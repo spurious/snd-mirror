@@ -17353,15 +17353,173 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 }
 
 
+/* -------------------------------- independent evaluators -------------------------------- */
+
+static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
+{
+  int i;
+  s7_scheme *new_sc;
+
+  /* make_thread which calls us has grabbed alloc_lock for the duration */
+
+  new_sc = (s7_scheme *)malloc(sizeof(s7_scheme));
+  memcpy((void *)new_sc, (void *)sc, sizeof(s7_scheme));
+  
+  /* share the heap, symbol table and global environment, protected objects list, and all the startup stuff (all via the memcpy),
+   *   but have separate stacks and eval locals
+   */
+  
+  new_sc->longjmp_ok = false;
+  new_sc->strbuf_size = INITIAL_STRBUF_SIZE;
+  new_sc->strbuf = (char *)calloc(new_sc->strbuf_size, sizeof(char));
+
+  new_sc->read_line_buf = NULL;
+  new_sc->read_line_buf_size = 0;
+  
+  new_sc->stack_top = 0;
+  new_sc->stack = vect;
+  new_sc->stack_size = INITIAL_STACK_SIZE;
+  new_sc->stack_size2 = new_sc->stack_size / 2;
+  
+  new_sc->x = new_sc->NIL;
+  new_sc->y = new_sc->NIL;
+  new_sc->z = new_sc->NIL;
+  new_sc->code = new_sc->NIL;
+  new_sc->args = new_sc->NIL;
+  new_sc->value = new_sc->NIL;
+  new_sc->cur_code = ERROR_INFO_DEFAULT;
+
+#if WITH_ENCAPSULATION
+  new_sc->encapsulators = sc->NIL;
+#endif
+  
+  new_sc->temps_size = GC_TEMPS_SIZE;
+  new_sc->temps_ctr = 0;
+  new_sc->temps = (s7_pointer *)malloc(new_sc->temps_size * sizeof(s7_pointer));
+  for (i = 0; i < new_sc->temps_size; i++)
+    new_sc->temps[i] = new_sc->NIL;
+
+  new_sc->circular_refs = (s7_pointer *)calloc(CIRCULAR_REFS_SIZE, sizeof(s7_pointer));
+#if HAVE_PTHREADS
+  new_sc->key_values = sc->NIL;
+
+  (*(sc->thread_ids))++;                   /* in case a spawned thread spawns another, we need this variable to be global to all */
+  new_sc->thread_id = (*(sc->thread_ids)); /* for more readable debugging printout -- main thread is thread 0 */
+#endif
+
+  new_sc->default_rng = NULL;
+#if WITH_GMP
+  new_sc->default_big_rng = NULL;
+#endif
+
+  return(new_sc);
+}
+
+
+static s7_scheme *close_s7(s7_scheme *sc)
+{
+  free(sc->strbuf);
+  free(sc->temps);
+  if (sc->read_line_buf) free(sc->read_line_buf);
+  if (sc->default_rng) free(sc->default_rng);
+#if WITH_GMP
+  if (sc->default_big_rng) free(sc->default_big_rng);
+#endif
+  free(sc);
+  return(NULL);
+}
+
+
+static void mark_s7(s7_scheme *sc)
+{
+  int i;
+  S7_MARK(sc->args);
+  S7_MARK(sc->envir);
+  S7_MARK(sc->code);
+  mark_vector(sc->stack, sc->stack_top);
+  S7_MARK(sc->value);
+  S7_MARK(sc->x);
+  S7_MARK(sc->y);
+  S7_MARK(sc->z);
+  for (i = 0; i < sc->temps_size; i++)
+    S7_MARK(sc->temps[i]);
+#if HAVE_PTHREADS
+  S7_MARK(sc->key_values);
+#endif
+}
+
+
+/* independent evaluators within a given overall scheme world (heap and global environment)
+ *   need gc mark support for evaluator locals, and a way to free all their resources,
+ *   so we have to provide these things to C as a special kind of object.  The caller 
+ *   should make sure the object is GC-protected until he is done with it!
+ */
+
+static int clone_tag = 0;
+
+typedef struct {
+  s7_scheme *sc;
+} clone;
+
+
+static char *clone_print(s7_scheme *sc, void *obj)
+{
+  return(s7_strdup("#<s7-clone>"));
+}
+
+
+static void clone_free(void *obj)
+{
+  close_s7(((clone *)obj)->sc);
+}
+
+
+static void clone_mark(void *val)
+{
+  mark_s7(((clone *)val)->sc);
+}
+
+
+static bool clone_equal(void *obj1, void *obj2)
+{
+  return(obj1 == obj2);
+}
+
+
+s7_pointer s7_make_clone(s7_scheme *sc)
+{
+  /* make a new evaluator that shares the caller's global environment and heap */
+  s7_scheme *new_sc;
+  clone *c;
+
+  new_sc = clone_s7(sc, s7_make_vector(sc, INITIAL_STACK_SIZE));
+  new_sc->envir = s7_immutable_cons(sc, sc->NIL, sc->envir);
+
+  c = (clone *)calloc(1, sizeof(clone));
+  c->sc = new_sc;
+
+  return(s7_make_object(sc, clone_tag, (void *)c));
+}
+
+
+bool s7_is_clone(s7_pointer obj)
+{
+  return((is_c_object(obj)) && (c_object_type(obj) == clone_tag));
+}
+
+
+s7_scheme *s7_clone(s7_pointer obj)
+{
+  if (s7_is_clone(obj))
+    return(((clone *)obj)->sc);
+  return(NULL);
+}
+
+
 
 /* -------------------------------- threads -------------------------------- */
 
 #if HAVE_PTHREADS
-
-static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect);
-static s7_scheme *close_s7(s7_scheme *sc);
-static void mark_s7(s7_scheme *sc);
-
 
 static int thread_tag = 0;
 
@@ -17659,95 +17817,6 @@ static s7_pointer set_key(s7_scheme *sc, s7_pointer obj, s7_pointer args)
   return(car(args));
 }
 
-
-static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
-{
-  int i;
-  s7_scheme *new_sc;
-
-  /* make_thread which calls us has grabbed alloc_lock for the duration */
-
-  new_sc = (s7_scheme *)malloc(sizeof(s7_scheme));
-  memcpy((void *)new_sc, (void *)sc, sizeof(s7_scheme));
-  
-  /* share the heap, symbol table and global environment, protected objects list, and all the startup stuff (all via the memcpy),
-   *   but have separate stacks and eval locals
-   */
-  
-  new_sc->longjmp_ok = false;
-  new_sc->strbuf_size = INITIAL_STRBUF_SIZE;
-  new_sc->strbuf = (char *)calloc(new_sc->strbuf_size, sizeof(char));
-
-  new_sc->read_line_buf = NULL;
-  new_sc->read_line_buf_size = 0;
-  
-  new_sc->stack_top = 0;
-  new_sc->stack = vect;
-  new_sc->stack_size = INITIAL_STACK_SIZE;
-  new_sc->stack_size2 = new_sc->stack_size / 2;
-  
-  new_sc->x = new_sc->NIL;
-  new_sc->y = new_sc->NIL;
-  new_sc->z = new_sc->NIL;
-  new_sc->code = new_sc->NIL;
-  new_sc->args = new_sc->NIL;
-  new_sc->value = new_sc->NIL;
-  new_sc->cur_code = ERROR_INFO_DEFAULT;
-
-#if WITH_ENCAPSULATION
-  new_sc->encapsulators = sc->NIL;
-#endif
-  
-  new_sc->temps_size = GC_TEMPS_SIZE;
-  new_sc->temps_ctr = 0;
-  new_sc->temps = (s7_pointer *)malloc(new_sc->temps_size * sizeof(s7_pointer));
-  for (i = 0; i < new_sc->temps_size; i++)
-    new_sc->temps[i] = new_sc->NIL;
-
-  new_sc->circular_refs = (s7_pointer *)calloc(CIRCULAR_REFS_SIZE, sizeof(s7_pointer));
-  new_sc->key_values = sc->NIL;
-
-  (*(sc->thread_ids))++;                   /* in case a spawned thread spawns another, we need this variable to be global to all */
-  new_sc->thread_id = (*(sc->thread_ids)); /* for more readable debugging printout -- main thread is thread 0 */
-
-  new_sc->default_rng = NULL;
-#if WITH_GMP
-  new_sc->default_big_rng = NULL;
-#endif
-
-  return(new_sc);
-}
-
-
-static s7_scheme *close_s7(s7_scheme *sc)
-{
-  free(sc->strbuf);
-  free(sc->temps);
-  if (sc->read_line_buf) free(sc->read_line_buf);
-  if (sc->default_rng) free(sc->default_rng);
-#if WITH_GMP
-  if (sc->default_big_rng) free(sc->default_big_rng);
-#endif
-  free(sc);
-  return(NULL);
-}
-
-
-static void mark_s7(s7_scheme *sc)
-{
-  int i;
-  S7_MARK(sc->args);
-  S7_MARK(sc->envir);
-  S7_MARK(sc->code);
-  mark_vector(sc->stack, sc->stack_top);
-  S7_MARK(sc->value);
-  S7_MARK(sc->x);
-  S7_MARK(sc->y);
-  S7_MARK(sc->z);
-  for (i = 0; i < sc->temps_size; i++)
-    S7_MARK(sc->temps[i]);
-  S7_MARK(sc->key_values);
-}
 
 #endif
 
@@ -22631,6 +22700,8 @@ s7_scheme *s7_init(void)
 
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "threads")));
 #endif
+
+  clone_tag = s7_new_type("<clone>", clone_print, clone_free, clone_equal, clone_mark, NULL, NULL);
 
 #if WITH_ENCAPSULATION
   encapsulator_tag = s7_new_type("<encapsulator>",  encapsulator_print, encapsulator_free, encapsulator_equal, encapsulator_mark, encapsulator_apply, NULL);

@@ -718,6 +718,11 @@ s7_pointer s7_procedure_with_setter_getter(s7_pointer obj);
    */
 
 
+s7_pointer s7_make_clone(s7_scheme *sc);
+bool s7_is_clone(s7_pointer obj);
+s7_scheme *s7_clone(s7_pointer obj);
+
+
 int s7_new_type(const char *name, 
 		char *(*print)(s7_scheme *sc, void *value), 
 		void (*free)(void *value), 
@@ -844,7 +849,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
- * 16-Dec:    hash-table-for-each.
+ * 16-Dec:    hash-table-for-each. s7_clone functions.
  * 1-Dec:     mpc versions before 0.8.0 are no longer supported.
  * 24-Nov:    define-macro* and defmacro*.
  *            force and delay included only if WITH_FORCE set, promise? removed.

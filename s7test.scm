@@ -2728,6 +2728,8 @@
       (test (call/cc (lambda (return) (vector-map (lambda (n) (if (even? n) (return n))) (vector 1 3 8 7 9 10)))) 8)
       ))
 
+;;; TODO: hash-table-for-each tests
+
 
 (if (provided? 'multidimensional-vectors)
     (let ((v1 (make-vector 3 1)))
