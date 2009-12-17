@@ -44698,7 +44698,7 @@ EDITS: 1
 		   (let ((v (channel->vct)))
 		     (if (not (vct? v))
 			 (snd-display ";channel->vct of oboe copy is null??")
-			 (array->file "test.snd" v fr sr chns))
+			 (array->file ltest v fr sr chns))
 		     (update-sound ind)
 		     (let ((mx1 (maxamp ind 0)))
 		       (if (fneq mx mx1)
@@ -67322,4 +67322,3 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  6,943,061,664  run.c:jump_if_not_equal [/home/bil/cl/snd]
 
 |#
-;; TODO: check prefs for peak-env-dir

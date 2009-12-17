@@ -38,13 +38,16 @@ void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t g
       draw_lines(ax, points, j);
       draw_lines(ax, points1, j);
       break;
+
     case GRAPH_DOTS:
       draw_points(ax, points, j, dot_size);
       draw_points(ax, points1, j, dot_size);
       break;
+
     case GRAPH_FILLED:
       fill_two_sided_polygons(ax, points, points1, j);
       break;
+
     case GRAPH_DOTS_AND_LINES:
       if (dot_size > 1)
 	{
@@ -54,6 +57,7 @@ void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t g
       draw_lines(ax, points, j);
       draw_lines(ax, points1, j);
       break;
+
     case GRAPH_LOLLIPOPS:
       if (dot_size == 1)
 	{
@@ -85,17 +89,21 @@ void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, mus_f
     default:
       draw_lines(ax, points, j); 
       break;
+
     case GRAPH_DOTS: 
       draw_points(ax, points, j, dot_size); 
       break;
+
     case GRAPH_FILLED: 
       fill_polygons(ax, points, j, grf_y(y0, ap)); 
       break;
+
     case GRAPH_DOTS_AND_LINES: 
       if (dot_size > 1) 
 	draw_points(ax, points, j, dot_size); 
       draw_lines(ax, points, j); 
       break;
+
     case GRAPH_LOLLIPOPS:
       gy0 = grf_y(y0, ap);
       if (dot_size == 1)
@@ -127,8 +135,10 @@ void draw_cursor(chan_info *cp)
 #endif
   axis_info *ap;
   axis_context *ax;
+
   if (!(cp->graph_time_p)) return;
   ap = cp->axis;
+
 #if USE_CAIRO
   ax = ap->ax;
   if (!ax)
@@ -139,15 +149,18 @@ void draw_cursor(chan_info *cp)
     }
   old_color = get_foreground_color(ax);
   set_foreground_color(ax, ss->sgx->cursor_color);
+
   if (ax->cr) cairo_destroy(ax->cr);
   ax->cr = gdk_cairo_create(ax->wn); /* this is needed to force the cursor to be displayed! */
   free_cursor_pix(cp);
+
   if (cp->cx > cp->cursor_size) cx0 = cp->cx - cp->cursor_size;
   if (cp->cy > cp->cursor_size) cy0 = cp->cy - cp->cursor_size;
   csize = 2 * cp->cursor_size + 1;
 #else
   ax = cursor_context(cp);
 #endif
+
   if ((cp->tracking) && (with_tracking_cursor(ss) != DONT_TRACK))
     cur = cp->tracking_cursor_style;
   else cur = cp->cursor_style;
@@ -161,12 +174,20 @@ void draw_cursor(chan_info *cp)
       draw_line(ax, cp->cx, cp->cy - cp->cursor_size, cp->cx, cp->cy + cp->cursor_size);
       draw_line(ax, cp->cx - cp->cursor_size, cp->cy, cp->cx + cp->cursor_size, cp->cy);
       break;
+
     case CURSOR_LINE:
+      if ((with_inset_graph(ss)) &&
+	  (cp->inset_graph))
+	draw_inset_line_cursor(cp, ax);
+      else
+	{
 #if USE_CAIRO
-      save_cursor_pix(cp, ax, 2, ap->y_axis_y0 - ap->y_axis_y1, cp->cx, ap->y_axis_y1);
+	  save_cursor_pix(cp, ax, 2, ap->y_axis_y0 - ap->y_axis_y1, cp->cx, ap->y_axis_y1);
 #endif
-      draw_line(ax, cp->cx, ap->y_axis_y0 - 1, cp->cx, ap->y_axis_y1);
+	  draw_line(ax, cp->cx, ap->y_axis_y0 - 1, cp->cx, ap->y_axis_y1);
+	}
       break;
+
     case CURSOR_PROC:
 #if USE_CAIRO
       /* in the cairo case, we need some info about the cursor shape, but I'll assume cursor_size is meaningful */
@@ -181,10 +202,12 @@ void draw_cursor(chan_info *cp)
 		 S_cursor_style " procedure");
       break;
     }
+
 #if USE_CAIRO
   set_foreground_color(ax, old_color);
 #endif
 }
+
 
 void erase_cursor(chan_info *cp)
 {
@@ -232,6 +255,7 @@ axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller)
       case TRANSFORM_AXIS_INFO: if (cp->fft) return(cp->fft->axis);            break;
       case LISP_AXIS_INFO:      if (cp->lisp_info) return(lisp_info_axis(cp)); break;
       }
+
   XEN_ERROR(XEN_ERROR_TYPE("no-such-axis"),
 	    XEN_LIST_3(C_TO_XEN_STRING(caller),
 		       ((!(cp->squelch_update)) || (!(AXIS_INFO_ID_OK(ap_id)))) ?
@@ -255,6 +279,7 @@ static XEN g_draw_line(XEN x0, XEN y0, XEN x1, XEN y1, XEN snd, XEN chn, XEN ax)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x1), x1, XEN_ARG_3, S_draw_line, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y1), y1, XEN_ARG_4, S_draw_line, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_7, S_draw_line, "an integer such as " S_time_graph);
+
 #if USE_CAIRO
   {
     axis_context *axc;
@@ -290,6 +315,7 @@ static XEN g_draw_dot(XEN x0, XEN y0, XEN size, XEN snd, XEN chn, XEN ax)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, XEN_ARG_2, S_draw_dot, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(size), size, XEN_ARG_3, S_draw_dot, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_6, S_draw_dot, "an integer such as " S_time_graph);
+
   draw_dot(TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dot),
 	   XEN_TO_C_INT(x0),
 	   XEN_TO_C_INT(y0),
@@ -309,6 +335,7 @@ static XEN g_fill_rectangle(XEN x0, XEN y0, XEN width, XEN height, XEN snd, XEN 
   XEN_ASSERT_TYPE(XEN_NUMBER_P(height), height, XEN_ARG_4, S_fill_rectangle, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_7, S_fill_rectangle, "an integer such as " S_time_graph);
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(erase), erase, XEN_ARG_8, S_fill_rectangle, "a boolean");
+
   if ((XEN_BOOLEAN_P(erase)) &&
       (XEN_TRUE_P(erase)))
     erase_rectangle(get_cp(snd, chn, S_fill_rectangle),
@@ -336,6 +363,7 @@ static XEN g_draw_string(XEN text, XEN x0, XEN y0, XEN snd, XEN chn, XEN ax)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_2, S_draw_string, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y0), y0, XEN_ARG_3, S_draw_string, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_6, S_draw_string, "an integer such as " S_time_graph);
+
   tmp = XEN_TO_C_STRING(text);
 #if USE_MOTIF
   /* snd-xdraw to make motif draw-string act in the same way (coordinate-wise) as gtk */
@@ -356,6 +384,7 @@ static point_t *vector_to_points(XEN pts, const char *caller, int *vector_len)
 {
   int i, j, vlen = 0, len = 0;
   point_t *pack_pts;
+
   vlen = XEN_VECTOR_LENGTH(pts);
   if (vlen & 1)
     XEN_ERROR(XEN_ERROR_TYPE("bad-length"),
@@ -370,6 +399,7 @@ static point_t *vector_to_points(XEN pts, const char *caller, int *vector_len)
   len = vlen / 2;
   (*vector_len) = len;
   pack_pts = (point_t *)calloc(len, sizeof(point_t));
+
   for (i = 0, j = 0; i < len; i++, j += 2)
     {
       pack_pts[i].x = XEN_TO_C_INT_OR_ELSE(XEN_VECTOR_REF(pts, j), 0);
@@ -387,12 +417,15 @@ static XEN g_draw_lines(XEN pts, XEN snd, XEN chn, XEN ax)
   point_t *pack_pts;
   axis_context *ax1;
   int vlen = 0;
+
   ASSERT_CHANNEL(S_draw_lines, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_VECTOR_P(pts), pts, XEN_ARG_1, S_draw_lines, "a vector");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_draw_lines, "an integer such as " S_time_graph);
+
   ax1 = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_lines);
   pack_pts = vector_to_points(pts, S_draw_lines, &vlen);
   draw_lines(ax1, pack_pts, vlen);
+
   free(pack_pts);
   return(pts);
 }
@@ -406,15 +439,18 @@ static XEN g_draw_dots(XEN pts, XEN size, XEN snd, XEN chn, XEN ax)
   point_t *pack_pts;
   axis_context *ax1;
   int vlen = 0;
+
   ASSERT_CHANNEL(S_draw_dots, snd, chn, 3);
   XEN_ASSERT_TYPE(XEN_VECTOR_P(pts), pts, XEN_ARG_1, S_draw_dots, "a vector");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_5, S_draw_dots, "an integer such as " S_time_graph);
+
   ax1 = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dots);
   pack_pts = vector_to_points(pts, S_draw_dots, &vlen);
   draw_points(ax1,
 	      pack_pts, 
 	      vlen,
 	      XEN_TO_C_INT_OR_ELSE(size, 1));
+
   free(pack_pts);
   return(pts);
 }
@@ -427,9 +463,11 @@ static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
   point_t *pack_pts;
   axis_context *ax;
   int vlen = 0;
+
   ASSERT_CHANNEL(S_fill_polygon, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_VECTOR_P(pts), pts, XEN_ARG_1, S_fill_polygon, "a vector");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, S_fill_polygon, "an integer such as " S_time_graph);
+
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_fill_polygon);
   pack_pts = vector_to_points(pts, S_fill_polygon, &vlen);
 #if USE_MOTIF
@@ -437,6 +475,7 @@ static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
 #else
   fill_polygon_from_array(ax, pack_pts, vlen);
 #endif
+
   free(pack_pts);
   return(pts);
 }
@@ -450,12 +489,14 @@ static XEN g_make_bezier(XEN args1)
   #define H_make_bezier "(" S_make_bezier " x0 y0 x1 y1 x2 y2 x3 y3 n): return a vector of points corresponding to the bezier curve \
 defined by the 4 controlling points x0..y3; 'n' is how many points to return"
   /* XDrawBezier from cmn's glfed.c (where it was assuming PostScript coordinates) */
+
   int ax, ay, bx, by, cx, cy, i;
   float incr, val;
   int x[4];
   int y[4];
   int n = 50;
   XEN pts, args;
+
   args = XEN_COPY_ARG(args1);
   for (i = 0; i < 4; i++)
     {
@@ -465,6 +506,7 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
     }
   if (XEN_NOT_NULL_P(args)) 
     n = XEN_TO_C_INT(XEN_CAR(args));
+
   cx = 3 * (x[1] - x[0]);
   cy = 3 * (y[1] - y[0]);
   bx = 3 * (x[2] - x[1]) - cx;
@@ -473,8 +515,10 @@ defined by the 4 controlling points x0..y3; 'n' is how many points to return"
   ay = y[3] - (y[0] + cy + by);
   incr = 1.0 / (float)n;
   pts = XEN_MAKE_VECTOR(2 * (n + 1), C_TO_XEN_INT(0));
+
   XEN_VECTOR_SET(pts, 0, C_TO_XEN_INT(x[0]));
   XEN_VECTOR_SET(pts, 1, C_TO_XEN_INT(y[0]));
+
   for (i = 1, val = incr; i <= n; i++, val += incr)
     {
       XEN_VECTOR_SET(pts, i * 2, C_TO_XEN_INT((int)(x[0] + val * (cx + (val * (bx + (val * ax)))))));
@@ -489,10 +533,13 @@ static XEN g_foreground_color(XEN snd, XEN chn, XEN xax)
   #define H_foreground_color "(" S_foreground_color " :optional snd chn (ax " S_time_graph ")): current drawing color"
   chan_info *cp;
   axis_context *ax;
+
   ASSERT_CHANNEL(S_foreground_color, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(xax), xax, XEN_ARG_3, S_foreground_color, "an integer");
+
   cp = get_cp(snd, chn, S_foreground_color);
   if (!cp) return(XEN_FALSE);
+
   ax = get_ax(cp, XEN_TO_C_INT_OR_ELSE(xax, (int)CHAN_GC), S_foreground_color);
   return(XEN_WRAP_PIXEL(get_foreground_color(ax)));
 }
@@ -501,11 +548,14 @@ static XEN g_foreground_color(XEN snd, XEN chn, XEN xax)
 static XEN g_set_foreground_color(XEN color, XEN snd, XEN chn, XEN ax)
 {
   chan_info *cp;
+
   ASSERT_CHANNEL(S_setB S_foreground_color, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ARG_1, S_setB S_foreground_color, "a color");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_4, S_setB S_foreground_color, "an integer");
+
   cp = get_cp(snd, chn, S_setB S_foreground_color);
   if (!cp) return(XEN_FALSE);
+
   set_foreground_color(get_ax(cp, 
 			      XEN_TO_C_INT_OR_ELSE(ax, (int)CHAN_GC),
 			      S_setB S_foreground_color),
@@ -521,12 +571,14 @@ WITH_FOUR_SETTER_ARGS(g_set_foreground_color_reversed, g_set_foreground_color)
 static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 {
   axis_context *ax;
+
   ASSERT_CHANNEL(S_setB S_current_font, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, S_setB S_current_font, "an integer such as time-graph");
   XEN_ASSERT_TYPE((XEN_LIST_P(id)) &&
 		  (XEN_LIST_LENGTH(id) >= 2) &&
 		  (XEN_SYMBOL_P(XEN_CAR(id))) &&
 		  (strcmp("Font", XEN_SYMBOL_TO_C_STRING(XEN_CAR(id))) == 0), id, XEN_ARG_1, S_setB S_current_font, "a Font");
+
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_current_font);
   ax->current_font = (Font)XEN_TO_C_ULONG(XEN_CADR(id));
   XSetFont(ax->dp, ax->gc, ax->current_font);
@@ -539,10 +591,12 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
   #define H_current_font "(" S_current_font " :optional snd chn (ax " S_time_graph ")): current font id"
   axis_context *ax;
   chan_info *cp;
+
   ASSERT_CHANNEL(S_current_font, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_3, S_current_font, "an integer such as time-graph");
   cp = get_cp(snd, chn, S_current_font);
   if (!cp) return(XEN_FALSE);
+
   ax = get_ax(cp,
 	      XEN_TO_C_INT_OR_ELSE(ax_id, (int)CHAN_GC),
 	      S_current_font);
@@ -563,6 +617,7 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 {
   axis_context *ax;
+
   ASSERT_CHANNEL(S_setB S_current_font, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, S_setB S_current_font, "an integer such as time-graph");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_setB S_current_font);
@@ -571,11 +626,13 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 		   (XEN_LIST_LENGTH(id) >= 2) &&
 		   (XEN_SYMBOL_P(XEN_CAR(id)))),
 		  id, XEN_ARG_1, S_setB S_current_font, "a wrapped object or a raw pointer");
+
   if (XEN_WRAPPED_C_POINTER_P(id))
     ax->current_font = (PangoFontDescription *)XEN_UNWRAP_C_POINTER(id); 
   else ax->current_font = (PangoFontDescription *)XEN_UNWRAP_C_POINTER(XEN_CADR(id));
   return(id);
 }
+
 
 static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 {
@@ -736,6 +793,7 @@ void set_dialog_widget(snd_dialog_t which, widget_t wid)
     }
   sx->dialogs[sx->num_dialogs++] = wid;
   check_dialog_widget_table();
+
   if (XEN_FALSE_P(XEN_VECTOR_REF(dialog_widgets, (int)which)))
     XEN_VECTOR_SET(dialog_widgets, (int)which, 
 		   XEN_WRAP_WIDGET(wid));
@@ -823,8 +881,10 @@ static XEN g_widget_text(XEN wid)
 {
   #define H_widget_text "(" S_widget_text " wid): widget's text or label"
   widget_t w;
+
   XEN res = XEN_FALSE;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ONLY_ARG, S_widget_text, "a Widget");
+
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     {
@@ -887,8 +947,10 @@ static XEN g_set_widget_text(XEN wid, XEN text)
 {
   widget_t w;
   const char *str = NULL;
+
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, S_setB S_widget_text, "a Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(text) || XEN_FALSE_P(text), text, XEN_ARG_2, S_setB S_widget_text, "a string");
+
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (w)
     {

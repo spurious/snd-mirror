@@ -5697,7 +5697,7 @@
 ;;;;(CFNC-290 "GType gtk_recent_filter_get_type void")
 (CFNC-290 "GtkRecentFilter* gtk_recent_filter_new void")
 (CFNC-290 "void gtk_recent_filter_set_name GtkRecentFilter* filter gchar* name")
-(CFNC-290 "gchar* gtk_recent_filter_get_name GtkRecentFilter* filter") ; 'const
+(CFNC-290 "gchar* gtk_recent_filter_get_name GtkRecentFilter* filter" 'const-return) 
 (CFNC-290 "void gtk_recent_filter_add_mime_type GtkRecentFilter* filter gchar* mime_type")
 (CFNC-290 "void gtk_recent_filter_add_pattern GtkRecentFilter* filter gchar* pattern")
 (CFNC-290 "void gtk_recent_filter_add_pixbuf_formats GtkRecentFilter* filter")
@@ -5725,9 +5725,9 @@
 (CFNC-290 "GtkRecentInfo* gtk_recent_info_ref GtkRecentInfo* info")
 (CFNC-290 "void gtk_recent_info_unref GtkRecentInfo* info")
 (CFNC-290 "gchar* gtk_recent_info_get_uri GtkRecentInfo* info") ; 'const
-(CFNC-290 "gchar* gtk_recent_info_get_display_name GtkRecentInfo* info") ; 'const
-(CFNC-290 "gchar* gtk_recent_info_get_description GtkRecentInfo* info") ; 'const
-(CFNC-290 "gchar* gtk_recent_info_get_mime_type GtkRecentInfo* info") ; 'const
+(CFNC-290 "gchar* gtk_recent_info_get_display_name GtkRecentInfo* info" 'const-return)
+(CFNC-290 "gchar* gtk_recent_info_get_description GtkRecentInfo* info" 'const-return)
+(CFNC-290 "gchar* gtk_recent_info_get_mime_type GtkRecentInfo* info" 'const-return)
 (CFNC-290 "time_t gtk_recent_info_get_added GtkRecentInfo* info")
 (CFNC-290 "time_t gtk_recent_info_get_modified GtkRecentInfo* info")
 (CFNC-290 "time_t gtk_recent_info_get_visited GtkRecentInfo* info")
@@ -7097,8 +7097,8 @@
 (CFNC-2190 "void gtk_tool_palette_add_drag_dest GtkToolPalette* palette GtkWidget* widget GtkDestDefaults flags GtkToolPaletteDragTargets targets GdkDragAction actions")
 (CFNC-2190 "GtkAdjustment* gtk_tool_palette_get_hadjustment GtkToolPalette* palette")
 (CFNC-2190 "GtkAdjustment* gtk_tool_palette_get_vadjustment GtkToolPalette* palette")
-(CFNC-2190 "GtkTargetEntry* gtk_tool_palette_get_drag_target_item void")
-(CFNC-2190 "GtkTargetEntry* gtk_tool_palette_get_drag_target_group void")
+(CFNC-2190 "GtkTargetEntry* gtk_tool_palette_get_drag_target_item void" 'const-return)
+(CFNC-2190 "GtkTargetEntry* gtk_tool_palette_get_drag_target_group void" 'const-return)
 (CFNC-2190 "GtkWidget* gtk_tool_item_group_new gchar* label" 'const)
 (CFNC-2190 "void gtk_tool_item_group_set_label GtkToolItemGroup* group gchar* label" 'const)
 (CFNC-2190 "void gtk_tool_item_group_set_label_widget GtkToolItemGroup* group GtkWidget* label_widget")

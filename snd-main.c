@@ -1890,7 +1890,7 @@ static XEN g_set_with_inset_graph(XEN on)
 {
   XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_with_inset_graph, "a boolean");
   set_with_inset_graph(XEN_TO_C_BOOLEAN(on));
-  /* TODO: update all graphs */
+  for_each_chan(update_graph);
   return(C_TO_XEN_BOOLEAN(with_inset_graph(ss)));
 }
 

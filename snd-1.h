@@ -1287,6 +1287,7 @@ chan_info *which_channel(snd_info *sp, int y);
 void clear_inset_graph(chan_info *cp);
 void show_inset_graph(chan_info *cp);
 void free_inset_graph(chan_info *cp);
+void draw_inset_line_cursor(chan_info *cp, axis_context *ax);
 
 void g_init_chn(void);
 XEN make_graph_data(chan_info *cp, int edit_pos, mus_long_t losamp, mus_long_t hisamp);

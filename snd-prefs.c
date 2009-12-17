@@ -2432,6 +2432,20 @@ static void clear_with_inset_graph(prefs_info *prf) {set_with_inset_graph(false)
 static void save_with_inset_graph(prefs_info *prf, FILE *fd)
 {
   rts_with_inset_graph = GET_TOGGLE(prf->toggle);
+  if (rts_with_inset_graph)
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(set! (with-inset-graph) #t)\n");
+#endif
+
+#if HAVE_RUBY
+      fprintf(fd, "$with_inset_graph = true\n");
+#endif
+
+#if HAVE_FORTH
+      fprintf(fd, "#t to with-inset-graph\n");
+#endif
+    }
   set_with_inset_graph(rts_with_inset_graph);
 }
 

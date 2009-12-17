@@ -253,7 +253,7 @@ void redirect_errors_to(void (*handler)(const char *msg, void *ufd), void *data)
 
 static char *gl_print(XEN result);
 
-#if (!HAVE_S7) && (!HAVE_FORTH)
+#if HAVE_RUBY
 static XEN snd_format_if_needed(XEN args)
 {
   /* if car has formatting info, use next arg as arg list for it */
@@ -308,22 +308,7 @@ static XEN snd_format_if_needed(XEN args)
 		      else
 			{
 			  char *temp = NULL;
-#if HAVE_FORTH
-			  if (XEN_PROCEDURE_P(cur_arg))
-			    {
-			      /* don't need the source, just the name here, I think */
-			      XEN str;
-			      str = XEN_PROCEDURE_NAME(cur_arg);
-			      if (!(XEN_FALSE_P(str)))
-				errmsg = mus_strcat(errmsg, XEN_AS_STRING(str), &err_size);
-			      else errmsg = mus_strcat(errmsg, XEN_AS_STRING(cur_arg), &err_size);
-			    }
-			  else 
-#endif
-			    errmsg = mus_strcat(errmsg, temp = (char *)XEN_AS_STRING(cur_arg), &err_size);
-#if HAVE_S7
-			    if (temp) free(temp);
-#endif
+			  errmsg = mus_strcat(errmsg, temp = (char *)XEN_AS_STRING(cur_arg), &err_size);
 			}
 		    }
 		  /* else ignore it */
@@ -341,9 +326,6 @@ static XEN snd_format_if_needed(XEN args)
       char *temp = NULL;
       errmsg = mus_strcat(errmsg, " ", &err_size);
       errmsg = mus_strcat(errmsg, temp = (char *)XEN_AS_STRING(XEN_CADR(args)), &err_size);
-#if HAVE_S7
-      if (temp) free(temp);
-#endif
     }
   if (num_args > 2)
     {
@@ -353,9 +335,6 @@ static XEN snd_format_if_needed(XEN args)
 	  char *temp = NULL;
 	  errmsg = mus_strcat(errmsg, " ", &err_size);
 	  errmsg = mus_strcat(errmsg, temp = (char *)XEN_AS_STRING(XEN_LIST_REF(args, i)), &err_size);
-#if HAVE_S7
-	  if (temp) free(temp);
-#endif
 	}
     }
   result = C_TO_XEN_STRING(errmsg);

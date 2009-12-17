@@ -5884,17 +5884,20 @@ void show_inset_graph(chan_info *cp)
 #endif
 }
 
-/* TODO: smart line cursor
- * TODO: check prefs handling of both peak-env-dir and with-inset-graph
- * TODO: check insets in multi cases (what was the mix release stuff about?)
- * TODO: track down the ;update-sound looped maxamp troubles
- * TODO: unguile cleanup checks for snd-xen.c xen.h etc
- * TODO: gtk g++ const business: In function 'gxg_gtk_tool_palette_get_drag_target_group':
- *           xg.c:32193: warning: passing argument 1 of 'C_TO_XEN_GtkTargetEntry_' discards qualifiers from pointer target type
- *           and several others: gxg_gtk_tool_palette_get_drag_target_item gxg_recent_filter gxg_clip_rich_text_received
- * TODO: check snd-test 23: ;max: 0.082317568361759, format: mus-bshort
- */
 
+void draw_inset_line_cursor(chan_info *cp, axis_context *ax)
+{
+  /* we've checked that with_inset_graph is #t and cp has the pointer */
+#if USE_CAIRO
+  save_cursor_pix(cp, ax, 2, ap->y_axis_y0 - ap->y_axis_y1, cp->cx, ap->y_axis_y1);
+#endif
+
+  if ((cp->inset_graph->graphing) &&
+      (cp->cx > cp->inset_graph->x0) &&
+      (cp->cx < cp->inset_graph->x1))
+    draw_line(ax, cp->cx, cp->axis->y_axis_y0 - 1, cp->cx, cp->inset_graph->y1 + 4);
+  else draw_line(ax, cp->cx, cp->axis->y_axis_y0 - 1, cp->cx, cp->axis->y_axis_y1);
+}
 
 
 /* -------------------------------------------------------------------------------- */

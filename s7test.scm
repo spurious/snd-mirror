@@ -2726,9 +2726,27 @@
       (test (vector-map (lambda (n) (vector-map (lambda (m) (* m n)) (vector 1 2 3))) (vector 4 5 6)) '#(#(4 8 12) #(5 10 15) #(6 12 18)))
       (test (call/cc (lambda (return) (vector-map (lambda (n) (return "oops")) (vector 1 2 3)))) "oops")
       (test (call/cc (lambda (return) (vector-map (lambda (n) (if (even? n) (return n))) (vector 1 3 8 7 9 10)))) 8)
-      ))
 
-;;; TODO: hash-table-for-each tests (and doc)
+      (test (let ((val 0) 
+		  (ht (make-hash-table))) 
+	      (set! (ht "hi") 123) 
+	      (hash-table-for-each 
+	       (lambda (alist) 
+		 (if (not (null? alist)) 
+		     (set! val (cdr (assoc "hi" alist)))))
+	       ht)
+	      val)
+	    123)
+      (test (let ((ht (make-hash-table)))
+	      (set! (ht "hi") 123) 
+	      (call/cc (lambda (return)
+			 (hash-table-for-each 
+			  (lambda (alist) 
+			    (if (not (null? alist)) 
+				( return (cdr (assoc "hi" alist)))))
+			  ht))))
+	    123)
+      ))
 
 
 (if (provided? 'multidimensional-vectors)

@@ -27367,7 +27367,7 @@ static XEN gxg_gtk_recent_filter_get_name(XEN filter)
 {
   #define H_gtk_recent_filter_get_name "gchar* gtk_recent_filter_get_name(GtkRecentFilter* filter)"
   XEN_ASSERT_TYPE(XEN_GtkRecentFilter__P(filter), filter, 1, "gtk_recent_filter_get_name", "GtkRecentFilter*");
-  return(C_TO_XEN_gchar_(gtk_recent_filter_get_name(XEN_TO_C_GtkRecentFilter_(filter))));
+    return(C_TO_XEN_gchar_((gchar*)gtk_recent_filter_get_name(XEN_TO_C_GtkRecentFilter_(filter))));
 }
 
 static XEN gxg_gtk_recent_filter_add_mime_type(XEN filter, XEN mime_type)
@@ -27596,21 +27596,21 @@ static XEN gxg_gtk_recent_info_get_display_name(XEN info)
 {
   #define H_gtk_recent_info_get_display_name "gchar* gtk_recent_info_get_display_name(GtkRecentInfo* info)"
   XEN_ASSERT_TYPE(XEN_GtkRecentInfo__P(info), info, 1, "gtk_recent_info_get_display_name", "GtkRecentInfo*");
-  return(C_TO_XEN_gchar_(gtk_recent_info_get_display_name(XEN_TO_C_GtkRecentInfo_(info))));
+    return(C_TO_XEN_gchar_((gchar*)gtk_recent_info_get_display_name(XEN_TO_C_GtkRecentInfo_(info))));
 }
 
 static XEN gxg_gtk_recent_info_get_description(XEN info)
 {
   #define H_gtk_recent_info_get_description "gchar* gtk_recent_info_get_description(GtkRecentInfo* info)"
   XEN_ASSERT_TYPE(XEN_GtkRecentInfo__P(info), info, 1, "gtk_recent_info_get_description", "GtkRecentInfo*");
-  return(C_TO_XEN_gchar_(gtk_recent_info_get_description(XEN_TO_C_GtkRecentInfo_(info))));
+    return(C_TO_XEN_gchar_((gchar*)gtk_recent_info_get_description(XEN_TO_C_GtkRecentInfo_(info))));
 }
 
 static XEN gxg_gtk_recent_info_get_mime_type(XEN info)
 {
   #define H_gtk_recent_info_get_mime_type "gchar* gtk_recent_info_get_mime_type(GtkRecentInfo* info)"
   XEN_ASSERT_TYPE(XEN_GtkRecentInfo__P(info), info, 1, "gtk_recent_info_get_mime_type", "GtkRecentInfo*");
-  return(C_TO_XEN_gchar_(gtk_recent_info_get_mime_type(XEN_TO_C_GtkRecentInfo_(info))));
+    return(C_TO_XEN_gchar_((gchar*)gtk_recent_info_get_mime_type(XEN_TO_C_GtkRecentInfo_(info))));
 }
 
 static XEN gxg_gtk_recent_info_get_added(XEN info)
@@ -32184,13 +32184,13 @@ static XEN gxg_gtk_tool_palette_get_vadjustment(XEN palette)
 static XEN gxg_gtk_tool_palette_get_drag_target_item(void)
 {
   #define H_gtk_tool_palette_get_drag_target_item "GtkTargetEntry* gtk_tool_palette_get_drag_target_item( void)"
-  return(C_TO_XEN_GtkTargetEntry_(gtk_tool_palette_get_drag_target_item()));
+    return(C_TO_XEN_GtkTargetEntry_((GtkTargetEntry*)gtk_tool_palette_get_drag_target_item()));
 }
 
 static XEN gxg_gtk_tool_palette_get_drag_target_group(void)
 {
   #define H_gtk_tool_palette_get_drag_target_group "GtkTargetEntry* gtk_tool_palette_get_drag_target_group( void)"
-  return(C_TO_XEN_GtkTargetEntry_(gtk_tool_palette_get_drag_target_group()));
+    return(C_TO_XEN_GtkTargetEntry_((GtkTargetEntry*)gtk_tool_palette_get_drag_target_group()));
 }
 
 static XEN gxg_gtk_tool_item_group_new(XEN label)
@@ -49366,7 +49366,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("16-Dec-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("17-Dec-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

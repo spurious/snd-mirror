@@ -6128,16 +6128,16 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
       {
 	switch (ch)
 	  {
-	  case ALL:   return(all_mins[nn - 1] + .01);
-	  case ODD:   return(odd_mins[nn - 1] + .01);
-	  case EVEN:  return(even_mins[nn - 1] + .01);
-	  case PRIME: return(prime_mins[nn - 1] + .01);
+	  case ALL:   return(all_mins[nn - 1]);
+	  case ODD:   return(odd_mins[nn - 1]);
+	  case EVEN:  return(even_mins[nn - 1]);
+	  case PRIME: return(prime_mins[nn - 1]);
 	  }
       }
-    if (nn == 256) return(min_8[ch] + .01);
-    if (nn == 512) return(min_9[ch] + .01);
-    if (nn == 1024) return(min_10[ch] + .01);
-    if (nn == 2048) return(min_11[ch] + .01);
+    if (nn == 256) return(min_8[ch]);
+    if (nn == 512) return(min_9[ch]);
+    if (nn == 1024) return(min_10[ch]);
+    if (nn == 2048) return(min_11[ch]);
     return((mus_float_t)nn);
   }
 
@@ -6572,16 +6572,16 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
       {
 	switch (ch)
 	  {
-	  case ALL:   return(all_mins[nn - 1] + .002);
-	  case ODD:   return(odd_mins[nn - 1] + .002);
-	  case EVEN:  return(even_mins[nn - 1] + .002);
-	  case PRIME: return(prime_mins[nn - 1] + .002);
+	  case ALL:   return(all_mins[nn - 1]);
+	  case ODD:   return(odd_mins[nn - 1]);
+	  case EVEN:  return(even_mins[nn - 1]);
+	  case PRIME: return(prime_mins[nn - 1]);
 	  }
       }
-    if (nn == 256) return(min_8[ch] + .002);
-    if (nn == 512) return(min_9[ch] + .002);
-    if (nn == 1024) return(min_10[ch] + .002);
-    if (nn == 2048) return(min_11[ch] + .002);
+    if (nn == 256) return(min_8[ch]);
+    if (nn == 512) return(min_9[ch]);
+    if (nn == 1024) return(min_10[ch]);
+    if (nn == 2048) return(min_11[ch]);
     return((mus_float_t)nn);
   }
 

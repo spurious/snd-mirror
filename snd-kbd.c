@@ -288,10 +288,10 @@ static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
   {snd_K_less,       snd_ControlMask, 0, kbd_false, false, "move cursor to sample 0",                    NULL, -1},
   {snd_K_greater,    snd_ControlMask, 0, kbd_false, false, "move cursor to last sample",                 NULL, -1},
   {snd_K_a,          snd_ControlMask, 0, kbd_false, false, "move cursor to window start",                NULL, -1},
-  {snd_K_b,          snd_ControlMask, 0, kbd_false, false, "move cursor back one sample",                NULL, -1},
+  {snd_K_b,          snd_ControlMask, 0, kbd_false, false, "move cursor back one pixel",                 NULL, -1},
   {snd_K_d,          snd_ControlMask, 0, kbd_false, false, "delete sample at cursor",                    NULL, -1},
   {snd_K_e,          snd_ControlMask, 0, kbd_false, false, "move cursor to window end",                  NULL, -1},
-  {snd_K_f,          snd_ControlMask, 0, kbd_false, false, "move cursor ahead one sample",               NULL, -1},
+  {snd_K_f,          snd_ControlMask, 0, kbd_false, false, "move cursor ahead one pixel",                NULL, -1},
   {snd_K_g,          snd_ControlMask, 0, kbd_false, false, "abort current command",                      NULL, -1},
   {snd_K_h,          snd_ControlMask, 0, kbd_false, false, "delete previous sample",                     NULL, -1},
   {snd_K_i,          snd_ControlMask, 0, kbd_false, false, "display cursor info",                        NULL, -1},
@@ -1451,7 +1451,9 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 
   u_count = false;
 
-  if ((keysym != snd_K_X) && (keysym != snd_K_x))
+  if ((keysym != snd_K_X) && (keysym != snd_K_x) &&
+      (keysym != snd_K_B) && (keysym != snd_K_b) &&
+      (keysym != snd_K_F) && (keysym != snd_K_f))
     {
       got_count = false;
       if (count == 0) return;
@@ -1492,8 +1494,18 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 
 	    case snd_K_B: case snd_K_b: 
-	      cp->cursor_on = true; 
-	      cursor_move(cp, -count); 
+	      /* this was by samples which is nuts if we're looking at a large window -- should be by pixel, I think */
+	      {
+		int samples_per_pixel = 1;
+		if (!got_count) /* C-u 2.1 C-b moves back 2.1 seconds */
+		  {
+		    samples_per_pixel = (cp->axis->hisamp - cp->axis->losamp) / (cp->axis->x_axis_x1 - cp->axis->x_axis_x0);
+		    if (samples_per_pixel < 1) samples_per_pixel = 1;
+		  }
+		cp->cursor_on = true; 
+		cursor_move(cp, -count * samples_per_pixel);
+		got_count = false;
+	      }
 	      break;
 
 	    case snd_K_D: case snd_K_d: 
@@ -1509,8 +1521,17 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      break;
 
 	    case snd_K_F: case snd_K_f:
-	      cp->cursor_on = true; 
-	      cursor_move(cp, count); 
+	      {
+		int samples_per_pixel = 1;
+		if (!got_count)
+		  {
+		    samples_per_pixel = (cp->axis->hisamp - cp->axis->losamp) / (cp->axis->x_axis_x1 - cp->axis->x_axis_x0);
+		    if (samples_per_pixel < 1) samples_per_pixel = 1;
+		  }
+		cp->cursor_on = true; 
+		cursor_move(cp, count * samples_per_pixel); 
+		got_count = false;
+	      }
 	      break;
 
 	    case snd_K_G: case snd_K_g: 
