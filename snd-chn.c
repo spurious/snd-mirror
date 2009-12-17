@@ -55,11 +55,11 @@ chan_info *get_cp(XEN snd, XEN x_chn_n, const char *caller)
 
 
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_MIX, CLICK_MARK,
-	      CLICK_FFT_MAIN, CLICK_SELECTION_LEFT, CLICK_SELECTION_RIGHT} click_loc_t;
+	      CLICK_FFT_MAIN, CLICK_SELECTION_LEFT, CLICK_SELECTION_RIGHT, CLICK_INSET_GRAPH} click_loc_t;
 /* for marks, regions, mouse click detection */
 /*
- * static char *click_detection_names[9] = {"no graph", "click wave", "click fft axis", "click lisp", "click mix", "click mark",
- *                                          "click fft graph", "click selection left", "click selection right"};
+ * static char *click_detection_names[10] = {"no graph", "click wave", "click fft axis", "click lisp", "click mix", "click mark",
+ *                                           "click fft graph", "click selection left", "click selection right", "click inset graph"};
  */
 
 
@@ -4536,7 +4536,7 @@ void goto_graph(chan_info *cp)
 
 /* ---------------- graphics callbacks ---------------- */
 
-#define SLOPPY_MOUSE 10
+#define SLOPPY_MOUSE 6
 
 #if USE_NO_GUI
 #define GUI_SET_CURSOR(w, cursor)
@@ -4547,6 +4547,13 @@ void goto_graph(chan_info *cp)
 #define GUI_SET_CURSOR(w, cursor) XUndefineCursor(XtDisplay(w), XtWindow(w)); XDefineCursor(XtDisplay(w), XtWindow(w), cursor)
 #endif
 #endif
+
+typedef struct inset_graph_info_t {  /* chan_info field is inset_graph, set to null in snd-data, but not cleared or freed */
+  int width, height, edpos, y_offset, data_size, x0, x1, y0, y1;
+  point_t *data0, *data1;
+  bool graphing;
+} inset_graph_info_t;
+
 
 static click_loc_t within_graph(chan_info *cp, int x, int y)
 {
@@ -4566,6 +4573,15 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
       if (((x0 <= ap->x_axis_x1) && (x1 >= ap->x_axis_x0)) && 
 	  ((y0 <= ap->y_axis_y0) && (y1 >= ap->y_axis_y1)))
 	{
+	  if ((with_inset_graph(ss)) &&
+	      (cp->inset_graph) &&
+	      (cp->inset_graph->graphing) &&
+	      (x1 > cp->inset_graph->x0) &&
+	      (x0 < cp->inset_graph->x1) &&
+	      (y1 > cp->inset_graph->y0) &&
+	      (y0 < cp->inset_graph->y1))
+	    return(CLICK_INSET_GRAPH);
+
 	  if ((y < (ap->y_offset + SELECTION_DRAG_HEIGHT)) &&
 	      (selection_is_active_in_channel(cp)))
 	    {
@@ -5044,22 +5060,11 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 
     case CLICK_SELECTION_LEFT:
     case CLICK_SELECTION_RIGHT:
-
-#if 0      
-      if ((mouse_mark == NULL) && 
-	  (play_mark == NULL))
-	mix_tag = hit_mix(cp, x, y);
-      
-      if (mix_tag == NO_MIX_TAG)
-	{
-	  dragged = true;
-	  /* start adjustment of selection bounds */
-	}
-#endif
       dragged = true;
       restart_selection_creation(cp, click_within_graph == CLICK_SELECTION_RIGHT);
       break;
 
+    case CLICK_INSET_GRAPH:
     case CLICK_NOGRAPH:
     case CLICK_FFT_MAIN:
       break;
@@ -5136,6 +5141,24 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 
 	  switch (actax)
 	    {
+	    case CLICK_INSET_GRAPH:
+	      {
+		mus_long_t samp;
+		samp = snd_round_mus_long_t(CURRENT_SAMPLES(cp) * ((double)(x - cp->inset_graph->x0) / (double)(cp->inset_graph->width)));
+		cursor_moveto(cp, samp);
+		if ((samp < cp->axis->losamp) ||
+		    (samp > cp->axis->hisamp))
+		  {
+		    mus_long_t rsamp;
+		    rsamp = samp + snd_round_mus_long_t(0.5 * (cp->axis->hisamp - cp->axis->losamp));
+		    if (rsamp < 0) rsamp = 0;
+		    if (rsamp > CURRENT_SAMPLES(cp)) rsamp = CURRENT_SAMPLES(cp);
+		    set_x_axis_x1(cp, rsamp);
+		    update_graph(cp);
+		  }
+	      }
+	      break;
+
 	    case CLICK_SELECTION_LEFT:
 	    case CLICK_SELECTION_RIGHT:
 	    case CLICK_MIX:
@@ -5264,6 +5287,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
 	      else
 		{
 		  if ((click_within_graph == CLICK_WAVE) ||
+		      (click_within_graph == CLICK_INSET_GRAPH) ||
 		      (click_within_graph == CLICK_SELECTION_LEFT) ||
 		      (click_within_graph == CLICK_SELECTION_RIGHT) ||
 		      (click_within_graph == CLICK_MIX) ||
@@ -5364,6 +5388,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 	  mus_float_t old_cutoff;
 	  switch (click_within_graph)
 	    {
+	    case CLICK_INSET_GRAPH:
 	    case CLICK_SELECTION_LEFT:
 	    case CLICK_SELECTION_RIGHT:
 	    case CLICK_MIX:
@@ -5602,12 +5627,6 @@ static axis_context *combined_context(chan_info *cp) {return(set_context(cp, CHA
 #define INSET_WIDTH .2
 #define INSET_HEIGHT .25
 
-typedef struct inset_graph_info_t {  /* chan_info field is inset_graph, set to null in snd-data, but not cleared or freed */
-  int width, height, edpos, y_offset, data_size;
-  point_t *data0, *data1;
-} inset_graph_info_t;
-
-
 void clear_inset_graph(chan_info *cp)
 {
   if (cp->inset_graph)
@@ -5689,6 +5708,10 @@ void show_inset_graph(chan_info *cp)
 	  cur_ax = set_context(grf_cp, CHAN_GC);
 	  fill_rectangle(cur_ax, x_offset, chan_offset + height, width, 2);
 	  fill_rectangle(cur_ax, x_offset, chan_offset, 2, height);
+	  info->x0 = x_offset;
+	  info->x1 = x_offset + width;
+	  info->y0 = chan_offset;
+	  info->y1 = chan_offset + height;
 
 	  /* show where the current window fits into the overall graph */
 	  {
@@ -5854,13 +5877,14 @@ void show_inset_graph(chan_info *cp)
 	  cur_ax = set_context(grf_cp, CHAN_GC);
 	  draw_lines(cur_ax, info->data0, info->data_size);
 	  if (info->data1) draw_lines(cur_ax, info->data1, info->data_size);
+	  info->graphing = true;
 	}
+      else info->graphing = false;
     }
 #endif
 }
 
-/* TODO: click within inset graph
- * TODO: smart line cursor
+/* TODO: smart line cursor
  * TODO: check prefs handling of both peak-env-dir and with-inset-graph
  * TODO: check insets in multi cases (what was the mix release stuff about?)
  * TODO: track down the ;update-sound looped maxamp troubles
@@ -5868,6 +5892,7 @@ void show_inset_graph(chan_info *cp)
  * TODO: gtk g++ const business: In function 'gxg_gtk_tool_palette_get_drag_target_group':
  *           xg.c:32193: warning: passing argument 1 of 'C_TO_XEN_GtkTargetEntry_' discards qualifiers from pointer target type
  *           and several others: gxg_gtk_tool_palette_get_drag_target_item gxg_recent_filter gxg_clip_rich_text_received
+ * TODO: check snd-test 23: ;max: 0.082317568361759, format: mus-bshort
  */
 
 

@@ -79,7 +79,7 @@
  *        stacktrace, trace and untrace, *trace-hook*, __func__, macroexpand
  *            as in C, __func__ is the name of the function currently being defined.
  *        length, copy, fill!, map, for-each are generic
- *        vector-for-each, vector-map, string-for-each, for-each of any applicable object
+ *        vector-for-each, vector-map, string-for-each, hash-table-for-each, for-each of any applicable object
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)

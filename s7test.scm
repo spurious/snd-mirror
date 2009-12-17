@@ -2728,7 +2728,7 @@
       (test (call/cc (lambda (return) (vector-map (lambda (n) (if (even? n) (return n))) (vector 1 3 8 7 9 10)))) 8)
       ))
 
-;;; TODO: hash-table-for-each tests
+;;; TODO: hash-table-for-each tests (and doc)
 
 
 (if (provided? 'multidimensional-vectors)

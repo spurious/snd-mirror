@@ -2033,7 +2033,7 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
       s7 = s7_init();
       if (!s7) 
 	{
-	  fprintf(stderr, "Can't initialize S7!\n");
+	  fprintf(stderr, "Can't initialize s7!\n");
 	  return(NULL);
 	}
     }
