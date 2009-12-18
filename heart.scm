@@ -4,6 +4,7 @@
 ;;; turn off clipping (the numbers will be between 70 and 150)
 (set! (mus-clipping) #f)
 (set! *clm-clipped* #f)
+(set! (with-inset-graph) #f)
 
 ;;; these hooks may be drawing the graph in the upper right corner, which we don't want for now
 (reset-hook! after-graph-hook)

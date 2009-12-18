@@ -3734,6 +3734,7 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 
 static void draw_sonogram_cursor(chan_info *cp);
 static void draw_graph_cursor(chan_info *cp);
+static void show_inset_graph(chan_info *cp);
 
 
 static void display_channel_data_with_size(chan_info *cp, 
@@ -5665,7 +5666,7 @@ static void make_point_arrays(inset_graph_info_t *info, int size, vct *v1)
 #endif
 
 
-void show_inset_graph(chan_info *cp)
+static void show_inset_graph(chan_info *cp)
 {
 #if (!USE_NO_GUI)
   if ((with_inset_graph(ss)) &&

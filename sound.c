@@ -219,8 +219,8 @@ static const char *mus_initial_error_names[MUS_INITIAL_ERROR_TAG] = {
 
   "audio channels not available", "audio srate not available", "audio format not available",
   "no audio input available", "audio configuration not available", 
-  "no audio lines available", "audio write error", "audio size not available", "audio device not available",
-  "can't close audio", "can't open audio", "audio read error", "audio amp not available",
+  "audio write error", "audio size not available", "audio device not available",
+  "can't close audio", "can't open audio", "audio read error",
   "can't write audio", "can't read audio", "no audio read permission", 
   "can't close file", "arg out of range", "wrong type arg",
 

@@ -15197,6 +15197,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
   switch (sc->op) 
     {
+      /* in gcc, this becomes a jump table, so we're not doing a linear search (gcc s7.c -S -I.) */
     case OP_READ_INTERNAL:
       sc->tok = token(sc);
 

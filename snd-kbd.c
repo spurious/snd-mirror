@@ -1497,7 +1497,8 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	      /* this was by samples which is nuts if we're looking at a large window -- should be by pixel, I think */
 	      {
 		int samples_per_pixel = 1;
-		if (!got_count) /* C-u 2.1 C-b moves back 2.1 seconds */
+		if ((!got_count) &&                              /* C-u 2.1 C-b moves back 2.1 seconds */
+		    (cp->axis->x_axis_x1 > cp->axis->x_axis_x0)) /* avoid divide by zero if window tiny */
 		  {
 		    samples_per_pixel = (cp->axis->hisamp - cp->axis->losamp) / (cp->axis->x_axis_x1 - cp->axis->x_axis_x0);
 		    if (samples_per_pixel < 1) samples_per_pixel = 1;
@@ -1523,7 +1524,8 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 	    case snd_K_F: case snd_K_f:
 	      {
 		int samples_per_pixel = 1;
-		if (!got_count)
+		if ((!got_count) &&
+		    (cp->axis->x_axis_x1 > cp->axis->x_axis_x0))
 		  {
 		    samples_per_pixel = (cp->axis->hisamp - cp->axis->losamp) / (cp->axis->x_axis_x1 - cp->axis->x_axis_x0);
 		    if (samples_per_pixel < 1) samples_per_pixel = 1;
@@ -2339,15 +2341,18 @@ static XEN g_key_binding(XEN key, XEN state, XEN cx_extended)
 modifiers.  As in " S_bind_key ", state is the logical 'or' of ctrl=4, meta=8, and 'extended' is " PROC_TRUE " if the key is \
 prefixed with C-x. 'key' can be a character, a key name such as 'Home', or an integer."
   int i, k, s;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(key) || XEN_CHAR_P(key) || XEN_STRING_P(key), key, XEN_ARG_1, S_key_binding, "an integer, character, or string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(state), state, XEN_ARG_2, S_key_binding, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(cx_extended), cx_extended, XEN_ARG_3, S_key_binding, "a boolean");
+
   k = key_name_to_key(key, S_key_binding);
   s = XEN_TO_C_INT_OR_ELSE(state, 0) & 0xfffe; /* no shift bit */
   check_for_key_error(k, s, S_key_binding);
   i = in_user_keymap(k, s, XEN_TRUE_P(cx_extended));
   if (i >= 0) 
     return(user_keymap[i].func);
+
   return(XEN_UNDEFINED);
 }
 
@@ -2422,15 +2427,19 @@ static XEN g_key(XEN kbd, XEN buckybits, XEN snd, XEN chn)
   #define H_key "(" S_key " key modifiers :optional snd chn): simulate typing 'key' with 'modifiers' in snd's channel chn"
   chan_info *cp;
   int k, s;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(kbd) || XEN_CHAR_P(kbd) || XEN_STRING_P(kbd), kbd, XEN_ARG_1, S_key, "an integer, character, or string");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(buckybits), buckybits, XEN_ARG_2, S_key, "an integer");
   ASSERT_CHANNEL(S_key, snd, chn, 3);
+
   cp = get_cp(snd, chn, S_key);
   if (!cp) return(XEN_FALSE);
+
   k = key_name_to_key(kbd, S_key);
   s = XEN_TO_C_INT(buckybits);
   check_for_key_error(k, s, S_key);
   keyboard_command(cp, k, s);
+
   return(kbd);
 }
 
@@ -2440,7 +2449,9 @@ static XEN g_save_macros(XEN file)
   #define H_save_macros "(" S_save_macros " :optional (file \"~/.snd\")): save keyboard macros file"
   FILE *fd = NULL;
   const char *name;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_save_macros, "a string");
+
   name = XEN_TO_C_STRING(file);
   fd = FOPEN(name, "a");
   if (fd) 
@@ -2528,6 +2539,7 @@ static XEN g_report_in_minibuffer(XEN msg, XEN snd, XEN as_error)
   #define H_report_in_minibuffer "(" S_report_in_minibuffer " msg :optional snd as-error): display msg in snd's minibuffer. \
 If 'as-error' is " PROC_TRUE ", place the message in the minibuffer's error label."
   snd_info *sp;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ARG_1, S_report_in_minibuffer, "a string");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(as_error), as_error, XEN_ARG_2, S_report_in_minibuffer, "a boolean");
   ASSERT_SOUND(S_report_in_minibuffer, snd, 2);
@@ -2548,7 +2560,9 @@ static XEN g_clear_minibuffer(XEN snd)
   #define H_clear_minibuffer "(" S_clear_minibuffer " :optional snd) clears snd's minibuffer (erasing any \
 error message as well)."
   snd_info *sp;
+
   ASSERT_SOUND(S_clear_minibuffer, snd, 1);
+
   sp = get_sp(snd);
   if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
     return(snd_no_such_sound_error(S_clear_minibuffer, snd));
@@ -2571,11 +2585,13 @@ static XEN g_snd_simulate_keystroke(XEN snd, XEN chn, XEN key, XEN state)
 {
   /* intended for testing */
   chan_info *cp;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(key), key, XEN_ARG_3, S_snd_simulate_keystroke, "key number (int)");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(state), state, XEN_ARG_4, S_snd_simulate_keystroke, "key state (int)");
   ASSERT_CHANNEL(S_snd_simulate_keystroke, snd, chn, 1);
   cp = get_cp(snd, chn, S_snd_simulate_keystroke);
   if (!cp) return(XEN_FALSE);
+
   keyboard_command(cp, XEN_TO_C_INT(key), XEN_TO_C_INT(state));
   return(key);
 }

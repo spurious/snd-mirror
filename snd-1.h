@@ -1285,7 +1285,6 @@ void cursor_moveto(chan_info *cp, mus_long_t samp);
 chan_info *which_channel(snd_info *sp, int y);
 
 void clear_inset_graph(chan_info *cp);
-void show_inset_graph(chan_info *cp);
 void free_inset_graph(chan_info *cp);
 void draw_inset_line_cursor(chan_info *cp, axis_context *ax);
 

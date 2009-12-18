@@ -1911,10 +1911,9 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
     (lambda (n)
       (declare (n float))
       (let ((rtn (and (< lastn 0.0)
-		      (>= n 0.0)
-		      -1)))
+		      (>= n 0.0))))
 	(set! lastn n)
-	rtn))))
+	(if rtn -1 #f)))))
 
 
 (define (next-peak)
@@ -1924,11 +1923,10 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
     (lambda (n)
       (let ((rtn (and (number? last0)
 		      (or (and (< last0 last1) (> last1 n))
-			  (and (> last0 last1) (< last1 n)))
-		      -1)))
+			  (and (> last0 last1) (< last1 n))))))
 	(set! last0 last1)
 	(set! last1 n)
-	rtn))))
+	(if rtn -1 #f)))))
 
 
 (define (find-pitch pitch)

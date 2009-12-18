@@ -1,16 +1,21 @@
-#!/usr/bin/guile -s
-!#
-
 ;;; bess1.scm -- some examples from clm-2/rt.lisp and clm-2/bess5.cl
 
 ;; Author: Michael Scholz <scholz-micha@gmx.de>
 ;; Created: Thu May 29 04:14:35 CEST 2003
 ;; Last: Sun Jun 15 03:50:21 CEST 2003
-;; changed slightly 14-Jun-06 Bill to match bess.scm, avoid a segfault in Guile, fix pitch problem in make-oscil.
+;; changed slightly 14-Jun-06 Bill to match bess.scm, fix pitch problem in make-oscil.
+;;   then again 18-Dec-09 to use s7 rather than Guile
+
+(if (not (provided? 'snd-motif)) (snd-error "bess1.scm needs motif"))
+
+(if (not (provided? 'xm))
+    (let ((hxm (dlopen "xm.so")))
+      (if (string? hxm)
+	  (snd-error (format #f "bess1.scm needs the xm module (either 'make xm' or build Snd with --with-static-xm): ~A" hxm))
+	  (dlinit hxm "Init_libxm"))))
+
 
 ;;; Commentary:
-
-;; Requires libsndlib.so and libxm.so!
 
 ;; This file provides simple mono real time output to DAC.  Tempo,
 ;; frequency, amplitude, and FM index can be controlled via sliders.
@@ -20,33 +25,15 @@
 ;; (main) calls (rt-motif) which starts a Motif widget with two DAC
 ;; tests.
 ;;
-;; (rt-motif #:srate       *clm-srate*        ;; 22050
-;;           #:bufsize     *clm-rt-bufsize*   ;; 128
-;;           #:data-format *clm-data-format*) ;; mus-lshort
+;; (rt-motif :srate       *clm-srate*        ;; 22050
+;;           :bufsize     *clm-rt-bufsize*   ;; 128
+;;           :data-format *clm-data-format*) ;; mus-lshort
 
 ;;; Code:
 
-;;; load sndlib and xmlib
-(let ((sndlib (dynamic-link "libsndlib.so")))
-  (if (not (dynamic-object? sndlib))
-      (set! sndlib (dynamic-link "sndlib.so")))
-  (if (not (dynamic-object? sndlib))
-      (error "can't find sndlib.so or libsndlib.so")
-      (dynamic-call (dynamic-func "Init_sndlib" sndlib) #f)))
-
-(let ((libxm (dynamic-link "libxm.so")))
-  (if (not (dynamic-object? libxm))
-      (error "can't find libxm")
-      (dynamic-call (dynamic-func "Init_libxm" libxm) #f)))
-
-;(define* (main #:rest args) (rt-motif))
-;;(define* (main #:rest args) (rt-motif #:srate 11025 #:bufsize 1024))
-
-(use-modules (ice-9 optargs) (ice-9 format))
-
 (define *clm-srate* 22050)
-(define *clm-data-format* mus-lshort)
-(define *clm-rt-bufsize* 128)
+(define *clm-data-format* mus-lfloat)
+(define *clm-rt-bufsize* 1024)
 (define *output* #f)			;holds fd from (mus-audio-open-output)
 
 (define ctempo 0.25)
@@ -58,8 +45,7 @@
 (define sliderback "lightsteelblue")
 (define background "lightsteelblue1")
 
-(if (not (defined? 'definstrument)) (define definstrument define*))
-;(define (seconds->samples secs) (inexact->exact (round (* secs (mus-srate)))))
+;(define (seconds->samples secs) (round (* secs (mus-srate))))
 
 ;; called by XtAppAddWorkProc
 (define (rt-send->dac func)
@@ -73,7 +59,7 @@
 	(mus-audio-close *output*)
 	#t)))
 
-(definstrument (make-rt-violin dur freq amp #:key
+(define* (make-rt-violin dur freq amp :key
 			       (fm-index 1.0)
 			       (amp-env '(0 0 25 1 75 1 100 0)))
   "(make-rt-violin dur freq amp (fm-index 1.0) (amp-env '(0 0 25 1 75 1
@@ -83,16 +69,16 @@
          (index1 (* maxdev (/ 5.0 (log freq))))
          (index2 (* maxdev 3.0 (/ (- 8.5 (log freq)) (+ 3.0 (/ freq 1000)))))
          (index3 (* maxdev (/ 4.0 (sqrt freq))))
-         (carrier (make-oscil #:frequency freq))
-         (fmosc1 (make-oscil #:frequency freq))
-         (fmosc2 (make-oscil #:frequency (* 3 freq)))
-         (fmosc3 (make-oscil #:frequency (* 4 freq)))
-         (ampf  (make-env #:envelope amp-env #:scaler amp #:duration dur))
-         (indf1 (make-env #:envelope '(0 1 25 0.4 75 0.6 100 0) #:scaler index1 #:duration dur))
-         (indf2 (make-env #:envelope '(0 1 25 0.4 75 0.6 100 0) #:scaler index2 #:duration dur))
-         (indf3 (make-env #:envelope '(0 1 25 0.4 75 0.6 100 0) #:scaler index3 #:duration dur))
-         (pervib (make-triangle-wave #:frequency 5 #:amplitude (* 0.0025 frq-scl)))
-         (ranvib (make-rand-interp #:frequency 16 #:amplitude (* 0.005 frq-scl))))
+         (carrier (make-oscil :frequency freq))
+         (fmosc1 (make-oscil :frequency freq))
+         (fmosc2 (make-oscil :frequency (* 3 freq)))
+         (fmosc3 (make-oscil :frequency (* 4 freq)))
+         (ampf  (make-env :envelope amp-env :scaler amp :duration dur))
+         (indf1 (make-env :envelope '(0 1 25 0.4 75 0.6 100 0) :scaler index1 :duration dur))
+         (indf2 (make-env :envelope '(0 1 25 0.4 75 0.6 100 0) :scaler index2 :duration dur))
+         (indf3 (make-env :envelope '(0 1 25 0.4 75 0.6 100 0) :scaler index3 :duration dur))
+         (pervib (make-triangle-wave :frequency 5 :amplitude (* 0.0025 frq-scl)))
+         (ranvib (make-rand-interp :frequency 16 :amplitude (* 0.005 frq-scl))))
     (lambda ()
       (let ((vib (+ (triangle-wave pervib) (rand-interp ranvib))))
 	(* (env ampf)
@@ -103,13 +89,12 @@
 		     (* (env indf3) (oscil fmosc3 (* 4.0 vib))))))))))
 
 ;; from clm-2/rt.lisp
-(define* (make-vct-test #:key
-			(srate *clm-srate*)
+(define* (make-vct-test (srate *clm-srate*)
 			(bufsize *clm-rt-bufsize*)
 			(data-format *clm-data-format*))
-  (let ((vmode (list->array 1 '(0 12 2 4 14 4 5 5 0 7 7 11 11)))
-	(vpits (make-array 0 (+ 1 lim)))
-	(vbegs (make-array 0 (+ 1 lim)))
+  (let ((vmode (vector 0 12 2 4 14 4 5 5 0 7 7 11 11))
+	(vpits (make-vector (+ 1 lim) 0))
+	(vbegs (make-vector (+ 1 lim) 0))
 	(cellbeg 0)
 	(cellsiz 6)
 	(cellctr 0)
@@ -118,8 +103,8 @@
 	(dur 0.0))
     (do ((i 0 (+ 1 i)))
 	((= i lim))
-      (array-set! vpits (inexact->exact (floor (random 12.0))) i)
-      (array-set! vbegs (+ 1 (inexact->exact (floor (random 3.0)))) i))
+      (set! (vpits i) (floor (random 12.0)))
+      (set! (vbegs i) (+ 1 (floor (random 3.0)))))
     (set! *clm-srate* srate)
     (set! *clm-rt-bufsize* bufsize)
     (set! (mus-srate) srate)
@@ -128,62 +113,71 @@
       (if (> len 1)
 	  (set! len (- len 1))
 	  (begin
-	    (set! dur (* ctempo (array-ref vbegs (+ 1 cellctr))))
+	    (set! dur (* ctempo (vbegs (+ 1 cellctr))))
 	    (set! cellctr (+ 1 cellctr))
 	    (if (> cellctr (+ cellsiz cellbeg))
 		(begin
 		  (if (> (random 1.0) 0.5) (set! cellbeg (+ 1 cellbeg)))
 		  (if (> (random 1.0) 0.5) (set! cellsiz (+ 1 cellsiz)))
 		  (set! cellctr cellbeg)))
+
+	    (format #t "dur: ~A, freq: ~A, amp: ~A, index: ~A~%"
+		    dur
+		    (let ((freq (* cfreq 16.351 16
+				   (expt 2 (/ (vmode (vpits cellctr))
+					      12.0)))))
+		      (if (< (* 8 freq) *clm-srate*)
+			  freq
+			  (/ freq 4)))
+		    (* camp 0.3) cindex)
+
 	    (set! func (make-rt-violin dur
 				       (let ((freq (* cfreq 16.351 16
-						      (expt 2 (/ (array-ref vmode (array-ref vpits cellctr))
+						      (expt 2 (/ (vmode (vpits cellctr))
 								 12.0)))))
 					 (if (< (* 8 freq) *clm-srate*)
 					     freq
 					     (/ freq 4)))
-				       (* camp 0.3) #:fm-index cindex))
-	    (set! len (inexact->exact (ceiling (/ (seconds->samples dur) bufsize))))))
+				       (* camp 0.3) :fm-index cindex))
+	    (set! len (ceiling (/ (seconds->samples dur) bufsize)))))
       func)))
 
 ;; from clm-2/bess5.cl and clm-2/clm-example.lisp
 (define lim 256)
 (define time 60)
-(define mode (list->array 1 '(0 0 2 4 11 11 5 6 7 9 2 0 0)))
-(define rats (list->array 1 '(1.0 256/243 9/8 32/27 81/64 4/3 1024/729
-				  3/2 128/81 27/16 16/9 243/128 2.0)))
+(define mode (vector 0 0 2 4 11 11 5 6 7 9 2 0 0))
+(define rats (vector 1.0 256/243 9/8 32/27 81/64 4/3 1024/729 3/2 128/81 27/16 16/9 243/128 2.0))
 
 (define bell '(0 0 10 0.25 90 1.0 100 1.0))
 
-(define pits (make-array 0 (+ 1 lim)))
-(define octs (make-array 0 (+ 1 lim)))
-(define rhys (make-array 0 (+ 1 lim)))
-(define begs (make-array 0 (+ 1 lim)))
-(define amps (make-array 0 (+ 1 lim)))
+(define pits (make-vector (+ 1 lim) 0))
+(define octs (make-vector (+ 1 lim) 0))
+(define rhys (make-vector (+ 1 lim) 0))
+(define begs (make-vector (+ 1 lim) 0))
+(define amps (make-vector (+ 1 lim) 0))
 
 (define (tune x)
   (let* ((pit (modulo x 12))
-	 (oct (inexact->exact (floor (/ x 12))))
-	 (base (array-ref rats pit)))
+	 (oct (floor (/ x 12)))
+	 (base (rats pit)))
     (* base (expt 2 oct))))
 
 (define (rbell x)
   (envelope-interp (* x 100) bell))
 
-(define* (make-agn #:key
-		   (srate *clm-srate*)
+(define* (make-agn (srate *clm-srate*)
 		   (bufsize *clm-rt-bufsize*)
 		   (data-format *clm-data-format*))
-  (let ((wins (list->array 1 '((0 0 40 0.1 60 0.2 75 0.4 82 1 90 1 100 0)
-			       (0 0 60 0.1 80 0.2 90 0.4 95 1 100 0)
-			       (0 0 10 1 16 0 32 0.1 50 1 56 0 60 0 90 0.3 100 0)
-			       (0 0 30 1 56 0 60 0 90 0.3 100 0)
-			       (0 0 50 1 80 0.3 100 0)
-			       (0 0 40 0.1 60 0.2 75 0.4 82 1 90 1 100 0)
-			       (0 0 40 0.1 60 0.2 75 0.4 82 1 90 1 100 0)
-			       (0 0 10 1 32 0.1 50 1 90 0.3 100 0)
-			       (0 0 60 0.1 80 0.3 95 1 100 0)
-			       (0 0 80 0.1 90 1 100 0))))
+  (let ((wins (vector '(0 0 40 0.1 60 0.2 75 0.4 82 1 90 1 100 0)
+		      '(0 0 60 0.1 80 0.2 90 0.4 95 1 100 0)
+		      '(0 0 10 1 16 0 32 0.1 50 1 56 0 60 0 90 0.3 100 0)
+		      '(0 0 30 1 56 0 60 0 90 0.3 100 0)
+		      '(0 0 50 1 80 0.3 100 0)
+		      '(0 0 40 0.1 60 0.2 75 0.4 82 1 90 1 100 0)
+		      '(0 0 40 0.1 60 0.2 75 0.4 82 1 90 1 100 0)
+		      '(0 0 10 1 32 0.1 50 1 90 0.3 100 0)
+		      '(0 0 60 0.1 80 0.3 95 1 100 0)
+		      '(0 0 80 0.1 90 1 100 0)))
 	(nextbeg 0.0)
 	(beg 0.0)
 	(dur 0.0)
@@ -198,14 +192,13 @@
 	(len 0))
     (do ((i 0 (+ 1 i)))
 	((= i lim))
-      (array-set! octs (inexact->exact (floor (+ 4 (* 2 (rbell (random 1.0)))))) i)
-      (array-set! pits (array-ref mode (inexact->exact (floor (* 12 (random 1.0))))) i)
-      (array-set! rhys (inexact->exact (floor (+ 4 (* 6 (random 1.0))))) i)
-      (array-set! begs (inexact->exact (if (< (random 1.0) 0.9) 
-					   (floor (+ 4 (* 2 (random 1.0))))
-					   (* 6 (floor (random 4.0)))))
-		  i)
-      (array-set! amps (inexact->exact (floor (+ 1 (* 8 (rbell (random 1.0)))))) i))
+      (set! (octs i) (floor (+ 4 (* 2 (rbell (random 1.0))))))
+      (set! (pits i) (mode (floor (random 12.0))))
+      (set! (rhys i) (floor (+ 4 (random 6.0))))
+      (set! (begs i) (if (< (random 1.0) 0.9) 
+		      (floor (+ 4 (random 2.0)))
+		      (floor (random 24.0))))
+      (set! (amps i) (floor (+ 1 (* 8 (rbell (random 1.0)))))) i)
     (set! *clm-srate* srate)
     (set! *clm-rt-bufsize* bufsize)
     (set! (mus-srate) srate)
@@ -215,13 +208,11 @@
 	  (set! len (- len 1))
 	  (begin
 	    (set! beg (+ beg nextbeg))
-	    (set! nextbeg (+ nextbeg (max 0.025 (* ctempo (+ 0.95 (random 0.1))
-						   (array-ref begs cellctr)))))
-	    (set! dur (max 0.025 (* ctempo (+ 0.85 (random 0.1)) (array-ref rhys cellctr))))
-	    (set! freq (* cfreq 16.351 (tune (array-ref pits cellctr))
-			  (expt 2 (array-ref octs cellctr))))
-	    (set! ampl (* camp 10 (max 0.003 (* (array-ref amps cellctr) 0.01))))
-	    (set! ind (* cindex (random 1.0) 3.0))
+	    (set! nextbeg (+ nextbeg (max 0.025 (* ctempo (+ 0.95 (random 0.1)) (begs cellctr)))))
+	    (set! dur (max 0.025 (* ctempo (+ 0.85 (random 0.1)) (rhys cellctr))))
+	    (set! freq (* cfreq 16.351 (tune (pits cellctr)) (expt 2 (octs cellctr))))
+	    (set! ampl (* camp 10 (max 0.003 (* (amps cellctr) 0.01))))
+	    (set! ind (* cindex (random 3.0)))
 	    (set! cellctr (+ 1 cellctr))
 	    (if (> cellctr (+ cellsiz cellbeg))
 		(begin
@@ -236,15 +227,13 @@
 		  (set! nextbeg (+ nextbeg (random 1.0)))
 		  (set! cellctr cellbeg)))
 	    (set! func (make-rt-violin dur freq ampl
-				       #:fm-index ind
-				       #:amp-env (array-ref wins
-							    (inexact->exact
-							     (floor (* 10 (- beg (floor beg))))))))
+				       :fm-index ind
+				       :amp-env (wins (floor (* 10 (- beg (floor beg)))))))
 	    (set! len (ceiling (/ (seconds->samples dur) bufsize)))))
       func)))
 
 ;; from env.scm
-(define* (envelope-interp #:rest args)
+(define* (envelope-interp :rest args)
   (let ((x (car args))
 	(env (cadr args))
 	(base (if (null? (cddr args)) #f (caddr args))))
@@ -269,7 +258,7 @@
 			    1.0))))))
 	  (else (envelope-interp x (cddr env))))))
 
-(define* (rt-motif #:rest args)
+(define* (rt-motif :rest args)
   (let* ((shell-app (XtVaOpenApplication 
 		     "FM" 0 '() applicationShellWidgetClass
 		     (list XmNallowShellResize #t)))
@@ -280,15 +269,18 @@
 	 (cmap (DefaultColormap dpy (DefaultScreen dpy)))
 	 (black (BlackPixelOfScreen screen))
 	 (white (WhitePixelOfScreen screen)))
+
     (define (get-color color)
       (let ((col (XColor)))
 	(if (= (XAllocNamedColor dpy cmap color col col) 0)
 	    (error (format #f "can't allocate ~A" color))
 	    (.pixel col))))
+
     (define (set-flabel label value)
       (let ((s1 (XmStringCreate (format #f "~5,3F" value) XmFONTLIST_DEFAULT_TAG)))
 	(XtVaSetValues label (list XmNlabelString s1))
 	(XmStringFree s1)))
+
     (XtSetValues shell (list XmNtitle "FM Forever!"))
     (let* ((light-blue (get-color sliderback))
 	   (form (XtCreateManagedWidget "form" xmFormWidgetClass shell 
@@ -463,18 +455,23 @@
 	   (which-play 0)
 	   (proc #f)
 	   (func #f))
+
       (define (tempo-callback w c i)
 	(set! ctempo (+ low-tempo (* (.value i) (/ (- high-tempo low-tempo) 100.0))))
 	(set-flabel tempo-label ctempo))
+
       (define (amp-callback w c i)
 	(set! camp (* (.value i) (/ high-amp 100.0)))
 	(set-flabel amp-label camp))
+
       (define (freq-callback w c i)
 	(set! cfreq (+ low-freq (* (.value i) (/ (- high-freq low-freq) 100.0))))
 	(set-flabel freq-label cfreq))
+
       (define (index-callback w c i)
 	(set! cindex (* (.value i) (/ high-index 100.0)))
 	(set-flabel index-label cindex))
+
       (define (set-defaults)
 	(set! ctempo 0.25)
 	(set! camp 1.0)
@@ -484,12 +481,10 @@
 	(set-flabel amp-label camp)
 	(set-flabel freq-label cfreq)
 	(set-flabel index-label cindex)
-	(XmScaleSetValue tempo-scale (inexact->exact (floor (* 100 (/ (- ctempo low-tempo)
-								      (- high-tempo low-tempo))))))
-	(XmScaleSetValue freq-scale (inexact->exact (floor (* 100 (/ (- cfreq low-freq)
-								     (- high-freq low-freq))))))
+	(XmScaleSetValue tempo-scale (floor (* 100 (/ (- ctempo low-tempo) (- high-tempo low-tempo)))))
+	(XmScaleSetValue freq-scale (floor (* 100 (/ (- cfreq low-freq) (- high-freq low-freq)))))
 	(XmScaleSetValue amp-scale (inexact->exact (* 100 camp)))
-	(XmScaleSetValue index-scale (inexact->exact (floor (* 100 (/ cindex high-index))))))
+	(XmScaleSetValue index-scale (floor (* 100 (/ cindex high-index)))))
 
       (XtManageChild radio)
       ;; add scale-change (drag and value-changed) callbacks
@@ -533,8 +528,8 @@
 			   (begin
 			     (set-defaults)
 			     (if (= which-play 0)
-				 (set! func (apply make-agn args))
-				 (set! func (apply make-vct-test args)))
+				 (set! func (apply make-agn (or args '())))
+				 (set! func (apply make-vct-test (or args '()))))
 			     (set! proc (XtAppAddWorkProc app (lambda (c) (rt-send->dac func)))))
 			   (if proc (XtRemoveWorkProc proc)))))
       (XmToggleButtonSetState play-button cplay #f)

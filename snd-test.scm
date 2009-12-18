@@ -3867,8 +3867,8 @@
 			  "header write failed" "can't open temp file" "interrupted" "bad envelope"
 			  "audio channels not available" "audio srate not available" "audio format not available"
 			  "no audio input available" "audio configuration not available" 
-			  "no audio lines available" "audio write error" "audio size not available" "audio device not available"
-			  "can't close audio" "can't open audio" "audio read error" "audio amp not available"
+			  "audio write error" "audio size not available" "audio device not available"
+			  "can't close audio" "can't open audio" "audio read error"
 			  "can't write audio" "can't read audio" "no audio read permission" 
 			  "can't close file" "arg out of range" "wrong type arg"
 			  "no channels method" "no hop method" "no width method" "no file-name method" "no ramp method" "no run method"
@@ -33485,12 +33485,12 @@ EDITS: 2
 	      (let ((val -.5)) (map-channel (lambda (y) (set! val (+ val .05)) val)))
 	      (let ((val (scan-channel (zero+))))
 		(if (or (not val)
-			(not (equal? val (list -1 10))))
+			(not (equal? val (list -1 10)))) ; optimization > 0 wants bool (change in run wrecked the back-one cursor placement)
 		    (snd-display ";zero+: ~A" val)))
 	      (set! (sample 8) .8)
 	      (let ((val (scan-channel (next-peak))))
 		(if (or (not val)
-			(not (equal? val (list -1 9))))
+			(not (equal? val (list -1 9))))  ; this gets the -1 because run can't deal with the bool/float mismatch
 		    (snd-display ";next-peak: ~A" val)))
 	      (let ((val (scan-channel (search-for-click))))
 		(if (or (not val)
@@ -33633,7 +33633,7 @@ EDITS: 2
 	      (key (char->integer #\x) 4 id)
 	      (key (char->integer #\b) 4 id)
 	      (let ((left (left-sample id)))
-		(if (and (not (= left 1000)) (not (= left 1001))) (snd-display ";u1000: ~A" left)))
+		(if (not (= left 0)) (snd-display ";u1000: ~A" left)))
 	      (prefix-it 0 id)
 	      (key (char->integer #\x) 4 id)
 	      (key (char->integer #\b) 4 id)

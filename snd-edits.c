@@ -2618,20 +2618,15 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 	      
 	      if (with_source)
 		{
-		  char *temp1 = NULL;
-#if HAVE_S7
-		  char *temp2 = NULL;
-#endif
+		  char *temp1 = NULL, *temp2 = NULL;
 		  code = mus_run_ptree_code(cp->ptrees[FRAGMENT_PTREE_INDEX(ed, j, 0)]);
 		  if (XEN_LIST_P(code))
 		    fprintf(outp, ", code: %s", temp1 = (char *)XEN_AS_STRING(code));
-#if HAVE_S7
 		  code = cp->ptree_inits[FRAGMENT_PTREE_INDEX(ed, j, 0)];
 		  if (XEN_PROCEDURE_P(code))
 		    fprintf(outp, ", init: %s", temp2 = XEN_AS_STRING(XEN_PROCEDURE_SOURCE(code))); /* ptree_code = car */
 		  if (temp1) free(temp1);
 		  if (temp2) free(temp2);
-#endif
 		}
 	    }
 	  if (is_mix_op(typ))
@@ -3242,9 +3237,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 				 ed->beg,
 				 ed->len,
 				 cp->chan);
-#if HAVE_S7
 		    if (temp) free(temp);
-#endif
 		  }
 		  break;
 
@@ -3453,9 +3446,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 					    temp = XEN_AS_STRING(mus_run_ptree_code(cp->ptrees[ed->ptree_location])),
 					    ed->beg, durstr);
 		      free(durstr);
-#if HAVE_S7
 		      if (temp) free(temp);
-#endif
 		    }
 		  break;
 
