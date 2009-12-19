@@ -2450,7 +2450,7 @@ static void save_with_inset_graph(prefs_info *prf, FILE *fd)
 }
 
 
-static void help_current_window(prefs_info *prf)
+static void help_inset_graph(prefs_info *prf)
 {
   snd_help(prf->var_name,
 	   "This option displays a small graph of the entire sound in the upper right corner \
@@ -2474,55 +2474,53 @@ static void reflect_with_inset_graph(prefs_info *prf)
 
 
 
-/* ---------------- focus-follows-mouse ---------------- */
+/* ---------------- with-pointer-focus ---------------- */
 
-static bool rts_focus_follows_mouse = false, prefs_focus_follows_mouse = false;
+static bool rts_with_pointer_focus = false, prefs_with_pointer_focus = false;
 
-static bool focus_follows_mouse(void)
+static void revert_with_pointer_focus(prefs_info *prf) {set_with_pointer_focus(rts_with_pointer_focus);}
+static void clear_with_pointer_focus(prefs_info *prf) {set_with_pointer_focus(false);}
+
+
+static void save_with_pointer_focus(prefs_info *prf, FILE *fd)
 {
-  return(XEN_TO_C_BOOLEAN(prefs_variable_get("focus-is-following-mouse")));
+  rts_with_pointer_focus = GET_TOGGLE(prf->toggle);
+  if (rts_with_pointer_focus)
+    {
+#if HAVE_SCHEME
+      fprintf(fd, "(set! (with-pointer-focus) #t)\n");
+#endif
+
+#if HAVE_RUBY
+      fprintf(fd, "$with_pointer_focus = true\n");
+#endif
+
+#if HAVE_FORTH
+      fprintf(fd, "#t to with-pointer-focus\n");
+#endif
+    }
+  set_with_pointer_focus(rts_with_pointer_focus);
 }
 
 
-static void set_focus_follows_mouse(bool val, const char *load)
-{
-  prefs_focus_follows_mouse = val;
-  prefs_variable_set("focus-is-following-mouse", C_TO_XEN_BOOLEAN(val));
-}
-
-
-static void revert_focus_follows_mouse(prefs_info *prf) {set_focus_follows_mouse(rts_focus_follows_mouse, NULL);}
-static void clear_focus_follows_mouse(prefs_info *prf) {set_focus_follows_mouse(false, NULL);}
-
-
-static void save_focus_follows_mouse(prefs_info *prf, FILE *fd) 
-{
-  rts_focus_follows_mouse = GET_TOGGLE(prf->toggle);
-  if (rts_focus_follows_mouse)
-    prefs_function_save_0(fd, "focus-follows-mouse", "extensions");
-}
-
-
-static void help_focus_follows_mouse(prefs_info *prf)
+static void help_pointer_focus(prefs_info *prf)
 {
   snd_help(prf->var_name,
-	   "This option implements 'pointer focus' in Snd; that is, the widget under the mouse \
-is the active widget. In this mode, you don't need to click a graph or text widget before \
-taking some action in it.  (This option only takes effect when you restart Snd).",
+	   "If this option is set, when the mouse moves over a text or graph widget, the widget is activated.",
 	   WITH_WORD_WRAP);
 }
 
 
-static void reflect_focus_follows_mouse(prefs_info *prf) 
+static void with_pointer_focus_toggle(prefs_info *prf)
 {
-  prefs_focus_follows_mouse = focus_follows_mouse();
-  SET_TOGGLE(prf->toggle, prefs_focus_follows_mouse);
+  set_with_pointer_focus(GET_TOGGLE(prf->toggle));
 }
 
 
-static void focus_follows_mouse_toggle(prefs_info *prf)
+static void reflect_with_pointer_focus(prefs_info *prf) 
 {
-  set_focus_follows_mouse(GET_TOGGLE(prf->toggle), NULL);
+  prefs_with_pointer_focus = with_pointer_focus(ss);
+  SET_TOGGLE(prf->toggle, prefs_with_pointer_focus);
 }
 
 

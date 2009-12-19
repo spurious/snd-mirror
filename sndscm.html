@@ -4995,15 +4995,6 @@ up and down moving ramps look symmetrical around a break point.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- focus-follows-mouse -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="focusfollowsmouse">focus-follows-mouse</a> <code>()</code>
-</td></tr><tr><td></td><td>
-focus-follows-mouse sets up various hook functions to activate whatever widget is underneath the mouse cursor
-(this is sometimes known as "point-to-focus" mode).
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 <!-- for-each-sound-file -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <a class=def name="foreachsoundfile">for-each-sound-file</a> <code>(func :optional dir)</code><br>
@@ -5794,16 +5785,6 @@ describe-hook tries to decipher the functions on the hook list; this is almost i
 </td></tr><tr><td></td><td>
 hook-member returns #t if 'func' is already on the hook list, equivalent to
 <code>(member value (hook-&gt;list hook))</code>
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- remove-local-hook! -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>remove-local-hook!</em> <code>(hook func)</code>
-</td></tr><tr><td></td><td>
-remove-local-hook! tries to
-remove a locally-defined function from a hook.
-There are examples in examp.scm and marks.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

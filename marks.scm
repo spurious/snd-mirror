@@ -235,6 +235,7 @@
 	       (let* ((marklist (marks snd 0))
 		      (samplist (map mark-sample marklist))
 		      (samp 0))
+
 		 (define (report-mark-names-play-hook size)
 		   (set! samp (+ samp size))
 		   (if (and (not (null? samplist))
@@ -243,10 +244,11 @@
 			 (report-in-minibuffer (mark-name (car marklist)) snd)
 			 (set! marklist (cdr marklist))
 			 (set! samplist (cdr samplist)))))
+
 		 (define (report-mark-names-stop-playing-hook snd)
 		   (report-in-minibuffer "" snd)
-		   (remove-local-hook! play-hook report-mark-names-play-hook)
-		   (remove-local-hook! stop-playing-hook report-mark-names-stop-playing-hook))
+		   (remove-hook! play-hook report-mark-names-play-hook)
+		   (remove-hook! stop-playing-hook report-mark-names-stop-playing-hook))
 		 
 		 (add-hook! stop-playing-hook report-mark-names-stop-playing-hook)
 		 (add-hook! play-hook report-mark-names-play-hook)

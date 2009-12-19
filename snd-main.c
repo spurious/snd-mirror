@@ -494,6 +494,7 @@ static void save_options(FILE *fd)
   if (cursor_location_offset(ss) != DEFAULT_CURSOR_LOCATION_OFFSET) pss_sd(fd, S_cursor_location_offset, cursor_location_offset(ss));
   if (verbose_cursor(ss) != DEFAULT_VERBOSE_CURSOR) pss_ss(fd, S_with_verbose_cursor, b2s(verbose_cursor(ss)));
   if (with_inset_graph(ss) != DEFAULT_WITH_INSET_GRAPH) pss_ss(fd, S_with_inset_graph, b2s(with_inset_graph(ss)));
+  if (with_pointer_focus(ss) != DEFAULT_WITH_POINTER_FOCUS) pss_ss(fd, S_with_pointer_focus, b2s(with_pointer_focus(ss)));
   if (show_indices(ss) != DEFAULT_SHOW_INDICES) pss_ss(fd, S_show_indices, b2s(show_indices(ss)));
   if (show_transform_peaks(ss) != DEFAULT_SHOW_TRANSFORM_PEAKS) pss_ss(fd, S_show_transform_peaks, b2s(show_transform_peaks(ss)));
   if (show_y_zero(ss) != DEFAULT_SHOW_Y_ZERO) pss_ss(fd, S_show_y_zero, b2s(show_y_zero(ss)));
@@ -1895,6 +1896,21 @@ static XEN g_set_with_inset_graph(XEN on)
 }
 
 
+static XEN g_with_pointer_focus(void)
+{
+  #define H_with_pointer_focus "(" S_with_pointer_focus "): if " PROC_TRUE " (default is " PROC_FALSE "), activate the widget beneath the mouse."
+  return(C_TO_XEN_BOOLEAN(with_pointer_focus(ss)));
+}
+
+
+static XEN g_set_with_pointer_focus(XEN on) 
+{
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_1, S_setB S_with_pointer_focus, "a boolean");
+  set_with_pointer_focus(XEN_TO_C_BOOLEAN(on));
+  return(C_TO_XEN_BOOLEAN(with_pointer_focus(ss)));
+}
+
+
 static XEN g_tiny_font(void) {return(C_TO_XEN_STRING(tiny_font(ss)));}
 
 static XEN g_set_tiny_font(XEN val) 
@@ -2249,6 +2265,8 @@ XEN_NARGIFY_0(g_just_sounds_w, g_just_sounds)
 XEN_NARGIFY_1(g_set_just_sounds_w, g_set_just_sounds)
 XEN_NARGIFY_0(g_with_inset_graph_w, g_with_inset_graph)
 XEN_NARGIFY_1(g_set_with_inset_graph_w, g_set_with_inset_graph)
+XEN_NARGIFY_0(g_with_pointer_focus_w, g_with_pointer_focus)
+XEN_NARGIFY_1(g_set_with_pointer_focus_w, g_set_with_pointer_focus)
 XEN_NARGIFY_0(g_audio_output_device_w, g_audio_output_device)
 XEN_NARGIFY_1(g_set_audio_output_device_w, g_set_audio_output_device)
 XEN_NARGIFY_0(g_audio_input_device_w, g_audio_input_device)
@@ -2327,6 +2345,8 @@ XEN_NARGIFY_0(g_abortq_w, g_abortq)
 #define g_set_just_sounds_w g_set_just_sounds
 #define g_with_inset_graph_w g_with_inset_graph
 #define g_set_with_inset_graph_w g_set_with_inset_graph
+#define g_with_pointer_focus_w g_with_pointer_focus
+#define g_set_with_pointer_focus_w g_set_with_pointer_focus
 #define g_audio_output_device_w g_audio_output_device
 #define g_set_audio_output_device_w g_set_audio_output_device
 #define g_audio_input_device_w g_audio_input_device
@@ -2504,6 +2524,9 @@ the hook functions return " PROC_TRUE ", the save state process opens 'filename'
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_inset_graph, g_with_inset_graph_w, H_with_inset_graph, 
 				   S_setB S_with_inset_graph, g_set_with_inset_graph_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_with_pointer_focus, g_with_pointer_focus_w, H_with_pointer_focus, 
+				   S_setB S_with_pointer_focus, g_set_with_pointer_focus_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_snd_version,              g_snd_version_w,              0, 0, 0, H_snd_version);
   XEN_DEFINE_PROCEDURE(S_color_orientation_dialog, g_color_orientation_dialog_w, 0, 1, 0, H_color_orientation_dialog);

@@ -2236,9 +2236,9 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 	  (add-hook! start-playing-hook local-start-playing-func)
 	  (add-hook! stop-playing-hook local-stop-playing-func))
 	(begin
-	  (remove-local-hook! dac-hook local-dac-func)
-	  (remove-local-hook! start-playing-hook local-start-playing-func)
-	  (remove-local-hook! stop-playing-hook local-stop-playing-func)))))
+	  (remove-hook! dac-hook local-dac-func)
+	  (remove-hook! start-playing-hook local-start-playing-func)
+	  (remove-hook! stop-playing-hook local-stop-playing-func)))))
 
 
 ;;; -------- smooth-channel as virtual op

@@ -36,8 +36,6 @@
 
 
 ;;; -------- swap selection chans
-;;;
-;;; (originally in examp.scm)
 
 (define (swap-selection-channels)
   "(swap-selection-channels) swaps the currently selected data's channels"
@@ -72,8 +70,6 @@
 
 
 ;;; -------- replace-with-selection
-;;;
-;;; (originally in examp.scm)
 
 (define (replace-with-selection)
   "(replace-with-selection) replaces the samples from the cursor with the current selection"
@@ -107,8 +103,6 @@
 ;;; -------- selection-members
 ;;;
 ;;; returns a list of lists of (snd chn): channels in current selection
-;;;
-;;; (originally in extensions.scm)
 
 (define (selection-members)
   "(selection-members) -> list of lists of (snd chn) indicating the channels participating in the current selection."
@@ -124,8 +118,6 @@
 
 
 ;;; -------- clear-selection
-;;;
-;;; (originally in extensions.scm)
 
 (define (clear-selection)
   "(clear-selection) unselects any currently selected samples."
@@ -141,8 +133,6 @@
 
 
 ;;; -------- make-selection
-;;;
-;;; (originally in extensions.scm)
 
 ;;; the regularized form of this would use dur not end
 
@@ -179,8 +169,6 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 
 
 ;;; -------- with-temporary-selection
-;;;
-;;; (originally in extensions.scm)
 
 (define (with-temporary-selection thunk beg dur snd chn)
 
@@ -206,8 +194,6 @@ restores the previous selection (if any).  It returns whatever 'thunk' returned.
 
 
 ;;; -------- delete selected portion and smooth the splice
-;;;
-;;; (originally in extensions.scm)
 
 (define (delete-selection-and-smooth)
   "(delete-selection-and-smooth) deletes the current selection and smooths the splice"
@@ -228,8 +214,6 @@ restores the previous selection (if any).  It returns whatever 'thunk' returned.
 ;;;   the minibuffer prompts "selection eval:".  Eventually the user responds,
 ;;;   hopefully with a function of one argument, the current selection sample
 ;;;   the value returned by the function becomes the new selection value.
-;;;
-;;; (originally in extensions.scm)
 
 (bind-key #\x 0
   (lambda () "eval over selection"
@@ -257,8 +241,6 @@ restores the previous selection (if any).  It returns whatever 'thunk' returned.
 
 
 ;;; -------- show-selection
-;;;
-;;; (originally in extensions.scm)
 
 (define (show-selection)
   "(show-selection) adjusts graph bounds to display the selected portion"

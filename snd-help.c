@@ -497,6 +497,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+21-Dec:  moved focus-follows-mouse to C as with-pointer-focus.\n\
 16-Dec:  make-current-window-display (draw.scm) moved to C as with-inset-graph.\n\
          removed Guile support.\n\
 14-Dec:  peak-env support moved to C, added peak-env-dir, removed peak-env.*,\n\

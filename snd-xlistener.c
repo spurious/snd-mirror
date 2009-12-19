@@ -901,6 +901,9 @@ static XEN mouse_leave_text_hook;
 
 void mouse_enter_text_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
+  if (with_pointer_focus(ss))
+    goto_window(w);
+
   if (XEN_HOOKED(mouse_enter_text_hook))
     run_hook(mouse_enter_text_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),
@@ -1152,6 +1155,9 @@ static XEN mouse_leave_listener_hook;
 
 static void listener_focus_callback(Widget w, XtPointer context, XEvent *event, Boolean *flag)
 {
+  if (with_pointer_focus(ss))
+    goto_window(listener_text);
+
   if (XEN_HOOKED(mouse_enter_listener_hook))
     run_hook(mouse_enter_listener_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(listener_text)), /* not w */

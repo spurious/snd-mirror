@@ -35,31 +35,6 @@
    (sounds)))
 
 
-;;; -------- remove-local-hook!
-;;;
-;;; TODO: is this still needed?
-
-(define (remove-local-hook! hook func)
-  "(remove-local-hook! hook func) removes func from hook even if func is defined locally"
-  (define (procedure-name-or-false f)
-    ;; anonymous lambda procedure name is #f
-    (let ((name (procedure-name f)))
-      (if name
-	  (symbol->string name)
-	  #f)))
-  (let ((name (procedure-name-or-false func)))
-    (if name
-	(let ((lst (hook->list hook)))
-	  (reset-hook! hook)
-	  (for-each (lambda (orig-func)
-		      (let ((orig-name (procedure-name-or-false orig-func)))
-			(if (not (and (string? orig-name)
-				      (string=? orig-name name)))
-			    (add-hook! hook orig-func))))
-		    lst))))
-  hook)
-
-
 ;;; -------- describe-hook
 
 (define (describe-hook hook)

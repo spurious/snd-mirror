@@ -1913,11 +1913,11 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_unsaved_edits, save_unsaved_edits, help_unsaved_edits, clear_unsaved_edits, revert_unsaved_edits);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    prf = prefs_row_with_toggle("include thumbnail graph in upper right corner", "with-inset-graph",
+    prf = prefs_row_with_toggle("include thumbnail graph in upper right corner", S_with_inset_graph,
 				rts_with_inset_graph = with_inset_graph(ss),
 				dpy_box, current_sep,
 				with_inset_graph_toggle);
-    remember_pref(prf, reflect_with_inset_graph, save_with_inset_graph, help_current_window, 
+    remember_pref(prf, reflect_with_inset_graph, save_with_inset_graph, help_inset_graph, 
 		  clear_with_inset_graph, revert_with_inset_graph);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
@@ -1928,11 +1928,13 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_auto_resize, save_auto_resize, NULL, NULL, revert_auto_resize);
 
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
-    prf = prefs_row_with_toggle("focus follows mouse", "focus-follows-mouse",
-				rts_focus_follows_mouse = focus_follows_mouse(),
+    prf = prefs_row_with_toggle("pointer focus", S_with_pointer_focus,
+				rts_with_pointer_focus = with_pointer_focus(ss),
 				dpy_box, current_sep,
-				focus_follows_mouse_toggle);
-    remember_pref(prf, reflect_focus_follows_mouse, save_focus_follows_mouse, help_focus_follows_mouse, clear_focus_follows_mouse, revert_focus_follows_mouse);
+				with_pointer_focus_toggle);
+    remember_pref(prf, reflect_with_pointer_focus, save_with_pointer_focus, help_pointer_focus, 
+		  clear_with_pointer_focus, revert_with_pointer_focus);
+
     current_sep = make_inter_variable_separator(dpy_box, prf->label);
     rts_sync_choice = sync_choice();
     prf = prefs_row_with_two_toggles("operate on all channels together", S_sync,

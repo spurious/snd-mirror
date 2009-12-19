@@ -309,7 +309,7 @@ Here's a more elaborate initialization file (~/.snd_s7):
 (load "extensions.scm")
 
 (set! (with-inset-graph) #t)        ;display an overview of the current window in the upper right
-(focus-follows-mouse)               ;automatically focus on (activate) the widget under the mouse
+(set! (with-pointer-focus) #t       ;automatically focus on (activate) the widget under the mouse
 
 (if (provided? '<a class=quiet href="#sndmotiffeature">snd-motif</a>)          
     (load "popup.scm")              ;context-sensitive popup menus
@@ -465,7 +465,6 @@ enved-hook lambda: ( en pt x y reason -- en'|#f )
 with-buffers-menu
 with-reopen-menu
 0.00 0.10 #t prefs-activate-initial-bounds
-focus-follows-mouse
 2 set-global-sync
 #f check-for-unsaved-edits
 3 remember-sound-state

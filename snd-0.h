@@ -646,6 +646,10 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #define set_with_inset_graph(a) ss->With_Inset_Graph = a
 #define DEFAULT_WITH_INSET_GRAPH false
 
+#define with_pointer_focus(ss) ss->With_Pointer_Focus
+#define set_with_pointer_focus(a) ss->With_Pointer_Focus = a
+#define DEFAULT_WITH_POINTER_FOCUS false
+
 #define selection_creates_region(ss) ss->Selection_Creates_Region
 #define set_selection_creates_region(a) ss->Selection_Creates_Region = a
 #define DEFAULT_SELECTION_CREATES_REGION true

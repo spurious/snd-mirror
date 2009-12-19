@@ -505,6 +505,9 @@ static void graph_mouse_enter(Widget w, XtPointer context, XEvent *event, Boolea
   pointer_or_int_t data;
   XEnterWindowEvent *ev = (XEnterWindowEvent *)event;
 
+  if (with_pointer_focus(ss))
+    goto_window(w);
+
   XtVaGetValues(w, XmNuserData, &data, NULL);
   if (XEN_HOOKED(mouse_enter_graph_hook))
     run_hook(mouse_enter_graph_hook,

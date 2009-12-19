@@ -713,6 +713,9 @@ static bool cursor_set_blinks(GtkWidget *w, bool blinks)
 
 static gboolean listener_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
+  if (with_pointer_focus(ss))
+    goto_window(listener_text);
+
   if (XEN_HOOKED(mouse_enter_listener_hook))
     run_hook(mouse_enter_listener_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(listener_text)),
@@ -735,7 +738,11 @@ static gboolean listener_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gp
 
 static gboolean mouse_enter_text_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer unknown)
 {
+  if (with_pointer_focus(ss))
+    goto_window(w);
+
   widget_modify_base(w, GTK_STATE_NORMAL, ss->sgx->white);
+
   if (XEN_HOOKED(mouse_enter_text_hook))
     run_hook(mouse_enter_text_hook,
 	     XEN_LIST_1(XEN_WRAP_WIDGET(w)),

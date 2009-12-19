@@ -597,11 +597,9 @@ list in the makefile.
 
 
 If C-f (and other such commands) doesn't work, either try toggling
-the "w" button, or add the focus-widget related hooks from grfsnd.html
-to your initialization file:
+the "w" button, or enable pointer focus:
 
-(if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))
-(focus-follows-mouse)
+  (set! (with-pointer-focus) #t)
 
 
 If the openmotif package forgot to include libXm.a (Motif), a version is
