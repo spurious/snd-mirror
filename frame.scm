@@ -242,7 +242,7 @@
       (throw 'wrong-type-arg (list "frame-reader-position" fr))))
 
 (define (frame-reader-home fr)
-  "(frame-reader-home fr) -> sound index associated with frame-reader fr"
+  "(frame-reader-home fr) -> sound object associated with frame-reader fr"
   (if (frame-reader? fr)
       (vector-ref fr +frame-reader-snd+)
       (throw 'wrong-type-arg (list "frame-reader-home" fr))))

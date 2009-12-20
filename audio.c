@@ -4198,9 +4198,10 @@ int mus_audio_read(int line, char *buf, int bytes)
  *   and to a much lesser extent, coreaudio.pdf and the HAL/Daisy examples.
  */
 
-/* TODO: the following have been deprecated: 
+/* the following have been deprecated: 
  *         AudioDeviceGetPropertyInfo, AudioDeviceGetProperty, AudioHardwareGetPropertyInfo, AudioHardwareGetProperty,
  *         AudioDeviceSetProperty
+ * once they are removed, Mac users will need portaudio, since I can't face rewriting that code.
  */
 
 #ifdef MUS_MAC_OSX

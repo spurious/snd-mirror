@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Tue Nov 17 16:32:19 CET 2009
+\ Changed: Sun Dec 20 00:51:04 CET 2009
 
 \ Commentary:
 \
@@ -82,7 +82,6 @@
 \ mono-files->stereo              ( new-name chan1-name chan2-name -- snd )
 \ stereo->mono                    ( orig-snd chan1-name chan2-name -- snd0 snd1 )
 \
-\ focus-follows-mouse             ( -- )
 \ prefs-activate-initial-bounds   ( beg dur full -- )
 \ prefs-deactivate-initial-bounds ( -- )
 \ with-reopen-menu     		  ( -- )
@@ -1280,37 +1279,6 @@ previous
 
 \ === PREFERENCES DIALOG ===
 
-\ ;;; -------- focus-follows-mouse
-
-hide
-: channel-xt ( snd chn -- xt; self -- val )
-  swap lambda-create , , latestxt
- does> ( self -- val )
-  { self }
-  self @ ( snd )
-  self cell+ @ ( chn ) channel-widgets
-;
-: graph-hook-cb <{ snd chn -- val }>
-  snd sound? if
-    snd chn channel-xt 'no-such-channel nil fth-catch false? if 0 array-ref focus-widget then
-  else
-    #f
-  then
-;
-set-current
-
-#f value focus-is-following-mouse	\ for prefs
-
-: focus-follows-mouse ( -- )
-  focus-is-following-mouse unless
-    mouse-enter-graph-hook    <'> graph-hook-cb add-hook!
-    mouse-enter-listener-hook <'> focus-widget  add-hook!
-    mouse-enter-text-hook     <'> focus-widget  add-hook!
-    #t to focus-is-following-mouse
-  then
-;
-previous
-
 \ --- initial bounds ---
 
 #f  value prefs-show-full-duration	\ for prefs
@@ -1450,8 +1418,10 @@ previous
 
 \ ;;; -------- global-sync (for prefs dialog)
 
+\ ;; 0 = no sync, 1 = all synced, 2 = sync within sound
 0 value global-sync-choice		\ global var so that we can reflect
 					\ the current setting in prefs dialog
+
 hide
 : global-sync-cb <{ snd -- }>
   global-sync-choice 1 = if

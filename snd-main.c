@@ -3,6 +3,13 @@
 #include "sndlib-strings.h"
 #include "clm2xen.h"
 
+ 
+#if HAVE_RUBY
+  #define TO_GVAR_NAME(Str) xen_scheme_global_variable_to_ruby(Str)
+#else
+  #define TO_GVAR_NAME(Str) Str
+#endif
+
 
 static void remove_temp_files(chan_info *cp)
 {
@@ -476,7 +483,7 @@ static void save_options(FILE *fd)
   if (wavo_trace(ss) != DEFAULT_WAVO_TRACE) pss_sd(fd, S_wavo_trace, wavo_trace(ss));
   if (spectro_hop(ss) != DEFAULT_SPECTRO_HOP) pss_sd(fd, S_spectro_hop, spectro_hop(ss));
 #if (!USE_NO_GUI)
-  if ((color_map(ss) != DEFAULT_COLOR_MAP) && (color_map(ss) <= 15)) pss_ss(fd, S_colormap, TO_VAR_NAME(colormap_variable_name(color_map(ss))));
+  if ((color_map(ss) != DEFAULT_COLOR_MAP) && (color_map(ss) <= 15)) pss_ss(fd, S_colormap, TO_GVAR_NAME(colormap_variable_name(color_map(ss))));
   if (color_map_size(ss) != DEFAULT_COLOR_MAP_SIZE) pss_sd(fd, S_colormap_size, color_map_size(ss));
 #endif
   if (wavelet_type(ss) != DEFAULT_WAVELET_TYPE) pss_sd(fd, S_wavelet_type, wavelet_type(ss));
@@ -1898,7 +1905,7 @@ static XEN g_set_with_inset_graph(XEN on)
 
 static XEN g_with_pointer_focus(void)
 {
-  #define H_with_pointer_focus "(" S_with_pointer_focus "): if " PROC_TRUE " (default is " PROC_FALSE "), activate the widget beneath the mouse."
+  #define H_with_pointer_focus "(" S_with_pointer_focus "): if " PROC_TRUE " (default is " PROC_FALSE "), activate the text or graph widget beneath the mouse."
   return(C_TO_XEN_BOOLEAN(with_pointer_focus(ss)));
 }
 

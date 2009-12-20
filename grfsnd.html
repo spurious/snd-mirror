@@ -309,7 +309,7 @@ Here's a more elaborate initialization file (~/.snd_s7):
 (load "extensions.scm")
 
 (set! (with-inset-graph) #t)        ;display an overview of the current window in the upper right
-(set! (with-pointer-focus) #t       ;automatically focus on (activate) the widget under the mouse
+(set! (with-pointer-focus) #t)      ;automatically focus on (activate) the widget under the mouse
 
 (if (provided? '<a class=quiet href="#sndmotiffeature">snd-motif</a>)          
     (load "popup.scm")              ;context-sensitive popup menus

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Thu Nov 26 18:14:32 CET 2009
+# Changed: Sun Dec 20 01:36:53 CET 2009
 
 # Commentary:
 # 
@@ -135,7 +135,6 @@
 #  mono_files2stereo(new_name, chan1_name, chan2_name)
 #  stereo2mono(orig_snd, chan1_name, chan2_name)
 #
-#  focus_follows_mouse()
 #  prefs_activate_initial_bounds(beg, dur, full)
 #  prefs_deactivate_initial_bounds
 #  with_reopen_menu
@@ -1854,30 +1853,6 @@ applies contrast enhancement to the sound" )
   # 
   # === PREFERENCES-DIALOG ===
   # 
-  # focus-follows-mouse
-
-  $focus_is_following_mouse = false # for prefs
-  
-  def focus_follows_mouse
-    unless $focus_is_following_mouse
-      $focus_is_following_mouse = true
-      hook_name ="prefs-focus-follows-play" 
-      $mouse_enter_graph_hook.add_hook!(hook_name) do |snd, chn|
-        if sound? snd
-          if wids = Snd.catch(:no_such_channel, false) do channel_widgets(snd, chn) end.car
-            focus_widget(wids.car)
-          end
-        end
-      end
-      $mouse_enter_listener_hook.add_hook!(hook_name) do |widget|
-        focus_widget(widget)
-      end
-      $mouse_enter_text_hook.add_hook!(hook_name) do |widget|
-        focus_widget(widget)
-      end
-    end
-  end
-
   # initial bounds
 
   $prefs_show_full_duration = false # for prefs
@@ -2007,8 +1982,10 @@ applies contrast enhancement to the sound" )
 
   # global sync (for prefs dialog)
 
+  # ;; 0 = no sync, 1 = all synced, 2 = sync within sound
   $global_sync_choice = 0       # global var so that we can reflect
                                 # the current setting in prefs dialog
+  
   def set_global_sync(choice)
     $global_sync_choice = choice
     if choice.nonzero? and (not $after_open_hook.member?("global-sync"))

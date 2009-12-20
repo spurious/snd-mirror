@@ -98,8 +98,8 @@
 
 
 (define (all-chans)
-  "(all-chans) -> two parallel lists, the first snd indices, the second channel numbers.  If we have
-two sounds open (indices 0 and 1 for example), and the second has two channels, (all-chans) returns '((0 1 1) (0 0 1))"
+  "(all-chans) -> two parallel lists, the first sound objects, the second channel numbers.  If we have
+two sounds open (indices 0 and 1 for example), and the second has two channels, (all-chans) returns '((#<sound 0> #<sound 1> #<sound 1>) (0 0 1))"
   (let ((sndlist '())
 	(chnlist '()))
     (for-each (lambda (snd)
@@ -109,9 +109,6 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 		  (set! chnlist (cons i chnlist))))
 	      (sounds))
     (list sndlist chnlist)))
-
-
-;;; PERHAPS: channels-for-each?
 
 
 
@@ -442,8 +439,8 @@ If 'check' is #f, the hooks are removed."
 
 (define* (mix-channel input-data :optional (beg 0) dur snd (chn 0) edpos with-tag)
 
-  "(mix-channel file :optional beg dur snd chn edpos with-tag) mixes in file. file can be the file name, a sound index, or \
-a list (file-name-or-sound-index [beg [channel]])."
+  "(mix-channel file :optional beg dur snd chn edpos with-tag) mixes in file. file can be the file name, a sound object, or \
+a list (file-name-or-sound-object [beg [channel]])."
 
   (define (channel->mix input-snd input-chn input-beg input-len output-snd output-chn output-beg)
     (if (< input-len 1000000)
@@ -491,7 +488,7 @@ a list (file-name-or-sound-index [beg [channel]])."
 		;; a virtual mix -- use simplest method available
 		(if (sound? input)
 
-		    ;; sound index case
+		    ;; sound object case
 		    (channel->mix input input-channel input-beg len snd chn start)
 
 		    ;; file input

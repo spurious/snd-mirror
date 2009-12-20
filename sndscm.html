@@ -3144,7 +3144,7 @@ src-fit-envelope returns a version of "env" scaled so that its duration as an sr
 These functions are taken from (or at least inspired by) Julius Smith's "Mathematics of the
 DFT".  Many are standard ways of describing a signal in statistics; others treat a signal
 as a vector (channel-distance, for example, returns the Euclidean distance between two
-sounds).  The 's1' and 's2' parameters refer to sound indices, and the 'c1' and 'c2'
+sounds).  The 's1' and 's2' parameters refer to sound objects, and the 'c1' and 'c2'
 parameters refer to channel numbers.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4496,9 +4496,10 @@ Set the variable 'retitle-time' to 0 to turn this off.
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <A class=def NAME="allchans">all-chans</A> <code>()</code>
 </td></tr><tr><td></td><td>
-all-chans returns two parallel lists, the first a list of sound indices, the second of channel numbers.  If we have 
+all-chans returns two parallel lists, the first a list of sound objects, the second of channel numbers.  If we have 
 two sounds open (indices 0 and 1 for example), and the second has two channels, <code>(all-chans)</code> returns 
-<code>'((0 1 1) (0 0 1))</code>.  The interpretation is: <code>'((index0 index1 index1) (chan0 chan0 chan1))</code>,
+<code>'((#&lt;sound 0&gt; #&lt;sound 1&gt; #&lt;sound 1&gt;) (0 0 1))</code>.  
+The interpretation is: <code>'((sound-with-index0 sound-with-index1 sound-with-index1) (chan0 chan0 chan1))</code>,
 so if we're mapping some function with the usual <code>snd chn</code> parameters over all the current channels,
 we can get the sound and channel values from these lists.  
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -7909,37 +7910,38 @@ all     14   3.6133    0.4868,        odd     9    2.8865    0.4824
 all     23   4.6081    0.4873,        odd     17   3.9278    0.4829
 all     11   3.2185    0.4875,        odd     10   3.0538    0.4848
 all     16   3.8753    0.4886,        odd     19   4.1739    0.4853
-all     24   4.7315    0.4891,        odd     14   3.5994    0.4853
+all     24   4.7311    0.4890,        odd     14   3.5994    0.4853
 all     15   3.7692    0.4900,        odd     13   3.4755    0.4857
 all     17   4.0148    0.4906,        odd     18   4.0712    0.4857
-all     25   4.8566    0.4910,        odd     16   3.8582    0.4870
+all     25   4.8564    0.4909,        odd     16   3.8582    0.4870
 all     13   3.5250    0.4912,        odd     15   3.7398    0.4871
 all     12   3.3894    0.4912,        odd     12   3.3627    0.4880
 all     10   3.1027    0.4917,        odd     28   5.0941    0.4886
 all     19   4.2581    0.4921,        odd     21   4.4509    0.4904
-all     18   4.1494    0.4923,        odd     23   4.6652    0.4912
-all     29   5.2492    0.4924,        odd     20   4.3661    0.4920
+all     29   5.2459    0.4922,        odd     23   4.6652    0.4912
+all     18   4.1494    0.4923,        odd     20   4.3661    0.4920
 all     27   5.0681    0.4924,        odd     31   5.4255    0.4925
 all     21   4.4849    0.4929,        odd     22   4.5835    0.4925
 all     22   4.5894    0.4930,        odd     24   4.7901    0.4929
 all     37   5.9376    0.4933,        odd     25   4.8902    0.4931
-all     32   5.5309    0.4935,        odd     33   5.6105    0.4932
-all     9    2.9618    0.4942,        odd     8    2.7908    0.4936
-all     8    2.7947    0.4942,        odd     30   5.3595    0.4936
-all     35   5.8035    0.4946,        odd     29   5.2720    0.4937
-all     33   5.6386    0.4947,        odd     27   5.0929    0.4939
+all     32   5.5308    0.4935,        odd     33   5.6105    0.4932
+all     35   5.7937    0.4941,        odd     8    2.7908    0.4936
+all     9    2.9618    0.4942,        odd     30   5.3595    0.4936
+all     8    2.7947    0.4942,        odd     29   5.2720    0.4937
+all     33   5.6374    0.4946,        odd     27   5.0929    0.4939
 all     34   5.7263    0.4949,        odd     26   5.0105    0.4946
-all     26   5.0235    0.4954,        odd     7    2.6184    0.4947
-all     30   5.3988    0.4958,        odd     32   5.5704    0.4956
-all     31   5.4886    0.4958,        odd     34   5.7577    0.4964
-all     39   6.1705    0.4967,        odd     35   5.8460    0.4966
+all     26   5.0233    0.4954,        odd     7    2.6184    0.4947
+all     30   5.3987    0.4958,        odd     32   5.5704    0.4956
+all     31   5.4874    0.4958,        odd     34   5.7577    0.4964
+all     39   6.1602    0.4963,        odd     35   5.8460    0.4966
 all     36   5.9366    0.4970,        odd     37   6.0404    0.4981
 all     28   5.2422    0.4972,        odd     40   6.2855    0.4983
-all     46   6.7364    0.4982,        odd     42   6.4584    0.4991
-all     41   6.3730    0.4987,        odd     38   6.1582    0.4997
+all     46   6.7201    0.4976,        odd     42   6.4584    0.4991
+all     41   6.3662    0.4984,        odd     38   6.1582    0.4997
 all     7    2.6394    0.4988
-all     44   6.6047    0.4989
+all     44   6.6031    0.4988
 all     38   6.1464    0.4992
+all     53   7.2784    0.4999
 </pre>
 </td></tr></table>
 
@@ -7951,33 +7953,33 @@ all     38   6.1464    0.4992
 <pre>
          n     peak   (log peak n)            n     peak   (log peak n)
 
-all     53   7.2926    0.5004,        odd     36   6.0213    0.5010
-all     43   6.5698    0.5005,        odd     39   6.2764    0.5014
-all     45   6.7332    0.5010,        odd     46   6.8367    0.5021
-all     52   7.2503    0.5014,        odd     44   6.6897    0.5022
-all     40   6.3653    0.5017,        odd     43   6.6246    0.5027
-all     42   6.5382    0.5024,        odd     49   7.0825    0.5030
-all     55   7.5537    0.5046,        odd     45   6.7863    0.5030
-all     63   8.0943    0.5047,        odd     41   6.4812    0.5033
-all     57   7.6971    0.5048,        odd     48   7.0430    0.5042
-all     48   7.0580    0.5048,        odd     53   7.4099    0.5045
-all     51   7.2941    0.5054,        odd     47   6.9919    0.5051
-all     56   7.6511    0.5055,        odd     57   7.7160    0.5054
-all     50   7.2278    0.5056,        odd     54   7.5177    0.5057
-all     54   7.5288    0.5061,        odd     50   7.2480    0.5063
-all     71   8.6672    0.5066,        odd     52   7.3937    0.5063
-all     58   7.8286    0.5068,        odd     63   8.1739    0.5071
-all     59   7.9056    0.5071,        odd     59   7.9096    0.5072
-all     66   8.3737    0.5072,        odd     51   7.3622    0.5077
-all     49   7.2050    0.5074,        odd     70   8.6538    0.5079
-all     47   7.0644    0.5078,        odd     60   8.0304    0.5088
-all     65   8.3319    0.5079,        odd     58   7.8959    0.5089
-all     64   8.2703    0.5080,        odd     62   8.1859    0.5094
-all     68   8.5298    0.5080,        odd     64   8.3212    0.5095
-all     72   8.8084    0.5087,        odd     55   7.7072    0.5096
-all     67   8.4967    0.5089,        odd     61   8.1336    0.5099
-all     62   8.1682    0.5089
-all     61   8.1343    0.5099
+all     43   6.5698    0.5005,        odd     36   6.0213    0.5010
+all     45   6.7332    0.5010,        odd     39   6.2764    0.5014
+all     52   7.2457    0.5012,        odd     46   6.8367    0.5021
+all     40   6.3653    0.5017,        odd     44   6.6897    0.5022
+all     42   6.5353    0.5022,        odd     43   6.6246    0.5027
+all     57   7.6493    0.5032,        odd     49   7.0825    0.5030
+all     63   8.0482    0.5033,        odd     45   6.7863    0.5030
+all     55   7.5226    0.5036,        odd     41   6.4812    0.5033
+all     48   7.0250    0.5036,        odd     48   7.0430    0.5042
+all     50   7.1840    0.5041,        odd     53   7.4099    0.5045
+all     51   7.2841    0.5050,        odd     47   6.9919    0.5051
+all     56   7.6481    0.5054,        odd     57   7.7160    0.5054
+all     54   7.5104    0.5055,        odd     54   7.5177    0.5057
+all     59   7.8610    0.5057,        odd     50   7.2480    0.5063
+all     71   8.6540    0.5063,        odd     52   7.3937    0.5063
+all     64   8.2134    0.5063,        odd     63   8.1739    0.5071
+all     68   8.4746    0.5065,        odd     59   7.9096    0.5072
+all     58   7.8210    0.5065,        odd     51   7.3622    0.5077
+all     65   8.2882    0.5066,        odd     70   8.6538    0.5079
+all     72   8.7332    0.5067,        odd     60   8.0304    0.5088
+all     66   8.3567    0.5067,        odd     58   7.8959    0.5089
+all     49   7.1875    0.5068,        odd     62   8.1859    0.5094
+all     47   7.0505    0.5073,        odd     64   8.3212    0.5095
+all     67   8.4460    0.5075,        odd     55   7.7072    0.5096
+all     70   8.6690    0.5084,        odd     61   8.1336    0.5099
+all     62   8.1582    0.5086
+all     73   8.8664    0.5086
 </pre>
 </td></tr></table>
 

@@ -16309,6 +16309,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_DEFINE_CONSTANT1:
       /* define-constant -> OP_DEFINE_CONSTANT0 -> OP_DEFINE0..1, then back to here */
       /*   at this point, sc->value is the symbol that we want to be immutable, sc->code is the original pair */
+
       sc->x = s7_find_symbol_in_environment(sc, sc->envir, sc->value, false);
       s7_set_immutable(car(sc->x));
       pop_stack(sc);
@@ -17132,12 +17133,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       stack_reset(sc);
       sc->op = OP_ERROR_QUIT;
-      sc->value = sc->UNSPECIFIED;
+      /* sc->value = sc->UNSPECIFIED; */ /* return the *error-hook* function's value if possible */
       if (sc->longjmp_ok)
 	{
 	  longjmp(sc->goto_start, 1);
 	}
-      return(sc->UNSPECIFIED); /* not executed I hope */
+      return(sc->value); /* not executed I hope */
 
 
     case OP_ERROR_QUIT:
@@ -17357,6 +17358,100 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 /* -------------------------------- threads -------------------------------- */
 
 #if HAVE_PTHREADS
+
+static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
+{
+  int i;
+  s7_scheme *new_sc;
+
+  /* make_thread which calls us has grabbed alloc_lock for the duration */
+
+  new_sc = (s7_scheme *)malloc(sizeof(s7_scheme));
+  memcpy((void *)new_sc, (void *)sc, sizeof(s7_scheme));
+  
+  /* share the heap, symbol table and global environment, protected objects list, and all the startup stuff (all via the memcpy),
+   *   but have separate stacks and eval locals
+   */
+  
+  new_sc->longjmp_ok = false;
+  new_sc->strbuf_size = INITIAL_STRBUF_SIZE;
+  new_sc->strbuf = (char *)calloc(new_sc->strbuf_size, sizeof(char));
+
+  new_sc->read_line_buf = NULL;
+  new_sc->read_line_buf_size = 0;
+  
+  new_sc->stack_top = 0;
+  new_sc->stack = vect;
+  new_sc->stack_size = INITIAL_STACK_SIZE;
+  new_sc->stack_size2 = new_sc->stack_size / 2;
+  
+  new_sc->x = new_sc->NIL;
+  new_sc->y = new_sc->NIL;
+  new_sc->z = new_sc->NIL;
+  new_sc->code = new_sc->NIL;
+  new_sc->args = new_sc->NIL;
+  new_sc->value = new_sc->NIL;
+  new_sc->cur_code = ERROR_INFO_DEFAULT;
+
+#if WITH_ENCAPSULATION
+  new_sc->encapsulators = sc->NIL;
+#endif
+  
+  new_sc->temps_size = GC_TEMPS_SIZE;
+  new_sc->temps_ctr = 0;
+  new_sc->temps = (s7_pointer *)malloc(new_sc->temps_size * sizeof(s7_pointer));
+  for (i = 0; i < new_sc->temps_size; i++)
+    new_sc->temps[i] = new_sc->NIL;
+
+  new_sc->circular_refs = (s7_pointer *)calloc(CIRCULAR_REFS_SIZE, sizeof(s7_pointer));
+#if HAVE_PTHREADS
+  new_sc->key_values = sc->NIL;
+
+  (*(sc->thread_ids))++;                   /* in case a spawned thread spawns another, we need this variable to be global to all */
+  new_sc->thread_id = (*(sc->thread_ids)); /* for more readable debugging printout -- main thread is thread 0 */
+#endif
+
+  new_sc->default_rng = NULL;
+#if WITH_GMP
+  new_sc->default_big_rng = NULL;
+#endif
+
+  return(new_sc);
+}
+
+
+static s7_scheme *close_s7(s7_scheme *sc)
+{
+  free(sc->strbuf);
+  free(sc->temps);
+  if (sc->read_line_buf) free(sc->read_line_buf);
+  if (sc->default_rng) free(sc->default_rng);
+#if WITH_GMP
+  if (sc->default_big_rng) free(sc->default_big_rng);
+#endif
+  free(sc);
+  return(NULL);
+}
+
+
+static void mark_s7(s7_scheme *sc)
+{
+  int i;
+  S7_MARK(sc->args);
+  S7_MARK(sc->envir);
+  S7_MARK(sc->code);
+  mark_vector(sc->stack, sc->stack_top);
+  S7_MARK(sc->value);
+  S7_MARK(sc->x);
+  S7_MARK(sc->y);
+  S7_MARK(sc->z);
+  for (i = 0; i < sc->temps_size; i++)
+    S7_MARK(sc->temps[i]);
+#if HAVE_PTHREADS
+  S7_MARK(sc->key_values);
+#endif
+}
+
 
 static int thread_tag = 0;
 
@@ -22588,16 +22683,6 @@ s7_scheme *s7_init(void)
 #endif
 
   /* s7_define_function(sc, "dump-heap", g_dump_heap, 0, 0, false, "hiho"); */
-
-#if (!S7_DISABLE_DEPRECATED)
-  /* backwards compatiblity */
-  s7_eval_c_string(sc, "(define (backtracing val) #f) \n\
-                        (define (set-backtrace-length val) #f) \n\
-                        (define (clear-backtrace) #f) \n\
-                        (define (backtrace) #f)");
-  s7_eval_c_string(sc, "(define (gc-verbose val) #f) \n\
-                        (define (load-verbose val) #f)");
-#endif
 
   /* macroexpand */
   s7_eval_c_string(sc, "(define-macro (macroexpand mac) `(,(procedure-source (car mac)) ',mac))");

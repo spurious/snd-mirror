@@ -445,14 +445,16 @@ static void prefs_variable_save(FILE *fd, const char *name, const char *file, XE
   str = no_stars(name);
   if (file)
     fprintf(fd, "require \"%s\"\n", file);
-  fprintf(fd, "set_%s(%s)\n", str, XEN_AS_STRING(val));
+  fprintf(fd, "$%s = %s\n", TO_PROC_NAME(str), XEN_AS_STRING(val));
+  /* fprintf(fd, "set_%s(%s)\n", TO_PROC_NAME(str), XEN_AS_STRING(val)); */
   free(str);
 #endif
 
 #if HAVE_FORTH
   if (file)
     fprintf(fd, "require %s\n", file);
-  fprintf(fd, "%s set-%s drop\n", XEN_AS_STRING(val), name);
+  fprintf(fd, "%s to %s\n", XEN_AS_STRING(val), name);
+  /* fprintf(fd, "%s set-%s drop\n", XEN_AS_STRING(val), name); */
 #endif
 }
 
@@ -470,7 +472,7 @@ static XEN prefs_variable_get(const char *name)
     XEN val = XEN_FALSE;
     str = no_stars(name);
     if (XEN_DEFINED_P(str))
-      val = XEN_NAME_AS_C_STRING_TO_VALUE(name);
+      val = XEN_NAME_AS_C_STRING_TO_VALUE(str);
     free(str);
     return(val);
   }
@@ -2432,20 +2434,6 @@ static void clear_with_inset_graph(prefs_info *prf) {set_with_inset_graph(false)
 static void save_with_inset_graph(prefs_info *prf, FILE *fd)
 {
   rts_with_inset_graph = GET_TOGGLE(prf->toggle);
-  if (rts_with_inset_graph)
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(set! (with-inset-graph) #t)\n");
-#endif
-
-#if HAVE_RUBY
-      fprintf(fd, "$with_inset_graph = true\n");
-#endif
-
-#if HAVE_FORTH
-      fprintf(fd, "#t to with-inset-graph\n");
-#endif
-    }
   set_with_inset_graph(rts_with_inset_graph);
 }
 
@@ -2485,20 +2473,6 @@ static void clear_with_pointer_focus(prefs_info *prf) {set_with_pointer_focus(fa
 static void save_with_pointer_focus(prefs_info *prf, FILE *fd)
 {
   rts_with_pointer_focus = GET_TOGGLE(prf->toggle);
-  if (rts_with_pointer_focus)
-    {
-#if HAVE_SCHEME
-      fprintf(fd, "(set! (with-pointer-focus) #t)\n");
-#endif
-
-#if HAVE_RUBY
-      fprintf(fd, "$with_pointer_focus = true\n");
-#endif
-
-#if HAVE_FORTH
-      fprintf(fd, "#t to with-pointer-focus\n");
-#endif
-    }
   set_with_pointer_focus(rts_with_pointer_focus);
 }
 
@@ -4674,23 +4648,6 @@ static void save_peak_envs(prefs_info *prf, FILE *fd)
   rts_peak_envs = GET_TOGGLE(prf->toggle);
   if (rts_peak_env_directory) free(rts_peak_env_directory);
   rts_peak_env_directory = mus_strdup(include_peak_env_directory);
-  if (rts_peak_envs)
-    {
-#if HAVE_SCHEME
-      if (include_peak_env_directory)
-	fprintf(fd, "(set! (peak-env-dir) \"%s\")\n", include_peak_env_directory);
-#endif
-
-#if HAVE_RUBY
-      if (include_peak_env_directory)
-	fprintf(fd, "$peak_env_dir = \"%s\"\n", include_peak_env_directory);
-#endif
-
-#if HAVE_FORTH
-      if (include_peak_env_directory)
-	fprintf(fd, "\"%s\" to peak-env-dir\n", include_peak_env_directory);
-#endif
-    }
 }
 
 
@@ -5314,7 +5271,7 @@ static char *make_revert_binding(char *key, bool ctrl, bool meta, bool cx)
 #endif
 
 #if HAVE_RUBY
-  return(mus_format("bind_key(%s, %d, lambda do\n  revert_sound())\n  end, %s, \"undo all edits\", \"revert-sound\")\n", 
+  return(mus_format("bind_key(%s, %d, lambda do\n  revert_sound()\n  end, %s, \"undo all edits\", \"revert-sound\")\n", 
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
@@ -5375,7 +5332,7 @@ static char *make_exit_binding(char *key, bool ctrl, bool meta, bool cx)
 #endif
 
 #if HAVE_RUBY
-  return(mus_format("bind_key(%s, %d, lambda do\n  exit())\n  end, %s, \"exit\", \"exit\")\n", 
+  return(mus_format("bind_key(%s, %d, lambda do\n  exit()\n  end, %s, \"exit\", \"exit\")\n", 
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));
@@ -5497,7 +5454,7 @@ static char *make_show_selection_binding(char *key, bool ctrl, bool meta, bool c
 #endif
 
 #if HAVE_RUBY
-  return(mus_format("require \"extensions\"\nbind_key(%s, %d, lambda do\n  show_selection())\n  end, %s, \"show selection\", \"show-selection\")\n", 
+  return(mus_format("require \"extensions\"\nbind_key(%s, %d, lambda do\n  show_selection()\n  end, %s, \"show selection\", \"show-selection\")\n", 
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "true" : "false"));

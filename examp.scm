@@ -624,8 +624,8 @@ read an ASCII sound file"
 ;;;
 
 (define (all-chans)
-  "(all-chans) -> two parallel lists, the first snd indices, the second channel numbers.  If we have 
-two sounds open (indices 0 and 1 for example), and the second has two channels, (all-chans) returns '((0 1 1) (0 0 1))"
+  "(all-chans) -> two parallel lists, the first sound objects, the second channel numbers.  If we have 
+two sounds open (indices 0 and 1 for example), and the second has two channels, (all-chans) returns '((#<sound 0> #<sound 1> #<sound 1>) (0 0 1))"
   (let ((sndlist '())
 	(chnlist '()))
     (for-each (lambda (snd)
@@ -1336,8 +1336,8 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 ;;; CLM version is in clm.html
 
 (define (cross-synthesis cross-snd amp fftsize r)
-  "(cross-synthesis cross-snd amp fftsize r) does cross-synthesis between 'cross-snd' (a sound index) and the currently 
-selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
+  "(cross-synthesis cross-snd amp fftsize r) does cross-synthesis between 'cross-snd' (a sound object) and the currently 
+selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
   (let* ((freq-inc (/ fftsize 2))
 	 (fdr (make-vct fftsize))
 	 (fdi (make-vct fftsize))

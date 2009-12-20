@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Fri Nov 27 01:02:37 CET 2009
+\ Changed: Sat Dec 19 02:35:00 CET 2009
 
 \ Commentary:
 
@@ -47,7 +47,9 @@ hide
 : popup-cascade-cb { children cb -- prc; w c i self -- }
   3 proc-create cb , children ,
  does> { w c info self -- }
-  self @ ( cb ) self cell+ @ ( children ) run-proc drop
+  self       @ { cb }
+  self cell+ @ { children }
+  cb #( children ) run-proc drop
 ;
 
 : make-simple-popdown-menu { label popdown-labels parent cascade-cb -- }
@@ -630,29 +632,21 @@ let: ( -- menu )
      #( "spectrogram" graph-as-spectrogram grp-lst-cb ) )
 ;
 : grp-set <{ lst -- }>
-  lst each ( child )
-    graph-popup-snd graph-popup-chn transform-graph-type i = if #f else #t then FXtSetSensitive drop
-  end-each
+  graph-popup-snd graph-popup-chn transform-graph-type { tp }
+  lst each ( child ) i tp <> FXtSetSensitive drop end-each
 ;
-#( 16 32 64 128 256 512 1024 2048 4096 8192 16384 65536 262144 1048576 ) constant fft-siz-sizes
+#( 16 64 256 1024 4096 16384 65536 262144 1048576 ) constant fft-siz-sizes
 : siz-lst-cb ( val -- prc; w c i self -- )
   3 proc-create swap ,
  does> { w c info self -- }
   self @ ( val ) graph-popup-snd choose-chan set-transform-size drop
 ;
 : siz-labs ( -- ary )
-  save-stack { stack }
-  fft-siz-sizes map #( *key* object->string *key* siz-lst-cb ) end-map { ary }
-  stack restore-stack
-  ary
+  fft-siz-sizes map #( *key* object->string *key* siz-lst-cb ) end-map ( ary )
 ;
 : siz-set <{ lst -- }>
-  save-stack { stack }
-  lst each ( child )
-    fft-siz-sizes i array-ref { siz }
-    graph-popup-snd graph-popup-chn transform-size siz <> if #t else #f then FXtSetSensitive drop
-  end-each
-  stack restore-stack
+  graph-popup-snd graph-popup-chn transform-size { siz }
+  lst each ( child ) fft-siz-sizes i array-ref siz <> FXtSetSensitive drop end-each
 ;
 #( rectangular-window
    hann-window
@@ -722,12 +716,8 @@ let: ( -- menu )
      "Flat-top" ) map #( *key* fft-win-windows i array-ref win-lst-cb ) end-map
 ;
 : win-set <{ lst -- }>
-  save-stack { stack }
-  lst each ( child )
-    fft-win-windows i array-ref { win }
-    graph-popup-snd graph-popup-chn fft-window win <> if #t else #f then FXtSetSensitive drop
-  end-each
-  stack restore-stack
+  graph-popup-snd graph-popup-chn fft-window { win }
+  lst each ( child ) fft-win-windows i array-ref win <> FXtSetSensitive drop end-each
 ;
 #( fourier-transform wavelet-transform autocorrelation cepstrum walsh-transform haar-transform )
 value fft-trn-transform
@@ -737,19 +727,13 @@ value fft-trn-transform
   self @ ( val ) graph-popup-snd choose-chan set-transform-type drop
 ;
 : trn-labs ( -- ary )
-  save-stack { stack }
-  #( "Fourier" "Wavelet" "Autocorrelate" "Cepstrum" "Walsh" "Haar" ) { names }
-  names map #( *key* fft-trn-transform i array-ref trn-lst-cb ) end-map { ary }
-  stack restore-stack
-  ary
+  #( "Fourier" "Wavelet" "Autocorrelate" "Cepstrum" "Walsh" "Haar" ) map
+    #( *key* fft-trn-transform i array-ref trn-lst-cb )
+  end-map ( ary )
 ;
 : trn-set <{ lst -- }>
-  save-stack { stack }
-  lst each ( child )
-    fft-trn-transform i array-ref { trn }
-    graph-popup-snd graph-popup-chn transform-type trn <> if #t else #f then FXtSetSensitive drop
-  end-each
-  stack restore-stack
+  graph-popup-snd graph-popup-chn transform-type { trn }
+  lst each ( child ) fft-trn-transform i array-ref trn equal? not FXtSetSensitive drop end-each
 ;
 : typ-lst-cb ( val -- prc; w c i self -- )
   3 proc-create swap ,
@@ -779,11 +763,8 @@ value fft-trn-transform
      "sym6" ) map #( *key* i typ-lst-cb ) end-map
 ;
 : typ-set <{ lst -- }>
-  save-stack { stack }
-  lst each ( child )
-    graph-popup-snd graph-popup-chn wavelet-type i <> if #t else #f then FXtSetSensitive drop
-  end-each
-  stack restore-stack
+  graph-popup-snd graph-popup-chn wavelet-type { tp }
+  lst each ( child ) i tp <> FXtSetSensitive drop end-each
 ;
 : fft-color <{ w c info -- val }> color-orientation-dialog ;
 
@@ -825,9 +806,7 @@ let: ( -- menu )
 : edit-fft-popup-menu ( snd chn -- wid )
   doc" Changes the fft-related popup menu to reflect the state of SND and CHN."
   { snd chn }
-  save-stack { stack }
   fft-popup-menu snd chn fft-popup-cb for-each-child
-  stack restore-stack
 ;
 set-current
 previous
@@ -919,22 +898,20 @@ let: ( -- menu )
   self cell+ @ { snd }
   w FXtName { name }
   name "Clear" string= name "Apply" string= || if
-    w edhist-funcs empty? if #f else #t then FXtSetSensitive drop
+    w edhist-funcs empty? not FXtSetSensitive drop
   else
     name "Save" string= if
-      w 0 snd chn edits each + end-each 0> if #t else #f then FXtSetSensitive drop
+      w 0 snd chn edits each + end-each 0> FXtSetSensitive drop
     else
       name "Reapply" string= if
-	w edhist-funcs #( snd chn ) array-assoc-ref if #t else #f then FXtSetSensitive drop
+	w edhist-funcs #( snd chn ) array-assoc-ref FXtSetSensitive drop
       then
     then
   then
 ;
 : edit-edhist-popup-menu ( snd chn -- wid )
   { snd chn }
-  save-stack { stack }
   edit-history-menu snd chn edhist-popup-cb for-each-child
-  stack restore-stack
 ;
 
 \  --- activate the above menus ---

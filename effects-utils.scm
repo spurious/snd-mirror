@@ -39,7 +39,7 @@
     (XtDisplay (cadr (main-widgets)))))
 
 (define (all-chans)
-  "(all-chans) returns a list of all current sound indices and channel numbers"
+  "(all-chans) returns a list of all current sound objects and channel numbers"
   (let ((sndlist '())
 	(chnlist '()))
     (for-each (lambda (snd)
