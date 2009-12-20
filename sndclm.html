@@ -2085,7 +2085,7 @@ Here is a somewhat low-level example:
 </p>
 <table border=0 hspace=40><tr><td>
 <pre>
-(def-optkey-fun (make-band-limited-triangle-wave (frequency *clm-default-frequency*) (order 1))
+(define* (make-band-limited-triangle-wave (frequency *clm-default-frequency*) (order 1))
   (let ((freqs '()))
     (do ((i 1 (+ 1 i))
 	 (j 1 (+ j 2)))

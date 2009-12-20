@@ -1,12 +1,12 @@
 (if (provided? 'xm)
     (if (not (provided? 'snd-effects-utils.scm))
-	(load-from-path "effects-utils.scm"))) ; make-effect-dialog
+	(load "effects-utils.scm"))) ; make-effect-dialog
 
 (if (provided? 'xg)
     (if (not (provided? 'snd-gtk-effects-utils.scm))
-	(load-from-path "gtk-effects-utils.scm")))
+	(load "gtk-effects-utils.scm")))
 
-(if (not (provided? 'snd-examp.scm)) (load-from-path "examp.scm")) ; squelch-vowels
+(if (not (provided? 'snd-examp.scm)) (load "examp.scm")) ; squelch-vowels
 
 (provide 'snd-fft-menu.scm)
 

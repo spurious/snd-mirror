@@ -457,85 +457,6 @@ finish-with-sound to complete the process."
      (list-set! w 9 val))))
 
 
-
-
-;;; -------- def-optkey-fun --------
-;;;
-;;; this is a translation of CLM's def-optkey-fun
-
-(defmacro def-optkey-fun (decls . body)
-  (let ((func-name (car decls))
-	(func-args (cdr decls)))
-    (if (null? func-args)
-	`(define (,func-name) ,@body)
-	(let ((args (map (lambda (arg)
-			   (symbol->keyword (if (list? arg) (car arg) arg)))
-			 func-args))
-	      (key-name (string->symbol (string-append (symbol->string func-name) "-1"))))
-	  (if (= (length func-args) 1)
-	      `(begin
-		 (define* (,key-name :key ,@func-args) ,@body)
-		 (define* (,func-name :rest passed-args)
-		   (if (or (null? passed-args)
-			   (keyword? (car passed-args)))
-		       (apply ,key-name passed-args)
-		       (apply ,key-name ,(car args) passed-args))))
-	      `(begin
-		 (define* (,key-name :key ,@func-args) ,@body)
-		 (define* (,func-name :rest passed-args)
-		   (if (or (null? passed-args)
-			   (keyword? (car passed-args)))
-		       (apply ,key-name passed-args)
-		       (let ((arglen (length passed-args)))
-			 (if (or (= arglen 1) 
-				 (and (> arglen 2) 
-				      (keyword? (cadr passed-args))))
-			     (apply ,key-name ,(car args) (car passed-args) (cdr passed-args))
-			     (if (or (= arglen 2) 
-				     (and (> arglen 3) 
-					  (keyword? (caddr passed-args))))
-				 (apply ,key-name 
-					,(car args) (car passed-args) 
-					,(cadr args) (cadr passed-args) 
-					(cddr passed-args))
-				 (let ((allargs (call-with-exit
-						 (lambda (break)
-						   (let ((arglist '())
-							 (pa passed-args)
-							 (na ',args))
-						     (do ((k 0 (+ k 1)))
-							 ((= k arglen) arglist)
-						       (if (keyword? (car pa))
-							   (break (append arglist pa))
-							   (begin
-							     (set! arglist (append arglist (list (car na) (car pa))))
-							     (set! pa (cdr pa))
-							     (set! na (cdr na))))))))))
-				   (apply ,key-name allargs)))))))))))))
-
-(defmacro def-optkey-instrument (args . body)
-  (let* ((name (car args))
-	 (targs (cdr args))
-	 (utargs (let ((arg-names '()))
-		   (for-each
-		    (lambda (a)
-		      (if (not (keyword? a))
-			  (if (symbol? a)
-			      (set! arg-names (cons a arg-names))
-			      (set! arg-names (cons (car a) arg-names)))))
-		    targs)
-		   (reverse arg-names))))
-  `(begin 
-     (def-optkey-fun (,name ,@targs)
-       (if *clm-notehook*
-	   (*clm-notehook* (symbol->string ',name) ,@utargs))
-       ((lambda () ; for inner defines, if any
-	  ,@body)))
-     ,@(if *definstrument-hook*
-           (list (*definstrument-hook* name targs))
-           (list)))))
-
-
 (define ->frequency
   (let ((main-pitch (/ 440.0 (expt 2.0 (/ 57 12)))) ; a4 = 440Hz is pitch 57 in our numbering
 	(last-octave 0)                             ; octave number can be omitted
@@ -649,13 +570,13 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	 (lambda ()
 	   "clm struct local method list accessor"
 	   ,methods))
-       (def-optkey-fun (,(string->symbol (string-append "make-" sname))
-		        ,@(map (lambda (n)
-				(if (and (list? n)
-					 (>= (length n) 2))
-				    (list (car n) (cadr n))
-				    (list n 0.0)))
-			      fields))
+       (define* (,(string->symbol (string-append "make-" sname))
+		 ,@(map (lambda (n)
+			  (if (and (list? n)
+				   (>= (length n) 2))
+			      (list (car n) (cadr n))
+			      (list n 0.0)))
+			fields))
 	 (,wrapper (if (list? ,methods)
 		       (list ',(string->symbol sname)
 			     ,@(map string->symbol field-names)

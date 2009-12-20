@@ -362,7 +362,7 @@ repetition to be in reverse."
 ;;;
 ;;; (this could also be done using multi-expt-env (based on env-any) in generators.scm)
 
-(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
+(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
 (def-clm-struct penv (envs #f :type clm-vector) (total-envs 0 :type int) (current-env 0 :type int) (current-pass 0 :type int))
 

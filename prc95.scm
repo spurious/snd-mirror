@@ -2,7 +2,7 @@
 ;;;  of Perry Cook's Physical Modelling Toolkit.
 
 (provide 'snd-prc95.scm)
-(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
+(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
 
 (define* (make-reed :key (offset 0.6) (slope -0.8))

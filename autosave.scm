@@ -2,7 +2,7 @@
 
 (provide 'snd-autosave.scm)
 
-(if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))
+(if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))
 
 (define auto-save-interval 60.0) ;seconds between auto-save checks
 (define auto-saving #f)

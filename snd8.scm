@@ -34,9 +34,7 @@
 
 
 
-(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
-
-(def-optkey-fun (open-sound-file file channels srate comment header-type)
+(define* (open-sound-file file channels srate comment header-type)
   (mus-sound-open-output (or file (if (little-endian?) "test.wav" "test.snd"))
 			 (or srate 22050)
 			 (or channels 1)

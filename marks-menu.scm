@@ -3,20 +3,20 @@
 (if (provided? 'xm)
     (begin
       (if (not (provided? 'snd-effects-utils.scm))
-	  (load-from-path "effects-utils.scm"))
+	  (load "effects-utils.scm"))
       (if (not (defined? 'mark-sync-color)) 
-	  (load-from-path "snd-motif.scm"))))
+	  (load "snd-motif.scm"))))
 
 (if (provided? 'xg)
     (begin
       (if (not (provided? 'snd-gtk-effects-utils.scm))
-	  (load-from-path "gtk-effects-utils.scm"))
+	  (load "gtk-effects-utils.scm"))
       (if (not (defined? 'mark-sync-color)) 
-	  (load-from-path "snd-gtk.scm"))))
+	  (load "snd-gtk.scm"))))
 
-(if (not (defined? 'mark-loops)) (load-from-path "examp.scm"))
-(if (not (defined? 'play-between-marks)) (load-from-path "marks.scm"))
-(if (not (defined? 'loop-between-marks)) (load-from-path "play.scm"))
+(if (not (defined? 'mark-loops)) (load "examp.scm"))
+(if (not (defined? 'play-between-marks)) (load "marks.scm"))
+(if (not (defined? 'loop-between-marks)) (load "play.scm"))
 
 
 (define marks-list '()) ; menu labels are updated to show current default settings

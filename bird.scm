@@ -14,7 +14,7 @@
 
 (if (and (not (provided? 'snd-ws.scm)) 
 	 (not (provided? 'sndlib-ws.scm)))
-    (load-from-path "ws.scm"))
+    (load "ws.scm"))
 
 (definstrument (bigbird start dur frequency freqskew amplitude freq-envelope amp-envelope partials)
   "(bigbird start dur frequency freqskew amplitude freq-envelope amp-envelope partials)"

@@ -300,7 +300,7 @@ static void save_prefs(const char *filename)
 	  current_dirs = NULL;
 	}
 
-      /* now finally the load path is set up, so we can call (load-from-path...) if we need to */
+      /* now finally the load path is set up, so we can call load if we need to */
       for (i = 0; i < prefs_top; i++)
 	{
 	  prefs_info *prf;
@@ -433,7 +433,7 @@ static void prefs_variable_save(FILE *fd, const char *name, const char *file, XE
 #if HAVE_SCHEME
   char *temp = NULL;
   if (file)
-    fprintf(fd, "(if (not (provided? 'snd-%s.scm)) (load-from-path \"%s.scm\"))\n", file, file);
+    fprintf(fd, "(if (not (provided? 'snd-%s.scm)) (load \"%s.scm\"))\n", file, file);
   fprintf(fd, "(set! %s %s)\n", name, temp = XEN_AS_STRING(val));
 #if HAVE_S7
   if (temp) free(temp);
@@ -556,7 +556,7 @@ static void prefs_function_save_0(FILE *fd, const char *name, const char *file)
 {
 #if HAVE_SCHEME
   if (file)
-    fprintf(fd, "(if (not (provided? 'snd-%s.scm)) (load-from-path \"%s.scm\"))\n", file, file);
+    fprintf(fd, "(if (not (provided? 'snd-%s.scm)) (load \"%s.scm\"))\n", file, file);
   fprintf(fd, "(%s)\n", name);
 #endif
 
@@ -582,7 +582,7 @@ static void prefs_function_save_1(FILE *fd, const char *name, const char *file, 
 #if HAVE_SCHEME
   char *temp = NULL;
   if (file)
-    fprintf(fd, "(if (not (provided? 'snd-%s.scm)) (load-from-path \"%s.scm\"))\n", file, file);
+    fprintf(fd, "(if (not (provided? 'snd-%s.scm)) (load \"%s.scm\"))\n", file, file);
   fprintf(fd, "(%s %s)\n", name, temp = XEN_AS_STRING(val));
 #if HAVE_S7
   if (temp) free(temp);
@@ -3518,7 +3518,7 @@ static void save_with_sound(prefs_info *prf, FILE *fd)
   if (rts_with_sound)
     {
 #if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-ws.scm)) (load-from-path \"ws.scm\"))\n");
+      fprintf(fd, "(if (not (provided? 'snd-ws.scm)) (load \"ws.scm\"))\n");
       if (rts_clm_file_name)
 	fprintf(fd, "(set! *clm-file-name* \"%s\")\n", rts_clm_file_name);
       if (rts_clm_file_buffer_size != 65536)
@@ -3736,7 +3736,7 @@ static void save_context_sensitive_popup(prefs_info *prf, FILE *fd)
   if (include_context_sensitive_popup)
     {
 #if HAVE_SCHEME
-      fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-popup.scm))\n        (load-from-path \"popup.scm\"))\n    (if (not (provided? 'snd-gtk-popup.scm))\n	(load-from-path \"gtk-popup.scm\")))\n");
+      fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-popup.scm))\n        (load \"popup.scm\"))\n    (if (not (provided? 'snd-gtk-popup.scm))\n	(load \"gtk-popup.scm\")))\n");
 #endif
 
 #if HAVE_RUBY
@@ -3794,7 +3794,7 @@ static void save_effects_menu(prefs_info *prf, FILE *fd)
   if (include_effects_menu)
     {
 #if HAVE_SCHEME
-      fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-new-effects.scm))\n        (load-from-path \"new-effects.scm\"))\n    (if (not (provided? 'snd-gtk-effects.scm))\n	(load-from-path \"gtk-effects.scm\")))\n");
+      fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-new-effects.scm))\n        (load \"new-effects.scm\"))\n    (if (not (provided? 'snd-gtk-effects.scm))\n	(load \"gtk-effects.scm\")))\n");
 #endif
 
 #if HAVE_RUBY
@@ -3851,7 +3851,7 @@ static void save_edit_menu(prefs_info *prf, FILE *fd)
 {
   include_edit_menu = GET_TOGGLE(prf->toggle);
   if (include_edit_menu)
-    fprintf(fd, "(if (not (provided? 'snd-edit-menu.scm)) (load-from-path \"edit-menu.scm\"))\n"); /* ok for either case */
+    fprintf(fd, "(if (not (provided? 'snd-edit-menu.scm)) (load \"edit-menu.scm\"))\n"); /* ok for either case */
 }
 
 
@@ -3892,7 +3892,7 @@ static void save_marks_menu(prefs_info *prf, FILE *fd)
 {
   include_marks_menu = GET_TOGGLE(prf->toggle);
   if (include_marks_menu)
-    fprintf(fd, "(if (not (provided? 'snd-marks-menu.scm)) (load-from-path \"marks-menu.scm\"))\n");
+    fprintf(fd, "(if (not (provided? 'snd-marks-menu.scm)) (load \"marks-menu.scm\"))\n");
 }
 
 
@@ -3932,7 +3932,7 @@ static void save_icon_box(prefs_info *prf, FILE *fd)
 {
   include_icon_box = GET_TOGGLE(prf->toggle);
   if (include_icon_box)
-    fprintf(fd, "(if (not (provided? 'snd-toolbar.scm)) (load-from-path \"toolbar.scm\"))\n");
+    fprintf(fd, "(if (not (provided? 'snd-toolbar.scm)) (load \"toolbar.scm\"))\n");
 }
 
 
@@ -3940,7 +3940,7 @@ static void icon_box_toggle(prefs_info *prf)
 {
   if ((GET_TOGGLE(prf->toggle)) &&
       (!(find_icon_box())))
-    load_file_with_path_and_extension("new-buttons");
+    load_file_with_path_and_extension("toolbar");
 }
 
 
@@ -4082,7 +4082,7 @@ static void save_hidden_controls(prefs_info *prf, FILE *fd)
   include_hidden_controls = GET_TOGGLE(prf->toggle);
   if (include_hidden_controls)
     {
-      fprintf(fd, "(if (not (provided? 'snd-snd-motif.scm)) (load-from-path \"snd-motif.scm\"))\n");
+      fprintf(fd, "(if (not (provided? 'snd-snd-motif.scm)) (load \"snd-motif.scm\"))\n");
       fprintf(fd, "(make-hidden-controls-dialog)\n");
     }
 }
@@ -4165,7 +4165,7 @@ static void save_smpte(prefs_info *prf, FILE *fd)
   if (include_smpte)
     {
 #if HAVE_SCHEME
-  fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-snd-motif.scm))\n        (load-from-path \"snd-motif.scm\"))\n    (if (not (provided? 'snd-snd-gtk.scm))\n        (load-from-path \"snd-gtk.scm\")))\n");
+  fprintf(fd, "(if (provided? 'snd-motif)\n    (if (not (provided? 'snd-snd-motif.scm))\n        (load \"snd-motif.scm\"))\n    (if (not (provided? 'snd-snd-gtk.scm))\n        (load \"snd-gtk.scm\")))\n");
   fprintf(fd, "(show-smpte-label #t)\n");
 #endif
 
@@ -4213,7 +4213,7 @@ static void save_remember_sound_state_choice(prefs_info *prf, FILE *fd)
   if (remember_sound_state_choice != 0)
     {
 #if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
+      fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load \"extensions.scm\"))\n");
       fprintf(fd, "(remember-sound-state %d)\n", remember_sound_state_choice);
 #endif
 
@@ -4902,7 +4902,7 @@ static void save_initial_bounds(prefs_info *prf, FILE *fd)
   if (include_duration)
     {
 #if HAVE_SCHEME
-      fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n");
+      fprintf(fd, "(if (not (provided? 'snd-extensions.scm)) (load \"extensions.scm\"))\n");
       fprintf(fd, "(prefs-activate-initial-bounds %.2f %.2f %s)\n", rts_initial_beg, rts_initial_dur, (rts_full_duration) ? "#t" : "#f");
 #endif
 
@@ -5447,7 +5447,7 @@ static void help_show_selection(prefs_info *prf)
 static char *make_show_selection_binding(char *key, bool ctrl, bool meta, bool cx)
 {
 #if HAVE_SCHEME
-  return(mus_format("(if (not (provided? 'snd-selection.scm)) (load-from-path \"selection.scm\"))\n\(bind-key %s %d show-selection %s \"show selection\" \"show-selection\")\n", 
+  return(mus_format("(if (not (provided? 'snd-selection.scm)) (load \"selection.scm\"))\n\(bind-key %s %d show-selection %s \"show selection\" \"show-selection\")\n", 
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));

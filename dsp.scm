@@ -1,8 +1,8 @@
 ;;; a DSP-related grabbag
 
 (provide 'snd-dsp.scm)
-(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
-(if (not (provided? 'snd-generators.scm)) (load-from-path "generators.scm")) ; moving-*
+(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(if (not (provided? 'snd-generators.scm)) (load "generators.scm")) ; moving-*
 
 (define (log10 a) 
   "(log10 a) returns the log base 10 of 'a'"
@@ -1224,7 +1224,7 @@ the era when computers were human beings"
 
 ;;; this is the inverse integration function used by CLM to turn a distribution function into a weighting function
 
-(if (not (provided? 'snd-env.scm)) (load-from-path "env.scm"))
+(if (not (provided? 'snd-env.scm)) (load "env.scm"))
 
 (define* (inverse-integrate dist :optional (data-size 512) (e-size 50))
   (let* ((e '())

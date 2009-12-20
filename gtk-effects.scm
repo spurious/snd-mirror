@@ -10,11 +10,11 @@
 
 (provide 'snd-gtk-effects.scm)
 
-(if (not (provided? 'snd-gtk-effects-utils.scm)) (load-from-path "gtk-effects-utils.scm"))
-(if (not (provided? 'snd-xm-enved.scm)) (load-from-path "xm-enved.scm"))
-(if (not (provided? 'snd-moog.scm)) (load-from-path "moog.scm"))
-(if (not (provided? 'snd-rubber.scm)) (load-from-path "rubber.scm"))
-(if (not (provided? 'snd-dsp.scm)) (load-from-path "dsp.scm"))
+(if (not (provided? 'snd-gtk-effects-utils.scm)) (load "gtk-effects-utils.scm"))
+(if (not (provided? 'snd-xm-enved.scm)) (load "xm-enved.scm"))
+(if (not (provided? 'snd-moog.scm)) (load "moog.scm"))
+(if (not (provided? 'snd-rubber.scm)) (load "rubber.scm"))
+(if (not (provided? 'snd-dsp.scm)) (load "dsp.scm"))
 
 (define (plausible-mark-samples)
   ;; find two marks in the current channel (in or nearest to current window)

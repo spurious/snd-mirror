@@ -12,7 +12,7 @@
 
 (if (and (not (provided? 'snd-ws.scm)) 
 	 (not (provided? 'sndlib-ws.scm)))
-    (load-from-path "ws.scm"))
+    (load "ws.scm"))
 
 
 (definstrument (expandn time duration filename amplitude

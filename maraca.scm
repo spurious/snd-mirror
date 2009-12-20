@@ -2,7 +2,7 @@
 ;;;   translated from CLM's maraca.ins
 
 (provide 'snd-maraca.scm)
-(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
+(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
 (define two-pi (* 2 pi))
 

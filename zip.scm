@@ -6,7 +6,7 @@
 
 
 (provide 'snd-zip.scm)
-(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
+(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
 (define (safe-srate) (if (not (null? (sounds))) (srate) (mus-srate)))
 

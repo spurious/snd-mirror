@@ -35,7 +35,7 @@
 ;;; Code:
 
 (provide 'snd-freeverb.scm)
-(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
+(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
 (definstrument (freeverb
 		   :key

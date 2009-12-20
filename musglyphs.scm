@@ -179,7 +179,7 @@
 ;(load "loop.scm") ; Rick's loop implementation (cm/src/loop.scm)
 (defmacro progn args `(begin ,@args))
 
-(load-from-path "cmn-glyphs.lisp")
+(load "cmn-glyphs.lisp")
 
 (set! defvar old-defvar)
 ;(set! declare old-declare)

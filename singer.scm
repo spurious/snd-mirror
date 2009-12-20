@@ -17,7 +17,7 @@
 ;;; translated from CLM singer.ins
 
 (provide 'snd-singer.scm)
-(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
+(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
 
 (definstrument (singer beg amp data)

@@ -5,7 +5,7 @@
 ;;; this file really needs doubles (--with-doubles in configure, double as s7_Double in s7.h)
 
 (provide 'snd-poly.scm)
-(if (not (provided? 'snd-mixer.scm)) (load-from-path "mixer.scm")) ; need matrix determinant for poly-resultant
+(if (not (provided? 'snd-mixer.scm)) (load "mixer.scm")) ; need matrix determinant for poly-resultant
 
 ;;; using lists and vectors internally for complex intermediates
 

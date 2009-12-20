@@ -1,9 +1,9 @@
 ;;; these are CLM test instruments
 
 (provide 'snd-clm23.scm)
-(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
-(if (not (provided? 'snd-dsp.scm)) (load-from-path "dsp.scm"))
-(if (not (provided? 'snd-snd9.scm)) (load-from-path "snd9.scm")) ; sine-bank
+(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
+(if (not (provided? 'snd-dsp.scm)) (load "dsp.scm"))
+(if (not (provided? 'snd-snd9.scm)) (load "snd9.scm")) ; sine-bank
 
 
 ;;; definstrument -> define (+ change open paren placement)
@@ -2896,7 +2896,7 @@
     (set! (sndscm-osc1-phase gen) (+ (sndscm-osc1-phase gen) (sndscm-osc1-freq gen) fm))
     result))
 
-(def-optkey-instrument (sndscm-osc1-fm beg dur freq amp mc-ratio (fm-index 1.0))
+(definstrument (sndscm-osc1-fm beg dur freq amp mc-ratio (fm-index 1.0))
   (let* ((start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur)))
 	 (carrier (make-sndscm-osc1 freq))
@@ -2937,7 +2937,7 @@
     (set! (sndscm-osc2-phase gen) (+ (sndscm-osc2-phase gen) (sndscm-osc2-freq gen) fm))
     result))
 
-(def-optkey-instrument (sndscm-osc2-fm beg dur freq amp mc-ratio (fm-index 1.0))
+(definstrument (sndscm-osc2-fm beg dur freq amp mc-ratio (fm-index 1.0))
   (let* ((start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur)))
 	 (carrier (make-sndscm-osc2 freq))

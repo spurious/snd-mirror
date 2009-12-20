@@ -2,7 +2,7 @@
 
 (if (and (not (provided? 'snd-ws.scm)) 
 	 (not (provided? 'sndlib-ws.scm)))
-    (load-from-path "ws.scm"))
+    (load "ws.scm"))
 
 
 (definstrument (fullmix in-file :optional beg outdur inbeg matrix srate reverb-amount)

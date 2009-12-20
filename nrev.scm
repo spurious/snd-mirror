@@ -4,7 +4,7 @@
 
 (if (and (not (provided? 'snd-ws.scm)) 
 	 (not (provided? 'sndlib-ws.scm)))
-    (load-from-path "ws.scm"))
+    (load "ws.scm"))
 
 
 (definstrument (nrev :key (reverb-factor 1.09) (lp-coeff 0.7) (volume 1.0))

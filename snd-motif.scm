@@ -52,8 +52,8 @@
 
 (provide 'snd-snd-motif.scm)
 
-(if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))
-(if (not (provided? 'snd-play.scm)) (load-from-path "play.scm"))
+(if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))
+(if (not (provided? 'snd-play.scm)) (load "play.scm"))
 
 (define (load-font name)
   "(load-font name) loads the font 'name', returning the font id"
@@ -816,7 +816,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 ;;; if you have a nice background pixmap, you can map it over all of Snd with:
 #|
-(load-from-path "new-backgrounds.scm")
+(load "new-backgrounds.scm")
 (define wd (make-pixmap (cadr (main-widgets)) wood))
 
 (define (paint-all widget)

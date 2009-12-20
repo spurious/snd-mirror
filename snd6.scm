@@ -94,7 +94,7 @@
   ;; so in this replacement, there are two added args
   (mus-sound-seek-frame fd loc))
 
-(if (not (provided? 'snd-mix.scm)) (load-from-path "mix.scm"))
+(if (not (provided? 'snd-mix.scm)) (load "mix.scm"))
 
 (define (protect-region n) 
   "obsolete -- simply produces an error"

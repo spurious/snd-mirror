@@ -2,7 +2,7 @@
 
 (if (and (not (provided? 'snd-ws.scm)) 
 	 (not (provided? 'sndlib-ws.scm)))
-    (load-from-path "ws.scm"))
+    (load "ws.scm"))
 
 
 (definstrument (jc-reverb :optional (low-pass #f) (volume 1.0) (amp-env #f))

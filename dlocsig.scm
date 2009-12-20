@@ -233,11 +233,11 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
     lst))
 
 
-(def-optkey-fun (arrange-speakers (speakers '())
-				  (groups '())
-				  (delays '())
-				  (distances '())
-				  (channel-map '()))
+(define* (arrange-speakers (speakers '())
+			   (groups '())
+			   (delays '())
+			   (distances '())
+			   (channel-map '()))
   ;; sanity checking of configuration
 
   (define (has-duplicates? lst)
@@ -698,7 +698,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 (define bezier-error     (make-procedure-with-setter (lambda (p) (list-ref p 20)) (lambda (p val) (list-set! p 20 val))))
 (define bezier-curvature (make-procedure-with-setter (lambda (p) (list-ref p 21)) (lambda (p val) (list-set! p 21 val))))
 
-(def-optkey-fun (make-bezier-path (path '()) (3d #t) (polar #f) (error 0.01) (curvature #f))
+(define* (make-bezier-path (path '()) (3d #t) (polar #f) (error 0.01) (curvature #f))
   (list 'bezier-path '() '() '() '() '() '() '() '() '() path 3d polar '() '() '() '() '() '() '() error curvature))
 
 
@@ -707,7 +707,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 (define initial-direction (make-procedure-with-setter (lambda (p) (list-ref p 22)) (lambda (p val) (list-set! p 22 val))))
 (define final-direction   (make-procedure-with-setter (lambda (p) (list-ref p 23)) (lambda (p val) (list-set! p 23 val))))
 
-(def-optkey-fun (make-open-bezier-path (path '()) (3d #t) (polar #f) (error 0.01) (curvature #f) 
+(define* (make-open-bezier-path (path '()) (3d #t) (polar #f) (error 0.01) (curvature #f) 
 				       (initial-direction '(0.0 0.0 0.0)) (final-direction '(0.0 0.0 0.0)))
   (list 'open-bezier-path '() '() '() '() '() '() '() '() '() path 3d polar '() '() '() '() '() '() '() error curvature initial-direction final-direction))
 
@@ -717,15 +717,15 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 ;;; Generic defining function (for open, closed, polar and cartesian paths)
 ;;;
 
-(def-optkey-fun (make-path path
-			   (3d path-3d)
-			   polar
-			   closed
-			   curvature
-			   (error 0.01)
-			   ;; only for open paths
-			   initial-direction
-			   final-direction)
+(define* (make-path path
+		    (3d path-3d)
+		    polar
+		    closed
+		    curvature
+		    (error 0.01)
+		    ;; only for open paths
+		    initial-direction
+		    final-direction)
   ;; some sanity checks
   (if (null? path)
       (snd-error "Can't define a path with no points in it"))
@@ -769,14 +769,14 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
 ;;; Some convenient abbreviations
 
-(def-optkey-fun (make-polar-path path
-				 (3d path-3d)
-				 closed
-				 curvature
-				 (error 0.01)
-				 ;; only for open paths
-				 initial-direction
-				 final-direction)
+(define* (make-polar-path path
+			  (3d path-3d)
+			  closed
+			  curvature
+			  (error 0.01)
+			  ;; only for open paths
+			  initial-direction
+			  final-direction)
   (if closed
       (make-path :path path
 		 :3d 3d
@@ -793,11 +793,11 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	       :initial-direction initial-direction
 	       :final-direction final-direction)))
 
-(def-optkey-fun (make-closed-path path
-				  (3d path-3d)
-				  polar
-				  curvature
-				  (error 0.01))
+(define* (make-closed-path path
+			   (3d path-3d)
+			   polar
+			   curvature
+			   (error 0.01))
   (make-path :path path
 	     :3d 3d
 	     :polar polar
@@ -1362,11 +1362,11 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 (define literal-polar  (make-procedure-with-setter (lambda (p) (list-ref p 12)) (lambda (p val) (list-set! p 12 val))))
 
 ;;; Generic literal path creation function
-(def-optkey-fun (make-literal-path (points '()) (3d path-3d) polar)
+(define* (make-literal-path (points '()) (3d path-3d) polar)
   (list 'literal-path '() '() '() '() '() '() '() '() '() points 3d polar))
 
 ;;; Specific polar literal path creation function
-(def-optkey-fun (make-literal-polar-path (points '()) (3d path-3d))
+(define* (make-literal-polar-path (points '()) (3d path-3d))
   (make-literal-path points 3d #t))
 
 
@@ -1382,13 +1382,13 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 (define spiral-height      (make-procedure-with-setter (lambda (p) (list-ref p 18)) (lambda (p val) (list-set! p 18 val))))
 (define spiral-velocity    (make-procedure-with-setter (lambda (p) (list-ref p 19)) (lambda (p val) (list-set! p 19 val))))
 
-(def-optkey-fun (make-spiral-path (start-angle 0.0)
-				  total-angle
-				  step-angle
-				  (turns '())
-				  (distance '(0 10 1 10))
-				  (height '(0 0 1 0))
-				  (velocity '(0 1 1 1)))
+(define* (make-spiral-path (start-angle 0.0)
+			   total-angle
+			   step-angle
+			   (turns '())
+			   (distance '(0 10 1 10))
+			   (height '(0 0 1 0))
+			   (velocity '(0 1 1 1)))
   (if (and total-angle (not (null? turns)))
       (snd-error (format #f "can't specify total-angle [~A] and turns [~A] at the same time for the spiral path" total-angle turns)))
   
@@ -2008,22 +2008,22 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Create a new dlocsig structure
 
-(def-optkey-fun (make-dlocsig start-time
-			      duration
-			      (path dlocsig-path)
-			      (scaler dlocsig-scaler)
-			      (direct-power dlocsig-direct-power)
-			      (inside-direct-power dlocsig-inside-direct-power)
-			      (reverb-power dlocsig-reverb-power)
-			      (inside-reverb-power dlocsig-inside-reverb-power)
-			      (reverb-amount dlocsig-reverb-amount)
-			      (initial-delay dlocsig-initial-delay)
-			      (unity-gain-dist dlocsig-unity-gain-distance)
-			      (inside-radius dlocsig-inside-radius)
-			      (minimum-segment-length dlocsig-minimum-segment-length)
-			      (render-using dlocsig-render-using)
-			      out-channels
-			      rev-channels)
+(define* (make-dlocsig start-time
+		       duration
+		       (path dlocsig-path)
+		       (scaler dlocsig-scaler)
+		       (direct-power dlocsig-direct-power)
+		       (inside-direct-power dlocsig-inside-direct-power)
+		       (reverb-power dlocsig-reverb-power)
+		       (inside-reverb-power dlocsig-inside-reverb-power)
+		       (reverb-amount dlocsig-reverb-amount)
+		       (initial-delay dlocsig-initial-delay)
+		       (unity-gain-dist dlocsig-unity-gain-distance)
+		       (inside-radius dlocsig-inside-radius)
+		       (minimum-segment-length dlocsig-minimum-segment-length)
+		       (render-using dlocsig-render-using)
+		       out-channels
+		       rev-channels)
 
   (if (null? start-time)
       (snd-error "a start time is required in make-dlocsig"))

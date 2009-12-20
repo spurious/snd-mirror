@@ -2,10 +2,10 @@
 
 (if (provided? 'snd-motif) 
     (begin
-      (if (not (provided? 'snd-snd7.scm)) (load-from-path "snd7.scm"))           ; backward-mix
-      (if (not (provided? 'snd-play.scm)) (load-from-path "play.scm"))           ; play-until-c-g
+      (if (not (provided? 'snd-snd7.scm)) (load "snd7.scm"))           ; backward-mix
+      (if (not (provided? 'snd-play.scm)) (load "play.scm"))           ; play-until-c-g
       (if (not (provided? 'snd-snd-motif.scm))                                   ; add-main-pane
-	  (load-from-path "snd-motif.scm"))))
+	  (load "snd-motif.scm"))))
 
 (if (provided? 'snd-motif)
     (let* ((toolscroll (add-main-pane "toolscroll" xmScrolledWindowWidgetClass

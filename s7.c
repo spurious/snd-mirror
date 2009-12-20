@@ -17298,6 +17298,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   value: 3, args: (2 1 list) 
        *   '(1 . 2)
        *   value: 2, args: (1)
+       *
        * but we also get here in a lambda arg list:
        *   (lambda (a b . c) #f)
        *   value: c, args: (b a)
@@ -22164,7 +22165,6 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "quote",             OP_QUOTE);
   assign_syntax(sc, "define",            OP_DEFINE0);
   assign_syntax(sc, "define*",           OP_DEFINE_STAR);
-  assign_syntax(sc, "def-optkey-fun",    OP_DEFINE_STAR);      /* for CLM */
   assign_syntax(sc, "define-constant",   OP_DEFINE_CONSTANT0);
   assign_syntax(sc, "if",                OP_IF0);
   assign_syntax(sc, "begin",             OP_BEGIN);

@@ -11273,7 +11273,7 @@ begin time) in the Snd window title bar, and tries to use the xm module if it is
 
 <p>
 definstrument
-is very much like define, but with added code to support notehook and (for Common Music) *definstrument-hook*.
+is very much like define*, but with added code to support notehook and (for Common Music) *definstrument-hook*.
 So, an instrument that wants to cooperate fully with with-sound and Common Music has the form:
 </p>
 
@@ -11287,11 +11287,11 @@ So, an instrument that wants to cooperate fully with with-sound and Common Music
           (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i ...))))))
 </pre></td></tr></table>
 
-<p>The <a href="sndclm.html#optional-key">optional-key</a> feature can be used with definstrument via def-optkey-instrument:
+<p>The <a href="sndclm.html#optional-key">optional-key</a> feature can be used with definstrument:
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td><pre>
-(def-optkey-instrument (simp beg dur (frequency 440.0) (amplitude 0.1))
+(definstrument (simp beg dur (frequency 440.0) (amplitude 0.1))
   (let* ((os (make-oscil frequency)))
     (run (lambda ()
       (do ((i 0 (+ 1 i))) ((= i dur))
@@ -11651,13 +11651,13 @@ the initial value to 0.0, so our declaration above is the same as any of these:
     (def-clm-struct osc (freq 0.0 :type float) (phase 0.0 :type float))
 </pre>
 
-<p>and so on. The "make" function (make-osc in our example) is a <a href="sndclm.html#optional-key">def-optkey-fun</a> with
+<p>and so on. The "make" function (make-osc in our example) uses define* with
 the field names and types as the optional keys.  So make-osc above is declared (by the
 def-clm-struct macro) as:
 </p>
 
 <pre>
-    (def-optkey-fun (make-osc (freq 0.0) (phase 0.0)) ...)
+    (define* (make-osc (freq 0.0) (phase 0.0)) ...)
 </pre>
 
 <p>which we can invoke in various ways, e.g.:

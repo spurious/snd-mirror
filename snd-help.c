@@ -498,6 +498,7 @@ void about_snd_help(void)
 		"\nRecent changes include:\n\
 \n\
 21-Dec:  moved focus-follows-mouse to C as with-pointer-focus.\n\
+         removed def-optkey-fun and def-optkey-instrument (use define* and definstrument).\n\
 16-Dec:  make-current-window-display (draw.scm) moved to C as with-inset-graph.\n\
          removed Guile support.\n\
 14-Dec:  peak-env support moved to C, added peak-env-dir, removed peak-env.*,\n\
@@ -505,10 +506,6 @@ void about_snd_help(void)
 11-Dec:  removed midi.c, sndrecord.c, SGI support, mus-audio-mixer-*, and Alsa < 1.0 support.\n\
 4-Dec:   portaudio support.\n\
 1-Dec:   removed --with-modules configuration switch.\n\
-30-Nov:  Snd 11.1.\n\
-23-Nov:  colormaps are objects now.  integer->colormap, colormap->integer.\n\
-         transforms are also objects.  integer->transform, transform->integer.\n\
-20-Nov:  play is generic now, \"old-play\" is the previous form.\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",

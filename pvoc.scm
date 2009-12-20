@@ -1,7 +1,7 @@
 ;;; versions of the Moore-Klingbeil-Trevisani-Edwards phase-vocoder
 
 (provide 'snd-pvoc.scm)
-(if (not (provided? 'snd-snd7.scm)) (load-from-path "snd7.scm"))
+(if (not (provided? 'snd-snd7.scm)) (load "snd7.scm"))
 
 (define* (make-pvocoder fftsize overlap interp :optional analyze edit synthesize)
   "(make-pvocoder fftsize overlap interp :optional analyze edit synthesize) makes a new (Scheme-based, not CLM) phase-vocoder generator"

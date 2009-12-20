@@ -29082,7 +29082,7 @@ EDITS: 2
 		(lambda args #f))))
   
   (define (marks->string sndf)
-    (let ((str (format #f "(if (not (provided? 'snd-marks.scm)) (load-from-path \"marks.scm\"))~%(let ((m #f))~%"))
+    (let ((str (format #f "(if (not (provided? 'snd-marks.scm)) (load \"marks.scm\"))~%(let ((m #f))~%"))
 	  (chan 0))
       (for-each
        (lambda (chan-marks)
@@ -52887,10 +52887,10 @@ EDITS: 1
 	    (delete-file revout)
 	    (set! (samples 0 len snd #f #f #f 0 #f #t) output)))))
   
-  (def-optkey-fun (optkey-1 a) a)
-  (def-optkey-fun (optkey-2 (a 3) b) (list a b))
-  (def-optkey-fun (optkey-3 a b c) (list a b c))
-  (def-optkey-fun (optkey-4 (a 1) (b 2) (c 3) d) (list a b c d))
+  (define* (optkey-1 a) a)
+  (define* (optkey-2 (a 3) b) (list a b))
+  (define* (optkey-3 a b c) (list a b c))
+  (define* (optkey-4 (a 1) (b 2) (c 3) d) (list a b c d))
   
   (define (fir+comb beg dur freq amp size)
     (let* ((start (inexact->exact (floor (* (mus-srate) beg)))) 
@@ -52995,7 +52995,7 @@ EDITS: 1
       (if (> unhappy 0)
 	  (snd-print (format #f "~A: unhappiest: ~A ~A~%" name unhappiestseg unhappiest)))))
   
-  (def-optkey-instrument (defopt-simp beg dur (frequency 440.0) (amplitude 0.1))
+  (definstrument (defopt-simp beg dur (frequency 440.0) (amplitude 0.1))
     (let* ((os (make-oscil frequency)))
       (run (lambda ()
 	     (do ((i 0 (+ 1 i))) ((= i dur))

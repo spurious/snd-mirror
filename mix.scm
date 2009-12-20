@@ -371,7 +371,7 @@ last end of the mixes in 'mix-list'"
       (mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (length data))))))
 
 
-(if (not (provided? 'snd-env.scm)) (load-from-path "env.scm"))
+(if (not (provided? 'snd-env.scm)) (load "env.scm"))
 
 (define (env-mixes mix-list overall-amp-env)
   "(env-mixes mix-list amp-env) applies 'amp-env' as a global amplitude envelope to the mixes in 'mix-list'"

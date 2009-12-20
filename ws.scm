@@ -2,7 +2,7 @@
 
 (provide 'snd-ws.scm)
 
-(if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm")) ; we need sound-property in with-mixed-sound
+(if (not (provided? 'snd-extensions.scm)) (load "extensions.scm")) ; we need sound-property in with-mixed-sound
 
 (defmacro ws-interrupt? ()
   `(if (c-g?) 
@@ -873,31 +873,6 @@ finish-with-sound to complete the process."
 (add-hook! after-save-state-hook ws-save-state)
 
 
-;;; -------- def-optkey-instrument --------
-
-(defmacro def-optkey-instrument (args . body)
-  (let* ((name (car args))
-	 (targs (cdr args))
-	 (utargs (let ((arg-names '()))
-		   (for-each
-		    (lambda (a)
-		      (if (not (keyword? a))
-			  (if (symbol? a)
-			      (set! arg-names (cons a arg-names))
-			      (set! arg-names (cons (car a) arg-names)))))
-		    targs)
-		   (reverse arg-names))))
-  `(begin 
-     (def-optkey-fun (,name ,@targs)
-       (if *clm-notehook*
-	   (*clm-notehook* (symbol->string ',name) ,@utargs))
-       ((lambda () ; for inner defines, if any
-	  ,@body)))
-     ,@(if *definstrument-hook*
-           (list (*definstrument-hook* name targs))
-           (list)))))
-
-
 ;;; -------- ->frequency --------
 
 (define ->frequency
@@ -1010,7 +985,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	 (lambda ()
 	   "clm struct local method list accessor"
 	   ,methods))
-       (def-optkey-fun (,(string->symbol (string-append "make-" sname))
+       (define* (,(string->symbol (string-append "make-" sname))
 		        ,@(map (lambda (n)
 				(if (and (list? n)
 					 (>= (length n) 2))

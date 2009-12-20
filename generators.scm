@@ -1,5 +1,5 @@
 (provide 'snd-generators.scm)
-(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
+(if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
 
 ;;; these try to mimic existing gens (mainly oscil), so "frequency" is placed first.
@@ -239,13 +239,13 @@
 	 (lambda ()
 	   ,methods))
 
-       (def-optkey-fun (,(string->symbol (string-append "make-" sname))
-		        ,@(map (lambda (n)
-				(if (and (list? n)
-					 (>= (length n) 2))
-				    (list (car n) (cadr n))
-				    (list n 0.0)))
-			      fields))
+       (define* (,(string->symbol (string-append "make-" sname))
+		 ,@(map (lambda (n)
+			  (if (and (list? n)
+				   (>= (length n) 2))
+			      (list (car n) (cadr n))
+			      (list n 0.0)))
+			fields))
 	 (,wrapper (if (list? ,methods)
 		       (list ',(string->symbol sname)
 			     ,@(map string->symbol field-names)
@@ -4894,7 +4894,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (defgenerator plsenv (pulse #f :type clm) (ampf #f :type clm))
 
-(def-optkey-fun (make-pulsed-env envelope duration frequency)
+(define* (make-pulsed-env envelope duration frequency)
   (make-plsenv (make-pulse-train frequency)
 	       (make-env envelope :duration duration)))
 
@@ -5121,7 +5121,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;;--------------------------------------------------------------------------------
 
-(def-optkey-fun (make-table-lookup-with-env frequency pulse-env size)
+(define* (make-table-lookup-with-env frequency pulse-env size)
   (let* ((len (or size (clm-table-size)))
 	 (ve (make-vct len))
 	 (e (make-env pulse-env :length len)))
@@ -5130,7 +5130,7 @@ index 10 (so 10/2 is the bes-jn arg):
       (vct-set! ve i (env e)))
     (make-table-lookup frequency 0.0 ve len)))
 
-(def-optkey-fun (make-wave-train-with-env frequency pulse-env size)
+(define* (make-wave-train-with-env frequency pulse-env size)
   (let* ((len (or size (clm-table-size)))
 	 (ve (make-vct len))
 	 (e (make-env pulse-env :length len)))
@@ -6002,7 +6002,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;;
 ;;; since initial phases are 0 or pi in peak-phases.scm if n>20, this code could be optimized
 
-(def-optkey-fun (make-noid (frequency 0.0) (n 1) (phases #f) (choice 'all))
+(define* (make-noid (frequency 0.0) (n 1) (phases #f) (choice 'all))
   (make-polyoid frequency
 		(let ((amps (make-vct (* 3 n))))
 		  (do ((i 1 (+ i 1))
@@ -6222,7 +6222,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;;
 ;;; roid -- sum of n sinusoids at arbitrary (default=random) initial phases and amp r^n
 
-(def-optkey-fun (make-roid (frequency 0.0) (n 1) (r 1.0) (phases #f))
+(define* (make-roid (frequency 0.0) (n 1) (r 1.0) (phases #f))
   (make-polyoid frequency
 		(let ((amps (make-vct (* 3 n)))
 		      (rn (/ 1.0 n)))
@@ -6303,16 +6303,16 @@ index 10 (so 10/2 is the bes-jn arg):
 (define waveshape? polyshape?)
 (define waveshape polyshape)
 
-(def-optkey-fun (make-waveshape (frequency *clm-default-frequency*) 
-				(partials '(1 1)) 
-				wave 
-				(size *clm-table-size*))
+(define* (make-waveshape (frequency *clm-default-frequency*) 
+			 (partials '(1 1)) 
+			 wave 
+			 (size *clm-table-size*))
   (if (not wave)
       (make-polyshape frequency :partials partials)
       (make-polyshape frequency :coeffs wave)))
 
-(def-optkey-fun (partials->waveshape partials 
-				     (size *clm-table-size*))
+(define* (partials->waveshape partials 
+			      (size *clm-table-size*))
   (partials->polynomial partials))
 		  
 

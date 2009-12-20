@@ -31,8 +31,8 @@
 
 (provide 'snd-snd-gtk.scm)
 
-(if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm"))
-(if (not (provided? 'snd-play.scm)) (load-from-path "play.scm"))
+(if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))
+(if (not (provided? 'snd-play.scm)) (load "play.scm"))
 
 (define (load-font name)
   (pango_font_description_from_string name))

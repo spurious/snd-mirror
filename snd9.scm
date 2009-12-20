@@ -187,7 +187,7 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
   (xn 0.0 :type float)
   (yn 0.0 :type float))
 
-(def-optkey-fun (make-mfilter (decay .99) (frequency 1000.0))
+(define* (make-mfilter (decay .99) (frequency 1000.0))
   (make-mflt :decay decay 
 	     :frequency frequency 
 	     :eps (* 2.0 (sin (/ (* pi frequency) (mus-srate))))))
@@ -270,10 +270,10 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
   (make-formant freq radius))
 
   
-(def-optkey-fun (make-ppolar (radius 0.9) (frequency 440.0))
+(define* (make-ppolar (radius 0.9) (frequency 440.0))
   (make-two-pole :frequency frequency :radius radius))
 
-(def-optkey-fun (make-zpolar (radius 0.9) (frequency 440.0))
+(define* (make-zpolar (radius 0.9) (frequency 440.0))
   (make-two-zero :frequency frequency :radius radius))
 
 
