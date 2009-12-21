@@ -1350,7 +1350,7 @@ vector, list, or mix object.
 <!-- play -->
 <!-- INDEX genericplay:play (generic) -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def>play</a> (object <a class=quiet href="sndclm.html#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">&amp;optional-key</a> :start :end :channel :edit-position :out-channel :with-sync :wait :stop :srate :channels)</code>
+<code><a class=def>play</a> (object :start :end :channel :edit-position :out-channel :with-sync :wait :stop :srate :channels)</code>
 </td></tr><tr><td></td><td>
 <A NAME="genericplay">play</A> plays an object. 
 The object can be a string (sound filename), a sound object or index, a mix, a region, the selection object, #f, a procedure, or a player.
@@ -2922,11 +2922,6 @@ to the currently selected channel.  So if there's only one sound active, and it 
 one channel, (cursor), (cursor 0), (cursor 0 0), and (cursor (integer-&gt;sound 0)) all refer to the same
 thing.  If you want to refer to the currently selected sound explicitly, use
 <a href="#selectedsound">selected-sound</a>.
-</p>
-
-<p>Some functions take <a class=quiet href="sndclm.html#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">optional-key</a> arguments, as in CLM.
-These are marked "&amp;optional-key" below, followed by the keywords themselves. As in CLM,
-the keywords can be omitted.  
 </p>
 
 <p>In many cases, the 'snd', 'chn', and 'reg' arguments
@@ -5518,11 +5513,11 @@ deleted.
 
 
 <!-- save-region -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="saveregion">save-region</a> reg <a class=quiet href="sndclm.html#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">&amp;optional-key</a> :file :header-type :data-format :comment</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="saveregion">save-region</a> reg :file :header-type :data-format :comment</code>
 </td></tr><tr><td></td><td>
 save-region saves the region 'reg' in 'file' in the given data format and header type.
-It returns the output filename.  The arguments after 'reg' are <a class=quiet href="sndclm.html#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">optional-key</a>
-args (that is, they are normal keyword arguments, but the keywords are optional).  The following calls are equivalent:
+It returns the output filename.  The arguments after 'reg' are define* "optional-key"
+argumentss (that is, they are normal keyword arguments, but the keywords are optional).  The following calls are equivalent:
 <pre>
     (save-region reg "reg0.snd")
     (save-region reg :file "reg0.snd" :header-type mus-next)
@@ -5643,7 +5638,7 @@ reverse-selection reverses the selection.
 
 
 <!-- save-selection -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="saveselection">save-selection</a> (<a class=quiet href="sndclm.html#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">&amp;optional-key</a> :file (:header-type mus-next) :data-format :srate :comment :channel)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="saveselection">save-selection</a> (:file (:header-type mus-next) :data-format :srate :comment :channel)</code>
 </td></tr><tr><td></td><td>
 save-selection saves the selection in 'file'.  If 'channel' is given, it saves only that channel.
 See popup.scm for an example.
@@ -7510,7 +7505,7 @@ actual dB value calculated to -140.0 or -180.0 (depending on which function is c
 
 <!-- new-sound -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="newsound">new-sound</a> (<a class=quiet href="sndclm.html#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">&amp;optional-key</a> :file :header-type :data-format :srate :channels :comment :size)</code>
+<code><a class=def name="newsound">new-sound</a> (:file :header-type :data-format :srate :channels :comment :size)</code>
 </td></tr><tr><td></td><td>
 new-sound creates a new sound named 'file'.  The following function opens a new sound named "test.snd",
 extends it to 'dur' samples, and initializes all samples to 'val':
@@ -7560,7 +7555,7 @@ The multichannel version is <a href="sndscm.html#normalizesound">normalize-sound
 
 <!-- open-raw-sound -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="openrawsound">open-raw-sound</a> (<a class=quiet href="sndclm.html#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">&amp;optional-key</a> :file :channels :srate :data-format)</code>
+<code><a class=def name="openrawsound">open-raw-sound</a> (:file :channels :srate :data-format)</code>
 </td></tr><tr><td></td><td>
 This opens 'file' as a raw (no header) sound in the layout specified.
 If the file has a header, it is not ignored (use <code>(set! (<a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_dataformat_tip)">data-format</a> ...))</code>
@@ -7669,7 +7664,7 @@ by <a href="#maxfftpeaks">max-transform-peaks</a>.
 
 <!-- play -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="play">play</a> (object <a class=quiet href="sndclm.html#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">&amp;optional-key</a> :start :end :channel :edit-position :out-channel :with-sync :wait :stop :srate :channels)</code>
+<code><a class=def name="play">play</a> (object :start :end :channel :edit-position :out-channel :with-sync :wait :stop :srate :channels)</code>
 </td></tr><tr><td></td><td>
 <p>
 play plays 'object'.  If no arguments are passed, it plays the currently selected sound.
@@ -8602,7 +8597,7 @@ save the current fft peak info: <a href="#peaks">peaks</a><br>
 
 <!-- save-sound-as -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="savesoundas">save-sound-as</a> (<a class=quiet href="sndclm.html#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">&amp;optional-key</a> :file :sound :header-type :data-format :srate :channel :edit-position :comment)</code>
+<code><a class=def name="savesoundas">save-sound-as</a> (:file :sound :header-type :data-format :srate :channel :edit-position :comment)</code>
 </td></tr><tr><td></td><td>
 This saves 'sound' as 'file' (like the 'File:Save as' menu option).  If 'channel' is specified,
 only that channel is saved (it is extracted if necessary from the multichannel original).  

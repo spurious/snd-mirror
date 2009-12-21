@@ -520,9 +520,6 @@ var extsnd_openrawsoundhook_tip = "<code>open-raw-sound-hook (filename current-c
 var extsnd_opensound_tip = "<code>(open-sound filename)</code>: open filename <br>" +
                            " (as if opened from File:Open menu option), and return the new sound's index";
 
-var extsnd_optimization_tip = "<code>(optimization)</code>: the current 'run' optimization level<br>" +
-                              " (default 0 = off, max is 6)";
-
 var extsnd_optimizationhook_tip = "<code>optimization-hook (msg)</code>: called if the run macro encounters something it can't optimize.<br>" +
                                   " 'msg' is a string description of the offending form:<br>" +
                                   "<code>  (add-hook! optimization-hook (lambda (msg) (snd-print msg)))</code>.<br>" +
@@ -572,8 +569,6 @@ var extsnd_readonly_tip = "<code>(read-only :optional snd)</code>: whether snd i
 var extsnd_readsample_tip = "<code>(read-sample reader)</code>: get the next sample from the sampler";
 
 var extsnd_redo_tip = "<code>(redo :optional (count 1) snd chn)</code>: redo 'count' edits in snd's channel chn";
-
-var extsnd_regionchans_tip = "<code>(region-chans :optional (reg 0)</code>: region channels";
 
 var extsnd_regionframes_tip = "<code>(region-frames :optional (reg 0) (chan 0))</code>: region length in frames";
 
@@ -1099,21 +1094,6 @@ var sndclm_mus_scaler_tip = "<code>(mus-scaler gen)</code>: gen's scaler, if any
 var sndclm_mussrate_tip = "<code>(mus-srate)</code>: current sampling rate";
 
 var sndclm_ncos_tip = "<code>(ncos gen :optional (fm 0.0))</code>: get the next sample from 'gen', an ncos generator";
-
-var sndclm_optional_key_tip = "One special aspect of each generator make function is the way it reads its arguments.<br>" +
-                "I use the word <b>optional-key</b> to indicate that the arguments are keywords, but the keywords<br>" +
-                "themselves are optional. Take the make-oscil call, defined as:<br><br>" +
-                "<code>make-oscil :optional-key (frequency *clm-default-frequency*) (initial-phase 0.0)</code><br><br>" +
-                "This says that make-oscil has two optional arguments, frequency (in Hz), and <br>" +
-                "initial-phase (in radians).  The keywords associated with these values are<br>" +
-                ":frequency and :initial-phase.  When make-oscil is called, it scans its arguments;<br>" +
-                "if a keyword is seen, that argument and all following arguments are passed unchanged,<br>" +
-                "but if a value is seen, the corresponding keyword is prepended in the argument list:<br><br>" +
-                "<code>(make-oscil :frequency 440.0)<br>" +
-                "(make-oscil :frequency 440.0 :initial-phase 0.0)<br>" +
-                "(make-oscil 440.0)<br>" +
-                "(make-oscil 440.0 :initial-phase 0.0)<br>" +
-                "(make-oscil 440.0 0.0)</code>";
 
 var sndclm_oscil_tip = "<code>(oscil gen :optional (fm 0.0) (pm 0.0))</code>:<br>" +
                        " next sample from oscil gen: val = sin(phase + pm); phase += (freq + fm)";

@@ -6829,6 +6829,26 @@ taking input from the readin generator 'reader'.  The output data is available v
 |#
 
 
+#|
+;; "extremal trigonometric polynomials"
+
+(define (extremal-trig N freq)
+  (with-sound ()
+    (let ((tan-scl (tan (/ pi (* 2 (+ N 1)))))
+	  (incr (hz->radians freq)))
+      (run
+       (lambda ()
+	 (do ((k 1 (+ k 1)))
+	     ((= k N))
+	   (let ((cos-coeff (* tan-scl (sin (/ (* k pi) (+ N 1)))))
+		 (kincr (* k incr)))
+	     (do ((i 0 (+ i 1))
+		  (x 0.0 (+ x kincr)))
+		 ((= i 40000))
+	       (outa i (* cos-coeff (cos x)))))))))))
+|#
+
+
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; set up make-* help strings

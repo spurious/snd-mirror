@@ -81,7 +81,6 @@
 #undef HAVE_FAM_H
 #undef HAVE_SYS_TIME_H
 #undef HAVE_DIRENT_H
-#undef HAVE_LRDF_H
 #undef FGREP_PROG
 
 #undef HAVE_PTHREAD_H

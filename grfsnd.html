@@ -69,7 +69,9 @@
   <li><a href="#sndaswidget" onmouseout="UnTip()" onmouseover="Tip('Embed Snd in some other program')">Snd as a Widget</a>
   <li><a href="#sndwithclm" onmouseout="UnTip()" onmouseover="Tip('CLM is built into Snd')">Snd and CLM</a>
   <li><a href="#sndwithcm" onmouseout="UnTip()" onmouseover="Tip('CM is Rick Taube\'s composition environment')">Snd and Common Music</a>
+<!--
   <li><a href="#sndwithpd" onmouseout="UnTip()" onmouseover="Tip('PD is Miller Puckette\'s synthesis and composition program')">Snd and Pd</a>
+-->
   <li><a href="#sndwithmotif" onmouseout="UnTip()" onmouseover="Tip('Motif extensions from xm.c')">Snd and Motif</a>
   <li><a href="#sndwithgtk" onmouseout="UnTip()" onmouseover="Tip('Gtk extensions from xg.c')">Snd and Gtk</a>
   <li><a href="#sndwithnogui">Snd with no GUI and as scripting engine</a>
@@ -758,10 +760,13 @@ Frank Barknecht made a more elaborate example using the Xfce-b5 theme:
 
 <img src="pix/snd-gtkrc.png" alt="Snd with Xfce-b5 theme" hspace=20 vspace=10>
 
+<!--
 <p>And Kjetil Matheussen has put together the "snd-ls" package with many improvements:
 </p>
 <br>
 <img src="pix/snd-ls.png" alt="snd-ls" hspace=20>
+-->
+
 
 <p>To get the default theme (set by Gnome or whatever), use the -nogtkrc startup switch.
 This is especially useful if you're using an inverse video theme.
@@ -1349,13 +1354,13 @@ It's also possible to load sndlib into cm.  Here's a note from Rick:
     Bye! 
 </pre>
 
-
+<!--
 <br><br>
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithpd">Snd and Pd</a></h3></td></tr></table>
 
 <p>This depends on Guile, so it is currently broken.
 </p>
-<!--
+
 
 <p>Snd can be built to be used as a Pd "external".  Use the --with-snd-as-pd-external switch, and make sure
 the configure script can find a Guile compiled with "--with-threads" and "--enable-static". 

@@ -351,12 +351,12 @@ normal usage, our oscillator looks something like:</p>
 </pre>
 
 <p>One special aspect of each make-&lt;gen&gt; function is the way it
-read its arguments.  I use the word <a class=def Name="optional-key">optional-key</a>
-in the function definitions in this document to indicate that the arguments are
+reads its arguments.  I use parenthesized parameters
+in the function definitions to indicate that the argument names are
 keywords, but the keywords themselves are optional.
 Take the make-oscil call, defined as:</p>
 <pre>
-    make-oscil :optional-key (frequency *clm-default-frequency*) (initial-phase 0.0)
+    make-oscil (frequency *clm-default-frequency*) (initial-phase 0.0)
 </pre>
 <p>This says that make-oscil has two optional arguments, frequency (in Hz), and
 initial-phase (in radians).  The keywords associated with these values are
@@ -381,7 +381,7 @@ seen, the corresponding keyword is prepended in the argument list:
 <p>are in error, because once we see any keyword, all the rest of the arguments have
 to use keywords too (we can't reliably make any assumptions after that point about argument
 ordering). 
-This style of argument passing is very similar to the "Optional
+This style of argument passing is the same as that of s7's define*, and is very similar to the "Optional
 Positional and Named Parameters" extension of scheme: <a href="http://srfi.schemers.org/srfi-89/">SRFI-89</a>.
 </p>
 
@@ -572,7 +572,7 @@ I'm also writing pure-scheme versions of the built-in generators: big-gens.scm.
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>oscil</h3></center></td></tr></table>
 <br>
 <pre>
-  <a class=def name="make-oscil">make-oscil</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency *clm-default-frequency*) (initial-phase 0.0)
+  <a class=def name="make-oscil">make-oscil</a> (frequency *clm-default-frequency*) (initial-phase 0.0)
   <a class=def name="oscil">oscil</a> os :optional (fm-input 0.0) (pm-input 0.0)
   <a class=def name="oscil?">oscil?</a> os
 </pre>
@@ -1029,7 +1029,7 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
 <br>
 
 <pre>
-  <a class=def name="make-env">make-env</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
+  <a class=def name="make-env">make-env</a> 
       envelope      ; list or vct of x,y break-point pairs
       (scaler 1.0)  ; scaler on every y value (before offset is added)
       duration      ; duration in seconds
@@ -1438,7 +1438,7 @@ step envelope in pitch: <a href="#rxyk!cos">brassy</a> in generators.scm<br>
 <br>
 
 <pre>
-  <a class=def name="make-table-lookup">make-table-lookup</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
+  <a class=def name="make-table-lookup">make-table-lookup</a> 
         (frequency *clm-default-frequency*) ; table repetition rate in Hz
         (initial-phase 0.0)                 ; starting point in radians (pi = mid-table)
         wave                                ; a vct containing the signal
@@ -1448,7 +1448,7 @@ step envelope in pitch: <a href="#rxyk!cos">brassy</a> in generators.scm<br>
   <a class=def name="table-lookup">table-lookup</a> tl :optional (fm-input 0.0)
   <a class=def name="table-lookup?">table-lookup?</a> tl
 
-  <a class=def NAME="make-table-lookup-with-env">make-table-lookup-with-env</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency env size
+  <a class=def NAME="make-table-lookup-with-env">make-table-lookup-with-env</a> frequency env size
 </pre>
 
 
@@ -1840,7 +1840,7 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>polywave, polyshape</h3></center></td></tr></table>
 <br>
 <pre>
-  <a class=def name="make-polywave">make-polywave</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
+  <a class=def name="make-polywave">make-polywave</a> 
          (frequency *clm-default-frequency*) 
          (partials '(1 1))                   ; a list of harmonic numbers and their associated amplitudes
          (type mus-chebyshev-first-kind)     ; Chebyshev polynomial choice
@@ -1848,7 +1848,7 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
   <a class=def name="polywave">polywave</a> w :optional (fm 0.0)
   <a class=def name="polywave?">polywave?</a> w
 
-  <a class=def name="make-polyshape">make-polyshape</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
+  <a class=def name="make-polyshape">make-polyshape</a> 
         (frequency *clm-default-frequency*) 
         (initial-phase 0.0) 
         coeffs 
@@ -2614,23 +2614,19 @@ See also <a href="#polyoid">polyoid and noid</a> in generators.scm.
 <table width="70%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>sawtooth-wave, triangle-wave, pulse-train, square-wave</h3></center></td></tr></table>
 <br>
 <pre>
-  <a class=def name="make-triangle-wave">make-triangle-wave</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
-        (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase pi)
+  <a class=def name="make-triangle-wave">make-triangle-wave</a> (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase pi)
   <a class=def name="triangle-wave">triangle-wave</a> s :optional (fm 0.0)
   <a class=def name="triangle-wave?">triangle-wave?</a> s
 
-  <a class=def name="make-square-wave">make-square-wave</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
-        (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase 0)
+  <a class=def name="make-square-wave">make-square-wave</a> (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase 0)
   <a class=def name="square-wave">square-wave</a> s :optional (fm  0.0)
   <a class=def name="square-wave?">square-wave?</a> s
 
-  <a class=def name="make-sawtooth-wave">make-sawtooth-wave</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
-        (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase pi)
+  <a class=def name="make-sawtooth-wave">make-sawtooth-wave</a> (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase pi)
   <a class=def name="sawtooth-wave">sawtooth-wave</a> s :optional (fm 0.0)
   <a class=def name="sawtooth-wave?">sawtooth-wave?</a> s
 
-  <a class=def name="make-pulse-train">make-pulse-train</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
-        (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase (* 2 pi))
+  <a class=def name="make-pulse-train">make-pulse-train</a> (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase (* 2 pi))
   <a class=def name="pulse-train">pulse-train</a> s :optional (fm 0.0)
   <a class=def name="pulse-train?">pulse-train?</a> s
 </pre>
@@ -3353,11 +3349,11 @@ for more dicussion about using these generators as FM modulators.
 <br>
 
 <pre>
-  <a class=def name="make-ncos">make-ncos</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency *clm-default-frequency*) (n 1)
+  <a class=def name="make-ncos">make-ncos</a> (frequency *clm-default-frequency*) (n 1)
   <a class=def name="ncos">ncos</a> nc :optional (fm 0.0)
   <a class=def name="ncos?">ncos?</a> nc
 
-  <a class=def name="make-nsin">make-nsin</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency *clm-default-frequency*) (n 1)
+  <a class=def name="make-nsin">make-nsin</a> (frequency *clm-default-frequency*) (n 1)
   <a class=def name="nsin">nsin</a> ns :optional (fm 0.0)
   <a class=def name="nsin?">nsin?</a> ns
 </pre>
@@ -4322,7 +4318,7 @@ reflection, please send it to me, and I'll add it to this collection.
 
 <br>
 <pre>
-  <a class=def name="make-nrxysin">make-nrxysin</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
+  <a class=def name="make-nrxysin">make-nrxysin</a> 
       (frequency *clm-default-frequency*) 
       (ratio 1.0)               ; ratio between frequency and the spacing between successive sidebands
       (n 1)                     ; number of sidebands
@@ -4330,7 +4326,7 @@ reflection, please send it to me, and I'll add it to this collection.
   <a class=def name="nrxysin">nrxysin</a> s :optional (fm 0.0)
   <a class=def name="nrxysin?">nrxysin?</a> s
 
-  <a class=def name="make-nrxycos">make-nrxycos</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r .5)
+  <a class=def name="make-nrxycos">make-nrxycos</a> (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r .5)
   <a class=def name="nrxycos">nrxycos</a> s :optional (fm 0.0)
   <a class=def name="nrxycos?">nrxycos?</a> s
 </pre>
@@ -4534,7 +4530,7 @@ In the graph, r is 0 at the midpoint, r goes from -1.0 to 1.0 along the horizont
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>ssb-am</h3></center></td></tr></table>
 <br>
 <pre>
-  <a class=def name="make-ssb-am">make-ssb-am</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency *clm-default-frequency*) (order 40)
+  <a class=def name="make-ssb-am">make-ssb-am</a> (frequency *clm-default-frequency*) (order 40)
   <a class=def name="ssb-am">ssb-am</a> gen :optional (insig 0.0) (fm 0.0)
   <a class=def name="ssb-am?">ssb-am?</a> gen
 </pre>
@@ -4773,7 +4769,7 @@ We would replace the current make-ssb-am line with:
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>wave-train</h3></center></td></tr></table>
 
 <pre>
-  <a class=def name="make-wave-train">make-wave-train</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
+  <a class=def name="make-wave-train">make-wave-train</a> 
         (frequency *clm-default-frequency*) 
         (initial-phase 0.0) 
         wave 
@@ -4783,7 +4779,7 @@ We would replace the current make-ssb-am line with:
   <a class=def name="wave-train">wave-train</a> w :optional (fm 0.0)
   <a class=def name="wave-train?">wave-train?</a> w
 
-  <a class=def NAME="make-wave-train-with-env">make-wave-train-with-env</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency env size
+  <a class=def NAME="make-wave-train-with-env">make-wave-train-with-env</a> frequency env size
 </pre>
 
 
@@ -4986,7 +4982,7 @@ trigger, and mus-reset to restart an envelope.
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>rand, rand-interp</h3></center></td></tr></table>
 
 <pre>
-  <a class=def name="make-rand">make-rand</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
+  <a class=def name="make-rand">make-rand</a> 
         (frequency *clm-default-frequency*) ; frequency at which new random numbers occur
         (amplitude 1.0)                     ; numbers are between -amplitude and amplitude
         (envelope '(-1 1 1 1))              ; distribution envelope (uniform distribution is the default)
@@ -4995,7 +4991,7 @@ trigger, and mus-reset to restart an envelope.
   <a class=def name="rand">rand</a> r :optional (sweep 0.0)
   <a class=def name="rand?">rand?</a> r
 
-  <a class=def name="make-rand-interp">make-rand-interp</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
+  <a class=def name="make-rand-interp">make-rand-interp</a> 
         (frequency *clm-default-frequency*) 
         (amplitude 1.0)
         (envelope '(-1 1 1 1)
@@ -5435,19 +5431,19 @@ and <a href="#green-noise">green-noise</a> (bounded Brownian noise).
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>one-pole, one-zero, two-pole, two-zero</h3></center></td></tr></table>
 
 <pre>
-   <a class=def name="make-one-pole">make-one-pole</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> a0 b1    ; b1 &lt; 0.0 gives lowpass, b1 &gt; 0.0 gives highpass
+   <a class=def name="make-one-pole">make-one-pole</a> a0 b1    ; b1 &lt; 0.0 gives lowpass, b1 &gt; 0.0 gives highpass
    <a class=def name="one-pole">one-pole</a> f input 
    <a class=def name="one-pole?">one-pole?</a> f
 
-   <a class=def name="make-one-zero">make-one-zero</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> a0 a1    ; a1 &gt; 0.0 gives weak lowpass, a1 &lt; 0.0 highpass
+   <a class=def name="make-one-zero">make-one-zero</a> a0 a1    ; a1 &gt; 0.0 gives weak lowpass, a1 &lt; 0.0 highpass
    <a class=def name="one-zero">one-zero</a> f input 
    <a class=def name="one-zero?">one-zero?</a> f
 
-   <a class=def name="make-two-pole">make-two-pole</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency [or a0] radius [or b1] b2
+   <a class=def name="make-two-pole">make-two-pole</a> frequency [or a0] radius [or b1] b2
    <a class=def name="two-pole">two-pole</a> f input 
    <a class=def name="two-pole?">two-pole?</a> f
 
-   <a class=def name="make-two-zero">make-two-zero</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency [or a0] radius [or a1] a2
+   <a class=def name="make-two-zero">make-two-zero</a> frequency [or a0] radius [or a1] a2
    <a class=def name="two-zero">two-zero</a> f input 
    <a class=def name="two-zero?">two-zero?</a> f
 </pre>
@@ -5633,13 +5629,13 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>formant</h3></center></td></tr></table>
 
 <pre>
-  <a class=def name="make-formant">make-formant</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
+  <a class=def name="make-formant">make-formant</a> 
       frequency   ; resonance center frequency in Hz
       radius      ; resonance width, indirectly
   <a class=def name="formant">formant</a> f input :optional center-frequency-in-radians
   <a class=def name="formant?">formant?</a> f
 
-  <a class=def name="make-firmant">make-firmant</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency radius
+  <a class=def name="make-firmant">make-firmant</a> frequency radius
   <a class=def name="firmant">firmant</a> f input :optional center-frequency-in-radians
   <a class=def name="firmant?">firmant?</a> f
 </pre>
@@ -5894,15 +5890,15 @@ example that puts formant on the edge of disaster (the glitch is about to explod
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>filter, iir-filter, fir-filter</h3></center></td></tr></table>
 
 <pre>
-   <a class=def name="make-filter">make-filter</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> order xcoeffs ycoeffs
+   <a class=def name="make-filter">make-filter</a> order xcoeffs ycoeffs
    <a class=def name="filter">filter</a> fl inp 
    <a class=def name="filter?">filter?</a> fl
 
-   <a class=def name="make-fir-filter">make-fir-filter</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> order xcoeffs
+   <a class=def name="make-fir-filter">make-fir-filter</a> order xcoeffs
    <a class=def name="fir-filter">fir-filter</a> fl inp 
    <a class=def name="fir-filter?">fir-filter?</a> fl
 
-   <a class=def name="make-iir-filter">make-iir-filter</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> order ycoeffs
+   <a class=def name="make-iir-filter">make-iir-filter</a> order ycoeffs
    <a class=def name="iir-filter">iir-filter</a> fl inp 
    <a class=def name="iir-filter?">iir-filter?</a> fl
 
@@ -6084,7 +6080,7 @@ see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>delay, tap</h3></center></td></tr></table>
 
 <pre>
-  <a class=def name="make-delay">make-delay</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
+  <a class=def name="make-delay">make-delay</a> 
       size                  ; delay length
       initial-contents      ; delay line's initial values (a vct or a list)
       (initial-element 0.0) ; delay line's initial element
@@ -6242,15 +6238,15 @@ and is the basis for about a dozen extensions (comb and friends below).
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>comb, notch</h3></center></td></tr></table>
 
 <pre>
-  <a class=def name="make-comb">make-comb</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (scaler 1.0) size initial-contents (initial-element 0.0) max-size
+  <a class=def name="make-comb">make-comb</a> (scaler 1.0) size initial-contents (initial-element 0.0) max-size
   <a class=def name="comb">comb</a> cflt input :optional (pm 0.0)
   <a class=def name="comb?">comb?</a> cflt
 
-  <a class=def name="make-filtered-comb">make-filtered-comb</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (scaler 1.0) size initial-contents (initial-element 0.0) max-size filter
+  <a class=def name="make-filtered-comb">make-filtered-comb</a> (scaler 1.0) size initial-contents (initial-element 0.0) max-size filter
   <a class=def name="filtered-comb">filtered-comb</a> cflt input :optional (pm 0.0)
   <a class=def name="filtered-comb?">filtered-comb?</a> cflt
 
-  <a class=def name="make-notch">make-notch</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (scaler 1.0) size initial-contents (initial-element 0.0) max-size
+  <a class=def name="make-notch">make-notch</a> (scaler 1.0) size initial-contents (initial-element 0.0) max-size
   <a class=def name="notch">notch</a> cflt input :optional (pm 0.0)
   <a class=def name="notch?">notch?</a> cflt
 </pre>
@@ -6476,7 +6472,7 @@ in the feedback loop:
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>all-pass</h3></center></td></tr></table>
 
 <pre>
-  <a class=def name="make-all-pass">make-all-pass</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
+  <a class=def name="make-all-pass">make-all-pass</a> 
         (feedback 0.0) 
         (feedforward 0.0)
         size 
@@ -6576,7 +6572,7 @@ To get the "all-pass" behavior, set feedback equal to -feedforward.
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>moving-average</h3></center></td></tr></table>
 
 <pre>
-  <a class=def name="make-moving-average">make-moving-average</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> size initial-contents (initial-element 0.0)
+  <a class=def name="make-moving-average">make-moving-average</a> size initial-contents (initial-element 0.0)
   <a class=def name="moving-average">moving-average</a> f input
   <a class=def name="moving-average?">moving-average?</a> f
 </pre>
@@ -6701,7 +6697,7 @@ that are squelched and those that are unchanged (to avoid clicks):
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>src</h3></center></td></tr></table>
 
 <pre>
-  <a class=def name="make-src">make-src</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> input (srate 1.0) (width 5)
+  <a class=def name="make-src">make-src</a> input (srate 1.0) (width 5)
   <a class=def name="src">src</a> s :optional (sr-change 0.0) input-function
   <a class=def name="src?">src?</a> s
 </pre>
@@ -6906,7 +6902,7 @@ envelope so that the result has a given duration, use <a href="sndscm.html#srcfi
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>convolve</h3></center></td></tr></table>
 
 <pre>
-  <a class=def name="make-convolve">make-convolve</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> input filter fft-size filter-size
+  <a class=def name="make-convolve">make-convolve</a> input filter fft-size filter-size
   <a class=def name="convolve">convolve</a> ff :optional input-function
   <a class=def name="convolve?">convolve?</a> ff
 
@@ -7059,7 +7055,7 @@ but convolve uses an FFT internally, rather than a laborious dot-product.
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>granulate</h3></center></td></tr></table>
 
 <pre>
-  <a class=def name="make-granulate">make-granulate</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a>   
+  <a class=def name="make-granulate">make-granulate</a>   
         input
         (expansion 1.0)   ; how much to lengthen or compress the file
         (length .15)      ; length of file slices that are overlapped
@@ -7306,8 +7302,7 @@ In the following example, we use the edit function to reverse every other grain:
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>phase-vocoder</h3></center></td></tr></table>
 
 <pre>
-  <a class=def name="make-phase-vocoder">make-phase-vocoder</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
-        input (fft-size 512) (overlap 4) (interp 128) (pitch 1.0) analyze edit synthesize
+  <a class=def name="make-phase-vocoder">make-phase-vocoder</a> input (fft-size 512) (overlap 4) (interp 128) (pitch 1.0) analyze edit synthesize
   <a class=def name="phase-vocoder">phase-vocoder</a> pv input-function analyze-function edit-function synthesize-function
   <a class=def name="phase-vocoder?">phase-vocoder?</a> pv
 </pre>
@@ -7501,7 +7496,7 @@ moving-spectrum in generators.scm.
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>asymmetric-fm</h3></center></td></tr></table>
 
 <pre>
-  <a class=def name="make-asymmetric-fm">make-asymmetric-fm</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
+  <a class=def name="make-asymmetric-fm">make-asymmetric-fm</a> 
       (frequency *clm-default-frequency*) 
       (initial-phase 0.0) 
       (r 1.0)             ; amplitude ratio between successive sidebands
@@ -7930,7 +7925,7 @@ and you forget to call mus-close, the GC will eventually do it for you.
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>readin</h3></center></td></tr></table>
 
 <pre>
- <a class=def name="make-readin">make-readin</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> file (channel 0) (start 0) (direction 1) size
+ <a class=def name="make-readin">make-readin</a> file (channel 0) (start 0) (direction 1) size
  <a class=def name="readin">readin</a> rd
  <a class=def name="readin?">readin?</a> rd
 </pre>
@@ -8196,7 +8191,7 @@ use its :output argument:
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>locsig</h3></center></td></tr></table>
 
 <pre>
- <a class=def name="make-locsig">make-locsig</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
+ <a class=def name="make-locsig">make-locsig</a> 
         (degree 0.0)
         (distance 1.0) 
 	(reverb 0.0)       ; reverb amount
@@ -8605,7 +8600,7 @@ frequency and the spacing between successive sidebands).
 
 <br>
 <pre style="background-color: #f2f4ff">
-  <a class=def name="make-polyoid">make-polyoid</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
+  <a class=def name="make-polyoid">make-polyoid</a> 
          (frequency *clm-default-frequency*) 
          (partial-amps-and-phases '(1 1 0.0))   ; a list of harmonic numbers, their associated amplitudes, and their initial-phases
 
@@ -8614,7 +8609,7 @@ frequency and the spacing between successive sidebands).
 
   <a class=def name="polyoidenv">polyoid-env</a> w fm amps phases
 
-  <a class=def name="make-noid">make-noid</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1) phases
+  <a class=def name="make-noid">make-noid</a> (frequency 0.0) (n 1) phases
   <a class=def name="noid">noid</a> w :optional (fm 0.0)
 </pre>
 
@@ -8703,7 +8698,7 @@ version usually sounds raspier, and in the limit it sounds like white noise!
 
 <br>
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-asyfm">make-asyfm</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 1.0) (index 1.0)
+  <A class=def NAME="make-asyfm">make-asyfm</A> (frequency 0.0) (ratio 1.0) (r 1.0) (index 1.0)
   <A class=def NAME="asyfmJ">asyfm-J</A> gen (fm 0.0)
   <A class=def NAME="asyfmI">asyfm-I</A> gen (fm 0.0)
   <A class=def NAME="asyfm?">asyfm?</A> gen
@@ -8716,7 +8711,7 @@ asyfm-I is the modified Bessel function version (the second formula in the <a hr
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-fmssb">make-fmssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (index 1.0)
+  <A class=def NAME="make-fmssb">make-fmssb</A> (frequency 0.0) (ratio 1.0) (index 1.0)
   <A class=def NAME="fmssb">fmssb</A> gen (fm 0.0)
   <A class=def NAME="fmssb?">fmssb?</A> gen
 </pre>
@@ -8730,7 +8725,7 @@ in with-sound, but not within run (the run macro does not currently handle compl
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-pulsed-env">make-pulsed-env</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> envelope duration frequency
+  <A class=def NAME="make-pulsed-env">make-pulsed-env</A> envelope duration frequency
   <A class=def NAME="pulsedenv">pulsed-env</A> gen (fm 0.0)
   <A class=def NAME="pulsedenv?">pulsed-env?</A> gen
 </pre>
@@ -8744,7 +8739,7 @@ Many of the instruments in animals.scm use this generator.  (In a sense, this is
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-blackman">make-blackman</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency n ; 1 &lt;= n &lt;= 10
+  <A class=def NAME="make-blackman">make-blackman</A> frequency n ; 1 &lt;= n &lt;= 10
   <A class=def NAME="blackman">blackman</A> gen (fm 0.0)
   <A class=def NAME="blackman?">blackman?</A> gen
 </pre>
@@ -8757,7 +8752,7 @@ as yet another "kernel" along the lines of <a href="#ncos">ncos</a>.
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-sinc-train">make-sinc-train</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency (n 1)
+  <A class=def NAME="make-sinc-train">make-sinc-train</A> frequency (n 1)
   <a class=def name="sinc-train">sinc-train</a> gen (fm 0.0)
   <A class=def NAME="sinc-train?">sinc-train?</A> gen
 </pre>
@@ -8769,7 +8764,7 @@ This produces a sinc-train ((sin x)/x) with n components.  It is very similar to
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-pink-noise">make-pink-noise</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (n 1)
+  <A class=def NAME="make-pink-noise">make-pink-noise</A> (n 1)
   <a class=def name="pink-noise">pink-noise</a> gen
   <A class=def NAME="pink-noise?">pink-noise?</A> gen
 </pre>
@@ -8782,7 +8777,7 @@ This produces a reasonable approximation to 1/f noise, also known as pink-noise.
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-brown-noise">make-brown-noise</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency (amplitude 1.0)
+  <A class=def NAME="make-brown-noise">make-brown-noise</A> frequency (amplitude 1.0)
   <a class=def name="brown-noise">brown-noise</a> gen
   <A class=def NAME="brown-noise?">brown-noise?</A> gen
 </pre>
@@ -8794,11 +8789,11 @@ This produces (unbounded) brownian noise.  'amplitude' sets the maximum size of 
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-green-noise">make-green-noise</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (amplitude 1.0) (low -1.0) (high 1.0)
+  <A class=def NAME="make-green-noise">make-green-noise</A> (frequency 0.0) (amplitude 1.0) (low -1.0) (high 1.0)
   <a class=def name="green-noise">green-noise</a> gen (fm 0.0)
   <A class=def NAME="green-noise?">green-noise?</A> gen
 
-  <A class=def NAME="make-green-noise-interp">make-green-noise-interp</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (amplitude 1.0) (low -1.0) (high 1.0)
+  <A class=def NAME="make-green-noise-interp">make-green-noise-interp</A> (frequency 0.0) (amplitude 1.0) (low -1.0) (high 1.0)
   <a class=def name="green-noise-interp">green-noise-interp</a> gen (fm 0.0)
   <A class=def NAME="green-noise-interp?">green-noise-interp?</A> gen
 </pre>
@@ -8840,15 +8835,15 @@ Here's an instrument that fuzzes up its amplitude envelope a bit using green noi
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-adjustable-square-wave">make-adjustable-square-wave</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency (duty-factor 0.5) (amplitude 1.0)
+  <A class=def NAME="make-adjustable-square-wave">make-adjustable-square-wave</A> frequency (duty-factor 0.5) (amplitude 1.0)
   <A class=def NAME="adjustable-square-wave">adjustable-square-wave</A> gen (fm 0.0)
   <A class=def NAME="adjustable-square-wave?">adjustable-square-wave?</A> gen
 
-  <A class=def NAME="make-adjustable-triangle-wave">make-adjustable-triangle-wave</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency (duty-factor 0.5) (amplitude 1.0)
+  <A class=def NAME="make-adjustable-triangle-wave">make-adjustable-triangle-wave</A> frequency (duty-factor 0.5) (amplitude 1.0)
   <A class=def NAME="adjustable-triangle-wave">adjustable-triangle-wave</A> gen (fm 0.0)
   <A class=def NAME="adjustable-triangle-wave?">adjustable-triangle-wave?</A> gen
 
-  <A class=def NAME="make-adjustable-sawtooth-wave">make-adjustable-sawtooth-wave</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency (duty-factor 0.5) (amplitude 1.0)
+  <A class=def NAME="make-adjustable-sawtooth-wave">make-adjustable-sawtooth-wave</A> frequency (duty-factor 0.5) (amplitude 1.0)
   <A class=def NAME="adjustable-sawtooth-wave">adjustable-sawtooth-wave</A> gen (fm 0.0)
   <A class=def NAME="adjustable-sawtooth-wave?">adjustable-sawtooth-wave?</A> gen
 </pre>
@@ -8920,7 +8915,7 @@ Use mus-scaler to set the duty-factor at run-time.
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-round-interp">make-round-interp</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency n amplitude
+  <A class=def NAME="make-round-interp">make-round-interp</A> frequency n amplitude
   <A class=def NAME="round-interp">round-interp</A> gen (fm 0.0)
   <A class=def NAME="round-interp?">round-interp?</A> gen
 </pre>
@@ -9028,7 +9023,7 @@ Also defined, but not tested, is moving-variance; in the same mold, but not defi
 <table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>Bessel functions</h5></center></td></tr></table>
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-bess">make-bess</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 0)
+  <A class=def NAME="make-bess">make-bess</A> (frequency 0.0) (n 0)
   <A class=def NAME="bess">bess</A> gen (fm 0.0)
   <A class=def NAME="bess?">bess?</A> gen
 </pre>
@@ -9064,7 +9059,7 @@ I must be missing something.
 <br>
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-j0evencos">make-j0evencos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (index 1.0)
+  <A class=def NAME="make-j0evencos">make-j0evencos</A> (frequency 0.0) (index 1.0)
   <A class=def NAME="j0evencos">j0evencos</A> gen (fm 0.0)
   <A class=def NAME="j0evencos?">j0evencos?</A> gen
 </pre>
@@ -9151,7 +9146,7 @@ blackman6 2048
 <br>
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-j0j1cos">make-j0j1cos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (index 0.0)
+  <A class=def NAME="make-j0j1cos">make-j0j1cos</A> (frequency 0.0) (index 0.0)
   <A class=def NAME="j0j1cos">j0j1cos</A> gen fm
   <A class=def NAME="j0j1cos?">j0j1cos?</A> gen
 </pre>
@@ -9166,7 +9161,7 @@ and is very similar to normal FM.
 <br>
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-izcos">make-izcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 1.0)
+  <A class=def NAME="make-izcos">make-izcos</A> (frequency 0.0) (r 1.0)
   <A class=def NAME="izcos">izcos</A> gen (fm 0.0)
   <A class=def NAME="izcos?">izcos?</A> gen
 </pre>
@@ -9181,19 +9176,19 @@ and is very similar to normal FM.
 <br>
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-jjcos">make-jjcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.5) (a 1.0) (k 1.0)
+  <A class=def NAME="make-jjcos">make-jjcos</A> (frequency 0.0) (r 0.5) (a 1.0) (k 1.0)
   <A class=def NAME="jjcos">jjcos</A> gen (fm 0.0)
   <A class=def NAME="jjcos?">jjcos?</A> gen
 
-  <A class=def NAME="make-j2cos">make-j2cos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.5) (n 1)
+  <A class=def NAME="make-j2cos">make-j2cos</A> (frequency 0.0) (r 0.5) (n 1)
   <A class=def NAME="j2cos">j2cos</A> gen (fm 0.0)
   <A class=def NAME="j2cos?">j2cos?</A> gen
 
-  <A class=def NAME="make-jpcos">make-jpcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.5) (a 0.0) (k 1.0)
+  <A class=def NAME="make-jpcos">make-jpcos</A> (frequency 0.0) (r 0.5) (a 0.0) (k 1.0)
   <A class=def NAME="jpcos">jpcos</A> gen (fm 0.0)
   <A class=def NAME="jpcos?">jpcos?</A> gen
 
-  <A class=def NAME="make-jncos">make-jncos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.5) (a 1.0) (n 0)
+  <A class=def NAME="make-jncos">make-jncos</A> (frequency 0.0) (r 0.5) (a 1.0) (n 0)
   <A class=def NAME="jncos">jncos</A> gen (fm 0.0)
   <A class=def NAME="jncos?">jncos?</A> gen
 </pre>
@@ -9213,7 +9208,7 @@ in general as a and r approach 1.0, the spectrum approaches "k" components, some
 <br>
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-jycos">make-jycos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 1.0) (a 1.0)
+  <A class=def NAME="make-jycos">make-jycos</A> (frequency 0.0) (r 1.0) (a 1.0)
   <A class=def NAME="jycos">jycos</A> gen (fm 0.0)
   <A class=def NAME="jycos?">jycos?</A> gen
 </pre>
@@ -9238,7 +9233,7 @@ think there would be any difference, even taking FM into account.
 </p>
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-nssb">make-nssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1)
+  <A class=def NAME="make-nssb">make-nssb</A> (frequency 0.0) (ratio 1.0) (n 1)
   <A class=def NAME="nssb">nssb</A> gen (fm 0.0)
   <A class=def NAME="nssb?">nssb?</A> gen
 </pre>
@@ -9249,7 +9244,7 @@ think there would be any difference, even taking FM into account.
 <br>
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-ncos2" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/fejer.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos2 (Fejer), n=10', ABOVE, true)">make-ncos2</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1)
+  <A class=def NAME="make-ncos2" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/fejer.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos2 (Fejer), n=10', ABOVE, true)">make-ncos2</A> (frequency 0.0) (n 1)
   <A class=def NAME="ncos2" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/fejer.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos2 (Fejer), n=10', ABOVE, true)">ncos2</A> gen (fm 0.0)
   <A class=def NAME="ncos2?">ncos2?</A> gen
 </pre>
@@ -9263,7 +9258,7 @@ think there would be any difference, even taking FM into account.
 <br>
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-ncos4" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/jackson.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos4 (Jackson), n=10', ABOVE, true)">make-ncos4</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1)
+  <A class=def NAME="make-ncos4" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/jackson.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos4 (Jackson), n=10', ABOVE, true)">make-ncos4</A> (frequency 0.0) (n 1)
   <A class=def NAME="ncos4" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/jackson.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos4 (Jackson), n=10', ABOVE, true)">ncos4</A> gen (fm 0.0)
   <A class=def NAME="ncos4?">ncos4?</A> gen
 </pre>
@@ -9279,7 +9274,7 @@ think there would be any difference, even taking FM into account.
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-npcos" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/poussin.png\' width=\'320\' height=\'170\'>', TITLE, 'npcos (Poussin), n=5', ABOVE, true)">make-npcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1)
+  <A class=def NAME="make-npcos" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/poussin.png\' width=\'320\' height=\'170\'>', TITLE, 'npcos (Poussin), n=5', ABOVE, true)">make-npcos</A> (frequency 0.0) (n 1)
   <A class=def NAME="npcos" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/poussin.png\' width=\'320\' height=\'170\'>', TITLE, 'npcos (Poussin), n=5', ABOVE, true)">npcos</A> gen (fm 0.0)
   <A class=def NAME="npcos?">npcos?</A> gen
 </pre>
@@ -9289,7 +9284,7 @@ think there would be any difference, even taking FM into account.
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-n1cos">make-n1cos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1)
+  <A class=def NAME="make-n1cos">make-n1cos</A> (frequency 0.0) (n 1)
   <A class=def NAME="n1cos">n1cos</A> gen (fm 0.0)
   <A class=def NAME="n1cos?">n1cos?</A> gen
 </pre>
@@ -9304,19 +9299,19 @@ think there would be any difference, even taking FM into account.
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-nxycos">make-nxycos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1)
+  <A class=def NAME="make-nxycos">make-nxycos</A> (frequency 0.0) (ratio 1.0) (n 1)
   <A class=def NAME="nxycos">nxycos</A> gen (fm 0.0)
   <A class=def NAME="nxycos?">nxycos?</A> gen
 
-  <A class=def NAME="make-nxysin">make-nxysin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1)
+  <A class=def NAME="make-nxysin">make-nxysin</A> (frequency 0.0) (ratio 1.0) (n 1)
   <A class=def NAME="nxysin">nxysin</A> gen (fm 0.0)
   <A class=def NAME="nxysin?">nxysin?</A> gen
 
-  <A class=def NAME="make-nxy1cos">make-nxy1cos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1)
+  <A class=def NAME="make-nxy1cos">make-nxy1cos</A> (frequency 0.0) (ratio 1.0) (n 1)
   <A class=def NAME="nxy1cos">nxy1cos</A> gen (fm 0.0)
   <A class=def NAME="nxy1cos?">nxy1cos?</A> gen
 
-  <A class=def NAME="make-nxy1sin">make-nxy1sin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1)
+  <A class=def NAME="make-nxy1sin">make-nxy1sin</A> (frequency 0.0) (ratio 1.0) (n 1)
   <A class=def NAME="nxy1sin">nxy1sin</A> gen (fm 0.0)
   <A class=def NAME="nxy1sin?">nxy1sin?</A> gen
 </pre>
@@ -9332,15 +9327,15 @@ even trickier, so it divides by "n".
 <br>
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-noddcos">make-noddcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1)
+  <A class=def NAME="make-noddcos">make-noddcos</A> (frequency 0.0) (n 1)
   <A class=def NAME="noddcos">noddcos</A> gen (fm 0.0)
   <A class=def NAME="noddcos?">noddcos?</A> gen
 
-  <A class=def NAME="make-noddsin">make-noddsin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1)
+  <A class=def NAME="make-noddsin">make-noddsin</A> (frequency 0.0) (n 1)
   <A class=def NAME="noddsin">noddsin</A> gen (fm 0.0)
   <A class=def NAME="noddsin?">noddsin?</A> gen
 
-  <A class=def NAME="make-noddssb">make-noddssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1)
+  <A class=def NAME="make-noddssb">make-noddssb</A> (frequency 0.0) (ratio 1.0) (n 1)
   <A class=def NAME="noddssb">noddssb</A> gen (fm 0.0)
   <A class=def NAME="noddssb?">noddssb?</A> gen
 </pre>
@@ -9378,15 +9373,15 @@ by the inverse of this, so it is always between -1 and 1.
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-nrcos">make-nrcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1) (r 0.5)             ; -1.0 &lt; r &lt; 1.0
+  <A class=def NAME="make-nrcos">make-nrcos</A> (frequency 0.0) (n 1) (r 0.5)             ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="nrcos">nrcos</A> gen (fm 0.0)
   <A class=def NAME="nrcos?">nrcos?</A> gen
 
-  <A class=def NAME="make-nrsin">make-nrsin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1) (r 0.5)             ; -1.0 &lt; r &lt; 1.0
+  <A class=def NAME="make-nrsin">make-nrsin</A> (frequency 0.0) (n 1) (r 0.5)             ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="nrsin">nrsin</A> gen (fm 0.0)
   <A class=def NAME="nrsin?">nrsin?</A> gen
 
-  <A class=def NAME="make-nrssb">make-nrssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1) (r 0.5) ; 0.0 &lt;= r &lt; 1.0
+  <A class=def NAME="make-nrssb">make-nrssb</A> (frequency 0.0) (ratio 1.0) (n 1) (r 0.5) ; 0.0 &lt;= r &lt; 1.0
   <A class=def NAME="nrssb">nrssb</A> gen (fm 0.0)
   <A class=def NAME="nrssbinterp">nrssb-interp</A> gen fm interp
   <A class=def NAME="nrssb?">nrssb?</A> gen
@@ -9431,7 +9426,7 @@ In the nrssb-interp generator, the "interp" argument interpolates between the up
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-nkssb">make-nkssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1)
+  <A class=def NAME="make-nkssb">make-nkssb</A> (frequency 0.0) (ratio 1.0) (n 1)
   <A class=def NAME="nkssb">nkssb</A> gen (fm 0.0)
   <A class=def NAME="nkssbinterp">nkssb-interp</A> gen fm interp
   <A class=def NAME="nkssb?">nkssb?</A> gen
@@ -9455,7 +9450,7 @@ The instrument nkssber uses nkssb-interp:
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-nsincos">make-nsincos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1)
+  <A class=def NAME="make-nsincos">make-nsincos</A> (frequency 0.0) (n 1)
   <A class=def NAME="nsincos">nsincos</A> gen (fm 0.0)
   <A class=def NAME="nsincos?">nsincos?</A> gen
 </pre>
@@ -9466,7 +9461,7 @@ The instrument nkssber uses nkssb-interp:
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-nchoosekcos">make-nchoosekcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1)
+  <A class=def NAME="make-nchoosekcos">make-nchoosekcos</A> (frequency 0.0) (ratio 1.0) (n 1)
   <A class=def NAME="nchoosekcos">nchoosekcos</A> gen (fm 0.0)
   <A class=def NAME="nchoosekcos?">nchoosekcos?</A> gen
 </pre>
@@ -9498,20 +9493,20 @@ is amplitude modulation:
 <table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>infinite sums</h5></center></td></tr></table>
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-rcos">make-rcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
+  <A class=def NAME="make-rcos">make-rcos</A> (frequency 0.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="rcos">rcos</A> gen (fm 0.0)
   <A class=def NAME="rcos?">rcos?</A> gen
 
-  <A class=def NAME="make-rssb">make-rssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
+  <A class=def NAME="make-rssb">make-rssb</A> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="rssb">rssb</A> gen (fm 0.0)
   <A class=def NAME="rssbinterp">rssb-interp</A> gen fm interp
   <A class=def NAME="rssb?">rssb?</A> gen
 
-  <A class=def NAME="make-rxycos">make-rxycos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
+  <A class=def NAME="make-rxycos">make-rxycos</A> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="rxycos">rxycos</A> gen (fm 0.0)
   <A class=def NAME="rxycos?">rxycos?</A> gen
 
-  <A class=def NAME="make-rxysin">make-rxysin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
+  <A class=def NAME="make-rxysin">make-rxysin</A> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="rxysin">rxysin</A> gen (fm 0.0)
   <A class=def NAME="rxysin?">rxysin?</A> gen
 </pre>
@@ -9593,11 +9588,11 @@ are the same, but there's an overall phase difference of pi.
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-ercos">make-ercos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.5) ; r &gt; 0.0
+  <A class=def NAME="make-ercos">make-ercos</A> (frequency 0.0) (r 0.5) ; r &gt; 0.0
   <A class=def NAME="ercos">ercos</A> gen (fm 0.0)
   <A class=def NAME="ercos?">ercos?</A> gen
 
-  <A class=def NAME="make-erssb">make-erssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.5)
+  <A class=def NAME="make-erssb">make-erssb</A> (frequency 0.0) (ratio 1.0) (r 0.5)
   <A class=def NAME="erssb">erssb</A> gen (fm 0.0)
   <A class=def NAME="erssb?">erssb?</A> gen
 </pre>
@@ -9615,7 +9610,7 @@ The ercoser instrument uses ercos:
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-eoddcos">make-eoddcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.5)
+  <A class=def NAME="make-eoddcos">make-eoddcos</A> (frequency 0.0) (r 0.5)
   <A class=def NAME="eoddcos">eoddcos</A> gen (fm 0.0)
   <A class=def NAME="eoddcos?">eoddcos?</A> gen
 </pre>
@@ -9637,15 +9632,15 @@ The ercoser instrument uses ercos:
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-rkcos">make-rkcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
+  <A class=def NAME="make-rkcos">make-rkcos</A> (frequency 0.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="rkcos">rkcos</A> gen (fm 0.0)
   <A class=def NAME="rkcos?">rkcos?</A> gen
 
-  <A class=def NAME="make-rksin">make-rksin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
+  <A class=def NAME="make-rksin">make-rksin</A> (frequency 0.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="rksin">rksin</A> gen (fm 0.0)
   <A class=def NAME="rksin?">rksin?</A> gen
 
-  <A class=def NAME="make-rkssb">make-rkssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
+  <A class=def NAME="make-rkssb">make-rkssb</A> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="rkssb">rkssb</A> gen (fm 0.0)
   <A class=def NAME="rkssb?">rkssb?</A> gen
 </pre>
@@ -9744,19 +9739,19 @@ differ by a factor of 3.  I think the one with the higher peak amplitude sounds 
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-rk!cos">make-rk!cos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.5)  ; rk!cos is a special case of rxyk!cos
+  <A class=def NAME="make-rk!cos">make-rk!cos</A> (frequency 0.0) (r 0.5)  ; rk!cos is a special case of rxyk!cos
   <A class=def NAME="rk!cos">rk!cos</A> gen (fm 0.0)
   <A class=def NAME="rk!cos?">rk!cos?</A> gen
 
-  <A class=def NAME="make-rk!ssb">make-rk!ssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.5)
+  <A class=def NAME="make-rk!ssb">make-rk!ssb</A> (frequency 0.0) (ratio 1.0) (r 0.5)
   <A class=def NAME="rk!ssb">rk!ssb</A> gen (fm 0.0)
   <A class=def NAME="rk!ssb?">rk!ssb?</A> gen
 
-  <A class=def NAME="make-rxyk!cos">make-rxyk!cos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.5)
+  <A class=def NAME="make-rxyk!cos">make-rxyk!cos</A> (frequency 0.0) (ratio 1.0) (r 0.5)
   <A class=def NAME="rxyk!cos">rxyk!cos</A> gen (fm 0.0)
   <A class=def NAME="rxyk!cos?">rxyk!cos?</A> gen
 
-  <A class=def NAME="make-rxyk!sin">make-rxyk!sin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.5)
+  <A class=def NAME="make-rxyk!sin">make-rxyk!sin</A> (frequency 0.0) (ratio 1.0) (r 0.5)
   <A class=def NAME="rxyk!sin">rxyk!sin</A> gen (fm 0.0)
   <A class=def NAME="rxyk!sin?">rxyk!sin?</A> gen
 </pre>
@@ -9826,7 +9821,7 @@ pitch and the index ("r") of the rxyk!cos generator.  The effect is vaguely bras
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-r2k!cos">make-r2k!cos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.5) (k 0.0)
+  <A class=def NAME="make-r2k!cos">make-r2k!cos</A> (frequency 0.0) (r 0.5) (k 0.0)
   <A class=def NAME="r2k!cos">r2k!cos</A> gen (fm 0.0)
   <A class=def NAME="r2k!cos?">r2k!cos?</A> gen
 </pre>
@@ -9907,7 +9902,7 @@ The instruments pianoy and pianoy1 use r2k!cos: <code>pianoy beg dur freq amp</c
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-rkoddssb">make-rkoddssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
+  <A class=def NAME="make-rkoddssb">make-rkoddssb</A> (frequency 0.0) (ratio 1.0) (r 0.5) ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="rkoddssb">rkoddssb</A> gen (fm 0.0)
   <A class=def NAME="rkoddssb?">rkoddssb?</A> gen
 </pre>
@@ -9950,15 +9945,15 @@ safe maximum r is:
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-k2sin">make-k2sin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0)
+  <A class=def NAME="make-k2sin">make-k2sin</A> (frequency 0.0)
   <A class=def NAME="k2sin">k2sin</A> gen (fm 0.0)
   <A class=def NAME="k2sin?">k2sin?</A> gen
 
-  <A class=def NAME="make-k2cos">make-k2cos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0)
+  <A class=def NAME="make-k2cos">make-k2cos</A> (frequency 0.0)
   <A class=def NAME="k2cos">k2cos</A> gen (fm 0.0)
   <A class=def NAME="k2cos?">k2cos?</A> gen
 
-  <A class=def NAME="make-k2ssb">make-k2ssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0)
+  <A class=def NAME="make-k2ssb">make-k2ssb</A> (frequency 0.0) (ratio 1.0)
   <A class=def NAME="k2ssb">k2ssb</A> gen (fm 0.0)
   <A class=def NAME="k2ssb?">k2ssb?</A> gen
 </pre>
@@ -9969,7 +9964,7 @@ safe maximum r is:
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-k3sin">make-k3sin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0)
+  <A class=def NAME="make-k3sin">make-k3sin</A> (frequency 0.0)
   <A class=def NAME="k3sin">k3sin</A> gen fm
   <A class=def NAME="k3sin?">k3sin?</A> gen
 </pre>
@@ -9980,7 +9975,7 @@ safe maximum r is:
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-krksin">make-krksin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.5)
+  <A class=def NAME="make-krksin">make-krksin</A> (frequency 0.0) (r 0.5)
   <A class=def NAME="krksin">krksin</A> gen (fm 0.0)
   <A class=def NAME="krksin?">krksin?</A> gen
 </pre>
@@ -10007,11 +10002,11 @@ The only value to avoid is 1.0.
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-abcos">make-abcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (a 0.5) (b 0.25)
+  <A class=def NAME="make-abcos">make-abcos</A> (frequency 0.0) (a 0.5) (b 0.25)
   <A class=def NAME="abcos">abcos</A> gen (fm 0.0)
   <A class=def NAME="abcos?">abcos?</A> gen
 
-  <A class=def NAME="make-absin">make-absin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (a 0.5) (b 0.25)
+  <A class=def NAME="make-absin">make-absin</A> (frequency 0.0) (a 0.5) (b 0.25)
   <A class=def NAME="absin">absin</A> gen (fm 0.0)
   <A class=def NAME="absin?">absin?</A> gen
 </pre>
@@ -10025,7 +10020,7 @@ The only value to avoid is 1.0.
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-r2k2cos">make-r2k2cos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.5)
+  <A class=def NAME="make-r2k2cos">make-r2k2cos</A> (frequency 0.0) (r 0.5)
   <A class=def NAME="r2k2cos">r2k2cos</A> gen (fm 0.0)
   <A class=def NAME="r2k2cos?">r2k2cos?</A> gen
 </pre>
@@ -10042,7 +10037,7 @@ variants of those given above.
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-tanhsin">make-tanhsin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency *clm-default-frequency*) (r 1.0) (initial-phase 0.0)
+  <A class=def NAME="make-tanhsin">make-tanhsin</A> (frequency *clm-default-frequency*) (r 1.0) (initial-phase 0.0)
   <A class=def NAME="tanhsin">tanhsin</A> gen (fm 0.0)
   <A class=def NAME="tanhsin?">tanhsin?</A> gen
 </pre>
@@ -10053,7 +10048,7 @@ variants of those given above.
 
 
 <pre style="background-color: #f2f4ff">
-  <a class=def name="make-moving-fft">make-moving-fft</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (input #f :type clm) (n 512) (hop 128)
+  <a class=def name="make-moving-fft">make-moving-fft</a> (input #f :type clm) (n 512) (hop 128)
   <a class=def name="moving-fft">moving-fft</A> gen
   <a class=def name="moving-fft?">moving-fft?</A> gen
 </pre>
@@ -10077,7 +10072,7 @@ We could mimic the fft display window in the "lisp graph" via:
 <br>
 
 <pre style="background-color: #f2f4ff">
-  <a class=def name="make-moving-spectrum">make-moving-spectrum</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (input #f :type clm) (n 512) (hop 128)
+  <a class=def name="make-moving-spectrum">make-moving-spectrum</a> (input #f :type clm) (n 512) (hop 128)
   <a class=def name="moving-spectrum">moving-spectrum</A> gen
   <a class=def name="moving-spectrum?">moving-spectrum?</A> gen
 </pre>
@@ -10091,7 +10086,7 @@ use moving-spectrum-amps, moving-spectrum-phases, and moving-spectrum-freqs.
 
 
 <pre style="background-color: #f2f4ff">
-  <a class=def name="make-moving-autocorrelation">make-moving-autocorrelation</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (input #f :type clm) (n 512) (hop 128)
+  <a class=def name="make-moving-autocorrelation">make-moving-autocorrelation</a> (input #f :type clm) (n 512) (hop 128)
   <a class=def name="moving-autocorrelation">moving-autocorrelation</A> gen
   <a class=def name="moving-autocorrelation?">moving-autocorrelation?</A> gen
 </pre>
@@ -10104,7 +10099,7 @@ via mus-data.
 
 
 <pre style="background-color: #f2f4ff">
-  <a class=def name="make-moving-pitch">make-moving-pitch</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (input #f :type clm) (n 512) (hop 128)
+  <a class=def name="make-moving-pitch">make-moving-pitch</a> (input #f :type clm) (n 512) (hop 128)
   <a class=def name="moving-pitch">moving-pitch</A> gen
   <a class=def name="moving-pitch?">moving-pitch?</A> gen
 </pre>
@@ -10131,7 +10126,7 @@ via mus-data.
 
 
 <pre style="background-color: #f2f4ff">
-  <a class=def name="make-moving-scentroid">make-moving-scentroid</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (dbfloor -40.0) (rfreq 100.0) (size 4096)
+  <a class=def name="make-moving-scentroid">make-moving-scentroid</a> (dbfloor -40.0) (rfreq 100.0) (size 4096)
   <a class=def name="moving-scentroid">moving-scentroid</A> gen
   <a class=def name="moving-scentroid?">moving-scentroid?</A> gen
 </pre>
@@ -10161,7 +10156,7 @@ We could add a dither generator via defgenerator (pandering to the Temple of Tap
 (<em class=red>defgenerator</em> dither
   (amplitude 0.001))
 
-;; this expands into (define* (make-dither :optional-key (amplitude 0.001)) ...) 
+;; this expands into (define* (make-dither (amplitude 0.001)) ...) 
 ;;   and (define (dither? obj)...)
 ;;   as well as the field accessors (dither-amplitude gen), (mus-scaler gen), 
 ;;   and all the other methods such as mus-name
@@ -10647,7 +10642,7 @@ The upper sidebands may foldover (alias); if it's a problem, low-pass filter the
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>FFT (fourier transform)</h3></center></td></tr></table>
 <pre>
   <a class=def Name="fft">mus-fft</a> rdat idat fftsize :optional sign
-  <a class=def name="make-fft-window">make-fft-window</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> type size (beta 0.0) (alpha 0.0)
+  <a class=def name="make-fft-window">make-fft-window</a> type size (beta 0.0) (alpha 0.0)
   <a class=def name="multiply-arrays">multiply-arrays</a> rdat window
   <a class=def name="rectangulartopolar">rectangular-&gt;polar</a> rdat idat
   <a class=def name="rectangulartomagnitudes">rectangular-&gt;magnitudes</a> rdat idat

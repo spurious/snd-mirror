@@ -2058,7 +2058,7 @@ The main region-related functions are:\n\
   " S_mix_region " (:optional samp reg snd chn reg-chan)\n\
     mix in region 'reg' at sample 'samp' (defaults to the cursor sample)\n\
 \n\
-  " S_save_region " (reg :optional-key :file :header-type :data-format :comment)\n\
+  " S_save_region " (reg :file :header-type :data-format :comment)\n\
     save region 'reg' in 'file' in data format (default is mus-bshort),\n\
     header type (default is mus-next), and comment. Return the output\n\
     filename.\n\
@@ -2164,7 +2164,7 @@ The primary selection-related functions are:\n\
 \n\
   " S_reverse_selection "(): reverse selected portion\n\
 \n\
-  " S_save_selection " (:optional-key :file (:header-type mus-next)\n\
+  " S_save_selection " (:file (:header-type mus-next)\n\
                            :data-format :srate :comment :channel)\n\
     save the selection in file. If channel is given, save\n\
     only that channel.\n\
