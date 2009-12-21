@@ -5,7 +5,7 @@
     (load "ws.scm"))
 
 
-(definstrument (fullmix in-file :optional beg outdur inbeg matrix srate reverb-amount)
+(definstrument (fullmix in-file beg outdur inbeg matrix srate reverb-amount)
   ;; "matrix" can be a simple amplitude or a list of lists
   ;;     each inner list represents one input channel's amps into one output channel
   ;;     each element of the list can be a number, a list (turned into an env) or an env

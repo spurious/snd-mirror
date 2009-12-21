@@ -21,8 +21,8 @@
   (fe #f :type clm)
   (rampe #f :type clm))
 
-(define* (make-zipper ramp-env :optional frame-size frame-env)
-  "(make-zipper ramp-env :optional frame-size frame-env) makes a zipper generator.  'ramp-env' is 
+(define* (make-zipper ramp-env frame-size frame-env)
+  "(make-zipper ramp-env frame-size frame-env) makes a zipper generator.  'ramp-env' is 
 an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping process, 
 'frame-size' is the maximum frame length during the zip in seconds (defaults to 0.05), and 
 'frame-env' is an envelope returning the current frame size during the zip process."
@@ -94,8 +94,8 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
 ;; (zip-sound 0 1 "fyow.snd" "now.snd" '(0 0 1 1) .05)
 ;; (zip-sound 0 3 "mb.snd" "fyow.snd" '(0 0 1.0 0 1.5 1.0 3.0 1.0) .025)
 
-(define* (zip-sound beg-in-seconds dur-in-seconds file1 file2 :optional ramp size)
-  "(zip-sound beg dur file1 file2 :optional ramp-env size) zips the two files and mixes the result into the current sound"
+(define* (zip-sound beg-in-seconds dur-in-seconds file1 file2 ramp size)
+  "(zip-sound beg dur file1 file2 ramp-env size) zips the two files and mixes the result into the current sound"
   (let* ((beg (round (* (srate) beg-in-seconds)))
 	 (dur (round (* (srate) dur-in-seconds)))
 	 (zip (make-zipper (make-env (or ramp (list 0 0 1 1)) :length dur)

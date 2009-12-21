@@ -123,7 +123,7 @@
 |#
 
 
-(define* (gegenbauer n x :optional (alpha 0.0))
+(define* (gegenbauer n x (alpha 0.0))
   (if (< alpha -0.5) (set! alpha -0.5))
   (if (= n 0)
       1.0
@@ -161,7 +161,7 @@
 |#
 
 
-(define* (chebyshev-polynomial a x :optional (kind 1))
+(define* (chebyshev-polynomial a x (kind 1))
   (let ((n (- (length a) 1)))
     (if (= n 0) 
 	(vector-ref a 0)
@@ -177,7 +177,7 @@
 	    (set! s h))
 	  (+ sum (* r (vector-ref a n)))))))
 
-(define* (chebyshev n x :optional (kind 1))
+(define* (chebyshev n x (kind 1))
   (let ((a (make-vector (+ 1 n) 0.0)))
     (vector-set! a n 1.0)
     (chebyshev-polynomial a x kind)))
@@ -206,7 +206,7 @@
     (hermite-polynomial a x)))
 
 
-(define* (laguerre-polynomial a x :optional (alpha 0.0))
+(define* (laguerre-polynomial a x (alpha 0.0))
   (let ((n (- (length a) 1)))
     (if (= n 0) 
 	(vector-ref a 0)
@@ -224,7 +224,7 @@
 	    (set! s h))
 	  (+ sum (* r (vector-ref a n)))))))
 
-(define* (laguerre n x :optional (alpha 0.0))
+(define* (laguerre n x (alpha 0.0))
   (let ((a (make-vector (+ 1 n) 0.0)))
     (vector-set! a n 1.0)
     (laguerre-polynomial a x alpha)))
@@ -240,7 +240,7 @@
 ;;; (automorph 0.0+1.0i 0 0 1) rotates 90 degrees (so 4 times = identity)
 ;;; most cases won't work right because we're assuming real output and so on
 
-(define* (automorph a b c d :optional snd chn)
+(define* (automorph a b c d snd chn)
   (let* ((len (frames snd chn))
 	 (pow2 (ceiling (/ (log len) (log 2))))
 	 (fftlen (inexact->exact (expt 2 pow2)))
@@ -790,7 +790,7 @@
 
 ;;; --------------------------------------------------------------------------------
 
-(define* (sin-nx-peak n :optional (error 1e-12))
+(define* (sin-nx-peak n (error 1e-12))
   ;; return the min peak amp and its location for sin(x)+sin(nx+a)
   (let* ((size (* n 100))
 	 (incr (/ (* 2 pi) size))

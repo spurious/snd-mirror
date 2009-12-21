@@ -136,8 +136,8 @@
 
 ;;; the regularized form of this would use dur not end
 
-(define* (make-selection :optional beg end snd chn)
-  "(make-selection :optional beg end snd chn) makes a selection like make-region but without creating a region.
+(define* (make-selection beg end snd chn)
+  "(make-selection beg end snd chn) makes a selection like make-region but without creating a region.
 make-selection follows snd's sync field, and applies to all snd's channels if chn is not specified. end defaults
 to end of channel, beg defaults to 0, snd defaults to the currently selected sound."
 
@@ -271,8 +271,8 @@ restores the previous selection (if any).  It returns whatever 'thunk' returned.
 
 ;;; -------- filter-selection-and-smooth
 
-(define* (filter-selection-and-smooth ramp-dur flt :optional order)
-  "(filter-selection-and-smooth ramp-dur flt :optional order) applies 'flt' (via filter-sound) to \
+(define* (filter-selection-and-smooth ramp-dur flt order)
+  "(filter-selection-and-smooth ramp-dur flt order) applies 'flt' (via filter-sound) to \
 the selection, the smooths the edges with a ramp whose duration is 'ramp-dur' (in seconds)"
   (let ((temp-file (snd-tempnam)))
     (save-selection temp-file)

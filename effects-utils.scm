@@ -66,8 +66,8 @@
 	  (and (selected-sound)
 	       (>= (length (marks (selected-sound) (selected-channel))) 2)))))
 
-(define* (make-effect-dialog label ok-callback help-callback reset-callback :optional target-ok-callback)
-  "(make-effect-dialog label ok-callback help-callback reset-callback :optional target-ok-callback) makes a standard effects dialog"
+(define* (make-effect-dialog label ok-callback help-callback reset-callback target-ok-callback)
+  "(make-effect-dialog label ok-callback help-callback reset-callback target-ok-callback) makes a standard effects dialog"
   ;; make a standard dialog
   (let* ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
 	 (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))

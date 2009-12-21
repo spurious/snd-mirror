@@ -33,7 +33,7 @@
 	  (and (selected-sound)
 	       (>= (length (marks (selected-sound) (selected-channel))) 2)))))
 
-(define* (make-effect-dialog label ok-callback help-callback reset-callback :optional target-ok-callback)
+(define* (make-effect-dialog label ok-callback help-callback reset-callback target-ok-callback)
   ;; make a standard dialog
   ;; callbacks take 2 args: widget data
   (let* ((dismiss-button (gtk_button_new_with_label "Go Away"))

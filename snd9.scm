@@ -203,7 +203,7 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
     (set! (mflt-yn m) yn1)
     yn1))
 
-(define* (mfilter m :optional (x-input 0.0) (y-input 0.0))
+(define* (mfilter m (x-input 0.0) (y-input 0.0))
   ;; assume the "b1" business is handled by the caller
   (mfilter-1 m x-input y-input))
 
@@ -265,7 +265,7 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
      (set! (length gen) val))))
 
 
-(define* (old-make-formant :optional (radius .5) (freq 0.0) gain)
+(define* (old-make-formant (radius .5) (freq 0.0) gain)
   (if gain (snd-warning "make-formant gain argument is now ignored"))
   (make-formant freq radius))
 
@@ -293,7 +293,7 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
 
 ;;; -------- sine-bank
 
-(define* (sine-bank amps phases :optional size)
+(define* (sine-bank amps phases size)
   (let ((len (or size (length amps)))
 	(sum 0.0))
     (do ((i 0 (+ 1 i)))

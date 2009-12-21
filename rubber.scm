@@ -16,15 +16,15 @@
 ;;;   sort by least weight
 ;;;   ramp (out or in) and check if done
 
-(define* (rubber-sound stretch :optional snd chn)
+(define* (rubber-sound stretch snd chn)
   ;; prepare sound (get rid of low freqs, resample)
   
-  (define* (add-named-mark samp name :optional snd chn)
+  (define* (add-named-mark samp name snd chn)
     (let ((m (add-mark samp snd chn)))
       (set! (mark-name m) name)
       m))
 
-  (define* (derumble-sound :optional snd chn)
+  (define* (derumble-sound snd chn)
     (let* ((old-length (frames snd chn))
 	   (pow2 (ceiling (/ (log (min old-length (srate snd))) (log 2))))
 	   (fftlen (inexact->exact (expt 2 pow2)))
@@ -32,11 +32,11 @@
       (filter-sound flt-env fftlen snd chn)
       (set! (frames snd chn) old-length)))
   
-  (define* (sample-sound :optional snd chn)
+  (define* (sample-sound snd chn)
     (if (not (= extension 1.0))
 	(src-sound (/ 1.0 extension) 1.0 snd chn)))
   
-  (define* (unsample-sound :optional snd chn)
+  (define* (unsample-sound snd chn)
     ;; undo earlier interpolation
     (if (not (= extension 1.0))
 	(src-sound extension 1.0 snd chn)))

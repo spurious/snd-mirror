@@ -83,7 +83,7 @@
 ;;; -------- with-sound --------
 
 (define* (with-sound-helper thunk 
-			    :key (srate *clm-srate*) 
+			    (srate *clm-srate*) 
 			          (output *clm-file-name*) 
 				  (channels *clm-channels*)
 				  (header-type *clm-header-type*)
@@ -615,7 +615,7 @@
 ;(with-mixed-sound (:channels 2) (fm-violin 0 .1 440 .1 :degree 0) (fm-violin 1 .1 660 .1 :degree 45))
 
 
-(define* (with-mixed-sound->notelist :optional (output-file "temp.scm") snd)
+(define* (with-mixed-sound->notelist (output-file "temp.scm") snd)
   (let* ((outsnd (or snd (selected-sound) (car (sounds))))
 	 (mix-info (sound-property 'with-mixed-sound-info outsnd)))
     (if (not mix-info)
@@ -712,7 +712,7 @@
 ;;; -------- Common Music --------
 
 (define* (init-with-sound
-	  :key (srate *clm-srate*) 
+	  (srate *clm-srate*) 
 	  (output *clm-file-name*) 
 	  (channels *clm-channels*)
 	  (header-type *clm-header-type*)
@@ -879,8 +879,8 @@ finish-with-sound to complete the process."
   (let ((main-pitch (/ 440.0 (expt 2.0 (/ 57 12)))) ; a4 = 440Hz is pitch 57 in our numbering
 	(last-octave 0)                             ; octave number can be omitted
 	(ratios (vector 1.0 256/243 9/8 32/27 81/64 4/3 1024/729 3/2 128/81 27/16 16/9 243/128 2.0)))
-    (lambda* (pitch :optional pythagorean)          ; pitch can be pitch name or actual frequency
-      "(->frequency pitch :optional pythagorean) returns the frequency (Hz) of the 'pitch', a CLM/CM style note name as a \
+    (lambda* (pitch pythagorean)          ; pitch can be pitch name or actual frequency
+      "(->frequency pitch pythagorean) returns the frequency (Hz) of the 'pitch', a CLM/CM style note name as a \
 symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small-integer ratios, rather than equal-tempered tuning."
       (if (symbol? pitch)
 	  (let* ((name (string-downcase (symbol->string pitch)))

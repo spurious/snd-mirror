@@ -15,7 +15,7 @@
 ;;;  CMJ vol 7 no 2 Summer 1983, reprinted in "The Music Machine".
 ;;;  translated from CLM's pluck.ins
 
-(definstrument (pluck start dur freq amp :optional (weighting .5) (lossfact .9))
+(definstrument (pluck start dur freq amp (weighting .5) (lossfact .9))
   "(pluck start dur freq amp weighting lossfact) implements the Jaffe-Smith plucked string physical model. 
 'weighting' is the ratio of the once-delayed to the twice-delayed samples.  It defaults to .5=shortest decay. 
 Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. 
@@ -85,7 +85,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 ;;; translation from MUS10 of Marc LeBrun's waveshaping voice instrument (using FM here)
 ;;; this version translated (and simplified slightly) from CLM's mlbvoi.ins
 
-(definstrument (vox beg dur freq amp ampfun freqfun freqscl phonemes formant-amps formant-indices :optional (vibscl .1) (deg 0) (pcrev 0))  
+(definstrument (vox beg dur freq amp ampfun freqfun freqscl phonemes formant-amps formant-indices (vibscl .1) (deg 0) (pcrev 0))  
   (let ((formants
 	 '((I 390 1990 2550)  (E 530 1840 2480)  (AE 660 1720 2410)
 	   (UH 520 1190 2390) (A 730 1090 2440)  (OW 570 840 2410)
@@ -184,8 +184,8 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 
 ;;; -------- FOF example
 
-(definstrument (fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 :optional (ae '(0 0 25 1 75 1 100 0)) ve)
-  "(fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 :optional (ampenv '(0 0 25 1 75 1 100 0)) vibenv) produces FOF 
+(definstrument (fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 (ae '(0 0 25 1 75 1 100 0)) ve)
+  "(fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 (ampenv '(0 0 25 1 75 1 100 0)) vibenv) produces FOF 
 synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
     (let* ((two-pi (* 2 pi))
 	   (start (seconds->samples beg))
@@ -223,7 +223,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 ;;; from CMJ feb 77 p51
 
 (definstrument (fm-trumpet startime dur
-			   :key (frq1 250.0)
+			   (frq1 250.0)
 			   (frq2 1500.0)
 			   (amp1 0.5)
 			   (amp2 0.1)
@@ -423,7 +423,7 @@ vocal sounds using phase quadrature waveshaping"
 
 ;;; -------- STEREO-FLUTE
 (definstrument (stereo-flute start dur freq flow 
-			     :key
+			    
 			     (flow-envelope '(0  1 100 1))
 			     (decay 0.01) 		; additional time for instrument to decay
 			     (noise 0.0356) 
@@ -436,7 +436,7 @@ vocal sounds using phase quadrature waveshaping"
 			     (vib-rate 5) (vib-amount 0.03)
 			     (ran-rate 5) (ran-amount 0.03))
   "(stereo-flute dur freq flow 
-     :key (flow-envelope '(0  1 100 1)) (decay 0.01)
+     (flow-envelope '(0  1 100 1)) (decay 0.01)
 	   (noise 0.0356) (embouchure-size 0.5) (fbk-scl1 0.5)
 	   (fbk-scl2 0.55) (offset-pos 0.764264) (out-scl 1.0)
 	   (a0 0.7) (b1 -0.3) (vib-rate 5) (vib-amount 0.03)
@@ -502,8 +502,8 @@ is a physical model of a flute:
 
 		  
 ;;; -------- FM-BELL
-(definstrument (fm-bell startime dur frequency amplitude :optional amp-env index-env index)
-  "(fm-bell startime dur frequency amplitude :optional amp-env index-env index) mixes in one fm bell note"
+(definstrument (fm-bell startime dur frequency amplitude amp-env index-env index)
+  "(fm-bell startime dur frequency amplitude amp-env index-env index) mixes in one fm bell note"
   (let* ((beg (seconds->samples startime))
 	 (len (seconds->samples dur))
 	 (end (+ beg len))
@@ -550,7 +550,7 @@ is a physical model of a flute:
 (definstrument (fm-insect startime dur frequency amplitude amp-env 
 			  mod-freq mod-skew mod-freq-env mod-index mod-index-env 
 			  fm-index fm-ratio
-			  :key (degree 0.0)
+			  (degree 0.0)
 		     	       (distance 1.0)
 		               (reverb-amount 0.005))
   (let* ((beg (seconds->samples startime))
@@ -655,7 +655,7 @@ is a physical model of a flute:
 ;;; Paul Weineke's gong.
 
 (definstrument (gong start-time duration frequency amplitude
-		     :key (degree 0.0) (distance 1.0) (reverb-amount 0.005))
+		     (degree 0.0) (distance 1.0) (reverb-amount 0.005))
   (let* ((mfq1 (* frequency 1.16))
 	 (mfq2 (* frequency 3.14))
 	 (mfq3 (* frequency 1.005))
@@ -720,7 +720,7 @@ is a physical model of a flute:
 
 ;;; -------- PQW
 (definstrument (pqw start dur spacing-freq carrier-freq amplitude ampfun indexfun partials
-		    :key (degree 0.0)
+		    (degree 0.0)
 			 (distance 1.0)
 			 (reverb-amount 0.005))
   ;; phase-quadrature waveshaping used to create asymmetric (i.e. single side-band) spectra.
@@ -762,7 +762,7 @@ is a physical model of a flute:
 ;;; in a bit of a hurry and may not have made slavishly accurate translations.
 ;;; Please let me (bil@ccrma.stanford.edu) know of any serious (non-envelope) errors.
 
-(definstrument (tubebell beg dur freq amp :optional (base 32.0))
+(definstrument (tubebell beg dur freq amp (base 32.0))
   ;; from Perry Cook's TubeBell.cpp
   (let* ((osc0 (make-oscil (* freq 0.995)))
 	 (osc1 (make-oscil (* freq 1.414 0.995)))
@@ -814,7 +814,7 @@ is a physical model of a flute:
 		       (* (env resenv) g2 (oscil osc2 (* g3 (env indenv) (oscil osc3))))))))))))
 
 
-(definstrument (rhodey beg dur freq amp :optional (base .5))
+(definstrument (rhodey beg dur freq amp (base .5))
   ;; from Perry Cook's Rhodey.cpp
   (let* ((osc0 (make-oscil freq))
 	 (osc1 (make-oscil (* freq 0.5)))
@@ -978,7 +978,7 @@ is a physical model of a flute:
 
 ;;; NREV (the most popular Samson box reverb)
 
-(definstrument (nrev :key (reverb-factor 1.09) (lp-coeff 0.7) (volume 1.0))
+(definstrument (nrev (reverb-factor 1.09) (lp-coeff 0.7) (volume 1.0))
   ;; reverb-factor controls the length of the decay -- it should not exceed (/ 1.0 .823)
   ;; lp-coeff controls the strength of the low pass filter inserted in the feedback loop
   ;; output-scale can be used to boost the reverb output
@@ -1156,7 +1156,7 @@ is a physical model of a flute:
 			    (oscil car (+ fm vib))))))))))
 
 
-(definstrument (jl-reverb :optional (decay 3.0))
+(definstrument (jl-reverb (decay 3.0))
   (let* ((allpass1 (make-all-pass -0.700 0.700 2111))
 	 (allpass2 (make-all-pass -0.700 0.700  673))
 	 (allpass3 (make-all-pass -0.700 0.700  223))
@@ -1240,7 +1240,7 @@ is a physical model of a flute:
 
 
 (definstrument (spectra start-time duration frequency amplitude
-		         :optional (partials '(1 1 2 0.5))
+		         (partials '(1 1 2 0.5))
 			           (amp-envelope '(0 0 50 1 100 0))
 			           (vibrato-amplitude 0.005)
 			           (vibrato-speed 5.0)
@@ -1276,7 +1276,7 @@ is a physical model of a flute:
 ;;; wavetable-based synthesis techniques).
 
 (definstrument (two-tab start-time duration frequency amplitude
-		        :optional (partial-1 '(1.0 1.0 2.0 0.5))
+		        (partial-1 '(1.0 1.0 2.0 0.5))
 			          (partial-2 '(1.0 0.0 3.0 1.0))
 			          (amp-envelope '(0 0 50 1 100 0))
 			          (interp-func '(0 1 100 0))
@@ -1313,7 +1313,7 @@ is a physical model of a flute:
 				  (table-lookup s-2 vib)))))))))))
 
 
-(definstrument (lbj-piano begin-time duration frequency amplitude :key pfreq
+(definstrument (lbj-piano begin-time duration frequency amplitude pfreq
 			  (degree 45) (reverb-amount 0) (distance 1))
   (let ((piano-spectra (list
 
@@ -1795,7 +1795,7 @@ is a physical model of a flute:
 	       ranfreq noiamp noifun cosamp cosfreq1 cosfreq0 cosnum
 	       ampcosfun freqcosfun 
 	       frq1 r1 g1 frq2 r2 g2 frq3 r3 g3
-	       :key (degree 0.0)
+	       (degree 0.0)
 		    (distance 1.0)
 		    (reverb-amount 0.005))
   ;; driver=0 -- use sum of cosines to drive the filter,
@@ -1902,7 +1902,7 @@ is a physical model of a flute:
 ;;; spectral modeling (SMS)
 
 (definstrument (pins beg dur file amp
-		     :key (transposition 1.0) ; this can be used to transpose the sound
+		     (transposition 1.0) ; this can be used to transpose the sound
 			  (time-scaler 1.0)    ; this can make things happen faster (< 1.0)/slower (> 1.0) in the output
 			  (fftsize 256)        ; should be a power of 2
 			  ;; at 22050 srate, this is ok for sounds above 300Hz or so, below that you need 512 or 1024,
@@ -2172,7 +2172,7 @@ is a physical model of a flute:
 ;;(with-sound () (za 0 1 100 .1 20 100 .95 .95) (za 1.5 1 100 .1 100 20 .95 .95))
 
 
-(define* (clm-expsrc beg dur input-file exp-ratio src-ratio amp :optional rev start-in-file)
+(define* (clm-expsrc beg dur input-file exp-ratio src-ratio amp rev start-in-file)
   (let* ((st (seconds->samples beg))
 	 (stf (floor (* (or start-in-file 0) (srate input-file))))
 	 (fdA (make-readin input-file :channel 0 :start stf))
@@ -2195,7 +2195,7 @@ is a physical model of a flute:
 	 (if revit (out-any i (* rev-amp (+ valA valB)) 0 *reverb*))))))))
 
 
-(definstrument (exp-snd file beg dur amp :optional (exp-amt 1.0) (ramp .4) (seglen .15) (sr 1.0) (hop .05) ampenv)
+(definstrument (exp-snd file beg dur amp (exp-amt 1.0) (ramp .4) (seglen .15) (sr 1.0) (hop .05) ampenv)
   ;; granulate with envelopes on the expansion amount, segment envelope shape,
   ;; segment length, hop length, and input file resampling rate
   (let* ((st (seconds->samples beg))
@@ -2420,7 +2420,7 @@ envelopes if we are in case 2, gains are envelopes.
 nil doesnt print anything, which will speed up a bit the process.
 |#
 
-(definstrument (graphEq file :key (beg 0) (dur 0) (or-beg 0) (amp 1) (amp-env '(0 1 .8 1 1 0)) (amp-base 1) 
+(definstrument (graphEq file (beg 0) (dur 0) (or-beg 0) (amp 1) (amp-env '(0 1 .8 1 1 0)) (amp-base 1) 
 	(offset-gain 0)  
 	(gain-freq-list '((0 1 1 0) 440 (0 0 1 1) 660))      
 	(filt-gain-scale 1)                   
@@ -2492,7 +2492,7 @@ nil doesnt print anything, which will speed up a bit the process.
 	   (outa i (* (env ampenv) outval))))))))
 
 
-(definstrument (anoi infile start dur :optional (fftsize 128) (amp-scaler 1.0) rr)
+(definstrument (anoi infile start dur (fftsize 128) (amp-scaler 1.0) rr)
   ;; a kind of noise reduction -- on-going average spectrum is squelched to some extent
   ;; obviously aimed at intermittent signal in background noise
   ;; this is based on Perry Cook's Scrubber.m
@@ -2575,7 +2575,7 @@ mjkoskin@sci.fi
 |#
 
 
-(definstrument (fullmix in-file :optional beg outdur inbeg matrix srate reverb-amount)
+(definstrument (fullmix in-file beg outdur inbeg matrix srate reverb-amount)
   ;; "matrix" can be a simple amplitude or a list of lists
   ;;     each inner list represents one input channel's amps into one output channel
   ;;     each element of the list can be a number, a list (turned into an env) or an env
@@ -2858,8 +2858,8 @@ mjkoskin@sci.fi
   (avg 0.0 :type float)
   (avgc 0 :type int))
 
-(define* (make-rmsgain :optional (hp 10.0))
-  "(make-rmsgain :optional (hp 10.0)) makes an RMS gain generator"
+(define* (make-rmsgain (hp 10.0))
+  "(make-rmsgain (hp 10.0)) makes an RMS gain generator"
   (let* ((b (- 2.0 (cos (* hp (/ (* 2.0 pi) (mus-srate))))))
 	 (c2 (- b (sqrt (- (* b b) 1.0))))
 	 (c1 (- 1.0 c2)))
@@ -2909,7 +2909,7 @@ mjkoskin@sci.fi
 ;;; split out cases to optimize May-09 bil
 
 (definstrument (expandn time duration filename amplitude
-			:key (expand 1.0)
+			(expand 1.0)
 			(matrix #f)
 			(ramp 0.4)
 			(seglen 0.15)

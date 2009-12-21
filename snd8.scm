@@ -26,7 +26,7 @@
      1.0)))
 
 
-(define* (samples->sound-data :optional (beg 0) num snd chn obj pos (sd-chan 0))
+(define* (samples->sound-data (beg 0) num snd chn obj pos (sd-chan 0))
   (vct->sound-data 
    (channel->vct beg num snd chn pos) 
    (or obj (make-sound-data 1 (or num (frames snd chn))))

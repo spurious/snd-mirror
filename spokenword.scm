@@ -147,7 +147,7 @@
 ; Copied from examp.scm
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define* (if-cursor-follows-play-it-stays-where-play-stopped :optional (enable #t))
+(define* (if-cursor-follows-play-it-stays-where-play-stopped (enable #t))
   ; call with #t or no args to enable this, with #f to disable
 
   (let ()

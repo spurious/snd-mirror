@@ -15,7 +15,7 @@
 ;;; (make-level-meter parent width height args), (display-level data), (with-level-meters n) -- VU meters
 ;;; (make-channel-drop-site snd chn) -- add a drop site
 ;;; (set-channel-drop drop snd chn) -- change given graph drop callback to drop
-;;; (select-file func :optional title dir filter help) starts a Snd-like File Selection Dialog running func if a file is selected
+;;; (select-file func title dir filter help) starts a Snd-like File Selection Dialog running func if a file is selected
 ;;; (show-disk-space snd) adds a label to the minibuffer area showing the current free space 
 ;;; (keep-file-dialog-open-upon-ok) changes File:Open so that clicking "ok" does not "unmanage" the dialog
 ;;; (add-amp-controls) adds amp sliders to the control panel for multi-channel sounds
@@ -162,7 +162,7 @@
 Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
   (define match-sound-files
     (lambda args
-      "(match-sound-files func :optional dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
+      "(match-sound-files func dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
       (let* ((func (car args))
 	     (matches '()))
 	(for-each
@@ -366,22 +366,22 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
 
 ;;; -------- add our own pane to the channel section --------
 
-(define* (add-channel-pane snd chn name type :optional (args '()))
-  "(add-channel-pane snd chn name type :optional (args '())) adds a pane to the channel section"
+(define* (add-channel-pane snd chn name type (args '()))
+  "(add-channel-pane snd chn name type (args '())) adds a pane to the channel section"
   (XtCreateManagedWidget name type (XtParent (XtParent (list-ref (channel-widgets snd chn) 7))) args))
 
 
 ;;; -------- add our own pane to the sound section (underneath the controls in this case) --------
 
-(define* (add-sound-pane snd name type :optional (args '()))
-  "(add-sound-pane snd name type :optional (args '())) adds a pane to the sound section (underneath the control panel)"
+(define* (add-sound-pane snd name type (args '()))
+  "(add-sound-pane snd name type (args '())) adds a pane to the sound section (underneath the control panel)"
   (XtCreateManagedWidget name type (car (sound-widgets snd)) args))
 
 
 ;;; -------- add our own pane to the overall Snd window (underneath the listener in this case) --------
 
-(define* (add-main-pane name type :optional (args '()))
-  "(add-main-pane name type :optional (args '())) adds a pane to Snd (underneath the listener)"
+(define* (add-main-pane name type (args '()))
+  "(add-main-pane name type (args '())) adds a pane to Snd (underneath the listener)"
   (XtCreateManagedWidget name type (or (list-ref (main-widgets) 5) (list-ref (main-widgets) 3)) args))
 
 
@@ -1318,7 +1318,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 ;;; -------- select-file --------
 ;;;
-;;; (select-file func :optional title dir filter help)
+;;; (select-file func title dir filter help)
 ;;;   starts a Snd-like File Selection Dialog, runs func if a file is selected
 ;;;
 ;;; (add-to-menu 0 "Insert File" 
@@ -1589,8 +1589,8 @@ Reverb-feedback sets the scaler on the feedback.
 	   sounds)
 	  container)))))
 
-(define* (show-sounds-in-directory :optional (dir "."))
-  "(show-sounds-in-directory :optional (dir \".\")) calls make-sound-box with the given directory"
+(define* (show-sounds-in-directory (dir "."))
+  "(show-sounds-in-directory (dir \".\")) calls make-sound-box with the given directory"
 
   (make-sound-box
    "sounds"
@@ -1613,7 +1613,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 ;;; -------- show-smpte-label
 ;;;
-;;; (show-smpte-label :optional on-or-off)
+;;; (show-smpte-label on-or-off)
 ;;;   turns on/off a label in the time-domain graph showing the current smpte frame of the leftmost sample
 
 (define smpte-frames-per-second 24.0)
@@ -1660,7 +1660,7 @@ Reverb-feedback sets the scaler on the feedback.
 	      (draw-string smpte (+ x 4) (+ y 4) snd chn)))))))
 
 (define (show-smpte-label . arg)
-  "(show-smpte-label :optional on-or-off) turns on/off a label in the time-domain graph showing the current smpte frame of the leftmost sample"
+  "(show-smpte-label on-or-off) turns on/off a label in the time-domain graph showing the current smpte frame of the leftmost sample"
   (if (or (null? arg)
 	  (car arg))
       (if (not (member draw-smpte-label (hook->list after-graph-hook)))
@@ -1693,8 +1693,8 @@ Reverb-feedback sets the scaler on the feedback.
 		   (set! pix (.pixel col)))))
       pix)))
 
-(define* (make-level-meter parent width height args :optional (resizable #t))
-  "(make-level-meter parent width height args :optional (resizable #t)) makes a VU level meter"
+(define* (make-level-meter parent width height args (resizable #t))
+  "(make-level-meter parent width height args (resizable #t)) makes a VU level meter"
   (let* ((frame (XtCreateManagedWidget "meter-frame" xmFrameWidgetClass parent
 		  (append (list XmNshadowType       XmSHADOW_ETCHED_IN
 				XmNwidth            width
@@ -1865,7 +1865,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 (define make-channel-drop-site
   (lambda args
-    "(make-channel-drop-site :optional snd) adds a drop site pane to the current channel"
+    "(make-channel-drop-site snd) adds a drop site pane to the current channel"
     (let* ((snd (if (> (length args) 0) (car args) (selected-sound)))
 	   (chn (selected-channel snd))
 	   (widget (add-channel-pane snd chn "drop here" xmDrawingAreaWidgetClass
@@ -1951,7 +1951,7 @@ Reverb-feedback sets the scaler on the feedback.
 	    (XtSetValues (cadr data) (list XmNlabelString str))
 	    (XmStringFree str)
 	    (XtAppAddTimeOut (caddr data) 10000 show-label data))))
-    (lambda* (:optional snd-arg)
+    (lambda* (snd-arg)
       "(show-disk-space) adds a label to the minibuffer area showing the current free space (for use with after-open-hook)"
       (let* ((snd (or snd-arg (selected-sound)))
 	     (previous-label (find-if (lambda (n) (equal? (car n) snd)) labelled-snds)))
@@ -2676,8 +2676,8 @@ Reverb-feedback sets the scaler on the feedback.
     (XtManageChild variables-dialog)
     variables-dialog))
 
-(define* (make-variable-display page-name variable-name :optional (type 'text) (range (list 0.0 1.0)))
-"(make-variable-display page-name variable-name :optional (type 'text) (range (list 0.0 1.0))) makes a variable \
+(define* (make-variable-display page-name variable-name (type 'text) (range (list 0.0 1.0)))
+"(make-variable-display page-name variable-name (type 'text) (range (list 0.0 1.0))) makes a variable \
 display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
   (if (not (Widget? variables-dialog)) (make-variables-dialog))
   ;; rowColumn widget gets confused by drawingareas, so I'll split them out into separate panes
@@ -3164,7 +3164,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 ;;;
 ;;; this used to be built-in, but never really worked right
 
-(define* (equalize-panes :optional snd)
+(define* (equalize-panes snd)
   (define (equalize-sound ind)
     (let ((old-style (channel-style ind)))
       (set! (channel-style ind) channels-combined)

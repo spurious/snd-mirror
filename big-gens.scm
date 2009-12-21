@@ -133,7 +133,7 @@
     (lambda (g) (set! (big-oscil-frequency g) (big-hz->radians (big-oscil-frequency g))) g))
   (frequency *clm-default-frequency*) (angle 0.0))
 
-(define* (big-oscil gen :optional (fm 0.0) (pm 0.0))
+(define* (big-oscil gen (fm 0.0) (pm 0.0))
   (declare (gen big-oscil) (fm float) (pm float))
   (let ((x (big-oscil-angle gen)))
     (set! (big-oscil-angle gen) (+ fm x (big-oscil-frequency gen)))
@@ -152,7 +152,7 @@
      g))
    (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0) (r 1.0))
 
-(define* (big-ncos gen :optional (fm 0.0))
+(define* (big-ncos gen (fm 0.0))
   (declare (gen big-ncos) (fm float))
   (let* ((n (big-ncos-n gen))
 	 (x (big-ncos-angle gen))
@@ -193,7 +193,7 @@
      g)))
    (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0) (r 1.0))
 
-(define* (big-nsin gen :optional (fm 0.0))
+(define* (big-nsin gen (fm 0.0))
   (declare (gen big-nsin) (fm float))
   (let* ((n (big-nsin-n gen))
 	 (x (big-nsin-angle gen))
@@ -227,7 +227,7 @@
       g))
   (frequency *clm-default-frequency*) (angle 0.0) (wave #f :type vector) (size *clm-table-size*))
 
-(define* (big-table-lookup gen :optional (fm 0.0))
+(define* (big-table-lookup gen (fm 0.0))
   (declare (gen big-table-lookup) (fm float))
   (let ((x (big-table-lookup-angle gen))
 	(w (big-table-lookup-wave gen))

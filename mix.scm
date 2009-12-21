@@ -51,8 +51,8 @@
         (mixes)))))
 
 
-(define* (find-mix sample :optional snd chn)
-  "(find-mix sample :optional snd chn) returns the mix at the given sample, or #f"
+(define* (find-mix sample snd chn)
+  "(find-mix sample snd chn) returns the mix at the given sample, or #f"
   (let ((mix-list (mixes (or snd (selected-sound) (car (sounds))) (or chn (selected-channel snd) 0))))
     (call-with-exit
      (lambda (found-it)
@@ -395,9 +395,9 @@ last end of the mixes in 'mix-list'"
 	mix-list)))))
   
 
-(define* (sync-all-mixes :optional (new-sync 1))
+(define* (sync-all-mixes (new-sync 1))
   ;; a replacement for set-all-tracks in snd-8
-  "(sync-all-mixes :optional (new-sync 1)) sets the mix-sync field of every active mix to new-sync"
+  "(sync-all-mixes (new-sync 1)) sets the mix-sync field of every active mix to new-sync"
   (for-each
    (lambda (snd-m)
      (for-each
@@ -446,9 +446,9 @@ last end of the mixes in 'mix-list'"
 
 ;;; -------- pan-mix --------
 
-(define* (pan-mix name beg pan :optional snd (chn 0) auto-delete)
+(define* (pan-mix name beg pan snd (chn 0) auto-delete)
 
-  "(pan-mix file start pan-env :optional snd (chn 0) (auto-delete #f)) mixes 'file' into the sound 'snd'
+  "(pan-mix file start pan-env snd (chn 0) (auto-delete #f)) mixes 'file' into the sound 'snd'
 starting at 'start' (in samples) using 'pan-env' to decide how to split the sound between the output channels (0: all chan 0, 1: all chan 1).
 So, (pan-mix \"oboe.snd\" 0 '(0 0 1 1)) goes from all chan 0 to all chan 1.
 'auto-delete' determines whether the in-coming file should be treated as a temporary file and deleted when the mix
@@ -539,9 +539,9 @@ panning operation."
 		       #f)))))))))
 
 
-(define* (pan-mix-selection beg pan :optional snd chn)
+(define* (pan-mix-selection beg pan snd chn)
 
-  "(pan-mix-selection start pan-env :optional snd chn) mixes the current selection  into the sound 'snd'
+  "(pan-mix-selection start pan-env snd chn) mixes the current selection  into the sound 'snd'
 starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all chan 1)."
 
   (if (not (selection?))
@@ -549,9 +549,9 @@ starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all c
       (pan-mix (save-selection (snd-tempnam)) beg pan snd chn #t)))
 
 
-(define* (pan-mix-region reg beg pan :optional snd chn)
+(define* (pan-mix-region reg beg pan snd chn)
 
-  "(pan-mix-region reg start pan-env :optional snd chn) mixes the given region into the sound 'snd' 
+  "(pan-mix-region reg start pan-env snd chn) mixes the given region into the sound 'snd' 
 starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all chan 1)."
 
   (if (not (region? reg))
@@ -559,9 +559,9 @@ starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all c
       (pan-mix (save-region reg (snd-tempnam)) beg pan snd chn #t)))
 
 
-(define* (pan-mix-vct v beg pan :optional snd chn)
+(define* (pan-mix-vct v beg pan snd chn)
 
-  "(pan-mix-vct v start pan-env :optional snd chn) mixes the vct data into the sound 'snd' 
+  "(pan-mix-vct v start pan-env snd chn) mixes the vct data into the sound 'snd' 
 starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all chan 1)."
 
   (let* ((temp-file (snd-tempnam))
@@ -574,8 +574,8 @@ starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all c
 
 ;;; -------- delay-channel-mixes
 
-(define* (delay-channel-mixes beg dur :optional snd chn)
-  "(delay-channel-mixes beg dur :optional snd chn) adds dur (which can be negative) to the \
+(define* (delay-channel-mixes beg dur snd chn)
+  "(delay-channel-mixes beg dur snd chn) adds dur (which can be negative) to the \
 begin time of each mix that starts after beg in the given channel"
   (for-each
    (lambda (m)
@@ -589,7 +589,7 @@ begin time of each mix that starts after beg in the given channel"
 ;;; -------- check-mix-tags
 
 (define* (check-mix-tags snd chn)
-  "(check-mix-tags :optional snd chn) tries to move mix tags around to avoid collisions"
+  "(check-mix-tags snd chn) tries to move mix tags around to avoid collisions"
   (if (not snd)
       (for-each check-mix-tags (sounds))
       (if (not chn)

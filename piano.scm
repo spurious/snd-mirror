@@ -101,7 +101,7 @@
 (define default-unaCordaGain-table '(21 1.0  24 .4 29 .1 29.1 .95 108 .95))
 
 
-(definstrument (p start  :key (duration 1.0)
+(definstrument (p start (duration 1.0)
 		  (keyNum 60.0)                    ; middleC=60: can use fractional part to detune
 		  (strike-velocity 0.5)            ; corresponding normalized velocities (range: 0.0--1.0)
 		  (pedal-down #f)                  ; set to #t for sustain pedal down...pedal-down-times not yet implemented

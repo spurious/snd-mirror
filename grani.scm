@@ -30,7 +30,7 @@
 
 (define grani-default-base (expt 2 (/ 12)))
 
-(define* (exp-envelope env :key
+(define* (exp-envelope env
 		       (base grani-default-base)
 		       (error 0.01)
 		       (scaler 1)
@@ -112,7 +112,7 @@
 ;;;  where:
 ;;;    vref=1.0 reference value = digital clipping
 
-(define* (db-envelope envelope :optional (cutoff -70) (error 0.01))
+(define* (db-envelope envelope (cutoff -70) (error 0.01))
   (exp-envelope envelope
 		:base 10
 		:scaler 1/20
@@ -120,7 +120,7 @@
 		:cutoff cutoff
 		:error error))
 
-(define* (make-db-env envelope :key
+(define* (make-db-env envelope
 		      (scaler 1)
 		      (offset 0)
 		      (base 1)
@@ -134,7 +134,7 @@
 
 ;;; Pitch envelopes (y units are semitone and octave intervals)
 
-(define* (semitones-envelope envelope :optional (around 1.0) (error 0.01))
+(define* (semitones-envelope envelope (around 1.0) (error 0.01))
   (exp-envelope envelope
 		:error error
 		:base (expt 2 (/ 12))
@@ -143,7 +143,7 @@
 		:offset 0
 		:out-scaler around))
 
-(define* (make-semitones-env envelope :key
+(define* (make-semitones-env envelope
 			     (around 1.0)
 			     (scaler 1.0)
 			     (offset 0.0)
@@ -155,7 +155,7 @@
 	    :scaler scaler :offset offset
 	    :base base :duration duration :length (+ 1 end)))
 
-(define* (octaves-envelope envelope :optional (around 1.0) (error 0.01))
+(define* (octaves-envelope envelope (around 1.0) (error 0.01))
   (exp-envelope envelope
 		:error error
 		:base 2
@@ -164,7 +164,7 @@
 		:offset 0
 		:out-scaler around))
 
-(define* (make-octaves-env envelope :key
+(define* (make-octaves-env envelope
 			   (around 1.0)
 			   (scaler 1.0)
 			   (offset 0.0)
@@ -230,7 +230,7 @@
 
 ;;; create a vct from an envelope
 
-(define* (make-gr-env env :optional (length 512))
+(define* (make-gr-env env (length 512))
   (let* ((env-vct (make-vct length))
 	 (length-1 (exact->inexact (- length 1))))
     (do ((i 0 (+ 1 i)))
@@ -240,7 +240,7 @@
 ;;;-----------------------------------------------------------------------------
 ;;; Grain envelopes
 
-(define* (raised-cosine :key 
+(define* (raised-cosine 
 			(duty-cycle 100)
 			(length 128))
   (let* ((v (make-vct length))
@@ -313,7 +313,7 @@
 (define grani-to-grain-random 4)
 (define grani-to-grain-allchans 5)
 
-(definstrument (grani start-time duration amplitude file :key
+(definstrument (grani start-time duration amplitude file
 		      (input-channel 0)
 		      (grains 0)
 		      (amp-envelope '(0 0 0.3 1 0.7 1 1 0))

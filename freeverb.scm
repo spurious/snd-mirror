@@ -38,7 +38,6 @@
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
 (definstrument (freeverb
-		   :key
 		   (room-decay 0.5)
 		   (damping 0.5)
 		   (global 0.3)

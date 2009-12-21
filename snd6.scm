@@ -41,8 +41,8 @@
 	(vct->vector vc0)
 	vc0)))
 
-(define* (append-to-minibuffer msg :optional snd)
-  "(append-to-minibuffer msg :optional snd) appends 'msg' to whatever is in snd's minibuffer"
+(define* (append-to-minibuffer msg snd)
+  "(append-to-minibuffer msg snd) appends 'msg' to whatever is in snd's minibuffer"
   (if (and (sound? snd)
 	   (not (provided? 'snd-nogui)))
       (let* ((minibuffer (and (sound-widgets snd) 

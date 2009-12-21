@@ -1,6 +1,6 @@
 ;;; playing-related examples previously scattered around at random
 ;;;
-;;; play-sound :optional func -- play current sound, calling (func data) on each buffer if func is passed
+;;; play-sound func -- play current sound, calling (func data) on each buffer if func is passed
 ;;; play-often, play-until-c-g -- play sound n times or until c-g
 ;;; play-region-forever -- play region over and over until C-g typed
 ;;; loop-between-marks -- play while looping continuously between two movable marks
@@ -14,14 +14,14 @@
 (provide 'snd-play.scm)
 
 
-(define* (samples->sound-data :optional (beg 0) num snd chn obj pos (sd-chan 0))
+(define* (samples->sound-data (beg 0) num snd chn obj pos (sd-chan 0))
   (vct->sound-data 
    (channel->vct beg num snd chn pos) 
    (or obj (make-sound-data 1 (or num (frames snd chn))))
    sd-chan))
 
 
-(define* (open-play-output :optional out-chans out-srate out-format out-bufsize)
+(define* (open-play-output out-chans out-srate out-format out-bufsize)
   ;; returns (list audio-fd chans frames)
   (let* ((outchans (or out-chans 1))
 	 (cur-srate (or out-srate (and (not (null? (sounds))) (srate)) 22050))
@@ -46,8 +46,8 @@
     (list audio-fd outchans pframes)))
 
 
-(define* (play-sound :optional func)
-  "(play-sound :optional func) plays the currently selected sound, calling func on each data buffer, if func exists"
+(define* (play-sound func)
+  "(play-sound func) plays the currently selected sound, calling func on each data buffer, if func exists"
   (if (not (null? (sounds)))
       (let* ((filechans (chans))
 	     (audio-info (open-play-output filechans (srate) #f 256))

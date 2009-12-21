@@ -107,8 +107,8 @@
       (throw 'no-such-region (list "region-rms" reg))))
 
 
-(define* (window-samples :optional snd chn)
-  "(window-samples :optional snd chn) -> samples in snd channel chn in current graph window"
+(define* (window-samples snd chn)
+  "(window-samples snd chn) -> samples in snd channel chn in current graph window"
   (let ((wl (left-sample snd chn))
 	(wr (right-sample snd chn)))
     (channel->vct wl (+ 1 (- wr wl)) snd chn)))
@@ -503,8 +503,8 @@
 ;;;
 ;;; these are used by Octave (WaveLab) -- each line has one integer, apparently a signed short.
 
-(define* (read-ascii in-filename :optional (out-filename "test.snd") (out-type mus-next) (out-format mus-bshort) (out-srate 44100))
-  "(read-ascii in-filename :optional (out-filename \"test.snd\") (out-type mus-next) (out-format mus-bshort) (out-srate 44100)) tries to \
+(define* (read-ascii in-filename (out-filename "test.snd") (out-type mus-next) (out-format mus-bshort) (out-srate 44100))
+  "(read-ascii in-filename (out-filename \"test.snd\") (out-type mus-next) (out-format mus-bshort) (out-srate 44100)) tries to \
 read an ASCII sound file"
   (let* ((in-fd (open-input-file in-filename))
 	 (out-fd (new-sound out-filename out-type out-format out-srate 1 (format #f "created by read-ascii: ~A" in-filename)))
@@ -636,7 +636,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 	      (sounds))
     (list sndlist chnlist)))
 
-(define* (do-all-chans func :optional origin)
+(define* (do-all-chans func origin)
   "(do-all-chans func edhist) applies func to all active channels, using edhist as the edit history 
 indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"
   (apply map (lambda (snd chn)
@@ -649,7 +649,7 @@ indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"
 	       (update-time-graph snd chn))
 	 (all-chans)))
 
-(define* (do-chans func :optional origin)
+(define* (do-chans func origin)
   "(do-chans func edhist) applies func to all sync'd channels using edhist as the edit history indication"
   (let ((snc (sync)))
     (if (> snc 0)
@@ -660,7 +660,7 @@ indication: (do-all-chans (lambda (val) (* 2.0 val)) \"double all samples\")"
 	       (all-chans))
 	(snd-warning "sync not set"))))
 
-(define* (do-sound-chans proc :optional origin)
+(define* (do-sound-chans proc origin)
   "(do-sound-chans func args edhist) applies func to all selected channels using edhist as the edit history indication"
   (let ((snd (selected-sound)))
     (if snd
@@ -724,7 +724,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 ;;; -------- FFT-based editing
 ;;;
 
-(define* (fft-edit bottom top :optional snd chn)
+(define* (fft-edit bottom top snd chn)
   "(fft-edit low-Hz high-Hz) ffts an entire sound, removes all energy below low-Hz and all above high-Hz, 
 then inverse ffts."
   (let* ((sr (srate snd))
@@ -759,7 +759,7 @@ then inverse ffts."
     (vct->channel rdata 0 (- len 1) snd chn #f (format #f "fft-edit ~A ~A" bottom top))))
 
 
-(define* (fft-squelch squelch :optional snd chn)
+(define* (fft-squelch squelch snd chn)
   "(fft-squelch squelch) ffts an entire sound, sets all bins to 0.0 whose energy is below squelch, then inverse ffts"
   (let* ((len (frames snd chn))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
@@ -793,7 +793,7 @@ then inverse ffts."
     scaler))
 
 
-(define* (fft-cancel lo-freq hi-freq :optional snd chn)
+(define* (fft-cancel lo-freq hi-freq snd chn)
   "(fft-cancel lo-freq hi-freq) ffts an entire sound, sets the bin(s) representing lo-freq to hi-freq to 0.0, then inverse ffts"
   (let* ((sr (srate snd))
 	 (len (frames snd chn))
@@ -832,12 +832,12 @@ then inverse ffts."
     (vct-set! gen 0 (min size (max 0 (+ ctr (if up 1 -1)))))
     val))
 
-(define* (make-ramp :optional (size 128))
-  "(make-ramp :optional (size 128)) returns a ramp generator"
+(define* (make-ramp (size 128))
+  "(make-ramp (size 128)) returns a ramp generator"
   (vct 0.0 size))
 
 
-(define* (squelch-vowels :optional snd chn)
+(define* (squelch-vowels snd chn)
   "(squelch-vowels) suppresses portions of a sound that look like steady-state"
   (let* ((fft-size 32)
 	 (fft-mid (floor (/ fft-size 2)))
@@ -875,7 +875,7 @@ then inverse ffts."
 		 0 #f snd chn #f "squelch-vowels")))
 
 
-(define* (fft-env-data fft-env :optional snd chn)
+(define* (fft-env-data fft-env snd chn)
   "(fft-env-data fft-env) applies fft-env as spectral env to current sound, returning vct of new data"
   (let* ((len (frames snd chn))
 	 (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
@@ -899,12 +899,12 @@ then inverse ffts."
     (vct-scale! rdata (/ 1.0 fsize))))
 
 
-(define* (fft-env-edit fft-env :optional snd chn)
+(define* (fft-env-edit fft-env snd chn)
   "(fft-env-edit fft-env) edits (filters) current chan using fft-env"
   (vct->channel (fft-env-data fft-env snd chn) 0 (- (frames) 1) snd chn #f (format #f "fft-env-edit '~A" fft-env)))
 
 
-(define* (fft-env-interp env1 env2 interp :optional snd chn)
+(define* (fft-env-interp env1 env2 interp snd chn)
   "(fft-env-interp env1 env2 interp) interpolates between two fft-filtered versions (env1 and env2 are the 
 spectral envelopes) following interp (an env between 0 and 1)"
   (let* ((data1 (fft-env-data env1 snd chn))
@@ -921,7 +921,7 @@ spectral envelopes) following interp (an env between 0 and 1)"
     (vct->channel new-data 0 (- len 1) snd chn #f (format #f "fft-env-interp '~A '~A '~A" env1 env2 interp))))
 
 
-(define* (filter-fft flt :optional (normalize #t) snd chn)
+(define* (filter-fft flt (normalize #t) snd chn)
   "(filter-fft flt normalize snd chn) gets the spectrum of all the data in the given channel, \
 applies the function 'flt' to it, then inverse ffts.  'flt' should take one argument, the \
 current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is like fft-squelch."
@@ -994,7 +994,7 @@ current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is 
 
 
 
-(define* (fft-smoother cutoff start samps :optional snd chn)
+(define* (fft-smoother cutoff start samps snd chn)
   "(fft-smoother cutoff start samps snd chn) uses fft-filtering to smooth a 
 section: (vct->channel (fft-smoother .1 (cursor) 400) (cursor) 400)"
   (let* ((fftpts (inexact->exact (expt 2 (ceiling (/ (log (+ 1 samps)) (log 2.0))))))
@@ -1196,7 +1196,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 ;;;
 ;;; CLM instrument version is in clm.html
 
-(define* (hello-dentist frq amp :optional snd chn)
+(define* (hello-dentist frq amp snd chn)
   "(hello-dentist frq amp) varies the sampling rate randomly, making a voice sound quavery: (hello-dentist 40.0 .1)"
   (let* ((rn (make-rand-interp :frequency frq :amplitude amp))
 	 (i 0)
@@ -1221,7 +1221,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 ;;; a very similar function uses oscil instead of rand-interp, giving
 ;;; various "Forbidden Planet" sound effects:
 
-(define* (fp sr osamp osfrq :optional snd chn)
+(define* (fp sr osamp osfrq snd chn)
   "(fp sr osamp osfrq) varies the sampling rate via an oscil: (fp 1.0 .3 20)"
   (let* ((os (make-oscil osfrq))
 	 (s (make-src :srate sr))
@@ -1255,8 +1255,8 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 
 ;;; here's the virtual op version:
 
-(define* (compand-channel :optional (beg 0) dur snd chn edpos)
-  "(compand-channel :optional (beg 0) dur snd chn edpos) applies a standard compander to sound"
+(define* (compand-channel (beg 0) dur snd chn edpos)
+  "(compand-channel (beg 0) dur snd chn edpos) applies a standard compander to sound"
   ;; this is the "regularized version of the compander using ptree-channel
   (ptree-channel (lambda (inval)
 		   (let ((index (+ 8.0 (* 8.0 inval))))
@@ -1265,8 +1265,8 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 		 (format #f "compand-channel ~A ~A" beg dur)))
 
 
-(define* (compand-sound :optional (beg 0) dur snd)
-  "(compand-sound :optional beg dur snd) applies companding to every channel of 'snd'"
+(define* (compand-sound (beg 0) dur snd)
+  "(compand-sound beg dur snd) applies companding to every channel of 'snd'"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
 	(let* ((out-chans (channels index)))
@@ -1283,8 +1283,8 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 ;;; in this case, src calls granulate which reads the currently selected file.
 ;;; CLM version is in expsrc.ins
 
-(define* (expsrc rate :optional snd chn)
-  "(expsrc rate :optional snd chn) uses sampling-rate conversion and granular synthesis 
+(define* (expsrc rate snd chn)
+  "(expsrc rate snd chn) uses sampling-rate conversion and granular synthesis 
 to produce a sound at a new pitch but at the original tempo.  It returns a function for map-channel."
   (let* ((gr (make-granulate :expansion rate))
 	 ;; this can be improved by messing with make-granulate's hop and length args
@@ -1312,7 +1312,7 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 ;;; will depend on the expansion envelope -- we integrate it to get
 ;;; the overall expansion, then use that to decide the new length.
 
-(define* (expsnd gr-env :optional snd chn)
+(define* (expsnd gr-env snd chn)
   "(expsnd gr-env) uses the granulate generator to change tempo according to an envelope: (expsnd '(0 .5 2 2.0))"
   (let* ((dur (/ (* (/ (frames snd chn) (srate snd)) 
 		    (integrate-envelope gr-env)) ; in env.scm
@@ -1366,7 +1366,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
 
 ;;; similar ideas can be used for spectral cross-fades, etc -- for example:
 
-(define* (voiced->unvoiced amp fftsize r tempo :optional snd chn)
+(define* (voiced->unvoiced amp fftsize r tempo snd chn)
   "(voiced->unvoiced amp fftsize r tempo) turns a vocal sound into whispering: (voiced->unvoiced 1.0 256 2.0 2.0)"
   (let* ((freq-inc (/ fftsize 2))
 	 (fdr (make-vct fftsize))
@@ -1416,8 +1416,8 @@ selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
 
 ;;; very similar but use ncos (glottal pulse train?) instead of white noise
 
-(define* (pulse-voice cosines :optional (freq 440.0) (amp 1.0) (fftsize 256) (r 2.0) snd chn)
-  "(pulse-voice cosines :optional (freq 440) (amp 1.0) (fftsize 256) (r 2.0) snd chn) uses ncos to manipulate speech sounds"
+(define* (pulse-voice cosines (freq 440.0) (amp 1.0) (fftsize 256) (r 2.0) snd chn)
+  "(pulse-voice cosines (freq 440) (amp 1.0) (fftsize 256) (r 2.0) snd chn) uses ncos to manipulate speech sounds"
   (let* ((freq-inc (/ fftsize 2))
 	 (fdr (make-vct fftsize))
 	 (fdi (make-vct fftsize))
@@ -1522,8 +1522,8 @@ selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
 ;;; make-sound-interp sets up a sound reader that reads a channel at an arbitary location,
 ;;;   interpolating between samples if necessary, the corresponding "generator" is sound-interp
 
-(define* (make-sound-interp start :optional snd chn)
-  "(make-sound-interp start :optional snd chn) -> an interpolating reader for snd's channel chn"
+(define* (make-sound-interp start snd chn)
+  "(make-sound-interp start snd chn) -> an interpolating reader for snd's channel chn"
   (let* ((data (channel->vct 0 #f snd chn))
 	 (size (length data)))
     (lambda (loc)
@@ -1568,7 +1568,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
 ;;   envelope could be used for this effect, but it is much more direct to apply the
 ;;   envelope to sound sample positions.
 
-(define* (env-sound-interp envelope :optional (time-scale 1.0) snd chn)
+(define* (env-sound-interp envelope (time-scale 1.0) snd chn)
   "(env-sound-interp env (time-scale 1.0) snd chn) reads snd's channel chn according to env and time-scale"
   ;; since the old/new sounds can be any length, we'll write a temp file rather than trying to use map-channel or vct-map!
   (let* ((len (frames snd chn))
@@ -1600,8 +1600,8 @@ selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
 
 ;;; here's a very similar function that uses granular synthesis to move at a varying tempo through a sound
 
-(define* (granulated-sound-interp envelope :optional (time-scale 1.0) (grain-length 0.10) (grain-envelope '(0 0 1 1 2 1 3 0)) (output-hop 0.05) snd chn)
-  "(granulated-sound-interp envelope :optional (time-scale 1.0) (grain-length 0.10) (grain-envelope '(0 0 1 1 2 1 3 0)) (output-hop 0.05) snd chn) reads \
+(define* (granulated-sound-interp envelope (time-scale 1.0) (grain-length 0.10) (grain-envelope '(0 0 1 1 2 1 3 0)) (output-hop 0.05) snd chn)
+  "(granulated-sound-interp envelope (time-scale 1.0) (grain-length 0.10) (grain-envelope '(0 0 1 1 2 1 3 0)) (output-hop 0.05) snd chn) reads \
 the given channel following 'envelope' (as in env-sound-interp), using grains to create the re-tempo'd read"
   (let* ((len (frames snd chn))
 	 (newlen (floor (* time-scale len)))
@@ -1692,7 +1692,7 @@ this clock, set retitle-time to 0"
 
 ;;; -------- filtered-env 
 
-(define* (filtered-env e :optional snd chn)
+(define* (filtered-env e snd chn)
   "(filtered-env env) is a time-varying one-pole filter: when env is at 1.0, no filtering, 
 as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount move together"
   (let* ((samps (frames))
@@ -1988,8 +1988,8 @@ In most cases, this will be slightly offset from the true beginning of the note"
     data))
 
 
-(define* (add-notes notes :optional snd chn)
-  "(add-notes notes) adds (mixes) 'notes' which is a list of lists of the form: file :optional (offset 0.0) (amp 1.0) 
+(define* (add-notes notes snd chn)
+  "(add-notes notes) adds (mixes) 'notes' which is a list of lists of the form: file (offset 0.0) (amp 1.0) 
 starting at the cursor in the currently selected channel: (add-notes '((\"oboe.snd\") (\"pistol.snd\" 1.0 2.0)))"
   (let* ((start (cursor snd chn)))
     (as-one-edit
@@ -2198,7 +2198,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 (if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))
 (if (not (provided? 'snd-hooks.scm)) (load "hooks.scm"))
 
-(define* (if-cursor-follows-play-it-stays-where-play-stopped :optional (enable #t))
+(define* (if-cursor-follows-play-it-stays-where-play-stopped (enable #t))
   ;; call with #t or no args to enable this, with #f to disable
 
   (let ()
@@ -2243,8 +2243,8 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 
 ;;; -------- smooth-channel as virtual op
 
-(define* (smooth-channel-via-ptree :optional (beg 0) dur snd chn edpos)
-  "(smooth-channel-via-ptree :optional (beg 0) dur snd chn edpos) is smooth-channel implemented as a virtual edit"
+(define* (smooth-channel-via-ptree (beg 0) dur snd chn edpos)
+  "(smooth-channel-via-ptree (beg 0) dur snd chn edpos) is smooth-channel implemented as a virtual edit"
   (let* ((y0 (sample beg snd chn edpos))
 	 (y1 (sample (+ beg (or dur (- (frames) 1))) snd chn edpos))
 	 (init-angle (if (> y1 y0) pi 0.0)) 
@@ -2273,8 +2273,8 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 
 ;;; -------- ring-modulate-channel (ring-mod as virtual op)
 
-(define* (ring-modulate-channel freq :optional (beg 0) dur snd chn edpos)
-  "(ring-modulate-channel freq :optional (beg 0) dur snd chn edpos) ring-modulates the given channel"
+(define* (ring-modulate-channel freq (beg 0) dur snd chn edpos)
+  "(ring-modulate-channel freq (beg 0) dur snd chn edpos) ring-modulates the given channel"
   (ptree-channel
    (lambda (y data forward)
      (let* ((angle (vct-ref data 0))
@@ -2396,8 +2396,8 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
     
 ;; -------- reorder blocks within channel
 
-(define* (reverse-by-blocks block-len :optional snd chn)
-  "(reverse-by-blocks block-len :optional snd chn): divide sound into block-len blocks, recombine blocks in reverse order"
+(define* (reverse-by-blocks block-len snd chn)
+  "(reverse-by-blocks block-len snd chn): divide sound into block-len blocks, recombine blocks in reverse order"
   (let* ((len (frames snd chn))
 	 (num-blocks (floor (/ len (* (srate snd) block-len)))))
     (if (> num-blocks 1)
@@ -2422,8 +2422,8 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	    0 #f snd chn #f (format #f "reverse-by-blocks ~A" block-len))))))
 
 
-(define* (reverse-within-blocks block-len :optional snd chn)
-  "(reverse-within-blocks block-len :optional snd chn): divide sound into blocks, recombine in order, but each block internally reversed"
+(define* (reverse-within-blocks block-len snd chn)
+  "(reverse-within-blocks block-len snd chn): divide sound into blocks, recombine in order, but each block internally reversed"
   (let* ((len (frames snd chn))
 	 (num-blocks (floor (/ len (* (srate snd) block-len)))))
     (if (> num-blocks 1)
@@ -2447,7 +2447,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 ;;;   this library can have about 12 notes).  The results of this function need to be fixed up by hand
 ;;;   in some cases (violin notes in particular).
 
-(define* (sounds->segment-data main-dir :optional (output-file "sounds.data"))
+(define* (sounds->segment-data main-dir (output-file "sounds.data"))
 
   (define (lower-case-and-no-spaces name)
     (let* ((new-name (string-downcase name))
@@ -2518,7 +2518,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	    (list (+ 1 segctr) segments))
 	  (list segctr segments))))
 
-  (define* (do-one-directory fd dir-name ins-name :optional (high .01) (low .001))
+  (define* (do-one-directory fd dir-name ins-name (high .01) (low .001))
     (snd-print (format #f ";~A~%" dir-name))
     (for-each
      (lambda (sound)
@@ -2565,7 +2565,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 
 ;;; -------- channel-clipped?
 
-(define* (channel-clipped? :optional snd chn)
+(define* (channel-clipped? snd chn)
   "(channel-clipped? snd chn) returns #t and a sample number if it finds clipping"
   (let ((last-y 0.0))
     (scan-channel 

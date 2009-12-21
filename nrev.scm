@@ -7,7 +7,7 @@
     (load "ws.scm"))
 
 
-(definstrument (nrev :key (reverb-factor 1.09) (lp-coeff 0.7) (volume 1.0))
+(definstrument (nrev (reverb-factor 1.09) (lp-coeff 0.7) (volume 1.0))
   ;; reverb-factor controls the length of the decay -- it should not exceed (/ 1.0 .823)
   ;; lp-coeff controls the strength of the low pass filter inserted in the feedback loop
   ;; output-scale can be used to boost the reverb output

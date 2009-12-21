@@ -394,7 +394,7 @@
 
 ;;; -------- show-smpte-label
 ;;;
-;;; (show-smpte-label :optional on-or-off)
+;;; (show-smpte-label on-or-off)
 ;;;   turns on/off a label in the time-domain graph showing the current smpte frame of the leftmost sample
 
 (define smpte-frames-per-second 24.0)
@@ -725,7 +725,7 @@ Reverb-feedback sets the scaler on the feedback.
 	    ((pred (car l)) (car l))
 	    (else (find-if pred (cdr l)))))
 
-    (lambda* (:optional snd-arg)
+    (lambda* (snd-arg)
       "(show-disk-space) adds a label to the minibuffer area showing the current free space (for use with after-open-hook)"
 
       (let* ((snd (or snd-arg (selected-sound)))
@@ -866,7 +866,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 ;;; -------- select-file --------
 ;;;
-;;; (select-file func :optional title dir filter help)
+;;; (select-file func title dir filter help)
 ;;;   starts a File Chooser Dialog, runs func if a file is selected
 ;;;
 ;;; (add-to-menu 0 "Insert File" 
@@ -1198,7 +1198,7 @@ Reverb-feedback sets the scaler on the feedback.
     (gtk_widget_show variables-dialog)
     variables-dialog))
 
-(define* (make-variable-display page-name variable-name :optional (type 'text) (range (list 0.0 1.0)))
+(define* (make-variable-display page-name variable-name (type 'text) (range (list 0.0 1.0)))
   ;; type = 'text, 'meter, 'graph, 'spectrum, 'scale
   (if (not variables-dialog) (make-variables-dialog))
   (let ((page-info (assoc page-name variables-pages)))
@@ -1602,7 +1602,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 ;;; and an example of drawing in a Snd graph:
 
-(define* (c-circles :optional (xc 5.0)  (yc 5.0) (radius 100.0) (width 2))
+(define* (c-circles (xc 5.0)  (yc 5.0) (radius 100.0) (width 2))
   (let* ((drawer (car (channel-widgets)))
 	 (cr (gdk_cairo_create (GDK_DRAWABLE (gtk_widget_get_window drawer)))))
 

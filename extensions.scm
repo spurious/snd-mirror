@@ -159,13 +159,13 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 ;;;
 ;;;   (map-sound-files (lambda (n) (if (> (mus-sound-duration n) 10.0) (snd-print n))))
 
-(define* (map-sound-files func :optional dir)
-  "(map-sound-files func :optional dir) applies func to each sound file in dir"
+(define* (map-sound-files func dir)
+  "(map-sound-files func dir) applies func to each sound file in dir"
   (map func (sound-files-in-directory (or dir "."))))
 
 
-(define* (for-each-sound-file func :optional dir)
-  "(for-each-sound-file func :optional dir) applies func to each sound file in dir"
+(define* (for-each-sound-file func dir)
+  "(for-each-sound-file func dir) applies func to each sound file in dir"
   (for-each func (sound-files-in-directory (or dir "."))))
 
 #|
@@ -180,8 +180,8 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 |#
 
 
-(define* (match-sound-files func :optional dir)
-  "(match-sound-files func :optional dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
+(define* (match-sound-files func dir)
+  "(match-sound-files func dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"
   (let* ((matches '()))
     (for-each
      (lambda (file)
@@ -194,17 +194,17 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
     
 ;;; -------- check-for-unsaved-edits
 ;;;
-;;; (check-for-unsaved-edits :optional (on #t)): if 'on', add a function to before-close-hook and before-exit-hook
+;;; (check-for-unsaved-edits (on #t)): if 'on', add a function to before-close-hook and before-exit-hook
 ;;;    that asks the user for confirmation before closing a sound if there are unsaved
 ;;;    edits on that sound.  if 'on' is #f, remove those hooks.
 
 (define checking-for-unsaved-edits #f) ; for prefs
 
-(define* (check-for-unsaved-edits :optional (check #t))
-  "(check-for-unsaved-edits :optional (check #t)) -> sets up hooks to check for and ask about unsaved edits when a sound is closed.
+(define* (check-for-unsaved-edits (check #t))
+  "(check-for-unsaved-edits (check #t)) -> sets up hooks to check for and ask about unsaved edits when a sound is closed.
 If 'check' is #f, the hooks are removed."
 
-  (define* (yes-or-no? question action-if-yes action-if-no :optional snd)
+  (define* (yes-or-no? question action-if-yes action-if-no snd)
     ;; we are replacing the caller's requested action with this prompt, so the action won't take place
     ;;   until we get a response.
     (clear-minibuffer snd)
@@ -269,7 +269,7 @@ If 'check' is #f, the hooks are removed."
 (define remembering-sound-state 0) ; for prefs
 (define remember-sound-filename ".snd-remember-sound") ; should this be in the home directory?
 
-(define* (remember-sound-state :optional (choice 3))
+(define* (remember-sound-state (choice 3))
   "(remember-sound-state) remembers the state of a sound when it is closed, and if it is subsquently re-opened, restores that state"
 
   (let ((states '())
@@ -437,9 +437,9 @@ If 'check' is #f, the hooks are removed."
 
 ;;; -------- mix-channel, insert-channel, c-channel
 
-(define* (mix-channel input-data :optional (beg 0) dur snd (chn 0) edpos with-tag)
+(define* (mix-channel input-data (beg 0) dur snd (chn 0) edpos with-tag)
 
-  "(mix-channel file :optional beg dur snd chn edpos with-tag) mixes in file. file can be the file name, a sound object, or \
+  "(mix-channel file beg dur snd chn edpos with-tag) mixes in file. file can be the file name, a sound object, or \
 a list (file-name-or-sound-object [beg [channel]])."
 
   (define (channel->mix input-snd input-chn input-beg input-len output-snd output-chn output-beg)
@@ -508,8 +508,8 @@ a list (file-name-or-sound-object [beg [channel]])."
 			  (mix output-name start 0 snd chn #t #t)))))))))
 
 
-(define* (insert-channel file-data :optional beg dur snd chn edpos)
-  "(insert-channel file :optional beg dur snd chn edpos) inserts the file. file can be the file name or a list (file-name [beg [channel]])"
+(define* (insert-channel file-data beg dur snd chn edpos)
+  "(insert-channel file beg dur snd chn edpos) inserts the file. file can be the file name or a list (file-name [beg [channel]])"
   (let* ((file-name (if (string? file-data) file-data (car file-data)))
 	 (file-beg (if (or (string? file-data) 
 			   (< (length file-data) 2)) 
@@ -534,14 +534,14 @@ a list (file-name-or-sound-object [beg [channel]])."
 
 ;;; -------- redo-channel, undo-channel
 
-(define* (redo-channel :optional (edits 1) snd chn)
+(define* (redo-channel (edits 1) snd chn)
   "(redo-channel (edits 1) snd chn) is the regularized version of redo"
   (if (and snd (not (= (sync snd) 0)) chn)
       (set! (edit-position snd chn) (+ (edit-position snd chn) edits))
       (redo edits snd)))
 
 
-(define* (undo-channel :optional (edits 1) snd chn)
+(define* (undo-channel (edits 1) snd chn)
   "(undo-channel (edits 1) snd chn) is the regularized version of undo"
   (if (and snd (not (= (sync snd) 0)) chn)
       (set! (edit-position snd chn) (max 0 (- (edit-position snd chn) edits)))
@@ -550,8 +550,8 @@ a list (file-name-or-sound-object [beg [channel]])."
 
 ;;; -------- any-env-channel
 
-(define* (any-env-channel env func :optional (beg 0) dur snd chn edpos origin)
-  "(any-env-channel env func :optional (beg 0) dur snd chn edpos origin) takes breakpoints in 'env', \
+(define* (any-env-channel env func (beg 0) dur snd chn edpos origin)
+  "(any-env-channel env func (beg 0) dur snd chn edpos origin) takes breakpoints in 'env', \
 connects them with 'func', and applies the result as an amplitude envelope to the given channel"
   ;; handled as a sequence of funcs and scales
   (if (not (null? env))
@@ -584,8 +584,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 ;;; -------- sine-ramp sine-env-channel 
 
-(define* (sine-ramp rmp0 rmp1 :optional (beg 0) dur snd chn edpos)
-  "(sine-ramp rmp0 rmp1 :optional (beg 0) dur snd chn edpos) produces a sinsusoidal connection from rmp0 to rmp1"
+(define* (sine-ramp rmp0 rmp1 (beg 0) dur snd chn edpos)
+  "(sine-ramp rmp0 rmp1 (beg 0) dur snd chn edpos) produces a sinsusoidal connection from rmp0 to rmp1"
   ;; vct: angle incr off scl
   (ptree-channel
    (lambda (y data forward)
@@ -607,8 +607,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
    (format #f "sine-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur)))
 
 
-(define* (sine-env-channel env :optional (beg 0) dur snd chn edpos)
-  "(sine-env-channel env :optional (beg 0) dur snd chn edpos) connects env's dots with sinusoids"
+(define* (sine-env-channel env (beg 0) dur snd chn edpos)
+  "(sine-env-channel env (beg 0) dur snd chn edpos) connects env's dots with sinusoids"
   (any-env-channel env sine-ramp beg dur snd chn edpos (format #f "sine-env-channel '~A ~A ~A" env beg dur)))
 
 ;;; (sine-env-channel '(0 0 1 1 2 -.5 3 1))
@@ -619,8 +619,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 ;;; -------- blackman4-ramp, blackman4-env-channel
 
-(define* (blackman4-ramp rmp0 rmp1 :optional (beg 0) dur snd chn edpos)
-  "(blackman4-ramp rmp0 rmp1 :optional (beg 0) dur snd chn edpos) produces a blackman4-shaped envelope"
+(define* (blackman4-ramp rmp0 rmp1 (beg 0) dur snd chn edpos)
+  "(blackman4-ramp rmp0 rmp1 (beg 0) dur snd chn edpos) produces a blackman4-shaped envelope"
   ;; vct: angle incr off scl
   (ptree-channel
    (lambda (y data forward)
@@ -645,8 +645,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
    (format #f "blackman4-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur)))
 
 
-(define* (blackman4-env-channel env :optional (beg 0) dur snd chn edpos)
-  "(blackman4-env-channel env :optional (beg 0) dur snd chn edpos) uses the blackman4 window to connect the dots in 'env'"
+(define* (blackman4-env-channel env (beg 0) dur snd chn edpos)
+  "(blackman4-env-channel env (beg 0) dur snd chn edpos) uses the blackman4 window to connect the dots in 'env'"
   (any-env-channel env blackman4-ramp beg dur snd chn edpos (format #f "blackman4-env-channel '~A ~A ~A" env beg dur)))
 
 ;;; any curve can be used as the connecting line between envelope breakpoints in the
@@ -657,8 +657,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 ;;; -------- ramp-squared, env-squared-channel
 
-(define* (ramp-squared rmp0 rmp1 :optional (symmetric #t) (beg 0) dur snd chn edpos)
-  "(ramp-squared rmp0 rmp1 :optional (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^2 curve"
+(define* (ramp-squared rmp0 rmp1 (symmetric #t) (beg 0) dur snd chn edpos)
+  "(ramp-squared rmp0 rmp1 (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^2 curve"
   ;; vct: start incr off scl
   (ptree-channel
    (lambda (y data forward)
@@ -679,8 +679,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
    (format #f "ramp-squared ~A ~A ~A ~A ~A" rmp0 rmp1 symmetric beg dur)))
 
 
-(define* (env-squared-channel env :optional (symmetric #t) (beg 0) dur snd chn edpos)
-  "(env-squared-channel env :optional (symmetric #t) (beg 0) dur snd chn edpos) connects env's dots with x^2 curves"
+(define* (env-squared-channel env (symmetric #t) (beg 0) dur snd chn edpos)
+  "(env-squared-channel env (symmetric #t) (beg 0) dur snd chn edpos) connects env's dots with x^2 curves"
   (any-env-channel env 
 		   (lambda (r0 r1 b d s c e)
 		     (ramp-squared r0 r1 symmetric b d s c e))
@@ -692,8 +692,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 ;;; -------- ramp-expt, env-expt-channel
 
-(define* (ramp-expt rmp0 rmp1 exponent :optional (symmetric #t) (beg 0) dur snd chn edpos)
-  "(ramp-expt rmp0 rmp1 exponent :optional (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^exponent curve"
+(define* (ramp-expt rmp0 rmp1 exponent (symmetric #t) (beg 0) dur snd chn edpos)
+  "(ramp-expt rmp0 rmp1 exponent (symmetric #t) (beg 0) dur snd chn edpos) connects rmp0 and rmp1 with an x^exponent curve"
   ;; vct: start incr off scl exponent
   ;; a^x = exp(x * log(a))
   (ptree-channel
@@ -715,8 +715,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
    (format #f "ramp-expt ~A ~A ~A ~A ~A ~A" rmp0 rmp1 exponent symmetric beg dur)))
 
 
-(define* (env-expt-channel env exponent :optional (symmetric #t) (beg 0) dur snd chn edpos)
-  "(env-expt-channel env exponent :optional (symmetric #t) (beg 0) dur snd chn edpos) connects env's dots with x^exponent curves"
+(define* (env-expt-channel env exponent (symmetric #t) (beg 0) dur snd chn edpos)
+  "(env-expt-channel env exponent (symmetric #t) (beg 0) dur snd chn edpos) connects env's dots with x^exponent curves"
   (if (= exponent 1.0)
       (env-channel env beg dur snd chn edpos)
       (any-env-channel env 
@@ -728,14 +728,14 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 ;;; -------- offset-channel 
 
-(define* (offset-channel dc :optional (beg 0) dur snd chn edpos)
-  "(offset-channel amount :optional (beg 0) dur snd chn edpos) adds amount to each sample"
+(define* (offset-channel dc (beg 0) dur snd chn edpos)
+  "(offset-channel amount (beg 0) dur snd chn edpos) adds amount to each sample"
   (ptree-channel (lambda (y) (+ y dc)) beg dur snd chn edpos #t #f
 		 (format #f "offset-channel ~A ~A ~A" dc beg dur)))
 
 
-(define* (offset-sound off :optional (beg 0) dur snd)
-  "(offset-sound off :optional beg dur snd) adds 'off' to every sample in 'snd'"
+(define* (offset-sound off (beg 0) dur snd)
+  "(offset-sound off beg dur snd) adds 'off' to every sample in 'snd'"
   ;; the pretty but slow way:
   ;; (map-sound (lambda (fr) (frame+ fr off)) beg dur snd)
   ;;
@@ -750,8 +750,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 ;;; -------- pad-sound
 
-(define* (pad-sound beg dur :optional snd) 
-  "(pad-sound beg dur :optional snd) places a block of 'dur' zeros in every channel of 'snd' starting at 'beg'"
+(define* (pad-sound beg dur snd) 
+  "(pad-sound beg dur snd) places a block of 'dur' zeros in every channel of 'snd' starting at 'beg'"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
 	(let* ((out-chans (channels index)))
@@ -763,15 +763,15 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 ;;; -------- dither-channel
 
-(define* (dither-channel :optional (amount .00006) (beg 0) dur snd chn edpos)
-  "(dither-channel :optional (amount .00006) (beg 0) dur snd chn edpos) adds amount dither to each sample"
+(define* (dither-channel (amount .00006) (beg 0) dur snd chn edpos)
+  "(dither-channel (amount .00006) (beg 0) dur snd chn edpos) adds amount dither to each sample"
   (let ((dither (* .5 amount)))
     (ptree-channel (lambda (y) (+ y (mus-random dither) (mus-random dither))) beg dur snd chn edpos #t #f
 		   (format #f "dither-channel ~,8F ~A ~A" amount beg dur))))
 
 
-(define* (dither-sound :optional (amount .00006) (beg 0) dur snd)
-  "(dither-sound :optional (amount .00006) beg dur snd) adds dithering to every channel of 'snd'"
+(define* (dither-sound (amount .00006) (beg 0) dur snd)
+  "(dither-sound (amount .00006) beg dur snd) adds dithering to every channel of 'snd'"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
 	(let* ((out-chans (channels index)))
@@ -783,8 +783,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 ;;; -------- contrast-channel
 
-(define* (contrast-channel index :optional (beg 0) dur snd chn edpos)
-  "(contrast-channel index :optional (beg 0) dur snd chn edpos) applies contrast enhancement to the sound"
+(define* (contrast-channel index (beg 0) dur snd chn edpos)
+  "(contrast-channel index (beg 0) dur snd chn edpos) applies contrast enhancement to the sound"
   (ptree-channel
    (lambda (y)
      (sin (+ (* y 0.5 pi) (* index (sin (* y 2.0 pi))))))
@@ -792,8 +792,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
    (format #f "contrast-channel ~A ~A ~A" index beg dur)))
 
 
-(define* (contrast-sound index :optional (beg 0) dur snd)
-  "(contrast-sound index :optional beg dur snd) applies contrast-enhancement to every channel of 'snd'"
+(define* (contrast-sound index (beg 0) dur snd)
+  "(contrast-sound index beg dur snd) applies contrast-enhancement to every channel of 'snd'"
   (let ((ind (or snd (selected-sound) (car (sounds)))))
     (if (sound? ind)
 	(let* ((out-chans (channels ind)))
@@ -805,8 +805,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 ;;; -------- scale-sound
 
-(define* (scale-sound scl :optional (beg 0) dur snd)
-  "(scale-sound scl :optional beg dur snd) multiplies every sample in 'snd' by 'scl'"
+(define* (scale-sound scl (beg 0) dur snd)
+  "(scale-sound scl beg dur snd) multiplies every sample in 'snd' by 'scl'"
   ;; the slow way:
   ;; (map-sound (lambda (fr) (frame* fr scl)) beg dur snd))
   (let ((index (or snd (selected-sound) (car (sounds)))))
@@ -820,8 +820,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 ;;; -------- normalize-sound
 
-(define* (normalize-sound amp :optional (beg 0) dur snd)
-  "(normalize-sound amp :optional beg dur snd) scales 'snd' to peak amplitude 'amp'"
+(define* (normalize-sound amp (beg 0) dur snd)
+  "(normalize-sound amp beg dur snd) scales 'snd' to peak amplitude 'amp'"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
 	(let* ((out-chans (channels index))
@@ -838,8 +838,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;;
 ;;; this is ok going forward (I think), but not in reverse
 
-(define* (delay-channel dly :optional (beg 0) dur snd chn edpos)
-  "(delay-channel amount :optional (beg 0) dur snd chn edpos) implements a delay using virtual edits"
+(define* (delay-channel dly (beg 0) dur snd chn edpos)
+  "(delay-channel amount (beg 0) dur snd chn edpos) implements a delay using virtual edits"
   (let ((cur-edpos (if (or (not edpos)
 			   (= edpos current-edit-position))
 		       (edit-position snd chn)
@@ -868,7 +868,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 ;;; -------- channels-equal
 
-(define* (channels=? snd1 chn1 snd2 chn2 :optional (allowable-difference 0.0))
+(define* (channels=? snd1 chn1 snd2 chn2 (allowable-difference 0.0))
   "(channels=? s1 c1 s2 c2 (diff 0.0)) -> #t if the two channels are the same (within diff) modulo trailing 0's"
   (if (and (equal? snd1 snd2)
 	   (= chn1 chn2))
@@ -892,7 +892,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 				 0 len s1 c1)))))))
 
 
-(define* (channels-equal? snd1 chn1 snd2 chn2 :optional (allowable-difference 0.0))
+(define* (channels-equal? snd1 chn1 snd2 chn2 (allowable-difference 0.0))
   "(channels-equal? s1 c1 s2 c2 (diff 0.0)) -> #t if the two channels are the same (within diff)"
   (let ((len1 (frames snd1 chn1))
 	(len2 (frames snd2 chn2)))
@@ -1072,7 +1072,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 ;;; -------- profiling
 
-(define* (profile :optional (file "sort.data"))
+(define* (profile (file "sort.data"))
   ;; find all functions, write out each one's number of calls, sorted first by calls, then alphabetically 
 
   (let ((st (symbol-table))

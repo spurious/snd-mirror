@@ -31,7 +31,7 @@
 	    (- (- len lag))))))
 
 
-(define* (snddiff-1 v0 v1 :optional (maxdiff 0.0))
+(define* (snddiff-1 v0 v1 (maxdiff 0.0))
   (let ((diff (vct-subtract! (vct-copy v0) v1)))
     (if (<= (vct-peak diff) maxdiff)
 	'no-difference

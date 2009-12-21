@@ -175,7 +175,7 @@
 		 (char=? (string-ref name i) #\*))
 	     (return (substring name 0 i))))))))
 
-(define* (parse-args args :optional x)
+(define* (parse-args args x)
   (let ((data '())
 	(sp -1)
 	(type #f)
@@ -351,7 +351,7 @@
 		    (hey "XL_TYPE_PTR(GLXContext, GLXContext)~%")
 		    ))))))
 
-(define* (CFNC data :optional spec spec-name)
+(define* (CFNC data spec spec-name)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -365,14 +365,14 @@
 		(set! funcs (cons (list name type strs args) funcs)))
 	    (set! names (cons (cons name 'fnc) names)))))))
 
-(define* (CINT name :optional type)
+(define* (CINT name type)
   (if (assoc name names)
       (display (format #f "~A CINT~%" name))
       (begin
 	(set! ints (cons name ints))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CFNC-X data :optional spec spec-name)
+(define* (CFNC-X data spec spec-name)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -386,7 +386,7 @@
 		(set! x-funcs (cons (list name type strs args) x-funcs)))
 	    (set! names (cons (cons name 'fnc) names)))))))
 
-(define* (CINT-X name :optional type)
+(define* (CINT-X name type)
   (if (assoc name names)
       (display (format #f "~A CINT-X~%" name))
       (begin

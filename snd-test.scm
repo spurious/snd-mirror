@@ -375,7 +375,7 @@
       (set! (mus-float-equal-fudge-factor) old-fudge)
       result)))
 
-(define* (my-substring str start :optional end)
+(define* (my-substring str start end)
   "substring with end"
   (substring str start (or end (string-length str))))
 
@@ -439,7 +439,7 @@
 	 (lambda () (make-color c1 c2 c3))
 	 (lambda args safe-color)))
 
-(define* (safe-display-edits :optional snd chn edpos (with-source #t))
+(define* (safe-display-edits snd chn edpos (with-source #t))
   "display-edits but catch all errors"
   (catch #t
 	 (lambda () (display-edits snd chn edpos with-source))
@@ -4967,7 +4967,7 @@
 (if (not (provided? 'snd-pvoc.scm)) (load "pvoc.scm"))
 (if (and with-gui (not (provided? 'snd-edit-menu.scm))) (load "edit-menu.scm"))
 
-(define* (cosine-channel-via-ptree :optional (beg 0) dur snd chn edpos)
+(define* (cosine-channel-via-ptree (beg 0) dur snd chn edpos)
   ;; vct: angle increment
   (ptree-channel
    (lambda (y data forward)
@@ -5056,13 +5056,13 @@
 	      (snd-display ";~A (orig: 1) ~A ~A" func-name v0 v2))))
       (revert-sound ind1)))
   
-  (define* (make-bandpass-2 flo1 fhi1 flo2 fhi2 :optional (len 30))
+  (define* (make-bandpass-2 flo1 fhi1 flo2 fhi2 (len 30))
     (let* ((f1 (make-bandpass flo1 fhi1 len))
 	   (f2 (make-bandpass flo2 fhi2 len)))
       (vct-add! (mus-xcoeffs f1) (mus-xcoeffs f2))
       f1))
   
-  (define* (cosine-channel :optional (beg 0) dur snd chn edpos)
+  (define* (cosine-channel (beg 0) dur snd chn edpos)
     (let ((old-opt (optimization))
 	  (samps (or dur (frames snd chn))))
       (set! (optimization) 0)
@@ -5130,7 +5130,7 @@
     (region->vct r 0 len c))
   
   ;; extensions.scm (commented out)
-  (define* (delay-channel dly :optional (beg 0) dur snd chn edpos)
+  (define* (delay-channel dly (beg 0) dur snd chn edpos)
     (let ((cur-edpos (if (or (not edpos)
 			     (= edpos current-edit-position))
 			 (edit-position snd chn)
@@ -10644,17 +10644,17 @@ EDITS: 5
 	  (test-edpos maxamp 'maxamp (lambda () (scale-by 2.0 ind1 0)) ind1)
 	  (test-edpos frames 'frames (lambda () (src-sound 2.0 1.0 ind1 0)) ind1)
 	  (test-edpos 
-	   (lambda* (:optional (snd 0) (chn 0) (edpos current-edit-position)) (count-matches (lambda (n1) (> n1 .1)) 0 snd chn edpos)) 
+	   (lambda* ((snd 0) (chn 0) (edpos current-edit-position)) (count-matches (lambda (n1) (> n1 .1)) 0 snd chn edpos)) 
 	   'count-matches
 	   (lambda () (scale-by 2.0 ind1 0)) 
 	   ind1)
 	  (test-edpos 
-	   (lambda* (:optional (snd 0) (chn 0) (edpos current-edit-position)) (cadr (find-channel (lambda (n2) (> n2 .1)) 0 snd chn edpos)))
+	   (lambda* ((snd 0) (chn 0) (edpos current-edit-position)) (cadr (find-channel (lambda (n2) (> n2 .1)) 0 snd chn edpos)))
 	   'find
 	   (lambda () (delete-samples 0 100 ind1 0))
 	   ind1)
 	  (test-edpos 
-	   (lambda* (:optional (snd 0) (chn 0) (edpos current-edit-position)) 
+	   (lambda* ((snd 0) (chn 0) (edpos current-edit-position)) 
 		    (let ((samp 0)) 
 		      (scan-chan (lambda (n3) 
 				   (or (> n3 .1) 
@@ -11309,7 +11309,7 @@ EDITS: 5
 	  (insert-silence 0 10 index 0)
 	  (insert-silence 0 10 index 1)
 	  
-	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan edpos)
 				      (clm-channel (make-env :envelope '(0 0 1 1) :length dur) beg dur index chan edpos))
 			     (lambda (dur)
 			       (let ((e (make-env :envelope '(0 0 1 1) :length dur))
@@ -11320,7 +11320,7 @@ EDITS: 5
 				 v))
 			     0.0)
 	  
-	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan edpos)
 				      (clm-channel (make-oscil :frequency 0.0 :initial-phase (/ pi 2)) beg dur index chan edpos))
 			     (lambda (dur)
 			       (let ((v (make-vct dur)))
@@ -11328,7 +11328,7 @@ EDITS: 5
 				 v))
 			     0.0)
 	  
-	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan edpos)
 				      (scale-channel 0.5 beg dur index chan edpos))
 			     (lambda (dur)
 			       (let ((v (make-vct dur)))
@@ -11336,7 +11336,7 @@ EDITS: 5
 				 v))
 			     1.0)
 	  
-	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan edpos)
 				      (env-channel (make-env :envelope '(0 0 1 1) :length dur) beg dur index chan edpos))
 			     (lambda (dur)
 			       (let ((e (make-env :envelope '(0 0 1 1) :length dur))
@@ -11347,7 +11347,7 @@ EDITS: 5
 				 v))
 			     1.0)
 	  
-	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan edpos)
 				      (env-channel '(0 0 1 1) beg dur index chan edpos))
 			     (lambda (dur)
 			       (let ((e (make-env :envelope '(0 0 1 1) :length dur))
@@ -11358,7 +11358,7 @@ EDITS: 5
 				 v))
 			     1.0)
 	  
-	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan edpos)
 				      (let ((v (make-vct dur)))
 					(vct-fill! v -1.0)
 					(vct->channel v beg dur index chan)))
@@ -11368,14 +11368,14 @@ EDITS: 5
 				 v))
 			     1.0)
 	  
-	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan edpos)
 				      (delete-samples beg dur index chan edpos)
 				      (pad-channel beg dur index chan edpos))
 			     (lambda (dur)
 			       (make-vct dur))
 			     1.0)
 	  
-	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan edpos)
 				      (let ((v (make-vct dur)))
 					(vct-fill! v -1.0)
 					(delete-samples beg dur index chan edpos)
@@ -11386,7 +11386,7 @@ EDITS: 5
 				 v))
 			     1.0)
 	  
-	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan edpos)
 				      (let ((v (make-vct dur)))
 					(vct-fill! v -1.0)
 					(set! (samples beg dur index chan #f "test-channel" 0 edpos) v)))
@@ -11396,7 +11396,7 @@ EDITS: 5
 				 v))
 			     1.0)
 	  
-	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan edpos)
 				      (env-channel (make-env :envelope '(0 0 1 1) :length dur) beg dur index chan edpos)
 				      (reverse-channel beg dur index chan))
 			     (lambda (dur)
@@ -11408,7 +11408,7 @@ EDITS: 5
 				 v))
 			     1.0)
 	  
-	  (test-channel-func (lambda* (beg dur index chan :optional edpos)
+	  (test-channel-func (lambda* (beg dur index chan edpos)
 				      (env-channel (make-env :envelope '(0 0 1 1) :length dur) beg dur index chan edpos)
 				      (set! (sample (+ beg dur) index chan) 1.0)
 				      (smooth-channel beg dur index chan)
@@ -11751,7 +11751,7 @@ EDITS: 5
 		  (if val 
 		      (list val (- (sampler-position reader) 1))
 		      (scan-again)))))
-	  (define* (my-scan-chan :optional proc)
+	  (define* (my-scan-chan proc)
 	    (if proc 
 		(begin
 		  (set! last-proc proc)
@@ -13505,7 +13505,7 @@ EDITS: 2
 	(if (not (eq? tag 'bad-arity))
 	    (snd-display ";as-one-edit arg? ~A" tag)))
       (let ((tag (catch #t
-			(lambda () (as-one-edit (lambda* (:optional oops) #f)))
+			(lambda () (as-one-edit (lambda* (oops) #f)))
 			(lambda args (car args)))))
 	(if (not (eq? tag 'bad-arity))
 	    (snd-display ";as-one-edit arg? ~A" tag)))
@@ -15046,7 +15046,7 @@ EDITS: 2
   ;; (test-scanned-synthesis .1 10000 1.0 0.1 0.0)
   
   ;; ----------------
-  (define* (array-interp-sound-diff :optional snd chn)
+  (define* (array-interp-sound-diff snd chn)
 
     (define (envelope->vct e len)
       (let ((v (make-vct len))
@@ -16308,7 +16308,7 @@ EDITS: 2
 	   (* .5 val))))))
   
   ;; ----------------
-  (define* (make-ssb-am-1 freq :optional (order 40))
+  (define* (make-ssb-am-1 freq (order 40))
     (if (even? order) (set! order (+ 1 order)))
     (make-sa1 :freq (abs freq)
 	      :coscar (make-oscil freq (* .5 pi))
@@ -16317,7 +16317,7 @@ EDITS: 2
 	      :hlb (make-hilbert-transform order)))
   
   ;; ----------------
-  (define* (ssb-am-1 gen y :optional (fm-1 0.0))
+  (define* (ssb-am-1 gen y (fm-1 0.0))
     (let* ((fm fm-1)
 	   (ccos (oscil (sa1-coscar gen) fm))
 	   (csin (oscil (sa1-sincar gen) fm))
@@ -16346,7 +16346,7 @@ EDITS: 2
       (vct-scale! spect (/ 1.0 mx))))
   
   ;; ----------------
-  (define* (print-and-check gen name desc :optional (desc1 "") (desc2 ""))
+  (define* (print-and-check gen name desc (desc1 "") (desc2 ""))
     (gc)
     (if (not (string=? (mus-name gen) name))
 	(snd-display ";mus-name ~A: ~A?" name (mus-name gen)))
@@ -16440,7 +16440,7 @@ EDITS: 2
 	  f)))
   
   ;; ----------------
-  (define* (agc :optional (ramp-speed .001) (window-size 512))
+  (define* (agc (ramp-speed .001) (window-size 512))
     (let ((maxer (make-moving-max window-size))
 	  (mult 1.0))
       (map-channel
@@ -25800,7 +25800,7 @@ EDITS: 2
 			    (if (or (= i 0) (= i 2))
 				name
 				(make-file->frame name)))))
-      (define* (mus-mix-1 outf inf :optional outloc frames inloc mixer envs)
+      (define* (mus-mix-1 outf inf outloc frames inloc mixer envs)
 	(if envs
 	    (mus-mix outf inf outloc frames inloc mixer envs)
 	    (if mixer
@@ -30787,7 +30787,7 @@ EDITS: 2
       (add-hook! help-hook (lambda (a b) 
 			     (if (not (string=? a "cursor-position"))
 				 (snd-display ";help-hook subject: ~A" a))
-			     (if (not (string=? b "(cursor-position :optional snd chn): current cursor position (x y in pixels) in snd's channel chn"))
+			     (if (not (string=? b "(cursor-position snd chn): current cursor position (x y in pixels) in snd's channel chn"))
 				 (snd-display ";help-hook text: ~A" b))
 			     (string-append "hiho:" b)))
       (let ((ho (snd-help 'cursor-position)))
@@ -32171,7 +32171,7 @@ EDITS: 2
 	 (s8-snd (if (file-exists? "s8.snd") "s8.snd" "oboe.snd"))
 	 (open-ctr 0))
     
-    (define* (clone-sound-as new-name :optional snd)
+    (define* (clone-sound-as new-name snd)
       ;; copies any edit-sounds to save-dir!
       (let* ((tmpf (snd-tempnam))
 	     (scm (string-append (substring tmpf 0 (- (string-length tmpf) 3)) "scm"))
@@ -35226,7 +35226,7 @@ EDITS: 2
 		  #f)))
 	  #f)))
   
-  (define* (edit-difference s1 c1 e1 e2 :optional (offset 0))
+  (define* (edit-difference s1 c1 e1 e2 (offset 0))
     (let* ((r1 (make-sampler 0 s1 c1 1 e1))
 	   (r2 (make-sampler offset s1 c1 1 e2))
 	   (max-diff 0.0)
@@ -35243,7 +35243,7 @@ EDITS: 2
 	  (list max-diff max-loc)
 	  #f)))
 
-  (define* (edit-distance s1 c1 e1 e2 :optional (offset 0))
+  (define* (edit-distance s1 c1 e1 e2 (offset 0))
     (let* ((r1 (make-sampler 0 s1 c1 1 e1))
 	   (r2 (make-sampler offset s1 c1 1 e2))
 	   (sum 0.0)
@@ -39900,15 +39900,15 @@ EDITS: 1
 
 (define after-save-state-hook-var 0) ; global for load save-state stuff
 
-(define* (clm-channel-test :optional snd chn) ; edit-list->function wants this to be global??
+(define* (clm-channel-test snd chn) ; edit-list->function wants this to be global??
   (clm-channel (make-two-zero 1 -1) 0 #f snd chn #f #f "clm-channel-test"))
 
-(define* (make-v-mix :optional snd chn)
+(define* (make-v-mix snd chn)
   (mix-vct (vct .1 .2 .3) 100 snd chn #t "mix-vct (vct .1 .2 .3)"))
 
 (define (snd_test_19)
   
-  (define* (hilbert-transform-via-fft :optional snd chn)
+  (define* (hilbert-transform-via-fft snd chn)
     "same as FIR version but use FFT and change phases by hand"
     (let* ((size (frames snd chn))
 	   (len (expt 2 (inexact->exact (ceiling (/ (log size) (log 2.0))))))
@@ -39936,7 +39936,7 @@ EDITS: 1
   
   ;; echoes with each echo at a new pitch via ssb-am etc
   
-  (define* (make-ssb-transposer old-freq new-freq pairs :optional (order 40) (bw 50.0))
+  (define* (make-ssb-transposer old-freq new-freq pairs (order 40) (bw 50.0))
     (let* ((ssbs (make-vector pairs))
 	   (bands (make-vector pairs))
 	   (factor (/ (- new-freq old-freq) old-freq)))
@@ -42333,7 +42333,7 @@ EDITS: 1
 	(vct-subtract! im2 rl2)       ; subtract the 4th from the 3rd
 	(vct-scale! (fft tmprl im2 -1) fftscale))))
   
-  (define* (automorph a b c d :optional snd chn)
+  (define* (automorph a b c d snd chn)
     (let* ((len (frames snd chn))
 	   (pow2 (inexact->exact (ceiling (/ (log len) (log 2)))))
 	   (fftlen (inexact->exact (expt 2 pow2)))
@@ -43244,7 +43244,7 @@ EDITS: 1
 	  (if (defined? 'bignum-fft)
 	      (let ()
 
-		(define* (vectors-equal? v1 v2 :optional (error 1e-30))
+		(define* (vectors-equal? v1 v2 (error 1e-30))
 		  (let ((len (vector-length v1)))
 		    (if (= (vector-length v2) len)
 			(let ((happy #t))
@@ -43871,7 +43871,7 @@ EDITS: 1
 
 (define (snd_test_21)
   
-  (define* (add-comment sample comment :optional snd1 chn1)
+  (define* (add-comment sample comment snd1 chn1)
     (let* ((snd (or snd1 (selected-sound)))
 	   (chn (or chn1 (selected-channel)))
 	   (old-comments (or (channel-property 'comments snd chn) '())))
@@ -52290,7 +52290,7 @@ EDITS: 1
 	  (if (fneq (run (lambda () (hie))) 1.0) (snd-display ";run opt args 1"))
 	  (if (fneq (run (lambda () (+ (hie) (hie 1.0)))) 3.0) (snd-display ";run opt args 2")))
 
-	(let ((hi (lambda* ((a 0.0) :optional (b 0.0)) (declare (a float) (b float)) (+ a b))))
+	(let ((hi (lambda* ((a 0.0) (b 0.0)) (declare (a float) (b float)) (+ a b))))
 	  (if (fneq (run (lambda () (hi 1.0))) 1.0) (snd-display ";run opt args 3"))
 	  (if (fneq (run (lambda () (hi 1.0 2.0))) 3.0) (snd-display ";run opt args 4"))
 	  (if (fneq (run (lambda () (hi))) 0.0) (snd-display ";run opt args 5"))
@@ -52862,7 +52862,7 @@ EDITS: 1
 	(close-sound ind)
 	date)))
   
-  (define* (clm-reverb-sound reverb-amount reverb :optional (reverb-data '()) snd)
+  (define* (clm-reverb-sound reverb-amount reverb (reverb-data '()) snd)
     (let ((output (snd-tempnam))
 	  (revout (snd-tempnam))
 	  (len (+ (frames snd) (srate snd))))
@@ -52905,7 +52905,7 @@ EDITS: 1
 	   (outa i (* amp (fir-filter flt (comb dly (rand r))))))))))
   
   (definstrument (dloc-sinewave start-time duration freq amp 
-				:key (amp-env '(0 1 1 1))
+				(amp-env '(0 1 1 1))
 				(path (make-path :path '(-10 10 0 5 10 10))))
     (let* ((vals (make-dlocsig :start-time start-time
 			       :duration duration
@@ -52922,7 +52922,7 @@ EDITS: 1
 	     (dlocsig dloc i (* (env aenv) (oscil osc)))))))))
   
   (definstrument (dlocsig-sinewave-1 start-time duration freq amp 
-				     :key (amp-env '(0 1 1 1))
+				     (amp-env '(0 1 1 1))
 				     (path (make-path :path '(-10 10 0 5 10 10)))
 				     (decode amplitude-panning)
 				     (initdly #f))
@@ -64638,7 +64638,7 @@ EDITS: 1
 	     chans)
 	    (save-selection "test.snd")))))
   
-  (define* (notch-out-rumble-and-hiss :optional snd chn)
+  (define* (notch-out-rumble-and-hiss snd chn)
     "(notch-out-rumble-and-hiss s c) applies a bandpass filter with cutoffs at 40 Hz and 3500 Hz"
     (let* ((cur-srate (exact->inexact (srate snd))))
       (filter-sound
@@ -64654,7 +64654,7 @@ EDITS: 1
        (expt 2 (inexact->exact (ceiling (/ (log (/ cur-srate 10.0)) (log 2.0)))))
        snd chn)))
   
-  (define* (reverse-channels :optional snd)
+  (define* (reverse-channels snd)
     (let* ((ind (or snd (selected-sound) (car (sounds))))
 	   (chns (chans ind)))
       (let ((swaps (inexact->exact (floor (/ chns 2)))))
@@ -64665,7 +64665,7 @@ EDITS: 1
 	       ((= i swaps))
 	     (swap-channels ind i ind j)))))))
   
-  (define* (rotate-channel :optional (samps 1) snd chn)
+  (define* (rotate-channel (samps 1) snd chn)
     (let* ((ind (or snd (selected-sound) (car (sounds))))
 	   (chan (or chn (selected-channel) 0)))
       (let ((reg (make-region 0 (- samps 1) ind chan)))

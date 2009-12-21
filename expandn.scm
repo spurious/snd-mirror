@@ -16,7 +16,7 @@
 
 
 (definstrument (expandn time duration filename amplitude
-			:key (expand 1.0)
+			(expand 1.0)
 			(matrix #f)
 			(ramp 0.4)
 			(seglen 0.15)

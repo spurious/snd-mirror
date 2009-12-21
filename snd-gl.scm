@@ -159,7 +159,7 @@
     ;; turn display with orientation dialog
     ;;  for example: x-angle 290, y angle: 60
     
-    (lambda* (start :optional scl pc-spectrum fft-size)
+    (lambda* (start scl pc-spectrum fft-size)
 	     (if start
 		 (begin
 		   (set! cutoff pc-spectrum)
@@ -173,7 +173,7 @@
 		 (stop-it)))))
 
   
-(define* (start-waterfall :optional (scl 1.0) (pc-spectrum 0.2) (fft-size 512))
+(define* (start-waterfall (scl 1.0) (pc-spectrum 0.2) (fft-size 512))
   "(start-waterfall (scl 1.0) (pc-spectrum 0.2) (fft-size 512)) starts a 'waterfall' spectrum display of the incoming audio data"
   (waterfall #t scl pc-spectrum fft-size))
 

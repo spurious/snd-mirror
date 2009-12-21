@@ -1,6 +1,6 @@
 ;; this file loads the music symbol glyphs in cmn-glyphs.lisp (from the cmn package),
 ;;; each function in that package becomes a Scheme function of the form:
-;;;   name :optional x y size style snd chn ax
+;;;   name x y size style snd chn ax
 ;;;   style: #t for lines, #f (default) for filled polygon
 ;;;
 ;;; although Snd based here, all this file needs externally are draw-lines, draw-dot, and fill-polygon
@@ -166,12 +166,12 @@
 
 ;(define comment
 ;  (make-procedure-with-setter
-;   (lambda* (:optional (scr #f) (msg 0))
-;     "(comment :optional (scr #f) (msg 0)) tries to make musglyph.scm safe for comments"
+;   (lambda* ((scr #f) (msg 0))
+;     "(comment (scr #f) (msg 0)) tries to make musglyph.scm safe for comments"
 ;     (if (or (number? msg)
 ;	     (not scr))
 ;	 (sound-comment scr)))
-;   (lambda* (snd :optional (val #f))
+;   (lambda* (snd (val #f))
 ;     (if (not val)
 ;	 (apply (setter sound-comment) (list #f snd))
 ;	 (apply (setter sound-comment) (list snd val))))))

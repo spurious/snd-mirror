@@ -77,8 +77,8 @@
 ;;; <frame[3]: [0.800 0.600 0.000]>
 |#
 
-(define* (frame->vct fr :optional v)
-  "(frame->vct fr :optional v) copies frame fr into either vct v or a new vct, returning the vct"
+(define* (frame->vct fr v)
+  "(frame->vct fr v) copies frame fr into either vct v or a new vct, returning the vct"
   (if (not (frame? fr))
       (throw 'wrong-type-arg (list "frame->vct" fr))
       (let* ((flen (channels fr))
@@ -90,8 +90,8 @@
 	  (vct-set! nv i (frame-ref fr i)))
 	nv)))
 
-(define* (vct->frame v :optional fr)
-  "(vct->frame v :optional fr) copies vct v into either frame fr or a new frame, returning the frame"
+(define* (vct->frame v fr)
+  "(vct->frame v fr) copies vct v into either frame fr or a new frame, returning the frame"
   (if (not (vct? v))
       (throw 'wrong-type-arg (list "vct->frame" v))
       (let* ((vlen (length v))
@@ -104,7 +104,7 @@
 	nfr)))
 
 
-(define* (frame->sound-data fr sd :optional (pos 0))
+(define* (frame->sound-data fr sd (pos 0))
   "(frame->sound-data fr sd pos) copies the contents of frame fr into the sound-data sd at position pos"
   (if (not (frame? fr))
       (throw 'wrong-type-arg (list "frame->sound-data" fr))
@@ -135,8 +135,8 @@
 		fr)))))
 
 
-(define* (sound->frame :optional (pos 0) snd)
-  "(sound->frame pos :optional snd) returns a frame containing the contents of the sound snd at position pos"
+(define* (sound->frame (pos 0) snd)
+  "(sound->frame pos snd) returns a frame containing the contents of the sound snd at position pos"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
 	(throw 'no-such-sound (list "sound->frame" snd))
@@ -146,8 +146,8 @@
 	       fr)
 	    (frame-set! fr i (sample pos index i)))))))
 
-(define* (frame->sound fr :optional (pos 0) snd)
-  "(frame->sound fr pos :optional snd) places the contents of frame fr into sound snd at position pos"
+(define* (frame->sound fr (pos 0) snd)
+  "(frame->sound fr pos snd) places the contents of frame fr into sound snd at position pos"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
 	(throw 'no-such-sound (list "frame->sound" snd))
@@ -168,8 +168,8 @@
 	  (frame-set! fr i (region-sample reg pos i))))))
 
 
-(define* (sound->sound-data :optional (beg 0) dur snd)
-  "(sound->sound-data beg dur :optional snd) returns a sound-data object containing the samples in sound snd starting at position beg for dur frames"
+(define* (sound->sound-data (beg 0) dur snd)
+  "(sound->sound-data beg dur snd) returns a sound-data object containing the samples in sound snd starting at position beg for dur frames"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
 	(throw 'no-such-sound (list "sound->sound-data" snd))
@@ -181,8 +181,8 @@
 	       sd)
 	    (vct->sound-data (channel->vct beg len index i) sd i))))))
 
-(define* (sound-data->sound sd :optional (beg 0) dur snd)
-  "(sound-data->sound sd beg :optional dur snd) places the contents of sound-data sd into sound snd starting at position beg for dur frames"
+(define* (sound-data->sound sd (beg 0) dur snd)
+  "(sound-data->sound sd beg dur snd) places the contents of sound-data sd into sound snd starting at position beg for dur frames"
   (if (not (sound-data? sd))
       (throw 'wrong-type-arg (list "sound-data->sound" sd))
       (let ((index (or snd (selected-sound) (car (sounds)))))
@@ -202,8 +202,8 @@
 (define +frame-reader-frame+ 3)
 (define +frame-reader0+ 4)
 
-(define* (make-frame-reader :optional (beg 0) snd dir edpos)
-  "(make-frame-reader :optional beg snd dir edpos) returns a frame reader, basically a sampler that reads all channels on each call"
+(define* (make-frame-reader (beg 0) snd dir edpos)
+  "(make-frame-reader beg snd dir edpos) returns a frame reader, basically a sampler that reads all channels on each call"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (and (not (sound? index))
 	     (not (string? index))) ; filename is a possibility here
@@ -300,8 +300,8 @@
     vals))
 
 
-(define* (make-region-frame-reader reg beg :optional dir)
-  "(make-region-frame-reader reg beg :optional dir) returns a frame-reader reading the contents of region reg"
+(define* (make-region-frame-reader reg beg dir)
+  "(make-region-frame-reader reg beg dir) returns a frame-reader reading the contents of region reg"
   (if (not (region? reg))
       (throw 'no-such-region (list "make-region-frame-reader" reg))
       (let* ((chns (channels reg))
@@ -315,8 +315,8 @@
 	  (vector-set! fr (+ i +frame-reader0+) (make-region-sampler reg beg i dir)))
 	fr)))
 
-(define* (make-sync-frame-reader :optional (beg 0) snd dir edpos)
-  "(make-sync-frame-reader :optional beg snd dir edpos) returns a frame reader that reads all channels sync'd to 'snd'"
+(define* (make-sync-frame-reader (beg 0) snd dir edpos)
+  "(make-sync-frame-reader beg snd dir edpos) returns a frame reader that reads all channels sync'd to 'snd'"
   (let* ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
 	(throw 'no-such-sound (list "make-sync-frame-reader" snd))
@@ -346,8 +346,8 @@
 		     (sounds)))
 		  fr)))))))
 
-(define* (make-selection-frame-reader :optional (beg 0))
-  "(make-selection-frame-reader :optional (beg 0)) returns a frame reader that reads all channels of the current selection"
+(define* (make-selection-frame-reader (beg 0))
+  "(make-selection-frame-reader (beg 0)) returns a frame reader that reads all channels of the current selection"
   (if (not (selection?))
       (throw 'no-active-selection (list "make-selection-frame-reader" beg))
       (let* ((chns (selection-chans))
@@ -380,8 +380,8 @@
     (free-sampler reader)
     data))
 
-(define* (vct->file v file :optional (srate 22050) (comment ""))
-  "(vct->file v file :optional srate comment) writes the data in vct v to the specified sound file"
+(define* (vct->file v file (srate 22050) (comment ""))
+  "(vct->file v file srate comment) writes the data in vct v to the specified sound file"
   (if (vct? v)
       (let ((fd (mus-sound-open-output file srate 1 #f mus-riff comment)))
 	(mus-sound-write fd 0 (- (length v) 1) 1 (vct->sound-data v))
@@ -402,8 +402,8 @@
     (free-frame-reader reader)
     data))
 
-(define* (sound-data->file sd file :optional (srate 22050) (comment ""))
-  "(sound-data->file sd file :optional srate comment) writes the contents of sound-data sd to file"
+(define* (sound-data->file sd file (srate 22050) (comment ""))
+  "(sound-data->file sd file srate comment) writes the contents of sound-data sd to file"
   (if (sound-data? sd)
       (let ((fd (mus-sound-open-output file srate (channels sd) #f mus-riff comment)))
 	(mus-sound-write fd 0 (- (length sd) 1) (channels sd) sd)
@@ -426,8 +426,8 @@
 	data)
       (throw 'no-such-region (list "region->sound-data" reg))))
 
-(define* (selection->sound-data :optional (beg 0))
-  "(selection->sound-data :optional beg) returns a sound-data object with the contents of current selection"
+(define* (selection->sound-data (beg 0))
+  "(selection->sound-data beg) returns a sound-data object with the contents of current selection"
   (if (selection?)
       (let* ((reader (make-selection-frame-reader beg))
 	     (len (- (selection-frames) beg))
@@ -441,15 +441,15 @@
       (throw 'no-active-selection (list "selection->sound-data"))))
 
 
-(define* (insert-vct v :optional (beg 0) dur snd chn edpos)
-  "(insert-vct v :optional beg dur snd chn edpos) inserts vct v's data into sound snd at beg"
+(define* (insert-vct v (beg 0) dur snd chn edpos)
+  "(insert-vct v beg dur snd chn edpos) inserts vct v's data into sound snd at beg"
   (if (not (vct? v))
       (throw 'wrong-type-arg (list "insert-vct" v))
       (let ((len (or dur (length v))))
 	(insert-samples beg len v snd chn edpos #f (format #f "insert-vct ~A ~A ~A" (vct->string v) beg dur)))))
 
-(define* (insert-frame fr :optional (beg 0) snd edpos)
-  "(insert-frame fr :optional beg snd edpos) inserts frame fr's data into sound snd (one sample in each channel) at beg"
+(define* (insert-frame fr (beg 0) snd edpos)
+  "(insert-frame fr beg snd edpos) inserts frame fr's data into sound snd (one sample in each channel) at beg"
   (if (not (frame? fr))
       (throw 'wrong-type-arg (list "insert-frame" fr))
       (let ((index (or snd (selected-sound) (car (sounds)))))
@@ -460,8 +460,8 @@
 		  ((= chn chns))
 		(insert-sample beg (frame-ref fr chn) index chn edpos)))))))
 
-(define* (insert-sound-data sd :optional (beg 0) dur snd edpos)
-  "(insert-sound-data sd :optional beg dur snd edpos) inserts sound-data sd's contents into sound snd at beg"
+(define* (insert-sound-data sd (beg 0) dur snd edpos)
+  "(insert-sound-data sd beg dur snd edpos) inserts sound-data sd's contents into sound snd at beg"
   ;; this should be built-into insert-samples
   (if (not (sound-data? sd))
       (throw 'wrong-type-arg (list "insert-sound-data" sd))
@@ -476,8 +476,8 @@
 		(insert-samples beg len (sound-data->vct sd chn v) index chn edpos #f "insert-sound-data")))))))
 
 
-(define* (mix-frame fr :optional (beg 0) snd)
-  "(mix-frame fr :optional beg snd) mixes frame fr's data into sound snd (one sample in each channel) at beg"
+(define* (mix-frame fr (beg 0) snd)
+  "(mix-frame fr beg snd) mixes frame fr's data into sound snd (one sample in each channel) at beg"
   (if (not (frame? fr))
       (throw 'wrong-type-arg (list "mix-frame" fr))
       (let ((index (or snd (selected-sound) (car (sounds)))))
@@ -488,8 +488,8 @@
 		  ((= chn chns))
 		(set! (sample beg index chn) (+ (frame-ref fr chn) (sample beg index chn)))))))))
 
-(define* (mix-sound-data sd :optional (beg 0) dur snd tagged)
-  "(mix-sound-data sd :optional beg dur snd tagged) mixes the contents of sound-data sd into sound snd at beg"
+(define* (mix-sound-data sd (beg 0) dur snd tagged)
+  "(mix-sound-data sd beg dur snd tagged) mixes the contents of sound-data sd into sound snd at beg"
   (if (not (sound-data? sd))
       (throw 'wrong-type-arg (list "mix-sound-data" sd))
       (let ((index (or snd (selected-sound) (car (sounds)))))
@@ -506,8 +506,8 @@
 	      mix-id)))))
 
   
-(define* (scan-sound func :optional (beg 0) dur snd with-sync)
-  "(scan-sound func :optional beg dur snd with-sync) is a version of scan-channel that passes func a frame on each call, rather than a sample"
+(define* (scan-sound func (beg 0) dur snd with-sync)
+  "(scan-sound func beg dur snd with-sync) is a version of scan-channel that passes func a frame on each call, rather than a sample"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
 	(let* ((reader (if with-sync
@@ -525,8 +525,8 @@
 
 (define +read-forward+ 1)
 
-(define* (map-sound func :optional (beg 0) dur snd edpos)
-  "(map-sound func :optional beg dur snd edpos) is a version of map-channel that passes func a frame on each call, rather than a sample"
+(define* (map-sound func (beg 0) dur snd edpos)
+  "(map-sound func beg dur snd edpos) is a version of map-channel that passes func a frame on each call, rather than a sample"
   ;; not sure map-sound with sync is a good idea -- even scale-by following sync seems bad
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
@@ -552,7 +552,7 @@
 	(throw 'no-such-sound (list "map-sound" snd)))))
 
 
-(define* (simultaneous-zero-crossing :optional (beg 0) dur snd)
+(define* (simultaneous-zero-crossing (beg 0) dur snd)
   "(simultaneous-zero-crossing :option beg dur snd) looks through all channels of 'snd' for a simultaneous zero crossing."
   (let ((last-fr (make-frame (channels snd))))
     (scan-sound (lambda (fr)

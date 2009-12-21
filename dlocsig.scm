@@ -81,8 +81,8 @@
 (provide 'snd-dlocsig.scm)
 
 
-(define* (envelope-interp x env :optional base)   ;env is list of x y breakpoint pairs, interpolate at x returning y
-  "(envelope-interp x env :optional (base 1.0)) -> value of env at x; base controls connecting segment 
+(define* (envelope-interp x env base)   ;env is list of x y breakpoint pairs, interpolate at x returning y
+  "(envelope-interp x env (base 1.0)) -> value of env at x; base controls connecting segment 
 type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
   (cond ((null? env) 0.0)		;no data -- return 0.0
 	((or (<= x (car env))	        ;we're sitting on x val (or if < we blew it)
@@ -160,7 +160,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Speaker Configuration
 
-(define* (make-group :key (id 0) (size 0) vertices speakers matrix)
+(define* (make-group (id 0) (size 0) vertices speakers matrix)
   (list 'group id size vertices speakers matrix))
 
 (define group-id (make-procedure-with-setter (lambda (a) (list-ref a 1)) (lambda (a b) (list-set! a 1 b))))
@@ -170,7 +170,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 (define group-matrix (make-procedure-with-setter (lambda (a) (list-ref a 5)) (lambda (a b) (list-set! a 5 b))))
 
 
-(define* (make-speaker-config :key number dimension coords groups delays omap)
+(define* (make-speaker-config number dimension coords groups delays omap)
   (list 'speaker-config number dimension coords groups delays omap))
 
 (define speaker-config-number (make-procedure-with-setter (lambda (a) (list-ref a 1)) (lambda (a b) (list-set! a 1 b))))
@@ -209,7 +209,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
   "(fourth lst) returns the 4th element of 'lst'"
   (if (>= (length a) 4) (list-ref a 3) #f))
 
-(define* (last a :optional n) 
+(define* (last a n) 
   "(last lst) returns the last 'n' elements of 'lst' as a list"
   (if (null? a)
       #f
@@ -532,8 +532,8 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
 ;;; Set a particular speaker configuration
 
-(define* (set-speaker-configuration config :key (configs dlocsig-speaker-configs))
-  "(set-speaker-configuration config :key (configs dlocsig-speaker-configs)) sets a dlocsig speaker configuration"
+(define* (set-speaker-configuration config (configs dlocsig-speaker-configs))
+  "(set-speaker-configuration config (configs dlocsig-speaker-configs)) sets a dlocsig speaker configuration"
   (let ((lst (if (< (speaker-config-dimension config) 3)
 		 (car configs)
 	       (cadr configs)))
@@ -543,8 +543,8 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
 ;;; Get the speaker configuration for a given number of output channels
 
-(define* (get-speaker-configuration channels :key (3d dlocsig-3d) (configs dlocsig-speaker-configs))
-  "(get-speaker-configuration channels :key (3d dlocsig-3d) (configs dlocsig-speaker-configs)) returns a dlocsig speaker configuration"
+(define* (get-speaker-configuration channels (3d dlocsig-3d) (configs dlocsig-speaker-configs))
+  "(get-speaker-configuration channels (3d dlocsig-3d) (configs dlocsig-speaker-configs)) returns a dlocsig speaker configuration"
   (let* ((config (if 3d (list-ref (cadr configs) channels) (list-ref (car configs) channels))))
     (if (null? config)
 	(snd-error (format #f "no speaker configuration exists for ~A ~A output channel~A~%" 
@@ -1775,7 +1775,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
 ;;; Transform a path (scaling + translation + rotation)
 
-(define* (transform-path path :key
+(define* (transform-path path
 			 scaling
 			 translation
 			 rotation
@@ -1938,7 +1938,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
 ;;; Mirror a path around an axis
 
-(define* (mirror-path path :key (axis 'y) (around 0))
+(define* (mirror-path path (axis 'y) (around 0))
   (if (not-transformed path)
       (transform-path path))
   (if (equal axis 'y)
@@ -2730,7 +2730,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
 
     ;; structure that defines the unit generator
-    (define* (make-dlocs :key                    ; order of fields must match make-move-sound expectations
+    (define* (make-dlocs                    ; order of fields must match make-move-sound expectations
 			 (start 0)               ; absolute sample number at which samples first reach the listener
 			 (end 0)                 ; absolute sample number of end of input samples
 			 (out-channels 0)        ; number of output channels in soundfile
@@ -2876,7 +2876,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
 (define* (sinewave start-time duration freq amp 
-		   :key (amp-env '(0 1 1 1))
+		   (amp-env '(0 1 1 1))
 		   (path (make-path :path '(-10 10 0 5 10 10))))
   (let* ((vals (make-dlocsig :start-time start-time
 			     :duration duration

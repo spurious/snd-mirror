@@ -120,8 +120,8 @@
       (set! sum (+ sum (mat mx i i))))))
 
 
-(define* (invert-matrix matrix :optional b (zero 1.0e-7))
-  "(invert-matrix matrix :optional b (zero 1.0e-7)) inverts 'matrix'"
+(define* (invert-matrix matrix b (zero 1.0e-7))
+  "(invert-matrix matrix b (zero 1.0e-7)) inverts 'matrix'"
   ;; translated from Numerical Recipes (gaussj)
   (call-with-exit
    (lambda (return)

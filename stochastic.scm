@@ -10,7 +10,7 @@
 (if (not (provided? 'snd-env.scm)) (load "env.scm"))
 
 (definstrument 
-  (stochastic start dur :key
+  (stochastic start dur
 	      (amp .9) (bits 16) (xmin 1) (xmax 20) (xwig 0) (xstep 1) (ywig 0) (xfb 0)
 	      (init-array '((10 0) (10 1) (10 0) (10 -.7) (10 0) (10 .5) 
 			    (10 0) (10 -.3) (10 0) (10 .2) (10 0) (10 -.1))))

@@ -3,8 +3,8 @@
 (provide 'snd-clean.scm)
 (if (not (provided? 'snd-dsp.scm)) (load "dsp.scm"))
 
-(define* (goertzel-channel freq :optional beg dur snd chn)
-  "(goertzel-channel freq :optional beg dur snd chn) returns the amplitude of the 'freq' spectral component"
+(define* (goertzel-channel freq beg dur snd chn)
+  "(goertzel-channel freq beg dur snd chn) returns the amplitude of the 'freq' spectral component"
   (let* ((sr (srate snd))
 	 (y2 0.0)
 	 (y1 0.0)
@@ -21,7 +21,7 @@
 		  snd chn)
     (magnitude (- y0 (* y1 (exp (make-rectangular 0.0 (- rfreq))))))))
 
-(define* (check-freq freq :optional snd chn)
+(define* (check-freq freq snd chn)
   (let ((hum 0.0))
     (do ((i 0 (1+ i))
 	 (loc 0.0 (+ loc (inexact->exact (round (/ (frames snd chn) 5))))))
@@ -32,7 +32,7 @@
 
 ;;; -------- single sample clicks
 
-(define* (remove-single-sample-clicks :optional (jump 8) snd chn)
+(define* (remove-single-sample-clicks (jump 8) snd chn)
   (let* ((reader (make-sampler 0 snd chn))
 	 (mx (make-moving-average 16)) ; local average of abs difference
 	 (samp0 0.0)
@@ -131,7 +131,7 @@
 	((= i dur))
       (vct-set! data (+ beg i) (+ off (* scale (cos (+ angle (* i incr)))))))))
 
-(define* (remove-pops :optional (size 8) snd chn)
+(define* (remove-pops (size 8) snd chn)
   (let* ((reader (make-sampler 0 snd chn))
 	 (dly0 (make-delay (* 4 size)))
 	 (dly1 (make-delay (* 5 size)))
@@ -347,7 +347,7 @@
     (close-sound test)))
 
 
-(define* (tvf-channel :optional snd chn)
+(define* (tvf-channel snd chn)
   (let* ((size (frames snd chn))
 	 (avg-data (make-vct size))
 	 (ctr 0)
@@ -399,7 +399,7 @@
 
 
 
-(define* (clean-channel :optional snd chn)
+(define* (clean-channel snd chn)
 
   ;; look for obvious simple clicks
   (let ((clicks (as-one-edit (lambda () (remove-single-sample-clicks 8 snd chn)))))
@@ -452,7 +452,7 @@
   )
 
 
-(define* (clean-sound :optional snd)
+(define* (clean-sound snd)
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (not (sound? index))
 	(throw 'no-such-sound (list "clean-sound" snd))

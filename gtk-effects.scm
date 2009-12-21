@@ -150,7 +150,7 @@
 
 (define effects-menu (add-to-main-menu "Effects" (lambda () (update-label effects-list))))
 
-(define* (effects-squelch-channel amp gate-size :optional snd chn)
+(define* (effects-squelch-channel amp gate-size snd chn)
   (let ((f0 (make-moving-average gate-size))
 	(f1 (make-moving-average gate-size :initial-element 1.0)))
     (map-channel (lambda (y) 
@@ -377,7 +377,7 @@
 ;;; DELAY EFFECTS
 ;;;
 
-(define* (effects-echo input-samps-1 delay-time echo-amount :optional beg dur snd chn)
+(define* (effects-echo input-samps-1 delay-time echo-amount beg dur snd chn)
   (let ((del (make-delay (round (* delay-time (srate snd)))))
 	(samp 0)
 	(input-samps (or input-samps-1 dur (frames snd chn))))
@@ -389,7 +389,7 @@
 		 beg dur snd chn #f
 		 (format #f "effects-echo ~A ~A ~A ~A ~A" input-samps-1 delay-time echo-amount beg dur))))
 
-(define* (effects-flecho-1 scaler secs input-samps-1 :optional beg dur snd chn)
+(define* (effects-flecho-1 scaler secs input-samps-1 beg dur snd chn)
   (let* ((flt (make-fir-filter :order 4 :xcoeffs (vct .125 .25 .25 .125)))
 	 (del (make-delay (round (* secs (srate snd)))))
 	 (samp 0)
@@ -402,7 +402,7 @@
 		 beg dur snd chn #f
 		 (format #f "effects-flecho-1 ~A ~A ~A ~A ~A" scaler secs input-samps-1 beg dur))))
 
-(define* (effects-zecho-1 scaler secs frq amp input-samps-1 :optional beg dur snd chn)
+(define* (effects-zecho-1 scaler secs frq amp input-samps-1 beg dur snd chn)
   (let* ((os (make-oscil frq))
 	 (len (round (* secs (srate snd))))
 	 (del (make-delay len :max-size (round (+ len amp 1))))
@@ -706,7 +706,7 @@ the modulation frequency, and the echo amplitude."))
 ;;; FILTERS
 ;;;
 
-(define* (effects-comb-filter scaler size :optional beg dur snd chn)
+(define* (effects-comb-filter scaler size beg dur snd chn)
   (let ((delay-line (make-vct size 0.0))
 	(delay-loc 0))
     (lambda (x)
@@ -716,7 +716,7 @@ the modulation frequency, and the echo amplitude."))
 	(if (= delay-loc size) (set! delay-loc 0))
 	result))))
 
-(define* (effects-comb-chord scaler size amp interval-one interval-two :optional beg dur snd chn)
+(define* (effects-comb-chord scaler size amp interval-one interval-two beg dur snd chn)
   (let ((c1 (make-comb scaler size))
 	(c2 (make-comb scaler (* size interval-one)))
 	(c3 (make-comb scaler (* size interval-two))))
@@ -725,29 +725,29 @@ the modulation frequency, and the echo amplitude."))
 		 beg dur snd chn #f
 		 (format #f "effects-comb-chord ~A ~A ~A ~A ~A ~A ~A" scaler size amp interval-one interval-two beg dur))))
 
-(define* (effects-moog freq Q :optional beg dur snd chn)
+(define* (effects-moog freq Q beg dur snd chn)
   (let ((gen (make-moog-filter freq Q)))
     (map-channel (lambda (inval)
 		   (moog-filter gen inval))
 		 beg dur snd chn #f
 		 (format #f "effects-moog ~A ~A ~A ~A" freq Q beg dur))))
     
-(define* (effects-bbp freq bw :optional beg dur snd chn)
+(define* (effects-bbp freq bw beg dur snd chn)
   (let ((flt (make-butter-band-pass freq bw)))
     (clm-channel flt beg dur snd chn #f #f
 		 (format #f "effects-bbp ~A ~A ~A ~A" freq bw beg dur))))
 
-(define* (effects-bbr freq bw :optional beg dur snd chn)
+(define* (effects-bbr freq bw beg dur snd chn)
   (let ((flt (make-butter-band-reject freq bw)))
     (clm-channel flt beg dur snd chn #f #f
 		 (format #f "effects-bbr ~A ~A ~A ~A" freq bw beg dur))))
 
-(define* (effects-bhp freq :optional beg dur snd chn)
+(define* (effects-bhp freq beg dur snd chn)
   (let ((flt (make-butter-high-pass freq)))
     (clm-channel flt beg dur snd chn #f #f
 		 (format #f "effects-bhp ~A ~A ~A" freq beg dur))))
 
-(define* (effects-blp freq :optional beg dur snd chn)
+(define* (effects-blp freq beg dur snd chn)
   (let ((flt (make-butter-low-pass freq)))
     (clm-channel flt beg dur snd chn #f #f
 		 (format #f "effects-blp ~A ~A ~A" freq beg dur))))
@@ -1629,7 +1629,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 
 ;;; MODULATION EFFECTS
 
-(define* (effects-am freq en :optional beg dur snd chn)
+(define* (effects-am freq en beg dur snd chn)
   (let* ((os (make-oscil freq))
 	 (e (and en (make-env en :length dur))))
     (map-channel (if e
@@ -1640,7 +1640,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		 beg dur snd chn #f
 		 (format #f "effects-am ~A ~A ~A ~A" freq (if en (format #f "'~A" en) #f) beg dur))))
 
-(define* (effects-rm freq gliss-env :optional beg dur snd chn)
+(define* (effects-rm freq gliss-env beg dur snd chn)
   (let* ((os (make-oscil freq))
 	 (e (and gliss-env (make-env gliss-env :length dur))))
     (map-channel (if e
@@ -1842,7 +1842,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 
 ;;; REVERBS
 
-(define* (effects-cnv snd0-1 amp :optional snd chn)
+(define* (effects-cnv snd0-1 amp snd chn)
   (let* ((snd0 (if (sound? snd0-1) snd0-1 (car (sounds))))
 	 (flt-len (frames snd0))
 	 (total-len (+ flt-len (frames snd chn)))
@@ -1886,7 +1886,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	(+ inval
 	   (* volume (delay outdel1 comb-sum)))))))
     
-(define* (effects-jc-reverb-1 volume :optional beg dur snd chn)
+(define* (effects-jc-reverb-1 volume beg dur snd chn)
   (map-channel (effects-jc-reverb (or dur (frames snd chn)) volume)
 	       beg dur snd chn #f
 	       (format #f "effects-jc-reverb-1 ~A ~A ~A" volume beg dur)))
@@ -2121,7 +2121,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 
 ;;; VARIOUS AND MISCELLANEOUS
 
-(define* (effects-hello-dentist frq amp :optional beg dur snd chn)
+(define* (effects-hello-dentist frq amp beg dur snd chn)
   (let* ((rn (make-rand-interp :frequency frq :amplitude amp))
 	 (i 0)
 	 (j 0)
@@ -2143,7 +2143,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
     (vct->channel out-data beg j snd chn #f 
 		  (format #f "effects-hello-dentist ~A ~A ~A ~A" frq amp beg (if (= len (frames snd chn)) #f len)))))
 
-(define* (effects-fp srf osamp osfrq :optional beg dur snd chn)
+(define* (effects-fp srf osamp osfrq beg dur snd chn)
   (let* ((os (make-oscil osfrq))
 	 (sr (make-src :srate srf))
 	 (sf (make-sampler beg))
@@ -2160,7 +2160,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
     (vct->channel out-data beg len snd chn #f
 		  (format #f "effects-fp ~A ~A ~A ~A ~A" srf osamp osfrq beg (if (= len (frames snd chn)) #f len)))))
 
-(define* (effects-position-sound mono-snd pos :optional snd chn)
+(define* (effects-position-sound mono-snd pos snd chn)
   (let ((len (frames mono-snd))
 	(reader1 (make-sampler 0 mono-snd)))
     (if (number? pos)
@@ -2179,7 +2179,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 			   0 len snd chn #f
 			   (format #f "effects-position-sound ~A '~A" mono-snd pos)))))))
     
-(define* (effects-flange amount speed time :optional beg dur snd chn)
+(define* (effects-flange amount speed time beg dur snd chn)
   (let* ((ri (make-rand-interp :frequency speed :amplitude amount))
 	 (len (round (* time (srate snd))))
 	 (del (make-delay len :max-size (round (+ len amount 1)))))
@@ -2219,7 +2219,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 	(vct-add! spectr fdr)
 	(* amp (formant-bank spectr formants inval))))))
     
-(define* (effects-cross-synthesis-1 cross-snd amp fftsize r :optional beg dur snd chn)
+(define* (effects-cross-synthesis-1 cross-snd amp fftsize r beg dur snd chn)
   (map-channel (effects-cross-synthesis (if (sound? cross-snd) cross-snd (car (sounds))) amp fftsize r)
 	       beg dur snd chn #f
 	       (format #f "effects-cross-synthesis-1 ~A ~A ~A ~A ~A ~A" cross-snd amp fftsize r beg dur)))
@@ -2913,7 +2913,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 			 (remove-click (+ click 2))))))
 	       (remove-click 0)))
 
-(define* (effects-remove-dc :optional snd chn)
+(define* (effects-remove-dc snd chn)
   (map-channel
    (let ((lastx 0.0)
 	 (lasty 0.0))
@@ -2926,7 +2926,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 (add-to-menu effects-menu "Remove DC" (lambda () (effects-remove-dc)))
 (add-to-menu effects-menu "Spiker" (lambda () (spike)))
 
-(define* (effects-compand :optional snd chn)
+(define* (effects-compand snd chn)
   (map-channel 
    (let* ((tbl (vct -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250
 		    0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000)))

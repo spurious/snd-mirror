@@ -3,8 +3,8 @@
 (provide 'snd-pvoc.scm)
 (if (not (provided? 'snd-snd7.scm)) (load "snd7.scm"))
 
-(define* (make-pvocoder fftsize overlap interp :optional analyze edit synthesize)
-  "(make-pvocoder fftsize overlap interp :optional analyze edit synthesize) makes a new (Scheme-based, not CLM) phase-vocoder generator"
+(define* (make-pvocoder fftsize overlap interp analyze edit synthesize)
+  "(make-pvocoder fftsize overlap interp analyze edit synthesize) makes a new (Scheme-based, not CLM) phase-vocoder generator"
 
   (let* ((N (or fftsize 512))
 	 (N2 (floor (/ N 2)))

@@ -54,7 +54,7 @@
 	       (vct-ref v 2)
 	       (+ (vct-ref v 5) (* val (vct-ref v 4)))))))
 
-    (define* (make-moving-rms :optional (size 128))
+    (define* (make-moving-rms (size 128))
       (make-moving-average size))
 
     (define (moving-rms gen y)
@@ -115,7 +115,7 @@
 ;(add-hook! after-graph-hook overlay-rms-env)
 
 
-(define* (display-colored-samples color beg dur :optional snd chn)
+(define* (display-colored-samples color beg dur snd chn)
   "(display-colored-samples color beg dur snd chn) displays samples from beg for dur in color 
 whenever they're in the current view."
   (let ((left (left-sample snd chn))
@@ -156,8 +156,8 @@ whenever they're in the current view."
 	   (apply display-colored-samples (append vals (list snd chn))))
 	 colors))))
 
-(define* (color-samples color :optional ubeg udur usnd uchn)
-  "(color-samples color :optional beg dur snd chn) causes samples from beg to beg+dur to be displayed in color"
+(define* (color-samples color ubeg udur usnd uchn)
+  "(color-samples color beg dur snd chn) causes samples from beg to beg+dur to be displayed in color"
   (if (not (member display-samples-in-color (hook->list after-graph-hook)))
       (add-hook! after-graph-hook display-samples-in-color))
   (let* ((beg (or ubeg 0))
@@ -168,8 +168,8 @@ whenever they're in the current view."
     (set! (channel-property 'colored-samples snd chn) (cons (list color beg dur) old-colors))
     (update-time-graph snd chn)))
 
-(define* (uncolor-samples :optional usnd uchn)
-  "(uncolor-samples :optional snd chn) cancels sample coloring in the given channel"
+(define* (uncolor-samples usnd uchn)
+  "(uncolor-samples snd chn) cancels sample coloring in the given channel"
   (let*	((snd (or usnd (selected-sound) (car (sounds))))
 	 (chn (or uchn (selected-channel snd) 0)))
     (set! (channel-property 'colored-samples snd chn) '())

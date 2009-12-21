@@ -345,8 +345,8 @@
 ;;;
 ;;; write out each section of a file between marks as a separate file
 
-(define* (mark-explode :optional (htype mus-next) (dformat mus-bfloat))
-  "(mark-explode :optional header-type data-format) splits a sound into a bunch of sounds based on mark placements"
+(define* (mark-explode (htype mus-next) (dformat mus-bfloat))
+  "(mark-explode header-type data-format) splits a sound into a bunch of sounds based on mark placements"
   (let ((start 0)
 	(file-ctr 0)
 	(snd (or (selected-sound) (car (sounds)))))

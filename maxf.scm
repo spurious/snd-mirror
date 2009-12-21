@@ -81,7 +81,7 @@
      (set! (mvm-pp2 b) (/ (* 2.0 pi ffreq) (mus-srate)))
      (set! (mvm-pp3 b) (* (mvm-pp2 b) famp))))
 
-(define* (maxfilter file beg :key
+(define* (maxfilter file beg
 		    (att 1.0)
 		    (numf 1)
 		    (freqfactor 1.0)
@@ -90,7 +90,7 @@
 		    (degree (random 90.0))
 		    (distance 1.0)
 		    (reverb-amount 0.2))
-  "(maxfilter file beg :key (att 1.0) (numf 1) (freqfactor 1.0)
+  "(maxfilter file beg (att 1.0) (numf 1) (freqfactor 1.0)
             (amplitude 1.0) (amp-env '(0 1 100 1))
             (degree (random 90.0)) (distance 1.0) (reverb-amount 0.2))
 
