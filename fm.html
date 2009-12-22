@@ -298,7 +298,7 @@ The corresponding CLM code is:
 
 <!-- SND CASE -->
 <pre>
-    (define* (oscil oscillator :optional (fm-input 0.0) (pm-input 0.0))
+    (define* (oscil oscillator (fm-input 0.0) (pm-input 0.0))
       (let ((result (sin (+ oscillator-phase pm-input))))
         (set! oscillator-phase (+ oscillator-phase (+ oscillator-phase-increment fm-input)))
         result))
@@ -691,7 +691,7 @@ Just for completeness, here's a derivation following Gray and Mathews, "A Treati
 
 <!-- SND CASE -->
 <pre>
-(define* (fm beg dur freq amp mc-ratio index :optional (index-env '(0 1 100 1)))
+(define* (fm beg dur freq amp mc-ratio index (index-env '(0 1 100 1)))
   (let* ((start (seconds-&gt;samples beg))
          (end (+ start (seconds-&gt;samples dur)))
          (cr (make-oscil freq))
@@ -2259,7 +2259,7 @@ FM(e^x) = PM(e^x).  FM(square-wave) is <img src="pix/fmeq58.png" alt="fm(noise)"
 
 <!--
 ;; FM(sq)=PM(tri):
-(define* (fmpmsq beg dur freq amp :optional (mc-ratio 1) (index 1.0) (phase (* 0.5 pi)))
+(define* (fmpmsq beg dur freq amp (mc-ratio 1) (index 1.0) (phase (* 0.5 pi)))
   (let* ((start (seconds->samples beg))
          (end (+ start (seconds->samples dur)))
 	 (fm-carrier (make-oscil freq))
@@ -2312,7 +2312,7 @@ FM(e^x) = PM(e^x).  FM(square-wave) is <img src="pix/fmeq58.png" alt="fm(noise)"
 
 
 ;; FM(white)=PM(brown):
-(define* (fmpmran beg dur freq amp :optional (index 1.0))
+(define* (fmpmran beg dur freq amp (index 1.0))
   (let* ((start (seconds->samples beg))
          (end (+ start (seconds->samples dur)))
 	 (fm-carrier (make-oscil freq))
@@ -2336,7 +2336,7 @@ FM(e^x) = PM(e^x).  FM(square-wave) is <img src="pix/fmeq58.png" alt="fm(noise)"
 (with-sound (:clipped #f :statistics #t :channels 4) (fmpmran 0 1 1000 .5 1))
 
 ;; FM(odd-sines-alternating-sign) = PM(sq)
-(define* (fmpmodd beg dur freq amp :optional (mc-ratio 1) (index 1.0) (phase (* 0.5 pi)))
+(define* (fmpmodd beg dur freq amp (mc-ratio 1) (index 1.0) (phase (* 0.5 pi)))
   (let* ((start (seconds->samples beg))
          (end (+ start (seconds->samples dur)))
 	 (fm-carrier (make-oscil freq))
@@ -2449,7 +2449,7 @@ used in "Colony" and other pieces:
 
 <!-- SND CASE -->
 <pre>
-(define* (vox beg dur freq amp :optional (indexes '(.005 .01 .02)) (formant-amps '(.86 .13 .01)))
+(define* (vox beg dur freq amp (indexes '(.005 .01 .02)) (formant-amps '(.86 .13 .01)))
   (let* ((start (seconds-&gt;samples beg))
 	 (end (+ start (seconds-&gt;samples dur)))
 	 (car-os (make-oscil 0))

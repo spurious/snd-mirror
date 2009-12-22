@@ -2175,7 +2175,7 @@ by list-ladspa.
 
 The main function is:
 
-	(apply-ladspa reader (plugin-library plugin-type [param1 [param2 ...]]) samples origin :optional snd chn)
+	(apply-ladspa reader (plugin-library plugin-type [param1 [param2 ...]]) samples origin snd chn)
 
 	Applies a LADSPA plugin to a block of samples. 
 An example call to apply the low-pass-filter in the CMT plugin library is 
@@ -2215,7 +2215,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
 <p><a name="ladspachannel"></a>The "regularized" version of apply-ladspa could be defined:
 </p>
 <table border=0 cellpadding=5 hspace=20><tr><td><pre>
-(define* (ladspa-channel ladspa-data :optional (beg 0) ndur snd chn (edpos -1))
+(define* (ladspa-channel ladspa-data (beg 0) ndur snd chn (edpos -1))
   (let* ((dur (or ndur (- (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn) beg)))
 	 (reader (<a class=quiet href="extsnd.html#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> beg snd chn 1 edpos)))
     (let ((result (<em class=red>apply-ladspa</em> reader ladspa-data dur "apply-ladspa" snd chn)))
@@ -2512,7 +2512,7 @@ at configuration time, and use the <a href="extsnd.html#glgraphtops">gl-graph-&g
 
 <!-- gsl-dht -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>gsl-dht</em> <code>(size data nu xmax)</code>
+<em class=emdef>gsl-dht</em> <code>size data nu xmax</code>
 </td></tr><tr><td width=60></td><td>
 gsl-dht performs the Hankel transform of "data", a vct.  See <a href="extsnd.html#addtransform">add-transform</a>
 for an example.
@@ -2521,7 +2521,7 @@ for an example.
 
 <!-- gsl-eigenvectors -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>gsl-eigenvectors</em> <code>(matrix)</code>
+<em class=emdef>gsl-eigenvectors</em> <code>matrix</code>
 </td></tr><tr><td width=60></td><td>
 gsl-eigenvectors returns the eigenvalues and corresponding eigenvectors of "matrix", a mixer.
 
@@ -2545,8 +2545,8 @@ See make-dpss-window in snd-test.scm (the corresponding C code is in clm.c).
 
 <!-- gsl-elliptk -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>gsl-ellipk</em> <code>(k)</code><br>
-<em class=emdef>gsl-ellipj</em> <code>(j u m)</code>
+<em class=emdef>gsl-ellipk</em> <code>k</code><br>
+<em class=emdef>gsl-ellipj</em> <code>j u m</code>
 </td></tr><tr><td width=60></td><td>
 These are calls on the functions gsl_sf_ellint_Kcomp and gsl_sf_elljac_e.  See the elliptic filter code in
 analog-filter.scm for an example.
@@ -2554,7 +2554,7 @@ analog-filter.scm for an example.
 
 <!-- gsl-roots -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>gsl-roots</em> <code>(poly)</code>
+<em class=emdef>gsl-roots</em> <code>poly</code>
 </td></tr><tr><td width=60></td><td>
 This returns the roots of the polynomial "poly" via gsl_poly_complex_solve.  See analog-filter.scm for an example.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -2577,7 +2577,7 @@ switch.  This version of s7 also supplies the functions:
 
 <!-- bignum -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>bignum</em> <code>(num)</code>
+<em class=emdef>bignum</em> <code>num</code>
 </td></tr><tr><td width=60></td><td>
 <p>bignum converts its argument (a string) into a big number.  This is the most convenient
 way to force a calculation to use big numbers.
@@ -2620,7 +2620,7 @@ of numbers.
 
 <!-- bignum? -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>bignum?</em> <code>(num)</code>
+<em class=emdef>bignum?</em> <code>num</code>
 </td></tr><tr><td width=60></td><td>
 <p>bignum? returns #t if its argument is a big number.
 </p>
@@ -2628,7 +2628,7 @@ of numbers.
 
 <!-- bignum-fft -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>bignum-fft</em> <code>(rl im size sign)</code>
+<em class=emdef>bignum-fft</em> <code>rl im size <em class=narg>sign</em></code>
 </td></tr><tr><td width=60></td><td>
 bignum-fft performs an FFT using big floats; rl and im are vectors of big floats.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -2636,7 +2636,7 @@ bignum-fft performs an FFT using big floats; rl and im are vectors of big floats
 
 <!-- bignum-precision -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>bignum-precision</em> <code>()</code>
+<em class=emdef>bignum-precision</em> <code></code>
 </td></tr><tr><td width=60></td><td>
 <p>bignum-precision sets the number of bits used in floating-point big numbers (integer 
 bignums have whatever size it takes to represent them).  The default is 128 which gives
@@ -2687,7 +2687,7 @@ is a bigfloat oscil:
       g))
   (frequency *clm-default-frequency*) (angle 0.0))
 
-(define* (big-oscil gen :optional (fm 0.0) (pm 0.0))
+(define* (big-oscil gen (fm 0.0) (pm 0.0))
   (let ((x (big-oscil-angle gen)))
     (set! (big-oscil-angle gen) (+ fm x (big-oscil-frequency gen)))
     (sin (+ x pm))))

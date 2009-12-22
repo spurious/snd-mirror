@@ -1,10 +1,10 @@
-var extsnd_addmark_tip = "<code>(add-mark samp :optional snd chn name (sync 0))</code>:<br>" +  
+var extsnd_addmark_tip = "<code>(add-mark samp snd chn name (sync 0))</code>:<br>" +  
                          " add a mark at sample 'samp' returning the mark id.";
 
 var extsnd_addsoundfileextension_tip = "<code>(add-sound-file-extension ext)</code>:<br>" +
                                        " add the file extension 'ext' to the list of sound file extensions";
 
-var extsnd_addtomenu_tip = "<code>(add-to-menu menu label func :optional position)</code>:<br>" +
+var extsnd_addtomenu_tip = "<code>(add-to-menu menu label func position)</code>:<br>" +
                            " add label to menu (a main menu index),<br>" +
                            " invoke func (a function of no args) when the new menu is activated.<br>" +
                            " Return the new menu label widget.";
@@ -36,17 +36,17 @@ var extsnd_aftersavestatehook_tip = "<code>after-save-state-hook (filename)</cod
 
 var extsnd_aftertransformhook_tip = "<code>after-transform-hook (snd chn scaler)</code>: called just after a spectrum is calculated.";
 
-var extsnd_ampcontrol_tip = "<code>(amp-control :optional snd chn)</code>: current amp slider setting";
+var extsnd_ampcontrol_tip = "<code>(amp-control snd chn)</code>: current amp slider setting";
 
-var extsnd_applycontrols_tip = "<code>(apply-controls :optional snd (choice 0) (beg 0) (dur len))</code>:<br>" +
+var extsnd_applycontrols_tip = "<code>(apply-controls snd (choice 0) (beg 0) (dur len))</code>:<br>" +
                                " applies the current control panel state as an edit. <br>" +
                                " The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to selection).<br>" +
                                " If 'beg' is given, the apply starts there.";
 
-var extsnd_asoneedit_tip = "<code>(as-one-edit thunk :optional origin)</code>: evaluate thunk,<br>" +
+var extsnd_asoneedit_tip = "<code>(as-one-edit thunk origin)</code>: evaluate thunk,<br>" +
                            " collecting all edits into one from the edit history's point of view";
 
-var extsnd_axisinfo_tip = "<code>(axis-info :optional snd chn (ax time-graph))</code>: info about axis:<br>" +
+var extsnd_axisinfo_tip = "<code>(axis-info snd chn (ax time-graph))</code>: info about axis:<br>" +
                           "<pre> (list losamp hisamp x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1<br>" +
                           "       y_offset xscale yscale xlabel ylabel new-peaks)</pre>";
 
@@ -59,7 +59,7 @@ var extsnd_badheaderhook_tip = "<code>bad-header-hook (filename)</code>: called 
 
 var extsnd_basiccolor_tip = "<code>(basic-color)</code>: Snd's basic color";
 
-var extsnd_beatsperminute_tip = "<code>(beats-per-minute :optional snd chn)</code>: beats per minute if x-axis-style is x-axis-in-beats";
+var extsnd_beatsperminute_tip = "<code>(beats-per-minute snd chn)</code>: beats per minute if x-axis-style is x-axis-in-beats";
 
 var extsnd_beforeclosehook_tip = "<code>before-close-hook (snd)</code>: called each time a file is closed (before the close).<br>" +
                                  " If it returns #t, the file is not closed.";
@@ -75,7 +75,7 @@ var extsnd_beforesavestatehook_tip = "<code>before-save-state-hook (filename)</c
 
 var extsnd_besj0_tip = "<code>(bes-j0 x) returns the Bessel function J0(x)";
 
-var extsnd_bindkey_tip = "<code>(bind-key key modifiers func :optional extended origin prefs-info)</code>:<br>" +
+var extsnd_bindkey_tip = "<code>(bind-key key modifiers func extended origin prefs-info)</code>:<br>" +
                          " causes 'key' (an integer, character, or string) when typed with 'modifiers'<br>" +
                          " (0:none, 4:control, 8:meta) (and C-x if extended) to invoke 'func', a function of zero or one arguments.<br>" +
                          " If the function takes one argument, it is passed the preceding C-u number, if any.<br>" +
@@ -89,48 +89,48 @@ var extsnd_boldpeaksfont_tip = "<code>(bold-peaks-font)</code>: bold font used b
 
 var extsnd_cgp_tip = "<code>(c-g?)</code>: allow pending user interface events to occur, returning #t if C-g was typed";
 
-var extsnd_channels_tip = "<code>(channels :optional snd)</code>: how many channels snd has";
+var extsnd_channels_tip = "<code>(channels snd)</code>: how many channels snd has";
 
-var extsnd_channelstyle_tip = "<code>(channel-style :optional snd)</code>: how multichannel sounds lay out the channels.<br>" +
+var extsnd_channelstyle_tip = "<code>(channel-style snd)</code>: how multichannel sounds lay out the channels.<br>" +
                               " The default is channels-combined; other values are channels-separate and channels-superimposed.<br>" +
                               " As a global (if the 'snd' arg is omitted), it is the default setting for each sound's 'unite' button.";
 
-var extsnd_channeltovct_tip = "<code>(channel-&gt;vct :optional beg dur snd chn edpos)</code>: return a vct with the specified samples.";
+var extsnd_channeltovct_tip = "<code>(channel-&gt;vct beg dur snd chn edpos)</code>: return a vct with the specified samples.";
 
-var extsnd_channelwidgets_tip = "<code>(channel-widgets :optional snd chn)</code>: a list of widgets: ((0)graph (1)w (2)f (3)sx (4)sy (5)zx (6)zy (7)edhist)";
+var extsnd_channelwidgets_tip = "<code>(channel-widgets snd chn)</code>: a list of widgets: ((0)graph (1)w (2)f (3)sx (4)sy (5)zx (6)zy (7)edhist)";
 
-var extsnd_chans_tip = "<code>(channels :optional snd)</code>: how many channels snd has";
+var extsnd_chans_tip = "<code>(channels snd)</code>: how many channels snd has";
 
 var extsnd_clearlistener_tip = "<code>(clear-listener)</code> removes listener text from the beginning to the cursor.";
 
-var extsnd_clearminibuffer_tip = "<code>(clear-minibuffer :optional snd)</code>: clears snd's minibuffer (erasing any error message as well).";
+var extsnd_clearminibuffer_tip = "<code>(clear-minibuffer snd)</code>: clears snd's minibuffer (erasing any error message as well).";
 
 var extsnd_cliphook_tip = "<code>clip-hook (clipping-value)</code> is called each time a sample is about to be clipped<br>" +
                           " upon being written to a sound file.  The hook function can return the new value to be written,<br>" +
                           " or rely on the default (-1.0 or 1.0 depending on the sign of 'clipping-value').";
 
-var extsnd_clmchannel_tip = "<code>(clm-channel gen :optional (beg 0) (dur len) snd chn edpos (overlap 0) origin)</code>:<br>" +
+var extsnd_clmchannel_tip = "<code>(clm-channel gen (beg 0) (dur len) snd chn edpos (overlap 0) origin)</code>:<br>" +
                             " apply gen to snd's channel chn starting at beg for dur samples.<br>" +
                             " overlap is the 'ring' time, if any.";
 
 var extsnd_closehook_tip = "<code>close-hook (snd)</code>: called each time a file is closed (before the close).";
 
-var extsnd_closesound_tip = "<code>(close-sound :optional snd)</code>: close snd";
+var extsnd_closesound_tip = "<code>(close-sound snd)</code>: close snd";
 
-var extsnd_comment_tip = "<code>(comment :optional snd)</code>: snd's comment (in its header)";
+var extsnd_comment_tip = "<code>(comment snd)</code>: snd's comment (in its header)";
 
 var extsnd_copycontext_tip = "<code>copy-context</code> is the graphics context used in Snd<br>" +
                              "when you want the newly drawn stuff to replace whatever is already there.<br>" +
                              "the other common choice is <code>cursor-context</code> which uses XOR";
 
-var extsnd_countmatches_tip = "<code>(count-matches func :optional (start-samp 0) snd chn edpos)</code>:<br>" +
+var extsnd_countmatches_tip = "<code>(count-matches func (start-samp 0) snd chn edpos)</code>:<br>" +
                               " return how many samples satisfy func (a function of one argument,<br>" +
                               " the current sample, returning #t upon match):<br>" +
                               " <code>(count-matches (lambda (y) (> y .1)))</code>";
 
-var extsnd_currentfont_tip = "<code>(current-font :optional snd chn (ax time-graph))</code>: current font id";
+var extsnd_currentfont_tip = "<code>(current-font snd chn (ax time-graph))</code>: current font id";
 
-var extsnd_cursor_tip = "<code>(cursor :optional snd chn edpos)</code>: current cursor location in snd's channel chn";
+var extsnd_cursor_tip = "<code>(cursor snd chn edpos)</code>: current cursor location in snd's channel chn";
 
 var extsnd_cursorcontext_tip = "graphics context for the cursor";
 
@@ -140,9 +140,9 @@ var extsnd_dacsize_tip = "<code>(dac-size)</code>: the current DAC buffer size i
 
 var extsnd_datacolor_tip = "<code>(data-color)</code>: color used to draw unselected data";
 
-var extsnd_dataformat_tip = "<code>(data-format :optional snd)</code>: snd's data format (e.g. mus-bshort)";
+var extsnd_dataformat_tip = "<code>(data-format snd)</code>: snd's data format (e.g. mus-bshort)";
 
-var extsnd_datalocation_tip = "<code>(data-location :optional snd)</code>: snd's data location (bytes)";
+var extsnd_datalocation_tip = "<code>(data-location snd)</code>: snd's data location (bytes)";
 
 var extsnd_declare_tip = "Functions embedded within run may need to declare the type of their arguments;<br>" +
                          " run assumes each variable has one type (integer by default) throughout its life.<br>" +
@@ -161,7 +161,7 @@ var extsnd_defineenvelope_tip = "<code>(define-envelope name data)</code>: defin
 var extsnd_defvar_tip = "<code>(defvar name data)</code>: define 'name' to have the value 'data'<br>" +
                         " (a list of breakpoints), and load it into the envelope editor.";
 
-var extsnd_deletesamples_tip = "<code>(delete-samples start-samp samps :optional snd chn edpos)</code>:<br>" +
+var extsnd_deletesamples_tip = "<code>(delete-samples start-samp samps snd chn edpos)</code>:<br>" +
                                " delete 'samps' samples from snd's channel chn starting at 'start-samp'";
 
 var extsnd_deleteselection_tip = "<code>(delete-selection)</code> deletes the currently selected portion";
@@ -176,11 +176,11 @@ var extsnd_dialogwidgets_tip = "<code>(dialog-widgets)</code>: dialog widgets (e
                                " (20 info-dialog) (21 #f) (22 save-selection-dialog)<br>" +
                                " (23 insert-file-dialog)  (24 save-region-dialog) (25 preferences-dialog))</code>";
 
-var extsnd_dotsize_tip = "<code>(dot-size :optional snd chn)</code>: size in pixels of dots when graphing with dots (1)";
+var extsnd_dotsize_tip = "<code>(dot-size snd chn)</code>: size in pixels of dots when graphing with dots (1)";
 
-var extsnd_drawline_tip = "<code>(draw-line x0 y0 x1 y1 :optional snd chn (ax time-graph))</code>: draw a line";
+var extsnd_drawline_tip = "<code>(draw-line x0 y0 x1 y1 snd chn (ax time-graph))</code>: draw a line";
 
-var extsnd_drawstring_tip = "<code>(draw-string text x0 y0 :optional snd chn (ax time-graph))</code>: draw a string";
+var extsnd_drawstring_tip = "<code>(draw-string text x0 y0 snd chn (ax time-graph))</code>: draw a string";
 
 var extsnd_duringopenhook_tip = "<code>during-open-hook (fd name reason)</code>:<br>" +
                                 " called after file is opened, but before data has been read.<br>" +
@@ -189,22 +189,22 @@ var extsnd_duringopenhook_tip = "<code>during-open-hook (fd name reason)</code>:
                                 "      (if (= (mus-sound-header-type name) mus-raw)<br>" +
                                 "          (set! (mus-file-prescaler fd) 500.0))))</pre>";
 
-var extsnd_editfragment_tip = "<code>(edit-fragment :optional (ctr current-edit-position) snd chn)</code>:<br>" +
+var extsnd_editfragment_tip = "<code>(edit-fragment (ctr current-edit-position) snd chn)</code>:<br>" +
                               " edit history entry at ctr associated with snd's channel chn;<br>" +
                               " the returned value is a list (origin type start-sample samps)";
 
-var extsnd_editposition_tip = "<code>(edit-position :optional snd chn)</code>: current edit history position in snd's channel chn";
+var extsnd_editposition_tip = "<code>(edit-position snd chn)</code>: current edit history position in snd's channel chn";
 
-var extsnd_edits_tip = "<code>(edits :optional snd chn)</code>: <br>" +
+var extsnd_edits_tip = "<code>(edits snd chn)</code>: <br>" +
                        "returns <code>(list undoable-edits redoable-edits)</code> in snd's channel chn";
 
-var extsnd_emarks_tip = "<code>(marks :optional snd chn edpos)</code>: list of marks (ids) in snd/chn<br>" +
+var extsnd_emarks_tip = "<code>(marks snd chn edpos)</code>: list of marks (ids) in snd/chn<br>" +
                         " at edit history position pos. mark list is: <br>" +
                         " if channel given: (id id ...), <br>" +
                         " if snd given: ((id id) (id id ...)), <br>" +
                         " if neither given: (((id ...) ...) ...).";
 
-var extsnd_envchannel_tip = "<code>(env-channel env-gen-or-envelope :optional (beg 0) (dur len) snd chn edpos)</code>:<br>" +
+var extsnd_envchannel_tip = "<code>(env-channel env-gen-or-envelope (beg 0) (dur len) snd chn edpos)</code>:<br>" +
                             " apply amplitude envelope to snd's channel chn starting at beg for dur samples.";
 
 var extsnd_envedtarget_tip = "<code>(enved-target)</code>: determines how the envelope edit envelope is applied:<br>" +
@@ -212,12 +212,12 @@ var extsnd_envedtarget_tip = "<code>(enved-target)</code>: determines how the en
 
 var extsnd_envedwaving_tip = "<code>(enved-wave?)</code>: #t if the envelope editor is displaying the waveform to be edited";
 
-var extsnd_envsound_tip = "<code>(env-sound env :optional (start-samp 0) (samps len) (env-base 1.0) snd chn edpos)</code>:<br>" +
+var extsnd_envsound_tip = "<code>(env-sound env (start-samp 0) (samps len) (env-base 1.0) snd chn edpos)</code>:<br>" +
                           " apply an amplitude envelope (a list of breakpoints or a CLM env) to snd's channel chn<br>" +
                           " starting at start-samp, going either to the end of the sound or for samps samples,<br>" +
                           " with segments interpolating according to env-base (1 = linear).";
 
-var extsnd_envselection_tip = "<code>(env-selection env :optional (env-base 1.0))</code>:<br>" +
+var extsnd_envselection_tip = "<code>(env-selection env (env-base 1.0))</code>:<br>" +
                               " apply envelope to the selection using env-base to determine how breakpoints are connected";
 
 var extsnd_eregions_tip = "<code>(regions)</code>: current active regions (a list of region ids)";
@@ -226,49 +226,49 @@ var extsnd_exit_tip = "<code>(exit)</code>: exit Snd";
 
 var extsnd_exithook_tip = "<code>exit-hook ()</code>: called upon exit.  This can be used to perform cleanup activities.";
 
-var extsnd_expandcontrol_tip = "<code>(expand-control :optional snd)</code>: current expand slider setting";
+var extsnd_expandcontrol_tip = "<code>(expand-control snd)</code>: current expand slider setting";
 
-var extsnd_expandcontrolp_tip = "<code>(expand-control? :optional snd)</code>: snd's control panel expand button state";
+var extsnd_expandcontrolp_tip = "<code>(expand-control? snd)</code>: snd's control panel expand button state";
 
-var extsnd_filename_tip = "<code>(file-name :optional snd)</code>: snd's full filename";
+var extsnd_filename_tip = "<code>(file-name snd)</code>: snd's full filename";
 
-var extsnd_fillrectangle_tip = "<code>(fill-rectangle x0 y0 width height :optional snd chn (ax time-graph) erase)</code>: draw a filled rectangle";
+var extsnd_fillrectangle_tip = "<code>(fill-rectangle x0 y0 width height snd chn (ax time-graph) erase)</code>: draw a filled rectangle";
 
-var extsnd_filterchannel_tip = "<code>(filter-channel env :optional order beg dur snd chn edpos (truncate #t) origin)</code>:<br>" +
+var extsnd_filterchannel_tip = "<code>(filter-channel env order beg dur snd chn edpos (truncate #t) origin)</code>:<br>" +
                                " applies an FIR filter to snd's channel chn.<br>" +
                                " 'env' is the frequency response envelope, or a vct with the coefficients.";
 
-var extsnd_filterselection_tip = "<code>(filter-selection filter :optional order (truncate #t))</code>:<br>" +
+var extsnd_filterselection_tip = "<code>(filter-selection filter order (truncate #t))</code>:<br>" +
                                  " apply filter to selection.<br>" +
                                  " If truncate, cut off filter output at end of selection, else mix";
 
-var extsnd_filtersound_tip = "<code>(filter-sound filter :optional order snd chn edpos origin)</code>:<br>" +
+var extsnd_filtersound_tip = "<code>(filter-sound filter order snd chn edpos origin)</code>:<br>" +
                              " applies FIR filter to snd's channel chn.<br>" +
                              " 'filter' is either the frequency response envelope,<br>" +
                              " a CLM filter, or a vct with the actual coefficients";
 
-var extsnd_findchannel_tip = "<code>(find-channel func :optional (start-samp 0) snd chn edpos)</code>:<br>" +
+var extsnd_findchannel_tip = "<code>(find-channel func (start-samp 0) snd chn edpos)</code>:<br>" +
                              " apply func, a function of one argument, the current sample,<br>" +
                              " to each sample in snd's channel chn, starting at 'start-samp'<br>" +
                              " until func returns something other than #f: <br>" +
                              " <code>  (find-channel (lambda (y) (> y .1)))</code>";
 
-var extsnd_findmark_tip = "<code>(find-mark samp-or-name :optional snd chn edpos)</code>:<br>" +
+var extsnd_findmark_tip = "<code>(find-mark samp-or-name snd chn edpos)</code>:<br>" +
                           " find the mark in snd's channel chn at samp (if a number)<br>" +
                           " or with the given name (if a string);<br>" +
                           " return the mark id or #f if no mark found.";
 
 var extsnd_focuswidget_tip = "<code>(focus-widget widget)</code>: cause widget to receive input focus";
 
-var extsnd_foregroundcolor_tip = "<code>(foreground-color :optional snd chn (ax time-graph))</code>: current drawing color";
+var extsnd_foregroundcolor_tip = "<code>(foreground-color snd chn (ax time-graph))</code>: current drawing color";
 
-var extsnd_frames_tip = "<code>(frames :optional snd chn edpos)</code>: number of frames of data in snd's channel chn";
+var extsnd_frames_tip = "<code>(frames snd chn edpos)</code>: number of frames of data in snd's channel chn";
 
 var extsnd_freesampler_tip = "<code>(free-sampler reader)</code>: free a sampler (of any kind)";
 
 var extsnd_gin_tip = "<code>(in msecs thunk)</code>: invoke thunk in msecs milliseconds (named call_in in Ruby)";
 
-var extsnd_graph_tip = "<code>(graph data :optional xlabel (x0 0.0) (x1 1.0) y0 y1 snd chn (force-display #t) show-axes)</code>:<br>" +
+var extsnd_graph_tip = "<code>(graph data xlabel (x0 0.0) (x1 1.0) y0 y1 snd chn (force-display #t) show-axes)</code>:<br>" +
                        " displays 'data' as a graph with x axis label 'xlabel', axis units going from x0 to x1 and y0 to y1;<br>" +
                        " 'data' can be a list or a vct. If 'data' is a list of numbers, it is treated as an envelope.";
 
@@ -277,16 +277,16 @@ var extsnd_graphhook_tip = "<code>graph-hook (snd chn y0 y1)</code>: called each
 
 var extsnd_graphonce_tip = "<code>graph-once</code> is the default value of the graph types (time-graph-type and transform-graph-type).";
 
-var extsnd_graphshorizontal_tip = "<code>(graphs-horizontal :optional snd chn)</code>:<br>" +
+var extsnd_graphshorizontal_tip = "<code>(graphs-horizontal snd chn)</code>:<br>" +
                                   " #t if the time domain, fft, and lisp graphs are layed out horizontally";
 
-var extsnd_graphstyle_tip = "<code>(graph-style :optional snd chn)</code>: graph style, <br>" +
+var extsnd_graphstyle_tip = "<code>(graph-style snd chn)</code>: graph style, <br>" +
                             " one of <code>graph-lines graph-dots graph-dots-and-lines graph-lollipops graph-filled</code>";
 
-var extsnd_graphtops_tip = "<code>(graph-&gt;ps :optional (filename eps-file)):</code><br>" +
+var extsnd_graphtops_tip = "<code>(graph-&gt;ps (filename eps-file)):</code><br>" +
                            "this writes the current Snd displays to an EPS file";
 
-var extsnd_headertype_tip = "<code>(header-type :optional snd)</code>: snd's header type (e.g. <code>mus-aiff</code>)";
+var extsnd_headertype_tip = "<code>(header-type snd)</code>: snd's header type (e.g. <code>mus-aiff</code>)";
 
 var extsnd_helpdialog_tip = "<code>(help-dialog subject message xrefs urls)</code>: start the Help window with subject and message";
 
@@ -299,17 +299,17 @@ var extsnd_infodialog_tip = "<code>(info-dialog subject message)</code>: start t
 var extsnd_initialgraphhook_tip = "<code>initial-graph-hook (snd chn dur)</code>:<br>" +
                                   " called when a sound is displayed for the first time";
 
-var extsnd_insertregion_tip = "<code>(insert-region :optional (start-samp 0) (region-id 0) snd chn)</code>:<br>" +
+var extsnd_insertregion_tip = "<code>(insert-region (start-samp 0) (region-id 0) snd chn)</code>:<br>" +
                               " insert region data into snd's channel chn starting at start-samp";
 
-var extsnd_insertsamples_tip = "<code>(insert-samples start-samp samps data :optional snd chn edpos auto-delete origin)</code>:<br>" +
+var extsnd_insertsamples_tip = "<code>(insert-samples start-samp samps data snd chn edpos auto-delete origin)</code>:<br>" +
                                " insert data (either a vct, a list of samples, or a filename) into snd's channel chn <br>" +
                                " starting at 'start-samp' for 'samps' samples";
 
-var extsnd_insertselection_tip = "<code>(insert-selection :optional (beg 0) snd chn)</code>:<br>" +
+var extsnd_insertselection_tip = "<code>(insert-selection (beg 0) snd chn)</code>:<br>" +
                                  " insert the currently selected portion starting at beg";
 
-var extsnd_insertsound_tip = "<code>(insert-sound file :optional (beg 0) (file-chan 0) snd chn edpos auto-delete)</code>:<br>" +
+var extsnd_insertsound_tip = "<code>(insert-sound file (beg 0) (file-chan 0) snd chn edpos auto-delete)</code>:<br>" +
                              " insert channel file-chan of file (or all chans if file-chan is not given)<br>" +
                              " into snd's channel chn at beg or at the cursor position.<br>" +
                              "<code>  (insert-sound \"oboe.snd\" 1000)</code><br>" +
@@ -320,7 +320,7 @@ var extsnd_justsounds_tip = "<code>(just-sounds)</code>: the 'just sounds' choic
 var extsnd_keyboard_no_action_tip = "<code>keyboard-no-action</code> is one of the <code>bind-key</a> function<br>" +
                                     "return values.  It indicates that Snd should not update the graphs.";
 
-var extsnd_leftsample_tip = "<code>(left-sample :optional snd chn)</code>: left sample number in time domain window";
+var extsnd_leftsample_tip = "<code>(left-sample snd chn)</code>: left sample number in time domain window";
 
 var extsnd_lispgraph_tip = "the <code>lisp-graph</code> is the 3rd graph displayed in the channel graphs.";
 
@@ -344,7 +344,7 @@ var extsnd_mainwidgets_tip = "<code>(main-widgets)</code>: top level widgets<br>
 
 var extsnd_makecolor_tip = "<code>(make-color r g b)</code>: return a color object with the indicated rgb values";
 
-var extsnd_makegraphdata_tip = "<code>(make-graph-data :optional snd chn edpos low high)</code>:<br>" +
+var extsnd_makegraphdata_tip = "<code>(make-graph-data snd chn edpos low high)</code>:<br>" +
                                " return either a vct (if the graph has one trace), or a list of two vcts<br>" +
                                " (the two sides of the envelope graph).<br>" +
                                " 'edpos' defaults to the current-edit-position,<br>" +
@@ -352,10 +352,10 @@ var extsnd_makegraphdata_tip = "<code>(make-graph-data :optional snd chn edpos l
                                " 'high' defaults to the current rightmost sample.<br>" +
                                " <code>(graph-data (make-graph-data))</code> reimplements the time domain graph.";
 
-var extsnd_makemixsampler_tip = "<code>(make-mix-sampler id :optional (beg 0))</code>:<br>" +
+var extsnd_makemixsampler_tip = "<code>(make-mix-sampler id (beg 0))</code>:<br>" +
                                      " return a reader ready to access mix id";
 
-var extsnd_makesampler_tip = "<code>(make-sampler :optional (start-samp 0) snd chn (dir 1) edpos)</code>:<br>" +
+var extsnd_makesampler_tip = "<code>(make-sampler (start-samp 0) snd chn (dir 1) edpos)</code>:<br>" +
                                   " return a reader ready to access snd's channel chn's data starting at start-samp,<br>" +
                                   " going in direction dir (1 = forward, -1 = backward),<br>" +
                                   " reading the version of the data indicated by edpos which defaults to the current version.<br>" +
@@ -364,11 +364,11 @@ var extsnd_makesampler_tip = "<code>(make-sampler :optional (start-samp 0) snd c
 var extsnd_makesounddata_tip = "<code>(make-sound-data chans frames)</code>: return a new sound-data object<br>" +
                                " with 'chans' channels, each having 'frames' samples";
 
-var extsnd_makevct_tip = "<code>(make-vct len :optional (initial-element 0))</code>: <br>" +
+var extsnd_makevct_tip = "<code>(make-vct len (initial-element 0))</code>: <br>" +
                          " returns a new vct of length len filled with initial-element:<br>" +
                          "<code>  (define v (make-vct 32 1.0))</code>";
 
-var extsnd_mapchannel_tip = "<code>(map-channel func :optional (start 0) (dur len) snd chn edpos edname)</code>:<br>" +
+var extsnd_mapchannel_tip = "<code>(map-channel func (start 0) (dur len) snd chn edpos edname)</code>:<br>" +
                             " apply func to samples in current channel;<br>" +
                             " edname is the edit history name for this editing operation.<br>" +
                             "<code>  (map-channel (lambda (y) (* y 2.0)))</code>";
@@ -378,31 +378,31 @@ var extsnd_markclickhook_tip = "<code>mark-click-hook (id)</code>: called when a
 
 var extsnd_markdraghook_tip = "<code>mark-drag-hook (id)</code>: called when a mark is dragged";
 
-var extsnd_markhome_tip = "<code>(mark-home :optional id)</code>: the sound (index) and channel that hold mark id";
+var extsnd_markhome_tip = "<code>(mark-home id)</code>: the sound (index) and channel that hold mark id";
 
-var extsnd_markname_tip = "<code>(mark-name :optional id)</code>: mark's name";
+var extsnd_markname_tip = "<code>(mark-name id)</code>: mark's name";
 
-var extsnd_marksample_tip = "<code>(mark-sample :optional id pos)</code>: mark's location (sample number) at edit history pos";
+var extsnd_marksample_tip = "<code>(mark-sample id pos)</code>: mark's location (sample number) at edit history pos";
 
-var extsnd_marksync_tip = "<code>(mark-sync :optional id)</code>: mark's sync value (default: 0)";
+var extsnd_marksync_tip = "<code>(mark-sync id)</code>: mark's sync value (default: 0)";
 
 var extsnd_marksyncmax_tip = "<code>(mark-sync-max)</code>: max mark sync value seen so far";
 
-var extsnd_maxamp_tip = "<code>(maxamp :optional snd chn edpos)</code>: maxamp of data in snd's channel chn";
+var extsnd_maxamp_tip = "<code>(maxamp snd chn edpos)</code>: maxamp of data in snd's channel chn";
 
-var extsnd_mix_tip = "<code>(mix file :optional (beg 0) (file-chan 0) snd chn (with-tag with-mix-tags) auto-delete)</code>:<br>" +
+var extsnd_mix_tip = "<code>(mix file (beg 0) (file-chan 0) snd chn (with-tag with-mix-tags) auto-delete)</code>:<br>" +
                      " mix channel file-chan of file into snd's channel chn starting at beg (in the output),<br>" +
                      " returning the new mix's id.  if with-tag is #f, no draggable tag is created. <br>" +
                      " If auto-delete is #t, the input file is deleted when it is no longer needed.";
 
 var extsnd_mixamp_tip = "<code>(mix-amp id)</code>: mix's scaler";
 
-var extsnd_mixcolor_tip = "<code>(mix-color :optional mix-id)</code>: color of all mix tags<br>" +
+var extsnd_mixcolor_tip = "<code>(mix-color mix-id)</code>: color of all mix tags<br>" +
                           " (if mix-id is omitted), or of mix-id's tag";
 
 var extsnd_mixposition_tip = "<code>(mix-position id)</code>: mix's begin time in the output in samples";
 
-var extsnd_mixregion_tip = "<code>(mix-region :optional (chn-samp 0) (region 0) snd chn (region-chan #t))</code>:<br>" +
+var extsnd_mixregion_tip = "<code>(mix-region (chn-samp 0) (region 0) snd chn (region-chan #t))</code>:<br>" +
                            " mix region's channel region-chan (or all chans if region-chan is #t)<br>" +
                            " into snd's channel chn starting at chn-samp; return new mix id, if any.";
 
@@ -413,7 +413,7 @@ var extsnd_mixreleasehook_tip = "<code>mix-release-hook (mix-id samps)</code>:<b
 
 var extsnd_mixsamplerQ_tip = "<code>(mix-sampler? obj)</code>: #t if obj is a mix-sampler";
 
-var extsnd_mixselection_tip = "<code>(mix-selection :optional (beg 0) snd chn (selection-channel #t))</code>:<br>" +
+var extsnd_mixselection_tip = "<code>(mix-selection (beg 0) snd chn (selection-channel #t))</code>:<br>" +
                               " mix the currently selected portion starting at beg";
 
 var extsnd_mixsync_tip = "<code>(mix-sync id)</code>: mix sync field (an integer)";
@@ -498,11 +498,11 @@ var extsnd_newsound_tip = "<code>(new-sound :file :header-type :data-format :sra
 
 var extsnd_nextsample_tip = "<code>(next-sample reader)</code>: next sample from reader";
 
-var extsnd_normalizefft_tip = "<code>(transform-normalization :optional snd chn)</code>:<br>" +
+var extsnd_normalizefft_tip = "<code>(transform-normalization snd chn)</code>:<br>" +
                               " decides whether spectral data is normalized before display;<br>" +
                               " can be dont-normalize, normalize-by-channel (default), normalize-by-sound, or normalize-globally.";
 
-var extsnd_openfiledialog_tip = "<code>(open-file-dialog :optional (managed #t))</code>:<br>" +
+var extsnd_openfiledialog_tip = "<code>(open-file-dialog (managed #t))</code>:<br>" +
                                 " create the file dialog if needed and display it if 'managed'";
 
 var extsnd_openhook_tip = "<code>open-hook (filename)</code>: called each time a file is opened<br>" +
@@ -525,7 +525,7 @@ var extsnd_optimizationhook_tip = "<code>optimization-hook (msg)</code>: called 
                                   "<code>  (add-hook! optimization-hook (lambda (msg) (snd-print msg)))</code>.<br>" +
                                   "  You can often slightly rewrite the form to make run happy.";
 
-var extsnd_padchannel_tip = "<code>(pad-channel beg dur :optional snd chn edpos)</code>: insert dur zeros at beg in snd's chn";
+var extsnd_padchannel_tip = "<code>(pad-channel beg dur snd chn edpos)</code>: insert dur zeros at beg in snd's chn";
 
 var extsnd_peaksfont_tip = "<code>(peaks-font)</code>: normal font used by fft peak display";
 
@@ -541,18 +541,18 @@ var extsnd_play_tip = "<code>(play object :start :end :channel :edit-position :o
 
 var extsnd_playhook_tip = "<code>play-hook (samps)</code>: called each time a buffer is sent to the DAC.";
 
-var extsnd_positiontox_tip = "<code>(position-&gt;x val :optional snd chn (ax time-graph))</code>: x axis value corresponding to pixel val";
+var extsnd_positiontox_tip = "<code>(position-&gt;x val snd chn (ax time-graph))</code>: x axis value corresponding to pixel val";
 
 var extsnd_previoussample_tip = "<code>(previous-sample reader)</code>: previous sample from reader";
 
-var extsnd_promptinminibuffer_tip = "<code>(prompt-in-minibuffer msg :optional callback snd raw)</code>:<br>" +
+var extsnd_promptinminibuffer_tip = "<code>(prompt-in-minibuffer msg callback snd raw)</code>:<br>" +
                                     " post msg in snd's minibuffer then when the user eventually responds,<br>" +
                                     " invoke the function callback, if any, with the response.<br>" +
                                     " If 'raw' is #t, the response is passed as a string to the prompt callback function;<br>" +
                                     " otherwise it is evaluated first as Scheme code.<br>" +
                                     "<code>   (prompt-in-minibuffer \"what?\" (lambda (response) (snd-print response)))</code>";
 
-var extsnd_ptreechannel_tip = "<code>(ptree-channel proc :optional (beg 0) (dur len) snd chn edpos peak-env-also init-func origin)</code>:<br>" +
+var extsnd_ptreechannel_tip = "<code>(ptree-channel proc (beg 0) (dur len) snd chn edpos peak-env-also init-func origin)</code>:<br>" +
                               " apply 'proc' as a 'virtual edit';<br>" +
                               " that is, the effect of 'proc' (a function of one argument, the current sample, if init-func is not specified),<br>" +
                               " comes about as an implicit change in the way the data is read.  This is similar to scaling and some envelope<br>" +
@@ -564,36 +564,36 @@ var extsnd_ptreechannel_tip = "<code>(ptree-channel proc :optional (beg 0) (dur 
 
 var extsnd_readmixsample_tip = "<code>(read-mix-sample reader)</code>: read sample from mix reader";
 
-var extsnd_readonly_tip = "<code>(read-only :optional snd)</code>: whether snd is write-protected";
+var extsnd_readonly_tip = "<code>(read-only snd)</code>: whether snd is write-protected";
 
 var extsnd_readsample_tip = "<code>(read-sample reader)</code>: get the next sample from the sampler";
 
-var extsnd_redo_tip = "<code>(redo :optional (count 1) snd chn)</code>: redo 'count' edits in snd's channel chn";
+var extsnd_redo_tip = "<code>(redo (count 1) snd chn)</code>: redo 'count' edits in snd's channel chn";
 
-var extsnd_regionframes_tip = "<code>(region-frames :optional (reg 0) (chan 0))</code>: region length in frames";
+var extsnd_regionframes_tip = "<code>(region-frames (reg 0) (chan 0))</code>: region length in frames";
 
 var extsnd_regionok_tip = "<code>(region? reg)</code>: #t if region is active";
 
 var extsnd_regularizedargs_tip = "The \"regularized\" functions take arguments in the order<br>" +
                                  " begin time, duration (not end sample), sound index, channel number, and edit position.";
 
-var extsnd_reportinminibuffer_tip = "<code>(report-in-minibuffer msg :optional snd as-error)</code>:<br>" +
+var extsnd_reportinminibuffer_tip = "<code>(report-in-minibuffer msg snd as-error)</code>:<br>" +
                                     " display msg in snd's minibuffer.<br>" +
                                     " If 'as-error' is #t, place the message in the minibuffer's error label.";
 
-var extsnd_restorecontrols_tip = "<code>(restore-controls :optional snd)</code>: restore the previously saved control panel settings";
+var extsnd_restorecontrols_tip = "<code>(restore-controls snd)</code>: restore the previously saved control panel settings";
 
-var extsnd_reversesound_tip = "<code>(reverse-sound :optional snd chn edpos)</code>: reverse snd's channel chn";
+var extsnd_reversesound_tip = "<code>(reverse-sound snd chn edpos)</code>: reverse snd's channel chn";
 
-var extsnd_revertsound_tip = "<code>(revert-sound :optional snd)</code>: return 'snd' to its unedited state (undo all edits).";
+var extsnd_revertsound_tip = "<code>(revert-sound snd)</code>: return 'snd' to its unedited state (undo all edits).";
 
-var extsnd_rightsample_tip = "<code>(right-sample :optional snd chn)</code>: right sample number in time domain window";
+var extsnd_rightsample_tip = "<code>(right-sample snd chn)</code>: right sample number in time domain window";
 
 var extsnd_run_tip = "<code>(run thunk)</code>: try to optimize the procedure passed as its argument,<br>" +
                      " then evaluate it; if the optimizer can't handle something in the procedure,<br>" +
                      " it is passed to Scheme and is equivalent to (thunk).";
 
-var extsnd_sample_tip = "<code>(sample samp :optional snd chn edpos)</code>:<br>" +
+var extsnd_sample_tip = "<code>(sample samp snd chn edpos)</code>:<br>" +
                         " return sample samp in snd's channel chn<br>" +
                         " (this is a slow access -- use samplers for speed)";
 
@@ -601,7 +601,7 @@ var extsnd_sampleratendQ_tip = "<code>(sampler-at-end? obj)</code>: #t if sample
 
 var extsnd_samplerposition_tip = "<code>(sampler-position obj)</code>: current (sample-wise) location of sampler";
 
-var extsnd_samples_tip = "<code>(samples :optional (start-samp 0) (samps len) snd chn edpos)</code>:<br>" +
+var extsnd_samples_tip = "<code>(samples (start-samp 0) (samps len) snd chn edpos)</code>:<br>" +
                          " return a vct containing snd channel chn's samples starting a start-samp for samps samples;<br>" +
                          " edpos is the edit history position to read (defaults to current position).";
 
@@ -615,7 +615,7 @@ var extsnd_saveselection_tip = "<code>(save-selection :file :header-type :data-f
                                "saves the current selection in 'file' using the indicated file attributes.<br>" +
                                "If 'channel' is given, save only that channel.";
 
-var extsnd_savesound_tip = "<code>(save-sound :optional snd)</code>: save snd<br>" +
+var extsnd_savesound_tip = "<code>(save-sound snd)</code>: save snd<br>" +
                            " (update the on-disk data to match Snd's current version)";
 
 var extsnd_savesoundas_tip = "<code>(save-sound-as :file :sound :header-type :data-format :srate :channel :edit-position :comment)</code>:<br>" +
@@ -631,18 +631,18 @@ var extsnd_savestatehook_tip = "<code>save-state-hook (temp-filename)</code>: ca
                                " This hook provides a way to keep track of which files are in a given<br>" +
                                " saved state batch, and a way to rename or redirect those files.";
 
-var extsnd_scaleby_tip = "<code>(scale-by scalers :optional snd chn)</code>: scale snd by scalers (following sync);<br>" +
+var extsnd_scaleby_tip = "<code>(scale-by scalers snd chn)</code>: scale snd by scalers (following sync);<br>" +
                          " scalers can be a float or a vct/list of floats";
 
-var extsnd_scalechannel_tip = "<code>(scale-channel scaler :optional (beg 0) (dur len) snd chn edpos)</code>:<br>" +
+var extsnd_scalechannel_tip = "<code>(scale-channel scaler (beg 0) (dur len) snd chn edpos)</code>:<br>" +
                               " scale samples in the given sound/channel between beg and beg + num by scaler.";
 
 var extsnd_scaleselectionby_tip = "<code>(scale-selection-by scalers)</code>: scale selected portion by scalers";
 
-var extsnd_scaleto_tip = "<code>(scale-to :optional (norms 1.0) snd chn)</code>: normalize snd to norms (following sync);<br>" +
+var extsnd_scaleto_tip = "<code>(scale-to (norms 1.0) snd chn)</code>: normalize snd to norms (following sync);<br>" +
                          " norms can be a float or a vct/list of floats";
 
-var extsnd_scanchannel_tip = "<code>(scan-channel func :optional (start 0) (dur len) snd chn edpos)</code>:<br>" +
+var extsnd_scanchannel_tip = "<code>(scan-channel func (start 0) (dur len) snd chn edpos)</code>:<br>" +
                              " apply func to samples in current channel (or the specified channel).<br>" +
                              " func is a function of one argument, the current sample.<br>" +
                              " if func returns non-#f, the scan stops, and the value is returned to the caller<br>" +
@@ -653,14 +653,14 @@ var extsnd_scriptarg_tip = "<code>(script-arg)</code>: where we are in the start
 
 var extsnd_scriptargs_tip = "<code>(script-args)</code>: the args passed to Snd at startup as a list of strings";
 
-var extsnd_searchprocedure_tip = "<code>(search-procedure :optional snd)</code>: global search function<br>" +
+var extsnd_searchprocedure_tip = "<code>(search-procedure snd)</code>: global search function<br>" +
                                  " (if no 'snd' specified) or sound-local search function";
 
-var extsnd_selectall_tip = "<code>(select-all :optional snd chn)</code>: make a new selection containing all of snd's channel chn.<br>" +
+var extsnd_selectall_tip = "<code>(select-all snd chn)</code>: make a new selection containing all of snd's channel chn.<br>" +
                            " If sync is set, all chans are included. <br>" +
                            " The new region id is returned (if selection-creates-region is #t).";
 
-var extsnd_selectedchannel_tip = "<code>(selected-channel :optional snd)</code>: currently selected channel in snd (or #f if none)";
+var extsnd_selectedchannel_tip = "<code>(selected-channel snd)</code>: currently selected channel in snd (or #f if none)";
 
 var extsnd_selecteddatacolor_tip = "<code>(selected-data-color)</code>: color used for selected data";
 
@@ -673,33 +673,33 @@ var extsnd_selectioncreatesregion_tip = "<code>(selection-creates-region)</code>
                                         " If you're dealing with large selections, and have no need of regions (saved selections),<br>" +
                                         " you can speed up many operations by setting this flag to #f";
 
-var extsnd_selectionframes_tip = "<code>(selection-frames :optional snd chn)</code>: selection length";
+var extsnd_selectionframes_tip = "<code>(selection-frames snd chn)</code>: selection length";
 
-var extsnd_selectionmember_tip = "<code>(selection-member? :optional snd chn)</code>: #t if snd's channel chn is a member of the current selection";
+var extsnd_selectionmember_tip = "<code>(selection-member? snd chn)</code>: #t if snd's channel chn is a member of the current selection";
 
 var extsnd_selectionok_tip = "<code>(selection?)</code>: #t if selection is currently active, visible, etc";
 
-var extsnd_selectionposition_tip = "<code>(selection-position :optional snd chn)</code>: selection start samp";
+var extsnd_selectionposition_tip = "<code>(selection-position snd chn)</code>: selection start samp";
 
-var extsnd_setsamples_tip = "<code>(set-samples start-samp samps data :optional snd chn truncate edname (infile-chan 0) edpos auto-delete)</code>:<br>" +
+var extsnd_setsamples_tip = "<code>(set-samples start-samp samps data snd chn truncate edname (infile-chan 0) edpos auto-delete)</code>:<br>" +
                             " set snd's channel chn's samples starting at start-samp for samps from data (a vct, vector, or string (filename));<br>" +
                             " start-samp can be beyond current data end;<br>" +
                             " if truncate is #t and start-samp is 0, the end of the file is set to match the new data's end.";
 
-var extsnd_shortfilename_tip = "<code>(short-file-name :optional snd)</code>: short form of snd's file name (no directory)";
+var extsnd_shortfilename_tip = "<code>(short-file-name snd)</code>: short form of snd's file name (no directory)";
 
-var extsnd_showcontrols_tip = "<code>(show-controls :optional snd)</code>: #t if snd's control panel is known to be open";
+var extsnd_showcontrols_tip = "<code>(show-controls snd)</code>: #t if snd's control panel is known to be open";
 
 var extsnd_showindices_tip = "<code>(show-indices)</code>: #t if sound name should be preceded by its index in the sound display.";
 
-var extsnd_showlistener_tip = "<code>(show-listener :optional (open #t))</code>: if 'open' opens the lisp listener;<br>" +
+var extsnd_showlistener_tip = "<code>(show-listener (open #t))</code>: if 'open' opens the lisp listener;<br>" +
                               " returns whether the listener is visible.";
 
-var extsnd_showtransformpeaks_tip = "<code>(show-transform-peaks :optional snd chn)</code>: #t if fft display should include peak list";
+var extsnd_showtransformpeaks_tip = "<code>(show-transform-peaks snd chn)</code>: #t if fft display should include peak list";
 
-var extsnd_smoothsound_tip = "<code>(smooth-sound :optional (start-samp 0) (samps len) snd chn)</code>: smooth data from start-samp for samps in snd's channel chn";
+var extsnd_smoothsound_tip = "<code>(smooth-sound (start-samp 0) (samps len) snd chn)</code>: smooth data from start-samp for samps in snd's channel chn";
 
-var extsnd_sndhelp_tip = "<code>(snd-help :optional (arg 'snd-help) (formatted #t))</code>: return the documentation associated with its argument.<br>" +
+var extsnd_sndhelp_tip = "<code>(snd-help (arg 'snd-help) (formatted #t))</code>: return the documentation associated with its argument.<br>" +
                          "<code> (snd-help 'make-vct)</code> for example, prints out a brief description of make-vct.<br>" +
                          " The argument can be a string, symbol, or in some cases, the object itself.<br>" +
                          " In the help descriptions, optional arguments are in parens with the default value (if any) as the 2nd entry.<br>" +
@@ -710,7 +710,7 @@ var extsnd_sndhelp_tip = "<code>(snd-help :optional (arg 'snd-help) (formatted #
 
 var extsnd_sndprint_tip = "<code>(snd-print str)</code>: display str in the listener window";
 
-var extsnd_sndspectrum_tip = "<code>(snd-spectrum data :optional (window rectangular-window) (len data-len)<br>" +
+var extsnd_sndspectrum_tip = "<code>(snd-spectrum data (window rectangular-window) (len data-len)<br>" +
                              " (linear #t) (beta 0.0) in-place (normalized #t))</code>:<br>" +
                              " magnitude spectrum of data (a vct), in data if in-place, using fft-window win and fft length len.";
 
@@ -728,29 +728,29 @@ var extsnd_sounddata_times_tip = "<code>(sound-data* val1 val2)</code>: multiply
 
 var extsnd_soundfilep_tip = "<code>(sound-file? name)</code>: #t if name has a known sound file extension";
 
-var extsnd_soundfilesindirectory_tip = "<code>(sound-files-in-directory :optional (directory \".\"))</code>:<br>" +
+var extsnd_soundfilesindirectory_tip = "<code>(sound-files-in-directory (directory \".\"))</code>:<br>" +
                                        " return a list of the sound files in 'directory'";
 
-var extsnd_soundp_tip = "<code>(sound? :optional (index 0))</code>: #t if sound associated with 'index' is active (accessible)";
+var extsnd_soundp_tip = "<code>(sound? (index 0))</code>: #t if sound associated with 'index' is active (accessible)";
 
 var extsnd_sounds_tip = "<code>(sounds)</code>: list of active sounds (a list of indices)";
 
-var extsnd_soundwidgets_tip = "<code>(sound-widgets :optional snd)</code>: returns a list of widgets associated with 'snd':<br>" +
+var extsnd_soundwidgets_tip = "<code>(sound-widgets snd)</code>: returns a list of widgets associated with 'snd':<br>" +
                               "(0)pane (1)name (2)control-panel<br>" +
                               "(3)minibuffer (4)play-button (5)filter-env<br>" +
                               "(6)unite-button (7)name-label (8)name-icon (9)sync-button";
 
-var extsnd_speedcontrol_tip = "<code>(speed-control :optional snd)</code>: current speed (srate) slider setting";
+var extsnd_speedcontrol_tip = "<code>(speed-control snd)</code>: current speed (srate) slider setting";
 
-var extsnd_squelchupdate_tip = "<code>(squelch-update :optional snd chn)</code>: #t if updates (redisplays) are turned off in snd's channel chn";
+var extsnd_squelchupdate_tip = "<code>(squelch-update snd chn)</code>: #t if updates (redisplays) are turned off in snd's channel chn";
 
-var extsnd_srate_tip = "<code>(srate :optional snd)</code>: snd's srate";
+var extsnd_srate_tip = "<code>(srate snd)</code>: snd's srate";
 
-var extsnd_srcchannel_tip = "<code>(src-channel ratio-or-env :optional (beg 0) (dur len) snd chn edpos)</code>:<br>" +
+var extsnd_srcchannel_tip = "<code>(src-channel ratio-or-env (beg 0) (dur len) snd chn edpos)</code>:<br>" +
                             " sampling-rate convert snd's channel chn by ratio, or following an envelope <br>" +
                             " (a list or a CLM env generator).";
 
-var extsnd_srcsound_tip = "<code>(src-sound ratio-or-env :optional (base 1.0) snd chn edpos)</code>:<br>" +
+var extsnd_srcsound_tip = "<code>(src-sound ratio-or-env (base 1.0) snd chn edpos)</code>:<br>" +
                           " sampling-rate convert snd's channel chn by ratio, or following an envelope.<br>" +
                           " A negative ratio reverses the sound";
 
@@ -763,13 +763,13 @@ var extsnd_startplayingselectionhook_tip = "<code>start-playing-selection-hook (
 
 var extsnd_stopdachook_tip = "<code>stop-dac-hook ()</code>: called upon mus_audio_close (when DAC is turned off)";
 
-var extsnd_stopplaying_tip = "<code>(stop-playing :optional snd)</code>: stop play (DAC output) in progress";
+var extsnd_stopplaying_tip = "<code>(stop-playing snd)</code>: stop play (DAC output) in progress";
 
 var extsnd_stopplayinghook_tip = "<code>stop-playing-hook (snd)</code>: called when a sound finishes playing.";
 
 var extsnd_stopplayingselectionhook_tip = "<code>stop-playing-selection-hook ()</code>: called when the selection stops playing";
 
-var extsnd_sync_tip = "<code>(sync :optional snd)</code>: snd's sync value (0 = no sync).<br>" +
+var extsnd_sync_tip = "<code>(sync snd)</code>: snd's sync value (0 = no sync).<br>" +
                       "  Some editing operations are applied to all sounds sharing the sync value of the selected sound.";
 
 var extsnd_tempdir_tip = "<code>(temp-dir)</code>: name of directory for temp files (or #f=null)";
@@ -777,32 +777,32 @@ var extsnd_tempdir_tip = "<code>(temp-dir)</code>: name of directory for temp fi
 var extsnd_time_graph_tip = "<code>time-graph<code> is the constant associated with the time domain graph<br>" +
                             "The other two graphs are <code>transform-graph</code> and <code>lisp-graph</code>";
 
-var extsnd_timegraphtype_tip = "<code>(time-graph-type :optional snd chn)</code>: graph-as-wavogram if<br>" +
+var extsnd_timegraphtype_tip = "<code>(time-graph-type snd chn)</code>: graph-as-wavogram if<br>" +
                                " Snd's time domain display is a 'wavogram',otherwise graph-once.";
 
 var extsnd_tinyfont_tip = "<code>(tiny-font)</code>: font use for some info in the graphs";
 
-var extsnd_transformgraphp_tip = "<code>(transform-graph? :optional snd chn)</code>: #t if fft display is active in snd's channel chn";
+var extsnd_transformgraphp_tip = "<code>(transform-graph? snd chn)</code>: #t if fft display is active in snd's channel chn";
 
-var extsnd_transformgraphtype_tip = "<code>(transform-graph-type :optional snd chn)</code>: can be<br>" +
+var extsnd_transformgraphtype_tip = "<code>(transform-graph-type snd chn)</code>: can be<br>" +
                                     " graph-once, graph-as-sonogram, or graph-as-spectrogram.";
 
-var extsnd_transformsize_tip = "<code>(transform-size :optional snd chn)</code>: current fft size (512)";
+var extsnd_transformsize_tip = "<code>(transform-size snd chn)</code>: current fft size (512)";
 
-var extsnd_transformtovct_tip = "<code>(transform-&gt;vct :optional snd chn obj)</code>: return a vct (obj if it's passed),<br>" +
+var extsnd_transformtovct_tip = "<code>(transform-&gt;vct snd chn obj)</code>: return a vct (obj if it's passed),<br>" +
                                 " with the current transform data from snd's channel chn";
 
-var extsnd_undo_tip = "<code>(undo :optional (count 1) snd chn)</code>: undo 'count' edits in snd's channel chn";
+var extsnd_undo_tip = "<code>(undo (count 1) snd chn)</code>: undo 'count' edits in snd's channel chn";
 
-var extsnd_updatesound_tip = "<code>(update-sound :optional snd)</code>: update snd (re-read it from the disk after flushing pending edits)";
+var extsnd_updatesound_tip = "<code>(update-sound snd)</code>: update snd (re-read it from the disk after flushing pending edits)";
 
-var extsnd_updatetimegraph_tip = "<code>(update-time-graph :optional snd chn)</code>: redraw snd channel chn's graphs";
+var extsnd_updatetimegraph_tip = "<code>(update-time-graph snd chn)</code>: redraw snd channel chn's graphs";
 
-var extsnd_updatetransformgraph_tip = "<code>(update-transform-graph :optional snd chn)</code>: redraw snd channel chn's fft display";
+var extsnd_updatetransformgraph_tip = "<code>(update-transform-graph snd chn)</code>: redraw snd channel chn's fft display";
 
 var extsnd_vct_tip = "<code>(vct :rest args)</code>: returns a new vct with args as contents; same as list-&gt;vct: (vct 1 2 3)";
 
-var extsnd_vctadd_tip = "<code>(vct-add! v1 v2 :optional (offset 0))</code>: element-wise add of vcts v1 and v2: v1[i + offset] += v2[i], returns v1";
+var extsnd_vctadd_tip = "<code>(vct-add! v1 v2 (offset 0))</code>: element-wise add of vcts v1 and v2: v1[i + offset] += v2[i], returns v1";
 
 var extsnd_vctcopy_tip = "<code>(vct-copy v)</code>: returns a copy of vct v";
 
@@ -814,7 +814,7 @@ var extsnd_vctmap_tip = "<code>(vct-map! v proc)</code>: set each element of v t
                         " v[i] = (proc), returns v.<br>" +
                         "<code>  (vct-map! v (lambda () 3.0))</code> is the same as <code>(vct-fill! v 3.0)</code>";
 
-var extsnd_vctmove_tip = "<code>(vct-move! obj new old :optional backwards)</code>: moves vct obj data from old to new:<br>" +
+var extsnd_vctmove_tip = "<code>(vct-move! obj new old backwards)</code>: moves vct obj data from old to new:<br>" +
                          " v[new++] = v[old++], or v[new--] = v[old--] if backwards is #f.";
 
 var extsnd_vctmultiply_tip = "<code>(vct-multiply! v1 v2)</code>: element-wise multiply of vcts v1 and v2:<br>" +
@@ -836,10 +836,10 @@ var extsnd_vctscale_tip = "<code>(vct-scale! v val)</code>: scale each element o
 
 var extsnd_vctset_tip = "<code>(vct-set! v n val)</code>: sets element of vct v to val, v[n] = val";
 
-var extsnd_vctsubseq_tip = "<code>(vct-subseq v start :optional end vnew)</code>: v[start..end],<br>" +
+var extsnd_vctsubseq_tip = "<code>(vct-subseq v start end vnew)</code>: v[start..end],<br>" +
                            " placed in vnew if given or new vct";
 
-var extsnd_vcttochannel_tip = "<code>(vct-&gt;channel vct :optional (beg 0) (dur len) snd chn edpos origin)</code>:<br>" +
+var extsnd_vcttochannel_tip = "<code>(vct-&gt;channel vct (beg 0) (dur len) snd chn edpos origin)</code>:<br>" +
                               " set snd's channel chn's samples starting at beg for dur samps from vct data";
 
 var extsnd_vcttosounddata_tip = "<code>(vct-&gt;sound-data v sd chan)</code>: copies vct v's data into sound-data sd's channel chan";
@@ -856,52 +856,52 @@ var extsnd_windowwidth_tip = "<code>(window-width)</code>: current Snd window wi
 
 var extsnd_withmixtags_tip = "<code>(with-mix-tags)</code>: #t if Snd should try to use virtual (tagged) mixing";
 
-var extsnd_withtrackingcursor_tip = "<code>(with-tracking-cursor :optional snd)</code>:<br>#t if cursor moves along in waveform display as sound is played";
+var extsnd_withtrackingcursor_tip = "<code>(with-tracking-cursor snd)</code>:<br>#t if cursor moves along in waveform display as sound is played";
 
-var extsnd_xaxislabel_tip = "<code>(x-axis-label :optional snd chn (ax time-graph))</code>: current x axis label";
+var extsnd_xaxislabel_tip = "<code>(x-axis-label snd chn (ax time-graph))</code>: current x axis label";
 
-var extsnd_xaxisstyle_tip = "<code>(x-axis-style :optional snd chn)</code>: The x axis labelling of the time domain waveform<br>" +
+var extsnd_xaxisstyle_tip = "<code>(x-axis-style snd chn)</code>: The x axis labelling of the time domain waveform<br>" +
                             " can be in seconds (x-axis-in-seconds), in samples (x-axis-in-samples),<br>" +
                             " expressed as a percentage of the overall duration (x-axis-as-percentage),<br>" +
                             " as a beat number (x-axis-in-beats), as a measure number (x-axis-in-measures),<br>" +
                             " or clock-style (dd:hh:mm:ss) (x-axis-as-clock).";
 
-var extsnd_xbounds_tip = "<code>(x-bounds :optional snd chn)</code>:<br>a list (x0 x1) giving the current x axis bounds of snd channel chn";
+var extsnd_xbounds_tip = "<code>(x-bounds snd chn)</code>:<br>a list (x0 x1) giving the current x axis bounds of snd channel chn";
 
-var extsnd_xtoposition_tip = "<code>(x-&gt;position val :optional snd chn (ax time-graph))</code>: x pixel loc of val";
+var extsnd_xtoposition_tip = "<code>(x-&gt;position val snd chn (ax time-graph))</code>: x pixel loc of val";
 
-var extsnd_xzoomslider_tip = "<code>(x-zoom-slider :optional snd chn)</code>: current x axis zoom slider of snd channel chn";
+var extsnd_xzoomslider_tip = "<code>(x-zoom-slider snd chn)</code>: current x axis zoom slider of snd channel chn";
 
-var extsnd_ybounds_tip = "<code>(y-bounds :optional snd chn)</code>:<br>a list (low high) giving the current y axis bounds of snd channel chn";
+var extsnd_ybounds_tip = "<code>(y-bounds snd chn)</code>:<br>a list (low high) giving the current y axis bounds of snd channel chn";
 
-var extsnd_ytoposition_tip = "<code>(y-&gt;position val :optional snd chn (ax time-graph))</code>: y pixel loc of val";
+var extsnd_ytoposition_tip = "<code>(y-&gt;position val snd chn (ax time-graph))</code>: y pixel loc of val";
 
-var extsnd_yzoomslider_tip = "<code>(y-zoom-slider :optional snd chn)</code>: current y axis zoom slider of snd channel chn";
+var extsnd_yzoomslider_tip = "<code>(y-zoom-slider snd chn)</code>: current y axis zoom slider of snd channel chn";
 
 var sndclm_amplitude_modulate_tip = "<code>(amplitude-modulate carrier in1 in2)</code>: in1 * (carrier + in2)";
 
-var sndclm_array_interp_tip = "<code>(array-interp v phase :optional size)</code>: v[phase] taking into account wrap-around<br>" +
+var sndclm_array_interp_tip = "<code>(array-interp v phase size)</code>: v[phase] taking into account wrap-around<br>" +
                               " (size is size of data), with linear interpolation if phase is not an integer.";
 
-var sndclm_comb_tip = "<code>(comb gen :optional (val 0.0) (pm 0.0))</code>: comb filter val, pm changes the delay length.";
+var sndclm_comb_tip = "<code>(comb gen (val 0.0) (pm 0.0))</code>: comb filter val, pm changes the delay length.";
 
 var sndclm_continue_sampletofile_tip = "<code>(continue-sample-&gt;file filename)</code>: return an output generator<br>" +
                                        " that reopens an existing sound file 'filename' ready for output via sample->file";
 
 var sndclm_contrast_enhancement_tip = "<code>(contrast-enhancement sig (index 1.0))</code>: sin(sig * pi / 2 + index * sin(sig * 2 * pi))";
 
-var sndclm_convolve_tip = "<code>(convolve gen :optional input-func)</code>: next sample from convolution generator";
+var sndclm_convolve_tip = "<code>(convolve gen input-func)</code>: next sample from convolution generator";
 
-var sndclm_delay_tip = "<code>(delay gen :optional (val 0.0) (pm 0.0))</code>: delay val<br>" +
+var sndclm_delay_tip = "<code>(delay gen (val 0.0) (pm 0.0))</code>: delay val<br>" +
                        " according to the delay line's length and pm ('phase-modulation').<br>" +
                        " If pm is greater than 0.0, the max-size argument used to create gen<br>" +
                        " should have accommodated its maximum value.";
 
-var sndclm_dot_product_tip = "<code>(dot-product v1 v2 :optional size)</code>: sum of (vcts) v1[i] * v2[i] (also named scalar product)";
+var sndclm_dot_product_tip = "<code>(dot-product v1 v2 size)</code>: sum of (vcts) v1[i] * v2[i] (also named scalar product)";
 
 var sndclm_env_tip = "<code>(env gen)</code>: next sample from envelope generator";
 
-var sndclm_fft_tip = "<code>(mus-fft rl im :optional len (dir 1))</code>:<br>" +
+var sndclm_fft_tip = "<code>(mus-fft rl im len (dir 1))</code>:<br>" +
                      " return the fft of vcts rl and im which contain <br>" +
                      " the real and imaginary parts of the data;<br>" +
                      " len should be a power of 2,<br>" +
@@ -914,20 +914,20 @@ var sndclm_filetoarray_tip = "<code>(file-&gt;array filename chan start samples 
 
 var sndclm_filetosample_tip = "<code>(file-&gt;sample obj frame chan)</code>: sample value in sound file read by 'obj' in channel chan at frame";
 
-var sndclm_fir_filter_tip = "<code>(fir-filter gen :optional (input 0.0))</code>: next sample from FIR filter";
+var sndclm_fir_filter_tip = "<code>(fir-filter gen (input 0.0))</code>: next sample from FIR filter";
 
-var sndclm_formant_tip = "<code>(formant gen :optional (input 0.0) freq-in-radians)</code>: next sample from resonator generator";
+var sndclm_formant_tip = "<code>(formant gen (input 0.0) freq-in-radians)</code>: next sample from resonator generator";
 
 var sndclm_frame_ref_tip = "<code>(frame-ref f chan)</code>: f[chan] (the chan-th sample in frame f";
 
 var sndclm_frame_set_tip = "<code>(frame-set! f chan val)</code>: sets frame f's chan-th sample to val:<br>" +
                            " f[chan] = val";
 
-var sndclm_frame_times_tip = "<code>(frame* f1 f2 :optional outf)</code>: multiply f1 and f2 (elementwise)<br>" +
+var sndclm_frame_times_tip = "<code>(frame* f1 f2 outf)</code>: multiply f1 and f2 (elementwise)<br>" +
                              " returning outf; if outf is not given, a new frame is created.<br>" +
                              " outf[i] = f1[i] * f2[i].";
 
-var sndclm_granulate_tip = "<code>(granulate gen :optional input-func edit-func)</code>: next sample from granular synthesis generator";
+var sndclm_granulate_tip = "<code>(granulate gen input-func edit-func)</code>: next sample from granular synthesis generator";
 
 var sndclm_hztoradians_tip = "<code>(hz-&gt;radians hz)</code>: convert frequency in Hz to radians per sample: hz * 2 * pi / srate";
 
@@ -944,7 +944,7 @@ var sndclm_make_comb_tip = "<code>(make-comb :scaler :size :initial-contents (:i
                            " If the comb length will be changing at run-time, max-size sets its maximum length.<br>" +
                            " initial-contents can be either a list or a vct.";
 
-var sndclm_contrast_enhancement_tip = "<code>(contrast-enhancement input :optional (fm-index 1.0))</code><br>" +
+var sndclm_contrast_enhancement_tip = "<code>(contrast-enhancement input (fm-index 1.0))</code><br>" +
                            " phase-modulates its input.";
 
 var sndclm_make_convolve_tip = "<code>(make-convolve :input :filter :fft-size)</code>: <br>" +
@@ -965,7 +965,7 @@ var sndclm_make_env_tip = "<code>(make-env :envelope (:scaler 1.0) :duration (:o
                           " If 'base' is 1.0, the connecting segments are linear, if 0.0 you get a step function,<br>" +
                           " and anything else produces an exponential connecting segment.";
 
-var sndclm_make_filetosample_tip = "<code>(make-file-&gt;sample filename :optional buffer-size)</code>:<br>" +
+var sndclm_make_filetosample_tip = "<code>(make-file-&gt;sample filename buffer-size)</code>:<br>" +
                                    " return an input generator reading 'filename' (a sound file)";
 
 var sndclm_make_filter_tip = "<code>(make-filter :order :xcoeffs :ycoeffs)</code>:<br>" +
@@ -1051,7 +1051,7 @@ var sndclm_make_readin_tip = "<code>(make-readin :file (:channel 0) (:start 0) (
                              " return a new readin (file input) generator reading the sound file 'file'<br>" +
                              " starting at frame 'start' in channel 'channel' and reading forward if 'direction' is not -1";
 
-var sndclm_make_sampletofile_tip = "<code>(make-sample-&gt;file filename :optional chans data-format header-type comment)</code>:<br>" +
+var sndclm_make_sampletofile_tip = "<code>(make-sample-&gt;file filename chans data-format header-type comment)</code>:<br>" +
                                    " return an output generator writing the sound file 'filename'<br>" +
                                    " which is set up to have 'chans' channels of 'data-format' samples with a header of 'header-type'.<br>" +
                                    " The latter should be sndlib identifiers:<br>" +
@@ -1069,7 +1069,7 @@ var sndclm_make_triangle_wave_tip = "<code>(make-triangle-wave (:frequency *clm-
 var sndclm_make_two_zero_tip = "<code>(make-two-zero :a0 :a1 :a2 or :frequency :radius)</code>:<br>" +
                                " return a new two-zero filter; a0*x(n) + a1*x(n-1) + a2*x(n-2)";
 
-var sndclm_moving_average_tip = "<code>(moving-average gen :optional (val 0.0))</code>: moving window moving_average.";
+var sndclm_moving_average_tip = "<code>(moving-average gen (val 0.0))</code>: moving window moving_average.";
 
 var sndclm_mus_channels_tip = "<code>(mus-channels gen)</code>: gen's mus-channels field";
 
@@ -1093,9 +1093,9 @@ var sndclm_mus_scaler_tip = "<code>(mus-scaler gen)</code>: gen's scaler, if any
 
 var sndclm_mussrate_tip = "<code>(mus-srate)</code>: current sampling rate";
 
-var sndclm_ncos_tip = "<code>(ncos gen :optional (fm 0.0))</code>: get the next sample from 'gen', an ncos generator";
+var sndclm_ncos_tip = "<code>(ncos gen (fm 0.0))</code>: get the next sample from 'gen', an ncos generator";
 
-var sndclm_oscil_tip = "<code>(oscil gen :optional (fm 0.0) (pm 0.0))</code>:<br>" +
+var sndclm_oscil_tip = "<code>(oscil gen (fm 0.0) (pm 0.0))</code>:<br>" +
                        " next sample from oscil gen: val = sin(phase + pm); phase += (freq + fm)";
 
 var sndclm_out_any_tip = "<code>(out-any frame val chan stream)</code>: add val to output stream at frame in channel chan";
@@ -1106,7 +1106,7 @@ var sndclm_outb_tip = "<code>(outb frame val stream)</code>: add val to output s
 
 var sndclm_output_tip = "<code>*output*</code> is the direct signal output stream.  The reverb input is sent to *reverb*.";
 
-var sndclm_partialstopolynomial_tip = "<code>(partials-&gt;polynomial partials :optional (kind mus-chebyshev-first-kind))</code>:<br>" +
+var sndclm_partialstopolynomial_tip = "<code>(partials-&gt;polynomial partials (kind mus-chebyshev-first-kind))</code>:<br>" +
                                       " produce a Chebyshev polynomial suitable for use with the polynomial generator<br>" +
                                       " to create (via waveshaping) the harmonic spectrum described by the partials argument:<br>" +
                                       "<code>  (let ((v0 (partials-&gt;polynomial '(1 1.0 2 1.0)))<br>        (os (make-oscil)))<br>    (polynomial v0 (oscil os)))</code>";
@@ -1116,18 +1116,18 @@ var sndclm_phase_vocoder_tip = "<code>(phase-vocoder gen input-function analyze-
 var sndclm_polynomial_tip = "<code>(polynomial coeffs x)</code>: evaluate a polynomial at x.<br>" +
                             " coeffs are in order of degree, so coeff[0] is the constant term.";
 
-var sndclm_polyshape_tip = "<code>(polyshape gen :optional (index 1.0) (fm 0.0))</code>:<br>" +
+var sndclm_polyshape_tip = "<code>(polyshape gen (index 1.0) (fm 0.0))</code>:<br>" +
                            " next sample of polynomial-based waveshaper";
 
-var sndclm_polywave_tip = "<code>(polywave gen :optional (fm 0.0))</code>:<br>" +
+var sndclm_polywave_tip = "<code>(polywave gen (fm 0.0))</code>:<br>" +
                           " next sample of polynomial-based waveshaper (additive synthesis)";
 
-var sndclm_pulse_train_tip = "<code>(pulse-train gen :optional (fm 0.0))</code>: next pulse train sample from generator";
+var sndclm_pulse_train_tip = "<code>(pulse-train gen (fm 0.0))</code>: next pulse train sample from generator";
 
-var sndclm_rand_interp_tip = "<code>(rand-interp gen :optional (fm 0.0))</code>: gen's current (interpolating) random number.<br>" +
+var sndclm_rand_interp_tip = "<code>(rand-interp gen (fm 0.0))</code>: gen's current (interpolating) random number.<br>" +
                              " fm modulates the rate at which new segment end-points are chosen.";
 
-var sndclm_rand_tip = "<code>(rand gen :optional (fm 0.0))</code>: gen's current random number.<br>" +
+var sndclm_rand_tip = "<code>(rand gen (fm 0.0))</code>: gen's current random number.<br>" +
                       " fm modulates the rate at which the current number is changed.";
 
 var sndclm_readin_tip = "<code>(readin gen)</code>: next sample from readin generator (a sound file reader)";
@@ -1139,17 +1139,17 @@ var sndclm_secondstosamples_tip = "<code>(seconds-&gt;samples secs)</code>: use 
 var sndclm_spectrum_tip = "<code>(spectrum rdat idat window norm-type</code>: return the spectrum of rdat and idat.<br>" +
                           "norm-type defaults to linear (1); the other choices are raw (unnormalized: 2), and dB (0).";
 
-var sndclm_src_tip = "<code>(src gen :optional (pm 0.0) input-function)</code>: next sampling rate conversion sample.<br>" +
+var sndclm_src_tip = "<code>(src gen (pm 0.0) input-function)</code>: next sampling rate conversion sample.<br>" +
                      " 'pm' can be used to change the sampling rate on a sample-by-sample basis.<br>" +
                      " 'input-function' is a function of one argument (the current input direction, normally ignored)<br>" +
                      " that is called internally whenever a new sample of input data is needed.<br>" +
                      " If the associated make-src included an 'input' argument, input-function is ignored.";
 
-var sndclm_tap_tip = "<code>(tap gen :optional (pm 0.0))</code>: tap the delay generator offset by pm";
+var sndclm_tap_tip = "<code>(tap gen (pm 0.0))</code>: tap the delay generator offset by pm";
 
 var sndclm_timestosamples_tip = "<code>(times-&gt;samples beg dur)</code>: returns a list of beg and beg+dur in samples.";
 
-var sndclm_triangle_wave_tip = "<code>(triangle-wave gen :optional (fm 0.0))</code>: next triangle wave sample from generator";
+var sndclm_triangle_wave_tip = "<code>(triangle-wave gen (fm 0.0))</code>: next triangle wave sample from generator";
 
 var sndscm_IIRfilters_tip = "These are simple 2nd order IIR filters in dsp.scm.";
 
@@ -1179,7 +1179,7 @@ var sndscm_envelopeinterp_tip = "<code>(envelope-interp x env (base 1.0)</code>:
 
 var sndscm_envelopelastx_tip = "<code>(envelope-last-x env)</code>: returns the last breakpoint's x axis value in 'env'";
 
-var sndscm_envexptchannel_tip = "<code>(env-expt-channel env exponent :optional (symmetric #t) beg dur snd chn edpos)</code>:<br>" +
+var sndscm_envexptchannel_tip = "<code>(env-expt-channel env exponent (symmetric #t) beg dur snd chn edpos)</code>:<br>" +
                                 " applies 'env' to the given channel using 'exponent' for the exponential base.<br>" +
                                 " The 'symmetric' argument determines whether the up and down moving ramps look<br>" +
                                 " symmetrical around a break point.";
@@ -1196,31 +1196,31 @@ var sndscm_hilberttransform_tip = "<code>(hilbert-transform gen input)</code> re
 var sndscm_html_function_tip = "<code>(html arg)</code> where 'arg' can be a string, a symbol, or a procedure<br>" +
                       " sends the html reader to the corresponding url in the Snd documents.";
 
-var sndscm_insertchannel_tip = "<code>(insert-channel filedat :optional beg dur snd chn edpos)</code>:<br>" +
+var sndscm_insertchannel_tip = "<code>(insert-channel filedat beg dur snd chn edpos)</code>:<br>" +
               " inserts the specified data ('filedat') in the given channel at the given location.<br>" +
               " 'filedat' can be either a filename (a string), a sound index, or a list containing<br>" +
               " the filename (or index), the start point in the file, and (optionally) the channel of the file to mix.";
 
-var sndscm_makebandpass_tip = "<code>(make-bandpass flo fhi :optional length)</code> returns a bandpass filter.";
+var sndscm_makebandpass_tip = "<code>(make-bandpass flo fhi length)</code> returns a bandpass filter.";
 
 var sndscm_makebiquad_tip = "<code>(make-biquad a0 a1 a2 b1 b2)</code> returns a biquad filter section.";
 
 var sndscm_makebutter_tip = "various 2nd order Butterworth filters in dsp.scm.";
 
-var sndscm_makedifferentiator_tip = "<code>(make-differentiator :optional length)</code> returns a differentiating filter.";
+var sndscm_makedifferentiator_tip = "<code>(make-differentiator length)</code> returns a differentiating filter.";
 
 var sndscm_makeframereader_tip = "<code>(make-frame-reader start snd dir pos)</code>: creates a frame-reader<br>" +
                                  " reading the sound 'snd' starting at frame 'start'<br>" +
                                  " with initial read direction 'dir' (1=forward, -1=backward).<br>" +
                                  " 'pos' is the edit history position to read (it defaults to current position).";
 
-var sndscm_makehighpass_tip = "<code>(make-highpass fc :optional length)</code> returns a highpass filter.";
+var sndscm_makehighpass_tip = "<code>(make-highpass fc length)</code> returns a highpass filter.";
 
-var sndscm_makehilberttransform_tip = "<code>(make-hilbert-transform :optional length)</code> returns a Hilbert transformer.";
+var sndscm_makehilberttransform_tip = "<code>(make-hilbert-transform length)</code> returns a Hilbert transformer.";
 
-var sndscm_makelowpass_tip = "<code>(make-lowpass fc :optional length)</code> returns a lowpass filter.";
+var sndscm_makelowpass_tip = "<code>(make-lowpass fc length)</code> returns a lowpass filter.";
 
-var sndscm_makeramp_tip = "<code>(make-ramp :optional (size 128))</code>: return a ramp generator.";
+var sndscm_makeramp_tip = "<code>(make-ramp (size 128))</code>: return a ramp generator.";
 
 var sndscm_makeselection_tip = "<code>(make-selection beg end snd chn)</code>: makes a selection,<br>" +
                                " like make-region but without creating a region.<br>" +
@@ -1230,7 +1230,7 @@ var sndscm_makespencerfilter_tip = "<code>(make-spencer-filter)</code> returns a
 
 var sndscm_markproperties_tip = "<code>(mark-properties id)</code> accesses the property list associated with the mark 'id'";
 
-var sndscm_matchsoundfiles_tip = "<code>(match-sound-files func :optional dir)</code>: apply 'func' to each sound file in 'dir'<br>" +
+var sndscm_matchsoundfiles_tip = "<code>(match-sound-files func dir)</code>: apply 'func' to each sound file in 'dir'<br>" +
                                  " and return a list of files for which func does not return #f.";
 
 var sndscm_maxenvelope_tip = "<code>(max-envelope env)</code>: return the maximum y value in 'env'";
@@ -1242,7 +1242,7 @@ var sndscm_moogfilter_tip = "<code>(moog-filter gen input)</code>: return Moog-s
 var sndscm_mpg_tip = "<code>(mpg mpgfile rawfile)</code>: call mpg123 to translate an MPEG format sound file<br>" +
                      " to a headerless (\"raw\") file containing 16-bit samples.";
 
-var sndscm_musmix_tip = "<code>(mus-mix outfile infile :optional (outloc 0) (frames) (inloc 0) mixer envs)</code>:<br>" +
+var sndscm_musmix_tip = "<code>(mus-mix outfile infile (outloc 0) (frames) (inloc 0) mixer envs)</code>:<br>" +
                         " mix 'infile' into 'outfile' starting at 'outloc' in 'outfile'<br>" +
                         " and 'inloc' in 'infile', mixing 'frames' frames into 'outfile'.<br>" +
                         " 'frames' defaults to the length of 'infile'.<br>" +
@@ -1282,14 +1282,14 @@ var sndscm_sound_let_tip = "sound-let is a form of let* that creates temporary s
                        " to :output with a unique name generated internally, and all other variables are taken from<br>" +
                        " the overall (enclosing) with-sound.  The rest of the list is the body of the associated with-sound.";
 
-var sndscm_sounddatatosound_tip = "<code>(sound-data-&gt;sound sd beg :optional dur snd)</code>: place the contents of<br>" +
+var sndscm_sounddatatosound_tip = "<code>(sound-data-&gt;sound sd beg dur snd)</code>: place the contents of<br>" +
                                   " its sound-data argument 'sd' into the sound 'snd' starting at 'beg' and going for 'dur' frames.<br>" +
                                   " 'dur' defaults to the sound-data object's length.";
 
 var sndscm_soundinterp_tip = "<code>(sound-interp reader loc)</code>: the sound-interp interpolating reader<br>" +
                              " reads a channel at an arbitary location, interpolating between samples if necessary.";
 
-var sndscm_soundtosounddata_tip = "<code>(sound-&gt;sound-data beg dur :optional snd)</code>:<br>" +
+var sndscm_soundtosounddata_tip = "<code>(sound-&gt;sound-data beg dur snd)</code>:<br>" +
                                   " return a sound-data object containing the contents of the sound 'snd'<br>" +
                                   " starting from beg for dur frames.<br>" +
                                   " <code>  (sound-data-&gt;sound (sound-data* (sound-&gt;sound-data) 2.0))</code><br>" +
@@ -1297,7 +1297,7 @@ var sndscm_soundtosounddata_tip = "<code>(sound-&gt;sound-data beg dur :optional
 
 var sndscm_syncdmixes_tip = "<code>(syncd-mixes sync)</code>:  returns a list of all mixes whose mix-sync field is set to 'sync'.";
 
-var sndscm_tofrequency_tip = "<code>(-&gt;frequency pitch :optional ratio)</code> takes either a number or a common-music pitch symbol<br>" +
+var sndscm_tofrequency_tip = "<code>(-&gt;frequency pitch ratio)</code> takes either a number or a common-music pitch symbol<br>" +
                        " ('c4 is middle C), and returns either the number or the frequency associated with that pitch:<br>" +
                        " <code>(-&gt;frequency 'cs5)</code> returns 554 and change.<br>" +
                        " 'ratio' can be #t to get small integer ratios rather than equal temperment.";
@@ -1306,7 +1306,7 @@ var sndscm_tosample_tip = "<code>(-&gt;sample time)</code> returns a sample numb
 
 var sndscm_volterrafilter_tip = "<code>(volterra-filter flt x)</code>: pass 'x' through the Volterra (non-linear) filter 'flt'.";
 
-var sndscm_windowsamples_tip = "<code>(window-samples :optional snd chn)</code>: returns (in a vct) the samples<br>" +
+var sndscm_windowsamples_tip = "<code>(window-samples snd chn)</code>: returns (in a vct) the samples<br>" +
                                " displayed in the current graph window for the given channel.";
 
 var sndscm_withtempsound_tip = "with-temp-sound is like sound-let (it sets up a temporary output<br>" +
@@ -1317,7 +1317,7 @@ var sndscm_wsdoc_tip = "with-sound provides a simple way to package up a bunch o
                        " with-sound opens an output object, and optionally a reverb output object.<br>" +
                        " Each instrument uses out-any to add its sounds to the *output* results.<br>" +
                        "<pre> with-sound<br>" + 
-                       "  :key (srate *clm-srate*)             ; output sampling rate (44100)<br>" + 
+                       "       (srate *clm-srate*)             ; output sampling rate (44100)<br>" + 
                        "       (output *clm-file-name*)        ; output file name (\"test.snd\")<br>" + 
                        "       (channels *clm-channels*)       ; channels in output (1)<br>" + 
                        "       (header-type *clm-header-type*) ; output header type (mus-next or mus-aifc)<br>" + 
@@ -1531,7 +1531,7 @@ var zip_doc_tip = "The zipper marches through the two sounds taking equal short 
                   " of each, then abutting them while resampling so that as one sound<br>" +
                   " takes less overall frame space, the other takes more.";
 
-var scheme_add_hook_tip = "<code>(add-hook! hook function :optional append)</code>: adds 'function'<br>" +
+var scheme_add_hook_tip = "<code>(add-hook! hook function append)</code>: adds 'function'<br>" +
                           "to the list of functions associated with 'hook'.  If 'append' is #t,<br>" +
                           "the function is added at the end of the list, otherwise at the start";
 
