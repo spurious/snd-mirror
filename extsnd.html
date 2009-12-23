@@ -10,13 +10,13 @@
         EM.listener {color:darkblue; font-style: normal}
 	H1 {text-align: center}
 	UL {list-style-type: none}
-	EM.emdef {font-weight: bold; font-style: normal}
+	EM.emdef {font-weight: bold; font-style: normal; padding-right: 0.2cm}
 
 	A {text-decoration:none}
 	A:hover {text-decoration:underline}
 	A.quiet {color:black; text-decoration:none}
 	A.quiet:hover {text-decoration:underline}
-	A.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black}
+	A.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black; padding-right: 0.2cm}
 -->
 </style>
 </head>
@@ -3393,7 +3393,7 @@ is the same as <code>(<a class=quiet href="#vctfill" onmouseout="UnTip()" onmous
 
 
 <!-- vct-move! -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="vctmove">vct-move!</a> v new old <em class=narg>backwards</em>)</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="vctmove">vct-move!</a> v new old <em class=narg>backwards</em></code>
 </td></tr><tr><td></td><td>
 vct-move moves a block of values within a vct:  <code>v[new++] = v[old++]</code>, or
 if 'backwards' is #t: <code>v[new--] = v[old--]</code>.  It returns 'v'.
@@ -5687,7 +5687,7 @@ selection-chans returns the number of channels in the current selection.
 
 
 <!-- selection-frames -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="selectionframes">selection-frames</a> <em class=narg>(snd chn</em></code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="selectionframes">selection-frames</a> <em class=narg>snd chn</em></code>
 </td></tr><tr><td></td><td>
 selection-frames returns the number of frames in the current selection (its length in samples).  
 You can set this to move the selection end point:

@@ -1,4 +1,4 @@
-/* xm.c: s7/Guile/Ruby/Forth bindings for X/Xt/Xpm/Xm/Xp/Xext
+/* xm.c: s7/Guile/Ruby/Forth bindings for X/Xt/Xpm/Xm/Xext
  *   needs xen.h
  *   for tests and examples see snd-motif.scm, bess.scm|rb, and snd-test.scm
  */
@@ -6,10 +6,11 @@
 #include <mus-config.h>
 #include <stdlib.h>
 
-#define XM_DATE "16-Nov-09"
+#define XM_DATE "23-Dec-09"
 
 /* HISTORY: 
  *
+ *   23-Dec:    removed XmPrint/libXp support.
  *   16-Dec:    removed Guile support.
  *   16-Nov:    XM_XTPOINTER resource type for 64-bit systems.
  *   7-Aug:     s7 extended type change.
@@ -166,7 +167,7 @@
 #include <X11/extensions/shape.h>
 #endif
 
-/* compile-time flags are HAVE_XPM HAVE_MOTIF HAVE_XM_XP HAVE_RUBY MUS_WITH_EDITRES */
+/* compile-time flags are HAVE_XPM HAVE_MOTIF HAVE_RUBY MUS_WITH_EDITRES */
 
 /* if you're using g++ and it complains about XmRemoveFromPostFromList, update Motif (you need 2.1.30) */
 
@@ -567,10 +568,6 @@ XM_TYPE_INT(KeyCode, KeyCode)
 XM_TYPE_INT(XContext, XContext)
 XM_TYPE_PTR(XIconSize, XIconSize *)
 
-#if HAVE_XM_XP
-XM_TYPE(XPContext, XPContext)
-#endif
-
 #if HAVE_MOTIF
 XM_TYPE_PTR(Widget, Widget)
 XM_TYPE(WidgetClass, WidgetClass)
@@ -613,9 +610,6 @@ XM_TYPE_PTR_NO_p(XmSpinBoxCallbackStruct, XmSpinBoxCallbackStruct *)
 XM_TYPE_PTR_NO_p(XmTraverseObscuredCallbackStruct, XmTraverseObscuredCallbackStruct *)
 XM_TYPE_PTR_NO_p(XmTopLevelLeaveCallbackStruct, XmTopLevelLeaveCallbackStruct *)
 XM_TYPE_PTR_NO_p(XmTopLevelEnterCallbackStruct, XmTopLevelEnterCallbackStruct *)
-#if HAVE_XM_XP
-XM_TYPE_PTR_NO_p(XmPrintShellCallbackStruct, XmPrintShellCallbackStruct *)
-#endif
 XM_TYPE_PTR_NO_p(XmPopupHandlerCallbackStruct, XmPopupHandlerCallbackStruct *)
 XM_TYPE_PTR_NO_p(XmSelectionCallbackStruct, XmSelectionCallbackStruct *)
 XM_TYPE_PTR_NO_C2X_NO_p(XmTransferDoneCallbackStruct, XmTransferDoneCallbackStruct *)
@@ -7380,70 +7374,6 @@ The CascadeButtonGadget creation function"
   return(gxm_new_widget("XmCreateCascadeButtonGadget", XmCreateCascadeButtonGadget, arg1, arg2, arg3, arg4));
 }
 
-#if HAVE_XM_XP
-static XEN gxm_XmRedisplayWidget(XEN arg1)
-{
-  #define H_XmRedisplayWidget "voidXmRedisplayWidget(Widgetwidget) Synchronously activates the expose method of a widget to draw its content"
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmRedisplayWidget", "Widget");
-  XmRedisplayWidget(XEN_TO_C_Widget(arg1));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmPrintPopupPDM(XEN arg1, XEN arg2)
-{
-  #define H_XmPrintPopupPDM "XtEnum XmPrintPopupPDM(Widgetprint_shell, Widget video_transient_for) Send a notification for the PDM to be popped up"
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmPrintPopupPDM", "Widget");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg2), arg2, 2, "XmPrintPopupPDM", "Widget");
-  return(C_TO_XEN_INT(XmPrintPopupPDM(XEN_TO_C_Widget(arg1), XEN_TO_C_Widget(arg2))));
-}
-
-static void gxm_XPFinishProc(Display *display, XPContext context, XPGetDocStatus status, XPointer client_data);
-
-static XEN gxm_XmPrintToFile(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  #define H_XmPrintToFile "XtEnumXmPrintToFile(Display*dpy, Stringfilename, XPFinishProcfinish_proc, XtPointerclient_data) \
-retrieves and saves data that would normally be printed by the X Print Server"
-  XEN descr;
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmPrintToFile", "Display*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmPrintToFile", "char*");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS_OK(arg3, 4)), arg3, 3, "XmPrintToFile", "XPFinishProc (4 args)");
-  descr = XEN_LIST_3(XEN_FALSE, arg3, arg4);
-  xm_protect(descr);
-  return(C_TO_XEN_INT(XmPrintToFile(XEN_TO_C_Display(arg1), 
-				    (char *)XEN_TO_C_STRING(arg2), 
-				    (XPFinishProc)gxm_XPFinishProc,
-				    (char *)descr)));
-}
-
-static XEN gxm_XmPrintSetup(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
-{
-  #define H_XmPrintSetup "Widget XmPrintSetup(Widget video_widget, Screen *print_screen, String print_shell_name, ArgList args, Cardinal num_args) \
-setup and create a Print Shell widget"
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmPrintSetup", "Widget");
-  XEN_ASSERT_TYPE(XEN_Screen_P(arg2), arg2, 2, "XmPrintSetup", "Screen*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XmPrintSetup", "String");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg4), arg4, 4, "XmPrintSetup", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg5), arg5, 5, "XmPrintSetup", "int");
-  {
-    Arg *args;
-    int arglen;
-    args = XEN_TO_C_Args(arg4);
-    arglen = XEN_TO_C_INT_DEF(arg5, arg4);
-    w = XmPrintSetup(XEN_TO_C_Widget(arg1), 
-		     XEN_TO_C_Screen(arg2), 
-		     (char *)XEN_TO_C_STRING(arg3), 
-		     args, arglen);
-    if (args)
-      {
-	fixup_args(w, args, arglen);
-	free_args(args, arglen);
-      }
-  }
-  return(C_TO_XEN_Widget(w));
-}
-#endif
-
 static XEN gxm_XmCreateBulletinBoardDialog(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateBulletinBoardDialog "Widget XmCreateBulletinBoardDialog(Widget parent, String name, ArgList arglist, Cardinal argcount) \
@@ -7632,15 +7562,6 @@ static XEN gxm_XmIsPrimitive(XEN arg)
   XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsPrimitive", "Widget");
   return(C_TO_XEN_BOOLEAN(XmIsPrimitive(XEN_TO_C_Widget(arg))));
 }
-
-#if HAVE_XM_XP
-static XEN gxm_XmIsPrintShell(XEN arg)
-{
-  #define H_XmIsPrintShell "Boolean XmIsPrintShell "XmIsPrintShell "Boolean XmIsPrintShell(Widget)"
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg), arg, 0, "XmIsPrintShell", "Widget");
-  return(C_TO_XEN_BOOLEAN(XmIsPrintShell(XEN_TO_C_Widget(arg))));
-}
-#endif
 
 static XEN gxm_XmIsCascadeButtonGadget(XEN arg)
 {
@@ -15357,9 +15278,6 @@ static XEN wrap_callback_struct(int type, XtPointer info)
     case GXM_Notebook:          return(C_TO_XEN_XmNotebookCallbackStruct((XmNotebookCallbackStruct *)info));
     case GXM_Operation:         return(C_TO_XEN_XmOperationChangedCallbackStruct((XmOperationChangedCallbackStruct *)info));
     case GXM_SpinBox:           return(C_TO_XEN_XmSpinBoxCallbackStruct((XmSpinBoxCallbackStruct *)info));
-#if HAVE_XM_XP
-    case GXM_Print:             return(C_TO_XEN_XmPrintShellCallbackStruct((XmPrintShellCallbackStruct *)info));
-#endif
     case GXM_TopLevel_Enter:    return(C_TO_XEN_XmTopLevelEnterCallbackStruct((XmTopLevelEnterCallbackStruct *)info));
     case GXM_TopLevel_Leave:    return(C_TO_XEN_XmTopLevelLeaveCallbackStruct((XmTopLevelLeaveCallbackStruct *)info));
     case GXM_Traverse:          return(C_TO_XEN_XmTraverseObscuredCallbackStruct((XmTraverseObscuredCallbackStruct *)info));
@@ -15411,9 +15329,6 @@ static int callback_struct_type(Widget w, const char *name)
       return(GXM_Destination); 
     }
   /* how to recognize a SpinBox? */
-#if HAVE_XM_XP
-  if (XmIsPrintShell(w)) return(GXM_Print);
-#endif
   if (XmIsCommand(w)) return(GXM_Command);
   if (XmIsDisplay(w)) return(GXM_Display);
   if (XmIsSelectionBox(w)) return(GXM_Selection);
@@ -16889,461 +16804,6 @@ static XEN gxm_XtSetArg(XEN arg1, XEN arg2, XEN arg3)
 #endif
 /* end HAVE_MOTIF */
 
-
-/* ---------------------------------------------------------------------------------------------------- */
-#if HAVE_XM_XP
-static XEN gxm_XpCancelPage(XEN arg1, XEN arg2)
-{
-  #define H_XpCancelPage "void XpCancelPage(Display *display,Bool discard)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpCancelPage", "Display*");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg2), arg2, 2, "XpCancelPage", "BOOLEAN");
-  XpCancelPage(XEN_TO_C_Display(arg1), XEN_TO_C_BOOLEAN(arg2));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XpEndPage(XEN arg1)
-{
-  #define H_XpEndPage "void XpEndPage(Display *display)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpEndPage", "Display*");
-  XpEndPage(XEN_TO_C_Display(arg1));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XpStartPage(XEN arg1, XEN arg2)
-{
-  #define H_XpStartPage "void XpStartPage(Display *display,Window window)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpStartPage", "Display*");
-  XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XpStartPage", "Window");
-  XpStartPage(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XpCancelDoc(XEN arg1, XEN arg2)
-{
-  #define H_XpCancelDoc "void XpCancelDoc(Display *display,Bool discard)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpCancelDoc", "Display*");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg2), arg2, 2, "XpCancelDoc", "BOOLEAN");
-  XpCancelDoc(XEN_TO_C_Display(arg1), XEN_TO_C_BOOLEAN(arg2));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XpEndDoc(XEN arg1)
-{
-  #define H_XpEndDoc "void XpEndDoc(Display *display)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpEndDoc", "Display*");
-  XpEndDoc(XEN_TO_C_Display(arg1));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XpStartDoc(XEN arg1, XEN arg2)
-{
-  #define H_XpStartDoc "void XpStartDoc(Display *display, XPDocumentType type)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpStartDoc", "Display*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XpStartDoc", "XPDocumentType");
-  XpStartDoc(XEN_TO_C_Display(arg1), (XPDocumentType)XEN_TO_C_INT(arg2));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XpCancelJob(XEN arg1, XEN arg2)
-{
-  #define H_XpCancelJob "void XpCancelJob(Display *display,Bool discard)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpCancelJob", "Display*");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg2), arg2, 2, "XpCancelJob", "BOOLEAN");
-  XpCancelJob(XEN_TO_C_Display(arg1), XEN_TO_C_BOOLEAN(arg2));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XpEndJob(XEN arg1)
-{
-  #define H_XpEndJob "void XpEndJob(Display *display)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpEndJob", "Display*");
-  XpEndJob(XEN_TO_C_Display(arg1));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XpStartJob(XEN arg1, XEN arg2)
-{
-  #define H_XpStartJob "void XpStartJob(Display *display, XPSaveData save_data)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpStartJob", "Display*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XpStartJob", "XPSaveData");
-  XpStartJob(XEN_TO_C_Display(arg1), (XPSaveData)XEN_TO_C_INT(arg2));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XpRehashPrinterList(XEN arg1)
-{
-  #define H_XpRehashPrinterList "void XpRehashPrinterList(Display *display)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpRehashPrinterList", "Display*");
-  XpRehashPrinterList(XEN_TO_C_Display(arg1));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XpDestroyContext(XEN arg1, XEN arg2)
-{
-  #define H_XpDestroyContext "void XpDestroyContext(Display *display, XPContext print_context)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpDestroyContext", "Display*");
-  XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpDestroyContext", "XPContext");
-  XpDestroyContext(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XpGetContext(XEN arg1)
-{
-  #define H_XpGetContext "XPContext XpGetContext(Display *display)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetContext", "Display*");
-  return(C_TO_XEN_XPContext(XpGetContext(XEN_TO_C_Display(arg1))));
-}
-
-static XEN gxm_XpSetContext(XEN arg1, XEN arg2)
-{
-  #define H_XpSetContext "void XpSetContext(Display *display, XPContext print_context)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpSetContext", "Display*");
-  XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpSetContext", "XPContext");
-  XpSetContext(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XpCreateContext(XEN arg1, XEN arg2)
-{
-  #define H_XpCreateContext "XPContext XpCreateContext(Display *display,char *printer_name)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpCreateContext", "Display*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XpCreateContext", "char*");
-  return(C_TO_XEN_XPContext(XpCreateContext(XEN_TO_C_Display(arg1), (char *)XEN_TO_C_STRING(arg2))));
-}
-
-static XEN gxm_XpNotifyPdm(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
-{
-  #define H_XpNotifyPdm "char *XpNotifyPdm(Display *print_display,Window print_window, XPContext print_context, \
-Display *video_display,Window video_window,Bool auth_flag)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpNotifyPdm", "Display*");
-  XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XpNotifyPdm", "Window");
-  XEN_ASSERT_TYPE(XEN_XPContext_P(arg3), arg3, 3, "XpNotifyPdm", "XPContext");
-  XEN_ASSERT_TYPE(XEN_Display_P(arg4), arg4, 4, "XpNotifyPdm", "Display*");
-  XEN_ASSERT_TYPE(XEN_Window_P(arg5), arg5, 5, "XpNotifyPdm", "Window");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg6), arg6, 6, "XpNotifyPdm", "BOOLEAN");
-  return(C_TO_XEN_STRING(XpNotifyPdm(XEN_TO_C_Display(arg1), 
-				     XEN_TO_C_Window(arg2), 
-				     XEN_TO_C_XPContext(arg3), 
-				     XEN_TO_C_Display(arg4), 
-				     XEN_TO_C_Window(arg5), 
-				     XEN_TO_C_BOOLEAN(arg6))));
-}
-
-static XEN gxm_XpGetLocaleNetString(void)
-{
-  #define H_XpGetLocaleNetString "char *XpGetLocaleNetString(void)"
-  return(C_TO_XEN_STRING(XpGetLocaleNetString()));
-}
-
-static XEN gxm_XpSendAuth(XEN arg1, XEN arg2)
-{
-  #define H_XpSendAuth "Status XpSendAuth(Display *display,Window window)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpSendAuth", "Display*");
-  XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XpSendAuth", "Window");
-  return(C_TO_XEN_INT(XpSendAuth(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2))));
-}
-
-static XEN gxm_XpGetImageResolution(XEN arg1, XEN arg2)
-{
-  #define H_XpGetImageResolution "int XpGetImageResolution(Display *display, XPContext print_context)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetImageResolution", "Display*");
-  XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpGetImageResolution", "XPContext");
-  return(C_TO_XEN_INT(XpGetImageResolution(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2))));
-}
-
-static XEN gxm_XpGetOneAttribute(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  #define H_XpGetOneAttribute "char *XpGetOneAttribute(Display *display, XPContext print_context, XPAttributes type,char *attribute_name)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetOneAttribute", "Display*");
-  XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpGetOneAttribute", "XPContext");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XpGetOneAttribute", "XPAttributes");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XpGetOneAttribute", "char*");
-  return(C_TO_XEN_STRING(XpGetOneAttribute(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2), 
-					   (XPAttributes)XEN_TO_C_INT(arg3), (char *)XEN_TO_C_STRING(arg4))));
-}
-
-static XEN gxm_XpSetAttributes(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
-{
-  #define H_XpSetAttributes "void XpSetAttributes(Display *display, XPContext print_context, XPAttributes type,char *pool, XPAttrReplacement replacement_rule)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpSetAttributes", "Display*");
-  XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpSetAttributes", "XPContext");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XpSetAttributes", "XPAttributes");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XpSetAttributes", "char*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 5, "XpSetAttributes", "XPAttrReplacement");
-  XpSetAttributes(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2), 
-		  (XPAttributes)XEN_TO_C_INT(arg3), (char *)XEN_TO_C_STRING(arg4), 
-		  (XPAttrReplacement)XEN_TO_C_INT(arg5));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XpGetAttributes(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XpGetAttributes "char *XpGetAttributes(Display *display, XPContext print_context, XPAttributes type)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetAttributes", "Display*");
-  XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpGetAttributes", "XPContext");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XpGetAttributes", "XPAttributes");
-  return(C_TO_XEN_STRING(XpGetAttributes(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2), 
-					 (XPAttributes)XEN_TO_C_INT(arg3))));
-}
-
-static XEN gxm_XpGetScreenOfContext(XEN arg1, XEN arg2)
-{
-  #define H_XpGetScreenOfContext "Screen *XpGetScreenOfContext(Display *display, XPContext print_context)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetScreenOfContext", "Display*");
-  XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpGetScreenOfContext", "XPContext");
-  return(C_TO_XEN_Screen(XpGetScreenOfContext(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2))));
-}
-
-static XEN gxm_XpSendOneTicket(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  #define H_XpSendOneTicket "Status XpSendOneTicket(Display *display,Window window, Xauth *ticket,Bool more)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpSendOneTicket", "Display*");
-  XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XpSendOneTicket", "Window");
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(arg3), arg3, 3, "XpSendOneTicket", "Xauth*"); /* opaque */
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg4), arg4, 4, "XpSendOneTicket", "BOOLEAN");
-  return(C_TO_XEN_INT(XpSendOneTicket(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), 
-				      (Xauth *)XEN_UNWRAP_C_POINTER(arg3), XEN_TO_C_BOOLEAN(arg4))));
-}
-
-static XEN gxm_XpGetAuthParams(XEN arg1, XEN arg2)
-{
-  #define H_XpGetAuthParams "Status XpGetAuthParams(Display *print_display,Display *video_display)"
-  /* DIFF: XpGetAuthParams omits 3 ref args and returns them 
-   */
-  Atom a1, a2;
-  Display *dp;
-  int val;
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetAuthParams", "Display*");
-  XEN_ASSERT_TYPE(XEN_Display_P(arg2), arg2, 2, "XpGetAuthParams", "Display*");
-  val = XpGetAuthParams(XEN_TO_C_Display(arg1), XEN_TO_C_Display(arg2), &dp, &a1, &a2);
-  return(XEN_LIST_4(C_TO_XEN_INT(val),
-		    C_TO_XEN_Display(dp),
-		    C_TO_XEN_Atom(a1),
-		    C_TO_XEN_Atom(a2)));
-}
-
-static XEN gxm_XpGetPdmStartParams(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
-{
-  #define H_XpGetPdmStartParams "Status XpGetPdmStartParams(Display *print_display,Window print_window, XPContext print_context, \
-Display *video_display,Window video_window)"
-  /* DIFF: XpGetPdmStartParams trailing 6 ref args omitted and returned
-   */
-  int val, i1, i2;
-  Atom a1, a2;
-  Display *dp;
-  unsigned char *pars;
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetPdmStartParams", "Display*");
-  XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XpGetPdmStartParams", "Window");
-  XEN_ASSERT_TYPE(XEN_XPContext_P(arg3), arg3, 3, "XpGetPdmStartParams", "XPContext");
-  XEN_ASSERT_TYPE(XEN_Display_P(arg4), arg4, 4, "XpGetPdmStartParams", "Display*");
-  XEN_ASSERT_TYPE(XEN_Window_P(arg5), arg5, 5, "XpGetPdmStartParams", "Window");
-  val = XpGetPdmStartParams(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), 
-			    XEN_TO_C_XPContext(arg3), XEN_TO_C_Display(arg4), 
-			    XEN_TO_C_Window(arg5), 
-			    &dp, &a1, &a2, &i1, &pars, &i2);
-  return(XEN_LIST_7(C_TO_XEN_INT(val),
-		    C_TO_XEN_Display(dp),
-		    C_TO_XEN_Atom(a1),
-		    C_TO_XEN_Atom(a2),
-		    C_TO_XEN_INT(i1),
-		    C_TO_XEN_STRING((const char *)pars),
-		    C_TO_XEN_INT(i2)));
-}
-
-static XEN gxm_XpQueryScreens(XEN arg1)
-{
-  #define H_XpQueryScreens "Screen **XpQueryScreens(Display *display)"
-  /* DIFF: XpQueryScreens omits last arg, returns list of Screens
-   */
-  int len, i, loc;
-  Screen **val = NULL;
-  XEN lst = XEN_EMPTY_LIST;
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpQueryScreens", "Display*");
-  val = XpQueryScreens(XEN_TO_C_Display(arg1), &len);
-  loc = xm_protect(lst);
-  if (val)
-    {
-      for (i = len - 1; i >= 0; i--)
-	lst = XEN_CONS(C_TO_XEN_Screen(val[i]), lst);
-    }
-  xm_unprotect_at(loc);
-  return(lst);
-}
-
-static XEN gxm_XpQueryExtension(XEN arg1)
-{
-  #define H_XpQueryExtension "Bool XpQueryExtension(Display *display)"
-  /* DIFF: XpQueryExtension omits and rtns last 2 args
-   */
-  int val, i1, i2;
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpQueryExtension", "Display*");
-  val = (int)XpQueryExtension(XEN_TO_C_Display(arg1), &i1, &i2);
-  return(XEN_LIST_3(C_TO_XEN_BOOLEAN(val),
-		    C_TO_XEN_INT(i1),
-		    C_TO_XEN_INT(i2)));
-}
-
-static XEN gxm_XpQueryVersion(XEN arg1)
-{
-  #define H_XpQueryVersion "Status XpQueryVersion(Display *display)"
-  /* DIFF: XpQueryVersion omits and rtns last 2 args
-   */
-  int val;
-  short i1, i2;
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpQueryVersion", "Display*");
-  val = XpQueryVersion(XEN_TO_C_Display(arg1), &i1, &i2);
-  return(XEN_LIST_3(C_TO_XEN_INT(val),
-		    C_TO_XEN_INT((int)i1),
-		    C_TO_XEN_INT((int)i2)));
-}
-
-static XEN gxm_XpFreePrinterList(XEN arg1)
-{
-  #define H_XpFreePrinterList "void XpFreePrinterList(XPPrinterList printer_list)"
-  /* DIFF: XpFreePrinterList is a no-op
-   */
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XpGetPageDimensions(XEN arg1, XEN arg2)
-{
-  #define H_XpGetPageDimensions "Status XpGetPageDimensions(Display *display, XPContext print_context)"
-  /* DIFF: XpGetPageDimensions omits and rtns last 3 args
-   */
-  unsigned short i1, i2;
-  XRectangle *r;
-  int val;
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetPageDimensions", "Display*");
-  XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpGetPageDimensions", "XPContext");
-  r = (XRectangle *)calloc(1, sizeof(XRectangle));
-  val = XpGetPageDimensions(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2), &i1, &i2, r);
-  return(XEN_LIST_4(C_TO_XEN_INT(val),
-		    C_TO_XEN_INT((int)i1),
-		    C_TO_XEN_INT((int)i2),
-		    C_TO_XEN_XRectangle(r)));
-}
-
-static XEN gxm_XpSetImageResolution(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  #define H_XpSetImageResolution "Bool XpSetImageResolution(Display *display, XPContext print_context,int image_res,int *prev_res)"
-  /* DIFF: XpSetImageResolution last arg is int, val is returned
-   */
-  int i, val;
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpSetImageResolution", "Display*");
-  XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpSetImageResolution", "XPContext");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XpSetImageResolution", "int");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XpSetImageResolution", "int*");
-  val = XpSetImageResolution(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2), XEN_TO_C_INT(arg3), &i);
-  return(XEN_LIST_2(C_TO_XEN_BOOLEAN(val),
-		    C_TO_XEN_INT(i)));
-}
-
-static XEN gxm_XpGetPrinterList(XEN arg1, XEN arg2)
-{
-  #define H_XpGetPrinterList "XPPrinterList XpGetPrinterList(Display *display,char *printer_name)"
-  /* DIFF: XpGetPrinterList returns list of printers, omits arg 3
-   */
-  XPPrinterList xp;
-  int len;
-  XEN lst = XEN_EMPTY_LIST;
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetPrinterList", "Display*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XpGetPrinterList", "char*");
-  xp = XpGetPrinterList(XEN_TO_C_Display(arg1), (char *)XEN_TO_C_STRING(arg2), &len);
-  if (xp)
-    {
-      int i, loc;
-      loc = xm_protect(lst);
-      for (i = len - 1; i >= 0; i--)
-	lst = XEN_CONS(XEN_LIST_2(C_TO_XEN_STRING(xp[i].name),
-				  C_TO_XEN_STRING(xp[i].desc)),
-		       lst);
-      XpFreePrinterList(xp);
-      xm_unprotect_at(loc);
-    }
-  return(lst);
-}
-
-static XEN gxm_XpSelectInput(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XpSelectInput "void XpSelectInput(Display *display, XPContext print_context,unsigned long event_mask)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpSelectInput", "Display*");
-  XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpSelectInput", "XPContext");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XpSelectInput", "ulong");
-  XpSelectInput(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2), XEN_TO_C_ULONG(arg3));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XpInputSelected(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XpInputSelected "unsigned long XpInputSelected(Display *display, XPContext print_context,unsigned long *all_events_mask)"
-  /* DIFF: XpInputSelected arg3 is int, is returned
-   */
-  unsigned long val, i1;
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpInputSelected", "Display*");
-  XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpInputSelected", "XPContext");
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg3), arg3, 3, "XpInputSelected", "ulong*");
-  i1 = XEN_TO_C_ULONG(arg3);
-  val = XpInputSelected(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2), &i1);
-  return(XEN_LIST_2(C_TO_XEN_ULONG(val),
-		    C_TO_XEN_ULONG(i1)));
-}
-
-static void gxm_XPSaveProc(Display *display, XPContext context, unsigned char *sdata, unsigned int data_len, XPointer client_data)
-{
-  XEN data = (XEN)client_data;
-  XEN_CALL_5(XEN_CAR(data),
-	     C_TO_XEN_Display(display),
-	     C_TO_XEN_XPContext(context),
-	     C_TO_XEN_STRING((const char *)sdata),
-	     C_TO_XEN_INT(data_len),
-	     XEN_CADDR(data),
-	     c__FUNCTION__);
-  xm_unprotect(data); /* not sure about this -- should it be deferred until the finish proc? */
-}
-
-static void gxm_XPFinishProc(Display *display, XPContext context, XPGetDocStatus status, XPointer client_data)
-{
-  XEN data = (XEN)client_data;
-  XEN_CALL_4(XEN_CADR(data),
-	     C_TO_XEN_Display(display),
-	     C_TO_XEN_XPContext(context),
-	     C_TO_XEN_INT(status),
-	     XEN_CADDR(data),
-	     c__FUNCTION__);
-  xm_unprotect(data);
-}
-
-static XEN gxm_XpGetDocumentData(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
-{
-  #define H_XpGetDocumentData "Status XpGetDocumentData(Display *display, XPContext context, XPSaveProc save_proc, XPFinishProc finish_proc, XPointer client_data)"
-  XEN descr;
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpGetDocumentData", "Display*");
-  XEN_ASSERT_TYPE(XEN_XPContext_P(arg2), arg2, 2, "XpGetDocumentData", "XPContext");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS_OK(arg3, 5)), arg3, 3, "XpGetDocumentData", "XPSaveProc");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 4)), arg4, 4, "XpGetDocumentData", "XPFinishProc");
-  descr = XEN_LIST_3(arg3, arg4, arg5);
-  xm_protect(descr);
-  return(C_TO_XEN_INT(XpGetDocumentData(XEN_TO_C_Display(arg1), XEN_TO_C_XPContext(arg2), 
-					(XPSaveProc)gxm_XPSaveProc,
-					(XPFinishProc)gxm_XPFinishProc,
-					(char *)descr)));
-}
-
-static XEN gxm_XpPutDocumentData(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
-{
-  #define H_XpPutDocumentData "void XpPutDocumentData(Display *display,Drawable drawable,unsigned char *data,int data_len,char *doc_fmt,char *options)"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XpPutDocumentData", "Display*");
-  XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XpPutDocumentData", "Window");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XpPutDocumentData", "uchar*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg4), arg4, 4, "XpPutDocumentData", "int");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg5), arg5, 5, "XpPutDocumentData", "char*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg6), arg6, 6, "XpPutDocumentData", "char*");
-  XpPutDocumentData(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), 
-		    (unsigned char *)XEN_TO_C_STRING(arg3), 
-		    XEN_TO_C_INT(arg4), (char *)XEN_TO_C_STRING(arg5), (char *)XEN_TO_C_STRING(arg6));
-  return(XEN_FALSE);
-}
-#endif
 
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -19158,9 +18618,6 @@ static XEN gxm_set_focus(XEN ptr, XEN val)
 
 static XEN gxm_detail(XEN ptr)
 {
-#if HAVE_XM_XP
-  if (XEN_XmPrintShellCallbackStruct_P(ptr)) return(C_TO_XEN_ULONG((XtPointer)((XEN_TO_C_XmPrintShellCallbackStruct(ptr))->detail)));
-#endif
   if (XEN_XConfigureRequestEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XConfigureRequestEvent(ptr))->detail)));
   if (XEN_XFocusChangeEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XFocusChangeEvent(ptr))->detail)));
   if (XEN_XCrossingEvent_P(ptr)) return(C_TO_XEN_INT((int)((XEN_TO_C_XCrossingEvent(ptr))->detail)));
@@ -20367,14 +19824,6 @@ static XEN gxm_position(XEN ptr)
   return(C_TO_XEN_INT((int)((XEN_TO_C_XmSpinBoxCallbackStruct(ptr))->position)));
 }
 
-#if HAVE_XM_XP
-static XEN gxm_last_page(XEN ptr)
-{
-  XM_FIELD_ASSERT_TYPE(XEN_XmPrintShellCallbackStruct_P(ptr), ptr, XEN_ONLY_ARG, "last_page", "XmPrintShellCallbackStruct");
-  return(C_TO_XEN_BOOLEAN((Boolean)((XEN_TO_C_XmPrintShellCallbackStruct(ptr))->last_page)));
-}
-#endif
-
 static XEN gxm_tag(XEN ptr)
 {
   XM_FIELD_ASSERT_TYPE(XEN_XmDisplayCallbackStruct_P(ptr), ptr, XEN_ONLY_ARG, "tag", "XmDisplayCallbackStruct");
@@ -20960,44 +20409,6 @@ static XEN gxm_page_number(XEN ptr)
 
 
 #ifdef XEN_ARGIFY_1
-#if HAVE_XM_XP
-  XEN_NARGIFY_2(gxm_XpStartPage_w, gxm_XpStartPage)
-  XEN_NARGIFY_1(gxm_XpEndPage_w, gxm_XpEndPage)
-  XEN_NARGIFY_2(gxm_XpCancelPage_w, gxm_XpCancelPage)
-  XEN_NARGIFY_2(gxm_XpStartJob_w, gxm_XpStartJob)
-  XEN_NARGIFY_1(gxm_XpEndJob_w, gxm_XpEndJob)
-  XEN_NARGIFY_2(gxm_XpCancelJob_w, gxm_XpCancelJob)
-  XEN_NARGIFY_2(gxm_XpStartDoc_w, gxm_XpStartDoc)
-  XEN_NARGIFY_1(gxm_XpEndDoc_w, gxm_XpEndDoc)
-  XEN_NARGIFY_2(gxm_XpCancelDoc_w, gxm_XpCancelDoc)
-  XEN_NARGIFY_1(gxm_XpRehashPrinterList_w, gxm_XpRehashPrinterList)
-  XEN_NARGIFY_2(gxm_XpCreateContext_w, gxm_XpCreateContext)
-  XEN_NARGIFY_2(gxm_XpSetContext_w, gxm_XpSetContext)
-  XEN_NARGIFY_1(gxm_XpGetContext_w, gxm_XpGetContext)
-  XEN_NARGIFY_2(gxm_XpDestroyContext_w, gxm_XpDestroyContext)
-  XEN_NARGIFY_0(gxm_XpGetLocaleNetString_w, gxm_XpGetLocaleNetString)
-  XEN_NARGIFY_6(gxm_XpNotifyPdm_w, gxm_XpNotifyPdm)
-  XEN_NARGIFY_2(gxm_XpSendAuth_w, gxm_XpSendAuth)
-  XEN_NARGIFY_2(gxm_XpGetImageResolution_w, gxm_XpGetImageResolution)
-  XEN_NARGIFY_3(gxm_XpGetAttributes_w, gxm_XpGetAttributes)
-  XEN_NARGIFY_5(gxm_XpSetAttributes_w, gxm_XpSetAttributes)
-  XEN_NARGIFY_4(gxm_XpGetOneAttribute_w, gxm_XpGetOneAttribute)
-  XEN_NARGIFY_2(gxm_XpGetScreenOfContext_w, gxm_XpGetScreenOfContext)
-  XEN_NARGIFY_1(gxm_XpFreePrinterList_w, gxm_XpFreePrinterList)
-  XEN_NARGIFY_1(gxm_XpQueryVersion_w, gxm_XpQueryVersion)
-  XEN_NARGIFY_1(gxm_XpQueryExtension_w, gxm_XpQueryExtension)
-  XEN_NARGIFY_1(gxm_XpQueryScreens_w, gxm_XpQueryScreens)
-  XEN_NARGIFY_5(gxm_XpGetPdmStartParams_w, gxm_XpGetPdmStartParams)
-  XEN_NARGIFY_2(gxm_XpGetAuthParams_w, gxm_XpGetAuthParams)
-  XEN_NARGIFY_4(gxm_XpSendOneTicket_w, gxm_XpSendOneTicket)
-  XEN_NARGIFY_2(gxm_XpGetPageDimensions_w, gxm_XpGetPageDimensions)
-  XEN_NARGIFY_4(gxm_XpSetImageResolution_w, gxm_XpSetImageResolution)
-  XEN_NARGIFY_2(gxm_XpGetPrinterList_w, gxm_XpGetPrinterList)
-  XEN_NARGIFY_3(gxm_XpSelectInput_w, gxm_XpSelectInput)
-  XEN_NARGIFY_3(gxm_XpInputSelected_w, gxm_XpInputSelected)
-  XEN_NARGIFY_6(gxm_XpPutDocumentData_w, gxm_XpPutDocumentData)
-  XEN_NARGIFY_5(gxm_XpGetDocumentData_w, gxm_XpGetDocumentData)
-#endif
 #if HAVE_MOTIF
   XEN_NARGIFY_3(gxm_XtSetArg_w, gxm_XtSetArg)
   XEN_ARGIFY_2(gxm_XtManageChildren_w, gxm_XtManageChildren)
@@ -21642,12 +21053,6 @@ static XEN gxm_page_number(XEN ptr)
   XEN_ARGIFY_4(gxm_XmCreateArrowButton_w, gxm_XmCreateArrowButton)
   XEN_ARGIFY_4(gxm_XmCreateNotebook_w, gxm_XmCreateNotebook)
   XEN_NARGIFY_2(gxm_XmNotebookGetPageInfo_w, gxm_XmNotebookGetPageInfo)
-#if HAVE_XM_XP
-  XEN_ARGIFY_5(gxm_XmPrintSetup_w, gxm_XmPrintSetup)
-  XEN_NARGIFY_4(gxm_XmPrintToFile_w, gxm_XmPrintToFile)
-  XEN_NARGIFY_2(gxm_XmPrintPopupPDM_w, gxm_XmPrintPopupPDM)
-  XEN_NARGIFY_1(gxm_XmRedisplayWidget_w, gxm_XmRedisplayWidget)
-#endif
   XEN_NARGIFY_5(gxm_XmTransferSetParameters_w, gxm_XmTransferSetParameters)
   XEN_NARGIFY_2(gxm_XmTransferDone_w, gxm_XmTransferDone)
   XEN_NARGIFY_5(gxm_XmTransferValue_w, gxm_XmTransferValue)
@@ -22021,9 +21426,6 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_1(gxm_XmCvtByteStreamToXmString_w, gxm_XmCvtByteStreamToXmString)
   XEN_NARGIFY_1(gxm_XmStringByteStreamLength_w, gxm_XmStringByteStreamLength)
   XEN_NARGIFY_1(gxm_XmIsNotebook_w, gxm_XmIsNotebook)
-#if HAVE_XM_XP
-  XEN_NARGIFY_1(gxm_XmIsPrintShell_w, gxm_XmIsPrintShell)
-#endif
   XEN_NARGIFY_1(gxm_XmIsComboBox_w, gxm_XmIsComboBox)
   XEN_NARGIFY_1(gxm_XmIsContainer_w, gxm_XmIsContainer)
   XEN_NARGIFY_1(gxm_XmIsGrabShell_w, gxm_XmIsGrabShell)
@@ -22187,9 +21589,6 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_1(XEN_XTextItem_p_w, XEN_XTextItem_p)
   XEN_NARGIFY_1(XEN_XStandardColormap_p_w, XEN_XStandardColormap_p)
   XEN_NARGIFY_1(XEN_Cursor_p_w, XEN_Cursor_p)
-#if HAVE_XM_XP
-  XEN_NARGIFY_1(XEN_XPContext_p_w, XEN_XPContext_p)
-#endif
 #if HAVE_MOTIF
   XEN_NARGIFY_1(XEN_WidgetClass_p_w, XEN_WidgetClass_p)
   XEN_NARGIFY_1(XEN_XmString_p_w, XEN_XmString_p)
@@ -22542,9 +21941,6 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_1(gxm_prev_page_widget_w, gxm_prev_page_widget)
   XEN_NARGIFY_1(gxm_rendition_w, gxm_rendition)
   XEN_NARGIFY_1(gxm_render_table_w, gxm_render_table)
-#if HAVE_XM_XP
-  XEN_NARGIFY_1(gxm_last_page_w, gxm_last_page)
-#endif
   XEN_NARGIFY_1(gxm_crossed_boundary_w, gxm_crossed_boundary)
   XEN_NARGIFY_1(gxm_client_data_w, gxm_client_data)
   XEN_NARGIFY_1(gxm_status_w, gxm_status)
@@ -22639,44 +22035,6 @@ static XEN gxm_page_number(XEN ptr)
 #else
 
 /* no argify */
-#if HAVE_XM_XP
-  #define gxm_XpStartPage_w gxm_XpStartPage
-  #define gxm_XpEndPage_w gxm_XpEndPage
-  #define gxm_XpCancelPage_w gxm_XpCancelPage
-  #define gxm_XpStartJob_w gxm_XpStartJob
-  #define gxm_XpEndJob_w gxm_XpEndJob
-  #define gxm_XpCancelJob_w gxm_XpCancelJob
-  #define gxm_XpStartDoc_w gxm_XpStartDoc
-  #define gxm_XpEndDoc_w gxm_XpEndDoc
-  #define gxm_XpCancelDoc_w gxm_XpCancelDoc
-  #define gxm_XpRehashPrinterList_w gxm_XpRehashPrinterList
-  #define gxm_XpCreateContext_w gxm_XpCreateContext
-  #define gxm_XpSetContext_w gxm_XpSetContext
-  #define gxm_XpGetContext_w gxm_XpGetContext
-  #define gxm_XpDestroyContext_w gxm_XpDestroyContext
-  #define gxm_XpGetLocaleNetString_w gxm_XpGetLocaleNetString
-  #define gxm_XpNotifyPdm_w gxm_XpNotifyPdm
-  #define gxm_XpSendAuth_w gxm_XpSendAuth
-  #define gxm_XpGetImageResolution_w gxm_XpGetImageResolution
-  #define gxm_XpGetAttributes_w gxm_XpGetAttributes
-  #define gxm_XpSetAttributes_w gxm_XpSetAttributes
-  #define gxm_XpGetOneAttribute_w gxm_XpGetOneAttribute
-  #define gxm_XpGetScreenOfContext_w gxm_XpGetScreenOfContext
-  #define gxm_XpFreePrinterList_w gxm_XpFreePrinterList
-  #define gxm_XpQueryVersion_w gxm_XpQueryVersion
-  #define gxm_XpQueryExtension_w gxm_XpQueryExtension
-  #define gxm_XpQueryScreens_w gxm_XpQueryScreens
-  #define gxm_XpGetPdmStartParams_w gxm_XpGetPdmStartParams
-  #define gxm_XpGetAuthParams_w gxm_XpGetAuthParams
-  #define gxm_XpSendOneTicket_w gxm_XpSendOneTicket
-  #define gxm_XpGetPageDimensions_w gxm_XpGetPageDimensions
-  #define gxm_XpSetImageResolution_w gxm_XpSetImageResolution
-  #define gxm_XpGetPrinterList_w gxm_XpGetPrinterList
-  #define gxm_XpSelectInput_w gxm_XpSelectInput
-  #define gxm_XpInputSelected_w gxm_XpInputSelected
-  #define gxm_XpPutDocumentData_w gxm_XpPutDocumentData
-  #define gxm_XpGetDocumentData_w gxm_XpGetDocumentData
-#endif
 #if HAVE_MOTIF
   #define gxm_XtSetArg_w gxm_XtSetArg
   #define gxm_XtManageChildren_w gxm_XtManageChildren
@@ -23321,12 +22679,6 @@ static XEN gxm_page_number(XEN ptr)
   #define gxm_XmCreateArrowButton_w gxm_XmCreateArrowButton
   #define gxm_XmCreateNotebook_w gxm_XmCreateNotebook
   #define gxm_XmNotebookGetPageInfo_w gxm_XmNotebookGetPageInfo
-#if HAVE_XM_XP
-  #define gxm_XmPrintSetup_w gxm_XmPrintSetup
-  #define gxm_XmPrintToFile_w gxm_XmPrintToFile
-  #define gxm_XmPrintPopupPDM_w gxm_XmPrintPopupPDM
-  #define gxm_XmRedisplayWidget_w gxm_XmRedisplayWidget
-#endif
   #define gxm_XmTransferSetParameters_w gxm_XmTransferSetParameters
   #define gxm_XmTransferDone_w gxm_XmTransferDone
   #define gxm_XmTransferValue_w gxm_XmTransferValue
@@ -23700,9 +23052,6 @@ static XEN gxm_page_number(XEN ptr)
   #define gxm_XmCvtByteStreamToXmString_w gxm_XmCvtByteStreamToXmString
   #define gxm_XmStringByteStreamLength_w gxm_XmStringByteStreamLength
   #define gxm_XmIsNotebook_w gxm_XmIsNotebook
-#if HAVE_XM_XP
-  #define gxm_XmIsPrintShell_w gxm_XmIsPrintShell
-#endif
   #define gxm_XmIsComboBox_w gxm_XmIsComboBox
   #define gxm_XmIsContainer_w gxm_XmIsContainer
   #define gxm_XmIsGrabShell_w gxm_XmIsGrabShell
@@ -23866,9 +23215,6 @@ static XEN gxm_page_number(XEN ptr)
   #define XEN_XTextItem_p_w XEN_XTextItem_p
   #define XEN_XStandardColormap_p_w XEN_XStandardColormap_p
   #define XEN_Cursor_p_w XEN_Cursor_p
-#if HAVE_XM_XP
-  #define XEN_XPContext_p_w XEN_XPContext_p
-#endif
 #if HAVE_MOTIF
   #define XEN_WidgetClass_p_w XEN_WidgetClass_p
   #define XEN_XmString_p_w XEN_XmString_p
@@ -24221,9 +23567,6 @@ static XEN gxm_page_number(XEN ptr)
   #define gxm_prev_page_widget_w gxm_prev_page_widget
   #define gxm_rendition_w gxm_rendition
   #define gxm_render_table_w gxm_render_table
-#if HAVE_XM_XP
-  #define gxm_last_page_w gxm_last_page
-#endif
   #define gxm_crossed_boundary_w gxm_crossed_boundary
   #define gxm_client_data_w gxm_client_data
   #define gxm_status_w gxm_status
@@ -24332,44 +23675,6 @@ static void define_procedures(void)
   xm_protected = XEN_MAKE_VECTOR(xm_protected_size, XEN_FALSE);
   XEN_VECTOR_SET(xm_gc_table, 0, xm_protected);
 
-#if HAVE_XM_XP
-  XM_DEFINE_PROCEDURE(XpStartPage, gxm_XpStartPage_w, 2, 0, 0, H_XpStartPage);
-  XM_DEFINE_PROCEDURE(XpEndPage, gxm_XpEndPage_w, 1, 0, 0, H_XpEndPage);
-  XM_DEFINE_PROCEDURE(XpCancelPage, gxm_XpCancelPage_w, 2, 0, 0, H_XpCancelPage);
-  XM_DEFINE_PROCEDURE(XpStartJob, gxm_XpStartJob_w, 2, 0, 0, H_XpStartJob);
-  XM_DEFINE_PROCEDURE(XpEndJob, gxm_XpEndJob_w, 1, 0, 0, H_XpEndJob);
-  XM_DEFINE_PROCEDURE(XpCancelJob, gxm_XpCancelJob_w, 2, 0, 0, H_XpCancelJob);
-  XM_DEFINE_PROCEDURE(XpStartDoc, gxm_XpStartDoc_w, 2, 0, 0, H_XpStartDoc);
-  XM_DEFINE_PROCEDURE(XpEndDoc, gxm_XpEndDoc_w, 1, 0, 0, H_XpEndDoc);
-  XM_DEFINE_PROCEDURE(XpCancelDoc, gxm_XpCancelDoc_w, 2, 0, 0, H_XpCancelDoc);
-  XM_DEFINE_PROCEDURE(XpRehashPrinterList, gxm_XpRehashPrinterList_w, 1, 0, 0, H_XpRehashPrinterList);
-  XM_DEFINE_PROCEDURE(XpCreateContext, gxm_XpCreateContext_w, 2, 0, 0, H_XpCreateContext);
-  XM_DEFINE_PROCEDURE(XpSetContext, gxm_XpSetContext_w, 2, 0, 0, H_XpSetContext);
-  XM_DEFINE_PROCEDURE(XpGetContext, gxm_XpGetContext_w, 1, 0, 0, H_XpGetContext);
-  XM_DEFINE_PROCEDURE(XpDestroyContext, gxm_XpDestroyContext_w, 2, 0, 0, H_XpDestroyContext);
-  XM_DEFINE_PROCEDURE(XpGetLocaleNetString, gxm_XpGetLocaleNetString_w, 0, 0, 0, H_XpGetLocaleNetString);
-  XM_DEFINE_PROCEDURE(XpNotifyPdm, gxm_XpNotifyPdm_w, 6, 0, 0, H_XpNotifyPdm);
-  XM_DEFINE_PROCEDURE(XpSendAuth, gxm_XpSendAuth_w, 2, 0, 0, H_XpSendAuth);
-  XM_DEFINE_PROCEDURE(XpGetImageResolution, gxm_XpGetImageResolution_w, 2, 0, 0, H_XpGetImageResolution);
-  XM_DEFINE_PROCEDURE(XpGetAttributes, gxm_XpGetAttributes_w, 3, 0, 0, H_XpGetAttributes);
-  XM_DEFINE_PROCEDURE(XpSetAttributes, gxm_XpSetAttributes_w, 5, 0, 0, H_XpSetAttributes);
-  XM_DEFINE_PROCEDURE(XpGetOneAttribute, gxm_XpGetOneAttribute_w, 4, 0, 0, H_XpGetOneAttribute);
-  XM_DEFINE_PROCEDURE(XpGetScreenOfContext, gxm_XpGetScreenOfContext_w, 2, 0, 0, H_XpGetScreenOfContext);
-  XM_DEFINE_PROCEDURE(XpFreePrinterList, gxm_XpFreePrinterList_w, 1, 0, 0, H_XpFreePrinterList);
-  XM_DEFINE_PROCEDURE(XpQueryVersion, gxm_XpQueryVersion_w, 1, 0, 0, H_XpQueryVersion);
-  XM_DEFINE_PROCEDURE(XpQueryExtension, gxm_XpQueryExtension_w, 1, 0, 0, H_XpQueryExtension);
-  XM_DEFINE_PROCEDURE(XpQueryScreens, gxm_XpQueryScreens_w, 1, 0, 0, H_XpQueryScreens);
-  XM_DEFINE_PROCEDURE(XpGetPdmStartParams, gxm_XpGetPdmStartParams_w, 5, 0, 0, H_XpGetPdmStartParams);
-  XM_DEFINE_PROCEDURE(XpGetAuthParams, gxm_XpGetAuthParams_w, 2, 0, 0, H_XpGetAuthParams);
-  XM_DEFINE_PROCEDURE(XpSendOneTicket, gxm_XpSendOneTicket_w, 4, 0, 0, H_XpSendOneTicket);
-  XM_DEFINE_PROCEDURE(XpGetPageDimensions, gxm_XpGetPageDimensions_w, 2, 0, 0, H_XpGetPageDimensions);
-  XM_DEFINE_PROCEDURE(XpSetImageResolution, gxm_XpSetImageResolution_w, 4, 0, 0, H_XpSetImageResolution);
-  XM_DEFINE_PROCEDURE(XpGetPrinterList, gxm_XpGetPrinterList_w, 2, 0, 0, H_XpGetPrinterList);
-  XM_DEFINE_PROCEDURE(XpSelectInput, gxm_XpSelectInput_w, 3, 0, 0, H_XpSelectInput);
-  XM_DEFINE_PROCEDURE(XpInputSelected, gxm_XpInputSelected_w, 3, 0, 0, H_XpInputSelected);
-  XM_DEFINE_PROCEDURE(XpPutDocumentData, gxm_XpPutDocumentData_w, 6, 0, 0, H_XpPutDocumentData);
-  XM_DEFINE_PROCEDURE(XpGetDocumentData, gxm_XpGetDocumentData_w, 5, 0, 0, H_XpGetDocumentData);
-#endif
 #if HAVE_MOTIF
   XM_DEFINE_PROCEDURE(XtSetArg, gxm_XtSetArg_w, 3, 0, 0, H_XtSetArg);
   XM_DEFINE_PROCEDURE(XtManageChildren, gxm_XtManageChildren_w, 1, 1, 0, H_XtManageChildren);
@@ -25023,12 +24328,6 @@ static void define_procedures(void)
 #endif
   XM_DEFINE_PROCEDURE(XmCreateNotebook, gxm_XmCreateNotebook_w, 3, 1, 0, H_XmCreateNotebook);
   XM_DEFINE_PROCEDURE(XmNotebookGetPageInfo, gxm_XmNotebookGetPageInfo_w, 2, 0, 0, H_XmNotebookGetPageInfo);
-#if HAVE_XM_XP
-  XM_DEFINE_PROCEDURE(XmPrintSetup, gxm_XmPrintSetup_w, 4, 1, 0, H_XmPrintSetup);
-  XM_DEFINE_PROCEDURE(XmPrintToFile, gxm_XmPrintToFile_w, 4, 0, 0, H_XmPrintToFile);
-  XM_DEFINE_PROCEDURE(XmPrintPopupPDM, gxm_XmPrintPopupPDM_w, 2, 0, 0, H_XmPrintPopupPDM);
-  XM_DEFINE_PROCEDURE(XmRedisplayWidget, gxm_XmRedisplayWidget_w, 1, 0, 0, H_XmRedisplayWidget);
-#endif
   XM_DEFINE_PROCEDURE(XmTransferSetParameters, gxm_XmTransferSetParameters_w, 5, 0, 0, H_XmTransferSetParameters);
   XM_DEFINE_PROCEDURE(XmTransferDone, gxm_XmTransferDone_w, 2, 0, 0, H_XmTransferDone);
   XM_DEFINE_PROCEDURE(XmTransferValue, gxm_XmTransferValue_w, 5, 0, 0, H_XmTransferValue);
@@ -25393,9 +24692,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmIsArrowButtonGadget, gxm_XmIsArrowButtonGadget_w, 1, 0, 0, H_XmIsArrowButtonGadget);
   XM_DEFINE_PROCEDURE(XmIsArrowButton, gxm_XmIsArrowButton_w, 1, 0, 0, H_XmIsArrowButton);
   XM_DEFINE_PROCEDURE(XmIsNotebook, gxm_XmIsNotebook_w, 1, 0, 0, H_XmIsNotebook);
-#if HAVE_XM_XP
-  XM_DEFINE_PROCEDURE(XmIsPrintShell, gxm_XmIsPrintShell_w, 1, 0, 0, H_XmIsPrintShell);
-#endif
   XM_DEFINE_PROCEDURE(XmIsComboBox, gxm_XmIsComboBox_w, 1, 0, 0, H_XmIsComboBox);
   XM_DEFINE_PROCEDURE(XmIsContainer, gxm_XmIsContainer_w, 1, 0, 0, H_XmIsContainer);
   XM_DEFINE_PROCEDURE(XmIsGrabShell, gxm_XmIsGrabShell_w, 1, 0, 0, H_XmIsGrabShell);
@@ -25577,9 +24873,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XTextItem?, XEN_XTextItem_p_w, 1, 0, 0, PROC_TRUE " if arg is a XTextItem");
   XM_DEFINE_PROCEDURE(XStandardColormap?, XEN_XStandardColormap_p_w, 1, 0, 0, PROC_TRUE " if arg is a XStandardColormap");
   XM_DEFINE_PROCEDURE(Cursor?, XEN_Cursor_p_w, 1, 0, 0, PROC_TRUE " if arg is a Cursor");
-#if HAVE_XM_XP
-  XM_DEFINE_PROCEDURE(XPContext?, XEN_XPContext_p_w, 1, 0, 0, PROC_TRUE " if arg is a XPContext");
-#endif
 #if HAVE_MOTIF
   XM_DEFINE_PROCEDURE(WidgetClass?, XEN_WidgetClass_p_w, 1, 0, 0, PROC_TRUE " if arg is a WidgetClass");
   XM_DEFINE_PROCEDURE(XmString?, XEN_XmString_p_w, 1, 0, 0, PROC_TRUE " if arg is a XmString");
@@ -25599,9 +24892,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmRowColumn?, gxm_XmIsRowColumn_w, 1, 0, 0, H_XmIsRowColumn);
   XM_DEFINE_PROCEDURE(XmTab?, XEN_XmTab_p_w, 1, 0, 0, PROC_TRUE " if arg is a Tab");
   XM_DEFINE_PROCEDURE(XmNotebook?, gxm_XmIsNotebook_w, 1, 0, 0, H_XmIsNotebook);
-#if HAVE_XM_XP
-  XM_DEFINE_PROCEDURE(XmPrintShell?, gxm_XmIsPrintShell_w, 1, 0, 0, H_XmIsPrintShell);
-#endif
   XM_DEFINE_PROCEDURE(XmComboBox?, gxm_XmIsComboBox_w, 1, 0, 0, H_XmIsComboBox);
   XM_DEFINE_PROCEDURE(XmContainer?, gxm_XmIsContainer_w, 1, 0, 0, H_XmIsContainer);
   XM_DEFINE_PROCEDURE(XmIconHeader?, gxm_XmIsIconHeader_w, 1, 0, 0, H_XmIsIconHeader);
@@ -25843,9 +25133,6 @@ static void define_structs(void)
   XM_DEFINE_READER(prev_page_widget, gxm_prev_page_widget_w, 1, 0, 0);
   XM_DEFINE_READER(rendition, gxm_rendition_w, 1, 0, 0);
   XM_DEFINE_READER(render_table, gxm_render_table_w, 1, 0, 0);
-#if HAVE_XM_XP
-  XM_DEFINE_READER(last_page, gxm_last_page_w, 1, 0, 0);
-#endif
   XM_DEFINE_READER(crossed_boundary, gxm_crossed_boundary_w, 1, 0, 0);
   XM_DEFINE_READER(client_data, gxm_client_data_w, 1, 0, 0);
   XM_DEFINE_READER(status, gxm_status_w, 1, 0, 0);
@@ -26664,9 +25951,6 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNvisualEmphasis, XM_UCHAR);
   DEFINE_RESOURCE(XmNwrap, XM_BOOLEAN);
 
-#if HAVE_XM_XP
-  DEFINE_STRING(XP_PRINTNAME);
-#endif
 #if HAVE_XmCreateFontSelector
   /* presumably in a "correct" setup these would be defined in Xm/XmStrDefs.h */
   #ifndef XmNcurrentFont
@@ -28483,62 +27767,6 @@ static void define_integers(void)
   DEFINE_INTEGER(XmListMode);
 #endif
 #endif
-#if HAVE_XM_XP
-  DEFINE_INTEGER(XP_DONT_CHECK);
-  DEFINE_INTEGER(XP_INITIAL_RELEASE);
-  DEFINE_INTEGER(XP_PROTO_MAJOR);
-  DEFINE_INTEGER(XP_PROTO_MINOR);
-  DEFINE_INTEGER(XP_MAJOR_VERSION);
-  DEFINE_INTEGER(XP_MINOR_VERSION);
-  DEFINE_INTEGER(XP_ABSENT);
-  DEFINE_INTEGER(XP_PRESENT);
-  DEFINE_INTEGER(XP_ERRORS);
-  DEFINE_INTEGER(XPBadContext);
-  DEFINE_INTEGER(XPBadSequence);
-  DEFINE_INTEGER(XPBadResourceID);
-  DEFINE_INTEGER(XP_EVENTS);
-  DEFINE_INTEGER(XPNoEventMask);
-  DEFINE_INTEGER(XPPrintMask);
-  DEFINE_INTEGER(XPAttributeMask);
-  DEFINE_INTEGER(XPPrintNotify);
-  DEFINE_INTEGER(XPAttributeNotify);
-  DEFINE_INTEGER(XPStartJobNotify);
-  DEFINE_INTEGER(XPEndJobNotify);
-  DEFINE_INTEGER(XPStartDocNotify);
-  DEFINE_INTEGER(XPEndDocNotify);
-  DEFINE_INTEGER(XPStartPageNotify);
-  DEFINE_INTEGER(XPEndPageNotify);
-  DEFINE_INTEGER(XP_ATTRIBUTES);
-  DEFINE_INTEGER(XPJobAttr);
-  DEFINE_INTEGER(XPDocAttr);
-  DEFINE_INTEGER(XPPageAttr);
-  DEFINE_INTEGER(XPPrinterAttr);
-  DEFINE_INTEGER(XPServerAttr);
-  DEFINE_INTEGER(XPMediumAttr);
-  DEFINE_INTEGER(XPFontAttr);
-  DEFINE_INTEGER(XPResAttr);
-  DEFINE_INTEGER(XPTransAttr);
-  DEFINE_INTEGER(XPDelAttr);
-  DEFINE_INTEGER(XPAuxSPkg);
-  DEFINE_INTEGER(XPAuxS);
-  DEFINE_INTEGER(XPFinishAttr);
-  DEFINE_INTEGER(XPOutputAttr);
-  DEFINE_INTEGER(XPImpAttr);
-  DEFINE_INTEGER(XPSchedAttr);
-  DEFINE_INTEGER(XPIntJobAttr);
-  DEFINE_INTEGER(XPIntDocAttr);
-  DEFINE_INTEGER(XPResConAttr);
-  DEFINE_INTEGER(XPAttrReplace);
-  DEFINE_INTEGER(XPAttrMerge);
-  DEFINE_INTEGER(XPGetDocFinished);
-  DEFINE_INTEGER(XPGetDocSecondConsumer);
-  DEFINE_INTEGER(XPGetDocError);
-  DEFINE_INTEGER(XPSpool);
-  DEFINE_INTEGER(XPGetData);
-  DEFINE_INTEGER(XPDocNormal);
-  DEFINE_INTEGER(XPDocRaw);
-#endif
-
 #if HAVE_XSHAPEQUERYEXTENSION
   DEFINE_INTEGER(ShapeSet);
   DEFINE_INTEGER(ShapeUnion);
@@ -28686,9 +27914,6 @@ static void define_pointers(void)
   DEFINE_POINTER(xmGrabShellWidgetClass);
   DEFINE_POINTER(xmNotebookWidgetClass);
   DEFINE_POINTER(xmIconGadgetClass);
-#if HAVE_XM_XP
-  DEFINE_POINTER(xmPrintShellWidgetClass);
-#endif
 #if HAVE_XmCreateButtonBox
   DEFINE_POINTER(xmButtonBoxWidgetClass);
 #endif
@@ -28903,9 +28128,6 @@ void Init_libxm(void)
 ;\n");
 #endif
       XEN_DEFINE_PROCEDURE(S_add_resource, g_add_resource_w, 2, 0, 0, H_add_resource);
-#endif
-#if HAVE_XM_XP
-      XEN_YES_WE_HAVE("Xp");
 #endif
       XEN_YES_WE_HAVE("xm");
       XEN_DEFINE("xm-version", C_TO_XEN_STRING(XM_DATE));

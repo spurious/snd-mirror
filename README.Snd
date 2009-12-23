@@ -98,7 +98,6 @@ The configure script has a bunch of arguments:
   
      --with-snd-as-widget      make Snd a loadable widget, not a standalone program
      --with-snd-as-pd-external make Snd a loadable pd external, not a standalone program
-     --with-hobbit             include hobbit-style function arity checking
 
      --with-temp-dir           directory to use for temp files (default: ".")
      --with-save-dir           directory to use for saved-state files (default: ".")
@@ -107,7 +106,6 @@ The configure script has a bunch of arguments:
      --with-shared-sndlib      try to use libsndlib.so (default: no).  The path to
                                  sndlib-config can be specified via SNDLIB_CONFIG_path.
   			         Normally, sndlib is built into Snd at compile time.
-       --with-midi             include sndlib midi module (default: no)
 
      --disable-nls             the gettext (internationalization) support is on
                                  by default; this turns it off.

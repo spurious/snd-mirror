@@ -69,7 +69,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --without-gsl         omit GSL even if it exists
 #   --without-fftw        omit FFTW even if it exists
 #   --without-xpm         omit XPM even if it exists (for testing)
-#   --without-xp          omit libXp even if it exists (for testing)
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
 #   --with-cairo          use cairo for Gtk graphics, if possible
 #   --with-pulseaudio     use PulseAudio
@@ -108,7 +107,6 @@ AC_ARG_WITH(profiling,   [  --with-profiling		  add code to keep profiling stats
 AC_ARG_WITH(gsl,         [  --with-gsl		  use GSL, default=yes])
 AC_ARG_WITH(fftw,        [  --with-fftw		  use fftw, default=yes])
 AC_ARG_WITH(xpm,         [  --with-xpm		  use xpm, default=yes])
-AC_ARG_WITH(xp,          [  --with-xp		  use xp, default=no])
 AC_ARG_WITH(fam,         [  --with-fam		  use libfam (Gamin), default=yes])
 AC_ARG_WITH(gmp,         [  --with-gmp		  include multiprecision arithmetic via gmp, mpfr, and mpc, default=no])
 
@@ -989,22 +987,6 @@ else
 	       with_motif=no
               ])
 	    ])
-
-	  if test "$with_xp" = yes; then
-	    AC_MSG_CHECKING([for XmPrint support])
-	    AC_COMPILE_IFELSE(
-	      [AC_LANG_PROGRAM([#include <Xm/Print.h>],
-			       [ Widget w; 
-                                 XmPrintShellCallbackStruct xmp;
-			         XtIsSubclass(w, xmPrintShellWidgetClass)
-			        ])],
-	      [
-	       AC_DEFINE(HAVE_XM_XP)
-               OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES Xp"
-	       AC_MSG_RESULT(yes)
- 	      ],
-	      [AC_MSG_RESULT(no)])
-           fi
           ],
 	[
 	 AC_MSG_WARN([can't find the Motif library! -- will look for Gtk])

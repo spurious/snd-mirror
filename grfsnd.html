@@ -7,7 +7,7 @@
         EM.typing {color:maroon; font-style: normal}
         EM.listener {color:darkblue; font-style: normal}
         EM.tab {font-style: normal; font-size: small; font-family: fixed}
-	EM.emdef {font-weight: bold; font-style: normal}
+	EM.emdef {font-weight: bold; font-style: normal; padding-right: 0.2cm}
 	H1 {text-align: center}
 	UL {list-style-type: none}
 
@@ -15,7 +15,7 @@
 	A:hover {text-decoration:underline}
 	A.quiet {color:black; text-decoration:none}
 	A.quiet:hover {text-decoration:underline}
-	A.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black}
+	A.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black; padding-right: 0.2cm}
 -->
 </style>
 </head>
@@ -805,7 +805,6 @@ latter are (configure --help):
 <tr><td></td><td>--with-gl2ps</td><td></td><td>include gl2ps (GL to Postscript code, Motif only)</td></tr>
 <tr><td></td><td>--with-editres</td><td></td><td>include editres in xm (default: no)</td></tr>
 <tr><td></td><td>--with-xpm</td><td></td><td>use xpm, default: yes</td></tr>
-<tr><td></td><td>--with-xp</td><td></td><td>use xp, default: no; this is the Xprint library which is not tied into Snd at all</td></tr>
 <tr><td></td><td>--with-builtin-gtkrc</td><td></td><td>include built-in gtkrc fallbacks (default: yes)</td></tr>
 <tr><td></td><td>--with-cairo</td><td></td><td>use cairo for Gtk graphics if possible (work in progress)</td></tr>
 <tr><td colspan=2></td><td></td><td></td></tr>
@@ -889,7 +888,6 @@ Depending on how Snd is configured, any of the following symbols may be "provide
 <tr><td bgcolor="#f2f4ff">snd-debug</td><td bgcolor="#f2f4ff">internal debugging hooks included (--enable-snd-debug)</td></tr>
 <tr><td>snd</td><td>It's Snd, ferchrissake... (always included)</td></tr>
 <tr><td bgcolor="#f2f4ff">xg</td><td bgcolor="#f2f4ff">Gtk module (xg.c) included (--with-static-xg, or loaded dynamically)</td></tr>
-<tr><td>Xp</td><td>Xprint library included and available from Scheme/Ruby/Forth (--with-xp, the default if it exists)</td></tr>
 <tr><td bgcolor="#f2f4ff">xm</td><td bgcolor="#f2f4ff">Motif module (xm.c) included (--with-static-xm, or loaded dynamically)</td></tr>
 <tr><td>alsa</td><td>ALSA is in use, rather than OSS (--with-alsa)</td></tr>
 <tr><td bgcolor="#f2f4ff">gsl</td><td bgcolor="#f2f4ff">GSL is loaded (--with-gsl)</td></tr>
