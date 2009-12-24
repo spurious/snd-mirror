@@ -6,6 +6,8 @@
   #include <dirent.h>
 #endif
 
+/* TODO: if ./snd non-existent.snd, error dialog or whatever is flushed before you can read it */
+
 
 /* -------------------------------- basic file attributes -------------------------------- */
 
