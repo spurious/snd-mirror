@@ -3,7 +3,9 @@
 /* I assume what people really want is a good rendition from their ancient SAM files,
  *   not an exact replica of the Samson box output.  The latter used 12, 14, 20, 24, 28, and 30-bit
  *   fractional and integer fields, which are a pain to deal with when we would rather use doubles.
- *   The 20-bitness matters in the noise calculation.
+ *   The 20-bitness matters (perhaps) in the noise calculation.
+ *
+ * gcc sam.c -o sam -lm -O2
  */
 
 #include <stdlib.h>
@@ -23,11 +25,13 @@
 #define LDB(Cmd, Size, Position) ((Cmd >> Position) & ((1 << Size) - 1))
 #define BIT(Cmd, Position) ((Cmd >> Position) & 1)
 
+#define TWOS_12(N) ((N < (1 << 11)) ? N : ((N & 0x7ff) - (1 << 11)))
 #define TWOS_20(N) ((N < (1 << 19)) ? N : ((N & 0x7ffff) - (1 << 19)))
 #define TWOS_24(N) ((N < (1 << 23)) ? N : ((N & 0x7fffff) - (1 << 23)))
 #define TWOS_28(N) ((N < (1 << 27)) ? N : ((N & 0x7ffffff) - (1 << 27)))
 #define TWOS_30(N) ((N < (1 << 29)) ? N : ((N & 0x1fffffff) - (1 << 29)))
 
+#define TWOS_12_TO_DOUBLE(N) ((double)TWOS_12(N) / (double)(1 << 11))
 #define TWOS_20_TO_DOUBLE(N) ((double)TWOS_20(N) / (double)(1 << 19))
 #define TWOS_24_TO_DOUBLE(N) ((double)TWOS_24(N) / (double)(1 << 23))
 #define TWOS_28_TO_DOUBLE(N) ((double)TWOS_28(N) / (double)(1 << 27))
@@ -68,7 +72,7 @@ static double delay_memory[65536];
 static double f_delay_memory[65536];
 static float dac_out[4];
 
-static int tick, pass, DX, highest_tick_per_pass, samples = 0, srate = 1;
+static int tick, pass, DX, processing_ticks, highest_tick_per_pass, samples = 0, srate = 1, total_commands = 0, current_command = 0;
 
 FILE *snd_file = NULL; /* for now just riff/wave quad, but srate depends on tick setting */
 
@@ -134,7 +138,7 @@ static void dac_write(double data, int chan)
   /*
   fprintf(stderr, "dac_write(%.4f, %d)\n", data, chan);
   */
-  dac_out[chan] += (float)data;
+  dac_out[chan] += (float)(data / 4.0); /* what is the correct scaling here? */
 }
 
 
@@ -317,7 +321,7 @@ static bool adding_to_sum(int mode)
   return((RRRR == 15) || (RRRR == 14) || (RRRR == 7) || (RRRR == 13));
 }
 
-static bool pulse_warned = false;
+static bool pulse_warned = false, read_data_warned = false, write_data_warned = true;
 
 static void process_gen(int gen)
 {
@@ -344,7 +348,11 @@ static void process_gen(int gen)
 
   if (osc_run(Gmode10) == 3)
     {
-      fprintf(stderr, "Can't writedata!\n");
+      if (!write_data_warned)
+	{
+	  fprintf(stderr, "Can't write data!\n");
+	  write_data_warned = true;
+	}
       return;
     }
 
@@ -398,12 +406,13 @@ static void process_gen(int gen)
       break;
 
     case SQUARE:
-      if (Phase13 < 0.0) 
-	OscOut13 = -1.0;  /* ?? */
-      else OscOut13 = 1.0;
+      if (Phase13 < 0.0)              /* SQUARE: -1/2 (on a scale from -1 to +1) if Phase13 is negative, else +1/2 */
+	OscOut13 = -0.5;
+      else OscOut13 = 0.5;
       break;
 
     case PULSE:
+      /* "overflow" here is passing 2-pi? */
       if (!pulse_warned)
 	{
 	  fprintf(stderr, "pulse not implemented yet\n");
@@ -444,8 +453,9 @@ static void process_gen(int gen)
       if ((CurAmp24 > 1.0) || (CurAmp24 < -1.0))  /*  if ((BIT(CurAmp24, 23) != BIT(old_amp, 23)) && (BIT(CurAmp24, 22) == BIT(AmpSwp20, 19))) */
 	{
 	  /* overflow */
+	  /*
 	  fprintf(stderr, "env overflow\n");
-
+	  */
 	  if (osc_run(Gmode10) == 15)              /* "running A" */
 	    CurAmp24 = old_amp;
 	  else
@@ -468,7 +478,9 @@ static void process_gen(int gen)
 
   if ((osc_env(Gmode10) == L_PLUS_2_TO_MINUS_Q) || 
       (osc_env(Gmode10) == L_MINUS_2_TO_MINUS_Q))
-    NewAmp12 = pow(2.0, -CurAmp12);
+    {
+      NewAmp12 = pow(2.0, -CurAmp12);
+    }
   else NewAmp12 = CurAmp12;
   /* in the notes: The scaling involved is a left shift of temp6 by 4 bits.
    */
@@ -478,26 +490,30 @@ static void process_gen(int gen)
     Env12 = AmpOff12 + NewAmp12;
   else Env12 = AmpOff12 - NewAmp12;
 
+  /*
+  if ((osc_env(Gmode10) == L_PLUS_2_TO_MINUS_Q) || 
+      (osc_env(Gmode10) == L_MINUS_2_TO_MINUS_Q))
+    fprintf(stderr, "expt: %.3f = %.3f +/- %.3f, %.3f, %.3f\n", Env12, AmpOff12, NewAmp12, CurAmp24, AmpSwp20);
+  */
+
   OscOut13 *= Env12;
   if (adding_to_sum(Gmode10))
     {
       if (osc_run(Gmode10) != 7)
-	gen_outs[OutSum6] += OscOut13; /* what is the scaling here? 25 -> 19 according to specs, I think */
-      else fprintf(stderr, "read data?!?\n");
+	{
+	  if (g->GS == 0)
+	    gen_outs[OutSum6] += (OscOut13 / 4.0);    /* what is the scaling here? 4.0 sounds like it reproduces what I remember of old pieces */
+	  else gen_outs[OutSum6] += (OscOut13 / 2.0); /* just a guess */
+	}
+      else 
+	{
+	  if (!read_data_warned)
+	    {
+	      fprintf(stderr, "read data?!?\n");
+	      read_data_warned = true;
+	    }
+	}
     }
-
-  /*    TODO: shift
-	If GS is 0, the high-order 19 bits
-	of the rounded product are taken, right-adjusted with sign
-	extended; if GS is 1, the high-order 20 bits of the rounded
-	product are taken.  Call this Temp9.  If the run mode 
-	specifies adding into sum memory, Temp9 is added into the sum
-	memory location designated by GSUM; except that in run mode
-	0111, the product is added to the next read-data item from the
-	CPU and the sum replaces the contents of the sum memory
-	location addressed.
-  */
-
 }
 
 
@@ -969,6 +985,31 @@ static void process_dly(int dly)
 static void linger(int time)
 {
   /* process each sample ("pass") until pass == time */
+  /*   but linger was a 20-bit number, so it wrapped around I believe, so if pass should be mod 2^20? */
+  
+  if (!snd_file)
+    {
+      fprintf(stderr, "no ticks setting found!\n");
+      exit(0);
+    }
+
+  if (time < pass)
+    pass = pass - (1 << 20);
+
+  /* TODO: another problem: we used to put infinite lingers at the end to avoid the box-turns-off click.
+   *   I need to catch those and ignore them in this context
+   */
+
+  if (((total_commands - current_command) < 100) && 
+      (total_commands > 1000) &&
+      ((time - pass) > srate))
+    {
+      fprintf(stderr, "ignore trailing %d sample (%.3f second) linger (%d)\n", 
+	      time - pass, (double)(time - pass) / (double)srate, total_commands - current_command);
+      pass = time;
+      return;
+    }
+
   while (pass < time)
     {
       /* run through all available ticks, processing gen+mod+dly, 
@@ -976,12 +1017,13 @@ static void linger(int time)
        *   and increment pass 
        */
       int i, tick, gen = 0, mod = 0, dly = 0;
-      for (tick = 0; tick < highest_tick_per_pass; tick++)
+      for (tick = 0; tick < processing_ticks; tick++)
 	{
 	  /* given the timing info I'll simplify a bit and run 1 gen per tick, 1 mod every 2 ticks, and 1 delay every 4 ticks */
 	  if (gen < 256)
 	    process_gen(gen++);
 
+	  /* I'm guessing... */
 	  if (((tick & 1) == 0) &&
 	      (mod < 128))
 	    process_mod(mod++);
@@ -991,9 +1033,6 @@ static void linger(int time)
 	    process_dly(dly++);
 	}
 
-      /*
-      fprintf(stderr, "--------------------------------------------------------------------------------\n");
-      */
       for (i = 0; i < 64; i++)
 	{
 	  gen_ins[i] = gen_outs[i];
@@ -1009,11 +1048,6 @@ static void linger(int time)
 
       if (samples == TOTAL_SAMPLES) 
 	all_done();
-
-      /* we have a problem here.  In the good old days, we'd pad the end with a huge linger to hold the box
-       *   until ESC (or some such command).  But in this system, that means we end up writing a lot of silence
-       *   at the end of the file.
-       */
     }
 }
 
@@ -1059,12 +1093,28 @@ static void misc_command(int cmd)
 
   if (RR == 1) DX = data;
 
-#if 0
-  /* TODO: implement these bits */
-  if (W == 1) fprintf(stderr, "clear all wait bits\n");
-  if (P == 1) fprintf(stderr, "clear all pause bits\n");
-  if (S == 1) fprintf(stderr, "stop clock!\n");
-#endif
+  if (W == 1) 
+    {
+      /* cause any generator in run mode 1001 to change to mode 1111 */
+      int i;
+      for (i = 0; i < 256; i++)
+	if ((gens[i]) && (osc_run(gens[i]->GMODE) == 9))
+	  set_osc_run(i, 15);
+    }
+
+  if (P == 1) 
+    {
+      /* cause any generator in run mode 0001 to change to mode 1111 */
+      int i;
+      for (i = 0; i < 256; i++)
+	if ((gens[i]) && (osc_run(gens[i]->GMODE) == 1))
+	  set_osc_run(i, 15);
+    }
+
+  /*
+  if (S == 1) 
+    fprintf(stderr, "stop clock!\n");
+  */
 }
 
 
@@ -1204,23 +1254,26 @@ static void ticks_command(int cmd)
   if (data != 0) /* used at end of some box sequences, but that confuses srate */
     {
       if (Q == 0)
-	highest_tick_per_pass = data;
-      else highest_tick_per_pass = data + 2; 
+	processing_ticks = data;
+      else 
+	{
+	  highest_tick_per_pass = data + 2; /* why isn't this 9? */
 
-      /* it's a 10 bit field, and higher bits are ignored, so the slowest we
-       *   can run is 5010Hz or thereabouts
-       */
+	  /* it's a 10 bit field, and higher bits are ignored, so the slowest we
+	   *   can run is 5010Hz or thereabouts
+	   */
 
-      if (highest_tick_per_pass > 256)
-	highest_tick_per_pass = 256;
+	  if (highest_tick_per_pass > 256)
+	    highest_tick_per_pass = 256;
 
-      srate = (int)(1000000000.0 / (double)(highest_tick_per_pass * 195));
+	  srate = (int)(1000000000.0 / (double)(highest_tick_per_pass * 195));
+	}
     }
 
   if (DESCRIBE_COMMANDS)
     fprintf(stderr, "sam %s: %d (%d Hz)\n", Q_name[Q], data, srate);
 
-  if (data != 0)
+  if ((data != 0) && (srate != 0))
     {
       if ((snd_file) && (samples == 0) && (Q == 1)) /* 2 tick commands at the start? */
 	{
@@ -1265,7 +1318,7 @@ static void ticks_command(int cmd)
 static void gq_command(int cmd)
 {
   /* GQ is 24 bits */
-  int data, E, gen;
+  int data, E, gen, old_DX = 0;
   generator *g;
   char *E_name[2] = {"right adjusted", "left adjusted + DX"};
 
@@ -1278,14 +1331,19 @@ static void gq_command(int cmd)
     g->GQ = TWOS_20(data);
   else 
     {
-      g->GQ = TWOS_24((data << 4) + (DX >> 16));
+      g->GQ = TWOS_24((data << 4) + (DX >> 16)); /* need 24 - 20 bits = 4? */
+      old_DX = DX;
       DX = 0;
     }
 
   g->f_GQ = TWOS_24_TO_DOUBLE(g->GQ);
 
   if (DESCRIBE_COMMANDS)
-    fprintf(stderr, "g%d amp: %s, %d = %d %.4f\n", gen, E_name[E], data, g->GQ, g->f_GQ);
+    {
+      if (E == 0)
+	fprintf(stderr, "g%d amp: %s, %d = %d %.4f\n", gen, E_name[E], data, g->GQ, g->f_GQ);
+      else fprintf(stderr, "g%d amp: %s, %d = %d %.4f (DX: %d)\n", gen, E_name[E], data, g->GQ, g->f_GQ, old_DX);
+    }
 }
 
 
@@ -1301,7 +1359,7 @@ static void gq_command(int cmd)
 static void gj_command(int cmd)
 {
   /* GJ is 28 bits */
-  int data, E, gen;
+  int data, E, gen, old_DX = 0;
   generator *g;
   char *E_name[2] = {"right adjusted", "left adjusted + DX"};
 
@@ -1314,7 +1372,8 @@ static void gj_command(int cmd)
     g->GJ = TWOS_20(data);
   else 
     {
-      g->GJ = TWOS_28((data << 8) + (DX >> 12));
+      g->GJ = TWOS_28((data << 8) + (DX >> 12)); /* need 28 - 20 = 8 bits? */
+      old_DX = DX;
       DX = 0;
     }
 
@@ -1324,7 +1383,7 @@ static void gj_command(int cmd)
     {
       if (E == 0)
 	fprintf(stderr, "g%d freq: %s, %d = %d %.4f (%.4f Hz)\n", gen, E_name[E], data, g->GJ, g->f_GJ, g->f_GJ * 0.5 * srate);
-      else fprintf(stderr, "g%d freq: %s (DX: %d), %d = %d %.4f (%.4f Hz)\n", gen, E_name[E], DX, data, g->GJ, g->f_GJ, g->f_GJ * 0.5 *srate);
+      else fprintf(stderr, "g%d freq: %s (DX: %d), %d = %d %.4f (%.4f Hz)\n", gen, E_name[E], old_DX, data, g->GJ, g->f_GJ, g->f_GJ * 0.5 *srate);
     }
 }
 
@@ -1441,8 +1500,13 @@ static void gl_command(int cmd)
 
   if (L == 0)
     {
-      g->GL = GL; /* this is apparently a 12-bit unsigned fraction */
-      g->f_GL = UNSIGNED_12_TO_DOUBLE(g->GL);
+#if 0
+      g->GL = TWOS_12(GL); /* this is apparently a 12-bit signed?? fraction */
+      /* it's used to offset 2^x which is positive, so surely it can be negative? */
+      g->f_GL = TWOS_12_TO_DOUBLE(GL);
+#endif
+      g->GL = GL;
+      g->f_GL = UNSIGNED_12_TO_DOUBLE(GL);
     }
 
   if (S == 0)
@@ -1617,7 +1681,6 @@ static go_command(int cmd)
 
   g = gens[gen];
   g->GO = TWOS_20(data);
-
   g->f_GO = TWOS_20_TO_DOUBLE(g->GO);
 
   if (DESCRIBE_COMMANDS)
@@ -1649,7 +1712,7 @@ static go_command(int cmd)
 static void mm_command(int cmd)
 {
   /* M0 and M1 are 30 bits */
-  int mod, VV, data;
+  int mod, VV, data, old_DX = 0;
   modifier *m;
 
   mod = LDB(cmd, 7, 0);
@@ -1665,7 +1728,7 @@ static void mm_command(int cmd)
       m->f_M0 = TWOS_20_TO_DOUBLE(data);
       m->o_M0 = m->M0;
       m->o_f_M0 = m->f_M0;
-      m->M0 *= m->mult_scl_0 / 4;
+      m->M0 = m->M0 * m->mult_scl_0 / 4;
       m->f_M0 *= m->mult_scl_0;
       break;
 
@@ -1674,7 +1737,7 @@ static void mm_command(int cmd)
       m->f_M1 = TWOS_20_TO_DOUBLE(data);
       m->o_M1 = m->M1;
       m->o_f_M1 = m->f_M1;
-      m->M1 *= m->mult_scl_1 / 4;
+      m->M1 = m->M1 * m->mult_scl_1 / 4;
       m->f_M1 *= m->mult_scl_1;
       break;
 
@@ -1683,8 +1746,9 @@ static void mm_command(int cmd)
       m->f_M0 = TWOS_30_TO_DOUBLE((data << 10) + (DX >> 10));
       m->o_M0 = m->M0;
       m->o_f_M0 = m->f_M0;
+      old_DX = DX;
       DX = 0;
-      m->M0 *= m->mult_scl_0 / 4;
+      m->M0 = m->M0 * m->mult_scl_0 / 4;
       m->f_M0 *= m->mult_scl_0;
       break;
 
@@ -1693,8 +1757,9 @@ static void mm_command(int cmd)
       m->f_M1 = TWOS_30_TO_DOUBLE((data << 10) + (DX >> 10));
       m->o_M1 = m->M1;
       m->o_f_M1 = m->f_M1;
+      old_DX = DX;
       DX = 0;
-      m->M1 *= m->mult_scl_1 / 4;
+      m->M1 = m->M1 * m->mult_scl_1 / 4;
       m->f_M1 *= m->mult_scl_1;
       break;
     }
@@ -1705,8 +1770,8 @@ static void mm_command(int cmd)
 	{
 	case 0: fprintf(stderr, "m%d M0: %d: %d %.6f\n", mod, data, m->M0, m->f_M0); break;
 	case 1: fprintf(stderr, "m%d M1: %d: %d %.6f\n", mod, data, m->M1, m->f_M1); break;
-	case 2: fprintf(stderr, "m%d M0+DX: %d, DX: %d: %d %.6f\n", mod, data, DX, m->M0, m->f_M0); break;
-	case 3: fprintf(stderr, "m%d M1+DX: %d, DX: %d: %d %.6f\n", mod, data, DX, m->M1, m->f_M1); break;
+	case 2: fprintf(stderr, "m%d M0+DX: %d, DX: %d: %d %.6f\n", mod, data, old_DX, m->M0, m->f_M0); break;
+	case 3: fprintf(stderr, "m%d M1+DX: %d, DX: %d: %d %.6f\n", mod, data, old_DX, m->M1, m->f_M1); break;
 	}
     }
 }
@@ -1926,6 +1991,8 @@ static void mrm_command(int cmd)
 
 static void handle_command(int cmd)
 {
+  /* actually we should take highest_tick - processing_ticks - 8 commands at a time, then run a sample */
+
   int op;
   op = LDB(cmd, 4, 8);
   
@@ -1993,6 +2060,8 @@ static void handle_command(int cmd)
       fprintf(stderr, "impossible command\n"); 
       break;
     }
+
+  current_command++;
 }
 
 
@@ -2050,6 +2119,8 @@ int main(int argc, char **argv)
 		  (command[1] != 0))
 		{
 		  fprintf(stderr, "32\n");
+		  total_commands = bytes / 4;
+		  current_command = 0;
 		  for (i = 0; i < bytes; i += 4)
 		    {
 		      int cmd;
@@ -2065,6 +2136,8 @@ int main(int argc, char **argv)
 	      else
 		{
 		  fprintf(stderr, "36\n");
+		  total_commands = bytes / 5;
+		  current_command = 0;
 		  for (i = 0; i < bytes; i += 5)
 		    {
 		      int cmd;
