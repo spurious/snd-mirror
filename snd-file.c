@@ -7,6 +7,8 @@
 #endif
 
 /* TODO: if ./snd non-existent.snd, error dialog or whatever is flushed before you can read it */
+/* TODO: if auto-update, we sometimes don't see the sample update at the end */
+
 
 
 /* -------------------------------- basic file attributes -------------------------------- */
