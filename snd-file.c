@@ -8,7 +8,8 @@
 
 /* TODO: if ./snd non-existent.snd, error dialog or whatever is flushed before you can read it */
 /* TODO: if auto-update, we sometimes don't see the sample update at the end */
-
+/* TODO: if menu item untoggle graph and multichans separate, need explicit redraw */
+/* TODO: maxamp calc comes from peaks file even if it is out-of-date! -- perhaps not ignored if current is short? */
 
 
 /* -------------------------------- basic file attributes -------------------------------- */
@@ -1468,7 +1469,7 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
       XEN_VARIABLE_SET(snd_opened_sound, C_INT_TO_XEN_SOUND(sp->index));
 #endif
 
-      sp->write_date = file_write_date(sp->filename);
+      sp->write_date = file_write_date(sp->filename); /* redundant (see snd-xsnd.c) */
       sp->need_update = false;
       ss->active_sounds++;
       reflect_file_change_in_title();
@@ -1511,6 +1512,7 @@ snd_info *snd_open_file(const char *filename, read_only_t read_only)
   file_info *hdr;
   snd_info *sp;
   static char *mcf = NULL;
+
   if (mcf) free(mcf);
   mcf = mus_expand_filename(filename);
   if (XEN_HOOKED(open_hook))
@@ -1535,6 +1537,7 @@ snd_info *snd_open_file(const char *filename, read_only_t read_only)
 	    }
 	}
     }
+
   hdr = make_file_info(mcf, read_only, FILE_SELECTED);
   if (!hdr) 
     {

@@ -294,6 +294,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   snd_slot = find_free_sound_slot(nchans); /* expands sound list if needed */
   ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], filename, hdr, snd_slot, read_only);
   sp = ss->sounds[snd_slot];
+  sp->write_date = file_write_date(filename); /* needed early in this process by the peak-env handlers */
   for (i = 0; i < nchans; i++) sp->chans[i] = make_chan_info(sp->chans[i], i, sp);
   add_sound_data(filename, sp, WITHOUT_GRAPH);
   after_open(sp->index);

@@ -1667,6 +1667,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   sp->inuse = SOUND_NORMAL;
   sx = sp->sgx;
   sp->bomb_ctr = 0;
+  sp->write_date = file_write_date(filename); /* needed early in this process by the peak-env handlers */
   make_pixmaps();
 
   if (sx->snd_widgets == NULL)

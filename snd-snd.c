@@ -5436,7 +5436,10 @@ void delete_peak_env_info_file(chan_info *cp)
   fullname = mus_expand_filename(peak_file_name);
 
   if (mus_file_probe(fullname))
-    unlink(fullname);
+    {
+      fprintf(stderr, "remove %s\n", fullname);
+      remove(fullname);
+    }
 
   if (fullname) free(fullname);
   if (peak_file_name) free(peak_file_name);
@@ -5591,9 +5594,12 @@ const char *read_peak_env_info_file(chan_info *cp)
   peak_file_name = mus_format("%s/%s-peaks-%d", peak_env_dir(ss), peak_clean(cp->sound->filename), cp->chan);
   fullname = mus_expand_filename(peak_file_name);
 
-  if ((mus_file_probe(fullname)) &&
-      (file_write_date(fullname) > cp->sound->write_date))
-    cp->edits[0]->peak_env = get_peak_env_info(fullname, &err);
+  if (mus_file_probe(fullname))
+    {
+      if (file_write_date(fullname) > cp->sound->write_date)
+	cp->edits[0]->peak_env = get_peak_env_info(fullname, &err);
+      else remove(fullname);
+    }
 
   if (fullname) free(fullname);
   if (peak_file_name) free(peak_file_name);

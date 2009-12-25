@@ -49,8 +49,8 @@ typedef struct {
 } generator;
 
 typedef struct {
-  int M0, M1, L0, L1, MIN, MRM, MSUM, MMODE, MMMMM, T, mult_scl_1, mult_scl_0; 
-  double f_M0, f_M1, f_L0, f_L1;
+  int M0, M1, L0, L1, MIN, MRM, MSUM, MMODE, MMMMM, T, mult_scl_1, mult_scl_0, o_M0, o_M1; 
+  double f_M0, f_M1, f_L0, f_L1, o_f_M0, o_f_M1;
   /* by "2nd multiplication" I think Pete means M0 since it follows M1 so AA -> M0 and BB -> M1*/
 } modifier;
 
@@ -342,18 +342,12 @@ static void process_gen(int gen)
   if (osc_run(g->GMODE) == 0) /* inactive */
     return;
 
-  /* 5) */
   if (osc_run(Gmode10) == 3)
     {
       fprintf(stderr, "Can't writedata!\n");
       return;
     }
 
-  /*
-  fprintf(stderr, "%d FmSum7: %d, OutSum6: %d, FrqSwp20: %.4f, OscFreq28: %.4f, OscAng20: %.4f, NumCos11: %d, AmpSwp20: %.4f, AmpOff12: %.4f, Gmode10: %d, CurAmp24: %.4f, CosScl4: %d, ShiftOut: %d\n", gen, FmSum7,  OutSum6,  FrqSwp20,  OscFreq28,  OscAng20,  NumCos11,  AmpSwp20,  AmpOff12,  Gmode10,  CurAmp24,  CosScl4,  ShiftOut);
-  */
-
-  /* 1) */
   if ((FmSum7 >> 6) == 0)
     fm = gen_ins[FmSum7 & 0x3f];
   else fm = mod_ins[FmSum7 & 0x3f];
@@ -364,27 +358,19 @@ static void process_gen(int gen)
       return;
     }
 
-  /*
-  fprintf(stderr, "%d fm: %.4f from %s[%d] (%d, %d)\n", gen, fm, (BIT(FmSum7, 6) == 0) ? "gen_ins" : "mod_ins", FmSum7 & 0x3f, g->GFM, BIT(FmSum7, 6));
-  */
-
   FmPhase20 = fm + OscFreq28; 
   
-  /* 2) */
   if (osc_is_running(Gmode10))
     OscFreq28 += (FrqSwp20 / 256.0);     /* right adjusted 20 bit */
   
-  /* 3) */
   if (osc_mode(Gmode10) == 9) /* sin(J+fm) */
     Phase20 = FmPhase20;
   else Phase20 = OscAng20;
   Phase13 = Phase20;             /* >> 7 */
 
-  /* 4) */
   if (osc_is_running(Gmode10))
     OscAng20 += FmPhase20;
   
-  /* 6) and 7) */
   if ((osc_mode(Gmode10) != SIN_K) && 
       (osc_mode(Gmode10) != SIN_FM))
     {
@@ -398,10 +384,8 @@ static void process_gen(int gen)
       temp = sin(M_PI * SinAdr);
     }
 
-  /* 8) */
   TblOut13 = temp / (double)(1 << CosScl4);
 
-  /* 9) */
   switch (osc_mode(Gmode10))
     {
     case SUMCOS: case SIN_K: case SIN_FM:
@@ -428,10 +412,8 @@ static void process_gen(int gen)
       break;
     }
 
-  /* 10) */
   CurAmp12 = CurAmp24;
   
-  /* 11) */
   if (env_is_running(Gmode10))
     {
       double old_amp;
@@ -484,35 +466,23 @@ static void process_gen(int gen)
 	}
     }
 
-  /* 12) */
   if ((osc_env(Gmode10) == L_PLUS_2_TO_MINUS_Q) || 
       (osc_env(Gmode10) == L_MINUS_2_TO_MINUS_Q))
-    {
-      /*
-      fprintf(stderr, "expt env ");
-      */
-      NewAmp12 = pow(2.0, -CurAmp12);
-    }
+    NewAmp12 = pow(2.0, -CurAmp12);
   else NewAmp12 = CurAmp12;
   /* in the notes: The scaling involved is a left shift of temp6 by 4 bits.
    */
 
-  /* 13) */
   if ((osc_env(Gmode10) == L_PLUS_Q) || 
       (osc_env(Gmode10) == L_PLUS_2_TO_MINUS_Q))  
     Env12 = AmpOff12 + NewAmp12;
   else Env12 = AmpOff12 - NewAmp12;
 
-  /*
-  fprintf(stderr, "NewAmp12: %.4f, Env12: %.4f, OscOut13: %.4f\n", NewAmp12, Env12, OscOut13);
-  */
-
-  /* 14) */
   OscOut13 *= Env12;
   if (adding_to_sum(Gmode10))
     {
       if (osc_run(Gmode10) != 7)
-	gen_outs[OutSum6] += OscOut13;
+	gen_outs[OutSum6] += OscOut13; /* what is the scaling here? 25 -> 19 according to specs, I think */
       else fprintf(stderr, "read data?!?\n");
     }
 
@@ -1080,7 +1050,7 @@ static void misc_command(int cmd)
   S = BIT(cmd, 0);
 
   if (DESCRIBE_COMMANDS)
-    fprintf(stderr, "MISC data: %d, %s%s%s%s\n", 
+    fprintf(stderr, "sam: %d, %s%s%s%s\n", 
 	    data, 
 	    RR_name[RR], 
 	    (W == 1) ? "" : ", clear waits",
@@ -1089,10 +1059,12 @@ static void misc_command(int cmd)
 
   if (RR == 1) DX = data;
 
+#if 0
   /* TODO: implement these bits */
   if (W == 1) fprintf(stderr, "clear all wait bits\n");
   if (P == 1) fprintf(stderr, "clear all pause bits\n");
   if (S == 1) fprintf(stderr, "stop clock!\n");
+#endif
 }
 
 
@@ -1139,14 +1111,14 @@ static void dly_command(int cmd)
 
   if (DESCRIBE_COMMANDS)
     {
-      fprintf(stderr, "DLY: d%d, %s", unit, UU_name[UU]);
+      fprintf(stderr, "d%d %s", unit, UU_name[UU]);
       if (UU == 0)
-	fprintf(stderr, ", X: %d", d->X);
+	fprintf(stderr, ": X: %d", d->X);
       else
 	{
 	  if (UU == 1)
-	    fprintf(stderr, ", Y: %d", d->Y);
-	  else fprintf(stderr, ", Z: %d, P: %d", d->Z, d->P);
+	    fprintf(stderr, ": Y: %d", d->Y);
+	  else fprintf(stderr, ": Z: %d, P: %d", d->Z, d->P);
 	}
       fprintf(stderr, "\n");
     }
@@ -1176,7 +1148,7 @@ static void timer_command(int cmd)
   data = LDB(cmd, 20, 12);
 
   if (DESCRIBE_COMMANDS)
-    fprintf(stderr, "TIMER: %s, data: %d\n", TT_name[TT], data);
+    fprintf(stderr, "sam %s: %d\n", TT_name[TT], data);
 
   switch (TT)
     {
@@ -1246,7 +1218,7 @@ static void ticks_command(int cmd)
     }
 
   if (DESCRIBE_COMMANDS)
-    fprintf(stderr, "TICKS: %s, data: %d (%d Hz)\n", Q_name[Q], data, srate);
+    fprintf(stderr, "sam %s: %d (%d Hz)\n", Q_name[Q], data, srate);
 
   if (data != 0)
     {
@@ -1313,7 +1285,7 @@ static void gq_command(int cmd)
   g->f_GQ = TWOS_24_TO_DOUBLE(g->GQ);
 
   if (DESCRIBE_COMMANDS)
-    fprintf(stderr, "GQ (amp): g%d, %s, data: %d = %d %.4f\n", gen, E_name[E], data, g->GQ, g->f_GQ);
+    fprintf(stderr, "g%d amp: %s, %d = %d %.4f\n", gen, E_name[E], data, g->GQ, g->f_GQ);
 }
 
 
@@ -1351,8 +1323,8 @@ static void gj_command(int cmd)
   if (DESCRIBE_COMMANDS)
     {
       if (E == 0)
-	fprintf(stderr, "GJ (freq): g%d, %s, data: %d = %d %.4f (%.4f Hz)\n", gen, E_name[E], data, g->GJ, g->f_GJ, g->f_GJ * 0.5 * srate);
-      else fprintf(stderr, "GJ (freq): g%d, %s %d, data: %d = %d %.4f (%.4f Hz)\n", gen, E_name[E], DX, data, g->GJ, g->f_GJ, g->f_GJ * 0.5 *srate);
+	fprintf(stderr, "g%d freq: %s, %d = %d %.4f (%.4f Hz)\n", gen, E_name[E], data, g->GJ, g->f_GJ, g->f_GJ * 0.5 * srate);
+      else fprintf(stderr, "g%d freq: %s (DX: %d), %d = %d %.4f (%.4f Hz)\n", gen, E_name[E], DX, data, g->GJ, g->f_GJ, g->f_GJ * 0.5 *srate);
     }
 }
 
@@ -1378,7 +1350,7 @@ static gp_command(int cmd)
   g->f_GP = TWOS_20_TO_DOUBLE(g->GP);
 
   if (DESCRIBE_COMMANDS)
-    fprintf(stderr, "GP (amp decay): g%d, data: %d = %d %.4f\n", gen, data, g->GP, g->f_GP);
+    fprintf(stderr, "g%d amp change: %d = %d %.4f\n", gen, data, g->GP, g->f_GP);
 }
 
 
@@ -1415,14 +1387,14 @@ static void gn_command(int cmd)
       if (N == 1)
 	{
 	  if (M == 1)
-	    fprintf(stderr, "GS (sum memory shift): g%d%s\n", gen, SS_name[SS]);
-	  else fprintf(stderr, "GM (ncos scale): g%d, GM: %d%s\n", gen, GM, SS_name[SS]);
+	    fprintf(stderr, "g%d sum-memory shift:%s\n", gen, SS_name[SS]);
+	  else fprintf(stderr, "g%d ncos scale: %d%s\n", gen, GM, SS_name[SS]);
 	}
       else
 	{
 	  if (M == 1)
-	    fprintf(stderr, "GN(ncos): g%d, GN: %d%s\n", gen, GN, SS_name[SS]);
-	  else fprintf(stderr, "GM/N (ncos n and scale): g%d, GN: %d, GM: %d%s\n", gen, GN, GM, SS_name[SS]);
+	    fprintf(stderr, "g%d ncos: %d%s\n", gen, GN, SS_name[SS]);
+	  else fprintf(stderr, "g%d ncos+scale: %d, %d%s\n", gen, GN, GM, SS_name[SS]);
 	}
     }
 
@@ -1481,14 +1453,14 @@ static void gl_command(int cmd)
       if (L == 1)
 	{
 	  if (S == 1)
-	    fprintf(stderr, "GL/SUM g%d: noop\n", gen);
-	  else fprintf(stderr, "GSUM (output loc): g%d, GSUM: %d\n", gen, g->GSUM);
+	    fprintf(stderr, "g%d: noop\n", gen);
+	  else fprintf(stderr, "g%d outloc: %d\n", gen, g->GSUM);
 	}
       else
 	{
 	  if (S == 0)
-	    fprintf(stderr, "GL(amp offset): g%d, GL: %d = %.4f\n", gen, g->GL, g->f_GL);
-	  else fprintf(stderr, "GL/SUM (amp offset and output loc): g%d, GSUM: %d, GL: %d = %.4f\n", gen, g->GSUM, g->GL, g->f_GL);
+	    fprintf(stderr, "g%d amp offset: %d = %.4f\n", gen, g->GL, g->f_GL);
+	  else fprintf(stderr, "g%d outloc + amp offset:  %d, %d = %.4f\n", gen, g->GSUM, g->GL, g->f_GL);
 	}
     }
 }
@@ -1515,7 +1487,7 @@ static gk_command(int cmd)
   g->f_GK = TWOS_20_TO_DOUBLE(g->GK);
 
   if (DESCRIBE_COMMANDS)
-    fprintf(stderr, "GK (phase): g%d, data: %d = %d %.4f\n", gen, data, g->GK, g->f_GK);
+    fprintf(stderr, "g%d phase: %d = %d %.4f\n", gen, data, g->GK, g->f_GK);
 }
 
 
@@ -1539,8 +1511,6 @@ static char *print_GMODE_name(mode)
   R = osc_run(mode);
   E = osc_env(mode);
   S = osc_mode(mode);
-
-  fprintf(stderr, ", GMODE: ");
 
   if (R == 0)
     {
@@ -1612,19 +1582,19 @@ static gmode_command(int cmd)
 
   if (DESCRIBE_COMMANDS)
     {
-      fprintf(stderr, "%s%s%s%s%s: g%d",
-	      (M == 0) ? "GMODE" : "",
+      fprintf(stderr, "g%d %s%s%s%s%s:", 
+	      gen,
+	      (M == 0) ? "mode" : "",
 	      ((M == 0) && ((F == 0) || (C == 1))) ? "/" : "",
-	      (F == 0) ? "GFM" : "",
+	      (F == 0) ? "inloc" : "",
 	      ((F == 0) && (C == 1)) ? "/" : "",
-	      (C == 1) ? "GK" : "",
-	      gen);
+	      (C == 1) ? "phase" : "");
       if (M == 0)
 	print_GMODE_name(g->GMODE);
       if (F == 0)
-	fprintf(stderr, ", GFM(input loc): %s[%d]", ((g->GFM >> 6) == 0) ? "gen-ins" : "mod-ins", g->GFM & 0x3f);
+	fprintf(stderr, ", inloc: %s[%d]", ((g->GFM >> 6) == 0) ? "gen-ins" : "mod-ins", g->GFM & 0x3f);
       if (C == 1)
-	fprintf(stderr, ", clear GK(phase)");
+	fprintf(stderr, ", clear phase");
       fprintf(stderr, "\n");
     }
 }
@@ -1653,8 +1623,8 @@ static go_command(int cmd)
   if (DESCRIBE_COMMANDS)
     {
       if (osc_run(g->GMODE) == 2)
-	fprintf(stderr, "GO (DAC out): g%d, data: %d\n", gen, data);
-      else fprintf(stderr, "GO (freq sweep): g%d, data: %d = %d %.4f (%.4f Hz)\n", gen, data, g->GO, g->f_GO, g->f_GO * 0.5 * srate / 256.0);
+	fprintf(stderr, "g%d DAC out: %d\n", gen, data);
+      else fprintf(stderr, "g%d freq change: %d = %d %.4f (%.4f Hz)\n", gen, data, g->GO, g->f_GO, g->f_GO * 0.5 * srate / 256.0);
     }
 }
 
@@ -1669,6 +1639,11 @@ static go_command(int cmd)
  *	    01  M1 right-adjusted, sign extended
  *	    10  M0 left-adjusted, low bits from left of DX; clear DX
  *	    11  M1 left-adjusted, low bits from left of DX; clear DX
+ */
+
+/* To avoid endless repetition in the modifier processing, I'll incorporate the scalers
+ *   into M0 and M1 when they are set, or when the scalers are changed, but this means
+ *   (for simplicity) keeping track of the oiginal M0 and M1 values "o_M0" and friends)
  */
 
 static void mm_command(int cmd)
@@ -1688,6 +1663,8 @@ static void mm_command(int cmd)
     case 0:
       m->M0 = TWOS_20(data);
       m->f_M0 = TWOS_20_TO_DOUBLE(data);
+      m->o_M0 = m->M0;
+      m->o_f_M0 = m->f_M0;
       m->M0 *= m->mult_scl_0 / 4;
       m->f_M0 *= m->mult_scl_0;
       break;
@@ -1695,6 +1672,8 @@ static void mm_command(int cmd)
     case 1:
       m->M1 = TWOS_20(data);
       m->f_M1 = TWOS_20_TO_DOUBLE(data);
+      m->o_M1 = m->M1;
+      m->o_f_M1 = m->f_M1;
       m->M1 *= m->mult_scl_1 / 4;
       m->f_M1 *= m->mult_scl_1;
       break;
@@ -1702,6 +1681,8 @@ static void mm_command(int cmd)
     case 2:
       m->M0 = (data << 10) + (DX >> 10);
       m->f_M0 = TWOS_30_TO_DOUBLE((data << 10) + (DX >> 10));
+      m->o_M0 = m->M0;
+      m->o_f_M0 = m->f_M0;
       DX = 0;
       m->M0 *= m->mult_scl_0 / 4;
       m->f_M0 *= m->mult_scl_0;
@@ -1710,6 +1691,8 @@ static void mm_command(int cmd)
     case 3:
       m->M1 = (data << 10) + (DX >> 10);
       m->f_M1 = TWOS_30_TO_DOUBLE((data << 10) + (DX >> 10));
+      m->o_M1 = m->M1;
+      m->o_f_M1 = m->f_M1;
       DX = 0;
       m->M1 *= m->mult_scl_1 / 4;
       m->f_M1 *= m->mult_scl_1;
@@ -1720,10 +1703,10 @@ static void mm_command(int cmd)
     {
       switch (VV)
 	{
-	case 0: fprintf(stderr, "M-M0: m%d, data: %d: %d %.6f\n", mod, data, m->M0, m->f_M0); break;
-	case 1: fprintf(stderr, "M-M1: m%d, data: %d: %d %.6f\n", mod, data, m->M1, m->f_M1); break;
-	case 2: fprintf(stderr, "M-M0+DX: m%d, data: %d, DX: %d: %d %.6f\n", mod, data, DX, m->M0, m->f_M0); break;
-	case 3: fprintf(stderr, "M-M1+DX: m%d, data: %d, DX: %d: %d %.6f\n", mod, data, DX, m->M1, m->f_M1); break;
+	case 0: fprintf(stderr, "m%d M0: %d: %d %.6f\n", mod, data, m->M0, m->f_M0); break;
+	case 1: fprintf(stderr, "m%d M1: %d: %d %.6f\n", mod, data, m->M1, m->f_M1); break;
+	case 2: fprintf(stderr, "m%d M0+DX: %d, DX: %d: %d %.6f\n", mod, data, DX, m->M0, m->f_M0); break;
+	case 3: fprintf(stderr, "m%d M1+DX: %d, DX: %d: %d %.6f\n", mod, data, DX, m->M1, m->f_M1); break;
 	}
     }
 }
@@ -1763,8 +1746,8 @@ static void ml_command(int cmd)
   if (DESCRIBE_COMMANDS)
     {
       if (N == 0)
-	fprintf(stderr, "M-L0: m%d, data: %d: %d %.6f\n", mod, data, m->L0, m->f_L0);
-      else fprintf(stderr, "M-L1: m%d, data: %d: %d %.6f\n", mod, data, m->L1, m->f_L1);
+	fprintf(stderr, "m%d L0: %d: %d %.6f\n", mod, data, m->L0, m->f_L0);
+      else fprintf(stderr, "m%d L1: %d: %d %.6f\n", mod, data, m->L1, m->f_L1);
     }
 }
 
@@ -1843,10 +1826,10 @@ static void mmode_command(int cmd)
       m->mult_scl_0 = (1 << ((MMODE >> 2) & 0x3));
       /* whenever M0/M1 are set, we will include these factors */
 
-      m->M0 *= m->mult_scl_0 / 4;
-      m->M1 *= m->mult_scl_1 / 4;
-      m->f_M0 *= m->mult_scl_0;
-      m->f_M1 *= m->mult_scl_1;
+      m->M0 = m->o_M0 * m->mult_scl_0 / 4;
+      m->M1 = m->o_M1 * m->mult_scl_1 / 4;
+      m->f_M0 = m->o_f_M0 * m->mult_scl_0;
+      m->f_M1 = m->o_f_M1 * m->mult_scl_1;
 
       if (M == 0)
 	m->MMODE = MMODE;                                  /* set both */
@@ -1860,13 +1843,13 @@ static void mmode_command(int cmd)
 
   if (DESCRIBE_COMMANDS)
     {
-      fprintf(stderr, "MMODE: m%d", mod);
+      fprintf(stderr, "m%d mode:", mod);
       if (M == 0)
 	fprintf(stderr, ", %s", mode_name(MMODE >> 4));
       if (H == 0)
 	fprintf(stderr, ", AA: %d, BB: %d", (MMODE >> 2) & 0x3, MMODE & 0x3);
       if (S == 0)
-	fprintf(stderr, ", MSUM(%s): %d", ((MSUM >> 6) == 0) ? "+" : "=", MSUM & 0x3f);
+	fprintf(stderr, ", outloc(%s): %d", ((MSUM >> 6) == 0) ? "+" : "=", MSUM & 0x3f);
       if (C == 1)
 	fprintf(stderr, ", L0=0");
       fprintf(stderr, "\n");
@@ -1922,7 +1905,7 @@ static void mrm_command(int cmd)
 
   if (DESCRIBE_COMMANDS)
     {
-      fprintf(stderr, "MRM: m%d", mod);
+      fprintf(stderr, "m%d inlocs:", mod);
       if (R == 0)
 	{
 	  fprintf(stderr, ", MRM: ");
@@ -2091,7 +2074,7 @@ int main(int argc, char **argv)
 		      b3 = command[i + 2];
 		      b4 = command[i + 3];
 		      b5 = command[i + 4];
-		      cmd = (b5 & 0xff) + (b4 << 4) + (b3 << 12) + (b2 << 20) + ((b1 & 0xff) << 28);
+		      cmd = ((b5 >> 4) & 0xff) + (b4 << 4) + (b3 << 12) + (b2 << 20) + ((b1 & 0xff) << 28);
 		      handle_command(cmd);
 		    }
 		}
