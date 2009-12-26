@@ -14,13 +14,9 @@
 #include <stdbool.h>
 #include <math.h>
 
-#include <byteswap.h>
-#define big_endian_int(n) bswap_32(n)
-
 #define DESCRIBE_COMMANDS false
 #define OUTPUT_FILENAME "test.wav"
 #define TOTAL_SAMPLES -1
-
 
 #define LDB(Cmd, Size, Position) ((Cmd >> Position) & ((1 << Size) - 1))
 #define BIT(Cmd, Position) ((Cmd >> Position) & 1)
@@ -55,7 +51,7 @@ typedef struct {
 typedef struct {
   int M0, M1, L0, L1, MIN, MRM, MSUM, MMODE, MMMMM, T, mult_scl_1, mult_scl_0, o_M0, o_M1; 
   double f_M0, f_M1, f_L0, f_L1, o_f_M0, o_f_M1;
-  /* by "2nd multiplication" I think Pete means M0 since it follows M1 so AA -> M0 and BB -> M1*/
+  /* by "2nd multiplication" I think Pete means M0 since it follows M1 so AA -> M0 and BB -> M1 */
 } modifier;
 
 typedef struct {
@@ -134,10 +130,6 @@ static void all_done(void)
 static void dac_write(double data, int chan)
 {
   /* during a given pass we accumulate output to the dac */
-
-  /*
-  fprintf(stderr, "dac_write(%.4f, %d)\n", data, chan);
-  */
   dac_out[chan] += (float)(data / 4.0); /* what is the correct scaling here? */
 }
 
@@ -985,7 +977,7 @@ static void process_dly(int dly)
 static void linger(int time)
 {
   /* process each sample ("pass") until pass == time */
-  /*   but linger was a 20-bit number, so it wrapped around I believe, so if pass should be mod 2^20? */
+  /*   but linger was a 20-bit number, so it wrapped around I believe, so pass should be mod 2^20? */
   
   if (!snd_file)
     {
@@ -995,10 +987,6 @@ static void linger(int time)
 
   if (time < pass)
     pass = pass - (1 << 20);
-
-  /* TODO: another problem: we used to put infinite lingers at the end to avoid the box-turns-off click.
-   *   I need to catch those and ignore them in this context
-   */
 
   if (((total_commands - current_command) < 100) && 
       (total_commands > 1000) &&

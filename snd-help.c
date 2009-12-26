@@ -497,6 +497,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+26-Dec:  tools/sam.c.\n\
 21-Dec:  moved focus-follows-mouse to C as with-pointer-focus.\n\
          removed def-optkey-fun and def-optkey-instrument (use define* and definstrument).\n\
 16-Dec:  make-current-window-display (draw.scm) moved to C as with-inset-graph.\n\
@@ -505,7 +506,6 @@ void about_snd_help(void)
            peak-env-info, read-peak-env-info-file, and write-peak-env-info-file.\n\
 11-Dec:  removed midi.c, sndrecord.c, SGI support, mus-audio-mixer-*, and Alsa < 1.0 support.\n\
 4-Dec:   portaudio support.\n\
-1-Dec:   removed --with-modules configuration switch.\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",

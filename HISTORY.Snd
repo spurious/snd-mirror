@@ -2,6 +2,7 @@ Snd change log
 
 2010 ----------------------------------------------------------------
 
+ 26-Dec:    tools/sam.c.
  21-Dec:    moved focus-follows-mouse to C as with-pointer-focus.
  	    removed def-optkey-fun and def-optkey-instrument (use define* and definstrument).
  16-Dec:    make-current-window-display (draw.scm) moved to C as with-inset-graph.

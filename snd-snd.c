@@ -5436,10 +5436,7 @@ void delete_peak_env_info_file(chan_info *cp)
   fullname = mus_expand_filename(peak_file_name);
 
   if (mus_file_probe(fullname))
-    {
-      fprintf(stderr, "remove %s\n", fullname);
-      remove(fullname);
-    }
+    remove(fullname);
 
   if (fullname) free(fullname);
   if (peak_file_name) free(peak_file_name);
