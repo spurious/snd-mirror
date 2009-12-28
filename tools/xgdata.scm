@@ -7116,3 +7116,12 @@
 (CFNC-2190 "guint gtk_tool_item_group_get_n_items GtkToolItemGroup* group")
 (CFNC-2190 "GtkToolItem* gtk_tool_item_group_get_nth_item GtkToolItemGroup* group guint index")
 (CFNC-2190 "GtkToolItem* gtk_tool_item_group_get_drop_item GtkToolItemGroup* group gint x gint y")
+
+;;; 2.19.2
+;; (CFNC-2190 "gboolean gdk_keymap_map_virtual_modifiers GdkKeymap* keymap GdkModifierType *state")
+;;  there is no code for this!
+(CFNC-2190 "gint gdk_screen_get_primary_monitor GdkScreen* screen")
+(CFNC-2190 "void gtk_window_set_mnemonics_visible GtkWindow* window gboolean setting")
+(CFNC-2190 "gboolean gtk_window_get_mnemonics_visible GtkWindow* window")
+
+

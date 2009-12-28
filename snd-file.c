@@ -9,7 +9,8 @@
 /* TODO: if ./snd non-existent.snd, error dialog or whatever is flushed before you can read it */
 /* TODO: if auto-update, we sometimes don't see the sample update at the end */
 /* TODO: if menu item untoggle graph and multichans separate, need explicit redraw */
-/* TODO: maxamp calc comes from peaks file even if it is out-of-date! -- perhaps not ignored if current is short? */
+/* TODO: if play from mark, stereo sync'd, only one chan played */
+/* TODO: scale-to seems to get confused if there are several non-0 syncs, and we want to ignore all but one */
 
 
 /* -------------------------------- basic file attributes -------------------------------- */

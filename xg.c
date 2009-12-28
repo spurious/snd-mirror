@@ -37,11 +37,11 @@
  *    (c-array->list arr len) derefs each member of arr, returning lisp list, len=#f: null terminated array
  *    (list->c-array lst ctype) packages each member of list as c-type "type" returning (wrapped) c array
  *    (make-target-entry lst) returns a GtkTargetEntry table, each member of 'lst' should be (list target flags info)
- *    (GdkColor :optional pixel red green blue): GdkColor struct
- *    (GdkCursor :optional type ref_count): GdkCursor struct
- *    (GdkPoint :optional x y): GdkPoint struct
- *    (GdkRectangle :optional x y width height): GdkRectangle struct
- *    (GtkRequisition :optional width height): GtkRequisition struct
+ *    (GdkColor pixel red green blue): GdkColor struct
+ *    (GdkCursor type ref_count): GdkCursor struct
+ *    (GdkPoint x y): GdkPoint struct
+ *    (GdkRectangle x y width height): GdkRectangle struct
+ *    (GtkRequisition width height): GtkRequisition struct
  *    (GtkStockItem): GtkStockItem struct
  *    (GtkTextIter): GtkTextIter struct
  *    (GtkTreeIter): GtkTreeIter struct
@@ -32342,6 +32342,30 @@ gint x, gint y)"
   return(C_TO_XEN_GtkToolItem_(gtk_tool_item_group_get_drop_item(XEN_TO_C_GtkToolItemGroup_(group), XEN_TO_C_gint(x), XEN_TO_C_gint(y))));
 }
 
+static XEN gxg_gdk_screen_get_primary_monitor(XEN screen)
+{
+  #define H_gdk_screen_get_primary_monitor "gint gdk_screen_get_primary_monitor(GdkScreen* screen)"
+  XEN_ASSERT_TYPE(XEN_GdkScreen__P(screen), screen, 1, "gdk_screen_get_primary_monitor", "GdkScreen*");
+  return(C_TO_XEN_gint(gdk_screen_get_primary_monitor(XEN_TO_C_GdkScreen_(screen))));
+}
+
+static XEN gxg_gtk_window_set_mnemonics_visible(XEN window, XEN setting)
+{
+  #define H_gtk_window_set_mnemonics_visible "void gtk_window_set_mnemonics_visible(GtkWindow* window, \
+gboolean setting)"
+  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 1, "gtk_window_set_mnemonics_visible", "GtkWindow*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(setting), setting, 2, "gtk_window_set_mnemonics_visible", "gboolean");
+  gtk_window_set_mnemonics_visible(XEN_TO_C_GtkWindow_(window), XEN_TO_C_gboolean(setting));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_window_get_mnemonics_visible(XEN window)
+{
+  #define H_gtk_window_get_mnemonics_visible "gboolean gtk_window_get_mnemonics_visible(GtkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 1, "gtk_window_get_mnemonics_visible", "GtkWindow*");
+  return(C_TO_XEN_gboolean(gtk_window_get_mnemonics_visible(XEN_TO_C_GtkWindow_(window))));
+}
+
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -38743,6 +38767,9 @@ XEN_NARGIFY_2(gxg_gtk_tool_item_group_get_item_position_w, gxg_gtk_tool_item_gro
 XEN_NARGIFY_1(gxg_gtk_tool_item_group_get_n_items_w, gxg_gtk_tool_item_group_get_n_items)
 XEN_NARGIFY_2(gxg_gtk_tool_item_group_get_nth_item_w, gxg_gtk_tool_item_group_get_nth_item)
 XEN_NARGIFY_3(gxg_gtk_tool_item_group_get_drop_item_w, gxg_gtk_tool_item_group_get_drop_item)
+XEN_NARGIFY_1(gxg_gdk_screen_get_primary_monitor_w, gxg_gdk_screen_get_primary_monitor)
+XEN_NARGIFY_2(gxg_gtk_window_set_mnemonics_visible_w, gxg_gtk_window_set_mnemonics_visible)
+XEN_NARGIFY_1(gxg_gtk_window_get_mnemonics_visible_w, gxg_gtk_window_get_mnemonics_visible)
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -42769,6 +42796,9 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_tool_item_group_get_n_items_w gxg_gtk_tool_item_group_get_n_items
 #define gxg_gtk_tool_item_group_get_nth_item_w gxg_gtk_tool_item_group_get_nth_item
 #define gxg_gtk_tool_item_group_get_drop_item_w gxg_gtk_tool_item_group_get_drop_item
+#define gxg_gdk_screen_get_primary_monitor_w gxg_gdk_screen_get_primary_monitor
+#define gxg_gtk_window_set_mnemonics_visible_w gxg_gtk_window_set_mnemonics_visible
+#define gxg_gtk_window_get_mnemonics_visible_w gxg_gtk_window_get_mnemonics_visible
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -46802,6 +46832,9 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_tool_item_group_get_n_items, gxg_gtk_tool_item_group_get_n_items_w, 1, 0, 0, H_gtk_tool_item_group_get_n_items);
   XG_DEFINE_PROCEDURE(gtk_tool_item_group_get_nth_item, gxg_gtk_tool_item_group_get_nth_item_w, 2, 0, 0, H_gtk_tool_item_group_get_nth_item);
   XG_DEFINE_PROCEDURE(gtk_tool_item_group_get_drop_item, gxg_gtk_tool_item_group_get_drop_item_w, 3, 0, 0, H_gtk_tool_item_group_get_drop_item);
+  XG_DEFINE_PROCEDURE(gdk_screen_get_primary_monitor, gxg_gdk_screen_get_primary_monitor_w, 1, 0, 0, H_gdk_screen_get_primary_monitor);
+  XG_DEFINE_PROCEDURE(gtk_window_set_mnemonics_visible, gxg_gtk_window_set_mnemonics_visible_w, 2, 0, 0, H_gtk_window_set_mnemonics_visible);
+  XG_DEFINE_PROCEDURE(gtk_window_get_mnemonics_visible, gxg_gtk_window_get_mnemonics_visible_w, 1, 0, 0, H_gtk_window_get_mnemonics_visible);
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -49366,7 +49399,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("17-Dec-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("26-Dec-09"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
