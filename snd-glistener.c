@@ -233,8 +233,7 @@ void listener_append_and_prompt(const char *msg)
 
 static void listener_return_callback(void)
 {
-  if (!(ss->error_lock))
-    listener_return(listener_text, printout_end);
+  listener_return(listener_text, printout_end);
 }
 
 

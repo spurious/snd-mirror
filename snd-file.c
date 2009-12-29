@@ -11,6 +11,8 @@
 /* TODO: if menu item untoggle graph and multichans separate, need explicit redraw */
 /* TODO: if play from mark, stereo sync'd, only one chan played */
 /* TODO: scale-to seems to get confused if there are several non-0 syncs, and we want to ignore all but one */
+/* TODO: :(play :channel 2 :start (cursor)) -> ;mus-error ("play" "redundant or invalid key found" :start) */
+/* TODO: and (play :channel 2) doesn't play but does seem to clobber the DAC */
 
 
 /* -------------------------------- basic file attributes -------------------------------- */

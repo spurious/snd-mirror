@@ -24,7 +24,8 @@
 #define FLUSH_BAD_COMMANDS false
 
 static bool describe_commands = DEFAULT_DESCRIBE_COMMANDS;
-static int start_describing = 0, stop_describing = 100000;
+static int start_describing = -1, stop_describing = -1;
+static int dump_patch_at = -1;
 
 
 #define LDB(Cmd, Size, Position) ((Cmd >> Position) & ((1 << Size) - 1))
@@ -68,16 +69,23 @@ typedef struct {
 
 typedef struct {
   int P, Z, Y, X, I; /* "I" = table lookup index received from modifier */
-  double X0, X1; /* the extra delays */
 } delay;
 
-static double gen_outs[64], gen_ins[64], mod_outs[64], mod_ins[64]; /* "sum memory" */
+#define SUM_MEMORY_SIZE 64
+static double gen_outs[SUM_MEMORY_SIZE], gen_ins[SUM_MEMORY_SIZE], mod_outs[SUM_MEMORY_SIZE], mod_ins[SUM_MEMORY_SIZE]; /* "sum memory" */
+static double prev_gen_ins[SUM_MEMORY_SIZE], prev_mod_ins[SUM_MEMORY_SIZE]; /* some debugging info */
+static double peak_gen_ins[SUM_MEMORY_SIZE], peak_mod_ins[SUM_MEMORY_SIZE];
 
-static generator *gens[256];
-static modifier *mods[128];
-static delay *dlys[32];
+#define GENERATORS 256
+#define MODIFIERS 128
+#define DELAYS 32
 
-static double delay_memory[65536];
+static generator *gens[GENERATORS];
+static modifier *mods[MODIFIERS];
+static delay *dlys[DELAYS];
+
+#define DELAY_MEMORY_SIZE 65536
+static double delay_memory[DELAY_MEMORY_SIZE];
 static float dac_out[4];
 
 static int tick, pass, DX, processing_ticks, highest_tick_per_pass, samples = 0, srate = 1, total_commands = 0, current_command = 0;
@@ -85,62 +93,36 @@ static int tick, pass, DX, processing_ticks, highest_tick_per_pass, samples = 0,
 FILE *snd_file = NULL; /* for now just riff/wave quad, but srate depends on tick setting */
 
 
-static void dump_gens(void)
-{
-  int i;
-  for (i = 0; i < 256; i++)
-    if (gens[i]->GMODE != 0)
-      fprintf(stderr, "g%d GMODE: %d, %d [%.3f] -> %d [%.3f], GQ: %.3f, GP: %.3f, GL: %.3f, GJ: %.3f, GO: %.3f, GN: %d, GS: %d\n",
-	      i, 
-	      gens[i]->GMODE, 
-	      gens[i]->GFM, ((gens[i]->GFM >> 6) == 0) ? gen_ins[gens[i]->GFM & 0x3f] : mod_ins[gens[i]->GFM & 0x3f],
-	      gens[i]->GSUM, gen_outs[gens[i]->GSUM],
-	      gens[i]->f_GQ, gens[i]->f_GP, gens[i]->f_GL, gens[i]->f_GJ, gens[i]->f_GO, 
-	      gens[i]->GN, gens[i]->GS);
-}
-
-
-static double mod_read(int addr);
-static void dump_mods(void)
-{
-  int i;
-  for (i = 0; i < 128; i++)
-    if (mods[i]->MMODE != 0)
-      fprintf(stderr, "m%d MMODE: %d, (%d [%.3f] %d [%.3f]) -> %d [%.3f], M0: %.3f, M1: %.3f, L0: %.3f, L1: %.3f\n",
-	      i,
-	      mods[i]->MMODE,
-	      mods[i]->MIN, mod_read(mods[i]->MIN),
-	      mods[i]->MRM, mod_read(mods[i]->MRM),
-	      mods[i]->MSUM, mod_outs[mods[i]->MSUM],
-	      mods[i]->f_M0, mods[i]->f_M1, mods[i]->f_L0, mods[i]->f_L1);
-}
-
-
 static void start_clean(void)
 {
   int i;
-  for (i = 0; i < 256; i++)
+  for (i = 0; i < SUM_MEMORY_SIZE; i++)
     {
       gen_outs[i] = 0.0; /* "outs" are this pass */
       gen_ins[i] = 0.0;  /* "ins" are last pass */
       mod_outs[i] = 0.0;
       mod_ins[i] = 0.0;
+
+      prev_mod_ins[i] = 0.0;
+      prev_gen_ins[i] = 0.0;
+      peak_mod_ins[i] = 0.0;
+      peak_gen_ins[i] = 0.0;
     }
 
-  for (i = 0; i < 256; i++)
+  for (i = 0; i < GENERATORS; i++)
     gens[i] = (generator *)calloc(1, sizeof(generator));
 
-  for (i = 0; i < 128; i++)
+  for (i = 0; i < MODIFIERS; i++)
     {
       mods[i] = (modifier *)calloc(1, sizeof(modifier));
       mods[i]->mult_scl_1 = 1;
       mods[i]->mult_scl_0 = 1;
     }
 
-  for (i = 0; i < 32; i++)
+  for (i = 0; i < DELAYS; i++)
     dlys[i] = (delay *)calloc(1, sizeof(delay));
 
-  for (i = 0; i < 65536; i++)
+  for (i = 0; i < DELAY_MEMORY_SIZE; i++)
     delay_memory[i] = 0.0;
 
   for (i = 0; i < 4; i++)
@@ -313,7 +295,7 @@ EE: 00  L - Q
 static void set_osc_run(int gen, int RRRR)
 {
   generator *g;
-  if (gen >= 256) {fprintf(stderr, "gen mode set overflow\n"); gen = 0;}
+  if (gen >= GENERATORS) {fprintf(stderr, "gen mode set overflow\n"); gen = 0;}
   g = gens[gen];
   /* RRRREESSSS */
   g->GMODE = (g->GMODE & 0x3f) | (RRRR << 6);
@@ -494,12 +476,16 @@ static void process_gen(int gen)
 		trigger (was in run mode 1110 or 1101 and envelope
 		overflowed).
       */
-      if ((CurAmp24 > 1.0) || (CurAmp24 < -1.0))  /*  if ((BIT(CurAmp24, 23) != BIT(old_amp, 23)) && (BIT(CurAmp24, 22) == BIT(AmpSwp20, 19))) */
+      if (CurAmp24 > 1.0)  /*  if ((BIT(CurAmp24, 23) != BIT(old_amp, 23)) && (BIT(CurAmp24, 22) == BIT(AmpSwp20, 19))) */
+	/* should this stick at 0 going negative? */
 	{
 	  /* overflow */
+
 	  /*
 	  fprintf(stderr, "env overflow\n");
 	  */
+	  if (CurAmp24 < 0.0) fprintf(stderr, "->%.4f ", CurAmp24);
+
 	  if (osc_run(Gmode10) == 15)              /* "running A" */
 	    CurAmp24 = old_amp;
 	  else
@@ -588,7 +574,10 @@ static void process_gen(int gen)
 static void print_mod_read_name(int m)
 {
   char *mem_names[4] = {"gen-ins", "mod-ins", "mod-outs", "oops"};
-  fprintf(stderr, "%s[%d]", mem_names[(m >> 6) & 0x3], m & 0x3f);
+  fprintf(stderr, "%s[%s%d]", 
+	  mem_names[(m >> 6) & 0x3], 
+	  (((m & 0x3f) == 0) && (((m >> 6) & 0x3) != 0)) ? "(zero)" : "",
+	  m & 0x3f);
 }
 
 
@@ -743,8 +732,10 @@ static void process_mod(int mod)
       if ((B != 0.0) && 
 	  (m->M1 != 0))
 	{
+	  /*
 	  if ((describe_commands) && (mod == 4))
 	    fprintf(stderr, "m%d %d triggered: %d (%.6f), M0: %d\n", mod, samples, TWOS_20(IS), TWOS_20_TO_DOUBLE(IS), m->M0);
+	  */
 	  /* I'm getting an immediate fixed-point from the SAM files that used triggered noise! */
 	  /* they used the M0 seed of 359035904 which immediately cycles at 422913! */
 	  m->L1 = IS;
@@ -779,7 +770,7 @@ static void process_mod(int mod)
        */
       /* to handle table lookups, we need the integer side here */
       /* fprintf(stderr, "d%d, m%d: %.4f = %.4f + %.4f * %.4f\n", m->MRM & 0x1f, mod, m->f_L0 + m->f_L1 * m->f_M0, m->f_L0, m->f_L1, m->f_M0); */
-
+      
       mod_write(m->MSUM, m->f_L0 + m->f_L1 * m->f_M0);
       m->f_L0 = delay_read(m->MRM & 0x1f);
       m->f_L1 = A + m->f_L0 * m->f_M1;
@@ -1038,7 +1029,7 @@ static void delay_write(int dly, double val)
       
     case D_LINE:
     case D_TAP:
-      d->X1 = val; /* hidden 2 (or is it 3?) sample delay */
+      delay_memory[d->X + d->Y] = val;
       break;
       
     case D_TABLE_LOOKUP:
@@ -1058,8 +1049,6 @@ static void process_dly(int dly)
 {
   delay *d;
   d = dlys[dly];
-  delay_memory[d->X + d->Y] = d->X0;
-  d->X0 = d->X1;
   d->Y += 1;
   if (d->Y > d->Z) /* unit size - 1 so not >= ? */
     d->Y = 0;
@@ -1067,6 +1056,8 @@ static void process_dly(int dly)
 
 
 /* ---------------------------------------- run! ---------------------------------------- */
+
+static void dump_patch(void);
 
 static void linger(int time)
 {
@@ -1099,26 +1090,37 @@ static void linger(int time)
        *   and increment pass 
        */
       int i, tick, gen = 0, mod = 0, dly = 0;
+
       for (tick = 0; tick < processing_ticks; tick++)
 	{
 	  /* given the timing info I'll simplify a bit and run 1 gen per tick, 1 mod every 2 ticks, and 1 delay every 4 ticks */
-	  if (gen < 256)
+	  if (gen < GENERATORS)
 	    process_gen(gen++);
 
 	  /* I'm guessing... */
 	  if (((tick & 1) == 0) &&
-	      (mod < 128))
+	      (mod < MODIFIERS))
 	    process_mod(mod++);
 
 	  if (((tick & 3) == 0) &&
-	      (dly < 32))
+	      (dly < DELAYS))
 	    process_dly(dly++);
 	}
 
-      for (i = 0; i < 64; i++)
+      if (dump_patch_at == samples)
+	dump_patch();
+
+      for (i = 0; i < SUM_MEMORY_SIZE; i++)
 	{
+	  if (fabs(gen_ins[i]) > peak_gen_ins[i])
+	    peak_gen_ins[i] = fabs(gen_ins[i]);
+	  prev_gen_ins[i] = gen_ins[i];
 	  gen_ins[i] = gen_outs[i];
 	  gen_outs[i] = 0.0;
+
+	  if (fabs(mod_ins[i]) > peak_mod_ins[i])
+	    peak_mod_ins[i] = fabs(mod_ins[i]);
+	  prev_mod_ins[i] = mod_ins[i];
 	  mod_ins[i] = mod_outs[i];
 	  mod_outs[i] = 0.0;
 	}
@@ -1179,7 +1181,7 @@ static void misc_command(int cmd)
     {
       /* cause any generator in run mode 1001 to change to mode 1111 */
       int i;
-      for (i = 0; i < 256; i++)
+      for (i = 0; i < GENERATORS; i++)
 	if ((gens[i]) && (osc_run(gens[i]->GMODE) == 9))
 	  set_osc_run(i, 15);
     }
@@ -1188,7 +1190,7 @@ static void misc_command(int cmd)
     {
       /* cause any generator in run mode 0001 to change to mode 1111 */
       int i;
-      for (i = 0; i < 256; i++)
+      for (i = 0; i < GENERATORS; i++)
 	if ((gens[i]) && (osc_run(gens[i]->GMODE) == 1))
 	  set_osc_run(i, 15);
     }
@@ -1219,11 +1221,11 @@ static const char *P_name(int P)
   switch (P)
     {
     case D_INACTIVE:             return("inactive");
-    case D_LINE:                 return("delay line");
-    case D_TAP:                  return("delay tap");
-    case D_TABLE_LOOKUP:         return("table lookup");
-    case D_TABLE_LOOKUP_ROUNDED: return("rounded table lookup");
-    default:                     return("unknown mode");
+    case D_LINE:                 return("line");
+    case D_TAP:                  return("tap");
+    case D_TABLE_LOOKUP:         return("table");
+    case D_TABLE_LOOKUP_ROUNDED: return("rtable");
+    default:                     return("unknown");
     }
 }
 
@@ -1367,8 +1369,8 @@ static void ticks_command(int cmd)
 	   *   can run is 5010Hz or thereabouts
 	   */
 
-	  if (highest_tick_per_pass > 256)
-	    highest_tick_per_pass = 256;
+	  if (highest_tick_per_pass > GENERATORS)
+	    highest_tick_per_pass = GENERATORS;
 
 	  srate = (int)(1000000000.0 / (double)(highest_tick_per_pass * 195));
 	}
@@ -1455,7 +1457,6 @@ static void gq_command(int cmd)
       else fprintf(stderr, "g%d amp: %s, %d = %d %.4f (DX: %d)\n", gen, E_name[E], data, g->GQ, g->f_GQ, old_DX);
     }
 
-
   if ((gen_is_active(g)) && 
       (samples > last_GMODE_command))
     {
@@ -1513,7 +1514,7 @@ static void gj_command(int cmd)
     {
       if (E == 0)
 	fprintf(stderr, "g%d freq: %s, %d = %d %.4f (%.4f Hz)\n", gen, E_name[E], data, g->GJ, g->f_GJ, g->f_GJ * 0.5 * srate);
-      else fprintf(stderr, "g%d freq: %s (DX: %d), %d = %d %.4f (%.4f Hz)\n", gen, E_name[E], old_DX, data, g->GJ, g->f_GJ, g->f_GJ * 0.5 *srate);
+      else fprintf(stderr, "g%d freq: %s (DX: %d), %d = %d %.4f (%.4f Hz)\n", gen, E_name[E], old_DX, data, g->GJ, g->f_GJ, g->f_GJ * 0.5 * srate);
     }
 
   if ((gen_is_active(g)) && 
@@ -1771,7 +1772,7 @@ static bool bad_mode(int mode)
 }
 
 
-static void print_GMODE_name(int mode)
+static void print_gmode_name(int mode)
 {
   /* RRRREESSSS */
   int R, E, S;
@@ -1791,29 +1792,29 @@ static void print_GMODE_name(int mode)
     {
       switch (S)
 	{
-	case SUMCOS:   fprintf(stderr, "sum of cosines");    break;
-	case SAWTOOTH: fprintf(stderr, "sawtooth wave");     break;
-	case SQUARE:   fprintf(stderr, "square wave");       break;
-	case PULSE:    fprintf(stderr, "pulse train");       break;
-	case SIN_K:    fprintf(stderr, "sin");               break;
-	case SIN_FM:   fprintf(stderr, "sin+fm");            break;
-	default:       fprintf(stderr, "unknown osc mode!"); break;
+	case SUMCOS:   fprintf(stderr, "ncos");    break;
+	case SAWTOOTH: fprintf(stderr, "saw");     break;
+	case SQUARE:   fprintf(stderr, "square");  break;
+	case PULSE:    fprintf(stderr, "pulse");   break;
+	case SIN_K:    fprintf(stderr, "sin");     break;
+	case SIN_FM:   fprintf(stderr, "sin+fm");  break;
+	default:       fprintf(stderr, "unknown"); break;
 	}
       
-      fprintf(stderr, ", %s", E_name[E]);
+      fprintf(stderr, "-%s", E_name[E]);
     }
 
   switch (R)
     {
-    case 1:  fprintf(stderr, ", pause");             break;
-    case 15: fprintf(stderr, ", run A (normal)");    break;
-    case 14: fprintf(stderr, ", run B (trigger)");   break;
-    case 9:  fprintf(stderr, ", wait");              break;
-    case 13: fprintf(stderr, ", run C (trigger)");   break;
-    case 7:  fprintf(stderr, ", read-data");         break;
-    case 3:  fprintf(stderr, ", write-data");        break;
-    case 2:  fprintf(stderr, ", write DAC");         break;
-    default: fprintf(stderr, ", unknown run mode!"); break;
+    case 1:  fprintf(stderr, "-pause");  break;
+    case 15: fprintf(stderr, "-A");      break;
+    case 14: fprintf(stderr, "-B");      break;
+    case 9:  fprintf(stderr, "-wait");   break;
+    case 13: fprintf(stderr, "-C");      break;
+    case 7:  fprintf(stderr, "-rd");     break;
+    case 3:  fprintf(stderr, "-wrt");    break;
+    case 2:  fprintf(stderr, "-DAC");    break;
+    default: fprintf(stderr, "unknown"); break;
     }
 }
 
@@ -1845,13 +1846,17 @@ static void gmode_command(int cmd)
   if (C == 1)
     g->GK = 0;
 
+  /*
+  if (osc_env(GMODE) > 1) fprintf(stderr, "expt %d ", samples);
+  */
+
   if (describe_commands)
     {
       fprintf(stderr, "g%d ", gen);
       if (M == 0)
 	{
 	  fprintf(stderr, "mode: ");
-	  print_GMODE_name(g->GMODE);
+	  print_gmode_name(g->GMODE);
 	}
       if (F == 0)
 	{
@@ -1873,6 +1878,21 @@ static void gmode_command(int cmd)
 	fprintf(stderr, "sample %d (%.3f), command %d, bad mode: g%d %x\n", 
 		samples, (double)samples / (double)srate, current_command, 
 		gen, GMODE);
+
+      if ((gen_is_active(g)) &&
+	  (gen >= processing_ticks))
+	fprintf(stderr, "sample %d (%.3f), command %d, g%d cannot actually run (procticks: %d)\n", 
+		samples, (double)samples / (double)srate, current_command, 
+		gen, processing_ticks);
+    
+      /*
+      if ((gen_was_active) &&
+	  (!gen_is_active(g)) &&
+	  (g->f_GQ != 0.0))
+	fprintf(stderr, "sample %d (%.3f), command %d, g%d turned off with amp %.4f\n", 
+		samples, (double)samples / (double)srate, current_command,
+		gen, g->f_GQ);
+      */
 	
       if ((gen_was_active) && 
 	  ((g->GFM != old_GFM) || (g->GMODE != old_GMODE)) &&
@@ -1887,9 +1907,9 @@ static void gmode_command(int cmd)
 	    {
 	      fprintf(stderr, "sample %d (%.3f), command %d, stray mode: g%d ",
 		      samples, (double)samples / (double)srate, current_command, gen);
-	      print_GMODE_name(g->GMODE);
+	      print_gmode_name(g->GMODE);
 	      fprintf(stderr, " from ");
-	      print_GMODE_name(old_GMODE);
+	      print_gmode_name(old_GMODE);
 	      fprintf(stderr, " (last mode sample: %d)\n", last_GMODE_command);
 	    }
 	}
@@ -1981,7 +2001,7 @@ static void mm_command(int cmd)
       m->o_f_M0 = m->f_M0;
       old_DX = DX;
       DX = 0;
-      m->M0 = m->M0 * m->mult_scl_0 / 4;
+      m->M0 = (m->M0 / 4) * m->mult_scl_0; /* try not to set the sign bit */
       m->f_M0 *= m->mult_scl_0;
       break;
 
@@ -1992,7 +2012,7 @@ static void mm_command(int cmd)
       m->o_f_M1 = m->f_M1;
       old_DX = DX;
       DX = 0;
-      m->M1 = m->M1 * m->mult_scl_1 / 4;
+      m->M1 = (m->M1 / 4) * m->mult_scl_1;
       m->f_M1 *= m->mult_scl_1;
       break;
     }
@@ -2001,10 +2021,20 @@ static void mm_command(int cmd)
     {
       switch (VV)
 	{
-	case 0: fprintf(stderr, "m%d M0: %d: %d %.6f\n", mod, data, m->M0, m->f_M0); break;
-	case 1: fprintf(stderr, "m%d M1: %d: %d %.6f\n", mod, data, m->M1, m->f_M1); break;
-	case 2: fprintf(stderr, "m%d M0+DX: data: %d + DX: %d = %d %.6f\n", mod, data << 10, old_DX >> 10, m->M0, m->f_M0); break;
-	case 3: fprintf(stderr, "m%d M1+DX: data: %d + DX: %d = %d %.6f\n", mod, data << 10, old_DX >> 10, m->M1, m->f_M1); break;
+	case 0: 
+	  fprintf(stderr, "m%d M0: %d: %d %.6f\n", mod, data, m->M0, m->f_M0); 
+	  break;
+	case 1: 
+	  fprintf(stderr, "m%d M1: %d: %d %.6f\n", mod, data, m->M1, m->f_M1); 
+	  break;
+	case 2: 
+	  fprintf(stderr, "m%d M0+DX: data: %d + DX: %d (%d), %d -> %d, %.6f -> %.6f\n", 
+		  mod, data, old_DX, m->mult_scl_0, m->o_M0, m->M0, m->o_f_M0, m->f_M0); 
+	  break;
+	case 3: 
+	  fprintf(stderr, "m%d M1+DX: data: %d + DX: %d (%d), %d -> %d, %.6f -> %.6f\n", 
+		  mod, data, old_DX, m->mult_scl_1, m->o_M1, m->M1, m->o_f_M1, m->f_M1); 
+	  break;
 	}
     }
 }
@@ -2068,27 +2098,27 @@ static const char *mode_name(int m)
   switch (m)
     {
     case M_INACTIVE:        return("inactive");
-    case M_NOISE:           return("uniform noise");
-    case M_TRIGGERED_NOISE: return("triggered noise");
+    case M_NOISE:           return("noise");
+    case M_TRIGGERED_NOISE: return("trignoise");
     case M_LATCH:           return("latch");
-    case M_THRESHOLD:       return("threshold");
-    case M_DELAY:           return("invoke delay");
-    case M_TWO_POLE:        return("two pole");
-    case M_TWO_POLE_M0:     return("two pole, M0 variable");
-    case M_TWO_POLE_M1:     return("two pole, M1 variable");
-    case M_TWO_ZERO:        return("two zero");
-    case M_TWO_ZERO_M0:     return("two zero, M0 variable");
-    case M_TWO_ZERO_M1:     return("two zero, M1 variable");
-    case M_INTEGER_MIXING:  return("integer mix");
-    case M_ONE_POLE:        return("one pole");
+    case M_THRESHOLD:       return("thresh");
+    case M_DELAY:           return("delay");
+    case M_TWO_POLE:        return("2pole");
+    case M_TWO_POLE_M0:     return("2pole-M0");
+    case M_TWO_POLE_M1:     return("2pole-M1");
+    case M_TWO_ZERO:        return("2zero");
+    case M_TWO_ZERO_M0:     return("2zero-M0");
+    case M_TWO_ZERO_M1:     return("2zero-M1");
+    case M_INTEGER_MIXING:  return("int-mix");
+    case M_ONE_POLE:        return("1pole");
     case M_MIXING:          return("mix");
-    case M_ONE_ZERO:        return("one zero");
-    case M_MULTIPLY:        return("four-quadrant multiply");
-    case M_AMP_MOD:         return("amplitude modulation");
-    case M_MAX:             return("maximum");
-    case M_MIN:             return("minimum");
+    case M_ONE_ZERO:        return("1zero");
+    case M_MULTIPLY:        return("multiply");
+    case M_AMP_MOD:         return("am");
+    case M_MAX:             return("max");
+    case M_MIN:             return("min");
     case M_SIGNUM:          return("signum");
-    case M_ZERO_CROSS:      return("zero-crossing pulser");
+    case M_ZERO_CROSS:      return("0cross");
     }
   return("unknown");
 }
@@ -2164,6 +2194,19 @@ static void mmode_command(int cmd)
 	  fprintf(stderr, "L0=0");
 	}
       fprintf(stderr, "\n");
+    }
+
+  if (REPORT_BAD_COMMANDS)
+    {
+      /*
+      if ((MMODE >> 4) == M_TRIGGERED_NOISE)
+	fprintf(stderr, "noise...");
+      */
+      if (((MMODE >> 4) != M_INACTIVE) &&
+	  ((mod * 2) >= processing_ticks))
+	fprintf(stderr, "sample %d (%.3f), command %d, m%d cannot actually run (procticks: %d)\n", 
+		samples, (double)samples / (double)srate, current_command, 
+		mod, processing_ticks);
     }
 }
 
@@ -2319,6 +2362,222 @@ static void handle_command(int cmd)
 
   current_command++;
 }
+
+
+/* ---------------------------------------- debugging ---------------------------------------- */
+
+static void dump_gens(void)
+{
+  int i;
+  for (i = 0; i < GENERATORS; i++)
+    if (gens[i]->GMODE != 0)
+      fprintf(stderr, "g%d GMODE: %d, %d [%.3f] -> %d [%.3f], GQ: %.3f, GP: %.3f, GL: %.3f, GJ: %.3f, GO: %.3f, GN: %d, GS: %d\n",
+	      i, 
+	      gens[i]->GMODE, 
+	      gens[i]->GFM, ((gens[i]->GFM >> 6) == 0) ? gen_ins[gens[i]->GFM & 0x3f] : mod_ins[gens[i]->GFM & 0x3f],
+	      gens[i]->GSUM, gen_outs[gens[i]->GSUM],
+	      gens[i]->f_GQ, gens[i]->f_GP, gens[i]->f_GL, gens[i]->f_GJ, gens[i]->f_GO, 
+	      gens[i]->GN, gens[i]->GS);
+}
+
+
+static void dump_mods(void)
+{
+  int i;
+  for (i = 0; i < MODIFIERS; i++)
+    if (mods[i]->MMODE != 0)
+      fprintf(stderr, "m%d MMODE: %d, (%d [%.3f] %d [%.3f]) -> %d [%.3f], M0: %.3f, M1: %.3f, L0: %.3f, L1: %.3f\n",
+	      i,
+	      mods[i]->MMODE,
+	      mods[i]->MIN, mod_read(mods[i]->MIN),
+	      mods[i]->MRM, mod_read(mods[i]->MRM),
+	      mods[i]->MSUM, mod_outs[mods[i]->MSUM],
+	      mods[i]->f_M0, mods[i]->f_M1, mods[i]->f_L0, mods[i]->f_L1);
+}
+
+
+static void dump_gen_sum(int addr)
+{
+  int i;
+  /* show prev-ins : ins : out, g%d for all writers */
+  fprintf(stderr, "g-sum%d: %.3f %.3f %.3f [max: %.3f]", addr, prev_gen_ins[addr], gen_ins[addr], gen_outs[addr], peak_gen_ins[addr]);
+
+  for (i = 0; i < GENERATORS; i++)
+    if ((gens[i]->GMODE != 0) && 
+	(gens[i]->GSUM == addr))
+      fprintf(stderr, " g%d", i);
+}
+
+
+static void dump_mod_sum(int addr)
+{
+  int i;
+  /* show prev-ins : ins : out, m%d for all writers */
+  fprintf(stderr, "m-sum%d: %.3f %.3f %.3f [max: %.3f]", addr, prev_mod_ins[addr], mod_ins[addr], mod_outs[addr], peak_mod_ins[addr]);
+
+  for (i = 0; i < MODIFIERS; i++)
+    if ((mods[i]->MMODE != 0) && 
+	((mods[i]->MSUM &0x3f) == addr))
+      fprintf(stderr, " m%d", i);
+}
+
+
+static void print_mod_sum(int addr)
+{
+  int loc;
+  loc = addr & 0x3f;
+  switch ((addr >> 6) & 0x3)
+    {
+    case 0: 
+      fprintf(stderr, "[");
+      dump_gen_sum(loc);
+      break;
+    case 1:
+      fprintf(stderr, "[");
+      if (loc == 0)
+	{
+	  if ((prev_mod_ins[0] != 0.0) || (mod_ins[0] != 0.0) || (mod_outs[0] != 0.0) || (peak_mod_ins[0] != 0))
+	    dump_mod_sum(0);
+	  else fprintf(stderr, "zero");
+	}
+      else dump_mod_sum(loc);
+      break;
+    case 2:
+      fprintf(stderr, "-out[");
+      if (loc == 0)
+	{
+	  if ((prev_mod_ins[0] != 0.0) || (mod_ins[0] != 0.0) || (mod_outs[0] != 0.0) || (peak_mod_ins[0] != 0))
+	    dump_mod_sum(0);
+	  else fprintf(stderr, "zero");
+	}
+      else dump_mod_sum(loc);
+      break;
+    case 3:
+      fprintf(stderr, "[illegal: %d", addr);
+      break;
+    }
+}
+
+
+static int gen_mem_readers(int addr)
+{
+  int i, rds = 0;
+  for (i = 0; i < GENERATORS; i++)
+    if ((gens[i]->GMODE != 0) &&
+	(gens[i]->GFM == addr)) /* Q bit 0 = gen */
+      rds++;
+  for (i = 0; i < MODIFIERS; i++)
+    if (mod_mode(mods[i]->MMODE) != M_INACTIVE)
+    {
+      if (mods[i]->MIN == addr) /* QQ bits = 0 = gen */
+	rds++;
+      if ((mod_mode(mods[i]->MMODE) != M_DELAY) &&
+	  (mods[i]->MRM == addr))
+	rds++;
+    }
+  return(rds);
+}
+
+
+static int mod_mem_readers(int addr)
+{
+  int i, rds = 0;
+  for (i = 0; i < GENERATORS; i++)
+    if ((gens[i]->GMODE != 0) &&
+	(gens[i]->GFM == 64 + addr)) /* Q bit 1 = mod */
+      rds++;
+  for (i = 0; i < MODIFIERS; i++)
+    if (mod_mode(mods[i]->MMODE) != M_INACTIVE)
+    {
+      if ((mods[i]->MIN == 64 + addr) ||
+	  (mods[i]->MIN == 128 + addr))
+	rds++;
+      if ((mod_mode(mods[i]->MMODE) != M_DELAY) &&
+	  ((mods[i]->MRM == 64 + addr) ||
+	   (mods[i]->MRM == 128 + addr)))
+	rds++;
+    }
+  return(rds);
+}
+
+
+static void dump_patch(void)
+{
+  /* try to show all currently active elements and memory with some history */
+  int i, p;
+
+  fprintf(stderr, "sample: %d, command: %d, ", samples, current_command);
+
+  for (i = 0, p = 0; i < GENERATORS; i++)
+    if (gens[i]->GMODE != 0)
+      p++;
+  fprintf(stderr, "active gens: %d, ", p);
+
+  for (i = 0, p = 0; i < MODIFIERS; i++)
+    if (mod_mode(mods[i]->MMODE) != M_INACTIVE)
+      p++;
+  fprintf(stderr, "active mods: %d, ", p);
+  
+  for (i = 0, p = 0; i < DELAYS; i++)
+    if (dlys[i]->P != 0)
+      p++;
+  fprintf(stderr, "active delays: %d\n\n", p);
+
+  for (i = 0; i < GENERATORS; i++)
+    if (gens[i]->GMODE != 0)
+      {
+	fprintf(stderr, "g%d ", i);
+	print_gmode_name(gens[i]->GMODE);
+	fprintf(stderr, " [");
+	if ((gens[i]->GFM >> 6) == 0)
+	  dump_gen_sum(gens[i]->GFM & 0x3f);
+	else print_mod_sum(gens[i]->GFM);
+	fprintf(stderr, "]->[");
+	if (osc_run(gens[i]->GMODE) == 2)
+	  fprintf(stderr, "OUT%d", gens[i]->GO & 0xf);
+	else dump_gen_sum(gens[i]->GSUM);
+	fprintf(stderr, " (%d)], (amp: %.3f, freq: %.3f)\n", 
+		gen_mem_readers(gens[i]->GSUM),
+		gens[i]->f_GQ,
+		gens[i]->f_GJ * 0.5 * srate);
+      }
+  fprintf(stderr, "\n");
+
+  for (i = 0; i < MODIFIERS; i++)
+    if (mod_mode(mods[i]->MMODE) != M_INACTIVE)
+      {
+	fprintf(stderr, "m%d %s min", i, mode_name(mod_mode(mods[i]->MMODE)));
+	print_mod_sum(mods[i]->MIN);
+	fprintf(stderr, "], mrm");
+	if (mod_mode(mods[i]->MMODE) == M_DELAY)
+	  fprintf(stderr, "[delay: %d", mods[i]->MRM & 0x1f);
+	else print_mod_sum(mods[i]->MRM);
+	fprintf(stderr, "]->[");
+	if ((mods[i]->MSUM >> 6) != 0)
+	  fprintf(stderr, "-replace");
+	dump_mod_sum(mods[i]->MSUM & 0x3f);
+	fprintf(stderr, " (%d)]\n", mod_mem_readers(mods[i]->MSUM));
+      }
+  fprintf(stderr, "\n");
+
+  for (i = 0; i < DELAYS; i++)
+    if (dlys[i]->P != D_INACTIVE)
+      {
+	fprintf(stderr, "d%d %s %.3f (%d + %d of %d)\n",
+		i, P_name(dlys[i]->P), 
+		delay_memory[dlys[i]->X + dlys[i]->Y],
+		dlys[i]->X, dlys[i]->Y, dlys[i]->Z);
+      }
+  {
+    double dmax;
+    dmax = fabs(delay_memory[0]);
+    for (i = 1; i < DELAY_MEMORY_SIZE; i++)
+      if (fabs(delay_memory[i]) > dmax)
+	dmax = fabs(delay_memory[i]);
+    fprintf(stderr, "delay memory peak: %.4f\n", dmax);
+  }
+}
+
 
 
 /* ---------------------------------------- main program ---------------------------------------- */

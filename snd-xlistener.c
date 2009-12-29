@@ -1027,8 +1027,7 @@ void listener_append_and_prompt(const char *msg)
 
 static void listener_return_callback(Widget w, XtPointer context, XtPointer info)
 {
-  if (!(ss->error_lock))
-    listener_return(w, find_prompt(w, XmTextGetInsertionPosition(w)));
+  listener_return(w, find_prompt(w, XmTextGetInsertionPosition(w)));
   /* prompt loc (last prompt pos) used only by read hook */
 }
 

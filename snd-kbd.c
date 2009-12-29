@@ -1385,7 +1385,6 @@ void control_g(snd_info *sp)
       for_each_sound_chan(sp, stop_fft_in_progress);
       clear_minibuffer(sp);
     }
-  ss->error_lock = false;
 }
 
 #ifndef SND_KEYMASK

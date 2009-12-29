@@ -488,7 +488,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->print_choice = PRINT_SND;
   ss->graph_hook_active = false;
   ss->lisp_graph_hook_active = false;
-  ss->error_lock = false;
   ss->exiting = false;
   ss->deferred_regions = 0;
   ss->fam_connection = NULL;

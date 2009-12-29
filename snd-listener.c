@@ -656,9 +656,7 @@ void listener_return(widget_t w, int last_prompt)
       str = NULL;
 
       if (!got_error)
-	snd_report_listener_result(form); /* used to check for unbound form here, but that's no good in Ruby,
-					   *   and doesn't seem sensible in Guile
-					   */
+	snd_report_listener_result(form); /* used to check for unbound form here, but that's no good in Ruby */
       GUI_UNSET_CURSOR(w, ss->sgx->arrow_cursor);
     }
   else
