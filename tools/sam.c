@@ -5,7 +5,9 @@
  *   fractional and integer fields, which are a pain to deal with when we would rather use doubles.
  *   The 20-bitness matters (perhaps) in the noise calculation.
  *
- * gcc sam.c -o sam -lm -O2
+ *        gcc sam.c -o sam -lm -O2
+ *        sam TEST.SAM
+ *        -> test.wav ("wav" or "riff" header, quad, little-endian float data at box srate)
  */
 
 #include <stdlib.h>
@@ -86,7 +88,7 @@ static delay *dlys[DELAYS];
 
 #define DELAY_MEMORY_SIZE 65536
 static double delay_memory[DELAY_MEMORY_SIZE];
-static float dac_out[4];
+static float dac_out[4], dac_out_peak[4];
 
 static int tick, pass, DX, processing_ticks, highest_tick_per_pass, samples = 0, srate = 1, total_commands = 0, current_command = 0;
 
@@ -126,7 +128,10 @@ static void start_clean(void)
     delay_memory[i] = 0.0;
 
   for (i = 0; i < 4; i++)
-    dac_out[i] = 0.0;
+    {
+      dac_out[i] = 0.0;
+      dac_out_peak[i] = 0.0;
+    }
 
   tick = 0;
   pass = 0;
@@ -148,7 +153,8 @@ static void all_done(void)
       fwrite((void *)header_info, 4, 1, snd_file);
       fclose(snd_file);
 
-      fprintf(stderr, "test.wav: %dHz, %.4f secs\n", srate, (double)samples / (double)srate);
+      fprintf(stderr, "test.wav: %dHz, %d samples, %.4f secs", srate, samples, (double)samples / (double)srate);
+      fprintf(stderr, ", maxamps: %.3f %.3f %.3f %.3f\n", dac_out_peak[0], dac_out_peak[1], dac_out_peak[2], dac_out_peak[3]);
     }
   exit(0);
 }
@@ -350,6 +356,26 @@ static bool gen_is_active(generator *g)
 }
 
 
+static double gen_amp(generator *g)
+{
+  int emode;
+  double Q;
+
+  if (osc_run(g->GMODE) == 0) return(0.0);
+
+  emode = osc_env(g->GMODE);
+  if ((emode == L_PLUS_2_TO_MINUS_Q) || 
+      (emode == L_MINUS_2_TO_MINUS_Q))
+    Q = pow(2.0, -4.0 * g->f_GQ);
+  else Q = g->f_GQ / 4.0;
+
+  if ((emode == L_PLUS_Q) || 
+      (emode == L_PLUS_2_TO_MINUS_Q))  
+    return(g->f_GL + Q);
+  return(g->f_GL - Q);
+}
+
+
 static bool read_data_warned = false, write_data_warned = true;
 
 static void process_gen(int gen)
@@ -476,16 +502,9 @@ static void process_gen(int gen)
 		trigger (was in run mode 1110 or 1101 and envelope
 		overflowed).
       */
-      if (CurAmp24 > 1.0)  /*  if ((BIT(CurAmp24, 23) != BIT(old_amp, 23)) && (BIT(CurAmp24, 22) == BIT(AmpSwp20, 19))) */
-	/* should this stick at 0 going negative? */
+      if ((CurAmp24 > 1.0) || (CurAmp24 < 0.0))  /*  if ((BIT(CurAmp24, 23) != BIT(old_amp, 23)) && (BIT(CurAmp24, 22) == BIT(AmpSwp20, 19))) */
 	{
 	  /* overflow */
-
-	  /*
-	  fprintf(stderr, "env overflow\n");
-	  */
-	  if (CurAmp24 < 0.0) fprintf(stderr, "->%.4f ", CurAmp24);
-
 	  if (osc_run(Gmode10) == 15)              /* "running A" */
 	    CurAmp24 = old_amp;
 	  else
@@ -508,11 +527,11 @@ static void process_gen(int gen)
 
   if ((osc_env(Gmode10) == L_PLUS_2_TO_MINUS_Q) || 
       (osc_env(Gmode10) == L_MINUS_2_TO_MINUS_Q))
-    {
-      NewAmp12 = pow(2.0, -CurAmp12);
-    }
-  else NewAmp12 = CurAmp12;
-  /* in the notes: The scaling involved is a left shift of temp6 by 4 bits.
+    NewAmp12 = pow(2.0, -4.0 * CurAmp12);
+  else NewAmp12 = CurAmp12 / 4.0;
+
+  /* in the notes: "The scaling involved is a left shift of temp6 by 4 bits", but that sounds wrong to me in the L+Q case.
+   *    This scaling matters in FM since it is a multiplier on the index, and in pluck.
    */
 
   if ((osc_env(Gmode10) == L_PLUS_Q) || 
@@ -520,11 +539,11 @@ static void process_gen(int gen)
     Env12 = AmpOff12 + NewAmp12;
   else Env12 = AmpOff12 - NewAmp12;
 
-  /*
-  if ((osc_env(Gmode10) == L_PLUS_2_TO_MINUS_Q) || 
-      (osc_env(Gmode10) == L_MINUS_2_TO_MINUS_Q))
+  if (((osc_env(Gmode10) == L_PLUS_2_TO_MINUS_Q) || 
+       (osc_env(Gmode10) == L_MINUS_2_TO_MINUS_Q)) &&
+      (fabs(Env12) > 10.0) &&
+      (describe_commands))
     fprintf(stderr, "expt: %.3f = %.3f +/- %.3f, %.3f, %.3f\n", Env12, AmpOff12, NewAmp12, CurAmp24, AmpSwp20);
-  */
 
   OscOut13 *= Env12;
   if (adding_to_sum(Gmode10))
@@ -532,8 +551,8 @@ static void process_gen(int gen)
       if (osc_run(Gmode10) != 7)
 	{
 	  if (g->GS == 0)
-	    gen_outs[OutSum6] += (OscOut13 / 4.0);    /* what is the scaling here? 4.0 sounds like it reproduces what I remember of old pieces */
-	  else gen_outs[OutSum6] += (OscOut13 / 2.0); /* just a guess */
+	    gen_outs[OutSum6] += OscOut13;    /* what is the scaling here? */
+	  else gen_outs[OutSum6] += (OscOut13 * 2.0); /* just a guess */
 	}
       else 
 	{
@@ -574,10 +593,11 @@ static void process_gen(int gen)
 static void print_mod_read_name(int m)
 {
   char *mem_names[4] = {"gen-ins", "mod-ins", "mod-outs", "oops"};
-  fprintf(stderr, "%s[%s%d]", 
-	  mem_names[(m >> 6) & 0x3], 
-	  (((m & 0x3f) == 0) && (((m >> 6) & 0x3) != 0)) ? "(zero)" : "",
-	  m & 0x3f);
+  fprintf(stderr, "%s[", mem_names[(m >> 6) & 0x3]);
+  if (((m & 0x3f) == 0) && (((m >> 6) & 0x3) != 0)) 
+    fprintf(stderr, "zero");
+  else fprintf(stderr, "%d", m & 0x3f);
+  fprintf(stderr, "]");
 }
 
 
@@ -724,8 +744,6 @@ static void process_mod(int mod)
        *          low-order 20 bits of product used; overflow ignored);
        *          if B*M1 (integer multiply, low-order 20 bits of product
        *          used; overflow ignored) is not 0, L1 := S
-       *
-       * is this correct?  Surely we should shift right say 10 bits, then logand?
        */
       IS = (m->L0 + (m->L1 * m->M0)) & 0xfffff;
       mod_write(m->MSUM, TWOS_20_TO_DOUBLE(IS));
@@ -745,8 +763,8 @@ static void process_mod(int mod)
     case M_LATCH:
       /* 00100:	latch (sample and hold).  S := L1;  If B*M1 is not 0, L1 := A 
        *   but in the errata:
-       *   BIL has discovered empirically that the modifier latch mode operation should actually read
-       * 00100:	latch (sample and hold).  S := L1;  If B*M1 is not 0, L1 := A*M0
+       *   "BIL has discovered empirically that the modifier latch mode operation should actually read
+       * 00100:	latch (sample and hold).  S := L1;  If B*M1 is not 0, L1 := A*M0"
        */
       mod_write(m->MSUM, m->f_L1);
       if ((B * m->f_M1) != 0.0) m->f_L1 = A * m->f_M0;
@@ -789,10 +807,6 @@ static void process_mod(int mod)
       tmp0 = m->f_L1 * m->f_M1;
       tmp1 = m->f_L0 * m->f_M0;
       S = tmp0 + tmp1 + A;
-      /*
-      if (mod == 78)
-	fprintf(stderr, "S: %.4f = %.4f * %.4f + %.4f * %.4f + %.4f\n", S, m->f_L1, m->f_M1, m->f_L0, m->f_L1, A);
-      */
       mod_write(m->MSUM, S);
       m->f_L0 = m->f_L1;
       m->f_L1 = S;
@@ -842,8 +856,8 @@ static void process_mod(int mod)
     case M_ONE_POLE:
       /* 10001:	one pole.  S := L1*M1 + B*M0; L1 := S
        *    but in the errata:
-       *    DAJ - It seems that the modifier mode one pole is really
-       * 10001:	one pole.  S := L1*M1 + B*L0; L1 := S
+       *    "DAJ - It seems that the modifier mode one pole is really
+       * 10001:	one pole.  S := L1*M1 + B*L0; L1 := S"
        */
       tmp0 = m->f_L1 * m->f_M1;
       tmp1 = B * m->f_L0;
@@ -976,6 +990,10 @@ static void process_mod(int mod)
  * in the delay line.  It will be retrieved and sent back to the
  * modifier Z+3 passes later.  In delay tap mode, a word is sent to
  * the modifier but delay memory is not written into.
+ *
+ * [currently I'm ignoring that 3 word delay -- 1 word comes from the connection, I assume,
+ *  but where are the other 2?  I actually think this part of the spec is either wrong or
+ *  misleading -- surely the extra 2 words weren't part of the circulating part of the delay-line]
  * 
  * 	In table look-up mode, the 20-bit data word received
  * from the modifier is shifted to the right Z bits, bringing in zeros,
@@ -1127,7 +1145,12 @@ static void linger(int time)
 
       fwrite((void *)dac_out, 4, 4, snd_file);
       samples++;
-      for (i = 0; i < 4; i++) dac_out[i] = 0.0;
+      for (i = 0; i < 4; i++) 
+	{
+	  if (fabs(dac_out[i]) > dac_out_peak[i])
+	    dac_out_peak[i] = fabs(dac_out[i]);
+	  dac_out[i] = 0.0;
+	}
       pass++;
 
       if (samples == TOTAL_SAMPLES) 
@@ -1365,6 +1388,11 @@ static void ticks_command(int cmd)
 	{
 	  highest_tick_per_pass = data + 2; /* why isn't this 9? */
 
+	  /* "It's not clear from the documentation, so to clarify:  On the # TICKS
+	   *  command, the number to be supplied for Q=1 is the total number of ticks
+	   * per pass minus 2. (TVR - 7 August 1984)"
+	   */
+
 	  /* it's a 10 bit field, and higher bits are ignored, so the slowest we
 	   *   can run is 5010Hz or thereabouts
 	   */
@@ -1377,7 +1405,12 @@ static void ticks_command(int cmd)
     }
 
   if (describe_commands)
-    fprintf(stderr, "sam %s: %d (%d Hz)\n", Q_name[Q], data, srate);
+    {
+      fprintf(stderr, "sam %s: %d", Q_name[Q], data);
+      if (Q == 1)
+	fprintf(stderr, " (%d Hz)", srate);
+      fprintf(stderr, "\n");
+    }
 
   if ((data != 0) && (srate != 0))
     {
@@ -1439,11 +1472,12 @@ static void gq_command(int cmd)
   old_GQ = g->GQ;
   old_f_GQ = g->f_GQ;
 
+  /* spec says "sign extended" which makes me think this number is signed, but I think it is unsigned in exp modes */
   if (E == 0)
-    g->GQ = TWOS_20(data);
+    g->GQ = (TWOS_20(data) & 0xffffff);
   else 
     {
-      g->GQ = TWOS_24(((data << 4) + (DX >> 16))); /* need 24 - 20 bits = 4? */
+      g->GQ = (data << 4) + (DX >> 16);
       old_DX = DX;
       DX = 0;
     }
@@ -1453,10 +1487,11 @@ static void gq_command(int cmd)
   if (describe_commands)
     {
       if (E == 0)
-	fprintf(stderr, "g%d amp: %s, %d = %d %.4f\n", gen, E_name[E], data, g->GQ, g->f_GQ);
+	fprintf(stderr, "g%d amp: %s, %d %.4f\n", gen, E_name[E], g->GQ, g->f_GQ);
       else fprintf(stderr, "g%d amp: %s, %d = %d %.4f (DX: %d)\n", gen, E_name[E], data, g->GQ, g->f_GQ, old_DX);
     }
 
+#if 0
   if ((gen_is_active(g)) && 
       (samples > last_GMODE_command))
     {
@@ -1471,6 +1506,7 @@ static void gq_command(int cmd)
 	  g->f_GQ = old_f_GQ;
 	}
     }
+#endif
 }
 
 
@@ -1513,7 +1549,7 @@ static void gj_command(int cmd)
   if (describe_commands)
     {
       if (E == 0)
-	fprintf(stderr, "g%d freq: %s, %d = %d %.4f (%.4f Hz)\n", gen, E_name[E], data, g->GJ, g->f_GJ, g->f_GJ * 0.5 * srate);
+	fprintf(stderr, "g%d freq: %s, %d %.4f (%.4f Hz)\n", gen, E_name[E], g->GJ, g->f_GJ, g->f_GJ * 0.5 * srate);
       else fprintf(stderr, "g%d freq: %s (DX: %d), %d = %d %.4f (%.4f Hz)\n", gen, E_name[E], old_DX, data, g->GJ, g->f_GJ, g->f_GJ * 0.5 * srate);
     }
 
@@ -1556,7 +1592,7 @@ static void gp_command(int cmd)
   g->f_GP = DOUBLE_20(g->GP);
 
   if (describe_commands)
-    fprintf(stderr, "g%d amp change: %d = %d %.4f\n", gen, data, g->GP, g->f_GP);
+    fprintf(stderr, "g%d amp change: %d %.4f\n", gen, g->GP, g->f_GP);
 }
 
 
@@ -1648,8 +1684,14 @@ static void gl_command(int cmd)
 
   if (L == 0)
     {
+      /* is this signed? -- posies treats it as unsigned, I believe */
+#if 1
       g->GL = GL;
       g->f_GL = UNSIGNED_12_TO_DOUBLE(GL);
+#else
+      g->GL = TWOS_12(GL);
+      g->f_GL = DOUBLE_12(g->GL);
+#endif
     }
 
   if (S == 0)
@@ -1714,7 +1756,7 @@ static void gk_command(int cmd)
   g->f_GK = DOUBLE_20(g->GK);
 
   if (describe_commands)
-    fprintf(stderr, "g%d phase: %d = %d %.4f\n", gen, data, g->GK, g->f_GK);
+    fprintf(stderr, "g%d phase: %d %.4f\n", gen, g->GK, g->f_GK);
 
   if ((gen_is_active(g)) && 
       (samples > last_GMODE_command))
@@ -1801,19 +1843,19 @@ static void print_gmode_name(int mode)
 	default:       fprintf(stderr, "unknown"); break;
 	}
       
-      fprintf(stderr, "-%s", E_name[E]);
+      fprintf(stderr, "-%s-", E_name[E]);
     }
 
   switch (R)
     {
-    case 1:  fprintf(stderr, "-pause");  break;
-    case 15: fprintf(stderr, "-A");      break;
-    case 14: fprintf(stderr, "-B");      break;
-    case 9:  fprintf(stderr, "-wait");   break;
-    case 13: fprintf(stderr, "-C");      break;
-    case 7:  fprintf(stderr, "-rd");     break;
-    case 3:  fprintf(stderr, "-wrt");    break;
-    case 2:  fprintf(stderr, "-DAC");    break;
+    case 1:  fprintf(stderr, "pause");  break;
+    case 15: fprintf(stderr, "A");      break;
+    case 14: fprintf(stderr, "B");      break;
+    case 9:  fprintf(stderr, "wait");   break;
+    case 13: fprintf(stderr, "C");      break;
+    case 7:  fprintf(stderr, "rd");     break;
+    case 3:  fprintf(stderr, "wrt");    break;
+    case 2:  fprintf(stderr, "DAC");    break;
     default: fprintf(stderr, "unknown"); break;
     }
 }
@@ -1885,14 +1927,14 @@ static void gmode_command(int cmd)
 		samples, (double)samples / (double)srate, current_command, 
 		gen, processing_ticks);
     
-      /*
+#if 0
       if ((gen_was_active) &&
 	  (!gen_is_active(g)) &&
 	  (g->f_GQ != 0.0))
 	fprintf(stderr, "sample %d (%.3f), command %d, g%d turned off with amp %.4f\n", 
 		samples, (double)samples / (double)srate, current_command,
 		gen, g->f_GQ);
-      */
+#endif
 	
       if ((gen_was_active) && 
 	  ((g->GFM != old_GFM) || (g->GMODE != old_GMODE)) &&
@@ -1940,7 +1982,7 @@ static void go_command(int cmd)
     {
       if (osc_run(g->GMODE) == 2)
 	fprintf(stderr, "g%d DAC out: %d\n", gen, data);
-      else fprintf(stderr, "g%d freq change: %d = %d %.4f (%.4f Hz)\n", gen, data, g->GO, g->f_GO, g->f_GO * 0.5 * srate / 256.0);
+      else fprintf(stderr, "g%d freq change: %d %.4f (%.4f Hz)\n", gen, g->GO, g->f_GO, g->f_GO * 0.5 * srate / 256.0);
     }
 }
 
@@ -2366,6 +2408,7 @@ static void handle_command(int cmd)
 
 /* ---------------------------------------- debugging ---------------------------------------- */
 
+#if 0
 static void dump_gens(void)
 {
   int i;
@@ -2394,7 +2437,7 @@ static void dump_mods(void)
 	      mods[i]->MSUM, mod_outs[mods[i]->MSUM],
 	      mods[i]->f_M0, mods[i]->f_M1, mods[i]->f_L0, mods[i]->f_L1);
 }
-
+#endif
 
 static void dump_gen_sum(int addr)
 {
@@ -2526,47 +2569,56 @@ static void dump_patch(void)
   for (i = 0; i < GENERATORS; i++)
     if (gens[i]->GMODE != 0)
       {
+	generator *g;
+	g = gens[i];
 	fprintf(stderr, "g%d ", i);
-	print_gmode_name(gens[i]->GMODE);
+	print_gmode_name(g->GMODE);
 	fprintf(stderr, " [");
-	if ((gens[i]->GFM >> 6) == 0)
-	  dump_gen_sum(gens[i]->GFM & 0x3f);
-	else print_mod_sum(gens[i]->GFM);
+	if ((g->GFM >> 6) == 0)
+	  dump_gen_sum(g->GFM & 0x3f);
+	else print_mod_sum(g->GFM);
 	fprintf(stderr, "]->[");
-	if (osc_run(gens[i]->GMODE) == 2)
-	  fprintf(stderr, "OUT%d", gens[i]->GO & 0xf);
-	else dump_gen_sum(gens[i]->GSUM);
-	fprintf(stderr, " (%d)], (amp: %.3f, freq: %.3f)\n", 
-		gen_mem_readers(gens[i]->GSUM),
-		gens[i]->f_GQ,
-		gens[i]->f_GJ * 0.5 * srate);
+	if (osc_run(g->GMODE) == 2)
+	  fprintf(stderr, "OUT%d", g->GO & 0xf);
+	else dump_gen_sum(g->GSUM);
+	fprintf(stderr, " (%d)], (amp: %.3f, freq: %.3f", 
+		gen_mem_readers(g->GSUM),
+		gen_amp(g),
+		g->f_GJ * 0.5 * srate);
+	if (g->f_GJ == 0.0)
+	  fprintf(stderr, ", phase: %.3f", g->f_GK);
+	fprintf(stderr, ")\n");
       }
   fprintf(stderr, "\n");
 
   for (i = 0; i < MODIFIERS; i++)
     if (mod_mode(mods[i]->MMODE) != M_INACTIVE)
       {
-	fprintf(stderr, "m%d %s min", i, mode_name(mod_mode(mods[i]->MMODE)));
-	print_mod_sum(mods[i]->MIN);
+	modifier *m;
+	m = mods[i];
+	fprintf(stderr, "m%d %s min", i, mode_name(mod_mode(m->MMODE)));
+	print_mod_sum(m->MIN);
 	fprintf(stderr, "], mrm");
-	if (mod_mode(mods[i]->MMODE) == M_DELAY)
-	  fprintf(stderr, "[delay: %d", mods[i]->MRM & 0x1f);
-	else print_mod_sum(mods[i]->MRM);
+	if (mod_mode(m->MMODE) == M_DELAY)
+	  fprintf(stderr, "[delay: %d", m->MRM & 0x1f);
+	else print_mod_sum(m->MRM);
 	fprintf(stderr, "]->[");
-	if ((mods[i]->MSUM >> 6) != 0)
+	if ((m->MSUM >> 6) != 0)
 	  fprintf(stderr, "-replace");
-	dump_mod_sum(mods[i]->MSUM & 0x3f);
-	fprintf(stderr, " (%d)]\n", mod_mem_readers(mods[i]->MSUM));
+	dump_mod_sum(m->MSUM & 0x3f);
+	fprintf(stderr, " (%d)]\n", mod_mem_readers(m->MSUM));
       }
   fprintf(stderr, "\n");
 
   for (i = 0; i < DELAYS; i++)
     if (dlys[i]->P != D_INACTIVE)
       {
+	delay *d;
+	d = dlys[i];
 	fprintf(stderr, "d%d %s %.3f (%d + %d of %d)\n",
-		i, P_name(dlys[i]->P), 
-		delay_memory[dlys[i]->X + dlys[i]->Y],
-		dlys[i]->X, dlys[i]->Y, dlys[i]->Z);
+		i, P_name(d->P), 
+		delay_memory[d->X + d->Y],
+		d->X, d->Y, d->Z);
       }
   {
     double dmax;
@@ -2574,7 +2626,7 @@ static void dump_patch(void)
     for (i = 1; i < DELAY_MEMORY_SIZE; i++)
       if (fabs(delay_memory[i]) > dmax)
 	dmax = fabs(delay_memory[i]);
-    fprintf(stderr, "delay memory peak: %.4f\n", dmax);
+    fprintf(stderr, "delay memory peak: %.4f\n\n", dmax);
   }
 }
 
@@ -2677,3 +2729,11 @@ int main(int argc, char **argv)
   return(0);
 }
 
+/* cover of an old copy of the specs:
+
+   NOT TO LEAVE THE MUSIC ROOM                 [red ink and underlined]
+
+   Would be an awful fate,                     [pencilled in below]
+   Said Cleopatra to her groom,
+   and struck him on the pate!
+*/
