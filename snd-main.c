@@ -1566,7 +1566,14 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 				      if (dont_start(startup_filename)) snd_exit(1);
 				    }
 				  ss->open_requestor = FROM_STARTUP;
-				  snd_open_file(argname, FILE_READ_WRITE);
+				  if (snd_open_file(argname, FILE_READ_WRITE) == NULL)
+				    {
+				      /* non-existent file at startup */
+				      fprintf(stdout, "can't open %s\n", argname);
+				      if (ss->startup_errors)
+					ss->startup_errors = mus_format("%s\n%s ;%s\"%s\"\n", ss->startup_errors, listener_prompt(ss), "can't open ", argname);
+				      else ss->startup_errors = mus_format(";%s\"%s\"\n", "can't open ", argname);
+				    }
 				}
 			    }
 			}

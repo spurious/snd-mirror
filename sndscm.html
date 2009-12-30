@@ -8009,7 +8009,7 @@ all     83   9.5110    0.5097
 </p>
 
 <p>
-Here is a graph of the values I've found so far (as of October 2009), followed by a graph of
+Here is a graph of the values I've found so far (as of December 2009), followed by a graph of
 the exponent vs n (n^y = peak amp). 
 One very good
 set for all harmonics up to n=40 is given in Horner and Beauchamp, "a genetic algorithm-based method
@@ -8204,6 +8204,74 @@ phase to 0.0).  If you then search around this set of phases, you'll find very g
 </p>
 
 <img src="pix/sum5.png" hspace=20 alt="n=5 case">
+
+<p>And a couple others:
+</p>
+
+<table border=0 hspace=20>
+<tr>
+<td><img src="pix/all57.png" alt="57 harmonics"></td>
+<td width=20></td>
+<td><img src="pix/odd57.png" alt="57 odd harmonics"></td>
+</tr></table>
+
+<!-- all57:
+
+(define phases '#(0.000000 0.402544 0.873914 0.824224 1.710182 0.183023 0.378574 0.128782 1.816255 1.249608 1.030253 1.030831 0.184699 0.677473 1.528003 1.262679 1.840809 0.082787 1.487290 1.579585 0.150833 0.308197 0.183834 1.435443 0.452047 0.800416 1.697556 1.103318 1.169502 1.438166 1.765331 0.875181 1.049248 1.321068 0.824424 0.599899 1.694664 0.504547 1.583285 1.657047 0.940116 1.788668 1.529808 0.367904 1.371253 0.572088 1.370961 1.371348 0.244247 1.592370 0.135712 0.911345 0.228778 1.543468 1.190091 1.504171 1.491159))
+
+(define (make-all-57)
+  (set! (with-inset-graph) #f)
+  (let* ((samples 1000)
+	 (incr (/ (* 2 pi) samples)))
+    (with-sound (:channels 1 :clipped #f)
+      (do ((i 0 (+ i 1))
+	   (x 0.0 (+ x incr)))
+	  ((= i samples))
+	(let ((sum 0.0))
+	  (do ((k 1 (+ k 1)))
+	      ((= k 58))
+	    (let ((val (sin (+ (* k x) (* pi (phases (- k 1)))))))
+	      (set! sum (+ sum val))))
+	  (outa i sum)))))
+
+  (set! (y-bounds) (list -8.0 8.0))
+  (set! (channel-style) channels-superimposed)
+  (set! (axis-color) (make-color 0 0 0))
+  (set! (x-axis-style) x-axis-in-samples)
+  (set! (selected-graph-color) (make-color 1 1 1))
+  (set! (selected-data-color) (make-color 0 0 0))
+  (set! (axis-label-font) "9x15")
+  (set! (x-axis-label) "57 harmonics with peak at 7.546")
+  )
+
+(define odd-phases '#(0.000000 -0.095905 1.360419 0.638244 0.752436 0.060307 1.680434 0.892474 1.556627 1.342822 1.202039 0.989766 0.747386 1.502768 1.484789 1.280575 -0.299617 0.648918 1.386594 0.570314 0.971680 0.602106 1.411224 0.349887 1.776881 0.686211 -0.138570 0.102115 0.187653 1.480790 0.475407 0.080540 0.078971 0.288194 0.529704 0.929207 1.248880 1.402125 0.332857 1.263541 0.757496 0.254501 0.084949 1.308375 0.041441 0.288389 1.222780 0.362725 1.537117 1.518618 0.267187 0.845609 0.722902 0.451852 0.582589 0.839423 1.817054))
+
+(define (make-odd-57)
+  (set! (with-inset-graph) #f)
+  (let* ((samples 1000)
+	 (incr (/ (* 2 pi) samples)))
+    (with-sound (:channels 1 :clipped #f)
+      (do ((i 0 (+ i 1))
+	   (x 0.0 (+ x incr)))
+	  ((= i samples))
+	(let ((sum 0.0))
+	  (do ((k 1 (+ k 1))
+	       (j 1 (+ j 2)))
+	      ((= k 58))
+	    (let ((val (sin (+ (* j x) (* pi (odd-phases (- k 1)))))))
+	      (set! sum (+ sum val))))
+	  (outa i sum)))))
+
+  (set! (y-bounds) (list -8.0 8.0))
+  (set! (channel-style) channels-superimposed)
+  (set! (axis-color) (make-color 0 0 0))
+  (set! (x-axis-style) x-axis-in-samples)
+  (set! (selected-graph-color) (make-color 1 1 1))
+  (set! (selected-data-color) (make-color 0 0 0))
+  (set! (axis-label-font) "9x15")
+  (set! (x-axis-label) "57 odd harmonics with peak at 7.564")
+  )
+-->
 
 
 <p>We can also use <a href="#withmixedsound">with-mixed-sound</a> to watch the waveforms "in real-time":

@@ -676,7 +676,6 @@ const char *io_error_name(io_error_t err);
   void snd_error(const char *format, ...);
   void snd_warning(const char *format, ...);
 #endif
-void snd_error_without_redirection_or_hook(const char *msg);
 void snd_error_without_format(const char *msg);
 void snd_warning_without_format(const char *msg);
 bool run_snd_error_hook(const char *msg);
@@ -1598,7 +1597,6 @@ void syncd_mix_unset_color(int id);
 void syncd_mix_set_amp(int id, mus_float_t amp);
 void syncd_mix_set_speed(int id, mus_float_t amp);
 void syncd_mix_set_amp_env(int id, env *e);
-void syncd_mix_set_position(int mix_id, mus_long_t pos);
 void syncd_mix_play(int id);
 void mix_unset_color_from_id(int id);
 color_t mix_set_color_from_id(int id, color_t new_color);

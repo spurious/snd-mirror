@@ -2815,7 +2815,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define undo-edit undo)");
   
   XEN_EVAL_C_STRING("(define (procedure-name proc) (format #f \"~A\" proc))");
-  /* needed in snd-test.scm and hooks.scm, originally a guile-ism I think, but that function returned a symbol? */
+  /* needed in snd-test.scm and hooks.scm */
 
   XEN_EVAL_C_STRING("(define (symbol-append . args) \"(symbol-append . args) makes a new symbol from its args\"\
                        (string->symbol (apply string-append (map symbol->string args))))");

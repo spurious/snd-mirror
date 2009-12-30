@@ -416,6 +416,7 @@
 (hey " * 'gl is added to *features*~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     --------~%")
 (hey " *     16-Dec-09: removed Guile support.~%")
 (hey " *     --------~%")
 (hey " *     17-Oct-08: removed gtkglext bindings.~%")

@@ -509,7 +509,7 @@ void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, 
 static void call_user_keymap(int hashedsym, int count)
 {
   kbd_cursor_t res = KEYBOARD_NO_ACTION;
-  /* if guile call the associated scheme code, else see if basic string parser can handle it */
+
   if (XEN_BOUND_P(user_keymap[hashedsym].func))
     {
       /* not _NO_CATCH here because the code is not protected at any higher level */

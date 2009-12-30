@@ -2257,7 +2257,7 @@ static void syncd_mix_set_position_1(mix_info *md, void *data)
 }
 
 
-void syncd_mix_set_position(int mix_id, mus_long_t pos)
+static void syncd_mix_set_position(int mix_id, mus_long_t pos)
 {
   move_mix_data *pos_data;
   pos_data = (move_mix_data *)malloc(sizeof(move_mix_data));

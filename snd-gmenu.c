@@ -251,7 +251,12 @@ static void view_dots_and_lines_callback(GtkWidget *w, gpointer info) {set_graph
 static void view_lollipops_callback(GtkWidget *w, gpointer info) {set_graph_style(GRAPH_LOLLIPOPS);}
 static void view_zero_callback(GtkWidget *w, gpointer info) {set_show_y_zero((!(show_y_zero(ss))));}
 static void view_cursor_callback(GtkWidget *w, gpointer info) {set_verbose_cursor((!(verbose_cursor(ss))));}
-static void view_inset_callback(GtkWidget *w, gpointer info) {set_with_inset_graph((!(with_inset_graph(ss))));}
+
+static void view_inset_callback(GtkWidget *w, gpointer info) 
+{
+  set_with_inset_graph((!(with_inset_graph(ss))));
+  for_each_chan(update_graph);
+}
 
 static void view_controls_callback(GtkWidget *w, gpointer info)
 {

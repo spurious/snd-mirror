@@ -979,7 +979,9 @@ static int syncd_channels(int sync)
       for (i = 0; i < ss->max_sounds; i++)
 	{
 	  sp = ss->sounds[i];
-	  if ((sp) && (sp->inuse == SOUND_NORMAL) && (sp->sync == sync)) 
+	  if ((sp) && 
+	      (sp->inuse == SOUND_NORMAL) && 
+	      (sp->sync == sync)) 
 	    chans += sp->nchans;
 	}
       return(chans);
@@ -1004,7 +1006,9 @@ sync_info *snd_sync(int sync)
       for (i = 0; i < ss->max_sounds; i++)
 	{
 	  sp = ss->sounds[i];
-	  if ((sp) && (sp->inuse == SOUND_NORMAL) && (sp->sync == sync))
+	  if ((sp) && 
+	      (sp->inuse == SOUND_NORMAL) && 
+	      (sp->sync == sync))
 	    for (k = 0; k < sp->nchans; k++, j++)
 	      si->cps[j] = sp->chans[k];
 	}
@@ -1031,7 +1035,7 @@ sync_info *sync_to_chan(chan_info *cp)
 {
   snd_info *sp;
   sp = cp->sound;
-  if (sp->sync)
+  if (sp->sync != 0)
     return(snd_sync(sp->sync));
   return(make_simple_sync(cp, 0));
 }

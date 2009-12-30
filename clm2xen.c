@@ -116,8 +116,10 @@ int mus_optkey_unscramble(const char *caller, int nkeys, XEN *keys, XEN *args, i
 	  if (keying) 
 	    clm_error(caller, "unmatched value within keyword section?", args[arg_ctr]);
 	  /* type checking on the actual values has to be the caller's problem */
+
 	  if (arg_ctr >= nkeys)
 	    clm_error(caller, "extra trailing args?", args[arg_ctr]);
+
 	  keys[arg_ctr] = args[arg_ctr];
 	  orig[arg_ctr] = arg_ctr + 1;
 	  arg_ctr++;
@@ -128,13 +130,17 @@ int mus_optkey_unscramble(const char *caller, int nkeys, XEN *keys, XEN *args, i
 	{
 	  XEN key;
 	  int i;
+
 	  if ((arg_ctr == (nargs - 1)) ||
 	      (!(XEN_BOUND_P(args[arg_ctr + 1]))))
 	    clm_error(caller, "keyword without value?", args[arg_ctr]);
+
 	  keying = true;
 	  key = args[arg_ctr];
+
 	  if (XEN_KEYWORD_P(args[arg_ctr + 1])) 
 	    clm_error(caller, "two keywords in a row?", key);
+
 	  key_found = false;
 	  for (i = key_start; i < nkeys; i++)
 	    {
@@ -147,6 +153,7 @@ int mus_optkey_unscramble(const char *caller, int nkeys, XEN *keys, XEN *args, i
 		  key_found = true;
 		}
 	    }
+
 	  if (!key_found)
 	    {
 	      /* either there's a redundant keyword pair or a keyword that 'caller' doesn't recognize */
@@ -289,7 +296,7 @@ static XEN kw_frequency, kw_initial_phase, kw_wave, kw_amplitude,
 
 static void init_keywords(void)
 {
-  /* keywords are GC-protected by Guile; in Ruby there's rb_intern of the symbol -- is it safe? */
+  /* in Ruby there's rb_intern of the symbol -- is it safe? */
   kw_frequency =        XEN_MAKE_KEYWORD("frequency");
   kw_initial_phase =    XEN_MAKE_KEYWORD("initial-phase");
   kw_wave =             XEN_MAKE_KEYWORD("wave");

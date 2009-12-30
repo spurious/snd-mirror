@@ -478,8 +478,10 @@ static idle_func_t startup_funcs(XtPointer context)
 	      (sp->selected_channel == NO_SELECTION)) /* don't clobber possible select-channel in loaded startup files */
 	    select_channel(sp, 0);
 	}
+
       if ((ss->init_window_height == 0) && (sound_style(ss) == SOUNDS_HORIZONTAL))
 	set_widget_height(MAIN_SHELL(ss), 200); /* otherwise it's just a title bar! */
+
       if (ss->startup_errors)
 	{
 	  handle_listener(true); /* create it, if necessary */
@@ -1155,12 +1157,14 @@ void snd_doit(int argc, char **argv)
 	}
     }
 #endif
+
   if (setjmp(top_level_jump))
     {
       if (!(ss->jump_ok))
 	snd_error_without_format(_("Caught top level error (will try to continue):\n"));
       else ss->jump_ok = false;
     }
+
 #if MUS_DEBUGGING
   XtAppSetErrorHandler(MAIN_APP(ss), trap_xt_error);
 #endif

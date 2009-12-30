@@ -232,12 +232,6 @@ void snd_error(const char *format, ...)
 }
 
 
-void snd_error_without_redirection_or_hook(const char *msg)
-{
-  snd_error_1(msg, false);
-}
-
-
 void snd_error_without_format(const char *msg)
 {
   snd_error_1(msg, true);

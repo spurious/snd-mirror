@@ -1,4 +1,4 @@
-/* xm.c: s7/Guile/Ruby/Forth bindings for X/Xt/Xpm/Xm/Xext
+/* xm.c: s7/Ruby/Forth bindings for X/Xt/Xpm/Xm/Xext
  *   needs xen.h
  *   for tests and examples see snd-motif.scm, bess.scm|rb, and snd-test.scm
  */
@@ -10,6 +10,7 @@
 
 /* HISTORY: 
  *
+ *   --------
  *   23-Dec:    removed XmPrint/libXp support.
  *   16-Dec:    removed Guile support.
  *   16-Nov:    XM_XTPOINTER resource type for 64-bit systems.
@@ -15233,7 +15234,7 @@ specified widget's callback list. (The 3rd arg is a list of descriptors returned
 /* need these for all callback proc types, and locations to store the list of them */
 
 enum {
-  GXM_Print, GXM_Any, GXM_Arrow, GXM_Combo, GXM_Command, GXM_Container_Outline, GXM_Container_Select,
+  GXM_Any, GXM_Arrow, GXM_Combo, GXM_Command, GXM_Container_Outline, GXM_Container_Select,
   GXM_Convert, GXM_Destination, GXM_Display, GXM_Drag_Drop, GXM_Drag_Motion, GXM_Drag_Proc, GXM_Drag_Start,
   GXM_Drawing, GXM_Drawn, GXM_Drop_Finish, GXM_Drop_Proc, GXM_DropSite_Enter, GXM_DropSite_Leave, GXM_Drop_Start,
   GXM_File, GXM_List, GXM_Notebook, GXM_Operation, GXM_Popup, GXM_PushButton, GXM_RowColumn, GXM_Scale,

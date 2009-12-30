@@ -844,6 +844,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * --------
  * 16-Dec:    hash-table-for-each.
  * 1-Dec:     mpc versions before 0.8.0 are no longer supported.
  * 24-Nov:    define-macro* and defmacro*.

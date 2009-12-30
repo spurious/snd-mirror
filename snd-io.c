@@ -705,7 +705,7 @@ snd_data *free_snd_data(snd_data *sd)
     {
       if (!(sd->inuse))
 	{
-	  /* assume the inuse cases will eventually be freed via Guile GC.
+	  /* assume the inuse cases will eventually be freed the GC.
 	   *   this can happen if a sampler is created, and forgotten,
 	   *   and the associated sound is closed.  The closing runs through
 	   *   the snd_data (sounds) list freeing the descriptors, but the

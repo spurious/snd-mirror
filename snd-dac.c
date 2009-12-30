@@ -2780,13 +2780,17 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
 
   if (XEN_NOT_NULL_P(arglist))
     {
-      XEN args[20]; 
-      XEN keys[10];
-      int orig_arg[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+      #define NARGS 10
+      XEN args[NARGS * 2]; 
+      XEN keys[NARGS];
+      int orig_arg[NARGS] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
       int vals, i, arglist_len;
 
-      object = XEN_CAR(arglist);
-      arglist = XEN_CDR(arglist);
+      if (!XEN_KEYWORD_P(XEN_CAR(arglist)))
+	{
+	  object = XEN_CAR(arglist);
+	  arglist = XEN_CDR(arglist);
+	}
 
       keys[0] = kw_start;
       keys[1] = kw_end;
@@ -2799,11 +2803,11 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
       keys[8] = kw_srate;
       keys[9] = kw_channels;
 
-      for (i = 0; i < 16; i++) args[i] = XEN_UNDEFINED;
+      for (i = 0; i < NARGS * 2; i++) args[i] = XEN_UNDEFINED;
       arglist_len = XEN_LIST_LENGTH(arglist);
 
       for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
-      vals = mus_optkey_unscramble(S_play, 8, keys, args, orig_arg);
+      vals = mus_optkey_unscramble(S_play, NARGS, keys, args, orig_arg);
 
       if (vals > 0)
 	{

@@ -592,6 +592,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * --------
  * 14-Oct:     sine-summation, sum-of-sines, sum-of-cosines removed.
  * 28-Aug:     changed some fft-related sizes from int to mus_long_t.
  * 17-Aug:     mus_frame|mixer_copy|fill.
