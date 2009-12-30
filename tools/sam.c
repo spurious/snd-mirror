@@ -26,8 +26,8 @@
 #define FLUSH_BAD_COMMANDS false
 
 static bool describe_commands = DEFAULT_DESCRIBE_COMMANDS;
-static int start_describing = -1, stop_describing = -1;
-static int dump_patch_at = -1;
+static int start_describing = 0, stop_describing = 10000;
+static int dump_patch_at = 10000;
 
 
 #define LDB(Cmd, Size, Position) ((Cmd >> Position) & ((1 << Size) - 1))
@@ -539,12 +539,6 @@ static void process_gen(int gen)
     Env12 = AmpOff12 + NewAmp12;
   else Env12 = AmpOff12 - NewAmp12;
 
-  if (((osc_env(Gmode10) == L_PLUS_2_TO_MINUS_Q) || 
-       (osc_env(Gmode10) == L_MINUS_2_TO_MINUS_Q)) &&
-      (fabs(Env12) > 10.0) &&
-      (describe_commands))
-    fprintf(stderr, "expt: %.3f = %.3f +/- %.3f, %.3f, %.3f\n", Env12, AmpOff12, NewAmp12, CurAmp24, AmpSwp20);
-
   OscOut13 *= Env12;
   if (adding_to_sum(Gmode10))
     {
@@ -612,8 +606,7 @@ static double mod_read(int addr)
     case 1: return(mod_ins[A]);
     case 2: return(mod_outs[A]);
     }
-  fprintf(stderr, "bad MIN/MRM\n");
-  abort();
+  fprintf(stderr, "bad MIN/MRM: %d\n", addr);
   return(0);
 }
 
@@ -625,7 +618,6 @@ static void mod_write(int addr, double val)
   if (isnan(val))
     {
       fprintf(stderr, "write %d %d NaN!\n", addr >> 6, addr & 0x3f);
-      abort();
     }
   AAAAAA = addr & 0x3f;
   R = BIT(addr, 6);
@@ -750,10 +742,6 @@ static void process_mod(int mod)
       if ((B != 0.0) && 
 	  (m->M1 != 0))
 	{
-	  /*
-	  if ((describe_commands) && (mod == 4))
-	    fprintf(stderr, "m%d %d triggered: %d (%.6f), M0: %d\n", mod, samples, TWOS_20(IS), TWOS_20_TO_DOUBLE(IS), m->M0);
-	  */
 	  /* I'm getting an immediate fixed-point from the SAM files that used triggered noise! */
 	  /* they used the M0 seed of 359035904 which immediately cycles at 422913! */
 	  m->L1 = IS;
@@ -991,10 +979,6 @@ static void process_mod(int mod)
  * modifier Z+3 passes later.  In delay tap mode, a word is sent to
  * the modifier but delay memory is not written into.
  *
- * [currently I'm ignoring that 3 word delay -- 1 word comes from the connection, I assume,
- *  but where are the other 2?  I actually think this part of the spec is either wrong or
- *  misleading -- surely the extra 2 words weren't part of the circulating part of the delay-line]
- * 
  * 	In table look-up mode, the 20-bit data word received
  * from the modifier is shifted to the right Z bits, bringing in zeros,
  * and the right 16 bits of the result are used to address the memory
