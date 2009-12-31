@@ -850,12 +850,17 @@ static void process_mod(int mod)
 
     case M_ONE_POLE:
       /* 10001:	one pole.  S := L1*M1 + B*M0; L1 := S
+       *
        *    but in the errata:
        *    "DAJ - It seems that the modifier mode one pole is really
        * 10001:	one pole.  S := L1*M1 + B*L0; L1 := S"
+       *
+       * but I think that is incorrect; old reverbs are definitely using the spec form of the 1-pole filter
        */
       tmp0 = m->f_L1 * m->f_M1;
-      tmp1 = B * m->f_L0;
+      /* tmp1 = B * m->f_L0; */
+      tmp1 = B * m->f_M0;
+
       m->f_L1 = tmp0 + tmp1;
       mod_write(m->MSUM, m->f_L1);
       break;
@@ -1583,7 +1588,7 @@ static void gp_command(int cmd)
   g->f_GP = DOUBLE_20(g->GP);
 
   if (describe_commands)
-    fprintf(stderr, "g%d amp change: %d %.4f\n", gen, g->GP, g->f_GP);
+    fprintf(stderr, "g%d amp change: %d (%.4f/sec), amp: %.4f\n", gen, g->GP, g->f_GP * srate, g->f_GQ);
 }
 
 
@@ -1694,13 +1699,13 @@ static void gl_command(int cmd)
 	{
 	  if (S == 1)
 	    fprintf(stderr, "g%d: noop\n", gen);
-	  else fprintf(stderr, "g%d outloc: %d\n", gen, g->GSUM);
+	  else fprintf(stderr, "g%d outloc: gen-outs[%d]\n", gen, g->GSUM);
 	}
       else
 	{
 	  if (S == 0)
 	    fprintf(stderr, "g%d amp offset: %d = %.4f\n", gen, g->GL, g->f_GL);
-	  else fprintf(stderr, "g%d outloc %d + amp offset: %d = %.4f\n", gen, g->GSUM, g->GL, g->f_GL);
+	  else fprintf(stderr, "g%d outloc: gen-outs[%d] + amp offset: %d = %.4f\n", gen, g->GSUM, g->GL, g->f_GL);
 	}
     }
 
@@ -1973,7 +1978,8 @@ static void go_command(int cmd)
     {
       if (osc_run(g->GMODE) == 2)
 	fprintf(stderr, "g%d DAC out: %d\n", gen, data);
-      else fprintf(stderr, "g%d freq change: %d %.4f (%.4f Hz)\n", gen, g->GO, g->f_GO, g->f_GO * 0.5 * srate / 256.0);
+      else fprintf(stderr, "g%d freq change: %d %.4f (%.4f Hz/sec), freq: %.4f\n", 
+		   gen, g->GO, g->f_GO, g->f_GO * 0.5 * srate * srate / 256.0, g->f_GJ * srate * 0.5);
     }
 }
 
@@ -2218,7 +2224,7 @@ static void mmode_command(int cmd)
 	{
 	  if ((H == 0) || (M == 0))
 	    fprintf(stderr, ", ");
-	  fprintf(stderr, "outloc(%s): %d", ((MSUM >> 6) == 0) ? "+" : "=", MSUM & 0x3f);
+	  fprintf(stderr, "outloc(%s): mod-outs[%d]", ((MSUM >> 6) == 0) ? "+" : "=", MSUM & 0x3f);
 	}
       if (C == 1)
 	{
@@ -2450,7 +2456,7 @@ static void dump_mod_sum(int addr)
   fprintf(stderr, "m-sum%d: %.3f %.3f %.3f [max: %.3f]", addr, prev_mod_ins[addr], mod_ins[addr], mod_outs[addr], peak_mod_ins[addr]);
 
   for (i = 0; i < MODIFIERS; i++)
-    if ((mods[i]->MMODE != 0) && 
+    if ((mod_mode(mods[i]->MMODE) != M_INACTIVE) && 
 	((mods[i]->MSUM &0x3f) == addr))
       fprintf(stderr, " m%d", i);
 }
@@ -2587,11 +2593,22 @@ static void dump_patch(void)
       {
 	modifier *m;
 	m = mods[i];
-	fprintf(stderr, "m%d %s min", i, mode_name(mod_mode(m->MMODE)));
+	fprintf(stderr, "m%d %s ", i, mode_name(mod_mode(m->MMODE)));
+	if (mod_mode(m->MMODE) == M_MIXING)
+	  fprintf(stderr, "%.4f * ", m->f_M0);
+	fprintf(stderr, "A");
 	print_mod_sum(m->MIN);
-	fprintf(stderr, "], mrm");
+	fprintf(stderr, "], ");
+	if (mod_mode(m->MMODE) == M_MIXING)
+	  fprintf(stderr, "%.4f * ", m->f_M1);
+	fprintf(stderr, "B");
 	if (mod_mode(m->MMODE) == M_DELAY)
-	  fprintf(stderr, "[delay: %d", m->MRM & 0x1f);
+	  {
+	    delay *d;
+	    d = dlys[m->MRM & 0x1f];
+	    fprintf(stderr, "[delay: %d (%.4f)", m->MRM & 0x1f, delay_memory[d->X + d->Y]);
+	    fprintf(stderr, ", M0: %.4f, M1: %.4f, L0: %.4f, L1: %.4f", m->f_M0, m->f_M1, m->f_L0, m->f_L1);
+	  }
 	else print_mod_sum(m->MRM);
 	fprintf(stderr, "]->[");
 	if ((m->MSUM >> 6) != 0)
