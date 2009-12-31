@@ -26,8 +26,8 @@
 #define FLUSH_BAD_COMMANDS false
 
 static bool describe_commands = DEFAULT_DESCRIBE_COMMANDS;
-static int start_describing = 0, stop_describing = 10000;
-static int dump_patch_at = 10000;
+static int start_describing = -1, stop_describing = -1;
+static int dump_patch_at = -1;
 
 
 #define LDB(Cmd, Size, Position) ((Cmd >> Position) & ((1 << Size) - 1))
@@ -709,8 +709,11 @@ static void process_mod(int mod)
 
   m = mods[mod];
   mode = mod_mode(m->MMODE);
-  if (mode == M_INACTIVE) 
-    return;
+  if (mode == M_INACTIVE)
+    {
+      /* technically, mod_write(m->MSUM, 0.0) which might be in "replace" mode if BIT(m->MSUM, 6) is not 0 */
+      return;
+    }
 
   A = mod_read(m->MIN);
   B = mod_read(m->MRM);
@@ -725,6 +728,8 @@ static void process_mod(int mod)
     case M_NOISE:
       /* 00010:	uniform noise.  S := L0 + L1*M0 (integer multiply, low-order
        *                        20 bits of product used; overflow ignored); L1 := S
+       *
+       * see below -- I don't think this is correct.
        */
       IS = (m->L0 + (m->L1 * m->M0)) & 0xfffff;
       mod_write(m->MSUM, TWOS_20_TO_DOUBLE(IS));
@@ -737,15 +742,17 @@ static void process_mod(int mod)
        *          if B*M1 (integer multiply, low-order 20 bits of product
        *          used; overflow ignored) is not 0, L1 := S
        */
-      IS = (m->L0 + (m->L1 * m->M0)) & 0xfffff;
+
+      /* IS = (m->L0 + (m->L1 * m->M0)) & 0xfffff; */
+      /* I'm getting an immediate fixed-point from the SAM files that used triggered noise! */
+      /* they used the M0 seed of 359035904, (L1: 204282), which immediately cycles. */
+      /* perhaps the spec is wrong... -- I'll try taking the middle bits */
+
+      IS = (m->L0 + ((m->L1 * m->M0) >> 10)) & 0xfffff;
       mod_write(m->MSUM, TWOS_20_TO_DOUBLE(IS));
       if ((B != 0.0) && 
 	  (m->M1 != 0))
-	{
-	  /* I'm getting an immediate fixed-point from the SAM files that used triggered noise! */
-	  /* they used the M0 seed of 359035904 which immediately cycles at 422913! */
-	  m->L1 = IS;
-	}
+	m->L1 = IS;
       break;
 
     case M_LATCH:
@@ -2054,11 +2061,11 @@ static void mm_command(int cmd)
 	  fprintf(stderr, "m%d M1: %d: %d %.6f\n", mod, data, m->M1, m->f_M1); 
 	  break;
 	case 2: 
-	  fprintf(stderr, "m%d M0+DX: data: %d + DX: %d (%d), %d -> %d, %.6f -> %.6f\n", 
+	  fprintf(stderr, "m%d M0+DX: data: %d + DX: %d (scl: %d), %d -> %d, %.6f -> %.6f\n", 
 		  mod, data, old_DX, m->mult_scl_0, m->o_M0, m->M0, m->o_f_M0, m->f_M0); 
 	  break;
 	case 3: 
-	  fprintf(stderr, "m%d M1+DX: data: %d + DX: %d (%d), %d -> %d, %.6f -> %.6f\n", 
+	  fprintf(stderr, "m%d M1+DX: data: %d + DX: %d (scl: %d), %d -> %d, %.6f -> %.6f\n", 
 		  mod, data, old_DX, m->mult_scl_1, m->o_M1, m->M1, m->o_f_M1, m->f_M1); 
 	  break;
 	}
@@ -2181,8 +2188,8 @@ static void mmode_command(int cmd)
       m->mult_scl_0 = (1 << ((MMODE >> 2) & 0x3));
       /* whenever M0/M1 are set, we will include these factors */
 
-      m->M0 = m->o_M0 * m->mult_scl_0 / 4;
-      m->M1 = m->o_M1 * m->mult_scl_1 / 4;
+      m->M0 = (m->o_M0 / 4) * m->mult_scl_0; /* order matters -- don't want to set sign bit by accident */
+      m->M1 = (m->o_M1 / 4) * m->mult_scl_1;
       m->f_M0 = m->o_f_M0 * m->mult_scl_0;
       m->f_M1 = m->o_f_M1 * m->mult_scl_1;
 
@@ -2205,7 +2212,7 @@ static void mmode_command(int cmd)
 	{
 	  if (M == 0)
 	    fprintf(stderr, ", ");
-	  fprintf(stderr, "AA: %d, BB: %d", (MMODE >> 2) & 0x3, MMODE & 0x3);
+	  fprintf(stderr, "AA: %d, BB: %d (M0: %d, %.3f, M1: %d, %.3f)", (MMODE >> 2) & 0x3, MMODE & 0x3, m->M0, m->f_M0, m->M1, m->f_M1);
 	}
       if (S == 0)
 	{
