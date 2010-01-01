@@ -35212,6 +35212,17 @@
 (test (symbol? ''1) #f)
 (test (string->number "''1") #f)
 
+(test 00 0)
+(test (string->number "00") 0)
+(test 000 0)
+(test (string->number "000") 0)
+(test 00.00 0.0)
+(test (string->number "00.00") 0.0)
+(test (number? '0-0) #f)
+(test (string->number "0-0") #f)
+(test (number? '00-) #f)
+(test (string->number "00-") #f)
+
 (test (let ((val (catch #t (lambda ()
 			     (= 1 
 				01 +1 1. 

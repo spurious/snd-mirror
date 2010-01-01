@@ -8,6 +8,33 @@
  *        gcc sam.c -o sam -lm -O2
  *        sam TEST.SAM
  *        -> test.wav ("wav" or "riff" header, quad, little-endian float data at box srate)
+ *
+ * here's the Snd code I use to turn quad into stereo and scale the result to .9:
+ *
+
+(define* (quad->stereo (snd 0))
+  "turn a quad sound into a (new) stereo sound by mixing 4->1 and 3->2"
+  (let ((r0 (make-sampler 0 snd 0))
+	(r1 (make-sampler 0 snd 1))
+	(r2 (make-sampler 0 snd 2))
+	(r3 (make-sampler 0 snd 3)))
+    (let ((new-snd (new-sound :channels 2 
+			      :srate (srate snd) 
+			      :size (frames snd) 
+			      :header-type (header-type snd) 
+			      :data-format (data-format snd))))
+      (map-channel (lambda (y) 
+                     (+ (next-sample r0) (next-sample r3))) 
+                   0 (frames snd) new-snd 0)
+      (map-channel (lambda (y) 
+                     (+ (next-sample r1) (next-sample r2))) 
+                   0 (frames snd) new-snd 1)
+      (let* ((mx (apply max (maxamp new-snd #t)))
+	     (scl (/ 0.9 mx)))
+	(map-channel (lambda (y) (* y scl)) 0 (frames snd) new-snd 0)
+	(map-channel (lambda (y) (* y scl)) 0 (frames snd) new-snd 1)))))
+
+ *
  */
 
 #include <stdlib.h>
@@ -19,6 +46,8 @@
 
 #define OUTPUT_FILENAME "test.wav"
 #define TOTAL_SAMPLES -1
+
+ /* set TOTAL_SAMPLES to the number of samples you want computed, or -1 to compute all of them */
 
 
 #define DEFAULT_DESCRIBE_COMMANDS false
@@ -1039,10 +1068,10 @@ static void delay_write(int dly, double val)
   switch (d->P)
     {
     case D_INACTIVE:
+    case D_TAP:
       break;
       
     case D_LINE:
-    case D_TAP:
       delay_memory[d->X + d->Y] = val;
       break;
       
@@ -2087,7 +2116,7 @@ static void mm_command(int cmd)
  *
  *	N: 0  L0
  *	   1  L1
-*/
+ */
 
 static void ml_command(int cmd)
 {
@@ -2570,20 +2599,24 @@ static void dump_patch(void)
 	g = gens[i];
 	fprintf(stderr, "g%d ", i);
 	print_gmode_name(g->GMODE);
+
 	fprintf(stderr, " [");
 	if ((g->GFM >> 6) == 0)
 	  dump_gen_sum(g->GFM & 0x3f);
 	else print_mod_sum(g->GFM);
+
 	fprintf(stderr, "]->[");
 	if (osc_run(g->GMODE) == 2)
 	  fprintf(stderr, "OUT%d", g->GO & 0xf);
 	else dump_gen_sum(g->GSUM);
+
 	fprintf(stderr, " (%d)], (amp: %.3f, freq: %.3f", 
 		gen_mem_readers(g->GSUM),
 		gen_amp(g),
 		g->f_GJ * 0.5 * srate);
 	if (g->f_GJ == 0.0)
 	  fprintf(stderr, ", phase: %.3f", g->f_GK);
+
 	fprintf(stderr, ")\n");
       }
   fprintf(stderr, "\n");
@@ -2594,11 +2627,13 @@ static void dump_patch(void)
 	modifier *m;
 	m = mods[i];
 	fprintf(stderr, "m%d %s ", i, mode_name(mod_mode(m->MMODE)));
+
 	if (mod_mode(m->MMODE) == M_MIXING)
 	  fprintf(stderr, "%.4f * ", m->f_M0);
 	fprintf(stderr, "A");
 	print_mod_sum(m->MIN);
 	fprintf(stderr, "], ");
+
 	if (mod_mode(m->MMODE) == M_MIXING)
 	  fprintf(stderr, "%.4f * ", m->f_M1);
 	fprintf(stderr, "B");
@@ -2610,10 +2645,12 @@ static void dump_patch(void)
 	    fprintf(stderr, ", M0: %.4f, M1: %.4f, L0: %.4f, L1: %.4f", m->f_M0, m->f_M1, m->f_L0, m->f_L1);
 	  }
 	else print_mod_sum(m->MRM);
+
 	fprintf(stderr, "]->[");
 	if ((m->MSUM >> 6) != 0)
 	  fprintf(stderr, "-replace");
 	dump_mod_sum(m->MSUM & 0x3f);
+
 	fprintf(stderr, " (%d)]\n", mod_mem_readers(m->MSUM));
       }
   fprintf(stderr, "\n");
@@ -2737,7 +2774,7 @@ int main(int argc, char **argv)
   return(0);
 }
 
-/* cover of an old copy of the specs:
+/* on the cover of an old copy of the specs:
 
    NOT TO LEAVE THE MUSIC ROOM                 [red ink and underlined]
 
