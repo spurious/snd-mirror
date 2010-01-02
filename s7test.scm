@@ -3751,11 +3751,11 @@
 	  (let ((loc 0))
 	    (let loop ((val (read p)))
 	      (or (eof-object? val)
-		  (> loc 10000) ; try to avoid the read-error stuff
+		  (> loc 1000) ; try to avoid the read-error stuff
 		  (begin
 		    (set! loc (+ 1 loc))
 		    (loop (read p)))))
-	    (> loc 10000))))
+	    (> loc 1000))))
       #t)
 
 (test (or (and (or (> 3 2) (> 3 4)) (> 2 3)) 4) 4)
@@ -6781,9 +6781,16 @@
 	      (vector-set! v1 0 (cons 3 v1)) 
 	      (string=? (object->string v1) "#((3 . [circular vector]) 1 1)")) 
 	    #t)
-      (test (let ((h1 (make-hash-table 11))) 
+      (test (let ((h1 (make-hash-table 11))
+		  (old-print-length *vector-print-length*))
+	      (set! *vector-print-length* 32)
 	      (hash-table-set! h1 'hi h1)
-	      (string=? (object->string h1) "#(() () () () ((\"hi\" . [circular hash-table])) () () () () () ())"))
+	      (let ((result (object->string h1)))
+		(set! *vector-print-length* old-print-length)
+		(let ((val (string=? result "#(() () () () ((\"hi\" . [circular hash-table])) () () () () () ())")))
+		  (if (not val)
+		      (format #t ";hash display:~%  ~A~%  ~A~%" (object->string h1) "#(() () () () ((\"hi\" . [circular hash-table])) () () () () () ())"))
+		  val)))
 	    #t)
 		 
 

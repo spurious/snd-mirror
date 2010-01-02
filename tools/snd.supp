@@ -11,6 +11,7 @@
 #
 # valgrind --tool=callgrind snd
 #   writes callgrind.out.<pid>
+#   (remember -g switch)
 #   callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 #                      --inclusive=yes|no
 

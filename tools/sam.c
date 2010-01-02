@@ -461,14 +461,15 @@ static void process_gen(int gen)
   if (osc_is_running(Gmode10))
     OscAng20 += FmPhase20;
   
-  if ((osc_mode(Gmode10) != SIN_K) && 
+  /* probably should be osc_mode(Gmode10) == SUMCOS */
+  if ((osc_mode(Gmode10) != SIN_K) &&
       (osc_mode(Gmode10) != SIN_FM))
     {
       SinAdr = (Phase20 * NumCos11);           /* was & 0xfff) << 2) + 1 */
       CscAdr = Phase20;
       if (fmod(CscAdr, 1.0) != 0.0)
 	temp = sin(M_PI * SinAdr) / sin(M_PI * CscAdr);       /* was (1 << 13)) */
-      else temp = 1.0; /* TODO: check this */
+      else temp = (double)NumCos11;
     }
   else 
     {

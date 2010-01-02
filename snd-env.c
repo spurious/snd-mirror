@@ -1349,7 +1349,7 @@ env *name_to_env(const char *str)
 {
   env *e;
   int pos;
-  if (!str) return(NULL);
+  if ((!str) || (!(*str))) return(NULL);
   pos = find_env(str);
   if (pos >= 0) return(copy_env(all_envs[pos]));
 #if HAVE_SCHEME || HAVE_FORTH

@@ -2369,7 +2369,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *
  *    objects are generator(clm2xen), player(snd-dac), sampler(snd-edits), sound-data(sndlib2xen), transform (snd-fft),
  *               mark(snd-marks), mix(snd-mix), selection(snd-select), region(snd-region), colormap(snd-gxcolormap),
- *               vct(vct), hook(xen), XmObj(xm, xg), plus the base types(s7): string hash-table vector pair object
+ *               vct(vct), hook(xen), XmObj(xm, xg), plus the base types(s7): string, hash-table, vector, pair, object
  *
  *    also needed are further cases of ref/set
  *    ref needed: mix? region selection sound
@@ -5416,7 +5416,7 @@ static char *peak_clean(const char *name)
   int len, i;
   char *peak_name;
   len = mus_strlen(name);
-  peak_name = (char *)calloc(len, sizeof(char));
+  peak_name = (char *)calloc(len + 1, sizeof(char));
   for (i = 0; i < len; i++)
     {
       if ((name[i] == '\\') ||
@@ -5428,18 +5428,29 @@ static char *peak_clean(const char *name)
 }
 
 
+static char *expanded_peak_name(const char *name, int chan)
+{
+  char *fullname, *peak_file_name, *clean_name;
+
+  clean_name = peak_clean(name);
+  peak_file_name = mus_format("%s/%s-peaks-%d", peak_env_dir(ss), clean_name, chan);
+  fullname = mus_expand_filename(peak_file_name);
+
+  if (clean_name) free(clean_name);
+  if (peak_file_name) free(peak_file_name);
+  return(fullname);
+}
+
+
 void delete_peak_env_info_file(chan_info *cp)
 {
-  char *fullname, *peak_file_name;
-
-  peak_file_name = mus_format("%s/%s-peaks-%d", peak_env_dir(ss), peak_clean(cp->sound->filename), cp->chan);
-  fullname = mus_expand_filename(peak_file_name);
+  char *fullname;
+  fullname = expanded_peak_name(cp->sound->filename, cp->chan);
 
   if (mus_file_probe(fullname))
     remove(fullname);
 
   if (fullname) free(fullname);
-  if (peak_file_name) free(peak_file_name);
 }
 
 
@@ -5450,7 +5461,7 @@ void delete_peak_env_info_file(chan_info *cp)
 
 bool write_peak_env_info_file(chan_info *cp)
 {
-  char *fullname, *peak_file_name;
+  char *fullname;
   peak_env_info *ep;
   int fd;
   int ibuf[PEAK_ENV_INTS];
@@ -5461,14 +5472,11 @@ bool write_peak_env_info_file(chan_info *cp)
   ep = cp->edits[0]->peak_env;
   if (ep == NULL) return(false);
 
-  peak_file_name = mus_format("%s/%s-peaks-%d", peak_env_dir(ss), peak_clean(cp->sound->filename), cp->chan);
-  fullname = mus_expand_filename(peak_file_name);
-
+  fullname = expanded_peak_name(cp->sound->filename, cp->chan);
   fd = mus_file_create(fullname);
   if (fd == -1)
     {
       if (fullname) free(fullname);
-      if (peak_file_name) free(peak_file_name);
       return(false);
     }
 
@@ -5488,7 +5496,6 @@ bool write_peak_env_info_file(chan_info *cp)
 
   snd_close(fd, fullname);
   if (fullname) free(fullname);
-  if (peak_file_name) free(peak_file_name);
   return(true);
 }
 
@@ -5584,22 +5591,18 @@ static peak_env_info *get_peak_env_info(const char *fullname, peak_env_error_t *
 const char *read_peak_env_info_file(chan_info *cp)
 {
   peak_env_error_t err = PEAK_ENV_NO_ERROR;
-  char *fullname, *peak_file_name;
+  char *fullname;
 
   if (!(cp->edits)) return(NULL);
 
-  peak_file_name = mus_format("%s/%s-peaks-%d", peak_env_dir(ss), peak_clean(cp->sound->filename), cp->chan);
-  fullname = mus_expand_filename(peak_file_name);
-
+  fullname = expanded_peak_name(cp->sound->filename, cp->chan);
   if (mus_file_probe(fullname))
     {
       if (file_write_date(fullname) > cp->sound->write_date)
 	cp->edits[0]->peak_env = get_peak_env_info(fullname, &err);
       else remove(fullname);
     }
-
   if (fullname) free(fullname);
-  if (peak_file_name) free(peak_file_name);
 
   if ((cp->edits[0]->peak_env == NULL) &&
       (err != PEAK_ENV_NO_ERROR))

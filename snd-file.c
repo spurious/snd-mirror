@@ -6,7 +6,8 @@
   #include <dirent.h>
 #endif
 
-/* TODO: if auto-update, we sometimes don't see the sample update at the end */
+
+/* TODO: show listener from menu sometimes doesn't open the listener pane */
 
 
 /* -------------------------------- basic file attributes -------------------------------- */

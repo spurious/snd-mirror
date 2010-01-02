@@ -969,13 +969,13 @@ static s7_pointer g_is_boolean(s7_scheme *sc, s7_pointer args)
 
 static bool s7_is_immutable(s7_pointer p) 
 { 
-  return((typeflag(p) & T_IMMUTABLE) != 0);
+  return(is_immutable(p));
 }
 
 
 static s7_pointer s7_set_immutable(s7_pointer p) 
 { 
-  typeflag(p) |= T_IMMUTABLE;
+  set_immutable(p);
   return(p);
 }
 
@@ -995,7 +995,7 @@ bool s7_is_constant(s7_pointer p)
   /*   so to be non-constant, it has to be a non-keyword symbol with the immutable bit not set, I think */
   
   return((type(p) != T_SYMBOL) ||
-	 ((typeflag(p) & T_IMMUTABLE) != 0) ||
+	 (is_immutable(p)) ||
 	 (s7_is_keyword(p)));
 }
 
@@ -2292,6 +2292,7 @@ bool s7_keyword_eq_p(s7_pointer obj1, s7_pointer obj2)
 bool s7_is_keyword(s7_pointer obj)
 {
   return((s7_is_symbol(obj)) &&
+	 (symbol_name_length(obj) > 0) &&
 	 ((symbol_name(obj)[0] == ':') ||
 	  (symbol_name(obj)[symbol_name_length(obj) - 1] == ':')));
 }
@@ -7956,6 +7957,8 @@ static s7_pointer s7_make_input_file(s7_scheme *sc, const char *name, FILE *fp)
   port_filename(x) = s7_strdup(name);
   port_line_number(x) = 1;  /* 1st line is numbered 1 */
   port_needs_free(x) = false;
+
+  /* PERHAPS: wouldn't it be faster here to load_file and return a string port? */
   return(x);
 }
 
@@ -15896,6 +15899,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     APPLY_WITHOUT_TRACE:
       if (sc->stack_top >= sc->stack_size2)
 	increase_stack_size(sc);
+
+      /* perhaps add a function type that does its own (possibly null) arg num checking,
+       *   and if its args are purely by value, can forego the copy above?
+       */
 
       switch (type(sc->code))
 	{
