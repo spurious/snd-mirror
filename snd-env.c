@@ -1030,17 +1030,24 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
   bool two_sided = false;
   axis_info *active_ap = NULL;
   chan_info *active_channel = NULL;
+
   if (!(any_selected_sound())) return;
+
   if ((!gray_ap) || (!ap)) return;
   gray_ap->x_axis_x0 = ap->x_axis_x0;
   gray_ap->x_axis_x1 = ap->x_axis_x1;
   gray_ap->y_axis_y0 = ap->y_axis_y0;
   gray_ap->y_axis_y1 = ap->y_axis_y1;
+
   active_channel = current_channel();
   if ((!active_channel) || 
-      (active_channel->active < CHANNEL_HAS_AXES)) return;
+      (active_channel->active < CHANNEL_HAS_AXES) ||
+      (active_channel->edits == NULL)) 
+    return;
+
   old_printing = active_channel->printing;
   active_channel->printing = printing;
+
   if (show_fft)
     {
       if (enved_max_fft_size < transform_size(ss)) enved_max_fft_size = transform_size(ss);

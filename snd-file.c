@@ -1575,21 +1575,24 @@ void snd_close_file(snd_info *sp)
 
   remember_filename(sp->filename, preloaded_files); /* for open dialog(s) previous files list in case dialog doesn't yet exist */
 
-  check_for_event(); /* an experiment -- event queue seems to be glomming up when lots of fast open/close */
+  /* an experiment -- event queue seems to be glomming up when lots of fast open/close */
+  /* but squelch updates just in case a redisplay event is in the queue */
+
+  for (i = 0; i < sp->nchans; i++) 
+    sp->chans[i]->squelch_update = true;
+  check_for_event(); 
 
   sp->file_watcher = fam_unmonitor_file(sp->filename, sp->file_watcher);
 
   /* exit does not go through this function to clean up temps -- see snd_exit_cleanly in snd-main.c */
   if (selection_creation_in_progress()) finish_selection_creation();
+
   if (ss->deferred_regions > 0)
     for (i = 0; i < sp->nchans; i++)
       if (sp->chans[i]) 
 	sequester_deferred_regions(sp->chans[i], -1);
 
   sp->inuse = SOUND_IDLE;
-  for (i = 0; i < sp->nchans; i++) 
-    sp->chans[i]->squelch_update = true;
-
   if (sp->playing) 
     stop_playing_sound(sp, PLAY_CLOSE);
 

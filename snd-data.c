@@ -132,6 +132,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
 static chan_info *free_chan_info(chan_info *cp)
 {
   /* this does not free the associated widgets -- they are merely unmanaged */
+
   cp->active = CHANNEL_INACTIVE;
   /* need an indication right away that this channel is being deleted -- during free_snd_info (close-sound),
    *   an error may occur (an edit list temp file might have vanished for example), and normally Snd

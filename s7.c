@@ -2288,6 +2288,50 @@ bool s7_keyword_eq_p(s7_pointer obj1, s7_pointer obj2)
   return(obj1 == obj2);
 }
 
+/* TODO: :(keyword? :0) -> #t? */
+/*
+:(define* (hi (0 1)) 0)
+;lambda* parameter ((0 1)) is confused
+
+:(make-keyword "0")
+:0
+:(symbol? (keyword->symbol :0))
+#t
+:(symbol? '0)
+#f
+:(symbol->string (keyword->symbol (make-keyword "0")))
+"0"
+:(format #f "~A" (keyword->symbol (make-keyword "0")))
+"0"
+:(define* (hi (0 1)) 0)
+;lambda* parameter ((0 1)) is confused
+:(string->symbol "0")
+0
+but...
+:(make-keyword "00x")
+:00x
+:(define* (hi (00x 1)) 00x)
+hi
+:(hi 1)
+1
+:(hi)
+1
+:(hi 2)
+2
+:(let ((00x 1)) 00x)
+1
+:(let ((0+ 1)) 0+)
+1
+:(let ((0e 1)) 0e)
+1
+:(let ((0e0 1)) 0e0)
+;bad variable ((0.0 1)) in let bindings
+
+these also work this way in guile
+r5rs.html says a symbol (identifier) must start with a non-digit
+
+can +.+ or +. or +0+ or +0.0e- be symbol names?
+*/
 
 bool s7_is_keyword(s7_pointer obj)
 {

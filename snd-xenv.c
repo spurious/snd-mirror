@@ -273,8 +273,10 @@ static void env_redisplay_1(printing_t printing)
 	  name = XmTextGetString(textL);
 	  if (!name) name = mus_strdup(_("noname"));
 	  /* active_env can be null here if just showing axes (empty initial graph) */
-
-	  if (enved_wave_p(ss))
+	  
+	  if ((enved_wave_p(ss)) &&
+	      (active_channel) &&
+	      (!(active_channel->squelch_update)))
 	    {
 	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env) && (FIR_p) && (printing == NOT_PRINTING))
 		display_frequency_response(active_env, axis, gray_ap->ax, enved_filter_order(ss), enved_in_dB(ss));
@@ -288,9 +290,15 @@ static void env_redisplay_1(printing_t printing)
 }
 
 
-void env_redisplay(void) {env_redisplay_1(NOT_PRINTING);}
+void env_redisplay(void) 
+{
+  env_redisplay_1(NOT_PRINTING);
+}
 
-void env_redisplay_with_print(void) {env_redisplay_1(PRINTING);}
+void env_redisplay_with_print(void) 
+{
+  env_redisplay_1(PRINTING);
+}
 
 
 void update_enved_background_waveform(chan_info *cp)

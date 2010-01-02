@@ -280,7 +280,9 @@ static void env_redisplay_1(printing_t printing)
 	  char *name = NULL;
 	  name = (char *)gtk_entry_get_text(GTK_ENTRY(textL));
 	  if (!name) name = _("noname");
-	  if (enved_wave_p(ss))
+	  if ((enved_wave_p(ss)) &&
+	      (active_channel) &&
+	      (!(active_channel->squelch_update)))
 	    {
 #if USE_CAIRO
 	      gray_ap->ax->cr = gdk_cairo_create(WIDGET_TO_WINDOW(drawer));
@@ -299,9 +301,15 @@ static void env_redisplay_1(printing_t printing)
 }
 
 
-void env_redisplay(void) {env_redisplay_1(NOT_PRINTING);}
+void env_redisplay(void) 
+{
+  env_redisplay_1(NOT_PRINTING);
+}
 
-void env_redisplay_with_print(void) {env_redisplay_1(PRINTING);}
+void env_redisplay_with_print(void) 
+{
+  env_redisplay_1(PRINTING);
+}
 
 
 void update_enved_background_waveform(chan_info *cp)

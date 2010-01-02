@@ -101,7 +101,12 @@ static void free_region(region *r, int complete)
       if (r->use_temp_file == REGION_DEFERRED)
 	r->dr = free_deferred_region(r->dr);
       if (r->rsp) 
-	r->rsp = completely_free_snd_info(r->rsp);
+	{
+	  if ((r->rsp->chans) &&
+	      (r->rsp->chans[0]->edits))
+	    r->rsp->chans[0]->edits[0]->peak_env = NULL;
+	  r->rsp = completely_free_snd_info(r->rsp);
+	}
       if (complete == COMPLETE_DELETION) free(r);
     }
 }
@@ -468,6 +473,7 @@ file_info *fixup_region_data(chan_info *cp, int chan, int pos)
 	  cp->edits[0]->samples = ncp->edits[0]->samples;
 	  cp->axis = ncp->axis;
 
+	  /* cp here is actually region sound chan 0 */
 	  if ((r->peak_envs) && (r->peak_envs[chan]))
 	    cp->edits[0]->peak_env = r->peak_envs[chan];
 	  else
