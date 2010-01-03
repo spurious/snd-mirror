@@ -1816,29 +1816,43 @@ void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
 }
 
 
+static bool *number_inits;
+
 s7_pointer s7_make_symbol(s7_scheme *sc, const char *name) 
 { 
   s7_pointer x; 
   int location;
 
-  if (!name) 
-    return(s7_error(sc, sc->ERROR, make_list_1(sc, s7_make_string(sc, "make symbol with no name?"))));
-  /*
-  if (isdigit(name[0]))
-    return(s7_error(sc, sc->ERROR, make_list_2(sc, 
-					       s7_make_string(sc, "identifier name can't start with a digit"), 
-					       s7_make_string(sc, name))));
-  */
-  /* this wrongly flags 1+ and 1- as bad identifier names */
-
-  /*   this won't catch :0 or -0e etc */
-  /*   for that matter, we need to catch (string->symbol "0") et al */
-    
-
   location = symbol_table_hash(name, vector_length(sc->symbol_table)); 
   x = symbol_table_find_by_name(sc, name, location); 
   if (x != sc->NIL) 
     return(x); 
+
+  /* before adding the new symbol, check that it's name is legal (not null, and not a number or an incipient number) */
+  if (!name) 
+    return(s7_error(sc, sc->ERROR, make_list_1(sc, s7_make_string(sc, "make symbol with no name?"))));
+
+  /* it's ok to start out looking like a number: 1+ 1- +constant+ ->integer .field_ref,
+   *   but each of these can't become a number by appending something, unlike 0e for example.
+   * But... that makes 1+ and 1- bad -- they can become 1+i and 1-i!
+   *
+   * is # a legal id 1st char?
+   */
+#if 0
+  if (number_inits(name[0]))  
+    {
+      if (make_atom(sc, name, 10, false) 
+
+      return(s7_error(sc, sc->ERROR, make_list_2(sc, 
+						 s7_make_string(sc, "identifier name can't start with a digit"), 
+						 s7_make_string(sc, name))));
+    }
+  */
+  /*   this won't catch :0 etc */
+  /*   for that matter, we need to catch (string->symbol "0") et al */
+  /*   and this will require some tricky testing! */
+#endif
+
   return(symbol_table_add_by_name_at_location(sc, name, location)); 
 } 
 
@@ -2347,6 +2361,7 @@ r5rs.html says a symbol (identifier) must start with a non-digit
 
 can +.+ or +. or +0+ or +0.0e- be symbol names?
 currently decided by make_atom below, but it leaves the decision up to s7_make_symbol
+it should be something like "can't start with a sequence that is a number or could become a number by appending some chars"
 */
 
 bool s7_is_keyword(s7_pointer obj)
@@ -4494,6 +4509,7 @@ static void init_ctables(void)
   exponent_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   slashify_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   string_delimiter_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
+  number_inits = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   
   dot_table['\n'] = true;
   dot_table['\t'] = true;
@@ -4549,6 +4565,11 @@ static void init_ctables(void)
   char_nums['d'] = 13; char_nums['D'] = 13;
   char_nums['e'] = 14; char_nums['E'] = 14;
   char_nums['f'] = 15; char_nums['F'] = 15;
+
+  number_inits['0'] = true; number_inits['1'] = true; number_inits['2'] = true; number_inits['3'] = true;
+  number_inits['4'] = true; number_inits['5'] = true; number_inits['6'] = true; number_inits['7'] = true;
+  number_inits['8'] = true; number_inits['9'] = true; number_inits['+'] = true; number_inits['-'] = true;
+  number_inits['.'] = true;
 }
 
 
@@ -11366,10 +11387,6 @@ static s7_pointer g_vector_map(s7_scheme *sc, s7_pointer args)
 #endif
 
 
-#if HAVE_PTHREADS
-static pthread_mutex_t sort_lock = PTHREAD_MUTEX_INITIALIZER;
-#endif
-
 static s7_pointer g_sort_in_place(s7_scheme *sc, s7_pointer args)
 {
   #define H_sort_in_place "(sort! list-or-vector func) sorts a list or vector using func to compare elements.\
@@ -11434,15 +11451,14 @@ If its first argument is a list, the list is copied (despite the '!')."
   if (!s7_is_procedure(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "sort!", 2, cadr(args), "a procedure"));
 
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&sort_lock);
-#endif
-
   compare_proc = cadr(args);
 #if (!HAVE_NESTED_FUNCTIONS)
   compare_sc = sc;
 #endif
 
+  /* I originally had a pthread lock around this code, but if call/cc jumps out,
+   *   we'd need to unlock, which seems to make the original lock pointless.
+   */
   compare_proc_args = make_list_2(sc, sc->F, sc->F);
   gc_loc = s7_gc_protect(sc, compare_proc_args);
 
@@ -11450,12 +11466,7 @@ If its first argument is a list, the list is copied (despite the '!')."
 
   if (setjmp(sc->goto_qsort_end) != 0)
     vect = sc->value;
-
   s7_gc_unprotect_at(sc, gc_loc);
-
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&sort_lock);
-#endif
 
   return(vect);
 }
@@ -16494,10 +16505,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto EVAL;
 	    }
 	  
-	  if (!s7_is_symbol(caar(sc->code)))                      /* (set! (1 2) #t) */
-	    return(eval_error(sc, "~A: non-symbol as generalized set! accessor?", sc->code)); 
-
-	  sc->x = s7_symbol_value(sc, caar(sc->code));
+	  if (s7_is_symbol(caar(sc->code)))
+	    sc->x = s7_symbol_value(sc, caar(sc->code));
+	  else sc->x = caar(sc->code);                            /* might be the pws function itself */
+	  
 	  if ((is_c_object(sc->x)) &&
 	      (object_set_function(sc->x)))
 	    sc->code = s7_cons(sc, sc->OBJECT_SET, s7_append(sc, car(sc->code), cdr(sc->code)));   /* use set method (append flattens the lists) */
@@ -16523,7 +16534,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  sc->code = s7_cons(sc, sc->HASH_TABLE_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
 		  break;
 
-		default:
+		default:                                         /* (set! (1 2) 3) */
 		  return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
 		}
 	    }

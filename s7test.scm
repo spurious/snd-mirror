@@ -4116,6 +4116,7 @@
 (test ((case '+ ((-) -) (else +)) 3 2) 5)
 (test ((call/cc (lambda (return) (dynamic-wind (lambda () #f) (lambda () (return +)) (lambda () #f)))) 3 2) 5)
 (test (+ 1 ((call/cc (lambda (return) (dynamic-wind (lambda () #f) (lambda () (return +)) (lambda () #f)))) 3 2) 2) 8)
+(test (let ((lst (list + -))) ((car lst) 1 2 3)) 6)
 
 
 ;;; -------- begin --------
@@ -7073,6 +7074,20 @@
 	      (set! (pws-test) 321)
 	      (pws-test))
 	    321)
+
+      (test (let ((v (vector 1 2 3)))
+	      (define vset (make-procedure-with-setter
+			    (lambda (loc)
+			      (vector-ref v loc))
+			    (lambda (loc val)
+			      (vector-set! v loc val))))
+	      (let ((lst (list vset)))
+		(let ((val (vset 1)))
+		  (set! (vset 1) 32)
+		  (let ((val1 (vset 1)))
+		    (set! ((car lst) 1) 3)
+		    (list val val1 (vset 1))))))
+	    (list 2 32 3))
 
       (if (defined? 'open-encapsulator) 
 	  (begin
