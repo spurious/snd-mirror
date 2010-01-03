@@ -57,10 +57,11 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     --------
  *     16-Dec-09: removed Guile support.
  *     --------
  *     16-Oct:    removed Gauche support.
- *     1-Sep:     S7 support.
+ *     1-Sep:     s7 support.
  *     8-Jul-08:  started removing all struct accessors (for Gtk 3).
  *     --------
  *     9-Mar:     removed all *_get_type functions (nearly 300!).
@@ -1017,10 +1018,10 @@ XM_TYPE_PTR(GtkEntryBuffer_, GtkEntryBuffer*)
 
 #if HAVE_GTK_TOOL_PALETTE_NEW
 XM_TYPE_PTR_1(GtkSpinner_, GtkSpinner*)
-XM_TYPE_PTR(GtkToolShell_, GtkToolShell*)
-XM_TYPE_PTR(GtkToolPalette_, GtkToolPalette*)
-XM_TYPE(GtkToolPaletteDragTargets, GtkToolPaletteDragTargets)
-XM_TYPE_PTR(GtkToolItemGroup_, GtkToolItemGroup*)
+XM_TYPE_PTR_1(GtkToolShell_, GtkToolShell*)
+XM_TYPE_PTR_1(GtkToolPalette_, GtkToolPalette*)
+XM_TYPE_1(GtkToolPaletteDragTargets, GtkToolPaletteDragTargets)
+XM_TYPE_PTR_1(GtkToolItemGroup_, GtkToolItemGroup*)
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -49399,7 +49400,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("26-Dec-09"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("02-Jan-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

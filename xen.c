@@ -1357,9 +1357,9 @@ char *xen_version(void)
   char *buf;
   buf = (char *)calloc(64, sizeof(char));
 #if HAVE_SNPRINTF
-  snprintf(buf, 64, "S7: %s (%s), Xen: %s", S7_VERSION, S7_DATE, XEN_VERSION);
+  snprintf(buf, 64, "s7: %s (%s), Xen: %s", S7_VERSION, S7_DATE, XEN_VERSION);
 #else
-  sprintf(buf, "S7: %s (%s), Xen: %s", S7_VERSION, S7_DATE, XEN_VERSION);
+  sprintf(buf, "s7: %s (%s), Xen: %s", S7_VERSION, S7_DATE, XEN_VERSION);
 #endif
   return(buf);
 }

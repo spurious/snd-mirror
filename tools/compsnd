@@ -111,7 +111,6 @@ make clmclean
 make sndinfo
 make audinfo
 make sndplay
-make sndrecord
 make allclean
 
 echo ' '
@@ -342,7 +341,7 @@ make allclean
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --without-extension-language --with-gtk             ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --without-extension-language --with-gtk
+./configure --quiet --without-extension-language --with-gtk --with-static-xg
 make
 echo ' '
 echo ' '
@@ -384,7 +383,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --without-extension-language g++                    ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --without-extension-language CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include"
+./configure --quiet --without-extension-language --with-static-xm CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include"
 make
 echo ' '
 echo ' '
@@ -817,7 +816,6 @@ make
 make sndinfo
 make audinfo
 make sndplay
-make sndrecord
 ./audinfo
 ./sndinfo test.snd
 make allclean
@@ -1174,18 +1172,6 @@ echo ' -------------------------------------------------------------------------
 echo ' -------------------------------- sndlib ruby -------------------------------- '
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet --with-ruby
-make
-make clean
-echo ' -------------------------------------------------------------------------------- '
-echo ' -------------------------------- sndlib no ext lang -------------------------------- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --without-extension-language
-make
-make clean
-echo ' -------------------------------------------------------------------------------- '
-echo ' -------------------------------- sndlib no ext lang c++ -------------------------------- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --without-extension-language CC=g++
 make
 make clean
 echo ' -------------------------------------------------------------------------------- '

@@ -1820,6 +1820,21 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
 { 
   s7_pointer x; 
   int location;
+
+  if (!name) 
+    return(s7_error(sc, sc->ERROR, make_list_1(sc, s7_make_string(sc, "make symbol with no name?"))));
+  /*
+  if (isdigit(name[0]))
+    return(s7_error(sc, sc->ERROR, make_list_2(sc, 
+					       s7_make_string(sc, "identifier name can't start with a digit"), 
+					       s7_make_string(sc, name))));
+  */
+  /* this wrongly flags 1+ and 1- as bad identifier names */
+
+  /*   this won't catch :0 or -0e etc */
+  /*   for that matter, we need to catch (string->symbol "0") et al */
+    
+
   location = symbol_table_hash(name, vector_length(sc->symbol_table)); 
   x = symbol_table_find_by_name(sc, name, location); 
   if (x != sc->NIL) 
@@ -2331,6 +2346,7 @@ these also work this way in guile
 r5rs.html says a symbol (identifier) must start with a non-digit
 
 can +.+ or +. or +0+ or +0.0e- be symbol names?
+currently decided by make_atom below, but it leaves the decision up to s7_make_symbol
 */
 
 bool s7_is_keyword(s7_pointer obj)

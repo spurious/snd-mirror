@@ -194,8 +194,8 @@ After that, you go to your local cvs-snd directory and
        cvs update 
 
 
-Included with Snd are four command-line programs that might
-be of interest: sndplay, sndrecord, sndinfo, and audinfo:
+Included with Snd are three command-line programs that might
+be of interest: sndplay, sndinfo, and audinfo:
 
   make sndplay
 

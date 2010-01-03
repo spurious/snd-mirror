@@ -235,7 +235,7 @@
 	"GdkDragAction" "GdkImageType"
 
 	"gdouble*" "GdkFill" "GdkSubwindowMode" "GdkLineStyle" "GdkCapStyle" "GdkJoinStyle"
-	"GtkInfoBar*" "GtkSpinner*"
+	"GtkInfoBar*" "GtkSpinner*" "GtkToolShell*" "GtkToolPalette*" "GtkToolPaletteDragTargets" "GtkToolItemGroup*"
 	))
 
 (define no-xen-p 

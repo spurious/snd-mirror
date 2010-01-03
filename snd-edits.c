@@ -3237,7 +3237,9 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 				 ed->beg,
 				 ed->len,
 				 cp->chan);
+#if HAVE_EXTENSION_LANGUAGE
 		    if (temp) free(temp);
+#endif
 		  }
 		  break;
 

@@ -21,7 +21,6 @@ make audinfo
 ./audinfo
 make sndplay
 ./sndplay oboe.snd
-make sndrecord
 
 
 echo ' -------------------------------- basic configure -------------------------------- '
@@ -400,7 +399,6 @@ make xm
 make sndinfo
 make audinfo
 make sndplay
-make sndrecord
 ./audinfo
 ./sndinfo test.snd
 ./snd --version
