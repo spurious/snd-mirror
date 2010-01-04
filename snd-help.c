@@ -497,6 +497,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+5-Jan:   Snd 11.2.\n\
 26-Dec:  tools/sam.c.\n\
 21-Dec:  moved focus-follows-mouse to C as with-pointer-focus.\n\
          removed def-optkey-fun and def-optkey-instrument (use define* and definstrument).\n\
