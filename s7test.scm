@@ -1689,6 +1689,12 @@
 (test (symbol->string (string->symbol "")) "")
 (test (symbol? (string->symbol "(weird name for a symbol!)")) #t)      
 
+(test (string->symbol "0") 'error) ; s7 specific
+(test (string->symbol "0e") '0e)
+(test (string->symbol "1+") '1+)
+(test (string->symbol "1+i") 'error)
+(test (string->symbol ":0") ':0)
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -40862,7 +40868,7 @@ expt error > 1e-6 around 2^-46.506993328423
 		   vector->list list->vector vector-fill! vector vector-length vector-ref make-vector
 					;call/cc call-with-current-continuation call-with-exit load
 		   continuation? eval eval-string apply
-		   force for-each map values call-with-values dynamic-wind ;catch error 
+		   for-each map values call-with-values dynamic-wind ;catch error 
 					;quit gc
 		   procedure? procedure-documentation
 		   help procedure-arity procedure-source make-procedure-with-setter procedure-with-setter? 

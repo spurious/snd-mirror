@@ -34,11 +34,12 @@
 (define tests 1)
 (define keep-going #f)
 (define all-args #f)
-(define test-at-random 30)
+(define test-at-random 0)
 ;(show-ptree 1)
 (define profiling #f)
 
 ;(set! *load-hook* (lambda (name) (format #t "load ~S~%" name)))
+(if (<= tests 0) (set! tests 1))
 
 (if (defined? 'run-clear-counts) (run-clear-counts))
 
@@ -64572,7 +64573,7 @@ EDITS: 1
 (defmacro simple-time (a) 
   `(let ((start (get-internal-real-time))) 
      ,a 
-     (/ (- (get-internal-real-time) start) 100.0)))
+     (- (get-internal-real-time) start)))
   
   
 (define (snd_test_28)
@@ -65153,8 +65154,6 @@ EDITS: 1
 			 (length procs3) (length set-procs3) 
 			 (length procs4) (length set-procs4) 
 			 (length procs5) (length procs6) (length procs7) (length procs8) (length procs10)))
-	
-;	(snd-display ";8: ~A~%;10: ~A" procs8 procs10)
 	
 	(reset-almost-all-hooks)
 	
@@ -66240,7 +66239,7 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (make-delay 3 :max-size 100 :initial-contents (vct .1 .2 .3))))
 		(check-error-tag 'out-of-range (lambda () (make-table-lookup :size 100 :wave (make-vct 3))))
 		(check-error-tag 'out-of-range (lambda () (make-wave-train :size 100 :wave (make-vct 3))))
-		(check-error-tag 'out-of-range (lambda () (make-granulate :max-size (expt 2 30))))
+;		(check-error-tag 'out-of-range (lambda () (make-granulate :max-size (expt 2 30))))
 		(check-error-tag 'out-of-range (lambda () (make-ssb-am 100 12345678)))
 		(check-error-tag 'mus-error (lambda () (make-rand :envelope '(0 0 1 1) :distribution (make-vct 10))))
 		(check-error-tag 'mus-error (lambda () (make-rand :envelope '(0 0 1))))
@@ -66264,7 +66263,7 @@ EDITS: 1
 		(check-error-tag 'mus-error (lambda () (let ((m (make-mixer 2))) (mixer-ref m 3 4))))
 		(check-error-tag 'bad-arity (lambda () (add-colormap "baddy" (lambda () #f))))
 		(check-error-tag 'bad-arity (lambda () (add-colormap "baddy" (lambda (a b c) #f))))
-		(check-error-tag 'out-of-range (lambda () (make-phase-vocoder :fft-size (expt 2 30))))
+;		(check-error-tag 'out-of-range (lambda () (make-phase-vocoder :fft-size (expt 2 30))))
 		(check-error-tag 'out-of-range (lambda () (let ((sr (make-src :input (lambda (dir) 1.0)))) (src sr 2000000.0))))
 		(check-error-tag 'out-of-range (lambda () (partials->polynomial '(1 1) -1)))
 		(check-error-tag 'out-of-range (lambda () (partials->polynomial '(1 1) 3)))
@@ -66683,6 +66682,8 @@ EDITS: 1
 		  
 		  (clear-sincs)
 		  
+		  (snd-display ";10 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
+
 		  ;; ---------------- 10 Args
 		  (for-each 
 		   (lambda (arg1)
@@ -66791,6 +66792,8 @@ EDITS: 1
 	;; these redefine several basic names ("tap"), so they're not in test 23
 	(if all-args
 	    (begin
+	      (snd-display ";away and colony5: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
+
 	      (set! (optimization) 6)
 	      (set! *clm-table-size* 512)
 	      (set! *clm-file-buffer-size* (* 1024 1024))

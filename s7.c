@@ -1828,30 +1828,15 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
   if (x != sc->NIL) 
     return(x); 
 
-  /* before adding the new symbol, check that it's name is legal (not null, and not a number or an incipient number) */
+  /* before adding the new symbol, check that it's name is legal (not null, and not a number) */
   if (!name) 
     return(s7_error(sc, sc->ERROR, make_list_1(sc, s7_make_string(sc, "make symbol with no name?"))));
 
-  /* it's ok to start out looking like a number: 1+ 1- +constant+ ->integer .field_ref,
-   *   but each of these can't become a number by appending something, unlike 0e for example.
-   * But... that makes 1+ and 1- bad -- they can become 1+i and 1-i!
-   *
-   * is # a legal id 1st char?
-   */
-#if 0
-  if (number_inits(name[0]))  
-    {
-      if (make_atom(sc, name, 10, false) 
-
-      return(s7_error(sc, sc->ERROR, make_list_2(sc, 
-						 s7_make_string(sc, "identifier name can't start with a digit"), 
-						 s7_make_string(sc, name))));
-    }
-  */
-  /*   this won't catch :0 etc */
-  /*   for that matter, we need to catch (string->symbol "0") et al */
-  /*   and this will require some tricky testing! */
-#endif
+  if ((number_inits[(int)name[0]]) &&
+      (make_atom(sc, (char *)name, 10, false) != sc->F))
+    return(s7_error(sc, sc->ERROR, make_list_2(sc, 
+					       s7_make_string(sc, "identifier (symbol) name can't be a number"), 
+					       s7_make_string(sc, name))));
 
   return(symbol_table_add_by_name_at_location(sc, name, location)); 
 } 
@@ -2317,52 +2302,6 @@ bool s7_keyword_eq_p(s7_pointer obj1, s7_pointer obj2)
   return(obj1 == obj2);
 }
 
-/* TODO: :(keyword? :0) -> #t? */
-/*
-:(define* (hi (0 1)) 0)
-;lambda* parameter ((0 1)) is confused
-
-:(make-keyword "0")
-:0
-:(symbol? (keyword->symbol :0))
-#t
-:(symbol? '0)
-#f
-:(symbol->string (keyword->symbol (make-keyword "0")))
-"0"
-:(format #f "~A" (keyword->symbol (make-keyword "0")))
-"0"
-:(define* (hi (0 1)) 0)
-;lambda* parameter ((0 1)) is confused
-:(string->symbol "0")
-0
-but...
-:(make-keyword "00x")
-:00x
-:(define* (hi (00x 1)) 00x)
-hi
-:(hi 1)
-1
-:(hi)
-1
-:(hi 2)
-2
-:(let ((00x 1)) 00x)
-1
-:(let ((0+ 1)) 0+)
-1
-:(let ((0e 1)) 0e)
-1
-:(let ((0e0 1)) 0e0)
-;bad variable ((0.0 1)) in let bindings
-
-these also work this way in guile
-r5rs.html says a symbol (identifier) must start with a non-digit
-
-can +.+ or +. or +0+ or +0.0e- be symbol names?
-currently decided by make_atom below, but it leaves the decision up to s7_make_symbol
-it should be something like "can't start with a sequence that is a number or could become a number by appending some chars"
-*/
 
 bool s7_is_keyword(s7_pointer obj)
 {
@@ -4838,7 +4777,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	  has_dec_point1 = true; 
 	  c = *p++; 
 	} 
-      if (!ISDIGIT(c, current_radix))
+      if ((!c) || (!ISDIGIT(c, current_radix)))
 	return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
     } 
   else 
@@ -4848,7 +4787,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	  has_dec_point1 = true; 
 	  c = *p++; 
 
-	  if (!ISDIGIT(c, current_radix))
+	  if ((!c) || (!ISDIGIT(c, current_radix)))
 	    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
 	} 
       else 
@@ -5089,7 +5028,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 static s7_pointer s7_string_to_number(s7_scheme *sc, char *str, int radix)
 {
   s7_pointer x;
-  x = make_atom(sc, str, radix, true);
+  x = make_atom(sc, str, radix, false);
   if (s7_is_number(x))
     return(x);
   return(sc->F);
@@ -15569,7 +15508,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (cadr(sc->code) != sc->NIL))       /* no end-test? */
 	return(eval_error(sc, "do: end-test and end-value list is not a list: ~A", sc->code));
 
-      if (car(sc->code) == sc->NIL)            /* (do () ...) */
+      if (car(sc->code) == sc->NIL)          /* (do () ...) */
 	{
 	  sc->envir = new_frame_in_env(sc, sc->envir); 
 	  sc->args = s7_cons(sc, sc->NIL, cadr(sc->code));
@@ -15591,7 +15530,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* here sc->code is a list like: ((i 0 (+ i 1)) ...)
 	   *   so cadar gets the init value
 	   */
-	  if (!(is_pair(car(sc->code))))          /* (do (4) (= 3)) */
+	  if (!(is_pair(car(sc->code))))              /* (do (4) (= 3)) */
 	    return(eval_error(sc, "do: variable name missing? ~A", sc->code));
 
 	  if (is_pair(cdar(sc->code)))
@@ -15611,13 +15550,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL;
 	}
 
-      if (sc->code != sc->NIL)                    /* (do ((i 0 i) . 1) ((= i 1))) */
+      if (sc->code != sc->NIL)                        /* (do ((i 0 i) . 1) ((= i 1))) */
 	return(eval_error(sc, "do: list of variables is improper: ~A", sc->code));
       
       /* all done */
       sc->args = safe_reverse_in_place(sc, sc->args);
-      sc->code = car(sc->args); /* saved at the start */
-      sc->args = cdr(sc->args); /* init values */
+      sc->code = car(sc->args);                       /* saved at the start */
+      sc->args = cdr(sc->args);                       /* init values */
       sc->envir = new_frame_in_env(sc, sc->envir); 
 
       sc->value = sc->NIL;
@@ -15783,7 +15722,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
     EVAL:
-    case OP_EVAL:       /* main part of evaluation */
+    case OP_EVAL:                           /* main part of evaluation */
       if (is_pair(sc->code))                /* switching type check order here slows us down */
 	{
 	  /* using a local s7_pointer for sc->x here drastically slows things down?!? */
@@ -16159,7 +16098,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      {
 			if (s7_is_keyword(car(sc->y)))
 			  {
-			    char *name;   /* need to remove the ':' before checking the lambda args */
+			    char *name;                       /* need to remove the ':' before checking the lambda args */
 			    s7_pointer sym;
 			    name = symbol_name(car(sc->y));
 			    if (name[0] == ':')
@@ -16173,7 +16112,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      }
 			    if (lambda_star_argument_set_value(sc, sym, car(cdr(sc->y))))
 			      sc->y = cddr(sc->y);
-			    else         /* might be passing a keyword as a normal argument value! */
+			    else                             /* might be passing a keyword as a normal argument value! */
 			      {
 				if (is_pair(car(sc->x)))
 				  lambda_star_argument_set_value(sc, caar(sc->x), car(sc->y));
@@ -16590,7 +16529,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_true(sc, sc->value))
 	sc->code = car(sc->code);
       else
-	sc->code = cadr(sc->code);  /* (if #f 1) ==> #<unspecified> because car(sc->NIL) = sc->UNSPECIFIED */
+	sc->code = cadr(sc->code);              /* (if #f 1) ==> #<unspecified> because car(sc->NIL) = sc->UNSPECIFIED */
       goto EVAL;
       
       
@@ -16598,17 +16537,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* sc->code is everything after the let: (let ((a 1)) a) so sc->code is (((a 1)) a) */
       /*   car it can be either a list or a symbol ("named let") */
 
-      if ((!is_pair(sc->code)) ||            /* (let . 1) */
-	  (!is_pair(cdr(sc->code))) ||       /* (let) */
-	  ((!is_pair(car(sc->code))) &&      /* (let 1 ...) */
+      if ((!is_pair(sc->code)) ||               /* (let . 1) */
+	  (!is_pair(cdr(sc->code))) ||          /* (let) */
+	  ((!is_pair(car(sc->code))) &&         /* (let 1 ...) */
 	   (car(sc->code) != sc->NIL) &&
 	   (!s7_is_symbol(car(sc->code)))))
 	return(eval_error(sc, "let syntax error: ~A", sc->code));
 
       if ((s7_is_symbol(car(sc->code))) &&
-	  (((!is_pair(cadr(sc->code))) &&    /* (let hi #t) */
+	  (((!is_pair(cadr(sc->code))) &&       /* (let hi #t) */
 	    (cadr(sc->code) != sc->NIL)) ||
-	   (cddr(sc->code) == sc->NIL)))     /* (let hi ()) */
+	   (cddr(sc->code) == sc->NIL)))        /* (let hi ()) */
       	return(eval_error(sc, "named let syntax error: ~A", sc->code));
 
       sc->args = sc->NIL;
