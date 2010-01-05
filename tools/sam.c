@@ -9,6 +9,9 @@
  *        sam TEST.SAM
  *        -> test.wav ("wav" or "riff" header, quad, little-endian float data at box srate)
  *
+ * to include a read-data file, convert the old SAD file to a raw file of little-endian floats,
+ *   then sam TEST.SAM test.snd
+ *
  * here's the Snd code I use to turn quad into stereo and scale the result to .9:
  *
 
@@ -122,7 +125,7 @@ static float dac_out[4], dac_out_peak[4];
 static int tick, pass, DX, processing_ticks, highest_tick_per_pass, samples = 0, srate = 1, total_commands = 0, current_command = 0;
 
 FILE *snd_file = NULL; /* for now just riff/wave quad, but srate depends on tick setting */
-
+FILE *read_data_file = NULL;
 
 static void start_clean(void)
 {
@@ -580,10 +583,28 @@ static void process_gen(int gen)
 	}
       else 
 	{
-	  if (!read_data_warned)
+	  /* read-data: assume we're reading floats from a raw file */
+	  if (read_data_file)
 	    {
-	      fprintf(stderr, "read data?!?\n");
-	      read_data_warned = true;
+	      float read_data_value;
+	      fread((void *)(&read_data_value), 4, 1, read_data_file);
+	      gen_outs[OutSum6] = OscOut13 + read_data_value;
+	      /* 
+		 If the run mode 
+		 specifies adding into sum memory, Temp9 is added into the sum
+		 memory location designated by GSUM; except that in run mode
+		 0111, the product is added to the next read-data item from the
+		 CPU and the sum replaces the contents of the sum memory
+		 location addressed.
+	      */
+	    }
+	  else
+	    {
+	      if (!read_data_warned)
+		{
+		  fprintf(stderr, "read data?!?\n");
+		  read_data_warned = true;
+		}
 	    }
 	}
     }
@@ -2690,6 +2711,8 @@ int main(int argc, char **argv)
       char *filename;
       filename = argv[1];
 
+      fprintf(stderr, "argc: %d\n", argc);
+
       sam_file = fopen(filename, "r");
       if (!sam_file)
 	fprintf(stderr, "can't find %s\n", filename);
@@ -2711,6 +2734,9 @@ int main(int argc, char **argv)
 	      unsigned char *command;
 	      int i;
 
+	      if (argc > 2)
+		read_data_file = fopen(argv[2], "r");
+
 	      start_clean();
 
 	      command = (unsigned char *)calloc(size + 1, sizeof(unsigned char));
@@ -2731,6 +2757,7 @@ int main(int argc, char **argv)
 	       *    with many (6?) renditions?
 	       */
 
+#if 0
 	      if ((command[0] != 0) || /* just a first guess */
 		  (command[1] != 0))
 		{
@@ -2767,6 +2794,25 @@ int main(int argc, char **argv)
 		      handle_command(cmd);
 		    }
 		}
+#else
+	      /* another format that Mike used:
+	       *   cmd = (b1 << 28) | (b2 << 24) | (b3 << 16) | (b4 << 8) | b5; 
+	       */
+	      total_commands = bytes / 5;
+	      current_command = 0;
+	      for (i = 0; i < bytes; i += 5)
+		{
+		  int cmd;
+		  int b1, b2, b3, b4, b5;
+		  b1 = command[i + 0];
+		  b2 = command[i + 1];
+		  b3 = command[i + 2];
+		  b4 = command[i + 3];
+		  b5 = command[i + 4];
+		  cmd = (b1 << 28) | (b2 << 24) | (b3 << 16) | (b4 << 8) | b5; 
+		  handle_command(cmd);
+		}
+#endif
 	    }
 	  
 	  all_done();

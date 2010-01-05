@@ -3755,12 +3755,12 @@
 (test (call-with-input-file "s7test.scm"
 	(lambda (p)
 	  (let ((loc 0))
-	    (let loop ((val (read p)))
+	    (let loop ((val (read-char p)))
 	      (or (eof-object? val)
 		  (> loc 1000) ; try to avoid the read-error stuff
 		  (begin
 		    (set! loc (+ 1 loc))
-		    (loop (read p)))))
+		    (loop (read-char p)))))
 	    (> loc 1000))))
       #t)
 
@@ -3802,13 +3802,13 @@
 (test (call-with-input-file "s7test.scm"
 	(lambda (p)
 	  (let ((loc 0))
-	    (let loop ((val (read p)))
+	    (let loop ((val (read-char p)))
 	      (and (not (eof-object? val))
-		   (< loc 10000)
+		   (< loc 1000)
 		   (begin
 		     (set! loc (+ 1 loc))
-		     (loop (read p)))))
-	    (>= loc 10000))))
+		     (loop (read-char p)))))
+	    (>= loc 1000))))
       #t)
 
 (test (and (or (and (> 3 2) (> 3 4)) (> 2 3)) 4) #f)
@@ -6823,10 +6823,73 @@
 
       (test (call-with-input-file "tmp1.r5rs" (lambda (p) (integer->char (read-byte p)))) #\t)
 
+      (let ((bytes (vector #o000 #o000 #o000 #o034 #o000 #o001 #o215 #o030 #o000 #o000 #o000 #o022 #o000 
+			   #o000 #o126 #o042 #o000 #o000 #o000 #o001 #o000 #o000 #o000 #o000 #o000 #o001)))
+	(with-output-to-file "tmp1.r5rs"
+	  (lambda ()
+	    (vector-for-each
+	     (lambda (b)
+	       (write-byte b))
+	     bytes)))
+	
+	(let ((ctr 0))
+	  (call-with-input-file "tmp1.r5rs"
+	    (lambda (p)
+	      
+	      (if (not (string=? (port-filename p) "tmp1.r5rs")) (display (port-filename p)))
+	      
+	      (let loop ((val (read-byte p)))
+		(if (eof-object? val)
+		    (if (not (= ctr 26))
+			(format #t "read-byte done at ~A~%" ctr))
+		    (begin
+		      (if (not (= (bytes ctr) val))
+			  (format #t "read-byte bytes[~D]: ~A ~A~%" ctr (bytes ctr) val))
+		      (set! ctr (+ 1 ctr))
+		      (loop (read-byte p))))))))
+	
+	(let ((ctr 0))
+	  (call-with-input-file "tmp1.r5rs"
+	    (lambda (p)
+	      (let loop ((val (read-char p)))
+		(if (eof-object? val)
+		    (if (not (= ctr 26))
+			(format #t "read-char done at ~A~%" ctr))
+		    (begin
+		      (if (not (= (bytes ctr) (char->integer val)))
+			  (format #t "read-char bytes[~D]: ~A ~A~%" ctr (bytes ctr) (char->integer val)))
+		      (set! ctr (+ 1 ctr))
+		      (loop (read-char p))))))))
+	)
+      
+      (with-output-to-file "tmp1.r5rs"
+	(lambda ()
+	  (display "(+ 1 2) 32")
+	  (newline)
+	  (display "#\\a  -1")))
+      
+      (with-input-from-file "tmp1.r5rs"
+	(lambda ()
+	  (let ((val (read)))
+	    (if (not (equal? val (list '+ 1 2)))
+		(format #t "read: ~A~%" val)))
+	  (let ((val (read)))
+	    (if (not (equal? val 32))
+		(format #t "read: ~A~%" val)))
+	  (let ((val (read)))
+	    (if (not (equal? val #\a))
+		(format #t "read: ~A~%" val)))
+	  (let ((val (read)))
+	    (if (not (equal? val -1))
+		(format #t "read: ~A~%" val)))
+	  (let ((val (read)))
+	    (if (not (eof-object? val))
+		(format #t "read: ~A~%" val)))))
+      
       (if (and (defined? 'provided?)
 	       (provided? 'threads))
 	  (begin
-
+	    
 	    (test (let ((ctr 0))
 		    (let ((t1 (make-thread (lambda () (set! ctr (+ ctr 1))))))
 		      (join-thread t1))

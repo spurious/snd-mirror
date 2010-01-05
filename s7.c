@@ -3994,11 +3994,14 @@ static bool num_eq(s7_num_t a, s7_num_t b)
 	{
 	case NUM_INT:
 	  return(real(a) == integer(b));
+
 	case NUM_RATIO:
 	  return(real(a) == num_to_real(b));
+
 	case NUM_REAL:
 	case NUM_REAL2:
 	  return(real(a) == real(b));
+
 	default:
 	  return((real_part(b) == real(a)) &&
 		 (imag_part(b) == 0.0));
@@ -4011,13 +4014,16 @@ static bool num_eq(s7_num_t a, s7_num_t b)
 	case NUM_INT:
 	  return((real_part(a) == integer(b)) &&
 		 (imag_part(a) == 0.0));
+
 	case NUM_RATIO:
 	  return((real_part(a) == num_to_real(b)) &&
 		 (imag_part(a) == 0.0));
+
 	case NUM_REAL:
 	case NUM_REAL2:
 	  return((real_part(a) == real(b)) &&
 		 (imag_part(a) == 0.0));
+
 	default:
 	  return((real_part(a) == real_part(b)) &&
 		 (imag_part(a) == imag_part(b)));
@@ -5029,7 +5035,7 @@ static s7_pointer s7_string_to_number(s7_scheme *sc, char *str, int radix)
 {
   s7_pointer x;
   x = make_atom(sc, str, radix, false);
-  if (s7_is_number(x))
+  if (s7_is_number(x))  /* only needed because str might start with '#' and not be a number (#t for example) */
     return(x);
   return(sc->F);
 }
@@ -7709,24 +7715,21 @@ static s7_pointer g_port_line_number(s7_scheme *sc, s7_pointer args)
 
 const char *s7_port_filename(s7_pointer x)
 {
-  if (((is_input_port(x)) || (is_output_port(x))) && /* make sure it's some kind of port */
-      (is_file_port(x)))
+  if ((is_input_port(x)) || (is_output_port(x))) /* make sure it's some kind of port */
     return(port_filename(x));
   return(NULL);
 }
+
 
 static s7_pointer g_port_filename(s7_scheme *sc, s7_pointer args)
 {
   #define H_port_filename "(port-filename file-port) returns the filename associated with port"
   s7_pointer x;
-  x = car(args);
 
+  x = car(args);
   if ((is_input_port(x)) || (is_output_port(x)))
-    {
-      if (is_file_port(x))
-	return(s7_make_string(sc, port_filename(x)));
-      return(sc->F); /* not an error! */
-    }
+    return(s7_make_string(sc, port_filename(x)));
+
   return(s7_wrong_type_arg_error(sc, "port-filename", 1, x, "a port"));
 }
 
@@ -7963,23 +7966,67 @@ static s7_pointer g_close_output_port(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_size, const char *caller)
+{
+  s7_pointer port;
+  long size;
+  char *content = NULL;
+
+  port = new_cell(sc);
+  set_type(port, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
+  port->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
+  port_is_closed(port) = false;
+  port_filename(port) = s7_strdup(name);
+  port_line_number(port) = 1;  /* 1st line is numbered 1 */
+
+  fseek(fp, 0, SEEK_END);
+  size = ftell(fp);
+  rewind(fp);
+
+  if ((max_size < 0) || (size < max_size))
+    {
+      if (size > 0)
+	{
+	  size_t bytes;
+	  content = (char *)malloc((size + 2) * sizeof(char));
+	  bytes = fread(content, sizeof(char), size, fp);
+	  if (bytes != (size_t)size)
+	    {
+	      char *tmp;
+	      tmp = (char *)calloc(256, sizeof(char));
+	      snprintf(tmp, 256, "(%s \"%s\") read %ld bytes of an expected %ld?", caller, name, (long)bytes, size);
+	      write_string(sc, tmp, sc->output_port);
+	      free(tmp);
+	    }
+	  content[size] = '\0';
+	  content[size + 1] = '\0';
+	}
+      else
+	{
+	  content = (char *)calloc(1, sizeof(char)); /* empty file in load still accesses the string (for 0=eof) */
+	}
+      fclose(fp);
+
+      port_type(port) = STRING_PORT;
+      port_string(port) = content;
+      port_string_length(port) = size;
+      port_string_point(port) = 0;
+      port_needs_free(port) = true;
+    }
+  else
+    {
+      port_file(port) = fp;
+      port_type(port) = FILE_PORT;
+      port_needs_free(port) = false;
+    }
+  return(port);
+}
+
+
 static s7_pointer s7_make_input_file(s7_scheme *sc, const char *name, FILE *fp)
 {
-  s7_pointer x;
-  x = new_cell(sc);
-  set_type(x, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
-  
-  /* set up the port struct */
-  x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
-  port_file(x) = fp;
-  port_type(x) = FILE_PORT;
-  port_is_closed(x) = false;
-  port_filename(x) = s7_strdup(name);
-  port_line_number(x) = 1;  /* 1st line is numbered 1 */
-  port_needs_free(x) = false;
-
-  /* PERHAPS: wouldn't it be faster here to load_file and return a string port? */
-  return(x);
+  #define MAX_SIZE_FOR_STRING_PORT 1000000
+  return(read_file(sc, fp, name, MAX_SIZE_FOR_STRING_PORT, "open"));
 }
 
 
@@ -8430,48 +8477,7 @@ static FILE *search_load_path(s7_scheme *sc, const char *name)
 
 static s7_pointer load_file(s7_scheme *sc, FILE *fp, const char *name)
 {
-  s7_pointer port;
-  long size;
-  char *content = NULL;
-
-  port = new_cell(sc);
-  set_type(port, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
-  port->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
-  port_type(port) = STRING_PORT;
-  port_is_closed(port) = false;
-
-  fseek(fp, 0, SEEK_END);
-  size = ftell(fp);
-  if (size > 0)
-    {
-      size_t bytes;
-      rewind(fp);
-      content = (char *)malloc((size + 1) * sizeof(char));
-      bytes = fread(content, sizeof(char), size, fp);
-      if (bytes != (size_t)size)
-	{
-	  char *tmp;
-	  tmp = (char *)calloc(256, sizeof(char));
-	  snprintf(tmp, 256, "(load \"%s\") read %ld bytes of an expected %ld?", name, (long)bytes, size);
-	  write_string(sc, tmp, sc->output_port);
-	  free(tmp);
-	}
-      content[size] = '\0';
-    }
-  else
-    {
-      content = (char *)calloc(1, sizeof(char)); /* empty file in load still accesses the string (for 0=eof) */
-    }
-  fclose(fp);
-
-  port_string(port) = content;
-  port_string_length(port) = size;
-  port_string_point(port) = 0;
-  port_line_number(port) = 1;
-  port_filename(port) = s7_strdup(name); /* for missing close paren error etc */
-  port_needs_free(port) = true;
-
-  return(port);
+  return(read_file(sc, fp, name, -1, "load"));  /* -1 means always read its contents into a local string */
 }
 
 
@@ -9379,12 +9385,25 @@ static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
     port = car(args);
   else port = sc->input_port;
 
-  if ((!is_input_port(port)) ||
-      (!is_file_port(port)))
-    return(s7_wrong_type_arg_error(sc, "read-byte", 0, port, "an input file port"));
+  if (!is_input_port(port))
+    return(s7_wrong_type_arg_error(sc, "read-byte", 0, port, "an input port"));
+
+  if (is_string_port(port))
+    {
+      if ((!(port_string(port))) ||
+	  (port_string_length(port) <= port_string_point(port)))
+	return(sc->EOF_OBJECT);
+      return(s7_make_integer(sc, (int)((unsigned char)(port_string(port)[port_string_point(port)++]))));
+    }
 
   if (is_file_port(port))
-    return(s7_make_integer(sc, fgetc(port_file(port))));
+    {
+      int c;
+      c = fgetc(port_file(port));
+      if (c == EOF)
+	return(sc->EOF_OBJECT);
+      return(s7_make_integer(sc, c)); 
+    }
 
   return((*(port_input_function(port)))(sc, S7_READ_BYTE, port));
 }
