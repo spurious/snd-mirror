@@ -2711,8 +2711,6 @@ int main(int argc, char **argv)
       char *filename;
       filename = argv[1];
 
-      fprintf(stderr, "argc: %d\n", argc);
-
       sam_file = fopen(filename, "r");
       if (!sam_file)
 	fprintf(stderr, "can't find %s\n", filename);
@@ -2757,7 +2755,7 @@ int main(int argc, char **argv)
 	       *    with many (6?) renditions?
 	       */
 
-#if 0
+#if 1
 	      if ((command[0] != 0) || /* just a first guess */
 		  (command[1] != 0))
 		{
