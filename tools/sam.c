@@ -588,7 +588,7 @@ static void process_gen(int gen)
 	    {
 	      float read_data_value;
 	      fread((void *)(&read_data_value), 4, 1, read_data_file);
-	      gen_outs[OutSum6] = OscOut13 + read_data_value;
+	      gen_outs[OutSum6] = OscOut13 + 2.0 * read_data_value;
 	      /* 
 		 If the run mode 
 		 specifies adding into sum memory, Temp9 is added into the sum
