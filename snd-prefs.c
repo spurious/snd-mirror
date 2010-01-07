@@ -242,12 +242,20 @@ static void add_local_load_path(FILE *fd, char *path)
 }
 
 
-static void save_prefs(const char *filename)
+static void save_prefs(void)
 {
   char *fullname;
+  const char *filename;
   FILE *fd;
 
-  if (!filename) return; /* error earlier */
+  /* save_options_in_prefs passes us the filename after calling save_options which handles all
+   *   the simple cases.  The rest of the special "save" functions called here are for cases
+   *   where we are calling extension code, so we have to make sure the necessary files are loaded.
+   */
+  
+  filename = save_options_in_prefs();
+  if (!filename) return;
+
   fullname = mus_expand_filename(filename);
   fd = FOPEN(fullname, "a");
   fprintf(fd, "\n");
@@ -2286,6 +2294,20 @@ static void revert_init_window_size(prefs_info *prf)
 {
   ss->init_window_width = rts_init_window_width;
   ss->init_window_height = rts_init_window_height;
+}
+
+
+static void reflect_init_window_size(prefs_info *prf)
+{
+  char *str;
+
+  str = mus_format("%d", ss->init_window_width);
+  SET_TEXT(prf->text, str);
+  free(str);
+
+  str = mus_format("%d", ss->init_window_height);
+  SET_TEXT(prf->rtxt, str);
+  free(str);
 }
 
 

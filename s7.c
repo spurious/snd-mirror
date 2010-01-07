@@ -8617,22 +8617,11 @@ s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *dir)
 }
 
 
-static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
+static s7_pointer eval_string_1(s7_scheme *sc, const char *str)
 {
-  #define H_eval_string "(eval-string str :optional env) returns the result of evaluating the string str as Scheme code"
   s7_pointer port;
 
-  if (!s7_is_string(car(args)))
-    return(s7_wrong_type_arg_error(sc, "eval-string", 0, car(args), "a string"));
-  
-  if (cdr(args) != sc->NIL)
-    {
-      if (!is_pair(cadr(args)))
-	return(s7_wrong_type_arg_error(sc, "eval", 2, cadr(args), "an environment"));
-      sc->envir = cadr(args);
-    }
-
-  port = s7_open_input_string(sc, s7_string(car(args)));
+  port = s7_open_input_string(sc, str);
   push_input_port(sc, port);
   push_stack(sc, OP_EVAL_STRING, sc->args, sc->code);
   eval(sc, OP_READ_INTERNAL);
@@ -8647,6 +8636,24 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
+{
+  #define H_eval_string "(eval-string str :optional env) returns the result of evaluating the string str as Scheme code"
+
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "eval-string", 0, car(args), "a string"));
+  
+  if (cdr(args) != sc->NIL)
+    {
+      if (!is_pair(cadr(args)))
+	return(s7_wrong_type_arg_error(sc, "eval", 2, cadr(args), "an environment"));
+      sc->envir = cadr(args);
+    }
+
+  return(eval_string_1(sc, s7_string(car(args))));
+}
+
+
 s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 {
   bool old_longjmp;
@@ -8654,7 +8661,7 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
   /* this can be called recursively via s7_call */
 
   if (sc->longjmp_ok)
-    return(g_eval_string(sc, make_list_1(sc, s7_make_string(sc, str))));
+    return(eval_string_1(sc, str));
   
   stack_reset(sc); 
   sc->envir = sc->global_env; 

@@ -564,11 +564,68 @@ static prefs_info *prefs_row_with_two_toggles(const char *label, const char *var
 
 /* ---------------- toggle with text ---------------- */
 
+/* see commentary in snd-xprefs.c */
+
+
+typedef struct {
+  bool text_focussed, text_changed;
+  prefs_info *prf;
+} text_info;
+
+
+static void text_change_callback(GtkWidget *w, gpointer context)
+{
+  text_info *data = (text_info *)context;
+  if (data->text_focussed) /* try to omit non-user actions that change the value */
+    data->text_changed = true;
+}
+
+
+static void text_activate_callback(GtkWidget *w, gpointer context)
+{
+  text_info *data = (text_info *)context;
+  data->text_changed = false;
+}
+
+
+static void text_grab_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer context)
+{
+  text_info *data = (text_info *)context;
+  if (with_pointer_focus(ss))
+    goto_window(w);
+  data->text_focussed = true;
+}
+
+
+static void text_lose_focus_callback(GtkWidget *w, GdkEventCrossing *ev, gpointer context)
+{
+  text_info *data = (text_info *)context;
+  if ((data->text_focussed) &&
+      (data->text_changed) &&
+      (data->prf) &&
+      (data->prf->text_func))
+    {
+      (*(data->prf->text_func))(data->prf);
+      data->text_changed = false;
+    }
+}
+
+
+static void call_text_func(GtkWidget *w, gpointer context) 
+{
+  prefs_info *prf = (prefs_info *)context;
+  if ((prf) && (prf->text_func))
+    (*(prf->text_func))(prf);
+}
+
+
 static GtkWidget *make_row_text(prefs_info *prf, const char *text_value, int cols, GtkWidget *box)
 {
   int len;
   GtkWidget *w;
   GtkSettings *settings;
+  text_info *info;
+
   ASSERT_WIDGET_TYPE(GTK_IS_HBOX(box), box);
   len = mus_strlen(text_value);
   w = gtk_entry_new();
@@ -592,15 +649,15 @@ static GtkWidget *make_row_text(prefs_info *prf, const char *text_value, int col
   SG_SIGNAL_CONNECT(w, "leave_notify_event", mouse_leave_pref_callback, (gpointer)prf);
   SG_SIGNAL_CONNECT(w, "activate", prefs_change_callback, NULL);
 
+  info = (text_info *)calloc(1, sizeof(text_info));
+  info->prf = prf;
+
+  SG_SIGNAL_CONNECT(w, "enter_notify_event", text_grab_focus_callback, (gpointer)info);
+  SG_SIGNAL_CONNECT(w, "leave_notify_event", text_lose_focus_callback, (gpointer)info);
+  SG_SIGNAL_CONNECT(w, "changed", text_change_callback, (gpointer)info);
+  SG_SIGNAL_CONNECT(w, "activate", text_activate_callback, (gpointer)info);
+
   return(w);
-}
-
-
-static void call_text_func(GtkWidget *w, gpointer context) 
-{
-  prefs_info *prf = (prefs_info *)context;
-  if ((prf) && (prf->text_func))
-    (*(prf->text_func))(prf);
 }
 
 
@@ -1557,7 +1614,7 @@ static void preferences_save_callback(GtkWidget *w, gpointer context)
   clear_prefs_dialog_error();
   redirect_snd_error_to(post_prefs_dialog_error, NULL);
   redirect_snd_warning_to(post_prefs_dialog_error, NULL);
-  save_prefs(save_options_in_prefs());
+  save_prefs();
   redirect_snd_error_to(NULL, NULL);
   redirect_snd_warning_to(NULL, NULL);
 }
@@ -1693,8 +1750,7 @@ widget_t start_preferences_dialog(void)
 				   "width:", str1, "height:", str2, 6,
 				   dpy_box,
 				   startup_size_text);
-    /* this is not reflected */
-    remember_pref(prf, NULL, save_init_window_size, NULL, clear_init_window_size, revert_init_window_size);  
+    remember_pref(prf, reflect_init_window_size, save_init_window_size, NULL, clear_init_window_size, revert_init_window_size);  
     free(str2);
     free(str1);
 

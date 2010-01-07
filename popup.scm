@@ -885,7 +885,7 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
 (define (add-listener-popup)
   (let* ((listener (or (list-ref (main-widgets) 4)
 		       (begin
-			 (show-listener)
+			 (set! (show-listener) #t) ; create it?
 			 (set! (show-listener) #f)
 			 (list-ref (main-widgets) 4))))
 	 (every-menu (list XmNbackground (highlight-color)))

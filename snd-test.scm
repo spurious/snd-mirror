@@ -284,7 +284,7 @@
        (set! times (cons (list ',a val) times)))))
 
 (define original-prompt (listener-prompt))
-(show-listener)
+(set! (show-listener) #t)
 (set! (window-x) 600)
 (set! (window-y) 10)
 
@@ -67082,7 +67082,7 @@ EDITS: 1
 (save-listener "test.output")
 (set! (listener-prompt) original-prompt)
 (clear-listener)
-(show-listener)
+(set! (show-listener) #t)
 
 (display (format #f "~%;all done!~%~A" original-prompt))
 

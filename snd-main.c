@@ -534,6 +534,9 @@ static void save_options(FILE *fd)
   if ((!axis_numbers_font(ss)) || (!(mus_strcmp(axis_numbers_font(ss), DEFAULT_AXIS_NUMBERS_FONT)))) pss_sq(fd, S_axis_numbers_font, axis_numbers_font(ss));
   if (listener_font(ss))
     pss_sq(fd, S_listener_font, listener_font(ss));
+  if (listener_is_visible())
+    pss_ss(fd, S_show_listener, b2s(true));
+
 #if USE_MOTIF || USE_GTK
   if (in_graph_cursor(ss) != DEFAULT_GRAPH_CURSOR)
     pss_sd(fd, S_graph_cursor, in_graph_cursor(ss));
@@ -1322,8 +1325,6 @@ void save_state(const char *save_state_name)
    *  To keep the mix/track dialogs in sync with the newly restored mixes would require keeping the
    *     old mix/track numbers and mapping to the new ones.
    */
-  
-  pss_ss(save_fd, S_show_listener, b2s(listener_is_visible()));
   
   /* the problem here (with saving hooks) is that it is not straightforward to save the function source
    *   (with the current print-set! source option, or with an earlier procedure->string function using

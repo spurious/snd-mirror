@@ -5,18 +5,6 @@
 /* preferences dialog; layout design taken from webmail
  */
 
-/* should the exit key work in the listener as well? -- how to handle C-x cmds in xttranslation tables?
-
-   abandoned:
-       preset packages: dlp, ksm
-       emacs setup
-         how to tie into emacs?
-       audio mixer settings? -> volume in some mode (snd6.scm has OSS version)
-         "startup dac volume" -- but this will be confusing since we don't notice mute settings etc
-       clm instruments? -- surely user should learn about the listener...
-*/
-
-
 static Widget preferences_dialog = NULL, load_path_text_widget = NULL;
 static bool prefs_helping = false, prefs_unsaved = false;
 static char *prefs_saved_filename = NULL;
@@ -210,7 +198,6 @@ static void prefs_change_callback(Widget w, XtPointer context, XtPointer info)
   prefs_set_dialog_title(NULL);
   clear_prefs_dialog_error();
 }
-
 
 
 /* ---------------- row (main) label widget ---------------- */
@@ -620,11 +607,71 @@ static prefs_info *prefs_row_with_two_toggles(const char *label, const char *var
 
 /* ---------------- toggle with text ---------------- */
 
+static void call_text_func(Widget w, XtPointer context, XtPointer info) 
+{
+  prefs_info *prf = (prefs_info *)context;
+  if ((prf) && (prf->text_func))
+    (*(prf->text_func))(prf);
+}
+
+
+/* earlier versions of this dialog assumed the user would type <cr> to save a new value
+ *    typed in a text widget, but no one does that anymore, so now, to catch these changes
+ *    but not be confused by automatic changes (such as in a scale widget's label),
+ *    we'll use XmNfocusCallback to set a text_focussed flag, XmNlosingFocusCallback to
+ *    unset it, XmNvalueChangedCallback to set a text_changed flag, XmNactivateCallback
+ *    to clear text_changed, and if XmNlosingFocusCallback sees that flag set, it
+ *    calls the activate function and unsets the flag. 
+ */
+
+typedef struct {
+  bool text_focussed, text_changed;
+  prefs_info *prf;
+} text_info;
+
+
+static void text_change_callback(Widget w, XtPointer context, XtPointer info)
+{
+  text_info *data = (text_info *)context;
+  if (data->text_focussed) /* try to omit non-user actions that change the value */
+    data->text_changed = true;
+}
+
+
+static void text_activate_callback(Widget w, XtPointer context, XtPointer info)
+{
+  text_info *data = (text_info *)context;
+  data->text_changed = false;
+}
+
+
+static void text_grab_focus_callback(Widget w, XtPointer context, XtPointer info)
+{
+  text_info *data = (text_info *)context;
+  data->text_focussed = true;
+}
+
+
+static void text_lose_focus_callback(Widget w, XtPointer context, XtPointer info)
+{
+  text_info *data = (text_info *)context;
+  if ((data->text_focussed) &&
+      (data->text_changed) &&
+      (data->prf) &&
+      (data->prf->text_func))
+    {
+      (*(data->prf->text_func))(data->prf);
+      data->text_changed = false;
+    }
+}
+
+
 static Widget make_row_text(prefs_info *prf, const char *text_value, int cols, Widget left_widget, Widget box, Widget top_widget)
 {
   Widget w;
   int n;
-  Arg args[20];
+  Arg args[30];
+  text_info *info;
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
@@ -657,18 +704,17 @@ static Widget make_row_text(prefs_info *prf, const char *text_value, int cols, W
 
   XtAddEventHandler(w, EnterWindowMask, false, mouse_enter_pref_callback, (XtPointer)prf);
   XtAddEventHandler(w, LeaveWindowMask, false, mouse_leave_pref_callback, (XtPointer)prf);
-
   XtAddCallback(w, XmNactivateCallback, prefs_change_callback, NULL);
 
+  info = (text_info *)calloc(1, sizeof(text_info));
+  info->prf = prf;
+
+  XtAddCallback(w, XmNactivateCallback, text_activate_callback, (XtPointer)info);
+  XtAddCallback(w, XmNvalueChangedCallback, text_change_callback, (XtPointer)info);
+  XtAddCallback(w, XmNfocusCallback, text_grab_focus_callback, (XtPointer)info);
+  XtAddCallback(w, XmNlosingFocusCallback, text_lose_focus_callback, (XtPointer)info);
+
   return(w);
-}
-
-
-static void call_text_func(Widget w, XtPointer context, XtPointer info) 
-{
-  prefs_info *prf = (prefs_info *)context;
-  if ((prf) && (prf->text_func))
-    (*(prf->text_func))(prf);
 }
 
 
@@ -1727,12 +1773,11 @@ static void preferences_save_callback(Widget w, XtPointer context, XtPointer inf
   clear_prefs_dialog_error();
   redirect_snd_error_to(post_prefs_dialog_error, NULL);
   redirect_snd_warning_to(post_prefs_dialog_error, NULL);
-  save_prefs(save_options_in_prefs());
+  save_prefs();
   redirect_snd_error_to(NULL, NULL);
   redirect_snd_warning_to(NULL, NULL);
 }
 
-/* TODO: text fields should be checked in prefs to catch changes that were not followed by a cr */
 
 
 /* ---------------- errors ---------------- */
@@ -1895,8 +1940,7 @@ widget_t start_preferences_dialog(void)
 				   "width:", str1, "height:", str2, 6,
 				   dpy_box, current_sep,
 				   startup_size_text);
-    /* this is not reflected */
-    remember_pref(prf, NULL, save_init_window_size, NULL, clear_init_window_size, revert_init_window_size); 
+    remember_pref(prf, reflect_init_window_size, save_init_window_size, NULL, clear_init_window_size, revert_init_window_size); 
     free(str2);
     free(str1);
 
