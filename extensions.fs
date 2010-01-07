@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Sun Dec 20 00:51:04 CET 2009
+\ Changed: Wed Jan 06 18:28:55 CET 2010
 
 \ Commentary:
 \
@@ -23,6 +23,9 @@
 \ backward-mark       		  ( count snd chn -- mk )
 \ mus-bank            		  ( gens amps in1 in2 -- val )
 \ oscil-bank          		  ( amps gens in1 in2 -- val )
+\ after-save-as-hook-replace-sound ( snd fname from-dialog -- )
+\ emacs-style-save-as             ( -- f )
+\ set-emacs-style-save-as         ( f -- )
 \
 \ Snd-8 compatibility
 \ samples->sound-data             ( :optional beg len snd chn sd edpos sd-chan -- sd )
@@ -50,7 +53,7 @@
 \ eval-over-selection             ( func -- val )
 \
 \ yes-or-no?                      ( question action-if-yes action-if-no snd -- )
-\ check-for-unsaved-edits         ( check -- )
+\ check-for-unsaved-edits         ( check -- #f )
 \ remember-sound-state            ( choice -- )
 \
 \ mix-channel                     ( file-data :optional beg dur snd chn edpos -- val )
@@ -86,8 +89,10 @@
 \ prefs-deactivate-initial-bounds ( -- )
 \ with-reopen-menu     		  ( -- )
 \ with-buffers-menu    		  ( -- )
-\ set-global-sync                 ( choice -- )
+\ set-global-sync                 ( choice -- #f )
 \ show-selection                  ( -- )
+\ 
+\ if-cursor-follows-play-it-stays-where-play-stopped ( :optional enable -- )
 
 require clm
 require examp
@@ -251,6 +256,30 @@ previous
   0.0					\ sum
   gens each ( gen ) in1 i object-ref in2 i object-ref oscil amps i vct-ref f* ( sum ) f+ end-each
 ;
+
+: after-save-as-hook-replace-sound ( snd fname from-dialog -- )
+   { snd fname from-dialog }
+  from-dialog if
+    snd revert-sound drop
+    snd close-sound drop
+    fname open-sound drop
+  then
+;
+: emacs-style-save-as ( -- f )
+  after-save-as-hook <'> after-save-as-hook-replace-sound hook-member?
+;
+: set-emacs-style-save-as ( f -- )
+  if
+    emacs-style-save-as unless
+      after-save-as-hook <'> after-save-as-hook-replace-sound add-hook!
+    then
+  else
+    after-save-as-hook <'> after-save-as-hook-replace-sound remove-hook! drop
+  then
+;
+\ #t set-emacs-style-save-as installs
+\ #f set-emacs-style-save-as deinstalls
+
 
 \ === Snd-8 compatibility stuff (snd8.scm) ===
 
@@ -501,7 +530,7 @@ END defaults to end of channel, BEG defaults to 0, SND defaults to the currently
 
 : eval-over-selection <{ func -- val }>
   doc" Evaluates FUNC on each sample in the current selection."
-  func proc?
+  func word?
   undef selection? && if
     #f #f selection-position { beg }
     #f #f selection-frames   { len }
@@ -588,7 +617,7 @@ set-current
 
 #f value checking-for-unsaved-edits
 
-: check-for-unsaved-edits ( check -- )
+: check-for-unsaved-edits ( check -- #f )
   doc" Sets up hooks to check for and ask about unsaved edits when a sound is closed.  \
 If CHECK is #f, the hooks are removed."
   ( check ) dup to checking-for-unsaved-edits if
@@ -598,18 +627,26 @@ If CHECK is #f, the hooks are removed."
     before-close-hook <'> unsaved-edits-at-close remove-hook! drop
     before-exit-hook  <'> unsaved-edits-at-exit  remove-hook! drop
   then
+  #f					\ for prefs_function_call|save_1() in snd-prefs.c
 ;
 previous
 
 \ --- remember-sound-state ---
 
+\ for prefs
+\ 
+\ REMEMBERING-SOUND-STATE
+\ 0 - no remembering
+\ 1 - just within-run remembering
+\ 2 - write state to REMEMBER-SOUND-FILENAME
+0 value remembering-sound-state
 ".snd-remember-sound" value remember-sound-filename
 #() value -saved-remember-sound-states-
 
 hide
 #( <'> sync <'> with-tracking-cursor <'> selected-channel <'> show-controls <'> read-only
    <'> contrast-control? <'> expand-control? <'> reverb-control? <'> filter-control?
-   <'> amp-control-bounds
+   <'> amp-control <'> amp-control-bounds
    <'> contrast-control <'> contrast-control-amp <'> contrast-control-bounds
    <'> expand-control <'> expand-control-bounds <'> expand-control-hop <'> expand-control-jitter
    <'> expand-control-length <'> expand-control-ramp
@@ -620,7 +657,7 @@ hide
    <'> reverb-control-scale-bounds
    <'> speed-control <'> speed-control-bounds <'> speed-control-style
    <'> speed-control-tones ) value sound-funcs
-#( <'> amp-control <'> time-graph? <'> transform-graph? <'> lisp-graph? <'> x-bounds <'> y-bounds
+#( <'> time-graph? <'> transform-graph? <'> lisp-graph? <'> x-bounds <'> y-bounds
    <'> cursor <'> cursor-size
    <'> cursor-style <'> show-marks <'> show-y-zero <'> show-grid <'> wavo-hop <'> wavo-trace
    <'> max-transform-peaks
@@ -633,57 +670,42 @@ hide
    <'> x-axis-style <'> show-axes <'> graphs-horizontal <'> lisp-graph-style
    <'> transform-graph-style
    <'> grid-density <'> tracking-cursor-style ) value channel-funcs
+\ REMEMBER-STATES
+\ #a( '( filename-symbol . values ) ... )
+\ VALUES
+\ #{ :time     file-time
+\    :sound    sound-value-array
+\    :channels channel-value-array }
 #() value remember-states
-0 value remember-choice
 
-: saved-state ( snd -- ary|#f )
-  { snd }
-  snd file-name { fname }
-  #f					\ flag
-  remember-states each { ary }
-    ary 0 array-ref fname string= if drop ary leave then
-  end-each
-;
-: set-saved-state ( snd new-state -- )
-  { snd new-state }
-  snd file-name { fname }
-  #t					\ flag
-  remember-states each { ary }
-    ary 0 array-ref fname string= if
-      not				\ toggle flag
-      remember-states i new-state array-set!
-      leave
-    then
-  end-each ( flag ) if
-    remember-states new-state array-push drop
-  then
+: saved-state ( snd -- ary|#f ) file-name remember-states swap array-assoc-ref ;
+: set-saved-state { snd new-state -- }
+  remember-states snd file-name new-state array-assoc-set! drop
 ;
 : remember-sound-at-close <{ snd -- #f }>
-  \ #( fname fwdate snd-fncs chn-fncs )
-  #( snd file-name
-     snd file-name file-write-date ) { new-state }
-  sound-funcs map snd *key* execute end-map new-state swap array-push to new-state
+  #{ :time snd file-name file-write-date } { new-state }
+  sound-funcs map snd *key* execute end-map new-state :sound rot hash-set!
   snd channels make-array map!
-    nil { fnc }
-    channel-funcs map *key* to fnc
-      fnc xt->name "cursor" string= if
+    channel-funcs map
+      *key* xt->name "cursor" string= if
 	snd j ( chn ) undef ( edpos ) cursor \ three arguments!
       else
-	snd j ( chn ) fnc execute
+	snd j ( chn ) *key* execute
       then
+      *key* xt->name "transform-type" string= if transform->integer then
     end-map
-  end-map new-state swap array-push to new-state
+  end-map new-state :channels rot hash-set!
   snd new-state set-saved-state
   #f
 ;
 : remember-sound-at-open <{ snd -- }>
   snd saved-state { state }
-  remember-choice 2 <>
-  state length && if
-    snd file-name file-write-date state 1 array-ref equal?
-    snd channels state 3 array-ref length = && if
+  state empty? not
+  remembering-sound-state 2 <> && if
+    snd file-name file-write-date state :time hash-ref d=
+    snd channels state :channels hash-ref length = && if
       nil nil { val fnc }
-      state 2 array-ref each to val
+      state :sound hash-ref each to val
 	sound-funcs i array-ref to fnc
 	fnc xt->name "selected-channel" string= if
 	  snd val set-selected-channel drop \ arguments swaped!
@@ -691,10 +713,12 @@ hide
 	  val snd fnc set-execute drop
 	then
       end-each
+      state :channels hash-ref { chans-state }
       snd channels 0 ?do
 	#t snd i ( chn ) set-squelch-update drop
-	state 3 array-ref i ( chn) array-ref each to val \ channel-funcs values
+	chans-state i ( chn ) array-ref each to val \ channel-funcs values
 	  channel-funcs i array-ref to fnc
+	  fnc xt->name "transform-type" string= if val integer->transform to val then
 	  fnc xt->name "cursor" string= if
 	    val snd j ( chn ) undef ( edpos ) set-cursor drop \ four arguments!
 	  else
@@ -716,35 +740,33 @@ hide
   then
   #f
 ;
+: remember-sound-write-cb <{ io -- }>
+  io $" \\ -*- snd-forth -*-\n" port-puts
+  io $" \\ from remember-sound-state in %s\n" '( *filename* ) port-puts-format
+  io $" \\ written: %s\n\n" '( date ) port-puts-format
+  io $" #a( " port-puts
+  remember-states each { en }
+    i 0> if io $" \n   " port-puts then
+    io $" %S " '( en 0 array-ref ) port-puts-format
+    io $" %S " '( en 1 array-ref ) port-puts-format
+  end-each
+  io $" ) to -saved-remember-sound-states-\n\n" port-puts
+  io $" \\ %s ends here\n" '( remember-sound-filename #f file-basename ) port-puts-format
+;
 : remember-sound-at-exit <{ -- #f }>
-  \ The local variable IO must be defined here, not in the else
-  \ branch.  ficlVmExecuteXT()/ficlVmInnerLoop() try to kill a local
-  \ stack but no local stack exists if remember-states is empty and IO
-  \ is defined in the else branch.  (I haven't seen this bug before.)
-  nil { io }
   remember-states empty? if
     remember-sound-filename file-delete
   else
-    remember-sound-filename io-open-write to io
-    io $" \\ -*- snd-forth -*-\n" io-write
-    io $" \\ from remember-sound-state in %s\n" #( *filename* ) io-write-format
-    io $" \\ written: %s\n\n" #( date ) io-write-format
-    io $" %S to -saved-remember-sound-states-\n\n" #( remember-states ) io-write-format
-    io $" \\ %s ends here\n" #( remember-sound-filename #f file-basename ) io-write-format
-    io io-close
+    <'> remember-sound-write-cb :filename remember-sound-filename with-output-port
   then
   #f
 ;
 set-current
 
-0 value remembering-sound-state
-
-: remember-sound-state ( choice -- )
+: remember-sound-state { choice -- }
   doc" Remembers the state of a sound when it is closed, \
 and if it is subsquently re-opened, restores that state."
-  { choice }
-  choice 0=				\ no remembering
-  choice 1 = ||	if			\ just within-run remembering
+  choice 2 < if
     choice 0= if
       close-hook      <'> remember-sound-at-close remove-hook! drop
       after-open-hook <'> remember-sound-at-open  remove-hook! drop
@@ -753,15 +775,14 @@ and if it is subsquently re-opened, restores that state."
     before-exit-hook <'> remember-sound-at-exit  remove-hook! drop
     remember-sound-filename file-delete
   then
-  choice 0<> if
+  choice 0> if
     close-hook      <'> remember-sound-at-close add-hook!
     after-open-hook <'> remember-sound-at-open  add-hook!
-    choice 1 <> if
+    choice 1 > if
       open-hook        <'> remember-sound-at-start add-hook!
       before-exit-hook <'> remember-sound-at-exit  add-hook!
     then
   then
-  choice to remember-choice
   choice to remembering-sound-state
 ;
 previous
@@ -1433,7 +1454,7 @@ hide
   then
 ;
 set-current
-: set-global-sync ( choice -- )
+: set-global-sync ( choice -- #f )
   { choice }
   choice to global-sync-choice
   choice 0<> if
@@ -1441,6 +1462,7 @@ set-current
       after-open-hook <'> global-sync-cb add-hook!
     then
   then
+  #f					\ for prefs_function_call|save_1() in snd-prefs.c
 ;
 previous
 
@@ -1466,5 +1488,48 @@ previous
     end-each
   then
 ;
+
+\ ;;; -------- cursor-follows-play and stays where it was when the play ended
+\ moved from examp.fs to extensions.fs [ms]
+
+hide
+: current-cursor      { snd chn -- cur } 'cursor snd chn channel-property ;
+: set-current-cursor  { snd chn val -- } 'cursor val snd chn set-channel-property ;
+: original-cursor     { snd chn -- cur } 'original-cursor snd chn channel-property ;
+: set-original-cursor { snd chn val -- } 'original-cursor val snd chn set-channel-property ;
+: local-dac-func <{ data -- val }>
+  sounds each { snd }
+    snd channels 0 ?do
+      snd i #f cursor snd i original-cursor <> if
+	snd i  snd i #f cursor set-current-cursor
+      then
+    loop
+  end-each
+  #f
+;
+: local-start-playing-func <{ snd -- val }>
+  snd channels 0 ?do
+    snd i #f cursor { cur }
+    snd i cur set-original-cursor
+    snd i cur set-current-cursor
+  loop
+  #f
+;
+: local-stop-playing-func <{ snd -- val }>
+  snd 0 current-cursor snd #t #f set-cursor
+;
+set-current
+: if-cursor-follows-play-it-stays-where-play-stopped <{ :optional enable #t -- }>
+  enable if
+    dac-hook           <'> local-dac-func           add-hook!
+    start-playing-hook <'> local-start-playing-func add-hook!
+    stop-playing-hook  <'> local-stop-playing-func  add-hook!
+  else
+    dac-hook           <'> local-dac-func           remove-hook! drop
+    start-playing-hook <'> local-start-playing-func remove-hook! drop
+    stop-playing-hook  <'> local-stop-playing-func  remove-hook! drop
+  then
+;
+previous
 
 \ extensions.fs ends here

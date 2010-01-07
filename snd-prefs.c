@@ -543,7 +543,7 @@ static void prefs_function_call_1(const char *func, XEN arg)
 #endif
 
 #if HAVE_FORTH
-  str = mus_format("%s %s\n", XEN_AS_STRING(arg), func);
+  str = mus_format("%s %s drop\n", XEN_AS_STRING(arg), func);
 #endif
 
   XEN_EVAL_C_STRING(str);
@@ -572,7 +572,7 @@ static void prefs_function_save_0(FILE *fd, const char *name, const char *file)
 #if HAVE_FORTH
   if (file)
     fprintf(fd, "require %s\n", file);
-  fprintf(fd, "%s\n", name); /* drop?? */
+  fprintf(fd, "%s\n", name);
 #endif
 }
 
@@ -727,8 +727,6 @@ static void show_listener_toggle(prefs_info *prf)
 static void save_show_listener(prefs_info *prf, FILE *fd)
 {
   rts_show_listener = prefs_show_listener;
-  if (GET_TOGGLE(prf->toggle))
-    prefs_function_save_1(fd, "show-listener", NULL, XEN_TRUE);
 }
 
 
@@ -4176,7 +4174,7 @@ static void save_smpte(prefs_info *prf, FILE *fd)
 
 #if HAVE_FORTH
   fprintf(fd, "require snd-xm\n");
-  fprintf(fd, "\\ #t show-smpte-label drop\n"); 
+  fprintf(fd, "#t show-smpte-label drop\n"); 
 #endif
     }
 }

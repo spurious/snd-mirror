@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Thu Nov 26 18:25:33 CET 2009
+\ Changed: Thu Jan 07 00:33:30 CET 2010
 
 \ Commentary:
 \
@@ -108,7 +108,6 @@
 \ open-next-file-in-directory ( -- f )
 \ click-middle-button-to-open-next-file-in-directory ( -- )
 \ chain-dsps                ( start dur :optional dsps -- )
-\ if-cursor-follows-play-it-stays-where-play-stopped ( :optional enable -- )
 \ 
 \ smooth-channel-via-ptree  ( :optional beg dur snd chn edpos -- val )
 \ ring-modulate-channel     ( freq :optional beg dur snd chn edpos -- val )
@@ -144,23 +143,20 @@
   ary
 ;
 
-\ Also defined in clm.fs.
-[ifundef] close-sound-extend
-  \ 5 == notebook widget
-  : close-sound-extend <{ snd -- }>
-    main-widgets 5 object-ref if
-      sounds snd object-index 0 max { idx }
-      snd close-sound drop
-      sounds empty? unless
-	sounds
-	idx  sounds length < if idx else -1 then
-	object-ref set-selected-sound drop
-      then
-    else
-      snd close-sound drop
+\ 5 == notebook widget
+: close-sound-extend <{ snd -- }>
+  main-widgets 5 object-ref if
+    sounds snd object-index 0 max { idx }
+    snd close-sound drop
+    sounds empty? unless
+      sounds
+      idx  sounds length < if idx else -1 then
+      object-ref set-selected-sound drop
     then
-  ;
-[then]
+  else
+    snd close-sound drop
+  then
+;
 
 : snd-snd <{ :optional snd #f -- snd }>
   snd integer? if
@@ -241,7 +237,6 @@ previous
 require clm
 require env
 require rgb
-require extensions
 
 \ === from frame.scm
 \
@@ -1474,29 +1469,31 @@ previous
 \  240.0 1.0 2048      pulse-voice
 \ 1000.0 1.0  512      pulse-voice
 
-\ ;;; -------- convolution example
+'snd-nogui provided? [unless]
+  \ ;;; -------- convolution example
 
-hide
-: cnv-cb { sf -- prc; dir self -- val }
-  1 proc-create sf , ( prc )
- does> { dir self -- val }
-  self @ ( sf ) next-sample
-;
-set-current
-: cnvtest ( snd0 snd1 amp -- mx )
-  doc" Convolves SND0 and SND1, scaling by AMP, returns new max amp: 0 1 0.1 cnvtest"
-  { snd0 snd1 amp }
-  snd0 #f #f frames { flt-len }
-  snd1 #f #f frames flt-len + { total-len }
-  0 snd1 0 1 #f make-sampler { sf }
-  :input sf cnv-cb :filter 0 flt-len snd0 #f #f channel->vct make-convolve { cnv }
-  total-len 0.0 make-vct map! cnv #f convolve end-map amp vct-scale! ( out-data )
-  0 total-len snd1 #f #f get-func-name vct->channel vct-peak { max-samp }
-  sf free-sampler drop
-  max-samp 1.0 f> if #( max-samp fnegate max-samp ) snd1 #f set-y-bounds drop then
-  max-samp
-;
-previous
+  hide
+  : cnv-cb { sf -- prc; dir self -- val }
+    1 proc-create sf , ( prc )
+   does> { dir self -- val }
+    self @ ( sf ) next-sample
+  ;
+  set-current
+  : cnvtest ( snd0 snd1 amp -- mx )
+    doc" Convolves SND0 and SND1, scaling by AMP, returns new max amp: 0 1 0.1 cnvtest"
+    { snd0 snd1 amp }
+    snd0 #f #f frames { flt-len }
+    snd1 #f #f frames flt-len + { total-len }
+    0 snd1 0 1 #f make-sampler { sf }
+    :input sf cnv-cb :filter 0 flt-len snd0 #f #f channel->vct make-convolve { cnv }
+    total-len 0.0 make-vct map! cnv #f convolve end-map amp vct-scale! ( out-data )
+    0 total-len snd1 #f #f get-func-name vct->channel vct-peak { max-samp }
+    sf free-sampler drop
+    max-samp 1.0 f> if #( max-samp fnegate max-samp ) snd1 #f set-y-bounds drop then
+    max-samp
+  ;
+  previous
+[then]
 
 \ ;;; -------- swap selection chans
 
@@ -1769,6 +1766,7 @@ hide
   #f
 ;
 set-current
+
 : switch-to-buffer <{ -- val }>
   "" { default }
   xb-last-buffer array? if
@@ -1780,8 +1778,6 @@ set-current
   default #f undef report-in-minibuffer drop
   msg <'> stb-cb #f #t prompt-in-minibuffer
 ;
-previous
-
 : xb-close <{ snd -- val }>
   xb-current-buffer array?
   xb-current-buffer 0 array-ref snd = && if
@@ -1805,7 +1801,6 @@ previous
   then
   #f
 ;
-
 : xb-open <{ snd -- val }>
   close-all-buffers
   xb-current-buffer to xb-last-buffer
@@ -1813,7 +1808,10 @@ previous
   xb-last-width  0= if window-width       else xb-last-width  then
   xb-last-height 0= if window-height 10 - else xb-last-height then open-current-buffer
 ;
-\ "b" 0 <'> switch-to-buffer #t "switch-to-buffer" "switch-to-buffer" bind-key
+previous
+
+\ C-x b
+\ "b" 0 <'> switch-to-buffer #t "Switch to buffer" "switch-to-buffer" bind-key drop
 \ after-open-hook <'> xb-open  add-hook!
 \ close-hook      <'> xb-close add-hook!
 
@@ -2197,48 +2195,6 @@ lambda: ( -- )
   0 1.0   #( #( 0 0 1 1 2 0 ) cb )     chain-dsps
 ; with-sound
 [then]
-previous
-
-\ ;;; -------- cursor-follows-play and stays where it was when the play ended
-
-hide
-: current-cursor      { snd chn -- cur } 'cursor snd chn channel-property ;
-: set-current-cursor  { snd chn val -- } 'cursor val snd chn set-channel-property ;
-: original-cursor     { snd chn -- cur } 'original-cursor snd chn channel-property ;
-: set-original-cursor { snd chn val -- } 'original-cursor val snd chn set-channel-property ;
-: local-dac-func <{ data -- val }>
-  sounds each { snd }
-    snd channels 0 ?do
-      snd i #f cursor snd i original-cursor <> if
-	snd i  snd i #f cursor set-current-cursor
-      then
-    loop
-  end-each
-  #f
-;
-: local-start-playing-func <{ snd -- val }>
-  snd channels 0 ?do
-    snd i #f cursor { cur }
-    snd i cur set-original-cursor
-    snd i cur set-current-cursor
-  loop
-  #f
-;
-: local-stop-playing-func <{ snd -- val }>
-  snd 0 current-cursor snd #t #f set-cursor
-;
-set-current
-: if-cursor-follows-play-it-stays-where-play-stopped <{ :optional enable #t -- }>
-  enable if
-    dac-hook           <'> local-dac-func           add-hook!
-    start-playing-hook <'> local-start-playing-func add-hook!
-    stop-playing-hook  <'> local-stop-playing-func  add-hook!
-  else
-    dac-hook           <'> local-dac-func           remove-hook! drop
-    start-playing-hook <'> local-start-playing-func remove-hook! drop
-    stop-playing-hook  <'> local-stop-playing-func  remove-hook! drop
-  then
-;
 previous
 
 \ ;;; -------- smooth-channel as virtual op

@@ -7183,18 +7183,11 @@ static s7_pointer g_string_length(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_string_ref(s7_scheme *sc, s7_pointer args)
+static s7_pointer string_ref_1(s7_scheme *sc, s7_pointer strng, s7_pointer index)
 {
-  #define H_string_ref "(string-ref str index) returns the character at the index-th element of the string str"
-  
-  s7_pointer index;
   char *str;
   s7_Int ind;
 
-  index = cadr(args);
-  
-  if (!s7_is_string(car(args)))
-    return(s7_wrong_type_arg_error(sc, "string-ref", 1, car(args), "a string"));
   if (!s7_is_integer(index))
     return(s7_wrong_type_arg_error(sc, "string-ref", 2, index, "an integer"));
 
@@ -7202,11 +7195,22 @@ static s7_pointer g_string_ref(s7_scheme *sc, s7_pointer args)
 
   if (ind < 0)
     return(s7_wrong_type_arg_error(sc, "string-ref", 2, index, "a non-negative integer"));
-  if (ind >= string_length(car(args)))
+  if (ind >= string_length(strng))
     return(s7_out_of_range_error(sc, "string-ref", 2, index, "index should be less than string length"));
   
-  str = string_value(car(args));
+  str = string_value(strng);
   return(s7_make_character(sc, ((unsigned char *)str)[ind]));
+}
+
+
+static s7_pointer g_string_ref(s7_scheme *sc, s7_pointer args)
+{
+  #define H_string_ref "(string-ref str index) returns the character at the index-th element of the string str"
+  
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "string-ref", 1, car(args), "a string"));
+
+  return(string_ref_1(sc, car(args), cadr(args)));
 }
 
 
@@ -9896,32 +9900,39 @@ static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_list_ref(s7_scheme *sc, s7_pointer args)
+static s7_pointer list_ref_1(s7_scheme *sc, s7_pointer lst, s7_pointer ind)
 {
-  #define H_list_ref "(list-ref lst i) returns the i-th element (0-based) of the list"
-  
   int i;
   s7_Int index;
   s7_pointer p;
 
-  if (!is_pair(car(args)))
-    return(s7_wrong_type_arg_error(sc, "list-ref", 1, car(args), "a pair"));
-  if ((!s7_is_integer(cadr(args))) ||
-      (s7_integer(cadr(args)) < 0))
-    return(s7_wrong_type_arg_error(sc, "list-ref", 2, cadr(args), "a non-negative integer"));
+  if ((!s7_is_integer(ind)) ||
+      (s7_integer(ind) < 0))
+    return(s7_wrong_type_arg_error(sc, "list-ref", 2, ind, "a non-negative integer"));
   
-  index = s7_integer(cadr(args));
+  index = s7_integer(ind);
   if (index < 0)
-    return(s7_out_of_range_error(sc, "list-ref", 2, cadr(args), "index should be non-negative"));
+    return(s7_out_of_range_error(sc, "list-ref", 2, ind, "index should be non-negative"));
   
-  for (i = 0, p = car(args); (i < index) && is_pair(p); i++, p = cdr(p)) {}
+  for (i = 0, p = lst; (i < index) && is_pair(p); i++, p = cdr(p)) {}
   
   if (p == sc->NIL)
-    return(s7_out_of_range_error(sc, "list-ref", 2, cadr(args), "index should be less than list length"));
+    return(s7_out_of_range_error(sc, "list-ref", 2, ind, "index should be less than list length"));
   if (!is_pair(p))
     return(s7_wrong_type_arg_error(sc, "list-ref", i, p, "a proper list"));
   
   return(car(p));
+}
+
+
+static s7_pointer g_list_ref(s7_scheme *sc, s7_pointer args)
+{
+  #define H_list_ref "(list-ref lst i) returns the i-th element (0-based) of the list"
+  
+  if (!is_pair(car(args)))
+    return(s7_wrong_type_arg_error(sc, "list-ref", 1, car(args), "a pair"));
+
+  return(list_ref_1(sc, car(args), cadr(args)));
 }
 
 
@@ -11537,19 +11548,10 @@ static char *s7_hashed_real_name(s7_Double key, char *intbuf)
 }
 
 
-static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
+static s7_pointer hash_table_ref_1(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
-  /* basically the same layout as the global symbol table */
-  #define H_hash_table_ref "(hash-table-ref table key) returns the value associated with key (a string or symbol) in the hash table"
   const char *name;
   char intbuf[HASHED_INTEGER_BUFFER_SIZE];
-  s7_pointer table, key;
-
-  table = car(args);
-  key = cadr(args);
-  
-  if (!s7_is_hash_table(table))
-    return(s7_wrong_type_arg_error(sc, "hash-table-ref", 1, table, "a hash-table"));
 
   if (s7_is_string(key))
     name = string_value(key);
@@ -11570,6 +11572,21 @@ static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
 	}
     }
   return(s7_hash_table_ref(sc, table, name));
+}
+
+
+static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
+{
+  /* basically the same layout as the global symbol table */
+  #define H_hash_table_ref "(hash-table-ref table key) returns the value associated with key (a string or symbol) in the hash table"
+  s7_pointer table;
+
+  table = car(args);
+  
+  if (!s7_is_hash_table(table))
+    return(s7_wrong_type_arg_error(sc, "hash-table-ref", 1, table, "a hash-table"));
+
+  return(hash_table_ref_1(sc, table, cadr(args)));
 }
 
 
@@ -15929,16 +15946,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->stack_top >= sc->stack_size2)
 	increase_stack_size(sc);
 
-      /* perhaps add a function type that does its own (possibly null) arg num checking,
-       *   and if its args are purely by value, can forego the copy above?
-       */
-
       switch (type(sc->code))
 	{
 	case T_C_FUNCTION: 	                  /* -------- C-based function -------- */
 	  {
 	    int len;
 	    len = safe_list_length(sc, sc->args);
+	    /* I tried embedding this list length in the safe_reverse_in_place function above, but
+	     *   that did not provide any speed-up.
+	     */
+
 	    if (len < c_function_required_args(sc->code))
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
@@ -16246,7 +16263,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_STRING:                            /* -------- string as applicable object -------- */
 	  if (cdr(sc->args) != sc->NIL)
 	    return(s7_wrong_number_of_args_error(sc, "string ref (via string as applicable object)", sc->args));
-	  sc->value = g_string_ref(sc, make_list_2(sc, sc->code, car(sc->args)));
+	  sc->value = string_ref_1(sc, sc->code, car(sc->args));
 	  pop_stack(sc);
 	  goto START;
 
@@ -16257,14 +16274,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   * I suppose we could take n args here = repeated list-refs
 	   * ((list (list 1 2) 3) 0 0) -> 1 (caar)
 	   */
-	  sc->value = g_list_ref(sc, make_list_2(sc, sc->code, car(sc->args)));
+	  sc->value = list_ref_1(sc, sc->code, car(sc->args));
 	  pop_stack(sc);
 	  goto START;
 
 	case T_HASH_TABLE:                        /* -------- hash-table as applicable object -------- */
 	  if (cdr(sc->args) != sc->NIL)
 	    return(s7_wrong_number_of_args_error(sc, "hash-table ref (via hash-table as applicable object)", sc->args));
-	  sc->value = g_hash_table_ref(sc, make_list_2(sc, sc->code, car(sc->args)));
+	  sc->value = hash_table_ref_1(sc, sc->code, car(sc->args));
 	  pop_stack(sc);
 	  goto START;
 

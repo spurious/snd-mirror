@@ -1,6 +1,6 @@
 # ws.rb -- with_sound and friends for Snd/Ruby -*- snd-ruby -*-
 
-# Copyright (c) 2003--2009 Michael Scholz <mi-scholz@users.sourceforge.net>
+# Copyright (c) 2003--2010 Michael Scholz <mi-scholz@users.sourceforge.net>
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -412,7 +412,7 @@ __ws_verbose__ = $VERBOSE
 __ws_debug__   = $DEBUG
 # get rid of `undefined variable' messages
 with_silence do
-  $clm_version            = "ruby 08-Dec-2009"
+  $clm_version            = "ruby 05-Jan-2010"
   $output                 ||= false
   $reverb                 ||= false
   $clm_array_print_length ||= 8
@@ -595,7 +595,7 @@ After finishing the body, the file will be removed.")
   end
 
   def make_default_comment
-    format("Written %s by %s at %s using clm (%s)",
+    format("# Written %s by %s at %s using clm (%s)",
            Time.new.localtime.strftime("%a %d-%b-%y %H:%M %Z"),
            Etc.getlogin,
            Socket.gethostname,

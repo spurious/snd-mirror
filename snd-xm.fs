@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Dec 26 22:36:46 CET 2005
-\ Changed: Fri Nov 06 00:36:06 CET 2009
+\ Changed: Wed Jan 06 22:59:50 CET 2010
 
 \ Commentary:
 \
@@ -32,7 +32,7 @@
 \ activate-dialog          ( dialog -- )
 \ add-mark-pane            ( -- )
 \
-\ show-smpte-label         ( on-or-off -- )
+\ show-smpte-label         ( on-or-off -- #f )
 \ smpte-is-on              ( -- flag )
 \ 
 \ change-label     	   ( widget new-label -- )
@@ -46,7 +46,8 @@
 
 require clm
 require examp
-dl-load libxm Init_libxm
+\ if not configured --with-static-xm
+'xm provided? not [if] dl-load libxm Init_libxm [then]
 
 : main-dpy ( -- dpy ) main-widgets 1 array-ref FXtDisplay ;
 : load-font ( name -- fid|#f )
@@ -306,7 +307,7 @@ hide
   then
   snd chn new-marks length set-mark-list-length
   snd chn mark-list #( FXmNchildren 0 ) FXtVaGetValues 1 array-ref each { wid }
-    new-marks nil? ?leave
+    new-marks empty? ?leave
     wid FXmIsTextField if
       wid
       #( FXmNvalue    new-marks 0 array-ref undef mark-sample number->string
@@ -389,7 +390,7 @@ hide
   then
 ;
 set-current
-: show-smpte-label ( on-or-off -- )
+: show-smpte-label ( on-or-off -- #f )
   doc" Turns on/off a label in the time-domain graph showing \
 the current smpte frame of the leftmost sample."
   ( on-or-off ) if
@@ -407,6 +408,7 @@ the current smpte frame of the leftmost sample."
     after-graph-hook <'> draw-smpte-label remove-hook! drop
     #t #t update-time-graph drop
   then
+  #f					\ for prefs_function_call|save_1() in snd-prefs.c
 ;
 
 \ for prefs

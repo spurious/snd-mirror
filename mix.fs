@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Sat Oct 31 00:04:31 CET 2009
+\ Changed: Wed Jan 06 18:51:34 CET 2010
 
 \ Commentary:
 \
@@ -19,7 +19,7 @@
 \
 \ mix-property         ( id key -- val )
 \ set-mix-property     ( id key val -- )
-\ mix-click-sets-amp   ( -- )
+\ mix-click-sets-amp   ( id -- #t )
 \ mix-click-info       ( id -- #t )
 \ mix-name->id         ( name -- id )
 \ 
@@ -39,23 +39,15 @@
 require clm
 require examp
 
-: tree-for-each ( proc-or-xt tree -- ?? )
+: tree-for-each ( proc-or-xt tree -- )
   doc" Applies PROC-OR-XT to every leaf of TREE."
   { proc-or-xt tree }
   tree nil? unless
-    tree array? if
-      proc-or-xt tree 0 array-ref recurse
-      proc-or-xt tree 1 nil array-subarray recurse
+    tree cons? if
+      proc-or-xt tree car recurse
+      proc-or-xt tree cdr recurse
     else
-      proc-or-xt xt? if
-	tree proc-or-xt execute
-      else
-	proc-or-xt proc? if
-	  proc-or-xt tree run-proc
-	else
-	  #f
-	then
-      then
+      proc-or-xt proc? if proc-or-xt '( tree ) run-proc drop then
     then
   then
 ;
@@ -79,7 +71,7 @@ previous
   doc" Returns the id of the mix at the given SAMPLE, or #f."
   #f					\ flag
   snd snd-snd chn snd-chn mixes each { id }
-    id mix-position samp = if
+    id mix-position samp d= if
       drop				\ drop flag
       id
       leave
@@ -157,7 +149,7 @@ previous
     id id :amp mix-property set-mix-amp drop
     id :zero #f set-mix-property
   then
-  #t
+  #t					\ #t --> omit default action
 ;
 \ mix-click-hook <'> mix-click-sets-amp add-hook!
 

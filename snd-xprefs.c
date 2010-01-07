@@ -1732,6 +1732,8 @@ static void preferences_save_callback(Widget w, XtPointer context, XtPointer inf
   redirect_snd_warning_to(NULL, NULL);
 }
 
+/* TODO: text fields should be checked in prefs to catch changes that were not followed by a cr */
+
 
 /* ---------------- errors ---------------- */
 

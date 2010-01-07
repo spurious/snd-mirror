@@ -1271,6 +1271,7 @@ def test00
             [:clipping, false],
             [:clipping, false],
             [:clm_table_size, 512],
+            [:clm_default_frequency, 0.0],
             [:color_cutoff, 0.003],
             [:color_inverted, true],
             [:color_scale, 1.0],
@@ -1366,11 +1367,13 @@ def test00
             [:transform_normalization, Normalize_by_channel],
             [:transform_size, 512],
             [:transform_type, $fourier_transform],
-            [:trap_segfault, true],     # snd/snd-0.h says: true (snd-test.scm: false)
+            [:trap_segfault, true],
             [:wavelet_type, 0],
             [:wavo_hop, 3],
             [:wavo_trace, 64],
-            [:with_file_monitor, true], # snd/snd-0.h says: true (snd-test.scm: false)
+            [:with_file_monitor, true],
+            [:with_inset_graph, false],
+            [:with_pointer_focus, false],
             [:with_verbose_cursor, false],
             [:x_axis_style, 0],
             [:zero_pad, 0],
@@ -1585,6 +1588,8 @@ def test01
                 [:wavelet_type, 0],
                 [:wavo_hop, 3],
                 [:wavo_trace, 64],
+                [:with_inset_graph, false],
+                [:with_pointer_focus, false],
                 [:with_mix_tags, (provided?(:snd_nogui) ? false : true)],
                 [:with_relative_panes, true],
                 [:with_verbose_cursor, false],
@@ -2440,6 +2445,7 @@ def test044
     snd_display("file_write_date oboe.snd: %s?", res)
   end
   play_sound_1(oboe_snd)
+  mus_sound_forget(oboe_snd)
   lasth = 1
   until mus_header_type_name(lasth) == "unsupported" do lasth += 1 end
   if lasth < 50
@@ -3508,14 +3514,12 @@ def test104
    "audio format not available",
    "no audio input available",
    "audio configuration not available",
-   "no audio lines available",
    "audio write error",
    "audio size not available",
    "audio device not available",
    "can't close audio",
    "can't open audio",
    "audio read error",
-   "audio amp not available",
    "can't write audio",
    "can't read audio",
    "no audio read permission",
@@ -22440,25 +22444,6 @@ def test0113
   end
   close_sound(ind)
   $open_raw_sound_hook.reset_hook!
-  #
-  $during_open_hook.reset_hook!
-  ind = open_sound("oboe.snd")
-  mx0 = maxamp(ind)
-  save_sound_as("test.snd", ind, Mus_next, Mus_bfloat)
-  close_sound(ind)
-  $during_open_hook.add_hook!("snd-test") do |fd, name, reason|
-    case mus_sound_data_format(name)
-    when Mus_bfloat, Mus_bdouble, Mus_lfloat, Mus_ldouble
-      set_mus_file_prescaler(fd, 4.0)
-    else
-      snd_display("not set_mus_file_prescaler (data_format: %s)",
-                  mus_data_format_name(mus_sound_data_format(name)))
-    end
-  end
-  ind1 = open_sound("test.snd")
-  mx1 = maxamp(ind1)
-  snd_display("set_mus_file_prescaler: %s -> %s (%s)?", mx0, mx1, mx1 / mx0) if fneq(mx1, mx0 * 4.0)
-  close_sound(ind1)
   $during_open_hook.reset_hook!
   #
   ind = op = sl = aop = dop = cl = ig = scl = other = false
@@ -24658,7 +24643,7 @@ def test0115
   prefix_it(1000, id)
   key(key_to_int(?x), 4, id)
   key(key_to_int(?b), 4, id)
-  if (left = left_sample(id)) != 1000 and left != 1001 then snd_display("u1000: %s?", left) end
+  if (left = left_sample(id)) != 0 then snd_display("u1000: %s?", left) end
   prefix_it(0, id)
   key(key_to_int(?x), 4, id)
   key(key_to_int(?b), 4, id)
@@ -24676,12 +24661,6 @@ def test0115
   prefix_it(1, id)
   key(key_to_int(?f), 4, id)
   if (cr = cursor(id)) != 1235 then snd_display("1f: %s?", cr) end
-  key(key_to_int(?+), 4, id)
-  key(key_to_int(?f), 4, id)
-  if (cr = cursor(id)) != 1236 then snd_display("+f: %s?", cr) end
-  key(key_to_int(?-), 4, id)
-  key(key_to_int(?f), 4, id)
-  if (cr = cursor(id)) != 1235 then snd_display("-f: %s?", cr) end
   prefix_it(1000, id)
   key(key_to_int(?x), 4, id)
   key(key_to_int(?p), 4, id)
@@ -25296,10 +25275,6 @@ def test0315
   set_cursor(1000, ind, 0)
   if (res = cursor(ind, 1)) != 1000
     snd_display("syncd cursors: %s %s?", cursor(ind, 0), res)
-  end
-  key(key_to_int(?f), 4)
-  if (res = cursor(ind, 1)) != 1001
-    snd_display("syncd cursors C-f: %s %s?", cursor(ind, 0), res)
   end
   close_sound(ind)
   #
@@ -33173,14 +33148,6 @@ def test23_b
     graph_eq("oboe.snd")
   end
   if sound?(ind = find_sound("test.snd"))
-    res1 = channel2vct(45, 10, ind, 0)
-    res2 = channel2vct(210, 10, ind, 0)
-    if (not vfffequal(res1,
-                      vct(-0.068,-0.064,-0.056,-0.041,-0.020, 0.007, 0.034, 0.059, 0.077,0.090))) or
-        (not vfffequal(res2,
-                       vct(0.016, 0.015, 0.013, 0.011, 0.008, 0.006, 0.004, 0.003, 0.001, 0.000)))
-      snd_display("fm_violin with_sound:\n#\t%s\n#\t%s", res1, res2)
-    end
     play(ind, :wait, true)
     close_sound(ind)
   else
@@ -34171,7 +34138,7 @@ Procs =
    :transform_sample, :transform2vct, :transform_frames, :transform_type, :trap_segfault,
    :with_file_monitor, :unbind_key, :update_transform_graph, :update_time_graph,
    :update_lisp_graph, :update_sound, :clm_table_size,
-   :with_verbose_cursor, :view_sound, :wavelet_type,
+   :with_verbose_cursor, :view_sound, :wavelet_type, :with_inset_graph, :with_pointer_focus,
    :time_graph?, :time_graph_type, :wavo_hop, :wavo_trace, :window_height, :window_width,
    :window_x, :window_y, :with_mix_tags, :with_relative_panes, :with_gl,
    :x_axis_style, :beats_per_measure, :beats_per_minute, :x_bounds, :x_position_slider,
@@ -34293,7 +34260,8 @@ Set_procs =
    :spectro_z_angle, :spectro_z_scale, :speed_control, :speed_control_style, :speed_control_tones,
    :squelch_update, :sync, :sound_properties, :temp_dir, :text_focus_color, :tiny_font, :y_bounds,
    :transform_type, :trap_segfault, :with_file_monitor, :with_verbose_cursor,
-   :wavelet_type, :x_bounds, :time_graph?, :wavo_hop, :wavo_trace, :with_gl,
+   :wavelet_type, :with_inset_graph, :with_pointer_focus, :x_bounds, :time_graph?, :wavo_hop,
+   :wavo_trace, :with_gl,
    :with_mix_tags, :x_axis_style, :beats_per_minute, :zero_pad, :zoom_color, :zoom_focus_style,
    :with_relative_panes, :window_x, :window_y, :window_width, :window_height, :mix_dialog_mix,
    :beats_per_measure, :channels, :chans, :colormap, :comment, :data_format,
@@ -34849,7 +34817,7 @@ def test0128
    :selection_creates_region, :show_controls, :show_indices,
    :show_listener, :show_selection_transform, :sinc_width, :temp_dir,
    :text_focus_color, :tiny_font, :trap_segfault, :with_file_monitor,
-   :with_verbose_cursor, :window_height,
+   :with_verbose_cursor, :with_inset_graph, :with_pointer_focus, :window_height,
    :beats_per_measure, :window_width, :window_x, :window_y, :with_gl,
    :with_mix_tags, :x_axis_style, :beats_per_minute, :zoom_color, :mix_tag_height,
    :mix_tag_width, :with_relative_panes, :clm_table_size,
@@ -35191,7 +35159,6 @@ def test0228
   end
   check_error_tag(:out_of_range) do make_table_lookup(:size, 100, :wave, Vct.new(3)) end
   check_error_tag(:out_of_range) do make_wave_train(:size, 100, :wave, Vct.new(3)) end
-  check_error_tag(:out_of_range) do make_granulate(:max_size, 2 ** 30) end
   check_error_tag(:out_of_range) do make_ssb_am(100, 12345678) end
   check_error_tag(:mus_error) do make_rand(:envelope, [0, 0, 1, 1], :distribution, Vct.new(10)) end
   check_error_tag(:mus_error) do make_rand(:envelope, [0, 0, 1]) end
@@ -35248,7 +35215,6 @@ def test0228
   end
   check_error_tag(:bad_arity) do add_colormap("baddy", lambda do | | false end) end
   check_error_tag(:bad_arity) do add_colormap("baddy", lambda do |a, b, c| false end) end
-  check_error_tag(:out_of_range) do make_phase_vocoder(:fft_size, 2 ** 30) end
   check_error_tag(:out_of_range) do
     sr = make_src(:input, lambda do |dir| 1.0 end)
     src(sr, 2000000.0)

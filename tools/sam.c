@@ -1076,7 +1076,8 @@ static double delay_read(int dly)
 	  }
 	Z_shift = d->Z & 0xf;
 	dY = (d->I >> Z_shift) & 0xffff;
-	return(delay_memory[d->X + dY]); /* still not right -- there's a 3 sample delay */
+	return(delay_memory[d->X + dY]); 
+	/* still not right -- there's a 3(2?) sample delay, but we get 1(2?) of those from the processing order */
       }
     }
   return(0);
@@ -2288,10 +2289,6 @@ static void mmode_command(int cmd)
 
   if (REPORT_BAD_COMMANDS)
     {
-      /*
-      if ((MMODE >> 4) == M_TRIGGERED_NOISE)
-	fprintf(stderr, "noise...");
-      */
       if (((MMODE >> 4) != M_INACTIVE) &&
 	  ((mod * 2) >= processing_ticks))
 	fprintf(stderr, "sample %d (%.3f), command %d, m%d cannot actually run (procticks: %d)\n", 
@@ -2751,7 +2748,7 @@ int main(int argc, char **argv)
 	       *    and the possibly not-32 bit files as 32. I can't find the corresponding code in the writers
 	       *    that Nando found on the exabyte tapes.  
 	       *
-	       * The *.SAM.snd files are raw big-endian 24 int data (stereo?) 
+	       * The *.SAM.snd files are raw big-endian 24-bit int data (stereo?) 
 	       *    with many (6?) renditions?
 	       */
 

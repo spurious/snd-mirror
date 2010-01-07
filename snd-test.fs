@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Mon Dec 14 17:34:32 CET 2009
+\ Changed: Mon Jan 04 23:34:38 CET 2010
 
 \ Commentary:
 \
@@ -3125,7 +3125,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   <'> make-delay 'out-of-range check-error-tag
   :size 100 :wave 3 0 make-vct <'> make-table-lookup    'out-of-range     check-error-tag
   :size 100 :wave 3 0 make-vct <'> make-wave-train      'out-of-range     check-error-tag
-  :max-size 2 30 f** f>s     <'> make-granulate         'out-of-range     check-error-tag
   100 12345678               <'> make-ssb-am            'out-of-range     check-error-tag
   :envelope #( 0 0 1 1 ) :distribution 10 0 make-vct <'> make-rand 'mus-error check-error-tag
   :envelope #( 0 0 1 )       <'> make-rand              'mus-error        check-error-tag
@@ -3147,7 +3146,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   2 0.1 0.2 make-frame 3     <'> frame-ref              'mus-error        check-error-tag
   0 0.1                      <'> make-scalar-mixer      'out-of-range     check-error-tag
   2 make-mixer 3 4           <'> mixer-ref              'mus-error        check-error-tag
-  :fft-size 2 30 f** f>s     <'> make-phase-vocoder     'out-of-range     check-error-tag
   :input <'> noop 1 make-proc make-src 2000000.0 <'> src 'out-of-range    check-error-tag
   #( 1 1 ) -1                <'> partials->polynomial   'out-of-range     check-error-tag
   #( 1 1 ) 3                 <'> partials->polynomial   'out-of-range     check-error-tag

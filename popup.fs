@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Sat Dec 19 02:35:00 CET 2009
+\ Changed: Fri Jan 01 01:46:50 CET 2010
 
 \ Commentary:
 
@@ -256,7 +256,7 @@ hide
 : sel-crop <{ w c info -- }>
   selection-members each ( sel ) as-one-edit-thunk "" as-one-edit drop end-each
 ;
-: sel-save-as <{ w c info -- val }> save-selection-dialog ;
+: sel-save-as <{ w c info -- val }> #t save-selection-dialog ;
 : sel-copy <{ w c info -- }>
   snd-tempnam { new-file-name }
   new-file-name save-selection drop
@@ -274,8 +274,8 @@ hide
     select 1 array-ref { chn }
     snd chn selection-position { pos }
     snd chn selection-frames 1- { len }
-    pos snd chn add-mark drop
-    pos len + snd chn add-mark drop
+    pos snd chn #f 0 add-mark drop
+    pos len d+ snd chn #f 0 add-mark drop
   end-each
 ;
 : sel-info <{ w c info -- val }>
@@ -390,7 +390,7 @@ let: ( -- menu )
 : prev-cb    <{ w c info -- val }> graph-popup-snd revert-sound ;
 : popen-cb   <{ w c info -- val }> #t open-file-dialog ;
 : psave-cb   <{ w c info -- val }> graph-popup-snd save-sound ;
-: psaveas-cb <{ w c info -- val }> graph-popup-snd select-sound drop save-sound-dialog ;
+: psaveas-cb <{ w c info -- val }> graph-popup-snd select-sound drop #t save-sound-dialog ;
 : pupdate-cb <{ w c info -- val }> graph-popup-snd update-sound ;
 : pclose-cb  <{ w c info -- val }> graph-popup-snd close-sound-extend #f ;
 : pmixsel-cb <{ w c info -- val }>
@@ -471,8 +471,8 @@ let: ( -- menu )
   snd file-name $"  info" $+ str info-dialog
 ;
 : paddmrk-cb <{ w c info -- val }>
-  graph-popup-snd graph-popup-chn #f cursor
-  graph-popup-snd graph-popup-chn add-mark
+  graph-popup-snd graph-popup-chn #f cursor ( samp )
+  graph-popup-snd graph-popup-chn #f ( name ) 0 ( sync ) add-mark
 ;
 : pdelmrk-cb <{ w c info -- val }>
   graph-popup-snd graph-popup-chn #f marks { ms }
@@ -766,7 +766,7 @@ value fft-trn-transform
   graph-popup-snd graph-popup-chn wavelet-type { tp }
   lst each ( child ) i tp <> FXtSetSensitive drop end-each
 ;
-: fft-color <{ w c info -- val }> color-orientation-dialog ;
+: fft-color <{ w c info -- val }> #t color-orientation-dialog ;
 
 let: ( -- menu )
   $" fft-popup" main-widgets 2 array-ref

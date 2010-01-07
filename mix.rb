@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Feb 22 13:40:33 CET 2005
-# Changed: Sun Nov 29 14:51:09 CET 2009
+# Changed: Wed Jan 06 01:37:40 CET 2010
 
 # Commentary:
 #
@@ -19,7 +19,7 @@
 #
 #  mix_property(id, key)
 #  set_mix_property(id, key, val)
-#  mix_click_sets_amp
+#  mix_click_sets_amp(id)
 #  mix_click_info(id)
 #  mix_name2id(name)
 #
@@ -177,19 +177,18 @@ sets the value VAL to KEY in the given mix's property list.")
     val
   end
 
-  def mix_click_sets_amp
-    $mix_click_hook.add_hook!("mix-click-sets-amp") do |id|
-      unless mix_property(id, :zero)
-        set_mix_property(id, :amp, mix_amp(id))
-        set_mix_amp(id, 0.0)
-        set_mix_property(id, :zero, true)
-      else
-        set_mix_amp(id, mix_property(id, :amp))
-        set_mix_property(id, :zero, false)
-      end
-      true
+  def mix_click_sets_amp(id)
+    unless mix_property(id, :zero)
+      set_mix_property(id, :amp, mix_amp(id))
+      set_mix_amp(id, 0.0)
+      set_mix_property(id, :zero, true)
+    else
+      set_mix_amp(id, mix_property(id, :amp))
+      set_mix_property(id, :zero, false)
     end
+    true
   end
+  # $mix_click_hook.add_hook!("mix-click-sets-amp", &method(:mix_click_sets_amp).to_proc)
 
   # 
   # === Mix Click Info ===

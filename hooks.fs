@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Aug 08 23:27:50 CEST 2006
-\ Changed: Sun Dec 14 00:22:42 CET 2008
+\ Changed: Thu Dec 31 05:27:01 CET 2009
 
 \ snd-hooks         Array with all Snd hooks.
 \ reset-all-hooks   ( -- )
@@ -105,18 +105,18 @@ require examp
   end-each
 ;
 
-: with-local-hook <{ hook local-hook-procs thunk -- ?? }>
+: with-local-hook <{ hook local-hook-procs thunk -- }>
   doc" Evaluates THUNK (an xt) with HOOK set to LOCAL-HOOK-PROCS (an array of procs), \
 then restores HOOK to its previous state."
-  hook hook?               hook             1 $" a hook"       assert-type
-  local-hook-procs array?  local-hook-procs 2 $" a array"      assert-type
-  thunk xt? thunk proc? || thunk            3 $" a proc or xt" assert-type
+  hook hook?              hook             1 $" a hook"       assert-type
+  local-hook-procs array? local-hook-procs 2 $" a array"      assert-type
+  thunk word?             thunk            3 $" a proc or xt" assert-type
   hook hook->array { old-procs }
   hook reset-hook!
   local-hook-procs each ( proc ) hook swap add-hook! end-each
-  thunk execute ( ?? )
+  thunk '() run-proc drop
   hook reset-hook!
   old-procs each ( proc ) hook swap add-hook! end-each
 ;
 
-\ draw.fs ends here
+\ hooks.fs ends here

@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Dec 27 19:22:06 CET 2005
-\ Changed: Fri Nov 06 00:29:50 CET 2009
+\ Changed: Wed Jan 06 22:31:05 CET 2010
 
 \ Commentary:
 \
@@ -116,7 +116,7 @@ require examp
 
 hide
 : save-mark-properties-cb <{ filename -- }>
-  undef undef undef marks 0 array-ref 0 array-ref array? if
+  undef undef undef marks car car cons? if
     filename :fam a/o io-open { io }
     io $" \n\\ from save-mark-properties in %s\n" #( *filename* ) io-write-format
     io $" require marks\n\n" io-write
