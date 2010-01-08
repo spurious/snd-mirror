@@ -575,7 +575,7 @@ def snd_error_test
 end
 snd_error_test
 
-show_listener
+set_show_listener(true)
 set_window_x(600)
 set_window_y(10)
 
@@ -642,10 +642,10 @@ def finish_snd_test
     $timings.each do |tst| snd_info("test %2d  %s", tst.first, tst.last.inspect) end
   end
   snd_info("total    %s\n", $overall_start_time.inspect)
-  show_listener
+  set_show_listener(true)
   save_listener("test-ruby.output")
   clear_listener
-  show_listener
+  set_show_listener(true)
   fs = 0
   [$original_save_dir, $original_temp_dir, "/tmp"].each do |path|
     if File.exist?(path)

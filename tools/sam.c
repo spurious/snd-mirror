@@ -3,7 +3,6 @@
 /* I assume what people really want is a good rendition from their ancient SAM files,
  *   not an exact replica of the Samson box output.  The latter used 12, 14, 20, 24, 28, and 30-bit
  *   fractional and integer fields, which are a pain to deal with when we would rather use doubles.
- *   The 20-bitness matters (perhaps) in the noise calculation.
  *
  *        gcc sam.c -o sam -lm -O2
  *        sam TEST.SAM
@@ -36,7 +35,6 @@
 	     (scl (/ 0.9 mx)))
 	(map-channel (lambda (y) (* y scl)) 0 (frames snd) new-snd 0)
 	(map-channel (lambda (y) (* y scl)) 0 (frames snd) new-snd 1)))))
-
  *
  */
 

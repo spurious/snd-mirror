@@ -7938,12 +7938,13 @@ all     28   5.2422    0.4972,        odd     50   6.9978    0.4973
 all     46   6.7149    0.4974,        odd     42   6.4179    0.4974
 all     44   6.5714    0.4975,        odd     43   6.4947    0.4974
 all     41   6.3450    0.4975,        odd     46   6.7262    0.4978
-all     43   6.5068    0.4979,        odd     37   6.0366    0.4979
+all     43   6.5001    0.4977,        odd     37   6.0366    0.4979
 all     53   7.2324    0.4983,        odd     39   6.1977    0.4979
 all     52   7.1751    0.4987,        odd     52   7.1610    0.4982
 all     7    2.6394    0.4988,        odd     40   6.2855    0.4983
 all     38   6.1464    0.4992,        odd     45   6.6676    0.4984
-all     57   7.5465    0.4999,        odd     57   7.5335    0.4995
+all     57   7.5465    0.4999,        odd     74   8.5709    0.4992
+                                      odd     57   7.5335    0.4995
                                       odd     44   6.6217    0.4995
                                       odd     38   6.1582    0.4997
 </pre>
@@ -7957,29 +7958,31 @@ all     57   7.5465    0.4999,        odd     57   7.5335    0.4995
 <pre>
          n     peak   (log peak n)            n     peak   (log peak n)
 
-all     63   7.9637    0.5008,        odd     74   8.6062    0.5001
-all     45   6.7332    0.5010,        odd     58   7.6278    0.5004
-all     59   7.7246    0.5014,        odd     36   6.0167    0.5008
-all     40   6.3653    0.5017,        odd     49   7.0224    0.5008
-all     55   7.4707    0.5018,        odd     48   6.9795    0.5019
-all     42   6.5282    0.5020,        odd     77   8.8536    0.5021
-all     56   7.5447    0.5020,        odd     62   7.9473    0.5022
-all     50   7.1313    0.5022,        odd     54   7.4203    0.5024
-all     68   8.3311    0.5024,        odd     53   7.3536    0.5025
-all     48   6.9953    0.5025,        odd     51   7.2188    0.5027
-all     71   8.5275    0.5028,        odd     59   7.7746    0.5030
-all     62   7.9684    0.5029,        odd     56   7.5735    0.5030
-all     74   8.7103    0.5029,        odd     70   8.4754    0.5030
-all     47   6.9355    0.5030,        odd     63   8.0390    0.5031
-all     49   7.1060    0.5039,        odd     61   7.9121    0.5032
-all     51   7.2537    0.5040,        odd     78   8.9603    0.5033
-all     73   8.6988    0.5042,        odd     76   8.8602    0.5037
-all     54   7.4739    0.5042,        odd     66   8.2794    0.5045
-all     66   8.2772    0.5045,        odd     55   7.5530    0.5046
-all     72   8.6509    0.5045,        odd     60   7.8934    0.5046
-all     65   8.2237    0.5048,        odd     64   8.1551    0.5046
-all     58   7.7689    0.5049,        odd     65   8.2295    0.5049
-all     70   8.5489    0.5051,        odd     47   6.9880    0.5050
+all     63   7.9575    0.5006,        odd     58   7.6278    0.5004
+all     45   6.7332    0.5010,        odd     36   6.0167    0.5008
+all     59   7.7246    0.5014,        odd     49   7.0224    0.5008
+all     62   7.9301    0.5017,        odd     48   6.9711    0.5016
+all     40   6.3653    0.5017,        odd     77   8.8520    0.5020
+all     55   7.4707    0.5018,        odd     62   7.9434    0.5021
+all     56   7.5395    0.5019,        odd     54   7.4203    0.5024
+all     42   6.5282    0.5020,        odd     53   7.3536    0.5025
+all     50   7.1253    0.5020,        odd     51   7.2188    0.5027
+all     68   8.3311    0.5024,        odd     59   7.7746    0.5030
+all     71   8.5153    0.5025,        odd     56   7.5735    0.5030
+all     48   6.9953    0.5025,        odd     70   8.4754    0.5030
+all     74   8.7036    0.5027,        odd     63   8.0390    0.5031
+all     47   6.9355    0.5030,        odd     61   7.9121    0.5032
+all     49   7.1060    0.5039,        odd     78   8.9603    0.5033
+all     51   7.2537    0.5040,        odd     76   8.8602    0.5037
+all     73   8.6988    0.5042,        odd     66   8.2794    0.5045
+all     72   8.6396    0.5042,        odd     55   7.5530    0.5046
+all     54   7.4739    0.5042,        odd     60   7.8934    0.5046
+all     66   8.2772    0.5045,        odd     64   8.1551    0.5046
+all     85   9.4068    0.5045,        odd     65   8.2295    0.5049
+all     65   8.2237    0.5048,        odd     47   6.9880    0.5050
+all     61   7.9681    0.5049,        odd     68   8.4266    0.5051
+all     58   7.7689    0.5049,        odd     80   9.1546    0.5053
+all     70   8.5450    0.5050,        odd     73   8.7448    0.5054
 </pre>
 </td></tr></table>
 
@@ -8021,6 +8024,19 @@ phase to 0.0).  If you then search around this set of phases, you'll find very g
 	  (fpsap 2 n new-phases)))                  ; search that vicinity for a good set (2 = even harmonics)
 </pre>
 
+<p>fpsap here was using 6000 starting points and an initial increment (search radius) of .06 (times pi of course).  These are the best
+values I've found so far.  When I started this search more than a year ago, I tried random phases 
+and evenly spaced phases (brute force), but that led to nothing useful.
+Next I tried the genetic algorithm with 2000 or so starting points and an initial increment
+of 1.0.  These are pretty good choices, but after a few months of searching, I reached a point of almost no
+returns.  I spent the next 3 months pounding on this situation, trying variants of the basic algorithm and other search methods.  
+Then it occurred to me that in the
+graphs of the peaks, the good values are more or less clustered together, so I tried centering
+the genetic search on the best phases I had found to that point, then iterating 
+the search each time from the new best point.  Trial and error led to the
+increment of .05 or so.  I don't know why a larger (or much smaller) search radius gets worse results.
+As one would expect, it gets harder and harder to make progress...
+</p>
 
 <!--
 (if (not (provided? 'snd-rgb.scm)) (load "rgb.scm"))

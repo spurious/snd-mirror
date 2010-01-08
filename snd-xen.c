@@ -2912,8 +2912,9 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 
 #if HAVE_FORTH
-  XEN_EVAL_C_STRING("' redo alias redo-edit");        /* consistency with Ruby */
-  XEN_EVAL_C_STRING("' undo alias undo-edit");
+  XEN_EVAL_C_STRING("<'> redo alias redo-edit");        /* consistency with Ruby */ 
+  XEN_EVAL_C_STRING("<'> undo alias undo-edit"); 
+  XEN_EVAL_C_STRING(": clm-print ( fmt :optional args -- ) fth-format snd-print drop ;"); 
 #endif
 
 #if HAVE_RUBY

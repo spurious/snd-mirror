@@ -551,7 +551,7 @@ static void prefs_function_call_1(const char *func, XEN arg)
 #endif
 
 #if HAVE_FORTH
-  str = mus_format("%s %s drop\n", XEN_AS_STRING(arg), func);
+  str = mus_format("%s %s\n", XEN_AS_STRING(arg), func); 
 #endif
 
   XEN_EVAL_C_STRING(str);
@@ -609,7 +609,7 @@ static void prefs_function_save_1(FILE *fd, const char *name, const char *file, 
 #if HAVE_FORTH
   if (file)
     fprintf(fd, "require %s\n", file);
-  fprintf(fd, "%s %s drop\n", XEN_AS_STRING(val), name);
+  fprintf(fd, "%s %s\n", XEN_AS_STRING(val), name); 
 #endif
 }
 
@@ -4196,7 +4196,7 @@ static void save_smpte(prefs_info *prf, FILE *fd)
 
 #if HAVE_FORTH
   fprintf(fd, "require snd-xm\n");
-  fprintf(fd, "#t show-smpte-label drop\n"); 
+  fprintf(fd, "#t show-smpte-label\n"); 
 #endif
     }
 }

@@ -41,7 +41,7 @@
 #f value *init-lisp-graph-extra-hooks*	\ with display-energy, display-db
 
 : print-loading-file { fname -- }
-  *fth-verbose* if $" \\ loading %s\n" '( fname ) string-format snd-print drop then
+  *fth-verbose* if $" \\ loading %s\n" '( fname ) clm-print then
 ;
 
 *filename* print-loading-file
@@ -97,14 +97,14 @@ lambda: <{ ins beg dur -- }> $" %14s: %5.2f %5.2f" '( ins beg dur ) clm-message 
   \ snd-nogui repl and prompt hooks
   before-repl-hook reset-hook!		\ remove default hook
   before-repl-hook lambda: <{ -- }>
-    "" clm-message
+    "" #f clm-message
     $" Starting session on %s." '( $" %Ev %Er" current-time strftime ) clm-message
-    "" clm-message
+    "" #f clm-message
   ; add-hook!
   after-repl-hook lambda: <{ history -- }>
-    "" clm-message
+    "" #f clm-message
     $" Thank you for using %s!" #( *program-name* string-upcase ) clm-message
-    "" clm-message
+    "" #f clm-message
     1 sleep
   ; add-hook!
   
@@ -127,6 +127,7 @@ lambda: <{ ins beg dur -- }> $" %14s: %5.2f %5.2f" '( ins beg dur ) clm-message 
 "/usr/gnu/cvs/snd"            set-html-dir                   drop
 "BROWSER" getenv "firefox" || set-html-program               drop
 #t                	      set-trap-segfault              drop
+#t                            set-show-listener              drop
 0.0               	      set-auto-update-interval       drop
 "rev"           	      add-sound-file-extension       drop
 "reverb"        	      add-sound-file-extension       drop
@@ -149,7 +150,7 @@ output-comment-hook lambda: <{ str -- s }>
     'xm provided? not [if] dl-load libxm Init_libxm [then]
     require snd-xm
     add-mark-pane
-    #t show-smpte-label drop
+    #t show-smpte-label
     after-open-hook <'> show-disk-space add-hook!
 
     require effects
@@ -167,13 +168,13 @@ output-comment-hook lambda: <{ str -- s }>
 
   require extensions
   #t set-emacs-style-save-as
-  #t check-for-unsaved-edits drop
+  #t check-for-unsaved-edits
   *snd-home* "/snd-remember-sound.fs" $+ to remember-sound-filename
   3 remember-sound-state
   0.00 0.10 #t prefs-activate-initial-bounds
   with-reopen-menu
   with-buffers-menu
-  2 set-global-sync drop
+  2 set-global-sync
 
   require examp
   *init-graph-extra-hooks* [if]
@@ -346,7 +347,6 @@ sounds empty? [if]
   *clm-file-name* find-file dup [if] open-sound [then] drop cr
 [then]
 
-#t show-listener drop
 $" Snd of %s (Fth %s)" #( snd-version fth-version ) clm-message
 
 \ .snd_forth ends here

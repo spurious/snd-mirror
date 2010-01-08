@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Thu Jan 07 02:46:02 CET 2010
+\ Changed: Fri Jan 08 01:06:37 CET 2010
 
 \ Commentary:
 \
@@ -53,7 +53,7 @@
 \ with-mix             ( body-str|nil args fname start -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 07-Jan-2010" value *clm-version*
+$" fth 08-Jan-2010" value *clm-version*
 
 [ifundef] flog10
   <'> flog  alias flog10
@@ -65,7 +65,6 @@ $" fth 07-Jan-2010" value *clm-version*
 dl-load sndlib Init_sndlib
 
 'snd provided? [unless]
-  : snd-print ( str -- str ) dup .$ ;
   <'> noop alias sound?
   <'> noop alias open-sound
   <'> noop alias find-sound
@@ -78,13 +77,17 @@ dl-load sndlib Init_sndlib
   : c-g? ( -- f ) #f ;
 [then]
 
-\ "hello" clm-print
-\ "file %s, line %d\n" '( "oboe.snd" 123 ) clm-print
-: clm-print   <{ fmt :optional args '() -- }>
-  fmt empty? if $space to fmt then	\ "" snd-print --> (null)
-  fmt args string-format snd-print drop
-;
-: clm-message <{ fmt :optional args '() -- }> $" \\ %s\n" '( fmt args string-format ) clm-print ;
+[undefined] clm-print [if]
+  \ "hello" clm-print
+  \ "file %s, line %d\n" '( "oboe.snd" 123 ) clm-print
+  'snd provided? [if]
+    : clm-print ( fmt :optional args -- ) fth-format snd-print drop ;
+  [else]
+    <'> fth-print alias clm-print ( fmt :optional args -- )
+  [then]
+[then]
+\ puts a comment sign before output string and adds a carriage return
+: clm-message <{ fmt :optional args undef -- }> $" \\ %s\n" '( fmt args fth-format ) clm-print ;
 
 \ === Notelist ===
 hide

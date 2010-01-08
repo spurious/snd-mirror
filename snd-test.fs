@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Mon Jan 04 23:34:38 CET 2010
+\ Changed: Fri Jan 08 03:49:24 CET 2010
 
 \ Commentary:
 \
@@ -20,13 +20,45 @@
 \ test 23: with-sound
 \ test 28: errors
 
-lambda: <{ -- }> cr gc-stats cr .memory cr cr ; at-exit
-
 #f value under-valgrind
 24 set-object-print-length
 
+'snd-nogui provided? [unless]
+  \ Prints to Snd's listener and stdout/stderr.
+  :port-name "sndout"
+  :write-line lambda: <{ line -- }> line snd-print .stdout ;
+  make-soft-port set-*stdout* value stdout-io
+  :port-name "snderr"
+  :write-line lambda: <{ line -- }> line snd-print .stderr ;
+  make-soft-port set-*stderr* value stderr-io
+[then]
+
+\ Output words: not clm-print here if we want xterm output.  That's
+\ why no clm-message which uses clm-print.
+
+\ SND-TEST-MESSAGE: Puts a comment sign before output and terminates with a carriage return
+: snd-test-message ( fmt args -- ) ." \ " fth-print cr ;
+
+\ SND-DISPLAY: Wraps text like snd-test-message and prepends text with
+\ current line number ("\ [0010] text\n").
+hide
+: (snd-display) { fmt args lno -- } $" \\ [%04d] %s\n" #( lno fmt args string-format ) fth-print ;
+set-current
+: snd-display ( --; fmt args -- ) postpone *lineno* postpone (snd-display) ; immediate
+previous
+
+\ lambda: <{ -- }> cr gc-stats cr .memory cr cr ; at-exit
+\ before-load-hook lambda: <{ fname -- f }> $" loading " fname $+ #f snd-test-message #t ; add-hook!
+
 'snd-motif provided? 'xm provided? not && [if] dl-load libxm Init_libxm [then]
 'snd-gtk   provided? 'xg provided? not && [if] dl-load libxg Init_libxg [then]
+
+'snd-nogui provided? [if]
+  : x-bounds <{ :optional snd 0 chn 0 axis 0 -- }> #f ;
+  : y-bounds <{ :optional snd 0 chn 0 axis 0 -- }> #f ;
+  : set-x-bounds <{ bounds :optional snd 0 chn 0 axis 0 -- }> bounds ;
+  : set-y-bounds <{ bounds :optional snd 0 chn 0 axis 0 -- }> bounds ;
+[then]
 
 require clm
 require clm-ins
@@ -44,13 +76,12 @@ require dsp
   [then]
 [then]
 
+reset-all-hooks
+
 nil value *arg1*
 nil value *arg2*
 nil value *prc*
 nil value *tag*
-
-reset-all-hooks
-'snd-motif provided? 'snd-gtk provided? || value with-gui
 
 \ If #t, prints additionals, e.g. function names in test-19 or proc-array lengths in test-28
 #t value *snd-test-verbose*
@@ -81,26 +112,6 @@ let: ( -- )
 ;let
 
 *clm-search-list* file-pwd array-push to *clm-search-list*
-
-\ Snd stdout and Snd stderr going to the listener and to
-\ stdout/stderr.
-'snd-nogui provided? [unless]
-  \ Prints at the same time to Snd's listener and stdout/stderr.
-  :port-name "sndout"
-  :write-line lambda: <{ line -- }> line snd-print .stdout ;
-  make-soft-port set-*stdout* value stdout-io
-  :port-name "snderr"
-  :write-line lambda: <{ line -- }> line snd-print .stderr ;
-  make-soft-port set-*stderr* value stderr-io
-[then]
-
-\ SND-DISPLAY: Wraps text like clm-message and prepends text with
-\ current line number ("\ [0010] text\n").
-hide
-: (snd-display) { fmt args lno -- msg } $" \\ [%04d] %s\n" #( lno fmt args format ) fth-print ;
-set-current
-: snd-display ( --; fmt args -- ) postpone *lineno* postpone (snd-display) ; immediate
-previous
 
 : fneq-err ( r1 r2 err -- f ) -rot f- fabs f<= ;
 : cneq-err ( c1 c2 err -- f )
@@ -224,7 +235,7 @@ previous
   { xt }
   xt xt->name { name }
   test-numbers  name 0 2 string-substring string->number  array-member? if
-    name #() clm-message
+    name #f snd-test-message
     stack-reset
     gc-run
     make-timer { tm }
@@ -232,10 +243,10 @@ previous
     tm stop-timer
     stack-reset
     sounds if
-      $" open sounds: %s" #( #t short-file-name ) clm-message
+      $" open sounds: %s" #( #t short-file-name ) snd-test-message
       sounds each ( snd ) close-sound drop end-each
     then
-    $" %s: %s\n\\ " #( name tm ) clm-message
+    $" %s: %s\n\\ " #( name tm ) snd-test-message
   then
 ;
 : start-snd-test ( -- )
@@ -257,17 +268,17 @@ previous
   then { kind }
   stack-reset
   "test.snd" file-exists? if "test.snd" 0o644 file-chmod then
-  $" === Snd version: %s (snd-%s)" #( snd-version kind ) clm-message
-  $" === Fth version: %s"          #( fth-version )      clm-message
-  ""   #() clm-message
-  date #() clm-message
-  ""   #() clm-message
+  $" === Snd version: %s (snd-%s)" #( snd-version kind ) snd-test-message
+  $" === Fth version: %s"          #( fth-version )      snd-test-message
+  ""   #f snd-test-message
+  date #f snd-test-message
+  ""   #f snd-test-message
   default-file-buffer-size set-mus-file-buffer-size to *clm-file-buffer-size*
   #f  set-with-background-processes drop
   #f  set-trap-segfault  	    drop
   600 set-window-x       	    drop
   10  set-window-y       	    drop
-  #t  show-listener      	    drop
+  #t  set-show-listener      	    drop
   reset-almost-all-hooks
   22050 set-mus-srate f>s to *clm-srate*
   stack-reset
@@ -277,15 +288,14 @@ previous
   overall-start-time stop-timer
   .stack
   stack-reset
-  #t show-listener drop
   regions each ( r ) forget-region drop end-each
   0 set-view-files-sort drop
   clear-sincs drop
   sounds if stop-playing drop then
   reset-almost-all-hooks
-  $" all done!" #() clm-message
-  "" #() clm-message
-  $" summary: %s" #( overall-start-time ) clm-message
+  $" all done!" #f snd-test-message
+  "" #f snd-test-message
+  $" summary: %s" #( overall-start-time ) snd-test-message
   0 nil nil { file-count path file }
   #( original-save-dir original-temp-dir "/tmp" ) each to path
     path file-directory? if
@@ -297,9 +307,9 @@ previous
       end-each
     then
   end-each
-  "" #() clm-message
-  $" %d files deleted" #( file-count ) clm-message
-  "" #() clm-message
+  "" #f snd-test-message
+  $" %d files deleted" #( file-count ) snd-test-message
+  "" #f snd-test-message
   "test.snd" file-exists? if "test.snd" 0o644 file-chmod then
   #( "aaa.eps"
      "envs.save"
@@ -539,14 +549,14 @@ previous
   gen1 0.0 0.0 delay 0.25 fneq ||
   gen1 0.0 0.0 delay 0.0  fneq ||
   gen1 0.0 0.0 delay 0.0  fneq || if
-    $" delay with list initial-contents confused" #() snd-display
+    $" delay with list initial-contents confused" #f snd-display
   then
   gen3 0.0 0.0 delay 1.0  fneq
   gen3 0.0 0.0 delay 0.5  fneq ||
   gen3 0.0 0.0 delay 0.25 fneq ||
   gen3 0.0 0.0 delay 0.0  fneq ||
   gen3 0.0 0.0 delay 0.0  fneq || if
-    $" delay with vct initial-contents confused" #() snd-display
+    $" delay with vct initial-contents confused" #f snd-display
   then
   :size #f <'> make-delay #t nil fth-catch to res
   stack-reset
@@ -595,8 +605,8 @@ previous
   home-lst 1 array-ref { chn }
   mix-id mix-amp       { amp }
   mix-id make-mix-sampler { mr }
-  mr mix-sampler? unless $" %s is not mix-sampler?"  mr snd-display then
-  mr region-sampler?  if $" mix-sampler: region %s?" mr snd-display then
+  mr mix-sampler? unless $" %s is not mix-sampler?"  #( mr ) snd-display then
+  mr region-sampler?  if $" mix-sampler: region %s?" #( mr ) snd-display then
   mr sampler-position to res
   res 0<> if $" mix sampler-position: %d?" #( res ) snd-display then
   mr sampler-at-end? if $" mix sampler-at-end: %s?" #( mr ) snd-display then
@@ -658,12 +668,12 @@ previous
   mix-id mix-speed    to spd
   mix-id mix-amp      to amp
   mix-id mix-tag-y { my }
-  200 pos <>   if $" set-mix-position: %d?" pos snd-display then
-  spd 2.0 fneq if $" set-mix-speed: %s?"    spd snd-display then
-  my  20    <> if $" set-mix-tag-y: %d?"    my  snd-display then
-  amp 0.5 fneq if $" set-mix-amp: %s?"      amp snd-display then
+  200 pos <>   if $" set-mix-position: %d?" #( pos ) snd-display then
+  spd 2.0 fneq if $" set-mix-speed: %s?"    #( spd ) snd-display then
+  my  20    <> if $" set-mix-tag-y: %d?"    #( my )  snd-display then
+  amp 0.5 fneq if $" set-mix-amp: %s?"      #( amp ) snd-display then
   mix-id mix-amp-env to res
-  res #( 0.0 0.0 1.0 1.0 ) array= unless $" set-mix-amp-env: %s?" res snd-display then
+  res #( 0.0 0.0 1.0 1.0 ) array= unless $" set-mix-amp-env: %s?" #( res ) snd-display then
   \
   3 0.1 make-vct 100 #f #f #t "" mix-vct drop
   0 set-cursor drop
@@ -1530,7 +1540,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
       vals 0 array-ref to func1
       vals 1 array-ref to descr
       vals 2 array-ref to name
-      *clm-debug* if name #() clm-message then
+      *clm-debug* if name #f snd-test-message then
       func1 #() run-proc drop
       ind #f undef undef edit-list->function to func
       func proc-source-ref descr string<> if
@@ -1545,7 +1555,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
 ;
 
 \ ====== test 23: with-sound
-: test23-notehook { ins start dur -- } $" %14s: %5.2f  %5.2f" #( ins start dur ) clm-message ;
+: test23-notehook { ins start dur -- } $" %14s: %5.2f  %5.2f" #( ins start dur ) snd-test-message ;
 : test23-balance ( -- )
   make-rmsgain { rg }
   40 make-rmsgain { rg1 }
@@ -2038,7 +2048,7 @@ include bird.fsm
    <'> selected-sound <'> selection-position <'> selection-creates-region
    <'> selection-frames <'> selection-member? <'> selection? <'> short-file-name
    <'> show-axes <'> show-controls <'> show-transform-peaks
-   <'> show-indices <'> show-listener <'> show-marks <'> show-mix-waveforms
+   <'> show-indices <'> show-marks <'> show-mix-waveforms
    <'> show-selection-transform <'> show-y-zero <'> sinc-width <'> show-grid
    <'> show-sonogram-cursor <'> grid-density <'> smooth-sound <'> smooth-selection
    <'> snd-print <'> snd-spectrum <'> snd-tempnam <'> snd-version
@@ -2195,7 +2205,7 @@ include bird.fsm
    <'> save-dir <'> save-state-file
    <'> selection-creates-region <'> show-axes
    <'> show-controls <'> show-transform-peaks <'> show-indices <'> show-marks
-   <'> show-mix-waveforms <'> show-selection-transform <'> show-listener <'> show-y-zero
+   <'> show-mix-waveforms <'> show-selection-transform <'> show-y-zero
    <'> show-grid <'> show-sonogram-cursor <'> sinc-width <'> spectrum-end
    <'> spectro-hop <'> spectrum-start <'> spectro-x-angle <'>  grid-density
    <'> spectro-x-scale <'> spectro-y-angle <'> spectro-y-scale <'> spectro-z-angle
@@ -2832,7 +2842,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> ladspa-dir <'> peak-env-dir <'> save-dir
      <'> save-state-file <'> selected-channel
      <'> selected-sound <'> selection-creates-region <'> show-controls
-     <'> show-indices <'> show-listener <'> show-selection-transform <'> sinc-width
+     <'> show-indices <'> show-selection-transform <'> sinc-width
      <'> temp-dir <'> trap-segfault
      <'> with-file-monitor <'> optimization <'> with-verbose-cursor
      <'> window-height <'> beats-per-measure
@@ -3346,22 +3356,22 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   then
   ind sound? if $" edpos proc clobbers chan??: %s" #( ind ) snd-display then
   *snd-test-verbose* if
-    $" procs   prcs/set-prcs" #() clm-message
-    $" =====================" #() clm-message
-    $" procs00: %3d/%3d" #( procs00 length set-procs00 length ) clm-message
-    $" procs01: %3d/%3d" #( procs01 length set-procs01 length ) clm-message
-    $" procs02: %3d/%3d" #( procs02 length set-procs02 length ) clm-message
-    $" procs03: %3d/%3d" #( procs03 length set-procs03 length ) clm-message
-    $" procs04: %3d/%3d" #( procs04 length set-procs04 length ) clm-message
-    $" procs05: %3d"     #( procs05 length )                    clm-message
-    $" procs06: %3d"     #( procs06 length )                    clm-message
-    $" procs07: %3d"     #( procs07 length )                    clm-message
-    $" procs08: %3d"     #( procs08 length )                    clm-message
-    $" procs10: %3d"     #( procs10 length )                    clm-message
+    $" procs   prcs/set-prcs" #f snd-test-message
+    $" =====================" #f snd-test-message
+    $" procs00: %3d/%3d" #( procs00 length set-procs00 length ) snd-test-message
+    $" procs01: %3d/%3d" #( procs01 length set-procs01 length ) snd-test-message
+    $" procs02: %3d/%3d" #( procs02 length set-procs02 length ) snd-test-message
+    $" procs03: %3d/%3d" #( procs03 length set-procs03 length ) snd-test-message
+    $" procs04: %3d/%3d" #( procs04 length set-procs04 length ) snd-test-message
+    $" procs05: %3d"     #( procs05 length )                    snd-test-message
+    $" procs06: %3d"     #( procs06 length )                    snd-test-message
+    $" procs07: %3d"     #( procs07 length )                    snd-test-message
+    $" procs08: %3d"     #( procs08 length )                    snd-test-message
+    $" procs10: %3d"     #( procs10 length )                    snd-test-message
   then
   #( 1.5 "/hiho" #( 0 1 ) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 ) { vals }
   nil nil nil nil nil nil nil { arg1 arg2 arg3 arg4 tm prc tag }
-  "keyargs-2-args" #() clm-message
+  "keyargs-2-args" #f snd-test-message
   keyargs each to arg1
     vals each to arg2
       make-procs each to prc
@@ -3370,7 +3380,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
   end-each
   all-args if
-    "keyargs-3-args" #() clm-message
+    "keyargs-3-args" #f snd-test-message
     vals each to arg1
       keyargs each to arg2
 	vals each to arg3
@@ -3380,7 +3390,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
 	end-each
       end-each
     end-each
-    "keyargs-4-args" #() clm-message
+    "keyargs-4-args" #f snd-test-message
     keyargs each to arg1
       vals each to arg2
 	keyargs each to arg3
@@ -3394,7 +3404,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
   then
   \ 0 args
-  "0-args" #() clm-message
+  "0-args" #f snd-test-message
   procs00 each to prc
     prc #t nil fth-catch to tag
     stack-reset
@@ -3413,7 +3423,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      -1 0 1 #f #t #() 12345678901234567890 ) { fewer-args }
   all-args if main-args else few-args then { less-args }
   \ 1 arg
-  "1-arg" #() clm-message
+  "1-arg" #f snd-test-message
   nil { arg }
   main-args each to arg
     procs01 each to prc
@@ -3427,7 +3437,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   cr					\ CR here because string "/hiho" appears on stdout
 					\ (or all args with snd-nogui)
   \ 2 args
-  "2-args" #() clm-message
+  "2-args" #f snd-test-message
   main-args each to arg1
     main-args each to arg2
       procs02 each to prc
@@ -3440,7 +3450,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
   end-each
   \ set! no args
-  "set-no-args" #() clm-message
+  "set-no-args" #f snd-test-message
   main-args each to arg
     set-procs00 each to prc
       arg prc set-xt #t nil fth-catch to tag
@@ -3452,7 +3462,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   end-each
   dismiss-all-dialogs
   \ set! 1 arg
-  "set-1-arg" #() clm-message
+  "set-1-arg" #f snd-test-message
   main-args each to arg1
     main-args each to arg2
       set-procs01 each to prc
@@ -3468,7 +3478,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   end-each
   all-args if
     \ set! 2 args
-    "set-2-args" #() clm-message
+    "set-2-args" #f snd-test-message
     less-args each to arg1
       less-args each to arg2
 	less-args each to arg3
@@ -3484,7 +3494,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
     nil nil nil nil nil nil { arg5 arg6 arg7 arg8 arg9 arg0 }
     \ 3 args
-    "3-args" #() clm-message
+    "3-args" #f snd-test-message
     make-timer to tm
     less-args each to arg1
       less-args each to arg2
@@ -3500,9 +3510,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       end-each
     end-each
     tm stop-timer
-    "%s" #( tm ) clm-message
+    "%s" #( tm ) snd-test-message
     \ set! 3 args
-    "set!-3-args" #() clm-message
+    "set!-3-args" #f snd-test-message
     tm start-timer
     less-args each to arg1
       less-args each to arg2
@@ -3520,9 +3530,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       end-each
     end-each
     tm stop-timer
-    "%s" #( tm ) clm-message
+    "%s" #( tm ) snd-test-message
     \ 4 args
-    "4-args" #() clm-message
+    "4-args" #f snd-test-message
     tm start-timer
     few-args each to arg1
       few-args each to arg2
@@ -3540,9 +3550,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       end-each
     end-each
     tm stop-timer
-    "%s" #( tm ) clm-message
+    "%s" #( tm ) snd-test-message
     \ set! 4 args
-    "set!-4-args" #() clm-message
+    "set!-4-args" #f snd-test-message
     tm start-timer
     few-args each to arg1
       few-args each to arg2
@@ -3565,9 +3575,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     clear-sincs drop
     stop-playing drop
     tm stop-timer
-    "%s" #( tm ) clm-message
+    "%s" #( tm ) snd-test-message
     \ 5 args
-    "5-args" #() clm-message
+    "5-args" #f snd-test-message
     tm start-timer
     fewer-args each to arg1
       fewer-args each to arg2
@@ -3589,9 +3599,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
     clear-sincs drop
     tm stop-timer
-    "%s" #( tm ) clm-message
+    "%s" #( tm ) snd-test-message
     \ 6 args
-    "6-args" #() clm-message
+    "6-args" #f snd-test-message
     tm start-timer
     #( 1.5 "/hiho" -1234 #f #t vct-5 ) each to arg1
       #( 1.5 -1234 vct-3 vct-5 -1 0 #f #t ) each to arg2
@@ -3614,9 +3624,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       end-each
     end-each
     tm stop-timer
-    "%s" #( tm ) clm-message
+    "%s" #( tm ) snd-test-message
     \ 8 args
-    "8-args" #() clm-message
+    "8-args" #f snd-test-message
     tm start-timer
     #( 1.5 -1 1234 #f #() ) each to arg1
       #( "/hiho" -1 1234 #() vct-5 ) each to arg2
@@ -3643,9 +3653,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       end-each
     end-each
     tm stop-timer
-    "%s" #( tm ) clm-message
+    "%s" #( tm ) snd-test-message
     \ 10 args
-    "10-args" #() clm-message
+    "10-args" #f snd-test-message
     tm start-timer
     #( 1.5 -1 #f 1234 ) each to arg1
       #( "/hiho" -1 1234 ) each to arg2
@@ -3679,7 +3689,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
     clear-sincs drop
     tm stop-timer
-    "%s" #( tm ) clm-message
+    "%s" #( tm ) snd-test-message
   then
 ;
 
@@ -3703,33 +3713,33 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   make-timer { tm }
   clear-sincs drop
   tm stop-timer
-  "%s" #( tm ) clm-message
+  "%s" #( tm ) snd-test-message
 ;
 
 SIGSEGV lambda: { sig -- }
   stack-reset
   backtrace
-  "" #() clm-message
-  $" Segmentation fault (signal no %d)" #( sig ) clm-message
-  "" #() clm-message
+  "" #f snd-test-message
+  $" Segmentation fault (signal no %d)" #( sig ) snd-test-message
+  "" #f snd-test-message
   finish-snd-test
   2 snd-exit drop
 ; signal drop
 SIGILL lambda: { sig -- }
   stack-reset
   backtrace
-  "" #() clm-message
-  $" Illegal instruction (signal no %d)" #( sig ) clm-message
-  "" #() clm-message
+  "" #f snd-test-message
+  $" Illegal instruction (signal no %d)" #( sig ) snd-test-message
+  "" #f snd-test-message
   finish-snd-test
   2 snd-exit drop
 ; signal drop
 SIGINT lambda: { sig -- }
   stack-reset
   backtrace
-  "" #() clm-message
-  $" Interrupt received.  Clean up %S." #( *filename* #f file-basename ) clm-message
-  "" #() clm-message
+  "" #f snd-test-message
+  $" Interrupt received.  Clean up %S." #( *filename* #f file-basename ) snd-test-message
+  "" #f snd-test-message
   finish-snd-test
   0 snd-exit drop
 ; signal drop

@@ -11438,7 +11438,23 @@ If its first argument is a list, the list is copied (despite the '!')."
   compare_proc_args = make_list_2(sc, sc->F, sc->F);
   gc_loc = s7_gc_protect(sc, compare_proc_args);
 
-  qsort((void *)s7_vector_elements(vect), vector_length(vect), sizeof(s7_pointer), vector_compare); /* qsort sizes are type size_t */
+  /* we could see simple sort cases like < and split them out, avoiding the eval call 
+   *   to tell that we're looking at a simple < for example (not redefined etc).
+   *      other simple comparisions: > >= <=, string cases, char cases
+   *
+   * static int compare_less(const void *v1, const void *v2) 
+   * {
+   *   if (num_lt(number(*((s7_pointer *)v1)), number(*((s7_pointer *)v2)))) return(-1); else return(1);
+   *  }
+   *
+   * if ((type(compare_proc) == T_C_FUNCTION) &&
+   *     (c_function_call(compare_proc) == g_less))
+   *   qsort((void *)s7_vector_elements(vect), vector_length(vect), sizeof(s7_pointer), compare_less);
+   *
+   * but the speed up is not very great.  For a million element vector, we go from 5.7 to 4.6
+   */
+
+   qsort((void *)s7_vector_elements(vect), vector_length(vect), sizeof(s7_pointer), vector_compare); /* qsort sizes are type size_t */
 
   if (setjmp(sc->goto_qsort_end) != 0)
     vect = sc->value;
@@ -16478,7 +16494,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (cddr(sc->code) != sc->NIL))                            /* (set! var) */
 	return(eval_error(sc, "~A: wrong number of args to set!", sc->code));
 
-      if (is_pair(car(sc->code))) /* has accessor */
+      if (is_pair(car(sc->code)))                                 /* has accessor */
 	{
 	  if (is_pair(caar(sc->code)))
 	    {
@@ -16491,6 +16507,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->x = s7_symbol_value(sc, caar(sc->code));
 	  else sc->x = caar(sc->code);                            /* might be the pws function itself */
 	  
+	  /* code here is the accessor and the value without the "set!": ((window-width) 800) */
+	  /*    (set! (hi 0) (* 2 3)) -> ((hi 0) (* 2 3)) */
+
 	  if ((is_c_object(sc->x)) &&
 	      (object_set_function(sc->x)))
 	    sc->code = s7_cons(sc, sc->OBJECT_SET, s7_append(sc, car(sc->code), cdr(sc->code)));   /* use set method (append flattens the lists) */
@@ -16561,7 +16580,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if ((is_pair(cddr(sc->code))) && 
 	  (cdddr(sc->code) != sc->NIL))                     /* (if 1 2 3 4) */
 	return(eval_error(sc, "too many clauses for if: ~A", sc->code));
-      
       
       push_stack(sc, OP_IF1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
@@ -16895,7 +16913,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_MACRO0:     /* this is tinyscheme's weird macro syntax */
       /*
 	(macro (when form)
-	`(if ,(cadr form) (begin ,@(cddr form))))
+	  `(if ,(cadr form) (begin ,@(cddr form))))
       */
       /* (macro (when form) ...) or (macro do (lambda (form) ...))
        *   sc->code is the business after the "macro"
@@ -16995,14 +17013,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (is_pair(cddr(sc->code))) &&
 	  (is_pair(caddr(sc->code))) &&
 	  (s7_is_symbol(caaddr(sc->code))) &&
-	  (caaddr(sc->code) == sc->QUASIQUOTE) &&
-	  (cdddr(sc->code) == sc->NIL))            /* protect against (defmacro hi (a) `(+ ,a 1) #f) */
+	  (caaddr(sc->code) == sc->QUASIQUOTE))
 	{
 	  sc->z = s7_cons(sc,
 			  cadr(sc->code),
 			  s7_cons(sc,
 				  g_quasiquote_2(sc, 0, cadr(caddr(sc->code))),
-				  sc->NIL));
+				  cdddr(sc->code)));
+	  /* fprintf(stderr, "z: %s\n", s7_object_to_c_string(sc, sc->z)); */
+	  sc->x = car(sc->code);            /* just in case g_quasiquote stepped on sc->x */
 	}
       else sc->z = cdr(sc->code);
 
@@ -17023,7 +17042,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * 3
        */
 
-      sc->x = car(sc->code);            /* just in case g_quasiquote stepped on sc->x */
       sc->y = s7_gensym(sc, "defmac");
       sc->code = s7_cons(sc, 
 			 sc->LAMBDA,
@@ -17083,16 +17101,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if ((is_pair(cdr(sc->code))) &&
 	  (is_pair(cadr(sc->code))) &&
 	  (s7_is_symbol(caadr(sc->code))) &&
-	  (caadr(sc->code) == sc->QUASIQUOTE) &&
-	  (cddr(sc->code) == sc->NIL))
+	  (caadr(sc->code) == sc->QUASIQUOTE))
 	{
 	  sc->z = s7_cons(sc,
 			  g_quasiquote_2(sc, 0, cadr(cadr(sc->code))),
-			  sc->NIL);
+			  cddr(sc->code));
+	  sc->x = caar(sc->code); /* just in case g_quasiquote stepped on sc->x */
 	}
       else sc->z = cdr(sc->code);
 
-      sc->x = caar(sc->code); /* just in case g_quasiquote stepped on sc->x */
       sc->y = s7_gensym(sc, "defmac");
       sc->code = s7_cons(sc,
 			 sc->LAMBDA,

@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Wed Jan 06 18:28:55 CET 2010
+\ Changed: Fri Jan 08 00:04:54 CET 2010
 
 \ Commentary:
 \
@@ -53,7 +53,7 @@
 \ eval-over-selection             ( func -- val )
 \
 \ yes-or-no?                      ( question action-if-yes action-if-no snd -- )
-\ check-for-unsaved-edits         ( check -- #f )
+\ check-for-unsaved-edits         ( check -- )
 \ remember-sound-state            ( choice -- )
 \
 \ mix-channel                     ( file-data :optional beg dur snd chn edpos -- val )
@@ -89,7 +89,7 @@
 \ prefs-deactivate-initial-bounds ( -- )
 \ with-reopen-menu     		  ( -- )
 \ with-buffers-menu    		  ( -- )
-\ set-global-sync                 ( choice -- #f )
+\ set-global-sync                 ( choice -- )
 \ show-selection                  ( -- )
 \ 
 \ if-cursor-follows-play-it-stays-where-play-stopped ( :optional enable -- )
@@ -617,7 +617,7 @@ set-current
 
 #f value checking-for-unsaved-edits
 
-: check-for-unsaved-edits ( check -- #f )
+: check-for-unsaved-edits ( check -- )
   doc" Sets up hooks to check for and ask about unsaved edits when a sound is closed.  \
 If CHECK is #f, the hooks are removed."
   ( check ) dup to checking-for-unsaved-edits if
@@ -627,7 +627,6 @@ If CHECK is #f, the hooks are removed."
     before-close-hook <'> unsaved-edits-at-close remove-hook! drop
     before-exit-hook  <'> unsaved-edits-at-exit  remove-hook! drop
   then
-  #f					\ for prefs_function_call|save_1() in snd-prefs.c
 ;
 previous
 
@@ -1454,7 +1453,7 @@ hide
   then
 ;
 set-current
-: set-global-sync ( choice -- #f )
+: set-global-sync ( choice -- )
   { choice }
   choice to global-sync-choice
   choice 0<> if
@@ -1462,7 +1461,6 @@ set-current
       after-open-hook <'> global-sync-cb add-hook!
     then
   then
-  #f					\ for prefs_function_call|save_1() in snd-prefs.c
 ;
 previous
 

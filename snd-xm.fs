@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Dec 26 22:36:46 CET 2005
-\ Changed: Wed Jan 06 22:59:50 CET 2010
+\ Changed: Fri Jan 08 00:07:47 CET 2010
 
 \ Commentary:
 \
@@ -32,7 +32,7 @@
 \ activate-dialog          ( dialog -- )
 \ add-mark-pane            ( -- )
 \
-\ show-smpte-label         ( on-or-off -- #f )
+\ show-smpte-label         ( on-or-off -- )
 \ smpte-is-on              ( -- flag )
 \ 
 \ change-label     	   ( widget new-label -- )
@@ -390,7 +390,7 @@ hide
   then
 ;
 set-current
-: show-smpte-label ( on-or-off -- #f )
+: show-smpte-label ( on-or-off -- )
   doc" Turns on/off a label in the time-domain graph showing \
 the current smpte frame of the leftmost sample."
   ( on-or-off ) if
@@ -408,7 +408,6 @@ the current smpte frame of the leftmost sample."
     after-graph-hook <'> draw-smpte-label remove-hook! drop
     #t #t update-time-graph drop
   then
-  #f					\ for prefs_function_call|save_1() in snd-prefs.c
 ;
 
 \ for prefs

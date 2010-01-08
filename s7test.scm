@@ -509,6 +509,12 @@
 (test (boolean? '#()) #f)
 (test (boolean? 't) #f)
 (test (boolean? (list)) #f)
+(test ( boolean? #t) #t)
+(test (   ; a comment 
+          boolean?  ;;; and another
+	  #t
+	  )
+      #t)
 
 (for-each
  (lambda (arg)
@@ -554,6 +560,7 @@
 (test (symbol? '#f) #f)
 (test (symbol? 'sym0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789) #t) ;M Gran
 (test (symbol? (vector-ref '#(1 a 34) 1)) #t)
+(test (if (symbol? '1+) (symbol? '0e) #t) #t)
 
 (for-each
  (lambda (arg)
@@ -1191,6 +1198,7 @@
   (test (string=? "foo" "foo" "") #f)
   (test (string=? "foo" "foo" "fOo") #f)))
 
+
 (test (let ((str (string #\" #\1 #\\ #\2 #\")))	(string=? str "\"1\\2\"")) #t)
 (test (let ((str (string #\\ #\\ #\\)))	(string=? str "\\\\\\")) #t)
 (test (let ((str (string #\")))	(string=? str "\"")) #t)
@@ -1488,6 +1496,9 @@
 (test (string-length "1\\") 2)
 (test (string-length "hi\\") 3)
 (test (string-length "\\\\\\\"") 4)
+(test (string-length "A ; comment") 11)
+(test (string-length "#| comment |#") 13)
+
 
 (test (string=? (string) "") #t)
 (test (string=? (string) (make-string 0)) #t)
@@ -40150,7 +40161,7 @@ expt error > 1e-6 around 2^-46.506993328423
 			     (else #f)))
 			  (if (or (not (boolean? v))
 				  (not (eq? v (eqv-1 a1 a2))))
-			      (format #t "(eqv? ~A ~A) -> ~A~%" a1 a2 v))))
+			      (format #t "(eqv? ~A ~A) -> ~A (~A ~A)~%" a1 a2 v (eqv-1 a1 a2) nlst))))
 		      (lambda () (list (car (choose-any 0)) (car (choose-any 0)))))
 		
 		(list equal?

@@ -8922,7 +8922,7 @@ static void mus_xen_init(void)
 #if (!USE_SND)
 
 #if HAVE_FORTH
-  XEN_EVAL_C_STRING(": clm-print ( fmt lst -- ) 0 drop ;");
+XEN_EVAL_C_STRING("<'> fth-print alias clm-print ( fmt :optional args -- )"); 
 #endif
 
 #if HAVE_RUBY
