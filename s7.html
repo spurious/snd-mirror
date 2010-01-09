@@ -1523,12 +1523,14 @@ int main(int argc, char **argv)
     }
 }
 
-/* gcc -o doc7 doc7.c -lm -I. /usr/local/lib/sndlib.a -lasound
+/* gcc -o doc7 doc7.c -lm -I. /usr/local/lib/libsndlib.a -lasound
  *
  *   (load "sndlib-ws.scm")
  *   (with-sound () (outa 10 .1))
  *   (load "v.scm")
  *   (with-sound () (fm-violin 0 .1 440 .1))
+ *
+ * you might also need -lgsl -lgslcblas
  */
 </pre>
 </td></tr></table>

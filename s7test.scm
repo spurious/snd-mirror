@@ -4879,6 +4879,7 @@
 (test (call/cc (let ((a 1)) (lambda (return) (set! a (+ a 1)) (return a)))) 2)
 (test (call/cc (lambda (return) (let ((hi return)) (hi 2) 3))) 2)
 (test (let () (define (hi) (call/cc func)) (define (func a) (a 1)) (hi)) 1)
+(test (((call/cc (call/cc call/cc)) call/cc) (lambda (a) 1)) 1)
 
 (test (let ((listindex (lambda (e l)
 			 (call/cc (lambda (not_found)
@@ -6662,6 +6663,18 @@
       (test (let () (define-macro (hi a) `(+ ,@a)) (hi (1 2 3))) 6)
       (test (let () (define-macro (hi a) `(+ ,a 1) #f) (hi 2)) #f)
       (test (let () (define-macro (mac1 a) `',a) (equal? (mac1 (+ 1 2)) '(+ 1 2))) #t)
+
+      (test (let ()
+	      (define-macro (pop sym)
+		(let ((v (gensym "v")))
+		  `(let ((,v (car ,sym)))
+		     (set! ,sym (cdr ,sym))
+		     ,v)))
+	      (let ((lst (list 1 2 3)))
+		(let ((val (pop lst)))
+		  (and (= val 1)
+		       (equal? lst (list 2 3))))))
+	    #t)
 
 
       (define-macro* (_mac1_) `(+ 1 2))

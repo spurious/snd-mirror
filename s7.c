@@ -302,11 +302,11 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV0, OP_WITH_ENV1, OP_WITH_ENV2,
 	      OP_VECTOR_FOR_EACH, OP_VECTOR_MAP0, OP_VECTOR_MAP1, OP_STRING_FOR_EACH, OP_OBJECT_FOR_EACH,
-	      OP_HASH_TABLE_FOR_EACH, 
+	      OP_HASH_TABLE_FOR_EACH, OP_QUASIQUOTE,
 	      OP_MAX_DEFINED} opcode_t;
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 87 */
+/* this needs to be at least OP_MAX_DEFINED = 88 */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
 	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, TOKEN_VECTOR} token_t;
@@ -1659,7 +1659,8 @@ static void show_stack(s7_scheme *sc)
      "define_constant1", "do", "do_end0", "do_end1", "do_step0", "do_step1", "do_step2", "do_init", "define_star", 
      "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit", "trace_hook_quit",
      "with_env0", "with_env1", "with_env2", "vector_for_each", "vector_map0", "vector_map1", "string_for_each", 
-     "object_for_each", "hash-table-for-each"};
+     "object_for_each", "hash-table-for-each", "quasiquote"
+    };
 
   int i;
   for (i = sc->stack_top - 4; i >= 0; i -= 4)
@@ -14806,11 +14807,6 @@ static s7_pointer g_quasiquote_2(s7_scheme *sc, int level, s7_pointer form)
   return(x);
 }
 
-static s7_pointer g_quasiquote(s7_scheme *sc, s7_pointer args)
-{
-  return(g_quasiquote_2(sc, s7_integer(car(args)), cadr(args)));
-}  
-
 
 
 /* ---------------- reader funcs for eval ---------------- */
@@ -15190,7 +15186,14 @@ static s7_pointer read_expression(s7_scheme *sc)
 	    expr = read_string_upto(sc, 0);
 	    sc->value = make_sharp_constant(sc, expr, true);
 	    if (sc->value == sc->NIL)
-	      return(read_error(sc, "undefined sharp expression")); /* (list #b) */
+	      {
+		int len;
+		char *buf;
+		len = 32 + safe_strlen(expr);
+		buf = (char *)calloc(len, sizeof(char)); /* memleak here... */
+		snprintf(buf, len, "#%s: undefined sharp expression", expr);
+		return(read_error(sc, buf));             /* (list #b) */
+	      }
 	    return(sc->value);
 	  }
 
@@ -16909,6 +16912,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = car(sc->code);
       goto EVAL;
       
+
+    case OP_QUASIQUOTE:
+      sc->code = g_quasiquote_2(sc, 0, car(sc->code));
+      sc->args = sc->NIL;
+      goto EVAL;
+
       
     case OP_MACRO0:     /* this is tinyscheme's weird macro syntax */
       /*
@@ -16968,7 +16977,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->x != sc->NIL) 
 	set_symbol_value(sc->x, sc->value); 
       else add_to_current_environment(sc, sc->code, sc->value); 
-      
+
       /* pop back to wherever the macro call was */
       sc->x = sc->value;
       sc->value = sc->code;
@@ -22261,6 +22270,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "define-expansion",  OP_DEFINE_EXPANSION); /* read-time (immediate) macro expansion */
   assign_syntax(sc, "do",                OP_DO);
   assign_syntax(sc, "with-environment",  OP_WITH_ENV0);
+  assign_syntax(sc, "quasiquote",        OP_QUASIQUOTE);
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");
   typeflag(sc->LAMBDA) |= T_DONT_COPY; 
@@ -22677,7 +22687,6 @@ s7_scheme *s7_init(void)
   
   s7_define_function(sc, "s7-version",              g_s7_version,              0, 0, false, H_s7_version);
   s7_define_set_function(sc, object_set_name,       g_object_set,              1, 0, true, "internal setter redirection");
-  s7_define_function(sc, "_quasiquote_",            g_quasiquote,              2, 0, false, "internal quasiquote handler");
   
   s7_define_variable(sc, "*features*", sc->NIL);
   s7_define_variable(sc, "*load-path*", sc->NIL);
@@ -22752,8 +22761,6 @@ s7_scheme *s7_init(void)
 
     /* for s7_Double, float gives about 9 digits, double 18, long Double claims 28 but I don't see more than about 22? */
   }
-
-  s7_eval_c_string(sc, "(macro quasiquote (lambda (l) (_quasiquote_ 0 (cadr l))))");
 
 #if WITH_GMP
   s7_gmp_init(sc);
