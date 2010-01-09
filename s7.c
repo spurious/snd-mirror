@@ -302,11 +302,11 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV0, OP_WITH_ENV1, OP_WITH_ENV2,
 	      OP_VECTOR_FOR_EACH, OP_VECTOR_MAP0, OP_VECTOR_MAP1, OP_STRING_FOR_EACH, OP_OBJECT_FOR_EACH,
-	      OP_HASH_TABLE_FOR_EACH, OP_QUASIQUOTE,
+	      OP_HASH_TABLE_FOR_EACH,
 	      OP_MAX_DEFINED} opcode_t;
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 88 */
+/* this needs to be at least OP_MAX_DEFINED = 87 */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
 	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, TOKEN_VECTOR} token_t;
@@ -492,7 +492,7 @@ struct s7_scheme {
   s7_pointer symbol_table;            /* symbol table */
   s7_pointer global_env;              /* global environment */
   
-  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, QUASIQUOTE, UNQUOTE, UNQUOTE_SPLICING, MACROEXPAND;
+  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, UNQUOTE_SPLICING, MACROEXPAND;
   s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, VECTOR_FUNCTION, VALUES, ELSE, SET;
   s7_pointer ERROR, WRONG_TYPE_ARG, OUT_OF_RANGE, FORMAT_ERROR, WRONG_NUMBER_OF_ARGS;
   s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, __FUNC__, ERROR_HOOK, TRACE_HOOK;
@@ -1659,7 +1659,7 @@ static void show_stack(s7_scheme *sc)
      "define_constant1", "do", "do_end0", "do_end1", "do_step0", "do_step1", "do_step2", "do_init", "define_star", 
      "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit", "trace_hook_quit",
      "with_env0", "with_env1", "with_env2", "vector_for_each", "vector_map0", "vector_map1", "string_for_each", 
-     "object_for_each", "hash-table-for-each", "quasiquote"
+     "object_for_each", "hash-table-for-each"
     };
 
   int i;
@@ -2566,7 +2566,10 @@ static void check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
       else
 	{
 	  if (op == OP_TRACE_RETURN)
-	    sc->trace_depth--;
+	    {
+	      sc->trace_depth--;
+	      if (sc->trace_depth < 0) sc->trace_depth = 0;
+	    }
 	}
     }
   
@@ -13576,7 +13579,7 @@ static void trace_return(s7_scheme *sc)
 
   tmp = s7_object_to_c_string(sc, sc->value);  
 
-  len = sc->trace_depth + safe_strlen(tmp) + 2;
+  len = sc->trace_depth + safe_strlen(tmp) + 3;
   str = (char *)calloc(len, sizeof(char));
 
   for (k = 0; k < sc->trace_depth; k++) str[k] = ' ';
@@ -13588,6 +13591,7 @@ static void trace_return(s7_scheme *sc)
   free(str);
 
   sc->trace_depth--;
+  if (sc->trace_depth < 0) sc->trace_depth = 0;
 }
 
 
@@ -13967,6 +13971,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 
 	case OP_TRACE_RETURN:
 	  sc->trace_depth--;
+	  if (sc->trace_depth < 0) sc->trace_depth = 0;
 	  break;
 
 	default:
@@ -14694,8 +14699,10 @@ s7_pointer s7_values(s7_scheme *sc, int num_values, ...)
 
 /* -------------------------------- quasiquote -------------------------------- */
 
-static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
+static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 {
+  s7_pointer l, r;
+
   if (!is_pair(form))
     {
       if ((s7_is_number(form)) ||
@@ -14704,97 +14711,49 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
 	return(form);
       return(make_list_2(sc, sc->QUOTE, form));
     }
-  /* from here, form is a pair */
 
-  if (car(form) == sc->QUASIQUOTE)
-    {
-      s7_pointer r;
-      r = g_quasiquote_1(sc, level + 1, cdr(form));
-      if ((is_pair(r)) &&
-	  (car(r) == sc->QUOTE) &&
-	  (car(cdr(r)) == cdr(form)))
-	return(make_list_2(sc, sc->QUOTE, form));
-      return(make_list_3(sc, sc->CONS, make_list_2(sc, sc->QUOTE, sc->QUASIQUOTE), r));
-    }
-
-  if (level == 0)
-    {
-      if (car(form) == sc->UNQUOTE)
-	return(car(cdr(form)));
-	      
-      if (car(form) == sc->UNQUOTE_SPLICING)
-	return(form);
-	      
-      if ((is_pair(car(form))) &&
-	  (caar(form) == sc->UNQUOTE_SPLICING))
-	{
-	  s7_pointer l, r;
-	  l = car(cdr(car(form)));
-	  if (cdr(form) == sc->NIL)
-	    return(l);
-
-	  r = g_quasiquote_1(sc, level, cdr(form));
-
-	  if ((is_pair(r)) &&
-	      (car(r) == sc->QUOTE) &&
-	      (car(cdr(r)) == sc->NIL))
-	    return(l);
-	  return(make_list_3(sc, sc->APPEND, l, r));
-	}
-      
-      goto MCONS;
-    }
-
-  /* level != 0 */
   if (car(form) == sc->UNQUOTE)
-    {
-      s7_pointer r;
-      r = g_quasiquote_1(sc, level - 1, cdr(form));
-
-      if ((is_pair(r)) &&
-	  (car(r) == sc->QUOTE) &&
-	  (car(cdr(r)) == cdr(form)))
-	return(make_list_2(sc, sc->QUOTE, form));
-
-      return(make_list_3(sc, sc->CONS, make_list_2(sc, sc->QUOTE, sc->UNQUOTE), r));
-    }
-  
-  if (car(form) == sc->UNQUOTE_SPLICING)
-    {
-      s7_pointer r;
-      r = g_quasiquote_1(sc, level - 1, cdr(form));
-
-      if ((is_pair(r)) &&
-	  (car(r) == sc->QUOTE) &&
-	  (car(cdr(r)) == cdr(form)))
-	return(make_list_2(sc, sc->QUOTE, form));
-
-      return(make_list_3(sc, sc->CONS, make_list_2(sc, sc->QUOTE, sc->UNQUOTE_SPLICING), r));
-    }
+    return(car(cdr(form)));
 	      
- MCONS:
-  {
-    s7_pointer l, r;
+  if (car(form) == sc->UNQUOTE_SPLICING)
+    return(form);
+	      
+  if ((is_pair(car(form))) &&
+      (caar(form) == sc->UNQUOTE_SPLICING))
+    {
+      s7_pointer l, r;
+      l = car(cdr(car(form)));
+      if (cdr(form) == sc->NIL)
+	return(l);
 
-    l = g_quasiquote_1(sc, level, car(form));
-    r = g_quasiquote_1(sc, level, cdr(form));
+      r = g_quasiquote_1(sc, cdr(form));
 
-    if ((is_pair(r)) &&
-	(is_pair(l)) &&
-	(car(r) == sc->QUOTE) &&
-	(car(l) == car(r)) &&
-	(car(cdr(r)) == cdr(form)) &&
-	(car(cdr(l)) == car(form)))
-      return(make_list_2(sc, sc->QUOTE, form));
+      if ((is_pair(r)) &&
+	  (car(r) == sc->QUOTE) &&
+	  (car(cdr(r)) == sc->NIL))
+	return(l);
+      return(make_list_3(sc, sc->APPEND, l, r));
+    }
+      
+  l = g_quasiquote_1(sc, car(form));
+  r = g_quasiquote_1(sc, cdr(form));
 
-    if (l == sc->VECTOR_FUNCTION)
-      return(g_vector(sc, make_list_1(sc, r))); /* eval? */
+  if ((is_pair(r)) &&
+      (is_pair(l)) &&
+      (car(r) == sc->QUOTE) &&
+      (car(l) == car(r)) &&
+      (car(cdr(r)) == cdr(form)) &&
+      (car(cdr(l)) == car(form)))
+    return(make_list_2(sc, sc->QUOTE, form));
 
-    return(make_list_3(sc, sc->CONS, l, r));
-  }
+  if (l == sc->VECTOR_FUNCTION)
+    return(g_vector(sc, make_list_1(sc, r))); /* eval? */
+
+  return(make_list_3(sc, sc->CONS, l, r));
 }
 
-static s7_pointer g_quasiquote_2(s7_scheme *sc, int level, s7_pointer form)
+
+static s7_pointer g_quasiquote_2(s7_scheme *sc, s7_pointer form)
 {
   /* the lists built up by quasiquote can be arbitrarily large, and it would be a nightmare to locally GC-protect,
    *   then later unprotect every cons, so we turn off the GC until we're done.
@@ -14802,7 +14761,7 @@ static s7_pointer g_quasiquote_2(s7_scheme *sc, int level, s7_pointer form)
   s7_pointer x;
   if (sc->free_heap_top < 4096) gc(sc);
   s7_gc_on(sc, false);
-  x = g_quasiquote_1(sc, level, form);
+  x = g_quasiquote_1(sc, form);
   s7_gc_on(sc, true);
   return(x);
 }
@@ -16264,7 +16223,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		else
 		  {
 		    if (op == OP_TRACE_RETURN)
-		      sc->trace_depth--;
+		      {
+			sc->trace_depth--;
+			if (sc->trace_depth < 0) sc->trace_depth = 0;
+		      }
 		  }
 	      }
 	    
@@ -16913,12 +16875,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
 
-    case OP_QUASIQUOTE:
-      sc->code = g_quasiquote_2(sc, 0, car(sc->code));
-      sc->args = sc->NIL;
-      goto EVAL;
-
-      
     case OP_MACRO0:     /* this is tinyscheme's weird macro syntax */
       /*
 	(macro (when form)
@@ -17008,32 +16964,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_immutable(sc->x))
 	return(eval_error(sc, "defmacro: ~S is immutable", sc->x));     /* (defmacro pi (a) `(+ ,a 1)) */
 
-      /* (defmacro hi (a) `(+ ,a 1))
-       *   cdr(sc->code): ((a) (quasiquote (+ (unquote a) 1)))
-       *   caddr(sc->code):    (quasiquote (+ (unquote a) 1))
-       *   cadr(caddr(sc->code):           (+ (unquote a) 1)
-       *   g_quasiquote_2(sc, 0, ^):       (cons (quote +) (cons a (cons 1 (quote ()))))
-       *
-       * so the quasiquote can be evaluated immediately.  It's possible that we could
-       *   always precompute quasiquotes, but this change takes care of 99% of the cases.
-       */
-
-      if ((is_pair(cdr(sc->code))) &&
-	  (is_pair(cddr(sc->code))) &&
-	  (is_pair(caddr(sc->code))) &&
-	  (s7_is_symbol(caaddr(sc->code))) &&
-	  (caaddr(sc->code) == sc->QUASIQUOTE))
-	{
-	  sc->z = s7_cons(sc,
-			  cadr(sc->code),
-			  s7_cons(sc,
-				  g_quasiquote_2(sc, 0, cadr(caddr(sc->code))),
-				  cdddr(sc->code)));
-	  /* fprintf(stderr, "z: %s\n", s7_object_to_c_string(sc, sc->z)); */
-	  sc->x = car(sc->code);            /* just in case g_quasiquote stepped on sc->x */
-	}
-      else sc->z = cdr(sc->code);
-
       /* could we make macros safe automatically by doing the symbol lookups right now?
        *   we'd replace each name with a reference to the current binding cons.  I think
        *   this is how Guile implements hygenic macros -- is it worth the bother?
@@ -17051,6 +16981,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * 3
        */
 
+      sc->z = cdr(sc->code);
       sc->y = s7_gensym(sc, "defmac");
       sc->code = s7_cons(sc, 
 			 sc->LAMBDA,
@@ -17103,22 +17034,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "define-macro: ~S is immutable", sc->x));
 
       /* (define-macro (hi a) `(+ ,a 1))
-       *   cdr(sc->code): ((quasiquote (+ (unquote a) 1)))
-       *   so in this case we want cadr, not caddr of defmacro
+       *   in this case we want cadr, not caddr of defmacro
        */
 
-      if ((is_pair(cdr(sc->code))) &&
-	  (is_pair(cadr(sc->code))) &&
-	  (s7_is_symbol(caadr(sc->code))) &&
-	  (caadr(sc->code) == sc->QUASIQUOTE))
-	{
-	  sc->z = s7_cons(sc,
-			  g_quasiquote_2(sc, 0, cadr(cadr(sc->code))),
-			  cddr(sc->code));
-	  sc->x = caar(sc->code); /* just in case g_quasiquote stepped on sc->x */
-	}
-      else sc->z = cdr(sc->code);
-
+      sc->z = cdr(sc->code);
       sc->y = s7_gensym(sc, "defmac");
       sc->code = s7_cons(sc,
 			 sc->LAMBDA,
@@ -17405,13 +17324,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_READ_QUASIQUOTE:
-      sc->value = make_list_2(sc, sc->QUASIQUOTE, sc->value);
+      /* this was pushed when the backquote was seen, then eventually we popped back to it */
+      sc->value = g_quasiquote_2(sc, sc->value);
       pop_stack(sc);
       goto START;
       
       
     case OP_READ_QUASIQUOTE_VECTOR:
-      sc->value = make_list_3(sc, sc->APPLY, sc->VECTOR, make_list_2(sc, sc->QUASIQUOTE, sc->value));
+      sc->value = make_list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_2(sc, sc->value));
       pop_stack(sc);
       goto START;
       
@@ -22270,7 +22190,6 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "define-expansion",  OP_DEFINE_EXPANSION); /* read-time (immediate) macro expansion */
   assign_syntax(sc, "do",                OP_DO);
   assign_syntax(sc, "with-environment",  OP_WITH_ENV0);
-  assign_syntax(sc, "quasiquote",        OP_QUASIQUOTE);
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");
   typeflag(sc->LAMBDA) |= T_DONT_COPY; 
@@ -22280,9 +22199,6 @@ s7_scheme *s7_init(void)
   
   sc->QUOTE = s7_make_symbol(sc, "quote");
   typeflag(sc->QUOTE) |= T_DONT_COPY; 
-  
-  sc->QUASIQUOTE = s7_make_symbol(sc, "quasiquote");
-  typeflag(sc->QUASIQUOTE) |= T_DONT_COPY;  /* add the immutable bit later */
   
   sc->UNQUOTE = s7_make_symbol(sc, "unquote");
   typeflag(sc->UNQUOTE) |= T_DONT_COPY; 
