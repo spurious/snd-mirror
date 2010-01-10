@@ -2080,6 +2080,7 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   return(s7);
 }
 
+
 void xen_initialize(void)
 {
   s7_xen_initialize(NULL);

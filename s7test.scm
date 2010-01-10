@@ -6667,6 +6667,13 @@
       (test (let () (define-macro (hi a) `(+ ,a 1) #f) (hi 2)) #f)
       (test (let () (define-macro (mac1 a) `',a) (equal? (mac1 (+ 1 2)) '(+ 1 2))) #t)
 
+      (test (let () (defmacro hi (a) `(+ , a 1)) (hi 1)) 2)
+      (test (let () (defmacro hi (a) `(eval `(+ ,,a 1))) (hi 1)) 2)
+      (test (let () (defmacro hi (a) `(eval (let ((a 12)) `(+ ,,a 1)))) (hi 1)) 2)
+      (test (let () (defmacro hi (a) `(eval (let ((a 12)) `(+ ,a 1)))) (hi 1)) 13)
+      (test (let () (defmacro hi (a) `(eval (let ((a 12)) `(let ((a 100)) (+ ,a 1))))) (hi 1)) 13)
+      (test (let () (defmacro hi (a) `(eval (let ((a 12)) `(let ((a 100)) (+ a 1))))) (hi 1)) 101)
+
       (test (let ()
 	      (define-macro (pop sym)
 		(let ((v (gensym "v")))

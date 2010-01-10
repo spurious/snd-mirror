@@ -8661,14 +8661,24 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 {
   bool old_longjmp;
-  s7_pointer port;
+  s7_pointer port, old_envir;
   /* this can be called recursively via s7_call */
 
+  old_envir = sc->envir;
+  sc->envir = sc->global_env; /* C call assumes top level, I think.  This is needed in any case
+			       *   by dlinit -- the init function will be called in some local environment,
+			       *   but the library entities it defines should obviously be top level,
+			       *   as if via load.
+			       */
   if (sc->longjmp_ok)
-    return(eval_string_1(sc, str));
+    {
+      s7_pointer result;
+      result = eval_string_1(sc, str);
+      sc->envir = old_envir;
+      return(result);
+    }
   
   stack_reset(sc); 
-  sc->envir = sc->global_env; 
   port = s7_open_input_string(sc, str);
   push_input_port(sc, port);
   push_stack(sc, OP_EVAL_STRING, sc->NIL, sc->NIL);
@@ -8685,7 +8695,7 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
   sc->longjmp_ok = old_longjmp;
   pop_input_port(sc);
   s7_close_input_port(sc, port);
-  
+  sc->envir = old_envir;  
   return(sc->value);
 }
 
@@ -22763,88 +22773,3 @@ s7_scheme *s7_init(void)
 }
 
 /* TODO: how to trace setter [s7_object_set?] mus-srate for example */
-
-#if 0
-/*  here are the ->* functions, without c-type stuff
-
-(define ->string object->string) ; or perhaps (format #f "~A" x)
-
-(define (->symbol x)
-  (string->symbol (object->string x)))
-
-(define (->real x)
-  (if (number? x)
-      (if (complex? x)
-	  (real-part x)
-	  (exact->inexact x))
-      (if (string? x)
-	  (exact->inexact (string->number x))
-	  (if (char? x)
-	      (exact->inexact (->integer x))
-	      (error 'wrong-type-arg "can't convert ~A to real" x)))))
-
-(define (->integer x)
-  (if (number? x)
-      (if (complex? x)
-	  (floor (real-part x))
-	  (floor x))
-      (if (string? x)
-	  (floor (string->number x))
-	  (if (char? x)
-	      (char->integer x)
-	      (error 'wrong-type-arg "can't convert ~A to integer" x)))))  
-
-(define (->ratio x)
-  (if (number? x)
-      (if (complex? x)
-	  (rationalize (real-part x))
-	  (rationalize x))
-      (if (string? x)
-	  (rationalize (string->number x))
-	  (if (char? x)
-	      (char->integer x)
-	      (error 'wrong-type-arg "can't convert ~A to ratio" x)))))
-
-(define (->number x)
-  (if (number? x)
-      x
-      (if (string? x)
-	  (string->number x)
-	  (if (char? x)
-	      (char->integer x)
-	      (error 'wrong-type-arg "can't convert ~A to number" x)))))
-
-(define (->character x)
-  (if (char? x)
-      x
-      (if (number? x)
-	  (integer->char (->integer x))
-	  (if (and (string? x)
-		   (= (length x) 1))
-	      (string-ref x 0)
-	      (error 'wrong-type-arg "can't convert ~A to character" x)))))	      
-
-(define (->list x)
-  (if (list? x)
-      x
-      (if (pair? x)
-	  (list (car x) (cdr x))
-	  (if (vector? x)
-	      (vector->list x)
-	      (if (string? x)
-		  (string->list x)
-		  (error 'wrong-type-arg "can't convert ~A to list" x))))))	      
-
-(define (->vector x)
-  (if (vector? x)
-      x
-      (if (list? x)
-	  (list->vector x)
-	  (if (string? x)
-	      (list->vector (string->list x))
-	      (if (pair? x)
-		  (list->vector (->list x))
-		  (error 'wrong-type-arg "can't convert ~A to vector" x))))))
-  */
-#endif
-
