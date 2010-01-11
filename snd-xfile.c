@@ -12,8 +12,6 @@
    View:Files
 */
 
-/* TODO: are non-activated text changes ignored in all these dialogs? */
-
 
 #define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)
 #define MSG_BOX(Dialog, Child) XmMessageBoxGetChild(Dialog, Child)

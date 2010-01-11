@@ -12613,6 +12613,11 @@ static s7_pointer g_is_equal(s7_scheme *sc, s7_pointer args)
 
 /* ---------------------------------------- length, copy, fill ---------------------------------------- */
 
+/* this returns 2:         (let ((x (list 1 2))) (set-car! x x) (length x))
+ *   but this is an error: (let ((x (list 1 2))) (set-cdr! x x) (length x))
+ *   because length just looks at cdrs (this is also true of other schemes).
+ */
+
 static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
 {
   #define H_length "(length obj) returns the length of obj, which can be a list, vector, string, or hash-table"
@@ -14265,7 +14270,7 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
 }
 
 
-static void display_frame(s7_scheme *sc, s7_pointer envir)
+static void display_frame(s7_scheme *sc, s7_pointer envir, s7_pointer port)
 {
   if ((is_pair(envir)) &&
       (is_pair(cdr(envir))))
@@ -14290,13 +14295,13 @@ static void display_frame(s7_scheme *sc, s7_pointer envir)
 	      if (!s7_is_symbol(cdr(lst)))
 		file_info = cddr(lst);
 	      
-	      format_to_output(sc, s7_current_output_port(sc), "(~A~{ ~A~})", make_list_2(sc, sym, local_env));
+	      format_to_output(sc, port, "(~A~{ ~A~})", make_list_2(sc, sym, local_env));
 	      if (is_pair(file_info))
-		format_to_output(sc, s7_current_output_port(sc), "    [~S ~D]", file_info);
+		format_to_output(sc, port, "    [~S ~D]", file_info);
 	    }
           else
-	    format_to_output(sc, s7_current_output_port(sc), "(~A~{~^ ~A~})", make_list_2(sc, cdr(lst), s7_reverse(sc, args)));
-          s7_newline(sc, s7_current_output_port(sc));
+	    format_to_output(sc, port, "(~A~{~^ ~A~})", make_list_2(sc, cdr(lst), s7_reverse(sc, args)));
+          s7_newline(sc, port);
 	}
     }
 }
@@ -14309,14 +14314,32 @@ static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args)
    *           =thread obj, show its stack
    *           =vector, assume it is a vector of envs from *error-info*
    *           =continuation, show its stack
+   * if trailing arg is a port, it sets where the output goes
    */
-  #define H_stacktrace "(stacktrace :optional obj) displays a stacktrace.  If obj is not \
+  #define H_stacktrace "(stacktrace :optional obj port) displays a stacktrace.  If obj is not \
 given, the current stack is displayed, if obj is a thread object, its stack is displayed, \
 if obj is *error-info*, the stack at the point of the error is displayed, and if obj \
-is a continuation, its stack is displayed."
+is a continuation, its stack is displayed.  If the trailing port argument is not given, \
+output is sent to the current-output-port."
 
   int i, top = 0;
-  s7_pointer stk = sc->F;
+  s7_pointer stk = sc->F, port;
+  port = s7_current_output_port(sc);
+
+  if (args != sc->NIL)
+    {
+      if (is_output_port(car(args)))
+	{
+	  port = car(args);
+	  args = cdr(args);
+	}
+      else
+	{
+	  if ((cdr(args) != sc->NIL) &&
+	      (is_output_port(cadr(args))))
+	    port = cadr(args);
+	}
+    }
 
   /* *error-info* is the special case here */
   if (s7_is_vector(car(args)))
@@ -14325,7 +14348,7 @@ is a continuation, its stack is displayed."
 	{
 	  if (vector_element(car(args), i) == ERROR_INFO_DEFAULT)
 	    break;
-	  display_frame(sc, vector_element(car(args), i));
+	  display_frame(sc, vector_element(car(args), i), port);
 	}
       return(sc->UNSPECIFIED);
     }
@@ -14356,10 +14379,10 @@ is a continuation, its stack is displayed."
 #endif	    
     }
   if (stk == sc->F)
-    return(s7_wrong_type_arg_error(sc, "stacktrace", 0, car(args), "a vector, thread object, or continuation"));
+    return(s7_wrong_type_arg_error(sc, "stacktrace", 0, args, "a vector, thread object, or continuation"));
   
   for (i = top; i > 0; i -= 4)
-    display_frame(sc, vector_element(stk, i - 3));
+    display_frame(sc, vector_element(stk, i - 3), port);
 
   return(sc->UNSPECIFIED);
 }
@@ -14368,6 +14391,8 @@ is a continuation, its stack is displayed."
 s7_pointer s7_stacktrace(s7_scheme *sc, s7_pointer arg)
 {
   if (arg == sc->NIL)
+    return(g_stacktrace(sc, arg));
+  if (is_pair(arg))
     return(g_stacktrace(sc, arg));
   return(g_stacktrace(sc, make_list_1(sc, arg)));
 }
@@ -15793,9 +15818,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{    
 	  /* macro expansion */
 	  if (!(is_c_macro(sc->value)))
-	    push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
-	  /* code is the macro invocation: (mac-name ...), args is nil, value is the macro code bound to mac-name */
-	  sc->args = make_list_1(sc, sc->code); 
+	    {
+	      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
+	      /* code is the macro invocation: (mac-name ...), args is nil, value is the macro code bound to mac-name */
+	      sc->args = make_list_1(sc, sc->code); 
+	    }
+	  else sc->args = sc->code; 
 	  sc->code = sc->value;
 	  goto APPLY;
 	} 
@@ -15988,10 +16016,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    int len;
 	    s7_pointer macsym;
-	    macsym = caar(sc->args);
-	    sc->args = cdar(sc->args);
 
+	    macsym = car(sc->args);
+	    sc->args = cdr(sc->args);
 	    len = safe_list_length(sc, sc->args);
+
 	    if (len < c_macro_required_args(sc->code))
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
@@ -22592,7 +22621,7 @@ s7_scheme *s7_init(void)
   s7_define_variable(sc, "*trace-hook*", sc->NIL);
 
   s7_define_function(sc, "stack",                   g_stack,                   0, 1, false, H_stack);
-  s7_define_function(sc, "stacktrace",              g_stacktrace,              0, 1, false, H_stacktrace);
+  s7_define_function(sc, "stacktrace",              g_stacktrace,              0, 2, false, H_stacktrace);
 
   s7_define_function(sc, "gc",                      g_gc,                      0, 1, false, H_gc);
   s7_define_function(sc, "quit",                    g_quit,                    0, 0, false, H_quit);
