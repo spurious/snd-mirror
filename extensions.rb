@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Sun Dec 20 01:36:53 CET 2009
+# Changed: Tue Jan 12 02:04:06 CET 2010
 
 # Commentary:
 # 
@@ -50,6 +50,8 @@
 #  samples2vct(samp, samps, snd, chn, nv, epos)
 #  scale_sound_by(scl, beg, dur, snd, chn, edpos)
 #  scale_sound_to(norm, beg, dur, snd, chn)
+#  emacs_style_save_as
+#  set_emacs_style_save_as(val)
 #  mixer_scale(mx, scl, nmx)
 #  make_iir_low_pass_1(fc)
 #  make_iir_high_pass_1(fc)
@@ -110,7 +112,7 @@
 #
 #  yes_or_no?(question, action_if_yes, action_if_no, snd)
 #  check_for_unsaved_edits(check)
-#  remember_sound_state
+#  remember_sound_state(choice)
 #  
 #  mix_channel(fdata, beg, dur, snd, chn, edpos)
 #  insert_channel(fdata, beg, dur, snd, chn, edpos)
@@ -732,6 +734,24 @@ turns a sound-data object's data into a list of lists (one for each channel)")
     end
   end
 
+  def emacs_style_save_as
+    $after_save_as_hook.member?("after-save-as-hook-replace-sound")
+  end
+
+  def set_emacs_style_save_as(val = true)
+    if val and (not emacs_style_save_as())
+      $after_save_as_hook.add_hook!("after-save-as-hook-replace-sound") do |snd, fname, from_dialog|
+        if from_dialog
+          revert_sound(snd)
+          close_sound(snd)
+          open_sound(fname)
+        end
+      end
+    else
+      $after_save_as_hook.remove_hook!("after-save-as-hook-replace-sound")
+    end
+  end
+  
   alias mixer_scale mixer_multiply
   alias mus_error_to_string mus_error_type2string
 
@@ -892,18 +912,39 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
     end
     nil
   end
+
+  # Used in remember_all_sound_properties and remember_sound_state
+  $sound_funcs = [:sync, :with_tracking_cursor, :selected_channel, :show_controls, :read_only,
+                  :contrast_control?, :expand_control?, :reverb_control?, :filter_control?,
+                  :amp_control, :amp_control_bounds,
+                  :contrast_control, :contrast_control_amp, :contrast_control_bounds,
+                  :expand_control, :expand_control_bounds, :expand_control_hop,
+                  :expand_control_jitter, :expand_control_length, :expand_control_ramp,
+                  :filter_control_envelope, :filter_control_in_dB, :filter_control_in_hz,
+                  :filter_control_order,
+                  :reverb_control_decay, :reverb_control_feedback, :reverb_control_length,
+                  :reverb_control_length_bounds, :reverb_control_lowpass, :reverb_control_scale,
+                  :reverb_control_scale_bounds,
+                  :speed_control, :speed_control_bounds, :speed_control_style, :speed_control_tones]
+  # transform_type: #<transform Xxx> transform2integer --> save/load --> integer2transform
+  $channel_funcs = [:time_graph?, :transform_graph?, :lisp_graph?, :x_bounds, :y_bounds,
+                    :cursor, :cursor_size, :cursor_style, :show_marks, :show_y_zero, :show_grid,
+                    :wavo_hop, :wavo_trace, :max_transform_peaks, :show_transform_peaks,
+                    :fft_log_frequency, :fft_log_magnitude, :with_verbose_cursor, :zero_pad,
+                    :wavelet_type, :min_dB, :transform_size, :transform_graph_type,
+                    :time_graph_type, :fft_window, :transform_type, :transform_normalization,
+                    :time_graph_style, :show_mix_waveforms, :dot_size,
+                    :x_axis_style, :show_axes, :graphs_horizontal, :lisp_graph_style,
+                    :transform_graph_style, :grid_density, :tracking_cursor_style]
   
-  # [MS] Based on the idea of remember_sound_state() below, here is
+  # [ms] Based on the idea of remember_sound_state() below, here is
   # another approach, using a database file.
   #
   # remember_all_sound_properties() in ~/.snd-ruby.rb installs the hooks
   # default database is ~/.snd-properties.db
   # default tmp_snd_p is false (discarding `.*0000_00.snd' and `.*.rev.*' filenames)
 
-  $remembering_sound_state = 0  # for prefs
-
   def remember_all_sound_properties(database = ENV['HOME'] + "/.snd-properties", tmp_snd_p = false)
-    $remembering_sound_state = 3
     rsp = Remember_sound_properties.new(database)
     unless $after_open_hook.member?("save-property-hook")
       $after_open_hook.add_hook!("save-property-hook") do |snd|
@@ -976,17 +1017,9 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
     end
     
     def initialize(database)
-      @database = database
-      @sound_funcs = [:sync, :with_tracking_cursor]
-      @channel_funcs = [:time_graph?, :transform_graph?, :lisp_graph?, :x_bounds, :y_bounds,
-                        :cursor, :cursor_size, :cursor_style, :show_marks, :show_y_zero,
-                        :wavo_hop, :wavo_trace, :max_transform_peaks, :show_transform_peaks,
-                        :fft_log_frequency, :fft_log_magnitude, :with_verbose_cursor, :zero_pad,
-                        :wavelet_type, :min_dB, :transform_size, :transform_graph_type,
-                        :time_graph_type, :fft_window, :transform_type, :transform_normalization,
-                        :time_graph_style, :show_mix_waveforms,
-                        :dot_size, :x_axis_style, :show_axes, :graphs_horizontal,
-                        :lisp_graph_style, :transform_graph_style]
+      @database      = database
+      @sound_funcs   = $sound_funcs
+      @channel_funcs = $channel_funcs
       set_help
     end
     attr_reader :database
@@ -1018,7 +1051,11 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
           set_squelch_update(true, snd, chn)
           @channel_funcs.each do |prop|
             if (val = channel_property(prop, snd, chn))
-              Kernel.set_snd_func(prop, val, snd, chn)
+              if prop == :transform_type
+                Kernel.set_snd_func(prop, integer2transform(val), snd, chn)
+              else
+                Kernel.set_snd_func(prop, val, snd, chn)
+              end
             end
           end
           set_squelch_update(false, snd, chn)
@@ -1052,7 +1089,11 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
       res += format("  set_sound_properties(%s, snd_s)\n", props.inspect)
       channels(snd).times do |chn|
         @channel_funcs.each do |prop|
-          set_channel_property(prop, snd_func(prop, snd, chn), snd, chn)
+          if prop == :transform_type
+            set_channel_property(prop, transform2integer(snd_func(prop, snd, chn)), snd, chn)
+          else
+            set_channel_property(prop, snd_func(prop, snd, chn), snd, chn)
+          end
         end
         props = (channel_properties(snd, chn) or [])
         if reject = channel_property(:save_state_ignore, snd, chn)
@@ -1412,59 +1453,89 @@ If CHECK is false, the hooks are removed.")
       $before_exit_hook.remove_hook!(unsaved_edits_at_exit_name)
     end
   end
-  
+
+  # ;;; -------- remember-sound-state
+  $remembering_sound_state = 0  # for prefs
+  $remember_sound_filename = ".snd-remember-sound"
+
   add_help(:remember_sound_state,
-           "remember_sound_state() \
+           "remember_sound_state(choice=3) \
 remembers the state of a sound when it is closed, \
 and if it is subsquently re-opened, restores that state")
-  def remember_sound_state
-    # states = {file_name => [date, sound_funcs, channel_funcs], ...}
-    $remembering_sound_state = 1
-    states = {}
-    sound_funcs = [:sync, :with_tracking_cursor]
-    channel_funcs = [:time_graph?, :transform_graph?, :lisp_graph?, :x_bounds, :y_bounds,
-                     :cursor, :cursor_size, :cursor_style, :show_marks, :show_y_zero,
-                     :wavo_hop, :wavo_trace, :max_transform_peaks, :show_transform_peaks,
-                     :fft_log_frequency, :fft_log_magnitude, :with_verbose_cursor, :zero_pad,
-                     :wavelet_type, :min_dB, :transform_size, :transform_graph_type,
-                     :time_graph_type, :fft_window, :transform_type, :transform_normalization,
-                     :time_graph_style, :show_mix_waveforms, :dot_size, :x_axis_style,
-                     :show_axes, :graphs_horizontal, :lisp_graph_style, :transform_graph_style,
-                     :grid_density, :tracking_cursor_style]
-    $close_hook.add_hook!(get_func_name) do |snd|
-      states[file_name(snd)] = [file_write_date(file_name(snd)),
-                                sound_funcs.map { |f| snd_func(f, snd) },
-                                (0...channels(snd)).map { |chn|
-                                   channel_funcs.map { |f| snd_func(f, snd, chn) }
-                                }]
-      false
+  def remember_sound_state(choice = 3)
+    # states = {file_name => {:time => number, :sound => [], channels => []}, ...}
+    $remembering_sound_state = choice
+    states        = {}
+    sound_funcs   = $sound_funcs
+    channel_funcs = $channel_funcs
+    hook_name     = get_func_name
+    if choice == 0 or choice == 1
+      if choice == 0
+        $close_hook.remove_hook!(hook_name)
+        $after_open_hook.remove_hook!(hook_name)
+      end
+      $open_hook.remove_hook!(hook_name)
+      $before_exit_hook.remove_hook!(hook_name)
+      if File.exist?($remember_sound_filename)
+        File.unlink($remember_sound_filename)
+      end
     end
-    $after_open_hook.add_hook!(get_func_name) do |snd|
-      if array?(state = states[file_name(snd)]) and (not state.empty?)
-        if file_write_date(file_name(snd)) == state[0]
-          sound_funcs.zip(state[1]) do |f, val|
-            Kernel.set_snd_func(f, val, snd)
-          end
-          channels(snd).times do |chn|
-            set_squelch_update(true, snd, chn)
-            channel_funcs.zip(state[2][chn]) do |f, val|
-              Kernel.set_snd_func(f, val, snd, chn)
+    if choice != 0
+      $close_hook.add_hook!(hook_name) do |snd|
+        states[file_name(snd)] = {
+          :time     => file_write_date(file_name(snd)),
+          :sound    => sound_funcs.map do |f| snd_func(f, snd) end,
+          :channels => (0...channels(snd)).map do |chn|
+            channel_funcs.map do |f|
+              if f == :transform_type
+                transform2integer(snd_func(f, snd, chn))
+              else
+                snd_func(f, snd, chn)
+              end
             end
-            set_squelch_update(false, snd, chn)
+          end}
+        false
+      end
+      if choice != 2
+        $after_open_hook.add_hook!(hook_name) do |snd|
+          if hash?(state = states[file_name(snd)]) and (not state.empty?)
+            if file_write_date(file_name(snd)) == state[:time] and
+                channels(snd) == state[:channels].length
+              sound_funcs.zip(state[:sound]) do |f, val|
+                Kernel.set_snd_func(f, val, snd)
+              end
+              channels(snd).times do |chn|
+                set_squelch_update(true, snd, chn)
+                channel_funcs.zip(state[:channels][chn]) do |f, val|
+                  if f == :transform_type
+                    Kernel.set_snd_func(f, integer2transform(val), snd, chn)
+                  else
+                    Kernel.set_snd_func(f, val, snd, chn)
+                  end
+                end
+                set_squelch_update(false, snd, chn)
+              end
+            end
           end
         end
       end
-    end
-    $open_hook.add_hook!(get_func_name) do |fname|
-      if states.empty? and defined? $_saved_remember_sound_states_states_
-        states = $_saved_remember_sound_states_states_
-      end
-      false
-    end
-    $after_save_state_hook.add_hook!(get_func_name) do |fname|
-      File.open(File.expand_path(fname), "a+") do |f|
-        f.printf("\n# from %s in %s\n", get_func_name, __FILE__)
-        f.printf("$_saved_remember_sound_states_states_ = %s\n", states.inspect)
+      if choice != 1
+        $open_hook.add_hook!(hook_name) do |fname|
+          if states.empty? and File.exist?($remember_sound_filename)
+            load($remember_sound_filename)
+            states = $_saved_remember_sound_states_states_
+          end
+          false
+        end
+        $after_save_state_hook.add_hook!(hook_name) do |fname|
+          File.open($remember_sound_filename, "w") do |f|
+            f.printf("# -*- snd-ruby -*-\n")
+            f.printf("# from remember-sound-state in %s\n", __FILE__)
+            f.printf("# written: %s\n\n", Time.new.strftime("%a %b %d %H:%M:%S %Z %Y"))
+            f.printf("$_saved_remember_sound_states_states_ = %s\n\n", states.inspect)
+            f.printf("# %s ends here\n", File.basename($remember_sound_filename))
+          end
+        end
       end
     end
   end

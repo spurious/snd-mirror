@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Fri Jan 01 01:46:50 CET 2010
+\ Changed: Tue Jan 12 02:10:31 CET 2010
 
 \ Commentary:
 
@@ -1150,7 +1150,7 @@ hide
 let: ( -- )
   main-widgets 4 array-ref dup unless
     drop
-    #t show-listener drop
+    #t set-show-listener drop
     #f set-show-listener drop
     main-widgets 4 array-ref
   then { parent }

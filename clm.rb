@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Oct 14 23:02:57 CEST 2009
-# Changed: Tue Dec 08 17:35:05 CET 2009
+# Changed: Tue Jan 12 00:12:48 CET 2010
 
 # Commentary:
 #
@@ -2054,7 +2054,7 @@ def install_eval_hooks(file, retval, input, hook, &reset_cursor)
   reset_cursor.nil? or reset_cursor.call
   $exit_hook.add_hook!(file) do | | prompt.reset end
   hook.add_hook!(file) do |line|
-    eval_line << line << "\n"
+    eval_line = eval_line + line + "\n"
     eval_level += Snd_eval.count_level(line)
     if eval_level.negative?
       eval_level = 0
@@ -2291,16 +2291,17 @@ end
 
 def verbose_message_string(stack_p, remark, *args)
   fmt_remark = format("\n%s", remark)
-  args.to_a.car = String(args.to_a.car)
-  str = if args.length < 2
-          args.car
+  str = if args.null?
+          ""
+        elsif args.length == 1
+          String(args.car)
         else
           format(*args)
         end
   str = if str.split(/\n/).length > 1
           str.split(/\n/).join(fmt_remark)
         else
-          format("%s%s", remark, args.car)
+          format("%s%s", remark, str)
         end
   if $!
     str += format("[%s] %s (%s)", rb_error_to_mus_tag.inspect, snd_error_to_message, $!.class)
@@ -2344,11 +2345,13 @@ def clm_message(*args)
         else
           format(*args)
         end
-  if provided?(:snd)
-    clm_print("\n%s", msg)
-     unless provided?(:snd_nogui)
-       $stdout.print(msg, "\n")
-     end
+  if provided? :snd
+    if provided? :snd_nogui
+      clm_print("%s\n", msg)
+    else
+      clm_print("\n%s", msg)
+    end
+    nil
   else
     $stdout.print(msg, "\n")
   end
@@ -2357,14 +2360,7 @@ end
 # like clm_print(*args), in emacs it prepends msg with a comment sign
 
 def message(*args)
-  msg = if args.null?
-          ""
-        elsif args.length == 1
-          String(args.car)
-        else
-          format(*args)
-        end
-  clm_message(verbose_message_string(false, "# ", msg))
+  clm_message(verbose_message_string(false, "# ", *args))
 end
 
 # debug(var1, var2) --> #<DEBUG: ClassName: value1, ClassName: value2>
@@ -2383,7 +2379,7 @@ def debug_trace(*args)
   clm_message(verbose_message_string(true, "# "))
 end
 
-if provided? :snd then set_snd_input(:snd) end
+if provided?(:snd) then set_snd_input(:snd) end
 
 class Snd
   class << Snd
@@ -2428,6 +2424,10 @@ class Snd
     end
 
     def message(*args)
+      clm_message(verbose_message_string(false, "# ", *args))
+    end
+
+    def display(*args)
       msg = if args.null?
               ""
             elsif args.length == 1
@@ -2435,15 +2435,12 @@ class Snd
             else
               format(*args)
             end
-      clm_message(verbose_message_string(false, "# ", msg))
-    end
-
-    def display(*args)
-      args[0] = String(args[0])
-      msg = format(*args)
       if snd_input == :snd
-        snd_print("\n" + msg)
-        if $VERBOSE then $stdout.print(msg, "\n") end
+        if provided? :snd_nogui
+          clm_print("%s\n", msg)
+        else
+          clm_print("\n%s", msg)
+        end
         nil
       else
         $stdout.print(msg, "\n")
@@ -2470,12 +2467,13 @@ class Snd
     end
 
     def debug(*args)
-      fmt = ""
-      args.each do |arg|
-        fmt += format("%s: %s", arg.class, arg.inspect)
-        fmt += ", "
+      if args.null?
+        Snd.message("#<DEBUG>")
+      elsif args.length == 1
+        Snd.message("#<DEBUG: %s>", String(args.car))
+      else
+        Snd.message("#<DEBUG: %s>", format(*args))
       end
-      Snd.message("#<DEBUG: %s>", fmt.chomp(", "))
     end
 
     def debug_trace(*args)

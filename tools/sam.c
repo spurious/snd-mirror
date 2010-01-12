@@ -577,7 +577,13 @@ static void process_gen(int gen)
 	{
 	  if (g->GS == 0)
 	    gen_outs[OutSum6] += OscOut13;    /* what is the scaling here? */
-	  else gen_outs[OutSum6] += (OscOut13 * 2.0); /* just a guess */
+	  else gen_outs[OutSum6] += (OscOut13 * 2.0); 
+
+	  /* "If GS is 0, the high-order 19 bits
+	     of the rounded product are taken, right-adjusted with sign
+	     extended; if GS is 1, the high-order 20 bits of the rounded
+	     product are taken."
+	  */
 	}
       else 
 	{
@@ -588,12 +594,12 @@ static void process_gen(int gen)
 	      fread((void *)(&read_data_value), 4, 1, read_data_file);
 	      gen_outs[OutSum6] = OscOut13 + 2.0 * read_data_value;
 	      /* 
-		 If the run mode 
+		 "If the run mode 
 		 specifies adding into sum memory, Temp9 is added into the sum
 		 memory location designated by GSUM; except that in run mode
 		 0111, the product is added to the next read-data item from the
 		 CPU and the sum replaces the contents of the sum memory
-		 location addressed.
+		 location addressed."
 	      */
 	    }
 	  else

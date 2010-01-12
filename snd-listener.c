@@ -409,11 +409,11 @@ void listener_return(widget_t w, int last_prompt)
     {
       XEN result;
       int len;
-      len = last_position - last_prompt + 1;
+      len = last_position - last_prompt;
       if (len > 0)
 	{
-	  str = (char *)calloc(len, sizeof(char));
-	  for (i = last_prompt + 1, j = 0; i < last_position; i++, j++) str[j] = full_str[i];
+	  str = (char *)calloc(len + 1, sizeof(char)); 
+	  for (i = last_prompt, j = 0; i < last_position; i++, j++) str[j] = full_str[i]; 
 	  result = run_or_hook(read_hook, 
 			       XEN_LIST_1(C_TO_XEN_STRING(str)),
 			       S_read_hook);

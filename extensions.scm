@@ -353,7 +353,9 @@ If 'check' is #f, the hooks are removed."
 		       sound-funcs)
 		  (map (lambda (sc)
 			 (map (lambda (f)
-				(f (car sc) (cadr sc)))
+				(if (equal? f transform-type) 
+				    (transform->integer (f (car sc) (cadr sc))) 
+				    (f (car sc) (cadr sc))))
 			      channel-funcs))
 		       (let ((scs '()))
 			 (do ((i 0 (+ 1 i)))
@@ -385,7 +387,9 @@ If 'check' is #f, the hooks are removed."
 					   (not (null? val))
 					   (eq? (car val) 'lambda))
 				      (set! (f snd chn) (eval val (current-environment)))
-				      (set! (f snd chn) val)))
+				      (if (equal? f transform-type) 
+					  (set! (f snd chn) (integer->transform val)) 
+					  (set! (f snd chn) val))))
 				channel-funcs
 				(list-ref (cadddr state) chn)))
 		    (lambda () (set! (squelch-update snd chn) #f)))
@@ -939,6 +943,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
     (set! (edit-position orig-snd 0) old-ed0)
     (set! (edit-position orig-snd 1) old-ed1)
     (list chan1 chan2)))
+
+
 
 
 ;;; -------- initial bounds 

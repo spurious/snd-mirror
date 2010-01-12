@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Changed: Thu Nov 26 22:26:17 CET 2009
+# Changed: Tue Jan 12 02:09:10 CET 2010
 
 # Commentary:
 #
@@ -1104,7 +1104,7 @@ all saved edit lists.",
                    :parent, if widget?(ww = main_widgets[Listener_pane])
                               ww
                             else
-                              show_listener
+                              set_show_listener(true)
                               set_show_listener(false)
                               main_widgets[Listener_pane]
                             end) do
