@@ -15199,15 +15199,12 @@ static s7_pointer read_expression(s7_scheme *sc)
 	case TOKEN_RIGHT_PAREN: /* (catch #t (lambda () '(1 2 . )) (lambda args 'hiho)) */
 	  back_up_stack(sc);
 	  return(read_error(sc, "unexpected close paren"));         /* (+ 1 2)) or (+ 1 . ) */
-
 	}
     }
 
   /* we never get here */
   return(sc->NIL);
 }
-
-
 
 
 static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
@@ -16110,6 +16107,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	     *   In other words (define* (hi (a 1)) ...) is the same as (define* (hi :key (a 1)) ...) etc.
 	     *
 	     * all args are optional, any arg with no default value defaults to #f.
+	     *   but the rest arg should default to '().
 	     */
 	    
 	    /* set all default values */
@@ -16117,20 +16115,27 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		/* bind all the args to something (default value or #f or maybe #undefined) */
 		if (!((car(sc->z) == sc->KEY_KEY) ||
-		      (car(sc->z) == sc->KEY_OPTIONAL) ||
-		      (car(sc->z) == sc->KEY_REST)))                  /* :optional and :key always ignored, :rest dealt with later */
+		      (car(sc->z) == sc->KEY_OPTIONAL)))
 		  {
-		    if (is_pair(car(sc->z)))                          /* (define* (hi (a mus-next)) a) */
-		      add_to_local_environment(sc,                    /* or (define* (hi (a 'hi)) (list a (eq? a 'hi))) */
-					       caar(sc->z), 
-					       lambda_star_argument_default_value(sc, cadar(sc->z)));
-		                                                      /* mus-next, for example, needs to be evaluated before binding */
-		    else add_to_local_environment(sc, car(sc->z), sc->F);
+		    if (car(sc->z) == sc->KEY_REST)
+		      {
+			sc->z = cdr(sc->z);
+			add_to_local_environment(sc, car(sc->z), sc->NIL); /* set :rest arg to sc->NIL, not sc->F */
+		      }
+		    else
+		      {
+			if (is_pair(car(sc->z)))                           /* (define* (hi (a mus-next)) a) */
+			  add_to_local_environment(sc,                     /* or (define* (hi (a 'hi)) (list a (eq? a 'hi))) */
+						   caar(sc->z), 
+						   lambda_star_argument_default_value(sc, cadar(sc->z)));
+			/* mus-next, for example, needs to be evaluated before binding */
+			else add_to_local_environment(sc, car(sc->z), sc->F);
+		      }
 		  }
 	      }
 	    if (s7_is_symbol(sc->z))                                  /* dotted (last) arg? -- make sure its name exists in the current environment */
-	      add_to_local_environment(sc, sc->z, sc->F);
-	    
+	      add_to_local_environment(sc, sc->z, sc->NIL);           /* this was sc->F */
+
 	    /* now get the current args, re-setting args that have explicit values */
 	    sc->x = closure_args(sc->code);
 	    sc->y = sc->args; 
@@ -16140,7 +16145,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		if ((car(sc->x) == sc->KEY_KEY) ||
 		    (car(sc->x) == sc->KEY_OPTIONAL))
-		  sc->x = cdr(sc->x);
+		  sc->x = cdr(sc->x);                                 /* everything is :key and :optional, so these are ignored */
 		else
 		  {
 		    if (car(sc->x) == sc->KEY_REST)

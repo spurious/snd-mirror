@@ -198,7 +198,9 @@ is either #f (if unspecified), or given in a list whose first member is
 the argument name.
 The last argument
 can be preceded by :rest or a dot to indicate that all other trailing arguments
-should be packaged as a list under that argument's name.  You can use
+should be packaged as a list under that argument's name.  A trailing or rest
+argument's default value is '().
+You can use
 :optional and :key, but they are ignored.  
 </p>
 <pre>
@@ -209,7 +211,7 @@ When the function is called,
 the argument names are bound to their default values, then the function's
 current argument list is scanned.  Any name that occurs as a keyword (":a")
 sets that argument's new value.  Otherwise, as values occur, they
-are plugged into the actual argument list based on their position.
+are plugged into the actual argument list based on their position (counting a keyword/value pair as one argument).
 This is called an optional-key list in CLM.  So, taking the function
 above as an example:
 </p>
