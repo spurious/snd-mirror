@@ -7880,6 +7880,40 @@
 	(define* (tree-equal a b) (and (listp a) (listp b)  (equal? a b)))
 	(define (last l) (if (or (null? l) (null? (cdr l))) l (last (cdr l))))
 
+	(define (conjugate z) (make-rectangular (real-part z) (- (imag-part z))))
+	(define zerop zero?)
+	(define oddp odd?)
+	(define evenp even?)
+	(define plusp positive?)
+	(define minusp negative?)
+	(define realpart real-part)
+	(define imagpart imag-part)
+	(define float exact->inexact)
+	(define rational rationalize)
+	(define mod modulo)
+	(define rem remainder)
+	
+	;; = < <= > >= are the same, also min max + - * / lcm gcd exp expt log sqrt
+	;; sin cos tan acos asin atan pi sinh cosh tanh asinh acosh atanh
+	;; numerator denominator logior logxor logand ash integer-length random
+
+	;; slightly different: floor ceiling truncate round and the ff cases thereof
+	;; abs of complex -> magnitude
+	;; (define %abs abs) (define (abs x) (if (not (zero? (imag-part x))) (nagnitude x) (%abs x)))
+       
+	(define (/= . args) 
+	  (if (null? (cdr args))
+	      #t 
+	      (if (member (car args) (cdr args))
+		  #f
+		  (apply /= (cdr args)))))
+	(define (1+ x) (+ x 1))
+	(define (1- x) (- x 1))
+	(define (isqrt x) (floor (sqrt x)))
+	(define phase angle)
+	(define (signum x) (if (zerop x) x (/ x (abs x))))
+	(define (cis x) (exp (make-rectangular 0.0 x)))
+
 	(define vectorp vector?)
 	(define symbolp symbol?)
 	(define (atom obj) (not (pair? obj)))
@@ -7894,6 +7928,11 @@
 	(define realp real?)
 	(define characterp char?)
 	(define stringp string?)
+
+	(define symbol-value symbol->value)
+	(define symbol-function symbol->value)
+	(define boundp defined?)
+	(define fboundp defined?)
 
 	(define (identity x) x)
 
@@ -7930,6 +7969,28 @@
 				  (set! var p)))
 			    pairs))))
 
+	(test (signum 3) 1)
+	(test (signum 0) 0)
+	(test (signum -3) -1)
+	(test (signum 3.0) 1.0)
+	(test (isqrt 12) 3)
+	(test (1+ 1) 2)
+	(test (1- 1) 0)
+	(test (/= 0 0) #f)
+	(test (/= 1 2 3) #t)
+	(test (/= 3 45 3) #f)
+	(test (zerop 0) #t)
+	(test (zerop 1) #f)
+	(test (minusp -1) #t)
+	(test (minusp 1) #f)
+	(test (plusp 1) #t)
+	(test (plusp -1) #f)
+	(test (oddp 3) #t)
+	(test (oddp 4) #f)
+	(test (evenp 3) #f)
+	(test (evenp 4) #t)
+	(test (conjugate 1+i) 1-i)
+	(test (conjugate 3.7) 3.7)
 	(test (count-if zero? '(0 1 2 0)) 2)
 	(test (count-if-not zero? '(0 1 2 0 3)) 3)
 	(test (count-if zero? '#(0 1 2 0)) 2)
@@ -7995,6 +8056,7 @@
 	(test (rest '(1 2 3)) '(2 3))
 	(test (let ((i1 1) (i2 2)) (setf i1 3) (list i1 i2)) (list 3 2))
 	(test (let ((i1 1) (i2 2)) (setf i1 123 i2 32) (list i1 i2)) (list 123 32))
+	(test (let ((hi (vector 1 2 3))) (setf (hi 0) (+ 1 2) (hi 2) (* 2 3)) hi) (vector 3 2 6))
 	(test (let ((val 0)) (progn (+ val 1))) 1)
 	(test (let ((val 0)) (prog1 (+ val 1) (+ val 2))) 1)
 	(test (let ((val 0)) (prog2 (+ val 1) (+ val 2) (+ val 3))) 2)

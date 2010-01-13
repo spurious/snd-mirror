@@ -1081,7 +1081,7 @@ static double delay_read(int dly)
 	Z_shift = d->Z & 0xf;
 	dY = (d->I >> Z_shift) & 0xffff;
 	return(delay_memory[d->X + dY]); 
-	/* still not right -- there's a 3(2?) sample delay, but we get 1(2?) of those from the processing order */
+	/* perhaps still not right -- there's a 3(2?) sample delay, but we get 1(2?) of those from the processing order */
       }
     }
   return(0);
