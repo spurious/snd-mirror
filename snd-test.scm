@@ -61230,11 +61230,7 @@ EDITS: 1
 		 (_PangoAttrList_ (pango_attr_list_new))
 		 (_list (gtk_label_get_selection_bounds _GtkLabel_))
 		 (_list1 (gtk_label_get_layout_offsets _GtkLabel_))
-		 (_int (GTK_WIDGET_STATE _GtkWidget_))
-		 (_int1 (GTK_WIDGET_SAVED_STATE _GtkWidget_))
 		 (_int2 (GTK_WIDGET_FLAGS _GtkWidget_))
-		 (_gboolean4 (GTK_WIDGET_TOPLEVEL _GtkWidget_))
-		 (_gboolean5 (GTK_WIDGET_NO_WINDOW _GtkWidget_))
 		 (_gboolean6 (GTK_WIDGET_REALIZED _GtkWidget_))
 		 (_gboolean7 (GTK_WIDGET_MAPPED _GtkWidget_))
 		 (_gboolean8 (GTK_WIDGET_VISIBLE _GtkWidget_))
@@ -61242,16 +61238,8 @@ EDITS: 1
 		 (_gboolean10 (GTK_WIDGET_SENSITIVE _GtkWidget_))
 		 (_gboolean11 (GTK_WIDGET_PARENT_SENSITIVE _GtkWidget_))
 		 (_gboolean12 (GTK_WIDGET_IS_SENSITIVE _GtkWidget_))
-		 (_gboolean13 (GTK_WIDGET_CAN_FOCUS _GtkWidget_))
 		 (_gboolean14 (GTK_WIDGET_HAS_FOCUS _GtkWidget_))
-		 (_gboolean15 (GTK_WIDGET_CAN_DEFAULT _GtkWidget_))
-		 (_gboolean16 (GTK_WIDGET_HAS_DEFAULT _GtkWidget_))
-		 (_gboolean17 (GTK_WIDGET_HAS_GRAB _GtkWidget_))
-		 (_gboolean18 (GTK_WIDGET_RC_STYLE _GtkWidget_))
-		 (_gboolean19 (GTK_WIDGET_COMPOSITE_CHILD _GtkWidget_))
-		 (_gboolean20 (GTK_WIDGET_APP_PAINTABLE _GtkWidget_))
-		 (_gboolean21 (GTK_WIDGET_RECEIVES_DEFAULT _GtkWidget_))
-		 (_gboolean22 (GTK_WIDGET_DOUBLE_BUFFERED _GtkWidget_)))
+		 (_gboolean18 (GTK_WIDGET_RC_STYLE _GtkWidget_)))
 	    (if (not (string=? _gchar_ "hiho")) (snd-display ";label text: ~A" _gchar_))
 	    (if (not (string=? _gchar1_ "hiho")) (snd-display ";label label: ~A" _gchar1_))
 	    (if (not (= _GtkJustification GTK_JUSTIFY_LEFT)) (snd-display ";label justification: ~A ~A" _GtkJustification GTK_JUSTIFY_LEFT))
@@ -61259,15 +61247,11 @@ EDITS: 1
 	    (if (and (not (equal? (list 0 0) _list1)) 
 		     (not (equal? (list -1 -1) _list1)))
 		(snd-display ";label layout offsets: ~A" _list1))
-	    (if (not (= _int 0)) (snd-display ";WIDGET STATE: ~A" _int))
-	    (if (not (= _int1 0)) (snd-display ";WIDGET SAVED STATE: ~A" _int1))
 	    (if _GtkWidget1_ (snd-display ";mnemnoinic widget: ~A" _GtkWidget1_))
 	    (if _gboolean (snd-display ";label use markup"))
 	    (if _gboolean1 (snd-display ";label underline"))
 	    (if _gboolean2 (snd-display ";label line wrap"))
 	    (if _gboolean3 (snd-display ";label selectable"))
-	    (if _gboolean4 (snd-display ";WIDGET TOPLEVEL"))
-	    (if (not _gboolean5) (snd-display ";WIDGET NO WINDOW"))
 	    (if _gboolean6 (snd-display ";WIDGET REALIZED"))
 	    (if _gboolean7 (snd-display ";WIDGET MAPPED"))
 	    (if _gboolean8 (snd-display ";WIDGET VISIBLE"))
@@ -61275,18 +61259,9 @@ EDITS: 1
 	    (if (not _gboolean10) (snd-display ";WIDGET SENSITIVE"))
 	    (if (not _gboolean11) (snd-display ";WIDGET SENSITIVE"))
 	    (if (not _gboolean12) (snd-display ";WIDGET SENSITIVE"))
-	    (if _gboolean13 (snd-display ";WIDGET CAN FOCUS"))
 	    (if _gboolean14 (snd-display ";WIDGET HAS FOCUS"))
-	    (if _gboolean15 (snd-display ";WIDGET CAN DEFAULT"))
-	    (if _gboolean16 (snd-display ";WIDGET HAS DEFAULT"))
-	    (if _gboolean17 (snd-display ";WIDGET HAS GRAB"))
 	    (if _gboolean18 (snd-display ";WIDGET RC STYLE"))
-	    (if _gboolean19 (snd-display ";WIDGET COMPOSITE CHILD"))
-	    (if _gboolean20 (snd-display ";WIDGET APP PAINTABLE"))
-	    (if _gboolean21 (snd-display ";WIDGET RECEIVES DEFAULT"))
-	    (if (not _gboolean22) (snd-display ";WIDGET DOUBLE BUFFERED"))
-					;	      (pango_attr_list_ref _PangoAttrList_)
-					;	      (pango_attr_list_unref _PangoAttrList_)
+
 	    (gtk_label_set_text _GtkLabel_ "another label")
 	    (if (not (string=? (gtk_label_get_text _GtkLabel_) "another label")) (snd-display ";set label text: ~A" (gtk_label_get_text _GtkLabel_)))
 	    (gtk_label_set_attributes _GtkLabel_ _PangoAttrList_)
@@ -63602,11 +63577,11 @@ EDITS: 1
 		   GTK_TREE_SELECTION GTK_TREE_SORTABLE GTK_TREE_STORE GTK_TREE_VIEW GTK_TREE_VIEW_COLUMN
 		   GTK_UI_MANAGER GTK_VBOX GTK_VBUTTON_BOX GTK_VIEWPORT GTK_VPANED
 		   GTK_VRULER GTK_VSCALE GTK_VSCROLLBAR GTK_VSEPARATOR GTK_WIDGET
-		   GTK_WIDGET_APP_PAINTABLE GTK_WIDGET_CAN_DEFAULT GTK_WIDGET_CAN_FOCUS GTK_WIDGET_COMPOSITE_CHILD GTK_WIDGET_DOUBLE_BUFFERED
-		   GTK_WIDGET_DRAWABLE GTK_WIDGET_FLAGS GTK_WIDGET_HAS_DEFAULT GTK_WIDGET_HAS_FOCUS GTK_WIDGET_HAS_GRAB
-		   GTK_WIDGET_IS_SENSITIVE GTK_WIDGET_MAPPED GTK_WIDGET_NO_WINDOW GTK_WIDGET_PARENT_SENSITIVE GTK_WIDGET_RC_STYLE
-		   GTK_WIDGET_REALIZED GTK_WIDGET_RECEIVES_DEFAULT GTK_WIDGET_SAVED_STATE GTK_WIDGET_SENSITIVE GTK_WIDGET_SET_FLAGS
-		   GTK_WIDGET_STATE GTK_WIDGET_TOPLEVEL GTK_WIDGET_UNSET_FLAGS GTK_WIDGET_VISIBLE GTK_WINDOW
+		   GTK_WIDGET_DRAWABLE GTK_WIDGET_FLAGS GTK_WIDGET_HAS_FOCUS
+		   GTK_WIDGET_IS_SENSITIVE GTK_WIDGET_MAPPED GTK_WIDGET_PARENT_SENSITIVE GTK_WIDGET_RC_STYLE
+		   GTK_WIDGET_REALIZED
+		   GTK_WIDGET_SENSITIVE GTK_WIDGET_SET_FLAGS
+		   GTK_WIDGET_UNSET_FLAGS GTK_WIDGET_VISIBLE GTK_WINDOW
 		   G_IS_OBJECT G_OBJECT G_OBJECT_TYPE PANGO_CONTEXT PANGO_FONT
 		   PANGO_FONT_FACE PANGO_FONT_FAMILY PANGO_FONT_MAP PANGO_IS_CONTEXT PANGO_IS_FONT
 		   PANGO_IS_FONT_FACE PANGO_IS_FONT_FAMILY PANGO_IS_FONT_MAP PANGO_IS_LAYOUT PANGO_IS_RENDERER

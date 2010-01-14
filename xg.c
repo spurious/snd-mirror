@@ -7440,22 +7440,6 @@ static XEN gxg_gtk_fixed_move(XEN fixed, XEN widget, XEN x, XEN y)
   return(XEN_FALSE);
 }
 
-static XEN gxg_gtk_fixed_set_has_window(XEN fixed, XEN has_window)
-{
-  #define H_gtk_fixed_set_has_window "void gtk_fixed_set_has_window(GtkFixed* fixed, gboolean has_window)"
-  XEN_ASSERT_TYPE(XEN_GtkFixed__P(fixed), fixed, 1, "gtk_fixed_set_has_window", "GtkFixed*");
-  XEN_ASSERT_TYPE(XEN_gboolean_P(has_window), has_window, 2, "gtk_fixed_set_has_window", "gboolean");
-  gtk_fixed_set_has_window(XEN_TO_C_GtkFixed_(fixed), XEN_TO_C_gboolean(has_window));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_fixed_get_has_window(XEN fixed)
-{
-  #define H_gtk_fixed_get_has_window "gboolean gtk_fixed_get_has_window(GtkFixed* fixed)"
-  XEN_ASSERT_TYPE(XEN_GtkFixed__P(fixed), fixed, 1, "gtk_fixed_get_has_window", "GtkFixed*");
-  return(C_TO_XEN_gboolean(gtk_fixed_get_has_window(XEN_TO_C_GtkFixed_(fixed))));
-}
-
 static XEN gxg_gtk_font_selection_new(void)
 {
   #define H_gtk_font_selection_new "GtkWidget* gtk_font_selection_new( void)"
@@ -9817,13 +9801,6 @@ gint position)"
   XEN_ASSERT_TYPE(XEN_gint_P(position), position, 3, "gtk_notebook_reorder_child", "gint");
   gtk_notebook_reorder_child(XEN_TO_C_GtkNotebook_(notebook), XEN_TO_C_GtkWidget_(child), XEN_TO_C_gint(position));
   return(XEN_FALSE);
-}
-
-static XEN gxg_GTK_OBJECT_TYPE_NAME(XEN object)
-{
-  #define H_GTK_OBJECT_TYPE_NAME "char* GTK_OBJECT_TYPE_NAME(GtkObject* object)"
-  XEN_ASSERT_TYPE(XEN_GtkObject__P(object), object, 1, "GTK_OBJECT_TYPE_NAME", "GtkObject*");
-  return(C_TO_XEN_char_(GTK_OBJECT_TYPE_NAME(XEN_TO_C_GtkObject_(object))));
 }
 
 static XEN gxg_GTK_OBJECT_FLAGS(XEN obj)
@@ -16361,39 +16338,11 @@ static XEN gxg_gtk_vseparator_new(void)
   return(C_TO_XEN_GtkWidget_(gtk_vseparator_new()));
 }
 
-static XEN gxg_GTK_WIDGET_STATE(XEN wid)
-{
-  #define H_GTK_WIDGET_STATE "int GTK_WIDGET_STATE(GtkWidget* wid)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(wid), wid, 1, "GTK_WIDGET_STATE", "GtkWidget*");
-  return(C_TO_XEN_int(GTK_WIDGET_STATE(XEN_TO_C_GtkWidget_(wid))));
-}
-
-static XEN gxg_GTK_WIDGET_SAVED_STATE(XEN wid)
-{
-  #define H_GTK_WIDGET_SAVED_STATE "int GTK_WIDGET_SAVED_STATE(GtkWidget* wid)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(wid), wid, 1, "GTK_WIDGET_SAVED_STATE", "GtkWidget*");
-  return(C_TO_XEN_int(GTK_WIDGET_SAVED_STATE(XEN_TO_C_GtkWidget_(wid))));
-}
-
 static XEN gxg_GTK_WIDGET_FLAGS(XEN wid)
 {
   #define H_GTK_WIDGET_FLAGS "int GTK_WIDGET_FLAGS(GtkWidget* wid)"
   XEN_ASSERT_TYPE(XEN_GtkWidget__P(wid), wid, 1, "GTK_WIDGET_FLAGS", "GtkWidget*");
   return(C_TO_XEN_int(GTK_WIDGET_FLAGS(XEN_TO_C_GtkWidget_(wid))));
-}
-
-static XEN gxg_GTK_WIDGET_TOPLEVEL(XEN wid)
-{
-  #define H_GTK_WIDGET_TOPLEVEL "gboolean GTK_WIDGET_TOPLEVEL(GtkWidget* wid)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(wid), wid, 1, "GTK_WIDGET_TOPLEVEL", "GtkWidget*");
-  return(C_TO_XEN_gboolean(GTK_WIDGET_TOPLEVEL(XEN_TO_C_GtkWidget_(wid))));
-}
-
-static XEN gxg_GTK_WIDGET_NO_WINDOW(XEN wid)
-{
-  #define H_GTK_WIDGET_NO_WINDOW "gboolean GTK_WIDGET_NO_WINDOW(GtkWidget* wid)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(wid), wid, 1, "GTK_WIDGET_NO_WINDOW", "GtkWidget*");
-  return(C_TO_XEN_gboolean(GTK_WIDGET_NO_WINDOW(XEN_TO_C_GtkWidget_(wid))));
 }
 
 static XEN gxg_GTK_WIDGET_REALIZED(XEN wid)
@@ -16445,13 +16394,6 @@ static XEN gxg_GTK_WIDGET_IS_SENSITIVE(XEN wid)
   return(C_TO_XEN_gboolean(GTK_WIDGET_IS_SENSITIVE(XEN_TO_C_GtkWidget_(wid))));
 }
 
-static XEN gxg_GTK_WIDGET_CAN_FOCUS(XEN wid)
-{
-  #define H_GTK_WIDGET_CAN_FOCUS "gboolean GTK_WIDGET_CAN_FOCUS(GtkWidget* wid)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(wid), wid, 1, "GTK_WIDGET_CAN_FOCUS", "GtkWidget*");
-  return(C_TO_XEN_gboolean(GTK_WIDGET_CAN_FOCUS(XEN_TO_C_GtkWidget_(wid))));
-}
-
 static XEN gxg_GTK_WIDGET_HAS_FOCUS(XEN wid)
 {
   #define H_GTK_WIDGET_HAS_FOCUS "gboolean GTK_WIDGET_HAS_FOCUS(GtkWidget* wid)"
@@ -16459,60 +16401,11 @@ static XEN gxg_GTK_WIDGET_HAS_FOCUS(XEN wid)
   return(C_TO_XEN_gboolean(GTK_WIDGET_HAS_FOCUS(XEN_TO_C_GtkWidget_(wid))));
 }
 
-static XEN gxg_GTK_WIDGET_CAN_DEFAULT(XEN wid)
-{
-  #define H_GTK_WIDGET_CAN_DEFAULT "gboolean GTK_WIDGET_CAN_DEFAULT(GtkWidget* wid)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(wid), wid, 1, "GTK_WIDGET_CAN_DEFAULT", "GtkWidget*");
-  return(C_TO_XEN_gboolean(GTK_WIDGET_CAN_DEFAULT(XEN_TO_C_GtkWidget_(wid))));
-}
-
-static XEN gxg_GTK_WIDGET_HAS_DEFAULT(XEN wid)
-{
-  #define H_GTK_WIDGET_HAS_DEFAULT "gboolean GTK_WIDGET_HAS_DEFAULT(GtkWidget* wid)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(wid), wid, 1, "GTK_WIDGET_HAS_DEFAULT", "GtkWidget*");
-  return(C_TO_XEN_gboolean(GTK_WIDGET_HAS_DEFAULT(XEN_TO_C_GtkWidget_(wid))));
-}
-
-static XEN gxg_GTK_WIDGET_HAS_GRAB(XEN wid)
-{
-  #define H_GTK_WIDGET_HAS_GRAB "gboolean GTK_WIDGET_HAS_GRAB(GtkWidget* wid)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(wid), wid, 1, "GTK_WIDGET_HAS_GRAB", "GtkWidget*");
-  return(C_TO_XEN_gboolean(GTK_WIDGET_HAS_GRAB(XEN_TO_C_GtkWidget_(wid))));
-}
-
 static XEN gxg_GTK_WIDGET_RC_STYLE(XEN wid)
 {
   #define H_GTK_WIDGET_RC_STYLE "gboolean GTK_WIDGET_RC_STYLE(GtkWidget* wid)"
   XEN_ASSERT_TYPE(XEN_GtkWidget__P(wid), wid, 1, "GTK_WIDGET_RC_STYLE", "GtkWidget*");
   return(C_TO_XEN_gboolean(GTK_WIDGET_RC_STYLE(XEN_TO_C_GtkWidget_(wid))));
-}
-
-static XEN gxg_GTK_WIDGET_COMPOSITE_CHILD(XEN wid)
-{
-  #define H_GTK_WIDGET_COMPOSITE_CHILD "gboolean GTK_WIDGET_COMPOSITE_CHILD(GtkWidget* wid)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(wid), wid, 1, "GTK_WIDGET_COMPOSITE_CHILD", "GtkWidget*");
-  return(C_TO_XEN_gboolean(GTK_WIDGET_COMPOSITE_CHILD(XEN_TO_C_GtkWidget_(wid))));
-}
-
-static XEN gxg_GTK_WIDGET_APP_PAINTABLE(XEN wid)
-{
-  #define H_GTK_WIDGET_APP_PAINTABLE "gboolean GTK_WIDGET_APP_PAINTABLE(GtkWidget* wid)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(wid), wid, 1, "GTK_WIDGET_APP_PAINTABLE", "GtkWidget*");
-  return(C_TO_XEN_gboolean(GTK_WIDGET_APP_PAINTABLE(XEN_TO_C_GtkWidget_(wid))));
-}
-
-static XEN gxg_GTK_WIDGET_RECEIVES_DEFAULT(XEN wid)
-{
-  #define H_GTK_WIDGET_RECEIVES_DEFAULT "gboolean GTK_WIDGET_RECEIVES_DEFAULT(GtkWidget* wid)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(wid), wid, 1, "GTK_WIDGET_RECEIVES_DEFAULT", "GtkWidget*");
-  return(C_TO_XEN_gboolean(GTK_WIDGET_RECEIVES_DEFAULT(XEN_TO_C_GtkWidget_(wid))));
-}
-
-static XEN gxg_GTK_WIDGET_DOUBLE_BUFFERED(XEN wid)
-{
-  #define H_GTK_WIDGET_DOUBLE_BUFFERED "gboolean GTK_WIDGET_DOUBLE_BUFFERED(GtkWidget* wid)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(wid), wid, 1, "GTK_WIDGET_DOUBLE_BUFFERED", "GtkWidget*");
-  return(C_TO_XEN_gboolean(GTK_WIDGET_DOUBLE_BUFFERED(XEN_TO_C_GtkWidget_(wid))));
 }
 
 static XEN gxg_GTK_WIDGET_SET_FLAGS(XEN wid, XEN flag)
@@ -36043,8 +35936,6 @@ XEN_NARGIFY_0(gxg_gtk_event_box_new_w, gxg_gtk_event_box_new)
 XEN_NARGIFY_0(gxg_gtk_fixed_new_w, gxg_gtk_fixed_new)
 XEN_NARGIFY_4(gxg_gtk_fixed_put_w, gxg_gtk_fixed_put)
 XEN_NARGIFY_4(gxg_gtk_fixed_move_w, gxg_gtk_fixed_move)
-XEN_NARGIFY_2(gxg_gtk_fixed_set_has_window_w, gxg_gtk_fixed_set_has_window)
-XEN_NARGIFY_1(gxg_gtk_fixed_get_has_window_w, gxg_gtk_fixed_get_has_window)
 XEN_NARGIFY_0(gxg_gtk_font_selection_new_w, gxg_gtk_font_selection_new)
 XEN_NARGIFY_1(gxg_gtk_font_selection_get_font_name_w, gxg_gtk_font_selection_get_font_name)
 XEN_NARGIFY_2(gxg_gtk_font_selection_set_font_name_w, gxg_gtk_font_selection_set_font_name)
@@ -36312,7 +36203,6 @@ XEN_NARGIFY_3(gxg_gtk_notebook_set_menu_label_w, gxg_gtk_notebook_set_menu_label
 XEN_NARGIFY_3(gxg_gtk_notebook_set_menu_label_text_w, gxg_gtk_notebook_set_menu_label_text)
 XEN_NARGIFY_2(gxg_gtk_notebook_get_menu_label_text_w, gxg_gtk_notebook_get_menu_label_text)
 XEN_NARGIFY_3(gxg_gtk_notebook_reorder_child_w, gxg_gtk_notebook_reorder_child)
-XEN_NARGIFY_1(gxg_GTK_OBJECT_TYPE_NAME_w, gxg_GTK_OBJECT_TYPE_NAME)
 XEN_NARGIFY_1(gxg_GTK_OBJECT_FLAGS_w, gxg_GTK_OBJECT_FLAGS)
 XEN_NARGIFY_2(gxg_GTK_OBJECT_SET_FLAGS_w, gxg_GTK_OBJECT_SET_FLAGS)
 XEN_NARGIFY_2(gxg_GTK_OBJECT_UNSET_FLAGS_w, gxg_GTK_OBJECT_UNSET_FLAGS)
@@ -36944,11 +36834,7 @@ XEN_NARGIFY_1(gxg_gtk_vscale_new_w, gxg_gtk_vscale_new)
 XEN_NARGIFY_3(gxg_gtk_vscale_new_with_range_w, gxg_gtk_vscale_new_with_range)
 XEN_NARGIFY_1(gxg_gtk_vscrollbar_new_w, gxg_gtk_vscrollbar_new)
 XEN_NARGIFY_0(gxg_gtk_vseparator_new_w, gxg_gtk_vseparator_new)
-XEN_NARGIFY_1(gxg_GTK_WIDGET_STATE_w, gxg_GTK_WIDGET_STATE)
-XEN_NARGIFY_1(gxg_GTK_WIDGET_SAVED_STATE_w, gxg_GTK_WIDGET_SAVED_STATE)
 XEN_NARGIFY_1(gxg_GTK_WIDGET_FLAGS_w, gxg_GTK_WIDGET_FLAGS)
-XEN_NARGIFY_1(gxg_GTK_WIDGET_TOPLEVEL_w, gxg_GTK_WIDGET_TOPLEVEL)
-XEN_NARGIFY_1(gxg_GTK_WIDGET_NO_WINDOW_w, gxg_GTK_WIDGET_NO_WINDOW)
 XEN_NARGIFY_1(gxg_GTK_WIDGET_REALIZED_w, gxg_GTK_WIDGET_REALIZED)
 XEN_NARGIFY_1(gxg_GTK_WIDGET_MAPPED_w, gxg_GTK_WIDGET_MAPPED)
 XEN_NARGIFY_1(gxg_GTK_WIDGET_VISIBLE_w, gxg_GTK_WIDGET_VISIBLE)
@@ -36956,16 +36842,8 @@ XEN_NARGIFY_1(gxg_GTK_WIDGET_DRAWABLE_w, gxg_GTK_WIDGET_DRAWABLE)
 XEN_NARGIFY_1(gxg_GTK_WIDGET_SENSITIVE_w, gxg_GTK_WIDGET_SENSITIVE)
 XEN_NARGIFY_1(gxg_GTK_WIDGET_PARENT_SENSITIVE_w, gxg_GTK_WIDGET_PARENT_SENSITIVE)
 XEN_NARGIFY_1(gxg_GTK_WIDGET_IS_SENSITIVE_w, gxg_GTK_WIDGET_IS_SENSITIVE)
-XEN_NARGIFY_1(gxg_GTK_WIDGET_CAN_FOCUS_w, gxg_GTK_WIDGET_CAN_FOCUS)
 XEN_NARGIFY_1(gxg_GTK_WIDGET_HAS_FOCUS_w, gxg_GTK_WIDGET_HAS_FOCUS)
-XEN_NARGIFY_1(gxg_GTK_WIDGET_CAN_DEFAULT_w, gxg_GTK_WIDGET_CAN_DEFAULT)
-XEN_NARGIFY_1(gxg_GTK_WIDGET_HAS_DEFAULT_w, gxg_GTK_WIDGET_HAS_DEFAULT)
-XEN_NARGIFY_1(gxg_GTK_WIDGET_HAS_GRAB_w, gxg_GTK_WIDGET_HAS_GRAB)
 XEN_NARGIFY_1(gxg_GTK_WIDGET_RC_STYLE_w, gxg_GTK_WIDGET_RC_STYLE)
-XEN_NARGIFY_1(gxg_GTK_WIDGET_COMPOSITE_CHILD_w, gxg_GTK_WIDGET_COMPOSITE_CHILD)
-XEN_NARGIFY_1(gxg_GTK_WIDGET_APP_PAINTABLE_w, gxg_GTK_WIDGET_APP_PAINTABLE)
-XEN_NARGIFY_1(gxg_GTK_WIDGET_RECEIVES_DEFAULT_w, gxg_GTK_WIDGET_RECEIVES_DEFAULT)
-XEN_NARGIFY_1(gxg_GTK_WIDGET_DOUBLE_BUFFERED_w, gxg_GTK_WIDGET_DOUBLE_BUFFERED)
 XEN_NARGIFY_2(gxg_GTK_WIDGET_SET_FLAGS_w, gxg_GTK_WIDGET_SET_FLAGS)
 XEN_NARGIFY_2(gxg_GTK_WIDGET_UNSET_FLAGS_w, gxg_GTK_WIDGET_UNSET_FLAGS)
 XEN_NARGIFY_1(gxg_gtk_widget_destroy_w, gxg_gtk_widget_destroy)
@@ -40072,8 +39950,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_fixed_new_w gxg_gtk_fixed_new
 #define gxg_gtk_fixed_put_w gxg_gtk_fixed_put
 #define gxg_gtk_fixed_move_w gxg_gtk_fixed_move
-#define gxg_gtk_fixed_set_has_window_w gxg_gtk_fixed_set_has_window
-#define gxg_gtk_fixed_get_has_window_w gxg_gtk_fixed_get_has_window
 #define gxg_gtk_font_selection_new_w gxg_gtk_font_selection_new
 #define gxg_gtk_font_selection_get_font_name_w gxg_gtk_font_selection_get_font_name
 #define gxg_gtk_font_selection_set_font_name_w gxg_gtk_font_selection_set_font_name
@@ -40341,7 +40217,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_notebook_set_menu_label_text_w gxg_gtk_notebook_set_menu_label_text
 #define gxg_gtk_notebook_get_menu_label_text_w gxg_gtk_notebook_get_menu_label_text
 #define gxg_gtk_notebook_reorder_child_w gxg_gtk_notebook_reorder_child
-#define gxg_GTK_OBJECT_TYPE_NAME_w gxg_GTK_OBJECT_TYPE_NAME
 #define gxg_GTK_OBJECT_FLAGS_w gxg_GTK_OBJECT_FLAGS
 #define gxg_GTK_OBJECT_SET_FLAGS_w gxg_GTK_OBJECT_SET_FLAGS
 #define gxg_GTK_OBJECT_UNSET_FLAGS_w gxg_GTK_OBJECT_UNSET_FLAGS
@@ -40973,11 +40848,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_vscale_new_with_range_w gxg_gtk_vscale_new_with_range
 #define gxg_gtk_vscrollbar_new_w gxg_gtk_vscrollbar_new
 #define gxg_gtk_vseparator_new_w gxg_gtk_vseparator_new
-#define gxg_GTK_WIDGET_STATE_w gxg_GTK_WIDGET_STATE
-#define gxg_GTK_WIDGET_SAVED_STATE_w gxg_GTK_WIDGET_SAVED_STATE
 #define gxg_GTK_WIDGET_FLAGS_w gxg_GTK_WIDGET_FLAGS
-#define gxg_GTK_WIDGET_TOPLEVEL_w gxg_GTK_WIDGET_TOPLEVEL
-#define gxg_GTK_WIDGET_NO_WINDOW_w gxg_GTK_WIDGET_NO_WINDOW
 #define gxg_GTK_WIDGET_REALIZED_w gxg_GTK_WIDGET_REALIZED
 #define gxg_GTK_WIDGET_MAPPED_w gxg_GTK_WIDGET_MAPPED
 #define gxg_GTK_WIDGET_VISIBLE_w gxg_GTK_WIDGET_VISIBLE
@@ -40985,16 +40856,8 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_WIDGET_SENSITIVE_w gxg_GTK_WIDGET_SENSITIVE
 #define gxg_GTK_WIDGET_PARENT_SENSITIVE_w gxg_GTK_WIDGET_PARENT_SENSITIVE
 #define gxg_GTK_WIDGET_IS_SENSITIVE_w gxg_GTK_WIDGET_IS_SENSITIVE
-#define gxg_GTK_WIDGET_CAN_FOCUS_w gxg_GTK_WIDGET_CAN_FOCUS
 #define gxg_GTK_WIDGET_HAS_FOCUS_w gxg_GTK_WIDGET_HAS_FOCUS
-#define gxg_GTK_WIDGET_CAN_DEFAULT_w gxg_GTK_WIDGET_CAN_DEFAULT
-#define gxg_GTK_WIDGET_HAS_DEFAULT_w gxg_GTK_WIDGET_HAS_DEFAULT
-#define gxg_GTK_WIDGET_HAS_GRAB_w gxg_GTK_WIDGET_HAS_GRAB
 #define gxg_GTK_WIDGET_RC_STYLE_w gxg_GTK_WIDGET_RC_STYLE
-#define gxg_GTK_WIDGET_COMPOSITE_CHILD_w gxg_GTK_WIDGET_COMPOSITE_CHILD
-#define gxg_GTK_WIDGET_APP_PAINTABLE_w gxg_GTK_WIDGET_APP_PAINTABLE
-#define gxg_GTK_WIDGET_RECEIVES_DEFAULT_w gxg_GTK_WIDGET_RECEIVES_DEFAULT
-#define gxg_GTK_WIDGET_DOUBLE_BUFFERED_w gxg_GTK_WIDGET_DOUBLE_BUFFERED
 #define gxg_GTK_WIDGET_SET_FLAGS_w gxg_GTK_WIDGET_SET_FLAGS
 #define gxg_GTK_WIDGET_UNSET_FLAGS_w gxg_GTK_WIDGET_UNSET_FLAGS
 #define gxg_gtk_widget_destroy_w gxg_gtk_widget_destroy
@@ -44108,8 +43971,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_fixed_new, gxg_gtk_fixed_new_w, 0, 0, 0, H_gtk_fixed_new);
   XG_DEFINE_PROCEDURE(gtk_fixed_put, gxg_gtk_fixed_put_w, 4, 0, 0, H_gtk_fixed_put);
   XG_DEFINE_PROCEDURE(gtk_fixed_move, gxg_gtk_fixed_move_w, 4, 0, 0, H_gtk_fixed_move);
-  XG_DEFINE_PROCEDURE(gtk_fixed_set_has_window, gxg_gtk_fixed_set_has_window_w, 2, 0, 0, H_gtk_fixed_set_has_window);
-  XG_DEFINE_PROCEDURE(gtk_fixed_get_has_window, gxg_gtk_fixed_get_has_window_w, 1, 0, 0, H_gtk_fixed_get_has_window);
   XG_DEFINE_PROCEDURE(gtk_font_selection_new, gxg_gtk_font_selection_new_w, 0, 0, 0, H_gtk_font_selection_new);
   XG_DEFINE_PROCEDURE(gtk_font_selection_get_font_name, gxg_gtk_font_selection_get_font_name_w, 1, 0, 0, H_gtk_font_selection_get_font_name);
   XG_DEFINE_PROCEDURE(gtk_font_selection_set_font_name, gxg_gtk_font_selection_set_font_name_w, 2, 0, 0, H_gtk_font_selection_set_font_name);
@@ -44377,7 +44238,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_notebook_set_menu_label_text, gxg_gtk_notebook_set_menu_label_text_w, 3, 0, 0, H_gtk_notebook_set_menu_label_text);
   XG_DEFINE_PROCEDURE(gtk_notebook_get_menu_label_text, gxg_gtk_notebook_get_menu_label_text_w, 2, 0, 0, H_gtk_notebook_get_menu_label_text);
   XG_DEFINE_PROCEDURE(gtk_notebook_reorder_child, gxg_gtk_notebook_reorder_child_w, 3, 0, 0, H_gtk_notebook_reorder_child);
-  XG_DEFINE_PROCEDURE(GTK_OBJECT_TYPE_NAME, gxg_GTK_OBJECT_TYPE_NAME_w, 1, 0, 0, H_GTK_OBJECT_TYPE_NAME);
   XG_DEFINE_PROCEDURE(GTK_OBJECT_FLAGS, gxg_GTK_OBJECT_FLAGS_w, 1, 0, 0, H_GTK_OBJECT_FLAGS);
   XG_DEFINE_PROCEDURE(GTK_OBJECT_SET_FLAGS, gxg_GTK_OBJECT_SET_FLAGS_w, 2, 0, 0, H_GTK_OBJECT_SET_FLAGS);
   XG_DEFINE_PROCEDURE(GTK_OBJECT_UNSET_FLAGS, gxg_GTK_OBJECT_UNSET_FLAGS_w, 2, 0, 0, H_GTK_OBJECT_UNSET_FLAGS);
@@ -45009,11 +44869,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_vscale_new_with_range, gxg_gtk_vscale_new_with_range_w, 3, 0, 0, H_gtk_vscale_new_with_range);
   XG_DEFINE_PROCEDURE(gtk_vscrollbar_new, gxg_gtk_vscrollbar_new_w, 1, 0, 0, H_gtk_vscrollbar_new);
   XG_DEFINE_PROCEDURE(gtk_vseparator_new, gxg_gtk_vseparator_new_w, 0, 0, 0, H_gtk_vseparator_new);
-  XG_DEFINE_PROCEDURE(GTK_WIDGET_STATE, gxg_GTK_WIDGET_STATE_w, 1, 0, 0, H_GTK_WIDGET_STATE);
-  XG_DEFINE_PROCEDURE(GTK_WIDGET_SAVED_STATE, gxg_GTK_WIDGET_SAVED_STATE_w, 1, 0, 0, H_GTK_WIDGET_SAVED_STATE);
   XG_DEFINE_PROCEDURE(GTK_WIDGET_FLAGS, gxg_GTK_WIDGET_FLAGS_w, 1, 0, 0, H_GTK_WIDGET_FLAGS);
-  XG_DEFINE_PROCEDURE(GTK_WIDGET_TOPLEVEL, gxg_GTK_WIDGET_TOPLEVEL_w, 1, 0, 0, H_GTK_WIDGET_TOPLEVEL);
-  XG_DEFINE_PROCEDURE(GTK_WIDGET_NO_WINDOW, gxg_GTK_WIDGET_NO_WINDOW_w, 1, 0, 0, H_GTK_WIDGET_NO_WINDOW);
   XG_DEFINE_PROCEDURE(GTK_WIDGET_REALIZED, gxg_GTK_WIDGET_REALIZED_w, 1, 0, 0, H_GTK_WIDGET_REALIZED);
   XG_DEFINE_PROCEDURE(GTK_WIDGET_MAPPED, gxg_GTK_WIDGET_MAPPED_w, 1, 0, 0, H_GTK_WIDGET_MAPPED);
   XG_DEFINE_PROCEDURE(GTK_WIDGET_VISIBLE, gxg_GTK_WIDGET_VISIBLE_w, 1, 0, 0, H_GTK_WIDGET_VISIBLE);
@@ -45021,16 +44877,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_WIDGET_SENSITIVE, gxg_GTK_WIDGET_SENSITIVE_w, 1, 0, 0, H_GTK_WIDGET_SENSITIVE);
   XG_DEFINE_PROCEDURE(GTK_WIDGET_PARENT_SENSITIVE, gxg_GTK_WIDGET_PARENT_SENSITIVE_w, 1, 0, 0, H_GTK_WIDGET_PARENT_SENSITIVE);
   XG_DEFINE_PROCEDURE(GTK_WIDGET_IS_SENSITIVE, gxg_GTK_WIDGET_IS_SENSITIVE_w, 1, 0, 0, H_GTK_WIDGET_IS_SENSITIVE);
-  XG_DEFINE_PROCEDURE(GTK_WIDGET_CAN_FOCUS, gxg_GTK_WIDGET_CAN_FOCUS_w, 1, 0, 0, H_GTK_WIDGET_CAN_FOCUS);
   XG_DEFINE_PROCEDURE(GTK_WIDGET_HAS_FOCUS, gxg_GTK_WIDGET_HAS_FOCUS_w, 1, 0, 0, H_GTK_WIDGET_HAS_FOCUS);
-  XG_DEFINE_PROCEDURE(GTK_WIDGET_CAN_DEFAULT, gxg_GTK_WIDGET_CAN_DEFAULT_w, 1, 0, 0, H_GTK_WIDGET_CAN_DEFAULT);
-  XG_DEFINE_PROCEDURE(GTK_WIDGET_HAS_DEFAULT, gxg_GTK_WIDGET_HAS_DEFAULT_w, 1, 0, 0, H_GTK_WIDGET_HAS_DEFAULT);
-  XG_DEFINE_PROCEDURE(GTK_WIDGET_HAS_GRAB, gxg_GTK_WIDGET_HAS_GRAB_w, 1, 0, 0, H_GTK_WIDGET_HAS_GRAB);
   XG_DEFINE_PROCEDURE(GTK_WIDGET_RC_STYLE, gxg_GTK_WIDGET_RC_STYLE_w, 1, 0, 0, H_GTK_WIDGET_RC_STYLE);
-  XG_DEFINE_PROCEDURE(GTK_WIDGET_COMPOSITE_CHILD, gxg_GTK_WIDGET_COMPOSITE_CHILD_w, 1, 0, 0, H_GTK_WIDGET_COMPOSITE_CHILD);
-  XG_DEFINE_PROCEDURE(GTK_WIDGET_APP_PAINTABLE, gxg_GTK_WIDGET_APP_PAINTABLE_w, 1, 0, 0, H_GTK_WIDGET_APP_PAINTABLE);
-  XG_DEFINE_PROCEDURE(GTK_WIDGET_RECEIVES_DEFAULT, gxg_GTK_WIDGET_RECEIVES_DEFAULT_w, 1, 0, 0, H_GTK_WIDGET_RECEIVES_DEFAULT);
-  XG_DEFINE_PROCEDURE(GTK_WIDGET_DOUBLE_BUFFERED, gxg_GTK_WIDGET_DOUBLE_BUFFERED_w, 1, 0, 0, H_GTK_WIDGET_DOUBLE_BUFFERED);
   XG_DEFINE_PROCEDURE(GTK_WIDGET_SET_FLAGS, gxg_GTK_WIDGET_SET_FLAGS_w, 2, 0, 0, H_GTK_WIDGET_SET_FLAGS);
   XG_DEFINE_PROCEDURE(GTK_WIDGET_UNSET_FLAGS, gxg_GTK_WIDGET_UNSET_FLAGS_w, 2, 0, 0, H_GTK_WIDGET_UNSET_FLAGS);
   XG_DEFINE_PROCEDURE(gtk_widget_destroy, gxg_gtk_widget_destroy_w, 1, 0, 0, H_gtk_widget_destroy);
@@ -49400,7 +49248,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("02-Jan-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("13-Jan-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

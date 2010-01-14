@@ -6709,6 +6709,11 @@
       (test (let () (defmacro hi (a) `(eval (let ((a 12)) `(let ((a 100)) (+ ,a 1))))) (hi 1)) 13)
       (test (let () (defmacro hi (a) `(eval (let ((a 12)) `(let ((a 100)) (+ a 1))))) (hi 1)) 101)
 
+      (test (let () (defmacro hi (q) ``(,,q)) (hi (* 2 3))) '(6))
+      (test (let () (defmacro hi (q) `(let ((q 32)) `(,,q))) (hi (* 2 3))) '(6))
+      (test (let () (defmacro hi (q) `(let ((q 32)) `(,q))) (hi (* 2 3))) '(32))
+      (test (let () (defmacro hi (q) `(let () ,@(list q))) (hi (* 2 3))) 6)
+
       (test (let ()
 	      (define-macro (pop sym)
 		(let ((v (gensym "v")))
@@ -7846,6 +7851,18 @@
 
 	(defmacro unless (test . forms) `(if (not ,test) (begin ,@forms)))
 
+	(define-macro (setf . pairs)
+	  (if (not (even? (length pairs)))
+	      (error "setf has odd number of args"))
+	  `(let () ,@(let ((var #f)) 
+		       (map (lambda (p) 
+			      (if var
+				  (let ((val (list 'set! var p)))
+				    (set! var #f)
+				    val)
+				  (set! var p)))
+			    pairs))))
+
 	(define (first l) (list-ref l 0))
 	(define (second l) (list-ref l 1))
 	(define (third l) (list-ref l 2))
@@ -7860,11 +7877,13 @@
 	(define (endp val) (if (null? val) #t (if (pair? val) #f (error "bad arg to endp"))))
 	(define rest cdr)
 	(define (copy-list lis) (append lis '()))
+
 	(define (copy-tree lis)
 	  (if (pair? lis)
 	      (cons (copy-tree (car lis))
 		    (copy-tree (cdr lis)))
 	      lis))
+
 	(define (butlast lis)
 	  (if (or (null? lis) 
 		  (null? (cdr lis)))
@@ -7876,7 +7895,12 @@
 		  (set-cdr! l (list (car lis)))
 		  (set! l (cdr l))
 		  (set! lis (cdr lis))))))
-	(define (nthcdr n lst) (do ((i n (- i 1)) (result lst (cdr result))) ((or (null? result) (zero? i)) result)))
+
+	(define (nthcdr n lst) 
+	  (do ((i n (- i 1)) 
+	       (result lst (cdr result))) 
+	      ((or (null? result) (zero? i)) result)))
+
 	(define* (tree-equal a b) (and (listp a) (listp b)  (equal? a b)))
 	(define (last l) (if (or (null? l) (null? (cdr l))) l (last (cdr l))))
 
@@ -7892,6 +7916,36 @@
 	(define rational rationalize)
 	(define mod modulo)
 	(define rem remainder)
+
+	(define (logtest i1 i2) (not (zero? (logand i1 i2))))
+	(define (logbitp index integer) (logtest (expt 2 index) integer))
+	(define (lognand n1 n2) (lognot (logand n1 n2)))
+	(define (lognor n1 n2) (lognot (logior n1 n2)))
+	(define (logandc1 n1 n2) (logand (lognot n1) n2))
+	(define (logandc2 n1 n2) (logand n1 (lognot n2)))
+	(define (logorc1 n1 n2) (logior (lognot n1) n2))
+	(define (logorc2 n1 n2) (logior n1 (logior n2)))
+
+	(define (byte siz pos)
+	  ;; cache size, position and mask.
+	  (list siz pos (ash (- (expt 2 siz) 1) pos)))
+
+	(define (byte-size bytespec) (car bytespec))
+	(define (byte-position bytespec) (cadr bytespec))
+	(define (byte-mask bytespec) (caddr bytespec))
+
+	(define (ldb bytespec integer)
+	  (ash (logand integer (byte-mask bytespec))
+	       (- (byte-position bytespec))))
+
+	(define (dpb integer bytespec into)
+	  (let ((val (logand integer (ash (byte-mask bytespec) 
+					  (- (byte-position bytespec))))))
+	    (logior into (ash val (byte-position bytespec)))))
+
+	(define (ldb-test byte int) (not (zero? (ldb byte int))))
+	(define (mask-field byte int) (logand int (dpb -1 byte 0)))
+
 	
 	;; = < <= > >= are the same, also min max + - * / lcm gcd exp expt log sqrt
 	;; sin cos tan acos asin atan pi sinh cosh tanh asinh acosh atanh
@@ -7914,6 +7968,45 @@
 	(define (signum x) (if (zerop x) x (/ x (abs x))))
 	(define (cis x) (exp (make-rectangular 0.0 x)))
 
+	(define char-code-limit 256)
+	(define alpha-char-p char-alphabetic?)
+	(define upper-case-p char-upper-case?)
+	(define lower-case-p char-lower-case?)
+	(define* (digit-char-p c (radix 10)) (string->number (string c) radix))
+	(define (alphanumericp c) (or (char-alphabetic? c) (char-numeric? c)))
+	(define char= char=?)
+	(define char< char<?)
+	(define char<= char<=?)
+	(define char> char>?)
+	(define char>= char>=?)
+	(define char-equal char-ci=?)
+	(define char-lessp char-ci<?)
+	(define char-greaterp char-ci>?)
+	(define char-not-lessp char-ci>=?)
+	(define char-not-greaterp char-ci<=?)
+	(define char-code char->integer)
+	(define code-char integer->char)
+	(define (character c) (if (char? c) c (integer->char c)))
+	;; char-upcase and char-downcase are ok
+	(define char-int char->integer)
+	(define int-char integer->char)
+	(define* (digit-char w (radix 10))
+	  (let ((str (number->string w radix)))
+	    (and str (= (length str) 1) (str 0))))
+	(define (char/= . args) 
+	  (if (null? (cdr args))
+	      #t 
+	      (if (member (car args) (cdr args))
+		  #f
+		  (apply char/= (cdr args)))))
+	(define (char-not-equal . args) 
+	  (if (null? (cdr args))
+	      #t 
+	      (if (or (member (char-upcase (car args)) (cdr args))
+		      (member (char-downcase (car args)) (cdr args)))
+		  #f
+		  (apply char-not-equal (cdr args)))))
+
 	(define vectorp vector?)
 	(define symbolp symbol?)
 	(define (atom obj) (not (pair? obj)))
@@ -7935,8 +8028,8 @@
 	(define fboundp defined?)
 
 	(define (identity x) x)
-
 	;; the sequence funcs can take advantage of the applicable object stuff:
+
 	(define* (count-if predicate sequence from-end (start 0) end (key identity))
 	  (let* ((counts 0)
 		 (len (length sequence))
@@ -7957,18 +8050,191 @@
 	(define* (count-if-not predicate sequence from-end (start 0) end (key identity))
 	  (count-if (lambda (obj) (not (predicate obj))) sequence from-end start end key))
 
-	(define-macro (setf . pairs)
-	  (if (not (even? (length pairs)))
-	      (error "setf has odd number of args"))
-	  `(let () ,@(let ((var #f)) 
-		       (map (lambda (p) 
-			      (if var
-				  (let ((val (list 'set! var p)))
-				    (set! var #f)
-				    val)
-				  (set! var p)))
-			    pairs))))
+	(define* (count item sequence from-end (test equal?) (start 0) end (key identity))
+	  (count-if (lambda (arg) (test arg item)) sequence from-end start end key))
 
+	(define* (find-if predicate sequence from-end (start 0) end (key identity))
+	  (let* ((len (length sequence))
+		 (nd (or end len))) ; up to but not including end
+	    (if (< nd start)
+		(error "~A :start ~A is greater than ~A ~A" __func__ start (if end ":end" "length") nd))
+	    (call-with-exit
+	     (lambda (return)
+	       (if (not from-end)
+		   (do ((i start (+ i 1)))
+		       ((= i nd) #f)
+		     (if (predicate (key (sequence i)))
+			 (return (sequence i))))
+		   (do ((i (- nd 1) (- i 1)))
+		       ((< i start) #f)
+		     (if (predicate (key (sequence i)))
+			 (return (sequence i)))))))))
+
+	(define* (find-if-not predicate sequence from-end (start 0) end (key identity))
+	  (find-if (lambda (obj) (not (predicate obj))) sequence from-end start end key))
+
+	(define* (find item sequence from-end (test equal?) (start 0) end (key identity))
+	  (find-if (lambda (arg) (test arg item)) sequence from-end start end key))
+	     
+	(define* (position-if predicate sequence from-end (start 0) end (key identity))
+	  (let* ((len (length sequence))
+		 (nd (or end len))) ; up to but not including end
+	    (if (< nd start)
+		(error "~A :start ~A is greater than ~A ~A" __func__ start (if end ":end" "length") nd))
+	    (call-with-exit
+	     (lambda (return)
+	       (if (not from-end)
+		   (do ((i start (+ i 1)))
+		       ((= i nd) #f)
+		     (if (predicate (key (sequence i)))
+			 (return i)))
+		   (do ((i (- nd 1) (- i 1)))
+		       ((< i start) #f)
+		     (if (predicate (key (sequence i)))
+			 (return i))))))))
+
+	(define* (position-if-not predicate sequence from-end (start 0) end (key identity))
+	  (position-if (lambda (obj) (not (predicate obj))) sequence from-end start end key))
+
+	(define* (position item sequence from-end (test equal?) (start 0) end (key identity))
+	  (position-if (lambda (arg) (test arg item)) sequence from-end start end key))
+
+
+	(define* (nsubstitute-if new-item test sequence from-end (start 0) end count (key identity))
+	  (if (and (number? count)
+		   (not (positive? count)))
+	      sequence
+	      (let* ((len (length sequence))
+		     (nd (or end len))) ; up to but not including end
+		(if (< nd start)
+		    (error "~A :start ~A is greater than ~A ~A" __func__ start (if end ":end" "length") nd))
+		(let ((cur-count 0))
+		  (if (not (number? count))
+		      (set! count len))
+		  (if (not from-end)
+		      (do ((i start (+ i 1)))
+			  ((or (= cur-count count)
+			       (= i nd))
+			   sequence)
+			(if (test (key (sequence i)))
+			    (begin
+			      (set! cur-count (+ cur-count 1))
+			      (set! (sequence i) new-item))))
+		      (do ((i (- nd 1) (- i 1)))
+			  ((or (= cur-count count)
+			       (< i start))
+			   sequence)
+			(if (test (key (sequence i)))
+			    (begin
+			      (set! cur-count (+ cur-count 1))
+			      (set! (sequence i) new-item)))))))))
+
+	(define* (nsubstitute-if-not new-item test sequence from-end (start 0) end count (key identity))
+	  (nsubstitute-if new-item (lambda (obj) (not (test obj))) sequence from-end start end count key))
+
+	(define* (nsubstitute new-item old-item sequence from-end (test equal?) (start 0) end count (key identity))
+	  (nsubstitute-if new-item (lambda (arg) (test arg old-item)) sequence from-end start end count key))
+
+	(define* (substitute-if new-item test sequence from-end (start 0) end count (key identity))
+	  (nsubstitute-if new-item test (copy sequence) from-end start end count key))
+
+	(define* (substitute-if-not new-item test sequence from-end (start 0) end count (key identity))
+	  (substitute-if-not new-item test (copy sequence) from-end start end count key))
+
+	(define* (substitute new-item old-item sequence from-end (test equal?) (start 0) end count (key identity))
+	  (nsubstitute new-item old-item (copy sequence) from-end test start end count key))
+
+
+	(define (nreverse sequence)
+	  (let ((len (length sequence)))
+	    (do ((i 0 (+ i 1))
+		 (j (- len 1) (- j 1)))
+		((>= i j) sequence)
+	      (let ((tmp (sequence i)))
+		(set! (sequence i) (sequence j))
+		(set! (sequence j) tmp)))))
+
+	(define (reverse sequence)
+	  (nreverse (copy sequence)))
+
+	(define (complement fn) (lambda args (not (apply fn args))))
+	(define (elt sequence index) (sequence index))
+	;; length is ok
+
+	(define (list* obj1 . objs)
+	  (define (list-1 obj)
+	    (if (null? (cdr obj))
+		(car obj)
+		(cons (car obj) (list-1 (cdr obj)))))
+	  (if (null? objs)
+	      obj1
+	      (cons obj1 (list-1 objs))))
+
+
+	(define* (some predicate . sequences)
+	  (call-with-exit
+	   (lambda (return)
+		     (apply for-each 
+		      (lambda args
+			(let ((val (apply predicate args)))
+			  (if val (return val))))
+		      sequences)
+		     #f)))
+
+	(define* (notany predicate . sequences)
+	  (not (apply some predicate sequences)))
+
+	(define* (every predicate . sequences)
+	  (call-with-exit
+	   (lambda (return)
+		     (apply for-each 
+		      (lambda args
+			(if (not (apply predicate args))
+			    (return #f)))
+		      sequences)
+		     #t)))
+
+	(define* (notevery predicate . sequences)
+	  (not (apply every predicate sequences)))
+
+	(define* (fill sequence item (start 0) end)
+	  (let ((nd (or end (length sequence))))
+	    (if (and (= start 0)
+		     (= nd (length sequence)))
+		(fill! sequence item)
+		(do ((i start (+ i 1)))
+		    ((= i nd))
+		  (set! (sequence i) item)))
+	    sequence))
+
+
+	;;; ----------------
+
+	(test (digit-char-p #\a) #f)
+	(test (digit-char-p #\a 16) 10)
+	(test (let ((v (vector 1 2 3 4 5))) (fill v 32 :start 2 :end 3)) '#(1 2 32 4 5))
+	(test (let ((v (vector 1 2 3 4 5))) (fill v 32 :start 2)) '#(1 2 32 32 32))
+	(test (let ((v (vector 1 2 3))) (fill v 32)) '#(32 32 32))
+	(test (let ((lst (list 1 2 3))) (fill lst "hi")) '("hi" "hi" "hi"))
+	(test (some zero? '(1 2 3)) #f)
+	(test (some zero? '(1 0 3)) #t)
+	(test (some (lambda args (apply > args)) #(1 2 3) #(2 3 4)) #f)
+	(test (some (lambda args (apply > args)) #(1 2 3) #(2 3 1)) #t)
+	(test (some (lambda (a) (and (positive? a) a)) '(0 -3 1 2)) 1)
+	(test (notany zero? '(1 2 3)) #t)
+	(test (notany zero? '(1 0 3)) #f)
+	(test (notany (lambda args (apply > args)) #(1 2 3) #(2 3 4)) #t)
+	(test (notany (lambda args (apply > args)) #(1 2 3) #(2 3 1)) #f)
+	(test (notany (lambda (a) (and (positive? a) a)) '(0 -3 1 2)) #f)
+	(test (every zero? '(1 2 3)) #f)
+	(test (every zero? '(0 0)) #t)
+	(test (every (lambda args (apply < args)) #(1 2 3) #(2 3 4)) #t)
+	(test (every (lambda args (apply < args)) #(1 2 3) #(2 3 1)) #f)
+	(test (notevery zero? '(1 2 3)) #t)
+	(test (notevery zero? '(0 0)) #f)
+	(test (notevery (lambda args (apply < args)) #(1 2 3) #(2 3 4)) #f)
+	(test (notevery (lambda args (apply < args)) #(1 2 3) #(2 3 1)) #t)
+	(test ((complement >) 1 2 3) #t)
 	(test (signum 3) 1)
 	(test (signum 0) 0)
 	(test (signum -3) -1)

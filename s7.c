@@ -2613,7 +2613,7 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 {
-  #define H_call_with_exit "(call-with-exit ...) is a simplified call/cc"
+  #define H_call_with_exit "(call-with-exit ...) is call/cc without the continuation"
   
   /* (call-with-exit (lambda (return) ...)) */
   /* perhaps "call/exit"? */
@@ -12690,6 +12690,7 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
   return(obj);
 }
 
+/* PERHAPS: a "make" generic function */
 
 static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 {

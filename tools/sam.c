@@ -2054,7 +2054,7 @@ static void go_command(int cmd)
 
 /* To avoid endless repetition in the modifier processing, I'll incorporate the scalers
  *   into M0 and M1 when they are set, or when the scalers are changed, but this means
- *   (for simplicity) keeping track of the oiginal M0 and M1 values "o_M0" and friends)
+ *   (for simplicity) keeping track of the original M0 and M1 values: ("o_M0" and friends)
  */
 
 static void mm_command(int cmd)
