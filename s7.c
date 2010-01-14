@@ -4530,6 +4530,7 @@ static bool is_radix_prefix(char prefix)
 	 (prefix == 'o'));
 }
 
+/* TODO: read-hash-extend chr proc */
 
 static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top) 
 {
@@ -18999,7 +19000,14 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 
   if (IS_BIG(obj))
     {
-      int type;
+      int type, gc_loc;
+
+      /* we'll be calling new_cell below, hence the GC, so make sure the elements are markable,
+       *   and the vector itself is GC protected (we can be called within make-vector).
+       */
+      gc_loc = s7_gc_protect(sc, vec);
+      vector_fill(sc, vec, sc->NIL); 
+
       type = c_object_type(obj);
       for (i = 0; i < len; i++) 
 	{
@@ -19017,6 +19025,7 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 		}
 	    }
 	}
+      s7_gc_unprotect_at(sc, gc_loc);
     }
   else vector_fill(sc, vec, obj);
 }
