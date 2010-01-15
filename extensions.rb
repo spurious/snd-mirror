@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Jan 03 17:30:23 CET 2004
-# Changed: Tue Jan 12 02:04:06 CET 2010
+# Changed: Fri Jan 15 04:03:11 CET 2010
 
 # Commentary:
 # 
@@ -1044,7 +1044,11 @@ sets 'key-val' pair in the given sound's property list and returns 'val'.")
       if file_write_date(snd_name) == sound_property(:current_file_time, snd)
         @sound_funcs.each do |prop|
           if (val = sound_property(prop, snd))
-            Kernel.set_snd_func(prop, val, snd)
+            if prop == :selected_channel # arguments swapped!
+              Kernel.set_snd_func(prop, snd, val)
+            else
+              Kernel.set_snd_func(prop, val, snd)
+            end
           end
         end
         channels(snd).times do |chn|
@@ -1461,7 +1465,11 @@ If CHECK is false, the hooks are removed.")
   add_help(:remember_sound_state,
            "remember_sound_state(choice=3) \
 remembers the state of a sound when it is closed, \
-and if it is subsquently re-opened, restores that state")
+and if it is subsequently re-opened, restores that state.\n\
+choice == 0: no remembering\n\
+choice == 1: just within-run remembering\n\
+choice == 2: don't read saved values\n\
+choice == 3: across runs remembering")
   def remember_sound_state(choice = 3)
     # states = {file_name => {:time => number, :sound => [], channels => []}, ...}
     $remembering_sound_state = choice
@@ -1472,7 +1480,9 @@ and if it is subsquently re-opened, restores that state")
     if choice == 0 or choice == 1
       if choice == 0
         $close_hook.remove_hook!(hook_name)
-        $after_open_hook.remove_hook!(hook_name)
+        if choice != 2
+          $after_open_hook.remove_hook!(hook_name)
+        end
       end
       $open_hook.remove_hook!(hook_name)
       $before_exit_hook.remove_hook!(hook_name)
@@ -1502,7 +1512,11 @@ and if it is subsquently re-opened, restores that state")
             if file_write_date(file_name(snd)) == state[:time] and
                 channels(snd) == state[:channels].length
               sound_funcs.zip(state[:sound]) do |f, val|
-                Kernel.set_snd_func(f, val, snd)
+                if f == :selected_channel # arguments swapped!
+                  Kernel.set_snd_func(f, snd, val)
+                else
+                  Kernel.set_snd_func(f, val, snd)
+                end
               end
               channels(snd).times do |chn|
                 set_squelch_update(true, snd, chn)

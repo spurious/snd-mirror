@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Fri Jan 08 00:04:54 CET 2010
+\ Changed: Thu Jan 14 21:44:40 CET 2010
 
 \ Commentary:
 \
@@ -707,7 +707,7 @@ hide
       state :sound hash-ref each to val
 	sound-funcs i array-ref to fnc
 	fnc xt->name "selected-channel" string= if
-	  snd val set-selected-channel drop \ arguments swaped!
+	  snd val set-selected-channel drop \ arguments swapped!
 	else
 	  val snd fnc set-execute drop
 	then

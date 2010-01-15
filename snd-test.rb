@@ -3,7 +3,7 @@
 # Commentary:
 #
 # Tested with:
-# ruby 1.8.7 (2009-04-08 patchlevel 160)
+# ruby 1.8.7 (2009-12-24 patchlevel 248)
 # ruby 1.9.1p129 (2009-05-12 revision 23412)
 
 #
@@ -748,6 +748,12 @@ unless hook? $before_test_hook
 end
 unless hook? $after_test_hook
   snd_display("$after_test_hook not a hook: %s?", $after_test_hook.inspect)
+end
+
+def snd_test_exit(test = 0)
+  $after_test_hook.call(test)
+  finish_snd_test
+  exit(0)
 end
 
 snd_info("===  Snd version: %s", snd_version)
@@ -2860,7 +2866,7 @@ def test064
   if fneq(res = sound_data_peak(sd), mx.car)
     snd_display("sound_data_peak oboe.snd: %s %s?", res, mx)
   end
-  if (res = Snd.catch do set_selected_channel(1) end).first != :no_such_channel
+  if (res = Snd.catch do set_selected_channel(ob, 1) end).first != :no_such_channel
     snd_display("set_selected_channel bad chan: %s?", res)
   end
   if (res = Snd.catch do set_selected_channel(123456, 1) end).first != :no_such_sound
@@ -21893,7 +21899,7 @@ def test12
     # mix reader
     #
     save_md = 0
-    mix_click_sets_amp
+    $mix_click_hook.add_hook!("mix-click-sets-amp") do |id| mix_click_sets_amp(id) end
     ind = open_sound("oboe.snd")
     reg = make_region(1000, 2000, ind, 0, 0)
     md = mix_region(reg, 0, ind, 0).car
@@ -22623,7 +22629,7 @@ def test0113
   set_selection_creates_region(true)
   $stop_playing_selection_hook.add_hook!("snd-test") do | | ss = true end
   reg = select_all
-  play(selected_sound, :wait, true)
+  play(selection, :wait, true)
   play(reg, :wait, true)
   snd_display("$stop_playing_selection_hook not called?") unless ss
   $stop_playing_selection_hook.reset_hook!
@@ -23188,16 +23194,26 @@ def test_panel(func)
   val1 = Snd.sounds.apply(:snd_func, func)
   val2 = Snd.sounds.reverse.apply(:snd_func, func)
   if (not vequal(val, val1)) and (not vequal(val, val2))
-    snd_display("%s %s:\n# %s\n# %s\n# %s?", get_func_name, func, val, val1, val2)
+    snd_display("%s %s:\n\t%s\n\t%s\n\t%s?", get_func_name, func, val, val1, val2)
   end
 end
 
+def all_chans_zipped_reverse
+  new_list = []
+  Snd.sounds.reverse.each do |snd|
+    channels(snd).times do |chn|
+      new_list.push([snd, chn])
+    end
+  end
+  new_list
+end
+
 def test_channel(func)
-  func_val = snd_func(func, true, true).flatten
-  func_val1 = all_chans_zipped.apply(:snd_func, func)
-  func_val2 = all_chans_zipped.reverse.apply(:snd_func, func)
-  if (func_val != func_val1) and (func_val != func_val2)
-    snd_display("%s %s:\n\t%s\n\t%s\n\t%s?", get_func_name, func, func_val, func_val1, func_val2)
+  val = snd_func(func, true, true).flatten
+  val1 = all_chans_zipped.map do |snd, chn| snd_func(func, snd, chn) end.flatten
+  val2 = all_chans_zipped_reverse.map do |snd, chn| snd_func(func, snd, chn) end.flatten
+  if (not val.eql?(val1)) and (not val.eql?(val2))
+    snd_display("%s %s:\n\t%s\n\t%s\n\t%s?", get_func_name, func, val, val1, val2)
   end
 end
 
@@ -25391,7 +25407,7 @@ def test0315
   if selected_sound != a4
     snd_display("set_selected_sound: %s %s?", selected_sound, a4)
   end
-  set_selected_channel(2)
+  set_selected_channel(a4, 2)
   if selected_channel != 2
     snd_display("set_selected_channel a4: %s?", selected_channel(a4))
   end
@@ -32437,19 +32453,23 @@ def test0121
 end
 
 def test0221
-  remember_sound_state
+  remember_sound_state(3)
   ind = open_sound("oboe.snd")
   set_transform_graph?(true, ind, 0)
   set_show_transform_peaks(true, ind, 0)
   set_show_y_zero(true, ind, 0)
   close_sound(ind)
   ind = open_sound("oboe.snd")
-  if !(res1 = transform_graph?(ind, 0)) or
-      !(res2 = show_transform_peaks(ind, 0)) or
-      !(res3 = show_y_zero(ind, 0))
-    snd_display("remember_sound_state: %s %s %s?", res1, res2, res3)
+  res1 = transform_graph?(ind, 0)
+  res2 = show_transform_peaks(ind, 0)
+  res3 = show_y_zero(ind, 0)
+  if (not res1.kind_of?(TrueClass)) or
+      (not res2.kind_of?(TrueClass)) or
+      (not res3.kind_of?(TrueClass))
+    snd_display("remember_sound_state: %s %s %s?", res1.inspect, res2.inspect, res3.inspect)
   end
   close_sound(ind)
+  remember_sound_state(0)
   reset_almost_all_hooks
   Snd.catch(:all, lambda do |*args| snd_display("snd_apropos trouble: %s", args) end) do
     # snd_apropos returns an array of all found matches if option is a
@@ -34127,12 +34147,12 @@ Procs =
    :selection?, :short_file_name, :show_axes, :show_controls,
    :show_transform_peaks, :show_indices, :show_listener, :show_marks, :show_mix_waveforms,
    :show_selection_transform, :show_y_zero, :sinc_width, :show_grid, :show_sonogram_cursor,
-   :grid_density, :smooth_sound, :smooth_selection, :snd_print, :snd_spectrum, :snd_tempnam,
-   :snd_version, :sound_files_in_directory, :sound_loop_info, :sound_widgets, :soundfont_info,
-   :sound?, :sounds, :spectrum_end, :spectro_hop, :spectrum_start, :spectro_x_angle,
-   :spectro_x_scale, :spectro_y_angle, :spectro_y_scale, :spectro_z_angle, :spectro_z_scale,
-   :speed_control, :speed_control_style, :speed_control_tones, :squelch_update, :srate,
-   :src_sound, :src_selection, :start_progress_report, :stop_player, :stop_playing,
+   :grid_density, :smooth_sound, :smooth_selection, :snd_print, :snd_spectrum,
+   :snd_tempnam, :snd_version, :sound_files_in_directory, :sound_loop_info, :sound_widgets,
+   :soundfont_info, :sound?, :sounds, :spectrum_end, :spectro_hop, :spectrum_start,
+   :spectro_x_angle, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale, :spectro_z_angle,
+   :spectro_z_scale, :speed_control, :speed_control_style, :speed_control_tones, :squelch_update,
+   :srate, :src_sound, :src_selection, :start_progress_report, :stop_player, :stop_playing,
    :swap_channels, :syncd_marks, :sync, :sync_max, :sound_properties, :temp_dir, :text_focus_color,
    :tiny_font, :region_sampler?, :transform_dialog,
    :transform_sample, :transform2vct, :transform_frames, :transform_type, :trap_segfault,
@@ -34199,7 +34219,7 @@ Procs =
    :scan_channel, :reverse_channel, :seconds2samples, :samples2seconds, :vct2channel,
    :smooth_channel, :channel2vct,
    :src_channel, :scale_channel, :ramp_channel, :pad_channel, :normalize_channel,
-   :cursor_position, :clear_listener, :mus_sound_prune, :mus_sound_forget, :xramp_channel,
+   :cursor_position, :mus_sound_prune, :mus_sound_forget, :xramp_channel,
    :ptree_channel, :snd2sample, :snd2sample?, :make_snd2sample, :make_scalar_mixer,
    :beats_per_minute, :beats_per_measure, :channel_amp_envs, :convolve_files,
    :filter_control_coeffs, :locsig_type, :make_phase_vocoder,

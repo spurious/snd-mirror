@@ -7847,6 +7847,8 @@
 	(define-macro (prog1 first . body) `(let ((result ,first)) ,@body result))
 	(define-macro (prog2 first second . body) `(let () ,first (let ((result ,second)) ,@body result)))
 
+	(defmacro the (type form) form)
+
 	(defmacro push (val sym) `(let () (set! ,sym (cons ,val ,sym)) ,sym))
 	(defmacro pop (sym) (let ((v (gensym))) `(let ((,v (car ,sym))) (set! ,sym (cdr ,sym)) ,v)))
 	(defmacro incf (sym . val) `(let () (set! ,sym (+ ,sym ,(if (null? val) 1 (car val)))) ,sym))
@@ -8007,6 +8009,43 @@
 	(define (logandc2 n1 n2) (logand n1 (lognot n2)))
 	(define (logorc1 n1 n2) (logior (lognot n1) n2))
 	(define (logorc2 n1 n2) (logior n1 (logior n2)))
+	(define (logeqv n1 n2) (lognot (logxor n1 n2)))
+
+	(define-constant boole-clr 0)
+	(define-constant boole-set 1)
+	(define-constant boole-1 2)
+	(define-constant boole-2 3)
+	(define-constant boole-c1 4)
+	(define-constant boole-c2 5)
+	(define-constant boole-and 6)
+	(define-constant boole-ior 7)
+	(define-constant boole-xor 8)
+	(define-constant boole-eqv 9)
+	(define-constant boole-nand 10)
+	(define-constant boole-nor 11)
+	(define-constant boole-andc1 12)
+	(define-constant boole-andc2 13)
+	(define-constant boole-orc1 14)
+	(define-constant boole-orc2 15)
+
+	(define (boole op int1 int2)
+	  (cond
+	    ((= op boole-clr)   0)
+	    ((= op boole-set)   -1) ;; all ones -- "always 1" is misleading
+	    ((= op boole-1)     int1)
+	    ((= op boole-2)     int2)
+	    ((= op boole-c1)    (lognot int1))
+	    ((= op boole-c2)    (lognot int2))
+	    ((= op boole-and)   (logand int1 int2))
+	    ((= op boole-ior)   (logior int1 int2))
+	    ((= op boole-xor)   (logxor int1 int2))
+	    ((= op boole-eqv)   (logeqv int1 int2))
+	    ((= op boole-nand)  (lognot (logand int1 int2)))
+	    ((= op boole-nor)   (lognot (logior int1 int2)))
+	    ((= op boole-andc1) (logand (lognot int1) int2))
+	    ((= op boole-andc2) (logand int1 (lognot int2)))
+	    ((= op boole-orc1)  (logior (lognot int1) int2))
+	    ((= op boole-orc2)  (logior int1 (lognot int2)))))
 
 	(define (byte siz pos)
 	  ;; cache size, position and mask.
@@ -8028,6 +8067,43 @@
 	(define (ldb-test byte int) (not (zero? (ldb byte int))))
 	(define (mask-field byte int) (logand int (dpb -1 byte 0)))
 
+	(define-constant double-float-epsilon 1.1102230246251568e-16)
+	(define-constant double-float-negative-epsilon 5.551115123125784e-17)
+	(define-constant least-negative-double-float -2.2250738585072014e-308)
+	(define-constant least-negative-long-float -5.676615526003731344L-646456994)
+	(define-constant least-negative-normalized-double-float -2.2250738585072014e-308)
+	(define-constant least-negative-normalized-long-float -5.676615526003731344L-646456994)
+	(define-constant least-negative-normalized-short-float -1.1755e-38)
+	(define-constant least-negative-normalized-single-float -1.1754944e-38)
+	(define-constant least-negative-short-float -1.1755e-38)
+	(define-constant least-negative-single-float -1.1754944e-38)
+	(define-constant least-positive-double-float 2.2250738585072014e-308)
+	(define-constant least-positive-long-float 5.676615526003731344e-646456994)
+	(define-constant least-positive-normalized-double-float 2.2250738585072014e-308)
+	(define-constant least-positive-normalized-long-float 5.676615526003731344e-646456994)
+	(define-constant least-positive-normalized-short-float 1.1755e-38)
+	(define-constant least-positive-normalized-single-float 1.1754944e-38)
+	(define-constant least-positive-short-float 1.1755e-38)
+	(define-constant least-positive-single-float 1.1754944e-38)
+	(define-constant long-float-epsilon 5.4210108624275221706e-20)
+	(define-constant long-float-negative-epsilon 2.7105054312137610853e-20)
+	(define-constant most-negative-double-float -1.7976931348623157e308)
+	;; most-negative-fixnum 
+	(define-constant most-negative-long-float -8.8080652584198167656L646456992) 
+	(define-constant most-negative-short-float -3.4028e38)
+	(define-constant most-negative-single-float -3.4028235e38)
+	(define-constant most-positive-double-float 1.7976931348623157e308)
+	;; most-positive-fixnum 
+	(define-constant most-positive-long-float 8.8080652584198167656e646456992)
+	(define-constant most-positive-short-float 3.4028e38)
+	(define-constant most-positive-single-float 3.4028235e38)
+	(define-constant short-float-epsilon 7.6295e-6)
+	(define-constant short-float-negative-epsilon 3.81476e-6)
+	(define-constant single-float-epsilon 5.960465e-8)
+	(define-constant single-float-negative-epsilon 2.9802326e-8)
+
+	(define (lisp-implementation-type) "s7")
+	(define (lisp-implementation-version) (s7-version))
 	
 	;; = < <= > >= are the same, also min max + - * / lcm gcd exp expt log sqrt
 	;; sin cos tan acos asin atan pi sinh cosh tanh asinh acosh atanh
@@ -8114,6 +8190,37 @@
 	(define (name-char s) "unimplemented")
 	;; --------
 
+	(define terpri newline)
+
+
+	;; -------- strings
+
+	(define char string-ref)
+	(define schar string-ref)
+	;; make-string is ok
+
+	(define (string x)
+	  (if (string? x) x
+	      (if (symbol? x) (symbol->string x)
+		  (error "string ~A?" x))))
+
+	(define* (string= str1 str2 (start1 0) end1 (start2 0) end2)
+	  (if (and (not end1) (not end2) (= start1 0) (= start2 0))
+	      (string=? str1 str2)
+	      (call-with-exit
+	       (lambda (return)
+		 (let ((nd1 (or end1 (length str1)))
+		       (nd2 (or end2 (length str2))))
+		   (if (not (= (- nd1 start1) (- nd2 start2)))
+		       #f
+		       (do ((i start1 (+ i 1))
+			    (j start2 (+ j 1)))
+			   ((= i nd1) #t)
+			 (if (not (op (str1 i) (str2 j)))
+			     (return #f)))))))))
+
+	;; -------- types
+
 	(define vectorp vector?)
 	(define symbolp symbol?)
 	(define (atom obj) (not (pair? obj)))
@@ -8130,6 +8237,7 @@
 	(define stringp string?)
 	(define arrayp vector?)
 	(define aref vector-ref)
+	(define vectorp vector?)
 
 	(define eq eq?)
 	(define eql eqv?)
@@ -8147,6 +8255,7 @@
 	(define fboundp defined?)
 
 	(define (identity x) x)
+
 	;; the sequence funcs can take advantage of the applicable object stuff:
 
 	;; -------- sequences
@@ -8342,6 +8451,26 @@
 		  (set! (sequence i) item)))
 	    sequence))
 
+	;; many of the sequence functions return a different length sequence, but
+	;;   for user-defined sequence types, we can't use the 'type kludge (or
+	;;   at least it's ugly), so we need either (make obj size initial-value)
+	;;   where obj is a representative of the desired type, or another
+	;;   arg to copy giving the new object's size.  For now, I'll cobble up
+	;;   something explicit
+
+	(define (make obj size)
+	  (cond ((vector? obj)     (make-vector size))
+		((list? obj)       (make-list size))
+		((string? obj)     (make-string size))
+		((hash-table? obj) (make-hash-table size)))) ; does this make any sense?
+
+	(define* (make-sequence type size initial-element)
+	  (case type 
+	    ((vector) (make-vector size initial-element))
+	    ((hash-table) (make-hash-table size))
+	    ((string) (make-string size initial-element))
+	    ((list) (make-list size initial-element))))
+	
 
 	;;; ----------------
 	;;; some of these tests are taken (with modifications) from sacla which has 
@@ -8696,6 +8825,23 @@
 ;	(test-t (char= #\Space (name-char (char-name #\Space))))
 ;	(test-t (char= #\Newline (name-char (char-name #\Newline))))
 
+
+	(let ((boole-n-vector
+	       (vector boole-clr   boole-and  boole-andc1 boole-2
+		       boole-andc2 boole-1    boole-xor   boole-ior
+		       boole-nor   boole-eqv  boole-c1    boole-orc1
+		       boole-c2    boole-orc2 boole-nand  boole-set)))
+	  (do ((n 0 (+ n 1)))
+	      ((= n 16))
+	    (if (not (= n (logand (boole (boole-n-vector n) #b0101 #b0011) #b1111)))
+		(display (format #f "~A: ~A ~A~%" n (boole-n-vector n) (logand (boole (boole-n-vector n) #b0101 #b0011) #b1111)))))
+	  (let ((lst '()))
+	    (do ((n #b0000 (+ n 1)))
+		((> n #b1111))
+	      (set! lst (cons (boole (boole-n-vector n) 5 3) lst)))
+	    (if (not (equal? (reverse lst)
+			     (list 0 1 2 3 4 5 6 7 -8 -7 -6 -5 -4 -3 -2 -1)))
+		(display (format #f ";boole: ~A~%" (reverse lst))))))
 
 	(test (digit-char-p #\a) #f)
 	(test (digit-char-p #\a 16) 10)

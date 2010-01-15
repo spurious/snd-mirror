@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Fri Jan 08 03:49:24 CET 2010
+\ Changed: Thu Jan 14 21:58:18 CET 2010
 
 \ Commentary:
 \
@@ -363,6 +363,7 @@ let: ( -- )
      "o2_dvi.wave.snd"
      "nist-shortpack.wav.snd"
      "bad_data_format.snd.snd" ) each ( file ) sf-dir swap $+ file-delete end-each
+  #t  set-show-listener      	    drop
   "test-forth.output" save-listener drop
   original-prompt set-listener-prompt drop
 ;
@@ -2150,7 +2151,7 @@ include bird.fsm
    <'> scan-channel <'> reverse-channel <'> seconds->samples
    <'> samples->seconds <'> smooth-channel <'> vct->channel <'> channel->vct
    <'> src-channel <'> scale-channel <'> ramp-channel <'> pad-channel
-   <'> normalize-channel <'> cursor-position <'> clear-listener <'> mus-sound-prune
+   <'> normalize-channel <'> cursor-position <'> show-listener <'> mus-sound-prune
    <'> mus-sound-forget <'> xramp-channel <'> ptree-channel <'> snd->sample
    <'> snd->sample? <'> make-snd->sample <'> make-scalar-mixer <'> beats-per-minute
    <'> beats-per-measure <'> channel-amp-envs <'> convolve-files <'> filter-control-coeffs
