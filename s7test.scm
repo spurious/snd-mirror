@@ -7841,7 +7841,16 @@
       (test (let ((sum 0)) (do* ((i 0 (+ i 1)) (j i (+ i 1))) ((= i 3) sum) (set! sum (+ sum j)))) 5)
 
       (let ()
+
 	;; some common lispisms
+	;;   where names are the same, but functions are different (abs for example), 
+	;;   I'll prepend "cl-" to the CL version; otherwise we end up redefining
+	;;   map and member, for example, which can only cause confusion.
+	;;
+	;; also I'm omitting the test-if-not and test-not args which strike me as ridiculous.
+	;; If CLtL2 says something is deprecated, it's not included.
+	;; Series and generators are ignored.
+
 
 	(define-macro (progn . body) `(let () ,@body))
 	(define-macro (prog1 first . body) `(let ((result ,first)) ,@body result))
@@ -7869,9 +7878,37 @@
 				  (set! var p)))
 			    pairs))))
 
+	(define mapcar map)
+
+	(define (maplist function . lists)
+	  (if (null? (car lists))
+	      '()
+	      (cons (apply function lists)
+		    (apply maplist function (map cdr lists)))))
+
+	(define (mapc function . lists)
+	  (apply for-each function lists)
+	  (car lists))
+
+	(define (mapl function . lists)
+	  (define (mapl-1 function . lists)
+	    (if (not (null? (car lists)))
+		(begin
+		  (apply function lists)
+		  (apply mapl-1 function (map cdr lists))))
+	    (car lists)))
+
+	(define (mapcon function . lists)
+	  (apply nconc (apply maplist function lists)))
+
+	(define (mapcan function . lists)
+	  (apply nconc (apply mapcar function lists)))
+	  
+
+
 	;; -------- lists
 
-	;; in CL (cdr '()) is nil -- need this throughout
+	;; in CL (cdr '()) is nil
 
 	(define (first l) (list-ref l 0))
 	(define (second l) (list-ref l 1))
@@ -7965,6 +8002,15 @@
 
 	(define* (rassoc item alist (test equal?) (key identity))
 	  (rassoc-if (lambda (obj) (test item obj)) alist key))
+
+	(define (copy-alist alist)
+	  (cons (if (pair? (car alist))
+		    (cons (caar alist) (cdar alist))
+		    (car alist))
+		(cdr alist)))
+
+	(define (revappend x y) (append (reverse x) y))
+
 	
 	(define* (pairlis keys data alist)
 	  (if (not (= (length keys) (length data)))
@@ -7986,8 +8032,82 @@
 		    (cons (sublis alist (car tree) test key)
 			  (sublis alist (cdr tree) test key))))))
 
-	
+	(define* (member-if predicate list (key identity))
+	  (if (null? list)
+	      #f
+	      (if (predicate (key (car list)))
+		  list
+		  (member-if predicate (cdr list) key))))
+
+	(define* (member-if-not predicate list (key identity))
+	  (member-if (lambda (obj) (not (test item obj))) list key))
+
+	(define* (cl-member item list (test equal?) (key identity))
+	  (member-if (lambda (obj) (test item obj)) list key))
+
+	(define* (adjoin item list (test equal?) (key identity))
+	  (if (cl-member item list test key)
+	      list
+	      (cons item list)))
+
+	(define (tailp sublist list)
+	  (and (not (null? list))
+	       (or (eq? sublist list)
+		   (tailp sublist (cdr list)))))
+
+	(define* (union list1 list2 (test equal?) (key identity))
+	  (let ((new-list (copy list1)))
+	    (do ((obj list2 (cdr obj)))
+		((null? obj) new-list)
+	      (set! new-list (adjoin (car obj) new-list test key)))))
+
+	(define nunion union) ; this is not required to be destructive
+
+	(define* (intersection list1 list2 (test equal?) (key identity))
+	  (let ((new-list '()))
+	    (do ((obj list1 (cdr obj)))
+		((null? obj) new-list)
+	      (if (cl-member (car obj) list2 test key)
+		  (set! new-list (adjoin (car obj) new-list test key))))))
+
+	(define nintersection intersection)
+	    
+	(define* (set-difference list1 list2 (test equal?) (key identity))
+	  (let ((new-list '()))
+	    (do ((obj list1 (cdr obj)))
+		((null? obj) new-list)
+	      (if (not (cl-member (car obj) list2 test key))
+		  (set! new-list (adjoin (car obj) new-list test key))))))
+
+	(define nset-difference set-difference)
+
+	(define* (set-exclusive-or list1 list2 (test equal?) (key identity))
+	  (let ((new-list '()))
+	    (do ((obj list1 (cdr obj)))
+		((null? obj))
+	      (if (not (cl-member (car obj) list2 test key))
+		  (set! new-list (adjoin (car obj) new-list test key))))
+	    (do ((obj list2 (cdr obj)))
+		((null? obj) new-list)
+	      (if (not (cl-member (car obj) list1 test key))
+		  (set! new-list (adjoin (car obj) new-list test key))))))
+
+	(define nset-exclusive-or set-exclusive-or)
+
+	(define* (subsetp list1 list2 (test equal?) (key identity))
+	  (call-with-exit
+	   (lambda (return)
+	     (do ((obj list1 (cdr obj)))
+		 ((null? obj) #t)
+	      (if (not (cl-member (car obj) list2 test key))
+		  (return #f))))))
+
+	;; nsubst not implemented yet
+
+
+
 	;; -------- numbers
+
 	(define (conjugate z) (make-rectangular (real-part z) (- (imag-part z))))
 	(define zerop zero?)
 	(define oddp odd?)
@@ -8009,7 +8129,25 @@
 	(define (logandc2 n1 n2) (logand n1 (lognot n2)))
 	(define (logorc1 n1 n2) (logior (lognot n1) n2))
 	(define (logorc2 n1 n2) (logior n1 (logior n2)))
-	(define (logeqv n1 n2) (lognot (logxor n1 n2)))
+	(define (logeqv . ints) (lognot (apply logxor ints)))
+
+	;; from slib
+	(define (logcount n)
+	  (define bitwise-bit-count
+	    (letrec ((logcnt (lambda (n tot)
+			       (if (zero? n)
+				   tot
+				   (logcnt (quotient n 16)
+					   (+ (vector-ref
+					       '#(0 1 1 2 1 2 2 3 1 2 2 3 2 3 3 4)
+					       (modulo n 16))
+					      tot))))))
+	      (lambda (n)
+		(cond ((negative? n) (lognot (logcnt (lognot n) 0)))
+		      ((positive? n) (logcnt n 0))
+		      (else 0)))))
+	  (cond ((negative? n) (bitwise-bit-count (lognot n)))
+		(else (bitwise-bit-count n))))
 
 	(define-constant boole-clr 0)
 	(define-constant boole-set 1)
@@ -8047,6 +8185,7 @@
 	    ((= op boole-orc1)  (logior (lognot int1) int2))
 	    ((= op boole-orc2)  (logior int1 (lognot int2)))))
 
+	;; from Rick
 	(define (byte siz pos)
 	  ;; cache size, position and mask.
 	  (list siz pos (ash (- (expt 2 siz) 1) pos)))
@@ -8066,7 +8205,8 @@
 
 	(define (ldb-test byte int) (not (zero? (ldb byte int))))
 	(define (mask-field byte int) (logand int (dpb -1 byte 0)))
-
+	
+	;; from clisp -- can't see any point to most of these
 	(define-constant double-float-epsilon 1.1102230246251568e-16)
 	(define-constant double-float-negative-epsilon 5.551115123125784e-17)
 	(define-constant least-negative-double-float -2.2250738585072014e-308)
@@ -8111,8 +8251,17 @@
 
 	;; slightly different: floor ceiling truncate round and the ff cases thereof
 	;; abs of complex -> magnitude
-	(define %abs abs) 
-	(define (abs x) (if (not (zero? (imag-part x))) (magnitude x) (%abs x)))
+	(define (cl-abs x) (if (not (zero? (imag-part x))) (magnitude x) (abs x)))
+
+	;; TODO: these actually return multiple values
+	(define* (cl-floor x (divisor 1)) (floor (/ x divisor)))
+	(define* (cl-ceiling x (divisor 1)) (ceiling (/ x divisor)))
+	(define* (cl-truncate x (divisor 1)) (truncate (/ x divisor)))
+	(define* (cl-round x (divisor 1)) (round (/ x divisor)))
+	(define* (ffloor x divisor) (exact->inexact (cl-floor x divisor)))
+	(define* (fceling x divisor) (exact->inexact (cl-ceiling x divisor)))
+	(define* (ftruncate x divisor) (exact->inexact (cl-truncate x divisor)))
+	(define* (fround x divisor) (exact->inexact (cl-round x divisor)))
        
 	(define (/= . args) 
 	  (if (null? (cdr args))
@@ -8125,11 +8274,13 @@
 	(define (1- x) (- x 1))
 	(define (isqrt x) (floor (sqrt x)))
 	(define phase angle)
+	(define* (complex rl (im 0.0)) (make-rectangular rl im))
 	(define (signum x) (if (zerop x) x (/ x (abs x))))
 	(define (cis x) (exp (make-rectangular 0.0 x)))
 
 
 	;; -------- characters
+
 	(define char-code-limit 256)
 	(define alpha-char-p char-alphabetic?)
 	(define upper-case-p char-upper-case?)
@@ -8188,36 +8339,11 @@
 	(define (standard-char-p c) "unimplemented")
 	(define (char-name c) "unimplemented")
 	(define (name-char s) "unimplemented")
+
 	;; --------
 
 	(define terpri newline)
 
-
-	;; -------- strings
-
-	(define char string-ref)
-	(define schar string-ref)
-	;; make-string is ok
-
-	(define (string x)
-	  (if (string? x) x
-	      (if (symbol? x) (symbol->string x)
-		  (error "string ~A?" x))))
-
-	(define* (string= str1 str2 (start1 0) end1 (start2 0) end2)
-	  (if (and (not end1) (not end2) (= start1 0) (= start2 0))
-	      (string=? str1 str2)
-	      (call-with-exit
-	       (lambda (return)
-		 (let ((nd1 (or end1 (length str1)))
-		       (nd2 (or end2 (length str2))))
-		   (if (not (= (- nd1 start1) (- nd2 start2)))
-		       #f
-		       (do ((i start1 (+ i 1))
-			    (j start2 (+ j 1)))
-			   ((= i nd1) #t)
-			 (if (not (op (str1 i) (str2 j)))
-			     (return #f)))))))))
 
 	;; -------- types
 
@@ -8236,8 +8362,8 @@
 	(define characterp char?)
 	(define stringp string?)
 	(define arrayp vector?)
-	(define aref vector-ref)
 	(define vectorp vector?)
+	(define keywordp keyword?)
 
 	(define eq eq?)
 	(define eql eqv?)
@@ -8256,9 +8382,9 @@
 
 	(define (identity x) x)
 
-	;; the sequence funcs can take advantage of the applicable object stuff:
 
 	;; -------- sequences
+
 	(define* (count-if predicate sequence from-end (start 0) end (key identity))
 	  (let* ((counts 0)
 		 (len (length sequence))
@@ -8407,7 +8533,7 @@
 		(set! (sequence i) (sequence j))
 		(set! (sequence j) tmp)))))
 
-	(define (reverse sequence)
+	(define (cl-reverse sequence)
 	  (nreverse (copy sequence)))
 	
 	(define copy-seq copy)
@@ -8456,7 +8582,10 @@
 	;;   at least it's ugly), so we need either (make obj size initial-value)
 	;;   where obj is a representative of the desired type, or another
 	;;   arg to copy giving the new object's size.  For now, I'll cobble up
-	;;   something explicit
+	;;   something explicit.
+	;;
+	;; perhaps the extended type could give its type symbol as well as the make function?
+	;; 'vct and make-vct etc
 
 	(define (make obj size)
 	  (cond ((vector? obj)     (make-vector size))
@@ -8470,8 +8599,281 @@
 	    ((hash-table) (make-hash-table size))
 	    ((string) (make-string size initial-element))
 	    ((list) (make-list size initial-element))))
-	
 
+	(define* (subseq sequence start end)
+	  (let* ((len (length sequence))
+		 (nd (or end len))
+		 (size (- nd start))
+		 (obj (make sequence size)))
+	    (do ((i start (+ i 1))
+		 (j 0 (+ j 1)))
+		((= i nd) obj)
+	      (set! (obj j) (sequence i)))))
+	
+	(define (concatenate type . sequences)
+	  (let* ((len (apply + (map length sequences)))
+		 (new-obj (make-sequence type len))
+		 (ctr 0))
+	    (for-each
+	     (lambda (sequence)
+	       (for-each
+		(lambda (obj)
+		  (set! (new-obj ctr) obj)
+		  (set! ctr (+ ctr 1)))
+		sequence))
+	     sequences)
+	    new-obj))
+
+	;; :(concatenate 'list "hiho" '#(1 2)) -> (#\h #\i #\h #\o 1 2)
+
+	(define* (cl-map type function . sequences)
+	  (let ((obj (apply map function sequences)))
+	    (if (eq? type 'list)
+		obj
+		(concatenate type obj))))
+
+	  
+	;; -------- strings
+
+	(define char string-ref)
+	(define schar string-ref)
+	;; make-string is ok
+
+	(define (cl-string x)
+	  (if (string? x) x
+	      (if (character? x)
+		  (string x)
+		  (if (symbol? x) (symbol->string x)
+		      (error "string ~A?" x)))))
+
+	(define* (string= str1 str2 (start1 0) end1 (start2 0) end2)
+	  (if (and (not end1) (not end2) (= start1 0) (= start2 0))
+	      (string=? str1 str2)
+	      (string=? (subseq str1 start1 (or end1 (length str1)))
+			(subseq str2 start2 (or end2 (length str2))))))
+
+	(define* (string-equal str1 str2 (start1 0) end1 (start2 0) end2)
+	  (if (and (not end1) (not end2) (= start1 0) (= start2 0))
+	      (string-ci=? str1 str2)
+	      (string-ci=? (subseq str1 start1 (or end1 (length str1)))
+			   (subseq str2 start2 (or end2 (length str2))))))
+
+	(define* (string< str1 str2 (start1 0) end1 (start2 0) end2)
+	  (if (and (not end1) (not end2) (= start1 0) (= start2 0))
+	      (string<? str1 str2)
+	      (string<? (subseq str1 start1 (or end1 (length str1)))
+			(subseq str2 start2 (or end2 (length str2))))))
+
+	(define* (string-lessp str1 str2 (start1 0) end1 (start2 0) end2)
+	  (if (and (not end1) (not end2) (= start1 0) (= start2 0))
+	      (string-ci<? str1 str2)
+	      (string-ci<? (subseq str1 start1 (or end1 (length str1)))
+			   (subseq str2 start2 (or end2 (length str2))))))
+
+	(define* (string<= str1 str2 (start1 0) end1 (start2 0) end2)
+	  (if (and (not end1) (not end2) (= start1 0) (= start2 0))
+	      (string<=? str1 str2)
+	      (string<=? (subseq str1 start1 (or end1 (length str1)))
+			 (subseq str2 start2 (or end2 (length str2))))))
+
+	(define* (string-not-greaterp str1 str2 (start1 0) end1 (start2 0) end2)
+	  (if (and (not end1) (not end2) (= start1 0) (= start2 0))
+	      (string-ci<=? str1 str2)
+	      (string-ci<=? (subseq str1 start1 (or end1 (length str1)))
+			    (subseq str2 start2 (or end2 (length str2))))))
+
+	(define* (string> str1 str2 (start1 0) end1 (start2 0) end2)
+	  (if (and (not end1) (not end2) (= start1 0) (= start2 0))
+	      (string>? str1 str2)
+	      (string>? (subseq str1 start1 (or end1 (length str1)))
+			(subseq str2 start2 (or end2 (length str2))))))
+
+	(define* (string-greaterp str1 str2 (start1 0) end1 (start2 0) end2)
+	  (if (and (not end1) (not end2) (= start1 0) (= start2 0))
+	      (string-ci>? str1 str2)
+	      (string-ci>? (subseq str1 start1 (or end1 (length str1)))
+			   (subseq str2 start2 (or end2 (length str2))))))
+
+	(define* (string>= str1 str2 (start1 0) end1 (start2 0) end2)
+	  (if (and (not end1) (not end2) (= start1 0) (= start2 0))
+	      (string>=? str1 str2)
+	      (string>=? (subseq str1 start1 (or end1 (length str1)))
+			 (subseq str2 start2 (or end2 (length str2))))))
+
+	(define* (string-not-lessp str1 str2 (start1 0) end1 (start2 0) end2)
+	  (if (and (not end1) (not end2) (= start1 0) (= start2 0))
+	      (string-ci>=? str1 str2)
+	      (string-ci>=? (subseq str1 start1 (or end1 (length str1)))
+			    (subseq str2 start2 (or end2 (length str2))))))
+
+	(define* (string/= str1 str2 (start1 0) end1 (start2 0) end2)
+	  (not (string= str1 str2 start1 end1 start2 end2)))
+	
+	(define* (string-not-equal str1 str2 (start1 0) end1 (start2 0) end2)
+	  (not (string-equal str1 str2 start1 end1 start2 end2)))
+
+	(define (string-trim-left bag str)
+	  (let ((len (length str)))
+	    (do ((i 0 (+ i 1)))
+		((or (= i len)
+		     (not (member (str i) bag)))
+		 (if (= i 0)
+		     str
+		     (subseq str i))))))
+		 
+	(define (string-trim-right bag str)
+	  (let ((len (length str)))
+	    (do ((i (- len 1) (- i 1)))
+		((or (< i 0)
+		     (not (member (str i) bag)))
+		 (if (= i (- len 1))
+		     str
+		     (subseq str 0 (+ i 1)))))))
+		 
+	(define (string-trim bag str)
+	  (string-trim-right bag (string-trim-left bag str)))
+
+	(define* (nstring-upcase str (start 0) end)
+	  (let ((nd (or end (length str))))
+	    (do ((i start (+ i 1)))
+		((= i nd) str)
+	      (set! (str i) (char-upcase (str i))))))
+
+	(define* (string-upcase str (start 0) end)
+	  (nstring-upcase (copy str) start end))
+
+	(define* (nstring-downcase str (start 0) end)
+	  (let ((nd (or end (length str))))
+	    (do ((i start (+ i 1)))
+		((= i nd) str)
+	      (set! (str i) (char-downcase (str i))))))
+
+	(define* (string-downcase str (start 0) end)
+	  (nstring-downcase (copy str) start end))
+
+	(define* (nstring-capitalize str (start 0) end)
+	  (define (alpha? c) 
+	    (or (char-alphabetic? c) 
+		(char-numeric? c)))
+	  (let ((nd (or end (length str))))
+	    (do ((i start (+ i 1)))
+		((= i nd) str)
+	      (if (and (alpha? (str i))
+		       (or (= i 0)
+			   (not (alpha? (str (- i 1))))))
+		  (set! (str i) (char-upcase (str i)))))))
+
+	(define* (string-capitalize str (start 0) end)
+	  (nstring-capitalize (copy str) start end))
+
+
+	;; -------- vectors
+
+	;; vector is ok
+
+	(define svref vector-ref)
+	(define aref vector-ref)
+	(define array-dimensions vector-dimensions)
+	(define array-total-size vector-length)
+	(define (array-dimension array num) (list-ref (vector-dimensions array) num))
+
+	(define-constant array-dimension-limit 16777215)
+	(define-constant array-rank-limit 4096)
+	(define-constant array-total-size-limit 16777215)
+
+	(define* (make-array dimensions initial-element)
+	  (make-vector (or dimensions 1) initial-element))
+	;; initial-contents etc
+
+	(define (array-in-bounds-p array . subscripts)
+	  (define (in-bounds dims subs)
+	    (or (null? subs)
+		(null? dims)
+		(and (< (car subs) (car dims))
+		     (in-bounds (cdr dims) (cdr subs)))))
+	  (in-bounds (vector-dimensions array) subscripts))
+
+	(define (row-major-index array . subscripts) 
+	  (apply + (maplist (lambda (x y)
+			      (* (car x) (apply * (cdr y))))
+			    subscripts
+			    (vector-dimensions array))))
+
+
+	;; -------- defstruct
+
+	(defmacro defstruct (struct-name . fields)
+	  (let* ((name (if (list? struct-name) (car struct-name) struct-name))
+		 (sname (if (string? name) name (symbol->string name)))
+		 
+		 (fsname (if (list? struct-name)
+			     (let ((cname (assoc :conc-name (cdr struct-name))))
+			       (if cname 
+				   (symbol->string (cadr cname))
+				   sname))
+			     sname))
+		 
+		 (make-name (if (list? struct-name)
+				(let ((cname (assoc :constructor (cdr struct-name))))
+				  (if cname 
+				      (cadr cname)
+				      (string->symbol (string-append "make-" sname))))
+				(string->symbol (string-append "make-" sname))))
+		 
+		 (copy-name (if (list? struct-name)
+				(let ((cname (assoc :copier (cdr struct-name))))
+				  (if cname 
+				      (cadr cname)
+				      (string->symbol (string-append "copy-" sname))))
+				(string->symbol (string-append "copy-" sname))))
+		 
+		 (field-names (map (lambda (n)
+				     (symbol->string (if (list? n) (car n) n)))
+				   fields))
+		 
+		 (field-types (map (lambda (field)
+				     (apply (lambda* (val type read-only) type) (cdr field)))
+				   fields))
+		 
+		 (field-read-onlys (map (lambda (field)
+					  (apply (lambda* (val type read-only) read-only) (cdr field)))
+					fields)))
+	    `(begin
+	       
+	       (define ,(string->symbol (string-append sname "-p"))
+		 (lambda (obj)
+		   (and (vector? obj)
+			(eq? (obj 0) ',(string->symbol sname)))))
+	       
+	       (define* (,make-name
+			 ,@(map (lambda (n)
+				  (if (and (list? n)
+					   (>= (length n) 2))
+				      (list (car n) (cadr n))
+				      (list n #f)))
+				fields))
+		 (vector ',(string->symbol sname) ,@(map string->symbol field-names)))
+	       
+	       (define ,copy-name copy)
+	       
+	       ,@(map (let ((ctr 1))
+			(lambda (n type read-only)
+			  (let ((val (if read-only
+					 `(define ,(string->symbol (string-append fsname "-" n))
+					    (lambda (arg) (arg ,ctr)))
+					 `(define ,(string->symbol (string-append fsname "-" n))
+					    (make-procedure-with-setter 
+					     (lambda (arg) (arg ,ctr)) 
+					     (lambda (arg val) (set! (arg ,ctr) val)))))))
+			    (set! ctr (+ 1 ctr))
+			    val)))
+		      field-names field-types field-read-onlys))))
+	
+	;; not yet implemented: :print-function :include :named :type :initial-offset
+	;;   also the explicit constructor business
+
+
+	
 	;;; ----------------
 	;;; some of these tests are taken (with modifications) from sacla which has 
 	;;;  the following copyright notice:
@@ -8868,9 +9270,9 @@
 	(test (notevery (lambda args (apply < args)) #(1 2 3) #(2 3 4)) #f)
 	(test (notevery (lambda args (apply < args)) #(1 2 3) #(2 3 1)) #t)
 	(test ((complement >) 1 2 3) #t)
-	(test (abs -1) 1)
-	(test (abs 1.0) 1.0)
-	(test (abs 1+i) (magnitude 1+i))
+	(test (cl-abs -1) 1)
+	(test (cl-abs 1.0) 1.0)
+	(test (cl-abs 1+i) (magnitude 1+i))
 	(test (signum 3) 1)
 	(test (signum 0) 0)
 	(test (signum -3) -1)

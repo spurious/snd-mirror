@@ -36,6 +36,8 @@
 	(map-channel (lambda (y) (* y scl)) 0 (frames snd) new-snd 0)
 	(map-channel (lambda (y) (* y scl)) 0 (frames snd) new-snd 1)))))
  *
+ *
+ * Thanks to Michael McNabb for bug fixes and enhancements!
  */
 
 #include <stdlib.h>
@@ -335,6 +337,8 @@ static void set_osc_run(int gen, int RRRR)
   g = gens[gen];
   /* RRRREESSSS */
   g->GMODE = (g->GMODE & 0x3f) | (RRRR << 6);
+
+  if (g->GMODE == 3) g->GMODE = 2; /* if write data, send it to the DAC outputs instead */
 }
 
 /*				 osc. run?  env. run?  add to sum?
@@ -455,7 +459,7 @@ static void process_gen(int gen)
   if (osc_is_running(Gmode10))
     OscFreq28 += (FrqSwp20 / 256.0);     /* right adjusted 20 bit */
   
-  if (osc_mode(Gmode10) == 9) /* sin(J+fm) */
+  if (osc_mode(Gmode10) == SIN_FM) /* sin(J+fm) */
     Phase20 = FmPhase20;
   else Phase20 = OscAng20;
 
@@ -558,7 +562,7 @@ static void process_gen(int gen)
 
   if ((osc_env(Gmode10) == L_PLUS_2_TO_MINUS_Q) || 
       (osc_env(Gmode10) == L_MINUS_2_TO_MINUS_Q))
-    NewAmp12 = pow(2.0, -4.0 * CurAmp12);
+    NewAmp12 = pow(2.0, -16.0 * CurAmp12);
   else NewAmp12 = CurAmp12 / 4.0;
 
   /* in the notes: "The scaling involved is a left shift of temp6 by 4 bits", but that sounds wrong to me in the L+Q case.
