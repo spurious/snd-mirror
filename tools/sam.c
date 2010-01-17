@@ -563,9 +563,18 @@ static void process_gen(int gen)
   if ((osc_env(Gmode10) == L_PLUS_2_TO_MINUS_Q) || 
       (osc_env(Gmode10) == L_MINUS_2_TO_MINUS_Q))
     NewAmp12 = pow(2.0, -16.0 * CurAmp12);
+  /* I think this matches the spec:
+   *    if temp6 is 0, then 2^(-temp6) is 1, the specs say #b111111111101, 
+   *       which assuming 12 bit unsigned fractions is 4093/4096,
+   *   if temp6 is #b000100000000 (256), 2^(-temp6) is #b011111111110,
+   *       which is .5 (fractional) so we really want 2^(-16*temp6) = 2^-1
+   * I originally had -4.0 * CurAmp12 because I'm dividing CurAmp12 by 4.0
+   *   in the other case, but perhaps that should be unscaled here, then 
+   *   divided by 4 when added into its output?
+   */
   else NewAmp12 = CurAmp12 / 4.0;
 
-  /* in the notes: "The scaling involved is a left shift of temp6 by 4 bits", but that sounds wrong to me in the L+Q case.
+  /* in the notes: "The scaling involved is a left shift of temp6 by 4 bits".
    *    This scaling matters in FM since it is a multiplier on the index, and in pluck.
    */
 
@@ -580,8 +589,8 @@ static void process_gen(int gen)
       if (osc_run(Gmode10) != 7)
 	{
 	  if (g->GS == 0)
-	    gen_outs[OutSum6] += OscOut13;    /* what is the scaling here? */
-	  else gen_outs[OutSum6] += (OscOut13 * 2.0); 
+	    gen_outs[OutSum6] += OscOut13 / 1.0;    /* what is the scaling here? */
+	  else gen_outs[OutSum6] += (OscOut13 / 0.5); 
 
 	  /* "If GS is 0, the high-order 19 bits
 	     of the rounded product are taken, right-adjusted with sign
