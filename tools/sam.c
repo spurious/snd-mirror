@@ -400,7 +400,7 @@ static double gen_amp(generator *g)
   emode = osc_env(g->GMODE);
   if ((emode == L_PLUS_2_TO_MINUS_Q) || 
       (emode == L_MINUS_2_TO_MINUS_Q))
-    Q = pow(2.0, -4.0 * g->f_GQ);
+    Q = pow(2.0, -16.0 * g->f_GQ);
   else Q = g->f_GQ / 4.0;
 
   if ((emode == L_PLUS_Q) || 

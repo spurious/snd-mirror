@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.41"
-#define S7_DATE "16-Dec-09"
+#define S7_VERSION "1.42"
+#define S7_DATE "20-Jan-10"
 
 
 typedef long long int s7_Int;
@@ -844,6 +844,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 20-Jan-10: removed the stack function.
  * --------
  * 16-Dec:    hash-table-for-each.
  * 1-Dec:     mpc versions before 0.8.0 are no longer supported.

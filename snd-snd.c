@@ -2338,9 +2338,6 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 
 /* this is my long term plan right now... */
 
-/* first move several functions from the extension language into C (next thing to move: "current-window-display")
- */
-
 /* generics (besides length, srate, channels, frames, file-name, sync, maxamp, play, copy, fill!, [apply], [set!], [for-each], [map]):
  *
  *             source:         procedure-source[s7_procedure_source] mix-home mark-home region-home player-home sampler-home
@@ -2405,8 +2402,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  * all current "work procs" could be handled as separate threads
  * all multichannel parallel ops also threaded, and graphics updates, and playing
  * TODO: make-sampler with mix etc -- let 1st arg be object, also add selection sampler
- * what about "Save again" menu item -- save as using the same choices including filename as before? [popup]
- *   or save button next to "unite" et al.  Also "close"? min max close save buttons on the left before the sound name?
+ *   Also "close"? min max close save buttons on the left before the sound name?
  */
 
 

@@ -220,6 +220,7 @@ above as an example:
 (hi :b 2 :a 3) -&gt; '(3 2 "hi")
 (hi 3 2 1) -&gt; '(3 2 1)
 </pre>
+<p>See s7test.scm for many examples.</p>
 </dd>
 <br>
 
@@ -673,17 +674,14 @@ function call (that is, global to the function, not the function's local environ
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>stacktrace, stack</h4></td></tr></table>
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>stacktrace</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
 <dd><p>stacktrace prints the stack contents.  Its optional argument
 can be *error-info* to show the stack at the point of the last error,
 a thread object to show that thread's stack, or a continuation to
-show the continuation stack.  Similarly, the stack function returns
-the stack top (an integer) and the stack itself (a vector).  
-Each stack frame has 4 entries, the function, the current environment, the function arguments, and an op code used
-internally by the evaluator. 
+show the continuation stack. 
 </p>
 </dd>
 <br>

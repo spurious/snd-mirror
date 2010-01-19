@@ -393,8 +393,6 @@ typedef struct s7_cell {
     
     unsigned char cvalue;
     
-    opcode_t proc_num;
-
     void *c_pointer;
     
     struct {
@@ -448,6 +446,9 @@ typedef struct {
 #endif
 
 
+static s7_pointer *small_ints;             /* permanent numbers for opcode entries in the stack */
+static s7_pointer real_zero, real_one;
+
 struct s7_scheme {  
   s7_cell **heap, **free_heap;
   unsigned int heap_size, free_heap_top;
@@ -465,8 +466,6 @@ struct s7_scheme {
   
   s7_pointer stack;                   /* stack is a vector */
   int stack_size, stack_top, stack_size2;
-  s7_pointer *small_ints;             /* permanent numbers for opcode entries in the stack */
-  s7_pointer real_zero, real_one;
   
   s7_pointer protected_objects;       /* a vector of gc-protected objects */
   int *protected_objects_size, *protected_objects_loc; /* pointers so they're global across threads */
@@ -727,7 +726,7 @@ struct s7_scheme {
   #define VECTOR_REST_ARGS            false
 #endif
 
-#define small_int(Sc, Val)            (Sc)->small_ints[Val]
+#define small_int(Sc, Val)            small_ints[Val]
 
 #define is_input_port(p)              (type(p) == T_INPUT_PORT) 
 #define is_output_port(p)             (type(p) == T_OUTPUT_PORT)
@@ -1589,18 +1588,20 @@ static void pop_stack(s7_scheme *sc)
   sc->code =  vel[0];
   sc->envir = vel[1];
   sc->args =  vel[2];
-  sc->op =    (opcode_t)integer(number(vel[3]));
+  sc->op =    (opcode_t)integer(number(vel[3])); /* changing this to a more direct reference does not speed up pop_stack */
 } 
 
 
-static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer code)
+#define opcode(Op) small_ints[(int)Op]
+
+static void push_stack(s7_scheme *sc, s7_pointer int_op, s7_pointer args, s7_pointer code)
 { 
   s7_pointer *vel;
   vel = (s7_pointer *)(vector_elements(sc->stack) + sc->stack_top);
   vel[0] = code;
   vel[1] = sc->envir;
   vel[2] = args;
-  vel[3] = sc->small_ints[(int)op];
+  vel[3] = int_op;
   sc->stack_top += 4;
 }
 
@@ -1616,31 +1617,6 @@ static void increase_stack_size(s7_scheme *sc)
   sc->stack_size2 = sc->stack_size;
   sc->stack_size = new_size;
 } 
-
-
-static s7_pointer g_stack(s7_scheme *sc, s7_pointer args)
-{
-  #define H_stack "(stack :optional continuation-or-thread) returns a list containing the current stack top (an integer) and the stack itself (a vector).\
-Each stack frame has 4 entries, the function, the current environment, the function arguments, and an op code used \
-internally by the evaluator.  If a continuation is passed, its stack and stack-top are returned."
-
-  if (args != sc->NIL)
-    {
-      if (s7_is_continuation(car(args)))
-	return(make_list_2(sc, s7_make_integer(sc, continuation_stack_top(car(args))), continuation_stack(car(args))));
-
-#if HAVE_PTHREADS
-      if (g_is_thread(sc, args) != sc->F)
-	{
-	  thred *f;
-	  f = (thred *)s7_object_value(car(args));
-	  return(make_list_2(sc, s7_make_integer(sc, f->sc->stack_top), f->sc->stack));
-	}
-#endif	 
-    }
-
-  return(make_list_2(sc, s7_make_integer(sc, sc->stack_top), sc->stack));
-}
 
 
 #if 0
@@ -2557,7 +2533,7 @@ static void check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 	  
 	  if (dynamic_wind_state(x) == T_DWIND_BODY)
 	    {
-	      push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+	      push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
 	      sc->args = sc->NIL;
 	      sc->code = dynamic_wind_out(x);
 	      eval(sc, OP_APPLY);
@@ -2578,7 +2554,7 @@ static void check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
       {
 	s7_pointer x;
 	x = vector_element(continuation_stack(c), i - 3);
-	push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+	push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
 	sc->args = sc->NIL;
 	sc->code = dynamic_wind_in(x);
 	eval(sc, OP_APPLY);
@@ -2606,7 +2582,7 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
 
   sc->code = car(args);
   sc->args = make_list_1(sc, s7_make_continuation(sc));
-  push_stack(sc, OP_APPLY, sc->args, sc->code);
+  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
   return(sc->NIL);
 }
 
@@ -2623,7 +2599,7 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 
   sc->code = car(args);                              /* the lambda form */
   sc->args = make_list_1(sc, s7_make_goto(sc));      /*   the argument to the lambda (the goto = "return" above) */
-  push_stack(sc, OP_APPLY, sc->args, sc->code);      /* apply looks at sc->code to decide what to do (it will see the lambda) */
+  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);      /* apply looks at sc->code to decide what to do (it will see the lambda) */
   
   /* if the lambda body calls the argument as a function, 
    *   it is applied to its arguments, apply notices that it is a goto, and...
@@ -3280,7 +3256,7 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
   s7_pointer x;
   if ((n >= 0) && (n < NUM_SMALL_INTS))
     return(small_int(sc, n));
-  /* there are ca 6300 -1's in s7test (14500 small negative ints) -- if like sc->real_zero (64000), this would gain us .2% overall speed */
+  /* there are ca 6300 -1's in s7test (14500 small negative ints) -- if like real_zero (64000), this would gain us .2% overall speed */
   /*   similarly, between 256 and 512, 8200 or so */
 
   x = new_cell(sc);
@@ -3308,9 +3284,9 @@ s7_pointer s7_make_real(s7_scheme *sc, s7_Double n)
 {
   s7_pointer x;
   if (n == 0.0)
-    return(sc->real_zero);
+    return(real_zero);
   if (n == 1.0)
-    return(sc->real_one);
+    return(real_one);
 
   x = new_cell(sc);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
@@ -4530,7 +4506,6 @@ static bool is_radix_prefix(char prefix)
 	 (prefix == 'o'));
 }
 
-/* TODO: read-hash-extend chr proc */
 
 static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top) 
 {
@@ -5188,7 +5163,7 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
     return(s7_make_real(sc, M_PI));
   if (number_type(x) <= NUM_RATIO)
     return(small_int(sc, 0));
-  return(sc->real_zero);
+  return(real_zero);
 }
 
 
@@ -5502,7 +5477,7 @@ static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
   if (s7_is_real(x))
     return(s7_make_real(sc, tanh(num_to_real(number(x)))));
   if (s7_real_part(x) > 350.0)
-    return(sc->real_one);           /* closer than 0.0 which is what ctanh is about to return! */
+    return(real_one);           /* closer than 0.0 which is what ctanh is about to return! */
   if (s7_real_part(x) < -350.0)
     return(s7_make_real(sc, -1.0)); /* closer than -0.0 which is what ctanh is about to return! */
 
@@ -5655,7 +5630,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	{
 	  if ((s7_is_integer(n)) && (s7_is_integer(pw)))       /* (expt 0 0) -> 1 */
 	    return(s7_make_integer(sc, 1));
-	  return(sc->real_zero);                               /* (expt 0.0 0) -> 0.0 */
+	  return(real_zero);                               /* (expt 0.0 0) -> 0.0 */
 	}
 
       if ((s7_is_real(pw)) && (s7_is_negative(pw)))            /* (expt 0 -1) */
@@ -5663,7 +5638,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 
       if ((s7_is_integer(n)) && (s7_is_integer(pw)))           /* pw != 0, (expt 0 2312) */
 	return(s7_make_integer(sc, 0));
-      return(sc->real_zero);                                   /* (expt 0.0 123123) */
+      return(real_zero);                                   /* (expt 0.0 123123) */
     }
 
   if (s7_is_one(pw))
@@ -5683,7 +5658,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	{
 	  if ((number_type(n) == NUM_INT) || (number_type(n) == NUM_RATIO))
 	    return(small_int(sc, 1));
-	  return(sc->real_one);
+	  return(real_one);
 	}
 
       if (number_type(n) == NUM_INT)
@@ -5761,7 +5736,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
       x = num_to_real(number(n));
       y = num_to_real(number(pw));
       if (y == 0.0)
-	return(sc->real_one);
+	return(real_one);
       if ((x > 0.0) ||
 	  ((y - floor(y)) < 1.0e-16))
 	return(s7_make_real(sc, pow(x, y)));
@@ -6262,7 +6237,6 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_equal "(= z1 ...) returns #t if all its arguments are equal"
-  /* return(compare_numbers(sc, N_EQUAL, args)); */
   int i;
   s7_pointer x;
   s7_num_t n;
@@ -6283,23 +6257,11 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 }
 
 
-typedef enum {N_LESS, N_GREATER, N_LESS_OR_EQUAL, N_GREATER_OR_EQUAL} compare_t;
-
-static s7_pointer compare_numbers(s7_scheme *sc, compare_t op, s7_pointer args)
+static s7_pointer compare_numbers(s7_scheme *sc, s7_pointer args, bool (*comp_func)(s7_num_t a, s7_num_t b),  const char *op_name)
 {
   int i;
   s7_pointer x;
-  bool (*comp_func)(s7_num_t a, s7_num_t b) = NULL;
-  const char *op_name = NULL;
   s7_num_t n;
-
-  switch (op)
-    {
-    case N_LESS:             comp_func = num_lt; op_name = "<";  break;
-    case N_GREATER:          comp_func = num_gt; op_name = ">";  break;
-    case N_LESS_OR_EQUAL:    comp_func = num_le; op_name = "<="; break;
-    case N_GREATER_OR_EQUAL: comp_func = num_ge; op_name = ">="; break;
-    }
   
   for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))
     if (!s7_is_real(car(x)))
@@ -6319,28 +6281,28 @@ static s7_pointer compare_numbers(s7_scheme *sc, compare_t op, s7_pointer args)
 static s7_pointer g_less(s7_scheme *sc, s7_pointer args)
 {
   #define H_less "(< x1 ...) returns #t if its arguments are in increasing order"
-  return(compare_numbers(sc, N_LESS, args));
+  return(compare_numbers(sc, args, num_lt, "<"));
 }
 
 
 static s7_pointer g_greater(s7_scheme *sc, s7_pointer args)
 {
   #define H_greater "(> x1 ...) returns #t if its arguments are in decreasing order"
-  return(compare_numbers(sc, N_GREATER, args));
+  return(compare_numbers(sc, args, num_gt, ">"));
 }
 
 
 static s7_pointer g_less_or_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_less_or_equal "(<= x1 ...) returns #t if its arguments are in increasing order"
-  return(compare_numbers(sc, N_LESS_OR_EQUAL, args));
+  return(compare_numbers(sc, args, num_le, "<="));
 }
 
 
 static s7_pointer g_greater_or_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_greater_or_equal "(>= x1 ...) returns #t if its arguments are in decreasing order"
-  return(compare_numbers(sc, N_GREATER_OR_EQUAL, args));
+  return(compare_numbers(sc, args, num_ge, ">="));
 }
 
 
@@ -7686,7 +7648,7 @@ static s7_pointer g_string_for_each(s7_scheme *sc, s7_pointer args)
   sc->args = s7_cons(sc, make_mutable_integer(sc, 0), 
                s7_cons(sc, s7_make_integer(sc, len), 
                  s7_cons(sc, fargs, cdr(args))));
-  push_stack(sc, OP_STRING_FOR_EACH, sc->args, sc->code);
+  push_stack(sc, opcode(OP_STRING_FOR_EACH), sc->args, sc->code);
   return(sc->UNSPECIFIED);
 }
 
@@ -8421,7 +8383,7 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
 	    return(sc->value);
 	}
       push_input_port(sc, port);
-      push_stack(sc, OP_READ_RETURN_EXPRESSION, port, sc->NIL);
+      push_stack(sc, opcode(OP_READ_RETURN_EXPRESSION), port, sc->NIL);
       eval(sc, OP_READ_INTERNAL);
       sc->longjmp_ok = old_longjmp;
       pop_input_port(sc);
@@ -8450,8 +8412,8 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
     return((*(port_input_function(port)))(sc, S7_READ, port));
   
   push_input_port(sc, port);
-  push_stack(sc, OP_READ_POP_AND_RETURN_EXPRESSION, sc->NIL, sc->NIL); /* this stops the internal read process so we only get one form */
-  push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
+  push_stack(sc, opcode(OP_READ_POP_AND_RETURN_EXPRESSION), sc->NIL, sc->NIL); /* this stops the internal read process so we only get one form */
+  push_stack(sc, opcode(OP_READ_INTERNAL), sc->NIL, sc->NIL);
   return(port);
 }
 
@@ -8497,7 +8459,7 @@ static void run_load_hook(s7_scheme *sc, const char *filename)
   load_hook = s7_symbol_value(sc, s7_make_symbol(sc, "*load-hook*"));
   if (is_procedure(load_hook))
     {
-      push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+      push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
       sc->args = make_list_1(sc, s7_make_string(sc, filename));
       sc->code = load_hook;
       eval(sc, OP_APPLY);
@@ -8529,7 +8491,7 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
   
   if (!sc->longjmp_ok)
     {
-      push_stack(sc, OP_LOAD_RETURN_IF_EOF, port, sc->NIL);
+      push_stack(sc, opcode(OP_LOAD_RETURN_IF_EOF), port, sc->NIL);
       
       old_longjmp = sc->longjmp_ok;
       if (!sc->longjmp_ok)
@@ -8546,7 +8508,7 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
   else
     {
       /* caller here is assuming the load will be complete before this function returns */
-      push_stack(sc, OP_LOAD_RETURN_IF_EOF, sc->args, sc->code);
+      push_stack(sc, opcode(OP_LOAD_RETURN_IF_EOF), sc->args, sc->code);
       eval(sc, OP_READ_INTERNAL);
       pop_input_port(sc);
       s7_close_input_port(sc, port);
@@ -8591,8 +8553,8 @@ defaults to the global environment; to load into the current environment instead
     }
   else sc->envir = s7_global_environment(sc);
 
-  push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, sc->NIL, sc->NIL);  /* was pushing args and code, but I don't think they're used later */
-  push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
+  push_stack(sc, opcode(OP_LOAD_CLOSE_AND_POP_IF_EOF), sc->NIL, sc->NIL);  /* was pushing args and code, but I don't think they're used later */
+  push_stack(sc, opcode(OP_READ_INTERNAL), sc->NIL, sc->NIL);
   
   return(sc->UNSPECIFIED);
 }
@@ -8628,7 +8590,7 @@ static s7_pointer eval_string_1(s7_scheme *sc, const char *str)
 
   port = s7_open_input_string(sc, str);
   push_input_port(sc, port);
-  push_stack(sc, OP_EVAL_STRING, sc->args, sc->code);
+  push_stack(sc, opcode(OP_EVAL_STRING), sc->args, sc->code);
   eval(sc, OP_READ_INTERNAL);
   pop_input_port(sc);
   s7_close_input_port(sc, port);
@@ -8682,7 +8644,7 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
   stack_reset(sc); 
   port = s7_open_input_string(sc, str);
   push_input_port(sc, port);
-  push_stack(sc, OP_EVAL_STRING, sc->NIL, sc->NIL);
+  push_stack(sc, opcode(OP_EVAL_STRING), sc->NIL, sc->NIL);
   
   old_longjmp = sc->longjmp_ok;
   if (!sc->longjmp_ok)
@@ -8703,7 +8665,7 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 
 static s7_pointer call_with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
 {
-  push_stack(sc, OP_UNWIND_INPUT, sc->input_port, port);
+  push_stack(sc, opcode(OP_UNWIND_INPUT), sc->input_port, port);
   sc->code = cadr(args);
   sc->args = make_list_1(sc, port);
   eval(sc, OP_APPLY);
@@ -8752,7 +8714,7 @@ static s7_pointer with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
   old_input_port = sc->input_port;
   sc->input_port = port;
   
-  push_stack(sc, OP_UNWIND_INPUT, old_input_port, port);
+  push_stack(sc, opcode(OP_UNWIND_INPUT), old_input_port, port);
   sc->code = cadr(args);
   sc->args = sc->NIL;
   eval(sc, OP_APPLY);
@@ -9467,7 +9429,7 @@ static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "call-with-output-string", 1, car(args), "a procedure"));
   
   port = s7_open_output_string(sc);
-  push_stack(sc, OP_UNWIND_OUTPUT, sc->F, port);
+  push_stack(sc, opcode(OP_UNWIND_OUTPUT), sc->F, port);
   sc->code = car(args);
   sc->args = make_list_1(sc, port);
   eval(sc, OP_APPLY);
@@ -9488,7 +9450,7 @@ static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "call-with-output-file", 2, cadr(args), "a procedure"));
   
   port = s7_open_output_file(sc, s7_string(car(args)), "w");
-  push_stack(sc, OP_UNWIND_OUTPUT, sc->F, port);
+  push_stack(sc, opcode(OP_UNWIND_OUTPUT), sc->F, port);
   sc->code = cadr(args);
   sc->args = make_list_1(sc, port);
   eval(sc, OP_APPLY);
@@ -9512,7 +9474,7 @@ static s7_pointer g_with_output_to_string(s7_scheme *sc, s7_pointer args)
   
   old_output_port = sc->output_port;
   sc->output_port = s7_open_output_string(sc);
-  push_stack(sc, OP_UNWIND_OUTPUT, old_output_port, sc->output_port);
+  push_stack(sc, opcode(OP_UNWIND_OUTPUT), old_output_port, sc->output_port);
   sc->code = car(args);
   sc->args = sc->NIL;
   eval(sc, OP_APPLY);
@@ -9537,7 +9499,7 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
   
   old_output_port = sc->output_port;
   sc->output_port = s7_open_output_file(sc, s7_string(car(args)), "w");
-  push_stack(sc, OP_UNWIND_OUTPUT, old_output_port, sc->output_port);
+  push_stack(sc, opcode(OP_UNWIND_OUTPUT), old_output_port, sc->output_port);
   sc->code = cadr(args);
   sc->args = sc->NIL;
   eval(sc, OP_APPLY);
@@ -11258,7 +11220,7 @@ static s7_pointer g_vector_for_each(s7_scheme *sc, s7_pointer args)
   sc->args = s7_cons(sc, make_mutable_integer(sc, 0), 
                s7_cons(sc, s7_make_integer(sc, len), 
                  s7_cons(sc, fargs, cdr(args))));
-  push_stack(sc, OP_VECTOR_FOR_EACH, sc->args, sc->code);
+  push_stack(sc, opcode(OP_VECTOR_FOR_EACH), sc->args, sc->code);
   return(sc->UNSPECIFIED);
 }
 
@@ -11296,7 +11258,7 @@ static s7_pointer g_hash_table_for_each(s7_scheme *sc, s7_pointer args)
   sc->args = s7_cons(sc, make_mutable_integer(sc, 0), 
                s7_cons(sc, s7_make_integer(sc, len), 
                  s7_cons(sc, fargs, cdr(args))));
-  push_stack(sc, OP_HASH_TABLE_FOR_EACH, sc->args, sc->code);
+  push_stack(sc, opcode(OP_HASH_TABLE_FOR_EACH), sc->args, sc->code);
   return(sc->UNSPECIFIED);
 }
 
@@ -11342,7 +11304,7 @@ static s7_pointer g_vector_map(s7_scheme *sc, s7_pointer args)
                s7_cons(sc, make_mutable_integer(sc, 0), 
                  s7_cons(sc, s7_make_integer(sc, len), 
 		   s7_cons(sc, fargs, cdr(args)))));
-  push_stack(sc, OP_VECTOR_MAP0, sc->args, sc->code);
+  push_stack(sc, opcode(OP_VECTOR_MAP0), sc->args, sc->code);
   return(sc->UNSPECIFIED);
 }
 
@@ -11361,7 +11323,7 @@ static s7_pointer g_vector_map(s7_scheme *sc, s7_pointer args)
     cadr(compare_proc_args) = (*(s7_pointer *)v2);
 
     start = compare_sc->stack_top; /* see note below */
-    push_stack(compare_sc, OP_EVAL_DONE, compare_sc->args, compare_sc->code); 
+    push_stack(compare_sc, opcode(OP_EVAL_DONE), compare_sc->args, compare_sc->code); 
     compare_sc->args = compare_proc_args;
     compare_sc->code = compare_proc;
     eval(compare_sc, OP_APPLY);
@@ -11405,7 +11367,7 @@ If its first argument is a list, the list is copied (despite the '!')."
      *   an error?
      */
 
-    push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+    push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
     sc->args = compare_proc_args;
     sc->code = compare_proc;
     eval(sc, OP_APPLY);
@@ -12264,7 +12226,7 @@ static s7_pointer g_object_for_each(s7_scheme *sc, s7_pointer args)
   sc->args = s7_cons(sc, make_mutable_integer(sc, 0), 
                s7_cons(sc, s7_make_integer(sc, len), 
                  s7_cons(sc, fargs, cdr(args))));
-  push_stack(sc, OP_OBJECT_FOR_EACH, sc->args, sc->code);
+  push_stack(sc, opcode(OP_OBJECT_FOR_EACH), sc->args, sc->code);
   return(sc->UNSPECIFIED);
 }
 
@@ -12362,7 +12324,7 @@ static s7_pointer pws_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
   if (f->getter != NULL)
     return((*(f->getter))(sc, args));
 
-  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+  push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
   sc->args = args;
   sc->code = f->scheme_getter;
   eval(sc, OP_APPLY);
@@ -12378,7 +12340,7 @@ static s7_pointer pws_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
   if (f->setter != NULL)
     return((*(f->setter))(sc, args));
 
-  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+  push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
   sc->args = args;
   sc->code = f->scheme_setter;
   eval(sc, OP_APPLY);
@@ -12942,8 +12904,8 @@ static void encapsulate(s7_scheme *sc, s7_pointer sym)
 	  y = s7_find_symbol_in_environment(sc, e->envir, sym, true);
 	  if (y != sc->NIL)
 	    e->bindings = s7_cons(sc, 
-                            s7_cons(sc, sym, s7_copy(sc, symbol_value(y))), 
-                            e->bindings); 
+				  s7_cons(sc, sym, s7_copy(sc, symbol_value(y))), 
+				  e->bindings); 
 
 	  /* a C-side procedure-with-setter becomes a no-op here -- accessing the underlying value is too tricky */
 	}
@@ -13534,7 +13496,7 @@ static void trace_apply(s7_scheme *sc)
     {
       int k, len;
       char *tmp1, *tmp2, *str;
-      push_stack(sc, OP_TRACE_RETURN, sc->code, sc->NIL);
+      push_stack(sc, opcode(OP_TRACE_RETURN), sc->code, sc->NIL);
       tmp1 = s7_object_to_c_string(sc, sc->code);
       tmp2 = s7_object_to_c_string(sc, sc->args);
       len = safe_strlen(tmp2);
@@ -13576,7 +13538,7 @@ static void trace_apply(s7_scheme *sc)
 	    (is_procedure(symbol_value(trace_hook_binding))))
 	  {
 	    trace_hook = symbol_value(trace_hook_binding);
-	    push_stack(sc, OP_TRACE_HOOK_QUIT, sc->args, sc->code); /* restore current state after dealing with the trace hook func */
+	    push_stack(sc, opcode(OP_TRACE_HOOK_QUIT), sc->args, sc->code); /* restore current state after dealing with the trace hook func */
 	    sc->args = make_list_2(sc, sc->code, sc->args);
 	    sc->code = trace_hook;
 	  }
@@ -13783,11 +13745,11 @@ each a function of no arguments, guaranteeing that finish is called even if body
   dynamic_wind_out(p) = caddr(args);
   set_type(p, T_DYNAMIC_WIND | T_ATOM | T_DWIND_INIT | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
 
-  push_stack(sc, OP_DYNAMIC_WIND, sc->NIL, p);          /* args will be the saved result, code = s7_dynwind_t obj */
+  push_stack(sc, opcode(OP_DYNAMIC_WIND), sc->NIL, p);          /* args will be the saved result, code = s7_dynwind_t obj */
   
   sc->args = sc->NIL;
   sc->code = car(args);
-  push_stack(sc, OP_APPLY, sc->args, sc->code);
+  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
   return(sc->F);
 }
 
@@ -13808,10 +13770,10 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   catch_handler(p) = caddr(args);
   set_type(p, T_CATCH | T_ATOM | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
 
-  push_stack(sc, OP_CATCH, sc->NIL, p);
+  push_stack(sc, opcode(OP_CATCH), sc->NIL, p);
   sc->args = sc->NIL;
   sc->code = cadr(args);
-  push_stack(sc, OP_APPLY, sc->args, sc->code);
+  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
   return(sc->F);
 }
 
@@ -13955,7 +13917,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  x = vector_element(sc->stack, i - 3);
 	  if (dynamic_wind_state(x) == T_DWIND_BODY)
 	    {
-	      push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+	      push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
 	      sc->args = sc->NIL;
 	      sc->code = dynamic_wind_out(x);
 	      eval(sc, OP_APPLY);
@@ -14022,7 +13984,7 @@ GOT_CATCH:
 	  set_symbol_value(error_hook_binding, sc->NIL);
 	  /* if the *error-hook* function triggers an error, we had better not have *error-hook* still set! */
 
-	  push_stack(sc, OP_ERROR_HOOK_QUIT, sc->NIL, error_hook); /* restore *error-hook* upon successful evaluation */
+	  push_stack(sc, opcode(OP_ERROR_HOOK_QUIT), sc->NIL, error_hook); /* restore *error-hook* upon successful evaluation */
 	  sc->args = make_list_2(sc, type, info);
 	  sc->code = error_hook;
 	  sc->op = OP_APPLY;
@@ -14407,7 +14369,7 @@ static s7_pointer g_quit(s7_scheme *sc, s7_pointer args)
 {
   #define H_quit "(quit) returns from the evaluator"
 
-  push_stack(sc, OP_QUIT, sc->NIL, sc->NIL);
+  push_stack(sc, opcode(OP_QUIT), sc->NIL, sc->NIL);
   return(sc->NIL);
 }
 
@@ -14415,7 +14377,7 @@ static s7_pointer g_quit(s7_scheme *sc, s7_pointer args)
 void s7_quit(s7_scheme *sc)
 {
   stack_reset(sc);
-  push_stack(sc, OP_QUIT, sc->NIL, sc->NIL);
+  push_stack(sc, opcode(OP_QUIT), sc->NIL, sc->NIL);
 }
 
 
@@ -14451,7 +14413,7 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
       if (!is_proper_list(sc, sc->args))        /* (apply + #f) etc */
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, s7_make_string(sc, "apply's last argument should be a list")));
     }
-  push_stack(sc, OP_APPLY, sc->args, sc->code);
+  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
   return(sc->NIL);
 }
 
@@ -14475,7 +14437,7 @@ pass (global-environment):\n\
       sc->envir = cadr(args);
     }
   sc->code = car(args);
-  push_stack(sc, OP_EVAL, sc->args, sc->code);
+  push_stack(sc, opcode(OP_EVAL), sc->args, sc->code);
   return(sc->NIL);
 }
 
@@ -14515,7 +14477,7 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
       return(sc->value);
     }
 
-  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); /* this saves the current evaluation and will eventually finish this (possibly) nested call */
+  push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); /* this saves the current evaluation and will eventually finish this (possibly) nested call */
   sc->args = args; 
   sc->code = func; 
   eval(sc, OP_APPLY);
@@ -14577,13 +14539,13 @@ static s7_pointer g_list_for_each(s7_scheme *sc, s7_pointer args)
       for (y = cdr(sc->x); y != sc->NIL; y = cdr(y))
 	if (car(y) != sc->NIL)
 	  return(eval_error(sc, "for-each args are not the same length", sc->x));
-      push_stack(sc, OP_APPLY, sc->args, sc->code);
+      push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
       return(sc->NIL);
     }
   
   /* set up for repeated call walking down the lists of args */
-  push_stack(sc, OP_LIST_FOR_EACH, sc->x, sc->code);
-  push_stack(sc, OP_APPLY, sc->args, sc->code);
+  push_stack(sc, opcode(OP_LIST_FOR_EACH), sc->x, sc->code);
+  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
   return(sc->NIL);
 }
 
@@ -14627,8 +14589,8 @@ static s7_pointer g_list_map(s7_scheme *sc, s7_pointer args)
   sc->x = safe_reverse_in_place(sc, sc->x);
   
   /* set up for repeated call walking down the lists of args, values list is cdr, current args is car */
-  push_stack(sc, OP_LIST_MAP, make_list_1(sc, sc->x), sc->code);
-  push_stack(sc, OP_APPLY, sc->args, sc->code);
+  push_stack(sc, opcode(OP_LIST_MAP), make_list_1(sc, sc->x), sc->code);
+  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
   return(sc->NIL);
 }
 
@@ -15117,7 +15079,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  return(sc->EOF_OBJECT);
 	  
 	case TOKEN_VECTOR:  /* already read #( */
-	  push_stack(sc, OP_READ_VECTOR, sc->NIL, sc->NIL);
+	  push_stack(sc, opcode(OP_READ_VECTOR), sc->NIL, sc->NIL);
 	  /* fall through */
 	  
 	case TOKEN_LEFT_PAREN:
@@ -15136,11 +15098,11 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  if (sc->tok == TOKEN_EOF)
 	    return(missing_close_paren_error(sc));
 
-	  push_stack(sc, OP_READ_LIST, sc->NIL, sc->NIL);
+	  push_stack(sc, opcode(OP_READ_LIST), sc->NIL, sc->NIL);
 	  break;
 	  
 	case TOKEN_QUOTE:
-	  push_stack(sc, OP_READ_QUOTE, sc->NIL, sc->NIL);
+	  push_stack(sc, opcode(OP_READ_QUOTE), sc->NIL, sc->NIL);
 	  sc->tok = token(sc);
 	  break;
 	  
@@ -15148,19 +15110,19 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  sc->tok = token(sc);
 	  if (sc->tok == TOKEN_VECTOR) 
 	    {
-	      push_stack(sc, OP_READ_QUASIQUOTE_VECTOR, sc->NIL, sc->NIL);
+	      push_stack(sc, opcode(OP_READ_QUASIQUOTE_VECTOR), sc->NIL, sc->NIL);
 	      sc->tok= TOKEN_LEFT_PAREN;
 	    } 
-	  else push_stack(sc, OP_READ_QUASIQUOTE, sc->NIL, sc->NIL);
+	  else push_stack(sc, opcode(OP_READ_QUASIQUOTE), sc->NIL, sc->NIL);
 	  break;
 	  
 	case TOKEN_COMMA:
-	  push_stack(sc, OP_READ_UNQUOTE, sc->NIL, sc->NIL);
+	  push_stack(sc, opcode(OP_READ_UNQUOTE), sc->NIL, sc->NIL);
 	  sc->tok = token(sc);
 	  break;
 	  
 	case TOKEN_AT_MARK:
-	  push_stack(sc, OP_READ_UNQUOTE_SPLICING, sc->NIL, sc->NIL);
+	  push_stack(sc, opcode(OP_READ_UNQUOTE_SPLICING), sc->NIL, sc->NIL);
 	  sc->tok = token(sc);
 	  break;
 	  
@@ -15317,8 +15279,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LOAD_RETURN_IF_EOF:  /* loop here until eof (via push stack below) */
       if (sc->tok != TOKEN_EOF)
 	{
-	  push_stack(sc, OP_LOAD_RETURN_IF_EOF, sc->NIL, sc->NIL);
-	  push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
+	  push_stack(sc, opcode(OP_LOAD_RETURN_IF_EOF), sc->NIL, sc->NIL);
+	  push_stack(sc, opcode(OP_READ_INTERNAL), sc->NIL, sc->NIL);
 	  sc->code = sc->value;
 	  goto EVAL;             /* we read an expression, now evaluate it, and return to read the next */
 	}
@@ -15331,8 +15293,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LOAD_CLOSE_AND_POP_IF_EOF:
       if (sc->tok != TOKEN_EOF)
 	{
-	  push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, sc->NIL, sc->NIL); /* was push args, code */
-	  push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
+	  push_stack(sc, opcode(OP_LOAD_CLOSE_AND_POP_IF_EOF), sc->NIL, sc->NIL); /* was push args, code */
+	  push_stack(sc, opcode(OP_READ_INTERNAL), sc->NIL, sc->NIL);
 	  sc->code = sc->value;
 	  goto EVAL;             /* we read an expression, now evaluate it, and return to read the next */
 	}
@@ -15361,12 +15323,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if ((c != EOF) && (c != 0))
 	    {
 	      backchar(sc, c, sc->input_port);
-	      push_stack(sc, OP_EVAL_STRING, sc->NIL, sc->value);
-	      push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
+	      push_stack(sc, opcode(OP_EVAL_STRING), sc->NIL, sc->value);
+	      push_stack(sc, opcode(OP_READ_INTERNAL), sc->NIL, sc->NIL);
 	    }
-	  else push_stack(sc, OP_EVAL_STRING_DONE, sc->NIL, sc->value);
+	  else push_stack(sc, opcode(OP_EVAL_STRING_DONE), sc->NIL, sc->value);
 	}
-      else push_stack(sc, OP_EVAL_STRING_DONE, sc->NIL, sc->value);
+      else push_stack(sc, opcode(OP_EVAL_STRING_DONE), sc->NIL, sc->value);
       sc->code = sc->value;
       goto EVAL;
       
@@ -15396,7 +15358,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      return(eval_error(sc, "for-each args are not the same length", sc->x));
 	  goto APPLY;
 	}
-      push_stack(sc, OP_LIST_FOR_EACH, sc->x, sc->code);
+      push_stack(sc, opcode(OP_LIST_FOR_EACH), sc->x, sc->code);
       goto APPLY;
       
       
@@ -15428,7 +15390,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  car(sc->y) = cdar(sc->y);
 	}
       sc->args = safe_reverse_in_place(sc, sc->args);
-      push_stack(sc, OP_LIST_MAP, sc->x, sc->code);
+      push_stack(sc, opcode(OP_LIST_MAP), sc->x, sc->code);
       goto APPLY;
 
 
@@ -15448,7 +15410,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    car(x) = vector_element(car(y), loc);   /* make func's arglist */
 
 	  integer(number(car(sc->args))) = loc + 1;
-	  push_stack(sc, sc->op, sc->args, sc->code);
+	  push_stack(sc, opcode(sc->op), sc->args, sc->code);
 	  sc->args = fargs;
 	  goto APPLY;
 	}
@@ -15489,7 +15451,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  for (x = fargs, y = vargs; x != sc->NIL; x = cdr(x), y = cdr(y))
 	    car(x) = vector_element(car(y), loc);
 
-	  push_stack(sc, OP_VECTOR_MAP1, sc->args, sc->code);
+	  push_stack(sc, opcode(OP_VECTOR_MAP1), sc->args, sc->code);
 	  sc->args = fargs;
 	  goto APPLY;
 	}
@@ -15514,7 +15476,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    car(x) = s7_make_character(sc, string_value(car(y))[loc]);
 
 	  integer(number(car(sc->args))) = loc + 1;
-	  push_stack(sc, OP_STRING_FOR_EACH, sc->args, sc->code);
+	  push_stack(sc, opcode(OP_STRING_FOR_EACH), sc->args, sc->code);
 	  sc->args = fargs;
 	  goto APPLY;
 	}
@@ -15540,7 +15502,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    car(x) = (*(object_types[c_object_type(car(y))].apply))(sc, car(y), sc->x);
 
 	  integer(number(car(sc->args))) = loc + 1;
-	  push_stack(sc, OP_OBJECT_FOR_EACH, sc->args, sc->code);
+	  push_stack(sc, opcode(OP_OBJECT_FOR_EACH), sc->args, sc->code);
 	  sc->args = fargs;
 	  goto APPLY;
 	}
@@ -15599,7 +15561,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		return(eval_error(sc, "do: variable info has extra stuff after the increment: ~A", sc->code));
 	    }
 
-	  push_stack(sc, OP_DO_INIT, sc->args, cdr(sc->code));
+	  push_stack(sc, opcode(OP_DO_INIT), sc->args, cdr(sc->code));
 	  sc->code = cadar(sc->code);
 	  sc->args = sc->NIL;
 	  goto EVAL;
@@ -15641,7 +15603,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *    code = body
        */
       
-      push_stack(sc, OP_DO_END1, sc->args, sc->code);
+      push_stack(sc, opcode(OP_DO_END1), sc->args, sc->code);
       /* evaluate the endtest */
       sc->code = cadr(sc->args);
       sc->args = sc->NIL;
@@ -15659,7 +15621,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       
       /* evaluate the body and step vars, etc */
-      push_stack(sc, OP_DO_STEP0, sc->args, sc->code);
+      push_stack(sc, opcode(OP_DO_STEP0), sc->args, sc->code);
       /* sc->code is ready to go */
       sc->args = sc->NIL;
       goto BEGIN;
@@ -15672,7 +15634,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (car(sc->args) == sc->NIL)
 	goto DO_END0;
       
-      push_stack(sc, OP_DO_END0, sc->args, sc->code);
+      push_stack(sc, opcode(OP_DO_END0), sc->args, sc->code);
       sc->code = s7_cons(sc, sc->NIL, car(sc->args));   /* car = list of newly incremented values, cdr = list of slots */
       sc->args = car(sc->args);
       
@@ -15720,7 +15682,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc); 
 	  goto DO_END0;
 	}
-      push_stack(sc, OP_DO_STEP2, sc->args, sc->code);
+      push_stack(sc, opcode(OP_DO_STEP2), sc->args, sc->code);
       /* here sc->args is a list like (((i . 0) (+ i 1)) ...)
        *   so sc->code becomes (+ i 1) in this case 
        */
@@ -15743,8 +15705,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_WITH_ENV0:
       /* (with-environment env . body) */
-      push_stack(sc, OP_WITH_ENV1, sc->envir, sc->NIL);  /* save current env */
-      push_stack(sc, OP_WITH_ENV2, sc->NIL, sc->code);
+      push_stack(sc, opcode(OP_WITH_ENV1), sc->envir, sc->NIL);  /* save current env */
+      push_stack(sc, opcode(OP_WITH_ENV2), sc->NIL, sc->code);
       sc->args = sc->NIL;
       sc->code = car(sc->code);                          /* eval env arg */
       goto EVAL;
@@ -15769,7 +15731,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       
       if (cdr(sc->code) != sc->NIL) 
-	push_stack(sc, OP_BEGIN, sc->NIL, cdr(sc->code));
+	push_stack(sc, opcode(OP_BEGIN), sc->NIL, cdr(sc->code));
       
       sc->code = car(sc->code);
       sc->cur_code = sc->code;
@@ -15788,7 +15750,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->op = (opcode_t)syntax_opcode(sc->x);
 	      goto START;
 	    } 
-	  push_stack(sc, OP_EVAL_ARGS0, sc->NIL, sc->code);
+	  push_stack(sc, opcode(OP_EVAL_ARGS0), sc->NIL, sc->code);
 	  sc->code = sc->x;
 	  goto EVAL;
 	} 
@@ -15818,7 +15780,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* macro expansion */
 	  if (!(is_c_macro(sc->value)))
 	    {
-	      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
+	      push_stack(sc, opcode(OP_EVAL_MACRO), sc->NIL, sc->NIL);
 	      /* code is the macro invocation: (mac-name ...), args is nil, value is the macro code bound to mac-name */
 	      sc->args = make_list_1(sc, sc->code); 
 	    }
@@ -15900,7 +15862,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  if (typ == T_PAIR)
 	    {
-	      push_stack(sc, OP_EVAL_ARGS1, sc->args, cdr(sc->code));
+	      push_stack(sc, opcode(OP_EVAL_ARGS1), sc->args, cdr(sc->code));
 	      sc->code = car_code;
 	      sc->args = sc->NIL;
 	      goto EVAL;
@@ -16260,7 +16222,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->z = vector_element(sc->stack, i - 3);
 		    if (dynamic_wind_state(sc->z) == T_DWIND_BODY)
 		      {
-			push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); 
+			push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
 			sc->args = sc->NIL;
 			sc->code = dynamic_wind_out(sc->z);
 			eval(sc, OP_APPLY);
@@ -16404,7 +16366,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_DEFINE_CONSTANT0:
-      push_stack(sc, OP_DEFINE_CONSTANT1, sc->NIL, sc->code);
+      push_stack(sc, opcode(OP_DEFINE_CONSTANT1), sc->NIL, sc->code);
 
       
     case OP_DEFINE_STAR:
@@ -16437,7 +16399,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (s7_is_immutable(sc->x))                                           /* (define pi 3) or (define (pi a) a) */
 	return(eval_error(sc, "define: ~S is immutable", sc->x));
       
-      push_stack(sc, OP_DEFINE1, sc->NIL, sc->x);
+      push_stack(sc, opcode(OP_DEFINE1), sc->NIL, sc->x);
       goto EVAL;
       
       
@@ -16509,7 +16471,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if (is_pair(caar(sc->code)))
 	    {
-	      push_stack(sc, OP_SET2, cdar(sc->code), cdr(sc->code));
+	      push_stack(sc, opcode(OP_SET2), cdar(sc->code), cdr(sc->code));
 	      sc->code = caar(sc->code);
 	      goto EVAL;
 	    }
@@ -16556,7 +16518,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (!s7_is_symbol(car(sc->code)))                  /* (set! 12345 1) */
 	    return(eval_error(sc, "set! can't change ~S", car(sc->code)));
 	  
-	  push_stack(sc, OP_SET1, sc->NIL, car(sc->code));
+	  push_stack(sc, opcode(OP_SET1), sc->NIL, car(sc->code));
 	  sc->code = cadr(sc->code);
 	}
       goto EVAL;
@@ -16592,7 +16554,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (cdddr(sc->code) != sc->NIL))                     /* (if 1 2 3 4) */
 	return(eval_error(sc, "too many clauses for if: ~A", sc->code));
       
-      push_stack(sc, OP_IF1, sc->NIL, cdr(sc->code));
+      push_stack(sc, opcode(OP_IF1), sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
       
@@ -16640,7 +16602,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (cddar(sc->code) != sc->NIL)       /* (let ((x 1 2 3)) ...) */
 	    return(eval_error(sc, "let syntax error (more than one value?): ~A", car(sc->code)));
 
-	  push_stack(sc, OP_LET1, sc->args, cdr(sc->code));
+	  push_stack(sc, opcode(OP_LET1), sc->args, cdr(sc->code));
 	  sc->code = cadar(sc->code);
 	  sc->args = sc->NIL;
 	  goto EVAL;
@@ -16704,7 +16666,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (!is_pair(cdaar(sc->code))))            /* (let* ((x . 1)) ...) */
 	return(eval_error(sc, "let* variable list syntax error: ~A", sc->code));
       
-      push_stack(sc, OP_LET_STAR1, cdr(sc->code), car(sc->code));
+      push_stack(sc, opcode(OP_LET_STAR1), cdr(sc->code), car(sc->code));
       sc->code = cadaar(sc->code);
       goto EVAL;
       
@@ -16737,7 +16699,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = cdr(sc->code);
       if (is_pair(sc->code)) 
 	{ 
-	  push_stack(sc, OP_LET_STAR1, sc->args, sc->code);
+	  push_stack(sc, opcode(OP_LET_STAR1), sc->args, sc->code);
 	  sc->code = cadar(sc->code);
 	  sc->args = sc->NIL;
 	  goto EVAL;
@@ -16792,7 +16754,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (cddar(sc->code) != sc->NIL)       /* (letrec ((x 1 2 3)) ...) */
 	    return(eval_error(sc, "letrec syntax error (more than one value?): ~A", car(sc->code)));
 
-	  push_stack(sc, OP_LETREC1, sc->args, cdr(sc->code));
+	  push_stack(sc, opcode(OP_LETREC1), sc->args, cdr(sc->code));
 	  sc->code = cadar(sc->code);
 	  sc->args = sc->NIL;
 	  goto EVAL;
@@ -16818,7 +16780,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	if (!is_pair(car(sc->x)))    /* (cond 1) or (cond (#t 1) 3) */
 	  return(eval_error(sc, "every clause in cond must be a list: ~A", car(sc->x)));
 
-      push_stack(sc, OP_COND1, sc->NIL, sc->code);
+      push_stack(sc, opcode(OP_COND1), sc->NIL, sc->code);
       sc->code = caar(sc->code);
       goto EVAL;
       
@@ -16856,7 +16818,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 	} 
 	  
-      push_stack(sc, OP_COND1, sc->NIL, sc->code);
+      push_stack(sc, opcode(OP_COND1), sc->NIL, sc->code);
       sc->code = caar(sc->code);
       goto EVAL;
       
@@ -16870,7 +16832,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       if (!is_pair(sc->code))
 	return(eval_error(sc, "and: syntax error: ~A", sc->code));
-      push_stack(sc, OP_AND1, sc->NIL, cdr(sc->code));
+      push_stack(sc, opcode(OP_AND1), sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
       
@@ -16886,7 +16848,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "and: syntax error: ~A", sc->code));
 
       if (cdr(sc->code) != sc->NIL)
-	push_stack(sc, OP_AND1, sc->NIL, cdr(sc->code));
+	push_stack(sc, opcode(OP_AND1), sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
       
@@ -16900,7 +16862,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       if (!is_pair(sc->code))
 	return(eval_error(sc, "or: syntax error: ~A", sc->code));
-      push_stack(sc, OP_OR1, sc->NIL, cdr(sc->code));
+      push_stack(sc, opcode(OP_OR1), sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
       
@@ -16916,7 +16878,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "and: syntax error: ~A", sc->code));
 
       if (cdr(sc->code) != sc->NIL)
-	push_stack(sc, OP_OR1, sc->NIL, cdr(sc->code));
+	push_stack(sc, opcode(OP_OR1), sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
       
@@ -16949,7 +16911,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!s7_is_symbol(sc->x)) 
 	return(eval_error(sc, "~S: variable is not a symbol", sc->x));
 
-      push_stack(sc, OP_MACRO1, sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
+      push_stack(sc, opcode(OP_MACRO1), sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
       goto EVAL;
       
       
@@ -17049,7 +17011,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *                        (cons (quote +) (cons a (cons b (quote ()))))) 
        *                      (cdr defmac-21)))
        */
-      push_stack(sc, OP_MACRO1, sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
+      push_stack(sc, opcode(OP_MACRO1), sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
       goto EVAL;
 
 
@@ -17063,7 +17025,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_DEFINE_EXPANSION:
       /* read-time macros, suggested by Rick */
-      push_stack(sc, OP_EXPANSION, sc->NIL, sc->NIL);
+      push_stack(sc, opcode(OP_EXPANSION), sc->NIL, sc->NIL);
       /* drop into define-macro */
 
 
@@ -17104,7 +17066,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   sc->x: hi
        *   sc->code: (lambda (defmac-22) (apply (lambda (a b) (cons (quote +) (cons a (cons b (quote ()))))) (cdr defmac-22)))
        */
-      push_stack(sc, OP_MACRO1, sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
+      push_stack(sc, opcode(OP_MACRO1), sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
       goto EVAL;
       
       
@@ -17114,7 +17076,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (!is_pair(cadr (sc->code)))) 
 	return(eval_error(sc, "syntax error in case: ~A", sc->code));
       
-      push_stack(sc, OP_CASE1, sc->NIL, cdr(sc->code));
+      push_stack(sc, opcode(OP_CASE1), sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
       
@@ -17151,7 +17113,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->code = cdar(sc->x);
 	      goto BEGIN;
 	    } 
-	  push_stack(sc, OP_CASE2, sc->NIL, cdar(sc->x));
+	  push_stack(sc, opcode(OP_CASE2), sc->NIL, cdar(sc->x));
 	  sc->code = caar(sc->x);
 	  goto EVAL;
 	} 
@@ -17204,7 +17166,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (dynamic_wind_state(sc->code) == T_DWIND_INIT)
 	{
 	  dynamic_wind_set_state(sc->code, T_DWIND_BODY);
-	  push_stack(sc, OP_DYNAMIC_WIND, sc->NIL, sc->code);
+	  push_stack(sc, opcode(OP_DYNAMIC_WIND), sc->NIL, sc->code);
 	  sc->args = sc->NIL;
 	  sc->code = dynamic_wind_body(sc->code);
 	  goto APPLY;
@@ -17214,7 +17176,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (dynamic_wind_state(sc->code) == T_DWIND_BODY)
 	    {
 	      dynamic_wind_set_state(sc->code, T_DWIND_FINISH);
-	      push_stack(sc, OP_DYNAMIC_WIND, sc->value, sc->code);
+	      push_stack(sc, opcode(OP_DYNAMIC_WIND), sc->value, sc->code);
 	      sc->args = sc->NIL;
 	      sc->code = dynamic_wind_out(sc->code);
 	      goto APPLY;
@@ -17317,7 +17279,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 
 	case TOKEN_DOT:
-	  push_stack(sc, OP_READ_DOT, sc->args, sc->NIL);
+	  push_stack(sc, opcode(OP_READ_DOT), sc->args, sc->NIL);
 	  sc->tok = token(sc);
 	  sc->value = read_expression(sc);
 	  break;
@@ -17329,7 +17291,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  return(missing_close_paren_error(sc));
 
 	default:
-	  push_stack(sc, OP_READ_LIST, sc->args, sc->NIL);
+	  push_stack(sc, opcode(OP_READ_LIST), sc->args, sc->NIL);
 	  sc->value = read_expression(sc);
 	  break;
 	}
@@ -19688,7 +19650,7 @@ static s7_pointer big_angle(s7_scheme *sc, s7_pointer args)
       if (c_object_type(p) == big_real_tag)
 	{
 	  if (mpfr_cmp_ui(S7_BIG_REAL(p), 0) >= 0)
-	    return(sc->real_zero);
+	    return(real_zero);
 	  return(big_pi(sc));
 	}
 
@@ -20049,7 +20011,7 @@ static s7_pointer big_trig(s7_scheme *sc, s7_pointer args, s7_function g_trig,
 	  if (tan_case == TRIG_TANH_CHECK)
 	    {
 	      if ((MPC_INEX_RE(mpc_cmp_si_si(S7_BIG_COMPLEX(p), 350, 1))) > 0)
-		return(sc->real_one);
+		return(real_one);
 	      if ((MPC_INEX_RE(mpc_cmp_si_si(S7_BIG_COMPLEX(p), -350, 1))) < 0)
 		return(s7_make_real(sc, -1.0));
 	    }
@@ -20148,7 +20110,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	  (s7_is_rational(y)))
 	return(small_int(sc, 0));
 
-      return(sc->real_zero);
+      return(real_zero);
     }
 
   if (s7_is_integer(y))
@@ -20163,7 +20125,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	{
 	  if (s7_is_rational(x))
 	    return(small_int(sc, 1));
-	  return(sc->real_one);
+	  return(real_one);
 	}
 
       if (yval == 1)
@@ -22195,7 +22157,7 @@ s7_scheme *s7_init(void)
   sc->envir = sc->global_env;
   
   /* keep the small_ints out of the heap */
-  sc->small_ints = (s7_pointer *)malloc((NUM_SMALL_INTS + 1) * sizeof(s7_pointer));
+  small_ints = (s7_pointer *)malloc((NUM_SMALL_INTS + 1) * sizeof(s7_pointer));
   for (i = 0; i <= NUM_SMALL_INTS; i++) 
     {
       s7_pointer p;
@@ -22204,20 +22166,20 @@ s7_scheme *s7_init(void)
       p->hloc = NOT_IN_HEAP;
       number_type(p) = NUM_INT;
       integer(number(p)) = (s7_Int)i;
-      sc->small_ints[i] = p;
+      small_ints[i] = p;
     }
   
-  sc->real_zero = (s7_pointer)calloc(1, sizeof(s7_cell));
-  sc->real_zero->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
-  sc->real_zero->hloc = NOT_IN_HEAP;
-  number_type(sc->real_zero) = NUM_REAL;
-  real(number(sc->real_zero)) = (s7_Double)0.0;
+  real_zero = (s7_pointer)calloc(1, sizeof(s7_cell));
+  real_zero->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
+  real_zero->hloc = NOT_IN_HEAP;
+  number_type(real_zero) = NUM_REAL;
+  real(number(real_zero)) = (s7_Double)0.0;
 
-  sc->real_one = (s7_pointer)calloc(1, sizeof(s7_cell));
-  sc->real_one->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
-  sc->real_one->hloc = NOT_IN_HEAP;
-  number_type(sc->real_one) = NUM_REAL;
-  real(number(sc->real_one)) = (s7_Double)1.0;
+  real_one = (s7_pointer)calloc(1, sizeof(s7_cell));
+  real_one->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
+  real_one->hloc = NOT_IN_HEAP;
+  number_type(real_one) = NUM_REAL;
+  real(number(real_one)) = (s7_Double)1.0;
 
   /* initialization of global pointers to special symbols */
   assign_syntax(sc, "lambda",            OP_LAMBDA);
@@ -22634,8 +22596,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "trace",                   g_trace,                   0, 0, true,  H_trace);
   s7_define_function(sc, "untrace",                 g_untrace,                 0, 0, true,  H_untrace);
   s7_define_variable(sc, "*trace-hook*", sc->NIL);
-
-  s7_define_function(sc, "stack",                   g_stack,                   0, 1, false, H_stack);
   s7_define_function(sc, "stacktrace",              g_stacktrace,              0, 2, false, H_stacktrace);
 
   s7_define_function(sc, "gc",                      g_gc,                      0, 1, false, H_gc);
@@ -22660,7 +22620,7 @@ s7_scheme *s7_init(void)
   
   s7_define_variable(sc, "*features*", sc->NIL);
   s7_define_variable(sc, "*load-path*", sc->NIL);
-  s7_define_variable(sc, "*vector-print-length*", sc->small_ints[8]);
+  s7_define_variable(sc, "*vector-print-length*", small_ints[8]);
   s7_define_variable(sc, "*load-hook*", sc->NIL);
 
   s7_define_variable(sc, "*error-hook*", sc->NIL);
