@@ -47,15 +47,13 @@
 #include <math.h>
 
 
-#define OUTPUT_FILENAME "test.wav"
 #define TOTAL_SAMPLES -1
-
- /* set TOTAL_SAMPLES to the number of samples you want computed, or -1 to compute all of them */
-
+/* set TOTAL_SAMPLES to the number of samples you want computed, or -1 to compute all of them */
 
 #define DEFAULT_DESCRIBE_COMMANDS false
 #define REPORT_BAD_COMMANDS true
 #define FLUSH_BAD_COMMANDS false
+#define FLUSH_TRAILING_LINGERS false
 
 static bool describe_commands = DEFAULT_DESCRIBE_COMMANDS;
 static int start_describing = -1, stop_describing = -1;
@@ -80,7 +78,8 @@ static int dump_patch_at = -1;
 #define DOUBLE_28(N) ((double)N / (double)(1 << 27))
 #define DOUBLE_30(N) ((double)N / (double)(1 << 29))
 
-#define UNSIGNED_12_TO_DOUBLE(N) ((double)N / (double)(1 << 12))
+/* mmm -- slightly more accurate to use 1<<12-1, I think */
+#define UNSIGNED_12_TO_DOUBLE(N) ((double)N / (double)((1 << 12) - 1))
 #define DOUBLE_TO_TWOS_20(X) ((X >= 0.0) ? (int)(X * (1 << 19)) : (int)((X + 1.0) * (1 << 19)))
 
 
@@ -124,8 +123,10 @@ static float dac_out[4], dac_out_peak[4];
 
 static int tick, pass, DX, processing_ticks, highest_tick_per_pass, samples = 0, srate = 1, total_commands = 0, current_command = 0;
 
-FILE *snd_file = NULL; /* for now just riff/wave quad, but srate depends on tick setting */
+FILE *snd_file = NULL;                /* for now just riff/wave quad, but srate depends on tick setting */
 FILE *read_data_file = NULL;
+static char *filename = NULL;         /* mmm - Keep SAM filename around */
+static char *output_filename = NULL;  /* mmm - And generate matching output file name == <sam name>.wav */
 
 static void start_clean(void)
 {
@@ -176,7 +177,7 @@ static void all_done(void)
     {
       int header_info[1];
       fclose(snd_file);
-      snd_file = fopen(OUTPUT_FILENAME, "r+");
+      snd_file = fopen(output_filename, "r+"); /* mmm */
       fseek(snd_file, 4L, SEEK_SET);
       header_info[0] = 88 + samples * 4 * 4;  /* total data bytes  4 chans, 4 bytes/float */
       fwrite((void *)header_info, 4, 1, snd_file);
@@ -185,7 +186,7 @@ static void all_done(void)
       fwrite((void *)header_info, 4, 1, snd_file);
       fclose(snd_file);
 
-      fprintf(stderr, "test.wav: %dHz, %d samples, %.4f secs", srate, samples, (double)samples / (double)srate);
+      fprintf(stderr, "%s: %dHz, %d samples, %.4f secs", output_filename, srate, samples, (double)samples / (double)srate); /* mmm */
       fprintf(stderr, ", maxamps: %.3f %.3f %.3f %.3f\n", dac_out_peak[0], dac_out_peak[1], dac_out_peak[2], dac_out_peak[3]);
     }
   exit(0);
@@ -195,7 +196,8 @@ static void all_done(void)
 static void dac_write(double data, int chan)
 {
   /* during a given pass we accumulate output to the dac */
-  dac_out[chan] += (float)(data / 4.0); /* what is the correct scaling here? */
+  dac_out[chan] += (float)(data / 2.0); 
+  /* mmm - /2 seems best now that other scalings have been adjusted */
 }
 
 
@@ -401,7 +403,7 @@ static double gen_amp(generator *g)
   if ((emode == L_PLUS_2_TO_MINUS_Q) || 
       (emode == L_MINUS_2_TO_MINUS_Q))
     Q = pow(2.0, -16.0 * g->f_GQ);
-  else Q = g->f_GQ / 4.0;
+  else Q = g->f_GQ;
 
   if ((emode == L_PLUS_Q) || 
       (emode == L_PLUS_2_TO_MINUS_Q))  
@@ -410,7 +412,7 @@ static double gen_amp(generator *g)
 }
 
 
-static bool read_data_warned = false, write_data_warned = true;
+static bool read_data_warned = false;
 
 static void process_gen(int gen)
 {
@@ -436,23 +438,13 @@ static void process_gen(int gen)
 
   if (osc_run(Gmode10) == 3)
     {
-      if (!write_data_warned)
-	{
-	  fprintf(stderr, "Can't write data!\n");
-	  write_data_warned = true;
-	}
+      /* mmm - just ignore write-data generators since everything is being written out anyway */
       return;
     }
 
   if ((FmSum7 >> 6) == 0)
     fm = gen_ins[FmSum7 & 0x3f];
   else fm = mod_ins[FmSum7 & 0x3f];
-
-  if (osc_run(Gmode10) == 2)
-    {
-      dac_write(fm, g->GO & 0xf); /* in this case, we need the integer value of GO */
-      return;
-    }
 
   FmPhase20 = fm + OscFreq28; 
   
@@ -465,7 +457,14 @@ static void process_gen(int gen)
 
   if (osc_is_running(Gmode10))
     OscAng20 += FmPhase20;
-  
+
+  /* mmm - dac write goes here and does not stop the processing (probably makes no diff) */
+  if (osc_run(Gmode10) == 2)
+    {
+      dac_write(fm, g->GO & 0xf); /* in this case, we need the integer value of GO */
+      return;
+    }
+
   /* probably should be osc_mode(Gmode10) == SUMCOS */
   if ((osc_mode(Gmode10) != SIN_K) &&
       (osc_mode(Gmode10) != SIN_FM))
@@ -514,7 +513,7 @@ static void process_gen(int gen)
     {
       double old_amp;
       old_amp = CurAmp24;
-      CurAmp24 += (AmpSwp20 / 16.0);
+      CurAmp24 += (AmpSwp20 / 32.0); /* was 16.0 */  /* mmm - don't know why 32 but it seems to be more accurate than 16 */
       /*
 	The envelope side of the generator can be sticky, which means
 	that rather than overflow it will stay at the last value it attained
@@ -572,7 +571,7 @@ static void process_gen(int gen)
    *   in the other case, but perhaps that should be unscaled here, then 
    *   divided by 4 when added into its output?
    */
-  else NewAmp12 = CurAmp12 / 4.0;
+  else NewAmp12 = CurAmp12; /* was / 4 */  /* mmm - no scaling called for here */
 
   /* in the notes: "The scaling involved is a left shift of temp6 by 4 bits".
    *    This scaling matters in FM since it is a multiplier on the index, and in pluck.
@@ -588,15 +587,14 @@ static void process_gen(int gen)
     {
       if (osc_run(Gmode10) != 7)
 	{
-	  if (g->GS == 0)
-	    gen_outs[OutSum6] += OscOut13 / 1.0;    /* what is the scaling here? */
-	  else gen_outs[OutSum6] += (OscOut13 / 0.5); 
-
 	  /* "If GS is 0, the high-order 19 bits
 	     of the rounded product are taken, right-adjusted with sign
 	     extended; if GS is 1, the high-order 20 bits of the rounded
 	     product are taken."
 	  */
+	  if (g->GS == 0)
+	    gen_outs[OutSum6] += OscOut13 / 2.0;   /* mmm - right-shifted high order 19 bits so divide by 2 */
+	  else gen_outs[OutSum6] += OscOut13;      /* mmm - no shift, so leave value alone */
 	}
       else 
 	{
@@ -605,7 +603,7 @@ static void process_gen(int gen)
 	    {
 	      float read_data_value;
 	      fread((void *)(&read_data_value), 4, 1, read_data_file);
-	      gen_outs[OutSum6] = OscOut13 + 2.0 * read_data_value;
+	      gen_outs[OutSum6] = OscOut13 + read_data_value;  /* was * 2 */
 	      /* 
 		 "If the run mode 
 		 specifies adding into sum memory, Temp9 is added into the sum
@@ -1156,7 +1154,13 @@ static void linger(int time)
   if (time < pass)
     pass = pass - (1 << 20);
 
-  if (((total_commands - current_command) < 100) && 
+  /* old SAM files had endless strings of lingers at the end generating enormous empty sound files, but
+   *
+   * mmm - this was causing the long trailing reverb of some of my files to be cut off.
+   */
+
+  if ((FLUSH_TRAILING_LINGERS) &&
+      ((total_commands - current_command) < 100) && 
       (total_commands > 1000) &&
       ((time - pass) > (6 * srate)))
     {
@@ -1448,24 +1452,34 @@ static void ticks_command(int cmd)
   if (data != 0) /* used at end of some box sequences, but that confuses srate */
     {
       if (Q == 0)
-	processing_ticks = data;
+	processing_ticks = data + 1; /* mmm - data is highest numbered processing tick per pass, so processing_ticks is 1 greater. */
       else 
 	{
-	  highest_tick_per_pass = data + 2; /* why isn't this 9? */
+	  if (srate <= 1)
+	    {
+	      /* mmm - srate can now be set from the command line in certain cases. I had some weird tick settings for some reason.
+	       * mmm - highest_tick_per_pass is actually being set here to the max *number* of ticks per pass, including overhead
+	       */
+	      highest_tick_per_pass = data + 2; /* why isn't this 9? */
 
-	  /* "It's not clear from the documentation, so to clarify:  On the # TICKS
-	   *  command, the number to be supplied for Q=1 is the total number of ticks
-	   * per pass minus 2. (TVR - 7 August 1984)"
-	   */
+	      /* "It's not clear from the documentation, so to clarify:  On the # TICKS
+	       *  command, the number to be supplied for Q=1 is the total number of ticks
+	       * per pass minus 2. (TVR - 7 August 1984)"
+	       */
 
-	  /* it's a 10 bit field, and higher bits are ignored, so the slowest we
-	   *   can run is 5010Hz or thereabouts
-	   */
+	      /* it's a 10 bit field, and higher bits are ignored, so the slowest we
+	       *   can run is 5010Hz or thereabouts
+	       */
 
-	  if (highest_tick_per_pass > GENERATORS)
-	    highest_tick_per_pass = GENERATORS;
+	      if (highest_tick_per_pass > GENERATORS)
+		highest_tick_per_pass = GENERATORS;  /* mmm - could it not be higher in some cases? */
 
-	  srate = (int)(1000000000.0 / (double)(highest_tick_per_pass * 195));
+	      srate = (int)(1000000000.0 / (double)(highest_tick_per_pass * 195));
+	    }
+	  else
+	    {
+	      highest_tick_per_pass = (1000000000.0 / (double)srate / 195.0);
+	    }
 	}
     }
 
@@ -1488,9 +1502,6 @@ static void ticks_command(int cmd)
       if (snd_file == NULL)
 	{
 	  /* now that we know the sampling rate, open the output file */
-	  /* each tick takes 195 nsec, and there are 8 overhead ticks,
-	   *   so our srate is 1000000000 / ((highest_tick + 8) * 195) 
-	   */
 	  int header_info[24] = {1179011410, 88, 1163280727, 1263424842,
 				 28, 0, 0, 0,
 				 0, 0, 0, 0,
@@ -1498,7 +1509,27 @@ static void ticks_command(int cmd)
 				 705600, 2097168, 1635017060, 16,
 				 0, 0, 0, 0};
 	  header_info[15] = srate;
-	  snd_file = fopen(OUTPUT_FILENAME, "w");
+
+	  /* mmm - generate output filename based on input filename */
+	  {					
+	    char *dot;
+	    int i, len;
+	    len = strlen(filename);
+	    output_filename = malloc(len + 1);
+	    strcpy(output_filename, filename);
+	    /* dot = strchr(output_filename, '.');
+	     *     can be confused by ../test/TEST.SAM
+	     */
+	    for (i = len - 1; i > 0; i--)
+	      if (filename[i] == '.')
+		{
+		  dot = (char *)(output_filename + i);
+		  break;
+		}
+	    strcpy(dot + 1, "wav");
+	    snd_file = fopen(output_filename, "w");
+	  }
+
 	  if (!snd_file)
 	    {
 	      fprintf(stderr, "can't open test.snd!\n");
@@ -1538,16 +1569,18 @@ static void gq_command(int cmd)
   old_f_GQ = g->f_GQ;
 
   /* spec says "sign extended" which makes me think this number is signed, but I think it is unsigned in exp modes */
+  /* mmm - I also believe it is unsigned. */
+
   if (E == 0)
-    g->GQ = (TWOS_20(data) & 0xffffff);
+    g->GQ = data; /* mmm */ 
   else 
     {
-      g->GQ = (data << 4) + (DX >> 16);
+      g->GQ = (data << 4) | ((DX >> 16) & 0xf); /* mmm */
       old_DX = DX;
       DX = 0;
     }
 
-  g->f_GQ = DOUBLE_24(g->GQ);
+  g->f_GQ = (double)(g->GQ) / (double)(1 << 24); /* mmm - proper scaling of unsigned value */
 
   if (describe_commands)
     {
@@ -2718,11 +2751,10 @@ static void dump_patch(void)
 int main(int argc, char **argv)
 {
   if (argc < 2)
-    fprintf(stderr, "sam filename\n");
+    fprintf(stderr, "sam filename [read_data file] [srate]\n"); /* mmm */
   else
     {
       FILE *sam_file;
-      char *filename;
       filename = argv[1];
 
       sam_file = fopen(filename, "r");
@@ -2747,7 +2779,14 @@ int main(int argc, char **argv)
 	      int i;
 
 	      if (argc > 2)
-		read_data_file = fopen(argv[2], "r");
+		{
+		  read_data_file = fopen(argv[2], "r");
+		  if (argc > 3) 
+		    {
+		      /* mmm - set srate explicitly.  I had an inexplicably high max tick setting in one sam file with read data input. */
+		      sscanf(argv[3], "%d", &srate);
+		    }
+		}
 
 	      start_clean();
 
