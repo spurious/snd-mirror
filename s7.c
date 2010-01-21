@@ -579,7 +579,8 @@ struct s7_scheme {
 #define T_BOOLEAN      20
 #define T_C_MACRO      21
 #define T_C_POINTER    22
-#define BUILT_IN_TYPES 23
+#define T_C_ANY_ARGS_FUNCTION 23
+#define BUILT_IN_TYPES 24
 
 #define TYPE_BITS                     8
 #define T_MASKTYPE                    0xff
@@ -746,7 +747,7 @@ struct s7_scheme {
 #define port_input_function(p)        (p)->object.port->input_function
 #define port_data(p)                  (p)->object.port->data
 
-#define is_c_function(f)              (type(f) == T_C_FUNCTION)
+#define is_c_function(f)              ((type(f) == T_C_FUNCTION) || (type(f) == T_C_ANY_ARGS_FUNCTION))
 #define c_function(f)                 (f)->object.ffptr
 #define c_function_call(f)            (f)->object.ffptr->ff
 #define c_function_name(f)            (f)->object.ffptr->name
@@ -1162,6 +1163,7 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
       s7_free_object(a);
       break;
       
+    case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION:
     case T_C_MACRO:
       s7_free_function(a);
@@ -1544,6 +1546,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
       break;
 
     case T_C_OBJECT:
+    case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION:
     case T_C_MACRO:
     case T_C_POINTER:
@@ -8984,6 +8987,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	return(s7_strdup("#<closure>"));
       }
   
+    case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION:
       return(s7_strdup(c_function_name(obj)));
 
@@ -11662,6 +11666,7 @@ bool s7_is_object(s7_pointer p)
 s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_func_t *ptr;
+  int ftype = T_C_FUNCTION;
   s7_pointer x = new_cell(sc);
 
   /* these are normally not gc'd (C-level function defs), but they can be in a few cases
@@ -11672,7 +11677,9 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
    */
 
   ptr = (s7_func_t *)calloc(1, sizeof(s7_func_t));
-  set_type(x, T_C_FUNCTION | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE);
+  if ((required_args == 0) && (rest_arg) && (optional_args == 0))
+    ftype = T_C_ANY_ARGS_FUNCTION;
+  set_type(x, ftype | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE);
   /* these guys can be freed -- in Snd, for example, "random" is defined in C, but then later redefined in snd-test.scm */
 
   c_function(x) = ptr;
@@ -11815,8 +11822,11 @@ void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int re
 void s7_define_set_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_pointer func;
+  int ftype = T_C_FUNCTION;
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
-  set_type(func, T_C_FUNCTION | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE | T_SETTER);
+  if ((required_args == 0) && (rest_arg) && (optional_args == 0))
+    ftype = T_C_ANY_ARGS_FUNCTION;
+  set_type(func, ftype | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE | T_SETTER);
   s7_define(sc, s7_global_environment(sc), s7_make_symbol(sc, name), func);
 }
 
@@ -13591,6 +13601,7 @@ static const char *s7_type_name(s7_pointer arg)
     case T_CLOSURE_STAR: return("closure");
     case T_GOTO:
     case T_CONTINUATION: return("continuation");
+    case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION:   return("function");
     case T_C_MACRO:      return("macro");
     case T_C_POINTER:    return("c-pointer");
@@ -15740,8 +15751,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     EVAL:
     case OP_EVAL:                           /* main part of evaluation */
-      if (is_pair(sc->code))                /* switching type check order here slows us down */
+      switch (type(sc->code))
 	{
+	case T_PAIR:
 	  /* using a local s7_pointer for sc->x here drastically slows things down?!? */
 	  sc->x = car(sc->code);
 	  if (is_syntax(sc->x))
@@ -15753,26 +15765,27 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  push_stack(sc, opcode(OP_EVAL_ARGS0), sc->NIL, sc->code);
 	  sc->code = sc->x;
 	  goto EVAL;
-	} 
 
-      if (s7_is_symbol(sc->code))
-	{
-	  /* expand eval_symbol here to speed it up by a lot */
-	  s7_pointer x;
-	  if (is_not_local(sc->code))
-	    x = symbol_global_slot(sc->code);
-	  else x = s7_find_symbol_in_environment(sc, sc->envir, sc->code, true);
-	  if (x != sc->NIL) 
-	    sc->value = symbol_value(x);
-	  else sc->value = eval_symbol(sc, sc->code);
+	case T_SYMBOL:
+	  {
+	    /* expand eval_symbol here to speed it up by a lot */
+	    s7_pointer x;
+	    if (is_not_local(sc->code))
+	      x = symbol_global_slot(sc->code);
+	    else x = s7_find_symbol_in_environment(sc, sc->envir, sc->code, true);
+	    if (x != sc->NIL) 
+	      sc->value = symbol_value(x);
+	    else sc->value = eval_symbol(sc, sc->code);
+	    pop_stack(sc);
+	    goto START;
+	  }
+
+	default:
+	  sc->value = sc->code;
 	  pop_stack(sc);
 	  goto START;
 	}
 
-      sc->value = sc->code;
-      pop_stack(sc);
-      goto START;
-      
       
     case OP_EVAL_ARGS0:
       if (is_any_macro(sc->value))
@@ -15860,6 +15873,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  car_code = car(sc->code);
 	  typ = type(car_code);
 
+	  /* switch statement here is much slower for some reason */
 	  if (typ == T_PAIR)
 	    {
 	      push_stack(sc, opcode(OP_EVAL_ARGS1), sc->args, cdr(sc->code));
@@ -15879,8 +15893,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sc->value = symbol_value(x);
 	      else sc->value = eval_symbol(sc, car_code);
 	    }
-	  
 	  else sc->value = car_code;
+
 	  sc->code = cdr(sc->code);
 	  goto EVAL_ARGS;
 	}
@@ -15953,24 +15967,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      make_list_3(sc, 
 					  s7_make_string_with_length(sc, "~A: too many arguments: ~A", 26),
 					  sc->code, sc->args)));
-
-	    sc->value = c_function_call(sc->code)(sc, sc->args);
-
-	    if (sc->stack_top != 0)
-	      pop_stack(sc);
-	    else return(sc->value); /* or perhaps sc->F? */
-
-	    /* this is trying to get around an existing, but very well-hidden bug:
-	     *  (defgenerator tanhsin (frequency 100.0))
-	     *  (define (tanhsin gen) #f)
-	     *  (define (crash) (let ((hi (make-tanhsin))) (catch #t (lambda () (mus-run hi 0.0)) (lambda args 123))))
-	     *  (crash)
-	     * and we pop_stack once too often somewhere.  I'd put a guard OP_QUIT at the start, but 
-	     *   reset_stack would need to be changed and so on.
-	     */
-
-	    goto START;
 	  }
+	  /* drop into ... */
+
+	case T_C_ANY_ARGS_FUNCTION:              /* -------- C-based function that can take any number of arguments -------- */
+	  sc->value = c_function_call(sc->code)(sc, sc->args);
+
+	  pop_stack(sc);
+	  goto START;
 
 
 	case T_C_MACRO: 	                    /* -------- C-based macro -------- */
