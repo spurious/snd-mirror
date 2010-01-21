@@ -6,7 +6,7 @@
  *
  *        gcc sam.c -o sam -lm -O2
  *        sam TEST.SAM
- *        -> test.wav ("wav" or "riff" header, quad, little-endian float data at box srate)
+ *        -> TEST.wav ("wav" or "riff" header, quad, little-endian float data at box srate)
  *
  * to include a read-data file, convert the old SAD file to a raw file of little-endian floats,
  *   then sam TEST.SAM test.snd
@@ -102,6 +102,7 @@ typedef struct {
 
 typedef struct {
   int P, Z, Y, X, I; /* "I" = table lookup index received from modifier */
+  double xd1, xd2; /* mmm - accounts for "extra" hidden delay */
 } delay;
 
 #define SUM_MEMORY_SIZE 64
@@ -1078,7 +1079,18 @@ static double delay_read(int dly)
     case D_LINE:
     case D_TAP:
       /* return the value with a hidden 2 sample delay (Z+3 == total delay length + 2) */
+#if 0
       return(delay_memory[d->X + d->Y]);
+#else
+      {
+	/* I originally thought this was making a raspy or crackling sound in the reverbs, but now I don't hear it (bil) */
+	double val;
+	val = d->xd2;
+	d->xd2 = d->xd1;
+	d->xd1 = delay_memory[d->X + d->Y];
+	return val;
+      }
+#endif
 
     case D_TABLE_LOOKUP:
     case D_TABLE_LOOKUP_ROUNDED:
@@ -1570,6 +1582,11 @@ static void gq_command(int cmd)
 
   /* spec says "sign extended" which makes me think this number is signed, but I think it is unsigned in exp modes */
   /* mmm - I also believe it is unsigned. */
+  /* pete: 
+   *       Hmm, it looks like it makes more sense to call it unsigned. Certainly   
+   *       the multiplication of envelope times waveform treats the envelope as   
+   *       unsigned (i.e. non-negative). 
+   */
 
   if (E == 0)
     g->GQ = data; /* mmm */ 
@@ -1749,6 +1766,7 @@ static void gn_command(int cmd)
     case 0:
       g->GS = 0;
       break;
+
     case 1:
       g->GS = 1;
       break;
@@ -2380,14 +2398,17 @@ static void mrm_command(int cmd)
     m->MRM = MRM;
   if (I == 0)
     m->MIN = MIN;
+
   switch (CC)
     {
     case 0: 
       m->T = 0;
       break;
+
     case 1:
       m->T = 1;
       break;
+
     case 2:
       m->L1 = 0;
       m->f_L1 = 0.0;

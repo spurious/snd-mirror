@@ -5123,15 +5123,14 @@ static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "abs", 0, car(args), "a real"));
 
   n = number(car(args));
-  if (num_type(n) >= NUM_REAL)
-    real(n) = s7_Double_abs(real(n));
-  else
+  switch (num_type(n))
     {
-      if (num_type(n) == NUM_INT)
-	integer(n) = s7_Int_abs(integer(n));
-      else numerator(n) = s7_Int_abs(numerator(n));
+    case NUM_INT:     return(s7_make_integer(sc, s7_Int_abs(integer(n))));
+    case NUM_RATIO:   return(s7_make_ratio(sc, s7_Int_abs(numerator(n)), denominator(n)));
+    case NUM_REAL2:
+    case NUM_REAL:    return(s7_make_real(sc, s7_Double_abs(real(n))));
     }
-  return(make_number(sc, n));      
+  return(sc->NIL); /* make compiler happy */
 }
 
 
