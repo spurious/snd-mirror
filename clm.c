@@ -7839,6 +7839,8 @@ static void flush_buffers(rdout *gen)
 
 	if (allocation_failed)
 	  {
+	    mus_long_t old_file_buffer_size = 0;
+
 	    /* first clean up the mess we made */
 	    for (i = 0; i < gen->chans; i++) 
 	      if (addbufs[i])
@@ -7852,7 +7854,14 @@ static void flush_buffers(rdout *gen)
 	     *   and it might fail on the next call (if more chans), so we'll throw an error.  We could get
 	     *   say 1024 samps per chan, then run through a loop outputting the current buffer, but geez...
 	     */
-	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, S_mus_file_buffer_size " (" MUS_LD ") is too large: we can't allocate the output buffers!", clm_file_buffer_size);
+	    /* but... if we hit this in with-sound, mus_error calls (eventually) s7_error which sees the
+	     *   dynamic-wind and tries to call mus-close, which tries to flush the buffers and we have
+	     *   an infinite loop.  So, we need to clean up right now.
+	     */
+	    mus_sound_close_input(fd);
+	    old_file_buffer_size = clm_file_buffer_size;
+	    clm_file_buffer_size = MUS_DEFAULT_FILE_BUFFER_SIZE;
+	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, S_mus_file_buffer_size " (" MUS_LD ") is too large: we can't allocate the output buffers!", old_file_buffer_size);
 	    return;
 	  }
       }

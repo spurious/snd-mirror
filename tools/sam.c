@@ -302,6 +302,7 @@ static void dac_write(double data, int chan)
  */
 
 #define osc_mode(gmode) (gmode & 0xf)
+
 /*
 SSSS: 0100  sum of cosines
       0001  sawtooth
@@ -310,6 +311,7 @@ SSSS: 0100  sum of cosines
       0000  sin (K)
       1000  sin (J + fm)
 */
+
 #define SUMCOS 4
 #define SAWTOOTH 1
 #define SQUARE 2
@@ -319,12 +321,14 @@ SSSS: 0100  sum of cosines
 
 
 #define osc_env(gmode) ((gmode >> 4) & 0x3)
+
 /*
 EE: 00  L - Q
     01  L + Q
     10  L - 2**(-Q)
     11  L + 2**(-Q)
 */
+
 #define L_PLUS_Q 1
 #define L_MINUS_Q 0
 #define L_MINUS_2_TO_MINUS_Q 2
@@ -446,6 +450,7 @@ static void process_gen(int gen)
   if ((FmSum7 >> 6) == 0)
     fm = gen_ins[FmSum7 & 0x3f];
   else fm = mod_ins[FmSum7 & 0x3f];
+  /* fm *= 0.5; */ /* I think this matches my old stuff */
 
   FmPhase20 = fm + OscFreq28; 
   
@@ -502,8 +507,11 @@ static void process_gen(int gen)
 
     case PULSE:
       /* pulse mode was primarily used for triggered noise */
-      if ((fmod(Phase20, 2.0) < 1.0) && (fmod(OscAng20, 2.0) > 1.0))
-	OscOut13 = 0.5;
+      if ((OscAng20 >= 2.0) || (OscAng20 < -2.0))
+	{
+	  OscAng20 = fmod(OscAng20, 2.0);
+	  OscOut13 = 0.5;
+	}
       else OscOut13 = 0.0;
       break;
     }
@@ -563,16 +571,14 @@ static void process_gen(int gen)
   if ((osc_env(Gmode10) == L_PLUS_2_TO_MINUS_Q) || 
       (osc_env(Gmode10) == L_MINUS_2_TO_MINUS_Q))
     NewAmp12 = pow(2.0, -16.0 * CurAmp12);
+  else NewAmp12 = CurAmp12; /* was / 4 */  /* mmm - no scaling called for here */
+
   /* I think this matches the spec:
    *    if temp6 is 0, then 2^(-temp6) is 1, the specs say #b111111111101, 
    *       which assuming 12 bit unsigned fractions is 4093/4096,
    *   if temp6 is #b000100000000 (256), 2^(-temp6) is #b011111111110,
    *       which is .5 (fractional) so we really want 2^(-16*temp6) = 2^-1
-   * I originally had -4.0 * CurAmp12 because I'm dividing CurAmp12 by 4.0
-   *   in the other case, but perhaps that should be unscaled here, then 
-   *   divided by 4 when added into its output?
    */
-  else NewAmp12 = CurAmp12; /* was / 4 */  /* mmm - no scaling called for here */
 
   /* in the notes: "The scaling involved is a left shift of temp6 by 4 bits".
    *    This scaling matters in FM since it is a multiplier on the index, and in pluck.
@@ -673,7 +679,10 @@ static double mod_read(int addr)
     case 1: return(mod_ins[A]);
     case 2: return(mod_outs[A]);
     }
+
+  /* this is happening a lot in MARS.SAM?
   fprintf(stderr, "bad MIN/MRM: %d\n", addr);
+  */
   return(0);
 }
 
@@ -798,7 +807,8 @@ static void process_mod(int mod)
        *
        * see below -- I don't think this is correct.
        */
-      IS = (m->L0 + (m->L1 * m->M0)) & 0xfffff;
+      /* IS = (m->L0 + (m->L1 * m->M0)) & 0xfffff; */
+      IS = (m->L0 + ((m->L1 * m->M0) >> 10)) & 0xfffff;
       mod_write(m->MSUM, TWOS_20_TO_DOUBLE(IS));
       m->L1 = IS;
       break;
@@ -1104,7 +1114,6 @@ static double delay_read(int dly)
 	Z_shift = d->Z & 0xf;
 	dY = (d->I >> Z_shift) & 0xffff;
 	return(delay_memory[d->X + dY]); 
-	/* perhaps still not right -- there's a 3(2?) sample delay, but we get 1(2?) of those from the processing order */
       }
     }
   return(0);
@@ -1224,7 +1233,7 @@ static void linger(int time)
 	  mod_outs[i] = 0.0;
 	}
 
-      fwrite((void *)dac_out, 4, 4, snd_file);
+      fwrite(dac_out, 4, 4, snd_file);
       samples++;
       for (i = 0; i < 4; i++) 
 	{
@@ -2154,7 +2163,7 @@ static void mm_command(int cmd)
       break;
 
     case 2:
-      m->M0 = TWOS_30(((data << 10) + (DX >> 10)));
+      m->M0 = TWOS_30(((data << 10) + ((DX >> 10) & 0x3ff)));
       m->f_M0 = DOUBLE_30(m->M0);
       m->o_M0 = m->M0;
       m->o_f_M0 = m->f_M0;
@@ -2165,7 +2174,7 @@ static void mm_command(int cmd)
       break;
 
     case 3:
-      m->M1 = TWOS_30(((data << 10) + (DX >> 10)));
+      m->M1 = TWOS_30(((data << 10) + ((DX >> 10) & 0x3ff)));
       m->f_M1 = DOUBLE_30(m->M1);
       m->o_M1 = m->M1;
       m->o_f_M1 = m->f_M1;
@@ -2258,7 +2267,7 @@ static const char *mode_name(int m)
     {
     case M_INACTIVE:        return("inactive");
     case M_NOISE:           return("noise");
-    case M_TRIGGERED_NOISE: return("trignoise");
+    case M_TRIGGERED_NOISE: return("triggered-noise");
     case M_LATCH:           return("latch");
     case M_THRESHOLD:       return("thresh");
     case M_DELAY:           return("delay");
