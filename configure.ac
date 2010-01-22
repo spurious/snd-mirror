@@ -37,7 +37,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-jack           use Jack
 #   --with-static-alsa    use ALSA statically loaded (for RPM generation)
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
-#   --with-snd-as-pd-external  make Snd a loadable pd external, not a standalone program
 #   --with-doubles        use doubles throughout (default is floats)
 #   --with-float-samples  represent samples internally as floats or doubles (default=yes)
 #   --with-gmp            include multiprecision arithmetic via gmp, mpfr, and mpc
@@ -55,7 +54,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-ruby-prefix    set location of Ruby
 #   --with-s7             use S7 as the extension language (default = yes)
 #   --with-extension-language use some extension language (default=yes)
-#   --with-rt             make Snd capable of running Snd-Rt
 #   --with-static-xm      include xm module
 #   --with-temp-dir       directory to use for temp files
 #   --with-save-dir       directory to use for saved-state files
@@ -184,54 +182,6 @@ AC_ARG_WITH(snd-as-widget,
 	   AC_DEFINE(SND_AS_WIDGET)
 	   MAKE_TARGET=widget
 	fi)
-
-AC_ARG_WITH(snd-as-pd-external,
-	[  --with-snd-as-pd-external	  make Snd a loadable pd external, not a standalone program],
-  	[if test "$with_snd_as_pd_external" = yes ; then
-
-	   if test "$with_motif" = yes || test "$with_gtk" = yes ; then
-	      AC_MSG_ERROR(When making snd as a pd external, motif or gtk can not be used.)
-	   fi
-	   if test "$with_ruby" = yes ; then
-	      AC_MSG_ERROR(When making snd as a pd external, ruby can not be used as extension language.)
-	   fi
-
-	   CFLAGS="$CFLAGS -DSND_PD_PATH=\\\"`pwd`\\\""
-	   [with_jack=yes]
-	   AC_DEFINE(SND_AS_PD_EXTERNAL)
-	   MAKE_TARGET=external
-           RANDOM_FEATURES="$RANDOM_FEATURES pd-external"
-
-    	   case "$host" in
-             *-apple-*)
-# 	       CFLAGS="$CFLAGS -DPD -I. -bundle -undefined suppress -flat_namespace"
-	       CFLAGS="$CFLAGS -DPD -I. -undefined suppress -flat_namespace"
- 	     ;;
-           esac
-
-	fi])
-
-RT_LIBS=""
-
-AC_ARG_WITH(rt,
-	[  --with-rt	  makes Snd capable of running Snd-Rt],
-  	[if test "$with_rt" = yes ; then
-
-           AC_CHECK_HEADER(rollendurchmesserzeitsammler.h)
-           AC_CHECK_LIB(rollendurchmesserzeitsammler,tar_get_dynamic_roots_for)
-
-	   RT_LIBS="-lrollendurchmesserzeitsammler"
-           OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES rollendurchmesserzeitsammler"
-
-	   [with_jack=yes]
-           [with_guile=yes]
-
-	   AC_DEFINE(WITH_RT)
-
-	fi])
-
-AC_SUBST(RT_LIBS)
-
 
 # if mingw add -mwindows to the load flags (I think this means we're trying to build a GUI app, not just a console app??)
 case "$host" in

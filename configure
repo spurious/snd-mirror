@@ -667,7 +667,6 @@ FFTW_CFLAGS
 FFTW_LIBS
 PKG_CONFIG
 FGREP
-RT_LIBS
 SND_VERSION
 SND_PACKAGE
 INSTALL_DATA
@@ -770,8 +769,6 @@ with_temp_dir
 with_save_dir
 with_doc_dir
 with_snd_as_widget
-with_snd_as_pd_external
-with_rt
 with_threads
 enable_threads
 enable_largefile
@@ -1467,8 +1464,6 @@ Optional Packages:
   --with-save-dir	  directory to use for saved-state files
   --with-doc-dir	  directory to search for documentation
   --with-snd-as-widget	  make Snd a loadable widget, not a standalone program
-  --with-snd-as-pd-external	  make Snd a loadable pd external, not a standalone program
-  --with-rt	  makes Snd capable of running Snd-Rt
   --with-threads	  include pthread support, same as --enable-threads
   --with-gnu-ld           assume the C compiler uses GNU ld default=no
   --with-x                use the X Window System
@@ -1689,6 +1684,52 @@ fi
 
 } # ac_fn_c_try_run
 
+# ac_fn_c_try_link LINENO
+# -----------------------
+# Try to link conftest.$ac_ext, and return whether this succeeded.
+ac_fn_c_try_link ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  rm -f conftest.$ac_objext conftest$ac_exeext
+  if { { ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_link") 2>conftest.err
+  ac_status=$?
+  if test -s conftest.err; then
+    grep -v '^ *+' conftest.err >conftest.er1
+    cat conftest.er1 >&5
+    mv -f conftest.er1 conftest.err
+  fi
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 $as_test_x conftest$ac_exeext
+       }; then :
+  ac_retval=0
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_retval=1
+fi
+  # Delete the IPA/IPO (Inter Procedural Analysis/Optimization) information
+  # created by the PGI compiler (conftest_ipa8_conftest.oo), as it would
+  # interfere with the next link command; also delete a directory that is
+  # left behind by Apple's compiler.  We do this before executing the actions.
+  rm -rf conftest.dSYM conftest_ipa8_conftest.oo
+  eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
+  as_fn_set_status $ac_retval
+
+} # ac_fn_c_try_link
+
 # ac_fn_c_check_header_mongrel LINENO HEADER VAR INCLUDES
 # -------------------------------------------------------
 # Tests whether HEADER exists, giving a warning if it cannot be compiled using
@@ -1812,52 +1853,6 @@ $as_echo "$ac_res" >&6; }
   eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
 
 } # ac_fn_c_check_header_compile
-
-# ac_fn_c_try_link LINENO
-# -----------------------
-# Try to link conftest.$ac_ext, and return whether this succeeded.
-ac_fn_c_try_link ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  rm -f conftest.$ac_objext conftest$ac_exeext
-  if { { ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
-$as_echo "$ac_try_echo"; } >&5
-  (eval "$ac_link") 2>conftest.err
-  ac_status=$?
-  if test -s conftest.err; then
-    grep -v '^ *+' conftest.err >conftest.er1
-    cat conftest.er1 >&5
-    mv -f conftest.er1 conftest.err
-  fi
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-	 test "$cross_compiling" = yes ||
-	 $as_test_x conftest$ac_exeext
-       }; then :
-  ac_retval=0
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_retval=1
-fi
-  # Delete the IPA/IPO (Inter Procedural Analysis/Optimization) information
-  # created by the PGI compiler (conftest_ipa8_conftest.oo), as it would
-  # interfere with the next link command; also delete a directory that is
-  # left behind by Apple's compiler.  We do this before executing the actions.
-  rm -rf conftest.dSYM conftest_ipa8_conftest.oo
-  eval $as_lineno_stack; test "x$as_lineno_stack" = x && { as_lineno=; unset as_lineno;}
-  as_fn_set_status $ac_retval
-
-} # ac_fn_c_try_link
 
 # ac_fn_c_check_decl LINENO SYMBOL VAR
 # ------------------------------------
@@ -4024,7 +4019,6 @@ _ACEOF
 #   --with-jack           use Jack
 #   --with-static-alsa    use ALSA statically loaded (for RPM generation)
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
-#   --with-snd-as-pd-external  make Snd a loadable pd external, not a standalone program
 #   --with-doubles        use doubles throughout (default is floats)
 #   --with-float-samples  represent samples internally as floats or doubles (default=yes)
 #   --with-gmp            include multiprecision arithmetic via gmp, mpfr, and mpc
@@ -4375,131 +4369,6 @@ if test "${with_snd_as_widget+set}" = set; then :
 fi
 
 
-
-# Check whether --with-snd-as-pd-external was given.
-if test "${with_snd_as_pd_external+set}" = set; then :
-  withval=$with_snd_as_pd_external; if test "$with_snd_as_pd_external" = yes ; then
-
-	   if test "$with_motif" = yes || test "$with_gtk" = yes ; then
-	      { as_fn_set_status motif or gtk can not be used.
-as_fn_error "When making snd as a pd external" "$LINENO" 5; }
-	   fi
-	   if test "$with_ruby" = yes ; then
-	      { as_fn_set_status ruby can not be used as extension language.
-as_fn_error "When making snd as a pd external" "$LINENO" 5; }
-	   fi
-
-	   CFLAGS="$CFLAGS -DSND_PD_PATH=\\\"`pwd`\\\""
-	   with_jack=yes
-	   $as_echo "#define SND_AS_PD_EXTERNAL 1" >>confdefs.h
-
-	   MAKE_TARGET=external
-           RANDOM_FEATURES="$RANDOM_FEATURES pd-external"
-
-    	   case "$host" in
-             *-apple-*)
-# 	       CFLAGS="$CFLAGS -DPD -I. -bundle -undefined suppress -flat_namespace"
-	       CFLAGS="$CFLAGS -DPD -I. -undefined suppress -flat_namespace"
- 	     ;;
-           esac
-
-	fi
-fi
-
-
-RT_LIBS=""
-
-# On IRIX 5.3, sys/types and inttypes.h are conflicting.
-for ac_header in sys/types.h sys/stat.h stdlib.h string.h memory.h strings.h \
-		  inttypes.h stdint.h unistd.h
-do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default
-"
-eval as_val=\$$as_ac_Header
-   if test "x$as_val" = x""yes; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-
-done
-
-
-
-# Check whether --with-rt was given.
-if test "${with_rt+set}" = set; then :
-  withval=$with_rt; if test "$with_rt" = yes ; then
-
-           ac_fn_c_check_header_mongrel "$LINENO" "rollendurchmesserzeitsammler.h" "ac_cv_header_rollendurchmesserzeitsammler_h" "$ac_includes_default"
-if test "x$ac_cv_header_rollendurchmesserzeitsammler_h" = x""yes; then :
-
-fi
-
-
-           { $as_echo "$as_me:${as_lineno-$LINENO}: checking for tar_get_dynamic_roots_for in -lrollendurchmesserzeitsammler" >&5
-$as_echo_n "checking for tar_get_dynamic_roots_for in -lrollendurchmesserzeitsammler... " >&6; }
-if test "${ac_cv_lib_rollendurchmesserzeitsammler_tar_get_dynamic_roots_for+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lrollendurchmesserzeitsammler  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char tar_get_dynamic_roots_for ();
-int
-main ()
-{
-return tar_get_dynamic_roots_for ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_rollendurchmesserzeitsammler_tar_get_dynamic_roots_for=yes
-else
-  ac_cv_lib_rollendurchmesserzeitsammler_tar_get_dynamic_roots_for=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_rollendurchmesserzeitsammler_tar_get_dynamic_roots_for" >&5
-$as_echo "$ac_cv_lib_rollendurchmesserzeitsammler_tar_get_dynamic_roots_for" >&6; }
-if test "x$ac_cv_lib_rollendurchmesserzeitsammler_tar_get_dynamic_roots_for" = x""yes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBROLLENDURCHMESSERZEITSAMMLER 1
-_ACEOF
-
-  LIBS="-lrollendurchmesserzeitsammler $LIBS"
-
-fi
-
-
-	   RT_LIBS="-lrollendurchmesserzeitsammler"
-           OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES rollendurchmesserzeitsammler"
-
-	   with_jack=yes
-           with_guile=yes
-
-	   $as_echo "#define WITH_RT 1" >>confdefs.h
-
-
-	fi
-fi
-
-
-
-
-
 # if mingw add -mwindows to the load flags (I think this means we're trying to build a GUI app, not just a console app??)
 case "$host" in
   *-*-mingw*)
@@ -4594,6 +4463,24 @@ fi
 
 # AC_CHECK_LIB(dl,main)
 # I don't think I need libdl in S7, and the other extension languages will call for it if needed
+
+# On IRIX 5.3, sys/types and inttypes.h are conflicting.
+for ac_header in sys/types.h sys/stat.h stdlib.h string.h memory.h strings.h \
+		  inttypes.h stdint.h unistd.h
+do :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default
+"
+eval as_val=\$$as_ac_Header
+   if test "x$as_val" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+
+done
+
 
 for ac_header in fcntl.h limits.h unistd.h string.h sys/soundcard.h machine/soundcard.h sys/mixer.h stdbool.h sys/time.h
 do :
