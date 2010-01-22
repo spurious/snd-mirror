@@ -82,6 +82,9 @@
  *        vector-for-each, vector-map, string-for-each, hash-table-for-each, for-each of any applicable object
  *
  *
+ *   perhaps add: (define ((f a) b) (* a b)) -> (define f (lambda (a) (lambda (b) (* a b))))
+ *
+ *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
  * Rick Taube and Andrew Burnson provided the MS Visual C++ support
  *
@@ -5479,7 +5482,7 @@ static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
   if (s7_is_real(x))
     return(s7_make_real(sc, tanh(num_to_real(number(x)))));
   if (s7_real_part(x) > 350.0)
-    return(real_one);           /* closer than 0.0 which is what ctanh is about to return! */
+    return(real_one);               /* closer than 0.0 which is what ctanh is about to return! */
   if (s7_real_part(x) < -350.0)
     return(s7_make_real(sc, -1.0)); /* closer than -0.0 which is what ctanh is about to return! */
 
@@ -5632,7 +5635,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	{
 	  if ((s7_is_integer(n)) && (s7_is_integer(pw)))       /* (expt 0 0) -> 1 */
 	    return(s7_make_integer(sc, 1));
-	  return(real_zero);                               /* (expt 0.0 0) -> 0.0 */
+	  return(real_zero);                                   /* (expt 0.0 0) -> 0.0 */
 	}
 
       if ((s7_is_real(pw)) && (s7_is_negative(pw)))            /* (expt 0 -1) */
@@ -5640,7 +5643,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 
       if ((s7_is_integer(n)) && (s7_is_integer(pw)))           /* pw != 0, (expt 0 2312) */
 	return(s7_make_integer(sc, 0));
-      return(real_zero);                                   /* (expt 0.0 123123) */
+      return(real_zero);                                       /* (expt 0.0 123123) */
     }
 
   if (s7_is_one(pw))
@@ -16398,6 +16401,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       if (!s7_is_symbol(sc->x))                                             /* (define (3 a) a) */
 	return(eval_error(sc, "define a non-symbol? ~S", sc->x));
+      /* (define ((f a) b) (* a b)) -> (define f (lambda (a) (lambda (b) (* a b)))) */
 
       if (s7_is_immutable(sc->x))                                           /* (define pi 3) or (define (pi a) a) */
 	return(eval_error(sc, "define: ~S is immutable", sc->x));

@@ -450,7 +450,7 @@ static void process_gen(int gen)
   if ((FmSum7 >> 6) == 0)
     fm = gen_ins[FmSum7 & 0x3f];
   else fm = mod_ins[FmSum7 & 0x3f];
-  /* fm *= 0.5; */ /* I think this matches my old stuff */
+  /* fm *= 0.5; */
 
   FmPhase20 = fm + OscFreq28; 
   
