@@ -530,15 +530,11 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
     }
 #endif
 
-#ifdef SND_AS_PD_EXTERNAL
-  return;
+#ifdef SND_AS_WIDGET
+  return(ss); 
 #else
-  #ifdef SND_AS_WIDGET
-    return(ss); 
-  #else
-    snd_doit(argc, argv);
-    return(0);
-  #endif
+  snd_doit(argc, argv);
+  return(0);
 #endif
 }
 
@@ -546,16 +542,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 #ifndef SND_AS_WIDGET
   #ifndef SND_AS_PD_EXTERNAL
   #endif
-#endif
-
-
-#ifdef SND_AS_PD_EXTERNAL
-int snd_pd_main(void)
-{
-  char *argv[] = {"pd", "-noglob", "-noinit"};
-  snd_main(NULL, 3, argv);
-  return(0);
-}
 #endif
 
 
