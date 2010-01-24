@@ -808,6 +808,7 @@ static void process_mod(int mod)
        * see below -- I don't think this is correct.
        */
       /* IS = (m->L0 + (m->L1 * m->M0)) & 0xfffff; */
+
       IS = (m->L0 + ((m->L1 * m->M0) >> 10)) & 0xfffff;
       mod_write(m->MSUM, TWOS_20_TO_DOUBLE(IS));
       m->L1 = IS;
@@ -878,14 +879,14 @@ static void process_mod(int mod)
        */
       tmp0 = m->f_L1 * m->f_M1;
       tmp1 = m->f_L0 * m->f_M0;
-      S = tmp0 + tmp1 + A;
+      S = tmp0 + tmp1 + A;  /* divide A by 1024.0 here probably */
       mod_write(m->MSUM, S);
       m->f_L0 = m->f_L1;
       m->f_L1 = S;
       if (mode == M_TWO_POLE_M0)
 	m->f_M0 += (B / 1024.0); 
       /* "when a quantity is added to M0 or M1 it is added right-justified, with sign extended"
-       *    does that include "A" above?
+       *    does that include "A" above? I think it does... (see one and two_zero below).
        */
       if (mode == M_TWO_POLE_M1)
 	m->f_M1 += (B / 1024.0);
@@ -902,9 +903,9 @@ static void process_mod(int mod)
        */
       tmp0 = m->f_L1 * m->f_M1;
       tmp1 = m->f_L0 * m->f_M0;
-      mod_write(m->MSUM, tmp0 + tmp1 + A);
+      mod_write(m->MSUM, tmp0 + tmp1 + A); /* divide A by 1024.0 here probably */
       m->f_L0 = m->f_L1;
-      m->f_L1 = A;
+      m->f_L1 = A / 1024.0;
       if (mode == M_TWO_ZERO_M0)
 	m->f_M0 += (B / 1024.0);
       if (mode == M_TWO_ZERO_M1)
@@ -948,7 +949,7 @@ static void process_mod(int mod)
       tmp0 = m->f_L1 * m->f_M1;
       tmp1 = m->f_L0 * m->f_M0;
       m->f_L0 = m->f_L1;
-      m->f_L1 = A;
+      m->f_L1 = A / 1024.0;
       mod_write(m->MSUM, tmp0 + tmp1);
       break;
 

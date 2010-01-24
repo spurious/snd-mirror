@@ -3631,6 +3631,12 @@
 (num-test (do ((i 0 (- i 1/2))) ((< i -2) i)) -5/2)
 (num-test (do ((i 0+i (+ i 0+i))) ((> (magnitude i) 2) i)) 0+3i)
 
+(test (call/cc (lambda (return) (do () () (if #t (return 123))))) 123)
+(test (call/cc (lambda (return) (do () (#f) (if #t (return 123))))) 123)
+(test (call/cc (lambda (return) (do ((i 0 (+ i 1))) () (if (= i 100) (return 123))))) 123)
+(test (call/cc (lambda (return) (do () ((return 123))))) 123)
+(test (call/cc (lambda (return) (do () (#t (return 123))))) 123)
+
 (test (do () (/ 0)) 0)
 (test (do () (+)) '())
 (test (do () (+ +) *) +)
@@ -4154,6 +4160,8 @@
 (test (let () (begin (define x 0)) (begin (set! x 5) (+ x 1)))  6)
 (test (let () (begin (define first car)) (first '(1 2))) 1)
 (test (let () (begin (define x 3)) (begin (set! x 4) (+ x x))) 8)
+(test (let ((x 3)) (begin x)) 3)
+(test (begin 3) 3)
 
 (if (equal? (begin 1) 1)
     (begin

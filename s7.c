@@ -983,15 +983,6 @@ static s7_pointer s7_set_immutable(s7_pointer p)
 }
 
 
-static s7_pointer set_pair_line_number(s7_pointer p, int n)
-{
-  if ((!is_eternal(p)) &&
-      (is_pair(p)))
-    pair_line_number(p) = n;
-  return(p);
-}
-
-
 bool s7_is_constant(s7_pointer p) 
 { 
   /* this means "not settable": numbers, characters, strings, keywords, #f #t pi etc */
@@ -13806,13 +13797,6 @@ static pthread_mutex_t remember_files_lock = PTHREAD_MUTEX_INITIALIZER;
 #define remembered_file_name(Line)   (((Line >> 20) <= file_names_top) ? file_names[Line >> 20] : "?")
 /* this gives room for 4000 files each of 1000000 lines */
 
-static s7_pointer remember_line(s7_scheme *sc, s7_pointer obj)
-{
-  if (sc->input_port != sc->NIL)
-    set_pair_line_number(obj, port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20));
-  return(obj);
-}
-
 
 static int remember_file_name(const char *file)
 {
@@ -15616,12 +15600,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *    code = body
        */
       
-      push_stack(sc, opcode(OP_DO_END1), sc->args, sc->code);
-      /* evaluate the endtest */
-      sc->code = cadr(sc->args);
-      sc->args = sc->NIL;
-      goto EVAL;
-      
+      if (cdr(sc->args) != sc->NIL)
+	{
+	  push_stack(sc, opcode(OP_DO_END1), sc->args, sc->code);
+	  /* evaluate the endtest */
+	  sc->code = cadr(sc->args);
+	  sc->args = sc->NIL;
+	  goto EVAL;
+	}
+      else sc->value = sc->F;                       /* (do ((...)) () ...) -- no endtest */
+
       
     case OP_DO_END1:
       /* sc->value should be result of endtest evaluation */
@@ -15747,7 +15735,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	push_stack(sc, opcode(OP_BEGIN), sc->NIL, cdr(sc->code));
       
       sc->code = car(sc->code);
-      sc->cur_code = sc->code;
+      sc->cur_code = sc->code;               /* in case error occurs, this helps tell us where we are */
       /* goto EVAL; */
       
 
@@ -17235,7 +17223,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       switch (sc->tok)
 	{
 	case TOKEN_RIGHT_PAREN:
-	  sc->value = remember_line(sc, safe_reverse_in_place(sc, sc->args));
+	  if (sc->args == sc->NIL)
+	    sc->value = sc->NIL;
+	  else
+	    {
+	      sc->value = safe_reverse_in_place(sc, sc->args);
+	      if (sc->input_port != sc->NIL)
+		pair_line_number(sc->value) = port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20);
+	    }
 
 	  /* read-time macro expansion
 	   *
