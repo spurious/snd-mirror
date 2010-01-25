@@ -1437,14 +1437,20 @@ static s7_pointer new_cell(s7_scheme *sc)
    * I think this is no longer needed.
    */
 
-  nsc->temps[nsc->temps_ctr++] = p;
-  if (nsc->temps_ctr >= nsc->temps_size)
-    nsc->temps_ctr = 0;
-  pthread_mutex_unlock(&alloc_lock);
+  if (sc->free_heap_top <= GC_TEMPS_SIZE)
+    {
+      nsc->temps[nsc->temps_ctr++] = p;
+      if (nsc->temps_ctr >= nsc->temps_size)
+	nsc->temps_ctr = 0;
+      pthread_mutex_unlock(&alloc_lock);
+    }
 #else
-  sc->temps[sc->temps_ctr++] = p;
-  if (sc->temps_ctr >= sc->temps_size)
-    sc->temps_ctr = 0;
+  if (sc->free_heap_top <= GC_TEMPS_SIZE)
+    {
+      sc->temps[sc->temps_ctr++] = p;
+      if (sc->temps_ctr >= sc->temps_size)
+	sc->temps_ctr = 0;
+    }
 #endif
   /* originally I tried to mark each temporary value until I was done with it, but
    *   that way madness lies... By delaying GC of _every_ %$^#%@ pointer, I can dispense
@@ -2148,7 +2154,13 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e, int ty
   /* this is called every time a lambda form is evaluated, or during letrec, etc */
 
   s7_pointer x;
-  x = new_cell(sc); /* expansion here doesn't save much */
+#if HAVE_PTHREADS
+  x = new_cell(sc);
+#else
+  if (sc->free_heap_top > GC_TEMPS_SIZE)
+    x = sc->free_heap[--(sc->free_heap_top)];
+  else x = new_cell(sc);
+#endif
   car(x) = c;
   cdr(x) = e;
   set_type(x, type | T_PROCEDURE);
@@ -3250,7 +3262,14 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
   /* there are ca 6300 -1's in s7test (14500 small negative ints) -- if like real_zero (64000), this would gain us .2% overall speed */
   /*   similarly, between 256 and 512, 8200 or so */
 
+#if HAVE_PTHREADS
   x = new_cell(sc);
+#else
+  if (sc->free_heap_top > GC_TEMPS_SIZE)
+    x = sc->free_heap[--(sc->free_heap_top)];
+  else x = new_cell(sc);
+#endif
+
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   
   number_type(x) = NUM_INT;
@@ -3279,7 +3298,14 @@ s7_pointer s7_make_real(s7_scheme *sc, s7_Double n)
   if (n == 1.0)
     return(real_one);
 
+#if HAVE_PTHREADS
   x = new_cell(sc);
+#else
+  if (sc->free_heap_top > GC_TEMPS_SIZE)
+    x = sc->free_heap[--(sc->free_heap_top)];
+  else x = new_cell(sc);
+#endif
+
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   
   number_type(x) = NUM_REAL;
@@ -9591,13 +9617,8 @@ s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
   x = new_cell(sc); /* might trigger gc */
 #else
   /* expand new_cell for speed */
-  if (sc->free_heap_top > 0)
-    {
-      x = sc->free_heap[--(sc->free_heap_top)];
-      sc->temps[sc->temps_ctr++] = x;
-      if (sc->temps_ctr >= sc->temps_size)
-	sc->temps_ctr = 0;
-    }
+  if (sc->free_heap_top > GC_TEMPS_SIZE)
+    x = sc->free_heap[--(sc->free_heap_top)];
   else x = new_cell(sc);
 #endif
   car(x) = a;
@@ -10068,13 +10089,8 @@ static s7_pointer g_cons(s7_scheme *sc, s7_pointer args)
   x = new_cell(sc); /* might trigger gc */
 #else
   /* expand new_cell for speed */
-  if (sc->free_heap_top > 0)
-    {
-      x = sc->free_heap[--(sc->free_heap_top)];
-      sc->temps[sc->temps_ctr++] = x;
-      if (sc->temps_ctr >= sc->temps_size)
-	sc->temps_ctr = 0;
-    }
+  if (sc->free_heap_top > GC_TEMPS_SIZE)
+    x = sc->free_heap[--(sc->free_heap_top)];
   else x = new_cell(sc);
 #endif
   car(x) = car(args);
