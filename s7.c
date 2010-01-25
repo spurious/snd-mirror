@@ -1699,12 +1699,6 @@ static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char
 } 
 
 
-static s7_pointer symbol_table_add_by_name(s7_scheme *sc, const char *name) 
-{
-  return(symbol_table_add_by_name_at_location(sc, name, symbol_table_hash(name, vector_length(sc->symbol_table)))); 
-}
-
-
 static  s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, int location) 
 { 
   s7_pointer x; 
@@ -4019,42 +4013,106 @@ static bool num_gt(s7_num_t a, s7_num_t b)
    *   :(> 0 most-negative-fixnum)
    *   #f
    */
-  s7_num_t val;
-  if ((num_type(a) == NUM_INT) && 
-      (num_type(b) == NUM_INT))
-    return(integer(a) > integer(b));
-
-  val = num_sub(a, b);
-  switch (num_type(val))
+  switch (num_type(a))
     {
-    case NUM_INT:   return(integer(val) > 0);
-    case NUM_RATIO: return(numerator(val) > 0);
-    default:        return(real(val) > 0.0);
-    }
+    case NUM_INT:
+      switch (num_type(b))
+	{
+	case NUM_INT:
+	  return(integer(a) > integer(b));
 
-#if 0  
-  /* this is the flakey version */
-  if ((num_type(a) == NUM_INT) &&
-      (num_type(b) == NUM_INT))
-    return(integer(a) > integer(b));
-  return(num_to_real(a) > num_to_real(b));
-#endif
+	case NUM_RATIO: 
+	  return((integer(a) * denominator(b)) > numerator(b));
+
+	default:
+	  return(integer(a) > real(b));
+	}
+      break;
+
+    case NUM_RATIO:
+      switch (num_type(b))
+	{
+	case NUM_INT: 
+	  return(numerator(a) > (integer(b) * denominator(a)));
+
+	case NUM_RATIO:
+	  {
+	    s7_num_t val;
+	    val = num_sub(a, b);
+	    return(numerator(val) > 0);
+	  }
+
+	default:
+	  return(num_to_real(a) > real(b));
+	}
+      break;
+
+    default:
+      switch (num_type(b))
+	{
+	case NUM_INT: 
+	  return(real(a) > integer(b));
+
+	case NUM_RATIO:
+	  return(real(a) > num_to_real(b));
+
+	default:
+	  return(real(a) > real(b));
+	}
+      break;
+    }
 }
 
 
 static bool num_lt(s7_num_t a, s7_num_t b) 
 {
-  s7_num_t val;
-  if ((num_type(a) == NUM_INT) && 
-      (num_type(b) == NUM_INT))
-    return(integer(a) < integer(b));
-
-  val = num_sub(a, b);
-  switch (num_type(val))
+  switch (num_type(a))
     {
-    case NUM_INT:   return(integer(val) < 0);
-    case NUM_RATIO: return(numerator(val) < 0);
-    default:        return(real(val) < 0.0);
+    case NUM_INT:
+      switch (num_type(b))
+	{
+	case NUM_INT:
+	  return(integer(a) < integer(b));
+
+	case NUM_RATIO: 
+	  return((integer(a) * denominator(b)) < numerator(b));
+
+	default:
+	  return(integer(a) < real(b));
+	}
+      break;
+
+    case NUM_RATIO:
+      switch (num_type(b))
+	{
+	case NUM_INT: 
+	  return(numerator(a) < (integer(b) * denominator(a)));
+
+	case NUM_RATIO:
+	  {
+	    s7_num_t val;
+	    val = num_sub(a, b);
+	    return(numerator(val) < 0);
+	  }
+
+	default:
+	  return(num_to_real(a) < real(b));
+	}
+      break;
+
+    default:
+      switch (num_type(b))
+	{
+	case NUM_INT: 
+	  return(real(a) < integer(b));
+
+	case NUM_RATIO:
+	  return(real(a) < num_to_real(b));
+
+	default:
+	  return(real(a) < real(b));
+	}
+      break;
     }
 }
 
@@ -15196,7 +15254,7 @@ static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
 static void assign_syntax(s7_scheme *sc, const char *name, opcode_t op) 
 {
   s7_pointer x;
-  x = symbol_table_add_by_name(sc, name); 
+  x = symbol_table_add_by_name_at_location(sc, name, symbol_table_hash(name, vector_length(sc->symbol_table))); 
   typeflag(x) |= (T_SYNTAX | T_DONT_COPY); 
   clear_finalizable(x);
   syntax_opcode(x) = (int)op;
@@ -15582,7 +15640,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->y = safe_reverse_in_place(sc, sc->value);
       sc->args = sc->NIL;
       for (sc->x = car(sc->code); sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y))       
-	if (cddar(sc->x) != sc->NIL) /* no incr expr, so ignore it henceforth */
+	if (cddar(sc->x) != sc->NIL)               /* no incr expr, so ignore it henceforth */
 	  {
 	    sc->value = s7_cons(sc, caddar(sc->x), sc->NIL);
 	    sc->value = s7_cons(sc, car(sc->y), sc->value);

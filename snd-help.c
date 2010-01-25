@@ -497,6 +497,9 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+23-Jan:  The rest of the Guile-dependent files have been removed.\n\
+           This includes pd-*, rt-*, and the --with-snd-as-pd-external\n\
+            --with-hobbit, and --with-rt configuration switches.\n\
 5-Jan:   Snd 11.2.\n\
 26-Dec:  tools/sam.c.\n\
 21-Dec:  moved focus-follows-mouse to C as with-pointer-focus.\n\
