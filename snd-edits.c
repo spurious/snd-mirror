@@ -378,7 +378,7 @@ char *run_save_state_hook(const char *file)
  *   to use in the current form.
  */
 
-static int max_virtual_ptrees = 3;
+static int max_virtual_ptrees = 32; /* was 3 */
 
 
 /* fragment ramp info */
@@ -9602,7 +9602,7 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
 
 static XEN g_max_virtual_ptrees(void)
 {
-  #define H_max_virtual_ptrees "(" S_max_virtual_ptrees "): most ptrees running at once in virtual edits"
+  #define H_max_virtual_ptrees "(" S_max_virtual_ptrees "): most ptrees running at once in virtual edits (default: 32)"
   return(C_TO_XEN_INT(max_virtual_ptrees));
 }
 

@@ -16431,12 +16431,12 @@ static void init_walkers(void)
 static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
 {
   ptree *pt;
+  s7_pointer cl;
+  int gc_loc;
+
 #if USE_SND
   current_optimization = SOURCE_OK;
 #endif
-
-  s7_pointer cl;
-  int gc_loc;
 
   cl = s7_make_closure(s7, code, xen_nil);
   gc_loc = s7_gc_protect(s7, cl);

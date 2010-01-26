@@ -1505,8 +1505,8 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
   int loc;
   /* global functions are very rarely redefined, so we can remove the function body from
    *   the heap when it is defined.  If redefined, we currently lose the memory held by the
-   *   old definition.  If this memory leak becomes a problem, we could notice the redefinition 
-   *   in add_to_environment, and GC the old body by hand.
+   *   old definition.  (It is not trivial to recover this memory because it is allocated
+   *   in blocks, not by the pointer, I think, but s7_define is the point to try).
    */
 
   switch (type(x))
@@ -4389,7 +4389,6 @@ static char *s7_number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int r
     case NUM_REAL2:
     case NUM_REAL:
       {
-	char *n, *d;
 	int i;
 	s7_Int int_part;
 	s7_Double x, frac_part, min_frac, base;
@@ -14791,7 +14790,6 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
   if ((is_pair(car(form))) &&
       (caar(form) == sc->UNQUOTE_SPLICING))
     {
-      s7_pointer l, r;
       l = car(cdr(car(form)));
       if (cdr(form) == sc->NIL)
 	return(l);
@@ -14918,7 +14916,6 @@ static token_t token(s7_scheme *sc)
       
     case ';':
       {
-	int c;
 	if (is_file_port(pt))
 	  do (c = fgetc(port_file(pt))); while ((c != '\n') && (c != EOF));
 	else do (c = port_string(pt)[port_string_point(pt)++]); while ((c != '\n') && (c != 0));

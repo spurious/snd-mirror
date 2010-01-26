@@ -61238,8 +61238,8 @@ EDITS: 1
 		 (_gboolean10 (GTK_WIDGET_SENSITIVE _GtkWidget_))
 		 (_gboolean11 (GTK_WIDGET_PARENT_SENSITIVE _GtkWidget_))
 		 (_gboolean12 (GTK_WIDGET_IS_SENSITIVE _GtkWidget_))
-		 (_gboolean14 (GTK_WIDGET_HAS_FOCUS _GtkWidget_))
-		 (_gboolean18 (GTK_WIDGET_RC_STYLE _GtkWidget_)))
+		 (_gboolean14 (GTK_WIDGET_HAS_FOCUS _GtkWidget_)))
+		 
 	    (if (not (string=? _gchar_ "hiho")) (snd-display ";label text: ~A" _gchar_))
 	    (if (not (string=? _gchar1_ "hiho")) (snd-display ";label label: ~A" _gchar1_))
 	    (if (not (= _GtkJustification GTK_JUSTIFY_LEFT)) (snd-display ";label justification: ~A ~A" _GtkJustification GTK_JUSTIFY_LEFT))
@@ -61260,7 +61260,6 @@ EDITS: 1
 	    (if (not _gboolean11) (snd-display ";WIDGET SENSITIVE"))
 	    (if (not _gboolean12) (snd-display ";WIDGET SENSITIVE"))
 	    (if _gboolean14 (snd-display ";WIDGET HAS FOCUS"))
-	    (if _gboolean18 (snd-display ";WIDGET RC STYLE"))
 
 	    (gtk_label_set_text _GtkLabel_ "another label")
 	    (if (not (string=? (gtk_label_get_text _GtkLabel_) "another label")) (snd-display ";set label text: ~A" (gtk_label_get_text _GtkLabel_)))
@@ -61292,7 +61291,7 @@ EDITS: 1
 		    (lst (c-array->list arr 3)))
 	       (if (not (equal? lst '(1 2 3)))
 		   (snd-display ";~A c-array->list not invertible?: ~A ~A" type arr lst))))
-	   (list "gint*" "guint*" "guint32*" "guint8*" "guint16*" "int*" "guchar*"))
+	   (list "gint*" "guint*" "guint32*" "guint16*" "int*" "guchar*"))
 	  
 	  (let* ((arr (list->c-array '(#f #t #t) "gboolean*"))
 		 (lst (c-array->list arr 3)))
@@ -62067,9 +62066,7 @@ EDITS: 1
 	    (gtk_ui_manager_get_ui _GtkUIManager_)
 	    (gtk_ui_manager_remove_ui _GtkUIManager_ _guint))
 	  
-	  (let* ((_GtkFixed_ (GTK_FIXED (gtk_fixed_new)))
-		 (_gboolean (gtk_fixed_get_has_window _GtkFixed_)))
-	    (gtk_fixed_set_has_window _GtkFixed_ #f)
+	  (let* ((_GtkFixed_ (GTK_FIXED (gtk_fixed_new))))
 	    (gtk_fixed_put _GtkFixed_ (gtk_label_new "hi") 0 0)
 	    (let* ((_gpointer (g_object_ref (GPOINTER _GtkFixed_)))
 		   (_GType (G_OBJECT_TYPE (GTK_OBJECT _GtkFixed_)))
@@ -62941,7 +62938,6 @@ EDITS: 1
 	    (gtk_accel_group_disconnect _GtkAccelGroup_ #f))
 	  
 	  (let* ((label (gtk_label_new "hi"))
-		 (_char_ (GTK_OBJECT_TYPE_NAME (GTK_OBJECT label)))
 		 (_gboolean (GTK_IS_RESIZE_CONTAINER (GTK_WIDGET label)))
 		 (_gboolean1 #f)
 		 (_GtkExpander_ (GTK_EXPANDER (gtk_expander_new "hi")))
@@ -62955,7 +62951,6 @@ EDITS: 1
 		 (_gint (gtk_expander_get_spacing _GtkExpander_))
 		 (_gint1 (gtk_editable_get_position _GtkEditable_))
 		 (_GtkContainer_ (GTK_CONTAINER (gtk_vbox_new #t 0))))
-	    (if (not (string=? _char_ "GtkLabel")) (snd-display ";label type name: ~A" _char_))
 	    (if _gboolean (snd-display ";label is resize container"))
 	    (if (not _gboolean2) (snd-display ";editable not editable"))
 	    (if _gboolean3 (snd-display ";expander expanded"))
@@ -63565,7 +63560,7 @@ EDITS: 1
 		   GTK_IS_WIDGET GTK_IS_WINDOW GTK_ITEM GTK_LABEL GTK_LAYOUT
 		   GTK_LIST_STORE GTK_MENU GTK_MENU_BAR GTK_MENU_ITEM GTK_MENU_SHELL
 		   GTK_MENU_TOOL_BUTTON GTK_MISC GTK_NOTEBOOK GTK_OBJECT
-		   GTK_OBJECT_FLAGS GTK_OBJECT_SET_FLAGS GTK_OBJECT_TYPE_NAME GTK_OBJECT_UNSET_FLAGS
+		   GTK_OBJECT_FLAGS GTK_OBJECT_SET_FLAGS GTK_OBJECT_UNSET_FLAGS
 		   GTK_PANED GTK_PLUG GTK_PROGRESS_BAR GTK_RADIO_ACTION GTK_RADIO_BUTTON
 		   GTK_RADIO_MENU_ITEM GTK_RADIO_TOOL_BUTTON GTK_RANGE GTK_RULER GTK_SCALE
 		   GTK_SCROLLBAR GTK_SCROLLED_WINDOW GTK_SEPARATOR GTK_SEPARATOR_MENU_ITEM GTK_SEPARATOR_TOOL_ITEM
@@ -63578,7 +63573,7 @@ EDITS: 1
 		   GTK_UI_MANAGER GTK_VBOX GTK_VBUTTON_BOX GTK_VIEWPORT GTK_VPANED
 		   GTK_VRULER GTK_VSCALE GTK_VSCROLLBAR GTK_VSEPARATOR GTK_WIDGET
 		   GTK_WIDGET_DRAWABLE GTK_WIDGET_FLAGS GTK_WIDGET_HAS_FOCUS
-		   GTK_WIDGET_IS_SENSITIVE GTK_WIDGET_MAPPED GTK_WIDGET_PARENT_SENSITIVE GTK_WIDGET_RC_STYLE
+		   GTK_WIDGET_IS_SENSITIVE GTK_WIDGET_MAPPED GTK_WIDGET_PARENT_SENSITIVE
 		   GTK_WIDGET_REALIZED
 		   GTK_WIDGET_SENSITIVE GTK_WIDGET_SET_FLAGS
 		   GTK_WIDGET_UNSET_FLAGS GTK_WIDGET_VISIBLE GTK_WINDOW
@@ -63832,8 +63827,7 @@ EDITS: 1
 		   gtk_file_chooser_unselect_filename gtk_file_chooser_unselect_uri
 		   gtk_file_filter_add_pattern gtk_file_filter_add_pixbuf_formats gtk_file_filter_filter gtk_file_filter_get_name gtk_file_filter_get_needed
 		   gtk_file_filter_new gtk_file_filter_set_name 
-		   gtk_fixed_get_has_window
-		   gtk_fixed_move gtk_fixed_new gtk_fixed_put gtk_fixed_set_has_window gtk_font_button_get_font_name
+		   gtk_fixed_move gtk_fixed_new gtk_fixed_put gtk_font_button_get_font_name
 		   gtk_font_button_get_show_size gtk_font_button_get_show_style gtk_font_button_get_title gtk_font_button_get_use_font
 		   gtk_font_button_get_use_size gtk_font_button_new gtk_font_button_new_with_font gtk_font_button_set_font_name gtk_font_button_set_show_size
 		   gtk_font_button_set_show_style gtk_font_button_set_title gtk_font_button_set_use_font 

@@ -3392,7 +3392,7 @@
 ;;;        (CFNC "gboolean GTK_WIDGET_CAN_DEFAULT GtkWidget* wid")
 ;;;        (CFNC "gboolean GTK_WIDGET_HAS_DEFAULT GtkWidget* wid")
 ;;;        (CFNC "gboolean GTK_WIDGET_HAS_GRAB GtkWidget* wid")
-(CFNC "gboolean GTK_WIDGET_RC_STYLE GtkWidget* wid")
+;;;        (CFNC "gboolean GTK_WIDGET_RC_STYLE GtkWidget* wid")
 ;;;        (CFNC "gboolean GTK_WIDGET_COMPOSITE_CHILD GtkWidget* wid")
 ;;;        (CFNC "gboolean GTK_WIDGET_APP_PAINTABLE GtkWidget* wid")
 ;;;        (CFNC "gboolean GTK_WIDGET_RECEIVES_DEFAULT GtkWidget* wid")
@@ -6714,50 +6714,24 @@
 
 ;;; Gtk 3.0 will probably disable a lot of these struct field accessors, so I need to start removing them
 
-;;; removed unused fields 23-Feb-09
+;;; removed unused fields 23-Feb-09 and 26-Jan-10
 (STRUCT "GdkEventAny GdkEventType type GdkWindow* window")
-(STRUCT "GdkEventMotion GdkEventType type GdkWindow* window guint32 time gdouble x gdouble y guint state gint16 is_hint")
-(STRUCT "GdkEventButton GdkEventType type GdkWindow* window guint32 time gdouble x gdouble y guint state guint button")
-(STRUCT "GdkEventScroll GdkEventType type GdkWindow* window guint32 time gdouble x gdouble y guint state GdkScrollDirection direction")
-(STRUCT "GdkEventKey GdkEventType type GdkWindow* window guint32 time guint state guint keyval")
-(STRUCT "GdkGCValues GdkFunction function")
-
-
-;;; unused?
-;(STRUCT "GdkEventFocus GdkEventType type GdkWindow* window gint8 send_event gint16 in")
-;(STRUCT "GdkEventExpose GdkEventType type GdkWindow* window gint8 send_event GdkRegion* region gint count")
-;(STRUCT "GdkEventNoExpose GdkEventType type GdkWindow* window gint8 send_event")
-;(STRUCT "GdkEventVisibility GdkEventType type GdkWindow* window gint8 send_event GdkVisibilityState state")
-;(STRUCT "GdkEventCrossing GdkEventType type GdkWindow* window gint8 send_event GdkWindow* subwindow guint32 time gdouble x gdouble y gdouble x_root gdouble y_root GdkCrossingMode mode GdkNotifyType detail gboolean focus guint state")
-;(STRUCT "GdkEventConfigure GdkEventType type GdkWindow* window gint8 send_event gint x gint y gint width gint height")
-;(STRUCT "GdkEventProperty GdkEventType type GdkWindow* window gint8 send_event GdkAtom atom guint32 time guint state")
-;(STRUCT "GdkEventSelection GdkEventType type GdkWindow* window gint8 send_event GdkAtom selection GdkAtom target GdkAtom property guint32 time GdkNativeWindow requestor")
-;(STRUCT "GdkEventProximity GdkEventType type GdkWindow* window gint8 send_event guint32 time GdkDevice* device")
-;(STRUCT "GdkEventSetting GdkEventType type GdkWindow* window gint8 send_event GdkSettingAction action char* name")
-;(STRUCT "GdkEventWindowState GdkEventType type GdkWindow* window gint8 send_event GdkWindowState changed_mask GdkWindowState new_window_state")
-;(STRUCT "GdkEventDND GdkEventType type GdkWindow* window gint8 send_event GdkDragContext* context guint32 time gshort x_root gshort y_root")
-;(STRUCT "GdkGC gint clip_x_origin gint clip_y_origin gint ts_x_origin gint ts_y_origin GdkColormap* colormap")
-;(STRUCT "GdkColormap gint size GdkColor* colors GdkVisual* visual gpointer windowing_data")
-;(STRUCT "GdkDragContext GdkDragProtocol protocol gboolean is_source GdkWindow* source_window GdkWindow* dest_window GList* targets GdkDragAction actions GdkDragAction suggested_action GdkDragAction action guint32 start_time gpointer windowing_data")
-;(STRUCT "GdkImage GdkImageType type GdkVisual* visual GdkByteOrder byte_order gint width gint height guint16 depth guint16 bpp guint16 bpl guint16 bits_per_pixel gpointer mem GdkColormap* colormap gpointer windowing_data")
-;(STRUCT "GdkKeymapKey guint keycode gint group gint level")
-;(STRUCT "GdkRgbCmap guint32* colors gint n_colors GSList* info_list")
-;(STRUCT "GdkVisual GdkVisualType type gint depth GdkByteOrder byte_order gint colormap_size gint bits_per_rgb guint32 red_mask gint red_shift gint red_prec guint32 green_mask gint green_shift gint green_prec guint32 blue_mask gint blue_shift gint blue_prec")
-;(STRUCT "GdkWindowAttr gchar* title gint event_mask gint x gint y gint width gint height GdkVisual* visual GdkColormap* colormap GdkWindowType window_type GdkCursor* cursor gchar* wmclass_name gchar* wmclass_class gboolean override_redirect")
-;(STRUCT "GdkGeometry gint min_width gint min_height gint max_width gint max_height gint base_width gint base_height gint width_inc gint height_inc gdouble min_aspect gdouble max_aspect GdkGravity win_gravity")
-;;; 2.13.6 (STRUCT "GtkAdjustment gdouble lower gdouble upper gdouble &value gdouble step_increment gdouble page_increment gdouble page_size")
-;(STRUCT "GtkFontSelectionDialog GtkWidget* action_area")
+;(STRUCT "GdkEventMotion GdkEventType type GdkWindow* window guint32 time gdouble x gdouble y guint state gint16 is_hint")
+;(STRUCT "GdkEventButton GdkEventType type GdkWindow* window guint32 time gdouble x gdouble y guint state guint button")
+;(STRUCT "GdkEventScroll GdkEventType type GdkWindow* window guint32 time gdouble x gdouble y guint state GdkScrollDirection direction")
+;(STRUCT "GdkEventKey GdkEventType type GdkWindow* window guint32 time guint state guint keyval")
+;(STRUCT "GdkGCValues GdkFunction function")
 
 ;;; removed unused fields 21-Feb-09
-(STRUCT "GtkStyle GdkGC* black_gc GdkGC* white_gc")
-(STRUCT "GtkColorSelectionDialog GtkWidget* ok_button GtkWidget* cancel_button")
-(STRUCT "GtkDialog GtkWidget* vbox GtkWidget* action_area") 
-(STRUCT "GtkWidget guint8 state GtkStyle* style GdkWindow* window")
+;(STRUCT "GtkStyle GdkGC* black_gc GdkGC* white_gc")
+(STRUCT "GtkColorSelectionDialog GtkWidget* ok_button GtkWidget* cancel_button") ; snd-gtk.scm
+;(STRUCT "GtkDialog GtkWidget* vbox GtkWidget* action_area")
+;(STRUCT "GtkWidget guint8 state GdkWindow* window")
 ;;; gui.scm is currently the main (only?) user of these fields
 
 ;;; for 3.0...
 ;;;
-;;; done (except for rt-related scheme code, and the ruby/forth stuff)
+;;; done (except for the ruby/forth stuff)
 ;;;   window -> gtk_widget_get_window
 ;;;   vbox -> gtk_dialog_get_content_area
 ;;;   action_area -> gtk_dialog_get_action_area
@@ -6776,18 +6750,14 @@
 ;;; GdkColor ->pixel, ->red|green|blue [no accessors apparently]
 ;;; color selection dialog buttons currently must go through the property access maze
 
-
 (STRUCT-make "GdkColor guint32 &pixel guint16 &red guint16 &green guint16 &blue")
 (STRUCT-make "GdkCursor GdkCursorType type guint ref_count")
 (STRUCT-make "GdkPoint gint x gint y")
 (STRUCT-make "GdkRectangle gint x gint y gint width gint height")
-
 (STRUCT-make "GtkRequisition gint width gint height")
-
 (STRUCT-make "GtkStockItem")
 (STRUCT-make "GtkTextIter")
 (STRUCT-make "GtkTreeIter")
-
 (STRUCT-make "PangoColor")
 (STRUCT-make "PangoRectangle")
 (STRUCT-make "PangoLogAttr")
@@ -7078,12 +7048,12 @@
 (CFNC-2190 "GtkSizeGroup* gtk_tool_shell_get_text_size_group GtkToolShell* shell")
 ;;; (CFNC-2190 "GtkWindowType gtk_window_get_window_type GtkWindow* window")
 (CFNC-2190 "GtkWidget* gtk_tool_palette_new void")
-(CFNC-2190 "void gtk_tool_palette_set_group_position GtkToolPalette* palette GtkWidget* group gint position")
-(CFNC-2190 "void gtk_tool_palette_set_exclusive GtkToolPalette* palette GtkWidget* group gboolean exclusive")
-(CFNC-2190 "void gtk_tool_palette_set_expand GtkToolPalette* palette GtkWidget* group gboolean expand")
-(CFNC-2190 "gint gtk_tool_palette_get_group_position GtkToolPalette* palette GtkWidget* group")
-(CFNC-2190 "gboolean gtk_tool_palette_get_exclusive GtkToolPalette* palette GtkWidget* group")
-(CFNC-2190 "gboolean gtk_tool_palette_get_expand GtkToolPalette* palette GtkWidget* group")
+(CFNC-2190 "void gtk_tool_palette_set_group_position GtkToolPalette* palette GtkToolItemGroup* group gint position") ; these changed GtkWidget* to GtkToolItemGroup*
+(CFNC-2190 "void gtk_tool_palette_set_exclusive GtkToolPalette* palette GtkToolItemGroup* group gboolean exclusive")
+(CFNC-2190 "void gtk_tool_palette_set_expand GtkToolPalette* palette GtkToolItemGroup* group gboolean expand")
+(CFNC-2190 "gint gtk_tool_palette_get_group_position GtkToolPalette* palette GtkToolItemGroup* group")
+(CFNC-2190 "gboolean gtk_tool_palette_get_exclusive GtkToolPalette* palette GtkToolItemGroup* group")
+(CFNC-2190 "gboolean gtk_tool_palette_get_expand GtkToolPalette* palette GtkToolItemGroup* group")
 (CFNC-2190 "void gtk_tool_palette_set_icon_size GtkToolPalette* palette GtkIconSize icon_size")
 (CFNC-2190 "void gtk_tool_palette_unset_icon_size GtkToolPalette* palette")
 (CFNC-2190 "void gtk_tool_palette_set_style GtkToolPalette* palette GtkToolbarStyle style")
@@ -7091,7 +7061,7 @@
 (CFNC-2190 "GtkIconSize gtk_tool_palette_get_icon_size GtkToolPalette* palette")
 (CFNC-2190 "GtkToolbarStyle gtk_tool_palette_get_style GtkToolPalette* palette")
 (CFNC-2190 "GtkToolItem* gtk_tool_palette_get_drop_item GtkToolPalette* palette gint x gint y")
-(CFNC-2190 "GtkWidget* gtk_tool_palette_get_drop_group GtkToolPalette* palette gint x gint y")
+(CFNC-2190 "GtkToolItemGroup* gtk_tool_palette_get_drop_group GtkToolPalette* palette gint x gint y")
 (CFNC-2190 "GtkWidget* gtk_tool_palette_get_drag_item GtkToolPalette* palette GtkSelectionData* selection")
 (CFNC-2190 "void gtk_tool_palette_set_drag_source GtkToolPalette* palette GtkToolPaletteDragTargets targets")
 (CFNC-2190 "void gtk_tool_palette_add_drag_dest GtkToolPalette* palette GtkWidget* widget GtkDestDefaults flags GtkToolPaletteDragTargets targets GdkDragAction actions")
@@ -7125,3 +7095,14 @@
 (CFNC-2190 "gboolean gtk_window_get_mnemonics_visible GtkWindow* window")
 
 
+;;; 2.19.4
+(CFNC-2190 "GdkWindow* gtk_entry_get_text_window GtkEntry* entry")
+(CFNC-2190 "GdkWindow* gtk_entry_get_icon_window GtkEntry* entry GtkEntryIconPosition icon_pos")
+(CFNC-2190 "void gtk_range_set_slider_size_fixed GtkRange* range gboolean size_fixed")
+(CFNC-2190 "gboolean gtk_range_get_slider_size_fixed GtkRange* range")
+(CFNC-2190 "void gtk_range_set_min_slider_size GtkRange* range gboolean min_size")
+(CFNC-2190 "gint gtk_range_get_min_slider_size GtkRange* range")
+(CFNC-2190 "void gtk_range_get_range_rect GtkRange* range GdkRectangle* range_rect")
+(CFNC-2190 "void gtk_range_get_slider_range GtkRange* range gint* [slider_start] gint* [slider_end]")
+(CFNC-2190 "void gtk_status_icon_set_name GtkStatusIcon* status_icon gchar* name") ; const gchar
+(CFNC-2190 "gboolean gtk_widget_has_rc_style GtkWidget* widget")

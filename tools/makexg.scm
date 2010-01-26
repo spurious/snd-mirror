@@ -235,7 +235,7 @@
 	"GdkDragAction" "GdkImageType"
 
 	"gdouble*" "GdkFill" "GdkSubwindowMode" "GdkLineStyle" "GdkCapStyle" "GdkJoinStyle"
-	"GtkInfoBar*" "GtkSpinner*" "GtkToolShell*" "GtkToolPalette*" "GtkToolPaletteDragTargets" "GtkToolItemGroup*"
+	"GtkInfoBar*" "GtkSpinner*" "GtkToolShell*" "GtkToolPalette*" "GtkToolPaletteDragTargets"
 	))
 
 (define no-xen-p 
@@ -248,7 +248,7 @@
 	"GValue*" "GdkByteOrder" "GdkCrossingMode" "GdkEventType" "GdkGrabStatus" "GdkNotifyType"
 	;"GdkOverlapType" 
 	"GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
-	"GtkImageType" "GtkTreeModelFlags" "gint16" "gint8" "gshort" "guint8" "lambda" 
+	"GtkImageType" "GtkTreeModelFlags" "gint8" "gshort" "guint8" "lambda" 
 
 	"time_t" "GtkWindowGroup*" "GtkSettings*" "GdkDevice*" "GtkScaleButton*"
 	"GtkPrintOperationResult" "GtkPrintStatus"
@@ -265,7 +265,7 @@
 	"GValue*" "GdkByteOrder" "GdkCrossingMode" "GdkEventType" "GdkGrabStatus" "GdkNotifyType"
 	;"GdkOverlapType" 
 	"GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
-	"GtkImageType" "GtkTreeModelFlags" "etc" "gint16" "gshort"
+	"GtkImageType" "GtkTreeModelFlags" "etc" "gshort"
 
 	"GtkWindowGroup*" "time_t" "GtkSettings*" "GdkDevice*" "GtkScaleButton*"
 	"GtkPrintOperationResult" "GtkPrintStatus"
@@ -751,8 +751,8 @@
 	(cons "guint16" "INT")
 	(cons "gint" "INT")
 	(cons "gshort" "INT")
-	(cons "gint16" "INT")
-	(cons "guint8" "INT")
+;	(cons "gint16" "INT")
+;	(cons "guint8" "INT")
 	(cons "guchar" "INT")
 	(cons "gint8" "INT")
 	(cons "gssize" "INT")
@@ -2087,7 +2087,7 @@
   (dpy "#endif~%~%"))
 
 (define (with-2190 dpy thunk)
-  (dpy "#if HAVE_GTK_TOOL_PALETTE_NEW~%")
+  (dpy "#if HAVE_GTK_ENTRY_GET_TEXT_WINDOW~%")
   (thunk)
   (dpy "#endif~%~%"))
 
