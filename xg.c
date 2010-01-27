@@ -57,6 +57,7 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     28-Jan-10: removed the rest of the struct accessors.
  *     --------
  *     16-Dec-09: removed Guile support.
  *     --------
@@ -373,6 +374,8 @@ static XEN C_TO_XEN_GError_(GError *err)
 
 /* ---------------------------------------- types ---------------------------------------- */
 
+XM_TYPE_PTR(GdkEvent_, GdkEvent*)
+XM_TYPE_PTR(GdkEventAny_, GdkEventAny*)
 XM_TYPE_PTR_1(gdouble_, gdouble*)
 XM_TYPE_PTR_1(GtkColorSelectionDialog_, GtkColorSelectionDialog*)
 XM_TYPE_PTR_1(GdkEventMotion_, GdkEventMotion*)
@@ -381,7 +384,6 @@ XM_TYPE_PTR(GtkAccelKey_, GtkAccelKey*)
 XM_TYPE_PTR(GClosure_, GClosure*)
 XM_TYPE_PTR(GtkWidget_, GtkWidget*)
 XM_TYPE_PTR_2(GdkXEvent_, GdkXEvent*)
-XM_TYPE_PTR(GdkEvent_, GdkEvent*)
 XM_TYPE_PTR(GdkEventKey_, GdkEventKey*)
 XM_TYPE_PTR(GtkMenu_, GtkMenu*)
 XM_TYPE_PTR(gint_, gint*)
@@ -826,8 +828,6 @@ XM_TYPE_PTR(PangoLayoutIter_, PangoLayoutIter*)
 XM_TYPE_PTR_2(PangoLayoutRun_, PangoLayoutRun*)
 #define XEN_TO_C_gssize(Arg) (gssize)(XEN_TO_C_INT(Arg))
 #define XEN_gssize_P(Arg) XEN_INTEGER_P(Arg)
-#define C_TO_XEN_GdkEventType(Arg) C_TO_XEN_INT(Arg)
-XM_TYPE_PTR(GdkEventAny_, GdkEventAny*)
 #if HAVE_GDK_DRAW_PIXBUF
 XM_TYPE_PTR(GdkDisplay_, GdkDisplay*)
 XM_TYPE_PTR(GdkScreen_, GdkScreen*)
@@ -34420,6 +34420,7 @@ static XEN gxg_PANGO_FONT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(
 static XEN gxg_PANGO_FONT_MAP(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("PangoFontMap_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_PANGO_LAYOUT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("PangoLayout_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_G_OBJECT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GObject_"), XEN_CADR(obj)) : XEN_FALSE);}
+static XEN gxg_GDK_EVENT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkEvent_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GDK_EVENT_ANY(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkEventAny_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GDK_EVENT_EXPOSE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkEventExpose_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GDK_EVENT_NOEXPOSE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkEventNoExpose_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -35081,27 +35082,8 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
 
 static XEN gxg_type(XEN ptr)
 {
-  XEN_ASSERT_TYPE(XEN_GdkEventAny__P(ptr) || XEN_GdkCursor__P(ptr), ptr, XEN_ONLY_ARG, "type", "GdkEventAny" " or " "GdkCursor");
-  if (XEN_GdkEventAny__P(ptr)) return(C_TO_XEN_GdkEventType((GdkEventType)((XEN_TO_C_GdkEventAny_(ptr))->type)));
+  XEN_ASSERT_TYPE(XEN_GdkCursor__P(ptr), ptr, XEN_ONLY_ARG, "type", "GdkCursor");
   return(C_TO_XEN_GdkCursorType((GdkCursorType)((XEN_TO_C_GdkCursor_(ptr))->type)));
-}
-
-static XEN gxg_window(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_GdkEventAny__P(ptr), ptr, XEN_ONLY_ARG, "window", "GdkEventAny");
-  return(C_TO_XEN_GdkWindow_((GdkWindow*)((XEN_TO_C_GdkEventAny_(ptr))->window)));
-}
-
-static XEN gxg_ok_button(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_GtkColorSelectionDialog__P(ptr), ptr, XEN_ONLY_ARG, "ok_button", "GtkColorSelectionDialog");
-  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkColorSelectionDialog_(ptr))->ok_button)));
-}
-
-static XEN gxg_cancel_button(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_GtkColorSelectionDialog__P(ptr), ptr, XEN_ONLY_ARG, "cancel_button", "GtkColorSelectionDialog");
-  return(C_TO_XEN_GtkWidget_((GtkWidget*)((XEN_TO_C_GtkColorSelectionDialog_(ptr))->cancel_button)));
 }
 
 static XEN gxg_ref_count(XEN ptr)
@@ -38973,6 +38955,7 @@ XEN_NARGIFY_1(gxg_PANGO_FONT_w, gxg_PANGO_FONT)
 XEN_NARGIFY_1(gxg_PANGO_FONT_MAP_w, gxg_PANGO_FONT_MAP)
 XEN_NARGIFY_1(gxg_PANGO_LAYOUT_w, gxg_PANGO_LAYOUT)
 XEN_NARGIFY_1(gxg_G_OBJECT_w, gxg_G_OBJECT)
+XEN_NARGIFY_1(gxg_GDK_EVENT_w, gxg_GDK_EVENT)
 XEN_NARGIFY_1(gxg_GDK_EVENT_ANY_w, gxg_GDK_EVENT_ANY)
 XEN_NARGIFY_1(gxg_GDK_EVENT_EXPOSE_w, gxg_GDK_EVENT_EXPOSE)
 XEN_NARGIFY_1(gxg_GDK_EVENT_NOEXPOSE_w, gxg_GDK_EVENT_NOEXPOSE)
@@ -39301,9 +39284,6 @@ XEN_NARGIFY_1(gxg_width_w, gxg_width)
 XEN_NARGIFY_1(gxg_y_w, gxg_y)
 XEN_NARGIFY_1(gxg_x_w, gxg_x)
 XEN_NARGIFY_1(gxg_ref_count_w, gxg_ref_count)
-XEN_NARGIFY_1(gxg_cancel_button_w, gxg_cancel_button)
-XEN_NARGIFY_1(gxg_ok_button_w, gxg_ok_button)
-XEN_NARGIFY_1(gxg_window_w, gxg_window)
 XEN_NARGIFY_1(gxg_type_w, gxg_type)
 XEN_NARGIFY_1(gxg_blue_w, gxg_blue)
 XEN_NARGIFY_1(gxg_green_w, gxg_green)
@@ -42984,6 +42964,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_PANGO_FONT_MAP_w gxg_PANGO_FONT_MAP
 #define gxg_PANGO_LAYOUT_w gxg_PANGO_LAYOUT
 #define gxg_G_OBJECT_w gxg_G_OBJECT
+#define gxg_GDK_EVENT_w gxg_GDK_EVENT
 #define gxg_GDK_EVENT_ANY_w gxg_GDK_EVENT_ANY
 #define gxg_GDK_EVENT_EXPOSE_w gxg_GDK_EVENT_EXPOSE
 #define gxg_GDK_EVENT_NOEXPOSE_w gxg_GDK_EVENT_NOEXPOSE
@@ -43312,9 +43293,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_y_w gxg_y
 #define gxg_x_w gxg_x
 #define gxg_ref_count_w gxg_ref_count
-#define gxg_cancel_button_w gxg_cancel_button
-#define gxg_ok_button_w gxg_ok_button
-#define gxg_window_w gxg_window
 #define gxg_type_w gxg_type
 #define gxg_blue_w gxg_blue
 #define gxg_green_w gxg_green
@@ -46995,6 +46973,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(PANGO_FONT_MAP, gxg_PANGO_FONT_MAP_w, 1, 0, 0, "(PANGO_FONT_MAP obj) casts obj to PANGO_FONT_MAP");
   XG_DEFINE_PROCEDURE(PANGO_LAYOUT, gxg_PANGO_LAYOUT_w, 1, 0, 0, "(PANGO_LAYOUT obj) casts obj to PANGO_LAYOUT");
   XG_DEFINE_PROCEDURE(G_OBJECT, gxg_G_OBJECT_w, 1, 0, 0, "(G_OBJECT obj) casts obj to G_OBJECT");
+  XG_DEFINE_PROCEDURE(GDK_EVENT, gxg_GDK_EVENT_w, 1, 0, 0, "(GDK_EVENT obj) casts obj to GDK_EVENT");
   XG_DEFINE_PROCEDURE(GDK_EVENT_ANY, gxg_GDK_EVENT_ANY_w, 1, 0, 0, "(GDK_EVENT_ANY obj) casts obj to GDK_EVENT_ANY");
   XG_DEFINE_PROCEDURE(GDK_EVENT_EXPOSE, gxg_GDK_EVENT_EXPOSE_w, 1, 0, 0, "(GDK_EVENT_EXPOSE obj) casts obj to GDK_EVENT_EXPOSE");
   XG_DEFINE_PROCEDURE(GDK_EVENT_NOEXPOSE, gxg_GDK_EVENT_NOEXPOSE_w, 1, 0, 0, "(GDK_EVENT_NOEXPOSE obj) casts obj to GDK_EVENT_NOEXPOSE");
@@ -47334,9 +47313,6 @@ static void define_structs(void)
   XG_DEFINE_READER(y, gxg_y_w, 1, 0, 0);
   XG_DEFINE_READER(x, gxg_x_w, 1, 0, 0);
   XG_DEFINE_READER(ref_count, gxg_ref_count_w, 1, 0, 0);
-  XG_DEFINE_READER(cancel_button, gxg_cancel_button_w, 1, 0, 0);
-  XG_DEFINE_READER(ok_button, gxg_ok_button_w, 1, 0, 0);
-  XG_DEFINE_READER(window, gxg_window_w, 1, 0, 0);
   XG_DEFINE_READER(type, gxg_type_w, 1, 0, 0);
   XG_DEFINE_ACCESSOR(blue, gxg_blue_w, gxg_set_blue_w, 1, 0, 2, 0);
   XG_DEFINE_ACCESSOR(green, gxg_green_w, gxg_set_green_w, 1, 0, 2, 0);
@@ -49198,7 +49174,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("26-Jan-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("27-Jan-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

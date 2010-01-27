@@ -173,8 +173,8 @@
 (define all-types '())
 
 ;;; preset some types that are getting confused
-(set! types (list "GdkEventMotion*" "GtkColorSelectionDialog*" "gdouble*"))
-(set! all-types (list "GdkEventMotion*" "GtkColorSelectionDialog*" "gdouble*"))
+(set! types (list "GdkEventMotion*" "GtkColorSelectionDialog*" "gdouble*" "GdkEventAny*" "GdkEvent*"))
+(set! all-types (list "GdkEventMotion*" "GtkColorSelectionDialog*" "gdouble*" "GdkEventAny*" "GdkEvent*"))
 
 (define idlers (list "g_source_remove" "g_idle_remove_by_data"
 		     "gtk_quit_remove" "gtk_quit_remove_by_data" 
@@ -2191,6 +2191,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     28-Jan-10: removed the rest of the struct accessors.~%")
 (hey " *     --------~%")
 (hey " *     16-Dec-09: removed Guile support.~%")
 (hey " *     --------~%")

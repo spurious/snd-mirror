@@ -512,9 +512,10 @@
       (set! fft-popup-menu fft-popup-menu-1)
       (add-hook! gtk-popup-hook
 		 (lambda (widget event data snd chn)
-		   (let* ((e (GDK_EVENT_BUTTON event))
-			  (x (.x e))
-			  (y (.y e))
+		   (let* ((e (GDK_EVENT event))
+			  (coords (gdk_event_get_coords e))
+			  (x (cadr coords))
+			  (y (caddr coords))
 			  (menu graph-popup-menu))
 		     (if snd
 			 (begin
@@ -598,159 +599,7 @@
 					   (with-marks next-mark-popup-menu)
 					   (with-marks last-mark-popup-menu))))))
 			   (gtk_widget_show menu)
-			   (gtk_menu_popup (GTK_MENU menu) #f #f #f #f (.button e) (.time e))
+			   (let ((time (gdk_event_get_time e)))
+			     (gtk_menu_popup (GTK_MENU menu) #f #f #f #f 2 time))
 			   #t)
 			 #f))))))
-
-
-;;; -------- edit history popup
-
-(define edhist-funcs '())
-(define edhist-widgets '())
-(define edhist-channel-widgets '())
-(define edhist-snd #f)
-(define edhist-chn #f)
-(define edhist-time 0)
-
-(define (edhist-clear-edits)
-  (set! edhist-funcs '())
-  #f)
-
-(define (edhist-save-edits)
-  (let* ((old-val (assoc (cons edhist-snd edhist-chn) edhist-funcs))
-	 (cur-edits (edits edhist-snd edhist-chn))
-	 (new-func (edit-list->function edhist-snd edhist-chn (+ 1 (car cur-edits)) (apply + cur-edits))))
-    (if old-val
-	(set-cdr! old-val new-func)
-	;; perhaps this should save the previous function under the current file name?
-	(set! edhist-funcs (cons (cons (cons edhist-snd edhist-chn) new-func) edhist-funcs)))
-    #f))
-
-(define (edhist-reapply-edits)
-  (let* ((old-val (assoc (cons edhist-snd edhist-chn) edhist-funcs)))
-    (if old-val	((cdr old-val) edhist-snd edhist-chn))))
-
-(define (edhist-apply-edits)
-  ;; the current popdown widgets are in edhist-widgets, current funcs are in edhist-funcs
-  ;; edhist-apply (for new widgets) is car of edhist-widgets
-
-  (define (edhist-apply w d)
-    (let ((index (cadr (g_object_get_data (G_OBJECT w) "popup-index"))))
-      (if (and (> index 0)
-	       (<= index (length edhist-funcs)))
-	  ((cdr (list-ref edhist-funcs (- index 1))) edhist-snd edhist-chn))))
-	  
-  (let ((wids (cdr edhist-widgets))
-	(funcs edhist-funcs)
-	(parent (car edhist-widgets))
-	(index 1))
-    (if (not (null? funcs))
-	(for-each
-	 (lambda (func)
-	   (let* ((label (car func))
-		  (button (if (not (null? wids))
-			      (let ((wid (car wids)))
-				(set! wids (cdr wids))
-				wid)
-			      (let ((wid (gtk_menu_item_new_with_label "label")))
-				(gtk_menu_shell_append (GTK_MENU_SHELL parent) wid)
-				(set! edhist-widgets (append edhist-widgets (list wid)))
-				(g_signal_connect wid "activate" edhist-apply)
-				wid))))
-	     (if (pair? label)
-		 (change-label button (format #f "~A[~A]" (short-file-name (car label)) (cdr label)))
-		 (change-label button label))
-	     (g_object_set_data (G_OBJECT button) "popup-index" (GPOINTER index))
-	     (gtk_widget_show button)
-	     (set! index (+ 1 index))))
-	 edhist-funcs))
-    (if (not (null? wids))
-	(for-each
-	 (lambda (w)
-	   (gtk_widget_hide w))
-	 wids))
-    (gtk_menu_popup (GTK_MENU parent) #f #f #f #f 3 edhist-time)
-    #f))
-
-(define (edhist-help-edits)
-  (help-dialog "Edit History Functions"
-	       "This popup menu gives access to the edit-list function handlers in Snd. \
-At any time you can backup in the edit list, 'save' the current trailing edits, make some \
-new set of edits, then 'reapply' the saved edits.  The 'apply' choice gives access to all \
-currently saved edit lists -- any such list can be applied to any channel.  'Clear' deletes \
-all saved edit lists."
-	       (list "{edit lists}" "{edit-list->function}")
-	       (list "extsnd.html#editlists" "extsnd.html#editlist_to_function")
-	       ))
-
-(define edhist-save-menu #f)
-(define edhist-apply-menu #f)
-(define edhist-reapply-menu #f)
-(define edhist-clear-menu #f)
-
-;(gc) -- trouble here?
-(define edit-history-menu
-  (let ((every-menu (lambda (w) #f)))
-    (make-popup-menu 
-     (lambda (w) #f)
-     (list
-      (list "Edits"    #f)
-      (list #f #f)
-      (list "Save"
-	    (lambda (w) (set! edhist-save-menu w))
-	    (lambda (w d) (edhist-save-edits)))
-      (list "Reapply"
-	    (lambda (w) (set! edhist-reapply-menu w))
-	    (lambda (w d) (edhist-reapply-edits)))
-      (list "Apply"
-	    (lambda (w)
-	      (set! edhist-apply-menu w)
-	      (let* ((top-cascade (gtk_menu_new)))
-		(gtk_menu_item_set_submenu (GTK_MENU_ITEM w) top-cascade)
-		(set! edhist-widgets (list top-cascade))))
-	    (lambda (w d) (edhist-apply-edits)))
-      (list "Clear"
-	    (lambda (w) (set! edhist-clear-menu w))
-	    (lambda (w d) (edhist-clear-edits)))
-      (list "Help"     #f 
-	    (lambda (w d) (edhist-help-edits)))))))
-
-(define (add-edhist-popup snd)
-  (let ((chns (channels snd)))
-    (do ((i 0 (+ 1 i)))
-	((= i chns))
-      (let ((edhist (list-ref (channel-widgets snd i) 7)))
-	(if (not (member edhist edhist-channel-widgets))
-	    (begin
-	      (set! edhist-channel-widgets (cons edhist edhist-channel-widgets))
-	      (g_signal_connect edhist "button_press_event" 
-		(lambda (w e d) 
-		  (let ((button (.button (GDK_EVENT_BUTTON e))))
-		    (if (= button 3)
-			(begin
-			  (set! edhist-snd snd)
-			  (set! edhist-chn i)
-			  (gtk_widget_set_sensitive edhist-clear-menu (not (null? edhist-funcs)))
-			  (gtk_widget_set_sensitive edhist-save-menu (> (apply + (edits snd i)) 0))
-			  (gtk_widget_set_sensitive edhist-apply-menu (not (null? edhist-funcs)))
-			  (gtk_widget_set_sensitive edhist-reapply-menu (not (eq? #f (assoc (cons snd i) edhist-funcs))))
-			  (gtk_widget_show edit-history-menu)
-			  (set! edhist-time (.time (GDK_EVENT_BUTTON e)))
-			  (gtk_menu_popup (GTK_MENU edit-history-menu) #f #f #f #f (.button (GDK_EVENT_BUTTON e)) (.time (GDK_EVENT_BUTTON e)))
-			  #t) ; don't select anything in the list (i.e. don't pass event to widget)
-			#f)))
-		#f)
-	      ))))))
-
-(add-hook! after-open-hook add-edhist-popup)
-(add-hook! close-hook (lambda (snd)
-			(let ((chns (channels snd))
-			      (name (short-file-name snd)))
-			  (do ((i 0 (+ 1 i)))
-			      ((= i chns))
-			    (let* ((old-val (assoc (cons snd i) edhist-funcs)))
-			      (if old-val
-				  (set-car! old-val (format #f "~A[~A]" name i))))))))
-(for-each add-edhist-popup (sounds))
-
-

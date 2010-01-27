@@ -6927,7 +6927,8 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
     free(choices);
   }
 
-  return(xen_make_vct(n, min_phases));
+  return(XEN_LIST_2(C_TO_XEN_DOUBLE(local_best), 
+		    xen_make_vct(n, min_phases)));
 }
 
 #endif

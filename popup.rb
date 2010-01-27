@@ -283,7 +283,7 @@ If it returns non-nil or non-false, the menu will be posted.")
               if Rbutton(b = RGDK_EVENT_BUTTON(e)) == 3
                 @before_popup_hook.call(snd, chn, w)
                 Rgtk_widget_show(@menu)
-                Rgtk_menu_popup(RGTK_MENU(@menu), false, false, false, false, Rbutton(b), Rtime(b))
+                Rgtk_menu_popup(RGTK_MENU(@menu), false, false, false, false, 3, Rtime(b))
                 true
               else
                 false

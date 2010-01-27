@@ -4337,6 +4337,7 @@
 (CFNC "void g_object_set_data GObject* object gchar* key gpointer data" 'const)
 
 ;(CCAST "GPOINTER(obj)" "gpointer") ; do this by hand...
+(CCAST "GDK_EVENT(obj)" "GdkEvent*")
 (CCAST "GDK_EVENT_ANY(obj)" "GdkEventAny*")
 (CCAST "GDK_EVENT_EXPOSE(obj)" "GdkEventExpose*")
 (CCAST "GDK_EVENT_NOEXPOSE(obj)" "GdkEventNoExpose*")
@@ -6710,45 +6711,6 @@
 ;(CFNC-2134 "GList* gtk_window_group_list_windows GtkWindowGroup* window_group")
 (CFNC-2134 "GdkModifierType gtk_accel_group_get_modifier_mask GtkAccelGroup* accel_group")
 
-
-
-;;; Gtk 3.0 will probably disable a lot of these struct field accessors, so I need to start removing them
-
-;;; removed unused fields 23-Feb-09 and 26-Jan-10
-(STRUCT "GdkEventAny GdkEventType type GdkWindow* window")
-;(STRUCT "GdkEventMotion GdkEventType type GdkWindow* window guint32 time gdouble x gdouble y guint state gint16 is_hint")
-;(STRUCT "GdkEventButton GdkEventType type GdkWindow* window guint32 time gdouble x gdouble y guint state guint button")
-;(STRUCT "GdkEventScroll GdkEventType type GdkWindow* window guint32 time gdouble x gdouble y guint state GdkScrollDirection direction")
-;(STRUCT "GdkEventKey GdkEventType type GdkWindow* window guint32 time guint state guint keyval")
-;(STRUCT "GdkGCValues GdkFunction function")
-
-;;; removed unused fields 21-Feb-09
-;(STRUCT "GtkStyle GdkGC* black_gc GdkGC* white_gc")
-(STRUCT "GtkColorSelectionDialog GtkWidget* ok_button GtkWidget* cancel_button") ; snd-gtk.scm
-;(STRUCT "GtkDialog GtkWidget* vbox GtkWidget* action_area")
-;(STRUCT "GtkWidget guint8 state GdkWindow* window")
-;;; gui.scm is currently the main (only?) user of these fields
-
-;;; for 3.0...
-;;;
-;;; done (except for the ruby/forth stuff)
-;;;   window -> gtk_widget_get_window
-;;;   vbox -> gtk_dialog_get_content_area
-;;;   action_area -> gtk_dialog_get_action_area
-;;;   colorsel -> gtk_color_selection_dialog_get_color_selection
-;;;   gtk_font_selection_dialog_get_ok|apply|cancel_button
-;;;
-;;;   allocation -> gtk_widget_get_allocation
-;;;   value -> gtk_adjustment_get|set_value
-;;;   active -> gtk_toggle_button_get_active
-;;;   child -> gtk_bin_get_child
-;;;   lower, upper, page_size -> gtk_adjustment
-;;;
-;;; not done:
-;;; gdk_event_get_time|state|coords[x and y]|type|button|window|keyval etc
-;;; [gdk_event_get_time|state|coords] but no accessor for button|window|keyval|type?
-;;; GdkColor ->pixel, ->red|green|blue [no accessors apparently]
-;;; color selection dialog buttons currently must go through the property access maze
 
 (STRUCT-make "GdkColor guint32 &pixel guint16 &red guint16 &green guint16 &blue")
 (STRUCT-make "GdkCursor GdkCursorType type guint ref_count")
