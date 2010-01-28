@@ -7990,6 +7990,30 @@ As one would expect, it gets harder and harder to make progress...
 </p>
 
 <!--
+(define (iterated-peak choice n)
+  (let ((phases (make-vector n 0.0))
+	(cur-best n)
+	(cur-incr 1.0))
+    (do ((i 1 (+ i 1)))
+	((= i n))
+      (set! (phases i) (random 1.0)))
+    (do ()
+	((< cur-incr .001))
+      (let ((vals (fpsap (if (eq? choice :all) 0 (if (eq? choice :odd) 1 (if (eq? choice :even) 2 3))) n phases 5000 cur-incr)))
+	(let ((pk (car vals))
+	      (new-phases (cadr vals)))
+	  (format #t "~A ~A: ~A~%" cur-incr pk new-phases)
+	  (let ((down (- cur-best pk)))
+	    (if (< down (/ cur-best 10))
+		(set! cur-incr (* 0.5 cur-incr))))
+	  (if (< pk cur-best)
+	      (begin
+		(set! cur-best pk)
+		(set! phases (vct->vector new-phases)))))))
+    (list cur-best phases)))
+-->
+
+<!--
 (if (not (provided? 'snd-rgb.scm)) (load "rgb.scm"))
 
 (define (draw-sqrt-label xg yg exponent) ; 20 3 ".59"

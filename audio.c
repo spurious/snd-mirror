@@ -5868,7 +5868,7 @@ static pid_t jack_mus_player_pid;
 static pthread_t jack_mus_watchdog_thread;
 
 static void *jack_mus_audio_watchdog(void *arg){
-#if HAVE_JACK
+#if MUS_JACK
   struct sched_param par;
 
   par.sched_priority = sched_get_priority_max(SCHED_RR);
@@ -6152,7 +6152,7 @@ static void jack_describe_audio_state_1(void) {
 
 
 int jack_mus_audio_systems(void) {
-  return(2);
+  return(1); /* was 2 which causes lots of problems -- Fernando and Bill 27-Jan-10 */
 }
 
 char *jack_mus_audio_moniker(void) 
@@ -7156,17 +7156,26 @@ int mus_audio_read_buffers(int port, int frames, int chans, mus_sample_t **bufs,
 void mus_audio_alsa_channel_info(int dev, int *info);
 void mus_audio_alsa_channel_info(int dev, int *info)
 {
-#if HAVE_JACK
-  info[0] = sndjack_num_read_channels_allocated;
+#if MUS_JACK
+  if (api == MUS_JACK_API) 
+    {
+      info[0] = sndjack_num_channels_allocated;
+      return;
+    }
+#endif
+
+#if HAVE_ALSA
+  if (api == MUS_ALSA_API) 
+    {
+      alsa_chans(dev, info);
+      return;
+    }
 #endif
 
 #if HAVE_OSS
   info[0] = 2;
 #endif
 
-#if HAVE_ALSA && (!MUS_JACK)
-  alsa_chans(dev, info);
-#endif
 }
 
 
@@ -7240,13 +7249,20 @@ int mus_audio_alsa_device_direction(int dev)
 
 int mus_audio_device_channels(int dev)
 {
-#if HAVE_ALSA &(!MUS_JACK)
-  return(alsa_chans(dev, NULL));
+#if MUS_JACK
+  if (api == MUS_JACK_API) 
+    {
+      return(sndjack_num_channels_allocated);
+    }
+#endif
+ 
+#if HAVE_ALSA
+  if (api == MUS_ALSA_API) 
+    {
+      return(alsa_chans(dev, NULL));
+    }
 #endif
 
-#if HAVE_JACK
-  return(sndjack_num_read_channels_allocated);
-#endif
 
 #if MUS_MAC_OSX
   return(osx_chans(dev));
@@ -7258,33 +7274,39 @@ int mus_audio_device_channels(int dev)
 
 int mus_audio_compatible_format(int dev) /* snd-dac and sndplay */
 {
-#if HAVE_ALSA && (!MUS_JACK)
+#if HAVE_ALSA
   int err, i;
   int ival[32];
-  err = alsa_formats(dev, 32, ival);
-  if (err != MUS_ERROR)
+  if (api == MUS_ALSA_API) 
     {
-      for (i = 1; i <= ival[0]; i++)
-	if (ival[i] == MUS_AUDIO_COMPATIBLE_FORMAT) 
-	  return(MUS_AUDIO_COMPATIBLE_FORMAT);
+      err = alsa_formats(dev, 32, ival);
+      if (err != MUS_ERROR)
+	{
+	  for (i = 1; i <= ival[0]; i++)
+	    if (ival[i] == MUS_AUDIO_COMPATIBLE_FORMAT) 
+	      return(MUS_AUDIO_COMPATIBLE_FORMAT);
 
-      for (i = 1; i <= ival[0]; i++) 
-	if ((ival[i] == MUS_BINT) || (ival[i] == MUS_LINT) ||
-	    (ival[i] == MUS_BFLOAT) || (ival[i] == MUS_LFLOAT) ||
-	    (ival[i] == MUS_BSHORT) || (ival[i] == MUS_LSHORT))
-	  return(ival[i]);
+	  for (i = 1; i <= ival[0]; i++) 
+	    if ((ival[i] == MUS_BINT) || (ival[i] == MUS_LINT) ||
+	        (ival[i] == MUS_BFLOAT) || (ival[i] == MUS_LFLOAT) ||
+		(ival[i] == MUS_BSHORT) || (ival[i] == MUS_LSHORT))
+	      return(ival[i]);
 
-      for (i = 1; i <= ival[0]; i++) 
-	if ((ival[i] == MUS_MULAW) || (ival[i] == MUS_ALAW) ||
-	    (ival[i] == MUS_UBYTE) || (ival[i] == MUS_BYTE))
-	  return(ival[i]);
+	  for (i = 1; i <= ival[0]; i++) 
+	    if ((ival[i] == MUS_MULAW) || (ival[i] == MUS_ALAW) ||
+	        (ival[i] == MUS_UBYTE) || (ival[i] == MUS_BYTE))
+	      return(ival[i]);
 
-      return(ival[1]);
+	  return(ival[1]);
+	}
     }
 #endif
 
 #if MUS_JACK
-  return(MUS_COMP_FLOAT);
+  if (api == MUS_JACK_API) 
+    {
+      return(MUS_COMP_FLOAT);
+    }
 #endif
 
   return(MUS_AUDIO_COMPATIBLE_FORMAT);
@@ -7307,14 +7329,25 @@ int mus_audio_device_format(int dev) /* snd-dac snd-xrec snd-grec */
   int mixer_vals[16];
   int format;
 
+  /* we return the new format, so mixer_vals is just a local collector of possible formats */
   mixer_vals[0] = 0;
 
-#if HAVE_OSS && (!MUS_JACK)
-  oss_formats(dev, mixer_vals);
+#if HAVE_OSS
+  if (api == MUS_OSS_API) 
+    oss_formats(dev, mixer_vals);
 #endif
 
-#if HAVE_ALSA && (!MUS_JACK)
-  alsa_formats(dev, 16, mixer_vals);
+#if HAVE_ALSA
+  if (api == MUS_ALSA_API) 
+    alsa_formats(dev, 16, mixer_vals);
+#endif
+
+#if MUS_JACK
+  if (api == MUS_JACK_API) 
+    {
+      mixer_vals[0] = 1;
+      mixer_vals[1] = MUS_COMP_FLOAT;
+    }
 #endif
 
 #if HAVE_SUN
@@ -7337,11 +7370,6 @@ int mus_audio_device_format(int dev) /* snd-dac snd-xrec snd-grec */
   mixer_vals[1] = MUS_UBYTE;
   mixer_vals[2] = MUS_LSHORT;
   mixer_vals[3] = MUS_BSHORT;
-#endif
-
-#if MUS_JACK
-  mixer_vals[0] = 1;
-  mixer_vals[1] = MUS_COMP_FLOAT;
 #endif
 
 #if MUS_NETBSD
