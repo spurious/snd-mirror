@@ -1802,7 +1802,7 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
   if (x != sc->NIL) 
     return(x); 
 
-  /* before adding the new symbol, check that it's name is legal (not null, and not a number) */
+  /* before adding the new symbol, check that its name is legal (not null, and not a number) */
   if (!name) 
     return(s7_error(sc, sc->ERROR, make_list_1(sc, s7_make_string(sc, "make symbol with no name?"))));
 
@@ -4375,14 +4375,11 @@ static char *s7_number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int r
       
     case NUM_RATIO:
       {
-	n = (char *)malloc(128 * sizeof(char));
-	d = (char *)malloc(128 * sizeof(char));
+	char n[128], d[128];
 	s7_Int_to_string(n, s7_numerator(obj), radix, 0);
 	s7_Int_to_string(d, s7_denominator(obj), radix, 0);
 	p = (char *)malloc(256 * sizeof(char));
 	snprintf(p, 256, "%s/%s", n, d);
-	free(n);
-	free(d);
       }
       break;
       
@@ -4393,6 +4390,8 @@ static char *s7_number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int r
 	s7_Int int_part;
 	s7_Double x, frac_part, min_frac, base;
 	bool sign = false;
+	char n[128];
+
 	x = s7_real(obj);
 	if (x < 0.0)
 	  {
@@ -4401,7 +4400,6 @@ static char *s7_number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int r
 	  }
 	int_part = (s7_Int)floor(x);
 	frac_part = x - int_part;
-	n = (char *)malloc(128 * sizeof(char));
 	s7_Int_to_string(n, int_part, radix, 0);
 	d = (char *)malloc((precision + 1) * sizeof(char));
 
@@ -4419,7 +4417,6 @@ static char *s7_number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int r
 	d[i] = '\0';
 	p = (char *)malloc(256 * sizeof(char));
 	snprintf(p, 256, "%s%s.%s", (sign) ? "-" : "", n, d);
-	free(n);
 	free(d);
       }
       break;
@@ -8042,11 +8039,9 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
 	  bytes = fread(content, sizeof(char), size, fp);
 	  if (bytes != (size_t)size)
 	    {
-	      char *tmp;
-	      tmp = (char *)calloc(256, sizeof(char));
+	      char tmp[256];
 	      snprintf(tmp, 256, "(%s \"%s\") read %ld bytes of an expected %ld?", caller, name, (long)bytes, size);
 	      write_string(sc, tmp, sc->output_port);
-	      free(tmp);
 	    }
 	  content[size] = '\0';
 	  content[size + 1] = '\0';

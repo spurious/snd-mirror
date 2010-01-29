@@ -8412,9 +8412,8 @@
 	       (- (byte-position bytespec))))
 
 	(define (dpb integer bytespec into)
-	  (let ((val (logand integer (ash (byte-mask bytespec) 
-					  (- (byte-position bytespec))))))
-	    (logior into (ash val (byte-position bytespec)))))
+	  (logior (ash (logand integer (- (expt 2 (byte-size bytespec)) 1)) (byte-position bytespec))
+		  (logand into (lognot (byte-mask bytespec)))))
 
 	(define (ldb-test byte int) (not (zero? (ldb byte int))))
 	(define (mask-field byte int) (logand int (dpb -1 byte 0)))
@@ -9388,6 +9387,16 @@
 	
 	;; not yet implemented: :print-function :include :named :type :initial-offset
 	;;   also the explicit constructor business
+
+	(define-macro (enum . args) ; (enum zero one two)
+	  `(begin
+	     ,@(let ((names '()))
+		 (do ((arg args (cdr arg))
+		      (i 0 (+ i 1)))
+		     ((null? arg) names)
+		   (set! names (cons
+				`(define ,(car arg) ,i)
+				names))))))
 
 
 	
@@ -14454,6 +14463,23 @@
 	(test (evenp 4) #t)
 	(test (conjugate 1+i) 1-i)
 	(test (conjugate 3.7) 3.7)
+	(test (ldb (byte 8 8) #x123) 1)
+	(test (ldb (byte 8 0) #x123) #x23)
+	(test (ldb (byte 4 4) #x123) 2)
+	(test (ldb (byte 1 4) #x123) 0)
+	(test (ldb (byte 1 5) #x123) 1)
+	(test (ldb (byte 16 16) -1) 65535)
+	(test (ldb (byte 12 18) #x12345678) 1165)
+	(test (dpb 1 (byte 8 0) #x100) #x101)
+	(test (dpb #x22 (byte 8 1) #x100) #x44) ;!
+	(test (dpb #x22 (byte 8 8) #x100) #x2200) ; not #x2300
+	(test (dpb #x1001 (byte 16 0) -1) -61439)
+	(test (dpb #x1 (byte 8 8) #xffffff) #xff01ff)
+	(test (dpb #x1 (byte 8 16) #xffffff) #x1ffff)	
+	(test (dpb #x1 (byte 8 16) #xffffffff) #xff01ffff) 
+	(test (dpb -1 (byte 8 0) 0) 255)
+	(test (dpb -1 (byte 8 2) 0) 1020)
+	(test (dpb 0 (byte 16 16) #xffffffff) 65535)
 	(test (count-if zero? '(0 1 2 0)) 2)
 	(test (count-if-not zero? '(0 1 2 0 3)) 3)
 	(test (count-if zero? '#(0 1 2 0)) 2)
