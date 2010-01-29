@@ -8459,6 +8459,20 @@
 
 	(define (lisp-implementation-type) "s7")
 	(define (lisp-implementation-version) (s7-version))
+	(define (software-type) "s7")
+	(define (software-version) (s7-version))
+
+	(define (machine-version)
+	  (if (file-exists? "/proc/cpuinfo")
+	      (call-with-input-file "/proc/cpuinfo"
+		(lambda (cpufile)
+		  (do ((line (read-line cpufile) (read-line cpufile)))
+		      ((or (eof-object? line)
+			   (string=? (substring line 0 10) "model name"))
+		       (if (string? line)
+			   (string-trim " " (substring line (+ 1 (position #\: line))))
+			   "unknown")))))
+	      "unknown"))
 	
 	;; = < <= > >= are the same, also min max + - * / lcm gcd exp expt log sqrt
 	;; sin cos tan acos asin atan pi sinh cosh tanh asinh acosh atanh
@@ -9398,6 +9412,22 @@
 				`(define ,(car arg) ,i)
 				names))))))
 
+	(define-macro (let*-values vals . body)
+	  (let ((args '())
+		(exprs '()))
+	    (for-each
+	     (lambda (arg+expr)
+	       (set! args (cons (car arg+expr) args))
+	       (set! exprs (cons (cadr arg+expr) exprs)))
+	     vals)
+	    (let ((form `((lambda ,(car args) ,@body) ,(car exprs))))
+	      (if (not (null? (cdr args)))
+		  (for-each
+		   (lambda (arg expr)
+		     (set! form `((lambda ,arg ,form) ,expr)))
+		   (cdr args)
+		   (cdr exprs)))
+	      form)))
 
 	
 	;;; ----------------

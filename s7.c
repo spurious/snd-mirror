@@ -8030,26 +8030,22 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
   size = ftell(fp);
   rewind(fp);
 
-  if ((max_size < 0) || (size < max_size))
+  /* pseudo files (under /proc for example) have size=0, but we can read them, so don't assume a 0 length file is empty */
+
+  if ((size != 0) &&
+      ((max_size < 0) || (size < max_size)))
     {
-      if (size > 0)
+      size_t bytes;
+      content = (char *)malloc((size + 2) * sizeof(char));
+      bytes = fread(content, sizeof(char), size, fp);
+      if (bytes != (size_t)size)
 	{
-	  size_t bytes;
-	  content = (char *)malloc((size + 2) * sizeof(char));
-	  bytes = fread(content, sizeof(char), size, fp);
-	  if (bytes != (size_t)size)
-	    {
-	      char tmp[256];
-	      snprintf(tmp, 256, "(%s \"%s\") read %ld bytes of an expected %ld?", caller, name, (long)bytes, size);
-	      write_string(sc, tmp, sc->output_port);
-	    }
-	  content[size] = '\0';
-	  content[size + 1] = '\0';
+	  char tmp[256];
+	  snprintf(tmp, 256, "(%s \"%s\") read %ld bytes of an expected %ld?", caller, name, (long)bytes, size);
+	  write_string(sc, tmp, sc->output_port);
 	}
-      else
-	{
-	  content = (char *)calloc(1, sizeof(char)); /* empty file in load still accesses the string (for 0=eof) */
-	}
+      content[size] = '\0';
+      content[size + 1] = '\0';
       fclose(fp);
 
       port_type(port) = STRING_PORT;
@@ -22781,28 +22777,6 @@ s7_scheme *s7_init(void)
   s7_eval_c_string(sc, "(define-macro (multiple-value-set! vars expr . body)\n\
                           (let ((local-vars (map (lambda (n) (gensym)) vars)))\n\
                             `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))");
-
-#if 0
-  /*
-(define-macro (let*-values vals . body)
-  (let ((args '())
-	(exprs '()))
-    (for-each
-     (lambda (arg+expr)
-       (set! args (cons (car arg+expr) args))
-       (set! exprs (cons (cadr arg+expr) exprs)))
-     vals)
-    (let ((form `((lambda ,(car args) ,@body) ,(car exprs))))
-      (if (not (null? (cdr args)))
-	  (for-each
-	   (lambda (arg expr)
-	     (set! form `((lambda ,arg ,form) ,expr)))
-	   (cdr args)
-	   (cdr exprs)))
-      form)))
-  */
-#endif
-
 
 #if WITH_ENCAPSULATION
   s7_eval_c_string(sc, "                                 \n\
