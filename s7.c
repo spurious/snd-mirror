@@ -11423,9 +11423,6 @@ If its first argument is a list, the list is copied (despite the '!')."
     /* qsort is a large and complex function (250 lines in libc), so we can't easily
      *   expand it in our eval loop, but we may want to jump out of the sort via call/cc,
      *   so we look for the stack being unwound past the start point -- this is a kludge!
-     * Currently, if an error occurs in the sort function, we depend on s7_error to
-     *   turn it back on; is there any case where we'd want it off despite hitting
-     *   an error?
      */
 
     push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
@@ -11435,7 +11432,7 @@ If its first argument is a list, the list is copied (despite the '!')."
 
     if (sc->stack_top < start)
       {
-	s7_gc_on(sc, true);
+	/* s7_gc_on(sc, true); */
 	longjmp(sc->goto_qsort_end, 1);
       }
     if (is_true(sc, sc->value))
@@ -11448,15 +11445,23 @@ If its first argument is a list, the list is copied (despite the '!')."
 
   if (s7_is_list(sc, vect))
     {
-      s7_pointer val;
-      if (sc->free_heap_top < 4096) gc(sc);
-      s7_gc_on(sc, false);
-      val = g_sort_in_place(sc, make_list_2(sc, 
-					    g_list_to_vector(sc, make_list_1(sc, vect)), 
-					    cadr(args)));
+      s7_pointer val, lst;
+      int gc_loc_1;
+
+      /* if (sc->free_heap_top < 4096) gc(sc); */
+      /* s7_gc_on(sc, false); */
+      /* sort! can be called recursively, so this gc-on/off stuff can get confused. */
+
+      lst = make_list_2(sc, g_list_to_vector(sc, make_list_1(sc, vect)), cadr(args));
+      gc_loc_1 = s7_gc_protect(sc, lst);
+
+      val = g_sort_in_place(sc, lst);
+
       if (s7_is_vector(val))
 	val = s7_vector_to_list(sc, val);
-      s7_gc_on(sc, true);
+      s7_gc_unprotect_at(sc, gc_loc_1);
+
+      /* s7_gc_on(sc, true); */
       return(val);
     }
 

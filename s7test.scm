@@ -6053,6 +6053,8 @@
 	       (set! val (car lst))))
 	   #t)))
 
+      (test (sort! (list 3 2 1) (lambda (m n) (let ((vals (sort! (list m n) <))) (< m n)))) '(1 2 3))
+
       ))
 
 
@@ -8405,7 +8407,7 @@
 	;; from Rick
 	(define (byte siz pos)
 	  ;; cache size, position and mask.
-	  (list siz pos (ash (- (expt 2 siz) 1) pos)))
+	  (list siz pos (ash (- (ash 1 siz) 1) pos)))
 
 	(define (byte-size bytespec) (car bytespec))
 	(define (byte-position bytespec) (cadr bytespec))
@@ -8416,7 +8418,7 @@
 	       (- (byte-position bytespec))))
 
 	(define (dpb integer bytespec into)
-	  (logior (ash (logand integer (- (expt 2 (byte-size bytespec)) 1)) (byte-position bytespec))
+	  (logior (ash (logand integer (- (ash 1 (byte-size bytespec)) 1)) (byte-position bytespec))
 		  (logand into (lognot (byte-mask bytespec)))))
 
 	(define (ldb-test byte int) (not (zero? (ldb byte int))))
@@ -9366,15 +9368,19 @@
 				   fields))
 		 
 		 (field-types (map (lambda (field)
-				     (apply (lambda* (val type read-only) type) (cdr field)))
+				     (if (list? field)
+					 (apply (lambda* (val type read-only) type) (cdr field))
+					 #f))
 				   fields))
 		 
 		 (field-read-onlys (map (lambda (field)
-					  (apply (lambda* (val type read-only) read-only) (cdr field)))
+					  (if (list? field)
+					      (apply (lambda* (val type read-only) read-only) (cdr field))
+					      #f))
 					fields)))
 	    `(begin
 	       
-	       (define ,(string->symbol (string-append sname "-p"))
+	       (define ,(string->symbol (string-append sname "?"))
 		 (lambda (obj)
 		   (and (vector? obj)
 			(eq? (obj 0) ',(string->symbol sname)))))
@@ -14514,6 +14520,10 @@
 	(test (dpb -1 (byte 8 0) 0) 255)
 	(test (dpb -1 (byte 8 2) 0) 1020)
 	(test (dpb 0 (byte 16 16) #xffffffff) 65535)
+	(test (mask-field (byte 8 8) #xfffffff) #xff00)
+	(test (mask-field (byte 1 8) #xfffffff) #x100)
+	(test (ldb-test (byte 1 8) #xfffffff) #t)
+	(test (ldb-test (byte 1 8) #x10ff) #f)
 	(test (count-if zero? '(0 1 2 0)) 2)
 	(test (count-if-not zero? '(0 1 2 0 3)) 3)
 	(test (count-if zero? '#(0 1 2 0)) 2)
@@ -14604,7 +14614,1320 @@
 	(test (let ((val (list 1 2 3 4 5 6 7 8 9 10))) (tenth val)) 10)
 	(test (let ((val (list 1 2 3 4 5 6 7 8 9 10))) (nth 7 val)) 8)
 	(test (let ((val (list 1 2 3 4 5 6 7 8 9 10))) (nth 17 val)) '())
+
+	(test (let*-values (((x) (values 1))) x) 1)
+	(test (let*-values ((x (values 1))) x) '(1))
+	(test (let*-values (((x) (values 1)) ((y) (values 2))) (list x y)) '(1 2))
+	(test (let*-values (((x) (values 1)) ((y) (values (+ x 1)))) (list x y)) '(1 2))
+
+	(test (let () (enum one two three) (list one two three)) '(0 1 2))
+
+	(test (let () (defstruct x1 a b c) (let ((xx1 (make-x1 1 2 3))) (list (x1-a xx1) (x1-b xx1) (x1-c xx1) (x1? xx1)))) '(1 2 3 #t))
+	(test (let () (defstruct x1 a (b "hi") (c 3/4)) (let ((xx1 (make-x1 1))) (list (x1-a xx1) (x1-b xx1) (x1-c xx1) (x1? xx1)))) '(1 "hi" 3/4 #t))
+	(test (let () (defstruct x1 a (b "hi") (c 3/4)) (let ((xx1 (make-x1 :b 1))) (list (x1-a xx1) (x1-b xx1) (x1-c xx1) (x1? xx1)))) '(#f 1 3/4 #t))
+	(test (let () (defstruct x1 a b c) (let ((xx1 (make-x1 1 2 3))) (set! (x1-a xx1) 32) (list (x1-a xx1) (x1-b xx1) (x1-c xx1)))) '(32 2 3))
 	)
+
+      (let ()
+	;; tiny-clos
+
+					; Mode: Scheme
+					;
+					;
+					; *************************************************************************
+					; Copyright (c) 1992 Xerox Corporation.  
+					; All Rights Reserved.  
+					;
+					; Use, reproduction, and preparation of derivative works are permitted.
+					; Any copy of this software or of any derivative work must include the
+					; above copyright notice of Xerox Corporation, this paragraph and the
+					; one after it.  Any distribution of this software or derivative works
+					; must comply with all applicable United States export control laws.
+					;
+					; This software is made available AS IS, and XEROX CORPORATION DISCLAIMS
+					; ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION THE
+					; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+					; PURPOSE, AND NOTWITHSTANDING ANY OTHER PROVISION CONTAINED HEREIN, ANY
+					; LIABILITY FOR DAMAGES RESULTING FROM THE SOFTWARE OR ITS USE IS
+					; EXPRESSLY DISCLAIMED, WHETHER ARISING IN CONTRACT, TORT (INCLUDING
+					; NEGLIGENCE) OR STRICT LIABILITY, EVEN IF XEROX CORPORATION IS ADVISED
+					; OF THE POSSIBILITY OF SUCH DAMAGES.
+					; *************************************************************************
+	
+					;
+					; In order to make this code more easily portable, we have to be
+					; explicit about its implementation dependencies.  To do this, we
+					; have the following variable.  Please adjust it before trying to
+					; run this code.  See also the macro, scheme-implementation-case,
+					; which follows shortly.
+					;
+					; Note that some of these dependencies (i.e. gsort) are purely for
+					; convenience (i.e. saving me from writing sort from scratch).
+					; Others are more pressing, like define-macro.
+					;
+					;
+	(define what-scheme-implementation
+	  's7
+					; 'mit
+					;'chez
+					;'scm
+					;'scheme48
+	  )                  
+	
+	(case what-scheme-implementation
+	  ((scm)
+	   (require 'sort)))
+	
+	(define gsort
+	  (case what-scheme-implementation
+	    ((s7)       (lambda (predicate list) (sort! list predicate)))
+	    ((mit)      (lambda (predicate list) (sort list predicate)))
+	    ((chez)     (lambda (predicate list) (sort predicate list)))
+	    ((scheme48) (lambda (predicate list) (sort-list predicate list)))
+	    ((scm)      (lambda (predicate list) (sort list predicate)))))
+	
+	(define simple-printer (lambda () barf))
+	(define ??? 'unspecified-result)
+	
+	(define list*
+	  (lambda args
+	    (letrec ((chase
+		      (lambda (args)
+			(cond ((null? args) '())
+			      ((null? (cdr args)) (car args))
+			      (else (cons (car args) (chase (cdr args))))))))
+	      (chase args))))
+	
+	(define apply*
+	  (lambda (proc . args)
+	    (apply proc (apply list* args))))
+	
+	(define position-of
+	  (lambda (x lst)
+	    (if (eq? x (car lst)) 0 (+ 1 (position-of x (cdr lst))))))
+	
+	(define map-append
+	  (lambda (proc . lists)
+	    (apply append (apply map (cons proc lists)))))
+	
+	(define last
+	  (lambda (l)
+	    (if (null? l)
+		#f
+		(if (null? (cdr l))
+		    (car l)
+		    (last (cdr l))))))
+	
+	(define every
+	  (lambda (test . lists)
+	    (let scan ((tails lists))
+	      (if (member #t (map null? tails))             ;(any null? lists)
+		  #t
+		  (and (apply test (map car tails))
+		       (scan (map cdr tails)))))))
+	
+	(define remove
+	  (lambda (x list)
+	    (cond ((null? list) '())
+		  ((eq? (car list) x) (cdr list))
+		  (else (cons (car list) (remove x (cdr list)))))))
+	
+	(define getl
+	  (lambda (initargs name . not-found)
+	    (letrec ((scan (lambda (tail)
+			     (cond ((null? tail)
+				    (if (pair? not-found)
+					(car not-found)
+					(error "GETL couldn't find" name)))
+				   ((eq? (car tail) name) (cadr tail))
+				   (else (scan (cddr tail)))))))
+	      (scan initargs))))
+	
+	(define union
+	  (lambda lists
+	    (letrec ((clean (lambda (list result)
+			      (cond ((null? list) result)
+				    ((memq (car list) result)
+				     (clean (cdr list) result))
+				    (else
+				     (clean (cdr list) (cons (car list) result)))))))
+	      (clean (apply append lists) '()))))
+	
+	(define collect-if
+	  (lambda (test? list)
+	    (cond ((null? list) '())
+		  ((test? (car list)) (cons (car list) (collect-if test? (cdr list))))
+		  (else (collect-if test? (cdr list))))))
+	
+	(define remove-duplicates
+	  (lambda (list)
+	    (let loop ((result-so-far '())
+		       (remaining list))
+	      (if (null? remaining)
+		  result-so-far
+		  (if (null? (memq (car remaining) result-so-far))
+		      (loop (cons (car remaining) result-so-far)
+			    (cdr remaining))
+		      (loop result-so-far
+			    (cdr remaining)))))))
+					;
+					; A simple topological sort.
+					;
+					; It's in this file so that both TinyClos and Objects can use it.
+					;
+					; This is a fairly modified version of code I originally got from Anurag
+					; Mendhekar <anurag@moose.cs.indiana.edu>.
+					;
+					;
+	
+	(define compute-std-cpl
+	  (lambda (c get-direct-supers)
+	    (top-sort ((build-transitive-closure get-direct-supers) c)
+		      ((build-constraints get-direct-supers) c)
+		      (std-tie-breaker get-direct-supers))))
+	
+	(define top-sort
+	  (lambda (elements constraints tie-breaker)
+	    (let loop ((elements    elements)
+		       (constraints constraints)
+		       (result      '()))
+	      (if (null? elements)
+		  result
+		  (let ((can-go-in-now
+			 (collect-if
+			  (lambda (x)
+			    (every (lambda (constraint)
+				     (or (not (eq? (cadr constraint) x))
+					 (memq (car constraint) result)))
+				   constraints))
+			  elements)))
+		    (if (null? can-go-in-now)
+			(error 'top-sort "Invalid constraints")
+			(let ((choice (if (null? (cdr can-go-in-now))
+					  (car can-go-in-now)
+					  (tie-breaker result
+						       can-go-in-now))))
+			  (loop
+			   (collect-if (lambda (x) (not (eq? x choice)))
+				       elements)
+			   constraints
+			   (append result (list choice))))))))))
+	
+	(define std-tie-breaker
+	  (lambda (get-supers)
+	    (lambda (partial-cpl min-elts)
+	      (let loop ((pcpl (reverse partial-cpl)))
+		(let ((current-elt (car pcpl)))
+		  (let ((ds-of-ce (get-supers current-elt)))
+		    (let ((common (collect-if (lambda (x)
+						(memq x ds-of-ce))
+					      min-elts)))
+		      (if (null? common)
+			  (if (null? (cdr pcpl))
+			      (error 'std-tie-breaker "Nothing valid")
+			      (loop (cdr pcpl)))
+			  (car common)))))))))
+	
+	(define build-transitive-closure
+	  (lambda (get-follow-ons)
+	    (lambda (x)
+	      (let track ((result '())
+			  (pending (list x)))
+		(if (null? pending)
+		    result
+		    (let ((next (car pending)))
+		      (if (memq next result)
+			  (track result (cdr pending))
+			  (track (cons next result)
+				 (append (get-follow-ons next)
+					 (cdr pending))))))))))
+	
+	(define build-constraints
+	  (lambda (get-follow-ons)
+	    (lambda (x)
+	      (let loop ((elements ((build-transitive-closure get-follow-ons) x))
+			 (this-one '())
+			 (result '()))
+		(if (or (null? this-one) (null? (cdr this-one)))
+		    (if (null? elements)
+			result
+			(loop (cdr elements)
+			      (cons (car elements)
+				    (get-follow-ons (car elements)))
+			      result))
+		    (loop elements
+			  (cdr this-one)
+			  (cons (list (car this-one) (cadr this-one))
+				result)))))))
+	
+	(define tiny-clos-version "1.7")
+	
+					; A very simple CLOS-like language, embedded in Scheme, with a simple
+					; MOP.  The features of the default base language are:
+					;
+					;   * Classes, with instance slots, but no slot options.
+					;   * Multiple-inheritance.
+					;   * Generic functions with multi-methods and class specializers only.
+					;   * Primary methods and call-next-method; no other method combination.
+					;   * Uses Scheme's lexical scoping facilities as the class and generic
+					;     function naming mechanism.  Another way of saying this is that
+					;     class, generic function and methods are first-class (meta)objects.
+					;
+					; While the MOP is simple, it is essentially equal in power to both MOPs
+					; in AMOP.  This implementation is not at all optimized, but the MOP is
+					; designed so that it can be optimized.  In fact, this MOP allows better
+					; optimization of slot access extenstions than those in AMOP.
+					; 
+					;
+					;
+					; In addition to calling a generic, the entry points to the default base
+					; language are:
+					;
+					;   (MAKE-CLASS list-of-superclasses list-of-slot-names)
+					;   (MAKE-GENERIC)
+					;   (MAKE-METHOD list-of-specializers procedure)
+					;   (ADD-METHOD generic method)
+					;
+					;   (MAKE class . initargs)
+					;   (INITIALIZE instance initargs)            ;Add methods to this,
+					;                                             ;don't call it directly.
+					;   
+					;   (SLOT-REF  object slot-name)
+					;   (SLOT-SET! object slot-name new-value)
+					;
+					;
+					; So, for example, one might do:
+					;
+					;   (define <position> (make-class (list <object>) (list 'x 'y)))
+					;   (add-method initialize
+					;       (make-method (list <position>)
+					;         (lambda (call-next-method pos initargs)
+					;           (for-each (lambda (initarg-name slot-name)
+					;                       (slot-set! pos
+					;                                  slot-name
+					;                                  (getl initargs initarg-name 0)))
+					;                     '(x y)
+					;                     '(x y)))))
+					;
+					;   (set! p1 (make <position> 'x 1 'y 3))
+					;
+					;
+					;
+					; NOTE!  Do not use EQUAL? to compare objects!  Use EQ? or some hand
+					;        written procedure.  Objects have a pointer to their class,
+					;        and classes are circular structures, and ...
+					;
+					;
+					;
+					; The introspective part of the MOP looks like the following.  Note that
+					; these are ordinary procedures, not generics.
+					;
+					;   CLASS-OF
+					;
+					;   CLASS-DIRECT-SUPERS
+					;   CLASS-DIRECT-SLOTS
+					;   CLASS-CPL
+					;   CLASS-SLOTS
+					;
+					;   GENERIC-METHODS
+					;
+					;   METHOD-SPECIALIZERS
+					;   METHOD-PROCEDURE
+					;
+					;
+					; The intercessory protocol looks like (generics in uppercase):
+					;
+					;   make                        
+					;     ALLOCATE-INSTANCE
+					;     INITIALIZE                   (really a base-level generic)
+					;
+					;   class initialization
+					;     COMPUTE-CPL
+					;     COMPUTE-SLOTS
+					;     COMPUTE-GETTER-AND-SETTER
+					;
+					;   add-method                     (Notice this is not a generic!)
+					;     COMPUTE-APPLY-GENERIC
+					;       COMPUTE-METHODS
+					;         COMPUTE-METHOD-MORE-SPECIFIC?
+					;       COMPUTE-APPLY-METHODS
+					;
+	
+					;
+					; OK, now let's get going.  But, as usual, before we can do anything
+					; interesting, we have to muck around for a bit first.  First, we need  
+					; to load the support library.
+					;
+					; Note that there is no extension on the filename in the following load,
+					; in particular, it isn't "support.scm" even though that is the name of
+					; the file in the distribution at PARC.  The idea is that when people
+					; install the code at their site, they should rename all the files to
+					; the appropriate extension, and then not change the load.  This should
+					; also make things work with binary files and the like.  This comes from
+					; my understanding of the CL world...  I hope it is right.
+					;
+					;
+					;
+					; Then, we need to build what, in a more real implementation, would be
+					; the interface to the memory subsystem: instances and entities.  The
+					; former are used for instances of instances of <class>; the latter
+					; are used for instances of instances of <entity-class>.  In this MOP,
+					; none of this is visible to base- or MOP-level programmers.
+					;
+					; A few things to note, that have influenced the way all this is done:
+					;  
+					;   - R4RS doesn't provide a mechanism for specializing the
+					;     behavior of the printer for certain objects.
+					;     
+					;   - Some Scheme implementations bomb when printing circular
+					;     structures -- that is, arrays and/or lists that somehow
+					;     point back to themselves.
+					;
+					; So, the natural implementation of instances -- vectors whose first
+					; field point to the class -- is straight on out.  Instead, we use a
+					; procedure to `encapsulate' that natural representation.
+					;
+					; Having gone that far, it makes things simpler to unify the way normal
+					; instances and entities are handled, at least in the lower levels of
+					; the system.  Don't get faked out by this -- the user shouldn't think
+					; of normal instances as being procedures, they aren't. (At least not
+					; in this language.)  If you are using this to teach, you probably want
+					; to hide the implementation of instances and entities from people.
+					;
+					;
+	(define %allocate-instance
+	  (lambda (class nfields)
+	    (%allocate-instance-internal
+	     class
+	     #t
+	     (lambda args
+	       (error "An instance isn't a procedure -- can't apply it."))
+	     nfields)))
+	
+	(define %allocate-entity
+	  (lambda (class nfields)
+	    (%allocate-instance-internal
+	     class
+	     #f
+	     (lambda args
+	       (error "Tried to call an entity before its proc is set."))
+	     nfields)))
+	
+	(define %allocate-instance-internal ???)
+	(define %instance?                  ???)
+	(define %instance-class             ???)
+	(define %set-instance-class-to-self ???)   ;This is used only once
+					;as part of bootstrapping
+					;the braid.
+	(define %set-instance-proc!  ???)
+	(define %instance-ref        ???)
+	(define %instance-set!       ???)
+	
+	(letrec ((instances '())
+		 (get-vector
+		  (lambda (closure)
+		    (let ((cell (assq closure instances)))
+		      (if cell (cdr cell) #f)))))
+	  
+	  (set! %allocate-instance-internal
+		(lambda (class lock proc nfields)
+		  (letrec ((vector (make-vector (+ nfields 3) #f))
+			   (closure (lambda args
+				      (apply (vector-ref vector 0) args))))
+		    (vector-set! vector 0 proc)
+		    (vector-set! vector 1 lock)
+		    (vector-set! vector 2 class)
+		    (set! instances (cons (cons closure vector) instances))
+		    closure)))
+	  
+	  (set! %instance?
+		(lambda (x) (not (null? (get-vector x)))))
+	  
+	  (set! %instance-class
+		(lambda (closure)
+		  (let ((vector (get-vector closure)))
+		    (vector-ref vector 2))))
+	  
+	  (set! %set-instance-class-to-self
+		(lambda (closure)
+		  (let ((vector (get-vector closure)))
+		    (vector-set! vector 2 closure))))
+	  
+	  (set! %set-instance-proc!
+		(lambda (closure proc)
+		  (let ((vector (get-vector closure)))
+		    (if (vector-ref vector 1)
+			(error "Can't set procedure of instance.")
+			(vector-set! vector 0 proc)))))
+	  
+	  (set! %instance-ref
+		(lambda (closure index)
+		  (let ((vector (get-vector closure)))
+		    (vector-ref vector (+ index 3)))))
+	  
+	  (set! %instance-set!
+		(lambda (closure index new-value)
+		  (let ((vector (get-vector closure)))
+		    (vector-set! vector (+ index 3) new-value))))
+	  )
+	
+					; %allocate-instance, %allocate-entity, %instance-ref, %instance-set!
+					; and class-of are the normal interface, from the rest of the code, to
+					; the low-level memory system.  One thing to take note of is that the
+					; protocol does not allow the user to add low-level instance
+					; representations.  I have never seen a way to make that work.
+					;
+					; Note that this implementation of class-of assumes the name of a the
+					; primitive classes that are set up later.
+					; 
+	(define class-of
+	  (lambda (x)
+	    (cond ((%instance? x)  (%instance-class x))
+		  
+		  ((pair? x)        <pair>)         ;If all Schemes were IEEE 
+		  ((null? x)        <null>)         ;compliant, the order of
+		  ((boolean? x)     <boolean>)      ;these wouldn't matter?
+		  ((symbol? x)      <symbol>)
+		  ((procedure? x)   <procedure>)
+		  ((number? x)      <number>)
+		  ((vector? x)      <vector>)
+		  ((char? x)        <char>)
+		  ((string? x)      <string>)
+		  (( input-port? x)  <input-port>)
+		  ((output-port? x) <output-port>)
+		  
+		  
+		  )))
+	
+					; Now we can get down to business.  First, we initialize the braid.
+					;
+					; For Bootstrapping, we define an early version of MAKE.  It will be
+					; changed to the real version later on.  String search for ``set! make''.
+					;
+	
+	(define make
+	  (lambda (class . initargs)
+	    (cond ((or (eq? class <class>)
+		       (eq? class <entity-class>))
+		   (let* ((new (%allocate-instance
+				class
+				(length the-slots-of-a-class)))
+			  (dsupers (getl initargs 'direct-supers '()))
+			  (dslots  (map list
+					(getl initargs 'direct-slots  '())))
+			  (cpl     (let loop ((sups dsupers)
+					      (so-far (list new)))
+				     (if (null? sups)
+					 (reverse so-far)
+					 (loop (class-direct-supers
+						(car sups))
+					       (cons (car sups)
+						     so-far)))))
+			  (slots (apply append
+					(cons dslots
+					      (map class-direct-slots
+						   (cdr cpl)))))
+			  (nfields 0)
+			  (field-initializers '())
+			  (allocator
+			   (lambda (init)
+			     (let ((f nfields))
+			       (set! nfields (+ nfields 1))
+			       (set! field-initializers
+				     (cons init field-initializers))
+			       (list (lambda (o)   (%instance-ref  o f))
+				     (lambda (o n) (%instance-set! o f n))))))
+			  (getters-n-setters
+			   (map (lambda (s)
+				  (cons (car s)
+					(allocator (lambda () '()))))
+				slots)))
+		     
+		     (slot-set! new 'direct-supers      dsupers)
+		     (slot-set! new 'direct-slots       dslots)
+		     (slot-set! new 'cpl                cpl)
+		     (slot-set! new 'slots              slots)
+		     (slot-set! new 'nfields            nfields)
+		     (slot-set! new 'field-initializers (reverse
+							 field-initializers))
+		     (slot-set! new 'getters-n-setters  getters-n-setters)
+		     new))
+		  ((eq? class <generic>)
+		   (let ((new (%allocate-entity class
+						(length (class-slots class)))))
+		     (slot-set! new 'methods '())
+		     new))
+		  ((eq? class <method>)
+		   (let ((new (%allocate-instance
+			       class
+			       (length (class-slots class)))))
+		     (slot-set! new
+				'specializers
+				(getl initargs 'specializers))
+		     (slot-set! new
+				'procedure
+				(getl initargs 'procedure))
+		     new)))))
+	
+					; These are the real versions of slot-ref and slot-set!.  Because of the
+					; way the new slot access protocol works, with no generic call in line,
+					; they can be defined up front like this.  Cool eh?
+					;
+					;
+	(define slot-ref
+	  (lambda (object slot-name)
+	    (let* ((info   (lookup-slot-info (class-of object) slot-name))
+		   (getter (list-ref info 0)))
+	      (getter object))))
+	
+	(define slot-set!
+	  (lambda (object slot-name new-value)
+	    (let* ((info   (lookup-slot-info (class-of object) slot-name))
+		   (setter (list-ref info 1)))
+	      (setter object new-value))))
+	
+	(define lookup-slot-info
+	  (lambda (class slot-name)
+	    (let* ((getters-n-setters
+		    (if (eq? class <class>)           ;* This grounds out
+			getters-n-setters-for-class   ;* the slot-ref tower.
+			(slot-ref class 'getters-n-setters)))
+		   (entry (assq slot-name getters-n-setters)))
+	      (if entry
+		  (cdr entry)
+		  (error "No slot" slot-name "in instances of" class)))))
+					;
+					; Given that the early version of MAKE is allowed to call accessors on
+					; class metaobjects, the definitions for them come here, before the
+					; actual class definitions, which are coming up right afterwards.
+					;
+					;
+	(define class-direct-slots
+	  (lambda (class) (slot-ref class 'direct-slots)))
+	(define class-direct-supers
+	  (lambda (class) (slot-ref class 'direct-supers)))
+	(define class-slots
+	  (lambda (class) (slot-ref class 'slots)))
+	(define class-cpl
+	  (lambda (class) (slot-ref class 'cpl)))
+	
+	(define generic-methods
+	  (lambda (generic) (slot-ref generic 'methods)))
+	
+	(define method-specializers
+	  (lambda (method) (slot-ref method 'specializers)))
+	(define method-procedure
+	  (lambda (method) (slot-ref method 'procedure)))
+	
+					; The next 7 clusters define the 6 initial classes.  It takes 7 to 6
+					; because the first and fourth both contribute to <class>.
+					;
+	(define the-slots-of-a-class     ;
+	  '(direct-supers              ;(class ...)        
+	    direct-slots               ;((name . options) ...)
+	    cpl                        ;(class ...) 
+	    slots                      ;((name . options) ...) 
+	    nfields                    ;an integer
+	    field-initializers         ;(proc ...)
+	    getters-n-setters))        ;((slot-name getter setter) ...)
+					;
+	(define getters-n-setters-for-class      ;see lookup-slot-info
+					;
+					; I know this seems like a silly way to write this.  The
+					; problem is that the obvious way to write it seems to
+					; tickle a bug in MIT Scheme!
+					;
+	  (let ((make-em (lambda (s f)
+			   (list s
+				 (lambda (o)   (%instance-ref  o f))
+				 (lambda (o n) (%instance-set! o f n))))))
+	    (map (lambda (s)
+		   (make-em s (position-of s the-slots-of-a-class)))
+		 the-slots-of-a-class)))
+	(define <class> (%allocate-instance #f (length the-slots-of-a-class)))
+	(%set-instance-class-to-self <class>)
+	
+	(define <top>          (make <class>
+				 'direct-supers (list)
+				 'direct-slots  (list)))
+	
+	(define <object>       (make <class>
+				 'direct-supers (list <top>)
+				 'direct-slots  (list)))
+	
+					;
+					; This cluster, together with the first cluster above that defines
+					; <class> and sets its class, have the effect of:
+					;
+					;   (define <class>
+					;     (make <class>
+					;           'direct-supers (list <object>)
+					;           'direct-slots  (list 'direct-supers ...)))
+					;
+	(slot-set! <class> 'direct-supers      (list <object>))
+	(slot-set! <class> 'direct-slots       (map list the-slots-of-a-class))
+	(slot-set! <class> 'cpl                (list <class> <object> <top>))
+	(slot-set! <class> 'slots              (map list the-slots-of-a-class))
+	(slot-set! <class> 'nfields            (length the-slots-of-a-class))
+	(slot-set! <class> 'field-initializers (map (lambda (s)
+						      (lambda () '()))
+						    the-slots-of-a-class))
+	(slot-set! <class> 'getters-n-setters  '())
+	
+	
+	(define <procedure-class> (make <class>
+				    'direct-supers (list <class>)
+				    'direct-slots  (list)))
+	
+	(define <entity-class>    (make <class>
+				    'direct-supers (list <procedure-class>)
+				    'direct-slots  (list)))
+	
+	(define <generic>         (make <entity-class>
+				    'direct-supers (list <object>)
+				    'direct-slots  (list 'methods)))
+	
+	(define <method>          (make <class>
+				    'direct-supers (list <object>)
+				    'direct-slots  (list 'specializers
+							 'procedure)))
+	
+	
+					; These are the convenient syntax we expose to the base-level user.
+					;
+					;
+	(define make-class
+	  (lambda (direct-supers direct-slots)
+	    (make <class>
+	      'direct-supers direct-supers
+	      'direct-slots  direct-slots)))
+	
+	(define make-generic
+	  (lambda ()
+	    (make <generic>)))
+	
+	(define make-method
+	  (lambda (specializers procedure)
+	    (make <method>
+	      'specializers specializers
+	      'procedure    procedure)))
+	
+	
+					; The initialization protocol
+					;
+	(define initialize (make-generic))
+	
+					; The instance structure protocol.
+					;
+	(define allocate-instance (make-generic))
+	(define compute-getter-and-setter (make-generic))
+					;
+					; The class initialization protocol.
+					;
+	(define compute-cpl   (make-generic))
+	(define compute-slots (make-generic))
+	
+					;
+					; The generic invocation protocol.
+					;
+	(define compute-apply-generic         (make-generic))
+	(define compute-methods               (make-generic))
+	(define compute-method-more-specific? (make-generic))
+	(define compute-apply-methods         (make-generic))
+					;
+					; The next thing to do is bootstrap generic functions.
+					; 
+	(define generic-invocation-generics (list compute-apply-generic
+						  compute-methods
+						  compute-method-more-specific?
+						  compute-apply-methods))
+	
+	(define add-method
+	  (lambda (generic method)
+	    (slot-set! generic
+		       'methods
+		       (cons method
+			     (collect-if
+			      (lambda (m)
+				(not (every eq?
+					    (method-specializers m)
+					    (method-specializers method))))
+			      (slot-ref generic 'methods))))
+	    (%set-instance-proc! generic (compute-apply-generic generic))))
+	
+					;
+					; Adding a method calls COMPUTE-APPLY-GENERIC, the result of which calls
+					; the other generics in the generic invocation protocol.  Two, related,
+					; problems come up.  A chicken and egg problem and a infinite regress
+					; problem.
+					;
+					; In order to add our first method to COMPUTE-APPLY-GENERIC, we need
+					; something sitting there, so it can be called.  The first definition
+					; below does that.
+					; 
+					; Then, the second definition solves both the infinite regress and the
+					; not having enough of the protocol around to build itself problem the
+					; same way: it special cases invocation of generics in the invocation
+					; protocol.
+					;
+					;
+	(%set-instance-proc! compute-apply-generic
+			     (lambda (generic)
+			       (let ((method (car (generic-methods generic))))
+				 ((method-procedure method) #f generic))))
+	
+	(add-method compute-apply-generic
+		    (make-method (list <generic>)
+				 (lambda (call-next-method generic)
+				   (lambda args
+				     (if (and (memq generic generic-invocation-generics)     ;* G  c
+					      (memq (car args) generic-invocation-generics)) ;* r  a
+					 (apply (method-procedure                            ;* o  s
+						 (last (generic-methods generic)))           ;* u  e
+						(cons #f args))                              ;* n
+					;* d
+					 ((compute-apply-methods generic)
+					  ((compute-methods generic) args)
+					  args))))))
+	
+	(add-method compute-methods
+		    (make-method (list <generic>)
+				 (lambda (call-next-method generic)
+				   (lambda (args)
+				     (let ((applicable
+					    (collect-if (lambda (method)
+					;
+					; Note that every only goes as far as the
+					; shortest list!
+					;
+							  (every applicable?
+								 (method-specializers method)
+								 args))
+							(generic-methods generic))))
+				       (gsort (lambda (m1 m2)
+						((compute-method-more-specific? generic)
+						 m1
+						 m2
+						 args))
+					      applicable))))))
+	
+	(add-method compute-method-more-specific?
+		    (make-method (list <generic>)
+				 (lambda (call-next-method generic)
+				   (lambda (m1 m2 args)
+				     (let loop ((specls1 (method-specializers m1))
+						(specls2 (method-specializers m2))
+						(args args))
+				       (cond ((and (null? specls1) (null? specls2))
+					      (error
+					       "Two methods are equally specific."))
+					     ((or  (null? specls1) (null? specls2))
+					      (error
+					       "Two methods have a different number of specializers."))
+					     ((null? args)
+					      (error
+					       "Fewer arguments than specializers."))
+					     (else
+					      (let ((c1  (car specls1))
+						    (c2  (car specls2))
+						    (arg (car args)))
+						(if (eq? c1 c2)
+						    (loop (cdr specls1)
+							  (cdr specls2)
+							  (cdr args))
+						    (more-specific? c1 c2 arg))))))))))
+	
+	(add-method compute-apply-methods
+		    (make-method (list <generic>)
+				 (lambda (call-next-method generic)
+				   (lambda (methods args)
+				     (letrec ((one-step
+					       (lambda (tail)
+						 (lambda ()
+						   (if (null? tail)
+						       (error "No applicable methods/next methods.")
+						       (apply (method-procedure (car tail))
+							      (cons (one-step (cdr tail)) args)))))))
+				       ((one-step methods)))))))
+	
+	(define applicable?
+	  (lambda (c arg)
+	    (memq c (class-cpl (class-of arg)))))
+	
+	(define more-specific?
+	  (lambda (c1 c2 arg)
+	    (memq c2 (memq c1 (class-cpl (class-of arg))))))
+	
+	(add-method initialize
+		    (make-method (list <object>)
+				 (lambda (call-next-method object initargs) object)))
+	
+	(add-method initialize
+		    (make-method (list <class>)
+				 (lambda (call-next-method class initargs)
+				   (call-next-method)
+				   (slot-set! class
+					      'direct-supers
+					      (getl initargs 'direct-supers '()))
+				   (slot-set! class
+					      'direct-slots
+					      (map (lambda (s)
+						     (if (pair? s) s (list s)))
+						   (getl initargs 'direct-slots  '())))
+				   (slot-set! class 'cpl   (compute-cpl   class))
+				   (slot-set! class 'slots (compute-slots class))
+				   (let* ((nfields 0)
+					  (field-initializers '())
+					  (allocator
+					   (lambda (init)
+					     (let ((f nfields))
+					       (set! nfields (+ nfields 1))
+					       (set! field-initializers
+						     (cons init field-initializers))
+					       (list (lambda (o)   (%instance-ref  o f))
+						     (lambda (o n) (%instance-set! o f n))))))
+					  (getters-n-setters
+					   (map (lambda (slot)
+						  (cons (car slot)
+							(compute-getter-and-setter class
+										   slot
+										   allocator)))
+						(slot-ref class 'slots))))
+				     (slot-set! class 'nfields nfields)
+				     (slot-set! class 'field-initializers field-initializers)
+				     (slot-set! class 'getters-n-setters getters-n-setters)))))
+	
+	(add-method initialize
+		    (make-method (list <generic>)
+				 (lambda (call-next-method generic initargs)
+				   (call-next-method)
+				   (slot-set! generic 'methods '())
+				   (%set-instance-proc! generic
+							(lambda args (error "Has no methods."))))))
+	
+	(add-method initialize
+		    (make-method (list <method>)
+				 (lambda (call-next-method method initargs)
+				   (call-next-method)
+				   (slot-set! method 'specializers (getl initargs 'specializers))
+				   (slot-set! method 'procedure    (getl initargs 'procedure)))))
+	
+	(add-method allocate-instance
+		    (make-method (list <class>)
+				 (lambda (call-next-method class)
+				   (let* ((field-initializers (slot-ref class 'field-initializers))
+					  (new (%allocate-instance
+						class
+						(length field-initializers))))
+				     (let loop ((n 0)
+						(inits field-initializers))
+				       (if (pair? inits)
+					   (begin
+					     (%instance-set! new n ((car inits)))
+					     (loop (+ n 1)
+						   (cdr inits)))
+					   new))))))
+	
+	(add-method allocate-instance
+		    (make-method (list <entity-class>)
+				 (lambda (call-next-method class)
+				   (let* ((field-initializers (slot-ref class 'field-initializers))
+					  (new (%allocate-entity
+						class
+						(length field-initializers))))
+				     (let loop ((n 0)
+						(inits field-initializers))
+				       (if (pair? inits)
+					   (begin
+					     (%instance-set! new n ((car inits)))
+					     (loop (+ n 1)
+						   (cdr inits)))
+					   new))))))
+	
+	(add-method compute-cpl
+		    (make-method (list <class>)
+				 (lambda (call-next-method class)
+				   (compute-std-cpl class class-direct-supers))))
+	
+	(add-method compute-slots
+		    (make-method (list <class>)
+				 (lambda (call-next-method class)
+				   (let collect ((to-process (apply append
+								    (map class-direct-slots
+									 (class-cpl class))))
+						 (result '()))
+				     (if (null? to-process)
+					 (reverse result)
+					 (let* ((current (car to-process))
+						(name (car current))
+						(others '())
+						(remaining-to-process
+						 (collect-if (lambda (o)
+							       (if (eq? (car o) name)
+								   (begin
+								     (set! others (cons o others))
+								     #f)
+								   #t))
+							     (cdr to-process))))
+					   (collect remaining-to-process
+						    (cons (append current
+								  (apply append (map cdr others)))
+							  result))))))))
+	
+	(add-method compute-getter-and-setter
+		    (make-method (list <class>)
+				 (lambda (call-next-method class slot allocator)
+				   (allocator (lambda () '())))))
+					;
+					; Now everything works, both generic functions and classes, so we can
+					; turn on the real MAKE.
+					;
+					;
+	(set! make
+	      (lambda (class . initargs)
+		(let ((instance (allocate-instance class)))
+		  (initialize instance initargs)
+		  instance)))
+	
+					;
+					; Now define what CLOS calls `built in' classes.
+					;
+					;
+	(define <primitive-class>
+	  (make <class>
+	    'direct-supers (list <class>)
+	    'direct-slots  (list)))
+	
+	(define make-primitive-class
+	  (lambda class
+	    (make (if (null? class) <primitive-class> (car class))
+	      'direct-supers (list <top>)
+	      'direct-slots  (list))))
+	
+	(define <pair>        (make-primitive-class))
+	(define <null>        (make-primitive-class))
+	(define <symbol>      (make-primitive-class))
+	(define <boolean>     (make-primitive-class))
+	(define <procedure>   (make-primitive-class <procedure-class>))
+	(define <number>      (make-primitive-class))
+	(define <vector>      (make-primitive-class))
+	(define <char>        (make-primitive-class))
+	(define <string>      (make-primitive-class))
+	(define  <input-port> (make-primitive-class))
+	(define <output-port> (make-primitive-class))
+	
+					; This is a useful sort of helper function.  Note how it uses the
+					; introspective part of the MOP.  The first few pages of chapter
+					; two of the AMOP discuss this.
+					;
+					; Note that this introspective MOP doesn't support back-links from
+					; the classes to methods and generic functions.  Is that worth adding?
+					;
+					;
+	(define initialize-slots
+	  (lambda (object initargs)
+	    (let ((not-there (list 'shes-not-there)))
+	      (for-each (lambda (slot)
+			  (let ((name (car slot)))
+			    (let ((value  (getl initargs name not-there)))
+			      (if (eq? value not-there)
+				  'do-nothing
+				  (slot-set! object name value)))))
+			(class-slots (class-of object))))))
+	
+					;***
+					;
+					; A simple class, just an instance of <class>.  Note that we are using
+					; make and <class> rather than make-class to make it.  See Section 2.4
+					; of AMOP for more on this.
+					;
+					;
+	
+	(define <pos> (make <class>                          ;[make-class 
+			'direct-supers (list <object>)   ;  (list <object>) 
+			'direct-slots  (list 'x 'y)))    ;  (list 'x 'y)]
+	
+	(add-method initialize
+		    (make-method (list <pos>)
+				 (lambda (call-next-method pos initargs)
+				   (call-next-method)
+				   (initialize-slots pos initargs))))
+	
+	(define p1 (make <pos> 'x 1 'y 2))
+	(define p2 (make <pos> 'x 3 'y 5))
+	
+					;***
+					;
+					; Another way of writing that class definition, that achives better
+					; `encapsulation' by using slot names that are unique keys, rather
+					; than symbols.
+					;
+					;
+	
+	(define <pos> #f)
+	(define pos-x (make-generic))
+	(define pos-y (make-generic))
+	(define move  (make-generic))
+	
+	(let ((x (vector 'x))
+	      (y (vector 'y)))
+	  
+	  (set! <pos> (make <class>
+			'direct-supers (list <object>)
+			'direct-slots  (list x y)))
+	  
+	  (add-method pos-x
+		      (make-method (list <pos>)
+				   (lambda (call-next-method pos) (slot-ref pos x))))
+	  (add-method pos-y
+		      (make-method (list <pos>)
+				   (lambda (call-next-method pos) (slot-ref pos y))))
+	  
+	  (add-method move
+		      (make-method (list <pos>)
+				   (lambda (call-next-method pos new-x new-y)
+				     (slot-set! pos x new-x)
+				     (slot-set! pos y new-y))))
+	  
+	  (add-method initialize
+		      (make-method (list <pos>)
+				   (lambda (call-next-method pos initargs)
+				     (move pos (getl initargs 'x 0) (getl initargs 'y 0)))))
+	  )
+	
+	
+	(define p3 (make <pos> 'x 1 'y 2))
+	(define p4 (make <pos> 'x 3 'y 5))
+	
+					;***
+					;
+					; Class allocated slots.
+					;
+					; In Scheme, this extension isn't worth a whole lot, but what the hell.
+					;
+					;
+	
+	(define <class-slots-class>
+	  (make-class (list <class>)
+		      (list)))
+	
+	(add-method compute-getter-and-setter
+		    (make-method (list <class-slots-class>)
+				 (lambda (call-next-method class slot allocator)
+				   (if (null? (memq ':class-allocation slot))
+				       (call-next-method)
+				       (let ((cell '()))
+					 (list (lambda (o) cell)
+					       (lambda (o new) (set! cell new) new)))))))
+	
+					;
+					; Here's a silly program that uses class allocated slots.
+					;
+					;
+	(define <ship>
+	  (make <class-slots-class>
+	    'direct-supers (list <object>)
+	    'direct-slots  (list 'name
+				 '(all-ships :class-allocation))))
+	
+	(add-method initialize
+		    (make-method (list <ship>)
+				 (lambda (call-next-method ship initargs)
+				   (call-next-method)
+				   (initialize-slots ship initargs)
+				   (slot-set! ship
+					      'all-ships
+					      (cons ship (slot-ref ship 'all-ships))))))
+	
+	(define siblings (make-generic))
+	(add-method siblings
+		    (make-method (list <ship>)
+				 (lambda (call-next-method ship)
+				   (remove ship (slot-ref ship 'all-ships)))))
+	
+	(define s1 (make <ship> 'name 's1))
+	(define s2 (make <ship> 'name 's2))
+	(define s3 (make <ship> 'name 's3))
+	
+					;***
+					;
+					; Here's a class of class that allocates some slots dynamically.
+					;
+					; It has a layered protocol (dynamic-slot?) that decides whether a given
+					; slot should be dynamically allocated.  This makes it easy to define a
+					; subclass that allocates all its slots dynamically.
+					;
+					;
+	(define <dynamic-class>
+	  (make-class (list <class>)
+		      (list 'alist-g-n-s)))
+	
+	
+	(define dynamic-slot? (make-generic))
+	
+	(add-method dynamic-slot?
+		    (make-method (list <dynamic-class>)
+				 (lambda (call-next-method class slot)
+				   (memq :dynamic-allocation (cdr slot)))))
+	
+	(define alist-getter-and-setter
+	  (lambda (dynamic-class allocator)
+	    (let ((old (slot-ref dynamic-class 'alist-g-n-s)))
+	      (if (null? old)
+		  (let ((new (allocator (lambda () '()))))
+		    (slot-set! dynamic-class 'alist-g-n-s new)
+		    new)
+		  old))))
+	
+	(add-method compute-getter-and-setter
+		    (make-method (list <dynamic-class>)
+				 (lambda (call-next-method class slot allocator)
+				   (if (null? (dynamic-slot? class slot))
+				       (call-next-method)
+				       (let* ((name (car slot))
+					      (g-n-s (alist-getter-and-setter class allocator))
+					      (alist-getter (car g-n-s))
+					      (alist-setter (cadr g-n-s)))
+					 (list (lambda (o)
+						 (let ((entry (assq name  (alist-getter o))))
+						   (if (not entry)
+						       '()
+						       (cdr entry))))
+					       (lambda (o new)
+						 (let* ((alist (alist-getter o))
+							(entry (assq name alist)))
+						   (if (not entry)
+						       (alist-setter o
+								     (cons (cons name new) alist))
+						       (set-cdr! entry new))
+						   new))))))))
+	
+	(define <all-dynamic-class>
+	  (make-class (list <dynamic-class>)
+		      (list)))
+	
+	(add-method dynamic-slot?
+		    (make-method (list <all-dynamic-class>)
+				 (lambda (call-next-method class slot) #t)))
+	
+					;
+					; A silly program that uses this.
+					;
+					;
+	(define <person> (make <all-dynamic-class>
+			   'direct-supers (list <object>)
+			   'direct-slots  (list 'name 'age 'address)))
+	
+	(add-method initialize
+		    (make-method (list <person>)
+				 (lambda (call-next-method person initargs)
+				   (initialize-slots person initargs))))
+	
+	(define person1 (make <person> 'name 'sally))
+	(define person2 (make <person> 'name 'betty))
+	(define person3 (make <person> 'name 'sue))
+	
+					;***
+					;
+					; A ``database'' class that stores slots externally.
+					;
+					;
+	(define <db-class>
+	  (make-class (list <class>)
+		      (list 'id-g-n-s)))
+	
+	(define id-getter-and-setter
+	  (lambda (db-class allocator)
+	    (let ((old (slot-ref db-class 'id-g-n-s)))
+	      (if (null? old)
+		  (let ((new (allocator db-allocate-id)))
+		    (slot-set! class 'id-g-n-s new)
+		    new)
+		  old))))
+	
+	(add-method compute-getter-and-setter
+		    (make-method (list <db-class>)
+				 (lambda (call-next-method class slot allocator)
+				   (let* ((id-g-n-s (id-getter-and-setter class allocator))
+					  (id-getter (car id-g-n-s))
+					  (id-setter (cadr id-g-n-s))
+					  (slot-name (car slot)))
+				     (list (lambda (o)
+					     (db-lookup (id-getter o) slot-name)) 
+					   (lambda (o new)
+					     (db-store  (id-getter o) slot-name new)))))))
+	
+					;***
+					;
+					; A kind of generic that supports around methods.
+					;
+					;
+	(define make-around-generic
+	  (lambda () (make <around-generic>)))
+	
+	(define make-around-method
+	  (lambda (specializers procedure)
+	    (make <around-method>
+	      'specializers specializers
+	      'procedure procedure)))
+	
+	
+	(define <around-generic> (make <entity-class>
+				   'direct-supers (list <generic>)))
+	(define <around-method>  (make <class>
+				   'direct-supers (list <method>)))
+	
+	
+	(define around-method?   (make-generic))
+	
+	(add-method around-method?
+		    (make-method (list <method>)
+				 (lambda (call-next-method x) #f)))
+	(add-method around-method?
+		    (make-method (list <around-method>)
+				 (lambda (call-next-method x) #t)))
+	
+	
+	(add-method compute-methods
+		    (make-method (list <around-generic>)
+				 (lambda (call-next-method generic)
+				   (let ((normal-compute-methods (call-next-method)))
+				     (lambda (args)
+				       (let ((normal-methods (normal-compute-methods args)))
+					 (append
+					  (collect-if around-method?
+						      normal-methods)
+					  (collect-if (lambda (m) (not (around-method? m)))
+						      normal-methods))))))))
+					;
+					; And a simple example of using it.
+					;
+					;
+	(define <baz> (make-class (list <object>) (list)))
+	(define <bar> (make-class (list <baz>)    (list)))
+	(define <foo> (make-class (list <bar>)    (list)))
+	
+	(define test-around
+	  (lambda (generic)
+	    (add-method generic
+			(make-method        (list <foo>)
+					    (lambda (cnm x) (cons 'foo (cnm)))))
+	    
+	    (add-method generic
+			(make-around-method (list <bar>)
+					    (lambda (cnm x) (cons 'bar (cnm)))))
+	    
+	    (add-method generic
+			(make-method        (list <baz>)
+					    (lambda (cnm x) '(baz))))
+	    
+	    (generic (make <foo>))))
+	
+	(test (test-around (make-generic))        '(foo bar baz))
+	(test (test-around (make-around-generic)) '(bar foo baz))
+	)
+      ;; end tiny-clos
+      
       
       (test (let () (define-constant __c1__ 32) __c1__) 32)
       (test (let () __c1__) 'error)
@@ -14704,7 +16027,6 @@
 		  val)))
 	    #t)
       
-      
       (test (let* ((l1 (list 1 2))
 		   (v1 (vector 1 2))
 		   (l2 (list 1 l1 2))
@@ -14718,15 +16040,15 @@
       (test (multiple-value-bind (a) 1 a) 1)
       (test (multiple-value-bind (a . rest) (values 1 2 3) (+ a (apply + rest))) 6)
       (test (multiple-value-bind a (values 1 2 3) a) '(1 2 3))
-
+      
       (test (let ((a 1)
 		  (b 2))
 	      (multiple-value-set! (a b) (values 32 64))
 	      (+ a b))
 	    96)
-
+      
       (test (call-with-input-file "tmp1.r5rs" (lambda (p) (integer->char (read-byte p)))) #\t)
-
+      
       (let ((bytes (vector #o000 #o000 #o000 #o034 #o000 #o001 #o215 #o030 #o000 #o000 #o000 #o022 #o000 
 			   #o000 #o126 #o042 #o000 #o000 #o000 #o001 #o000 #o000 #o000 #o000 #o000 #o001)))
 	(with-output-to-file "tmp1.r5rs"
