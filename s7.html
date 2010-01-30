@@ -267,6 +267,10 @@ add-2
 &gt; (add-2 :b 3 :a 1)
 4
 </pre>
+
+<p>See s7test.scm for many examples including such perennial favorites as
+when, loop, dotimes, do*, enum, pushnew, and defstruct.
+</p>
 </dd>
 <br>
 
@@ -351,6 +355,9 @@ are both applicable and settable.  I think the syntax is pretty:
 </pre>
 <p>You can use list-ref and friends, of course, but just try to read any serious vector arithmetic code
 when it is buried in vector-refs and vector-set!s! 
+</p>
+<p>This syntax makes it easy to write generic sequence functions, as in Common Lisp.
+See s7test.scm for examples.
 </p>
 </dd>
 <br>
@@ -725,7 +732,7 @@ are:
 the upper limit on how many vector elements are printed by object-&gt;string and format.
 </p>
 <p>When running s7 behind a GUI, you often want input to come from and output to go to
-arbitrary widgets. The "function ports" provide a way to redirect IO.  See s7.h
+arbitrary widgets. The "function ports" provide a way to redirect IO.  See <a href="#functionportexample">below</a>
 for an example.
 </p>
 <p>s7 also includes current-error-port and set-current-error-port.
@@ -1716,6 +1723,7 @@ int main(int argc, char **argv)
 
 
 <br><br>
+<a name="functionportexample"></a>
 <p>Redirect output (and input) to a C procedure:
 </p>
 

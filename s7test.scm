@@ -8007,6 +8007,10 @@
 		result-sequence)))
 
 
+	(define input-stream-p input-port?)
+	(define output-stream-p output-port?)
+
+
 	;; -------- lists
 
 	;; in CL (cdr '()) is nil
