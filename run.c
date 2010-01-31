@@ -1140,7 +1140,12 @@ static void unattach_ptree(ptree *inner, ptree *outer)
   outer->samplers = inner->samplers;
 #endif
   outer->xen_vars = inner->xen_vars;
-  outer->gc_protected = inner->gc_protected;
+
+  /* outer->gc_protected = inner->gc_protected; */
+  /* not this one -- we always work back to the outermost tree in add_loc_to_protected_list, and
+   *   if we happen to need a reallocation of gc_protected during the inner ptree evaluation,
+   *   the outermost gc_protected is realloc'd, leaving the inner ptree's pointer invalid.
+   */
 
   inner->ints = NULL;
   inner->dbls = NULL;

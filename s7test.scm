@@ -1557,6 +1557,12 @@
   (string-set! str 3 #\x)
   (test (string=? str "xxxxaxxxxx") #t))
 
+(test (let ((hi (make-string 3 #\a)))
+	(string-set! hi 1 (let ((ho (make-string 4 #\x)))
+			    (string-set! ho 1 #\b)
+			    (string-ref ho 0)))
+	hi)
+      "axa")
 
 
 (test (substring "ab" 0 0) "")
@@ -2859,6 +2865,23 @@
 
 (test (+ 100 (call-with-input-string "123" (lambda (p) (values (read p) 1)))) 224)
 
+(test (call-with-input-string
+       "1234567890"
+       (lambda (p)
+	 (call-with-input-string
+	  "0987654321"
+	  (lambda (q)
+            (+ (read p) (read q))))))
+      2222222211)
+
+(test (call-with-input-string
+       "12345 67890"
+       (lambda (p)
+	 (call-with-input-string
+	  "09876 54321"
+	  (lambda (q)
+            (- (+ (read p) (read q)) (read p) (read q))))))
+      -99990)
 
 (test (output-port? (current-output-port)) #t)
 (write-char #\space (current-output-port))
@@ -3594,6 +3617,7 @@
 	   
 ;(test (do () (() ()) ()) '()) ; ?? -- is '() the same as ()? -- scheme bboard sez not necessarily
 (test (do () ('() '())) '())
+(test (do () ('())) '())
 
 (test (let ((x 0) (y 0)) (set! y (do () (#t (set! x 32) 123))) (list x y)) (list 32 123))
 (test (let ((i 32)) (do ((i 0 (+ i 1)) (j i (+ j 1))) ((> j 33) i))) 2)
@@ -6025,36 +6049,39 @@
 
       (test (call/cc (lambda (return) (sort! '(1 2 3) (lambda (a b) (return "oops"))))) "oops")
       
-      (let ((v (make-vector 10000)))
-	(do ((i 0 (+ i 1)))
-	    ((= i 10000))
-	  (vector-set! v i (random 100.0)))
-	(sort! v <)
-	(call/cc
-	 (lambda (return)
-	   (do ((i 0 (+ i 1)))
-	       ((< i 9999))
-	     (if (not (< (vector-ref v i) (vector-ref v (+ i 1))))
-		 (return #f)))
-	   #t)))
+      (test (let ((v (make-vector 1000)))
+	      (do ((i 0 (+ i 1)))
+		  ((= i 1000))
+		(vector-set! v i (random 100.0)))
+	      (set! v (sort! v >))
+	      (call-with-exit
+	       (lambda (return)
+		 (do ((i 0 (+ i 1)))
+		     ((= i 999) #t)
+		   (if (<= (v i) (v (+ i 1)))
+		       (return #f))))))
+	    #t)
 
-      (let ((v '()))
-	(do ((i 0 (+ i 1)))
-	    ((= i 10000))
-	  (set! v (cons (random 100.0) v)))
-	(set! v (sort! v >))
-	(call/cc
-	 (lambda (return)
-	   (let ((val (car v)))
-	     (do ((lst (cdr v) (cdr lst)))
-		 ((null? (cdr lst)))
-	       (if (not (> val (car lst)))
-		   (return #f))
-	       (set! val (car lst))))
-	   #t)))
+      (test (let ((v '()))
+	      (do ((i 0 (+ i 1)))
+		  ((= i 1000))
+		(set! v (cons (random 100.0) v)))
+	      (set! v (sort! v >))
+	      (apply > v))
+	    #t)
 
       (test (sort! (list 3 2 1) (lambda (m n) (let ((vals (sort! (list m n) <))) (< m n)))) '(1 2 3))
 
+      (test (let ((lst '()))
+	      (do ((i 0 (+ i 1)))
+		  ((= i 128))
+		(set! lst (cons (random 1.0) lst)))
+	      (let ((vals (sort! lst (lambda (m n)
+				       (let ((lst1 (list 1 2 3)))
+					 (sort! lst1 <))
+				       (< m n)))))
+		(apply < vals)))
+	    #t)
       ))
 
 
@@ -6126,19 +6153,12 @@
 		  (cond
 		   ((null? forms)
 		    `(block ,block-tag
-			    (letrec ,(reverse! (cons (list cur-tag `(lambda ()
-								      ,@(reverse! 
-									 (cons `(,block-tag #f)
-									       cur-code))))
-						     tags-and-code))
+			    (letrec ,(reverse! (cons (list cur-tag `(lambda () ,@(reverse! (cons `(,block-tag #f) cur-code)))) tags-and-code))
 			      (,start-tag))))
 		   ((symbol? (car forms))
 		    (loop (car forms)
 			  '()
-			  (cons (list cur-tag `(lambda ()
-						 ,@(reverse! (cons `(,(car forms))
-								   cur-code))))
-				tags-and-code)
+			  (cons (list cur-tag `(lambda () ,@(reverse! (cons `(,(car forms)) cur-code)))) tags-and-code)
 			  (cdr forms)))
 		   (else
 		    (loop cur-tag
@@ -45234,6 +45254,7 @@
       (test (string-set! "" 1 #\a) 'error)
       (test (string-set! (string) 0 #\a) 'error)
       (test (string-set! (symbol->string 'lambda) 0 #\a) 'error)
+      (test (let ((ho (make-string 0 #\x))) (string-set! ho 0 #\a) ho) 'error)
       
       (for-each
        (lambda (arg)

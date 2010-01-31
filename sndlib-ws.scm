@@ -607,7 +607,6 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 (defmacro with-threaded-sound (args . body)
   (if (and (provided? 'threads)
-	   (provided? 's7)
 	   (not (= (optimization) 0)))
       (let ((split 
 	     (lambda (l n k)

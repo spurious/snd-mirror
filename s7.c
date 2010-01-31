@@ -1089,8 +1089,12 @@ void s7_gc_unprotect_at(s7_scheme *sc, int loc)
   pthread_mutex_lock(&protected_objects_lock);
 #endif
 
-  vector_element(sc->protected_objects, loc) = sc->NIL;
-  (*(sc->protected_objects_loc)) = loc;
+  if ((loc >= 0) &&
+      (loc < (*(sc->protected_objects_size))))
+    {
+      vector_element(sc->protected_objects, loc) = sc->NIL;
+      (*(sc->protected_objects_loc)) = loc;
+    }
 
 #if HAVE_PTHREADS
   pthread_mutex_unlock(&protected_objects_lock);
@@ -1101,12 +1105,15 @@ void s7_gc_unprotect_at(s7_scheme *sc, int loc)
 s7_pointer s7_gc_protected_at(s7_scheme *sc, int loc)
 {
   s7_pointer obj;
+  obj = sc->UNSPECIFIED;
 
 #if HAVE_PTHREADS
   pthread_mutex_lock(&protected_objects_lock);
 #endif
 
-  obj = vector_element(sc->protected_objects, loc);
+  if ((loc >= 0) &&
+      (loc < (*(sc->protected_objects_size))))
+    obj = vector_element(sc->protected_objects, loc);
 
 #if HAVE_PTHREADS
   pthread_mutex_unlock(&protected_objects_lock);
@@ -8278,9 +8285,6 @@ static s7_pointer pop_input_port(s7_scheme *sc)
 }
 
 
-/* TODO: tie in (and test/document) the caller function input port
- */
-
 static int inchar(s7_scheme *sc, s7_pointer pt)
 {
   int c;
@@ -12725,7 +12729,6 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
   return(obj);
 }
 
-/* PERHAPS: a "make" generic function */
 
 static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 {
@@ -16521,13 +16524,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SET0:                                                 /* entry for set! */
       if (!is_pair(sc->code))
 	return(eval_error(sc, "set! syntax error ~A", sc->code)); /* set! . 1) */
-
       if (s7_is_immutable(car(sc->code)))                         /* (set! pi 3) */
 	return(eval_error(sc, "set!: can't alter immutable object: ~S", car(sc->code)));
-      
-      if ((cdr(sc->code) == sc->NIL) ||
-	  (cddr(sc->code) != sc->NIL))                            /* (set! var) */
-	return(eval_error(sc, "~A: wrong number of args to set!", sc->code));
+      if (cdr(sc->code) == sc->NIL)                               /* (set! var) */
+	return(eval_error(sc, "~A: set! takes two args", sc->code));
+      if (cddr(sc->code) != sc->NIL)                              /* (set! var 1 2) */
+	return(eval_error(sc, "~A: too many args to set!", sc->code));
 
       if (is_pair(car(sc->code)))                                 /* has accessor */
 	{
@@ -16545,34 +16547,34 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* code here is the accessor and the value without the "set!": ((window-width) 800) */
 	  /*    (set! (hi 0) (* 2 3)) -> ((hi 0) (* 2 3)) */
 
-	  if ((is_c_object(sc->x)) &&
-	      (object_set_function(sc->x)))
-	    sc->code = s7_cons(sc, sc->OBJECT_SET, s7_append(sc, car(sc->code), cdr(sc->code)));   /* use set method (append flattens the lists) */
-	  else 
+	  switch (type(sc->x))
 	    {
-	      switch (type(sc->x))
-		{
-		case T_VECTOR:
-		  /* sc->x is the vector, sc->code is expr without the set! */
-		  /*  args have not been evaluated! */
-		  sc->code = s7_cons(sc, sc->VECTOR_SET, s7_append(sc, car(sc->code), cdr(sc->code)));
-		  break;
-		  
-		case T_STRING:
-		  sc->code = s7_cons(sc, sc->STRING_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
-		  break;
+	    case T_C_OBJECT:
+	      if (object_set_function(sc->x))
+		sc->code = s7_cons(sc, sc->OBJECT_SET, s7_append(sc, car(sc->code), cdr(sc->code)));   /* use set method (append flattens the lists) */
+	      else return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
+	      break;
 
-		case T_PAIR:
-		  sc->code = s7_cons(sc, sc->LIST_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
-		  break;
+	    case T_VECTOR:
+	      /* sc->x is the vector, sc->code is expr without the set! */
+	      /*  args have not been evaluated! */
+	      sc->code = s7_cons(sc, sc->VECTOR_SET, s7_append(sc, car(sc->code), cdr(sc->code)));
+	      break;
+	      
+	    case T_STRING:
+	      sc->code = s7_cons(sc, sc->STRING_SET, s7_append(sc, car(sc->code), cdr(sc->code)));
+	      break;
 
-		case T_HASH_TABLE:
-		  sc->code = s7_cons(sc, sc->HASH_TABLE_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
-		  break;
+	    case T_PAIR:
+	      sc->code = s7_cons(sc, sc->LIST_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
+	      break;
 
-		default:                                         /* (set! (1 2) 3) */
-		  return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
-		}
+	    case T_HASH_TABLE:
+	      sc->code = s7_cons(sc, sc->HASH_TABLE_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
+	      break;
+
+	    default:                                         /* (set! (1 2) 3) */
+	      return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
 	    }
 	}
       else 
@@ -22724,10 +22726,15 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "close-encapsulator",      g_close_encapsulator,      1, 0, false, H_close_encapsulator);
   s7_define_function(sc, "encapsulator?",           g_is_encapsulator,         1, 0, false, H_is_encapsulator);
   s7_define_function(sc, "encapsulator-bindings",   g_encapsulator_bindings,   1, 0, false, H_encapsulator_bindings);
+  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "encapsulation")));  
 #endif
 
 #if WITH_MULTIDIMENSIONAL_VECTORS
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "multidimensional-vectors")));
+#endif
+
+#if WITH_PROFILING
+  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "profiling")));  
 #endif
 
   sc->VECTOR_FUNCTION = s7_name_to_value(sc, "vector");

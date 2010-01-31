@@ -6849,6 +6849,141 @@ taking input from the readin generator 'reader'.  The output data is available v
 |#
 
 
+
+;;; ---------------- flocsig (flanged locsig) ----------------
+
+(defgenerator (flocsig 
+	       ;; assume stereo out/rev 
+	       :make-wrapper (lambda (g)
+			       (set! (flocsig-maxd g) (ceiling amplitude))
+			       (set! (flocsig-out1 g) (make-vct (flocsig-maxd g)))
+			       (set! (flocsig-out2 g) (make-vct (flocsig-maxd g)))
+			       (set! (flocsig-ri g) (make-rand-interp 
+						     :frequency (flocsig-frequency g) 
+						     :amplitude (- (flocsig-amplitude g) 1.0)))
+			       (if (not (flocsig-offset g))
+				   (set! (flocsig-offset g) (mus-random (* 0.3 (flocsig-amplitude g)))))
+			       g))
+  (reverb-amount 0.0) (frequency 1.0) (amplitude 2.0) offset
+  (maxd 0)
+  (out1 #f :type vct) (out2 #f :type vct) (outloc 0)
+  (ri #f :type clm))
+
+(define (flocsig gen samp input)
+  ;; signal position and per-channel-delay depends on rand-interp
+  (declare (gen flocsig) (samp int) (input float))
+  (let* ((rpos (rand-interp (flocsig-ri gen)))
+	 (pos (min (max (+ rpos (flocsig-offset gen)) (- (flocsig-amplitude gen))) (flocsig-amplitude gen)))
+	 (amp1 (if (<= pos -1.0) 1.0
+		   (if (>= pos 1.0) 0.0
+		       (/ (sqrt (- 1.0 pos)) (sqrt 2.0)))))
+	 (amp2 (if (<= pos -1.0) 0.0
+		   (if (>= pos 1.0) 1.0
+		       (/ (sqrt (+ 1.0 pos)) (sqrt 2.0)))))
+	 (dly1 (abs (min 0.0 pos)))
+	 (frac1 (- dly1 (floor dly1)))
+	 (dly2 (max 0.0 pos))
+	 (frac2 (- dly2 (floor dly2)))
+	 (out1 (flocsig-out1 gen))
+	 (loc (flocsig-outloc gen))
+	 (out2 (flocsig-out2 gen))
+	 (size (flocsig-maxd gen))
+	 (loc10 (modulo (+ loc (floor dly1)) size))
+	 (loc11 (modulo (+ loc 1 (floor dly1)) size))
+	 (loc20 (modulo (+ loc (floor dly2)) size))
+	 (loc21 (modulo (+ loc 1 (floor dly2)) size))
+	 (rev (flocsig-reverb-amount gen)))
+
+    (vct-set! out1 loc10 (+ (vct-ref out1 loc10) (* amp1 input (- 1.0 frac1))))
+    (vct-set! out1 loc11 (+ (vct-ref out1 loc11) (* amp1 input frac1)))
+    (vct-set! out2 loc20 (+ (vct-ref out2 loc20) (* amp2 input (- 1.0 frac2))))
+    (vct-set! out2 loc21 (+ (vct-ref out2 loc21) (* amp2 input frac2)))
+
+    (let* ((val1 (vct-ref out1 loc))
+	   (val2 (vct-ref out2 loc)))
+      (vct-set! out1 loc 0.0)
+      (vct-set! out2 loc 0.0)
+      (set! loc (+ loc 1))
+      (if (= loc size) (set! loc 0))
+      (outa samp val1)
+      (outb samp val2)
+      (if (> rev 0.0)
+	  (begin
+	    (outa samp (* rev val1) *reverb*)
+	    (outb samp (* rev val2) *reverb*)))
+      (set! (flocsig-outloc gen) loc))))
+
+
+#|
+(definstrument (jcrev2)
+  (let* (
+	 (allpass11 (make-all-pass -0.700 0.700 1051))
+	 (allpass21 (make-all-pass -0.700 0.700  337))
+	 (allpass31 (make-all-pass -0.700 0.700  113))
+	 (comb11 (make-comb 0.742 4799))
+	 (comb21 (make-comb 0.733 4999))
+	 (comb31 (make-comb 0.715 5399))
+	 (comb41 (make-comb 0.697 5801))
+	 (outdel11 (make-delay (seconds->samples .01)))
+
+	 (allpass12 (make-all-pass -0.700 0.700 1051))
+	 (allpass22 (make-all-pass -0.700 0.700  337))
+	 (allpass32 (make-all-pass -0.700 0.700  113))
+	 (comb12 (make-comb 0.742 4799))
+	 (comb22 (make-comb 0.733 4999))
+	 (comb32 (make-comb 0.715 5399))
+	 (comb42 (make-comb 0.697 5801))
+	 (outdel12 (make-delay (seconds->samples .01)))
+
+	 (file-dur (frames *reverb*))
+	 (decay-dur (mus-srate))
+	 (len (floor (+ decay-dur file-dur))))
+
+	(run
+	 (lambda ()
+	   (do ((i 0 (+ 1 i)))
+	       ((= i len))
+
+	     (let* ((allpass-sum (all-pass allpass31 
+					   (all-pass allpass21 
+						     (all-pass allpass11 
+							       (ina i *reverb*)))))
+		    (comb-sum (+ (comb comb11 allpass-sum)
+				 (comb comb21 allpass-sum)
+				 (comb comb31 allpass-sum)
+				 (comb comb41 allpass-sum))))
+	       (outa i (delay outdel11 comb-sum)))
+
+	     (let* ((allpass-sum (all-pass allpass32 
+					   (all-pass allpass22 
+						     (all-pass allpass12 
+							       (inb i *reverb*)))))
+		    (comb-sum (+ (comb comb12 allpass-sum)
+				 (comb comb22 allpass-sum)
+				 (comb comb32 allpass-sum)
+				 (comb comb42 allpass-sum))))
+	       (outb i (delay outdel12 comb-sum)))
+	     )))))
+
+
+(definstrument (simp beg dur (amp 0.5) (freq 440.0) (ramp 2.0) (rfreq 1.0) offset)
+  (let* ((os (make-pulse-train freq))
+	 (floc (make-flocsig :reverb-amount 0.1
+			     :frequency rfreq
+			     :amplitude ramp
+			     :offset offset))
+	 (start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur))))
+    (run
+     (lambda ()
+       (do ((i start (+ i 1))) 
+	   ((= i end))
+	 (flocsig floc i (* amp (pulse-train os))))))))
+
+(with-sound (:channels 2 :reverb-channels 2 :reverb jcrev2) (simp 0 1))
+|#
+
+
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; set up make-* help strings

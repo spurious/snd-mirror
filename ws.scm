@@ -396,7 +396,6 @@
 
 (defmacro with-threaded-sound (args . body)
   (if (and (provided? 'snd-threads)
-	   (provided? 's7)
 	   (not (= (optimization) 0)))
       (let ((split 
 	     (lambda (l n k)
@@ -1046,7 +1045,6 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 (define (with-threaded-channels snd func)
   (let ((chns (channels snd)))
     (if (and (provided? 'snd-threads)
-	     (provided? 's7)
 	     (> chns 1))
 	
 	(dynamic-wind
