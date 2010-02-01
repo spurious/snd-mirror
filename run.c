@@ -179,16 +179,10 @@
 #include "clm-strings.h"
 #include "sndlib-strings.h"
 
-
-#if USE_SND
-  #define PROTECT(Obj) snd_protect(Obj)
-  #define UNPROTECT_AT(Loc) snd_unprotect_at(Loc)
-#else
-  #define PROC_FALSE "#f"
-  #define NOT_A_GC_LOC -1
-  #define PROTECT(Obj) s7_gc_protect(s7, Obj)
-  #define UNPROTECT_AT(Loc) s7_gc_unprotect_at(s7, Loc)
-#endif
+#define PROC_FALSE "#f"
+#define NOT_A_GC_LOC -1
+#define PROTECT(Obj) s7_gc_protect(s7, Obj)
+#define UNPROTECT_AT(Loc) s7_gc_unprotect_at(s7, Loc)
 
 
 static int safe_strcmp(const char *s1, const char *s2)
