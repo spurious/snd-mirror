@@ -6913,7 +6913,7 @@ taking input from the readin generator 'reader'.  The output data is available v
 	    (outb samp (* rev val2) *reverb*)))
       (set! (flocsig-outloc gen) loc))))
 
-;;; TODO: doc/test flocsig
+
 
 #|
 (definstrument (jcrev2)

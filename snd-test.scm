@@ -52985,6 +52985,72 @@ EDITS: 1
 	       (outa (+ i beg) (* amplitude (oscil os))))))))
   
   
+  (definstrument (jcrev2)
+    (let* (
+	   (allpass11 (make-all-pass -0.700 0.700 1051))
+	   (allpass21 (make-all-pass -0.700 0.700  337))
+	   (allpass31 (make-all-pass -0.700 0.700  113))
+	   (comb11 (make-comb 0.742 4799))
+	   (comb21 (make-comb 0.733 4999))
+	   (comb31 (make-comb 0.715 5399))
+	   (comb41 (make-comb 0.697 5801))
+	   (outdel11 (make-delay (seconds->samples .01)))
+	   
+	   (allpass12 (make-all-pass -0.700 0.700 1051))
+	   (allpass22 (make-all-pass -0.700 0.700  337))
+	   (allpass32 (make-all-pass -0.700 0.700  113))
+	   (comb12 (make-comb 0.742 4799))
+	   (comb22 (make-comb 0.733 4999))
+	   (comb32 (make-comb 0.715 5399))
+	   (comb42 (make-comb 0.697 5801))
+	   (outdel12 (make-delay (seconds->samples .01)))
+	   
+	   (file-dur (frames *reverb*))
+	   (decay-dur (mus-srate))
+	   (len (floor (+ decay-dur file-dur))))
+      
+      (run
+       (lambda ()
+	 (do ((i 0 (+ 1 i)))
+	     ((= i len))
+	   
+	   (let* ((allpass-sum (all-pass allpass31 
+					 (all-pass allpass21 
+						   (all-pass allpass11 
+							     (ina i *reverb*)))))
+		  (comb-sum (+ (comb comb11 allpass-sum)
+			       (comb comb21 allpass-sum)
+			       (comb comb31 allpass-sum)
+			       (comb comb41 allpass-sum))))
+	     (outa i (delay outdel11 comb-sum)))
+	   
+	   (let* ((allpass-sum (all-pass allpass32 
+					 (all-pass allpass22 
+						   (all-pass allpass12 
+							     (inb i *reverb*)))))
+		  (comb-sum (+ (comb comb12 allpass-sum)
+			       (comb comb22 allpass-sum)
+			       (comb comb32 allpass-sum)
+			       (comb comb42 allpass-sum))))
+	     (outb i (delay outdel12 comb-sum)))
+	   )))))
+  
+  
+  (definstrument (floc-simp beg dur (amp 0.5) (freq 440.0) (ramp 2.0) (rfreq 1.0) offset)
+    (let* ((os (make-pulse-train freq))
+	   (floc (make-flocsig :reverb-amount 0.1
+			       :frequency rfreq
+			       :amplitude ramp
+			       :offset offset))
+	   (start (seconds->samples beg))
+	   (end (+ start (seconds->samples dur))))
+      (run
+       (lambda ()
+	 (do ((i start (+ i 1))) 
+	     ((= i end))
+	   (flocsig floc i (* amp (pulse-train os))))))))
+  
+
   (define (test-ws-errors)
     ;; since we only catch 'mus-error and 'with-sound-interrupt above, any other error
     ;;   closes *output* and returns to the top-level -- are there languishing threads?
@@ -53951,8 +54017,9 @@ EDITS: 1
 	    (close-sound ind))
 	  
 	  (with-sound (:play #f) (defopt-simp 0 10000) (defopt-simp 10000 10000 550.0 0.1) (defopt-simp 20000 10000 :amplitude .2))
-	  
-	  (with-sound (:channels 2 :statistics #t)
+	  (with-sound (:channels 2 :reverb-channels 2 :reverb jcrev2 :play #f) (floc-simp 0 1))
+  
+  	  (with-sound (:channels 2 :statistics #t)
 		      (fullmix "pistol.snd")
 		      (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
 	  (let ((ind (find-sound "test.snd")))

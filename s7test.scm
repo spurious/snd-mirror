@@ -7891,8 +7891,8 @@
 	;;  ... later ... I've run out of gas.
 
 	(define-macro (progn . body) `(let () ,@body))
-	(define-macro (prog1 first . body) `(let ((result ,first)) ,@body result))
-	(define-macro (prog2 first second . body) `(let () ,first (let ((result ,second)) ,@body result)))
+	(define-macro (prog1 first . body) (let ((result (gensym))) `(let ((,result ,first)) ,@body ,result)))
+	(define-macro (prog2 first second . body) `(prog1 (progn ,first ,second) ,@body))
 
 	(defmacro the (type form) form)
 
