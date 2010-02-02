@@ -4174,6 +4174,15 @@
 (test ((call/cc (lambda (return) (dynamic-wind (lambda () #f) (lambda () (return +)) (lambda () #f)))) 3 2) 5)
 (test (+ 1 ((call/cc (lambda (return) (dynamic-wind (lambda () #f) (lambda () (return +)) (lambda () #f)))) 3 2) 2) 8)
 (test (let ((lst (list + -))) ((car lst) 1 2 3)) 6)
+(test (let ((a +)) ((let ((b -)) (if (eq? a b) a *)) 2 3)) 6)
+(test ((list-ref (list + - * /) 0) 2 3) 5)
+(test (((if #t list-ref oops) (list + - * /) 0) 2 3) 5)
+(test ((((car (list car cdr)) (list car cdr)) (list + -)) 2 3) 5)
+(test (let ()
+	(define function lambda)
+	(define hiho (function (a) (+ a 1)))
+	(hiho 2))
+      3)
 
 
 ;;; -------- begin --------
@@ -7890,7 +7899,8 @@
 	;;
 	;;  ... later ... I've run out of gas.
 
-	(define-macro (progn . body) `(let () ,@body))
+	;(define-macro (progn . body) `(let () ,@body))
+	(define progn begin)
 	(define-macro (prog1 first . body) (let ((result (gensym))) `(let ((,result ,first)) ,@body ,result)))
 	(define-macro (prog2 first second . body) `(prog1 (progn ,first ,second) ,@body))
 
@@ -7960,6 +7970,17 @@
 				    (set! var p)
 				    '())))
 			    pairs))))
+
+	(define-macro (psetq . pairs)
+	  (let ((vals '())
+		(vars '()))
+	    (do ((var-val pairs (cddr var-val)))
+		((null? var-val))
+	      (let ((interval (gensym)))
+		(set! vals (cons (list interval (cadr var-val)) vals))
+		(set! vars (cons (list 'set! (car var-val) interval) vars))))
+	    `(let ,(reverse vals)
+	       ,@vars)))
 
 	(define (mapcar func . lists)
 	  ;; not scheme's map because lists can be different lengths
@@ -14621,6 +14642,8 @@
 	(test (let ((x 0)) (decf x 2) x) -2)	
 	(test (let ((lst (list 1 2))) (pushnew 1 lst)) (list 1 2))
 	(test (let ((lst (list 1 2))) (pushnew 3 lst)) (list 3 1 2))
+	(test (let ((a 1) (b 2)) (psetq a b b a) (list a b)) '(2 1))
+	(test (let ((a 1) (b 2) (c 3)) (psetq a (+ b c) b (+ a c) c (+ a b)) (list a b c)) '(5 4 3))
 	(test (let ((val #f)) (unless val 1)) 1)
 	(test (let ((val (list 1 2 3 4 5 6 7 8 9 10))) (first val)) 1)
 	(test (let ((val (list 1 2 3 4 5 6 7 8 9 10))) (second val)) 2)
@@ -14646,6 +14669,45 @@
 	(test (let () (defstruct x1 a (b "hi") (c 3/4)) (let ((xx1 (make-x1 1))) (list (x1-a xx1) (x1-b xx1) (x1-c xx1) (x1? xx1)))) '(1 "hi" 3/4 #t))
 	(test (let () (defstruct x1 a (b "hi") (c 3/4)) (let ((xx1 (make-x1 :b 1))) (list (x1-a xx1) (x1-b xx1) (x1-c xx1) (x1? xx1)))) '(#f 1 3/4 #t))
 	(test (let () (defstruct x1 a b c) (let ((xx1 (make-x1 1 2 3))) (set! (x1-a xx1) 32) (list (x1-a xx1) (x1-b xx1) (x1-c xx1)))) '(32 2 3))
+
+	(let ()
+	  (defstruct ship (x 0.0) (y 0.0 :type 'real))
+	  (test (let ((s1 (make-ship 1.0 2.0)))
+		  (let ((s2 (copy-ship s1)))
+		    (list (ship-x s2) (ship-y s2))))
+		'(1.0 2.0))
+	  (test (let ((s3 (make-ship :y 1.0 :x 2.0)))
+		  (list (ship-x s3) (ship-y s3)))
+		'(2.0 1.0)))
+
+	(let()
+	  (defstruct ship1 x y)
+	  (let ((s1 (make-ship1 "hi" (list 1 2 3))))
+	    (let ((s2 (copy-ship1 s1)))
+	      (test (list (ship1-x s2) (ship1-y s2)) '("hi" (1 2 3))))))
+
+	(let ()
+	  (defstruct ship2 (x 0.0) (y 1.0 :read-only #t))
+	  (let ((s1 (make-ship2)))
+	    (test (let ((tag (catch #t
+				    (lambda ()
+				      (set! (ship2-y s1) 123.0))
+				    (lambda args (car args)))))
+		    tag)
+		  'error)
+	    (set! (ship2-x s1) 123.0)
+	    (test (ship2-x s1)  123.0)))
+
+	(let ()
+	  (defstruct (ship3 (:conc-name hi)) (x 0.0) (y 1.0 :read-only #t))
+	  (let ((s1 (make-ship3 :x 3.0)))
+	    (test (list (hi-x s1) (hi-y s1)) '(3.0 1.0))))
+
+	(let ()
+	  (defstruct (ship4 (:constructor new-ship)) (x 0.0) (y 1.0 :read-only #t))
+	  (let ((s1 (new-ship 1.0 2.0)))
+	    (test (list (ship4-x s1) (ship4-y s1)) '(1.0 2.0))))
+
 	)
 
       (let ()

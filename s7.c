@@ -593,7 +593,7 @@ struct s7_scheme {
 /* set_type below -- needs to maintain mark setting */
 
 #define T_SYNTAX                      (1 << (TYPE_BITS + 1))
-#define is_syntax(p)                  ((typeflag(p) & T_SYNTAX) != 0) /* the silly != 0 business is for MS C++'s benefit */
+#define is_syntax(p)                  ((typeflag(p) & T_SYNTAX) != 0) /* the != 0 business is for MS C++'s benefit */
 #define syntax_opcode(x)              ((x)->hloc)
 
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 2))
@@ -644,6 +644,7 @@ struct s7_scheme {
 #define T_ANY_MACRO                   (1 << (TYPE_BITS + 12))
 #define is_any_macro(p)               ((typeflag(p) & T_ANY_MACRO) != 0)
 /* this marks scheme and C-defined macros */
+#define is_any_macro_or_syntax(p)     ((typeflag(p) & (T_ANY_MACRO | T_SYNTAX)) != 0)
 
 #define T_EXPANSION                   (1 << (TYPE_BITS + 13))
 #define is_expansion(p)               ((typeflag(p) & T_EXPANSION) != 0)
@@ -15830,12 +15831,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  {
 	    /* expand eval_symbol here to speed it up by a lot */
 	    s7_pointer x;
+
 	    if (is_not_local(sc->code))
 	      x = symbol_global_slot(sc->code);
 	    else x = s7_find_symbol_in_environment(sc, sc->envir, sc->code, true);
 	    if (x != sc->NIL) 
 	      sc->value = symbol_value(x);
 	    else sc->value = eval_symbol(sc, sc->code);
+
 	    pop_stack(sc);
 	    goto START;
 	  }
@@ -15848,19 +15851,31 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     case OP_EVAL_ARGS0:
-      if (is_any_macro(sc->value))
-	{    
-	  /* macro expansion */
-	  if (!(is_c_macro(sc->value)))
-	    {
-	      push_stack(sc, opcode(OP_EVAL_MACRO), sc->NIL, sc->NIL);
-	      /* code is the macro invocation: (mac-name ...), args is nil, value is the macro code bound to mac-name */
-	      sc->args = make_list_1(sc, sc->code); 
-	    }
-	  else sc->args = sc->code; 
-	  sc->code = sc->value;
-	  goto APPLY;
-	} 
+      if (is_any_macro_or_syntax(sc->value))
+	{
+	  if (is_any_macro(sc->value))
+	    {    
+	      /* macro expansion */
+	      if (!(is_c_macro(sc->value)))
+		{
+		  push_stack(sc, opcode(OP_EVAL_MACRO), sc->NIL, sc->NIL);
+		  /* code is the macro invocation: (mac-name ...), args is nil, value is the macro code bound to mac-name */
+		  sc->args = make_list_1(sc, sc->code); 
+		}
+	      else sc->args = sc->code; 
+	      sc->code = sc->value;
+	      goto APPLY;
+	    } 
+
+	  /* (define progn begin)
+	   * (progn (display "hi") (+ 1 23))
+	   * we can't catch this above under T_SYMBOL because we might be using "syntax" symbols as symbols (case labels etc)
+	   */
+	  sc->code = cdr(sc->code);
+	  sc->op = (opcode_t)syntax_opcode(sc->value);
+	  goto START;
+	}
+
       else 
 	{
 	  /* here sc->value is the func, sc->code is the entire expression */

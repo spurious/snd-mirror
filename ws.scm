@@ -1077,3 +1077,35 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	    ((= chn chns))
 	  (func snd chn)))))
 
+
+;;; -------- *clm-search-list*
+
+;;; PERHAPS: doc/test *clm-search-list*
+
+(define *clm-search-list* (list "."))
+
+(define (clm-find-file name)
+  (if (file-exists? name)
+      name
+      (call-with-exit
+       (lambda (return)
+	 (for-each
+	  (lambda (path)
+	    (let ((len (string-length path)))
+	      (if (> len 0)
+		  (let ((new-name (string-append path (if (not (char=? (path (- len 1)) #\/)) "/" "") name)))
+		    (if (file-exists? new-name)
+			(return new-name))))))
+	  *clm-search-list*)
+	 #f))))
+
+#|
+(with-sound ()
+  (let ((fd (make-file->sample "oboe.snd"))
+	(len (mus-sound-frames "oboe.snd")))
+    (run
+     (lambda ()
+       (do ((i 0 (+ i 1)))
+	   ((= i len))
+	 (outa i (* .5 (file->sample fd i 0))))))))
+|#

@@ -969,6 +969,46 @@ write "hygenic" macros:
 </dd>
 <br>
 
+<!--
+(define-macro (glet inits . body)
+  ;; any defines in the body are defined in the calling environment 
+  (let ((e (gensym))
+	(result (gensym)))
+    `(let ((,e (current-environment)))
+       (let ,inits
+	 (let ((,result (begin ,@body)))
+	   (for-each (lambda (binding)
+		       (if (procedure? (cdr binding))
+			   (push-environment ,e binding)))
+		     (cadr (current-environment)))
+	   ,result)))))
+
+but maybe it would be more sensible to use something like
+
+(define-macro (global-funcs-share-local-data local-name local-value . funcs)
+  (let ((local-name (gensym)))
+    `(begin
+       (define ,local-name ,local-value)
+       ,@(trans-tree local-name funcs))))
+
+where trans-tree is copy-tree replacing the original local name with the gensym'd one
+but this still makes a built-in let! look good.
+
+(define (tree-for-each tree func)
+  (if (pair? tree)
+      (begin
+        (tree-for-each (car tree) func)
+        (tree-for-each (cdr tree) func))
+      (func tree)))
+  
+(define (tree-map tree func)
+  (if (pair? tree)
+      (cons (tree-map (car tree) func)
+            (tree-map (cdr tree) func))
+      (func tree)))
+  
+-->
+
 
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
@@ -1190,6 +1230,7 @@ global-x
 <li>no transcript-on or transcript-off.
 <li>__func__ is the name of the function currently being defined or called (as in C).
 <li>vector-for-each, vector-map, hash-table-for-each, string-for-each
+<li>syntactic names can be values: (define progn begin) (progn (display "progn!") (+ 3 4)) or (define function lambda), etc
 </ul>
 </dd>
 <br>
