@@ -355,6 +355,9 @@ typedef struct s7_port_t {
   s7_pointer (*input_function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port);
   void (*output_function)(s7_scheme *sc, char c, s7_pointer port);
   void *data;
+  /* a version of string ports using a pointer to the current location and a pointer to the end
+   *   (rather than an integer for both, indexing from the base string) was not faster.
+   */
 } s7_port_t;
 
 
@@ -559,31 +562,31 @@ struct s7_scheme {
 };
 
 
-#define T_UNTYPED       0
-#define T_NIL           1
-#define T_STRING        2
-#define T_NUMBER        3
-#define T_SYMBOL        4
-#define T_PAIR          5
-#define T_CLOSURE       6
-#define T_CLOSURE_STAR  7
-#define T_CONTINUATION  8
-#define T_C_FUNCTION    9
-#define T_CHARACTER    10
-#define T_INPUT_PORT   11
-#define T_VECTOR       12
-#define T_MACRO        13
-#define T_C_OBJECT     14
-#define T_GOTO         15
-#define T_OUTPUT_PORT  16
-#define T_CATCH        17
-#define T_DYNAMIC_WIND 18
-#define T_HASH_TABLE   19
-#define T_BOOLEAN      20
-#define T_C_MACRO      21
-#define T_C_POINTER    22
+#define T_UNTYPED              0
+#define T_NIL                  1
+#define T_STRING               2
+#define T_NUMBER               3
+#define T_SYMBOL               4
+#define T_PAIR                 5
+#define T_CLOSURE              6
+#define T_CLOSURE_STAR         7
+#define T_CONTINUATION         8
+#define T_C_FUNCTION           9
+#define T_CHARACTER           10
+#define T_INPUT_PORT          11
+#define T_VECTOR              12
+#define T_MACRO               13
+#define T_C_OBJECT            14
+#define T_GOTO                15
+#define T_OUTPUT_PORT         16
+#define T_CATCH               17
+#define T_DYNAMIC_WIND        18
+#define T_HASH_TABLE          19
+#define T_BOOLEAN             20
+#define T_C_MACRO             21
+#define T_C_POINTER           22
 #define T_C_ANY_ARGS_FUNCTION 23
-#define BUILT_IN_TYPES 24
+#define BUILT_IN_TYPES        24
 
 #define TYPE_BITS                     8
 #define T_MASKTYPE                    0xff

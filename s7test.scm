@@ -7905,6 +7905,7 @@
 	(define-macro (prog2 first second . body) `(prog1 (progn ,first ,second) ,@body))
 
 	(defmacro the (type form) form)
+	(define-macro (defvar var . args) `(define ,var (or ,(and (not (null? args)) (car args)) #f)))
 
 	(defmacro incf (sym . val) `(let () (set! ,sym (+ ,sym ,(if (null? val) 1 (car val)))) ,sym))
 	(defmacro decf (sym . val) `(let () (set! ,sym (- ,sym ,(if (null? val) 1 (car val)))) ,sym))
@@ -8464,6 +8465,7 @@
 
 	(define (ldb-test byte int) (not (zero? (ldb byte int))))
 	(define (mask-field byte int) (logand int (dpb -1 byte 0)))
+	(define (deposit-field byte spec int) (logior (logand byte (byte-mask spec)) (logand int (lognot (byte-mask spec)))))
 
 	;; decode-float strikes me as a bad idea, as do all the others in this section!
 	(define (scale-float x k) (* x (expt 2.0 k)))
@@ -14565,6 +14567,9 @@
 	(test (mask-field (byte 1 8) #xfffffff) #x100)
 	(test (ldb-test (byte 1 8) #xfffffff) #t)
 	(test (ldb-test (byte 1 8) #x10ff) #f)
+	(test (deposit-field #xabcdef (byte 8 8) 0) #xcd00)
+	(test (deposit-field #xabcdef (byte 8 4) 0) #xde0)
+	(test (deposit-field #xabcdef (byte 8 8) #xffffffff) #xffffcdff)
 	(test (count-if zero? '(0 1 2 0)) 2)
 	(test (count-if-not zero? '(0 1 2 0 3)) 3)
 	(test (count-if zero? '#(0 1 2 0)) 2)
