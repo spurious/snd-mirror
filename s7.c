@@ -17176,7 +17176,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (sc->y != sc->ELSE)
 		return(eval_error(sc, "case clause key list ~A is not a list or 'else'", sc->y));
 	      if (cdr(sc->x) != sc->NIL)
-		return(eval_error(sc, "case 'else' clause is not the last", sc->x));
+		return(eval_error(sc, "case 'else' clause is not the last clause", sc->x));
 	      break;
 	    }
 

@@ -1006,6 +1006,16 @@ but this still makes a built-in let! look good.
       (cons (tree-map (car tree) func)
             (tree-map (cdr tree) func))
       (func tree)))
+
+Another thing that would be useful: case with evaluated "key-lists":
+
+(define-macro (eval-case key . clauses)
+  `(cond ,@(map (lambda (lst)
+		  (if (pair? (car lst))
+		      (cons `(member ,key (list ,@(car lst)))
+			     (cdr lst))
+		      lst))
+		clauses)))
   
 -->
 
