@@ -538,7 +538,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
       return(true); /* don't repeat the keystroke */
     }
 
-#if HAVE_S7
+#if HAVE_SCHEME
   /* TODO: set ss->listener_char = char */
 #endif
 

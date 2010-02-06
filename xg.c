@@ -173,7 +173,7 @@ static void xm_obj_free(XEN obj)
   free(val);
 }
 #endif
-#if HAVE_S7
+#if HAVE_SCHEME
 static void xm_obj_free(void *val)
 {
   free(val);
@@ -189,7 +189,7 @@ static XEN make_xm_obj(void *ptr)
 }
 static void define_xm_obj(void)
 {
-#if HAVE_S7
+#if HAVE_SCHEME
  xm_obj_tag = XEN_MAKE_OBJECT_TYPE("<XmObj>", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL, NULL, NULL, NULL);
 #else
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *));
@@ -47339,7 +47339,7 @@ static void define_structs(void)
 
 static void define_integers(void)
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   #define DEFINE_INTEGER(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))
   #define DEFINE_ULONG(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))
 #else
@@ -48957,7 +48957,7 @@ static void define_integers(void)
 
 static void define_doubles(void)
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   #define DEFINE_DOUBLE(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, C_TO_XEN_DOUBLE(Name))
 #else
   #define DEFINE_DOUBLE(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_DOUBLE(Name))
@@ -48976,7 +48976,7 @@ static void define_doubles(void)
 
 static void define_atoms(void)
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   #define DEFINE_ATOM(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, C_TO_XEN_GdkAtom(Name))
 #else
   #define DEFINE_ATOM(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_GdkAtom(Name))
@@ -49006,7 +49006,7 @@ static void define_atoms(void)
 static void define_strings(void)
 {
   
-#if HAVE_S7
+#if HAVE_SCHEME
   #define DEFINE_STRING(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, s7_make_permanent_string(Name))
 #else
   #define DEFINE_STRING(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))
@@ -49174,7 +49174,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("27-Jan-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("06-Feb-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

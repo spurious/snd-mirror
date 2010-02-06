@@ -1376,7 +1376,7 @@ void xen_initialize(void)
 
 /* ------------------------------ S7 ------------------------------ */
 
-#if HAVE_S7
+#if HAVE_SCHEME
 
 #if HAVE_LIMITS_H
   #include <limits.h>

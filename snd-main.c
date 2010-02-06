@@ -440,7 +440,6 @@ static void save_options(FILE *fd)
    *        how to get the German translations?
    * TODO: why does setenv LANG de_DE change the colors [gtk?] (but no other LANG does)? Why doesn't the NLS crap work?
    * PERHAPS: add load dir to search list?
-   * TODO: move to C: sound|channel|mix|mark|edit-property and fixup lingering loads thereof
    */
 #endif
 
@@ -1362,7 +1361,7 @@ const char *save_options_in_prefs(void)
 #if HAVE_FORTH
   #define SND_PREFS "~/.snd_prefs_forth"
 #endif
-#if HAVE_S7
+#if HAVE_SCHEME
   #define SND_PREFS "~/.snd_prefs_s7"
 #endif
 
@@ -2098,7 +2097,7 @@ static void set_print_lengths(int len)
 {
   set_print_length(len);
   mus_vct_set_print_length(len);
-#if HAVE_S7
+#if HAVE_SCHEME
   s7_symbol_set_value(s7, s7_make_symbol(s7, "*vector-print-length*"), s7_make_integer(s7, len));
 #endif
 }

@@ -1067,14 +1067,14 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
 
   if (XEN_HOOKED(open_raw_sound_hook))
     {
-#if HAVE_S7
+#if HAVE_SCHEME
       int gc_loc;
 #endif
       XEN arg1;
       procs = XEN_HOOK_PROCEDURES(open_raw_sound_hook);
 
       arg1 = C_TO_XEN_STRING(fullname);
-#if HAVE_S7
+#if HAVE_SCHEME
       gc_loc = s7_gc_protect(s7, arg1);
 #endif
 
@@ -1088,7 +1088,7 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
 	  res_loc = snd_protect(res);
 	  procs = XEN_CDR(procs);
 	}
-#if HAVE_S7
+#if HAVE_SCHEME
       s7_gc_unprotect_at(s7, gc_loc);
 #endif
     }
@@ -1427,14 +1427,14 @@ char *output_name(const char *current_name)
 {
   if (XEN_HOOKED(output_name_hook))
     {
-#if HAVE_S7
+#if HAVE_SCHEME
       int gc_loc;
 #endif
       XEN result, fname;
       XEN procs = XEN_HOOK_PROCEDURES (output_name_hook);
 
       fname = C_TO_XEN_STRING(current_name);
-#if HAVE_S7
+#if HAVE_SCHEME
       gc_loc = s7_gc_protect(s7, fname);
 #endif
 
@@ -1447,7 +1447,7 @@ char *output_name(const char *current_name)
 	    return(mus_strdup(XEN_TO_C_STRING(result)));
 	  procs = XEN_CDR (procs);
 	}
-#if HAVE_S7
+#if HAVE_SCHEME
       s7_gc_unprotect_at(s7, gc_loc);
 #endif
     }
@@ -4939,7 +4939,7 @@ static XEN g_file_write_date(XEN file)
     #define write_date_equivalent "Equivalent to Forth's file-mtime"
   #endif
 
-  #if HAVE_S7
+  #if HAVE_SCHEME
     #define write_date_equivalent ""
   #endif
 

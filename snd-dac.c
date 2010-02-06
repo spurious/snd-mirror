@@ -2620,7 +2620,7 @@ static XEN g_xen_player_to_string(XEN obj)
 #endif
 
 
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
 static bool xen_player_equalp(xen_player *v1, xen_player *v2) 
 {
   return((v1 == v2) ||
@@ -2657,7 +2657,7 @@ static XEN new_xen_player(int n)
 #define C_INT_TO_XEN_PLAYER(val) new_xen_player(val)
 
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static bool s7_xen_player_equalp(void *obj1, void *obj2)
 {
   return((obj1 == obj2) ||
@@ -2677,7 +2677,7 @@ static XEN s7_xen_player_length(s7_scheme *sc, XEN player)
 
 static void init_xen_player(void)
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   xen_player_tag = XEN_MAKE_OBJECT_TYPE("<player>", print_xen_player, free_xen_player, s7_xen_player_equalp, NULL, NULL, NULL, s7_xen_player_length, NULL, NULL);
 #else
 #if HAVE_RUBY
@@ -3386,7 +3386,7 @@ If it returns " PROC_TRUE ", the sound is not played."
 
 
 #ifndef SND_DISABLE_DEPRECATED
-#if HAVE_S7
+#if HAVE_SCHEME
   XEN_EVAL_C_STRING("(define* (play-region reg wait stop-func)\
                        (play (if (integer? reg) (integer->region reg) reg) :wait wait :stop stop-func))");
 

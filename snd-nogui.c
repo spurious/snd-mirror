@@ -338,7 +338,7 @@ void snd_doit(int argc, char **argv)
   ss->sgx = (state_context *)calloc(1, sizeof(state_context));
   ss->sgx->axis_color_set = false;
 
-#if HAVE_S7
+#if HAVE_SCHEME
   xen_s7_set_repl_prompt("snd>");
 #endif
 

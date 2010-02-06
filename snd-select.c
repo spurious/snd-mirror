@@ -881,7 +881,7 @@ static XEN g_xen_selection_to_string(XEN obj)
 #endif
 
 
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
 static bool xen_selection_equalp(xen_selection *v1, xen_selection *v2) 
 {
   return((v1 == v2) ||
@@ -919,7 +919,7 @@ static XEN g_selection(void)
 }
 
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static XEN s7_xen_selection_length(s7_scheme *sc, XEN obj)
 {
   return(g_selection_frames(XEN_UNDEFINED, XEN_UNDEFINED));
@@ -990,7 +990,7 @@ static XEN s7_xen_selection_fill(s7_scheme *sc, XEN obj, XEN val)
 
 static void init_xen_selection(void)
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   xen_selection_tag = XEN_MAKE_OBJECT_TYPE("<selection>", 
 					   print_xen_selection, free_xen_selection, s7_xen_selection_equalp, 
 					   NULL, NULL, NULL, s7_xen_selection_length, 

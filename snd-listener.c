@@ -404,7 +404,7 @@ void listener_return(widget_t w, int last_prompt)
   last_position = GUI_TEXT_END(w);
   add_listener_position(last_position);
 
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
   if (XEN_HOOKED(read_hook))
     {
       XEN result;
@@ -616,7 +616,7 @@ void listener_return(widget_t w, int last_prompt)
       form = XEN_EVAL_C_STRING(str);
 #endif
 
-#if HAVE_S7
+#if HAVE_SCHEME
       /* TODO: need a catch here if user has called read-line of listener-input-port, or perhaps earlier in listener_return_callback (snd-g|xlistener) */
 
       if ((mus_strlen(str) > 1) || (str[0] != '\n'))
@@ -738,7 +738,7 @@ void set_listener_prompt(const char *new_prompt)
     xen_rb_repl_set_prompt(listener_prompt(ss));
 #endif
 
-#if HAVE_S7
+#if HAVE_SCHEME
     xen_s7_set_repl_prompt(listener_prompt(ss));
 #endif
   }

@@ -1387,7 +1387,7 @@ static XEN g_xen_region_to_string(XEN obj)
 #endif
 
 
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
 static bool xen_region_equalp(xen_region *v1, xen_region *v2) 
 {
   return((v1 == v2) ||
@@ -1422,7 +1422,7 @@ XEN new_xen_region(int n)
 }
 
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static bool s7_xen_region_equalp(void *obj1, void *obj2)
 {
   return((obj1 == obj2) ||
@@ -1438,7 +1438,7 @@ static XEN s7_xen_region_length(s7_scheme *sc, XEN obj)
 
 static void init_xen_region(void)
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   xen_region_tag = XEN_MAKE_OBJECT_TYPE("<region>", print_xen_region, free_xen_region, s7_xen_region_equalp, NULL, NULL, NULL, s7_xen_region_length, NULL, NULL);
 #else
 #if HAVE_RUBY

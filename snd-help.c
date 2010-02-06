@@ -483,7 +483,7 @@ void about_snd_help(void)
   files = word_wrap(XEN_AS_STRING(XEN_VARIABLE_REF("*loaded-files*")), 400);
 #endif
 
-#if HAVE_S7
+#if HAVE_SCHEME
   {
     char *temp = NULL;
     features = word_wrap(temp = XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")), 400);
@@ -518,7 +518,7 @@ void about_snd_help(void)
 	    "\n    *features*:\n", features, "\n\n",
             "\n    *loaded-files*:\n", files, "\n\n",
 #endif
-#if HAVE_S7
+#if HAVE_SCHEME
   	    "\n    *features*:\n    '", features, "\n\n",
 #endif
 #if (!HAVE_EXTENSION_LANGUAGE)
@@ -3580,25 +3580,25 @@ static char *run_string_hook(XEN hook, const char *caller, char *initial_string,
   /* no longer concats -- now just passes successive results along */
   if (XEN_HOOKED(hook))
     {
-#if HAVE_S7
+#if HAVE_SCHEME
       int gc_loc1, gc_loc2;
 #endif
       XEN result, substr;
       XEN procs = XEN_HOOK_PROCEDURES(hook);
 
       result = C_TO_XEN_STRING(initial_string);
-#if HAVE_S7
+#if HAVE_SCHEME
       gc_loc1 = s7_gc_protect(s7, result);
 #endif
 
       substr = C_TO_XEN_STRING(subject);
-#if HAVE_S7
+#if HAVE_SCHEME
       gc_loc2 = s7_gc_protect(s7, substr);
 #endif
 
       while (XEN_NOT_NULL_P(procs))
 	{
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
 	  if (subject)
 	    result = XEN_CALL_2(XEN_CAR(procs), substr, result,	caller);
 	  else result = XEN_CALL_1(XEN_CAR(procs), result, caller);
@@ -3612,7 +3612,7 @@ static char *run_string_hook(XEN hook, const char *caller, char *initial_string,
 	  procs = XEN_CDR(procs);
 	}
 
-#if HAVE_S7
+#if HAVE_SCHEME
       s7_gc_unprotect_at(s7, gc_loc1);
       s7_gc_unprotect_at(s7, gc_loc2);
 #endif
@@ -3699,7 +3699,7 @@ and its value is returned."
   str = XEN_AS_STRING(XEN_OBJECT_HELP(text));
 #endif
 
-#if HAVE_S7
+#if HAVE_SCHEME
   {
     /* hooks and vars are broken here */
     XEN sym = XEN_FALSE;

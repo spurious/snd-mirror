@@ -140,7 +140,7 @@
 
 #include <mus-config.h>
 
-#if HAVE_S7
+#if HAVE_SCHEME
 /* (almost) entire file is on this switch */
 
 #define WITH_COUNTERS 0

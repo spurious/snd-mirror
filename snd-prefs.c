@@ -236,7 +236,7 @@ static void add_local_load_path(FILE *fd, char *path)
   fprintf(fd, "\"%s\" add-load-path\n", path); /* no drop here */
 #endif
 
-#if HAVE_S7
+#if HAVE_SCHEME
   fprintf(fd, "(if (not (member \"%s\" *load-path*)) (set! *load-path* (cons \"%s\" *load-path*)))\n", path, path);
 #endif
 }
@@ -374,7 +374,7 @@ static void prefs_help(prefs_info *prf)
 	  prefs_helping = true;
 	  (*(prf->help_func))(prf);
 	}
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
       else
 	{
 	  XEN sym;
@@ -443,7 +443,7 @@ static void prefs_variable_save(FILE *fd, const char *name, const char *file, XE
   if (file)
     fprintf(fd, "(if (not (provided? 'snd-%s.scm)) (load \"%s.scm\"))\n", file, file);
   fprintf(fd, "(set! %s %s)\n", name, temp = XEN_AS_STRING(val));
-#if HAVE_S7
+#if HAVE_SCHEME
   if (temp) free(temp);
 #endif
 #endif
@@ -541,7 +541,7 @@ static void prefs_function_call_1(const char *func, XEN arg)
 #if HAVE_SCHEME
   char *temp = NULL;
   str = mus_format("(%s %s)\n", func, temp = XEN_AS_STRING(arg));
-#if HAVE_S7
+#if HAVE_SCHEME
   if (temp) free(temp);
 #endif
 #endif
@@ -592,7 +592,7 @@ static void prefs_function_save_1(FILE *fd, const char *name, const char *file, 
   if (file)
     fprintf(fd, "(if (not (provided? 'snd-%s.scm)) (load \"%s.scm\"))\n", file, file);
   fprintf(fd, "(%s %s)\n", name, temp = XEN_AS_STRING(val));
-#if HAVE_S7
+#if HAVE_SCHEME
   if (temp) free(temp);
 #endif
 #endif
@@ -2519,7 +2519,7 @@ static void reflect_with_pointer_focus(prefs_info *prf)
 
 
 
-#if HAVE_S7
+#if HAVE_SCHEME
 /* ---------------- optimization ---------------- */
 
 static int rts_optimization = DEFAULT_OPTIMIZATION;
@@ -4714,7 +4714,7 @@ find elsewhere.  The current load path list is: \n\n%s\n",
 #if HAVE_RUBY
 		   ", $LOAD_PATH",
 #else
-#if HAVE_FORTH || HAVE_S7
+#if HAVE_FORTH || HAVE_SCHEME
 		   ", *load-path*",
 #else
 		   "",
@@ -4722,7 +4722,7 @@ find elsewhere.  The current load path list is: \n\n%s\n",
 #endif
 		   temp = (char *)XEN_AS_STRING(XEN_LOAD_PATH));
   snd_help("load paths", hlp, 	   WITH_WORD_WRAP);
-#if HAVE_S7
+#if HAVE_SCHEME
   if (temp) free(temp);
 #endif
   free(hlp);
@@ -4734,7 +4734,7 @@ static char *find_sources(void) /* returns full filename if found else null */
   char *file = NULL;
   #define BASE_FILE "extensions." XEN_FILE_EXTENSION
 
-#if HAVE_S7
+#if HAVE_SCHEME
   /* mimic Forth code below -- get *load-path* value and run through it */
   {
       int i, len, base_len;

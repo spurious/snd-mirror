@@ -859,7 +859,7 @@
 (hey "/* ---------------------------------------- constants ---------------------------------------- */~%~%")
 (hey "static void define_integers(void)~%")
 (hey "{~%~%")
-(hey "#if HAVE_S7~%")
+(hey "#if HAVE_SCHEME~%")
 (hey "#define DEFINE_INTEGER(Name) s7_define_constant(s7, XL_PRE #Name XL_POST, C_TO_XEN_INT(Name))~%")
 (hey "#else~%")
 (hey "#define DEFINE_INTEGER(Name) XEN_DEFINE(XL_PRE #Name XL_POST, C_TO_XEN_INT(Name))~%")

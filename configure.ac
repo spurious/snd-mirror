@@ -1434,7 +1434,6 @@ if test "$with_s7" != no && test "$with_extension_language" != no && test "$ac_s
     ac_snd_have_extension_language=yes
     AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
     AC_DEFINE(HAVE_MAKE_RATIO)
-    AC_DEFINE(WITH_CASE_SENSITIVE_SYMBOL_NAMES)
     AC_DEFINE(WITH_MULTIDIMENSIONAL_VECTORS)
     AC_CHECK_HEADER(complex.h, 
         [

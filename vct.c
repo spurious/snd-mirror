@@ -232,7 +232,7 @@ bool mus_vct_equalp(vct *v1, vct *v2)
 
 static XEN g_vct_fill(XEN obj, XEN val);
 
-#if (HAVE_S7)
+#if (HAVE_SCHEME)
 static XEN g_vct_ref(XEN obj, XEN pos);
 static XEN g_vct_set(XEN obj, XEN pos, XEN val);
 static XEN g_vct_length(XEN obj);
@@ -273,7 +273,7 @@ static XEN s7_mus_vct_fill(s7_scheme *sc, XEN obj, XEN val)
 
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(vct, print_vct, mus_vct_to_string)
 
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
 static XEN equalp_vct(XEN obj1, XEN obj2)
 {
   if ((!(MUS_VCT_P(obj1))) || (!(MUS_VCT_P(obj2)))) return(XEN_FALSE);
@@ -633,7 +633,7 @@ v. " vct_map_example " is the same as " vct_fill_example
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_mapB, "a vct");
 
   v = XEN_TO_VCT(obj);
-#if HAVE_S7 && USE_SND
+#if HAVE_SCHEME && USE_SND
   {
     struct ptree *pt = NULL;
     if ((optimization(ss)) > 0)
@@ -784,7 +784,7 @@ static XEN g_vector_to_vct(XEN vect)
   mus_long_t len, i;
   vct *v;
   XEN scv;
-#if HAVE_S7
+#if HAVE_SCHEME
   int gc_loc;
 #endif
 
@@ -793,7 +793,7 @@ static XEN g_vector_to_vct(XEN vect)
   len = (mus_long_t)XEN_VECTOR_LENGTH(vect);
   if (len == 0) return(XEN_FALSE);
   scv = xen_make_vct(len, (mus_float_t *)calloc(len, sizeof(mus_float_t)));
-#if HAVE_S7
+#if HAVE_SCHEME
   gc_loc = s7_gc_protect(s7, scv);
 #endif
 
@@ -801,7 +801,7 @@ static XEN g_vector_to_vct(XEN vect)
   for (i = 0; i < len; i++) 
     v->data[i] = (mus_float_t)XEN_TO_C_DOUBLE(XEN_VECTOR_REF(vect, i));
 
-#if HAVE_S7
+#if HAVE_SCHEME
   s7_gc_unprotect_at(s7, gc_loc);
 #endif
   return(scv);
@@ -814,7 +814,7 @@ static XEN g_vct_to_vector(XEN vobj)
   vct *v;
   mus_long_t i, len;
   XEN new_vect;
-#if HAVE_S7
+#if HAVE_SCHEME
   int gc_loc;
 #endif
 
@@ -824,7 +824,7 @@ static XEN g_vct_to_vector(XEN vobj)
   len = v->length;
   new_vect = XEN_MAKE_VECTOR(len, C_TO_XEN_DOUBLE(0.0));
 
-#if HAVE_S7
+#if HAVE_SCHEME
   gc_loc = s7_gc_protect(s7, new_vect);
 #endif
 #if HAVE_RUBY && HAVE_RB_GC_DISABLE
@@ -838,7 +838,7 @@ static XEN g_vct_to_vector(XEN vobj)
   for (i = 0; i < len; i++) 
     XEN_VECTOR_SET(new_vect, i, C_TO_XEN_DOUBLE(v->data[i]));
 
-#if HAVE_S7
+#if HAVE_SCHEME
   s7_gc_unprotect_at(s7, gc_loc);
 #endif
 #if HAVE_RUBY && HAVE_RB_GC_DISABLE
@@ -1208,7 +1208,7 @@ vct( 0.5 0.3 0.1 ) .g => #<vct[len=3]: 0.500 0.300 0.100>"
 void mus_vct_init(void)
 {
 
-#if HAVE_S7
+#if HAVE_SCHEME
   vct_tag = XEN_MAKE_OBJECT_TYPE("<vct>", print_vct, free_vct, s7_mus_vct_equalp, NULL, 
 				 s7_mus_vct_apply, s7_mus_vct_set, s7_mus_vct_length, 
 				 s7_mus_vct_copy, s7_mus_vct_fill);
@@ -1294,7 +1294,7 @@ void mus_vct_init(void)
   XEN_DEFINE_PROCEDURE(S_vct,               g_vct_w,           0, 0, 1, H_vct);
   XEN_DEFINE_SET_PROCEDURE(S_vct_reverse,   g_vct_reverse_w,   1, 1, 0, H_vct_reverse);
 
-#if HAVE_S7 && USE_SND
+#if HAVE_SCHEME && USE_SND
   XEN_DEFINE_SET_PROCEDURE(S_vct_mapB,      g_vct_mapB_w,      2, 0, 0, H_vct_mapB);
 #else
   XEN_DEFINE_PROCEDURE(S_vct_mapB,          g_vct_mapB_w,      2, 0, 0, H_vct_mapB);

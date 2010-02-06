@@ -203,7 +203,7 @@ static void execute_named_macro(chan_info *cp, char *name, mus_long_t count)
     /* not a macro...*/
     {
 #if HAVE_EXTENSION_LANGUAGE
-#if HAVE_S7
+#if HAVE_SCHEME
       XEN result = XEN_FALSE;
       int i, loc, one_edit;
       one_edit = cp->edit_ctr + 1;
@@ -269,7 +269,7 @@ int in_user_keymap(int key, int state, bool cx_extended)
 }
 
 
-#if HAVE_S7
+#if HAVE_SCHEME
   #define kbd_false 0
 #else
   #define kbd_false XEN_FALSE
@@ -2645,7 +2645,7 @@ void g_init_kbd(void)
   XEN_DEFINE_PROCEDURE(S_prompt_in_minibuffer,   g_prompt_in_minibuffer_w,   1, 3, 0, H_prompt_in_minibuffer);
   XEN_DEFINE_PROCEDURE(S_snd_simulate_keystroke, g_snd_simulate_keystroke_w, 4, 0, 0, "internal testing function");
 
-#if HAVE_S7
+#if HAVE_SCHEME
   {
     int i;
     for (i = 0; i < NUM_BUILT_IN_KEY_BINDINGS; i++)

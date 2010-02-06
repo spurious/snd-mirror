@@ -1061,14 +1061,14 @@ static XEN *make_vcts(int size)
 
 enum {MUS_DATA_WRAPPER, MUS_INPUT_FUNCTION, MUS_ANALYZE_FUNCTION, MUS_EDIT_FUNCTION, MUS_SYNTHESIZE_FUNCTION, MUS_SELF_WRAPPER, MUS_MAX_VCTS};
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static XEN_MARK_OBJECT_TYPE mark_mus_xen(void *obj) 
 #else
 static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj) 
 #endif
 {
   mus_xen *ms;
-#if HAVE_RUBY || HAVE_S7
+#if HAVE_RUBY || HAVE_SCHEME
   /* rb_gc_mark and scheme_mark_object pass us the actual value, not the XEN wrapper */
   ms = (mus_xen *)obj;
 #endif
@@ -1101,7 +1101,7 @@ static void mus_xen_free(mus_xen *ms)
 XEN_MAKE_OBJECT_FREE_PROCEDURE(mus_xen, free_mus_xen, mus_xen_free)
 
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static char *print_mus_xen(s7_scheme *sc, void *obj)
 {
   return(mus_describe(((mus_xen *)obj)->gen));
@@ -1140,7 +1140,7 @@ static XEN print_mus_xen(XEN obj)
 #endif
 
 
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
 static XEN equalp_mus_xen(XEN obj1, XEN obj2) 
 {
   if ((!(MUS_XEN_P(obj1))) || (!(MUS_XEN_P(obj2)))) return(XEN_FALSE);
@@ -1161,7 +1161,7 @@ static XEN mus_xen_apply(XEN gen, XEN arg1, XEN arg2)
 }
 #endif
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static XEN g_frame_set(XEN uf1, XEN uchan, XEN val);
 static XEN g_mixer_set(XEN uf1, XEN in, XEN out, XEN val);
 
@@ -1237,7 +1237,7 @@ XEN mus_xen_to_object(mus_xen *gn) /* global for user-defined gens */
 
 XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v) /* global for user-defined gens (not used anymore in this file) */
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   if (!mus_vct_p(v)) fprintf(stderr, "vct arg clobbered");
 #endif
   gn->vcts[MUS_DATA_WRAPPER] = v;
@@ -1392,7 +1392,7 @@ static XEN call_set_method(XEN gen, XEN value, const char *method_name)
 				XEN_LIST_LENGTH(gen) - 1));
   if (XEN_LIST_P(pair))
     {
-#if HAVE_S7
+#if HAVE_SCHEME
       if (s7_is_procedure_with_setter(XEN_CADR(pair)))
 	return(XEN_CALL_2(s7_procedure_with_setter_setter(XEN_CADR(pair)),
 			  gen, value,
@@ -1420,7 +1420,7 @@ static XEN call_set_method_2(XEN gen, XEN arg, XEN value, const char *method_nam
 				XEN_LIST_LENGTH(gen) - 1));
   if (XEN_LIST_P(pair))
     {
-#if HAVE_S7
+#if HAVE_SCHEME
       if (s7_is_procedure_with_setter(XEN_CADR(pair)))
 	return(XEN_CALL_3(s7_procedure_with_setter_setter(XEN_CADR(pair)),
 			  gen, arg, value,
@@ -1812,7 +1812,7 @@ XEN g_mus_file_name(XEN gen)
   #define H_mus_file_name "(" S_mus_file_name " gen): file associated with gen, if any"
   if (XEN_LIST_P(gen)) return(call_get_method(gen, S_mus_file_name));
 
-#if HAVE_S7 && HAVE_PTHREADS
+#if HAVE_SCHEME && HAVE_PTHREADS
   if (s7_is_thread_variable(gen))
     gen = s7_thread_variable_value(s7, gen);
 #endif
@@ -1825,7 +1825,7 @@ XEN g_mus_file_name(XEN gen)
 
 /* ---------------- oscil ---------------- */
 
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
 
 static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
@@ -2764,7 +2764,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
   mus_float_t *partial_data = NULL;
   mus_long_t len = 0, i;
   bool partials_allocated = true;
-#if HAVE_S7
+#if HAVE_SCHEME
   int gc_loc;
 #endif
 
@@ -2807,7 +2807,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
     }
   else table = utable;
 
-#if HAVE_S7
+#if HAVE_SCHEME
   gc_loc = s7_gc_protect(s7, table);
 #endif
 
@@ -2827,7 +2827,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
   if (partials_allocated)
     free(partial_data);
 
-#if HAVE_S7
+#if HAVE_SCHEME
   s7_gc_unprotect_at(s7, gc_loc);
 #endif
 
@@ -2842,7 +2842,7 @@ static XEN g_phase_partials_to_wave(XEN partials, XEN utable, XEN normalize)
   mus_float_t *partial_data = NULL, *wave;
   mus_long_t len = 0, i;
   bool partials_allocated = true;
-#if HAVE_S7
+#if HAVE_SCHEME
   int gc_loc;
 #endif
 
@@ -2899,7 +2899,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
     }
   else table = utable;
 
-#if HAVE_S7
+#if HAVE_SCHEME
   gc_loc = s7_gc_protect(s7, table);
 #endif
 
@@ -2919,7 +2919,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
   if (partials_allocated)
     free(partial_data);
 
-#if HAVE_S7
+#if HAVE_SCHEME
   s7_gc_unprotect_at(s7, gc_loc);
 #endif
 
@@ -5347,17 +5347,17 @@ static XEN g_env_any(XEN e, XEN func)
 
 static XEN clm_output, clm_reverb; /* *output* and *reverb* at extlang level -- these can be output streams, vct, sound-data objects etc */
 
-#if (HAVE_S7 && (!HAVE_PTHREADS))
+#if (HAVE_SCHEME && (!HAVE_PTHREADS))
 XEN mus_clm_output(void) {return(XEN_VARIABLE_REF(clm_output));}
 XEN mus_clm_reverb(void) {return(XEN_VARIABLE_REF(clm_reverb));}
 #endif
 
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
 XEN mus_clm_output(void) {return(XEN_VARIABLE_REF(S_output));}
 XEN mus_clm_reverb(void) {return(XEN_VARIABLE_REF(S_reverb));}
 #endif
 
-#if HAVE_S7 && HAVE_PTHREADS
+#if HAVE_SCHEME && HAVE_PTHREADS
 XEN mus_clm_output(void) 
 {
   XEN obj;
@@ -5389,7 +5389,7 @@ static XEN g_output_p(XEN obj)
 {
   #define H_mus_output_p "(" S_mus_output_p " gen): " PROC_TRUE " if gen is an output generator"
 
-#if HAVE_S7 && HAVE_PTHREADS
+#if HAVE_SCHEME && HAVE_PTHREADS
   if (s7_is_thread_variable(obj))
     obj = s7_thread_variable_value(s7, obj);
 #endif
@@ -5416,7 +5416,7 @@ static XEN g_sample_to_file_p(XEN obj)
 {
   #define H_sample_to_file_p "(" S_sample_to_file_p " gen): " PROC_TRUE " if gen is a " S_sample_to_file " generator"
 
-#if HAVE_S7 && HAVE_PTHREADS
+#if HAVE_SCHEME && HAVE_PTHREADS
   if (s7_is_thread_variable(obj))
     obj = s7_thread_variable_value(s7, obj);
 #endif
@@ -5429,7 +5429,7 @@ static XEN g_frame_to_file_p(XEN obj)
 {
   #define H_frame_to_file_p "(" S_frame_to_file_p " gen): " PROC_TRUE " if gen is a " S_frame_to_file " generator"
 
-#if HAVE_S7 && HAVE_PTHREADS
+#if HAVE_SCHEME && HAVE_PTHREADS
   if (s7_is_thread_variable(obj))
     obj = s7_thread_variable_value(s7, obj);
 #endif
@@ -5548,7 +5548,7 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
   if (XEN_NOT_BOUND_P(outp))
     outp = mus_clm_output();
   
-#if HAVE_S7 && HAVE_PTHREADS
+#if HAVE_SCHEME && HAVE_PTHREADS
   else
     {
       if (s7_is_thread_variable(outp))
@@ -5644,7 +5644,7 @@ static XEN g_mus_close(XEN ptr)
   if (MUS_XEN_P(ptr))
     return(C_TO_XEN_INT(mus_close_file((mus_any *)XEN_TO_MUS_ANY(ptr))));
 
-#if HAVE_S7 && HAVE_PTHREADS
+#if HAVE_SCHEME && HAVE_PTHREADS
   if (s7_is_thread_variable(ptr))
     {
       if (MUS_XEN_P(s7_thread_variable_value(s7, ptr)))
@@ -5694,7 +5694,7 @@ static XEN g_file_to_sample(XEN obj, XEN samp, XEN chan)
   #define H_file_to_sample "(" S_file_to_sample " obj frame chan): sample value in sound file read by 'obj' in channel chan at frame"
   int channel = 0;
 
-#if HAVE_S7 && HAVE_PTHREADS
+#if HAVE_SCHEME && HAVE_PTHREADS
   if (s7_is_thread_variable(obj))
     obj = s7_thread_variable_value(s7, obj);
 #endif
@@ -5781,7 +5781,7 @@ static XEN g_sample_to_file(XEN obj, XEN samp, XEN chan, XEN val)
   #define H_sample_to_file "(" S_sample_to_file " obj samp chan val): add val to the output stream \
 handled by the output generator 'obj', in channel 'chan' at frame 'samp'"
 
-#if HAVE_S7 && HAVE_PTHREADS
+#if HAVE_SCHEME && HAVE_PTHREADS
   if (s7_is_thread_variable(obj))
     obj = s7_thread_variable_value(s7, obj);
 #endif
@@ -5802,7 +5802,7 @@ static XEN g_sample_to_file_add(XEN obj1, XEN obj2)
 {
   #define H_sample_to_file_add "(" S_sample_to_file_add " obj1 obj2): mixes obj2 (an output generator) into obj1 (also an output generator)"
 
-#if HAVE_S7 && HAVE_PTHREADS
+#if HAVE_SCHEME && HAVE_PTHREADS
   if (s7_is_thread_variable(obj2))
     obj2 = s7_thread_variable_value(s7, obj2);
 #endif
@@ -5914,7 +5914,7 @@ static XEN g_frame_to_file(XEN obj, XEN samp, XEN val)
   #define H_frame_to_file "(" S_frame_to_file " obj samp val): add frame 'val' to the output stream \
 handled by the output generator 'obj' at frame 'samp'"
 
-#if HAVE_S7 && HAVE_PTHREADS
+#if HAVE_SCHEME && HAVE_PTHREADS
   if (s7_is_thread_variable(obj))
     obj = s7_thread_variable_value(s7, obj);
 #endif
@@ -6373,7 +6373,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 
   if (XEN_NOT_BOUND_P(keys3))
     keys3 = mus_clm_output();
-#if HAVE_S7 && HAVE_PTHREADS
+#if HAVE_SCHEME && HAVE_PTHREADS
   else
     if (s7_is_thread_variable(keys3))
       keys3 = s7_thread_variable_value(s7, keys3);
@@ -6381,7 +6381,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 
   if (XEN_NOT_BOUND_P(keys4))
     keys4 = mus_clm_reverb();
-#if HAVE_S7 && HAVE_PTHREADS
+#if HAVE_SCHEME && HAVE_PTHREADS
   else
     if (s7_is_thread_variable(keys4))
       keys4 = s7_thread_variable_value(s7, keys4);
@@ -6503,7 +6503,7 @@ XEN g_mus_channels(XEN obj)
   if (sound_data_p(obj))
     return(C_TO_XEN_INT((XEN_TO_SOUND_DATA(obj))->chans));
 
-#if HAVE_S7 && HAVE_PTHREADS
+#if HAVE_SCHEME && HAVE_PTHREADS
   if (s7_is_thread_variable(obj))
     return(C_TO_XEN_INT(mus_channels(XEN_TO_MUS_ANY(s7_thread_variable_value(s7, obj)))));
 #endif
@@ -7793,7 +7793,7 @@ static XEN g_mus_irandom(XEN val) {return(C_TO_XEN_INT(mus_irandom(XEN_TO_C_INT(
 
 
 
-#if HAVE_S7
+#if HAVE_SCHEME
 #if HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H && (!MSC_VER)
 
 #include <time.h>
@@ -7883,7 +7883,7 @@ XEN_NARGIFY_1(g_mus_order_w, g_mus_order)
 XEN_NARGIFY_1(g_mus_data_w, g_mus_data)
 XEN_NARGIFY_2(g_mus_set_data_w, g_mus_set_data)
 XEN_NARGIFY_1(g_oscil_p_w, g_oscil_p)
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
 XEN_ARGIFY_4(g_make_oscil_w, g_make_oscil)
 #endif
 XEN_ARGIFY_3(g_oscil_w, g_oscil)
@@ -8182,7 +8182,7 @@ XEN_NARGIFY_1(g_mus_irandom_w, g_mus_irandom)
 #define g_mus_data_w g_mus_data
 #define g_mus_set_data_w g_mus_set_data
 #define g_oscil_p_w g_oscil_p
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
 #define g_make_oscil_w g_make_oscil
 #endif
 #define g_oscil_w g_oscil
@@ -8430,7 +8430,7 @@ static void mus_xen_init(void)
   current_connect_func = XEN_FALSE;
 #endif
 
-#if HAVE_S7
+#if HAVE_SCHEME
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<generator>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, 
 				     mus_xen_apply, s7_mus_set, s7_mus_length, s7_mus_copy, s7_mus_fill);
 #else
@@ -8608,7 +8608,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mus_xcoeffs, g_mus_xcoeffs_w, 1, 0, 0, H_mus_xcoeffs);
   XEN_DEFINE_PROCEDURE(S_mus_ycoeffs, g_mus_ycoeffs_w, 1, 0, 0, H_mus_ycoeffs);
   XEN_DEFINE_PROCEDURE(S_oscil_p,     g_oscil_p_w,     1, 0, 0, H_oscil_p);
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
   XEN_DEFINE_PROCEDURE(S_make_oscil,  g_make_oscil_w,  0, 4, 0, H_make_oscil);
 #else
   XEN_DEFINE_PROCEDURE_STAR(S_make_oscil, g_make_oscil, "(frequency *clm-default-frequency*) (initial-phase 0.0)", H_make_oscil);
@@ -8912,7 +8912,7 @@ static void mus_xen_init(void)
   XEN_DEFINE_VARIABLE(S_output, clm_output, XEN_FALSE);
   XEN_DEFINE_VARIABLE(S_reverb, clm_reverb, XEN_FALSE);
 
-#if HAVE_S7 && HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H && (!MSC_VER)
+#if HAVE_SCHEME && HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H && (!MSC_VER)
   XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
   XEN_DEFINE_CONSTANT("internal-time-units-per-second", 1, "clock speed");
 #endif
@@ -8945,7 +8945,7 @@ XEN_EVAL_C_STRING("<'> fth-print alias clm-print ( fmt :optional args -- )");
     free(clm_version);
   }
 
-#if HAVE_S7 && HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H && (!MSC_VER)
+#if HAVE_SCHEME && HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H && (!MSC_VER)
   {
     struct timezone z0;
     gettimeofday(&overall_start_time, &z0);

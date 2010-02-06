@@ -2926,7 +2926,7 @@ void cos_smooth(chan_info *cp, mus_long_t beg, mus_long_t num, bool over_selecti
 }
 
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static char *run_channel(chan_info *cp, struct ptree *pt, mus_long_t beg, mus_long_t dur, int edpos, const char *origin, const char *caller)
 {
   snd_info *sp;
@@ -3268,7 +3268,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	  pos = cp->edit_ctr;
 	}
 
-#if HAVE_S7
+#if HAVE_SCHEME
       if (optimization(ss) > 0)
 	{
 	  struct ptree *pt = NULL;
@@ -3610,7 +3610,7 @@ the current sample, the vct returned by 'init-func', and the current read direct
   mus_long_t beg = 0, dur = 0;
   bool backup = false;
   int pos;
-#if HAVE_S7
+#if HAVE_SCHEME
   bool too_many_ptrees = false;
   struct ptree *pt = NULL;
 #endif
@@ -3650,7 +3650,7 @@ the current sample, the vct returned by 'init-func', and the current read direct
       pos = cp->edit_ctr;
     }
 
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
   if (XEN_STRING_P(origin)) caller = mus_strdup(XEN_TO_C_STRING(origin)); else caller = mus_strdup(S_ptree_channel);
   g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
   if (caller) {free(caller); caller = NULL;}
@@ -3775,7 +3775,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   if (sf == NULL) return(XEN_TRUE);
 
-#if HAVE_S7
+#if HAVE_SCHEME
   if (optimization(ss) > 0)
     {
       pt = mus_run_form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(proc_and_list));
@@ -5679,7 +5679,7 @@ that give a minimum peak amplitude when the signals are added together."
   static mus_float_t min_10[4] = {49.8672, 48.8125, 51.6272, 70.1400};
   static mus_float_t min_11[4] = {77.3502, 78.9374, 78.0793, 102.6190};
 
-#define USE_CLM_RANDOM (!HAVE_S7)
+#define USE_CLM_RANDOM (!HAVE_SCHEME)
 
 static mus_float_t local_random(mus_float_t val)
 {

@@ -940,7 +940,7 @@ static XEN g_xen_colormap_to_string(XEN obj)
 #endif
 
 
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
 static bool xen_colormap_equalp(xen_colormap *v1, xen_colormap *v2) 
 {
   return((v1 == v2) ||
@@ -977,7 +977,7 @@ static XEN new_xen_colormap(int n)
 #define C_INT_TO_XEN_COLORMAP(Val) new_xen_colormap(Val)
 
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static bool s7_xen_colormap_equalp(void *obj1, void *obj2)
 {
   return((obj1 == obj2) ||
@@ -1001,7 +1001,7 @@ static XEN s7_colormap_apply(s7_scheme *sc, XEN obj, XEN args)
 
 static void init_xen_colormap(void)
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   xen_colormap_tag = XEN_MAKE_OBJECT_TYPE("<colormap>", print_xen_colormap, free_xen_colormap, s7_xen_colormap_equalp, 
 				       NULL, s7_colormap_apply, NULL, s7_xen_colormap_length, NULL, NULL);
 #else

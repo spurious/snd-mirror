@@ -2062,7 +2062,7 @@ static XEN g_xen_mark_to_string(XEN obj)
 #endif
 
 
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
 static bool xen_mark_equalp(xen_mark *v1, xen_mark *v2) 
 {
   return((v1 == v2) ||
@@ -2097,7 +2097,7 @@ XEN new_xen_mark(int n)
 }
 
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static bool s7_xen_mark_equalp(void *obj1, void *obj2)
 {
   return((obj1 == obj2) ||
@@ -2121,7 +2121,7 @@ static XEN s7_xen_mark_copy(s7_scheme *sc, s7_pointer obj)
 
 static void init_xen_mark(void)
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   xen_mark_tag = XEN_MAKE_OBJECT_TYPE("<mark>", print_xen_mark, free_xen_mark, s7_xen_mark_equalp, NULL, NULL, NULL, NULL, s7_xen_mark_copy, NULL);
 #else
 #if HAVE_RUBY

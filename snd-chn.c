@@ -5740,12 +5740,12 @@ static void show_inset_graph(chan_info *cp)
 	      double data_max = 0.0, data_scaler, step;
 	      vct *v0 = NULL, *v1 = NULL;
 	      int data_len;
-#if HAVE_S7
+#if HAVE_SCHEME
 	      int gc_loc;
 #endif
 
 	      data = make_graph_data(cp, cp->edit_ctr, 0, frames);
-#if HAVE_S7
+#if HAVE_SCHEME
 	      gc_loc = s7_gc_protect(s7, data);
 #endif
 	      if (mus_vct_p(data))
@@ -5870,7 +5870,7 @@ static void show_inset_graph(chan_info *cp)
 	      info->height = height;
 	      info->edpos = cp->edit_ctr;
 	      info->y_offset = y_offset;
-#if HAVE_S7
+#if HAVE_SCHEME
 	      s7_gc_unprotect_at(s7, gc_loc);
 #endif
 	    }
@@ -8604,7 +8604,7 @@ static XEN g_channel_property(XEN key, XEN snd, XEN chn)
   return(XEN_ASSOC_REF(key, g_channel_properties(snd, chn)));
 }
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static XEN g_set_channel_property(XEN val, XEN key, XEN snd, XEN chn) 
 #else
 static XEN g_set_channel_property(XEN key, XEN val, XEN snd, XEN chn) 
@@ -8677,7 +8677,7 @@ static XEN g_set_edit_property(XEN key, XEN val, XEN snd, XEN chn, XEN pos)
 }
 
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static XEN g_set_edit_property_reversed(s7_scheme *sc, s7_pointer args)
 {
   int len;

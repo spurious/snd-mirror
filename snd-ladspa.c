@@ -919,7 +919,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   #define FIELD_PREFIX "F"
 #endif
 
-#if HAVE_S7
+#if HAVE_SCHEME
   #define DEFINE_INTEGER(Name) s7_define_constant(s7, #Name, C_TO_XEN_INT(Name))
 #else
   #define DEFINE_INTEGER(Name) XEN_DEFINE(#Name, C_TO_XEN_INT(Name))

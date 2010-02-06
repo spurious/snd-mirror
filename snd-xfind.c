@@ -82,7 +82,7 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
 	{
 	  ss->search_proc = proc;
 	  ss->search_proc_loc = snd_protect(proc);
-#if HAVE_S7
+#if HAVE_SCHEME
 	  if (optimization(ss) > 0)
 	    ss->search_tree = mus_run_form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(proc));
 #endif
@@ -101,7 +101,7 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
 	  /* using global search_proc set by user */
 	  buf = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(buf, PRINT_BUFFER_SIZE, _("find: %s"), temp = (char *)XEN_AS_STRING(ss->search_proc));
-#if HAVE_S7
+#if HAVE_SCHEME
 	  if (temp) free(temp);
 #endif
 	  set_label(edit_find_label, buf);

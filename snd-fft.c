@@ -2145,7 +2145,7 @@ static XEN g_xen_transform_to_string(XEN obj)
 #endif
 
 
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
 static bool xen_transform_equalp(xen_transform *v1, xen_transform *v2) 
 {
   return((v1 == v2) ||
@@ -2182,7 +2182,7 @@ XEN new_xen_transform(int n)
 #define C_INT_TO_XEN_TRANSFORM(Val) new_xen_transform(Val)
 
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static bool s7_xen_transform_equalp(void *obj1, void *obj2)
 {
   return((obj1 == obj2) ||
@@ -2199,7 +2199,7 @@ static XEN s7_xen_transform_length(s7_scheme *sc, XEN obj)
 
 static void init_xen_transform(void)
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   xen_transform_tag = XEN_MAKE_OBJECT_TYPE("<transform>", print_xen_transform, free_xen_transform, s7_xen_transform_equalp, 
 				       NULL, NULL, NULL, s7_xen_transform_length, NULL, NULL);
 #else

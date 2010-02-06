@@ -357,7 +357,7 @@ static void snd_sigusr1(int ignored)
   XEN_ERROR(XEN_ERROR_TYPE("snd-top-level"), XEN_EMPTY_LIST);
 }
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static void jump_to_top_level(void)
 {
   top_level_catch(1);
@@ -440,7 +440,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   mus_sound_initialize(); /* has to precede version check (mus_audio_moniker needs to be setup in Alsa/Oss) */
   xen_initialize();
 
-#if HAVE_S7 && HAVE_SETJMP_H
+#if HAVE_SCHEME && HAVE_SETJMP_H
   s7_set_error_exiter(s7, jump_to_top_level);
 #endif
 
@@ -499,7 +499,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->xen_error_handler = NULL;
   ss->update_sound_channel_style = NOT_A_CHANNEL_STYLE;
 
-#if USE_NO_GUI || HAVE_RUBY || HAVE_FORTH || HAVE_S7
+#if USE_NO_GUI || HAVE_RUBY || HAVE_FORTH || HAVE_SCHEME
   ss->catch_exists = 1; /* scm_shell for USE_NO_GUI case */
 #else
   ss->catch_exists = 0;
@@ -520,7 +520,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   signal(SIGUSR1, snd_sigusr1);
 #endif
 
-#if HAVE_S7 && defined(SIGQUIT)
+#if HAVE_SCHEME && defined(SIGQUIT)
   sigaction(SIGQUIT, NULL, &old_act);
   if (old_act.sa_handler != SIG_IGN)
     {

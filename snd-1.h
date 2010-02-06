@@ -14,7 +14,7 @@
 
 /* these macros fix up argument order for setter procs in Scheme: (set! (proc a b) c) */
 /*    snd-edits has a 5 and a 10 case */
-#if HAVE_S7
+#if HAVE_SCHEME
 
 #define WITH_TWO_SETTER_ARGS(name_reversed, name)	   \
   static s7_pointer name_reversed(s7_scheme *sc, s7_pointer args)   \
@@ -522,7 +522,7 @@ typedef struct snd_state {
 #if HAVE_GL && MUS_WITH_GL2PS
   bool gl_printing;
 #endif
-#if HAVE_S7
+#if HAVE_SCHEME
   char listener_char;
 #endif
 } snd_state;

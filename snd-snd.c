@@ -2464,7 +2464,7 @@ static XEN g_xen_sound_to_string(XEN obj)
 #endif
 
 
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
 static bool xen_sound_equalp(xen_sound *v1, xen_sound *v2) 
 {
   return((v1 == v2) ||
@@ -2499,7 +2499,7 @@ XEN new_xen_sound(int n)
 }
 
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static bool s7_xen_sound_equalp(void *obj1, void *obj2)
 {
   return((obj1 == obj2) ||
@@ -2554,7 +2554,7 @@ static XEN s7_xen_sound_fill(s7_scheme *sc, XEN obj, XEN val)
 	}
       else
 	{
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
 	  mus_long_t len = -1, j;
 	  mus_sample_t *data = NULL;
 	  mus_sample_t value;
@@ -2604,7 +2604,7 @@ static XEN s7_xen_sound_fill(s7_scheme *sc, XEN obj, XEN val)
 
 static void init_xen_sound(void)
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   xen_sound_tag = XEN_MAKE_OBJECT_TYPE("<sound>", print_xen_sound, free_xen_sound, s7_xen_sound_equalp, 
 				       NULL, NULL, NULL, s7_xen_sound_length, s7_xen_sound_copy, s7_xen_sound_fill);
 #else
@@ -2673,7 +2673,7 @@ static XEN g_sound_p(XEN snd)
 }
 
 
-#if HAVE_S7
+#if HAVE_SCHEME
 bool r_sound_p(int i);
 bool r_sound_p(int i)
 {
@@ -3760,7 +3760,7 @@ static XEN g_sound_property(XEN key, XEN snd)
   return(XEN_ASSOC_REF(key, g_sound_properties(snd)));
 }
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static XEN g_set_sound_property(XEN val, XEN key, XEN snd) 
 #else
 static XEN g_set_sound_property(XEN key, XEN val, XEN snd) 
@@ -4093,7 +4093,7 @@ static XEN g_file_name(XEN snd)
   if (XEN_REGION_P(snd))
     return(C_TO_XEN_STRING(region_file_name(XEN_REGION_TO_C_INT(snd))));
 
-#if HAVE_S7
+#if HAVE_SCHEME
   if ((s7_is_input_port(s7, snd)) || (s7_is_output_port(s7, snd)))
     return(C_TO_XEN_STRING(s7_port_filename(snd)));
 #endif
@@ -5337,7 +5337,7 @@ where each inner list entry can also be " PROC_FALSE "."
 				     PROC_QUOTE,
 				     temp = XEN_AS_STRING(settings), 
 				     apply_beg, apply_dur);
-#if HAVE_S7
+#if HAVE_SCHEME
 	if (temp) free(temp);
 #endif
       }

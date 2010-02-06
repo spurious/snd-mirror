@@ -2560,7 +2560,7 @@ static XEN g_xen_mix_to_string(XEN obj)
 #endif
 
 
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
 static bool xen_mix_equalp(xen_mix *v1, xen_mix *v2) 
 {
   return((v1 == v2) ||
@@ -2595,7 +2595,7 @@ XEN new_xen_mix(int n)
 }
 
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static XEN s7_xen_mix_length(s7_scheme *sc, s7_pointer obj)
 {
   return(g_mix_length(obj));
@@ -2618,7 +2618,7 @@ static XEN s7_xen_mix_copy(s7_scheme *sc, s7_pointer obj)
 
 static void init_xen_mix(void)
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   xen_mix_tag = XEN_MAKE_OBJECT_TYPE("<mix>", print_xen_mix, free_xen_mix, s7_xen_mix_equalp, NULL, NULL, NULL, s7_xen_mix_length, s7_xen_mix_copy, NULL);
 #else
 #if HAVE_RUBY
@@ -3517,7 +3517,7 @@ static void mf_free(mix_fd *fd)
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(mix_fd, free_mf, mf_free)
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static bool s7_equalp_mf(void *m1, void *m2)
 {
   return(m1 == m2);
@@ -3575,7 +3575,7 @@ snd_fd *xen_mix_to_snd_fd(XEN obj)
 }
 
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static XEN s7_read_mix_sample(s7_scheme *sc, XEN obj, XEN args)
 {
   return(g_read_mix_sample(obj));
@@ -3945,7 +3945,7 @@ void g_init_mix(void)
 {
   init_xen_mix();
 
-#if HAVE_S7
+#if HAVE_SCHEME
   mf_tag = XEN_MAKE_OBJECT_TYPE("<mix-sampler>", print_mf, free_mf, s7_equalp_mf, NULL, s7_read_mix_sample, NULL, NULL, NULL, NULL);
 #else
   mf_tag = XEN_MAKE_OBJECT_TYPE("MixSampler", sizeof(mix_fd));

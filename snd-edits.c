@@ -310,14 +310,14 @@ char *run_save_state_hook(const char *file)
   filename = mus_strdup(file);
   if (XEN_HOOKED(save_state_hook))
     {
-#if HAVE_S7
+#if HAVE_SCHEME
       int gc_loc;
 #endif
       XEN fname;
       XEN result = XEN_FALSE;
       XEN procs = XEN_HOOK_PROCEDURES(save_state_hook);
       fname = C_TO_XEN_STRING(filename);
-#if HAVE_S7
+#if HAVE_SCHEME
       gc_loc = s7_gc_protect(s7, fname);
 #endif
       while (XEN_NOT_NULL_P(procs))
@@ -330,7 +330,7 @@ char *run_save_state_hook(const char *file)
 	    }
 	  procs = XEN_CDR (procs);
 	}
-#if HAVE_S7
+#if HAVE_SCHEME
       s7_gc_unprotect_at(s7, gc_loc);
 #endif
     }
@@ -7688,7 +7688,7 @@ snd_fd *xen_to_sampler(XEN obj) {if (SAMPLER_P(obj)) return((snd_fd *)XEN_OBJECT
 #define XEN_TO_SAMPLER(obj) ((snd_fd *)XEN_OBJECT_REF(obj))
 
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static bool s7_equalp_sf(void *s1, void *s2)
 {
   return(s1 == s2);
@@ -7700,7 +7700,7 @@ char *sampler_to_string(snd_fd *fd)
 {
   char *desc;
   chan_info *cp;
-#if HAVE_S7
+#if HAVE_SCHEME
   desc = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
 #else
   desc = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
@@ -8170,7 +8170,7 @@ static XEN g_read_sample(XEN obj)
 }
 
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static XEN s7_read_sample(s7_scheme *sc, XEN obj, XEN args)
 {
   return(g_read_sample(obj));
@@ -8409,7 +8409,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
   XEN result = XEN_FALSE;
   char *errmsg, *as_one_edit_origin = NULL;
   XEN errstr;
-#if HAVE_S7
+#if HAVE_SCHEME
   int loc = -1;
 #endif
 
@@ -8429,7 +8429,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
 
   for_each_normal_chan(init_as_one_edit);
   result = XEN_CALL_0_NO_CATCH(proc);
-#if HAVE_S7
+#if HAVE_SCHEME
   loc = s7_gc_protect(s7, result);
   /* finish_as_one_edit can call update_graph which can call any number of hooks,
    *   so this result has to be GC protected by hand.
@@ -8443,7 +8443,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
       free(as_one_edit_origin);
     }
 
-#if HAVE_S7
+#if HAVE_SCHEME
   s7_gc_unprotect_at(s7, loc);
 #endif
   return(result);
@@ -8726,7 +8726,7 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd, XEN chn_n, XEN edpos)
 }
 
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static XEN g_set_sample_reversed(s7_scheme *sc, s7_pointer args)
 {
   int len;
@@ -8994,7 +8994,7 @@ history position to read (defaults to current position)."
 }
 
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static XEN g_set_samples_reversed(s7_scheme *sc, s7_pointer args)
 {
   int len;
@@ -9705,7 +9705,7 @@ XEN_NARGIFY_1(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
 
 void g_init_edits(void)
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   sf_tag = XEN_MAKE_OBJECT_TYPE("<sampler>", print_sf, free_sf, s7_equalp_sf, NULL, s7_read_sample, NULL, NULL, NULL, NULL);
 #else
   sf_tag = XEN_MAKE_OBJECT_TYPE("Sampler", sizeof(snd_fd));

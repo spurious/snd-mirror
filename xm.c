@@ -388,7 +388,7 @@ static void xm_obj_free(XEN obj)
 }
 #endif
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static void xm_obj_free(void *val)
 {
   free(val);
@@ -407,7 +407,7 @@ static XEN make_xm_obj(void *ptr)
 
 static void define_xm_obj(void)
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("<XmObj>", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL, NULL, NULL, NULL);
 #else
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *));
@@ -25310,7 +25310,7 @@ static xm_resource_t resource_type(const char *name)
 
 static void define_strings(void)
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   #define DEFINE_STRING(Name) s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, s7_make_permanent_string(Name))
   #define DEFINE_RESOURCE(Name, Type) \
             s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, s7_make_permanent_string(Name)); \
@@ -26210,7 +26210,7 @@ The types are defined in xm.c around line 679.  To add XmNhiho as an integer: \n
 
 static void define_integers(void)
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   #define DEFINE_INTEGER(Name) s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_INT(Name))
   #define DEFINE_ULONG(Name) s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_ULONG(Name))
 #else
@@ -27850,7 +27850,7 @@ static void define_pointers(void)
 {
 #if HAVE_MOTIF
 
-#if HAVE_S7
+#if HAVE_SCHEME
   #define DEFINE_POINTER(Name) s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_WidgetClass(Name))
 #else
   #define DEFINE_POINTER(Name) XEN_DEFINE(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_WidgetClass(Name))
@@ -27947,7 +27947,7 @@ static void define_pointers(void)
 
 static void define_Atoms(void)
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   #define DEFINE_ATOM(Name) s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_Atom(Name))
 #else
   #define DEFINE_ATOM(Name) XEN_DEFINE(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_Atom(Name))

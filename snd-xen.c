@@ -80,7 +80,7 @@
 
 /* -------- protect XEN vars from GC -------- */
 
-#if HAVE_S7
+#if HAVE_SCHEME
 
 int snd_protect(XEN obj) {return(s7_gc_protect(s7, obj));}
 void snd_unprotect_at(int loc) {s7_gc_unprotect_at(s7, loc);}
@@ -210,7 +210,7 @@ void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *da
 }
 
 
-#if (!HAVE_S7) && (!HAVE_FORTH)
+#if (!HAVE_SCHEME) && (!HAVE_FORTH)
 static void call_xen_error_handler(const char *msg)
 {
   /* make sure it doesn't call itself recursively */
@@ -464,7 +464,7 @@ bool procedure_arity_ok(XEN proc, int args)
     return(false);
 #endif
 
-#if HAVE_S7
+#if HAVE_SCHEME
   {
     int oargs, restargs, gc_loc;
 
@@ -498,7 +498,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 	  str = mus_format("%s: %s (%s arg %d) is not a procedure!", 
 			   temp = (char *)XEN_AS_STRING(proc),
 			   arg_name, caller, argn);
-#if HAVE_S7
+#if HAVE_SCHEME
 	  if (temp) free(temp);
 #endif
 	  return(str);
@@ -625,7 +625,7 @@ XEN eval_str_wrapper(void *data)
 }
 
 
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
 XEN eval_form_wrapper(void *data)
 {
   return(XEN_EVAL_FORM((XEN)data));
@@ -662,7 +662,7 @@ static XEN eval_file_wrapper(void *data)
 
 char *g_print_1(XEN obj) /* free return val */
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   return(XEN_AS_STRING(obj)); 
 #endif
 
@@ -934,7 +934,7 @@ void snd_load_init_file(bool no_global, bool no_init)
   #define SND_INIT "~/.snd_forth"
 #endif
 
-#if HAVE_S7
+#if HAVE_SCHEME
   #define SND_EXT_CONF "/etc/snd_s7.conf"
   #define SND_PREFS "~/.snd_prefs_s7"
   #define SND_INIT "~/.snd_s7"
@@ -1195,13 +1195,13 @@ mus_long_t string_to_mus_long_t(const char *str, mus_long_t lo, const char *fiel
 
 XEN run_progn_hook(XEN hook, XEN args, const char *caller)
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   int gc_loc;
 #endif
   XEN result = XEN_FALSE;
   XEN procs = XEN_HOOK_PROCEDURES(hook);
 
-#if HAVE_S7
+#if HAVE_SCHEME
   gc_loc = s7_gc_protect(s7, args);
   /* this gc protection is needed in s7 because the args are not s7 eval-assembled;
    *   they are cons'd up in our C code, and applied here via s7_call, so between
@@ -1216,7 +1216,7 @@ XEN run_progn_hook(XEN hook, XEN args, const char *caller)
       procs = XEN_CDR(procs);
     }
 
-#if HAVE_S7
+#if HAVE_SCHEME
   s7_gc_unprotect_at(s7, gc_loc);
 #endif
 
@@ -1226,12 +1226,12 @@ XEN run_progn_hook(XEN hook, XEN args, const char *caller)
 
 XEN run_hook(XEN hook, XEN args, const char *caller)
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   int gc_loc;
 #endif
   XEN procs = XEN_HOOK_PROCEDURES(hook);
 
-#if HAVE_S7
+#if HAVE_SCHEME
   gc_loc = s7_gc_protect(s7, args);
 #endif
 
@@ -1243,7 +1243,7 @@ XEN run_hook(XEN hook, XEN args, const char *caller)
       procs = XEN_CDR (procs);
     }
 
-#if HAVE_S7
+#if HAVE_SCHEME
   s7_gc_unprotect_at(s7, gc_loc);
 #endif
 
@@ -1253,14 +1253,14 @@ XEN run_hook(XEN hook, XEN args, const char *caller)
 
 XEN run_or_hook(XEN hook, XEN args, const char *caller)
 {
-#if HAVE_S7
+#if HAVE_SCHEME
   int gc_loc;
 #endif
   XEN result = XEN_FALSE; /* (or): #f */
   XEN hook_result = XEN_FALSE;
   XEN procs = XEN_HOOK_PROCEDURES (hook);
 
-#if HAVE_S7
+#if HAVE_SCHEME
   gc_loc = s7_gc_protect(s7, args);
 #endif
 
@@ -1274,7 +1274,7 @@ XEN run_or_hook(XEN hook, XEN args, const char *caller)
       procs = XEN_CDR (procs);
     }
 
-#if HAVE_S7
+#if HAVE_SCHEME
   s7_gc_unprotect_at(s7, gc_loc);
 #endif
 
@@ -1417,7 +1417,7 @@ static XEN g_fmod(XEN a, XEN b)
 
 /* ---------------------------------------- use libm ---------------------------------------- */
 
-#if HAVE_S7 && WITH_GMP && HAVE_SPECIAL_FUNCTIONS
+#if HAVE_SCHEME && WITH_GMP && HAVE_SPECIAL_FUNCTIONS
 
 #include <gmp.h>
 #include <mpfr.h>
@@ -1689,7 +1689,7 @@ static XEN g_j0(XEN x)
   #define H_j0 "(" S_bes_j0 " x): returns the regular cylindrical bessel function value J0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_j0, " a number");
 
-#if HAVE_S7 && WITH_GMP
+#if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
@@ -1704,7 +1704,7 @@ static XEN g_j1(XEN x)
   #define H_j1 "(" S_bes_j1 " x): returns the regular cylindrical bessel function value J1(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_j1, " a number");
 
-#if HAVE_S7 && WITH_GMP
+#if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
@@ -1720,7 +1720,7 @@ static XEN g_jn(XEN order, XEN x)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, S_bes_jn, " an int");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_bes_jn, " a number");
 
-#if HAVE_S7 && WITH_GMP
+#if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
@@ -1734,7 +1734,7 @@ static XEN g_y0(XEN x)
 {
   #define H_y0 "(" S_bes_y0 " x): returns the irregular cylindrical bessel function value Y0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_y0, " a number");
-#if HAVE_S7 && WITH_GMP
+#if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
@@ -1748,7 +1748,7 @@ static XEN g_y1(XEN x)
 {
   #define H_y1 "(" S_bes_y1 " x): returns the irregular cylindrical bessel function value Y1(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_y1, " a number");
-#if HAVE_S7 && WITH_GMP
+#if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
@@ -1763,7 +1763,7 @@ static XEN g_yn(XEN order, XEN x)
   #define H_yn "(" S_bes_yn " n x): returns the irregular cylindrical bessel function value Yn(x)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, S_bes_yn, " an int");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_bes_yn, " a number");
-#if HAVE_S7 && WITH_GMP
+#if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
@@ -1777,7 +1777,7 @@ static XEN g_erf(XEN x)
 {
   #define H_erf "(erf x): returns the error function erf(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "erf", " a number");
-#if HAVE_S7 && WITH_GMP
+#if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
@@ -1791,7 +1791,7 @@ static XEN g_erfc(XEN x)
 {
   #define H_erfc "(erfc x): returns the complementary error function erfc(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "erfc", " a number");
-#if HAVE_S7 && WITH_GMP
+#if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
@@ -1816,7 +1816,7 @@ static XEN g_i0(XEN x)
 {
   #define H_i0 "(" S_bes_i0 " x): returns the modified cylindrical bessel function value I0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_i0, " a number");
-#if HAVE_S7 && WITH_GMP
+#if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
@@ -1837,7 +1837,7 @@ static XEN g_j0(XEN x)
   #define H_j0 "(" S_bes_j0 " x): returns the regular cylindrical bessel function value J0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_j0, " a number");
 
-#if HAVE_S7 && WITH_GMP
+#if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
@@ -1852,7 +1852,7 @@ static XEN g_j1(XEN x)
   #define H_j1 "(" S_bes_j1 " x): returns the regular cylindrical bessel function value J1(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_j1, " a number");
 
-#if HAVE_S7 && WITH_GMP
+#if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
@@ -1868,7 +1868,7 @@ static XEN g_jn(XEN order, XEN x)
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, S_bes_jn, " an int");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_bes_jn, " a number");
 
-#if HAVE_S7 && WITH_GMP
+#if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
@@ -1882,7 +1882,7 @@ static XEN g_y0(XEN x)
 {
   #define H_y0 "(" S_bes_y0 " x): returns the irregular cylindrical bessel function value Y0(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_y0, " a number");
-#if HAVE_S7 && WITH_GMP
+#if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
@@ -1896,7 +1896,7 @@ static XEN g_y1(XEN x)
 {
   #define H_y1 "(" S_bes_y1 " x): returns the irregular cylindrical bessel function value Y1(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_y1, " a number");
-#if HAVE_S7 && WITH_GMP
+#if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
@@ -1911,7 +1911,7 @@ static XEN g_yn(XEN order, XEN x)
   #define H_yn "(" S_bes_yn " n x): returns the irregular cylindrical bessel function value Yn(x)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, S_bes_yn, " an int");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_bes_yn, " a number");
-#if HAVE_S7 && WITH_GMP
+#if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
@@ -1973,7 +1973,7 @@ static XEN g_erf(XEN x)
 {
   #define H_erf "(erf x): returns the error function erf(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "erf", " a number");
-#if HAVE_S7 && WITH_GMP
+#if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
@@ -1987,7 +1987,7 @@ static XEN g_erfc(XEN x)
 {
   #define H_erfc "(erfc x): returns the complementary error function value erfc(x)"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "erfc", " a number");
-#if HAVE_S7 && WITH_GMP
+#if HAVE_SCHEME && WITH_GMP
   if ((s7_is_bignum(x)) &&
       (s7_is_real(x)) &&
       (!(s7_is_rational(x))))
@@ -2533,7 +2533,7 @@ static char *legalize_path(const char *in_str)
 
 /* -------------------------------------------------------------------------------- */
 
-#if HAVE_S7
+#if HAVE_SCHEME
 /* an experiment */
 
 /* TODO: needs read-line etc. also minibuffer funcs.
@@ -2654,7 +2654,7 @@ void g_xen_initialize(void)
   fth_add_loaded_files("sndlib.so");
 #endif
 
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
   gc_protection = XEN_FALSE;
 #endif
 
@@ -2700,7 +2700,7 @@ void g_xen_initialize(void)
 
 #endif
 
-#if HAVE_S7 && WITH_GMP
+#if HAVE_SCHEME && WITH_GMP
   s7_define_function(s7, "bignum-fft", bignum_fft, 3, 1, false, H_bignum_fft);
 #endif
 
@@ -2808,7 +2808,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
     free(legal_pwd); 
   } 
 
-#if HAVE_S7
+#if HAVE_SCHEME
   init_listener_ports();
 
   XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
@@ -2995,7 +2995,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_YES_WE_HAVE("snd-forth");
 #endif
 
-#if HAVE_S7
+#if HAVE_SCHEME
   XEN_YES_WE_HAVE("snd-s7");
 #endif
 

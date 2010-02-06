@@ -9,7 +9,7 @@ static char *current_match = NULL;
  *   around in the symbol tables
  */
 
-#if HAVE_S7
+#if HAVE_SCHEME
 
 typedef struct {
   const char *text;
@@ -99,7 +99,7 @@ static int completions(const char *text)
 		  }
 	    }
 	}
-#if HAVE_S7
+#if HAVE_SCHEME
       if (sym) free(sym);
 #endif
     }

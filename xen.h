@@ -972,7 +972,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 /* ------------------------------ s7 ------------------------------ */
 
-#if HAVE_S7
+#if HAVE_SCHEME
 
 #define XEN_OK 1
 
@@ -1723,7 +1723,7 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define XEN_ARG_9    9
 #define XEN_ARG_10   10
 
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
   #define XEN_TO_C_OFF_T_OR_ELSE(a, b)   xen_to_c_off_t_or_else(a, b)
   #define XEN_TO_C_INT64_T_OR_ELSE(a, b) xen_to_c_int64_t_or_else(a, b)
   #define C_TO_XEN_OFF_T(a)             c_to_xen_off_t(a)
@@ -1756,7 +1756,7 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 
 
 /* (need a way to pass an uninterpreted pointer from C to XEN then back to C) */
-#if HAVE_S7
+#if HAVE_SCHEME
   #define XEN_WRAP_C_POINTER(a)           s7_make_c_pointer(s7, (void *)(a))
   #define XEN_UNWRAP_C_POINTER(a)         s7_c_pointer(a)
   #define XEN_WRAPPED_C_POINTER_P(a)      s7_is_c_pointer(a)
@@ -1779,7 +1779,7 @@ extern "C" {
 
 char *xen_strdup(const char *str);
 
-#if (!HAVE_S7)
+#if (!HAVE_SCHEME)
   int xen_to_c_int_or_else(XEN obj, int fallback);
   off_t xen_to_c_off_t_or_else(XEN obj, off_t fallback);
   off_t xen_to_c_off_t(XEN obj);

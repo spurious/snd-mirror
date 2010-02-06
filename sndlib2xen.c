@@ -1427,14 +1427,14 @@ static void g_new_sound_hook(const char *filename)
 {
   if (XEN_HOOKED(new_sound_hook))
     {
-#if HAVE_S7
+#if HAVE_SCHEME
       int gc_loc;
 #endif
       XEN procs = XEN_HOOK_PROCEDURES(new_sound_hook);
       XEN fname;
 
       fname = C_TO_XEN_STRING(filename);
-#if HAVE_S7
+#if HAVE_SCHEME
       gc_loc = s7_gc_protect(s7, fname);
 #endif
 
@@ -1445,7 +1445,7 @@ static void g_new_sound_hook(const char *filename)
 		     S_new_sound_hook);
 	  procs = XEN_CDR (procs);
 	}
-#if HAVE_S7
+#if HAVE_SCHEME
       s7_gc_unprotect_at(s7, gc_loc);
 #endif
     }
@@ -1554,7 +1554,7 @@ bool sound_data_equalp(sound_data *v1, sound_data *v2)
   return(false);
 }
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static bool s7_equalp_sound_data(void *s1, void *s2)
 {
   return(sound_data_equalp((sound_data *)s1, (sound_data *)s2));
@@ -1750,7 +1750,7 @@ static XEN sound_data_apply(XEN obj, XEN chan, XEN i)
 }
 #endif
 
-#if HAVE_S7
+#if HAVE_SCHEME
 static XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val);
 static XEN g_sound_data_copy(XEN obj);
 static XEN g_sound_data_fillB(XEN sdobj, XEN scl);
@@ -2585,7 +2585,7 @@ void mus_sndlib_xen_initialize(void)
 {
   mus_sound_initialize();
 
-#if HAVE_S7
+#if HAVE_SCHEME
   sound_data_tag = XEN_MAKE_OBJECT_TYPE("<sound-data>", print_sound_data, free_sound_data, s7_equalp_sound_data, NULL, 
 					sound_data_apply, s7_sound_data_set, s7_sound_data_length, s7_sound_data_copy, s7_sound_data_fill);
 #else

@@ -1541,7 +1541,7 @@ static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enve
   if (XEN_HOOKED(enved_hook))
     {
       int len = 0;
-#if HAVE_S7
+#if HAVE_SCHEME
       int gc_loc;
 #endif
       XEN result = XEN_FALSE;
@@ -1552,7 +1552,7 @@ static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enve
        */
       procs = XEN_HOOK_PROCEDURES(enved_hook);
       env_list = env_to_xen(e);
-#if HAVE_S7
+#if HAVE_SCHEME
       gc_loc = s7_gc_protect(s7, env_list);
 #endif
 
@@ -1584,11 +1584,11 @@ static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enve
 		e->data[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
 	      if (XEN_NOT_NULL_P(procs))
 		{
-#if HAVE_S7
+#if HAVE_SCHEME
 		  s7_gc_unprotect_at(s7, gc_loc);
 #endif
 		  env_list = env_to_xen(e);
-#if HAVE_S7
+#if HAVE_SCHEME
 		  gc_loc = s7_gc_protect(s7, env_list);
 #endif
 	
@@ -1596,7 +1596,7 @@ static bool check_enved_hook(env *e, int pos, mus_float_t x, mus_float_t y, enve
 	      env_changed = true;
 	    }
 	}
-#if HAVE_S7
+#if HAVE_SCHEME
       s7_gc_unprotect_at(s7, gc_loc);
 #endif
     }
