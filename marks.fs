@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Dec 27 19:22:06 CET 2005
-\ Changed: Wed Jan 06 22:31:05 CET 2010
+\ Changed: Sat Feb 06 14:01:51 CET 2010
 
 \ Commentary:
 \
@@ -12,10 +12,6 @@
 \ move-syncd-marks     ( sync diff -- )
 \ describe-mark        ( id -- ary )
 \
-\ mark-properties      ( id -- props )
-\ set-mark-properties  ( id props -- )
-\ mark-property        ( id key -- val )
-\ set-mark-property    ( id key val -- )
 \ save-mark-properties ( -- )
 \ mark-click-info      ( id -- #t )
 
@@ -92,28 +88,6 @@ require examp
 ;
 
 \ --- Mark Properties ---
-\ : mark-properties ( id -- props )
-\   doc" Returns mark ID's entire property list."
-\   { id }
-\   id mark? unless 'no-such-mark #( get-func-name id ) fth-throw then
-\   :mark-property id object-id property-ref
-\ ;
-\ : set-mark-properties ( id props -- )
-\   { id props }
-\   id mark? unless 'no-such-mark #( get-func-name id ) fth-throw then
-\   :mark-property id object-id props property-set!
-\ ;
-\ : mark-property ( id key -- val )
-\   doc" Returns the value associated with KEY in the given mark's property list, or #f."
-\   { id key }
-\   id mark-properties key list-assoc-ref
-\ ;
-\ : set-mark-property ( id key val -- )
-\   doc" Sets VAL to KEY in the given mark's property list."
-\   { id key val }
-\   id dup mark-properties key val list-assoc-set! set-mark-properties
-\ ;
-
 hide
 : save-mark-properties-cb <{ filename -- }>
   undef undef undef marks car car cons? if

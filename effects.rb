@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Feb 07 23:56:21 CET 2003
-# Changed: Wed Oct 14 23:11:01 CEST 2009
+# Changed: Sat Feb 06 13:57:27 CET 2010
 
 # Commentary:
 #
@@ -43,6 +43,9 @@
 # Code:
 
 require "clm"
+# FIXME
+# gtk temporarily disabled
+if provided? :snd_motif
 require "snd-xm"
 require "env"
 require "extensions"
@@ -898,7 +901,7 @@ Move the slider to change the center frequency and bandwidth.",
           @freq = if provided? :xm
                     scale_linear2log(20, Rvalue(i), 22050)
                   else
-                    scale_linear2log(20, Rvalue(RGTK_ADJUSTMENT(w)), 22050)
+                    scale_linear2log(20, Rgtk_adjustment_get_value(RGTK_ADJUSTMENT(w)), 22050)
                   end
         end
         sliders[1] = @dlg.add_slider("bandwidth", 0, init_bw, 1000) do |w, c, i|
@@ -960,7 +963,7 @@ Move the slider to change the center frequency and bandwidth.",
           @freq = if provided? :xm
                     scale_linear2log(20, Rvalue(i), 22050)
                   else
-                    scale_linear2log(20, Rvalue(RGTK_ADJUSTMENT(w)), 22050)
+                    scale_linear2log(20, Rgtk_adjustment_get_value(RGTK_ADJUSTMENT(w)), 22050)
                   end
         end
         sliders[1] = @dlg.add_slider("bandwidth", 0, init_bw, 1000) do |w, c, i|
@@ -1019,7 +1022,7 @@ Move the slider to change the high-pass cutoff frequency.",
           @freq = if provided? :xm
                     scale_linear2log(20, Rvalue(i), 22050)
                   else
-                    scale_linear2log(20, Rvalue(RGTK_ADJUSTMENT(w)), 22050)
+                    scale_linear2log(20, Rgtk_adjustment_get_value(RGTK_ADJUSTMENT(w)), 22050)
                   end
         end
         @dlg.add_target([["entire sound", :sound, true],
@@ -1075,7 +1078,7 @@ Move the slider to change the low-pass cutoff frequency.",
           @freq = if provided? :xm
                     scale_linear2log(20, Rvalue(i), 22050)
                   else
-                    scale_linear2log(20, Rvalue(RGTK_ADJUSTMENT(w)), 22050)
+                    scale_linear2log(20, Rgtk_adjustment_get_value(RGTK_ADJUSTMENT(w)), 22050)
                   end
         end
         @dlg.add_target([["entire sound", :sound, true],
@@ -1238,7 +1241,7 @@ Move the sliders to set the filter cutoff frequency and resonance.",
           @cutoff_freq = if provided? :xm
                            scale_linear2log(20, Rvalue(i), 22050)
                          else
-                           scale_linear2log(20, Rvalue(RGTK_ADJUSTMENT(w)), 22050)
+                           scale_linear2log(20, Rgtk_adjustment_get_value(RGTK_ADJUSTMENT(w)),22050)
                          end
         end
         sliders[1] = @dlg.add_slider("resonance", 0.0, init_resonance, 1.0, 100) do |w, c, i|
@@ -2436,5 +2439,7 @@ unless defined? $__private_snd_menu__ and $__private_snd_menu__
   end
   $effects_menu = true
 end
+
+end                             # if motif
 
 # effects.rb ends here

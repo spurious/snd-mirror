@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Wed Jan 06 18:51:34 CET 2010
+\ Changed: Sat Feb 06 18:13:53 CET 2010
 
 \ Commentary:
 \
@@ -17,8 +17,6 @@
 \ mix-maxamp           ( id -- max-amp )
 \ snap-mix-to-beat     ( at-tag-position -- )
 \
-\ mix-property         ( id key -- val )
-\ set-mix-property     ( id key val -- )
 \ mix-click-sets-amp   ( id -- #t )
 \ mix-click-info       ( id -- #t )
 \ mix-name->id         ( name -- id )
@@ -126,29 +124,15 @@ Resets mix-release-hook to cancel."
 previous
 
 \ --- Mix Property ---
-\ : mix-property ( id key -- val )
-\   doc" Returns the value associated with KEY in the given mix's property list, or #f."
-\   { id key }
-\   \ mix? returns mix id if mix id is active, but mix id 0 means false in Forth.
-\   id mix? false? if 'no-such-mix #( get-func-name id ) fth-throw then
-\   id mix-properties key array-assoc-ref
-\ ;
-\ : set-mix-property ( id key val -- )
-\   doc" Sets VAL to KEY in the given mix's property list."
-\   { id key val }
-\   id mix? false? if 'no-such-mix #( get-func-name id ) fth-throw then
-\   id dup mix-properties key val array-assoc-set! set-mix-properties drop
-\ ;
-
 : mix-click-sets-amp <{ id -- #t }>
-  id :zero mix-property not if
-    id :amp id mix-amp set-mix-property
+  'zero id mix-property not if
+    'amp  id  id mix-amp  set-mix-property drop
     id 0.0 set-mix-amp drop
-    id :zero #t set-mix-property
+    'zero id #t set-mix-property
   else
-    id id :amp mix-property set-mix-amp drop
-    id :zero #f set-mix-property
-  then
+    id  'amp id mix-property  set-mix-amp drop
+    'zero id #f set-mix-property
+  then drop
   #t					\ #t --> omit default action
 ;
 \ mix-click-hook <'> mix-click-sets-amp add-hook!

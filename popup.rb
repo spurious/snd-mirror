@@ -2,13 +2,13 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Thu Sep 05 22:28:49 CEST 2002
-# Changed: Tue Jan 12 02:09:10 CET 2010
+# Changed: Sat Feb 06 13:55:21 CET 2010
 
 # Commentary:
 #
-# Requires --with-motif or --with-gtk and module libxm.so or --with-static-xm!
-#
-# Tested with Snd 11, Motif 2.2.3, Gtk+ 2.16.6, Ruby 1.8.7 and 1.9.1.
+# Requires --with-motif|gtk and module libxm.so|libxg.so or --with-static-xm|xg!
+# 
+# Tested with Snd 11, Motif 2.2.3, Gtk+ 2.18.6, Ruby 1.8.7.
 #
 # $info_comment_hook: lambda do |file, info_string| ...; new_info_string; end
 # $edhist_save_hook:  lambda do |prc| ... end
@@ -250,12 +250,14 @@ If it returns non-nil or non-false, the menu will be posted.")
     instance_eval(&body) if block_given?
     case @target
     when :channels, :edhist
-      if provided?(:xm) or (provided?(:xg) and @target == :edhist)
+      if provided?(:xm)
         Snd.sounds.each do |snd| set_channel_popup(snd) end
         hook_name = format("%s-popup", (@label or "channels").downcase.tr(" ", "-"))
         $after_open_hook.add_hook!(hook_name) do |snd| set_channel_popup(snd) end
       else                      # gtk :channels
-        set_gtk_channel_popup
+        unless @target == :edhist
+          set_gtk_channel_popup
+        end
       end
     when :widget
       set_widget_popup
@@ -269,29 +271,16 @@ If it returns non-nil or non-false, the menu will be posted.")
       unless @popups.detect do |c| c == [snd, chn] end
         @popups.push([snd, chn])
         if @target == :edhist
-          if provided? :xm
-            RXtAddCallback(channel_widgets(snd, chn)[Edhist],
-                           RXmNpopupHandlerCallback,
-                           lambda do |w, c, i|
-                             if Rtype(Revent(i)) == RButtonPress
-                               @before_popup_hook.call(snd, chn, w)
-                               Rset_menuToPost(i, @menu)
-                             end
-                           end)
-          else
-            add_event_handler(channel_widgets(snd, chn)[Edhist], "button_press_event") do |w, e, d|
-              if Rbutton(b = RGDK_EVENT_BUTTON(e)) == 3
-                @before_popup_hook.call(snd, chn, w)
-                Rgtk_widget_show(@menu)
-                Rgtk_menu_popup(RGTK_MENU(@menu), false, false, false, false, 3, Rtime(b))
-                true
-              else
-                false
-              end
-            end
-          end
+          RXtAddCallback(channel_widgets(snd, chn)[Edhist],
+                         RXmNpopupHandlerCallback,
+                         lambda do |w, c, i|
+                           if Rtype(Revent(i)) == RButtonPress
+                             @before_popup_hook.call(snd, chn, w)
+                             Rset_menuToPost(i, @menu)
+                           end
+                         end)
         end
-        if @target == :channels and provided? :xm
+        if @target == :channels
           RXtAddCallback(channel_widgets(snd, chn)[Graph],
                          RXmNpopupHandlerCallback,
                          lambda do |w, c, i|
@@ -332,21 +321,25 @@ If it returns non-nil or non-false, the menu will be posted.")
   def set_gtk_channel_popup
     $gtk_popup_hook.add_hook!("popup-rb-hook") do |widget, event, data, snd, chn|
       if snd
-        b = RGDK_EVENT_BUTTON(event)
+        e = RGDK_EVENT(event)
+        time = Rgdk_event_get_time(e)
         if @before_popup_hook.empty?
           Rgtk_widget_show(@menu)
-          Rgtk_menu_popup(RGTK_MENU(@menu), false, false, false, false, Rbutton(b), Rtime(b))
+          Rgtk_menu_popup(RGTK_MENU(@menu), false, false, false, false, 2, time)
         else
+          coords = Rgdk_event_get_coords(e)
+          x = coords[1]
+          y = coords[2]
           if channel_style(snd) == Channels_combined
-            chn = if (cn = (0...channels(snd)).detect do |cc| Ry(b) < axis_info(snd, cc)[14] end)
+            chn = if (cn = (0...channels(snd)).detect do |cc| y < axis_info(snd, cc)[14] end)
                     cn - 1
                   else
                     channels(snd) - 1
                   end
           end
-          if @before_popup_hook.run_hook_bool(snd, chn, Rx(b))
+          if @before_popup_hook.run_hook_bool(snd, chn, x)
             Rgtk_widget_show(@menu)
-            Rgtk_menu_popup(RGTK_MENU(@menu), false, false, false, false, Rbutton(b), Rtime(b))
+            Rgtk_menu_popup(RGTK_MENU(@menu), false, false, false, false, 2, time)
           end
         end
         true

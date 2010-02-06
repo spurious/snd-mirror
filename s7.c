@@ -4737,10 +4737,10 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 
 static s7_Double string_to_double_with_radix(char *str, int radix)
 {
-  /* (do ((i 2 (+ i 1))) ((= i 17)) (display (inexact->exact (floor (log (expt 2 62) i)))) (display ", ")) */
-  static int digits[] = {0, 0, 62, 39, 31, 26, 23, 22, 20, 19, 18, 17, 17, 16, 16, 15, 15};
+  /* (do ((i 2 (+ i 1))) ((= i 17)) (display (inexact->exact (floor (log (- (expt 2 63) 1) i)))) (display ", ")) */
+  static int digits[] = {0, 0, 62, 39, 31, 27, 24, 22, 20, 19, 18, 18, 17, 17, 16, 16, 15};
 
-  int i, len, iloc = 0, floc = -1, eloc = -1, sign = 1, flen = 0;
+  int i, len, iloc = 0, floc = -1, eloc = -1, sign = 1, flen = 0, extra = 0;
   long long int int_part = 0, frac_part = 0, exponent = 0;
 
   /* there's an ambiguity in number notation here if we allow "1e1" or "1.e1" in base 16 (or 15) -- is e a digit or an exponent marker?
@@ -4769,7 +4769,19 @@ static s7_Double string_to_double_with_radix(char *str, int radix)
       errno = 0;
       int_part = strtoll((const char *)(str + iloc), (char **)NULL, radix);
       if (errno == ERANGE)
-	return(0.0);
+	{
+	  char old_c;
+	  int dlen;
+	  dlen = iloc + digits[radix];
+	  extra = floc - dlen;
+	  old_c = str[dlen];
+	  str[dlen] = '\0';
+	  errno = 0;
+	  int_part = strtoll((const char *)(str + iloc), (char **)NULL, radix);
+	  str[dlen] = old_c;
+	  if (errno == ERANGE)
+	    return(0.0);
+	}
     }
 
   if ((floc != -1) &&          /* has a "." */
@@ -4787,28 +4799,33 @@ static s7_Double string_to_double_with_radix(char *str, int radix)
       else
 	{
 	  char old_c;
+	  int dlen;
 	  /* we need to ignore extra trailing digits here to avoid later overflow */
 	  /* (string->number "3.1415926535897932384626433832795029" 11) */
 	  flen = digits[radix];
-	  old_c = str[floc + flen + 1];
-	  str[floc + flen + 1] = '\0';
+	  dlen = floc + flen + 1;
+	  old_c = str[dlen];
+	  str[dlen] = '\0';
 	  errno = 0;
 	  frac_part = strtoll((const char *)(str + floc + 1), (char **)NULL, radix);
 	  if (errno == ERANGE)
 	    return(0.0);
-	  str[floc + flen + 1] = old_c;
+	  str[dlen] = old_c;
 	}
     }
 
   if (eloc != -1)
     {
       errno = 0;
-      exponent = strtoll((const char *)(str + eloc + 1), (char **)NULL, 10); /* the exponent is in  base 10 */
+      exponent = strtoll((const char *)(str + eloc + 1), (char **)NULL, 10); /* the exponent is in base 10 */
+#if WITH_GMP
       if ((exponent > 100) || (exponent < -100))
 	errno = ERANGE;
+#endif
       if (errno == ERANGE)
 	return(0.0);
     }
+  exponent += extra;
 
   /* (string->number "1.1e1" 2) */
   if (frac_part > 0)
@@ -4831,7 +4848,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 
 #if (!WITH_GMP)
   #define ATOLL(x) strtoll(x, (char **)NULL, radix)
-  #define ATOF(x) ((radix == 10) ? atof(x) : string_to_double_with_radix(x, radix))
+  #define ATOF(x) string_to_double_with_radix(x, radix)
 #endif
 
   current_radix = radix;
@@ -5056,7 +5073,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
       return(result);
     }
 
-  
+  /* not complex */
   if ((has_dec_point1) ||
       (ex1))
     {
@@ -10567,7 +10584,7 @@ static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, const char *name, boo
   if (cadr(args) == sc->NIL)
     return(sc->F);
 
-  if (s7_list_length(sc, cadr(args)) <= 0)
+  if (s7_list_length(sc, cadr(args)) <= 0)   /* TODO: this is an expensive way to check for proper lists */
     return(s7_wrong_type_arg_error(sc, name, 2, cadr(args), "a proper list"));
   
   x = car(args);
@@ -18791,20 +18808,15 @@ static s7_pointer string_to_either_real(s7_scheme *sc, const char *str, int radi
   if (safe_strlen(str) < 20)
     {
       double val;
-      if (radix == 10)
-	{
-	  errno = 0;
-	  val = strtod(str, (char **)NULL);
-	  if (errno != ERANGE)
-	    return(s7_make_real(sc, val));
-	}
-      else
-	{
-	  errno = 0;
-	  val = string_to_double_with_radix((char *)str, radix);
-	  if (errno != ERANGE)
-	    return(s7_make_real(sc, val));
-	}
+       /* strtod follows LANG which is not what we want ("." is decimal point in Scheme).
+        *   To overcome that would require screwing around with setlocale which never works
+        *   and isn't thread safe.  So use our own code -- according to valgrind, 
+        *   our function is much faster than strtod.
+        */
+      errno = 0;
+      val = string_to_double_with_radix((char *)str, radix);
+      if (errno != ERANGE)
+	return(s7_make_real(sc, val));
     }
   return(string_to_big_real(sc, str, radix));
 }
@@ -18817,20 +18829,10 @@ static s7_pointer string_to_either_complex_1(s7_scheme *sc, char *q, char *slash
     {
       if (safe_strlen(q) < 20)
 	{
-	  if (radix == 10)
-	    {
-	      errno = 0;
-	      (*d_rl) = strtod(q, (char **)NULL);
-	      if (errno == ERANGE)
-		return(string_to_big_real(sc, q, radix));
-	    }
-	  else
-	    {
-	      errno = 0;
-	      (*d_rl) = string_to_double_with_radix(q, radix);
-	      if (errno == ERANGE)
-		return(string_to_big_real(sc, q, radix));
-	    }
+	  errno = 0;
+	  (*d_rl) = string_to_double_with_radix(q, radix);
+	  if (errno == ERANGE)
+	    return(string_to_big_real(sc, q, radix));
 	}
       else return(string_to_big_real(sc, q, radix));
     }

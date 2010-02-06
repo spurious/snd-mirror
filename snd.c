@@ -422,14 +422,9 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   #endif
   bindtextdomain(SND_PACKAGE, LOCALE_DIR);
   textdomain (SND_PACKAGE);
-  /*
-    (bindtextdomain "snd" "/usr/local/share/locale")
-    (textdomain "snd")
-    (define _ gettext)
-    (display (_ "no selection"))
-
-    but that is limited to Snd's messages
-  */
+  #if HAVE_SETLOCALE
+    setlocale(LC_NUMERIC, "C"); 
+  #endif
 #endif
 
   ss = (snd_state *)calloc(1, sizeof(snd_state)); /* not calloc! */

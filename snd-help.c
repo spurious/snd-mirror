@@ -429,10 +429,6 @@ char *version_info(void)
 #if SND_AS_WIDGET
 	  _("\n    compiled as a widget"),
 #endif
-#if ENABLE_NLS && HAVE_GETTEXT
-	  _("\n    with gettext: "),
-	  setlocale(LC_ALL, NULL),
-#endif
 #ifdef __DATE__
 	  "\n    Compiled ", __DATE__, " ", __TIME__,
 #endif

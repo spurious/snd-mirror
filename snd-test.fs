@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Thu Jan 14 21:58:18 CET 2010
+\ Changed: Sat Feb 06 20:01:40 CET 2010
 
 \ Commentary:
 \
@@ -726,10 +726,10 @@ let: ( -- )
   \
   "oboe.snd" 100 mix car to mix-id
   40 set-mix-waveform-height drop
-  mix-id 'hiho 123 set-mix-property
-  mix-id 'hiho mix-property to res
+  'hiho mix-id 123 set-mix-property
+  'hiho mix-id mix-property to res
   res 123 <> if $" mix-property: %s?" #( res ) snd-display then
-  mix-id 'not-here mix-property to res
+  'not-here mix-id mix-property to res
   res if $" mix-property not-here: %s?" #( res ) snd-display then
   #f #f update-time-graph drop
   20 set-mix-waveform-height drop
@@ -1983,7 +1983,8 @@ include bird.fsm
    <'> axis-info <'> c-g? <'> apply-controls <'> change-samples-with-origin
    <'> channel-style <'> channels <'> chans <'> close-sound
    <'> comment <'> contrast-control <'> contrast-control-amp <'> contrast-control?
-   <'> convolve-selection-with <'> convolve-with <'> channel-properties <'> amp-control-bounds
+   <'> convolve-selection-with <'> convolve-with <'> channel-properties <'> channel-property
+   <'> amp-control-bounds
    <'> speed-control-bounds <'> expand-control-bounds <'> contrast-control-bounds
    <'> reverb-control-length-bounds
    <'> reverb-control-scale-bounds <'> cursor-update-interval <'> cursor-location-offset
@@ -2014,12 +2015,14 @@ include bird.fsm
    <'> just-sounds <'> left-sample <'> listener-prompt
    <'> make-mix-sampler <'> make-player <'> make-region <'> make-region-sampler
    <'> make-sampler <'> map-chan
-   <'> mark-name <'> mark-sample <'> mark-sync <'> mark-sync-max
+   <'> mark-name <'> mark-properties <'> mark-property
+   <'> mark-sample <'> mark-sync <'> mark-sync-max
    <'> mark-home <'> marks <'> mark? <'>  max-transform-peaks
    <'> max-regions <'> maxamp <'> maxamp-position
    <'> minibuffer-history-length <'> min-dB <'> log-freq-start <'> mix
    <'> mixes <'> mix-amp <'> mix-amp-env <'> mix-length
-   <'> mix? <'> mix-position <'> mix-name <'> mix-region <'> mix-sampler?
+   <'> mix? <'> mix-position <'> mix-properties <'> mix-property
+   <'> mix-name <'> mix-region <'> mix-sampler?
    <'> mix-selection <'> mix-sound <'> mix-home <'> mix-speed
    <'> mix-tag-height <'> mix-tag-width <'> mark-tag-height <'> mark-tag-width
    <'> mix-tag-y <'> mix-vct <'> mix-waveform-height <'> time-graph-style
@@ -2060,7 +2063,7 @@ include bird.fsm
    <'> speed-control-style <'> speed-control-tones <'> squelch-update <'> srate
    <'> src-sound <'> src-selection <'> start-progress-report <'> stop-player
    <'> stop-playing <'> swap-channels <'> syncd-marks <'> sync
-   <'> sync-max <'> sound-properties <'> temp-dir <'>  region-sampler?
+   <'> sync-max <'> sound-properties <'> sound-property <'> temp-dir <'>  region-sampler?
    <'> transform-sample <'> transform->vct <'> transform-frames <'> transform-type
    <'> trap-segfault <'> with-file-monitor <'> optimization
    <'> undo <'> update-transform-graph <'> update-time-graph <'> update-lisp-graph
@@ -2178,7 +2181,7 @@ include bird.fsm
    <'> reverb-control-length-bounds <'> reverb-control-scale-bounds <'> cursor-update-interval
    <'> cursor-location-offset
    <'> contrast-control? <'> auto-update-interval <'> cursor
-   <'> channel-properties <'> with-tracking-cursor <'> cursor-size
+   <'> channel-properties <'> channel-property <'> with-tracking-cursor <'> cursor-size
    <'> cursor-style <'> tracking-cursor-style <'> dac-combines-channels <'> dac-size
    <'> clipping <'> default-output-chans <'> default-output-data-format
    <'> default-output-srate <'> default-output-header-type <'> dot-size <'> enved-envelope
@@ -2192,9 +2195,11 @@ include bird.fsm
    <'> enved-filter-order <'> enved-filter <'> filter-control-in-hz <'> filter-control-order
    <'> filter-control? <'> graph-cursor <'> graph-style <'> lisp-graph? <'> graphs-horizontal
    <'> just-sounds <'> left-sample <'> listener-prompt
-   <'> mark-name <'> mark-sample <'> mark-sync <'> max-transform-peaks
+   <'> mark-name <'> mark-properties <'> mark-property
+   <'> mark-sample <'> mark-sync <'> max-transform-peaks
    <'> min-dB <'> log-freq-start <'> mix-amp
-   <'> mix-amp-env <'> mix-name <'> mix-position <'> mix-speed <'> mix-tag-height <'> mix-tag-width
+   <'> mix-amp-env <'> mix-name <'> mix-position <'> mix-properties <'> mix-property
+   <'> mix-speed <'> mix-tag-height <'> mix-tag-width
    <'> mix-tag-y <'> mark-tag-width <'> mark-tag-height <'> mix-waveform-height
    <'> transform-normalization
    <'> view-files-sort <'> print-length <'> view-files-amp
@@ -2211,7 +2216,7 @@ include bird.fsm
    <'> spectro-hop <'> spectrum-start <'> spectro-x-angle <'>  grid-density
    <'> spectro-x-scale <'> spectro-y-angle <'> spectro-y-scale <'> spectro-z-angle
    <'> spectro-z-scale <'> speed-control <'> speed-control-style <'> speed-control-tones
-   <'> squelch-update <'> sync <'> sound-properties <'> temp-dir
+   <'> squelch-update <'> sync <'> sound-properties <'> sound-property <'> temp-dir
    <'> y-bounds <'> transform-type
    <'> trap-segfault <'> with-file-monitor <'> optimization <'> with-verbose-cursor
    <'> wavelet-type <'> x-bounds
@@ -2349,7 +2354,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> reverb-control-lowpass <'> reverb-control-scale <'> reverb-control? <'> save-controls
      <'> select-sound <'> short-file-name <'> sound-loop-info <'> speed-control
      <'> speed-control-style <'> speed-control-tones <'> srate <'> channel-style
-     <'> start-progress-report <'> sync <'> sound-properties <'> swap-channels ) { prcs-1 }
+     <'> start-progress-report <'> sync <'> sound-properties <'> sound-property
+     <'> swap-channels ) { prcs-1 }
   prcs-1 each to prc
     123 prc #t nil fth-catch to tag
     stack-reset
@@ -2366,7 +2372,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       arg prc #t nil fth-catch to tag
       stack-reset
       tag if
-	tag car 'wrong-type-arg =
+	tag car 'no-such-sound  =
+	tag car 'wrong-type-arg = ||
 	tag car 'mus-error      = || unless
 	  $" snd wrong-type-arg %s: %s (%s)" #( prc tag arg ) snd-display
 	then
@@ -2612,7 +2619,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       $" bad file mus-sound %s: %s" #( prc tag ) snd-display
     then
   end-each
-  #( <'> count-matches <'> cursor <'> channel-properties
+  #( <'> count-matches <'> cursor <'> channel-properties <'> channel-property
      <'> with-tracking-cursor <'> cursor-position <'> cursor-size <'> cursor-style
      <'> tracking-cursor-style <'> delete-sample <'> display-edits <'> dot-size
      <'> edit-fragment <'> edit-position
@@ -2652,7 +2659,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       $" chn (no chn) procs %s: %s" #( prc tag ) snd-display
     then
   end-each
-  #( <'> cursor <'> with-tracking-cursor <'> channel-properties
+  #( <'> cursor <'> with-tracking-cursor <'> channel-properties <'> channel-property
      <'> cursor-position <'> cursor-size <'> cursor-style <'> tracking-cursor-style
      <'> delete-sample <'> display-edits <'> dot-size <'> edit-fragment
      <'> edit-position <'> edit-tree <'> edits <'> env-sound
@@ -2721,12 +2728,14 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> update-time-graph <'> update-lisp-graph <'> wavelet-type <'> time-graph?
      <'> time-graph-type <'> wavo-hop <'> wavo-trace <'> x-bounds
      <'> x-position-slider <'> x-axis-label <'> x-zoom-slider <'> y-bounds
-     <'> y-position-slider <'> y-zoom-slider <'> zero-pad <'> channel-properties ) each to prc
+     <'> y-position-slider <'> y-zoom-slider <'> zero-pad
+     <'> channel-properties <'> channel-property ) each to prc
     ind 1234 prc #t nil fth-catch to tag
     stack-reset
     tag if
-      tag car 'no-such-channel = unless
-	$" chn procs %s: %s" #( prc tag ) snd-display
+      tag car 'no-such-sound   =
+      tag car 'no-such-channel = || unless
+	$" chn (2) procs %s: %s" #( prc tag ) snd-display
       then
     then
   end-each
@@ -2736,7 +2745,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     vct-5 ind 0 prc set-xt #t nil fth-catch to tag
     stack-reset
     tag if
-      tag car 'wrong-type-arg = unless
+      tag car 'no-such-sound  =
+      tag car 'wrong-type-arg = || unless
 	$" set chn procs %s: %s" #( prc tag ) snd-display
       then
     then

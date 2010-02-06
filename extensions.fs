@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Dec 18 19:21:00 CET 2005
-\ Changed: Thu Jan 14 21:44:40 CET 2010
+\ Changed: Sat Feb 06 14:06:16 CET 2010
 
 \ Commentary:
 \
@@ -33,11 +33,9 @@
 \ close-sound-file                ( fd bytes -- n )
 \ vct->sound-file                 ( fd v samps -- n )
 \
-\ sound-property       		  ( key snd -- value|#f )
-\ set-sound-property   		  ( key val snd -- )
+\ remove-sound-property           ( key :optional snd -- alist )
 \ set-sound-property-save-state-ignore   ( key snd -- alist )
-\ channel-property     		  ( key snd chn -- value|#f )
-\ set-channel-property 		  ( key val snd chn -- )
+\ remove-channel-property         ( key :optional snd chn -- alist )
 \ set-channel-property-save-state-ignore ( key snd chn -- alist )
 \ channel-sync                    ( snd chn -- val )
 \ set-channel-sync                ( snd chn val -- )
@@ -315,18 +313,6 @@ previous
 \ === End of compatibility stuff ===
 
 \ ;;; -------- sound-property
-\ 
-\ : sound-property <{ key :optional snd #f -- val }>
-\   doc" Returns the value associated with KEY in the given sound's property list, or #f."
-\   snd sound-properties key array-assoc-ref
-\ ;
-\ 
-\ : set-sound-property <{ key val :optional snd #f -- alist }>
-\   doc" Sets key-value pair in the given sound's property list.  \
-\ If KEY exists, VAL overwrites the old value."
-\   snd sound-properties key val array-assoc-set! snd set-sound-properties
-\ ;
-
 : remove-sound-property <{ key :optional snd #f -- alist }>
   doc" Removes key-value pair in the given sound's property list.  \
 Returns altered list."
@@ -341,18 +327,6 @@ Returns altered list."
 ;
 
 \ ;;; -------- channel-property
-\ 
-\ : channel-property <{ key :optional snd #f chn #f -- val }>
-\   doc" Returns the value associated with KEY in the given channel's property list, or #f."
-\   snd chn channel-properties key array-assoc-ref
-\ ;
-\ 
-\ : set-channel-property <{ key val :optional snd #f chn #f -- alist }>
-\   doc" Sets key-value pair in the given channel's property list.  \
-\ If KEY exists, VAL overwrites the old value."
-\   snd chn channel-properties key val array-assoc-set! snd chn set-channel-properties
-\ ;
-
 : remove-channel-property <{ key :optional snd #f chn #f -- alist }>
   doc" Removes key-value pair in the given channel's property list.  \
 Returns altered list."
