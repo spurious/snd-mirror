@@ -4796,36 +4796,6 @@ in one channel are compared with 0.0 (that is, the shorter channel is padded out
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- channel-property -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="channelproperty">channel-property</a> <code>key snd chn</code>
-</td></tr><tr><td></td><td>
-channel-property returns the value associated with 'key' in the given channel's
-<a href="extsnd.html#channelproperties">property list</a>.  To add or change a property, use set! with this procedure. 
-<pre>
-    Scheme:
-    :<em class=typing>(set! (channel-property 'info 0 0) "this is sound 0, first channel")</em>
-    <em class=listener>"this is sound 0, first channel"</em>
-    :<em class=typing>(channel-property 'info 0 0)</em>
-    <em class=listener>"this is sound 0, first channel"</em>
-
-    Ruby:
-    ><em class=typing>set_channel_property(:info, "this is info", 0, 0)</em>
-    <em class=listener>this is info</em>
-    ><em class=typing>channel_property(:info, 0, 0)</em>
-    <em class=listener>this is info</em>
-
-    Forth:
-    ><em class=typing>'info "this is info" 0 0 set-channel-property</em>
-    <em class=listener>'( '( 'info . this is info ) )</em>
-    ><em class=typing>'info 0 0 channel-property</em>
-    <em class=listener>this is info</em>
-</pre>
-The property list is convenient because the associated information goes away automatically
-when the channel is closed, and the property lists are saved by <a href="extsnd.html#savestate">save-state</a>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 <!-- channel-sync -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <a class=def name="channelsync">channel-sync</a> <code>snd chn</code>
@@ -4879,18 +4849,6 @@ The noise consists of two white noise generators adding together.
 </td></tr><tr><td width=30></td><td>
 dither-sound adds dithering to every channel of the sound 'snd'.
 It is the multichannel version of <a href="#ditherchannel">dither-channel</a>.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- edit-property -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="editproperty">edit-property</a> <code>key snd chn edpos</code>
-</td></tr><tr><td></td><td>
-edit-property returns the value associated with 'key' in the given channel's edit history list
-<a href="extsnd.html#editproperties">property list</a> at edit location 'edpos'.  To add or change a property, use set! with this procedure
-as in <a href="#channelproperty">channel-property</a>.
-The edit list property list is convenient because the associated information goes away automatically
-when the given edit is no longer accessible.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5105,17 +5063,6 @@ It is the multichannel version of <a href="extsnd.html#scalechannel">scale-chann
 </td></tr><tr><td></td><td>
 set-global-sync sets up a hook function that syncs all of a sound's channels ('choice' == 2),
 or all channels (across all sounds) ('choice' == 1).  'choice' == 0 turns off the syncing.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- sound-property -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="soundproperty">sound-property</a> <code>key snd</code>
-</td></tr><tr><td></td><td>
-sound-property provides access to a sound's <a href="extsnd.html#soundproperties">property list</a>.
-These properties are saved when Snd's state is saved (via <a href="extsnd.html#savestate">save-state</a>
-or the Options:Save session menu).  To omit a given property at that time, add its name (a symbol) to
-the property 'save-state-ignore (a list of symbols); see 'inset-envelope in extensions.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -6261,29 +6208,6 @@ If a such a mark doesn't exist, it returns <code>'no-such-mark</code>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- mark-properties -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="markproperties">mark-properties</a> <code>mark</code>
-</td></tr><tr><td></td><td>
-mark-properties accesses the property list associated with the mark.
-This list is created, if necessary, by mark-property.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- mark-property -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="markproperty">mark-property</a> <code>key mark</code>
-</td></tr><tr><td></td><td>
-mark-property accesses the property 'key' in the property list associated with the mark.
-<pre>
-    :<em class=typing>(set! (mark-property :weight m0) 2.5)</em>   ; m0 is the mark
-    <em class=listener>2.5</em>
-    :<em class=typing>(mark-property :weight m0)</em>
-    <em class=listener>2.5</em>
-</pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 <!-- move-syncd-marks -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <A class=def NAME="movesyncdmarks">move-syncd-marks</a> <code>sync samples-to-move</code>
@@ -6710,20 +6634,6 @@ mix-maxamp returns the maxamp in the given mix.
 </td></tr><tr><td></td><td>
 mix-name-&gt;id returns the mix with the given name, or 'no-such-mix if none can be found.
 </td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- mix-property -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<a class=def name="mixproperty">mix-property</a> <code>key mix</code>
-</td></tr><tr><td></td><td>
-mix-property associates a property with each mix.
-<pre>
-    :<em class=typing>(set! (mix-property :info mx) "this is a mix")</em>
-    <em class=listener>"this is a mix"</em>
-    :<em class=typing>(mix-property :info mx)</em>
-    <em class=listener>"this is a mix"</em>
-</pre>
-</td></tr><tr><td colspan=2></td></tr>
 
 
 <!-- mix-sound -->
@@ -7856,10 +7766,10 @@ all     13   3.5249    0.4912,        odd     12   3.3627    0.4880
 all     12   3.3891    0.4912,        odd     28   5.0931    0.4885
 all     10   3.1027    0.4917,        odd     21   4.4504    0.4904
 all     18   4.1454    0.4920,        odd     23   4.6639    0.4911
-all     29   5.2447    0.4922,        odd     20   4.3629    0.4917
+all     29   5.2447    0.4922,        odd     20   4.3621    0.4917
 all     27   5.0665    0.4923,        odd     31   5.4235    0.4924
 all     28   5.1610    0.4925,        odd     22   4.5831    0.4925
-all     22   4.5881    0.4929,        odd     24   4.7894    0.4929
+all     22   4.5881    0.4929,        odd     24   4.7891    0.4929
 all     21   4.4844    0.4929,        odd     25   4.8892    0.4930
 all     35   5.7695    0.4929,        odd     33   5.6070    0.4931
 all     37   5.9340    0.4931,        odd     29   5.2676    0.4934
@@ -7882,12 +7792,12 @@ all     52   7.1497    0.4978,        odd     74   8.5079    0.4974
 all     7    2.6394    0.4988,        odd     46   6.7167    0.4975
 all     38   6.1411    0.4990,        odd     39   6.1875    0.4975
 all     57   7.5207    0.4990,        odd     40   6.2779    0.4980
-all     63   7.9218    0.4995,        odd     57   7.4990    0.4983
+all     63   7.9218    0.4995,        odd     57   7.4982    0.4983
 all     59   7.6748    0.4998,        odd     56   7.4388    0.4985
 all     62   7.8677    0.4998,        odd     44   6.6048    0.4989
-                                      odd     77   8.7464    0.4992
+all     45   6.7042    0.4998,        odd     77   8.7437    0.4992
                                       odd     38   6.1502    0.4994
-                                      odd     78   8.8112    0.4995
+                                      odd     78   8.8088    0.4994
                                       odd     58   7.6018    0.4995
                                       odd     49   6.9981    0.4999
 </pre>
@@ -7901,43 +7811,42 @@ all     62   7.8677    0.4998,        odd     44   6.6048    0.4989
 <pre>
          n     peak   (log peak n)            n     peak   (log peak n)
 
-all     74   8.6053    0.5001,        odd     76   8.7259    0.5002
-all     45   6.7103    0.5001,        odd     36   6.0075    0.5003
+all     47   6.8567    0.5000,        odd     76   8.7259    0.5002
+all     74   8.6053    0.5001,        odd     36   6.0075    0.5003
 all     71   8.4392    0.5004,        odd     48   6.9398    0.5004
-all     56   7.4963    0.5004,        odd     63   7.9587    0.5007
+all     56   7.4963    0.5004,        odd     63   7.9549    0.5005
 all     68   8.2662    0.5006,        odd     62   7.9000    0.5008
-all     55   7.4513    0.5012,        odd     70   8.4050    0.5011
-all     72   8.5287    0.5012,        odd     51   7.1723    0.5011
-all     50   7.1043    0.5012,        odd     82   9.0993    0.5011
-all     42   6.5169    0.5015,        odd     54   7.3839    0.5012
-all     40   6.3596    0.5015,        odd     55   7.4526    0.5012
-all     47   6.8983    0.5016,        odd     80   9.0029    0.5015
-all     48   6.9800    0.5019,        odd    110  10.5651    0.5016
-all     85   9.2995    0.5019,        odd     53   7.3284    0.5017
-all     88   9.4757    0.5022,        odd     61   7.8639    0.5017
-all     70   8.4480    0.5023,        odd     59   7.7450    0.5020
-all     99  10.0579    0.5023,        odd     73   8.6204    0.5021
-all     73   8.6308    0.5024,        odd     69   8.3995    0.5026
-all    105  10.3634    0.5024,        odd     68   8.3394    0.5027
-all     75   8.7553    0.5025,        odd     66   8.2168    0.5027
-all     49   7.0809    0.5030,        odd     91   9.6608    0.5028
-all     64   8.1003    0.5030,        odd     64   8.1024    0.5031
-all     66   8.2275    0.5030,        odd     65   8.1750    0.5033
-all     51   7.2270    0.5030,        odd     95   9.8966    0.5033
-all     79   9.0078    0.5031,        odd    102  10.2581    0.5034
-all     54   7.4434    0.5032,        odd     81   9.1398    0.5035
-all     60   7.8545    0.5034,        odd     60   7.8602    0.5036
-all     65   8.1853    0.5036,        odd     83   9.2622    0.5037
-all     61   7.9335    0.5038,        odd     79   9.0367    0.5038
-all     69   8.4511    0.5041,        odd    113  10.8356    0.5040
-all     58   7.7458    0.5042,        odd    105  10.4534    0.5043
-all     76   8.8781    0.5042,        odd     47   6.9739    0.5044
-all     91   9.7258    0.5043,        odd     75   8.8302    0.5045
-all     90   9.6752    0.5044,        odd    114  10.9118    0.5046
-all     92   9.7876    0.5045,        odd     92   9.8026    0.5048
-all     87   9.5259    0.5047,        odd     89   9.6459    0.5050
-all     81   9.1899    0.5048
-all     93   9.8545    0.5048
+all     55   7.4513    0.5012,        odd     82   9.0932    0.5009
+all     72   8.5287    0.5012,        odd     70   8.4050    0.5011
+all     50   7.1043    0.5012,        odd     55   7.4487    0.5011
+all     42   6.5169    0.5015,        odd     51   7.1723    0.5011
+all     40   6.3596    0.5015,        odd     54   7.3828    0.5012
+all     48   6.9800    0.5019,        odd    110  10.5551    0.5014
+all     85   9.2995    0.5019,        odd     80   9.0024    0.5015
+all     88   9.4757    0.5022,        odd     53   7.3284    0.5017
+all     70   8.4480    0.5023,        odd     61   7.8639    0.5017
+all     99  10.0579    0.5023,        odd     59   7.7450    0.5020
+all     73   8.6308    0.5024,        odd     73   8.6204    0.5021
+all    105  10.3634    0.5024,        odd     69   8.3968    0.5026
+all     75   8.7553    0.5025,        odd     66   8.2141    0.5026
+all     49   7.0809    0.5030,        odd     68   8.3394    0.5027
+all     64   8.1003    0.5030,        odd     91   9.6582    0.5027
+all     66   8.2275    0.5030,        odd     64   8.1024    0.5031
+all     51   7.2270    0.5030,        odd    102  10.2465    0.5031
+all     79   9.0078    0.5031,        odd     95   9.8952    0.5033
+all     54   7.4434    0.5032,        odd     65   8.1750    0.5033
+all     60   7.8545    0.5034,        odd     81   9.1361    0.5034
+all     65   8.1853    0.5036,        odd     60   7.8577    0.5035
+all     61   7.9335    0.5038,        odd     83   9.2585    0.5036
+all     69   8.4511    0.5041,        odd     79   9.0350    0.5037
+all     58   7.7458    0.5042,        odd    113  10.8342    0.5040
+all     76   8.8781    0.5042,        odd    105  10.4421    0.5041
+all     91   9.7258    0.5043,        odd    114  10.9030    0.5044
+all     90   9.6752    0.5044,        odd     47   6.9739    0.5044
+all     92   9.7876    0.5045,        odd     75   8.8302    0.5045
+all     87   9.5259    0.5047,        odd     92   9.7972    0.5047
+all     81   9.1899    0.5048,        odd     96  10.0149    0.5048
+all     93   9.8545    0.5048,        odd     89   9.6432    0.5049
 all     83   9.3080    0.5049
 all    111  10.7804    0.5049
 </pre>

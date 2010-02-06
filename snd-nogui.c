@@ -461,6 +461,9 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("(define (" S_colormap_ref " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_colormap_name " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_add_colormap " . args) #f)");
+
+  XEN_EVAL_C_STRING("(define " S_x_bounds " (make-procedure-with-setter (lambda args #f) (lambda args #f)))");
+  XEN_EVAL_C_STRING("(define " S_y_bounds " (make-procedure-with-setter (lambda args #f) (lambda args #f)))");
 #endif
 
 #if HAVE_RUBY
@@ -593,6 +596,11 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("Selection_context = 2");
   XEN_EVAL_C_STRING("Time_graph = 0");
   XEN_EVAL_C_STRING("Transform_graph = 1");
+
+  XEN_EVAL_C_STRING("def x_bounds (s, c, a) false end");
+  XEN_EVAL_C_STRING("def set_x_bounds (s, c, ax, a) false end");
+  XEN_EVAL_C_STRING("def y_bounds (s, c, a) false end");
+  XEN_EVAL_C_STRING("def set_y_bounds (s, c, ax, a) false end");
 #endif
 
 #if HAVE_FORTH
@@ -673,6 +681,10 @@ void snd_doit(int argc, char **argv)
 : " S_zoom_color " #f ;\n\
 : set-" S_zoom_color " { a } #f ;\n\
 : " S_axis_info " { s c a } #f ;\n\
+: " S_x_bounds " { s c a } #f ;\n\
+: set-" S_x_bounds " { a } #f ;\n\
+: " S_y_bounds " { s c a } #f ;\n\
+: set-" S_y_bounds " { a } #f ;\n\
 : " S_channel_widgets " { s c } #f ;\n\
 : " S_color_p " { a } #f ;\n\
 : " S_color_to_list " { a } #f ;\n\

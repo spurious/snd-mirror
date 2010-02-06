@@ -2195,7 +2195,6 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 
 ;;; -------- cursor-follows-play and stays where it was when the play ended
 
-(if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))
 (if (not (provided? 'snd-hooks.scm)) (load "hooks.scm"))
 
 (define* (if-cursor-follows-play-it-stays-where-play-stopped (enable #t))

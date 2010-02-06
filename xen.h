@@ -10,11 +10,13 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 3
-#define XEN_VERSION "3.3"
+#define XEN_MINOR_VERSION 4
+#define XEN_VERSION "3.4"
 
 /* HISTORY:
  *
+ *  5-Feb-10:  XEN_ASSOC_REF and XEN_ASSOC_SET.  XEN_ASSOC_REF returns the value, not the key/value pair.
+ *  --------
  *  16-Dec:    removed Guile support. removed xen_return_first (a guile-ism).
  *  2-Nov:     XEN_VECTOR_RANK.
  *  5-Oct:     use s7_c_pointer etc.
@@ -145,7 +147,7 @@
 /* ------------------------------ RUBY ------------------------------ */
 
 /* other possibilities: 
- *    XEN_ASSOC (args reversed from Scheme), XEN_DEFINE_METHOD, XEN_DEFINE_ALIAS, rb_ary_unsift = XEN_LIST_PREPEND?,
+ *    XEN_DEFINE_METHOD, XEN_DEFINE_ALIAS, rb_ary_unsift = XEN_LIST_PREPEND?,
  *    various property macros -- in Scheme as well, rb_const_defined, rb_yield, XEN_INCLUDE_MODULE,
  *    rb_id2name (XEN_SYMBOL...), rb_raise.
  */
@@ -304,6 +306,10 @@
 #define XEN_VECTOR_SET(Vect, Num, Val)  xen_rb_list_set(Vect, Num, Val)
 #define XEN_MAKE_VECTOR(Num, Fill)      xen_rb_ary_new_with_initial_element(Num, Fill)
 #define XEN_VECTOR_TO_LIST(a)           a
+
+#define XEN_ASSOC_REF(Item, Lst)        xen_assoc(Item, Lst)
+#define XEN_ASSOC_SET(Sym, Val, Lst)    xen_set_assoc(Sym, Val, Lst)
+
 
 /* ---- symbols ---- */
 #define XEN_SYMBOL_P(Arg)               SYMBOL_P(Arg)
@@ -674,6 +680,8 @@ XEN rb_set_documentation(XEN name, XEN help);
 bool xen_rb_arity_ok(int rargs, int args);
 void xen_rb_repl_set_prompt(const char *prompt);
 XEN xen_rb_add_to_load_path(char *path);
+XEN xen_set_assoc(XEN key, XEN val, XEN alist);
+XEN xen_assoc(XEN key, XEN alist);
 
 #ifdef __cplusplus
 }
@@ -848,7 +856,9 @@ XEN xen_rb_add_to_load_path(char *path);
 #define XEN_CDDR(a)                     FTH_CDDR(a)
 #define XEN_COPY_ARG(Lst)               fth_list_copy(Lst)
 #define XEN_APPEND(a, b)                fth_list_append(XEN_LIST_2(a, b))
-#define XEN_ASSOC(Item, Lst)            fth_list_assoc_ref(Lst, Item)
+#define XEN_ASSOC_REF(Item, Lst)        fth_list_assoc_ref(Lst, Item)
+#define XEN_ASSOC_SET(Sym, Val, Lst)    fth_list_assoc_set(Lst, Sym, Val)
+#define XEN_ASSOC(Item, Lst)            fth_list_assoc_ref(Lst, Item)  /* perhaps fth_list_assoc? */
 #define XEN_MEMBER(Item, Lst)           fth_list_member_p(Lst, Item)
 
 /* === Hook, Procedure === */
@@ -1023,6 +1033,8 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_LIST_REVERSE(Lst)                      s7_reverse(s7, Lst)
 #define XEN_COPY_ARG(Lst)                          Lst
 #define XEN_APPEND(Arg1, Arg2)                     s7_append(s7, Arg1, Arg2)
+#define XEN_ASSOC_REF(Sym, Lst)                    xen_assoc(s7, Sym, Lst)
+#define XEN_ASSOC_SET(Sym, Val, Lst)               xen_set_assoc(s7, Sym, Val, Lst)
 #define XEN_ASSOC(Sym, Lst)                        s7_assoc(s7, Sym, Lst)
 #define XEN_MEMBER(Sym, Lst)                       s7_member(s7, Sym, Lst)
 
@@ -1455,6 +1467,8 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc);
 void xen_s7_set_repl_prompt(const char *new_prompt);
 void xen_s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value, const char *help);
 const char *xen_s7_constant_help(const char *name);
+XEN xen_set_assoc(s7_scheme *sc, s7_pointer key, s7_pointer val, s7_pointer alist);
+XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 
 #if !(defined(__GNUC__) && (!(defined(__cplusplus))))
   XEN xen_s7_c_to_xen_string(const char *str);
@@ -1633,6 +1647,8 @@ const char *xen_s7_constant_help(const char *name);
 #define XEN_VECTOR_SET(a, b, c)
 #define XEN_MAKE_VECTOR(Num, Fill) 0
 #define XEN_VECTOR_TO_LIST(Vect) 0
+#define XEN_ASSOC_REF(Sym, Lst) 0
+#define XEN_ASSOC_SET(Sym, Val, Lst) 0
 #define XEN_CHAR_P(Arg) 0
 #define XEN_TO_C_CHAR(Arg) 0
 #define C_TO_XEN_CHAR(Arg) 0

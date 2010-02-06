@@ -9,7 +9,6 @@
 ;;; (play-panned snd) pans a mono sound following its enved envelope into a stereo sound
 
 (provide 'snd-enved.scm)
-(if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))
 
 (define channel-envelope
   (make-procedure-with-setter

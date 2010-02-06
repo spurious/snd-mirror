@@ -785,33 +785,33 @@ end
 include Compatibility
 
 module Extensions
-  add_help(:channel_property,
-           "channel_property(key, snd, chn) \
-returns the value associated with 'key' in the given channel's property list, or nil")
-  def channel_property(key, snd = false, chn = false)
-    if array?(props = channel_properties(snd, chn))
-      array?(item = props.assoc(key)) and item[1]
-    else
-      nil
-    end
-  end
-  
-  add_help(:set_channel_property,
-           "set_channel_property(key, val, snd, chn) \
-sets 'key-val' in the given channel's property list and returns 'val'")
-  def set_channel_property(key, val, snd = false, chn = false)
-    if array?(props = channel_properties(snd, chn))
-      if array?(item = props.assoc(key))
-        item[1] = val
-      else
-        props.push([key, val])
-      end
-    else
-      set_channel_properties([[key, val]], snd, chn)
-    end
-    val
-  end
-
+#  add_help(:channel_property,
+#           "channel_property(key, snd, chn) \
+#returns the value associated with 'key' in the given channel's property list, or nil")
+#  def channel_property(key, snd = false, chn = false)
+#    if array?(props = channel_properties(snd, chn))
+#      array?(item = props.assoc(key)) and item[1]
+#    else
+#      nil
+#    end
+#  end
+#  
+#  add_help(:set_channel_property,
+#           "set_channel_property(key, val, snd, chn) \
+#sets 'key-val' in the given channel's property list and returns 'val'")
+#  def set_channel_property(key, val, snd = false, chn = false)
+#    if array?(props = channel_properties(snd, chn))
+#      if array?(item = props.assoc(key))
+#        item[1] = val
+#      else
+#        props.push([key, val])
+#      end
+#    else
+#      set_channel_properties([[key, val]], snd, chn)
+#    end
+#    val
+#  end
+#
   add_help(:remove_channel_property, "remove_channel_property(key, snd)  deletes key-value pair")
   def remove_channel_property(key, snd = false, chn = false)
     array?(props = channel_properties(snd, chn)) and
@@ -819,32 +819,32 @@ sets 'key-val' in the given channel's property list and returns 'val'")
       props.delete(item)
   end
 
-  add_help(:sound_property,
-           "sound_property(key, snd) \
-returns the value associated with 'key' in the given sound's property list, or nil")
-  def sound_property(key, snd = false)
-    if array?(props = sound_properties(snd))
-      array?(item = props.assoc(key)) and item[1]
-    else
-      nil
-    end
-  end
-  
-  add_help(:set_sound_property,
-           "set_sound_property(key, val, snd) \
-sets 'key-val' pair in the given sound's property list and returns 'val'.")
-  def set_sound_property(key, val, snd = false)
-    if array?(props = sound_properties(snd))
-      if array?(item = props.assoc(key))
-        item[1] = val
-      else
-        props.push([key, val])
-      end
-    else
-      set_sound_properties([[key, val]], snd)
-    end
-    val
-  end
+#  add_help(:sound_property,
+#           "sound_property(key, snd) \
+#returns the value associated with 'key' in the given sound's property list, or nil")
+#  def sound_property(key, snd = false)
+#    if array?(props = sound_properties(snd))
+#      array?(item = props.assoc(key)) and item[1]
+#    else
+#      nil
+#    end
+#  end
+#  
+#  add_help(:set_sound_property,
+#           "set_sound_property(key, val, snd) \
+#sets 'key-val' pair in the given sound's property list and returns 'val'.")
+#  def set_sound_property(key, val, snd = false)
+#    if array?(props = sound_properties(snd))
+#      if array?(item = props.assoc(key))
+#        item[1] = val
+#      else
+#        props.push([key, val])
+#      end
+#    else
+#      set_sound_properties([[key, val]], snd)
+#    end
+#    val
+#  end
 
   add_help(:remove_sound_property, "remove_sound_property(key, snd)  deletes key-value pair")
   def remove_sound_property(key, snd = false)

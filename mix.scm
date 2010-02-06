@@ -6,7 +6,6 @@
 ;;; (find-mix sample snd chn) returns the mix at the given sample, or #f
 ;;; (mix-maxamp mix) maxamp of mix
 ;;;
-;;; mix-property associates a property list with a mix
 ;;; mix-click-sets-amp sets up hook functions so that mix click zeros amps, then subsequent click resets to the before-zero value
 ;;; check-mix-tags tries to move mix tags around to avoid collisions
 
@@ -144,28 +143,6 @@ All mixes sync'd to it are also moved the same number of samples. (remove-hook! 
   (add-hook! mix-release-hook snap-syncd-mixes-1 #t))
 
 
-
-
-;;; --------- mix-property
-
-(define mix-property
-  (make-procedure-with-setter
-   (lambda (key id)
-     "(mix-property key mix) returns the value associated with 'key' in the given mix's property list, or #f"
-     (if (mix? id)
-	 (let ((data (assoc key (mix-properties id))))
-	   (if data
-	       (cdr data)
-	       #f))
-	 (throw 'no-such-mix (list "mix-property" id))))
-   (lambda (key id new-val)
-     (if (mix? id)
-	 (let ((old-val (assoc key (mix-properties id))))
-	   (if old-val
-	       (set-cdr! old-val new-val)
-	       (set! (mix-properties id) (cons (cons key new-val) (mix-properties id))))
-	   new-val)
-	 (throw 'no-such-mix (list "set! mix-property" id))))))
 
 
 ;;; -------- mix-click-sets-amp

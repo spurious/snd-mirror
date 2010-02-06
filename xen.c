@@ -208,6 +208,44 @@ XEN xen_rb_ary_new_with_initial_element(long num, XEN element)
 }
 
 
+XEN xen_set_assoc(XEN key, XEN val, XEN alist)
+{
+  /* assoc key val in alist so later rb_ary_assoc will find val given key in alist */
+  /*
+    if array?(alist)
+      if array?(item = alist.assoc(key))
+        item[1] = val
+      else
+        alist.push([key, val])
+      end
+    else
+      [[key, val]]
+    end
+  */
+  if (XEN_CONS_P(alist))
+    {
+      XEN pair;
+      pair = rb_ary_assoc(alist, key);
+      if (XEN_CONS_P(pair))
+	rb_ary_store(pair, 1, val);
+      else rb_ary_push(alist, rb_assoc_new(key, val));
+      return(alist);
+    }
+  return(rb_ary_new3(1, rb_assoc_new(key, val)));
+}
+
+
+XEN xen_assoc(XEN key, XEN alist)
+{
+  XEN val;
+  val = rb_ary_assoc(alist, key);
+  if (val != Qnil)
+    return(rb_ary_entry(val, 1));
+  return(Qfalse);
+}
+
+
+
 static char *scheme_to_ruby(const char *name)
 {
   /* replace any non-alphanumeric except "?" with "_". "?" -> "_p". '->" -> "2" drop "!" */
@@ -1553,6 +1591,36 @@ const char *xen_s7_constant_help(const char *name)
 	  return(constant_helps[i]);
     }
   return(NULL);
+}
+
+
+XEN xen_set_assoc(s7_scheme *sc, s7_pointer key, s7_pointer val, s7_pointer alist)
+{
+  /* fixup alist, return it (caller has to make sure it is reflected in its object) */
+  /*
+     (let ((old-val (assoc key alist)))
+       (if old-val
+           (progn
+              (set-cdr! old-val new-val)
+              alist)
+	   (cons (cons key new-val) alist)))
+  */
+  XEN old_val;
+  old_val = s7_assoc(sc, key, alist); /* returns #f if nothing found */
+  if (old_val == s7_f(sc))
+    return(s7_cons(sc, s7_cons(sc, key, val), alist));
+  s7_set_cdr(old_val, val);
+  return(alist);
+}
+
+
+XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist)
+{
+  XEN val;
+  val = s7_assoc(sc, key, alist);
+  if (val != s7_f(sc))
+    return(s7_cdr(val));
+  return(s7_f(sc));
 }
 
 

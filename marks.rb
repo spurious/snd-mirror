@@ -456,59 +456,59 @@ splits a sound into a bunch of sounds based on mark placements")
   #
   # === Mark Properties ===
   #
-  $all_mark_properties = Array.new
-
-  def mark_properties(id)
-    property(id, :mark_property)
-  end
-
-  def set_mark_properties(id, new_val)
-    set_property(id, :mark_property, new_val)
-  end
-
-  def remove_mark_properties(id)
-    if hash?(mark_properties(id))
-      properties.delete(id)
-      $all_mark_properties.delete(id)
-    end
-  end
-
-  add_help(:mark_property,
-           "mark_property(id, key) \
-returns the value associated with 'key' in the given mark's property list, or false")
-  def mark_property(id, key)
-    Snd.raise(:no_such_mark, id) unless mark?(id)
-    hash?(h = mark_properties(id)) and h[key]
-  end
-
-  add_help(:set_mark_property,
-           "set_mark_property(id, key, val) \
-sets the value 'val' to 'key' in the given mark's property list")
-  def set_mark_property(id, key, val)
-    Snd.raise(:no_such_mark, id) unless mark?(id)
-    unless hash?(h = mark_properties(id)) and h.store(key, val)
-      $all_mark_properties.push(id)
-      set_mark_properties(id, {key => val})
-    end
-  end
-
-  add_help(:remove_mark_property,
-           "remove_mark_property(key, id) \
-removes the key-value pair in the given mark's property list")
-  def remove_mark_property(key, id)
-    Snd.raise(:no_such_mark, id) unless mark?(id)
-    if hash?(h = mark_properties(id))
-      h.delete(key)
-    else
-      $all_mark_properties.delete(id)
-    end
-  end
-  
-=begin  
-  $close_hook.add_hook!("remove-mark-properties") do |snd|
-    $all_mark_properties.each do |id| (not mark?(id)) and remove_mark_properties(id) end
-  end
-=end
+#  $all_mark_properties = Array.new
+#
+#  def mark_properties(id)
+#    property(id, :mark_property)
+#  end
+#
+#  def set_mark_properties(id, new_val)
+#    set_property(id, :mark_property, new_val)
+#  end
+#
+#  def remove_mark_properties(id)
+#    if hash?(mark_properties(id))
+#      properties.delete(id)
+#      $all_mark_properties.delete(id)
+#    end
+#  end
+#
+#  add_help(:mark_property,
+#           "mark_property(id, key) \
+#returns the value associated with 'key' in the given mark's property list, or false")
+#  def mark_property(id, key)
+#    Snd.raise(:no_such_mark, id) unless mark?(id)
+#    hash?(h = mark_properties(id)) and h[key]
+#  end
+#
+#  add_help(:set_mark_property,
+#           "set_mark_property(id, key, val) \
+#sets the value 'val' to 'key' in the given mark's property list")
+#  def set_mark_property(id, key, val)
+#    Snd.raise(:no_such_mark, id) unless mark?(id)
+#    unless hash?(h = mark_properties(id)) and h.store(key, val)
+#      $all_mark_properties.push(id)
+#      set_mark_properties(id, {key => val})
+#    end
+#  end
+#
+#  add_help(:remove_mark_property,
+#           "remove_mark_property(key, id) \
+#removes the key-value pair in the given mark's property list")
+#  def remove_mark_property(key, id)
+#    Snd.raise(:no_such_mark, id) unless mark?(id)
+#    if hash?(h = mark_properties(id))
+#      h.delete(key)
+#    else
+#      $all_mark_properties.delete(id)
+#    end
+#  end
+#  
+#=begin  
+#  $close_hook.add_hook!("remove-mark-properties") do |snd|
+#    $all_mark_properties.each do |id| (not mark?(id)) and remove_mark_properties(id) end
+#  end
+#=end
 
   add_help(:save_mark_properties,
            "save_mark_properties() \

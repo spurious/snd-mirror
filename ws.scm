@@ -2,8 +2,6 @@
 
 (provide 'snd-ws.scm)
 
-(if (not (provided? 'snd-extensions.scm)) (load "extensions.scm")) ; we need sound-property in with-mixed-sound
-
 (defmacro ws-interrupt? ()
   `(if (c-g?) 
        (throw 'with-sound-interrupt)))
@@ -12,32 +10,32 @@
 
 ;;; -------- with-sound defaults --------
 
-(define *clm-srate* (default-output-srate))
-(define *clm-file-name* "test.snd")
-(define *clm-channels* (default-output-chans))
-(define *clm-data-format* (default-output-data-format))
-(define *clm-header-type* (default-output-header-type))
-(define *clm-verbose* #f)
-(define *clm-play* #f)
-(define *clm-statistics* #f)
-(define *clm-reverb* #f)
-(define *clm-reverb-channels* 1)
-(define *clm-reverb-data* '())
-(define *clm-table-size* 512)
-(define *clm-file-buffer-size* 65536)
-(define *clm-locsig-type* mus-interp-linear)
-(define *clm-clipped* #t)
+(define *clm-srate*             (default-output-srate))
+(define *clm-file-name*         "test.snd")
+(define *clm-channels*          (default-output-chans))
+(define *clm-data-format*       (default-output-data-format))
+(define *clm-header-type*       (default-output-header-type))
+(define *clm-verbose*           #f)
+(define *clm-play*              #f)
+(define *clm-statistics*        #f)
+(define *clm-reverb*            #f)
+(define *clm-reverb-channels*   1)
+(define *clm-reverb-data*       '())
+(define *clm-table-size*        512)
+(define *clm-file-buffer-size*  65536)
+(define *clm-locsig-type*       mus-interp-linear)
+(define *clm-clipped*           #t)
 (define *clm-array-print-length* (print-length))
-(define *clm-player* #f)          ; default is play-and-wait (takes index of newly created sound, not the sound's file name)
-(define *clm-notehook* #f)
-(define *clm-with-sound-depth* 0) ; for CM, not otherwise used
+(define *clm-player*            #f)          ; default is play-and-wait (takes index of newly created sound, not the sound's file name)
+(define *clm-notehook*          #f)
+(define *clm-with-sound-depth*  0)           ; for CM, not otherwise used
 (define *clm-default-frequency* 0.0)
-(define *clm-safety* 0)           ; obsolete
-(define *clm-delete-reverb* #f)   ; should with-sound clean up reverb stream
-(define *clm-threads* 4)
-(define *clm-output-safety* 0)    ; if 1, assume output buffers will not need to be flushed except at the very end
+(define *clm-safety*            0)           ; obsolete
+(define *clm-delete-reverb*     #f)          ; should with-sound clean up reverb stream
+(define *clm-threads*           4)
+(define *clm-output-safety*     0)           ; if 1, assume output buffers will not need to be flushed except at the very end
 
-(define *to-snd* #t)
+(define *to-snd*                #t)
 
 
 (define (times->samples beg dur) 
@@ -1080,7 +1078,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 ;;; -------- *clm-search-list*
 
-;;; PERHAPS: doc/test *clm-search-list*
+;;; PERHAPS: doc/test *clm-search-list*, and use to choose output loc?
 
 (define *clm-search-list* (list "."))
 

@@ -17,7 +17,6 @@
 ;;;     define-selection-via-marks selects the portion between two marks
 ;;;     snap-mark-to-beat forces dragged mark to end up on a beat
 ;;;     mark-explode splits a sound into a bunch of sounds based on mark placements
-;;;     mark-property implements property lists for marks
 ;;;     save-mark-properties sets up an after-save-state-hook function to save any mark-properties
 ;;;     mark-click-info is a mark-click-hook function that describes a mark and its properties
 
@@ -370,26 +369,7 @@
     (update-time-graph snd)))
 
 
-;;; -------- mark property lists
-
-(define mark-property
-  (make-procedure-with-setter
-   (lambda (key id)
-     "(mark-property key mark) returns the value associated with 'key' in the given mark's property list, or #f"
-     (if (mark? id)
-	 (let ((data (assoc key (mark-properties id))))
-	   (if data
-	       (cdr data)
-	       #f))
-	 (throw 'no-such-mark (list "mark-property" id))))
-   (lambda (key id new-val)
-     (if (mark? id)
-	 (let ((old-val (assoc key (mark-properties id))))
-	   (if old-val
-	       (set-cdr! old-val new-val)
-	       (set! (mark-properties id) (cons (cons key new-val) (mark-properties id))))
-	   new-val)
-	 (throw 'no-such-mark (list "set! mark-property" id))))))
+;;; -------- save mark property lists
 
 (define (save-mark-properties)
   "(save-mark-properties) sets up an after-save-state-hook function to save any mark-properties"

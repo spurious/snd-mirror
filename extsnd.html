@@ -2047,7 +2047,7 @@ hook function is used in <a href="sndscm.html#withmarkedsound">with-marked-sound
 	      (if (not (= (<a class=quiet href="#marksync" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksync_tip)">mark-sync</a> n) 0))
 	        (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~%  sync: ~A" (<a class=quiet href="#marksync" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksync_tip)">mark-sync</a> n))
 	        "")
-	      (let ((props (<a class=quiet href="sndscm.html#markproperties" onmouseout="UnTip()" onmouseover="Tip(sndscm_markproperties_tip)">mark-properties</a> n)))
+	      (let ((props (<a class=quiet href="#markproperties" onmouseout="UnTip()" onmouseover="Tip(sndscm_markproperties_tip)">mark-properties</a> n)))
 	        (if (and (list? props)
 		         (not (null? props)))
 	          (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~%  properties: '~A" props)
@@ -4596,7 +4596,21 @@ This is the name of the mark.
 <code><a class=def name="markproperties">mark-properties</a> mark</code>
 </td></tr><tr><td></td><td>
 mark-properties is a property list associated with a mark.
-<a href="sndscm.html#markproperty">mark-property</a> (in marks.scm) reads and writes this list.  
+<a href="#markproperty">mark-property</a> reads and writes this list.  
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- mark-property -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<code><a class=def name="markproperty">mark-property</a> key mark</code>
+</td></tr><tr><td></td><td>
+mark-property accesses the property 'key' in the property list associated with the mark.
+<pre>
+    :<em class=typing>(set! (mark-property :weight m0) 2.5)</em>   ; m0 is the mark
+    <em class=listener>2.5</em>
+    :<em class=typing>(mark-property :weight m0)</em>
+    <em class=listener>2.5</em>
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4777,7 +4791,7 @@ define selection via marks: <a href="sndscm.html#defineselectionviamarks">define
 force dragged mark to land on a beat: <a href="sndscm.html#snapmarktobeat">snap-mark-to-beat</a><br>
 loop continuously between the two specified marks: <a href="sndscm.html#loopbetweenmarks">loop-between-marks</a><br>
 split sound into separate files based on mark placement: <a href="sndscm.html#markexplode">mark-explode</a><br>
-mark property lists: <a href="sndscm.html#markproperty">mark-property</a><br>
+mark property lists: <a href="#markproperty">mark-property</a><br>
 save mark properties in saved state file: <a href="sndscm.html#savemarkproperties">save-mark-properties</a><br>
 show mark properties upon click: <a href="sndscm.html#markclickinfo">mark-click-info</a><br>
 <br>
@@ -5101,8 +5115,22 @@ mix-position is the current starting position (a sample number) of 'mix'.  To mo
 <code><a class=def name="mixproperties">mix-properties</a> mix</code>
 </td></tr><tr><td></td><td>
 mix-properties is a property list associated with a mix.
-<a href="sndscm.html#mixproperty">mix-property</a> (in mix.scm) reads and writes this list.  
+<a href="#mixproperty">mix-property</a> reads and writes this list.  
 </td></tr><tr><td colspan=2 height=18></td></tr>
+
+
+<!-- mix-property -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<code><a class=def name="mixproperty">mix-property</a> key mix</code>
+</td></tr><tr><td></td><td>
+mix-property associates a property with a mix.
+<pre>
+    :<em class=typing>(set! (mix-property :info mx) "this is a mix")</em>
+    <em class=listener>"this is a mix"</em>
+    :<em class=typing>(mix-property :info mx)</em>
+    <em class=listener>"this is a mix"</em>
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- mix-region -->
@@ -5244,7 +5272,7 @@ read mix samples: <a href="#makemixsampler">make-mix-sampler</a><br>
 mix data maxamp: <a href="sndscm.html#mixmaxamp">mix-maxamp</a><br>
 mix data to vct: <a href="sndscm.html#mixtovct">mix-&gt;vct</a><br>
 save mix data in file: <a href="#savemix">save-mix</a><br>
-mix property list: <a href="sndscm.html#mixproperty">mix-property</a> in mix.scm<br>
+mix property list: <a href="#mixproperty">mix-property</a><br>
 pan mono sound into stereo: see <a href="sndscm.html#placesound">place-sound</a> in examp.scm<br>
 move a mixed sound via dlocsig: <a href="#mixmovesound">mix-move-sound</a><br>
 the mix dialog: <a href="snd.html#mixdialog">Mix Dialog</a><br>
@@ -6104,7 +6132,7 @@ the configure argument --without-float-samples).  See make-variable-display in s
 </td></tr><tr><td></td><td>
 channel-properties is a property list associated with a channel.  It is set to '() at the time a sound is opened, so
 it provides a relatively simple way to save data about a channel which will automatically be erased when the channel is closed.
-<a href="sndscm.html#channelproperty">channel-property</a> (in extensions.scm) reads and writes this list.  
+<a href="#channelproperty">channel-property</a> reads and writes this list.  
 <br><br>
 Traditionally in Lisp, a property list has been treated as an association list. This is a list
 of pairs (made by cons), each inner pair having a key as its first element, and the associated value as the second element.
@@ -6117,6 +6145,36 @@ In Common Lisp, property lists have other properties, so to speak, but channel-p
 <a href="#soundproperties">sound-properties</a>) can be handled in any way you like.
 See <a href="sndscm.html#channelsync">channel-sync</a> in extensions.scm for a brief example; more
 elaborate examples are in enved.scm (enved-envelope), or draw.scm (colored-samples and insert-envelope).
+</td></tr><tr><td colspan=2 height=18></td></tr>
+
+
+<!-- channel-property -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<code><a class=def name="channelproperty">channel-property</a> key snd chn</code>
+</td></tr><tr><td></td><td>
+channel-property returns the value associated with 'key' in the given channel's
+<a href="extsnd.html#channelproperties">property list</a>.  To add or change a property, use set! with this procedure. 
+<pre>
+    Scheme:
+    :<em class=typing>(set! (channel-property 'info 0 0) "this is sound 0, first channel")</em>
+    <em class=listener>"this is sound 0, first channel"</em>
+    :<em class=typing>(channel-property 'info 0 0)</em>
+    <em class=listener>"this is sound 0, first channel"</em>
+
+    Ruby:
+    ><em class=typing>set_channel_property(:info, "this is info", 0, 0)</em>
+    <em class=listener>this is info</em>
+    ><em class=typing>channel_property(:info, 0, 0)</em>
+    <em class=listener>this is info</em>
+
+    Forth:
+    ><em class=typing>'info "this is info" 0 0 set-channel-property</em>
+    <em class=listener>'( '( 'info . this is info ) )</em>
+    ><em class=typing>'info 0 0 channel-property</em>
+    <em class=listener>this is info</em>
+</pre>
+The property list is convenient because the associated information goes away automatically
+when the channel is closed, and the property lists are saved by <a href="extsnd.html#savestate">save-state</a>.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -9032,9 +9090,20 @@ This is similar to <a href="#mussoundloopinfo">mus-sound-loop-info</a> (but it's
 <code><a class=def name="soundproperties">sound-properties</a> <em class=narg>snd</em></code>
 </td></tr><tr><td></td><td>
 This is a property list associated with the given sound.  It is set to '() at the time a sound is opened.  The accessor
-<a href="sndscm.html#soundproperty">sound-property</a> is provided in extensions.scm.  There are several
+is <a href="#soundproperty">sound-property</a>.  There are several
 examples of using it in snd-motif.scm and autosave.scm.
 </td></tr><tr><td colspan=2 height=18></td></tr>
+
+
+<!-- sound-property -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<code><a class=def name="soundproperty">sound-property</a> key snd</code>
+</td></tr><tr><td></td><td>
+sound-property provides access to a sound's <a href="#soundproperties">property list</a>.
+These properties are saved when Snd's state is saved (via <a href="extsnd.html#savestate">save-state</a>
+or the Options:Save session menu).  To omit a given property at that time, add its name (a symbol) to
+the property 'save-state-ignore (a list of symbols); see 'inset-envelope in extensions.scm.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- sounds -->
@@ -10540,6 +10609,18 @@ Each entry in a channel's edit history list has a property list (similar to the
 <a href="#channelproperties">channel-properties</a> list).  If you have information that changes with the
 edit lists, these property lists might simplify the access code.
 </td></tr><tr><td></td><td></td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+<!-- edit-property -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<code><a class=def name="editproperty">edit-property</a> key snd chn edpos</code>
+</td></tr><tr><td></td><td>
+edit-property returns the value associated with 'key' in the given channel's edit history list
+<a href="extsnd.html#editproperties">property list</a> at edit location 'edpos'.  To add or change a property, use set! with this procedure
+as in <a href="#channelproperty">channel-property</a>.
+The edit list property list is convenient because the associated information goes away automatically
+when the given edit is no longer accessible.
+</td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- edits -->
@@ -13362,7 +13443,7 @@ make-bezier-1 in <a href="sndscm.html#musglyphs">musglyphs.scm</a> can be used t
 <code><a class=def name="drawstring">draw-string</a> text x0 y0 <em class=narg>snd chn context</em></code>
 </td></tr><tr><td></td><td>
 This draws a string ('text') in the current font and foreground color starting at ('x0 y0') in the specified context.
-The next procedures use the channel-property list (extensions.scm) to maintain a list
+The next procedures use the channel-property list to maintain a list
 of sample-oriented comments, displaying a given comment if its associated sample is
 currently in the time-domain graph:
 
@@ -13370,13 +13451,13 @@ currently in the time-domain graph:
 (define* (<a name="addcomment">add-comment</a> sample comment snd1 chn1)
   (let* ((snd (or snd1 (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>)))
 	 (chn (or chn1 (<a class=quiet href="#selectedchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedchannel_tip)">selected-channel</a>)))
-	 (old-comments (or (<a class=quiet href="sndscm.html#channelproperty" onmouseout="UnTip()" onmouseover="Tip(sndscm_channelproperty_tip)">channel-property</a> 'comments snd chn) '())))
-    (set! (<a class=quiet href="sndscm.html#channelproperty" onmouseout="UnTip()" onmouseover="Tip(sndscm_channelproperty_tip)">channel-property</a> 'comments snd chn)
+	 (old-comments (or (<a class=quiet href="#channelproperty" onmouseout="UnTip()" onmouseover="Tip(sndscm_channelproperty_tip)">channel-property</a> 'comments snd chn) '())))
+    (set! (<a class=quiet href="#channelproperty" onmouseout="UnTip()" onmouseover="Tip(sndscm_channelproperty_tip)">channel-property</a> 'comments snd chn)
 	  (cons (list sample comment)
 		old-comments))))
 	  
 (define (show-comments snd chn)
-  (let ((comments (or (<a class=quiet href="sndscm.html#channelproperty" onmouseout="UnTip()" onmouseover="Tip(sndscm_channelproperty_tip)">channel-property</a> 'comments snd chn) '())))
+  (let ((comments (or (<a class=quiet href="#channelproperty" onmouseout="UnTip()" onmouseover="Tip(sndscm_channelproperty_tip)">channel-property</a> 'comments snd chn) '())))
     (for-each
      (lambda (<a class=quiet href="#comment" onmouseout="UnTip()" onmouseover="Tip(extsnd_comment_tip)">comment</a>)
        (let* ((samp (car comment))

@@ -2942,6 +2942,19 @@ static XEN g_set_mix_properties(XEN n, XEN val)
 }
 
 
+static XEN g_mix_property(XEN key, XEN id) 
+{
+  #define H_mix_property "(" S_mix_property " key id) returns the value associated with 'key' in the given mix's property list, or #f"
+  return(XEN_ASSOC_REF(key, g_mix_properties(id)));
+}
+
+static XEN g_set_mix_property(XEN key, XEN id, XEN val) 
+{
+  g_set_mix_properties(id, XEN_ASSOC_SET(key, val, g_mix_properties(id)));
+  return(val);
+}
+
+
 static XEN g_mix_home(XEN n) 
 {
   #define H_mix_home "(" S_mix_home " id): list of sound index and channel for the output of the mix, and the \
@@ -3845,6 +3858,8 @@ XEN_NARGIFY_1(g_mix_to_integer_w, g_mix_to_integer)
 XEN_NARGIFY_1(g_mix_home_w, g_mix_home)
 XEN_NARGIFY_1(g_mix_properties_w, g_mix_properties)
 XEN_NARGIFY_2(g_set_mix_properties_w, g_set_mix_properties)
+XEN_NARGIFY_2(g_mix_property_w, g_mix_property)
+XEN_NARGIFY_3(g_set_mix_property_w, g_set_mix_property)
 XEN_ARGIFY_1(g_mix_color_w, g_mix_color)
 XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
 
@@ -3895,6 +3910,8 @@ XEN_NARGIFY_1(g_set_mix_dialog_mix_w, g_set_mix_dialog_mix)
 #define g_mix_home_w g_mix_home
 #define g_mix_properties_w g_mix_properties
 #define g_set_mix_properties_w g_set_mix_properties
+#define g_mix_property_w g_mix_property
+#define g_set_mix_property_w g_set_mix_property
 #define g_mix_color_w g_mix_color
 #define g_set_mix_color_w g_set_mix_color
 
@@ -3969,6 +3986,7 @@ void g_init_mix(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_name,       g_mix_name_w,       H_mix_name,       S_setB S_mix_name,       g_set_mix_name_w,       1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_sync,       g_mix_sync_w,       H_mix_sync,       S_setB S_mix_sync,       g_set_mix_sync_w,       1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_properties, g_mix_properties_w, H_mix_properties, S_setB S_mix_properties, g_set_mix_properties_w, 1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_property,   g_mix_property_w,   H_mix_property,   S_setB S_mix_property,   g_set_mix_property_w,   2, 0, 3, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_y,      g_mix_tag_y_w,      H_mix_tag_y,      S_setB S_mix_tag_y,      g_set_mix_tag_y_w,      1, 0, 2, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_width,  g_mix_tag_width_w,  H_mix_tag_width,  S_setB S_mix_tag_width,  g_set_mix_tag_width_w,  0, 0, 1, 0);

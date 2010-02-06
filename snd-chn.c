@@ -5890,7 +5890,7 @@ void draw_inset_line_cursor(chan_info *cp, axis_context *ax)
 {
   /* we've checked that with_inset_graph is #t and cp has the pointer */
 #if USE_CAIRO
-  save_cursor_pix(cp, ax, 2, ap->y_axis_y0 - ap->y_axis_y1, cp->cx, ap->y_axis_y1);
+  save_cursor_pix(cp, ax, 2, cp->axis->y_axis_y0 - cp->axis->y_axis_y1, cp->cx, cp->axis->y_axis_y1);
 #endif
 
   if ((cp->inset_graph->graphing) &&
@@ -8598,6 +8598,25 @@ static XEN g_set_channel_properties(XEN on, XEN snd, XEN chn_n)
 WITH_THREE_SETTER_ARGS(g_set_channel_properties_reversed, g_set_channel_properties)
 
 
+static XEN g_channel_property(XEN key, XEN snd, XEN chn) 
+{
+  #define H_channel_property "(" S_channel_property " key snd chn) returns the value associated with 'key' in the given channel's property list, or #f"
+  return(XEN_ASSOC_REF(key, g_channel_properties(snd, chn)));
+}
+
+#if HAVE_S7
+static XEN g_set_channel_property(XEN val, XEN key, XEN snd, XEN chn) 
+#else
+static XEN g_set_channel_property(XEN key, XEN val, XEN snd, XEN chn) 
+#endif
+{
+  g_set_channel_properties(XEN_ASSOC_SET(key, val, g_channel_properties(snd, chn)), snd, chn);
+  return(val);
+}
+
+WITH_FOUR_SETTER_ARGS(g_set_channel_property_reversed, g_set_channel_property)
+
+
 
 static XEN g_edit_properties(XEN snd, XEN chn_n, XEN pos) 
 {
@@ -8644,6 +8663,38 @@ static XEN g_set_edit_properties(XEN on, XEN snd, XEN chn_n, XEN pos)
 
 WITH_FOUR_SETTER_ARGS(g_set_edit_properties_reversed, g_set_edit_properties)
 
+
+static XEN g_edit_property(XEN key, XEN snd, XEN chn, XEN pos) 
+{
+  #define H_edit_property "(" S_edit_property " key snd chn pos) returns the value associated with 'key' in the given edit's property list, or #f"
+  return(XEN_ASSOC_REF(key, g_edit_properties(snd, chn, pos)));
+}
+
+static XEN g_set_edit_property(XEN key, XEN val, XEN snd, XEN chn, XEN pos) 
+{
+  g_set_edit_properties(XEN_ASSOC_SET(key, val, g_edit_properties(snd, chn, pos)), snd, chn, pos);
+  return(val);
+}
+
+
+#if HAVE_S7
+static XEN g_set_edit_property_reversed(s7_scheme *sc, s7_pointer args)
+{
+  int len;
+  len = XEN_LIST_LENGTH(args);
+
+  if (len == 2)
+    return(g_set_edit_property(XEN_LIST_REF(args, 0), XEN_LIST_REF(args, 1), XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
+
+  if (len == 3)
+    return(g_set_edit_property(XEN_LIST_REF(args, 0), XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 1), XEN_UNDEFINED, XEN_UNDEFINED)); 
+
+  if (len == 4)
+    return(g_set_edit_property(XEN_LIST_REF(args, 0), XEN_LIST_REF(args, 3), XEN_LIST_REF(args, 1), XEN_LIST_REF(args, 2), XEN_UNDEFINED)); 
+
+  return(g_set_edit_property(XEN_LIST_REF(args, 0), XEN_LIST_REF(args, 4), XEN_LIST_REF(args, 1), XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 3)));
+}
+#endif
 
 
 static XEN g_edits(XEN snd, XEN chn_n)
@@ -9108,8 +9159,12 @@ XEN_ARGIFY_2(g_right_sample_w, g_right_sample)
 XEN_ARGIFY_3(g_set_right_sample_w, g_set_right_sample)
 XEN_ARGIFY_2(g_channel_properties_w, g_channel_properties)
 XEN_ARGIFY_3(g_set_channel_properties_w, g_set_channel_properties)
+XEN_ARGIFY_3(g_channel_property_w, g_channel_property)
+XEN_ARGIFY_4(g_set_channel_property_w, g_set_channel_property)
 XEN_ARGIFY_3(g_edit_properties_w, g_edit_properties)
 XEN_ARGIFY_4(g_set_edit_properties_w, g_set_edit_properties)
+XEN_ARGIFY_4(g_edit_property_w, g_edit_property)
+XEN_ARGIFY_5(g_set_edit_property_w, g_set_edit_property)
 XEN_ARGIFY_2(g_max_transform_peaks_w, g_max_transform_peaks)
 XEN_ARGIFY_3(g_set_max_transform_peaks_w, g_set_max_transform_peaks)
 XEN_ARGIFY_2(g_show_y_zero_w, g_show_y_zero)
@@ -9257,8 +9312,12 @@ XEN_NARGIFY_1(g_set_with_gl_w, g_set_with_gl)
 #define g_set_right_sample_w g_set_right_sample
 #define g_channel_properties_w g_channel_properties
 #define g_set_channel_properties_w g_set_channel_properties
+#define g_channel_property_w g_channel_property
+#define g_set_channel_property_w g_set_channel_property
 #define g_edit_properties_w g_edit_properties
 #define g_set_edit_properties_w g_set_edit_properties
+#define g_edit_property_w g_edit_property
+#define g_set_edit_property_w g_set_edit_property
 #define g_max_transform_peaks_w g_max_transform_peaks
 #define g_set_max_transform_peaks_w g_set_max_transform_peaks
 #define g_show_y_zero_w g_show_y_zero
@@ -9455,8 +9514,14 @@ void g_init_chn(void)
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_channel_properties, g_channel_properties_w, H_channel_properties,
 					    S_setB S_channel_properties, g_set_channel_properties_w, g_set_channel_properties_reversed, 0, 2, 1, 2);
   
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_channel_property, g_channel_property_w, H_channel_property,
+					    S_setB S_channel_property, g_set_channel_property_w, g_set_channel_property_reversed, 1, 2, 2, 2);
+  
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_edit_properties, g_edit_properties_w, H_edit_properties,
 					    S_setB S_edit_properties, g_set_edit_properties_w, g_set_edit_properties_reversed, 0, 3, 1, 3);
+  
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_edit_property, g_edit_property_w, H_edit_property,
+					    S_setB S_edit_property, g_set_edit_property_w, g_set_edit_property_reversed, 1, 3, 2, 3);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_max_transform_peaks, g_max_transform_peaks_w, H_max_transform_peaks,
 					    S_setB S_max_transform_peaks, g_set_max_transform_peaks_w, g_set_max_transform_peaks_reversed, 0, 2, 1, 2);

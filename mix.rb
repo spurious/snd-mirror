@@ -144,38 +144,38 @@ Reset $mix_release_hook to cancel.")
   #
   # === Mix Property ===
   #
-  add_help(:mix_property,
-           "mix_property(id, key) \
-returns the value associated with KEY in the given mix's property list, or false.")
-  def mix_property(id, key)
-    Snd.raise(:no_such_mix, id) unless mix?(id)
-    if (data = mix_properties(id)) and (res = data.assoc(key))
-      if (val = res.cdr).length == 1
-        val.car
-      else
-        val
-      end
-    else
-      false
-    end
-  end
-
-  add_help(:set_mix_property,
-           "set_mix_property(id, key, val) \
-sets the value VAL to KEY in the given mix's property list.")
-  def set_mix_property(id, key, val)
-    Snd.raise(:no_such_mix, id) unless mix?(id)
-    if data = mix_properties(id)
-      if res = data.assoc(key)
-        res.cdr = val
-      else
-        data.push([key, val])
-      end
-    else                        # new list
-      set_mix_properties(id, [[key, val]])
-    end
-    val
-  end
+#  add_help(:mix_property,
+#           "mix_property(id, key) \
+#returns the value associated with KEY in the given mix's property list, or false.")
+#  def mix_property(id, key)
+#    Snd.raise(:no_such_mix, id) unless mix?(id)
+#    if (data = mix_properties(id)) and (res = data.assoc(key))
+#      if (val = res.cdr).length == 1
+#        val.car
+#      else
+#        val
+#      end
+#    else
+#      false
+#    end
+#  end
+#
+#  add_help(:set_mix_property,
+#           "set_mix_property(id, key, val) \
+#sets the value VAL to KEY in the given mix's property list.")
+#  def set_mix_property(id, key, val)
+#    Snd.raise(:no_such_mix, id) unless mix?(id)
+#    if data = mix_properties(id)
+#      if res = data.assoc(key)
+#        res.cdr = val
+#      else
+#        data.push([key, val])
+#      end
+#    else                        # new list
+#      set_mix_properties(id, [[key, val]])
+#    end
+#    val
+#  end
 
   def mix_click_sets_amp(id)
     unless mix_property(id, :zero)

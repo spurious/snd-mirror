@@ -2929,6 +2929,17 @@ static XEN g_set_mark_properties(XEN n, XEN val)
 }
 
 
+static XEN g_mark_property(XEN key, XEN id) 
+{
+  #define H_mark_property "(" S_mark_property " key id) returns the value associated with 'key' in the given mark's property list, or #f"
+  return(XEN_ASSOC_REF(key, g_mark_properties(id)));
+}
+
+static XEN g_set_mark_property(XEN key, XEN id, XEN val) 
+{
+  g_set_mark_properties(id, XEN_ASSOC_SET(key, val, g_mark_properties(id)));
+  return(val);
+}
 
 
 
@@ -2958,6 +2969,8 @@ XEN_NARGIFY_1(g_integer_to_mark_w, g_integer_to_mark)
 XEN_NARGIFY_1(g_mark_to_integer_w, g_mark_to_integer)
 XEN_NARGIFY_1(g_mark_properties_w, g_mark_properties)
 XEN_NARGIFY_2(g_set_mark_properties_w, g_set_mark_properties)
+XEN_NARGIFY_2(g_mark_property_w, g_mark_property)
+XEN_NARGIFY_3(g_set_mark_property_w, g_set_mark_property)
 #if MUS_DEBUGGING && HAVE_SCHEME
   XEN_NARGIFY_3(g_test_control_drag_mark_w, g_test_control_drag_mark)
 #endif
@@ -2987,6 +3000,8 @@ XEN_NARGIFY_2(g_set_mark_properties_w, g_set_mark_properties)
 #define g_mark_to_integer_w g_mark_to_integer
 #define g_mark_properties_w g_mark_properties
 #define g_set_mark_properties_w g_set_mark_properties
+#define g_mark_property_w g_mark_property
+#define g_set_mark_property_w g_set_mark_property
 #if MUS_DEBUGGING && HAVE_SCHEME
   #define g_test_control_drag_mark_w g_test_control_drag_mark
 #endif
@@ -3034,6 +3049,9 @@ void g_init_marks(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_properties, g_mark_properties_w, H_mark_properties, 
 				   S_setB S_mark_properties, g_set_mark_properties_w, 1, 0, 2, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mark_property, g_mark_property_w, H_mark_property, 
+				   S_setB S_mark_property, g_set_mark_property_w, 2, 0, 3, 0);
 
   #define H_draw_mark_hook S_draw_mark_hook " (mark-id): called before a mark is drawn (in XOR mode). \
 If the hook returns " PROC_TRUE ", the mark is not drawn."

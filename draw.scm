@@ -1,7 +1,6 @@
 ;;; examples of extensions to Snd's graphics
 
 (provide 'snd-draw.scm)
-(if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))
 
 
 (define (overlay-rms-env snd chn)

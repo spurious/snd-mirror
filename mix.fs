@@ -126,19 +126,19 @@ Resets mix-release-hook to cancel."
 previous
 
 \ --- Mix Property ---
-: mix-property ( id key -- val )
-  doc" Returns the value associated with KEY in the given mix's property list, or #f."
-  { id key }
-  \ mix? returns mix id if mix id is active, but mix id 0 means false in Forth.
-  id mix? false? if 'no-such-mix #( get-func-name id ) fth-throw then
-  id mix-properties key array-assoc-ref
-;
-: set-mix-property ( id key val -- )
-  doc" Sets VAL to KEY in the given mix's property list."
-  { id key val }
-  id mix? false? if 'no-such-mix #( get-func-name id ) fth-throw then
-  id dup mix-properties key val array-assoc-set! set-mix-properties drop
-;
+\ : mix-property ( id key -- val )
+\   doc" Returns the value associated with KEY in the given mix's property list, or #f."
+\   { id key }
+\   \ mix? returns mix id if mix id is active, but mix id 0 means false in Forth.
+\   id mix? false? if 'no-such-mix #( get-func-name id ) fth-throw then
+\   id mix-properties key array-assoc-ref
+\ ;
+\ : set-mix-property ( id key val -- )
+\   doc" Sets VAL to KEY in the given mix's property list."
+\   { id key val }
+\   id mix? false? if 'no-such-mix #( get-func-name id ) fth-throw then
+\   id dup mix-properties key val array-assoc-set! set-mix-properties drop
+\ ;
 
 : mix-click-sets-amp <{ id -- #t }>
   id :zero mix-property not if

@@ -2052,7 +2052,7 @@
 		       'blackman5-window 'blackman6-window 'blackman7-window 'blackman8-window 'blackman9-window 'blackman10-window 
 		       'bohman-window 'bold-peaks-font 'bomb 'c-g! 'c-g? 'cauchy-window 'mlt-sine-window
 		       'cepstrum 'change-samples-with-origin 'channel->vct 'channel-amp-envs 'channel-data
-		       'channel-properties 'channel-style 'channel-widgets 'channels 'channels-combined
+		       'channel-properties 'channel-property 'channel-style 'channel-widgets 'channels 'channels-combined
 		       'channels-separate 'channels-superimposed 'chans 'clear-array 'clear-listener
 		       'clear-minibuffer 'clear-sincs 'clip-hook 'clipping 'clm-channel 'clm-print
 		       'clm-table-size 'clm-default-frequency 'close-hook 'close-sound 'color->list
@@ -2132,13 +2132,13 @@
 		       'make-triangle-wave 'make-two-pole 'make-two-zero
 		       'make-variable-graph 'make-vct 'make-wave-train 
 		       'map-chan 'map-channel 'mark-click-hook 'mark-color 'mark-context
-		       'mark-drag-hook 'mark-drag-triangle-hook 'mark-home 'mark-hook 'mark-name 'mark-properties
+		       'mark-drag-hook 'mark-drag-triangle-hook 'mark-home 'mark-hook 'mark-name 'mark-properties 'mark-property
 		       'mark-sample 'mark-sync 'mark-sync-max 'mark-tag-height 'mark-tag-width
 		       'mark? 'marks 'max-regions 'max-transform-peaks 'max-virtual-ptrees 'maxamp
 		       'maxamp-position 'menu-widgets 'min-dB 'minibuffer-history-length 'mix
 		       'mix-amp 'mix-amp-env 'mix-click-hook 'mix-color
 		       'mix-dialog-mix 'mix-drag-hook 'mix-file-dialog 'mix-length 'mix-home
-		       'mix-name 'mix-position 'mix-properties 'mix-region 'mix-release-hook 'mix-sync 'mix-sync-max
+		       'mix-name 'mix-position 'mix-properties 'mix-property 'mix-region 'mix-release-hook 'mix-sync 'mix-sync-max
 		       'mix-sampler? 'mix-selection 'mix-speed 'mix-tag-height
 		       'mix-tag-width 'mix-tag-y
 		       'mix-vct 'mix-waveform-height 'mix? 'mixer 'mixer*
@@ -2233,7 +2233,7 @@
 		       'sound-data-set! 'sound-data-scale! 'sound-data-fill! 'sound-data? 
 		       'sound-data-multiply! 'sound-data-add! 'sound-data-offset! 'sound-data* 'sound-data+ 'sound-data-copy 'sound-data-reverse!
 		       'sound-file-extensions 'sound-file? 'sound-files-in-directory
-		       'sound-loop-info 'sound-properties 'sound-widgets 'sound? 'soundfont-info
+		       'sound-loop-info 'sound-properties 'sound-property 'sound-widgets 'sound? 'soundfont-info
 		       'sounds 'spectrum-end 'spectro-hop 'spectrum-start 'spectro-x-angle
 		       'spectro-x-scale 'spectro-y-angle 'spectro-y-scale 'spectro-z-angle 'spectro-z-scale
 		       'spectrum 'speed-control 'speed-control-as-float 'speed-control-as-ratio 'speed-control-as-semitone
@@ -64918,7 +64918,7 @@ EDITS: 1
 		     channel-widgets channels chans peaks-font bold-peaks-font close-sound
 		     color-cutoff color-orientation-dialog colormap-ref add-colormap delete-colormap colormap-size colormap-name colormap?
 		     color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
-		     contrast-control? convolve-selection-with convolve-with channel-properties controls->channel
+		     contrast-control? convolve-selection-with convolve-with channel-properties channel-property controls->channel
 		     amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 		     reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
 		     auto-update-interval count-matches current-font cursor cursor-color with-tracking-cursor cursor-size
@@ -64941,11 +64941,11 @@ EDITS: 1
 		     insert-samples-with-origin insert-selection insert-silence insert-sound just-sounds key key-binding
 		     left-sample listener-color listener-font listener-prompt listener-selection listener-text-color
 		     main-widgets make-color make-graph-data make-mix-sampler make-player make-region
-		     make-region-sampler make-sampler map-chan mark-color mark-name mark-properties
+		     make-region-sampler make-sampler map-chan mark-color mark-name mark-properties mark-property
 		     mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions max-virtual-ptrees
 		     maxamp maxamp-position menu-widgets minibuffer-history-length min-dB log-freq-start mix mixes mix-amp mix-amp-env
 		     mix-color mix-length mix? view-mixes-dialog mix-position
-		     mix-dialog-mix mix-name mix-sync-max mix-sync mix-properties
+		     mix-dialog-mix mix-name mix-sync-max mix-sync mix-properties mix-property 
 		     mix-region mix-sampler?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width mark-tag-height mark-tag-width
 		     mix-tag-y mix-vct mix-waveform-height time-graph-style lisp-graph-style transform-graph-style
 					;new-sound in add-watcher
@@ -64976,7 +64976,7 @@ EDITS: 1
 		     spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
 		     speed-control speed-control-style speed-control-tones squelch-update srate src-sound src-selection
 					;start-playing 
-		     start-progress-report stop-player stop-playing swap-channels syncd-marks sync sync-max sound-properties temp-dir
+		     start-progress-report stop-player stop-playing swap-channels syncd-marks sync sync-max sound-properties sound-property temp-dir
 		     text-focus-color tiny-font region-sampler? transform-dialog transform-sample
 		     transform->vct transform-frames transform-type trap-segfault with-file-monitor optimization unbind-key undo
 		     update-transform-graph update-time-graph update-lisp-graph update-sound clm-table-size clm-default-frequency
@@ -65063,7 +65063,7 @@ EDITS: 1
 			 color-cutoff color-inverted color-scale contrast-control contrast-control-amp 
 			 amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 			 reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
-			 contrast-control? auto-update-interval current-font cursor cursor-color channel-properties
+			 contrast-control? auto-update-interval current-font cursor cursor-color channel-properties channel-property 
 			 with-tracking-cursor cursor-size cursor-style tracking-cursor-style dac-combines-channels dac-size clipping data-color
 			 default-output-chans default-output-data-format default-output-srate default-output-header-type dot-size
 			 enved-envelope enved-base enved-clip? enved-in-dB enved-style enved-power
@@ -65074,8 +65074,8 @@ EDITS: 1
 			 filter-control-in-hz filter-control-order filter-control-waveform-color filter-control?  foreground-color
 			 graph-color graph-cursor graph-style lisp-graph? graphs-horizontal highlight-color
 			 just-sounds left-sample listener-color listener-font listener-prompt listener-text-color mark-color
-			 mark-name mark-properties mark-sample mark-sync max-transform-peaks max-regions min-dB log-freq-start mix-amp
-			 mix-amp-env mix-color mix-name mix-position mix-sync mix-properties  max-virtual-ptrees
+			 mark-name mark-properties mark-property mark-sample mark-sync max-transform-peaks max-regions min-dB log-freq-start mix-amp
+			 mix-amp-env mix-color mix-name mix-position mix-sync mix-properties mix-property max-virtual-ptrees
 			 mix-speed mix-tag-height mix-tag-width mix-tag-y mark-tag-width mark-tag-height 
 			 mix-waveform-height transform-normalization open-file-dialog-directory
 			 position-color view-files-sort print-length pushed-button-color
@@ -65088,7 +65088,7 @@ EDITS: 1
 			 show-transform-peaks show-indices show-marks show-mix-waveforms show-selection-transform show-listener
 			 show-y-zero show-grid show-sonogram-cursor sinc-width spectrum-end spectro-hop spectrum-start spectro-x-angle  grid-density
 			 spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
-			 speed-control-style speed-control-tones squelch-update sync sound-properties temp-dir text-focus-color tiny-font y-bounds
+			 speed-control-style speed-control-tones squelch-update sync sound-properties sound-property temp-dir text-focus-color tiny-font y-bounds
 			 transform-type trap-segfault with-file-monitor optimization with-verbose-cursor with-inset-graph with-pointer-focus wavelet-type x-bounds
 			 time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style 
 			 with-relative-panes  window-x window-y window-width window-height mix-dialog-mix beats-per-measure
@@ -65258,7 +65258,7 @@ EDITS: 1
 			  progress-report read-only reset-controls restore-controls reverb-control-decay reverb-control-feedback
 			  reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control? save-controls
 			  select-sound short-file-name sound-loop-info soundfont-info speed-control speed-control-style
-			  speed-control-tones srate channel-style start-progress-report sync sound-properties swap-channels))
+			  speed-control-tones srate channel-style start-progress-report sync sound-properties sound-property swap-channels))
 	  
 	  (for-each (lambda (arg)
 		      (for-each (lambda (n)
@@ -65576,7 +65576,7 @@ EDITS: 1
 				   (not (eq? tag 'no-such-sound)))
 			      (snd-display ";~D: chn (no snd) procs ~A: ~A" ctr n tag))
 			  (set! ctr (+ ctr 1))))
-		      (list channel-widgets count-matches cursor channel-properties
+		      (list channel-widgets count-matches cursor channel-properties channel-property 
 			    with-tracking-cursor cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size
 			    draw-dots draw-lines edit-fragment edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency
 			    fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window transform-graph? find-channel
@@ -65604,7 +65604,7 @@ EDITS: 1
 			  (if (not (eq? tag 'wrong-type-arg))
 			      (snd-display ";~D: chn (no chn) procs ~A: ~A" ctr n tag))
 			  (set! ctr (+ ctr 1))))
-		      (list channel-widgets count-matches cursor channel-properties
+		      (list channel-widgets count-matches cursor channel-properties channel-property 
 			    cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size draw-dots draw-lines
 			    edit-fragment edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases
 			    transform-size transform-graph-type fft-window transform-graph? find-channel
@@ -65714,7 +65714,7 @@ EDITS: 1
 			    spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform->vct
 			    transform-frames transform-type update-transform-graph update-time-graph update-lisp-graph
 			    wavelet-type time-graph?  time-graph-type wavo-hop wavo-trace x-bounds x-position-slider x-axis-label
-			    x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad channel-properties))
+			    x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad channel-properties channel-property ))
 	    (close-sound index))
 	  
 	  (let ((ctr 0)

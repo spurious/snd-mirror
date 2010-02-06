@@ -3748,11 +3748,30 @@ static XEN g_sound_properties(XEN snd)
 
 static XEN g_set_sound_properties(XEN on, XEN snd) 
 {
-  /* XEN_ASSERT_TYPE(XEN_LIST_P(on), on, XEN_ARG_1, S_setB S_sound_properties, "a property list"); */
   return(sound_set(snd, on, SP_PROPERTIES, S_setB S_sound_properties));
 }
 
 WITH_TWO_SETTER_ARGS(g_set_sound_properties_reversed, g_set_sound_properties)
+
+
+static XEN g_sound_property(XEN key, XEN snd) 
+{
+  #define H_sound_property "(" S_sound_property " key snd) returns the value associated with 'key' in the given sound's property list, or #f"
+  return(XEN_ASSOC_REF(key, g_sound_properties(snd)));
+}
+
+#if HAVE_S7
+static XEN g_set_sound_property(XEN val, XEN key, XEN snd) 
+#else
+static XEN g_set_sound_property(XEN key, XEN val, XEN snd) 
+#endif
+{
+  g_set_sound_properties(XEN_ASSOC_SET(key, val, g_sound_properties(snd)), snd);
+  return(val);
+}
+
+WITH_THREE_SETTER_ARGS(g_set_sound_property_reversed, g_set_sound_property)
+
 
 
 static XEN g_channel_style(XEN snd) 
@@ -6008,6 +6027,8 @@ XEN_ARGIFY_2(g_set_sync_w, g_set_sync)
 XEN_NARGIFY_0(g_sync_max_w, g_sync_max)
 XEN_ARGIFY_1(g_sound_properties_w, g_sound_properties)
 XEN_ARGIFY_2(g_set_sound_properties_w, g_set_sound_properties)
+XEN_ARGIFY_2(g_sound_property_w, g_sound_property)
+XEN_ARGIFY_3(g_set_sound_property_w, g_set_sound_property)
 XEN_ARGIFY_1(g_channel_style_w, g_channel_style)
 XEN_ARGIFY_2(g_set_channel_style_w, g_set_channel_style)
 XEN_ARGIFY_1(g_read_only_w, g_read_only)
@@ -6130,6 +6151,8 @@ XEN_NARGIFY_1(g_sound_to_integer_w, g_sound_to_integer)
 #define g_sync_max_w g_sync_max
 #define g_sound_properties_w g_sound_properties
 #define g_set_sound_properties_w g_set_sound_properties
+#define g_sound_property_w g_sound_property
+#define g_set_sound_property_w g_set_sound_property
 #define g_channel_style_w g_channel_style
 #define g_set_channel_style_w g_set_channel_style
 #define g_read_only_w g_read_only
@@ -6289,6 +6312,9 @@ If it returns " PROC_TRUE ", the usual informative minibuffer babbling is squelc
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sound_properties, g_sound_properties_w, H_sound_properties,
 					    S_setB S_sound_properties, g_set_sound_properties_w, g_set_sound_properties_reversed, 0, 1, 1, 1);
+  
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_sound_property, g_sound_property_w, H_sound_property,
+					    S_setB S_sound_property, g_set_sound_property_w, g_set_sound_property_reversed, 1, 1, 2, 1);
   
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_channel_style, g_channel_style_w, H_channel_style,
 					    S_setB S_channel_style, g_set_channel_style_w, g_set_channel_style_reversed, 0, 1, 1, 1);

@@ -2042,4 +2042,4 @@ void g_init_axis(void)
 
 #endif
 /* end no gui (covers entire xen section) */
-
+/*   (if something is moved here, remember to add stubs to snd-nogui.c) */

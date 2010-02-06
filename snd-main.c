@@ -433,7 +433,15 @@ static void save_options(FILE *fd)
   char *locale = NULL;
 
 #if HAVE_SETLOCALE
-  locale = mus_strdup(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
+  locale = mus_strdup(setlocale(LC_NUMERIC, "C")); 
+  /* must use decimal point in floats since Scheme assumes that format */
+
+  /* TODO: since there's no built-in setlocale at ext lang level (scheme anyway), 
+   *        how to get the German translations?
+   * TODO: why does setenv LANG de_DE change the colors [gtk?] (but no other LANG does)? Why doesn't the NLS crap work?
+   * PERHAPS: add load dir to search list?
+   * TODO: move to C: sound|channel|mix|mark|edit-property and fixup lingering loads thereof
+   */
 #endif
 
   fprintf(fd, "\n%s Snd %s (%s) options saved %s\n", XEN_COMMENT_STRING, SND_VERSION, SND_DATE, snd_local_time());
@@ -737,10 +745,8 @@ static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 {
   XEN ignore_list;
   int old_print_length, old_vct_print_length;
-#if HAVE_S7
   int old_s7_print_length;
   old_s7_print_length = s7_integer(s7_name_to_value(s7, "*vector-print-length*"));
-#endif
   
   old_vct_print_length = mus_vct_print_length();
   old_print_length = print_length(ss);
@@ -761,9 +767,7 @@ static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 	    fprintf(fd, "%s(set! (%s sfile %d) \'%s)\n", white_space, S_channel_properties, chan, temp = XEN_AS_STRING(property_list));
 	  else fprintf(fd, "%s(set! (%s sfile %d %d) \'%s)\n", white_space, S_edit_properties, chan, edpos, temp = XEN_AS_STRING(property_list));
 	}
-#if HAVE_S7
       if (temp) free(temp);
-#endif
     }
   else
     {
@@ -789,9 +793,7 @@ static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 		fprintf(fd, "%s(set! (%s sfile %d) \'%s)\n", white_space, S_channel_properties, chan, temp = XEN_AS_STRING(new_properties));
 	      else fprintf(fd, "%s(set! (%s sfile %d %d) \'%s)\n", white_space, S_edit_properties, chan, edpos, temp = XEN_AS_STRING(new_properties));
 	    }
-#if HAVE_S7
 	  if (temp) free(temp);
-#endif
 	}
       snd_unprotect_at(gc_loc);
     }
@@ -799,9 +801,7 @@ static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
   /* restore the various print lengths */
   set_print_length(old_print_length);
   mus_vct_set_print_length(old_vct_print_length);
-#if HAVE_S7
   s7_symbol_set_value(s7, s7_make_symbol(s7, "*vector-print-length*"), s7_make_integer(s7, old_s7_print_length));
-#endif
 }
 #endif
 

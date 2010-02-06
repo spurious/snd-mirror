@@ -497,6 +497,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+8-Feb:   moved sound|channel|mix|mark|edit-property to C.\n\
 23-Jan:  The rest of the Guile-dependent files have been removed.\n\
            This includes pd-*, rt-*, and the --with-snd-as-pd-external\n\
             --with-hobbit, and --with-rt configuration switches.\n\
@@ -509,7 +510,6 @@ void about_snd_help(void)
 14-Dec:  peak-env support moved to C, added peak-env-dir, removed peak-env.*,\n\
            peak-env-info, read-peak-env-info-file, and write-peak-env-info-file.\n\
 11-Dec:  removed midi.c, sndrecord.c, SGI support, mus-audio-mixer-*, and Alsa < 1.0 support.\n\
-4-Dec:   portaudio support.\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",

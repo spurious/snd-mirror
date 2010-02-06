@@ -244,9 +244,6 @@ C, Scheme, Ruby, Forth, m4, Common Lisp, Emacs Lisp, javascript,
 Fortran, expect, and postscript (altogether about 710,000 lines).
 
 
-To get the German version at run-time, (setlocale LC_ALL "de_DE").
-
-
 ----------------------------------------------------------------
 
 If you hit a bug, don't just sit there weeping -- send me

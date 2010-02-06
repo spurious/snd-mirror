@@ -92,27 +92,27 @@ require examp
 ;
 
 \ --- Mark Properties ---
-: mark-properties ( id -- props )
-  doc" Returns mark ID's entire property list."
-  { id }
-  id mark? unless 'no-such-mark #( get-func-name id ) fth-throw then
-  :mark-property id object-id property-ref
-;
-: set-mark-properties ( id props -- )
-  { id props }
-  id mark? unless 'no-such-mark #( get-func-name id ) fth-throw then
-  :mark-property id object-id props property-set!
-;
-: mark-property ( id key -- val )
-  doc" Returns the value associated with KEY in the given mark's property list, or #f."
-  { id key }
-  id mark-properties key list-assoc-ref
-;
-: set-mark-property ( id key val -- )
-  doc" Sets VAL to KEY in the given mark's property list."
-  { id key val }
-  id dup mark-properties key val list-assoc-set! set-mark-properties
-;
+\ : mark-properties ( id -- props )
+\   doc" Returns mark ID's entire property list."
+\   { id }
+\   id mark? unless 'no-such-mark #( get-func-name id ) fth-throw then
+\   :mark-property id object-id property-ref
+\ ;
+\ : set-mark-properties ( id props -- )
+\   { id props }
+\   id mark? unless 'no-such-mark #( get-func-name id ) fth-throw then
+\   :mark-property id object-id props property-set!
+\ ;
+\ : mark-property ( id key -- val )
+\   doc" Returns the value associated with KEY in the given mark's property list, or #f."
+\   { id key }
+\   id mark-properties key list-assoc-ref
+\ ;
+\ : set-mark-property ( id key val -- )
+\   doc" Sets VAL to KEY in the given mark's property list."
+\   { id key val }
+\   id dup mark-properties key val list-assoc-set! set-mark-properties
+\ ;
 
 hide
 : save-mark-properties-cb <{ filename -- }>

@@ -1,6 +1,5 @@
 ;;; various generally useful Snd extensions
 
-;;; channel-property, sound-property, edit-property
 ;;; delete selected portion and smooth the splice
 ;;; mix then scale result to original peak amp
 ;;; mix with envelope
@@ -27,76 +26,6 @@
 	  (else (loop (cdr l) (cons (car l) result))))))
 
 
-;;; -------- channel-property
-
-(define channel-property
-  (make-procedure-with-setter
-       
-   (lambda (key snd chn)
-     "(channel-property key snd chn) returns the value associated with 'key' in the given channel's property list, or #f"
-
-     (let ((data (assoc key (channel-properties snd chn))))
-       (if data
-	   (cdr data)
-           #f)))
-
-   (lambda (key snd chn new-val)
-     (let ((old-val (assoc key (channel-properties snd chn))))
-       (if old-val
-	   (set-cdr! old-val new-val)
-	   (set! (channel-properties snd chn) (cons (cons key new-val) (channel-properties snd chn))))
-       new-val))))
-
-
-(define channel-sync
-  (make-procedure-with-setter
-   (lambda (snd chn) (channel-property 'sync snd chn))
-   (lambda (snd chn val) (set! (channel-property 'sync snd chn) val))))
-
-
-
-;;; -------- sound-property
-
-(define sound-property
-  (make-procedure-with-setter
-       
-   (lambda (key snd)
-     "(sound-property key snd) returns the value associated with 'key' in the given sound's property list, or #f"
-     (let ((data (assoc key (sound-properties snd))))
-       (if data
-	   (cdr data)
-           #f)))
-
-   (lambda (key snd new-val)
-     (let ((old-val (assoc key (sound-properties snd))))
-       (if old-val
-	   (set-cdr! old-val new-val)
-	   (set! (sound-properties snd) (cons (cons key new-val) (sound-properties snd))))
-       new-val))))
-
-
-;;; -------- edit-property
-
-(define edit-property
-  (make-procedure-with-setter
-       
-   (lambda (key snd chn edpos)
-     "(edit-property key snd chn edpos) returns the value associated with 'key' in the given channel's edit history property list at edit location edpos"
-     (let ((data (assoc key (edit-properties snd chn edpos))))
-       (if data
-	   (cdr data)
-           #f)))
-
-   (lambda (key snd chn edpos new-val)
-     (let ((old-val (assoc key (edit-properties snd chn edpos))))
-       (if old-val
-	   (set-cdr! old-val new-val)
-	   (set! (edit-properties snd chn edpos) (cons (cons key new-val) (edit-properties snd chn edpos))))
-       new-val))))
-
-
-
-
 (define (all-chans)
   "(all-chans) -> two parallel lists, the first sound objects, the second channel numbers.  If we have
 two sounds open (indices 0 and 1 for example), and the second has two channels, (all-chans) returns '((#<sound 0> #<sound 1> #<sound 1>) (0 0 1))"
@@ -109,6 +38,12 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 		  (set! chnlist (cons i chnlist))))
 	      (sounds))
     (list sndlist chnlist)))
+
+
+(define channel-sync
+  (make-procedure-with-setter
+   (lambda (snd chn) (channel-property 'sync snd chn))
+   (lambda (snd chn val) (set! (channel-property 'sync snd chn) val))))
 
 
 

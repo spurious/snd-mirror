@@ -1,5 +1,6 @@
 Snd change log
 
+ 8-Feb:     moved sound|channel|mix|mark|edit-property to C.
  23-Jan:    The rest of the Guile-dependent files have been removed.
               This includes pd-*, rt-*, and the --with-snd-as-pd-external
               --with-hobbit, and --with-rt configuration switches.
