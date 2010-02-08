@@ -48,5 +48,3 @@ cp $curdir/configure $snddir
 
 chdir curdir
 wc hi
-xgettext --keyword=_ --keyword=N_ --files-from=po/POTFILES.in -o po/snd.pot
-cp po/snd.pot $snddir/po/snd.pot

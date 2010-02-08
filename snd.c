@@ -415,18 +415,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   gsl_set_error_handler(snd_gsl_error);
 #endif
 
-#if ENABLE_NLS && HAVE_GETTEXT && defined(LOCALE_DIR)
-  /* both flags needed to avoid idiotic confusion on the Sun */
-  #if HAVE_SETLOCALE
-    setlocale (LC_ALL, "");
-  #endif
-  bindtextdomain(SND_PACKAGE, LOCALE_DIR);
-  textdomain (SND_PACKAGE);
-  #if HAVE_SETLOCALE
-    setlocale(LC_NUMERIC, "C"); 
-  #endif
-#endif
-
   ss = (snd_state *)calloc(1, sizeof(snd_state)); /* not calloc! */
   ss->fam_ok = false;
   ss->cg_seen = false;

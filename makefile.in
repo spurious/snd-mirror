@@ -19,7 +19,7 @@ JACK_FLAGS = @JACK_FLAGS@
 ORIGINAL_LDFLAGS = @ORIGINAL_LDFLAGS@
 LDFLAGS = @LDFLAGS@
 
-LIBS = @LIBINTL@ @LIBS@
+LIBS = @LIBS@
 XEN_LIBS = @XEN_LIBS@
 GTK_LIBS = @GTK_LIBS@
 GTK_LD_LIBS = @GTK_LD_LIBS@
@@ -50,15 +50,12 @@ top_srcdir = @top_srcdir@
 datarootdir = ${prefix}/share
 pkgdatadir = ${datarootdir}/snd
 # snd-help.c looks for the documentation in /usr/local/share/doc/snd-11 -- perhaps it should be pkgdatadir? or passed at compile time
-localedir = ${datadir}/locale
-DEFS = -DLOCALE_DIR=\"$(localedir)\" -DSCRIPTS_DIR=\"$(pkgdatadir)\" @DEFS@
+DEFS = -DSCRIPTS_DIR=\"$(pkgdatadir)\" @DEFS@
 
 SNDLIB_FILES = $(@SNDLIB_FILES@)
 
 GX_FILES = $(@GX_FILES@)
 GX_HEADERS = $(@GX_HEADERS@)
-
-SUBDIRS = po
 
 .SUFFIXES:
 .SUFFIXES: .c .o
@@ -99,7 +96,6 @@ NO_FILES =
 main_target: @MAKE_TARGET@
 
 snd: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(S7_HEADERS) $(S7_O_FILES) $(SNDLIB_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES)
-	(cd po && $(MAKE))
 	$(CC) $(LDFLAGS) $(CFLAGS) $(S7_O_FILES) $(SNDLIB_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES) -o snd $(SNDLIB_LIB) $(XEN_LIBS) $(GTK_LIBS) $(GL_LIBS) $(MOTIF_LIBS) $(JACK_LIBS) $(AUDIO_LIB) $(FFTW_LIBS) $(GSL_LIBS) $(FAM_LIB) $(GMP_LIBS) $(LIBS)
 
 xm: 	xen.h mus-config.h $(S7_HEADERS)
@@ -181,7 +177,6 @@ install: snd
 	${SHELL} ${top_srcdir}/mkinstalldirs ${mandir}
 	${SHELL} ${top_srcdir}/mkinstalldirs ${mandir}/man1
 	${SHELL} ${top_srcdir}/mkinstalldirs ${pkgdatadir}
-	(cd po && $(MAKE) install)
 	$(INSTALL) snd ${bindir}/snd
 	$(INSTALL) ${top_srcdir}/snd.1 ${mandir}/man1
 	(cd ${top_srcdir} && for f in ${SND_SCRIPTS}; do ${INSTALL_DATA} ${top_srcdir}/$${f} ${pkgdatadir}/$${f}; done)
@@ -196,7 +191,6 @@ install-strip: snd
 	${SHELL} ${top_srcdir}/mkinstalldirs ${mandir}
 	${SHELL} ${top_srcdir}/mkinstalldirs ${mandir}/man1
 	${SHELL} ${top_srcdir}/mkinstalldirs ${pkgdatadir}
-	(cd po && $(MAKE) install)
 	$(INSTALL) -s snd ${bindir}/snd
 	$(INSTALL) ${top_srcdir}/snd.1 ${mandir}/man1
 	(cd ${top_srcdir} && for f in ${SND_SCRIPTS}; do ${INSTALL_DATA} ${top_srcdir}/$${f} ${pkgdatadir}/$${f}; done) 

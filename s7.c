@@ -260,7 +260,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <errno.h>
 #include <time.h>
 #include <stdarg.h>
 
@@ -842,9 +841,11 @@ struct s7_scheme {
 
 static int safe_strlen(const char *str)
 {
-  if ((str) && (*str))
-    return(strlen(str));
-  return(0);
+  /* this is safer than strlen, and slightly faster */
+  char *tmp = (char *)str;
+  if (!tmp) return(0);
+  while (*tmp++) {};
+  return(tmp - str - 1);
 }
 
 
@@ -3600,6 +3601,7 @@ static int integer_length(s7_Int a)
 
 
 static int s7_int_max = 0, s7_int_min = 0, s7_int_bits = 0, s7_int_digits = 0; /* initialized later */
+static int s7_int_digits_by_radix[17];
 
 static s7_num_t num_add(s7_num_t a, s7_num_t b) 
 {
@@ -4512,7 +4514,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 
 #define CTABLE_SIZE 128
 static bool *dot_table, *exponent_table, *slashify_table, *string_delimiter_table;
-static int *digits, *char_nums;
+static int *digits;
 
 static void init_ctables(void)
 {
@@ -4557,11 +4559,10 @@ static void init_ctables(void)
   string_delimiter_table[' '] = false;
 
   digits = (int *)malloc(CTABLE_SIZE * sizeof(int));
-  char_nums = (int *)calloc(CTABLE_SIZE, sizeof(int));
   for (i = 0; i < CTABLE_SIZE; i++)
     digits[i] = 256;
 
-  digits['0'] = 1; digits['1'] = 1; digits['2'] = 2; digits['3'] = 3; digits['4'] = 4;
+  digits['0'] = 0; digits['1'] = 1; digits['2'] = 2; digits['3'] = 3; digits['4'] = 4;
   digits['5'] = 5; digits['6'] = 6; digits['7'] = 7; digits['8'] = 8; digits['9'] = 9;
   digits['a'] = 10; digits['A'] = 10;
   digits['b'] = 11; digits['B'] = 11;
@@ -4569,15 +4570,6 @@ static void init_ctables(void)
   digits['d'] = 13; digits['D'] = 13;
   digits['e'] = 14; digits['E'] = 14;
   digits['f'] = 15; digits['F'] = 15;
-
-  char_nums['0'] = 0; char_nums['1'] = 1; char_nums['2'] = 2; char_nums['3'] = 3; char_nums['4'] = 4;
-  char_nums['5'] = 5; char_nums['6'] = 6; char_nums['7'] = 7; char_nums['8'] = 8; char_nums['9'] = 9;
-  char_nums['a'] = 10; char_nums['A'] = 10;
-  char_nums['b'] = 11; char_nums['B'] = 11;
-  char_nums['c'] = 12; char_nums['C'] = 12;
-  char_nums['d'] = 13; char_nums['D'] = 13;
-  char_nums['e'] = 14; char_nums['E'] = 14;
-  char_nums['f'] = 15; char_nums['F'] = 15;
 
   number_inits['0'] = true; number_inits['1'] = true; number_inits['2'] = true; number_inits['3'] = true;
   number_inits['4'] = true; number_inits['5'] = true; number_inits['6'] = true; number_inits['7'] = true;
@@ -4607,7 +4599,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
   if (strcmp(name, "f") == 0)
     return(sc->F);
   
-  len = strlen(name);
+  len = safe_strlen(name);
   if (len == 0)
     return(sc->NIL);
 
@@ -4735,13 +4727,48 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 }
 
 
-static s7_Double string_to_double_with_radix(char *str, int radix)
-{
-  /* (do ((i 2 (+ i 1))) ((= i 17)) (display (inexact->exact (floor (log (- (expt 2 63) 1) i)))) (display ", ")) */
-  static int digits[] = {0, 0, 62, 39, 31, 27, 24, 22, 20, 19, 18, 18, 17, 17, 16, 16, 15};
+/* TODO: arithmetic-overflow error? */
 
-  int i, len, iloc = 0, floc = -1, eloc = -1, sign = 1, flen = 0, extra = 0;
-  long long int int_part = 0, frac_part = 0, exponent = 0;
+static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
+{
+  bool negative = false;
+  s7_Int lval = 0;
+  int dig, start = 1;
+  char *tmp = (char *)str;
+
+  if ((str[0] == '+') || (str[0] == '-'))
+    {
+      start = 2;
+      if (str[0] == '-') negative = true;
+      tmp++;
+    }
+
+  while ((dig = digits[(int)(*tmp++)]) < radix)
+    lval = dig + (lval * radix);
+
+  (*overflow) = ((tmp - str - start) > s7_int_digits_by_radix[radix]);
+
+  if (negative)
+    return(-lval);
+  return(lval);
+}
+
+
+/*  9223372036854775807                9223372036854775807 */
+/* -9223372036854775808               -9223372036854775808 */
+/* 0000000000000000000000000001.0     1.0 */
+/* 1.0000000000000000000000000000     1.0 */
+/* 1000000000000000000000000000.0e-40 1.0e-12 */
+/* 0.0000000000000000000000000001e40  1.0e12 */
+/* 1.0e00000000000000000001           10.0 */
+
+static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool *overflow)
+{
+  int i, sign = 1, frac_len, int_len, dig, max_len, exponent = 0;
+  long long int int_part = 0, frac_part = 0;
+  char *str;
+  char *ipart, *fpart;
+  s7_Double dval = 0.0;
 
   /* there's an ambiguity in number notation here if we allow "1e1" or "1.e1" in base 16 (or 15) -- is e a digit or an exponent marker?
    *   but 1e+1, for example disambiguates it -- kind of messy! -- the scheme spec says "e" can only occur in base 10. 
@@ -4750,89 +4777,214 @@ static s7_Double string_to_double_with_radix(char *str, int radix)
    *   bases <= 10.
    */
 
-  if ((str[0] == '+') || (str[0] == '-'))
-    {
-      iloc = 1;
-      if (str[0] == '-') sign = -1;
-    }
+  max_len = s7_int_digits_by_radix[radix];
+  str = (char *)ur_str;
 
-  len = safe_strlen(str);
-  for (i = iloc; i < len; i++)
-    if (str[i] == '.')
-      floc = i;
-    else
-      if ((str[i] == 'e') && (radix <= 10))
-	eloc = i;
-
-  if ((floc == -1) || (floc > iloc))
+  if (*str == '+')
+    str++;
+  else
     {
-      errno = 0;
-      int_part = strtoll((const char *)(str + iloc), (char **)NULL, radix);
-      if (errno == ERANGE)
+      if (*str == '-')
 	{
-	  char old_c;
-	  int dlen;
-	  dlen = iloc + digits[radix];
-	  extra = floc - dlen;
-	  old_c = str[dlen];
-	  str[dlen] = '\0';
-	  errno = 0;
-	  int_part = strtoll((const char *)(str + iloc), (char **)NULL, radix);
-	  str[dlen] = old_c;
-	  if (errno == ERANGE)
-	    return(0.0);
+	  str++;
+	  sign = -1;
 	}
     }
+  while (*str == '0') {str++;};
 
-  if ((floc != -1) &&          /* has a "." */
-      (floc < len - 1) &&      /* doesn't end in "." */
-      (floc != eloc - 1))      /* "1.e1" for example */
+  ipart = str;
+  while (digits[(int)(*str)] < radix) str++;
+  int_len = str - ipart;
+
+  if (*str == '.') str++;
+  fpart = str;
+  while (digits[(int)(*str)] < radix) str++;
+  frac_len = str - fpart;
+
+  if ((*str) && (exponent_table[(int)(*str)]))
     {
-      flen = ((eloc == -1) ? (len - floc - 1) : (eloc - floc - 1));
-      if (flen <= digits[radix])
+      int exp_negative = false;
+      str++;
+      if (*str == '+') 
+	str++;
+      else
 	{
-	  errno = 0;
-	  frac_part = strtoll((const char *)(str + floc + 1), (char **)NULL, radix);
-	  if (errno == ERANGE)
-	    return(0.0);
+	  if (*str == '-')
+	    {
+	      str++;
+	      exp_negative = true;
+	    }
+	}
+      while ((dig = digits[(int)(*str++)]) < radix)
+	exponent = dig + (exponent * 10);
+      if (exp_negative) exponent = -exponent;
+    }
+
+#if WITH_GMP
+  if ((int_len >= max_len) ||
+      (frac_len >= max_len) ||
+      ((int_len + exponent) > max_len) ||
+      ((frac_len - exponent) > max_len))
+    {
+      (*overflow) = true;
+      return(0.0);
+    }
+#endif
+      
+  str = ipart;
+  if ((int_len + exponent) > max_len)
+    {
+      /*  12341234.56789e12                   12341234567889999872.0              1.234123456789e+19
+       * -1234567890123456789.0              -1234567890123456768.0              -1.2345678901235e+18
+       *  12345678901234567890.0              12345678901234567168.0              1.2345678901235e+19
+       *  123.456e30                          123456000000000012741097792995328.0 1.23456e+32
+       *  12345678901234567890.0e12           12345678901234569054409354903552.0  1.2345678901235e+31
+       *  1.234567890123456789012e30          1234567890123456849145940148224.0   1.2345678901235e+30
+       *  1e20                                100000000000000000000.0             1e+20
+       *  1234567890123456789.0               1234567890123456768.0               1.2345678901235e+18
+       *  123.456e16                          1234560000000000000.0               1.23456e+18
+       *  98765432101234567890987654321.0e-5  987654321012345728401408.0          9.8765432101235e+23
+       *  98765432101234567890987654321.0e-10 9876543210123456512.0               9.8765432101235e+18
+       *  0.00000000000000001234e20           1234.0
+       *  0.000000000000000000000000001234e30 1234.0
+       *  0.0000000000000000000000000000000000001234e40 1234.0
+       *  0.000000000012345678909876543210e15 12345.678909877
+       */
+
+      for (i = 0; i < max_len; i++)
+	{
+	  dig = digits[(int)(*str++)];
+	  if (dig < radix)
+	    int_part = dig + (int_part * radix);
+	  else break;
+	}
+      (*overflow) = (int_part > 0);
+      
+      if (int_len <= max_len)
+	dval = int_part * pow((s7_Double)radix, (s7_Double)exponent);
+      else dval = int_part * pow((s7_Double)radix, (s7_Double)(exponent + int_len - max_len));
+      /* shift by exponent, but if int_len > max_len then we assumed (see below) int_len - max_len 0's on the left */
+
+      if (int_len < max_len)
+	{
+	  int k, flen;
+	  str = fpart;
+	  
+	  for (k = 0; (frac_len > 0) && (k < exponent); k += max_len)
+	    {
+	      if (frac_len > max_len) flen = max_len; else flen = frac_len;
+	      frac_len -= max_len;
+
+	      frac_part = 0;
+	      for (i = 0; i < flen; i++)
+		frac_part = digits[(int)(*str++)] + (frac_part * radix);
+
+	      dval += frac_part * pow((s7_Double)radix, (s7_Double)(exponent - flen - k));
+	    }
 	}
       else
 	{
-	  char old_c;
-	  int dlen;
-	  /* we need to ignore extra trailing digits here to avoid later overflow */
-	  /* (string->number "3.1415926535897932384626433832795029" 11) */
-	  flen = digits[radix];
-	  dlen = floc + flen + 1;
-	  old_c = str[dlen];
-	  str[dlen] = '\0';
-	  errno = 0;
-	  frac_part = strtoll((const char *)(str + floc + 1), (char **)NULL, radix);
-	  if (errno == ERANGE)
-	    return(0.0);
-	  str[dlen] = old_c;
+	  /* some of the fraction is in the integer part before the negative exponent shifts it over */
+	  if (int_len > max_len)
+	    {
+	      int ilen;
+	      /* str should be at the last digit we read */
+	      ilen = int_len - max_len;                          /* we read these above */
+	      if (ilen > max_len)
+		ilen = max_len;
+
+	      for (i = 0; i < ilen; i++)
+		frac_part = digits[(int)(*str++)] + (frac_part * radix);
+
+	      dval += frac_part * pow((s7_Double)radix, (s7_Double)(exponent - ilen));
+	    }
+	}
+
+      return(sign * dval);
+    }
+
+  if (int_len <= max_len)
+    {
+      while ((dig = digits[(int)(*str++)]) < radix)
+	int_part = dig + (int_part * radix);
+      
+      if (exponent != 0)
+	dval = int_part * pow((s7_Double)radix, (s7_Double)exponent);
+      else dval = (s7_Double)int_part;
+
+    }
+  else
+    {
+      int len, flen;
+      long long int fpart = 0;
+
+      /* 98765432101234567890987654321.0e-20    987654321.012346  
+       * 98765432101234567890987654321.0e-29    0.98765432101235
+       * 98765432101234567890987654321.0e-30    0.098765432101235
+       * 98765432101234567890987654321.0e-28    9.8765432101235
+       */
+
+      len = int_len + exponent;
+      for (i = 0; i < len; i++)
+	int_part = digits[(int)(*str++)] + (int_part * radix);
+      
+      flen = -exponent;
+      if (flen > max_len)
+	flen = max_len;
+
+      for (i = 0; i < flen; i++)
+	fpart = digits[(int)(*str++)] + (fpart * radix);
+
+      if (len <= 0)
+	dval = int_part + fpart * pow((s7_Double)radix, (s7_Double)(len - flen));
+      else dval = int_part + fpart * pow((s7_Double)radix, (s7_Double)(-flen));
+    }
+
+  str = fpart;
+  if (frac_len <= max_len)
+    {
+      while ((dig = digits[(int)(*str++)]) < radix)
+	frac_part = dig + (frac_part * radix);
+
+      dval += frac_part * pow((s7_Double)radix, (s7_Double)(exponent - frac_len));
+    }
+  else
+    {
+      if (exponent <= 0)
+	{
+	  for (i = 0; i < max_len; i++)
+	    frac_part = digits[(int)(*str++)] + (frac_part * radix);
+
+	  dval += frac_part * pow((s7_Double)radix, (s7_Double)(exponent - max_len));
+	}
+      else
+	{
+	  long long int ipart = 0;
+	  /* 1.0123456789876543210e1         10.12345678987654373771  
+	   * 1.0123456789876543210e10        10123456789.87654304504394531250
+	   * 0.000000010000000000000000e10   100.0
+	   * 0.000000010000000000000000000000000000000000000e10 100.0
+	   * 0.000000012222222222222222222222222222222222222e10 122.22222222222222
+	   * 0.000000012222222222222222222222222222222222222e17 1222222222.222222
+	   */
+	  
+	  for (i = 0; i < exponent; i++)
+	    ipart = digits[(int)(*str++)] + (ipart * radix);
+
+	  frac_len -= exponent;
+	  if (frac_len > max_len)
+	    frac_len = max_len;
+
+	  for (i = 0; i < frac_len; i++)
+	    frac_part = digits[(int)(*str++)] + (frac_part * radix);
+	  
+	  dval += ipart + frac_part * pow((s7_Double)radix, (s7_Double)(-frac_len));
 	}
     }
 
-  if (eloc != -1)
-    {
-      errno = 0;
-      exponent = strtoll((const char *)(str + eloc + 1), (char **)NULL, 10); /* the exponent is in base 10 */
-#if WITH_GMP
-      if ((exponent > 100) || (exponent < -100))
-	errno = ERANGE;
-#endif
-      if (errno == ERANGE)
-	return(0.0);
-    }
-  exponent += extra;
+  /* fprintf(stderr, "%s -> %.20f (int: %d, frac: %d, max: %d, exp: %d)\n", ur_str, dval * sign, int_len, frac_len, max_len, exponent); */
 
-  /* (string->number "1.1e1" 2) */
-  if (frac_part > 0)
-    return(sign * (int_part + ((s7_Double)frac_part / pow((s7_Double)radix, (s7_Double)flen))) * pow((s7_Double)radix, (s7_Double)exponent));
-  if (exponent != 0)
-    return(sign * (int_part * pow((s7_Double)radix, (s7_Double)exponent)));
-  return(sign * int_part);
+  return(sign * dval);
 }
 
 
@@ -4847,8 +4999,12 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
   int has_plus_or_minus = 0, current_radix;
 
 #if (!WITH_GMP)
-  #define ATOLL(x) strtoll(x, (char **)NULL, radix)
-  #define ATOF(x) string_to_double_with_radix(x, radix)
+  bool overflow = false;
+  /* strtod follows LANG which is not what we want ("." is decimal point in Scheme).
+   *   To overcome LANG in strtod would require screwing around with setlocale which never works
+   *   and isn't thread safe.  So use our own code -- according to valgrind, 
+   *   our function is much faster than strtod.
+   */
 #endif
 
   current_radix = radix;
@@ -5020,7 +5176,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
       s7_pointer result;
       int len;
       char *saved_q;
-      len = strlen(q);
+      len = safe_strlen(q);
       
       if (q[len - 1] != 'i')
 	return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
@@ -5040,25 +5196,25 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
       if ((has_dec_point1) ||
 	  (ex1))
 	{
-	  /* (string->number "1100.1+0.11i" 2) -- need to split into 2 honest reals before passing to non-base-10 ATOF */
-	  rl = ATOF(q);
+	  /* (string->number "1100.1+0.11i" 2) -- need to split into 2 honest reals before passing to non-base-10 str->dbl */
+	  rl = string_to_double_with_radix(q, radix, &overflow);
 	}
       else
 	{
 	  if (slash1)
-	    rl = (s7_Double)ATOLL(q) / (s7_Double)ATOLL(slash1);
-	  else rl = (s7_Double)ATOLL(q);
+	    rl = (s7_Double)string_to_integer(q, radix, &overflow) / (s7_Double)string_to_integer(slash1, radix, &overflow);
+	  else rl = (s7_Double)string_to_integer(q, radix, &overflow);
 	}
       if (rl == -0.0) rl = 0.0;
 
       if ((has_dec_point2) ||
 	  (ex2))
-	im = ATOF(plus);
+	im = string_to_double_with_radix(plus, radix, &overflow);
       else
 	{
 	  if (slash2)
-	    im = (s7_Double)ATOLL(plus) / (s7_Double)ATOLL(slash2);
-	  else im = (s7_Double)ATOLL(plus);
+	    im = (s7_Double)string_to_integer(plus, radix, &overflow) / (s7_Double)string_to_integer(slash2, radix, &overflow);
+	  else im = (s7_Double)string_to_integer(plus, radix, &overflow);
 	}
       if ((has_plus_or_minus == -1) && 
 	  (im != 0.0))
@@ -5090,7 +5246,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	}
 
 #if (!WITH_GMP)
-      result = s7_make_real(sc, ATOF(q));
+      result = s7_make_real(sc, string_to_double_with_radix(q, radix, &overflow));
 #else
       result = string_to_either_real(sc, q, radix);
 #endif
@@ -5101,15 +5257,18 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
       return(result);
     }
   
+  /* not real */
   if (slash1)
 #if (!WITH_GMP)
-    return(s7_make_ratio(sc, ATOLL(q), ATOLL(slash1)));
+    return(s7_make_ratio(sc, string_to_integer(q, radix, &overflow), 
+			     string_to_integer(slash1, radix, &overflow)));
 #else
     return(string_to_either_ratio(sc, q, slash1, radix));
 #endif
   
+    /* integer */
 #if (!WITH_GMP)
-  return(s7_make_integer(sc, ATOLL(q)));
+    return(s7_make_integer(sc, string_to_integer(q, radix, &overflow)));
 #else
   return(string_to_either_integer(sc, q, radix));
 #endif
@@ -7194,7 +7353,7 @@ s7_pointer s7_make_permanent_string(const char *str)
   set_type(x, T_STRING | T_ATOM | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY);
   if (str)
     {
-      string_length(x) = strlen(str);
+      string_length(x) = safe_strlen(str);
       string_value(x) = s7_strdup_with_len(str, string_length(x));
     }
   else 
@@ -7528,8 +7687,8 @@ static int safe_strcasecmp(const char *s1, const char *s2)
   if (s2 == NULL)
     return(1);
 
-  len1 = strlen(s1);
-  len2 = strlen(s2);
+  len1 = safe_strlen(s1);
+  len2 = safe_strlen(s2);
   len = len1;
   if (len1 > len2)
     len = len2;
@@ -7646,7 +7805,7 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
    *   set when it is created, and (apparently) can contain an embedded 0, so its
    *   print length is not its length.
    *         char *str; char c; str = string_value(car(args)); c = character(cadr(args));
-   *         int i, len = 0; if (str) len = strlen(str); if (len > 0) for (i = 0; i < len; i++) str[i] = c; 
+   *         int i, len = 0; if (str) len = safe_strlen(str); if (len > 0) for (i = 0; i < len; i++) str[i] = c; 
    */
   memset((void *)(string_value(x)), (int)character(cadr(args)), string_length(x)); /* presumably memset can fill 0 bytes if empty string */
   return(x); /* or perhaps sc->UNSPECIFIED */
@@ -7706,7 +7865,7 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "string->list", 0, car(args), "a string"));
   
   str = string_value(car(args));
-  if (str) len = strlen(str);
+  if (str) len = safe_strlen(str);
   if (len == 0)
     return(sc->NIL);
   for (i = 0; i < len; i++)
@@ -8519,7 +8678,7 @@ static FILE *search_load_path(s7_scheme *sc, const char *name)
   s7_pointer lst;
   lst = s7_load_path(sc);
   len = s7_list_length(sc, lst);
-  name_len = strlen(name);
+  name_len = safe_strlen(name);
   for (i = 0; i < len; i++)
     {
       const char *new_dir;
@@ -8529,7 +8688,7 @@ static FILE *search_load_path(s7_scheme *sc, const char *name)
 	{
 	  char *new_name;
 	  FILE *fp;
-	  size = name_len + strlen(new_dir) + 2;
+	  size = name_len + safe_strlen(new_dir) + 2;
 	  new_name = (char *)malloc(size * sizeof(char));
 	  snprintf(new_name, size, "%s/%s", new_dir, name);
 	  fp = fopen(new_name, "r");
@@ -13123,7 +13282,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
   format_data *fdat = NULL;
   char *result, *tmp = NULL;
 
-  str_len = strlen(str);
+  str_len = safe_strlen(str);
 
   fdat = (format_data *)malloc(sizeof(format_data));
   fdat->loc = 0;
@@ -16003,7 +16162,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      argstr = s7_object_to_c_string(sc, s7_append(sc, 
 							   s7_reverse(sc, cdr(sc->args)), 
 							   s7_cons(sc, car(sc->args), sc->code)));
-	      len = strlen(argstr) + 32;
+	      len = safe_strlen(argstr) + 32;
 	      msg = (char *)malloc(len * sizeof(char));
 	      len = snprintf(msg, len, "improper list of arguments: %s?", argstr);
 	      free(argstr);
@@ -18132,7 +18291,7 @@ static s7_pointer string_to_big_integer(s7_scheme *sc, const char *str, int radi
 {
   mpz_t *n;
   n = (mpz_t *)malloc(sizeof(mpz_t));
-  mpz_init_set_str(*n, str, radix);
+  mpz_init_set_str(*n, (str[0] == '+') ? (const char *)(str + 1) : str, radix);
   return(s7_make_object(sc, big_integer_tag, (void *)n));
 }
 
@@ -18778,26 +18937,28 @@ static bool big_numbers_are_eqv(s7_pointer a, s7_pointer b)
 
 static s7_pointer string_to_either_integer(s7_scheme *sc, const char *str, int radix)
 {
-  /* try strtol, check for overflow, fallback on make_big_integer */
-  int val;
-  errno = 0;
-  val = strtol(str, (char **)NULL, radix);
-  if (errno == ERANGE)
-    return(string_to_big_integer(sc, str, radix));
-  return(s7_make_integer(sc, (s7_Int)val));
+  s7_Int val;
+  bool overflow = false;
+
+  val = string_to_integer(str, radix, &overflow);
+  if (!overflow)
+    return(s7_make_integer(sc, val));
+  
+  return(string_to_big_integer(sc, str, radix));
 }
 
 
 static s7_pointer string_to_either_ratio(s7_scheme *sc, const char *nstr, const char *dstr, int radix)
 {
-  int n, d;
-  errno = 0;
-  n = strtol(nstr, (char **)NULL, radix);
-  if (errno != ERANGE)
+  s7_Int n, d;
+  bool overflow = false;
+
+  n = string_to_integer(nstr, radix, &overflow);
+  if (!overflow)
     {
-      d = strtol(dstr, (char **)NULL, radix);
-      if (errno != ERANGE)
-	return(s7_make_ratio(sc, (s7_Int)n, (s7_Int)d));
+      d = string_to_integer(dstr, radix, &overflow);
+      if (!overflow)
+	return(s7_make_ratio(sc, n, d));
     }
   return(string_to_big_ratio(sc, nstr, radix));
 }
@@ -18805,61 +18966,54 @@ static s7_pointer string_to_either_ratio(s7_scheme *sc, const char *nstr, const 
 
 static s7_pointer string_to_either_real(s7_scheme *sc, const char *str, int radix)
 {
-  if (safe_strlen(str) < 20)
-    {
-      double val;
-       /* strtod follows LANG which is not what we want ("." is decimal point in Scheme).
-        *   To overcome that would require screwing around with setlocale which never works
-        *   and isn't thread safe.  So use our own code -- according to valgrind, 
-        *   our function is much faster than strtod.
-        */
-      errno = 0;
-      val = string_to_double_with_radix((char *)str, radix);
-      if (errno != ERANGE)
-	return(s7_make_real(sc, val));
-    }
+  bool overflow = false;
+  s7_Double val;
+
+  val = string_to_double_with_radix((char *)str, radix, &overflow);
+  if (!overflow)
+    return(s7_make_real(sc, val));
+
   return(string_to_big_real(sc, str, radix));
 }
 
 
-static s7_pointer string_to_either_complex_1(s7_scheme *sc, char *q, char *slash1, char *ex1, bool has_dec_point1, int radix, double *d_rl)
+static s7_pointer string_to_either_complex_1(s7_scheme *sc, char *q, char *slash1, char *ex1, bool has_dec_point1, int radix, s7_Double *d_rl)
 {
+  bool overflow = false;
+
   if ((has_dec_point1) ||
       (ex1))
     {
-      if (safe_strlen(q) < 20)
-	{
-	  errno = 0;
-	  (*d_rl) = string_to_double_with_radix(q, radix);
-	  if (errno == ERANGE)
-	    return(string_to_big_real(sc, q, radix));
-	}
-      else return(string_to_big_real(sc, q, radix));
+      (*d_rl) = string_to_double_with_radix(q, radix, &overflow);
+      if (overflow)
+	return(string_to_big_real(sc, q, radix));
     }
   else
     {
       if (slash1)
 	{
-	  int n, d;
-	  n = strtol(q, (char **)NULL, radix);
-	  if (errno == ERANGE)
+	  s7_Int n, d;
+
+	  /* q can include the slash and denominator */
+	  n = string_to_integer(q, radix, &overflow);
+	  if (overflow)
 	    return(string_to_big_ratio(sc, q, radix));
 	  else
 	    {
-	      d = strtol(slash1, (char **)NULL, radix);
-	      if (errno != ERANGE)
+	      d = string_to_integer(slash1, radix, &overflow);
+	      if (!overflow)
 		(*d_rl) = (s7_Double)n / (s7_Double)d;
 	      else return(string_to_big_ratio(sc, q, radix));
 	    }
 	}
       else
 	{
-	  int val;
-	  errno = 0;
-	  val = strtol(q, (char **)NULL, radix);
-	  if (errno == ERANGE)
+	  s7_Int val;
+
+	  val = string_to_integer(q, radix, &overflow);
+	  if (overflow)
 	    return(string_to_big_integer(sc, q, radix));
-	  else (*d_rl) = (s7_Double)val;
+	  (*d_rl) = (s7_Double)val;
 	}
     }
   if ((*d_rl) == -0.0) (*d_rl) = 0.0;
@@ -22772,12 +22926,21 @@ s7_scheme *s7_init(void)
   typeflag(sc->STRING_SET) |= T_DONT_COPY; 
 
   {
-    int top;
+    int i, top;
+    #define LOG_LLONG_MAX 43.668274
+    #define LOG_LONG_MAX  21.487562
+
     top = sizeof(s7_Int);
     s7_int_max = (top == 8) ? LONG_MAX : SHRT_MAX;
     s7_int_min = (top == 8) ? LONG_MIN : SHRT_MIN;
     s7_int_bits = (top == 8) ? 63 : 31;
     s7_int_digits = (top == 8) ? 18 : 8;
+
+    s7_int_digits_by_radix[0] = 0;
+    s7_int_digits_by_radix[1] = 0;
+
+    for (i = 2; i < 17; i++)
+      s7_int_digits_by_radix[i] = (int)(floor(((top == 8) ? LOG_LLONG_MAX : LOG_LONG_MAX) / log((double)i)));
 
     s7_define_constant(sc, "most-positive-fixnum", s7_make_integer(sc, (top == 8) ? LLONG_MAX : ((top == 4) ? LONG_MAX : SHRT_MAX)));
     s7_define_constant(sc, "most-negative-fixnum", s7_make_integer(sc, (top == 8) ? LLONG_MIN : ((top == 4) ? LONG_MIN : SHRT_MIN)));

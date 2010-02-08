@@ -265,24 +265,6 @@ disk_space_t disk_space_p(mus_long_t bytes, const char *filename)
 }
 
 
-#if HAVE_LANGINFO_DECIMAL_POINT || HAVE_LANGINFO_RADIXCHAR
-  #include <langinfo.h>
-#endif
-
-static char decimal_pt;
-
-static char local_decimal_point(void)
-{
-#if HAVE_LANGINFO_DECIMAL_POINT
-  return(nl_langinfo(DECIMAL_POINT)[0]);
-#endif
-#if HAVE_LANGINFO_RADIXCHAR
-  return(nl_langinfo(RADIXCHAR)[0]);
-#endif
-  return('.');
-}
-
-
 char *prettyf(double num, int tens)
 { 
   /* try to prettify float display -- if tens <= 0, return int */
@@ -688,7 +670,6 @@ static XEN g_file_to_string(XEN name)
 
 void g_init_utils(void)
 {
-  decimal_pt = local_decimal_point();
 #if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE(S_file_to_string, g_file_to_string_w, 1, 0, 0, "file contents as string");
 #endif

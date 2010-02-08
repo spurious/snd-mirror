@@ -493,6 +493,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+9-Feb:   removed NLS support (the po directory and so on).\n\
 8-Feb:   moved sound|channel|mix|mark|edit-property to C.\n\
 23-Jan:  The rest of the Guile-dependent files have been removed.\n\
            This includes pd-*, rt-*, and the --with-snd-as-pd-external\n\

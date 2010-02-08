@@ -5,7 +5,7 @@ AC_INIT(snd, 11.3, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
 AC_CONFIG_HEADERS(mus-config.h sndlib.h)
-AC_CONFIG_FILES(makefile po/Makefile.in )
+AC_CONFIG_FILES(makefile )
 AC_PROG_CC
 AC_HEADER_STDC # this needs to precede AC_CHECK_HEADER! (is this the case in 2.60?)
 AC_PROG_INSTALL
@@ -265,7 +265,6 @@ AC_OLD_BIGENDIAN
 
 AC_SYS_LARGEFILE
 AC_TYPE_OFF_T
-AM_LANGINFO_DECIMAL_POINT
 AC_CHECK_SIZEOF(off_t)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(long long)
@@ -279,7 +278,6 @@ AC_CHECK_SIZEOF(ssize_t)
 AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep signal statvfs statfs getline difftime gettimeofday)
 AC_CHECK_FUNCS(vsnprintf snprintf strftime memmove lstat strcasecmp pathconf)
 
-AC_LIB_PROG_LD
 AC_PROG_FGREP
 AC_DEFINE_UNQUOTED(FGREP_PROG, "$FGREP")
 
@@ -1999,23 +1997,6 @@ if test "$with_shared_sndlib" = yes; then
 fi
 AC_SUBST(SNDLIB_FILES)
 AC_SUBST(SNDLIB_LIB)
-
-
-#--------------------------------------------------------------------------------
-# gettext
-#--------------------------------------------------------------------------------
-
-AM_GNU_GETTEXT([external]) 
- 
-# if test "$enable_nls" != no ; then 
-#   AM_GNU_GETTEXT([external]) 
-#   OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gettext" 
-# else 
-# # desperation! 
-# cp makefile.in makefile.gettext 
-# cp makefile.no-gettext makefile.in 
-# fi 
-
 
 
 #--------------------------------------------------------------------------------

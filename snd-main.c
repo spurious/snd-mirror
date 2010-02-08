@@ -438,7 +438,6 @@ static void save_options(FILE *fd)
 
   /* TODO: since there's no built-in setlocale at ext lang level (scheme anyway), 
    *        how to get the German translations?
-   * TODO: why does setenv LANG de_DE change the colors [gtk?] (but no other LANG does)? Why doesn't the NLS crap work?
    * PERHAPS: add load dir to search list?
    */
 #endif

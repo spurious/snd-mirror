@@ -1016,7 +1016,6 @@ latter are (configure --help):
 <tr><td></td><td>--with-profiling</td><td></td><td>include profiling (branch counting) machinery, default: no (only for s7)</td></tr>
 <tr><td></td><td>--enable-snd-debug</td><td></td><td>include internal Snd debugging functions, default: no (not useful if not actually debugging!) </td></tr>
 <tr><td></td><td>--disable-largefile</td><td></td><td>omit support for large (64-bit byte address) files</td></tr>
-<tr><td></td><td>--disable-nls</td><td></td><td>do not use Native Language Support</td></tr>
 <tr><td colspan=2></td><td></td><td></td></tr>
 </table>
 
@@ -1026,9 +1025,8 @@ latter are (configure --help):
   make install
 </pre>
 <p>tries to use s7, Motif, ALSA (if Linux), and a float sample representation, then
-installs the snd executable in /usr/local/bin, a brief blurb
-in /usr/local/man/man1, and the German translations in whatever directory the translation files are sent to (this is part of
-the NLS business in Gnu). 
+installs the snd executable in /usr/local/bin, with a brief blurb
+in /usr/local/man/man1.
 Here at CCRMA, we normally use:
 </p>
 <pre>
