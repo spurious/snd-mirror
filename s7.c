@@ -4742,6 +4742,7 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
       if (str[0] == '-') negative = true;
       tmp++;
     }
+  while (*str == '0') {str++;};
 
   while ((dig = digits[(int)(*tmp++)]) < radix)
     lval = dig + (lval * radix);
@@ -4864,6 +4865,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	dval = int_part * pow((s7_Double)radix, (s7_Double)exponent);
       else dval = int_part * pow((s7_Double)radix, (s7_Double)(exponent + int_len - max_len));
       /* shift by exponent, but if int_len > max_len then we assumed (see below) int_len - max_len 0's on the left */
+      /*   using int_to_int or table lookups here instead of pow did not make any difference in speed */
 
       if (int_len < max_len)
 	{
@@ -10730,6 +10732,14 @@ s7_pointer s7_remv(s7_scheme *sc, s7_pointer a, s7_pointer obj)
 }
 
 
+static bool is_dotted(s7_scheme *sc, s7_pointer x)
+{
+  s7_pointer a = x;
+  while (is_pair(a)) {a = cdr(a);}
+  return(a != sc->NIL);
+}
+
+
 static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, const char *name, bool (*eq_func)(s7_pointer a, s7_pointer b))
 {
   #define H_assq "(assq obj alist) returns the key-value pair associated (via eq?) with the key obj in the association list alist"
@@ -10743,7 +10753,7 @@ static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, const char *name, boo
   if (cadr(args) == sc->NIL)
     return(sc->F);
 
-  if (s7_list_length(sc, cadr(args)) <= 0)   /* TODO: this is an expensive way to check for proper lists */
+  if (is_dotted(sc, cadr(args)))
     return(s7_wrong_type_arg_error(sc, name, 2, cadr(args), "a proper list"));
   
   x = car(args);
@@ -10773,7 +10783,7 @@ static s7_pointer g_memq_1(s7_scheme *sc, s7_pointer args, const char *name, boo
   if (cadr(args) == sc->NIL)
     return(sc->F);
 
-  if (s7_list_length(sc, cadr(args)) <= 0)
+  if (is_dotted(sc, cadr(args)))
     return(s7_wrong_type_arg_error(sc, name, 2, cadr(args), "a proper list"));
   
   for (x = cadr(args); is_pair(x); x = cdr(x)) 

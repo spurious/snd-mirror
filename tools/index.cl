@@ -37,7 +37,7 @@
 (setf gfiles (make-array array-length :initial-element nil))
 (setf topics (make-array array-length :initial-element nil))
 
-(defstruct ind name sortby topic file general indexed)
+(defstruct ind name sortby topic file general indexed char)
 
 (defun html-length (str)
   (if (find #\& str :test #'char=)
@@ -461,9 +461,8 @@
 			(progn
 			  (setf (aref new-names j) (make-ind :name nil :topic nil :file nil :sortby nil))
 			  (setf j (+ j 1))
-			  (setf (aref new-names j) (make-ind :name "    "
-;;; (format nil "<table width=50% border=1><tr><td bgcolor=\"beige\" align=\"center\" valign=\"middle\"><em class=tab>~A</em></td></tr></table>" (char-upcase this-char))
-;;;   this is too elaborate
+			  (setf (aref new-names j) (make-ind :name "    " 
+							     :char (char-upcase this-char)
 							     :topic nil :file nil :sortby nil))
 			  (setf j (+ j 1))
 			  (setf (aref new-names j) (make-ind :name nil :topic nil :file nil :sortby nil))
@@ -517,15 +516,24 @@
 	      (if (< x n)
 		  (progn
 		    (format ofil 
-			    "<td~A><em class=tab>~A</em></td>" 
+			    "<td~A>~A~A~A</td>" 
 			    (if (not (ind-name name))
 				""
 			      (if (not (ind-sortby name))
 				  " bgcolor=\"lightgreen\""
 				""))
-			    (if (ind-name name)
-				(ind-name name)
-			      "    "))
+			    (if (ind-char name)
+				"<center>"
+			      "<em class=tab>")
+			    (if (ind-char name)
+				(ind-char name)
+			      (if (ind-name name)
+				  (ind-name name)
+				"    "))
+			    (if (ind-char name)
+				"</center>"
+			      "</em>")
+			    )
 		    (if (ind-indexed name) (format t "~A indexed twice~%" (ind-name name)))
 		    (setf (ind-indexed name) t))
 		(format ofil "~%")))

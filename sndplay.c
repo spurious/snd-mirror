@@ -16,7 +16,6 @@
   #endif
   #include <string.h>
 #endif
-#include <errno.h>
 
 #if MUS_MAC_OSX
   #define BUFFER_SIZE 256

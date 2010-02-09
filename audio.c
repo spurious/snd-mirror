@@ -2984,9 +2984,9 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
     {
       if (dev == MUS_AUDIO_SPEAKERS)
 	/* OR may not be available */
-	info.play.port = AUDIO_SPEAKER | (sun_default_outputs & AUDIO_HEADPHONE);
+	info.play.port = AUDIO_SPEAKER | AUDIO_HEADPHONE;
       else 
-	info.play.port = sun_default_outputs;
+	info.play.port = AUDIO_SPEAKER;
     }
   info.play.sample_rate = srate; 
   info.play.channels = chans;
