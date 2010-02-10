@@ -242,6 +242,7 @@ static void add_local_load_path(FILE *fd, char *path)
 }
 
 
+#if HAVE_EXTENSION_LANGUAGE
 static void save_prefs(void)
 {
   char *fullname;
@@ -324,6 +325,7 @@ static void save_prefs(void)
   prefs_unsaved = false;
   prefs_set_dialog_title(filename);
 }
+#endif
 
 
 static char *trim_string(const char *str)

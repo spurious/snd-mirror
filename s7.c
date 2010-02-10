@@ -1454,8 +1454,8 @@ static s7_pointer new_cell(s7_scheme *sc)
       nsc->temps[nsc->temps_ctr++] = p;
       if (nsc->temps_ctr >= nsc->temps_size)
 	nsc->temps_ctr = 0;
-      pthread_mutex_unlock(&alloc_lock);
     }
+  pthread_mutex_unlock(&alloc_lock);
 #else
   if (sc->free_heap_top <= GC_TEMPS_SIZE)
     {
@@ -4816,7 +4816,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	      exp_negative = true;
 	    }
 	}
-      while ((dig = digits[(int)(*str++)]) < radix)
+      while ((dig = digits[(int)(*str++)]) < 10) /* exponent is always base 10 */
 	exponent = dig + (exponent * 10);
       if (exp_negative) exponent = -exponent;
     }
@@ -18174,30 +18174,64 @@ static char *print_big_ratio(s7_scheme *sc, void *val)
 
 static char *mpfr_to_string(mpfr_t val, int radix)
 {
-  char *str, *tmp;
+  char *str, *tmp, *str1;
   mp_exp_t expptr;
-  int i, len;
+  int i, len, ep;
 
   if (mpfr_zero_p(val))
     return(s7_strdup("0.0"));
 
-  str = mpfr_get_str(NULL, &expptr, radix, 0, val, GMP_RNDN);
+  str1 = mpfr_get_str(NULL, &expptr, radix, 0, val, GMP_RNDN);
+  str = str1;
+  ep = (int)expptr;
   len = safe_strlen(str);
 
-  /* remove trailing 0's */
-  for (i = len - 1; i > 3; i--)
-    if (str[i] != '0')
-      break;
-  if (i < len - 1)
-    str[i + 1] = '\0';
+  if (radix <= 10)
+    {
+      /* remove trailing 0's */
+      for (i = len - 1; i > 3; i--)
+	if (str[i] != '0')
+	  break;
+      if (i < len - 1)
+	str[i + 1] = '\0';
 
-  len += 64;
-  tmp = (char *)malloc(len * sizeof(char));
+      len += 64;
+      tmp = (char *)malloc(len * sizeof(char));
   
-  if (str[0] == '-')
-    snprintf(tmp, len, "-%c.%sE%d", str[1], (char *)(str + 2), (int)expptr - 1);
-  else snprintf(tmp, len, "%c.%sE%d", str[0], (char *)(str + 1), (int)expptr - 1);
-  mpfr_free_str(str);
+      if (str[0] == '-')
+	snprintf(tmp, len, "-%c.%sE%d", str[1], (char *)(str + 2), ep - 1);
+      else snprintf(tmp, len, "%c.%sE%d", str[0], (char *)(str + 1), ep - 1);
+    }
+  else
+    {
+      /* if radix > 10, we should not be using the 'E' business -- need to move the decimal point */
+      /* (number->string 1234.5678909876543212345 16) "4d2.91614dc3ab1f80e55a563311b8f308"
+       * (number->string -1234.5678909876543212345 16) "-4d2.91614dc3ab1f80e55a563311b8f308"
+       * (number->string 1234.5678909876543212345e8 16) "1cbe991a6a.c3f35c11868cb7e3fb75536"
+       * (number->string 1234.5678909876543212345e-8 16) "0.0000cf204983a27e1eff701c562a870641e50"
+       * (number->string 123456789098765432.12345e-8 16) "499602d2.fcd6e9e1748ba5adccc12c5a8"
+       */
+      int loc = 0;
+      tmp = (char *)calloc(len + ep + 64, sizeof(char));
+      if (str[0] == '-')
+	tmp[loc++] = (*str++);
+      if (ep < 0)
+	{
+	  ep = -ep;
+	  tmp[loc++] = '0';
+	  tmp[loc++] = '.';
+	  for (i = 0; i < ep; i++)
+	    tmp[loc++] = '0';
+	}
+      else
+	{
+	  for (i = 0; i < ep; i++)
+	    tmp[loc++] = (*str++);
+	  tmp[loc++] = '.';
+	}
+      while (*str) tmp[loc++] = (*str++);
+    }
+  mpfr_free_str(str1);
   return(tmp);
 }
 

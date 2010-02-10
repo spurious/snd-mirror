@@ -1039,6 +1039,7 @@ static int mix_tag_y_from_id(int id)
 }
 
 
+#if (!USE_NO_GUI)
 static color_t mix_color_from_id(int mix_id)
 {
   mix_info *md;
@@ -1047,6 +1048,7 @@ static color_t mix_color_from_id(int mix_id)
     return(md->color);
   return(ss->sgx->mix_color);
 }
+#endif
 
 
 color_t mix_set_color_from_id(int id, color_t new_color)

@@ -44183,6 +44183,30 @@
 (num-test (string->number "0.000000012222222222222222222222222222222222222e10") 122.22222222222222)
 (num-test (string->number "0.000000012222222222222222222222222222222222222e17") 1222222222.222222)
 
+(num-test #x0000000000000000000000000001.0 1.0)
+(num-test #x1.0000000000000000000000000000 1.0)
+(test (number->string 1222222222.222222 16) "48d9a18e.38e38c")
+(num-test (string->number (number->string 1222222222.222222222222222222 16) 16) 1222222222.222222222222222222)
+
+(if with-bignums
+    (begin
+      (test (number->string (bignum "12345.67890987654321") 2) "1.1000000111001101011011100110100001001101001001011E13")
+      (num-test (string->number (number->string (bignum "12345.67890987654321") 2) 2) 12345.67890987654321)
+      (test (number->string 1234.5678909876543212345 16) "4d2.91614dc3ab1f80e55a563311b8f308")
+      (test (number->string -1234.5678909876543212345 16) "-4d2.91614dc3ab1f80e55a563311b8f308")
+      (test (number->string 1234.5678909876543212345e8 16) "1cbe991a6a.c3f35c11868cb7e3fb75536")
+      (test (number->string 1234.5678909876543212345e-8 16) "0.0000cf204983a27e1eff701c562a870641e50")
+      (test (number->string 123456789098765432.12345e-8 16) "499602d2.fcd6e9e1748ba5adccc12c5a8")))
+
+(num-test (string->number "1.1e4" 5) 750.0)
+(num-test (string->number "1.1e4" 4) 320.0)
+(num-test (string->number "1.1e4" 3) 108.0)
+(num-test (string->number "1.1e4" 2) 24.0)
+
+(do ((i 2 (+ i 1)))
+    ((= i 17)) 
+  (num-test (string->number (number->string 12345.67890987654321 i) i) 12345.67890987654321))
+
 (let ((happy #t))
   (do ((i 2 (+ i 1)))
       ((or (not happy)

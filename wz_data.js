@@ -690,8 +690,6 @@ var extsnd_shortfilename_tip = "<code>(short-file-name snd)</code>: short form o
 
 var extsnd_showcontrols_tip = "<code>(show-controls snd)</code>: #t if snd's control panel is known to be open";
 
-var extsnd_showindices_tip = "<code>(show-indices)</code>: #t if sound name should be preceded by its index in the sound display.";
-
 var extsnd_showlistener_tip = "<code>(show-listener (open #t))</code>: if 'open' opens the lisp listener;<br>" +
                               " returns whether the listener is visible.";
 
@@ -715,8 +713,6 @@ var extsnd_sndspectrum_tip = "<code>(snd-spectrum data (window rectangular-windo
                              " magnitude spectrum of data (a vct), in data if in-place, using fft-window win and fft length len.";
 
 var extsnd_sndtempnam_tip = "<code>(snd-tempnam)</code>: return a new temp file name using temp-dir.";
-
-var extsnd_sounddatalength_tip = "<code>(sound-data-length sd)</code>: length (in samples) of each channel of sound-data sd";
 
 var extsnd_sounddataref_tip = "<code>(sound-data-ref sd chan i)</code>: sample in channel chan at location i of sound-data sd:<br>" +
                               " sd[chan][i]";
@@ -807,8 +803,6 @@ var extsnd_vctadd_tip = "<code>(vct-add! v1 v2 (offset 0))</code>: element-wise 
 var extsnd_vctcopy_tip = "<code>(vct-copy v)</code>: returns a copy of vct v";
 
 var extsnd_vctfill_tip = "<code>(vct-fill! v val)</code>: set each element of v to val: v[i] = val, returns v";
-
-var extsnd_vctlength_tip = "<code>(vct-length v)</code>: length of vct v";
 
 var extsnd_vctmap_tip = "<code>(vct-map! v proc)</code>: set each element of v to value of proc (a thunk):<br>" +
                         " v[i] = (proc), returns v.<br>" +
@@ -1070,8 +1064,6 @@ var sndclm_make_two_zero_tip = "<code>(make-two-zero :a0 :a1 :a2 or :frequency :
                                " return a new two-zero filter; a0*x(n) + a1*x(n-1) + a2*x(n-2)";
 
 var sndclm_moving_average_tip = "<code>(moving-average gen (val 0.0))</code>: moving window moving_average.";
-
-var sndclm_mus_channels_tip = "<code>(mus-channels gen)</code>: gen's mus-channels field";
 
 var sndclm_mus_close_tip = "<code>(mus-close gen)</code>: close the IO stream managed by 'gen' (a sample-&gt;file generator, for example)";
 
@@ -1394,9 +1386,6 @@ var draw_doc_tip = "Examples of drawing extensions, primarily one that puts a th
 var dsp_doc_tip = "This has all the usual DSP stuff: filters, ffts, sample rate conversion, <br>" +
                   " sound effects, statistics, scanned synthesis, transforms, etc";
 
-var dot_snd_doc_tip = "Example initialization (~/.snd) files.<br>" +
-                      " snd_frg.scm sets up key bindings to imitate Soundforge.";
-
 var env_doc_tip = "Various operations on envelopes: add, scale, copy, stretch";
 
 var enved_doc_tip = "This adds an envelope editor to each displayed channel.<br>" +
@@ -1429,9 +1418,6 @@ var inf_snd_doc_tip = "this provides a Snd emacs mode implementation.<br>" +
                       "  You can use emacs as the listener, rather than the built-in Snd window.";
 
 var jcrev_doc_tip = "this is probably the first Schroeder reverb, based on all-pass and comb filters.";
-
-var ladspa_doc_tip = "LADSPA is the linux audio group plugin standard. <br>" +
-                     "There are a lot of plugin collections.";
 
 var maraca_doc_tip = "this includes the maraca, tambourine, wind-chimes, etc";
 
@@ -1485,13 +1471,6 @@ var pvoc_doc_tip = "various versions of the Moore-Klingbeil-Trevisani-Edwards ph
                    "see also the CLM phase-vocoder generator.";
 
 var rgb_doc_tip = "this translates the standard X11 color names into Snd color objects.";
-
-var rtex_doc_tip = "hard (glitch-free) real-time support for CLM instruments,<br>" +
-                   " as well as numerous other extensions of Snd for user <br>" +
-                   " interface development.  Included are rt-compiler.scm,<br>" +
-                   " rt-engine.scm, rt-faust.scm, rt.tex, rt-clm-ins.scm, <br>" +
-                   " rt-DotEmacs, rt-examples.scm, and rt-player.scm, <br>" +
-                   " all thanks to Kjetil Matheussen";
 
 var rtio_doc_tip = "show graph of real-time input and so on";
 

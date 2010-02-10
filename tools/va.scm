@@ -91,15 +91,6 @@
 	       (loop (read-line file 'concat))))))))
  (list "CALLOC" "MALLOC" "REALLOC" "calloc" "malloc" "realloc"))
 
-(system "fgrep 'setf ' *.scm > vahi")
-(call-with-input-file "vahi"
-  (lambda (file)
-    (let loop ((line (read-line file 'concat)))
-      (or (eof-object? line)
-	  (begin
-	    (display line)
-	    (loop (read-line file 'concat)))))))
-
 (let ((flen (string-length "snd-display  "))
       (line-ctr 0))
   (call-with-input-file "snd-test.scm"

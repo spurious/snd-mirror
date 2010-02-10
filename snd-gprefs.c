@@ -1609,6 +1609,7 @@ static void preferences_clear_callback(GtkWidget *w, gpointer context)
 }
 
 
+#if HAVE_EXTENSION_LANGUAGE
 static void preferences_save_callback(GtkWidget *w, gpointer context) 
 {
   clear_prefs_dialog_error();
@@ -1618,7 +1619,7 @@ static void preferences_save_callback(GtkWidget *w, gpointer context)
   redirect_snd_error_to(NULL, NULL);
   redirect_snd_warning_to(NULL, NULL);
 }
-
+#endif
 
 
 /* ---------------- errors ---------------- */
@@ -1681,8 +1682,10 @@ widget_t start_preferences_dialog(void)
   helpB = gtk_button_new_from_stock(GTK_STOCK_HELP);
   gtk_widget_set_name(helpB, "help_button");
 
+#if HAVE_EXTENSION_LANGUAGE
   saveB = gtk_button_new_from_stock(GTK_STOCK_SAVE);
   gtk_widget_set_name(saveB, "doit_button");
+#endif
 
   revertB = gtk_button_new_from_stock(GTK_STOCK_REVERT_TO_SAVED);
   gtk_widget_set_name(revertB, "reset_button");
@@ -1697,18 +1700,24 @@ widget_t start_preferences_dialog(void)
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), dismissB, true, true, 10);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), revertB, true, true, 10);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), clearB, true, true, 10);
+#if HAVE_EXTENSION_LANGUAGE
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), saveB, true, true, 10);
+#endif
   gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), helpB, true, true, 10);
 
   SG_SIGNAL_CONNECT(preferences_dialog, "delete_event", preferences_delete_callback, NULL);
   SG_SIGNAL_CONNECT(dismissB, "clicked", preferences_dismiss_callback, NULL);
   SG_SIGNAL_CONNECT(revertB, "clicked", preferences_revert_callback, NULL);
   SG_SIGNAL_CONNECT(clearB, "clicked", preferences_clear_callback, NULL);
+#if HAVE_EXTENSION_LANGUAGE
   SG_SIGNAL_CONNECT(saveB, "clicked", preferences_save_callback, NULL);
+#endif
   SG_SIGNAL_CONNECT(helpB, "clicked", preferences_help_callback, NULL);
 
   gtk_widget_show(dismissB);
+#if HAVE_EXTENSION_LANGUAGE
   gtk_widget_show(saveB);
+#endif
   gtk_widget_show(revertB);
   gtk_widget_show(clearB);
   gtk_widget_show(helpB);

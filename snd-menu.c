@@ -94,8 +94,10 @@ void view_menu_update(void)
   /* verbose cursor label */
   set_menu_label(view_cursor_menu, (verbose_cursor(ss)) ? _("Silent cursor") : _("Verbose cursor"));
 
+#if HAVE_EXTENSION_LANGUAGE
   /* inset graph label */
   set_menu_label(view_inset_menu, (with_inset_graph(ss)) ? _("Without inset graph") : _("With inset graph"));
+#endif
 
   /* channel style */
   set_sensitive(view_combine_separate_menu,     channel_style(ss) != CHANNELS_SEPARATE);
@@ -110,8 +112,11 @@ void view_menu_update(void)
   set_sensitive(view_all_axes_unlabelled_menu,    show_axes(ss) != SHOW_ALL_AXES_UNLABELLED);
   set_sensitive(view_bare_x_axis_menu,            show_axes(ss) != SHOW_BARE_X_AXIS);
 
+#if HAVE_EXTENSION_LANGUAGE
   /* make sure listener menu option label correctly reflects current listener state */
   set_menu_label(view_listener_menu, (listener_is_visible()) ? _("Hide listener") : _("Show listener"));
+#endif
+
   set_menu_label(view_controls_menu, (in_show_controls(ss)) ? _("Hide controls") : _("Show controls"));
 
   /* set_sensitive(view_files_menu, get_view_files_end() >= 0); */

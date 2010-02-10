@@ -932,7 +932,7 @@
     (if (not (equal? (max-regions)  16 )) 
 	(snd-display ";max-regions set def: ~A" (max-regions)))
     (set! (max-virtual-ptrees) (max-virtual-ptrees))
-    (if (not (equal? (max-virtual-ptrees)  3 )) 
+    (if (not (equal? (max-virtual-ptrees)  32 )) 
 	(snd-display ";max-virtual-ptrees set def: ~A" (max-virtual-ptrees)))
     (set! (min-dB) (min-dB))
     (if (fneq (min-dB)  -60.0 )
@@ -1259,7 +1259,7 @@
       'mark-tag-height (mark-tag-height) 4
       'mark-tag-width (mark-tag-width) 10
       'max-regions (max-regions) 16 
-      'max-virtual-ptrees (max-virtual-ptrees) 3
+      'max-virtual-ptrees (max-virtual-ptrees) 32
       'max-transform-peaks (max-transform-peaks) 100
       'min-dB (min-dB) -60.0 
       'minibuffer-history-length (minibuffer-history-length) 8
@@ -64695,9 +64695,7 @@ EDITS: 1
   
   (set! (with-background-processes) #t)
   
-	(load "s7test.scm")
-	(if all-args
-	    (s7-test-at-random))
+  (load "s7test.scm")
 
   (if (and (provided? 'gsl)
 	   (provided? 'gmp))

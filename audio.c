@@ -126,21 +126,6 @@ static const char *mus_audio_device_name(int dev)
 }
 
 
-#if (!HAVE_OSS) || (HAVE_ALSA)
-static const char *mus_audio_format_names[] = {
-  "unknown",  S_mus_bshort, S_mus_mulaw, S_mus_byte, S_mus_bfloat, S_mus_bint, S_mus_alaw, S_mus_ubyte, S_mus_b24int,
-  S_mus_bdouble, S_mus_lshort, S_mus_lint, S_mus_lfloat, S_mus_ldouble, S_mus_ubshort, S_mus_ulshort, S_mus_l24int,
-  S_mus_bintn, S_mus_lintn
-};
-
-static const char *mus_audio_format_name(int fr)
-{
-  if (mus_data_format_p(fr))
-    return(mus_audio_format_names[fr]);
-  return("invalid format");
-}
-#endif
-
 static char *audio_strbuf = NULL; /* previous name "strbuf" collides with Mac OSX global! */
 static void pprint(const char *str);
 
@@ -2405,7 +2390,7 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
   if (alsa_trace) 
     mus_print("%s: %x rate=%d, chans=%d, format=%d:%s, size=%d", 
 	      c__FUNCTION__, ur_dev, srate, chans, format, 
-	      mus_audio_format_name(format), size);
+	      mus_data_format_to_string(format), size);
 
   card = MUS_AUDIO_SYSTEM(ur_dev);
   device = MUS_AUDIO_DEVICE(ur_dev);
@@ -2420,7 +2405,7 @@ static int alsa_audio_open(int ur_dev, int srate, int chans, int format, int siz
     {
       return(alsa_mus_error(MUS_AUDIO_FORMAT_NOT_AVAILABLE, 
 			    mus_format("could not change %s<%d> to alsa format", 
-				       mus_audio_format_name(format), format)));
+				       mus_data_format_to_string(format), format)));
     }
 
   alsa_name = (alsa_stream == SND_PCM_STREAM_PLAYBACK) ? alsa_playback_device_name : alsa_capture_device_name;
@@ -6224,7 +6209,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, int format, int size
 	  else 
 	    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, fd,
 			      mus_format("can't set output format to %d (%s) for %d (%s)",
-					 format, mus_audio_format_name(format),
+					 format, mus_data_format_to_string(format),
 					 dev, 
 					 mus_audio_device_name(dev)));
 	}
@@ -6375,7 +6360,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size)
 	  else 
 	    RETURN_ERROR_EXIT(MUS_AUDIO_FORMAT_NOT_AVAILABLE, fd,
 			      mus_format("can't set input format to %d (%s) on %d (%s)",
-					 format, mus_audio_format_name(format),
+					 format, mus_data_format_to_string(format),
 					 dev, 
 					 mus_audio_device_name(dev)));
 	}

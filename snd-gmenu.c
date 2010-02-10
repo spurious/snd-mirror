@@ -252,11 +252,13 @@ static void view_lollipops_callback(GtkWidget *w, gpointer info) {set_graph_styl
 static void view_zero_callback(GtkWidget *w, gpointer info) {set_show_y_zero((!(show_y_zero(ss))));}
 static void view_cursor_callback(GtkWidget *w, gpointer info) {set_verbose_cursor((!(verbose_cursor(ss))));}
 
+#if HAVE_EXTENSION_LANGUAGE
 static void view_inset_callback(GtkWidget *w, gpointer info) 
 {
   set_with_inset_graph((!(with_inset_graph(ss))));
   for_each_chan(update_graph);
 }
+#endif
 
 static void view_controls_callback(GtkWidget *w, gpointer info)
 {
@@ -768,11 +770,13 @@ GtkWidget *add_menu(void)
   gtk_widget_show(view_cursor_menu);
   SG_SIGNAL_CONNECT(view_cursor_menu, "activate", view_cursor_callback, NULL);
 
+#if HAVE_EXTENSION_LANGUAGE
   view_inset_menu = gtk_menu_item_new_with_label(_("With inset graph"));
   ml[v_inset_menu] = _("With inset graph");
   gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), view_inset_menu);
   gtk_widget_show(view_inset_menu);
   SG_SIGNAL_CONNECT(view_inset_menu, "activate", view_inset_callback, NULL);
+#endif
 
 
   view_combine_menu = gtk_menu_item_new_with_label(_("Channel style"));
