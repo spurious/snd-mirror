@@ -1,5 +1,6 @@
 Snd change log
 
+ 11-Feb:    Snd 11.3.
  9-Feb:     removed NLS support (the po directory and so on).
  8-Feb:     moved sound|channel|mix|mark|edit-property to C.
  23-Jan:    The rest of the Guile-dependent files have been removed.

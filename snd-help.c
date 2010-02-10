@@ -493,6 +493,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+11-Feb:  Snd 11.3.\n\
 9-Feb:   removed NLS support (the po directory and so on).\n\
 8-Feb:   moved sound|channel|mix|mark|edit-property to C.\n\
 23-Jan:  The rest of the Guile-dependent files have been removed.\n\
@@ -502,11 +503,6 @@ void about_snd_help(void)
 26-Dec:  tools/sam.c.\n\
 21-Dec:  moved focus-follows-mouse to C as with-pointer-focus.\n\
          removed def-optkey-fun and def-optkey-instrument (use define* and definstrument).\n\
-16-Dec:  make-current-window-display (draw.scm) moved to C as with-inset-graph.\n\
-         removed Guile support.\n\
-14-Dec:  peak-env support moved to C, added peak-env-dir, removed peak-env.*,\n\
-           peak-env-info, read-peak-env-info-file, and write-peak-env-info-file.\n\
-11-Dec:  removed midi.c, sndrecord.c, SGI support, mus-audio-mixer-*, and Alsa < 1.0 support.\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",

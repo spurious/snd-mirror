@@ -18210,6 +18210,7 @@ static char *mpfr_to_string(mpfr_t val, int radix)
        * (number->string 1234.5678909876543212345e8 16) "1cbe991a6a.c3f35c11868cb7e3fb75536"
        * (number->string 1234.5678909876543212345e-8 16) "0.0000cf204983a27e1eff701c562a870641e50"
        * (number->string 123456789098765432.12345e-8 16) "499602d2.fcd6e9e1748ba5adccc12c5a8"
+       * (number->string 123456789098765432.1e20 16) "949b0f70beeac8895e74b18b9680000.00"
        */
       int loc = 0;
       tmp = (char *)calloc(len + ep + 64, sizeof(char));
@@ -18247,6 +18248,7 @@ static char *mpc_to_string(mpc_t val, int radix)
   char *rl, *im, *tmp;
   int len;
   mpfr_t r;
+
   mpfr_init(r);
   mpc_real(r, val, GMP_RNDN);
   rl = mpfr_to_string(r, radix);
@@ -18255,6 +18257,7 @@ static char *mpc_to_string(mpc_t val, int radix)
   len = safe_strlen(rl) + safe_strlen(im) + 128;
   tmp = (char *)malloc(len * sizeof(char));
   snprintf(tmp, len, "%s%s%si", rl, (im[0] == '-') ? "" : "+", im);
+
   free(rl);
   free(im);
   return(tmp);
@@ -18271,10 +18274,13 @@ static char *big_number_to_string_with_radix(s7_pointer p, int radix)
 {
   if (c_object_type(p) == big_integer_tag)
     return(mpz_get_str(NULL, radix, S7_BIG_INTEGER(p)));
+
   if (c_object_type(p) == big_ratio_tag)
     return(mpq_get_str(NULL, radix, S7_BIG_RATIO(p)));
+
   if (c_object_type(p) == big_real_tag)
     return(mpfr_to_string(S7_BIG_REAL(p), radix));
+
   return(mpc_to_string(S7_BIG_COMPLEX(p), radix));
 }
 

@@ -1,55 +1,28 @@
-Snd 11.2
+Snd 11.3:
 
-added portaudio (version 19) support.
+The old functional form of show-listener no longer works:
+  change (show-listener) to (set! (show-listener) #t).
 
-s7: hash-table-for-each.
+in CLM, mus-file-probe et al changed to get bools working across the FFI,
+          (that is, mus-file-probe now returns either T or NIL, not 1 or 0),
+          and sound-frames and friends now follow the *clm-seach-list* list.
 
-added tools/sam.c: a Samson box emulator!
+The rest of the Guile-dependent files have been removed.  As soon as
+  they are translated to s7, I'll put them back in.  This includes the
+  --with-snd-as-pd-external and --with-rt configuration switches.
 
-some of the more useful extensions were moved to C:
+About half of the CL functions have been implemented in s7test.scm (including
+  CLOS via tiny-clos); they pass the sacla/ansi/clisp tests (also in s7test.scm).
 
-  make-current-window-display (draw.*) as with-inset-graph.
+flocsig in generators.scm (flanged locsig).
 
-  focus-follows-mouse as with-pointer-focus.
+moved sound|channel|mix|mark|edit-property to C.
 
-  peak-env support, so peak-env.* removed, peak-env-info,
-    read-peak-env-info-file and write-peak-env-info-file removed,
-    added peak-env-dir which if not null (the default) turns on the
-    peak env machinery.  smart-line-cursor also moved to C.
-
-
-lots of long-delayed cleanups:
-
-  removed Guile support.
-    this includes remove-local-hook! in hooks.scm, use-modules and all
-    the guile-specific reader/debugger settings ("debug-set!" etc),
-    --with-guile, --with-modules, and --with-hobbit configuration switches, 
-    snd-out in examp.scm, pd-* and rt-* are currently broken.  def-optkey-fun
-    is now just define*, and def-optkey-instrument is definstrument.
-    load-from-path is load.  shell is system. removed fix-optargs.scm.
-
-  removed mus-audio-systems, mus-audio-mixer-read, mus-audio-mixer-write, 
-    and all the associated field and device names (in CLM as well as Snd). 
-    removed mus-audio-report and changed mus-audio-describe to return the 
-    description as a string.
-
-  removed sndrecord.c and new-buttons.scm.
-
-  removed SGI support.
-
-  removed midi.c and the --with-midi configure switch.
-
-  in CLM, removed sc.c and clm-snd.lisp (CLM to Snd interjob communication).
-
-  removed XmPrint/libXp support (--with-xp configure switch).
+removed NLS support (the po directory and so on).
 
 
-versions of Alsa before 1.0 are no longer supported.
+checked: gtk 2.19.3|4|5, FC 12, sbcl 1.0.35
 
-mpc versions before 0.8.0 are no longer supported.
-
-
-checked: autoconf 2.65, sbcl 1.0.33|4, mpfr 2.4.2, gtk 2.19.1|2, mpc 0.8.1
-
-Thanks!: Hermann Beyer, Mike Scholz, Tommy Rushton, Mike Winter, Rick Taube.
+Thanks!: Kim Cascone, Mike Scholz, Michael McNabb, Rick Taube, Michael Edwards,
+	 Fernando Lopez-Lezcano, Geoff Lee
 

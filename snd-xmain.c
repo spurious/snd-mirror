@@ -381,6 +381,7 @@ static void get_stdin_string(XtPointer context, int *fd, XtInputId *id)
 }
 #endif
 
+/* TODO: unidlize these startup funcs -- this made sense in 1995! */
 
 static int tm_slice = 0;
 

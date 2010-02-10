@@ -44196,7 +44196,8 @@
       (test (number->string -1234.5678909876543212345 16) "-4d2.91614dc3ab1f80e55a563311b8f308")
       (test (number->string 1234.5678909876543212345e8 16) "1cbe991a6a.c3f35c11868cb7e3fb75536")
       (test (number->string 1234.5678909876543212345e-8 16) "0.0000cf204983a27e1eff701c562a870641e50")
-      (test (number->string 123456789098765432.12345e-8 16) "499602d2.fcd6e9e1748ba5adccc12c5a8")))
+      (test (number->string 123456789098765432.12345e-8 16) "499602d2.fcd6e9e1748ba5adccc12c5a8")
+      (test (number->string 123456789098765432.1e20 16) "949b0f70beeac8895e74b18b9680000.00")))
 
 (num-test (string->number "1.1e4" 5) 750.0)
 (num-test (string->number "1.1e4" 4) 320.0)

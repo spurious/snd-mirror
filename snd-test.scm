@@ -61297,15 +61297,7 @@ EDITS: 1
 		 (_PangoAttrList_ (pango_attr_list_new))
 		 (_list (gtk_label_get_selection_bounds _GtkLabel_))
 		 (_list1 (gtk_label_get_layout_offsets _GtkLabel_))
-		 (_int2 (GTK_WIDGET_FLAGS _GtkWidget_))
-		 (_gboolean6 (GTK_WIDGET_REALIZED _GtkWidget_))
-		 (_gboolean7 (GTK_WIDGET_MAPPED _GtkWidget_))
-		 (_gboolean8 (GTK_WIDGET_VISIBLE _GtkWidget_))
-		 (_gboolean9 (GTK_WIDGET_DRAWABLE _GtkWidget_))
-		 (_gboolean10 (GTK_WIDGET_SENSITIVE _GtkWidget_))
-		 (_gboolean11 (GTK_WIDGET_PARENT_SENSITIVE _GtkWidget_))
-		 (_gboolean12 (GTK_WIDGET_IS_SENSITIVE _GtkWidget_))
-		 (_gboolean14 (GTK_WIDGET_HAS_FOCUS _GtkWidget_)))
+		 )
 		 
 	    (if (not (string=? _gchar_ "hiho")) (snd-display ";label text: ~A" _gchar_))
 	    (if (not (string=? _gchar1_ "hiho")) (snd-display ";label label: ~A" _gchar1_))
@@ -61319,14 +61311,6 @@ EDITS: 1
 	    (if _gboolean1 (snd-display ";label underline"))
 	    (if _gboolean2 (snd-display ";label line wrap"))
 	    (if _gboolean3 (snd-display ";label selectable"))
-	    (if _gboolean6 (snd-display ";WIDGET REALIZED"))
-	    (if _gboolean7 (snd-display ";WIDGET MAPPED"))
-	    (if _gboolean8 (snd-display ";WIDGET VISIBLE"))
-	    (if _gboolean9 (snd-display ";WIDGET DRAWABLE"))
-	    (if (not _gboolean10) (snd-display ";WIDGET SENSITIVE"))
-	    (if (not _gboolean11) (snd-display ";WIDGET SENSITIVE"))
-	    (if (not _gboolean12) (snd-display ";WIDGET SENSITIVE"))
-	    (if _gboolean14 (snd-display ";WIDGET HAS FOCUS"))
 
 	    (gtk_label_set_text _GtkLabel_ "another label")
 	    (if (not (string=? (gtk_label_get_text _GtkLabel_) "another label")) (snd-display ";set label text: ~A" (gtk_label_get_text _GtkLabel_)))
@@ -62876,8 +62860,6 @@ EDITS: 1
 		 (_GtkWidget_2 (gtk_radio_button_new_with_mnemonic _GSList_ _gchar_))
 		 (_GSList_ (gtk_radio_button_get_group _GtkRadioButton_))
 		 (_int (GTK_OBJECT_FLAGS (GTK_OBJECT _GtkRadioButton_))))
-	    (GTK_WIDGET_SET_FLAGS _GtkWidget_ 0)
-	    (GTK_WIDGET_UNSET_FLAGS _GtkWidget_ 0)
 	    (GTK_OBJECT_SET_FLAGS (GTK_OBJECT _GtkWidget_) 0)
 	    (GTK_OBJECT_UNSET_FLAGS (GTK_OBJECT _GtkWidget_) 0))
 	  
@@ -63633,11 +63615,6 @@ EDITS: 1
 		   GTK_TREE_SELECTION GTK_TREE_SORTABLE GTK_TREE_STORE GTK_TREE_VIEW GTK_TREE_VIEW_COLUMN
 		   GTK_UI_MANAGER GTK_VBOX GTK_VBUTTON_BOX GTK_VIEWPORT GTK_VPANED
 		   GTK_VRULER GTK_VSCALE GTK_VSCROLLBAR GTK_VSEPARATOR GTK_WIDGET
-		   GTK_WIDGET_DRAWABLE GTK_WIDGET_FLAGS GTK_WIDGET_HAS_FOCUS
-		   GTK_WIDGET_IS_SENSITIVE GTK_WIDGET_MAPPED GTK_WIDGET_PARENT_SENSITIVE
-		   GTK_WIDGET_REALIZED
-		   GTK_WIDGET_SENSITIVE GTK_WIDGET_SET_FLAGS
-		   GTK_WIDGET_UNSET_FLAGS GTK_WIDGET_VISIBLE GTK_WINDOW
 		   G_IS_OBJECT G_OBJECT G_OBJECT_TYPE PANGO_CONTEXT PANGO_FONT
 		   PANGO_FONT_FACE PANGO_FONT_FAMILY PANGO_FONT_MAP PANGO_IS_CONTEXT PANGO_IS_FONT
 		   PANGO_IS_FONT_FACE PANGO_IS_FONT_FAMILY PANGO_IS_FONT_MAP PANGO_IS_LAYOUT PANGO_IS_RENDERER
