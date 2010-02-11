@@ -4411,6 +4411,9 @@ static char *s7_number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int r
 	    sign = true;
 	    x = -x;
 	  }
+	if (x < 0.0)
+	  return(s7_strdup("-inf.0"));
+
 	int_part = (s7_Int)floor(x);
 	frac_part = x - int_part;
 	s7_Int_to_string(n, int_part, radix, 0);
@@ -4774,8 +4777,8 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
   /* there's an ambiguity in number notation here if we allow "1e1" or "1.e1" in base 16 (or 15) -- is e a digit or an exponent marker?
    *   but 1e+1, for example disambiguates it -- kind of messy! -- the scheme spec says "e" can only occur in base 10. 
    *   mpfr says "e" as exponent only in bases <= 10 -- else use '@' which works in any base.  This can only cause confusion
-   *   in scheme, unfortunately, due to the idiotic scheme polar notation.  So... here the exponent can occur only in
-   *   bases <= 10.
+   *   in scheme, unfortunately, due to the idiotic scheme polar notation.  But we accept "s" and "l" as exponent markers
+   *   so, perhaps for radix > 10, the exponent, if any, has to use one of S s L l?
    */
 
   max_len = s7_int_digits_by_radix[radix];

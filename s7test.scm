@@ -44208,6 +44208,100 @@
     ((= i 17)) 
   (num-test (string->number (number->string 12345.67890987654321 i) i) 12345.67890987654321))
 
+(let ()
+  (define (make-number radix)
+    (let* ((max-len (+ 1 (vector-ref (vector 0 0 62 39 31 26 23 22 20 19 18 17 17 16 16 15 15) radix)))
+	   (int-len (floor (* max-len (random 1.0) (random 1.0) (random 1.0))))
+	   (frac-len (floor (* max-len (random 1.0) (random 1.0) (random 1.0))))
+	   (exp-len 1)
+	   (has-frac (> (random 1.0) 0.2))
+	   (has-exp (and (<= radix 10)
+			 (> (random 1.0) 0.5)))
+	   (signed (> (random 1.0) 0.5))
+	   (exp-signed (> (random 1.0) 0.5)))
+      (if (and (= int-len 0)
+	       (or (not has-frac)
+		   (= frac-len 0)))
+	  (set! int-len 1))
+      (let ((str (make-string (+ int-len
+				 (if signed 1 0)
+				 (if has-frac (+ frac-len 1) 0) ; extra 1 for "."
+				 (if has-exp (+ (+ exp-len 1)   ; extra 1 for exponent char
+						(if exp-signed 1 0))
+				     0))))
+	    (loc 0))
+	
+	(define (digit->char digit)
+	  (if (< digit 10)
+	      (integer->char (+ (char->integer #\0) digit))
+	      (integer->char (+ (char->integer #\a) (- digit 10)))))
+	
+	(define (exponent-marker)
+	  (string-ref "eEsSfFdDlL" (random 10)))
+	
+	(if signed 
+	    (begin
+	      (set! (str 0) #\-)
+	      (set! loc (+ loc 1))))
+	
+	(do ((i 0 (+ i 1)))
+	    ((= i int-len))
+	  (set! (str loc) (digit->char (random radix)))
+	  (set! loc (+ loc 1)))
+	
+	(if has-frac
+	    (begin
+	      (set! (str loc) #\.)
+	      (set! loc (+ loc 1))
+	      (do ((i 0 (+ i 1)))
+		  ((= i frac-len))
+		(set! (str loc) (digit->char (random radix)))
+		(set! loc (+ loc 1)))))
+	
+	(if has-exp
+	    (begin
+	      (set! (str loc) (exponent-marker))
+	      (set! loc (+ loc 1))
+	      (if exp-signed
+		  (begin
+		    (set! (str loc) #\-)
+		    (set! loc (+ loc 1))))
+	      (do ((i 0 (+ i 1)))
+		  ((= i exp-len))
+		(set! (str loc) (digit->char (random 10)))
+		(set! loc (+ loc 1)))))
+	
+	str)))
+  
+  (let ((tries 1000))
+    (do ((i 0 (+ i 1)))
+	((= i tries))
+      (let ((rad (+ 2 (random 15))))
+	(let ((str (make-number rad)))
+	  (if (not (number? (string->number str rad)))
+	      (format #t "trouble in string->number ~A ~S: ~A~%"
+		      rad str
+		      (string->number str rad))
+	      (if (not (string? (number->string (string->number str rad) rad)))
+		  (format #t "trouble in number->string ~A ~S: ~A ~S~%"
+			  rad str
+			  (string->number str rad)
+			  (number->string (string->number str rad) rad))
+		  (if (not (number? (string->number (number->string (string->number str rad) rad) rad)))
+		      (format #t "trouble in (3) number->string ~A ~S: ~A ~S ~A~%"
+			      rad str
+			      (string->number str rad)
+			      (number->string (string->number str rad) rad)
+			      (string->number (number->string (string->number str rad) rad) rad))
+		      (let ((diff (abs (- (string->number (number->string (string->number str rad) rad) rad) (string->number str rad)))))
+			(if (> diff 1e-6)
+			    (format #t "~A ~S: ~A ~S, ~A ~A~%"
+				    rad str
+				    (string->number str rad)
+				    (number->string (string->number str rad) rad)
+				    (string->number (number->string (string->number str rad) rad) rad)
+				    diff)))))))))))
+
 (let ((happy #t))
   (do ((i 2 (+ i 1)))
       ((or (not happy)
@@ -44237,24 +44331,24 @@
 	(num-test (string->number "-111.01" 2) -7.25)
 	(num-test (string->number "0.001" 2) 0.125)
 	(num-test (string->number "1000000.001" 2) 64.125)
-
+	
 	(num-test (string->number "111.01" 8) 73.015625)
 	(num-test (string->number "-111.01" 8) -73.015625)
 	(num-test (string->number "0.001" 8) 0.001953125)
 	(num-test (string->number "1000000.001" 8) 262144.001953125)
-
+	
 	(num-test (string->number "111.01" 16) 273.00390625)
 	(num-test (string->number "-111.01" 16) -273.00390625)
 	(num-test (string->number "0.001" 16) 0.000244140625)
 	(num-test (string->number "1000000.001" 16) 16777216.000244)
-
+	
 	(num-test (string->number "11.+i" 2) 3+1i)
 	(num-test (string->number "0+.1i" 2) 0+0.5i)
 	(num-test (string->number "1.+0.i" 2) 1.0)
 	(num-test (string->number ".01+.1i" 2) 0.25+0.5i)
 	(num-test (string->number "1+0.i" 2) 1.0)
 	(num-test (string->number "1+0i" 2) 1.0)
-
+	
 	(test (number->string 0.75 2) "0.11")
 	(test (number->string 0.125 8) "0.1")
 	(test (number->string 12.5 8) "14.4")
@@ -44269,42 +44363,42 @@
 	(test (number->string -12.5-3.75i 8) "-14.4-3.6i")
 	(test (number->string 12.0+0.75i 16) "c.0+0.ci")
 	(test (number->string -12.5-3.75i 16) "-c.8-3.ci")
-
+	
 	(test (string=? (substring (number->string our-pi 16) 0 14) "3.243f6a8885a3") #t)
-;	(test (string=? (substring (number->string our-pi 2) 0 14) "11.0010010000111111011") #t)
-
+					;	(test (string=? (substring (number->string our-pi 2) 0 14) "11.0010010000111111011") #t)
+	
 	(for-each
 	 (lambda (expchar)
 	   (let ((exponent (string expchar)))
 	     (do ((base 2 (+ base 1)))
 		 ((= base 11))
 	       (let ((val (string->number (string-append "1" exponent "1") base)))
-		   (if (and (number? val)
-			    (not (= val base)))
-		       (begin
-			 (display "(string->number ") (display (string-append "1" exponent "1")) (display " ") (display base)
-			 (display ") returned ") (display (string->number (string-append "1" exponent "1") base)) 
-			 (display "?") (newline)))))
+		 (if (and (number? val)
+			  (not (= val base)))
+		     (begin
+		       (display "(string->number ") (display (string-append "1" exponent "1")) (display " ") (display base)
+		       (display ") returned ") (display (string->number (string-append "1" exponent "1") base)) 
+		       (display "?") (newline)))))
 	     
 	     (do ((base 2 (+ base 1)))
 		 ((= base 11))
 	       (let ((val (string->number (string-append "1.1" exponent "1") base)))
-		   (if (and (number? val)
-			    (not (= val (+ base 1))))
-		       (begin
-			 (display "(string->number ") (display (string-append "1.1" exponent "1")) (display " ") (display base)
-			 (display ") returned ") (display (string->number (string-append "1.1" exponent "1") base)) 
-			 (display "?") (newline)))))
+		 (if (and (number? val)
+			  (not (= val (+ base 1))))
+		     (begin
+		       (display "(string->number ") (display (string-append "1.1" exponent "1")) (display " ") (display base)
+		       (display ") returned ") (display (string->number (string-append "1.1" exponent "1") base)) 
+		       (display "?") (newline)))))
 	     
 	     (do ((base 2 (+ base 1)))
 		 ((= base 11))
 	       (let ((val (string->number (string-append "1" exponent "+1") base)))
 		 (if (and (number? val)
 			  (not (= val base)))
-		       (begin
-			 (display "(string->number ") (display (string-append "1" exponent "+1")) (display " ") (display base)
-			 (display ") returned ") (display (string->number (string-append "1" exponent "+1") base)) 
-			 (display "?") (newline)))))
+		     (begin
+		       (display "(string->number ") (display (string-append "1" exponent "+1")) (display " ") (display base)
+		       (display ") returned ") (display (string->number (string-append "1" exponent "+1") base)) 
+		       (display "?") (newline)))))
 					; in base 16 this is still not a number because of the + (or -)
 					; but "1e+1i" is a number -- gad!
 	     
@@ -44313,13 +44407,13 @@
 	       (let ((val (string->number (string-append "1" exponent "-1+1i") base)))
 		 (if (and (number? val)
 			  (> (magnitude (- val (make-rectangular (/ base) 1))) 1e-6))
-		       (begin
-			 (display "(string->number ") (display (string-append "1" exponent "-1+1i")) (display " ") (display base)
-			 (display ") returned ") (display (string->number (string-append "1" exponent "-1+1i") base)) 
-			 (display "?") (newline)))))))
-
+		     (begin
+		       (display "(string->number ") (display (string-append "1" exponent "-1+1i")) (display " ") (display base)
+		       (display ") returned ") (display (string->number (string-append "1" exponent "-1+1i") base)) 
+		       (display "?") (newline)))))))
+	 
 	 (list #\e #\d #\f #\s #\l))
-
+	
 	(test (< (abs (- (string->number "3.1415926535897932384626433832795029" 10) 3.1415926535897932384626433832795029)) 1e-7) #t)
 	(num-test (string->number "2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427" 16) 2.4433976119657)
 	(num-test (string->number "2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427" 11) 2.6508258818757)

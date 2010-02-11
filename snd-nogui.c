@@ -272,14 +272,17 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   snd_info *sp;
   int snd_slot, nchans, i;
   bool free_filename = false;
+
   if (ss->translated_filename) 
     {
       filename = ss->translated_filename;
       free_filename = true;
       ss->translated_filename = NULL;
     }
+
   nchans = hdr->chans;
   if (nchans <= 0) nchans = 1;
+
   if (nchans > 256)
     {
       /* either a screwed up header, or Snd was built with wrong endianess */
@@ -291,16 +294,20 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	fprintf(stderr, _("byte swap problem: chans should be %d"), mus_char_to_lint((unsigned char *)&nchans));
       nchans = 1; /* ?? */
     }
+
   snd_slot = find_free_sound_slot(nchans); /* expands sound list if needed */
   ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], filename, hdr, snd_slot, read_only);
   sp = ss->sounds[snd_slot];
+
   sp->write_date = file_write_date(filename); /* needed early in this process by the peak-env handlers */
   for (i = 0; i < nchans; i++) sp->chans[i] = make_chan_info(sp->chans[i], i, sp);
   add_sound_data(filename, sp, WITHOUT_GRAPH);
   after_open(sp->index);
+
   if (free_filename) free(filename);
   return(sp);
 }
+
 
 static char **auto_open_file_names = NULL;
 static int auto_open_files = 0;
@@ -313,11 +320,13 @@ static bool noglob = false, noinit = false, nostdin = false;
 /* stolen from scwm.c */
 static sigjmp_buf envHandleEventsLoop;
 
+
 static void segv(int ignored)
 {
   siglongjmp(envHandleEventsLoop, 1);
 }
 #endif
+
 
 static jmp_buf top_level_jump;
 void top_level_catch(int ignore);

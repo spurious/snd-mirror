@@ -406,114 +406,89 @@ static gboolean io_invoke(GIOChannel *source, GIOCondition condition, gpointer d
 #endif
 
 
-static int tm_slice = 0;
-
-static idle_func_t startup_funcs(gpointer context)
+static void startup_funcs(void)
 {
   static int auto_open_ctr = 0;
-  switch (tm_slice)
-    {
-    case 0:
+
 #ifndef SND_AS_WIDGET
-      /* add X property level communication path (see sndctrl.c for the other side) */
-      snd_v = gdk_atom_intern("SND_VERSION", false);
-      snd_c = gdk_atom_intern("SND_COMMAND", false);
+  /* add X property level communication path (see sndctrl.c for the other side) */
+  snd_v = gdk_atom_intern("SND_VERSION", false);
+  snd_c = gdk_atom_intern("SND_COMMAND", false);
 
-      gdk_property_change(MAIN_WINDOW(ss), 
-			  snd_v, 
-			  GDK_TARGET_STRING, 8, 
-			  GDK_PROP_MODE_REPLACE, 
-			  (guchar *)(SND_DATE), 
-			  strlen(SND_DATE) + 1);
+  gdk_property_change(MAIN_WINDOW(ss), 
+		      snd_v, 
+		      GDK_TARGET_STRING, 8, 
+		      GDK_PROP_MODE_REPLACE, 
+		      (guchar *)(SND_DATE), 
+		      strlen(SND_DATE) + 1);
 
 #if HAVE_EXTENSION_LANGUAGE
-      gtk_widget_add_events(MAIN_SHELL(ss), GDK_PROPERTY_CHANGE_MASK);
-      SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "property_notify_event", who_called, NULL);
+  gtk_widget_add_events(MAIN_SHELL(ss), GDK_PROPERTY_CHANGE_MASK);
+  SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "property_notify_event", who_called, NULL);
 #endif
-      /* trap outer-level Close for cleanup check */
-      SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "delete_event", window_close, NULL);
-      /* when iconified, we need to hide any dialogs as well */
-      SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "window_state_event", window_iconify, NULL);
+  /* trap outer-level Close for cleanup check */
+  SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "delete_event", window_close, NULL);
+  /* when iconified, we need to hide any dialogs as well */
+  SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "window_state_event", window_iconify, NULL);
 #endif
 
-      ss->sgx->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
-      ss->sgx->wait_cursor = gdk_cursor_new(GDK_WATCH);
-      ss->sgx->bounds_cursor = gdk_cursor_new(GDK_SB_H_DOUBLE_ARROW);
-      ss->sgx->arrow_cursor = gdk_cursor_new(GDK_LEFT_PTR);
-      break;
+  ss->sgx->graph_cursor = gdk_cursor_new((GdkCursorType)in_graph_cursor(ss));
+  ss->sgx->wait_cursor = gdk_cursor_new(GDK_WATCH);
+  ss->sgx->bounds_cursor = gdk_cursor_new(GDK_SB_H_DOUBLE_ARROW);
+  ss->sgx->arrow_cursor = gdk_cursor_new(GDK_LEFT_PTR);
 
-    case 1: 
 #if HAVE_EXTENSION_LANGUAGE
-      snd_load_init_file(noglob, noinit);
+  snd_load_init_file(noglob, noinit);
 #endif
 
 #if HAVE_SIGNAL && HAVE_EXTENSION_LANGUAGE && !__MINGW32__
-      if (!nostdin)
-	{
-	  GIOChannel *channel;
-	  signal(SIGTTIN, SIG_IGN);
-	  signal(SIGTTOU, SIG_IGN);
-	  /* these signals are sent by a shell if we start Snd as a background process,
-	   * but try to read stdin (needed to support the emacs subjob connection).  If
-	   * we don't do this, the background job is suspended when the shell sends SIGTTIN.
-	   */
-	  channel = g_io_channel_unix_new(STDIN_FILENO);
-	  stdin_id = g_io_add_watch_full(channel, 
-					 G_PRIORITY_DEFAULT, 
-					 (GIOCondition)(G_IO_IN | G_IO_HUP | G_IO_ERR), 
-					 io_invoke, NULL, NULL);
-	  g_io_channel_unref(channel);
-	}
-#endif
-      break;
-
-    case 2: 
-      if (auto_open_files > 0)
-	{
-	  auto_open_ctr = handle_next_startup_arg(auto_open_ctr, auto_open_file_names, true, auto_open_files);
-	  if (auto_open_ctr < auto_open_files) return(BACKGROUND_CONTINUE); /* i.e. come back to this branch */
-	}
-      break;
-
-    case 3:
-#ifndef SND_AS_WIDGET
-      if ((ss->init_window_width > 0) && (ss->init_window_height > 0))
-	set_widget_size(GTK_WIDGET(MAIN_SHELL(ss)), ss->init_window_width, ss->init_window_height);
-      if ((ss->init_window_x != DEFAULT_INIT_WINDOW_X) && (ss->init_window_y != DEFAULT_INIT_WINDOW_Y))
-	set_widget_position(GTK_WIDGET(MAIN_SHELL(ss)), ss->init_window_x, ss->init_window_y);
-#endif
-#if (!HAVE_FAM)
-      if (auto_update_interval(ss) > 0.0)
-	g_timeout_add_full(0, (guint32)(auto_update_interval(ss) * 1000), auto_update_check, NULL, NULL);
-#endif
-      break;
-
-    case 4: 
-#if MUS_TRAP_SEGFAULT
-      if (trap_segfault(ss)) signal(SIGSEGV, segv);
-#endif
-      if ((ss->sounds) &&
-	  (ss->selected_sound == NO_SELECTION))
-	{
-	  snd_info *sp;
-	  sp = ss->sounds[0];
-	  if ((sp) && 
-	      (sp->inuse == SOUND_NORMAL) &&
-	      (sp->selected_channel == NO_SELECTION)) /* don't clobber possible select-channel in loaded startup files */
-	    select_channel(sp, 0);
-	}
-      if (ss->startup_errors)
-	{
-	  handle_listener(true);
-	  listener_append(ss->startup_errors);
-	  free(ss->startup_errors);
-	  ss->startup_errors = NULL;
-	}
-      return(BACKGROUND_QUIT); 
-      break;
+  if (!nostdin)
+    {
+      GIOChannel *channel;
+      signal(SIGTTIN, SIG_IGN);
+      signal(SIGTTOU, SIG_IGN);
+      /* these signals are sent by a shell if we start Snd as a background process,
+       * but try to read stdin (needed to support the emacs subjob connection).  If
+       * we don't do this, the background job is suspended when the shell sends SIGTTIN.
+       */
+      channel = g_io_channel_unix_new(STDIN_FILENO);
+      stdin_id = g_io_add_watch_full(channel, 
+				     G_PRIORITY_DEFAULT, 
+				     (GIOCondition)(G_IO_IN | G_IO_HUP | G_IO_ERR), 
+				     io_invoke, NULL, NULL);
+      g_io_channel_unref(channel);
     }
-  tm_slice++;
-  return(BACKGROUND_CONTINUE);
+#endif
+
+  while (auto_open_ctr < auto_open_files)
+    auto_open_ctr = handle_next_startup_arg(auto_open_ctr, auto_open_file_names, true, auto_open_files);
+
+#ifndef SND_AS_WIDGET
+  if ((ss->init_window_width > 0) && (ss->init_window_height > 0))
+    set_widget_size(GTK_WIDGET(MAIN_SHELL(ss)), ss->init_window_width, ss->init_window_height);
+  if ((ss->init_window_x != DEFAULT_INIT_WINDOW_X) && (ss->init_window_y != DEFAULT_INIT_WINDOW_Y))
+    set_widget_position(GTK_WIDGET(MAIN_SHELL(ss)), ss->init_window_x, ss->init_window_y);
+#endif
+
+#if (!HAVE_FAM)
+  if (auto_update_interval(ss) > 0.0)
+    g_timeout_add_full(0, (guint32)(auto_update_interval(ss) * 1000), auto_update_check, NULL, NULL);
+#endif
+
+#if MUS_TRAP_SEGFAULT
+  if (trap_segfault(ss)) signal(SIGSEGV, segv);
+#endif
+
+  if ((ss->sounds) &&
+      (ss->selected_sound == NO_SELECTION))
+    {
+      snd_info *sp;
+      sp = ss->sounds[0];
+      if ((sp) && 
+	  (sp->inuse == SOUND_NORMAL) &&
+	  (sp->selected_channel == NO_SELECTION)) /* don't clobber possible select-channel in loaded startup files */
+	select_channel(sp, 0);
+    }
 }
 
 
@@ -1076,7 +1051,7 @@ class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n			\
   make_icons_transparent(BASIC_COLOR);
 #endif
   if (batch) gtk_widget_hide(MAIN_SHELL(ss));
-  BACKGROUND_ADD(startup_funcs, NULL);
+  startup_funcs();
   
 #if HAVE_SETJMP_H
 #if MUS_TRAP_SEGFAULT
@@ -1099,6 +1074,13 @@ class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n			\
     }
 #endif
   
+  if (ss->startup_errors)
+    {
+      post_it("Error in initialization", ss->startup_errors);
+      free(ss->startup_errors);
+      ss->startup_errors = NULL;
+    }
+
 #ifndef SND_AS_WIDGET
   set_up_icon();
   gtk_main();

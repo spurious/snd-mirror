@@ -66732,6 +66732,8 @@ EDITS: 1
 		  
 		  ))))
 
+	(snd-display ";end args~%")
+
 	(if (defined? 'mus-audio-reinitialize) (mus-audio-reinitialize))
 	(set! (window-y) 10)
 	(dismiss-all-dialogs)
@@ -67288,5 +67290,35 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  7,695,845,150  clm.c:mus_src [/home/bil/cl/snd]
  7,299,789,900  s7.c:s7_cons [/home/bil/cl/snd]
  6,943,061,664  run.c:jump_if_not_equal [/home/bil/cl/snd]
+
+10-Feb-10 (full snd-test, not just test 23):
+372,028,372,850  PROGRAM TOTALS
+45,638,227,518  io.c:mus_read_any_1 [/home/bil/snd-11/snd]
+44,386,146,639  s7.c:eval [/home/bil/snd-11/snd]
+26,599,493,642  s7.c:eval'2 [/home/bil/snd-11/snd]
+20,950,395,846  s7.c:gc [/home/bil/snd-11/snd]
+20,800,612,761  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-11/snd]
+17,699,734,242  snd-edits.c:channel_local_maxamp [/home/bil/snd-11/snd]
+14,661,979,458  io.c:mus_write_1 [/home/bil/snd-11/snd]
+14,486,041,393  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
+10,836,543,187  run.c:eval_ptree [/home/bil/snd-11/snd]
+ 6,663,065,404  /home/bil/test/gsl-1.13/linalg/householder.c:gsl_linalg_householder_mh [/usr/local/lib/libgsl.so.0.14.0]
+ 4,848,628,373  ???:memset [/lib/ld-2.9.so]
+ 4,354,124,652  clm.c:mus_out_any_to_file [/home/bil/snd-11/snd]
+ 4,081,657,874  clm.c:mus_fir_filter [/home/bil/snd-11/snd]
+ 3,881,809,674  snd-edits.c:next_sample_value [/home/bil/snd-11/snd]
+ 3,676,951,173  clm.c:mus_src [/home/bil/snd-11/snd]
+ 3,588,422,788  /home/bil/test/gsl-1.13/linalg/householder.c:gsl_linalg_householder_hm [/usr/local/lib/libgsl.so.0.14.0]
+ 3,166,989,992  run.c:jump_if_not_equal [/home/bil/snd-11/snd]
+ 2,997,117,922  s7.c:g_add [/home/bil/snd-11/snd]
+ 2,761,768,633  s7.c:s7_mark_object_1'2 [/home/bil/snd-11/snd]
+ 2,568,586,593  s7.c:s7_make_real [/home/bil/snd-11/snd]
+ 2,533,319,957  xen.c:xen_s7_type_p [/home/bil/snd-11/snd]
+ 2,450,756,818  /home/bil/test/gsl-1.13/linalg/../gsl/gsl_matrix_double.h:gsl_linalg_householder_mh
+ 2,389,660,542  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-11/snd]
+ 2,383,913,072  s7.c:copy_object'2 [/home/bil/snd-11/snd]
+ 2,119,836,764  s7.c:s7_cons [/home/bil/snd-11/snd]
+ 2,118,663,239  s7.c:new_cell [/home/bil/snd-11/snd]
+ 1,815,226,062  s7.c:s7_object_value [/home/bil/snd-11/snd]
 
 |#

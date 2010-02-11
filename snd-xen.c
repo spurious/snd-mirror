@@ -1,19 +1,6 @@
 #include "snd.h"
 #include "clm2xen.h"
 
-/* we often use the pair (selected-sound) (selected-channel) or whatever,
- *         and these are always paired in the argument lists, so if we had a
- *         C function that returned both as a (scheme) multiple-value, we
- *         could simply plug that in wherever the other 2 were wanted.
- *         Actually, this should work as well:
- *         (define (sc)
- *           (if (not (null? sounds))
- *               (values (or (selected-sound) (car (sounds)))
- *                       (or (selected-channel) 0))
- *               (values #f 0)))
- *         and similarly in other such cases. [end chn edpos]
- */
-
 /* Snd defines its own exit and delay
  *
  *   In Scheme, delay is protected in clm2xen.c as make-promise
@@ -203,28 +190,40 @@ XEN snd_protected_at(int loc)
 
 static char *last_file_loaded = NULL;
 
+#if HAVE_SCHEME
+static XEN g_snd_s7_error_handler(XEN args)
+{
+  fprintf(stderr, "args: %s\n", s7_object_to_c_string(s7, args));
+  if (ss->xen_error_handler)
+    (*(ss->xen_error_handler))(s7_string(s7_car(args)), (void *)NULL);
+  return(s7_f(s7));
+}
+#endif
+
+
 void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *data)
 {
   ss->xen_error_handler = handler;
   ss->xen_error_data = data;
-}
 
-
-#if (!HAVE_SCHEME) && (!HAVE_FORTH)
-static void call_xen_error_handler(const char *msg)
-{
-  /* make sure it doesn't call itself recursively */
-  void (*old_xen_error_handler)(const char *msg, void *data);
-  void *old_xen_error_data;
-  old_xen_error_handler = ss->xen_error_handler;
-  old_xen_error_data = ss->xen_error_data;
-  ss->xen_error_handler = NULL;
-  ss->xen_error_data = NULL;
-  (*(old_xen_error_handler))(msg, old_xen_error_data);
-  ss->xen_error_handler = old_xen_error_handler;
-  ss->xen_error_data = old_xen_error_data;
-}
+#if HAVE_SCHEME
+  if (handler == NULL)
+    s7_symbol_set_value(s7, s7_make_symbol(s7, "*error-hook*"), s7_nil(s7));
+  else s7_eval_c_string(s7, "(set! *error-hook*                           \n\
+                               (lambda (tag args)                         \n\
+                                 (_snd_s7_error_handler_                  \n\
+                                   (string-append                         \n\
+                                     (apply format #f args)               \n\
+                                     (if (and (*error-info* 2)            \n\
+                                              (string? (*error-info* 4))  \n\
+                                              (number? (*error-info* 3))) \n\
+                                         (format #f \"~%~S[~D]: ~A~%\"    \n\
+                                                 (*error-info* 4)         \n\
+                                                 (*error-info* 3)         \n\
+                                                 (*error-info* 2))        \n\
+                                         \"\")))))");
 #endif
+}
 
 
 void redirect_snd_print_to(void (*handler)(const char *msg, void *ufd), void *data)
@@ -409,7 +408,18 @@ void snd_rb_raise(XEN tag, XEN throw_args)
       if (!(run_snd_error_hook(msg)))
 	{
 	  if (ss->xen_error_handler)
-	    call_xen_error_handler(msg);
+	    {
+	      /* make sure it doesn't call itself recursively */
+	      void (*old_xen_error_handler)(const char *msg, void *data);
+	      void *old_xen_error_data;
+	      old_xen_error_handler = ss->xen_error_handler;
+	      old_xen_error_data = ss->xen_error_data;
+	      ss->xen_error_handler = NULL;
+	      ss->xen_error_data = NULL;
+	      (*(old_xen_error_handler))(msg, old_xen_error_data);
+	      ss->xen_error_handler = old_xen_error_handler;
+	      ss->xen_error_data = old_xen_error_data;
+	    }
 	}
     }
 
@@ -2395,6 +2405,9 @@ static char *find_source_file(const char *orig)
   XEN_NARGIFY_0(g_dlerror_w, g_dlerror)
   XEN_NARGIFY_2(g_dlinit_w, g_dlinit)
 #endif
+#if HAVE_SCHEME
+  XEN_VARGIFY(g_snd_s7_error_handler_w, g_snd_s7_error_handler);
+#endif
 
 XEN_NARGIFY_1(g_snd_print_w, g_snd_print)
 XEN_NARGIFY_0(g_little_endian_w, g_little_endian)
@@ -2451,6 +2464,9 @@ XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
   #define g_dlclose_w g_dlclose
   #define g_dlerror_w g_dlerror
   #define g_dlinit_w g_dlinit
+#endif
+#if HAVE_SCHEME
+  #define g_snd_s7_error_handler_w g_snd_s7_error_handler
 #endif
 
 #define g_snd_print_w g_snd_print
@@ -2810,6 +2826,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 
 #if HAVE_SCHEME
   init_listener_ports();
+  XEN_DEFINE_PROCEDURE("_snd_s7_error_handler_", g_snd_s7_error_handler_w,  0, 0, 1, "internal error redirection for snd/s7");
 
   XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
   XEN_EVAL_C_STRING("(define undo-edit undo)");
@@ -2855,20 +2872,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 	             (apropos-1 (vector-ref frame i))))\
 	         (apropos-1 frame)))\
            (current-environment)))");
-
-
-  /* a second stab at a break point handler for s7 
-
-     I think Scheme should support stuff like:
-
-     (let ((local-var 32))
-       (define (proc1 arg)
-         (+ local-var arg))
-       (define (proc2 arg)
-         (- local-var arg)))
-
-     which gives shared local variables without the annoying set! two-step
-  */
 
   XEN_EVAL_C_STRING("\
 (define break-ok #f)\

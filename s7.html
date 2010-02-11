@@ -983,6 +983,12 @@ write "hygenic" macros:
 		     (cadr (current-environment)))
 	   ,result)))))
 
+     (glet ((local-var 32))
+       (define (proc1 arg)
+         (+ local-var arg))
+       (define (proc2 arg)
+         (- local-var arg)))
+
 but maybe it would be more sensible to use something like
 
 (define-macro (global-funcs-share-local-data local-name local-value . funcs)

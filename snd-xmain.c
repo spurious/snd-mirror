@@ -381,11 +381,8 @@ static void get_stdin_string(XtPointer context, int *fd, XtInputId *id)
 }
 #endif
 
-/* TODO: unidlize these startup funcs -- this made sense in 1995! */
 
-static int tm_slice = 0;
-
-static idle_func_t startup_funcs(XtPointer context)
+static void startup_funcs(void)
 {
 #ifndef SND_AS_WIDGET
   Atom wm_delete_window;
@@ -396,105 +393,86 @@ static idle_func_t startup_funcs(XtPointer context)
   Display *dpy;
   shell = ss->sgx->mainshell;
   dpy = MAIN_DISPLAY(ss);
-  switch (tm_slice)
-    {
-    case 0:
-      create_popup_menu();
+
+  create_popup_menu();
+
 #ifndef SND_AS_WIDGET
 #ifndef __alpha__
-      add_menu_drop();
+  add_menu_drop();
 #endif
-#endif
-#ifndef SND_AS_WIDGET
-      /* trap outer-level Close for cleanup check */
-      wm_delete_window = XmInternAtom(dpy, (char *)"WM_DELETE_WINDOW", false);
-      XmAddWMProtocolCallback(shell, wm_delete_window, window_close, NULL);
 
-      snd_v = XInternAtom(dpy, "SND_VERSION", false);
-      snd_c = XInternAtom(dpy, "SND_COMMAND", false);
-      XChangeProperty(dpy, XtWindow(shell), snd_v, XA_STRING, 8, PropModeReplace, 
-		      (unsigned char *)(SND_DATE), strlen(SND_DATE) + 1);
-#if HAVE_EXTENSION_LANGUAGE
-      XtAddEventHandler(shell, PropertyChangeMask, false, who_called, NULL);
-#endif
-      XtAddEventHandler(shell, StructureNotifyMask, false, minify_maxify_window, NULL);
-#endif
-      ss->sgx->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
-      ss->sgx->wait_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_watch);
-      ss->sgx->bounds_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_sb_h_double_arrow);
-      break;
+  /* trap outer-level Close for cleanup check */
+  wm_delete_window = XmInternAtom(dpy, (char *)"WM_DELETE_WINDOW", false);
+  XmAddWMProtocolCallback(shell, wm_delete_window, window_close, NULL);
 
-    case 1:
+  snd_v = XInternAtom(dpy, "SND_VERSION", false);
+  snd_c = XInternAtom(dpy, "SND_COMMAND", false);
+  XChangeProperty(dpy, XtWindow(shell), snd_v, XA_STRING, 8, PropModeReplace, 
+		  (unsigned char *)(SND_DATE), strlen(SND_DATE) + 1);
+
 #if HAVE_EXTENSION_LANGUAGE
-      snd_load_init_file(noglob, noinit);
+  XtAddEventHandler(shell, PropertyChangeMask, false, who_called, NULL);
 #endif
+  XtAddEventHandler(shell, StructureNotifyMask, false, minify_maxify_window, NULL);
+#endif
+
+  ss->sgx->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
+  ss->sgx->wait_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_watch);
+  ss->sgx->bounds_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_sb_h_double_arrow);
+
+#if HAVE_EXTENSION_LANGUAGE
+  snd_load_init_file(noglob, noinit);
+#endif
+
 #if HAVE_SIGNAL && HAVE_EXTENSION_LANGUAGE && !__MINGW32__
-      if (!nostdin)
-	{
-	  signal(SIGTTIN, SIG_IGN);
-	  signal(SIGTTOU, SIG_IGN);
-	  /* these signals are sent by a shell if we start Snd as a background process,
-	   * but try to read stdin (needed to support the emacs subjob connection).  If
-	   * we don't do this, the background job is suspended when the shell sends SIGTTIN.
-	   */
-	  stdin_id = XtAppAddInput(MAIN_APP(ss), 
-				   STDIN_FILENO, 
-				   (XtPointer)XtInputReadMask, 
-				   get_stdin_string, 
-				   NULL);
-	}
-#endif
-      break;
-
-    case 2: 
-      if (auto_open_files > 0)
-	{
-	  auto_open_ctr = handle_next_startup_arg(auto_open_ctr, auto_open_file_names, false, auto_open_files);
-	  if (auto_open_ctr < auto_open_files) 
-	    return(BACKGROUND_CONTINUE); /* i.e. come back to this branch */
-	}
-      break;
-
-    case 3:
-      if (ss->init_window_width > 0) set_widget_width(MAIN_SHELL(ss), ss->init_window_width);
-      if (ss->init_window_height > 0) set_widget_height(MAIN_SHELL(ss), ss->init_window_height);
-      if (ss->init_window_x != DEFAULT_INIT_WINDOW_X) set_widget_x(MAIN_SHELL(ss), ss->init_window_x);
-      if (ss->init_window_y != DEFAULT_INIT_WINDOW_Y) set_widget_y(MAIN_SHELL(ss), ss->init_window_y);
-#if (!HAVE_FAM)
-      if (auto_update_interval(ss) > 0.0)
-	XtAppAddTimeOut(MAIN_APP(ss), 
-			(unsigned long)(auto_update_interval(ss) * 1000), 
-			auto_update_check, 
-			NULL);
-#endif
-#if MUS_TRAP_SEGFAULT
-      if (trap_segfault(ss)) signal(SIGSEGV, segv);
-#endif
-      if ((ss->sounds) &&
-	  (ss->selected_sound == NO_SELECTION))
-	{
-	  sp = ss->sounds[0];
-	  if ((sp) && 
-	      (sp->inuse == SOUND_NORMAL) &&
-	      (sp->selected_channel == NO_SELECTION)) /* don't clobber possible select-channel in loaded startup files */
-	    select_channel(sp, 0);
-	}
-
-      if ((ss->init_window_height == 0) && (sound_style(ss) == SOUNDS_HORIZONTAL))
-	set_widget_height(MAIN_SHELL(ss), 200); /* otherwise it's just a title bar! */
-
-      if (ss->startup_errors)
-	{
-	  handle_listener(true); /* create it, if necessary */
-	  listener_append(ss->startup_errors);
-	  free(ss->startup_errors);
-	  ss->startup_errors = NULL;
-	}
-      return(BACKGROUND_QUIT); 
-      break;
+  if (!nostdin)
+    {
+      signal(SIGTTIN, SIG_IGN);
+      signal(SIGTTOU, SIG_IGN);
+      /* these signals are sent by a shell if we start Snd as a background process,
+       * but try to read stdin (needed to support the emacs subjob connection).  If
+       * we don't do this, the background job is suspended when the shell sends SIGTTIN.
+       */
+      stdin_id = XtAppAddInput(MAIN_APP(ss), 
+			       STDIN_FILENO, 
+			       (XtPointer)XtInputReadMask, 
+			       get_stdin_string, 
+			       NULL);
     }
-  tm_slice++;
-  return(BACKGROUND_CONTINUE);
+#endif
+
+  while (auto_open_ctr < auto_open_files)
+    auto_open_ctr = handle_next_startup_arg(auto_open_ctr, auto_open_file_names, false, auto_open_files);
+
+  if (ss->init_window_width > 0) set_widget_width(MAIN_SHELL(ss), ss->init_window_width);
+  if (ss->init_window_height > 0) set_widget_height(MAIN_SHELL(ss), ss->init_window_height);
+  if (ss->init_window_x != DEFAULT_INIT_WINDOW_X) set_widget_x(MAIN_SHELL(ss), ss->init_window_x);
+  if (ss->init_window_y != DEFAULT_INIT_WINDOW_Y) set_widget_y(MAIN_SHELL(ss), ss->init_window_y);
+
+#if (!HAVE_FAM)
+  if (auto_update_interval(ss) > 0.0)
+    XtAppAddTimeOut(MAIN_APP(ss), 
+		    (unsigned long)(auto_update_interval(ss) * 1000), 
+		    auto_update_check, 
+		    NULL);
+#endif
+
+#if MUS_TRAP_SEGFAULT
+  if (trap_segfault(ss)) signal(SIGSEGV, segv);
+#endif
+
+  if ((ss->sounds) &&
+      (ss->selected_sound == NO_SELECTION))
+    {
+      sp = ss->sounds[0];
+      if ((sp) && 
+	  (sp->inuse == SOUND_NORMAL) &&
+	  (sp->selected_channel == NO_SELECTION)) /* don't clobber possible select-channel in loaded startup files */
+	select_channel(sp, 0);
+    }
+
+  if ((ss->init_window_height == 0) && (sound_style(ss) == SOUNDS_HORIZONTAL))
+    set_widget_height(MAIN_SHELL(ss), 200); /* otherwise it's just a title bar! */
 }
 
 
@@ -643,9 +621,11 @@ static void save_a_color(FILE *Fp, Display *dpy, Colormap cmap, const char *rs_n
 #if HAVE_EXTENSION_LANGUAGE
   Status lookup_ok;
   XColor default_color, ignore;
+
   lookup_ok = XLookupColor(dpy, cmap, rs_name, &default_color, &ignore);
   if (!lookup_ok) 
     lookup_ok = XLookupColor(dpy, cmap, def_name, &default_color, &ignore);
+
   if (lookup_ok)
     {
       XColor current_color;
@@ -655,6 +635,7 @@ static void save_a_color(FILE *Fp, Display *dpy, Colormap cmap, const char *rs_n
       if ((current_color.red != default_color.red) ||
 	  (current_color.green != default_color.green) ||
 	  (current_color.blue != default_color.blue))
+
 #if HAVE_FORTH
 	fprintf(Fp, "%.3f %.3f %.3f %s set-%s drop\n", 
 		RGB_TO_FLOAT(current_color.red),
@@ -663,9 +644,11 @@ static void save_a_color(FILE *Fp, Display *dpy, Colormap cmap, const char *rs_n
 		S_make_color,
 		ext_name);
 #else
+
 #if HAVE_SCHEME
 	fprintf(Fp, "(set! (%s) (%s %.3f %.3f %.3f))\n", 
 #endif
+
 #if HAVE_RUBY
 	fprintf(Fp, "set_%s(%s(%.3f, %.3f, %.3f))\n", 
 #endif
@@ -750,13 +733,16 @@ void snd_doit(int argc, char **argv)
   Widget menu;
   XGCValues gv;
   char *app_title = NULL;
+
 #ifdef SND_AS_WIDGET
   ss = snd_main(argc, argv);
 #else
   XtSetLanguageProc(NULL, NULL, NULL);
 #endif
+
   ss->channel_min_height = CHANNEL_MIN_HEIGHT;
   ss->Graph_Cursor = DEFAULT_GRAPH_CURSOR;
+
 #ifndef SND_AS_WIDGET
 #ifndef __alpha__
   XtSetArg(args[0], XtNwidth, 640);
@@ -845,11 +831,13 @@ void snd_doit(int argc, char **argv)
   ss->sash_size = snd_rs.sash_size;
   ss->sash_indent = snd_rs.sash_indent;
   ss->toggle_size = snd_rs.toggle_size;
+
 #ifdef MUS_MAC_OS
   ss->click_time = XtGetMultiClickTime(dpy);
 #else
   ss->click_time = (oclock_t)(0.5 * XtGetMultiClickTime(dpy));
 #endif
+
   ss->sgx = (state_context *)calloc(1, sizeof(state_context));
   sx = ss->sgx;
 
@@ -1137,13 +1125,7 @@ void snd_doit(int argc, char **argv)
   initialize_colormap(); /* X11 not ours */
   make_icons_transparent(snd_rs.basic_color);
 
-  BACKGROUND_ADD(startup_funcs, NULL);
-  /* this complication seems necessary because we might be loading Scheme code files
-   *   from the startup args (via -l) and they might contain errors etc -- we want to
-   *   be sure the complete interface is running (via the XtAppMainLoop below) when
-   *   we drop into the error handler.  (Also we need the two longjmp sets, but they
-   *   must follow this startup loop).
-   */
+  startup_funcs();
 
 #if HAVE_SETJMP_H
 #if MUS_TRAP_SEGFAULT
@@ -1171,10 +1153,16 @@ void snd_doit(int argc, char **argv)
 #endif
 #endif
 
+  if (ss->startup_errors)
+    {
+      post_it("Error in initialization", ss->startup_errors);
+      free(ss->startup_errors);
+      ss->startup_errors = NULL;
+    }
+  
 #ifndef SND_AS_WIDGET
   XtAppMainLoop(app);
 #endif
-  
 }
 
 
