@@ -235,15 +235,17 @@ XEN xen_set_assoc(XEN key, XEN val, XEN alist)
 }
 
 
-XEN xen_assoc(XEN key, XEN alist)
-{
-  XEN val;
-  val = rb_ary_assoc(alist, key);
-  if (val != Qnil)
-    return(rb_ary_entry(val, 1));
-  return(Qfalse);
-}
-
+XEN xen_assoc(XEN key, XEN alist) 
+{ 
+  if (XEN_CONS_P(alist)) 
+    { 
+      XEN val; 
+      val = rb_ary_assoc(alist, key); 
+      if (val != Qnil) 
+	return(rb_ary_entry(val, 1)); 
+    } 
+  return(Qfalse); 
+} 
 
 
 static char *scheme_to_ruby(const char *name)
@@ -1895,13 +1897,6 @@ static bool file_probe(const char *arg)
 }
 
 
-#if USE_SND
-
-char *snd_tempnam(void);
-bool directory_p(const char *filename);
-
-#else
-
 static bool directory_p(const char *filename)
 {
 #if HAVE_WINDOZE
@@ -1922,8 +1917,6 @@ static bool directory_p(const char *filename)
 #endif
 #endif
 }
-
-#endif
 
 
 static XEN g_file_exists_p(XEN name)
@@ -2031,16 +2024,41 @@ static XEN g_current_time(void)
 
 static XEN g_tmpnam(void)
 {
-  XEN str;
-  char *result;
-#if USE_SND
-  result = snd_tempnam();
+  #define H_tmpnam "(tmpnam) returns a new (hopefully unused) tempporary file name"
+  #define BUFFER_SIZE 512
+  static int file_ctr = 0;
+  char *str, *tmpdir = NULL;
+  int len;
+  XEN result;
+
+  str = (char *)calloc(BUFFER_SIZE, sizeof(char));
+  tmpdir = xen_strdup(getenv("TMPDIR"));
+
+#ifdef P_tmpdir
+  if (tmpdir == NULL) 
+    tmpdir = xen_strdup(P_tmpdir); /* /usr/include/stdio.h */
+  if (tmpdir)
+    {
+      len = strlen(tmpdir);
+      if (len > 0)
+	{
+	  if (tmpdir[len - 1] == '/') tmpdir[len - 1] = 0;
+	}
+      else
+	{
+	  free(tmpdir);
+	  tmpdir = xen_strdup(".");
+	}
+    }
 #else
-  result = tempnam(NULL, "xen_");
+  if (tmpdir == NULL) tmpdir = xen_strdup("/tmp");
 #endif
-  str = C_TO_XEN_STRING(result);
-  free(result);
-  return(str);
+
+  mus_snprintf(str, BUFFER_SIZE, "%s/xen_%d_%d", tmpdir, (int)getpid(), file_ctr++);
+  if (tmpdir) free(tmpdir);
+  result = C_TO_XEN_STRING(str);
+  free(str);
+  return(result);
 }
 
 
@@ -2131,7 +2149,7 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   XEN_DEFINE_PROCEDURE("delete-file",         g_delete_file_w,        1, 0, 0, H_delete_file);
   XEN_DEFINE_PROCEDURE("getcwd",              g_getcwd_w,             0, 0, 0, H_getcwd);
   XEN_DEFINE_PROCEDURE("strftime",            g_strftime_w,           2, 0, 0, H_strftime);
-  XEN_DEFINE_PROCEDURE("tmpnam",              g_tmpnam_w,             0, 0, 0, H_localtime);
+  XEN_DEFINE_PROCEDURE("tmpnam",              g_tmpnam_w,             0, 0, 0, H_tmpnam);
   XEN_DEFINE_PROCEDURE("localtime",           g_localtime_w,          1, 0, 0, H_localtime);
   XEN_DEFINE_PROCEDURE("current-time",        g_current_time_w,       0, 0, 0, H_current_time);
   XEN_DEFINE_PROCEDURE("ftell",               g_ftell_w,              1, 0, 0, "(ftell fd): lseek");

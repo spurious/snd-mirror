@@ -66732,7 +66732,7 @@ EDITS: 1
 		  
 		  ))))
 
-	(snd-display ";end args~%")
+	(snd-display ";end args")
 
 	(if (defined? 'mus-audio-reinitialize) (mus-audio-reinitialize))
 	(set! (window-y) 10)
