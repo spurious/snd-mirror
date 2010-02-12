@@ -10743,9 +10743,31 @@ static bool is_dotted(s7_scheme *sc, s7_pointer x)
 }
 
 
-static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, const char *name, bool (*eq_func)(s7_pointer a, s7_pointer b))
+static s7_pointer g_assq(s7_scheme *sc, s7_pointer args)
 {
   #define H_assq "(assq obj alist) returns the key-value pair associated (via eq?) with the key obj in the association list alist"
+  s7_pointer x, y;
+
+  if (!s7_is_list(sc, cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "assq", 2, cadr(args), "a list"));
+
+  if (cadr(args) == sc->NIL)
+    return(sc->F);
+
+  if (is_dotted(sc, cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "assq", 2, cadr(args), "a proper list"));
+  
+  x = car(args);
+  for (y = cadr(args); is_pair(y) && is_pair(car(y)); y = cdr(y)) 
+    if (x == caar(y))
+      return(car(y));
+  
+  return(sc->F);
+}      
+
+
+static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, const char *name, bool (*eq_func)(s7_pointer a, s7_pointer b))
+{
   #define H_assv "(assv obj alist) returns the key-value pair associated (via eqv?) with the key obj in the association list alist"
   #define H_assoc "(assoc obj alist) returns the key-value pair associated (via equal?) with the key obj in the association list alist"
   s7_pointer x, y;
@@ -10768,7 +10790,6 @@ static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, const char *name, boo
 }      
 
 
-static s7_pointer g_assq(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, args, "assq", s7_is_eq));}
 static s7_pointer g_assv(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, args, "assv", s7_is_eqv));}
 static s7_pointer g_assoc(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, args, "assoc", s7_is_equal));}
 
@@ -14190,7 +14211,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  x = vector_element(sc->stack, i - 3);
 	  if ((type == sc->T) ||
 	      (catch_tag(x) == sc->T) ||
-	      (s7_is_eq(catch_tag(x), type)))
+	      (catch_tag(x) == type))
 	    {
 	      catcher = x;
 	      goto GOT_CATCH;

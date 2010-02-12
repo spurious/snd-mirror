@@ -278,6 +278,9 @@ AC_CHECK_SIZEOF(ssize_t)
 AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep signal statvfs statfs getline difftime gettimeofday)
 AC_CHECK_FUNCS(vsnprintf snprintf strftime memmove lstat strcasecmp pathconf)
 
+AC_LIB_PROG_LD
+# this is needed for the -export-dynamic check below (export dynamic is needed to get the xm.so module loadable at run-time)
+
 AC_PROG_FGREP
 AC_DEFINE_UNQUOTED(FGREP_PROG, "$FGREP")
 
