@@ -1725,6 +1725,7 @@
 (test (string->symbol "1+") '1+)
 (test (string->symbol "1+i") 'error)
 (test (string->symbol ":0") ':0)
+(test (symbol->string (string->symbol "")) "")
 
 
 
@@ -44302,6 +44303,9 @@
 				    (string->number (number->string (string->number str rad) rad) rad)
 				    diff)))))))))))
 
+;;; (number->string (string->number "-5L-4" 9) 9) -> "-0.00049" 
+;;; (number->string (string->number "5.e-8" 6) 6) -> "0.000000046"
+
 (let ((happy #t))
   (do ((i 2 (+ i 1)))
       ((or (not happy)
@@ -44644,6 +44648,8 @@
 (test (exact? #e1) #t)
 (test (exact? #i#b1) #f)
 (test (exact? #e#b1) #t)
+(num-test #x#e1.5 21/16)
+(num-test #x#i3 3.0)
 
 (for-each
   (lambda (n)
@@ -45928,7 +45934,7 @@
        (lambda (arg)
 	 (test (number->string arg) 'error))
        (list #\a '#(1 2 3) '() 'hi abs "hi" '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
-      
+
       (for-each
        (lambda (arg)
 	 (test (number->string 123 arg) 'error))
@@ -46148,12 +46154,14 @@
 	     (list cosh sinh tanh acosh asinh atanh))
 	    ))
 
-;      (if with-procedure-arity
-;	  (begin
-;	    (test (eval-string ",") 'error)
-;	    (test (eval-string ")") 'error)
-;	    (test (eval-string "{") 'error)
-;	    ))
+      (for-each
+       (lambda (arg)
+	 (test (eval-string arg) 'error))
+       (list -1 0 1 512 #\a '#(1 2 3) 3.14 2/3 1.5+0.3i 1+i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+      (for-each
+       (lambda (arg)
+	 (test (eval-string "(+ 1 2)" arg) 'error))
+       (list -1 0 1 512 #\a '#(1 2 3) 3.14 2/3 1.5+0.3i 1+i 'hi abs "hi" '#(()) (lambda () 1)))
 
       
       (test (string->number) 'error)

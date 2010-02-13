@@ -1814,9 +1814,10 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
   if (x != sc->NIL) 
     return(x); 
 
-  /* before adding the new symbol, check that its name is legal (not null, and not a number) */
+  /*
   if (!name) 
     return(s7_error(sc, sc->ERROR, make_list_1(sc, s7_make_string(sc, "make symbol with no name?"))));
+  */
 
   if ((number_inits[(int)name[0]]) &&
       (make_atom(sc, (char *)name, 10, false) != sc->F))
@@ -1911,6 +1912,10 @@ static s7_pointer g_string_to_symbol(s7_scheme *sc, s7_pointer args)
   #define H_string_to_symbol "(string->symbol str) returns the string str converted to a symbol"
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "string->symbol", 0, car(args), "a string"));
+
+  /* what about (string->symbol "")?  Guile accepts it, as does s7:
+   *   (symbol->string (string->symbol "")) -> ""
+   */
   return(s7_make_symbol(sc, string_value(car(args))));
 }
 
@@ -2288,12 +2293,6 @@ static s7_pointer s7_find_value_in_environment(s7_scheme *sc, s7_pointer val)
 
 
 /* -------- keywords -------- */
-
-bool s7_keyword_eq_p(s7_pointer obj1, s7_pointer obj2)
-{
-  return(obj1 == obj2);
-}
-
 
 bool s7_is_keyword(s7_pointer obj)
 {
@@ -4417,16 +4416,20 @@ static char *s7_number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int r
 	int_part = (s7_Int)floor(x);
 	frac_part = x - int_part;
 	s7_Int_to_string(n, int_part, radix, 0);
-	d = (char *)malloc((precision + 1) * sizeof(char));
 
+	d = (char *)malloc((precision + 1) * sizeof(char));
 	min_frac = (s7_Double)pow((s7_Double)radix, (s7_Double)(-precision));
+
 	for (i = 0, base = radix; (i < precision) && (frac_part > min_frac); i++, base *= radix)
 	  {
-	    int_part = (int)(frac_part * base);
-	    frac_part -= (int_part / base);
-	    if (int_part < 10)
-	      d[i] = (char)('0' + int_part);
-	    else d[i] = (char)('a' + int_part -  10);
+	    s7_Int ipart;
+	    ipart = (int)(frac_part * base);
+	    if (ipart >= radix)         /* rounding confusion */
+	      ipart = radix - 1;
+	    frac_part -= (ipart / base);
+	    if (ipart < 10)
+	      d[i] = (char)('0' + ipart);
+	    else d[i] = (char)('a' + ipart -  10);
 	  }
 	if (i == 0)
 	  d[i++] = '0';
@@ -4736,21 +4739,22 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
 {
   bool negative = false;
   s7_Int lval = 0;
-  int dig, start = 1;
+  int dig;
   char *tmp = (char *)str;
+  char *tmp1;
 
   if ((str[0] == '+') || (str[0] == '-'))
     {
-      start = 2;
       if (str[0] == '-') negative = true;
       tmp++;
     }
-  while (*str == '0') {str++;};
+  while (*tmp == '0') {tmp++;};
+  tmp1 = tmp;
 
   while ((dig = digits[(int)(*tmp++)]) < radix)
     lval = dig + (lval * radix);
 
-  (*overflow) = ((tmp - str - start) > s7_int_digits_by_radix[radix]);
+  (*overflow) = ((tmp - tmp1) > s7_int_digits_by_radix[radix]);
 
   if (negative)
     return(-lval);
@@ -4778,7 +4782,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
    *   but 1e+1, for example disambiguates it -- kind of messy! -- the scheme spec says "e" can only occur in base 10. 
    *   mpfr says "e" as exponent only in bases <= 10 -- else use '@' which works in any base.  This can only cause confusion
    *   in scheme, unfortunately, due to the idiotic scheme polar notation.  But we accept "s" and "l" as exponent markers
-   *   so, perhaps for radix > 10, the exponent, if any, has to use one of S s L l?
+   *   so, perhaps for radix > 10, the exponent, if any, has to use one of S s L l?  Not "l"!  And "s" originally meant "short".
    */
 
   max_len = s7_int_digits_by_radix[radix];
@@ -10794,9 +10798,30 @@ static s7_pointer g_assv(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, ar
 static s7_pointer g_assoc(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, args, "assoc", s7_is_equal));}
 
 
-static s7_pointer g_memq_1(s7_scheme *sc, s7_pointer args, const char *name, bool (*eq_func)(s7_pointer a, s7_pointer b))
+static s7_pointer g_memq(s7_scheme *sc, s7_pointer args)
 {
   #define H_memq "(memq obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. memq uses eq?"
+  s7_pointer x;
+
+  if (!s7_is_list(sc, cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "memq", 2, cadr(args), "a list"));
+
+  if (cadr(args) == sc->NIL)
+    return(sc->F);
+
+  if (is_dotted(sc, cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "memq", 2, cadr(args), "a proper list"));
+  
+  for (x = cadr(args); is_pair(x); x = cdr(x)) 
+    if (car(args) == car(x))
+      return(x);
+  
+  return(sc->F);
+}     
+
+
+static s7_pointer g_memq_1(s7_scheme *sc, s7_pointer args, const char *name, bool (*eq_func)(s7_pointer a, s7_pointer b))
+{
   #define H_memv "(memv obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. memv uses eqv?"
   #define H_member "(member obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. member uses equal?"
   s7_pointer x;
@@ -10818,7 +10843,6 @@ static s7_pointer g_memq_1(s7_scheme *sc, s7_pointer args, const char *name, boo
 }     
 
 
-static s7_pointer g_memq(s7_scheme *sc, s7_pointer args) {return(g_memq_1(sc, args, "memq", s7_is_eq));}
 static s7_pointer g_memv(s7_scheme *sc, s7_pointer args) {return(g_memq_1(sc, args, "memv", s7_is_eqv));}
 static s7_pointer g_member(s7_scheme *sc, s7_pointer args) {return(g_memq_1(sc, args, "member", s7_is_equal));}
 
@@ -12362,7 +12386,7 @@ static void s7_free_object(s7_pointer a)
 }
 
 
-static bool s7_equalp_objects(s7_pointer a, s7_pointer b)
+static bool s7_objects_are_equal(s7_pointer a, s7_pointer b)
 {
   if ((is_c_object(a)) &&
       (is_c_object(b)) &&
@@ -12826,7 +12850,7 @@ bool s7_is_equal(s7_pointer x, s7_pointer y)
 	    (strcmp(string_value(x), string_value(y)) == 0)));
   
   if (is_c_object(x))
-    return(s7_equalp_objects(x, y));
+    return(s7_objects_are_equal(x, y));
   
   if ((s7_is_vector(x)) ||
       (s7_is_hash_table(x)))

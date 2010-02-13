@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.42"
-#define S7_DATE "20-Jan-10"
+#define S7_VERSION "1.43"
+#define S7_DATE "15-Feb-10"
 
 
 typedef long long int s7_Int;
@@ -466,7 +466,7 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix);                    /* (
 
 bool s7_is_keyword(s7_pointer obj);                                         /* (keyword? obj) */
 s7_pointer s7_make_keyword(s7_scheme *sc, const char *key);                 /* (make-keyword key) */
-bool s7_keyword_eq_p(s7_pointer obj1, s7_pointer obj2);                     /* (eq? obj1 obj2) -- objs are keys */
+#define s7_keyword_eq_p(Obj1, Obj2) s7_is_eq(Obj1, Obj2)
 
 
 s7_pointer s7_global_environment(s7_scheme *sc);                            /* (global-environment) */
