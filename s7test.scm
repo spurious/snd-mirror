@@ -72,15 +72,7 @@
 
 (define (ok? tst result expected)
   (if (not (equal? result expected))
-      (begin
-	(display tst)
-	(display " got ")
-	(display result)
-	(display " but expected ")
-	(display expected)
-	(newline) (newline)
-	)))
-
+      (format #t "~A got ~A but expected ~A~%~%" tst result expected)))
 
 (defmacro test (tst expected) ;(display tst) (newline)
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
@@ -90,12 +82,7 @@
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
      (if (or (not result)
 	     (eq? result 'error))
-	 (begin
-	   (display ',tst)
-	   (display " got ")
-	   (display result)
-	   (newline) (newline)
-	   ))))
+	 (format #t "~A got ~A~%~%" ',tst result))))
 
 
 ;;; the error limits below are pretty expansive in some cases, so with-error-data
@@ -3263,6 +3250,8 @@
 (test (if (list) 2 3) 2)
 (test (if "" 2 3) 2)
 
+;(test (if () () ()) 'error) ; ?? s7 thinks it's ok, but guile says error
+
 (test (let ((a #t) (b #f) (c #t) (d #f)) (if (if (if (if d d c) d b) d a) 'a 'd)) 'a)
 (test (let ((a #t) (b #f) (c #t) (d #f)) (if a (if b (if c (if d d c) c) 'b) 'a)) 'b)
 ;(test (let ((a #t) (b #f) (c #t) (d #f)) (((if a if 'gad) c if 'gad) (not d) 'a 'gad)) 'a)
@@ -3431,6 +3420,7 @@
 (test (let ((sum 0)) (for-each (lambda (a b . args) (set! sum (+ sum a b (apply + args)))) '(0 1 2) '(2 1 0) '(3 4 5) '(5 4 3) '(6 7 8) '(8 7 6)) sum) 72)
 (test (let ((sum 0)) (for-each (lambda (a b . args) (set! sum (+ sum a b (apply + args)))) '(0 1 2) '(2 1 0)) sum) 6)
 (test (let () (for-each + '(0 1 2) '(2 1 0)) 0) 0)
+(test (let () () ()) '())
 (test (let ((d 0))
 	(for-each (let ((a 0))
 		    (for-each (lambda (b) (set! a (+ a b))) (list 1 2))
@@ -4242,8 +4232,12 @@
 (test (let ((z 0)) (begin (define x 32) (define y x)) (set! z y) z) 32)         ; similarly here
 ;;; I can't find anything in r5rs.html that mandates letrec here, or that says it's in error
 
-; (test (begin (define b 1) (begin (define a b) (define b 3)) a) 1) ; ?? if a 1st => "b unbound", but guile returns #f
-; (begin (begin (define a 1) (begin (define a b) (define b 3))) a) ; guile says 3, s7 says error
+(test (let () (begin (define b 1) (begin (define a b) (define b 3)) a)) 1)
+(test (let () (begin (begin (define a1 1) (begin (define a1 b1) (define b1 3))) a1)) 'error)
+(test (let () (begin (begin (define (a3) 1)) (begin (define (a3) b3) (define b3 3)) (a3))) 3) ; yow
+(test (let () (begin (begin (define (a) 1)) (a))) 1)
+(test (let ((a 1)) (begin (define a 2)) a) 2)
+
 ;;; begin is a mess...
 
 
@@ -29250,11 +29244,17 @@
 (test (zero? 1) #f )
 (test (zero? -1) #f )
 (test (zero? -100) #f )
+(test (positive? 4/3) #t )
 (test (positive? 4) #t )
 (test (positive? -4) #f )
+(test (positive? -4/3) #f )
 (test (positive? 0) #f )
+(test (positive? 0.0) #f )
+(test (positive? -0) #f )
 (test (negative? 4) #f )
+(test (negative? 4/3) #f )
 (test (negative? -4) #t )
+(test (negative? -4/3) #t )
 (test (negative? 0) #f )
 (test (negative? -0) #f )
 (test (negative? 0.0) #f )
@@ -29303,10 +29303,13 @@
 (test (odd? 2) #f )
 (test (odd? -4) #f )
 (test (odd? -1) #t )
+(test (odd? 0) #f)
+(test (odd? -0) #f)
 (test (even? 3) #f )
 (test (even? 2) #t )
 (test (even? -4) #t )
 (test (even? -1) #f )
+(test (even? -0) #t)
 
 (for-each
  (lambda (n)
@@ -44217,6 +44220,7 @@
 	   (exp-len 1)
 	   (has-frac (> (random 1.0) 0.2))
 	   (has-exp (and (<= radix 10)
+			 (< int-len 9)
 			 (> (random 1.0) 0.5)))
 	   (signed (> (random 1.0) 0.5))
 	   (exp-signed (> (random 1.0) 0.5)))
@@ -44295,7 +44299,7 @@
 			      (number->string (string->number str rad) rad)
 			      (string->number (number->string (string->number str rad) rad) rad))
 		      (let ((diff (abs (- (string->number (number->string (string->number str rad) rad) rad) (string->number str rad)))))
-			(if (> diff 1e-6)
+			(if (> diff 1e-5)
 			    (format #t "~A ~S: ~A ~S, ~A ~A~%"
 				    rad str
 				    (string->number str rad)
@@ -45265,9 +45269,11 @@
 	     (test (< most-positive-fixnum most-negative-fixnum) #f)
 	     (test (< most-negative-fixnum most-positive-fixnum) #t)
 	     (test (negative? most-negative-fixnum) #t)
+	     (test (positive? most-negative-fixnum) #f)
 	     (test (zero? most-negative-fixnum) #f)
 	     (test (zero? most-positive-fixnum) #f)
 	     (test (negative? most-positive-fixnum) #f)
+	     (test (positive? most-positive-fixnum) #t)
 	     (test (= (+ most-negative-fixnum 1) (- most-positive-fixnum)) #t)
 	     (test (= (abs (+ most-negative-fixnum 1)) most-positive-fixnum) #t)
 	     (test (= (+ most-negative-fixnum most-positive-fixnum) -1) #t)
@@ -50517,30 +50523,8 @@ expt error > 1e-6 around 2^-46.506993328423
 		argls))
 	     argls))
 	  argls))
-       ops)
-      
-					;(display "four args") (newline)
-      (for-each
-       (lambda (f)
-	 (display f) (display " ")
-	 (for-each
-	  (lambda (a)
-	    (for-each
-	     (lambda (b)
-	       (for-each
-		(lambda (c)
-		  (for-each
-		   (lambda (d)
-		     (catch #t 
-			    (lambda () 
-			      (f a b c d))
-			    (lambda args #f)))
-		   argls))
-		argls))
-	     argls))
-	  argls))
        ops)))
-
+      
   (let ((ops (list 'lambda 'define 'quote 'if 'begin 'set! 'let 'let* 'letrec 'cond 'case 'and 'or 'do
 		   'call/cc 'apply 'for-each 'map 'values 'dynamic-wind))
 
@@ -50708,48 +50692,6 @@ expt error > 1e-6 around 2^-46.506993328423
 			 (eval (list op arg1 (list arg2 arg3))))
 		       (lambda args
 			 #f)))
-	      args))
-	   ops))
-	args))
-     ops)
-    
-    (for-each
-     (lambda (op)
-       (for-each
-	(lambda (arg1)
-	  (for-each
-	   (lambda (arg2)
-	     (for-each
-	      (lambda (arg3)
-		(for-each
-		 (lambda (arg4)
-		   (catch #t
-			  (lambda () 
-			    (eval (list op arg1 arg2 arg3 arg4)))
-			  (lambda args
-			    #f)))
-		 args))
-	      args))
-	   args))
-	args))
-     ops)
-    
-    (for-each
-     (lambda (op)
-       (for-each
-	(lambda (arg1)
-	  (for-each
-	   (lambda (arg2)
-	     (for-each
-	      (lambda (arg3)
-		(for-each
-		 (lambda (arg4)
-		   (catch #t
-			  (lambda () 
-			    (eval (list op arg1 (list arg2 arg3) arg4)))
-			  (lambda args
-			    #f)))
-		 args))
 	      args))
 	   ops))
 	args))

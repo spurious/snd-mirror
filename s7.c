@@ -289,21 +289,21 @@
   #define M_PI 3.1415926535897932384626433832795029L
 #endif
 
-typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY, OP_EVAL_MACRO, OP_LAMBDA, OP_QUOTE, 
-	      OP_DEFINE0, OP_DEFINE1, OP_BEGIN, OP_IF0, OP_IF1, OP_SET0, OP_SET1, OP_SET2, 
-	      OP_LET0, OP_LET1, OP_LET2, OP_LET_STAR0, OP_LET_STAR1, 
-	      OP_LETREC0, OP_LETREC1, OP_LETREC2, OP_COND0, OP_COND1, 
-	      OP_AND0, OP_AND1, OP_OR0, OP_OR1, OP_DEFMACRO, OP_DEFMACRO_STAR, OP_MACRO0, OP_MACRO1, 
+typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, OP_EVAL_MACRO, OP_LAMBDA, OP_QUOTE, 
+	      OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_IF, OP_IF1, OP_SET, OP_SET1, OP_SET2, 
+	      OP_LET, OP_LET1, OP_LET2, OP_LET_STAR, OP_LET_STAR1, 
+	      OP_LETREC, OP_LETREC1, OP_LETREC2, OP_COND, OP_COND1, 
+	      OP_AND, OP_AND1, OP_OR, OP_OR1, OP_DEFMACRO, OP_DEFMACRO_STAR, OP_MACRO, OP_MACRO1, 
 	      OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION, OP_EXPANSION,
-	      OP_CASE0, OP_CASE1, OP_CASE2, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
+	      OP_CASE, OP_CASE1, OP_CASE2, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, 
 	      OP_READ_VECTOR, OP_READ_RETURN_EXPRESSION, OP_READ_POP_AND_RETURN_EXPRESSION, 
 	      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_STRING_DONE, OP_EVAL_DONE,
-	      OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_LIST_FOR_EACH, OP_LIST_MAP, OP_DEFINE_CONSTANT0, OP_DEFINE_CONSTANT1, 
-	      OP_DO, OP_DO_END0, OP_DO_END1, OP_DO_STEP0, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
+	      OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_LIST_FOR_EACH, OP_LIST_MAP, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1, 
+	      OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
-	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV0, OP_WITH_ENV1, OP_WITH_ENV2,
-	      OP_VECTOR_FOR_EACH, OP_VECTOR_MAP0, OP_VECTOR_MAP1, OP_STRING_FOR_EACH, OP_OBJECT_FOR_EACH,
+	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_ENV2,
+	      OP_VECTOR_FOR_EACH, OP_VECTOR_MAP, OP_VECTOR_MAP1, OP_STRING_FOR_EACH, OP_OBJECT_FOR_EACH,
 	      OP_HASH_TABLE_FOR_EACH,
 	      OP_MAX_DEFINED} opcode_t;
 
@@ -1322,7 +1322,7 @@ static int gc(s7_scheme *sc)
 
   {
     s7_pointer *fp, *tp;
-    fp = sc->free_heap;
+    fp = (&(sc->free_heap[sc->free_heap_top]));
 
     for (tp = sc->heap; (*tp); tp++) /* this form of the loop is slightly faster than counting i with sc->heap[i] */
       {
@@ -1338,10 +1338,11 @@ static int gc(s7_scheme *sc)
 		if (is_finalizable(p))
 		  finalize_s7_cell(sc, p); 
 		typeflag(p) = 0;
-		fp[sc->free_heap_top++] = p;
+		(*fp++) = p;
 	      }
 	  }
       }
+    sc->free_heap_top = fp - sc->free_heap;
   }
 
   /* fprintf(stderr, "gc: %d of %u\n", sc->free_heap_top - old_free_heap_top, sc->heap_size); */
@@ -1378,6 +1379,17 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
 }
 #endif
 
+
+#if HAVE_PTHREADS
+  #define NEW_CELL(Sc, Obj) Obj = new_cell(Sc)
+#else
+  #define NEW_CELL(Sc, Obj) \
+    do { \
+      if (Sc->free_heap_top > GC_TEMPS_SIZE) \
+        Obj = Sc->free_heap[--(Sc->free_heap_top)]; \
+      else Obj = new_cell(Sc); \
+    } while (0)
+#endif
 
 #if HAVE_PTHREADS
 static pthread_mutex_t alloc_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -1946,9 +1958,26 @@ static s7_pointer g_symbol_calls(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- environments -------------------------------- */
 
+#define NEW_FRAME(Sc, Old_Env, New_Env) \
+  do { \
+      s7_pointer x; \
+      NEW_CELL(Sc, x); \
+      car(x) = Sc->NIL; \
+      cdr(x) = Old_Env; \
+      set_type(x, T_PAIR); \
+      New_Env = x; \
+     } while (0)
+
+
 static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env) 
 { 
-  return(s7_cons(sc, sc->NIL, old_env));
+  /* return(s7_cons(sc, sc->NIL, old_env)); */
+  s7_pointer x;
+  NEW_CELL(sc, x);
+  car(x) = sc->NIL;
+  cdr(x) = old_env;
+  set_type(x, T_PAIR);
+  return(x);
 } 
 
 
@@ -1980,13 +2009,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
   else
     {
       s7_pointer x;
-#if HAVE_PTHREADS
-      x = new_cell(sc); 
-#else
-      if (sc->free_heap_top > 0)
-	x = sc->free_heap[--(sc->free_heap_top)];
-      else x = new_cell(sc);
-#endif
+      NEW_CELL(sc, x); 
       car(x) = slot;
       cdr(x) = e;
       set_type(x, T_PAIR);
@@ -2010,24 +2033,26 @@ static s7_pointer add_to_current_environment(s7_scheme *sc, s7_pointer variable,
 static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s7_pointer value) 
 { 
   /* this is called when it is guaranteed that there is a local environment */
-  s7_pointer x;
+  s7_pointer x, y;
 
   if (is_immutable(variable))
     return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "can't bind or set an immutable object: ~S"), variable)));
 
-#if HAVE_PTHREADS
-  x = new_cell(sc); 
-#else
-  if (sc->free_heap_top > 0)
-    x = sc->free_heap[--(sc->free_heap_top)];
-  else x = new_cell(sc);
-#endif
-  car(x) = s7_immutable_cons(sc, variable, value);
+  NEW_CELL(sc, y);
+  car(y) = variable;
+  cdr(y) = value;
+  set_type(y, T_PAIR | T_IMMUTABLE);
+
+  NEW_CELL(sc, x);
+  /* car(x) = s7_immutable_cons(sc, variable, value); */
+  car(x) = y;
   cdr(x) = car(sc->envir);
   set_type(x, T_PAIR);
+
   car(sc->envir) = x;
   set_local(variable);
-  return(car(x));
+
+  return(y);
 } 
 
 
@@ -2171,13 +2196,7 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e, int ty
   /* this is called every time a lambda form is evaluated, or during letrec, etc */
 
   s7_pointer x;
-#if HAVE_PTHREADS
-  x = new_cell(sc);
-#else
-  if (sc->free_heap_top > GC_TEMPS_SIZE)
-    x = sc->free_heap[--(sc->free_heap_top)];
-  else x = new_cell(sc);
-#endif
+  NEW_CELL(sc, x);
   car(x) = c;
   cdr(x) = e;
   set_type(x, type | T_PROCEDURE);
@@ -2395,7 +2414,7 @@ void *s7_c_pointer(s7_pointer p)
 s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr)
 {
   s7_pointer x;
-  x = new_cell(sc);
+  NEW_CELL(sc, x);
   set_type(x, T_C_POINTER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   x->object.c_pointer = ptr;
   return(x);
@@ -2434,7 +2453,7 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
 
   {
     int nloc;
-    nobj = new_cell(sc);
+    NEW_CELL(sc, nobj);
     nloc = nobj->hloc;
     memcpy((void *)nobj, (void *)obj, sizeof(s7_cell));
     nobj->hloc = nloc;
@@ -2493,7 +2512,7 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
 static s7_pointer s7_make_goto(s7_scheme *sc) 
 {
   s7_pointer x;
-  x = new_cell(sc);
+  NEW_CELL(sc, x);
   set_type(x, T_ATOM | T_GOTO | T_SIMPLE | T_DONT_COPY | T_PROCEDURE);
   x->object.goto_loc = sc->stack_top;
   return(x);
@@ -2511,7 +2530,7 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
    *   in successive copy_stack's below, causing s7 to core up until it runs out of memory.
    */
 
-  x = new_cell(sc);
+  NEW_CELL(sc, x);
   continuation_stack_top(x) = sc->stack_top;
   continuation_stack_size(x) = sc->stack_size;
   continuation_stack(x) = copy_stack(sc, sc->stack, sc->stack_top);
@@ -3273,16 +3292,8 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
   /* there are ca 6300 -1's in s7test (14500 small negative ints) -- if like real_zero (64000), this would gain us .2% overall speed */
   /*   similarly, between 256 and 512, 8200 or so */
 
-#if HAVE_PTHREADS
-  x = new_cell(sc);
-#else
-  if (sc->free_heap_top > GC_TEMPS_SIZE)
-    x = sc->free_heap[--(sc->free_heap_top)];
-  else x = new_cell(sc);
-#endif
-
+  NEW_CELL(sc, x);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
-  
   number_type(x) = NUM_INT;
   integer(number(x)) = n;
   
@@ -3293,7 +3304,7 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
 static s7_pointer make_mutable_integer(s7_scheme *sc, s7_Int n)
 {
   s7_pointer x;
-  x = new_cell(sc);
+  NEW_CELL(sc, x);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   number_type(x) = NUM_INT;
   integer(number(x)) = n;
@@ -3309,16 +3320,8 @@ s7_pointer s7_make_real(s7_scheme *sc, s7_Double n)
   if (n == 1.0)
     return(real_one);
 
-#if HAVE_PTHREADS
-  x = new_cell(sc);
-#else
-  if (sc->free_heap_top > GC_TEMPS_SIZE)
-    x = sc->free_heap[--(sc->free_heap_top)];
-  else x = new_cell(sc);
-#endif
-
+  NEW_CELL(sc, x);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
-  
   number_type(x) = NUM_REAL;
   real(number(x)) = n;
   
@@ -3329,7 +3332,7 @@ s7_pointer s7_make_real(s7_scheme *sc, s7_Double n)
 s7_pointer s7_make_complex(s7_scheme *sc, s7_Double a, s7_Double b)
 {
   s7_pointer x;
-  x = new_cell(sc);
+  NEW_CELL(sc, x);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   if (b == 0.0)
     {
@@ -3356,7 +3359,7 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
   if (b == 0)
     return(s7_division_by_zero_error(sc, "make-ratio", make_list_2(sc, s7_make_integer(sc, a), s7_make_integer(sc, b))));
 
-  x = new_cell(sc);
+  NEW_CELL(sc, x);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
 
   ret = make_ratio(a, b);
@@ -6753,7 +6756,7 @@ unsigned long s7_ulong(s7_pointer p)
 s7_pointer s7_make_ulong(s7_scheme *sc, unsigned long n) 
 {
   s7_pointer x;
-  x = new_cell(sc);
+  NEW_CELL(sc, x);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   
   number_type(x) = NUM_INT;
@@ -6777,7 +6780,7 @@ unsigned long long s7_ulong_long(s7_pointer p)
 s7_pointer s7_make_ulong_long(s7_scheme *sc, unsigned long long n) 
 {
   s7_pointer x;
-  x = new_cell(sc);
+  NEW_CELL(sc, x);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   
   number_type(x) = NUM_INT;
@@ -7170,7 +7173,8 @@ static s7_pointer g_is_char(s7_scheme *sc, s7_pointer args)
 
 s7_pointer s7_make_character(s7_scheme *sc, int c) 
 {
-  s7_pointer x = new_cell(sc);
+  s7_pointer x;
+  NEW_CELL(sc, x);
   set_type(x, T_CHARACTER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   character(x) = c;
   return(x);
@@ -7324,7 +7328,7 @@ static s7_pointer g_chars_are_ci_leq(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len) 
 {
   s7_pointer x;
-  x = new_cell(sc);
+  NEW_CELL(sc, x);
   set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   string_value(x) = s7_strdup_with_len(str, len);
   string_length(x) = len;
@@ -7335,7 +7339,7 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
 static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill) 
 {
   s7_pointer x;
-  x = new_cell(sc);
+  NEW_CELL(sc, x);
   set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   string_value(x) = (char *)malloc((len + 1) * sizeof(char));
@@ -8215,7 +8219,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
   long size;
   char *content = NULL;
 
-  port = new_cell(sc);
+  NEW_CELL(sc, port);
   set_type(port, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   port->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_is_closed(port) = false;
@@ -8307,7 +8311,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   if (!fp)
     return(s7_file_error(sc, "open-output-file", "can't open", name));
   
-  x = new_cell(sc);
+  NEW_CELL(sc, x);
   set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
@@ -8341,7 +8345,7 @@ static s7_pointer g_open_output_file(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
 {
   s7_pointer x;
-  x = new_cell(sc);
+  NEW_CELL(sc, x);
   set_type(x, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
@@ -8374,7 +8378,7 @@ static s7_pointer g_open_input_string(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_open_output_string(s7_scheme *sc)
 {
   s7_pointer x;
-  x = new_cell(sc);
+  NEW_CELL(sc, x);
   set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
@@ -8414,7 +8418,7 @@ static s7_pointer g_get_output_string(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port))
 {
   s7_pointer x;
-  x = new_cell(sc);
+  NEW_CELL(sc, x);
   set_type(x, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
@@ -8429,7 +8433,7 @@ s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_schem
 s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc, char c, s7_pointer port))
 {
   s7_pointer x;
-  x = new_cell(sc);
+  NEW_CELL(sc, x);
   set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
@@ -9784,7 +9788,7 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
 static s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
 {
   s7_pointer x;
-  x = new_cell(sc); /* might trigger gc, expansion here does not help */
+  NEW_CELL(sc, x); /* might trigger gc, expansion here does not help */
   car(x) = a;
   cdr(x) = b;
   set_type(x, T_PAIR | T_IMMUTABLE);
@@ -9795,15 +9799,7 @@ static s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
 s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b) 
 {
   s7_pointer x;
-
-#if HAVE_PTHREADS
-  x = new_cell(sc); /* might trigger gc */
-#else
-  /* expand new_cell for speed */
-  if (sc->free_heap_top > GC_TEMPS_SIZE)
-    x = sc->free_heap[--(sc->free_heap_top)];
-  else x = new_cell(sc);
-#endif
+  NEW_CELL(sc, x);
   car(x) = a;
   cdr(x) = b;
   set_type(x, T_PAIR);
@@ -9859,7 +9855,7 @@ s7_pointer s7_set_cdr(s7_pointer p, s7_pointer q)
 static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a) 
 {
   s7_pointer x;
-  x = new_cell(sc);
+  NEW_CELL(sc, x);
   car(x) = a;
   cdr(x) = sc->NIL;
   set_type(x, T_PAIR);
@@ -9870,11 +9866,11 @@ static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a)
 static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b) 
 {
   s7_pointer x, y;
-  y = new_cell(sc);
+  NEW_CELL(sc, y);
   car(y) = b;
   cdr(y) = sc->NIL;
   set_type(y, T_PAIR);
-  x = new_cell(sc); /* order matters because the GC will see "y" and expect it to have legit car/cdr */
+  NEW_CELL(sc, x); /* order matters because the GC will see "y" and expect it to have legit car/cdr */
   car(x) = a;
   cdr(x) = y;
   set_type(x, T_PAIR);
@@ -9885,15 +9881,15 @@ static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b)
 static s7_pointer make_list_3(s7_scheme *sc, s7_pointer a, s7_pointer b, s7_pointer c) 
 {
   s7_pointer x, y, z;
-  z = new_cell(sc);
+  NEW_CELL(sc, z);
   car(z) = c;
   cdr(z) = sc->NIL;
   set_type(z, T_PAIR);
-  y = new_cell(sc);
+  NEW_CELL(sc, y);
   car(y) = b;
   cdr(y) = z;
   set_type(y, T_PAIR);
-  x = new_cell(sc);
+  NEW_CELL(sc, x);
   car(x) = a;
   cdr(x) = y;
   set_type(x, T_PAIR);
@@ -10268,14 +10264,7 @@ static s7_pointer g_cons(s7_scheme *sc, s7_pointer args)
    */
   s7_pointer x;
 
-#if HAVE_PTHREADS
-  x = new_cell(sc); /* might trigger gc */
-#else
-  /* expand new_cell for speed */
-  if (sc->free_heap_top > GC_TEMPS_SIZE)
-    x = sc->free_heap[--(sc->free_heap_top)];
-  else x = new_cell(sc);
-#endif
+  NEW_CELL(sc, x);
   car(x) = car(args);
   cdr(x) = cadr(args);
   set_type(x, T_PAIR);
@@ -10958,7 +10947,7 @@ static s7_pointer s7_make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
     }
 
   /* this has to follow the error checks!  (else garbage in temps array confuses GC when "vector" is finalized) */
-  x = new_cell(sc);
+  NEW_CELL(sc, x);
   set_type(x, T_VECTOR | T_FINALIZABLE | T_DONT_COPY);
   vector_length(x) = len;
   if (len > 0)
@@ -11607,7 +11596,7 @@ static s7_pointer g_vector_map(s7_scheme *sc, s7_pointer args)
                s7_cons(sc, make_mutable_integer(sc, 0), 
                  s7_cons(sc, s7_make_integer(sc, len), 
 		   s7_cons(sc, fargs, cdr(args)))));
-  push_stack(sc, opcode(OP_VECTOR_MAP0), sc->args, sc->code);
+  push_stack(sc, opcode(OP_VECTOR_MAP), sc->args, sc->code);
   return(sc->UNSPECIFIED);
 }
 
@@ -11971,7 +11960,8 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
 {
   s7_func_t *ptr;
   int ftype = T_C_FUNCTION;
-  s7_pointer x = new_cell(sc);
+  s7_pointer x;
+  NEW_CELL(sc, x);
 
   /* these are normally not gc'd (C-level function defs), but they can be in a few cases
    *   (C-level redefinition as in the gmp case), and then we can't be certain they haven't
@@ -12468,7 +12458,7 @@ int s7_object_type(s7_pointer obj)
 s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
 {
   s7_pointer x;
-  x = new_cell(sc);
+  NEW_CELL(sc, x);
   c_object_type(x) = type;
   c_object_value(x) = value;
   set_type(x, T_C_OBJECT | T_ATOM | T_FINALIZABLE | T_DONT_COPY);
@@ -14053,7 +14043,7 @@ each a function of no arguments, guaranteeing that finish is called even if body
   if (!is_thunk(sc, caddr(args)))
     return(s7_wrong_type_arg_error(sc, "dynamic-wind", 3, caddr(args), "a thunk"));
   
-  p = new_cell(sc);
+  NEW_CELL(sc, p);
   dynamic_wind_in(p) = car(args);
   dynamic_wind_body(p) = cadr(args);
   dynamic_wind_out(p) = caddr(args);
@@ -14078,7 +14068,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   if (!is_procedure(caddr(args)))
     return(s7_wrong_type_arg_error(sc, "catch", 3, caddr(args), "a procedure"));
   
-  p = new_cell(sc);
+  NEW_CELL(sc, p);
   catch_tag(p) = car(args);
   catch_goto_loc(p) = sc->stack_top;
   catch_handler(p) = caddr(args);
@@ -15445,16 +15435,14 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  
 	case TOKEN_SHARP_CONST:
 	  {
-	    char *expr;
-	    expr = read_string_upto(sc, 0);
-	    sc->value = make_sharp_constant(sc, expr, true);
+	    sc->value = make_sharp_constant(sc, read_string_upto(sc, 0), true);
 	    if (sc->value == sc->NIL)
 	      {
 		int len;
 		char *buf;
-		len = 32 + safe_strlen(expr);
+		len = 32 + safe_strlen(sc->strbuf);
 		buf = (char *)calloc(len, sizeof(char)); /* memleak here... */
-		snprintf(buf, len, "#%s: undefined sharp expression", expr);
+		snprintf(buf, len, "#%s: undefined sharp expression", sc->strbuf);
 		return(read_error(sc, buf));             /* (list #b) */
 	      }
 	    return(sc->value);
@@ -15736,7 +15724,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* drop into VECTOR_MAP0 */
 
       
-    case OP_VECTOR_MAP0:
+    case OP_VECTOR_MAP:
       /* func = sc->code, 
        * new-vector = car(sc->args), 
        * func-args = cadddr(sc->args), 
@@ -15815,6 +15803,77 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = sc->UNSPECIFIED;
       pop_stack(sc);
       goto START;
+      
+
+    case OP_DO_STEP:
+      /* increment all vars, return to endtest 
+       *   these are also updated in parallel at the end, so we gather all the incremented values first
+       */
+      if (car(sc->args) == sc->NIL)
+	goto DO_END0;
+      
+      push_stack(sc, opcode(OP_DO_END), sc->args, sc->code);
+      sc->code = s7_cons(sc, sc->NIL, car(sc->args));   /* car = list of newly incremented values, cdr = list of slots */
+      sc->args = car(sc->args);
+      
+      
+    DO_STEP1:
+    case OP_DO_STEP1:
+      if (sc->args == sc->NIL)
+	{
+	  sc->y = cdr(sc->code);
+	  sc->code = safe_reverse_in_place(sc, car(sc->code));
+	  for (sc->x = sc->code; sc->y != sc->NIL && sc->x != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y))
+	    set_symbol_value(caar(sc->y), car(sc->x));
+
+	  /* "real" schemes rebind here, rather than reset, but that is expensive,
+	   *    and only matters once in a blue moon (closure over enclosed lambda referring to a do var)
+	   *    and the caller can easily mimic the correct behavior in that case by adding a let,
+	   *    making the rebinding explicit.
+	   *
+	   * Hmmm... I'll leave this alone, but there are other less cut-and-dried cases:
+	   *
+	   *   (let ((j (lambda () 0))
+	   *         (k 0))
+	   *     (do ((i (j) (j))
+	   *          (j (lambda () 1) (lambda () (+ i 1)))) ; bind here hits different "i" than reset
+	   *         ((= i 3) k)
+	   *       (set! k (+ k i))))
+	   *
+	   *   is it 6 or 3?
+	   *
+	   * if we had a way to tell that there were no lambdas in the do expression, would that
+	   *   guarantee that set was ok?  Here's a bad case:
+	   *
+	   *   (let ((f #f))
+	   *     (do ((i 0 (+ i 1)))
+	   *         ((= i 3))
+	   *       (let () ; so that the define is ok
+	   *         (define (x) i)
+	   *         (if (= i 1) (set! f x))))
+	   *    (f))
+	   *
+	   * s7 says 3, guile says 1.
+	   */
+	  
+	  sc->value = sc->NIL;
+	  pop_stack(sc); 
+	  goto DO_END0;
+	}
+
+      push_stack(sc, opcode(OP_DO_STEP2), sc->args, sc->code);
+      /* here sc->args is a list like (((i . 0) (+ i 1)) ...)
+       *   so sc->code becomes (+ i 1) in this case 
+       */
+      sc->code = cadar(sc->args);
+      sc->args = sc->NIL;
+      goto EVAL;
+      
+
+    case OP_DO_STEP2:
+      car(sc->code) = s7_cons(sc, sc->value, car(sc->code));  /* add this value to our growing list */
+      sc->args = cdr(sc->args);                               /* go to next */
+      goto DO_STEP1;
       
 
     case OP_DO: 
@@ -15902,7 +15961,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     DO_END0:
-    case OP_DO_END0:
+    case OP_DO_END:
       /* here vars have been init'd or incr'd
        *    args = (cons var-data end-data)
        *    code = body
@@ -15930,103 +15989,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       
       /* evaluate the body and step vars, etc */
-      push_stack(sc, opcode(OP_DO_STEP0), sc->args, sc->code);
+      push_stack(sc, opcode(OP_DO_STEP), sc->args, sc->code);
       /* sc->code is ready to go */
       sc->args = sc->NIL;
-      goto BEGIN;
-      
-      
-    case OP_DO_STEP0:
-      /* increment all vars, return to endtest 
-       *   these are also updated in parallel at the end, so we gather all the incremented values first
-       */
-      if (car(sc->args) == sc->NIL)
-	goto DO_END0;
-      
-      push_stack(sc, opcode(OP_DO_END0), sc->args, sc->code);
-      sc->code = s7_cons(sc, sc->NIL, car(sc->args));   /* car = list of newly incremented values, cdr = list of slots */
-      sc->args = car(sc->args);
-      
-      
-    DO_STEP1:
-    case OP_DO_STEP1:
-      if (sc->args == sc->NIL)
-	{
-	  sc->y = cdr(sc->code);
-	  sc->code = safe_reverse_in_place(sc, car(sc->code));
-	  for (sc->x = sc->code; sc->y != sc->NIL && sc->x != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y))
-	    set_symbol_value(caar(sc->y), car(sc->x));
-
-	  /* "real" schemes rebind here, rather than reset, but that is expensive,
-	   *    and only matters once in a blue moon (closure over enclosed lambda referring to a do var)
-	   *    and the caller can easily mimic the correct behavior in that case by adding a let,
-	   *    making the rebinding explicit.
-	   *
-	   * Hmmm... I'll leave this alone, but there are other less cut-and-dried cases:
-	   *
-	   *   (let ((j (lambda () 0))
-	   *         (k 0))
-	   *     (do ((i (j) (j))
-	   *          (j (lambda () 1) (lambda () (+ i 1)))) ; bind here hits different "i" than reset
-	   *         ((= i 3) k)
-	   *       (set! k (+ k i))))
-	   *
-	   *   is it 6 or 3?
-	   *
-	   * if we had a way to tell that there were no lambdas in the do expression, would that
-	   *   guarantee that set was ok?  Here's a bad case:
-	   *
-	   *   (let ((f #f))
-	   *     (do ((i 0 (+ i 1)))
-	   *         ((= i 3))
-	   *       (let () ; so that the define is ok
-	   *         (define (x) i)
-	   *         (if (= i 1) (set! f x))))
-	   *    (f))
-	   *
-	   * s7 says 3, guile says 1.
-	   */
-	  
-	  sc->value = sc->NIL;
-	  pop_stack(sc); 
-	  goto DO_END0;
-	}
-      push_stack(sc, opcode(OP_DO_STEP2), sc->args, sc->code);
-      /* here sc->args is a list like (((i . 0) (+ i 1)) ...)
-       *   so sc->code becomes (+ i 1) in this case 
-       */
-      sc->code = cadar(sc->args);
-      sc->args = sc->NIL;
-      goto EVAL;
-      
-
-    case OP_DO_STEP2:
-      car(sc->code) = s7_cons(sc, sc->value, car(sc->code));  /* add this value to our growing list */
-      sc->args = cdr(sc->args);                               /* go to next */
-      goto DO_STEP1;
-      
-
-    case OP_WITH_ENV1:
-      sc->envir = sc->args;                              /* restore previous environment */
-      pop_stack(sc);
-      goto START;
-
-
-    case OP_WITH_ENV0:
-      /* (with-environment env . body) */
-      push_stack(sc, opcode(OP_WITH_ENV1), sc->envir, sc->NIL);  /* save current env */
-      push_stack(sc, opcode(OP_WITH_ENV2), sc->NIL, sc->code);
-      sc->args = sc->NIL;
-      sc->code = car(sc->code);                          /* eval env arg */
-      goto EVAL;
-
-      
-    case OP_WITH_ENV2:
-      sc->envir = sc->value;                             /* in new env... */
-      sc->code = cdr(sc->code);                          /*   handle body */
       /* goto BEGIN; */
-
-
+      
+      
     BEGIN:
     case OP_BEGIN:
       if (!is_pair(sc->code)) 
@@ -16060,7 +16028,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->op = (opcode_t)syntax_opcode(sc->x);
 	      goto START;
 	    } 
-	  push_stack(sc, opcode(OP_EVAL_ARGS0), sc->NIL, sc->code);
+	  push_stack(sc, opcode(OP_EVAL_ARGS), sc->NIL, sc->code);
 	  sc->code = sc->x;
 	  goto EVAL;
 
@@ -16087,7 +16055,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
       
-    case OP_EVAL_ARGS0:
+    case OP_EVAL_ARGS:
       if (is_any_macro_or_syntax(sc->value))
 	{
 	  if (is_any_macro(sc->value))
@@ -16164,13 +16132,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /*    before expansion: sc->args = s7_cons(sc, sc->value, sc->args); */
       {
         s7_pointer x;
-#if HAVE_PTHREADS
-	x = new_cell(sc); 
-#else
-	if (sc->free_heap_top > 0)
-	  x = sc->free_heap[--(sc->free_heap_top)];
-	else x = new_cell(sc);
-#endif
+	NEW_CELL(sc, x); 
 	car(x) = sc->value;
 	cdr(x) = sc->args;
 	set_type(x, T_PAIR);
@@ -16320,7 +16282,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	case T_CLOSURE:                              /* -------- normal function (lambda), or macro -------- */
 	case T_MACRO:
-	  sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); 
+	  /* sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); */
+	  NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
 	  
 	  /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
 
@@ -16672,7 +16635,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     case OP_DEFINE_CONSTANT1:
-      /* define-constant -> OP_DEFINE_CONSTANT0 -> OP_DEFINE0..1, then back to here */
+      /* define-constant -> OP_DEFINE_CONSTANT -> OP_DEFINE..1, then back to here */
       /*   at this point, sc->value is the symbol that we want to be immutable, sc->code is the original pair */
 
       sc->x = s7_find_symbol_in_environment(sc, sc->envir, sc->value, false);
@@ -16681,12 +16644,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
 
 
-    case OP_DEFINE_CONSTANT0:
+    case OP_DEFINE_CONSTANT:
       push_stack(sc, opcode(OP_DEFINE_CONSTANT1), sc->NIL, sc->code);
 
       
     case OP_DEFINE_STAR:
-    case OP_DEFINE0:
+    case OP_DEFINE:
       if (!is_pair(sc->code))
 	return(eval_error(sc, "define: nothing to define? ~A", sc->code));   /* (define) */
 
@@ -16773,7 +16736,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = s7_cons(sc, s7_cons(sc, sc->value, sc->args), sc->code);
 
       
-    case OP_SET0:                                                 /* entry for set! */
+    case OP_SET:                                                 /* entry for set! */
       if (!is_pair(sc->code))
 	return(eval_error(sc, "set! syntax error ~A", sc->code)); /* set! . 1) */
       if (s7_is_immutable(car(sc->code)))                         /* (set! pi 3) */
@@ -16855,7 +16818,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       return(eval_error(sc, "set! ~A: unbound variable", sc->code));
       
       
-    case OP_IF0:
+    case OP_IF:
       if (!is_pair(sc->code))                               /* (if) or (if . 1) */
 	return(eval_error(sc, "(if): if needs at least 2 expressions", sc->code));
 
@@ -16883,7 +16846,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
       
-    case OP_LET0:
+    case OP_LET:
       /* sc->code is everything after the let: (let ((a 1)) a) so sc->code is (((a 1)) a) */
       /*   car it can be either a list or a symbol ("named let") */
 
@@ -16933,7 +16896,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_LET2:
-      sc->envir = new_frame_in_env(sc, sc->envir); 
+      NEW_FRAME(sc, sc->envir, sc->envir); 
       for (sc->x = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 	{
 	  if (!(s7_is_symbol(caar(sc->x))))
@@ -16963,7 +16926,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto BEGIN;
       
       
-    case OP_LET_STAR0:
+    case OP_LET_STAR:
       if ((!is_pair(sc->code)) ||                /* (let* . 1) */
 	  (!is_pair(cdr(sc->code))) ||           /* (let*) */
 	  ((!is_pair(car(sc->code))) &&          /* (let* 1 ...), also there's no named let* */
@@ -16972,7 +16935,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       if (car(sc->code) == sc->NIL) 
 	{
-	  sc->envir = new_frame_in_env(sc, sc->envir); 
+	  sc->envir = new_frame_in_env(sc, sc->envir);
 	  sc->code = cdr(sc->code);
 	  goto BEGIN;
 	}
@@ -17029,7 +16992,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto BEGIN;
       
       
-    case OP_LETREC0:
+    case OP_LETREC:
       if ((!is_pair(sc->code)) ||                 /* (letrec . 1) */
 	  (!is_pair(cdr(sc->code))) ||            /* (letrec) */
 	  ((!is_pair(car(sc->code))) &&           /* (letrec 1 ...) */
@@ -17089,7 +17052,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto BEGIN;
       
       
-    case OP_COND0:
+    case OP_COND:
       if (!is_pair(sc->code))
 	return(eval_error(sc, "syntax error in cond: ~A", sc->code));
       for (sc->x = sc->code; sc->x != sc->NIL; sc->x = cdr(sc->x))
@@ -17139,7 +17102,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
       
-    case OP_AND0:
+    case OP_AND:
       if (sc->code == sc->NIL) 
 	{
 	  sc->value = sc->T;
@@ -17169,7 +17132,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
       
-    case OP_OR0:
+    case OP_OR:
       if (sc->code == sc->NIL) 
 	{
 	  sc->value = sc->F;
@@ -17199,7 +17162,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
 
-    case OP_MACRO0:     /* this is tinyscheme's weird macro syntax */
+    case OP_MACRO:     /* this is tinyscheme's weird macro syntax */
       /*
 	(macro (when form)
 	  `(if ,(cadr form) (begin ,@(cddr form))))
@@ -17386,7 +17349,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
       
-    case OP_CASE0:      /* case, car(sc->code) is the selector */
+    case OP_CASE:      /* case, car(sc->code) is the selector */
       if ((!is_pair(sc->code)) ||
 	  (!is_pair(cdr(sc->code))) ||
 	  (!is_pair(cadr (sc->code)))) 
@@ -17516,6 +17479,27 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
 
 
+    case OP_WITH_ENV1:
+      sc->envir = sc->args;                              /* restore previous environment */
+      pop_stack(sc);
+      goto START;
+
+
+    case OP_WITH_ENV:
+      /* (with-environment env . body) */
+      push_stack(sc, opcode(OP_WITH_ENV1), sc->envir, sc->NIL);  /* save current env */
+      push_stack(sc, opcode(OP_WITH_ENV2), sc->NIL, sc->code);
+      sc->args = sc->NIL;
+      sc->code = car(sc->code);                          /* eval env arg */
+      goto EVAL;
+
+      
+    case OP_WITH_ENV2:
+      sc->envir = sc->value;                             /* in new env... */
+      sc->code = cdr(sc->code);                          /*   handle body */
+      goto BEGIN;
+
+
     case OP_TRACE_RETURN:
       trace_return(sc);
       pop_stack(sc);
@@ -17527,13 +17511,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /*    was: sc->args = s7_cons(sc, sc->value, sc->args); */ 
       {
 	s7_pointer x;
-#if HAVE_PTHREADS
-	x = new_cell(sc);
-#else
-	if (sc->free_heap_top > 0)
-	  x = sc->free_heap[--(sc->free_heap_top)];
-	else x = new_cell(sc);
-#endif
+	NEW_CELL(sc, x);
 	car(x) = sc->value;
 	cdr(x) = sc->args;
 	set_type(x, T_PAIR);
@@ -22528,27 +22506,27 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "lambda",            OP_LAMBDA);
   assign_syntax(sc, "lambda*",           OP_LAMBDA_STAR);      /* part of define* */
   assign_syntax(sc, "quote",             OP_QUOTE);
-  assign_syntax(sc, "define",            OP_DEFINE0);
+  assign_syntax(sc, "define",            OP_DEFINE);
   assign_syntax(sc, "define*",           OP_DEFINE_STAR);
-  assign_syntax(sc, "define-constant",   OP_DEFINE_CONSTANT0);
-  assign_syntax(sc, "if",                OP_IF0);
+  assign_syntax(sc, "define-constant",   OP_DEFINE_CONSTANT);
+  assign_syntax(sc, "if",                OP_IF);
   assign_syntax(sc, "begin",             OP_BEGIN);
-  assign_syntax(sc, "set!",              OP_SET0);
-  assign_syntax(sc, "let",               OP_LET0);
-  assign_syntax(sc, "let*",              OP_LET_STAR0);
-  assign_syntax(sc, "letrec",            OP_LETREC0);
-  assign_syntax(sc, "cond",              OP_COND0);
-  assign_syntax(sc, "and",               OP_AND0);
-  assign_syntax(sc, "or",                OP_OR0);
-  assign_syntax(sc, "case",              OP_CASE0);
-  assign_syntax(sc, "macro",             OP_MACRO0);           /* r4rs macro syntax, I think */
+  assign_syntax(sc, "set!",              OP_SET);
+  assign_syntax(sc, "let",               OP_LET);
+  assign_syntax(sc, "let*",              OP_LET_STAR);
+  assign_syntax(sc, "letrec",            OP_LETREC);
+  assign_syntax(sc, "cond",              OP_COND);
+  assign_syntax(sc, "and",               OP_AND);
+  assign_syntax(sc, "or",                OP_OR);
+  assign_syntax(sc, "case",              OP_CASE);
+  assign_syntax(sc, "macro",             OP_MACRO);           /* r4rs macro syntax, I think */
   assign_syntax(sc, "defmacro",          OP_DEFMACRO);         /* CL-style macro syntax */
   assign_syntax(sc, "defmacro*",         OP_DEFMACRO_STAR);
   assign_syntax(sc, "define-macro",      OP_DEFINE_MACRO);     /* Scheme-style macro syntax */
   assign_syntax(sc, "define-macro*",     OP_DEFINE_MACRO_STAR); 
   assign_syntax(sc, "define-expansion",  OP_DEFINE_EXPANSION); /* read-time (immediate) macro expansion */
   assign_syntax(sc, "do",                OP_DO);
-  assign_syntax(sc, "with-environment",  OP_WITH_ENV0);
+  assign_syntax(sc, "with-environment",  OP_WITH_ENV);
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");
   typeflag(sc->LAMBDA) |= T_DONT_COPY; 
