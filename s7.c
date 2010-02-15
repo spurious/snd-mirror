@@ -1650,18 +1650,18 @@ static void increase_stack_size(s7_scheme *sc)
 static void show_stack(s7_scheme *sc)
 {
   const char *ops[OP_MAX_DEFINED] = 
-    {"read_internal", "eval", "eval_args0", "eval_args1", "apply", "eval_macro", "lambda", "quote", 
-     "define0", "define1", "begin", "if0", "if1", "set0", "set1", "set2", "let0", "let1", "let2", 
-     "let_star0", "let_star1", "letrec0", "letrec1", "letrec2", "cond0", "cond1", 
-     "and0", "and1", "or0", "or1", "defmacro", "defmacro_star", "macro0", "macro1", 
-     "define_macro", "define_macro_star", "define_expansion", "expansion", 
-     "case0", "case1", "case2", "read_list", "read_dot", "read_quote", "read_quasiquote", "read_quasiquote_vector", 
+    {"read_internal", "eval", "eval_args", "eval_args1", "apply", "eval_macro", "lambda", "quote", 
+     "define", "define1", "begin", "if", "if1", "set", "set1", "set2", "let", "let1", "let2", 
+     "let*", "let*1", "letrec", "letrec1", "letrec2", "cond", "cond1", 
+     "and", "and1", "or", "or1", "defmacro", "defmacro*", "macro", "macro1", 
+     "define_macro", "define_macro*", "define_expansion", "expansion", 
+     "case", "case1", "case2", "read_list", "read_dot", "read_quote", "read_quasiquote", "read_quasiquote_vector", 
      "read_unquote", "read_unquote_splicing", "read_vector", "read_return_expression", 
      "read_and_return_expression", "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", 
-     "eval_string_done", "eval_done", "quit", "catch", "dynamic_wind", "for_list_each", "list_map", "define_constant0", 
-     "define_constant1", "do", "do_end0", "do_end1", "do_step0", "do_step1", "do_step2", "do_init", "define_star", 
-     "lambda_star", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit", "trace_hook_quit",
-     "with_env0", "with_env1", "with_env2", "vector_for_each", "vector_map0", "vector_map1", "string_for_each", 
+     "eval_string_done", "eval_done", "quit", "catch", "dynamic_wind", "for_list_each", "list_map", "define_constant", 
+     "define_constant1", "do", "do_end", "do_end1", "do_step", "do_step1", "do_step2", "do_init", "define_star", 
+     "lambda*", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit", "trace_hook_quit",
+     "with_env", "with_env1", "with_env2", "vector_for_each", "vector_map", "vector_map1", "string_for_each", 
      "object_for_each", "hash-table-for-each"
     };
 
@@ -15721,7 +15721,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	integer(number(cadr(sc->args))) = loc + 1;
 	vector_element(car(sc->args), loc) = sc->value;
       }
-      /* drop into VECTOR_MAP0 */
+      /* drop into VECTOR_MAP */
 
       
     case OP_VECTOR_MAP:
@@ -15810,7 +15810,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   these are also updated in parallel at the end, so we gather all the incremented values first
        */
       if (car(sc->args) == sc->NIL)
-	goto DO_END0;
+	goto DO_END;
       
       push_stack(sc, opcode(OP_DO_END), sc->args, sc->code);
       sc->code = s7_cons(sc, sc->NIL, car(sc->args));   /* car = list of newly incremented values, cdr = list of slots */
@@ -15858,7 +15858,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  sc->value = sc->NIL;
 	  pop_stack(sc); 
-	  goto DO_END0;
+	  goto DO_END;
 	}
 
       push_stack(sc, opcode(OP_DO_STEP2), sc->args, sc->code);
@@ -15894,7 +15894,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->envir = new_frame_in_env(sc, sc->envir); 
 	  sc->args = s7_cons(sc, sc->NIL, cadr(sc->code));
 	  sc->code = cddr(sc->code);
-	  goto DO_END0;
+	  goto DO_END;
 	}
       
       /* eval each init value, then set up the new frame (like let, not let*) */
@@ -15960,7 +15960,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = cddr(sc->code);
       
       
-    DO_END0:
+    DO_END:
     case OP_DO_END:
       /* here vars have been init'd or incr'd
        *    args = (cons var-data end-data)

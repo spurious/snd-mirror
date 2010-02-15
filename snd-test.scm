@@ -55270,8 +55270,10 @@ EDITS: 1
 	  (cello  0 1 'c3 .2)  (cello  1 1.5 'e3 .2)  (cello  2.5 .5 'g2 .2)
 	  
 	  (let* ((index (new-sound "test.snd" :channels 1)) ; our overall output file
-		 (vs (car (mix "violins.snd")))
-		 (cs (car (mix "cellos.snd"))))
+		 (vs1 (mix "violins.snd"))
+		 (cs1 (mix "cellos.snd"))
+		 (vs (and (pair? vs1) (car vs1)))
+		 (cs (and (pair? cs1) (car cs1))))
 	    
 	    (mus-close violins)
 	    (mus-close cellos)

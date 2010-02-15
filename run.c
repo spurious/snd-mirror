@@ -106,17 +106,17 @@
 /* some timings (I keep losing these stats, so I'll put them here for safekeeping, "*"=not optimizable)
  *     valgrind --tool=callgrind snd ws.scm [etc]
  *
- *      test                                                       snd-10.4     now 
+ *      test                                                       snd-10.4  (snd-10.7?)  snd-11.4
  *
- * (with-sound () (fm-violin 0 20 440 .1))                          1068        642
- * (with-sound (:channels 2) (fm-violin 0 20 440 .1 :degree 45))    1228        764
- * (with-sound (:reverb jc-reverb) (fm-violin 0 20 440 .1))         2577       1455
- * (with-sound (:reverb nrev) (fm-violin 0 20 440 .1))              2983       1812
- * (with-sound () (p 0 3))                                         91020*      3011
- * (with-sound () (expandn 0 10 "oboe.snd" 1 :expand 4))            1228        526
- * (with-sound () (calling-all-animals))                           16359      11684
- * (with-sound () (pins 0 3 "oboe.snd" 1.0 :max-peaks 8))           1207        783 (755)
- * (load "popi.scm")                                               11042       6391
+ * (with-sound () (fm-violin 0 20 440 .1))                          1068        642         593
+ * (with-sound (:channels 2) (fm-violin 0 20 440 .1 :degree 45))    1228        764         704
+ * (with-sound (:reverb jc-reverb) (fm-violin 0 20 440 .1))         2577       1455        1366
+ * (with-sound (:reverb nrev) (fm-violin 0 20 440 .1))              2983       1812        1703
+ * (with-sound () (p 0 3))                                         91020*      3011        2906
+ * (with-sound () (expandn 0 10 "oboe.snd" 1 :expand 4))            1228        526         488
+ * (with-sound () (calling-all-animals))                           16359      11684       10876
+ * (with-sound () (pins 0 3 "oboe.snd" 1.0 :max-peaks 8))           1207        783 (755)   710
+ * (load "popi.scm")                                               11042       6391        6137
  *
  * (with-sound ()                                                   1015        641
  *   (singer 0 .1 
