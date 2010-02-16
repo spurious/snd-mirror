@@ -1405,16 +1405,6 @@ char *xen_version(void)
 }
 
 
-double xen_to_c_double(XEN a) 
-{
-  if (s7_is_integer(a))
-    return((double)s7_integer(a));
-  if (s7_is_rational(a))
-    return((double)s7_numerator(a) / (double)s7_denominator(a));
-  return(s7_real(a));
-}
-
-
 int xen_to_c_int(XEN a) /* xen_to_c_int is expected to return an int (not an int64_t) */
 {
   s7_Int val;
@@ -1451,7 +1441,7 @@ int64_t xen_to_c_int64_t(XEN a)
 double xen_to_c_double_or_else(XEN a, double b) 
 {
   if (XEN_NUMBER_P(a))
-    return(xen_to_c_double(a));
+    return(s7_number_to_real(a));
   return(b);
 }
 
@@ -1510,14 +1500,6 @@ void xen_repl(int argc, char **argv)
 	}
     }
   free(buffer);
-}
-
-
-bool xen_s7_type_p(XEN obj, XEN_OBJECT_TYPE type)
-{
-  return((s7_is_object(obj)) &&
-	 (s7_object_value(obj)) && /* i.e. not a null object */
-	 (s7_object_type(obj) == type));
 }
 
 

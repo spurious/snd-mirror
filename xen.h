@@ -1078,7 +1078,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_EXACT_P(Arg)                           s7_is_exact(Arg)
 
 #define XEN_DOUBLE_P(Arg)                          s7_is_real(Arg)
-#define XEN_TO_C_DOUBLE(Arg)                       xen_to_c_double(Arg)
+#define XEN_TO_C_DOUBLE(Arg)                       ((double)s7_number_to_real(Arg))
 #define XEN_TO_C_DOUBLE_OR_ELSE(Arg, Def)          xen_to_c_double_or_else(Arg, Def)
 #define C_TO_XEN_DOUBLE(Arg)                       s7_make_real(s7, Arg)
 
@@ -1166,7 +1166,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_NARGIFY_1(OutName, InName) \
   static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
-    if (XEN_LIST_LENGTH(args) != 1) XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
+    if (!(XEN_NULL_P(XEN_CDR(args)))) XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
     return(InName(XEN_CAR(args))); \
   }
   
@@ -1435,7 +1435,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 #define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2)   return(s7_make_object(s7, Tag, Val))
 #define XEN_OBJECT_REF(Arg)                              s7_object_value(Arg)
 #define XEN_OBJECT_TYPE                                  int /* tag type */
-#define XEN_OBJECT_TYPE_P(Obj, Tag)                      xen_s7_type_p(Obj, Tag)
+#define XEN_OBJECT_TYPE_P(Obj, Tag)                      (s7_object_type(Obj) == Tag)
 
 #define XEN_HOOK_P(Arg)                                  xen_hook_p(Arg)
 #define XEN_DEFINE_HOOK(Name, Arity, Help)               xen_s7_define_hook(Name, Arity, Help)
@@ -1449,7 +1449,6 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 extern "C" {
 #endif
 
-bool xen_s7_type_p(XEN obj, XEN_OBJECT_TYPE type);
 XEN xen_s7_define_hook(const char *name, int arity, const char *help);
 XEN xen_s7_reset_hook(XEN hook);
 XEN xen_hook_to_list(XEN hook);
@@ -1459,7 +1458,6 @@ const char *xen_s7_hook_documentation(XEN hook);
 XEN xen_define_variable(const char *name, XEN value);
 void xen_s7_ignore(s7_function func); /* squelch compiler warnings */
 const char *xen_s7_object_help(XEN sym);
-double xen_to_c_double(XEN a);
 int xen_to_c_int(XEN a);
 int64_t xen_to_c_int64_t(XEN a);
 double xen_to_c_double_or_else(XEN a, double b);

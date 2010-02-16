@@ -519,11 +519,21 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
   if (XEN_INT64_T_P(offs))
     {
       j = XEN_TO_C_INT64_T(offs); /* needed by g++ 3.2 -- otherwise segfault from the compiler! */
-      if (j < 0) XEN_OUT_OF_RANGE_ERROR(S_vct_addB, 3, offs, "offset ~A < 0?");
-      if ((j + lim) > v1->length)
-	lim = (v1->length - j);
-      for (i = 0; i < lim; i++, j++) 
-	v1->data[j] += v2->data[i];
+      if (j < 0) 
+	XEN_OUT_OF_RANGE_ERROR(S_vct_addB, 3, offs, "offset ~A < 0?");
+
+      if (j == 0)
+	{
+	  for (i = 0; i < lim; i++) 	    
+	    v1->data[i] += v2->data[i];
+	}
+      else
+	{
+	  if ((j + lim) > v1->length)
+	    lim = (v1->length - j);
+	  for (i = 0; i < lim; i++, j++) 
+	    v1->data[j] += v2->data[i];
+	}
     }
   else
     for (i = 0; i < lim; i++) 

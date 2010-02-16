@@ -12451,7 +12451,9 @@ void *s7_object_value(s7_pointer obj)
 
 int s7_object_type(s7_pointer obj)
 {
-  return(c_object_type(obj));
+  if (is_c_object(obj))
+    return(c_object_type(obj));
+  return(-1);
 }
 
 

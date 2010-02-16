@@ -5303,33 +5303,46 @@ mus_float_t mus_filter(mus_any *ptr, mus_float_t input)
   return(xout + (gen->state[0] * gen->x[0]));
 }
 
+/* TODO: opt mus_filter and find other such cases (src? cheby?) */
 
 mus_float_t mus_fir_filter(mus_any *ptr, mus_float_t input)
 {
   mus_float_t xout = 0.0;
-  int j;
   flt *gen = (flt *)ptr;
-  gen->state[0] = input;
-  for (j = gen->order - 1; j >= 1; j--) 
+  mus_float_t *ap, *dp, *d, *dprev;
+
+  ap = (mus_float_t *)(gen->x + gen->order - 1);
+  dp = (mus_float_t *)(gen->state + gen->order - 1);
+  d = gen->state;
+
+  (*d) = input;
+  while (dp > d)
     {
-      xout += gen->state[j] * gen->x[j]; /* if fma: xout = fma(gen->state[j], gen->x[j], xout) */
-      gen->state[j] = gen->state[j - 1];
+      xout += (*dp) * (*ap--);
+      dprev = dp--;
+      (*dprev) = (*dp);
     }
-  return(xout + (gen->state[0] * gen->x[0]));
+  return(xout + input * (*ap));
 }
 
 
 mus_float_t mus_iir_filter(mus_any *ptr, mus_float_t input)
 {
-  int j;
   flt *gen = (flt *)ptr;
-  gen->state[0] = input;
-  for (j = gen->order - 1; j >= 1; j--) 
+  mus_float_t *ap, *dp, *d, *dprev;
+
+  ap = (mus_float_t *)(gen->y + gen->order - 1);
+  dp = (mus_float_t *)(gen->state + gen->order - 1);
+  d = gen->state;
+
+  (*d) = input;
+  while (dp > d)
     {
-      gen->state[0] -= gen->y[j] * gen->state[j];
-      gen->state[j] = gen->state[j - 1];
+      (*d) -= (*dp) * (*ap--);
+      dprev = dp--;
+      (*dprev) = (*dp);
     }
-  return(gen->state[0]);
+  return(*d);
 }
 
 static mus_float_t run_filter(mus_any *ptr, mus_float_t input, mus_float_t unused) {return(mus_filter(ptr, input));}
@@ -11609,12 +11622,31 @@ bool mus_ssb_am_p(mus_any *ptr)
 }
 
 
-static mus_float_t run_hilbert(flt *g, mus_float_t insig)
+static mus_float_t run_hilbert(flt *gen, mus_float_t insig)
 {
-  /* every odd-numbered entry in the coeffs array is 0 in this filter
-   *   but we have to run the loop twice to skip the 0 mults --
-   *   not very elaborate timing tests indicate all this silliness saves 10% compute time
-   */
+  mus_float_t xout = 0.0, d1 = 0.0, d2 = 0.0;
+  mus_float_t *ap, *dp, *dend;
+
+  ap = gen->x;
+  dp = gen->state;
+  dend = (mus_float_t *)(gen->state + gen->order);
+
+  dp[0] = insig;
+  while (dp < dend)
+    {
+      xout += (*dp) * (*ap++);
+      d2 = d1;
+      d1 = (*dp);
+      (*dp++) = d2;
+      if (dp == dend) break;
+      d2 = d1;
+      d1 = (*dp);
+      (*dp++) = d2;
+      ap++;                  /* every odd-numbered entry in the coeffs array is 0 in this filter */
+    }
+  return(xout);
+
+#if 0
   int i, len;
   mus_float_t val = 0.0;
   len = g->order;
@@ -11622,6 +11654,7 @@ static mus_float_t run_hilbert(flt *g, mus_float_t insig)
   for (i = 0; i < len; i += 2) val += (g->x[i] * g->state[i]);
   for (i = len - 1; i >= 1; i--) g->state[i] = g->state[i - 1];
   return(val);
+#endif
 }
 
 
