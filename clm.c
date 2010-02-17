@@ -5290,20 +5290,27 @@ mus_float_t mus_filter(mus_any *ptr, mus_float_t input)
 {
   flt *gen = (flt *)ptr;
   mus_float_t xout = 0.0;
-  int j;
+  mus_float_t *xp, *yp, *dp, *d, *dprev;
+
   if (!(gen->y)) return(mus_fir_filter(ptr, input));  
   if (!(gen->x)) return(mus_iir_filter(ptr, input));
-  gen->state[0] = input;
-  for (j = gen->order - 1; j >= 1; j--) 
+
+  xp = (mus_float_t *)(gen->x + gen->order - 1);
+  yp = (mus_float_t *)(gen->y + gen->order - 1);
+  dp = (mus_float_t *)(gen->state + gen->order - 1);
+  d = gen->state;
+
+  d[0] = input;
+  while (dp > d)
     {
-      xout += gen->state[j] * gen->x[j];
-      gen->state[0] -= gen->y[j] * gen->state[j];
-      gen->state[j] = gen->state[j - 1];
+      xout += (*dp) * (*xp--);
+      d[0] -= (*dp) * (*yp--);
+      dprev = dp--;
+      (*dprev) = (*dp);
     }
-  return(xout + (gen->state[0] * gen->x[0]));
+  return(xout + (d[0] * (*xp)));
 }
 
-/* TODO: opt mus_filter and find other such cases (src? cheby?) */
 
 mus_float_t mus_fir_filter(mus_any *ptr, mus_float_t input)
 {
@@ -5322,7 +5329,7 @@ mus_float_t mus_fir_filter(mus_any *ptr, mus_float_t input)
       dprev = dp--;
       (*dprev) = (*dp);
     }
-  return(xout + input * (*ap));
+  return(xout + (input * (*ap)));
 }
 
 

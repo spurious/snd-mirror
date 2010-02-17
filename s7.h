@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.43"
-#define S7_DATE "15-Feb-10"
+#define S7_VERSION "1.44"
+#define S7_DATE "17-Feb-10"
 
 
 typedef long long int s7_Int;
@@ -293,6 +293,7 @@ bool s7_is_real(s7_pointer p);                                               /* 
 s7_Double s7_real(s7_pointer p);                                             /* scheme real -> C double */
 s7_pointer s7_make_real(s7_scheme *sc, s7_Double num);                       /* C double -> scheme real */
 s7_Double s7_number_to_real(s7_pointer x);                                   /* x can be any kind of number */
+s7_Int s7_number_to_integer(s7_pointer x);
 
 bool s7_is_ulong(s7_pointer arg);                                            /* returns true if arg is an unsigned long */
 unsigned long s7_ulong(s7_pointer p);                                        /* scheme unsigned long -> C */
@@ -844,6 +845,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 17-Feb:    s7_number_to_integer.
  * 20-Jan-10: removed the stack function.
  * --------
  * 16-Dec:    hash-table-for-each.

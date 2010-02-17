@@ -3427,6 +3427,19 @@ s7_Double s7_number_to_real(s7_pointer x)
 }
 
 
+s7_Int s7_number_to_integer(s7_pointer x)
+{
+  switch (number_type(x))
+    {
+    case NUM_INT:   return(s7_integer(x));
+    case NUM_RATIO: return((s7_Int)s7_numerator(x) / (s7_Double)s7_denominator(x));
+    case NUM_REAL:
+    case NUM_REAL2: return((s7_Int)s7_real(x));
+    default:        return((s7_Int)s7_real_part(x));
+    }
+}
+
+
 s7_Int s7_numerator(s7_pointer x)
 {
   if (number_type(x) == NUM_RATIO)
@@ -18738,6 +18751,29 @@ s7_Double s7_number_to_real(s7_pointer x)
     case NUM_REAL:
     case NUM_REAL2: return(s7_real(x));
     default:        return(s7_real_part(x));
+    }
+}
+
+
+s7_Int s7_number_to_integer(s7_pointer x)
+{
+  if (is_c_object(x))
+    {
+      if (c_object_type(x) == big_integer_tag)
+	return(big_integer_to_s7_Int(S7_BIG_INTEGER(x)));
+      if (c_object_type(x) == big_real_tag)
+	return((s7_Int)mpfr_get_d(S7_BIG_REAL(x), GMP_RNDN));
+      if (c_object_type(x) == big_ratio_tag)
+	return((s7_Int)((double)big_integer_to_s7_Int(mpq_numref(S7_BIG_RATIO(x))) / (double)big_integer_to_s7_Int(mpq_denref(S7_BIG_RATIO(x)))));
+    }
+
+  switch (number_type(x))
+    {
+    case NUM_INT:   return(s7_integer(x));
+    case NUM_RATIO: return((s7_Int)s7_numerator(x) / (s7_Double)s7_denominator(x));
+    case NUM_REAL:
+    case NUM_REAL2: return((s7_Int)s7_real(x));
+    default:        return((s7_Int)s7_real_part(x));
     }
 }
 

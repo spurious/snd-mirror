@@ -1408,14 +1408,7 @@ char *xen_version(void)
 int xen_to_c_int(XEN a) /* xen_to_c_int is expected to return an int (not an int64_t) */
 {
   s7_Int val;
-  if (s7_is_integer(a))
-    val = s7_integer(a);
-  else
-    {
-      if (s7_is_rational(a))
-	val = (int64_t)(s7_numerator(a) / s7_denominator(a));
-      else val = (int64_t)s7_real(a);
-    }
+  val = s7_number_to_integer(a);
   if (val > INT_MAX)
     return(INT_MAX);
   if (val < INT_MIN)
@@ -1427,13 +1420,7 @@ int xen_to_c_int(XEN a) /* xen_to_c_int is expected to return an int (not an int
 int64_t xen_to_c_int64_t(XEN a)
 {
   if (XEN_NUMBER_P(a))
-    {
-      if (s7_is_integer(a))
-	return(s7_integer(a));
-      if (s7_is_rational(a))
-	return((int64_t)(s7_numerator(a) / s7_denominator(a)));
-      return((int64_t)s7_real(a));
-    }
+    return(s7_number_to_integer(a));
   return(0); /* ?? in xm.c, XtSetValues of XmUserData with a pointer falls back on this -- probably can't work */
 }
 
