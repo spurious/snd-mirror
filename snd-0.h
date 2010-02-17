@@ -53,13 +53,6 @@
 #define POINT_BUFFER_SIZE 8192
 
 #define FILE_BUFFER_SIZE 8192
-/* this shouldn't be too much larger than the average un-peak-env'd time domain window size:
- *   as a read crosses the in-core boundary, it jumps ahead to the next windowful (everything
- *   goes through read_sample, and it doesn't have local knowledge of the caller's intentions).
- *   But that means a subsequent redisplay (normally upon mouse release) has to jump back to
- *   ax->losamp, so at worst each crossing can cost us 1/4 or thereabouts of FILE_BUFFER_SIZE
- *   extra samples read. Not a big deal, but...
- */
 #define MAX_BUFFER_SIZE 65536
 #define MIX_FILE_BUFFER_SIZE 2048
 #define PRINT_BUFFER_SIZE 512

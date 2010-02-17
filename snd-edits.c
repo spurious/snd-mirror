@@ -8536,14 +8536,43 @@ scale samples in the given sound/channel between beg and beg + num to norm."
 mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, int edpos, mus_long_t *maxpos)
 {
   snd_fd *sf;
-  mus_float_t ymax, mval;
+  mus_float_t ymax = 0.0, mval;
   mus_long_t i, mpos = -1;
   int j = 0;
+
+  if (edpos == 0)
+    {
+      snd_data *sd;
+      sd = cp->sounds[0];
+      if ((sd) && 
+	  (sd->io) && 
+	  (io_beg(sd->io) <= beg) && 
+	  (io_end(sd->io) >= (beg + num)))
+	{
+	  /* use the in-core data directly */
+	  int start, end, jpos = 0;
+
+	  start = beg - io_beg(sd->io);
+	  end = beg + num - io_beg(sd->io);
+	  
+	  for (j = start; j < end; j++)
+	    {
+	      mval = fabs(MUS_SAMPLE_TO_FLOAT(sd->buffered_data[j]));
+	      if (mval > ymax) 
+		{
+		  ymax = mval;
+		  jpos = j;
+		}
+	    }
+
+	  if (maxpos) (*maxpos) = jpos + beg;
+	  return(ymax);
+	}
+    }
 
   sf = init_sample_read_any(beg, cp, READ_FORWARD, edpos);
   if (sf == NULL) return(0.0);
 
-  ymax = 0.0;
   if (num > (1 << 30))
     {
       ss->stopped_explicitly = false;
@@ -8675,6 +8704,7 @@ return sample samp in snd's channel chn (this is a slow access -- use samplers f
   ASSERT_CHANNEL(S_sample, snd, chn_n, 2);
   cp = get_cp(snd, chn_n, S_sample);
   if (!cp) return(XEN_FALSE);
+
   pos = to_c_edit_position(cp, pos_n, S_sample, 4);
   if (XEN_BOUND_P(samp_n))
     beg = beg_to_sample(samp_n, S_sample);

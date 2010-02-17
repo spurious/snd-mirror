@@ -3520,11 +3520,12 @@ static XEN g_formant(XEN gen, XEN input, XEN freq)
 static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
 {
   #define H_formant_bank "(" S_formant_bank " scls gens inval): sum a bank of " S_formant "s: scls[i]*" S_formant "(gens[i], inval)"
-  mus_float_t outval = 0.0, inval = 0.0;
+  mus_float_t outval = 0.0, inval;
   int i, size;
-  vct *scl_1;
-  mus_float_t *scls = NULL;
-  mus_any **gs;
+  vct *scl;
+#if HAVE_SCHEME
+  s7_pointer *elements;
+#endif
 
   XEN_ASSERT_TYPE(XEN_VECTOR_P(gens), gens, XEN_ARG_2, S_formant_bank, "a vector of formant generators");
   XEN_ASSERT_TYPE(MUS_VCT_P(amps), amps, XEN_ARG_1, S_formant_bank, "a vct");
@@ -3532,26 +3533,30 @@ static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
 
   size = XEN_VECTOR_LENGTH(gens);
   if (size == 0) return(XEN_ZERO);
+  scl = XEN_TO_VCT(amps);
+  inval = XEN_TO_C_DOUBLE(inp);
+#if HAVE_SCHEME
+  elements = s7_vector_elements(gens);
+#endif
 
-  gs = (mus_any **)calloc(size, sizeof(mus_any *));
   for (i = 0; i < size; i++)
     {
-      XEN datum;
-      datum = XEN_VECTOR_REF(gens, i);
-      if ((MUS_XEN_P(datum)) && (mus_formant_p(XEN_TO_MUS_ANY(datum))))
-	gs[i] = XEN_TO_MUS_ANY(datum);
-      else 
+      XEN g;
+#if HAVE_SCHEME
+      g = elements[i];
+#else
+      g = XEN_VECTOR_REF(gens, i);
+#endif
+      if (MUS_XEN_P(g))
 	{
-	  if (gs) free(gs);
-	  XEN_WRONG_TYPE_ARG_ERROR(S_formant_bank, i, datum, "a formant generator");
+	  mus_any *fg;
+	  fg = XEN_TO_MUS_ANY(g);
+	  if (mus_formant_p(fg))
+	    outval += (scl->data[i] * mus_formant(fg, inval));
+	  else XEN_WRONG_TYPE_ARG_ERROR(S_formant_bank, i, g, "a formant generator");
 	}
+      else XEN_WRONG_TYPE_ARG_ERROR(S_formant_bank, i, g, "a formant generator");
     }
-  scl_1 = xen_to_vct(amps);
-  if (scl_1->length < size) size = scl_1->length;
-  scls = scl_1->data;
-  inval = XEN_TO_C_DOUBLE(inp);
-  outval = mus_formant_bank(scls, gs, inval, size);
-  if (gs) free(gs);
   return(C_TO_XEN_DOUBLE(outval));
 }
 

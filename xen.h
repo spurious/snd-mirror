@@ -15,6 +15,7 @@
 
 /* HISTORY:
  *
+ *  17-Feb:    various s7 changes.
  *  5-Feb-10:  XEN_ASSOC_REF and XEN_ASSOC_SET.  XEN_ASSOC_REF returns the value, not the key/value pair.
  *  --------
  *  16-Dec:    removed Guile support. removed xen_return_first (a guile-ism).
@@ -173,7 +174,6 @@
 #define XEN_UNDEFINED                   ID2SYM(rb_intern("undefined"))
 
 #define XEN_BOUND_P(Arg)                ((Arg) != XEN_UNDEFINED)
-#define XEN_NOT_BOUND_P(Arg)            ((Arg) == XEN_UNDEFINED)
 
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
   #define XEN_BOOLEAN_P(Arg)            ({ XEN _xen_h_7_ = Arg;        (XEN_TRUE_P(_xen_h_7_) || XEN_FALSE_P(_xen_h_7_)); })
@@ -728,7 +728,6 @@ XEN xen_assoc(XEN key, XEN alist);
 #define XEN_TO_C_BOOLEAN(a)             FTH_TO_BOOL(a)
 
 #define XEN_BOUND_P(Arg)                FTH_BOUND_P(Arg)
-#define XEN_NOT_BOUND_P(Arg)            FTH_NOT_BOUND_P(Arg)
 
 #define XEN_EQ_P(a, b)                  ((a) == (b))
 #define XEN_EQV_P(a, b)                 XEN_EQ_P(a, b)
@@ -997,7 +996,6 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 
 #define XEN_NULL_P(Arg)                            ((Arg) == xen_nil)
 #define XEN_BOUND_P(Arg)                           ((Arg) != xen_undefined)
-#define XEN_NOT_BOUND_P(Arg)                       ((Arg) == xen_undefined)
 #define XEN_EMPTY_LIST                             xen_nil
 #define XEN_UNDEFINED                              xen_undefined
 
@@ -1150,173 +1148,261 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 
 #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) if (!(Assertion)) XEN_WRONG_TYPE_ARG_ERROR(Caller, Position, Arg, Correct_Type)
 
-#define XEN_NARGIFY_0(OutName, InName) static s7_pointer OutName(s7_scheme *sc, s7_pointer args) {return(InName());}
-#define XEN_NARGIFY_1(OutName, InName) static s7_pointer OutName(s7_scheme *sc, s7_pointer args) {return(InName(XEN_CAR(args)));}
-#define XEN_NARGIFY_2(OutName, InName) static s7_pointer OutName(s7_scheme *sc, s7_pointer args) {return(InName(XEN_CAR(args), XEN_CADR(args)));}
+/* the arg checks are not redundant because procedure-with-setters in s7 expect the caller to check */
+/*    perhaps s7 (which knows the passed arg num) could pass this to us? Or check pws args? */
+
+#define XEN_NARGIFY_0(OutName, InName) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
+  { \
+    if (args != xen_nil) XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
+    return(InName()); \
+  }
+
+#define XEN_NARGIFY_1(OutName, InName) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
+  { \
+    XEN arg1;\
+    if (args != xen_nil) {arg1 = XEN_CAR(args); args = XEN_CDR(args); \
+      if (args == xen_nil) return(InName(arg1));} \
+    XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
+  }
+  
+#define XEN_NARGIFY_2(OutName, InName) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
+  { \
+    XEN arg1, arg2;							      \
+    if (args != xen_nil) {arg1 = XEN_CAR(args); args = XEN_CDR(args); \
+      if (args != xen_nil) {arg2 = XEN_CAR(args); args = XEN_CDR(args); \
+	if (args == xen_nil) return(InName(arg1, arg2));}}		\
+    XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
+  }
   
 #define XEN_NARGIFY_3(OutName, InName) \
-  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) {return(InName(XEN_CAR(args), XEN_CADR(args), XEN_LIST_REF(args, 2)));}
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
+  { \
+    XEN arg1, arg2, arg3;						      \
+    if (args != xen_nil) {arg1 = XEN_CAR(args); args = XEN_CDR(args); \
+      if (args != xen_nil) {arg2 = XEN_CAR(args); args = XEN_CDR(args); \
+        if (args != xen_nil) {arg3 = XEN_CAR(args); args = XEN_CDR(args); \
+	  if (args == xen_nil) return(InName(arg1, arg2, arg3));}}}	\
+    XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
+  }
 
 #define XEN_NARGIFY_4(OutName, InName) \
-  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) {return(InName(XEN_CAR(args), XEN_CADR(args), XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 3))); }
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
+  { \
+    XEN arg1, arg2, arg3, arg4;					      \
+    if (args != xen_nil) {arg1 = XEN_CAR(args); args = XEN_CDR(args); \
+      if (args != xen_nil) {arg2 = XEN_CAR(args); args = XEN_CDR(args); \
+        if (args != xen_nil) {arg3 = XEN_CAR(args); args = XEN_CDR(args); \
+	  if (args != xen_nil) {arg4 = XEN_CAR(args); args = XEN_CDR(args); \
+	    if (args == xen_nil) return(InName(arg1, arg2, arg3, arg4));}}}} \
+    XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
+  }
 
 #define XEN_NARGIFY_5(OutName, InName) \
   static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
-    return(InName(XEN_CAR(args), XEN_CADR(args), XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 3), XEN_LIST_REF(args, 4))); \
+    XEN arg1, arg2, arg3, arg4, arg5;				      \
+    if (args != xen_nil) {arg1 = XEN_CAR(args); args = XEN_CDR(args); \
+      if (args != xen_nil) {arg2 = XEN_CAR(args); args = XEN_CDR(args); \
+        if (args != xen_nil) {arg3 = XEN_CAR(args); args = XEN_CDR(args); \
+	  if (args != xen_nil) {arg4 = XEN_CAR(args); args = XEN_CDR(args); \
+	    if (args != xen_nil) {arg5 = XEN_CAR(args); args = XEN_CDR(args); \
+	      if (args == xen_nil) return(InName(arg1, arg2, arg3, arg4, arg5));}}}}} \
+    XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
   }
 
 #define XEN_NARGIFY_6(OutName, InName) \
   static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
-    return(InName(XEN_CAR(args), XEN_CADR(args), XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 3), XEN_LIST_REF(args, 4), XEN_LIST_REF(args, 5))); \
+    XEN arg1, arg2, arg3, arg4, arg5, arg6;				      \
+    if (args != xen_nil) {arg1 = XEN_CAR(args); args = XEN_CDR(args); \
+      if (args != xen_nil) {arg2 = XEN_CAR(args); args = XEN_CDR(args); \
+        if (args != xen_nil) {arg3 = XEN_CAR(args); args = XEN_CDR(args); \
+	  if (args != xen_nil) {arg4 = XEN_CAR(args); args = XEN_CDR(args); \
+	    if (args != xen_nil) {arg5 = XEN_CAR(args); args = XEN_CDR(args); \
+	      if (args != xen_nil) {arg6 = XEN_CAR(args); args = XEN_CDR(args); \
+		if (args == xen_nil) return(InName(arg1, arg2, arg3, arg4, arg5, arg6));}}}}}} \
+    XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
   }
 
 #define XEN_NARGIFY_7(OutName, InName) \
   static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
-    return(InName(XEN_CAR(args), XEN_CADR(args), XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 3), \
-                  XEN_LIST_REF(args, 4), XEN_LIST_REF(args, 5), XEN_LIST_REF(args, 6))); \
+  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7;			      \
+    if (args != xen_nil) {arg1 = XEN_CAR(args); args = XEN_CDR(args); \
+      if (args != xen_nil) {arg2 = XEN_CAR(args); args = XEN_CDR(args); \
+        if (args != xen_nil) {arg3 = XEN_CAR(args); args = XEN_CDR(args); \
+	  if (args != xen_nil) {arg4 = XEN_CAR(args); args = XEN_CDR(args); \
+	    if (args != xen_nil) {arg5 = XEN_CAR(args); args = XEN_CDR(args); \
+	      if (args != xen_nil) {arg6 = XEN_CAR(args); args = XEN_CDR(args); \
+		if (args != xen_nil) {arg7 = XEN_CAR(args); args = XEN_CDR(args); \
+		  if (args == xen_nil) return(InName(arg1, arg2, arg3, arg4, arg5, arg6, arg7));}}}}}}} \
+    XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
   }
 
 #define XEN_NARGIFY_8(OutName, InName) \
   static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
-    return(InName(XEN_CAR(args), XEN_CADR(args), XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 3), \
-                  XEN_LIST_REF(args, 4), XEN_LIST_REF(args, 5), XEN_LIST_REF(args, 6), XEN_LIST_REF(args, 7))); \
+    XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8;		      \
+    if (args != xen_nil) {arg1 = XEN_CAR(args); args = XEN_CDR(args); \
+      if (args != xen_nil) {arg2 = XEN_CAR(args); args = XEN_CDR(args); \
+        if (args != xen_nil) {arg3 = XEN_CAR(args); args = XEN_CDR(args); \
+	  if (args != xen_nil) {arg4 = XEN_CAR(args); args = XEN_CDR(args); \
+	    if (args != xen_nil) {arg5 = XEN_CAR(args); args = XEN_CDR(args); \
+	      if (args != xen_nil) {arg6 = XEN_CAR(args); args = XEN_CDR(args); \
+		if (args != xen_nil) {arg7 = XEN_CAR(args); args = XEN_CDR(args); \
+		  if (args != xen_nil) {arg8 = XEN_CAR(args); args = XEN_CDR(args); \
+		    if (args == xen_nil) return(InName(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8));}}}}}}}} \
+    XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
   }
 
 #define XEN_NARGIFY_9(OutName, InName) \
   static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
-    return(InName(XEN_CAR(args), XEN_CADR(args), XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 3), \
-                  XEN_LIST_REF(args, 4), XEN_LIST_REF(args, 5), XEN_LIST_REF(args, 6), XEN_LIST_REF(args, 7), XEN_LIST_REF(args, 8))); \
+  XEN arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9;		      \
+    if (args != xen_nil) {arg1 = XEN_CAR(args); args = XEN_CDR(args); \
+      if (args != xen_nil) {arg2 = XEN_CAR(args); args = XEN_CDR(args); \
+        if (args != xen_nil) {arg3 = XEN_CAR(args); args = XEN_CDR(args); \
+	  if (args != xen_nil) {arg4 = XEN_CAR(args); args = XEN_CDR(args); \
+	    if (args != xen_nil) {arg5 = XEN_CAR(args); args = XEN_CDR(args); \
+	      if (args != xen_nil) {arg6 = XEN_CAR(args); args = XEN_CDR(args); \
+		if (args != xen_nil) {arg7 = XEN_CAR(args); args = XEN_CDR(args); \
+		  if (args != xen_nil) {arg8 = XEN_CAR(args); args = XEN_CDR(args); \
+		    if (args != xen_nil) {arg9 = XEN_CAR(args); args = XEN_CDR(args); \
+		      if (args == xen_nil) return(InName(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9));}}}}}}}}} \
+    XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
   }
 
 
-#define XEN_ARGIFY_1(OutName, InName) \
+#define XEN_ARGIFY_1(OutName, InName)                       \
   static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
-  { \
-    int len; \
-    len = XEN_LIST_LENGTH(args); \
-    return(InName((len > 0) ? XEN_CAR(args) : XEN_UNDEFINED)); \
+  {							    \
+    XEN arg = XEN_UNDEFINED;				    \
+    if (args != xen_nil) arg = XEN_CAR(args);		    \
+    return(InName(arg));				    \
   }
 
-#define XEN_ARGIFY_2(OutName, InName) \
-  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
-  { \
-    int len; \
-    len = XEN_LIST_LENGTH(args); \
-    return(InName((len > 0) ? XEN_CAR(args) : XEN_UNDEFINED, \
-                  (len > 1) ? XEN_CADR(args) : XEN_UNDEFINED)); \
+#define XEN_ARGIFY_2(OutName, InName)					\
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args)		\
+  {									\
+    XEN arg1 = XEN_UNDEFINED, arg2 = XEN_UNDEFINED;			\
+    if (args != xen_nil) {arg1 = XEN_CAR(args); args = XEN_CDR(args);	\
+      if (args != xen_nil) arg2 = XEN_CAR(args);}			\
+    return(InName(arg1, arg2));						\
   }
 
-#define XEN_ARGIFY_3(OutName, InName) \
-  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
-  { \
-    int len; \
-    len = XEN_LIST_LENGTH(args); \
-    return(InName((len > 0) ? XEN_CAR(args) : XEN_UNDEFINED, \
-                  (len > 1) ? XEN_CADR(args) : XEN_UNDEFINED, \
-                  (len > 2) ? XEN_LIST_REF(args, 2) : XEN_UNDEFINED)); \
+#define XEN_ARGIFY_3(OutName, InName)					\
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args)		\
+  {									\
+    XEN arg1 = XEN_UNDEFINED, arg2 = XEN_UNDEFINED, arg3 = XEN_UNDEFINED;\
+    if (args != xen_nil) {arg1 = XEN_CAR(args); args = XEN_CDR(args);	\
+      if (args != xen_nil) {arg2 = XEN_CAR(args); args = XEN_CDR(args);	\
+	if (args != xen_nil) arg3 = XEN_CAR(args);}}			\
+    return(InName(arg1, arg2, arg3));					\
   }
 
-#define XEN_ARGIFY_4(OutName, InName) \
-  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
-  { \
-    int len; \
-    len = XEN_LIST_LENGTH(args); \
-    return(InName((len > 0) ? XEN_CAR(args) : XEN_UNDEFINED, \
-                  (len > 1) ? XEN_CADR(args) : XEN_UNDEFINED, \
-                  (len > 2) ? XEN_LIST_REF(args, 2) : XEN_UNDEFINED, \
-                  (len > 3) ? XEN_LIST_REF(args, 3) : XEN_UNDEFINED)); \
+#define XEN_ARGIFY_4(OutName, InName)					\
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args)		\
+  {									\
+    XEN arg1 = XEN_UNDEFINED, arg2 = XEN_UNDEFINED, arg3 = XEN_UNDEFINED, arg4 = XEN_UNDEFINED; \
+    if (args != xen_nil) {arg1 = XEN_CAR(args); args = XEN_CDR(args);	\
+      if (args != xen_nil) {arg2 = XEN_CAR(args); args = XEN_CDR(args);	\
+        if (args != xen_nil) {arg3 = XEN_CAR(args); args = XEN_CDR(args);	\
+	  if (args != xen_nil) arg4 = XEN_CAR(args);}}}			\
+    return(InName(arg1, arg2, arg3, arg4));				\
   }
 
-#define XEN_ARGIFY_5(OutName, InName) \
-  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
-  { \
-    int len; \
-    len = XEN_LIST_LENGTH(args); \
-    return(InName((len > 0) ? XEN_CAR(args) : XEN_UNDEFINED, \
-                  (len > 1) ? XEN_CADR(args) : XEN_UNDEFINED, \
-                  (len > 2) ? XEN_LIST_REF(args, 2) : XEN_UNDEFINED, \
-                  (len > 3) ? XEN_LIST_REF(args, 3) : XEN_UNDEFINED, \
-                  (len > 4) ? XEN_LIST_REF(args, 4) : XEN_UNDEFINED)); \
+#define XEN_ARGIFY_5(OutName, InName)					\
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args)		\
+  {									\
+    XEN arg1 = XEN_UNDEFINED, arg2 = XEN_UNDEFINED, arg3 = XEN_UNDEFINED, arg4 = XEN_UNDEFINED, arg5 = XEN_UNDEFINED; \
+    if (args != xen_nil) {arg1 = XEN_CAR(args); args = XEN_CDR(args);	\
+      if (args != xen_nil) {arg2 = XEN_CAR(args); args = XEN_CDR(args);	\
+        if (args != xen_nil) {arg3 = XEN_CAR(args); args = XEN_CDR(args);	\
+	  if (args != xen_nil) {arg4 = XEN_CAR(args); args = XEN_CDR(args); \
+	    if (args != xen_nil) arg5 = XEN_CAR(args);}}}}		\
+    return(InName(arg1, arg2, arg3, arg4, arg5));				\
   }
 
 #define XEN_ARGIFY_6(OutName, InName) \
   static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
-    int len; \
-    len = XEN_LIST_LENGTH(args); \
-    return(InName((len > 0) ? XEN_CAR(args) : XEN_UNDEFINED, \
-                  (len > 1) ? XEN_CADR(args) : XEN_UNDEFINED, \
-                  (len > 2) ? XEN_LIST_REF(args, 2) : XEN_UNDEFINED, \
-                  (len > 3) ? XEN_LIST_REF(args, 3) : XEN_UNDEFINED, \
-                  (len > 4) ? XEN_LIST_REF(args, 4) : XEN_UNDEFINED, \
-                  (len > 5) ? XEN_LIST_REF(args, 5) : XEN_UNDEFINED)); \
+    XEN arg1 = XEN_UNDEFINED, arg2 = XEN_UNDEFINED, arg3 = XEN_UNDEFINED, arg4 = XEN_UNDEFINED, arg5 = XEN_UNDEFINED, arg6 = XEN_UNDEFINED; \
+    if (args != xen_nil) {arg1 = XEN_CAR(args); args = XEN_CDR(args);	\
+      if (args != xen_nil) {arg2 = XEN_CAR(args); args = XEN_CDR(args);	\
+        if (args != xen_nil) {arg3 = XEN_CAR(args); args = XEN_CDR(args);	\
+	  if (args != xen_nil) {arg4 = XEN_CAR(args); args = XEN_CDR(args); \
+	    if (args != xen_nil) {arg5 = XEN_CAR(args); args = XEN_CDR(args); \
+	      if (args != xen_nil) arg6 = XEN_CAR(args);}}}}}		\
+    return(InName(arg1, arg2, arg3, arg4, arg5, arg6));			\
   }
 
 #define XEN_ARGIFY_7(OutName, InName) \
   static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
-    int len; \
-    len = XEN_LIST_LENGTH(args); \
-    return(InName((len > 0) ? XEN_CAR(args) : XEN_UNDEFINED, \
-                  (len > 1) ? XEN_CADR(args) : XEN_UNDEFINED, \
-                  (len > 2) ? XEN_LIST_REF(args, 2) : XEN_UNDEFINED, \
-                  (len > 3) ? XEN_LIST_REF(args, 3) : XEN_UNDEFINED, \
-                  (len > 4) ? XEN_LIST_REF(args, 4) : XEN_UNDEFINED, \
-                  (len > 5) ? XEN_LIST_REF(args, 5) : XEN_UNDEFINED, \
-                  (len > 6) ? XEN_LIST_REF(args, 6) : XEN_UNDEFINED)); \
+    XEN arg1 = XEN_UNDEFINED, arg2 = XEN_UNDEFINED, arg3 = XEN_UNDEFINED, arg4 = XEN_UNDEFINED, arg5 = XEN_UNDEFINED; \
+    XEN arg6 = XEN_UNDEFINED, arg7 = XEN_UNDEFINED; \
+    if (args != xen_nil) {arg1 = XEN_CAR(args); args = XEN_CDR(args);	\
+      if (args != xen_nil) {arg2 = XEN_CAR(args); args = XEN_CDR(args);	\
+        if (args != xen_nil) {arg3 = XEN_CAR(args); args = XEN_CDR(args);	\
+	  if (args != xen_nil) {arg4 = XEN_CAR(args); args = XEN_CDR(args); \
+	    if (args != xen_nil) {arg5 = XEN_CAR(args); args = XEN_CDR(args); \
+	      if (args != xen_nil) {arg6 = XEN_CAR(args); args = XEN_CDR(args); \
+		if (args != xen_nil) arg7 = XEN_CAR(args);}}}}}}	\
+    return(InName(arg1, arg2, arg3, arg4, arg5, arg6, arg7));		\
   }
 
 #define XEN_ARGIFY_8(OutName, InName) \
   static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
-    int len; \
-    len = XEN_LIST_LENGTH(args); \
-    return(InName((len > 0) ? XEN_CAR(args) : XEN_UNDEFINED, \
-                  (len > 1) ? XEN_CADR(args) : XEN_UNDEFINED, \
-                  (len > 2) ? XEN_LIST_REF(args, 2) : XEN_UNDEFINED, \
-                  (len > 3) ? XEN_LIST_REF(args, 3) : XEN_UNDEFINED, \
-                  (len > 4) ? XEN_LIST_REF(args, 4) : XEN_UNDEFINED, \
-                  (len > 5) ? XEN_LIST_REF(args, 5) : XEN_UNDEFINED, \
-                  (len > 6) ? XEN_LIST_REF(args, 6) : XEN_UNDEFINED, \
-                  (len > 7) ? XEN_LIST_REF(args, 7) : XEN_UNDEFINED)); \
+    XEN arg1 = XEN_UNDEFINED, arg2 = XEN_UNDEFINED, arg3 = XEN_UNDEFINED, arg4 = XEN_UNDEFINED, arg5 = XEN_UNDEFINED; \
+    XEN arg6 = XEN_UNDEFINED, arg7 = XEN_UNDEFINED, arg8 = XEN_UNDEFINED;\
+    if (args != xen_nil) {arg1 = XEN_CAR(args); args = XEN_CDR(args);	\
+      if (args != xen_nil) {arg2 = XEN_CAR(args); args = XEN_CDR(args);	\
+        if (args != xen_nil) {arg3 = XEN_CAR(args); args = XEN_CDR(args);	\
+	  if (args != xen_nil) {arg4 = XEN_CAR(args); args = XEN_CDR(args); \
+	    if (args != xen_nil) {arg5 = XEN_CAR(args); args = XEN_CDR(args); \
+	      if (args != xen_nil) {arg6 = XEN_CAR(args); args = XEN_CDR(args); \
+	        if (args != xen_nil) {arg7 = XEN_CAR(args); args = XEN_CDR(args);	\
+		  if (args != xen_nil) arg8 = XEN_CAR(args);}}}}}}}	\
+    return(InName(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8));		\
   }
 
 #define XEN_ARGIFY_9(OutName, InName) \
   static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
-    int len; \
-    len = XEN_LIST_LENGTH(args); \
-    return(InName((len > 0) ? XEN_CAR(args) : XEN_UNDEFINED, \
-                  (len > 1) ? XEN_CADR(args) : XEN_UNDEFINED, \
-                  (len > 2) ? XEN_LIST_REF(args, 2) : XEN_UNDEFINED, \
-                  (len > 3) ? XEN_LIST_REF(args, 3) : XEN_UNDEFINED, \
-                  (len > 4) ? XEN_LIST_REF(args, 4) : XEN_UNDEFINED, \
-                  (len > 5) ? XEN_LIST_REF(args, 5) : XEN_UNDEFINED, \
-                  (len > 6) ? XEN_LIST_REF(args, 6) : XEN_UNDEFINED, \
-                  (len > 7) ? XEN_LIST_REF(args, 7) : XEN_UNDEFINED, \
-                  (len > 8) ? XEN_LIST_REF(args, 8) : XEN_UNDEFINED)); \
+    XEN arg1 = XEN_UNDEFINED, arg2 = XEN_UNDEFINED, arg3 = XEN_UNDEFINED, arg4 = XEN_UNDEFINED, arg5 = XEN_UNDEFINED; \
+    XEN arg6 = XEN_UNDEFINED, arg7 = XEN_UNDEFINED, arg8 = XEN_UNDEFINED, arg9 = XEN_UNDEFINED; \
+    if (args != xen_nil) {arg1 = XEN_CAR(args); args = XEN_CDR(args);	\
+      if (args != xen_nil) {arg2 = XEN_CAR(args); args = XEN_CDR(args);	\
+        if (args != xen_nil) {arg3 = XEN_CAR(args); args = XEN_CDR(args);	\
+	  if (args != xen_nil) {arg4 = XEN_CAR(args); args = XEN_CDR(args); \
+	    if (args != xen_nil) {arg5 = XEN_CAR(args); args = XEN_CDR(args); \
+	      if (args != xen_nil) {arg6 = XEN_CAR(args); args = XEN_CDR(args); \
+	        if (args != xen_nil) {arg7 = XEN_CAR(args); args = XEN_CDR(args);	\
+		  if (args != xen_nil) {arg8 = XEN_CAR(args); args = XEN_CDR(args); \
+		    if (args != xen_nil) arg9 = XEN_CAR(args);}}}}}}}}	\
+    return(InName(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9));	\
   }
 
 #define XEN_ARGIFY_10(OutName, InName) \
   static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
-    int len; \
-    len = XEN_LIST_LENGTH(args); \
-    return(InName((len > 0) ? XEN_CAR(args) : XEN_UNDEFINED, \
-                  (len > 1) ? XEN_CADR(args) : XEN_UNDEFINED, \
-                  (len > 2) ? XEN_LIST_REF(args, 2) : XEN_UNDEFINED, \
-                  (len > 3) ? XEN_LIST_REF(args, 3) : XEN_UNDEFINED, \
-                  (len > 4) ? XEN_LIST_REF(args, 4) : XEN_UNDEFINED, \
-                  (len > 5) ? XEN_LIST_REF(args, 5) : XEN_UNDEFINED, \
-                  (len > 6) ? XEN_LIST_REF(args, 6) : XEN_UNDEFINED, \
-                  (len > 7) ? XEN_LIST_REF(args, 7) : XEN_UNDEFINED, \
-                  (len > 8) ? XEN_LIST_REF(args, 8) : XEN_UNDEFINED, \
-                  (len > 9) ? XEN_LIST_REF(args, 9) : XEN_UNDEFINED)); \
+    XEN arg1 = XEN_UNDEFINED, arg2 = XEN_UNDEFINED, arg3 = XEN_UNDEFINED, arg4 = XEN_UNDEFINED, arg5 = XEN_UNDEFINED; \
+    XEN arg6 = XEN_UNDEFINED, arg7 = XEN_UNDEFINED, arg8 = XEN_UNDEFINED, arg9 = XEN_UNDEFINED, arg10 = XEN_UNDEFINED; \
+    if (args != xen_nil) {arg1 = XEN_CAR(args); args = XEN_CDR(args);	\
+      if (args != xen_nil) {arg2 = XEN_CAR(args); args = XEN_CDR(args);	\
+        if (args != xen_nil) {arg3 = XEN_CAR(args); args = XEN_CDR(args);	\
+	  if (args != xen_nil) {arg4 = XEN_CAR(args); args = XEN_CDR(args); \
+	    if (args != xen_nil) {arg5 = XEN_CAR(args); args = XEN_CDR(args); \
+	      if (args != xen_nil) {arg6 = XEN_CAR(args); args = XEN_CDR(args); \
+	        if (args != xen_nil) {arg7 = XEN_CAR(args); args = XEN_CDR(args);	\
+		  if (args != xen_nil) {arg8 = XEN_CAR(args); args = XEN_CDR(args); \
+		    if (args != xen_nil) {arg9 = XEN_CAR(args); args = XEN_CDR(args); \
+		      if (args != xen_nil) arg10 = XEN_CAR(args);}}}}}}}}} \
+    return(InName(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10)); \
   }
 
 #define XEN_VARGIFY(OutName, InName) static s7_pointer OutName(s7_scheme *sc, s7_pointer args) {return(InName(args));}
@@ -1618,9 +1704,10 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 
 
 
-#define XEN_NOT_TRUE_P(a)  (!(XEN_TRUE_P(a)))
-#define XEN_NOT_FALSE_P(a) (!(XEN_FALSE_P(a)))
-#define XEN_NOT_NULL_P(a)  (!(XEN_NULL_P(a)))
+#define XEN_NOT_TRUE_P(a)    (!(XEN_TRUE_P(a)))
+#define XEN_NOT_FALSE_P(a)   (!(XEN_FALSE_P(a)))
+#define XEN_NOT_NULL_P(a)    (!(XEN_NULL_P(a)))
+#define XEN_NOT_BOUND_P(Arg) (!(XEN_BOUND_P(Arg)))
 
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
   #define XEN_BOOLEAN_IF_BOUND_P(Arg)            ({ XEN _xen_h_14_ = Arg; ((XEN_BOOLEAN_P(_xen_h_14_))   || (XEN_NOT_BOUND_P(_xen_h_14_))); })
@@ -1685,7 +1772,6 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #ifndef XEN_DEFINED_P
   #define XEN_DEFINED_P(Name) false
 #endif
-
 
 /* (need a way to pass an uninterpreted pointer from C to XEN then back to C) */
 #if HAVE_SCHEME

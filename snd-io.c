@@ -271,11 +271,16 @@ snd_io *make_file_state(int fd, file_info *hdr, int chan, mus_long_t beg, int su
   snd_io *io;
   int bufsize;
   mus_long_t chansize;
+  #define MAX_FILE_BUFFER_SIZE 65536
+
   bufsize = suggested_bufsize;
+
   chansize = (hdr->samples / hdr->chans); /* this can be bogus if the header is messed up */
-  if ((chansize > 0) && 
-      (bufsize > chansize)) 
+  if ((chansize >= 0) && 
+      ((bufsize > chansize) ||
+       (MAX_FILE_BUFFER_SIZE > chansize)))
     bufsize = chansize + 1;
+
   io = (snd_io *)calloc(1, sizeof(snd_io)); /* only creation point */
   io->arrays = (mus_sample_t **)calloc(hdr->chans, sizeof(mus_sample_t *));
   io->fd = fd;
