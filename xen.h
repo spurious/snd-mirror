@@ -1488,7 +1488,6 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 #define XEN_TO_C_BOOLEAN(a) 0
 #define XEN_NULL_P(a) ((a) == XEN_EMPTY_LIST)
 #define XEN_BOUND_P(Arg) 0
-#define XEN_NOT_BOUND_P(Arg) 1
 #define XEN_EMPTY_LIST 0
 #define XEN_UNDEFINED 0
 #define XEN_EQ_P(a, b) 0

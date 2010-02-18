@@ -12645,7 +12645,7 @@ static s7_pointer pws_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
       /* this is the c_function case */
       int len;
 
-      len = s7_list_length(sc, args);
+      len = safe_list_length(sc, args);
       if (len < f->get_req_args)
 	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, make_list_3(sc, s7_make_string(sc, "~A: not enough arguments: ~A"), obj, args)));
       if (len > (f->get_req_args + f->get_opt_args))
@@ -12672,7 +12672,7 @@ static s7_pointer pws_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
       /* this is the c_function case */
       int len;
 
-      len = s7_list_length(sc, args);
+      len = safe_list_length(sc, args);
       if (len < f->set_req_args)
 	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, make_list_3(sc, s7_make_string(sc, "set!: ~A: not enough arguments: ~A"), obj, args)));
       if (len > (f->set_req_args + f->set_opt_args))
