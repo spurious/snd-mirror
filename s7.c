@@ -12641,7 +12641,18 @@ static s7_pointer pws_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
   s7_pws_t *f;
   f = (s7_pws_t *)s7_object_value(obj);
   if (f->getter != NULL)
-    return((*(f->getter))(sc, args));
+    {
+      /* this is the c_function case */
+      int len;
+
+      len = s7_list_length(sc, args);
+      if (len < f->get_req_args)
+	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, make_list_3(sc, s7_make_string(sc, "~A: not enough arguments: ~A"), obj, args)));
+      if (len > (f->get_req_args + f->get_opt_args))
+	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, make_list_3(sc, s7_make_string(sc, "~A: too many arguments: ~A"), obj, args)));
+
+      return((*(f->getter))(sc, args));
+    }
 
   push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
   sc->args = args;
@@ -12657,7 +12668,18 @@ static s7_pointer pws_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
   s7_pws_t *f;
   f = (s7_pws_t *)s7_object_value(obj);
   if (f->setter != NULL)
-    return((*(f->setter))(sc, args));
+    {
+      /* this is the c_function case */
+      int len;
+
+      len = s7_list_length(sc, args);
+      if (len < f->set_req_args)
+	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, make_list_3(sc, s7_make_string(sc, "set!: ~A: not enough arguments: ~A"), obj, args)));
+      if (len > (f->set_req_args + f->set_opt_args))
+	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, make_list_3(sc, s7_make_string(sc, "set!: ~A: too many arguments: ~A"), obj, args)));
+
+      return((*(f->setter))(sc, args));
+    }
 
   push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
   sc->args = args;
@@ -12738,15 +12760,6 @@ static char *pws_documentation(s7_pointer x)
   s7_pws_t *f = (s7_pws_t *)s7_object_value(x);
   return(f->documentation);
 }
-
-
-#if 0
-static char *pws_name(s7_pointer x)
-{
-  s7_pws_t *f = (s7_pws_t *)s7_object_value(x);
-  return(f->name);
-}
-#endif
 
 
 static int pws_get_req_args(s7_pointer x)
@@ -16781,7 +16794,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	    case T_C_OBJECT:
 	      if (object_set_function(sc->x))
-		sc->code = s7_cons(sc, sc->OBJECT_SET, s7_append(sc, car(sc->code), cdr(sc->code)));   /* use set method (append flattens the lists) */
+		sc->code = s7_cons(sc, sc->OBJECT_SET, s7_append(sc, car(sc->code), cdr(sc->code)));   
+	        /* use set method (append copies/flattens the lists) -- we can't stitch car to cdr here because we're
+		 *   dealing with in-coming code -- set_cdr! will create a circular list.
+		 */
 	      else return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
 	      break;
 

@@ -118,24 +118,26 @@
  * (with-sound () (pins 0 3 "oboe.snd" 1.0 :max-peaks 8))           1207        783 (755)   710
  * (load "popi.scm")                                               11042       6391        6137
  *
- * (with-sound ()                                                   1015        641
+ * (with-sound ()                                                   1015        641         604
  *   (singer 0 .1 
  *     (list (list .4 ehh.shp test.glt 523.0 .8 0.0 .01) 
  *           (list .6 oo.shp test.glt 523.0 .7 .1 .01))))
  *
- * (with-sound (:channels 2)                                         206        139
+ * (with-sound (:channels 2)                                         206        139          96
  *   (let ((file "oboe.snd")) 
  *     (grani 0 1 .5 "oboe.snd" 
  *       :grain-envelope '(0 0 0.2 0.2 0.5 1 0.8 0.2 1 0))))
  *
- * (with-sound ()                                                   7120       5069
+ * (with-sound ()                                                   7120       5069        4335
  *   (do ((i 0 (+ i 1))) 
  *       ((= i 10000)) 
  *     (fm-violin (* i .001) .01 440 .001)))
  *
- * (with-sound (:channels 2)                                         283        220    [1st case in clm-ins.scm:   12201   1138]
+ * (with-sound (:channels 2)                                         283        220         180
  *   (fullmix "pistol.snd" 0 2 0 #f .5)  
  *   (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
+ *
+ *                                      1st case in clm-ins.scm:    12201      1138        1079
  */
 
 #include <mus-config.h>

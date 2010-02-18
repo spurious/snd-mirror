@@ -8550,9 +8550,10 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 	  (io_end(sd->io) >= (beg + num)))
 	{
 	  /* use the in-core data directly */
-	  int start, end, jpos = 0;
+	  int start, end, jpos;
 
 	  start = beg - io_beg(sd->io);
+	  jpos = start;
 	  end = beg + num - io_beg(sd->io);
 	  
 	  for (j = start; j < end; j++)
@@ -8565,7 +8566,7 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 		}
 	    }
 
-	  if (maxpos) (*maxpos) = jpos + beg;
+	  if (maxpos) (*maxpos) = jpos - start;
 	  return(ymax);
 	}
     }

@@ -46475,6 +46475,8 @@
       (test (set! (let () 'a) 1) 'error)
       (test (set!) 'error)
       (test (set! #t #f) 'error)
+      (test (set! '() #f) 'error)
+      (test (set! #(1 2 3) 1) 'error)
       (test (set! (call/cc (lambda (a) a)) #f) 'error)
       (test (set! 3 1) 'error)
       (test (set! 3.14 1) 'error)
