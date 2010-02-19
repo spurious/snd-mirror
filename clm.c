@@ -2537,33 +2537,33 @@ static int pw_choice(mus_any *ptr) {return(((pw *)ptr)->cheby_choice);}
 mus_float_t mus_chebyshev_tu_sum(mus_float_t x, int n, mus_float_t *tn, mus_float_t *un)
 {
   /* the Clenshaw algorithm */
-  int i;
-  double x2, b, b1 = 0.0, b2 = 0.0, cx, cx_val;
+  double x2, tb, tb1 = 0.0, tb2, cx, ub, ub1 = 0.0, ub2;
+  mus_float_t *tp, *up;
 
   cx = cos(x);
   x2 = 2.0 * cx;
 
-  /* Tn calc */
-  b = tn[n - 1];
-  for (i = n - 2; i >= 0; i--)
-    {
-      b2 = b1;
-      b1 = b;
-      b = x2 * b1 - b2 + tn[i];
-    }
-  cx_val = b - b1 * cx;
+  tp = (mus_float_t *)(tn + n - 1);
+  up = (mus_float_t *)(un + n - 1);
+  tb = (*tp--);
+  ub = (*up--);
 
-  /* Un calc */
-  b = un[n - 1];
-  b1 = 0.0;
-  for (i = n - 2; i > 0; i--)
+  while (up != un)
     {
-      b2 = b1;
-      b1 = b;
-      b = x2 * b1 - b2 + un[i];
+      tb2 = tb1;
+      tb1 = tb;
+      tb = x2 * tb1 - tb2 + (*tp--);
+
+      ub2 = ub1;
+      ub1 = ub;
+      ub = x2 * ub1 - ub2 + (*up--);
     }
 
-  return((mus_float_t)(cx_val + (sin(x) * b)));
+  tb2 = tb1;
+  tb1 = tb;
+  tb = x2 * tb1 - tb2 + tn[0];
+
+  return((mus_float_t)((tb - tb1 * cx) + (sin(x) * ub)));
 }
 
 
@@ -5889,7 +5889,7 @@ static mus_float_t run_env(mus_any *ptr, mus_float_t unused1, mus_float_t unused
 static void dmagify_env(seg *e, mus_float_t *data, int pts, mus_long_t dur, double scaler)
 { 
   int i, j;
-  double xscl = 1.0, cur_loc = 0.0;
+  double xscl = 1.0, cur_loc = 0.0, y1 = 0.0;
 
   e->size = pts;
 
@@ -5903,7 +5903,7 @@ static void dmagify_env(seg *e, mus_float_t *data, int pts, mus_long_t dur, doub
   for (j = 0, i = 2; i < pts * 2; i += 2, j++)
     {
       mus_long_t samps;
-      double cur_dx, x0, y0, x1, y1;
+      double cur_dx, x0, y0, x1;
 
       x0 = data[i - 2];
       x1 = data[i];
@@ -5951,7 +5951,7 @@ static void dmagify_env(seg *e, mus_float_t *data, int pts, mus_long_t dur, doub
       switch (e->style)
       {
       case MUS_ENV_STEP:
-	e->rates[pts - 1] = e->rates[pts - 2]; /* stick at last value, which in this case is the value (not an increment) */
+	e->rates[pts - 1] = e->offset + (scaler * y1); /* stick at last value, which in this case is the value (not an increment) */
 	break;
 
       case MUS_ENV_LINEAR:

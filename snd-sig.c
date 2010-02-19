@@ -1480,12 +1480,15 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
 
   if (!(editable_p(cp))) return(NULL);
   sp = cp->sound;
+
   dur += order;
   if (dur < TWO_30)
     fsize = snd_to_int_pow2(dur);
   else fsize = TWO_30;
+
   ofile = snd_tempnam();
   hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
+
 #if MUS_LITTLE_ENDIAN
   if (sizeof(mus_float_t) == 4)
     hdr->format = MUS_LFLOAT;
@@ -3227,9 +3230,6 @@ char *scale_and_src(char **files, int len, int max_chans, mus_float_t amp, mus_f
   return(tempfile);
 }
 
-#define MUS_OUTA_1(Frame, Val, Fd) ((*(Fd->core)->write_sample))(Fd, Frame, 0, Val)
-/* avoids all the CLM error checking */
-
 
 static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN snd, XEN chn, XEN edpos, XEN s_dur, const char *fallback_caller) 
 { 
@@ -3319,104 +3319,153 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
       temp_file = (num > MAX_BUFFER_SIZE);
       if (temp_file)
 	{
-	  mus_any *outgen = NULL;
-	  int rpt4;
+	  int rpt4, ofd, datumb;
 	  char *filename;
-	  mus_long_t j, kp;
+	  file_info *hdr;
+	  mus_long_t kp, samps = 0;
+	  int j = 0;
 	  bool reporting = false;
+	  io_error_t io_err = IO_NO_ERROR;
 
 	  reporting = ((num > REPORTING_SIZE) && (!(cp->squelch_update)));
 	  if (reporting) start_progress_report(cp);
 	  rpt4 = MAX_BUFFER_SIZE / 4;
 
 	  filename = snd_tempnam();
-	  outgen = mus_make_sample_to_file_with_comment(filename, 1, MUS_OUT_FORMAT, MUS_NEXT, "map-channel temp");
-	  j = 0;
-	  ss->stopped_explicitly = false;
-	  for (kp = 0; kp < num; kp++)
-	    {
-	      /* changed here to remove catch 24-Mar-02 */
-	      res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample(sf)));
-	      if (XEN_NUMBER_P(res))                         /* one number -> replace current sample */
-		MUS_OUTA_1(j++, XEN_TO_C_DOUBLE(res), outgen);
-	      else
-		{
-		  if (XEN_NOT_FALSE_P(res))                  /* if #f, no output on this pass */
-		    {
-		      if (XEN_TRUE_P(res))                   /* if #t we halt the entire map */
-			break;
-		      else
-			{
-			  if (MUS_VCT_P(res))
-			    {
-			      vct *v;
-			      v = XEN_TO_VCT(res);
-			      for (i = 0; i < v->length; i++) 
-				MUS_OUTA_1(j++, v->data[i], outgen);
-			    }
-			  else
-			    {
-			      if (outgen) mus_free(outgen);
-			      sf = free_snd_fd(sf);
-			      if (reporting) finish_progress_report(cp);
-			      snd_remove(filename, REMOVE_FROM_CACHE);
-			      free(filename);
-			      XEN_ERROR(BAD_TYPE,
-					XEN_LIST_3(C_TO_XEN_STRING(caller),
-						   C_TO_XEN_STRING("result of procedure must be a (non-complex) number, boolean, or vct:"),
-						   res));
-			    }
-			}
-		    }
-		}
-	      if (reporting) 
-		{
-		  rpt++;
-		  if (rpt > rpt4)
-		    {
-		      progress_report(cp, (mus_float_t)((double)kp / (double)num));
-		      if (!(sp->active))
-			{
-			  ss->stopped_explicitly = true;
-			  break;
-			}
-		      rpt = 0;		    
-		    }
-		}
-	      if (ss->stopped_explicitly) break;
-	    }
-	  if (outgen) mus_free(outgen);
-	  sf = free_snd_fd(sf);
-	  if (reporting) finish_progress_report(cp);
-	  if (ss->stopped_explicitly) 
-	    ss->stopped_explicitly = false;
+	  hdr = make_temp_header(filename, SND_SRATE(cp->sound), 1, 0, S_map_channel);
+	  ofd = open_temp_file(filename, 1, hdr, &io_err);
+	  if (ofd == -1)
+	    snd_error(_("%s: %s (temp file) %s: %s"), 
+		      S_map_channel,
+		      (io_err != IO_NO_ERROR) ? io_error_name(io_err) : "can't open",
+		      filename, 
+		      snd_open_strerror());
 	  else
 	    {
-	      if (cp->active < CHANNEL_HAS_EDIT_LIST)
+	      int err = MUS_NO_ERROR;
+	      mus_sample_t **data;
+
+	      data = (mus_sample_t **)calloc(1, sizeof(mus_sample_t *));
+	      data[0] = (mus_sample_t *)calloc(MAX_BUFFER_SIZE, sizeof(mus_sample_t));
+	      datumb = mus_bytes_per_sample(hdr->format);
+	      ss->stopped_explicitly = false;
+
+	      for (kp = 0; kp < num; kp++)
 		{
-		  snd_remove(filename, REMOVE_FROM_CACHE);
-		  free(filename);
-		  XEN_ERROR(NO_SUCH_CHANNEL,
-			    XEN_LIST_2(C_TO_XEN_STRING(caller),
-				       C_TO_XEN_STRING("can't edit closed channel!")));
-		  return(XEN_FALSE);
+		  /* changed here to remove catch 24-Mar-02 */
+		  res = XEN_CALL_1_NO_CATCH(proc, C_TO_XEN_DOUBLE((double)read_sample(sf)));
+		  if (XEN_NUMBER_P(res))                         /* one number -> replace current sample */
+		    {
+		      samps++;
+		      data[0][j++] = XEN_TO_C_DOUBLE(res);
+		      if (j == MAX_BUFFER_SIZE)
+			{
+			  err = mus_file_write(ofd, 0, j - 1, 1, data);
+			  j = 0;
+			  if (err == -1) break;
+			}
+		    }
+		  else
+		    {
+		      if (XEN_NOT_FALSE_P(res))                  /* if #f, no output on this pass */
+			{
+			  if (XEN_TRUE_P(res))                   /* if #t we halt the entire map */
+			    break;
+			  else
+			    {
+			      if (MUS_VCT_P(res))
+				{
+				  vct *v;
+				  v = XEN_TO_VCT(res);
+				  for (i = 0; i < v->length; i++) 
+				    {
+				      data[0][j++] = v->data[i];
+				      if (j == MAX_BUFFER_SIZE)
+					{
+					  err = mus_file_write(ofd, 0, j - 1, 1, data);
+					  j = 0;
+					  if (err == -1) break;
+					}
+				    }
+				  samps += v->length - 1;
+				}
+			      else
+				{
+				  close_temp_file(filename, ofd, hdr->type, samps * datumb);
+				  sf = free_snd_fd(sf);
+				  if (reporting) finish_progress_report(cp);
+				  snd_remove(filename, REMOVE_FROM_CACHE);
+				  free(filename);
+				  free(data[0]);
+				  free(data);
+				  
+				  XEN_ERROR(BAD_TYPE,
+					    XEN_LIST_3(C_TO_XEN_STRING(caller),
+						       C_TO_XEN_STRING("result of procedure must be a (non-complex) number, boolean, or vct:"),
+						       res));
+				}
+			    }
+			}
+		    }
+		  if (reporting) 
+		    {
+		      rpt++;
+		      if (rpt > rpt4)
+			{
+			  progress_report(cp, (mus_float_t)((double)kp / (double)num));
+			  if (!(sp->active))
+			    {
+			      ss->stopped_explicitly = true;
+			      break;
+			    }
+			  rpt = 0;		    
+			}
+		    }
+		  if (ss->stopped_explicitly) break;
 		}
-	      if (j == num)
-		file_change_samples(beg, j, filename, cp, 0, DELETE_ME, caller, pos);
+
+	      if (j > 0) 
+		mus_file_write(ofd, 0, j - 1, 1, data);
+	      close_temp_file(filename, ofd, hdr->type, samps * datumb);
+
+	      free_file_info(hdr);
+	      free(data[0]);
+	      free(data);
+
+	      sf = free_snd_fd(sf);
+
+	      if (reporting) finish_progress_report(cp);
+	      if (ss->stopped_explicitly) 
+		ss->stopped_explicitly = false;
 	      else
 		{
-		  delete_samples(beg, num, cp, pos);
-		  if (j > 0)
+		  if (cp->active < CHANNEL_HAS_EDIT_LIST)
 		    {
-		      int cured;
-		      cured = cp->edit_ctr;
-		      file_insert_samples(beg, j, filename, cp, 0, DELETE_ME, caller, cp->edit_ctr);
-		      backup_edit_list(cp);
-		      if (cp->edit_ctr > cured)
-			backup_edit_list(cp);
-		      ripple_trailing_marks(cp, beg, num, j);
+		      snd_remove(filename, REMOVE_FROM_CACHE);
+		      free(filename);
+		      XEN_ERROR(NO_SUCH_CHANNEL,
+				XEN_LIST_2(C_TO_XEN_STRING(caller),
+					   C_TO_XEN_STRING("can't edit closed channel!")));
+		      return(XEN_FALSE);
 		    }
-		  else snd_remove(filename, REMOVE_FROM_CACHE);
+
+		  if (samps == num)
+		    file_change_samples(beg, samps, filename, cp, 0, DELETE_ME, caller, pos);
+		  else
+		    {
+		      delete_samples(beg, num, cp, pos);
+		      if (samps > 0)
+			{
+			  int cured;
+			  cured = cp->edit_ctr;
+			  file_insert_samples(beg, samps, filename, cp, 0, DELETE_ME, caller, cp->edit_ctr);
+			  backup_edit_list(cp);
+			  if (cp->edit_ctr > cured)
+			    backup_edit_list(cp);
+			  ripple_trailing_marks(cp, beg, num, samps);
+			}
+		      else snd_remove(filename, REMOVE_FROM_CACHE);
+		    }
 		}
 	    }
 	  free(filename);
@@ -3513,6 +3562,9 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   return(res);
 }
 
+
+#define MUS_OUTA_1(Frame, Val, Fd) ((*(Fd->core)->write_sample))(Fd, Frame, 0, Val)
+/* avoids all the CLM error checking */
 
 static XEN g_map_chan_ptree_fallback(XEN proc, XEN init_func, chan_info *cp, mus_long_t beg, mus_long_t num, int pos, const char *origin)
 { 
@@ -5694,9 +5746,9 @@ that give a minimum peak amplitude when the signals are added together."
      17827, 17837, 17839, 17851, 17863};
 #endif
 
-  static mus_float_t all_mins[128] = {1.0000, 1.7600, 1.9797, 2.0390, 2.3435, 2.5493, 2.6394, 2.7947, 2.9618, 3.1027, 3.2184, 3.3891, 3.5249, 3.6131, 3.7690, 3.8751, 3.9815, 4.1454, 4.2237, 4.2901, 4.4844, 4.5881, 4.6077, 4.7308, 4.8556, 5.0083, 5.0665, 5.1610, 5.2447, 5.3667, 5.4835, 5.5298, 5.6351, 5.7213, 5.7695, 5.9314, 5.9340, 6.1411, 6.1310, 6.3596, 6.3364, 6.5159, 6.4824, 6.5525, 6.7031, 6.6997, 6.8394, 6.9776, 7.0801, 7.0874, 7.1937, 7.1497, 7.2114, 7.4365, 7.4513, 7.3719, 7.5207, 7.7458, 7.6748, 7.8545, 7.9335, 7.8677, 7.9218, 8.1003, 8.1853, 8.2275, 8.3657, 8.1976, 8.4511, 8.4306, 8.4356, 8.5204, 8.5835, 8.5725, 8.7553, 8.8781, 8.9925, 9.0473, 9.0078, 9.1948, 9.1598, 9.3176, 9.2954, 9.3440, 9.2978, 9.4977, 9.4999, 9.4542, 9.6650, 9.6752, 9.7165, 9.7753, 9.8545, 10.1799, 10.2298, 10.1435, 10.1401, 10.1635, 9.9784, 10.2635, 10.3129, 10.5181, 10.5710, 10.4965, 10.3117, 10.5996, 10.6709, 10.6599, 10.8470, 10.8857, 10.7804, 10.8395, 11.0289, 10.9655, 11.0472, 11.0865, 11.2635, 11.3221, 11.3991, 11.2636, 11.5046, 11.3714, 11.4332, 11.5504, 11.6483, 11.6464, 11.6990, 11.7783};
+  static mus_float_t all_mins[128] = {1.0000, 1.7600, 1.9797, 2.0390, 2.3435, 2.5493, 2.6394, 2.7947, 2.9618, 3.1027, 3.2184, 3.3891, 3.5249, 3.6131, 3.7690, 3.8751, 3.9815, 4.1454, 4.2237, 4.2901, 4.4844, 4.5881, 4.6077, 4.7308, 4.8556, 5.0083, 5.0665, 5.1610, 5.2447, 5.3667, 5.4835, 5.5298, 5.6351, 5.7213, 5.7695, 5.9314, 5.9340, 6.1411, 6.1310, 6.3596, 6.3364, 6.5159, 6.4824, 6.5525, 6.7031, 6.6997, 6.8394, 6.9776, 7.0801, 7.0874, 7.1937, 7.1497, 7.2114, 7.4365, 7.4513, 7.3719, 7.5207, 7.7368, 7.6748, 7.8545, 7.9335, 7.8677, 7.9218, 8.1003, 8.1853, 8.2275, 8.3627, 8.1976, 8.4481, 8.4246, 8.4310, 8.5204, 8.5835, 8.5725, 8.7553, 8.8781, 8.9925, 9.0473, 9.0078, 9.1932, 9.1541, 9.3176, 9.2937, 9.3086, 9.2904, 9.4788, 9.4947, 9.4542, 9.6543, 9.6669, 9.6961, 9.7571, 9.8515, 10.1799, 10.2093, 10.1435, 10.1401, 10.1518, 9.9763, 10.2635, 10.2925, 10.5181, 10.5702, 10.4788, 10.3117, 10.5723, 10.6622, 10.6599, 10.8312, 10.8689, 10.7804, 10.8107, 11.0178, 10.9655, 11.0472, 11.0865, 11.2635, 11.2939, 11.3794, 11.2636, 11.4747, 11.3696, 11.4332, 11.5358, 11.6483, 11.6314, 11.6970, 11.7783};
 
-  static mus_float_t odd_mins[128] = {1.0000, 1.5390, 1.7387, 2.0452, 2.3073, 2.5227, 2.6184, 2.7908, 2.8865, 3.0538, 3.1771, 3.3627, 3.4755, 3.5994, 3.7398, 3.8582, 3.9278, 4.0712, 4.1739, 4.3601, 4.4504, 4.5828, 4.6639, 4.7891, 4.8892, 5.0085, 5.0916, 5.0926, 5.2674, 5.3569, 5.4235, 5.5676, 5.6070, 5.7451, 5.8382, 6.0075, 6.0249, 6.1502, 6.1875, 6.2779, 6.3276, 6.4085, 6.4809, 6.6048, 6.6310, 6.7167, 6.9739, 6.9290, 6.9979, 6.9553, 7.1723, 7.0875, 7.3284, 7.3828, 7.4464, 7.4388, 7.4982, 7.6006, 7.7420, 7.8577, 7.8579, 7.8988, 7.9226, 8.1024, 8.1727, 8.2137, 8.3934, 8.3369, 8.3939, 8.4041, 8.6766, 8.7154, 8.6184, 8.5058, 8.8302, 8.7191, 8.7389, 8.8023, 9.0327, 8.9976, 9.1247, 9.0785, 9.2563, 9.4090, 9.4658, 9.5083, 9.6166, 9.5949, 9.6377, 9.7765, 9.6446, 9.7926, 9.9767, 9.9812, 9.8952, 10.0051, 10.0861, 10.1552, 10.3130, 10.3199, 10.2811, 10.2336, 10.4839, 10.6061, 10.4360, 10.5347, 10.8161, 10.7672, 10.8641, 10.5415, 10.8070, 11.0061, 10.8308, 10.8934, 11.0826, 11.0300, 11.1500, 11.3720, 11.3830, 11.4348, 11.3530, 11.4854, 11.5599, 11.4671, 11.7214, 11.6207, 11.6497, 11.6306};
+  static mus_float_t odd_mins[128] = {1.0000, 1.5390, 1.7387, 2.0452, 2.3073, 2.5227, 2.6184, 2.7908, 2.8865, 3.0538, 3.1771, 3.3627, 3.4755, 3.5994, 3.7398, 3.8582, 3.9278, 4.0712, 4.1739, 4.3601, 4.4504, 4.5828, 4.6639, 4.7891, 4.8892, 5.0085, 5.0916, 5.0926, 5.2674, 5.3569, 5.4235, 5.5676, 5.6070, 5.7451, 5.8382, 6.0075, 6.0249, 6.1502, 6.1875, 6.2779, 6.3276, 6.4085, 6.4809, 6.6048, 6.6310, 6.7167, 6.9739, 6.9200, 6.9979, 6.9553, 7.1723, 7.0875, 7.3284, 7.3828, 7.4464, 7.4388, 7.4982, 7.6006, 7.7420, 7.8577, 7.8579, 7.8988, 7.9226, 8.1024, 8.1727, 8.2137, 8.3934, 8.3369, 8.3939, 8.4041, 8.6766, 8.7154, 8.6184, 8.5058, 8.8302, 8.7191, 8.7389, 8.8023, 9.0327, 8.9976, 9.1247, 9.0785, 9.2563, 9.4090, 9.4658, 9.5083, 9.6166, 9.5949, 9.6377, 9.7765, 9.6446, 9.7926, 9.9767, 9.9812, 9.8952, 10.0051, 10.0861, 10.1552, 10.3130, 10.3199, 10.2811, 10.2336, 10.4839, 10.6061, 10.4360, 10.5347, 10.8161, 10.7672, 10.8641, 10.5415, 10.8070, 11.0061, 10.8308, 10.8934, 11.0826, 11.0300, 11.1500, 11.3720, 11.3830, 11.4348, 11.3530, 11.4854, 11.5599, 11.4671, 11.7214, 11.6207, 11.6497, 11.6306};
 
   static mus_float_t prime_mins[128] = {1.0000, 1.7600, 1.9798, 2.1921, 2.4768, 2.8055, 3.0619, 3.2630, 3.3824, 3.6023, 3.7790, 3.9366, 4.1551, 4.3254, 4.4680, 4.6025, 4.7203, 4.8567, 5.0167, 5.1901, 5.3299, 5.4469, 5.5674, 5.6505, 5.8178, 6.0653, 6.2081, 6.1965, 6.3721, 6.4568, 6.7151, 6.8684, 6.9144, 7.0538, 7.2291, 7.4042, 7.3551, 7.5736, 7.6340, 7.8117, 7.8967, 8.0162, 8.1174, 8.2153, 8.3261, 8.3882, 8.4967, 8.6045, 8.7217, 8.6988, 8.8050, 9.0379, 9.2928, 9.2154, 9.4256, 9.5635, 9.6958, 9.8552, 9.5883, 9.7591, 10.0939, 10.1512, 9.9367, 10.2679, 10.4742, 10.5562, 10.5489, 10.6922, 10.7636, 10.6987, 10.8841, 11.0362, 11.1187, 11.1436, 11.2561, 11.2994, 11.2399, 11.6393, 11.8223, 11.8510, 11.6859, 11.7939, 11.7819, 12.0045, 12.0393, 11.8403, 12.2786, 12.2679, 12.6520, 12.5783, 12.6296, 12.5320, 12.7409, 12.7509, 13.1423, 13.2047, 13.1303, 13.2481, 13.4171, 13.3503, 13.3679, 13.7348, 13.7727, 13.9934, 13.7340, 14.0443, 14.1183, 14.2221, 14.4192, 14.4269, 14.3588, 14.5122, 14.7860, 14.9489, 15.0036, 15.0120, 15.1811, 15.1379, 15.0064, 15.0844, 15.3211, 15.2519, 15.2207, 15.5409, 15.3624, 15.5629, 15.4239, 15.6868};
 

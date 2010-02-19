@@ -114,7 +114,7 @@
  * (with-sound (:reverb nrev) (fm-violin 0 20 440 .1))              2983       1812        1703
  * (with-sound () (p 0 3))                                         91020*      3011        2906
  * (with-sound () (expandn 0 10 "oboe.snd" 1 :expand 4))            1228        526         488
- * (with-sound () (calling-all-animals))                           16359      11684       10876
+ * (with-sound () (calling-all-animals))                           16359      11684       10839
  * (with-sound () (pins 0 3 "oboe.snd" 1.0 :max-peaks 8))           1207        783 (755)   710
  * (load "popi.scm")                                               11042       6391        6137
  *

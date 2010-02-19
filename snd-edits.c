@@ -2736,16 +2736,19 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
   mus_sample_t **obufs;
   io_error_t io_err = IO_NO_ERROR;
   int sl_err = MUS_NO_ERROR;
+
   ofd = open_temp_file(ofile, chans, hdr, &io_err);
   if (ofd == -1) 
     return(io_err);
   mus_file_set_clipping(ofd, clipping(ss));
   datumb = mus_bytes_per_sample(hdr->format);
-  obufs = (mus_sample_t **)malloc(chans * sizeof(mus_sample_t *));
   ss->stopped_explicitly = false;
+
+  obufs = (mus_sample_t **)malloc(chans * sizeof(mus_sample_t *));
   for (i = 0; i < chans; i++)
     obufs[i] = (mus_sample_t *)calloc(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
   j = 0;
+
   reporting = ((report_ok) && (length > REPORTING_SIZE));
   if (reporting) 
     {
