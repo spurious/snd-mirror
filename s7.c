@@ -156,7 +156,10 @@
 /* names are hashed into the symbol table (a vector) and collisions are chained as lists. */
 
 #define INITIAL_STACK_SIZE 4000            
-/* the stack grows as needed, each frame takes 4 entries, this is its initial size */
+/* the stack grows as needed, each frame takes 4 entries, this is its initial size.
+ *   max stack size needed in s7test.scm: 1448, snd-test: 288.
+ *   this needs to be big enough to handle the eval_c_string's at startup (ca 100) 
+ */
 
 #define INITIAL_PROTECTED_OBJECTS_SIZE 16  
 /* a vector of objects that are (semi-permanently) protected from the GC, grows as needed */
@@ -307,8 +310,9 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_HASH_TABLE_FOR_EACH,
 	      OP_MAX_DEFINED} opcode_t;
 
-#define NUM_SMALL_INTS 256
+#define NUM_SMALL_INTS 200
 /* this needs to be at least OP_MAX_DEFINED = 87 */
+/* going up to 1024 gives very little improvement, down to 128 costs about .2% run time */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
 	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, TOKEN_VECTOR} token_t;
@@ -451,8 +455,8 @@ typedef struct {
 #endif
 
 
-static s7_pointer *small_ints;             /* permanent numbers for opcode entries in the stack */
-static s7_pointer real_zero, real_one;
+static s7_pointer *small_ints, *small_negative_ints;
+static s7_pointer real_zero, real_one; /* -1.0 as constant gains us almost nothing in run time */
 
 struct s7_scheme {  
   s7_cell **heap, **free_heap;
@@ -600,7 +604,7 @@ struct s7_scheme {
 
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 2))
 #define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
-#define set_immutable(p)              typeflag(p) |= T_IMMUTABLE
+#define set_immutable(p)              typeflag(p) |= (T_IMMUTABLE | T_DONT_COPY)
 /* immutable means the object's value can't be changed via set! */
 
 #define T_ATOM                        (1 << (TYPE_BITS + 3))
@@ -663,7 +667,11 @@ struct s7_scheme {
 #define DWIND_STATE(p)                (typeflag(p) & T_DWIND_FINISH)
 #define DWIND_SET_STATE(p, n)         typeflag(p) = ((typeflag(p) & (~T_DWIND_FINISH)) | n)
 
-#define UNUSED_BITS                   0xfe000000
+#define T_DONT_COPY_CDR               (1 << (TYPE_BITS + 17))
+#define dont_copy_cdr(p)              ((typeflag(p) & T_DONT_COPY_CDR) != 0)
+
+
+#define UNUSED_BITS                   0xfc000000
 
 #if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f) | T_OBJECT)
@@ -852,13 +860,17 @@ static int safe_strlen(const char *str)
 static char *s7_strdup_with_len(const char *str, int len)
 {
   char *newstr;
-  if (!str) return(NULL);
   newstr = (char *)malloc((len + 1) * sizeof(char));
-  if (!newstr) return(NULL);
-  memcpy((void *)newstr, (void *)str, len);
-  newstr[len] = 0;
+  memcpy((void *)newstr, (void *)str, len + 1);
   return(newstr);
 }
+
+
+#define STRDUP(NewStr, OldStr, Len) \
+  do { \
+       NewStr = (char *)malloc((Len + 1) * sizeof(char)); \
+       memcpy((void *)NewStr, (void *)OldStr, Len + 1); \
+       } while (0) 
 
 
 static char *s7_strdup(const char *str)
@@ -2041,7 +2053,7 @@ static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s
   NEW_CELL(sc, y);
   car(y) = variable;
   cdr(y) = value;
-  set_type(y, T_PAIR | T_IMMUTABLE);
+  set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
 
   NEW_CELL(sc, x);
   /* car(x) = s7_immutable_cons(sc, variable, value); */
@@ -2199,7 +2211,7 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e, int ty
   NEW_CELL(sc, x);
   car(x) = c;
   cdr(x) = e;
-  set_type(x, type | T_PROCEDURE);
+  set_type(x, type | T_PROCEDURE | T_DONT_COPY_CDR | T_DONT_COPY);
   return(x);
 }
 
@@ -2450,24 +2462,18 @@ static s7_pointer copy_list(s7_scheme *sc, s7_pointer lst)
 static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
 {
   s7_pointer nobj;
+  int nloc;
 
-  {
-    int nloc;
-    NEW_CELL(sc, nobj);
-    nloc = nobj->hloc;
-    memcpy((void *)nobj, (void *)obj, sizeof(s7_cell));
-    nobj->hloc = nloc;
-  }
+  NEW_CELL(sc, nobj);
+  nloc = nobj->hloc;
+  memcpy((void *)nobj, (void *)obj, sizeof(s7_cell));
+  nobj->hloc = nloc;
   
   if (dont_copy(car(obj)))
     car(nobj) = car(obj);
   else car(nobj) = copy_object(sc, car(obj));
 
-  if ((dont_copy(cdr(obj))) ||
-      (is_closure(obj)) ||
-      (is_closure_star(obj)) ||
-      (is_macro(obj)) || 
-      (s7_is_function(obj)))
+  if ((dont_copy(cdr(obj))) || (dont_copy_cdr(obj)))
     cdr(nobj) = cdr(obj); /* closure_environment in func cases */
   else cdr(nobj) = copy_object(sc, cdr(obj));
   
@@ -2482,7 +2488,7 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
   s7_pointer *nv, *ov;
 
   new_v = s7_make_vector(sc, vector_length(old_v));
-  /* we can't leave the upper stuff simply malloc-garbage because this object is in the
+  /* we can't leave the upper stuff simply malloc-garbage because this object could be in the
    *   temps array for a nanosecond or two, and we're sure to call the GC at that moment.
    *   We also can't just copy the vector since that seems to confuse the gc mark process.
    */
@@ -3287,11 +3293,13 @@ static s7_num_t make_complex(s7_Double rl, s7_Double im)
 s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n) 
 {
   s7_pointer x;
-  if ((n >= 0) && (n < NUM_SMALL_INTS))
-    return(small_int(sc, n));
-  /* there are ca 6300 -1's in s7test (14500 small negative ints) -- if like real_zero (64000), this would gain us .2% overall speed */
-  /*   similarly, between 256 and 512, 8200 or so */
-
+  if (n < NUM_SMALL_INTS)
+    {
+      if (n >= 0)
+	return(small_ints[n]);
+      if (n > (-NUM_SMALL_INTS))
+	return(small_negative_ints[-n]);
+    }
   NEW_CELL(sc, x);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   number_type(x) = NUM_INT;
@@ -5206,7 +5214,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
       if (q[len - 1] != 'i')
 	return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
 
-      saved_q = s7_strdup_with_len(q, len);
+      STRDUP(saved_q, q, len);
 
       /* look for cases like 1+i */
       if ((q[len - 2] == '+') || (q[len - 2] == '-'))
@@ -5917,7 +5925,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
       if (s7_is_zero(pw))
 	{
 	  if ((s7_is_integer(n)) && (s7_is_integer(pw)))       /* (expt 0 0) -> 1 */
-	    return(s7_make_integer(sc, 1));
+	    return(small_int(sc, 1));
 	  return(real_zero);                                   /* (expt 0.0 0) -> 0.0 */
 	}
 
@@ -5925,7 +5933,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	return(s7_division_by_zero_error(sc, "expt", args));   /* what about (expt 0 -1+i)? */
 
       if ((s7_is_integer(n)) && (s7_is_integer(pw)))           /* pw != 0, (expt 0 2312) */
-	return(s7_make_integer(sc, 0));
+	return(small_int(sc, 0));
       return(real_zero);                                       /* (expt 0.0 123123) */
     }
 
@@ -7343,7 +7351,7 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
   s7_pointer x;
   NEW_CELL(sc, x);
   set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
-  string_value(x) = s7_strdup_with_len(str, len);
+  STRDUP(string_value(x), str, len);
   string_length(x) = len;
   return(x);
 }
@@ -7380,7 +7388,7 @@ s7_pointer s7_make_permanent_string(const char *str)
   if (str)
     {
       string_length(x) = safe_strlen(str);
-      string_value(x) = s7_strdup_with_len(str, string_length(x));
+      STRDUP(string_value(x), str, string_length(x));
     }
   else 
     {
@@ -9804,7 +9812,7 @@ static s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
   NEW_CELL(sc, x); /* might trigger gc, expansion here does not help */
   car(x) = a;
   cdr(x) = b;
-  set_type(x, T_PAIR | T_IMMUTABLE);
+  set_type(x, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
   return(x);
 }
 
@@ -11986,7 +11994,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   ptr = (s7_func_t *)calloc(1, sizeof(s7_func_t));
   if ((required_args == 0) && (rest_arg) && (optional_args == 0))
     ftype = T_C_ANY_ARGS_FUNCTION;
-  set_type(x, ftype | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE);
+  set_type(x, ftype | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR);
   /* these guys can be freed -- in Snd, for example, "random" is defined in C, but then later redefined in snd-test.scm */
 
   c_function(x) = ptr;
@@ -12133,7 +12141,7 @@ void s7_define_set_function(s7_scheme *sc, const char *name, s7_function fnc, in
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
   if ((required_args == 0) && (rest_arg) && (optional_args == 0))
     ftype = T_C_ANY_ARGS_FUNCTION;
-  set_type(func, ftype | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE | T_SETTER);
+  set_type(func, ftype | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE | T_SETTER | T_DONT_COPY_CDR);
   s7_define(sc, s7_global_environment(sc), s7_make_symbol(sc, name), func);
 }
 
@@ -12142,7 +12150,7 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
 {
   s7_pointer func;
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
-  set_type(func, T_C_MACRO | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE | T_ANY_MACRO);
+  set_type(func, T_C_MACRO | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE | T_ANY_MACRO | T_DONT_COPY_CDR);
   s7_define(sc, s7_global_environment(sc), s7_make_symbol(sc, name), func);
 }
 
@@ -15976,6 +15984,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       sc->y = safe_reverse_in_place(sc, sc->value);
       sc->args = sc->NIL;
+
       for (sc->x = car(sc->code); sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y))       
 	if (cddar(sc->x) != sc->NIL)               /* no incr expr, so ignore it henceforth */
 	  {
@@ -17244,7 +17253,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!s7_is_symbol(sc->code))
 	return(eval_error(sc, "macro name is not a symbol?", sc->code));
 
-      set_type(sc->value, T_MACRO | T_ANY_MACRO);
+      set_type(sc->value, T_MACRO | T_ANY_MACRO | T_DONT_COPY_CDR | T_DONT_COPY);
       
       /* find name in environment, and define it */
       sc->x = s7_find_symbol_in_environment(sc, sc->envir, sc->code, false); 
@@ -17327,8 +17336,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_EXPANSION:
       /* sc->x is the value (sc->value right now is sc->code, the macro name symbol) */
-      set_type(sc->x, T_MACRO | T_ANY_MACRO | T_EXPANSION);
-      set_type(sc->value, type(sc->value) | T_EXPANSION);
+      set_type(sc->x, T_MACRO | T_ANY_MACRO | T_EXPANSION | T_DONT_COPY_CDR | T_DONT_COPY);
+      set_type(sc->value, type(sc->value) | T_EXPANSION | T_DONT_COPY);
       pop_stack(sc);
       goto START;
 
@@ -22542,6 +22551,17 @@ s7_scheme *s7_init(void)
       number_type(p) = NUM_INT;
       integer(number(p)) = (s7_Int)i;
       small_ints[i] = p;
+    }
+  small_negative_ints = (s7_pointer *)malloc((NUM_SMALL_INTS + 1) * sizeof(s7_pointer));
+  for (i = 0; i <= NUM_SMALL_INTS; i++) 
+    {
+      s7_pointer p;
+      p = (s7_pointer)calloc(1, sizeof(s7_cell));
+      p->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
+      p->hloc = NOT_IN_HEAP;
+      number_type(p) = NUM_INT;
+      integer(number(p)) = (s7_Int)(-i);
+      small_negative_ints[i] = p;
     }
   
   real_zero = (s7_pointer)calloc(1, sizeof(s7_cell));

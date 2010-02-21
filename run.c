@@ -16701,8 +16701,8 @@ mus_float_t mus_run_evaluate_ptreec(struct ptree *pt, mus_float_t arg, XEN objec
 int mus_run_xen_to_run_type(XEN val) {return(0);}
 
 #define S_optimization "optimization"
-static XEN g_optimization(void) {return(C_TO_XEN_INT(0));}
-static XEN g_set_optimization(XEN val) {return(C_TO_XEN_INT(0));}
+static XEN g_optimization(void) {return(XEN_ZERO);}
+static XEN g_set_optimization(XEN val) {return(XEN_ZERO);}
 
 static XEN optimization_hook;
 

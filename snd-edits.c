@@ -9272,7 +9272,7 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
 	  free(filename);
 	  return(snd_no_such_file_error(S_insert_samples, vect));
 	}
-      if (mus_sound_frames(filename) <= 0) return(C_TO_XEN_INT(0));
+      if (mus_sound_frames(filename) <= 0) return(XEN_ZERO);
 #if HAVE_FORTH
       if (!origin) origin = mus_format(MUS_LD PROC_SEP MUS_LD " \"%s\" %s drop", beg, len, filename, S_insert_samples);
 #else

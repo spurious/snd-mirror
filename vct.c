@@ -518,26 +518,26 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
   lim = MIN(v1->length, v2->length);
   if (XEN_INT64_T_P(offs))
     {
-      j = XEN_TO_C_INT64_T(offs); /* needed by g++ 3.2 -- otherwise segfault from the compiler! */
+      j = XEN_TO_C_INT64_T(offs);
       if (j < 0) 
 	XEN_OUT_OF_RANGE_ERROR(S_vct_addB, 3, offs, "offset ~A < 0?");
 
-      if (j == 0)
-	{
-	  for (i = 0; i < lim; i++) 	    
-	    v1->data[i] += v2->data[i];
-	}
-      else
-	{
-	  if ((j + lim) > v1->length)
-	    lim = (v1->length - j);
-	  for (i = 0; i < lim; i++, j++) 
-	    v1->data[j] += v2->data[i];
-	}
+      if ((j + lim) > v1->length)
+	lim = (v1->length - j);
+
+      for (i = 0; i < lim; i++, j++) 
+	v1->data[j] += v2->data[i];
     }
   else
-    for (i = 0; i < lim; i++) 
-      v1->data[i] += v2->data[i];
+    {
+      mus_float_t *d1, *d2, *dend;
+      d1 = v1->data;
+      d2 = v2->data;
+      dend = (mus_float_t *)(v1->data + lim);
+      while (d1 != dend) (*d1++) += (*d2++);  /* is this safe? or perhaps use (*d1++) = (*d1) + (*d2++)? */
+
+      /* for (i = 0; i < lim; i++) v1->data[i] += v2->data[i]; */
+    }
   return(obj1);
 }
 
@@ -676,11 +676,14 @@ double mus_vct_peak(vct *v)
 {
   mus_long_t i;
   mus_float_t val = 0.0, absv;
+  mus_float_t *d1, *dend;
 
-  val = fabs(v->data[0]); 
-  for (i = 1; i < v->length; i++) 
+  val = fabs(v->data[0]);
+  d1 = (mus_float_t *)(v->data + 1);
+  dend = (mus_float_t *)(v->data + v->length);
+  while (d1 != dend)
     {
-      absv = fabs(v->data[i]); 
+      absv = fabs(*d1++);
       if (absv > val) val = absv;
     }
 

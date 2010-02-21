@@ -5262,9 +5262,11 @@ where each inner list entry can also be " PROC_FALSE "."
 		case 0: 
 		  if (XEN_NUMBER_P(element)) sp->amp_control = XEN_TO_C_DOUBLE(element);
 		  break;
+
 		case 1:
 		  if (XEN_NUMBER_P(element)) sp->speed_control = XEN_TO_C_DOUBLE(element);
 		  break;
+
 		case 2:
 		  if (XEN_LIST_P(element))
 		    {
@@ -5274,6 +5276,7 @@ where each inner list entry can also be " PROC_FALSE "."
 		      if (elen > 1) sp->contrast_control_amp = XEN_TO_C_DOUBLE(XEN_CADR(element));
 		    }
 		  break;
+
 		case 3:
 		  if (XEN_LIST_P(element))
 		    {
@@ -5286,6 +5289,7 @@ where each inner list entry can also be " PROC_FALSE "."
 		      if (elen > 4) sp->expand_control_jitter = XEN_TO_C_DOUBLE(XEN_LIST_REF(element, 4));
 		    }
 		  break;
+
 		case 4:
 		  if (XEN_LIST_P(element))
 		    {
@@ -5298,6 +5302,7 @@ where each inner list entry can also be " PROC_FALSE "."
 		      if (elen > 4) sp->reverb_control_decay = XEN_TO_C_DOUBLE(XEN_LIST_REF(element, 4));
 		    }
 		  break;
+
 		case 5:
 		  if (XEN_LIST_P(element))
 		    {

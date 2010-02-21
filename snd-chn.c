@@ -6898,7 +6898,7 @@ XEN g_frames(XEN snd, XEN chn, XEN edpos)
 	return(g_mix_length(snd));
 
       if (XEN_REGION_P(snd))                     /* region-frames */
-	return(g_region_frames(snd, C_TO_XEN_INT(0)));
+	return(g_region_frames(snd, XEN_ZERO));
 
       if (XEN_PLAYER_P(snd))
 	{

@@ -984,7 +984,7 @@ extern s7_scheme *s7;  /* s7 is a pointer to the current scheme */
 #define XEN_LANGUAGE_NAME                          "S7"
 #define XEN_COMMENT_STRING                         ";"
 
-extern XEN xen_false, xen_true, xen_nil, xen_undefined;
+extern XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
 
 #define XEN_FALSE                                  xen_false
 #define XEN_TRUE                                   xen_true
@@ -1046,7 +1046,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #endif
 #define C_TO_XEN_STRINGN(Str, Len)                 s7_make_string_with_length(s7, Str, Len)
 
-#define XEN_ZERO                                   s7_make_integer(s7, 0)
+#define XEN_ZERO                                   xen_zero
 #define XEN_INTEGER_P(Arg)                         s7_is_integer(Arg)
 #define C_TO_XEN_INT(Arg)                          s7_make_integer(s7, Arg)
 #define XEN_TO_C_INT(Arg)                          xen_to_c_int(Arg)

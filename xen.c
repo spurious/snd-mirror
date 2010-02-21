@@ -1390,7 +1390,7 @@ void xen_initialize(void)
 #include "s7.h"
 
 s7_scheme *s7;
-XEN xen_false, xen_true, xen_nil, xen_undefined;
+XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
 
 char *xen_version(void)
 {
@@ -2098,6 +2098,7 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   xen_true = s7_t(s7);
   xen_nil = s7_nil(s7);
   xen_undefined = s7_undefined(s7);
+  xen_zero = s7_make_integer(s7, 0);
 
   ghook_tag = XEN_MAKE_OBJECT_TYPE("<hook>", print_hook, free_hook, equalp_hook, mark_hook, NULL, NULL, NULL, NULL, NULL);
 

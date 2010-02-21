@@ -5443,21 +5443,18 @@ static XEN g_frame_to_file_p(XEN obj)
 }
 
 
-static XEN g_in_any_1(const char *caller, XEN frame, XEN chan, XEN inp)
+static XEN g_in_any_1(const char *caller, XEN frame, int in_chan, XEN inp)
 {
   mus_long_t pos;
-  int in_chan;
 
   XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_1, caller, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, caller, "an integer");
 
   pos = XEN_TO_C_INT64_T(frame);
   if (pos < 0) 
     XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_1, frame, "must be >= 0");    
 
-  in_chan = XEN_TO_C_INT(chan);
   if (in_chan < 0) 
-    XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_2, chan, "must be >= 0");    
+    XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_2, C_TO_XEN_INT(in_chan), "must be >= 0");    
 
   if (MUS_XEN_P(inp))
     {
@@ -5488,7 +5485,7 @@ static XEN g_in_any_1(const char *caller, XEN frame, XEN chan, XEN inp)
   if (XEN_PROCEDURE_P(inp))
     {
       if (local_arity_ok(inp, 2))
-	return(XEN_CALL_2(inp, frame, chan, caller)); /* follow arg order of in-any */
+	return(XEN_CALL_2(inp, frame, C_TO_XEN_INT(in_chan), caller)); /* follow arg order of in-any */
       XEN_ASSERT_TYPE(false, inp, XEN_ARG_3, caller, "a procedure of 2 arguments: the sample number and the channel");
     }
 
@@ -5505,37 +5502,35 @@ static XEN g_in_any_1(const char *caller, XEN frame, XEN chan, XEN inp)
 static XEN g_in_any(XEN frame, XEN chan, XEN inp) 
 {
   #define H_in_any "(" S_in_any " frame chan stream): input stream sample at frame in channel chan"
-  return(g_in_any_1(S_in_any, frame, chan, inp));
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, S_in_any, "an integer");
+  return(g_in_any_1(S_in_any, frame, XEN_TO_C_INT(chan), inp));
 }
 
 
 static XEN g_ina(XEN frame, XEN inp) 
 {
   #define H_ina "(" S_ina " frame stream): input stream sample in channel 0 at frame"
-  return(g_in_any_1(S_ina, frame, C_TO_XEN_INT(0), inp));
+  return(g_in_any_1(S_ina, frame, 0, inp));
 }
 
 
 static XEN g_inb(XEN frame, XEN inp) 
 {
   #define H_inb "(" S_inb " frame stream): input stream sample in channel 1 at frame"
-  return(g_in_any_1(S_inb, frame, C_TO_XEN_INT(1), inp));
+  return(g_in_any_1(S_inb, frame, 1, inp));
 }
 
 
-static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN outp)
+static XEN g_out_any_1(const char *caller, XEN frame, int chn, XEN val, XEN outp)
 {
-  int chn;
   mus_long_t pos;
   mus_float_t inv;
 
   XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_1, caller, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, caller, "an integer"); /* caller's point of view */
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, caller, "a number");
 
-  chn = XEN_TO_C_INT(chan);
   if (chn < 0)
-    XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_3, chan, "must be >= 0");    
+    XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_3, C_TO_XEN_INT(chn), "must be >= 0");    
 
   pos = XEN_TO_C_INT64_T_OR_ELSE(frame, 0);
   if (pos < 0) 
@@ -5593,7 +5588,7 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
   if (XEN_PROCEDURE_P(outp))
     {
       if (local_arity_ok(outp, 3))
-	return(XEN_CALL_3(outp, frame, val, chan, caller)); /* follow arg order of out-any */
+	return(XEN_CALL_3(outp, frame, val, C_TO_XEN_INT(chn), caller)); /* follow arg order of out-any */
       XEN_ASSERT_TYPE(false, outp, XEN_ARG_4, caller, "a procedure of 3 arguments: the sample number, the sample value, and the channel");
     }
 
@@ -5610,35 +5605,36 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
 static XEN g_out_any(XEN frame, XEN val, XEN chan, XEN outp)
 {
   #define H_out_any "(" S_out_any " frame val chan stream): add val to output stream at frame in channel chan"
-  return(g_out_any_1(S_out_any, frame, chan, val, outp));
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, S_out_any, "an integer");
+  return(g_out_any_1(S_out_any, frame, XEN_TO_C_INT(chan), val, outp));
 }
 
 
 static XEN g_outa(XEN frame, XEN val, XEN outp)
 {
   #define H_outa "(" S_outa " frame val stream): add val to output stream at frame in channel 0"
-  return(g_out_any_1(S_outa, frame, C_TO_XEN_INT(0), val, outp));
+  return(g_out_any_1(S_outa, frame, 0, val, outp));
 }
 
 
 static XEN g_outb(XEN frame, XEN val, XEN outp)
 {
   #define H_outb "(" S_outb " frame val stream): add val to output stream at frame in channel 1"
-  return(g_out_any_1(S_outb, frame, C_TO_XEN_INT(1), val, outp));
+  return(g_out_any_1(S_outb, frame, 1, val, outp));
 }
 
 
 static XEN g_outc(XEN frame, XEN val, XEN outp)
 {
   #define H_outc "(" S_outc " frame val stream): add val to output stream at frame in channel 2"
-  return(g_out_any_1(S_outc, frame, C_TO_XEN_INT(2), val, outp));
+  return(g_out_any_1(S_outc, frame, 2, val, outp));
 }
 
 
 static XEN g_outd(XEN frame, XEN val, XEN outp)
 {
   #define H_outd "(" S_outd " frame val stream): add val to output stream at frame in channel 3"
-  return(g_out_any_1(S_outd, frame, C_TO_XEN_INT(3), val, outp));
+  return(g_out_any_1(S_outd, frame, 3, val, outp));
 }
 
 
@@ -6219,7 +6215,7 @@ mus_float_t mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 		  XEN_CALL_3(output, 
 			     C_TO_XEN_INT64_T(pos), 
 			     C_TO_XEN_DOUBLE(fval), 
-			     C_TO_XEN_INT(0), 
+			     XEN_ZERO, 
 			     (from_locsig) ? S_locsig : S_move_sound);
 		}
 	    }
@@ -6255,7 +6251,7 @@ mus_float_t mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *
 		  XEN_CALL_3(reverb, 
 			     C_TO_XEN_INT64_T(pos), 
 			     C_TO_XEN_DOUBLE(fval), 
-			     C_TO_XEN_INT(0), 
+			     XEN_ZERO, 
 			     (from_locsig) ? S_locsig : S_move_sound);
 		}
 	    }
