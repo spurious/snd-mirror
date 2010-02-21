@@ -50727,3 +50727,4 @@ expt error > 1e-6 around 2^-46.506993328423
 ;;; same:            (call/cc (lambda arg ((car arg) 1))) -> 1
 ;;; (call/cc (lambda () 1)) -> error?
 
+;;; TODO: define-expansion needs testing!

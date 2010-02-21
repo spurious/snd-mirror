@@ -459,8 +459,8 @@ static s7_pointer *small_ints, *small_negative_ints;
 static s7_pointer real_zero, real_one; /* -1.0 as constant gains us almost nothing in run time */
 
 struct s7_scheme {  
-  s7_cell **heap, **free_heap;
-  unsigned int heap_size, free_heap_top;
+  s7_cell **heap, **free_heap, **free_heap_top, **free_heap_trigger;
+  unsigned int heap_size;
 
   /* "int" or "unsigned int" seems safe here:
    *      sizeof(s7_cell) = 28 in 32-bit machines, 32 in 64
@@ -1298,7 +1298,7 @@ void s7_mark_object(s7_pointer p)
 static int gc(s7_scheme *sc)
 {
   int i;
-  unsigned int old_free_heap_top;
+  s7_cell **old_free_heap_top;
   
   /* mark all live objects (the symbol table is in permanent memory, not the heap) */
   S7_MARK(sc->global_env);
@@ -1333,19 +1333,22 @@ static int gc(s7_scheme *sc)
   old_free_heap_top = sc->free_heap_top;
 
   {
-    s7_pointer *fp, *tp;
-    fp = (&(sc->free_heap[sc->free_heap_top]));
+    s7_pointer *fp, *tp, *heap_top;
+    fp = sc->free_heap_top;
 
-    for (tp = sc->heap; (*tp); tp++) /* this form of the loop is slightly faster than counting i with sc->heap[i] */
+    tp = sc->heap;
+    heap_top = (s7_pointer *)(sc->heap + sc->heap_size);
+
+    while (tp < heap_top)
       {
 	s7_pointer p;
-	p = (*tp);
+	p = (*tp++);
 
-	if (typeflag(p) != 0) /* an already-free object? */
+	if (is_marked(p))
+	  clear_mark(p);
+	else 
 	  {
-	    if (is_marked(p)) /* it's marginally faster to switch the order of these checks */
-	      clear_mark(p);
-	    else 
+	    if (typeflag(p) != 0) /* an already-free object? */
 	      {
 		if (is_finalizable(p))
 		  finalize_s7_cell(sc, p); 
@@ -1354,11 +1357,9 @@ static int gc(s7_scheme *sc)
 	      }
 	  }
       }
-    sc->free_heap_top = fp - sc->free_heap;
+    sc->free_heap_top = fp;
   }
 
-  /* fprintf(stderr, "gc: %d of %u\n", sc->free_heap_top - old_free_heap_top, sc->heap_size); */
-  
   return(sc->free_heap_top - old_free_heap_top); /* needed by cell allocator to decide when to increase heap size */
 }
 
@@ -1397,8 +1398,8 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
 #else
   #define NEW_CELL(Sc, Obj) \
     do { \
-      if (Sc->free_heap_top > GC_TEMPS_SIZE) \
-        Obj = Sc->free_heap[--(Sc->free_heap_top)]; \
+      if (Sc->free_heap_top > Sc->free_heap_trigger) \
+        Obj = (*(--(Sc->free_heap_top)));	     \
       else Obj = new_cell(Sc); \
     } while (0)
 #endif
@@ -1419,7 +1420,7 @@ static s7_pointer new_cell(s7_scheme *sc)
   sc = nsc->orig_sc;
 #endif
 
-  if (sc->free_heap_top == 0)
+  if (sc->free_heap_top == sc->free_heap)
     {
       /* no free heap */
       unsigned int k, old_size, freed_heap = 0;
@@ -1436,13 +1437,16 @@ static s7_pointer new_cell(s7_scheme *sc)
 	    sc->heap_size *= 2;
 	  else sc->heap_size += 512000;
 
-	  sc->heap = (s7_cell **)realloc(sc->heap, (sc->heap_size + 1) * sizeof(s7_cell *));
+	  sc->heap = (s7_cell **)realloc(sc->heap, sc->heap_size * sizeof(s7_cell *));
 	  if (!(sc->heap))
-	    fprintf(stderr, "heap reallocation failed! tried to get %lu bytes\n", (unsigned long)((sc->heap_size + 1) * sizeof(s7_cell *)));
+	    fprintf(stderr, "heap reallocation failed! tried to get %lu bytes\n", (unsigned long)(sc->heap_size * sizeof(s7_cell *)));
 
 	  sc->free_heap = (s7_cell **)realloc(sc->free_heap, sc->heap_size * sizeof(s7_cell *));
 	  if (!(sc->free_heap))
 	    fprintf(stderr, "free heap reallocation failed! tried to get %lu bytes\n", (unsigned long)(sc->heap_size * sizeof(s7_cell *)));	  
+
+	  sc->free_heap_trigger = (s7_cell **)(sc->free_heap + GC_TEMPS_SIZE);
+	  sc->free_heap_top = sc->free_heap;
 
 	  { 
 	    /* optimization suggested by K Matheussen */
@@ -1450,15 +1454,14 @@ static s7_pointer new_cell(s7_scheme *sc)
 	    for (k = old_size; k < sc->heap_size; k++)
 	      {
 		sc->heap[k] = &cells[k - old_size];
-		sc->free_heap[sc->free_heap_top++] = sc->heap[k];
+		(*sc->free_heap_top++) = sc->heap[k];
 		sc->heap[k]->hloc = k;
 	      }
 	  }
-	  sc->heap[sc->heap_size] = NULL; /* end mark for GC loop */
 	}
     }
 
-  p = sc->free_heap[--(sc->free_heap_top)];
+  p = (*(--(sc->free_heap_top)));
 
 #if HAVE_PTHREADS
   set_type(p, T_SIMPLE);
@@ -1473,7 +1476,7 @@ static s7_pointer new_cell(s7_scheme *sc)
    * I think this is no longer needed.
    */
 
-  if (sc->free_heap_top <= GC_TEMPS_SIZE)
+  if (sc->free_heap_top <= sc->free_heap_trigger)
     {
       nsc->temps[nsc->temps_ctr++] = p;
       if (nsc->temps_ctr >= nsc->temps_size)
@@ -1481,7 +1484,7 @@ static s7_pointer new_cell(s7_scheme *sc)
     }
   pthread_mutex_unlock(&alloc_lock);
 #else
-  if (sc->free_heap_top <= GC_TEMPS_SIZE)
+  if (sc->free_heap_top <= sc->free_heap_trigger)
     {
       sc->temps[sc->temps_ctr++] = p;
       if (sc->temps_ctr >= sc->temps_size)
@@ -1603,7 +1606,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     {
       x->hloc = NOT_IN_HEAP;
       sc->heap[loc] = (s7_cell *)calloc(1, sizeof(s7_cell));
-      sc->free_heap[sc->free_heap_top++] = sc->heap[loc];
+      (*sc->free_heap_top++) = sc->heap[loc];
       sc->heap[loc]->hloc = loc;
     }
 }
@@ -1616,6 +1619,11 @@ static void stack_reset(s7_scheme *sc)
 { 
   sc->stack_top = 0;
 } 
+
+#define stack_code(Sc, Loc) vector_element(Sc->stack, Loc - 3)
+#define stack_environment(Sc, Loc) vector_element(Sc->stack, Loc - 2)
+#define stack_args(Sc, Loc) vector_element(Sc->stack, Loc - 1)
+#define stack_op(Sc, Loc) vector_element(Sc->stack, Loc)
 
 
 static void pop_stack(s7_scheme *sc) 
@@ -1678,11 +1686,11 @@ static void show_stack(s7_scheme *sc)
     };
 
   int i;
-  for (i = sc->stack_top - 4; i >= 0; i -= 4)
+  for (i = sc->stack_top - 1; i > 0; i -= 4)
     fprintf(stderr, "[%s: (%s %s)]\n", 
-	    ops[(int)integer(number(vector_element(sc->stack, i + 3)))],
-	    s7_object_to_c_string(sc, vector_element(sc->stack, i + 0)),
-	    s7_object_to_c_string(sc, vector_element(sc->stack, i + 2)));
+	    ops[(int)integer(number(stack_op(sc, i)))],
+	    s7_object_to_c_string(sc, stack_code(sc, i)),
+	    s7_object_to_c_string(sc, stack_args(sc, i)));
 }
 #endif	    
 
@@ -2529,7 +2537,7 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
 {
   s7_pointer x;
 
-  if (sc->free_heap_top < sc->heap_size / 4)
+  if ((sc->free_heap_top - sc->free_heap) < sc->heap_size / 4)
     gc(sc);
   /* this gc call is needed if there are lots of call/cc's -- by pure bad luck
    *   we can end up hitting the end of the gc free list time after time while
@@ -2553,11 +2561,11 @@ static void check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
     {
       s7_pointer x;
       opcode_t op;
-      op = (opcode_t)s7_integer(vector_element(sc->stack, i));
+      op = (opcode_t)s7_integer(stack_op(sc, i));
       if (op == OP_DYNAMIC_WIND)
 	{
 	  int j;
-	  x = vector_element(sc->stack, i - 3);
+	  x = stack_code(sc, i);
 	  for (j = 3; j < continuation_stack_top(c); j += 4)
 	    if (((opcode_t)s7_integer(vector_element(continuation_stack(c), j)) == OP_DYNAMIC_WIND) &&
 		(x == vector_element(continuation_stack(c), j - 3)))
@@ -10149,7 +10157,7 @@ static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
   else init = sc->F;
   
   result = sc->NIL;
-  if (sc->free_heap_top <= (unsigned int)len) gc(sc);
+  if ((sc->free_heap_top - sc->free_heap) <= (unsigned int)len) gc(sc);
 
   s7_gc_on(sc, false);
   for (i = 0; i < len; i++)
@@ -14227,8 +14235,8 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  vector_element(sc->error_info, ERROR_CODE_FILE) = s7_make_string(sc, remembered_file_name(line));	  
 	}
 
-      for (top = sc->stack_top, j = ERROR_ENVIRONMENT + 1; (top > 0) && (j < ERROR_INFO_SIZE); top -= 4, j++)
-	vector_element(sc->error_info, j) = vector_element(sc->stack, top - 3);
+      for (top = sc->stack_top - 1, j = ERROR_ENVIRONMENT + 1; (top > 0) && (j < ERROR_INFO_SIZE); top -= 4, j++)
+	vector_element(sc->error_info, j) = stack_environment(sc, top);
       if (j < ERROR_INFO_SIZE)
 	vector_element(sc->error_info, j) = ERROR_INFO_DEFAULT;
     }
@@ -14242,12 +14250,12 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
     {
       opcode_t op;
       s7_pointer x;
-      op = (opcode_t)s7_integer(vector_element(sc->stack, i));
+      op = (opcode_t)s7_integer(stack_op(sc, i));
       
       switch (op)
 	{
 	case OP_DYNAMIC_WIND:
-	  x = vector_element(sc->stack, i - 3);
+	  x = stack_code(sc, i);
 	  if (dynamic_wind_state(x) == T_DWIND_BODY)
 	    {
 	      push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
@@ -14258,7 +14266,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  break;
 
 	case OP_CATCH:
-	  x = vector_element(sc->stack, i - 3);
+	  x = stack_code(sc, i);
 	  if ((type == sc->T) ||
 	      (catch_tag(x) == sc->T) ||
 	      (catch_tag(x) == type))
@@ -14269,16 +14277,16 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  break;
 
 	case OP_UNWIND_OUTPUT:
-	  x = vector_element(sc->stack, i - 3); /* "code" = port that we opened */
+	  x = stack_code(sc, i);                /* "code" = port that we opened */
 	  s7_close_output_port(sc, x);
-	  x = vector_element(sc->stack, i - 1); /* "args" = port that we shadowed, if not #f */
+	  x = stack_args(sc, i);                /* "args" = port that we shadowed, if not #f */
 	  if (x != sc->F)
 	    sc->output_port = x;
 	  break;
 
 	case OP_UNWIND_INPUT:
-	  s7_close_input_port(sc, vector_element(sc->stack, i - 3)); /* "code" = port that we opened */
-	  sc->input_port = vector_element(sc->stack, i - 1); /* "args" = port that we shadowed */
+	  s7_close_input_port(sc, stack_code(sc, i));        /* "code" = port that we opened */
+	  sc->input_port = stack_args(sc, i);                /* "args" = port that we shadowed */
 	  break;
 
 	case OP_TRACE_RETURN:
@@ -15090,7 +15098,7 @@ static s7_pointer g_quasiquote_2(s7_scheme *sc, s7_pointer form)
    *   then later unprotect every cons, so we turn off the GC until we're done.
    */
   s7_pointer x;
-  if (sc->free_heap_top < 4096) gc(sc);
+  if ((sc->free_heap_top - sc->free_heap) < 4096) gc(sc);
   s7_gc_on(sc, false);
   x = g_quasiquote_1(sc, form);
   s7_gc_on(sc, true);
@@ -15104,16 +15112,16 @@ static s7_pointer g_quasiquote_2(s7_scheme *sc, s7_pointer form)
 static void back_up_stack(s7_scheme *sc)
 {
   opcode_t top_op;
-  top_op =(opcode_t)s7_integer(vector_element(sc->stack, sc->stack_top - 1));
+  top_op =(opcode_t)s7_integer(stack_op(sc, sc->stack_top - 1));
   if (top_op == OP_READ_DOT)
     {
       pop_stack(sc);
-      top_op =(opcode_t)s7_integer(vector_element(sc->stack, sc->stack_top - 1));
+      top_op =(opcode_t)s7_integer(stack_op(sc, sc->stack_top - 1));
     }
   if (top_op == OP_READ_VECTOR)
     {
       pop_stack(sc);
-      top_op =(opcode_t)s7_integer(vector_element(sc->stack, sc->stack_top - 1));
+      top_op =(opcode_t)s7_integer(stack_op(sc, sc->stack_top - 1));
     }
   if (top_op == OP_READ_QUOTE)
     pop_stack(sc);
@@ -16054,6 +16062,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     EVAL:
     case OP_EVAL:                           /* main part of evaluation */
+      /* timing info from valgrind makes no sense to me.  Why does a one-level if statement drastically
+       *   slow this down, whereas the equivalent switch statement does not?  I'm wondering to
+       *   what extent I'm optimizing for valgrind... (And I get different results from s7test
+       *   under valgrind).
+       */
       switch (type(sc->code))
 	{
 	case T_PAIR:
@@ -16532,10 +16545,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    for (i = sc->stack_top - 1; i > new_stack_top; i -= 4)
 	      {
 		opcode_t op;
-		op = (opcode_t)s7_integer(vector_element(sc->stack, i));
+		op = (opcode_t)s7_integer(stack_op(sc, i));
 		if (op == OP_DYNAMIC_WIND)
 		  {
-		    sc->z = vector_element(sc->stack, i - 3);
+		    sc->z = stack_code(sc, i);
 		    if (dynamic_wind_state(sc->z) == T_DWIND_BODY)
 		      {
 			push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
@@ -17607,9 +17620,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if ((sc->value != sc->NIL) &&
 	      (is_expansion(car(sc->value))) &&
 	      (sc->stack_top >= 4) &&
-	      ((int)integer(number(vector_element(sc->stack, sc->stack_top - 1))) != OP_READ_QUOTE) && /* '(hi 1) for example */
-	      (car(vector_element(sc->stack, sc->stack_top - 2)) != sc->QUOTE) &&                      /* (quote (hi 1)) */
-	      (car(vector_element(sc->stack, sc->stack_top - 2)) != sc->MACROEXPAND))                  /* (macroexpand (hi 1)) */
+	      ((int)integer(number(stack_op(sc, sc->stack_top - 1))) != OP_READ_QUOTE) &&   /* '(hi 1) for example */
+	      (car(stack_args(sc, sc->stack_top - 1)) != sc->QUOTE) &&                      /* (quote (hi 1)) */
+	      (car(stack_args(sc, sc->stack_top - 1)) != sc->MACROEXPAND))                  /* (macroexpand (hi 1)) */
 	    {
 	      s7_pointer x;
 	      x = symbol_value(s7_find_symbol_in_environment(sc, sc->envir, car(sc->value), true));
@@ -22473,10 +22486,12 @@ s7_scheme *s7_init(void)
   sc->default_rng = NULL;
   
   sc->heap_size = INITIAL_HEAP_SIZE;
-  sc->heap = (s7_pointer *)malloc((sc->heap_size + 1) * sizeof(s7_pointer));
+  sc->heap = (s7_pointer *)malloc(sc->heap_size * sizeof(s7_pointer));
   
   sc->free_heap = (s7_cell **)malloc(sc->heap_size * sizeof(s7_cell *));
-  sc->free_heap_top = INITIAL_HEAP_SIZE;
+  sc->free_heap_top = (s7_cell **)(sc->free_heap + INITIAL_HEAP_SIZE);
+  sc->free_heap_trigger = (s7_cell **)(sc->free_heap + GC_TEMPS_SIZE);
+
   {
     s7_cell *cells = (s7_cell *)calloc(INITIAL_HEAP_SIZE, sizeof(s7_cell));
     for (i = 0; i < INITIAL_HEAP_SIZE; i++)
@@ -22485,7 +22500,6 @@ s7_scheme *s7_init(void)
  	sc->free_heap[i] = sc->heap[i];
  	sc->heap[i]->hloc = i;
       }
-    sc->heap[sc->heap_size] = NULL;
   }
   
   /* this has to precede s7_make_* allocations */
