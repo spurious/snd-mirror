@@ -426,8 +426,9 @@ typedef struct s7_cell {
     } fobj;
     
     struct {
-      int stack_size, stack_top;
+      int stack_size;
       s7_pointer stack;
+      s7_pointer *stack_start, *stack_end;
     } continuation;
     
     int goto_loc;
@@ -474,7 +475,8 @@ struct s7_scheme {
   s7_pointer code, cur_code;          /* current code */
   
   s7_pointer stack;                   /* stack is a vector */
-  int stack_size, stack_top, stack_size2;
+  int stack_size;
+  s7_pointer *stack_start, *stack_end, *stack_resize_trigger;
   
   s7_pointer protected_objects;       /* a vector of gc-protected objects */
   int *protected_objects_size, *protected_objects_loc; /* pointers so they're global across threads */
@@ -778,8 +780,12 @@ struct s7_scheme {
 #define c_macro_all_args(f)           (f)->object.ffptr->all_args
 
 #define continuation_stack(p)         (p)->object.continuation.stack
-#define continuation_stack_top(p)     (p)->object.continuation.stack_top
+#define continuation_stack_end(p)     (p)->object.continuation.stack_end
+#define continuation_stack_start(p)   (p)->object.continuation.stack_start
 #define continuation_stack_size(p)    (p)->object.continuation.stack_size
+#define continuation_stack_top(p)     (continuation_stack_end(p) - continuation_stack_start(p))
+
+#define s7_stack_top(Sc)              ((Sc)->stack_end - (Sc)->stack_start)
 
 #define is_goto(p)                    (type(p) == T_GOTO)
 #define is_macro(p)                   (type(p) == T_MACRO)
@@ -1306,7 +1312,7 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->envir);
   S7_MARK(sc->code);
   S7_MARK(sc->cur_code);
-  mark_vector(sc->stack, sc->stack_top);
+  mark_vector(sc->stack, s7_stack_top(sc));
   S7_MARK(sc->x);
   S7_MARK(sc->y);
   S7_MARK(sc->z);
@@ -1617,25 +1623,24 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 
 static void stack_reset(s7_scheme *sc) 
 { 
-  sc->stack_top = 0;
+  sc->stack_end = sc->stack_start;
 } 
 
-#define stack_code(Sc, Loc) vector_element(Sc->stack, Loc - 3)
-#define stack_environment(Sc, Loc) vector_element(Sc->stack, Loc - 2)
-#define stack_args(Sc, Loc) vector_element(Sc->stack, Loc - 1)
-#define stack_op(Sc, Loc) vector_element(Sc->stack, Loc)
+
+#define stack_code(Stack, Loc)        vector_element(Stack, Loc - 3)
+#define stack_environment(Stack, Loc) vector_element(Stack, Loc - 2)
+#define stack_args(Stack, Loc)        vector_element(Stack, Loc - 1)
+#define stack_op(Stack, Loc)          integer(number(vector_element(Stack, Loc)))
 
 
 static void pop_stack(s7_scheme *sc) 
 { 
   /* avoid "if..then" here and in push_stack -- these 2 are called a zillion times */
-  s7_pointer *vel;
-  sc->stack_top -= 4;
-  vel = (s7_pointer *)(vector_elements(sc->stack) + sc->stack_top);
-  sc->code =  vel[0];
-  sc->envir = vel[1];
-  sc->args =  vel[2];
-  sc->op =    (opcode_t)integer(number(vel[3])); /* changing this to a more direct reference does not speed up pop_stack */
+  sc->stack_end -= 4;
+  sc->op =    (opcode_t)integer(number(sc->stack_end[3]));
+  sc->args =  sc->stack_end[2];
+  sc->envir = sc->stack_end[1];
+  sc->code =  sc->stack_end[0];
 } 
 
 
@@ -1643,26 +1648,27 @@ static void pop_stack(s7_scheme *sc)
 
 static void push_stack(s7_scheme *sc, s7_pointer int_op, s7_pointer args, s7_pointer code)
 { 
-  s7_pointer *vel;
-  vel = (s7_pointer *)(vector_elements(sc->stack) + sc->stack_top);
-  vel[0] = code;
-  vel[1] = sc->envir;
-  vel[2] = args;
-  vel[3] = int_op;
-  sc->stack_top += 4;
+  sc->stack_end[0] = code;
+  sc->stack_end[1] = sc->envir;
+  sc->stack_end[2] = args;
+  sc->stack_end[3] = int_op;
+  sc->stack_end += 4;
 }
 
 
 static void increase_stack_size(s7_scheme *sc)
 {
-  int i, new_size;
+  int i, new_size, loc;
+  loc = s7_stack_top(sc);
   new_size = sc->stack_size * 2;
   vector_elements(sc->stack) = (s7_pointer *)realloc(vector_elements(sc->stack), new_size * sizeof(s7_pointer));
   for (i = sc->stack_size; i < new_size; i++)
     vector_element(sc->stack, i) = sc->NIL;
   vector_length(sc->stack) = new_size;
-  sc->stack_size2 = sc->stack_size;
   sc->stack_size = new_size;
+  sc->stack_start = vector_elements(sc->stack);
+  sc->stack_end = (s7_pointer *)(sc->stack_start + loc);
+  sc->stack_resize_trigger = (s7_pointer *)(sc->stack_start + sc->stack_size / 2);
 } 
 
 
@@ -1686,11 +1692,11 @@ static void show_stack(s7_scheme *sc)
     };
 
   int i;
-  for (i = sc->stack_top - 1; i > 0; i -= 4)
+  for (i = s7_stack_top(sc) - 1; i > 0; i -= 4)
     fprintf(stderr, "[%s: (%s %s)]\n", 
-	    ops[(int)integer(number(stack_op(sc, i)))],
-	    s7_object_to_c_string(sc, stack_code(sc, i)),
-	    s7_object_to_c_string(sc, stack_args(sc, i)));
+	    ops[(int)stack_op(sc->stack, i)],
+	    s7_object_to_c_string(sc, stack_code(sc->stack, i)),
+	    s7_object_to_c_string(sc, stack_args(sc->stack, i)));
 }
 #endif	    
 
@@ -2528,7 +2534,7 @@ static s7_pointer s7_make_goto(s7_scheme *sc)
   s7_pointer x;
   NEW_CELL(sc, x);
   set_type(x, T_ATOM | T_GOTO | T_SIMPLE | T_DONT_COPY | T_PROCEDURE);
-  x->object.goto_loc = sc->stack_top;
+  x->object.goto_loc = s7_stack_top(sc);
   return(x);
 }
 
@@ -2536,6 +2542,7 @@ static s7_pointer s7_make_goto(s7_scheme *sc)
 s7_pointer s7_make_continuation(s7_scheme *sc) 
 {
   s7_pointer x;
+  int loc;
 
   if ((sc->free_heap_top - sc->free_heap) < sc->heap_size / 4)
     gc(sc);
@@ -2544,10 +2551,12 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
    *   in successive copy_stack's below, causing s7 to core up until it runs out of memory.
    */
 
+  loc = s7_stack_top(sc);
   NEW_CELL(sc, x);
-  continuation_stack_top(x) = sc->stack_top;
   continuation_stack_size(x) = sc->stack_size;
-  continuation_stack(x) = copy_stack(sc, sc->stack, sc->stack_top);
+  continuation_stack(x) = copy_stack(sc, sc->stack, s7_stack_top(sc));
+  continuation_stack_start(x) = vector_elements(continuation_stack(x));
+  continuation_stack_end(x) = (s7_pointer *)(continuation_stack_start(x) + loc);
   set_type(x, T_CONTINUATION | T_DONT_COPY | T_PROCEDURE);
   return(x);
 }
@@ -2557,18 +2566,18 @@ static void check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 {
   int i, s_base = 0, c_base = -1;
   
-  for (i = sc->stack_top - 1; i > 0; i -= 4)
+  for (i = s7_stack_top(sc) - 1; i > 0; i -= 4)
     {
       s7_pointer x;
       opcode_t op;
-      op = (opcode_t)s7_integer(stack_op(sc, i));
+      op = (opcode_t)stack_op(sc->stack, i);
       if (op == OP_DYNAMIC_WIND)
 	{
 	  int j;
-	  x = stack_code(sc, i);
+	  x = stack_code(sc->stack, i);
 	  for (j = 3; j < continuation_stack_top(c); j += 4)
-	    if (((opcode_t)s7_integer(vector_element(continuation_stack(c), j)) == OP_DYNAMIC_WIND) &&
-		(x == vector_element(continuation_stack(c), j - 3)))
+	    if (((opcode_t)stack_op(continuation_stack(c), j) == OP_DYNAMIC_WIND) &&
+		(x == stack_code(continuation_stack(c), j)))
 	      {
 		s_base = i;
 		c_base = j;
@@ -2597,10 +2606,10 @@ static void check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
     }
   
   for (i = c_base + 4; i < continuation_stack_top(c); i += 4)
-    if ((opcode_t)s7_integer(vector_element(continuation_stack(c), i)) == OP_DYNAMIC_WIND)
+    if ((opcode_t)stack_op(continuation_stack(c), i) == OP_DYNAMIC_WIND)
       {
 	s7_pointer x;
-	x = vector_element(continuation_stack(c), i - 3);
+	x = stack_code(continuation_stack(c), i);
 	push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
 	sc->args = sc->NIL;
 	sc->code = dynamic_wind_in(x);
@@ -2651,7 +2660,7 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   /* if the lambda body calls the argument as a function, 
    *   it is applied to its arguments, apply notices that it is a goto, and...
    *   
-   *      sc->stack_top = (sc->code)->object.goto_loc;           
+   *      (conceptually...) sc->stack_top = (sc->code)->object.goto_loc;           
    *      s_pop(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
    * 
    *   which jumps to the point of the goto returning car(args)
@@ -11643,13 +11652,13 @@ static s7_pointer g_vector_map(s7_scheme *sc, s7_pointer args)
     car(compare_proc_args) = (*(s7_pointer *)v1);
     cadr(compare_proc_args) = (*(s7_pointer *)v2);
 
-    start = compare_sc->stack_top; /* see note below */
+    start = s7_stack_top(compare_sc); /* see note below */
     push_stack(compare_sc, opcode(OP_EVAL_DONE), compare_sc->args, compare_sc->code); 
     compare_sc->args = compare_proc_args;
     compare_sc->code = compare_proc;
     eval(compare_sc, OP_APPLY);
 
-    if (compare_sc->stack_top < start)
+    if (s7_stack_top(compare_sc) < start)
       {
 	s7_gc_on(compare_sc, true);
 	longjmp(compare_sc->goto_qsort_end, 1);
@@ -11679,7 +11688,7 @@ If its first argument is a list, the list is copied (despite the '!')."
     car(compare_proc_args) = (*(s7_pointer *)v1);
     cadr(compare_proc_args) = (*(s7_pointer *)v2);
 
-    start = sc->stack_top;
+    start = s7_stack_top(sc);
     /* qsort is a large and complex function (250 lines in libc), so we can't easily
      *   expand it in our eval loop, but we may want to jump out of the sort via call/cc,
      *   so we look for the stack being unwound past the start point -- this is a kludge!
@@ -11690,7 +11699,7 @@ If its first argument is a list, the list is copied (despite the '!')."
     sc->code = compare_proc;
     eval(sc, OP_APPLY);
 
-    if (sc->stack_top < start)
+    if (s7_stack_top(sc) < start)
       {
 	/* s7_gc_on(sc, true); */
 	longjmp(sc->goto_qsort_end, 1);
@@ -14114,7 +14123,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   
   NEW_CELL(sc, p);
   catch_tag(p) = car(args);
-  catch_goto_loc(p) = sc->stack_top;
+  catch_goto_loc(p) = s7_stack_top(sc);
   catch_handler(p) = caddr(args);
   set_type(p, T_CATCH | T_ATOM | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
 
@@ -14235,8 +14244,8 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  vector_element(sc->error_info, ERROR_CODE_FILE) = s7_make_string(sc, remembered_file_name(line));	  
 	}
 
-      for (top = sc->stack_top - 1, j = ERROR_ENVIRONMENT + 1; (top > 0) && (j < ERROR_INFO_SIZE); top -= 4, j++)
-	vector_element(sc->error_info, j) = stack_environment(sc, top);
+      for (top = s7_stack_top(sc) - 1, j = ERROR_ENVIRONMENT + 1; (top > 0) && (j < ERROR_INFO_SIZE); top -= 4, j++)
+	vector_element(sc->error_info, j) = stack_environment(sc->stack, top);
       if (j < ERROR_INFO_SIZE)
 	vector_element(sc->error_info, j) = ERROR_INFO_DEFAULT;
     }
@@ -14246,16 +14255,16 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   /* if (!s7_is_continuation(type))... */
 
   /* top is 1 past actual top, top - 1 is op, if op = OP_CATCH, top - 4 is the cell containing the catch struct */
-  for (i = sc->stack_top - 1; i >= 3; i -= 4)
+  for (i = s7_stack_top(sc) - 1; i >= 3; i -= 4)
     {
       opcode_t op;
       s7_pointer x;
-      op = (opcode_t)s7_integer(stack_op(sc, i));
+      op = (opcode_t)stack_op(sc->stack, i);
       
       switch (op)
 	{
 	case OP_DYNAMIC_WIND:
-	  x = stack_code(sc, i);
+	  x = stack_code(sc->stack, i);
 	  if (dynamic_wind_state(x) == T_DWIND_BODY)
 	    {
 	      push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
@@ -14266,7 +14275,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  break;
 
 	case OP_CATCH:
-	  x = stack_code(sc, i);
+	  x = stack_code(sc->stack, i);
 	  if ((type == sc->T) ||
 	      (catch_tag(x) == sc->T) ||
 	      (catch_tag(x) == type))
@@ -14277,16 +14286,16 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  break;
 
 	case OP_UNWIND_OUTPUT:
-	  x = stack_code(sc, i);                /* "code" = port that we opened */
+	  x = stack_code(sc->stack, i);                /* "code" = port that we opened */
 	  s7_close_output_port(sc, x);
-	  x = stack_args(sc, i);                /* "args" = port that we shadowed, if not #f */
+	  x = stack_args(sc->stack, i);                /* "args" = port that we shadowed, if not #f */
 	  if (x != sc->F)
 	    sc->output_port = x;
 	  break;
 
 	case OP_UNWIND_INPUT:
-	  s7_close_input_port(sc, stack_code(sc, i));        /* "code" = port that we opened */
-	  sc->input_port = stack_args(sc, i);                /* "args" = port that we shadowed */
+	  s7_close_input_port(sc, stack_code(sc->stack, i)); /* "code" = port that we opened */
+	  sc->input_port = stack_args(sc->stack, i);         /* "args" = port that we shadowed */
 	  break;
 
 	case OP_TRACE_RETURN:
@@ -14302,9 +14311,11 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 GOT_CATCH:
   if (catcher != sc->F)
     {
+      int loc;
       sc->args = make_list_2(sc, type, info);
       sc->code = catch_handler(catcher);
-      sc->stack_top = catch_goto_loc(catcher);
+      loc = catch_goto_loc(catcher);
+      sc->stack_end = (s7_pointer *)(sc->stack_start + loc);
       sc->op = OP_APPLY;
 
       /* explicit eval needed if s7_call called into scheme where a caught error occurred (ex6 in exs7.c)
@@ -14660,7 +14671,7 @@ output is sent to the current-output-port."
 
   if (args == sc->NIL)
     {
-      top = sc->stack_top;
+      top = s7_stack_top(sc);
       stk = sc->stack;
     }
   else
@@ -14677,7 +14688,7 @@ output is sent to the current-output-port."
 	    {
 	      thred *f;
 	      f = (thred *)s7_object_value(car(args));
-	      top = f->sc->stack_top;
+	      top = s7_stack_top(f->sc);
 	      stk = f->sc->stack;
 	    }
 	}
@@ -14687,7 +14698,7 @@ output is sent to the current-output-port."
     return(s7_wrong_type_arg_error(sc, "stacktrace", 0, args, "a vector, thread object, or continuation"));
   
   for (i = top; i > 0; i -= 4)
-    display_frame(sc, vector_element(stk, i - 3), port);
+    display_frame(sc, stack_environment(stk, i), port);
 
   return(sc->UNSPECIFIED);
 }
@@ -14978,24 +14989,17 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 {
-  if (sc->stack_top > 0)
+  if (sc->stack_end > sc->stack_start)
     {
       /* code = args yet to eval in order, args = evalled args reversed */
-      s7_pointer *vel;
       int top;
-      top = sc->stack_top - 4;
-      vel = (s7_pointer *)(vector_elements(sc->stack) + top);
-      /*
-       * code = vel[0]
-       * args = vel[2]
-       * op =   (opcode_t)integer(number(vel[3]))
-      */
-      if ((opcode_t)integer(number(vel[3])) == OP_EVAL_ARGS1)
+      top = s7_stack_top(sc) - 1;
+      if ((opcode_t)stack_op(sc->stack, top) == OP_EVAL_ARGS1)
 	{
 	  s7_pointer x;
 	  /* splice into the caller's arg list, leaving the last for the eval args loop to handle */
 	  for (x = args; cdr(x) != sc->NIL; x = cdr(x))
-	    vel[2] = s7_cons(sc, car(x), vel[2]);
+	    stack_args(sc->stack, top) = s7_cons(sc, car(x), stack_args(sc->stack, top));
 	  return(car(x));
 	}
     }
@@ -15112,16 +15116,16 @@ static s7_pointer g_quasiquote_2(s7_scheme *sc, s7_pointer form)
 static void back_up_stack(s7_scheme *sc)
 {
   opcode_t top_op;
-  top_op =(opcode_t)s7_integer(stack_op(sc, sc->stack_top - 1));
+  top_op =(opcode_t)stack_op(sc->stack, s7_stack_top(sc) - 1);
   if (top_op == OP_READ_DOT)
     {
       pop_stack(sc);
-      top_op =(opcode_t)s7_integer(stack_op(sc, sc->stack_top - 1));
+      top_op =(opcode_t)stack_op(sc->stack, s7_stack_top(sc) - 1);
     }
   if (top_op == OP_READ_VECTOR)
     {
       pop_stack(sc);
-      top_op =(opcode_t)s7_integer(stack_op(sc, sc->stack_top - 1));
+      top_op =(opcode_t)stack_op(sc->stack, s7_stack_top(sc) - 1);
     }
   if (top_op == OP_READ_QUOTE)
     pop_stack(sc);
@@ -16265,7 +16269,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	trace_apply(sc);
 
     APPLY_WITHOUT_TRACE:
-      if (sc->stack_top >= sc->stack_size2)
+      if (sc->stack_end >= sc->stack_resize_trigger)
 	increase_stack_size(sc);
 
       switch (type(sc->code))
@@ -16523,8 +16527,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    check_for_dynamic_winds(sc, sc->code);
 	    sc->stack = copy_stack(sc, continuation_stack(sc->code), continuation_stack_top(sc->code));
 	    sc->stack_size = continuation_stack_size(sc->code);
-	    sc->stack_size2 = sc->stack_size / 2;
-	    sc->stack_top = continuation_stack_top(sc->code);
+	    sc->stack_start = vector_elements(sc->stack);
+	    sc->stack_end = (s7_pointer *)(sc->stack_start + continuation_stack_top(sc->code));
+	    sc->stack_resize_trigger = (s7_pointer *)(sc->stack_start + sc->stack_size / 2);
 	    if (sc->args == sc->NIL)
 	      sc->value = sc->NIL;
 	    else
@@ -16542,13 +16547,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    int i, new_stack_top;
 	    new_stack_top = (sc->code)->object.goto_loc;
 	    /* look for dynamic-wind in the stack section that we are jumping out of */
-	    for (i = sc->stack_top - 1; i > new_stack_top; i -= 4)
+	    for (i = s7_stack_top(sc) - 1; i > new_stack_top; i -= 4)
 	      {
 		opcode_t op;
-		op = (opcode_t)s7_integer(stack_op(sc, i));
+		op = (opcode_t)stack_op(sc->stack, i);
 		if (op == OP_DYNAMIC_WIND)
 		  {
-		    sc->z = stack_code(sc, i);
+		    sc->z = stack_code(sc->stack, i);
 		    if (dynamic_wind_state(sc->z) == T_DWIND_BODY)
 		      {
 			push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
@@ -16567,7 +16572,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 	      }
 	    
-	    sc->stack_top = new_stack_top;
+	    sc->stack_end = (s7_pointer *)(sc->stack_start + new_stack_top);
 	    sc->value = (sc->args != sc->NIL) ? car(sc->args) : sc->NIL;
 	    pop_stack(sc);
 	    goto START;
@@ -16575,7 +16580,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	case T_C_OBJECT:	                  /* -------- applicable object -------- */
 	  sc ->value = s7_apply_object(sc, sc->code, sc->args);
-	  if (sc->stack_top > 0)
+	  if (sc->stack_end > sc->stack_start)
 	    pop_stack(sc);
 	  goto START;
 
@@ -17618,17 +17623,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   */
 	  
 	  if ((sc->value != sc->NIL) &&
-	      (is_expansion(car(sc->value))) &&
-	      (sc->stack_top >= 4) &&
-	      ((int)integer(number(stack_op(sc, sc->stack_top - 1))) != OP_READ_QUOTE) &&   /* '(hi 1) for example */
-	      (car(stack_args(sc, sc->stack_top - 1)) != sc->QUOTE) &&                      /* (quote (hi 1)) */
-	      (car(stack_args(sc, sc->stack_top - 1)) != sc->MACROEXPAND))                  /* (macroexpand (hi 1)) */
+	      (is_expansion(car(sc->value))))
 	    {
-	      s7_pointer x;
-	      x = symbol_value(s7_find_symbol_in_environment(sc, sc->envir, car(sc->value), true));
-	      sc->args = make_list_1(sc, sc->value); 
-	      sc->code = x;
-	      goto APPLY;
+	      int loc;
+	      loc = s7_stack_top(sc) - 1;
+	      if ((loc >= 3) &&
+		  ((int)stack_op(sc->stack, loc) != OP_READ_QUOTE) &&        /* '(hi 1) for example */
+		  (car(stack_args(sc->stack, loc)) != sc->QUOTE) &&          /* (quote (hi 1)) */
+		  (car(stack_args(sc->stack, loc)) != sc->MACROEXPAND))      /* (macroexpand (hi 1)) */
+		{
+		  s7_pointer x;
+		  x = symbol_value(s7_find_symbol_in_environment(sc, sc->envir, car(sc->value), true));
+		  sc->args = make_list_1(sc, sc->value); 
+		  sc->code = x;
+		  goto APPLY;
+		}
 	    }
 	  break;
 
@@ -17749,10 +17758,11 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   new_sc->read_line_buf = NULL;
   new_sc->read_line_buf_size = 0;
   
-  new_sc->stack_top = 0;
   new_sc->stack = vect;
+  new_sc->stack_start = vector_elements(vect);
+  new_sc->stack_end = new_sc->stack_start;
   new_sc->stack_size = INITIAL_STACK_SIZE;
-  new_sc->stack_size2 = new_sc->stack_size / 2;
+  new_sc->stack_resize_trigger = (s7_pointer *)(new_sc->stack_start + new_sc->stack_size / 2);
   
   new_sc->x = new_sc->NIL;
   new_sc->y = new_sc->NIL;
@@ -17809,7 +17819,7 @@ static void mark_s7(s7_scheme *sc)
   S7_MARK(sc->args);
   S7_MARK(sc->envir);
   S7_MARK(sc->code);
-  mark_vector(sc->stack, sc->stack_top);
+  mark_vector(sc->stack, s7_stack_top(sc));
   S7_MARK(sc->value);
   S7_MARK(sc->x);
   S7_MARK(sc->y);
@@ -22519,10 +22529,11 @@ s7_scheme *s7_init(void)
   set_immutable(sc->protected_objects);
   typeflag(sc->protected_objects) |= T_DONT_COPY;
   
-  sc->stack_top = 0;
   sc->stack = s7_make_vector(sc, INITIAL_STACK_SIZE);
+  sc->stack_start = vector_elements(sc->stack);
+  sc->stack_end = sc->stack_start;
   sc->stack_size = INITIAL_STACK_SIZE;
-  sc->stack_size2 = sc->stack_size / 2;
+  sc->stack_resize_trigger = (s7_pointer *)(sc->stack_start + sc->stack_size / 2);
   
   /* keep the symbol table out of the heap */
   sc->symbol_table = (s7_pointer)calloc(1, sizeof(s7_cell));
