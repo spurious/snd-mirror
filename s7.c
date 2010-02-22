@@ -744,6 +744,7 @@ struct s7_scheme {
 #endif
 
 #define small_int(Sc, Val)            small_ints[Val]
+#define opcode(Op)                    small_ints[(int)Op]
 
 #define is_input_port(p)              (type(p) == T_INPUT_PORT) 
 #define is_output_port(p)             (type(p) == T_OUTPUT_PORT)
@@ -1644,8 +1645,6 @@ static void pop_stack(s7_scheme *sc)
 } 
 
 
-#define opcode(Op) small_ints[(int)Op]
-
 static void push_stack(s7_scheme *sc, s7_pointer int_op, s7_pointer args, s7_pointer code)
 { 
   sc->stack_end[0] = code;
@@ -1659,13 +1658,17 @@ static void push_stack(s7_scheme *sc, s7_pointer int_op, s7_pointer args, s7_poi
 static void increase_stack_size(s7_scheme *sc)
 {
   int i, new_size, loc;
+
   loc = s7_stack_top(sc);
   new_size = sc->stack_size * 2;
+
   vector_elements(sc->stack) = (s7_pointer *)realloc(vector_elements(sc->stack), new_size * sizeof(s7_pointer));
   for (i = sc->stack_size; i < new_size; i++)
     vector_element(sc->stack, i) = sc->NIL;
+
   vector_length(sc->stack) = new_size;
   sc->stack_size = new_size;
+
   sc->stack_start = vector_elements(sc->stack);
   sc->stack_end = (s7_pointer *)(sc->stack_start + loc);
   sc->stack_resize_trigger = (s7_pointer *)(sc->stack_start + sc->stack_size / 2);
@@ -14610,7 +14613,7 @@ static void display_frame(s7_scheme *sc, s7_pointer envir, s7_pointer port)
 	      local_env = s7_reverse(sc, args);
 	      if (!s7_is_symbol(cdr(lst)))
 		file_info = cddr(lst);
-	      
+
 	      format_to_output(sc, port, "(~A~{ ~A~})", make_list_2(sc, sym, local_env));
 	      if (is_pair(file_info))
 		format_to_output(sc, port, "    [~S ~D]", file_info);
@@ -14697,7 +14700,7 @@ output is sent to the current-output-port."
   if (stk == sc->F)
     return(s7_wrong_type_arg_error(sc, "stacktrace", 0, args, "a vector, thread object, or continuation"));
   
-  for (i = top; i > 0; i -= 4)
+  for (i = top - 1; i > 0; i -= 4)
     display_frame(sc, stack_environment(stk, i), port);
 
   return(sc->UNSPECIFIED);
@@ -14712,6 +14715,7 @@ s7_pointer s7_stacktrace(s7_scheme *sc, s7_pointer arg)
     return(g_stacktrace(sc, arg));
   return(g_stacktrace(sc, make_list_1(sc, arg)));
 }
+
 
 
 
@@ -15120,12 +15124,12 @@ static void back_up_stack(s7_scheme *sc)
   if (top_op == OP_READ_DOT)
     {
       pop_stack(sc);
-      top_op =(opcode_t)stack_op(sc->stack, s7_stack_top(sc) - 1);
+      top_op = (opcode_t)stack_op(sc->stack, s7_stack_top(sc) - 1);
     }
   if (top_op == OP_READ_VECTOR)
     {
       pop_stack(sc);
-      top_op =(opcode_t)stack_op(sc->stack, s7_stack_top(sc) - 1);
+      top_op = (opcode_t)stack_op(sc->stack, s7_stack_top(sc) - 1);
     }
   if (top_op == OP_READ_QUOTE)
     pop_stack(sc);

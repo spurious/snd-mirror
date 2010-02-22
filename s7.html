@@ -690,6 +690,20 @@ can be *error-info* to show the stack at the point of the last error,
 a thread object to show that thread's stack, or a continuation to
 show the continuation stack. 
 </p>
+
+<pre>
+    (let ()
+      (define (a1 a) (+ a #\c))
+      (define (a2 b) (+ b (a1 b)))
+      (define (a3 c) (+ c (a2 c)))
+      (catch #t
+        (lambda () (a3 1))
+        (lambda args (stacktrace *error-info*))))
+
+-&gt;    (a1 (a . 1))
+      (a2 (b . 1))
+      (a3 (c . 1))
+</pre>
 </dd>
 <br>
 

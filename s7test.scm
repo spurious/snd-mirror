@@ -6824,6 +6824,33 @@
 	(test (equal? (vector (hi 1)) '#(2)) #t)
 	(test (symbol? (vector-ref '#(hi) 0)) #t))
 
+#|
+      ;; these 2 tests don't work in this context because the file/line are included
+      (let ()
+	(define (a1 a) (stacktrace) (+ a 1))
+	(define (a2 b) (+ b (a1 b)))
+	(define (a3 c) (+ c (a2 c)))
+	(let ((str (with-output-to-string
+		     (lambda ()
+		       (a3 1)))))
+	  (if (not (string=? str "(a1 (a . 1))\n(a2 (b . 1))\n(a3 (c . 1))\n"))
+	      (format #t ";stacktrace: ~A~%" str))))
+
+      (let ()
+	(define (a1 a) (+ a #\c))
+	(define (a2 b) (+ b (a1 b)))
+	(define (a3 c) (+ c (a2 c)))
+	(let ((str (catch #t
+			  (lambda () (a3 1))
+			  (lambda args 
+			    (with-output-to-string 
+			      (lambda ()
+				(stacktrace *error-info*)))))))
+	  (if (not (string=? str "(a1 (a . 1))\n(a2 (b . 1))\n(a3 (c . 1))\n"))
+	      (format #t ";*error-info* stacktrace: ~A" str))))
+|#
+
+
       ;; **********************************************************************
       ;; 
       ;; Copyright (C) 2002 Heinrich Taube (taube@uiuc.edu) 
