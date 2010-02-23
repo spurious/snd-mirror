@@ -1715,7 +1715,6 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 	  /* and using memmove for the "state" changes slowed it down by a factor of 2! */
 	  for (j = 0; j < dur; j++)
 	    {
-	      mus_float_t xout = 0.0;
 	      mus_float_t *ap, *dp, *dprev;
 
 	      ap = (mus_float_t *)(a + order - 1);
@@ -1742,7 +1741,6 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
 	    x = MUS_RUN(gen, read_sample(sf), 0.0);
 	  else
 	    {
-	      mus_float_t xout = 0.0;
 	      mus_float_t *ap, *dp, *dprev;
 
 	      ap = (mus_float_t *)(a + order - 1);

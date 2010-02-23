@@ -1360,7 +1360,7 @@ mus_clip_handler_t *mus_clip_set_handler(mus_clip_handler_t *new_clip_handler)
 
 static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_sample_t **bufs, char *inbuf, bool clipped)
 {
-  int err, siz, siz_chans, data_format, val, cliploc;
+  int err, siz, siz_chans, data_format, val;
   mus_long_t bytes, k, lim, leftover, loc, oldloc, buflim;
   bool clipping = false;
   unsigned char *jchar;

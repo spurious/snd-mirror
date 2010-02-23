@@ -674,7 +674,6 @@ v. " vct_map_example " is the same as " vct_fill_example
 
 double mus_vct_peak(vct *v)
 {
-  mus_long_t i;
   mus_float_t val = 0.0, absv;
   mus_float_t *d1, *dend;
 

@@ -908,6 +908,7 @@ static bool is_thunk(s7_scheme *sc, s7_pointer x);
 static int remember_file_name(const char *file);
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
 static const char *s7_type_name(s7_pointer arg);
+static s7_pointer s7_make_string_uncopied(s7_scheme *sc, char *str);
 
 #if WITH_ENCAPSULATION
   static void encapsulate(s7_scheme *sc, s7_pointer sym);
@@ -1613,6 +1614,26 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
       sc->heap[loc]->hloc = loc;
     }
 }
+
+
+/* permanent memory for objects that we know will not be deallocated */
+
+#define PERMANENT_HEAP_SIZE 65536
+static unsigned char *permanent_heap = NULL, *permanent_heap_top = NULL;
+
+static unsigned char *permanent_calloc(int bytes)
+{
+  unsigned char *cur;
+  if ((permanent_heap + bytes) >= permanent_heap_top)
+    {
+      permanent_heap = (unsigned char *)calloc(PERMANENT_HEAP_SIZE, sizeof(unsigned char));
+      permanent_heap_top = (unsigned char *)(permanent_heap + PERMANENT_HEAP_SIZE);
+    }
+  cur = permanent_heap;
+  permanent_heap += bytes;
+  return(cur);
+}
+
 
 
 
@@ -2543,7 +2564,7 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
   s7_pointer x;
   int loc;
 
-  if ((sc->free_heap_top - sc->free_heap) < sc->heap_size / 4)
+  if ((int)(sc->free_heap_top - sc->free_heap) < (int)(sc->heap_size / 4))
     gc(sc);
   /* this gc call is needed if there are lots of call/cc's -- by pure bad luck
    *   we can end up hitting the end of the gc free list time after time while
@@ -4549,12 +4570,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
     }
   else res = s7_number_to_string_base_10(x, 0, size, 'g');
   
-  {
-    s7_pointer y;
-    y = s7_make_string(sc, res);
-    free(res);
-    return(y);
-  }
+  return(s7_make_string_uncopied(sc, res));
 }
 
 
@@ -7382,6 +7398,17 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
 }
 
 
+static s7_pointer s7_make_string_uncopied_with_length(s7_scheme *sc, char *str, int len) 
+{
+  s7_pointer x;
+  NEW_CELL(sc, x);
+  set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
+  string_value(x) = str;
+  string_length(x) = len;
+  return(x);
+}
+
+
 static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill) 
 {
   s7_pointer x;
@@ -7403,17 +7430,24 @@ s7_pointer s7_make_string(s7_scheme *sc, const char *str)
 }
 
 
+static s7_pointer s7_make_string_uncopied(s7_scheme *sc, char *str) 
+{
+  return(s7_make_string_uncopied_with_length(sc, str, safe_strlen(str)));
+}
+
+
 s7_pointer s7_make_permanent_string(const char *str) 
 {
   /* for the symbol table which is never GC'd */
   s7_pointer x;
-  x = (s7_cell *)calloc(1, sizeof(s7_cell));
+  x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
   x->hloc = NOT_IN_HEAP;
   set_type(x, T_STRING | T_ATOM | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY);
   if (str)
     {
       string_length(x) = safe_strlen(str);
-      STRDUP(string_value(x), str, string_length(x));
+      string_value(x) = (char *)permanent_calloc((string_length(x) + 1) * sizeof(char)); 
+      memcpy((void *)string_value(x), (void *)str, string_length(x)); 
     }
   else 
     {
@@ -9464,12 +9498,7 @@ static char *s7_vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth, bo
 
 static s7_pointer s7_vector_to_string(s7_scheme *sc, s7_pointer vect)
 {
-  char *buf;
-  s7_pointer result;
-  buf = s7_vector_to_c_string(sc, vect, 0, false);
-  result = s7_make_string(sc, buf);
-  free(buf);
-  return(result);
+  return(s7_make_string_uncopied(sc, s7_vector_to_c_string(sc, vect, 0, false)));
 }
 
 
@@ -9541,12 +9570,7 @@ static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst, int depth)
 
 static s7_pointer s7_list_to_string(s7_scheme *sc, s7_pointer lst)
 {
-  s7_pointer result;
-  char *buf;
-  buf = s7_list_to_c_string(sc, lst, 0);
-  result = s7_make_string(sc, buf);
-  free(buf);
-  return(result);
+  return(s7_make_string_uncopied(sc, s7_list_to_c_string(sc, lst, 0)));
 }
 
 
@@ -9558,8 +9582,6 @@ char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj)
 
 s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj)
 {
-  char *str = NULL;
-  s7_pointer x;
   if ((s7_is_vector(obj)) ||
       (s7_is_hash_table(obj)))
     return(s7_vector_to_string(sc, obj));
@@ -9567,9 +9589,7 @@ s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj)
   if (is_pair(obj))
     return(s7_list_to_string(sc, obj));
 
-  x = s7_make_string(sc, str = s7_atom_to_c_string(sc, obj, true));
-  if (str) free(str);
-  return(x);
+  return(s7_make_string_uncopied(sc, s7_atom_to_c_string(sc, obj, true)));
 }
 
 
@@ -9857,7 +9877,7 @@ static s7_pointer s7_permanent_cons(s7_pointer a, s7_pointer b, int type)
 {
   /* for the symbol table which is never GC'd (and its contents aren't marked) */
   s7_pointer x;
-  x = (s7_cell *)calloc(1, sizeof(s7_cell));
+  x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
   x->hloc = NOT_IN_HEAP;
   car(x) = a;
   cdr(x) = b;
@@ -10174,7 +10194,7 @@ static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
   else init = sc->F;
   
   result = sc->NIL;
-  if ((sc->free_heap_top - sc->free_heap) <= (unsigned int)len) gc(sc);
+  if ((int)(sc->free_heap_top - sc->free_heap) <= len) gc(sc);
 
   s7_gc_on(sc, false);
   for (i = 0; i < len; i++)
@@ -13022,7 +13042,7 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
   switch (type(obj))
     {
     case T_STRING:
-      return(s7_make_string_with_length(sc, s7_strdup_with_len(string_value(obj), string_length(obj)), string_length(obj)));
+      return(s7_make_string_with_length(sc, string_value(obj), string_length(obj)));
 
     case T_C_OBJECT:
       return(s7_object_copy(sc, obj));
@@ -13333,9 +13353,8 @@ static char *s7_format_error(s7_scheme *sc, const char *msg, const char *str, s7
       free(filler);
     }
 
-  x = make_list_3(sc, s7_make_string(sc, errmsg), s7_make_string(sc, str), args);
+  x = make_list_3(sc, s7_make_string_uncopied(sc, errmsg), s7_make_string(sc, str), args);
 
-  free(errmsg);
   if (dat->str) free(dat->str);
   free(dat);
 
@@ -13684,7 +13703,6 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 
 static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char *in_str, s7_pointer args)
 {
-  char *out_str;
   s7_pointer result;
 
   if (!in_str)
@@ -13696,9 +13714,7 @@ static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char
       return(s7_make_string(sc, ""));
     }
 
-  out_str = format_to_c_string(sc, in_str, args, NULL);
-  result = s7_make_string(sc, out_str);
-  if (out_str) free(out_str);
+  result = s7_make_string_uncopied(sc, format_to_c_string(sc, in_str, args, NULL));
 
   if (out_loc != sc->F)
     s7_display(sc, result, out_loc);
@@ -14024,7 +14040,6 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
 {
   int len, slen;
   char *errmsg;
-  s7_pointer x;
   const char *typ, *a_or_an = "a ";
 
   typ = s7_type_name(arg);
@@ -14042,10 +14057,8 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
       if (arg_n < 0) arg_n = 1;
       slen = snprintf(errmsg, len, "%s argument %d, ~S, is %s%s, but should be %s", caller, arg_n, a_or_an, typ, descr);
     }
-  x = make_list_2(sc, s7_make_string_with_length(sc, errmsg, slen), arg);
-  free(errmsg);
 
-  return(s7_error(sc, sc->WRONG_TYPE_ARG, x));
+  return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, s7_make_string_uncopied_with_length(sc, errmsg, slen), arg)));
 }
 
 
@@ -14053,16 +14066,13 @@ s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s
 {
   int len, slen;
   char *errmsg;
-  s7_pointer x;
   
   len = safe_strlen(descr) + safe_strlen(caller) + 64;
   errmsg = (char *)malloc(len * sizeof(char));
   if (arg_n <= 0) arg_n = 1;
   slen = snprintf(errmsg, len, "%s argument %d is out of range (%s)", caller, arg_n, descr);
-  x = make_list_2(sc, s7_make_string_with_length(sc, errmsg, slen), arg);
-  free(errmsg);
 
-  return(s7_error(sc, sc->OUT_OF_RANGE, x));
+  return(s7_error(sc, sc->OUT_OF_RANGE, make_list_2(sc, s7_make_string_uncopied_with_length(sc, errmsg, slen), arg)));
 }
 
 
@@ -14076,15 +14086,12 @@ static s7_pointer s7_division_by_zero_error(s7_scheme *sc, const char *caller, s
 {
   int len, slen;
   char *errmsg;
-  s7_pointer x;
 
   len = safe_strlen(caller) + 128;
   errmsg = (char *)malloc(len * sizeof(char));
   slen = snprintf(errmsg, len, "%s: division by zero in ~A", caller);
-  x = make_list_2(sc, s7_make_string_with_length(sc, errmsg, slen), arg);
-  free(errmsg);
 
-  return(s7_error(sc, s7_make_symbol(sc, "division-by-zero"), x));
+  return(s7_error(sc, s7_make_symbol(sc, "division-by-zero"), make_list_2(sc, s7_make_string_uncopied_with_length(sc, errmsg, slen), arg)));
 }
 
 
@@ -14092,15 +14099,12 @@ static s7_pointer s7_file_error(s7_scheme *sc, const char *caller, const char *d
 {
   int len, slen;
   char *errmsg;
-  s7_pointer x;
 
   len = safe_strlen(descr) + safe_strlen(name) + safe_strlen(caller) + 8;
   errmsg = (char *)malloc(len * sizeof(char));
   slen = snprintf(errmsg, len, "%s: %s %s", caller, descr, name);
-  x = s7_make_string_with_length(sc, errmsg, slen);
-  free(errmsg);
 
-  return(s7_error(sc, s7_make_symbol(sc, "io-error"), x));
+  return(s7_error(sc, s7_make_symbol(sc, "io-error"), s7_make_string_uncopied_with_length(sc, errmsg, slen)));
 }
 
 
@@ -14509,7 +14513,7 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
    */
   char *msg;
   int len;
-  s7_pointer pt, result;
+  s7_pointer pt;
   pt = sc->input_port;
 
   if (is_string_port(sc->input_port))
@@ -14563,13 +14567,10 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
   write_string(sc, msg, s7_current_error_port(sc)); /* make sure we complain ... */
   s7_newline(sc, s7_current_error_port(sc));
 
-  result = make_list_3(sc, 
-		       s7_symbol_value(sc, sc->ERROR), 
-		       sc->ERROR, 
-		       s7_make_string_with_length(sc, msg, len));
-
-  free(msg);
-  return(result);
+  return(make_list_3(sc, 
+		     s7_symbol_value(sc, sc->ERROR), 
+		     sc->ERROR, 
+		     s7_make_string_uncopied_with_length(sc, msg, len)));
 }
 
 
@@ -14598,16 +14599,16 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
   line = pair_line_number(x);
   if (line > 0)
     {
-      s7_pointer result;
       char *str1;
       int len;
       len = 64 + safe_strlen(port_filename(sc->input_port)); 
       str1 = (char *)malloc(len * sizeof(char));
       len = snprintf(str1, len, "missing close paren, list started around line %d of %s: ~A", 
 		     remembered_line_number(line), port_filename(sc->input_port));
-      result = s7_make_string_with_length(sc, str1, len);
-      free(str1);
-      return(s7_error(sc, sc->ERROR, make_list_2(sc, result, safe_reverse_in_place(sc, sc->args))));
+      return(s7_error(sc, sc->ERROR, 
+		      make_list_2(sc, 
+				  s7_make_string_uncopied_with_length(sc, str1, len), 
+				  safe_reverse_in_place(sc, sc->args))));
     }
   return(read_error(sc, "missing close paren"));
 }
@@ -16388,7 +16389,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      int len;
 	      char *msg, *argstr;
-	      s7_pointer result;
 	      argstr = s7_object_to_c_string(sc, s7_append(sc, 
 							   s7_reverse(sc, cdr(sc->args)), 
 							   s7_cons(sc, car(sc->args), sc->code)));
@@ -16396,9 +16396,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      msg = (char *)malloc(len * sizeof(char));
 	      len = snprintf(msg, len, "improper list of arguments: %s?", argstr);
 	      free(argstr);
-	      result = s7_make_string_with_length(sc, msg, len);
-	      free(msg);
-	      s7_error(sc, sc->ERROR, result);
+	      s7_error(sc, sc->ERROR, s7_make_string_uncopied_with_length(sc, msg, len));
 	    }
 
 	  sc->args = safe_reverse_in_place(sc, sc->args); 
@@ -22548,6 +22546,9 @@ s7_scheme *s7_init(void)
  	sc->heap[i]->hloc = i;
       }
   }
+
+  permanent_heap = (unsigned char *)calloc(PERMANENT_HEAP_SIZE, sizeof(unsigned char));
+  permanent_heap_top = (unsigned char *)(permanent_heap + PERMANENT_HEAP_SIZE);
   
   /* this has to precede s7_make_* allocations */
   sc->temps_size = GC_TEMPS_SIZE;

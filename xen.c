@@ -2023,7 +2023,7 @@ static XEN g_tmpnam(void)
   if (tmpdir == NULL) tmpdir = xen_strdup("/tmp");
 #endif
 
-  mus_snprintf(str, BUFFER_SIZE, "%s/xen_%d_%d", tmpdir, (int)getpid(), file_ctr++);
+  snprintf(str, BUFFER_SIZE, "%s/xen_%d_%d", tmpdir, (int)getpid(), file_ctr++);
   if (tmpdir) free(tmpdir);
   result = C_TO_XEN_STRING(str);
   free(str);
