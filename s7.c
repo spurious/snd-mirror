@@ -150,13 +150,24 @@
 /* ---------------- initial sizes ---------------- */
 
 #define INITIAL_HEAP_SIZE 128000
-/* the heap grows as needed, this is its initial size. */
+/* the heap grows as needed, this is its initial size. 
+ *
+ *    this size is not very important:
+ *      8k: 2432, 32k: 2419, 128k: 2401, 512k: 2394, 8192k: 2417
+ *    (valgrind timings from 23-Feb-10 running s7test.scm)
+ */
 
-#define SYMBOL_TABLE_SIZE 9601
-/* names are hashed into the symbol table (a vector) and collisions are chained as lists. */
+#define SYMBOL_TABLE_SIZE 2207
+/* names are hashed into the symbol table (a vector) and collisions are chained as lists. 
+ *
+ *   this number probably does not matter (most global references are direct): 
+ *      509: 2407, 1049: 2401, 2207: 2401, 4397: 2398, 9601: 2401, 19259: 2404, 39233: 2408
+ *   (valgrind timings are from 23-Feb-10 running s7test.scm), it was 9601 for a long time.
+ */
 
 #define INITIAL_STACK_SIZE 4000            
 /* the stack grows as needed, each frame takes 4 entries, this is its initial size.
+ *
  *   max stack size needed in s7test.scm: 1448, snd-test: 288.
  *   this needs to be big enough to handle the eval_c_string's at startup (ca 100) 
  */
@@ -6660,12 +6671,19 @@ static s7_pointer g_imag_part(s7_scheme *sc, s7_pointer args)
 {
   #define H_imag_part "(imag-part num) returns the imaginary part of num"
   s7_pointer p;
+
   p = car(args);
   if (!s7_is_number(p))
     return(s7_wrong_type_arg_error(sc, "imag-part", 0, p, "a number"));
-  if (number_type(p) < NUM_REAL)
-    return(small_int(sc, 0));                /* try to maintain exactness throughout expressions */
-  return(s7_make_real(sc, s7_imag_part(p)));
+
+  switch (number_type(p))
+    {
+    case NUM_INT:   
+    case NUM_RATIO: return(small_int(sc, 0));
+    case NUM_REAL:
+    case NUM_REAL2: return(real_zero);
+    default:        return(s7_make_real(sc, s7_imag_part(p)));
+    }
 }
 
 
@@ -16440,14 +16458,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
 			      make_list_3(sc, 
-					  s7_make_string_with_length(sc, "~A: not enough arguments: ~A", 28), 
+					  s7_make_string(sc, "~A: not enough arguments: ~A"), 
 					  sc->code, sc->args)));
 	    
 	    if (c_function_all_args(sc->code) < len)
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
 			      make_list_3(sc, 
-					  s7_make_string_with_length(sc, "~A: too many arguments: ~A", 26),
+					  s7_make_string(sc, "~A: too many arguments: ~A"),
 					  sc->code, sc->args)));
 	  }
 	  /* drop into ... */
@@ -16472,14 +16490,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
 			      make_list_3(sc, 
-					  s7_make_string_with_length(sc, "~A: not enough arguments: ~A", 28), 
+					  s7_make_string(sc, "~A: not enough arguments: ~A"), 
 					  macsym, sc->args)));
 	    
 	    if (c_macro_all_args(sc->code) < len)
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
 			      make_list_3(sc, 
-					  s7_make_string_with_length(sc, "~A: too many arguments: ~A", 26),
+					  s7_make_string(sc, "~A: too many arguments: ~A"),
 					  macsym, sc->args)));
 
 	    sc->code = c_macro_call(sc->code)(sc, sc->args);
@@ -16505,7 +16523,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		return(s7_error(sc, 
 				sc->WRONG_NUMBER_OF_ARGS, 
 				make_list_3(sc, 
-					    s7_make_string_with_length(sc, "~A: not enough arguments: ~A", 28),
+					    s7_make_string(sc, "~A: not enough arguments: ~A"),
 					    g_procedure_source(sc, make_list_1(sc, sc->code)), 
 					    sc->args)));
 	      add_to_local_environment(sc, car(sc->x), car(sc->y));
@@ -16517,7 +16535,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		return(s7_error(sc, 
 				sc->WRONG_NUMBER_OF_ARGS, 
 				make_list_3(sc, 
-					    s7_make_string_with_length(sc, "~A: too many arguments: ~A", 26), 
+					    s7_make_string(sc, "~A: too many arguments: ~A"), 
 					    g_procedure_source(sc, make_list_1(sc, sc->code)), 
 					    sc->args)));
 	    } 
@@ -16545,7 +16563,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
 			      make_list_3(sc, 
-					  s7_make_string_with_length(sc, "~A: too many arguments: ~A", 22), 
+					  s7_make_string(sc, "~A: too many arguments: ~A"),
 					  g_procedure_source(sc, make_list_1(sc, sc->code)), 
 					  sc->args)));
 	      

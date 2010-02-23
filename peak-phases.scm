@@ -43,7 +43,7 @@
 
 
 ;; there's always an equivalent point found by flipping the even harmonics, and another pair at 2-val (symmetry around 0)
-;; so there are always 4 equivalent points.  A function that returns the other 3 given 1 is at the end of this file.
+;; so there are 4 equivalent points.  A function that returns the other 3 given 1 is at the end of this file.
 
 
 ;;; 3 all --------------------------------------------------------------------------------
