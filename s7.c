@@ -1228,22 +1228,18 @@ static void s7_mark_object_1(s7_pointer p);
 
 static void mark_vector(s7_pointer p, s7_Int top)
 {
-  s7_pointer *tp;
-  set_mark(p); /* might be called outside s7_mark_object */
-  tp = (s7_pointer *)(vector_elements(p));
+  s7_pointer *tp, *tend;
 
-  if (top < INT_MAX)
+  set_mark(p); /* might be called outside s7_mark_object */
+
+  tp = (s7_pointer *)(vector_elements(p));
+  tend = (s7_pointer *)(tp + top);
+
+  while (tp < tend) 
     {
-      int j, jlen;
-      jlen = top;
-      for (j = 0; j < jlen; j++) 
-	S7_MARK(tp[j]);
-    }
-  else
-    {
-      s7_Int i;
-      for (i = 0; i < top; i++) 
-	S7_MARK(tp[i]);
+      s7_pointer tmp; 
+      tmp = (*tp++); 
+      S7_MARK(tmp);
     }
 }
 
@@ -1336,7 +1332,7 @@ static int gc(s7_scheme *sc)
       S7_MARK(tmps[i]);
   }
 
-  /* free up all other objects */
+  /* free up all unmarked objects */
   old_free_heap_top = sc->free_heap_top;
 
   {
@@ -1777,7 +1773,7 @@ static  s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, in
 #endif
 	  return(car(x)); 
 	}
-    } 
+    }
 #if HAVE_PTHREADS
   pthread_mutex_unlock(&symtab_lock);
 #endif
@@ -5279,6 +5275,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 
       memcpy((void *)q, (void *)saved_q, len);
       free(saved_q);
+
       return(result);
     }
 
@@ -6261,13 +6258,23 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_add_unchecked(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 {
+  #define H_add "(+ ...) adds its arguments"
+  int i;
   s7_pointer x;
   s7_num_t n;
 
+#if (!WITH_GMP)
+  if (args == sc->NIL)
+    return(small_int(sc, 0));
+
+    if (!s7_is_number(car(args)))
+      return(s7_wrong_type_arg_error(sc, "+", 1, car(args), "a number"));
+#endif
+
   n = number(car(args));
-  for (x = cdr(args); x != sc->NIL; x = cdr(x)) 
+  for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
     {
 #if WITH_GMP
       switch (n.type)
@@ -6285,37 +6292,34 @@ static s7_pointer g_add_unchecked(s7_scheme *sc, s7_pointer args)
 	    return(big_add(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, (numerator(n)), denominator(n)), x)));
 	  break;
 	}
+#else
+    if (!s7_is_number(car(x)))
+      return(s7_wrong_type_arg_error(sc, "+", i, car(x), "a number"));
 #endif
       n = num_add(n, number(car(x)));
     }
+
   return(make_number(sc, n));
 }
 
 
-static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 {
-  #define H_add "(+ ...) adds its arguments"
+  #define H_subtract "(- x1 ...) subtracts its trailing arguments from the first, or negates the first if only one argument is given"
   int i;
-  s7_pointer x;
-
-  if (args == sc->NIL)
-    return(small_int(sc, 0));
-  
-  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x)) 
-    if (!s7_is_number(car(x)))
-      return(s7_wrong_type_arg_error(sc, "+", i, car(x), "a number"));
-
-  return(g_add_unchecked(sc, args));
-}
-
-
-static s7_pointer g_subtract_unchecked(s7_scheme *sc, s7_pointer args)
-{
   s7_pointer x;
   s7_num_t n;
 
+#if (!WITH_GMP)
+  if (!s7_is_number(car(args)))
+    return(s7_wrong_type_arg_error(sc, "-", 1, car(args), "a number"));
+
+  if (cdr(args) == sc->NIL) 
+    return(make_number(sc, num_negate(number(car(args)))));
+#endif
+
   n = number(car(args));
-  for (x = cdr(args); x != sc->NIL; x = cdr(x)) 
+  for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
     {
 #if WITH_GMP
       switch (n.type)
@@ -6333,37 +6337,34 @@ static s7_pointer g_subtract_unchecked(s7_scheme *sc, s7_pointer args)
 	    return(big_subtract(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, (numerator(n)), denominator(n)), x)));
 	  break;
 	}
+#else
+      if (!s7_is_number(car(x)))
+	return(s7_wrong_type_arg_error(sc, "-", i, car(x), "a number"));
 #endif
       n = num_sub(n, number(car(x)));
     }
+
   return(make_number(sc, n));
 }
 
 
-static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 {
-  #define H_subtract "(- x1 ...) subtracts its trailing arguments from the first, or negates the first if only one argument is given"
+  #define H_multiply "(* ...) multiplies its arguments"
   int i;
-  s7_pointer x;
-
-  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))
-    if (!s7_is_number(car(x)))
-      return(s7_wrong_type_arg_error(sc, "-", i, car(x), "a number"));
-  
-  if (cdr(args) == sc->NIL) 
-    return(make_number(sc, num_negate(number(car(args)))));
-
-  return(g_subtract_unchecked(sc, args));
-}
-
-
-static s7_pointer g_multiply_unchecked(s7_scheme *sc, s7_pointer args)
-{
   s7_pointer x;
   s7_num_t n;
 
+#if (!WITH_GMP)
+  if (args == sc->NIL)
+    return(small_int(sc, 1));
+
+    if (!s7_is_number(car(args)))
+      return(s7_wrong_type_arg_error(sc, "*", 1, car(args), "a number"));
+#endif
+
   n = number(car(args));
-  for (x = cdr(args); x != sc->NIL; x = cdr(x)) 
+  for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
     {
 #if WITH_GMP
       switch (n.type)
@@ -6381,41 +6382,46 @@ static s7_pointer g_multiply_unchecked(s7_scheme *sc, s7_pointer args)
 	    return(big_multiply(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, (numerator(n)), denominator(n)), x)));
 	  break;
 	}
+#else
+    if (!s7_is_number(car(x)))
+      return(s7_wrong_type_arg_error(sc, "*", i, car(x), "a number"));
 #endif
       n = num_mul(n, number(car(x)));
     }
+
   return(make_number(sc, n));
 }
 
 
-static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 {
-  #define H_multiply "(* ...) multiplies its arguments"
+  #define H_divide "(- x1 ...) divides its first argument by the rest, or inverts the first if there is only one argument"
   int i;
-  s7_pointer x;
-
-  if (args == sc->NIL)
-    return(small_int(sc, 1));
-  
-  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x)) 
-    if (!s7_is_number(car(x)))
-      return(s7_wrong_type_arg_error(sc, "*", i, car(x), "a number"));
-
-  return(g_multiply_unchecked(sc, args));
-}
-
-
-static s7_pointer g_divide_unchecked(s7_scheme *sc, s7_pointer args)
-{
-  /* "unchecked" => we're sure they're numbers, but the divisor needs to be checked for 0 */
   s7_pointer x;
   s7_num_t n;
 
-  n = number(car(args));
-  for (x = cdr(args); x != sc->NIL; x = cdr(x))
+#if (!WITH_GMP)
+    if (!s7_is_number(car(args)))
+      return(s7_wrong_type_arg_error(sc, "/", 1, car(args), "a number"));
+
+  if (cdr(args) == sc->NIL)
     {
+      if (s7_is_zero(car(args)))
+	return(s7_division_by_zero_error(sc, "/", args));
+      return(make_number(sc, num_invert(number(car(args)))));
+    }
+#endif
+
+  n = number(car(args));
+  for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x))
+    {
+#if (!WITH_GMP)
+      if (!s7_is_number(car(x)))
+	return(s7_wrong_type_arg_error(sc, "/", i, car(x), "a number"));
+#endif
       if (s7_is_zero(car(x)))
 	return(s7_division_by_zero_error(sc, "/", args));
+
 #if WITH_GMP
       switch (n.type)
 	{
@@ -6435,28 +6441,8 @@ static s7_pointer g_divide_unchecked(s7_scheme *sc, s7_pointer args)
 #endif
       n = num_div(n, number(car(x)));
     }
+
   return(make_number(sc, n));
-}
-
-
-static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
-{
-  #define H_divide "(- x1 ...) divides its first argument by the rest, or inverts the first if there is only one argument"
-  int i;
-  s7_pointer x;
-
-  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))
-    if (!s7_is_number(car(x)))
-      return(s7_wrong_type_arg_error(sc, "/", i, car(x), "a number"));
-
-  if (cdr(args) == sc->NIL)
-    {
-      if (s7_is_zero(car(args)))
-	return(s7_division_by_zero_error(sc, "/", args));
-      return(make_number(sc, num_invert(number(car(args)))));
-    }
-
-  return(g_divide_unchecked(sc, args));
 }
 
 
@@ -6557,19 +6543,28 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   s7_num_t n;
 
-  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))
-    if (!s7_is_number(car(x)))
-      return(s7_wrong_type_arg_error(sc, "=", i, car(x), "a number"));
+  if (!s7_is_number(car(args)))
+    return(s7_wrong_type_arg_error(sc, "=", 1, car(args), "a number"));
   
   n = number(car(args));
-  for (x = cdr(args); x != sc->NIL; x = cdr(x)) 
+  for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
     {
-      if (!num_eq(n, number(car(x)))) 
-	return(sc->F);
-      n = number(car(x));
+      s7_pointer tmp;
+      tmp = car(x);
+      if (!s7_is_number(tmp))
+	  return(s7_wrong_type_arg_error(sc, "=", i, tmp, "a number"));
+
+      if (!num_eq(n, number(tmp)))
+	{
+	  for (i++, x = cdr(x); x != sc->NIL; i++, x = cdr(x)) /* check trailing args for bad type */
+	    if (!s7_is_number(car(x)))
+	      return(s7_wrong_type_arg_error(sc, "=", i, car(x), "a number"));
+	  
+	  return(sc->F);
+	}
     }
+
   return(sc->T);
-  /* rewriting this to check type and equality at the same time saved about 5% compute time */
 }
 
 
@@ -6579,16 +6574,26 @@ static s7_pointer compare_numbers(s7_scheme *sc, s7_pointer args, bool (*comp_fu
   s7_pointer x;
   s7_num_t n;
   
-  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))
-    if (!s7_is_real(car(x)))
-      return(s7_wrong_type_arg_error(sc, op_name, i, car(x), "a real"));
-  
+  if (!s7_is_real(car(args)))
+    return(s7_wrong_type_arg_error(sc, op_name, 1, car(args), "a real"));
+
   n = number(car(args));
-  for (x = cdr(args); x != sc->NIL; x = cdr(x)) 
+  for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
     {
-      if (!comp_func(n, number(car(x)))) 
-	return(sc->F);
-      n = number(car(x));
+      s7_pointer tmp;
+      tmp = car(x);
+      if (!s7_is_real(tmp))
+	  return(s7_wrong_type_arg_error(sc, op_name, i, tmp, "a real"));
+      
+      if (!comp_func(n, number(tmp)))
+	{
+	  for (i++, x = cdr(x); x != sc->NIL; i++, x = cdr(x)) /* check trailing args for bad type */
+	    if (!s7_is_real(car(x)))
+	      return(s7_wrong_type_arg_error(sc, op_name, i, car(x), "a real"));
+
+	  return(sc->F);
+	}
+      n = number(tmp);
     }
   return(sc->T);
 }
@@ -10769,34 +10774,36 @@ s7_pointer s7_remv(s7_scheme *sc, s7_pointer a, s7_pointer obj)
 }
 
 
-static bool is_dotted(s7_scheme *sc, s7_pointer x)
-{
-  s7_pointer a = x;
-  while (is_pair(a)) {a = cdr(a);}
-  return(a != sc->NIL);
-}
-
-
 static s7_pointer g_assq(s7_scheme *sc, s7_pointer args)
 {
   #define H_assq "(assq obj alist) returns the key-value pair associated (via eq?) with the key obj in the association list alist"
-  s7_pointer x, y;
+  s7_pointer x, y, result = sc->F;
 
   if (!s7_is_list(sc, cadr(args)))
     return(s7_wrong_type_arg_error(sc, "assq", 2, cadr(args), "a list"));
 
   if (cadr(args) == sc->NIL)
     return(sc->F);
-
-  if (is_dotted(sc, cadr(args)))
-    return(s7_wrong_type_arg_error(sc, "assq", 2, cadr(args), "a proper list"));
   
   x = car(args);
-  for (y = cadr(args); is_pair(y) && is_pair(car(y)); y = cdr(y)) 
-    if (x == caar(y))
-      return(car(y));
+  for (y = cadr(args); is_pair(y); y = cdr(y)) 
+    {
+      s7_pointer tmp;
+      tmp = car(y);
+      if ((is_pair(tmp)) &&
+	  (x == car(tmp)))
+	{
+	  result = tmp;
+	  break;
+	}
+    }
+
+  /* check for wrong-type-arg error */
+  while (is_pair(y)) {y = cdr(y);}
+  if (y != sc->NIL)
+    return(s7_wrong_type_arg_error(sc, "assq", 2, cadr(args), "a proper list"));
   
-  return(sc->F);
+  return(result);
 }      
 
 
@@ -10804,7 +10811,7 @@ static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, const char *name, boo
 {
   #define H_assv "(assv obj alist) returns the key-value pair associated (via eqv?) with the key obj in the association list alist"
   #define H_assoc "(assoc obj alist) returns the key-value pair associated (via equal?) with the key obj in the association list alist"
-  s7_pointer x, y;
+  s7_pointer x, y, result = sc->F;
 
   if (!s7_is_list(sc, cadr(args)))
     return(s7_wrong_type_arg_error(sc, name, 2, cadr(args), "a list"));
@@ -10812,15 +10819,24 @@ static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, const char *name, boo
   if (cadr(args) == sc->NIL)
     return(sc->F);
 
-  if (is_dotted(sc, cadr(args)))
-    return(s7_wrong_type_arg_error(sc, name, 2, cadr(args), "a proper list"));
-  
   x = car(args);
-  for (y = cadr(args); is_pair(y) && is_pair(car(y)); y = cdr(y)) 
-    if (eq_func(x, caar(y)))
-      return(car(y));
+  for (y = cadr(args); is_pair(y); y = cdr(y)) 
+    {
+      s7_pointer tmp;
+      tmp = car(y);
+      if ((is_pair(tmp)) &&
+	  (eq_func(x, car(tmp))))
+	{
+	  result = tmp;
+	  break;
+	}
+    }
   
-  return(sc->F);
+  while (is_pair(y)) {y = cdr(y);}
+  if (y != sc->NIL)
+    return(s7_wrong_type_arg_error(sc, name, 2, cadr(args), "a proper list"));
+
+  return(result);
 }      
 
 
@@ -10831,7 +10847,7 @@ static s7_pointer g_assoc(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, a
 static s7_pointer g_memq(s7_scheme *sc, s7_pointer args)
 {
   #define H_memq "(memq obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. memq uses eq?"
-  s7_pointer x;
+  s7_pointer x, result = sc->F;
 
   if (!s7_is_list(sc, cadr(args)))
     return(s7_wrong_type_arg_error(sc, "memq", 2, cadr(args), "a list"));
@@ -10839,14 +10855,18 @@ static s7_pointer g_memq(s7_scheme *sc, s7_pointer args)
   if (cadr(args) == sc->NIL)
     return(sc->F);
 
-  if (is_dotted(sc, cadr(args)))
-    return(s7_wrong_type_arg_error(sc, "memq", 2, cadr(args), "a proper list"));
-  
   for (x = cadr(args); is_pair(x); x = cdr(x)) 
     if (car(args) == car(x))
-      return(x);
+      {
+	result = x;
+	break;
+      }
   
-  return(sc->F);
+  while (is_pair(x)) {x = cdr(x);}
+  if (x != sc->NIL)
+    return(s7_wrong_type_arg_error(sc, "memq", 2, cadr(args), "a proper list"));
+
+  return(result);
 }     
 
 
@@ -10854,7 +10874,7 @@ static s7_pointer g_memq_1(s7_scheme *sc, s7_pointer args, const char *name, boo
 {
   #define H_memv "(memv obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. memv uses eqv?"
   #define H_member "(member obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. member uses equal?"
-  s7_pointer x;
+  s7_pointer x, result = sc->F;
 
   if (!s7_is_list(sc, cadr(args)))
     return(s7_wrong_type_arg_error(sc, name, 2, cadr(args), "a list"));
@@ -10862,14 +10882,18 @@ static s7_pointer g_memq_1(s7_scheme *sc, s7_pointer args, const char *name, boo
   if (cadr(args) == sc->NIL)
     return(sc->F);
 
-  if (is_dotted(sc, cadr(args)))
-    return(s7_wrong_type_arg_error(sc, name, 2, cadr(args), "a proper list"));
-  
   for (x = cadr(args); is_pair(x); x = cdr(x)) 
     if (eq_func(car(args), car(x)))
-      return(x);
+      {
+	result = x;
+	break;
+      }
   
-  return(sc->F);
+  while (is_pair(x)) {x = cdr(x);}
+  if (x != sc->NIL)
+    return(s7_wrong_type_arg_error(sc, name, 2, cadr(args), "a proper list"));
+
+  return(result);
 }     
 
 
@@ -15551,6 +15575,134 @@ static void assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
 }
 
 
+static bool prepare_closure_star(s7_scheme *sc)
+{
+  /* sc->code is a closure: ((args body) envir)
+   * (define* (hi a (b 1)) (+ a b))
+   * (procedure-source hi) -> (lambda* (a (b 1)) (+ a b))
+   *
+   * so rather than spinning through the args binding names to values in the
+   *   procedure's new environment (as in the usual closure case above),
+   *   we scan the current args, and match against the
+   *   template in the car of the closure, binding as we go.
+   *
+   * for each actual arg, if it's not a keyword that matches a member of the 
+   *   template, bind it to its current (place-wise) arg, else bind it to
+   *   that arg.  If it's the symbol :key or :optional, just go on.
+   *   If it's :rest bind the next arg to the trailing args at this point.
+   *   All args can be accessed by their name as a keyword.
+   *   In other words (define* (hi (a 1)) ...) is the same as (define* (hi :key (a 1)) ...) etc.
+   *
+   * all args are optional, any arg with no default value defaults to #f.
+   *   but the rest arg should default to '().
+   */
+  
+  /* set all default values */
+  for (sc->z = closure_args(sc->code); is_pair(sc->z); sc->z = cdr(sc->z))
+    {
+      /* bind all the args to something (default value or #f or maybe #undefined) */
+      if (!((car(sc->z) == sc->KEY_KEY) ||
+	    (car(sc->z) == sc->KEY_OPTIONAL)))
+	{
+	  if (car(sc->z) == sc->KEY_REST)
+	    {
+	      sc->z = cdr(sc->z);
+	      add_to_local_environment(sc, car(sc->z), sc->NIL); /* set :rest arg to sc->NIL, not sc->F */
+	    }
+	  else
+	    {
+	      if (is_pair(car(sc->z)))                           /* (define* (hi (a mus-next)) a) */
+		add_to_local_environment(sc,                     /* or (define* (hi (a 'hi)) (list a (eq? a 'hi))) */
+					 caar(sc->z), 
+					 lambda_star_argument_default_value(sc, cadar(sc->z)));
+	      /* mus-next, for example, needs to be evaluated before binding */
+	      else add_to_local_environment(sc, car(sc->z), sc->F);
+	    }
+	}
+    }
+  if (s7_is_symbol(sc->z))                                  /* dotted (last) arg? -- make sure its name exists in the current environment */
+    add_to_local_environment(sc, sc->z, sc->NIL);           /* this was sc->F */
+  
+  /* now get the current args, re-setting args that have explicit values */
+  sc->x = closure_args(sc->code);
+  sc->y = sc->args; 
+  sc->z = sc->NIL;
+  while ((is_pair(sc->x)) &&
+	 (is_pair(sc->y)))
+    {
+      if ((car(sc->x) == sc->KEY_KEY) ||
+	  (car(sc->x) == sc->KEY_OPTIONAL))
+	sc->x = cdr(sc->x);                                 /* everything is :key and :optional, so these are ignored */
+      else
+	{
+	  if (car(sc->x) == sc->KEY_REST)
+	    {
+	      /* next arg is bound to trailing args from this point as a list */
+	      sc->z = sc->KEY_REST;
+	      sc->x = cdr(sc->x);
+	      if (is_pair(car(sc->x)))
+		lambda_star_argument_set_value(sc, caar(sc->x), sc->y);
+	      else lambda_star_argument_set_value(sc, car(sc->x), sc->y);
+	      sc->y = cdr(sc->y);
+	      sc->x = cdr(sc->x);
+	    }
+	  else
+	    {
+	      if (s7_is_keyword(car(sc->y)))
+		{
+		  char *name;                       /* need to remove the ':' before checking the lambda args */
+		  s7_pointer sym;
+		  name = symbol_name(car(sc->y));
+		  if (name[0] == ':')
+		    sym = s7_make_symbol(sc, (const char *)(name + 1));
+		  else
+		    {
+		      /* must be a trailing ':' here, else not s7_is_keyword */
+		      name[symbol_name_length(car(sc->y)) - 1] = '\0';
+		      sym = s7_make_symbol(sc, name);
+		      name[symbol_name_length(car(sc->y)) - 1] = ':';
+		    }
+		  if (lambda_star_argument_set_value(sc, sym, car(cdr(sc->y))))
+		    sc->y = cddr(sc->y);
+		  else                             /* might be passing a keyword as a normal argument value! */
+		    {
+		      if (is_pair(car(sc->x)))
+			lambda_star_argument_set_value(sc, caar(sc->x), car(sc->y));
+		      else lambda_star_argument_set_value(sc, car(sc->x), car(sc->y));
+		      sc->y = cdr(sc->y);
+		    }
+		}
+	      else 
+		{
+		  if (is_pair(car(sc->x)))
+		    lambda_star_argument_set_value(sc, caar(sc->x), car(sc->y));
+		  else lambda_star_argument_set_value(sc, car(sc->x), car(sc->y));
+		  sc->y = cdr(sc->y);
+		}
+	      sc->x = cdr(sc->x);
+	    }
+	}
+    }
+  
+  /* check for trailing args with no :rest arg */
+  if (sc->y != sc->NIL)
+    {
+      if ((sc->x == sc->NIL) &&
+	  (is_pair(sc->y)))
+	{
+	  if (sc->z != sc->KEY_REST)
+	    return(false);
+	} 
+      else 
+	{
+	  /* final arg was dotted? */
+	  if (s7_is_symbol(sc->x))
+	    add_to_local_environment(sc, sc->x, sc->y); 
+	}
+    }
+  return(true);
+}
+
 
 
 /* -------------------------------- eval -------------------------------- */
@@ -16391,135 +16543,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  { 
 	    sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); 
 	    
-	    /* sc->code is a closure: ((args body) envir)
-	     * (define* (hi a (b 1)) (+ a b))
-	     * (procedure-source hi) -> (lambda* (a (b 1)) (+ a b))
-	     *
-	     * so rather than spinning through the args binding names to values in the
-	     *   procedure's new environment (as in the usual closure case above),
-	     *   we scan the current args, and match against the
-	     *   template in the car of the closure, binding as we go.
-	     *
-	     * for each actual arg, if it's not a keyword that matches a member of the 
-	     *   template, bind it to its current (place-wise) arg, else bind it to
-	     *   that arg.  If it's the symbol :key or :optional, just go on.
-	     *   If it's :rest bind the next arg to the trailing args at this point.
-	     *   All args can be accessed by their name as a keyword.
-	     *   In other words (define* (hi (a 1)) ...) is the same as (define* (hi :key (a 1)) ...) etc.
-	     *
-	     * all args are optional, any arg with no default value defaults to #f.
-	     *   but the rest arg should default to '().
-	     */
-	    
-	    /* set all default values */
-	    for (sc->z = closure_args(sc->code); is_pair(sc->z); sc->z = cdr(sc->z))
-	      {
-		/* bind all the args to something (default value or #f or maybe #undefined) */
-		if (!((car(sc->z) == sc->KEY_KEY) ||
-		      (car(sc->z) == sc->KEY_OPTIONAL)))
-		  {
-		    if (car(sc->z) == sc->KEY_REST)
-		      {
-			sc->z = cdr(sc->z);
-			add_to_local_environment(sc, car(sc->z), sc->NIL); /* set :rest arg to sc->NIL, not sc->F */
-		      }
-		    else
-		      {
-			if (is_pair(car(sc->z)))                           /* (define* (hi (a mus-next)) a) */
-			  add_to_local_environment(sc,                     /* or (define* (hi (a 'hi)) (list a (eq? a 'hi))) */
-						   caar(sc->z), 
-						   lambda_star_argument_default_value(sc, cadar(sc->z)));
-			/* mus-next, for example, needs to be evaluated before binding */
-			else add_to_local_environment(sc, car(sc->z), sc->F);
-		      }
-		  }
-	      }
-	    if (s7_is_symbol(sc->z))                                  /* dotted (last) arg? -- make sure its name exists in the current environment */
-	      add_to_local_environment(sc, sc->z, sc->NIL);           /* this was sc->F */
-
-	    /* now get the current args, re-setting args that have explicit values */
-	    sc->x = closure_args(sc->code);
-	    sc->y = sc->args; 
-	    sc->z = sc->NIL;
-	    while ((is_pair(sc->x)) &&
-		   (is_pair(sc->y)))
-	      {
-		if ((car(sc->x) == sc->KEY_KEY) ||
-		    (car(sc->x) == sc->KEY_OPTIONAL))
-		  sc->x = cdr(sc->x);                                 /* everything is :key and :optional, so these are ignored */
-		else
-		  {
-		    if (car(sc->x) == sc->KEY_REST)
-		      {
-			/* next arg is bound to trailing args from this point as a list */
-			sc->z = sc->KEY_REST;
-			sc->x = cdr(sc->x);
-			if (is_pair(car(sc->x)))
-			  lambda_star_argument_set_value(sc, caar(sc->x), sc->y);
-			else lambda_star_argument_set_value(sc, car(sc->x), sc->y);
-			sc->y = cdr(sc->y);
-			sc->x = cdr(sc->x);
-		      }
-		    else
-		      {
-			if (s7_is_keyword(car(sc->y)))
-			  {
-			    char *name;                       /* need to remove the ':' before checking the lambda args */
-			    s7_pointer sym;
-			    name = symbol_name(car(sc->y));
-			    if (name[0] == ':')
-			      sym = s7_make_symbol(sc, (const char *)(name + 1));
-			    else
-			      {
-				/* must be a trailing ':' here, else not s7_is_keyword */
-				name[symbol_name_length(car(sc->y)) - 1] = '\0';
-				sym = s7_make_symbol(sc, name);
-				name[symbol_name_length(car(sc->y)) - 1] = ':';
-			      }
-			    if (lambda_star_argument_set_value(sc, sym, car(cdr(sc->y))))
-			      sc->y = cddr(sc->y);
-			    else                             /* might be passing a keyword as a normal argument value! */
-			      {
-				if (is_pair(car(sc->x)))
-				  lambda_star_argument_set_value(sc, caar(sc->x), car(sc->y));
-				else lambda_star_argument_set_value(sc, car(sc->x), car(sc->y));
-				sc->y = cdr(sc->y);
-			      }
-			  }
-			else 
-			  {
-			    if (is_pair(car(sc->x)))
-			      lambda_star_argument_set_value(sc, caar(sc->x), car(sc->y));
-			    else lambda_star_argument_set_value(sc, car(sc->x), car(sc->y));
-			    sc->y = cdr(sc->y);
-			  }
-			sc->x = cdr(sc->x);
-		      }
-		  }
-	      }
-
-	    /* check for trailing args with no :rest arg */
-	    if (sc->y != sc->NIL)
-	      {
-		if ((sc->x == sc->NIL) &&
-		    (is_pair(sc->y)))
-		  {
-		    if (sc->z != sc->KEY_REST)
-		      return(s7_error(sc, 
-				      sc->WRONG_NUMBER_OF_ARGS, 
-				      make_list_3(sc, 
-						  s7_make_string_with_length(sc, "~A: too many arguments: ~A", 22), 
-						  g_procedure_source(sc, make_list_1(sc, sc->code)), 
-						  sc->args)));
-		  } 
-		else 
-		  {
-		    /* final arg was dotted? */
-		    if (s7_is_symbol(sc->x))
-		      add_to_local_environment(sc, sc->x, sc->y); 
-		  }
-	      }
-
+	    if (!prepare_closure_star(sc))
+	      return(s7_error(sc, 
+			      sc->WRONG_NUMBER_OF_ARGS, 
+			      make_list_3(sc, 
+					  s7_make_string_with_length(sc, "~A: too many arguments: ~A", 22), 
+					  g_procedure_source(sc, make_list_1(sc, sc->code)), 
+					  sc->args)));
+	      
 	    /* evaluate the function body */
 	    sc->code = closure_body(sc->code);
 	    sc->args = sc->NIL;
@@ -19463,7 +19494,7 @@ static s7_pointer big_add(s7_scheme *sc, s7_pointer args)
     }
 
   if (IS_NUM(result_type))
-    return(g_add_unchecked(sc, args));
+    return(g_add(sc, args));
 
   result_type = canonicalize_result_type(result_type);
   result = copy_and_promote_number(sc, result_type, car(args));
@@ -19548,7 +19579,7 @@ static s7_pointer big_negate(s7_scheme *sc, s7_pointer args)
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }
-  return(g_subtract(sc, args));
+  return(make_number(sc, num_negate(number(car(args)))));
 }
 
 
@@ -19577,7 +19608,7 @@ static s7_pointer big_subtract(s7_scheme *sc, s7_pointer args)
     }
 
   if (IS_NUM(result_type))
-    return(g_subtract_unchecked(sc, args));
+    return(g_subtract(sc, args));
 
   result_type = canonicalize_result_type(result_type);
   result = copy_and_promote_number(sc, result_type, car(args));
@@ -19643,7 +19674,7 @@ static s7_pointer big_multiply(s7_scheme *sc, s7_pointer args)
     }
 
   if (IS_NUM(result_type))
-    return(g_multiply_unchecked(sc, args));
+    return(g_multiply(sc, args));
 
   result_type = canonicalize_result_type(result_type);
   result = copy_and_promote_number(sc, result_type, car(args));
@@ -19690,6 +19721,7 @@ static s7_pointer big_invert(s7_scheme *sc, s7_pointer args)
 {
   /* assume cdr(args) is nil and we're called from divide, so check for big num else call g_divide */
   s7_pointer p;
+
   p = car(args);
   if (big_is_zero_1(sc, p) == sc->T)
     return(s7_division_by_zero_error(sc, "/", p));
@@ -19756,7 +19788,8 @@ static s7_pointer big_invert(s7_scheme *sc, s7_pointer args)
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }
-  return(g_divide(sc, args));
+
+  return(make_number(sc, num_invert(number(p))));
 }
 
 
@@ -19785,7 +19818,7 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
     }
 
   if (IS_NUM(result_type))
-    return(g_divide_unchecked(sc, args));
+    return(g_divide(sc, args));
 
   result_type = canonicalize_result_type(result_type);
   divisor = copy_and_promote_number(sc, result_type, cadr(args));

@@ -6824,6 +6824,12 @@
 	(test (equal? (vector (hi 1)) '#(2)) #t)
 	(test (symbol? (vector-ref '#(hi) 0)) #t))
 
+      (define-expansion (_expansion_ a) `(+ ,a 1))
+      (test (_expansion_ 3) 4)
+      (test (macroexpand (_expansion_ 3)) `(+ 3 1))
+      (test '(_expansion_ 3) (quote (_expansion_ 3)))
+      (test (_expansion_ (+ (_expansion_ 1) 2)) 5)
+
 #|
       ;; these 2 tests don't work in this context because the file/line are included
       (let ()
@@ -50754,4 +50760,3 @@ expt error > 1e-6 around 2^-46.506993328423
 ;;; same:            (call/cc (lambda arg ((car arg) 1))) -> 1
 ;;; (call/cc (lambda () 1)) -> error?
 
-;;; TODO: define-expansion needs testing!

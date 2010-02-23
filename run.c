@@ -128,7 +128,7 @@
  *     (grani 0 1 .5 "oboe.snd" 
  *       :grain-envelope '(0 0 0.2 0.2 0.5 1 0.8 0.2 1 0))))
  *
- * (with-sound ()                                                   7120       5069        4335
+ * (with-sound ()                                                   7120       5069        4314
  *   (do ((i 0 (+ i 1))) 
  *       ((= i 10000)) 
  *     (fm-violin (* i .001) .01 440 .001)))
@@ -2401,67 +2401,55 @@ int mus_run_xen_to_run_type(XEN val)
     {
       if ((XEN_EXACT_P(val)) && (XEN_INT64_T_P(val)))
 	return(R_INT);
-      else return(R_FLOAT);
+      return(R_FLOAT);
     }
-  else
+
+  if (XEN_BOOLEAN_P(val)) return(R_BOOL);
+  if (MUS_VCT_P(val)) return(R_VCT);
+  if (sound_data_p(val)) return(R_SOUND_DATA);
+  if (mus_xen_p(val)) return(R_CLM); 
+  if (XEN_CHAR_P(val)) return(R_CHAR); 
+  if (XEN_STRING_P(val)) return(R_STRING);
+  if (XEN_KEYWORD_P(val)) return(R_KEYWORD); 
+  if (XEN_SYMBOL_P(val)) return(R_SYMBOL);
+
+  if (XEN_LIST_P(val)) 
     {
-      if (XEN_BOOLEAN_P(val)) return(R_BOOL); else
-	if (MUS_VCT_P(val)) return(R_VCT); else
-	  if (sound_data_p(val)) return(R_SOUND_DATA); else
-	    if (mus_xen_p(val)) return(R_CLM); else
-	      if (XEN_CHAR_P(val)) return(R_CHAR); else
-		if (XEN_STRING_P(val)) return(R_STRING); else
-		  if (XEN_KEYWORD_P(val)) return(R_KEYWORD); else
-		    if (XEN_SYMBOL_P(val)) return(R_SYMBOL); else
-		      if (XEN_LIST_P(val)) 
-			{
-			  if ((XEN_NOT_NULL_P(val)) &&
-			      (XEN_SYMBOL_P(XEN_CAR(val))))
-			    {
-			      int type;
-			      type = name_to_type(XEN_SYMBOL_TO_C_STRING(XEN_CAR(val)));
-			      if (CLM_STRUCT_P(type))
-				return(type); /* might be a list of symbols?? */
-			    }
-			  if (XEN_LIST_LENGTH(val) >= 0) /* no dotted lists here */
-			    return(R_LIST); 
-			}
-		      else
-			{
-			  if (XEN_VECTOR_P(val))
-			    {
-			      XEN val0;
-			      val0 = XEN_VECTOR_REF(val, 0);
-			      if (XEN_NUMBER_P(val0))
-				{
-				  if (XEN_EXACT_P(val0))
-				    return(R_INT_VECTOR);
-				  else return(R_FLOAT_VECTOR);
-				}
-			      else
-				if (MUS_VCT_P(val0)) 
-				  return(R_VCT_VECTOR); 
-				else
-				  {
-				    if ((mus_xen_p(val0)) || (XEN_FALSE_P(val0)))
-				      return(R_CLM_VECTOR); 
-				    else
-				      {
-					if (XEN_LIST_P(val0))
-					  return(R_LIST_VECTOR);
-				      }
-				  }
-			    }
-#if USE_SND
-			  else
-			    if (sampler_p(val)) return(R_SAMPLER); else
-			      if (xen_sound_p(val)) return(R_SOUND); else
-				if (xen_region_p(val)) return(R_REGION); else
-				  if (xen_mix_p(val)) return(R_MIX); else
-				    if (xen_mark_p(val)) return(R_MARK);
-#endif
-			}
+      if ((XEN_NOT_NULL_P(val)) &&
+	  (XEN_SYMBOL_P(XEN_CAR(val))))
+	{
+	  int type;
+	  type = name_to_type(XEN_SYMBOL_TO_C_STRING(XEN_CAR(val)));
+	  if (CLM_STRUCT_P(type))
+	    return(type); /* might be a list of symbols?? */
+	}
+      if (XEN_LIST_LENGTH(val) >= 0) /* no dotted lists here */
+	return(R_LIST); 
     }
+
+  if (XEN_VECTOR_P(val))
+    {
+      XEN val0;
+      val0 = XEN_VECTOR_REF(val, 0);
+      if (XEN_NUMBER_P(val0))
+	{
+	  if (XEN_EXACT_P(val0))
+	    return(R_INT_VECTOR);
+	  return(R_FLOAT_VECTOR);
+	}
+      if (MUS_VCT_P(val0)) return(R_VCT_VECTOR); 
+      if ((mus_xen_p(val0)) || (XEN_FALSE_P(val0))) return(R_CLM_VECTOR); 
+      if (XEN_LIST_P(val0)) return(R_LIST_VECTOR);
+    }
+
+#if USE_SND
+  if (sampler_p(val)) return(R_SAMPLER); 
+  if (xen_sound_p(val)) return(R_SOUND);
+  if (xen_region_p(val)) return(R_REGION);
+  if (xen_mix_p(val)) return(R_MIX);
+  if (xen_mark_p(val)) return(R_MARK);
+#endif
+
   return(R_UNSPECIFIED);
 }
 
