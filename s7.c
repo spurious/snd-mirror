@@ -897,12 +897,12 @@ static char *s7_strdup(const char *str)
 }
 
 
+
 static bool is_proper_list(s7_scheme *sc, s7_pointer lst);
 static void s7_mark_embedded_objects(s7_pointer a); /* called by gc, calls fobj's mark func */
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op);
 static s7_pointer s7_division_by_zero_error(s7_scheme *sc, const char *caller, s7_pointer arg);
 static s7_pointer s7_file_error(s7_scheme *sc, const char *caller, const char *descr, const char *name);
-static void s7_free_function(s7_pointer a);
 static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list);
 static s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static void s7_free_object(s7_pointer a);
@@ -1068,7 +1068,8 @@ int s7_gc_protect(s7_scheme *sc, s7_pointer x)
       }
     }
   
-  for (i = 0; i < (*(sc->protected_objects_size)); i++)
+  loc = (*(sc->protected_objects_size));
+  for (i = 0; i < loc; i++)
     if (vector_element(sc->protected_objects, i) == sc->NIL)
       {
 	vector_element(sc->protected_objects, i) = x;
@@ -1078,13 +1079,13 @@ int s7_gc_protect(s7_scheme *sc, s7_pointer x)
 	return(i);
       }
   
-  loc = (*(sc->protected_objects_size));
-  new_size = 2 * (*(sc->protected_objects_size));
+  new_size = 2 * loc;
   vector_elements(sc->protected_objects) = (s7_pointer *)realloc(vector_elements(sc->protected_objects), new_size * sizeof(s7_pointer));
-  for (i = (*(sc->protected_objects_size)) + 1; i < new_size; i++)
+  for (i = loc; i < new_size; i++)
     vector_element(sc->protected_objects, i) = sc->NIL;
   vector_length(sc->protected_objects) = new_size;
   (*(sc->protected_objects_size)) = new_size;
+
   vector_element(sc->protected_objects, loc) = x;
   
 #if HAVE_PTHREADS
@@ -1198,12 +1199,6 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
       
     case T_C_OBJECT:
       s7_free_object(a);
-      break;
-      
-    case T_C_ANY_ARGS_FUNCTION:
-    case T_C_FUNCTION:
-    case T_C_MACRO:
-      s7_free_function(a);
       break;
       
     case T_VECTOR:
@@ -2049,15 +2044,10 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
     {
       int loc;
 
-      if (is_c_function(value))
-	s7_remove_from_heap(sc, value);
-      else
-	{
-	  if ((is_closure(value)) ||
-	      (is_closure_star(value)) ||
-	      (is_macro(value)))
-	    s7_remove_from_heap(sc, closure_source(value));
-	}
+      if ((is_closure(value)) ||
+	  (is_closure_star(value)) ||
+	  (is_macro(value)))
+	s7_remove_from_heap(sc, closure_source(value));
 
       loc = symbol_location(variable);
       vector_element(e, loc) = s7_cons(sc, slot, vector_element(e, loc));
@@ -2320,7 +2310,7 @@ void s7_define(s7_scheme *sc, s7_pointer envir, s7_pointer symbol, s7_pointer va
 void s7_define_variable(s7_scheme *sc, const char *name, s7_pointer value)
 {
   s7_pointer sym;
-  
+
   sym = s7_make_symbol(sc, name);
   s7_define(sc, s7_global_environment(sc), sym, value);
 }
@@ -3488,7 +3478,7 @@ s7_Int s7_number_to_integer(s7_pointer x)
   switch (number_type(x))
     {
     case NUM_INT:   return(s7_integer(x));
-    case NUM_RATIO: return((s7_Int)s7_numerator(x) / (s7_Double)s7_denominator(x));
+    case NUM_RATIO: return((s7_Int)((s7_Double)s7_numerator(x) / (s7_Double)s7_denominator(x)));
     case NUM_REAL:
     case NUM_REAL2: return((s7_Int)s7_real(x));
     default:        return((s7_Int)s7_real_part(x));
@@ -4593,11 +4583,11 @@ static void init_ctables(void)
 {
   int i;
 
-  dot_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
-  exponent_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
-  slashify_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
-  string_delimiter_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
-  number_inits = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
+  dot_table = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
+  exponent_table = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
+  slashify_table = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
+  string_delimiter_table = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
+  number_inits = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
   
   dot_table['\n'] = true;
   dot_table['\t'] = true;
@@ -4631,7 +4621,7 @@ static void init_ctables(void)
   string_delimiter_table['\r'] = false;
   string_delimiter_table[' '] = false;
 
-  digits = (int *)malloc(CTABLE_SIZE * sizeof(int));
+  digits = (int *)permanent_calloc(CTABLE_SIZE * sizeof(int));
   for (i = 0; i < CTABLE_SIZE; i++)
     digits[i] = 256;
 
@@ -5248,24 +5238,30 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
     {
 #if (!WITH_GMP)
       s7_Double rl = 0.0, im = 0.0;
+#else
+      char e1, e2;
 #endif
       s7_pointer result;
       int len;
-      char *saved_q;
+      char ql1, pl1;
       len = safe_strlen(q);
       
       if (q[len - 1] != 'i')
 	return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
 
-      STRDUP(saved_q, q, len);
+      /* save original string */
+      ql1 = q[len - 1];
+      pl1 = (*(plus - 1));
+#if WITH_GMP
+      if (ex1) {e1 = *ex1; (*ex1) = 'e';} /* for mpfr */
+      if (ex2) {e2 = *ex2; (*ex2) = 'e';}
+#endif
 
       /* look for cases like 1+i */
       if ((q[len - 2] == '+') || (q[len - 2] == '-'))
 	q[len - 1] = '1';
       else q[len - 1] = '\0'; /* remove 'i' */
       
-      if (ex1) (*ex1) = 'e';
-      if (ex2) (*ex2) = 'e';
       (*((char *)(plus - 1))) = '\0';
 
 #if (!WITH_GMP)
@@ -5300,8 +5296,13 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
       result = string_to_either_complex(sc, q, slash1, ex1, has_dec_point1, plus, slash2, ex2, has_dec_point2, radix, has_plus_or_minus);
 #endif
 
-      memcpy((void *)q, (void *)saved_q, len);
-      free(saved_q);
+      /* restore original string */
+      q[len - 1] = ql1;
+      (*((char *)(plus - 1))) = pl1;
+#if WITH_GMP
+      if (ex1) (*ex1) = e1;
+      if (ex2) (*ex2) = e2;
+#endif
 
       return(result);
     }
@@ -5311,25 +5312,25 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
       (ex1))
     {
       s7_pointer result;
-      char old_e = 0;
 
       if (slash1)  /* not complex, so slash and "." is not a number */
 	return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
 
-      if (ex1)
-	{
-	  old_e = (*ex1);
-	  (*ex1) = 'e';
-	}
-
 #if (!WITH_GMP)
       result = s7_make_real(sc, string_to_double_with_radix(q, radix, &overflow));
 #else
-      result = string_to_either_real(sc, q, radix);
+      {
+	char old_e = 0;
+	if (ex1)
+	  {
+	    old_e = (*ex1);
+	    (*ex1) = 'e';
+	  }
+	result = string_to_either_real(sc, q, radix);
+	if (ex1)
+	  (*ex1) = old_e;
+      }
 #endif
-      
-      if (ex1)
-	(*ex1) = old_e;
 
       return(result);
     }
@@ -7451,6 +7452,17 @@ s7_pointer s7_make_string(s7_scheme *sc, const char *str)
 static s7_pointer s7_make_string_uncopied(s7_scheme *sc, char *str) 
 {
   return(s7_make_string_uncopied_with_length(sc, str, safe_strlen(str)));
+}
+
+
+static char *make_permanent_string(const char *str)
+{
+  char *x;
+  int len;
+  len = safe_strlen(str);
+  x = (char *)permanent_calloc((len + 1) * sizeof(char)); 
+  memcpy((void *)x, (void *)str, len);
+  return(x);
 }
 
 
@@ -12043,8 +12055,6 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
  *              #f #f #f)                          ; length copy fill!
  *  (make-object <tag> value)
  *  (object? <tag> obj) or maybe (name? obj) and (make-name value)
- *
- * should probably add a list of methods (reverse, member, etc)
  */
 
 bool s7_is_function(s7_pointer p)  
@@ -12064,26 +12074,21 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   s7_func_t *ptr;
   int ftype = T_C_FUNCTION;
   s7_pointer x;
-  NEW_CELL(sc, x);
 
-  /* these are normally not gc'd (C-level function defs), but they can be in a few cases
-   *   (C-level redefinition as in the gmp case), and then we can't be certain they haven't
-   *   been protected as the value of some Scheme variable.  It saves about 1% overall
-   *   compute time (in s7test.scm) if we ignore those issues and use calloc here, rather
-   *   than new_cell.
-   */
+  x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  x->hloc = NOT_IN_HEAP;
 
-  ptr = (s7_func_t *)calloc(1, sizeof(s7_func_t));
+  ptr = (s7_func_t *)permanent_calloc(sizeof(s7_func_t));
   if ((required_args == 0) && (rest_arg) && (optional_args == 0))
     ftype = T_C_ANY_ARGS_FUNCTION;
-  set_type(x, ftype | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR);
-  /* these guys can be freed -- in Snd, for example, "random" is defined in C, but then later redefined in snd-test.scm */
+  set_type(x, ftype | T_ATOM | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR);
 
   c_function(x) = ptr;
   c_function_call(x) = f;
   c_function_name(x) = name;       /* (procedure-name proc) => (format #f "~A" proc); perhaps add this as a built-in function? */
   if (doc)
-    c_function_documentation(x) = s7_strdup(doc);
+    c_function_documentation(x) = make_permanent_string(doc);
+
   c_function_required_args(x) = required_args;
   c_function_optional_args(x) = optional_args;
   c_function_has_rest_arg(x) = rest_arg;
@@ -12092,14 +12097,6 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   else c_function_all_args(x) = required_args + optional_args;
 
   return(x);
-}
-
-
-static void s7_free_function(s7_pointer a)
-{
-  if (c_function_documentation(a))
-    free(c_function_documentation(a));
-  free(c_function(a));
 }
 
 
@@ -12223,7 +12220,7 @@ void s7_define_set_function(s7_scheme *sc, const char *name, s7_function fnc, in
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
   if ((required_args == 0) && (rest_arg) && (optional_args == 0))
     ftype = T_C_ANY_ARGS_FUNCTION;
-  set_type(func, ftype | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE | T_SETTER | T_DONT_COPY_CDR);
+  set_type(func, ftype | T_ATOM | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_SETTER | T_DONT_COPY_CDR);
   s7_define(sc, s7_global_environment(sc), s7_make_symbol(sc, name), func);
 }
 
@@ -12232,7 +12229,7 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
 {
   s7_pointer func;
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
-  set_type(func, T_C_MACRO | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE | T_ANY_MACRO | T_DONT_COPY_CDR);
+  set_type(func, T_C_MACRO | T_ATOM | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_ANY_MACRO | T_DONT_COPY_CDR);
   s7_define(sc, s7_global_environment(sc), s7_make_symbol(sc, name), func);
 }
 
@@ -12241,6 +12238,7 @@ void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, c
 {
   /* make an internal function of any args that calls fnc, then wrap it in define* and use eval_c_string */
   /* should (does) this ignore :key and other such noise? */
+
   char *internal_function, *internal_arglist;
   int arglist_len, len, args;
   const char *local_sym;
@@ -14268,6 +14266,7 @@ static int remember_file_name(const char *file)
 static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bool exit_eval)
 {
   int i;
+  bool reset_error_hook = false;
   s7_pointer catcher;
   catcher = sc->F;
 
@@ -14352,6 +14351,13 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  if (sc->trace_depth < 0) sc->trace_depth = 0;
 	  break;
 
+	case OP_ERROR_HOOK_QUIT:
+	  s7_symbol_set_value(sc, sc->ERROR_HOOK, stack_code(sc->stack, i));
+	  /* apparently there was an error during *error-hook* evaluation, but Rick wants the hook re-established anyway */
+	  reset_error_hook = true;
+	  /* avoid infinite loop -- don't try to (re-)evaluate (buggy) *error-hook*! */
+	  break;
+
 	default:
 	  break;
 	}
@@ -14378,14 +14384,16 @@ GOT_CATCH:
       s7_pointer error_hook, error_hook_binding;
 
       error_hook_binding = s7_find_symbol_in_environment(sc, sc->envir, sc->ERROR_HOOK, true);
-      if ((error_hook_binding != sc->NIL) &&
+
+      if ((!reset_error_hook) &&
+	  (error_hook_binding != sc->NIL) &&
 	  (is_procedure(symbol_value(error_hook_binding))))
 	{
 	  error_hook = symbol_value(error_hook_binding);
 	  set_symbol_value(error_hook_binding, sc->NIL);
 	  /* if the *error-hook* function triggers an error, we had better not have *error-hook* still set! */
 
-	  push_stack(sc, opcode(OP_ERROR_HOOK_QUIT), sc->NIL, error_hook); /* restore *error-hook* upon successful evaluation */
+	  push_stack(sc, opcode(OP_ERROR_HOOK_QUIT), sc->NIL, error_hook); /* restore *error-hook* upon successful (or any!) evaluation */
 	  sc->args = make_list_2(sc, type, info);
 	  sc->code = error_hook;
 	  sc->op = OP_APPLY;
