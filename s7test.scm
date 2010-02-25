@@ -1,4 +1,4 @@
-;;; R5RS test suite
+;;; s7 test suite
 ;;;
 ;;; sources include 
 ;;;   clisp test suite
@@ -52,6 +52,9 @@
 (define with-sort! #t)                                         ; sort! exists for both lists and vectors (needs random)
 (define with-generic-length #t)                                ; length accepts things other than lists
 (define with-vector-for-each #t)                               ; vector-for-each and vector-map are defined
+
+;;; these switches and all the dumb "display" calls in this file were originally
+;;;   for schemes that didn't have format and so on -- now I'm only interested in s7.
 
 
 (define our-pi 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930382)
@@ -227,16 +230,12 @@
 	      (and (number? result)
 		   (not (types-consistent? result))))
 	  (begin
-	    (display tst)
-	    (display " got ")
-	    (display result)
-	    (if (and (rational? result) (not (rational? expected)))
-		(begin
-		  (display " (")
-		  (display (exact->inexact result))
-		  (display ")" )))
-	    (display " but expected ")
-	    (display expected)
+	    (format #t "~A got ~A~Abut expected ~A" 
+		    tst result 
+		    (if (and (rational? result) (not (rational? expected)))
+			(format #f " (~A) " (exact->inexact result))
+			" ")
+		    expected)
 
 	    (if (defined? 'format) 
 		(begin
@@ -364,9 +363,7 @@
     (do ((j (+ i 1) (+ j 1)))
 	((= j (vector-length things)))
       (if (eq? (vector-ref things i) (vector-ref things j))
-	  (begin
-	    (display "(eq? ") (display (vector-ref things i)) (display " ") (display (vector-ref things j)) (display ") -> #t?") (newline))))))
-
+	  (format #t "(eq? ~A ~A) -> #t?~%" (vector-ref things i) (vector-ref things j))))))
 
 
 (test (eqv? 'a 3) #f)
@@ -416,9 +413,7 @@
     (do ((j (+ i 1) (+ j 1)))
 	((= j (vector-length things)))
       (if (eqv? (vector-ref things i) (vector-ref things j))
-	  (begin
-	    (display "(eqv? ") (display (vector-ref things i)) (display " ") (display (vector-ref things j)) (display ") -> #t?") (newline))))))
-
+	  (format #t "(eqv? ~A ~A) -> #t?~%" (vector-ref things i) (vector-ref things j))))))
 
 
 (test (equal? 'a 3) #f)
@@ -494,9 +489,7 @@
     (do ((j (+ i 1) (+ j 1)))
 	((= j (vector-length things)))
       (if (equal? (vector-ref things i) (vector-ref things j))
-	  (begin
-	    (display "(equal? ") (display (vector-ref things i)) (display " ") (display (vector-ref things j)) (display ") -> #t?") (newline))))))
-
+	  (format #t "(equal? ~A ~A) -> #t?~%" (vector-ref things i) (vector-ref things j))))))
 
 
 
@@ -23878,6 +23871,60 @@
 	    (test (> (imag-part 1.0+1.0F100i) 1.0e98) #t)
 	    ))
       ))
+
+(test (> (string->number "1.0L10") 1.0e9) #t)
+(test (> (string->number "1.0l10") 1.0e9) #t)
+(test (> (string->number "1.0s10") 1.0e9) #t)
+(test (> (string->number "1.0S10") 1.0e9) #t)
+(test (> (string->number "1.0d10") 1.0e9) #t)
+(test (> (string->number "1.0D10") 1.0e9) #t)
+(test (> (string->number "1.0f10") 1.0e9) #t)
+(test (> (string->number "1.0F10") 1.0e9) #t)
+
+(test (> 1.0L10 1.0e9) #t)
+(test (> 1.0l10 1.0e9) #t)
+(test (> 1.0s10 1.0e9) #t)
+(test (> 1.0S10 1.0e9) #t)
+(test (> 1.0d10 1.0e9) #t)
+(test (> 1.0D10 1.0e9) #t)
+(test (> 1.0f10 1.0e9) #t)
+(test (> 1.0F10 1.0e9) #t)
+
+(test (> (real-part (string->number "1.0L10+i")) 1.0e9) #t)
+(test (> (real-part (string->number "1.0l10+i")) 1.0e9) #t)
+(test (> (real-part (string->number "1.0s10+i")) 1.0e9) #t)
+(test (> (real-part (string->number "1.0S10+i")) 1.0e9) #t)
+(test (> (real-part (string->number "1.0d10+i")) 1.0e9) #t)
+(test (> (real-part (string->number "1.0D10+i")) 1.0e9) #t)
+(test (> (real-part (string->number "1.0f10+i")) 1.0e9) #t)
+(test (> (real-part (string->number "1.0F10+i")) 1.0e9) #t)
+
+(test (> (real-part 1.0L10+i) 1.0e9) #t)
+(test (> (real-part 1.0l10+i) 1.0e9) #t)
+(test (> (real-part 1.0s10+i) 1.0e9) #t)
+(test (> (real-part 1.0S10+i) 1.0e9) #t)
+(test (> (real-part 1.0d10+i) 1.0e9) #t)
+(test (> (real-part 1.0D10+i) 1.0e9) #t)
+(test (> (real-part 1.0f10+i) 1.0e9) #t)
+(test (> (real-part 1.0F10+i) 1.0e9) #t)
+
+(test (> (imag-part (string->number "1.0+1.0L10i")) 1.0e9) #t)
+(test (> (imag-part (string->number "1.0+1.0l10i")) 1.0e9) #t)
+(test (> (imag-part (string->number "1.0+1.0s10i")) 1.0e9) #t)
+(test (> (imag-part (string->number "1.0+1.0S10i")) 1.0e9) #t)
+(test (> (imag-part (string->number "1.0+1.0d10i")) 1.0e9) #t)
+(test (> (imag-part (string->number "1.0+1.0D10i")) 1.0e9) #t)
+(test (> (imag-part (string->number "1.0+1.0f10i")) 1.0e9) #t)
+(test (> (imag-part (string->number "1.0+1.0F10i")) 1.0e9) #t)
+
+(test (> (imag-part 1.0+1.0L10i) 1.0e9) #t)
+(test (> (imag-part 1.0+1.0l10i) 1.0e9) #t)
+(test (> (imag-part 1.0+1.0s10i) 1.0e9) #t)
+(test (> (imag-part 1.0+1.0S10i) 1.0e9) #t)
+(test (> (imag-part 1.0+1.0d10i) 1.0e9) #t)
+(test (> (imag-part 1.0+1.0D10i) 1.0e9) #t)
+(test (> (imag-part 1.0+1.0f10i) 1.0e9) #t)
+(test (> (imag-part 1.0+1.0F10i) 1.0e9) #t)
 
 (num-test (expt 10 0) 1)
 (num-test (expt -10 0) 1)

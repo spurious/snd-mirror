@@ -2640,6 +2640,61 @@ static void check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 }
 
 
+static void call_with_current_continuation(s7_scheme *sc)
+{
+  check_for_dynamic_winds(sc, sc->code);
+  sc->stack = copy_stack(sc, continuation_stack(sc->code), continuation_stack_top(sc->code));
+  sc->stack_size = continuation_stack_size(sc->code);
+  sc->stack_start = vector_elements(sc->stack);
+  sc->stack_end = (s7_pointer *)(sc->stack_start + continuation_stack_top(sc->code));
+  sc->stack_resize_trigger = (s7_pointer *)(sc->stack_start + sc->stack_size / 2);
+  if (sc->args == sc->NIL)
+    sc->value = sc->NIL;
+  else
+    {
+      if (cdr(sc->args) == sc->NIL)
+	sc->value = car(sc->args);
+      else sc->value = splice_in_values(sc, sc->args);
+    }
+}
+
+
+static void call_with_exit(s7_scheme *sc)
+{
+  int i, new_stack_top;
+  new_stack_top = (sc->code)->object.goto_loc;
+
+  /* look for dynamic-wind in the stack section that we are jumping out of */
+  for (i = s7_stack_top(sc) - 1; i > new_stack_top; i -= 4)
+    {
+      opcode_t op;
+      op = (opcode_t)stack_op(sc->stack, i);
+      if (op == OP_DYNAMIC_WIND)
+	{
+	  sc->z = stack_code(sc->stack, i);
+	  if (dynamic_wind_state(sc->z) == T_DWIND_BODY)
+	    {
+	      push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
+	      sc->args = sc->NIL;
+	      sc->code = dynamic_wind_out(sc->z);
+	      eval(sc, OP_APPLY);
+	    }
+	}
+      else
+	{
+	  if (op == OP_TRACE_RETURN)
+	    {
+	      sc->trace_depth--;
+	      if (sc->trace_depth < 0) sc->trace_depth = 0;
+	    }
+	}
+    }
+	    
+  sc->stack_end = (s7_pointer *)(sc->stack_start + new_stack_top);
+  sc->value = (sc->args != sc->NIL) ? car(sc->args) : sc->NIL;
+}
+
+
 static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_cc "(call-with-current-continuation ...) needs more than a one sentence explanation"
@@ -7434,8 +7489,13 @@ static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill)
   NEW_CELL(sc, x);
   set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
-  string_value(x) = (char *)malloc((len + 1) * sizeof(char));
-  memset((void *)(string_value(x)), fill, len);
+  if (fill == 0)
+    string_value(x) = (char *)calloc((len + 1), sizeof(char));
+  else
+    {
+      string_value(x) = (char *)malloc((len + 1) * sizeof(char));
+      memset((void *)(string_value(x)), fill, len);
+    }
   string_value(x)[len] = 0;
 
   string_length(x) = len;
@@ -9393,7 +9453,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   {
     char *buf;
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     (type(obj) < BUILT_IN_TYPES) ? s7_type_name(obj) : "none",
 	     typeflag(obj),
@@ -9405,6 +9465,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     is_immutable(obj) ? " immutable" : "",
 	     is_syntax(obj) ? " syntax" : "",
 	     dont_copy(obj) ? " dont-copy" : "",
+	     dont_copy_cdr(obj) ? "dont-copy-cdr" : "",
 	     ((typeflag(obj) & T_OBJECT) != 0) ? " obj" : "",
 	     is_finalizable(obj) ? " gc-finalize" : "",
 	     is_setter(obj) ? " setter" : "",
@@ -15039,6 +15100,63 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
 }
 
 
+static void next_object_for_each(s7_scheme *sc)
+{
+  /* func = sc->code, func-args = caddr(sc->args), counter = car(sc->args), len = cadr(sc->args), object(s) = cdddr(sc->args) */
+  s7_pointer x, y, vargs, fargs;
+  int loc;
+
+  vargs = cdddr(sc->args);
+  fargs = caddr(sc->args);
+  loc = s7_integer(car(sc->args));
+  sc->x = s7_cons(sc, car(sc->args), sc->NIL);
+
+  for (x = fargs, y = vargs; x != sc->NIL; x = cdr(x), y = cdr(y))
+    car(x) = (*(object_types[c_object_type(car(y))].apply))(sc, car(y), sc->x);
+
+  integer(number(car(sc->args))) = loc + 1;
+  push_stack(sc, opcode(OP_OBJECT_FOR_EACH), sc->args, sc->code);
+  sc->args = fargs;
+}
+
+
+static void next_vector_for_each(s7_scheme *sc)
+{
+  s7_pointer x, y, vargs, fargs;
+  int loc;
+  /* next loop iteration */
+
+  vargs = cdddr(sc->args);
+  fargs = caddr(sc->args);
+  loc = s7_integer(car(sc->args));
+  for (x = fargs, y = vargs; x != sc->NIL; x = cdr(x), y = cdr(y))
+    car(x) = vector_element(car(y), loc);   /* make func's arglist */
+
+  integer(number(car(sc->args))) = loc + 1;
+  push_stack(sc, opcode(sc->op), sc->args, sc->code);
+  sc->args = fargs;
+}
+
+
+static void next_string_for_each(s7_scheme *sc)
+{
+  /* func = sc->code, func-args = caddr(sc->args), counter = car(sc->args), len = cadr(sc->args), string(s) = cdddr(sc->args) */
+  s7_pointer x, y, vargs, fargs;
+  int loc;
+
+  vargs = cdddr(sc->args);
+  fargs = caddr(sc->args);
+  loc = s7_integer(car(sc->args));
+  for (x = fargs, y = vargs; x != sc->NIL; x = cdr(x), y = cdr(y))
+    car(x) = s7_make_character(sc, string_value(car(y))[loc]);
+
+  integer(number(car(sc->args))) = loc + 1;
+  push_stack(sc, opcode(OP_STRING_FOR_EACH), sc->args, sc->code);
+  sc->args = fargs;
+}
+
+
+
 
 /* -------------------------------- multiple-values -------------------------------- */
 
@@ -15923,22 +16041,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* func = sc->code, func-args = caddr(sc->args), counter = car(sc->args), len = cadr(sc->args), vector(s) = cdddr(sc->args) */
       if (s7_integer(car(sc->args)) < s7_integer(cadr(sc->args)))
 	{
-	  s7_pointer x, y, vargs, fargs;
-	  int loc;
-	  /* next loop iteration */
-
-	  vargs = cdddr(sc->args);
-	  fargs = caddr(sc->args);
-	  loc = s7_integer(car(sc->args));
-	  for (x = fargs, y = vargs; x != sc->NIL; x = cdr(x), y = cdr(y))
-	    car(x) = vector_element(car(y), loc);   /* make func's arglist */
-
-	  integer(number(car(sc->args))) = loc + 1;
-	  push_stack(sc, opcode(sc->op), sc->args, sc->code);
-	  sc->args = fargs;
+	  next_vector_for_each(sc);
 	  goto APPLY;
 	}
-      
       /* loop done */
       sc->value = sc->UNSPECIFIED;
       pop_stack(sc);
@@ -15987,24 +16092,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_STRING_FOR_EACH:
-      /* func = sc->code, func-args = caddr(sc->args), counter = car(sc->args), len = cadr(sc->args), string(s) = cdddr(sc->args) */
       if (s7_integer(car(sc->args)) < s7_integer(cadr(sc->args)))
 	{
-	  s7_pointer x, y, vargs, fargs;
-	  int loc;
-
-	  vargs = cdddr(sc->args);
-	  fargs = caddr(sc->args);
-	  loc = s7_integer(car(sc->args));
-	  for (x = fargs, y = vargs; x != sc->NIL; x = cdr(x), y = cdr(y))
-	    car(x) = s7_make_character(sc, string_value(car(y))[loc]);
-
-	  integer(number(car(sc->args))) = loc + 1;
-	  push_stack(sc, opcode(OP_STRING_FOR_EACH), sc->args, sc->code);
-	  sc->args = fargs;
+	  next_string_for_each(sc);
 	  goto APPLY;
 	}
-      
       sc->value = sc->UNSPECIFIED;
       pop_stack(sc);
       goto START;
@@ -16014,23 +16106,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* func = sc->code, func-args = caddr(sc->args), counter = car(sc->args), len = cadr(sc->args), object(s) = cdddr(sc->args) */
       if (s7_integer(car(sc->args)) < s7_integer(cadr(sc->args)))
 	{
-	  s7_pointer x, y, vargs, fargs;
-	  int loc;
-
-	  vargs = cdddr(sc->args);
-	  fargs = caddr(sc->args);
-	  loc = s7_integer(car(sc->args));
-	  sc->x = s7_cons(sc, car(sc->args), sc->NIL);
-
-	  for (x = fargs, y = vargs; x != sc->NIL; x = cdr(x), y = cdr(y))
-	    car(x) = (*(object_types[c_object_type(car(y))].apply))(sc, car(y), sc->x);
-
-	  integer(number(car(sc->args))) = loc + 1;
-	  push_stack(sc, opcode(OP_OBJECT_FOR_EACH), sc->args, sc->code);
-	  sc->args = fargs;
+	  next_object_for_each(sc);
 	  goto APPLY;
 	}
-      
       sc->value = sc->UNSPECIFIED;
       pop_stack(sc);
       goto START;
@@ -16581,61 +16659,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto BEGIN;
 	  }
 		
-	case T_CONTINUATION:	                  /* -------- continuation ("call-with-continuation") -------- */
-	  {
-	    check_for_dynamic_winds(sc, sc->code);
-	    sc->stack = copy_stack(sc, continuation_stack(sc->code), continuation_stack_top(sc->code));
-	    sc->stack_size = continuation_stack_size(sc->code);
-	    sc->stack_start = vector_elements(sc->stack);
-	    sc->stack_end = (s7_pointer *)(sc->stack_start + continuation_stack_top(sc->code));
-	    sc->stack_resize_trigger = (s7_pointer *)(sc->stack_start + sc->stack_size / 2);
-	    if (sc->args == sc->NIL)
-	      sc->value = sc->NIL;
-	    else
-	      {
-		if (cdr(sc->args) == sc->NIL)
-		  sc->value = car(sc->args);
-		else sc->value = splice_in_values(sc, sc->args);
-	      }
-	    pop_stack(sc);
-	    goto START;
-	  }
+	case T_CONTINUATION:	                  /* -------- continuation ("call-with-current-continuation") -------- */
+	  call_with_current_continuation(sc);
+	  pop_stack(sc);
+	  goto START;
 
 	case T_GOTO:	                          /* -------- goto ("call-with-exit") -------- */
-	  {
-	    int i, new_stack_top;
-	    new_stack_top = (sc->code)->object.goto_loc;
-	    /* look for dynamic-wind in the stack section that we are jumping out of */
-	    for (i = s7_stack_top(sc) - 1; i > new_stack_top; i -= 4)
-	      {
-		opcode_t op;
-		op = (opcode_t)stack_op(sc->stack, i);
-		if (op == OP_DYNAMIC_WIND)
-		  {
-		    sc->z = stack_code(sc->stack, i);
-		    if (dynamic_wind_state(sc->z) == T_DWIND_BODY)
-		      {
-			push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
-			sc->args = sc->NIL;
-			sc->code = dynamic_wind_out(sc->z);
-			eval(sc, OP_APPLY);
-		      }
-		  }
-		else
-		  {
-		    if (op == OP_TRACE_RETURN)
-		      {
-			sc->trace_depth--;
-			if (sc->trace_depth < 0) sc->trace_depth = 0;
-		      }
-		  }
-	      }
-	    
-	    sc->stack_end = (s7_pointer *)(sc->stack_start + new_stack_top);
-	    sc->value = (sc->args != sc->NIL) ? car(sc->args) : sc->NIL;
-	    pop_stack(sc);
-	    goto START;
-	  }
+	  call_with_exit(sc);
+	  pop_stack(sc);
+	  goto START;
 
 	case T_C_OBJECT:	                  /* -------- applicable object -------- */
 	  sc ->value = s7_apply_object(sc, sc->code, sc->args);

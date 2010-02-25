@@ -1037,9 +1037,14 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
       prescaling = (float)(fd->prescaler * MUS_FLOAT_TO_SAMPLE(1.0));
       /* not MUS_FLOAT_TO_SAMPLE(fd->prescaler) here because there's a possible cast to int which can overflow */
 
+#if 0
       if (ur_charbuf == NULL) 
 	ur_charbuf = (char *)calloc(BUFLIM, sizeof(char)); 
       else memset((void *)ur_charbuf, 0, BUFLIM);
+#else
+      if (ur_charbuf == NULL) 
+	ur_charbuf = (char *)malloc(BUFLIM * sizeof(char)); 
+#endif
       charbuf = ur_charbuf;
     }
   else
@@ -1834,23 +1839,22 @@ int mus_snprintf(char *buffer, int buffer_len, const char *format, ...)
 }
 
 
-#define MUS_FORMAT_STRING_MAX 1024
-
 char *mus_format(const char *format, ...)
 {
   /* caller should free result */
-  char *buf = NULL, *rtn = NULL;
+  #define MUS_FORMAT_BUFFER_SIZE 256
+  char *buf = NULL;
   int needed_bytes = 0;
   va_list ap;
-  buf = (char *)calloc(MUS_FORMAT_STRING_MAX, sizeof(char));
+  buf = (char *)calloc(MUS_FORMAT_BUFFER_SIZE, sizeof(char));
   va_start(ap, format);
 #if HAVE_VSNPRINTF
-  needed_bytes = vsnprintf(buf, MUS_FORMAT_STRING_MAX, format, ap);
+  needed_bytes = vsnprintf(buf, MUS_FORMAT_BUFFER_SIZE, format, ap);
 #else
   needed_bytes = vsprintf(buf, format, ap);
 #endif
   va_end(ap);
-  if (needed_bytes > MUS_FORMAT_STRING_MAX)
+  if (needed_bytes > MUS_FORMAT_BUFFER_SIZE)
     {
       free(buf);
       buf = (char *)calloc(needed_bytes + 1, sizeof(char));
@@ -1862,9 +1866,7 @@ char *mus_format(const char *format, ...)
 #endif
       va_end(ap);
     }
-  rtn = mus_strdup(buf);
-  free(buf);
-  return(rtn);
+  return(buf);
 }
 
 

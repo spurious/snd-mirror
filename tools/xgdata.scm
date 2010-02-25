@@ -7079,8 +7079,6 @@
 
 ;;; 2.19.6
 #|
-+ void           gdk_keymap_add_virtual_modifiers    (GdkKeymap           *keymap,
-+                                                     GdkModifierType     *state);
-+ void                  gtk_widget_get_requisition        (GtkWidget     *widget,
-+                                                          GtkRequisition *requisition);
+(CFUNC-2190 "void gdk_keymap_add_virtual_modifiers GdkKeymap* keymap GdkModifierType* state")
+(CFUNC-2190 "void gtk_widget_get_requisition GtkWidget* widget GtkRequisition* requisition")
 |#

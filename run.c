@@ -408,7 +408,7 @@ typedef struct {
 } xen_value;
 
 typedef struct {
-  char *name;
+  const char *name;
   xen_value *v;
   bool global, unclean, unsettable;
 } xen_var;
@@ -1522,7 +1522,6 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 		}
 	    }
 	}
-      if (var->name) free(var->name);
       if (var->v) free(var->v);
       free(var);
     }
@@ -2058,7 +2057,7 @@ static xen_var *new_xen_var(const char *name, xen_value *v)
 {
   xen_var *var;
   var = (xen_var *)calloc(1, sizeof(xen_var));
-  var->name = mus_strdup(name);
+  var->name = name; /* this s7_symbol_name isn't going to be deallocated during a run */
   var->v = copy_xen_value(v);
   var->unclean = false;
   var->global = false;

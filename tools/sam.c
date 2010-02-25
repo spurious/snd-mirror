@@ -38,6 +38,7 @@
  *
  *
  * Thanks to Michael McNabb for bug fixes and enhancements!
+ * And thanks to Peter Samson for going back to the schematics to answer our questions!
  */
 
 #include <stdlib.h>
@@ -678,11 +679,20 @@ static double mod_read(int addr)
     case 0: return(gen_ins[A]);
     case 1: return(mod_ins[A]);
     case 2: return(mod_outs[A]);
+
+    case 3: 
+      /* "reserved", but it seems to happen in MARS.SAM, and Pete says:
+       *
+       * "Thanks to Al Kossow of the Computer History Museum for putting scans   
+       *  of the (preliminary) synthesizer schematics and the theory-of- 
+       *  operation manual up on bitsavers.org. 
+       *
+       *  It appears that QQ=3 will work the same as QQ=1, i.e. modifier last   
+       *  pass quadrant."
+       */
+      return(mod_ins[A]);
     }
 
-  /* this is happening a lot in MARS.SAM?
-  fprintf(stderr, "bad MIN/MRM: %d\n", addr);
-  */
   return(0);
 }
 
