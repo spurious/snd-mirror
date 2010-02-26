@@ -4519,7 +4519,7 @@ static char *s7_number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int r
 	s7_Int int_part;
 	s7_Double x, frac_part, min_frac, base;
 	bool sign = false;
-	char n[128];
+	char n[128], d[256];
 
 	x = s7_real(obj);
 	if (x < 0.0)
@@ -4533,8 +4533,6 @@ static char *s7_number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int r
 	int_part = (s7_Int)floor(x);
 	frac_part = x - int_part;
 	s7_Int_to_string(n, int_part, radix, 0);
-
-	d = (char *)malloc((precision + 1) * sizeof(char));
 	min_frac = (s7_Double)pow((s7_Double)radix, (s7_Double)(-precision));
 
 	for (i = 0, base = radix; (i < precision) && (frac_part > min_frac); i++, base *= radix)
@@ -4553,7 +4551,6 @@ static char *s7_number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int r
 	d[i] = '\0';
 	p = (char *)malloc(256 * sizeof(char));
 	snprintf(p, 256, "%s%s.%s", (sign) ? "-" : "", n, d);
-	free(d);
       }
       break;
 

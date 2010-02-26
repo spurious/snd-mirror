@@ -7937,6 +7937,24 @@
 
       (test (let ((sum 0)) (do* ((i 0 (+ i 1)) (j i (+ i 1))) ((= i 3) sum) (set! sum (+ sum j)))) 5)
 
+      ;; define** treats args before :optional as required args
+      (define-macro (define** declarations . forms)
+	(let ((name (car declarations))
+	      (args (cdr declarations)))
+	  (define (position thing lst count)
+	    (if (null? lst)
+		#f
+		(if (eq? thing (car lst))
+		    count
+		    (position thing (cdr lst) (+ count 1)))))
+	  (let ((required-args (position :optional args 0)))
+	    (if required-args
+		`(define* (,name . func-args)
+		   (if (< (length func-args) ,required-args)
+		       (error "~A requires at least ~D args: ~A" ',name ,required-args func-args)
+		       (apply (lambda* ,args ,@forms) func-args)))
+		`(define* ,declarations ,@forms)))))
+
       (let ()
 
 	;; some common lispisms

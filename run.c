@@ -346,7 +346,7 @@ static const char *basic_type_names[BUILT_IN_TYPES] = {"unspecified", "int", "fl
 static void init_type_names(void)
 {
   int i;
-  type_names = (const char **)calloc(BUILT_IN_TYPES, sizeof(char *));
+  type_names = (const char **)malloc(BUILT_IN_TYPES * sizeof(char *));
   for (i = 0; i < BUILT_IN_TYPES; i++)
     type_names[i] = basic_type_names[i];
 }
@@ -559,7 +559,7 @@ static triple *free_triple(triple *trp)
 static xen_value *make_xen_value(int typ, int address, xen_value_constant_t constant)
 {
   xen_value *v;
-  v = (xen_value *)calloc(1, sizeof(xen_value));
+  v = (xen_value *)malloc(sizeof(xen_value));
   v->type = typ;
   v->addr = address;
   v->constant = constant;
@@ -749,7 +749,7 @@ static char *describe_triple(triple *trp, ptree *pt)
 	{
 	  int i, size = 0;
 	  char **descrs;
-	  descrs = (char **)calloc(trp->num_args, sizeof(char *));
+	  descrs = (char **)malloc(trp->num_args * sizeof(char *));
 	  for (i = 0; i < trp->num_args; i++)
 	    {
 	      descrs[i] = describe_xen_value_with_var_name(trp->types[i], trp->args[i], pt);
