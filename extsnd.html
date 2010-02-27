@@ -4908,10 +4908,9 @@ We can use <a href="sndscm.html#dlocsigdoc">dlocsig</a> in conjunction with mix 
 		              (beg (cadr vals))
 		              (end (caddr vals)))
 	                (run
-		         (lambda ()
-		           (do ((i beg (+ 1 i)))
-		               ((= i end))
-		             (<em class=red>dlocsig</em> dloc i (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> rd)))))))))
+		         (do ((i beg (+ 1 i)))
+		             ((= i end))
+		           (<em class=red>dlocsig</em> dloc i (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> rd))))))))
 
          ;; now tmp-sound is the name of a temp sound file that moves 'file' in a spiral
 
@@ -8438,10 +8437,9 @@ of the speed of CL+run+C in CLM.  Currently, only s7 supports this optimization.
 (define (ws-sine freq)
   (let ((o (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> freq)))
     (<em class=red>run</em>
-     (lambda ()
-       (do ((i 0 (+ 1 i)))
-	   ((= i 100))
-	 (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> o)))))))
+     (do ((i 0 (+ 1 i)))
+         ((= i 100))
+       (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> o))))))
 </pre></td></tr></table>
 
 <A NAME="declare"></A>
@@ -8450,14 +8448,14 @@ So, the following code
 displays "0", rather than "3.14":
 
 <pre>
-  (run (lambda () (let ((x 3.14)) (define (a b) (display b)) (a x))))
+  (run (let ((x 3.14)) (define (a b) (display b)) (a x)))
 </pre>
 
 The "b" argument to "a" is assumed to be an integer, and passing in a float 
 causes nothing but confusion.  To get this code to work right:
 
 <pre>
-  (run (lambda () (let ((x 3.14)) (define (a b) (<em class=red>declare</em> (b real)) (display b)) (a x))))
+  (run (let ((x 3.14)) (define (a b) (<em class=red>declare</em> (b real)) (display b)) (a x)))
 </pre>
 
 The current declarable types include any <a href="sndscm.html#def-clm-struct">def-clm-struct</a> type and:
@@ -8864,12 +8862,12 @@ it's probably simpler to use <a href="sndscm.html#withsound">with-sound</a> (see
 	 (s (<a class=quiet href="sndclm.html#make-src" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_src_tip)">make-src</a> :srate 0.0))
 	 (incr (+ 2.0 (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> o)))	  
 	 (tempfile (<em class=red>with-sound</em> (:output (<a class=quiet href="#sndtempnam" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndtempnam_tip)">snd-tempnam</a>) :srate (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>) :to-snd #f)
-		     (<a class=quiet href="sndscm.html#run" onmouseout="UnTip()" onmouseover="Tip(sndscm_run_tip)">run</a> (lambda ()
-			    (do ((samp 0 (+ 1 samp)))
-				((or (c-g?) (<a class=quiet href="#sampleratendQ" onmouseout="UnTip()" onmouseover="Tip(extsnd_sampleratendQ_tip)">sampler-at-end?</a> rd)))
-			      (<a class=quiet href="sndclm.html#out-any" onmouseout="UnTip()" onmouseover="Tip(sndclm_out_any_tip)">out-any</a> samp (<a class=quiet href="sndclm.html#src" onmouseout="UnTip()" onmouseover="Tip(sndclm_src_tip)">src</a> s incr (lambda (dir) (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> rd))) 0)
+		     (<a class=quiet href="sndscm.html#run" onmouseout="UnTip()" onmouseover="Tip(sndscm_run_tip)">run</a>
+			  (do ((samp 0 (+ 1 samp)))
+			      ((or (c-g?) (<a class=quiet href="#sampleratendQ" onmouseout="UnTip()" onmouseover="Tip(extsnd_sampleratendQ_tip)">sampler-at-end?</a> rd)))
+			    (<a class=quiet href="sndclm.html#out-any" onmouseout="UnTip()" onmouseover="Tip(sndclm_out_any_tip)">out-any</a> samp (<a class=quiet href="sndclm.html#src" onmouseout="UnTip()" onmouseover="Tip(sndclm_src_tip)">src</a> s incr (lambda (dir) (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> rd))) 0)
 			      (if (= (modulo samp 2205) 0)
-				  (set! incr (+ 2.0 (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> o)))))))))
+				  (set! incr (+ 2.0 (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> o))))))))
 	 (len (<a class=quiet href="#mussoundframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundframes_tip)">mus-sound-frames</a> tempfile)))
     (<em class=red>set-samples</em> 0 (- len 1) tempfile #f #f #t "step-src" 0 #f #t)))
 </pre></td></tr></table>

@@ -26011,22 +26011,24 @@ EDITS: 2
 				     #f ;no change to analysis
 				     (lambda (v)
 					; new editing func changes pitch
-				       (let* ((N (mus-length v)) ;mus-increment => interp, mus-data => in-data
-					      (D (mus-hop v))
-					      (freqs (phase-vocoder-freqs v)))
-					 (do ((k 0 (+ 1 k))
-					      (pscl (/ 1.0 D))
-					      (kscl (/ pi2 N)))
-					     ((= k (inexact->exact (floor (/ N 2)))))
-					   (let ((phasediff (- (vct-ref freqs k) (vct-ref lastphases k))))
-					     (vct-set! lastphases k (vct-ref freqs k))
-					     (if (> phasediff pi) (do () ((<= phasediff pi)) (set! phasediff (- phasediff pi2))))
-					     (if (< phasediff (- pi)) (do () ((>= phasediff (- pi))) (set! phasediff (+ phasediff pi2))))
-					     (vct-set! freqs k 
-						       (* 0.5
-							  (+ (* pscl phasediff)
-							     (* k kscl))))))
-					 #f))
+				       (run
+					(lambda ()
+					  (let* ((N (mus-length v)) ;mus-increment => interp, mus-data => in-data
+						 (D (mus-hop v))
+						 (freqs (phase-vocoder-freqs v)))
+					    (do ((k 0 (+ 1 k))
+						 (pscl (/ 1.0 D))
+						 (kscl (/ pi2 N)))
+						((= k (inexact->exact (floor (/ N 2)))))
+					      (let ((phasediff (- (vct-ref freqs k) (vct-ref lastphases k))))
+						(vct-set! lastphases k (vct-ref freqs k))
+						(if (> phasediff pi) (do () ((<= phasediff pi)) (set! phasediff (- phasediff pi2))))
+						(if (< phasediff (- pi)) (do () ((>= phasediff (- pi))) (set! phasediff (+ phasediff pi2))))
+						(vct-set! freqs k 
+							  (* 0.5
+							     (+ (* pscl phasediff)
+								(* k kscl))))))
+					    #f))))
 				     #f ; no change to synthesis
 				     ))
 	(set! reader (make-sampler 0))

@@ -51,44 +51,44 @@
 			  ))))
     (ws-interrupt?) ;;does this really belong here?
     (run
-     (lambda ()
-       (do ((i beg (1+ i)))
-	   ((= i end))
-	 (if (= dx dt);;when current sample is a breakpoint
-	     (begin
-	       (set! dx (inexact->exact (vct-ref xy-array (modulo m xy-array-l))))
-	       (set! y (vct-ref xy-array (+ (modulo m xy-array-l) 1)))
-	       (set! prev-dx (inexact->exact (vct-ref xy-array (modulo (- m 2) xy-array-l))))
-	       (set! dy (- y oldy))
-	       (set! oldy y)
-	       ;;straight uniform distribution for y
-	       (set! ydev (round (* (- 1.0 (random 2.0)) (* .01 b ywig))))
-	       ;;gaussian distribution for x
-	       (set! xdev 
-		     (* xstep (round 
-			       (* xwig 
-				  (* (sqrt (* -2.0 (log (- 1 (random 1.0)))))
-				     (cos (* 6.283185307179586 (random 1.0))))))))
-	       (vct-set! xy-array (modulo m xy-array-l)
-			 ;;mirror stuff for x
-			 (cond ((or  (< (round xmax) (+ dx xdev))
-				     (> (round xmin)(+ dx xdev)))
-				(max (min ;;this mirror is attentuated
-				      (round (+ (* xfb prev-dx) (* (- 1  xfb) (+ dx (- xdev)))))
-				      (round xmax))
-				     (round xmin)))
-			       (else (round (+ (* xfb prev-dx)
-					       (* (- 1  xfb) (+ dx xdev)))))))
-	       (vct-set! xy-array (+ (modulo m xy-array-l) 1)
-			 ;;mirror stuff for y 
-			 (cond ((or (< b (+ y ydev)) (> (- b) (+ y ydev)))
-				(max (min (+ y (- ydev)) b) (- b)))
-			       (else (+ y ydev))))
-	       (set! m (+ m 2))
-	       (set! dt 0)))
-	 (set! dt (+ 1 dt))
-	 (set! j (+ j (/ dy dx)));linear interpolation
-	 (set! output (/ j b));normalization -1 to 1
-	 (outa i (* amp output (env d-click))))))))
-
+     (do ((i beg (1+ i)))
+	 ((= i end))
+       (if (= dx dt);;when current sample is a breakpoint
+	   (begin
+	     (set! dx (inexact->exact (vct-ref xy-array (modulo m xy-array-l))))
+	     (set! y (vct-ref xy-array (+ (modulo m xy-array-l) 1)))
+	     (set! prev-dx (inexact->exact (vct-ref xy-array (modulo (- m 2) xy-array-l))))
+	     (set! dy (- y oldy))
+	     (set! oldy y)
+	     ;;straight uniform distribution for y
+	     (set! ydev (round (* (- 1.0 (random 2.0)) (* .01 b ywig))))
+	     ;;gaussian distribution for x
+	     (set! xdev 
+		   (* xstep (round 
+			     (* xwig 
+				(* (sqrt (* -2.0 (log (- 1 (random 1.0)))))
+				   (cos (* 6.283185307179586 (random 1.0))))))))
+	     (vct-set! xy-array (modulo m xy-array-l)
+		       ;;mirror stuff for x
+		       (cond ((or  (< (round xmax) (+ dx xdev))
+				   (> (round xmin)(+ dx xdev)))
+			      (max (min ;;this mirror is attentuated
+				    (round (+ (* xfb prev-dx) (* (- 1  xfb) (+ dx (- xdev)))))
+				    (round xmax))
+				   (round xmin)))
+			     (else (round (+ (* xfb prev-dx)
+					     (* (- 1  xfb) (+ dx xdev)))))))
+	     (vct-set! xy-array (+ (modulo m xy-array-l) 1)
+		       ;;mirror stuff for y 
+		       (cond ((or (< b (+ y ydev)) (> (- b) (+ y ydev)))
+			      (max (min (+ y (- ydev)) b) (- b)))
+			     (else (+ y ydev))))
+	     (set! m (+ m 2))
+	     (set! dt 0)))
+       (set! dt (+ 1 dt))
+       (set! j (+ j (/ dy dx)));linear interpolation
+       (set! output (/ j b));normalization -1 to 1
+       (outa i (* amp output (env d-click))))))
+  
 ;(with-sound (:statistics #t)(stochastic 0 10 :xwig .25 :ywig 10.0))
+  

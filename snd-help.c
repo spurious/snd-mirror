@@ -493,6 +493,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+27-Feb:  the run macro's argument no longer has to be a thunk.\n\
 11-Feb:  Snd 11.3.\n\
 9-Feb:   removed NLS support (the po directory and so on).\n\
 8-Feb:   moved sound|channel|mix|mark|edit-property to C.\n\

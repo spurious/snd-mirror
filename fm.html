@@ -579,10 +579,9 @@ the 15 main components, with their sum in black:
 
       (let ((gen (make-polyoid freq cur-phases)))
 	(run 
-	 (lambda ()
-	   (do ((i 0 (+ 1 i)))
-	       ((= i 88200))
-	     (outa i (polyoid gen 0.0)))))))))
+	 (do ((i 0 (+ 1 i)))
+	     ((= i 88200))
+	   (outa i (polyoid gen 0.0))))))))
 
 (with-sound (:output "test1.snd")
   (let* ((cgen (make-oscil 1000))
@@ -700,12 +699,11 @@ Just for completeness, here's a derivation following Gray and Mathews, "A Treati
          (ampf (make-env index-env :scaler amp :duration dur)) 
          (indf (make-env index-env :scaler fm-index :duration dur)))
     (run
-     (lambda ()
-       (do ((i start (+ 1 i)))
-	   ((= i end))
-	 (outa i (* (env ampf)                       ; amplitude env
-                    (oscil cr (* (env indf)          ; carrier + modulation env
-                                 (oscil md)))))))))) ; modulation
+     (do ((i start (+ 1 i)))
+         ((= i end))
+       (outa i (* (env ampf)                       ; amplitude env
+                  (oscil cr (* (env indf)          ; carrier + modulation env
+                               (oscil md)))))))))  ; modulation
 </pre>
 <!-- -->
 </td></tr></table>
@@ -1085,11 +1083,10 @@ instrument:
 	 (cr (make-oscil freq))
 	 (md (make-oscil freq mod-phase)))
     (run
-     (lambda ()
-       (do ((i start (+ 1 i)))
-	   ((= i end))
-	 (outa i (* amp (oscil cr 0.0 
-                          (* fm-index (oscil md))))))))))
+     (do ((i start (+ 1 i)))
+         ((= i end))
+       (outa i (* amp (oscil cr 0.0 
+                        (* fm-index (oscil md)))))))))
 
 (with-sound () (pm 0 1.0 100 .5 8 0))
 (with-sound () (pm 0 1.0 100 .5 8 (* .5 pi)))
@@ -1145,10 +1142,9 @@ CLM instrument that shows this (subtle) effect:
 	 (md (make-oscil (* freq mc-ratio)))
 	 (skewf (make-env (list 0.0 0.0 1.0 pi) :duration dur)))
     (run
-     (lambda ()
-       (do ((i start (+ 1 i)))
-	   ((= i end))
-        (outa i (* amp (oscil cr 0.0 (* index (oscil md 0.0 (env skewf)))))))))))
+     (do ((i start (+ 1 i)))
+         ((= i end))
+      (outa i (* amp (oscil cr 0.0 (* index (oscil md 0.0 (env skewf))))))))))
 
 (with-sound () (fm 0 2 100 0.5 1.0 30.0))
 </pre>
@@ -1249,11 +1245,10 @@ examples which come from a collection of "imaginary machines":
 	 (frqf (make-env (if (&gt; gliss 0.0) '(0 0 1 1) '(0 1 1 0)) 
                  :duration dur :scaler (hz-&gt;radians (abs gliss)))))
     (run 
-     (lambda ()
-       (do ((i start (+ 1 i)))
-	   ((= i stop)) 
-	 (set! (fmssb-index gen) (env indf))
-	 (outa i (* (env ampf) (fmssb gen (env frqf)))))))))
+     (do ((i start (+ 1 i)))
+         ((= i stop)) 
+       (set! (fmssb-index gen) (env indf))
+       (outa i (* (env ampf) (fmssb gen (env frqf))))))))
 
 (with-sound (:play #t)
   (do ((i 0.0 (+ i .2)))
@@ -1272,12 +1267,11 @@ examples which come from a collection of "imaginary machines":
 	(ampf (make-env '(0 0 1 1 11 1 12 0) :duration 11.0 :scaler .5))
 	(frqf (make-env '(0 0 1 1 2 0 10 0 11 1 12 0 20 0) :duration 11.0 :scaler (hz-&gt;radians 1.0))))
     (run 
-     (lambda ()
-       (do ((i 0 (+ 1 i)))
-	   ((= i (* 12 44100)))
-	 (outa i (* (env ampf) 
-		    (+ (rkoddssb gen1 (env frqf))
-		       (* .2 (sin (rkoddssb gen (rand noi)))))))))))
+     (do ((i 0 (+ 1 i)))
+         ((= i (* 12 44100)))
+       (outa i (* (env ampf) 
+	          (+ (rkoddssb gen1 (env frqf))
+		     (* .2 (sin (rkoddssb gen (rand noi))))))))))
   (do ((i 0.0 (+ i 2)))
       ((&gt;= i 10.0))
     (machine1 i 3 100 700 0.5 4.0 0.0)
@@ -1316,10 +1310,9 @@ any exponential in the numerator, so we can get many interesting effects: moving
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (let ((gen (make-rxyk!cos 1000 100 2)))
     (run 
-     (lambda ()
-       (do ((i 0 (+ 1 i)))
-	   ((= i 10000))
-	 (outa i (rxyk!cos gen 0.0)))))))
+     (do ((i 0 (+ 1 i)))
+         ((= i 10000))
+       (outa i (rxyk!cos gen 0.0))))))
 -->
 
 <p>
@@ -1502,14 +1495,13 @@ In general:
       (vector-set! modulators i (make-oscil (* freq (list-ref mc-ratios i)) (list-ref mod-phases i)))
       (vct-set! fm-indices i (hz-&gt;radians (* freq (list-ref indexes i) (list-ref mc-ratios i)))))
     (run
-     (lambda ()
-       (do ((i start (+ 1 i)))
-	   ((= i end))
-	 (let ((sum 0.0))
-	   (do ((k 0 (+ 1 k)))
-	       ((= k n))
-	     (set! sum (+ sum (* (vct-ref fm-indices k) (oscil (vector-ref modulators k))))))
-	   (outa i (* amp (oscil cr sum)))))))))
+     (do ((i start (+ 1 i)))
+         ((= i end))
+       (let ((sum 0.0))
+	 (do ((k 0 (+ 1 k)))
+	     ((= k n))
+	   (set! sum (+ sum (* (vct-ref fm-indices k) (oscil (vector-ref modulators k))))))
+	 (outa i (* amp (oscil cr sum))))))))
 
 (with-sound () (fm 0 2.0 440 .3 '(1 3 4) '(1.0 0.5 0.1) 0.0 '(0.0 0.0 0.0)))
 </pre>
@@ -1639,16 +1631,15 @@ A pared down version of the fm-violin is:
          (pervib (make-triangle-wave 5 :amplitude (* .0025 frq-scl)))
          (ranvib (make-rand-interp 16 :amplitude (* .005 frq-scl))))
     (run
-     (lambda ()
-       (do ((i start (+ 1 i)))
-	   ((= i end))
-	 (let ((vib (+ (triangle-wave pervib) (rand-interp ranvib))))
-	   (outa i (* (env ampf)
-		      (oscil carrier
-			     (+ vib 
-				(* (env indf1) (oscil fmosc1 vib))
-				(* (env indf2) (oscil fmosc2 (* 3.0 vib)))
-				(* (env indf3) (oscil fmosc3 (* 4.0 vib)))))))))))))
+     (do ((i start (+ 1 i)))
+         ((= i end))
+       (let ((vib (+ (triangle-wave pervib) (rand-interp ranvib))))
+	 (outa i (* (env ampf)
+	            (oscil carrier
+		           (+ vib 
+			      (* (env indf1) (oscil fmosc1 vib))
+			      (* (env indf2) (oscil fmosc2 (* 3.0 vib)))
+			      (* (env indf3) (oscil fmosc3 (* 4.0 vib))))))))))))
 
 (with-sound () (violin 0 1.0 440 .1 1.0))
 </pre>
@@ -1694,20 +1685,19 @@ set of initial phases that minimizes the modulating signal's peak amplitude:
       (set! (mods2 i) (make-oscil (* (+ i 1) freq) (* pi (phases i)))))
 
     (run 
-     (lambda ()
-       (do ((i 0 (+ i 1 ))) 
-	   ((= i 441000))
-	 (let ((mod1 0.0)
-	       (mod2 0.0))
-	   (do ((k 0 (+ k 1)))
-	       ((= k n))
-	     (set! mod1 (+ mod1 (oscil (vector-ref mods1 k))))
-	     (set! mod2 (+ mod2 (oscil (vector-ref mods2 k)))))
-	   (outa i (/ mod1 n))
-	   (outb i (oscil car1 (/ mod1 (* n n))))
-	   (outc i (/ mod2 n))
-	   (outd i (oscil car2 (/ mod2 (* n n))))
-	   ))))))
+     (do ((i 0 (+ i 1 ))) 
+         ((= i 441000))
+       (let ((mod1 0.0)
+	     (mod2 0.0))
+	 (do ((k 0 (+ k 1)))
+	     ((= k n))
+	   (set! mod1 (+ mod1 (oscil (vector-ref mods1 k))))
+	   (set! mod2 (+ mod2 (oscil (vector-ref mods2 k)))))
+	 (outa i (/ mod1 n))
+	 (outb i (oscil car1 (/ mod1 (* n n))))
+	 (outc i (/ mod2 n))
+	 (outd i (oscil car2 (/ mod2 (* n n))))
+	 )))))
 
 (set! (selected-graph-color) (make-color 1 1 1))
 (set! (selected-data-color) (make-color 0 0 0))
@@ -1756,13 +1746,12 @@ cascade.png:
 	 (fm-ind0 (hz->radians (* modind modfreq)))
 	 (fm-ind1 (hz->radians (* casind casfreq))))
     (run
-     (lambda ()
-       (do ((i start (+ 1 i)))
-	   ((= i end))
-	 (outa i (* amp 
-                    (oscil cr (* fm-ind0 
-                                 (oscil md (* fm-ind1 
-                                              (oscil ca))))))))))))	
+     (do ((i start (+ 1 i)))
+         ((= i end))
+       (outa i (* amp 
+                  (oscil cr (* fm-ind0 
+                               (oscil md (* fm-ind1 
+                                            (oscil ca)))))))))))	
 
 (with-sound () 
   (cascade1 0 1.0 2000 .25  500 1.5 (* 0.5 (+ pi (hz->radians 500)))  50 1.0 (+ pi (* 0.5 (hz->radians 550)))))
@@ -1855,13 +1844,12 @@ to show how strong this effect is:
 	 (fm-ind0 (hz-&gt;radians (* modind modrat freq)))
 	 (fm-ind1 (hz-&gt;radians (* casind casrat freq))))
     (run
-     (lambda ()
-       (do ((i start (+ 1 i)))
-	   ((= i end))
-	 (outa i (* amp 
-                    (oscil cr (* fm-ind0 
-                                 (oscil md (* fm-ind1 
-                                              (oscil ca))))))))))))
+     (do ((i start (+ 1 i)))
+         ((= i end))
+       (outa i (* amp 
+                  (oscil cr (* fm-ind0 
+                               (oscil md (* fm-ind1 
+                                            (oscil ca)))))))))))
 
 (with-sound () 
   (cascade 0 1.0 400 .25 1.0 1.0 1.0 1.0 0)
@@ -2092,17 +2080,16 @@ The take-home message is: "keep the index below 1.0!".
 	 (y 0.0)
 	 (x-incr (hz->radians freq)))
     (run 
-     (lambda ()
-       (do ((i start (+ 1 i))
-	    (x 0.0 (+ x x-incr)))
-	   ((= i end))
-	 (out-any i y 0)                    ;0: previous y (effective phase)
-	 (out-any i x 1)                    ;1: x (carrier phase) = old x + x-incr
-	 (let ((md (* index (sin y))))
-	   (out-any i (- (+ x md) y) 2)     ;2: new y - old y
-	   (set! y (+ x md))
-	   (out-any i md 3)                 ;3: output (* amp (sin y))
-	   (out-any i y 4)))))))            ;4: new y
+     (do ((i start (+ 1 i))
+          (x 0.0 (+ x x-incr)))
+	 ((= i end))
+       (out-any i y 0)                    ;0: previous y (effective phase)
+       (out-any i x 1)                    ;1: x (carrier phase) = old x + x-incr
+       (let ((md (* index (sin y))))
+         (out-any i (- (+ x md) y) 2)     ;2: new y - old y
+         (set! y (+ x md))
+         (out-any i md 3)                 ;3: output (* amp (sin y))
+         (out-any i y 4))))))             ;4: new y
 
 (with-sound (:srate 44100 :data-format mus-ldouble :channels 5 :statistics #t :clipped #f) (feedbk 0 2 100.0 1.0 1.22))
  channel 2 (outc) is our actual per-sample phase increment; notice that at the trouble spot it
@@ -2136,26 +2123,23 @@ we can use the phase to minimize the difference with the sum:
 	 (y 0.0)
 	 (x-incr (hz->radians freq)))
     (run 
-     (lambda ()
-       (do ((i start (+ 1 i))
-	    (x 0.0 (+ x x-incr)))
-	   ((or (c-g?)
-		(= i end)))
-	 (set! y (+ x (* index (sin y))))
+     (do ((i start (+ 1 i))
+          (x 0.0 (+ x x-incr)))
+         ((or (c-g?)
+	      (= i end)))
+       (set! y (+ x (* index (sin y))))
 
-	 (let ((result (* amp (sin y)))
-	       (sum 0.0))
-
-	   (do ((n 1 (+ 1 n))) 
-	       ((= n iters)) 
-	     (set! sum (+ sum (/ (* 2.0 
-				    (bes-jn n (* index n))
-				    (sin (* n x)))
-				 (* n index)))))
-
-	   (outb i (* amp sum))
-	   (outc i (- sum (sin (+ y pha1))))
-	   (outa i (* amp (sin (+ y pha1))))))))))
+       (let ((result (* amp (sin y)))
+             (sum 0.0))
+	 (do ((n 1 (+ 1 n))) 
+             ((= n iters)) 
+           (set! sum (+ sum (/ (* 2.0 
+			          (bes-jn n (* index n))
+			          (sin (* n x)))
+			    (* n index)))))
+	 (outb i (* amp sum))
+         (outc i (- sum (sin (+ y pha1))))
+         (outa i (* amp (sin (+ y pha1)))))))))
 
 (with-sound (:channels 3 :statistics #t :clipped #f) (feedbk 0 1 100 1.0 0.5 100 0.01265)) ; .0005 0.1 100
 the sum has DC! and the difference is a pulse train, but higher srate fixes that
@@ -2270,17 +2254,16 @@ FM(e^x) = PM(e^x).  FM(square-wave) is <img src="pix/fmeq58.png" alt="fm(noise)"
 	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur))
 	 (sqsum 0.0))
     (run
-     (lambda ()
-       (do ((i start (+ 1 i)))
-	   ((= i end))
-	 (let ((vol (env ampf))
-	       (sq (* fm-index (- (square-wave fm-modulator) 1.0)))
-               (tri (* index (triangle-wave pm-modulator))))
-	   (outa i (* vol (oscil fm-carrier sq)))
-	   (outb i (* vol (oscil pm-carrier 0.0 tri)))
-           (outc i sqsum)
-           (outd i tri)
-           (set! sqsum (+ sqsum sq))))))))
+     (do ((i start (+ 1 i)))
+         ((= i end))
+       (let ((vol (env ampf))
+             (sq (* fm-index (- (square-wave fm-modulator) 1.0)))
+             (tri (* index (triangle-wave pm-modulator))))
+         (outa i (* vol (oscil fm-carrier sq)))
+         (outb i (* vol (oscil pm-carrier 0.0 tri)))
+         (outc i sqsum)
+         (outd i tri)
+         (set! sqsum (+ sqsum sq)))))))
 
 (with-sound (:clipped #f :statistics #t :channels 4) (fmpmsq 0 1 1000 .5 .1 1 (+ (* 0.5 pi) .005)))
 ;; almost a match -- the pi/2 triangle amp is to take into account the square wave's internal table size (2 pi)
@@ -2296,17 +2279,16 @@ FM(e^x) = PM(e^x).  FM(square-wave) is <img src="pix/fmeq58.png" alt="fm(noise)"
 	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur))
 	 (sumex 0.0))
     (run
-     (lambda ()
-       (do ((i start (+ 1 i))
-            (x 0.0 (+ x .0001)))
-	   ((= i end))
-	 (let ((vol (env ampf))
-               (ex (exp x)))
-	   (outa i (* vol (oscil fm-carrier (* .0001 ex)))) ; sampled ex...
-	   (outb i (* vol (oscil pm-carrier 0.0 ex)))
-	   (outc i ex)
-	   (outd i sumex)
-	   (set! sumex (+ sumex (* .0001 ex)))))))))
+     (do ((i start (+ 1 i))
+          (x 0.0 (+ x .0001)))
+         ((= i end))
+       (let ((vol (env ampf))
+            (ex (exp x)))
+         (outa i (* vol (oscil fm-carrier (* .0001 ex)))) ; sampled ex...
+         (outb i (* vol (oscil pm-carrier 0.0 ex)))
+         (outc i ex)
+         (outd i sumex)
+         (set! sumex (+ sumex (* .0001 ex))))))))
 
 (with-sound (:clipped #f :statistics #t :channels 4) (fmpmex 0 1 1000 .5))
 
@@ -2321,17 +2303,16 @@ FM(e^x) = PM(e^x).  FM(square-wave) is <img src="pix/fmeq58.png" alt="fm(noise)"
 	 (sumex 0.0)
 	 (fm-index (hz->radians (* index freq))))
     (run
-     (lambda ()
-       (do ((i start (+ 1 i))
-            (x 0.0 (+ x .0001)))
-	   ((= i end))
-	 (let ((vol (env ampf))
-               (ex (- (random 2.0) 1.0)))
-	   (outa i (* vol (oscil fm-carrier (* fm-index ex))))
-	   (outb i (* vol (oscil pm-carrier 0.0 (* index sumex))))
-	   (outc i ex)
-	   (outd i sumex)
-	   (set! sumex (+ sumex (* fm-index ex)))))))))
+     (do ((i start (+ 1 i))
+          (x 0.0 (+ x .0001)))
+         ((= i end))
+       (let ((vol (env ampf))
+             (ex (- (random 2.0) 1.0)))
+         (outa i (* vol (oscil fm-carrier (* fm-index ex))))
+         (outb i (* vol (oscil pm-carrier 0.0 (* index sumex))))
+         (outc i ex)
+         (outd i sumex)
+         (set! sumex (+ sumex (* fm-index ex))))))))
 
 (with-sound (:clipped #f :statistics #t :channels 4) (fmpmran 0 1 1000 .5 1))
 
@@ -2347,17 +2328,16 @@ FM(e^x) = PM(e^x).  FM(square-wave) is <img src="pix/fmeq58.png" alt="fm(noise)"
 	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur))
 	 (sqsum 0.0))
     (run
-     (lambda ()
-       (do ((i start (+ 1 i)))
-	   ((= i end))
-	 (let ((vol (env ampf))
-	       (pulse (* index (nxy1sin fm-modulator)))
-               (sq (* index (square-wave pm-modulator))))
-	   (outa i (* vol (oscil fm-carrier pulse)))
-	   (outb i (* vol (oscil pm-carrier 0.0 sq)))
-           (outc i sqsum)
-           (outd i sq)
-           (set! sqsum (+ sqsum pulse))))))))
+     (do ((i start (+ 1 i)))
+         ((= i end))
+       (let ((vol (env ampf))
+             (pulse (* index (nxy1sin fm-modulator)))
+             (sq (* index (square-wave pm-modulator))))
+         (outa i (* vol (oscil fm-carrier pulse)))
+         (outb i (* vol (oscil pm-carrier 0.0 sq)))
+         (outc i sqsum)
+         (outd i sq)
+         (set! sqsum (+ sqsum pulse)))))))
 
 (with-sound (:clipped #f :statistics #t :channels 4) (fmpmodd 0 1 1000 .5 .1 1))
 
@@ -2471,38 +2451,37 @@ used in "Colony" and other pieces:
     (vector-set! frmfs 2 (make-env '(0 2390 100 1690) :duration dur))
 
     (run
-     (lambda ()
-       (do ((i start (+ 1 i)))
-	   ((= i end))
-	 (let* ((frq (+ freq (triangle-wave per-vib) (rand-interp ran-vib)))
-		(car (oscil car-os (hz-&gt;radians frq)))
-		(sum 0.0))
-	   (do ((k 0 (+ 1 k)))
-	       ((= k 3))
-	     (let* ((frm (env (vector-ref frmfs k)))
-		    (frm0 (/ frm frq))
-		    (frm-int (inexact-&gt;exact (floor frm0)))
-		    (even-amp 0.0) (odd-amp 0.0) 
-		    (even-freq 0.0) (odd-freq 0.0))
-	       (if (even? frm-int)
-		   (begin
-		     (set! even-freq (hz-&gt;radians (* frm-int frq)))
-		     (set! odd-freq (hz-&gt;radians (* (+ frm-int 1) frq)))
-		     (set! odd-amp (- frm0 frm-int))
-		     (set! even-amp (- 1.0 odd-amp)))
-		   (begin
-		     (set! odd-freq (hz-&gt;radians (* frm-int frq)))
-		     (set! even-freq (hz-&gt;radians (* (+ frm-int 1) frq)))
-		     (set! even-amp (- frm0 frm-int))
-		     (set! odd-amp (- 1.0 even-amp))))
-	       (set! sum (+ sum (+ (* (vct-ref amps k) 
-				      (+ (* even-amp 
-					    (oscil (vector-ref evens k) 
-						   (+ even-freq (* (vct-ref indices k) car))))
-					 (* odd-amp 
-					    (oscil (vector-ref odds k) 
-						   (+ odd-freq (* (vct-ref indices k) car)))))))))))
-	   (outa i (* (env ampf) sum))))))))
+     (do ((i start (+ 1 i)))
+         ((= i end))
+       (let* ((frq (+ freq (triangle-wave per-vib) (rand-interp ran-vib)))
+	      (car (oscil car-os (hz-&gt;radians frq)))
+	      (sum 0.0))
+         (do ((k 0 (+ 1 k)))
+             ((= k 3))
+           (let* ((frm (env (vector-ref frmfs k)))
+	          (frm0 (/ frm frq))
+	          (frm-int (inexact-&gt;exact (floor frm0)))
+	          (even-amp 0.0) (odd-amp 0.0) 
+	          (even-freq 0.0) (odd-freq 0.0))
+             (if (even? frm-int)
+	         (begin
+	           (set! even-freq (hz-&gt;radians (* frm-int frq)))
+	           (set! odd-freq (hz-&gt;radians (* (+ frm-int 1) frq)))
+	           (set! odd-amp (- frm0 frm-int))
+	           (set! even-amp (- 1.0 odd-amp)))
+	         (begin
+	           (set! odd-freq (hz-&gt;radians (* frm-int frq)))
+	           (set! even-freq (hz-&gt;radians (* (+ frm-int 1) frq)))
+	           (set! even-amp (- frm0 frm-int))
+	           (set! odd-amp (- 1.0 even-amp))))
+             (set! sum (+ sum (+ (* (vct-ref amps k) 
+			            (+ (* even-amp 
+				          (oscil (vector-ref evens k) 
+					         (+ even-freq (* (vct-ref indices k) car))))
+				       (* odd-amp 
+				          (oscil (vector-ref odds k) 
+					         (+ odd-freq (* (vct-ref indices k) car)))))))))))
+          (outa i (* (env ampf) sum)))))))
 
 (with-sound () 
   (vox 0 1.0 220.0 0.5)

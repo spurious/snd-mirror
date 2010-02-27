@@ -147,10 +147,10 @@ var extsnd_datalocation_tip = "<code>(data-location snd)</code>: snd's data loca
 var extsnd_declare_tip = "Functions embedded within run may need to declare the type of their arguments;<br>" +
                          " run assumes each variable has one type (integer by default) throughout its life.<br>" +
                          " So, the following code displays \"0\", rather than \"3.14\":<br><br>" +
-                         " <code>  (run (lambda () (let ((x 3.14)) (define (a b) (display b)) (a x))))</code><br><br>" +
+                         " <code>  (run (let ((x 3.14)) (define (a b) (display b)) (a x)))</code><br><br>" +
                          " The \"b\" argument to \"a\" is assumed to be an integer, and passing in a float<br>" +
                          " causes nothing but confusion.  To get this code to work right:<br><br>" +
-                         " <code>  (run (lambda () (let ((x 3.14)) (define (a b) (<b>declare</b> (b real)) (display b)) (a x))))</code><br><br>" +
+                         " <code>  (run (let ((x 3.14)) (define (a b) (<b>declare</b> (b real)) (display b)) (a x)))</code><br><br>" +
                          " The current declarable types include:<br><br>" +
                          " <code>    int float boolean char string list symbol keyword vct sampler mix-sampler</code><br>" +
                          " <code>    sound-data clm float-vector int-vector vct-vector list-vector clm-vector</code>";
@@ -589,9 +589,9 @@ var extsnd_revertsound_tip = "<code>(revert-sound snd)</code>: return 'snd' to i
 
 var extsnd_rightsample_tip = "<code>(right-sample snd chn)</code>: right sample number in time domain window";
 
-var extsnd_run_tip = "<code>(run thunk)</code>: try to optimize the procedure passed as its argument,<br>" +
-                     " then evaluate it; if the optimizer can't handle something in the procedure,<br>" +
-                     " it is passed to Scheme and is equivalent to (thunk).";
+var extsnd_run_tip = "<code>(run code)</code>: try to optimize the forms (or thunk) passed as its argument,<br>" +
+                     " then evaluate it; if the optimizer can't handle something in the forms,<br>" +
+                     " it is passed to Scheme.";
 
 var extsnd_sample_tip = "<code>(sample samp snd chn edpos)</code>:<br>" +
                         " return sample samp in snd's channel chn<br>" +
@@ -1252,7 +1252,7 @@ var sndscm_prc95doc_tip = "various physical modeling functions from Perry Cook."
 
 var sndscm_rmsgain_tip = "various RMS-related generators.";
 
-var sndscm_run_tip = "<code>(run  thunk)</code> tries to optimize its argument using a sort of byte compiler.<br>" +
+var sndscm_run_tip = "<code>(run code)</code> tries to optimize its argument using a sort of byte compiler.<br>" +
                      " When successful, it can speed up computation by about a factor of 10.<br>" +
                      " When unsuccessful, it falls back on Scheme, so you always get a sound. ";
 

@@ -128,7 +128,7 @@
  *     (grani 0 1 .5 "oboe.snd" 
  *       :grain-envelope '(0 0 0.2 0.2 0.5 1 0.8 0.2 1 0))))
  *
- * (with-sound ()                                                   7120       5069        4314
+ * (with-sound ()                                                   7120       5069        4261
  *   (do ((i 0 (+ i 1))) 
  *       ((= i 10000)) 
  *     (fm-violin (* i .001) .01 440 .001)))
@@ -2730,7 +2730,7 @@ static void eval_ptree(ptree *pt)
   while (!(pt->all_done))
     {
       triple *cpc;
-      cpc = (*(pt->pc++));
+      cpc = (*pt->pc++);
 #if WITH_COUNTERS
       this_loc = cpc->func_loc;
       counts[last_loc][this_loc]++;
@@ -16610,8 +16610,13 @@ void mus_init_run(void)
   if (run_inited) fprintf(stderr, "redundant run initialization?");
   run_inited = true;
 
-  XEN_DEFINE_PROCEDURE("run",           g_run_w,           1, 0, 0, H_run);
+  XEN_DEFINE_PROCEDURE("__run__",       g_run_w,           1, 0, 0, H_run);
   XEN_DEFINE_PROCEDURE("run-eval",      g_run_eval_w,      1, 3, 0, H_run);
+
+  XEN_EVAL_C_STRING("(define-macro (run . code)        \n\
+                       (if (eq? (caar code) 'lambda)   \n\
+                          `(__run__ ,@code)            \n\
+                          `(__run__ (lambda () ,@code))))");
 
   walker_hash_table = s7_make_hash_table(s7, 1031);
   s7_gc_protect(s7, walker_hash_table);

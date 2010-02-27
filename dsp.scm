@@ -1639,28 +1639,27 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
 	 (binwidth (exact->inexact (/ fsr fftsize)))
 	 (rd (make-readin file)))
     (run
-     (lambda ()
-       (do ((i start (+ i incrsamps))
-	    (loc 0 (+ 1 loc)))
-	   ((>= i end))
-	 (set! (mus-location rd) i)
-	 (let ((sum-of-squares 0.0))
-	   (do ((j 0 (+ 1 j)))
-	       ((= j fftsize))
-	     (let ((val (readin rd)))
-	       (set! sum-of-squares (+ sum-of-squares (* val val)))
-	       (vct-set! fdr j val)))
-	   (if (>= (linear->db (sqrt (/ sum-of-squares fftsize))) db-floor)
-	       (let ((numsum 0.0)
-		     (densum 0.0))
-		 (clear-array fdi)
-		 (mus-fft fdr fdi fftsize)
-		 (rectangular->magnitudes fdr fdi)
-		 (do ((k 0 (+ 1 k)))
-		     ((= k fft2))
-		   (set! numsum (+ numsum (* k binwidth (vct-ref fdr k))))
-		   (set! densum (+ densum (vct-ref fdr k))))
-		 (vct-set! results loc (/ numsum densum))))))))
+     (do ((i start (+ i incrsamps))
+	  (loc 0 (+ 1 loc)))
+	 ((>= i end))
+       (set! (mus-location rd) i)
+       (let ((sum-of-squares 0.0))
+	 (do ((j 0 (+ 1 j)))
+	     ((= j fftsize))
+	   (let ((val (readin rd)))
+	     (set! sum-of-squares (+ sum-of-squares (* val val)))
+	     (vct-set! fdr j val)))
+	 (if (>= (linear->db (sqrt (/ sum-of-squares fftsize))) db-floor)
+	     (let ((numsum 0.0)
+		   (densum 0.0))
+	       (clear-array fdi)
+	       (mus-fft fdr fdi fftsize)
+	       (rectangular->magnitudes fdr fdi)
+	       (do ((k 0 (+ 1 k)))
+		   ((= k fft2))
+		 (set! numsum (+ numsum (* k binwidth (vct-ref fdr k))))
+		 (set! densum (+ densum (vct-ref fdr k))))
+	       (vct-set! results loc (/ numsum densum)))))))
     results))
 	     
 
@@ -1797,21 +1796,21 @@ and replaces it with the spectrum given in coeffs"
 	 (intrp 0.0)
 	 (tempfile 
 	  (with-sound (:output (snd-tempnam) :srate (srate snd) :to-snd #f)
-	    (run (lambda ()
-		   (do ((samp 0 (+ 1 samp)))
-		       ((sampler-at-end? rd))
-		     (out-any samp
-			      (let ((pos intrp))
-				(if (>= pos 1.0)
-				    (let ((num (floor pos)))
-				      (do ((i 0 (+ i 1)))
-					  ((= i num))
-					(set! last next)
-					(set! next (rd)))
-				      (set! pos (- pos num))))
-				(set! intrp (+ pos sr))
-				(+ last (* pos (- next last))))
-			      0))))))
+	    (run
+	     (do ((samp 0 (+ 1 samp)))
+		 ((sampler-at-end? rd))
+	       (out-any samp
+			(let ((pos intrp))
+			  (if (>= pos 1.0)
+			      (let ((num (floor pos)))
+				(do ((i 0 (+ i 1)))
+				    ((= i num))
+				  (set! last next)
+				  (set! next (rd)))
+				(set! pos (- pos num))))
+			  (set! intrp (+ pos sr))
+			  (+ last (* pos (- next last))))
+			0)))))
 	 (len (frames tempfile)))
     (set-samples 0 (- len 1) tempfile snd chn #t "linear-src" 0 #f #t)
     ;; first #t=truncate to new length, #f=at current edpos, #t=auto delete temp file
@@ -1883,34 +1882,33 @@ and replaces it with the spectrum given in coeffs"
 			    (set! bark-fft-size fftlen)
 			    
 			    (run 
-			     (lambda ()
-			       (do ((i 0 (+ i 1)))
-				   ((= i data-len))
-				 (let* ((val (vct-ref fft i))
-					(frq (* sr (/ i fftlen)))
-					(bark-bin (round (* bark-frqscl (- (bark frq) bark-low))))
-					(mel-bin (round (* mel-frqscl (- (mel frq) mel-low))))
-					(erb-bin (round (* erb-frqscl (- (erb frq) erb-low)))))
-				   (if (and (>= bark-bin 0)
-					    (< bark-bin data-len))
-				       (vct-set! bark-data bark-bin (+ val (vct-ref bark-data bark-bin))))
-				   (if (and (>= mel-bin 0)
-					    (< mel-bin data-len))
-				       (vct-set! mel-data mel-bin (+ val (vct-ref mel-data mel-bin))))
-				   (if (and (>= erb-bin 0)
-					    (< erb-bin data-len))
-				       (vct-set! erb-data erb-bin (+ val (vct-ref erb-data erb-bin))))))
-			       
-			       (if normalized
-				   (let ((bmx (vct-peak bark-data))
-					 (mmx (vct-peak mel-data))
-					 (emx (vct-peak erb-data)))
-				     (if (> (abs (- mx bmx)) .01)
-					 (vct-scale! bark-data (/ mx bmx)))
-				     (if (> (abs (- mx mmx)) .01)
-					 (vct-scale! mel-data (/ mx mmx)))
-				     (if (> (abs (- mx emx)) .01)
-					 (vct-scale! erb-data (/ mx emx)))))))
+			     (do ((i 0 (+ i 1)))
+				 ((= i data-len))
+			       (let* ((val (vct-ref fft i))
+				      (frq (* sr (/ i fftlen)))
+				      (bark-bin (round (* bark-frqscl (- (bark frq) bark-low))))
+				      (mel-bin (round (* mel-frqscl (- (mel frq) mel-low))))
+				      (erb-bin (round (* erb-frqscl (- (erb frq) erb-low)))))
+				 (if (and (>= bark-bin 0)
+					  (< bark-bin data-len))
+				     (vct-set! bark-data bark-bin (+ val (vct-ref bark-data bark-bin))))
+				 (if (and (>= mel-bin 0)
+					  (< mel-bin data-len))
+				     (vct-set! mel-data mel-bin (+ val (vct-ref mel-data mel-bin))))
+				 (if (and (>= erb-bin 0)
+					  (< erb-bin data-len))
+				     (vct-set! erb-data erb-bin (+ val (vct-ref erb-data erb-bin))))))
+			     
+			     (if normalized
+				 (let ((bmx (vct-peak bark-data))
+				       (mmx (vct-peak mel-data))
+				       (emx (vct-peak erb-data)))
+				   (if (> (abs (- mx bmx)) .01)
+				       (vct-scale! bark-data (/ mx bmx)))
+				   (if (> (abs (- mx mmx)) .01)
+				       (vct-scale! mel-data (/ mx mmx)))
+				   (if (> (abs (- mx emx)) .01)
+				       (vct-scale! erb-data (/ mx emx))))))
 			    
 			    (graph (list bark-data mel-data erb-data) 
 				   "ignored" 
@@ -2271,27 +2269,27 @@ is assumed to be outside -1.0 to 1.0."
 	 (del (make-moving-average 256))
 	 (K 0.0))
 
-    (run (lambda ()
-	   (do ((k 1 (+ 1 k)))
-	       ((= k size))
-	     (let ((datum (vct-ref data k))
-		   (xhatminus xhat))
-
-	       (let* ((res (formant frm datum))
-		      (avg (moving-average del (abs res))))
-		 (set! R (/ .000001 (+ avg .001))))
-		 ;; K now goes between say .5 if avg large to almost 0 if avg 0 (R is inverse essentially)
-		 ;;   so filter lp effect increases as apparent true signal decreases
-		 ;;   "truth" here is based on vocal resonances
-
-	       (vct-set! data k xhatminus) ; filter output
-
-	       (set! Pminus (+ P Q))
-	       (set! K (/ Pminus (+ Pminus R)))
-	       (set! xhat (+ xhatminus
-			     (* K (- datum xhatminus))))
-	       (set! P (* (- 1.0 K) Pminus))))))
-
+    (run
+     (do ((k 1 (+ 1 k)))
+	 ((= k size))
+       (let ((datum (vct-ref data k))
+	     (xhatminus xhat))
+	 
+	 (let* ((res (formant frm datum))
+		(avg (moving-average del (abs res))))
+	   (set! R (/ .000001 (+ avg .001))))
+	 ;; K now goes between say .5 if avg large to almost 0 if avg 0 (R is inverse essentially)
+	 ;;   so filter lp effect increases as apparent true signal decreases
+	 ;;   "truth" here is based on vocal resonances
+	 
+	 (vct-set! data k xhatminus) ; filter output
+	 
+	 (set! Pminus (+ P Q))
+	 (set! K (/ Pminus (+ Pminus R)))
+	 (set! xhat (+ xhatminus
+		       (* K (- datum xhatminus))))
+	 (set! P (* (- 1.0 K) Pminus)))))
+    
     (as-one-edit
      (lambda ()
        (vct->channel data)

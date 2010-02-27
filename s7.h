@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.44"
-#define S7_DATE "17-Feb-10"
+#define S7_VERSION "1.45"
+#define S7_DATE "27-Feb-10"
 
 
 typedef long long int s7_Int;
@@ -845,6 +845,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 27-Feb:    removed r4rs-style macro syntax.
  * 17-Feb:    s7_number_to_integer.
  * 20-Jan-10: removed the stack function.
  * --------

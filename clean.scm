@@ -46,41 +46,40 @@
 	 (block (make-vct block-size))
 	 (block-changed #f))
     (run
-     (lambda ()
-       (do ((ctr 0 (1+ ctr)))
-	   ((= ctr len))
-	 (set! samp0 samp1)
-	 (set! samp1 samp2)
-	 (set! samp2 (next-sample reader))
-	 (vct-set! block block-ctr samp2)
-	 (let* ((df1 (abs (- samp1 samp0)))
-		(df2 (abs (- samp2 samp1)))
-		(df3 (abs (- samp2 samp0)))
-		(local-max (moving-average mx df1)))
-	   (if (and (> df1 (* jump local-max))
-		    (> df2 (* jump local-max))
-		    (or (< df3 local-max)
-			(and (< df3 (* 2 local-max))
-			     (< (* (- samp2 samp0)
-				   (- samp1 samp0))
-				0.0))))
-	       (begin
-		 (set! samp1 (* .5 (+ samp0 samp2)))
-		 (vct-set! block (1- block-ctr) samp1)
-		 (set! block-changed #t)
-		 (set! fixed (1+ fixed)))))
-	 (set! block-ctr (1+ block-ctr))
-	 (if (>= block-ctr block-size)
+     (do ((ctr 0 (1+ ctr)))
+	 ((= ctr len))
+       (set! samp0 samp1)
+       (set! samp1 samp2)
+       (set! samp2 (next-sample reader))
+       (vct-set! block block-ctr samp2)
+       (let* ((df1 (abs (- samp1 samp0)))
+	      (df2 (abs (- samp2 samp1)))
+	      (df3 (abs (- samp2 samp0)))
+	      (local-max (moving-average mx df1)))
+	 (if (and (> df1 (* jump local-max))
+		  (> df2 (* jump local-max))
+		  (or (< df3 local-max)
+		      (and (< df3 (* 2 local-max))
+			   (< (* (- samp2 samp0)
+				 (- samp1 samp0))
+			      0.0))))
 	     (begin
-	       (if block-changed
-		   (begin
-		     (vct->channel block block-beg block-size snd chn)
-		     (set! block-changed #f)))
-	       (set! block-beg (+ block-beg (1- block-size)))
-	       (set! block-ctr 1)
-	       (vct-set! block 0 samp2))))
-       (if block-changed
-	   (vct->channel block block-beg block-ctr snd chn))))
+	       (set! samp1 (* .5 (+ samp0 samp2)))
+	       (vct-set! block (1- block-ctr) samp1)
+	       (set! block-changed #t)
+	       (set! fixed (1+ fixed)))))
+       (set! block-ctr (1+ block-ctr))
+       (if (>= block-ctr block-size)
+	   (begin
+	     (if block-changed
+		 (begin
+		   (vct->channel block block-beg block-size snd chn)
+		   (set! block-changed #f)))
+	     (set! block-beg (+ block-beg (1- block-size)))
+	     (set! block-ctr 1)
+	     (vct-set! block 0 samp2))))
+     (if block-changed
+	 (vct->channel block block-beg block-ctr snd chn)))
     fixed))
 
 (define (test-remove-single-clicks)
@@ -159,76 +158,75 @@
 	 (block-changed #f))
     
     (run
-     (lambda ()
-       (let ((check-val 0.0)
-	     (check-start 0)
-	     (checker 0)
-	     (checked 0)
-	     (checking #f)
-	     (moving-start #t))
-	 (do ((ctr 0 (1+ ctr)))
-	     ((= ctr len))
-	   (let* ((ahead-samp (next-sample reader))
-		  (diff-ahead (abs (- ahead-samp last-ahead-samp)))
-		  (avg-ahead (moving-average mx-ahead diff-ahead))
-		  (dly0-samp (delay dly0 ahead-samp))
-		  (cur-diff (abs (- dly0-samp last-dly0-samp)))
-		  (cur-avg (moving-average mx cur-diff))
-		  (dly1-samp (delay dly1 ahead-samp))
-		  (diff-behind (abs (- dly1-samp last-dly1-samp)))
-		  (avg-behind (moving-average mx-behind diff-behind)))
-	     (set! last-ahead-samp ahead-samp)
-	     (set! last-dly0-samp dly0-samp)
-	     (set! last-dly1-samp dly1-samp)
-	     (vct-set! block block-ctr ahead-samp)
-	     (if checking
-		 (begin
-		   (set! checked (1+ checked))
-		   (if (or (>= checked (* 2 size))
-			   (< cur-avg check-val))
-		       (begin
-			 (set! fixed (1+ fixed))
-			 (set! checking #f)
-			 (smooth-vct block (- check-start block-beg) (+ size checker))
-			 (set! block-changed #t)))
-		   (if moving-start
-		       (begin
-			 (set! moving-start (< cur-diff avg-behind))
-			 (if moving-start
-			     (set! check-start (1+ check-start)))))
-		   (if (not moving-start)
-		       (set! checker (1+ checker))))
-		 (if (and (> (- ctr last-case) (* 2 size))
-			  (> cur-avg (* 4 avg-ahead))
-			  (> cur-avg (* 4 avg-behind)))
-		     ;; possible pop
+     (let ((check-val 0.0)
+	   (check-start 0)
+	   (checker 0)
+	   (checked 0)
+	   (checking #f)
+	   (moving-start #t))
+       (do ((ctr 0 (1+ ctr)))
+	   ((= ctr len))
+	 (let* ((ahead-samp (next-sample reader))
+		(diff-ahead (abs (- ahead-samp last-ahead-samp)))
+		(avg-ahead (moving-average mx-ahead diff-ahead))
+		(dly0-samp (delay dly0 ahead-samp))
+		(cur-diff (abs (- dly0-samp last-dly0-samp)))
+		(cur-avg (moving-average mx cur-diff))
+		(dly1-samp (delay dly1 ahead-samp))
+		(diff-behind (abs (- dly1-samp last-dly1-samp)))
+		(avg-behind (moving-average mx-behind diff-behind)))
+	   (set! last-ahead-samp ahead-samp)
+	   (set! last-dly0-samp dly0-samp)
+	   (set! last-dly1-samp dly1-samp)
+	   (vct-set! block block-ctr ahead-samp)
+	   (if checking
+	       (begin
+		 (set! checked (1+ checked))
+		 (if (or (>= checked (* 2 size))
+			 (< cur-avg check-val))
 		     (begin
-		       (set! check-start (max 0 (- ctr (* 5 size))))
+		       (set! fixed (1+ fixed))
+		       (set! checking #f)
+		       (smooth-vct block (- check-start block-beg) (+ size checker))
+		       (set! block-changed #t)))
+		 (if moving-start
+		     (begin
 		       (set! moving-start (< cur-diff avg-behind))
 		       (if moving-start
-			   (set! check-start (1+ check-start)))
-		       (set! checking #t)
-		       (set! check-val cur-avg)
-		       (set! checker 0)
-		       (set! checked 0)
-		       (set! last-case ctr))))
-
-	     (set! block-ctr (1+ block-ctr))
-	     (if (>= (+ block-ctr pad) block-size)
-		 (begin
-		   (if block-changed
-		       (begin
-			 (vct->channel block block-beg (- block-ctr pad) snd chn)
-			 (set! block-changed #f)))
-		   (set! block-beg (+ block-beg (- block-ctr pad)))
-		   (do ((i 0 (1+ i))
-			(j (- block-ctr pad) (1+ j)))
-		       ((= i pad))
-		     (vct-set! block i (vct-ref block j)))
-		   (set! block-ctr pad)))))
-
-	 (if block-changed
-	     (vct->channel block block-beg block-ctr snd chn)))))
+			   (set! check-start (1+ check-start)))))
+		 (if (not moving-start)
+		     (set! checker (1+ checker))))
+	       (if (and (> (- ctr last-case) (* 2 size))
+			(> cur-avg (* 4 avg-ahead))
+			(> cur-avg (* 4 avg-behind)))
+		   ;; possible pop
+		   (begin
+		     (set! check-start (max 0 (- ctr (* 5 size))))
+		     (set! moving-start (< cur-diff avg-behind))
+		     (if moving-start
+			 (set! check-start (1+ check-start)))
+		     (set! checking #t)
+		     (set! check-val cur-avg)
+		     (set! checker 0)
+		     (set! checked 0)
+		     (set! last-case ctr))))
+	   
+	   (set! block-ctr (1+ block-ctr))
+	   (if (>= (+ block-ctr pad) block-size)
+	       (begin
+		 (if block-changed
+		     (begin
+		       (vct->channel block block-beg (- block-ctr pad) snd chn)
+		       (set! block-changed #f)))
+		 (set! block-beg (+ block-beg (- block-ctr pad)))
+		 (do ((i 0 (1+ i))
+		      (j (- block-ctr pad) (1+ j)))
+		     ((= i pad))
+		   (vct-set! block i (vct-ref block j)))
+		 (set! block-ctr pad)))))
+       
+       (if block-changed
+	   (vct->channel block block-beg block-ctr snd chn))))
 
     fixed))
 
@@ -266,10 +264,10 @@
   (let ((test (with-sound (:output "test.snd" :srate 22050)
 		(let ((osc (make-oscil 60.0))
 		      (e (make-env '(0 0 1 .5 9 .5 10 0) :length 44100)))
-		  (run (lambda ()
-			 (do ((i 0 (1+ i)))
-			     ((= i 44100))
-			   (outa i (* (env e) (oscil osc))))))))))
+		  (run
+		   (do ((i 0 (1+ i)))
+		       ((= i 44100))
+		     (outa i (* (env e) (oscil osc)))))))))
     
     (notch-channel (list 60.0) #f #f #f #f #f #f #t 8)
     (let ((mx (maxamp)))
@@ -281,10 +279,10 @@
 		      (osc1 (make-oscil 40.0))
 		      (osc2 (make-oscil 80.0))
 		      (e (make-env '(0 0 1 .3 9 .3 10 0) :length 44100)))
-		  (run (lambda ()
-			 (do ((i 0 (1+ i)))
-			     ((= i 44100))
-			   (outa i (* (env e) (+ (oscil osc) (oscil osc1) (oscil osc2)))))))))))
+		  (run
+		   (do ((i 0 (1+ i)))
+		       ((= i 44100))
+		     (outa i (* (env e) (+ (oscil osc) (oscil osc1) (oscil osc2))))))))))
     
     (let ((v60 (goertzel 60.0))
 	  (v40 (goertzel 40.0))
@@ -304,10 +302,10 @@
 		      (osc1 (make-oscil 55.0))
 		      (osc2 (make-oscil 65.0))
 		      (e (make-env '(0 0 1 .3 9 .3 10 0) :length 44100)))
-		  (run (lambda ()
-			 (do ((i 0 (1+ i)))
-			     ((= i 44100))
-			   (outa i (* (env e) (+ (oscil osc) (oscil osc1) (oscil osc2)))))))))))
+		  (run
+		   (do ((i 0 (1+ i)))
+		       ((= i 44100))
+		     (outa i (* (env e) (+ (oscil osc) (oscil osc1) (oscil osc2))))))))))
     
     (let ((v60 (goertzel 60.0))
 	  (v40 (goertzel 55.0))
@@ -418,7 +416,7 @@
 
   ;; look for pops
   (let ((total-pops 0))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (quit)
        (for-each
 	(lambda (size)

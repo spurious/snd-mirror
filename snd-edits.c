@@ -2736,11 +2736,47 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
   mus_sample_t **obufs;
   io_error_t io_err = IO_NO_ERROR;
   int sl_err = MUS_NO_ERROR;
+  bool need_clipping;
 
   ofd = open_temp_file(ofile, chans, hdr, &io_err);
   if (ofd == -1) 
     return(io_err);
-  mus_file_set_clipping(ofd, clipping(ss));
+
+  need_clipping = clipping(ss);
+  if (need_clipping)
+    {
+      bool max_ok = false;
+      mus_float_t mx = 0.0;
+      for (i = 0; i < chans; i++)
+	{
+	  mus_float_t cur_mx;
+	  chan_info *ncp;
+	  int edpos;
+
+	  ncp = sfs[i]->cp;
+	  edpos = sfs[i]->edit_ctr;
+
+	  if (peak_env_maxamp_ok(ncp, edpos))
+	    cur_mx = peak_env_maxamp(ncp, edpos);
+	  else
+	    {
+	      cur_mx = ed_maxamp(ncp, edpos);
+	      if (cur_mx < 0.0) break;
+	    }
+	  
+	  if (cur_mx > mx)
+	    mx = cur_mx;
+	  if (i == (chans - 1))
+	    max_ok = true;
+	}
+
+      if ((max_ok) &&
+	  (mx <= 1.0))
+	need_clipping = false;
+    }
+
+  mus_file_set_clipping(ofd, need_clipping); /* clipping is very expensive, so try to avoid it */
+
   datumb = mus_bytes_per_sample(hdr->format);
   ss->stopped_explicitly = false;
 

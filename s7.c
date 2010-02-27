@@ -307,8 +307,8 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_IF, OP_IF1, OP_SET, OP_SET1, OP_SET2, 
 	      OP_LET, OP_LET1, OP_LET2, OP_LET_STAR, OP_LET_STAR1, 
 	      OP_LETREC, OP_LETREC1, OP_LETREC2, OP_COND, OP_COND1, 
-	      OP_AND, OP_AND1, OP_OR, OP_OR1, OP_DEFMACRO, OP_DEFMACRO_STAR, OP_MACRO, OP_MACRO1, 
-	      OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION, OP_EXPANSION,
+	      OP_AND, OP_AND1, OP_OR, OP_OR1, OP_DEFMACRO, OP_DEFMACRO_STAR, 
+	      OP_MACRO1, OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION, OP_EXPANSION,
 	      OP_CASE, OP_CASE1, OP_CASE2, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, 
 	      OP_READ_VECTOR, OP_READ_RETURN_EXPRESSION, OP_READ_POP_AND_RETURN_EXPRESSION, 
@@ -1705,7 +1705,7 @@ static void show_stack(s7_scheme *sc)
     {"read_internal", "eval", "eval_args", "eval_args1", "apply", "eval_macro", "lambda", "quote", 
      "define", "define1", "begin", "if", "if1", "set", "set1", "set2", "let", "let1", "let2", 
      "let*", "let*1", "letrec", "letrec1", "letrec2", "cond", "cond1", 
-     "and", "and1", "or", "or1", "defmacro", "defmacro*", "macro", "macro1", 
+     "and", "and1", "or", "or1", "defmacro", "defmacro*", "macro1", 
      "define_macro", "define_macro*", "define_expansion", "expansion", 
      "case", "case1", "case2", "read_list", "read_dot", "read_quote", "read_quasiquote", "read_quasiquote_vector", 
      "read_unquote", "read_unquote_splicing", "read_vector", "read_return_expression", 
@@ -16848,12 +16848,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  s7_cons(sc, 
 		  s7_cons(sc, 
 			  port_filename(sc->input_port) ? s7_immutable_cons(sc, 
-									   sc->__FUNC__, 									       
-									   make_list_3(sc, 
-										       sc->code,
-										       s7_make_string(sc, port_filename(sc->input_port)),
-										       s7_make_integer(sc, port_line_number(sc->input_port)))) :
-							 s7_immutable_cons(sc, sc->__FUNC__, sc->code), 
+									    sc->__FUNC__, 									       
+									    make_list_3(sc, 
+											sc->code,
+											s7_make_string(sc, port_filename(sc->input_port)),
+											s7_make_integer(sc, port_line_number(sc->input_port)))) :
+			                                  s7_immutable_cons(sc, sc->__FUNC__, sc->code), 
 			  sc->NIL), 
 		  closure_environment(sc->value));
       else
@@ -17308,54 +17308,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
 
-    case OP_MACRO:     /* this is tinyscheme's weird macro syntax */
-      /*
-	(macro (when form)
-	  `(if ,(cadr form) (begin ,@(cddr form))))
-      */
-      /* (macro (when form) ...) or (macro do (lambda (form) ...))
-       *   sc->code is the business after the "macro"
-       *   so in 1st case, car(sc->code) is '(when form), and in 2nd it is 'do
-       *   in 1st case, put caar(sc->code) "when" into sc->x for later symbol definition, in 2nd use car(sc->code)
-       *   in 1st case, wrap up a lambda:
-       *      '(lambda (form) ...)
-       *   in 2nd case, it's ready to go
-       * goto eval popping to OP_MACRO1
-       *   eval sees the lambda and creates a closure (s7_make_closure): car => code, cdr => environment
-       */
-      if (is_pair(car(sc->code))) 
-	{
-	  sc->x = caar(sc->code);
-	  sc->code = s7_cons(sc, sc->LAMBDA, s7_cons(sc, cdar(sc->code), cdr(sc->code)));
-	} 
-      else 
-	{
-	  sc->x = car(sc->code);
-	  sc->code = cadr(sc->code);
-	}
-      if (!s7_is_symbol(sc->x)) 
-	return(eval_error(sc, "~S: variable is not a symbol", sc->x));
-
-      push_stack(sc, opcode(OP_MACRO1), sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
-      goto EVAL;
-      
-      
     case OP_MACRO1:
-      /* here sc->code is the name (a symbol), sc->value is a closure object, its car is the form as called
-       *     (macro (when form)
-       *       `(if ,(cadr form) (begin ,@(cddr form))))
-       * has become:
-       *     ((form) 
-       *      (quasiquote 
-       *        (if (unquote (cadr form)) 
-       *            (begin (unquote-splicing (cddr form))))))
-       * with 
-       *   sc->code: when 
-       *   sc->value: #<closure> 
-       * where "form" is the thing presented to us in the code, i.e. (when mumble do-this)
-       *   and the following code takes that as its argument and transforms it in some way
-       */
-
       if (!s7_is_symbol(sc->code))
 	return(eval_error(sc, "macro name is not a symbol?", sc->code));
 
@@ -22696,7 +22649,7 @@ s7_scheme *s7_init(void)
 
   /* initialization of global pointers to special symbols */
   assign_syntax(sc, "lambda",            OP_LAMBDA);
-  assign_syntax(sc, "lambda*",           OP_LAMBDA_STAR);      /* part of define* */
+  assign_syntax(sc, "lambda*",           OP_LAMBDA_STAR);      /* for define* and define-macro* */
   assign_syntax(sc, "quote",             OP_QUOTE);
   assign_syntax(sc, "define",            OP_DEFINE);
   assign_syntax(sc, "define*",           OP_DEFINE_STAR);
@@ -22711,13 +22664,12 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "and",               OP_AND);
   assign_syntax(sc, "or",                OP_OR);
   assign_syntax(sc, "case",              OP_CASE);
-  assign_syntax(sc, "macro",             OP_MACRO);           /* r4rs macro syntax, I think */
+  assign_syntax(sc, "do",                OP_DO);
   assign_syntax(sc, "defmacro",          OP_DEFMACRO);         /* CL-style macro syntax */
   assign_syntax(sc, "defmacro*",         OP_DEFMACRO_STAR);
   assign_syntax(sc, "define-macro",      OP_DEFINE_MACRO);     /* Scheme-style macro syntax */
   assign_syntax(sc, "define-macro*",     OP_DEFINE_MACRO_STAR); 
   assign_syntax(sc, "define-expansion",  OP_DEFINE_EXPANSION); /* read-time (immediate) macro expansion */
-  assign_syntax(sc, "do",                OP_DO);
   assign_syntax(sc, "with-environment",  OP_WITH_ENV);
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");

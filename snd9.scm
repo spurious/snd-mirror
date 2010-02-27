@@ -211,21 +211,21 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
 (with-sound () 
   (let ((rd (make-sampler 0 "now.snd")) 
 	(m (make-mfilter))) 
-    (run (lambda () 
-	   (do ((i 0 (+ 1 i))) 
-	       ((= i 10000))
-	     (outa i (mfilter m (* .1 (rd)))))))))
+    (run
+     (do ((i 0 (+ 1 i))) 
+	 ((= i 10000))
+       (outa i (mfilter m (* .1 (rd))))))))
 
 ;;; sweep center freq:
 (with-sound () 
   (let ((rd (make-sampler 0 "oboe.snd")) 
         (m (make-mfilter :decay .99 :frequency 1000)) 
         (e (make-env '(0 100 1 2000) :length 10000))) 
-    (run (lambda () 
-	   (do ((i 0 (+ 1 i))) 
-	       ((= i 10000))
-	     (outa i (mfilter m (* .1 (rd)))) 
-	     (set! (mflt-eps m) (* 2.0 (sin (/ (* pi (env e)) (mus-srate))))))))))
+    (run
+     (do ((i 0 (+ 1 i))) 
+	 ((= i 10000))
+       (outa i (mfilter m (* .1 (rd)))) 
+       (set! (mflt-eps m) (* 2.0 (sin (/ (* pi (env e)) (mus-srate)))))))))
 
 ;;; harmonics:
 (with-sound (:statistics #t)
@@ -235,16 +235,15 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
 	((= i 9))
       (vector-set! filters i (make-mfilter :decay .999 :frequency (* 400 (+ i 1)))))
     (run
-     (lambda ()
-       (declare (clm-vector filters))
-       (do ((i 0 (+ 1 i)))
-	   ((= i 10000))
-	 (let ((sum 0.0)
-	       (input (* .01 (rand noi))))
-	   (do ((j 0 (+ 1 j)))
-	       ((= j 9))
-	     (set! sum (+ sum (* (/ 1.0 (+ j 1)) (mfilter (vector-ref filters j) input)))))
-	   (outa i sum)))))))
+     (declare (clm-vector filters))
+     (do ((i 0 (+ 1 i)))
+	 ((= i 10000))
+       (let ((sum 0.0)
+	     (input (* .01 (rand noi))))
+	 (do ((j 0 (+ 1 j)))
+	     ((= j 9))
+	   (set! sum (+ sum (* (/ 1.0 (+ j 1)) (mfilter (vector-ref filters j) input)))))
+	 (outa i sum))))))
 |#
 
 

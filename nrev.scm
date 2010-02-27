@@ -52,24 +52,23 @@
 	   (allpass8 (if chan4 (make-all-pass -0.700 0.700 (list-ref dly-len 14)) #f)))
       (ws-interrupt?)
       (run
-       (lambda ()
-	 (do ((i 0 (+ i 1)))
-	     ((= i len))
-	   (let* ((rev (* volume (ina i *reverb*)))
-		  (outrev (all-pass allpass4
-				    (one-pole low
-					      (all-pass allpass3
-							(all-pass allpass2
-								  (all-pass allpass1
-									    (+ (comb comb1 rev)
-									       (comb comb2 rev)
-									       (comb comb3 rev)
-									       (comb comb4 rev)
-									       (comb comb5 rev)
-									       (comb comb6 rev)))))))))
-	     (outa i (all-pass allpass5 outrev))
-	     (if chan2 (outb i (all-pass allpass6 outrev)))
-	     (if chan4 (outc i (all-pass allpass7 outrev)))
-	     (if chan4 (outd i (all-pass allpass8 outrev))))))))))
+       (do ((i 0 (+ i 1)))
+	   ((= i len))
+	 (let* ((rev (* volume (ina i *reverb*)))
+		(outrev (all-pass allpass4
+				  (one-pole low
+					    (all-pass allpass3
+						      (all-pass allpass2
+								(all-pass allpass1
+									  (+ (comb comb1 rev)
+									     (comb comb2 rev)
+									     (comb comb3 rev)
+									     (comb comb4 rev)
+									     (comb comb5 rev)
+									     (comb comb6 rev)))))))))
+	   (outa i (all-pass allpass5 outrev))
+	   (if chan2 (outb i (all-pass allpass6 outrev)))
+	   (if chan4 (outc i (all-pass allpass7 outrev)))
+	   (if chan4 (outd i (all-pass allpass8 outrev)))))))))
 
 

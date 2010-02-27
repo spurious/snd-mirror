@@ -78,28 +78,27 @@
 		(set! (foreground-color snd chn) red))
 	      (lambda ()
 		(run
-		 (lambda ()
-		   (declare (int-vector lines))
-		   (if (< start left)                ; check previous samples to get first rms value
-		       (do ((i start (+ 1 i)))
-			   ((= i left))
-			 (moving-rms rms (reader))))
-		   (let ((first-sample (next-sample reader)))
-		     (set! x0 (grf-it (* left sr) xdata))
-		     (set! y0 (grf-it first-sample ydata))
-		     (vector-set! lines 0 x0)        ; first graph point
-		     (vector-set! lines 1 y0))
-		   (do ((i (+ left 1) (+ 1 i)))       ; loop through all samples calling moving-rms
-		       ((= i right))
-		     (let* ((x1 (grf-it (* i sr) xdata))
-			    (y (moving-rms rms (next-sample reader))))
-		       (if (> x1 x0)                 ; very often many samples are represented by one pixel
-			   (let ((y1 (grf-it y ydata)))
-			     (vector-set! lines line-ctr x1)
-			     (vector-set! lines (+ 1 line-ctr) y1)
-			     (set! line-ctr (+ line-ctr 2))
-			     (set! x0 x1)
-			     (set! y0 y1)))))))      ; else should we do "max" here? or draw a vertical line from min to max?
+		 (declare (int-vector lines))
+		 (if (< start left)                ; check previous samples to get first rms value
+		     (do ((i start (+ 1 i)))
+			 ((= i left))
+		       (moving-rms rms (reader))))
+		 (let ((first-sample (next-sample reader)))
+		   (set! x0 (grf-it (* left sr) xdata))
+		   (set! y0 (grf-it first-sample ydata))
+		   (vector-set! lines 0 x0)        ; first graph point
+		   (vector-set! lines 1 y0))
+		 (do ((i (+ left 1) (+ 1 i)))       ; loop through all samples calling moving-rms
+		     ((= i right))
+		   (let* ((x1 (grf-it (* i sr) xdata))
+			  (y (moving-rms rms (next-sample reader))))
+		     (if (> x1 x0)                 ; very often many samples are represented by one pixel
+			 (let ((y1 (grf-it y ydata)))
+			   (vector-set! lines line-ctr x1)
+			   (vector-set! lines (+ 1 line-ctr) y1)
+			   (set! line-ctr (+ line-ctr 2))
+			   (set! x0 x1)
+			   (set! y0 y1))))))      ; else should we do "max" here? or draw a vertical line from min to max?
 		(if (< line-ctr (length lines))
 		    (do ((j line-ctr (+ j 2)))       ; off-by-one in vector size calc -- need to pad so we don't get a bogus line to (0, 0)
 			((>= j (length lines)))

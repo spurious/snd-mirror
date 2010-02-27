@@ -109,33 +109,31 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
       (ws-interrupt?)
       (if (or (not easy-case) ind-noi amp-noi (> noise-amount 0.0) (not modulate))
 	  (run
-	   (lambda ()
-	     (do ((i beg (+ 1 i)))
-		 ((= i end))
-	       (if (not (= 0.0 noise-amount))
-		   (set! fuzz (rand fm-noi)))
-	       (set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
-	       (if ind-noi (set! ind-fuzz (+ 1.0 (rand-interp ind-noi))))
-	       (if amp-noi (set! amp-fuzz (+ 1.0 (rand-interp amp-noi))))
-	       (if modulate
-		   (if easy-case
-		       (set! modulation
-			     (* (env indf1) 
-				(polywave fmosc1 vib)))
-		       (set! modulation
-			     (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
-				(* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
-				(* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
-	       (locsig locs i (* (env ampf) amp-fuzz
-				 (oscil carrier (+ vib (* ind-fuzz modulation))))))))
+	   (do ((i beg (+ 1 i)))
+	       ((= i end))
+	     (if (not (= 0.0 noise-amount))
+		 (set! fuzz (rand fm-noi)))
+	     (set! vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib)))
+	     (if ind-noi (set! ind-fuzz (+ 1.0 (rand-interp ind-noi))))
+	     (if amp-noi (set! amp-fuzz (+ 1.0 (rand-interp amp-noi))))
+	     (if modulate
+		 (if easy-case
+		     (set! modulation
+			   (* (env indf1) 
+			      (polywave fmosc1 vib)))
+		     (set! modulation
+			   (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
+			      (* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
+			      (* (env indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))))
+	     (locsig locs i (* (env ampf) amp-fuzz
+			       (oscil carrier (+ vib (* ind-fuzz modulation)))))))
 	  (run
-	   (lambda () 
-	     (do ((i beg (+ 1 i)))
-		 ((= i end))
-	       (let* ((vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib))))
-		 (locsig locs i (* (env ampf) 
-				   (oscil carrier (+ vib (* (env indf1) 
-							    (polywave fmosc1 vib)))))))))))))
+	   (do ((i beg (+ 1 i)))
+	       ((= i end))
+	     (let* ((vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib))))
+	       (locsig locs i (* (env ampf) 
+				 (oscil carrier (+ vib (* (env indf1) 
+							  (polywave fmosc1 vib))))))))))))
 
 
 ; (fm-violin 0 1 440 .1 :fm-index 2.0)

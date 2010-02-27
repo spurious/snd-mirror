@@ -220,7 +220,40 @@ above as an example:
 (hi :b 2 :a 3) -&gt; '(3 2 "hi")
 (hi 3 2 1) -&gt; '(3 2 1)
 </pre>
-<p>See s7test.scm for many examples.</p>
+<p>See s7test.scm for many examples.  If you want a version of define* that insists
+that any arguments before the keyword :optional are required:
+</p>
+
+<pre>
+(define-macro (define** declarations . forms)
+  (let ((name (car declarations))
+	(args (cdr declarations)))
+    (define (position thing lst count)
+      (if (or (null? lst)
+	      (not (pair? (cdr lst)))) ; for dotted arg = "rest" arg
+	  #f
+	  (if (eq? thing (car lst))
+	      count
+	      (position thing (cdr lst) (+ count 1)))))
+    (let ((required-args (position :optional args 0)))
+      (if required-args
+	  `(define* (,name . func-args)
+	     (if (&lt; (length func-args) ,required-args)
+	     (if (&lt; (length func-args) ,required-args)
+		 (error "~A requires ~D argument~A: ~A" 
+			',name ,required-args 
+                        (if (&gt; ,required-args 1) "s" "") 
+                        func-args)
+		 (apply (lambda* ,args ,@forms) func-args)))
+	  `(define* ,declarations ,@forms)))))
+
+&gt; (define** (hi a :optional (b 23)) (list a b))
+hi
+&gt; (hi 1)
+(1 23)
+&gt; (hi)
+;hi requires 1 argument: ()
+</pre>
 </dd>
 <br>
 

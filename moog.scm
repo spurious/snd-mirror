@@ -112,4 +112,3 @@
 
 ;;; (define gen (make-moog-filter 500.0 .1))
 ;;; (map-channel (lambda (y) (moog-filter gen y)))
-;;; (run (lambda () (moog-filter gen 1.0)))

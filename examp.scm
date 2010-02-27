@@ -1388,7 +1388,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
 	((= i freq-inc))
       (vector-set! formants i (make-formant (* i bin) radius)))
     (call-with-exit                 ; setup non-local exit (for C-g interrupt)
-     (lambda (break)                ;   now (break value) will exit the call/cc returning value
+     (lambda (break)                ;   now (break value) will exit the call-with-exit returning value
        (do ((k 0 (+ 1 k)))
 	   ((= k outlen))
 	 (let ((outval 0.0))
@@ -2166,20 +2166,19 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 	 (len (length dsp-chain)))
     (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((k start (+ 1 k)))
-	   ((= k end))
-	 (let ((val 0.0))
-	   ;; using do and vector here for the run macro's benefit
-	   (do ((i 0 (+ i 1)))
-	       ((= i len))
-	     (let ((gen (vector-ref dsp-chain i)))
-	       (if (env? gen)
-		   (set! val (* (gen) val))
-		   (if (readin? gen)
-		       (set! val (+ val (gen)))
-		       (set! val (gen val))))))
-	   (outa k val)))))))
+     (do ((k start (+ 1 k)))
+	 ((= k end))
+       (let ((val 0.0))
+	 ;; using do and vector here for the run macro's benefit
+	 (do ((i 0 (+ i 1)))
+	     ((= i len))
+	   (let ((gen (vector-ref dsp-chain i)))
+	     (if (env? gen)
+		 (set! val (* (gen) val))
+		 (if (readin? gen)
+		     (set! val (+ val (gen)))
+		     (set! val (gen val))))))
+	 (outa k val))))))
 
 #|
 (with-sound ()
@@ -2473,10 +2472,9 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
     (let ((mx 0.0)
 	  (rd (make-sampler beg name)))
       (run
-       (lambda ()
-	 (do ((i 0 (+ i 1)))
-	     ((= i dur))
-	   (set! mx (max mx (abs (next-sample rd)))))))
+       (do ((i 0 (+ i 1)))
+	   ((= i dur))
+	 (set! mx (max mx (abs (next-sample rd))))))
       (free-sampler rd)
       mx))
 
@@ -2490,26 +2488,26 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	   (possible-end 0)
 	   (in-sound #f))
       (run 
-       (lambda ()                                  ; this block is where 99% of the time goes
-	 (do ((i 0 (+ i 1)))
-	     ((= i end))
-	   (let* ((samp (abs (next-sample reader)))
-		  (val (moving-average avg samp))
-		  (lval (moving-average lavg samp)))
-	     (if in-sound
-		 (if (< val low)
-		     (begin
-		       (set! possible-end i)
-		       (if (< lval low)
-			   (begin
-			     (vct-set! segments segctr (+ possible-end 128))
-			     (set! segctr (+ 1 segctr))
-			     (set! in-sound #f)))))
-		 (if (> val high)
-		     (begin
-		       (vct-set! segments segctr (- i 128))
-		       (set! segctr (+ 1 segctr))
-		       (set! in-sound #t))))))))
+       ;; this block is where 99% of the time goes
+       (do ((i 0 (+ i 1)))
+	   ((= i end))
+	 (let* ((samp (abs (next-sample reader)))
+		(val (moving-average avg samp))
+		(lval (moving-average lavg samp)))
+	   (if in-sound
+	       (if (< val low)
+		   (begin
+		     (set! possible-end i)
+		     (if (< lval low)
+			 (begin
+			   (vct-set! segments segctr (+ possible-end 128))
+			   (set! segctr (+ 1 segctr))
+			   (set! in-sound #f)))))
+	       (if (> val high)
+		   (begin
+		     (vct-set! segments segctr (- i 128))
+		     (set! segctr (+ 1 segctr))
+		     (set! in-sound #t)))))))
       (free-sampler reader)
       (if in-sound
 	  (begin

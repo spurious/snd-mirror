@@ -179,127 +179,126 @@
 	   (outa-val 0.0)
 	   (outb-val 0.0))
       (run
-       (lambda ()
-	 (do ((overlap 0 (+ 1 overlap)))
+       (do ((overlap 0 (+ 1 overlap)))
+	   ((or eow-flag (= overlap overlaps)))
+	 (set! overlap-ratio (/ overlap overlaps))
+	 (set! overlap-ratio-compl (- 1 overlap-ratio))
+	 (set! eow-flag #f)
+	 (set! writestart beg)
+	 (set! (mus-location ampf) beg)
+	 (set! (mus-location locf) beg)
+	 (do ((section 0 (+ 1 section)))
 	     ((or eow-flag (= overlap overlaps)))
-	   (set! overlap-ratio (/ overlap overlaps))
-	   (set! overlap-ratio-compl (- 1 overlap-ratio))
-	   (set! eow-flag #f)
-	   (set! writestart beg)
-	   (set! (mus-location ampf) beg)
-	   (set! (mus-location locf) beg)
-	   (do ((section 0 (+ 1 section)))
-	       ((or eow-flag (= overlap overlaps)))
-	     (set! (mus-location timef) writestart)
-	     (set! (mus-location sratef) writestart)
-	     (set! (mus-location wsizef) writestart)
-	     (set! wsize (env wsizef))
-	     (let* ((winlen (if (and (= overlap 0) (= section 0)) ; first section of first overlap isn't randomized
-				wsize
-				(+ wsize (random randw))))
-		    (winsamps (seconds->samples winlen))
-		    (srate-val (env sratef))
-		    (time-val (env timef)))
-	       ;; Even for the 1st section's truncated envelopes, the frequency of the envelope must be as if the envelope were full duration.
-	       (set! (mus-frequency windf) (* .5 (/ fsr winsamps)))
-	       ;; Set windowing oscillator to starting phase and appropriate frequency to provide half-sine envelope over window.
-	       ;; Phase must be altered for 1st envelope of each overlap stream.
-	       (set! (mus-phase windf) 
-		     (if (= section 0)
-			 (if (= overlap 0)
-			     0.0
-			     (* .5 clmsw-2pi overlap-ratio-compl))
-			 0.0))
-	       ;; Either use the absolute time pointer or a scaled increment.
-	       ;; If first section in scaled mode, must initialize section readstart to beginning plus first overlap position.
-	       ;; In both cases, need to alter readstart and length of first section's windows based on phase of overlap
-	       (if time-ptr 
-		   ;; TIME-PTR mode
+	   (set! (mus-location timef) writestart)
+	   (set! (mus-location sratef) writestart)
+	   (set! (mus-location wsizef) writestart)
+	   (set! wsize (env wsizef))
+	   (let* ((winlen (if (and (= overlap 0) (= section 0)) ; first section of first overlap isn't randomized
+			      wsize
+			      (+ wsize (random randw))))
+		  (winsamps (seconds->samples winlen))
+		  (srate-val (env sratef))
+		  (time-val (env timef)))
+	     ;; Even for the 1st section's truncated envelopes, the frequency of the envelope must be as if the envelope were full duration.
+	     (set! (mus-frequency windf) (* .5 (/ fsr winsamps)))
+	     ;; Set windowing oscillator to starting phase and appropriate frequency to provide half-sine envelope over window.
+	     ;; Phase must be altered for 1st envelope of each overlap stream.
+	     (set! (mus-phase windf) 
 		   (if (= section 0)
-		       ;; initial section
-		       (let ((overlap-start 
-			      (if window-offset
-				  ;; Csound style - start each overlap series further into the soundfile
-				  (if (= overlap 0)
-				      0
-				      (round (* winlen overlap-ratio-compl)))
-				  ;; Alternative style - start each overlap series at 0
-				  0))
-			     ;; To match csound version, 1st section must start reading at 0. Using zero-start-time-ptr 
-			     ;; flag = #f,  however, allows 1st section to start as determined by time-ptr instead.
-			     (adj-time-val (if zero-start-time-ptr 0.0 time-val)))
-			 (set! readstart (round (* fsr (+ inputbeg overlap-start adj-time-val))))
-			 (if (not (= overlap 0)) (set! winsamps (inexact->exact (* winsamps overlap-ratio)))))
-		       ;; remaining sections
-		       (set! readstart (round (* fsr (+ inputbeg time-val)))))
-		   ;; STRETCH mode
-		   (if (= section 0)
-		       ;; initial section
-		       (let ((init-read-start 
-			      (if window-offset
-				  ;; Csound style - start each overlap series further into the soundfile
-				  (if (= overlap 0)
-				      0
-				      (round (* winlen overlap-ratio-compl)))
-				  ;; Alternative style - start each overlap series at 0
-				  0)))
-			 (begin
-			   (set! readstart (round (* fsr (+ inputbeg init-read-start))))
-			   (if (not (= overlap 0)) (set! winsamps (inexact->exact (* winsamps overlap-ratio))))))
-		       ;; remaining sections
-		       (set! readstart (round (+ readstart (* fsr (/ winlen time-val)))))))
-	       ;; Set readin position and sampling rate
-	       (set! (mus-location f-a) readstart)
-	       (set! (mus-increment rdA) srate-val)
-	       (mus-reset rdA)
-	       (if stereo-i
+		       (if (= overlap 0)
+			   0.0
+			   (* .5 clmsw-2pi overlap-ratio-compl))
+		       0.0))
+	     ;; Either use the absolute time pointer or a scaled increment.
+	     ;; If first section in scaled mode, must initialize section readstart to beginning plus first overlap position.
+	     ;; In both cases, need to alter readstart and length of first section's windows based on phase of overlap
+	     (if time-ptr 
+		 ;; TIME-PTR mode
+		 (if (= section 0)
+		     ;; initial section
+		     (let ((overlap-start 
+			    (if window-offset
+				;; Csound style - start each overlap series further into the soundfile
+				(if (= overlap 0)
+				    0
+				    (round (* winlen overlap-ratio-compl)))
+				;; Alternative style - start each overlap series at 0
+				0))
+			   ;; To match csound version, 1st section must start reading at 0. Using zero-start-time-ptr 
+			   ;; flag = #f,  however, allows 1st section to start as determined by time-ptr instead.
+			   (adj-time-val (if zero-start-time-ptr 0.0 time-val)))
+		       (set! readstart (round (* fsr (+ inputbeg overlap-start adj-time-val))))
+		       (if (not (= overlap 0)) (set! winsamps (inexact->exact (* winsamps overlap-ratio)))))
+		     ;; remaining sections
+		     (set! readstart (round (* fsr (+ inputbeg time-val)))))
+		 ;; STRETCH mode
+		 (if (= section 0)
+		     ;; initial section
+		     (let ((init-read-start 
+			    (if window-offset
+				;; Csound style - start each overlap series further into the soundfile
+				(if (= overlap 0)
+				    0
+				    (round (* winlen overlap-ratio-compl)))
+				;; Alternative style - start each overlap series at 0
+				0)))
+		       (begin
+			 (set! readstart (round (* fsr (+ inputbeg init-read-start))))
+			 (if (not (= overlap 0)) (set! winsamps (inexact->exact (* winsamps overlap-ratio))))))
+		     ;; remaining sections
+		     (set! readstart (round (+ readstart (* fsr (/ winlen time-val)))))))
+	     ;; Set readin position and sampling rate
+	     (set! (mus-location f-a) readstart)
+	     (set! (mus-increment rdA) srate-val)
+	     (mus-reset rdA)
+	     (if stereo-i
+		 (begin
+		   (set! (mus-location f-b) readstart)
+		   (set! (mus-increment rdB) srate-val)
+		   (mus-reset rdB)))
+	     ;; Write window out
+	     (do ((k 0 (+ 1 k))
+		  (i writestart (+ 1 i)))
+		 ((or eow-flag (= k winsamps)))
+	       (if (> i end)
 		   (begin
-		     (set! (mus-location f-b) readstart)
-		     (set! (mus-increment rdB) srate-val)
-		     (mus-reset rdB)))
-	       ;; Write window out
-	       (do ((k 0 (+ 1 k))
-		    (i writestart (+ 1 i)))
-		   ((or eow-flag (= k winsamps)))
-		 (if (> i end)
-		     (begin
-		       (set! eow-flag #t)
-		       (set! overlap (+ 1 overlaps)))
-		     (let* ((amp-val (env ampf))
-			    (loc-val (env locf))
-			    (win-val (oscil windf))
-			    (sampa (* (src rdA) win-val))
-			    (sampb (if stereo-i (* (src rdB) win-val))))
-		       ;; channel panning
-		       (if stereo-o
-			   (let ((apan (sqrt loc-val))
-				 (bpan (sqrt (- 1 loc-val))))
-			     (if stereo-i
-				 (begin
-				   ;; stereo in and out
-				   (set! outa-val (* amp-val apan sampa))
-				   (set! outb-val (* amp-val bpan sampb)))
-				 (begin
-				   ;; mono in, stereo out
-				   (set! outa-val (* amp-val apan sampa))
-				   (set! outb-val (* amp-val bpan sampa)))))
-			   ;; stereo in, mono out
+		     (set! eow-flag #t)
+		     (set! overlap (+ 1 overlaps)))
+		   (let* ((amp-val (env ampf))
+			  (loc-val (env locf))
+			  (win-val (oscil windf))
+			  (sampa (* (src rdA) win-val))
+			  (sampb (if stereo-i (* (src rdB) win-val))))
+		     ;; channel panning
+		     (if stereo-o
+			 (let ((apan (sqrt loc-val))
+			       (bpan (sqrt (- 1 loc-val))))
 			   (if stereo-i
-			       (set! outa-val (* amp-val (+ sampa sampb) .75))
-			       ;; mono in, mono out
-			       (set! outa-val (* amp-val sampa))))
-		       ;; output
-		       (outa i outa-val)
-		       (if stereo-o
-			   (begin
-			     (outb i outb-val)	     
-			     (if *reverb* (outa i (* rev-val outa-val) *reverb*)))))))
-	       (if (not eow-flag )
-		   (begin
-		     ;; For first section, have to backup readstart
-		     (if (and (= section 0) (> overlap 0) (not time-ptr))
-			 (set! readstart (- readstart (round (* fsr winlen overlap-ratio-compl)))))))
-	       (set! writestart (+ writestart winsamps))))))))))
+			       (begin
+				 ;; stereo in and out
+				 (set! outa-val (* amp-val apan sampa))
+				 (set! outb-val (* amp-val bpan sampb)))
+			       (begin
+				 ;; mono in, stereo out
+				 (set! outa-val (* amp-val apan sampa))
+				 (set! outb-val (* amp-val bpan sampa)))))
+			 ;; stereo in, mono out
+			 (if stereo-i
+			     (set! outa-val (* amp-val (+ sampa sampb) .75))
+			     ;; mono in, mono out
+			     (set! outa-val (* amp-val sampa))))
+		     ;; output
+		     (outa i outa-val)
+		     (if stereo-o
+			 (begin
+			   (outb i outb-val)	     
+			   (if *reverb* (outa i (* rev-val outa-val) *reverb*)))))))
+	     (if (not eow-flag )
+		 (begin
+		   ;; For first section, have to backup readstart
+		   (if (and (= section 0) (> overlap 0) (not time-ptr))
+		       (set! readstart (- readstart (round (* fsr winlen overlap-ratio-compl)))))))
+	     (set! writestart (+ writestart winsamps)))))))))
 
 
 

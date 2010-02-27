@@ -2207,7 +2207,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
     ;; find the speaker group that contains a point
     (define (find-group x y z)
-      (call-with-current-continuation
+      (call-with-exit
        (lambda (return)
 	 (for-each
 	  (lambda (group)
@@ -2234,7 +2234,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 
     (define (position val lst)
       (define (position-1 val lst pos)
-	(call-with-current-continuation
+	(call-with-exit
 	 (lambda (return)
 	   (if (null? lst)
 	       #f
@@ -2887,10 +2887,9 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
     (let* ((osc (make-oscil :frequency freq))
 	   (aenv (make-env :envelope amp-env :scaler amp :duration duration)))
       (run
-       (lambda ()
-	 (do ((i beg (+ 1 i)))
-	     ((= i end))
-	   (dlocsig dloc i (* (env aenv) (oscil osc)))))))))
+       (do ((i beg (+ 1 i)))
+	   ((= i end))
+	 (dlocsig dloc i (* (env aenv) (oscil osc))))))))
 
 (with-sound (:channels 2) (sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
 

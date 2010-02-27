@@ -56,7 +56,7 @@ end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"
   (let ((nenv '())
 	(lasty (if env (cadr env) 0.0))
 	(len (length env)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return-early)               
        (do ((i 0 (+ i 2)))
 	   ((>= i len))

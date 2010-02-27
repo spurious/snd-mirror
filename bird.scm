@@ -27,11 +27,10 @@
 	 (end (+ beg len)))
     (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((i beg (+ 1 i)))
-	   ((= i end))
-	 (outa i (* (env amp-env)
-		    (polyshape os 1.0 (env gls-env)))))))))
+     (do ((i beg (+ 1 i)))
+	 ((= i end))
+       (outa i (* (env amp-env)
+		  (polyshape os 1.0 (env gls-env))))))))
 
 (definstrument (bird start dur frequency freqskew amplitude freq-envelope amp-envelope)
   "(bird start dur frequency freqskew amplitude freq-envelope amp-envelope)"
@@ -43,11 +42,10 @@
 	 (end (+ beg len)))
     (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((i beg (+ 1 i)))
-	   ((= i end))
-	 (outa i (* (env amp-env)
-		    (oscil os (env gls-env)))))))))
+     (do ((i beg (+ 1 i)))
+	 ((= i end))
+       (outa i (* (env amp-env)
+		  (oscil os (env gls-env))))))))
   
 (define main-amp '(.00 .00 .25 1.00 .60 .70 .75 1.00 1.00 .0))
 (define bird-tap '(.00 .00 .01 1.00 .99 1.00 1.00 .0))

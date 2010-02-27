@@ -7798,12 +7798,13 @@ all     57   7.5207    0.4990,        odd     44   6.6048    0.4989
 all     74   8.5725    0.4992,        odd     77   8.7389    0.4991
 all     42   6.4658    0.4994,        odd     78   8.8023    0.4992
 all     47   6.8394    0.4994,        odd     38   6.1502    0.4994
-all     63   7.9218    0.4995,        odd     76   8.6974    0.4995
+all     63   7.9218    0.4995,        odd     76   8.6949    0.4994
 all     99   9.9384    0.4997,        odd     58   7.6006    0.4995
 all     59   7.6748    0.4998,        odd     48   6.9153    0.4995
 all     45   6.7031    0.4998,        odd     63   7.9226    0.4996
 all     62   7.8677    0.4998,        odd     49   6.9979    0.4999
 all     71   8.4245    0.5000
+all     58   7.6146    0.5000
 </pre>
 </td></tr></table>
 
@@ -7815,33 +7816,32 @@ all     71   8.4245    0.5000
 <pre>
          n     peak   (log peak n)            n     peak   (log peak n)
 
-all     58   7.6289    0.5004,        odd     36   6.0074    0.5003
-all     50   7.0874    0.5006,        odd     82   9.0785    0.5006
-all    105  10.2823    0.5007,        odd     62   7.8988    0.5008
-all     72   8.5179    0.5009,        odd     55   7.4464    0.5010
-all     70   8.3988    0.5009,        odd     70   8.4041    0.5011
-all     73   8.5835    0.5011,        odd    110  10.5415    0.5011
-all     88   9.4268    0.5011,        odd     51   7.1723    0.5011
-all     49   7.0311    0.5011,        odd     54   7.3828    0.5012
-all     86   9.3300    0.5014,        odd     80   8.9976    0.5014
+all     50   7.0874    0.5006,        odd     36   6.0074    0.5003
+all     70   8.3905    0.5007,        odd     82   9.0785    0.5006
+all     84   9.1941    0.5007,        odd     62   7.8988    0.5008
+all    105  10.2823    0.5007,        odd     55   7.4464    0.5010
+all     72   8.5179    0.5009,        odd     70   8.4041    0.5011
+all     49   7.0258    0.5009,        odd    110  10.5415    0.5011
+all     73   8.5835    0.5011,        odd     51   7.1723    0.5011
+all     88   9.4268    0.5011,        odd     54   7.3828    0.5012
+all     86   9.3289    0.5013,        odd     80   8.9976    0.5014
 all     40   6.3596    0.5015,        odd     61   7.8579    0.5015
 all     85   9.2830    0.5015,        odd     53   7.3284    0.5017
-all     84   9.2283    0.5015,        odd     59   7.7420    0.5019
-all     48   6.9776    0.5018,        odd     73   8.6184    0.5020
-all     51   7.1937    0.5019,        odd     91   9.6446    0.5024
-all     92   9.6801    0.5020,        odd     69   8.3939    0.5025
+all     48   6.9776    0.5018,        odd     59   7.7420    0.5019
+all     51   7.1937    0.5019,        odd     73   8.6184    0.5020
+all     92   9.6801    0.5020,        odd     91   9.6446    0.5024
+all     64   8.0680    0.5020,        odd     69   8.3939    0.5025
 all     75   8.7553    0.5025,        odd     68   8.3369    0.5026
-all     64   8.0856    0.5026,        odd     66   8.2137    0.5026
-all     91   9.6515    0.5026,        odd    102  10.2336    0.5029
+all     91   9.6515    0.5026,        odd     66   8.2137    0.5026
+all     54   7.4251    0.5026,        odd    102  10.2336    0.5029
 all    112  10.7173    0.5027,        odd     60   7.8387    0.5029
-all     54   7.4365    0.5030,        odd     64   8.1024    0.5031
-all     66   8.2275    0.5030,        odd     81   9.1247    0.5031
+all     66   8.2275    0.5030,        odd     64   8.1024    0.5031
 </pre>
 </td></tr></table>
 
 <p>I don't want to jinx myself, but maybe that initial guess wasn't so bad!  These values
-(and those in peak-phases.scm) represent about 400 GHz years of computing, probably only
-possible at an enlightened institution like CCRMA.
+(and those in peak-phases.scm) represent about 400 GHz years of computing, 
+possible only at an enlightened institution like CCRMA.
 </p>
 
 <p>
@@ -7861,7 +7861,8 @@ initial phases, so it is obviously irrelevant).
 
 <p>The "even" cases are not independent of the "all" cases; each even-harmonics set can be at worst 1.0 above
 its corresponding (n-1) all-harmonics set (shift the current "all" choices right to multiply each by 2, then set the new fundamental
-phase to 0.0).  If you then search around this set of phases, you'll find very good values.  Using Snd's fpsap:
+phase to 0.0).  If you then search around this set of phases, you'll find very good values.  Using Snd's fpsap (a version
+of the genetic algorithm):
 </p>
 
 <pre>
@@ -7881,9 +7882,9 @@ Next, due to the very good results reported in
 Horner and Beauchamp, "a genetic algorithm-based method
 for synthesis of low peak amplitude signals", J. Acoustic. Soc. Am Vol 99 No 1 Jan 96, online
 at ems.music.uiuc.edu/beaucham/papers/JASA.01.96.pdf,
- I tried the genetic algorithm 
-with 2000 or so starting points and an initial increment
-of 1.0.  These are pretty good choices, but after a few months of searching, I reached a point of almost no
+ I tried the genetic algorithm.  I started with 
+2000 or so randomly chosen initial points and a search radius
+of 1.0 (= pi).  These are pretty good choices, but after a few months of searching, I reached a point of almost no
 returns.  I tried variants of the basic algorithm and other search methods, but the results were not very good until
 I noticed that in the 
 graphs of the peaks, the good values are more or less clustered together.  So I tried centering

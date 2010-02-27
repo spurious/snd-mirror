@@ -150,156 +150,155 @@
     (set! poslt (modulo (inexact->exact (+ end poslt)) bufsize))
     (ws-interrupt?)
     (run
-     (lambda ()
-       (do ((i beg (+ i 1)))
-	   ((= i end))
-	 (set! indexl (modulo (inexact->exact (- (+ i posl bufsize) samp_lperiod)) bufsize))
-	 (set! indexr (modulo (inexact->exact (- (+ i posr bufsize) samp_rperiod)) bufsize))
-	 (set! indexlt (modulo (inexact->exact (- (+ i poslt bufsize) samp_lperiodt)) bufsize))
-	 (set! indexrt (modulo (inexact->exact (- (+ i posrt bufsize) samp_rperiodt)) bufsize))
-	 (set! indexl_1 (modulo
-			 (inexact->exact (- (- (+ i posl bufsize) samp_lperiod) 1)) bufsize))
-	 (set! indexr_1 (modulo
-			 (inexact->exact (- (- (+ i posr bufsize) samp_rperiod) 1)) bufsize))
-	 (set! indexlt_1 (modulo
-			  (inexact->exact (- (- (+ i poslt bufsize) samp_lperiodt) 1)) bufsize))
-	 (set! indexrt_1 (modulo
-			  (inexact->exact (- (- (+ i posrt bufsize) samp_rperiodt) 1)) bufsize))
-	 (set! indexl_2 (modulo
-			 (inexact->exact (- (- (+ i posl bufsize) samp_lperiod) 2)) bufsize))
-	 (set! indexr_2 (modulo
-			 (inexact->exact (- (- (+ i posr bufsize) samp_rperiod) 2)) bufsize))
-	 (set! indexlt_2 (modulo
-			  (inexact->exact (- (- (+ i poslt bufsize) samp_lperiodt) 2)) bufsize))
-	 (set! indexrt_2 (modulo
-			  (inexact->exact (- (- (+ i posrt bufsize) samp_rperiodt) 2)) bufsize))
-	 (set! vib (+ (/ (* (vct-ref vinbridge indexl_2) (- alphal 1)(- alphal 2)) 2)
-		      (* (vct-ref vinbridge indexl_1) (* alphal -1) (- alphal 2))
-		      (/ (* (vct-ref vinbridge indexl) alphal (- alphal 1)) 2)))
-	 (set! vin (+ (/ (* (vct-ref vinut indexr_2) (- alphar 1)(- alphar 2)) 2)
-		      (* (vct-ref vinut indexr_1) (* alphar -1) (- alphar 2))
-		      (/ (* (vct-ref vinut indexr) (- alphar 1) alphar) 2)))
-	 (set! vibt (+ (/ (* (vct-ref vinbridget indexlt_2) (- alphalt 1)(- alphalt 2)) 2)
-		       (* (vct-ref vinbridget indexlt_1) (* alphalt -1) (- alphalt 2))
-		       (/ (* (vct-ref vinbridget indexlt) alphalt (- alphalt 1)) 2)))
-	 (set! vint (+ (/ (* (vct-ref vinutt indexrt_2) (- alphart 1)(- alphart 2)) 2)
-		       (* (vct-ref vinutt indexrt_1) (* alphart -1) (- alphart 2))
-		       (/ (* (vct-ref vinutt indexrt) (- alphart 1) alphart) 2)))
-	 (bowfilt inharm)
-	 (set! vh (+ (+ ynn y1nb) (+ ynnt ynbt)))
-
-	 (set! aa zslope)
-	 (set! bb1 (- (- (+ (* 0.2 zslope) (* 0.3 fb)) (* zslope vb)) (* zslope vh)))
-	 (set! cc1 (- (- (+ (* 0.06 fb) (* (* zslope vh) vb)) (* 0.2 zslope vh)) (* 0.3 vb fb)))
-	 (set! delta1 (- (* bb1 bb1) (* 4 aa cc1)))
-	 (set! bb2 (- (- (- (* -0.2 zslope) (* 0.3 fb)) (* zslope vb)) (* zslope vh)))
-	 (set! cc2 (+ (+ (+ (+ (* 0.06 fb) (* zslope vh vb))
-			    (* 0.2 zslope vh)) (* 0.3 vb fb)) (* 0.1 fb)))
-	 (set! delta2 (- (* bb2 bb2) (* 4 aa cc2)))
-	 (if (or (= vb 0) (= fb 0))
-	     (set! v vh)
-	     (begin
-	       (if (= vh vb)
-		   (begin
-		     (set! v vb)
-		     (set! stick 1))
-		   (begin
-		     (if (> vh vb)
-			 (begin
-			   (set! lhs #f)
-			   (set! rhs #t))
-			 (begin
-			   (set! rhs #f)
-			   (set! lhs #t)))
-		     (if rhs
-			 (begin
-			   (if (< delta1 0)
-			       (begin
-				 (set! v vb)
-				 (set! stick 1))
-			       (begin
-				 (if (= stick 1)
-				     (begin
-				       (set! vtemp vb)
-				       (set! f (* (* 2 zslope) (- vtemp vh)))
-				       (if (>= f (* -1 (* mus fb)))
-					   (set! v vtemp)
-					   (begin
-					     (set! v1 (/ (+ (* -1 bb1 ) (sqrt delta1)) (* 2 aa)))
-					     (set! v2 (/ (- (* -1 bb1) (sqrt delta1)) (* 2 aa)))
-					     (set! v (min v1 v2))
-					     (set! stick 0))))
-				     (begin
-				       (set! v1 (/ (+ (* -1 bb1 ) (sqrt delta1)) (* 2 aa)))
-				       (set! v2 (/ (- (* -1 bb1) (sqrt delta1)) (* 2 aa)))
-				       (set! v (min v1 v2))
-				       (set! stick 0))))))
-			 (if lhs
+     (do ((i beg (+ i 1)))
+	 ((= i end))
+       (set! indexl (modulo (inexact->exact (- (+ i posl bufsize) samp_lperiod)) bufsize))
+       (set! indexr (modulo (inexact->exact (- (+ i posr bufsize) samp_rperiod)) bufsize))
+       (set! indexlt (modulo (inexact->exact (- (+ i poslt bufsize) samp_lperiodt)) bufsize))
+       (set! indexrt (modulo (inexact->exact (- (+ i posrt bufsize) samp_rperiodt)) bufsize))
+       (set! indexl_1 (modulo
+		       (inexact->exact (- (- (+ i posl bufsize) samp_lperiod) 1)) bufsize))
+       (set! indexr_1 (modulo
+		       (inexact->exact (- (- (+ i posr bufsize) samp_rperiod) 1)) bufsize))
+       (set! indexlt_1 (modulo
+			(inexact->exact (- (- (+ i poslt bufsize) samp_lperiodt) 1)) bufsize))
+       (set! indexrt_1 (modulo
+			(inexact->exact (- (- (+ i posrt bufsize) samp_rperiodt) 1)) bufsize))
+       (set! indexl_2 (modulo
+		       (inexact->exact (- (- (+ i posl bufsize) samp_lperiod) 2)) bufsize))
+       (set! indexr_2 (modulo
+		       (inexact->exact (- (- (+ i posr bufsize) samp_rperiod) 2)) bufsize))
+       (set! indexlt_2 (modulo
+			(inexact->exact (- (- (+ i poslt bufsize) samp_lperiodt) 2)) bufsize))
+       (set! indexrt_2 (modulo
+			(inexact->exact (- (- (+ i posrt bufsize) samp_rperiodt) 2)) bufsize))
+       (set! vib (+ (/ (* (vct-ref vinbridge indexl_2) (- alphal 1)(- alphal 2)) 2)
+		    (* (vct-ref vinbridge indexl_1) (* alphal -1) (- alphal 2))
+		    (/ (* (vct-ref vinbridge indexl) alphal (- alphal 1)) 2)))
+       (set! vin (+ (/ (* (vct-ref vinut indexr_2) (- alphar 1)(- alphar 2)) 2)
+		    (* (vct-ref vinut indexr_1) (* alphar -1) (- alphar 2))
+		    (/ (* (vct-ref vinut indexr) (- alphar 1) alphar) 2)))
+       (set! vibt (+ (/ (* (vct-ref vinbridget indexlt_2) (- alphalt 1)(- alphalt 2)) 2)
+		     (* (vct-ref vinbridget indexlt_1) (* alphalt -1) (- alphalt 2))
+		     (/ (* (vct-ref vinbridget indexlt) alphalt (- alphalt 1)) 2)))
+       (set! vint (+ (/ (* (vct-ref vinutt indexrt_2) (- alphart 1)(- alphart 2)) 2)
+		     (* (vct-ref vinutt indexrt_1) (* alphart -1) (- alphart 2))
+		     (/ (* (vct-ref vinutt indexrt) (- alphart 1) alphart) 2)))
+       (bowfilt inharm)
+       (set! vh (+ (+ ynn y1nb) (+ ynnt ynbt)))
+       
+       (set! aa zslope)
+       (set! bb1 (- (- (+ (* 0.2 zslope) (* 0.3 fb)) (* zslope vb)) (* zslope vh)))
+       (set! cc1 (- (- (+ (* 0.06 fb) (* (* zslope vh) vb)) (* 0.2 zslope vh)) (* 0.3 vb fb)))
+       (set! delta1 (- (* bb1 bb1) (* 4 aa cc1)))
+       (set! bb2 (- (- (- (* -0.2 zslope) (* 0.3 fb)) (* zslope vb)) (* zslope vh)))
+       (set! cc2 (+ (+ (+ (+ (* 0.06 fb) (* zslope vh vb))
+			  (* 0.2 zslope vh)) (* 0.3 vb fb)) (* 0.1 fb)))
+       (set! delta2 (- (* bb2 bb2) (* 4 aa cc2)))
+       (if (or (= vb 0) (= fb 0))
+	   (set! v vh)
+	   (begin
+	     (if (= vh vb)
+		 (begin
+		   (set! v vb)
+		   (set! stick 1))
+		 (begin
+		   (if (> vh vb)
+		       (begin
+			 (set! lhs #f)
+			 (set! rhs #t))
+		       (begin
+			 (set! rhs #f)
+			 (set! lhs #t)))
+		   (if rhs
+		       (begin
+			 (if (< delta1 0)
 			     (begin
-			       (if (< delta2 0)
+			       (set! v vb)
+			       (set! stick 1))
+			     (begin
+			       (if (= stick 1)
 				   (begin
-				     (set! v vb)
-				     (set! stick 1))
-				   (begin
-				     (if (= stick 1)
+				     (set! vtemp vb)
+				     (set! f (* (* 2 zslope) (- vtemp vh)))
+				     (if (>= f (* -1 (* mus fb)))
+					 (set! v vtemp)
 					 (begin
-					   (set! vtemp vb)
-					   (set! f (* zslope (- vtemp vh)))
-					   (if (and (<= f (* mus fb)) (> f 0))
-					       (begin
-						 (set! v vtemp))
-					       (begin
-						 (set! v1 (/ (- (* -1 bb2 ) (sqrt delta2)) (* 2 aa)))
-						 (set! v2 (/ (+ (* -1 bb2) (sqrt delta2)) (* 2 aa)))
-						 (set! vtemp (min v1 v2))
-						 (set! stick 0)
-						 (if (> vtemp vb)
-						     (begin
-						       (set! v vb)
-						       (set! stick 1))
-						     (begin
-						       (set! v vtemp)
-						       (set! f (* zslope (- v vh) )))))))
-					 (begin
-					   (set! v1 (/ (- (* -1 bb2 ) (sqrt delta2)) (* 2 aa)))
-					   (set! v2 (/ (+ (* -1 bb2) (sqrt delta2)) (* 2 aa)))
+					   (set! v1 (/ (+ (* -1 bb1 ) (sqrt delta1)) (* 2 aa)))
+					   (set! v2 (/ (- (* -1 bb1) (sqrt delta1)) (* 2 aa)))
 					   (set! v (min v1 v2))
-					   (set! stick 0)))))
-			       (if (> v vb)
+					   (set! stick 0))))
 				   (begin
-				     (set! v vb)
-				     (set! stick 1))))))))
-	       (set! f (* zslope (- v vh)))
-	       (set! xnn (+ y1nb (/ f (* 2 stringImpedance))))
-	       (set! xnb (+ ynn (/ f (* 2 stringImpedance))))))
-    
-	 (set! f (* zslope (- v vh)))
-	 (set! xnnt (+ ynbt (/ f (* 2 stringImpedancet))))
-	 (set! xnbt (+ ynnt (/ f (* 2 stringImpedancet))))
-	 (set! updl (modulo (inexact->exact (+ i posl bufsize)) bufsize))
-	 (set! updr (modulo (inexact->exact (+ i posr bufsize)) bufsize))
-	 (set! updlt (modulo (inexact->exact (+ i poslt bufsize)) bufsize))
-	 (set! updrt (modulo (inexact->exact (+ i posrt bufsize)) bufsize))
-	 (vct-set! vinbridge updl xnb)
-	 (vct-set! vinut updr xnn)
-	 (vct-set! vinbridget updlt xnbt)
-	 (vct-set! vinutt updrt xnnt)
-	 (locsig loc i (* xnb (env ampf)))
-	 (set! lhs #f)
-	 (set! rhs #f))))))
+				     (set! v1 (/ (+ (* -1 bb1 ) (sqrt delta1)) (* 2 aa)))
+				     (set! v2 (/ (- (* -1 bb1) (sqrt delta1)) (* 2 aa)))
+				     (set! v (min v1 v2))
+				     (set! stick 0))))))
+		       (if lhs
+			   (begin
+			     (if (< delta2 0)
+				 (begin
+				   (set! v vb)
+				   (set! stick 1))
+				 (begin
+				   (if (= stick 1)
+				       (begin
+					 (set! vtemp vb)
+					 (set! f (* zslope (- vtemp vh)))
+					 (if (and (<= f (* mus fb)) (> f 0))
+					     (begin
+					       (set! v vtemp))
+					     (begin
+					       (set! v1 (/ (- (* -1 bb2 ) (sqrt delta2)) (* 2 aa)))
+					       (set! v2 (/ (+ (* -1 bb2) (sqrt delta2)) (* 2 aa)))
+					       (set! vtemp (min v1 v2))
+					       (set! stick 0)
+					       (if (> vtemp vb)
+						   (begin
+						     (set! v vb)
+						     (set! stick 1))
+						   (begin
+						     (set! v vtemp)
+						     (set! f (* zslope (- v vh) )))))))
+				       (begin
+					 (set! v1 (/ (- (* -1 bb2 ) (sqrt delta2)) (* 2 aa)))
+					 (set! v2 (/ (+ (* -1 bb2) (sqrt delta2)) (* 2 aa)))
+					 (set! v (min v1 v2))
+					 (set! stick 0)))))
+			     (if (> v vb)
+				 (begin
+				   (set! v vb)
+				   (set! stick 1))))))))
+	     (set! f (* zslope (- v vh)))
+	     (set! xnn (+ y1nb (/ f (* 2 stringImpedance))))
+	     (set! xnb (+ ynn (/ f (* 2 stringImpedance))))))
+       
+       (set! f (* zslope (- v vh)))
+       (set! xnnt (+ ynbt (/ f (* 2 stringImpedancet))))
+       (set! xnbt (+ ynnt (/ f (* 2 stringImpedancet))))
+       (set! updl (modulo (inexact->exact (+ i posl bufsize)) bufsize))
+       (set! updr (modulo (inexact->exact (+ i posr bufsize)) bufsize))
+       (set! updlt (modulo (inexact->exact (+ i poslt bufsize)) bufsize))
+       (set! updrt (modulo (inexact->exact (+ i posrt bufsize)) bufsize))
+       (vct-set! vinbridge updl xnb)
+       (vct-set! vinut updr xnn)
+       (vct-set! vinbridget updlt xnbt)
+       (vct-set! vinutt updrt xnnt)
+       (locsig loc i (* xnb (env ampf)))
+       (set! lhs #f)
+       (set! rhs #f)))))
 
-;(with-sound (:channels 2) (bow 0 3 400 0.5 :vb 0.15 :fb 0.1 :inharm 0.25))
-;(with-sound (:channels 2) (bow 0 2 440 0.5  :fb 0.25))
-;(with-sound (:channels 2) (bow 0 4 600 0.8))
-;(with-sound (:channels 2) (bow 0 6 147 2 :fb 0.035 :vb 0.1))
-;(with-sound (:channels 2) (bow 0 3 1100 0.5 :vb 0.45 :fb 0.9 :inharm 0.3))
-;(with-sound (:channels 2) (bow 0 3 1500 0.5 :vb 0.25 :fb 0.9 :inharm 0.3))
-;(with-sound (:channels 2) (bow 0 3 1525 0.5 :vb 0.25 :fb 0.9 :inharm 0.3))
-;(with-sound (:channels 2 :reverb jc-reverb) (bow 0 1 400 0.5 :reverb 0.0051))
-;
-;(with-sound (:channels 2 :reverb jc-reverb)
-; 	    (bow 0 3 366 0.5  :degree 0)
-; 	    (bow 0 3 422 0.5  :degree 90)
-; 	    (bow 4 6 147 2 :fb 0.035 :vb 0.1 :reverb 0.051))
+					;(with-sound (:channels 2) (bow 0 3 400 0.5 :vb 0.15 :fb 0.1 :inharm 0.25))
+					;(with-sound (:channels 2) (bow 0 2 440 0.5  :fb 0.25))
+					;(with-sound (:channels 2) (bow 0 4 600 0.8))
+					;(with-sound (:channels 2) (bow 0 6 147 2 :fb 0.035 :vb 0.1))
+					;(with-sound (:channels 2) (bow 0 3 1100 0.5 :vb 0.45 :fb 0.9 :inharm 0.3))
+					;(with-sound (:channels 2) (bow 0 3 1500 0.5 :vb 0.25 :fb 0.9 :inharm 0.3))
+					;(with-sound (:channels 2) (bow 0 3 1525 0.5 :vb 0.25 :fb 0.9 :inharm 0.3))
+					;(with-sound (:channels 2 :reverb jc-reverb) (bow 0 1 400 0.5 :reverb 0.0051))
+					;
+					;(with-sound (:channels 2 :reverb jc-reverb)
+					; 	    (bow 0 3 366 0.5  :degree 0)
+					; 	    (bow 0 3 422 0.5  :degree 90)
+					; 	    (bow 4 6 147 2 :fb 0.035 :vb 0.1 :reverb 0.051))
 
 ;; strad.scm ends here
