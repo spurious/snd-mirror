@@ -513,8 +513,7 @@
 (for-each
  (lambda (arg)
    (if (boolean? arg)
-       (begin
-	 (display "(boolean? ") (display arg) (display ") returned #t?") (newline))))
+       (format #t "(boolean? ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1))))
 
 
@@ -534,8 +533,7 @@
 (for-each
  (lambda (arg)
    (if (not arg)
-       (begin
-	 (display "(not ") (display arg) (display ") returned #t?") (newline))))
+       (format #t "(not ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1))))
 
 
@@ -559,8 +557,7 @@
 (for-each
  (lambda (arg)
    (if (symbol? arg)
-       (begin
-	 (display "(symbol? ") (display arg) (display ") returned #t?") (newline))))
+       (format #t "(symbol? ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1))))
 
 
@@ -578,8 +575,7 @@
 (for-each
  (lambda (arg)
    (if (procedure? arg)
-       (begin
-	 (display "(procedure? ") (display arg) (display ") returned #t?") (newline))))
+       (format #t "(procedure? ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f))
 
 
@@ -631,15 +627,13 @@
 (for-each
  (lambda (arg)
    (if (char? arg)
-       (begin
-	 (display "(char? ") (display arg) (display ") returned #t?") (newline))))
+       (format #t "(char? ~A) -> #t?~%" arg)))
  (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (lambda (a) (+ a 1))))
 
 (do ((i 0 (+ i 1)))
     ((= i 256))
-   (if (not (char? (integer->char i)))
-       (begin
-	 (display "(char? (integer->char ") (display i) (display ")) returned #f?") (newline))))
+  (if (not (char? (integer->char i)))
+      (format #t "(char? (integer->char ~A)) -> #f?~%" i)))
 
 (num-test (let ((str (make-string 258 #\space)))
 	    (do ((i 1 (+ i 1)))
@@ -662,15 +656,13 @@
   (for-each
    (lambda (arg)
      (if (not (char-upper-case? arg))
-	 (begin
-	   (display "(char-upper-case? ") (display arg) (display ") returned #f?") (newline))))
+	 (format #t "(char-upper-case? ~A) -> #f?~%" arg)))
    cap-a-to-z)
 
   (for-each
    (lambda (arg)
      (if (char-upper-case? arg)
-	 (begin
-	   (display "(char-upper-case? ") (display arg) (display ") returned #t?") (newline))))
+	 (format #t "(char-upper-case? ~A) -> #t?~%" arg)))
    a-to-z)
 
   ;; non-alpha chars are "unspecified" here
@@ -682,15 +674,13 @@
   (for-each
    (lambda (arg)
      (if (not (char-lower-case? arg))
-	 (begin
-	   (display "(char-lower-case? ") (display arg) (display ") returned #f?") (newline))))
+	 (format #t "(char-lower-case? ~A) -> #f?~%" arg)))
    a-to-z)
 
   (for-each
    (lambda (arg)
      (if (char-lower-case? arg)
-	 (begin
-	   (display "(char-lower-case? ") (display arg) (display ") returned #t?") (newline))))
+	 (format #t "(char-lower-case? ~A) -> #t?~%" arg)))
    cap-a-to-z)
 
 
@@ -711,8 +701,7 @@
   (for-each
    (lambda (arg1 arg2)
      (if (not (char=? (char-upcase arg1) arg2))
-	 (begin
-	   (display "(char-upcase ") (display arg1) (display ") returned ") (display arg2) (display "?") (newline))))
+	 (format #t "(char-upcase ~A) != ~A?~%" arg1 arg2)))
    a-to-z
    cap-a-to-z)
 
@@ -720,10 +709,7 @@
       ((= i 128))
     (if (and (not (char=? (integer->char i) (char-upcase (integer->char i))))
 	     (not (char-alphabetic? (integer->char i))))
-	(begin 
-	  (display "(char-upcase ") (display (integer->char i)) (display ") -> ")
-	  (display (integer->char i)) (display ", but not alphabetic?")
-	  (newline))))
+	(format #t "(char-upcase ~A) -> ~A but not alphabetic?~%" (integer->char i) (char-upcase (integer->char i)))))
 
   (test (char-downcase #\A) #\a)
   (test (char-downcase #\a) #\a)
@@ -741,8 +727,7 @@
   (for-each
    (lambda (arg1 arg2)
      (if (not (char=? (char-downcase arg1) arg2))
-	 (begin
-	   (display "(char-downcase ") (display arg1) (display ") returned ") (display arg2) (display "?") (newline))))
+	 (format #t "(char-downcase ~A) != ~A?~%" arg1 arg2)))
    cap-a-to-z
    a-to-z)
 
@@ -762,15 +747,13 @@
   (for-each
    (lambda (arg)
      (if (char-numeric? arg)
-	 (begin
-	   (display "(char-numeric? ") (display arg) (display ") returned #t?") (newline))))
+	 (format #t "(char-numeric? ~A) -> #t?~%" arg)))
    cap-a-to-z)
 
   (for-each
    (lambda (arg)
      (if (char-numeric? arg)
-	 (begin
-	   (display "(char-numeric? ") (display arg) (display ") returned #t?") (newline))))
+	 (format #t "(char-numeric? ~A) -> #t?~%" arg)))
    a-to-z)
 
 
@@ -787,15 +770,13 @@
   (for-each
    (lambda (arg)
      (if (char-whitespace? arg)
-	 (begin
-	   (display "(char-whitespace? ") (display arg) (display ") returned #t?") (newline))))
+	 (format #t "(char-whitespace? ~A) -> #t?~%" arg)))
    mixed-a-to-z)
 
   (for-each
    (lambda (arg)
      (if (char-whitespace? arg)
-	 (begin
-	   (display "(char-whitespace? ") (display arg) (display ") returned #t?") (newline))))
+	 (format #t "(char-whitespace? ~A) -> #t?~%" arg)))
    digits)
 
 
@@ -817,15 +798,13 @@
   (for-each
    (lambda (arg)
      (if (char-alphabetic? arg)
-	 (begin
-	   (display "(char-alphabetic? ") (display arg) (display ") returned #t?") (newline))))
+	 (format #t "(char-alphabetic? ~A) -> #t?~%" arg)))
    digits)
 
   (for-each
    (lambda (arg)
      (if (not (char-alphabetic? arg))
-	 (begin
-	   (display "(char-alphabetic? ") (display arg) (display ") returned #f?") (newline))))
+	 (format #t "(char-alphabetic? ~A) -> #f?~%" arg)))
    mixed-a-to-z)
 
   (test 
@@ -1761,8 +1740,7 @@
 (for-each
  (lambda (arg)
    (if (not (equal? (car (cons arg '())) arg))
-       (begin
-	 (display "(car '(") (display arg) (display ")) returned ") (display (car (cons arg '()))) (display "?") (newline))))
+       (format #t "(car '(~A)) returned ~A?~%" arg (car (cons arg '())))))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
 
 
@@ -2157,8 +2135,7 @@
 (for-each
  (lambda (arg)
    (if (pair? arg)
-       (begin
-	 (display "(pair? ") (display arg) (display ") returned #t?") (newline))))
+       (format #t "(pair? ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
 
 
@@ -2196,8 +2173,7 @@
 (for-each
  (lambda (arg)
    (if (list? arg)
-       (begin
-	 (display "(list? ") (display arg) (display ") returned #t?") (newline))))
+       (format #t "(list? ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
 
 
@@ -2233,8 +2209,7 @@
 (for-each
  (lambda (arg)
    (if (null? arg)
-       (begin
-	 (display "(null? ") (display arg) (display ") returned #t?") (newline))))
+       (format #t "(null? ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
 
 
@@ -2830,8 +2805,7 @@
 (for-each
  (lambda (arg)
    (if (input-port? arg)
-       (begin
-	 (display "(input-port? ") (display arg) (display ") returned #t?") (newline))))
+       (format #t "(input-port? ~A) -> #t?~%" arg)))
  (list "hi" #f (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f))
 
 (test (call-with-input-file "s7test.scm" input-port?) #t)
@@ -2876,8 +2850,7 @@
 (for-each
  (lambda (arg)
    (if (output-port? arg)
-       (begin
-	 (display "(output-port? ") (display arg) (display ") returned #t?") (newline))))
+       (format #t "(output-port? ~A) -> #t?~%" arg)))
  (list "hi" #f (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f))
 
 (test (call-with-output-file "tmp1.r5rs" output-port?) #t)
@@ -2898,8 +2871,7 @@
 (for-each
  (lambda (arg)
    (if (eof-object? arg)
-       (begin
-	 (display "(eof-object? ") (display arg) (display ") returned #t?") (newline))))
+       (format #t "(eof-object? ~A) -> #t?~%" arg)))
  (list "hi" -1 #\a 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (lambda (a) (+ a 1))))
 
 (call-with-output-file "tmp1.r5rs" (lambda (p) (display "3.14" p)))
@@ -14562,14 +14534,14 @@
 	  (do ((n 0 (+ n 1)))
 	      ((= n 16))
 	    (if (not (= n (logand (boole (boole-n-vector n) #b0101 #b0011) #b1111)))
-		(display (format #f "~A: ~A ~A~%" n (boole-n-vector n) (logand (boole (boole-n-vector n) #b0101 #b0011) #b1111)))))
+		(format #t "~A: ~A ~A~%" n (boole-n-vector n) (logand (boole (boole-n-vector n) #b0101 #b0011) #b1111))))
 	  (let ((lst '()))
 	    (do ((n #b0000 (+ n 1)))
 		((> n #b1111))
 	      (set! lst (cons (boole (boole-n-vector n) 5 3) lst)))
 	    (if (not (equal? (reverse lst)
 			     (list 0 1 2 3 4 5 6 7 -8 -7 -6 -5 -4 -3 -2 -1)))
-		(display (format #f ";boole: ~A~%" (reverse lst))))))
+		(format #t ";boole: ~A~%" (reverse lst)))))
 	
 	(test (digit-char-p #\a) #f)
 	(test (digit-char-p #\a 16) 10)
@@ -18377,23 +18349,25 @@
 (num-test (asin 3.0-70000000i) 4.2857142400327436E-8-18.7571529895002i)
 (num-test (asin -70000000+3i) -1.570796279536826+18.75715298057358i)
 
-(let ((err 0.0))
+(let ((err 0.0)
+      (mx 0.0))
   (do ((i 0 (+ i 1))
        (x -10.0 (+ x .1)))
       ((= i 200))
     (let ((y (magnitude (- x (sin (asin x))))))
-      (if (> y err) (set! err y))))
+      (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-12)
-      (format #t "(sin (asin ~A)) error: ~A~%" x err)))
+      (format #t "(sin (asin ~A)) error: ~A~%" mx err)))
 
-(let ((err 0.0))
+(let ((err 0.0)
+      (mx 0.0))
   (do ((i 0 (+ i 1))
        (x 1.0-i (+ x -.1+i)))
       ((= i 100))
     (let ((y (magnitude (- x (sin (asin x))))))
-      (if (> y err) (set! err y))))
+      (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-9)
-      (format #t "(sin (asin ~A)) error: ~A~%" x err)))
+      (format #t "(sin (asin ~A)) error: ~A~%" mx err)))
 
 
 
@@ -18862,23 +18836,25 @@
 (num-test (acos 1234000000.0+2.71828182845905i) -4.051865509779873E-10-21.62667394298955i) 
 (num-test (acos -64983.97009220963-48983.30494825104i) 2.495679792792491+12.0i)
 
-(let ((err 0.0))
+(let ((err 0.0)
+      (mx 0.0))
   (do ((i 0 (+ i 1))
        (x -10.0 (+ x .1)))
       ((= i 200))
     (let ((y (magnitude (- x (cos (acos x))))))
-      (if (> y err) (set! err y))))
+      (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-12)
-      (format #t "(cos (acos ~A)) error: ~A~%" x err)))
+      (format #t "(cos (acos ~A)) error: ~A~%" mx err)))
 
-(let ((err 0.0))
+(let ((err 0.0)
+      (mx 0.0))
   (do ((i 0 (+ i 1))
        (x 1.0-i (+ x -0.1+0.1i)))
       ((= i 200))
     (let ((y (magnitude (- x (cos (acos x))))))
-      (if (> y err) (set! err y))))
+      (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-10)
-      (format #t "(cos (acos ~A)) error: ~A~%" x err)))
+      (format #t "(cos (acos ~A)) error: ~A~%" mx err)))
 
 
 ;; -------- atan
@@ -21913,50 +21889,55 @@
       (num-test (atanh -8.3886080e+06+8.3886080e+06i) -5.9604644775390483828e-8+1.5707962671902518438e0i)
       (num-test (atanh -8.3886080e+06-8.3886080e+06i) -5.9604644775390483828e-8-1.5707962671902518438e0i)
 
-      (let ((err 0.0))
+      (let ((err 0.0)
+	    (mx 0.0))
 	(do ((i 0 (+ i 1))
 	     (x 1.0 (+ x .1)))
 	    ((= i 100))
 	  (let ((y (abs (- x (cosh (acosh x))))))
-	    (if (> y err) (set! err y))))
+	    (if (> y err) (begin (set! mx x) (set! err y)))))
 	(if (> err 1e-14)
-	    (format #t "(cosh (acosh ~A)) error: ~A~%" x err)))
+	    (format #t "(cosh (acosh ~A)) error: ~A~%" mx err)))
       
-      (let ((err 0.0))
+      (let ((err 0.0)
+	    (mx 0.0))
 	(do ((i 0 (+ i 1))
 	     (x 1.0+i (+ x 0.1-0.1i)))
 	    ((= i 100))
 	  (let ((y (magnitude (- x (cosh (acosh x))))))
-	    (if (> y err) (set! err y))))
+	    (if (> y err) (begin (set! mx x) (set! err y)))))
 	(if (> err 1e-14)
-	    (format #t "(cosh (acosh ~A)) error: ~A~%" x err)))
+	    (format #t "(cosh (acosh ~A)) error: ~A~%" mx err)))
       
-      (let ((err 0.0))
+      (let ((err 0.0)
+	    (mx 0.0))
 	(do ((i 0 (+ i 1))
 	     (x 1.0 (+ x .1)))
 	    ((= i 100))
 	  (let ((y (abs (- x (sinh (asinh x))))))
-	    (if (> y err) (set! err y))))
+	    (if (> y err) (begin (set! mx x) (set! err y)))))
 	(if (> err 1e-14)
-	    (format #t "(sinh (asinh ~A)) error: ~A~%" x err)))
+	    (format #t "(sinh (asinh ~A)) error: ~A~%" mx err)))
       
-      (let ((err 0.0))
+      (let ((err 0.0)
+	    (mx 0.0))
 	(do ((i 0 (+ i 1))
 	     (x 1.0-i (+ x -0.1+i)))
 	    ((= i 100))
 	  (let ((y (magnitude (- x (sinh (asinh x))))))
-	    (if (> y err) (set! err y))))
+	    (if (> y err) (begin (set! mx x) (set! err y)))))
 	(if (> err 1e-9)
-	    (format #t "(sinh (asinh ~A)) error: ~A~%" x err)))
+	    (format #t "(sinh (asinh ~A)) error: ~A~%" mx err)))
       
-      (let ((err 0.0))
+      (let ((err 0.0)
+	    (mx 0.0))
 	(do ((i 0 (+ i 1))
 	     (x 0.0 (+ x .1)))
 	    ((= i 100))
 	  (let ((y (magnitude (- x (tanh (atanh x))))))
-	    (if (> y err) (set! err y))))
+	    (if (> y err) (begin (set! mx x) (set! err y)))))
 	(if (> err 1e-12)
-	    (format #t "(tanh (atanh ~A)) error: ~A~%" x err)))
+	    (format #t "(tanh (atanh ~A)) error: ~A~%" mx err)))
 
       ))
 
@@ -22478,9 +22459,7 @@
 	     (let ((val (sqrt n)))
 	       (if (or (not (integer? val))
 		       (not (eqv? sqn val)))
-		   (begin
-		     (display "(sqrt ") (display n) (display ") expected ") 
-		     (display sqn) (display " but got ") (display val) (newline))))))
+		   (format #t "(sqrt ~A) expected ~A but got ~A~%" n sqn val)))))
        (list 9 491401 19439281 1248844921 235565593201)
        (list 3 701 4409 35339 485351))
 
@@ -22490,9 +22469,7 @@
 	     (let ((val (sqrt n)))
 	       (if (or (integer? val)
 		       (> (abs (- (* val val) n)) .001))
-		   (begin
-		     (display "(sqrt ") (display n) (display ") expected ") 
-		     (display (sqrt (exact->inexact n))) (display " but got ") (display val) (newline))))))
+		   (format #t "(sqrt ~A) expected ~A but got ~A~%" n (sqrt (exact->inexact n)) val)))))
        (list 10 491400 19439282 1248844920 235565593200))
 
       (test (eqv? (expt 2 3) 8) #t)
@@ -22503,23 +22480,25 @@
       (test (eqv? (log 491401 701) 2) #t)
       ))
 
-(let ((err 0.0))
+(let ((err 0.0)
+      (mx 0.0))
   (do ((i 0 (+ i 1))
        (x -10.0 (+ x .1)))
       ((= i 200))
     (let ((y (magnitude (- x (* (sqrt x) (sqrt x))))))
-      (if (> y err) (set! err y))))
+      (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-14)
-      (format #t "(sqr (sqrt ~A)) error: ~A~%" x err)))
+      (format #t "(sqr (sqrt ~A)) error: ~A~%" mx err)))
 
-(let ((err 0.0))
+(let ((err 0.0)
+      (mx 0.0))
   (do ((i 0 (+ i 1))
        (x -10.0+i (+ x .1+i)))
       ((= i 200))
     (let ((y (magnitude (- x (* (sqrt x) (sqrt x))))))
-      (if (> y err) (set! err y))))
+      (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-12)
-      (format #t "(sqr (sqrt ~A)) error: ~A~%" x err)))
+      (format #t "(sqr (sqrt ~A)) error: ~A~%" mx err)))
 
 
 
@@ -23563,25 +23542,27 @@
 (num-test (log 1.0e-12) -27.63102111592855)
 (num-test (log (log (log -1))) 0.66457192224882+0.9410294873126i)
 
-(let ((err 0.0))
+(let ((err 0.0)
+      (mx 0.0))
   (do ((i 0 (+ i 1))
        (x -10.0 (+ x .1)))
       ((= i 200))
     (if (not (zero? x))
 	(let ((y (magnitude (- x (exp (log x))))))
-	  (if (> y err) (set! err y)))))
+	  (if (> y err) (begin (set! mx x) (set! err y))))))
   (if (> err 1e-14)
-      (format #t "(exp (log ~A)) error: ~A~%" x err)))
+      (format #t "(exp (log ~A)) error: ~A~%" mx err)))
 
-(let ((err 0.0))
+(let ((err 0.0)
+      (mx 0.0))
   (do ((i 0 (+ i 1))
        (x -10.0+i (+ x 0.1-0.1i)))
       ((= i 200))
     (if (not (zero? x))
 	(let ((y (magnitude (- x (exp (log x))))))
-	  (if (> y err) (set! err y)))))
+	  (if (> y err) (begin (set! err y) (set! mx x))))))
   (if (> err 1e-14)
-      (format #t "(exp (log ~A)) error: ~A~%" x err)))
+      (format #t "(exp (log ~A)) error: ~A~%" mx err)))
 
 
 ;; -------- expt

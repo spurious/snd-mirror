@@ -438,7 +438,7 @@ static void make_region_readable(region *r)
       else
 	{
 	  XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
-		    XEN_LIST_3(C_TO_XEN_STRING(_("can't read region file!!")),
+		    XEN_LIST_3(C_TO_XEN_STRING(_("can't read region file!")),
 			       C_TO_XEN_STRING(r->filename),
 			       C_TO_XEN_STRING(snd_open_strerror())));
 	}

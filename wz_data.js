@@ -1252,10 +1252,6 @@ var sndscm_prc95doc_tip = "various physical modeling functions from Perry Cook."
 
 var sndscm_rmsgain_tip = "various RMS-related generators.";
 
-var sndscm_run_tip = "<code>(run code)</code> tries to optimize its argument using a sort of byte compiler.<br>" +
-                     " When successful, it can speed up computation by about a factor of 10.<br>" +
-                     " When unsuccessful, it falls back on Scheme, so you always get a sound. ";
-
 var sndscm_scalemixes_tip = "<code>(scale-mixes mix-list scl)</code>: scales the amplitude of each mix in 'mix-list' by 'scl'.";
 
 var sndscm_sgfilter_tip = "<code>(savitzky-golay-filter gen input)</code>: a Savitzky-Golay filter, assuming symmetrical positioning.<br>" +

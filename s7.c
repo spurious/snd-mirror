@@ -322,7 +322,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_MAX_DEFINED} opcode_t;
 
 #define NUM_SMALL_INTS 200
-/* this needs to be at least OP_MAX_DEFINED = 87 */
+/* this needs to be at least OP_MAX_DEFINED = 86 */
 /* going up to 1024 gives very little improvement, down to 128 costs about .2% run time */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -2237,15 +2237,14 @@ static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e, int type) 
+static s7_pointer make_closure(s7_scheme *sc, s7_pointer code, s7_pointer environment, int type) 
 {
-  /* c is code. e is environment */
   /* this is called every time a lambda form is evaluated, or during letrec, etc */
 
   s7_pointer x;
   NEW_CELL(sc, x);
-  car(x) = c;
-  cdr(x) = e;
+  car(x) = code;
+  cdr(x) = environment;
   set_type(x, type | T_PROCEDURE | T_DONT_COPY_CDR | T_DONT_COPY);
   return(x);
 }

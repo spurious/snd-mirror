@@ -239,7 +239,6 @@ that any arguments before the keyword :optional are required:
       (if required-args
 	  `(define* (,name . func-args)
 	     (if (&lt; (length func-args) ,required-args)
-	     (if (&lt; (length func-args) ,required-args)
 		 (error "~A requires ~D argument~A: ~A" 
 			',name ,required-args 
                         (if (&gt; ,required-args 1) "s" "") 

@@ -550,9 +550,17 @@
 	      (if (< i n) (progn (format ofil "  <tr>") (setf got-tr t)))
 	      (setf ctr 0))))
 	(format ofil "~%</table>~%</body></html>~%"))
+
       (dotimes (i n)
 	(if (not (ind-indexed (aref tnames i)))
 	    (format t "unindexed: ~A (~A)~%" (ind-name (aref tnames i)) i)))
+      (dotimes (i (- n 1))
+	(let ((n1 (aref tnames i))
+	      (n2 (aref tnames (+ i 1))))
+	  (if (and (stringp (ind-sortby n1))
+		   (stringp (ind-sortby n2))
+		   (string= (ind-sortby n1) (ind-sortby n2)))
+	      (format t "duplicated name: ~A (~A ~A)~%" (ind-sortby n1) (ind-name n1) (ind-name n2)))))
 
       (if with-scm
 	  (progn

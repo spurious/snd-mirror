@@ -193,7 +193,9 @@ static char *last_file_loaded = NULL;
 #if HAVE_SCHEME
 static XEN g_snd_s7_error_handler(XEN args)
 {
-  fprintf(stderr, "args: %s\n", s7_object_to_c_string(s7, args));
+#if MUS_DEBUGGING
+  fprintf(stderr, "error: %s\n", s7_object_to_c_string(s7, args));
+#endif
   if (ss->xen_error_handler)
     (*(ss->xen_error_handler))(s7_string(s7_car(args)), (void *)NULL);
   return(s7_f(s7));
@@ -213,7 +215,7 @@ void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *da
                                (lambda (tag args)                         \n\
                                  (_snd_s7_error_handler_                  \n\
                                    (string-append                         \n\
-                                     (apply format #f args)               \n\
+                                     (object->string args)                \n\
                                      (if (and (*error-info* 2)            \n\
                                               (string? (*error-info* 4))  \n\
                                               (number? (*error-info* 3))) \n\
@@ -224,6 +226,7 @@ void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *da
                                          \"\")))))");
 #endif
 }
+/* TODO: xen error args lists need to be acceptable to format */
 
 
 void redirect_snd_print_to(void (*handler)(const char *msg, void *ufd), void *data)
