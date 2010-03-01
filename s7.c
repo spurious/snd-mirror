@@ -363,7 +363,7 @@ typedef struct s7_port_t {
   FILE *file;
   int line_number;
   int file_number;
-  char *filename;
+  const char *filename;
   char *value;
   int size, point; 
   s7_pointer (*input_function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port);
@@ -920,6 +920,7 @@ static int remember_file_name(const char *file);
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
 static const char *s7_type_name(s7_pointer arg);
 static s7_pointer s7_make_string_uncopied(s7_scheme *sc, char *str);
+static s7_pointer s7_make_protected_string(s7_scheme *sc, const char *str);
 
 #if WITH_ENCAPSULATION
   static void encapsulate(s7_scheme *sc, s7_pointer sym);
@@ -1178,22 +1179,12 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
 	    }
 	  port_needs_free(a) = false;
 	}
-      if (port_filename(a))
-	{
-	  free(port_filename(a));
-	  port_filename(a) = NULL;
-	}
+      /* don't free port_filename -- it is a permanent string */
       free(a->object.port);
       break;
       
     case T_OUTPUT_PORT:
       s7_close_output_port(sc, a);
-      if ((is_file_port(a)) && 
-	  (port_filename(a)))
-	{
-	  free(port_filename(a));
-	  port_filename(a) = NULL;
-	}
       free(a->object.port);
       break;
       
@@ -1781,7 +1772,7 @@ static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char
 } 
 
 
-static  s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, int location) 
+static s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, int location) 
 { 
   s7_pointer x; 
 
@@ -1967,7 +1958,7 @@ static s7_pointer g_symbol_to_string(s7_scheme *sc, s7_pointer args)
   #define H_symbol_to_string "(symbol->string sym) returns the symbol sym converted to a string"
   if (!s7_is_symbol(car(args)))
     return(s7_wrong_type_arg_error(sc, "symbol->string", 0, car(args), "a symbol"));
-  return(s7_set_immutable(s7_make_string(sc, s7_symbol_name(car(args)))));
+  return(s7_make_protected_string(sc, s7_symbol_name(car(args))));
 }
 
 
@@ -2103,7 +2094,7 @@ static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s
 } 
 
 
-static s7_pointer s7_find_symbol_in_environment(s7_scheme *sc, s7_pointer env, s7_pointer hdl, bool all_envirs) 
+static s7_pointer s7_find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl, bool all_envirs) 
 { 
   s7_pointer x, y;
   /* this is a list (of alists, each representing a frame) ending with a vector (the global environment) */
@@ -2127,7 +2118,7 @@ static s7_pointer s7_find_symbol_in_environment(s7_scheme *sc, s7_pointer env, s
 s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just the global environment? */
 {
   s7_pointer x;
-  x = s7_find_symbol_in_environment(sc, sc->envir, sym, true);
+  x = s7_find_symbol(sc, sc->envir, sym, true);
   if (x != sc->NIL)
     return(symbol_value(x));
   if (s7_is_keyword(sym))
@@ -2139,7 +2130,7 @@ s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just 
 s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local_env)
 {
   s7_pointer x;
-  x = s7_find_symbol_in_environment(sc, local_env, sym, true);
+  x = s7_find_symbol(sc, local_env, sym, true);
   if (x != sc->NIL)
     return(symbol_value(x));
   return(s7_symbol_value(sc, sym)); /* try sc->envir */
@@ -2169,7 +2160,7 @@ static s7_pointer g_symbol_to_value(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
 {
   s7_pointer x;
-  x = s7_find_symbol_in_environment(sc, sc->envir, sym, true);
+  x = s7_find_symbol(sc, sc->envir, sym, true);
   if (x != sc->NIL)
     set_symbol_value(x, val);
   return(val);
@@ -2195,7 +2186,7 @@ static s7_pointer lambda_star_argument_default_value(s7_scheme *sc, s7_pointer v
   s7_pointer x;
   if (s7_is_symbol(val))
     {
-      x = s7_find_symbol_in_environment(sc, sc->envir, val, true);
+      x = s7_find_symbol(sc, sc->envir, val, true);
       if (x != sc->NIL) 
 	return(symbol_value(x));
     }
@@ -2291,7 +2282,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
     }
   else x = sc->envir;
   
-  x = s7_find_symbol_in_environment(sc, x, car(args), true);
+  x = s7_find_symbol(sc, x, car(args), true);
   return(make_boolean(sc, (x != sc->NIL) && (x != sc->UNDEFINED)));
 }
 
@@ -2299,7 +2290,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 void s7_define(s7_scheme *sc, s7_pointer envir, s7_pointer symbol, s7_pointer value) 
 {
   s7_pointer x;
-  x = s7_find_symbol_in_environment(sc, envir, symbol, false);
+  x = s7_find_symbol(sc, envir, symbol, false);
   if (x != sc->NIL) 
     set_symbol_value(x, value); 
   else add_to_environment(sc, envir, symbol, value); /* I think this means C code can override "constant" defs */
@@ -2322,7 +2313,7 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
   sym = s7_make_symbol(sc, name);
   s7_define(sc, s7_global_environment(sc), sym, value);
 
-  x = s7_find_symbol_in_environment(sc, s7_global_environment(sc), sym, false);
+  x = s7_find_symbol(sc, s7_global_environment(sc), sym, false);
   s7_set_immutable(car(x));
 }
 
@@ -2386,7 +2377,7 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
   typeflag(sym) |= (T_IMMUTABLE | T_DONT_COPY); 
   free(name);
   
-  x = s7_find_symbol_in_environment(sc, sc->envir, sym, true); /* is it already defined? */
+  x = s7_find_symbol(sc, sc->envir, sym, true); /* is it already defined? */
   if (x == sc->NIL) 
     add_to_environment(sc, sc->envir, sym, sym); /* its value is itself, skip the immutable check in add_to_current_environment */
   
@@ -7479,6 +7470,17 @@ static s7_pointer s7_make_string_uncopied_with_length(s7_scheme *sc, char *str, 
 }
 
 
+static s7_pointer s7_make_protected_string(s7_scheme *sc, const char *str)
+{
+  s7_pointer x;
+  NEW_CELL(sc, x);
+  set_type(x, T_STRING | T_ATOM | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  string_value(x) = (char *)str;
+  string_length(x) = safe_strlen(str);
+  return(x);
+}
+
+
 static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill) 
 {
   s7_pointer x;
@@ -8141,7 +8143,7 @@ static s7_pointer g_port_filename(s7_scheme *sc, s7_pointer args)
 
   x = car(args);
   if ((is_input_port(x)) || (is_output_port(x)))
-    return(s7_make_string(sc, port_filename(x)));
+    return(s7_make_protected_string(sc, port_filename(x)));
 
   return(s7_wrong_type_arg_error(sc, "port-filename", 1, x, "a port"));
 }
@@ -8389,7 +8391,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
   set_type(port, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   port->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_is_closed(port) = false;
-  port_filename(port) = s7_strdup(name);
+  port_filename(port) = make_permanent_string(name);
   port_line_number(port) = 1;  /* 1st line is numbered 1 */
 
   fseek(fp, 0, SEEK_END);
@@ -8483,7 +8485,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
-  port_filename(x) = s7_strdup(name);
+  port_filename(x) = make_permanent_string(name);
   port_line_number(x) = 1;
   port_file(x) = fp;
   port_needs_free(x) = false;
@@ -13331,7 +13333,7 @@ static s7_pointer encapsulator_apply(s7_scheme *sc, s7_pointer obj, s7_pointer a
       s7_pointer x, y;
       for (x = e->bindings; is_pair(x); x = cdr(x)) 
 	{
-	  y = s7_find_symbol_in_environment(sc, sc->envir, caar(x), true);
+	  y = s7_find_symbol(sc, sc->envir, caar(x), true);
 	  if (y != sc->NIL)
 	    set_symbol_value(y, cdar(x));
 	}
@@ -13377,7 +13379,7 @@ static void encapsulate(s7_scheme *sc, s7_pointer sym)
 
       if (!ok)
 	{
-	  y = s7_find_symbol_in_environment(sc, e->envir, sym, true);
+	  y = s7_find_symbol(sc, e->envir, sym, true);
 	  if (y != sc->NIL)
 	    e->bindings = s7_cons(sc, 
 				  s7_cons(sc, sym, s7_copy(sc, symbol_value(y))), 
@@ -14005,7 +14007,7 @@ static void trace_apply(s7_scheme *sc)
       {
 	/* handle *trace-hook* */
 	s7_pointer trace_hook, trace_hook_binding;
-	trace_hook_binding = s7_find_symbol_in_environment(sc, sc->envir, sc->TRACE_HOOK, true);
+	trace_hook_binding = s7_find_symbol(sc, sc->envir, sc->TRACE_HOOK, true);
 	if ((trace_hook_binding != sc->NIL) &&
 	    (is_procedure(symbol_value(trace_hook_binding))))
 	  {
@@ -14440,7 +14442,7 @@ GOT_CATCH:
       /* (set! *error-hook* (lambda (tag args) (apply format (cons #t args)))) */
       s7_pointer error_hook, error_hook_binding;
 
-      error_hook_binding = s7_find_symbol_in_environment(sc, sc->envir, sc->ERROR_HOOK, true);
+      error_hook_binding = s7_find_symbol(sc, sc->envir, sc->ERROR_HOOK, true);
 
       if ((!reset_error_hook) &&
 	  (error_hook_binding != sc->NIL) &&
@@ -14514,7 +14516,7 @@ GOT_CATCH:
 		format_to_output(sc,
 				 s7_current_error_port(sc), 
 				 ", ~A[~D]",
-				 make_list_2(sc, s7_make_string(sc, filename), s7_make_integer(sc, line)));
+				 make_list_2(sc, s7_make_protected_string(sc, filename), s7_make_integer(sc, line)));
 	      else 
 		{
 		  if (line > 0)
@@ -15681,14 +15683,9 @@ static s7_pointer read_expression(s7_scheme *sc)
 }
 
 
-static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
+static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
 {
   s7_pointer x;
-
-  x = s7_find_symbol_in_environment(sc, sc->envir, sym, true);
-
-  if (x != sc->NIL) 
-    return(symbol_value(x));
 
   if (s7_is_keyword(sym))
     return(sym);
@@ -15703,6 +15700,19 @@ static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
     return(eval_error(sc, "unquote-splicing (',@') occurred outside quasiquote", sc->NIL));
 
   return(eval_error(sc, "~A: unbound variable", sym));
+}
+
+
+static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
+{
+  s7_pointer x;
+
+  x = s7_find_symbol(sc, sc->envir, sym, true);
+
+  if (x != sc->NIL) 
+    return(symbol_value(x));
+
+  return(eval_symbol_1(sc, sym));
 }
 
 
@@ -16350,10 +16360,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	    if (is_not_local(sc->code))
 	      x = symbol_global_slot(sc->code);
-	    else x = s7_find_symbol_in_environment(sc, sc->envir, sc->code, true);
+	    else x = s7_find_symbol(sc, sc->envir, sc->code, true);
 	    if (x != sc->NIL) 
 	      sc->value = symbol_value(x);
-	    else sc->value = eval_symbol(sc, sc->code);
+	    else sc->value = eval_symbol_1(sc, sc->code);
 
 	    pop_stack(sc);
 	    goto START;
@@ -16376,7 +16386,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		{
 		  push_stack(sc, opcode(OP_EVAL_MACRO), sc->NIL, sc->NIL);
 		  /* code is the macro invocation: (mac-name ...), args is nil, value is the macro code bound to mac-name */
-		  sc->args = make_list_1(sc, sc->code); 
+		  sc->args = make_list_1(sc, sc->code);
 		}
 	      else sc->args = sc->code; 
 	      sc->code = sc->value;
@@ -16473,10 +16483,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      s7_pointer x;
 	      if (is_not_local(car_code))
 		x = symbol_global_slot(car_code);
-	      else x = s7_find_symbol_in_environment(sc, sc->envir, car_code, true);
+	      else x = s7_find_symbol(sc, sc->envir, car_code, true);
 	      if (x != sc->NIL) 
 		sc->value = symbol_value(x);
-	      else sc->value = eval_symbol(sc, car_code);
+	      else sc->value = eval_symbol_1(sc, car_code);
 	    }
 	  else sc->value = car_code;
 
@@ -16608,7 +16618,35 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 					    s7_make_string(sc, "~A: not enough arguments: ~A"),
 					    g_procedure_source(sc, make_list_1(sc, sc->code)), 
 					    sc->args)));
+#if HAVE_PTHREADS
 	      add_to_local_environment(sc, car(sc->x), car(sc->y));
+	      /* if the expansion (below) is not thread-safe, neither is this, but at least the trouble stays local to the function */
+#else
+
+	      {
+		/* expand add_to_local_environment(sc, car(sc->x), car(sc->y)); -- (sc variable value) 
+		 *   ugly, but this is the principal call and the "inline" attribute is much slower
+		 */
+		s7_pointer x, y, z;
+
+		z = car(sc->x);
+		if (is_immutable(z))
+		  return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "can't bind or set an immutable object: ~S"), z)));
+
+		NEW_CELL(sc, y);
+		car(y) = z;
+		cdr(y) = car(sc->y);
+		set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+
+		NEW_CELL(sc, x);
+		car(x) = y;
+		cdr(x) = car(sc->envir);
+		set_type(x, T_PAIR);
+
+		car(sc->envir) = x;
+		set_local(z);
+	      }
+#endif
 	    }
 	  
 	  if (sc->x == sc->NIL) 
@@ -16780,7 +16818,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* define-constant -> OP_DEFINE_CONSTANT -> OP_DEFINE..1, then back to here */
       /*   at this point, sc->value is the symbol that we want to be immutable, sc->code is the original pair */
 
-      sc->x = s7_find_symbol_in_environment(sc, sc->envir, sc->value, false);
+      sc->x = s7_find_symbol(sc, sc->envir, sc->value, false);
       s7_set_immutable(car(sc->x));
       pop_stack(sc);
       goto START;
@@ -16846,13 +16884,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	closure_environment(sc->value) = 
 	  s7_cons(sc, 
 		  s7_cons(sc, 
-			  port_filename(sc->input_port) ? s7_immutable_cons(sc, 
-									    sc->__FUNC__, 									       
-									    make_list_3(sc, 
-											sc->code,
-											s7_make_string(sc, port_filename(sc->input_port)),
-											s7_make_integer(sc, port_line_number(sc->input_port)))) :
-			                                  s7_immutable_cons(sc, sc->__FUNC__, sc->code), 
+			  port_filename(sc->input_port) ? 
+			    s7_immutable_cons(sc, 
+					      sc->__FUNC__, 									       
+					      make_list_3(sc, 
+							  sc->code,
+							  s7_make_protected_string(sc, port_filename(sc->input_port)),
+							  s7_make_integer(sc, port_line_number(sc->input_port)))) :
+			    s7_immutable_cons(sc, sc->__FUNC__, sc->code), 
 			  sc->NIL), 
 		  closure_environment(sc->value));
       else
@@ -16865,7 +16904,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
       /* add the newly defined thing to the current environment */
-      sc->x = s7_find_symbol_in_environment(sc, sc->envir, sc->code, false);
+      sc->x = s7_find_symbol(sc, sc->envir, sc->code, false);
       if (sc->x != sc->NIL) 
 	set_symbol_value(sc->x, sc->value); 
       else add_to_current_environment(sc, sc->code, sc->value); 
@@ -16949,7 +16988,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_SET1:     
-      sc->y = s7_find_symbol_in_environment(sc, sc->envir, sc->code, true);
+      sc->y = s7_find_symbol(sc, sc->envir, sc->code, true);
       if (sc->y != sc->NIL) 
 	{
 #if WITH_ENCAPSULATION
@@ -17048,7 +17087,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    return(eval_error(sc, "bad variable ~S in let bindings", car(sc->code)));
 
 	  /* check for name collisions -- not sure this is required by Scheme */
-	  if (s7_find_symbol_in_environment(sc, sc->envir, caar(sc->x), false) != sc->NIL)
+	  if (s7_find_symbol(sc, sc->envir, caar(sc->x), false) != sc->NIL)
 	    return(eval_error(sc, "duplicate identifier in let", caar(sc->x)));
 
 	  add_to_local_environment(sc, caar(sc->x), car(sc->y)); /* expansion here does not help */
@@ -17314,7 +17353,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       set_type(sc->value, T_MACRO | T_ANY_MACRO | T_DONT_COPY_CDR | T_DONT_COPY);
       
       /* find name in environment, and define it */
-      sc->x = s7_find_symbol_in_environment(sc, sc->envir, sc->code, false); 
+      sc->x = s7_find_symbol(sc, sc->envir, sc->code, false); 
       if (sc->x != sc->NIL) 
 	set_symbol_value(sc->x, sc->value); 
       else add_to_current_environment(sc, sc->code, sc->value); 
@@ -17673,7 +17712,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  (car(stack_args(sc->stack, loc)) != sc->MACROEXPAND))      /* (macroexpand (hi 1)) */
 		{
 		  s7_pointer x;
-		  x = symbol_value(s7_find_symbol_in_environment(sc, sc->envir, car(sc->value), true));
+		  x = symbol_value(s7_find_symbol(sc, sc->envir, car(sc->value), true));
 		  sc->args = make_list_1(sc, sc->value); 
 		  sc->code = x;
 		  goto APPLY;

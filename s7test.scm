@@ -1768,8 +1768,7 @@
 (for-each
  (lambda (arg)
    (if (not (equal? (cdr (cons '() arg)) arg))
-       (begin
-	 (display "(cdr '(() ") (display arg) (display ")) returned ") (display (cdr (cons '() arg))) (display "?") (newline))))
+       (format #t "(cdr '(() ~A) -> ~A?~%" arg (cdr (cons '() arg)))))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
 
 (define (cons-r a b n) (if (= 0 n) (cons a b) (cons (cons-r (+ a 1) (+ b 1) (- n 1)) (cons-r (- a 1) (- b 1) (- n 1)))))
@@ -1843,8 +1842,7 @@
       (let ((val1 (catch #t (lambda () (op1 lst)) (lambda args 'error)))
 	    (val2 (catch #t (lambda () (op2 lst)) (lambda args 'error))))
 	(if (not (equal? val1 val2))
-	    (begin
-	      (display "(") (display name) (display " ") (display lst) (display ")) returned ") (display val1) (display " ") (display val2) (newline)))))
+	    (format #t "(~A ~A) -> ~A ~A?~%" name lst val1 val2))))
     lists))
  (list 'caar 'cadr 'cdar 'cddr 'caaar 'caadr 'cadar 'cdaar 'caddr 'cdddr 'cdadr 'cddar 
        'caaaar 'caaadr 'caadar 'cadaar 'caaddr 'cadddr 'cadadr 'caddar 'cdaaar 
@@ -2090,16 +2088,14 @@
  (lambda (lst)
    (if (list? lst)
        (if (not (equal? lst (reverse (reverse lst))))
-	   (begin
-	     (display "(reverse (reverse ") (display lst) (display ")) returned ") (display (reverse (reverse lst))) (newline)))))
+	   (format #t "(reverse (reverse ~A)) -> ~A?~%" (reverse (reverse lst))))))
  lists)
 
 (for-each
  (lambda (lst)
    (if (list? lst)
        (if (not (equal? lst (reverse (reverse (reverse (reverse lst))))))
-	   (begin
-	     (display "(reverse...(4x) ") (display lst) (display ")) returned ") (display (reverse (reverse (reverse (reverse lst))))) (newline)))))
+	   (format #t "(reverse...(4x) ~A) -> ~A?~%" lst (reverse (reverse (reverse (reverse lst))))))))
  lists)
 
 
@@ -2283,8 +2279,7 @@
       (let ((val1 (catch #t (lambda () (op1 lst)) (lambda args 'error)))
 	    (val2 (catch #t (lambda () (op2 lst)) (lambda args 'error))))
 	(if (not (equal? val1 val2))
-	    (begin
-	      (display "(") (display name) (display " ") (display lst) (display ")) returned ") (display val1) (display " ") (display val2) (newline)))))
+	    (format #t "(~A ~A) -> ~A ~A?~%" name lst val1 val2))))
     lists))
  (list 'list-ref:0 'list-ref:1 'list-ref:2 'list-ref:3)
  (list car cadr caddr cadddr)
@@ -2362,8 +2357,7 @@
       (let ((val1 (catch #t (lambda () (op1 lst)) (lambda args 'error)))
 	    (val2 (catch #t (lambda () (op2 lst)) (lambda args 'error))))
 	(if (not (equal? val1 val2))
-	    (begin
-	      (display "(") (display name) (display " ") (display lst) (display ")) returned ") (display val1) (display " ") (display val2) (newline)))))
+	    (format #t "(~A ~A) -> ~A ~A?~%" name lst val1 val2))))
     lists))
  (list 'list-tail:0 'list-tail:1 'list-tail:2 'list-tail:3 'list-tail:4)
  (list (lambda (l) l) cdr cddr cdddr cddddr)
@@ -3371,6 +3365,9 @@
 
 ;(test (eq? '() ()) #t) ; not sure about this -- Gauche, SCM, stklos say #t; Guile says error; clisp, cmucl, and sbcl say T
 
+(test (let ((quote 1)) (+ quote 1)) 2)
+(test ((lambda (quote) (+ quote 1)) 2) 3)
+(test ((lambda (quote . args) (list quote args)) 1 2 3) '(1 (2 3)))
 
 
 
