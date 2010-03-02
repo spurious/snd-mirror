@@ -1,4 +1,4 @@
-/* S7, a Scheme interpreter
+/* s7, a Scheme interpreter
  *
  *    derived from:
  */
@@ -882,13 +882,6 @@ static char *s7_strdup_with_len(const char *str, int len)
   memcpy((void *)newstr, (void *)str, len + 1);
   return(newstr);
 }
-
-
-#define STRDUP(NewStr, OldStr, Len) \
-  do { \
-       NewStr = (char *)malloc((Len + 1) * sizeof(char)); \
-       memcpy((void *)NewStr, (void *)OldStr, Len + 1); \
-       } while (0) 
 
 
 static char *s7_strdup(const char *str)
@@ -7453,7 +7446,8 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
   s7_pointer x;
   NEW_CELL(sc, x);
   set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
-  STRDUP(string_value(x), str, len);
+  string_value(x) = (char *)malloc((len + 1) * sizeof(char)); 
+  memcpy((void *)string_value(x), (void *)str, len + 1);
   string_length(x) = len;
   return(x);
 }
@@ -11163,7 +11157,7 @@ static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 #endif
 {
   s7_Int len;
-  s7_pointer *tp;
+  s7_pointer *tp, *tend;
 
   tp = (s7_pointer *)(vector_elements(vec));
   len = vector_length(vec);
@@ -11184,20 +11178,8 @@ static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
       return;
     }
 
-  /* splitting out the int case saves a lot of compute time */
-  if (len < INT_MAX)
-    {
-      int j, jlen;
-      jlen = len;
-      for (j = 0; j < jlen; j++) 
-	tp[j] = obj;
-    }
-  else
-    {
-      s7_Int i;
-      for (i = 0; i < len; i++) 
-	tp[i] = obj;
-    }
+  tend = (s7_pointer *)(tp + len);
+  while (tp != tend) {(*tp++) = obj;}
 }
 
 
@@ -15444,11 +15426,11 @@ static token_t token(s7_scheme *sc)
 	  return(token(sc));
 	}
       
-      backchar(sc, c, pt);
+      sc->strbuf[0] = c; 
       return(TOKEN_SHARP_CONST); /* next stage notices any errors */
       
     default: 
-      sc->strbuf[0] = c; /* every TOKEN_ATOM return goes to read_string_upto, so we save a backchar/inchar shuffle by starting the read here */
+      sc->strbuf[0] = c; /* every TOKEN_ATOM return goes to read_delimited_string, so we save a backchar/inchar shuffle by starting the read here */
       return(TOKEN_ATOM);
     }
 }
@@ -15464,15 +15446,17 @@ static void resize_strbuf(s7_scheme *sc)
 }
 
 
-static char *read_string_upto(s7_scheme *sc, int start) 
+static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case) 
 {
-  int i, c;
+  int c;
   s7_pointer pt;
+
   pt = sc->input_port;
-  i = start;
+  /* sc->strbuf[0] has the 1st char of the string we're reading */
 
   if (is_file_port(pt))
     {
+      int i = 1;
       do
 	{
 	  c = fgetc(port_file(pt)); /* might return EOF */
@@ -15487,7 +15471,7 @@ static char *read_string_upto(s7_scheme *sc, int start)
 
       if ((i == 2) && 
 	  (sc->strbuf[0] == '\\'))
-	sc->strbuf[i] = '\0';
+	sc->strbuf[2] = '\0';
       else 
 	{
 	  if (c != EOF)
@@ -15509,30 +15493,68 @@ static char *read_string_upto(s7_scheme *sc, int start)
 	  str = (char *)(port_string(pt) + port_string_point(pt));
 	  orig_str = str;
 	  do {c = (int)(*str++);} while (string_delimiter_table[c]);
+	  /* this is a bad name -- string_delimiter_table elements are false if c is a string delimiter */
 
 	  k = str - orig_str;
 	  port_string_point(pt) += k;
-	  i += k;
-	  if (i >= sc->strbuf_size)
-	    resize_strbuf(sc);
 
-	  memcpy((void *)(sc->strbuf + start), (void *)orig_str, k);
-
-	  if ((i == 2) && 
-	      (sc->strbuf[0] == '\\'))
-	    sc->strbuf[i] = '\0';
+	  if ((k == 1) && 
+	      (sc->strbuf[0] == '\\'))         
+	    /* must be from #\( and friends -- a character name that happens to be a string delimiter
+	     *   so the "delimiter" in this case is a 1 char portion of a scheme character name, and
+	     *   we ended up pointing to the actual delimiter, whereas below, if c != 0 (end of file)
+	     *   we ended up 1 past the delimiter, so we have to back up the port point.
+	     */
+	    {
+	      sc->strbuf[1] = (*orig_str);
+	      sc->strbuf[2] = '\0';
+	      return(make_sharp_constant(sc, sc->strbuf, true));
+	    }
 	  else 
 	    {
+	      if (port_needs_free(pt)) 
+		{
+		  /* port_string was allocated (and read from a file) so we can mess with it directly */
+		  s7_pointer result;
+		  char endc;
+
+		  endc = orig_str[k - 1];
+		  orig_str[k - 1] = '\0';
+	      
+		  if (atom_case)
+		    result = make_atom(sc, (char *)(orig_str - 1), 10, true);
+		  else result = make_sharp_constant(sc, (char *)(orig_str - 1), true);
+	      
+		  orig_str[k - 1] = endc;
+		  if (c != 0) port_string_point(pt)--;
+
+		  return(result);
+		}
+
+	      /* eval_c_string string is a constant so we can't set and unset the token's end char */
+	      if ((k + 1) >= sc->strbuf_size)
+		resize_strbuf(sc);
+
+	      memcpy((void *)(sc->strbuf + 1), (void *)orig_str, k);
+
 	      if (c != 0)
 		{
 		  port_string_point(pt)--;
-		  sc->strbuf[i - 1] = '\0';
+		  sc->strbuf[k] = '\0';
 		}
 	    }
 	}
-      else sc->strbuf[0] = '\0';
+      else 
+	{
+	  sc->strbuf[0] = '\0';
+	  if (!atom_case) return(sc->NIL);
+	}
     }
-  return(sc->strbuf);
+
+  if (atom_case)
+    return(make_atom(sc, sc->strbuf, 10, true));
+
+  return(make_sharp_constant(sc, sc->strbuf, true));
 }
 
 
@@ -15641,7 +15663,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  break;
 	  
 	case TOKEN_ATOM:
-	  return(make_atom(sc, read_string_upto(sc, 1), 10, true)); /* true = not just string->number */
+	  return(read_delimited_string(sc, true));
 	  /* If reading list (from lparen), this will finally get us to op_read_list */
 	  
 	case TOKEN_DOUBLE_QUOTE:
@@ -15654,7 +15676,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  
 	case TOKEN_SHARP_CONST:
 	  {
-	    sc->value = make_sharp_constant(sc, read_string_upto(sc, 0), true);
+	    sc->value = read_delimited_string(sc, false);
 	    if (sc->value == sc->NIL)
 	      {
 		int len;
@@ -15667,12 +15689,12 @@ static s7_pointer read_expression(s7_scheme *sc)
 	    return(sc->value);
 	  }
 
-	case TOKEN_DOT: /* (catch #t (lambda () (+ 1 . . )) (lambda args 'hiho)) */
+	case TOKEN_DOT:                                             /* (catch #t (lambda () (+ 1 . . )) (lambda args 'hiho)) */
 	  back_up_stack(sc);
 	  do {c = inchar(sc, sc->input_port);} while ((c != ')') && (c != EOF));
 	  return(read_error(sc, "stray dot in list?"));             /* (+ 1 . . ) */
 
-	case TOKEN_RIGHT_PAREN: /* (catch #t (lambda () '(1 2 . )) (lambda args 'hiho)) */
+	case TOKEN_RIGHT_PAREN:                                     /* (catch #t (lambda () '(1 2 . )) (lambda args 'hiho)) */
 	  back_up_stack(sc);
 	  return(read_error(sc, "unexpected close paren"));         /* (+ 1 2)) or (+ 1 . ) */
 	}
@@ -15682,6 +15704,8 @@ static s7_pointer read_expression(s7_scheme *sc)
   return(sc->NIL);
 }
 
+
+/* ---------------- */
 
 static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
 {
@@ -22782,7 +22806,7 @@ s7_scheme *s7_init(void)
   typeflag(sc->KEY_REST) |= T_DONT_COPY; 
 
   sc->__FUNC__ = s7_make_symbol(sc, "__func__");
-  typeflag(sc->__FUNC__) |= T_DONT_COPY; 
+  typeflag(sc->__FUNC__) |= (T_DONT_COPY | T_LOCAL); 
 
   sc->ERROR_HOOK = s7_make_symbol(sc, "*error-hook*");
   typeflag(sc->ERROR_HOOK) |= T_DONT_COPY; 
