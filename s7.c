@@ -702,6 +702,7 @@ struct s7_scheme {
 #endif
 
 #define is_pair(p)                    (type(p) == T_PAIR)
+/* using a bit here, rather than a type number) was much slower */
 #define car(p)                        ((p)->object.cons.car)
 #define cdr(p)                        ((p)->object.cons.cdr)
 #define caar(p)                       car(car(p))
@@ -2087,31 +2088,56 @@ static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s
 } 
 
 
-static s7_pointer s7_find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl, bool all_envirs) 
+static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
 { 
-  s7_pointer x, y;
+  s7_pointer x;
   /* this is a list (of alists, each representing a frame) ending with a vector (the global environment) */
 
   for (x = env; is_pair(x); x = cdr(x)) 
     { 
-      if (s7_is_vector(car(x)))
+      s7_pointer y;
+      y = car(x);
+
+      if (s7_is_vector(y))
 	return(symbol_global_slot(hdl));
+
+      if (caar(y) == hdl)
+	return(car(y));
       
-      for (y = car(x); is_pair(y); y = cdr(y))
+      for (y = cdr(y); is_pair(y); y = cdr(y))
 	if (caar(y) == hdl)
 	  return(car(y));
-
-      if (!all_envirs) 
-	return(sc->NIL); 
     }
   return(sc->NIL); 
 } 
 
 
+static s7_pointer find_local_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
+{ 
+  s7_pointer y;
+
+  y = car(env);
+  if (s7_is_vector(y))
+    return(symbol_global_slot(hdl));
+
+  if (caar(y) == hdl)
+    return(car(y));
+      
+  for (y = cdr(y); is_pair(y); y = cdr(y))
+    if (caar(y) == hdl)
+      return(car(y));
+
+  return(sc->NIL); 
+} 
+
+
+#define find_global_symbol(Hdl) symbol_global_slot(Hdl)
+
+
 s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just the global environment? */
 {
   s7_pointer x;
-  x = s7_find_symbol(sc, sc->envir, sym, true);
+  x = find_symbol(sc, sc->envir, sym);
   if (x != sc->NIL)
     return(symbol_value(x));
   if (s7_is_keyword(sym))
@@ -2123,7 +2149,7 @@ s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just 
 s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local_env)
 {
   s7_pointer x;
-  x = s7_find_symbol(sc, local_env, sym, true);
+  x = find_symbol(sc, local_env, sym);
   if (x != sc->NIL)
     return(symbol_value(x));
   return(s7_symbol_value(sc, sym)); /* try sc->envir */
@@ -2153,7 +2179,7 @@ static s7_pointer g_symbol_to_value(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
 {
   s7_pointer x;
-  x = s7_find_symbol(sc, sc->envir, sym, true);
+  x = find_symbol(sc, sc->envir, sym);
   if (x != sc->NIL)
     set_symbol_value(x, val);
   return(val);
@@ -2179,7 +2205,7 @@ static s7_pointer lambda_star_argument_default_value(s7_scheme *sc, s7_pointer v
   s7_pointer x;
   if (s7_is_symbol(val))
     {
-      x = s7_find_symbol(sc, sc->envir, val, true);
+      x = find_symbol(sc, sc->envir, val);
       if (x != sc->NIL) 
 	return(symbol_value(x));
     }
@@ -2275,7 +2301,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
     }
   else x = sc->envir;
   
-  x = s7_find_symbol(sc, x, car(args), true);
+  x = find_symbol(sc, x, car(args));
   return(make_boolean(sc, (x != sc->NIL) && (x != sc->UNDEFINED)));
 }
 
@@ -2283,7 +2309,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 void s7_define(s7_scheme *sc, s7_pointer envir, s7_pointer symbol, s7_pointer value) 
 {
   s7_pointer x;
-  x = s7_find_symbol(sc, envir, symbol, false);
+  x = find_local_symbol(sc, envir, symbol);
   if (x != sc->NIL) 
     set_symbol_value(x, value); 
   else add_to_environment(sc, envir, symbol, value); /* I think this means C code can override "constant" defs */
@@ -2306,7 +2332,9 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
   sym = s7_make_symbol(sc, name);
   s7_define(sc, s7_global_environment(sc), sym, value);
 
-  x = s7_find_symbol(sc, s7_global_environment(sc), sym, false);
+  /* x = find_local_symbol(sc, s7_global_environment(sc), sym); */
+  x = find_global_symbol(sym);
+
   s7_set_immutable(car(x));
 }
 
@@ -2317,7 +2345,7 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
  */
 
 
-static s7_pointer s7_find_value_in_environment(s7_scheme *sc, s7_pointer val)
+static s7_pointer find_value_in_environment(s7_scheme *sc, s7_pointer val)
 { 
   s7_pointer x, y, vec; 
   for (x = sc->envir; (x != sc->NIL) && (!s7_is_vector(car(x))); x = cdr(x)) 
@@ -2370,7 +2398,7 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
   typeflag(sym) |= (T_IMMUTABLE | T_DONT_COPY); 
   free(name);
   
-  x = s7_find_symbol(sc, sc->envir, sym, true); /* is it already defined? */
+  x = find_symbol(sc, sc->envir, sym);        /* is it already defined? */
   if (x == sc->NIL) 
     add_to_environment(sc, sc->envir, sym, sym); /* its value is itself, skip the immutable check in add_to_current_environment */
   
@@ -9407,7 +9435,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       {
 	/* try to find obj in the current environment and return its name */
 	s7_pointer binding;
-	binding = s7_find_value_in_environment(sc, obj);
+	binding = find_value_in_environment(sc, obj);
 	if (is_pair(binding))
 	  return(s7_strdup(symbol_name(car(binding))));
 	return(s7_strdup("#<closure>"));
@@ -13315,7 +13343,7 @@ static s7_pointer encapsulator_apply(s7_scheme *sc, s7_pointer obj, s7_pointer a
       s7_pointer x, y;
       for (x = e->bindings; is_pair(x); x = cdr(x)) 
 	{
-	  y = s7_find_symbol(sc, sc->envir, caar(x), true);
+	  y = find_symbol(sc, sc->envir, caar(x));
 	  if (y != sc->NIL)
 	    set_symbol_value(y, cdar(x));
 	}
@@ -13361,7 +13389,7 @@ static void encapsulate(s7_scheme *sc, s7_pointer sym)
 
       if (!ok)
 	{
-	  y = s7_find_symbol(sc, e->envir, sym, true);
+	  y = find_symbol(sc, e->envir, sym);
 	  if (y != sc->NIL)
 	    e->bindings = s7_cons(sc, 
 				  s7_cons(sc, sym, s7_copy(sc, symbol_value(y))), 
@@ -13989,7 +14017,7 @@ static void trace_apply(s7_scheme *sc)
       {
 	/* handle *trace-hook* */
 	s7_pointer trace_hook, trace_hook_binding;
-	trace_hook_binding = s7_find_symbol(sc, sc->envir, sc->TRACE_HOOK, true);
+	trace_hook_binding = find_symbol(sc, sc->envir, sc->TRACE_HOOK);
 	if ((trace_hook_binding != sc->NIL) &&
 	    (is_procedure(symbol_value(trace_hook_binding))))
 	  {
@@ -14424,7 +14452,7 @@ GOT_CATCH:
       /* (set! *error-hook* (lambda (tag args) (apply format (cons #t args)))) */
       s7_pointer error_hook, error_hook_binding;
 
-      error_hook_binding = s7_find_symbol(sc, sc->envir, sc->ERROR_HOOK, true);
+      error_hook_binding = find_symbol(sc, sc->envir, sc->ERROR_HOOK);
 
       if ((!reset_error_hook) &&
 	  (error_hook_binding != sc->NIL) &&
@@ -14678,6 +14706,21 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
 				  safe_reverse_in_place(sc, sc->args))));
     }
   return(read_error(sc, "missing close paren"));
+}
+
+
+static void improper_arglist_error(s7_scheme *sc)
+{
+  int len;
+  char *msg, *argstr;
+  argstr = s7_object_to_c_string(sc, s7_append(sc, 
+					       s7_reverse(sc, cdr(sc->args)), 
+					       s7_cons(sc, car(sc->args), sc->code)));
+  len = safe_strlen(argstr) + 32;
+  msg = (char *)malloc(len * sizeof(char));
+  len = snprintf(msg, len, "improper list of arguments: %s?", argstr);
+  free(argstr);
+  s7_error(sc, sc->ERROR, s7_make_string_uncopied_with_length(sc, msg, len));
 }
 
 
@@ -15705,6 +15748,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 }
 
 
+
 /* ---------------- */
 
 static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
@@ -15731,7 +15775,7 @@ static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
 {
   s7_pointer x;
 
-  x = s7_find_symbol(sc, sc->envir, sym, true);
+  x = find_symbol(sc, sc->envir, sym);
 
   if (x != sc->NIL) 
     return(symbol_value(x));
@@ -16384,7 +16428,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	    if (is_not_local(sc->code))
 	      x = symbol_global_slot(sc->code);
-	    else x = s7_find_symbol(sc, sc->envir, sc->code, true);
+	    else x = find_symbol(sc, sc->envir, sc->code);
 	    if (x != sc->NIL) 
 	      sc->value = symbol_value(x);
 	    else sc->value = eval_symbol_1(sc, sc->code);
@@ -16507,7 +16551,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      s7_pointer x;
 	      if (is_not_local(car_code))
 		x = symbol_global_slot(car_code);
-	      else x = s7_find_symbol(sc, sc->envir, car_code, true);
+	      else x = find_symbol(sc, sc->envir, car_code);
 	      if (x != sc->NIL) 
 		sc->value = symbol_value(x);
 	      else sc->value = eval_symbol_1(sc, car_code);
@@ -16520,28 +16564,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       else                       /* got all args -- go to apply */
 	{
 	  if (sc->code != sc->NIL)
+	    improper_arglist_error(sc);
+	  else
 	    {
-	      int len;
-	      char *msg, *argstr;
-	      argstr = s7_object_to_c_string(sc, s7_append(sc, 
-							   s7_reverse(sc, cdr(sc->args)), 
-							   s7_cons(sc, car(sc->args), sc->code)));
-	      len = safe_strlen(argstr) + 32;
-	      msg = (char *)malloc(len * sizeof(char));
-	      len = snprintf(msg, len, "improper list of arguments: %s?", argstr);
-	      free(argstr);
-	      s7_error(sc, sc->ERROR, s7_make_string_uncopied_with_length(sc, msg, len));
+	      sc->args = safe_reverse_in_place(sc, sc->args); 
+	      /* we could omit this reversal in many cases: all built in ops could
+	       *   assume reversed args, things like eq? and + don't care about order, etc.
+	       *   But, I think the reversal is not taking any noticeable percentage of
+	       *   the overall compute time (ca 1% according to callgrind).
+	       */
+	      sc->code = car(sc->args);
+	      sc->args = cdr(sc->args);
+	      /* goto APPLY;  */
 	    }
-
-	  sc->args = safe_reverse_in_place(sc, sc->args); 
-	  /* we could omit this reversal in many cases: all built in ops could
-	   *   assume reversed args, things like eq? and + don't care about order, etc.
-	   *   But, I think the reversal is not taking any noticeable percentage of
-	   *   the overall compute time (ca 1% according to callgrind).
-	   */
-	  sc->code = car(sc->args);
-	  sc->args = cdr(sc->args);
-	  /* goto APPLY;  */
 	}
       
       
@@ -16842,7 +16877,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* define-constant -> OP_DEFINE_CONSTANT -> OP_DEFINE..1, then back to here */
       /*   at this point, sc->value is the symbol that we want to be immutable, sc->code is the original pair */
 
-      sc->x = s7_find_symbol(sc, sc->envir, sc->value, false);
+      sc->x = find_local_symbol(sc, sc->envir, sc->value);
       s7_set_immutable(car(sc->x));
       pop_stack(sc);
       goto START;
@@ -16928,7 +16963,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
       /* add the newly defined thing to the current environment */
-      sc->x = s7_find_symbol(sc, sc->envir, sc->code, false);
+      sc->x = find_local_symbol(sc, sc->envir, sc->code);
       if (sc->x != sc->NIL) 
 	set_symbol_value(sc->x, sc->value); 
       else add_to_current_environment(sc, sc->code, sc->value); 
@@ -17012,7 +17047,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_SET1:     
-      sc->y = s7_find_symbol(sc, sc->envir, sc->code, true);
+      sc->y = find_symbol(sc, sc->envir, sc->code);
       if (sc->y != sc->NIL) 
 	{
 #if WITH_ENCAPSULATION
@@ -17111,7 +17146,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    return(eval_error(sc, "bad variable ~S in let bindings", car(sc->code)));
 
 	  /* check for name collisions -- not sure this is required by Scheme */
-	  if (s7_find_symbol(sc, sc->envir, caar(sc->x), false) != sc->NIL)
+	  if (find_local_symbol(sc, sc->envir, caar(sc->x)) != sc->NIL)
 	    return(eval_error(sc, "duplicate identifier in let", caar(sc->x)));
 
 	  add_to_local_environment(sc, caar(sc->x), car(sc->y)); /* expansion here does not help */
@@ -17377,7 +17412,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       set_type(sc->value, T_MACRO | T_ANY_MACRO | T_DONT_COPY_CDR | T_DONT_COPY);
       
       /* find name in environment, and define it */
-      sc->x = s7_find_symbol(sc, sc->envir, sc->code, false); 
+      sc->x = find_local_symbol(sc, sc->envir, sc->code); 
       if (sc->x != sc->NIL) 
 	set_symbol_value(sc->x, sc->value); 
       else add_to_current_environment(sc, sc->code, sc->value); 
@@ -17538,7 +17573,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      break;
 	    }
 
-	  for ( ; sc->y != sc->NIL; sc->y = cdr(sc->y)) 
+	  if (s7_is_eqv(car(sc->y), sc->value)) 
+	    break;
+
+	  for (sc->y = cdr(sc->y); sc->y != sc->NIL; sc->y = cdr(sc->y)) 
 	    if (s7_is_eqv(car(sc->y), sc->value)) 
 	      break;
 	  
@@ -17736,7 +17774,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  (car(stack_args(sc->stack, loc)) != sc->MACROEXPAND))      /* (macroexpand (hi 1)) */
 		{
 		  s7_pointer x;
-		  x = symbol_value(s7_find_symbol(sc, sc->envir, car(sc->value), true));
+		  x = symbol_value(find_symbol(sc, sc->envir, car(sc->value)));
 		  sc->args = make_list_1(sc, sc->value); 
 		  sc->code = x;
 		  goto APPLY;
