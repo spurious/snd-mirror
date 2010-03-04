@@ -8932,7 +8932,7 @@ static void run_load_hook(s7_scheme *sc, const char *filename)
 s7_pointer s7_load(s7_scheme *sc, const char *filename)
 {
   bool old_longjmp;
-  s7_pointer port, old_env;
+  s7_pointer port;
   FILE *fp;
   
   fp = fopen(filename, "r");
@@ -8950,13 +8950,11 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
   /* it's possible to call this recursively (s7_load is XEN_LOAD_FILE which can be invoked via s7_call)
    *   but in that case, we actually want it to behave like g_load and continue the evaluation upon completion
    */
-
-  old_env = sc->envir;
+  sc->envir = s7_global_environment(sc);
   
   if (!sc->longjmp_ok)
     {
       push_stack(sc, opcode(OP_LOAD_RETURN_IF_EOF), port, sc->NIL);
-      sc->envir = s7_global_environment(sc);
       
       old_longjmp = sc->longjmp_ok;
       if (!sc->longjmp_ok)
@@ -8974,15 +8972,12 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
     {
       /* caller here is assuming the load will be complete before this function returns */
       push_stack(sc, opcode(OP_LOAD_RETURN_IF_EOF), sc->args, sc->code);
-      sc->envir = s7_global_environment(sc);
 
       eval(sc, OP_READ_INTERNAL);
       pop_input_port(sc);
       s7_close_input_port(sc, port);
     }
 
-  /* try to restore possible local env -- can this actually work? */
-  sc->envir = old_env; 
   return(sc->UNSPECIFIED);
 }
 
