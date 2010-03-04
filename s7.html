@@ -354,8 +354,10 @@ The getter is called when the object is encountered as a function, and the sette
 it is set:
 </p>
 <pre>
-(define x 32)
-(define xx (make-procedure-with-setter (lambda () x) (lambda (val) (set! x val) x)))
+(define xx (let ((x 32))
+             (<em class=red>make-procedure-with-setter</em>
+               (lambda () x) 
+               (lambda (val) (set! x val) x))))
 (xx) -&gt; 32
 (set! (xx) 1)
 (xx) -&gt; 1
@@ -675,7 +677,7 @@ which allows you to stop at some point, then evaluate arbitrary expressions in t
           (+ 1 (hiho (- arg 1))) 
           0))
 
-    (trace hiho)
+    (<em class=red>trace</em> hiho)
 
     (hiho 3)
 
@@ -730,7 +732,7 @@ show the continuation stack.
       (define (a3 c) (+ c (a2 c)))
       (catch #t
         (lambda () (a3 1))
-        (lambda args (stacktrace *error-info*))))
+        (lambda args (<em class=red>stacktrace</em> *error-info*))))
 
 -&gt;    (a1 (a . 1))
       (a2 (b . 1))

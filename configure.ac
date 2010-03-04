@@ -609,7 +609,7 @@ if test "$with_motif" = yes && test "$with_gtk" = yes ; then
   AC_MSG_WARN([You asked for both Motif and Gtk -- Motif will be used])
 fi
 
-if test "$with_no_gui" = yes || test "$with_snd_as_pd_external"; then
+if test "$with_no_gui" = yes ; then
 
   AC_DEFINE(USE_NO_GUI)
   XLIBS=""
@@ -2073,16 +2073,8 @@ if test "$ac_snd_have_extension_language" = no ; then
       LDFLAGS="$LDFLAGS -ldl"
     fi
     AC_MSG_WARN([Snd needs either an extension language (s7, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless.])
-    if test "$with_snd_as_pd_external" = yes ; then	
-       AC_MSG_ERROR(Guile is needed when making snd as a pd external.)
-    fi
   fi
 fi
-
-if test "$with_snd_as_pd_external" = yes ; then
-  CFLAGS="$CFLAGS -bundle"
-fi
-
 
 AC_SUBST(CFLAGS)
 AC_SUBST(ORIGINAL_LDFLAGS)

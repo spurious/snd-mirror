@@ -4074,6 +4074,16 @@
 	(define hiho (function (a) (+ a 1)))
 	(hiho 2))
       3)
+(test ((lambda (let) (let* ((letrec 1)) (+ letrec let))) 123) 124)
+(test ((lambda (let*) (let ((letrec 1)) (+ letrec let*))) 123) 124)
+(test ((lambda (a b c d e f g h i j k l m n o p q r s t u v x y z)
+	 (+ a b c d e f g h i j k l m n o p q r s t u v x y z))
+       1 2 3 4 5 6 7 8 9 11 12 13 14 15 16 17 18 19 21 22 23 24 25 26 27)
+      348)
+(test ((lambda (x) "a useless string" x) 32) 32)
+(test ((lambda (>< =0=? .arg.) (+ >< =0=? .arg.)) 1 2 3) 6)
+
+
 
 
 ;;; -------- begin --------

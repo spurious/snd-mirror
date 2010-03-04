@@ -33,7 +33,6 @@
 ;;; time varying FIR filter, notch filter
 ;;; sound-interp, env-sound-interp
 ;;; add date and time to title bar
-;;; how to get 'display' to write to Snd's listener (Guile only)
 ;;; filtered-env (low-pass and amplitude follow envelope)
 ;;; multi-colored rxvt printout
 ;;; lisp graph with draggable x axis

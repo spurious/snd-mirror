@@ -6858,39 +6858,6 @@ taking input from the readin generator 'reader'.  The output data is available v
 |#
 
 
-;;; --------------------------------------------------------------------------------
-;;;
-;;; set up make-* help strings
-
-(if (provided? 'snd-guile)
-    (for-each
-     (lambda (funcstr makefunc)
-       (if funcstr
-	   (set-procedure-property! makefunc 'documentation funcstr)))
-     (map procedure-documentation 
-	  (list nssb nxysin nxycos nxy1cos nxy1sin noddsin noddcos noddssb ncos2 npcos
-		nrsin nrcos nrssb nkssb nsincos rcos rssb rxysin rxycos
-		rxyk!sin rxyk!cos ercos erssb eoddcos rkcos rksin rkssb
-		rk!cos rk!ssb r2k!cos k2sin k2cos k2ssb dblsum rkoddssb krksin
-		abcos absin r2k2cos bess jjcos j0evencos j2cos jpcos jncos 
-		j0j1cos jycos blackman fmssb k3sin izcos nchoosekcos n1cos
-		adjustable-square-wave adjustable-triangle-wave adjustable-sawtooth-wave adjustable-oscil 
-		round-interp sinc-train pink-noise green-noise brown-noise green-noise-interp
-		moving-max moving-sum moving-rms moving-length weighted-moving-average exponentially-weighted-moving-average 
-		tanhsin moving-fft moving-scentroid moving-autocorrelation moving-pitch
-		))
-     (list make-nssb make-nxysin make-nxycos make-nxy1cos make-nxy1sin make-noddsin make-noddcos make-noddssb make-ncos2 make-npcos
-	   make-nrsin make-nrcos make-nrssb make-nkssb make-nsincos make-rcos make-rssb make-rxysin make-rxycos
-	   make-rxyk!sin make-rxyk!cos make-ercos make-erssb make-eoddcos make-rkcos make-rksin make-rkssb
-	   make-rk!cos make-rk!ssb make-r2k!cos make-k2sin make-k2cos make-k2ssb make-dblsum make-rkoddssb make-krksin
-	   make-abcos make-absin make-r2k2cos make-bess make-jjcos make-j0evencos make-j2cos make-jpcos make-jncos
-	   make-j0j1cos make-jycos make-blackman make-fmssb make-k3sin make-izcos make-nchoosekcos make-n1cos
-	   make-adjustable-square-wave make-adjustable-triangle-wave make-adjustable-sawtooth-wave make-adjustable-oscil
-	   make-round-interp make-sinc-train make-pink-noise make-green-noise make-brown-noise make-green-noise-interp
-	   make-moving-max make-moving-sum make-moving-rms make-moving-length make-weighted-moving-average make-exponentially-weighted-moving-average 
-	   make-tanhsin make-moving-fft make-moving-scentroid make-moving-autocorrelation make-moving-pitch
-	   )))
-
 
 
 ;;; --------------------------------------------------------------------------------

@@ -69,16 +69,12 @@
   <li><a href="#sndaswidget" onmouseout="UnTip()" onmouseover="Tip('Embed Snd in some other program')">Snd as a Widget</a>
   <li><a href="#sndwithclm" onmouseout="UnTip()" onmouseover="Tip('CLM is built into Snd')">Snd and CLM</a>
   <li><a href="#sndwithcm" onmouseout="UnTip()" onmouseover="Tip('CM is Rick Taube\'s composition environment')">Snd and Common Music</a>
-<!--
-  <li><a href="#sndwithpd" onmouseout="UnTip()" onmouseover="Tip('PD is Miller Puckette\'s synthesis and composition program')">Snd and Pd</a>
--->
   <li><a href="#sndwithmotif" onmouseout="UnTip()" onmouseover="Tip('Motif extensions from xm.c')">Snd and Motif</a>
   <li><a href="#sndwithgtk" onmouseout="UnTip()" onmouseover="Tip('Gtk extensions from xg.c')">Snd and Gtk</a>
   <li><a href="#sndwithnogui">Snd with no GUI and as scripting engine</a>
   <li><a href="#sndandruby" onmouseout="UnTip()" onmouseover="Tip('Ruby is a scripting/extension language somewhat like Python')">Snd with Ruby</a>
   <li><a href="#sndandforth" onmouseout="UnTip()" onmouseover="Tip('Forth is a postfix extension language')">Snd with Forth</a>
   <li><a href="#sndands7" onmouseout="UnTip()" onmouseover="Tip('s7 is yet another Scheme extension language')">Snd with s7</a>
-  <li><a href="#sndandguile" onmouseout="UnTip()" onmouseover="Tip('Guile is yet another Scheme extension language')">Snd with Guile</a>
   <li><a href="#sndandladspa" onmouseout="UnTip()" onmouseover="Tip('This is a Linux-based sound-effects plugin system')">Snd and LADSPA plugins</a>
   <li><a href="#sndandalsa" onmouseout="UnTip()" onmouseover="Tip('This is the no-longer-very-new Linux audio library')">Snd and ALSA</a>
   <li><a href="#sndandjack" onmouseout="UnTip()" onmouseover="Tip('This is the Jack audio library')">Snd and Jack</a>
@@ -1518,68 +1514,6 @@ It's also possible to load sndlib into cm.  Here's a note from Rick:
     Bye! 
 </pre>
 
-<!--
-<br><br>
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndwithpd">Snd and Pd</a></h3></td></tr></table>
-
-<p>This depends on Guile, so it is currently broken.
-</p>
-
-
-<p>Snd can be built to be used as a Pd "external".  Use the --with-snd-as-pd-external switch, and make sure
-the configure script can find a Guile compiled with "--with-threads" and "--enable-static". 
-If you have several versions of Guile, use the GUILE_CONFIG_path variable to select the latest: 
-</p> 
-
-<pre> 
-./configure --with-snd-as-pd-external GUILE_CONFIG_path=/home/bil/test/bin 
-</pre>
-
-<p>
-help-snd.pd and snd-help-fm.pd have example patches.
-Here are brief descriptions of the functions:
-</p>
-<br>
-<pre>
-(<b>pd-inlet</b> inlet-num type func)
-    'func' is a function that is called when the object receives a message to the inlet 'inlet-num' of type 
-      'type'. Normal values for 'type' are 'float, 'list, 'bang, etc. 
-    add.scm, inout.scm 
-    Local function. 
-
-(<b>pd-outlet</b> outlet-num arg0 arg1 ...) 
-    Sends one or more values to outlet 'outlet-num'. The arguments can be of any kind. 
-    add.scm, inout.scm 
-    Local function. 
-
-(<b>pd-bind</b> symbol func) 
-    Pd messages sent to 'symbol' arrive at the 'func' function. 
-    send_receive.scm 
-    Both local and global 
-
-(<b>pd-unbind</b> symbol) 
-    Stop receiving messages sent to 'symbol'. 
-    Both local and global. For the local version, all bindings are automatically unbound 
-      when the object is destroyed or reloaded. 
-
-(<b>pd-send</b> symbol arg0 arg1 ...) 
-    Sends one or more values to receivers for 'symbol'. 'symbol' can either be a scheme or a pd symbol. 
-    send_receive.scm 
-    Global function. 
-
-(<b>pd-get-symbol</b> symbol) 
-    Returns the pd symbol for the scheme symbol 'symbol'. pd-send works faster when a pd symbol 
-      is used instead of a scheme symbol. 
-    send_receive.scm 
-    Global function. 
-
-(<b>pd-set-destroy-func</b> thunk) 
-    'thunk' is called before the object is destroyed or reloaded. 
-    Local function.
-</pre>
-
-<img src="pix/stochastic.png" alt="snd with pd" hspace=20 vspace=20>
--->
 
 
 <br><br><br>
@@ -2250,47 +2184,6 @@ instrument: src-simp { start dur amp sr sr-env fname -- }
 <p>
 The s7 initialization file is ~/.snd_s7.
 </p>
-
-
-<br><br>
-
-
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandguile">Snd with Guile</a></h3></td></tr></table>
-
-<p>
-Guile support has been removed.
-</p>
-
-<p>
-Since this is a big change in Snd, I feel like I should look back and try to
-explain what went awry.  When I started Snd, I hoped to use emacs as the
-listener, and emacs lisp as the extension language.  I was in the midst of
-trying to extract emacs lisp from emacs when someone mentioned guile.
-At that time I would have preferred a language closer to Common Lisp,
-but there were none I could embed in Snd.  I read through the guile
-mail archives, and was impressed by Jim Blandy, at that time the head of
-guile.  So I abandoned emacs lisp, and embedded guile.  But several years
-later, Jim Blandy left guile (he now has his own Scheme named Minor),
-and guile's new leader was a disaster.  Guile became comatose, and the
-guile forums became (in my view) ever more hostile.  I tried to
-escape to Gauche, but then that project chose to go toward a compiler,
-and abandoned embedded language support.  I reached a point where
-guile was getting in my way.  I wanted solid multithreading
-(for with-sound in CLM primarily), and guile's was a morass of
-bugs.  Since guile code was famously unreadable, it was impossible
-to find these bugs in any reasonable time.  I also wanted multiprecision
-floats for my own research interests, but I had no hope of getting guile's
-developers to accept that.  Although guile finally got a new, infinitely better leader,
-the project chose to go in two directions I did not like.  First, it chose
-to move toward r6rs which I consider unspeakably ugly, and second it made
-a compiler its main goal.  The latter wrecked the run macro because it (run)
-needs to be able to look into the current environment.  So, I saw
-no way out except to find or write a new extension language.  The list
-of things I looked at is in snd-xen.c.  As you can see, that list
-ends with TinyScheme.  As soon as I saw it, I knew I could make it
-into a "real" scheme that I could use indefinitely: s7.
-</p>
-
 <br><br>
 
 

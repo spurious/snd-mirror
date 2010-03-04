@@ -101,6 +101,8 @@
  *
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
+ *
+ * the next thing to optimize probably is (oscil|formant (vector-ref ...) ...)
  */
 
 /* some timings (I keep losing these stats, so I'll put them here for safekeeping, "*"=not optimizable)
@@ -7088,7 +7090,6 @@ static xen_value *seconds_to_samples_1(ptree *prog, xen_value **args, int num_ar
 static Double f_round(Double x)
 {
   /* tricky here -- if .5 diff, need to round to nearest even int */
-  /* this code from Guile numbers.c */
   double plus_half = x + 0.5;
   double result = floor(plus_half);
   return((plus_half == result) && ((plus_half / 2) != floor(plus_half / 2)) ? result - 1 : result);

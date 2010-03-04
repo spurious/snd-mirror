@@ -2837,10 +2837,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define (procedure-name proc) (format #f \"~A\" proc))");
   /* needed in snd-test.scm and hooks.scm */
 
-  XEN_EVAL_C_STRING("(define (symbol-append . args) \"(symbol-append . args) makes a new symbol from its args\"\
-                       (string->symbol (apply string-append (map symbol->string args))))");
-  /* taken from guile ice-9/boot9.scm, used by KM's stuff (gui.scm etc) */
-
   XEN_EVAL_C_STRING("\
         (define (apropos name)\
           (define (substring? subs s)\

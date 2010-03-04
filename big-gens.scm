@@ -2,8 +2,6 @@
 
 (if (not (provided? 'snd-generators.scm)) (load "generators.scm"))
 
-;;; this file currently does not work in Guile
-
 
 ;;; -------- conversions --------
 

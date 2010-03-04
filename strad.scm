@@ -1,4 +1,4 @@
-;;; strad.scm -- Translation CLM -> Snd-Guile
+;;; strad.scm -- Translation CLM -> Snd
 
 ;; Bowed string physical model with stiffness.  CLM version adapted
 ;; from the Matlab and C versions courtesy of JOS and Stefania Serafin

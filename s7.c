@@ -646,7 +646,6 @@ struct s7_scheme {
 
 #define T_FINALIZABLE                 (1 << (TYPE_BITS + 7))
 #define is_finalizable(p)             ((typeflag(p) & T_FINALIZABLE) != 0)
-#define clear_finalizable(p)          typeflag(p) &= (~T_FINALIZABLE)
 /* finalizable means some action may need to be taken when the cell is GC'd */
 
 #define T_SIMPLE                      (1 << (TYPE_BITS + 8))
@@ -1557,6 +1556,9 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_UNTYPED:
     case T_NIL:
     case T_BOOLEAN:
+      return;
+      /* not break! */
+
     case T_STRING:
     case T_NUMBER:
     case T_CHARACTER:
@@ -1755,8 +1757,7 @@ static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char
   pthread_mutex_lock(&symtab_lock);
 #endif
 
-  vector_element(sc->symbol_table, location) = permanent_cons(x, 
-								 vector_element(sc->symbol_table, location), 
+  vector_element(sc->symbol_table, location) = permanent_cons(x, vector_element(sc->symbol_table, location), 
 								 T_PAIR | T_ATOM | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY);
 #if HAVE_PTHREADS
   pthread_mutex_unlock(&symtab_lock);
@@ -8931,14 +8932,14 @@ static void run_load_hook(s7_scheme *sc, const char *filename)
 s7_pointer s7_load(s7_scheme *sc, const char *filename)
 {
   bool old_longjmp;
-  s7_pointer port;
+  s7_pointer port, old_env;
   FILE *fp;
   
   fp = fopen(filename, "r");
   if (!fp)
     fp = search_load_path(sc, filename);
   if (!fp)
-    return(file_error(sc, "open-input-file", "can't open", filename));
+    return(file_error(sc, "load", "can't open", filename));
 
   run_load_hook(sc, filename);
 
@@ -8949,10 +8950,13 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
   /* it's possible to call this recursively (s7_load is XEN_LOAD_FILE which can be invoked via s7_call)
    *   but in that case, we actually want it to behave like g_load and continue the evaluation upon completion
    */
+
+  old_env = sc->envir;
   
   if (!sc->longjmp_ok)
     {
       push_stack(sc, opcode(OP_LOAD_RETURN_IF_EOF), port, sc->NIL);
+      sc->envir = s7_global_environment(sc);
       
       old_longjmp = sc->longjmp_ok;
       if (!sc->longjmp_ok)
@@ -8970,11 +8974,15 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
     {
       /* caller here is assuming the load will be complete before this function returns */
       push_stack(sc, opcode(OP_LOAD_RETURN_IF_EOF), sc->args, sc->code);
+      sc->envir = s7_global_environment(sc);
+
       eval(sc, OP_READ_INTERNAL);
       pop_input_port(sc);
       s7_close_input_port(sc, port);
     }
 
+  /* try to restore possible local env -- can this actually work? */
+  sc->envir = old_env; 
   return(sc->UNSPECIFIED);
 }
 
@@ -8998,7 +9006,7 @@ defaults to the global environment; to load into the current environment instead
   if (!fp)
     fp = search_load_path(sc, fname);
   if (!fp)
-    return(file_error(sc, "open-input-file", "can't open", fname));
+    return(file_error(sc, "load", "can't open", fname));
   
   run_load_hook(sc, fname);
 
@@ -15780,7 +15788,6 @@ static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
   s7_pointer x;
 
   x = find_symbol(sc, sc->envir, sym);
-
   if (x != sc->NIL) 
     return(symbol_value(x));
 
@@ -15793,7 +15800,6 @@ static void assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
   s7_pointer x;
   x = symbol_table_add_by_name_at_location(sc, name, symbol_table_hash(name, vector_length(sc->symbol_table))); 
   typeflag(x) |= (T_SYNTAX | T_DONT_COPY); 
-  clear_finalizable(x);
   syntax_opcode(x) = (int)op;
 }
 

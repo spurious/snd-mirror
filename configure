@@ -5462,6 +5462,8 @@ $as_echo "$acl_cv_prog_gnu_ld" >&6; }
 with_gnu_ld=$acl_cv_prog_gnu_ld
 
 
+# this is needed for the -export-dynamic check below (export dynamic is needed to get the xm.so module loadable at run-time)
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for fgrep" >&5
 $as_echo_n "checking for fgrep... " >&6; }
 if test "${ac_cv_path_FGREP+set}" = set; then :
@@ -7032,7 +7034,7 @@ if test "$with_motif" = yes && test "$with_gtk" = yes ; then
 $as_echo "$as_me: WARNING: You asked for both Motif and Gtk -- Motif will be used" >&2;}
 fi
 
-if test "$with_no_gui" = yes || test "$with_snd_as_pd_external"; then
+if test "$with_no_gui" = yes ; then
 
   $as_echo "#define USE_NO_GUI 1" >>confdefs.h
 
@@ -12082,16 +12084,8 @@ if test "$ac_snd_have_extension_language" = no ; then
     fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Snd needs either an extension language (s7, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless." >&5
 $as_echo "$as_me: WARNING: Snd needs either an extension language (s7, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless." >&2;}
-    if test "$with_snd_as_pd_external" = yes ; then
-       as_fn_error "Guile is needed when making snd as a pd external." "$LINENO" 5
-    fi
   fi
 fi
-
-if test "$with_snd_as_pd_external" = yes ; then
-  CFLAGS="$CFLAGS -bundle"
-fi
-
 
 
 
