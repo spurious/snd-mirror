@@ -1087,6 +1087,25 @@ where you are in the file.
 <pre>
 (set! *load-hook* (lambda (name) (format #t "loading ~S...~%" name)))
 </pre>
+
+<p>Here's a *load-hook* function that adds the loaded file's directory
+to the *load-path* variable so that subsequent loads don't need to specify
+the directory:
+</p>
+<pre>
+(set! <em class=red>*load-hook*</em>
+  (lambda (filename)
+    (let ((pos -1)
+	  (len (length filename)))
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
+	(if (char=? (filename i) #\/)
+	    (set! pos i)))
+      (if (positive? pos)
+	  (let ((directory-name (substring filename 0 pos)))
+	    (if (not (member directory-name <em class=red>*load-path*</em>))
+		(set! <em class=red>*load-path*</em> (cons directory-name *load-path*))))))))
+</pre>
 </dd>
 <br>
 

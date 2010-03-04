@@ -435,7 +435,6 @@ static void save_options(FILE *fd)
 #if HAVE_SETLOCALE && HAVE_SCHEME
   locale = mus_strdup(setlocale(LC_NUMERIC, "C")); 
   /* must use decimal point in floats */
-  /* PERHAPS: add load dir to search list? */
 #endif
 
   fprintf(fd, "\n%s Snd %s (%s) options saved %s\n", XEN_COMMENT_STRING, SND_VERSION, SND_DATE, snd_local_time());

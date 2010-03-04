@@ -224,6 +224,7 @@
 /* -------------------------------------------------------------------------------- */
 
 /* s7.c is organized as follows:
+ *
  *    structs and type flags
  *    constants
  *    GC
@@ -250,6 +251,9 @@
  *    threads
  *    multiprecision arithmetic
  *    s7 init
+ *
+ * naming conventions: s7_* usually are C accessible (snd.h), g_* are scheme accessible (FFI), H_* are documentation strings,
+ *   *_1 are auxilliary functions, big_* refer to gmp and friends, scheme "?" corresponds to C "_is_", scheme "->" to C "_to_".
  */
 
 #if __cplusplus
@@ -876,7 +880,7 @@ static int safe_strlen(const char *str)
 }
 
 
-static char *strdup_with_len(const char *str, int len)
+static char *copy_string_with_len(const char *str, int len)
 {
   char *newstr;
   newstr = (char *)malloc((len + 1) * sizeof(char));
@@ -885,11 +889,10 @@ static char *strdup_with_len(const char *str, int len)
 }
 
 
-static char *s7_strdup(const char *str)
+static char *copy_string(const char *str)
 {
-  return(strdup_with_len(str, safe_strlen(str)));
+  return(copy_string_with_len(str, safe_strlen(str)));
 }
-
 
 
 static bool is_proper_list(s7_scheme *sc, s7_pointer lst);
@@ -916,6 +919,7 @@ static const char *type_name(s7_pointer arg);
 static s7_pointer make_string_uncopied(s7_scheme *sc, char *str);
 static s7_pointer make_protected_string(s7_scheme *sc, const char *str);
 
+
 #if WITH_ENCAPSULATION
   static void encapsulate(s7_scheme *sc, s7_pointer sym);
 #endif
@@ -923,10 +927,6 @@ static s7_pointer make_protected_string(s7_scheme *sc, const char *str);
   static s7_pointer g_is_thread(s7_scheme *sc, s7_pointer args);
 #endif
 
-
-/* naming conventions: s7_* usually are C accessible (snd.h), g_* are scheme accessible (FFI),
- *   *_1 are auxilliary functions, scheme "?" corresponds to C "_is_".
- */
 
 
 /* -------------------------------- constants -------------------------------- */
@@ -1557,11 +1557,14 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_UNTYPED:
     case T_NIL:
     case T_BOOLEAN:
-      return;
-
     case T_STRING:
     case T_NUMBER:
     case T_CHARACTER:
+    case T_C_OBJECT:
+    case T_C_ANY_ARGS_FUNCTION:
+    case T_C_FUNCTION:
+    case T_C_MACRO:
+    case T_C_POINTER:
       break;
 
     case T_SYMBOL:
@@ -1581,13 +1584,6 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_OUTPUT_PORT:
     case T_CATCH:
     case T_DYNAMIC_WIND:
-      break;
-
-    case T_C_OBJECT:
-    case T_C_ANY_ARGS_FUNCTION:
-    case T_C_FUNCTION:
-    case T_C_MACRO:
-    case T_C_POINTER:
       break;
 
     case T_HASH_TABLE:
@@ -2435,7 +2431,7 @@ static s7_pointer g_keyword_to_symbol(s7_scheme *sc, s7_pointer args)
   {
     char *temp;
     s7_pointer res;
-    temp = s7_strdup(name);
+    temp = copy_string(name);
     temp[strlen(temp) - 1] = '\0';
     res = s7_make_symbol(sc, (const char *)temp);
     free(temp);
@@ -2565,7 +2561,7 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
 }
 
 
-static s7_pointer s7_make_goto(s7_scheme *sc) 
+static s7_pointer make_goto(s7_scheme *sc) 
 {
   s7_pointer x;
   NEW_CELL(sc, x);
@@ -2741,11 +2737,11 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   /* (call-with-exit (lambda (return) ...)) */
   /* perhaps "call/exit"? */
   
-  if (!is_procedure(car(args)))                      /* this includes continuations */
+  if (!is_procedure(car(args)))                              /* this includes continuations */
     return(s7_wrong_type_arg_error(sc, "call-with-exit", 1, car(args), "a procedure"));
 
-  sc->code = car(args);                              /* the lambda form */
-  sc->args = make_list_1(sc, s7_make_goto(sc));      /*   the argument to the lambda (the goto = "return" above) */
+  sc->code = car(args);                                      /* the lambda form */
+  sc->args = make_list_1(sc, make_goto(sc));                 /*   the argument to the lambda (the goto = "return" above) */
   push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);      /* apply looks at sc->code to decide what to do (it will see the lambda) */
   
   /* if the lambda body calls the argument as a function, 
@@ -4498,7 +4494,7 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 }
 
 
-static char *s7_number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radix, int width, int precision, char float_choice)
+static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radix, int width, int precision, char float_choice)
 {
   char *p, *n, *d;
 
@@ -4543,7 +4539,7 @@ static char *s7_number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int r
 	    x = -x;
 	  }
 	if (x < 0.0)
-	  return(s7_strdup("-inf.0"));
+	  return(copy_string("-inf.0"));
 
 	int_part = (s7_Int)floor(x);
 	frac_part = x - int_part;
@@ -4571,8 +4567,8 @@ static char *s7_number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int r
 
     default:
       p = (char *)malloc(512 * sizeof(char));
-      n = s7_number_to_string_with_radix(sc, s7_make_real(sc, s7_real_part(obj)), radix, width, precision, float_choice);
-      d = s7_number_to_string_with_radix(sc, s7_make_real(sc, s7_imag_part(obj)), radix, width, precision, float_choice);
+      n = number_to_string_with_radix(sc, s7_make_real(sc, s7_real_part(obj)), radix, width, precision, float_choice);
+      d = number_to_string_with_radix(sc, s7_make_real(sc, s7_imag_part(obj)), radix, width, precision, float_choice);
       snprintf(p, 512, "%s%s%si", n, (s7_imag_part(obj) < 0.0) ? "" : "+", d);
       free(n);
       free(d);
@@ -4585,7 +4581,7 @@ static char *s7_number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int r
 
 char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
 {
-  return(s7_number_to_string_with_radix(sc, obj, radix, 0, 20, 'g')); /* (log top 10) so we get all the digits */
+  return(number_to_string_with_radix(sc, obj, radix, 0, 20, 'g')); /* (log top 10) so we get all the digits */
 }
 
 
@@ -4634,7 +4630,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
       if ((radix < 2) || (radix > 16))
 	return(s7_out_of_range_error(sc, "number->string radix,", 2, cadr(args), "should be between 2 and 16"));
 
-      res = s7_number_to_string_with_radix(sc, x, radix, 0, (radix == 10) ? size : 20, 'g');
+      res = number_to_string_with_radix(sc, x, radix, 0, (radix == 10) ? size : 20, 'g');
     }
   else res = number_to_string_base_10(x, 0, size, 'g');
   
@@ -4857,7 +4853,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 }
 
 
-/* TODO: arithmetic-overflow error? */
+/* perhaps arithmetic-overflow error? */
 
 static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
 {
@@ -4878,7 +4874,9 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
   while ((dig = digits[(int)(*tmp++)]) < radix)
     lval = dig + (lval * radix);
 
+#if WITH_GMP
   (*overflow) = ((tmp - tmp1) > s7_int_digits_by_radix[radix]);
+#endif
 
   if (negative)
     return(-lval);
@@ -4990,6 +4988,8 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	    int_part = dig + (int_part * radix);
 	  else break;
 	}
+      
+      /* this is only noticed in the gmp case */
       (*overflow) = (int_part > 0);
       
       if (int_len <= max_len)
@@ -8458,7 +8458,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
 }
 
 
-static s7_pointer s7_make_input_file(s7_scheme *sc, const char *name, FILE *fp)
+static s7_pointer make_input_file(s7_scheme *sc, const char *name, FILE *fp)
 {
   #define MAX_SIZE_FOR_STRING_PORT 1000000
   return(read_file(sc, fp, name, MAX_SIZE_FOR_STRING_PORT, "open"));
@@ -8474,7 +8474,7 @@ s7_pointer s7_open_input_file(s7_scheme *sc, const char *name, const char *mode)
   if (!fp)
     return(file_error(sc, "open-input-file", "can't open", name));
   
-  return(s7_make_input_file(sc, name, fp));
+  return(make_input_file(sc, name, fp));
 }
 
 
@@ -9347,21 +9347,21 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     {
     case T_BOOLEAN:
       if (obj == sc->T)
-	return(s7_strdup("#t"));
-      return(s7_strdup("#f"));
+	return(copy_string("#t"));
+      return(copy_string("#f"));
 
     case T_NIL:
-      return(s7_strdup("()"));
+      return(copy_string("()"));
   
     case T_UNTYPED:
       if (obj == sc->EOF_OBJECT)
-	return(s7_strdup("#<eof>"));
+	return(copy_string("#<eof>"));
   
       if (obj == sc->UNDEFINED) 
-	return(s7_strdup("#<undefined>"));
+	return(copy_string("#<undefined>"));
   
       if (obj == sc->UNSPECIFIED) 
-	return(s7_strdup("#<unspecified>"));
+	return(copy_string("#<unspecified>"));
       break;
 
     case T_INPUT_PORT:
@@ -9375,12 +9375,12 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       if (string_length(obj) > 0)
 	{
 	  if (!use_write) 
-	    return(strdup_with_len(string_value(obj), string_length(obj)));
+	    return(copy_string_with_len(string_value(obj), string_length(obj)));
 	  return(slashify_string(string_value(obj)));
 	}
       if (!use_write)
 	return(NULL);
-      else return(s7_strdup("\"\""));
+      else return(copy_string("\"\""));
 
     case T_CHARACTER:
       {
@@ -9429,10 +9429,10 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       }
   
     case T_SYMBOL:
-      return(s7_strdup(symbol_name(obj)));
+      return(copy_string(symbol_name(obj)));
   
     case T_MACRO:
-      return(s7_strdup("#<macro>"));
+      return(copy_string("#<macro>"));
   
     case T_CLOSURE:
     case T_CLOSURE_STAR:
@@ -9441,31 +9441,31 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	s7_pointer binding;
 	binding = find_value_in_environment(sc, obj);
 	if (is_pair(binding))
-	  return(s7_strdup(symbol_name(car(binding))));
-	return(s7_strdup("#<closure>"));
+	  return(copy_string(symbol_name(car(binding))));
+	return(copy_string("#<closure>"));
       }
   
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION:
-      return(s7_strdup(c_function_name(obj)));
+      return(copy_string(c_function_name(obj)));
 
     case T_C_MACRO:
-      return(s7_strdup(c_macro_name(obj)));
+      return(copy_string(c_macro_name(obj)));
   
     case T_C_POINTER:
-      return(s7_strdup("#<c_pointer>"));
+      return(copy_string("#<c_pointer>"));
   
     case T_CONTINUATION:
-      return(s7_strdup("#<continuation>"));
+      return(copy_string("#<continuation>"));
   
     case T_GOTO:
-      return(s7_strdup("#<goto>"));
+      return(copy_string("#<goto>"));
   
     case T_CATCH:
-      return(s7_strdup("#<catch>"));
+      return(copy_string("#<catch>"));
   
     case T_DYNAMIC_WIND:
-      return(s7_strdup("#<dynamic-wind>"));
+      return(copy_string("#<dynamic-wind>"));
   
     case T_C_OBJECT:
       return(describe_object(sc, obj)); /* this allocates already */
@@ -9536,10 +9536,10 @@ static char *object_to_c_string_with_circle_check(s7_scheme *sc, s7_pointer vr, 
     if (s7_is_eq(vr, sc->circular_refs[k]))
       {
 	if (s7_is_vector(vr))
-	  return(s7_strdup("[circular vector]"));
+	  return(copy_string("[circular vector]"));
 	if (s7_is_hash_table(vr))
-	  return(s7_strdup("[circular hash-table]"));
-	return(s7_strdup("[circular list]"));
+	  return(copy_string("[circular hash-table]"));
+	return(copy_string("[circular list]"));
       }
 
   return(s7_object_to_c_string_1(sc, vr, true, depth + 1, false));
@@ -9555,7 +9555,7 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth, bool 
   
   len = vector_length(vect);
   if (len == 0)
-    return(s7_strdup("#()"));
+    return(copy_string("#()"));
   
   if (!to_file)
     {
@@ -9635,8 +9635,8 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, int depth)
   if (len == 0)                   /* either '() or a circular list */
     {
       if (lst != sc->NIL)
-	return(s7_strdup("[circular list]"));
-      return(s7_strdup("()"));
+	return(copy_string("[circular list]"));
+      return(copy_string("()"));
     }
   
   if (depth < CIRCULAR_REFS_SIZE)
@@ -9652,7 +9652,7 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, int depth)
   if (dotted)
     {
       if (s7_is_eq(x, lst))
-	elements[i] = s7_strdup("[circular list]");
+	elements[i] = copy_string("[circular list]");
       elements[i] = object_to_c_string_with_circle_check(sc, x, depth);
       bufsize += safe_strlen(elements[i]);
     }
@@ -10140,7 +10140,7 @@ s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a)
 }
 
 
-static s7_pointer s7_reverse_in_place(s7_scheme *sc, s7_pointer term, s7_pointer list) 
+static s7_pointer reverse_in_place(s7_scheme *sc, s7_pointer term, s7_pointer list) 
 {
   s7_pointer p = list, result = term, q;
   while (p != sc->NIL)
@@ -10890,7 +10890,7 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
   if (!is_pair(p))
     return(s7_wrong_type_arg_error(sc, "reverse!", 0, p, "a list"));
   
-  np = s7_reverse_in_place(sc, sc->NIL, p);
+  np = reverse_in_place(sc, sc->NIL, p);
   if (np == sc->NIL)
     return(s7_wrong_type_arg_error(sc, "reverse!", 0, p, "a proper list"));
   
@@ -11215,7 +11215,7 @@ static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 }
 
 
-static s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
+static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect)
 {
   s7_Int len;
   s7_pointer new_vect;
@@ -12018,14 +12018,14 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
 
 #define HASHED_INTEGER_BUFFER_SIZE 64
 
-static char *s7_hashed_integer_name(s7_Int key, char *intbuf) /* not const here because snprintf is declared char* */
+static char *hashed_integer_name(s7_Int key, char *intbuf) /* not const here because snprintf is declared char* */
 {
   snprintf(intbuf, HASHED_INTEGER_BUFFER_SIZE, "\b%lld\b", (long long int)key);
   return(intbuf);
 }
 
 
-static char *s7_hashed_real_name(s7_Double key, char *intbuf)
+static char *hashed_real_name(s7_Double key, char *intbuf)
 {
   /* this is actually not safe due to the challenges faced by %f */
   snprintf(intbuf, HASHED_INTEGER_BUFFER_SIZE, "\b%.20f\b", key); /* default precision is not enough */
@@ -12047,11 +12047,11 @@ static s7_pointer hash_table_ref_1(s7_scheme *sc, s7_pointer table, s7_pointer k
       else
 	{
 	  if (s7_is_integer(key))
-	    name = s7_hashed_integer_name(s7_integer(key), intbuf);
+	    name = hashed_integer_name(s7_integer(key), intbuf);
 	  else
 	    {
 	      if ((s7_is_real(key)) && (!s7_is_ratio(key)))
-		name = s7_hashed_real_name(s7_real(key), intbuf);
+		name = hashed_real_name(s7_real(key), intbuf);
 	      else return(s7_wrong_type_arg_error(sc, "hash-table-ref key,", 2, key, "a string, symbol, integer, or (non-ratio) real"));
 	    }
 	}
@@ -12097,11 +12097,11 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
       else
 	{
 	  if (s7_is_integer(key))
-	    name = s7_hashed_integer_name(s7_integer(key), intbuf);
+	    name = hashed_integer_name(s7_integer(key), intbuf);
 	  else
 	    {
 	      if ((s7_is_real(key)) && (!s7_is_ratio(key)))
-		name = s7_hashed_real_name(s7_real(key), intbuf);
+		name = hashed_real_name(s7_real(key), intbuf);
 	      else return(s7_wrong_type_arg_error(sc, "hash-table-set! key,", 2, key, "a string, symbol, integer, or (non-ratio) real"));
 	    }
 	}
@@ -12497,7 +12497,7 @@ int s7_new_type(const char *name,
 	}
     }
   object_types[tag].type = tag;
-  object_types[tag].name = s7_strdup(name);
+  object_types[tag].name = copy_string(name);
   object_types[tag].free = free;
   object_types[tag].print = print;
   object_types[tag].equal = equal;
@@ -12537,7 +12537,7 @@ static char *describe_object(s7_scheme *sc, s7_pointer a)
   tag = c_object_type(a);
   if (object_types[tag].print)
     return((*(object_types[tag].print))(sc, c_object_value(a))); /* assume allocation here (so we'll free the string later) */
-  return(s7_strdup(object_types[tag].name));
+  return(copy_string(object_types[tag].name));
 }
 
 
@@ -12585,7 +12585,7 @@ static bool object_is_applicable(s7_pointer x)
 }
 
 
-static s7_pointer s7_apply_object(s7_scheme *sc, s7_pointer obj, s7_pointer args)
+static s7_pointer apply_object(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
   int tag;
   tag = c_object_type(obj);
@@ -12598,7 +12598,7 @@ static s7_pointer s7_apply_object(s7_scheme *sc, s7_pointer obj, s7_pointer args
 
 #define object_set_function(Obj) object_types[c_object_type(Obj)].set
 
-static s7_pointer s7_object_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
+static s7_pointer object_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
   int tag;
   tag = c_object_type(obj);
@@ -12613,7 +12613,7 @@ static s7_pointer s7_object_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 
 static s7_pointer g_object_set(s7_scheme *sc, s7_pointer args)
 {
-  return(s7_object_set(sc, car(args), cdr(args)));
+  return(object_set(sc, car(args), cdr(args)));
 }
 
 
@@ -12644,7 +12644,7 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
 }
 
 
-static s7_pointer s7_object_length(s7_scheme *sc, s7_pointer obj)
+static s7_pointer object_length(s7_scheme *sc, s7_pointer obj)
 {
   int tag;
   tag = c_object_type(obj);
@@ -12655,7 +12655,7 @@ static s7_pointer s7_object_length(s7_scheme *sc, s7_pointer obj)
 }
 
 
-static s7_pointer s7_object_copy(s7_scheme *sc, s7_pointer obj)
+static s7_pointer object_copy(s7_scheme *sc, s7_pointer obj)
 {
   int tag;
   tag = c_object_type(obj);
@@ -12666,7 +12666,7 @@ static s7_pointer s7_object_copy(s7_scheme *sc, s7_pointer obj)
 }
 
 
-static s7_pointer s7_object_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
+static s7_pointer object_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
 {
   int tag;
   tag = c_object_type(obj);
@@ -12688,7 +12688,7 @@ static s7_pointer g_object_for_each(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "for-each", 1, sc->code, "a procedure"));
 
   obj = cadr(args); /* already checked */
-  len = s7_integer(s7_object_length(sc, obj));
+  len = s7_integer(object_length(sc, obj));
   fargs = s7_cons(sc, sc->NIL, sc->NIL);
 
   if (cddr(args) != sc->NIL)
@@ -12697,7 +12697,7 @@ static s7_pointer g_object_for_each(s7_scheme *sc, s7_pointer args)
 	{
 	  if (!object_is_applicable(car(x)))
 	    return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "an applicable object"));
-	  if (len != s7_integer(s7_object_length(sc, car(x))))
+	  if (len != s7_integer(object_length(sc, car(x))))
 	    return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "an object whose length matches the other objects"));
 	  fargs = s7_cons(sc, sc->NIL, fargs);
 	}
@@ -12746,10 +12746,10 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
   f->set_req_args = set_req_args;
   f->set_opt_args = set_opt_args;
   if (documentation)
-    f->documentation = s7_strdup(documentation);
+    f->documentation = copy_string(documentation);
   else f->documentation = NULL;
   if (name)
-    f->name = s7_strdup(name);
+    f->name = copy_string(name);
   else f->name = NULL;
   f->scheme_getter = sc->NIL;
   f->scheme_setter = sc->NIL;
@@ -12763,8 +12763,8 @@ static char *pws_print(s7_scheme *sc, void *obj)
 {
   s7_pws_t *f = (s7_pws_t *)obj;
   if (f->name)
-    return(s7_strdup(f->name));
-  return(s7_strdup((char *)"#<procedure-with-setter>"));
+    return(copy_string(f->name));
+  return(copy_string((char *)"#<procedure-with-setter>"));
 }
 
 
@@ -13108,7 +13108,7 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
       return(g_hash_table_size(sc, args));
 
     case T_C_OBJECT:
-      return(s7_object_length(sc, lst));
+      return(object_length(sc, lst));
 
     default:
       return(s7_wrong_type_arg_error(sc, "length", 0, lst, "a list, vector, string, or hash-table"));
@@ -13118,10 +13118,10 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer s7_list_copy(s7_scheme *sc, s7_pointer obj)
+static s7_pointer list_copy(s7_scheme *sc, s7_pointer obj)
 {
   if (is_pair(obj))
-    return(s7_cons(sc, car(obj), s7_list_copy(sc, cdr(obj))));
+    return(s7_cons(sc, car(obj), list_copy(sc, cdr(obj))));
   return(obj);
 }
 
@@ -13134,14 +13134,14 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
       return(s7_make_string_with_length(sc, string_value(obj), string_length(obj)));
 
     case T_C_OBJECT:
-      return(s7_object_copy(sc, obj));
+      return(object_copy(sc, obj));
 
     case T_HASH_TABLE:
     case T_VECTOR:
-      return(s7_vector_copy(sc, obj));
+      return(vector_copy(sc, obj));
 
     case T_PAIR:
-      return(s7_list_copy(sc, obj)); /* should vector/list copy the objects as well as the container? */
+      return(list_copy(sc, obj)); /* should vector/list copy the objects as well as the container? */
     }
   return(obj);
 }
@@ -13154,16 +13154,16 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer s7_list_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
+static s7_pointer list_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
 {
   if (is_pair(obj))
     {
       if (is_pair(car(obj)))
-	s7_list_fill(sc, car(obj), val);
+	list_fill(sc, car(obj), val);
       else car(obj) = val;
 
       if (is_pair(cdr(obj)))
-	s7_list_fill(sc, cdr(obj), val);
+	list_fill(sc, cdr(obj), val);
       else
 	{
 	  if (cdr(obj) != sc->NIL)
@@ -13188,10 +13188,10 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
       return(g_vector_fill(sc, args));
 
     case T_C_OBJECT:
-      return(s7_object_fill(sc, car(args), cadr(args)));
+      return(object_fill(sc, car(args), cadr(args)));
 
     case T_PAIR:
-      return(s7_list_fill(sc, car(args), cadr(args)));
+      return(list_fill(sc, car(args), cadr(args)));
       
     }
   return(cadr(args));
@@ -13417,7 +13417,7 @@ typedef struct {
 } format_data;
 
 
-static char *s7_format_error(s7_scheme *sc, const char *msg, const char *str, s7_pointer args, format_data *dat)
+static char *format_error(s7_scheme *sc, const char *msg, const char *str, s7_pointer args, format_data *dat)
 {
   int len;
   char *errmsg;
@@ -13481,13 +13481,13 @@ static int format_read_integer(s7_scheme *sc, int *cur_i, int str_len, const cha
     {
       tmp = (char *)(str + i);
       if (sscanf(tmp, "%d", &arg1) < 1)
-	s7_format_error(sc, "bad number?", str, args, fdat);
+	format_error(sc, "bad number?", str, args, fdat);
 
       for (i = i + 1; i < str_len - 1; i++)
 	if (!isdigit(str[i]))
 	  break;
       if (i >= str_len)
-	s7_format_error(sc, "numeric argument, but no directive!", str, args, fdat);
+	format_error(sc, "numeric argument, but no directive!", str, args, fdat);
     }
   *cur_i = i;
   return(arg1);
@@ -13498,7 +13498,7 @@ static void format_number(s7_scheme *sc, format_data *fdat, int radix, int width
 {
   char *tmp;
   if (width < 0) width = 0;
-  tmp = s7_number_to_string_with_radix(sc, car(fdat->args), radix, width, precision, float_choice);
+  tmp = number_to_string_with_radix(sc, car(fdat->args), radix, width, precision, float_choice);
   if (pad != ' ')
     {
       char *padtmp;
@@ -13531,7 +13531,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
     {
       if ((args != sc->NIL) &&
 	  (next_arg == NULL))
-	return(s7_format_error(sc, "too many arguments", str, args, fdat));
+	return(format_error(sc, "too many arguments", str, args, fdat));
     }
   else
     {
@@ -13589,11 +13589,11 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		   *   but that could easily(?) be handled with substring and an embedded format arg.
 		   */
 		  if (fdat->args == sc->NIL)
-		    return(s7_format_error(sc, "missing argument", str, args, fdat));
+		    return(format_error(sc, "missing argument", str, args, fdat));
 		  i++;
 		  if (((str[i] == 'C') || (str[i] == 'c')) &&
 		      (!s7_is_character(car(fdat->args))))
-		    return(s7_format_error(sc, "~C directive requires a character argument", str, args, fdat));
+		    return(format_error(sc, "~C directive requires a character argument", str, args, fdat));
 
 		  tmp = s7_object_to_c_string_1(sc, car(fdat->args), (str[i] == 'S') || (str[i] == 's'), 0, false);
 		  format_append_string(fdat, tmp);
@@ -13607,7 +13607,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		    char *curly_str = NULL;
 		    int k, curly_len = -1, curly_nesting = 1;
 		    if (!s7_is_list(sc, car(fdat->args)))
-		      return(s7_format_error(sc, "'{' directive argument should be a list", str, args, fdat));
+		      return(format_error(sc, "'{' directive argument should be a list", str, args, fdat));
 
 		    for (k = i + 2; k < str_len - 1; k++)
 		      if (str[k] == '~')
@@ -13628,10 +13628,10 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			    }
 			}
 		    if (curly_len == -1)
-		      return(s7_format_error(sc, "'{' directive, but no matching '}'", str, args, fdat));
+		      return(format_error(sc, "'{' directive, but no matching '}'", str, args, fdat));
 
 		    if (curly_len <= 1)
-		      return(s7_format_error(sc, "~{...~} doesn't consume any arguments!", str, args, fdat));
+		      return(format_error(sc, "~{...~} doesn't consume any arguments!", str, args, fdat));
 
 		    curly_str = (char *)malloc(curly_len * sizeof(char));
 		    for (k = 0; k < curly_len - 1; k++)
@@ -13648,7 +13648,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			if (curly_arg == new_arg)
 			  {
 			    if (curly_str) free(curly_str);
-			    return(s7_format_error(sc, "~{...~} doesn't consume any arguments!", str, args, fdat));
+			    return(format_error(sc, "~{...~} doesn't consume any arguments!", str, args, fdat));
 			  }
 			curly_arg = new_arg;
 		      }
@@ -13660,7 +13660,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		  break;
 		  
 		case '}':
-		  return(s7_format_error(sc, "unmatched '}'", str, args, fdat));
+		  return(format_error(sc, "unmatched '}'", str, args, fdat));
 		  
 		  /* -------- numeric args -------- */
 		case '0': case '1': case '2': case '3': case '4': case '5':
@@ -13696,9 +13696,9 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		    if ((str[i] != 'T') && (str[i] != 't'))
 		      {
 			if (fdat->args == sc->NIL)
-			  return(s7_format_error(sc, "missing argument", str, args, fdat));
+			  return(format_error(sc, "missing argument", str, args, fdat));
 			if (!(s7_is_number(car(fdat->args))))
-			  return(s7_format_error(sc, "numeric argument required", str, args, fdat));
+			  return(format_error(sc, "numeric argument required", str, args, fdat));
 		      }
 
 		    switch (str[i])
@@ -13760,13 +13760,13 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			break;
 		      
 		      default:
-			return(s7_format_error(sc, "unimplemented format directive", str, args, fdat));
+			return(format_error(sc, "unimplemented format directive", str, args, fdat));
 		      }
 		  }
 		  break;
 
 		default:
-		  return(s7_format_error(sc, "unimplemented format directive", str, args, fdat));
+		  return(format_error(sc, "unimplemented format directive", str, args, fdat));
 		}
 	    }
 	  else format_append_char(fdat, str[i]);
@@ -13779,7 +13779,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
   else
     {
       if (fdat->args != sc->NIL)
-	return(s7_format_error(sc, "too many arguments", str, args, fdat));
+	return(format_error(sc, "too many arguments", str, args, fdat));
     }
   if (i < str_len)
     format_append_char(fdat, str[i]);    /* possible trailing ~ is sent out */
@@ -14295,7 +14295,7 @@ static int remember_file_name(const char *file)
 	    file_names[i] = NULL;
 	}
     }
-  file_names[file_names_top] = s7_strdup(file);
+  file_names[file_names_top] = copy_string(file);
 
 #if HAVE_PTHREADS
   pthread_mutex_unlock(&remember_files_lock);
@@ -16283,9 +16283,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = cddr(sc->code);
 	  goto DO_END;
 	}
+
+      /* if this form can be expressed as a dotimes form, use that operation instead */
+      /*    we can recognize it: 1 step var, steps from int by int to int */
+      /*    car(sc-code) is the step var info, cadr possible end test and expr */
+      /*    (do ((i 0 (+ i 1))) ((= i 100) ...) ...) */
+      /* why can't we avoid all the consing even in the general case? -- keep the list used for the initial values rather than consing up a new one each time */
       
       /* eval each init value, then set up the new frame (like let, not let*) */
-      
       sc->args = sc->NIL;       /* the evaluated var-data */
       sc->value = sc->code;     /* protect it */
       sc->code = car(sc->code); /* the vars */
@@ -16334,6 +16339,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* now we've set up the environment, next set up for loop */
 
       sc->y = safe_reverse_in_place(sc, sc->value);
+
+      /* here we throw away the init value list */
       sc->args = sc->NIL;
 
       for (sc->x = car(sc->code); sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y))       
@@ -16767,7 +16774,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	case T_C_OBJECT:	                  /* -------- applicable object -------- */
-	  sc ->value = s7_apply_object(sc, sc->code, sc->args);
+	  sc ->value = apply_object(sc, sc->code, sc->args);
 	  if (sc->stack_end > sc->stack_start)
 	    pop_stack(sc);
 	  goto START;
@@ -16962,7 +16969,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (s7_is_procedure_with_setter(sc->value))
 	    {
 	      s7_pws_t *f = (s7_pws_t *)s7_object_value(sc->value);
-	      f->name = s7_strdup(symbol_name(sc->code));
+	      f->name = copy_string(symbol_name(sc->code));
 	    }
 	}
 
@@ -17828,7 +17835,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   -- in eval_args1, if we end with non-pair-not-nil then
        *      something is fishy
        */
-      sc->value = s7_reverse_in_place(sc, sc->value, sc->args);
+      sc->value = reverse_in_place(sc, sc->value, sc->args);
       pop_stack(sc);
       goto START;
       
@@ -18413,7 +18420,7 @@ static char *mpfr_to_string(mpfr_t val, int radix)
   int i, len, ep;
 
   if (mpfr_zero_p(val))
-    return(s7_strdup("0.0"));
+    return(copy_string("0.0"));
 
   str1 = mpfr_get_str(NULL, &expptr, radix, 0, val, GMP_RNDN);
   str = str1;
@@ -23336,5 +23343,3 @@ s7_scheme *s7_init(void)
 	   
   return(sc);
 }
-
-/* TODO: how to trace setter [s7_object_set?] mus-srate for example */
