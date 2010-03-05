@@ -2494,7 +2494,7 @@
 	  (close-sound index)
 	  (mus-sound-forget long-file-name)
 	  (delete-file long-file-name))
-	
+
 	(let* ((fsnd (string-append sf-dir "forest.aiff")))
 	  (if (file-exists? fsnd)
 	      (begin
@@ -54011,6 +54011,7 @@ EDITS: 1
 	  (with-sound (:play #f) (defopt-simp 0 10000) (defopt-simp 10000 10000 550.0 0.1) (defopt-simp 20000 10000 :amplitude .2))
 	  (with-sound (:channels 2 :reverb-channels 2 :reverb jcrev2 :play #f) (floc-simp 0 1))
   
+
   	  (with-sound (:channels 2 :statistics #t)
 		      (fullmix "pistol.snd")
 		      (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
@@ -54071,6 +54072,33 @@ EDITS: 1
 		      (fullmix "2a.snd" #f #f #f '((0.5 0.0) (0.0 0.75)))
 		      (fullmix "oboe.snd" #f #f #f (list (list (list 0 0 1 1 2 0) 0.5)))
 		      (fullmix "oboe.snd" 3 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
+
+
+	  (load "fullmix.scm") ; this is also in clm-ins.scm so we need a separate set of tests
+	  
+  	  (with-sound (:channels 2 :statistics #t)
+		      (fullmix "pistol.snd")
+		      (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
+	  (let ((ind (find-sound "test.snd")))
+	    (if (sound? ind) (close-sound ind) (snd-display ";fullmix.scm no output?")))
+	  
+	  (with-sound (:channels 2) 
+		      (fullmix "4.aiff" 0.0 0.1 36.4 '((0.0 0.0) (0.0 0.0) (1.0 0.0) (0.0 1.0))))
+	  (let ((ind (find-sound "test.snd")))
+	    (if (fneq (maxamp) 0.664947509765625) (snd-display ";4->2(0) fullmix.scm: ~A" (maxamp)))
+	    (close-sound ind))
+	  
+	  (with-sound (:channels 1) 
+		      (fullmix "4.aiff" 0.0 0.1 36.4 '((1.0) (0.0) (0.0) (0.0))))
+	  (let ((ind (find-sound "test.snd")))
+	    (if (fneq (maxamp) 0.221649169921875) (snd-display ";4->1(0) fullmix.scm: ~A" (maxamp)))
+	    (close-sound ind))
+
+	  (with-sound (:statistics #t :scaled-to .5 :srate 44100 :channels 1) 
+		      (cnvrev "oboe.snd" "fyow.snd"))
+	  (let ((ind (find-sound "test.snd")))
+	    (if (sound? ind) (close-sound ind) (snd-display ";cnvrev no output?")))
+	  
 	  
 	  (if (file-exists? "with-mix.snd") (delete-file "with-mix.snd"))
 	  (with-sound () (with-mix () "with-mix" 0 (fm-violin 0 .1 440 .1)))
