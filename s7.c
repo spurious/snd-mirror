@@ -3606,96 +3606,6 @@ static s7_pointer s7_from_c_complex(s7_scheme *sc, s7_Complex z)
 }
 
 
-static s7_num_t num_max(s7_num_t a, s7_num_t b) 
-{
-  s7_num_t ret;
-  ret.type = a.type | b.type;
-  
-  switch (num_type(ret))
-    {
-    case NUM_INT: 
-      if (integer(a) >= integer(b))
-	integer(ret) = integer(a);
-      else integer(ret) = integer(b);
-      break;
-      
-    case NUM_RATIO:
-      {
-	s7_Int vala, valb;
-	vala = num_to_numerator(a) / num_to_denominator(a); 
-	valb = num_to_numerator(b) / num_to_denominator(b);
-
-	if ((vala > valb) ||
-	    ((vala == valb) && (b.type == NUM_INT)))
-	  return(a);
-
-	if ((valb > vala) ||
-	    ((vala == valb) && (a.type == NUM_INT)))
-	  return(b);
-
-	/* sigh -- both are ratios and the int parts are equal */
-	if (((double)(num_to_numerator(a) % num_to_denominator(a)) / (double)num_to_denominator(a)) >
-	    ((double)(num_to_numerator(b) % num_to_denominator(b)) / (double)num_to_denominator(b)))
-	  return(a);
-	return(b);
-      }
-      break;
-      
-    default:
-      if (num_to_real(a) >= num_to_real(b))
-	real(ret) = num_to_real(a);
-      else real(ret) = num_to_real(b);
-      break;
-    }
-  return(ret);
-}
-
-
-static s7_num_t num_min(s7_num_t a, s7_num_t b) 
-{
-  s7_num_t ret;
-  ret.type = a.type | b.type;
-  
-  switch (num_type(ret))
-    {
-    case NUM_INT: 
-      if (integer(a) < integer(b))
-	integer(ret) = integer(a);
-      else integer(ret) = integer(b);
-      break;
-      
-    case NUM_RATIO:
-      {
-	s7_Int vala, valb;
-	vala = num_to_numerator(a) / num_to_denominator(a); 
-	valb = num_to_numerator(b) / num_to_denominator(b);
-
-	if ((vala < valb) ||
-	    ((vala == valb) && (a.type == NUM_INT)))
-	  return(a);
-
-	if ((valb < vala) ||
-	    ((vala == valb) && (b.type == NUM_INT)))
-	  return(b);
-
-	/* sigh -- both are ratios and the int parts are equal */
-	if (((double)(num_to_numerator(a) % num_to_denominator(a)) / (double)num_to_denominator(a)) <
-	    ((double)(num_to_numerator(b) % num_to_denominator(b)) / (double)num_to_denominator(b)))
-	  return(a);
-	return(b);
-      }
-      break;
-      
-    default:
-      if (num_to_real(a) < num_to_real(b))
-	real(ret) = num_to_real(a);
-      else real(ret) = num_to_real(b);
-      break;
-    }
-  return(ret);
-}
-
-
 static int integer_length(s7_Int a)
 {
   static int bits[256] =
@@ -3921,6 +3831,7 @@ static s7_num_t num_mul(s7_num_t a, s7_num_t b)
   return(ret);
 }
 
+
 static s7_num_t num_invert(s7_num_t a)
 {
   switch (num_type(a))
@@ -4026,273 +3937,6 @@ static s7_num_t num_quotient(s7_num_t a, s7_num_t b)
     integer(ret) = integer(a) / integer(b);
   else integer(ret) = s7_truncate(num_to_real(a) / num_to_real(b));
   return(ret);
-}
-
-
-static s7_num_t num_rem(s7_num_t a, s7_num_t b) 
-{
-  /* (define (rem x1 x2) (- x1 (* x2 (quo x1 x2)))) ; slib */
-  s7_num_t ret;
-  ret.type = a.type | b.type;
-  switch (ret.type)
-    {
-    case NUM_INT: 
-      integer(ret) = integer(a) % integer(b);
-      break;
-
-    case NUM_RATIO: 
-      return(make_ratio(num_to_numerator(a) * num_to_denominator(b) - 
-			num_to_numerator(b) * num_to_denominator(a) * integer(num_quotient(a, b)),
-			num_to_denominator(a) * num_to_denominator(b)));
-      break;
-
-    default:
-      real(ret) = num_to_real(a) - num_to_real(b) * integer(num_quotient(a, b));
-      break;
-    }
-  return(ret);
-}
-
-
-static s7_num_t num_mod(s7_num_t a, s7_num_t b) 
-{
-  /* (define (mod x1 x2) (- x1 (* x2 (floor (/ x1 x2))))) ; slib */
-  s7_num_t ret;
-  ret.type = a.type | b.type;
-  switch (ret.type)
-    {
-    case NUM_INT:
-      integer(ret) = c_mod(integer(a), integer(b));
-      break;
-
-    case NUM_RATIO:
-      return(make_ratio(num_to_numerator(a) * num_to_denominator(b) - 
-			num_to_numerator(b) * num_to_denominator(a) * (s7_Int)floor(num_to_real(a) / num_to_real(b)),
-			num_to_denominator(a) * num_to_denominator(b)));
-      break;
-
-    default:
-      real(ret) = num_to_real(a) - num_to_real(b) * (s7_Int)floor(num_to_real(a) / num_to_real(b));
-      break;
-    }
-  return(ret);
-}
-
-
-static bool num_eq(s7_num_t a, s7_num_t b) 
-{
-  switch (num_type(a))
-    {
-    case NUM_INT:
-      switch (num_type(b))
-	{
-	case NUM_INT: 
-	  return(integer(a) == integer(b));
-	case NUM_RATIO:
-	  return(false);
-	case NUM_REAL:
-	case NUM_REAL2:
-	  return(integer(a) == real(b));
-	default: 
-	  return((real_part(b) == integer(a)) &&
-		 (imag_part(b) == 0.0));
-	}
-      break;
-      
-    case NUM_RATIO:  
-      switch (num_type(b))
-	{
-	case NUM_RATIO:
-	  return((numerator(a) == numerator(b)) &&
-		 (denominator(a) == denominator(b)));
-	case NUM_REAL:
-	case NUM_REAL2:
-	  return(num_to_real(a) == real(b));
-
-	  /* this gives some possibly confusing results:
-
-              :(= 245850922/78256779 (angle -1))
-              #t
-	      :(= 884279719003555/281474976710656 (angle -1))
-              #t
-              :(= 245850922/78256779 884279719003555/281474976710656)
-              #f
-	      
-	     should I rationalize the float before the comparison?  These results are not incorrect (pace r6rs) --
-	     if you use a float, it infects the rest of the numbers, as anywhere else.
-	  */
-	default:
-	  return(false);
-	}
-      break;
-      
-    case NUM_REAL2:
-    case NUM_REAL:    
-      switch (num_type(b))
-	{
-	case NUM_INT:
-	  return(real(a) == integer(b));
-
-	case NUM_RATIO:
-	  return(real(a) == num_to_real(b));
-
-	case NUM_REAL:
-	case NUM_REAL2:
-	  return(real(a) == real(b));
-
-	default:
-	  return((real_part(b) == real(a)) &&
-		 (imag_part(b) == 0.0));
-	}
-      break;
-      
-    default:
-      switch (num_type(b))
-	{
-	case NUM_INT:
-	  return((real_part(a) == integer(b)) &&
-		 (imag_part(a) == 0.0));
-
-	case NUM_RATIO:
-	  return((real_part(a) == num_to_real(b)) &&
-		 (imag_part(a) == 0.0));
-
-	case NUM_REAL:
-	case NUM_REAL2:
-	  return((real_part(a) == real(b)) &&
-		 (imag_part(a) == 0.0));
-
-	default:
-	  return((real_part(a) == real_part(b)) &&
-		 (imag_part(a) == imag_part(b)));
-	}
-      break;
-    }
-  return(false);
-}
-
-
-static bool num_gt(s7_num_t a, s7_num_t b) 
-{
-  /* the ">" operator here is a problem.
-   *   we get different results depending on the gcc optimization level for cases like (< 1234/11 1234/11)
-   *   so, to keep ratios honest, we'll use num_sub and compare against 0.  But that can cause problems:
-   *   :(> 0 most-negative-fixnum)
-   *   #f
-   */
-  switch (num_type(a))
-    {
-    case NUM_INT:
-      switch (num_type(b))
-	{
-	case NUM_INT:
-	  return(integer(a) > integer(b));
-
-	case NUM_RATIO: 
-	  return((integer(a) * denominator(b)) > numerator(b));
-
-	default:
-	  return(integer(a) > real(b));
-	}
-      break;
-
-    case NUM_RATIO:
-      switch (num_type(b))
-	{
-	case NUM_INT: 
-	  return(numerator(a) > (integer(b) * denominator(a)));
-
-	case NUM_RATIO:
-	  {
-	    s7_num_t val;
-	    val = num_sub(a, b);
-	    return(numerator(val) > 0);
-	  }
-
-	default:
-	  return(num_to_real(a) > real(b));
-	}
-      break;
-
-    default:
-      switch (num_type(b))
-	{
-	case NUM_INT: 
-	  return(real(a) > integer(b));
-
-	case NUM_RATIO:
-	  return(real(a) > num_to_real(b));
-
-	default:
-	  return(real(a) > real(b));
-	}
-      break;
-    }
-}
-
-
-static bool num_lt(s7_num_t a, s7_num_t b) 
-{
-  switch (num_type(a))
-    {
-    case NUM_INT:
-      switch (num_type(b))
-	{
-	case NUM_INT:
-	  return(integer(a) < integer(b));
-
-	case NUM_RATIO: 
-	  return((integer(a) * denominator(b)) < numerator(b));
-
-	default:
-	  return(integer(a) < real(b));
-	}
-      break;
-
-    case NUM_RATIO:
-      switch (num_type(b))
-	{
-	case NUM_INT: 
-	  return(numerator(a) < (integer(b) * denominator(a)));
-
-	case NUM_RATIO:
-	  {
-	    s7_num_t val;
-	    val = num_sub(a, b);
-	    return(numerator(val) < 0);
-	  }
-
-	default:
-	  return(num_to_real(a) < real(b));
-	}
-      break;
-
-    default:
-      switch (num_type(b))
-	{
-	case NUM_INT: 
-	  return(real(a) < integer(b));
-
-	case NUM_RATIO:
-	  return(real(a) < num_to_real(b));
-
-	default:
-	  return(real(a) < real(b));
-	}
-      break;
-    }
-}
-
-
-static bool num_ge(s7_num_t a, s7_num_t b) 
-{
-  return(!num_lt(a, b));
-}
-
-
-static bool num_le(s7_num_t a, s7_num_t b) 
-{
-  return(!num_gt(a, b));
 }
 
 
@@ -6542,26 +6186,70 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* should (min 1 1.5) return 1? */
-
 static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 {
   #define H_max "(max ...) returns the maximum of its arguments"
   int i;
-  s7_pointer x;
-  s7_num_t n;
+  s7_pointer x, ap, bp, result;
+  s7_num_t a, b;
 
-  if (!s7_is_real(car(args)))
-    return(s7_wrong_type_arg_error(sc, "max", 1, car(args), "a real"));
+  ap = car(args);
+  if (!s7_is_real(ap))
+    return(s7_wrong_type_arg_error(sc, "max", 1, ap, "a real"));
 
-  n = number(car(args));
+  result = ap;
+  a = number(ap);
+
   for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
     {
-      if (!s7_is_real(car(x)))
-	return(s7_wrong_type_arg_error(sc, "max", i, car(x), "a real"));
-      n = num_max(n, number(car(x)));
+      bp = car(x);
+      if (!s7_is_real(bp))
+	return(s7_wrong_type_arg_error(sc, "max", i, bp, "a real"));
+
+      b = number(bp);
+
+      switch (a.type | b.type)
+	{
+	case NUM_INT: 
+	  if (integer(a) < integer(b))
+	    {
+	      a = b;
+	      result = bp;
+	    }
+	  break;
+      
+	case NUM_RATIO:
+	  {
+	    s7_Int vala, valb;
+	    vala = num_to_numerator(a) / num_to_denominator(a); 
+	    valb = num_to_numerator(b) / num_to_denominator(b);
+
+	    if (!((vala > valb) ||
+		  ((vala == valb) && (b.type == NUM_INT))))
+	      {
+		if ((valb > vala) ||
+		    ((vala == valb) && (a.type == NUM_INT)) ||
+		    /* sigh -- both are ratios and the int parts are equal */
+		    (((double)(num_to_numerator(a) % num_to_denominator(a)) / (double)num_to_denominator(a)) <=
+		     ((double)(num_to_numerator(b) % num_to_denominator(b)) / (double)num_to_denominator(b))))
+		  {
+		    a = b;
+		    result = bp;
+		  }
+	      }
+	  }
+	  break;
+      
+	default:
+	  if (num_to_real(a) < num_to_real(b))
+	    {
+	      a = b;
+	      result = bp;
+	    }
+	  break;
+	}
     }
-  return(make_number(sc, n));
+  return(result);
 }
 
 
@@ -6569,20 +6257,66 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 {
   #define H_min "(min ...) returns the minimum of its arguments"
   int i;
-  s7_pointer x;
-  s7_num_t n;
+  s7_pointer x, ap, bp, result;
+  s7_num_t a, b;
 
-  if (!s7_is_real(car(args)))
-    return(s7_wrong_type_arg_error(sc, "min", 1, car(args), "a real"));
+  ap = car(args);
+  if (!s7_is_real(ap))
+    return(s7_wrong_type_arg_error(sc, "min", 1, ap, "a real"));
 
-  n = number(car(args));
+  result = ap;
+  a = number(ap);
+
   for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
     {
-      if (!s7_is_real(car(x)))
-	return(s7_wrong_type_arg_error(sc, "min", i, car(x), "a real"));
-      n = num_min(n, number(car(x)));
+      bp = car(x);
+      if (!s7_is_real(bp))
+	return(s7_wrong_type_arg_error(sc, "min", i, bp, "a real"));
+
+      b = number(bp);
+
+      switch (a.type | b.type)
+	{
+	case NUM_INT: 
+	  if (integer(a) > integer(b))
+	    {
+	      a = b;
+	      result = bp;
+	    }
+	  break;
+      
+	case NUM_RATIO:
+	  {
+	    s7_Int vala, valb;
+	    vala = num_to_numerator(a) / num_to_denominator(a); 
+	    valb = num_to_numerator(b) / num_to_denominator(b);
+
+	    if (!((vala < valb) ||
+		  ((vala == valb) && (a.type == NUM_INT))))
+	      {
+		if ((valb < vala) ||
+		    ((vala == valb) && (b.type == NUM_INT)) ||
+		    /* sigh -- both are ratios and the int parts are equal */
+		    (((double)(num_to_numerator(a) % num_to_denominator(a)) / (double)num_to_denominator(a)) >=
+		     ((double)(num_to_numerator(b) % num_to_denominator(b)) / (double)num_to_denominator(b))))
+		  {
+		    a = b;
+		    result = bp;
+		  }
+	      }
+	  }
+	  break;
+
+	default:
+	  if (num_to_real(a) > num_to_real(b))
+	    {
+	      a = b;
+	      result = bp;
+	    }
+	  break;
+	}
     }
-  return(make_number(sc, n));
+  return(result);
 }
 
 
@@ -6604,53 +6338,213 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 {
   #define H_remainder "(remainder x1 x2) returns the integer remainder of x1 and x2; (remainder 10 3) = 1"
+  /* (define (rem x1 x2) (- x1 (* x2 (quo x1 x2)))) ; slib */
+
+  s7_pointer ap, bp;
+  s7_num_t a, b;
   
-  if (!s7_is_real(car(args)))
-    return(s7_wrong_type_arg_error(sc, "remainder", 1, car(args), "a real"));
-  if (!s7_is_real(cadr(args)))
-    return(s7_wrong_type_arg_error(sc, "remainder", 2, cadr(args), "a real"));
-  if (s7_is_zero(cadr(args))) 
+  ap = car(args);
+  if (!s7_is_real(ap))
+    return(s7_wrong_type_arg_error(sc, "remainder", 1, ap, "a real"));
+
+  bp = cadr(args);
+  if (!s7_is_real(bp))
+    return(s7_wrong_type_arg_error(sc, "remainder", 2, bp, "a real"));
+
+  if (s7_is_zero(bp))
     return(division_by_zero_error(sc, "remainder", args));
- 
-  return(make_number(sc, num_rem(number(car(args)), number(cadr(args)))));
+
+  a = number(ap);
+  b = number(bp);
+
+  switch (num_type(a) | num_type(b))
+    {
+    case NUM_INT: 
+      return(s7_make_integer(sc, integer(a) % integer(b)));
+
+    case NUM_RATIO: 
+      return(s7_make_ratio(sc,
+			   num_to_numerator(a) * num_to_denominator(b) - 
+			   num_to_numerator(b) * num_to_denominator(a) * integer(num_quotient(a, b)),
+			   num_to_denominator(a) * num_to_denominator(b)));
+
+    default:
+      return(s7_make_real(sc, num_to_real(a) - num_to_real(b) * integer(num_quotient(a, b))));
+    }
 }
 
 
 static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 {
   #define H_modulo "(modulo x1 x2) returns x1 mod x2; (modulo 4 3) = 1.  The arguments can be real numbers."
+  s7_pointer ap, bp;
+  s7_num_t a, b;
+  /* (define (mod x1 x2) (- x1 (* x2 (floor (/ x1 x2))))) ; slib */
+
+  ap = car(args);
+  if (!s7_is_real(ap))
+    return(s7_wrong_type_arg_error(sc, "modulo", 1, ap, "a real"));
+
+  bp = cadr(args);
+  if (!s7_is_real(bp))
+    return(s7_wrong_type_arg_error(sc, "modulo", 2, bp, "a real"));
+
+  if (s7_is_zero(bp))
+    return(ap);                       /* (mod x 0) = x according to "Concrete Mathematics" */
   
-  if (!s7_is_real(car(args)))
-    return(s7_wrong_type_arg_error(sc, "modulo", 1, car(args), "a real"));
-  if (!s7_is_real(cadr(args)))
-    return(s7_wrong_type_arg_error(sc, "modulo", 2, cadr(args), "a real"));
+  a = number(ap);
+  b = number(bp);
 
-  if (!s7_is_zero(cadr(args)))
-    return(make_number(sc, num_mod(number(car(args)), number(cadr(args)))));
+  switch (num_type(a) | num_type(b))
+    {
+    case NUM_INT:
+      return(s7_make_integer(sc, c_mod(integer(a), integer(b))));
 
-  return(car(args)); /* (mod x 0) = x according to "Concrete Mathematics" */
+    case NUM_RATIO:                   /* a or b might be integer here, hence the num_to_* */
+      return(s7_make_ratio(sc, 
+			   num_to_numerator(a) * num_to_denominator(b) - 
+			   num_to_numerator(b) * num_to_denominator(a) * (s7_Int)floor(num_to_real(a) / num_to_real(b)),
+			   num_to_denominator(a) * num_to_denominator(b)));
+
+    default:
+      return(s7_make_real(sc, num_to_real(a) - num_to_real(b) * (s7_Int)floor(num_to_real(a) / num_to_real(b))));
+    }
 }
 
 
 static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_equal "(= z1 ...) returns #t if all its arguments are equal"
-  int i;
+  int i, type_a, type_b;
   s7_pointer x;
-  s7_num_t n;
+  s7_num_t a, b;
 
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "=", 1, car(args), "a number"));
   
-  n = number(car(args));
+  a = number(car(args));
+  type_a = num_type(a);
+
   for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
     {
       s7_pointer tmp;
+      bool equal = true;
+
       tmp = car(x);
       if (!s7_is_number(tmp))
 	  return(s7_wrong_type_arg_error(sc, "=", i, tmp, "a number"));
 
-      if (!num_eq(n, number(tmp)))
+      b = number(tmp);
+      type_b = num_type(b);
+
+      switch (type_a)
+	{
+	case NUM_INT:
+	  switch (type_b)
+	    {
+	    case NUM_INT: 
+	      equal = (integer(a) == integer(b));
+	      break;
+
+	    case NUM_RATIO:
+	      equal = false;
+	      break;
+
+	    case NUM_REAL:
+	    case NUM_REAL2:
+	      equal = (integer(a) == real(b));
+	      break;
+
+	    default: 
+	      equal = ((imag_part(b) == 0.0) &&
+		       (real_part(b) == integer(a)));
+	      break;
+	    }
+	  break;
+      
+	case NUM_RATIO:  
+	  switch (type_b)
+	    {
+	    case NUM_RATIO:
+	      equal = ((numerator(a) == numerator(b)) &&
+		       (denominator(a) == denominator(b)));
+	      break;
+
+	    case NUM_REAL:
+	    case NUM_REAL2:
+	      equal = (num_to_real(a) == real(b));
+	      /* this gives some possibly confusing results:
+		 
+		 :(= 245850922/78256779 (angle -1))
+		 #t
+		 :(= 884279719003555/281474976710656 (angle -1))
+		 #t
+		 :(= 245850922/78256779 884279719003555/281474976710656)
+		 #f
+	      
+		 should I rationalize the float before the comparison?  These results are not incorrect (pace r6rs) --
+		 if you use a float, it infects the rest of the numbers, as anywhere else.
+	      */
+	      break;
+
+	    default:
+	      equal = false;
+	      break;
+	    }
+	  break;
+      
+	case NUM_REAL2:
+	case NUM_REAL:    
+	  switch (type_b)
+	    {
+	    case NUM_INT:
+	      equal = (real(a) == integer(b));
+	      break;
+
+	    case NUM_RATIO:
+	      equal = (real(a) == num_to_real(b));
+	      break;
+
+	    case NUM_REAL:
+	    case NUM_REAL2:
+	      equal = (real(a) == real(b));
+	      break;
+
+	    default:
+	      equal = ((imag_part(b) == 0.0) &&
+		       (real_part(b) == real(a)));
+	      break;
+	    }
+	  break;
+      
+	default:
+	  switch (type_b)
+	    {
+	    case NUM_INT:
+	      equal = ((imag_part(a) == 0.0) &&
+		       (real_part(a) == integer(b)));
+	      break;
+
+	    case NUM_RATIO:
+	      equal = ((imag_part(a) == 0.0) &&
+		       (real_part(a) == num_to_real(b)));
+	      break;
+
+	    case NUM_REAL:
+	    case NUM_REAL2:
+	      equal = ((imag_part(a) == 0.0) &&
+		       (real_part(a) == real(b)));
+	      break;
+
+	    default:
+	      equal = ((real_part(a) == real_part(b)) &&
+		       (imag_part(a) == imag_part(b)));
+	      break;
+	    }
+	  break;
+	}
+
+      if (!equal)
 	{
 	  for (i++, x = cdr(x); x != sc->NIL; i++, x = cdr(x)) /* check trailing args for bad type */
 	    if (!s7_is_number(car(x)))
@@ -6658,39 +6552,111 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	  
 	  return(sc->F);
 	}
+
+      a = b;
+      type_a = type_b;
     }
 
   return(sc->T);
 }
 
 
-static s7_pointer compare_numbers(s7_scheme *sc, s7_pointer args, bool (*comp_func)(s7_num_t a, s7_num_t b),  const char *op_name)
+static s7_pointer g_less_1(s7_scheme *sc, bool reversed, s7_pointer args)
 {
-  int i;
+  int i, type_a, type_b;
   s7_pointer x;
-  s7_num_t n;
+  s7_num_t a, b;
   
   if (!s7_is_real(car(args)))
-    return(s7_wrong_type_arg_error(sc, op_name, 1, car(args), "a real"));
+    return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", 1, car(args), "a real"));
 
-  n = number(car(args));
+  a = number(car(args));
+  type_a = num_type(a);
+
   for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
     {
       s7_pointer tmp;
+      bool less = true;
+
       tmp = car(x);
       if (!s7_is_real(tmp))
-	  return(s7_wrong_type_arg_error(sc, op_name, i, tmp, "a real"));
+	return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", i, tmp, "a real"));
+
+      b = number(tmp);
+      type_b = num_type(b);
+
+      switch (type_a)
+	{
+	case NUM_INT:
+	  switch (type_b)
+	    {
+	    case NUM_INT:
+	      less = (integer(a) < integer(b));
+	      break;
+
+	    case NUM_RATIO: 
+	      less = ((integer(a) * denominator(b)) < numerator(b));
+	      break;
+
+	    default:
+	      less = (integer(a) < real(b));
+	      break;
+	    }
+	  break;
+
+	case NUM_RATIO:
+	  switch (type_b)
+	    {
+	    case NUM_INT: 
+	      less = (numerator(a) < (integer(b) * denominator(a)));
+	      break;
+
+	    case NUM_RATIO:
+	      {
+		s7_num_t val;
+		val = num_sub(a, b);
+		less = (numerator(val) < 0);
+	      }
+	      break;
+
+	    default:
+	      less = (num_to_real(a) < real(b));
+	      break;
+	    }
+	  break;
+
+	default:
+	  switch (type_b)
+	    {
+	    case NUM_INT: 
+	      less = (real(a) < integer(b));
+	      break;
+
+	    case NUM_RATIO:
+	      less = (real(a) < num_to_real(b));
+	      break;
+
+	    default:
+	      less = (real(a) < real(b));
+	      break;
+	    }
+	  break;
+	}
       
-      if (!comp_func(n, number(tmp)))
+      if (reversed) less = !less;
+      if (!less)
 	{
 	  for (i++, x = cdr(x); x != sc->NIL; i++, x = cdr(x)) /* check trailing args for bad type */
 	    if (!s7_is_real(car(x)))
-	      return(s7_wrong_type_arg_error(sc, op_name, i, car(x), "a real"));
+	      return(s7_wrong_type_arg_error(sc, (reversed) ? ">=" : "<", i, car(x), "a real"));
 
 	  return(sc->F);
 	}
-      n = number(tmp);
+      
+      a = b;
+      type_a = type_b;
     }
+
   return(sc->T);
 }
 
@@ -6698,29 +6664,137 @@ static s7_pointer compare_numbers(s7_scheme *sc, s7_pointer args, bool (*comp_fu
 static s7_pointer g_less(s7_scheme *sc, s7_pointer args)
 {
   #define H_less "(< x1 ...) returns #t if its arguments are in increasing order"
-  return(compare_numbers(sc, args, num_lt, "<"));
-}
-
-
-static s7_pointer g_greater(s7_scheme *sc, s7_pointer args)
-{
-  #define H_greater "(> x1 ...) returns #t if its arguments are in decreasing order"
-  return(compare_numbers(sc, args, num_gt, ">"));
-}
-
-
-static s7_pointer g_less_or_equal(s7_scheme *sc, s7_pointer args)
-{
-  #define H_less_or_equal "(<= x1 ...) returns #t if its arguments are in increasing order"
-  return(compare_numbers(sc, args, num_le, "<="));
+  return(g_less_1(sc, false, args));
 }
 
 
 static s7_pointer g_greater_or_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_greater_or_equal "(>= x1 ...) returns #t if its arguments are in decreasing order"
-  return(compare_numbers(sc, args, num_ge, ">="));
+  return(g_less_1(sc, true, args));  
 }
+
+
+static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
+{
+  int i, type_a, type_b;
+  s7_pointer x;
+  s7_num_t a, b;
+  
+  if (!s7_is_real(car(args)))
+    return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", 1, car(args), "a real"));
+
+  a = number(car(args));
+  type_a = num_type(a);
+
+  for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
+    {
+      s7_pointer tmp;
+      bool greater = true;
+
+      tmp = car(x);
+      if (!s7_is_real(tmp))
+	return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, tmp, "a real"));
+
+      b = number(tmp);
+      type_b = num_type(b);
+
+      /* the ">" operator here is a problem.
+       *   we get different results depending on the gcc optimization level for cases like (< 1234/11 1234/11)
+       *   so, to keep ratios honest, we'll use num_sub and compare against 0.  But that can cause problems:
+       *   :(> 0 most-negative-fixnum)
+       *   #f
+       */
+      switch (type_a)
+	{
+	case NUM_INT:
+	  switch (type_b)
+	    {
+	    case NUM_INT:
+	      greater = (integer(a) > integer(b));
+	      break;
+
+	    case NUM_RATIO: 
+	      greater = ((integer(a) * denominator(b)) > numerator(b));
+	      break;
+
+	    default:
+	      greater = (integer(a) > real(b));
+	      break;
+	    }
+	  break;
+
+	case NUM_RATIO:
+	  switch (type_b)
+	    {
+	    case NUM_INT: 
+	      greater = (numerator(a) > (integer(b) * denominator(a)));
+	      break;
+
+	    case NUM_RATIO:
+	      {
+		s7_num_t val;
+		val = num_sub(a, b);
+		greater = (numerator(val) > 0);
+	      }
+	      break;
+
+	    default:
+	      greater = (num_to_real(a) > real(b));
+	      break;
+	    }
+	  break;
+
+	default:
+	  switch (type_b)
+	    {
+	    case NUM_INT: 
+	      greater = (real(a) > integer(b));
+	      break;
+
+	    case NUM_RATIO:
+	      greater = (real(a) > num_to_real(b));
+	      break;
+
+	    default:
+	      greater = (real(a) > real(b));
+	      break;
+	    }
+	  break;
+	}
+
+      if (reversed) greater = !greater;
+      if (!greater)
+	{
+	  for (i++, x = cdr(x); x != sc->NIL; i++, x = cdr(x)) /* check trailing args for bad type */
+	    if (!s7_is_real(car(x)))
+	      return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", i, car(x), "a real"));
+
+	  return(sc->F);
+	}
+      
+      a = b;
+      type_a = type_b;
+    }
+
+  return(sc->T);
+}
+
+
+static s7_pointer g_greater(s7_scheme *sc, s7_pointer args)
+{
+  #define H_greater "(> x1 ...) returns #t if its arguments are in decreasing order"
+  return(g_greater_1(sc, false, args));
+}
+
+
+static s7_pointer g_less_or_equal(s7_scheme *sc, s7_pointer args)
+{
+  #define H_less_or_equal "(<= x1 ...) returns #t if its arguments are in increasing order"
+  return(g_greater_1(sc, true, args));  
+}
+
+
 
 
 static s7_pointer g_real_part(s7_scheme *sc, s7_pointer args)
@@ -16201,18 +16275,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto DO_END;
       
       push_stack(sc, opcode(OP_DO_END), sc->args, sc->code);
-      sc->code = s7_cons(sc, sc->NIL, car(sc->args));   /* car = list of newly incremented values, cdr = list of slots */
-      sc->args = car(sc->args);
-      
+      sc->args = car(sc->args);                /* the var data lists */
+      sc->code = sc->args;                     /* save the top of the list */
+
       
     DO_STEP1:
     case OP_DO_STEP1:
+
+      /* on each iteration, we first get here with args as the list of var bindings, exprs, and init vals
+       *   e.g. (((i . 0) (+ i 1) 0))
+       * each arg incr expr is evaluated and the value placed in caddr while we cdr down args
+       * finally args is nil...
+       */
+
       if (sc->args == sc->NIL)
 	{
-	  sc->y = cdr(sc->code);
-	  sc->code = safe_reverse_in_place(sc, car(sc->code));
-	  for (sc->x = sc->code; sc->y != sc->NIL && sc->x != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y))
-	    set_symbol_value(caar(sc->y), car(sc->x));
+	  for (sc->x = sc->code; sc->x != sc->NIL; sc->x = cdr(sc->x))
+	    set_symbol_value(caar(sc->x), caddar(sc->x));
 
 	  /* "real" schemes rebind here, rather than reset, but that is expensive,
 	   *    and only matters once in a blue moon (closure over enclosed lambda referring to a do var)
@@ -16250,7 +16329,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
       push_stack(sc, opcode(OP_DO_STEP2), sc->args, sc->code);
-      /* here sc->args is a list like (((i . 0) (+ i 1)) ...)
+
+      /* here sc->args is a list like (((i . 0) (+ i 1) 0) ...)
        *   so sc->code becomes (+ i 1) in this case 
        */
       sc->code = cadar(sc->args);
@@ -16259,8 +16339,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_DO_STEP2:
-      car(sc->code) = s7_cons(sc, sc->value, car(sc->code));  /* add this value to our growing list */
-      sc->args = cdr(sc->args);                               /* go to next */
+      caddar(sc->args) = sc->value;                           /* save current value */
+      sc->args = cdr(sc->args);                               /* go to next step var */
       goto DO_STEP1;
       
 
@@ -16268,37 +16348,31 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* setup is very similar to let */
       /* sc->code is the stuff after "do" */
 
-      if ((!is_pair(sc->code)) ||            /* (do . 1) */
-	  ((!is_pair(car(sc->code))) &&      /* (do 123) */
-	   (car(sc->code) != sc->NIL)))      /* (do () ...) is ok */
+      if ((!is_pair(sc->code)) ||                             /* (do . 1) */
+	  ((!is_pair(car(sc->code))) &&                       /* (do 123) */
+	   (car(sc->code) != sc->NIL)))                       /* (do () ...) is ok */
 	return(eval_error(sc, "do: var list is not a list: ~S", sc->code));
 
-      if ((!is_pair(cadr(sc->code))) &&      /* (do ((i 0)) 123) */
-	  (cadr(sc->code) != sc->NIL))       /* no end-test? */
+      if ((!is_pair(cadr(sc->code))) &&                       /* (do ((i 0)) 123) */
+	  (cadr(sc->code) != sc->NIL))                        /* no end-test? */
 	return(eval_error(sc, "do: end-test and end-value list is not a list: ~A", sc->code));
 
-      if (car(sc->code) == sc->NIL)          /* (do () ...) */
+      if (car(sc->code) == sc->NIL)                           /* (do () ...) */
 	{
 	  sc->envir = new_frame_in_env(sc, sc->envir); 
 	  sc->args = s7_cons(sc, sc->NIL, cadr(sc->code));
 	  sc->code = cddr(sc->code);
 	  goto DO_END;
 	}
-
-      /* if this form can be expressed as a dotimes form, use that operation instead */
-      /*    we can recognize it: 1 step var, steps from int by int to int */
-      /*    car(sc-code) is the step var info, cadr possible end test and expr */
-      /*    (do ((i 0 (+ i 1))) ((= i 100) ...) ...) */
-      /* why can't we avoid all the consing even in the general case? -- keep the list used for the initial values rather than consing up a new one each time */
       
       /* eval each init value, then set up the new frame (like let, not let*) */
-      sc->args = sc->NIL;       /* the evaluated var-data */
-      sc->value = sc->code;     /* protect it */
-      sc->code = car(sc->code); /* the vars */
+      sc->args = sc->NIL;                             /* the evaluated var-data */
+      sc->value = sc->code;                           /* protect it */
+      sc->code = car(sc->code);                       /* the vars */
       
       
     case OP_DO_INIT:
-      sc->args = s7_cons(sc, sc->value, sc->args); /* code will be last element (first after reverse) */
+      sc->args = s7_cons(sc, sc->value, sc->args);    /* code will be last element (first after reverse) */
       if (is_pair(sc->code))
 	{
 	  /* here sc->code is a list like: ((i 0 (+ i 1)) ...)
@@ -16337,24 +16411,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 	sc->value = s7_cons(sc, add_to_local_environment(sc, caar(sc->x), car(sc->y)), sc->value);
 
-      /* now we've set up the environment, next set up for loop */
-
+      /* now we've set up the environment, next set up for the loop */
       sc->y = safe_reverse_in_place(sc, sc->value);
 
-      /* here we throw away the init value list */
+      /* here args is a list of init values (in order of occurence in the do var list), but those values are also in the bindings */
       sc->args = sc->NIL;
 
       for (sc->x = car(sc->code); sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y))       
-	if (cddar(sc->x) != sc->NIL)               /* no incr expr, so ignore it henceforth */
-	  {
-	    sc->value = s7_cons(sc, caddar(sc->x), sc->NIL);
-	    sc->value = s7_cons(sc, car(sc->y), sc->value);
-	    sc->args = s7_cons(sc, sc->value, sc->args);
-	  }
-      sc->value = safe_reverse_in_place(sc, sc->args);
-      sc->args = s7_cons(sc, sc->value, cadr(sc->code));
+	if (cddar(sc->x) != sc->NIL)                  /* no incr expr, so ignore it henceforth */
+	  sc->args = s7_cons(sc, make_list_3(sc, car(sc->y), caddar(sc->x), cdar(sc->y)), sc->args);
+
+      sc->args = safe_reverse_in_place(sc, sc->args);
+      sc->args = s7_cons(sc, sc->args, cadr(sc->code));
       sc->code = cddr(sc->code);
       
+      /* here args is a list of 2 or 3 lists, 1st is (list (list (var . binding) incr-expr init-value) ...), 2nd is end-expr, 3rd can be result expr
+       *   so for (do ((i 0 (+ i 1))) ((= i 3) (+ i 1)) ...) args is ((((i . 0) (+ i 1))) (= i 3) (+ i 1) 0)
+       */
+
       
     DO_END:
     case OP_DO_END:
@@ -16367,7 +16441,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  push_stack(sc, opcode(OP_DO_END1), sc->args, sc->code);
 	  /* evaluate the endtest */
-	  sc->code = cadr(sc->args);
+	  sc->code = cadr(sc->args);                /* end expr */
 	  sc->args = sc->NIL;
 	  goto EVAL;
 	}
@@ -16379,7 +16453,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_true(sc, sc->value))
 	{
 	  /* we're done -- deal with result exprs */
-	  sc->code = cddr(sc->args);
+	  sc->code = cddr(sc->args);                /* result expr */
 	  sc->args = sc->NIL;
 	  goto BEGIN;
 	}
