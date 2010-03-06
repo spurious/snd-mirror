@@ -248,7 +248,7 @@ static XEN g_snd_error(XEN msg)
 
   if (!(run_snd_error_hook(XEN_TO_C_STRING(msg)))) /* have to call this before the throw, else we end up at top level */
     XEN_ERROR(XEN_ERROR_TYPE("snd-error"),
-	      XEN_LIST_2(C_TO_XEN_STRING(S_snd_error),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_snd_error ": ~A"),
 			 msg));
   return(msg);
 }

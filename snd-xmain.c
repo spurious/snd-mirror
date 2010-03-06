@@ -339,7 +339,7 @@ static void trap_xt_error(String message)
 {
   fprintf(stderr, "%s", message);
   XEN_ERROR(XEN_ERROR_TYPE("xt-error"),
-	    XEN_LIST_2(C_TO_XEN_STRING("Xt error:"),
+	    XEN_LIST_2(C_TO_XEN_STRING("Xt error: ~A"),
 		       C_TO_XEN_STRING(message)));
 }
 #endif

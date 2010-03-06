@@ -2713,13 +2713,13 @@ static XEN play_file(const char *play_name, mus_long_t start, mus_long_t end, in
 
   if (!(mus_header_type_p(mus_sound_header_type(play_name))))
     XEN_ERROR(BAD_HEADER,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_play),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_play ": ~S has unknown header: ~A"),
 			 C_TO_XEN_STRING(play_name),
 			 C_TO_XEN_STRING(mus_header_type_name(mus_header_type()))));
 
   if (!(mus_data_format_p(mus_sound_data_format(play_name))))
     XEN_ERROR(XEN_ERROR_TYPE("bad-format"),
-	      XEN_LIST_3(C_TO_XEN_STRING(S_play),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_play ": ~S has unknown data format: ~A"),
 			 C_TO_XEN_STRING(play_name),
 			 C_TO_XEN_STRING(mus_header_original_format_name(mus_sound_original_format(play_name),
 									 mus_sound_header_type(play_name)))));
@@ -2947,7 +2947,8 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
 XEN no_such_player_error(const char *caller, XEN player)
 {
   XEN_ERROR(XEN_ERROR_TYPE("no-such-player"),
-	    XEN_LIST_2(C_TO_XEN_STRING(caller),
+	    XEN_LIST_3(C_TO_XEN_STRING("~A: no such player, ~A"),
+		       C_TO_XEN_STRING(caller),
 		       player));
   return(XEN_FALSE);
 }
@@ -3080,8 +3081,7 @@ channel number in the sound that contains the channel being played."
       if ((play_list[i]) && 
 	  (sp == (play_list[i]->sp)))
 	XEN_ERROR(XEN_ERROR_TYPE("arg-error"),
-		  XEN_LIST_3(C_TO_XEN_STRING(S_add_player),
-			     C_TO_XEN_STRING("player is already in the play list"),
+		  XEN_LIST_2(C_TO_XEN_STRING(S_add_player ": player ~A is already in the play list"),
 			     player));
 
   cp = sp->chans[player_chans[index]];

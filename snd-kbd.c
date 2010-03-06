@@ -2326,10 +2326,10 @@ static XEN check_for_key_error(int k, int s, const char *caller)
   if ((k < MIN_KEY_CODE) || (k > MAX_KEY_CODE) ||
       (s < MIN_KEY_STATE) || (s > MAX_KEY_STATE))
     XEN_ERROR(XEN_ERROR_TYPE("no-such-key"),
-	      XEN_LIST_3(C_TO_XEN_STRING(caller),
-			 C_TO_XEN_STRING("key: ~A, state: ~A"),
-			 XEN_LIST_2(C_TO_XEN_INT(k),
-				    C_TO_XEN_INT(s))));
+	      XEN_LIST_4(C_TO_XEN_STRING("~A: no such key: ~A, state: ~A"),
+			 C_TO_XEN_STRING(caller),
+			 C_TO_XEN_INT(k),
+			 C_TO_XEN_INT(s)));
   return(XEN_FALSE);
 }
 
@@ -2461,7 +2461,7 @@ static XEN g_save_macros(XEN file)
   else
     {
       XEN_ERROR(CANNOT_SAVE,
-		XEN_LIST_3(C_TO_XEN_STRING(S_save_macros),
+		XEN_LIST_3(C_TO_XEN_STRING(S_save_macros ": ~S ~A"),
 			   file,
 			   C_TO_XEN_STRING(snd_io_strerror())));
     }

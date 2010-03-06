@@ -644,7 +644,7 @@ static XEN g_graph_to_ps(XEN filename)
       result = C_TO_XEN_STRING(error);
       free(error);
       XEN_ERROR(XEN_ERROR_TYPE("cannot-print"),
-		XEN_LIST_3(C_TO_XEN_STRING(S_graph_to_ps),
+		XEN_LIST_3(C_TO_XEN_STRING(S_graph_to_ps ": can't print ~S (~A)"),
 			   C_TO_XEN_STRING(file),
 			   result));
     }

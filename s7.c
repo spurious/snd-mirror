@@ -519,7 +519,8 @@ struct s7_scheme {
   
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, UNQUOTE_SPLICING, MACROEXPAND;
   s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, VECTOR_FUNCTION, VALUES, ELSE, SET;
-  s7_pointer ERROR, WRONG_TYPE_ARG, OUT_OF_RANGE, FORMAT_ERROR, WRONG_NUMBER_OF_ARGS;
+  s7_pointer ERROR, WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO;
+  s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS;
   s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, __FUNC__, ERROR_HOOK, TRACE_HOOK;
   s7_pointer FEED_TO;                 /* => */
   s7_pointer OBJECT_SET;              /* applicable object set method */
@@ -758,7 +759,7 @@ struct s7_scheme {
   #define VECTOR_REST_ARGS            false
 #endif
 
-#define small_int(Sc, Val)            small_ints[Val]
+#define small_int(Val)                small_ints[Val]
 #define opcode(Op)                    small_ints[(int)Op]
 
 #define is_input_port(p)              (type(p) == T_INPUT_PORT) 
@@ -2464,7 +2465,7 @@ void *s7_c_pointer(s7_pointer p)
     return(NULL); /* special case where the null pointer has been cons'd up by hand */
 
   if (type(p) != T_C_POINTER)
-    fprintf(stderr, "s7_c_pointer argument is a %s\n", type_name(p));
+    fprintf(stderr, "s7_c_pointer argument is not a c pointer?");
 
   return(p->object.c_pointer);
 }
@@ -5215,7 +5216,7 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
   if (num_to_real(number(x)) < 0.0)
     return(s7_make_real(sc, M_PI));
   if (number_type(x) <= NUM_RATIO)
-    return(small_int(sc, 0));
+    return(small_int(0));
   return(real_zero);
 }
 
@@ -5682,7 +5683,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
       if (s7_is_zero(pw))
 	{
 	  if ((s7_is_integer(n)) && (s7_is_integer(pw)))       /* (expt 0 0) -> 1 */
-	    return(small_int(sc, 1));
+	    return(small_int(1));
 	  return(real_zero);                                   /* (expt 0.0 0) -> 0.0 */
 	}
 
@@ -5690,7 +5691,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	return(division_by_zero_error(sc, "expt", args));   /* what about (expt 0 -1+i)? */
 
       if ((s7_is_integer(n)) && (s7_is_integer(pw)))           /* pw != 0, (expt 0 2312) */
-	return(small_int(sc, 0));
+	return(small_int(0));
       return(real_zero);                                       /* (expt 0.0 123123) */
     }
 
@@ -5710,7 +5711,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
       if (y == 0)
 	{
 	  if ((number_type(n) == NUM_INT) || (number_type(n) == NUM_RATIO))
-	    return(small_int(sc, 1));
+	    return(small_int(1));
 	  return(real_one);
 	}
 
@@ -5725,7 +5726,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	    {
 	      if (s7_Int_abs(y) & 1)
 		return(n);
-	      return(small_int(sc, 1));
+	      return(small_int(1));
 	    }
 
 	  if (int_pow_ok(x, s7_Int_abs(y)))
@@ -5945,7 +5946,7 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 	    return(big_lcm(sc, s7_cons(sc, s7_Int_to_big_integer(sc, n), x)));
 #endif
 	  if (n == 0)
-	    return(small_int(sc, 0));
+	    return(small_int(0));
 	}
       return(s7_make_integer(sc, n));
     }
@@ -5958,7 +5959,7 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 	return(big_lcm(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, n, d), x)));
 #endif
       if (n == 0)
-	return(small_int(sc, 0));
+	return(small_int(0));
       d = c_gcd(d, s7_denominator(car(x)));
     }
   return(s7_make_ratio(sc, n, d));
@@ -5984,7 +5985,7 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
 	{
 	  n = c_gcd(n, s7_integer(car(x)));
 	  if (n == 1)
-	    return(small_int(sc, 1));
+	    return(small_int(1));
 	}
       return(s7_make_integer(sc, n));
     }
@@ -6007,7 +6008,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 
 #if (!WITH_GMP)
   if (args == sc->NIL)
-    return(small_int(sc, 0));
+    return(small_int(0));
 
     if (!s7_is_number(car(args)))
       return(s7_wrong_type_arg_error(sc, "+", 1, car(args), "a number"));
@@ -6097,7 +6098,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 
 #if (!WITH_GMP)
   if (args == sc->NIL)
-    return(small_int(sc, 1));
+    return(small_int(1));
 
     if (!s7_is_number(car(args)))
       return(s7_wrong_type_arg_error(sc, "*", 1, car(args), "a number"));
@@ -6822,7 +6823,7 @@ static s7_pointer g_imag_part(s7_scheme *sc, s7_pointer args)
   switch (number_type(p))
     {
     case NUM_INT:   
-    case NUM_RATIO: return(small_int(sc, 0));
+    case NUM_RATIO: return(small_int(0));
     case NUM_REAL:
     case NUM_REAL2: return(real_zero);
     default:        return(s7_make_real(sc, s7_imag_part(p)));
@@ -7094,13 +7095,13 @@ static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "ash", 2, cadr(args), "an integer"));
   
   arg1 = s7_integer(car(args));
-  if (arg1 == 0) return(small_int(sc, 0));
+  if (arg1 == 0) return(small_int(0));
 
   arg2 = s7_integer(cadr(args));
   if (arg2 >= s7_int_bits)
     return(s7_out_of_range_error(sc, "ash", 2, cadr(args), "shift is too large"));
   if (arg2 < -s7_int_bits)
-    return(small_int(sc, 0));
+    return(small_int(0));
 
   if (arg2 >= 0)
     return(s7_make_integer(sc, arg1 << arg2));
@@ -9556,7 +9557,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     buf = (char *)calloc(512, sizeof(char));
     snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
-	     (type(obj) < BUILT_IN_TYPES) ? type_name(obj) : "none",
+	     type_name(obj),
 	     typeflag(obj),
 	     is_simple(obj) ? " simple" : "",
 	     is_atom(obj) ? " atom" : "",
@@ -12472,13 +12473,13 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
       else 
 	{
 	  if (s7_is_symbol(closure_args(x)))
-	    return(make_list_3(sc, small_int(sc, 0), small_int(sc, 0), sc->T));
+	    return(make_list_3(sc, small_int(0), small_int(0), sc->T));
 	  len = s7_list_length(sc, closure_args(x));
 	}
       
       if (is_closure_star(x))
-	return(make_list_3(sc, small_int(sc, 0), s7_make_integer(sc, abs(len)), make_boolean(sc, len < 0)));
-      return(make_list_3(sc, s7_make_integer(sc, abs(len)), small_int(sc, 0), make_boolean(sc, len < 0)));
+	return(make_list_3(sc, small_int(0), s7_make_integer(sc, abs(len)), make_boolean(sc, len < 0)));
+      return(make_list_3(sc, s7_make_integer(sc, abs(len)), small_int(0), make_boolean(sc, len < 0)));
     }
   
   if (s7_is_procedure_with_setter(x))
@@ -12489,7 +12490,7 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
   
   if ((object_is_applicable(x)) ||
       (s7_is_continuation(x)))
-    return(make_list_3(sc, small_int(sc, 0), small_int(sc, 0), sc->T));
+    return(make_list_3(sc, small_int(0), small_int(0), sc->T));
 
   return(sc->NIL);
 }
@@ -13158,7 +13159,7 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
   s7_pointer lst = car(args);
   
   if (lst == sc->NIL)
-    return(small_int(sc, 0));
+    return(small_int(0));
 
   switch (type(lst))
     {
@@ -13191,7 +13192,7 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
       return(s7_wrong_type_arg_error(sc, "length", 0, lst, "a list, vector, string, or hash-table"));
     }
   
-  return(small_int(sc, 0));
+  return(small_int(0));
 }
 
 
@@ -14204,41 +14205,31 @@ static const char *type_name(s7_pointer arg)
 
 s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr)
 {
-  int len, slen;
-  char *errmsg;
-  const char *typ, *a_or_an = "a ";
+  /* info list is '(format_string caller arg_n arg type_name descr) */
+  if (arg_n <= 0) arg_n = 1;
 
-  typ = type_name(arg);
-  if ((typ[0] == 'a') || (typ[0] == 'e') || (typ[0] == 'i') || (typ[0] == 'o') || (typ[0] == 'u'))
-    a_or_an = "an ";
-  if ((type(arg) == T_NIL) || (type(arg) == T_UNTYPED))
-    a_or_an = "";
-
-  len = safe_strlen(descr) + safe_strlen(caller) + 64;
-  errmsg = (char *)malloc(len * sizeof(char));
-  if (arg_n == 0)
-    slen = snprintf(errmsg, len, "%s argument ~S is %s%s, but should be %s", caller, a_or_an, typ, descr);
-  else
-    {
-      if (arg_n < 0) arg_n = 1;
-      slen = snprintf(errmsg, len, "%s argument %d, ~S, is %s%s, but should be %s", caller, arg_n, a_or_an, typ, descr);
-    }
-
-  return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, make_string_uncopied_with_length(sc, errmsg, slen), arg)));
+  s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 1, s7_make_string(sc, (char *)caller));
+  s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 2, s7_make_integer(sc, arg_n));
+  s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 3, arg);
+  s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 4, s7_make_string(sc, (char *)type_name(arg))); /* PERHAPS: these can be built-in */
+  s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 5, s7_make_string(sc, (char *)descr));
+  return(s7_error(sc, sc->WRONG_TYPE_ARG, sc->WRONG_TYPE_ARG_INFO));
 }
+
+/* TODO: fix all the built-in errors to use templates */
+
 
 
 s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr)
 {
-  int len, slen;
-  char *errmsg;
-  
-  len = safe_strlen(descr) + safe_strlen(caller) + 64;
-  errmsg = (char *)malloc(len * sizeof(char));
+  /* info list is '(format_string caller arg_n arg descr) */
   if (arg_n <= 0) arg_n = 1;
-  slen = snprintf(errmsg, len, "%s argument %d is out of range (%s)", caller, arg_n, descr);
 
-  return(s7_error(sc, sc->OUT_OF_RANGE, make_list_2(sc, make_string_uncopied_with_length(sc, errmsg, slen), arg)));
+  s7_list_set(sc, sc->OUT_OF_RANGE_INFO, 1, s7_make_string(sc, (char *)caller));
+  s7_list_set(sc, sc->OUT_OF_RANGE_INFO, 2, s7_make_integer(sc, arg_n));
+  s7_list_set(sc, sc->OUT_OF_RANGE_INFO, 3, arg);
+  s7_list_set(sc, sc->OUT_OF_RANGE_INFO, 4, s7_make_string(sc, (char *)descr));
+  return(s7_error(sc, sc->OUT_OF_RANGE, sc->OUT_OF_RANGE_INFO));
 }
 
 
@@ -14418,6 +14409,11 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   int i;
   bool reset_error_hook = false;
   s7_pointer catcher;
+  
+  /* set up *error-info*, look for a catch that matches 'type', if found
+   *   call its error-handler, else if *error-hook* is bound, call it,
+   *   else send out the error info ourselves.
+   */
   catcher = sc->F;
 
   vector_element(sc->error_info, ERROR_TYPE) = type;
@@ -14553,6 +14549,9 @@ GOT_CATCH:
 	  /* if info is not a list, send object->string to current error port,
 	   *   else assume car(info) is a format control string, and cdr(info) are its args
 	   */
+
+	  fprintf(stderr, "s7_error type: %s, info: %s\n", s7_object_to_c_string(sc, type), s7_object_to_c_string(sc, info));
+
 	  if ((!s7_is_list(sc, info)) ||
 	      (!s7_is_string(car(info))))
 	    format_to_output(sc, 
@@ -19667,7 +19666,7 @@ static s7_pointer big_add(s7_scheme *sc, s7_pointer args)
   s7_pointer x, result;
 
   if (args == sc->NIL)
-    return(small_int(sc, 0));
+    return(small_int(0));
 
   if ((cdr(args) == sc->NIL) && (s7_is_number(car(args))))
     return(car(args));
@@ -19847,7 +19846,7 @@ static s7_pointer big_multiply(s7_scheme *sc, s7_pointer args)
   s7_pointer x, result;
 
   if (args == sc->NIL)
-    return(small_int(sc, 1));
+    return(small_int(1));
 
   if ((cdr(args) == sc->NIL) && (s7_is_number(car(args))))
     return(car(args));
@@ -20119,7 +20118,7 @@ static s7_pointer big_denominator(s7_scheme *sc, s7_pointer args)
   if (is_c_object(p))
     {
       if (c_object_type(p) == big_integer_tag)
-	return(small_int(sc, 1));
+	return(small_int(1));
       if (c_object_type(p) == big_ratio_tag)
 	return(mpz_to_big_integer(sc, mpq_denref(S7_BIG_RATIO(p))));
     }
@@ -20194,7 +20193,7 @@ static s7_pointer big_imag_part(s7_scheme *sc, s7_pointer args)
 	  if ((c_object_type(p) == big_integer_tag) ||
 	      (c_object_type(p) == big_ratio_tag) ||
 	      (c_object_type(p) == big_real_tag))
-	    return(small_int(sc, 0));
+	    return(small_int(0));
 	}
     }
   return(g_imag_part(sc, args));
@@ -20272,14 +20271,14 @@ static s7_pointer big_angle(s7_scheme *sc, s7_pointer args)
       if (c_object_type(p) == big_integer_tag)
 	{
 	  if (mpz_cmp_ui(S7_BIG_INTEGER(p), 0) >= 0)
-	    return(small_int(sc, 0));
+	    return(small_int(0));
 	  return(big_pi(sc));
 	}
 
       if (c_object_type(p) == big_ratio_tag)
 	{
 	  if (mpq_cmp_ui(S7_BIG_RATIO(p), 0, 1) >= 0)
-	    return(small_int(sc, 0));
+	    return(small_int(0));
 	  return(big_pi(sc));
 	}
 
@@ -20737,14 +20736,14 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
       if ((s7_is_integer(x)) && 
 	  (s7_is_integer(y)) &&
 	  (big_is_zero_1(sc, y) == sc->T))
-	return(small_int(sc, 1));
+	return(small_int(1));
 
       if ((s7_is_real(y)) && (s7_is_negative(y)))
 	return(division_by_zero_error(sc, "expt", args));
 
       if ((s7_is_rational(x)) && 
 	  (s7_is_rational(y)))
-	return(small_int(sc, 0));
+	return(small_int(0));
 
       return(real_zero);
     }
@@ -20760,7 +20759,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
       if (yval == 0)
 	{
 	  if (s7_is_rational(x))
-	    return(small_int(sc, 1));
+	    return(small_int(1));
 	  return(real_one);
 	}
 
@@ -20909,14 +20908,14 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	{
 	  mpc_clear(*z);
 	  free(z);
-	  return(small_int(sc, 0));
+	  return(small_int(0));
 	}
 
       if (mpc_cmp_si_si(*z, 1, 0) == 0)
 	{
 	  mpc_clear(*z);
 	  free(z);
-	  return(small_int(sc, 1));
+	  return(small_int(1));
 	}
 
       mpc_init(cy);
@@ -21310,7 +21309,7 @@ static s7_pointer big_ash(s7_scheme *sc, s7_pointer args)
 	   (mpz_cmp_ui(S7_BIG_INTEGER(p0), 0) == 0)) || 
 	  ((!is_c_object(p0)) &&
 	   (s7_integer(p0) == 0)))
-	return(small_int(sc, 0));
+	return(small_int(0));
 	
       if (is_c_object(p1))
 	{
@@ -21318,7 +21317,7 @@ static s7_pointer big_ash(s7_scheme *sc, s7_pointer args)
 	    {
 	      if (mpz_cmp_ui(S7_BIG_INTEGER(p1), 0) > 0)
 		return(s7_out_of_range_error(sc, "ash", 2, p1, "shift is too large"));
-	      return(small_int(sc, 0));
+	      return(small_int(0));
 	    }
 	  shift = mpz_get_si(S7_BIG_INTEGER(p1));
 	}
@@ -22200,7 +22199,7 @@ static s7_pointer big_gcd(s7_scheme *sc, s7_pointer args)
 	    {
 	      mpz_clear(*n);
 	      free(n);
-	      return(small_int(sc, 1));
+	      return(small_int(1));
 	    }
 	}
       return(s7_make_object(sc, big_integer_tag, (void *)n));
@@ -22268,7 +22267,7 @@ static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
 	    {
 	      mpz_clear(*n);
 	      free(n);
-	      return(small_int(sc, 0));
+	      return(small_int(0));
 	    }
 	}
       return(s7_make_object(sc, big_integer_tag, (void *)n));
@@ -22283,7 +22282,7 @@ static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
       if (mpz_cmp_ui(n, 0) == 0)
 	{
 	  mpz_clear(n);
-	  return(small_int(sc, 0));
+	  return(small_int(0));
 	}
       mpz_init_set(d, mpq_denref(S7_BIG_RATIO(rat)));
       for (x = cdr(args); x != sc->NIL; x = cdr(x))
@@ -22294,7 +22293,7 @@ static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
 	    {
 	      mpz_clear(n);
 	      mpz_clear(d);
-	      return(small_int(sc, 0));
+	      return(small_int(0));
 	    }
 	  mpz_gcd(d, d, mpq_denref(S7_BIG_RATIO(rat)));
 	}
@@ -22911,6 +22910,11 @@ s7_scheme *s7_init(void)
   sc->WRONG_TYPE_ARG = s7_make_symbol(sc, "wrong-type-arg");
   typeflag(sc->WRONG_TYPE_ARG) |= T_DONT_COPY; 
 
+  sc->WRONG_TYPE_ARG_INFO = sc->NIL;
+  for (i = 0; i < 6; i++)
+    sc->WRONG_TYPE_ARG_INFO = permanent_cons(sc->F, sc->WRONG_TYPE_ARG_INFO, T_PAIR);
+  s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 0, s7_make_permanent_string("~A argument ~D, ~S, is a ~A but should be ~A"));
+
   sc->WRONG_NUMBER_OF_ARGS = s7_make_symbol(sc, "wrong-number-of-args");
   typeflag(sc->WRONG_NUMBER_OF_ARGS) |= T_DONT_COPY; 
 
@@ -22919,6 +22923,11 @@ s7_scheme *s7_init(void)
 
   sc->OUT_OF_RANGE = s7_make_symbol(sc, "out-of-range");
   typeflag(sc->OUT_OF_RANGE) |= T_DONT_COPY; 
+
+  sc->OUT_OF_RANGE_INFO = sc->NIL;
+  for (i = 0; i < 5; i++)
+    sc->OUT_OF_RANGE_INFO = permanent_cons(sc->F, sc->OUT_OF_RANGE_INFO, T_PAIR);
+  s7_list_set(sc, sc->OUT_OF_RANGE_INFO, 0, s7_make_permanent_string("~A argument ~D, ~S, is out of range (~A)"));
 
   sc->KEY_KEY = s7_make_keyword(sc, "key");
   typeflag(sc->KEY_KEY) |= T_DONT_COPY; 

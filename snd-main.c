@@ -1592,7 +1592,7 @@ static void save_state_error_handler(const char *msg, void *data)
   else fname = C_TO_XEN_STRING(save_state_file(ss));
   redirect_snd_error_to(NULL, NULL);
   XEN_ERROR(CANNOT_SAVE,
-	    XEN_LIST_2(C_TO_XEN_STRING(S_save_state),
+	    XEN_LIST_2(C_TO_XEN_STRING(S_save_state ": can't save ~S"),
 		       fname));
 }
 

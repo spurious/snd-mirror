@@ -388,13 +388,12 @@ static void handle_sigquit(int ignored)
 static void snd_gsl_error(const char *reason, const char *file, int line, int gsl_errno)
 {
   XEN_ERROR(XEN_ERROR_TYPE("gsl-error"),
-	    XEN_LIST_3(C_TO_XEN_STRING("GSL"),
-		       C_TO_XEN_STRING("~A, ~A in ~A line ~A, gsl err: ~A"),
-		       XEN_LIST_5(C_TO_XEN_STRING(gsl_strerror(gsl_errno)),
-				  C_TO_XEN_STRING(reason),
-				  C_TO_XEN_STRING(file),
-				  C_TO_XEN_INT(line),
-				  C_TO_XEN_INT(gsl_errno))));
+	    XEN_LIST_6(C_TO_XEN_STRING("GSL: ~A, ~A in ~A line ~A, gsl err: ~A"),
+		       C_TO_XEN_STRING(gsl_strerror(gsl_errno)),
+		       C_TO_XEN_STRING(reason),
+		       C_TO_XEN_STRING(file),
+		       C_TO_XEN_INT(line),
+		       C_TO_XEN_INT(gsl_errno)));
 }
 #endif
 

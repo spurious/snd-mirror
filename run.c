@@ -16495,7 +16495,9 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
 	  if (arity_err) 
 	    {
 	      mus_run_free_ptree(pt); 
-	      XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), code); 
+	      XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), 
+			XEN_LIST_2(C_TO_XEN_STRING("run-eval: wrong number of args for function: ~A"),
+				   code)); 
 	      return(XEN_FALSE);
 	    }
 	}
@@ -16503,7 +16505,9 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
     }
   if (pt) mus_run_free_ptree(pt);
 
-  XEN_ERROR(XEN_ERROR_TYPE("cannot-parse"), code);
+  XEN_ERROR(XEN_ERROR_TYPE("cannot-parse"),
+	    XEN_LIST_2(C_TO_XEN_STRING("run-eval: can't parse ~A"),
+		       code));
 
   return(XEN_FALSE);
 }

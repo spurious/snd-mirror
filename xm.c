@@ -25295,7 +25295,9 @@ static xm_resource_t resource_type(const char *name)
   /* unfortunately, we have names like 100DPIString in the newer Motif widgets... */
   if ((ind < 0) || (ind >= LINKS_SIZE))
     {
-      XEN_ERROR(XEN_ERROR_TYPE("no-such-resource"), XEN_LIST_1(C_TO_XEN_STRING(name)));
+      XEN_ERROR(XEN_ERROR_TYPE("no-such-resource"), 
+		XEN_LIST_2(C_TO_XEN_STRING("no such resource: ~A"),
+			   C_TO_XEN_STRING(name)));
       return(XM_NOT_A_RESOURCE);
     }
   start = hd_links[ind];

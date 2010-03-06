@@ -8526,7 +8526,7 @@ to the info dialog if filename is omitted"
 
   if (!fd)
     XEN_ERROR(XEN_ERROR_TYPE("cant-open-file"),
-	      XEN_LIST_3(C_TO_XEN_STRING(S_peaks),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_peaks ": ~S ~A"),
 			 C_TO_XEN_STRING(name),
 			 C_TO_XEN_STRING(snd_io_strerror())));
 
@@ -9016,8 +9016,7 @@ to a standard Snd channel graph placed in the widget 'container'."
 
   if (sp == NULL) /* can only happen if "container" is not a form widget (or perhaps no container XtWindow) */
     XEN_ERROR(XEN_ERROR_TYPE("wrong-type-arg"),
-	      XEN_LIST_3(C_TO_XEN_STRING(S_make_variable_graph),
-			 C_TO_XEN_STRING("container must be a Form widget with a legitimate window"),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_make_variable_graph ": container, ~A, must be a Form widget with a legitimate window"),
 			 container));
 
   sp->user_read_only = FILE_READ_ONLY;

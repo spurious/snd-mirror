@@ -321,7 +321,7 @@ XEN xen_make_vct(mus_long_t len, mus_float_t *data)
   if ((len > 0) && 
       (data == NULL))
     XEN_ERROR(XEN_ERROR_TYPE("out-of-memory"),
-	      XEN_LIST_2(C_TO_XEN_STRING(S_make_vct),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_make_vct ": can't allocate size ~A"),
 			 C_TO_XEN_INT(len)));
 
   new_vct = (vct *)malloc(sizeof(vct));

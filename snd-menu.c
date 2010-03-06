@@ -295,7 +295,8 @@ void save_state_from_menu(void)
 static XEN snd_no_such_menu_error(const char *caller, XEN id)
 {
   XEN_ERROR(XEN_ERROR_TYPE("no-such-menu"),
-	    XEN_LIST_2(C_TO_XEN_STRING(caller),
+	    XEN_LIST_3(C_TO_XEN_STRING("~A: no such menu, ~A"),
+		       C_TO_XEN_STRING(caller),
 		       id));
   return(XEN_FALSE);
 }
@@ -468,7 +469,7 @@ static XEN g_main_menu(XEN which)
   which_menu = XEN_TO_C_INT(which);
   if ((which_menu < 0) || (which_menu >= MAX_MAIN_MENUS))
     XEN_ERROR(XEN_ERROR_TYPE("no-such-menu"),
-	      XEN_LIST_2(C_TO_XEN_STRING(S_main_menu),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_main_menu ": no such menu, ~A"),
 			 which));
   return(XEN_WRAP_WIDGET(menu_widget(which_menu)));
 }

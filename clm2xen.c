@@ -78,15 +78,11 @@ static XEN clm_mus_error(int type, const char *msg)
 
 static void clm_error(const char *caller, const char *msg, XEN val)
 {
-  if (msg)
-    XEN_ERROR(CLM_ERROR,
-	      XEN_LIST_3(C_TO_XEN_STRING(caller),
-			 C_TO_XEN_STRING(msg),
-			 val));
-  else
-    XEN_ERROR(CLM_ERROR,
-	      XEN_LIST_2(C_TO_XEN_STRING(caller),
-			 val));
+  XEN_ERROR(CLM_ERROR,
+	    XEN_LIST_4(C_TO_XEN_STRING("~A: ~A ~A"),
+		       C_TO_XEN_STRING(caller),
+		       C_TO_XEN_STRING(msg),
+		       val));
 }
 
 
@@ -1338,7 +1334,8 @@ static XEN call_get_method(XEN gen, const char *method_name)
 		      gen,
 		      method_name));
   XEN_ERROR(XEN_ERROR_TYPE("no-such-method"), 
-	    XEN_LIST_2(C_TO_XEN_STRING(method_name), 
+	    XEN_LIST_3(C_TO_XEN_STRING("no-such-method: ~A for ~A"),
+		       C_TO_XEN_STRING(method_name), 
 		       gen));
 #endif
   return(XEN_FALSE);
@@ -1357,7 +1354,8 @@ static XEN call_get_method_2(XEN gen, XEN arg, const char *method_name)
 		      gen, arg,
 		      method_name));
   XEN_ERROR(XEN_ERROR_TYPE("no-such-method"), 
-	    XEN_LIST_2(C_TO_XEN_STRING(method_name), 
+	    XEN_LIST_3(C_TO_XEN_STRING("no-such-method: ~A for ~A"),
+		       C_TO_XEN_STRING(method_name), 
 		       gen));
 #endif
   return(XEN_FALSE);
@@ -1376,7 +1374,8 @@ static XEN call_get_method_3(XEN gen, XEN arg1, XEN arg2, const char *method_nam
 		      gen, arg1, arg2,
 		      method_name));
   XEN_ERROR(XEN_ERROR_TYPE("no-such-method"), 
-	    XEN_LIST_2(C_TO_XEN_STRING(method_name), 
+	    XEN_LIST_3(C_TO_XEN_STRING("no-such-method: ~A for ~A"),
+		       C_TO_XEN_STRING(method_name), 
 		       gen));
 #endif
   return(XEN_FALSE);
@@ -1404,7 +1403,8 @@ static XEN call_set_method(XEN gen, XEN value, const char *method_name)
 			  method_name));
     }
   XEN_ERROR(XEN_ERROR_TYPE("no-such-method"), 
-	    XEN_LIST_2(C_TO_XEN_STRING(method_name), 
+	    XEN_LIST_3(C_TO_XEN_STRING("no-such-method: ~A for ~A"),
+		       C_TO_XEN_STRING(method_name), 
 		       gen));
 #endif
   return(XEN_FALSE);
@@ -1432,7 +1432,8 @@ static XEN call_set_method_2(XEN gen, XEN arg, XEN value, const char *method_nam
 			  method_name));
     }
   XEN_ERROR(XEN_ERROR_TYPE("no-such-method"), 
-	    XEN_LIST_2(C_TO_XEN_STRING(method_name), 
+	    XEN_LIST_3(C_TO_XEN_STRING("no-such-method: ~A for ~A"),
+		       C_TO_XEN_STRING(method_name), 
 		       gen));
 #endif
   return(XEN_FALSE);
@@ -1978,10 +1979,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(CLM_ERROR,
-	      XEN_LIST_3(C_TO_XEN_STRING(caller), 
-			 C_TO_XEN_STRING("too many args!"),
-			 arglist));
+    clm_error(caller, "too many args!", arglist);
 
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
   for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
@@ -2048,10 +2046,8 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
       if (!(XEN_KEYWORD_P(keys[filter_key])))
 	{
 	  if (choice != G_FCOMB)
-	    XEN_ERROR(CLM_ERROR,
-		      XEN_LIST_3(C_TO_XEN_STRING(caller), 
-				 C_TO_XEN_STRING("filter arg passed??"),
-				 keys[filter_key]));
+	    clm_error(caller, "filter arg passed??", keys[filter_key]);
+				 
 	  XEN_ASSERT_TYPE(MUS_XEN_P(keys[filter_key]), keys[filter_key], orig_arg[filter_key], caller, "filter arg must be a generator");
 	  xen_filt = keys[filter_key];
 	  filt = XEN_TO_MUS_ANY(xen_filt);
@@ -2075,8 +2071,9 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 		{
 		  if (len == 0) 
 		    XEN_ERROR(NO_DATA,
-			      XEN_LIST_2(C_TO_XEN_STRING(caller), 
-					 C_TO_XEN_STRING("initial-contents list empty?")));
+			      XEN_LIST_2(C_TO_XEN_STRING("~A: initial-contents list empty?"),
+					 C_TO_XEN_STRING(caller)));
+
 		  orig_v = xen_list_to_vct(keys[initial_contents_key]);
 		  initial_contents = XEN_TO_VCT(orig_v);
 		  /* do I need to protect this until we read its contents? -- no extlang stuff except error returns */
@@ -2583,10 +2580,8 @@ static XEN g_make_noi(bool rand_case, const char *caller, XEN arglist)
 
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(CLM_ERROR,
-	      XEN_LIST_3(C_TO_XEN_STRING(caller), 
-			 C_TO_XEN_STRING("too many args!"),
-			 arglist));
+    clm_error(caller, "too many args!", arglist);
+
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
   for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
 
@@ -2785,16 +2780,16 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
       len = XEN_LIST_LENGTH(partials);
       if (len == 0)
 	XEN_ERROR(NO_DATA, 
-		  XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_wave), 
-			     C_TO_XEN_STRING("partials list empty?"), 
-			     partials));
+		  XEN_LIST_2(C_TO_XEN_STRING("~A: partials list empty?"), 
+			     C_TO_XEN_STRING(S_partials_to_wave)));
+
       if (!(XEN_NUMBER_P(XEN_CAR(partials))))
 	XEN_ASSERT_TYPE(false, partials, XEN_ARG_1, S_partials_to_wave, "a list of numbers (partial numbers with amplitudes)");
     }
   if (len & 1)
     XEN_ERROR(BAD_TYPE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_wave), 
-			 C_TO_XEN_STRING("odd length partials list?"), 
+	      XEN_LIST_3(C_TO_XEN_STRING("~A: odd length partials list? ~A"), 
+			 C_TO_XEN_STRING(S_partials_to_wave), 
 			 partials));
 
   if ((XEN_NOT_BOUND_P(utable)) || (!(MUS_VCT_P(utable))))
@@ -2878,16 +2873,16 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
       len = XEN_LIST_LENGTH(partials);
       if (len == 0)
 	XEN_ERROR(NO_DATA,
-		  XEN_LIST_3(C_TO_XEN_STRING(S_phase_partials_to_wave), 
-			     C_TO_XEN_STRING("partials list empty?"),
-			     partials));
+		  XEN_LIST_2(C_TO_XEN_STRING("~A: partials list empty?"),
+			     C_TO_XEN_STRING(S_phase_partials_to_wave)));
+
       if (!(XEN_NUMBER_P(XEN_CAR(partials))))
 	XEN_ASSERT_TYPE(false, partials, XEN_ARG_1, S_phase_partials_to_wave, "a list of numbers (partial numbers with amplitudes and phases)");
     }
   if ((len % 3) != 0)
     XEN_ERROR(XEN_ERROR_TYPE("wrong-type-arg"),
-	      XEN_LIST_3(C_TO_XEN_STRING(S_phase_partials_to_wave), 
-			 C_TO_XEN_STRING("partials list should have 3 entries for each harmonic (number amp phase)"),
+	      XEN_LIST_3(C_TO_XEN_STRING("~A: partials list, ~A, should have 3 entries for each harmonic (number amp phase)"),
+			 C_TO_XEN_STRING(S_phase_partials_to_wave), 
 			 partials));
 
   if ((XEN_NOT_BOUND_P(utable)) || (!(MUS_VCT_P(utable))))
@@ -2957,10 +2952,8 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
 
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(CLM_ERROR,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_make_table_lookup), 
-			 C_TO_XEN_STRING("too many args!"),
-			 arglist));
+    clm_error(S_make_table_lookup, "too many args!", arglist);
+
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
   for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
 
@@ -4186,10 +4179,8 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
 
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(CLM_ERROR,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_make_wave_train), 
-			 C_TO_XEN_STRING("too many args!"),
-			 arglist));
+    clm_error(S_make_wave_train, "too many args!", arglist);
+
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
   for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
 
@@ -4265,13 +4256,13 @@ static const char *list_to_partials_error_to_string(int code)
 {
   switch (code)
     {
-    case NO_PROBLEM_IN_LIST:          return("nothing wrong with partials list??");                  break;
-    case NULL_LIST:                   return("partials list is null");                               break;
-    case ODD_LENGTH_LIST:             return("partials list has an odd number of elements");         break;
-    case NON_NUMBER_IN_LIST:          return("partials list has a non-numerical element");           break;
-    case NEGATIVE_NUMBER_IN_LIST:     return("partials list has a partial number that is negative"); break;
+    case NO_PROBLEM_IN_LIST:          return("~A: nothing wrong with partials list?? ~A");                   break;
+    case NULL_LIST:                   return("~A: partials list is null, ~A");                               break;
+    case ODD_LENGTH_LIST:             return("~A: partials list has an odd number of elements: ~A");         break;
+    case NON_NUMBER_IN_LIST:          return("~A: partials list has a non-numerical element: ~A");           break;
+    case NEGATIVE_NUMBER_IN_LIST:     return("~A: partials list has a partial number that is negative: ~A"); break;
     }
-  return("unknown error");
+  return("~A: unknown error, ~A");
 }
 
 
@@ -4417,8 +4408,8 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
 
   if (partials == NULL)
     XEN_ERROR(NO_DATA, 
-	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_polynomial), 
-			 C_TO_XEN_STRING(list_to_partials_error_to_string(error)), 
+	      XEN_LIST_3(C_TO_XEN_STRING(list_to_partials_error_to_string(error)), 
+			 C_TO_XEN_STRING(S_partials_to_polynomial), 
 			 amps));
 
   wave = mus_partials_to_polynomial(npartials, partials, kind); /* wave == partials; in both vct and list cases, partials is newly allocated */
@@ -4445,8 +4436,8 @@ partial amplitudes in the vct or list 'partials' by the inverse of their sum (so
       ((v->length & 1) == 0))
     mus_normalize_partials(v->length / 2, v->data);
   else XEN_ERROR(BAD_TYPE,
-		 XEN_LIST_3(C_TO_XEN_STRING(S_normalize_partials),
-			    C_TO_XEN_STRING("partials must be a non-empty list or vct of even length (partial-number partial-amp ...)"),
+		 XEN_LIST_3(C_TO_XEN_STRING("~A: partials, ~A, must be a non-empty list or vct of even length (partial-number partial-amp ...)"),
+			    C_TO_XEN_STRING(S_normalize_partials),
 			    partials));
   return(xv);
 }
@@ -4563,10 +4554,8 @@ is the same in effect as " S_make_oscil
 
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(CLM_ERROR,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_make_polyshape), 
-			 C_TO_XEN_STRING("too many args!"),
-			 arglist));
+    clm_error(S_make_polyshape, "too many args!", arglist);
+
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
   for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
 
@@ -4605,8 +4594,8 @@ is the same in effect as " S_make_oscil
 		}
 	      if (partials == NULL)
 		XEN_ERROR(NO_DATA, 
-			  XEN_LIST_3(C_TO_XEN_STRING(S_make_polyshape), 
-				     C_TO_XEN_STRING(list_to_partials_error_to_string(error)), 
+			  XEN_LIST_3(C_TO_XEN_STRING(list_to_partials_error_to_string(error)), 
+				     C_TO_XEN_STRING(S_make_polyshape), 
 				     keys[3]));
 	      coeffs = mus_partials_to_polynomial(npartials, partials, kind);
 	      csize = npartials;
@@ -4682,10 +4671,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(CLM_ERROR,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_make_polywave), 
-			 C_TO_XEN_STRING("too many args!"),
-			 arglist));
+    clm_error(S_make_polywave, "too many args!", arglist);
 
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
   for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
@@ -4716,8 +4702,8 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 
 	  if (partials == NULL)
 	    XEN_ERROR(NO_DATA, 
-		      XEN_LIST_3(C_TO_XEN_STRING(S_make_polywave), 
-				 C_TO_XEN_STRING(list_to_partials_error_to_string(error)), 
+		      XEN_LIST_3(C_TO_XEN_STRING(list_to_partials_error_to_string(error)), 
+				 C_TO_XEN_STRING(S_make_polywave), 
 				 keys[1]));
 
 	  coeffs = partials;
@@ -4808,10 +4794,8 @@ static XEN g_make_nrxy(bool sin_case, const char *caller, XEN arglist)
 
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(CLM_ERROR,
-	      XEN_LIST_3(C_TO_XEN_STRING(caller), 
-			 C_TO_XEN_STRING("too many args!"),
-			 arglist));
+    clm_error(caller, "too many args!", arglist);
+
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
   for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
 
@@ -4879,9 +4863,9 @@ static XEN g_make_fir_coeffs(XEN order, XEN envl)
   size = XEN_TO_C_INT(order);
   if (size != v->length)
     XEN_ERROR(CLM_ERROR,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_make_fir_coeffs), 
-			 C_TO_XEN_STRING("order (~A) != vct length (~A)"),
-			 XEN_LIST_2(order, envl)));
+	      XEN_LIST_3(C_TO_XEN_STRING(S_make_fir_coeffs ": order ~A != vct length ~A"),
+			 order, 
+			 envl));
 
   a = mus_make_fir_coeffs(XEN_TO_C_INT(order), v->data, NULL);
   return(xen_make_vct(v->length, a));
@@ -5008,8 +4992,8 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
   if (((x == NULL) && (choice != G_IIR_FILTER)) ||
       ((y == NULL) && (choice != G_FIR_FILTER)))
     XEN_ERROR(NO_DATA,
-	      XEN_LIST_2(C_TO_XEN_STRING(caller), 
-			 C_TO_XEN_STRING("no coeffs?")));
+	      XEN_LIST_2(C_TO_XEN_STRING("~A: no coeffs?"),
+			 C_TO_XEN_STRING(caller)));
   if (order == 0)
     {
       if (x)
@@ -5021,27 +5005,27 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
       if ((x) && (order > x->length))
 	{
 	  XEN_ERROR(CLM_ERROR,
-		    XEN_LIST_3(C_TO_XEN_STRING(caller),
-			       C_TO_XEN_STRING("xcoeffs must match order"),
-			       XEN_LIST_4(C_TO_XEN_STRING("order:"), keys[0], 
-					  C_TO_XEN_STRING("xcoeffs:"), keys[1])));
+		    XEN_LIST_4(C_TO_XEN_STRING("~A: xcoeffs, ~A, must match order, ~A"),
+			       C_TO_XEN_STRING(caller),
+			       keys[1],
+			       keys[0]));
 	}
       else
 	{
 	  if ((y) && (order > y->length))
 	    XEN_ERROR(CLM_ERROR,
-		      XEN_LIST_3(C_TO_XEN_STRING(caller),
-				 C_TO_XEN_STRING("ycoeffs must match order"),
-				 XEN_LIST_4(C_TO_XEN_STRING("order:"), keys[0], 
-					    C_TO_XEN_STRING("ycoeffs:"), keys[2])));
+		      XEN_LIST_4(C_TO_XEN_STRING("~A: ycoeffs, ~A, must match order, ~A"),
+				 C_TO_XEN_STRING(caller),
+				 keys[2],
+				 keys[0])); 
 	  else
 	    {
 	      if ((x) && (y) && (x->length != y->length))
 		XEN_ERROR(CLM_ERROR,
-			  XEN_LIST_3(C_TO_XEN_STRING(caller),
-				     C_TO_XEN_STRING("coeffs must be same length"),
-				     XEN_LIST_4(C_TO_XEN_STRING("x len:"), C_TO_XEN_INT(x->length),
-						C_TO_XEN_STRING("y len:"), C_TO_XEN_INT(y->length))));
+			  XEN_LIST_4(C_TO_XEN_STRING("~A: coeffs must be same length.  x len: ~A, y len: ~A"),
+				     C_TO_XEN_STRING(caller),
+				     C_TO_XEN_INT(x->length),
+				     C_TO_XEN_INT(y->length)));
 	    }
 	}
     }
@@ -5135,10 +5119,8 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(CLM_ERROR,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
-			 C_TO_XEN_STRING("too many args!"),
-			 arglist));
+    clm_error(S_make_env, "too many args!", arglist);
+
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
   for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
 
@@ -5175,8 +5157,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	      len = v->length;
 	      if ((len < 2) || (len & 1))
 		XEN_ERROR(BAD_TYPE,
-			  XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
-				     C_TO_XEN_STRING("vct is a bogus breakpoints list"), 
+			  XEN_LIST_2(C_TO_XEN_STRING(S_make_env ": vct is a bogus breakpoints list, ~A"), 
 				     keys[0]));
 	    }
 	  else
@@ -5184,8 +5165,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	      XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(keys[0], len), keys[0], orig_arg[0], S_make_env, "a list");
 	      if (len == 0)
 		XEN_ERROR(NO_DATA,
-			  XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
-				     C_TO_XEN_STRING("null env?"), 
+			  XEN_LIST_2(C_TO_XEN_STRING(S_make_env ": null env? ~A"), 
 				     keys[0]));
 
 	      if (XEN_LIST_P(XEN_CAR(keys[0])))
@@ -5194,8 +5174,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 		{
 		  if (len & 1)
 		    XEN_ERROR(BAD_TYPE,
-			      XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
-					 C_TO_XEN_STRING("odd length breakpoints list?"), 
+			      XEN_LIST_2(C_TO_XEN_STRING(S_make_env ": odd length breakpoints list? ~A"), 
 					 keys[0]));
 
 		  if (!(XEN_NUMBER_P(XEN_CAR(keys[0]))))
@@ -5237,8 +5216,8 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 
   if (brkpts == NULL) 
     XEN_ERROR(NO_DATA,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_make_env), 
-			 C_TO_XEN_STRING("no envelope?")));
+	      XEN_LIST_1(C_TO_XEN_STRING(S_make_env ": no envelope?"))); 
+
   if (dur > 0)
     {
       if ((end > 0) && ((end + 1) != dur))
@@ -5246,9 +5225,9 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	  if (brkpts) {free(brkpts); brkpts = NULL;}
 	  if (odata) {free(odata); odata = NULL;}
 	  XEN_ERROR(CLM_ERROR,
-		    XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
-			       C_TO_XEN_STRING("end (~A) and dur (~A) specified, but dur != end+1"),
-			       XEN_LIST_2(keys[5], keys[6])));
+		    XEN_LIST_3(C_TO_XEN_STRING(S_make_env ": end, ~A, and dur, ~A, specified, but dur != end+1"),
+			       keys[5], 
+			       keys[6]));
 	}
       end = dur - 1;
     }
@@ -5672,7 +5651,7 @@ static XEN g_make_file_to_sample(XEN name, XEN buffer_size)
 
   if (!(mus_file_probe(XEN_TO_C_STRING(name))))
     XEN_ERROR(NO_SUCH_FILE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_make_file_to_sample),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_make_file_to_sample ": ~S, ~A"),
 			 name,
 			 C_TO_XEN_STRING(STRERROR(errno))));
 
@@ -5828,9 +5807,10 @@ static XEN g_make_file_to_frame(XEN name, XEN buffer_size)
 
   if (!(mus_file_probe(XEN_TO_C_STRING(name))))
     XEN_ERROR(NO_SUCH_FILE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_make_file_to_frame),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_make_file_to_frame ": ~S, ~A"),
 			 name,
 			 C_TO_XEN_STRING(STRERROR(errno))));
+
   if (XEN_INT64_T_P(buffer_size))
     {
       size = XEN_TO_C_INT64_T(buffer_size);
@@ -5994,10 +5974,8 @@ return a new readin (file input) generator reading the sound file 'file' startin
 
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(CLM_ERROR,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_make_readin), 
-			 C_TO_XEN_STRING("too many args!"),
-			 arglist));
+    clm_error(S_make_readin, "too many args!", arglist);
+
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
   for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
 
@@ -6023,15 +6001,15 @@ return a new readin (file input) generator reading the sound file 'file' startin
     XEN_OUT_OF_RANGE_ERROR(S_make_readin, orig_arg[0], keys[0], "no file name given");
   if (!(mus_file_probe(file)))
     XEN_ERROR(NO_SUCH_FILE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_make_readin),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_make_readin ": ~S, ~A"),
 			 C_TO_XEN_STRING(file),
 			 C_TO_XEN_STRING(STRERROR(errno))));
 
   if (mus_sound_chans(file) <= 0)
     XEN_ERROR(BAD_HEADER,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_make_readin),
-			 C_TO_XEN_STRING(file),
-			 C_TO_XEN_STRING("chans <= 0")));
+	      XEN_LIST_2(C_TO_XEN_STRING(S_make_readin ": ~S chans <= 0?"),
+			 C_TO_XEN_STRING(file)));
+
   if (channel >= mus_sound_chans(file))
     XEN_OUT_OF_RANGE_ERROR(S_make_readin, orig_arg[1], keys[1], "channel ~A > available chans?");
 
@@ -6337,10 +6315,8 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(CLM_ERROR,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_make_locsig), 
-			 C_TO_XEN_STRING("too many args!"),
-			 arglist));
+    clm_error(S_make_locsig, "too many args!", arglist);
+
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
   for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
 
@@ -6992,10 +6968,8 @@ The edit function, if any, should return the length in samples of the grain, or 
 
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(CLM_ERROR,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_make_granulate), 
-			 C_TO_XEN_STRING("too many args!"),
-			 arglist));
+    clm_error(S_make_granulate, "too many args!", arglist);
+
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
   for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
 
@@ -7119,10 +7093,8 @@ return a new convolution generator which convolves its input with the impulse re
 
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(CLM_ERROR,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_make_convolve), 
-			 C_TO_XEN_STRING("too many args!"),
-			 arglist));
+    clm_error(S_make_convolve, "too many args!", arglist);
+
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
   for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
 
@@ -7143,8 +7115,7 @@ return a new convolution generator which convolves its input with the impulse re
 
   if (filter == NULL)
     XEN_ERROR(NO_DATA,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_make_convolve), 
-			 C_TO_XEN_STRING("no impulse (filter)?")));
+	      XEN_LIST_1(C_TO_XEN_STRING(S_make_convolve ": no impulse (filter)?")));
 
   if (POWER_OF_2_P(filter->length))
     fftlen = filter->length * 2;
@@ -7360,10 +7331,8 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
 
   arglist_len = XEN_LIST_LENGTH(arglist);
   if (arglist_len > MAX_ARGLIST_LEN)
-    XEN_ERROR(CLM_ERROR,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_make_phase_vocoder), 
-			 C_TO_XEN_STRING("too many args!"),
-			 arglist));
+    clm_error(S_make_phase_vocoder, "too many args!", arglist);
+
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
   for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
 
@@ -7563,7 +7532,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
       tmp_outf = XEN_TO_C_STRING(out);
       if (!mus_file_probe(tmp_outf)) 
 	XEN_ERROR(NO_SUCH_FILE,
-		  XEN_LIST_2(C_TO_XEN_STRING(S_mus_mix),
+		  XEN_LIST_2(C_TO_XEN_STRING(S_mus_mix ": no such file, ~S"),
 			     out));
       else out_chans = mus_sound_chans(tmp_outf);
     }
@@ -7575,9 +7544,8 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
 
   if (out_chans <= 0)
     XEN_ERROR(BAD_HEADER,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
-			 out,
-			 C_TO_XEN_STRING("output chans <= 0")));
+	      XEN_LIST_2(C_TO_XEN_STRING(S_mus_mix ": ~S output chans <= 0"),
+			 out));
 
   if (XEN_STRING_P(in)) 
     {
@@ -7585,7 +7553,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
       tmp_inf = XEN_TO_C_STRING(in); 
       if (!mus_file_probe(tmp_inf)) 
 	XEN_ERROR(NO_SUCH_FILE,
-		  XEN_LIST_2(C_TO_XEN_STRING(S_mus_mix),
+		  XEN_LIST_2(C_TO_XEN_STRING(S_mus_mix ": no such file, ~S"),
 			     in));
       else in_chans = mus_sound_chans(tmp_inf);
     }
@@ -7597,10 +7565,8 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
 
   if (in_chans <= 0)
     XEN_ERROR(BAD_HEADER,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
-			 in,
-			 C_TO_XEN_STRING("input chans <= 0")));
-
+	      XEN_LIST_2(C_TO_XEN_STRING(S_mus_mix ": ~S input chans <= 0"),
+			 in));
 
   if (XEN_BOUND_P(olen)) 
     osamps = XEN_TO_C_INT64_T_OR_ELSE(olen, 0); 
@@ -7611,9 +7577,8 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
       else osamps = mus_length(inf);
       if (osamps < 0)
 	XEN_ERROR(BAD_HEADER,
-		  XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
-			     in,
-			     C_TO_XEN_STRING("input frames < 0")));
+		  XEN_LIST_2(C_TO_XEN_STRING(S_mus_mix ": ~S input frames < 0"),
+			     in));
     }
   if (osamps == 0) return(XEN_FALSE);
 
@@ -7622,20 +7587,20 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
       int in_len = 0, out_len, j;
       /* pack into a C-style array of arrays of env pointers */
       in_len = XEN_VECTOR_LENGTH(envs);
+
       if (in_len == 0)
 	XEN_ERROR(BAD_TYPE,
-		  XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
-			     envs,
-			     C_TO_XEN_STRING("env vector can't be empty")));
+		  XEN_LIST_2(C_TO_XEN_STRING(S_mus_mix ": env vector, ~A, can't be empty"),
+			     envs));
+
       for (i = 0; i < in_len; i++)
 	{
 	  XEN datum;
 	  datum = XEN_VECTOR_REF(envs, i);
 	  if (!(XEN_VECTOR_P(datum)))
 	    XEN_ERROR(BAD_TYPE,
-		      XEN_LIST_3(C_TO_XEN_STRING(S_mus_mix),
-				 datum,
-				 C_TO_XEN_STRING("each element of env vector must be a vector (of envelopes)")));
+		      XEN_LIST_2(C_TO_XEN_STRING(S_mus_mix ": each element of env vector, ~A, must be a vector (of envelopes)"),
+				 datum));
 	}
       out_len = XEN_VECTOR_LENGTH(XEN_VECTOR_REF(envs, 0));
       if (in_len < in_chans) in_size = in_chans; else in_size = in_len;
@@ -7657,9 +7622,8 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
 		      for (i = 0; i < in_size; i++) if (envs1[i]) free(envs1[i]);
 		      free(envs1);
 		      XEN_ERROR(BAD_TYPE,
-				XEN_LIST_5(C_TO_XEN_STRING(S_mus_mix),
+				XEN_LIST_4(C_TO_XEN_STRING(S_mus_mix ": each (non " PROC_FALSE ") element of (inner) envs vector, ~A at ~A ~A, must be an envelope"),
 					   datum1,
-					   C_TO_XEN_STRING("each (non " PROC_FALSE ") element of (inner) envs vector must be an envelope: "),
 					   C_TO_XEN_INT(i),
 					   C_TO_XEN_INT(j)));
 		    }

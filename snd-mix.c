@@ -2346,7 +2346,8 @@ void mix_display_during_drag(int mix_id, mus_long_t drag_beg, mus_long_t drag_en
 static XEN snd_no_such_mix_error(const char *caller, XEN n)
 {
   XEN_ERROR(XEN_ERROR_TYPE("no-such-mix"),
-	    XEN_LIST_2(C_TO_XEN_STRING(caller),
+	    XEN_LIST_3(C_TO_XEN_STRING("~A: no such mix, ~A"),
+		       C_TO_XEN_STRING(caller),
 		       n));
   return(XEN_FALSE);
 }
@@ -3317,9 +3318,8 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
   if (chans <= 0)
     {
       XEN_ERROR(BAD_HEADER,
-		XEN_LIST_4(C_TO_XEN_STRING(S_mix),
+		XEN_LIST_3(C_TO_XEN_STRING(S_mix ": ~S chans <= 0? (~A)"),
 			   file,
-			   C_TO_XEN_STRING("chans <= 0"),
 			   C_TO_XEN_INT(chans)));
     }
   if (XEN_INTEGER_P(file_chn))
@@ -3328,11 +3328,10 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
       if (file_channel >= chans)
 	{
 	  XEN_ERROR(NO_SUCH_CHANNEL,
-		    XEN_LIST_3(C_TO_XEN_STRING(S_mix),
-			       C_TO_XEN_STRING("chan: ~A, ~A chans: ~A"),
-			       XEN_LIST_3(file_chn,
-					  file,
-					  C_TO_XEN_INT(chans))));
+		    XEN_LIST_4(C_TO_XEN_STRING(S_mix ": chan: ~A, but ~S chans: ~A"),
+			       file_chn,
+			       file,
+			       C_TO_XEN_INT(chans)));
 	}
     }
   else

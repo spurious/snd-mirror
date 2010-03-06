@@ -2167,7 +2167,8 @@ static XEN g_mark_to_integer(XEN n)
 static XEN snd_no_such_mark_error(const char *caller, XEN id)
 {
   XEN_ERROR(XEN_ERROR_TYPE("no-such-mark"),
-	    XEN_LIST_2(C_TO_XEN_STRING(caller),
+	    XEN_LIST_3(C_TO_XEN_STRING("~A: no such mark ~A"),
+		       C_TO_XEN_STRING(caller),
 		       id));
   return(XEN_FALSE);
 }
@@ -2428,7 +2429,7 @@ static XEN g_add_mark_1(XEN samp_n, XEN snd, XEN chn_n, XEN name, XEN sync, bool
   if ((loc < 0) || 
       (loc >= CURRENT_SAMPLES(cp)))
     XEN_ERROR(NO_SUCH_SAMPLE,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_add_mark),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_add_mark ": no such sample, ~A"),
 			 samp_n));
 
   if (XEN_STRING_P(name)) mname = XEN_TO_C_STRING(name);
@@ -2612,7 +2613,7 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 		  pos = cp->edit_ctr;
 		if ((pos < 0) || (pos >= cp->edit_size) || (cp->edits[pos] == NULL))
 		  XEN_ERROR(NO_SUCH_EDIT,
-			    XEN_LIST_2(C_TO_XEN_STRING(S_marks),
+			    XEN_LIST_2(C_TO_XEN_STRING(S_marks ": no such edit, ~A"),
 				       pos_n));
 	      }
 	    else pos = cp->edit_ctr;
@@ -2866,10 +2867,9 @@ The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that
 	  lname = C_TO_XEN_STRING(newname);
 	  free(newname);
 	  XEN_ERROR(CANNOT_SAVE,
-		    XEN_LIST_3(C_TO_XEN_STRING(S_save_marks),
-			       C_TO_XEN_STRING("open ~A: ~A"),
-			       XEN_LIST_2(lname,
-					  C_TO_XEN_STRING(snd_open_strerror()))));
+		    XEN_LIST_3(C_TO_XEN_STRING(S_save_marks ": can't save ~S, ~A"),
+			       lname,
+			       C_TO_XEN_STRING(snd_open_strerror())));
 	}
       else
 	{

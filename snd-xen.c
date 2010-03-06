@@ -198,6 +198,9 @@ static XEN g_snd_s7_error_handler(XEN args)
 #endif
   if (ss->xen_error_handler)
     (*(ss->xen_error_handler))(s7_string(s7_car(args)), (void *)NULL);
+
+  /* TODO: shouldn't there be some default here!? */
+
   return(s7_f(s7));
 }
 #endif
@@ -228,6 +231,14 @@ void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *da
 }
 /* TODO: xen error args lists need to be acceptable to format */
 
+/* fix all the error calls: 
+ *    :(frames 0 1)
+ *    ;no-such-channel ("frames" "chan: ~A, sound index: ~A (~A, chans: ~A)" (1 0 "oboe.snd" 1))
+ * which ideally would be
+ *    ;no-such-channel (frames chan: 1, sound: 0 ("oboe.snd", :chans: 1))
+ * followed by some indication of where the error occurred if in a file, and a stacktrace if it's useful
+ */
+
 
 void redirect_snd_print_to(void (*handler)(const char *msg, void *ufd), void *data)
 {
@@ -254,6 +265,9 @@ void redirect_errors_to(void (*handler)(const char *msg, void *ufd), void *data)
 
 
 static char *gl_print(XEN result);
+
+
+/* ---------------- RUBY error handler ---------------- */
 
 #if HAVE_RUBY
 static XEN snd_format_if_needed(XEN args)
@@ -343,12 +357,8 @@ static XEN snd_format_if_needed(XEN args)
   free(errmsg);
   return(result);
 }
-#endif
 
 
-/* ---------------- RUBY error handler ---------------- */
-
-#if HAVE_RUBY
 void snd_rb_raise(XEN tag, XEN throw_args)
 {
   static char *msg = NULL;
@@ -570,7 +580,8 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 XEN snd_no_such_file_error(const char *caller, XEN filename)
 {
   XEN_ERROR(NO_SUCH_FILE,
-	    XEN_LIST_3(C_TO_XEN_STRING(caller),
+	    XEN_LIST_4(C_TO_XEN_STRING("no-such-file: ~A ~S: ~A"),
+		       C_TO_XEN_STRING(caller),
 		       filename,
 		       C_TO_XEN_STRING(snd_open_strerror())));
   return(XEN_FALSE);
@@ -596,15 +607,16 @@ XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn)
     {
       sp = ss->sounds[index];
       XEN_ERROR(NO_SUCH_CHANNEL,
-		XEN_LIST_3(C_TO_XEN_STRING(caller),
-			   C_TO_XEN_STRING("chan: ~A, sound index: ~A (~A, chans: ~A)"),
-			   XEN_LIST_4(chn, 
-				      snd, 
-				      C_TO_XEN_STRING(sp->short_filename), 
-				      C_TO_XEN_INT(sp->nchans))));
+		XEN_LIST_6(C_TO_XEN_STRING("no-such-channel: (~A: sound: ~A, chan: ~A) (~S, chans: ~A))"),
+			   C_TO_XEN_STRING(caller),
+			   snd, 
+			   chn, 
+			   C_TO_XEN_STRING(sp->short_filename), 
+			   C_TO_XEN_INT(sp->nchans)));
     }
   XEN_ERROR(NO_SUCH_CHANNEL,
-	    XEN_LIST_3(C_TO_XEN_STRING(caller),
+	    XEN_LIST_4(C_TO_XEN_STRING("no-such-channel: (~A: sound: ~A, chan: ~A)"),
+		       C_TO_XEN_STRING(caller),
 		       snd,
 		       chn));
   return(XEN_FALSE);
@@ -622,9 +634,9 @@ XEN snd_no_active_selection_error(const char *caller)
 XEN snd_bad_arity_error(const char *caller, XEN errstr, XEN proc)
 {
   XEN_ERROR(XEN_ERROR_TYPE("bad-arity"),
-            XEN_LIST_3(C_TO_XEN_STRING(caller),
-                       errstr,
-		       proc));
+            XEN_LIST_3(C_TO_XEN_STRING("~A,~A"),
+		       C_TO_XEN_STRING(caller),
+                       errstr));
   return(XEN_FALSE);
 }
 
@@ -2401,6 +2413,19 @@ static char *find_source_file(const char *orig)
 }
 
 
+#if MUS_DEBUGGING && HAVE_SCHEME
+static XEN g_test_load(XEN name)
+{
+  XEN_LOAD_FILE(XEN_TO_C_STRING(name));
+}
+#ifdef XEN_ARGIFY_1
+  XEN_NARGIFY_1(g_test_load_w, g_test_load)
+#else
+  #define g_test_load_w g_test_load
+#endif
+#endif
+
+
 #ifdef XEN_ARGIFY_1
 #if HAVE_SCHEME && HAVE_DLFCN_H
   XEN_NARGIFY_1(g_dlopen_w, g_dlopen)
@@ -2665,6 +2690,9 @@ void g_xen_initialize(void)
 
 #if MUS_DEBUGGING
   XEN_DEFINE_PROCEDURE("snd-sound-pointer", g_snd_sound_pointer_w, 1, 0, 0, "internal testing function");
+#endif
+#if MUS_DEBUGGING && HAVE_SCHEME
+  XEN_DEFINE_PROCEDURE("_test_load_", g_test_load_w, 1, 0, 0, "internal testing function");
 #endif
 
   Init_sndlib();

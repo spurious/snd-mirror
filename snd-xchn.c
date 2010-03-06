@@ -1674,8 +1674,9 @@ static XEN g_make_color(XEN r, XEN g, XEN b)
 
   if ((XAllocColor(dpy, cmap, &tmp_color)) == 0)
     XEN_ERROR(XEN_ERROR_TYPE("no-such-color"),
-	      XEN_LIST_2(C_TO_XEN_STRING(S_make_color),
-			 XEN_LIST_3(r, g, b)));
+	      XEN_LIST_4(C_TO_XEN_STRING(S_make_color ": can't allocate this color! (~A ~A ~A)"),
+			 r, g, b));
+
   return(XEN_WRAP_PIXEL(tmp_color.pixel));
 }
 

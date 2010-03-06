@@ -2000,25 +2000,23 @@ return the current transform sample at bin and slice in snd channel chn (assumin
 		      (fslice < si->active_slices))
 		    return(C_TO_XEN_DOUBLE(si->data[fslice][fbin]));
 		  else XEN_ERROR(NO_SUCH_SAMPLE,
-				 XEN_LIST_3(C_TO_XEN_STRING(S_transform_sample),
-					    C_TO_XEN_STRING("bin: ~A, max bin: ~A, slice: ~A, max slice: ~A, sound index: ~A (~A), chan: ~A"),
-					    XEN_LIST_7(bin,
-						       C_TO_XEN_INT((si) ? si->target_bins : 0),
-						       slice,
-						       C_TO_XEN_INT((si) ? si->active_slices : 0),
-						       snd, 
-						       C_TO_XEN_STRING(cp->sound->short_filename),
-						       chn_n)));
+				 XEN_LIST_8(C_TO_XEN_STRING(S_transform_sample ": no such sample, bin: ~A, max bin: ~A, slice: ~A, max slice: ~A, sound index: ~A (~A), chan: ~A"),
+					    bin,
+					    C_TO_XEN_INT((si) ? si->target_bins : 0),
+					    slice,
+					    C_TO_XEN_INT((si) ? si->active_slices : 0),
+					    snd, 
+					    C_TO_XEN_STRING(cp->sound->short_filename),
+					    chn_n));
 		}
 	    }
 	  else XEN_ERROR(NO_SUCH_SAMPLE,
-			 XEN_LIST_3(C_TO_XEN_STRING(S_transform_sample),
-				    C_TO_XEN_STRING("bin: ~A, max bin: ~A, sound index: ~A (~A), chan: ~A"),
-				    XEN_LIST_5(bin,
-					       C_TO_XEN_INT(fp->current_size),
-					       snd,
-					       C_TO_XEN_STRING(cp->sound->short_filename),
-					       chn_n)));
+			 XEN_LIST_6(C_TO_XEN_STRING(S_transform_sample ": no such sample, bin: ~A, max bin: ~A, sound index: ~A (~A), chan: ~A"),
+				    bin,
+				    C_TO_XEN_INT(fp->current_size),
+				    snd,
+				    C_TO_XEN_STRING(cp->sound->short_filename),
+				    chn_n));
 	}
     }
   return(XEN_FALSE);

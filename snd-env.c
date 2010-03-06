@@ -1479,8 +1479,8 @@ env *get_env(XEN e, const char *origin) /* list in e */
 
   if (len == 0)
     XEN_ERROR(NO_DATA,
-	      XEN_LIST_3(C_TO_XEN_STRING(origin), 
-			 C_TO_XEN_STRING("null env"), 
+	      XEN_LIST_3(C_TO_XEN_STRING("~A: null env, ~A"), 
+			 C_TO_XEN_STRING(origin), 
 			 e));
   new_env = xen_to_env(e);
 
@@ -1495,7 +1495,7 @@ env *get_env(XEN e, const char *origin) /* list in e */
 	free(buf);
 	free_env(new_env);
 	XEN_ERROR(XEN_ERROR_TYPE("env-error"),
-		  XEN_LIST_3(C_TO_XEN_STRING(S_filter_channel),
+		  XEN_LIST_3(C_TO_XEN_STRING(S_filter_channel ": ~A, ~A"),
 			     msg,
 			     e));
       }
@@ -1525,7 +1525,7 @@ static XEN g_save_envelopes(XEN filename)
   if (!fd)
     {
       XEN_ERROR(CANNOT_SAVE,
-		XEN_LIST_3(C_TO_XEN_STRING(S_save_envelopes),
+		XEN_LIST_3(C_TO_XEN_STRING(S_save_envelopes ": can't save ~S, ~A"),
 			   filename,
 			   C_TO_XEN_STRING(snd_open_strerror())));
     }

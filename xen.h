@@ -30,7 +30,6 @@
  *  14-Mar:    removed XEN_LOCAL_GC_PROTECT and XEN_LOCAL_GC_UNPROTECT.
  *  14-Jan-09: s7_xen_initialize.
  *  --------
- *  30-Nov-08: use s7_wrong_number_of_args_error.
  *  17-Nov-08: use s7_define_constant in XEN_DEFINE_CONSTANT.
  *  1-Nov-08:  changed s7 and Guile C_TO_XEN_STRING slightly.
  *  16-Oct-08: removed Gauche support.
@@ -1144,7 +1143,6 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
 
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) s7_wrong_type_arg_error(s7, Caller, ArgN, Arg, Descr)
 #define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr)   s7_out_of_range_error(s7, Caller, ArgN, Arg, Descr)
-#define XEN_WRONG_NUMBER_OF_ARGS_ERROR(Caller, Args)       s7_wrong_number_of_args_error(s7, Caller, Args)
 
 #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) if (!(Assertion)) XEN_WRONG_TYPE_ARG_ERROR(Caller, Position, Arg, Correct_Type)
 

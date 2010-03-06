@@ -1357,7 +1357,7 @@ static XEN g_set_enved_envelope(XEN e)
   else active_env = xen_to_env(e);
   if ((!active_env) && (!(XEN_LIST_P(e))))
     XEN_ERROR(NO_SUCH_ENVELOPE,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_setB S_enved_envelope),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_setB S_enved_envelope ": bad envelope arg: ~A"),
 			 e));
   if (enved_dialog) 
     env_redisplay();

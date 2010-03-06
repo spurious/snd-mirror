@@ -1761,8 +1761,12 @@ static XEN g_run_hook(XEN all_args)
 
   if (ghook_arity(obj) != arglen)
     XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"),
-	      XEN_LIST_2(C_TO_XEN_STRING("run-hook"),
+	      XEN_LIST_5(C_TO_XEN_STRING("run hook (~A) got ~A args, but wants ~A (args: ~A)"),
+			 hook,
+			 C_TO_XEN_INT(arglen),
+			 C_TO_XEN_INT(ghook_arity(obj)),
 			 args));
+			 
 
   functions = ghook_functions(obj);
   while (XEN_NOT_NULL_P(functions))

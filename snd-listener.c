@@ -689,7 +689,7 @@ static XEN g_save_listener(XEN filename)
     }
   if ((!fp) || (err == -1))
     XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_save_listener),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_save_listener ": can't save ~S, ~A"),
 			 filename,
 			 C_TO_XEN_STRING(snd_io_strerror())));
   return(filename);
