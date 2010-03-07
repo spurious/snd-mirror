@@ -225,12 +225,12 @@ static bool prepare_edit_list(chan_info *cp, int pos, const char *caller)
   if (pos > cp->edit_ctr)
     {
       XEN_ERROR(NO_SUCH_EDIT,
-		XEN_LIST_3(C_TO_XEN_STRING(caller),
-			   C_TO_XEN_STRING("edpos: ~A, ~A chan ~A has ~A edits"),
-			   XEN_LIST_4(C_TO_XEN_INT(pos),
-				      C_TO_XEN_STRING(cp->sound->short_filename),
-				      C_TO_XEN_INT(cp->chan),
-				      C_TO_XEN_INT(cp->edit_ctr))));
+		XEN_LIST_6(C_TO_XEN_STRING("~A: edpos: ~A but ~A chan ~A has ~A edits"),
+			   C_TO_XEN_STRING(caller),
+			   C_TO_XEN_INT(pos),
+			   C_TO_XEN_STRING(cp->sound->short_filename),
+			   C_TO_XEN_INT(cp->chan),
+			   C_TO_XEN_INT(cp->edit_ctr)));
     }
   sp = cp->sound;
   stop_peak_env(cp);
@@ -5076,7 +5076,8 @@ bool file_change_samples(mus_long_t beg, mus_long_t num, const char *tempfile, c
   else
     {
       XEN_ERROR(NO_SUCH_FILE,
-		XEN_LIST_2(C_TO_XEN_STRING(origin),
+		XEN_LIST_3(C_TO_XEN_STRING("~A: ~A"),
+			   C_TO_XEN_STRING(origin),
 			   C_TO_XEN_STRING(snd_io_strerror())));
     }
   return(true);
@@ -5130,7 +5131,8 @@ bool file_override_samples(mus_long_t num, const char *tempfile, chan_info *cp, 
   else
     {
       XEN_ERROR(NO_SUCH_FILE,
-		XEN_LIST_2(C_TO_XEN_STRING(origin),
+		XEN_LIST_3(C_TO_XEN_STRING("~A: ~A"),
+			   C_TO_XEN_STRING(origin),
 			   C_TO_XEN_STRING(snd_io_strerror())));
     }
   return(true);
@@ -7589,7 +7591,7 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
 	pos = cp->edit_ctr;
       if ((pos < 0) || (pos >= cp->edit_size) || (!(cp->edits[pos])))
 	XEN_ERROR(NO_SUCH_EDIT,
-		  XEN_LIST_2(C_TO_XEN_STRING(S_display_edits),
+		  XEN_LIST_2(C_TO_XEN_STRING(S_display_edits ": no such edit: ~A"),
 			     edpos));
     }
   name = snd_tempnam();
@@ -7602,7 +7604,7 @@ static XEN g_display_edits(XEN snd, XEN chn, XEN edpos, XEN with_source)
       snd_fclose(tmp, name);
     }
   else XEN_ERROR(CANNOT_SAVE,
-		 XEN_LIST_3(C_TO_XEN_STRING(S_display_edits),
+		 XEN_LIST_3(C_TO_XEN_STRING(S_display_edits ": can't save ~S, ~A"),
 			    C_TO_XEN_STRING(name),
 			    C_TO_XEN_STRING(snd_io_strerror())));
   fd = mus_file_open_read(name);
@@ -7646,8 +7648,8 @@ associated with snd's channel chn; the returned value is a list (origin type sta
 			  C_TO_XEN_INT64_T(ed->len)));
     }
   XEN_ERROR(NO_SUCH_EDIT,
-	    XEN_LIST_4(C_TO_XEN_STRING(S_edit_fragment),
-		       uctr, snd, chn));
+	    XEN_LIST_2(C_TO_XEN_STRING(S_edit_fragment ": no such edit ~A"),
+		       uctr));
   return(uctr);
 }
 
@@ -8012,7 +8014,7 @@ return a reader ready to access region's channel chn data starting at start-samp
 
   if (!(region_ok(reg_n))) 
     XEN_ERROR(XEN_ERROR_TYPE("no-such-region"),
-	      XEN_LIST_2(C_TO_XEN_STRING(S_make_region_sampler),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_make_region_sampler ": no such region: ~A"),
                          reg));
 
   chn_n = XEN_TO_C_INT_OR_ELSE(chn, 0);
@@ -8029,7 +8031,7 @@ return a reader ready to access region's channel chn data starting at start-samp
       if (direction == -1)
 	fd = init_region_read(beg, reg_n, chn_n, READ_BACKWARD);
       else XEN_ERROR(XEN_ERROR_TYPE("no-such-direction"),
-		     XEN_LIST_2(C_TO_XEN_STRING(S_make_region_sampler),
+		     XEN_LIST_2(C_TO_XEN_STRING(S_make_region_sampler ": bad direction: ~A"),
 				dir1));
     }
 
@@ -8104,7 +8106,7 @@ snd can be a filename, a mix, a region, or a sound index number."
       if (direction == -1)
 	fd = init_sample_read_any(beg, cp, READ_BACKWARD, edpos);
       else XEN_ERROR(XEN_ERROR_TYPE("no-such-direction"),
-		     XEN_LIST_2(C_TO_XEN_STRING(S_make_sampler),
+		     XEN_LIST_2(C_TO_XEN_STRING(S_make_sampler ": bad direction: ~A"),
 				dir1));
     }
 
@@ -8301,7 +8303,7 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
   else
     {
       XEN_ERROR(CANNOT_SAVE,
-		XEN_LIST_3(C_TO_XEN_STRING(S_save_edit_history),
+		XEN_LIST_3(C_TO_XEN_STRING(S_save_edit_history ": can't save ~S: ~A"),
 			   filename,
 			   C_TO_XEN_STRING(snd_open_strerror())));
     }
@@ -8772,7 +8774,7 @@ static XEN g_set_sample(XEN samp_n, XEN val, XEN snd, XEN chn_n, XEN edpos)
   pos = to_c_edit_position(cp, edpos, S_setB S_sample, 5);
   if (pos > cp->edit_ctr)
     XEN_ERROR(NO_SUCH_EDIT,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_setB S_sample),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_setB S_sample ": no such edit: ~A"),
 			 edpos));
   if (XEN_BOUND_P(samp_n))
     beg = beg_to_sample(samp_n, S_setB S_sample);
@@ -8835,7 +8837,8 @@ file_delete_t xen_to_file_delete_t(XEN auto_delete, const char *caller)
 	  if ((val >= DONT_DELETE_ME) && (val <= MULTICHANNEL_DELETION_IF_FILE))
 	    return((file_delete_t)val);
 	  XEN_ERROR(XEN_ERROR_TYPE("no-such-auto-delete-choice"),
-		    XEN_LIST_2(C_TO_XEN_STRING(caller),
+		    XEN_LIST_3(C_TO_XEN_STRING("~A: no such auto-delete option: ~A"), 
+			       C_TO_XEN_STRING(caller),
 			       auto_delete));
 	}
     }
@@ -8894,9 +8897,11 @@ the new data's end."
       if ((inchan < 0) ||
 	  (inchan >= mus_sound_chans(fname)))
 	XEN_ERROR(NO_SUCH_CHANNEL,
-		  XEN_LIST_3(C_TO_XEN_STRING(caller),
+		  XEN_LIST_5(C_TO_XEN_STRING("~A: no such channel: ~A (~S has ~A chans)"),
+			     C_TO_XEN_STRING(caller),
+			     infile_chan,
 			     vect,
-			     infile_chan));
+			     C_TO_XEN_INT(mus_sound_chans(fname))));
 
       delete_file = xen_to_file_delete_t(auto_delete, caller);
       if ((beg == 0) && 
@@ -9182,9 +9187,8 @@ position.\n  " insert_sound_example "\ninserts all of oboe.snd starting at sampl
   if (nc <= 0)
     {
       XEN_ERROR(BAD_HEADER,
-		XEN_LIST_4(C_TO_XEN_STRING(S_insert_sound),
+		XEN_LIST_3(C_TO_XEN_STRING(S_insert_sound ": chans <= 0? (~S has ~D chans)"),
 			   file,
-			   C_TO_XEN_STRING("chans <= 0"),
 			   C_TO_XEN_INT(nc)));
     }
 
@@ -9392,9 +9396,8 @@ static XEN g_delete_sample(XEN samp_n, XEN snd, XEN chn_n, XEN edpos)
   pos = to_c_edit_position(cp, edpos, S_delete_sample, 4);
   if ((samp < 0) || (samp > cp->edits[pos]->samples))
     XEN_ERROR(NO_SUCH_SAMPLE,
-	      XEN_LIST_4(C_TO_XEN_STRING(S_delete_sample),
-			 samp_n,
-			 snd, chn_n));
+	      XEN_LIST_2(C_TO_XEN_STRING(S_delete_sample ": no such sample: ~A"),
+			 samp_n));
 
   if (delete_samples(samp, 1, cp, pos))
     update_graph(cp);

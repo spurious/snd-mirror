@@ -241,16 +241,15 @@ static mus_float_t **make_xen_colormap(int size, XEN lambda)
       else str = XEN_FALSE;
 
       XEN_ERROR(XEN_ERROR_TYPE("colormap-error"),
-		XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap),
-			   C_TO_XEN_STRING("function error:"),
+		XEN_LIST_2(C_TO_XEN_STRING(S_add_colormap ": function error ~A"),
 			   str));
     }
 
   if (!(XEN_LIST_P(xrgb)))
     XEN_ERROR(XEN_ERROR_TYPE("colormap-error"),
-	      XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap),
-			 C_TO_XEN_STRING("colormap func must return a list of 3 vcts"),
-			 lambda));
+	      XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap ": colormap function, ~A, returned ~A, but should return a list of 3 vcts"),
+			 lambda,
+			 xrgb));
   else
     {
       vct *xr, *xg, *xb;
@@ -261,15 +260,13 @@ static mus_float_t **make_xen_colormap(int size, XEN lambda)
 
       if (!(mus_vct_p(XEN_LIST_REF(xrgb, 0)))) 
 	XEN_ERROR(XEN_ERROR_TYPE("colormap-error"),
-		  XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap),
-			     C_TO_XEN_STRING("function did not return a list of vcts!"),
+		  XEN_LIST_2(C_TO_XEN_STRING(S_add_colormap ": function did not return a list of vcts! ~A"),
 			     xrgb));
 
       xr = XEN_TO_VCT(XEN_LIST_REF(xrgb, 0));
       if (xr->length < size)
 	XEN_ERROR(XEN_ERROR_TYPE("colormap-error"),
-		  XEN_LIST_3(C_TO_XEN_STRING(S_add_colormap),
-			     C_TO_XEN_STRING("function did not return a list of vcts of the correct size"),
+		  XEN_LIST_2(C_TO_XEN_STRING(S_add_colormap ": function did not return a list of vcts of the correct size: ~A"),
 			     xrgb));
 
       xg = XEN_TO_VCT(XEN_LIST_REF(xrgb, 1));
@@ -1061,7 +1058,7 @@ static XEN g_colormap_ref(XEN map, XEN pos)
   index = XEN_COLORMAP_TO_C_INT(map);
   if (!(is_colormap(index)))
     XEN_ERROR(NO_SUCH_COLORMAP,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_colormap_ref),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_colormap_ref ": no such colormap: ~A"),
 			 map));
 
   x = XEN_TO_C_DOUBLE(pos);
@@ -1092,7 +1089,7 @@ static XEN g_set_colormap(XEN val)
   index = XEN_COLORMAP_TO_C_INT(val);
   if (!(is_colormap(index)))
     XEN_ERROR(NO_SUCH_COLORMAP,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_colormap),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_colormap ": no such colormap: ~A"),
 			 val));
 
   set_color_map(index); /* this normally redisplays */
@@ -1132,7 +1129,7 @@ static XEN g_colormap_name(XEN col)
   map = XEN_COLORMAP_TO_C_INT(col);
   if (!(is_colormap(map)))
     XEN_ERROR(NO_SUCH_COLORMAP,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_colormap_name),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_colormap_name ": no such colormap: ~A"),
 			 col));
 
   return(C_TO_XEN_STRING(cmaps[map]->name));
@@ -1157,7 +1154,7 @@ static XEN g_delete_colormap(XEN col)
   map = XEN_COLORMAP_TO_C_INT(col);
   if (!(is_colormap(map)))
     XEN_ERROR(NO_SUCH_COLORMAP,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_delete_colormap),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_delete_colormap ": no such colormap: ~A"),
 			 col));
 
   delete_cmap(map);

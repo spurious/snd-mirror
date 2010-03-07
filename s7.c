@@ -1865,16 +1865,12 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
   if (x != sc->NIL) 
     return(x); 
 
-  /*
-  if (!name) 
-    return(s7_error(sc, sc->ERROR, make_list_1(sc, s7_make_string(sc, "make symbol with no name?"))));
-  */
-
   if ((number_inits[(int)name[0]]) &&
       (make_atom(sc, (char *)name, 10, false) != sc->F))
-    return(s7_error(sc, sc->ERROR, make_list_2(sc, 
-					       s7_make_string(sc, "identifier (symbol) name can't be a number"), 
-					       s7_make_string(sc, name))));
+    return(s7_error(sc, sc->ERROR, 
+		    make_list_2(sc, 
+				s7_make_string(sc, "identifier (symbol) name, ~A, can't be a number"), 
+				s7_make_string(sc, name))));
 
   return(symbol_table_add_by_name_at_location(sc, name, location)); 
 } 
@@ -2058,7 +2054,8 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
 static s7_pointer add_to_current_environment(s7_scheme *sc, s7_pointer variable, s7_pointer value) 
 { 
   if (is_immutable(variable))
-    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "can't bind or set an immutable object: ~S"), variable)));
+    return(s7_error(sc, sc->ERROR, 
+		    make_list_2(sc, s7_make_string(sc, "can't bind or set an immutable object: ~S"), variable)));
 
   return(add_to_environment(sc, sc->envir, variable, value)); 
 } 
@@ -2070,7 +2067,8 @@ static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s
   s7_pointer x, y;
 
   if (is_immutable(variable))
-    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "can't bind or set an immutable object: ~S"), variable)));
+    return(s7_error(sc, sc->ERROR, 
+		    make_list_2(sc, s7_make_string(sc, "can't bind or set an immutable object: ~S"), variable)));
 
   NEW_CELL(sc, y);
   car(y) = variable;
@@ -2723,7 +2721,8 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
       ((s7_integer(car(proc_args)) == 0) &&
        (s7_integer(cadr(proc_args)) == 0) &&
        (caddr(proc_args) == sc->F)))
-    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "call/cc procedure should take one argument"), car(args))));
+    return(s7_error(sc, sc->ERROR, 
+		    make_list_2(sc, s7_make_string(sc, "call/cc procedure, ~A, should take one argument"), car(args))));
 
   sc->code = car(args);
   sc->args = make_list_1(sc, s7_make_continuation(sc));
@@ -10161,14 +10160,10 @@ s7_pointer s7_list_ref(s7_scheme *sc, s7_pointer lst, int num)
   int i;
   s7_pointer x;
   
-  if (num == 0)
-    return(s7_car(lst));
-  if (num < 0)
-    return(sc->NIL);
   for (x = lst, i = 0; (i < num) && (is_pair(x)); i++, x = cdr(x)) {}
-  if ((i == num) &&
-      (is_pair(x)))
+  if ((i == num) && (is_pair(x)))
     return(car(x));
+
   return(sc->NIL);
 }
 
@@ -10177,10 +10172,12 @@ s7_pointer s7_list_set(s7_scheme *sc, s7_pointer lst, int num, s7_pointer val)
 {
   int i;
   s7_pointer x;
+
   for (x = lst, i = 0; (i < num) && (is_pair(x)); i++, x = cdr(x)) {}
   if ((i == num) &&
       (is_pair(x)))
     car(x) = val;
+
   return(val);
 }
 
@@ -10188,9 +10185,11 @@ s7_pointer s7_list_set(s7_scheme *sc, s7_pointer lst, int num, s7_pointer val)
 s7_pointer s7_member(s7_scheme *sc, s7_pointer sym, s7_pointer lst)
 {
   s7_pointer x;
+
   for (x = lst; is_pair(x); x = cdr(x))
     if (s7_is_equal(sym, car(x)))
       return(x);
+
   return(sc->F);
 }
 
@@ -10198,10 +10197,12 @@ s7_pointer s7_member(s7_scheme *sc, s7_pointer sym, s7_pointer lst)
 s7_pointer s7_assoc(s7_scheme *sc, s7_pointer sym, s7_pointer lst)
 {
   s7_pointer x;
+
   for (x = lst; is_pair(x); x = cdr(x))
     if ((is_pair(s7_car(x))) &&
 	(s7_is_equal(sym, car(car(x)))))
       return(car(x));
+
   return(sc->F);
 }
 
@@ -10210,10 +10211,12 @@ s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a)
 {
   /* reverse list -- produce new list */
   s7_pointer p = sc->NIL;
+
   for ( ; is_pair(a); a = cdr(a)) 
     p = s7_cons(sc, car(a), p);
   if (a == sc->NIL)
     return(p);
+
   return(sc->NIL);
 }
 
@@ -10221,6 +10224,7 @@ s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a)
 static s7_pointer reverse_in_place(s7_scheme *sc, s7_pointer term, s7_pointer list) 
 {
   s7_pointer p = list, result = term, q;
+
   while (p != sc->NIL)
     {
       q = cdr(p);
@@ -10231,6 +10235,7 @@ static s7_pointer reverse_in_place(s7_scheme *sc, s7_pointer term, s7_pointer li
       result = p;
       p = q;
     }
+
   return(result);
 }
 
@@ -10248,6 +10253,7 @@ static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list) /* "safe
       result = p;
       p = q;
     }
+
   return(result);
 }
 
@@ -10309,8 +10315,9 @@ int s7_list_length(s7_scheme *sc, s7_pointer a)
       if (fast == slow) 
 	{
 	  /* the fast pointer has looped back around and caught up
-	     with the slow pointer, hence the structure is circular,
-	     not of finite length, and therefore not a list */
+	   *  with the slow pointer, hence the structure is circular,
+	   *  not of finite length, and therefore not a list 
+	   */
 	  return(0);
 	}
     }
@@ -11503,7 +11510,7 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 	}
       if ((x != sc->NIL) ||
 	  (i != vector_ndims(vect)))
-	return(s7_wrong_number_of_args_error(sc, "vector ref", indices));
+	return(s7_wrong_number_of_args_error(sc, "vector ref: ~A", indices));
     }
   else
 #endif
@@ -11512,7 +11519,7 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
       if (!s7_is_integer(car(indices)))
 	return(s7_wrong_type_arg_error(sc, "vector ref index,", 2, car(indices), "an integer"));
       if (cdr(indices) != sc->NIL)                            /* (#(1 2) 1 2) */
-	return(s7_wrong_number_of_args_error(sc, "vector ref", indices));
+	return(s7_wrong_number_of_args_error(sc, "vector ref: ~A", indices));
 
       index = s7_integer(car(indices));
       if ((index < 0) ||
@@ -11582,7 +11589,7 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
       if ((cdr(x) != sc->NIL) ||
 	  ((i != vector_ndims(vec)) &&
 	   (i != 1)))
-	return(s7_wrong_number_of_args_error(sc, "vector-set!", args));
+	return(s7_wrong_number_of_args_error(sc, "vector-set!: ~A", args));
 
       val = car(x);
     }
@@ -12886,9 +12893,12 @@ static s7_pointer pws_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 
       len = safe_list_length(sc, args);
       if (len < f->get_req_args)
-	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, make_list_3(sc, s7_make_string(sc, "~A: not enough arguments: ~A"), obj, args)));
+	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, 
+			make_list_3(sc, make_protected_string(sc, "~A: not enough arguments: ~A"), obj, args)));
+
       if (len > (f->get_req_args + f->get_opt_args))
-	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, make_list_3(sc, s7_make_string(sc, "~A: too many arguments: ~A"), obj, args)));
+	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, 
+			make_list_3(sc, make_protected_string(sc, "~A: too many arguments: ~A"), obj, args)));
 
       return((*(f->getter))(sc, args));
     }
@@ -12913,9 +12923,12 @@ static s7_pointer pws_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 
       len = safe_list_length(sc, args);
       if (len < f->set_req_args)
-	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, make_list_3(sc, s7_make_string(sc, "set!: ~A: not enough arguments: ~A"), obj, args)));
+	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, 
+			make_list_3(sc, make_protected_string(sc, "set!: ~A: not enough arguments: ~A"), obj, args)));
+
       if (len > (f->set_req_args + f->set_opt_args))
-	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, make_list_3(sc, s7_make_string(sc, "set!: ~A: too many arguments: ~A"), obj, args)));
+	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, 
+			make_list_3(sc, make_protected_string(sc, "set!: ~A: too many arguments: ~A"), obj, args)));
 
       return((*(f->setter))(sc, args));
     }
@@ -13520,10 +13533,12 @@ static char *format_error(s7_scheme *sc, const char *msg, const char *str, s7_po
       free(filler);
     }
 
-  x = make_list_3(sc, make_string_uncopied(sc, errmsg), s7_make_string(sc, str), args);
+  x = make_list_3(sc, make_string_uncopied(sc, errmsg), make_protected_string(sc, str), args);
 
   if (dat->str) free(dat->str);
   free(dat);
+
+  /* fprintf(stderr, "format error: %s\n", s7_object_to_c_string(sc, x)); */
 
   s7_error(sc, sc->FORMAT_ERROR, x);
   return(NULL);
@@ -13877,7 +13892,7 @@ static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char
       if (args != sc->NIL)
 	return(s7_error(sc, 
 			sc->FORMAT_ERROR, 
-			make_list_2(sc, s7_make_string(sc, "format control string is null, but there are other arguments"), args)));
+			make_list_2(sc, s7_make_string(sc, "format control string is null, but there are other arguments: ~A"), args)));
       return(s7_make_string(sc, ""));
     }
 
@@ -13926,8 +13941,6 @@ const char *s7_format(s7_scheme *sc, s7_pointer args)
 }
 
 
-
-/* -------------------------------- errors -------------------------------- */
 
 /* -------- trace -------- */
 
@@ -14208,16 +14221,13 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
   /* info list is '(format_string caller arg_n arg type_name descr) */
   if (arg_n <= 0) arg_n = 1;
 
-  s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 1, s7_make_string(sc, (char *)caller));
+  s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 1, make_protected_string(sc, caller));
   s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 2, s7_make_integer(sc, arg_n));
   s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 3, arg);
-  s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 4, s7_make_string(sc, (char *)type_name(arg))); /* PERHAPS: these can be built-in */
-  s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 5, s7_make_string(sc, (char *)descr));
+  s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 4, make_protected_string(sc, type_name(arg)));
+  s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 5, make_protected_string(sc, descr));
   return(s7_error(sc, sc->WRONG_TYPE_ARG, sc->WRONG_TYPE_ARG_INFO));
 }
-
-/* TODO: fix all the built-in errors to use templates */
-
 
 
 s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr)
@@ -14225,43 +14235,42 @@ s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s
   /* info list is '(format_string caller arg_n arg descr) */
   if (arg_n <= 0) arg_n = 1;
 
-  s7_list_set(sc, sc->OUT_OF_RANGE_INFO, 1, s7_make_string(sc, (char *)caller));
+  s7_list_set(sc, sc->OUT_OF_RANGE_INFO, 1, make_protected_string(sc, caller));
   s7_list_set(sc, sc->OUT_OF_RANGE_INFO, 2, s7_make_integer(sc, arg_n));
   s7_list_set(sc, sc->OUT_OF_RANGE_INFO, 3, arg);
-  s7_list_set(sc, sc->OUT_OF_RANGE_INFO, 4, s7_make_string(sc, (char *)descr));
+  s7_list_set(sc, sc->OUT_OF_RANGE_INFO, 4, make_protected_string(sc, descr));
   return(s7_error(sc, sc->OUT_OF_RANGE, sc->OUT_OF_RANGE_INFO));
 }
 
 
 s7_pointer s7_wrong_number_of_args_error(s7_scheme *sc, const char *caller, s7_pointer args)
 {
-  return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, make_list_2(sc, s7_make_string(sc, caller), args)));
+  return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, 
+		  make_list_2(sc, 
+			      make_protected_string(sc, caller), /* "caller" includes the format directives */
+			      args)));
 }
 
 
 static s7_pointer division_by_zero_error(s7_scheme *sc, const char *caller, s7_pointer arg)
 {
-  int len, slen;
-  char *errmsg;
-
-  len = safe_strlen(caller) + 128;
-  errmsg = (char *)malloc(len * sizeof(char));
-  slen = snprintf(errmsg, len, "%s: division by zero in ~A", caller);
-
-  return(s7_error(sc, s7_make_symbol(sc, "division-by-zero"), make_list_2(sc, make_string_uncopied_with_length(sc, errmsg, slen), arg)));
+  return(s7_error(sc, s7_make_symbol(sc, "division-by-zero"), 
+		  make_list_3(sc, 
+			      make_protected_string(sc, "~A: division by zero, ~A"), 
+			      make_protected_string(sc, caller),
+			      arg)));
 }
 
 
 static s7_pointer file_error(s7_scheme *sc, const char *caller, const char *descr, const char *name)
 {
-  int len, slen;
-  char *errmsg;
-
-  len = safe_strlen(descr) + safe_strlen(name) + safe_strlen(caller) + 8;
-  errmsg = (char *)malloc(len * sizeof(char));
-  slen = snprintf(errmsg, len, "%s: %s %s", caller, descr, name);
-
-  return(s7_error(sc, s7_make_symbol(sc, "io-error"), make_string_uncopied_with_length(sc, errmsg, slen)));
+  return(s7_error(sc, s7_make_symbol(sc, "io-error"), 
+		  s7_cons(sc, 
+			  make_protected_string(sc, "~A: ~A ~A"),
+			  make_list_3(sc, 
+				      make_protected_string(sc, caller),
+				      make_protected_string(sc, descr),
+				      make_protected_string(sc, name)))));
 }
 
 
@@ -14550,7 +14559,7 @@ GOT_CATCH:
 	   *   else assume car(info) is a format control string, and cdr(info) are its args
 	   */
 
-	  fprintf(stderr, "s7_error type: %s, info: %s\n", s7_object_to_c_string(sc, type), s7_object_to_c_string(sc, info));
+	  /* fprintf(stderr, "s7_error type: %s, info: %s\n", s7_object_to_c_string(sc, type), s7_object_to_c_string(sc, info)); */
 
 	  if ((!s7_is_list(sc, info)) ||
 	      (!s7_is_string(car(info))))
@@ -14674,7 +14683,8 @@ s7_pointer s7_error_and_exit(s7_scheme *sc, s7_pointer type, s7_pointer info)
 
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj)
 {
-  return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, errmsg), obj)));
+  return(s7_error(sc, sc->ERROR, 
+		  make_list_2(sc, make_protected_string(sc, errmsg), obj)));
 }
 
 
@@ -14769,38 +14779,33 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
 {
   s7_pointer x;
   int line;
+
   x = sc->args;
   while (is_pair(cdr(x))) x = cdr(x);
   line = pair_line_number(x);
+
   if (line > 0)
-    {
-      char *str1;
-      int len;
-      len = 64 + safe_strlen(port_filename(sc->input_port)); 
-      str1 = (char *)malloc(len * sizeof(char));
-      len = snprintf(str1, len, "missing close paren, list started around line %d of %s: ~A", 
-		     remembered_line_number(line), port_filename(sc->input_port));
-      return(s7_error(sc, sc->ERROR, 
-		      make_list_2(sc, 
-				  make_string_uncopied_with_length(sc, str1, len), 
-				  safe_reverse_in_place(sc, sc->args))));
-    }
+    return(s7_error(sc, sc->ERROR, 
+		    make_list_3(sc, 
+				s7_make_string(sc, "missing close paren, list started around line ~D of ~S"), 
+				s7_make_integer(sc, remembered_line_number(line)),
+				make_protected_string(sc, port_filename(sc->input_port)))));
   return(read_error(sc, "missing close paren"));
 }
 
 
 static void improper_arglist_error(s7_scheme *sc)
 {
-  int len;
-  char *msg, *argstr;
-  argstr = s7_object_to_c_string(sc, s7_append(sc, 
-					       s7_reverse(sc, cdr(sc->args)), 
-					       s7_cons(sc, car(sc->args), sc->code)));
-  len = safe_strlen(argstr) + 32;
-  msg = (char *)malloc(len * sizeof(char));
-  len = snprintf(msg, len, "improper list of arguments: %s?", argstr);
-  free(argstr);
-  s7_error(sc, sc->ERROR, make_string_uncopied_with_length(sc, msg, len));
+  s7_pointer x, y;
+
+  x = safe_reverse_in_place(sc, sc->args);
+  for (y = x; cdr(y) != sc->NIL; y = cdr(y));
+  cdr(y) = sc->code;
+  
+  s7_error(sc, sc->ERROR, 
+	   make_list_2(sc,
+		       s7_make_string(sc, "improper list of arguments: ~A"),
+		       x));
 }
 
 
@@ -14982,7 +14987,10 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
       sc->args = apply_list_star(sc, cdr(args));
 
       if (!is_proper_list(sc, sc->args))        /* (apply + #f) etc */
-	return(s7_error(sc, sc->WRONG_TYPE_ARG, s7_make_string(sc, "apply's last argument should be a list")));
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+			make_list_2(sc, 
+				    s7_make_string(sc, "apply's last argument should be a list: ~A"),
+				    args)));
     }
   push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
   return(sc->NIL);
@@ -15109,7 +15117,7 @@ static s7_pointer g_list_for_each(s7_scheme *sc, s7_pointer args)
     {
       for (y = cdr(sc->x); y != sc->NIL; y = cdr(y))
 	if (car(y) != sc->NIL)
-	  return(eval_error(sc, "for-each args are not the same length", sc->x));
+	  return(eval_error(sc, "for-each args are not the same length: ~A", sc->x));
       push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
       return(sc->NIL);
     }
@@ -16139,7 +16147,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       for (sc->y = sc->x; sc->y != sc->NIL; sc->y = cdr(sc->y))
 	{
 	  if (car(sc->y) == sc->NIL)
-	    return(eval_error(sc, "for-each args are not the same length", sc->x));
+	    return(eval_error(sc, "for-each args are not the same length: ~A", sc->x));
 
 	  sc->args = s7_cons(sc, caar(sc->y), sc->args);
 	  car(sc->y) = cdar(sc->y);                           /* cdr this arg list */
@@ -16149,7 +16157,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  for (sc->y = cdr(sc->x); sc->y != sc->NIL; sc->y = cdr(sc->y))
 	    if (car(sc->y) != sc->NIL)
-	      return(eval_error(sc, "for-each args are not the same length", sc->x));
+	      return(eval_error(sc, "for-each args are not the same length: ~A", sc->x));
 	  goto APPLY;
 	}
       push_stack(sc, opcode(OP_LIST_FOR_EACH), sc->x, sc->code);
@@ -16165,7 +16173,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  for (sc->y = cdar(sc->x); sc->y != sc->NIL; sc->y = cdr(sc->y))
 	    if (car(sc->y) != sc->NIL)
-	      return(eval_error(sc, "map args are not the same length", sc->x));
+	      return(eval_error(sc, "map args are not the same length: ~A", sc->x));
 
 	  sc->value = safe_reverse_in_place(sc, cdr(sc->x));
 	  /* should this expand values objects?
@@ -16178,7 +16186,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       for (sc->y = car(sc->x); sc->y != sc->NIL; sc->y = cdr(sc->y))
 	{
 	  if (car(sc->y) == sc->NIL)
-	    return(eval_error(sc, "map args are not the same length", sc->x));
+	    return(eval_error(sc, "map args are not the same length: ~A", sc->x));
 
 	  sc->args = s7_cons(sc, caar(sc->y), sc->args);
 	  car(sc->y) = cdar(sc->y);
@@ -16469,7 +16477,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!is_pair(sc->code)) 
 	{
 	  if (sc->code != sc->NIL)            /* (begin . 1) */
-	    return(eval_error(sc, "unexpected dot or '() at end of body?", sc->code));
+	    return(eval_error(sc, "unexpected dot or '() at end of body? ~A", sc->code));
 
 	  sc->value = sc->code;
 	  pop_stack(sc);
@@ -16694,14 +16702,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
 			      make_list_3(sc, 
-					  s7_make_string(sc, "~A: not enough arguments: ~A"), 
+					  make_protected_string(sc, "~A: not enough arguments: ~A"), 
 					  sc->code, sc->args)));
 	    
 	    if (c_function_all_args(sc->code) < len)
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
 			      make_list_3(sc, 
-					  s7_make_string(sc, "~A: too many arguments: ~A"),
+					  make_protected_string(sc, "~A: too many arguments: ~A"),
 					  sc->code, sc->args)));
 	  }
 	  /* drop into ... */
@@ -16726,14 +16734,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
 			      make_list_3(sc, 
-					  s7_make_string(sc, "~A: not enough arguments: ~A"), 
+					  make_protected_string(sc, "~A: not enough arguments: ~A"), 
 					  macsym, sc->args)));
 	    
 	    if (c_macro_all_args(sc->code) < len)
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
 			      make_list_3(sc, 
-					  s7_make_string(sc, "~A: too many arguments: ~A"),
+					  make_protected_string(sc, "~A: too many arguments: ~A"),
 					  macsym, sc->args)));
 
 	    sc->code = c_macro_call(sc->code)(sc, sc->args);
@@ -16759,7 +16767,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		return(s7_error(sc, 
 				sc->WRONG_NUMBER_OF_ARGS, 
 				make_list_3(sc, 
-					    s7_make_string(sc, "~A: not enough arguments: ~A"),
+					    make_protected_string(sc, "~A: not enough arguments: ~A"),
 					    g_procedure_source(sc, make_list_1(sc, sc->code)), 
 					    sc->args)));
 #if HAVE_PTHREADS
@@ -16775,7 +16783,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		z = car(sc->x);
 		if (is_immutable(z))
-		  return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "can't bind or set an immutable object: ~S"), z)));
+		  return(s7_error(sc, sc->ERROR,
+				  make_list_2(sc, s7_make_string(sc, "can't bind or set an immutable object: ~S"), z)));
 
 		NEW_CELL(sc, y);
 		car(y) = z;
@@ -16799,7 +16808,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		return(s7_error(sc, 
 				sc->WRONG_NUMBER_OF_ARGS, 
 				make_list_3(sc, 
-					    s7_make_string(sc, "~A: too many arguments: ~A"), 
+					    make_protected_string(sc, "~A: too many arguments: ~A"), 
 					    g_procedure_source(sc, make_list_1(sc, sc->code)), 
 					    sc->args)));
 	    } 
@@ -16827,7 +16836,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
 			      make_list_3(sc, 
-					  s7_make_string(sc, "~A: too many arguments: ~A"),
+					  make_protected_string(sc, "~A: too many arguments: ~A"),
 					  g_procedure_source(sc, make_list_1(sc, sc->code)), 
 					  sc->args)));
 	      
@@ -16861,14 +16870,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	case T_STRING:                            /* -------- string as applicable object -------- */
 	  if (cdr(sc->args) != sc->NIL)
-	    return(s7_wrong_number_of_args_error(sc, "string ref (via string as applicable object)", sc->args));
+	    return(s7_wrong_number_of_args_error(sc, "string ref (via string as applicable object): ~A", sc->args));
 	  sc->value = string_ref_1(sc, sc->code, car(sc->args));
 	  pop_stack(sc);
 	  goto START;
 
 	case T_PAIR:                              /* -------- list as applicable object -------- */
 	  if (cdr(sc->args) != sc->NIL)
-	    return(s7_wrong_number_of_args_error(sc, "list ref (via list as applicable object)", sc->args));
+	    return(s7_wrong_number_of_args_error(sc, "list ref (via list as applicable object): ~A", sc->args));
 	  /* 
 	   * I suppose we could take n args here = repeated list-refs
 	   * ((list (list 1 2) 3) 0 0) -> 1 (caar)
@@ -16879,7 +16888,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	case T_HASH_TABLE:                        /* -------- hash-table as applicable object -------- */
 	  if (cdr(sc->args) != sc->NIL)
-	    return(s7_wrong_number_of_args_error(sc, "hash-table ref (via hash-table as applicable object)", sc->args));
+	    return(s7_wrong_number_of_args_error(sc, "hash-table ref (via hash-table as applicable object): ~A", sc->args));
 	  sc->value = hash_table_ref_1(sc, sc->code, car(sc->args));
 	  pop_stack(sc);
 	  goto START;
@@ -17148,7 +17157,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_IF:
       if (!is_pair(sc->code))                               /* (if) or (if . 1) */
-	return(eval_error(sc, "(if): if needs at least 2 expressions", sc->code));
+	return(eval_error(sc, "(if): if needs at least 2 expressions: ~A", sc->code));
 
       if (!is_pair(cdr(sc->code)))                          /* (if 1) */
 	return(eval_error(sc, "(if ~A): if needs another clause", car(sc->code)));
@@ -17232,7 +17241,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  /* check for name collisions -- not sure this is required by Scheme */
 	  if (find_local_symbol(sc, sc->envir, caar(sc->x)) != sc->NIL)
-	    return(eval_error(sc, "duplicate identifier in let", caar(sc->x)));
+	    return(eval_error(sc, "duplicate identifier in let: ~A", caar(sc->x)));
 
 	  add_to_local_environment(sc, caar(sc->x), car(sc->y)); /* expansion here does not help */
 	}
@@ -17492,7 +17501,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_MACRO1:
       if (!s7_is_symbol(sc->code))
-	return(eval_error(sc, "macro name is not a symbol?", sc->code));
+	return(eval_error(sc, "macro name, ~A, is not a symbol?", sc->code));
 
       set_type(sc->value, T_MACRO | T_ANY_MACRO | T_DONT_COPY_CDR | T_DONT_COPY);
       
@@ -17654,7 +17663,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (sc->y != sc->ELSE)
 		return(eval_error(sc, "case clause key list ~A is not a list or 'else'", sc->y));
 	      if (cdr(sc->x) != sc->NIL)
-		return(eval_error(sc, "case 'else' clause is not the last clause", sc->x));
+		return(eval_error(sc, "case 'else' clause, ~A, is not the last clause", sc->x));
 	      break;
 	    }
 

@@ -626,7 +626,8 @@ XEN snd_no_such_channel_error(const char *caller, XEN snd, XEN chn)
 XEN snd_no_active_selection_error(const char *caller)
 {
   XEN_ERROR(XEN_ERROR_TYPE("no-active-selection"),
-	    XEN_LIST_1(C_TO_XEN_STRING(caller)));
+	    XEN_LIST_2(C_TO_XEN_STRING("~A: no active selection"),
+		       C_TO_XEN_STRING(caller)));
   return(XEN_FALSE);
 }
 

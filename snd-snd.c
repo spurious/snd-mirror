@@ -2651,7 +2651,8 @@ static XEN g_sound_to_integer(XEN n)
 XEN snd_no_such_sound_error(const char *caller, XEN n)
 {
   XEN_ERROR(XEN_ERROR_TYPE("no-such-sound"),
-	    XEN_LIST_2(C_TO_XEN_STRING(caller),
+	    XEN_LIST_3(C_TO_XEN_STRING("~A: no such sound: ~A"),
+		       C_TO_XEN_STRING(caller),
 		       n));
   return(XEN_FALSE);
 }
@@ -4163,7 +4164,8 @@ static void save_sound_error_handler(const char *msg, void *data)
   redirect_snd_error_to(NULL, NULL);
   redirect_snd_warning_to(NULL, NULL);
   XEN_ERROR(CANNOT_SAVE,
-	    XEN_LIST_2(C_TO_XEN_STRING((char *)data),
+	    XEN_LIST_3(C_TO_XEN_STRING("~A: ~A"),
+		       C_TO_XEN_STRING((char *)data),
 		       C_TO_XEN_STRING(msg)));
 }
 
@@ -4191,7 +4193,7 @@ static XEN g_save_sound(XEN index)
       str = C_TO_XEN_STRING(msg);
       free(msg);
       XEN_ERROR(CANNOT_SAVE,
-		XEN_LIST_2(C_TO_XEN_STRING(S_save_sound),
+		XEN_LIST_2(C_TO_XEN_STRING(S_save_sound ": can't save sound, ~A"),
 			   str));
       return(XEN_FALSE);
     }
@@ -4205,9 +4207,8 @@ static XEN g_save_sound(XEN index)
   /* if err and we got here, report it */
   if (SERIOUS_IO_ERROR(err))
     XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_save_sound),
-			 C_TO_XEN_STRING(io_error_name(err)),
-			 C_TO_XEN_INT(sp->index)));
+	      XEN_LIST_2(C_TO_XEN_STRING(S_save_sound ": IO error ~A"),
+			 C_TO_XEN_STRING(io_error_name(err))));
 	      
   return(C_INT_TO_XEN_SOUND(sp->index));
 }
@@ -4252,7 +4253,8 @@ static void open_sound_error_handler(const char *msg, void *data)
   redirect_snd_error_to(NULL, NULL);
   redirect_snd_warning_to(NULL, NULL);
   XEN_ERROR(XEN_ERROR_TYPE("not-a-sound-file"),
-	    XEN_LIST_2(C_TO_XEN_STRING((char *)data),
+	    XEN_LIST_3(C_TO_XEN_STRING("~A: ~A"),
+		       C_TO_XEN_STRING((char *)data),
 		       C_TO_XEN_STRING(msg)));
 }
 
@@ -4352,8 +4354,7 @@ open file assuming the data matches the attributes indicated unless the file act
 
   if (file == NULL) 
     XEN_ERROR(NO_SUCH_FILE,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_open_raw_sound),
-			 C_TO_XEN_STRING("no output file?")));
+	      XEN_LIST_1(C_TO_XEN_STRING(S_open_raw_sound ": no output file?")));
 
   fullname = mus_expand_filename(file);
   file_exists = mus_file_probe(fullname);
@@ -4468,11 +4469,12 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
       ht = mus_optkey_to_int(keys[2], S_save_sound_as, orig_arg[2], ht);
       df = mus_optkey_to_int(keys[3], S_save_sound_as, orig_arg[3], df);
       sr = mus_optkey_to_int(keys[4], S_save_sound_as, orig_arg[4], sr);
+
       if ((sr <= 0) && (!XEN_KEYWORD_P(keys[4])))
 	XEN_ERROR(CANNOT_SAVE,
-		  XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as),
-			     C_TO_XEN_STRING(_("srate can't be <= 0")),
+		  XEN_LIST_2(C_TO_XEN_STRING(S_save_sound_as ": srate (~A) can't be <= 0"),
 			     C_TO_XEN_INT(sr)));
+
       chan = mus_optkey_to_int(keys[5], S_save_sound_as, orig_arg[5], chan);
       if (!(XEN_KEYWORD_P(keys[6]))) 
 	{
@@ -4486,8 +4488,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
   if ((file == NULL) || 
       (directory_p(file)))
     XEN_ERROR(NO_SUCH_FILE,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_save_sound_as),
-			 C_TO_XEN_STRING("no output file?")));
+	      XEN_LIST_1(C_TO_XEN_STRING(S_save_sound_as ": no output file?")));
 
   ASSERT_SOUND(S_save_sound_as, index, 2);
 
@@ -4499,8 +4500,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
   if (ht == -1) ht = hdr->type;
   if (!(mus_header_writable(ht, -2)))
     XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as),
-			 C_TO_XEN_STRING(_("can't write this header type:")),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_save_sound_as ": can't write ~A headers"),
 			 C_TO_XEN_STRING(mus_header_type_name(ht))));
 
   if (sr == -1) 
@@ -4538,10 +4538,9 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
 
   if (!mus_header_writable(ht, df))
     XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_4(C_TO_XEN_STRING(S_save_sound_as),
-			 C_TO_XEN_STRING(_("can't write this combination of header type and data format:")),
-			 C_TO_XEN_STRING(mus_header_type_name(ht)),
-			 C_TO_XEN_STRING(mus_data_format_name(df))));
+	      XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as ": can't write ~A data to ~A headers"),
+			 C_TO_XEN_STRING(mus_data_format_name(df)),
+			 C_TO_XEN_STRING(mus_header_type_name(ht))));
 
   if (chan >= sp->nchans)
     return(snd_no_such_channel_error(S_save_sound_as, index, keys[5]));
@@ -4552,12 +4551,11 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
       for (i = 0; i < sp->nchans; i++)
 	if (edit_position > sp->chans[i]->edit_ctr)
 	  XEN_ERROR(NO_SUCH_EDIT,
-		    XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as),
-			       C_TO_XEN_STRING("edpos: ~A, but ~A chan ~A has ~A edits"),
-			       XEN_LIST_4(C_TO_XEN_INT(edit_position),
-					  C_TO_XEN_STRING(sp->short_filename),
-					  C_TO_XEN_INT(i),
-					  C_TO_XEN_INT(sp->chans[i]->edit_ctr))));
+		    XEN_LIST_5(C_TO_XEN_STRING(S_save_sound_as ": no such edit position: ~A (~S chan ~A has ~A edits)"),
+			       C_TO_XEN_INT(edit_position),
+			       C_TO_XEN_STRING(sp->short_filename),
+			       C_TO_XEN_INT(i),
+			       C_TO_XEN_INT(sp->chans[i]->edit_ctr)));
     }
 
   fname = mus_expand_filename(file);
@@ -4590,9 +4588,8 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
 	  errstr = C_TO_XEN_STRING(fname);
 	  if (fname) {free(fname); fname = NULL;}
 	  XEN_ERROR(CANNOT_SAVE,
-		    XEN_LIST_4(C_TO_XEN_STRING(S_save_sound_as),
+		    XEN_LIST_3(C_TO_XEN_STRING(S_save_sound_as ": ~A (~A)"),
 			       errstr,
-			       C_TO_XEN_INT((int)io_err),
 			       C_TO_XEN_STRING(snd_open_strerror())));
 	}
     }
@@ -4666,9 +4663,9 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
 
   if (!(mus_header_writable(ht, df)))
     XEN_ERROR(BAD_HEADER,
-	      XEN_LIST_4(C_TO_XEN_STRING(S_new_sound),
-			 C_TO_XEN_STRING("can't write this combination of data format and header type"),
-			 keys[1], keys[2]));
+	      XEN_LIST_3(C_TO_XEN_STRING(S_new_sound ": can't write ~A data to a ~A header"),
+			 keys[2], 
+			 keys[1]));
 
   if (sr <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[3], keys[3], "srate ~A <= 0?");
@@ -4689,9 +4686,9 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
     {
       if (str) {free(str); str = NULL;}
       XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
-		XEN_LIST_3(C_TO_XEN_STRING(S_new_sound), 
-			   C_TO_XEN_STRING(snd_io_strerror()), 
-			   keys[0]));
+		XEN_LIST_3(C_TO_XEN_STRING(S_new_sound ": ~S, ~A"),
+			   keys[0],
+			   C_TO_XEN_STRING(snd_io_strerror())));
     }
 
   chan = snd_reopen_write(str);
@@ -5193,7 +5190,8 @@ static void apply_controls_error(const char *msg, void *data)
   redirect_snd_warning_to(NULL, NULL);
   redirect_snd_error_to(NULL, NULL);
   XEN_ERROR(XEN_ERROR_TYPE("cannot-apply-controls"),
-	    XEN_LIST_2(C_TO_XEN_STRING((char *)data),
+	    XEN_LIST_3(C_TO_XEN_STRING("~A: ~A"),
+		       C_TO_XEN_STRING((char *)data),
 		       C_TO_XEN_STRING(msg)));
 }
 
@@ -5230,8 +5228,7 @@ where each inner list entry can also be " PROC_FALSE "."
       if (sp->applying)
 	{
 	  XEN_ERROR(XEN_ERROR_TYPE("cannot-apply-controls"),
-		    XEN_LIST_2(C_TO_XEN_STRING(S_controls_to_channel),
-			       C_TO_XEN_STRING("already applying controls")));
+		    XEN_LIST_1(C_TO_XEN_STRING(S_controls_to_channel ": already applying controls")));
 	}
       if (XEN_INT64_T_P(beg)) apply_beg = XEN_TO_C_INT64_T(beg); else apply_beg = 0;
       if (XEN_INT64_T_P(dur)) apply_dur = XEN_TO_C_INT64_T(dur); else apply_dur = 0;
@@ -5388,8 +5385,7 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
       if (sp->applying)
 	{
 	  XEN_ERROR(XEN_ERROR_TYPE("cannot-apply-controls"),
-		    XEN_LIST_2(C_TO_XEN_STRING(S_apply_controls),
-			       C_TO_XEN_STRING("already applying controls")));
+		    XEN_LIST_1(C_TO_XEN_STRING(S_apply_controls ": already applying controls")));
 	}
 
       if (XEN_INT64_T_P(beg)) apply_beg = XEN_TO_C_INT64_T(beg); else apply_beg = 0;
@@ -5822,7 +5818,10 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
       else
 	{
 	  if (fullname) free(fullname);
-	  XEN_ERROR(NO_SUCH_CHANNEL, XEN_LIST_3(C_TO_XEN_STRING(S_channel_amp_envs), filename, chan));
+	  XEN_ERROR(NO_SUCH_CHANNEL, 
+		    XEN_LIST_3(C_TO_XEN_STRING(S_channel_amp_envs ": no such channel (~A in ~S)"),
+			       chan,
+			       filename));
 	  return(XEN_FALSE);
 	}
     }
@@ -5830,13 +5829,18 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
   if (!(mus_file_probe(fullname)))
     {
       if (fullname) free(fullname);
-      XEN_ERROR(NO_SUCH_FILE, XEN_LIST_2(C_TO_XEN_STRING(S_channel_amp_envs), filename));
+      XEN_ERROR(NO_SUCH_FILE, 
+		XEN_LIST_2(C_TO_XEN_STRING(S_channel_amp_envs ": no such file: ~S"),
+			   filename));
       return(XEN_FALSE);
     }
   if (mus_sound_chans(fullname) < chn)
     {
       if (fullname) free(fullname);
-      XEN_ERROR(NO_SUCH_CHANNEL, XEN_LIST_3(C_TO_XEN_STRING(S_channel_amp_envs), filename, chan));
+      XEN_ERROR(NO_SUCH_CHANNEL, 
+		XEN_LIST_3(C_TO_XEN_STRING(S_channel_amp_envs ": no such channel (~A in ~S)"),
+			   chan,
+			   filename));
       return(XEN_FALSE);
     }
 

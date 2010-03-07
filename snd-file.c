@@ -1181,7 +1181,8 @@ static file_info *tackle_bad_header(const char *fullname, read_only_t read_only,
 	caller = S_open_sound;
       else caller = S_view_sound;
       XEN_ERROR(BAD_HEADER,
-		XEN_LIST_2(C_TO_XEN_STRING(caller),
+		XEN_LIST_3(C_TO_XEN_STRING("~A: ~S has a bad header?"),
+			   C_TO_XEN_STRING(caller),
 			   C_TO_XEN_STRING(fullname)));
       return(NULL);
     }
@@ -2175,7 +2176,8 @@ static void snd_update_error_handler(const char *msg, void *data)
   redirect_snd_error_to(NULL, NULL);
   redirect_snd_warning_to(NULL, NULL);
   XEN_ERROR(CANT_UPDATE_FILE,
-	    XEN_LIST_2(C_TO_XEN_STRING((char *)data),
+	    XEN_LIST_3(C_TO_XEN_STRING("~A: ~A"),
+		       C_TO_XEN_STRING((char *)data),
 		       C_TO_XEN_STRING(msg)));
 }
 
@@ -5006,12 +5008,13 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
 
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_setB S_sound_loop_info, snd));
+
   if ((sp->user_read_only == FILE_READ_ONLY) || 
       (sp->file_read_only == FILE_READ_ONLY))
     XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_setB S_sound_loop_info),
-			 C_TO_XEN_STRING(sp->filename),
-			 C_TO_XEN_STRING(_("sound is write-protected"))));
+	      XEN_LIST_2(C_TO_XEN_STRING(S_setB S_sound_loop_info ": ~S is write-protected"),
+			 C_TO_XEN_STRING(sp->filename)));
+
   hdr = sp->hdr;
   if (len > 0) 
     {
@@ -5088,7 +5091,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
 	(err != IO_SAVE_HOOK_CANCELLATION))
       {
 	XEN_ERROR(CANNOT_SAVE,
-		  XEN_LIST_3(C_TO_XEN_STRING(S_setB S_sound_loop_info),
+		  XEN_LIST_3(C_TO_XEN_STRING(S_setB S_sound_loop_info ": can't save ~S, ~A"),
 			     C_TO_XEN_STRING(tmp_file),
 			     C_TO_XEN_STRING(snd_io_strerror())));
 	return(XEN_FALSE); /* not executed -- just for emphasis */
@@ -5104,7 +5107,7 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
 	    free(tmp_file);
 	    sp->writing = false;
 	    XEN_ERROR(CANT_UPDATE_FILE,
-		      XEN_LIST_4(C_TO_XEN_STRING(S_setB S_sound_loop_info),
+		      XEN_LIST_4(C_TO_XEN_STRING(S_setB S_sound_loop_info ": can't update ~S: ~A ~A"),
 				 C_TO_XEN_STRING(sp->filename),
 				 C_TO_XEN_STRING(io_error_name(err)),
 				 C_TO_XEN_STRING(snd_io_strerror())));

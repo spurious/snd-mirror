@@ -231,12 +231,12 @@ static axis_context *get_ax(chan_info *cp, int ax_id, const char *caller)
   if ((cp) && (AXIS_CONTEXT_ID_OK(ax_id)))
     return(set_context(cp, (chan_gc_t)ax_id));
   XEN_ERROR(XEN_ERROR_TYPE("no-such-graphics-context"),
-	    XEN_LIST_3(C_TO_XEN_STRING(caller),
-		       C_TO_XEN_STRING("axis: ~A, sound index: ~A (~A), chan: ~A"),
-		       XEN_LIST_4(C_TO_XEN_INT(ax_id),
-				  C_INT_TO_XEN_SOUND(cp->sound->index),
-				  C_TO_XEN_STRING(cp->sound->short_filename),
-				  C_TO_XEN_INT(cp->chan))));
+	    XEN_LIST_6(C_TO_XEN_STRING("~A: no such graphics context: ~A, sound index: ~A (~A), chan: ~A"),
+		       C_TO_XEN_STRING(caller),
+		       C_TO_XEN_INT(ax_id),
+		       C_INT_TO_XEN_SOUND(cp->sound->index),
+		       C_TO_XEN_STRING(cp->sound->short_filename),
+		       C_TO_XEN_INT(cp->chan)));
   return(NULL);
 }
 
@@ -257,14 +257,14 @@ axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller)
       }
 
   XEN_ERROR(XEN_ERROR_TYPE("no-such-axis"),
-	    XEN_LIST_3(C_TO_XEN_STRING(caller),
-		       ((!(cp->squelch_update)) || (!(AXIS_INFO_ID_OK(ap_id)))) ?
-		       C_TO_XEN_STRING("axis: ~A of sound ~A (~A), chan: ~A (axis should be " S_time_graph ", " S_lisp_graph ", or " S_transform_graph ")") :
-		       C_TO_XEN_STRING("axis: ~A of sound ~A (~A), chan: ~A does not exist, probably because output is squelched"),
-		       XEN_LIST_4(C_TO_XEN_INT((int)(ap_id)),
-				  C_INT_TO_XEN_SOUND(cp->sound->index),
-				  C_TO_XEN_STRING(cp->sound->short_filename),
-				  C_TO_XEN_INT(cp->chan))));
+	    XEN_LIST_6(((!(cp->squelch_update)) || (!(AXIS_INFO_ID_OK(ap_id)))) ?
+		         C_TO_XEN_STRING("~A: no such axis: ~A of sound ~A (~A), chan: ~A (axis should be " S_time_graph ", " S_lisp_graph ", or " S_transform_graph ")") :
+		         C_TO_XEN_STRING("~A: no such axis: ~A of sound ~A (~A), chan: ~A does not exist, probably because output is squelched"),
+		       C_TO_XEN_STRING(caller),
+		       C_TO_XEN_INT((int)(ap_id)),
+		       C_INT_TO_XEN_SOUND(cp->sound->index),
+		       C_TO_XEN_STRING(cp->sound->short_filename),
+		       C_TO_XEN_INT(cp->chan)));
   return(NULL);
 }
 
@@ -388,13 +388,13 @@ static point_t *vector_to_points(XEN pts, const char *caller, int *vector_len)
   vlen = XEN_VECTOR_LENGTH(pts);
   if (vlen & 1)
     XEN_ERROR(XEN_ERROR_TYPE("bad-length"),
-	      XEN_LIST_3(C_TO_XEN_STRING(caller),
-			 C_TO_XEN_STRING("length of vector of points (~A) must be even"),
+	      XEN_LIST_3(C_TO_XEN_STRING("~A: length of vector of points (~A) must be even"),
+			 C_TO_XEN_STRING(caller),
 			 C_TO_XEN_INT(vlen)));
   if (vlen <= 0) 
     XEN_ERROR(NO_DATA,
-	      XEN_LIST_3(C_TO_XEN_STRING(caller), 
-			 C_TO_XEN_STRING("empty vector?"), 
+	      XEN_LIST_3(C_TO_XEN_STRING("~A: empty points vector? ~A"), 
+			 C_TO_XEN_STRING(caller), 
 			 pts));
   len = vlen / 2;
   (*vector_len) = len;
@@ -819,7 +819,7 @@ static XEN g_widget_position(XEN wid)
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (!w)
     XEN_ERROR(NO_SUCH_WIDGET,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_widget_position),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_widget_position ": no such widget: ~A"),
 			 wid));
   return(XEN_LIST_2(C_TO_XEN_INT(widget_x(w)),
 		    C_TO_XEN_INT(widget_y(w))));
@@ -837,9 +837,8 @@ static XEN g_set_widget_position(XEN wid, XEN xy)
 			mus_iclamp(0, XEN_TO_C_INT(XEN_CAR(xy)), LOTSA_PIXELS),
 			mus_iclamp(0, XEN_TO_C_INT(XEN_CADR(xy)), LOTSA_PIXELS));
   else XEN_ERROR(NO_SUCH_WIDGET,
-		 XEN_LIST_3(C_TO_XEN_STRING(S_setB S_widget_position),
-			    wid,
-			    xy));
+		 XEN_LIST_2(C_TO_XEN_STRING(S_setB S_widget_position ": no such widget: ~A"),
+			    wid));
   return(wid);
 }
 
@@ -852,7 +851,7 @@ static XEN g_widget_size(XEN wid)
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
   if (!w)
     XEN_ERROR(NO_SUCH_WIDGET,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_widget_size),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_widget_size ": no such widget: ~A"),
 			 wid));
   return(XEN_LIST_2(C_TO_XEN_INT(widget_width(w)),
 		    C_TO_XEN_INT(widget_height(w))));
@@ -870,9 +869,8 @@ static XEN g_set_widget_size(XEN wid, XEN wh)
 		    mus_iclamp(1, XEN_TO_C_INT(XEN_CAR(wh)), LOTSA_PIXELS),
 		    mus_iclamp(1, XEN_TO_C_INT(XEN_CADR(wh)), LOTSA_PIXELS));
   else XEN_ERROR(NO_SUCH_WIDGET,
-		 XEN_LIST_3(C_TO_XEN_STRING(S_setB S_widget_size),
-			    wid,
-			    wh));
+		 XEN_LIST_2(C_TO_XEN_STRING(S_setB S_widget_size ": no such widget: ~A"),
+			    wid));
   return(wid);
 }
 
@@ -937,7 +935,7 @@ static XEN g_widget_text(XEN wid)
 #endif
     }
   else XEN_ERROR(NO_SUCH_WIDGET,
-		 XEN_LIST_2(C_TO_XEN_STRING(S_widget_text),
+		 XEN_LIST_2(C_TO_XEN_STRING(S_widget_text ": no such widget: ~A"),
 			    wid));
   return(res);
 }
@@ -966,9 +964,8 @@ static XEN g_set_widget_text(XEN wid, XEN text)
 #endif
     }
   else XEN_ERROR(NO_SUCH_WIDGET,
-		 XEN_LIST_3(C_TO_XEN_STRING(S_setB S_widget_text),
-			    wid,
-			    text));
+		 XEN_LIST_2(C_TO_XEN_STRING(S_setB S_widget_text ": no such widget: ~A"),
+			    wid));
   return(text);
 }
 
@@ -988,7 +985,7 @@ static XEN g_hide_widget(XEN wid)
 #endif
     }
   else XEN_ERROR(NO_SUCH_WIDGET,
-		 XEN_LIST_2(C_TO_XEN_STRING(S_hide_widget),
+		 XEN_LIST_2(C_TO_XEN_STRING(S_hide_widget ": no such widget: ~A"),
 			    wid));
   return(wid);
 }
@@ -1009,7 +1006,7 @@ static XEN g_show_widget(XEN wid)
 #endif
     }
   else XEN_ERROR(NO_SUCH_WIDGET,
-		 XEN_LIST_2(C_TO_XEN_STRING(S_show_widget),
+		 XEN_LIST_2(C_TO_XEN_STRING(S_show_widget ": no such widget: ~A"),
 			    wid));
   return(wid);
 }
@@ -1024,7 +1021,7 @@ static XEN g_focus_widget(XEN wid)
   if (w)
     goto_window(w);
   else XEN_ERROR(NO_SUCH_WIDGET,
-		 XEN_LIST_2(C_TO_XEN_STRING(S_focus_widget),
+		 XEN_LIST_2(C_TO_XEN_STRING(S_focus_widget ": no such widget: ~A"),
 			    wid));
   return(wid);
 }

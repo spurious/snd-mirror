@@ -1258,7 +1258,7 @@ static XEN g_insert_selection(XEN beg, XEN snd, XEN chn)
 
       if (SERIOUS_IO_ERROR(io_err))
 	XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
-		  XEN_LIST_2(C_TO_XEN_STRING(S_insert_selection),
+		  XEN_LIST_2(C_TO_XEN_STRING(S_insert_selection ": IO error ~A"),
 			     C_TO_XEN_STRING(io_error_name(io_err))));
       return(XEN_FALSE);
     }
@@ -1298,7 +1298,7 @@ static XEN g_mix_selection(XEN beg, XEN snd, XEN chn, XEN sel_chan)
 
       if (SERIOUS_IO_ERROR(io_err))
 	XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
-		  XEN_LIST_2(C_TO_XEN_STRING(S_mix_selection),
+		  XEN_LIST_2(C_TO_XEN_STRING(S_mix_selection ": IO error ~A"),
 			     C_TO_XEN_STRING(io_error_name(io_err))));
 
       if (id == -1) return(XEN_FALSE);
@@ -1332,7 +1332,7 @@ static XEN g_selection_to_mix(void)
 	  if (tempfile) free(tempfile);
 	  free_sync_info(si_out);
 	  XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
-		    XEN_LIST_2(C_TO_XEN_STRING(S_selection_to_mix),
+		    XEN_LIST_2(C_TO_XEN_STRING(S_selection_to_mix ": IO error ~A"),
 			       C_TO_XEN_STRING(io_error_name(io_err))));
 	}
 
@@ -1622,26 +1622,22 @@ save the current selection in file using the indicated file attributes.  If chan
 
   if (file == NULL) 
     XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
-	      XEN_LIST_2(C_TO_XEN_STRING(S_save_selection),
-			 C_TO_XEN_STRING("no output file?")));
+	      XEN_LIST_1(C_TO_XEN_STRING(S_save_selection ": no output file?")));
 
   if ((type != -1) && (!(mus_header_writable(type, -2))))
     XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_save_selection),
-			 C_TO_XEN_STRING(_("can't write this header type:")),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_save_selection ": can't write a ~A header"),
 			 C_TO_XEN_STRING(mus_header_type_name(type))));
 
   if ((type != -1) && (format != -1) && (!(mus_header_writable(type, format))))
     XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_4(C_TO_XEN_STRING(S_save_selection),
-			 C_TO_XEN_STRING(_("can't write this combination of header type and data format:")),
-			 C_TO_XEN_STRING(mus_header_type_name(type)),
-			 C_TO_XEN_STRING(mus_data_format_name(format))));
+	      XEN_LIST_3(C_TO_XEN_STRING(S_save_selection ": can't write ~A data to a ~A header"),
+			 C_TO_XEN_STRING(mus_data_format_name(format)),
+			 C_TO_XEN_STRING(mus_header_type_name(type))));
 
   if ((sr != -1) && (sr <= 0))
     XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_3(C_TO_XEN_STRING(S_save_selection),
-			 C_TO_XEN_STRING(_("srate can't be <= 0")),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_save_selection ": srate (~A) can't be <= 0"),
 			 C_TO_XEN_INT(sr)));
 
   fname = mus_expand_filename(file);
@@ -1652,7 +1648,8 @@ save the current selection in file using the indicated file attributes.  If chan
       (io_err != IO_INTERRUPTED) &&
       (io_err != IO_SAVE_HOOK_CANCELLATION))
     XEN_ERROR(CANNOT_SAVE,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_save_selection),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_save_selection ": can't save ~S, ~A"),
+			 keys[0],
 			 C_TO_XEN_STRING(snd_open_strerror())));
   return(args[orig_arg[0] - 1]);
 }

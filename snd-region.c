@@ -438,7 +438,7 @@ static void make_region_readable(region *r)
       else
 	{
 	  XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
-		    XEN_LIST_3(C_TO_XEN_STRING(_("can't read region file!")),
+		    XEN_LIST_3(C_TO_XEN_STRING("can't read region file ~S, ~A"),
 			       C_TO_XEN_STRING(r->filename),
 			       C_TO_XEN_STRING(snd_open_strerror())));
 	}
@@ -1475,7 +1475,8 @@ static XEN g_region_to_integer(XEN n)
 static XEN snd_no_such_region_error(const char *caller, XEN n)
 {
   XEN_ERROR(XEN_ERROR_TYPE("no-such-region"),
-	    XEN_LIST_2(C_TO_XEN_STRING(caller),
+	    XEN_LIST_3(C_TO_XEN_STRING("~A: no such region, ~A"),
+		       C_TO_XEN_STRING(caller),
 		       n));
   return(XEN_FALSE);
 }
@@ -1546,12 +1547,12 @@ insert region data into snd's channel chn starting at start-samp"
     return(snd_no_such_region_error(S_insert_region, reg_n));
 
   samp = beg_to_sample(samp_n, S_insert_region);
-
   err = paste_region_2(rg, cp, false, samp);
 
   if (SERIOUS_IO_ERROR(err))
-    XEN_ERROR(CANT_UPDATE_FILE,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_insert_region),
+    XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
+	      XEN_LIST_3(C_TO_XEN_STRING(S_insert_region ": can't edit ~A (region access problem?), ~A"),
+			 C_TO_XEN_STRING(cp->sound->filename),
 			 C_TO_XEN_STRING(io_error_name(err))));
   update_graph(cp);
   return(reg_n);
@@ -1832,7 +1833,7 @@ static void save_region_to_xen_error(const char *msg, void *data)
 {
   redirect_snd_error_to(NULL, NULL);
   XEN_ERROR(CANNOT_SAVE,
-	    XEN_LIST_2(C_TO_XEN_STRING(S_save_region),
+	    XEN_LIST_2(C_TO_XEN_STRING(S_save_region ": can't save ~S"),
 		       C_TO_XEN_STRING(msg)));
 }
 
@@ -1873,8 +1874,7 @@ using data format (default depends on machine byte order), header type (" S_mus_
 
   if (file == NULL) 
     XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
-	      XEN_LIST_2(C_TO_XEN_STRING(S_save_region),
-			 C_TO_XEN_STRING("no output file?")));
+	      XEN_LIST_1(C_TO_XEN_STRING(S_save_region ": no output file?")));
 
   name = mus_expand_filename(file);
 
@@ -1934,8 +1934,8 @@ it returns a list of the new mixes"
 
   /* id might legitmately be invalid mix id if with_mix_tags is #f or virtual mix not ok */
   if (SERIOUS_IO_ERROR(err))
-    XEN_ERROR(CANT_UPDATE_FILE,
-	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region),
+    XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_mix_region ": can't edit, ~A"),
 			 C_TO_XEN_STRING(io_error_name(err))));
   
   if (id == -1) return(XEN_FALSE);

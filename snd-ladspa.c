@@ -485,10 +485,9 @@ a user interface edit the parameter in a useful way."
 
   if (!psDescriptor) {
     XEN_ERROR(XEN_ERROR_TYPE("no-such-plugin"),
-	      XEN_LIST_3(C_TO_XEN_STRING(S_analyse_ladspa),
-			 C_TO_XEN_STRING("plugin file: ~A, plugin label: ~A"),
-                         XEN_LIST_2(ladspa_plugin_filename,
-				    ladspa_plugin_label)));
+	      XEN_LIST_3(C_TO_XEN_STRING(S_analyse_ladspa ": no such plugin file: ~A, plugin label: ~A"),
+                         ladspa_plugin_filename,
+			 ladspa_plugin_label));
     return(XEN_FALSE);
   }
 
@@ -630,7 +629,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
 
   if (!psDescriptor)
     XEN_ERROR(XEN_ERROR_TYPE("no-such-plugin"),
-	      XEN_LIST_2(C_TO_XEN_STRING(S_apply_ladspa),
+	      XEN_LIST_2(C_TO_XEN_STRING(S_apply_ladspa ": no such plugin: ~A"),
 			 ladspa_plugin_configuration));
 
   isLADSPAPluginSupported(psDescriptor);
@@ -638,9 +637,8 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   outchans = lOutputCount;
   if (outchans == 0)
     XEN_ERROR(XEN_ERROR_TYPE("plugin-error"),
-	      XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
-			 ladspa_plugin_configuration,
-			 C_TO_XEN_STRING(_("Snd plugins must have at least 1 output"))));
+	      XEN_LIST_2(C_TO_XEN_STRING(S_apply_ladspa ": plugins must have at least 1 output, ~A"),
+			 ladspa_plugin_configuration));
 
   if (inchans != readers)
     {
@@ -648,7 +646,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
       errmsg = C_TO_XEN_STRING(msg);
       free(msg);
       XEN_ERROR(XEN_ERROR_TYPE("plugin-error"),
-		XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
+		XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa ": ~A, ~A"),
 			   ladspa_plugin_configuration,
 			   errmsg));
     }
@@ -703,9 +701,8 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   psHandle = (LADSPA_Handle *)psDescriptor->instantiate(psDescriptor, lSampleRate);
   if (!psHandle)
     XEN_ERROR(XEN_ERROR_TYPE("plugin-error"),
-	      XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
-			 ladspa_plugin_configuration,
-			 C_TO_XEN_STRING("plugin did not instantiate")));
+	      XEN_LIST_2(C_TO_XEN_STRING(S_apply_ladspa ": ~A plugin did not instantiate"),
+			 ladspa_plugin_configuration));
 
   /* Temporary file name. */
   ofile = snd_tempnam();
@@ -727,7 +724,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
 	  if (pfControls) free(pfControls);
 	  psDescriptor->cleanup(psHandle);
 	  XEN_ERROR(CANNOT_SAVE,
-		    XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa),
+		    XEN_LIST_3(C_TO_XEN_STRING(S_apply_ladspa ": can't save ~S, ~A"),
 			       C_TO_XEN_STRING(ofile),
 			       C_TO_XEN_STRING(snd_io_strerror())));
 	  return(XEN_FALSE);
