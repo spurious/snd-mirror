@@ -6547,8 +6547,55 @@ comb filter.  If both scale terms are 0.0, we get a pure delay line.
 
 <p>all-pass filters are used extensively in reverberation; 
 see <a href="sndscm.html#jcrevdoc">jcrev</a> or <a href="sndscm.html#nrev">nrev</a>.
-To get the "all-pass" behavior, set feedback equal to -feedforward. 
+To get the "all-pass" behavior, set feedback equal to -feedforward. Here's an example
+(based on John Chowning's ancient reverb) that was inspired by the bleed-through you get on
+old analog tapes &mdash; the reverb slightly precedes the direct signal:
 </p>
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=12 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff">
+<pre>
+(define (later file dly rev)
+  (let* ((allpass1 (<em class=red>make-all-pass</em> -0.700 0.700 1051))
+         (allpass2 (<em class=red>make-all-pass</em> -0.700 0.700  337))
+         (allpass3 (<em class=red>make-all-pass</em> -0.700 0.700  113))
+         (comb1 (make-comb 0.742 4799))
+         (comb2 (make-comb 0.733 4999))
+         (comb3 (make-comb 0.715 5399))
+         (comb4 (make-comb 0.697 5801))
+         (file-dur (mus-sound-frames file))
+         (decay-dur (mus-srate))
+         (len (floor (+ decay-dur file-dur)))
+         (rd (make-readin file)) ; the direct signal (via sound-let below)
+         (d (make-delay dly))    ; this delays the direct signal
+         (backup (min 4799 dly)))
+    (run
+     (do ((i 0 (+ 1 i)))
+         ((= i len))
+       (let* ((inval (readin rd))
+              (allpass-sum (<em class=red>all-pass</em> allpass3 
+                             (<em class=red>all-pass</em> allpass2 
+                               (<em class=red>all-pass</em> allpass1 
+                                 (* rev inval)))))
+              (comb-sum 
+               (+ (comb comb1 allpass-sum)
+                  (comb comb2 allpass-sum)
+                  (comb comb3 allpass-sum)
+                  (comb comb4 allpass-sum)))
+              (orig (delay d inval)))  
+         (if (&gt;= i backup)
+             (outa (- i backup) (+ comb-sum orig))))))))
+
+(with-sound () 
+  (sound-let ((tmp () (fm-violin 0 .1 440 .1))) 
+    (later tmp 10000 .1)))
+</pre>
+</td>
+</tr>
+</table>
+
 <br><br>
 
 

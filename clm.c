@@ -7336,7 +7336,8 @@ mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
   rdin *gen = (rdin *)ptr;
   mus_float_t result = 0.0;
 
-  if (chan >= gen->chans)
+  if ((chan >= gen->chans) ||
+      (samp < 0))
     return(0.0);
 
   if ((samp <= gen->data_end) &&
@@ -7995,7 +7996,9 @@ mus_float_t mus_out_any_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_flo
 {
   rdout *gen = (rdout *)ptr;
   
-  if ((chan >= gen->chans) || (!(gen->obufs)))
+  if ((chan >= gen->chans) || 
+      (!(gen->obufs)) ||
+      (samp < 0))
     return(val);
 
   if (gen->safety == 1)
@@ -8113,7 +8116,7 @@ mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chan
 
 mus_float_t mus_sample_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_float_t val)
 {
-  return(mus_write_sample(ptr, samp, chan, val)); /* write_sample -> write_sample in class struct -> mus_in_any_from_file for example */
+  return(mus_write_sample(ptr, samp, chan, val)); /* write_sample -> write_sample in class struct -> mus_out_any_to_file for example */
 }
 
 
@@ -8129,7 +8132,7 @@ int mus_close_file(mus_any *ptr)
 
 mus_float_t mus_out_any(mus_long_t samp, mus_float_t val, int chan, mus_any *IO)
 {
-  if (IO) 
+  if ((IO) && (samp >= 0))
     return(mus_write_sample(IO, samp, chan, val));
   return(val);
 }

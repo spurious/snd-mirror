@@ -198,9 +198,6 @@ static XEN g_snd_s7_error_handler(XEN args)
 #endif
   if (ss->xen_error_handler)
     (*(ss->xen_error_handler))(s7_string(s7_car(args)), (void *)NULL);
-
-  /* TODO: shouldn't there be some default here!? */
-
   return(s7_f(s7));
 }
 #endif
@@ -214,30 +211,21 @@ void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *da
 #if HAVE_SCHEME
   if (handler == NULL)
     s7_symbol_set_value(s7, s7_make_symbol(s7, "*error-hook*"), s7_nil(s7));
-  else s7_eval_c_string(s7, "(set! *error-hook*                           \n\
-                               (lambda (tag args)                         \n\
-                                 (_snd_s7_error_handler_                  \n\
-                                   (string-append                         \n\
-                                     (object->string args)                \n\
-                                     (if (and (*error-info* 2)            \n\
-                                              (string? (*error-info* 4))  \n\
-                                              (number? (*error-info* 3))) \n\
-                                         (format #f \"~%~S[~D]: ~A~%\"    \n\
-                                                 (*error-info* 4)         \n\
-                                                 (*error-info* 3)         \n\
-                                                 (*error-info* 2))        \n\
+  else s7_eval_c_string(s7, "(set! *error-hook*                               \n\
+                               (lambda (tag args)                             \n\
+                                 (_snd_s7_error_handler_                      \n\
+                                   (string-append                             \n\
+                                     (apply format #f (car args) (cdr args))  \n\
+                                     (if (and (*error-info* 2)                \n\
+                                              (string? (*error-info* 4))      \n\
+                                              (number? (*error-info* 3)))     \n\
+                                         (format #f \"~%~S[~D]: ~A~%\"        \n\
+                                                 (*error-info* 4)             \n\
+                                                 (*error-info* 3)             \n\
+                                                 (*error-info* 2))            \n\
                                          \"\")))))");
 #endif
 }
-/* TODO: xen error args lists need to be acceptable to format */
-
-/* fix all the error calls: 
- *    :(frames 0 1)
- *    ;no-such-channel ("frames" "chan: ~A, sound index: ~A (~A, chans: ~A)" (1 0 "oboe.snd" 1))
- * which ideally would be
- *    ;no-such-channel (frames chan: 1, sound: 0 ("oboe.snd", :chans: 1))
- * followed by some indication of where the error occurred if in a file, and a stacktrace if it's useful
- */
 
 
 void redirect_snd_print_to(void (*handler)(const char *msg, void *ufd), void *data)

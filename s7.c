@@ -3641,60 +3641,6 @@ static int integer_length(s7_Int a)
 static int s7_int_max = 0, s7_int_min = 0, s7_int_bits = 0, s7_int_digits = 0; /* initialized later */
 static int s7_int_digits_by_radix[17];
 
-static s7_num_t num_add(s7_num_t a, s7_num_t b) 
-{
-  s7_num_t ret;
-  ret.type = a.type | b.type;
-  
-  switch (num_type(ret))
-    {
-    case NUM_INT: 
-      integer(ret) = integer(a) + integer(b);
-      break;
-      
-    case NUM_RATIO:
-      {
-	s7_Int d1, d2, n1, n2;
-	d1 = num_to_denominator(a);
-	n1 = num_to_numerator(a);
-	d2 = num_to_denominator(b);
-	n2 = num_to_numerator(b);
-	if (d1 == d2)                                     /* the easy case -- if overflow here, it matches the int case */
-	  return(make_ratio(n1 + n2, d1));                /* d1 can't be zero */
-
-#if (!WITH_GMP)
-	if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
-	    (n1 > s7_int_max) || (n2 > s7_int_max) ||
-	    (n1 < s7_int_min) || (n2 < s7_int_min))
-	  {
-	    int d1bits, d2bits;
-	    d1bits = integer_length(d1);
-	    d2bits = integer_length(d2);
-	    if (((d1bits + d2bits) > s7_int_bits) ||
-		((d1bits + integer_length(n2)) > (s7_int_bits - 1)) ||
-		((d2bits + integer_length(n1)) > (s7_int_bits - 1)))
-	      return(make_real(((long double)n1 / (long double)d1) + ((long double)n2 / (long double)d2)));
-	  }
-#endif
-	return(make_ratio(n1 * d2 + n2 * d1, d1 * d2));
-      }
-      break;
-      
-    case NUM_REAL2:
-    case NUM_REAL:
-      real(ret) = num_to_real(a) + num_to_real(b);
-      break;
-      
-    default:
-      /* NUM_COMPLEX is 4 separate types */
-      return(make_complex(num_to_real_part(a) + num_to_real_part(b),
-			  num_to_imag_part(a) + num_to_imag_part(b)));
-      break;
-    }
-  return(ret);
-}
-
-
 static s7_num_t num_negate(s7_num_t a)
 {
   s7_num_t ret;
@@ -3773,59 +3719,6 @@ static s7_num_t num_sub(s7_num_t a, s7_num_t b)
     default:
       return(make_complex(num_to_real_part(a) - num_to_real_part(b),
 			  num_to_imag_part(a) - num_to_imag_part(b)));
-      break;
-    }
-  return(ret);
-}
-
-
-static s7_num_t num_mul(s7_num_t a, s7_num_t b) 
-{
-  s7_num_t ret;
-  ret.type = a.type | b.type;
-  
-  switch (num_type(ret))
-    {
-    case NUM_INT: 
-      integer(ret) = integer(a) * integer(b);
-      break;
-      
-    case NUM_RATIO:
-      {
-	s7_Int d1, d2, n1, n2;
-	d1 = num_to_denominator(a);
-	n1 = num_to_numerator(a);
-	d2 = num_to_denominator(b);
-	n2 = num_to_numerator(b);
-#if (!WITH_GMP)
-	if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
-	    (n1 > s7_int_max) || (n2 > s7_int_max) ||
-	    (n1 < s7_int_min) || (n2 < s7_int_min))
-	  {
-	    if ((integer_length(d1) + integer_length(d2) > s7_int_bits) ||
-		(integer_length(n1) + integer_length(n2) > s7_int_bits))
-	      return(make_real(((long double)n1 / (long double)d1) * ((long double)n2 / (long double)d2)));
-	  }
-#endif
-	return(make_ratio(n1 * n2, d1 * d2));
-      }
-      break;
-      
-    case NUM_REAL2:
-    case NUM_REAL:
-      real(ret) = num_to_real(a) * num_to_real(b);
-      break;
-      
-    default:
-      {
-	s7_Double r1, r2, i1, i2;
-	r1 = num_to_real_part(a);
-	r2 = num_to_real_part(b);
-	i1 = num_to_imag_part(a);
-	i2 = num_to_imag_part(b);
-	return(make_complex(r1 * r2 - i1 * i2, 
-			    r1 * i2 + r2 * i1));
-      }
       break;
     }
   return(ret);
@@ -6001,9 +5894,9 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 {
   #define H_add "(+ ...) adds its arguments"
-  int i;
+  int i, ret_type;
   s7_pointer x;
-  s7_num_t n;
+  s7_num_t a, b;
 
 #if (!WITH_GMP)
   if (args == sc->NIL)
@@ -6013,33 +5906,90 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
       return(s7_wrong_type_arg_error(sc, "+", 1, car(args), "a number"));
 #endif
 
-  n = number(car(args));
+  a = number(car(args));
+
   for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
     {
 #if WITH_GMP
-      switch (n.type)
+      switch (a.type)
 	{
 	case NUM_INT:
-	  if ((integer(n) > LONG_MAX) ||
-	      (integer(n) < LONG_MIN))
-	    return(big_add(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(n)), x)));
+	  if ((integer(a) > LONG_MAX) ||
+	      (integer(a) < LONG_MIN))
+	    return(big_add(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(a)), x)));
 	  break;
 
 	case NUM_RATIO:
-	  if ((numerator(n) > LONG_MAX) ||
-	      (denominator(n) > LONG_MAX) ||
-	      (numerator(n) < LONG_MIN))
-	    return(big_add(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, (numerator(n)), denominator(n)), x)));
+	  if ((numerator(a) > LONG_MAX) ||
+	      (denominator(a) > LONG_MAX) ||
+	      (numerator(a) < LONG_MIN))
+	    return(big_add(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, (numerator(a)), denominator(a)), x)));
 	  break;
 	}
 #else
-    if (!s7_is_number(car(x)))
-      return(s7_wrong_type_arg_error(sc, "+", i, car(x), "a number"));
+      if (!s7_is_number(car(x)))
+	return(s7_wrong_type_arg_error(sc, "+", i, car(x), "a number"));
 #endif
-      n = num_add(n, number(car(x)));
+
+      b = number(car(x));
+      ret_type = a.type | b.type;
+  
+      switch (ret_type)
+	{
+	case NUM_INT: 
+	  integer(a) += integer(b);
+	  break;
+      
+	case NUM_RATIO:
+	  {
+	    s7_Int d1, d2, n1, n2;
+	    d1 = num_to_denominator(a);
+	    n1 = num_to_numerator(a);
+	    d2 = num_to_denominator(b);
+	    n2 = num_to_numerator(b);
+	    if (d1 == d2)                                     /* the easy case -- if overflow here, it matches the int case */
+	      a = make_ratio(n1 + n2, d1);                    /* d1 can't be zero */
+	    else
+	      {
+#if (!WITH_GMP)
+		if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
+		    (n1 > s7_int_max) || (n2 > s7_int_max) ||
+		    (n1 < s7_int_min) || (n2 < s7_int_min))
+		  {
+		    int d1bits, d2bits;
+		    d1bits = integer_length(d1);
+		    d2bits = integer_length(d2);
+		    if (((d1bits + d2bits) > s7_int_bits) ||
+			((d1bits + integer_length(n2)) > (s7_int_bits - 1)) ||
+			((d2bits + integer_length(n1)) > (s7_int_bits - 1)))
+		      a = make_real(((long double)n1 / (long double)d1) + ((long double)n2 / (long double)d2));
+		    else a = make_ratio(n1 * d2 + n2 * d1, d1 * d2);
+		  }
+		else
+#endif
+		  a = make_ratio(n1 * d2 + n2 * d1, d1 * d2);
+	      }
+	  }
+	  break;
+      
+	case NUM_REAL2:
+	case NUM_REAL:
+	  real(a) = num_to_real(a) + num_to_real(b);
+	  a.type = NUM_REAL;
+	  break;
+      
+	default:
+	  /* NUM_COMPLEX is 4 separate types */
+	  real_part(a) = num_to_real_part(a) + num_to_real_part(b);
+	  imag_part(a) = num_to_imag_part(a) + num_to_imag_part(b);
+	  if (imag_part(a) == 0.0)
+	    a.type = NUM_REAL;
+	  else a.type = NUM_COMPLEX;
+	  break;
+	}
     }
 
-  return(make_number(sc, n));
+  return(make_number(sc, a));
 }
 
 
@@ -6091,9 +6041,10 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 {
   #define H_multiply "(* ...) multiplies its arguments"
-  int i;
+
+  int i, ret_type;
   s7_pointer x;
-  s7_num_t n;
+  s7_num_t a, b;
 
 #if (!WITH_GMP)
   if (args == sc->NIL)
@@ -6103,39 +6054,92 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
       return(s7_wrong_type_arg_error(sc, "*", 1, car(args), "a number"));
 #endif
 
-  n = number(car(args));
+  a = number(car(args));
+
   for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
     {
 #if WITH_GMP
-      switch (n.type)
+      switch (a.type)
 	{
 	case NUM_INT:
-	  if ((integer(n) > LONG_MAX) ||
-	      (integer(n) < LONG_MIN))
-	    return(big_multiply(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(n)), x)));
+	  if ((integer(a) > LONG_MAX) ||
+	      (integer(a) < LONG_MIN))
+	    return(big_multiply(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(a)), x)));
 	  break;
 
 	case NUM_RATIO:
-	  if ((numerator(n) > LONG_MAX) ||
-	      (denominator(n) > LONG_MAX) ||
-	      (numerator(n) < LONG_MIN))
-	    return(big_multiply(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, (numerator(n)), denominator(n)), x)));
+	  if ((numerator(a) > LONG_MAX) ||
+	      (denominator(a) > LONG_MAX) ||
+	      (numerator(a) < LONG_MIN))
+	    return(big_multiply(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, (numerator(a)), denominator(a)), x)));
 	  break;
 	}
 #else
     if (!s7_is_number(car(x)))
       return(s7_wrong_type_arg_error(sc, "*", i, car(x), "a number"));
 #endif
-      n = num_mul(n, number(car(x)));
-    }
 
-  return(make_number(sc, n));
+      b = number(car(x));
+      ret_type = a.type | b.type;
+  
+      switch (ret_type)
+	{
+	case NUM_INT: 
+	  integer(a) *= integer(b);
+	  break;
+      
+	case NUM_RATIO:
+	  {
+	    s7_Int d1, d2, n1, n2;
+	    d1 = num_to_denominator(a);
+	    n1 = num_to_numerator(a);
+	    d2 = num_to_denominator(b);
+	    n2 = num_to_numerator(b);
+#if (!WITH_GMP)
+	    if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
+		(n1 > s7_int_max) || (n2 > s7_int_max) ||
+		(n1 < s7_int_min) || (n2 < s7_int_min))
+	      {
+		if ((integer_length(d1) + integer_length(d2) > s7_int_bits) ||
+		    (integer_length(n1) + integer_length(n2) > s7_int_bits))
+		  a = make_real(((long double)n1 / (long double)d1) * ((long double)n2 / (long double)d2));
+		else a = make_ratio(n1 * n2, d1 * d2);
+	      }
+	    else
+#endif
+	      a = make_ratio(n1 * n2, d1 * d2);
+	  }
+	  break;
+      
+	case NUM_REAL2:
+	case NUM_REAL:
+	  real(a) = num_to_real(a) * num_to_real(b);
+	  a.type = NUM_REAL;
+	  break;
+      
+	default:
+	  {
+	    s7_Double r1, r2, i1, i2;
+	    r1 = num_to_real_part(a);
+	    r2 = num_to_real_part(b);
+	    i1 = num_to_imag_part(a);
+	    i2 = num_to_imag_part(b);
+	    real_part(a) = r1 * r2 - i1 * i2;
+	    imag_part(a) = r1 * i2 + r2 * i1;
+	    if (imag_part(a) == 0.0)
+	      a.type = NUM_REAL;
+	    else a.type = NUM_COMPLEX;
+	  }
+	  break;
+	}
+    }
+  return(make_number(sc, a));
 }
 
 
 static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 {
-  #define H_divide "(- x1 ...) divides its first argument by the rest, or inverts the first if there is only one argument"
+  #define H_divide "(/ x1 ...) divides its first argument by the rest, or inverts the first if there is only one argument"
   int i;
   s7_pointer x;
   s7_num_t n;

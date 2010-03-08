@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 30
-#define MUS_DATE "14-Oct-09"
+#define MUS_REVISION 31
+#define MUS_DATE "7-Mar-10"
 
 /* isn't mus_env_interp backwards? */
 
@@ -592,6 +592,7 @@ MUS_EXPORT mus_any *mus_make_mixer_with_data(int chans, mus_float_t *data);
 
 /* Change log.
  *
+ * 7-Mar-10:   protect in-any and out-any from sample numbers less than 0.
  * --------
  * 14-Oct:     sine-summation, sum-of-sines, sum-of-cosines removed.
  * 28-Aug:     changed some fft-related sizes from int to mus_long_t.
