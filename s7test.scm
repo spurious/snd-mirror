@@ -6762,7 +6762,7 @@
 	(format #t ";*error-info* stacktrace: ~A" str))))
 |#
 
-(if #t (let ()
+(let ()
 
       ;; **********************************************************************
       ;; 
@@ -14672,10 +14672,11 @@
 	    (test (list (ship4-x s1) (ship4-y s1)) '(1.0 2.0))))
 	
 	)
+     ) ; end CL
     
-    (let ()
-      ;; tiny-clos
-      
+(let ()
+  ;; tiny-clos
+  
 					; Mode: Scheme
 					;
 					;
@@ -14698,7 +14699,7 @@
 					; NEGLIGENCE) OR STRICT LIABILITY, EVEN IF XEROX CORPORATION IS ADVISED
 					; OF THE POSSIBILITY OF SUCH DAMAGES.
 					; *************************************************************************
-      
+  
 					;
 					; In order to make this code more easily portable, we have to be
 					; explicit about its implementation dependencies.  To do this, we
@@ -14711,110 +14712,110 @@
 					; Others are more pressing, like define-macro.
 					;
 					;
-      (define what-scheme-implementation
-	's7
+  (define what-scheme-implementation
+    's7
 					; 'mit
 					;'chez
 					;'scm
 					;'scheme48
-	)                  
-      
-      (case what-scheme-implementation
-	((scm)
-	 (require 'sort)))
-      
-      (define gsort
-	(case what-scheme-implementation
-	  ((s7)       (lambda (predicate list) (sort! list predicate)))
-	  ((mit)      (lambda (predicate list) (sort list predicate)))
-	  ((chez)     (lambda (predicate list) (sort predicate list)))
-	  ((scheme48) (lambda (predicate list) (sort-list predicate list)))
-	  ((scm)      (lambda (predicate list) (sort list predicate)))))
-      
-      (define simple-printer (lambda () barf))
-      (define ??? 'unspecified-result)
-      
-      (define list*
-	(lambda args
-	  (letrec ((chase
-		    (lambda (args)
-		      (cond ((null? args) '())
-			    ((null? (cdr args)) (car args))
-			    (else (cons (car args) (chase (cdr args))))))))
-	    (chase args))))
-      
-      (define apply*
-	(lambda (proc . args)
-	  (apply proc (apply list* args))))
-      
-      (define position-of
-	(lambda (x lst)
-	  (if (eq? x (car lst)) 0 (+ 1 (position-of x (cdr lst))))))
-      
-      (define map-append
-	(lambda (proc . lists)
-	  (apply append (apply map (cons proc lists)))))
-      
-      (define last
-	(lambda (l)
-	  (if (null? l)
-	      #f
-	      (if (null? (cdr l))
-		  (car l)
-		  (last (cdr l))))))
-      
-      (define every
-	(lambda (test . lists)
-	  (let scan ((tails lists))
-	    (if (member #t (map null? tails))             ;(any null? lists)
-		#t
-		(and (apply test (map car tails))
-		     (scan (map cdr tails)))))))
-      
-      (define remove
-	(lambda (x list)
-	  (cond ((null? list) '())
-		((eq? (car list) x) (cdr list))
-		(else (cons (car list) (remove x (cdr list)))))))
-      
-      (define getl
-	(lambda (initargs name . not-found)
-	  (letrec ((scan (lambda (tail)
-			   (cond ((null? tail)
-				  (if (pair? not-found)
-				      (car not-found)
-				      (error "GETL couldn't find" name)))
-				 ((eq? (car tail) name) (cadr tail))
-				 (else (scan (cddr tail)))))))
-	    (scan initargs))))
-      
-      (define union
-	(lambda lists
-	  (letrec ((clean (lambda (list result)
-			    (cond ((null? list) result)
-				  ((memq (car list) result)
-				   (clean (cdr list) result))
-				  (else
-				   (clean (cdr list) (cons (car list) result)))))))
-	    (clean (apply append lists) '()))))
-      
-      (define collect-if
-	(lambda (test? list)
-	  (cond ((null? list) '())
-		((test? (car list)) (cons (car list) (collect-if test? (cdr list))))
-		(else (collect-if test? (cdr list))))))
-      
-      (define remove-duplicates
-	(lambda (list)
-	  (let loop ((result-so-far '())
-		     (remaining list))
-	    (if (null? remaining)
-		result-so-far
-		(if (null? (memq (car remaining) result-so-far))
-		    (loop (cons (car remaining) result-so-far)
-			  (cdr remaining))
-		    (loop result-so-far
-			  (cdr remaining)))))))
+    )                  
+  
+  (case what-scheme-implementation
+    ((scm)
+     (require 'sort)))
+  
+  (define gsort
+    (case what-scheme-implementation
+      ((s7)       (lambda (predicate list) (sort! list predicate)))
+      ((mit)      (lambda (predicate list) (sort list predicate)))
+      ((chez)     (lambda (predicate list) (sort predicate list)))
+      ((scheme48) (lambda (predicate list) (sort-list predicate list)))
+      ((scm)      (lambda (predicate list) (sort list predicate)))))
+  
+  (define simple-printer (lambda () barf))
+  (define ??? 'unspecified-result)
+  
+  (define list*
+    (lambda args
+      (letrec ((chase
+		(lambda (args)
+		  (cond ((null? args) '())
+			((null? (cdr args)) (car args))
+			(else (cons (car args) (chase (cdr args))))))))
+	(chase args))))
+  
+  (define apply*
+    (lambda (proc . args)
+      (apply proc (apply list* args))))
+  
+  (define position-of
+    (lambda (x lst)
+      (if (eq? x (car lst)) 0 (+ 1 (position-of x (cdr lst))))))
+  
+  (define map-append
+    (lambda (proc . lists)
+      (apply append (apply map (cons proc lists)))))
+  
+  (define last
+    (lambda (l)
+      (if (null? l)
+	  #f
+	  (if (null? (cdr l))
+	      (car l)
+	      (last (cdr l))))))
+  
+  (define every
+    (lambda (test . lists)
+      (let scan ((tails lists))
+	(if (member #t (map null? tails))             ;(any null? lists)
+	    #t
+	    (and (apply test (map car tails))
+		 (scan (map cdr tails)))))))
+  
+  (define remove
+    (lambda (x list)
+      (cond ((null? list) '())
+	    ((eq? (car list) x) (cdr list))
+	    (else (cons (car list) (remove x (cdr list)))))))
+  
+  (define getl
+    (lambda (initargs name . not-found)
+      (letrec ((scan (lambda (tail)
+		       (cond ((null? tail)
+			      (if (pair? not-found)
+				  (car not-found)
+				  (error "GETL couldn't find" name)))
+			     ((eq? (car tail) name) (cadr tail))
+			     (else (scan (cddr tail)))))))
+	(scan initargs))))
+  
+  (define union
+    (lambda lists
+      (letrec ((clean (lambda (list result)
+			(cond ((null? list) result)
+			      ((memq (car list) result)
+			       (clean (cdr list) result))
+			      (else
+			       (clean (cdr list) (cons (car list) result)))))))
+	(clean (apply append lists) '()))))
+  
+  (define collect-if
+    (lambda (test? list)
+      (cond ((null? list) '())
+	    ((test? (car list)) (cons (car list) (collect-if test? (cdr list))))
+	    (else (collect-if test? (cdr list))))))
+  
+  (define remove-duplicates
+    (lambda (list)
+      (let loop ((result-so-far '())
+		 (remaining list))
+	(if (null? remaining)
+	    result-so-far
+	    (if (null? (memq (car remaining) result-so-far))
+		(loop (cons (car remaining) result-so-far)
+		      (cdr remaining))
+		(loop result-so-far
+		      (cdr remaining)))))))
 					;
 					; A simple topological sort.
 					;
@@ -14824,89 +14825,89 @@
 					; Mendhekar <anurag@moose.cs.indiana.edu>.
 					;
 					;
-      
-      (define compute-std-cpl
-	(lambda (c get-direct-supers)
-	  (top-sort ((build-transitive-closure get-direct-supers) c)
-		    ((build-constraints get-direct-supers) c)
-		    (std-tie-breaker get-direct-supers))))
-      
-      (define top-sort
-	(lambda (elements constraints tie-breaker)
-	  (let loop ((elements    elements)
-		     (constraints constraints)
-		     (result      '()))
-	    (if (null? elements)
-		result
-		(let ((can-go-in-now
-		       (collect-if
-			(lambda (x)
-			  (every (lambda (constraint)
-				   (or (not (eq? (cadr constraint) x))
-				       (memq (car constraint) result)))
-				 constraints))
-			elements)))
-		  (if (null? can-go-in-now)
-		      (error 'top-sort "Invalid constraints")
-		      (let ((choice (if (null? (cdr can-go-in-now))
-					(car can-go-in-now)
-					(tie-breaker result
-						     can-go-in-now))))
-			(loop
-			 (collect-if (lambda (x) (not (eq? x choice)))
-				     elements)
-			 constraints
-			 (append result (list choice))))))))))
-      
-      (define std-tie-breaker
-	(lambda (get-supers)
-	  (lambda (partial-cpl min-elts)
-	    (let loop ((pcpl (reverse partial-cpl)))
-	      (let ((current-elt (car pcpl)))
-		(let ((ds-of-ce (get-supers current-elt)))
-		  (let ((common (collect-if (lambda (x)
-					      (memq x ds-of-ce))
-					    min-elts)))
-		    (if (null? common)
-			(if (null? (cdr pcpl))
-			    (error 'std-tie-breaker "Nothing valid")
-			    (loop (cdr pcpl)))
-			(car common)))))))))
-      
-      (define build-transitive-closure
-	(lambda (get-follow-ons)
-	  (lambda (x)
-	    (let track ((result '())
-			(pending (list x)))
-	      (if (null? pending)
+  
+  (define compute-std-cpl
+    (lambda (c get-direct-supers)
+      (top-sort ((build-transitive-closure get-direct-supers) c)
+		((build-constraints get-direct-supers) c)
+		(std-tie-breaker get-direct-supers))))
+  
+  (define top-sort
+    (lambda (elements constraints tie-breaker)
+      (let loop ((elements    elements)
+		 (constraints constraints)
+		 (result      '()))
+	(if (null? elements)
+	    result
+	    (let ((can-go-in-now
+		   (collect-if
+		    (lambda (x)
+		      (every (lambda (constraint)
+			       (or (not (eq? (cadr constraint) x))
+				   (memq (car constraint) result)))
+			     constraints))
+		    elements)))
+	      (if (null? can-go-in-now)
+		  (error 'top-sort "Invalid constraints")
+		  (let ((choice (if (null? (cdr can-go-in-now))
+				    (car can-go-in-now)
+				    (tie-breaker result
+						 can-go-in-now))))
+		    (loop
+		     (collect-if (lambda (x) (not (eq? x choice)))
+				 elements)
+		     constraints
+		     (append result (list choice))))))))))
+  
+  (define std-tie-breaker
+    (lambda (get-supers)
+      (lambda (partial-cpl min-elts)
+	(let loop ((pcpl (reverse partial-cpl)))
+	  (let ((current-elt (car pcpl)))
+	    (let ((ds-of-ce (get-supers current-elt)))
+	      (let ((common (collect-if (lambda (x)
+					  (memq x ds-of-ce))
+					min-elts)))
+		(if (null? common)
+		    (if (null? (cdr pcpl))
+			(error 'std-tie-breaker "Nothing valid")
+			(loop (cdr pcpl)))
+		    (car common)))))))))
+  
+  (define build-transitive-closure
+    (lambda (get-follow-ons)
+      (lambda (x)
+	(let track ((result '())
+		    (pending (list x)))
+	  (if (null? pending)
+	      result
+	      (let ((next (car pending)))
+		(if (memq next result)
+		    (track result (cdr pending))
+		    (track (cons next result)
+			   (append (get-follow-ons next)
+				   (cdr pending))))))))))
+  
+  (define build-constraints
+    (lambda (get-follow-ons)
+      (lambda (x)
+	(let loop ((elements ((build-transitive-closure get-follow-ons) x))
+		   (this-one '())
+		   (result '()))
+	  (if (or (null? this-one) (null? (cdr this-one)))
+	      (if (null? elements)
 		  result
-		  (let ((next (car pending)))
-		    (if (memq next result)
-			(track result (cdr pending))
-			(track (cons next result)
-			       (append (get-follow-ons next)
-				       (cdr pending))))))))))
-      
-      (define build-constraints
-	(lambda (get-follow-ons)
-	  (lambda (x)
-	    (let loop ((elements ((build-transitive-closure get-follow-ons) x))
-		       (this-one '())
-		       (result '()))
-	      (if (or (null? this-one) (null? (cdr this-one)))
-		  (if (null? elements)
-		      result
-		      (loop (cdr elements)
-			    (cons (car elements)
-				  (get-follow-ons (car elements)))
-			    result))
-		  (loop elements
-			(cdr this-one)
-			(cons (list (car this-one) (cadr this-one))
-			      result)))))))
-      
-      (define tiny-clos-version "1.7")
-      
+		  (loop (cdr elements)
+			(cons (car elements)
+			      (get-follow-ons (car elements)))
+			result))
+	      (loop elements
+		    (cdr this-one)
+		    (cons (list (car this-one) (cadr this-one))
+			  result)))))))
+  
+  (define tiny-clos-version "1.7")
+  
 					; A very simple CLOS-like language, embedded in Scheme, with a simple
 					; MOP.  The features of the default base language are:
 					;
@@ -14997,7 +14998,7 @@
 					;         COMPUTE-METHOD-MORE-SPECIFIC?
 					;       COMPUTE-APPLY-METHODS
 					;
-      
+  
 					;
 					; OK, now let's get going.  But, as usual, before we can do anything
 					; interesting, we have to muck around for a bit first.  First, we need  
@@ -15040,82 +15041,82 @@
 					; to hide the implementation of instances and entities from people.
 					;
 					;
-      (define %allocate-instance
-	(lambda (class nfields)
-	  (%allocate-instance-internal
-	   class
-	   #t
-	   (lambda args
-	     (error "An instance isn't a procedure -- can't apply it."))
-	   nfields)))
-      
-      (define %allocate-entity
-	(lambda (class nfields)
-	  (%allocate-instance-internal
-	   class
-	   #f
-	   (lambda args
-	     (error "Tried to call an entity before its proc is set."))
-	   nfields)))
-      
-      (define %allocate-instance-internal ???)
-      (define %instance?                  ???)
-      (define %instance-class             ???)
-      (define %set-instance-class-to-self ???)   ;This is used only once
+  (define %allocate-instance
+    (lambda (class nfields)
+      (%allocate-instance-internal
+       class
+       #t
+       (lambda args
+	 (error "An instance isn't a procedure -- can't apply it."))
+       nfields)))
+  
+  (define %allocate-entity
+    (lambda (class nfields)
+      (%allocate-instance-internal
+       class
+       #f
+       (lambda args
+	 (error "Tried to call an entity before its proc is set."))
+       nfields)))
+  
+  (define %allocate-instance-internal ???)
+  (define %instance?                  ???)
+  (define %instance-class             ???)
+  (define %set-instance-class-to-self ???)   ;This is used only once
 					;as part of bootstrapping
 					;the braid.
-      (define %set-instance-proc!  ???)
-      (define %instance-ref        ???)
-      (define %instance-set!       ???)
-      
-      (letrec ((instances '())
-	       (get-vector
-		(lambda (closure)
-		  (let ((cell (assq closure instances)))
-		    (if cell (cdr cell) #f)))))
-	
-	(set! %allocate-instance-internal
-	      (lambda (class lock proc nfields)
-		(letrec ((vector (make-vector (+ nfields 3) #f))
-			 (closure (lambda args
-				    (apply (vector-ref vector 0) args))))
-		  (vector-set! vector 0 proc)
-		  (vector-set! vector 1 lock)
-		  (vector-set! vector 2 class)
-		  (set! instances (cons (cons closure vector) instances))
-		  closure)))
-	
-	(set! %instance?
-	      (lambda (x) (not (null? (get-vector x)))))
-	
-	(set! %instance-class
-	      (lambda (closure)
-		(let ((vector (get-vector closure)))
-		  (vector-ref vector 2))))
-	
-	(set! %set-instance-class-to-self
-	      (lambda (closure)
-		(let ((vector (get-vector closure)))
-		  (vector-set! vector 2 closure))))
-	
-	(set! %set-instance-proc!
-	      (lambda (closure proc)
-		(let ((vector (get-vector closure)))
-		  (if (vector-ref vector 1)
-		      (error "Can't set procedure of instance.")
-		      (vector-set! vector 0 proc)))))
-	
-	(set! %instance-ref
-	      (lambda (closure index)
-		(let ((vector (get-vector closure)))
-		  (vector-ref vector (+ index 3)))))
-	
-	(set! %instance-set!
-	      (lambda (closure index new-value)
-		(let ((vector (get-vector closure)))
-		  (vector-set! vector (+ index 3) new-value))))
-	)
-      
+  (define %set-instance-proc!  ???)
+  (define %instance-ref        ???)
+  (define %instance-set!       ???)
+  
+  (letrec ((instances '())
+	   (get-vector
+	    (lambda (closure)
+	      (let ((cell (assq closure instances)))
+		(if cell (cdr cell) #f)))))
+    
+    (set! %allocate-instance-internal
+	  (lambda (class lock proc nfields)
+	    (letrec ((vector (make-vector (+ nfields 3) #f))
+		     (closure (lambda args
+				(apply (vector-ref vector 0) args))))
+	      (vector-set! vector 0 proc)
+	      (vector-set! vector 1 lock)
+	      (vector-set! vector 2 class)
+	      (set! instances (cons (cons closure vector) instances))
+	      closure)))
+    
+    (set! %instance?
+	  (lambda (x) (not (null? (get-vector x)))))
+    
+    (set! %instance-class
+	  (lambda (closure)
+	    (let ((vector (get-vector closure)))
+	      (vector-ref vector 2))))
+    
+    (set! %set-instance-class-to-self
+	  (lambda (closure)
+	    (let ((vector (get-vector closure)))
+	      (vector-set! vector 2 closure))))
+    
+    (set! %set-instance-proc!
+	  (lambda (closure proc)
+	    (let ((vector (get-vector closure)))
+	      (if (vector-ref vector 1)
+		  (error "Can't set procedure of instance.")
+		  (vector-set! vector 0 proc)))))
+    
+    (set! %instance-ref
+	  (lambda (closure index)
+	    (let ((vector (get-vector closure)))
+	      (vector-ref vector (+ index 3)))))
+    
+    (set! %instance-set!
+	  (lambda (closure index new-value)
+	    (let ((vector (get-vector closure)))
+	      (vector-set! vector (+ index 3) new-value))))
+    )
+  
 					; %allocate-instance, %allocate-entity, %instance-ref, %instance-set!
 					; and class-of are the normal interface, from the rest of the code, to
 					; the low-level memory system.  One thing to take note of is that the
@@ -15125,181 +15126,181 @@
 					; Note that this implementation of class-of assumes the name of a the
 					; primitive classes that are set up later.
 					; 
-      (define class-of
-	(lambda (x)
-	  (cond ((%instance? x)  (%instance-class x))
-		
-		((pair? x)        <pair>)         ;If all Schemes were IEEE 
-		((null? x)        <null>)         ;compliant, the order of
-		((boolean? x)     <boolean>)      ;these wouldn't matter?
-		((symbol? x)      <symbol>)
-		((procedure? x)   <procedure>)
-		((number? x)      <number>)
-		((vector? x)      <vector>)
-		((char? x)        <char>)
-		((string? x)      <string>)
-		(( input-port? x)  <input-port>)
-		((output-port? x) <output-port>)
-		
-		
-		)))
-      
+  (define class-of
+    (lambda (x)
+      (cond ((%instance? x)  (%instance-class x))
+	    
+	    ((pair? x)        <pair>)         ;If all Schemes were IEEE 
+	    ((null? x)        <null>)         ;compliant, the order of
+	    ((boolean? x)     <boolean>)      ;these wouldn't matter?
+	    ((symbol? x)      <symbol>)
+	    ((procedure? x)   <procedure>)
+	    ((number? x)      <number>)
+	    ((vector? x)      <vector>)
+	    ((char? x)        <char>)
+	    ((string? x)      <string>)
+	    (( input-port? x)  <input-port>)
+	    ((output-port? x) <output-port>)
+	    
+	    
+	    )))
+  
 					; Now we can get down to business.  First, we initialize the braid.
 					;
 					; For Bootstrapping, we define an early version of MAKE.  It will be
 					; changed to the real version later on.  String search for ``set! make''.
 					;
-      
-      (define make
-	(lambda (class . initargs)
-	  (cond ((or (eq? class <class>)
-		     (eq? class <entity-class>))
-		 (let* ((new (%allocate-instance
-			      class
-			      (length the-slots-of-a-class)))
-			(dsupers (getl initargs 'direct-supers '()))
-			(dslots  (map list
-				      (getl initargs 'direct-slots  '())))
-			(cpl     (let loop ((sups dsupers)
-					    (so-far (list new)))
-				   (if (null? sups)
-				       (reverse so-far)
-				       (loop (class-direct-supers
-					      (car sups))
-					     (cons (car sups)
-						   so-far)))))
-			(slots (apply append
-				      (cons dslots
-					    (map class-direct-slots
-						 (cdr cpl)))))
-			(nfields 0)
-			(field-initializers '())
-			(allocator
-			 (lambda (init)
-			   (let ((f nfields))
-			     (set! nfields (+ nfields 1))
-			     (set! field-initializers
-				   (cons init field-initializers))
-			     (list (lambda (o)   (%instance-ref  o f))
-				   (lambda (o n) (%instance-set! o f n))))))
-			(getters-n-setters
-			 (map (lambda (s)
-				(cons (car s)
-				      (allocator (lambda () '()))))
-			      slots)))
-		   
-		   (slot-set! new 'direct-supers      dsupers)
-		   (slot-set! new 'direct-slots       dslots)
-		   (slot-set! new 'cpl                cpl)
-		   (slot-set! new 'slots              slots)
-		   (slot-set! new 'nfields            nfields)
-		   (slot-set! new 'field-initializers (reverse
-						       field-initializers))
-		   (slot-set! new 'getters-n-setters  getters-n-setters)
-		   new))
-		((eq? class <generic>)
-		 (let ((new (%allocate-entity class
-					      (length (class-slots class)))))
-		   (slot-set! new 'methods '())
-		   new))
-		((eq? class <method>)
-		 (let ((new (%allocate-instance
-			     class
-			     (length (class-slots class)))))
-		   (slot-set! new
-			      'specializers
-			      (getl initargs 'specializers))
-		   (slot-set! new
-			      'procedure
-			      (getl initargs 'procedure))
-		   new)))))
-      
+  
+  (define make
+    (lambda (class . initargs)
+      (cond ((or (eq? class <class>)
+		 (eq? class <entity-class>))
+	     (let* ((new (%allocate-instance
+			  class
+			  (length the-slots-of-a-class)))
+		    (dsupers (getl initargs 'direct-supers '()))
+		    (dslots  (map list
+				  (getl initargs 'direct-slots  '())))
+		    (cpl     (let loop ((sups dsupers)
+					(so-far (list new)))
+			       (if (null? sups)
+				   (reverse so-far)
+				   (loop (class-direct-supers
+					  (car sups))
+					 (cons (car sups)
+					       so-far)))))
+		    (slots (apply append
+				  (cons dslots
+					(map class-direct-slots
+					     (cdr cpl)))))
+		    (nfields 0)
+		    (field-initializers '())
+		    (allocator
+		     (lambda (init)
+		       (let ((f nfields))
+			 (set! nfields (+ nfields 1))
+			 (set! field-initializers
+			       (cons init field-initializers))
+			 (list (lambda (o)   (%instance-ref  o f))
+			       (lambda (o n) (%instance-set! o f n))))))
+		    (getters-n-setters
+		     (map (lambda (s)
+			    (cons (car s)
+				  (allocator (lambda () '()))))
+			  slots)))
+	       
+	       (slot-set! new 'direct-supers      dsupers)
+	       (slot-set! new 'direct-slots       dslots)
+	       (slot-set! new 'cpl                cpl)
+	       (slot-set! new 'slots              slots)
+	       (slot-set! new 'nfields            nfields)
+	       (slot-set! new 'field-initializers (reverse
+						   field-initializers))
+	       (slot-set! new 'getters-n-setters  getters-n-setters)
+	       new))
+	    ((eq? class <generic>)
+	     (let ((new (%allocate-entity class
+					  (length (class-slots class)))))
+	       (slot-set! new 'methods '())
+	       new))
+	    ((eq? class <method>)
+	     (let ((new (%allocate-instance
+			 class
+			 (length (class-slots class)))))
+	       (slot-set! new
+			  'specializers
+			  (getl initargs 'specializers))
+	       (slot-set! new
+			  'procedure
+			  (getl initargs 'procedure))
+	       new)))))
+  
 					; These are the real versions of slot-ref and slot-set!.  Because of the
 					; way the new slot access protocol works, with no generic call in line,
 					; they can be defined up front like this.  Cool eh?
 					;
 					;
-      (define slot-ref
-	(lambda (object slot-name)
-	  (let* ((info   (lookup-slot-info (class-of object) slot-name))
-		 (getter (list-ref info 0)))
-	    (getter object))))
-      
-      (define slot-set!
-	(lambda (object slot-name new-value)
-	  (let* ((info   (lookup-slot-info (class-of object) slot-name))
-		 (setter (list-ref info 1)))
-	    (setter object new-value))))
-      
-      (define lookup-slot-info
-	(lambda (class slot-name)
-	  (let* ((getters-n-setters
-		  (if (eq? class <class>)           ;* This grounds out
-		      getters-n-setters-for-class   ;* the slot-ref tower.
-		      (slot-ref class 'getters-n-setters)))
-		 (entry (assq slot-name getters-n-setters)))
-	    (if entry
-		(cdr entry)
-		(error "No slot" slot-name "in instances of" class)))))
+  (define slot-ref
+    (lambda (object slot-name)
+      (let* ((info   (lookup-slot-info (class-of object) slot-name))
+	     (getter (list-ref info 0)))
+	(getter object))))
+  
+  (define slot-set!
+    (lambda (object slot-name new-value)
+      (let* ((info   (lookup-slot-info (class-of object) slot-name))
+	     (setter (list-ref info 1)))
+	(setter object new-value))))
+  
+  (define lookup-slot-info
+    (lambda (class slot-name)
+      (let* ((getters-n-setters
+	      (if (eq? class <class>)           ;* This grounds out
+		  getters-n-setters-for-class   ;* the slot-ref tower.
+		  (slot-ref class 'getters-n-setters)))
+	     (entry (assq slot-name getters-n-setters)))
+	(if entry
+	    (cdr entry)
+	    (error "No slot" slot-name "in instances of" class)))))
 					;
 					; Given that the early version of MAKE is allowed to call accessors on
 					; class metaobjects, the definitions for them come here, before the
 					; actual class definitions, which are coming up right afterwards.
 					;
 					;
-      (define class-direct-slots
-	(lambda (class) (slot-ref class 'direct-slots)))
-      (define class-direct-supers
-	(lambda (class) (slot-ref class 'direct-supers)))
-      (define class-slots
-	(lambda (class) (slot-ref class 'slots)))
-      (define class-cpl
-	(lambda (class) (slot-ref class 'cpl)))
-      
-      (define generic-methods
-	(lambda (generic) (slot-ref generic 'methods)))
-      
-      (define method-specializers
-	(lambda (method) (slot-ref method 'specializers)))
-      (define method-procedure
-	(lambda (method) (slot-ref method 'procedure)))
-      
+  (define class-direct-slots
+    (lambda (class) (slot-ref class 'direct-slots)))
+  (define class-direct-supers
+    (lambda (class) (slot-ref class 'direct-supers)))
+  (define class-slots
+    (lambda (class) (slot-ref class 'slots)))
+  (define class-cpl
+    (lambda (class) (slot-ref class 'cpl)))
+  
+  (define generic-methods
+    (lambda (generic) (slot-ref generic 'methods)))
+  
+  (define method-specializers
+    (lambda (method) (slot-ref method 'specializers)))
+  (define method-procedure
+    (lambda (method) (slot-ref method 'procedure)))
+  
 					; The next 7 clusters define the 6 initial classes.  It takes 7 to 6
 					; because the first and fourth both contribute to <class>.
 					;
-      (define the-slots-of-a-class     ;
-	'(direct-supers              ;(class ...)        
-	  direct-slots               ;((name . options) ...)
-	  cpl                        ;(class ...) 
-	  slots                      ;((name . options) ...) 
-	  nfields                    ;an integer
-	  field-initializers         ;(proc ...)
-	  getters-n-setters))        ;((slot-name getter setter) ...)
+  (define the-slots-of-a-class     ;
+    '(direct-supers              ;(class ...)        
+      direct-slots               ;((name . options) ...)
+      cpl                        ;(class ...) 
+      slots                      ;((name . options) ...) 
+      nfields                    ;an integer
+      field-initializers         ;(proc ...)
+      getters-n-setters))        ;((slot-name getter setter) ...)
 					;
-      (define getters-n-setters-for-class      ;see lookup-slot-info
+  (define getters-n-setters-for-class      ;see lookup-slot-info
 					;
 					; I know this seems like a silly way to write this.  The
 					; problem is that the obvious way to write it seems to
 					; tickle a bug in MIT Scheme!
 					;
-	(let ((make-em (lambda (s f)
-			 (list s
-			       (lambda (o)   (%instance-ref  o f))
-			       (lambda (o n) (%instance-set! o f n))))))
-	  (map (lambda (s)
-		 (make-em s (position-of s the-slots-of-a-class)))
-	       the-slots-of-a-class)))
-      (define <class> (%allocate-instance #f (length the-slots-of-a-class)))
-      (%set-instance-class-to-self <class>)
-      
-      (define <top>          (make <class>
-			       'direct-supers (list)
-			       'direct-slots  (list)))
-      
-      (define <object>       (make <class>
-			       'direct-supers (list <top>)
-			       'direct-slots  (list)))
-      
+    (let ((make-em (lambda (s f)
+		     (list s
+			   (lambda (o)   (%instance-ref  o f))
+			   (lambda (o n) (%instance-set! o f n))))))
+      (map (lambda (s)
+	     (make-em s (position-of s the-slots-of-a-class)))
+	   the-slots-of-a-class)))
+  (define <class> (%allocate-instance #f (length the-slots-of-a-class)))
+  (%set-instance-class-to-self <class>)
+  
+  (define <top>          (make <class>
+			   'direct-supers (list)
+			   'direct-slots  (list)))
+  
+  (define <object>       (make <class>
+			   'direct-supers (list <top>)
+			   'direct-slots  (list)))
+  
 					;
 					; This cluster, together with the first cluster above that defines
 					; <class> and sets its class, have the effect of:
@@ -15309,97 +15310,97 @@
 					;           'direct-supers (list <object>)
 					;           'direct-slots  (list 'direct-supers ...)))
 					;
-      (slot-set! <class> 'direct-supers      (list <object>))
-      (slot-set! <class> 'direct-slots       (map list the-slots-of-a-class))
-      (slot-set! <class> 'cpl                (list <class> <object> <top>))
-      (slot-set! <class> 'slots              (map list the-slots-of-a-class))
-      (slot-set! <class> 'nfields            (length the-slots-of-a-class))
-      (slot-set! <class> 'field-initializers (map (lambda (s)
-						    (lambda () '()))
-						  the-slots-of-a-class))
-      (slot-set! <class> 'getters-n-setters  '())
-      
-      
-      (define <procedure-class> (make <class>
-				  'direct-supers (list <class>)
-				  'direct-slots  (list)))
-      
-      (define <entity-class>    (make <class>
-				  'direct-supers (list <procedure-class>)
-				  'direct-slots  (list)))
-      
-      (define <generic>         (make <entity-class>
-				  'direct-supers (list <object>)
-				  'direct-slots  (list 'methods)))
-      
-      (define <method>          (make <class>
-				  'direct-supers (list <object>)
-				  'direct-slots  (list 'specializers
-						       'procedure)))
-      
-      
+  (slot-set! <class> 'direct-supers      (list <object>))
+  (slot-set! <class> 'direct-slots       (map list the-slots-of-a-class))
+  (slot-set! <class> 'cpl                (list <class> <object> <top>))
+  (slot-set! <class> 'slots              (map list the-slots-of-a-class))
+  (slot-set! <class> 'nfields            (length the-slots-of-a-class))
+  (slot-set! <class> 'field-initializers (map (lambda (s)
+						(lambda () '()))
+					      the-slots-of-a-class))
+  (slot-set! <class> 'getters-n-setters  '())
+  
+  
+  (define <procedure-class> (make <class>
+			      'direct-supers (list <class>)
+			      'direct-slots  (list)))
+  
+  (define <entity-class>    (make <class>
+			      'direct-supers (list <procedure-class>)
+			      'direct-slots  (list)))
+  
+  (define <generic>         (make <entity-class>
+			      'direct-supers (list <object>)
+			      'direct-slots  (list 'methods)))
+  
+  (define <method>          (make <class>
+			      'direct-supers (list <object>)
+			      'direct-slots  (list 'specializers
+						   'procedure)))
+  
+  
 					; These are the convenient syntax we expose to the base-level user.
 					;
 					;
-      (define make-class
-	(lambda (direct-supers direct-slots)
-	  (make <class>
-	    'direct-supers direct-supers
-	    'direct-slots  direct-slots)))
-      
-      (define make-generic
-	(lambda ()
-	  (make <generic>)))
-      
-      (define make-method
-	(lambda (specializers procedure)
-	  (make <method>
-	    'specializers specializers
-	    'procedure    procedure)))
-      
-      
+  (define make-class
+    (lambda (direct-supers direct-slots)
+      (make <class>
+	'direct-supers direct-supers
+	'direct-slots  direct-slots)))
+  
+  (define make-generic
+    (lambda ()
+      (make <generic>)))
+  
+  (define make-method
+    (lambda (specializers procedure)
+      (make <method>
+	'specializers specializers
+	'procedure    procedure)))
+  
+  
 					; The initialization protocol
 					;
-      (define initialize (make-generic))
-      
+  (define initialize (make-generic))
+  
 					; The instance structure protocol.
 					;
-      (define allocate-instance (make-generic))
-      (define compute-getter-and-setter (make-generic))
+  (define allocate-instance (make-generic))
+  (define compute-getter-and-setter (make-generic))
 					;
 					; The class initialization protocol.
 					;
-      (define compute-cpl   (make-generic))
-      (define compute-slots (make-generic))
-      
+  (define compute-cpl   (make-generic))
+  (define compute-slots (make-generic))
+  
 					;
 					; The generic invocation protocol.
 					;
-      (define compute-apply-generic         (make-generic))
-      (define compute-methods               (make-generic))
-      (define compute-method-more-specific? (make-generic))
-      (define compute-apply-methods         (make-generic))
+  (define compute-apply-generic         (make-generic))
+  (define compute-methods               (make-generic))
+  (define compute-method-more-specific? (make-generic))
+  (define compute-apply-methods         (make-generic))
 					;
 					; The next thing to do is bootstrap generic functions.
 					; 
-      (define generic-invocation-generics (list compute-apply-generic
-						compute-methods
-						compute-method-more-specific?
-						compute-apply-methods))
-      
-      (define add-method
-	(lambda (generic method)
-	  (slot-set! generic
-		     'methods
-		     (cons method
-			   (collect-if
-			    (lambda (m)
-			      (not (every eq?
-					  (method-specializers m)
-					  (method-specializers method))))
-			    (slot-ref generic 'methods))))
-	  (%set-instance-proc! generic (compute-apply-generic generic))))
-      
+  (define generic-invocation-generics (list compute-apply-generic
+					    compute-methods
+					    compute-method-more-specific?
+					    compute-apply-methods))
+  
+  (define add-method
+    (lambda (generic method)
+      (slot-set! generic
+		 'methods
+		 (cons method
+		       (collect-if
+			(lambda (m)
+			  (not (every eq?
+				      (method-specializers m)
+				      (method-specializers method))))
+			(slot-ref generic 'methods))))
+      (%set-instance-proc! generic (compute-apply-generic generic))))
+  
 					;
 					; Adding a method calls COMPUTE-APPLY-GENERIC, the result of which calls
 					; the other generics in the generic invocation protocol.  Two, related,
@@ -15416,251 +15417,251 @@
 					; protocol.
 					;
 					;
-      (%set-instance-proc! compute-apply-generic
-			   (lambda (generic)
-			     (let ((method (car (generic-methods generic))))
-			       ((method-procedure method) #f generic))))
-      
-      (add-method compute-apply-generic
-		  (make-method (list <generic>)
-			       (lambda (call-next-method generic)
-				 (lambda args
-				   (if (and (memq generic generic-invocation-generics)     ;* G  c
-					    (memq (car args) generic-invocation-generics)) ;* r  a
-				       (apply (method-procedure                            ;* o  s
-					       (last (generic-methods generic)))           ;* u  e
-					      (cons #f args))                              ;* n
+  (%set-instance-proc! compute-apply-generic
+		       (lambda (generic)
+			 (let ((method (car (generic-methods generic))))
+			   ((method-procedure method) #f generic))))
+  
+  (add-method compute-apply-generic
+	      (make-method (list <generic>)
+			   (lambda (call-next-method generic)
+			     (lambda args
+			       (if (and (memq generic generic-invocation-generics)     ;* G  c
+					(memq (car args) generic-invocation-generics)) ;* r  a
+				   (apply (method-procedure                            ;* o  s
+					   (last (generic-methods generic)))           ;* u  e
+					  (cons #f args))                              ;* n
 					;* d
-				       ((compute-apply-methods generic)
-					((compute-methods generic) args)
-					args))))))
-      
-      (add-method compute-methods
-		  (make-method (list <generic>)
-			       (lambda (call-next-method generic)
-				 (lambda (args)
-				   (let ((applicable
-					  (collect-if (lambda (method)
+				   ((compute-apply-methods generic)
+				    ((compute-methods generic) args)
+				    args))))))
+  
+  (add-method compute-methods
+	      (make-method (list <generic>)
+			   (lambda (call-next-method generic)
+			     (lambda (args)
+			       (let ((applicable
+				      (collect-if (lambda (method)
 					;
 					; Note that every only goes as far as the
 					; shortest list!
 					;
-							(every applicable?
-							       (method-specializers method)
-							       args))
-						      (generic-methods generic))))
-				     (gsort (lambda (m1 m2)
-					      ((compute-method-more-specific? generic)
-					       m1
-					       m2
-					       args))
-					    applicable))))))
-      
-      (add-method compute-method-more-specific?
-		  (make-method (list <generic>)
-			       (lambda (call-next-method generic)
-				 (lambda (m1 m2 args)
-				   (let loop ((specls1 (method-specializers m1))
-					      (specls2 (method-specializers m2))
-					      (args args))
-				     (cond ((and (null? specls1) (null? specls2))
-					    (error
-					     "Two methods are equally specific."))
-					   ((or  (null? specls1) (null? specls2))
-					    (error
-					     "Two methods have a different number of specializers."))
-					   ((null? args)
-					    (error
-					     "Fewer arguments than specializers."))
-					   (else
-					    (let ((c1  (car specls1))
-						  (c2  (car specls2))
-						  (arg (car args)))
-					      (if (eq? c1 c2)
-						  (loop (cdr specls1)
-							(cdr specls2)
-							(cdr args))
-						  (more-specific? c1 c2 arg))))))))))
-      
-      (add-method compute-apply-methods
-		  (make-method (list <generic>)
-			       (lambda (call-next-method generic)
-				 (lambda (methods args)
-				   (letrec ((one-step
-					     (lambda (tail)
-					       (lambda ()
-						 (if (null? tail)
-						     (error "No applicable methods/next methods.")
-						     (apply (method-procedure (car tail))
-							    (cons (one-step (cdr tail)) args)))))))
-				     ((one-step methods)))))))
-      
-      (define applicable?
-	(lambda (c arg)
-	  (memq c (class-cpl (class-of arg)))))
-      
-      (define more-specific?
-	(lambda (c1 c2 arg)
-	  (memq c2 (memq c1 (class-cpl (class-of arg))))))
-      
-      (add-method initialize
-		  (make-method (list <object>)
-			       (lambda (call-next-method object initargs) object)))
-      
-      (add-method initialize
-		  (make-method (list <class>)
-			       (lambda (call-next-method class initargs)
-				 (call-next-method)
-				 (slot-set! class
-					    'direct-supers
-					    (getl initargs 'direct-supers '()))
-				 (slot-set! class
-					    'direct-slots
-					    (map (lambda (s)
-						   (if (pair? s) s (list s)))
-						 (getl initargs 'direct-slots  '())))
-				 (slot-set! class 'cpl   (compute-cpl   class))
-				 (slot-set! class 'slots (compute-slots class))
-				 (let* ((nfields 0)
-					(field-initializers '())
-					(allocator
-					 (lambda (init)
-					   (let ((f nfields))
-					     (set! nfields (+ nfields 1))
-					     (set! field-initializers
-						   (cons init field-initializers))
-					     (list (lambda (o)   (%instance-ref  o f))
-						   (lambda (o n) (%instance-set! o f n))))))
-					(getters-n-setters
-					 (map (lambda (slot)
-						(cons (car slot)
-						      (compute-getter-and-setter class
-										 slot
-										 allocator)))
-					      (slot-ref class 'slots))))
-				   (slot-set! class 'nfields nfields)
-				   (slot-set! class 'field-initializers field-initializers)
-				   (slot-set! class 'getters-n-setters getters-n-setters)))))
-      
-      (add-method initialize
-		  (make-method (list <generic>)
-			       (lambda (call-next-method generic initargs)
-				 (call-next-method)
-				 (slot-set! generic 'methods '())
-				 (%set-instance-proc! generic
-						      (lambda args (error "Has no methods."))))))
-      
-      (add-method initialize
-		  (make-method (list <method>)
-			       (lambda (call-next-method method initargs)
-				 (call-next-method)
-				 (slot-set! method 'specializers (getl initargs 'specializers))
-				 (slot-set! method 'procedure    (getl initargs 'procedure)))))
-      
-      (add-method allocate-instance
-		  (make-method (list <class>)
-			       (lambda (call-next-method class)
-				 (let* ((field-initializers (slot-ref class 'field-initializers))
-					(new (%allocate-instance
-					      class
-					      (length field-initializers))))
-				   (let loop ((n 0)
-					      (inits field-initializers))
-				     (if (pair? inits)
-					 (begin
-					   (%instance-set! new n ((car inits)))
-					   (loop (+ n 1)
-						 (cdr inits)))
-					 new))))))
-      
-      (add-method allocate-instance
-		  (make-method (list <entity-class>)
-			       (lambda (call-next-method class)
-				 (let* ((field-initializers (slot-ref class 'field-initializers))
-					(new (%allocate-entity
-					      class
-					      (length field-initializers))))
-				   (let loop ((n 0)
-					      (inits field-initializers))
-				     (if (pair? inits)
-					 (begin
-					   (%instance-set! new n ((car inits)))
-					   (loop (+ n 1)
-						 (cdr inits)))
-					 new))))))
-      
-      (add-method compute-cpl
-		  (make-method (list <class>)
-			       (lambda (call-next-method class)
-				 (compute-std-cpl class class-direct-supers))))
-      
-      (add-method compute-slots
-		  (make-method (list <class>)
-			       (lambda (call-next-method class)
-				 (let collect ((to-process (apply append
-								  (map class-direct-slots
-								       (class-cpl class))))
-					       (result '()))
-				   (if (null? to-process)
-				       (reverse result)
-				       (let* ((current (car to-process))
-					      (name (car current))
-					      (others '())
-					      (remaining-to-process
-					       (collect-if (lambda (o)
-							     (if (eq? (car o) name)
-								 (begin
-								   (set! others (cons o others))
-								   #f)
-								 #t))
-							   (cdr to-process))))
-					 (collect remaining-to-process
-						  (cons (append current
-								(apply append (map cdr others)))
-							result))))))))
-      
-      (add-method compute-getter-and-setter
-		  (make-method (list <class>)
-			       (lambda (call-next-method class slot allocator)
-				 (allocator (lambda () '())))))
+						    (every applicable?
+							   (method-specializers method)
+							   args))
+						  (generic-methods generic))))
+				 (gsort (lambda (m1 m2)
+					  ((compute-method-more-specific? generic)
+					   m1
+					   m2
+					   args))
+					applicable))))))
+  
+  (add-method compute-method-more-specific?
+	      (make-method (list <generic>)
+			   (lambda (call-next-method generic)
+			     (lambda (m1 m2 args)
+			       (let loop ((specls1 (method-specializers m1))
+					  (specls2 (method-specializers m2))
+					  (args args))
+				 (cond ((and (null? specls1) (null? specls2))
+					(error
+					 "Two methods are equally specific."))
+				       ((or  (null? specls1) (null? specls2))
+					(error
+					 "Two methods have a different number of specializers."))
+				       ((null? args)
+					(error
+					 "Fewer arguments than specializers."))
+				       (else
+					(let ((c1  (car specls1))
+					      (c2  (car specls2))
+					      (arg (car args)))
+					  (if (eq? c1 c2)
+					      (loop (cdr specls1)
+						    (cdr specls2)
+						    (cdr args))
+					      (more-specific? c1 c2 arg))))))))))
+  
+  (add-method compute-apply-methods
+	      (make-method (list <generic>)
+			   (lambda (call-next-method generic)
+			     (lambda (methods args)
+			       (letrec ((one-step
+					 (lambda (tail)
+					   (lambda ()
+					     (if (null? tail)
+						 (error "No applicable methods/next methods.")
+						 (apply (method-procedure (car tail))
+							(cons (one-step (cdr tail)) args)))))))
+				 ((one-step methods)))))))
+  
+  (define applicable?
+    (lambda (c arg)
+      (memq c (class-cpl (class-of arg)))))
+  
+  (define more-specific?
+    (lambda (c1 c2 arg)
+      (memq c2 (memq c1 (class-cpl (class-of arg))))))
+  
+  (add-method initialize
+	      (make-method (list <object>)
+			   (lambda (call-next-method object initargs) object)))
+  
+  (add-method initialize
+	      (make-method (list <class>)
+			   (lambda (call-next-method class initargs)
+			     (call-next-method)
+			     (slot-set! class
+					'direct-supers
+					(getl initargs 'direct-supers '()))
+			     (slot-set! class
+					'direct-slots
+					(map (lambda (s)
+					       (if (pair? s) s (list s)))
+					     (getl initargs 'direct-slots  '())))
+			     (slot-set! class 'cpl   (compute-cpl   class))
+			     (slot-set! class 'slots (compute-slots class))
+			     (let* ((nfields 0)
+				    (field-initializers '())
+				    (allocator
+				     (lambda (init)
+				       (let ((f nfields))
+					 (set! nfields (+ nfields 1))
+					 (set! field-initializers
+					       (cons init field-initializers))
+					 (list (lambda (o)   (%instance-ref  o f))
+					       (lambda (o n) (%instance-set! o f n))))))
+				    (getters-n-setters
+				     (map (lambda (slot)
+					    (cons (car slot)
+						  (compute-getter-and-setter class
+									     slot
+									     allocator)))
+					  (slot-ref class 'slots))))
+			       (slot-set! class 'nfields nfields)
+			       (slot-set! class 'field-initializers field-initializers)
+			       (slot-set! class 'getters-n-setters getters-n-setters)))))
+  
+  (add-method initialize
+	      (make-method (list <generic>)
+			   (lambda (call-next-method generic initargs)
+			     (call-next-method)
+			     (slot-set! generic 'methods '())
+			     (%set-instance-proc! generic
+						  (lambda args (error "Has no methods."))))))
+  
+  (add-method initialize
+	      (make-method (list <method>)
+			   (lambda (call-next-method method initargs)
+			     (call-next-method)
+			     (slot-set! method 'specializers (getl initargs 'specializers))
+			     (slot-set! method 'procedure    (getl initargs 'procedure)))))
+  
+  (add-method allocate-instance
+	      (make-method (list <class>)
+			   (lambda (call-next-method class)
+			     (let* ((field-initializers (slot-ref class 'field-initializers))
+				    (new (%allocate-instance
+					  class
+					  (length field-initializers))))
+			       (let loop ((n 0)
+					  (inits field-initializers))
+				 (if (pair? inits)
+				     (begin
+				       (%instance-set! new n ((car inits)))
+				       (loop (+ n 1)
+					     (cdr inits)))
+				     new))))))
+  
+  (add-method allocate-instance
+	      (make-method (list <entity-class>)
+			   (lambda (call-next-method class)
+			     (let* ((field-initializers (slot-ref class 'field-initializers))
+				    (new (%allocate-entity
+					  class
+					  (length field-initializers))))
+			       (let loop ((n 0)
+					  (inits field-initializers))
+				 (if (pair? inits)
+				     (begin
+				       (%instance-set! new n ((car inits)))
+				       (loop (+ n 1)
+					     (cdr inits)))
+				     new))))))
+  
+  (add-method compute-cpl
+	      (make-method (list <class>)
+			   (lambda (call-next-method class)
+			     (compute-std-cpl class class-direct-supers))))
+  
+  (add-method compute-slots
+	      (make-method (list <class>)
+			   (lambda (call-next-method class)
+			     (let collect ((to-process (apply append
+							      (map class-direct-slots
+								   (class-cpl class))))
+					   (result '()))
+			       (if (null? to-process)
+				   (reverse result)
+				   (let* ((current (car to-process))
+					  (name (car current))
+					  (others '())
+					  (remaining-to-process
+					   (collect-if (lambda (o)
+							 (if (eq? (car o) name)
+							     (begin
+							       (set! others (cons o others))
+							       #f)
+							     #t))
+						       (cdr to-process))))
+				     (collect remaining-to-process
+					      (cons (append current
+							    (apply append (map cdr others)))
+						    result))))))))
+  
+  (add-method compute-getter-and-setter
+	      (make-method (list <class>)
+			   (lambda (call-next-method class slot allocator)
+			     (allocator (lambda () '())))))
 					;
 					; Now everything works, both generic functions and classes, so we can
 					; turn on the real MAKE.
 					;
 					;
-      (set! make
-	    (lambda (class . initargs)
-	      (let ((instance (allocate-instance class)))
-		(initialize instance initargs)
-		instance)))
-      
+  (set! make
+	(lambda (class . initargs)
+	  (let ((instance (allocate-instance class)))
+	    (initialize instance initargs)
+	    instance)))
+  
 					;
 					; Now define what CLOS calls `built in' classes.
 					;
 					;
-      (define <primitive-class>
-	(make <class>
-	  'direct-supers (list <class>)
-	  'direct-slots  (list)))
-      
-      (define make-primitive-class
-	(lambda class
-	  (make (if (null? class) <primitive-class> (car class))
-	    'direct-supers (list <top>)
-	    'direct-slots  (list))))
-      
-      (define <pair>        (make-primitive-class))
-      (define <null>        (make-primitive-class))
-      (define <symbol>      (make-primitive-class))
-      (define <boolean>     (make-primitive-class))
-      (define <procedure>   (make-primitive-class <procedure-class>))
-      (define <number>      (make-primitive-class))
-      (define <vector>      (make-primitive-class))
-      (define <char>        (make-primitive-class))
-      (define <string>      (make-primitive-class))
-      (define  <input-port> (make-primitive-class))
-      (define <output-port> (make-primitive-class))
-      
+  (define <primitive-class>
+    (make <class>
+      'direct-supers (list <class>)
+      'direct-slots  (list)))
+  
+  (define make-primitive-class
+    (lambda class
+      (make (if (null? class) <primitive-class> (car class))
+	'direct-supers (list <top>)
+	'direct-slots  (list))))
+  
+  (define <pair>        (make-primitive-class))
+  (define <null>        (make-primitive-class))
+  (define <symbol>      (make-primitive-class))
+  (define <boolean>     (make-primitive-class))
+  (define <procedure>   (make-primitive-class <procedure-class>))
+  (define <number>      (make-primitive-class))
+  (define <vector>      (make-primitive-class))
+  (define <char>        (make-primitive-class))
+  (define <string>      (make-primitive-class))
+  (define  <input-port> (make-primitive-class))
+  (define <output-port> (make-primitive-class))
+  
 					; This is a useful sort of helper function.  Note how it uses the
 					; introspective part of the MOP.  The first few pages of chapter
 					; two of the AMOP discuss this.
@@ -15669,17 +15670,17 @@
 					; the classes to methods and generic functions.  Is that worth adding?
 					;
 					;
-      (define initialize-slots
-	(lambda (object initargs)
-	  (let ((not-there (list 'shes-not-there)))
-	    (for-each (lambda (slot)
-			(let ((name (car slot)))
-			  (let ((value  (getl initargs name not-there)))
-			    (if (eq? value not-there)
-				'do-nothing
-				(slot-set! object name value)))))
-		      (class-slots (class-of object))))))
-      
+  (define initialize-slots
+    (lambda (object initargs)
+      (let ((not-there (list 'shes-not-there)))
+	(for-each (lambda (slot)
+		    (let ((name (car slot)))
+		      (let ((value  (getl initargs name not-there)))
+			(if (eq? value not-there)
+			    'do-nothing
+			    (slot-set! object name value)))))
+		  (class-slots (class-of object))))))
+  
 					;***
 					;
 					; A simple class, just an instance of <class>.  Note that we are using
@@ -15687,20 +15688,20 @@
 					; of AMOP for more on this.
 					;
 					;
-      
-      (define <pos> (make <class>                          ;[make-class 
-		      'direct-supers (list <object>)   ;  (list <object>) 
-		      'direct-slots  (list 'x 'y)))    ;  (list 'x 'y)]
-      
-      (add-method initialize
-		  (make-method (list <pos>)
-			       (lambda (call-next-method pos initargs)
-				 (call-next-method)
-				 (initialize-slots pos initargs))))
-      
-      (define p1 (make <pos> 'x 1 'y 2))
-      (define p2 (make <pos> 'x 3 'y 5))
-      
+  
+  (define <pos> (make <class>                          ;[make-class 
+		  'direct-supers (list <object>)   ;  (list <object>) 
+		  'direct-slots  (list 'x 'y)))    ;  (list 'x 'y)]
+  
+  (add-method initialize
+	      (make-method (list <pos>)
+			   (lambda (call-next-method pos initargs)
+			     (call-next-method)
+			     (initialize-slots pos initargs))))
+  
+  (define p1 (make <pos> 'x 1 'y 2))
+  (define p2 (make <pos> 'x 3 'y 5))
+  
 					;***
 					;
 					; Another way of writing that class definition, that achives better
@@ -15708,42 +15709,42 @@
 					; than symbols.
 					;
 					;
-      
-      (define <pos> #f)
-      (define pos-x (make-generic))
-      (define pos-y (make-generic))
-      (define move  (make-generic))
-      
-      (let ((x (vector 'x))
-	    (y (vector 'y)))
-	
-	(set! <pos> (make <class>
-		      'direct-supers (list <object>)
-		      'direct-slots  (list x y)))
-	
-	(add-method pos-x
-		    (make-method (list <pos>)
-				 (lambda (call-next-method pos) (slot-ref pos x))))
-	(add-method pos-y
-		    (make-method (list <pos>)
-				 (lambda (call-next-method pos) (slot-ref pos y))))
-	
-	(add-method move
-		    (make-method (list <pos>)
-				 (lambda (call-next-method pos new-x new-y)
-				   (slot-set! pos x new-x)
-				   (slot-set! pos y new-y))))
-	
-	(add-method initialize
-		    (make-method (list <pos>)
-				 (lambda (call-next-method pos initargs)
-				   (move pos (getl initargs 'x 0) (getl initargs 'y 0)))))
-	)
-      
-      
-      (define p3 (make <pos> 'x 1 'y 2))
-      (define p4 (make <pos> 'x 3 'y 5))
-      
+  
+  (define <pos> #f)
+  (define pos-x (make-generic))
+  (define pos-y (make-generic))
+  (define move  (make-generic))
+  
+  (let ((x (vector 'x))
+	(y (vector 'y)))
+    
+    (set! <pos> (make <class>
+		  'direct-supers (list <object>)
+		  'direct-slots  (list x y)))
+    
+    (add-method pos-x
+		(make-method (list <pos>)
+			     (lambda (call-next-method pos) (slot-ref pos x))))
+    (add-method pos-y
+		(make-method (list <pos>)
+			     (lambda (call-next-method pos) (slot-ref pos y))))
+    
+    (add-method move
+		(make-method (list <pos>)
+			     (lambda (call-next-method pos new-x new-y)
+			       (slot-set! pos x new-x)
+			       (slot-set! pos y new-y))))
+    
+    (add-method initialize
+		(make-method (list <pos>)
+			     (lambda (call-next-method pos initargs)
+			       (move pos (getl initargs 'x 0) (getl initargs 'y 0)))))
+    )
+  
+  
+  (define p3 (make <pos> 'x 1 'y 2))
+  (define p4 (make <pos> 'x 3 'y 5))
+  
 					;***
 					;
 					; Class allocated slots.
@@ -15751,49 +15752,49 @@
 					; In Scheme, this extension isn't worth a whole lot, but what the hell.
 					;
 					;
-      
-      (define <class-slots-class>
-	(make-class (list <class>)
-		    (list)))
-      
-      (add-method compute-getter-and-setter
-		  (make-method (list <class-slots-class>)
-			       (lambda (call-next-method class slot allocator)
-				 (if (null? (memq ':class-allocation slot))
-				     (call-next-method)
-				     (let ((cell '()))
-				       (list (lambda (o) cell)
-					     (lambda (o new) (set! cell new) new)))))))
-      
+  
+  (define <class-slots-class>
+    (make-class (list <class>)
+		(list)))
+  
+  (add-method compute-getter-and-setter
+	      (make-method (list <class-slots-class>)
+			   (lambda (call-next-method class slot allocator)
+			     (if (null? (memq ':class-allocation slot))
+				 (call-next-method)
+				 (let ((cell '()))
+				   (list (lambda (o) cell)
+					 (lambda (o new) (set! cell new) new)))))))
+  
 					;
 					; Here's a silly program that uses class allocated slots.
 					;
 					;
-      (define <ship>
-	(make <class-slots-class>
-	  'direct-supers (list <object>)
-	  'direct-slots  (list 'name
-			       '(all-ships :class-allocation))))
-      
-      (add-method initialize
-		  (make-method (list <ship>)
-			       (lambda (call-next-method ship initargs)
-				 (call-next-method)
-				 (initialize-slots ship initargs)
-				 (slot-set! ship
-					    'all-ships
-					    (cons ship (slot-ref ship 'all-ships))))))
-      
-      (define siblings (make-generic))
-      (add-method siblings
-		  (make-method (list <ship>)
-			       (lambda (call-next-method ship)
-				 (remove ship (slot-ref ship 'all-ships)))))
-      
-      (define s1 (make <ship> 'name 's1))
-      (define s2 (make <ship> 'name 's2))
-      (define s3 (make <ship> 'name 's3))
-      
+  (define <ship>
+    (make <class-slots-class>
+      'direct-supers (list <object>)
+      'direct-slots  (list 'name
+			   '(all-ships :class-allocation))))
+  
+  (add-method initialize
+	      (make-method (list <ship>)
+			   (lambda (call-next-method ship initargs)
+			     (call-next-method)
+			     (initialize-slots ship initargs)
+			     (slot-set! ship
+					'all-ships
+					(cons ship (slot-ref ship 'all-ships))))))
+  
+  (define siblings (make-generic))
+  (add-method siblings
+	      (make-method (list <ship>)
+			   (lambda (call-next-method ship)
+			     (remove ship (slot-ref ship 'all-ships)))))
+  
+  (define s1 (make <ship> 'name 's1))
+  (define s2 (make <ship> 'name 's2))
+  (define s3 (make <ship> 'name 's3))
+  
 					;***
 					;
 					; Here's a class of class that allocates some slots dynamically.
@@ -15803,177 +15804,177 @@
 					; subclass that allocates all its slots dynamically.
 					;
 					;
-      (define <dynamic-class>
-	(make-class (list <class>)
-		    (list 'alist-g-n-s)))
-      
-      
-      (define dynamic-slot? (make-generic))
-      
-      (add-method dynamic-slot?
-		  (make-method (list <dynamic-class>)
-			       (lambda (call-next-method class slot)
-				 (memq :dynamic-allocation (cdr slot)))))
-      
-      (define alist-getter-and-setter
-	(lambda (dynamic-class allocator)
-	  (let ((old (slot-ref dynamic-class 'alist-g-n-s)))
-	    (if (null? old)
-		(let ((new (allocator (lambda () '()))))
-		  (slot-set! dynamic-class 'alist-g-n-s new)
-		  new)
-		old))))
-      
-      (add-method compute-getter-and-setter
-		  (make-method (list <dynamic-class>)
-			       (lambda (call-next-method class slot allocator)
-				 (if (null? (dynamic-slot? class slot))
-				     (call-next-method)
-				     (let* ((name (car slot))
-					    (g-n-s (alist-getter-and-setter class allocator))
-					    (alist-getter (car g-n-s))
-					    (alist-setter (cadr g-n-s)))
-				       (list (lambda (o)
-					       (let ((entry (assq name  (alist-getter o))))
-						 (if (not entry)
-						     '()
-						     (cdr entry))))
-					     (lambda (o new)
-					       (let* ((alist (alist-getter o))
-						      (entry (assq name alist)))
-						 (if (not entry)
-						     (alist-setter o
-								   (cons (cons name new) alist))
-						     (set-cdr! entry new))
-						 new))))))))
-      
-      (define <all-dynamic-class>
-	(make-class (list <dynamic-class>)
-		    (list)))
-      
-      (add-method dynamic-slot?
-		  (make-method (list <all-dynamic-class>)
-			       (lambda (call-next-method class slot) #t)))
-      
+  (define <dynamic-class>
+    (make-class (list <class>)
+		(list 'alist-g-n-s)))
+  
+  
+  (define dynamic-slot? (make-generic))
+  
+  (add-method dynamic-slot?
+	      (make-method (list <dynamic-class>)
+			   (lambda (call-next-method class slot)
+			     (memq :dynamic-allocation (cdr slot)))))
+  
+  (define alist-getter-and-setter
+    (lambda (dynamic-class allocator)
+      (let ((old (slot-ref dynamic-class 'alist-g-n-s)))
+	(if (null? old)
+	    (let ((new (allocator (lambda () '()))))
+	      (slot-set! dynamic-class 'alist-g-n-s new)
+	      new)
+	    old))))
+  
+  (add-method compute-getter-and-setter
+	      (make-method (list <dynamic-class>)
+			   (lambda (call-next-method class slot allocator)
+			     (if (null? (dynamic-slot? class slot))
+				 (call-next-method)
+				 (let* ((name (car slot))
+					(g-n-s (alist-getter-and-setter class allocator))
+					(alist-getter (car g-n-s))
+					(alist-setter (cadr g-n-s)))
+				   (list (lambda (o)
+					   (let ((entry (assq name  (alist-getter o))))
+					     (if (not entry)
+						 '()
+						 (cdr entry))))
+					 (lambda (o new)
+					   (let* ((alist (alist-getter o))
+						  (entry (assq name alist)))
+					     (if (not entry)
+						 (alist-setter o
+							       (cons (cons name new) alist))
+						 (set-cdr! entry new))
+					     new))))))))
+  
+  (define <all-dynamic-class>
+    (make-class (list <dynamic-class>)
+		(list)))
+  
+  (add-method dynamic-slot?
+	      (make-method (list <all-dynamic-class>)
+			   (lambda (call-next-method class slot) #t)))
+  
 					;
 					; A silly program that uses this.
 					;
 					;
-      (define <person> (make <all-dynamic-class>
-			 'direct-supers (list <object>)
-			 'direct-slots  (list 'name 'age 'address)))
-      
-      (add-method initialize
-		  (make-method (list <person>)
-			       (lambda (call-next-method person initargs)
-				 (initialize-slots person initargs))))
-      
-      (define person1 (make <person> 'name 'sally))
-      (define person2 (make <person> 'name 'betty))
-      (define person3 (make <person> 'name 'sue))
-      
+  (define <person> (make <all-dynamic-class>
+		     'direct-supers (list <object>)
+		     'direct-slots  (list 'name 'age 'address)))
+  
+  (add-method initialize
+	      (make-method (list <person>)
+			   (lambda (call-next-method person initargs)
+			     (initialize-slots person initargs))))
+  
+  (define person1 (make <person> 'name 'sally))
+  (define person2 (make <person> 'name 'betty))
+  (define person3 (make <person> 'name 'sue))
+  
 					;***
 					;
 					; A ``database'' class that stores slots externally.
 					;
 					;
-      (define <db-class>
-	(make-class (list <class>)
-		    (list 'id-g-n-s)))
-      
-      (define id-getter-and-setter
-	(lambda (db-class allocator)
-	  (let ((old (slot-ref db-class 'id-g-n-s)))
-	    (if (null? old)
-		(let ((new (allocator db-allocate-id)))
-		  (slot-set! class 'id-g-n-s new)
-		  new)
-		old))))
-      
-      (add-method compute-getter-and-setter
-		  (make-method (list <db-class>)
-			       (lambda (call-next-method class slot allocator)
-				 (let* ((id-g-n-s (id-getter-and-setter class allocator))
-					(id-getter (car id-g-n-s))
-					(id-setter (cadr id-g-n-s))
-					(slot-name (car slot)))
-				   (list (lambda (o)
-					   (db-lookup (id-getter o) slot-name)) 
-					 (lambda (o new)
-					   (db-store  (id-getter o) slot-name new)))))))
-      
+  (define <db-class>
+    (make-class (list <class>)
+		(list 'id-g-n-s)))
+  
+  (define id-getter-and-setter
+    (lambda (db-class allocator)
+      (let ((old (slot-ref db-class 'id-g-n-s)))
+	(if (null? old)
+	    (let ((new (allocator db-allocate-id)))
+	      (slot-set! class 'id-g-n-s new)
+	      new)
+	    old))))
+  
+  (add-method compute-getter-and-setter
+	      (make-method (list <db-class>)
+			   (lambda (call-next-method class slot allocator)
+			     (let* ((id-g-n-s (id-getter-and-setter class allocator))
+				    (id-getter (car id-g-n-s))
+				    (id-setter (cadr id-g-n-s))
+				    (slot-name (car slot)))
+			       (list (lambda (o)
+				       (db-lookup (id-getter o) slot-name)) 
+				     (lambda (o new)
+				       (db-store  (id-getter o) slot-name new)))))))
+  
 					;***
 					;
 					; A kind of generic that supports around methods.
 					;
 					;
-      (define make-around-generic
-	(lambda () (make <around-generic>)))
-      
-      (define make-around-method
-	(lambda (specializers procedure)
-	  (make <around-method>
-	    'specializers specializers
-	    'procedure procedure)))
-      
-      
-      (define <around-generic> (make <entity-class>
-				 'direct-supers (list <generic>)))
-      (define <around-method>  (make <class>
-				 'direct-supers (list <method>)))
-      
-      
-      (define around-method?   (make-generic))
-      
-      (add-method around-method?
-		  (make-method (list <method>)
-			       (lambda (call-next-method x) #f)))
-      (add-method around-method?
-		  (make-method (list <around-method>)
-			       (lambda (call-next-method x) #t)))
-      
-      
-      (add-method compute-methods
-		  (make-method (list <around-generic>)
-			       (lambda (call-next-method generic)
-				 (let ((normal-compute-methods (call-next-method)))
-				   (lambda (args)
-				     (let ((normal-methods (normal-compute-methods args)))
-				       (append
-					(collect-if around-method?
-						    normal-methods)
-					(collect-if (lambda (m) (not (around-method? m)))
-						    normal-methods))))))))
+  (define make-around-generic
+    (lambda () (make <around-generic>)))
+  
+  (define make-around-method
+    (lambda (specializers procedure)
+      (make <around-method>
+	'specializers specializers
+	'procedure procedure)))
+  
+  
+  (define <around-generic> (make <entity-class>
+			     'direct-supers (list <generic>)))
+  (define <around-method>  (make <class>
+			     'direct-supers (list <method>)))
+  
+  
+  (define around-method?   (make-generic))
+  
+  (add-method around-method?
+	      (make-method (list <method>)
+			   (lambda (call-next-method x) #f)))
+  (add-method around-method?
+	      (make-method (list <around-method>)
+			   (lambda (call-next-method x) #t)))
+  
+  
+  (add-method compute-methods
+	      (make-method (list <around-generic>)
+			   (lambda (call-next-method generic)
+			     (let ((normal-compute-methods (call-next-method)))
+			       (lambda (args)
+				 (let ((normal-methods (normal-compute-methods args)))
+				   (append
+				    (collect-if around-method?
+						normal-methods)
+				    (collect-if (lambda (m) (not (around-method? m)))
+						normal-methods))))))))
 					;
 					; And a simple example of using it.
 					;
 					;
-      (define <baz> (make-class (list <object>) (list)))
-      (define <bar> (make-class (list <baz>)    (list)))
-      (define <foo> (make-class (list <bar>)    (list)))
-      
-      (define test-around
-	(lambda (generic)
-	  (add-method generic
-		      (make-method        (list <foo>)
-					  (lambda (cnm x) (cons 'foo (cnm)))))
-	  
-	  (add-method generic
-		      (make-around-method (list <bar>)
-					  (lambda (cnm x) (cons 'bar (cnm)))))
-	  
-	  (add-method generic
-		      (make-method        (list <baz>)
-					  (lambda (cnm x) '(baz))))
-	  
-	  (generic (make <foo>))))
+  (define <baz> (make-class (list <object>) (list)))
+  (define <bar> (make-class (list <baz>)    (list)))
+  (define <foo> (make-class (list <bar>)    (list)))
   
-      (test (test-around (make-generic))        '(foo bar baz))
-      (test (test-around (make-around-generic)) '(bar foo baz))
+  (define test-around
+    (lambda (generic)
+      (add-method generic
+		  (make-method        (list <foo>)
+				      (lambda (cnm x) (cons 'foo (cnm)))))
+      
+      (add-method generic
+		  (make-around-method (list <bar>)
+				      (lambda (cnm x) (cons 'bar (cnm)))))
+      
+      (add-method generic
+		  (make-method        (list <baz>)
+				      (lambda (cnm x) '(baz))))
+      
+      (generic (make <foo>))))
+  
+  (test (test-around (make-generic))        '(foo bar baz))
+  (test (test-around (make-around-generic)) '(bar foo baz))
+  
+  ) ;; end tiny-clos
 
-      )
-        ;; end tiny-clos
-    ))  ;; end CL
+
 
 
 (test (let () (define-constant __c1__ 32) __c1__) 32)
@@ -16395,6 +16396,20 @@
 			  (lambda (val) (set! local val))))
 	(pws-test))
       123)
+
+(test (let ((local 123))
+	(define pws-test (make-procedure-with-setter
+			  (lambda () local)
+			  (lambda (val) (set! local val))))
+	(pws-test 32))
+      'error)
+
+(test (let ((local 123))
+	(define pws-test (make-procedure-with-setter
+			  (lambda () local)
+			  (lambda (val) (set! local val))))
+	(set! (pws-test 32) 123))
+      'error)
 
 (test (call-with-exit (lambda (return) (let ((local 123))
 					 (define pws-test (make-procedure-with-setter
@@ -20425,6 +20440,18 @@
 (num-test (tanh -2.0e+00+9.42512322775237976202e+00i) -9.6402758819508310550e-1+2.439339541035071690e-5i)
 (num-test (tanh -2.0e+00-9.42512322775237976202e+00i) -9.6402758819508310550e-1-2.439339541035071690e-5i)
 (num-test (tanh 50) 1.0)
+
+(num-test (tanh 1s13)    1s0)
+(num-test (tanh 1s3)     1s0)
+(num-test (tanh 1s2)     1s0)
+(num-test (tanh 1s1)     1s0)
+(num-test (tanh 1l0)     0.7615941559557648881L0)
+(num-test (tanh 1l1)     0.9999999958776927636L0)
+(num-test (tanh 1l100)   1L0)
+(num-test (tanh 1f10)    1f0)
+(num-test (tanh 1L-10)   1L-10)
+(num-test (tanh 1L-17)   1L-17)
+(num-test (tanh 1L-47)   1L-47)
 
 
 ;; -------- asinh
@@ -26811,7 +26838,8 @@
 (num-test (gcd 1/3 2/3) 1/3)
 (num-test (gcd 1/3 1/6 5/12) 1/12)
 (num-test (gcd 1/3 1/6 5/12 2) 1/12)
-
+(num-test (gcd 77874422 32223899) 1)
+ 
 
 (num-test (modulo 13 4) 1)
 (num-test (modulo -13 4) 3)
@@ -41309,6 +41337,356 @@
       (num-test (/ -54987418627898620923060954379316763081930842855917193391807940070173620336071/17370345837184638879794373707261631548922174314274224219546763452439685451597 107349939397731511365417710412808670916754334908520065561311453951414109180973/7800708635318451621630266369706695626474649690647985662113853436261704078874) -428940831324519456770429889832838610542119304716244392653623661175655561457214418178921042544524225772650432309479656622489393939407340321261255371264054/1864705572939408818246392762570376592749103793151936455808919833872532407312841098160841844995663367019074328670998871082130543124576872890789577304863881)
       (num-test (= -98781233389595723930250385525631360344437602649022271391716773162526352115087074898920261954897888235939429993829738630297052776667061779065100945771127020439712527398509771853491319737304616607041615012797134365574007368603232768089410097730646360760856052946465578073788924743642391638455649511108051053789425902013657106523269224045822294981391380222050223141347787674321888089837786284947870569165079491411110074602544203383038299901291952931113248943344436935596614205784436844912243069019367149526328612664067719765890897558075277707055756274228634652905751880612235340874976952880431555921814590049070979276358637989837532124647692152520447680373275200239544449293834424643702763974403094033892112967196087310232853165951285609426599617479356206218697586025251765476179158153123631158173662488102357611674821528467825910806391548770908013608889792001203039243914696463472490444573930050190716726220002151679336252008777326482398042427845860796285369622627679324605214987983884122808994422164327311297556122943400093231935477754959547620500784989043704825777186301417894825200797719289692636286337716705491307686644214213732116277102140558505945554566856673724837541141206267647285222293953181717113434757149921850120377706206012113994795124049471433490016083401216757825264766474891405185591236321448744678896448941259668731597494947127423662646933419809756274038044752395708014998820826196523041220918922611359697502638594907608648168849193813197790291360087857093790119162389573209640804111261616771827989939551840471235079945175327536638365874717775169210186608268924244639016270610098894971732892267642318266405837012482726627199088381027028630711279130575230815976484191675172279903609489448225149181063260231957171204855841611039996959582465138269247794842445177715476581512709861409446684911276158067098438009067149531119008707418601627426255891/2063950098473886055933596136103014753954685977787179797499441692283103642150668140884348149132839387663291870239435604463778573480782766958396423322880804442523056530013282118705429274303746421980903580754656364533869319744640130831962767797772323836293079599182477171562218297208495122660799328579852852969560730744211066545295945803939271680397511478811389399527913043145952054883289558914237172406636283114284363301999238526952309439259354223729114988806937903509692118585280437646676248013406270664905997291670857985754768850507766359973207600149782819306010561088246502918148146264806947375101624011387317921439210509902170092173796154464078297852707797984007992277904626058467143192149921546030028316990855470478894515952884526783686210401408859364838148201339959570732480920969000913791571631154267939054105878236201498477027265774680071188764947522112650857013491135901945605796776829525789886482760578142306057177990048751864852763036720112071475134369179525117161001517868525821398753039187062869247457336940152614866298628205010037695017885878296140891234142925514925051385440766473260338168038302226808098439763889250948602137806546736025439919604390464712793474019469457135856879584745805794574609707742445431851999335443724488636749987837445626810087003490329257105472274738811579817454656532496370562155449815456374456838912258383282154811001588175608617475540639254689723629881619252699580383612847920348111900440075645703960104081690968807839189109040568288972353424306876947127635585164905071821419089229871978994388197349499565628906992171901547121903117815637249359328193980583892566359962066242217169190169986105579733710057404319381685578470983838597020624234209884597110721892707818651210378187525863009879314177842634871978427592746452643603586344401223449546482306838947819060455178762434166799996220143825677025686435609179225302671777326568324855229172912876656233006785717920665743720753617646617017219230313226844735567400507490772935145894670445831971526014183234960075574401616682479457962912905141754252265169682318523572680657053374002911007741991220001444440319448034755483178790032581428679303588017268970 0) #f)
       
+
+      (num-test (+ (bignum "17009115185923538769.0") (bignum "-12047631083067675031.0")) (bignum "4961484102855863738.0"))
+      (num-test (+ (bignum "12677011568664239747.0") (bignum "3269056182420253574.0")) (bignum "15946067751084493321.0"))
+      (num-test (+ (bignum "9315504781982082433.0") (bignum "13857624532376678678.0")) (bignum "23173129314358761111.0"))
+      (num-test (+ (bignum "15226508728194069537.0") (bignum "11481952022080775416.0")) (bignum "26708460750274844953.0"))
+      (num-test (+ (bignum "7461641943684774743.0") (bignum "12249026721402718630.0")) (bignum "19710668665087493373.0"))
+      (num-test (+ (bignum "1180469445886971055.0") (bignum "-3208456171287181032.0")) (bignum "-2027986725400209977.0"))
+      (num-test (+ (bignum "18358552990465743315.0") (bignum "221529797579218180385160273426219343697.0")) (bignum "221529797579218180403518826416685087012.0"))
+      (num-test (+ (bignum "-14819874956616484359.0") (bignum "30498815629431206969122152847973230849.0")) (bignum "30498815629431206954302277891356746490.0"))
+      (num-test (+ (bignum "-11781881800334342169.0") (bignum "112219460388643619332860331282276228017.0")) (bignum "112219460388643619321078449481941885848.0"))
+      (num-test (+ (bignum "3570694277032201957.0") (bignum "284821691832196381859344006870088122712.0")) (bignum "284821691832196381862914701147120324669.0"))
+      (num-test (+ (bignum "-17005463295060938595.0") (bignum "69162171850264911722979835561124066203.0")) (bignum "69162171850264911705974372266063127608.0"))
+      (num-test (+ (bignum "15647113311796203488.0") (bignum "150750467185419235519670165664526735459.0")) (bignum "150750467185419235535317278976322938947.0"))
+      (num-test (+ (bignum "-14330150541101371097.0") (bignum "-13054027994001826312503071338715966858478218093171762021549815587520723118772963817341751396703629529810372702877555022105594068768886421335353882155416908.0")) (bignum "-13054027994001826312503071338715966858478218093171762021549815587520723118772963817341751396703629529810372702877555022105594068768886435665504423256788005.0"))
+      (num-test (+ (bignum "7406427184711759740.0") (bignum "-4059250217961011548005203450962458026528281798230141192186669580689721046971433745892994467792118611646113962840750314719233572760336084100766391093756252.0")) (bignum "-4059250217961011548005203450962458026528281798230141192186669580689721046971433745892994467792118611646113962840750314719233572760336076694339206381996512.0"))
+      (num-test (+ (bignum "8819522415901031498.0") (bignum "7274905269237471130619913887005155660991437201841760414347836177003483932007334374478344594178179032728521106519295465031750530183363793325150672647162846.0")) (bignum "7274905269237471130619913887005155660991437201841760414347836177003483932007334374478344594178179032728521106519295465031750530183363802144673088548194344.0"))
+      (num-test (+ (bignum "-7242932332215698200.0") (bignum "-10558564312909325527488520195600871241245891651644550509993750377630234801225525279855157008009255586978047154906058790342845859331159009687703010657137320.0")) (bignum "-10558564312909325527488520195600871241245891651644550509993750377630234801225525279855157008009255586978047154906058790342845859331159016930635342872835520.0"))
+      (num-test (+ (bignum "9794320575955609492.0") (bignum "13380937715397052566925484435342184213544885758759259410983243841206628594840271850190097746775475837233042430565529099681550277688470325394342993771343357.0")) (bignum "13380937715397052566925484435342184213544885758759259410983243841206628594840271850190097746775475837233042430565529099681550277688470335188663569726952849.0"))
+      (num-test (+ (bignum "-18404048401680891243.0") (bignum "6690884608978704096379677348142836785900717005050936986370615083929607190833180925295418079551348559691161519822750772440155040888224482801864925665484770.0")) (bignum "6690884608978704096379677348142836785900717005050936986370615083929607190833180925295418079551348559691161519822750772440155040888224464397816523984593527.0"))
+      (num-test (+ (bignum "-10763220363947284865.0") (bignum "-30985722824355332972176356513316569304601382411274079243859710673739383446566598659878378034375348869471278415635671865753349734809209959160389615096293457362383744562507969316522225741589739150453090393424063226271167062127000223628785686999799282795143706407082119829140399988180879618548495395684946331608899565543458192773899200054228140747414544792128323269250618482622488195333106891323515989863192944848391405358725993695671970811097285270641251816244586360288952156538400321933146150313939864593445583603568771077260174826348411367609521412133720180359748539721570562669201065857989876521301209899829037444385.0")) (bignum "-30985722824355332972176356513316569304601382411274079243859710673739383446566598659878378034375348869471278415635671865753349734809209959160389615096293457362383744562507969316522225741589739150453090393424063226271167062127000223628785686999799282795143706407082119829140399988180879618548495395684946331608899565543458192773899200054228140747414544792128323269250618482622488195333106891323515989863192944848391405358725993695671970811097285270641251816244586360288952156538400321933146150313939864593445583603568771077260174826348411367609521412133720180359748539721570562669201065857989876521311973120192984729250.0"))
+      (num-test (+ (bignum "-12742462236537568498.0") (bignum "8711131313747826394504271797986775572294949693272674156076339989631171694968899228610359983845552623710580616605402899155485071497929100432998183040757832449369366844015907530612334721882095163137705867337969942902346066961718232788529860214990099385213558935023241940238638069647809530490438245386869385682221280939688108487754251075630026707075310465788398213293782900699868609660892232563106662995330591906155134237356516622436517046191466823447743155250482328613449506396571170001248589926831956459700467126756876526930443317428628239358666456771112897986098390410773312792390699312960051747534683311506465130527.0")) (bignum "8711131313747826394504271797986775572294949693272674156076339989631171694968899228610359983845552623710580616605402899155485071497929100432998183040757832449369366844015907530612334721882095163137705867337969942902346066961718232788529860214990099385213558935023241940238638069647809530490438245386869385682221280939688108487754251075630026707075310465788398213293782900699868609660892232563106662995330591906155134237356516622436517046191466823447743155250482328613449506396571170001248589926831956459700467126756876526930443317428628239358666456771112897986098390410773312792390699312960051747521940849269927562029.0"))
+      (num-test (+ (bignum "9991390529516174614.0") (bignum "7879872958436992955898278403297937595295396115022400543178444946646147916754852888072481665174663073269556311758611700754643170639645548596647557683044355930340624784190093631808382820554407595007761070026239341594197877214157118335743842022627898879376346092898666610367809537340994845045475091410516226225078052019727419030585524815982151736622865401299588936172760762386183577504972623377661437665668080131418564228642443266935225613702941906491478788336262289516199380144218708241406077806669686589734333554945412904560108150202389909124657090061223183441083590340175629756198442568877659538345749595968764873879.0")) (bignum "7879872958436992955898278403297937595295396115022400543178444946646147916754852888072481665174663073269556311758611700754643170639645548596647557683044355930340624784190093631808382820554407595007761070026239341594197877214157118335743842022627898879376346092898666610367809537340994845045475091410516226225078052019727419030585524815982151736622865401299588936172760762386183577504972623377661437665668080131418564228642443266935225613702941906491478788336262289516199380144218708241406077806669686589734333554945412904560108150202389909124657090061223183441083590340175629756198442568877659538355740986498281048493.0"))
+      (num-test (+ (bignum "831234034418847630.0") (bignum "-744676478858160349467117341859049692149463503380690495147216354303526704924280287782902146026018180364963325847811379182950159627878800024734206345960410146056000392683000433501805629464626281031086102425271022388473812300724085127447081771317912465921636737545371909901577246384446144919253141375367648958387948463576516115079816552636772639965957498569187848459747361493535081532845254971492261148968198806736512864867151355002902241562014241077734122599581732704243705918200179789271894804233542502502119523149682814025979598424744685548054183678652651244898867735764030968089217841214778606507809487462642341164.0")) (bignum "-744676478858160349467117341859049692149463503380690495147216354303526704924280287782902146026018180364963325847811379182950159627878800024734206345960410146056000392683000433501805629464626281031086102425271022388473812300724085127447081771317912465921636737545371909901577246384446144919253141375367648958387948463576516115079816552636772639965957498569187848459747361493535081532845254971492261148968198806736512864867151355002902241562014241077734122599581732704243705918200179789271894804233542502502119523149682814025979598424744685548054183678652651244898867735764030968089217841214778606506978253428223493534.0"))
+      (num-test (+ (bignum "-6996572501442843347.0") (bignum "-16567158719848992553565776505785820491834685475229611199353714982570065913508303466008005931649515528390057456882757990896824841386431756898386429000065518724021230756426613661219891419166146764347562529640689229693578574350948436847247856000438153789455857903402883189892697143647998643667467614427922009931545254965075041050860609824086811877108940020349157317276288348430058535959434983921323332907180869396258655826781438419383792024592535415693101119109484610789291889841197827977530804650015884500878613240443324806805475203272442094530735476095374446946252236490708915034012846683015547314889561060687692538144.0")) (bignum "-16567158719848992553565776505785820491834685475229611199353714982570065913508303466008005931649515528390057456882757990896824841386431756898386429000065518724021230756426613661219891419166146764347562529640689229693578574350948436847247856000438153789455857903402883189892697143647998643667467614427922009931545254965075041050860609824086811877108940020349157317276288348430058535959434983921323332907180869396258655826781438419383792024592535415693101119109484610789291889841197827977530804650015884500878613240443324806805475203272442094530735476095374446946252236490708915034012846683015547314896557633189135381491.0"))
+      (num-test (+ (bignum "-8920936222630165483.0") (bignum "-18738991973681679876688842391791783563249057933653045519186959571392922172943405646958686202208790537612746921398028331540617848217445632123805070077600768524509025758950743971128222843292926773668584735575066246660802064630842300367821042873152766467703905048558085377302000898639290554395913805527529259855535801856020623830262396582180677933562523957295341539162448074423901242873918231922121053192425691524797238343327318801359521456598967984637483081312932069399045363737622797213185099130529375169698811801965974416555301085043300426947769193582129151016159057101028336667142913854943018973494705119572045938607.0")) (bignum "-18738991973681679876688842391791783563249057933653045519186959571392922172943405646958686202208790537612746921398028331540617848217445632123805070077600768524509025758950743971128222843292926773668584735575066246660802064630842300367821042873152766467703905048558085377302000898639290554395913805527529259855535801856020623830262396582180677933562523957295341539162448074423901242873918231922121053192425691524797238343327318801359521456598967984637483081312932069399045363737622797213185099130529375169698811801965974416555301085043300426947769193582129151016159057101028336667142913854943018973503626055794676104090.0"))
+      (num-test (+ (bignum "-243510292488206214847646757340020705642.0") (bignum "5940577100149745132.0")) (bignum "-243510292488206214841706180239870960510.0"))
+      (num-test (+ (bignum "35446324064743728955945058978206455057.0") (bignum "-6248622708755929572.0")) (bignum "35446324064743728949696436269450525485.0"))
+      (num-test (+ (bignum "-285342226760657637664173494795024413673.0") (bignum "-11942737781617905307.0")) (bignum "-285342226760657637676116232576642318980.0"))
+      (num-test (+ (bignum "180790435817422032042321866247362452865.0") (bignum "12401641959336396832.0")) (bignum "180790435817422032054723508206698849697.0"))
+      (num-test (+ (bignum "-179994871947239535956826388240542999950.0") (bignum "13573822506399140772.0")) (bignum "-179994871947239535943252565734143859178.0"))
+      (num-test (+ (bignum "-308198027295905163635866438671452347268.0") (bignum "-8790069282378476990.0")) (bignum "-308198027295905163644656507953830824258.0"))
+      (num-test (+ (bignum "-139324757925833055762410227358605285566.0") (bignum "-190622873846936719063564661032771271922.0")) (bignum "-329947631772769774825974888391376557488.0"))
+      (num-test (+ (bignum "332866352618304570046318203427223999347.0") (bignum "147978646177673305481282943528696833018.0")) (bignum "480844998795977875527601146955920832365.0"))
+      (num-test (+ (bignum "-39471620476300923970352914034802271156.0") (bignum "28992893610776120142668950821916856486.0")) (bignum "-10478726865524803827683963212885414670.0"))
+      (num-test (+ (bignum "274120253734611965146455315763505869288.0") (bignum "254675910805265090692978775702306142625.0")) (bignum "528796164539877055839434091465812011913.0"))
+      (num-test (+ (bignum "-122086811464559635596206661886176775901.0") (bignum "287312583034687582188356355813963609701.0")) (bignum "165225771570127946592149693927786833800.0"))
+      (num-test (+ (bignum "288576174771266329955482943556556984728.0") (bignum "-57843540651903655425270706396868707777.0")) (bignum "230732634119362674530212237159688276951.0"))
+      (num-test (+ (bignum "-47977736580820486006305788441965482221.0") (bignum "984809271313988066640898939725532304075331399066274624928410251834520283291912387208948664716457549646483445981126881113426109906085249657168046936670489.0")) (bignum "984809271313988066640898939725532304075331399066274624928410251834520283291912387208948664716457549646483445981126833135689529085599243351379604971188268.0"))
+      (num-test (+ (bignum "21225484205143479814642328762121362291.0") (bignum "11839789093732539327981861490012713257538550745921177905266671749716203131127256902110452504526721633943016923389974867770082516862899595554460170417713940.0")) (bignum "11839789093732539327981861490012713257538550745921177905266671749716203131127256902110452504526721633943016923389974888995566722006379410196788932539076231.0"))
+      (num-test (+ (bignum "-193095363331703875886398909106293703000.0") (bignum "4389392021031719669078675478621418677903292147307684123866099084349756491860737402449105804868232530632178577388168068485304437343508442251302846768269976.0")) (bignum "4389392021031719669078675478621418677903292147307684123866099084349756491860737402449105804868232530632178577388167875389941105639632555852393740474566976.0"))
+      (num-test (+ (bignum "-14827657635864183514988182371035598180.0") (bignum "-7256545787852407071411458891023580461638051949278710509801472046178301830006724297747051044450550248499056073213660185258676369175307019300952192657194576.0")) (bignum "-7256545787852407071411458891023580461638051949278710509801472046178301830006724297747051044450550248499056073213660200086334005039490534289134563692792756.0"))
+      (num-test (+ (bignum "54301423175725658626298504084995819705.0") (bignum "-13385853291610595576947504757201441006088030688464261540642594993520424631577281077984278942244446266776534612440941312995898184903431893212829646845766101.0")) (bignum "-13385853291610595576947504757201441006088030688464261540642594993520424631577281077984278942244446266776534612440941258694475009177773266914325561849946396.0"))
+      (num-test (+ (bignum "195114404067053480147948948510253723990.0") (bignum "-8373866462448797623435948949281383906369538962237624940506813188612614128993186653340202956656303504523161255703176374041758276069255591562198514767063594.0")) (bignum "-8373866462448797623435948949281383906369538962237624940506813188612614128993186653340202956656303504523161255703176178927354209015775443613250004513339604.0"))
+      (num-test (+ (bignum "-308030589512186791277525017840002670741.0") (bignum "-11922204352024596469278978325035646517433105521287613403902396944414655739824695945028308092245747333098422116078042326104667969967224788442970266049942774583538734406057081597034454910987815490244451193242377705191422489528853976486607580169986057592557285271953385769215318545520155212402919465580052078255078759756709086185424029620805084776442744700501748376290562843380642608395240491162047933014854466267084965223593172702334466729933986413870670083326499598274393380692146118979961818816348097032083332695128587696590646086980241100792624502607816103195636761141133903550454815591457829485684936036414823492160.0")) (bignum "-11922204352024596469278978325035646517433105521287613403902396944414655739824695945028308092245747333098422116078042326104667969967224788442970266049942774583538734406057081597034454910987815490244451193242377705191422489528853976486607580169986057592557285271953385769215318545520155212402919465580052078255078759756709086185424029620805084776442744700501748376290562843380642608395240491162047933014854466267084965223593172702334466729933986413870670083326499598274393380692146118979961818816348097032083332695128587696590646086980241100792624502607816103195636761141133903550762846180970016276962461054254826162901.0"))
+      (num-test (+ (bignum "-172649878347923210775992373331623646864.0") (bignum "22180935775581457002090790736532281654456312526625354262953960635330604551829750571440878712430708012807252279301365732385899228826740712544768476577874129759972563823209525283326887563301081200476495752033290851190327066070873711444930389093339915885090143783170994309089448293499799071372787520776773788274677288230540162485916160484352398851925328125588729604931589867889917097887951581817207079060016091919559509735997493084833476849835444339835031436580214492450731100723026312163752403946315983551266206214298679421644737804098691991631489261658890937663698502561036246447760919715595005106669653475931803053499.0")) (bignum "22180935775581457002090790736532281654456312526625354262953960635330604551829750571440878712430708012807252279301365732385899228826740712544768476577874129759972563823209525283326887563301081200476495752033290851190327066070873711444930389093339915885090143783170994309089448293499799071372787520776773788274677288230540162485916160484352398851925328125588729604931589867889917097887951581817207079060016091919559509735997493084833476849835444339835031436580214492450731100723026312163752403946315983551266206214298679421644737804098691991631489261658890937663698502561036246447588269837247081895893661102600179406635.0"))
+      (num-test (+ (bignum "17539006966816771902104329685391462527.0") (bignum "15609797782337099611892065465036826453911053690739041627254619195700021040383385710184052653282070244915503750549545390475671883312314708978681904377133928647935359080875691628246716591529028104762422990155477702994042953196747769893182153631482194578269859879402160062955490194674372351117284129320011166238130774752386987036267064693133554447596069886693581191241594745541512444806003236372840085705813835001957163976961730871756250344335996073970142337882238844723800849054637237549515249957267772181010402413375667537558243971058326641257721901094391380667244006959028327507917720426571969997513984360849930719808.0")) (bignum "15609797782337099611892065465036826453911053690739041627254619195700021040383385710184052653282070244915503750549545390475671883312314708978681904377133928647935359080875691628246716591529028104762422990155477702994042953196747769893182153631482194578269859879402160062955490194674372351117284129320011166238130774752386987036267064693133554447596069886693581191241594745541512444806003236372840085705813835001957163976961730871756250344335996073970142337882238844723800849054637237549515249957267772181010402413375667537558243971058326641257721901094391380667244006959028327507935259433538786769416088690535322182335.0"))
+      (num-test (+ (bignum "244901855797156286376563377540855746602.0") (bignum "-22138106346578776369849317622304392466030036563754663379976505966920461958652141160336156065177498990718609170201272980114106671808245437660234479124938853665375934080221740523696180221118540569603989748587853373569525751680828044059607889572522502629277877343410298879764820905044284757389006201848194571453112545228115550224254565141563427486518108434758694923122284117299374156393942906293546318323661938734959824887786185558612820887463537294120950912969343488704744978847504513710882720654330147775174336365363311173472002077960424794151168301281665765411704505095008907760396535767621855642720080219960822554492.0")) (bignum "-22138106346578776369849317622304392466030036563754663379976505966920461958652141160336156065177498990718609170201272980114106671808245437660234479124938853665375934080221740523696180221118540569603989748587853373569525751680828044059607889572522502629277877343410298879764820905044284757389006201848194571453112545228115550224254565141563427486518108434758694923122284117299374156393942906293546318323661938734959824887786185558612820887463537294120950912969343488704744978847504513710882720654330147775174336365363311173472002077960424794151168301281665765411704505095008907760151633911824699356343516842419966807890.0"))
+      (num-test (+ (bignum "-119403662992279138748600939857239307122.0") (bignum "26272999248235953724172008428088697264933069743507017434844709711501131900922919455931092196539942532993887162365511473221418376205773427597933886270411672062672089518774390132453916538404354895529975888201032175628249480896964400801763570333497287321002961557096975786141940970260074557095118887294558700145949117395512768347250531196100831164663613049206690894640391431616112104502483838173255614981302462548882276825096564828583591963617871547373532874400764134244496979962241959713525053686209002866840900623246072884125102845824992994967009109046451949348656842486048332953732384499190437432898387573320391878853.0")) (bignum "26272999248235953724172008428088697264933069743507017434844709711501131900922919455931092196539942532993887162365511473221418376205773427597933886270411672062672089518774390132453916538404354895529975888201032175628249480896964400801763570333497287321002961557096975786141940970260074557095118887294558700145949117395512768347250531196100831164663613049206690894640391431616112104502483838173255614981302462548882276825096564828583591963617871547373532874400764134244496979962241959713525053686209002866840900623246072884125102845824992994967009109046451949348656842486048332953612980836198158294149786633463152571731.0"))
+      (num-test (+ (bignum "313963939617834410089002930298454269912.0") (bignum "23286645405607099799151331553995799851855144387826191186590140820016670502830395945076644578998873585162998873396623634135231418574284200209367505115739462344028303923666952261030907434438322884189133236837089851688275865098623902644385995630973049587854251981548128145516004461191094062488421288607625783540996659060285661398859383778209495884203323937672739376151794507745282074538961033778823733980759695886879886017489555795079194346438911010371103435094677167286870898482214310646392174423422237727456012197253183422715313378603607058548706460095379882633958651034759773864354021315490712575535559549015858088608.0")) (bignum "23286645405607099799151331553995799851855144387826191186590140820016670502830395945076644578998873585162998873396623634135231418574284200209367505115739462344028303923666952261030907434438322884189133236837089851688275865098623902644385995630973049587854251981548128145516004461191094062488421288607625783540996659060285661398859383778209495884203323937672739376151794507745282074538961033778823733980759695886879886017489555795079194346438911010371103435094677167286870898482214310646392174423422237727456012197253183422715313378603607058548706460095379882633958651034759773864667985255108546985624562479314312358520.0"))
+      (num-test (+ (bignum "2000877973959266893810594143560134441447453310844726478119781029700338468704683515329516333146806175216349912753585564808803731447160643580198590073658869.0") (bignum "-17993015014355471903.0")) (bignum "2000877973959266893810594143560134441447453310844726478119781029700338468704683515329516333146806175216349912753585564808803731447160625587183575718186966.0"))
+      (num-test (+ (bignum "5492930533666246223206322654398877802091439062008700770880939594548305919677404080859141226095489505872709347538974725998600861651942609010590873980143878.0") (bignum "15372278140141207703.0")) (bignum "5492930533666246223206322654398877802091439062008700770880939594548305919677404080859141226095489505872709347538974725998600861651942624382869014121351581.0"))
+      (num-test (+ (bignum "-13405500833215428652808705089190188280715732437731292502890523313631564795139560159124390691283401484515088713758307366404145018349044148223082253439210893.0") (bignum "-14793401891248640808.0")) (bignum "-13405500833215428652808705089190188280715732437731292502890523313631564795139560159124390691283401484515088713758307366404145018349044163016484144687851701.0"))
+      (num-test (+ (bignum "9945195259699924701593703207751086973468898794114625092150620088406276196469184233537941913755508476427888065765634203723512911676149274871082481174186606.0") (bignum "8699133332160461067.0")) (bignum "9945195259699924701593703207751086973468898794114625092150620088406276196469184233537941913755508476427888065765634203723512911676149283570215813334647673.0"))
+      (num-test (+ (bignum "-1785165974800693006461065312083337532938610906605533088558498259067461510781028452552786542598361030690629530721209490413999022804146471920873844686294838.0") (bignum "-13079925952361275418.0")) (bignum "-1785165974800693006461065312083337532938610906605533088558498259067461510781028452552786542598361030690629530721209490413999022804146485000799797047570256.0"))
+      (num-test (+ (bignum "-4861207515430071951958387366611380234482792653010151054346367776006873932152600469133110239669746470475230906073865131648496652783311445471793936775767736.0") (bignum "-9381557743227419896.0")) (bignum "-4861207515430071951958387366611380234482792653010151054346367776006873932152600469133110239669746470475230906073865131648496652783311454853351680003187632.0"))
+      (num-test (+ (bignum "-6638723469626495957966112633999375479181736600737250559572415894485618850919815869703127084789143821420728194272094956858541960962483734293877093635361160.0") (bignum "277811698220276334443479876776376776138.0")) (bignum "-6638723469626495957966112633999375479181736600737250559572415894485618850919815869703127084789143821420728194272094679046843740686149290814000317258585022.0"))
+      (num-test (+ (bignum "1983880417172931934469534542170437296262471214582817006917470485544552211448284732460451903536334682269123998240709059499894818265755197559390728940140016.0") (bignum "-118940994129137705779355371753506018694.0")) (bignum "1983880417172931934469534542170437296262471214582817006917470485544552211448284732460451903536334682269123998240708940558900689128049418204018975434121322.0"))
+      (num-test (+ (bignum "-9354509264984586574958285335910611806441061705184818350015454221731287473282231343722010109181841005578131927454778025302197744540571159656556971614966757.0") (bignum "120224841184491944160266976391113485817.0")) (bignum "-9354509264984586574958285335910611806441061705184818350015454221731287473282231343722010109181841005578131927454777905077356560048626999389580580501480940.0"))
+      (num-test (+ (bignum "4389359421234641412950681847970318834150108533025088077429496538447029921663033978550089607257809597829358374972237448178553189381274150213236222139873594.0") (bignum "106674783386899772113212633712093787897.0")) (bignum "4389359421234641412950681847970318834150108533025088077429496538447029921663033978550089607257809597829358374972237554853336576281046263425869934233661491.0"))
+      (num-test (+ (bignum "-9319417879153488839579936799737117639058244394679644240663244688680826325564084529474537634510092069422987165268448907193562300482925125162731530249763801.0") (bignum "192969103435503875767216559494769734726.0")) (bignum "-9319417879153488839579936799737117639058244394679644240663244688680826325564084529474537634510092069422987165268448714224458864979049357946172035480029075.0"))
+      (num-test (+ (bignum "1394404616168163951844558734723678125985464491792846741433683801962971891047718103736551854371207400145441134823994228143957746922511631911996296931168332.0") (bignum "-211230038021470285136061932161632203274.0")) (bignum "1394404616168163951844558734723678125985464491792846741433683801962971891047718103736551854371207400145441134823994016913919725452226495850064135298965058.0"))
+      (num-test (+ (bignum "-2935941510094051560788359387128767361559188973149773593522440619832472030019457317998381634585179453958737810428870232715146002408187749944694186205812791.0") (bignum "-1221176156661231926164756142840452419679061324806989304452215660535991083923207702827717652226257158321829748247784282139952864899457896871473184473608543.0")) (bignum "-4157117666755283486953115529969219781238250297956762897974656280368463113942665020826099286811436612280567558676654514855098867307645646816167370679421334.0"))
+      (num-test (+ (bignum "-1338674579024795395027232680327531457830908239605718353094975139226848400289367913459076082700361212506196070727982446232782659114647371030398516119682505.0") (bignum "-1298372177520411182435886041880377054374169787570856408996533471838082317927648953576721017727347029007573543972764860712708420553928791798580799809858729.0")) (bignum "-2637046756545206577463118722207908512205078027176574762091508611064930718217016867035797100427708241513769614700747306945491079668576162828979315929541234.0"))
+      (num-test (+ (bignum "-2072456075229532951804023218627137969798924912365258263779029006567941400203608770518731715660383378937120213112973528605594220795605977413985543331908189.0") (bignum "-9744489461776287963808523409593616918248399004543154581056479712028497082820841423941781438667661074968238703192056877665754560746003512076830245760254982.0")) (bignum "-11816945537005820915612546628220754888047323916908412844835508718596438483024450194460513154328044453905358916305030406271348781541609489490815789092163171.0"))
+      (num-test (+ (bignum "-2570682164188734368809161664810917340861573482754788446510182252413437925852206735928397938304353826925422441004271229738766803460790995673395984247950088.0") (bignum "656920705293329551826685120408221577679101260931105312141757138825917579070505267306626244216341686712802796891966598838285570807961966448181138356047523.0")) (bignum "-1913761458895404816982476544402695763182472221823683134368425113587520346781701468621771694088012140212619644112304630900481232652829029225214845891902565.0"))
+      (num-test (+ (bignum "7846359203342053693101523606887617345982401999003795257520576318451663998927274759872692123323796450295314377046602880394071105863527900699633560551732837.0") (bignum "3683380639347829102597675045842249667669675715600522157867595962635108482512780509393310714588544837398923613138772339053021025559943198965234376657126821.0")) (bignum "11529739842689882795699198652729867013652077714604317415388172281086772481440055269266002837912341287694237990185375219447092131423471099664867937208859658.0"))
+      (num-test (+ (bignum "-11692323148567132684205145901751681947225824260005631214936266006610207543813382900867093989444659986091234552140689684476541703112098935301322850961583953.0") (bignum "-8534276689564199122569555420819240948691777228327984555753862457592427992599992931175844172478864477440165366128106812103785256271256853749622592560655914.0")) (bignum "-20226599838131331806774701322570922895917601488333615770690128464202635536413375832042938161923524463531399918268796496580326959383355789050945443522239867.0"))
+      (num-test (+ (bignum "-10734754884168724884333968138739681643742524619139397687680049322697740991391014196697040576174049452737571835233123127815762146577096625434481167057340772.0") (bignum "17059878151450238567815178684522345445687980385106446646013863901583786249398194029757376950491550197185231926262467028755342392379269039238766592672298850588065335172902157386017520689203005559576263548017475991638498600879259882041932152385436968424098224966518534467302264172016376096778201462205990822825056602379115848799619564610033123837036507127427054121975400703490855123544706355545059512146550901507159940126280812512339749605195422987937677650572797378799103456094203126081464905326203083057134061673694975250599375795827437561275156235513192978645909947341297774926450637694325145427434486258223666250272.0")) (bignum "17059878151450238567815178684522345445687980385106446646013863901583786249398194029757376950491550197185231926262467028755342392379269039238766592672298850588065335172902157386017520689203005559576263548017475991638498600879259882041932152385436968424098224966518534467302264172016376096778201462205990822825056602379115848799619564610033123837036507127427054121975400703490855123544706355545059512146550901507159940126280812512339749605195422987937677650572797368064348571925478241747496766586521439314609442534297287570550053098086446170260959538472616804596457209769462541803322821932178568330809051777056608909500.0"))
+      (num-test (+ (bignum "1982582032974021971225071139786536402936929744496433027195224299475980201425925452469321205602618940472354066218156609448199804973454183972974358405933935.0") (bignum "-5591374624026484498020036332218412149978824230210339582240360391202660977358546150723165491729699122647688030937226316069237264083850854032732663284717882873051337566653841254365703461654061656817936193716386141166210237666314879751427421825450110467888973152907618520704486700443275358649289847595635931220181024199692771066498714511145489237541761266539978351840438236927937894376002981658065431416811632941197501676956304254109064936038146674412392128883565757325842468006824235119684861972224857533964558963441079998949499582965764591461900562931342373507763081479989957632695010603500633322408246084430203281475.0")) (bignum "-5591374624026484498020036332218412149978824230210339582240360391202660977358546150723165491729699122647688030937226316069237264083850854032732663284717882873051337566653841254365703461654061656817936193716386141166210237666314879751427421825450110467888973152907618520704486700443275358649289847595635931220181024199692771066498714511145489237541761266539978351840438236927937894376002981658065431416811632941197501676956304254109064936038146674412392128883565755343260435032802263894613722185688454597034814467008052803725200106985563165536448093610136770888822609125923739476085562403695659868224273110071797347540.0"))
+      (num-test (+ (bignum "11532228364136654310006206557545352284448588590560137249197311142901246089838098630841794341370689745410654263817911440601934362503092628725755210859171724.0") (bignum "-25776236925500995542036591604259749301547568770017466769502569415611770276300787105037848049555500555975152877716727294374436703766730618054071617947449695177320842403963009384468257891933593584757723535299746543328292715942626303315235241470269740287031317322772461137186093930239744879822272349431389779234805703118929710210161489122272898252221025966631463842234537744822906696719691188223105175714602909117904182229960075276443648211003011686250829474364425483901920822837775032295913486152631638908227467242772081310515646217115760180349854601959031626524004201825198439309850266508687796415478396821644422350208.0")) (bignum "-25776236925500995542036591604259749301547568770017466769502569415611770276300787105037848049555500555975152877716727294374436703766730618054071617947449695177320842403963009384468257891933593584757723535299746543328292715942626303315235241470269740287031317322772461137186093930239744879822272349431389779234805703118929710210161489122272898252221025966631463842234537744822906696719691188223105175714602909117904182229960075276443648211003011686250829474364425472369692458701120722289706928607279354459638876682634832113204503315869670342251223760164690255834258791170934621398409664574325293322849671066433563178484.0"))
+      (num-test (+ (bignum "-2603756427337798371354526130541868239006085657393372011847827118826669474695402075575479286172808099892726251004549675772420422527946534088483901153485670.0") (bignum "-10844269742362409682236511127219508926736627172993604953084481596070757241623728297275447608738915355190715664012379562650777199088096670239050254578284071100042116609747208178716191571268815994455064584659920497876052406993834873124981417288518101426395560764186717660091472734401090302285129741058888303693710456902635092811413971399734306158050053239768185860958896447298052082493590498954512083131068867270078638929796561440903919430094619437872896595720463663570751134804664228918188923926951933302878771189484614604311920655871182974081898031051411394311700207305532216445616083858025977851570522763537300875989.0")) (bignum "-10844269742362409682236511127219508926736627172993604953084481596070757241623728297275447608738915355190715664012379562650777199088096670239050254578284071100042116609747208178716191571268815994455064584659920497876052406993834873124981417288518101426395560764186717660091472734401090302285129741058888303693710456902635092811413971399734306158050053239768185860958896447298052082493590498954512083131068867270078638929796561440903919430094619437872896595720463666174507562142462600272715054468820172308964428582856626452139039482540657669483973606530697567119800100031783220995291856278448505798104611247438454361659.0"))
+      (num-test (+ (bignum "-5929887196386997518766568868806997104240129372360669348628384183712406620199102166145939206783172815805659513128544493795329100599632286529420772709366102.0") (bignum "24544958491142793859949310604465694574872439331169358241746200808802938771527900616394258199996170862256988647191747967628756772368808644819831481350919782560499270148419601775750932556119448001824346026042068416905254113155445053931789404515589532235225580737103411251232560863878948880220469490014568323308965914171394449781093816607870593225534700167342589927524232815571862258490314644577819742372918446373756857848586825568514909823940075182825283229026250682015641747568282510036326125505522447591703308661608718100933027549520132308555240654655887041040427813131621391320267698106519650611462269033902177180035.0")) (bignum "24544958491142793859949310604465694574872439331169358241746200808802938771527900616394258199996170862256988647191747967628756772368808644819831481350919782560499270148419601775750932556119448001824346026042068416905254113155445053931789404515589532235225580737103411251232560863878948880220469490014568323308965914171394449781093816607870593225534700167342589927524232815571862258490314644577819742372918446373756857848586825568514909823940075182825283229026250676085754551181284991269757256698525343351573936300939369472548843837113512109453074508716680257867612007472108262775773902777419050979175739613129467813933.0"))
+      (num-test (+ (bignum "-8848084327536592532063677611386811805244460767433749071435930786126721080365289638381557872263825830664387392539638767251180242665642373539064690745095464.0") (bignum "-15917950175678012281826361248776190984758236997789474333609547749168308439513527143790323694526378056113636462939674273462177686456811495629631337058042159570336251822399402513133598701991665209363955263097315081570618652783181494594400709239428597117944511110842795526862595552977665064029517628515465251448116061875878430407784298951946811321795808932206846491091803276390661869369638950672478828532423383951689632136029256108992610781912267083149156104328033893238864631158195280554850035949666897861529711006187241710164902350100555999894332438423857208747342184052953230247487231455921360593096823760117493579248.0")) (bignum "-15917950175678012281826361248776190984758236997789474333609547749168308439513527143790323694526378056113636462939674273462177686456811495629631337058042159570336251822399402513133598701991665209363955263097315081570618652783181494594400709239428597117944511110842795526862595552977665064029517628515465251448116061875878430407784298951946811321795808932206846491091803276390661869369638950672478828532423383951689632136029256108992610781912267083149156104328033902086948958694787812618527647336478703105990478439936313146095688476821636365183970819981729472573172848440345769886254482636164026235470362824808238674712.0"))
+      (num-test (+ (bignum "-16314775600714318471451792035636584056297958597339492996728118376578145765736873313518831390349547274517050864260054903974054712997529177834428786007341762649083404743713562157667828894017440065599882523458121037421757904691003094608420565550031561905074671735751685371533975894842331113347413787808917193134135744321547478500861021485075363990553639161661734684228250909589741380076008551020384304303171431833670236949934603973673998262066558668396388979463892768199916011368116729432353268535563246463324517035331079693172060671712718486388759443825620676228470068291448236914050793177812037679396721657020438979754.0") (bignum "12553426083939460917.0")) (bignum "-16314775600714318471451792035636584056297958597339492996728118376578145765736873313518831390349547274517050864260054903974054712997529177834428786007341762649083404743713562157667828894017440065599882523458121037421757904691003094608420565550031561905074671735751685371533975894842331113347413787808917193134135744321547478500861021485075363990553639161661734684228250909589741380076008551020384304303171431833670236949934603973673998262066558668396388979463892768199916011368116729432353268535563246463324517035331079693172060671712718486388759443825620676228470068291448236914050793177812037679384168230936499518837.0"))
+      (num-test (+ (bignum "20637030084881771176788188367974505419050866216433677435050410899110162793040751338330447574748263391136356400036001988938659722098883893353523409458775455519257672423829361150611806294256710309281788819450225670112435352092313483086404714074567539245791066202051788986426960935796927738180831688497683293306590464598379493141645539253898709000874685535467854788184424886911457134522632486730390913239660179785071885982403741669161655812015114272497907946919026898579927936299607156006210124954460880383605958519412435713868501997649784658832599101777001703519408664662715322044086646014163774269660274683400619225321.0") (bignum "11620128128044940816.0")) (bignum "20637030084881771176788188367974505419050866216433677435050410899110162793040751338330447574748263391136356400036001988938659722098883893353523409458775455519257672423829361150611806294256710309281788819450225670112435352092313483086404714074567539245791066202051788986426960935796927738180831688497683293306590464598379493141645539253898709000874685535467854788184424886911457134522632486730390913239660179785071885982403741669161655812015114272497907946919026898579927936299607156006210124954460880383605958519412435713868501997649784658832599101777001703519408664662715322044086646014163774269671894811528664166137.0"))
+      (num-test (+ (bignum "-9838804688358141062268493389453191808060717708062736103828856866310283812230958467655270667206937622979717683919584610288962829724022506216738929136418489468786902364550847498615864720240589837282441807174290461916292258263929411081218952357662703079709351365960916688275651864441386750529258343003652300629003597744958152243494244227986280506395347894285277364095898602965258114321853474000520432831298793365139040664543928707100657375292032051256485942532600998813627925626928634068613637417702688610315924917761411247617905738119218110678854564441914784262998574445847209847985439514580300936248281049628734475702.0") (bignum "2380166482232871816.0")) (bignum "-9838804688358141062268493389453191808060717708062736103828856866310283812230958467655270667206937622979717683919584610288962829724022506216738929136418489468786902364550847498615864720240589837282441807174290461916292258263929411081218952357662703079709351365960916688275651864441386750529258343003652300629003597744958152243494244227986280506395347894285277364095898602965258114321853474000520432831298793365139040664543928707100657375292032051256485942532600998813627925626928634068613637417702688610315924917761411247617905738119218110678854564441914784262998574445847209847985439514580300936245900883146501603886.0"))
+      (num-test (+ (bignum "-30961575335426221869515496362216292453766907587859856766456625722888557357647164641922707199324601608700561081422636642523431947551124957385652791834855425829101761914145137205962610515642614866296480715893528289170482422505734612327038754622917335073993027434927547277037587173529054849390646376806910407207016292483185533697336599641898250465186168797820802225861771331652801064811222606773495565340386327294310913503461903243119204619412324538886439122443769008953829820425376589389335553937319588224864611583436327810214798652896733118881040503785110481197462772022447173744898802421806800203373153221004361953729.0") (bignum "-10586442965055062759.0")) (bignum "-30961575335426221869515496362216292453766907587859856766456625722888557357647164641922707199324601608700561081422636642523431947551124957385652791834855425829101761914145137205962610515642614866296480715893528289170482422505734612327038754622917335073993027434927547277037587173529054849390646376806910407207016292483185533697336599641898250465186168797820802225861771331652801064811222606773495565340386327294310913503461903243119204619412324538886439122443769008953829820425376589389335553937319588224864611583436327810214798652896733118881040503785110481197462772022447173744898802421806800203383739663969417016488.0"))
+      (num-test (+ (bignum "8835746018617511846981408800319983340292665114153404569022025834059427359831684523399830234196625160662387716033871154398104436720494608541518837969397374272734698261557358249258503982414578618525420572597611597792132117034895074841909295420434392963714805547538976612884853497014341345150095544449860198192757839489063747595073430612069212219930749783824683135433987509303139260133564905961552149844964215891730262218278214035649706577154652729844092199333026620127958228847111442161350881527928460177763370427262298116900358910460957772350452949782281117704005514462730290063772968929608448642592954601418753021512.0") (bignum "-12227722924075527556.0")) (bignum "8835746018617511846981408800319983340292665114153404569022025834059427359831684523399830234196625160662387716033871154398104436720494608541518837969397374272734698261557358249258503982414578618525420572597611597792132117034895074841909295420434392963714805547538976612884853497014341345150095544449860198192757839489063747595073430612069212219930749783824683135433987509303139260133564905961552149844964215891730262218278214035649706577154652729844092199333026620127958228847111442161350881527928460177763370427262298116900358910460957772350452949782281117704005514462730290063772968929608448642580726878494677493956.0"))
+      (num-test (+ (bignum "-5455184800550144006991157215735481579353213544152145628297990102571936052187486515129266239245491863623978659179559754999567936067584384479787934704340911556625153536160778495579370425428019248950494107696016864499055854257192071541354806671987402367524770228296322497224645429524493838356022616251290117624472061673033274133156467148770562815676767117605001434288573911556053311048284534341905722947046607192815465807736361991479044698448267471087552952494477144251510778491315012457514838113324210534577956298926109164909779987221094000880908857594198276812276890284008572664102792405452379662935026125770444036994.0") (bignum "-7349798942312432150.0")) (bignum "-5455184800550144006991157215735481579353213544152145628297990102571936052187486515129266239245491863623978659179559754999567936067584384479787934704340911556625153536160778495579370425428019248950494107696016864499055854257192071541354806671987402367524770228296322497224645429524493838356022616251290117624472061673033274133156467148770562815676767117605001434288573911556053311048284534341905722947046607192815465807736361991479044698448267471087552952494477144251510778491315012457514838113324210534577956298926109164909779987221094000880908857594198276812276890284008572664102792405452379662942375924712756469144.0"))
+      (num-test (+ (bignum "27233955893140063612427006607965940109569052437681267421929959186535416115028420267622879017163568256526042146282241931623674996867133390355390677118211537487769195270234259640386625552763891339073878417517169618832945750393661600092643257470064376916337734385887099957095417541169462231630821139075814859604097878094729685589777579267192538715202397220666651307185763054526407234767132218634060693076054116575833737797189157152326979078121760900891899319809724675232853322526718686306470372869701173824664984405178677187081936624687293494821338781534163633206006387449585716391843039459733925494003066841874935048611.0") (bignum "-66646390577667468207341453008390168215.0")) (bignum "27233955893140063612427006607965940109569052437681267421929959186535416115028420267622879017163568256526042146282241931623674996867133390355390677118211537487769195270234259640386625552763891339073878417517169618832945750393661600092643257470064376916337734385887099957095417541169462231630821139075814859604097878094729685589777579267192538715202397220666651307185763054526407234767132218634060693076054116575833737797189157152326979078121760900891899319809724675232853322526718686306470372869701173824664984405178677187081936624687293494821338781534163633206006387449585716391776393069156258025795725388866544880396.0"))
+      (num-test (+ (bignum "15030400024888781078933103028897733817304421960545019199443871381537070197157227994520524631721701055962609956080413517776229513420814407790533237358129529547793422514837651333555776540939235592155512951229106778709351772195248438493792786143040421233061520515971787881798980515709417481015662862327435825812557205663033601853937647320838585333754027488605638576977560072206293290493215523194883494322543800546276353830683084405428005815296131527861252717516620765986589669237487765523936713749717927502645633123584240464131140829496052170285171610845098023517906586134613874506419828208611247177336492131262918439281.0") (bignum "-164048419232636429449474429717211197442.0")) (bignum "15030400024888781078933103028897733817304421960545019199443871381537070197157227994520524631721701055962609956080413517776229513420814407790533237358129529547793422514837651333555776540939235592155512951229106778709351772195248438493792786143040421233061520515971787881798980515709417481015662862327435825812557205663033601853937647320838585333754027488605638576977560072206293290493215523194883494322543800546276353830683084405428005815296131527861252717516620765986589669237487765523936713749717927502645633123584240464131140829496052170285171610845098023517906586134613874506255779789378610747887017701545707241839.0"))
+      (num-test (+ (bignum "-10227062646189307616073129048534031298512434237226774743330733206156788005874968173984804649812506029813402205606562016228122184161577517837608957023376079537037472977098465137152327215807765130656192272994478964341604278041664840636982572214751638093860605132350960802560601354006634296348422600320863531059118477125143903734159707623839282511184908969206873548650544269932394344952983661665472663102992782521888857016369837211403335306200813816060883478434441858442549261115972947741929087886423170398410216855322384956160289855500229952405068604320121652911887067414460828300146993858360430784079225137421074839819.0") (bignum "117460076430162201914796277915447781936.0")) (bignum "-10227062646189307616073129048534031298512434237226774743330733206156788005874968173984804649812506029813402205606562016228122184161577517837608957023376079537037472977098465137152327215807765130656192272994478964341604278041664840636982572214751638093860605132350960802560601354006634296348422600320863531059118477125143903734159707623839282511184908969206873548650544269932394344952983661665472663102992782521888857016369837211403335306200813816060883478434441858442549261115972947741929087886423170398410216855322384956160289855500229952405068604320121652911887067414460828300029533781930268582164428859505627057883.0"))
+      (num-test (+ (bignum "27989453264793973121573869640708223239762902243991948581280654553806618470632044367386680716040316895884976837122054709584963028986161694425215067648887944710852278135008221491665079705797192389681328802747226171436158375378499411314855257919224316919346771317457123252623293612958336691335423245293660257386649100685560072354549579281852792682734916555498283053758141666658137856828164206947320523255487437004565021167276952652515632644458005291855624829941937578229983628962137595011570216766689546500517528191189928660433013004254032861383790553611840534023221000900694995707453499030166286828319347894538505334235.0") (bignum "-59175168207571178843658955348404514921.0")) (bignum "27989453264793973121573869640708223239762902243991948581280654553806618470632044367386680716040316895884976837122054709584963028986161694425215067648887944710852278135008221491665079705797192389681328802747226171436158375378499411314855257919224316919346771317457123252623293612958336691335423245293660257386649100685560072354549579281852792682734916555498283053758141666658137856828164206947320523255487437004565021167276952652515632644458005291855624829941937578229983628962137595011570216766689546500517528191189928660433013004254032861383790553611840534023221000900694995707394323861958715649475688939190100819314.0"))
+      (num-test (+ (bignum "1178650930337394440162727078866515771626896502845852711186000991913866844090831426017480263676964607121490209778220339316756171449922437605552456088105443130477974682689512446683178356259305893852096425478878588001446154476458310269704392486398646169362313605456233489086567865316333034897433650974160168545492823208575634152241341906068149887959566983066154182855136114289266802474404127414747112706158621650063987662749553991791509795764642256261917497984177610694405881831052199417235241109412927893781778469398975117797578753730248539151297798807326284978255001046995523851829184120171969918537718488250577987049.0") (bignum "-151873924489040812813761508259707631973.0")) (bignum "1178650930337394440162727078866515771626896502845852711186000991913866844090831426017480263676964607121490209778220339316756171449922437605552456088105443130477974682689512446683178356259305893852096425478878588001446154476458310269704392486398646169362313605456233489086567865316333034897433650974160168545492823208575634152241341906068149887959566983066154182855136114289266802474404127414747112706158621650063987662749553991791509795764642256261917497984177610694405881831052199417235241109412927893781778469398975117797578753730248539151297798807326284978255001046995523851677310195682929105723956979990870355076.0"))
+      (num-test (+ (bignum "28233332719950979786871881804755080223325040620170668729385709165879717973040387558150293205758215739710262749733170837042434162049732587908182282319848154049410849721309988807368466228286699721201975848741931128639324322061892706638973259354962358866000024260698793885547287093369940035337370984725857550291339492871017395328145015077506882578124550084937438336881072124376107623716831044079223921566902242543198986921476998895559488862309653154914291349588095330683589871173449191854284433182368052817373384461363574550061788800329400860372148193491004593903732351395815409821222597665222975816418433744748143385431.0") (bignum "-43245950360315656184924888243641533635.0")) (bignum "28233332719950979786871881804755080223325040620170668729385709165879717973040387558150293205758215739710262749733170837042434162049732587908182282319848154049410849721309988807368466228286699721201975848741931128639324322061892706638973259354962358866000024260698793885547287093369940035337370984725857550291339492871017395328145015077506882578124550084937438336881072124376107623716831044079223921566902242543198986921476998895559488862309653154914291349588095330683589871173449191854284433182368052817373384461363574550061788800329400860372148193491004593903732351395815409821179351714862660160233508856504501851796.0"))
+      (num-test (+ (bignum "17311283930487575047109155431670372891723312431004343097275158353815289445461275098157423001160013464866170709729134076291306322952612660169010483426086431377525432637844274608988581691477819008626983761905899834444008235608280930166913911248710072733217113558125600345343437000427963292980921009445490627620344145866648036116660335905940809860199697939729919140888034303887423527841395304960072549430314367914315102150378504502158659627719016733307736583749830415574905929299482373462584995162798576853564481617711234957058703455021082855018642616999836886763535412642684228990890160568207941504887072856663966242787.0") (bignum "1954009743321912552050341299974626734964446274711484506734354360114801426013796892421541915293157994203607853436799102383078659985249097057923578528366737.0")) (bignum "17311283930487575047109155431670372891723312431004343097275158353815289445461275098157423001160013464866170709729134076291306322952612660169010483426086431377525432637844274608988581691477819008626983761905899834444008235608280930166913911248710072733217113558125600345343437000427963292980921009445490627620344145866648036116660335905940809860199697939729919140888034303887423527841395304960072549430314367914315102150378504502158659627719016733307736583749830417528915672621394925512926295137425311818010756329195741691413063569822508868815535038541752179921529616250537665789992543646867926753984130780242494609524.0"))
+      (num-test (+ (bignum "1135960177108146621604027872788612991247811085764456406834564014092038611848908717507207251239454266163702244932570537009884467598603226302482406831131219148530146321028801515381981782506355042255201016953375149829517466449677312249611502599434850555618739830488706171667035140895674806873502543300909514568759918040129665855731078258004983486524477103833885001539135541445685573269814159175744401893663504523858005835387122082112362666991112899837534230326730196110477118156871579503345757821268248575583821695674912517830056856597644827244194658166928026249459511837772775196175188368236573504643083995409774002567.0") (bignum "-5513982495816270388232134254127393284677692173792609278582774509636977743203029647121158805174638642867428501907786521939155900331399058909602425073976766.0")) (bignum "1135960177108146621604027872788612991247811085764456406834564014092038611848908717507207251239454266163702244932570537009884467598603226302482406831131219148530146321028801515381981782506355042255201016953375149829517466449677312249611502599434850555618739830488706171667035140895674806873502543300909514568759918040129665855731078258004983486524477103833885001539135541445685573269814159175744401893663504523858005835387122082112362666991112899837534230326730190596494622340601191271211503693874963897891647903065633935055547219619901624214547537008122851610816644409270867409653249212336242105584174392984700025801.0"))
+      (num-test (+ (bignum "-30369736932762868789456108597366835061749107555998091727589163626331595118680326568212941898571309672187038272915036839449380083450246957904300051802617002374912724325419651633014408152565340519439718081357147324136023867003917288524338643759680061563616479323818330115572573568245719292922176485298767387601922362893307843067637295955606642841006993776777666041277965868780958830666697755738164183356399977211227424725670822944234275611849032230010745799964550976844117943559190671369193871330514473741920389633762695829790016565565261170688485790141638094160105909405353382982945608773290740598479367828342651860878.0") (bignum "3451570547959142767282758882796967240086418127970526029661337442068316209707489088420708984628065070358319478649952710478991064476168799556496237099109563.0")) (bignum "-30369736932762868789456108597366835061749107555998091727589163626331595118680326568212941898571309672187038272915036839449380083450246957904300051802617002374912724325419651633014408152565340519439718081357147324136023867003917288524338643759680061563616479323818330115572573568245719292922176485298767387601922362893307843067637295955606642841006993776777666041277965868780958830666697755738164183356399977211227424725670822944234275611849032230010745799964550973392547395600047904086434988533547233655502261663236666168452574497249051463199397369432653466095035551085874733030235129782226264429679811332105552751315.0"))
+      (num-test (+ (bignum "24749014370880469345815230363662696846133977441600857690896762642529872426102613384561609594131771018575590861342023688138502403609639138062665279129058939911797019091643704220495944170754490238422880589600838613701783818105188827633578438439212856537589855796204839275633245851474930725845096235668385012500773524750522781174430369067441632028068262240870795850561389232369373523415592833273932285308223863420210049445377497367753786125779044716949754454461623397410528064697616617917065021866397277409044449982605591256067763430930720398889239414812509701319783809830072841056369381573100589260104551934136733317845.0") (bignum "-9461623592584966196513107657889418526847060851423069480904645009418813160370721071067349946095573698635859409908288864150475056170059858850823883834932131.0")) (bignum "24749014370880469345815230363662696846133977441600857690896762642529872426102613384561609594131771018575590861342023688138502403609639138062665279129058939911797019091643704220495944170754490238422880589600838613701783818105188827633578438439212856537589855796204839275633245851474930725845096235668385012500773524750522781174430369067441632028068262240870795850561389232369373523415592833273932285308223863420210049445377497367753786125779044716949754454461623387948904472112650421403957363976978750561983598559536110351422754012117560028168168347462563605746085173970662932767505231098044419200245701110252898385714.0"))
+      (num-test (+ (bignum "19070246171469235561279483225919489206942407814032615339351735800304747459507922411906751965555240682457214768298108831815622470433175555196912899313888991765436434867025639919521068437191248198117664398275835972573354886915721765715992151871453808224011999677700078879590132676060988550961950472536029228350169237717222998397029428440792110955380302156159849645211726041489206565536560827557279129751110297078563108009278363910936720061216511798518178957070787710331228500533067546198458251241005176280410230146430275074766072259256583499095689284871987010372039977403712023630453400259082684930755893684499232318008.0") (bignum "12330599952818018622104330691506128012101935028731995985677032980931398338453806827555760801312052792065671886621851470997557806941112316627790755867100463.0")) (bignum "19070246171469235561279483225919489206942407814032615339351735800304747459507922411906751965555240682457214768298108831815622470433175555196912899313888991765436434867025639919521068437191248198117664398275835972573354886915721765715992151871453808224011999677700078879590132676060988550961950472536029228350169237717222998397029428440792110955380302156159849645211726041489206565536560827557279129751110297078563108009278363910936720061216511798518178957070787722661828453351086168302788942747133188382345258878426260751799053190654921952902516840632788322424832043075598645481924397816889626043072521475255099418471.0"))
+      (num-test (+ (bignum "-20895998178036569919774658790651496115060841511658297683195804524712012347695091074325978179977718571444320688167469052862702339462089668992243209990795362064005869602003990235714500149401994013174762139297327430396441552225926368085284222509085197484452650071390132794942944512235132641643003294762547138305644086106533258432786768644384855008506026923783604514268955071498269812887794817192371944269611642901807443894686178438687102834127061425955994253034824027771176714559050403098437684091684851207513969915720607528045624635094984539637789113651579846373399975502788877555747414523231999341294756679330384323996.0") (bignum "764238600803843266244444637050072967342049538611688895792923539838804953492110953673720766879606601435939162680753428779068917662740403667549850724878795.0")) (bignum "-20895998178036569919774658790651496115060841511658297683195804524712012347695091074325978179977718571444320688167469052862702339462089668992243209990795362064005869602003990235714500149401994013174762139297327430396441552225926368085284222509085197484452650071390132794942944512235132641643003294762547138305644086106533258432786768644384855008506026923783604514268955071498269812887794817192371944269611642901807443894686178438687102834127061425955994253034824027006938113755207136853993047041611883865464431304031711735122084796290031047526835439930812966766798539563626196802318635454314336600891089129479659445201.0"))
+      (num-test (+ (bignum "6243894672855694190803081952962387322599009058758027960092936187687064819462191583137945440936085088260632250436567758576422207449236613172605950116622271404444221039084346501796818945639456207912207604248991842124079786471250102192718092353598850889806607728696519257402580732995770031331187089424192803722612735557735028710899438934171272639518928194764526910590046378401600819132587804143949995694950116915803127294011661411525934100144319021440919928013617766507409909846670172516021888661284467975865076091834094160862228180625536450124272957206172214541444266874056050295270719541605687740822711659847211976891.0") (bignum "11877496607682442993105675644902145742318375725225741293060927105303783712520284640625374957608051032540491531573337817824773543104969422017506696018037874641947740606655370938613842356322585858034851150595788166740174872996252792014218946552442572806242471174234462119454014379628228878122072189387777413014452140618318641689597452676091677588204537830401725113931418426919671512011822864583481449136550835952005765386885680701637038206002172218712504732572449659704181315669255320876647592649071711438131711904976335957846353867776093588236311654631696625859173554395714740218099921290128795607292259527492722462071.0")) (bignum "18121391280538137183908757597864533064917384783983769253153863292990848531982476223763320398544136120801123782009905576401195750554206035190112646134660146046391961645739717440410661301962042065947058754844780008864254659467502894206937038906041423696049078902930981376856595112623998909453259278811970216737064876176053670400496891610262950227723466025166252024521464805321272331144410668727431444831500952867808892680897342113162972306146491240153424660586067426211591225515925493392669481310356179413996787996810430118708582048401630038360584611837868840400617821269770790513370640831734483348114971187339934438962.0"))
+      (num-test (+ (bignum "-24023960171862805266003610953999097357395283354964456554686635290239019705581779621120391229617494503580661676939681517550103414632840981987397485411400553792707518662609532504246677658012933762605038799352109564432278094548068984563394926376371580465135388578139331334464060067790936072127680597181415407099723844313625277987147283697141407959289588588489162704824409673099509423520008795428217612706997355591985894255450783091681112776112997887084157623388943538145736618168104404283342039105202585543852590302154958791010622670839015475427693311663800177428904406869645066988663292128104453773413982185343111560886.0") (bignum "-31939808827732134714870375774276102357277346245583282398423150631754622253109692213928642228787888509211781331649081002266227303203259124984426497846441848502574293640959494009564992092503141598640200823656998243767453860939156780549404892392521391484933772285520949470194562525777116137058001008184603332597820522016200623301007194309404025522056113671560767212894303567191067178003014955596425115379852712737129325098876542459702682095445350281859042779889411325882123213577906096942649941285655935053362468972482748617111598313960198743596285343178242282172686940700127068972627110105953098737923773182254460772630.0")) (bignum "-55963768999594939980873986728275199714672629600547738953109785921993641958691471835049033458405383012792443008588762519816330717836100106971823983257842402295281812303569026513811669750516075361245239623009107808199731955487225765112799818768892971950069160863660280804658622593568052209185681605366018739697544366329825901288154478006545433481345702260049929917718713240290576601523023751024642728086850068329115219354327325551383794871558348168943200403278354864027859831746010501225991980390858520597215059274637707408122220984799214219023978654842042459601591347569772135961290402234057552511337755367597572333516.0"))
+      (num-test (+ (bignum "14513652183174940741664411990199277445706189147726874603036586212536012746892966848269748909379750612027025331446918381470766609543142456872580466135425754204680927122749772612276850998180593344389487924747722210296498854143380696064338777945015153982467675141485724865534995199700908286263993697988986805404864429385840512740226775506122190698806967785494289035976495492863456705096841250592980439363856397663738211335801835896091823148249303370609165910779981271035234045185574995335952208702661648744928539539455138167482396767268362221492607154709559716065850417221174683768503217544145599044845325824451589309835.0") (bignum "-12814535978730024053359592817368712576084646962861720729844389627130663192435154658607204342320327460695280260731620465435530495952836598646143907272825807563512741964987882356778796849529260646503692618525570185450780889283642116889481314560395290434301143877809550098309214046129802023655714098730144464028249594406616074059558969757405392170810220921023905546104487938441503430332099605473144930508420331873995741851604525954472341693863067199617721032815462094767522339305487934030130207039176659398466616780628644572276059410087128533031562978399689702766028716401176531098447698206272762966470643604141938670152.0")) (bignum "1699116204444916688304819172830564869621542184865153873192196585405349554457812189662544567059423151331745070715297916035236113590305858226436558862599946641168185157761890255498054148651332697885795306222152024845717964859738579174857463384619863548166531263676174767225781153571106262608279599258842341376614834979224438680667805748716798527996746864470383489872007554421953274764741645119835508855436065789742469484197309941619481454386236170991444877964519176267711705880087061305822001663484989346461922758826493595206337357181233688461044176309870013299821700819998152670055519337872836078374682220309650639683.0"))
+      (num-test (+ (bignum "11356479761814008572465147431830778885327227506593483181241437802252618729479905490826767363633131720717461693888023278837835457496021519184903984385091047829540007466025527592005114414671285638168997562037691602144751434208304408870143450743278437854754504713023422097017723330207792526222436928747286558205279330508360438281011315147578105966454344087225699378388309094140949428028313539634103047841948634832398526343605363013644180832752120081735152285507591096001749463421326282317713079361827765412853023201330345752038722069405404812511739634687282327711258974520622248165974215116400638833123609666501349513623.0") (bignum "-2451734542868054449539778460457497703609327132304922810342762480808881050209276687756391911546806187586640918078231508181876445466503459873508196878629364924241891220686182517218825181707207808769770392864734466652524094735160185556148554260517746279303022469784592528209667497664672945900929888144529727881050106027775707933311860110618130543481573815538047460723253898548348335762406437618625388229555824532715231231491787570056329865617082709588903922431713098922691537317839185452018617461891748518176708607861270770493263960554805373552348256747200291438630960804647686832667981625018361034564086859426490014044.0")) (bignum "8904745218945954122925368971373281181717900374288560370898675321443737679270628803070375452086325533130820775809791770655959012029518059311395787506461682905298116245339345074786289232964077829399227169172957135492227339473144223313994896482760691575451482243238829568808055832543119580321507040602756830324229224480584730347699455036959975422972770271687651917665055195592601092265907102015477659612392810299683295112113575443587850967135037372146248363075877997079057926103487096865694461899936016894676314593469074981545458108850599438959391377940082036272628013715974561333306233491382277798559522807074859499579.0"))
+      (num-test (+ (bignum "-1814184401790217165873937825605141478060935014868566665644215718762341535891730598045990231798382966074312671040257824056876679135909008140059087311700216658095793352051583071432744886316274989901835606602224927350560604355249919901932382803472476702792978322468747380191775778902733911968522382089332819162367884984027854067607561808704316828316820133400099093450636968732151876570835173932998599031643640476109466728761033062776578175554441947411139184426213290292577467587355369954997241091769769542810051228504545831588488726789173405585678190671534386784806998695797717346491308862362775748058331375692317599945.0") (bignum "15466182953987394334491149436346080039471412309427279110582769586053943302670765125931570041904640518032832554998553018838321871748542118021556398569294085708441934948186080236498081517178574839977996802813431873543309853609838200338534343580791382510179184571852290959723696010410340740895530535423959476873857191548113125728667781953125153120447892632916574768078583174099545013854248664119997703948998871566374080719541931440495888606776561795893839624084254684939434035018741535261951124673664746010067859317726891535170781460914710499572006592206360512398012457295755926986236618644330364227754380084585899275327.0")) (bignum "13651998552197177168617211610740938561410477294558712444938553867291601766779034527885579810106257551958519883958295194781445192612633109881497311257593869050346141596134497165065336630862299850076161196211206946192749249254588280436601960777318905807386206249383543579531920231507606828927008153334626657711489306564085271661060220144420836292131072499516475674627946205367393137283413490186999104917355231090264613990780898377719310431222119848482700439658041394646856567431386165306953883581894976467257808089222345703582292734125537093986328401534826125613205458599958209639745309781967588479696048708893581675382.0"))
+      (num-test (+ (bignum "-27127130599753372624001250456405972983012981437652156246797208697430661165612459362971759027335854588888552031022264244768883843080959804690580574272908031271224646245152017114094021048441971097191444782106551075175878815012595015584723250801765859461211934306789890718268168352614164589637346918581658850565274510502652089457352942736418509881708568727739912127781455473660768550022762222130489047215089836402367851853412705556570667960548570630054608024914653686223423908494006675057953013815512203710764854485332282975729323105427143207127239069826750682633272289409910001698385240596625059970587393681128674617278.0") (bignum "5719655139276246085992066702308194672442413085748146924567717361937179810269300239821879673460959112727066470468217892213025828988023367028158410455624528688729907493639908638553730770145274142147983721694721139760883483821883267129411125364089207412089113869427479340283853501026803387874124668123626271531796990801822527792189514551888019206405597994403243358155410088320317141454525417323186389587327532772638942220300149829241141659063128602316305332848477566686425551944956989370838072872906293845914921103561360871571846865478762953536949621421094416539099628942010528483544062050170673327754206501716239719529.0")) (bignum "-21407475460477126538009183754097778310570568351904009322229491335493481355343159123149879353874895476161485560554046352555858014092936437662422163817283502582494738751512108475540290278296696955043461060411829935414995331190711748455312125437676652049122820437362411377984314851587361201763222250458032579033477519700829561665163428184530490675302970733336668769626045385340451408568236804807302657627762303629728909633112555727329526301485442027738302692066176119536998356549049685687114940942605909864849933381770922104157476239948380253590289448405656266094172660467899473214841178546454386642833187179412434897749.0"))
+      (num-test (- (bignum "3872339191937382556.0") (bignum "13437882608410293981.0")) (bignum "-9565543416472911425.0"))
+      (num-test (- (bignum "12702320881720530101.0") (bignum "13823645380834800545.0")) (bignum "-1121324499114270444.0"))
+      (num-test (- (bignum "10222969257152373972.0") (bignum "-3454292165863475982.0")) (bignum "13677261423015849954.0"))
+      (num-test (- (bignum "591233951053628288.0") (bignum "-17639978232337836611.0")) (bignum "18231212183391464899.0"))
+      (num-test (- (bignum "-7878405903223218778.0") (bignum "9050739027069287469.0")) (bignum "-16929144930292506247.0"))
+      (num-test (- (bignum "11347120771894057376.0") (bignum "8443917396834074370.0")) (bignum "2903203375059983006.0"))
+      (num-test (- (bignum "7831959259127703467.0") (bignum "-257470007821066702597399141202130667973.0")) (bignum "257470007821066702605231100461258371440.0"))
+      (num-test (- (bignum "1092406341647857980.0") (bignum "-325710450166845666190895573961860069495.0")) (bignum "325710450166845666191987980303507927475.0"))
+      (num-test (- (bignum "-4220606126689357919.0") (bignum "73461013742902296577411907972196819778.0")) (bignum "-73461013742902296581632514098886177697.0"))
+      (num-test (- (bignum "-5112059189225304080.0") (bignum "334306213789148650102245018234146620793.0")) (bignum "-334306213789148650107357077423371924873.0"))
+      (num-test (- (bignum "3093346224554776175.0") (bignum "-204967241927023874963787190016588249299.0")) (bignum "204967241927023874966880536241143025474.0"))
+      (num-test (- (bignum "-5735747638156472357.0") (bignum "-3881750746805128137401544408305666047.0")) (bignum "3881750746805128131665796770149193690.0"))
+      (num-test (- (bignum "17639095392510638323.0") (bignum "13312205908441007415860933757605397223142073616822325142416364932887680287063250296996056787873086490231950036662943632990219865746131453861285495087665017.0")) (bignum "-13312205908441007415860933757605397223142073616822325142416364932887680287063250296996056787873086490231950036662943632990219865746131436222190102577026694.0"))
+      (num-test (- (bignum "16304056910692545233.0") (bignum "1463591032326743052350022746892396184459320617971409440301562638996633667625451301419074212369365394140737678584830314878769698416417465834928609990708982.0")) (bignum "-1463591032326743052350022746892396184459320617971409440301562638996633667625451301419074212369365394140737678584830314878769698416417449530871699298163749.0"))
+      (num-test (- (bignum "-10347586523508777315.0") (bignum "12614325304787850623826535169596975975360455924114817820074336137897280818245940873677389644701038550150832199897314137414727161192173691528917744363375331.0")) (bignum "-12614325304787850623826535169596975975360455924114817820074336137897280818245940873677389644701038550150832199897314137414727161192173701876504267872152646.0"))
+      (num-test (- (bignum "16875252323587344863.0") (bignum "-10230183557696638447600885112945653217398839137450096120772416948425622105048400944465287395231588821521217980407867153259741079758527788318592431794213674.0")) (bignum "10230183557696638447600885112945653217398839137450096120772416948425622105048400944465287395231588821521217980407867153259741079758527805193844755381558537.0"))
+      (num-test (- (bignum "8574302739232756920.0") (bignum "2945205250727759066959418729185252318153395797902208079569164623770839848878181416073351760975066439564334127158302281471631001294503759011790017443478716.0")) (bignum "-2945205250727759066959418729185252318153395797902208079569164623770839848878181416073351760975066439564334127158302281471631001294503750437487278210721796.0"))
+      (num-test (- (bignum "-17657597319577965851.0") (bignum "-470389901349206124503884936612357721199915776516939967013182926735009022045917047211666512521578494339222795740836335004070464944715357800461845632614015.0")) (bignum "470389901349206124503884936612357721199915776516939967013182926735009022045917047211666512521578494339222795740836335004070464944715340142864526054648164.0"))
+      (num-test (- (bignum "11472336850218354926.0") (bignum "16764018932433717867649699977474298016589762238077229911249331402108995850754999065988360217500238643747316139204767820295123085026049273617874157749889925712672510963712964034497935503076689670786498045302562704435768723916334451317158760704743066709581593570757498670622547878516907127632802801541072452593999435195637193819500375063696114131057474475407791672955417184592088612921927282233762919112197264895445408873539746256555444555901857369535350160665235184955438709679669964546134487688796078142789125799020704969226557493354453298489954288702387159956161243151013189140749021799388406290339231792790773612376.0")) (bignum "-16764018932433717867649699977474298016589762238077229911249331402108995850754999065988360217500238643747316139204767820295123085026049273617874157749889925712672510963712964034497935503076689670786498045302562704435768723916334451317158760704743066709581593570757498670622547878516907127632802801541072452593999435195637193819500375063696114131057474475407791672955417184592088612921927282233762919112197264895445408873539746256555444555901857369535350160665235184955438709679669964546134487688796078142789125799020704969226557493354453298489954288702387159956161243151013189140749021799388406290327759455940555257450.0"))
+      (num-test (- (bignum "12682607562584942903.0") (bignum "32133619583510009354538204193505267426986629771080807813988708187761849276650847958886764459302043799013813125903744946349479743277662066609741649009023451783267511140245797235200413941774959851628239089013586399425314412329003636059313583335807925401822165199322334470452126484173417518861322963430951772895619791799137157183662289329901964728384697377777905235894234370773419160283767144177627084271804319157013765325677633945370597318765372346484383325176768117059688792498687750479618961541872574768601477738410497806623403054372221338126223825515939164627992974469102910882915893925327931884157735553718792115929.0")) (bignum "-32133619583510009354538204193505267426986629771080807813988708187761849276650847958886764459302043799013813125903744946349479743277662066609741649009023451783267511140245797235200413941774959851628239089013586399425314412329003636059313583335807925401822165199322334470452126484173417518861322963430951772895619791799137157183662289329901964728384697377777905235894234370773419160283767144177627084271804319157013765325677633945370597318765372346484383325176768117059688792498687750479618961541872574768601477738410497806623403054372221338126223825515939164627992974469102910882915893925327931884145052946156207173026.0"))
+      (num-test (- (bignum "14621880654476679971.0") (bignum "-10075923784619510279100488003620810539888599376089081798647754628017452762406215094511315867213396543200861274584884759429891242650999761503100661310915213260386281412125687376866399124849043409890009033179987278297335571911640353059036551139958369871790768643514550179661619387008678118363266091945225880595898524898713646458647465935791224159084684209727153050053537752111696883536364966526666445737103854446009305531519860527938394412863332757413309423156200192973778629503534709731073637828912608835085933003410694216843775182940057891552358942312728978810053715387504707194992816961400377579655168106377696154728.0")) (bignum "10075923784619510279100488003620810539888599376089081798647754628017452762406215094511315867213396543200861274584884759429891242650999761503100661310915213260386281412125687376866399124849043409890009033179987278297335571911640353059036551139958369871790768643514550179661619387008678118363266091945225880595898524898713646458647465935791224159084684209727153050053537752111696883536364966526666445737103854446009305531519860527938394412863332757413309423156200192973778629503534709731073637828912608835085933003410694216843775182940057891552358942312728978810053715387504707194992816961400377579669789987032172834699.0"))
+      (num-test (- (bignum "-3220156644655019630.0") (bignum "-8347829670073174550775641165362740628312221836466572623516708794243074870361401136762432100726575330214254748615114820602945887237367461962207075265579588481261313345359877816874924645801358760718027997416917747796144940020489321523749233377708490614979453376328244189926517907474704635785063100359787580409065317918203485474119227673185211436285930586838616288721370975925191964611302275354365110550116042403226844820172448647475637867255305805337047967053177320593337377763657329816935516961201488840745892529800883680912275812320160312651894919502389242002380151562481051684439333368396132543667539444686619670713.0")) (bignum "8347829670073174550775641165362740628312221836466572623516708794243074870361401136762432100726575330214254748615114820602945887237367461962207075265579588481261313345359877816874924645801358760718027997416917747796144940020489321523749233377708490614979453376328244189926517907474704635785063100359787580409065317918203485474119227673185211436285930586838616288721370975925191964611302275354365110550116042403226844820172448647475637867255305805337047967053177320593337377763657329816935516961201488840745892529800883680912275812320160312651894919502389242002380151562481051684439333368396132543664319288041964651083.0"))
+      (num-test (- (bignum "11628988978410243120.0") (bignum "21091260149209133824278525560739673446778991946138130571540201996950100883736332286627324787663044982195445635023357027423513202277912840570399895946346028843517588470258087913846945044832851780108963206182331994065720076983528527849542421619745503796476103034657238118665288185878258232226731582201217795631247916614224227701409259346052937919425072595891571572960468193421257458185693656090215937518204243652916583730260295885562094977775951577484951577581277292356830523013216949489797535362720471761788697932265967910160407593278848113303674799017334692501935041730808945554336564957621028111014116286675587727714.0")) (bignum "-21091260149209133824278525560739673446778991946138130571540201996950100883736332286627324787663044982195445635023357027423513202277912840570399895946346028843517588470258087913846945044832851780108963206182331994065720076983528527849542421619745503796476103034657238118665288185878258232226731582201217795631247916614224227701409259346052937919425072595891571572960468193421257458185693656090215937518204243652916583730260295885562094977775951577484951577581277292356830523013216949489797535362720471761788697932265967910160407593278848113303674799017334692501935041730808945554336564957621028111002487297697177484594.0"))
+      (num-test (- (bignum "-15960716439913426281.0") (bignum "18799211173341989380260980155501104944815245973352765317821146163884181375747259542484535639646490774929026134833947975785613727050541297797675705933339289016115326958150660323801621778641184271728990164666383865587422591755046779736996211052149338115836473967202556153668963815595875844414662034458693455631979862997316049580586739835122770408911308146605671192538040301857163633538268589024651373766021087864982140201615461513687698136663128896835597598904095187715456109340116329587986878167776146023396961265667934659006280575496363066974484893764810659481361856335795455814679851690737943592227795474197104696127.0")) (bignum "-18799211173341989380260980155501104944815245973352765317821146163884181375747259542484535639646490774929026134833947975785613727050541297797675705933339289016115326958150660323801621778641184271728990164666383865587422591755046779736996211052149338115836473967202556153668963815595875844414662034458693455631979862997316049580586739835122770408911308146605671192538040301857163633538268589024651373766021087864982140201615461513687698136663128896835597598904095187715456109340116329587986878167776146023396961265667934659006280575496363066974484893764810659481361856335795455814679851690737943592243756190637018122408.0"))
+      (num-test (- (bignum "-181065640455671431985325539445069267017.0") (bignum "14120143334024043377.0")) (bignum "-181065640455671431999445682779093310394.0"))
+      (num-test (- (bignum "-91295299684959299024846233061686623774.0") (bignum "6891102275697080803.0")) (bignum "-91295299684959299031737335337383704577.0"))
+      (num-test (- (bignum "-252582289949155881579950873916766853744.0") (bignum "883304029266526072.0")) (bignum "-252582289949155881580834177946033379816.0"))
+      (num-test (- (bignum "-10104159950635417603045689770006558103.0") (bignum "17251490913777465304.0")) (bignum "-10104159950635417620297180683784023407.0"))
+      (num-test (- (bignum "288463495341489091297108607960869684860.0") (bignum "-16376960611483226267.0")) (bignum "288463495341489091313485568572352911127.0"))
+      (num-test (- (bignum "204661965092367792468062569536290631004.0") (bignum "7774991291341524479.0")) (bignum "204661965092367792460287578244949106525.0"))
+      (num-test (- (bignum "174559967167400201536723778015754014369.0") (bignum "168183438971818617783400303174116396891.0")) (bignum "6376528195581583753323474841637617478.0"))
+      (num-test (- (bignum "-253300708624436983509156598368557395374.0") (bignum "-77166863757693227553099778725240875400.0")) (bignum "-176133844866743755956056819643316519974.0"))
+      (num-test (- (bignum "-38587765028356074196061530813295290944.0") (bignum "5999161273284748726648331130480323187.0")) (bignum "-44586926301640822922709861943775614131.0"))
+      (num-test (- (bignum "-236400856885875891058508662756360145662.0") (bignum "222191413471626205952456600591947275777.0")) (bignum "-458592270357502097010965263348307421439.0"))
+      (num-test (- (bignum "212937903940173587742882129816769611096.0") (bignum "336470165768472077447806282475185249734.0")) (bignum "-123532261828298489704924152658415638638.0"))
+      (num-test (- (bignum "-264812595676159375893264580577855253845.0") (bignum "-247068943830535581577267897204259299723.0")) (bignum "-17743651845623794315996683373595954122.0"))
+      (num-test (- (bignum "-1725732715479127274526681751197327660.0") (bignum "-2279805492899538651574406423954277869507456204136276822451602661149698386520868702017367409743272511010382761246500508887739763323997191435566266331339917.0")) (bignum "2279805492899538651574406423954277869507456204136276822451602661149698386520868702017367409743272511010382761246500507162007047844869916908884515134012257.0"))
+      (num-test (- (bignum "-220007189346579184019349894240059989979.0") (bignum "9116030813176547770422918633286023943039811682891023288884273747820892639481842291616424036020927750322528731882517057595815179415042385175627374957565803.0")) (bignum "-9116030813176547770422918633286023943039811682891023288884273747820892639481842291616424036020927750322528731882517277603004525994226404525521615017555782.0"))
+      (num-test (- (bignum "139683266109784685815165642637380856544.0") (bignum "5782493350903499652295971390391981928106911831248674750993968151944332845911526084530951283012280786005612601970108688202931002414214353708335212597807345.0")) (bignum "-5782493350903499652295971390391981928106911831248674750993968151944332845911526084530951283012280786005612601970108548519664892629528538542692575216950801.0"))
+      (num-test (- (bignum "239160165978290709841254489756277328273.0") (bignum "5152132850125501873897264811465207492706871561577273155117982457627773151595716641409297120994045059130053034927464958986304380141364542178714472948085275.0")) (bignum "-5152132850125501873897264811465207492706871561577273155117982457627773151595716641409297120994045059130053034927464719826138401850654700924224716670757002.0"))
+      (num-test (- (bignum "315772704643232632782106484978382006176.0") (bignum "-3689252327480456512393153800679864208480329729627292260734151097785848947569336194072922395859496552999163037466184616218582046814434719444842678248982224.0")) (bignum "3689252327480456512393153800679864208480329729627292260734151097785848947569336194072922395859496552999163037466184931991286690047067501551327656630988400.0"))
+      (num-test (- (bignum "82735713197488344149642668226610301853.0") (bignum "-12473025194535761005577066561696471986140205263843017221991729197337093872383371857001077050460827652296473928714097816492579684543651922277865558518876774.0")) (bignum "12473025194535761005577066561696471986140205263843017221991729197337093872383371857001077050460827652296473928714097899228292882031996071920533785129178627.0"))
+      (num-test (- (bignum "63472235942371758467270296983419551089.0") (bignum "-7866520408163137968600317959735552406794938230345293650627055135268307695389903092041438746530663083967329111232451176014649873249349534808700483360707382397988918594143264031213181385790969271527978925616276399184489007642142996251807222768397530946779296600805549276528669432847672215219943599871223372831999133812100481632278022608906065923652981249057846548868473376683960144009223047416366697876553049362242497225174860431577034875737250719899362881567590934060155436179316063810148362442197071642183371654740845983314705249832168923202400873364289483910868432511677656218937984504828452980698439495961392749596.0")) (bignum "7866520408163137968600317959735552406794938230345293650627055135268307695389903092041438746530663083967329111232451176014649873249349534808700483360707382397988918594143264031213181385790969271527978925616276399184489007642142996251807222768397530946779296600805549276528669432847672215219943599871223372831999133812100481632278022608906065923652981249057846548868473376683960144009223047416366697876553049362242497225174860431577034875737250719899362881567590934060155436179316063810148362442197071642183371654740845983314705249832168923202400873364289483910868432511677656219001456740770824739165709792944812300685.0"))
+      (num-test (- (bignum "-284018520801241078671538235859630240269.0") (bignum "-5529748211779294240854894683633173443789067073881249229985499707296461959655918837051490512357840133495603640185675483847478587849599477020706893805485599954539589062532211767295361120129440287144117406526027552427750375526095104163474774446716012360038076376952619723549765229763943818011605991300849052030142173100367582906381575666628005795818339029350398340616624791399526643991489247585213423174803853961438830286737553181353007081438503238779644371968004083452645077716952159339978836669723137339898471600546912430030276920763475622536295311290657163861398519747560279682401429552174530714298081464588450842581.0")) (bignum "5529748211779294240854894683633173443789067073881249229985499707296461959655918837051490512357840133495603640185675483847478587849599477020706893805485599954539589062532211767295361120129440287144117406526027552427750375526095104163474774446716012360038076376952619723549765229763943818011605991300849052030142173100367582906381575666628005795818339029350398340616624791399526643991489247585213423174803853961438830286737553181353007081438503238779644371968004083452645077716952159339978836669723137339898471600546912430030276920763475622536295311290657163861398519747560279682117411031373289635626543228728820602312.0"))
+      (num-test (- (bignum "-171812101820192353275910956459431262142.0") (bignum "11401673303315394031728944442295528921842441448377692701102691446500671963119794838260543877466107345474902885032629120622020177051592733148817057943390167845763358795044702079370835841331467130719834250134674578757640577473495192331790176510774020541399177011446664359866582351045889299070080989390219063301859447807907203943168891690028442190793548699886572720360741686677780644932612683647303776634496172481504075784427704287335805355801794320914944330891519283383694196486986108936857630373759865062862204149003789919218681050221366182434949855054760827976853645027544605870235074909890698574792562001595287630131.0")) (bignum "-11401673303315394031728944442295528921842441448377692701102691446500671963119794838260543877466107345474902885032629120622020177051592733148817057943390167845763358795044702079370835841331467130719834250134674578757640577473495192331790176510774020541399177011446664359866582351045889299070080989390219063301859447807907203943168891690028442190793548699886572720360741686677780644932612683647303776634496172481504075784427704287335805355801794320914944330891519283383694196486986108936857630373759865062862204149003789919218681050221366182434949855054760827976853645027544605870406887011710890928068472958054718892273.0"))
+      (num-test (- (bignum "-243638660221338112796448050030955119997.0") (bignum "-32214383478080953899491069562585164652288236626686985994647827422262342469970423345510055643470262764747630363450204055220886177681745412924556264758690138113272748656941509018308925555317383307928766093730384151056027828368474245304944063213926492719166086055718735381341569379006804236876950175122702350552198046290567043195716369691666842524594399597143281611765509174168738392889075290806378316647736667077047013214732267367344808724905727602402784621437141760604478301412768904784950365257469208085143467704875589485635570084387755189599791857576855454112556762755762408826226326879491415484319411662301650468948.0")) (bignum "32214383478080953899491069562585164652288236626686985994647827422262342469970423345510055643470262764747630363450204055220886177681745412924556264758690138113272748656941509018308925555317383307928766093730384151056027828368474245304944063213926492719166086055718735381341569379006804236876950175122702350552198046290567043195716369691666842524594399597143281611765509174168738392889075290806378316647736667077047013214732267367344808724905727602402784621437141760604478301412768904784950365257469208085143467704875589485635570084387755189599791857576855454112556762755762408825982688219270077371522963612270695348951.0"))
+      (num-test (- (bignum "-126332081511349770866908261827634312283.0") (bignum "31497387372874133218238910173378055967910722258532087598053588964599898753455370244114881403020152175272452951858324158004662566613339529101292284073176382818309096142522412043073218657587031893636358434796164444941535757484360125937835242214199979245499374972029624710574236962978707708765065292759037309958875006017588240959790355958632745299212449602934380927677385974488564420550408281673927387615657765312151272852486266800510090872812376232597458154951925709496664568906509814364388823105469855516803225244972466742963619633076158367569109107733990828830121948130235858799809203410103682003414364238243553515261.0")) (bignum "-31497387372874133218238910173378055967910722258532087598053588964599898753455370244114881403020152175272452951858324158004662566613339529101292284073176382818309096142522412043073218657587031893636358434796164444941535757484360125937835242214199979245499374972029624710574236962978707708765065292759037309958875006017588240959790355958632745299212449602934380927677385974488564420550408281673927387615657765312151272852486266800510090872812376232597458154951925709496664568906509814364388823105469855516803225244972466742963619633076158367569109107733990828830121948130235858799935535491615031774281272500071187827544.0"))
+      (num-test (- (bignum "219979452670016849533060110266815720199.0") (bignum "3900115048441644499033281842448985956665866771934663536385503692700586024397767816761943054115584011069129310718114010862034970648115172218305599786238607524420973404711138276011261135403209178420948996472570042497859127324157786975578751148348046315727383390370594954695454631662061021971027739429505825056455676233533511412589936865597034183410893428831818716136282201523804692574965779771140320669492229416601369453681528301333865290947482219850340728455965391492610516639151652595539203632139883064874286555941718154489936421274731413286355640404192677546692090304496817063325766995908926108582896362623757323811.0")) (bignum "-3900115048441644499033281842448985956665866771934663536385503692700586024397767816761943054115584011069129310718114010862034970648115172218305599786238607524420973404711138276011261135403209178420948996472570042497859127324157786975578751148348046315727383390370594954695454631662061021971027739429505825056455676233533511412589936865597034183410893428831818716136282201523804692574965779771140320669492229416601369453681528301333865290947482219850340728455965391492610516639151652595539203632139883064874286555941718154489936421274731413286355640404192677546692090304496817063105787543238909259049836252356941603612.0"))
+      (num-test (- (bignum "585873325961105129055557280004608765382109855007674169500308242261038324959928764512890600512016613154122762798104714052579267789493643522748210870974797.0") (bignum "-1855792162818946202.0")) (bignum "585873325961105129055557280004608765382109855007674169500308242261038324959928764512890600512016613154122762798104714052579267789493645378540373689920999.0"))
+      (num-test (- (bignum "-3026050092505200332789765255096964033685859497096213532090644235603419347590512426830117415222669642053441336442247132403948783838396746566100575461602162.0") (bignum "18009081534399282710.0")) (bignum "-3026050092505200332789765255096964033685859497096213532090644235603419347590512426830117415222669642053441336442247132403948783838396764575182109860884872.0"))
+      (num-test (- (bignum "-11124638695599888462310706699308855434715251048597328942409434888923094027849143412724699165971400546471660924330688750607774759764580214088920441698992069.0") (bignum "-4827559068742614723.0")) (bignum "-11124638695599888462310706699308855434715251048597328942409434888923094027849143412724699165971400546471660924330688750607774759764580209261361372956377346.0"))
+      (num-test (- (bignum "4950293428090696283711882613183655723616682297360442241017758383241177602498881186549809051670562038601658285833496694108818253845693871318067007752043113.0") (bignum "17597810481352184048.0")) (bignum "4950293428090696283711882613183655723616682297360442241017758383241177602498881186549809051670562038601658285833496694108818253845693853720256526399859065.0"))
+      (num-test (- (bignum "-5733769947958740467479139247420201065087494801172241127791526686385518674532830661413722661802560247463032020003355494614502034002778775472609306735864748.0") (bignum "-3892174127829225880.0")) (bignum "-5733769947958740467479139247420201065087494801172241127791526686385518674532830661413722661802560247463032020003355494614502034002778771580435178906638868.0"))
+      (num-test (- (bignum "8320894458193427045187598554188178307429755504967209344418448624882517461814957461249858674758807195827056824653471934409067429988676743031117653237018365.0") (bignum "-12861394200627120797.0")) (bignum "8320894458193427045187598554188178307429755504967209344418448624882517461814957461249858674758807195827056824653471934409067429988676755892511853864139162.0"))
+      (num-test (- (bignum "13033402737450594044106258936169013897237368708138118260402180886096095497725071502601849887805439844083105685971731015312020770945603825344926844435936044.0") (bignum "236396022362585261770052671762207864597.0")) (bignum "13033402737450594044106258936169013897237368708138118260402180886096095497725071502601849887805439844083105685971730778915998408360342055292255082228071447.0"))
+      (num-test (- (bignum "12170667278114656173974716189098171384426379753661081475485441559687661443127166543908925678856145097632475832903680828294561265828775791256812588754280222.0") (bignum "-276673555533799047589626400978981416789.0")) (bignum "12170667278114656173974716189098171384426379753661081475485441559687661443127166543908925678856145097632475832903681104968116799627823380883213567735697011.0"))
+      (num-test (- (bignum "-12755594876262399860618168642932232021734362385933348033134635580177924615701078617214764415318471507488803810365565826229169313660087149542130819663319659.0") (bignum "-157671440495648010763311068579191828684.0")) (bignum "-12755594876262399860618168642932232021734362385933348033134635580177924615701078617214764415318471507488803810365565668557728818012076386231062240471490975.0"))
+      (num-test (- (bignum "8664063140780163008577373335591938905735059211566906376953760862047748343846207426667781783874718320339071949903053785280430612875488847226724390758938740.0") (bignum "54361107931665215623681874454167019934.0")) (bignum "8664063140780163008577373335591938905735059211566906376953760862047748343846207426667781783874718320339071949903053730919322681210273223544849936591918806.0"))
+      (num-test (- (bignum "3699576825118349347309026261327541749454660339251578894574483235547605815416603169143590292164644149607672871236942391817131531474661895913650810587431606.0") (bignum "-50508350367572393968128467319633674717.0")) (bignum "3699576825118349347309026261327541749454660339251578894574483235547605815416603169143590292164644149607672871236942442325481899047055864042118130221106323.0"))
+      (num-test (- (bignum "5626548453644136572409808769267055618695663227750732922630041368983808478347120771651822300668480671524976882745306794511840379704578900504784165956486985.0") (bignum "170502882789371639987361620116696459267.0")) (bignum "5626548453644136572409808769267055618695663227750732922630041368983808478347120771651822300668480671524976882745306624008957590332938913143164049260027718.0"))
+      (num-test (- (bignum "-10859007735074693411217019392659638207496329895257318665547454149984863458541990037760564769787816800806064437172810158051442267508476778676439633382657890.0") (bignum "-7558060977666720080449823996328496253877735754811271086853901493753796001778345391546991917892931500169890406340928835457635973812901681485438886367096185.0")) (bignum "-3300946757407973330767195396331141953618594140446047578693552656231067456763644646213572851894885300636174030831881322593806293695575097191000747015561705.0"))
+      (num-test (- (bignum "9842028993407961669727766131360795288615020071102475108883839785397865740828387076847892646234215787999498419839351470775471313077046438080666908734795616.0") (bignum "8259939762466350877481193620364896193464602165170783019804380181692322874550956777598992104871440502758410340359413403619753571535498118388286469082729503.0")) (bignum "1582089230941610792246572510995899095150417905931692089079459603705542866277430299248900541362775285241088079479938067155717741541548319692380439652066113.0"))
+      (num-test (- (bignum "3122315115429970622394662815735050825423438028108957393747131991771456957037829402044934484343765915727397519247940959221091465331254497476137639859816450.0") (bignum "10737995515603450913722681305571315249864367824351372254572936648132763616823019940208526402092654554035074813865303483747097673960803093638463005072804384.0")) (bignum "-7615680400173480291328018489836264424440929796242414860825804656361306659785190538163591917748888638307677294617362524526006208629548596162325365212987934.0"))
+      (num-test (- (bignum "11618335890332522671268040181306950825004789685088262996478365976802329054158653675768163009290064139158450983598701977173152384425333441365287895694522192.0") (bignum "-13130287008197231017935223399369698658354829835061356451363818961959486828237111511740029441613108087354987794332115218978284937263725126538295501305403242.0")) (bignum "24748622898529753689203263580676649483359619520149619447842184938761815882395765187508192450903172226513438777930817196151437321689058567903583396999925434.0"))
+      (num-test (- (bignum "-4829477140897377009195646150061276059814366801005389903693533021027427566117360765323647260121062827801190746646296803957067548167571028717513392985791293.0") (bignum "10716557117391614298810040587314742187092120526669273567183969821384063434473189717686678450880765426943205955814024872764413373364846268902370055526485180.0")) (bignum "-15546034258288991308005686737376018246906487327674663470877502842411491000590550483010325711001828254744396702460321676721480921532417297619883448512276473.0"))
+      (num-test (- (bignum "1560421244904974852620371975782132605421448226892487453928759432083522187778803424020804578027100625536441377609275030418285893555753560195716001014786650.0") (bignum "-11797558308994912054526619290334311429749533070145154703018977152548370444659962978040151671210413666186432921816690953994784423526183449271023503069393845.0")) (bignum "13357979553899886907146991266116444035170981297037642156947736584631892632438766402060956249237514291722874299425965984413070317081937009466739504084180495.0"))
+      (num-test (- (bignum "-7701347923966912534344428538744620884561375267012102797292378941649984539207353887059064943586048644516121387166836442084007442716291792933061162738380376.0") (bignum "5290969389374230541016502448421359606252744677802288901830045825873182202718418905866055323957065013553046698199939002159982374580735362593037515863844280108947533575824820196689891621498006303535207762625068798755031433921940066544809959896067184147997503827988613858484669349726945188167613248195147619673963531690938913245110754715059472477991342216448470339490385593605806518967792963339193162830698488489270925945408227996742278697477358272529028932771642478870844024835907350391770605391526921411004262446196112836319091260967898895009427182171643279100998182191816962677328417390867021108292139204864164048286.0")) (bignum "-5290969389374230541016502448421359606252744677802288901830045825873182202718418905866055323957065013553046698199939002159982374580735362593037515863844280108947533575824820196689891621498006303535207762625068798755031433921940066544809959896067184147997503827988613858484669349726945188167613248195147619673963531690938913245110754715059472477991342216448470339490385593605806518967792963339193162830698488489270925945408227996742278697477358272529028932771642486572191948802819884736199144136147805972379529458298910128698032910952438102363314241236586865149642698313204129513770501398309737400085072266026902428662.0"))
+      (num-test (- (bignum "9733743430220591762422540139212426729307515492818443460852332805653889275463385649305231919846970974905736816260992940027028218064265519723018527155353151.0") (bignum "-29407855293830047984154639411082591337348779678279017647951764366455421210163494489475996514661359700145916243499452007595041420522019751347743105082745321262372977262641488359297167392118038994384136863563032667040671405618315550876997904307423736276844997706938133936081058323434935833614475654922773162140266784233792639117145232791514703532554345086520312281500696798706889025860427142771458666376271994240028586899592254884476941388776984078337603148583453255593120138178690189726206775893096279000909079330468718593887702543025737308336025198677457129910473491269839827087491228569718246503140134413881896746751.0")) (bignum "29407855293830047984154639411082591337348779678279017647951764366455421210163494489475996514661359700145916243499452007595041420522019751347743105082745321262372977262641488359297167392118038994384136863563032667040671405618315550876997904307423736276844997706938133936081058323434935833614475654922773162140266784233792639117145232791514703532554345086520312281500696798706889025860427142771458666376271994240028586899592254884476941388776984078337603148583453265326863568399281952148746915105523008308424572148912179446220508196915012771721674503909376976881448397006656088080431255597936310768659857432409052099902.0"))
+      (num-test (- (bignum "-276731217243271862683214238489380950428392903790808046630969592255272629537001990355375434170910931115552132394269672247616298060929507021008951190291387.0") (bignum "100289083769237476480554074865040988004216167545459907207847010762380733541100608695693297149249375537088329431700364201275915507683345148401600569951338052791424407090330310974243070931256108167365334162914085216447196038922091547331474328250886730614683299908003398886233860613008266913065047699535081030427106800418656336608005860846045905149012346378286475449307630537665901621055008855374148058291266835796203075976592585729940879567246284967856356337849150102261744547461816282538319258966892339056695718919291240188920586288417893106046698069355647145603908383687239983874164793005765733782432717429040621674.0")) (bignum "-100289083769237476480554074865040988004216167545459907207847010762380733541100608695693297149249375537088329431700364201275915507683345148401600569951338052791424407090330310974243070931256108167365334162914085216447196038922091547331474328250886730614683299908003398886233860613008266913065047699535081030427106800418656336608005860846045905149012346378286475449307630537665901621055008855374148058291266835796203075976592585729940879567246284967856356337849150378992961790733678965752557748347842767449599509727337871158512841561047430108037053444789818056535023935819634253546412409303826663289453726380230913061.0"))
+      (num-test (- (bignum "8505070389896098095621766692413480203366379968950158493268895987250690600795955783113900096527432416791184386061684833478921638080978014176210898461637606.0") (bignum "-16410711613672171332126342754193842244915477287016327757357714698751777287458963458682349581881560880814595167244857846847668988374679430572782121021084683986742283012573569894084166107235597351093334125816075658348307113218478800035703971671113417712009419861470917307849916674203301497919242668373376352901312309673053175315189945730756118172940886476343290174961420986113367531057713782438374928471960914578818951372282574754612716278516397754222547513576728677459134022062202283647690649100602260948409511070624300011106517649666031530376191755817891213910847547809248990517666613043010292627100428536737652546738.0")) (bignum "16410711613672171332126342754193842244915477287016327757357714698751777287458963458682349581881560880814595167244857846847668988374679430572782121021084683986742283012573569894084166107235597351093334125816075658348307113218478800035703971671113417712009419861470917307849916674203301497919242668373376352901312309673053175315189945730756118172940886476343290174961420986113367531057713782438374928471960914578818951372282574754612716278516397754222547513576728685964204411958300379269457341514082464314789480020782793280002504900356632326331974869717987741343264338993635052202500091964648373605114604747636114184344.0"))
+      (num-test (- (bignum "-12618010259109779267590315037969998053964054382853891516547435925972388025118492931596200697357628900783311183940584302426381939302632641549019984810957030.0") (bignum "-30500906828861638007306362171210132987300359439962044769219457463653547834815716264412200930088623097530758080891972640000479943534665059199377729854850415258341537838023739964147532129877743393965857370995558748807382396090020006195649251292012405690725917389684473999400905751109361754679152179983739269026226054012963756892488872262522587481931950410504651253101938824790285623805566521723062029033001745636445860437154344665483641408727637784045030118212476306906983993748299291616038887011943864441807818857508443930272872365334665976442185494702520760793786640113779099219233665607521784524244604432396247693263.0")) (bignum "30500906828861638007306362171210132987300359439962044769219457463653547834815716264412200930088623097530758080891972640000479943534665059199377729854850415258341537838023739964147532129877743393965857370995558748807382396090020006195649251292012405690725917389684473999400905751109361754679152179983739269026226054012963756892488872262522587481931950410504651253101938824790285623805566521723062029033001745636445860437154344665483641408727637784045030118212476294288973734638520024025723849041945810477753436003616927382836946392946640857949253898501823403164885856802595158634931239225582481891603055412411436736233.0"))
+      (num-test (- (bignum "793528769616879938852241178439496352527042950647521648629732169156958768358523029837406526207126598190786120139491813624819360632811627576064199559812277.0") (bignum "-7357484069649002655190557040768215614708659708788999334802985986235721030962928900092675952032143512196279092521450986819067071570862007086586132687661085824939677603953832219860573980632016025218580608321648907608385784471745482257672314890331358256478273312255285010343369949412955387472116587504557483184506548209831317705115523967163525846685455369176657510129844566195941925821733027993620517287411895496215426174909366458092382652675628195464969405904518323018004882611048769247228828875493680284766874334247375868318795940759082324831733175858991629741478124633015067484305547002438816473086042218906532116413.0")) (bignum "7357484069649002655190557040768215614708659708788999334802985986235721030962928900092675952032143512196279092521450986819067071570862007086586132687661085824939677603953832219860573980632016025218580608321648907608385784471745482257672314890331358256478273312255285010343369949412955387472116587504557483184506548209831317705115523967163525846685455369176657510129844566195941925821733027993620517287411895496215426174909366458092382652675628195464969405904518323811533652227928708099470007314990032811809824981769024498050965097717850683354763013265517836868076315419135206976119171821799449284713618283106091928690.0"))
+      (num-test (- (bignum "30958566711373255787092081401292877738974978442987704470984765018293851031728996862405055424093249924047528792113585028592262445810946419909807061004531455817427671594281537965628880611732831524185850161910304038646992464838306728350704966234151134620041799373762432970330864023007632010865749239024802839173884778578927209741320635135275002489733299806669933393428518104197594560039136096527206600870299327752296492029012993590212340409989598323540081430189567580333356380487749078595746626408529223195894600223743978246922817054226858311823994547784553612982586322603593335538875728113115443554199017672360091721648.0") (bignum "9164115638960783470.0")) (bignum "30958566711373255787092081401292877738974978442987704470984765018293851031728996862405055424093249924047528792113585028592262445810946419909807061004531455817427671594281537965628880611732831524185850161910304038646992464838306728350704966234151134620041799373762432970330864023007632010865749239024802839173884778578927209741320635135275002489733299806669933393428518104197594560039136096527206600870299327752296492029012993590212340409989598323540081430189567580333356380487749078595746626408529223195894600223743978246922817054226858311823994547784553612982586322603593335538875728113115443554189853556721130938178.0"))
+      (num-test (- (bignum "-22540807692474380279530794404584230073523360203115293035869063366926380719566516089428840111682263403627532047214106171892715667227836310498366393991106231487046533598391969789120283294510723096483520917309134391072655861112766764278247568027435618337967113341863713181603534251049249873125130781073437913954718595729437608729446837417196899902194261111827656247095442897532040935029872731410799530408713850806239149348700486268275019296069828199088780767614008685960242354118969741283398882689239770114582524756296906388861630890288875920861344939520380841337675934551587994259348267613541166769237154904791412049964.0") (bignum "16928681651977808800.0")) (bignum "-22540807692474380279530794404584230073523360203115293035869063366926380719566516089428840111682263403627532047214106171892715667227836310498366393991106231487046533598391969789120283294510723096483520917309134391072655861112766764278247568027435618337967113341863713181603534251049249873125130781073437913954718595729437608729446837417196899902194261111827656247095442897532040935029872731410799530408713850806239149348700486268275019296069828199088780767614008685960242354118969741283398882689239770114582524756296906388861630890288875920861344939520380841337675934551587994259348267613541166769254083586443389858764.0"))
+      (num-test (- (bignum "-5403850875869356031749551669837202919756114555261706106905659104903792701565965475066159243529680606410723686422444947172225540145977333194008702465610630608545009270872541652430806931212184915840724378685979865349848151917650322286497417985248678815214889868576385900691591784772762893647315325310416150353725001943778473686980157692817497562783521120544549784746647104651038037129984152623720529803205580894126664077380391379306511348324442512538418658728022685805514196592544294177914956734669359073791151050869328577099869772182315103156047405800398706114122356939316464974680113324979723289916823063616573634058.0") (bignum "-10755560408227106818.0")) (bignum "-5403850875869356031749551669837202919756114555261706106905659104903792701565965475066159243529680606410723686422444947172225540145977333194008702465610630608545009270872541652430806931212184915840724378685979865349848151917650322286497417985248678815214889868576385900691591784772762893647315325310416150353725001943778473686980157692817497562783521120544549784746647104651038037129984152623720529803205580894126664077380391379306511348324442512538418658728022685805514196592544294177914956734669359073791151050869328577099869772182315103156047405800398706114122356939316464974680113324979723289906067503208346527240.0"))
+      (num-test (- (bignum "16201587974698660164372991183566748501003872177894450603471850345714117528335101264234127789041855420954511595895378320972957964222386731614839583078498685801156670229700092209313747849610762975747730086443186821337319452128253859293962343891549207804191088925361935683615063225197130192492652062735684739784075955094308092423304262201429421582566117390598395895220976999990205945523225411701169301910362640419341608407294018105959688929256136725564385243617240412649023368133778798063226772467915584333795357813292935080009919284755332034998122912861893282865727947810588086156919649131720183722427134042574317487793.0") (bignum "-126159569916621842.0")) (bignum "16201587974698660164372991183566748501003872177894450603471850345714117528335101264234127789041855420954511595895378320972957964222386731614839583078498685801156670229700092209313747849610762975747730086443186821337319452128253859293962343891549207804191088925361935683615063225197130192492652062735684739784075955094308092423304262201429421582566117390598395895220976999990205945523225411701169301910362640419341608407294018105959688929256136725564385243617240412649023368133778798063226772467915584333795357813292935080009919284755332034998122912861893282865727947810588086156919649131720183722427260202144234109635.0"))
+      (num-test (- (bignum "-9976758107386398142455037422077809088581080675608340830198269021688955930541332630075972471934165382030070969307731206728197760190279942894255740733209190331510591013089699837164445642396864912572863786290237335963836376543389815671640509582958465164874961381137096877288362944469137669502842448492172241151419831252572392809173900377271652074261706120638052379886108764460001026094198502028776365675088466580595870167840105746912975236851293882732079317535103041585285239081516202482201377111734010788198635874359396626004300532752450289119192633850562141516671742961938277967783337559307443617308447853505824391099.0") (bignum "13449070890444925581.0")) (bignum "-9976758107386398142455037422077809088581080675608340830198269021688955930541332630075972471934165382030070969307731206728197760190279942894255740733209190331510591013089699837164445642396864912572863786290237335963836376543389815671640509582958465164874961381137096877288362944469137669502842448492172241151419831252572392809173900377271652074261706120638052379886108764460001026094198502028776365675088466580595870167840105746912975236851293882732079317535103041585285239081516202482201377111734010788198635874359396626004300532752450289119192633850562141516671742961938277967783337559307443617321896924396269316680.0"))
+      (num-test (- (bignum "-8570952518585194406209873586517687582701183275108243979199329595605282282125006489076327154374449108678257552384372919282846744626955206382078850958298637157198962032090439427286914716782317030245513658212430127586764421559372214829010306717557679285031617989735914399954286846456953917915955558448774972943731602144914068097214910567329340361564904028964471241318105967747431610163083002382821902859161510204381788262611298660559327478615315484763561786397041779926288206767156863141140852268323253657685018587945456372648431446464389004257999049529945532453598011773843788498650935959375182414447893892341891463988.0") (bignum "4431555062692055371.0")) (bignum "-8570952518585194406209873586517687582701183275108243979199329595605282282125006489076327154374449108678257552384372919282846744626955206382078850958298637157198962032090439427286914716782317030245513658212430127586764421559372214829010306717557679285031617989735914399954286846456953917915955558448774972943731602144914068097214910567329340361564904028964471241318105967747431610163083002382821902859161510204381788262611298660559327478615315484763561786397041779926288206767156863141140852268323253657685018587945456372648431446464389004257999049529945532453598011773843788498650935959375182414452325447404583519359.0"))
+      (num-test (- (bignum "4117976000917214601143188578494558474138167055110060832594841842655428229500889876131794484851166401425675703592388271925904534237338595998991043982676292549088043959446082382516734793718348862105938692342851330680670593768890094290655852108130945387988863730762717733881418314989528719379494082656897158942547008663543153236129762264443358316776532465284014215413819415615612452225913947961681691310132286840303081453109375175436902292224029179426794714036524361081174901146731799945483243427138748119832116750910126386838614645397770107366925613473924955965862778639046707637382775371488874447622330992324750207465.0") (bignum "329466253508616383200261654231797136951.0")) (bignum "4117976000917214601143188578494558474138167055110060832594841842655428229500889876131794484851166401425675703592388271925904534237338595998991043982676292549088043959446082382516734793718348862105938692342851330680670593768890094290655852108130945387988863730762717733881418314989528719379494082656897158942547008663543153236129762264443358316776532465284014215413819415615612452225913947961681691310132286840303081453109375175436902292224029179426794714036524361081174901146731799945483243427138748119832116750910126386838614645397770107366925613473924955965862778639046707637053309117980258064422069338092953070514.0"))
+      (num-test (- (bignum "28857935543824608075326348244201981931023939250259142606733822094071772153858420201297951828741003977413353359215638528196235956061529059419904405354390715114239219947402126760298132539402386106279333968395498788354937020337343839325588433318100331044091923709732742795159387846354148919054314582749477292946200912006940503778924320301062789466388997936618573519744795661160190636101768486096961991215006236190655062992372061052426455063703038765465688361316141792840153608145888307784845264037109867657483109819380082597605481013612040648149090345778910883349230476481347645708269410828528742743794495302359380494607.0") (bignum "126536164564464424337714470705049463978.0")) (bignum "28857935543824608075326348244201981931023939250259142606733822094071772153858420201297951828741003977413353359215638528196235956061529059419904405354390715114239219947402126760298132539402386106279333968395498788354937020337343839325588433318100331044091923709732742795159387846354148919054314582749477292946200912006940503778924320301062789466388997936618573519744795661160190636101768486096961991215006236190655062992372061052426455063703038765465688361316141792840153608145888307784845264037109867657483109819380082597605481013612040648149090345778910883349230476481347645708142874663964278319456780831654331030629.0"))
+      (num-test (- (bignum "3146199586408378667812619157270468624370984629500707476575291934586478540055436137993431548830607708293475788354970610669452058906009873485175438772484599603993015239438297747261356407887781450787482447252615210880612867127689283653562498484594955015919746443263740095372831444793239911996227663006098501180972347442107190398034048225264564325230296723559400768342331039755765597288518435463475921534765025262262798267314969774604439319964638461636007229819888743218820584570149249791727508891676067767073852694327748467914037392778283816153183422263956621516748627574334199731850712255885395479903525322397561293553.0") (bignum "-169494171680584797187706369710105239124.0")) (bignum "3146199586408378667812619157270468624370984629500707476575291934586478540055436137993431548830607708293475788354970610669452058906009873485175438772484599603993015239438297747261356407887781450787482447252615210880612867127689283653562498484594955015919746443263740095372831444793239911996227663006098501180972347442107190398034048225264564325230296723559400768342331039755765597288518435463475921534765025262262798267314969774604439319964638461636007229819888743218820584570149249791727508891676067767073852694327748467914037392778283816153183422263956621516748627574334199732020206427565980277091231692107666532677.0"))
+      (num-test (- (bignum "-17024716654716744558842421452239026542281806678754026383430912733874686056449261218428541803113383766132449624540209841726047308927951820311213785345168358108138304716549475322223600292513384537980742126687035576531330089447100646214364923043445903103768701639992829171572718403272488931980504461938688955457870904289239032709146514866818331202329982821151580491257491540240579366183525075936339515949345815704583685855315810611089822402567649542290589282153225725537026309623090382054078872576985425957096858376112688308214148412270019118710904983829984589093557307164347051152307499446188262820058714564165108542508.0") (bignum "-26845770031559702758807696432929071597.0")) (bignum "-17024716654716744558842421452239026542281806678754026383430912733874686056449261218428541803113383766132449624540209841726047308927951820311213785345168358108138304716549475322223600292513384537980742126687035576531330089447100646214364923043445903103768701639992829171572718403272488931980504461938688955457870904289239032709146514866818331202329982821151580491257491540240579366183525075936339515949345815704583685855315810611089822402567649542290589282153225725537026309623090382054078872576985425957096858376112688308214148412270019118710904983829984589093557307164347051152280653676156703117299906867732179470911.0"))
+      (num-test (- (bignum "-20875354448001792153279041347864644172439177882677780548397567327274288309764204295853633150227327732322157811413794613378828291977852467550695289535036337326494269114787031260705326469002279939986228049380615128280814933748700667874022724707001736732724010699175779382411342385842744973636495738468838244099596215421975861650998954057316519632062827510021706536194961332185926551767127180751211669386674770139039516623606727799489291663572125587356845055646322930167536458093283930082765496058330805117442824718962237069840252138957395570892073194575112213410604881673785921789655406716271370732069643455590690035701.0") (bignum "-321447426701397438572265325285879998363.0")) (bignum "-20875354448001792153279041347864644172439177882677780548397567327274288309764204295853633150227327732322157811413794613378828291977852467550695289535036337326494269114787031260705326469002279939986228049380615128280814933748700667874022724707001736732724010699175779382411342385842744973636495738468838244099596215421975861650998954057316519632062827510021706536194961332185926551767127180751211669386674770139039516623606727799489291663572125587356845055646322930167536458093283930082765496058330805117442824718962237069840252138957395570892073194575112213410604881673785921789333959289569973293497378130304810037338.0"))
+      (num-test (- (bignum "-6750548706930727136186675393752693335334383613941059024795513640678178119089262068912855951615043660442324823673049951182143778744824110223137384940032268718291241014850714197673735719784663896993460156686600813524168487673234842233781654493200950459723884918456280719440022930492599128086690014332139955274261568563155723011697763382009890186816226119314994799655369791620499988988986590903148198659095740939986627235565633349906453726759224441608018598520571182643709143072528030332708598472074166415467718451869993686505339408706320298338691467040585228617379086727764240955696690287600957842671916189752415855520.0") (bignum "132223863177855649509430852484092802671.0")) (bignum "-6750548706930727136186675393752693335334383613941059024795513640678178119089262068912855951615043660442324823673049951182143778744824110223137384940032268718291241014850714197673735719784663896993460156686600813524168487673234842233781654493200950459723884918456280719440022930492599128086690014332139955274261568563155723011697763382009890186816226119314994799655369791620499988988986590903148198659095740939986627235565633349906453726759224441608018598520571182643709143072528030332708598472074166415467718451869993686505339408706320298338691467040585228617379086727764240955828914150778813492181347042236508658191.0"))
+      (num-test (- (bignum "15737797902964168014939893286340956118635524170934156177365242966267432695262586636031957242055461736359478270642576860414422844075672388559647477705484719667060463718865742735598799928335211410004369240278699196301127699945374217439676378682879115442203681638050752745036508637214733712716867800216723838016099572951915042604603457902610639317648800296497583507890473114507231814851908526534709496988648572353272479026750068932474334642929727977996779536604912743446197670724757690108283368934769626461285961947257397454619164856011847736479229692086038931510067165282571276049292116713101550911614590774659556899356.0") (bignum "-6114512833799784097991148713266650451765474382378581896952003894922931741133332233338460555227243451198289670274036744955599177213449957470212981501678055.0")) (bignum "15737797902964168014939893286340956118635524170934156177365242966267432695262586636031957242055461736359478270642576860414422844075672388559647477705484719667060463718865742735598799928335211410004369240278699196301127699945374217439676378682879115442203681638050752745036508637214733712716867800216723838016099572951915042604603457902610639317648800296497583507890473114507231814851908526534709496988648572353272479026750068932474334642929727977996779536604912749560710504524541788099432082201420078226760344325839294406623059778943588869811463030546594158753518363572241550086037072312278764361572060987641058577411.0"))
+      (num-test (- (bignum "-26633154627863501044020127597209297142657179797586777727331879111280843451446814109347357601013807189824906954310855123313836812409388745541128842840054310853220032505914307470215180950497357091093642400638925719682307925365402618310180378684705799724964274776149984064608716300479893889145492885897234574442542501896696821902329473018442082678749291668341477914681413039643187020003425962922948452894682558162414623956491734656939841377698702802567258906642912449969621455596132708975438173455827361542712483153981422051943690720556013580161324856788091093465837542336129629269227369781823515673967591796132853515009.0") (bignum "3321161637038961370471515250185392889390643163295535903347391615170504064647249127732639364682803744773593849851778894972403397573953564801884397178069327.0")) (bignum "-26633154627863501044020127597209297142657179797586777727331879111280843451446814109347357601013807189824906954310855123313836812409388745541128842840054310853220032505914307470215180950497357091093642400638925719682307925365402618310180378684705799724964274776149984064608716300479893889145492885897234574442542501896696821902329473018442082678749291668341477914681413039643187020003425962922948452894682558162414623956491734656939841377698702802567258906642912453290783092635094079446953423641220250933355646449517325399335305891060078227410452589427455776269582315929979481048122342185221089627532393680530031584336.0"))
+      (num-test (- (bignum "27668394897866653012794531261739800318882766882548843941974485394983434533400277607364280566269718161470415771058329222680901477416257843578362127708934184467195154000133252468684612556324066063725677629160438683034201285122508880444372096430021219637788794365539396242345208611990491721052691567092029622640533057073151980959055665792776356282961971341363712186503783566960850166774438868528799819047163739437906559674823146932668464230936946321915236658512741918196732794332451120218658490129307932187658010681746557120172585093207839141764683325214902696969028472942954863209641597556494684135445935915485525220911.0") (bignum "204625459185084436546676461283890328511903949966691877662249903659689934813784661695047569885195881142676761876303280806728760511429260843727967794322777.0")) (bignum "27668394897866653012794531261739800318882766882548843941974485394983434533400277607364280566269718161470415771058329222680901477416257843578362127708934184467195154000133252468684612556324066063725677629160438683034201285122508880444372096430021219637788794365539396242345208611990491721052691567092029622640533057073151980959055665792776356282961971341363712186503783566960850166774438868528799819047163739437906559674823146932668464230936946321915236658512741917992107335147366683671982028845417603675754060715054679457922681433517904327980021630167332811773147330266192986906360790827734172706185092187517730898134.0"))
+      (num-test (- (bignum "18944451653774463090918576081661764936021793389045063662102219434278236461286997354190032851092512146937346521704215170240383659165117708716738711782597164244188741818096207452074083439983059414271417130274747048227795964884943105011205424198661201055104372863019759130697888820715782179466491256695453118035286889359217448004524564796840711987314064158194625731263591557915838970249677548534895064545467992194029425250039951132361639559343536937119283951538321037694842089561504643350632756961329867761604760788760440497535611072991056505806805291706178639395690245460397975614715123591611301423752799666149495108752.0") (bignum "994321141213369910357526037382331323092462599623554452705525887587326552002660849455542761618020243106424015447778226642816634338781654345001677083881111.0")) (bignum "18944451653774463090918576081661764936021793389045063662102219434278236461286997354190032851092512146937346521704215170240383659165117708716738711782597164244188741818096207452074083439983059414271417130274747048227795964884943105011205424198661201055104372863019759130697888820715782179466491256695453118035286889359217448004524564796840711987314064158194625731263591557915838970249677548534895064545467992194029425250039951132361639559343536937119283951538321036700520948348134732993106719578998544669142161165205987792009723485664504503145955836163417021375447139036382527836488480774976962642098454664472411227641.0"))
+      (num-test (- (bignum "-25075128489482657321316021943980016828761861550379828525731288423212311433274066958090940464803020097932875912251380196071686918459370667428905844496548191635733867314315152547202859654044591981512687559437417616479425752991419002108503390319869665933757684966460526631533822984311725217788657567199485442486045019468844265484117570385156844404625735176559901986920712550964238722824122000259551821135404274194791706113272773768366572120227974096419295159271316157215551931810740200836725504693738229444336470213883741520460842708733150362983831267583568258736572295448486287825894301201018490203520738439038977754991.0") (bignum "-7402949251688548738762242219263594861535354011996392637087346760786292549376145193266590582054224293289596877537643409310483743293801574030358189880866069.0")) (bignum "-25075128489482657321316021943980016828761861550379828525731288423212311433274066958090940464803020097932875912251380196071686918459370667428905844496548191635733867314315152547202859654044591981512687559437417616479425752991419002108503390319869665933757684966460526631533822984311725217788657567199485442486045019468844265484117570385156844404625735176559901986920712550964238722824122000259551821135404274194791706113272773768366572120227974096419295159271316149812602680122191462074483285430143367908982458217491104433114081922440600986838638000992986204512279005851608750182484990717275196401946708080849096888922.0"))
+      (num-test (- (bignum "-26509487378481600038412836495388065888781507388737194948728047318975269277448073484403390476243134990463394380967295356958474984927721196047241216945988250219075749832868804186657201899994373052648345989716938779173325348547767647529160988985542438998030764420175306438858518207072038513664360905985908879070216069156102379349899544471658754952888660878997691670566078979940005195987259493512159628198906090101827331841914429358969184839073862821059400943312264269215878469013316796620921077244799814690434355127994011220041638393750697699141479399553359747084811371804524490919966410379714725200415331414459870271869.0") (bignum "-9247155945465656153397925559476432992975541781462281935278489123804934847762489500833913193183733932905776020790478662969835879365116238125565077744775032.0")) (bignum "-26509487378481600038412836495388065888781507388737194948728047318975269277448073484403390476243134990463394380967295356958474984927721196047241216945988250219075749832868804186657201899994373052648345989716938779173325348547767647529160988985542438998030764420175306438858518207072038513664360905985908879070216069156102379349899544471658754952888660878997691670566078979940005195987259493512159628198906090101827331841914429358969184839073862821059400943312264259968722523547660643222995517768366821714892573665712075941552514588815849936651978565640166563350878466028503700441303440543835360084177205849382125496837.0"))
+      (num-test (- (bignum "-17010604274474750006607667808593883725990508452473783283717890546525148212376267233909567638545898628257361383837671935903199638230375408397752251127816717091041943873728526445398525706450929660366518707254053655364610471112296477865068960744948010561798109833411657930112293904378353445961131058136287425064317621271289456901138718557297733713446119244533144377470099270824020439428168481914824420861176457152299497728390918971852021025089592998997807574907789524112450146545688385954763667980124432645276563626082835790429598328230426471161191074551543308732791287559033843466623138171520961684959997180979203053477.0") (bignum "-17319079025684619178510812811805110270463447771889107440996086020812918555191263705580533644731591929176480040622705607552852994906782176254877135818109655911838591767583157894999741648979817400330572419476101372927546509769818404491634583907246692993992514876697330603464497645633398167129555001859772111887143352351860130929715392173452396253437927361301990735683539169040916027268831202732178553152351117118606495416985612909248422655861312689027789401950549626643389790516560291620711705848717875304929186131258525831197192620523261738944873398924939726689336762464320190834794155527335576391767307110012289717973.0")) (bignum "308474751209869171903145003211226544472939319415324157278195474287770342814996471670966006185693300919118656785033671649653356676406767857124884690292938820796647893854631449601215942528887739964053712222047717562936038657521926626565623162298682432194405043285672673352203741255044721168423943723484686822825731080570674028576673616154662539991808116768846358213439898216895587840662720817354132291174659966306997688594693937396401630771719690029981827042760102530939643970871905665948037868593442659652622505175690040767594292292835267783682324373396417956545474905286347368171017355814614706807309929033086664496.0"))
+      (num-test (- (bignum "-28362352496476494327713713233021518136860402239251781438945998574753662942796270292818595738100959519541952077905620088422871490191217157269435052965329201030095268586136492980900212955645939325800541690754639292707053269767151001292253701853012092829784482071789669480438026889625605099744553642207773753943711175375843649210118677569597324789367425691177169929576236753018329085700397911235750600921874606148324025962628852167093806152864269874177214562322576097931390470469397118268354868919899638376323751276807304678316688836173746719723312665764603485606350244811113608471530958617108833879194264695174468397461.0") (bignum "-4081062111675377984305281082755054920741203741273067094307824323728798665450292976016160959354997082250970415737745853292134965575242789548167162064123232363464302136338349828801951197252612093077640695564825095503535921549690447893467349156939791370286866987224201115453216606688305427702274940837032716124925028835914047967887674858015919302546781010326385758988488478290741665427521820112231266659657169118374988259423444686317389869729817643396097464874333968181509317307320406521221309011946212308190273531009796563611621389720223920155554879800901239072885025170342349379379336047732368458185953903872634982504.0")) (bignum "-24281290384801116343408432150266463216119198497978714344638174251024864277345977316802434778745962437290981662167874235130736524615974367721267890901205968666630966449798143152098261758393327232722900995189814197203517348217460553398786352696072301459497615084565468364984810282937299672042278701370741037818786146539929601242231002711581405486820644680850784170587748274727587420272876091123519334262217437029949037703205407480776416283134452230781117097448242129749881153162076711747133559907953426068133477745797508114705067446453522799567757785963702246533465219640771259092151622569376465421008310791301833414957.0"))
+      (num-test (- (bignum "10367142604728811799331249565431331488313655422005202933702176605382043644320209814639311439871418581341534233560256605231366966869093495784665834232350567124110194965198962966795893926025854156729633358240069116588609932539289897499402463770167927610848388138020589286461244557962368497723086593344721146859584146431437967506007518396464517349944129896971137720357645026281243138165214047233258394590454775153944241555543594427555914116439316287902470043292624597940465373006598913770411505099332700167695871387948271302951230983772351549087620538875967635100644404345317626621438913980275970160864401622986870735123.0") (bignum "-13323117602411502623386235160326625769048477819798659261203460002048250420188223753407093545503703207645050883770850457071863684414849353264890601744588860687970804808452855795406182324143949747985869939791374195222513169904228914579995165180964917538177994190229733465224857616114628815752065632238207474599531507602861647623695058640735949593381112671690796335596142010430124683781417828023076027476816068202219709673411776556090962187853799456968290579708094595903778622705850818245685205707447012659247018940946510378371952655457988959551256869060428488498330109152756599450626641948447980234503249330875085656261.0")) (bignum "23690260207140314422717484725757957257362133241803862194905636607430294064508433568046404985375121788986585117331107062303230651283942849049556435976939427812080999773651818762202076250169803904715503298031443311811123102443518812079397628951132845149026382328250322751686102174076997313475152225582928621459115654034299615129702577037200466943325242568661934055953787036711367821946631875256334422067270843356163951228955370983646876304293115744870760623000719193844243995712449732016096710806779712826942890328894781681323183639230340508638877407936396123598974513498074226072065555928723950395367650953861956391384.0"))
+      (num-test (- (bignum "-25321281404861286799950777949097462701962113587443565138655462269365151737118518315058035825695270231347401755128007072923189452859397209062457461602335603630181865680063451525170253746137368267674863889514153713728814272332433431604233690200451816570240227260445028630591376891139306370205846627093813889699170594185178241812081296510140572331372738998993116117098817936927692238682202717231675283209016857095739468507690090676681400453024293870135659990528969837132054786661560150259115734877162158755858653364070279937027014730947342216816307219127474721622123875699701715404820384545693058511056735799834754890692.0") (bignum "-15870257059811626693754498423136372480069134596343998984549199283973854570508228359295418026089909378687774627821225399931314225867711515277913855368473873536462450935842786002269065816311054834857109074848803122494252885020527074586145467185882674518032764708782999568002770206995683800833252068328835778749976046128872525287656002968632147457840467536682726059599593635219947081138082647985895437016641903078766878782632503812736486529143041369932038649270950453231711525943737962179463585338023463992816994328519710963267459007592689204838965317062070771191372220277256094361390952025057574056586665509010902583686.0")) (bignum "-9451024345049660106196279525961090221892978991099566154106262985391297166610289955762617799605360852659627127306781672991875226991685693784543606233861730093719414744220665522901187929826313432817754814665350591234561387311906357018088223014569142052207462551662029062588606684143622569372594558764978110949194548056305716524425293541508424873532271462310390057499224301707745157544120069245779846192374954016972589725057586863944913923881252500203621341258019383900343260717822188079652149539138694763041659035550568973759555723354653011977341902065403950430751655422445621043429432520635484454470070290823852307006.0"))
+      (num-test (- (bignum "-10064759312484387184876313010284016458560725440641239737323234767636591183611201479885347260175161165340917225306019885202675573016295152797559983194160634880140345743489989007821872426587698574795394887035658449467358615185057180305109018898637903449135520486663185036663238956537895356325733583128141439025002140924158670346599492383552938312402521066705186885506193758499006001382444818328802338159713646715901977137011576113434170842422373328479181457354927400927267448788528116619711184792932525071391797130057189079431487557270366699175956757661488296856660145077706273571985222726397848614141194988258117115194.0") (bignum "-3689074607001776735792882994440038588887963294487080609346609068733026224735369468180206799966728461935654851527895876039403151156669223687679382665269013769686991783531091821265184956524448064027733731862929686596729449196238312997460578818232100254940830907672953344544031914926653652310468671685310332327057444910423081752028857828828473637496272809899061573593874011995802487442092326045415689987885712749026491545159340468151000027397821404233369034594141219014219707193746581364791219277489927025992135462852894714639406751538919395016165215641239054420028872350709704191189169571752512626755385998505584006855.0")) (bignum "-6375684705482610449083430015843977869672762146154159127976625698903564958875832011705140460208432703405262373778124009163272421859625929109880600528891621110453353959958897186556687470063250510767661155172728762870629165988818867307648440080405803194194689578990231692119207041611241704015264911442831106697944696013735588594570634554724464674906248256806125311912319746503203513940352492283386648171827933966875485591852235645283170815024551924245812422760786181913047741594781535254919965515442598045399661667204294364792080805731447304159791542020249242436631272726996569380796053154645335987385808989752533108339.0"))
+      (num-test (- (bignum "-4621513851362114851854472268081584822344822740665629177305004335694395719163541988311496405455186973857145245414214464449674464879082042971313025249648887349614046805778335573547862191522938924075560443632614665169520240664970180760364771373836023824195690134618554368845612471858027311791638881380352344527105480173917778084361560336490212845414303819150625355111300877737042696291233444311426721588476948565949641149735838580313236869041013210454558557732497012037162735013212361842433337324577522358968152852532145622765032318936569346015498130151789662274686368870963891262060214274101000058555635785833724062234.0") (bignum "20283847238128227963042817384468009365120280641032764409860857066215336820785816567924217697745867082423864450685360959383940995237907453126362378908108545669654749698030305432673477271848544313029448526561606175059997663752601262173667861202924953502866611309434183496911206954880840674239880495147451496219568787221129244201657487090244435562896841733049066453539864301122516559479757096183362477594406691085946787803323712522074578611082872627361465163804239673539339633332349145205596371287028267780080937728455742966681547897652607170788637996317683436193829274172400558140357237480809582038468874094877651383053.0")) (bignum "-24905361089490342814897289652549594187465103381698393587165861401909732539949358556235714103201054056281009696099575423833615460116989496097675404157757433019268796503808641006221339463371483237105008970194220840229517904417571442934032632576760977327062301444052737865756819426738867986031519376527803840746674267395047022286019047426734648408311145552199691808651165178859559255770990540494789199182883639651896428953059551102387815480123885837816023721536736685576502368345561507048029708611605790139049090580987888589446580216589176516804136126469473098468515643043364449402417451754910582097024509880711375445287.0"))
+      (num-test (* (bignum "-1412797070596191471.0") (bignum "-15492755620416346417.0")) (bignum "21888119755986895161222137392796809407.0"))
+      (num-test (* (bignum "16686841096925954110.0") (bignum "1491135775021813104.0")) (bignum "24882345731730524499708005167300657440.0"))
+      (num-test (* (bignum "13262412958100188045.0") (bignum "-18379071970155621919.0")) (bignum "-243750842254847872704698616507823758355.0"))
+      (num-test (* (bignum "889503034794263569.0") (bignum "-16600674457216690894.0")) (bignum "-14766350309325860687849239111838240686.0"))
+      (num-test (* (bignum "3148165694020236318.0") (bignum "-11771070679825280729.0")) (bignum "-37057280896113409834434531491271315822.0"))
+      (num-test (* (bignum "-4443818546267181727.0") (bignum "-12001052312087213799.0")) (bignum "53330498839175802532024121011435050873.0"))
+      (num-test (* (bignum "8305259347214213793.0") (bignum "-229351169208067535459370186456659711595.0")) (bignum "-1904820941859811670566233132773219565154696335396051029835.0"))
+      (num-test (* (bignum "-18273334758510166901.0") (bignum "290047155020180552782039318570071650475.0")) (bignum "-5300128759437251944808204783222405076790289915320785927975.0"))
+      (num-test (* (bignum "-703280433697652940.0") (bignum "91110448009482115063492795153459771021.0")) (bignum "-64076195390496041906141380919369524419358692517527451740.0"))
+      (num-test (* (bignum "15279634596127882146.0") (bignum "-220998726467849290098339792307263567896.0")) (bignum "-3376779786638352686104608499923871317791563686466157184816.0"))
+      (num-test (* (bignum "-4472497681184076830.0") (bignum "325612942672822430032905460436166528379.0")) (bignum "-1456303131067722058341139305566346079551678140995111358570.0"))
+      (num-test (* (bignum "-6180420673489141029.0") (bignum "-161157288800853703711204405567379740552.0")) (bignum "996019839388256252540244286609069684717518686623358308008.0"))
+      (num-test (* (bignum "14044956603588468379.0") (bignum "10163190459901171254101452124764637970005230126310661589196828892266636678427020930101076689732526935899135126391465178494895371156141265424428405590113790.0")) (bignum "142741568963316278148132287599703960511135825069792278910440475692913696263448088587778211787403889397993501704943449376875999977937418748662459138952952917221024170426846410.0"))
+      (num-test (* (bignum "2133283347509865817.0") (bignum "10577710515843519541178984366353275630877942729579274295972091544607384358263130633386329706527832990861547566574369528634541156662300858851752195966167381.0")) (bignum "22565253698228972909216255630133478029433774404794962869038558824053350969301054394347471181756471783852326407546652836376109109470959746153989521923555764579738243072315277.0"))
+      (num-test (* (bignum "7812722507014599311.0") (bignum "-5055959518947106416800910724733658104378582281318226107212861190073091017493970778425583956006925004399967175604321778956828368132273155364830637407968648.0")) (bignum "-39500808728232764770485117356353304373275127104839804121600969932458363071148383405901570717732548020267052999198017578112731079638156026910705662052515278317807704170401528.0"))
+      (num-test (* (bignum "-17560801708050275829.0") (bignum "9842515227842383346577123873881045824143545509071137371075701856197189100217561683579562062872293951325890789283651221922663521213150065638405410634222129.0")) (bignum "-172842458224605375239887212582262805312641302639067963604956593404910080268476692854082531021580381176489626536608405283010496488558204787140272050713264572452317265305619941.0"))
+      (num-test (* (bignum "16743386830114877156.0") (bignum "7347065846171565625701636575261347705942035850951855454324853850791855951431141198155170102434274509450315416946729031216385536668189501958761688618635668.0")) (bignum "123014765528775807847206414290825117502032199391400884957413813554539073118943905948723779020186281150198999824020769031248882909461419778092564985979904308229718874140000208.0"))
+      (num-test (* (bignum "12697192948029671719.0") (bignum "-11416780209809507417142822520376617951137069007568339428552592261458272400645205700952156716454820410468812274673183389934216970221062627926131479014990611.0")) (bignum "-144961061169197993494569769162151457365959287966302572862364500950127981616038900865036521107816831702945678695331078399461327412574397914795455218447174498277798426197230309.0"))
+      (num-test (* (bignum "17005139720743105479.0") (bignum "-29990519259587469661876904501488342396062731024702923152492275204626478246142153608222329335341363164148761307659972897552084842238285026253664841395295138667328930482145590159132144957515157474957872335043653264146346772142483721767458961320947069718037828473530001033848282453826154763424789967441239969918856795769965946388666154136004597297855416503729657013008165049478441197537144135384444157408972370236442813734429031404855591324183846423588871065272526864866155918285777640819778251612915859290336548446745308788013234099839998683451658620461972798204104633072664604846231692505409653434538208644416538994256.0")) (bignum "-509992970306921990341332390474393215554862069848994183152714032617297815196921655222705396130464246880845576204295466273071779248718654338767559016551390771145212884412809612574391658668778295682412755916528976282396155832617323980694289208942491001345059122414240884660276842648466533488559879226195446807748573906940273568334343093922652142252689341425941673567630236228358747411926991658260241924294146562230425295426217833820067881064577380516936937782688004146531121831211284735538742160763820814174631414364095096099434285754767091040812242751724012532803037860394426031234340719537172735695313262283511554154662650333168783128624.0"))
+      (num-test (* (bignum "-15877530153400521290.0") (bignum "27863984127681242643954505352420303514833683768731313003271701952957204538094398204984051331105594788039352443762851136101330385230866919393696564428736685568762923746771275677491379334452751710169529933675128178840986001684425353245791752781476028565228371147542431713985092322787978914276414008774443194161599919167210582437024618824616489802661351916633993681556274980075051797120207655478780052593534285265078265845445633803877185868676955831374479850746658711791169579387317321983669227930929736238215792068273805543745311609083833407544342964285215427999724272264458975101474080574470499647168865409458531868592.0")) (bignum "-442411248181132450919255517905812929771246981404050821923231762557171158858876183536414772404562764742655092127161703706239729646027465795612501446223663310668879007072125975886873343449629108246953385822769744013416908613100114754904323190537317463286500657291202287742354250227377164455244103312266617146454847578457073139633297517170508179596166314955134347046515455569689877574427319658085169791949003021426613961459610227430636932814700361914589752207776142403364490846294795496119883683491811246550808038342285518518431538295199537270236275774546666026424361019715280652576803278928827199810150387207105149968313623040090578323680.0"))
+      (num-test (* (bignum "-14162897687527555611.0") (bignum "-23016403916121951319848021112075986869602408568431399211927062304968548663313037929311574133954267816204873252195499803324830278637331653769648377216095499136975244697758388851688873078022850203685120154634090802825656419418077380419130449990938627982123188424119187922828250625318327074513352279785514062876718714640725789938556578327139793467832731546881422469843509318627826856881082450937188956068348931459011923844607158528494902828851692203126881727638511348944908726926619613375594042390434147948508706733126737304560579515324106834237197081860910657003346633962662773394999353766192391746258372744063777808796.0")) (bignum "325978973798843759388794644178802841408656469654887121096165875654577046313115917671847505813174070119516580105483409446057747653173640660143855580491229746795572929387698247460831363721394707501497262525550824977473864621747159715947297817600227665840640555029633517390896890601028716769035575763283168066843141870124768085499453574902575378368669494153555135898430469356384416638130459557518713454927909937610851489821263029886989981438507377741962130296498574556444168140838201069779040087521405032426995145166201901368032136008107323350679784004016321425234898132080844200202007395427054392280809376612533414505539109579739614954356.0"))
+      (num-test (* (bignum "10844738523441551664.0") (bignum "13010289169828379103330191247192587220592807931898339555723704078985668371901953113936581573750666143303899278973814509164982887504269303358034042953769514772858989849512527461308415676004712388964136857232374888643347097138114199889581495448978914022318770898259317738823514820591042321773469959130347470144905381758960436645008051488666423115693738341045851119808222048272924385188356021826450267608127588500233526688704136268009202730309974485584784539415807259862449203760469406037505772435323036790641520939576046423540699016607317147689982042035523118533555744274806239272109508745089640043900389441390176681340.0")) (bignum "141093184161152226992592021994885140117836445291515772908453669279294934817987511015413332614094493905560980363483549300117114491702466085602279965168041684355125886388302948336158133555051817733078300668260616983283027038746214728386770752826764135491650323133831923154477800324207350667020747545837613879364064704092093040155243919335078139087599906324684688427176309081290932504214653249366429592335409761783188358003723753633106574740731573467850133547164922532633897844647383889253777956821171583261238607289172489135768839436605233457738153233579088224808850428203888700116300637190661108848906846940291749737998056247719674749760.0"))
+      (num-test (* (bignum "-16402132873169057380.0") (bignum "8202725117980211375579199554494319645475746305836527475507064811368616698686329266053570766100878145903342129595869654087772486685252653587846560946850102095086896668181099435964053041678323706849735936082196618754721606824996486473796843333331029865501790248862590712245450877098960007272754260813822886287008295409755783478345202299352891066800825979067590290793893933819913530599309037639082839491869155044147367415785329077864525961799400923643936705317921900308490987828345313709179960659814100113658528990241758360711799009722683007157350272749544178688961738222930753008443755881419398858537860612954576778456.0")) (bignum "-134542187307192759584182063854799850608007421111316277594191532129597970622559949723743396309231347084450105499455916612009290113746722460358793168839937004812915757145655285798961178877391232945062437277255128401572171216279188126380587081673725314534095093062983435026047851041796084651601813918099532876684901239903769891552275465470747567830660442193995685219383258617057944010709906130655663966913354414611799232001438943448374556294933488875450563987147224709383408815994320229340710143082135667640802837699940654151297907451396297241124380508001357553893328703788960812706653503939250831164194874527033594779746890593262611805280.0"))
+      (num-test (* (bignum "-12094905083549825231.0") (bignum "-7303327854122277566083382629094740392048421584433028903125893639493993705575691832165314461496849401726460344615713884253150283931509897329926825128629833541892164122168618243719393446304446866677253728405617434021389128710195093788280203239300086905325641224801020413858421914412156234316517981228056539721130386645649016559425091470643854813419057026759188125291655398451427686659900364573485593902992038773538760663063071699966278379037038361219424927031644750173900916227834573604566165762753650347331082640552394430002401423199016978155236550541225512734287851807727860645247391524620773399994302380387697957581.0")) (bignum "88333057189654571362020288527489792875655269960629008914349561689924145109953656394378545526256758871407020025766992398117775520525507898420898102744530402370720932219749861094609497366188371774072368034971851022164946370916317410415503705484491514312339956381120953283812334833067601825812118392757289250628861166579446800637104996060739031010579056633535166403083327528575504427815713481850979373113173151813491831551023902022537957860211597622343157802805275942920911544696695931809085743355666792408029743911424760065578742910735408262758198787195579745280191859776661700139596074108035867940154338953640690242795671183308201526211.0"))
+      (num-test (* (bignum "-81618231044418675360403541307856740187.0") (bignum "9751573706924018395.0")) (bignum "-795906195858402819552264165081526765614024708979523739865.0"))
+      (num-test (* (bignum "-167600745660011044249531125104202473984.0") (bignum "-12960244919927910377.0")) (bignum "2172146712516287908809731894157839567367040369214826131968.0"))
+      (num-test (* (bignum "90306383312124738690336097936949488486.0") (bignum "156109477991590792.0")) (bignum "14097682358164298866835386043901377722456291173827620912.0"))
+      (num-test (* (bignum "126202800261728727198105694812165074067.0") (bignum "-17404362862588500316.0")) (bignum "-2196479330029905727399352310201914876903532806486592905172.0"))
+      (num-test (* (bignum "-80093647977875266525946940496137725572.0") (bignum "-9499399805878278852.0")) (bignum "760841584053111508349403804472960020663660465509267203344.0"))
+      (num-test (* (bignum "304052889577333477963637861956318521374.0") (bignum "7233536405885618691.0")) (bignum "2199377646072361697737485358722028853038393128548297401434.0"))
+      (num-test (* (bignum "-124787646062877233829165925777950698937.0") (bignum "-125798384154373172164515376683173327013.0")) (bignum "15698084237137783175768362160964949930745617334715009097620154581879012485181.0"))
+      (num-test (* (bignum "259623502197082370239517374851053110076.0") (bignum "307089583871541575627915295134832918432.0")) (bignum "79727673252974285068387698133566605944659309374400074880377824560177225320832.0"))
+      (num-test (* (bignum "-245358177397026033963771466683003477163.0") (bignum "-285087883756432161967673595037725276963.0")) (bignum "69948643556453419103498093570621669430956866597291662675473644085666220495969.0"))
+      (num-test (* (bignum "46731711386059374483493216849082745840.0") (bignum "-216522280665540473581476116002923812173.0")) (bignum "-10118456728713381305690589407461434638634240429858378588644634276171257110320.0"))
+      (num-test (* (bignum "-301422430661955757433852743238845048860.0") (bignum "-737194742467573013847855072675441356.0")) (bignum "222207031145790358162820429948896977201848379524899474475604149595884654160.0"))
+      (num-test (* (bignum "109781582310220385246795023904554278713.0") (bignum "-273317662617851276579672019029762858338.0")) (bignum "-30005245475518685175699313262818315773200953201653075289648004177366787958994.0"))
+      (num-test (* (bignum "-312236719893391897821327608828679767006.0") (bignum "-661158307192284418474080017860142217763949256471548515134335997907628404839044913830388499435166012788226998900468665646723366842553747501004752506346280.0")) (bignum "206437901167986463762021023207669068873036145952740267172145693855475451354717023377588805030022300923600718715029262618794758202955817341818233889201852381575043965927328029955969846754837680.0"))
+      (num-test (* (bignum "-134379788461141842858846278268259347105.0") (bignum "-5535479645589936472405910397299739073641612836770238183712206042659632410776896398062277742229906915852933418684231779996404071421767274180368154310128427.0")) (bignum "743856583805332082970350662728998610690268824090148728726850517499798631519601137183443104910590855501252539324674812560702657332874686395923181633958702249128106139207076314713649515720653835.0"))
+      (num-test (* (bignum "278271843790644800793473851247546123375.0") (bignum "-3845690285506025443856370771250487683891303505653819308540635173436088084480277686684743918745832832765066355874381847690771330587033980524869033600561589.0")) (bignum "-1070147326395532917564114389205677334125034378502074943828571411806344559859053091006175486397820822872698474899835730026158782698085673635033947150554253148685482702599776833910878579880042875.0"))
+      (num-test (* (bignum "22345490710865165412267189692679994671.0") (bignum "-13168094845644809414256057134926669929759930873747535851687323456073141938879368460977723280750841588750507348317544461824280674332488497533955177541413394.0")) (bignum "-294247541053147552931885013427268298282376074124656716577088212043667912662239091316191145352314750820026626159649861330384837204227899202392764926604802655267738710003310052268554637728023374.0"))
+      (num-test (* (bignum "-223445051950608517881717261787296926498.0") (bignum "-2609806601119499724524852022247741111662431776874117401343811680374867931883996125145979162937751368655661775097445043144114599069842524778189198926688379.0")) (bignum "583148371568187658089071213924575304457465978545376486297236105670932990897420147110485946155066725440999079357995678147717407410446012970360780626554347417807723098476525833332400212113766742.0"))
+      (num-test (* (bignum "12604140228725912459681435851589379433.0") (bignum "10671266866958584640992033560488052420339425977492420594983497264069815016478448589306666811246532193922229713077112601565462530332258877522384022088660628.0")) (bignum "134502144009302626262781543880199144227907004673612064586081220538754991037447647926963488301214672345398823354945333417956344119228084327815583754032364976497975702972112644238248704660063924.0"))
+      (num-test (* (bignum "-221289678591114384943252477126208006780.0") (bignum "20020996887149770966522122735176842174467884990518978494604707026520269232864200848420530223248762875769520715632742683760311747174524709550334825291720803698613541109690224185041740294906022358446325921538593105347423518731748623037078340006459454656405997570119591344894717789372844612253617591807770017562530034107842444403952657949565007792107071767260484233194674888488789619319597151367813735192433631007526015463229060702510632792171187339118004038505860316305860704455466207113207893106982258864355430481457640304138738182009363353560090082819036973601710432437342931523433079941958203038050750205966472435692.0")) (bignum "-4430439966231074415853738608900692925851705818190624801199561884242897308817127146763274284287396980593383317678766559004881552228480591814939402896201244425805503258878061459604511214900528594870260206969839682573246490602076070316760182753341371682323914671418233629420599310422437691170629449435494697829163966912842611408632129590129483811802031178053300073562716917597174161526976287351465154825036851645956354853960835948518860624747958440181683978083391663149733813297698623499283645627889274004656942800842013709298338912226207338477579862672216831422765369078886850523202897989792734789430796029206661261129141144642117177625405158700499049991760.0"))
+      (num-test (* (bignum "180785619668676509441152734583033930295.0") (bignum "-11909038209406834057075682058438206007134213485822042209417443270921391661498900475635417780140585878716264253792335317341527677051828500780153492153490249297998660274828986996948999762620400587091118252205695562417522111840305140989214300921122857271717052213225664738544344394774362885331856170636862181712515248810239601812262573113794334115259873527539564296101166439562124016438281173202196876398090029995104489712272260608848551754611421227761245487365953257890749115194455096508613617028024932657498899001119282498614739316599704645009607294747043489655424155986912576002393048535846081096337705941547991821928.0")) (bignum "-2152982852345560218506186041143281789706715672110278207735389192913214838321097754496849942223194392302524369156102301165660674797665128931611291246607346536492650554391248756408556789391955568308599431054809433808337036546281323840555452571430884302696950144068129601527530304907460164571704857360215834011779559395577299313379666503707563751314135201994045874159291100986903645360754621200008830207429980872071814202801994486961737459218017354210479544121100423399040398021780750351097082070296255480707530391964970754186799748521538525274241709676878827522138880241734356460339681718690408853314007343934035505873192699052380699509877559455199604508760.0"))
+      (num-test (* (bignum "-196121729286794751535600080816329923561.0") (bignum "31755463535476988506639447113088283661031267977524968610501132544098607201258848456920865390506381665724254592728643925608893982794532243733117636645689751360224314774452374503339856173343683819017479955914451013484169313685311530532055735999039466721411777061709328450052490025363788971916050033904534189719389237878257877112162843506491071470067738867693853480174965212750301808781573369342701195147083717623066339671595077736036738235636996351642097684597005928843274525502529735435418805821748637387888409663397547514467435322454217015563134545731593492200855670248739786405074231658957946422903165662016649229286.0")) (bignum "-6227936422881500100190187768375947805694946596622670066116457374856427496311253030141271922822486386675428302332027411428470488965226898801659352566022706152307022438261392466548357753526474097246042956052374187605144719189465046544498482461077851578811186829094445089366592317045580466302238653533114619908864036973070346979261546801894831273337217021756025770590122176562027129481076270727248949609326868225755958667670279949371399535144788247565199415296122873444199709788941984099349149684384486618280260678252604631431089580057102263617056951788273430713908768738965854953667135156866028646584137788146112300214498814212865170902491169332389942607446.0"))
+      (num-test (* (bignum "-149247491509558553673630984739524508601.0") (bignum "-9241905448313719916485289537122695595500213295294799660583133638026091750542612875183284894676615989153030773719811347110864468582634048542108726080717551794580656021381515769591713295631818532114918070215760259364277583650102628486861397602958930509695263902920994329409932518607260720657755504091822028630927071374796474717671220452208310602827254296323761245420486376569048549643478954846020045263141546849795367522490793641049509748005893155533480849922847230018411440739584477452313387881413141538766185123978087175960946255649923135634987656065468774634483495944248865774633962770893338531522570776854773975281.0")) (bignum "1379331204929344851843348280532786532350930013132149419346606977890849868537539899667631713548510207947097949976792337278764045110931774279794402312944786743575421497528669859045492875676005849752425421867514661792129580445000023570590786705609341859529483054902802038173138834528021423393677908655442991197348183257271932188161681770513283703502340499171444058119260228931558784004778969491586252899270869275893402714040693571919281494643765571068045362364213060063345212881008657925426024923296369533374671614852576576041747836643356665301762059898161073609265572267138950725010661453917338098901465732991316661901878681888138048552901254914604845891881.0"))
+      (num-test (* (bignum "-246070233154436622785727814428081917418.0") (bignum "29761582253452470642591719346200231425423204062498655510037025199574178834762931489817919404889920159374886981199608181795387339523762458361385170203883094308920011218315748466148953320570427838912637152446837553950810011344492780712558515815917745810385725989241835877316836808088478276603934260581342710503593237081689944686263274319354100341139245512159619947319496638082702549196795236216458749363904150768879765280332386830831409591769966706351022328535490587838695167807967607003680703048770719240872629379640571077329748828739281770075441660330884779539288220944313294762143588847790653176774089774033399559617.0")) (bignum "-7323439484151992757431054484912931979861244043627630118213112440051387392428853497035249623931234821362770902740177541812170377563064854590834087655133962963430877452052749127605572395112726398103244974178157574726551814002744001021805127518246639418981066588073652668879613252372759895389345727455380224104332342029151667860553645106555190741775758687650292791318963679857313030729683299101577207875499929500963723267185390425716927303375831321783415003339099100562942730763231688479910689887284950156875532151104047755803876078837921949287811575034368641167438367411569736575067233548122814012421044943430647665260439418887639347030312118291762161708906.0"))
+      (num-test (* (bignum "203826295936164259559522643510940430939.0") (bignum "428315860474710981601019542870649234168732095026625500771233691514247613083810271191136212287636290276352210600151884730196161003906066671915478570992925366265552107746965374246537358349673161970290367972281768471743836339191023211359427335141701167253694144280251188008871929010775436125645541749886873478179599464478734149706121117222690271210887178499620737860802605991262799781279373870647695125320153193063528861104479576369448865373971847676465682752435142074973627172566791961541105525781297462635428308325033717669972726101583722868689418677558787287897456521530400671342257419067050354522203242849353639864.0")) (bignum "87302035331271280954456598486072605056704393103691656908943847729634903654600322194677794243221825233700566108459784062758955025931450719283517278054268553004951352280583820782976072352456972931479389375165173986780482062859853305469143408707179895843295115510597584169486406323435925707638987591151227843652210256611991940374072593149367903739596883229844326054223707236369465710416960023659329202073724249764308867733476242261506975691004092043954515337899900837434270833782490145948781128533218641649564543508314976001614187701395586824982250794852925954991265270537649691628899148413763865280007928191637215283244406869662872539567459561720369352296.0"))
+      (num-test (* (bignum "-5899540498246269366107488541138263797694914692322476860852796858749106720144552037986906792251681094769894732746138541066810195167688318229720888479512583.0") (bignum "5834015210744942902.0")) (bignum "-34418009003174534626858248456163154666511779871358190892629413477534042866009573638264296461516598238780495750056279721797403178867717911762916049857737963922333901125535866.0"))
+      (num-test (* (bignum "-7558198374656605586076446665394545534375963428962439959101805545423930654069723860456022097647139432324162475685494459942871728608277717748075653794546685.0") (bignum "-2079670855873590264.0")) (bignum "15718564882684481784074014915267371190416032453294568239793060140651422710113447422494938907375595456199203928496644205320139985222135619659630853564447794621716315309474840.0"))
+      (num-test (* (bignum "-9442744083812363570102321552182535031605446031706376100893354933468482520577272174689455502380973733378565213055641110431767353396963744600184737808983381.0") (bignum "-7204974197101757391.0")) (bignum "68034727473703353914019458883709211780958983263702756416891835054494728840771498925306650413027883039860202168095834137357212487561983607389479135319040711944281262212918971.0"))
+      (num-test (* (bignum "-10658732210276096534851972646242288663170038580488752611749460640657411087860047053151548660331707024718100598181073744715506934778234716535781332588396176.0") (bignum "9193953347013373121.0")) (bignum "-97995886679587166046252015742839992974979220158813197140160489510432960510418039749924861744197553021702396544307690217470606424904065359660871469041838900287446937257585296.0"))
+      (num-test (* (bignum "3330096979672637104536573277593029682675932033891010715180474877149733802060455951241981993421466123791200840797318740359792251505430948855600408060492000.0") (bignum "-9413190658845804679.0")) (bignum "-31346837782105095097578725347257193539696338226258990009265748336528353873277500144838721882313026604404426563737656928378230261942407473822851842589487713775609448642068000.0"))
+      (num-test (* (bignum "2224201331350479188470378485954814766783857696988331736807430786504130570570323948774102396158334805040994159865821844362926631687258969480929122732089195.0") (bignum "10226747830478556903.0")) (bignum "22746346139936030910929166328517425029735137934434969334578972386859485783192993228082340012742115893176871887387993591191632260444955081663604449277961804869872353878963085.0"))
+      (num-test (* (bignum "-12394770820700925077767705800588617445613665027183406054209162910642613421436080064653443098327137503596792411463268187212855350864330592654862321763110243.0") (bignum "336135860956209890623046930607725140868.0")) (bignum "-4166326961171213704571179876442248501325782360170764344978629523457550315208845439497110652079907652744850691289494398473488033083739905461347650605270023127087625641779424751335704552988710924.0"))
+      (num-test (* (bignum "11792778994619176404079667787533709801900490264171877873621265044313417667869688303207909681289642260521608966405181881416781694320672906600599581862090088.0") (bignum "-197661229068721548419113517262926820105.0")) (bignum "-2330975190212228827672814304508257223671550753091700552243633152084831515892056240354560520878171696176381845689952044935988868477421447557890739834031207059212175922089523097911477486879619240.0"))
+      (num-test (* (bignum "11608994516281296345925963401821217560860934641820086911326880657644311461955556832927259499969983808078591149768068360172431078248807463030805586293656663.0") (bignum "-40654941048774156019243747229920736005.0")) (bignum "-471962987694958552110784676392477007070112288398143925079396435246284471999814508543057304008480666763661066976653446723271982094424149279649226771823800871458389214002872916339341019732251315.0"))
+      (num-test (* (bignum "4821517917539756801293776911844480642406562140007084392649374723119190602353617113036081438891134008988421494142194891002983491670246762173236312873933599.0") (bignum "-255528396376819316172341014108564420589.0")) (bignum "-1232034741571035406264710387186737842510579499938716343220834781077329515145216794636313459582844773420679078031627466542930137302257934575129329529129776153159694412903937370462708576694469811.0"))
+      (num-test (* (bignum "7638751115643228563298483305056828584775811590562130101723525925933790010789130133831569153863129513189315440899053288261039147463032870669035935364282061.0") (bignum "114438828287750304954799140618669114911.0")) (bignum "874169727255956505920153418854946321208907128396839975975317705220623267360648189969313978740314703015845506506608054761304647627635292132043887080298168302864314697920637105700927041824911571.0"))
+      (num-test (* (bignum "-3653826017463740005170218884285271512636869606149686475539243914909566619638259666405831445823138528809165270360144267462878986866506114069923299116957450.0") (bignum "215752050445782448772085819939961259625.0")) (bignum "-788320455239949216234629350585027855111249573063377172522422069903710014529292638311216050777840734448624510386643245486023092483841464815987597578151663227035102742664709136512524899527956250.0"))
+      (num-test (* (bignum "-43242564273985683175827997542883970694363047476880657467026050730764924897992516355909421962249292250047896135687573746158665836208681548975073555418266.0") (bignum "4424346097667245771102179669235543742385176589624011161914909311078645828684936231569739522607200308028372644149306431599085361996722603718517735348761218.0")) (bignum "-191320070498733614136284309000213964486426347688040889144514933290125387693498098446328694172047943298442181705949005984031677324306763731212307716485454004382079159622650481983102917517993601466178931324415483972311904823997211920702201161092866663969163567426868740120661073974542958600768774774949607988.0"))
+      (num-test (* (bignum "-5093597555679260616199210906198149266592665304134802327659606846977583233938836318559188141955851256260954289429418183711191354912372372976165948043123133.0") (bignum "-2240632735861652612028397136046974907251405868353380459030143407902436514978447480884513019736738955326732458088791830752499716417751919868492224207936623.0")) (bignum "11412881426559848135724717164530530041659963797467536748076144863846600718211858527283843975968920120508569299672573958424908957105703597501013710262110218780710678312197455759181436286391257283676806548463507528765947919856827004176416634630489598937924092540289712219714362500246928243091408698274649199859.0"))
+      (num-test (* (bignum "6049789822056553589237940133475342650218069231558204589924996117723031491205673061674252841792149409384720347601549237626288416453061224734057079515141650.0") (bignum "-826416247951451524584060567988229017033981218652490450160817307801130685352465013890931297548015267655971295627931896259998420078888499206031390299169584.0")) (bignum "-4999644605638856588581238481465237523157457201817697008198975191261856978252081380810200468420738807464233192102972784271159116426108806200426852134469939032473362689081653859652824862066224063273799612269941254948709760659691148103622071316554194507524610166457990087959160807415102946877307193349131573600.0"))
+      (num-test (* (bignum "-1175978338162966145239180473229656000174129248706173549637767835154921467129547950144109700900405904250603515318348888619371004435353505449762899046094747.0") (bignum "8633693716102199391202401198009047492431980605560930404972542822133579985462906768067706391388213605203282586546130434156768523403030127356256666478340720.0")) (bignum "-10153036788469908062299722391986722149392791936544969945546931764708792252481931153733789787389051773529081688846141949513463792442701686406966696738286561777611293604311491896230769507535896070984747493738525389837795316954065260075941524322954935690803870500012809797698319359975893462672845329776468197840.0"))
+      (num-test (* (bignum "-5083395547684319640767882199938390155755986838939007846911062687871291096073452055061784159768637502151635665247461348347470360218957222873087414506633886.0") (bignum "10813098236568616588240471432239693891825284805405416395976866126102880121934298269375465735278296789484402954117593716698067735458182402220278016922449294.0")) (bignum "-54967255432446073625448401244836956268872685687128644401372608170106281377801209665004925733448944141633739594240156882328181133879414641109484442890809130544146420476457200729843868300396656004198615619691952536924980482714767859804902602805398865249514544806725162402291122143659939645240358379962457176484.0"))
+      (num-test (* (bignum "-8944626200084865988157251013718979706166428261352840753194709093968177704853157211364231059892647813839391802007588961807572842923682104089512428902387812.0") (bignum "3814836951264415657788614449012480613328314590744410079075164918748648723114236698412482309581077603776489883375576245233128800002373843611668945838558629.0")) (bignum "-34122290543331565327874124324135450224668275222811493728051290368641401807963502623692504750924543845019291736982354932620821594287780848608647686402233097059022704206628297180782771812500512744911371653368388270442874670230118309469599458827222162362901084328510647514081302476000779049412605744638457029748.0"))
+      (num-test (* (bignum "5186176030253526423885531264483408352469356233262336223619904269047786350470477526433506158542551137478071074193659876898065998079440819597952826155782068.0") (bignum "21428324964794197485898135923805540163916541943812058590308650649384013587098638034673796533027113673143959572855470411726978105342739938341516634354246514986124789451866589211982659199267654387148420461876524076040233779391563396552267276880650559148637067641021059664960876301072636635299261389450890094318429077561092553337025096293793433968243940381587994428364726938534453507046761494257538813861046058298873206568935790790373886840765817404479239485444563488020955730741209738203470138117422899051269778988135668626686262669881048094388220931264751830393793846372816717368806996496715219806062282836392457741918.0")) (bignum "111131065300898907482632501071313138589398597291097276435916516379173430095773463468344138866282820740991088290299992221985607057347883717514843661030457396422379155394966857856069231504805779448809986906434617741485942621643754096548512120178021034054648207248963478122178145159262707381679354401629366698488021743300737044695960363216253889163551918513521913593214414139637549577618641974388739304727218804595402055185824193445089425262833385286117064481648652550355832014346131722965510192584901901111154083186713580209077544982897821477349293279848852596241762198202012197892321827305803333334823616660229870976569043453639028059771892706354703750763908127611939169337399882784092285804830644630059487027413697220038110815990084742241055099963659761569486906596326424.0"))
+      (num-test (* (bignum "-12615422028124847936088012564413126213419674293830655240645918456932358053670311316461359727921727680491520480380615359506308571290338231702217134487397730.0") (bignum "21538722931308708400287621200994476771789912594554241036641406577761480056366647329031140922034590767810855360008375309986798226712928670905618807986829790199948665185268081173685941421700542631395958882077936923141152528333121096909688700106365468854487023847026564219531968849793109908193037522063952753477768381591929787242143631287330811801315216116212154423972654430356675401769729358415036943501470085182304183033246682446978634892995900678975109490698283226559860736462409705544079080978470202336645384768211440438501339641775269445439018148409151795830925198162301321965042997632479354427154223366199106583051.0")) (bignum "-271720079725309675925162538296715595434811519956795637977932956405490708202732964133816538801099235844279338645471102896234318181092598033040518838847055114923365599862266767493227393553801736813141780001130539648588341196802606083178208108557367013886856183999712817955194261262279080641101769944037282423238147653270651419282545398168930625797556638625301898893565965773914460998322350526545278664715332414172614761548301364063397364632709194713561073496860524124460861314674679928692398440036071116570829193414179054372604203478369755566003622621281005164747628075596444178089558747835994702060740334079222508147598079351187013336751322569865313532407367116553748939535664259669808534100091049960040092785009707220249025633808590643620557093069849490009472441113874230.0"))
+      (num-test (* (bignum "10381022953674450046578890619826448644067144294659610359943634722044183130638243233110364436029778310048006743033299956844491228999113516347401915490861208.0") (bignum "-20974871685432829994714153210121536409377362402944992609230062091789259307033495284524234519701670462495676590513192861649457148897274608767543942797542628100823017887236899471151903799837558453043431373811892813126194662218472834650841742305925226558315372771353677064933578639099452438843500601586038910108679737480263349221244638463171088589123712367802373159421798288708123925853179931628847579314900787361946716531755600236755527982132768286927549323465697241340003870259800347640599467922823203446834792229595507968354687630029075884034263531531423883902851487995214646322431057626558858528344843531280263328354.0")) (bignum "-217740624416854507100100919338835880277259264187442792458843251425095703739537223785767883764746809214920580060316177442387941385712712426957388995082877226019966428812240179251716274377143798847348759498926420314709056615470455134468678662646006408843897699718742372199854223008996321568642038054564397441209859567556502098420151667437837356649730396360374136203172669776530655738388121236079327354422138744456395348910073462618440421257604563050031602590345028438897601523520973759458890228893913090702884911857207117714231568437403212806578764580006787626657709435954760239671948147344463295520930250155876010414461245194991189183956653772752290656063730950237649394743456230607077768595983629559996700837383822873994717987698780007691157576205450973669241823945091632.0"))
+      (num-test (* (bignum "-3984492646329789478973994496812455855595578196959138558282015917391108383154917581748539892089090551298072688793487597623310815918942283997753800645644511.0") (bignum "22199897116873160263914990610762123553075230334116099569358672964060004245706770678771431369917479502828754815568950371273785689812698287446020480951417047185190067265849637510591502642000414540862689426343523077229502494771352820057572619644085930901096534031496492870227890836816886496090287321502805172125273822231241073590840684742085641304915656543831190976008986490532066597410386596132766422026234488163435487889876791504407434387555507637783709991326338482319227500686541368087892665100076351075069628862376686619537655838590687615291898971286325099164241688147975845320979841704002364545072665891829427213069.0")) (bignum "-88455326811459002089798581395024759975871889172872668466370443703433800509268320055453743803627754859670391415348970278548381190662701716228279482045339649051139909543850883613464992501666524385524517648069873862957915620016943364950043289963237718026629805297916194484838158010754666017024585366330526135823515744339445036315966714684052345462172808299142368905939297220895721123725415007532441824406115746741972351142687017849809593982432484296719999502992792447259391592152463664807498752410740679664044620898308783634092355737296495489953554685938970593890496829484673393665321572846542839714620847185428664388282452532264810310019327395691530430185946743995669191791841546685206884247468693248673484055915613115527492005264289557719000245333079386593840592027314259.0"))
+      (num-test (* (bignum "-10672574004830373997900438516438419278676753890756925443116289034080220708922677740383425352837266631691319394850521121221541344600832530724104047804922665.0") (bignum "-7307684417326792807224298894786988180161884427390942431653062127076829842696634441114228528164049031680536693195116703321494895319862805505304314401000204515985676763063862569446064343853536464020413910728442475032187317639476018710375702206456631041987826826225461927793241495220512935434301833094232834266749666697332380140380619185254354273073522191066457437931022783436360434167505326773192959291779779370530770935758482422581712556111319611455306383173529090289274267200543081481693078804068524057891845603351773722737987393428313340760607600482724483853560340630587029610437280601010173185018227638972500038072.0")) (bignum "77991802747865927212086621295493124451256238920588746597961055391511562690441964216934615500942858653797884925704270904527938466874924049039962754703188019915846345804228044693122758075602494985337649496117180241872910247079655077012999375809878184011356481981590430241786534827516536543734645410817621964035091467871491521760928486006653992134635010794346993161329777270345449763927429735191213854873362673179799811714902439637861750855639857969259787075469241319618538795721956528400353086156169058060112255274542232054021662809196965752800525093125763127895334967094763817500702626282397394521201385439419885607578137159972521677923972708827090645776826953976605193554447841693259586575931864396484621463004541561908426383260772786784541411548146173991869741515701880.0"))
+      (num-test (* (bignum "1420855003086789510813111205540636553863493314684153860389816109865085846062678305775289632805233481596171530412925552158799875183492757047174905459819169.0") (bignum "13897739053062356545217161606361735964779941697726983959749295377836209520566715597422965426908191354971972501742952706730523748574796773473606175934144970768662226027157110240776527834790487577863781140089347362129598158760833470434895693782503529955845076709376071972727346128409008293671217324995682020009675316075606538241192607139905488719485728099428376369506685875348346231688684483781160648420909364963718027571565217314827671844485031440079254478598236877074793221578612249882886835580737423192061550370069895525711885220268707201966615936769696379335772521903910689934596134239331592980694745008817040569590.0")) (bignum "19746672065138309742065153069587996891492444461032276894328314121573439684229636534026409362850111716212254549198595854140809664451286626009917828620279583631575940837712663100442879662416765138504151063632823014639305658882804073655537352377258786105147057375069447099908107785635606190515362082317465738205179108333064680370909383338688734129396788764959056886328471374018961975554190739706996184818378586233017775166959010668462907838359485424792026496574369912033757997469014639705459505746723512361959074802456098328538419933637295482429555127226978561859965498424173552676019033370307387047798600024901453757451579262061785051932535359410827170361533603618131510421439128567361259204833501190218719779570258541358012741265599985490513564378203502703406698160470710.0"))
+      (num-test (* (bignum "-25117824099635104147178796272946098711514362630774369209876335291088434247131228189812265510495277875692804180473811834186270331245779845635089547499275113671007257221593872123397418355506777725721168216892830217596134983713752526559153149600553468865338887605949011743043425900799896245185282419637806859906582214420191794114207677635194054239563071023206500505880052007267243210206807805387341085613436600843317096291021780624738422589234020279836961194869688005260369009833026575446099544900581955685627511787510900479881434909308757027825050977932238481841909425598834367032841935054158448815026264505726593064239.0") (bignum "7846111496222858966.0")) (bignum "-197077248428250572361351389692146917243277049539013604789802566767174747369897711991559940484392921619974209620152008632450612546796556905740493507885376190913893140368029841033442857949219716681475253727058707723386016055991276120001690579154370788782636181079931076758384034193266737114305362492836167078199155929937891579224024229182935372106924021709421948701131654358516297806197381566809357458374057189773041520552821330635689748583803171230633654728360451100477472934847975252390985102859262992904778849652221553818627134153578436315973777720706502751232660284910468721430874674021521629540714057383398858244828214000543075116874.0"))
+      (num-test (* (bignum "-12000343217458212092754251360179138661969968218789048702097501439124892987400633614429800307263114371624489988815324366411323242909652002510513570900627875514001409309670202055060404640758548257776155562167062337394219073071639153822126554525439988062676648294108951003012550815746564810508912122306190725453386412796036693387315128514162061147675205485143205925649214342646148112549805850530430229663418469577245456944558387628002442451042105749848177325651852669794048215063957689756465788955050513359977166122710392613631703123491357791351447110169966270916789849428298930624807758982400706608788793481972190953569.0") (bignum "15463017349709835150.0")) (bignum "-185561515374029078700596518575548896805308728003103939537818954646551372890610870275966055765608887701776880889777402229764948269089126750201922167386201171243298907675542965323275634529293654817279957832652909009385491998537031060285890512199675273422070784691446251899120095880199298512230290860589352290462643231396804350623684034400741386070220057232978556614620855818271117742675632435727751812101639747357642295230273344552327870600519422276996860893842363996198017494117619585153346745838853026029459826407782259598477529242420507010652705302341725948095720110508044256096963772599572721279996322424269691990173052929936294150350.0"))
+      (num-test (* (bignum "20244597897909303129995907707212050478823487084391413473821544089492035634291726811145005824559631386634261268723753786161463497881725871168747275110149007801865428978596190887145324535224079986377522166727137028753272158887188902047835658826867304220850429481233026043496635847568448251753504834367809877190895369288045026559783632709799678639927825194847005181499299410953860627694080906167346078299421796974815616608326704894611151743720515377248152215241639534004099341398238713597030368980166731393247619511322804984829747216779359780372801101821087516269912916462719248736442644433057333788741151270815989388229.0") (bignum "17931151643499274580.0")) (bignum "363008954869078360197158713265773114114991766614027768774402465306840646219477262855625957403406166192075865834283840624408916170935610374573318606346031792128003204902147985329385955814330782527184421959263266167048755628089412213360508944817963403092490479480264538027768728303095523018598016863928762335410109567604756183580676503045557867957273324581082608248341332512325136675167966306268035077761004923732568405295901819511346235524577361289712297365403327125212199451099538443576479787130510546755789504852631291774614010584650672707483555436445926222945298928326313943231688436271883746272589347954697213098866117569339490918820.0"))
+      (num-test (* (bignum "18134862906191691435095953372467318196853760384894170022863300447691250350836421337333332682828557871096554531436829166444150586004379181099133295174348038948038399079336722004125999533719492457544642570217406286811480006881054375314838605871238868968956868878182133492469763282800195060849734382249696543089869191257451321764806079423169235271658993054867624410589213892458246001270123109841429271429275464249821855221014782727398959126117031823977229309775211695677345378510417534328974531801634095862859684508240122911023047425473036305928743193594967362216559973174709883576295373749738633873828863608550295977368.0") (bignum "15082354452174510460.0")) (bignum "273516430292774638949326170314933525797985748367549139070674899956657807928629067317576809269188258819686207094298714770978509118959142516619521080722291318367607601498107007447014759288176261262818034997399866363248136237609824401265450913244758024085739876914482935655100890803279961929047974391299795570244708811454483314898873277493486428279875241232025231140855860469097028388778917980779775554139507550577255217032521719099071084956515691364008526064349956553916033914728254580848198941020806723485184338914882588931083516851849558411503129184026079582257756707601984686901646494090820169212279581209612798749779318126482639269280.0"))
+      (num-test (* (bignum "19213874382308276075905228027166553836726993832150876980655958901416537033385379180983129528081628446454583401834309285184752924794893846406622935494758142810049493348116192315865522516744262115026742103678965417868790607689989205765793528434388393584537260717130892518011447327847533083474230074174308157934463971640826422302901570010591182715932658037868980053012095115562188975692530473556182305847290196895478280679341869546292639446526021874910117953225154204035612531584978136604161393474554294315903436682283787080297348697922389355209790646124024053098888687638640826064745026930980189268652291562437512941810.0") (bignum "3155416591710364359.0")) (bignum "60627778016974262766014671335614995348970065077989108071534610098195400001445248886220725085881796599270026085183075312353388418711598523030563716616967792282609748819081238929738105086199457414615236966895805539596649555457494710621217412773036416007129418290246899690911654008867819945724649185574237527152410775686803449108977881160831441280833577932476667657759420192656716352190871667386955409426879693856001112340390304980532208752863058384169885129364117656404549585836664647784765508649117301622797243353610345828189312360124462238989888436478381583689386509617357901461416012201469794664889076397809504626996523928173064949790.0"))
+      (num-test (* (bignum "-6561903839860415551587224953276060627466820222543175464705113686962550773423611522044145975606965294164125376820288981286542044306677764776675868357117109664125730405280822770267329297542599719353907954399688197248115043785617436343303277493146049939491224480136371029084354063731401026459653680017632996944506546122253686805764620116169065663214526857151412139439538335533979733329962892417175374550305659302592107472151941922230309227785266745974334776462642676959433923828440435340579340133192678341787895007461237846313005612116885419002449356480017828933592324336731295317076205553526568668826499450826560670163.0") (bignum "14908715577157091280.0")) (bignum "-97829557993133908713082095435440645457469053259814412551982534425389603663024461131358343104414088618618030154957456050473312402460589893359522167472060177968099538846750606564761307960896264958539903740023783283814849937681270591589750181462708056758506230073751440847913386576449367635057595344744119561166438538811561109125506233466453974371464999669336530949393433719456191822836826214814780222021267726528396849558417851727452246676857867278196266042327956933753121947589485377148388716839519782819642328655117625818256334190717182923260613562191698788004591479576661108985313450029332968584240383859113741485244318702724563478640.0"))
+      (num-test (* (bignum "-10378013547095983701124686671659666242518351347561698092030999302329372512356819420877395264401390796163955327080881297568412490286247154759694714275858127906305200295043241717769593877683535229411640745872559018085757273530771413156968541499388413497221629366848027355125816131586610997516488552323667400115617175682996681969687885201321292153656071894385242141321468096793766926179134511319941715949712230831768643024119693594235207988046511542691719002262040067921088838755337917414526554050602539873232518619281766327369577617796816586064895744680567067970817494102948032924671421242699225194947982378019119315136.0") (bignum "30004910492448871409155105619400474385.0")) (bignum "-311391367570036811050052853596227388481520279736812036769684195465110674594690412517879149770622679377262288447706750813509857551308594851067359841826754786725926298013483569424123912020079066150719085450400229896983461212531213110847425940968466564079253939695853896434719530729030897976597410468081535234663568150722646854183317007227669132983719314653861536414057481478039579810285535699518386214012059191958557306338432321511585867535008319640705419431310336566447165302011113284064246284641707577414470505948868362067233709611758700034131461348997580441628136979257037186480770286846026250437141175360847735150981343952303257191661069675154710791360.0"))
+      (num-test (* (bignum "6311357747888359229575837883366949670125882865462293491587368290797766017168248637163030339387377997726585769250585768079027576213724941259801478313127113803503561717311996500019522893295813684259416551410025111443510215766297835872165689077882298506134885487991732718254835036694083204758447948541157893533099634169589161496492972953698758234452126564385255035294546278732684663873459439615228706684138982066055370429797835904846166362278557095045056472775166294675997320598469599722704075215700819354957397052721573993997624711445698656580401684113096559767093466880001548887739825916626416328760047783071058963451.0") (bignum "-212654096583990292869707082365869207538.0")) (bignum "-1342136080095566600483524091094048745061145155430997807005186206704767933140306297188996797343723817220160636373424666345108189275851749622201429179882167381735732553825696482751584102093819432866729465599060815670807282181979889263381844726842751894916887860819210652174987999919869623292751389157233409465756974677789790982740267208982768450215563288024088369480574425410032306456026930809228182100949940216614156925537929648841127727165386031716586596638254705402653861723407930666152691102484352058909219619985877341630210918347460471644327858114815713557305185589162775699323253049631349906791700893878999711846225062306568467992135934882289075693638.0"))
+      (num-test (* (bignum "25104391676237653962996674810232896003857294806799086059884413856421530328279649263948893056601611073815235439115612155497964541323584159786678357898152394779494741995735881624055133443980324145256438160990490767324719276757840825641421547232460969806196141938571103617707677351907526127993230143577974386169402623023560579220343920203666762052525898442578990183400559087522259053245822827313206196194989095468393682721753147596892214609346047051670610252732846805143964713621673722554204896154742594858056891979146566683467510164875593192581407047920719605560716270697985110227952698114701527191421628561835164291236.0") (bignum "-205991315859231724218751687295926841150.0")) (bignum "-5171286675233738337789203670843122752625713948587464573381323151628930998435518250812603433784823922283042037694290795352461861058217142213862777203850665369756106838860420507328654214723398688455622487003912073924323587826356928211672752672052670663842775836967587150049181838707784871641183683742967716787111671792311389517753578360293551031540853470719098360013225516593755039537796518619542838794169319227197212817921098393499332268929332950035803734983497370378852859829228973012039890600437082235032378948656232679080766068869430262740600476498399803176452431728914806536862849281928869092524387549297345184969051926149006293586531930828748109161400.0"))
+      (num-test (* (bignum "-25971587288596053786734900662696128734726180676323130693160397208008930123341700520454723462226657743365779183466120836187720332442041321870351823609046027805781414454998487673927365486893294110931852680018706479684281928396163669935417207859889405108139261480861908067489849403284000981453574189898304616775302917687860062501465417706095450121596418236563421425311420755550335597318818628123183624214438801254105808079227429950505879366254661664881055965092586612702279548151277733307180663770432418397550642136953750720624507617115504303570076531620003848642167562950736271141440609700821621532583527124386811144839.0") (bignum "-182748557863603655835821910989658558236.0")) (bignum "4746270122419629115710902425435990509747636609113505336611751359043717100752575149404352359855260443259846554733621122684788488984010741203981300775978945529551335641218319619542248418128319220383298229263331638090009313676486209764655429828385994626323209879925281409485074778611946493692237774852428345451174837474328995186242262565013937544898941834362941815633750896882758939509605799422068815435202904271722442099465950700886702949580264958171808372530471918175963644209760378395316412115175988232945569517230829200985652504383431054550902852797293952515652017940918628980037316292352828228005975466732028971159947131994753006597870175664981312344004.0"))
+      (num-test (* (bignum "2117427896392849163304163145095251890404997781812823978967013619233450901604407363671467658244435728579079751353560538034596183240362499870272373308111405924505741579887345118857908796509418246599428633956038017783178050402412769812823236255234302205027282366926174916871858199918908361186936687654278623156607813451034087735179167324944824913226799346886951212979149617678949292799645035425029596869092844906629996914674904522806258932192931217652241231736891642224851547474205131131019084734780208254203537633402057673465583362982905095029133132240839391503135932501785844503813910210348239157828902668852795945482.0") (bignum "-296778668392678698960782643314222141731.0")) (bignum "-628407431508980610909134894336322264939705333430111861505965183839156278363647883745193463537783397824947515214540990712455315080515980803996660089847066076833542492719707493333185909990202372284811233272987993068106356248349054482194817336258302692039392400931536481136340269417905505366385505196886218794044229758585631131853635721528813397816307666671727692971421531381290925317161326036075629905443938124481334173158440927555118173661486114828362551889594188958723424604273078091320087897088472418346754088900034854230711982602435635574895960156993014703292551046970069204857846207328434544990709459402656908170089318995291341536347275682867153109342.0"))
+      (num-test (* (bignum "24743327715258194976385899813930363006464428087412805068703455203318769863096919192538751530954777047772548306936907016751357570434930538612382851621309732767199276228580401695793317612267605312672263736938703887622824117576912830029817460033437752668221355377879837833796222831371174014543622739933433581963103361464022058091243110136610854806189138108937004805781857031030005354158991203388998364340053773883952742645161560754545458260688560269655272249435540890073696261770299845722705104648358053080678920468895189601731801025555650490534399590288852165862135571140382055044665678298182909026026068995867606241201.0") (bignum "309156501491030456401354118244509785044.0")) (bignum "7649560631695275371386748526795333430293346807872366006552933839286343590101586516802834568317627508914888989005968805867728947519409222814667350103434422356009252082456906520988877859152125402282765775845766265340707473525444185795403554160270722809642681642831847296672303556012796775586274347178092325226458743113317655523655255626670958156216225968018208281266858684283741496986683426354716284780229004376492833583965647875097951642088252875535823145900129967026856898970545720526282798418382467634180690243423325770596949644122541224189780082061715230852249880601371985342796525016176048518593825361248232406051886794538203297084423942036889326397844.0"))
+      (num-test (* (bignum "31345149697924857384985323414506591310628538098830133854928154990821019223495435414394178930529373634315044777562902565397455028894455733092896622048288278424884040917250546068175763309233883078972879622697667174865833277342334219810618450605650614585133187005110148963483824629405555603493157452295284935004578187488673124814714326405406894084902824045787647963172437833905574178160343833139650913077173865287057167288286708807322607983179910358234015596109655900840652230258122852488289951986129788952718105898226951651151495867246384586164892018870981480003722043190639707903266193064807571586900961788679579912089.0") (bignum "2067227180806746570739122295766566373146995767544546241400900414826379465803168632854028593293108913670556431832056563218709444199286888840721753894461468.0")) (bignum "64797545442006646811970698282511426059102976298051534827345388707272469591333019870381858263624490336448197115781363489554169207652559213486772008013638214870324260793199674746523791257170452738018910619029072942848422098770309928561867618844814267276213608306045020686764830302020953883994906997293368193331696747777630621086600981981357507299729947717565760536305785574555255589190221698706036770081438750974356437738060098906046001271392354762036427049946092656701257615490057677558059955825843182799904828201890893555678855718728417223845757559310912618029462136640226686626513375024547351747669476392735304999046232068947570708757930233036922714350584650744960478326257916948676866148362166017752159953504981324652709881831381637989229842766220141292801807437886652.0"))
+      (num-test (* (bignum "1965759082776833678304908699214846485256126608825750175641683294458978302204367346739996602241053060915897480812220051082619942907491598551933638540412113496542245474287364500698693202553692963910123752514310355402167440783023542848697962967771951714434359320001430281377747193083851165947498546085410216620013287853719686698746328198021011905482303248172483782066908570502837009924228011993318265674390462360820566174204659723461994730913995303015012684826295802887547970851558451858623353950391701673651959262042520584275132971807158231859672678070714276061110616753309305801080136339206017351200193800253572481467.0") (bignum "-11092241138073130060021642325471345789108575712118027611362686690749327689527135459714040658411176246054106270789083336195599640521602432629024562630323934.0")) (bignum "-21804673765518097879589124792137157558586438669762099454880024920520894260754279593873244443852337739758694535682558790532827482894104906218015712179591886600693703465749571299271429989154199263793230178266758966678432691901731270899259065726530463438316383699558373053423999416350780342222940065486831353604365192968606300436304827279383661172824549131179471364227618431414928702407510473319879188990689163932586727702195573766225861364297410904859137393184592815970592502081722125458353280743087607273547490382023433724488604177909671497082747464946083901888849483505451426245881736990810339421864101129619181017696837017966116165703320918568645290788634265522956017905246042460811062666193790657969385648522736090098231379029903772234867701846824572274796526421531178.0"))
+      (num-test (* (bignum "-4067457132547237558852016696244696525033953641638067592741078194074861352472861925779476293767777560910963786727886946479865734639031042985368829200802420611189793957001730656623744670821921724417176679009632346904384261431052972127975733031277489967119978909321422086102208644766894305071609385305464547231057263658903212521469801833214062476735046735467944834107695748433481665714184831786462886261252526036621257865158497049125410241033365487816324425563483999957660557670189397770488996359512245971368638615503320507431381893539767352426795415898379765583574977542068222040889423739693921998717145084904555464058.0") (bignum "9635268828818063607505341812331931088336041632536136269505180222913464638532245578488168867093853062326136774925531196873279749483997619950077042084971972.0")) (bignum "-39191042921786100943542578352486285322085069425292685238158202937549417928185097567102615300826629615520476316505465412722375794150552330462353356124896483739321653441446703127728441315609093330694305784991844511900128172079464896650958648496336601612657347012294121239821167759496102233234525084695798195547141521849769350204659392602605928907953707277320590923278178152903602506284861018886300148663530071056792375593665422754923886137410482547324901798328311927545105456397213670390651819229021443747424183114992653572959318104053511452473611466305149349027962240989590453237778130260105665310067480846969449221473610614214933278048389171979184119355459010233147440293881252851501522689209874112819966647846701257081192324007280573826673895648273593609466000383382376.0"))
+      (num-test (* (bignum "-22047771987573494284336211037167956208924595972749016352929724093971147687332865088249749580556015503923927321586913446367676445848750229391300778587369581738560634537089081840938984779012854694220894920437076215176060179241185151442003472788530160589267677502568156006531439509890061829154786579353177129190813899423306499631144919702707240832059008168851983259611724134448165201725432622521420667808597545410136493805873769372831833878868603946583848422310946469083400330960925084024624317866822897278934924368888332618046649078771617892961267312226309927786691384460940015979582201446635756024251269978545916298961.0") (bignum "7481502540911026808093162425787184755732317118387068406204973030847892995155568099553397887864257088525242568880427634318737874025160499293315047534753494.0")) (bignum "-164950462146458057264341765173378248123415893870534274075422323606836246718538063890359159423074703472625232511667875897808555123518162244263016096627959208397334135559180524195701526029092734741010866589515172934676451385008535538102832400604699294088534999994990970130226363762230944961249818769566697211068918154629209895730969522747736738946126971914549491889482944152891334838234907190697109929512401661529882587076352559260375439428815896053844621297552401396168240947357044985051323834074355418902009161796886350497072010833513601114819625605048943438304411954380599728561071485061414856047768286383287807924135081902458690495890129203192613070824670256334683011083767124852354110322463725619194174195587835939047474059288568764831570274891727391545546467943319734.0"))
+      (num-test (* (bignum "22607201423790553279447786193696575272983924506336369475058795405894123712509544256099524616893423762658394830755129501447553593365768543361107397299007141714383407862976654294384881771985218996697067215804348472693636567074361380875512341556932579903687576929186215185312685712277482751425466251201421842248749944123326048360909954588266368306843116245625635467041934524547983478110533044085242847795585598341867070787331785945399446665919396062565614516404861115244243161694059679274045050270546536781907061002623188435269769778378780371158624481539046590932125320888745103158180784231722265376331553893647061533815.0") (bignum "10075764395489719205294189472045365742345400155046712954334138069917417587273618147303160957788995022989479371576840422540097479703418600112174202202728054.0")) (bignum "227784835187493343385594867881830022845566753253174983274076326016001091958812135049265213053390506720261776960833046225700903422206015373488419693650378821159134369608830936915027161415300759990632038898164509761337714774392506802504397626551196717184785586630245704512525844329038355790338277254618639554796026366029578805283659986085947726260520495140332204643887370987929304924491772630534558682402396784510750317396488402942581973350428066695976988812610467654886227733900635715495731445319565054848075104982244316563526232071957624002266648721592744376122065531440026836549316222728280595228806728872537793522244957258060730038589170810090676474272044568671474692128168357087077816573419470273384256552275636517940058764711467508281344270125535855785388198570146010.0"))
+      (num-test (* (bignum "21997874907846585575969651776904015812729615626636027149446399573806943459105370044846476738175828244018281160136531735881270437472624605280356112191272531838028896521621800558410217146758345955334174583639352151367532676985598470747138461153212653362188252002768647808852054182649808145379073620834551216386805267446360709820441771932135218282126427988826945094538034579367527908530151926679515746133600376612899354099328788736038811470295396365432559354070365548930628714861826464935305416998192532029724853617023971964507955475554955277722555849603716733374588174421463022213135839490633927005539569058361144905451.0") (bignum "-1400498192750070094581812894241996480373581610489471746158083224360249880335094841398529960182484181641387946900090289855375996313447832474435929084180606.0")) (bignum "-30807984052781257825246153008277875918087659020905755686964119182052911551148620538090633516362197112383237624321406969368641524681503231262834662890145617622830207559490089313283375890353617292096501953380469351747504928597461154633889236826060654886877907382241867167198409355653371944304660938495445848950444683274236538890057643038410268234731745456035923559528706349316582901179686671568504971088561096469997823300883298811440849031903066114422309644669680078733839046643542078157684064686933779591609758494599988463628362190034612412739669041368897594110022347872452261447359402810277413572637740870748949093642723240662839444216981630862346445890780016393330114883270596630385367407921496982236074288475142085411632630374714528706189796772213264952893973677883306.0"))
+      (num-test (* (bignum "-270155241925436273159477510619232592261228150696806729750247050.0") (bignum "15545126743930076938536195287546926534964892301082800206802745964245668351235397.0") (bignum "72127079799316080210744562119267314209211162112457416152560774669179705347659265.0") (bignum "58427280233475514109627698916382980237252687770812483048907352594138577656301900.0") (bignum "91336330475502063985843547526216808965829995610054777216888670176112782119332811.0") (bignum "99495081134815818196404370468895496198561677002653930126818668800341380375657337.0") (bignum "6904264296552316628911621065724553059847235903647375662685025031963599691416829398469283631386160328944460790101458427909545198569619131058877708293713734.0") (bignum "-16074984786353617526516141164566295497596312655026144270863093715961484079732496604871734572736757225277596743795506589617891195569235287256031608792067121393492186703333733526879481948463529609113624075923052999494363547340563039654910799974388353472433635130983731604982117092991918514078659590068643956240711810902756784590442416249652077644077280371860780741318193975770906075446772544431670392964384669681404295839302410058434872964315897505894833409101781069230919347279857855594782111721176074849502391457684148683668165019969667481755384384017844104770253558111588611189351637275389688093074751942960310850074.0")) (bignum "17849860827147993486644896214424106325295064110723402251474432199595968349198253682890653243676378684005650871261983711134190416277366473221365848417375107498764965893729640224952922241531788638514200018520970345581414705756736222535562338748426356003659523260330725662384208724142177900990027225665451069059291754155591197426279006090296512196415617974140965334686090032257444820748820516976632201388937358434205022475303705442914044454220818215336283948743042841946229853366515552653568436171217572212088935263340599371830215580988184775240338748954666846379831467518505260487989636951404886967842600777836444030434816421999334066711024026401362115623932221335906548647785232855815515579448393689650116225664467056283988125816950714780486880294535933597118808163054631168063568847830481653855357008353733414826165759079092633441356914450038756281940532159493763482047244493174370100586359619040444818634156576789665732998111907245928253704097384811414269835758656988678207624731164159069547745777423464124959379113843649940896359346515513936964849811155238140671698227057228045173997904545787593258286212427476788605370334985423461194148838623911634821153061693257996982252745844329344589168264774527631972524787804330730506700000.0"))
+      (num-test (* (bignum "6411564443509812216548163965666668398784964137255201222920640150.0") (bignum "65325385402074288043601436729391841747319174569548241717675134253657593233436152.0") (bignum "63305037198546989906433329294566491017476837189978173607681765241525113921707860.0") (bignum "72383582945810879300930057856704905379805338886592055772943486702915907397618845.0") (bignum "35525980101796892634292856352740658817031405780112750352735419884048051630180860.0") (bignum "47579150292602967366908574298176357632207539947399443701205872093150879604391127.0") (bignum "7775494633965874654516687741429737470333189902121089184439228657893110997221737422210698789286625633365548095171257583020272703565350668755439139356570.0") (bignum "-7847653632223099338936161226557020783515367997970448568586056286591257384101422312757649765574456754668588904917800060981155642916520580540801153603733496143328839018174649200566737789874193483124577734129346933208306772618814806884416239295732454033604210880463262467564639515484363761639994642888910703066277724414372379965872478153546766131136324967950786993982228851928269842355632200589446224738709869729930285189047112131897218464505263042012855229737941639093204086147932759923796947642895167078971517834730472596647456786099215405165290569214043431009370032818978995463168133051136053246705694337584724712230.0")) (bignum "-197949741939898550383903354028842356745461597695099989904494711851411610441324234089773644533872304737431480244289438922163630848266242200711131210228027234579469457105291847132071566876246332653149194709623963836885480655282595345693084881617726426841183231475364991154699746506928116505297453355016975688761948609740314324443406930215518937775475617384099331839748494157863510168743547396262979908353122625808170296763676837551973930928848463398657587603606321137626467028732193151671337338929938959296176472483674270114824853018199281637976410726195357458134038379491704909997939715446657856320452698914513791221947734373322868574099599391493563479057703049036936132407025278683219316357543078875410080612067641232277376174351958080693019953378024732243763129075732499165068171168470237875348580987967740148512425201518758344757030205911031119619416763996490581551977913711646761182756531618786226541010835120092904291975494846126923510483263978074437667987560077422810120462938292680423746968095994108344184522240467647491991837793653579480334442342102339933473270535800619630342940590477752278184994533764839125736268376640933720554199782388890444619996919031351334561766248781813883867406045414518951152508504891407920000000.0"))
+      (num-test (* (bignum "1669833986019218156514274418186396165434871163342486930502417566.0") (bignum "58528969848472951398118375496887849181512821636583415470809040929690124231959506.0") (bignum "50098163184827557635697120379841225459445103589988345336880332217224622666020381.0") (bignum "90445522698871905833766573423181067004916996574451008349087758531794463581708977.0") (bignum "92366726802191504770638415639612204654473958526592425718659284841373421985393966.0") (bignum "69096133232785816552402133765198624674167660496399099321713067612475604030259084.0") (bignum "323971624832697152056406152359288553860210436839331005469891386690556929684663075996719803995137130737141925308417709520389528780839777347463558171582753.0") (bignum "2635514624483961079560488004237441873979133312246005082134175818331132377114926863102436691793380965631848192666106793612266994709357524826644421074908075389316030912936338175907209987972553710900613011802455058538786723149316934049388525865455871552882282353445228425640452635081303490379594663330152071465360003249884180020993032086861074931796165970076448856988084523672973069824258299029863033098237556417571526135639288006133579174344589248428714474318969988990720790226604664141927030250855550010512291136517209169959021730625428868037074528890516086527430801590050720467893089085308995719513895962750896813152.0")) (bignum "2413207990093478676325592386500172980330574558867366638913149256222218924700401110600319869300256745035993991818342784487193857053589994816247466074246569162659879368383295411190237107255160498774228460295857931362161062884154872938368166514128474751716517750517217000290486110198899480877593169193610813452614906598055909439037075588626529658637140089909227353944313408987644743661503976835580507054926908821206921014266535160031749397432350114673787218438589065861056449106115395189057409933330355574558853874223262465965933679584884152813357065227868165556818717270584803360466149860292769520737249610469675917864449261901859162854558012721179400237645357401213337423255109839806528503425658270050436129019270883446965562683284298538825840361267548675967778385927410390726055957928634152514415917053614892441910675109517307682075989998558764742821214685548219206933043196677521610851950501225469125512893859254575460130829051324112015464552874242522140166275233893076603452098841950130740353331198999756316969161591691095397245996664755249875720008141774247384884623389430842799829690618405724986702942913150258769060684255363816662231923570491001519802836627028431389746450987110456127797025006251203111629141890634728548553728.0"))
+      (num-test (/ (bignum "10105597264942543888.0") (bignum "14352488138967388642.0")) (bignum "5052798632471271944/7176244069483694321"))
+      (num-test (/ (bignum "-17631701977702695093.0") (bignum "3931860028646338313.0")) (bignum "-17631701977702695093/3931860028646338313"))
+      (num-test (/ (bignum "-1606495881715082381.0") (bignum "16324360910828438638.0")) (bignum "-1606495881715082381/16324360910828438638"))
+      (num-test (/ (bignum "-7960193178071300653.0") (bignum "-10280747961248435844.0")) (bignum "7960193178071300653/10280747961248435844"))
+      (num-test (/ (bignum "-11544909483975853384.0") (bignum "-16041992360613233027.0")) (bignum "11544909483975853384/16041992360613233027"))
+      (num-test (/ (bignum "-5758820541298901548.0") (bignum "-2596462557714095861.0")) (bignum "5758820541298901548/2596462557714095861"))
+      (num-test (/ (bignum "-13056342734667572546.0") (bignum "46502284983183419157350605242474199851.0")) (bignum "-13056342734667572546/46502284983183419157350605242474199851"))
+      (num-test (/ (bignum "12668118634717482325.0") (bignum "-338544675918656078399121171905238525746.0")) (bignum "-12668118634717482325/338544675918656078399121171905238525746"))
+      (num-test (/ (bignum "-16738429327795346815.0") (bignum "164053836541028518093058940786011794219.0")) (bignum "-16738429327795346815/164053836541028518093058940786011794219"))
+      (num-test (/ (bignum "-9884600460121235549.0") (bignum "-53914696297933680001835530599748561584.0")) (bignum "9884600460121235549/53914696297933680001835530599748561584"))
+      (num-test (/ (bignum "6753521264659576004.0") (bignum "71759828079371803409570464915096122874.0")) (bignum "3376760632329788002/35879914039685901704785232457548061437"))
+      (num-test (/ (bignum "-6072478784520825268.0") (bignum "83641961138289700975241455431547940418.0")) (bignum "-3036239392260412634/41820980569144850487620727715773970209"))
+      (num-test (/ (bignum "-6708950756971973620.0") (bignum "-9847903810677323447803434015107261150885944735136350527205856921771320298384705376646797569973415403097847060539915279223391112430240736564839483430569706.0")) (bignum "3354475378485986810/4923951905338661723901717007553630575442972367568175263602928460885660149192352688323398784986707701548923530269957639611695556215120368282419741715284853"))
+      (num-test (/ (bignum "11263779860755455072.0") (bignum "2292311486393743282743453705144070351222990311578446825826935237655927864700827857707370158936582804478427014131790879562565658386819339761919809732496450.0")) (bignum "1877296643459242512/382051914398957213790575617524011725203831718596407804304489206275987977450137976284561693156097134079737835688631813260427609731136556626986634955416075"))
+      (num-test (/ (bignum "9956488981426387585.0") (bignum "-12351244248621474338537656633137999145154500022264356186225225426288301330225259889671144104952158102155582320296061124840400655528634050137479515338944145.0")) (bignum "-1991297796285277517/2470248849724294867707531326627599829030900004452871237245045085257660266045051977934228820990431620431116464059212224968080131105726810027495903067788829"))
+      (num-test (/ (bignum "-14875992781716065391.0") (bignum "4906952781757522095285156014969507916562921709689447567404076064849249737893410245743456952512717420040816186768213920574809530298070437840356629617118643.0")) (bignum "-2125141825959437913/700993254536788870755022287852786845223274529955635366772010866407035676841915749391922421787531060005830883824030560082115647185438633977193804231016949"))
+      (num-test (/ (bignum "16043178952268979636.0") (bignum "-4962728781666935768923030490263743715131420507991284894489828489607808897271220927863958149140648859077934323268424257800724618076505149638049461104621679.0")) (bignum "-5347726317422993212/1654242927222311922974343496754581238377140169330428298163276163202602965757073642621319383046882953025978107756141419266908206025501716546016487034873893"))
+      (num-test (/ (bignum "-14889985628902581941.0") (bignum "3075736124701105220602924325296812116294816310089906623707854625135862902005059305428034753787024827094954645083406870532379125275086885405969947540175361.0")) (bignum "-14889985628902581941/3075736124701105220602924325296812116294816310089906623707854625135862902005059305428034753787024827094954645083406870532379125275086885405969947540175361"))
+      (num-test (/ (bignum "-1719613957783789857.0") (bignum "19860562547348050982501313785551054055826630539673708970554435103060535649825139319625648954889488501680865494719253019921780044205805557658109807483499994523398090829033362953135186523580359552555144614353929273831853529446536288544481045105104526669277307473478898498061888931858821517694257595658138564305517447595298378933983614114298000880741350618424855028965861930329619462261269994651112266861896630584883581092431090390354633458596611690990999635499563944625720180529318327647519405136188243979680965052005899543797270970540925042201315580510136864931200059448645464256385079735225156720340173280541113382758.0")) (bignum "-1719613957783789857/19860562547348050982501313785551054055826630539673708970554435103060535649825139319625648954889488501680865494719253019921780044205805557658109807483499994523398090829033362953135186523580359552555144614353929273831853529446536288544481045105104526669277307473478898498061888931858821517694257595658138564305517447595298378933983614114298000880741350618424855028965861930329619462261269994651112266861896630584883581092431090390354633458596611690990999635499563944625720180529318327647519405136188243979680965052005899543797270970540925042201315580510136864931200059448645464256385079735225156720340173280541113382758"))
+      (num-test (/ (bignum "-10969623867482498359.0") (bignum "1292477254230352575769754773488799598312602810841892384475535212194939033905139960602724737178675944133847094464739764817257836826367652752931492512753561670732296265459534230949226553571982695924178928914002527460943582374603078611662312521259541641138419845784008028215876048965254023368247445173694441960256131358058174374542730502334351759171930973722361567186133851896057677818979314942434199157003833234473048838906103902832115569853657335216793235394595479328932380393044485884605451918890395812628720641212850763944658735838941829604119213195707479940053016354291972875689927240247563236506479099606571912595.0")) (bignum "-10969623867482498359/1292477254230352575769754773488799598312602810841892384475535212194939033905139960602724737178675944133847094464739764817257836826367652752931492512753561670732296265459534230949226553571982695924178928914002527460943582374603078611662312521259541641138419845784008028215876048965254023368247445173694441960256131358058174374542730502334351759171930973722361567186133851896057677818979314942434199157003833234473048838906103902832115569853657335216793235394595479328932380393044485884605451918890395812628720641212850763944658735838941829604119213195707479940053016354291972875689927240247563236506479099606571912595"))
+      (num-test (/ (bignum "-3716891004757979686.0") (bignum "-19452372993227550502015765258932159656814363741878583541173956168837566077148160901999018823586675966076058615847408138956450751813058209394199427182041779436168298455103717521843644244801542056954603631432685194627158423459586845252167819811850263444712218938833443253125954475476481099092216538126519474183531297423759923656571895377587989169731023397615799830371852298135015608612181670362528239430952907458704415974164085176066242388561893721949244663406941558257051263727439679525692652639731850971185056484335828001005009903973037524233097329857690857731943951449292814500362180170793919266389501882641682782987.0")) (bignum "3716891004757979686/19452372993227550502015765258932159656814363741878583541173956168837566077148160901999018823586675966076058615847408138956450751813058209394199427182041779436168298455103717521843644244801542056954603631432685194627158423459586845252167819811850263444712218938833443253125954475476481099092216538126519474183531297423759923656571895377587989169731023397615799830371852298135015608612181670362528239430952907458704415974164085176066242388561893721949244663406941558257051263727439679525692652639731850971185056484335828001005009903973037524233097329857690857731943951449292814500362180170793919266389501882641682782987"))
+      (num-test (/ (bignum "-4863232114852441787.0") (bignum "-22963038454503597269981750990033903654256693514059439027985256604978917966584414065892146187253799108250061573972673983350956191446047978392921074610323648301008272837432907303975548030552369880338022067315042332692023645592417869181836251486577977896077712912433381480614752789750181208326525834629219729662085632321271870762094800588296544243340047360684854239747242066367921596241226349790282723168222543448385227922748241223520686047460119733024390425165073367321644498280127168757335614077882325524816799960018589278475564547840614315473357481582710826551932681173443524724802157570101916268510464302946527662720.0")) (bignum "4863232114852441787/22963038454503597269981750990033903654256693514059439027985256604978917966584414065892146187253799108250061573972673983350956191446047978392921074610323648301008272837432907303975548030552369880338022067315042332692023645592417869181836251486577977896077712912433381480614752789750181208326525834629219729662085632321271870762094800588296544243340047360684854239747242066367921596241226349790282723168222543448385227922748241223520686047460119733024390425165073367321644498280127168757335614077882325524816799960018589278475564547840614315473357481582710826551932681173443524724802157570101916268510464302946527662720"))
+      (num-test (/ (bignum "-16248276650501285553.0") (bignum "-3381199474840825715485713565301777938368574604710714363907009216856320913536015299178065264912798511857598595067318796576494480424838898250138649774858742984769125731728430552285782315111538920026330816414650913188340281906359149109963139438960274321560117812365241840204034925444652058916966934904097509799291744775242863360284348334605170437300543978049053839829106628489146216325576991696936733592366926096500684308845306493636196092408597450926695579897293944488261001228478152650490677071497874746121221519036861983646423005753475340900508665494162949119110128646472783016552527735050067363030838015919512260159.0")) (bignum "16248276650501285553/3381199474840825715485713565301777938368574604710714363907009216856320913536015299178065264912798511857598595067318796576494480424838898250138649774858742984769125731728430552285782315111538920026330816414650913188340281906359149109963139438960274321560117812365241840204034925444652058916966934904097509799291744775242863360284348334605170437300543978049053839829106628489146216325576991696936733592366926096500684308845306493636196092408597450926695579897293944488261001228478152650490677071497874746121221519036861983646423005753475340900508665494162949119110128646472783016552527735050067363030838015919512260159"))
+      (num-test (/ (bignum "18296946401228630959.0") (bignum "3302341071702763311560113831030141639804425031433511503765833897787925467295486187687396312611805794369889470239777040624530990622212474466940548049117664906468330871893337410618797113677420975837622378808494314918471282099855916016026079371666730617071364751834080179173620476977670099126230223862266413091012344741482772771219725893630556702028108027870656512750807359335108428687238687397060104669074315031780019301768744978815422943986587389425726602444937024004102212071953113581935989741954695450085391443134273670514145585869912689150728183940456773133212037846765421397201956541430155664614978559762638030787.0")) (bignum "494512064898071107/89252461397371981393516590027841665940660135984689500101779294534808796413391518586145846286805562009997012709183163260122459206005742553160555352678855808282927861402522632719426949018308675022638442670499846349147872489185295027460164307342344070731658506806326491329016769648045137814222438482763957110567901209229264128951884483611636667622381298050558284128400198900948876451006451010731354180245251757615676197345101215643660079567205064579073691957971270919029789515458192258971242965998775552705010579544169558662544475293781424031100761728120453327924649671534200578302755582200815017962566988101692919751"))
+      (num-test (/ (bignum "-60488682170925814337492051725122486652.0") (bignum "14880088785789146426.0")) (bignum "-30244341085462907168746025862561243326/7440044392894573213"))
+      (num-test (/ (bignum "126617729996196635247771282957911941277.0") (bignum "-7166506344996883172.0")) (bignum "-126617729996196635247771282957911941277/7166506344996883172"))
+      (num-test (/ (bignum "-278675896803726074870988122161067771390.0") (bignum "7744689831802931490.0")) (bignum "-27867589680372607487098812216106777139/774468983180293149"))
+      (num-test (/ (bignum "-283351838662873779255871649630248958879.0") (bignum "6912311315831153835.0")) (bignum "-14913254666467041013466928927907839941/363805858727955465"))
+      (num-test (/ (bignum "-9715584046609700027352634666499181378.0") (bignum "3368831995960494221.0")) (bignum "-9715584046609700027352634666499181378/3368831995960494221"))
+      (num-test (/ (bignum "-137493547985106345282009151869389470397.0") (bignum "-1916381539906956855.0")) (bignum "137493547985106345282009151869389470397/1916381539906956855"))
+      (num-test (/ (bignum "-328662747577960331872949773416436800743.0") (bignum "-231069430804205460334599495337085157308.0")) (bignum "328662747577960331872949773416436800743/231069430804205460334599495337085157308"))
+      (num-test (/ (bignum "213595640581249636406536485951630735277.0") (bignum "-48492294677143227478357598229530842959.0")) (bignum "-213595640581249636406536485951630735277/48492294677143227478357598229530842959"))
+      (num-test (/ (bignum "85922846498729014445816145204889624189.0") (bignum "193533957681757355413031965695625196813.0")) (bignum "85922846498729014445816145204889624189/193533957681757355413031965695625196813"))
+      (num-test (/ (bignum "24053342958857142686054803491202486471.0") (bignum "196417511107100936775397820630955772553.0")) (bignum "24053342958857142686054803491202486471/196417511107100936775397820630955772553"))
+      (num-test (/ (bignum "102038936612518756467074084117019701214.0") (bignum "-111946989731587760700903475996379168167.0")) (bignum "-102038936612518756467074084117019701214/111946989731587760700903475996379168167"))
+      (num-test (/ (bignum "-3006867214208872584699983438179656913.0") (bignum "-234257597822744479264249663225224173340.0")) (bignum "3006867214208872584699983438179656913/234257597822744479264249663225224173340"))
+      (num-test (/ (bignum "-279839802710533516603863620922251878907.0") (bignum "-3244112647743502769852782626803305310331045534071805654982307107362388474314396636799597033636575215617240554815450017779373048313695795886893032630263219.0")) (bignum "279839802710533516603863620922251878907/3244112647743502769852782626803305310331045534071805654982307107362388474314396636799597033636575215617240554815450017779373048313695795886893032630263219"))
+      (num-test (/ (bignum "123635964546481689465778244982425098404.0") (bignum "7701433613491146708866098469269971554817017737111287276993583150548359764165526640986060909954451793171933304569726872785964805121981749276421956645830854.0")) (bignum "61817982273240844732889122491212549202/3850716806745573354433049234634985777408508868555643638496791575274179882082763320493030454977225896585966652284863436392982402560990874638210978322915427"))
+      (num-test (/ (bignum "166158110049010486343321316578688184578.0") (bignum "4093720847216792748840371965199135052196058344862447621818024731938681519017878880275303125899149558774718190527651555811733139227128378041055212888819294.0")) (bignum "83079055024505243171660658289344092289/2046860423608396374420185982599567526098029172431223810909012365969340759508939440137651562949574779387359095263825777905866569613564189020527606444409647"))
+      (num-test (/ (bignum "147416259636838312272435267341375281181.0") (bignum "-11266711292262839805944890501811605204323255169233519804446548849178247889563130015168799346120099052214488209897402054530713234143622703174309015777885801.0")) (bignum "-147416259636838312272435267341375281181/11266711292262839805944890501811605204323255169233519804446548849178247889563130015168799346120099052214488209897402054530713234143622703174309015777885801"))
+      (num-test (/ (bignum "102557200511608632541115941654031896919.0") (bignum "3866177549962722728707550488877109233779215384377007088712280650225992470307822792085413087509167847767889824884877044539352696974351192629898363157976511.0")) (bignum "102557200511608632541115941654031896919/3866177549962722728707550488877109233779215384377007088712280650225992470307822792085413087509167847767889824884877044539352696974351192629898363157976511"))
+      (num-test (/ (bignum "47794953079190110032282671989549362415.0") (bignum "3802290983508829335098916118339496411537222492645529399519373082799614656011270200284796148989094312601047370399228868583158444769807910513767845541589667.0")) (bignum "47794953079190110032282671989549362415/3802290983508829335098916118339496411537222492645529399519373082799614656011270200284796148989094312601047370399228868583158444769807910513767845541589667"))
+      (num-test (/ (bignum "-169956065319483471022234920202991103615.0") (bignum "-9934427489865644196610501807375648335352544234206717324511161205173460054921759084767897792996557220898467288533128078406604709773449948420404563411793533441010236017064154469575084055359823982786110746700747423674942932421964955746280671982635899487781780756099620799397239156211815110739544719746684712086075069101799537802834839550142629064374734870047412916259754010150500874430055034366305216104752636211802195447299210332237598443674867760860326529472901775427058078447963316168327741049511844237329137194533000697525539835371015163158135757326482343130221118201740819963770851200676279882978581431999960842565.0")) (bignum "33991213063896694204446984040598220723/1986885497973128839322100361475129667070508846841343464902232241034692010984351816953579558599311444179693457706625615681320941954689989684080912682358706688202047203412830893915016811071964796557222149340149484734988586484392991149256134396527179897556356151219924159879447831242363022147908943949336942417215013820359907560566967910028525812874946974009482583251950802030100174886011006873261043220950527242360439089459842066447519688734973552172065305894580355085411615689592663233665548209902368847465827438906600139505107967074203032631627151465296468626044223640348163992754170240135255976595716286399992168513"))
+      (num-test (/ (bignum "-83006311763073652927964071041666508273.0") (bignum "13480787677843057038436344704360462056114592749322481662307876594244244638227291805757775026215166740035048814729231681821563443093991755779505400592913963236010573873554317250153995160235771659208137440518282824497744092608999871327127239673370293239927529076145825972430101380272357235582367639159280348164804218713823424182167974242317526959809443701996053548231667727254858428867000011055354779789221097183515832386890638024105232865079002765479933320220378271026425568216748186200736499581088153390350474814123049637951929317200314355414551809067125550551841102097159644340520444983020267926123546444838010089690.0")) (bignum "-83006311763073652927964071041666508273/13480787677843057038436344704360462056114592749322481662307876594244244638227291805757775026215166740035048814729231681821563443093991755779505400592913963236010573873554317250153995160235771659208137440518282824497744092608999871327127239673370293239927529076145825972430101380272357235582367639159280348164804218713823424182167974242317526959809443701996053548231667727254858428867000011055354779789221097183515832386890638024105232865079002765479933320220378271026425568216748186200736499581088153390350474814123049637951929317200314355414551809067125550551841102097159644340520444983020267926123546444838010089690"))
+      (num-test (/ (bignum "-312626207169475064151212222217866488926.0") (bignum "6989069923898656093413456232544365450599471748502878018530391549015151484336014906416216966193568842618920902504390187814247729346977677905224098932673981665869061845335443588666641982676550205160521286690015544764015602751932938178737949961754714143180917985455875095030469699198116593730005119922928175789172042067281849364217595912265452199938281052984802042194034638773435768458457616208103331213440768472281882976004050012769415198321241810008696147179275528426468408383757692656341606162350211696837361434874035354680073309142183699892959618671515841112321607728427286289324836870027735590091451421689980776552.0")) (bignum "-52104367861579177358535370369644414821/1164844987316442682235576038757394241766578624750479669755065258169191914056002484402702827698928140436486817084065031302374621557829612984204016488778996944311510307555907264777773663779425034193420214448335924127335933791988823029789658326959119023863486330909312515838411616533019432288334186653821362631528673677880308227369599318710908699989713508830800340365672439795572628076409602701350555202240128078713647162667341668794902533053540301668116024529879254737744734730626282109390267693725035282806226905812339225780012218190363949982159936445252640185386934621404547714887472811671289265015241903614996796092"))
+      (num-test (/ (bignum "-151709660794612786408772973806200383563.0") (bignum "-26960472721919005254400858042130056790831511338891584787669209989714807518625849812230185079206081782191501696661436514815190623849929065098497737155759771863508038766934134444191240792356114381746781342181881402424707118515655119761011977116554236461222788625158348668147995099157685699761135150772589445239536582228655532345059046596356954495360132444243748421428095867292294626357084961338288369883088525401649234025290736504802104065029036642533076183281468647642956623788270236516849523210698622687255735945678505925047193818483603361307498423724202227256505312543145618362906047473400380196192622607541097732443.0")) (bignum "151709660794612786408772973806200383563/26960472721919005254400858042130056790831511338891584787669209989714807518625849812230185079206081782191501696661436514815190623849929065098497737155759771863508038766934134444191240792356114381746781342181881402424707118515655119761011977116554236461222788625158348668147995099157685699761135150772589445239536582228655532345059046596356954495360132444243748421428095867292294626357084961338288369883088525401649234025290736504802104065029036642533076183281468647642956623788270236516849523210698622687255735945678505925047193818483603361307498423724202227256505312543145618362906047473400380196192622607541097732443"))
+      (num-test (/ (bignum "138834496986391136939574372853300933725.0") (bignum "-8052690543272184576133758511645801940246473546142520821850130421981395129853341888352999304040698251945886555605291324954368612109314080471658982022831338507499254609048475429862437003158379101603576571787302167207044118847876475134352180874260998595377014195145760071923429129767580115085764485254455919915567128572731355497418831212259648020550107573824886521471697331410754043280744066090848295906051303624846301488010249980896364883452154860562864255354208802313850527991005497484253401461375477060954782095047043919500670383372218536999834862885439984085848342867301834247551832677237328664699302165347765799113.0")) (bignum "-15426055220710126326619374761477881525/894743393696909397348195390182866882249608171793613424650014491331266125539260209816999922671188694660654061733921258328263179123257120052406553558092370945277694956560941714429159667017597677955952952420811351911893790983097386126039131208251222066153001577238417785769269903307508901676196053917161768879507458730303483944157647912473294224505567508202765169052410814601194893697860451787872032878450144847205144609778916664544040542605794984506984917261578755812650058665667277498250377940152830784550531343894115991055630042596913170777759429209493331565094260318589092694172425853026369851633255796149751755457"))
+      (num-test (/ (bignum "276499207940187081393841843387608369874.0") (bignum "27347897028734618663428054896349668572244941195143856840032842195489553215406302254043947382368793914074147314353589439281000471813879502242851166670252197853998033813694814376228360691543987661407996785043637351295817024680721181205269262470473172181965930243852520386958529041036476807810647578694133804796395977642274699322030062940721165202488695975750512485574440928370802874677938542169620505668128224812441566912043326338714451629730522324228356364241376445033028898865300103247057378058702233150414643818049655628999871012383236520330575609745427181485617250755214922048672375947942288446974485524776744246517.0")) (bignum "8919329288393131657865865915729302254/882190226733374795594453383753215115233707780488511510968801361144824297271171040453030560721573997228198300463019014170354853929479983943317779570008135414645097864957897237942850344888515731013161186614310882299865065312281328425976427821628166844579546136898468399579307388420531509929375728344972058219238579923944345139420324610991005329112538579862919757599175513818412995957352856199020016311875104026207792481033655688345627471926791042717043753685205691775258996737590325911195399292216201069368214316711279213838705516528491500655825019669207328435019911314684352324150721804772331885386273726605701427307"))
+      (num-test (/ (bignum "-8979365591106781219797187096315899769868799444656824967426553299158070014074001230883484015880186603742048949313393413640240595706939311540002219411120389.0") (bignum "-1698360947072008877.0")) (bignum "1282766513015254459971026728045128538552685634950974995346650471308295716296285890126212002268598086248864135616199059091462942243848473077143174201588627/242622992438858411"))
+      (num-test (/ (bignum "-12831814656788829919185319784994714617782749504716966706877579983082880759985031662545957372565411439648298939198657738497464024214657609856476819270030801.0") (bignum "454910754379715.0")) (bignum "-273017333123166594025219569893504566335803180951424823550586808150699590637979397075445901543944924247836147642524632733988596259886332124605889771702783/9678952220845"))
+      (num-test (/ (bignum "-7834266257250691217409788323211914445703052638619784568844628449769010091330019095736167988675873769434766592786720961949649685040028101508217441360672222.0") (bignum "-428418418877192732.0")) (bignum "3917133128625345608704894161605957222851526319309892284422314224884505045665009547868083994337936884717383296393360480974824842520014050754108720680336111/214209209438596366"))
+      (num-test (/ (bignum "-4001605821592542867351046644170905984672346731784670159062281252096012802838642896466582343641124674682428297533953704119505640938363392225910275838094045.0") (bignum "15760991890495426717.0")) (bignum "-4001605821592542867351046644170905984672346731784670159062281252096012802838642896466582343641124674682428297533953704119505640938363392225910275838094045/15760991890495426717"))
+      (num-test (/ (bignum "2876630161532936743269451364955814480771395635620140205538288339793482694260173239474830738010159518887660000673207712630507802368373928478641773477534499.0") (bignum "-6788234478844960330.0")) (bignum "-2876630161532936743269451364955814480771395635620140205538288339793482694260173239474830738010159518887660000673207712630507802368373928478641773477534499/6788234478844960330"))
+      (num-test (/ (bignum "6230070442453337264527950102774203962152836811174649694700041895216739851602598854067104967963392074425258687296947909484969927078206601660837276754799333.0") (bignum "190237375887614033974333796608341639595.0")) (bignum "6230070442453337264527950102774203962152836811174649694700041895216739851602598854067104967963392074425258687296947909484969927078206601660837276754799333/190237375887614033974333796608341639595"))
+      (num-test (/ (bignum "-12098771374444180013224380531550204930654718468097503123335711776524055419889032578894177605164827523969169377266342179411916625188550162928371789854647472.0") (bignum "-41681385674896602840749705069663453185.0")) (bignum "12098771374444180013224380531550204930654718468097503123335711776524055419889032578894177605164827523969169377266342179411916625188550162928371789854647472/41681385674896602840749705069663453185"))
+      (num-test (/ (bignum "13185465843955116174925558412278612918939024395488172088108029202384613698982949554556435640011161663974075894844304583900497170806796813871943782330552768.0") (bignum "-155202352609947911537719051033334010254.0")) (bignum "-6592732921977558087462779206139306459469512197744086044054014601192306849491474777278217820005580831987037947422152291950248585403398406935971891165276384/77601176304973955768859525516667005127"))
+      (num-test (/ (bignum "12784980722915659825738808684740823452025110516624579136271791852138148426775553817114893299569867520414470532361018804123866264934222335562072872489963044.0") (bignum "-249441012384365373362771955533424187237.0")) (bignum "-12784980722915659825738808684740823452025110516624579136271791852138148426775553817114893299569867520414470532361018804123866264934222335562072872489963044/249441012384365373362771955533424187237"))
+      (num-test (/ (bignum "8517839393030302736298983538193047531846908718502576675615969705563208303329257882565359266876007571790337440612227785062203468682754778416335180236967433.0") (bignum "-23101645464137481399279134347982485126.0")) (bignum "-8517839393030302736298983538193047531846908718502576675615969705563208303329257882565359266876007571790337440612227785062203468682754778416335180236967433/23101645464137481399279134347982485126"))
+      (num-test (/ (bignum "-10157767522292361462005308817460390811646115952647174687477824271227382383351453540195549992670001314693794150879368708343715654899952822395459036505947192.0") (bignum "-25611473771508763579433379623726126173.0")) (bignum "10157767522292361462005308817460390811646115952647174687477824271227382383351453540195549992670001314693794150879368708343715654899952822395459036505947192/25611473771508763579433379623726126173"))
+      (num-test (/ (bignum "-8580252632668820290302987230726290672170301642399871646484841866604753910447257372311950907045477729554307803379310475132687855999835211879267570997069974.0") (bignum "5347050029330174629945013741349819215851040371727058829687387719215168997632386672310746837193930669173408831178932364105722911104309540550576485594530627.0")) (bignum "-8580252632668820290302987230726290672170301642399871646484841866604753910447257372311950907045477729554307803379310475132687855999835211879267570997069974/5347050029330174629945013741349819215851040371727058829687387719215168997632386672310746837193930669173408831178932364105722911104309540550576485594530627"))
+      (num-test (/ (bignum "7706102251141221799524762336156378964168657337573751909064577951085535246905735244239132983582998872001001594454632956803416956154262109939446710205558308.0") (bignum "6334400709835247308796432875490978646658012545184955441452799118298109610816693049400832749087993843490999852355789914065232784070007399786089389453289854.0")) (bignum "3853051125570610899762381168078189482084328668786875954532288975542767623452867622119566491791499436000500797227316478401708478077131054969723355102779154/3167200354917623654398216437745489323329006272592477720726399559149054805408346524700416374543996921745499926177894957032616392035003699893044694726644927"))
+      (num-test (/ (bignum "12609622044672092190084693450911157599596799695538449568681964257744962273690941575572590166273187189250007688411096790312605666562908125521094386992971478.0") (bignum "-8237858212652788898158635047388584411011830102060269605835391741772914864422465141467281143809161251942948659243584296367296559912373856433388249393853968.0")) (bignum "-6304811022336046095042346725455578799798399847769224784340982128872481136845470787786295083136593594625003844205548395156302833281454062760547193496485739/4118929106326394449079317523694292205505915051030134802917695870886457432211232570733640571904580625971474329621792148183648279956186928216694124696926984"))
+      (num-test (/ (bignum "-9988492519236282081446302885464711911055350309732728352574982611126604133339499170845224383282665522673248920309221355720665956477799939031063172954469785.0") (bignum "-1878204914631111607000020160429571305542722711529281855381736226230242796648854769713662269068364131804626863789957256573308715572826753755672493154125086.0")) (bignum "9988492519236282081446302885464711911055350309732728352574982611126604133339499170845224383282665522673248920309221355720665956477799939031063172954469785/1878204914631111607000020160429571305542722711529281855381736226230242796648854769713662269068364131804626863789957256573308715572826753755672493154125086"))
+
       ;; these come from Brad Lucier:
       
       (num-test (quotient 295147905149568077200 34359738366) 8589934591)
@@ -41508,6 +41886,103 @@
 (num-test (* 2 2 2.0 2) 16.0)
 (num-test (/ -8) -1/8)
 (num-test (/ 4 2) 2)
+
+(test (< 3/147483647 40/3) #t)
+(test (< 3/3147483647 40/3) #t)
+(test (< 3/3147483647 40/12345678901) #t)
+(test (< 3/3147483647 -40/12345678901) #f)
+(test (< 10/3147483647 40/12345678901) #t)
+(test (< 11/3147483647 40/12345678901) #f)
+(test (< -101/3147483647 40/12345678901) #t)
+(test (< -10/3147483647 -40/12345678901) #f)
+(test (< -11/3147483647 -40/12345678901) #t)
+(test (< 3147483646/11 40/12345678901) #f)
+(test (< 3147483646/11 12345678901/40) #t)
+(test (< 3147483646/11 1234567890213/12345678901123123) #f)
+(test (< 3147483646/111111111111111 1234567890213/12345678901123123) #t)
+(test (< 3147483646/11111111111111 1234567890213/12345678901123123) #f)
+(test (< 2147483646/11111111111111 1234567890213/12345678901123123) #f)
+(test (< 1047483646/11111111111111 1234567890213/12345678901123123) #t)
+(test (< 1282469252765/12824692526603504 1234567890213/12345678901123123) #f)
+(test (< 1282469252763/12824692526603504 1234567890213/12345678901123123) #t)
+(test (< 3147483547/2 3147483547/3) #f)
+(test (< 3147483547/2 3/3147483547) #f)
+(test (< 2/3147483547 3147483547/3) #t)
+(test (< 2/3 3147483547123/4) #t)
+
+(test (< 3147483646/11 -40/12345678901) #f)
+(test (< 3147483646/11 -12345678901/40) #f)
+(test (< 3147483646/11 -1234567890213/12345678901123123) #f)
+(test (< 3147483646/111111111111111 -1234567890213/12345678901123123) #f)
+(test (< 3147483646/11111111111111 -1234567890213/12345678901123123) #f)
+(test (< 2147483646/11111111111111 -1234567890213/12345678901123123) #f)
+(test (< 1047483646/11111111111111 -1234567890213/12345678901123123) #f)
+(test (< 1282469252765/12824692526603504 -1234567890213/12345678901123123) #f)
+(test (< 1282469252763/12824692526603504 -1234567890213/12345678901123123) #f)
+(test (< 3147483547/2 -3147483547/3) #f)
+(test (< 3147483547/2 -3/3147483547) #f)
+(test (< 2/3147483547 -3147483547/3) #f)
+(test (< 2/3 -3147483547123/4) #f)
+
+(test (< -3147483646/11 -40/12345678901) #t)
+(test (< -3147483646/11 -12345678901/40) #f)
+(test (< -3147483646/11 -1234567890213/12345678901123123) #t)
+(test (< -3147483646/111111111111111 -1234567890213/12345678901123123) #f)
+(test (< -3147483646/11111111111111 -1234567890213/12345678901123123) #t)
+(test (< -2147483646/11111111111111 -1234567890213/12345678901123123) #t)
+(test (< -1047483646/11111111111111 -1234567890213/12345678901123123) #f)
+(test (< -1282469252765/12824692526603504 -1234567890213/12345678901123123) #t)
+(test (< -1282469252763/12824692526603504 -1234567890213/12345678901123123) #f)
+(test (< -3147483547/2 -3147483547/3) #t)
+(test (< -3147483547/2 -3/3147483547) #t)
+(test (< -2/3147483547 -3147483547/3) #f)
+(test (< -2/3 -3147483547123/4) #f)
+
+(test (< -3147483646/11 40/12345678901) #t)
+(test (< -3147483646/11 12345678901/40) #t)
+(test (< -3147483646/11 1234567890213/12345678901123123) #t)
+(test (< -3147483646/111111111111111 1234567890213/12345678901123123) #t)
+(test (< -3147483646/11111111111111 1234567890213/12345678901123123) #t)
+(test (< -2147483646/11111111111111 1234567890213/12345678901123123) #t)
+(test (< -1047483646/11111111111111 1234567890213/12345678901123123) #t)
+(test (< -1282469252765/12824692526603504 1234567890213/12345678901123123) #t)
+(test (< -1282469252763/12824692526603504 1234567890213/12345678901123123) #t)
+(test (< -3147483547/2 3147483547/3) #t)
+(test (< -3147483547/2 3/3147483547) #t)
+(test (< -2/3147483547 3147483547/3) #t)
+(test (< -2/3 3147483547123/4) #t)
+
+
+(test (> 3/147483647 40/3) #f)
+(test (> 3/3147483647 40/3) #f)
+(test (> 3/3147483647 40/12345678901) #f)
+(test (> 3/3147483647 -40/12345678901) #t)
+(test (> 10/3147483647 40/12345678901) #f)
+(test (> 11/3147483647 40/12345678901) #t)
+(test (> -101/3147483647 40/12345678901) #f)
+(test (> -10/3147483647 -40/12345678901) #t)
+(test (> -11/3147483647 -40/12345678901) #f)
+(test (> 3147483646/11 40/12345678901) #t)
+(test (> 3147483646/11 12345678901/40) #f)
+(test (> 3147483646/11 1234567890213/12345678901123123) #t)
+(test (> 3147483646/111111111111111 1234567890213/12345678901123123) #f)
+(test (> 3147483646/11111111111111 1234567890213/12345678901123123) #t)
+(test (> 2147483646/11111111111111 1234567890213/12345678901123123) #t)
+(test (> 1047483646/11111111111111 1234567890213/12345678901123123) #f)
+(test (> 1282469252765/12824692526603504 1234567890213/12345678901123123) #t)
+(test (> 1282469252763/12824692526603504 1234567890213/12345678901123123) #f)
+(test (> 3147483547/2 3147483547/3) #t)
+(test (> 3147483547/2 3/3147483547) #t)
+(test (> 2/3147483547 3147483547/3) #f)
+(test (> 2/3 3147483547123/4) #f)
+
+(test (< 100000000000000.0 100000000000001.0) #t)
+(test (= 100000000000000.0 100000000000001.0) #f)
+(test (< 100000000000000/3 100000000000001/3) #t)
+(test (< 1000000000000000000/3 1000000000000000001/3) #t)
+(num-test (- 100000000000000.0 100000000000001.0) -1.0)
+(num-test (- 1000000000000000000/3 1000000000000000001/3) -1/3)
+
 
 ;; --------------------------------------------------------------------------------
 ;; miscellaneous numeric tests
@@ -42343,7 +42818,7 @@
       (num-test (- 1/98947 2/97499 3/76847 4/61981) -0.00011398112564314)
       (num-test (* 1/98947 2/97499 3/76847 4/61981) 5.2230351951008e-19)
       (num-test (/ 1/98947 2/97499 3/76847 4/61981) 464392992878593/2374728) ;195556288.07955 -- seems to fit
-      (num-test (/ 1/98947 2/97499 3/76847 4/61981) 195556288.07955)))
+      (num-test (/ 1/98947 2/97499 3/76847 4/61981) 195556288.07955816413500830)))
 
 (if (not with-bignums)
     (begin
@@ -42772,7 +43247,9 @@
       (num-test (max 12345678901234567890 12345678901234567891) 12345678901234567891)
       (num-test (min 12345678901234567890 12345678901234567891) 12345678901234567890)
       (num-test (gcd 12345678901234567890 12345) 15)
-      
+      (num-test (gcd 2346026393680644703525505657 17293822570713318399) 11)
+      (num-test (gcd 974507656412513757857315037382926980395082974811562770185617915360 -1539496810360685510909469177732386446833404488164283) 1)
+
       ;;  (test (not (= (sin 12345678901234567890) (cos 12345678901234567890))) #t) ; and so on
       
       (num-test (+ 4611686018427387904 1) 4611686018427387905) ; (expt 2 62) + 1 -- should work in both cases
@@ -42994,6 +43471,16 @@
 	    
 	    (num-test (cos 100000000000000000000000000000000)   -9.207313839241906875982573440296245746235E-1)
 	    (num-test (cos 100000000000000000000000000000000.0) -9.207313839241906875982573440296245746235E-1)
+
+	    (let ((old-precision (bignum-precision)))
+					; these checked against arprec (digits = 512)
+	      (set! (bignum-precision) 512)  
+	      (num-test (sin (bignum "696898287454081973170944403677937368733396.0")) -0.01999904696709900707248379699203543861700131080741493395453090012397)
+	      (num-test (cos (bignum "696898287454081973170944403677937368733396.0")) -0.99979999906001588673892554498680272502063995303949755633430660411025)
+	      (num-test (tan (bignum "696898287454081973170944403677937368733396.0")) 0.02000304759542063815661565629241173304757896817099118262507840447691)
+	      (num-test (log (bignum "696898287454081973170944403677937368733396.0")) 96.34745809783239800899232787971326647885871562509641009125683617504293)
+	      (num-test (sqrt (bignum "696898287454081973170944403677937368733396.0")) 8.34804340821298061589146684184612401904558331041225568173326261228620e20)
+	      (set! (bignum-precision) old-precision))
 	    
 	    ;; these can be checked against arprec -- get tables of the others as well
 	    ;;	(num-test (sin 31415926535897932384626433832795028841.971693993751058209749445) 6.8290634690588564658126265428876656461078982456442870201741792E-24)
@@ -43788,6 +44275,12 @@
 (num-test (string->number (number->string 1222222222.222222222222222222 16) 16) 1222222222.222222222222222222)
 
 (if with-bignums
+    (num-test (string->number "179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368.0")
+	      179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368.0)
+    (num-test (string->number "179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368.0")
+	      1.7976931348623e+308))
+
+(if with-bignums
     (begin
       (test (number->string (bignum "12345.67890987654321") 2) "1.1000000111001101011011100110100001001101001001011E13")
       (num-test (string->number (number->string (bignum "12345.67890987654321") 2) 2) 12345.67890987654321)
@@ -43797,6 +44290,10 @@
       (test (number->string 1234.5678909876543212345e-8 16) "0.0000cf204983a27e1eff701c562a870641e50")
       (test (number->string 123456789098765432.12345e-8 16) "499602d2.fcd6e9e1748ba5adccc12c5a8")
       (test (number->string 123456789098765432.1e20 16) "949b0f70beeac8895e74b18b9680000.00")))
+
+(num-test (string->number "12345678900000000000.0") 1.23456789e+19)
+(num-test (string->number "1234567890000000000000000000000000000000000000000000000000000000000000.0") 1.23456789e+69)
+(num-test (string->number "1234567890000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.0") 1.23456789e+129)
 
 (num-test (string->number "1.1e4" 5) 750.0)
 (num-test (string->number "1.1e4" 4) 320.0)
@@ -46389,10 +46886,62 @@
 (test (let ((!@$%^&*~|}{?><.,/`_-+=:! 1)) (+ !@$%^&*~|}{?><.,/`_-+=:! 1)) 2)
       
       
-      (let ((d 3.14)
-	    (i 32)
-	    (r 2/3)
-	    (c 1.5+0.3i))
+(let ((d 3.14)
+      (i 32)
+      (r 2/3)
+      (c 1.5+0.3i))
+  (let ((check-vals (lambda (name)
+		      (if (or (not (= d 3.14))
+			      (not (= i 32))
+			      (not (= r 2/3))
+			      (not (= c 1.5+0.3i)))
+			  (begin 
+			    (display name) (display " changed ")
+			    (if (not (= i 32))
+				(begin (display "stored integer to: ") (display i))
+				(if (not (= r 2/3))
+				    (begin (display "stored ratio to: ") (display r))
+				    (if (not (= d 3.14))
+					(begin (display "stored real to: ") (display d))
+					(begin (display "stored complex to: ") (display c)))))
+			    (display "?") (newline))))))
+    (for-each
+     (lambda (op)
+       (let ((x (catch #t (lambda () (op i)) (lambda args 'error))))
+	 (check-vals op))
+       (let ((x (catch #t (lambda () (op r)) (lambda args 'error))))
+	 (check-vals op))
+       (let ((x (catch #t (lambda () (op d)) (lambda args 'error))))
+	 (check-vals op))
+       (let ((x (catch #t (lambda () (op c)) (lambda args 'error))))
+	 (check-vals op))
+       (let ((x (catch #t (lambda () (op i d)) (lambda args 'error))))
+	 (check-vals op))
+       (let ((x (catch #t (lambda () (op r d)) (lambda args 'error))))
+	 (check-vals op))
+       (let ((x (catch #t (lambda () (op d d)) (lambda args 'error))))
+	 (check-vals op))
+       (let ((x (catch #t (lambda () (op c d)) (lambda args 'error))))
+	 (check-vals op)))
+     (list
+      number->string string->number make-rectangular magnitude abs exp make-polar angle
+      sin cos tan sinh cosh tanh atan sqrt log asinh acosh atanh acos asin
+      number? integer? real? complex? rational? even? odd? zero? positive? negative? real-part imag-part
+      numerator denominator rationalize exact? inexact? exact->inexact inexact->exact floor ceiling truncate round
+      logior logxor logand lognot ash integer-length
+      + - * / quotient remainder
+      expt = max min modulo < > <= >= lcm gcd 
+      ))))
+
+(if (and with-bignums with-bignum-function with-bigfloats)
+    (begin
+      
+      (test (bignum "1/3.0") 'error)
+
+      (let ((d (bignum "3.14"))
+	    (i (bignum "32"))
+	    (r (bignum "2/3"))
+	    (c (bignum "1.5+0.3i")))
 	(let ((check-vals (lambda (name)
 			    (if (or (not (= d 3.14))
 				    (not (= i 32))
@@ -46436,99 +46985,49 @@
 	    expt = max min modulo < > <= >= lcm gcd 
 	    ))))
       
-      (if (and with-bignums with-bignum-function with-bigfloats)
-	  (begin
-	    
-	    (let ((d (bignum "3.14"))
-		  (i (bignum "32"))
-		  (r (bignum "2/3"))
-		  (c (bignum "1.5+0.3i")))
-	      (let ((check-vals (lambda (name)
-				  (if (or (not (= d 3.14))
-					  (not (= i 32))
-					  (not (= r 2/3))
-					  (not (= c 1.5+0.3i)))
-				      (begin 
-					(display name) (display " changed ")
-					(if (not (= i 32))
-					    (begin (display "stored integer to: ") (display i))
-					    (if (not (= r 2/3))
-						(begin (display "stored ratio to: ") (display r))
-						(if (not (= d 3.14))
-						    (begin (display "stored real to: ") (display d))
-						    (begin (display "stored complex to: ") (display c)))))
-					(display "?") (newline))))))
-		(for-each
-		 (lambda (op)
-		   (let ((x (catch #t (lambda () (op i)) (lambda args 'error))))
-		     (check-vals op))
-		   (let ((x (catch #t (lambda () (op r)) (lambda args 'error))))
-		     (check-vals op))
-		   (let ((x (catch #t (lambda () (op d)) (lambda args 'error))))
-		     (check-vals op))
-		   (let ((x (catch #t (lambda () (op c)) (lambda args 'error))))
-		     (check-vals op))
-		   (let ((x (catch #t (lambda () (op i d)) (lambda args 'error))))
-		     (check-vals op))
-		   (let ((x (catch #t (lambda () (op r d)) (lambda args 'error))))
-		     (check-vals op))
-		   (let ((x (catch #t (lambda () (op d d)) (lambda args 'error))))
-		     (check-vals op))
-		   (let ((x (catch #t (lambda () (op c d)) (lambda args 'error))))
-		     (check-vals op)))
-		 (list
-		  number->string string->number make-rectangular magnitude abs exp make-polar angle
-		  sin cos tan sinh cosh tanh atan sqrt log asinh acosh atanh acos asin
-		  number? integer? real? complex? rational? even? odd? zero? positive? negative? real-part imag-part
-		  numerator denominator rationalize exact? inexact? exact->inexact inexact->exact floor ceiling truncate round
-		  logior logxor logand lognot ash integer-length
-		  + - * / quotient remainder
-		  expt = max min modulo < > <= >= lcm gcd 
-		  ))))
-	    
-	    
-	    ))
       
-      
+      ))
+
+
 ;;; ----------------
-      
-      (test (char? '1e311) #f)
-      (for-each
-       (lambda (n)
-	 (let ((nb (catch #t (lambda () (number? n)) (lambda args 'error))))
-	   (if (not nb) (format #t "(number? ~A) -> #f?~%" n))))
-       (list '1e311 '1e-311 '0e311 '2.1e40000))
-      
-      #|
-      (test (list #b) 'error)
-      (test (char? #\spaces) 'error)
-      (test (car '( . 1)) 'error) 
-      (test (car '(. )) 'error)
-      (test (car '( . )) 'error)
-      (test (car '(. . . )) 'error)
-      (test '#( . 1) 'error) 
-      (test '(1 2 . ) 'error)
-      (test '#(1 2 . ) 'error)
-      (test (+ 1 . . ) 'error)
-      (test (car '(1 . )) 'error)
-      (test (car '(1 . . 2)) 'error)
-      (test '#( . ) 'error) 
-      (test '#(1 . ) 'error)
-      (test '#(. . . ) 'error)
-      (test '#(1 . . 2) 'error)
-      (test '(. 1) 'error)
-      (test '#(. 1) 'error)
-      (test '(. ) 'error)
-      (test '#(. ) 'error)
-      (test (list 1 . 2) 'error)
-      (test (+ 1 . 2) 'error)
-      (test (car '@#`') 'error)
-      (test (list . ) 'error)
-      (test '#( .) 'error)
-      (test (car '( .)) 'error)
-      (test '#(1 . 2) 'error)
-      (test (let ((. 3)) .) 'error)
-      |#
+
+(test (char? '1e311) #f)
+(for-each
+ (lambda (n)
+   (let ((nb (catch #t (lambda () (number? n)) (lambda args 'error))))
+     (if (not nb) (format #t "(number? ~A) -> #f?~%" n))))
+ (list '1e311 '1e-311 '0e311 '2.1e40000))
+
+#|
+(test (list #b) 'error)
+(test (char? #\spaces) 'error)
+(test (car '( . 1)) 'error) 
+(test (car '(. )) 'error)
+(test (car '( . )) 'error)
+(test (car '(. . . )) 'error)
+(test '#( . 1) 'error) 
+(test '(1 2 . ) 'error)
+(test '#(1 2 . ) 'error)
+(test (+ 1 . . ) 'error)
+(test (car '(1 . )) 'error)
+(test (car '(1 . . 2)) 'error)
+(test '#( . ) 'error) 
+(test '#(1 . ) 'error)
+(test '#(. . . ) 'error)
+(test '#(1 . . 2) 'error)
+(test '(. 1) 'error)
+(test '#(. 1) 'error)
+(test '(. ) 'error)
+(test '#(. ) 'error)
+(test (list 1 . 2) 'error)
+(test (+ 1 . 2) 'error)
+(test (car '@#`') 'error)
+(test (list . ) 'error)
+(test '#( .) 'error)
+(test (car '( .)) 'error)
+(test '#(1 . 2) 'error)
+(test (let ((. 3)) .) 'error)
+|#
       
       
 ;;; ----------------
@@ -46536,3665 +47035,3652 @@
 ;;; due primarily to stupidities on my part, the "expected" values are sometimes not more
 ;;;   accurate than say 1e-7 or so
       
-      (if (and (not (null? error-data))
-	       with-error-data)
-	  (begin
-	    (format #t "op~16Terror~44Ttest~76Tresult~115Texpected~%")
-	    (for-each
-	     (lambda (op)
-	       (format #t "~A: ~16T~A ~40T~A ~70T~A ~110T~A~%" 
-		       (vector-ref op 0) (vector-ref op 1) (vector-ref op 2) (vector-ref op 3) (vector-ref op 4)))
-	     error-data)
-	    
-	    (let ((data '((3.0 0.14159265358979323846 0.1411200080598672)
-			  (31.0 0.41592653589793238462 0.404037645323065)
-			  (314.0 0.15926535897932384626 0.1585929060285728)
-			  (3141.0 0.59265358979323846264 0.5585640372121817)
-			  (31415.0 0.92653589793238462643 0.7995441773754675)
-			  (314159.0 0.26535897932384626433 0.262255699519879)
-			  (3141592.0 0.65358979323846264338 0.6080402764374114)
-			  (31415926.0 0.53589793238462643383 0.5106132968486387)
-			  (314159265.0 0.35897932384626433832 0.3513188023745885)
-			  (3141592653.0 0.58979323846264338327 0.5561892044494355)
-			  (31415926535.0 0.89793238462643383279 0.7820399858427447)
-			  (314159265358.0 0.97932384626433832795 0.8301205477998297)
-			  (3141592653589.0 0.79323846264338327950 0.7126289202333107)
-			  (31415926535897.0 0.93238462643383279502 0.8030432710678118)
-			  (314159265358979.0 0.32384626433832795028 0.3182152351447919)
-			  (3141592653589793.0 0.23846264338327950288 0.2362090532517409)
-			  (31415926535897932.0 0.38462643383279502884 0.3752128900123344)
-			  (314159265358979323.0 0.84626433832795028841 0.7488096950162713)
-			  (3141592653589793238.0 0.46264338327950288419 0.4463151633593201)
-			  (31415926535897932384.0 0.62643383279502884197 0.5862594566145847)
-			  (314159265358979323846.0 0.26433832795028841971 0.2612706361296674)
-			  (3141592653589793238462.0 0.64338327950288419716 0.5999057324027754)
-			  (31415926535897932384626.0 0.43383279502884197169 0.4203516113275538)
-			  (314159265358979323846264.0 0.33832795028841971693 0.3319102940355321)
-			  (3141592653589793238462643.0 0.38327950288419716939 .3739640276557301))) 
-		  (vals '())
-		  (mx-sin-err 0.0))
-	      
-	      (for-each
-	       (lambda (p)
-		 (let ((arg1 (car p))
-		       (arg2 (cadr p))
-		       (mxerr 0.0))
-		   (do ((i 0 (+ i 1))
-			(x 0.0 (+ x .1)))
-		       ((= i 10))
-		     (let ((err (abs (- (abs (sin (- arg1 x))) (abs (sin (+ arg2 x)))))))
-		       (if (> err mxerr)
-			   (set! mxerr err))))
-		   (set! vals (cons mxerr vals))
-		   (set! mx-sin-err (max mx-sin-err (abs (- (sin arg2) (caddr p)))))))
-	       data)
-	      
-	      (if (> mx-sin-err 1e-8)
-		  (begin
-		    (display "base sine seems inaccurate!  error: ") 
-		    (display mx-sin-err) 
-		    (newline)))
-	      
-	      (set! vals (reverse vals))
-	      
-	      (let ((stop #f))
-		(do ((i 0 (+ i 1)))
-		    ((or (number? stop)
-			 (= i (length vals))))
-		  (if (> (list-ref vals i) 1e-6)
-		      (set! stop i)))
-		(if (number? stop)
-		    (begin
-		      (display "sin error > 1e-6 after 2^")
-		      (display (/ (log (car (list-ref data stop))) (log 2.0)))
-		      (display " or thereabouts")
-		      (newline)))))
-	    
-	    (let ((data (list
-			 2.71828182845904523536028747135266249775724709369995957
-			 27.1828182845904523536028747135266249775724709369995957
-			 271.828182845904523536028747135266249775724709369995957
-			 2718.28182845904523536028747135266249775724709369995957
-			 27182.8182845904523536028747135266249775724709369995957
-			 271828.182845904523536028747135266249775724709369995957
-			 2718281.82845904523536028747135266249775724709369995957
-			 27182818.2845904523536028747135266249775724709369995957
-			 271828182.845904523536028747135266249775724709369995957
-			 2718281828.45904523536028747135266249775724709369995957
-			 27182818284.5904523536028747135266249775724709369995957
-			 271828182845.904523536028747135266249775724709369995957
-			 2718281828459.04523536028747135266249775724709369995957
-			 27182818284590.4523536028747135266249775724709369995957
-			 271828182845904.523536028747135266249775724709369995957
-			 2718281828459045.23536028747135266249775724709369995957
-			 27182818284590452.3536028747135266249775724709369995957
-			 271828182845904523.536028747135266249775724709369995957
-			 2718281828459045235.36028747135266249775724709369995957
-			 27182818284590452353.6028747135266249775724709369995957
-			 271828182845904523536.028747135266249775724709369995957
-			 2718281828459045235360.28747135266249775724709369995957
-			 27182818284590452353602.8747135266249775724709369995957
-			 271828182845904523536028.747135266249775724709369995957
-			 2718281828459045235360287.47135266249775724709369995957
-			 27182818284590452353602874.7135266249775724709369995957
-			 271828182845904523536028747.135266249775724709369995957
-			 2718281828459045235360287471.35266249775724709369995957
-			 27182818284590452353602874713.5266249775724709369995957)))
-	      (let ((happy #t))
-		(do ((i 0 (+ i 1))
-		     (dec 1.0 (* dec 10.0)))
-		    ((or (not happy)
-			 (= i (length data))))
-		  (let ((val (exp (+ 1.0 (log dec)))))
-		    (let ((err (abs (- (list-ref data i) val))))
-		      (if (> err 1e-6)
-			  (begin
-			    (set! happy #f)
-			    (display "exp+log error > 1e-6 around 2^") (display (/ (log val) (log 2))) (newline))))))))
-	    
-	    (let ((data (list ; table[Tan[10^k], {k, 0, 30}] 
-			 1.55740772465490223050697480745836017308725077238152003838394660569886
-			 0.64836082745908667125912493300980867681687434298372497563362796739585
-			 -0.58721391515692907667780963564458789425876598687291954412663968360989
-			 1.47032415570271844598020880490391856915748389146711182025455665358979
-			 0.32097113462381472460896162480876337966088525010731594977977206336933
-			 -0.03577166295289877341133054456893096203777589491986804979647879769616
-			 -0.37362445398759902917349708857538141978530379801059302641978134928241
-			 -0.46353082785018908581469758918080168755473695345937070670149218665289
-			 -2.56377890672837725789840319603083470729708859667680805828679070820622
-			 0.65145220214514128858645272422054798185112543058289784681820964602226
-			 -0.55834963781124184656189340731863681858164809933060716499623295934358
-			 2.50424481449822111118237373761381771825510968075886393173926375110559
-			 -0.77230596813187614161063494471423746038444882506077057787558499031077
-			 -0.30175082856983471199636858701688775346296430492149675721730025846251
-			 0.21415652428250396225222102422385566728114779011753338339645623774420
-			 -1.67241478212758304295552142696079055033040910554091189243737002950172
-			 -1.24517343571840642168009129451609763781317676741030141327973693611564
-			 0.52456243090255001593041672482494038697466467439258592602675334853162
-			 -8.38854968059368800013526842602194492647448392917034135131083409265520
-			 2.47279376584652736033818679563656602249667799226358809957010483326311
-			 -0.84460246301988425418409323400055358116535547279258431245425813826798
-			 -0.89552329255426546888442598272446987755918451773757800611680045521648
-			 -1.62877822560689887854937593693954851354515116817021717086346127966844
-			 -0.98333523138083649717001389546802280189805226009031609173028377317771
-			 -11.87362630545544227571094967408372098364257316309876130680769667747893
-			 1.11612596981774655887307362253927728556627435787456734029790793087502
-			 -1.63758698713112186463163321344320618241852069893975176926240178134592
-			 -1.03173363516910726343237554775898936974208941138122693037794681869065
-			 6.35083773135836351463817396716338533781524290151157250457191403689220
-			 -110.81342510911236031336859049236316125148742351166700266651506403034426
-			 0.09048506806330217256622313805004127372738954023205417991033965089185)))
-	      (let ((happy #t))
-		(do ((i 0 (+ i 1))
-		     (dec 1.0 (* dec 10.0)))
-		    ((or (not happy)
-			 (= i (length data))))
-		  (let ((val (tan dec))) 
-		    (let ((err (abs (- (list-ref data i) val)))
-			  (err1 (- (tan (+ 0.1 (* our-pi dec))) (tan 0.1)))
-			  (err2 (- (tan (+ 1.0 (* our-pi dec))) (tan 1.0))))
-		      (if (or (> err 1e-6)
-			      (> err1 1e-6)
-			      (> err2 1e-6))
-			  (begin
-			    (set! happy #f)
-			    (display "tan error > 1e-6 around 2^") (display (/ (log dec) (log 2))) (newline))))))))
-	    
-	    ;; table[(1/10^k)/(((1/10^k)^(1/10^k)) - 1), {k, 1, 30}]
-	    ;;   the test came from calc_errors.txt from the web by "dave"
-	    (let ((expts (list
-			  -0.48621160938616180680870317336747983548142173621715706851490974881717
-			  -0.22218561601345857583044966876729715619642038672598556073380084629504
-			  -0.14526540294689938889864991134840220307566223888497162784858064408875
-			  -0.10862362815109649171007844591526444220973735508130191198062253212652
-			  -0.08686389647659141105044978528770239308857034812798554177686261943193
-			  -0.07238291365169326382168151357331039782973682143307349669152489742891
-			  -0.06204211884333512141082278643490234288550259196615819050849846987015
-			  -0.05428681523790663196206398113420109019962541643547760927657854324749
-			  -0.04825494293369464924373092184737925979664303236414611590980578553450
-			  -0.04342944824032518278430110099994422226122739720915846151097610557365
-			  -0.03948131654165925705940460838351885560840418164027583205682137097699
-			  -0.03619120682577098563759637916147675090355043511246085981138602579761
-			  -0.03340726783876167905008686486133377017608955166698061593202699553920
-			  -0.03102103442166584483222349447696386196557178259759899539894506586562
-			  -0.02895296546021728851007526126398523685253569082526692705926181546848
-			  -0.02714340511895328922819555743231851877797306680518273360154914602559
-			  -0.02554673422960305368536052464215356633451937057629542604571806752914
-			  -0.02412747121684732425839605105092250802578858425793889081112350331353
-			  -0.02285760431069746466321731152192658331511007129540571803806313398860
-			  -0.02171472409516259138755644594583025411510361447234900258639235440074
-			  -0.02068068961444056322198232947221928963307055360980162368063530687389
-			  -0.01974065826832962852964676904166386737701808793240851850210059107980
-			  -0.01888236877840225337614103995289587314323465286757518193028428290776
-			  -0.01809560341263549281879753828819187842893320857975794377409033233328
-			  -0.01737177927613007310604520675666420329177588023219463316734886061171
-			  -0.01670363391935583952504342495833096470363065406937228989783888395986
-			  -0.01608498081123154917226403453394833638127396317791358170357400676126
-			  -0.01551051721083042241611174715416446722479989306441666312924319204483
-			  -0.01497567178976730440176306617453810628601368985529884710795141610434
-			  -0.01447648273010839425503763063105350274314656686012221887048754923492)))
-	      (let ((happy #t))
-		(do ((i 1 (+ i 1))) 
-		    ((or (= i (length expts))
-			 (not happy)))
-		  (catch #t
-			 (lambda ()
-			   (let ((val (/ (expt .1 i)
-					 (- (expt (expt .1 i) (expt .1 i)) 1))))
-			     (if (> (abs (- val (list-ref expts (- i 1)))) 1e-6)
-				 (begin
-				   (set! happy #f)
-				   (display "expt error > 1e-6 around 2^") (display (/ (log (expt .1 i)) (log 2))) (newline)))))
-			 (lambda args 
-			   (display "expt no accurate below around 2^") (display (/ (log (expt .1 i)) (log 2))) (newline))))))
-	    
-	    (let ((sin-err 0.0)
-		  (cos-err 0.0)
-		  (log-err 0.0)
-		  (asin-err 0.0)
-		  (atan-err 0.0)
-		  (sqrt-err 0.0))
-	      ;; data generated by mathtool in the arprec package
-	      
-	      ;; another baddy: (tan 314159265358979323) should be -1.129792652308908544253650171110
-	      
-	      (let ((sins (list 
-			   0.00000000000000000000000000000000000000000000000000000000000000000000
-			   0.09983341664682815230681419841062202698991538801798225999276686156165
-			   0.19866933079506121545941262711838975037020672954020540398639599139797
-			   0.29552020666133957510532074568502737367783211174261844850153103617326
-			   0.38941834230865049166631175679570526459306018344395889511584896585734
-			   0.47942553860420300027328793521557138808180336794060067518861661312553
-			   0.56464247339503535720094544565865790710988808499415177102426589426735
-			   0.64421768723769105367261435139872018306581384457368964474396308809382
-			   0.71735609089952276162717461058138536619278523779142282098968252068287
-			   0.78332690962748338846138231571354862314014792572030960356048515256195
-			   0.84147098480789650665250232163029899962256306079837106567275170999191
-			   0.89120736006143533995180257787170353831890931945282652766035329176720
-			   0.93203908596722634967013443549482599541507058820873073536659789445024
-			   0.96355818541719296470134863003955481534204849131773911795564922309212
-			   0.98544972998846018065947457880609751735626167234736563194021894560084
-			   0.99749498660405443094172337114148732270665142592211582194997482405934
-			   0.99957360304150516434211382554623417197949791475491995534260751586102
-			   0.99166481045246861534613339864787565240681957116712372532710249102330
-			   0.97384763087819518653237317884335760670293947136523395566725825917196
-			   0.94630008768741448848970961163495776211399866559491176443047155279581
-			   0.90929742682568169539601986591174484270225497144789026837897301153096
-			   0.86320936664887377068075931326902458492047242489508107697183045949721
-			   0.80849640381959018430403691041611906515855960597557707903336060873485
-			   0.74570521217672017738540621164349953894264877802047425750762828050000
-			   0.67546318055115092656577152534128337425336495789352584226890212866520
-			   0.59847214410395649405185470218616227170359717157722357330262703263874
-			   0.51550137182146423525772693520936824389387858775426312126259173008382
-			   0.42737988023382993455605308585788064749647642266670256499017776070511
-			   0.33498815015590491954385375271242210603030652888358671068410107309479
-			   0.23924932921398232818425691873957537221555293029961877411621026588071
-			   0.14112000805986722210074480280811027984693326425226558415188264123242
-			   0.04158066243329057919469827159667310055461342296380675064800900076588
-			   -0.05837414342757990913721741461909518512512509908292656970935025422273)))
-		(let ((mxerr 0.0))
-		  (do ((i 0 (+ i 1))
-		       (x 0.0 (+ x 0.1)))
-		      ((= i 32))
-		    (let ((err (abs (- (sin x) (list-ref sins i)))))
-		      (if (> err mxerr)
-			  (set! mxerr err))))
-		  (set! sin-err mxerr)))
-	      
-	      (let ((coss (list 
-			   1.00000000000000000000000000000000000000000000000000000000000000000000
-			   0.99500416527802576609556198780387029483857622541508403595935274468526
-			   0.98006657784124163112419651674816887739352436080656799405254829012618
-			   0.95533648912560601964231022756804989824421408263203767451761361222758
-			   0.92106099400288508279852673205180161402585956931985044561508926713514
-			   0.87758256189037271611628158260382965199164519710974405299761086831595
-			   0.82533561490967829724095249895537603887809103918847038136974977367156
-			   0.76484218728448842625585999019186490926821055037370335607293245825206
-			   0.69670670934716542092074998164232492610178601370806078363714489414924
-			   0.62160996827066445648471615140713350872176136659123900757638348453897
-			   0.54030230586813971740093660744297660373231042061792222767009725538110
-			   0.45359612142557738777137005178471612212146729566259504745593805541880
-			   0.36235775447667357763837335562307602033994778557664862648774972093613
-			   0.26749882862458740699798410929287135927592992167912966191725336742182
-			   0.16996714290024093861674803520364980292818392102853430898236521149464
-			   0.07073720166770291008818985143426870908509102756334686942264541719092
-			   -0.02919952230128872620577046294649852444486472109384694500313007908245
-			   -0.12884449429552468408764285733487351410164007964520297633178213994289
-			   -0.22720209469308705531667430653058073247695158653826107158496911100681
-			   -0.32328956686350342227883369508031017459419076544223959990115436505106
-			   -0.41614683654714238699756822950076218976600077107554489075514997378196
-			   -0.50484610459985745162093852371916747040702337674136205964819622353659
-			   -0.58850111725534570852414261265492841629376036669872798974753517400616
-			   -0.66627602127982419331788057116601723016327537100376988865266957182167
-			   -0.73739371554124549960882222733478290843301289199228479878436568873073
-			   -0.80114361554693371483350279046735166442856784876782013507459799166202
-			   -0.85688875336894723379770215164520111235392263823324404910501242714241
-			   -0.90407214201706114798252728194333012633184973516362471104126694868604
-			   -0.94222234066865815258678811736615401246341423446824662018098201995710
-			   -0.97095816514959052178110666934553217911761475942423954213867099245327
-			   -0.98999249660044545727157279473126130239367909661558832881408593292832
-			   -0.99913515027327946449237605454146626283664166994794274354471598254947
-			   -0.99829477579475308466166072228358269144701258595166016759508002045139)))
-		(let ((mxerr 0.0))
-		  (do ((i 0 (+ i 1))
-		       (x 0.0 (+ x 0.1)))
-		      ((= i 32))
-		    (let ((err (abs (- (cos x) (list-ref coss i)))))
-		      (if (> err mxerr)
-			  (set! mxerr err))))
-		  (set! cos-err mxerr)))
-	      
-	      (let ((logs-1 (list
-			     -4.60517018598809136803598290936872841520220297725754595206665580193514
-			     -3.91202300542814605861875078791055184712670284289729069794597579244175
-			     -3.50655789731998167664073767244620271055471241943479650033196146829765
-			     -3.21887582486820074920151866645237527905120270853703544382529578294835
-			     -2.99573227355399099343522357614254077567660162298902823015400791046096
-			     -2.81341071676003636722350555098802614247921228507454124621128145880425
-			     -2.65926003693277806293063016592554868556511824767568476360726565199756
-			     -2.52572864430825543978428654499419871097570257417678018970461577345496
-			     -2.40794560865187198524549243552367700590722186161204704859726713466015
-			     -2.30258509299404568401799145468436420760110148862877297603332790096757
-			     -2.20727491318972082397403933140359911538049612332012877684808809280457
-			     -2.12026353620009105780627342952984957440371215071428599209060144931086
-			     -2.04022082852655463198249546780340981039693503249733883564761029127168
-			     -1.96611285637283275351339804446737211748961811331542950948658564250417
-			     -1.89711998488588130203997833922001507102911106516627877841931357682347
-			     -1.83258146374831013036705442353602214290020243981652493558393576396157
-			     -1.77195684193187528778644829149560187961399996467180116476941806405285
-			     -1.71479842809192667582826031406550043783172172725179179447658712516676
-			     -1.66073120682165090802695547748087487796482371595841713352869556552585
-			     -1.60943791243410037460075933322618763952560135426851772191264789147417))
-		    (logs-2 (list
-			     2.30258509299404568401799145468436420760110148862877297603332790096757
-			     2.99573227355399099343522357614254077567660162298902823015400791046096
-			     3.40119738166215537541323669160688991224859204645152242776802223460506
-			     3.68887945411393630285245569760071734375210175734928348427468791995435
-			     3.91202300542814605861875078791055184712670284289729069794597579244175
-			     4.09434456222210068483046881306506648032409218081177768188870224409846
-			     4.24849524204935898912334419812754393723818621821063416449271805090515
-			     4.38202663467388161226968781905889391182760189170953873839536792944775
-			     4.49980967033026506680848192852941561689608260427427187950271656824256
-			     4.60517018598809136803598290936872841520220297725754595206665580193514
-			     4.70048036579241622807993503264949350742280834256619015125189561009814
-			     4.78749174278204599424770093452324304839959231517203293600938225359185
-			     4.86753445045558242007147889624968281240636943338898009245237341163103
-			     4.94164242260930429854057631958572050531368635257088941861339806039854
-			     5.01063529409625575001399602483307755177419340072004014968067012607924
-			     5.07517381523382692168691994051707047990310202606979399251604793894114
-			     5.13579843705026176426752607255749074318930450121451776333056563884986
-			     5.19295685089021037622571404998759218497158273863452713362339657773595
-			     5.24702407216048614402701888657221774483848074992790179457128813737686
-			     5.29831736654803667745321503082690498327770311161780120618733581142853)))
-		(let ((mxerr 0.0))
-		  (do ((i 0 (+ i 1))
-		       (x 0.01 (+ x 0.01))
-		       (y 10.0 (+ y 10.0)))
-		      ((= i 20))
-		    (let ((err (max (abs (- (log x) (list-ref logs-1 i)))
-				    (abs (- (log y) (list-ref logs-2 i))))))
-		      (if (> err mxerr)
-			  (set! mxerr err))))
-		  (set! log-err mxerr)))
-	      
-	      (let ((asins (list
-			    0.00000000000000000000000000000000000000000000000000000000000000000000
-			    0.02500260489936113599406838915349107150195748368840710160729904233944
-			    0.05002085680577001466274438682046411497780608049468789272874398055703
-			    0.07507049107671654265775143572317089898194705496817785120910161299955
-			    0.10016742116155979634552317945269331856867597222962954139102385503640
-			    0.12532783116806539687456698635708471804814772683867237523396403098649
-			    0.15056827277668602642326030146739539047425784470580485344319902595849
-			    0.17590576816371628737774199743846051972730948209298253171964068749984
-			    0.20135792079033079145512555221762341024003808140222838625725124345560
-			    0.22694303617851994909359260763689579636930963064761339672521677581090
-			    0.25268025514207865348565743699371097225219373309683819363392377874057
-			    0.27858970239165058217050815183568882129133935843106227203280647300877
-			    0.30469265401539750797200296122752916695456003170677638739297794874647
-			    0.33101172808929452771961639961139035858195303667932389628972377319123
-			    0.35757110364551028671483849232064256784674132498948776325141270863037
-			    0.38439677449563908303819487296704697375277948430656504155058375479079
-			    0.41151684606748801938473789761733560485570113512702585178394678070009
-			    0.43896188560976067483321619602147236009843505358239561712817387552271
-			    0.46676533904729636185033976030413712126156503909241369925276357159851
-			    0.49496403171689461363027991615293072605447706550005723007748628111125
-			    0.52359877559829887307710723054658381403286156656251763682915743205130
-			    0.55271511309678317285035596261806027710654731438452549350875265730232
-			    0.58236423786874344183204729090997636797897358751436418853659347126034
-			    0.61260414804862246566851988030718610964520075565860642564808142300476
-			    0.64350110879328438680280922871732263804151059111531238286560611871351
-			    0.67513153293703164720905626529438801420418535124967921737841984904557
-			    0.70758443672535557545286474430459468476197717933193633785448106190261
-			    0.74096470220302000164595109317351452207440076171206748884906746063949
-			    0.77539749661075306374035335271498711355578873864116199359771996373272
-			    0.81103439428758154765966499519016990220446846078107874166646027112837
-			    0.84806207898148100805294433899841808007336621326311264286071816357020
-			    0.88671509499956738294114522105877020358977872696702934222169938478807
-			    0.92729521800161223242851246292242880405707410857224052762186617744039
-			    0.97020219992884564627294507144637975649395034794671876838355202607208
-			    1.01598529381482513116231792163105149400316379682053508778250056579494
-			    1.06543581651073931226000681765232949759419723349387652321962473867275
-			    1.11976951499863418668667705584539961589516218640330288237568186391443
-			    1.18103559399742179696187441797151603545275866323114802494551011137296
-			    1.25323589750337525873710391866600599574114067342736145636046515573871
-			    1.34672104149307735953151290762049740983950868154764854526693662237423
-			    1.57079632679489661923132169163975144209858469968755291048747229615390)))
-		(let ((mxerr 0.0))
-		  (do ((i 0 (+ i 1))
-		       (x 0.0 (+ x (/ 1.0 40.0))))
-		      ((= i 40))
-		    (let ((err (abs (- (asin x) (list-ref asins i)))))
-		      (if (> err mxerr)
-			  (set! mxerr err))))
-		  (set! asin-err mxerr)))
-	      
-	      (let ((atans (list
-			    0.00000000000000000000000000000000000000000000000000000000000000000000
-			    0.04995839572194276141000628703484488149127708042350717441085345482998
-			    0.09966865249116202737844611987802059024327832250431464801550877681002
-			    0.14888994760949725058653039165586728099052584656913639751654183508627
-			    0.19739555984988075837004976519479029344758510378785210151768894024103
-			    0.24497866312686415417208248121127581091414409838118406712737591466735
-			    0.29145679447786709199560462143289119350316759901206541927220608308729
-			    0.33667481938672718139669863134176645842796861176681965716976593102220
-			    0.38050637711236488630358791681043310449740571365810083757630562232420
-			    0.42285392613294071296648279098114197360332058559089653470801277782477
-			    0.46364760900080611621425623146121440202853705428612026381093308872019
-			    0.50284321092786082733088202924527755577645581499776483101147435179592
-			    0.54041950027058415544357836460859991013514825146259238811636023340959
-			    0.57637522059118368022757047839377004593402018294846332167674413471879
-			    0.61072596438920861654375887649023609381850306612882761584286773000023
-			    0.64350110879328438680280922871732263804151059111531238286560611871351
-			    0.67474094222355266305652097360981361507400625484071242312092170496930
-			    0.70449406424221771665748034078199625698360683805607748632242138272858
-			    0.73281510178650659164079207273428025198575567935825608631050693192821
-			    0.75976275487577082892296119539998182400552294838843900175686400378812
-			    0.78539816339744830961566084581987572104929234984377645524373614807695
-			    0.80978357257016684662414585801888523310377327237135123533486105150550
-			    0.83298126667443170541769356183636123851585134443710842085342312250327
-			    0.85505273712601651097815432807058769283799489703232752323972864020297
-			    0.87605805059819342311404752112834133907534524616033200346065614838499
-			    0.89605538457134395617480071802993782702457844484684048736655059118459
-			    0.91510070055336041656680197245527296654755880944161873770852665151657
-			    0.93324752865620386989366255071265925262560793377140310475404520234906
-			    0.95054684081207514789478913546381917504767901030880427426177057808809
-			    0.96704699339746024466331914650201513140746494542545306371969751473184
-			    0.98279372324732906798571061101466601449687745363162855676142508831798
-			    0.99783018390619045494496187944270463542510496590550026609871776901127
-			    1.01219701145133418325981347523809017175213711715353810435383625801215
-			    1.02593241134335292660599590143869494280346122674543977431139573494988
-			    1.03907225953609102762125033790727884531233378855364699989530509706554
-			    1.05165021254837366745986731208629982963024430034204461753698029655611
-			    1.06369782240255966094389111605254547856256296541932752568273985366635
-			    1.07524465330906808242086208732184320752064516718532174460312177009311
-			    1.08631839775787341806397958192567762897580047046812780208748680606431
-			    1.09694499030013626798639002132512259906130967805041989207206852796014
-			    1.10714871779409050301706546017853704007004764540143264667653920743371)))
-		(let ((mxerr 0.0))
-		  (do ((i 0 (+ i 1))
-		       (x 0.0 (+ x 0.05)))
-		      ((= i 40))
-		    (let ((err (abs (- (atan x) (list-ref atans i)))))
-		      (if (> err mxerr)
-			  (set! mxerr err))))
-		  (set! atan-err mxerr)))
-	      
-	      (let ((sqrts (list
-			    1.00000000000000000000000000000000000000000000000000000000000000000000
-			    1.41421356237309504880168872420969807856967187537694807317667973799073
-			    1.73205080756887729352744634150587236694280525381038062805580697945193
-			    2.00000000000000000000000000000000000000000000000000000000000000000000
-			    2.23606797749978969640917366873127623544061835961152572427089724541052
-			    2.44948974278317809819728407470589139196594748065667012843269256725096
-			    2.64575131106459059050161575363926042571025918308245018036833445920106
-			    2.82842712474619009760337744841939615713934375075389614635335947598146
-			    3.00000000000000000000000000000000000000000000000000000000000000000000
-			    3.16227766016837933199889354443271853371955513932521682685750485279259
-			    3.31662479035539984911493273667068668392708854558935359705868214611648
-			    3.46410161513775458705489268301174473388561050762076125611161395890386
-			    3.60555127546398929311922126747049594625129657384524621271045305622716
-			    3.74165738677394138558374873231654930175601980777872694630374546732003
-			    3.87298334620741688517926539978239961083292170529159082658757376611348
-			    4.00000000000000000000000000000000000000000000000000000000000000000000
-			    4.12310562561766054982140985597407702514719922537362043439863357309495
-			    4.24264068711928514640506617262909423570901562613084421953003921397219
-			    4.35889894354067355223698198385961565913700392523244493689034413815955
-			    4.47213595499957939281834733746255247088123671922305144854179449082104
-			    4.58257569495584000658804719372800848898445657676797190260724212390686
-			    4.69041575982342955456563011354446628058822835341173715360570189101702
-			    4.79583152331271954159743806416269391999670704190412934648530911444825
-			    4.89897948556635619639456814941178278393189496131334025686538513450192
-			    5.00000000000000000000000000000000000000000000000000000000000000000000
-			    5.09901951359278483002822410902278198956377094609959640758497080442593
-			    5.19615242270663188058233902451761710082841576143114188416742093835579
-			    5.29150262212918118100323150727852085142051836616490036073666891840213
-			    5.38516480713450403125071049154032955629512016164478883768038867001664
-			    5.47722557505166113456969782800802133952744694997983254226894449732493
-			    5.56776436283002192211947129891854952047639337757041430396843258560358
-			    5.65685424949238019520675489683879231427868750150779229270671895196292
-			    5.74456264653802865985061146821892931822026445798279236769987747056590
-			    5.83095189484530047087415287754558307652139833488597195445000674486781
-			    5.91607978309961604256732829156161704841550123079434032287971966914282
-			    6.00000000000000000000000000000000000000000000000000000000000000000000
-			    6.08276253029821968899968424520206706208497009478641118641915304648633
-			    6.16441400296897645025019238145424422523562402344457454487457207245839
-			    6.24499799839839820584689312093979446107295997799165630845297193060961
-			    6.32455532033675866399778708886543706743911027865043365371500970558518)))
-		(let ((mxerr 0.0))
-		  (do ((i 1 (+ i 1)))
-		      ((> i 40))
-		    (let ((err (abs (- (sqrt i) (list-ref sqrts (- i 1))))))
-		      (if (> err mxerr)
-			  (set! mxerr err))))
-		  (set! sqrt-err mxerr)))
-	      
-	      (if (> sin-err 1e-12) (format #t "sin err: ~A~%" sin-err))
-	      (if (> cos-err 1e-12) (format #t "cos err: ~A~%" cos-err))
-	      (if (> log-err 1e-12) (format #t "log err: ~A~%" log-err))
-	      (if (> asin-err 1e-12) (format #t "asin err: ~A~%" asin-err))
-	      (if (> atan-err 1e-12) (format #t "atan err: ~A~%" atan-err))
-	      (if (> sqrt-err 1e-12) (format #t "sqrt err: ~A~%" sqrt-err))
-	      )
-	    
-	    ))
+(if (and (not (null? error-data))
+	 with-error-data)
+    (begin
+      (format #t "op~16Terror~44Ttest~76Tresult~115Texpected~%")
+      (for-each
+       (lambda (op)
+	 (format #t "~A: ~16T~A ~40T~A ~70T~A ~110T~A~%" 
+		 (vector-ref op 0) (vector-ref op 1) (vector-ref op 2) (vector-ref op 3) (vector-ref op 4)))
+       error-data)
       
-      '(
-;;; this is the current s7 output from loading this file:
+      (let ((data '((3.0 0.14159265358979323846 0.1411200080598672)
+		    (31.0 0.41592653589793238462 0.404037645323065)
+		    (314.0 0.15926535897932384626 0.1585929060285728)
+		    (3141.0 0.59265358979323846264 0.5585640372121817)
+		    (31415.0 0.92653589793238462643 0.7995441773754675)
+		    (314159.0 0.26535897932384626433 0.262255699519879)
+		    (3141592.0 0.65358979323846264338 0.6080402764374114)
+		    (31415926.0 0.53589793238462643383 0.5106132968486387)
+		    (314159265.0 0.35897932384626433832 0.3513188023745885)
+		    (3141592653.0 0.58979323846264338327 0.5561892044494355)
+		    (31415926535.0 0.89793238462643383279 0.7820399858427447)
+		    (314159265358.0 0.97932384626433832795 0.8301205477998297)
+		    (3141592653589.0 0.79323846264338327950 0.7126289202333107)
+		    (31415926535897.0 0.93238462643383279502 0.8030432710678118)
+		    (314159265358979.0 0.32384626433832795028 0.3182152351447919)
+		    (3141592653589793.0 0.23846264338327950288 0.2362090532517409)
+		    (31415926535897932.0 0.38462643383279502884 0.3752128900123344)
+		    (314159265358979323.0 0.84626433832795028841 0.7488096950162713)
+		    (3141592653589793238.0 0.46264338327950288419 0.4463151633593201)
+		    (31415926535897932384.0 0.62643383279502884197 0.5862594566145847)
+		    (314159265358979323846.0 0.26433832795028841971 0.2612706361296674)
+		    (3141592653589793238462.0 0.64338327950288419716 0.5999057324027754)
+		    (31415926535897932384626.0 0.43383279502884197169 0.4203516113275538)
+		    (314159265358979323846264.0 0.33832795028841971693 0.3319102940355321)
+		    (3141592653589793238462643.0 0.38327950288419716939 .3739640276557301))) 
+	    (vals '())
+	    (mx-sin-err 0.0))
 	
-	" "
-	(let ((funcs (make-vector 3 #f))) (do ((i 0 (+ i 1))) ((= i 3)) (vector-set! funcs i (lambda () (+ i 1)))) (+ ((vector-ref funcs 0)) ((vector-ref funcs 1)) ((vector-ref funcs 2)))) got 12 but expected 6
+	(for-each
+	 (lambda (p)
+	   (let ((arg1 (car p))
+		 (arg2 (cadr p))
+		 (mxerr 0.0))
+	     (do ((i 0 (+ i 1))
+		  (x 0.0 (+ x .1)))
+		 ((= i 10))
+	       (let ((err (abs (- (abs (sin (- arg1 x))) (abs (sin (+ arg2 x)))))))
+		 (if (> err mxerr)
+		     (set! mxerr err))))
+	     (set! vals (cons mxerr vals))
+	     (set! mx-sin-err (max mx-sin-err (abs (- (sin arg2) (caddr p)))))))
+	 data)
 	
-	(let* ((x (quote (1 2 3))) (y (apply list x))) (not (eq? x y))) got #f but expected #t
+	(if (> mx-sin-err 1e-8)
+	    (begin
+	      (display "base sine seems inaccurate!  error: ") 
+	      (display mx-sin-err) 
+	      (newline)))
 	
-	format #t 1 output-port: 2! (this is testing output ports)
+	(set! vals (reverse vals))
 	
-	op              error                      test                            result                                 expected
-	bes-i0:         4.728274528735e-07      (bes-i0 100.0)                1.0737511994318e+42                     1.0737517071311e+42
-	*:              1.4453905801655e-16     (* 1234/11 1234/11 1+1i)      12584.760330579+12584.760330579i        12584.760330579+12584.760330579i
-	+:              1.2356560980092e-17     (+ 1.234+1.234i -1+1i)        0.234+2.234i                            0.234+2.234i
-	-:              7.065416064077e-15      (- 1234/11 1234/11 -1+1i)     1-1i                                    1-1i
-	/:              6.7706212385519e-12     (/ 1+1i 123.4 123.4)          6.5670402874788e-05+6.5670402874788e-05i 6.567040287e-05+6.567040287e-05i
-	magnitude:      4.3762690498963e-15     (magnitude 1e-08+1e-08i)      1.4142135623731e-08                     1.414214e-08
-	angle:          5.2180482157382e-15     (angle 3.1415926535898+1i)    0.30816907111599                        0.30816907111598
-	make-polar:     5.1075947370453e-12     (make-polar 1e-08 1234.0)     -7.9855062358758e-09+6.019276547625e-09i -7.98551e-09+6.01928e-09i
-	remainder:      1.1102230246252e-16     (remainder -3.1 2.5)          -0.6                                    -0.6
-	modulo:         1.1102230246252e-16     (modulo -3.1 2.0)             0.9                                     0.9
-	expt:           5.3037918931232e-12     (expt -1234-2.718281828459i -1-1e-08i) -0.00081036881365486+1.7851555921329e-06i -0.00081036881365+1.78515559e-06i
-	log:            1.9801079834368e-14     (log 8.0 1+1i)                0.97790391649038-2.2161063668189i       0.97790391649038-2.2161063668189i
-	exp:            6.2082941131998e-11     (exp 2.718281828459+1234000000i) 2.4081506430049-14.961700256459i     2.4081506420759-14.961700256608i
-	sqrt:           4.9628289840723e-12     (sqrt 1e-08+1e-08i)           0.00010986841134678+4.5508986056223e-05i 0.00010986841135+4.550898606e-05i
-	atanh:          3.3019134302818e-14     (atanh 1e-08+1e-08i)          9.9999999669809e-09+1e-08i              1e-08+1e-08i
-	acosh:          3.0063814632876e-11     (acosh 0-1234i)               7.8111635492012-1.5707963267949i        7.8111635489617-1.5707963267949i
-	asinh:          1.8798350372034e-07     (asinh -181440)               -12.801827480089                        -12.801829886622
-	tanh:           3.9570983863574e-10     (tanh 1e-08+1234000000i)      3.9600648213873e-07-6.2129419934418i    3.9600648244422e-07-6.2129419959003i
-	cosh:           3.8571780349279e-10     (cosh 1e-08+1234000000i)      0.15890913095152-9.8729321283003e-09i   0.15890913089022-9.8729321283989e-09i
-	sinh:           6.1863103554352e-11     (sinh 3.1415926535898+1234000000i) 1.8352001348474-11.444656792365i   1.8352001341396-11.44465679248i
-	atan:           1.6781042865365e-14     (atan 0+1e-08i)               0+1.0000000016781e-08i                  0+1e-08i
-	acos:           1.8259451651704e-08     (acos 181440)                 -0+12.801827480074i                     0+12.80182724632i
-	asin:           6.2060307610322e-09     (asin 1e-08+1234000000i)      8.1037277147488e-18+21.62667394299i     8.1037250521496e-18+21.626673808774i
-	tan:            4.2096697956986e-07     (tan 1234000000/3)            -18.780955178921                        -18.780947272762
-	cos:            2.2319583216357e-08     (cos 1234000000/3)            -0.053170110875237                      -0.05317013319482
-	sin:            1.1884160322495e-09     (sin 1234000000/3)            0.99858546920607                        0.99858546801766
-	string->number: 3.514766724748e-14      (string->number "1234567890123456789012345678901234567890.123456789e-30") 1234567890.1235 1234567890.1235
-	sin error > 1e-6 after 2^38.192705173229 or thereabouts
-	exp+log error > 1e-6 around 2^31.340047894875
-	tan error > 1e-6 around 2^46.506993328423
-	expt error > 1e-6 around 2^-46.506993328423
+	(let ((stop #f))
+	  (do ((i 0 (+ i 1)))
+	      ((or (number? stop)
+		   (= i (length vals))))
+	    (if (> (list-ref vals i) 1e-6)
+		(set! stop i)))
+	  (if (number? stop)
+	      (begin
+		(display "sin error > 1e-6 after 2^")
+		(display (/ (log (car (list-ref data stop))) (log 2.0)))
+		(display " or thereabouts")
+		(newline)))))
+      
+      (let ((data (list
+		   2.71828182845904523536028747135266249775724709369995957
+		   27.1828182845904523536028747135266249775724709369995957
+		   271.828182845904523536028747135266249775724709369995957
+		   2718.28182845904523536028747135266249775724709369995957
+		   27182.8182845904523536028747135266249775724709369995957
+		   271828.182845904523536028747135266249775724709369995957
+		   2718281.82845904523536028747135266249775724709369995957
+		   27182818.2845904523536028747135266249775724709369995957
+		   271828182.845904523536028747135266249775724709369995957
+		   2718281828.45904523536028747135266249775724709369995957
+		   27182818284.5904523536028747135266249775724709369995957
+		   271828182845.904523536028747135266249775724709369995957
+		   2718281828459.04523536028747135266249775724709369995957
+		   27182818284590.4523536028747135266249775724709369995957
+		   271828182845904.523536028747135266249775724709369995957
+		   2718281828459045.23536028747135266249775724709369995957
+		   27182818284590452.3536028747135266249775724709369995957
+		   271828182845904523.536028747135266249775724709369995957
+		   2718281828459045235.36028747135266249775724709369995957
+		   27182818284590452353.6028747135266249775724709369995957
+		   271828182845904523536.028747135266249775724709369995957
+		   2718281828459045235360.28747135266249775724709369995957
+		   27182818284590452353602.8747135266249775724709369995957
+		   271828182845904523536028.747135266249775724709369995957
+		   2718281828459045235360287.47135266249775724709369995957
+		   27182818284590452353602874.7135266249775724709369995957
+		   271828182845904523536028747.135266249775724709369995957
+		   2718281828459045235360287471.35266249775724709369995957
+		   27182818284590452353602874713.5266249775724709369995957)))
+	(let ((happy #t))
+	  (do ((i 0 (+ i 1))
+	       (dec 1.0 (* dec 10.0)))
+	      ((or (not happy)
+		   (= i (length data))))
+	    (let ((val (exp (+ 1.0 (log dec)))))
+	      (let ((err (abs (- (list-ref data i) val))))
+		(if (> err 1e-6)
+		    (begin
+		      (set! happy #f)
+		      (display "exp+log error > 1e-6 around 2^") (display (/ (log val) (log 2))) (newline))))))))
+      
+      (let ((data (list ; table[Tan[10^k], {k, 0, 30}] 
+		   1.55740772465490223050697480745836017308725077238152003838394660569886
+		   0.64836082745908667125912493300980867681687434298372497563362796739585
+		   -0.58721391515692907667780963564458789425876598687291954412663968360989
+		   1.47032415570271844598020880490391856915748389146711182025455665358979
+		   0.32097113462381472460896162480876337966088525010731594977977206336933
+		   -0.03577166295289877341133054456893096203777589491986804979647879769616
+		   -0.37362445398759902917349708857538141978530379801059302641978134928241
+		   -0.46353082785018908581469758918080168755473695345937070670149218665289
+		   -2.56377890672837725789840319603083470729708859667680805828679070820622
+		   0.65145220214514128858645272422054798185112543058289784681820964602226
+		   -0.55834963781124184656189340731863681858164809933060716499623295934358
+		   2.50424481449822111118237373761381771825510968075886393173926375110559
+		   -0.77230596813187614161063494471423746038444882506077057787558499031077
+		   -0.30175082856983471199636858701688775346296430492149675721730025846251
+		   0.21415652428250396225222102422385566728114779011753338339645623774420
+		   -1.67241478212758304295552142696079055033040910554091189243737002950172
+		   -1.24517343571840642168009129451609763781317676741030141327973693611564
+		   0.52456243090255001593041672482494038697466467439258592602675334853162
+		   -8.38854968059368800013526842602194492647448392917034135131083409265520
+		   2.47279376584652736033818679563656602249667799226358809957010483326311
+		   -0.84460246301988425418409323400055358116535547279258431245425813826798
+		   -0.89552329255426546888442598272446987755918451773757800611680045521648
+		   -1.62877822560689887854937593693954851354515116817021717086346127966844
+		   -0.98333523138083649717001389546802280189805226009031609173028377317771
+		   -11.87362630545544227571094967408372098364257316309876130680769667747893
+		   1.11612596981774655887307362253927728556627435787456734029790793087502
+		   -1.63758698713112186463163321344320618241852069893975176926240178134592
+		   -1.03173363516910726343237554775898936974208941138122693037794681869065
+		   6.35083773135836351463817396716338533781524290151157250457191403689220
+		   -110.81342510911236031336859049236316125148742351166700266651506403034426
+		   0.09048506806330217256622313805004127372738954023205417991033965089185)))
+	(let ((happy #t))
+	  (do ((i 0 (+ i 1))
+	       (dec 1.0 (* dec 10.0)))
+	      ((or (not happy)
+		   (= i (length data))))
+	    (let ((val (tan dec))) 
+	      (let ((err (abs (- (list-ref data i) val)))
+		    (err1 (- (tan (+ 0.1 (* our-pi dec))) (tan 0.1)))
+		    (err2 (- (tan (+ 1.0 (* our-pi dec))) (tan 1.0))))
+		(if (or (> err 1e-6)
+			(> err1 1e-6)
+			(> err2 1e-6))
+		    (begin
+		      (set! happy #f)
+		      (display "tan error > 1e-6 around 2^") (display (/ (log dec) (log 2))) (newline))))))))
+      
+      ;; table[(1/10^k)/(((1/10^k)^(1/10^k)) - 1), {k, 1, 30}]
+      ;;   the test came from calc_errors.txt from the web by "dave"
+      (let ((expts (list
+		    -0.48621160938616180680870317336747983548142173621715706851490974881717
+		    -0.22218561601345857583044966876729715619642038672598556073380084629504
+		    -0.14526540294689938889864991134840220307566223888497162784858064408875
+		    -0.10862362815109649171007844591526444220973735508130191198062253212652
+		    -0.08686389647659141105044978528770239308857034812798554177686261943193
+		    -0.07238291365169326382168151357331039782973682143307349669152489742891
+		    -0.06204211884333512141082278643490234288550259196615819050849846987015
+		    -0.05428681523790663196206398113420109019962541643547760927657854324749
+		    -0.04825494293369464924373092184737925979664303236414611590980578553450
+		    -0.04342944824032518278430110099994422226122739720915846151097610557365
+		    -0.03948131654165925705940460838351885560840418164027583205682137097699
+		    -0.03619120682577098563759637916147675090355043511246085981138602579761
+		    -0.03340726783876167905008686486133377017608955166698061593202699553920
+		    -0.03102103442166584483222349447696386196557178259759899539894506586562
+		    -0.02895296546021728851007526126398523685253569082526692705926181546848
+		    -0.02714340511895328922819555743231851877797306680518273360154914602559
+		    -0.02554673422960305368536052464215356633451937057629542604571806752914
+		    -0.02412747121684732425839605105092250802578858425793889081112350331353
+		    -0.02285760431069746466321731152192658331511007129540571803806313398860
+		    -0.02171472409516259138755644594583025411510361447234900258639235440074
+		    -0.02068068961444056322198232947221928963307055360980162368063530687389
+		    -0.01974065826832962852964676904166386737701808793240851850210059107980
+		    -0.01888236877840225337614103995289587314323465286757518193028428290776
+		    -0.01809560341263549281879753828819187842893320857975794377409033233328
+		    -0.01737177927613007310604520675666420329177588023219463316734886061171
+		    -0.01670363391935583952504342495833096470363065406937228989783888395986
+		    -0.01608498081123154917226403453394833638127396317791358170357400676126
+		    -0.01551051721083042241611174715416446722479989306441666312924319204483
+		    -0.01497567178976730440176306617453810628601368985529884710795141610434
+		    -0.01447648273010839425503763063105350274314656686012221887048754923492)))
+	(let ((happy #t))
+	  (do ((i 1 (+ i 1))) 
+	      ((or (= i (length expts))
+		   (not happy)))
+	    (catch #t
+		   (lambda ()
+		     (let ((val (/ (expt .1 i)
+				   (- (expt (expt .1 i) (expt .1 i)) 1))))
+		       (if (> (abs (- val (list-ref expts (- i 1)))) 1e-6)
+			   (begin
+			     (set! happy #f)
+			     (display "expt error > 1e-6 around 2^") (display (/ (log (expt .1 i)) (log 2))) (newline)))))
+		   (lambda args 
+		     (display "expt no accurate below around 2^") (display (/ (log (expt .1 i)) (log 2))) (newline))))))
+      
+      (let ((sin-err 0.0)
+	    (cos-err 0.0)
+	    (log-err 0.0)
+	    (asin-err 0.0)
+	    (atan-err 0.0)
+	    (sqrt-err 0.0))
+	;; data generated by mathtool in the arprec package
+	
+	;; another baddy: (tan 314159265358979323) should be -1.129792652308908544253650171110
+	
+	(let ((sins (list 
+		     0.00000000000000000000000000000000000000000000000000000000000000000000
+		     0.09983341664682815230681419841062202698991538801798225999276686156165
+		     0.19866933079506121545941262711838975037020672954020540398639599139797
+		     0.29552020666133957510532074568502737367783211174261844850153103617326
+		     0.38941834230865049166631175679570526459306018344395889511584896585734
+		     0.47942553860420300027328793521557138808180336794060067518861661312553
+		     0.56464247339503535720094544565865790710988808499415177102426589426735
+		     0.64421768723769105367261435139872018306581384457368964474396308809382
+		     0.71735609089952276162717461058138536619278523779142282098968252068287
+		     0.78332690962748338846138231571354862314014792572030960356048515256195
+		     0.84147098480789650665250232163029899962256306079837106567275170999191
+		     0.89120736006143533995180257787170353831890931945282652766035329176720
+		     0.93203908596722634967013443549482599541507058820873073536659789445024
+		     0.96355818541719296470134863003955481534204849131773911795564922309212
+		     0.98544972998846018065947457880609751735626167234736563194021894560084
+		     0.99749498660405443094172337114148732270665142592211582194997482405934
+		     0.99957360304150516434211382554623417197949791475491995534260751586102
+		     0.99166481045246861534613339864787565240681957116712372532710249102330
+		     0.97384763087819518653237317884335760670293947136523395566725825917196
+		     0.94630008768741448848970961163495776211399866559491176443047155279581
+		     0.90929742682568169539601986591174484270225497144789026837897301153096
+		     0.86320936664887377068075931326902458492047242489508107697183045949721
+		     0.80849640381959018430403691041611906515855960597557707903336060873485
+		     0.74570521217672017738540621164349953894264877802047425750762828050000
+		     0.67546318055115092656577152534128337425336495789352584226890212866520
+		     0.59847214410395649405185470218616227170359717157722357330262703263874
+		     0.51550137182146423525772693520936824389387858775426312126259173008382
+		     0.42737988023382993455605308585788064749647642266670256499017776070511
+		     0.33498815015590491954385375271242210603030652888358671068410107309479
+		     0.23924932921398232818425691873957537221555293029961877411621026588071
+		     0.14112000805986722210074480280811027984693326425226558415188264123242
+		     0.04158066243329057919469827159667310055461342296380675064800900076588
+		     -0.05837414342757990913721741461909518512512509908292656970935025422273)))
+	  (let ((mxerr 0.0))
+	    (do ((i 0 (+ i 1))
+		 (x 0.0 (+ x 0.1)))
+		((= i 32))
+	      (let ((err (abs (- (sin x) (list-ref sins i)))))
+		(if (> err mxerr)
+		    (set! mxerr err))))
+	    (set! sin-err mxerr)))
+	
+	(let ((coss (list 
+		     1.00000000000000000000000000000000000000000000000000000000000000000000
+		     0.99500416527802576609556198780387029483857622541508403595935274468526
+		     0.98006657784124163112419651674816887739352436080656799405254829012618
+		     0.95533648912560601964231022756804989824421408263203767451761361222758
+		     0.92106099400288508279852673205180161402585956931985044561508926713514
+		     0.87758256189037271611628158260382965199164519710974405299761086831595
+		     0.82533561490967829724095249895537603887809103918847038136974977367156
+		     0.76484218728448842625585999019186490926821055037370335607293245825206
+		     0.69670670934716542092074998164232492610178601370806078363714489414924
+		     0.62160996827066445648471615140713350872176136659123900757638348453897
+		     0.54030230586813971740093660744297660373231042061792222767009725538110
+		     0.45359612142557738777137005178471612212146729566259504745593805541880
+		     0.36235775447667357763837335562307602033994778557664862648774972093613
+		     0.26749882862458740699798410929287135927592992167912966191725336742182
+		     0.16996714290024093861674803520364980292818392102853430898236521149464
+		     0.07073720166770291008818985143426870908509102756334686942264541719092
+		     -0.02919952230128872620577046294649852444486472109384694500313007908245
+		     -0.12884449429552468408764285733487351410164007964520297633178213994289
+		     -0.22720209469308705531667430653058073247695158653826107158496911100681
+		     -0.32328956686350342227883369508031017459419076544223959990115436505106
+		     -0.41614683654714238699756822950076218976600077107554489075514997378196
+		     -0.50484610459985745162093852371916747040702337674136205964819622353659
+		     -0.58850111725534570852414261265492841629376036669872798974753517400616
+		     -0.66627602127982419331788057116601723016327537100376988865266957182167
+		     -0.73739371554124549960882222733478290843301289199228479878436568873073
+		     -0.80114361554693371483350279046735166442856784876782013507459799166202
+		     -0.85688875336894723379770215164520111235392263823324404910501242714241
+		     -0.90407214201706114798252728194333012633184973516362471104126694868604
+		     -0.94222234066865815258678811736615401246341423446824662018098201995710
+		     -0.97095816514959052178110666934553217911761475942423954213867099245327
+		     -0.98999249660044545727157279473126130239367909661558832881408593292832
+		     -0.99913515027327946449237605454146626283664166994794274354471598254947
+		     -0.99829477579475308466166072228358269144701258595166016759508002045139)))
+	  (let ((mxerr 0.0))
+	    (do ((i 0 (+ i 1))
+		 (x 0.0 (+ x 0.1)))
+		((= i 32))
+	      (let ((err (abs (- (cos x) (list-ref coss i)))))
+		(if (> err mxerr)
+		    (set! mxerr err))))
+	    (set! cos-err mxerr)))
+	
+	(let ((logs-1 (list
+		       -4.60517018598809136803598290936872841520220297725754595206665580193514
+		       -3.91202300542814605861875078791055184712670284289729069794597579244175
+		       -3.50655789731998167664073767244620271055471241943479650033196146829765
+		       -3.21887582486820074920151866645237527905120270853703544382529578294835
+		       -2.99573227355399099343522357614254077567660162298902823015400791046096
+		       -2.81341071676003636722350555098802614247921228507454124621128145880425
+		       -2.65926003693277806293063016592554868556511824767568476360726565199756
+		       -2.52572864430825543978428654499419871097570257417678018970461577345496
+		       -2.40794560865187198524549243552367700590722186161204704859726713466015
+		       -2.30258509299404568401799145468436420760110148862877297603332790096757
+		       -2.20727491318972082397403933140359911538049612332012877684808809280457
+		       -2.12026353620009105780627342952984957440371215071428599209060144931086
+		       -2.04022082852655463198249546780340981039693503249733883564761029127168
+		       -1.96611285637283275351339804446737211748961811331542950948658564250417
+		       -1.89711998488588130203997833922001507102911106516627877841931357682347
+		       -1.83258146374831013036705442353602214290020243981652493558393576396157
+		       -1.77195684193187528778644829149560187961399996467180116476941806405285
+		       -1.71479842809192667582826031406550043783172172725179179447658712516676
+		       -1.66073120682165090802695547748087487796482371595841713352869556552585
+		       -1.60943791243410037460075933322618763952560135426851772191264789147417))
+	      (logs-2 (list
+		       2.30258509299404568401799145468436420760110148862877297603332790096757
+		       2.99573227355399099343522357614254077567660162298902823015400791046096
+		       3.40119738166215537541323669160688991224859204645152242776802223460506
+		       3.68887945411393630285245569760071734375210175734928348427468791995435
+		       3.91202300542814605861875078791055184712670284289729069794597579244175
+		       4.09434456222210068483046881306506648032409218081177768188870224409846
+		       4.24849524204935898912334419812754393723818621821063416449271805090515
+		       4.38202663467388161226968781905889391182760189170953873839536792944775
+		       4.49980967033026506680848192852941561689608260427427187950271656824256
+		       4.60517018598809136803598290936872841520220297725754595206665580193514
+		       4.70048036579241622807993503264949350742280834256619015125189561009814
+		       4.78749174278204599424770093452324304839959231517203293600938225359185
+		       4.86753445045558242007147889624968281240636943338898009245237341163103
+		       4.94164242260930429854057631958572050531368635257088941861339806039854
+		       5.01063529409625575001399602483307755177419340072004014968067012607924
+		       5.07517381523382692168691994051707047990310202606979399251604793894114
+		       5.13579843705026176426752607255749074318930450121451776333056563884986
+		       5.19295685089021037622571404998759218497158273863452713362339657773595
+		       5.24702407216048614402701888657221774483848074992790179457128813737686
+		       5.29831736654803667745321503082690498327770311161780120618733581142853)))
+	  (let ((mxerr 0.0))
+	    (do ((i 0 (+ i 1))
+		 (x 0.01 (+ x 0.01))
+		 (y 10.0 (+ y 10.0)))
+		((= i 20))
+	      (let ((err (max (abs (- (log x) (list-ref logs-1 i)))
+			      (abs (- (log y) (list-ref logs-2 i))))))
+		(if (> err mxerr)
+		    (set! mxerr err))))
+	    (set! log-err mxerr)))
+	
+	(let ((asins (list
+		      0.00000000000000000000000000000000000000000000000000000000000000000000
+		      0.02500260489936113599406838915349107150195748368840710160729904233944
+		      0.05002085680577001466274438682046411497780608049468789272874398055703
+		      0.07507049107671654265775143572317089898194705496817785120910161299955
+		      0.10016742116155979634552317945269331856867597222962954139102385503640
+		      0.12532783116806539687456698635708471804814772683867237523396403098649
+		      0.15056827277668602642326030146739539047425784470580485344319902595849
+		      0.17590576816371628737774199743846051972730948209298253171964068749984
+		      0.20135792079033079145512555221762341024003808140222838625725124345560
+		      0.22694303617851994909359260763689579636930963064761339672521677581090
+		      0.25268025514207865348565743699371097225219373309683819363392377874057
+		      0.27858970239165058217050815183568882129133935843106227203280647300877
+		      0.30469265401539750797200296122752916695456003170677638739297794874647
+		      0.33101172808929452771961639961139035858195303667932389628972377319123
+		      0.35757110364551028671483849232064256784674132498948776325141270863037
+		      0.38439677449563908303819487296704697375277948430656504155058375479079
+		      0.41151684606748801938473789761733560485570113512702585178394678070009
+		      0.43896188560976067483321619602147236009843505358239561712817387552271
+		      0.46676533904729636185033976030413712126156503909241369925276357159851
+		      0.49496403171689461363027991615293072605447706550005723007748628111125
+		      0.52359877559829887307710723054658381403286156656251763682915743205130
+		      0.55271511309678317285035596261806027710654731438452549350875265730232
+		      0.58236423786874344183204729090997636797897358751436418853659347126034
+		      0.61260414804862246566851988030718610964520075565860642564808142300476
+		      0.64350110879328438680280922871732263804151059111531238286560611871351
+		      0.67513153293703164720905626529438801420418535124967921737841984904557
+		      0.70758443672535557545286474430459468476197717933193633785448106190261
+		      0.74096470220302000164595109317351452207440076171206748884906746063949
+		      0.77539749661075306374035335271498711355578873864116199359771996373272
+		      0.81103439428758154765966499519016990220446846078107874166646027112837
+		      0.84806207898148100805294433899841808007336621326311264286071816357020
+		      0.88671509499956738294114522105877020358977872696702934222169938478807
+		      0.92729521800161223242851246292242880405707410857224052762186617744039
+		      0.97020219992884564627294507144637975649395034794671876838355202607208
+		      1.01598529381482513116231792163105149400316379682053508778250056579494
+		      1.06543581651073931226000681765232949759419723349387652321962473867275
+		      1.11976951499863418668667705584539961589516218640330288237568186391443
+		      1.18103559399742179696187441797151603545275866323114802494551011137296
+		      1.25323589750337525873710391866600599574114067342736145636046515573871
+		      1.34672104149307735953151290762049740983950868154764854526693662237423
+		      1.57079632679489661923132169163975144209858469968755291048747229615390)))
+	  (let ((mxerr 0.0))
+	    (do ((i 0 (+ i 1))
+		 (x 0.0 (+ x (/ 1.0 40.0))))
+		((= i 40))
+	      (let ((err (abs (- (asin x) (list-ref asins i)))))
+		(if (> err mxerr)
+		    (set! mxerr err))))
+	    (set! asin-err mxerr)))
+	
+	(let ((atans (list
+		      0.00000000000000000000000000000000000000000000000000000000000000000000
+		      0.04995839572194276141000628703484488149127708042350717441085345482998
+		      0.09966865249116202737844611987802059024327832250431464801550877681002
+		      0.14888994760949725058653039165586728099052584656913639751654183508627
+		      0.19739555984988075837004976519479029344758510378785210151768894024103
+		      0.24497866312686415417208248121127581091414409838118406712737591466735
+		      0.29145679447786709199560462143289119350316759901206541927220608308729
+		      0.33667481938672718139669863134176645842796861176681965716976593102220
+		      0.38050637711236488630358791681043310449740571365810083757630562232420
+		      0.42285392613294071296648279098114197360332058559089653470801277782477
+		      0.46364760900080611621425623146121440202853705428612026381093308872019
+		      0.50284321092786082733088202924527755577645581499776483101147435179592
+		      0.54041950027058415544357836460859991013514825146259238811636023340959
+		      0.57637522059118368022757047839377004593402018294846332167674413471879
+		      0.61072596438920861654375887649023609381850306612882761584286773000023
+		      0.64350110879328438680280922871732263804151059111531238286560611871351
+		      0.67474094222355266305652097360981361507400625484071242312092170496930
+		      0.70449406424221771665748034078199625698360683805607748632242138272858
+		      0.73281510178650659164079207273428025198575567935825608631050693192821
+		      0.75976275487577082892296119539998182400552294838843900175686400378812
+		      0.78539816339744830961566084581987572104929234984377645524373614807695
+		      0.80978357257016684662414585801888523310377327237135123533486105150550
+		      0.83298126667443170541769356183636123851585134443710842085342312250327
+		      0.85505273712601651097815432807058769283799489703232752323972864020297
+		      0.87605805059819342311404752112834133907534524616033200346065614838499
+		      0.89605538457134395617480071802993782702457844484684048736655059118459
+		      0.91510070055336041656680197245527296654755880944161873770852665151657
+		      0.93324752865620386989366255071265925262560793377140310475404520234906
+		      0.95054684081207514789478913546381917504767901030880427426177057808809
+		      0.96704699339746024466331914650201513140746494542545306371969751473184
+		      0.98279372324732906798571061101466601449687745363162855676142508831798
+		      0.99783018390619045494496187944270463542510496590550026609871776901127
+		      1.01219701145133418325981347523809017175213711715353810435383625801215
+		      1.02593241134335292660599590143869494280346122674543977431139573494988
+		      1.03907225953609102762125033790727884531233378855364699989530509706554
+		      1.05165021254837366745986731208629982963024430034204461753698029655611
+		      1.06369782240255966094389111605254547856256296541932752568273985366635
+		      1.07524465330906808242086208732184320752064516718532174460312177009311
+		      1.08631839775787341806397958192567762897580047046812780208748680606431
+		      1.09694499030013626798639002132512259906130967805041989207206852796014
+		      1.10714871779409050301706546017853704007004764540143264667653920743371)))
+	  (let ((mxerr 0.0))
+	    (do ((i 0 (+ i 1))
+		 (x 0.0 (+ x 0.05)))
+		((= i 40))
+	      (let ((err (abs (- (atan x) (list-ref atans i)))))
+		(if (> err mxerr)
+		    (set! mxerr err))))
+	    (set! atan-err mxerr)))
+	
+	(let ((sqrts (list
+		      1.00000000000000000000000000000000000000000000000000000000000000000000
+		      1.41421356237309504880168872420969807856967187537694807317667973799073
+		      1.73205080756887729352744634150587236694280525381038062805580697945193
+		      2.00000000000000000000000000000000000000000000000000000000000000000000
+		      2.23606797749978969640917366873127623544061835961152572427089724541052
+		      2.44948974278317809819728407470589139196594748065667012843269256725096
+		      2.64575131106459059050161575363926042571025918308245018036833445920106
+		      2.82842712474619009760337744841939615713934375075389614635335947598146
+		      3.00000000000000000000000000000000000000000000000000000000000000000000
+		      3.16227766016837933199889354443271853371955513932521682685750485279259
+		      3.31662479035539984911493273667068668392708854558935359705868214611648
+		      3.46410161513775458705489268301174473388561050762076125611161395890386
+		      3.60555127546398929311922126747049594625129657384524621271045305622716
+		      3.74165738677394138558374873231654930175601980777872694630374546732003
+		      3.87298334620741688517926539978239961083292170529159082658757376611348
+		      4.00000000000000000000000000000000000000000000000000000000000000000000
+		      4.12310562561766054982140985597407702514719922537362043439863357309495
+		      4.24264068711928514640506617262909423570901562613084421953003921397219
+		      4.35889894354067355223698198385961565913700392523244493689034413815955
+		      4.47213595499957939281834733746255247088123671922305144854179449082104
+		      4.58257569495584000658804719372800848898445657676797190260724212390686
+		      4.69041575982342955456563011354446628058822835341173715360570189101702
+		      4.79583152331271954159743806416269391999670704190412934648530911444825
+		      4.89897948556635619639456814941178278393189496131334025686538513450192
+		      5.00000000000000000000000000000000000000000000000000000000000000000000
+		      5.09901951359278483002822410902278198956377094609959640758497080442593
+		      5.19615242270663188058233902451761710082841576143114188416742093835579
+		      5.29150262212918118100323150727852085142051836616490036073666891840213
+		      5.38516480713450403125071049154032955629512016164478883768038867001664
+		      5.47722557505166113456969782800802133952744694997983254226894449732493
+		      5.56776436283002192211947129891854952047639337757041430396843258560358
+		      5.65685424949238019520675489683879231427868750150779229270671895196292
+		      5.74456264653802865985061146821892931822026445798279236769987747056590
+		      5.83095189484530047087415287754558307652139833488597195445000674486781
+		      5.91607978309961604256732829156161704841550123079434032287971966914282
+		      6.00000000000000000000000000000000000000000000000000000000000000000000
+		      6.08276253029821968899968424520206706208497009478641118641915304648633
+		      6.16441400296897645025019238145424422523562402344457454487457207245839
+		      6.24499799839839820584689312093979446107295997799165630845297193060961
+		      6.32455532033675866399778708886543706743911027865043365371500970558518)))
+	  (let ((mxerr 0.0))
+	    (do ((i 1 (+ i 1)))
+		((> i 40))
+	      (let ((err (abs (- (sqrt i) (list-ref sqrts (- i 1))))))
+		(if (> err mxerr)
+		    (set! mxerr err))))
+	    (set! sqrt-err mxerr)))
+	
+	(if (> sin-err 1e-12) (format #t "sin err: ~A~%" sin-err))
+	(if (> cos-err 1e-12) (format #t "cos err: ~A~%" cos-err))
+	(if (> log-err 1e-12) (format #t "log err: ~A~%" log-err))
+	(if (> asin-err 1e-12) (format #t "asin err: ~A~%" asin-err))
+	(if (> atan-err 1e-12) (format #t "atan err: ~A~%" atan-err))
+	(if (> sqrt-err 1e-12) (format #t "sqrt err: ~A~%" sqrt-err))
 	)
       
+      ))
+
+'(
+;;; this is the current s7 output from loading this file:
+  
+  " "
+  (let ((funcs (make-vector 3 #f))) (do ((i 0 (+ i 1))) ((= i 3)) (vector-set! funcs i (lambda () (+ i 1)))) (+ ((vector-ref funcs 0)) ((vector-ref funcs 1)) ((vector-ref funcs 2)))) got 12 but expected 6
+  
+  (let* ((x (quote (1 2 3))) (y (apply list x))) (not (eq? x y))) got #f but expected #t
+  
+  format #t 1 output-port: 2! (this is testing output ports)
+  
+  op              error                      test                            result                                 expected
+  bes-i0:         4.728274528735e-07      (bes-i0 100.0)                1.0737511994318e+42                     1.0737517071311e+42
+  *:              1.4453905801655e-16     (* 1234/11 1234/11 1+1i)      12584.760330579+12584.760330579i        12584.760330579+12584.760330579i
+  +:              1.2356560980092e-17     (+ 1.234+1.234i -1+1i)        0.234+2.234i                            0.234+2.234i
+  -:              7.065416064077e-15      (- 1234/11 1234/11 -1+1i)     1-1i                                    1-1i
+  /:              6.7706212385519e-12     (/ 1+1i 123.4 123.4)          6.5670402874788e-05+6.5670402874788e-05i 6.567040287e-05+6.567040287e-05i
+  magnitude:      4.3762690498963e-15     (magnitude 1e-08+1e-08i)      1.4142135623731e-08                     1.414214e-08
+  angle:          5.2180482157382e-15     (angle 3.1415926535898+1i)    0.30816907111599                        0.30816907111598
+  make-polar:     5.1075947370453e-12     (make-polar 1e-08 1234.0)     -7.9855062358758e-09+6.019276547625e-09i -7.98551e-09+6.01928e-09i
+  remainder:      1.1102230246252e-16     (remainder -3.1 2.5)          -0.6                                    -0.6
+  modulo:         1.1102230246252e-16     (modulo -3.1 2.0)             0.9                                     0.9
+  expt:           5.3037918931232e-12     (expt -1234-2.718281828459i -1-1e-08i) -0.00081036881365486+1.7851555921329e-06i -0.00081036881365+1.78515559e-06i
+  log:            1.9801079834368e-14     (log 8.0 1+1i)                0.97790391649038-2.2161063668189i       0.97790391649038-2.2161063668189i
+  exp:            6.2082941131998e-11     (exp 2.718281828459+1234000000i) 2.4081506430049-14.961700256459i     2.4081506420759-14.961700256608i
+  sqrt:           4.9628289840723e-12     (sqrt 1e-08+1e-08i)           0.00010986841134678+4.5508986056223e-05i 0.00010986841135+4.550898606e-05i
+  atanh:          3.3019134302818e-14     (atanh 1e-08+1e-08i)          9.9999999669809e-09+1e-08i              1e-08+1e-08i
+  acosh:          3.0063814632876e-11     (acosh 0-1234i)               7.8111635492012-1.5707963267949i        7.8111635489617-1.5707963267949i
+  asinh:          1.8798350372034e-07     (asinh -181440)               -12.801827480089                        -12.801829886622
+  tanh:           3.9570983863574e-10     (tanh 1e-08+1234000000i)      3.9600648213873e-07-6.2129419934418i    3.9600648244422e-07-6.2129419959003i
+  cosh:           3.8571780349279e-10     (cosh 1e-08+1234000000i)      0.15890913095152-9.8729321283003e-09i   0.15890913089022-9.8729321283989e-09i
+  sinh:           6.1863103554352e-11     (sinh 3.1415926535898+1234000000i) 1.8352001348474-11.444656792365i   1.8352001341396-11.44465679248i
+  atan:           1.6781042865365e-14     (atan 0+1e-08i)               0+1.0000000016781e-08i                  0+1e-08i
+  acos:           1.8259451651704e-08     (acos 181440)                 -0+12.801827480074i                     0+12.80182724632i
+  asin:           6.2060307610322e-09     (asin 1e-08+1234000000i)      8.1037277147488e-18+21.62667394299i     8.1037250521496e-18+21.626673808774i
+  tan:            4.2096697956986e-07     (tan 1234000000/3)            -18.780955178921                        -18.780947272762
+  cos:            2.2319583216357e-08     (cos 1234000000/3)            -0.053170110875237                      -0.05317013319482
+  sin:            1.1884160322495e-09     (sin 1234000000/3)            0.99858546920607                        0.99858546801766
+  string->number: 3.514766724748e-14      (string->number "1234567890123456789012345678901234567890.123456789e-30") 1234567890.1235 1234567890.1235
+  sin error > 1e-6 after 2^38.192705173229 or thereabouts
+  exp+log error > 1e-6 around 2^31.340047894875
+  tan error > 1e-6 around 2^46.506993328423
+  expt error > 1e-6 around 2^-46.506993328423
+  )
+
+
+(if with-the-bug-finding-machine
+    (let ((tries (if (integer? with-the-bug-finding-machine) with-the-bug-finding-machine 10000))
+	  (err-max 1e-12)
+	  (err-max-12 1e-15)
+	  (expt-max (if with-bignums 100 31))) ; 63 is fine
       
-      (if with-the-bug-finding-machine
-	  (let ((tries (if (integer? with-the-bug-finding-machine) with-the-bug-finding-machine 10000))
-		(err-max 1e-12)
-		(err-max-12 1e-15)
-		(expt-max (if with-bignums 100 31))) ; 63 is fine
-	    
-	    
+      
       ;;; --------------------------------------------------------------------------------
       ;;; these are for testing the logical funcs -- taken from slib
-	    
-	    ;; "logical.scm", bit access and operations for integers for Scheme
-	    ;; Copyright (C) 1991, 1993, 2001, 2003 Aubrey Jaffer
-	    ;;
-	    ;;Permission to copy this software, to modify it, to redistribute it,
-	    ;;to distribute modified versions, and to use it for any purpose is
-	    ;;granted, subject to the following restrictions and understandings.
-	    ;;
-	    ;;1.  Any copy made of this software must include this copyright notice
-	    ;;in full.
-	    ;;
-	    ;;2.  I have made no warranty or representation that the operation of
-	    ;;this software will be error-free, and I am under no obligation to
-	    ;;provide any services, by way of maintenance, update, or otherwise.
-	    ;;
-	    ;;3.  In conjunction with products arising from the use of this
-	    ;;material, there shall be no use of my name in any advertising,
-	    ;;promotional, or sales literature without prior written consent in
-	    ;;each case.
-	    
-	    (define logical:integer-expt
-	      (if (provided? 'inexact)
-		  expt
-		  (lambda (n k)
-		    (do ((x n (* x x))
-			 (j k (quotient j 2))
-			 (acc 1 (if (even? j) acc (* x acc))))
-			((<= j 1)
-			 (case j
-			   ((0) acc)
-			   ((1) (* x acc))
-			   (else (slib:error 'integer-expt n k))))))))
-	    
-	    (define logical:boole-xor
-	      '#(#(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)
-		 #(1 0 3 2 5 4 7 6 9 8 11 10 13 12 15 14)
-		 #(2 3 0 1 6 7 4 5 10 11 8 9 14 15 12 13)
-		 #(3 2 1 0 7 6 5 4 11 10 9 8 15 14 13 12)
-		 #(4 5 6 7 0 1 2 3 12 13 14 15 8 9 10 11)
-		 #(5 4 7 6 1 0 3 2 13 12 15 14 9 8 11 10)
-		 #(6 7 4 5 2 3 0 1 14 15 12 13 10 11 8 9)
-		 #(7 6 5 4 3 2 1 0 15 14 13 12 11 10 9 8)
-		 #(8 9 10 11 12 13 14 15 0 1 2 3 4 5 6 7)
-		 #(9 8 11 10 13 12 15 14 1 0 3 2 5 4 7 6)
-		 #(10 11 8 9 14 15 12 13 2 3 0 1 6 7 4 5)
-		 #(11 10 9 8 15 14 13 12 3 2 1 0 7 6 5 4)
-		 #(12 13 14 15 8 9 10 11 4 5 6 7 0 1 2 3)
-		 #(13 12 15 14 9 8 11 10 5 4 7 6 1 0 3 2)
-		 #(14 15 12 13 10 11 8 9 6 7 4 5 2 3 0 1)
-		 #(15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0)))
-	    
-	    (define logical:boole-and
-	      '#(#(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-		 #(0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1)
-		 #(0 0 2 2 0 0 2 2 0 0 2 2 0 0 2 2)
-		 #(0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3)
-		 #(0 0 0 0 4 4 4 4 0 0 0 0 4 4 4 4)
-		 #(0 1 0 1 4 5 4 5 0 1 0 1 4 5 4 5)
-		 #(0 0 2 2 4 4 6 6 0 0 2 2 4 4 6 6)
-		 #(0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7)
-		 #(0 0 0 0 0 0 0 0 8 8 8 8 8 8 8 8)
-		 #(0 1 0 1 0 1 0 1 8 9 8 9 8 9 8 9)
-		 #(0 0 2 2 0 0 2 2 8 8 10 10 8 8 10 10)
-		 #(0 1 2 3 0 1 2 3 8 9 10 11 8 9 10 11)
-		 #(0 0 0 0 4 4 4 4 8 8 8 8 12 12 12 12)
-		 #(0 1 0 1 4 5 4 5 8 9 8 9 12 13 12 13)
-		 #(0 0 2 2 4 4 6 6 8 8 10 10 12 12 14 14)
-		 #(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)))
-	    
-	    (define (logical:ash-4 x)
-	      (if (negative? x)
-		  (+ -1 (quotient (+ 1 x) 16))
-		  (quotient x 16)))
-	    
-	    (define logical:logand
-	      (letrec
-		  ((lgand
-		    (lambda (n2 n1 scl acc)
-		      (cond ((= n1 n2) (+ acc (* scl n1)))
-			    ((zero? n2) acc)
-			    ((zero? n1) acc)
-			    (else (lgand (logical:ash-4 n2)
-					 (logical:ash-4 n1)
-					 (* 16 scl)
-					 (+ (* (vector-ref (vector-ref logical:boole-and
-								       (modulo n1 16))
-							   (modulo n2 16))
-					       scl)
-					    acc)))))))
-		(lambda (n1 n2) (lgand n2 n1 1 0))))
-	    
-	    (define logical:logior
-	      (letrec
-		  ((lgior
-		    (lambda (n2 n1 scl acc)
-		      (cond ((= n1 n2) (+ acc (* scl n1)))
-			    ((zero? n2) (+ acc (* scl n1)))
-			    ((zero? n1) (+ acc (* scl n2)))
-			    (else (lgior (logical:ash-4 n2)
-					 (logical:ash-4 n1)
-					 (* 16 scl)
-					 (+ (* (- 15 (vector-ref
-						      (vector-ref logical:boole-and
-								  (- 15 (modulo n1 16)))
-						      (- 15 (modulo n2 16))))
-					       scl)
-					    acc)))))))
-		(lambda (n1 n2) (lgior n2 n1 1 0))))
-	    
-	    (define logical:logxor
-	      (letrec
-		  ((lgxor
-		    (lambda (n2 n1 scl acc)
-		      (cond ((= n1 n2) acc)
-			    ((zero? n2) (+ acc (* scl n1)))
-			    ((zero? n1) (+ acc (* scl n2)))
-			    (else (lgxor (logical:ash-4 n2)
-					 (logical:ash-4 n1)
-					 (* 16 scl)
-					 (+ (* (vector-ref (vector-ref logical:boole-xor
-								       (modulo n1 16))
-							   (modulo n2 16))
-					       scl)
-					    acc)))))))
-		(lambda (n1 n2) (lgxor n2 n1 1 0))))
-	    
-	    (define (logical:lognot n) (- -1 n))
-	    
-	    (define (logical:ash n count)
-	      (if (negative? count)
-		  (let ((k (logical:integer-expt 2 (- count))))
-		    (if (negative? n)
-			(+ -1 (quotient (+ 1 n) k))
-			(quotient n k)))
-		  (* (logical:integer-expt 2 count) n)))
-	    
-	    (define logical:integer-length
-	      (letrec ((intlen (lambda (n tot)
-				 (case n
-				   ((0 -1) (+ 0 tot))
-				   ((1 -2) (+ 1 tot))
-				   ((2 3 -3 -4) (+ 2 tot))
-				   ((4 5 6 7 -5 -6 -7 -8) (+ 3 tot))
-				   (else (intlen (logical:ash-4 n) (+ 4 tot)))))))
-		(lambda (n) (intlen n 0))))
-	    
-	    ;; --------------------------------------------------------------------------------
-	    ;; end of slib borrowings
-	    ;; --------------------------------------------------------------------------------
-	    
-	    
-	    (if (and (provided? 's7) (defined? 'current-time) (defined? 'mus-rand-seed)) (set! (mus-rand-seed) (current-time)))
-	    
-	    (format #t "the bug machine is running...")
-	    
-	    (letrec ((distance (lambda (a b) 
-				 (magnitude (- a b))
-				 ;; (magnitude (- (exact->inexact a) (exact->inexact b)))
-				 ))
-		     
-		     (choose-number (lambda ()
+      
+      ;; "logical.scm", bit access and operations for integers for Scheme
+      ;; Copyright (C) 1991, 1993, 2001, 2003 Aubrey Jaffer
+      ;;
+      ;;Permission to copy this software, to modify it, to redistribute it,
+      ;;to distribute modified versions, and to use it for any purpose is
+      ;;granted, subject to the following restrictions and understandings.
+      ;;
+      ;;1.  Any copy made of this software must include this copyright notice
+      ;;in full.
+      ;;
+      ;;2.  I have made no warranty or representation that the operation of
+      ;;this software will be error-free, and I am under no obligation to
+      ;;provide any services, by way of maintenance, update, or otherwise.
+      ;;
+      ;;3.  In conjunction with products arising from the use of this
+      ;;material, there shall be no use of my name in any advertising,
+      ;;promotional, or sales literature without prior written consent in
+      ;;each case.
+      
+      (define logical:integer-expt
+	(if (provided? 'inexact)
+	    expt
+	    (lambda (n k)
+	      (do ((x n (* x x))
+		   (j k (quotient j 2))
+		   (acc 1 (if (even? j) acc (* x acc))))
+		  ((<= j 1)
+		   (case j
+		     ((0) acc)
+		     ((1) (* x acc))
+		     (else (slib:error 'integer-expt n k))))))))
+      
+      (define logical:boole-xor
+	'#(#(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)
+	   #(1 0 3 2 5 4 7 6 9 8 11 10 13 12 15 14)
+	   #(2 3 0 1 6 7 4 5 10 11 8 9 14 15 12 13)
+	   #(3 2 1 0 7 6 5 4 11 10 9 8 15 14 13 12)
+	   #(4 5 6 7 0 1 2 3 12 13 14 15 8 9 10 11)
+	   #(5 4 7 6 1 0 3 2 13 12 15 14 9 8 11 10)
+	   #(6 7 4 5 2 3 0 1 14 15 12 13 10 11 8 9)
+	   #(7 6 5 4 3 2 1 0 15 14 13 12 11 10 9 8)
+	   #(8 9 10 11 12 13 14 15 0 1 2 3 4 5 6 7)
+	   #(9 8 11 10 13 12 15 14 1 0 3 2 5 4 7 6)
+	   #(10 11 8 9 14 15 12 13 2 3 0 1 6 7 4 5)
+	   #(11 10 9 8 15 14 13 12 3 2 1 0 7 6 5 4)
+	   #(12 13 14 15 8 9 10 11 4 5 6 7 0 1 2 3)
+	   #(13 12 15 14 9 8 11 10 5 4 7 6 1 0 3 2)
+	   #(14 15 12 13 10 11 8 9 6 7 4 5 2 3 0 1)
+	   #(15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0)))
+      
+      (define logical:boole-and
+	'#(#(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
+	   #(0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1)
+	   #(0 0 2 2 0 0 2 2 0 0 2 2 0 0 2 2)
+	   #(0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3)
+	   #(0 0 0 0 4 4 4 4 0 0 0 0 4 4 4 4)
+	   #(0 1 0 1 4 5 4 5 0 1 0 1 4 5 4 5)
+	   #(0 0 2 2 4 4 6 6 0 0 2 2 4 4 6 6)
+	   #(0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7)
+	   #(0 0 0 0 0 0 0 0 8 8 8 8 8 8 8 8)
+	   #(0 1 0 1 0 1 0 1 8 9 8 9 8 9 8 9)
+	   #(0 0 2 2 0 0 2 2 8 8 10 10 8 8 10 10)
+	   #(0 1 2 3 0 1 2 3 8 9 10 11 8 9 10 11)
+	   #(0 0 0 0 4 4 4 4 8 8 8 8 12 12 12 12)
+	   #(0 1 0 1 4 5 4 5 8 9 8 9 12 13 12 13)
+	   #(0 0 2 2 4 4 6 6 8 8 10 10 12 12 14 14)
+	   #(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15)))
+      
+      (define (logical:ash-4 x)
+	(if (negative? x)
+	    (+ -1 (quotient (+ 1 x) 16))
+	    (quotient x 16)))
+      
+      (define logical:logand
+	(letrec
+	    ((lgand
+	      (lambda (n2 n1 scl acc)
+		(cond ((= n1 n2) (+ acc (* scl n1)))
+		      ((zero? n2) acc)
+		      ((zero? n1) acc)
+		      (else (lgand (logical:ash-4 n2)
+				   (logical:ash-4 n1)
+				   (* 16 scl)
+				   (+ (* (vector-ref (vector-ref logical:boole-and
+								 (modulo n1 16))
+						     (modulo n2 16))
+					 scl)
+				      acc)))))))
+	  (lambda (n1 n2) (lgand n2 n1 1 0))))
+      
+      (define logical:logior
+	(letrec
+	    ((lgior
+	      (lambda (n2 n1 scl acc)
+		(cond ((= n1 n2) (+ acc (* scl n1)))
+		      ((zero? n2) (+ acc (* scl n1)))
+		      ((zero? n1) (+ acc (* scl n2)))
+		      (else (lgior (logical:ash-4 n2)
+				   (logical:ash-4 n1)
+				   (* 16 scl)
+				   (+ (* (- 15 (vector-ref
+						(vector-ref logical:boole-and
+							    (- 15 (modulo n1 16)))
+						(- 15 (modulo n2 16))))
+					 scl)
+				      acc)))))))
+	  (lambda (n1 n2) (lgior n2 n1 1 0))))
+      
+      (define logical:logxor
+	(letrec
+	    ((lgxor
+	      (lambda (n2 n1 scl acc)
+		(cond ((= n1 n2) acc)
+		      ((zero? n2) (+ acc (* scl n1)))
+		      ((zero? n1) (+ acc (* scl n2)))
+		      (else (lgxor (logical:ash-4 n2)
+				   (logical:ash-4 n1)
+				   (* 16 scl)
+				   (+ (* (vector-ref (vector-ref logical:boole-xor
+								 (modulo n1 16))
+						     (modulo n2 16))
+					 scl)
+				      acc)))))))
+	  (lambda (n1 n2) (lgxor n2 n1 1 0))))
+      
+      (define (logical:lognot n) (- -1 n))
+      
+      (define (logical:ash n count)
+	(if (negative? count)
+	    (let ((k (logical:integer-expt 2 (- count))))
+	      (if (negative? n)
+		  (+ -1 (quotient (+ 1 n) k))
+		  (quotient n k)))
+	    (* (logical:integer-expt 2 count) n)))
+      
+      (define logical:integer-length
+	(letrec ((intlen (lambda (n tot)
+			   (case n
+			     ((0 -1) (+ 0 tot))
+			     ((1 -2) (+ 1 tot))
+			     ((2 3 -3 -4) (+ 2 tot))
+			     ((4 5 6 7 -5 -6 -7 -8) (+ 3 tot))
+			     (else (intlen (logical:ash-4 n) (+ 4 tot)))))))
+	  (lambda (n) (intlen n 0))))
+      
+      ;; --------------------------------------------------------------------------------
+      ;; end of slib borrowings
+      ;; --------------------------------------------------------------------------------
+      
+      
+      (if (and (provided? 's7) (defined? 'current-time) (defined? 'mus-rand-seed)) (set! (mus-rand-seed) (current-time)))
+      
+      (format #t "the bug machine is running...")
+      
+      (letrec ((distance (lambda (a b) 
+			   (magnitude (- a b))
+			   ;; (magnitude (- (exact->inexact a) (exact->inexact b)))
+			   ))
+	       
+	       (choose-number (lambda ()
+				(let ((choice (random 4))
+				      (num1 (random (inexact->exact (floor (expt 2 expt-max)))))
+				      (num2 (random (inexact->exact (floor (expt 2 expt-max))))))
+				  (if (> (random 1.0) 0.5) (set! num1 (- num1)))
+				  (if (> (random 1.0) 0.5) (set! num2 (- num2)))
+				  (list 
+				   (case choice
+				     ((0) num1)
+				     ((1) (/ num1 (if (= num2 0) 1 num2)))
+				     ((2) (if (not (= num2 0)) (exact->inexact (/ num1 num2)) (* .01 num1)))
+				     ((3) (make-rectangular (* (random 1.0) num1) (* (random 1.0) num2))))))))
+	       
+	       (choose-real (lambda ()
+			      (let ((choice (random 3))
+				    (num1 (random (expt 2 expt-max)))
+				    (num2 (random (expt 2 expt-max))))
+				(if (> (random 1.0) 0.5) (set! num1 (- num1)))
+				(if (> (random 1.0) 0.5) (set! num2 (- num2)))
+				(list 
+				 (case choice
+				   ((0) num1)
+				   ((1) (/ num1 (if (= num2 0) 1 num2)))
+				   ((2) (if (not (= num2 0)) (exact->inexact (/ num1 num2)) (* .01 num1))))))))
+	       
+	       (choose-rational (lambda ()
+				  (let ((choice (random 2))
+					(num1 (random (inexact->exact (floor (expt 2 expt-max)))))
+					(num2 (inexact->exact (floor (random (expt 2 expt-max))))))
+				    (if (> (random 1.0) 0.5) (set! num1 (- num1)))
+				    (if (> (random 1.0) 0.5) (set! num2 (- num2)))
+				    (list 
+				     (case choice
+				       ((0) num1)
+				       ((1) (/ num1 (if (= num2 0) 1 num2))))))))
+	       
+	       (choose-integer (lambda () (list (random (inexact->exact (floor (expt 2 31)))))))
+	       
+	       (choose-number-small-imag (lambda ()
+					   (let ((choice (random 4))
+						 (num1 (random (inexact->exact (floor (expt 2 31)))))
+						 (num2 (random (inexact->exact (floor (expt 2 31))))))
+					     (if (> (random 1.0) 0.5) (set! num1 (- num1)))
+					     (if (> (random 1.0) 0.5) (set! num2 (- num2)))
+					     (list 
+					      (case choice
+						((0) num1)
+						((1) (/ num1 (if (= num2 0) 1 num2)))
+						((2) (if (not (= num2 0)) (exact->inexact (/ num1 num2)) (* .01 num1)))
+						((3) (make-rectangular (* (random 1.0) num1) (- (random 10.0) 5.0))))))))
+	       
+	       (choose-number-small-real (lambda ()
+					   (let ((choice (random 4))
+						 (num1 (random 10.0))
+						 (num2 (random 1000.0)))
+					     (if (> (random 1.0) 0.5) (set! num1 (- num1)))
+					     (if (> (random 1.0) 0.5) (set! num2 (- num2)))
+					     (list 
+					      (case choice
+						((0) (floor num1))
+						((1) (/ (floor num1) (max 1 (floor num2))))
+						((2) num1)
+						((3) (make-rectangular (- (random 10.0) 5.0) (* (random 1.0) num1))))))))
+	       
+	       (choose-small-number (lambda ()
 				      (let ((choice (random 4))
-					    (num1 (random (inexact->exact (floor (expt 2 expt-max)))))
-					    (num2 (random (inexact->exact (floor (expt 2 expt-max))))))
+					    (num1 (random 10.0))
+					    (num2 (random 10.0)))
 					(if (> (random 1.0) 0.5) (set! num1 (- num1)))
-					(if (> (random 1.0) 0.5) (set! num2 (- num2)))
 					(list 
 					 (case choice
-					   ((0) num1)
-					   ((1) (/ num1 (if (= num2 0) 1 num2)))
-					   ((2) (if (not (= num2 0)) (exact->inexact (/ num1 num2)) (* .01 num1)))
-					   ((3) (make-rectangular (* (random 1.0) num1) (* (random 1.0) num2))))))))
-		     
-		     (choose-real (lambda ()
-				    (let ((choice (random 3))
-					  (num1 (random (expt 2 expt-max)))
-					  (num2 (random (expt 2 expt-max))))
-				      (if (> (random 1.0) 0.5) (set! num1 (- num1)))
-				      (if (> (random 1.0) 0.5) (set! num2 (- num2)))
-				      (list 
-				       (case choice
-					 ((0) num1)
-					 ((1) (/ num1 (if (= num2 0) 1 num2)))
-					 ((2) (if (not (= num2 0)) (exact->inexact (/ num1 num2)) (* .01 num1))))))))
-		     
-		     (choose-rational (lambda ()
-					(let ((choice (random 2))
-					      (num1 (random (inexact->exact (floor (expt 2 expt-max)))))
-					      (num2 (inexact->exact (floor (random (expt 2 expt-max))))))
-					  (if (> (random 1.0) 0.5) (set! num1 (- num1)))
-					  (if (> (random 1.0) 0.5) (set! num2 (- num2)))
-					  (list 
-					   (case choice
-					     ((0) num1)
-					     ((1) (/ num1 (if (= num2 0) 1 num2))))))))
-		     
-		     (choose-integer (lambda () (list (random (inexact->exact (floor (expt 2 31)))))))
-		     
-		     (choose-number-small-imag (lambda ()
-						 (let ((choice (random 4))
-						       (num1 (random (inexact->exact (floor (expt 2 31)))))
-						       (num2 (random (inexact->exact (floor (expt 2 31))))))
-						   (if (> (random 1.0) 0.5) (set! num1 (- num1)))
-						   (if (> (random 1.0) 0.5) (set! num2 (- num2)))
-						   (list 
-						    (case choice
-						      ((0) num1)
-						      ((1) (/ num1 (if (= num2 0) 1 num2)))
-						      ((2) (if (not (= num2 0)) (exact->inexact (/ num1 num2)) (* .01 num1)))
-						      ((3) (make-rectangular (* (random 1.0) num1) (- (random 10.0) 5.0))))))))
-		     
-		     (choose-number-small-real (lambda ()
-						 (let ((choice (random 4))
-						       (num1 (random 10.0))
-						       (num2 (random 1000.0)))
-						   (if (> (random 1.0) 0.5) (set! num1 (- num1)))
-						   (if (> (random 1.0) 0.5) (set! num2 (- num2)))
-						   (list 
-						    (case choice
-						      ((0) (floor num1))
-						      ((1) (/ (floor num1) (max 1 (floor num2))))
-						      ((2) num1)
-						      ((3) (make-rectangular (- (random 10.0) 5.0) (* (random 1.0) num1))))))))
-		     
-		     (choose-small-number (lambda ()
-					    (let ((choice (random 4))
-						  (num1 (random 10.0))
-						  (num2 (random 10.0)))
-					      (if (> (random 1.0) 0.5) (set! num1 (- num1)))
-					      (list 
-					       (case choice
-						 ((0) (floor num1))
-						 ((1) (/ (floor num1) (max 1 (floor num2))))
-						 ((2) num1)
-						 ((3) (make-rectangular (- (random 10.0) 5.0) (* (random 1.0) num1))))))))
-		     
-		     (choose-n-numbers (lambda ()
+					   ((0) (floor num1))
+					   ((1) (/ (floor num1) (max 1 (floor num2))))
+					   ((2) num1)
+					   ((3) (make-rectangular (- (random 10.0) 5.0) (* (random 1.0) num1))))))))
+	       
+	       (choose-n-numbers (lambda ()
+				   (let ((n (max 1 (random 20)))
+					 (args '()))
+				     (do ((i 0 (+ i 1)))
+					 ((= i n) args)
+				       (set! args (cons (car (choose-number)) args))))))
+	       
+	       (choose-n-real-numbers (lambda ()
+					(let ((n (max 1 (random 20)))
+					      (args '()))
+					  (do ((i 0 (+ i 1)))
+					      ((= i n) args)
+					    (set! args (cons (car (choose-real)) args))))))
+	       
+	       (choose-2-or-more-real-numbers (lambda ()
+						(let ((n (max 2 (random 20)))
+						      (args '()))
+						  (do ((i 0 (+ i 1)))
+						      ((= i n) args)
+						    (set! args (cons (car (choose-real)) args))))))
+	       
+	       (choose-n-small-numbers (lambda ()
 					 (let ((n (max 1 (random 20)))
 					       (args '()))
 					   (do ((i 0 (+ i 1)))
 					       ((= i n) args)
-					     (set! args (cons (car (choose-number)) args))))))
-		     
-		     (choose-n-real-numbers (lambda ()
-					      (let ((n (max 1 (random 20)))
-						    (args '()))
-						(do ((i 0 (+ i 1)))
-						    ((= i n) args)
-						  (set! args (cons (car (choose-real)) args))))))
-		     
-		     (choose-2-or-more-real-numbers (lambda ()
-						      (let ((n (max 2 (random 20)))
-							    (args '()))
-							(do ((i 0 (+ i 1)))
-							    ((= i n) args)
-							  (set! args (cons (car (choose-real)) args))))))
-		     
-		     (choose-n-small-numbers (lambda ()
-					       (let ((n (max 1 (random 20)))
-						     (args '()))
-						 (do ((i 0 (+ i 1)))
-						     ((= i n) args)
-						   (set! args (cons (car (choose-small-number)) args))))))
-		     
-		     (ok-real-keep-type (lambda (op nlst v tst)
-					  (let ((n (car nlst)))
-					    (if (not (real? n))
-						(if (not (eq? v 'error))
-						    (format #t "(~A ~A) -> ~A~%" op n v))
-						(if (or (and (integer? n)
-							     (not (integer? v)))
-							(and (rational? n)
-							     (not (rational? v)))
-							(not (real? v))
-							(not (tst n v)))
-						    (format #t "(~A ~A) -> ~A~%" op n v))))))
-		     
-		     (ok-number-to-real (lambda (op nlst v tst)
-					  (let ((n (car nlst)))
-					    (if (not (number? n))
-						(if (not (eq? v 'error))
-						    (format #t "(~A ~A) -> ~A~%" op n v))
-						(if (or (not (real? v))
-							(not (tst n v)))
-						    (format #t "(~A ~A) -> ~A~%" op n v))))))
-		     
-		     (ok-rational (lambda (op nlst v tst)
+					     (set! args (cons (car (choose-small-number)) args))))))
+	       
+	       (ok-real-keep-type (lambda (op nlst v tst)
 				    (let ((n (car nlst)))
-				      (if (not (rational? n))
+				      (if (not (real? n))
 					  (if (not (eq? v 'error))
 					      (format #t "(~A ~A) -> ~A~%" op n v))
-					  (if (not (tst n v))
+					  (if (or (and (integer? n)
+						       (not (integer? v)))
+						  (and (rational? n)
+						       (not (rational? v)))
+						  (not (real? v))
+						  (not (tst n v)))
 					      (format #t "(~A ~A) -> ~A~%" op n v))))))
-		     
-		     (ok-number (lambda (op nlst v tst)
+	       
+	       (ok-number-to-real (lambda (op nlst v tst)
+				    (let ((n (car nlst)))
+				      (if (not (number? n))
+					  (if (not (eq? v 'error))
+					      (format #t "(~A ~A) -> ~A~%" op n v))
+					  (if (or (not (real? v))
+						  (not (tst n v)))
+					      (format #t "(~A ~A) -> ~A~%" op n v))))))
+	       
+	       (ok-rational (lambda (op nlst v tst)
+			      (let ((n (car nlst)))
+				(if (not (rational? n))
+				    (if (not (eq? v 'error))
+					(format #t "(~A ~A) -> ~A~%" op n v))
+				    (if (not (tst n v))
+					(format #t "(~A ~A) -> ~A~%" op n v))))))
+	       
+	       (ok-number (lambda (op nlst v tst)
+			    (let ((n (car nlst)))
+			      (if (not (number? n))
+				  (if (not (eq? v 'error))
+				      (format #t "(~A ~A) -> ~A~%" op n v))
+				  (if (not (tst n v))
+				      (format #t "(~A ~A) -> ~A~%" op n v))))))
+	       
+	       (ok-two-numbers (lambda (op nlst v tst)
+				 (let ((n1 (car nlst))
+				       (n2 (cadr nlst)))
+				   (if (or (not (number? n1))
+					   (not (number? n2)))
+				       (if (not (eq? v 'error))
+					   (format #t "(~A ~A ~A) -> ~A~%" op n1 n2 v))
+				       (if (not (tst n1 n2 v))
+					   (format #t "(~A ~A ~A) -> ~A~%" op n1 n2 v))))))
+	       
+	       (ok-number-to-bool (lambda (op nlst v tst)
+				    (let ((n (car nlst)))
+				      (if (not (number? n))
+					  (if (not (eq? v 'error))
+					      (format #t "(~A ~A) -> ~A~%" op n v))
+					  (if (or (not (boolean? v))
+						  (not (tst n v)))
+					      (format #t "(~A ~A) -> ~A~%" op n v))))))
+	       
+	       (ok-real-to-bool (lambda (op nlst v tst)
 				  (let ((n (car nlst)))
-				    (if (not (number? n))
+				    (if (not (real? n))
 					(if (not (eq? v 'error))
 					    (format #t "(~A ~A) -> ~A~%" op n v))
-					(if (not (tst n v))
+					(if (or (not (boolean? v))
+						(not (tst n v)))
 					    (format #t "(~A ~A) -> ~A~%" op n v))))))
-		     
-		     (ok-two-numbers (lambda (op nlst v tst)
-				       (let ((n1 (car nlst))
-					     (n2 (cadr nlst)))
-					 (if (or (not (number? n1))
-						 (not (number? n2)))
-					     (if (not (eq? v 'error))
-						 (format #t "(~A ~A ~A) -> ~A~%" op n1 n2 v))
-					     (if (not (tst n1 n2 v))
-						 (format #t "(~A ~A ~A) -> ~A~%" op n1 n2 v))))))
-		     
-		     (ok-number-to-bool (lambda (op nlst v tst)
-					  (let ((n (car nlst)))
-					    (if (not (number? n))
-						(if (not (eq? v 'error))
-						    (format #t "(~A ~A) -> ~A~%" op n v))
-						(if (or (not (boolean? v))
-							(not (tst n v)))
-						    (format #t "(~A ~A) -> ~A~%" op n v))))))
-		     
-		     (ok-real-to-bool (lambda (op nlst v tst)
-					(let ((n (car nlst)))
-					  (if (not (real? n))
-					      (if (not (eq? v 'error))
-						  (format #t "(~A ~A) -> ~A~%" op n v))
-					      (if (or (not (boolean? v))
-						      (not (tst n v)))
-						  (format #t "(~A ~A) -> ~A~%" op n v))))))
-		     
-		     (ok-integer-to-bool (lambda (op nlst v tst)
-					   (let ((n (car nlst)))
-					     (if (not (integer? n))
-						 (if (not (eq? v 'error))
-						     (format #t "(~A ~A) -> ~A~%" op n v))
-						 (if (or (not (boolean? v))
-							 (not (tst n v)))
-						     (format #t "(~A ~A) -> ~A~%" op n v))))))
-		     
-		     (ok-string-to-number (lambda (op nlst v tst)
-					    (let ((n (car nlst)))
-					      (if (not (number? n))
-						  (if (not (eq? v 'error))
-						      (format #t "(~A ~A) -> ~A~%" op n v))
-						  (if (or (not (string? v))
-							  (not (tst n v)))
-						      (format #t "(~A ~A) -> ~A~%" op n v))))))
-		     
-		     (choose-char (lambda () (list (integer->char (random 128)))))
-		     
-		     (choose-non-null-char (lambda () (list (integer->char (max 1 (random 128))))))
-		     
-		     (choose-2-or-more-chars (lambda ()
-					       (let ((n (max 2 (random 20)))
-						     (args '()))
-						 (do ((i 0 (+ i 1)))
-						     ((= i n) args)
-						   (set! args (cons (car (choose-char)) args))))))
-		     
-		     (choose-string (lambda ()
-				      (let* ((strlen (random 20))
-					     (str (make-string strlen)))
-					(do ((i 0 (+ i 1)))
-					    ((= i strlen))
-					  (string-set! str i (integer->char (+ 40 (random 80)))))  ;(max 1 (random 128)))))
-					(list str))))
-		     
-		     (choose-non-null-string (lambda ()
-					       (let* ((strlen (+ 1 (random 20)))
-						      (str (make-string strlen)))
-						 (do ((i 0 (+ i 1)))
-						     ((= i strlen))
-						   (string-set! str i (integer->char (+ 40 (random 80)))))  ;(max 1 (random 128)))))
-						 (list str))))
-		     
-		     (choose-2-or-more-strings (lambda ()
-						 (let ((n (max 2 (random 20)))
-						       (args '()))
-						   (do ((i 0 (+ i 1)))
-						       ((= i n) args)
-						     (set! args (cons (car (choose-string)) args))))))
-		     
-		     (choose-vector (lambda (ctr)
-				      (if (> ctr 3)
-					  (list 1)
-					  (let* ((len (+ 1 (random (inexact->exact (floor (/ 10 (+ ctr 1)))))))
-						 (v (make-vector len)))
-					    (do ((i 0 (+ i 1)))
-						((= i len))
-					      (vector-set! v i (car (choose-any (+ ctr 1)))))
-					    (list v)))))
-		     
-		     (choose-list (lambda (ctr)
-				    (if (> ctr 6)
-					(list (list 1))
-					(let ((len (random (inexact->exact (floor (/ 20 (+ ctr 1))))))
-					      (lst '()))
-					  (do ((i 0 (+ i 1)))
-					      ((= i len))
-					    (set! lst (cons (car (choose-any (+ ctr 1))) lst)))
-					  (list lst)))))
-		     
-		     (choose-non-null-list (lambda (ctr)
-					     (let ((val (car (choose-list ctr))))
-					       (if (null? val)
-						   (list (list val))
-						   (list val)))))
-		     
-		     (choose-alist (lambda (type)
-				     (let ((dotted (> (random 1.0) 0.5))
-					   (len (+ 1 (random 10)))
-					   (key (car (if (eq? type 'eq?)
-							 (choose-boolean)
-							 (if (eq? type 'eqv?)
-							     (choose-any 3)
-							     (choose-any 6))))))
-				       (let ((lst '())
-					     (keyset #f))
-					 (do ((i 0 (+ i 1)))
-					     ((= i len))
-					   (if (and (not keyset)
-						    (> (random 1.0) 0.75))
-					       (begin
-						 (set! keyset #t)
-						 (set! lst (cons ((if dotted cons list) key key) lst)))
-					       (set! lst (cons ((if dotted cons list) (car (choose-any 3)) (car (choose-any 3))) lst))))
-					 (list key (reverse lst))))))
-		     
-		     (choose-mlist (lambda (type)
-				     (let ((len (+ 1 (random 10)))
-					   (key (car (if (eq? type 'eq?)
-							 (choose-boolean)
-							 (if (eq? type 'eqv?)
-							     (choose-any 3)
-							     (choose-any 6))))))
-				       (let ((lst '())
-					     (keyset #f))
-					 (do ((i 0 (+ i 1)))
-					     ((= i len))
-					   (if (and (not keyset)
-						    (> (random 1.0) 0.75))
-					       (begin
-						 (set! keyset #t)
-						 (set! lst (cons key lst)))
-					       (set! lst (cons (car (choose-any 3)) lst))))
-					 (list key (reverse lst))))))
-		     
-		     (choose-boolean (lambda ()
-				       (list (case (random 4)
-					       ((0) #f)
-					       ((1) #t)
-					       (else 'hi)))))
-		     
-		     (choose-any (lambda (ctr)
-				   (let ((type (random (if (= ctr 0) 6 (if (= ctr 1) 5 (if (= ctr 2) 4 3))))))
-				     (case type
-				       ((0) (choose-number))
-				       ((1) (choose-char))
-				       ((2) (choose-string))
-				       ((3) (choose-list (+ ctr 1)))
-				       ((4) (choose-vector (+ ctr 1)))
-				       (else (choose-boolean))))))
-		     
-		     
-		     )
-	      
-	      (let ((ops 
-		     (list 
-		      
-		      ;; -------- numbers --------------------------------
-		      (list abs 
-			    (lambda (nlst v) 
-			      (ok-real-keep-type 'abs nlst v 
-						 (lambda (n v)
-						   (= v (if (< n 0) (- n) n)))))
-			    choose-real)
-		      
-		      (list angle 
-			    (lambda (nlst v)
-			      (ok-number 'angle nlst v 
-					 (lambda (n v)
-					   (let ((val (make-polar (magnitude n) v)))
-					     (< (distance val n) 1e-5)))))
-			    choose-number)
-		      
-		      (list magnitude 
-			    (lambda (nlst v)
-			      (ok-number 'magnitude nlst v 
-					 (lambda (n v)
-					   (let ((val (make-polar v (angle n))))
-					     (< (distance val n) 1e-5)))))
-			    choose-number)
-		      
-		      (list real-part 
-			    (lambda (nlst v)
-			      (ok-number-to-real 'real-part nlst v 
-						 (lambda (n v)
-						   (let ((val (make-rectangular v (imag-part n))))
-						     (< (distance val n) 1e-5)))))
-			    choose-number)
-		      
-		      (list imag-part 
-			    (lambda (nlst v)
-			      (ok-number-to-real 'imag-part nlst v 
-						 (lambda (n v)
-						   (let ((val (make-rectangular (real-part n) v)))
-						     (< (distance val n) 1e-5)))))
-			    choose-number)
-		      
-		      (list numerator 
-			    (lambda (nlst v)
-			      (ok-rational 'numerator nlst v 
-					   (lambda (n v)
-					     (if (integer? n)
-						 (= n v)
-						 (= v (* n (denominator n)))))))
-			    choose-rational)
-		      
-		      (list denominator 
-			    (lambda (nlst v)
-			      (ok-rational 'denominator nlst v 
-					   (lambda (n v)
-					     (if (integer? n)
-						 (= v 1)
-						 (= v (/ (numerator n) n))))))
-			    choose-rational)
-		      
-		      (list zero? 
-			    (lambda (nlst v)
-			      (ok-number-to-bool 'zero? nlst v 
-						 (lambda (n v)
-						   (or (and (= n 0)
-							    v)
-						       (and (not (= n 0))
-							    (not v))))))
-			    choose-number)
-		      
-		      (list positive? 
-			    (lambda (nlst v)
-			      (ok-real-to-bool 'positive? nlst v 
-					       (lambda (n v)
-						 (or (and (> n 0)
-							  v)
-						     (and (<= n 0)
-							  (not v))))))
-			    choose-real)
-		      
-		      (list negative? 
-			    (lambda (nlst v)
-			      (ok-real-to-bool 'negative? nlst v 
-					       (lambda (n v)
-						 (or (and (< n 0)
-							  v)
-						     (and (>= n 0)
-							  (not v))))))
-			    choose-real)
-		      
-		      (list even? 
-			    (lambda (nlst v)
-			      (ok-integer-to-bool 'even? nlst v 
-						  (lambda (n v)
-						    (or (and (= (modulo n 2) 0)
-							     v)
-							(and (not (= (modulo n 2) 0))
-							     (not v))))))
-			    choose-integer)
-		      
-		      (list odd? 
-			    (lambda (nlst v)
-			      (ok-integer-to-bool 'odd? nlst v 
-						  (lambda (n v)
-						    (or (and (= (modulo n 2) 1)
-							     v)
-							(and (not (= (modulo n 2) 1))
-							     (not v))))))
-			    choose-integer)
-		      
-		      (list exact? 
-			    (lambda (nlst v)
-			      (ok-number-to-bool 'exact? nlst v 
-						 (lambda (n v)
-						   (let* ((str (number->string n))
-							  (dotted #f)
-							  (len (string-length str)))
-						     (do ((i 0 (+ i 1)))
-							 ((or dotted (= i len)))
-						       (set! dotted (char=? #\. (string-ref str i))))
-						     (if (not (provided? 's7))
-							 (eq? v (not dotted))
-							 (eq? v (and (real? n)
-								     (not dotted))))))))
-			    choose-number)
-		      
-		      (list inexact? 
-			    (lambda (nlst v)
-			      (ok-number-to-bool 'inexact? nlst v 
-						 (lambda (n v)
-						   (let* ((str (number->string n))
-							  (dotted #f)
-							  (len (string-length str)))
-						     (do ((i 0 (+ i 1)))
-							 ((or dotted (= i len)))
-						       (set! dotted (char=? #\. (string-ref str i))))
-						     (if (not (provided? 's7))
-							 (eq? v dotted)
-							 (eq? v (or (not (real? n))
-								    dotted)))))))
-			    choose-number)
-		      
-		      (list sin 
-			    (lambda (nlst v)
-			      (ok-number 'sin nlst v 
-					 (lambda (n v)
-					   (let ((a (cos n)))
-					     (and (< (min (distance v (sqrt (- 1 (* a a)))) 
-							  (distance v (- (sqrt (- 1 (* a a))))))
-						     err-max)
-						  (< (distance (- v) (sin (- n))) err-max)
-						  (< (distance v (- (* 3 (sin (/ n 3))) (* 4 (expt (sin (/ n 3)) 3)))) 1e-4))))))
-			    choose-number-small-imag)
-		      
-		      (list cos 
-			    (lambda (nlst v)
-			      (ok-number 'cos nlst v 
-					 (lambda (n v)
-					   (let ((a (sin n)))
-					     (and (< (min (distance v (sqrt (- 1 (* a a)))) 
-							  (distance v (- (sqrt (- 1 (* a a))))))
-						     err-max)
-						  (< (distance v (cos (- n))) err-max)
-						  (< (distance v (- (* 4 (expt (cos (/ n 3)) 3)) (* 3 (cos (/ n 3))))) 1e-4))))))
-			    choose-number-small-imag)
-		      
-		      (list asin
-			    (lambda (nlst v)
-			      (let ((asin-taylor (lambda (x)
-						   (+ x (* 1/6 x x x) (* 3/40 x x x x x) (* 5/112 (expt x 7))
-						      (* 35/1152 (expt x 9)) (* 63/2816 (expt x 11)) (* 231/13312 (expt x 13))
-						      (* 143/10240 (expt x 15)) (* 6435/557056 (expt x 17)) (* 12155/1245184 (expt x 19))))))
-				
-				(ok-number 'asin nlst v 
-					   (lambda (n v)
-					     (let ((a (sin v)))
-					;(format #t "[~A ~A ~A -> ~A]~%" n v a (min (magnitude (- a n)) (magnitude (+ a n))))
-					       (and (< (/ (min (distance a n)
-							       (distance a (- n)))
-							  (max 0.001 (magnitude n)))
-						       1e-2)
-						    (< (distance (asin (- n)) (- v)) 1e-6)
-						    (or (> (magnitude n) 0.1)
-							(let ((val (asin-taylor (exact->inexact n))))
-							  (< (min (distance val v)
-								  (distance val (- v)))
-							     1e-6)))))))))
-			    choose-small-number)
-		      
-		      (list acos 
-			    (lambda (nlst v)
-			      (let ((acos-taylor (lambda (x)
-						   (- (/ our-pi 2) 
-						      x (* 1/6 x x x) (* 3/40 x x x x x) (* 5/112 (expt x 7))
-						      (* 35/1152 (expt x 9)) (* 63/2816 (expt x 11)) (* 231/13312 (expt x 13))
-						      (* 143/10240 (expt x 15)) (* 6435/557056 (expt x 17)) (* 12155/1245184 (expt x 19))))))
-				(ok-number 'acos nlst v 
-					   (lambda (n v)
-					     (let ((a (cos v)))
-					;(format #t "[~A ~A ~A -> ~A]~%" n v a (min (magnitude (- a n)) (magnitude (+ a n))))
-					       (and (< (/ (min (distance a n)
-							       (distance a (- n)))
-							  (max 0.001 (magnitude n)))
-						       1e-2)
-						    (or (> (magnitude n) 0.1)
-							(let ((val (acos-taylor (exact->inexact n))))
-							  (< (min (distance val v)
-								  (distance val (- v)))
-							     1e-6)))))))))
-			    choose-small-number)
-		      
-		      (list integer? 
-			    (lambda (nlst v)
-			      (ok-number-to-bool 'integer? nlst v 
-						 (lambda (n v)
-						   (eq? v 
-							(and (zero? (imag-part n))
-							     (rational? n)
-							     (= n (inexact->exact n))
-							     (= (denominator n) 1)
-							     ;; good grief...
-							     (let* ((str (number->string n))
-								    (dotted #f)
-								    (unzero-after-dot #f)
-								    (len (string-length str)))
-							       (do ((i 0 (+ i 1)))
-								   ((or unzero-after-dot (= i len)))
-								 (if (not dotted)
-								     (set! dotted (char=? #\. (string-ref str i)))
-								     (set! unzero-after-dot (not (char=? #\0 (string-ref str i))))))
-							       (not unzero-after-dot)))))))
-			    choose-number)
-		      
-		      (list rational?
-			    (lambda (nlst v)
-			      (ok-number-to-bool 'rational? nlst v 
-						 (lambda (n v)
-						   (eq? v (exact? n)))))
-			    choose-number)
-		      
-		      (list real?
-			    (lambda (nlst v)
-			      (ok-number-to-bool 'real? nlst v 
-						 (lambda (n v) (eq? v (zero? (imag-part n))))))
-			    choose-number)
-		      
-		      (list complex? 
-			    (lambda (nlst v)
-			      (ok-number-to-bool 'complex? nlst v 
-						 (lambda (n v) (eq? v (number? n)))))
-			    choose-number)
-		      
-		      (list sqrt 
-			    (lambda (nlst v)
-			      (ok-number 'sqrt nlst v 
-					 (lambda (n v)
-					   (let ((a (* v v)))
-					     (and (< (magnitude (- a n)) 1e-6)
-						  (< (distance (expt n 1/2) v) 1e-6)
-						  (< (/ (distance (* n v) (expt n 3/2)) (max 1 (magnitude n))) 1e-6))))))
-			    choose-number)
-		      
-		      (list exp 
-			    (lambda (nlst v)
-			      (ok-number 'exp nlst v 
-					 (lambda (n v)
-					   (let ((a (log v)))
-					     (and (< (min (distance a n)
-							  (distance (make-rectangular (real-part a) (+ (imag-part a) (* 2 our-pi))) n)
-							  (distance (make-rectangular (real-part a) (- (imag-part a) (* 2 our-pi))) n)
-							  (distance (make-rectangular (real-part a) (+ (imag-part a) (* 4 our-pi))) n)
-							  (distance (make-rectangular (real-part a) (- (imag-part a) (* 4 our-pi))) n))
-						     err-max)
-						  (< (distance (/ (exp n) (exp 2.8125)) (exp (- n 2.8125))) err-max)
-						  (< (distance (* (exp n) (exp (- n))) 1.0) err-max))))))
-			    choose-number-small-real)
-		      
-		      (list log 
-			    (lambda (nlst v)
-			      (ok-number 'log nlst v 
-					 (lambda (n v)
-					   (let ((a (exp v)))
-					     (and (< (distance a n) 1e-4)
-						  (or (complex? n)
-						      (negative? n) ; avoid the 2*pi = 1 business
-						      (< (distance v (- (log (/ (* 17 n) 16)) (log (/ 17 16)))) 1e-4)
-						      (< (distance (* 2 v) (log (* n n))) 1e-4)
-						      (< (distance (- v) (log (/ 1 n))) 1e-4)))))))
-			    (lambda () (let ((val (car (choose-number)))) (list (if (zero? val) 1.0 val)))))
-		      
-		      (list tan 
-			    (lambda (nlst v)
-			      (ok-number 'tan nlst v 
-					 (lambda (n v)
-					   (let ((a (/ (sin n) (cos n))))
-					     ;; this division is a problem!
-					     (and (< (/ (distance a v) (magnitude n)) err-max)
-						  (< (distance v (/ (* 2 (tan (/ n 2)))
-								    (- 1 (expt (tan (/ n 2)) 2))))
-						     1e-4))))))
-			    (lambda () (let ((val (car (choose-number-small-imag)))) (list (if (zero? (cos val)) 1.0 val)))))
-		      
-		      (list atan 
-			    (lambda (nlst v) 
-			      (let ((atan-taylor (lambda (x)
-						   (let ((val x))
-						     (do ((i 3 (+ i 2))
-							  (sign -1 (- sign)))
-							 ((>= i 100) val)
-						       (set! val (+ val (/ (* sign (expt x i)) i))))))))
-				(ok-number 'atan nlst v 
-					   (lambda (n v)
-					     (let ((a (tan v)))
-					       (and (< (min (distance a n)
-							    (distance a (- n)))
-						       err-max)
-						    (< (distance (- v) (atan (- n))) 1e-6)
-						    (or (> (magnitude n) .5)
-							(< (distance v (atan-taylor (exact->inexact n))) 1e-6))))))))
-			    choose-number-small-real)
-		      
-		      (list floor
-			    (lambda (nlst v)
-			      (ok-number 'floor nlst v 
-					 (lambda (n v)
-					   (and (rational? v)
-						(>= (- n v) 0)
-						(< (- n v) 1.0)))))
-			    choose-real)
-		      
-		      (list ceiling
-			    (lambda (nlst v)
-			      (ok-number 'ceiling nlst v 
-					 (lambda (n v)
-					   (and (rational? v)
-						(<= (- n v) 0)
-						(< (- v n) 1.0)))))
-			    choose-real)
-		      
-		      (list round 
-			    (lambda (nlst v)
-			      (ok-number 'round nlst v 
-					 (lambda (n v)
-					   (and (rational? v)
-						(<= (abs (- n v)) 0.5)))))
-			    choose-real)
-		      
-		      (list truncate
-			    (lambda (nlst v)
-			      (ok-number 'truncate nlst v 
-					 (lambda (n v)
-					   (and (rational? v)
-						(< (abs (- n v)) 1.0)))))
-			    choose-real)
-		      
-		      
-		      ;; -------- hyperbolics --------------------------------
-		      
-		      (list sinh
-			    (lambda (nlst v)
-			      (let ((sinh-taylor (lambda (x)
-						   (+ x (* 1/6 (expt x 3)) (* 1/120 (expt x 5)) (* 1/5040 (expt x 7))
-						      (* 1/362880 (expt x 9)) (* 1/39916800 (expt x 11))
-						      (* 1/6227020800 (expt x 13))))))
-				(ok-number 'sinh nlst v 
-					   (lambda (n v)
-					     (let ((a (- (* 0.0+1.0i (sin (* 0.0+1.0i n))))))
-					       (and (< (distance a v) err-max)
-						    (or (> (magnitude n) 1.0)
-							(< (distance (sinh-taylor (exact->inexact n)) v) 1e-4))))))))
-			    choose-number-small-real)
-		      
-		      (list cosh 
-			    (lambda (nlst v)
-			      (let ((cosh-taylor (lambda (x)
-						   (+ 1 (* 1/2 x x) (* 1/24 (expt x 4)) (* 1/720 (expt x 6))
-						      (* 1/40320 (expt x 8)) (* 1/362880 (expt x 10))
-						      (* 1/479001600 (expt x 12))))))
-				(ok-number 'cosh nlst v 
-					   (lambda (n v)
-					     (let ((a (cos (* 0.0+1.0i n))))
-					       (and (< (distance a v) err-max)
-						    (or (> (magnitude n) 1.0)
-							(< (distance (cosh-taylor (exact->inexact n)) v) 1e-4))))))))
-			    choose-number-small-real)
-		      
-		      (list asinh
-			    (lambda (nlst v)
-			      (ok-number 'asinh nlst v 
-					 (lambda (n v)
-					   (let ((a (sinh v)))
-					     (< (distance a n) err-max)))))
-			    choose-small-number)
-		      
-		      (list acosh
-			    (lambda (nlst v)
-			      (ok-number 'acosh nlst v 
-					 (lambda (n v)
-					   (let ((a (cosh v)))
-					     (< (distance a n) err-max)))))
-			    choose-small-number)
-		      
-		      (list tanh
-			    (lambda (nlst v)
-			      (ok-number 'tanh nlst v 
-					 (lambda (n v)
-					   (let ((a (/ (sinh n) (cosh n))))
-					     (< (distance a v) err-max)))))
-			    choose-small-number)
-		      
-		      (list atanh
-			    (lambda (nlst v)
-			      (ok-number 'atanh nlst v 
-					 (lambda (n v)
-					   (let ((a (tanh v)))
-					     (< (distance a n) err-max)))))
-			    choose-small-number)
-		      
-		      ;; ------------------------------------------------
-		      
-		      (list make-polar 
-			    (lambda (nlst v)
-			      (ok-two-numbers 'make-polar nlst v 
-					      (lambda (n1 n2 v)
-						(if (>= (/ (distance (* n1 (exp (* 0.0+1.0i n2))) v) (max .001 (magnitude n1))) err-max)
-						    (format #t "(make-polar ~A ~A) -> ~A (~A, ~A)~%"
-							    n1 n2 v  
-							    (* n1 (exp (* 0.0+1.0i n2)))
-							    (/ (distance (* n1 (exp (* 0.0+1.0i n2))) v) (max .001 (magnitude n1)))))
-						(< (/ (distance (* n1 (exp (* 0.0+1.0i n2))) v) (max .001 (magnitude n1))) err-max))))
-			    (lambda () (list (car (choose-real)) (car (choose-real)))))
-		      
-		      (list make-rectangular
-			    (lambda (nlst v)
-			      (ok-two-numbers 'make-rectangular nlst v 
-					      (lambda (n1 n2 v)
-						(< (/ (distance (+ n1 (* 0.0+1.0i n2)) v) (max .001 (magnitude n1))) err-max))))
-			    (lambda () (list (car (choose-real)) (car (choose-real)))))
-		      
-		      (list modulo 
-			    (lambda (nlst v)
-			      (ok-two-numbers 'modulo nlst v 
-					      (lambda (n1 n2 v)
-						(let ((a (- n1 (* n2 (floor (/ n1 n2))))))
-						  (= a v)))))
-			    (lambda () (list (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))
-					     (let ((val (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))))
-					       (if (zero? val) 1 val)))))
-		      
-		      (list remainder 
-			    (lambda (nlst v)
-			      (ok-two-numbers 'remainder nlst v 
-					      (lambda (n1 n2 v)
-						(let ((a (- n1 (* n2 (quotient n1 n2)))))
-						  (= a v)))))
-			    (lambda () (list (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))
-					     (let ((val (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))))
-					       (if (zero? val) 1 val)))))
-		      
-		      (list quotient
-			    (lambda (nlst v)
-			      (ok-two-numbers 'quotient nlst v 
-					      (lambda (n1 n2 v)
-						(let ((a (truncate (/ n1 n2))))
-						  (= a v)))))
-			    (lambda () (list (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))
-					     (let ((val (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))))
-					       (if (zero? val) 1 val)))))
-		      
-		      (list rationalize
-			    (lambda (nlst v)
-			      (ok-two-numbers 'rationalize nlst v 
-					      (lambda (n1 n2 v) ; (rationalize n1 n2) -> v
-						(and (rational? v)
-						     (< (abs (- v n1)) n2)
-						     (let ((rat (lambda (ux err)
-								  (let ((x0 (- ux err))
-									(x1 (+ ux err)))
-								    (let ((i (inexact->exact (ceiling x0)))
-									  (i0 (inexact->exact (floor x0)))
-									  (i1 (inexact->exact (ceiling x1)))
-									  (r 0))
-								      (if (>= err 1.0)
-									  (if (< x0 0.0)
-									      (if (< x1 0.0)
-										  (inexact->exact (floor x1))
-										  0)
-									      i)
-									  (if (>= x1 i)
-									      (if (>= i 0)
-										  i
-										  (inexact->exact (floor x1)))
-									      (do ((p0 i0 (+ p1 (* r p0)))
-										   (q0 1 (+ q1 (* r q0)))
-										   (p1 i1 p0)
-										   (q1 1 q0)
-										   (e0 (- i1 x0) e1p)
-										   (e1 (- x0 i0) (- e0p (* r e1p)))
-										   (e0p (- i1 x1) e1)
-										   (e1p (- x1 i0) (- e0 (* r e1))))
-										  ((<= x0 (/ p0 q0) x1)
-										   (/ p0 q0))
-										(set! r (min (inexact->exact (floor (/ e0 e1)))
-											     (inexact->exact (ceiling (/ e0p e1p)))))))))))))
-						       (let ((v1 (rat n1 n2)))
-							 (= v1 v)))))))
-			    (lambda () (list (car (choose-real)) (max 0.000001 (random .1)))))
-		      
-		      (list number->string 
-			    (lambda (nlst v)
-			      (ok-string-to-number 'number->string nlst v 
-						   (lambda (n v)
-						     (< (distance n (string->number v)) 1e-4))))
-			    choose-number)
-		      
-		      (list exact->inexact 
-			    (lambda (nlst v)
-			      (ok-number 'exact->inexact nlst v
-					 (lambda (n v)
-					   (and (< (abs (- n v)) 1e-11)
-						(inexact? v)))))
-			    choose-rational)
-		      
-		      (list inexact->exact 
-			    (lambda (nlst v)
-			      (ok-number 'inexact->exact nlst v
-					 (lambda (n v)
-					   (and (< (abs (- n v)) 1e-11)
-						(exact? v)))))
-			    choose-real)
-		      
-		      (list gcd 
-			    (lambda (nlst v)
-			      (ok-two-numbers 'gcd nlst v 
-					      (lambda (n1 n2 v)
-						(and (integer? (/ n1 v))
-						     (integer? (/ n2 v))
-						     (positive? v)
-						     (= (abs (lcm n1 n2)) (abs (/ (* n1 n2) v)))))))
-			    (lambda () (list (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))
-					     (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1)))))
-		      
-		      
-		      (list lcm 
-			    (lambda (nlst v)
-			      (ok-two-numbers 'lcm nlst v
-					      (lambda (n1 n2 v)
-						(or (and (or (= n1 0)
-							     (= n2 0))
-							 (= v 0))
-						    (and (integer? (/ v n1))
-							 (integer? (/ v n2))
-							 (= (abs (/ (* n1 n2) v)) (gcd n1 n2)))))))
-			    (lambda () (list (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))
-					     (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1)))))
-		      
-		      (list expt 
-			    (lambda (nlst v)
-			      (ok-two-numbers 'expt nlst v 
-					      (lambda (n1 n2 v)
-						
-						(let ((a1 (if (zero? n1) 0 (exp (* n2 (log n1)))))
-						      (a2 (if (zero? n1) 0 (exp (* n2 (+ (* 2 our-pi 0+i) (log n1)))))))
-						  (if (and (> (/ (distance a1 v) (magnitude v)) err-max)
-							   (> (/ (distance a2 v) (magnitude v)) err-max))
-						      (format #t "[expt ~A ~A -> ~A, ~A -> ~A]~%" n1 n2 v a1 (distance a1 v)))
-						  (or (< (/ (distance a1 v) (magnitude v)) err-max)
-						      (< (/ (distance a2 v) (magnitude v)) err-max))))))
-			    
-			    (lambda () (list (let ((val (car (choose-small-number))))
-					       (if (zero? val) 1 (/ val 2.0)))
-					     (car (choose-small-number)))))
-		      
-		      (list + 
-			    (lambda (nlst v)
-			      (let ((tst (lambda (nlst v)
-					   (let ((n (length nlst))
-						 (mx 0.0))
+	       
+	       (ok-integer-to-bool (lambda (op nlst v tst)
+				     (let ((n (car nlst)))
+				       (if (not (integer? n))
+					   (if (not (eq? v 'error))
+					       (format #t "(~A ~A) -> ~A~%" op n v))
+					   (if (or (not (boolean? v))
+						   (not (tst n v)))
+					       (format #t "(~A ~A) -> ~A~%" op n v))))))
+	       
+	       (ok-string-to-number (lambda (op nlst v tst)
+				      (let ((n (car nlst)))
+					(if (not (number? n))
+					    (if (not (eq? v 'error))
+						(format #t "(~A ~A) -> ~A~%" op n v))
+					    (if (or (not (string? v))
+						    (not (tst n v)))
+						(format #t "(~A ~A) -> ~A~%" op n v))))))
+	       
+	       (choose-char (lambda () (list (integer->char (random 128)))))
+	       
+	       (choose-non-null-char (lambda () (list (integer->char (max 1 (random 128))))))
+	       
+	       (choose-2-or-more-chars (lambda ()
+					 (let ((n (max 2 (random 20)))
+					       (args '()))
+					   (do ((i 0 (+ i 1)))
+					       ((= i n) args)
+					     (set! args (cons (car (choose-char)) args))))))
+	       
+	       (choose-string (lambda ()
+				(let* ((strlen (random 20))
+				       (str (make-string strlen)))
+				  (do ((i 0 (+ i 1)))
+				      ((= i strlen))
+				    (string-set! str i (integer->char (+ 40 (random 80)))))  ;(max 1 (random 128)))))
+				  (list str))))
+	       
+	       (choose-non-null-string (lambda ()
+					 (let* ((strlen (+ 1 (random 20)))
+						(str (make-string strlen)))
+					   (do ((i 0 (+ i 1)))
+					       ((= i strlen))
+					     (string-set! str i (integer->char (+ 40 (random 80)))))  ;(max 1 (random 128)))))
+					   (list str))))
+	       
+	       (choose-2-or-more-strings (lambda ()
+					   (let ((n (max 2 (random 20)))
+						 (args '()))
 					     (do ((i 0 (+ i 1)))
+						 ((= i n) args)
+					       (set! args (cons (car (choose-string)) args))))))
+	       
+	       (choose-vector (lambda (ctr)
+				(if (> ctr 3)
+				    (list 1)
+				    (let* ((len (+ 1 (random (inexact->exact (floor (/ 10 (+ ctr 1)))))))
+					   (v (make-vector len)))
+				      (do ((i 0 (+ i 1)))
+					  ((= i len))
+					(vector-set! v i (car (choose-any (+ ctr 1)))))
+				      (list v)))))
+	       
+	       (choose-list (lambda (ctr)
+			      (if (> ctr 6)
+				  (list (list 1))
+				  (let ((len (random (inexact->exact (floor (/ 20 (+ ctr 1))))))
+					(lst '()))
+				    (do ((i 0 (+ i 1)))
+					((= i len))
+				      (set! lst (cons (car (choose-any (+ ctr 1))) lst)))
+				    (list lst)))))
+	       
+	       (choose-non-null-list (lambda (ctr)
+				       (let ((val (car (choose-list ctr))))
+					 (if (null? val)
+					     (list (list val))
+					     (list val)))))
+	       
+	       (choose-alist (lambda (type)
+			       (let ((dotted (> (random 1.0) 0.5))
+				     (len (+ 1 (random 10)))
+				     (key (car (if (eq? type 'eq?)
+						   (choose-boolean)
+						   (if (eq? type 'eqv?)
+						       (choose-any 3)
+						       (choose-any 6))))))
+				 (let ((lst '())
+				       (keyset #f))
+				   (do ((i 0 (+ i 1)))
+				       ((= i len))
+				     (if (and (not keyset)
+					      (> (random 1.0) 0.75))
+					 (begin
+					   (set! keyset #t)
+					   (set! lst (cons ((if dotted cons list) key key) lst)))
+					 (set! lst (cons ((if dotted cons list) (car (choose-any 3)) (car (choose-any 3))) lst))))
+				   (list key (reverse lst))))))
+	       
+	       (choose-mlist (lambda (type)
+			       (let ((len (+ 1 (random 10)))
+				     (key (car (if (eq? type 'eq?)
+						   (choose-boolean)
+						   (if (eq? type 'eqv?)
+						       (choose-any 3)
+						       (choose-any 6))))))
+				 (let ((lst '())
+				       (keyset #f))
+				   (do ((i 0 (+ i 1)))
+				       ((= i len))
+				     (if (and (not keyset)
+					      (> (random 1.0) 0.75))
+					 (begin
+					   (set! keyset #t)
+					   (set! lst (cons key lst)))
+					 (set! lst (cons (car (choose-any 3)) lst))))
+				   (list key (reverse lst))))))
+	       
+	       (choose-boolean (lambda ()
+				 (list (case (random 4)
+					 ((0) #f)
+					 ((1) #t)
+					 (else 'hi)))))
+	       
+	       (choose-any (lambda (ctr)
+			     (let ((type (random (if (= ctr 0) 6 (if (= ctr 1) 5 (if (= ctr 2) 4 3))))))
+			       (case type
+				 ((0) (choose-number))
+				 ((1) (choose-char))
+				 ((2) (choose-string))
+				 ((3) (choose-list (+ ctr 1)))
+				 ((4) (choose-vector (+ ctr 1)))
+				 (else (choose-boolean))))))
+	       
+	       
+	       )
+	
+	(let ((ops 
+	       (list 
+		
+		;; -------- numbers --------------------------------
+		(list abs 
+		      (lambda (nlst v) 
+			(ok-real-keep-type 'abs nlst v 
+					   (lambda (n v)
+					     (= v (if (< n 0) (- n) n)))))
+		      choose-real)
+		
+		(list angle 
+		      (lambda (nlst v)
+			(ok-number 'angle nlst v 
+				   (lambda (n v)
+				     (let ((val (make-polar (magnitude n) v)))
+				       (< (distance val n) 1e-5)))))
+		      choose-number)
+		
+		(list magnitude 
+		      (lambda (nlst v)
+			(ok-number 'magnitude nlst v 
+				   (lambda (n v)
+				     (let ((val (make-polar v (angle n))))
+				       (< (distance val n) 1e-5)))))
+		      choose-number)
+		
+		(list real-part 
+		      (lambda (nlst v)
+			(ok-number-to-real 'real-part nlst v 
+					   (lambda (n v)
+					     (let ((val (make-rectangular v (imag-part n))))
+					       (< (distance val n) 1e-5)))))
+		      choose-number)
+		
+		(list imag-part 
+		      (lambda (nlst v)
+			(ok-number-to-real 'imag-part nlst v 
+					   (lambda (n v)
+					     (let ((val (make-rectangular (real-part n) v)))
+					       (< (distance val n) 1e-5)))))
+		      choose-number)
+		
+		(list numerator 
+		      (lambda (nlst v)
+			(ok-rational 'numerator nlst v 
+				     (lambda (n v)
+				       (if (integer? n)
+					   (= n v)
+					   (= v (* n (denominator n)))))))
+		      choose-rational)
+		
+		(list denominator 
+		      (lambda (nlst v)
+			(ok-rational 'denominator nlst v 
+				     (lambda (n v)
+				       (if (integer? n)
+					   (= v 1)
+					   (= v (/ (numerator n) n))))))
+		      choose-rational)
+		
+		(list zero? 
+		      (lambda (nlst v)
+			(ok-number-to-bool 'zero? nlst v 
+					   (lambda (n v)
+					     (or (and (= n 0)
+						      v)
+						 (and (not (= n 0))
+						      (not v))))))
+		      choose-number)
+		
+		(list positive? 
+		      (lambda (nlst v)
+			(ok-real-to-bool 'positive? nlst v 
+					 (lambda (n v)
+					   (or (and (> n 0)
+						    v)
+					       (and (<= n 0)
+						    (not v))))))
+		      choose-real)
+		
+		(list negative? 
+		      (lambda (nlst v)
+			(ok-real-to-bool 'negative? nlst v 
+					 (lambda (n v)
+					   (or (and (< n 0)
+						    v)
+					       (and (>= n 0)
+						    (not v))))))
+		      choose-real)
+		
+		(list even? 
+		      (lambda (nlst v)
+			(ok-integer-to-bool 'even? nlst v 
+					    (lambda (n v)
+					      (or (and (= (modulo n 2) 0)
+						       v)
+						  (and (not (= (modulo n 2) 0))
+						       (not v))))))
+		      choose-integer)
+		
+		(list odd? 
+		      (lambda (nlst v)
+			(ok-integer-to-bool 'odd? nlst v 
+					    (lambda (n v)
+					      (or (and (= (modulo n 2) 1)
+						       v)
+						  (and (not (= (modulo n 2) 1))
+						       (not v))))))
+		      choose-integer)
+		
+		(list exact? 
+		      (lambda (nlst v)
+			(ok-number-to-bool 'exact? nlst v 
+					   (lambda (n v)
+					     (let* ((str (number->string n))
+						    (dotted #f)
+						    (len (string-length str)))
+					       (do ((i 0 (+ i 1)))
+						   ((or dotted (= i len)))
+						 (set! dotted (char=? #\. (string-ref str i))))
+					       (if (not (provided? 's7))
+						   (eq? v (not dotted))
+						   (eq? v (and (real? n)
+							       (not dotted))))))))
+		      choose-number)
+		
+		(list inexact? 
+		      (lambda (nlst v)
+			(ok-number-to-bool 'inexact? nlst v 
+					   (lambda (n v)
+					     (let* ((str (number->string n))
+						    (dotted #f)
+						    (len (string-length str)))
+					       (do ((i 0 (+ i 1)))
+						   ((or dotted (= i len)))
+						 (set! dotted (char=? #\. (string-ref str i))))
+					       (if (not (provided? 's7))
+						   (eq? v dotted)
+						   (eq? v (or (not (real? n))
+							      dotted)))))))
+		      choose-number)
+		
+		(list sin 
+		      (lambda (nlst v)
+			(ok-number 'sin nlst v 
+				   (lambda (n v)
+				     (let ((a (cos n)))
+				       (and (< (min (distance v (sqrt (- 1 (* a a)))) 
+						    (distance v (- (sqrt (- 1 (* a a))))))
+					       err-max)
+					    (< (distance (- v) (sin (- n))) err-max)
+					    (< (distance v (- (* 3 (sin (/ n 3))) (* 4 (expt (sin (/ n 3)) 3)))) 1e-4))))))
+		      choose-number-small-imag)
+		
+		(list cos 
+		      (lambda (nlst v)
+			(ok-number 'cos nlst v 
+				   (lambda (n v)
+				     (let ((a (sin n)))
+				       (and (< (min (distance v (sqrt (- 1 (* a a)))) 
+						    (distance v (- (sqrt (- 1 (* a a))))))
+					       err-max)
+					    (< (distance v (cos (- n))) err-max)
+					    (< (distance v (- (* 4 (expt (cos (/ n 3)) 3)) (* 3 (cos (/ n 3))))) 1e-4))))))
+		      choose-number-small-imag)
+		
+		(list asin
+		      (lambda (nlst v)
+			(let ((asin-taylor (lambda (x)
+					     (+ x (* 1/6 x x x) (* 3/40 x x x x x) (* 5/112 (expt x 7))
+						(* 35/1152 (expt x 9)) (* 63/2816 (expt x 11)) (* 231/13312 (expt x 13))
+						(* 143/10240 (expt x 15)) (* 6435/557056 (expt x 17)) (* 12155/1245184 (expt x 19))))))
+			  
+			  (ok-number 'asin nlst v 
+				     (lambda (n v)
+				       (let ((a (sin v)))
+					;(format #t "[~A ~A ~A -> ~A]~%" n v a (min (magnitude (- a n)) (magnitude (+ a n))))
+					 (and (< (/ (min (distance a n)
+							 (distance a (- n)))
+						    (max 0.001 (magnitude n)))
+						 1e-2)
+					      (< (distance (asin (- n)) (- v)) 1e-6)
+					      (or (> (magnitude n) 0.1)
+						  (let ((val (asin-taylor (exact->inexact n))))
+						    (< (min (distance val v)
+							    (distance val (- v)))
+						       1e-6)))))))))
+		      choose-small-number)
+		
+		(list acos 
+		      (lambda (nlst v)
+			(let ((acos-taylor (lambda (x)
+					     (- (/ our-pi 2) 
+						x (* 1/6 x x x) (* 3/40 x x x x x) (* 5/112 (expt x 7))
+						(* 35/1152 (expt x 9)) (* 63/2816 (expt x 11)) (* 231/13312 (expt x 13))
+						(* 143/10240 (expt x 15)) (* 6435/557056 (expt x 17)) (* 12155/1245184 (expt x 19))))))
+			  (ok-number 'acos nlst v 
+				     (lambda (n v)
+				       (let ((a (cos v)))
+					;(format #t "[~A ~A ~A -> ~A]~%" n v a (min (magnitude (- a n)) (magnitude (+ a n))))
+					 (and (< (/ (min (distance a n)
+							 (distance a (- n)))
+						    (max 0.001 (magnitude n)))
+						 1e-2)
+					      (or (> (magnitude n) 0.1)
+						  (let ((val (acos-taylor (exact->inexact n))))
+						    (< (min (distance val v)
+							    (distance val (- v)))
+						       1e-6)))))))))
+		      choose-small-number)
+		
+		(list integer? 
+		      (lambda (nlst v)
+			(ok-number-to-bool 'integer? nlst v 
+					   (lambda (n v)
+					     (eq? v 
+						  (and (zero? (imag-part n))
+						       (rational? n)
+						       (= n (inexact->exact n))
+						       (= (denominator n) 1)
+						       ;; good grief...
+						       (let* ((str (number->string n))
+							      (dotted #f)
+							      (unzero-after-dot #f)
+							      (len (string-length str)))
+							 (do ((i 0 (+ i 1)))
+							     ((or unzero-after-dot (= i len)))
+							   (if (not dotted)
+							       (set! dotted (char=? #\. (string-ref str i)))
+							       (set! unzero-after-dot (not (char=? #\0 (string-ref str i))))))
+							 (not unzero-after-dot)))))))
+		      choose-number)
+		
+		(list rational?
+		      (lambda (nlst v)
+			(ok-number-to-bool 'rational? nlst v 
+					   (lambda (n v)
+					     (eq? v (exact? n)))))
+		      choose-number)
+		
+		(list real?
+		      (lambda (nlst v)
+			(ok-number-to-bool 'real? nlst v 
+					   (lambda (n v) (eq? v (zero? (imag-part n))))))
+		      choose-number)
+		
+		(list complex? 
+		      (lambda (nlst v)
+			(ok-number-to-bool 'complex? nlst v 
+					   (lambda (n v) (eq? v (number? n)))))
+		      choose-number)
+		
+		(list sqrt 
+		      (lambda (nlst v)
+			(ok-number 'sqrt nlst v 
+				   (lambda (n v)
+				     (let ((a (* v v)))
+				       (and (< (magnitude (- a n)) 1e-6)
+					    (< (distance (expt n 1/2) v) 1e-6)
+					    (< (/ (distance (* n v) (expt n 3/2)) (max 1 (magnitude n))) 1e-6))))))
+		      choose-number)
+		
+		(list exp 
+		      (lambda (nlst v)
+			(ok-number 'exp nlst v 
+				   (lambda (n v)
+				     (let ((a (log v)))
+				       (and (< (min (distance a n)
+						    (distance (make-rectangular (real-part a) (+ (imag-part a) (* 2 our-pi))) n)
+						    (distance (make-rectangular (real-part a) (- (imag-part a) (* 2 our-pi))) n)
+						    (distance (make-rectangular (real-part a) (+ (imag-part a) (* 4 our-pi))) n)
+						    (distance (make-rectangular (real-part a) (- (imag-part a) (* 4 our-pi))) n))
+					       err-max)
+					    (< (distance (/ (exp n) (exp 2.8125)) (exp (- n 2.8125))) err-max)
+					    (< (distance (* (exp n) (exp (- n))) 1.0) err-max))))))
+		      choose-number-small-real)
+		
+		(list log 
+		      (lambda (nlst v)
+			(ok-number 'log nlst v 
+				   (lambda (n v)
+				     (let ((a (exp v)))
+				       (and (< (distance a n) 1e-4)
+					    (or (complex? n)
+						(negative? n) ; avoid the 2*pi = 1 business
+						(< (distance v (- (log (/ (* 17 n) 16)) (log (/ 17 16)))) 1e-4)
+						(< (distance (* 2 v) (log (* n n))) 1e-4)
+						(< (distance (- v) (log (/ 1 n))) 1e-4)))))))
+		      (lambda () (let ((val (car (choose-number)))) (list (if (zero? val) 1.0 val)))))
+		
+		(list tan 
+		      (lambda (nlst v)
+			(ok-number 'tan nlst v 
+				   (lambda (n v)
+				     (let ((a (/ (sin n) (cos n))))
+				       ;; this division is a problem!
+				       (and (< (/ (distance a v) (magnitude n)) err-max)
+					    (< (distance v (/ (* 2 (tan (/ n 2)))
+							      (- 1 (expt (tan (/ n 2)) 2))))
+					       1e-4))))))
+		      (lambda () (let ((val (car (choose-number-small-imag)))) (list (if (zero? (cos val)) 1.0 val)))))
+		
+		(list atan 
+		      (lambda (nlst v) 
+			(let ((atan-taylor (lambda (x)
+					     (let ((val x))
+					       (do ((i 3 (+ i 2))
+						    (sign -1 (- sign)))
+						   ((>= i 100) val)
+						 (set! val (+ val (/ (* sign (expt x i)) i))))))))
+			  (ok-number 'atan nlst v 
+				     (lambda (n v)
+				       (let ((a (tan v)))
+					 (and (< (min (distance a n)
+						      (distance a (- n)))
+						 err-max)
+					      (< (distance (- v) (atan (- n))) 1e-6)
+					      (or (> (magnitude n) .5)
+						  (< (distance v (atan-taylor (exact->inexact n))) 1e-6))))))))
+		      choose-number-small-real)
+		
+		(list floor
+		      (lambda (nlst v)
+			(ok-number 'floor nlst v 
+				   (lambda (n v)
+				     (and (rational? v)
+					  (>= (- n v) 0)
+					  (< (- n v) 1.0)))))
+		      choose-real)
+		
+		(list ceiling
+		      (lambda (nlst v)
+			(ok-number 'ceiling nlst v 
+				   (lambda (n v)
+				     (and (rational? v)
+					  (<= (- n v) 0)
+					  (< (- v n) 1.0)))))
+		      choose-real)
+		
+		(list round 
+		      (lambda (nlst v)
+			(ok-number 'round nlst v 
+				   (lambda (n v)
+				     (and (rational? v)
+					  (<= (abs (- n v)) 0.5)))))
+		      choose-real)
+		
+		(list truncate
+		      (lambda (nlst v)
+			(ok-number 'truncate nlst v 
+				   (lambda (n v)
+				     (and (rational? v)
+					  (< (abs (- n v)) 1.0)))))
+		      choose-real)
+		
+		
+		;; -------- hyperbolics --------------------------------
+		
+		(list sinh
+		      (lambda (nlst v)
+			(let ((sinh-taylor (lambda (x)
+					     (+ x (* 1/6 (expt x 3)) (* 1/120 (expt x 5)) (* 1/5040 (expt x 7))
+						(* 1/362880 (expt x 9)) (* 1/39916800 (expt x 11))
+						(* 1/6227020800 (expt x 13))))))
+			  (ok-number 'sinh nlst v 
+				     (lambda (n v)
+				       (let ((a (- (* 0.0+1.0i (sin (* 0.0+1.0i n))))))
+					 (and (< (distance a v) err-max)
+					      (or (> (magnitude n) 1.0)
+						  (< (distance (sinh-taylor (exact->inexact n)) v) 1e-4))))))))
+		      choose-number-small-real)
+		
+		(list cosh 
+		      (lambda (nlst v)
+			(let ((cosh-taylor (lambda (x)
+					     (+ 1 (* 1/2 x x) (* 1/24 (expt x 4)) (* 1/720 (expt x 6))
+						(* 1/40320 (expt x 8)) (* 1/362880 (expt x 10))
+						(* 1/479001600 (expt x 12))))))
+			  (ok-number 'cosh nlst v 
+				     (lambda (n v)
+				       (let ((a (cos (* 0.0+1.0i n))))
+					 (and (< (distance a v) err-max)
+					      (or (> (magnitude n) 1.0)
+						  (< (distance (cosh-taylor (exact->inexact n)) v) 1e-4))))))))
+		      choose-number-small-real)
+		
+		(list asinh
+		      (lambda (nlst v)
+			(ok-number 'asinh nlst v 
+				   (lambda (n v)
+				     (let ((a (sinh v)))
+				       (< (distance a n) err-max)))))
+		      choose-small-number)
+		
+		(list acosh
+		      (lambda (nlst v)
+			(ok-number 'acosh nlst v 
+				   (lambda (n v)
+				     (let ((a (cosh v)))
+				       (< (distance a n) err-max)))))
+		      choose-small-number)
+		
+		(list tanh
+		      (lambda (nlst v)
+			(ok-number 'tanh nlst v 
+				   (lambda (n v)
+				     (let ((a (/ (sinh n) (cosh n))))
+				       (< (distance a v) err-max)))))
+		      choose-small-number)
+		
+		(list atanh
+		      (lambda (nlst v)
+			(ok-number 'atanh nlst v 
+				   (lambda (n v)
+				     (let ((a (tanh v)))
+				       (< (distance a n) err-max)))))
+		      choose-small-number)
+		
+		;; ------------------------------------------------
+		
+		(list make-polar 
+		      (lambda (nlst v)
+			(ok-two-numbers 'make-polar nlst v 
+					(lambda (n1 n2 v)
+					  (if (>= (/ (distance (* n1 (exp (* 0.0+1.0i n2))) v) (max .001 (magnitude n1))) err-max)
+					      (format #t "(make-polar ~A ~A) -> ~A (~A, ~A)~%"
+						      n1 n2 v  
+						      (* n1 (exp (* 0.0+1.0i n2)))
+						      (/ (distance (* n1 (exp (* 0.0+1.0i n2))) v) (max .001 (magnitude n1)))))
+					  (< (/ (distance (* n1 (exp (* 0.0+1.0i n2))) v) (max .001 (magnitude n1))) err-max))))
+		      (lambda () (list (car (choose-real)) (car (choose-real)))))
+		
+		(list make-rectangular
+		      (lambda (nlst v)
+			(ok-two-numbers 'make-rectangular nlst v 
+					(lambda (n1 n2 v)
+					  (< (/ (distance (+ n1 (* 0.0+1.0i n2)) v) (max .001 (magnitude n1))) err-max))))
+		      (lambda () (list (car (choose-real)) (car (choose-real)))))
+		
+		(list modulo 
+		      (lambda (nlst v)
+			(ok-two-numbers 'modulo nlst v 
+					(lambda (n1 n2 v)
+					  (let ((a (- n1 (* n2 (floor (/ n1 n2))))))
+					    (= a v)))))
+		      (lambda () (list (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))
+				       (let ((val (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))))
+					 (if (zero? val) 1 val)))))
+		
+		(list remainder 
+		      (lambda (nlst v)
+			(ok-two-numbers 'remainder nlst v 
+					(lambda (n1 n2 v)
+					  (let ((a (- n1 (* n2 (quotient n1 n2)))))
+					    (= a v)))))
+		      (lambda () (list (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))
+				       (let ((val (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))))
+					 (if (zero? val) 1 val)))))
+		
+		(list quotient
+		      (lambda (nlst v)
+			(ok-two-numbers 'quotient nlst v 
+					(lambda (n1 n2 v)
+					  (let ((a (truncate (/ n1 n2))))
+					    (= a v)))))
+		      (lambda () (list (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))
+				       (let ((val (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))))
+					 (if (zero? val) 1 val)))))
+		
+		(list rationalize
+		      (lambda (nlst v)
+			(ok-two-numbers 'rationalize nlst v 
+					(lambda (n1 n2 v) ; (rationalize n1 n2) -> v
+					  (and (rational? v)
+					       (< (abs (- v n1)) n2)
+					       (let ((rat (lambda (ux err)
+							    (let ((x0 (- ux err))
+								  (x1 (+ ux err)))
+							      (let ((i (inexact->exact (ceiling x0)))
+								    (i0 (inexact->exact (floor x0)))
+								    (i1 (inexact->exact (ceiling x1)))
+								    (r 0))
+								(if (>= err 1.0)
+								    (if (< x0 0.0)
+									(if (< x1 0.0)
+									    (inexact->exact (floor x1))
+									    0)
+									i)
+								    (if (>= x1 i)
+									(if (>= i 0)
+									    i
+									    (inexact->exact (floor x1)))
+									(do ((p0 i0 (+ p1 (* r p0)))
+									     (q0 1 (+ q1 (* r q0)))
+									     (p1 i1 p0)
+									     (q1 1 q0)
+									     (e0 (- i1 x0) e1p)
+									     (e1 (- x0 i0) (- e0p (* r e1p)))
+									     (e0p (- i1 x1) e1)
+									     (e1p (- x1 i0) (- e0 (* r e1))))
+									    ((<= x0 (/ p0 q0) x1)
+									     (/ p0 q0))
+									  (set! r (min (inexact->exact (floor (/ e0 e1)))
+										       (inexact->exact (ceiling (/ e0p e1p)))))))))))))
+						 (let ((v1 (rat n1 n2)))
+						   (= v1 v)))))))
+		      (lambda () (list (car (choose-real)) (max 0.000001 (random .1)))))
+		
+		(list number->string 
+		      (lambda (nlst v)
+			(ok-string-to-number 'number->string nlst v 
+					     (lambda (n v)
+					       (< (distance n (string->number v)) 1e-4))))
+		      choose-number)
+		
+		(list exact->inexact 
+		      (lambda (nlst v)
+			(ok-number 'exact->inexact nlst v
+				   (lambda (n v)
+				     (and (< (abs (- n v)) 1e-11)
+					  (inexact? v)))))
+		      choose-rational)
+		
+		(list inexact->exact 
+		      (lambda (nlst v)
+			(ok-number 'inexact->exact nlst v
+				   (lambda (n v)
+				     (and (< (abs (- n v)) 1e-11)
+					  (exact? v)))))
+		      choose-real)
+		
+		(list gcd 
+		      (lambda (nlst v)
+			(ok-two-numbers 'gcd nlst v 
+					(lambda (n1 n2 v)
+					  (and (integer? (/ n1 v))
+					       (integer? (/ n2 v))
+					       (positive? v)
+					       (= (abs (lcm n1 n2)) (abs (/ (* n1 n2) v)))))))
+		      (lambda () (list (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))
+				       (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1)))))
+		
+		
+		(list lcm 
+		      (lambda (nlst v)
+			(ok-two-numbers 'lcm nlst v
+					(lambda (n1 n2 v)
+					  (or (and (or (= n1 0)
+						       (= n2 0))
+						   (= v 0))
+					      (and (integer? (/ v n1))
+						   (integer? (/ v n2))
+						   (= (abs (/ (* n1 n2) v)) (gcd n1 n2)))))))
+		      (lambda () (list (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))
+				       (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1)))))
+		
+		(list expt 
+		      (lambda (nlst v)
+			(ok-two-numbers 'expt nlst v 
+					(lambda (n1 n2 v)
+					  
+					  (let ((a1 (if (zero? n1) 0 (exp (* n2 (log n1)))))
+						(a2 (if (zero? n1) 0 (exp (* n2 (+ (* 2 our-pi 0+i) (log n1)))))))
+					    (if (and (> (/ (distance a1 v) (magnitude v)) err-max)
+						     (> (/ (distance a2 v) (magnitude v)) err-max))
+						(format #t "[expt ~A ~A -> ~A, ~A -> ~A]~%" n1 n2 v a1 (distance a1 v)))
+					    (or (< (/ (distance a1 v) (magnitude v)) err-max)
+						(< (/ (distance a2 v) (magnitude v)) err-max))))))
+		      
+		      (lambda () (list (let ((val (car (choose-small-number))))
+					 (if (zero? val) 1 (/ val 2.0)))
+				       (car (choose-small-number)))))
+		
+		(list + 
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (mx 0.0))
+				       (do ((i 0 (+ i 1)))
+					   ((= i n))
+					 (let ((arg (list-ref nlst i)))
+					   (set! v (- v arg))
+					   ;;(set! v (- v (exact->inexact arg)))
+					   (set! mx (max mx (magnitude arg)))))
+				       (< (magnitude (/ v (max 0.001 mx))) err-max)))))
+			  (if (not (tst nlst v))
+			      (format #t "(+ ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
+		      choose-n-numbers)
+		
+		(list - 
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (mx 0.0)
+					   (ans (car nlst)))
+				       (if (= n 1)
+					   (< (distance v (- 0.0 ans)) err-max)
+					   (let ()
+					     (do ((i 1 (+ i 1)))
 						 ((= i n))
 					       (let ((arg (list-ref nlst i)))
-						 (set! v (- v arg))
-						 ;;(set! v (- v (exact->inexact arg)))
+						 (set! v (+ v arg))
 						 (set! mx (max mx (magnitude arg)))))
-					     (< (magnitude (/ v (max 0.001 mx))) err-max)))))
-				(if (not (tst nlst v))
-				    (format #t "(+ ~{~A~^ ~}) -> ~A~%" nlst v)
-				    #t)))
-			    choose-n-numbers)
-		      
-		      (list - 
-			    (lambda (nlst v)
-			      (let ((tst (lambda (nlst v)
-					   (let ((n (length nlst))
-						 (mx 0.0)
-						 (ans (car nlst)))
-					     (if (= n 1)
-						 (< (distance v (- 0.0 ans)) err-max)
-						 (let ()
-						   (do ((i 1 (+ i 1)))
-						       ((= i n))
-						     (let ((arg (list-ref nlst i)))
-						       (set! v (+ v arg))
-						       (set! mx (max mx (magnitude arg)))))
-						   (< (magnitude (/ (- v ans) (max 0.001 mx))) err-max)))))))
-				(if (not (tst nlst v))
-				    (format #t "(- ~{~A~^ ~}) -> ~A~%" nlst v)
-				    #t)))
-			    choose-n-numbers)
-		      
-		      (list * 
-			    (lambda (nlst v)
-			      (let ((tst (lambda (nlst v)
-					   (let ((n (length nlst))
-						 (mx 0.0))
-					     (do ((i 0 (+ i 1)))
+					     (< (magnitude (/ (- v ans) (max 0.001 mx))) err-max)))))))
+			  (if (not (tst nlst v))
+			      (format #t "(- ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
+		      choose-n-numbers)
+		
+		(list * 
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (mx 0.0))
+				       (do ((i 0 (+ i 1)))
+					   ((= i n))
+					 (let ((arg (list-ref nlst i)))
+					   (set! v (/ v arg))
+					   (set! mx (max mx (magnitude arg)))))
+				       (< (magnitude (/ (- v 1) (max 0.001 mx))) err-max)))))
+			  (if (not (tst nlst v))
+			      (format #t "(* ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
+		      (lambda () (map (lambda (n) (if (zero? n) 1 n)) (choose-n-small-numbers))))
+		
+		(list / 
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (mx 0.0)
+					   (ans (car nlst)))
+				       (if (= n 1)
+					   (distance v (/ 1 n))
+					   (let ()
+					     (do ((i 1 (+ i 1)))
 						 ((= i n))
 					       (let ((arg (list-ref nlst i)))
-						 (set! v (/ v arg))
+						 (set! v (* v arg))
 						 (set! mx (max mx (magnitude arg)))))
-					     (< (magnitude (/ (- v 1) (max 0.001 mx))) err-max)))))
-				(if (not (tst nlst v))
-				    (format #t "(* ~{~A~^ ~}) -> ~A~%" nlst v)
-				    #t)))
-			    (lambda () (map (lambda (n) (if (zero? n) 1 n)) (choose-n-small-numbers))))
-		      
-		      (list / 
-			    (lambda (nlst v)
-			      (let ((tst (lambda (nlst v)
-					   (let ((n (length nlst))
-						 (mx 0.0)
-						 (ans (car nlst)))
-					     (if (= n 1)
-						 (distance v (/ 1 n))
-						 (let ()
-						   (do ((i 1 (+ i 1)))
-						       ((= i n))
-						     (let ((arg (list-ref nlst i)))
-						       (set! v (* v arg))
-						       (set! mx (max mx (magnitude arg)))))
-						   (< (magnitude (/ (- v ans) (max 0.001 mx))) err-max)))))))
-				(if (not (tst nlst v))
-				    (format #t "(/ ~{~A~^ ~}) -> ~A~%" nlst v)
-				    #t)))
-			    (lambda () (map (lambda (n) (if (zero? n) 1 n)) (choose-n-small-numbers))))
-		      
-		      (list max 
-			    (lambda (nlst v)
-			      (let ((tst (lambda (nlst v)
-					   (let ((n (length nlst))
-						 (happy #t))
+					     (< (magnitude (/ (- v ans) (max 0.001 mx))) err-max)))))))
+			  (if (not (tst nlst v))
+			      (format #t "(/ ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
+		      (lambda () (map (lambda (n) (if (zero? n) 1 n)) (choose-n-small-numbers))))
+		
+		(list max 
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (happy #t))
+				       (do ((i 0 (+ i 1)))
+					   ((or (not happy) 
+						(= i n)) 
+					    happy)
+					 (let ((arg (list-ref nlst i)))
+					   (set! happy (> (- v arg) (- err-max)))))))))
+			  (if (not (tst nlst v))
+			      (format #t "(max ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
+		      choose-n-real-numbers)
+		
+		(list min
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (happy #t))
+				       (do ((i 0 (+ i 1)))
+					   ((or (not happy) 
+						(= i n)) 
+					    happy)
+					 (let ((arg (list-ref nlst i)))
+					   (set! happy (> (- arg v) (- err-max)))))))))
+			  (if (not (tst nlst v))
+			      (format #t "(min ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
+		      choose-n-real-numbers)
+		
+		(list <
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (happy #t)
+					   (last-arg (car nlst)))
+				       (do ((i 1 (+ i 1)))
+					   ((or (not happy) 
+						(= i n))
+					    (eq? v happy))
+					 (let ((arg (list-ref nlst i)))
+					   (set! happy (> (- arg last-arg) (- err-max-12)))
+					   (set! last-arg arg)))))))
+			  (if (not (tst nlst v))
+			      (format #t "(< ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
+		      choose-2-or-more-real-numbers)
+		
+		(list <=
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (happy #t)
+					   (last-arg (car nlst)))
+				       (do ((i 1 (+ i 1)))
+					   ((or (not happy) 
+						(= i n))
+					    (eq? v happy))
+					 (let ((arg (list-ref nlst i)))
+					   (set! happy (> (- arg last-arg) (- err-max-12)))
+					   (set! last-arg arg)))))))
+			  (if (not (tst nlst v))
+			      (format #t "(<= ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
+		      choose-2-or-more-real-numbers)
+		
+		(list >
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (happy #t)
+					   (last-arg (car nlst)))
+				       (do ((i 1 (+ i 1)))
+					   ((or (not happy) 
+						(= i n))
+					    (eq? v happy))
+					 (let ((arg (list-ref nlst i)))
+					   (set! happy (> (- last-arg arg) (- err-max-12)))
+					   (set! last-arg arg)))))))
+			  (if (not (tst nlst v))
+			      (format #t "(> ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
+		      choose-2-or-more-real-numbers)
+		
+		(list >=
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (happy #t)
+					   (last-arg (car nlst)))
+				       (do ((i 1 (+ i 1)))
+					   ((or (not happy) 
+						(= i n))
+					    (eq? v happy))
+					 (let ((arg (list-ref nlst i)))
+					   (set! happy (> (- last-arg arg) (- err-max-12)))
+					   (set! last-arg arg)))))))
+			  (if (not (tst nlst v))
+			      (format #t "(>= ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
+		      choose-2-or-more-real-numbers)
+		
+		(list =
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (happy #t)
+					   (last-arg (car nlst)))
+				       (do ((i 1 (+ i 1)))
+					   ((or (not happy) 
+						(= i n))
+					    (eq? v happy))
+					 (let ((arg (list-ref nlst i)))
+					   (set! happy (< (abs (- last-arg arg)) err-max-12))
+					   (set! last-arg arg)))))))
+			  (if (not (tst nlst v))
+			      (format #t "(= ~{~A~^ ~}) -> ~A~%" nlst v)
+			      #t)))
+		      choose-2-or-more-real-numbers)
+		
+		
+		;; -------- bitwise functions -------------------------
+		
+		
+		(list logand
+		      (lambda (nlst v)
+			(ok-two-numbers 'logand nlst v 
+					(lambda (n1 n2 v)
+					  (let ((a (logical:logand n1 n2)))
+					    (= a v)))))
+		      (lambda () (list (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))
+				       (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1)))))
+		(list logior
+		      (lambda (nlst v)
+			(ok-two-numbers 'logior nlst v 
+					(lambda (n1 n2 v)
+					  (let ((a (logical:logior n1 n2)))
+					    (= a v)))))
+		      (lambda () (list (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))
+				       (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1)))))
+		
+		(list logxor
+		      (lambda (nlst v)
+			(ok-two-numbers 'logxor nlst v 
+					(lambda (n1 n2 v)
+					  (let ((a (logical:logxor n1 n2)))
+					    (= a v)))))
+		      (lambda () (list (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))
+				       (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1)))))
+		
+		(list lognot
+		      (lambda (nlst v)
+			(ok-number 'logxor nlst v 
+				   (lambda (n1 v)
+				     (let ((a (logical:lognot n1)))
+				       (= a v)))))
+		      choose-integer)
+		
+		(list ash
+		      (lambda (nlst v)
+			(ok-two-numbers 'ash nlst v 
+					(lambda (n1 n2 v)
+					  (let ((a (logical:ash n1 n2)))
+					    (= a v)))))
+		      (lambda () (list (* (random (inexact->exact (floor (inexact->exact (floor (expt 2 30)))))) (if (> (random 1.0) 0.5) 1 -1))
+				       (* (random (if with-bignums 100 30)) (if (> (random 1.0) 0.5) 1 -1)))))
+		
+		(list integer-length
+		      (lambda (nlst v)
+			(ok-number 'integer-length nlst v 
+				   (lambda (n1 v)
+				     (let ((a (logical:integer-length n1))
+					   (b (ceiling (log (abs n1) 2))))
+				       (= a b v)))))
+		      choose-integer)
+		
+		
+		
+		;; -------- characters --------------------------------
+		
+		(list char-upcase
+		      (lambda (nlst v)
+			(let ((chr (car nlst)))
+			  (if (not (char-alphabetic? chr))
+			      (if (not (char=? v chr))
+				  (format #t "(char-upcase #\\~A) -> ~A" chr v))
+			      (if (and (not (char=? chr v))
+				       (not (char=? chr (char-downcase v))))
+				  (format #t "(char-upcase #\\~A) -> ~A~%" chr v)))))
+		      choose-char)
+		
+		(list char-downcase
+		      (lambda (nlst v)
+			(let ((chr (car nlst)))
+			  (if (not (char-alphabetic? chr))
+			      (if (not (char=? v chr))
+				  (format #t "(char-downcase @\\~A) -> ~A" chr v))
+			      (if (and (not (char=? chr v))
+				       (not (char=? chr (char-upcase v))))
+				  (format #t "(char-downcase #\\~A) -> ~A~%" chr v)))))
+		      choose-char)
+		
+		(list char-alphabetic?
+		      (lambda (nlst v)
+			(let ((chr (car nlst)))
+			  (if (not (eq? v (or (and (char<=? #\A chr) (char<=? chr #\Z))
+					      (and (char<=? #\a chr) (char<=? chr #\z)))))
+			      (format #t "(char-alphabetic? #\\~A) -> ~A~%" chr v))))
+		      choose-char)
+		
+		(list char-numeric?
+		      (lambda (nlst v)
+			(let ((chr (car nlst)))
+			  (if (not (eq? v (if (member chr (list #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9)) #t #f)))
+			      (format #t "(char-numeric? #\\~A) -> ~A~%" chr v))))
+		      choose-char)
+		
+		(list char-upper-case?
+		      (lambda (nlst v)
+			(let ((chr (car nlst)))
+			  (if (not (eq? v (and (char<=? #\A chr) (char<=? chr #\Z))))
+			      (format #t "(char-upper-case? #\\~A) -> ~A~%" chr v))))
+		      choose-char)
+		
+		(list char-lower-case?
+		      (lambda (nlst v)
+			(let ((chr (car nlst)))
+			  (if (not (eq? v (and (char<=? #\a chr) (char<=? chr #\z))))
+			      (format #t "(char-lower-case? #\\~A) -> ~A~%" chr v))))
+		      choose-char)
+		
+		(list char-whitespace?
+		      (lambda (nlst v)
+			(let ((chr (car nlst)))
+			  (if (not (eq? v (if (member chr (list #\space (integer->char 9) (integer->char 10) 
+								(integer->char 11) (integer->char 12) (integer->char 13)))
+					      #t #f)))
+			      (format #t "(char-whitespace? #\\~A) -> ~A (~D)~%" chr v (char->integer chr)))))
+		      choose-char)
+		
+		(list char=?
+		      (lambda (nlst v)
+			(let ((c1 (car nlst))
+			      (len (length nlst))
+			      (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (= (char->integer c1) (char->integer (list-ref nlst i)))))
+			  (if (not (eq? happy v))
+			      (format #t "(char=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-chars)
+		
+		(list char-ci=?
+		      (lambda (nlst v)
+			(let ((c1 (car nlst))
+			      (len (length nlst))
+			      (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (or (= (char->integer c1) (char->integer (list-ref nlst i)))
+					    (= (char->integer c1) (char->integer (char-upcase (list-ref nlst i))))
+					    (= (char->integer c1) (char->integer (char-downcase (list-ref nlst i)))))))
+			  (if (not (eq? happy v))
+			      (format #t "(char-ci=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-chars)
+		
+		(list char<?
+		      (lambda (nlst v)
+			(let ((c1 (car nlst))
+			      (len (length nlst))
+			      (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (< (char->integer c1) (char->integer (list-ref nlst i))))
+			    (set! c1 (list-ref nlst i)))
+			  (if (not (eq? happy v))
+			      (format #t "(char<? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-chars)
+		
+		(list char-ci<?
+		      (lambda (nlst v)
+			(let ((c1 (car nlst))
+			      (len (length nlst))
+			      (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (< (char->integer (char-upcase c1)) (char->integer (char-upcase (list-ref nlst i)))))
+			    (set! c1 (list-ref nlst i)))
+			  (if (not (eq? happy v))
+			      (format #t "(char-ci<? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-chars)
+		
+		(list char<=?
+		      (lambda (nlst v)
+			(let ((c1 (car nlst))
+			      (len (length nlst))
+			      (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (<= (char->integer c1) (char->integer (list-ref nlst i))))
+			    (set! c1 (list-ref nlst i)))
+			  (if (not (eq? happy v))
+			      (format #t "(char<=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-chars)
+		
+		(list char-ci<=?
+		      (lambda (nlst v)
+			(let ((c1 (car nlst))
+			      (len (length nlst))
+			      (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (<= (char->integer (char-upcase c1)) (char->integer (char-upcase (list-ref nlst i)))))
+			    (set! c1 (list-ref nlst i)))
+			  (if (not (eq? happy v))
+			      (format #t "(char-ci<=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-chars)
+		
+		(list char>?
+		      (lambda (nlst v)
+			(let ((c1 (car nlst))
+			      (len (length nlst))
+			      (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (> (char->integer c1) (char->integer (list-ref nlst i))))
+			    (set! c1 (list-ref nlst i)))
+			  (if (not (eq? happy v))
+			      (format #t "(char>? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-chars)
+		
+		(list char-ci>?
+		      (lambda (nlst v)
+			(let ((c1 (car nlst))
+			      (len (length nlst))
+			      (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (> (char->integer (char-upcase c1)) (char->integer (char-upcase (list-ref nlst i)))))
+			    (set! c1 (list-ref nlst i)))
+			  (if (not (eq? happy v))
+			      (format #t "(char-ci>? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-chars)
+		
+		(list char>=?
+		      (lambda (nlst v)
+			(let ((c1 (car nlst))
+			      (len (length nlst))
+			      (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (>= (char->integer c1) (char->integer (list-ref nlst i))))
+			    (set! c1 (list-ref nlst i)))
+			  (if (not (eq? happy v))
+			      (format #t "(char>=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-chars)
+		
+		(list char-ci>=?
+		      (lambda (nlst v)
+			(let ((c1 (car nlst))
+			      (len (length nlst))
+			      (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (>= (char->integer (char-upcase c1)) (char->integer (char-upcase (list-ref nlst i)))))
+			    (set! c1 (list-ref nlst i)))
+			  (if (not (eq? happy v))
+			      (format #t "(char-ci>=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-chars)
+		
+		(list char->integer
+		      (lambda (nlst v)
+			(let ((chr (car nlst)))
+			  (if (or (not (integer? v))
+				  (not (char=? chr (integer->char v))))
+			      (format #t "(char->integer #\\~A) -> ~A~%" chr v))))
+		      choose-char)
+		
+		(list integer->char
+		      (lambda (nlst v)
+			(let ((chr (car nlst)))
+			  (if (or (not (char? v))
+				  (not (= chr (char->integer v))))
+			      (format #t "(integer->char ~A) -> #\\~A" chr v))))
+		      (lambda () (list (random 256))))
+		
+		;; -------- strings --------------------------------
+		
+		(list string-length
+		      (lambda (nlst v)
+			(let ((chr (car nlst))
+			      (ilen -1))
+			  (if (or (not (integer? v))
+				  ;; assume for these tests that there won't be embedded nulls
+				  (let ((happy #t))
+				    (catch #t
+					   (lambda ()
 					     (do ((i 0 (+ i 1)))
-						 ((or (not happy) 
-						      (= i n)) 
-						  happy)
-					       (let ((arg (list-ref nlst i)))
-						 (set! happy (> (- v arg) (- err-max)))))))))
-				(if (not (tst nlst v))
-				    (format #t "(max ~{~A~^ ~}) -> ~A~%" nlst v)
-				    #t)))
-			    choose-n-real-numbers)
-		      
-		      (list min
-			    (lambda (nlst v)
-			      (let ((tst (lambda (nlst v)
-					   (let ((n (length nlst))
-						 (happy #t))
-					     (do ((i 0 (+ i 1)))
-						 ((or (not happy) 
-						      (= i n)) 
-						  happy)
-					       (let ((arg (list-ref nlst i)))
-						 (set! happy (> (- arg v) (- err-max)))))))))
-				(if (not (tst nlst v))
-				    (format #t "(min ~{~A~^ ~}) -> ~A~%" nlst v)
-				    #t)))
-			    choose-n-real-numbers)
-		      
-		      (list <
-			    (lambda (nlst v)
-			      (let ((tst (lambda (nlst v)
-					   (let ((n (length nlst))
-						 (happy #t)
-						 (last-arg (car nlst)))
-					     (do ((i 1 (+ i 1)))
-						 ((or (not happy) 
-						      (= i n))
-						  (eq? v happy))
-					       (let ((arg (list-ref nlst i)))
-						 (set! happy (> (- arg last-arg) (- err-max-12)))
-						 (set! last-arg arg)))))))
-				(if (not (tst nlst v))
-				    (format #t "(< ~{~A~^ ~}) -> ~A~%" nlst v)
-				    #t)))
-			    choose-2-or-more-real-numbers)
-		      
-		      (list <=
-			    (lambda (nlst v)
-			      (let ((tst (lambda (nlst v)
-					   (let ((n (length nlst))
-						 (happy #t)
-						 (last-arg (car nlst)))
-					     (do ((i 1 (+ i 1)))
-						 ((or (not happy) 
-						      (= i n))
-						  (eq? v happy))
-					       (let ((arg (list-ref nlst i)))
-						 (set! happy (> (- arg last-arg) (- err-max-12)))
-						 (set! last-arg arg)))))))
-				(if (not (tst nlst v))
-				    (format #t "(<= ~{~A~^ ~}) -> ~A~%" nlst v)
-				    #t)))
-			    choose-2-or-more-real-numbers)
-		      
-		      (list >
-			    (lambda (nlst v)
-			      (let ((tst (lambda (nlst v)
-					   (let ((n (length nlst))
-						 (happy #t)
-						 (last-arg (car nlst)))
-					     (do ((i 1 (+ i 1)))
-						 ((or (not happy) 
-						      (= i n))
-						  (eq? v happy))
-					       (let ((arg (list-ref nlst i)))
-						 (set! happy (> (- last-arg arg) (- err-max-12)))
-						 (set! last-arg arg)))))))
-				(if (not (tst nlst v))
-				    (format #t "(> ~{~A~^ ~}) -> ~A~%" nlst v)
-				    #t)))
-			    choose-2-or-more-real-numbers)
-		      
-		      (list >=
-			    (lambda (nlst v)
-			      (let ((tst (lambda (nlst v)
-					   (let ((n (length nlst))
-						 (happy #t)
-						 (last-arg (car nlst)))
-					     (do ((i 1 (+ i 1)))
-						 ((or (not happy) 
-						      (= i n))
-						  (eq? v happy))
-					       (let ((arg (list-ref nlst i)))
-						 (set! happy (> (- last-arg arg) (- err-max-12)))
-						 (set! last-arg arg)))))))
-				(if (not (tst nlst v))
-				    (format #t "(>= ~{~A~^ ~}) -> ~A~%" nlst v)
-				    #t)))
-			    choose-2-or-more-real-numbers)
-		      
-		      (list =
-			    (lambda (nlst v)
-			      (let ((tst (lambda (nlst v)
-					   (let ((n (length nlst))
-						 (happy #t)
-						 (last-arg (car nlst)))
-					     (do ((i 1 (+ i 1)))
-						 ((or (not happy) 
-						      (= i n))
-						  (eq? v happy))
-					       (let ((arg (list-ref nlst i)))
-						 (set! happy (< (abs (- last-arg arg)) err-max-12))
-						 (set! last-arg arg)))))))
-				(if (not (tst nlst v))
-				    (format #t "(= ~{~A~^ ~}) -> ~A~%" nlst v)
-				    #t)))
-			    choose-2-or-more-real-numbers)
-		      
-		      
-		      ;; -------- bitwise functions -------------------------
-		      
-		      
-		      (list logand
-			    (lambda (nlst v)
-			      (ok-two-numbers 'logand nlst v 
-					      (lambda (n1 n2 v)
-						(let ((a (logical:logand n1 n2)))
-						  (= a v)))))
-			    (lambda () (list (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))
-					     (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1)))))
-		      (list logior
-			    (lambda (nlst v)
-			      (ok-two-numbers 'logior nlst v 
-					      (lambda (n1 n2 v)
-						(let ((a (logical:logior n1 n2)))
-						  (= a v)))))
-			    (lambda () (list (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))
-					     (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1)))))
-		      
-		      (list logxor
-			    (lambda (nlst v)
-			      (ok-two-numbers 'logxor nlst v 
-					      (lambda (n1 n2 v)
-						(let ((a (logical:logxor n1 n2)))
-						  (= a v)))))
-			    (lambda () (list (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1))
-					     (* (random (inexact->exact (floor (expt 2 30)))) (if (> (random 1.0) 0.5) 1 -1)))))
-		      
-		      (list lognot
-			    (lambda (nlst v)
-			      (ok-number 'logxor nlst v 
-					 (lambda (n1 v)
-					   (let ((a (logical:lognot n1)))
-					     (= a v)))))
-			    choose-integer)
-		      
-		      (list ash
-			    (lambda (nlst v)
-			      (ok-two-numbers 'ash nlst v 
-					      (lambda (n1 n2 v)
-						(let ((a (logical:ash n1 n2)))
-						  (= a v)))))
-			    (lambda () (list (* (random (inexact->exact (floor (inexact->exact (floor (expt 2 30)))))) (if (> (random 1.0) 0.5) 1 -1))
-					     (* (random (if with-bignums 100 30)) (if (> (random 1.0) 0.5) 1 -1)))))
-		      
-		      (list integer-length
-			    (lambda (nlst v)
-			      (ok-number 'integer-length nlst v 
-					 (lambda (n1 v)
-					   (let ((a (logical:integer-length n1))
-						 (b (ceiling (log (abs n1) 2))))
-					     (= a b v)))))
-			    choose-integer)
-		      
-		      
-		      
-		      ;; -------- characters --------------------------------
-		      
-		      (list char-upcase
-			    (lambda (nlst v)
-			      (let ((chr (car nlst)))
-				(if (not (char-alphabetic? chr))
-				    (if (not (char=? v chr))
-					(format #t "(char-upcase #\\~A) -> ~A" chr v))
-				    (if (and (not (char=? chr v))
-					     (not (char=? chr (char-downcase v))))
-					(format #t "(char-upcase #\\~A) -> ~A~%" chr v)))))
-			    choose-char)
-		      
-		      (list char-downcase
-			    (lambda (nlst v)
-			      (let ((chr (car nlst)))
-				(if (not (char-alphabetic? chr))
-				    (if (not (char=? v chr))
-					(format #t "(char-downcase @\\~A) -> ~A" chr v))
-				    (if (and (not (char=? chr v))
-					     (not (char=? chr (char-upcase v))))
-					(format #t "(char-downcase #\\~A) -> ~A~%" chr v)))))
-			    choose-char)
-		      
-		      (list char-alphabetic?
-			    (lambda (nlst v)
-			      (let ((chr (car nlst)))
-				(if (not (eq? v (or (and (char<=? #\A chr) (char<=? chr #\Z))
-						    (and (char<=? #\a chr) (char<=? chr #\z)))))
-				    (format #t "(char-alphabetic? #\\~A) -> ~A~%" chr v))))
-			    choose-char)
-		      
-		      (list char-numeric?
-			    (lambda (nlst v)
-			      (let ((chr (car nlst)))
-				(if (not (eq? v (if (member chr (list #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9)) #t #f)))
-				    (format #t "(char-numeric? #\\~A) -> ~A~%" chr v))))
-			    choose-char)
-		      
-		      (list char-upper-case?
-			    (lambda (nlst v)
-			      (let ((chr (car nlst)))
-				(if (not (eq? v (and (char<=? #\A chr) (char<=? chr #\Z))))
-				    (format #t "(char-upper-case? #\\~A) -> ~A~%" chr v))))
-			    choose-char)
-		      
-		      (list char-lower-case?
-			    (lambda (nlst v)
-			      (let ((chr (car nlst)))
-				(if (not (eq? v (and (char<=? #\a chr) (char<=? chr #\z))))
-				    (format #t "(char-lower-case? #\\~A) -> ~A~%" chr v))))
-			    choose-char)
-		      
-		      (list char-whitespace?
-			    (lambda (nlst v)
-			      (let ((chr (car nlst)))
-				(if (not (eq? v (if (member chr (list #\space (integer->char 9) (integer->char 10) 
-								      (integer->char 11) (integer->char 12) (integer->char 13)))
-						    #t #f)))
-				    (format #t "(char-whitespace? #\\~A) -> ~A (~D)~%" chr v (char->integer chr)))))
-			    choose-char)
-		      
-		      (list char=?
-			    (lambda (nlst v)
-			      (let ((c1 (car nlst))
-				    (len (length nlst))
-				    (happy #t))
-				(do ((i 1 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (set! happy (= (char->integer c1) (char->integer (list-ref nlst i)))))
-				(if (not (eq? happy v))
-				    (format #t "(char=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-chars)
-		      
-		      (list char-ci=?
-			    (lambda (nlst v)
-			      (let ((c1 (car nlst))
-				    (len (length nlst))
-				    (happy #t))
-				(do ((i 1 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (set! happy (or (= (char->integer c1) (char->integer (list-ref nlst i)))
-						  (= (char->integer c1) (char->integer (char-upcase (list-ref nlst i))))
-						  (= (char->integer c1) (char->integer (char-downcase (list-ref nlst i)))))))
-				(if (not (eq? happy v))
-				    (format #t "(char-ci=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-chars)
-		      
-		      (list char<?
-			    (lambda (nlst v)
-			      (let ((c1 (car nlst))
-				    (len (length nlst))
-				    (happy #t))
-				(do ((i 1 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (set! happy (< (char->integer c1) (char->integer (list-ref nlst i))))
-				  (set! c1 (list-ref nlst i)))
-				(if (not (eq? happy v))
-				    (format #t "(char<? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-chars)
-		      
-		      (list char-ci<?
-			    (lambda (nlst v)
-			      (let ((c1 (car nlst))
-				    (len (length nlst))
-				    (happy #t))
-				(do ((i 1 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (set! happy (< (char->integer (char-upcase c1)) (char->integer (char-upcase (list-ref nlst i)))))
-				  (set! c1 (list-ref nlst i)))
-				(if (not (eq? happy v))
-				    (format #t "(char-ci<? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-chars)
-		      
-		      (list char<=?
-			    (lambda (nlst v)
-			      (let ((c1 (car nlst))
-				    (len (length nlst))
-				    (happy #t))
-				(do ((i 1 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (set! happy (<= (char->integer c1) (char->integer (list-ref nlst i))))
-				  (set! c1 (list-ref nlst i)))
-				(if (not (eq? happy v))
-				    (format #t "(char<=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-chars)
-		      
-		      (list char-ci<=?
-			    (lambda (nlst v)
-			      (let ((c1 (car nlst))
-				    (len (length nlst))
-				    (happy #t))
-				(do ((i 1 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (set! happy (<= (char->integer (char-upcase c1)) (char->integer (char-upcase (list-ref nlst i)))))
-				  (set! c1 (list-ref nlst i)))
-				(if (not (eq? happy v))
-				    (format #t "(char-ci<=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-chars)
-		      
-		      (list char>?
-			    (lambda (nlst v)
-			      (let ((c1 (car nlst))
-				    (len (length nlst))
-				    (happy #t))
-				(do ((i 1 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (set! happy (> (char->integer c1) (char->integer (list-ref nlst i))))
-				  (set! c1 (list-ref nlst i)))
-				(if (not (eq? happy v))
-				    (format #t "(char>? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-chars)
-		      
-		      (list char-ci>?
-			    (lambda (nlst v)
-			      (let ((c1 (car nlst))
-				    (len (length nlst))
-				    (happy #t))
-				(do ((i 1 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (set! happy (> (char->integer (char-upcase c1)) (char->integer (char-upcase (list-ref nlst i)))))
-				  (set! c1 (list-ref nlst i)))
-				(if (not (eq? happy v))
-				    (format #t "(char-ci>? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-chars)
-		      
-		      (list char>=?
-			    (lambda (nlst v)
-			      (let ((c1 (car nlst))
-				    (len (length nlst))
-				    (happy #t))
-				(do ((i 1 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (set! happy (>= (char->integer c1) (char->integer (list-ref nlst i))))
-				  (set! c1 (list-ref nlst i)))
-				(if (not (eq? happy v))
-				    (format #t "(char>=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-chars)
-		      
-		      (list char-ci>=?
-			    (lambda (nlst v)
-			      (let ((c1 (car nlst))
-				    (len (length nlst))
-				    (happy #t))
-				(do ((i 1 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (set! happy (>= (char->integer (char-upcase c1)) (char->integer (char-upcase (list-ref nlst i)))))
-				  (set! c1 (list-ref nlst i)))
-				(if (not (eq? happy v))
-				    (format #t "(char-ci>=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-chars)
-		      
-		      (list char->integer
-			    (lambda (nlst v)
-			      (let ((chr (car nlst)))
-				(if (or (not (integer? v))
-					(not (char=? chr (integer->char v))))
-				    (format #t "(char->integer #\\~A) -> ~A~%" chr v))))
-			    choose-char)
-		      
-		      (list integer->char
-			    (lambda (nlst v)
-			      (let ((chr (car nlst)))
-				(if (or (not (char? v))
-					(not (= chr (char->integer v))))
-				    (format #t "(integer->char ~A) -> #\\~A" chr v))))
-			    (lambda () (list (random 256))))
-		      
-		      ;; -------- strings --------------------------------
-		      
-		      (list string-length
-			    (lambda (nlst v)
-			      (let ((chr (car nlst))
-				    (ilen -1))
-				(if (or (not (integer? v))
-					;; assume for these tests that there won't be embedded nulls
-					(let ((happy #t))
-					  (catch #t
-						 (lambda ()
-						   (do ((i 0 (+ i 1)))
-						       ((not happy))
-						     (let ((c (string-ref chr i))) ; error if we run off the end?
-						       (set! ilen i)
-						       (if (= (char->integer c) 0)
-							   (set! happy #f)))))
-						 (lambda args args))
-					  (not (= (+ ilen 1) v))))
-				    (format #t "(string-length ~S) -> ~D (~D)~%" chr v ilen))))
-			    choose-string)
-		      
-		      (list string-ref
-			    (lambda (nlst v)
-			      (let ((str (car nlst))
-				    (pt (cadr nlst)))
-				(if (or (not (char? v))
-					(not (char=? (list-ref (string->list str) pt) v)))
-				    (format #t "(string-ref ~S ~D) -> #\\~A~%" str pt v))))
-			    (lambda ()
-			      (let ((str (string-append "1" (car (choose-string)))))
-				(list str (random (string-length str))))))
-		      
-		      (list string-set!
-			    (lambda (nlst v)
-			      (let ((str (car nlst))
-				    (pt (cadr nlst))
-				    (chr (caddr nlst)))
-				(if (not (char=? (list-ref (string->list str) pt) chr))
-				    (format #t "(string-set! ~S ~D #\\~A) -> #\\~A~%" str pt chr (list-ref (string->list str) pt)))))
-			    (lambda ()
-			      (let ((str (string-append "1" (car (choose-string)))))
-				(list str (random (string-length str)) (car (choose-non-null-char))))))
-		      
-		      (list make-string
-			    (lambda (nlst v)
-			      (let ((len (car nlst))
-				    (c (and (not (null? (cdr nlst))) (cadr nlst))))
-				(if (or (not (string? v))
-					(not (= (string-length v) len))
-					(and c
-					     (let ((happy #t))
-					       (do ((i 0 (+ i 1)))
-						   ((or (not happy) (= i len)) (not happy))
-						 (set! happy (char=? (string-ref v i) c))))))
-				    (if c
-					(format #t "(make-string ~D #\\~A) -> ~S~%" len c v)
-					(format #t "(make-string ~D) -> ~S~%" len v)))))
-			    (lambda ()
-			      (let ((len (random 20)))
-				(if (> (random 1.0) 0.5)
-				    (list len (car (choose-non-null-char)))
-				    (list len)))))
-		      
-		      (list string=?
-			    (lambda (nlst v)
-			      (let* ((c1 (car nlst))
-				     (c1-len (string-length c1))
-				     (len (length nlst))
-				     (happy #t))
-				(do ((i 1 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (let ((c2 (list-ref nlst i)))
-				    (if (not (= (string-length c2) c1-len))
-					(set! happy #f)
-					(do ((k 0 (+ k 1)))
-					    ((or (not happy) (= k c1-len)) happy)
-					  (set! happy (char=? (string-ref c1 k) (string-ref c2 k)))))))
-				(if (not (eq? happy v))
-				    (format #t "(string=? ~{~S~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-strings)
-		      
-		      (list string-ci=?
-			    (lambda (nlst v)
-			      (let* ((c1 (car nlst))
-				     (c1-len (string-length c1))
-				     (len (length nlst))
-				     (happy #t))
-				(do ((i 1 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (let ((c2 (list-ref nlst i)))
-				    (if (not (= (string-length c2) c1-len))
-					(set! happy #f)
-					(do ((k 0 (+ k 1)))
-					    ((or (not happy) (= k c1-len)) happy)
-					  (set! happy (char-ci=? (string-ref c1 k) (string-ref c2 k)))))))
-				(if (not (eq? happy v))
-				    (format #t "(string-ci=? ~{~S~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-strings)
-		      
-		      (list string<?
-			    (lambda (nlst v)
-			      (let* ((c1 (car nlst))
-				     (c1-len (string-length c1))
-				     (len (length nlst))
-				     (happy #t))
-				(do ((i 1 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (let* ((c2 (list-ref nlst i))
-					 (c2-len (string-length c2))
-					 (pos -1))
-				    ;; first differing char decides -- if same length but otherwise same chars, shorter is less
-				    (do ((k 0 (+ k 1)))
-					((or (not happy)
-					     (not (= pos -1))
-					     (= k (min c1-len c2-len))))
-				      (if (not (char=? (string-ref c1 k) (string-ref c2 k)))
-					  (begin
-					    (if (= pos -1) (set! pos k))
-					    (set! happy (char<? (string-ref c1 k) (string-ref c2 k))))))
-				    (if (and happy 
-					     (= pos -1))
-					(set! happy (< c1-len c2-len)))
-				    (set! c1 c2)
-				    (set! c1-len c2-len)))
-				(if (not (eq? happy v))
-				    (format #t "(string<? ~{~S~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-strings)
-		      
-		      (list string-ci<?
-			    (lambda (nlst v)
-			      (let* ((c1 (car nlst))
-				     (c1-len (string-length c1))
-				     (len (length nlst))
-				     (happy #t))
-				(do ((i 1 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (let* ((c2 (list-ref nlst i))
-					 (c2-len (string-length c2))
-					 (pos -1))
-				    ;; first differing char decides -- if same length but otherwise same chars, shorter is less
-				    (do ((k 0 (+ k 1)))
-					((or (not happy)
-					     (not (= pos -1))
-					     (= k (min c1-len c2-len))))
-				      (if (not (char-ci=? (string-ref c1 k) (string-ref c2 k)))
-					  (begin
-					    (if (= pos -1) (set! pos k))
-					    (set! happy (char-ci<? (string-ref c1 k) (string-ref c2 k))))))
-				    (if (and happy 
-					     (= pos -1))
-					(set! happy (< c1-len c2-len)))
-				    (set! c1 c2)
-				    (set! c1-len c2-len)))
-				(if (not (eq? happy v))
-				    (format #t "(string-ci<? ~{~S~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-strings)
-		      
-		      (list string>?
-			    (lambda (nlst v)
-			      (let* ((c1 (car nlst))
-				     (c1-len (string-length c1))
-				     (len (length nlst))
-				     (happy #t))
-				(do ((i 1 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (let* ((c2 (list-ref nlst i))
-					 (c2-len (string-length c2))
-					 (pos -1))
-				    (do ((k 0 (+ k 1)))
-					((or (not happy)
-					     (not (= pos -1))
-					     (= k (min c1-len c2-len))))
-				      (if (not (char=? (string-ref c1 k) (string-ref c2 k)))
-					  (begin
-					    (if (= pos -1) (set! pos k))
-					    (set! happy (char>? (string-ref c1 k) (string-ref c2 k))))))
-				    (if (and happy 
-					     (= pos -1))
-					(set! happy (> c1-len c2-len)))
-				    (set! c1 c2)
-				    (set! c1-len c2-len)))
-				(if (not (eq? happy v))
-				    (format #t "(string>? ~{~S~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-strings)
-		      
-		      (list string-ci>?
-			    (lambda (nlst v)
-			      (let* ((c1 (car nlst))
-				     (c1-len (string-length c1))
-				     (len (length nlst))
-				     (happy #t))
-				(do ((i 1 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (let* ((c2 (list-ref nlst i))
-					 (c2-len (string-length c2))
-					 (pos -1))
-				    (do ((k 0 (+ k 1)))
-					((or (not happy)
-					     (not (= pos -1))
-					     (= k (min c1-len c2-len))))
-				      (if (not (char-ci=? (string-ref c1 k) (string-ref c2 k)))
-					  (begin
-					    (if (= pos -1) (set! pos k))
-					    (set! happy (char-ci>? (string-ref c1 k) (string-ref c2 k))))))
-				    (if (and happy 
-					     (= pos -1))
-					(set! happy (> c1-len c2-len)))
-				    (set! c1 c2)
-				    (set! c1-len c2-len)))
-				(if (not (eq? happy v))
-				    (format #t "(string-ci>? ~{~S~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-strings)
-		      
-		      (list string<=?
-			    (lambda (nlst v)
-			      (let* ((c1 (car nlst))
-				     (c1-len (string-length c1))
-				     (len (length nlst))
-				     (happy #t))
-				(do ((i 1 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (let* ((c2 (list-ref nlst i))
-					 (c2-len (string-length c2))
-					 (pos -1))
-				    (do ((k 0 (+ k 1)))
-					((or (not happy)
-					     (not (= pos -1))
-					     (= k (min c1-len c2-len))))
-				      (if (not (char=? (string-ref c1 k) (string-ref c2 k)))
-					  (begin
-					    (if (= pos -1) (set! pos k))
-					    (set! happy (char<? (string-ref c1 k) (string-ref c2 k))))))
-				    (if (and happy 
-					     (= pos -1))
-					(set! happy (<= c1-len c2-len)))
-				    (set! c1 c2)
-				    (set! c1-len c2-len)))
-				(if (not (eq? happy v))
-				    (format #t "(string<=? ~{~S~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-strings)
-		      
-		      (list string-ci<=?
-			    (lambda (nlst v)
-			      (let* ((c1 (car nlst))
-				     (c1-len (string-length c1))
-				     (len (length nlst))
-				     (happy #t))
-				(do ((i 1 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (let* ((c2 (list-ref nlst i))
-					 (c2-len (string-length c2))
-					 (pos -1))
-				    (do ((k 0 (+ k 1)))
-					((or (not happy)
-					     (not (= pos -1))
-					     (= k (min c1-len c2-len))))
-				      (if (not (char-ci=? (string-ref c1 k) (string-ref c2 k)))
-					  (begin
-					    (if (= pos -1) (set! pos k))
-					    (set! happy (char-ci<? (string-ref c1 k) (string-ref c2 k))))))
-				    (if (and happy 
-					     (= pos -1))
-					(set! happy (<= c1-len c2-len)))
-				    (set! c1 c2)
-				    (set! c1-len c2-len)))
-				(if (not (eq? happy v))
-				    (format #t "(string-ci<=? ~{~S~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-strings)
-		      
-		      (list string>=?
-			    (lambda (nlst v)
-			      (let* ((c1 (car nlst))
-				     (c1-len (string-length c1))
-				     (len (length nlst))
-				     (happy #t))
-				(do ((i 1 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (let* ((c2 (list-ref nlst i))
-					 (c2-len (string-length c2))
-					 (pos -1))
-				    (do ((k 0 (+ k 1)))
-					((or (not happy)
-					     (not (= pos -1))
-					     (= k (min c1-len c2-len))))
-				      (if (not (char=? (string-ref c1 k) (string-ref c2 k)))
-					  (begin
-					    (if (= pos -1) (set! pos k))
-					    (set! happy (char>? (string-ref c1 k) (string-ref c2 k))))))
-				    (if (and happy 
-					     (= pos -1))
-					(set! happy (>= c1-len c2-len)))
-				    (set! c1 c2)
-				    (set! c1-len c2-len)))
-				(if (not (eq? happy v))
-				    (format #t "(string>=? ~{~S~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-strings)
-		      
-		      (list string-ci>=?
-			    (lambda (nlst v)
-			      (let* ((c1 (car nlst))
-				     (c1-len (string-length c1))
-				     (len (length nlst))
-				     (happy #t))
-				(do ((i 1 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (let* ((c2 (list-ref nlst i))
-					 (c2-len (string-length c2))
-					 (pos -1))
-				    (do ((k 0 (+ k 1)))
-					((or (not happy)
-					     (not (= pos -1))
-					     (= k (min c1-len c2-len))))
-				      (if (not (char-ci=? (string-ref c1 k) (string-ref c2 k)))
-					  (begin
-					    (if (= pos -1) (set! pos k))
-					    (set! happy (char-ci>? (string-ref c1 k) (string-ref c2 k))))))
-				    (if (and happy 
-					     (= pos -1))
-					(set! happy (>= c1-len c2-len)))
-				    (set! c1 c2)
-				    (set! c1-len c2-len)))
-				(if (not (eq? happy v))
-				    (format #t "(string-ci>=? ~{~S~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-strings)
-		      
-		      (list string-append
-			    (lambda (nlst v)
-			      (let* ((len (length nlst))
-				     (happy #t)
-				     (j 0)
-				     (vlen (string-length v)))
-				(do ((i 0 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (let* ((c1 (list-ref nlst i))
-					 (c1-len (string-length c1)))
-				    (do ((k 0 (+ k 1)))
-					((or (not happy)
-					     (= k c1-len)))
-				      (set! happy (char=? (string-ref c1 k) (string-ref v j)))
-				      (set! j (+ j 1))
-				      (if (> j vlen)
-					  (set! happy #f)))))
-				(if (not happy)
-				    (format #t "(string-append ~{~S~^ ~}) -> ~A~%" nlst v))))
-			    choose-2-or-more-strings)
-		      
-		      (list string-fill!
-			    (lambda (nlst v)
-			      (let ((str (car nlst))
-				    (c (cadr nlst))
-				    (happy #t))
-				(do ((i 0 (+ i 1)))
-				    ((or (not happy) (= i (string-length str))))
-				  (set! happy (char=? c (string-ref str i))))
-				(if (not happy)
-				    (format #t "(string-fill! ~S #\\~A) -> ~S~%" str c v))))
-			    (lambda ()
-			      (let ((str (car (choose-string))))
-				(list str (car (choose-non-null-char))))))
-		      
-		      (list string-copy
-			    (lambda (nlst v)
-			      (let ((str (car nlst)))
-				(if (not (string=? str v))
-				    (format #t "(string-copy ~S) -> ~S~%" str v))))
-			    choose-string)
-		      
-		      (list string->list
-			    (lambda (nlst v)
-			      (let* ((str (car nlst))
-				     (strlen (string-length str)))
-				(if (or (not (list? v))
-					(not (= (length v) strlen))
-					(let ((happy #t))
-					  (do ((i 0 (+ i 1)))
-					      ((or (not happy) (= i strlen)) (not happy))
-					    (set! happy (char=? (string-ref str i) (list-ref v i))))))
-				    (format #t "(string->list ~S) -> ~A~%" str v))))
-			    choose-string)
-		      
-		      (list list->string
-			    (lambda (nlst v)
-			      (let* ((lst (car nlst))
-				     (len (length lst)))
-				(if (or (not (string? v))
-					(not (= (string-length v) len))
-					(let ((happy #t))
-					  (do ((i 0 (+ i 1)))
-					      ((or (not happy) (= i len)) (not happy))
-					    (set! happy (char=? (string-ref v i) (list-ref lst i))))))
-				    (format #t "(list->string ~A) -> ~S~%" lst v))))
-			    (lambda ()
-			      (let ((lst '())
-				    (len (random 20)))
-				(do ((i 0 (+ i 1)))
-				    ((= i len) (list lst))
-				  (set! lst (cons (car (choose-non-null-char)) lst))))))
-		      
-		      (list string
-			    (lambda (nlst v)
-			      (let ((len (length nlst)))
-				(if (or (not (string? v))
-					(not (= len (string-length v)))
-					(let ((happy #t))
-					  (do ((i 0 (+ i 1)))
-					      ((or (not happy) (= i len)) (not happy))
-					    (set! happy (char=? (string-ref v i) (list-ref nlst i))))))
-				    (format #t "(string~{~^ #\\~A~}) -> ~S~%" nlst v))))
-			    (lambda ()
-			      (let ((lst '())
-				    (len (random 20)))
-				(do ((i 0 (+ i 1)))
-				    ((= i len) lst)
-				  (set! lst (cons (car (choose-non-null-char)) lst))))))
-		      
-		      (list substring
-			    (lambda (nlst v)
-			      (let* ((str (car nlst))
-				     (start (cadr nlst))
-				     (end (if (not (null? (cddr nlst))) (caddr nlst) (string-length str)))
-				     (happy #t))
-				(if (or (not (string? v))
-					(not (= (string-length v) (- end start)))
-					(do ((i start (+ i 1))
-					     (j 0 (+ j 1)))
-					    ((or (not happy) (= i end)) (not happy))
-					  (set! happy (char=? (string-ref str i) (string-ref v j)))))
-				    (if (not (null? (cddr nlst)))
-					(format #t "(substring ~S ~D ~D) -> ~S~%" str start end v)
-					(format #t "(substring ~S ~D) -> ~S~%" str start v)))))
-			    (lambda ()
-			      (let* ((str (car (choose-non-null-string)))
-				     (strlen (string-length str))
-				     (start (if (> strlen 1) (random (- strlen 1)) 0)))
-				(if (or (> (random 1.0) 0.5)
-					(= start strlen))
-				    (list str start)
-				    (list str start (+ start (random (- strlen start))))))))
-		      
-		      
-		      ;; -------- generic stuff  --------------------------------
-		      
-		      (list not
-			    (lambda (nlst v)
-			      (if (not (eq? v (if (car nlst) #f #t)))
-				  (format #t "(not ~A) -> ~A~%" (car nlst) v)))
-			    (lambda () (choose-any 0)))
-		      
-		      (list boolean?
-			    (lambda (nlst v)
-			      (if (or (and (not (eq? v #t))
-					   (not (eq? v #f)))
-				      (and (eq? v #t)
-					   (not (eq? (car nlst) #t))
-					   (not (eq? (car nlst) #f)))
-				      (and (eq? v #f)
-					   (or (eq? (car nlst) #f)
-					       (eq? (car nlst) #t))))
-				  (format #t "(boolean? ~A) -> ~A~%" (car nlst) v)))
-			    (lambda () (choose-any 0)))
-		      
-		      (list number?
-			    (lambda (nlst v)
-			      (if (or (not (boolean? v))
-				      (not (eq? v (complex? (car nlst)))))
-				  (format #t "(number? ~A) -> ~A~%" (car nlst) v)))
-			    (lambda () (choose-any 0)))
-		      
-		      (list string?
-			    (lambda (nlst v)
-			      (let ((strp (catch #t (lambda () (integer? (string-length (car nlst)))) (lambda args #f))))
-				(if (or (not (boolean? v))
-					(not (eq? v strp)))
-				    (format #t "(string? ~A) -> ~A~%" (car nlst) v))))
-			    (lambda () (choose-any 0)))
-		      
-		      (list char?
-			    (lambda (nlst v)
-			      (let ((chrp (catch #t (lambda () (integer? (char->integer (car nlst)))) (lambda args #f))))
-				(if (or (not (boolean? v))
-					(not (eq? v chrp)))
-				    (format #t "(char? ~A) -> ~A~%" (car nlst) v))))
-			    (lambda () (choose-any 0)))
-		      
-		      (list vector?
-			    (lambda (nlst v)
-			      (let ((chrp (catch #t (lambda () (integer? (vector-length (car nlst)))) (lambda args #f))))
-				(if (or (not (boolean? v))
-					(not (eq? v chrp)))
-				    (format #t "(vector? ~A) -> ~A~%" (car nlst) v))))
-			    (lambda () (choose-any 0)))
-		      
-		      (list list?
-			    (lambda (nlst v)
-			      (let ((chrp (catch #t (lambda () (let ((hi (or (null? (car nlst)) (list-ref (car nlst) 0)))) #t)) (lambda args #f))))
-				(if (or (not (boolean? v))
-					(not (eq? v chrp)))
-				    (format #t "(list? ~A) -> ~A~%" (car nlst) v))))
-			    (lambda () (choose-any 0)))
-		      
-		      (list pair?
-			    (lambda (nlst v)
-			      (let ((chrp (catch #t (lambda () (car (car nlst)) #t) (lambda args #f))))
-				(if (or (not (boolean? v))
-					(not (eq? v chrp)))
-				    (format #t "(pair? ~A) -> ~A~%" (car nlst) v))))
-			    (lambda () (choose-any 0)))
-		      
-		      (list eqv?
-			    (lambda (nlst v)
-			      (let* ((a1 (car nlst))
-				     (a2 (cadr nlst)))
-				;; eq? + numbers chars 
-				(define (eqv-1 x y) ; from Dybvig
-				  (cond
-				   ((eq? x y))
-				   ((number? x)
-				    (and (number? y)
-					 (if (exact? x)
-					     (and (exact? y) (= x y))
-					     (and (inexact? y) (= x y)))))
-				   ((char? x) (and (char? y) (char=? x y)))
-				   (else #f)))
-				(if (or (not (boolean? v))
-					(not (eq? v (eqv-1 a1 a2))))
-				    (format #t "(eqv? ~A ~A) -> ~A (~A ~A)~%" a1 a2 v (eqv-1 a1 a2) nlst))))
-			    (lambda () (list (car (choose-any 0)) (car (choose-any 0)))))
-		      
-		      (list equal?
-			    (lambda (nlst v)
-			      (let* ((a1 (car nlst))
-				     (a2 (cadr nlst)))
-				(define (equal-1 x y) ; also Dybvig
-				  (cond
-				   ((eqv? x y))
-				   ((pair? x)
-				    (and (pair? y)
-					 (equal? (car x) (car y))
-					 (equal? (cdr x) (cdr y))))
-				   ((string? x) (and (string? y) (string=? x y)))
-				   ((vector? x)
-				    (and (vector? y)
-					 (let ((n (vector-length x)))
-					   (and (= n (vector-length y))
-						(let loop ((i 0))
-						  (or (= i n)
-						      (and (equal? (vector-ref x i) (vector-ref y i))
-							   (loop (+ i 1)))))))))
-				   (else #f)))
-				(if (or (not (boolean? v))
-					(not (eq? v (equal-1 a1 a2))))
-				    (format #t "(equal? ~A ~A) -> ~A~%" a1 a2 v))))
-			    (lambda () (list (car (choose-any 0)) (car (choose-any 0)))))
-		      
-		      
-		      
-		      ;; -------- vectors --------------------------------
-		      
-		      (list vector-fill!
-			    (lambda (nlst v)
-			      (let* ((vect (car nlst))
-				     (len (vector-length vect))
-				     (val (cadr nlst))
-				     (happy #t))
-				(do ((i 0 (+ i 1)))
-				    ((or (not happy) (= i len)))
-				  (set! happy (equal? (vector-ref vect i) val)))
-				(if (not happy)
-				    (format #t "(vector-fill! ~A ~A)~%" vect val))))
-			    (lambda ()
-			      (list (car (choose-vector 0)) (car (choose-any 0)))))
-		      
-		      (list vector-ref
-			    (lambda (nlst v)
-			      (let* ((vect (car nlst))
-				     (pos (cadr nlst))
-				     (val (list-ref (vector->list vect) pos)))
-				(if (not (equal? val v))
-				    (format #t "(vector-ref ~A ~A) -> ~A~%" vect pos v))))
-			    (lambda ()
-			      (let ((vect (car (choose-vector 0))))
-				(list vect (random (vector-length vect))))))
-		      
-		      (list vector-set!
-			    (lambda (nlst v)
-			      (let* ((vect (car nlst))
-				     (pos (cadr nlst))
-				     (val (caddr nlst)))
-				(if (not (equal? val (list-ref (vector->list vect) pos)))
-				    (format #t "(vector-set! ~A ~A ~A)~%" vect pos val))))
-			    (lambda ()
-			      (let ((vect (car (choose-vector 0))))
-				(list vect (random (vector-length vect)) (car (choose-any 0))))))
-		      
-		      (list vector-length
-			    (lambda (nlst v)
-			      (let* ((vect (car nlst))
-				     (val (length (vector->list vect))))
-				(if (not (= val v))
-				    (format #t "(vector-length ~A) -> ~A~%" vect v))))
-			    (lambda () (choose-vector 0)))
-		      
-		      (list vector->list
-			    (lambda (nlst v)
-			      (let* ((vect (car nlst))
-				     (len (vector-length vect)))
-				(if (or (not (list? v))
-					(not (= len (length v)))
-					(let ((happy #t))
-					  (do ((i 0 (+ i 1)))
-					      ((or (not happy) (= i len)) (not happy))
-					    (set! happy (equal? (vector-ref vect i) (list-ref v i))))))
-				    (format #t "(vector->list ~A) -> ~A~%" vect v))))
-			    (lambda () (choose-vector 0)))
-		      
-		      (list list->vector
-			    (lambda (nlst v)
-			      (let* ((lst (car nlst))
-				     (len (length lst)))
-				(if (or (not (vector? v))
-					(not (= len (vector-length v)))
-					(let ((happy #t))
-					  (do ((i 0 (+ i 1)))
-					      ((or (not happy) (= i len)) (not happy))
-					    (set! happy (equal? (vector-ref v i) (list-ref lst i))))))
-				    (format #t "(list->vector ~A) -> ~A~%" lst v))))
-			    (lambda () (choose-list 0)))
-		      
-		      (list vector
-			    (lambda (lst v)
-			      (let* ((len (length lst)))
-				(if (or (not (vector? v))
-					(not (= len (vector-length v)))
-					(let ((happy #t))
-					  (do ((i 0 (+ i 1)))
-					      ((or (not happy) (= i len)) (not happy))
-					    (set! happy (equal? (vector-ref v i) (list-ref lst i))))))
-				    (format #t "(vector ~{~A~^ ~}) -> ~A~%" lst v))))
-			    (lambda () (choose-list 0)))
-		      
-		      (list make-vector
-			    (lambda (nlst v)
-			      (let* ((len (car nlst))
-				     (val (if (not (null? (cdr nlst))) (cadr nlst) 12345)))
-				(if (or (not (vector? v))
-					(not (= len (vector-length v)))
-					(and (not (equal? val 12345))
-					     (let ((happy #t))
-					       (do ((i 0 (+ i 1)))
-						   ((or (not happy) (= i len)) (not happy))
-						 (set! happy (equal? (vector-ref v i) val))))))
-				    (if (not (equal? val 12345))
-					(format #t "(make-vector ~A ~A) -> ~A~%" len val v)
-					(format #t "(make-vector ~A) -> ~A~%" len v)))))
-			    (lambda ()
-			      (if (> (random 1.0) 0.5)
-				  (list (+ 1 (random 20)) (car (choose-any 0)))
-				  (list (+ 1 (random 20))))))
-		      
-		      
-		      ;; -------- lists --------------------------------
-		      
-		      (list null? 
-			    (lambda (nlst v)
-			      (if (or (not (boolean? v))
-				      (and (eq? v #t) (not (eq? (car nlst) '())))
-				      (and (eq? v #f) (eq? (car nlst) '())))
-				  (format #t "(null? ~A) -> ~A~%" (car nlst) v)))
-			    (lambda () (choose-list 0)))
-		      
-		      (list car
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-ref (list-ref nlst 0) 0)))
-				  (format #t "(car ~A) -> ~A~%" (car nlst) v)))
-			    (lambda () (choose-non-null-list 0)))
-		      
-		      (list cdr
-			    (lambda (nlst v)
-			      (if (not (equal? v (list-tail (car nlst) 1)))
-				  (format #t "(cdr ~A) -> ~A~%" (car nlst) v)))
-			    (lambda () (choose-non-null-list 0)))
-		      
-		      (list length
-			    (lambda (nlst v)
-			      (let* ((lst (car nlst)))
-				(if (or (not (integer? v))
-					(not (= v (vector-length (list->vector lst)))))
-				    (format #t "(length ~A) -> ~A~%" lst v))))
-			    (lambda () (choose-list 0)))
-		      
-		      (list null?
-			    (lambda (nlst v)
-			      (let* ((lst (car nlst))
-				     (len (length lst)))
-				(if (or (and v
-					     (not (= len 0)))
-					(and (not v)
-					     (= len 0)))
-				    (format #t "(null? ~A) -> ~A~%" lst v))))
-			    (lambda () (choose-list 0)))
-		      
-		      (list list-ref
-			    (lambda (nlst v)
-			      (let* ((lst (car nlst))
-				     (pos (cadr nlst)))
-				(if (not (equal? v (vector-ref (list->vector lst) pos)))
-				    (format #t "(list-ref ~A ~D) -> ~A~%" lst pos v))))
-			    (lambda () 
-			      (let ((lst (car (choose-non-null-list 0))))
-				(list lst (random (length lst))))))
-		      
-		      (list reverse
-			    (lambda (nlst v)
-			      (let* ((lst (car nlst))
-				     (len (length lst)))
-				(if (or (not (list? v))
-					(not (= len (length v)))
-					(let ((happy #t))
-					  (do ((i 0 (+ i 1))
-					       (j (- len 1) (- j 1)))
-					      ((or (not happy) (= i len)) (not happy))
-					    (set! happy (equal? (list-ref lst i) (list-ref v j))))))
-				    (format #t "(reverse ~A) -> ~A~%" lst v))))
-			    (lambda () (choose-list 0)))
-		      
-		      (list cons
-			    (lambda (nlst v)
-			      (let* ((cr (car nlst))
-				     (cd (cadr nlst)))
-				(if (or (not (pair? v))
-					(not (equal? (car v) cr))
-					(not (equal? (cdr v) cd)))
-				    (format #t "(cons ~A ~A) -> ~A~%" cr cd v))))
-			    (lambda () (list (car (choose-any 0)) (car (choose-any 0)))))
-		      
-		      (list caar
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-ref (list-ref (list-ref nlst 0) 0) 0)))
-				  (format #t "(caar ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (not (pair? (car lst)))
-				    (list (list (choose-list 0) lst))
-				    (list lst)))))
-		      
-		      (list cadr
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-ref (list-tail (car nlst) 1) 0)))
-				  (format #t "(cadr ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (< (length lst) 2)
-				    (list (list lst (choose-non-null-list 0)))
-				    (list lst)))))
-		      
-		      (list cdar
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-tail (list-ref (list-ref nlst 0) 0) 1)))
-				  (format #t "(cdar ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (not (pair? (car lst)))
-				    (list (list (choose-list 0) lst))
-				    (list lst)))))
-		      
-		      (list cddr
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-tail (list-tail (list-ref nlst 0) 1) 1)))
-				  (format #t "(cddr ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (not (pair? (cdr lst)))
-				    (list (list lst (choose-list 0)))
-				    (list lst)))))
-		      
-		      (list caaar
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-ref (list-ref (list-ref (list-ref nlst 0) 0) 0) 0)))
-				  (format #t "(caaar ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (car lst)))
-					(not (pair? (caar lst))))
-				    (list (list (list lst (choose-list 0))))
-				    (list lst)))))
-		      
-		      (list caadr
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-ref (list-ref (list-tail (car nlst) 1) 0) 0)))
-				  (format #t "(caadr ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (cdr lst)))
-					(not (pair? (cadr lst))))
-				    (list (list lst (list (choose-non-null-list 0))))
-				    (list lst)))))
-		      
-		      (list cadar
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-ref (list-tail (list-ref (list-ref nlst 0) 0) 1) 0)))
-				  (format #t "(cadar ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (car lst)))
-					(not (pair? (cdar lst))))
-				    (list (list (list (choose-non-null-list 0) (list 1 lst))))
-				    (list lst)))))
-		      
-		      (list cdaar
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-tail (list-ref (list-ref (list-ref nlst 0) 0) 0) 1)))
-				  (format #t "(cdaar ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (car lst)))
-					(not (pair? (caar lst))))
-				    (list (list (list (choose-list 0) lst)))
-				    (list lst)))))
-		      
-		      (list caddr
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-ref (list-tail (list-tail (list-ref nlst 0) 1) 1) 0)))
-				  (format #t "(caddr ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (cdr lst)))
-					(not (pair? (cddr lst))))
-				    (list (list 1 lst (list (choose-list 0))))
-				    (list lst)))))
-		      
-		      (list cdddr
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-tail (list-tail (list-tail (list-ref nlst 0) 1) 1) 1)))
-				  (format #t "(cdddr ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (cdr lst)))
-					(not (pair? (cddr lst))))
-				    (list (list 1 lst (list (choose-list 0))))
-				    (list lst)))))
-		      
-		      (list cdadr
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-tail (list-ref (list-tail (car nlst) 1) 0) 1)))
-				  (format #t "(cdadr ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (cdr lst)))
-					(not (pair? (cadr lst))))
-				    (list (list 1 (list lst (list (choose-list 0)))))
-				    (list lst)))))
-		      
-		      (list cddar
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-tail (list-tail (list-ref (list-ref nlst 0) 0) 1) 1)))
-				  (format #t "(cddar ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (car lst)))
-					(not (pair? (cdar lst))))
-				    (list (list (list lst (list (choose-list 0)))))
-				    (list lst)))))
-		      
-		      (list caaaar
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-ref (list-ref (list-ref (list-ref (list-ref nlst 0) 0) 0) 0) 0)))
-				  (format #t "(caaaar ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (car lst)))
-					(not (pair? (caar lst))))
-				    (list (list (list (list lst (choose-list 0)))))
-				    (list lst)))))
-		      
-		      (list cdaaar
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-tail (list-ref (list-ref (list-ref (list-ref nlst 0) 0) 0) 0) 1)))
-				  (format #t "(caaaar ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (car lst)))
-					(not (pair? (caar lst))))
-				    (list (list (list (list lst (choose-list 0)))))
-				    (list lst)))))
-		      
-		      (list caaadr
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-ref (list-ref (list-ref (list-tail (car nlst) 1) 0) 0) 0)))
-				  (format #t "(caaadr ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (cdr lst)))
-					(not (pair? (cadr lst)))
-					(not (pair? (caadr lst))))
-				    (list (list lst (list (list (choose-non-null-list 0)))))
-				    (list lst)))))
-		      
-		      (list cdaadr
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-tail (list-ref (list-ref (list-tail (car nlst) 1) 0) 0) 1)))
-				  (format #t "(cdaadr ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (cdr lst)))
-					(not (pair? (cadr lst)))
-					(not (pair? (caadr lst))))
-				    (list (list lst (list (list (choose-non-null-list 0)))))
-				    (list lst)))))
-		      
-		      (list caadar
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-ref (list-ref (list-tail (list-ref (list-ref nlst 0) 0) 1) 0) 0)))
-				  (format #t "(caadar ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (car lst)))
-					(not (pair? (cdar lst)))
-					(not (pair? (cadar lst))))
-				    (list (list (list (choose-non-null-list 0) (list (list 1 lst)))))
-				    (list lst)))))
-		      
-		      (list cdadar
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-tail (list-ref (list-tail (list-ref (list-ref nlst 0) 0) 1) 0) 1)))
-				  (format #t "(cdadar ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (car lst)))
-					(not (pair? (cdar lst)))
-					(not (pair? (cadar lst))))
-				    (list (list (list (choose-non-null-list 0) (list (list 1 lst)))))
-				    (list lst)))))
-		      
-		      (list cadaar
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-ref (list-tail (list-ref (list-ref (list-ref nlst 0) 0) 0) 1) 0)))
-				  (format #t "(cadaar ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (car lst)))
-					(not (pair? (caar lst)))
-					(not (pair? (cdaar lst))))
-				    (list (list (list (list (choose-list 0) (list lst)))))
-				    (list lst)))))
-		      
-		      (list cddaar
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-tail (list-tail (list-ref (list-ref (list-ref nlst 0) 0) 0) 1) 1)))
-				  (format #t "(cddaar ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (car lst)))
-					(not (pair? (caar lst)))
-					(not (pair? (cdaar lst))))
-				    (list (list (list (list (choose-list 0) (list lst)))))
-				    (list lst)))))
-		      
-		      (list caaddr
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-ref (list-ref (list-tail (list-tail (list-ref nlst 0) 1) 1) 0) 0)))
-				  (format #t "(caaddr ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (cdr lst)))
-					(not (pair? (cddr lst)))
-					(not (pair? (caddr lst))))
-				    (list (list 1 lst (list (list (choose-list 0)))))
-				    (list lst)))))
-		      
-		      (list cdaddr
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-tail (list-ref (list-tail (list-tail (list-ref nlst 0) 1) 1) 0) 1)))
-				  (format #t "(cdaddr ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (cdr lst)))
-					(not (pair? (cddr lst)))
-					(not (pair? (caddr lst))))
-				    (list (list 1 lst (list (list (choose-list 0)))))
-				    (list lst)))))
-		      
-		      (list cadddr
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-ref (list-tail (list-tail (list-tail (list-ref nlst 0) 1) 1) 1) 0)))
-				  (format #t "(cadddr ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (cdr lst)))
-					(not (pair? (cddr lst)))
-					(not (pair? (cdddr lst))))
-				    (list (list 1 lst 1 (list (choose-list 0))))
-				    (list lst)))))
-		      
-		      (list cddddr
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-tail (list-tail (list-tail (list-tail (list-ref nlst 0) 1) 1) 1) 1)))
-				  (format #t "(cddddr ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (cdr lst)))
-					(not (pair? (cddr lst)))
-					(not (pair? (cdddr lst))))
-				    (list (list 1 lst 1 (list (choose-list 0))))
-				    (list lst)))))
-		      
-		      (list cadadr
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-ref (list-tail (list-ref (list-tail (car nlst) 1) 0) 1) 0)))
-				  (format #t "(cadadr ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (cdr lst)))
-					(not (pair? (cadr lst)))
-					(not (pair? (cdadr lst))))
-				    (list (list 1 (list lst (list (choose-list 0)))))
-				    (list lst)))))
-		      
-		      (list cddadr
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-tail (list-tail (list-ref (list-tail (car nlst) 1) 0) 1) 1)))
-				  (format #t "(cddadr ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (cdr lst)))
-					(not (pair? (cadr lst)))
-					(not (pair? (cdadr lst))))
-				    (list (list 1 (list lst (list (choose-list 0)))))
-				    (list lst)))))
-		      
-		      (list caddar
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-ref (list-tail (list-tail (list-ref (list-ref nlst 0) 0) 1) 1) 0)))
-				  (format #t "(caddar ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (car lst)))
-					(not (pair? (cdar lst)))
-					(not (pair? (cddar lst))))
-				    (list (list (list lst 1 (list (choose-list 0)))))
-				    (list lst)))))
-		      
-		      (list cdddar
-			    (lambda (nlst v)
-			      (if (not (eq? v (list-tail (list-tail (list-tail (list-ref (list-ref nlst 0) 0) 1) 1) 1)))
-				  (format #t "(cdddar ~A) -> ~A~%" (car nlst) v)))
-			    (lambda ()
-			      (let ((lst (car (choose-non-null-list 0))))
-				(if (or (not (pair? (car lst)))
-					(not (pair? (cdar lst)))
-					(not (pair? (cddar lst))))
-				    (list (list (list lst 1 (list (choose-list 0)))))
-				    (list lst)))))
-		      
-		      (list set-car!
-			    (lambda (nlst v)
-			      (let* ((lst (car nlst))
-				     (val (cadr nlst)))
-				(if (not (equal? (car lst) val))
-				    (format #t "(set-car! ~A ~A)~%" lst val))))
-			    (lambda () (list (choose-non-null-list 0) (choose-any 0))))
-		      
-		      (list set-cdr!
-			    (lambda (nlst v)
-			      (let* ((lst (car nlst))
-				     (val (cadr nlst)))
-				(if (not (equal? (cdr lst) val))
-				    (format #t "(set-cdr! ~A ~A)~%" lst val))))
-			    (lambda () (list (choose-non-null-list 0) (choose-any 0))))
-		      
-		      (list assoc
-			    (lambda (nlst v)
-			      (let* ((alst (cadr nlst))
-				     (obj (car nlst))
-				     (val #f))
-				(for-each
-				 (lambda (kv)
-				   (if (and (not val)
-					    (equal? obj (car kv)))
-				       (set! val kv)))
-				 alst)
-				(if (not (equal? v val))
-				    (format #t "(assoc ~A ~A) -> ~A~%" obj alst v))))
-			    (lambda () (choose-alist 'equal?)))
-		      
-		      (list assq
-			    (lambda (nlst v)
-			      (let* ((alst (cadr nlst))
-				     (obj (car nlst))
-				     (val #f))
-				(for-each
-				 (lambda (kv)
-				   (if (and (not val)
-					    (equal? obj (car kv)))
-				       (set! val kv)))
-				 alst)
-				(if (not (eq? v val))
-				    (format #t "(assq ~A ~A) -> ~A~%" obj alst v))))
-			    (lambda () (choose-alist 'eq?)))
-		      
-		      (list assv
-			    (lambda (nlst v)
-			      (let* ((alst (cadr nlst))
-				     (obj (car nlst))
-				     (val #f))
-				(for-each
-				 (lambda (kv)
-				   (if (and (not val)
-					    (eqv? obj (car kv)))
-				       (set! val kv)))
-				 alst)
-				(if (not (equal? v val))
-				    (format #t "(assv ~A ~A) -> ~A~%" obj alst v))))
-			    (lambda () (choose-alist 'eqv?)))
-		      
-		      (list memq
-			    (lambda (nlst v)
-			      (let* ((lst (cadr nlst))
-				     (len (length lst))
-				     (obj (car nlst))
-				     (val #f))
-				(do ((i 0 (+ i 1))
-				     (mlst lst (cdr mlst)))
-				    ((or val (= i len)))
-				  (if (eq? obj (car mlst))
-				      (set! val mlst)))
-				(if (not (equal? v val))
-				    (format #t "(memq ~A ~A) -> ~A~%" obj lst v))))
-			    (lambda () (choose-mlist 'eq?))) 
-		      
-		      (list memv
-			    (lambda (nlst v)
-			      (let* ((lst (cadr nlst))
-				     (len (length lst))
-				     (obj (car nlst))
-				     (val #f))
-				(do ((i 0 (+ i 1))
-				     (mlst lst (cdr mlst)))
-				    ((or val (= i len)))
-				  (if (eqv? obj (car mlst))
-				      (set! val mlst)))
-				(if (not (equal? v val))
-				    (format #t "(memv ~A ~A) -> ~A~%" obj lst v))))
-			    (lambda () (choose-mlist 'eqv?))) 
-		      
-		      (list member
-			    (lambda (nlst v)
-			      (let* ((lst (cadr nlst))
-				     (len (length lst))
-				     (obj (car nlst))
-				     (val #f))
-				(do ((i 0 (+ i 1))
-				     (mlst lst (cdr mlst)))
-				    ((or val (= i len)))
-				  (if (equal? obj (car mlst))
-				      (set! val mlst)))
-				(if (not (equal? v val))
-				    (format #t "(member ~A ~A) -> ~A~%" obj lst v))))
-			    (lambda () (choose-mlist 'equal?))) 
-		      
-		      (list list-tail
-			    (lambda (nlst v)
-			      (let* ((lst (car nlst))
-				     (pos (cadr nlst)))
-				(if (not (equal? v (do ((i 0 (+ i 1))
-							(mlst lst (cdr mlst)))
-						       ((= i pos) mlst))))
-				    (format #t "(list-tail ~A ~A) -> ~A~%" lst pos v))))
-			    (lambda ()
-			      (let ((lst (car (choose-list 0))))
-				(list lst (random (length lst))))))
-		      
-		      (list list
-			    (lambda (nlst v)
-			      (if (not (equal? nlst v))
-				  (format #t "(list ~{~A~^ ~}) -> ~A~%" nlst v)))
-			    (lambda ()
-			      (car (choose-list 0))))
-		      
-		      (list symbol?
-			    (lambda (nlst v)
-			      (let ((symp (catch #t (lambda () (string? (symbol->string (car nlst)))) (lambda args #f))))
-				(if (or (not (boolean? v))
-					(not (eq? v symp)))
-				    (format #t "(symbol? ~A) -> ~A~%" (car nlst) v))))
-			    (lambda () (choose-any 0)))
-		      
-		      (list append
-			    (lambda (nlst v)
-			      (let* ((len (length nlst))
-				     (mv v)
-				     (happy #t))
-				(for-each
-				 (lambda (lst)
-				   (if happy
-				       (for-each
-					(lambda (obj)
-					  (if happy
-					      (if (not (equal? obj (car mv)))
-						  (begin
-						    (format #t "(append ~{~A~^ ~}) -> ~A~%" nslt v)
-						    (set! happy #f))))
-					  (set! mv (cdr mv)))
-					lst)))
-				 nlst)))
-			    (lambda ()
-			      (let ((len (random 10))
-				    (lsts '()))
-				(do ((i 0 (+ i 1)))
-				    ((= i len))
-				  (set! lsts (cons (car (choose-list 0)) lsts)))
-				lsts)))
-		      
-		      ;; --------------------------------------------------------------------------------
-		      
-		      
-		      )))
+						 ((not happy))
+					       (let ((c (string-ref chr i))) ; error if we run off the end?
+						 (set! ilen i)
+						 (if (= (char->integer c) 0)
+						     (set! happy #f)))))
+					   (lambda args args))
+				    (not (= (+ ilen 1) v))))
+			      (format #t "(string-length ~S) -> ~D (~D)~%" chr v ilen))))
+		      choose-string)
 		
-		(define (choose-op)
-		  (let ((choice (random (length ops))))
-		    (list-ref ops choice)))
+		(list string-ref
+		      (lambda (nlst v)
+			(let ((str (car nlst))
+			      (pt (cadr nlst)))
+			  (if (or (not (char? v))
+				  (not (char=? (list-ref (string->list str) pt) v)))
+			      (format #t "(string-ref ~S ~D) -> #\\~A~%" str pt v))))
+		      (lambda ()
+			(let ((str (string-append "1" (car (choose-string)))))
+			  (list str (random (string-length str))))))
 		
-		(define (quotify args)
-		  (map (lambda (arg)
-			 (if (or (list? arg)
-				 (vector? arg)
-				 (symbol? arg))
-			     (list 'quote arg)
-			     arg))
-		       args))
+		(list string-set!
+		      (lambda (nlst v)
+			(let ((str (car nlst))
+			      (pt (cadr nlst))
+			      (chr (caddr nlst)))
+			  (if (not (char=? (list-ref (string->list str) pt) chr))
+			      (format #t "(string-set! ~S ~D #\\~A) -> #\\~A~%" str pt chr (list-ref (string->list str) pt)))))
+		      (lambda ()
+			(let ((str (string-append "1" (car (choose-string)))))
+			  (list str (random (string-length str)) (car (choose-non-null-char))))))
 		
-		(do ((i 1 (+ i 1)))
-		    ((> i tries))
-		  (if (= (modulo i 1000) 0) (format #t "."))
-		  (let* ((data (choose-op))
-			 (args ((caddr data)))
-			 (op (car data))
-			 (checker (cadr data)))
+		(list make-string
+		      (lambda (nlst v)
+			(let ((len (car nlst))
+			      (c (and (not (null? (cdr nlst))) (cadr nlst))))
+			  (if (or (not (string? v))
+				  (not (= (string-length v) len))
+				  (and c
+				       (let ((happy #t))
+					 (do ((i 0 (+ i 1)))
+					     ((or (not happy) (= i len)) (not happy))
+					   (set! happy (char=? (string-ref v i) c))))))
+			      (if c
+				  (format #t "(make-string ~D #\\~A) -> ~S~%" len c v)
+				  (format #t "(make-string ~D) -> ~S~%" len v)))))
+		      (lambda ()
+			(let ((len (random 20)))
+			  (if (> (random 1.0) 0.5)
+			      (list len (car (choose-non-null-char)))
+			      (list len)))))
+		
+		(list string=?
+		      (lambda (nlst v)
+			(let* ((c1 (car nlst))
+			       (c1-len (string-length c1))
+			       (len (length nlst))
+			       (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let ((c2 (list-ref nlst i)))
+			      (if (not (= (string-length c2) c1-len))
+				  (set! happy #f)
+				  (do ((k 0 (+ k 1)))
+				      ((or (not happy) (= k c1-len)) happy)
+				    (set! happy (char=? (string-ref c1 k) (string-ref c2 k)))))))
+			  (if (not (eq? happy v))
+			      (format #t "(string=? ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string-ci=?
+		      (lambda (nlst v)
+			(let* ((c1 (car nlst))
+			       (c1-len (string-length c1))
+			       (len (length nlst))
+			       (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let ((c2 (list-ref nlst i)))
+			      (if (not (= (string-length c2) c1-len))
+				  (set! happy #f)
+				  (do ((k 0 (+ k 1)))
+				      ((or (not happy) (= k c1-len)) happy)
+				    (set! happy (char-ci=? (string-ref c1 k) (string-ref c2 k)))))))
+			  (if (not (eq? happy v))
+			      (format #t "(string-ci=? ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string<?
+		      (lambda (nlst v)
+			(let* ((c1 (car nlst))
+			       (c1-len (string-length c1))
+			       (len (length nlst))
+			       (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let* ((c2 (list-ref nlst i))
+				   (c2-len (string-length c2))
+				   (pos -1))
+			      ;; first differing char decides -- if same length but otherwise same chars, shorter is less
+			      (do ((k 0 (+ k 1)))
+				  ((or (not happy)
+				       (not (= pos -1))
+				       (= k (min c1-len c2-len))))
+				(if (not (char=? (string-ref c1 k) (string-ref c2 k)))
+				    (begin
+				      (if (= pos -1) (set! pos k))
+				      (set! happy (char<? (string-ref c1 k) (string-ref c2 k))))))
+			      (if (and happy 
+				       (= pos -1))
+				  (set! happy (< c1-len c2-len)))
+			      (set! c1 c2)
+			      (set! c1-len c2-len)))
+			  (if (not (eq? happy v))
+			      (format #t "(string<? ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string-ci<?
+		      (lambda (nlst v)
+			(let* ((c1 (car nlst))
+			       (c1-len (string-length c1))
+			       (len (length nlst))
+			       (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let* ((c2 (list-ref nlst i))
+				   (c2-len (string-length c2))
+				   (pos -1))
+			      ;; first differing char decides -- if same length but otherwise same chars, shorter is less
+			      (do ((k 0 (+ k 1)))
+				  ((or (not happy)
+				       (not (= pos -1))
+				       (= k (min c1-len c2-len))))
+				(if (not (char-ci=? (string-ref c1 k) (string-ref c2 k)))
+				    (begin
+				      (if (= pos -1) (set! pos k))
+				      (set! happy (char-ci<? (string-ref c1 k) (string-ref c2 k))))))
+			      (if (and happy 
+				       (= pos -1))
+				  (set! happy (< c1-len c2-len)))
+			      (set! c1 c2)
+			      (set! c1-len c2-len)))
+			  (if (not (eq? happy v))
+			      (format #t "(string-ci<? ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string>?
+		      (lambda (nlst v)
+			(let* ((c1 (car nlst))
+			       (c1-len (string-length c1))
+			       (len (length nlst))
+			       (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let* ((c2 (list-ref nlst i))
+				   (c2-len (string-length c2))
+				   (pos -1))
+			      (do ((k 0 (+ k 1)))
+				  ((or (not happy)
+				       (not (= pos -1))
+				       (= k (min c1-len c2-len))))
+				(if (not (char=? (string-ref c1 k) (string-ref c2 k)))
+				    (begin
+				      (if (= pos -1) (set! pos k))
+				      (set! happy (char>? (string-ref c1 k) (string-ref c2 k))))))
+			      (if (and happy 
+				       (= pos -1))
+				  (set! happy (> c1-len c2-len)))
+			      (set! c1 c2)
+			      (set! c1-len c2-len)))
+			  (if (not (eq? happy v))
+			      (format #t "(string>? ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string-ci>?
+		      (lambda (nlst v)
+			(let* ((c1 (car nlst))
+			       (c1-len (string-length c1))
+			       (len (length nlst))
+			       (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let* ((c2 (list-ref nlst i))
+				   (c2-len (string-length c2))
+				   (pos -1))
+			      (do ((k 0 (+ k 1)))
+				  ((or (not happy)
+				       (not (= pos -1))
+				       (= k (min c1-len c2-len))))
+				(if (not (char-ci=? (string-ref c1 k) (string-ref c2 k)))
+				    (begin
+				      (if (= pos -1) (set! pos k))
+				      (set! happy (char-ci>? (string-ref c1 k) (string-ref c2 k))))))
+			      (if (and happy 
+				       (= pos -1))
+				  (set! happy (> c1-len c2-len)))
+			      (set! c1 c2)
+			      (set! c1-len c2-len)))
+			  (if (not (eq? happy v))
+			      (format #t "(string-ci>? ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string<=?
+		      (lambda (nlst v)
+			(let* ((c1 (car nlst))
+			       (c1-len (string-length c1))
+			       (len (length nlst))
+			       (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let* ((c2 (list-ref nlst i))
+				   (c2-len (string-length c2))
+				   (pos -1))
+			      (do ((k 0 (+ k 1)))
+				  ((or (not happy)
+				       (not (= pos -1))
+				       (= k (min c1-len c2-len))))
+				(if (not (char=? (string-ref c1 k) (string-ref c2 k)))
+				    (begin
+				      (if (= pos -1) (set! pos k))
+				      (set! happy (char<? (string-ref c1 k) (string-ref c2 k))))))
+			      (if (and happy 
+				       (= pos -1))
+				  (set! happy (<= c1-len c2-len)))
+			      (set! c1 c2)
+			      (set! c1-len c2-len)))
+			  (if (not (eq? happy v))
+			      (format #t "(string<=? ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string-ci<=?
+		      (lambda (nlst v)
+			(let* ((c1 (car nlst))
+			       (c1-len (string-length c1))
+			       (len (length nlst))
+			       (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let* ((c2 (list-ref nlst i))
+				   (c2-len (string-length c2))
+				   (pos -1))
+			      (do ((k 0 (+ k 1)))
+				  ((or (not happy)
+				       (not (= pos -1))
+				       (= k (min c1-len c2-len))))
+				(if (not (char-ci=? (string-ref c1 k) (string-ref c2 k)))
+				    (begin
+				      (if (= pos -1) (set! pos k))
+				      (set! happy (char-ci<? (string-ref c1 k) (string-ref c2 k))))))
+			      (if (and happy 
+				       (= pos -1))
+				  (set! happy (<= c1-len c2-len)))
+			      (set! c1 c2)
+			      (set! c1-len c2-len)))
+			  (if (not (eq? happy v))
+			      (format #t "(string-ci<=? ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string>=?
+		      (lambda (nlst v)
+			(let* ((c1 (car nlst))
+			       (c1-len (string-length c1))
+			       (len (length nlst))
+			       (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let* ((c2 (list-ref nlst i))
+				   (c2-len (string-length c2))
+				   (pos -1))
+			      (do ((k 0 (+ k 1)))
+				  ((or (not happy)
+				       (not (= pos -1))
+				       (= k (min c1-len c2-len))))
+				(if (not (char=? (string-ref c1 k) (string-ref c2 k)))
+				    (begin
+				      (if (= pos -1) (set! pos k))
+				      (set! happy (char>? (string-ref c1 k) (string-ref c2 k))))))
+			      (if (and happy 
+				       (= pos -1))
+				  (set! happy (>= c1-len c2-len)))
+			      (set! c1 c2)
+			      (set! c1-len c2-len)))
+			  (if (not (eq? happy v))
+			      (format #t "(string>=? ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string-ci>=?
+		      (lambda (nlst v)
+			(let* ((c1 (car nlst))
+			       (c1-len (string-length c1))
+			       (len (length nlst))
+			       (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let* ((c2 (list-ref nlst i))
+				   (c2-len (string-length c2))
+				   (pos -1))
+			      (do ((k 0 (+ k 1)))
+				  ((or (not happy)
+				       (not (= pos -1))
+				       (= k (min c1-len c2-len))))
+				(if (not (char-ci=? (string-ref c1 k) (string-ref c2 k)))
+				    (begin
+				      (if (= pos -1) (set! pos k))
+				      (set! happy (char-ci>? (string-ref c1 k) (string-ref c2 k))))))
+			      (if (and happy 
+				       (= pos -1))
+				  (set! happy (>= c1-len c2-len)))
+			      (set! c1 c2)
+			      (set! c1-len c2-len)))
+			  (if (not (eq? happy v))
+			      (format #t "(string-ci>=? ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string-append
+		      (lambda (nlst v)
+			(let* ((len (length nlst))
+			       (happy #t)
+			       (j 0)
+			       (vlen (string-length v)))
+			  (do ((i 0 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let* ((c1 (list-ref nlst i))
+				   (c1-len (string-length c1)))
+			      (do ((k 0 (+ k 1)))
+				  ((or (not happy)
+				       (= k c1-len)))
+				(set! happy (char=? (string-ref c1 k) (string-ref v j)))
+				(set! j (+ j 1))
+				(if (> j vlen)
+				    (set! happy #f)))))
+			  (if (not happy)
+			      (format #t "(string-append ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string-fill!
+		      (lambda (nlst v)
+			(let ((str (car nlst))
+			      (c (cadr nlst))
+			      (happy #t))
+			  (do ((i 0 (+ i 1)))
+			      ((or (not happy) (= i (string-length str))))
+			    (set! happy (char=? c (string-ref str i))))
+			  (if (not happy)
+			      (format #t "(string-fill! ~S #\\~A) -> ~S~%" str c v))))
+		      (lambda ()
+			(let ((str (car (choose-string))))
+			  (list str (car (choose-non-null-char))))))
+		
+		(list string-copy
+		      (lambda (nlst v)
+			(let ((str (car nlst)))
+			  (if (not (string=? str v))
+			      (format #t "(string-copy ~S) -> ~S~%" str v))))
+		      choose-string)
+		
+		(list string->list
+		      (lambda (nlst v)
+			(let* ((str (car nlst))
+			       (strlen (string-length str)))
+			  (if (or (not (list? v))
+				  (not (= (length v) strlen))
+				  (let ((happy #t))
+				    (do ((i 0 (+ i 1)))
+					((or (not happy) (= i strlen)) (not happy))
+				      (set! happy (char=? (string-ref str i) (list-ref v i))))))
+			      (format #t "(string->list ~S) -> ~A~%" str v))))
+		      choose-string)
+		
+		(list list->string
+		      (lambda (nlst v)
+			(let* ((lst (car nlst))
+			       (len (length lst)))
+			  (if (or (not (string? v))
+				  (not (= (string-length v) len))
+				  (let ((happy #t))
+				    (do ((i 0 (+ i 1)))
+					((or (not happy) (= i len)) (not happy))
+				      (set! happy (char=? (string-ref v i) (list-ref lst i))))))
+			      (format #t "(list->string ~A) -> ~S~%" lst v))))
+		      (lambda ()
+			(let ((lst '())
+			      (len (random 20)))
+			  (do ((i 0 (+ i 1)))
+			      ((= i len) (list lst))
+			    (set! lst (cons (car (choose-non-null-char)) lst))))))
+		
+		(list string
+		      (lambda (nlst v)
+			(let ((len (length nlst)))
+			  (if (or (not (string? v))
+				  (not (= len (string-length v)))
+				  (let ((happy #t))
+				    (do ((i 0 (+ i 1)))
+					((or (not happy) (= i len)) (not happy))
+				      (set! happy (char=? (string-ref v i) (list-ref nlst i))))))
+			      (format #t "(string~{~^ #\\~A~}) -> ~S~%" nlst v))))
+		      (lambda ()
+			(let ((lst '())
+			      (len (random 20)))
+			  (do ((i 0 (+ i 1)))
+			      ((= i len) lst)
+			    (set! lst (cons (car (choose-non-null-char)) lst))))))
+		
+		(list substring
+		      (lambda (nlst v)
+			(let* ((str (car nlst))
+			       (start (cadr nlst))
+			       (end (if (not (null? (cddr nlst))) (caddr nlst) (string-length str)))
+			       (happy #t))
+			  (if (or (not (string? v))
+				  (not (= (string-length v) (- end start)))
+				  (do ((i start (+ i 1))
+				       (j 0 (+ j 1)))
+				      ((or (not happy) (= i end)) (not happy))
+				    (set! happy (char=? (string-ref str i) (string-ref v j)))))
+			      (if (not (null? (cddr nlst)))
+				  (format #t "(substring ~S ~D ~D) -> ~S~%" str start end v)
+				  (format #t "(substring ~S ~D) -> ~S~%" str start v)))))
+		      (lambda ()
+			(let* ((str (car (choose-non-null-string)))
+			       (strlen (string-length str))
+			       (start (if (> strlen 1) (random (- strlen 1)) 0)))
+			  (if (or (> (random 1.0) 0.5)
+				  (= start strlen))
+			      (list str start)
+			      (list str start (+ start (random (- strlen start))))))))
+		
+		
+		;; -------- generic stuff  --------------------------------
+		
+		(list not
+		      (lambda (nlst v)
+			(if (not (eq? v (if (car nlst) #f #t)))
+			    (format #t "(not ~A) -> ~A~%" (car nlst) v)))
+		      (lambda () (choose-any 0)))
+		
+		(list boolean?
+		      (lambda (nlst v)
+			(if (or (and (not (eq? v #t))
+				     (not (eq? v #f)))
+				(and (eq? v #t)
+				     (not (eq? (car nlst) #t))
+				     (not (eq? (car nlst) #f)))
+				(and (eq? v #f)
+				     (or (eq? (car nlst) #f)
+					 (eq? (car nlst) #t))))
+			    (format #t "(boolean? ~A) -> ~A~%" (car nlst) v)))
+		      (lambda () (choose-any 0)))
+		
+		(list number?
+		      (lambda (nlst v)
+			(if (or (not (boolean? v))
+				(not (eq? v (complex? (car nlst)))))
+			    (format #t "(number? ~A) -> ~A~%" (car nlst) v)))
+		      (lambda () (choose-any 0)))
+		
+		(list string?
+		      (lambda (nlst v)
+			(let ((strp (catch #t (lambda () (integer? (string-length (car nlst)))) (lambda args #f))))
+			  (if (or (not (boolean? v))
+				  (not (eq? v strp)))
+			      (format #t "(string? ~A) -> ~A~%" (car nlst) v))))
+		      (lambda () (choose-any 0)))
+		
+		(list char?
+		      (lambda (nlst v)
+			(let ((chrp (catch #t (lambda () (integer? (char->integer (car nlst)))) (lambda args #f))))
+			  (if (or (not (boolean? v))
+				  (not (eq? v chrp)))
+			      (format #t "(char? ~A) -> ~A~%" (car nlst) v))))
+		      (lambda () (choose-any 0)))
+		
+		(list vector?
+		      (lambda (nlst v)
+			(let ((chrp (catch #t (lambda () (integer? (vector-length (car nlst)))) (lambda args #f))))
+			  (if (or (not (boolean? v))
+				  (not (eq? v chrp)))
+			      (format #t "(vector? ~A) -> ~A~%" (car nlst) v))))
+		      (lambda () (choose-any 0)))
+		
+		(list list?
+		      (lambda (nlst v)
+			(let ((chrp (catch #t (lambda () (let ((hi (or (null? (car nlst)) (list-ref (car nlst) 0)))) #t)) (lambda args #f))))
+			  (if (or (not (boolean? v))
+				  (not (eq? v chrp)))
+			      (format #t "(list? ~A) -> ~A~%" (car nlst) v))))
+		      (lambda () (choose-any 0)))
+		
+		(list pair?
+		      (lambda (nlst v)
+			(let ((chrp (catch #t (lambda () (car (car nlst)) #t) (lambda args #f))))
+			  (if (or (not (boolean? v))
+				  (not (eq? v chrp)))
+			      (format #t "(pair? ~A) -> ~A~%" (car nlst) v))))
+		      (lambda () (choose-any 0)))
+		
+		(list eqv?
+		      (lambda (nlst v)
+			(let* ((a1 (car nlst))
+			       (a2 (cadr nlst)))
+			  ;; eq? + numbers chars 
+			  (define (eqv-1 x y) ; from Dybvig
+			    (cond
+			     ((eq? x y))
+			     ((number? x)
+			      (and (number? y)
+				   (if (exact? x)
+				       (and (exact? y) (= x y))
+				       (and (inexact? y) (= x y)))))
+			     ((char? x) (and (char? y) (char=? x y)))
+			     (else #f)))
+			  (if (or (not (boolean? v))
+				  (not (eq? v (eqv-1 a1 a2))))
+			      (format #t "(eqv? ~A ~A) -> ~A (~A ~A)~%" a1 a2 v (eqv-1 a1 a2) nlst))))
+		      (lambda () (list (car (choose-any 0)) (car (choose-any 0)))))
+		
+		(list equal?
+		      (lambda (nlst v)
+			(let* ((a1 (car nlst))
+			       (a2 (cadr nlst)))
+			  (define (equal-1 x y) ; also Dybvig
+			    (cond
+			     ((eqv? x y))
+			     ((pair? x)
+			      (and (pair? y)
+				   (equal? (car x) (car y))
+				   (equal? (cdr x) (cdr y))))
+			     ((string? x) (and (string? y) (string=? x y)))
+			     ((vector? x)
+			      (and (vector? y)
+				   (let ((n (vector-length x)))
+				     (and (= n (vector-length y))
+					  (let loop ((i 0))
+					    (or (= i n)
+						(and (equal? (vector-ref x i) (vector-ref y i))
+						     (loop (+ i 1)))))))))
+			     (else #f)))
+			  (if (or (not (boolean? v))
+				  (not (eq? v (equal-1 a1 a2))))
+			      (format #t "(equal? ~A ~A) -> ~A~%" a1 a2 v))))
+		      (lambda () (list (car (choose-any 0)) (car (choose-any 0)))))
+		
+		
+		
+		;; -------- vectors --------------------------------
+		
+		(list vector-fill!
+		      (lambda (nlst v)
+			(let* ((vect (car nlst))
+			       (len (vector-length vect))
+			       (val (cadr nlst))
+			       (happy #t))
+			  (do ((i 0 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (equal? (vector-ref vect i) val)))
+			  (if (not happy)
+			      (format #t "(vector-fill! ~A ~A)~%" vect val))))
+		      (lambda ()
+			(list (car (choose-vector 0)) (car (choose-any 0)))))
+		
+		(list vector-ref
+		      (lambda (nlst v)
+			(let* ((vect (car nlst))
+			       (pos (cadr nlst))
+			       (val (list-ref (vector->list vect) pos)))
+			  (if (not (equal? val v))
+			      (format #t "(vector-ref ~A ~A) -> ~A~%" vect pos v))))
+		      (lambda ()
+			(let ((vect (car (choose-vector 0))))
+			  (list vect (random (vector-length vect))))))
+		
+		(list vector-set!
+		      (lambda (nlst v)
+			(let* ((vect (car nlst))
+			       (pos (cadr nlst))
+			       (val (caddr nlst)))
+			  (if (not (equal? val (list-ref (vector->list vect) pos)))
+			      (format #t "(vector-set! ~A ~A ~A)~%" vect pos val))))
+		      (lambda ()
+			(let ((vect (car (choose-vector 0))))
+			  (list vect (random (vector-length vect)) (car (choose-any 0))))))
+		
+		(list vector-length
+		      (lambda (nlst v)
+			(let* ((vect (car nlst))
+			       (val (length (vector->list vect))))
+			  (if (not (= val v))
+			      (format #t "(vector-length ~A) -> ~A~%" vect v))))
+		      (lambda () (choose-vector 0)))
+		
+		(list vector->list
+		      (lambda (nlst v)
+			(let* ((vect (car nlst))
+			       (len (vector-length vect)))
+			  (if (or (not (list? v))
+				  (not (= len (length v)))
+				  (let ((happy #t))
+				    (do ((i 0 (+ i 1)))
+					((or (not happy) (= i len)) (not happy))
+				      (set! happy (equal? (vector-ref vect i) (list-ref v i))))))
+			      (format #t "(vector->list ~A) -> ~A~%" vect v))))
+		      (lambda () (choose-vector 0)))
+		
+		(list list->vector
+		      (lambda (nlst v)
+			(let* ((lst (car nlst))
+			       (len (length lst)))
+			  (if (or (not (vector? v))
+				  (not (= len (vector-length v)))
+				  (let ((happy #t))
+				    (do ((i 0 (+ i 1)))
+					((or (not happy) (= i len)) (not happy))
+				      (set! happy (equal? (vector-ref v i) (list-ref lst i))))))
+			      (format #t "(list->vector ~A) -> ~A~%" lst v))))
+		      (lambda () (choose-list 0)))
+		
+		(list vector
+		      (lambda (lst v)
+			(let* ((len (length lst)))
+			  (if (or (not (vector? v))
+				  (not (= len (vector-length v)))
+				  (let ((happy #t))
+				    (do ((i 0 (+ i 1)))
+					((or (not happy) (= i len)) (not happy))
+				      (set! happy (equal? (vector-ref v i) (list-ref lst i))))))
+			      (format #t "(vector ~{~A~^ ~}) -> ~A~%" lst v))))
+		      (lambda () (choose-list 0)))
+		
+		(list make-vector
+		      (lambda (nlst v)
+			(let* ((len (car nlst))
+			       (val (if (not (null? (cdr nlst))) (cadr nlst) 12345)))
+			  (if (or (not (vector? v))
+				  (not (= len (vector-length v)))
+				  (and (not (equal? val 12345))
+				       (let ((happy #t))
+					 (do ((i 0 (+ i 1)))
+					     ((or (not happy) (= i len)) (not happy))
+					   (set! happy (equal? (vector-ref v i) val))))))
+			      (if (not (equal? val 12345))
+				  (format #t "(make-vector ~A ~A) -> ~A~%" len val v)
+				  (format #t "(make-vector ~A) -> ~A~%" len v)))))
+		      (lambda ()
+			(if (> (random 1.0) 0.5)
+			    (list (+ 1 (random 20)) (car (choose-any 0)))
+			    (list (+ 1 (random 20))))))
+		
+		
+		;; -------- lists --------------------------------
+		
+		(list null? 
+		      (lambda (nlst v)
+			(if (or (not (boolean? v))
+				(and (eq? v #t) (not (eq? (car nlst) '())))
+				(and (eq? v #f) (eq? (car nlst) '())))
+			    (format #t "(null? ~A) -> ~A~%" (car nlst) v)))
+		      (lambda () (choose-list 0)))
+		
+		(list car
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-ref nlst 0) 0)))
+			    (format #t "(car ~A) -> ~A~%" (car nlst) v)))
+		      (lambda () (choose-non-null-list 0)))
+		
+		(list cdr
+		      (lambda (nlst v)
+			(if (not (equal? v (list-tail (car nlst) 1)))
+			    (format #t "(cdr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda () (choose-non-null-list 0)))
+		
+		(list length
+		      (lambda (nlst v)
+			(let* ((lst (car nlst)))
+			  (if (or (not (integer? v))
+				  (not (= v (vector-length (list->vector lst)))))
+			      (format #t "(length ~A) -> ~A~%" lst v))))
+		      (lambda () (choose-list 0)))
+		
+		(list null?
+		      (lambda (nlst v)
+			(let* ((lst (car nlst))
+			       (len (length lst)))
+			  (if (or (and v
+				       (not (= len 0)))
+				  (and (not v)
+				       (= len 0)))
+			      (format #t "(null? ~A) -> ~A~%" lst v))))
+		      (lambda () (choose-list 0)))
+		
+		(list list-ref
+		      (lambda (nlst v)
+			(let* ((lst (car nlst))
+			       (pos (cadr nlst)))
+			  (if (not (equal? v (vector-ref (list->vector lst) pos)))
+			      (format #t "(list-ref ~A ~D) -> ~A~%" lst pos v))))
+		      (lambda () 
+			(let ((lst (car (choose-non-null-list 0))))
+			  (list lst (random (length lst))))))
+		
+		(list reverse
+		      (lambda (nlst v)
+			(let* ((lst (car nlst))
+			       (len (length lst)))
+			  (if (or (not (list? v))
+				  (not (= len (length v)))
+				  (let ((happy #t))
+				    (do ((i 0 (+ i 1))
+					 (j (- len 1) (- j 1)))
+					((or (not happy) (= i len)) (not happy))
+				      (set! happy (equal? (list-ref lst i) (list-ref v j))))))
+			      (format #t "(reverse ~A) -> ~A~%" lst v))))
+		      (lambda () (choose-list 0)))
+		
+		(list cons
+		      (lambda (nlst v)
+			(let* ((cr (car nlst))
+			       (cd (cadr nlst)))
+			  (if (or (not (pair? v))
+				  (not (equal? (car v) cr))
+				  (not (equal? (cdr v) cd)))
+			      (format #t "(cons ~A ~A) -> ~A~%" cr cd v))))
+		      (lambda () (list (car (choose-any 0)) (car (choose-any 0)))))
+		
+		(list caar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-ref (list-ref nlst 0) 0) 0)))
+			    (format #t "(caar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (not (pair? (car lst)))
+			      (list (list (choose-list 0) lst))
+			      (list lst)))))
+		
+		(list cadr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-tail (car nlst) 1) 0)))
+			    (format #t "(cadr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (< (length lst) 2)
+			      (list (list lst (choose-non-null-list 0)))
+			      (list lst)))))
+		
+		(list cdar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-ref (list-ref nlst 0) 0) 1)))
+			    (format #t "(cdar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (not (pair? (car lst)))
+			      (list (list (choose-list 0) lst))
+			      (list lst)))))
+		
+		(list cddr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-tail (list-ref nlst 0) 1) 1)))
+			    (format #t "(cddr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (not (pair? (cdr lst)))
+			      (list (list lst (choose-list 0)))
+			      (list lst)))))
+		
+		(list caaar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-ref (list-ref (list-ref nlst 0) 0) 0) 0)))
+			    (format #t "(caaar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (caar lst))))
+			      (list (list (list lst (choose-list 0))))
+			      (list lst)))))
+		
+		(list caadr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-ref (list-tail (car nlst) 1) 0) 0)))
+			    (format #t "(caadr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cadr lst))))
+			      (list (list lst (list (choose-non-null-list 0))))
+			      (list lst)))))
+		
+		(list cadar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-tail (list-ref (list-ref nlst 0) 0) 1) 0)))
+			    (format #t "(cadar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (cdar lst))))
+			      (list (list (list (choose-non-null-list 0) (list 1 lst))))
+			      (list lst)))))
+		
+		(list cdaar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-ref (list-ref (list-ref nlst 0) 0) 0) 1)))
+			    (format #t "(cdaar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (caar lst))))
+			      (list (list (list (choose-list 0) lst)))
+			      (list lst)))))
+		
+		(list caddr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-tail (list-tail (list-ref nlst 0) 1) 1) 0)))
+			    (format #t "(caddr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cddr lst))))
+			      (list (list 1 lst (list (choose-list 0))))
+			      (list lst)))))
+		
+		(list cdddr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-tail (list-tail (list-ref nlst 0) 1) 1) 1)))
+			    (format #t "(cdddr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cddr lst))))
+			      (list (list 1 lst (list (choose-list 0))))
+			      (list lst)))))
+		
+		(list cdadr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-ref (list-tail (car nlst) 1) 0) 1)))
+			    (format #t "(cdadr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cadr lst))))
+			      (list (list 1 (list lst (list (choose-list 0)))))
+			      (list lst)))))
+		
+		(list cddar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-tail (list-ref (list-ref nlst 0) 0) 1) 1)))
+			    (format #t "(cddar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (cdar lst))))
+			      (list (list (list lst (list (choose-list 0)))))
+			      (list lst)))))
+		
+		(list caaaar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-ref (list-ref (list-ref (list-ref nlst 0) 0) 0) 0) 0)))
+			    (format #t "(caaaar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (caar lst))))
+			      (list (list (list (list lst (choose-list 0)))))
+			      (list lst)))))
+		
+		(list cdaaar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-ref (list-ref (list-ref (list-ref nlst 0) 0) 0) 0) 1)))
+			    (format #t "(caaaar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (caar lst))))
+			      (list (list (list (list lst (choose-list 0)))))
+			      (list lst)))))
+		
+		(list caaadr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-ref (list-ref (list-tail (car nlst) 1) 0) 0) 0)))
+			    (format #t "(caaadr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cadr lst)))
+				  (not (pair? (caadr lst))))
+			      (list (list lst (list (list (choose-non-null-list 0)))))
+			      (list lst)))))
+		
+		(list cdaadr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-ref (list-ref (list-tail (car nlst) 1) 0) 0) 1)))
+			    (format #t "(cdaadr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cadr lst)))
+				  (not (pair? (caadr lst))))
+			      (list (list lst (list (list (choose-non-null-list 0)))))
+			      (list lst)))))
+		
+		(list caadar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-ref (list-tail (list-ref (list-ref nlst 0) 0) 1) 0) 0)))
+			    (format #t "(caadar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (cdar lst)))
+				  (not (pair? (cadar lst))))
+			      (list (list (list (choose-non-null-list 0) (list (list 1 lst)))))
+			      (list lst)))))
+		
+		(list cdadar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-ref (list-tail (list-ref (list-ref nlst 0) 0) 1) 0) 1)))
+			    (format #t "(cdadar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (cdar lst)))
+				  (not (pair? (cadar lst))))
+			      (list (list (list (choose-non-null-list 0) (list (list 1 lst)))))
+			      (list lst)))))
+		
+		(list cadaar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-tail (list-ref (list-ref (list-ref nlst 0) 0) 0) 1) 0)))
+			    (format #t "(cadaar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (caar lst)))
+				  (not (pair? (cdaar lst))))
+			      (list (list (list (list (choose-list 0) (list lst)))))
+			      (list lst)))))
+		
+		(list cddaar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-tail (list-ref (list-ref (list-ref nlst 0) 0) 0) 1) 1)))
+			    (format #t "(cddaar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (caar lst)))
+				  (not (pair? (cdaar lst))))
+			      (list (list (list (list (choose-list 0) (list lst)))))
+			      (list lst)))))
+		
+		(list caaddr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-ref (list-tail (list-tail (list-ref nlst 0) 1) 1) 0) 0)))
+			    (format #t "(caaddr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cddr lst)))
+				  (not (pair? (caddr lst))))
+			      (list (list 1 lst (list (list (choose-list 0)))))
+			      (list lst)))))
+		
+		(list cdaddr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-ref (list-tail (list-tail (list-ref nlst 0) 1) 1) 0) 1)))
+			    (format #t "(cdaddr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cddr lst)))
+				  (not (pair? (caddr lst))))
+			      (list (list 1 lst (list (list (choose-list 0)))))
+			      (list lst)))))
+		
+		(list cadddr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-tail (list-tail (list-tail (list-ref nlst 0) 1) 1) 1) 0)))
+			    (format #t "(cadddr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cddr lst)))
+				  (not (pair? (cdddr lst))))
+			      (list (list 1 lst 1 (list (choose-list 0))))
+			      (list lst)))))
+		
+		(list cddddr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-tail (list-tail (list-tail (list-ref nlst 0) 1) 1) 1) 1)))
+			    (format #t "(cddddr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cddr lst)))
+				  (not (pair? (cdddr lst))))
+			      (list (list 1 lst 1 (list (choose-list 0))))
+			      (list lst)))))
+		
+		(list cadadr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-tail (list-ref (list-tail (car nlst) 1) 0) 1) 0)))
+			    (format #t "(cadadr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cadr lst)))
+				  (not (pair? (cdadr lst))))
+			      (list (list 1 (list lst (list (choose-list 0)))))
+			      (list lst)))))
+		
+		(list cddadr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-tail (list-ref (list-tail (car nlst) 1) 0) 1) 1)))
+			    (format #t "(cddadr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cadr lst)))
+				  (not (pair? (cdadr lst))))
+			      (list (list 1 (list lst (list (choose-list 0)))))
+			      (list lst)))))
+		
+		(list caddar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-tail (list-tail (list-ref (list-ref nlst 0) 0) 1) 1) 0)))
+			    (format #t "(caddar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (cdar lst)))
+				  (not (pair? (cddar lst))))
+			      (list (list (list lst 1 (list (choose-list 0)))))
+			      (list lst)))))
+		
+		(list cdddar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-tail (list-tail (list-ref (list-ref nlst 0) 0) 1) 1) 1)))
+			    (format #t "(cdddar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (cdar lst)))
+				  (not (pair? (cddar lst))))
+			      (list (list (list lst 1 (list (choose-list 0)))))
+			      (list lst)))))
+		
+		(list set-car!
+		      (lambda (nlst v)
+			(let* ((lst (car nlst))
+			       (val (cadr nlst)))
+			  (if (not (equal? (car lst) val))
+			      (format #t "(set-car! ~A ~A)~%" lst val))))
+		      (lambda () (list (choose-non-null-list 0) (choose-any 0))))
+		
+		(list set-cdr!
+		      (lambda (nlst v)
+			(let* ((lst (car nlst))
+			       (val (cadr nlst)))
+			  (if (not (equal? (cdr lst) val))
+			      (format #t "(set-cdr! ~A ~A)~%" lst val))))
+		      (lambda () (list (choose-non-null-list 0) (choose-any 0))))
+		
+		(list assoc
+		      (lambda (nlst v)
+			(let* ((alst (cadr nlst))
+			       (obj (car nlst))
+			       (val #f))
+			  (for-each
+			   (lambda (kv)
+			     (if (and (not val)
+				      (equal? obj (car kv)))
+				 (set! val kv)))
+			   alst)
+			  (if (not (equal? v val))
+			      (format #t "(assoc ~A ~A) -> ~A~%" obj alst v))))
+		      (lambda () (choose-alist 'equal?)))
+		
+		(list assq
+		      (lambda (nlst v)
+			(let* ((alst (cadr nlst))
+			       (obj (car nlst))
+			       (val #f))
+			  (for-each
+			   (lambda (kv)
+			     (if (and (not val)
+				      (equal? obj (car kv)))
+				 (set! val kv)))
+			   alst)
+			  (if (not (eq? v val))
+			      (format #t "(assq ~A ~A) -> ~A~%" obj alst v))))
+		      (lambda () (choose-alist 'eq?)))
+		
+		(list assv
+		      (lambda (nlst v)
+			(let* ((alst (cadr nlst))
+			       (obj (car nlst))
+			       (val #f))
+			  (for-each
+			   (lambda (kv)
+			     (if (and (not val)
+				      (eqv? obj (car kv)))
+				 (set! val kv)))
+			   alst)
+			  (if (not (equal? v val))
+			      (format #t "(assv ~A ~A) -> ~A~%" obj alst v))))
+		      (lambda () (choose-alist 'eqv?)))
+		
+		(list memq
+		      (lambda (nlst v)
+			(let* ((lst (cadr nlst))
+			       (len (length lst))
+			       (obj (car nlst))
+			       (val #f))
+			  (do ((i 0 (+ i 1))
+			       (mlst lst (cdr mlst)))
+			      ((or val (= i len)))
+			    (if (eq? obj (car mlst))
+				(set! val mlst)))
+			  (if (not (equal? v val))
+			      (format #t "(memq ~A ~A) -> ~A~%" obj lst v))))
+		      (lambda () (choose-mlist 'eq?))) 
+		
+		(list memv
+		      (lambda (nlst v)
+			(let* ((lst (cadr nlst))
+			       (len (length lst))
+			       (obj (car nlst))
+			       (val #f))
+			  (do ((i 0 (+ i 1))
+			       (mlst lst (cdr mlst)))
+			      ((or val (= i len)))
+			    (if (eqv? obj (car mlst))
+				(set! val mlst)))
+			  (if (not (equal? v val))
+			      (format #t "(memv ~A ~A) -> ~A~%" obj lst v))))
+		      (lambda () (choose-mlist 'eqv?))) 
+		
+		(list member
+		      (lambda (nlst v)
+			(let* ((lst (cadr nlst))
+			       (len (length lst))
+			       (obj (car nlst))
+			       (val #f))
+			  (do ((i 0 (+ i 1))
+			       (mlst lst (cdr mlst)))
+			      ((or val (= i len)))
+			    (if (equal? obj (car mlst))
+				(set! val mlst)))
+			  (if (not (equal? v val))
+			      (format #t "(member ~A ~A) -> ~A~%" obj lst v))))
+		      (lambda () (choose-mlist 'equal?))) 
+		
+		(list list-tail
+		      (lambda (nlst v)
+			(let* ((lst (car nlst))
+			       (pos (cadr nlst)))
+			  (if (not (equal? v (do ((i 0 (+ i 1))
+						  (mlst lst (cdr mlst)))
+						 ((= i pos) mlst))))
+			      (format #t "(list-tail ~A ~A) -> ~A~%" lst pos v))))
+		      (lambda ()
+			(let ((lst (car (choose-list 0))))
+			  (list lst (random (length lst))))))
+		
+		(list list
+		      (lambda (nlst v)
+			(if (not (equal? nlst v))
+			    (format #t "(list ~{~A~^ ~}) -> ~A~%" nlst v)))
+		      (lambda ()
+			(car (choose-list 0))))
+		
+		(list symbol?
+		      (lambda (nlst v)
+			(let ((symp (catch #t (lambda () (string? (symbol->string (car nlst)))) (lambda args #f))))
+			  (if (or (not (boolean? v))
+				  (not (eq? v symp)))
+			      (format #t "(symbol? ~A) -> ~A~%" (car nlst) v))))
+		      (lambda () (choose-any 0)))
+		
+		(list append
+		      (lambda (nlst v)
+			(let* ((len (length nlst))
+			       (mv v)
+			       (happy #t))
+			  (for-each
+			   (lambda (lst)
+			     (if happy
+				 (for-each
+				  (lambda (obj)
+				    (if happy
+					(if (not (equal? obj (car mv)))
+					    (begin
+					      (format #t "(append ~{~A~^ ~}) -> ~A~%" nslt v)
+					      (set! happy #f))))
+				    (set! mv (cdr mv)))
+				  lst)))
+			   nlst)))
+		      (lambda ()
+			(let ((len (random 10))
+			      (lsts '()))
+			  (do ((i 0 (+ i 1)))
+			      ((= i len))
+			    (set! lsts (cons (car (choose-list 0)) lsts)))
+			  lsts)))
+		
+		;; --------------------------------------------------------------------------------
+		
+		
+		)))
+	  
+	  (define (choose-op)
+	    (let ((choice (random (length ops))))
+	      (list-ref ops choice)))
+	  
+	  (define (quotify args)
+	    (map (lambda (arg)
+		   (if (or (list? arg)
+			   (vector? arg)
+			   (symbol? arg))
+		       (list 'quote arg)
+		       arg))
+		 args))
+	  
+	  (do ((i 1 (+ i 1)))
+	      ((> i tries))
+	    (if (= (modulo i 1000) 0) (format #t "."))
+	    (let* ((data (choose-op))
+		   (args ((caddr data)))
+		   (op (car data))
+		   (checker (cadr data)))
 					;	(format #t "(~A ~A)~%" op args)
-		    (let ((result (catch #t 
-					 (lambda () 
-					   (apply op args)) 
-					 (lambda args 
-					   (display args) 
-					   (newline) 
-					   'error))))
-		      (checker args result)
-		      (set! result (catch #t 
-					  (lambda () 
-					    (eval (cons op (quotify args))))  
-					  (lambda args 
-					    (display args) 
-					    (newline) 
-					    'error)))
-		      (checker args result))))))
-	    ))
+	      (let ((result (catch #t 
+				   (lambda () 
+				     (apply op args)) 
+				   (lambda args 
+				     (display args) 
+				     (newline) 
+				     'error))))
+		(checker args result)
+		(set! result (catch #t 
+				    (lambda () 
+				      (eval (cons op (quotify args))))  
+				    (lambda args 
+				      (display args) 
+				      (newline) 
+				      'error)))
+		(checker args result))))))
+      ))
 ;;; I made a fancier version that created nested expressions, but it didn't hit any new
 ;;;   bugs, and it was too complicated.  
-      
-      
-      (newline) (display ";all done!") (newline)
+
+
+(newline) (display ";all done!") (newline)
       
       
 ;;; --------------------------------------------------------------------------------
       
-      (define (s7-test-at-random)
-	(let ((ops (list gensym symbol-table symbol? symbol->string string->symbol symbol->value
-			 global-environment current-environment provided? provide defined? keyword?
-			 make-keyword symbol->keyword keyword->symbol hash-table? make-hash-table
-			 hash-table-ref hash-table-set! hash-table-size port-line-number port-filename
-			 input-port? output-port? char-ready? eof-object? current-input-port 
-			 current-output-port    
+(define (s7-test-at-random)
+  (let ((ops (list gensym symbol-table symbol? symbol->string string->symbol symbol->value
+		   global-environment current-environment provided? provide defined? keyword?
+		   make-keyword symbol->keyword keyword->symbol hash-table? make-hash-table
+		   hash-table-ref hash-table-set! hash-table-size port-line-number port-filename
+		   input-port? output-port? char-ready? eof-object? current-input-port 
+		   current-output-port    
 					;set-current-output-port set-current-input-port set-current-error-port
-			 current-error-port 
-			 close-input-port close-output-port 
+		   current-error-port 
+		   close-input-port close-output-port 
 					;open-input-file open-output-file open-input-string
 					;open-output-string 
-			 get-output-string read-char peek-char read newline write-char
-			 write display read-byte write-byte read-line 
+		   get-output-string read-char peek-char read newline write-char
+		   write display read-byte write-byte read-line 
 					;call-with-input-string call-with-input-file
 					;with-input-from-string with-input-from-file 
 					;call-with-output-string call-with-output-file
 					;with-output-to-string with-output-to-file 
-			 number->string string->number make-polar 
-			 make-rectangular magnitude angle rationalize abs exp log sin cos tan asin acos atan
-			 sinh cosh tanh asinh acosh atanh sqrt expt floor ceiling truncate round lcm gcd + - * 
+		   number->string string->number make-polar 
+		   make-rectangular magnitude angle rationalize abs exp log sin cos tan asin acos atan
+		   sinh cosh tanh asinh acosh atanh sqrt expt floor ceiling truncate round lcm gcd + - * 
 					; / -- too many divide by 0 complaints
-			 max min quotient remainder modulo = < > <= >= number? integer? real? complex? rational?
-			 even? odd? zero? positive? negative? real-part imag-part numerator denominator inexact->exact
-			 exact->inexact exact? inexact? integer-length logior logxor logand lognot ash random
-			 make-random-state char-upcase char-downcase char->integer integer->char char-upper-case?
-			 char-lower-case? char-alphabetic? char-numeric? char-whitespace? char? char=? char<?
-			 char>? char<=? char>=? char-ci=? char-ci<? char-ci>? char-ci<=? char-ci>=? string?
-			 make-string string-length string-ref string-set! string=? string<? string>? string<=?
-			 string>=? string-ci=? string-ci<? string-ci>? string-ci<=? string-ci>=? string-append
-			 string-fill! string-copy substring string list->string string->list object->string format
-			 null? list? pair? reverse 
+		   max min quotient remainder modulo = < > <= >= number? integer? real? complex? rational?
+		   even? odd? zero? positive? negative? real-part imag-part numerator denominator inexact->exact
+		   exact->inexact exact? inexact? integer-length logior logxor logand lognot ash random
+		   make-random-state char-upcase char-downcase char->integer integer->char char-upper-case?
+		   char-lower-case? char-alphabetic? char-numeric? char-whitespace? char? char=? char<?
+		   char>? char<=? char>=? char-ci=? char-ci<? char-ci>? char-ci<=? char-ci>=? string?
+		   make-string string-length string-ref string-set! string=? string<? string>? string<=?
+		   string>=? string-ci=? string-ci<? string-ci>? string-ci<=? string-ci>=? string-append
+		   string-fill! string-copy substring string list->string string->list object->string format
+		   null? list? pair? reverse 
 					;reverse! set-car! set-cdr! sort!
-			 cons car cdr caar cadr cdar cddr
-			 caaar caadr cadar cdaar caddr cdddr cdadr cddar caaaar caaadr caadar cadaar caaddr cadddr
-			 cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar length assq assv
-			 assoc memq memv member append list list-ref 
+		   cons car cdr caar cadr cdar cddr
+		   caaar caadr cadar cdaar caddr cdddr cdadr cddar caaaar caaadr caadar cadaar caaddr cadddr
+		   cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar length assq assv
+		   assoc memq memv member append list list-ref 
 					;list-set! vector-set! 
-			 list-tail vector?
-			 vector->list list->vector vector-fill! vector vector-length vector-ref make-vector
+		   list-tail vector?
+		   vector->list list->vector vector-fill! vector vector-length vector-ref make-vector
 					;call/cc call-with-current-continuation call-with-exit load
-			 continuation? eval eval-string apply
-			 for-each map values call-with-values dynamic-wind ;catch error 
+		   continuation? eval eval-string apply
+		   for-each map values call-with-values dynamic-wind ;catch error 
 					;quit gc
-			 procedure? procedure-documentation
-			 help procedure-arity procedure-source make-procedure-with-setter procedure-with-setter? 
-			 procedure-with-setter-setter-arity not boolean? eq? eqv? equal? s7-version)))
-	  
-	  (let ((argls (list #t #f 
-			     -1 0 1 1.5 1.0+1.0i 3/4 (if with-bignums (expt 2 100) (expt 2 30))
-			     (list 1 2) (cons 1 2) '() '((1 2) (3 4)) '((1 (2)) (((3) 4)))
-			     '#(1 2) (vector 1 #\a '(3)) (make-vector 0)
-			     (let ((x 3)) (lambda (y) (+ x y))) abs
-			     "hi" "" 
-			     'hi :hi 
-			     #\a #\newline 
+		   procedure? procedure-documentation
+		   help procedure-arity procedure-source make-procedure-with-setter procedure-with-setter? 
+		   procedure-with-setter-setter-arity not boolean? eq? eqv? equal? s7-version)))
+    
+    (let ((argls (list #t #f 
+		       -1 0 1 1.5 1.0+1.0i 3/4 (if with-bignums (expt 2 100) (expt 2 30))
+		       (list 1 2) (cons 1 2) '() '((1 2) (3 4)) '((1 (2)) (((3) 4)))
+		       '#(1 2) (vector 1 #\a '(3)) (make-vector 0)
+		       (let ((x 3)) (lambda (y) (+ x y))) abs
+		       "hi" "" 
+		       'hi :hi 
+		       #\a #\newline 
 		       ;;; (call/cc (lambda (a) a)) -- this causes us to start over!
-			     (make-hash-table 256)
-			     (symbol->value '_?__undefined__?_)                  ; -> #<undefined> hopefully
-			     (vector-fill! (vector 0) 0)                         ; -> #<unspecified>?
-			     (with-input-from-string "" (lambda () (read-char))) ; -> #<eof>?
-			     (make-random-state 1234))))
-	    
+		       (make-hash-table 256)
+		       (symbol->value '_?__undefined__?_)                  ; -> #<undefined> hopefully
+		       (vector-fill! (vector 0) 0)                         ; -> #<unspecified>?
+		       (with-input-from-string "" (lambda () (read-char))) ; -> #<eof>?
+		       (make-random-state 1234))))
+      
 					;(display "no args") (newline)
+      (for-each
+       (lambda (f)
+	 (catch #t 
+		(lambda () 
+		  (f))
+		(lambda args #f)))
+       ops)
+      
+					;(display "one arg") (newline)
+      (for-each
+       (lambda (f)
+	 (for-each
+	  (lambda (a)
+	    (catch #t 
+		   (lambda () 
+		     (if (or (and (not (eq? f make-string))
+				  (not (eq? f ash)))
+			     (not (>= a (expt 2 30))))
+			 (f a)
+			 #f))
+		   (lambda args #f)))
+	  argls))
+       ops)
+      
+					;(display "two args") (newline)
+      (for-each
+       (lambda (f)
+	 (for-each
+	  (lambda (a)
 	    (for-each
-	     (lambda (f)
+	     (lambda (b)
 	       (catch #t 
 		      (lambda () 
-			(f))
+			(if (or (and (not (eq? f expt))
+				     (not (eq? f ash))
+				     (not (eq? f make-string)))
+				(and (not (>= a (expt 2 30)))
+				     (not (>= b (expt 2 30)))))
+			    (f a b)
+			    #f))
 		      (lambda args #f)))
-	     ops)
-	    
-					;(display "one arg") (newline)
+	     argls))
+	  argls))
+       ops)
+      
+					;(display "three args") (newline)
+      (for-each
+       (lambda (f)
+	 (for-each
+	  (lambda (a)
 	    (for-each
-	     (lambda (f)
+	     (lambda (b)
 	       (for-each
-		(lambda (a)
+		(lambda (c)
 		  (catch #t 
 			 (lambda () 
-			   (if (or (and (not (eq? f make-string))
-					(not (eq? f ash)))
-				   (not (>= a (expt 2 30))))
-			       (f a)
-			       #f))
+					;(format #t "(~A ~A ~A ~A)~%" f a b c)
+			   (f a b c))
 			 (lambda args #f)))
 		argls))
-	     ops)
-	    
-					;(display "two args") (newline)
-	    (for-each
-	     (lambda (f)
-	       (for-each
-		(lambda (a)
-		  (for-each
-		   (lambda (b)
-		     (catch #t 
-			    (lambda () 
-			      (if (or (and (not (eq? f expt))
-					   (not (eq? f ash))
-					   (not (eq? f make-string)))
-				      (and (not (>= a (expt 2 30)))
-					   (not (>= b (expt 2 30)))))
-				  (f a b)
-				  #f))
-			    (lambda args #f)))
-		   argls))
-		argls))
-	     ops)
-	    
-					;(display "three args") (newline)
-	    (for-each
-	     (lambda (f)
-	       (for-each
-		(lambda (a)
-		  (for-each
-		   (lambda (b)
-		     (for-each
-		      (lambda (c)
-			(catch #t 
-			       (lambda () 
-					;(format #t "(~A ~A ~A ~A)~%" f a b c)
-				 (f a b c))
-			       (lambda args #f)))
-		      argls))
-		   argls))
-		argls))
-	     ops)))
+	     argls))
+	  argls))
+       ops)))
+  
+  (let ((ops (list 'lambda 'define 'quote 'if 'begin 'set! 'let 'let* 'letrec 'cond 'case 'and 'or 'do
+		   'call/cc 'apply 'for-each 'map 'values 'dynamic-wind))
 	
-	(let ((ops (list 'lambda 'define 'quote 'if 'begin 'set! 'let 'let* 'letrec 'cond 'case 'and 'or 'do
-			 'call/cc 'apply 'for-each 'map 'values 'dynamic-wind))
-	      
-	      (args (list #t #f 
-			  -1 0 1 1.5 1.0+1.0i 3/4 (expt 2 30)
-			  (list 1 2) (cons 1 2) '() '((1 2) (3 4)) '((1 (2)) (((3) 4)))
-			  '#(1 2) (vector 1 #\a '(3)) (make-vector 0)
-			  (let ((x 3)) (lambda (y) (+ x y))) abs (lambda args args)
-			  "hi" "" 
-			  'hi :hi 
-			  #\a #\newline 
+	(args (list #t #f 
+		    -1 0 1 1.5 1.0+1.0i 3/4 (expt 2 30)
+		    (list 1 2) (cons 1 2) '() '((1 2) (3 4)) '((1 (2)) (((3) 4)))
+		    '#(1 2) (vector 1 #\a '(3)) (make-vector 0)
+		    (let ((x 3)) (lambda (y) (+ x y))) abs (lambda args args)
+		    "hi" "" 
+		    'hi :hi 
+		    #\a #\newline 
 		    ;;; (call/cc (lambda (a) a))
-			  (make-hash-table 256)
-			  (symbol->value '_?__undefined__?_)                  ; -> #<undefined> hopefully
-			  (vector-fill! (vector 0) 0)                         ; -> #<unspecified>?
-			  (with-input-from-string "" (lambda () (read-char))) ; -> #<eof>?
-			  (make-random-state 1234))))
+		    (make-hash-table 256)
+		    (symbol->value '_?__undefined__?_)                  ; -> #<undefined> hopefully
+		    (vector-fill! (vector 0) 0)                         ; -> #<unspecified>?
+		    (with-input-from-string "" (lambda () (read-char))) ; -> #<eof>?
+		    (make-random-state 1234))))
+    (for-each
+     (lambda (op)
+       (for-each
+	(lambda (arg)
+	  (catch #t
+		 (lambda () 
+		   (if (or (and (not (eq? op make-string))
+				(not (eq? op ash)))
+			   (not (>= arg (expt 2 30))))
+		       (eval (list op arg))
+		       #f))
+		 (lambda args
+		   #f)))
+	
+	args))
+     ops)
+    
+    (for-each
+     (lambda (op)
+       (for-each
+	(lambda (arg1)
 	  (for-each
-	   (lambda (op)
+	   (lambda (arg2)
+	     (catch #t
+		    (lambda () 
+		      (if (or (and (not (eq? op expt))
+				   (not (eq? op ash))
+				   (not (eq? op make-string)))
+			      (and (not (>= arg1 (expt 2 30)))
+				   (not (>= arg2 (expt 2 30)))))
+			  (eval (list op arg1 arg2))
+			  #f))
+		    (lambda args
+		      #f)))
+	   args))
+	args))
+     ops)
+    
+    (for-each
+     (lambda (op)
+       (for-each
+	(lambda (arg)
+	  (catch #t
+		 (lambda () 
+		   (eval (cons op arg)))
+		 (lambda args
+		   #f)))
+	args))
+     ops)
+    
+    (for-each
+     (lambda (op)
+       (for-each
+	(lambda (arg1)
+	  (for-each
+	   (lambda (arg2)
+	     (catch #t
+		    (lambda () 
+		      (eval (list op (cons arg1 arg2))))
+		    (lambda args
+		      #f)))
+	   args))
+	args))
+     ops)
+    
+    (for-each
+     (lambda (arg1)
+       (for-each
+	(lambda (arg2)
+	  (catch #t
+		 (lambda () 
+		   (eval (list 'set! (list arg1) arg2)))
+		 (lambda args
+		   #f)))
+	args))
+     args)
+    
+    (for-each
+     (lambda (arg1)
+       (for-each
+	(lambda (arg2)
+	  (catch #t
+		 (lambda () 
+		   (eval (list 'set! (list arg1) arg2)))
+		 (lambda args
+		   #f)))
+	ops))
+     args)
+    
+    (for-each
+     (lambda (arg1)
+       (for-each
+	(lambda (arg2)
+	  (catch #t
+		 (lambda () 
+		   (eval (list 'set! (cons arg1 arg2) arg1)))
+		 (lambda args
+		   #f)))
+	args))
+     args)
+    
+    (for-each
+     (lambda (op)
+       (for-each
+	(lambda (arg1)
+	  (for-each
+	   (lambda (arg2)
 	     (for-each
-	      (lambda (arg)
+	      (lambda (arg3)
 		(catch #t
-		       (lambda () 
-			 (if (or (and (not (eq? op make-string))
-				      (not (eq? op ash)))
-				 (not (>= arg (expt 2 30))))
-			     (eval (list op arg))
-			     #f))
+		       (lambda ()
+			 (eval (list op arg1 arg2 arg3)))
 		       (lambda args
 			 #f)))
-	      
 	      args))
-	   ops)
-	  
+	   args))
+	args))
+     ops)
+    
+    (for-each
+     (lambda (op)
+       (for-each
+	(lambda (arg1)
 	  (for-each
-	   (lambda (op)
+	   (lambda (arg2)
 	     (for-each
-	      (lambda (arg1)
-		(for-each
-		 (lambda (arg2)
-		   (catch #t
-			  (lambda () 
-			    (if (or (and (not (eq? op expt))
-					 (not (eq? op ash))
-					 (not (eq? op make-string)))
-				    (and (not (>= arg1 (expt 2 30)))
-					 (not (>= arg2 (expt 2 30)))))
-				(eval (list op arg1 arg2))
-				#f))
-			  (lambda args
-			    #f)))
-		 args))
-	      args))
-	   ops)
-	  
-	  (for-each
-	   (lambda (op)
-	     (for-each
-	      (lambda (arg)
+	      (lambda (arg3)
 		(catch #t
 		       (lambda () 
-			 (eval (cons op arg)))
+			 (eval (list op (list arg1 arg2 arg3))))
 		       (lambda args
 			 #f)))
 	      args))
-	   ops)
-	  
+	   args))
+	ops))
+     ops)
+    
+    (for-each
+     (lambda (op)
+       (for-each
+	(lambda (arg1)
 	  (for-each
-	   (lambda (op)
+	   (lambda (arg2)
 	     (for-each
-	      (lambda (arg1)
-		(for-each
-		 (lambda (arg2)
-		   (catch #t
-			  (lambda () 
-			    (eval (list op (cons arg1 arg2))))
-			  (lambda args
-			    #f)))
-		 args))
-	      args))
-	   ops)
-	  
-	  (for-each
-	   (lambda (arg1)
-	     (for-each
-	      (lambda (arg2)
+	      (lambda (arg3)
 		(catch #t
 		       (lambda () 
-			 (eval (list 'set! (list arg1) arg2)))
+			 (eval (list op arg1 (list arg2 arg3))))
 		       (lambda args
 			 #f)))
 	      args))
-	   args)
-	  
-	  (for-each
-	   (lambda (arg1)
-	     (for-each
-	      (lambda (arg2)
-		(catch #t
-		       (lambda () 
-			 (eval (list 'set! (list arg1) arg2)))
-		       (lambda args
-			 #f)))
-	      ops))
-	   args)
-	  
-	  (for-each
-	   (lambda (arg1)
-	     (for-each
-	      (lambda (arg2)
-		(catch #t
-		       (lambda () 
-			 (eval (list 'set! (cons arg1 arg2) arg1)))
-		       (lambda args
-			 #f)))
-	      args))
-	   args)
-	  
-	  (for-each
-	   (lambda (op)
-	     (for-each
-	      (lambda (arg1)
-		(for-each
-		 (lambda (arg2)
-		   (for-each
-		    (lambda (arg3)
-		      (catch #t
-			     (lambda ()
-			       (eval (list op arg1 arg2 arg3)))
-			     (lambda args
-			       #f)))
-		    args))
-		 args))
-	      args))
-	   ops)
-	  
-	  (for-each
-	   (lambda (op)
-	     (for-each
-	      (lambda (arg1)
-		(for-each
-		 (lambda (arg2)
-		   (for-each
-		    (lambda (arg3)
-		      (catch #t
-			     (lambda () 
-			       (eval (list op (list arg1 arg2 arg3))))
-			     (lambda args
-			       #f)))
-		    args))
-		 args))
-	      ops))
-	   ops)
-	  
-	  (for-each
-	   (lambda (op)
-	     (for-each
-	      (lambda (arg1)
-		(for-each
-		 (lambda (arg2)
-		   (for-each
-		    (lambda (arg3)
-		      (catch #t
-			     (lambda () 
-			       (eval (list op arg1 (list arg2 arg3))))
-			     (lambda args
-			       #f)))
-		    args))
-		 ops))
-	      args))
-	   ops)
-	  
-	  ))
-      
-      
-      
-      
-;;; trouble: [bignum-precision = 128]
-;;;   (= (string->number (number->string 100000000000000000000000000000000.0)) 100000000000000000000000000000000.0) -> #f
-;;;   even with gmp
-;;;   (string->number "100000000000000000000000000000000.0") -> 1.000E32
-;;;   (= 1.000E32 100000000000000000000000000000000.0) -> #f
-;;;   (format #f "~40F" 32.0) -> "                               32.000000"
-;;;   (format #f "~40F" 100000000000000000000000000000000.0) -> "1.000E32"
-;;; but:
-;;;   (cos (bignum "1.0000000000000000000000000000000000e32")) gets the right answer, so who truncates?
-;;; I think this is a bug in mpfr
-      
-      
+	   ops))
+	args))
+     ops)
+    
+    ))
+
+
+
 ;;; guile/s7 accept: (call/cc (lambda (a . b) (a 1))) -> 1
 ;;; same:            (call/cc (lambda (a b c) (a 1))) -> too many args
 ;;; same:            (call/cc (lambda (a b) (a 1))) -> same

@@ -8467,8 +8467,8 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_polar_to_rectangular, g_polar_to_rectangular_w, 2, 0, 0, H_polar_to_rectangular);
   XEN_DEFINE_PROCEDURE(S_array_interp,         g_array_interp_w,         2, 1, 0, H_array_interp);
   XEN_DEFINE_PROCEDURE(S_mus_interpolate,      g_mus_interpolate_w,      3, 2, 0, H_mus_interpolate);
-  XEN_DEFINE_PROCEDURE(S_mus_frandom,          g_mus_frandom_w,          1, 0, 0, "internal testing function");
-  XEN_DEFINE_PROCEDURE(S_mus_irandom,          g_mus_irandom_w,          1, 0, 0, "internal testing function");
+  XEN_DEFINE_PROCEDURE(S_mus_frandom,          g_mus_frandom_w,          1, 0, 0, "random reals");
+  XEN_DEFINE_PROCEDURE(S_mus_irandom,          g_mus_irandom_w,          1, 0, 0, "random integers");
 
   XEN_DEFINE_CONSTANT(S_rectangular_window,     MUS_RECTANGULAR_WINDOW,     "The un-window, so to speak");
   XEN_DEFINE_CONSTANT(S_hann_window,            MUS_HANN_WINDOW,            "A simple raised cosine window");

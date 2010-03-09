@@ -26786,6 +26786,38 @@ EDITS: 2
 			    (set! max-case (/ m n)))))))))
 	  (if (> maxerr 1e-12)
 	      (format #t "sin-m*pi/n (~A cases) max err ~A at ~A~%" cases maxerr max-case))))
+
+    (let ((tag (catch #t
+		      (lambda () (with-sound () (outa -1 .1)))
+		      (lambda args (car args)))))
+      (if (not (eq? tag 'out-of-range))
+	  (snd-display ";outa -1 -> ~A" tag)))
+
+    (let ((tag (catch #t
+		      (lambda () (let ((v (with-sound (:output (make-vct 10)) (outa -1 .1)))) v))
+		      (lambda args (car args)))))
+      (if (not (eq? tag 'out-of-range))
+	  (snd-display ";outa (vct) -1 -> ~A" tag)))
+
+    (let ((tag (catch #t
+		      (lambda () (let ((v (with-sound (:output (make-sound-data 1 10)) (outa -1 .1)))) v))
+		      (lambda args (car args)))))
+      (if (not (eq? tag 'out-of-range))
+	  (snd-display ";outa (sound-data) -1 -> ~A" tag)))
+
+    (let ((v (with-sound () (run (outa -1 .1)))))
+      (if (file-exists? v)
+	  (begin
+	    (if (> (cadr (mus-sound-maxamp v)) 0.0) 
+		(snd-display ";outa to file at -1: ~A" v))
+	    (if (> (mus-sound-chans v) 1)
+		(snd-display ";outa to file at -1 chans: ~A" (mus-sound-chans v)))
+	    (if (find-sound v) (close-sound (find-sound v)))
+	    (delete-file v))))
+    (let ((v (with-sound (:output (make-vct 10)) (run (outa -1 .1)))))
+      (if (> (vct-peak v) 0.0) (snd-display ";outa to vct at -1: ~A" v)))
+    (let ((v (with-sound (:output (make-sound-data 1 10)) (run (outa -1 .1)))))
+      (if (> (sound-data-peak v) 0.0) (snd-display ";outa to sound-data at -1: ~A" v)))
     
     ))
 

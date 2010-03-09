@@ -5209,6 +5209,18 @@ static void firmant_2f_env(int *args, ptree *pt);
 static void polyshape_1fn(int *args, ptree *pt);
 static void polyshape_1fn_mult(int *args, ptree *pt);
 static void polyshape_1fn_env(int *args, ptree *pt);
+static void oscil_0f_vect(int *args, ptree *pt);
+static void oscil_0f_vect_mult(int *args, ptree *pt);
+static void oscil_0f_vect_env(int *args, ptree *pt);
+static void oscil_1f_vect(int *args, ptree *pt);
+static void oscil_1f_vect_mult(int *args, ptree *pt);
+static void oscil_1f_vect_env(int *args, ptree *pt);
+static void formant_1f_vect(int *args, ptree *pt);
+static void formant_1f_vect_mult(int *args, ptree *pt);
+static void formant_1f_vect_env(int *args, ptree *pt);
+static void firmant_1f_vect(int *args, ptree *pt);
+static void firmant_1f_vect_mult(int *args, ptree *pt);
+static void firmant_1f_vect_env(int *args, ptree *pt);
 
 
 
@@ -5240,8 +5252,10 @@ static int find_m2_op(triple *prev_op)
 }
 
 
+/* (let ((v (vector (make-oscil 330)))) (run (* 0.5 (oscil (vector-ref v 0))))) */
+
 /* 3 arg ops that can be combined into a multiply */
-#define NUM_M3_OPS 10
+#define NUM_M3_OPS 11
 
 static opt_ops m3_ops[NUM_M3_OPS] = {
   {oscil_1f_1, "oscil_1f_1", oscil_1f_1_mult, "oscil_1f_1_mult", oscil_1f_1_env, "oscil_1f_1_env"},
@@ -5254,6 +5268,7 @@ static opt_ops m3_ops[NUM_M3_OPS] = {
   {formant_1f, "formant_1f", formant_1f_mult, "formant_1f_mult", formant_1f_env, "formant_1f_env"},
   {firmant_1f, "firmant_1f", firmant_1f_mult, "firmant_1f_mult", firmant_1f_env, "firmant_1f_env"},
   {multiply_f2, "multiply_f2", multiply_f3, "multiply_f3", NULL, NULL},
+  {oscil_0f_vect, "oscil_0f_vect", oscil_0f_vect_mult, "oscil_0f_vect_mult", oscil_0f_vect_env, "oscil_0f_vect_env"},
 };
 
 
@@ -5268,7 +5283,7 @@ static int find_m3_op(triple *prev_op)
 
 
 /* 4 arg ops that can be combined into a multiply */
-#define NUM_M4_OPS 9
+#define NUM_M4_OPS 12
 
 static opt_ops m4_ops[NUM_M4_OPS] = {
   {multiply_add_f2, "multiply_add_f2", multiply_add_f2_mult, "multiply_add_f2_mult", NULL, NULL},
@@ -5280,6 +5295,9 @@ static opt_ops m4_ops[NUM_M4_OPS] = {
   {subtract_f3, "subtract_f3", subtract_f3_mult, "subtract_f3_mult", NULL, NULL},
   {multiply_f3, "multiply_f3", multiply_f4, "multiply_f4", NULL, NULL},
   {firmant_2f, "firmant_2f", firmant_2f_mult, "firmant_2f_mult", firmant_2f_env, "firmant_2f_env"},
+  {oscil_1f_vect, "oscil_1f_vect", oscil_1f_vect_mult, "oscil_1f_vect_mult", oscil_1f_vect_env, "oscil_1f_vect_env"},
+  {formant_1f_vect, "formant_1f_vect", formant_1f_vect_mult, "formant_1f_vect_mult", formant_1f_vect_env, "formant_1f_vect_env"},
+  {firmant_1f_vect, "firmant_1f_vect", firmant_1f_vect_mult, "firmant_1f_vect_mult", firmant_1f_vect_env, "firmant_1f_vect_env"},
 };
 
 
@@ -10767,6 +10785,14 @@ static void oscil_2f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_pm(CLM_AR
 
 static void oscil_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
 
+static void oscil_0f_vect(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_unmodulated(VECT_ARG_1->data.gens[INT_ARG_2]);}
+static void oscil_0f_vect_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 * mus_oscil_unmodulated(VECT_ARG_1->data.gens[INT_ARG_2]);}
+static void oscil_0f_vect_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_3) * mus_oscil_unmodulated(VECT_ARG_1->data.gens[INT_ARG_2]);}
+
+static void oscil_1f_vect(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_fm(VECT_ARG_1->data.gens[INT_ARG_2], FLOAT_ARG_3);}
+static void oscil_1f_vect_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_4 * mus_oscil_fm(VECT_ARG_1->data.gens[INT_ARG_2], FLOAT_ARG_3);}
+static void oscil_1f_vect_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_4) * mus_oscil_fm(VECT_ARG_1->data.gens[INT_ARG_2], FLOAT_ARG_3);}
+
 GEN_P(oscil)
 
 static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
@@ -10778,7 +10804,27 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
       ((num_args == 2) && 
        (args[2]->constant == R_CONSTANT) && 
        (prog->dbls[args[2]->addr] == 0.0)))
-    return(package(prog, R_FLOAT, oscil_0f_1, "oscil_0f_1", args, 1));
+    {
+      if (prog->triple_ctr > 0)
+	{
+	  triple *prev_op;
+	  prev_op = prog->program[prog->triple_ctr - 1];
+	  if ((prev_op->function == vector_ref_c) &&
+	      (prev_op->types[0] == R_CLM) &&
+	      (prev_op->args[0] == args[1]->addr) &&
+	      ((find_var_in_ptree_via_addr(prog, R_CLM, prev_op->args[0])) == NULL))
+	    {
+	      xen_value *new0;
+	      new0 = add_temporary_var_to_ptree(prog, R_FLOAT);
+	      prev_op->args[0] = new0->addr;
+	      prev_op->types[0] = R_FLOAT;
+	      prev_op->function = oscil_0f_vect;
+	      prev_op->op_name = "oscil_0f_vect";
+	      return(new0);
+	    }
+	}
+      return(package(prog, R_FLOAT, oscil_0f_1, "oscil_0f_1", args, 1));
+    }
  
   if ((num_args == 2) || 
       ((num_args == 3) && 
@@ -10847,6 +10893,26 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
 #endif				  
 	      return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
 	    }
+
+	  if ((prev_op->function == vector_ref_c) &&
+	      (prev_op->types[0] == R_CLM) &&
+	      (prev_op->args[0] == args[1]->addr) &&
+	      ((find_var_in_ptree_via_addr(prog, R_CLM, prev_op->args[0])) == NULL))
+	    {
+	      xen_value *new0;
+	      new0 = add_temporary_var_to_ptree(prog, R_FLOAT);
+	      prev_op->types = (int *)realloc(prev_op->types, 4 * sizeof(int));
+	      prev_op->args = (int *)realloc(prev_op->args, 4 * sizeof(int));
+	      prev_op->num_args = 4;
+	      prev_op->args[0] = new0->addr;
+	      prev_op->types[0] = R_FLOAT;
+	      prev_op->function = oscil_1f_vect;
+	      prev_op->op_name = "oscil_1f_vect";
+	      prev_op->args[3] = args[2]->addr;
+	      prev_op->types[3] = R_FLOAT;
+	      return(new0);
+	    }
+
 	}
       return(package(prog, R_FLOAT, oscil_1f_1, "oscil_1f_1", args, 2));
     }
@@ -10865,6 +10931,10 @@ static void formant_1f_add(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 + m
 static void formant_1f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_3 * mus_formant(CLM_ARG_1, FLOAT_ARG_2);}
 static void formant_1f_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_3) * mus_formant(CLM_ARG_1, FLOAT_ARG_2);}
 
+static void formant_1f_vect(int *args, ptree *pt) {FLOAT_RESULT = mus_formant(VECT_ARG_1->data.gens[INT_ARG_2], FLOAT_ARG_3);}
+static void formant_1f_vect_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_4 * mus_formant(VECT_ARG_1->data.gens[INT_ARG_2], FLOAT_ARG_3);}
+static void formant_1f_vect_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_4) * mus_formant(VECT_ARG_1->data.gens[INT_ARG_2], FLOAT_ARG_3);}
+
 static void formant_1f_sma(int *args, ptree *pt) {FLOAT_RESULT = mus_formant(CLM_ARG_5, FLOAT_ARG_4 + FLOAT_ARG_3 * (FLOAT_ARG_1 - FLOAT_ARG_2));}
 
 static void formant_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_formant_with_frequency(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
@@ -10877,6 +10947,7 @@ static xen_value *formant_1(ptree *prog, xen_value **args, int num_args)
   if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3);
   if (num_args == 1)
     return(package(prog, R_FLOAT, formant_0f, "formant_0f", args, 1));
+
   if (num_args == 2)
     {
       if (prog->triple_ctr > 0)
@@ -10899,6 +10970,26 @@ static xen_value *formant_1(ptree *prog, xen_value **args, int num_args)
 	      prev_op->args[5] = args[1]->addr;
 	      return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
 	    }
+
+	  if ((prev_op->function == vector_ref_c) &&
+	      (prev_op->types[0] == R_CLM) &&
+	      (prev_op->args[0] == args[1]->addr) &&
+	      ((find_var_in_ptree_via_addr(prog, R_CLM, prev_op->args[0])) == NULL))
+	    {
+	      /* (let ((v (vector (make-formant 330)))) (run (* 0.5 (formant (vector-ref v 0) .1)))) */
+	      xen_value *new0;
+	      new0 = add_temporary_var_to_ptree(prog, R_FLOAT);
+	      prev_op->types = (int *)realloc(prev_op->types, 4 * sizeof(int));
+	      prev_op->args = (int *)realloc(prev_op->args, 4 * sizeof(int));
+	      prev_op->num_args = 4;
+	      prev_op->args[0] = new0->addr;
+	      prev_op->types[0] = R_FLOAT;
+	      prev_op->function = formant_1f_vect;
+	      prev_op->op_name = "formant_1f_vect";
+	      prev_op->args[3] = args[2]->addr;
+	      prev_op->types[3] = R_FLOAT;
+	      return(new0);
+	    }
 	}
 
       return(package(prog, R_FLOAT, formant_1f, "formant_1f", args, 2));
@@ -10917,16 +11008,49 @@ static void firmant_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_firmant_with_fr
 static void firmant_2f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_4 * mus_firmant_with_frequency(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
 static void firmant_2f_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_4) * mus_firmant_with_frequency(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
 
+static void firmant_1f_vect(int *args, ptree *pt) {FLOAT_RESULT = mus_firmant(VECT_ARG_1->data.gens[INT_ARG_2], FLOAT_ARG_3);}
+static void firmant_1f_vect_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_4 * mus_firmant(VECT_ARG_1->data.gens[INT_ARG_2], FLOAT_ARG_3);}
+static void firmant_1f_vect_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_4) * mus_firmant(VECT_ARG_1->data.gens[INT_ARG_2], FLOAT_ARG_3);}
+
 GEN_P(firmant)
 
 static xen_value *firmant_1(ptree *prog, xen_value **args, int num_args)
 {
   if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2);
   if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3);
+
   if (num_args == 1)
     return(package(prog, R_FLOAT, firmant_0f, "firmant_0f", args, 1));
+
   if (num_args == 2)
-    return(package(prog, R_FLOAT, firmant_1f, "firmant_1f", args, 2));
+    {
+      if (prog->triple_ctr > 0)
+	{
+	  triple *prev_op;
+	  prev_op = prog->program[prog->triple_ctr - 1];
+
+	  if ((prev_op->function == vector_ref_c) &&
+	      (prev_op->types[0] == R_CLM) &&
+	      (prev_op->args[0] == args[1]->addr) &&
+	      ((find_var_in_ptree_via_addr(prog, R_CLM, prev_op->args[0])) == NULL))
+	    {
+	      /* (let ((v (vector (make-firmant 330)))) (run (* 0.5 (formant (vector-ref v 0) .1)))) */
+	      xen_value *new0;
+	      new0 = add_temporary_var_to_ptree(prog, R_FLOAT);
+	      prev_op->types = (int *)realloc(prev_op->types, 4 * sizeof(int));
+	      prev_op->args = (int *)realloc(prev_op->args, 4 * sizeof(int));
+	      prev_op->num_args = 4;
+	      prev_op->args[0] = new0->addr;
+	      prev_op->types[0] = R_FLOAT;
+	      prev_op->function = firmant_1f_vect;
+	      prev_op->op_name = "firmant_1f_vect";
+	      prev_op->args[3] = args[2]->addr;
+	      prev_op->types[3] = R_FLOAT;
+	      return(new0);
+	    }
+	}
+      return(package(prog, R_FLOAT, firmant_1f, "firmant_1f", args, 2));
+    }
   return(package(prog, R_FLOAT, firmant_2f, "firmant_2f", args, 3));
 }
 
@@ -11011,10 +11135,10 @@ static xen_value *env_1(ptree *prog, xen_value **args, int num_args)
 	  if (prog->triple_ctr > 0)
 	    {
 	      triple *prev_op;
-	      xen_value *new0;
 	      prev_op = prog->program[prog->triple_ctr - 1];
 	      if (prev_op->function == env_linear_0f)
 		{
+		  xen_value *new0;
 		  prev_op->types = (int *)realloc(prev_op->types, 4 * sizeof(int));
 		  prev_op->args = (int *)realloc(prev_op->args, 4 * sizeof(int));
 		  prev_op->num_args = 4;
@@ -12519,49 +12643,49 @@ static void out_any_function_4(int *args, ptree *pt)
 
 static void out_vct_3(int *args, ptree *pt) 
 {
-  if (INT_ARG_1 < VCT_ARG_3->length)
+  if ((INT_ARG_1 < VCT_ARG_3->length) && (INT_ARG_1 >= 0))
     VCT_ARG_3->data[INT_ARG_1] += FLOAT_ARG_2; 
   FLOAT_RESULT = FLOAT_ARG_2;
 }
 
 static void out_any_vct_4(int *args, ptree *pt) 
 {
-  if (INT_ARG_1 < VCT_ARG_4->length)
+  if ((INT_ARG_1 < VCT_ARG_4->length) && (INT_ARG_1 >= 0))
     VCT_ARG_4->data[INT_ARG_1] += FLOAT_ARG_2; 
   FLOAT_RESULT = FLOAT_ARG_2;
 }
 
 static void outa_sound_data_3(int *args, ptree *pt) 
 {
-  if (INT_ARG_1 < SOUND_DATA_ARG_3->length)
+  if ((INT_ARG_1 < SOUND_DATA_ARG_3->length) && (INT_ARG_1 >= 0))
     SOUND_DATA_ARG_3->data[0][INT_ARG_1] += FLOAT_ARG_2; 
   FLOAT_RESULT = FLOAT_ARG_2;
 }
 
 static void outb_sound_data_3(int *args, ptree *pt) 
 {
-  if ((INT_ARG_1 < SOUND_DATA_ARG_3->length) && (SOUND_DATA_ARG_3->chans > 1))
+  if ((INT_ARG_1 < SOUND_DATA_ARG_3->length) && (SOUND_DATA_ARG_3->chans > 1) && (INT_ARG_1 >= 0))
     SOUND_DATA_ARG_3->data[1][INT_ARG_1] += FLOAT_ARG_2; 
   FLOAT_RESULT = FLOAT_ARG_2;
 }
 
 static void outc_sound_data_3(int *args, ptree *pt) 
 {
-  if ((INT_ARG_1 < SOUND_DATA_ARG_3->length) && (SOUND_DATA_ARG_3->chans > 2))
+  if ((INT_ARG_1 < SOUND_DATA_ARG_3->length) && (SOUND_DATA_ARG_3->chans > 2) && (INT_ARG_1 >= 0))
     SOUND_DATA_ARG_3->data[2][INT_ARG_1] += FLOAT_ARG_2; 
   FLOAT_RESULT = FLOAT_ARG_2;
 }
 
 static void outd_sound_data_3(int *args, ptree *pt) 
 {  
-  if ((INT_ARG_1 < SOUND_DATA_ARG_3->length) && (SOUND_DATA_ARG_3->chans > 3))
+  if ((INT_ARG_1 < SOUND_DATA_ARG_3->length) && (SOUND_DATA_ARG_3->chans > 3) && (INT_ARG_1 >= 0))
     SOUND_DATA_ARG_3->data[3][INT_ARG_1] += FLOAT_ARG_2; 
   FLOAT_RESULT = FLOAT_ARG_2;
 }
 
 static void out_any_sound_data_4(int *args, ptree *pt) 
 {
-  if ((INT_ARG_1 < SOUND_DATA_ARG_4->length) && (SOUND_DATA_ARG_4->chans > INT_ARG_3))
+  if ((INT_ARG_1 < SOUND_DATA_ARG_4->length) && (SOUND_DATA_ARG_4->chans > INT_ARG_3) && (INT_ARG_1 >= 0))
     SOUND_DATA_ARG_4->data[INT_ARG_3][INT_ARG_1] += FLOAT_ARG_2; 
   FLOAT_RESULT = FLOAT_ARG_2;
 }
@@ -13019,14 +13143,14 @@ static void in_any_f_3(int *args, ptree *pt) {FLOAT_RESULT = 0.0;}
 
 static void in_vct_2(int *args, ptree *pt) 
 {
-  if (VCT_ARG_2->length > INT_ARG_1)
+  if ((VCT_ARG_2->length > INT_ARG_1) && (INT_ARG_1 >= 0))
     FLOAT_RESULT = VCT_ARG_2->data[INT_ARG_1];
   else FLOAT_RESULT = 0.0;
 }
 
 static void in_any_vct_3(int *args, ptree *pt) 
 {
-  if (VCT_ARG_3->length > INT_ARG_1)
+  if ((VCT_ARG_3->length > INT_ARG_1) && (INT_ARG_1 >= 0))
     FLOAT_RESULT = VCT_ARG_3->data[INT_ARG_1];
   else FLOAT_RESULT = 0.0;
 }
@@ -13034,7 +13158,7 @@ static void in_any_vct_3(int *args, ptree *pt)
 
 static void ina_sound_data_2(int *args, ptree *pt) 
 {
-  if (SOUND_DATA_ARG_2->length > INT_ARG_1)
+  if ((SOUND_DATA_ARG_2->length > INT_ARG_1) && (INT_ARG_1 >= 0))
     FLOAT_RESULT = SOUND_DATA_ARG_2->data[0][INT_ARG_1];
   else FLOAT_RESULT = 0.0;
 }
@@ -13042,7 +13166,8 @@ static void ina_sound_data_2(int *args, ptree *pt)
 static void inb_sound_data_2(int *args, ptree *pt) 
 {
   if ((SOUND_DATA_ARG_2->length > INT_ARG_1) && 
-      (SOUND_DATA_ARG_2->chans > 1))
+      (SOUND_DATA_ARG_2->chans > 1) &&
+      (INT_ARG_1 >= 0))
     FLOAT_RESULT = SOUND_DATA_ARG_2->data[1][INT_ARG_1];
   else FLOAT_RESULT = 0.0;
 }
@@ -13050,7 +13175,8 @@ static void inb_sound_data_2(int *args, ptree *pt)
 static void in_any_sound_data_3(int *args, ptree *pt) 
 {
   if ((SOUND_DATA_ARG_3->length > INT_ARG_1) && 
-      (SOUND_DATA_ARG_3->chans > INT_ARG_2))
+      (SOUND_DATA_ARG_3->chans > INT_ARG_2) &&
+      (INT_ARG_1 >= 0))
     FLOAT_RESULT = SOUND_DATA_ARG_3->data[INT_ARG_2][INT_ARG_1];
   else FLOAT_RESULT = 0.0;
 }

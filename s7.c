@@ -858,6 +858,7 @@ struct s7_scheme {
 #ifndef LLONG_MAX
   #define LLONG_MAX 9223372036854775807LL
   #define LLONG_MIN (-LLONG_MAX - 1LL)
+  /* LONG_MAX is either the same or 2147483647 */
 #endif
 
 #if __cplusplus
@@ -893,6 +894,10 @@ static char *copy_string(const char *str)
 {
   return(copy_string_with_len(str, safe_strlen(str)));
 }
+
+
+#define strings_are_equal(Str1, Str2) (strcmp(Str1, Str2) == 0)
+/* newlib code here was slower */
 
 
 static bool is_proper_list(s7_scheme *sc, s7_pointer lst);
@@ -1780,7 +1785,7 @@ static s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, int
     { 
       const char *s; 
       s = s7_symbol_name(car(x)); 
-      if ((s) && (strcmp(name, s) == 0))
+      if ((s) && (strings_are_equal(name, s)))
 	{
 #if HAVE_PTHREADS
 	  pthread_mutex_unlock(&symtab_lock);
@@ -3374,20 +3379,15 @@ static s7_num_t make_ratio(s7_Int numer, s7_Int denom)
 }
 
 
-static s7_num_t make_real(s7_Double rl)
-{
-  s7_num_t ret;
-  ret.type = NUM_REAL;
-  real(ret) = rl;
-  return(ret);
-}
-
-
 static s7_num_t make_complex(s7_Double rl, s7_Double im)
 {
   s7_num_t ret;
   if (im == 0.0)
-    return(make_real(rl));
+    {
+      ret.type = NUM_REAL;
+      real(ret) = rl;
+      return(ret);
+    }
 
   ret.type = NUM_COMPLEX;
   real_part(ret) = rl;
@@ -3641,104 +3641,45 @@ static int integer_length(s7_Int a)
 static int s7_int_max = 0, s7_int_min = 0, s7_int_bits = 0, s7_int_digits = 0; /* initialized later */
 static int s7_int_digits_by_radix[17];
 
-static s7_num_t num_negate(s7_num_t a)
+static s7_pointer negate(s7_scheme *sc, s7_pointer p)
 {
-  s7_num_t ret;
-  ret.type = a.type;
+  s7_num_t a;
+  a = number(p);
   
-  switch (num_type(ret))
+  switch (a.type)
     {
     case NUM_INT: 
-      integer(ret) = -integer(a);
-      break;
+      return(s7_make_integer(sc, -integer(a)));
       
     case NUM_RATIO:
-      numerator(ret) = -numerator(a);
-      denominator(ret) = denominator(a);
-      break;
+      return(s7_make_ratio(sc, -numerator(a), denominator(a)));
       
     case NUM_REAL2:
     case NUM_REAL:
-      real(ret) = -real(a);
-      break;
+      return(s7_make_real(sc, -real(a)));
       
     default:
-      real_part(ret) = -real_part(a);
-      imag_part(ret) = -imag_part(a);
-      break;
+      return(s7_make_complex(sc, -real_part(a), -imag_part(a)));
     }
-  return(ret);
 }
 
 
-static s7_num_t num_sub(s7_num_t a, s7_num_t b) 
+static s7_pointer invert(s7_scheme *sc, s7_pointer p)
 {
-  s7_num_t ret;
-  ret.type = a.type | b.type;
-  
-  switch (num_type(ret))
-    {
-    case NUM_INT: 
-      integer(ret) = integer(a) - integer(b);
-      break;
-      
-    case NUM_RATIO:
-      {
-	s7_Int d1, d2, n1, n2;
-	d1 = num_to_denominator(a);
-	n1 = num_to_numerator(a);
-	d2 = num_to_denominator(b);
-	n2 = num_to_numerator(b);
+  s7_num_t a;
+  a = number(p);
 
-	if (d1 == d2)                                     /* the easy case -- if overflow here, it matches the int case */
-	  return(make_ratio(n1 - n2, d1));
-
-#if (!WITH_GMP)
-	if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
-	    (n1 > s7_int_max) || (n2 > s7_int_max) ||
-	    (n1 < s7_int_min) || (n2 < s7_int_min))
-	  {
-	    int d1bits, d2bits;
-	    d1bits = integer_length(d1);
-	    d2bits = integer_length(d2);
-	    if (((d1bits + d2bits) > s7_int_bits) ||
-		((d1bits + integer_length(n2)) > (s7_int_bits - 1)) ||
-		((d2bits + integer_length(n1)) > (s7_int_bits - 1)))
-	      return(make_real(((long double)n1 / (long double)d1) - ((long double)n2 / (long double)d2)));
-	  }
-#endif
-	return(make_ratio(n1 * d2 - n2 * d1, d1 * d2));
-      }
-      break;
-      
-    case NUM_REAL2:
-    case NUM_REAL:
-      real(ret) = num_to_real(a) - num_to_real(b);
-      break;
-      
-    default:
-      return(make_complex(num_to_real_part(a) - num_to_real_part(b),
-			  num_to_imag_part(a) - num_to_imag_part(b)));
-      break;
-    }
-  return(ret);
-}
-
-
-static s7_num_t num_invert(s7_num_t a)
-{
-  switch (num_type(a))
+  switch (a.type)
     {
     case NUM_INT:
-      /* a already checked, not 0 */
-      return(make_ratio(1, integer(a)));
+      return(s7_make_ratio(sc, 1, integer(a)));      /* a already checked, not 0 */
       
     case NUM_RATIO:
-      return(make_ratio(denominator(a), numerator(a)));
+      return(s7_make_ratio(sc, denominator(a), numerator(a)));
 
     case NUM_REAL:
     case NUM_REAL2:
-      return(make_real(1.0 / real(a)));
+      return(s7_make_real(sc, 1.0 / real(a)));
 
     default:
       {
@@ -3746,74 +3687,13 @@ static s7_num_t num_invert(s7_num_t a)
 	r2 = num_to_real_part(a);
 	i2 = num_to_imag_part(a);
 	den = (r2 * r2 + i2 * i2);
-	return(make_complex(r2 / den, -i2 / den));
+	return(s7_make_complex(sc, r2 / den, -i2 / den));
       }
     }
 }
 
 
-static s7_num_t num_div(s7_num_t a, s7_num_t b) 
-{
-  s7_num_t ret;
-  ret.type = a.type | b.type;
-  
-  switch (num_type(ret))
-    {
-    case NUM_INT: 
-      /* b checked for 0 below */
-      return(make_ratio(integer(a), integer(b)));
-      
-    case NUM_RATIO:
-      {
-	s7_Int d1, d2, n1, n2;
-	d1 = num_to_denominator(a);
-	n1 = num_to_numerator(a);
-	d2 = num_to_denominator(b);
-	n2 = num_to_numerator(b);
-
-	if (d1 == d2)
-	  return(make_ratio(n1, n2));
-#if (!WITH_GMP)
-	if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
-	    (n1 > s7_int_max) || (n2 > s7_int_max) ||
-	    (n1 < s7_int_min) || (n2 < s7_int_min))
-	  {
-	    if ((integer_length(d1) + integer_length(n2) > s7_int_bits) ||
-		(integer_length(d2) + integer_length(n1) > s7_int_bits))
-	      return(make_real(((long double)n1 / (long double)d1) / ((long double)n2 / (long double)d2)));
-	  }
-#endif
-	return(make_ratio(n1 * d2, d1 * n2));
-      }
-      break;
-      
-    case NUM_REAL2:
-    case NUM_REAL:
-      {
-	s7_Double rb;
-	rb = num_to_real(b);
-	real(ret) = num_to_real(a) / rb;
-      }
-      break;
-      
-    default:
-      {
-	s7_Double r1, r2, i1, i2, den;
-	r1 = num_to_real_part(a);
-	r2 = num_to_real_part(b);
-	i1 = num_to_imag_part(a);
-	i2 = num_to_imag_part(b);
-	den = (r2 * r2 + i2 * i2);
-	return(make_complex((r1 * r2 + i1 * i2) / den, (r2 * i1 - r1 * i2) / den));
-      }
-      break;
-    }
-  
-  return(ret);
-}
-
-
-static s7_Int s7_truncate(s7_Double xf)
+static s7_Int s7_truncate(s7_Double xf)   /* can't use "truncate" -- it's in unistd.h */
 {
   if (xf > 0.0)
     return((s7_Int)floor(xf));
@@ -3821,15 +3701,14 @@ static s7_Int s7_truncate(s7_Double xf)
 }
 
 
-static s7_num_t num_quotient(s7_num_t a, s7_num_t b) 
+static s7_Int quotient(s7_num_t a, s7_num_t b) 
 {
   /* (define (quo x1 x2) (truncate (/ x1 x2))) ; slib */
-  s7_num_t ret;
-  ret.type = NUM_INT;
+
   if ((a.type | b.type) == NUM_INT)
-    integer(ret) = integer(a) / integer(b);
-  else integer(ret) = s7_truncate(num_to_real(a) / num_to_real(b));
-  return(ret);
+    return(integer(a) / integer(b));
+
+  return(s7_truncate(num_to_real(a) / num_to_real(b)));
 }
 
 
@@ -4257,10 +4136,10 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
   int len;
   s7_pointer x;
 
-  if (strcmp(name, "t") == 0)
+  if (strings_are_equal(name, "t"))
     return(sc->T);
   
-  if (strcmp(name, "f") == 0)
+  if (strings_are_equal(name, "f"))
     return(sc->F);
   
   len = safe_strlen(name);
@@ -4349,23 +4228,23 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
       /* #\space or whatever (named character) */
       { 
 	int c = 0;
-	if (strcmp(name + 1, "space") == 0) 
+	if (strings_are_equal(name + 1, "space")) 
 	  c =' ';
 	else 
 	  {
-	    if ((strcmp(name + 1, "newline") == 0) || (strcmp(name + 1, "linefeed") == 0))
+	    if ((strings_are_equal(name + 1, "newline")) || (strings_are_equal(name + 1, "linefeed")))
 	      c ='\n';
 	    else 
 	      {
-		if (strcmp(name + 1, "return") == 0) 
+		if (strings_are_equal(name + 1, "return")) 
 		  c ='\r';
 		else 
 		  {
-		    if (strcmp(name + 1, "tab") == 0) 
+		    if (strings_are_equal(name + 1, "tab")) 
 		      c ='\t';
 		    else 
 		      {
-			if ((strcmp(name + 1, "null") == 0) || (strcmp(name + 1, "nul") == 0))
+			if ((strings_are_equal(name + 1, "null")) || (strings_are_equal(name + 1, "nul")))
 			  c ='\0';
 			else 
 			  {
@@ -4495,6 +4374,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
       ((frac_len - exponent) > max_len))
     {
       (*overflow) = true;
+      /* let gmp/mpfr/mpc deal with it */
       return(0.0);
     }
 #endif
@@ -4527,8 +4407,10 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	  else break;
 	}
       
+#if WITH_GMP
       /* this is only noticed in the gmp case */
       (*overflow) = (int_part > 0);
+#endif
       
       if (int_len <= max_len)
 	dval = int_part * pow((s7_Double)radix, (s7_Double)exponent);
@@ -5146,6 +5028,7 @@ static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
   x = car(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "exp", 0, x, "a number"));
+  if (x == small_int(0)) return(small_int(1));
 
   if (s7_is_real(x))
     return(s7_make_real(sc, exp(num_to_real(number(x)))));
@@ -5215,6 +5098,7 @@ static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
   x = car(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "sin", 0, x, "a number"));
+  if (x == small_int(0)) return(x);
 
   if (s7_is_real(x))
     return(s7_make_real(sc, sin(num_to_real(number(x)))));
@@ -5230,6 +5114,7 @@ static s7_pointer g_cos(s7_scheme *sc, s7_pointer args)
   x = car(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "cos", 0, x, "a number"));
+  if (x == small_int(0)) return(small_int(1));
 
   if (s7_is_real(x))
     return(s7_make_real(sc, cos(num_to_real(number(x)))));
@@ -5245,6 +5130,7 @@ static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
   x = car(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "tan", 0, x, "a number"));
+  if (x == small_int(0)) return(x);
 
   if (s7_is_real(x))
     return(s7_make_real(sc, tan(num_to_real(number(x)))));
@@ -5266,6 +5152,7 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
   n = car(args);
   if (!s7_is_number(n))
     return(s7_wrong_type_arg_error(sc, "asin", 0, n, "a number"));
+  if (n == small_int(0)) return(n);
 
   if (s7_is_real(n))
     {
@@ -5315,6 +5202,7 @@ static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
   n = car(args);
   if (!s7_is_number(n))
     return(s7_wrong_type_arg_error(sc, "acos", 0, n, "a number"));
+  if (n == small_int(1)) return(small_int(0));
 
   if (s7_is_real(n))
     {
@@ -5389,6 +5277,7 @@ static s7_pointer g_sinh(s7_scheme *sc, s7_pointer args)
   x = car(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "sinh", 0, x, "a number"));
+  if (x == small_int(0)) return(x);
 
   if (s7_is_real(x))
     return(s7_make_real(sc, sinh(num_to_real(number(x)))));
@@ -5404,6 +5293,7 @@ static s7_pointer g_cosh(s7_scheme *sc, s7_pointer args)
   x = car(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "cosh", 0, x, "a number"));
+  if (x == small_int(0)) return(small_int(1));
 
   if (s7_is_real(x))
     return(s7_make_real(sc, cosh(num_to_real(number(x)))));
@@ -5439,6 +5329,7 @@ static s7_pointer g_asinh(s7_scheme *sc, s7_pointer args)
   x = car(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "asinh", 0, x, "a number"));
+  if (x == small_int(0)) return(x);
 
   if (s7_is_real(x))
     return(s7_make_real(sc, asinh(num_to_real(number(x)))));
@@ -5454,6 +5345,7 @@ static s7_pointer g_acosh(s7_scheme *sc, s7_pointer args)
   x = car(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "acosh", 0, x, "a number"));
+  if (x == small_int(1)) return(small_int(0));
 
   if ((s7_is_real(x)) &&
       (num_to_real(number(x)) >= 1.0))
@@ -5962,7 +5854,10 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 		    if (((d1bits + d2bits) > s7_int_bits) ||
 			((d1bits + integer_length(n2)) > (s7_int_bits - 1)) ||
 			((d2bits + integer_length(n1)) > (s7_int_bits - 1)))
-		      a = make_real(((long double)n1 / (long double)d1) + ((long double)n2 / (long double)d2));
+		      {
+			a.type = NUM_REAL;
+			real(a) = ((long double)n1 / (long double)d1) + ((long double)n2 / (long double)d2);
+		      }
 		    else a = make_ratio(n1 * d2 + n2 * d1, d1 * d2);
 		  }
 		else
@@ -5996,45 +5891,105 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 {
   #define H_subtract "(- x1 ...) subtracts its trailing arguments from the first, or negates the first if only one argument is given"
-  int i;
+  int i, ret_type;
   s7_pointer x;
-  s7_num_t n;
+  s7_num_t a, b;
 
 #if (!WITH_GMP)
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "-", 1, car(args), "a number"));
 
   if (cdr(args) == sc->NIL) 
-    return(make_number(sc, num_negate(number(car(args)))));
+    return(negate(sc, car(args)));
 #endif
 
-  n = number(car(args));
+  a = number(car(args));
+
   for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
     {
 #if WITH_GMP
-      switch (n.type)
+      switch (a.type)
 	{
 	case NUM_INT:
-	  if ((integer(n) > LONG_MAX) ||
-	      (integer(n) < LONG_MIN))
-	    return(big_subtract(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(n)), x)));
+	  if ((integer(a) > LONG_MAX) ||
+	      (integer(a) < LONG_MIN))
+	    return(big_subtract(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(a)), x)));
 	  break;
 
 	case NUM_RATIO:
-	  if ((numerator(n) > LONG_MAX) ||
-	      (denominator(n) > LONG_MAX) ||
-	      (numerator(n) < LONG_MIN))
-	    return(big_subtract(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, (numerator(n)), denominator(n)), x)));
+	  if ((numerator(a) > LONG_MAX) ||
+	      (denominator(a) > LONG_MAX) ||
+	      (numerator(a) < LONG_MIN))
+	    return(big_subtract(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, (numerator(a)), denominator(a)), x)));
 	  break;
 	}
 #else
       if (!s7_is_number(car(x)))
 	return(s7_wrong_type_arg_error(sc, "-", i, car(x), "a number"));
 #endif
-      n = num_sub(n, number(car(x)));
+
+      b = number(car(x));
+      ret_type = a.type | b.type;
+  
+      switch (ret_type)
+	{
+	case NUM_INT: 
+	  integer(a) -= integer(b);
+	  break;
+      
+	case NUM_RATIO:
+	  {
+	    s7_Int d1, d2, n1, n2;
+	    d1 = num_to_denominator(a);
+	    n1 = num_to_numerator(a);
+	    d2 = num_to_denominator(b);
+	    n2 = num_to_numerator(b);
+
+	    if (d1 == d2)                                     /* the easy case -- if overflow here, it matches the int case */
+	      a = make_ratio(n1 - n2, d1);
+	    else
+	      {
+#if (!WITH_GMP)
+		if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
+		    (n1 > s7_int_max) || (n2 > s7_int_max) ||
+		    (n1 < s7_int_min) || (n2 < s7_int_min))
+		  {
+		    int d1bits, d2bits;
+		    d1bits = integer_length(d1);
+		    d2bits = integer_length(d2);
+		    if (((d1bits + d2bits) > s7_int_bits) ||
+			((d1bits + integer_length(n2)) > (s7_int_bits - 1)) ||
+			((d2bits + integer_length(n1)) > (s7_int_bits - 1)))
+		      {
+			a.type = NUM_REAL;
+			real(a) = ((long double)n1 / (long double)d1) - ((long double)n2 / (long double)d2);
+		      }
+		    else a = make_ratio(n1 * d2 - n2 * d1, d1 * d2);
+		  }
+		else 
+#endif
+		  a = make_ratio(n1 * d2 - n2 * d1, d1 * d2);
+	      }
+	  }
+	  break;
+      
+	case NUM_REAL2:
+	case NUM_REAL:
+	  real(a) = num_to_real(a) - num_to_real(b);
+	  a.type = NUM_REAL;
+	  break;
+      
+	default:
+	  real_part(a) = num_to_real_part(a) - num_to_real_part(b);
+	  imag_part(a) = num_to_imag_part(a) - num_to_imag_part(b);
+	  if (imag_part(a) == 0.0)
+	    a.type = NUM_REAL;
+	  else a.type = NUM_COMPLEX;
+	  break;
+	}
     }
 
-  return(make_number(sc, n));
+  return(make_number(sc, a));
 }
 
 
@@ -6102,7 +6057,10 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	      {
 		if ((integer_length(d1) + integer_length(d2) > s7_int_bits) ||
 		    (integer_length(n1) + integer_length(n2) > s7_int_bits))
-		  a = make_real(((long double)n1 / (long double)d1) * ((long double)n2 / (long double)d2));
+		  {
+		    a.type = NUM_REAL;
+		    real(a) = ((long double)n1 / (long double)d1) * ((long double)n2 / (long double)d2);
+		  }
 		else a = make_ratio(n1 * n2, d1 * d2);
 	      }
 	    else
@@ -6140,9 +6098,9 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 {
   #define H_divide "(/ x1 ...) divides its first argument by the rest, or inverts the first if there is only one argument"
-  int i;
+  int i, ret_type;
   s7_pointer x;
-  s7_num_t n;
+  s7_num_t a, b;
 
 #if (!WITH_GMP)
     if (!s7_is_number(car(args)))
@@ -6152,11 +6110,12 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
     {
       if (s7_is_zero(car(args)))
 	return(division_by_zero_error(sc, "/", args));
-      return(make_number(sc, num_invert(number(car(args)))));
+      return(invert(sc, car(args)));
     }
 #endif
 
-  n = number(car(args));
+  a = number(car(args));
+
   for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x))
     {
 #if (!WITH_GMP)
@@ -6167,26 +6126,90 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	return(division_by_zero_error(sc, "/", args));
 
 #if WITH_GMP
-      switch (n.type)
+      switch (a.type)
 	{
 	case NUM_INT:
-	  if ((integer(n) > LONG_MAX) ||
-	      (integer(n) < LONG_MIN))
-	    return(big_divide(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(n)), x)));
+	  if ((integer(a) > LONG_MAX) ||
+	      (integer(a) < LONG_MIN))
+	    return(big_divide(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(a)), x)));
 	  break;
 
 	case NUM_RATIO:
-	  if ((numerator(n) > LONG_MAX) ||
-	      (denominator(n) > LONG_MAX) ||
-	      (numerator(n) < LONG_MIN))
-	    return(big_divide(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, (numerator(n)), denominator(n)), x)));
+	  if ((numerator(a) > LONG_MAX) ||
+	      (denominator(a) > LONG_MAX) ||
+	      (numerator(a) < LONG_MIN))
+	    return(big_divide(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, (numerator(a)), denominator(a)), x)));
 	  break;
 	}
 #endif
-      n = num_div(n, number(car(x)));
+      
+      b = number(car(x));
+      ret_type = a.type | b.type;
+  
+      switch (ret_type)
+	{
+	case NUM_INT: 
+	  a = make_ratio(integer(a), integer(b));  /* b checked for 0 above */
+	  break;
+
+	case NUM_RATIO:
+	  {
+	    s7_Int d1, d2, n1, n2;
+	    d1 = num_to_denominator(a);
+	    n1 = num_to_numerator(a);
+	    d2 = num_to_denominator(b);
+	    n2 = num_to_numerator(b);
+
+	    if (d1 == d2)
+	      a = make_ratio(n1, n2);
+	    else
+	      {
+#if (!WITH_GMP)
+		if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
+		    (n1 > s7_int_max) || (n2 > s7_int_max) ||
+		    (n1 < s7_int_min) || (n2 < s7_int_min))
+		  {
+		    if ((integer_length(d1) + integer_length(n2) > s7_int_bits) ||
+			(integer_length(d2) + integer_length(n1) > s7_int_bits))
+		      {
+			a.type = NUM_REAL;
+			real(a) = ((long double)n1 / (long double)d1) / ((long double)n2 / (long double)d2);
+		      }
+		    else a = make_ratio(n1 * d2, d1 * n2);
+		  }
+		else
+#endif
+		  a = make_ratio(n1 * d2, d1 * n2);
+	      }
+	  }
+	  break;
+      
+	case NUM_REAL2:
+	case NUM_REAL:
+	  real(a) = num_to_real(a) / num_to_real(b);
+	  a.type =  NUM_REAL; /* must follow num_to_real */
+	  break;
+      
+	default:
+	  {
+	    s7_Double r1, r2, i1, i2, den;
+	    r1 = num_to_real_part(a);
+	    r2 = num_to_real_part(b);
+	    i1 = num_to_imag_part(a);
+	    i2 = num_to_imag_part(b);
+	    den = (r2 * r2 + i2 * i2);
+
+	    real_part(a) = (r1 * r2 + i1 * i2) / den;
+	    imag_part(a) = (r2 * i1 - r1 * i2) / den;
+	    if (imag_part(a) == 0.0)
+	      a.type = NUM_REAL;
+	    else a.type = NUM_COMPLEX;
+	  }
+	  break;
+	}
     }
 
-  return(make_number(sc, n));
+  return(make_number(sc, a));
 }
 
 
@@ -6335,7 +6358,7 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
   if (s7_is_zero(cadr(args)))
     return(division_by_zero_error(sc, "quotient", args));
 
-  return(make_number(sc, num_quotient(number(car(args)), number(cadr(args)))));
+  return(s7_make_integer(sc, quotient(number(car(args)), number(cadr(args)))));
 }
 
 
@@ -6369,11 +6392,11 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
     case NUM_RATIO: 
       return(s7_make_ratio(sc,
 			   num_to_numerator(a) * num_to_denominator(b) - 
-			   num_to_numerator(b) * num_to_denominator(a) * integer(num_quotient(a, b)),
+			   num_to_numerator(b) * num_to_denominator(a) * quotient(a, b),
 			   num_to_denominator(a) * num_to_denominator(b)));
 
     default:
-      return(s7_make_real(sc, num_to_real(a) - num_to_real(b) * integer(num_quotient(a, b))));
+      return(s7_make_real(sc, num_to_real(a) - num_to_real(b) * quotient(a, b)));
     }
 }
 
@@ -6616,10 +6639,34 @@ static s7_pointer g_less_1(s7_scheme *sc, bool reversed, s7_pointer args)
 	      break;
 
 	    case NUM_RATIO:
+	      /* conversion to real and < is not safe here (see comment under g_greater) */
 	      {
-		s7_num_t val;
-		val = num_sub(a, b);
-		less = (numerator(val) < 0);
+		s7_Int d1, d2, n1, n2;
+		d1 = num_to_denominator(a);
+		n1 = num_to_numerator(a);
+		d2 = num_to_denominator(b);
+		n2 = num_to_numerator(b);
+
+		if (d1 == d2)                    
+		  less = (n1 < n2);
+		else
+		  {
+		    if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
+			(n1 > s7_int_max) || (n2 > s7_int_max) ||
+			(n1 < s7_int_min) || (n2 < s7_int_min))
+		      {
+			int d1bits, d2bits;
+			d1bits = integer_length(d1);
+			d2bits = integer_length(d2);
+			if (((d1bits + d2bits) > s7_int_bits) ||
+			    ((d1bits + integer_length(n2)) > (s7_int_bits - 1)) ||
+			    ((d2bits + integer_length(n1)) > (s7_int_bits - 1)))
+			  less = (((long double)n1 / (long double)d1) < ((long double)n2 / (long double)d2));
+			else less = ((n1 * d2) < (n2 * d1));
+		      }
+		    else
+		      less = ((n1 * d2) < (n2 * d1));
+		  }
 	      }
 	      break;
 
@@ -6705,7 +6752,7 @@ static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
 
       /* the ">" operator here is a problem.
        *   we get different results depending on the gcc optimization level for cases like (< 1234/11 1234/11)
-       *   so, to keep ratios honest, we'll use num_sub and compare against 0.  But that can cause problems:
+       *   so, to keep ratios honest, we'll subtract and compare against 0.  But that can cause problems:
        *   :(> 0 most-negative-fixnum)
        *   #f
        */
@@ -6737,9 +6784,32 @@ static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
 
 	    case NUM_RATIO:
 	      {
-		s7_num_t val;
-		val = num_sub(a, b);
-		greater = (numerator(val) > 0);
+		s7_Int d1, d2, n1, n2;
+		d1 = num_to_denominator(a);
+		n1 = num_to_numerator(a);
+		d2 = num_to_denominator(b);
+		n2 = num_to_numerator(b);
+
+		if (d1 == d2)                    
+		  greater = (n1 > n2);
+		else
+		  {
+		    if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
+			(n1 > s7_int_max) || (n2 > s7_int_max) ||
+			(n1 < s7_int_min) || (n2 < s7_int_min))
+		      {
+			int d1bits, d2bits;
+			d1bits = integer_length(d1);
+			d2bits = integer_length(d2);
+			if (((d1bits + d2bits) > s7_int_bits) ||
+			    ((d1bits + integer_length(n2)) > (s7_int_bits - 1)) ||
+			    ((d2bits + integer_length(n1)) > (s7_int_bits - 1)))
+			  greater = (((long double)n1 / (long double)d1) > ((long double)n2 / (long double)d2));
+			else greater = ((n1 * d2) > (n2 * d1));
+		      }
+		    else
+		      greater = ((n1 * d2) > (n2 * d1));
+		  }
 	      }
 	      break;
 
@@ -12076,7 +12146,7 @@ s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, const char *name)
   
   location = hash_table_hash(name, vector_length(table));
   for (x = vector_element(table, location); x != sc->NIL; x = cdr(x)) 
-    if (strcmp(name, string_value(caar(x))) == 0) 
+    if (strings_are_equal(name, string_value(caar(x)))) 
       return(cdar(x)); 
   
   return(sc->F);
@@ -12091,7 +12161,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
   
   /* if it exists, update value, else add to table */
   for (x = vector_element(table, location); x != sc->NIL; x = cdr(x)) 
-    if (strcmp(name, string_value(caar(x))) == 0)
+    if (strings_are_equal(name, string_value(caar(x))))
       {
 	cdar(x) = value;
 	return(value);
@@ -13119,9 +13189,7 @@ bool s7_is_equal(s7_pointer x, s7_pointer y)
 	   (s7_is_equal(cdr(x), cdr(y))));
   
   if (s7_is_string(x))
-    return((string_length(x) == string_length(y)) &&
-	   ((string_length(x) == 0) ||
-	    (strcmp(string_value(x), string_value(y)) == 0)));
+    return(strings_are_equal(string_value(x), string_value(y)));
   
   if (is_c_object(x))
     return(objects_are_equal(x, y));
@@ -19645,6 +19713,12 @@ static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
   s7_pointer p;
 
   p = g_string_to_number(sc, args);
+  if (is_false(sc, p)) /* (bignum "1/3.0") */
+    s7_error(sc, s7_make_symbol(sc, "bignum-error"),
+	     make_list_2(sc,
+			 make_protected_string(sc, "bignum argument is not a number: ~S"),
+			 car(args)));
+
   if (is_c_object(p)) return(p);
 
   switch (number_type(p))
@@ -19783,7 +19857,7 @@ static s7_pointer big_negate(s7_scheme *sc, s7_pointer args)
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }
-  return(make_number(sc, num_negate(number(car(args)))));
+  return(negate(sc, car(args)));
 }
 
 
@@ -19993,7 +20067,7 @@ static s7_pointer big_invert(s7_scheme *sc, s7_pointer args)
 	}
     }
 
-  return(make_number(sc, num_invert(number(p))));
+  return(invert(sc, p));
 }
 
 
@@ -21988,9 +22062,7 @@ static s7_pointer big_less(s7_scheme *sc, s7_pointer args)
   if (result_type < 0)
     return(s7_wrong_type_arg_error(sc, "<", -result_type, s7_list_ref(sc, args, -1 - result_type), "a real number"));
 
-  if (IS_NUM(result_type))
-    return(g_less(sc, args));
-
+  /* don't try to use g_less here */
   result_type = canonicalize_result_type(result_type);
   previous = promote_number(sc, result_type, car(args));
 
@@ -22025,9 +22097,6 @@ static s7_pointer big_less_or_equal(s7_scheme *sc, s7_pointer args)
   result_type = big_real_scan_args(sc, args);
   if (result_type < 0)
     return(s7_wrong_type_arg_error(sc, "<=", -result_type, s7_list_ref(sc, args, -1 - result_type), "a real number"));
-
-  if (IS_NUM(result_type))
-    return(g_less_or_equal(sc, args));
 
   result_type = canonicalize_result_type(result_type);
   previous = promote_number(sc, result_type, car(args));
@@ -22064,9 +22133,6 @@ static s7_pointer big_greater(s7_scheme *sc, s7_pointer args)
   if (result_type < 0)
     return(s7_wrong_type_arg_error(sc, ">", -result_type, s7_list_ref(sc, args, -1 - result_type), "a real number"));
 
-  if (IS_NUM(result_type))
-    return(g_greater(sc, args));
-
   result_type = canonicalize_result_type(result_type);
   previous = promote_number(sc, result_type, car(args));
 
@@ -22101,9 +22167,6 @@ static s7_pointer big_greater_or_equal(s7_scheme *sc, s7_pointer args)
   result_type = big_real_scan_args(sc, args);
   if (result_type < 0)
     return(s7_wrong_type_arg_error(sc, ">=", -result_type, s7_list_ref(sc, args, -1 - result_type), "a real number"));
-
-  if (IS_NUM(result_type))
-    return(g_greater_or_equal(sc, args));
 
   result_type = canonicalize_result_type(result_type);
   previous = promote_number(sc, result_type, car(args));
@@ -22926,7 +22989,7 @@ s7_scheme *s7_init(void)
   sc->WRONG_TYPE_ARG_INFO = sc->NIL;
   for (i = 0; i < 6; i++)
     sc->WRONG_TYPE_ARG_INFO = permanent_cons(sc->F, sc->WRONG_TYPE_ARG_INFO, T_PAIR);
-  s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 0, s7_make_permanent_string("~A argument ~D, ~S, is a ~A but should be ~A"));
+  s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 0, s7_make_permanent_string("~A argument ~D, ~S, is ~A but should be ~A"));
 
   sc->WRONG_NUMBER_OF_ARGS = s7_make_symbol(sc, "wrong-number-of-args");
   typeflag(sc->WRONG_NUMBER_OF_ARGS) |= T_DONT_COPY; 
