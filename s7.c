@@ -3641,7 +3641,7 @@ static int integer_length(s7_Int a)
 static int s7_int_max = 0, s7_int_min = 0, s7_int_bits = 0, s7_int_digits = 0; /* initialized later */
 static int s7_int_digits_by_radix[17];
 
-static s7_pointer negate(s7_scheme *sc, s7_pointer p)
+static s7_pointer s7_negate(s7_scheme *sc, s7_pointer p)     /* can't use "negate" because it confuses C++! */
 {
   s7_num_t a;
   a = number(p);
@@ -3664,7 +3664,7 @@ static s7_pointer negate(s7_scheme *sc, s7_pointer p)
 }
 
 
-static s7_pointer invert(s7_scheme *sc, s7_pointer p)
+static s7_pointer s7_invert(s7_scheme *sc, s7_pointer p)      /* s7_ to be consistent... */
 {
   s7_num_t a;
   a = number(p);
@@ -5900,7 +5900,7 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "-", 1, car(args), "a number"));
 
   if (cdr(args) == sc->NIL) 
-    return(negate(sc, car(args)));
+    return(s7_negate(sc, car(args)));
 #endif
 
   a = number(car(args));
@@ -6110,7 +6110,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
     {
       if (s7_is_zero(car(args)))
 	return(division_by_zero_error(sc, "/", args));
-      return(invert(sc, car(args)));
+      return(s7_invert(sc, car(args)));
     }
 #endif
 
@@ -19857,7 +19857,7 @@ static s7_pointer big_negate(s7_scheme *sc, s7_pointer args)
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }
-  return(negate(sc, car(args)));
+  return(s7_negate(sc, car(args)));
 }
 
 
@@ -20067,7 +20067,7 @@ static s7_pointer big_invert(s7_scheme *sc, s7_pointer args)
 	}
     }
 
-  return(invert(sc, p));
+  return(s7_invert(sc, p));
 }
 
 
