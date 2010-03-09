@@ -83,32 +83,28 @@ static void snd_error_1(const char *msg, bool with_redirection_and_hook)
       if (run_snd_error_hook(msg))
 	return;
     }
-#if USE_NO_GUI
+#if (USE_NO_GUI) || (MUS_DEBUGGING)
   fprintf(stderr, "%s", msg);
 #else
   if ((ss) && (ss->sgx))
     {
-      if ((MUS_DEBUGGING) || (ss->batch_mode))
+      if (ss->batch_mode)
 	fprintf(stderr, "%s", msg);
 #ifdef SND_AS_WIDGET
       if (snd_error_display) 
-	snd_error_display(msg);
-      else
 	{
-	  /* don't break (unlikely) existing code? */
-#endif
-	  {
-	    snd_info *sp;
-	    sp = any_selected_sound();
-	    if (ss->catch_exists == 0) /* not from xen(?) */
-	      {
-		if ((sp) && (sp->active))
-		  display_minibuffer_error(sp, msg);
-		else post_it("Error", msg);
-	      }
-	  }
-#ifdef SND_AS_WIDGET
+	  snd_error_display(msg);
+	  return;
 	}
+#endif
+#if ((!HAVE_EXTENSION_LANGUAGE) && (!USE_NO_GUI))
+      {
+	snd_info *sp;
+	sp = any_selected_sound();
+	if ((sp) && (sp->active))
+	  display_minibuffer_error(sp, msg);
+	else post_it("Error", msg);
+      }
 #endif
     }
   else 

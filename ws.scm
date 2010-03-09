@@ -157,7 +157,8 @@
 			 (if (file-exists? output-1) 
 			     (delete-file output-1))
 			 (set! *output* (make-sample->file output-1 channels data-format header-type comment))))
-		   (set! (mus-safety *output*) output-safety))
+		   (if *output*
+		       (set! (mus-safety *output*) output-safety)))
 		 (begin
 		   (if (not continue-old-file)
 		       ;; if s7 we could just use fill! here (and below)
@@ -176,7 +177,8 @@
 			     (if (file-exists? reverb-1) 
 				 (delete-file reverb-1))
 			     (set! *reverb* (make-sample->file reverb-1 reverb-channels data-format header-type))))
-		       (set! (mus-safety *reverb*) output-safety))
+		       (if *reverb*
+			   (set! (mus-safety *reverb*) output-safety)))
 		     (begin
 		       (if (not continue-old-file)
 			   (if (or (vct? reverb-1)

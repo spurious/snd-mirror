@@ -39,22 +39,18 @@ void mus_error_to_snd(int type, char *msg)
 
   if (!(ignore_mus_error(type, msg)))
     {
-      if (ss->catch_exists)
-	{
-	  if (msg == NULL)
-	    XEN_ERROR(XEN_ERROR_TYPE("mus-error"),
-		      XEN_LIST_1(C_TO_XEN_STRING((char *)mus_error_type_to_string(type))));
-	  else XEN_ERROR(XEN_ERROR_TYPE("mus-error"),
-			 XEN_LIST_1(C_TO_XEN_STRING(msg)));
-	}
-      else
-	{
-	  snd_error("%s: %s", mus_error_type_to_string(type), msg);
-#if HAVE_SETJMP_H
-	  ss->jump_ok = true;
-	  top_level_catch(1); /* sigh -- try to keep going */
+#if HAVE_EXTENSION_LANGUAGE
+      if (msg == NULL)
+	XEN_ERROR(XEN_ERROR_TYPE("mus-error"),
+		  XEN_LIST_1(C_TO_XEN_STRING((char *)mus_error_type_to_string(type))));
+      else XEN_ERROR(XEN_ERROR_TYPE("mus-error"),
+		     XEN_LIST_1(C_TO_XEN_STRING(msg)));
 #endif
-	}
+      snd_error("%s: %s", mus_error_type_to_string(type), msg);
+#if HAVE_SETJMP_H
+      ss->jump_ok = true;
+      top_level_catch(1); /* sigh -- try to keep going */
+#endif
     }
 }
 
@@ -481,11 +477,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->xen_error_handler = NULL;
   ss->update_sound_channel_style = NOT_A_CHANNEL_STYLE;
 
-#if USE_NO_GUI || HAVE_RUBY || HAVE_FORTH || HAVE_SCHEME
-  ss->catch_exists = 1; /* scm_shell for USE_NO_GUI case */
-#else
-  ss->catch_exists = 0;
-#endif
 #if HAVE_GL && MUS_WITH_GL2PS
   ss->gl_printing = false;
 #endif

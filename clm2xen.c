@@ -6800,8 +6800,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
       in_obj = mus_optkey_to_input_procedure(keys[0], S_make_src, orig_arg[0], XEN_UNDEFINED, 1, "src input procedure takes 1 arg");
 
       srate = mus_optkey_to_float(keys[1], S_make_src, orig_arg[1], srate);
-      if (srate < 0) 
-	XEN_OUT_OF_RANGE_ERROR(S_make_src, orig_arg[1], keys[1], "srate ~A < 0.0?");
+      /* srate can be negative => read in reverse */
 
       wid = mus_optkey_to_int(keys[2], S_make_src, orig_arg[2], wid);
       if (wid < 0) 

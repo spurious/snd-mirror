@@ -7995,6 +7995,7 @@ mus_any *mus_sample_to_file_add(mus_any *out1, mus_any *out2)
 mus_float_t mus_out_any_to_file(mus_any *ptr, mus_long_t samp, int chan, mus_float_t val)
 {
   rdout *gen = (rdout *)ptr;
+  if (!ptr) return(val);
   
   if ((chan >= gen->chans) || 
       (!(gen->obufs)) ||

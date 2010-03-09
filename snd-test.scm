@@ -65980,7 +65980,7 @@ EDITS: 1
 		(check-error-tag 'mus-error (lambda () (make-iir-filter :coeffs (make-vct 4) :ycoeffs (make-vct 4))))
 		(check-error-tag 'mus-error (lambda () (make-fir-filter :coeffs (make-vct 4) :xcoeffs (make-vct 4))))
 		(check-error-tag 'out-of-range (lambda () (make-table-lookup :size 123456789)))
-		(check-error-tag 'out-of-range (lambda () (make-src :srate -0.5)))
+;		(check-error-tag 'out-of-range (lambda () (make-src :srate -0.5)))
 		(check-error-tag 'out-of-range (lambda () (make-granulate :ramp -0.5)))
 		(check-error-tag 'out-of-range (lambda () (make-granulate :ramp 1.5)))
 		(check-error-tag 'mus-error (lambda () (make-granulate :expansion 32000.0)))

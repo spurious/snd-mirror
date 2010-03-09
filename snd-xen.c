@@ -431,13 +431,6 @@ void snd_rb_raise(XEN tag, XEN throw_args)
 
 
 
-/* if error occurs in sndlib, mus-error wants to throw to user-defined catch
- *   (or our own global catch), but if the sndlib function was not called by the user, 
- *   the attempt to throw to a non-existent catch tag exits the main program!!
- *   so, we only throw if catch_exists.
- */
-
-
 #if HAVE_EXTENSION_LANGUAGE
 
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
