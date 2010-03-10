@@ -66,7 +66,8 @@
 		    (mixer-set! mx inp inp matrix))))))
 
     (if (or (not srate)
-	    (= srate 1.0))
+	    (and (number? srate)
+		 (= srate 1.0)))
 	(begin
 	  ;; -------- no src
 	  (mus-mix *output* file st samps inloc mx (if envs
