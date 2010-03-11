@@ -67253,44 +67253,8 @@ EDITS: 1
 
 
 #|
-valgrind test 23 6-Aug-09:
-
-39,032,814,374  /home/bil/snd-10/io.c:mus_read_any_1 [/home/bil/snd-10/snd]
-20,772,525,729  /home/bil/snd-10/s7.c:eval_symbol [/home/bil/snd-10/snd]
-17,746,630,056  /home/bil/snd-10/snd-edits.c:next_sample_value_unscaled [/home/bil/snd-10/snd]
-15,014,697,124  /home/bil/snd-10/io.c:mus_write_1 [/home/bil/snd-10/snd]
-14,386,551,225  /home/bil/snd-10/snd-sig.c:direct_filter [/home/bil/snd-10/snd]
-13,917,957,078  /home/bil/snd-10/snd-edits.c:channel_local_maxamp [/home/bil/snd-10/snd]
-12,475,299,147  /home/bil/snd-10/s7.c:s7_mark_object_1'2 [/home/bil/snd-10/snd]
- 8,719,747,420  /home/bil/snd-10/s7.c:eval [/home/bil/snd-10/snd]
- 8,546,890,750  /home/bil/snd-10/s7.c:gc [/home/bil/snd-10/snd]
-
 valgrind --tool=callgrind snd -l snd-test
 callgrind_annotate --auto=yes callgrind.out.<pid> > hi
-
-21-Oct-09:
-69,218,104,704  s7.c:eval [/home/bil/cl/snd]
-59,134,237,840  s7.c:s7_find_symbol_in_environment [/home/bil/cl/snd]
-48,084,615,625  s7.c:gc [/home/bil/cl/snd]
-37,399,130,371  io.c:mus_read_any_1 [/home/bil/cl/snd]
-36,202,606,109  s7.c:eval'2 [/home/bil/cl/snd]
-33,500,608,059  run.c:eval_ptree [/home/bil/cl/snd]
-30,924,268,443  snd-sig.c:direct_filter [/home/bil/cl/snd]
-21,937,958,240  s7.c:pop_stack [/home/bil/cl/snd]
-21,454,101,396  s7.c:push_stack [/home/bil/cl/snd]
-19,997,629,681  io.c:mus_write_1 [/home/bil/cl/snd]
-18,239,206,028  clm.c:mus_fir_filter [/home/bil/cl/snd]
-14,624,386,395  snd-edits.c:next_sample_value_unscaled [/home/bil/cl/snd]
-14,452,459,496  s7.c:safe_reverse_in_place [/home/bil/cl/snd]
-14,013,523,823  s7.c:s7_mark_object_1'2 [/home/bil/cl/snd]
-13,426,309,461  clm.c:mus_out_any_to_file [/home/bil/cl/snd]
-12,293,573,859  s7.c:s7_is_vector [/home/bil/cl/snd]
- 9,960,856,278  s7.c:new_cell [/home/bil/cl/snd]
- 9,335,346,075  clm.c:run_hilbert [/home/bil/cl/snd]
- 8,190,470,642  clm.c:mus_env_linear [/home/bil/cl/snd]
- 7,695,845,150  clm.c:mus_src [/home/bil/cl/snd]
- 7,299,789,900  s7.c:s7_cons [/home/bil/cl/snd]
- 6,943,061,664  run.c:jump_if_not_equal [/home/bil/cl/snd]
 
 10-Feb-10 (full snd-test, not just test 23):
 372,028,372,850  PROGRAM TOTALS
@@ -67322,4 +67286,28 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,118,663,239  s7.c:new_cell [/home/bil/snd-11/snd]
  1,815,226,062  s7.c:s7_object_value [/home/bil/snd-11/snd]
 
+7-Mar-10
+318,148,021,968  PROGRAM TOTALS
+40,864,919,790  s7.c:eval [/home/bil/snd-s7/snd]
+26,485,168,742  io.c:mus_read_any_1 [/home/bil/snd-s7/snd]
+24,338,113,084  s7.c:eval'2 [/home/bil/snd-s7/snd]
+21,345,385,043  snd-edits.c:next_sample_value_unscaled [/home/bil/snd-s7/snd]
+18,089,464,229  snd-edits.c:channel_local_maxamp [/home/bil/snd-s7/snd]
+16,230,371,673  s7.c:gc [/home/bil/snd-s7/snd]
+10,973,188,812  io.c:mus_write_1 [/home/bil/snd-s7/snd]
+10,939,541,547  run.c:eval_ptree [/home/bil/snd-s7/snd]
+ 8,918,483,945  snd-sig.c:direct_filter [/home/bil/snd-s7/snd]
+ 7,030,924,951  s7.c:s7_mark_object_1'2 [/home/bil/snd-s7/snd]
+ 6,663,065,404  /home/bil/test/gsl-1.13/linalg/householder.c:gsl_linalg_householder_mh [/usr/local/lib/libgsl.so.0.14.0]
+ 3,946,755,027  clm.c:mus_out_any_to_file [/home/bil/snd-s7/snd]
+ 3,702,560,061  snd-edits.c:next_sample_value [/home/bil/snd-s7/snd]
+ 3,675,942,470  clm.c:mus_src [/home/bil/snd-s7/snd]
+ 3,588,422,788  /home/bil/test/gsl-1.13/linalg/householder.c:gsl_linalg_householder_hm [/usr/local/lib/libgsl.so.0.14.0]
+ 3,173,655,679  run.c:jump_if_not_equal [/home/bil/snd-s7/snd]
+ 2,997,971,312  clm.c:mus_fir_filter [/home/bil/snd-s7/snd]
+ 2,572,480,120  s7.c:g_add [/home/bil/snd-s7/snd]
+ 2,450,756,818  /home/bil/test/gsl-1.13/linalg/../gsl/gsl_matrix_double.h:gsl_linalg_householder_mh
+ 2,389,660,564  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-s7/snd]
+ 2,383,162,838  s7.c:s7_make_real [/home/bil/snd-s7/snd]
+ 2,256,089,964  clm.c:mus_formant [/home/bil/snd-s7/snd]
 |#

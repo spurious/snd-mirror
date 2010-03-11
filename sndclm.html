@@ -6549,10 +6549,8 @@ To get the "all-pass" behavior, set feedback equal to -feedforward. Here's an ex
 old analog tapes &mdash; the reverb slightly precedes the direct signal:
 </p>
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=12 cellpadding=5>
-
-<tr>
-<td bgcolor="#f0f4ff">
+<table border=0 hspace=40>
+<tr><td>
 <pre>
 (define (later file dly rev)
   (let* ((allpass1 (<em class=red>make-all-pass</em> -0.700 0.700 1051))
@@ -6909,8 +6907,29 @@ an instrument that provides time-varying sampling rate conversion:
 to src provide the generator with input as it is needed. 
 The input function
 is a function of one argument (the desired read direction, if the reader can support it), that is called each time src needs another
-sample of input. 
+sample of input. Here's an example instrument that reads a file with an envelope on the src:
 </p>
+
+<table border=0 hspace=40><tr><td>
+<pre>
+(definstrument (src-change filename start-time duration file-start srcenv)
+  (let* ((beg (seconds-&gt;samples start-time))
+         (end (+ beg (seconds-&gt;samples duration)))
+	 (loc (seconds-&gt;samples file-start))
+         (src-gen (make-src :srate 0.0))
+	 (e (make-env srcenv :duration duration))
+	 (inp (make-file-&gt;sample filename)))
+    (run
+     (do ((i beg (+ i 1)))
+	 ((= i end))
+       (outa i (src src-gen (env e) 
+		 (<em class=red>lambda (dir)</em>  ; our input function
+		   (set! loc (+ loc dir))
+		   (ina loc inp))))))))
+
+;;; (with-sound () (src-change "pistol.snd" 0 2 0 '(0 0.5 1 -1.5)))
+</pre>
+</td></tr></table>
 
 <p>
 If you jump around in the input (via mus-location for example), use

@@ -101,9 +101,8 @@
  *
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
- *
- * the next thing to optimize probably is (oscil|formant (vector-ref ...) ...)
  */
+
 
 /* some timings (I keep losing these stats, so I'll put them here for safekeeping, "*"=not optimizable)
  *     valgrind --tool=callgrind snd ws.scm [etc]
