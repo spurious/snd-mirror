@@ -844,7 +844,7 @@ instrument: forth-bird { f: start f: dur f: freq f: freq-skew f: amp freqenv amp
 <table border=0 hspace=20><tr><td bgcolor="#f0f0f0">
 <pre>
 void c_bird(double start, double dur, double frequency, double freqskew, double amplitude, 
-	    double *freqdata, int freqpts, double *ampdata, int amppts, mus_any *output)
+	    mus_float_t *freqdata, int freqpts, mus_float_t *ampdata, int amppts, mus_any *output)
 {
   mus_long_t beg, end, i;
   mus_any *amp_env, *freq_env, *osc;
@@ -7097,8 +7097,27 @@ two files, then normalize the result to some maxamp.  The convolve generator doe
 know in advance what its maxamp will be, and when the two files are more or less
 the same size, there's no real computational savings to using overlap-add (i.e.
 the generator), so a one-time giant FFT saved as a temporary sound file is much
-handier.
+handier.  If you're particular about the format of the convolved data:
 </p>
+
+
+<table border=0 hspace=40><tr><td>
+<pre>
+(define* (convolve-files-&gt;aifc file1 file2 (maxamp 1.0) (output-file "test.snd"))
+  (let ((outname (string-append "temp-" output-file)))
+    (<em class=red>convolve-files</em> file1 file2 maxamp outname)
+    (with-sound (:header-type mus-aifc :data-format mus-bfloat)
+      (let ((len (seconds-&gt;samples (mus-sound-duration outname)))
+	    (reader (make-readin outname)))
+	(run 
+          (do ((i 0 (+ i 1)))
+	      ((= i len))
+	    (outa i (readin reader))))))
+    (delete-file outname)
+    output-file))
+</pre>
+</td></tr></table>
+
 
 <p>The convolve generator is the modern way to add reverb.  There are impulse responses of various concert
 halls floating around the web.  convolve and <a href="#fir-filter">fir-filter</a> actually perform the same mathematical operation,

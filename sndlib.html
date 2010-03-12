@@ -333,7 +333,6 @@ it through a mixer (a matrix, the operation being a matrix multiply).
 </ul>
 <pre>
   mus_any *osc;
-  init_mus_module();
   osc = mus_make_oscil(440.0, 0.0);
   if (mus_oscil_p(osc)) 
     fprintf(stderr, "%.3f, %.3f ", .1 * mus_oscil(osc, 0.0, 0.0), mus_frequency(osc));
@@ -418,7 +417,7 @@ it through a mixer (a matrix, the operation being a matrix multiply).
 <li>float mus_apply(mus_any *gen, ...)
 </ul>
 
-<p>Before using any of these functions, call init_mus_module.  Errors are reported
+<p>Errors are reported
 through mus_error which can be redirected or muffled.  See clm2xen.c for an example.
 </p>
 <br>
@@ -576,7 +575,6 @@ int main(int argc, char *argv[])
   int i;
   mus_any *osc, *op;
   mus_sound_initialize();	
-  init_mus_module();
   osc = mus_make_oscil(440.0, 0.0);
   op = mus_make_sample_to_file("test.snd", 1, MUS_BSHORT, MUS_NEXT);
   if (op) 
@@ -705,7 +703,6 @@ int main(int argc, char *argv[])
 {
   mus_any *osc = NULL, *op = NULL;
   mus_sound_initialize();	
-  init_mus_module();
   op = mus_make_sample_to_file("test.snd", 1, MUS_BSHORT, MUS_NEXT);
   if (op)
     {

@@ -442,6 +442,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 
   initialize_format_lists();
   snd_set_global_defaults(false);
+
 #if MUS_DEBUGGING
   ss->Trap_Segfault = false;
 #else
@@ -510,12 +511,6 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   return(0);
 #endif
 }
-
-
-#ifndef SND_AS_WIDGET
-  #ifndef SND_AS_PD_EXTERNAL
-  #endif
-#endif
 
 
 void g_init_base(void)

@@ -5187,6 +5187,7 @@ static void vct_constant_ref_0(int *args, ptree *pt);
 static void vct_constant_ref_0_mult(int *args, ptree *pt);
 static void vct_ref_f(int *args, ptree *pt);
 static void vct_ref_f_mult(int *args, ptree *pt);
+static void vector_ref_f(int *args, ptree *pt);
 static void delay_1f(int *args, ptree *pt);
 static void delay_1f_env(int *args, ptree *pt);
 static void delay_1f_mult(int *args, ptree *pt);
@@ -5220,6 +5221,8 @@ static void formant_1f_vect_env(int *args, ptree *pt);
 static void firmant_1f_vect(int *args, ptree *pt);
 static void firmant_1f_vect_mult(int *args, ptree *pt);
 static void firmant_1f_vect_env(int *args, ptree *pt);
+static void vct_set_f_add(int *args, ptree *pt);
+static void vct_set_f_mult(int *args, ptree *pt);
 
 
 
@@ -5254,7 +5257,7 @@ static int find_m2_op(triple *prev_op)
 /* (let ((v (vector (make-oscil 330)))) (run (* 0.5 (oscil (vector-ref v 0))))) */
 
 /* 3 arg ops that can be combined into a multiply */
-#define NUM_M3_OPS 11
+#define NUM_M3_OPS 12
 
 static opt_ops m3_ops[NUM_M3_OPS] = {
   {oscil_1f_1, "oscil_1f_1", oscil_1f_1_mult, "oscil_1f_1_mult", oscil_1f_1_env, "oscil_1f_1_env"},
@@ -5264,6 +5267,7 @@ static opt_ops m3_ops[NUM_M3_OPS] = {
   {add_f2, "add_f2", add_f2_mult, "add_f2_mult", NULL, NULL},
   {subtract_f2, "subtract_f2", subtract_f2_mult, "subtract_f2_mult", NULL, NULL},
   {vct_ref_f, "vct_ref_f", vct_ref_f_mult, "vct_ref_f_mult", NULL, NULL},
+  {vector_ref_f, "vector_ref_f", vct_ref_f_mult, "vct_ref_f_mult", NULL, NULL},
   {formant_1f, "formant_1f", formant_1f_mult, "formant_1f_mult", formant_1f_env, "formant_1f_env"},
   {firmant_1f, "firmant_1f", firmant_1f_mult, "firmant_1f_mult", firmant_1f_env, "firmant_1f_env"},
   {multiply_f2, "multiply_f2", multiply_f3, "multiply_f3", NULL, NULL},
@@ -5698,7 +5702,7 @@ static int find_a2_op(triple *prev_op)
 }
 
 
-#define NUM_A3_OPS 8
+#define NUM_A3_OPS 9
 
 static opt_ops a3_ops[NUM_A3_OPS] = {
   {multiply_f2, "multiply_f2", multiply_add_f2, "multiply_add_f2", NULL, NULL},
@@ -5709,6 +5713,7 @@ static opt_ops a3_ops[NUM_A3_OPS] = {
   {abs_f_mult, "abs_f_mult", abs_f_mult_add, "abs_f_mult_add", NULL, NULL},
   {formant_1f, "formant_1f", formant_1f_add, "formant_1f_add", NULL, NULL},
   {vct_ref_f, "vct_ref_f", vct_ref_f_add, "vct_ref_f_add", NULL, NULL},
+  {vector_ref_f, "vector_ref_f", vct_ref_f_add, "vct_ref_f_add", NULL, NULL},
 };
 
 
@@ -9866,6 +9871,31 @@ static xen_value *vector_set_1(ptree *prog, xen_value **args, int num_args)
 	  if (prog->ints[args[2]->addr] == 2)
 	    return(package(prog, R_FLOAT, vector_set_f2, "vector_set_f2", args, 3));
 	}
+
+      if (prog->triple_ctr > 0)
+	{
+	  triple *prev_op;
+	  prev_op = prog->program[prog->triple_ctr - 1];
+	  if (((prev_op->function == vct_ref_f_add) || (prev_op->function == vct_ref_f_mult)) &&
+	      (prev_op->args[1] == args[1]->addr) &&
+	      (prev_op->args[2] == args[2]->addr) &&
+	      ((find_var_in_ptree_via_addr(prog, R_FLOAT, prev_op->args[0])) == NULL))
+	    {
+	      /* (let ((v (vct 1 2 3)) (i 2)) (run (vct-set! v i (+ (vct-ref v i) 3.0)))) */
+	      if (prev_op->function == vct_ref_f_add)
+		{
+		  prev_op->function = vct_set_f_add;
+		  prev_op->op_name = "vct_set_f_add";
+		}
+	      else
+		{
+		  prev_op->function = vct_set_f_mult;
+		  prev_op->op_name = "vct_set_f_mult";
+		}
+	      return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+	    }
+	}
+
       return(package(prog, R_FLOAT, vector_set_f, "vector_set_f", args, 3)); 
       break;
 
@@ -10037,7 +10067,8 @@ static void vct_constant_set_2(int *args, ptree *pt) {VCT_ARG_1->data[2] = FLOAT
 static void vct_constant_set_3(int *args, ptree *pt) {VCT_ARG_1->data[3] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
 
 static void vct_set_f(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
-
+static void vct_set_f_add(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] += FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
+static void vct_set_f_mult(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] *= FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
 
 static void vct_set_i(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = (mus_float_t)INT_ARG_3; FLOAT_RESULT = (Double)INT_ARG_3;}
 
@@ -10084,6 +10115,31 @@ static xen_value *vct_set_2(ptree *prog, xen_value **args, int num_args)
 	  if (prog->ints[args[2]->addr] == 3)
 	    return(package(prog, R_FLOAT, vct_constant_set_3, "vct_constant_set_3", args, 3));
 	}
+
+      if (prog->triple_ctr > 0)
+	{
+	  triple *prev_op;
+	  prev_op = prog->program[prog->triple_ctr - 1];
+	  if (((prev_op->function == vct_ref_f_add) || (prev_op->function == vct_ref_f_mult)) &&
+	      (prev_op->args[1] == args[1]->addr) &&
+	      (prev_op->args[2] == args[2]->addr) &&
+	      ((find_var_in_ptree_via_addr(prog, R_FLOAT, prev_op->args[0])) == NULL))
+	    {
+	      /* (let ((v (vct 1 2 3)) (i 2)) (run (vct-set! v i (+ (vct-ref v i) 3.0)))) */
+	      if (prev_op->function == vct_ref_f_add)
+		{
+		  prev_op->function = vct_set_f_add;
+		  prev_op->op_name = "vct_set_f_add";
+		}
+	      else
+		{
+		  prev_op->function = vct_set_f_mult;
+		  prev_op->op_name = "vct_set_f_mult";
+		}
+	      return(make_xen_value(R_FLOAT, prev_op->args[0], R_TEMPORARY));
+	    }
+	}
+
       return(package(prog, R_FLOAT, vct_set_f, "vct_set_f", args, 3));
     }
   return(package(prog, R_FLOAT, vct_set_i, "vct_set_i", args, 3));
