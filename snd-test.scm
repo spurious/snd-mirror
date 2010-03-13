@@ -47509,6 +47509,81 @@ EDITS: 1
     (btst '(let ((a 0)) (do ((i 0 (+ 1 i)) (j 3)) ((= i 3)) (set! a (+ 1 a)))) #f)
     (itst '(let ((a 0)) (do ((i 0 (+ 1 i)) (j 3)) ((= i 3) j) (set! a (+ 1 a)))) 3)
     
+    (let ((j 1))
+      (run
+       (do ((i 0 (+ i 1)))
+	   ((= i 3))
+	 (set! j i)))
+      (if (not (= j 2)) (snd-display ";loop 1 j=~A" j)))
+    
+    (let ((j 1))
+      (run
+       (do ((i 0 (+ i 1))
+	    (k 1 (+ k 2)))
+	   ((= i 3))
+	 (set! j i)))
+      (if (not (= j 2)) (snd-display ";loop 2 j=~A" j)))
+    
+    (let ((j 1))
+      (run
+       (do ((i 0 (+ i 1)))
+	   ((= 3 i))
+	 (set! j i)))
+      (if (not (= j 2)) (snd-display ";loop 2 j=~A" j)))
+    
+    (let ((j 1))
+      (run
+       (do ((i 0 (+ 1 i)))
+	   ((= 3 i))
+	 (set! j i)))
+      (if (not (= j 2)) (snd-display ";loop 3 j=~A" j)))
+    
+    (let ((j 1))
+      (run
+       (do ((i 0 (+ 1 i)))
+	   ((>= i 3))
+	 (set! j i)))
+      (if (not (= j 2)) (snd-display ";loop 4 j=~A" j)))
+    
+    (let ((j 1))
+      (run
+       (do ((i 0 (+ 1 i)))
+	   ((= j 2))
+	 (set! j i)))
+      (if (not (= j 2)) (snd-display ";loop 5 j=~A" j)))
+    
+    (let ((j 1))
+      (run
+       (do ((i 0 (+ i 2)))
+	   ((= i 4))
+	 (set! j i)))
+      (if (not (= j 2)) (snd-display ";loop 6 j=~A" j)))
+    
+    (let ((j 1))
+      (run
+       (do ((k 1 (+ k 2))
+	    (i 0 (+ i 1)))
+	   ((= i 3))
+	 (set! j i)))
+      (if (not (= j 2)) (snd-display ";loop 7 j=~A" j)))
+    
+    (let ((j 1))
+      (run
+       (do ((k 0 (+ k 1))
+	    (i 6 (- i 1)))
+	   ((= i 3))
+	 (set! j k)))
+      (if (not (= j 2)) (snd-display ";loop 8 j=~A" j)))
+
+    (let ((j 1))
+      (run
+       (do ((i 0 (+ i 1)))
+	   ((= i 3))
+	 (set! j i))
+       (set! j (+ j 1)))
+      (if (not (= j 3)) (snd-display ";loop 9 j=~A" j)))
+
+    
     (etst '(do ((i 0 (+ i 0.5)) (j 0 (+ 1 j))) ((>= j 3)) (display i)))
     
     (itst '(let ((a 32)) (let ((a 3)) (set! a 4)) a) 32)
@@ -52792,32 +52867,6 @@ EDITS: 1
 	   (outa i (* amp (oscil osc (hz->radians (+ (env e) (green-noise-interp grn 0.0)))))))))))
 					;(with-sound () (green4 0 2.0 440 .5 '(0 0 1 1 2 1 3 0) 440 100 100 10))
   
-  
-  (define (make-cndf n freq)
-    (let ((amps (make-vct (- n 1) 0.0))
-	  (oscs (make-vector (- n 1) #f))
-	  (r 1))
-      (do ((i 1 (+ 1 i)))
-	  ((= i n))
-	(vct-set! amps (- i 1) (/ 1.0 r))
-	(vector-set! oscs (- i 1) (make-oscil (* freq r r)))
-	(set! r (* r (+ 1 i))))
-      (list amps oscs)))
-  
-  (define (cndf gen)
-    (oscil-bank (car gen) (cadr gen) #f))
-  
-  (define (cndf-ins beg dur amp freq n)
-    (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
-	   (end (+ start (inexact->exact (floor (* dur (mus-srate))))))
-	   (gen (make-cndf n freq)))
-      (run
-	 (do ((i start (+ 1 i))) 
-	     ((= i end))
-	   (out-any i (* amp (cndf gen)) 0)))))
-  
-					;(with-sound () (cndf-ins 0 1 .1 20.0 4))
-  
   (define (ws-sine freq)
     (let ((o (make-oscil freq)))
       (run
@@ -54564,7 +54613,6 @@ EDITS: 1
 		    (sample-arrintp 6.25 .2 440 .1)
 		    (sample-if 6.5 .2 440 .1)
 		    (sample-arrfile 6.75 .2 440 .15)
-		    (cndf-ins 7 .2 .1 20.0 4)
 		    (sample-pvoc5 7.25 .2 .1 256 "oboe.snd" 440.0)
 		    )
   

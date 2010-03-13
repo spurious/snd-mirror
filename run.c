@@ -69,8 +69,7 @@
  *      no complex, ratio, bignum (but we use 64-bit ints)
  *      no pointer aliasing (i.e. vct var set to alias another vct var etc -- GC confusion otherwise)
  *      no apply or eval (we need to know at parse time what we are trying to do -- actually these might be doable)
- *      no "delay/force", no syntax-case fanciness
- *      no map or for-each (these need lists)
+ *      no map or for-each (these need lists, but for-each's lists aren't changing...)
  *
  * whenever the code-walker or tree initializer finds something it is unhappy about,
  *  it returns an error indication, and the caller should fallback on Scheme's evaluator.
@@ -109,36 +108,36 @@
  *
  *      test                                                       snd-10.4  (snd-10.7?)  snd-11.4
  *
- * (with-sound () (fm-violin 0 20 440 .1))                          1068        642         593
- * (with-sound (:channels 2) (fm-violin 0 20 440 .1 :degree 45))    1228        764         704
- * (with-sound (:reverb jc-reverb) (fm-violin 0 20 440 .1))         2577       1455        1366
- * (with-sound (:reverb nrev) (fm-violin 0 20 440 .1))              2983       1812        1703
- * (with-sound () (p 0 3))                                         91020*      3011        2906
- * (with-sound () (expandn 0 10 "oboe.snd" 1 :expand 4))            1228        526         488
- * (with-sound () (calling-all-animals))                           16359      11684       10839
- * (with-sound () (pins 0 3 "oboe.snd" 1.0 :max-peaks 8))           1207        783 (755)   710
- * (load "popi.scm")                                               11042       6391        6137
+ * (with-sound () (fm-violin 0 20 440 .1))                          1068        642         579
+ * (with-sound (:channels 2) (fm-violin 0 20 440 .1 :degree 45))    1228        764         689
+ * (with-sound (:reverb jc-reverb) (fm-violin 0 20 440 .1))         2577       1455        1338
+ * (with-sound (:reverb nrev) (fm-violin 0 20 440 .1))              2983       1812        1688
+ * (with-sound () (p 0 3))                                         91020*      3011        2832
+ * (with-sound () (expandn 0 10 "oboe.snd" 1 :expand 4))            1228        526         471
+ * (with-sound () (calling-all-animals))                           16359      11684       10566
+ * (with-sound () (pins 0 3 "oboe.snd" 1.0 :max-peaks 8))           1207        783 (755)   682
+ * (load "popi.scm")                                               11042       6391        6027
  *
- * (with-sound ()                                                   1015        641         604
+ * (with-sound ()                                                   1015        641         585
  *   (singer 0 .1 
  *     (list (list .4 ehh.shp test.glt 523.0 .8 0.0 .01) 
  *           (list .6 oo.shp test.glt 523.0 .7 .1 .01))))
  *
- * (with-sound (:channels 2)                                         206        139          96
+ * (with-sound (:channels 2)                                         206        139          93
  *   (let ((file "oboe.snd")) 
  *     (grani 0 1 .5 "oboe.snd" 
  *       :grain-envelope '(0 0 0.2 0.2 0.5 1 0.8 0.2 1 0))))
  *
- * (with-sound ()                                                   7120       5069        4261
+ * (with-sound ()                                                   7120       5069        4183
  *   (do ((i 0 (+ i 1))) 
  *       ((= i 10000)) 
  *     (fm-violin (* i .001) .01 440 .001)))
  *
- * (with-sound (:channels 2)                                         283        220         180
+ * (with-sound (:channels 2)                                         283        220         159
  *   (fullmix "pistol.snd" 0 2 0 #f .5)  
  *   (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
  *
- *                                      1st case in clm-ins.scm:    12201      1138        1079
+ *                                      1st case in clm-ins.scm:    12201      1138        1059
  */
 
 #include <mus-config.h>
@@ -2941,6 +2940,13 @@ static void jump_if_not_abs(int *args, ptree *pt) {if (INT_ARG_1 == 0) pt->pc = 
 
 static void jump_if_equal(int *args, ptree *pt) {if (INT_ARG_1 == INT_ARG_2) pt->pc = pt->program + pt->ints[args[0]];}
 static void jump_if_not_equal(int *args, ptree *pt) {if (INT_ARG_1 != INT_ARG_2) pt->pc = pt->program + pt->ints[args[0]];}
+static void inc_and_jump_if_not_equal(int *args, ptree *pt) 
+{
+  (INT_ARG_1)++;                              /* i++ */
+  if (INT_ARG_1 != INT_ARG_2)                 /* (= i lim) */
+    pt->pc = pt->program + pt->ints[args[0]]; /* jump back to start of loop body */
+  else pt->pc++;                              /* else skip redundant end test */
+}
 
 static void jump_if(int *args, ptree *pt) {if (INT_ARG_1 != 0) pt->pc += pt->ints[args[0]];}
 static void jump_if_not(int *args, ptree *pt) {if (INT_ARG_1 == 0) pt->pc += pt->ints[args[0]];}
@@ -4409,7 +4415,7 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 
   vars = XEN_CADR(form);
   done = XEN_CADDR(form);
-  if (XEN_NULL_P(done)) return(run_warn("do: null test")); /* invalid in Scheme */
+  if (XEN_NULL_P(done)) return(run_warn("do: null test")); 
   body = XEN_CDDDR(form);
   test_form = XEN_CAR(done);
   results = XEN_CDR(done);
@@ -4583,14 +4589,13 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 
   /* test for repeat */
   prog->ints[jump_to_test->addr] = prog->triple_ctr;
-  test = walk(prog, test_form, NEED_ANY_RESULT);
   free(jump_to_test);
   jump_to_test = NULL;
 
+  test = walk(prog, test_form, NEED_ANY_RESULT);
   if (test == NULL) 
-    {
-      return(NULL);
-    }
+    return(NULL);
+
   if (test->type != R_BOOL) 
     {
       xen_value *rv;
@@ -4609,10 +4614,33 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
   {
     triple *prev_op;
     prev_op = prog->program[prog->triple_ctr - 1];
-    if (prev_op->function == equal_i2)
+    if (prev_op->function == equal_i2)                      /* BOOL_RESULT = (INT_ARG_1 == INT_ARG_2) */
       {
+	if (prog->triple_ctr > 1)
+	  {
+	    triple *p_op;
+	    p_op = prog->program[prog->triple_ctr - 2];
+	    if ((p_op->function == inc_i_1) &&              /* INT_RESULT++ (op->args[0]) */
+		(p_op->args[0] == prev_op->args[1]))
+	      {
+		/* p_op is inc i0++, prev_op is equal i1 i2, where one of the args is the same as the inc result
+		 *   we want the inc'd arg in i1, the other in i2, jump loc in arg0
+		 */
+		p_op->args[1] = prev_op->args[1];
+		p_op->args[2] = prev_op->args[2];
+
+		p_op->function = inc_and_jump_if_not_equal;
+		p_op->op_name = "inc_and_jump_if_not_equal";
+		p_op->args[0] = jump_to_body->addr; 
+		p_op->types[0] = R_INT;
+#if WITH_COUNTERS
+		p_op->func_loc = get_func_loc(p_op->function, p_op->op_name);
+#endif
+		/* prev_op has to be left in place -- it is the target of the original (pre increment) jump */
+	      }
+	  }
 	/* change previous instruction to jump_if_not_equal */
-	prev_op->function = jump_if_not_equal;
+	prev_op->function = jump_if_not_equal;              /* if (INT_ARG_1 != INT_ARG_2) goto pt->ints[args[0]] */
 	prev_op->args[0] = jump_to_body->addr;
 	prev_op->types[0] = R_INT;
 	prev_op->op_name = "jump_if_not_equal";
@@ -5155,8 +5183,10 @@ static void oscil_1f_2m_env(int *args, ptree *pt);
 static void oscil_1f_2m_mult(int *args, ptree *pt);
 static void oscil_1f_3ma(int *args, ptree *pt);
 static void oscil_1f_3ma_mult(int *args, ptree *pt);
+static void oscil_1f_3ma_env(int *args, ptree *pt);
 static void oscil_1f_3(int *args, ptree *pt);
 static void oscil_1f_3_mult(int *args, ptree *pt);
+static void oscil_1f_3_env(int *args, ptree *pt);
 static void polywave_0f_env(int *args, ptree *pt);
 static void polywave_0f_mult(int *args, ptree *pt);
 static void polywave_0f(int *args, ptree *pt);
@@ -5319,12 +5349,13 @@ static int find_m4_op(triple *prev_op)
 #define NUM_M5_OPS 3
 
 static opt_ops m5_ops[NUM_M5_OPS] = {
-  {oscil_1f_3ma, "oscil_1f_3ma", oscil_1f_3ma_mult, "oscil_1f_3ma_mult", NULL, NULL},
-  {oscil_1f_3, "oscil_1f_3", oscil_1f_3_mult, "oscil_1f_3_mult", NULL, NULL},
+  {oscil_1f_3ma, "oscil_1f_3ma", oscil_1f_3ma_mult, "oscil_1f_3ma_mult", oscil_1f_3ma_env, "oscil_1f_3ma_env"},
+  {oscil_1f_3, "oscil_1f_3", oscil_1f_3_mult, "oscil_1f_3_mult", oscil_1f_3_env, "oscil_1f_3_env"},
   {multiply_f4, "multiply_f4", multiply_f5, "multiply_f5", NULL, NULL},
   
 };
 
+/* (let ((gen (make-oscil 100)) (e (make-env '(0 0 1 1) :end 10)) (x 2.0) (y 3.0) (z 4.0)) (run (lambda () (* (env e) (oscil gen (+ x y z))))) gen) */
 
 static int find_m5_op(triple *prev_op)
 {
@@ -5525,17 +5556,17 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 				   ((p2_op->args[0] == args[2]->addr) && (prev_op->args[0] == args[1]->addr))) &&
 				  ((find_var_in_ptree_via_addr(prog, R_FLOAT, p2_op->args[0])) == NULL))
 				{
+				  int k;
 				  p2_op->types = (int *)realloc(p2_op->types, 5 * sizeof(int));
 				  p2_op->args = (int *)realloc(p2_op->args, 5 * sizeof(int));
 				  /* env becomes arg 4 */
 				  p2_op->args[4] = p2_op->args[1];
 				  p2_op->types[4] = p2_op->types[1];
-				  p2_op->args[1] = prev_op->args[1];
-				  p2_op->types[1] = prev_op->types[1];
-				  p2_op->args[2] = prev_op->args[2];
-				  p2_op->types[2] = prev_op->types[2];
-				  p2_op->args[3] = prev_op->args[3];
-				  p2_op->types[3] = prev_op->types[3];
+				  for (k = 1; k < 4; k++)
+				    {
+				      p2_op->args[k] = prev_op->args[k];
+				      p2_op->types[k] = prev_op->types[k];
+				    }
 				  p2_op->num_args = 5;
 				  p2_op->function = m4_ops[loc].env_func;
 				  p2_op->op_name = m4_ops[loc].env_func_name;
@@ -5570,6 +5601,42 @@ static xen_value *multiply(ptree *prog, xen_value **args, int num_args)
 		      loc = find_m5_op(prev_op);
 		      if (loc >= 0)
 			{
+			  if ((prog->triple_ctr > 1) &&
+			      (m5_ops[loc].env_func)) /* env is a possibility */
+			    {
+			      triple *p2_op;
+			      p2_op = prog->program[prog->triple_ctr - 2];
+			      if ((p2_op->function == env_linear_0f) &&
+				  (((p2_op->args[0] == args[1]->addr) && (prev_op->args[0] == args[2]->addr)) ||
+				   ((p2_op->args[0] == args[2]->addr) && (prev_op->args[0] == args[1]->addr))) &&
+				  ((find_var_in_ptree_via_addr(prog, R_FLOAT, p2_op->args[0])) == NULL))
+				{
+				  int k;
+				  p2_op->types = (int *)realloc(p2_op->types, 6 * sizeof(int));
+				  p2_op->args = (int *)realloc(p2_op->args, 6 * sizeof(int));
+				  /* env becomes arg 5 */
+				  p2_op->args[5] = p2_op->args[1];
+				  p2_op->types[5] = p2_op->types[1];
+				  for (k = 1; k < 5; k++)
+				    {
+				      p2_op->args[k] = prev_op->args[k];
+				      p2_op->types[k] = prev_op->types[k];
+				    }
+				  p2_op->num_args = 6;
+				  p2_op->function = m5_ops[loc].env_func;
+				  p2_op->op_name = m5_ops[loc].env_func_name;
+#if WITH_COUNTERS
+				  p2_op->func_loc = get_func_loc(p2_op->function, p2_op->op_name);
+#endif				  
+				  free_triple(prev_op);
+				  prog->triple_ctr--;
+				  prog->program[prog->triple_ctr] = NULL;
+				  return(make_xen_value(R_FLOAT, p2_op->args[0], R_TEMPORARY));
+				}
+			      /* (let ((gen (make-polyshape)) (e (make-env '(0 0 1 1)))) (run (lambda () (* (env e) (polyshape gen 1.0 1.5))))) */
+			    }
+
+
 			  prev_op->types = (int *)realloc(prev_op->types, 6 * sizeof(int));
 			  prev_op->args = (int *)realloc(prev_op->args, 6 * sizeof(int));
 			  if (prev_op->args[0] == args[1]->addr)
@@ -5825,7 +5892,7 @@ static xen_value *add(ptree *prog, xen_value **args, int num_args)
 			    prev_op->args[2] = args[2]->addr;
 			  else prev_op->args[2] = args[1]->addr;
 			  prev_op->num_args = 3;
-			  prev_op->function = a2_ops[loc].mult_func;
+			  prev_op->function = a2_ops[loc].mult_func; /* " mult" means "add" in this context */
 			  prev_op->op_name = a2_ops[loc].mult_func_name;
 #if WITH_COUNTERS
 			  prev_op->func_loc = get_func_loc(prev_op->function, prev_op->op_name);
@@ -10833,8 +10900,10 @@ static void oscil_1f_2m_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_4 *
 static void oscil_1f_3(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_fm(CLM_ARG_1, FLOAT_ARG_2 + FLOAT_ARG_3 + FLOAT_ARG_4);}
 static void oscil_1f_3ma(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_fm(CLM_ARG_1, (FLOAT_ARG_2 * FLOAT_ARG_3) + FLOAT_ARG_4);}
 static void oscil_1f_3ma_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_5 * mus_oscil_fm(CLM_ARG_1, (FLOAT_ARG_2 * FLOAT_ARG_3) + FLOAT_ARG_4);}
+static void oscil_1f_3ma_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_5) * mus_oscil_fm(CLM_ARG_1, (FLOAT_ARG_2 * FLOAT_ARG_3) + FLOAT_ARG_4);}
 /* (let ((gen (make-oscil 100)) (x 2.0) (y 3.0) (z 4.0)) (run (lambda () (oscil gen (+ x (* y z))))) gen) */
 static void oscil_1f_3_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_5 * mus_oscil_fm(CLM_ARG_1, FLOAT_ARG_2 + FLOAT_ARG_3 + FLOAT_ARG_4);}
+static void oscil_1f_3_env(int *args, ptree *pt) {FLOAT_RESULT = mus_env_linear(CLM_ARG_5) * mus_oscil_fm(CLM_ARG_1, FLOAT_ARG_2 + FLOAT_ARG_3 + FLOAT_ARG_4);}
 
 static void oscil_2f_1(int *args, ptree *pt) {FLOAT_RESULT = mus_oscil_pm(CLM_ARG_1, FLOAT_ARG_3);}
 
@@ -12628,7 +12697,8 @@ static void outa_polywave_1_mult(int *args, ptree *pt) {mus_out_any_to_file(CLM_
 static void outa_delay_1_mult(int *args, ptree *pt)    {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_5 * mus_delay_unmodulated_noz(CLM_ARG_4, FLOAT_ARG_2));}
 static void outa_add_f2_mult(int *args, ptree *pt)     {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_5 * (FLOAT_ARG_2 + FLOAT_ARG_4));}
 static void outa_add_f3_mult(int *args, ptree *pt)     {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_4 * (FLOAT_ARG_2 + FLOAT_ARG_5 + FLOAT_ARG_6));}
-
+static void outa_formant_1_mult(int *args, ptree *pt)  {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_5 * mus_formant(CLM_ARG_4, FLOAT_ARG_2));}
+static void outa_firmant_1_mult(int *args, ptree *pt)  {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 0, FLOAT_ARG_5 * mus_firmant(CLM_ARG_4, FLOAT_ARG_2));}
 
 static void outb_3(int *args, ptree *pt)               {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 1, CLM_ARG_3);}
 static void outb_3f(int *args, ptree *pt)              {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_2);}
@@ -12644,7 +12714,8 @@ static void outb_polywave_1_mult(int *args, ptree *pt) {mus_out_any_to_file(CLM_
 static void outb_delay_1_mult(int *args, ptree *pt)    {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_5 * mus_delay_unmodulated_noz(CLM_ARG_4, FLOAT_ARG_2));}
 static void outb_add_f2_mult(int *args, ptree *pt)     {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_5 * (FLOAT_ARG_2 + FLOAT_ARG_4));}
 static void outb_add_f3_mult(int *args, ptree *pt)     {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_4 * (FLOAT_ARG_2 + FLOAT_ARG_5 + FLOAT_ARG_6));}
-
+static void outb_formant_1_mult(int *args, ptree *pt)  {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_5 * mus_formant(CLM_ARG_4, FLOAT_ARG_2));}
+static void outb_firmant_1_mult(int *args, ptree *pt)  {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 1, FLOAT_ARG_5 * mus_firmant(CLM_ARG_4, FLOAT_ARG_2));}
 
 static void outc_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 2, CLM_ARG_3);}
 static void outc_3f(int *args, ptree *pt) {mus_out_any_to_file(CLM_ARG_3, INT_ARG_1, 2, FLOAT_ARG_2);}
@@ -12767,7 +12838,7 @@ static int find_o3_op(triple *prev_op)
 }
 
 
-#define NUM_O4_OPS 7
+#define NUM_O4_OPS 9
 
 static opt_ops o4_ops[NUM_O4_OPS] = {
   {add_f3, "add_f3", outa_add_f3, "outa_add_f3", outb_add_f3, "outb_add_f3"},
@@ -12777,6 +12848,8 @@ static opt_ops o4_ops[NUM_O4_OPS] = {
   {polywave_1f_mult, "polywave_1f_mult", outa_polywave_1_mult, "outa_polywave_1_mult", outb_polywave_1_mult, "outb_polywave_1_mult"},
   {delay_1f_noz_mult, "delay_1f_noz_mult", outa_delay_1_mult, "outa_delay_1_mult", outb_delay_1_mult, "outb_delay_1_mult"},
   {funcall_cf2, "funcall_cf2", outa_funcall_cf2, "outa_funcall_cf2", outb_funcall_cf2, "outb_funcall_cf2"},
+  {formant_1f_mult, "formant_1f_mult", outa_formant_1_mult, "outa_formant_1_mult", outb_formant_1_mult, "outb_formant_1_mult"},
+  {firmant_1f_mult, "firmant_1f_mult", outa_firmant_1_mult, "outa_firmant_1_mult", outb_firmant_1_mult, "outb_firmant_1_mult"},
 };
 
 
@@ -13000,6 +13073,7 @@ static xen_value *outc_2(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, out_f_3, "out_f_3", args, 3));  
 }
 
+
 static xen_value *outd_2(ptree *prog, xen_value **args, int num_args) 
 {
   if (args[3]->type == R_CLM)
@@ -13016,15 +13090,29 @@ static xen_value *outd_2(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, out_f_3, "out_f_3", args, 3));  
 }
 
+
 static xen_value *out_any_2(ptree *prog, xen_value **args, int num_args)
 {
   if (args[4]->type == R_CLM)
     {
+      /* if arg[3] is a constant, go to the explicit cases that are more highly optimized */
+      if ((args[3]->constant == R_CONSTANT) &&
+	  (args[3]->type == R_INT) &&
+	  (prog->ints[args[3]->addr] < 2))
+	{
+	  int chan;
+	  chan = prog->ints[args[3]->addr];
+	  args[3]->type = R_CLM;
+	  args[3]->addr = args[4]->addr;
+	  return(out_opt(prog, args, num_args - 1, chan));
+	}
+
       if ((prog->walk_result == DONT_NEED_RESULT) &&
 	  (mus_output_p(prog->clms[args[4]->addr])))   
 	return(package(prog, R_FLOAT, out_any_4f, "out_any_4f", args, 4));
       return(package(prog, R_FLOAT, out_any_4, "out_any_4", args, 4));
     }
+
   if (args[4]->type == R_VCT)
     return(package(prog, R_FLOAT, out_any_vct_4, "out_any_vct_4", args, 4));
   if (args[4]->type == R_SOUND_DATA)

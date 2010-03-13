@@ -286,6 +286,7 @@
 
 (define (oscil-bank amps1 gens fms)
   "(oscil-bank amps1 gens fms) sums a vector of oscils"
+  (declare (gens clm-vector))
   (let* ((len (vector-length gens))
 	 (sum 0.0)
 	 (amps (if (vector? amps1) (vector->vct amps1) amps1))
