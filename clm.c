@@ -6389,6 +6389,9 @@ mus_float_t mus_env_any(mus_any *e, mus_float_t (*connect_points)(mus_float_t va
 
 /* frame = vector, mixer = (square) matrix, but "vector" is in use already, and "matrix" sounds too techy */
 
+/* someday frames and vcts should be combined, and mixers/sound-data
+ */
+
 typedef struct {
   mus_any_class *core;
   int chans;

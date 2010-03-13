@@ -315,9 +315,9 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_MACRO1, OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION, OP_EXPANSION,
 	      OP_CASE, OP_CASE1, OP_CASE2, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, 
-	      OP_READ_VECTOR, OP_READ_RETURN_EXPRESSION, OP_READ_POP_AND_RETURN_EXPRESSION, 
-	      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_STRING_DONE, OP_EVAL_DONE,
-	      OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_LIST_FOR_EACH, OP_LIST_MAP, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1, 
+	      OP_READ_VECTOR, OP_READ_POP_AND_RETURN_EXPRESSION, 
+	      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_DONE,
+	      OP_CATCH, OP_DYNAMIC_WIND, OP_LIST_FOR_EACH, OP_LIST_MAP, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1, 
 	      OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_ENV2,
@@ -326,7 +326,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_MAX_DEFINED} opcode_t;
 
 #define NUM_SMALL_INTS 200
-/* this needs to be at least OP_MAX_DEFINED = 86 */
+/* this needs to be at least OP_MAX_DEFINED = 83 */
 /* going up to 1024 gives very little improvement, down to 128 costs about .2% run time */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -1701,9 +1701,9 @@ static void show_stack(s7_scheme *sc)
      "and", "and1", "or", "or1", "defmacro", "defmacro*", "macro1", 
      "define_macro", "define_macro*", "define_expansion", "expansion", 
      "case", "case1", "case2", "read_list", "read_dot", "read_quote", "read_quasiquote", "read_quasiquote_vector", 
-     "read_unquote", "read_unquote_splicing", "read_vector", "read_return_expression", 
+     "read_unquote", "read_unquote_splicing", "read_vector",
      "read_and_return_expression", "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", 
-     "eval_string_done", "eval_done", "quit", "catch", "dynamic_wind", "for_list_each", "list_map", "define_constant", 
+     "eval_done", "catch", "dynamic_wind", "for_list_each", "list_map", "define_constant", 
      "define_constant1", "do", "do_end", "do_end1", "do_step", "do_step1", "do_step2", "do_init", "define_star", 
      "lambda*", "error_quit", "unwind_input", "unwind_output", "trace_return", "error_hook_quit", "trace_hook_quit",
      "with_env", "with_env1", "with_env2", "vector_for_each", "vector_map", "vector_map1", "string_for_each", 
@@ -8993,7 +8993,7 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
 	    return(sc->value);
 	}
       push_input_port(sc, port);
-      push_stack(sc, opcode(OP_READ_RETURN_EXPRESSION), port, sc->NIL);
+      push_stack(sc, opcode(OP_EVAL_DONE), port, sc->NIL);
       eval(sc, OP_READ_INTERNAL);
       sc->longjmp_ok = old_longjmp;
       pop_input_port(sc);
@@ -15017,7 +15017,7 @@ static s7_pointer g_quit(s7_scheme *sc, s7_pointer args)
 {
   #define H_quit "(quit) returns from the evaluator"
 
-  push_stack(sc, opcode(OP_QUIT), sc->NIL, sc->NIL);
+  push_stack(sc, opcode(OP_EVAL_DONE), sc->NIL, sc->NIL);
   return(sc->NIL);
 }
 
@@ -15025,7 +15025,7 @@ static s7_pointer g_quit(s7_scheme *sc, s7_pointer args)
 void s7_quit(s7_scheme *sc)
 {
   stack_reset(sc);
-  push_stack(sc, opcode(OP_QUIT), sc->NIL, sc->NIL);
+  push_stack(sc, opcode(OP_EVAL_DONE), sc->NIL, sc->NIL);
 }
 
 
@@ -16124,25 +16124,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
       
-      /* g_read(p) from C 
-       *   read one expr, return it, let caller deal with input port setup 
-       */
-    case OP_READ_RETURN_EXPRESSION:
-      return(sc->F);
-      
-      
       /* (read p) from scheme
        *    "p" becomes current input port for eval's duration, then pops back before returning value into calling expr
        */
     case OP_READ_POP_AND_RETURN_EXPRESSION:
       pop_input_port(sc);
-      
+
       if (sc->tok == TOKEN_EOF)
-	{
-	  sc->value = sc->EOF_OBJECT;
-	  pop_stack(sc);
-	  goto START;
-	}
+	sc->value = sc->EOF_OBJECT;
+
       pop_stack(sc);
       goto START;
       
@@ -16200,18 +16190,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      push_stack(sc, opcode(OP_EVAL_STRING), sc->NIL, sc->value);
 	      push_stack(sc, opcode(OP_READ_INTERNAL), sc->NIL, sc->NIL);
 	    }
-	  else push_stack(sc, opcode(OP_EVAL_STRING_DONE), sc->NIL, sc->value);
+	  else push_stack(sc, opcode(OP_EVAL_DONE), sc->NIL, sc->value);
 	}
-      else push_stack(sc, opcode(OP_EVAL_STRING_DONE), sc->NIL, sc->value);
+      else push_stack(sc, opcode(OP_EVAL_DONE), sc->NIL, sc->value);
       sc->code = sc->value;
       goto EVAL;
       
       
-    case OP_EVAL_DONE:
-    case OP_EVAL_STRING_DONE:
-     return(sc->F);
-
-
 
     case OP_LIST_FOR_EACH:
       sc->x = sc->args; /* save lists */
@@ -16230,9 +16215,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  for (sc->y = cdr(sc->x); sc->y != sc->NIL; sc->y = cdr(sc->y))
 	    if (car(sc->y) != sc->NIL)
 	      return(eval_error(sc, "for-each args are not the same length: ~A", sc->x));
-	  goto APPLY;
 	}
-      push_stack(sc, opcode(OP_LIST_FOR_EACH), sc->x, sc->code);
+      else push_stack(sc, opcode(OP_LIST_FOR_EACH), sc->x, sc->code);
       goto APPLY;
       
       
@@ -16533,16 +16517,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  /* we're done -- deal with result exprs */
 	  sc->code = cddr(sc->args);                /* result expr */
-	  sc->args = sc->NIL;
-	  goto BEGIN;
 	}
-      
-      /* evaluate the body and step vars, etc */
-      push_stack(sc, opcode(OP_DO_STEP), sc->args, sc->code);
-      /* sc->code is ready to go */
+      else
+	{
+	  /* evaluate the body and step vars, etc */
+	  push_stack(sc, opcode(OP_DO_STEP), sc->args, sc->code);
+	  /* sc->code is ready to go */
+	}
       sc->args = sc->NIL;
       /* goto BEGIN; */
-      
+
       
     BEGIN:
     case OP_BEGIN:
@@ -17798,10 +17782,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       return(sc->value); /* not executed I hope */
 
 
-    case OP_ERROR_QUIT:
-    case OP_QUIT:
+    case OP_ERROR_QUIT: 
     case OP_UNWIND_OUTPUT:
     case OP_UNWIND_INPUT:
+      /* these 3 are used for unwinding the stack in dynamic-wind and error handling */
+    case OP_EVAL_DONE:
+      /* this is the "time to quit" operator */
       return(sc->F);
       break;
       

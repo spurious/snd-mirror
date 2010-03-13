@@ -11694,6 +11694,7 @@ REF_GEN0(locsig_reverb_ref, locsig)
   }
 
 SET_GEN0(frame_set, frame)
+/* often preceded by (set:)add_f2 all_pass_1f (ref):add_multiply_i2 vector_ref_c */
 SET_GEN0(locsig_set, locsig)
 SET_GEN0(locsig_reverb_set, locsig)
 

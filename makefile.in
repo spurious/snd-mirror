@@ -187,7 +187,7 @@ install: snd
 	${SHELL} ${top_srcdir}/mkinstalldirs ${mandir}/man1
 	${SHELL} ${top_srcdir}/mkinstalldirs ${pkgdatadir}
 	$(INSTALL) snd ${bindir}/snd
-	$(INSTALL) ${top_srcdir}/snd.1 ${mandir}/man1
+	$(INSTALL_DATA) ${top_srcdir}/snd.1 ${mandir}/man1
 	(cd ${top_srcdir} && for f in ${SND_SCRIPTS}; do ${INSTALL_DATA} ${top_srcdir}/$${f} ${pkgdatadir}/$${f}; done)
 
 uninstall:
@@ -201,7 +201,7 @@ install-strip: snd
 	${SHELL} ${top_srcdir}/mkinstalldirs ${mandir}/man1
 	${SHELL} ${top_srcdir}/mkinstalldirs ${pkgdatadir}
 	$(INSTALL) -s snd ${bindir}/snd
-	$(INSTALL) ${top_srcdir}/snd.1 ${mandir}/man1
+	$(INSTALL_DATA) ${top_srcdir}/snd.1 ${mandir}/man1
 	(cd ${top_srcdir} && for f in ${SND_SCRIPTS}; do ${INSTALL_DATA} ${top_srcdir}/$${f} ${pkgdatadir}/$${f}; done) 
 
 Makefile: Makefile.in config.status

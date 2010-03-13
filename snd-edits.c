@@ -8620,7 +8620,8 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
       ss->stopped_explicitly = false;
       for (i = 0; i < num; i++)
 	{
-	  mval = fabs(read_sample(sf));
+	  mval = read_sample(sf);
+	  if (mval < 0.0) mval = -mval;
 	  if (mval > ymax) 
 	    {
 	      ymax = mval;
@@ -8642,13 +8643,16 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
     }
   else
     {
-      for (i = 0; i < num; i++)
+      /* num is less than (1 << 30) so we can use an int */
+      int k;
+      for (k = 0; k < num; k++)
 	{
-	  mval = fabs(read_sample(sf));
+	  mval = read_sample(sf);
+	  if (mval < 0.0) mval = -mval;
 	  if (mval > ymax) 
 	    {
 	      ymax = mval;
-	      mpos = i;
+	      mpos = k;
 	    }
 	}
     }

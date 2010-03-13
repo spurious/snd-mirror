@@ -982,6 +982,22 @@ static const mus_sample_t mus_ubyte[256] = {
 #endif
 
 
+#if SNDLIB_USE_FLOATS
+static float *swapped_shorts = NULL;
+static void initialize_swapped_shorts(void)
+{
+  int i;
+  swapped_shorts = (float *)malloc(65536 * sizeof(float));
+  for (i = 0; i < 65536; i++)
+    {
+      signed short x;
+      x = (signed short)(((i >> 8) & 0xff) | ((i & 0xff) << 8));
+      swapped_shorts[i] = MUS_SHORT_TO_SAMPLE(x);
+    }
+}
+#endif
+
+
 static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t nints, mus_sample_t **bufs, mus_sample_t **cm, char *inbuf)
 {
   int format, siz, siz_chans;
@@ -1037,14 +1053,8 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
       prescaling = (float)(fd->prescaler * MUS_FLOAT_TO_SAMPLE(1.0));
       /* not MUS_FLOAT_TO_SAMPLE(fd->prescaler) here because there's a possible cast to int which can overflow */
 
-#if 0
-      if (ur_charbuf == NULL) 
-	ur_charbuf = (char *)calloc(BUFLIM, sizeof(char)); 
-      else memset((void *)ur_charbuf, 0, BUFLIM);
-#else
       if (ur_charbuf == NULL) 
 	ur_charbuf = (char *)malloc(BUFLIM * sizeof(char)); 
-#endif
       charbuf = ur_charbuf;
     }
   else
@@ -1063,6 +1073,16 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
   else buflim = BUFLIM;
   total_read = 0;
   loc = beg;
+
+#if SNDLIB_USE_FLOATS
+#if MUS_LITTLE_ENDIAN
+  if ((format == MUS_BSHORT) && (!swapped_shorts))
+    initialize_swapped_shorts();
+#else
+  if ((format == MUS_LSHORT) && (!swapped_shorts))
+    initialize_swapped_shorts();
+#endif
+#endif
 
   while (leftover > 0)
     {
@@ -1124,14 +1144,24 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		  jchar += (k * siz);
 		  switch (format)
 		    {
-		    case MUS_BSHORT:               
+		    case MUS_BSHORT:      
+#if MUS_LITTLE_ENDIAN && SNDLIB_USE_FLOATS
+		      for (; bufnow <= bufend; jchar += siz_chans) 
+			(*bufnow++) = swapped_shorts[(*((unsigned short *)jchar))];
+#else       
 		      for (; bufnow <= bufend; jchar += siz_chans) 
 			(*bufnow++) = MUS_SHORT_TO_SAMPLE(big_endian_short(jchar)); 
+#endif
 		      break;
 
 		    case MUS_LSHORT: 
+#if (!MUS_LITTLE_ENDIAN) && SNDLIB_USE_FLOATS
+		      for (; bufnow <= bufend; jchar += siz_chans) 
+			(*bufnow++) = swapped_shorts[(*((unsigned short *)jchar))];
+#else
 		      for (; bufnow <= bufend; jchar += siz_chans) 
 			(*bufnow++) = MUS_SHORT_TO_SAMPLE(little_endian_short(jchar)); 
+#endif
 		      break;
 
 		    case MUS_BINT:              
@@ -1486,8 +1516,11 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_s
 	  if (!charbuf)
 	    {
 	      if (ur_charbuf == NULL)
+		ur_charbuf = (char *)malloc(BUFLIM * sizeof(char)); 
+	      /*
 		ur_charbuf = (char *)calloc(BUFLIM, sizeof(char)); 
 	      else memset((void *)ur_charbuf, 0, BUFLIM);
+	      */
 	      charbuf = ur_charbuf;
 	    }
 
@@ -1645,7 +1678,7 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_s
 
 int mus_file_write(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_sample_t **bufs)
 {
-  return(mus_write_1(tfd, beg, end, chans, bufs, NULL, false));
+  return(mus_write_1(tfd, beg, end, chans, bufs, NULL, false)); /* if inbuf is NULL (as here), clipped is ignored, so the "false" could be anything */
 }
 
 

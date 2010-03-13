@@ -21199,7 +21199,7 @@ EDITS: 2
 		  (if (not (vequal win1 win2))
 		      (snd-display ";dpss-windows:~%    ~A~%    ~A" win1 win2))))
 	      (list .01 .07 .12 .2)))
-	   (list 32 64 256))))
+	   (list 16 32))))
 
     (let ((win (make-papoulis-window 32)))
       (if (not (vequal win (vct 0.000 0.001 0.006 0.021 0.048 0.091 0.151 0.227 0.318 0.422 0.533 0.647 0.755 0.852 0.930 0.982 
