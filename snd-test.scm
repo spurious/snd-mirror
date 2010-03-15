@@ -47583,6 +47583,15 @@ EDITS: 1
        (set! j (+ j 1)))
       (if (not (= j 3)) (snd-display ";loop 9 j=~A" j)))
 
+    (let ((j 1))
+      (run
+       (do ((i 0 (+ i 1)))
+	   ((= i 3))
+	 (do ((k 0 (+ k 1)))
+	     ((= k 3))
+	   (set! j (+ i k)))))
+      (if (not (= j 2)) (format #t ";loop 10 j=~A" j)))
+
     
     (etst '(do ((i 0 (+ i 0.5)) (j 0 (+ 1 j))) ((>= j 3)) (display i)))
     

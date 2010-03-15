@@ -9354,10 +9354,6 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
   bool int_ok = false;
 
   lim = srp->lim;
-
-#if HAVE_DECL_ISNAN && HAVE_DECL_ISINF
-  if ((isnan(sr_change)) || (isinf(sr_change))) sr_change = 0.0;
-#endif
   if (sr_change > MUS_MAX_CLM_SRC) 
     sr_change = MUS_MAX_CLM_SRC;
   else

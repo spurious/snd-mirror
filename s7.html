@@ -967,48 +967,17 @@ Here is an example of "apropos" that accesses both environments:
 	         (apropos-1 frame)))
            (<em class=red>current-environment</em>)))
 </pre>
-<p>
-You can change the current environment by hand:
-</p>
-<pre>
-      (define (push-environment e binding)
-        (if (vector? (car e))
-            (begin
-              (set-cdr! e (list (car e)))
-              (set-car! e (list binding)))
-            (set-car! e (cons binding (car e)))))
-   
-      (define (pop-environment e)
-        (if (not (vector? (car e)))
-            (begin
-              (set-car! e (cadr e))
-              (set-cdr! e (cddr e)))))
-   
-      (define-macro (define! e var val) ; define var=val in env e
-        `(push-environment ,e (cons ',var ,val)))
 
-      (define (make-environment . initial-bindings)
-         (cons initial-bindings (global-environment)))
-
-     (let ((x 3)) 
-       (define! (current-environment) hi 21)
-       (+ x hi))
-     -&gt; 24
-
-     (let ((x 32)) 
-       (eval `(+ x y) (make-environment '(x . 2) '(y . 4))))
-     -&gt; 6
-</pre>
 <p>(with-environment env . body) evaluates its body in the environment env.
 Unless I'm missing something, I think this makes it possible to
 write "hygenic" macros:
 </p>
 <pre>
         (define-macro (mac a b) 
-          `(with-environment (global-environment)
+          `(with-environment (<em class=red>global-environment</em>)
              (+ ,a ,b)))
 </pre>
-<p>now if we rebind +, nothing goes wrong:</p>
+<p>Now if we rebind +, nothing goes wrong:</p>
 <pre>
         (let ((+ -)) 
           (mac 1 2))
@@ -1017,61 +986,6 @@ write "hygenic" macros:
 </dd>
 <br>
 
-<!--
-(define-macro (glet inits . body)
-  ;; any defines in the body are defined in the calling environment 
-  (let ((e (gensym))
-	(result (gensym)))
-    `(let ((,e (current-environment)))
-       (let ,inits
-	 (let ((,result (begin ,@body)))
-	   (for-each (lambda (binding)
-		       (if (procedure? (cdr binding))
-			   (push-environment ,e binding)))
-		     (cadr (current-environment)))
-	   ,result)))))
-
-     (glet ((local-var 32))
-       (define (proc1 arg)
-         (+ local-var arg))
-       (define (proc2 arg)
-         (- local-var arg)))
-
-but maybe it would be more sensible to use something like
-
-(define-macro (global-funcs-share-local-data local-name local-value . funcs)
-  (let ((local-name (gensym)))
-    `(begin
-       (define ,local-name ,local-value)
-       ,@(trans-tree local-name funcs))))
-
-where trans-tree is copy-tree replacing the original local name with the gensym'd one
-but this still makes a built-in let! look good.
-
-(define (tree-for-each tree func)
-  (if (pair? tree)
-      (begin
-        (tree-for-each (car tree) func)
-        (tree-for-each (cdr tree) func))
-      (func tree)))
-  
-(define (tree-map tree func)
-  (if (pair? tree)
-      (cons (tree-map (car tree) func)
-            (tree-map (cdr tree) func))
-      (func tree)))
-
-Another thing that would be useful: case with evaluated "key-lists":
-
-(define-macro (eval-case key . clauses)
-  `(cond ,@(map (lambda (lst)
-		  (if (pair? (car lst))
-		      (cons `(member ,key (list ,@(car lst)))
-			     (cdr lst))
-		      lst))
-		clauses)))
-  
--->
 
 
 <!-- -------------------------------------------------------------------------------- -->

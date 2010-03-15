@@ -1223,8 +1223,16 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		      break;
 
 		    case MUS_BDOUBLE:   
-		      for (; bufnow <= bufend; jchar += siz_chans)
-			(*bufnow++) = (mus_sample_t)(prescaling * (big_endian_double(jchar)));
+		      if (prescaling == 1.0)
+			{
+			  for (; bufnow <= bufend; jchar += siz_chans)
+			    (*bufnow++) = (mus_sample_t)(big_endian_double(jchar));
+			}
+		      else
+			{
+			  for (; bufnow <= bufend; jchar += siz_chans)
+			    (*bufnow++) = (mus_sample_t)(prescaling * (big_endian_double(jchar)));
+			}
 		      break;
 
 		    case MUS_BDOUBLE_UNSCALED:   
@@ -1251,8 +1259,16 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		      break;
 
 		    case MUS_LDOUBLE:   
-		      for (; bufnow <= bufend; jchar += siz_chans) 
-			(*bufnow++) = (mus_sample_t)(prescaling * (little_endian_double(jchar)));
+		      if (prescaling == 1.0)
+			{
+			  for (; bufnow <= bufend; jchar += siz_chans) 
+			    (*bufnow++) = (mus_sample_t)(little_endian_double(jchar));
+			}
+		      else
+			{
+			  for (; bufnow <= bufend; jchar += siz_chans) 
+			    (*bufnow++) = (mus_sample_t)(prescaling * (little_endian_double(jchar)));
+			}
 		      break;
 
 		    case MUS_LDOUBLE_UNSCALED:   
@@ -1272,16 +1288,12 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 
 		    case MUS_B24INT:
 		      for (; bufnow <= bufend; jchar += siz_chans) 
-			(*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[0] << 24) + 
-								 (jchar[1] << 16) + 
-								 (jchar[2] << 8)) >> 8));
+			(*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[0] << 24) | (jchar[1] << 16) | (jchar[2] << 8)) >> 8));
 		      break;
 
 		    case MUS_L24INT:   
 		      for (; bufnow <= bufend; jchar += siz_chans) 
-			(*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[2] << 24) + 
-								 (jchar[1] << 16) + 
-								 (jchar[0] << 8)) >> 8));
+			(*bufnow++) = MUS_INT24_TO_SAMPLE((int)(((jchar[2] << 24) | (jchar[1] << 16) | (jchar[0] << 8)) >> 8));
 		      break;
 		    }
 		  loc = loclim;

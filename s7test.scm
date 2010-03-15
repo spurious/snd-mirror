@@ -16367,28 +16367,10 @@
 	    (with-environment e (* x 2)))))
       24)
 
-(test (let ()
-	(define (make-environment . initial-bindings)
-	  (cons initial-bindings (global-environment)))
-	(with-environment (make-environment '(x . 2) '(y . 4))
-			  (+ x y)))
-      6)
-
 (test (let ((*features* 123))
 	(let ((e (global-environment)))
 	  (with-environment e (list? *features*))))
       #t)
-
-(test (let ()
-        (define-macro (mac a b) 
-          `(with-environment 
-	    (cons (list (cons 'a ,a) 
-			(cons 'b ,b))
-		  (global-environment))
-	    (+ a b)))
-	(let ((+ -))
-	  (mac 1 2)))
-      3)
 
 (test (let ((local 123))
 	(define pws-test (make-procedure-with-setter

@@ -108,17 +108,17 @@
  *
  *      test                                                       snd-10.4  (snd-10.7?)  snd-11.4
  *
- * (with-sound () (fm-violin 0 20 440 .1))                          1068        642         579
- * (with-sound (:channels 2) (fm-violin 0 20 440 .1 :degree 45))    1228        764         689
- * (with-sound (:reverb jc-reverb) (fm-violin 0 20 440 .1))         2577       1455        1338
- * (with-sound (:reverb nrev) (fm-violin 0 20 440 .1))              2983       1812        1688
- * (with-sound () (p 0 3))                                         91020*      3011        2832
- * (with-sound () (expandn 0 10 "oboe.snd" 1 :expand 4))            1228        526         471
- * (with-sound () (calling-all-animals))                           16359      11684       10566
- * (with-sound () (pins 0 3 "oboe.snd" 1.0 :max-peaks 8))           1207        783 (755)   682
- * (load "popi.scm")                                               11042       6391        6027
+ * (with-sound () (fm-violin 0 20 440 .1))                          1068        642         561
+ * (with-sound (:channels 2) (fm-violin 0 20 440 .1 :degree 45))    1228        764         687
+ * (with-sound (:reverb jc-reverb) (fm-violin 0 20 440 .1))         2577       1455        1335
+ * (with-sound (:reverb nrev) (fm-violin 0 20 440 .1))              2983       1812        1685
+ * (with-sound () (p 0 3))                                         91020*      3011        2828
+ * (with-sound () (expandn 0 10 "oboe.snd" 1 :expand 4))            1228        526         464
+ * (with-sound () (calling-all-animals))                           16359      11684       10306
+ * (with-sound () (pins 0 3 "oboe.snd" 1.0 :max-peaks 8))           1207        783 (755)   660
+ * (load "popi.scm")                                               11042       6391        5923
  *
- * (with-sound ()                                                   1015        641         585
+ * (with-sound ()                                                   1015        641         562
  *   (singer 0 .1 
  *     (list (list .4 ehh.shp test.glt 523.0 .8 0.0 .01) 
  *           (list .6 oo.shp test.glt 523.0 .7 .1 .01))))
@@ -128,16 +128,16 @@
  *     (grani 0 1 .5 "oboe.snd" 
  *       :grain-envelope '(0 0 0.2 0.2 0.5 1 0.8 0.2 1 0))))
  *
- * (with-sound ()                                                   7120       5069        4183
+ * (with-sound ()                                                   7120       5069        4064
  *   (do ((i 0 (+ i 1))) 
  *       ((= i 10000)) 
  *     (fm-violin (* i .001) .01 440 .001)))
  *
- * (with-sound (:channels 2)                                         283        220         159
+ * (with-sound (:channels 2)                                         283        220         158
  *   (fullmix "pistol.snd" 0 2 0 #f .5)  
  *   (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
  *
- *                                      1st case in clm-ins.scm:    12201      1138        1059
+ *                                      1st case in clm-ins.scm:    12201      1138        1043
  */
 
 #include <mus-config.h>
@@ -2673,7 +2673,7 @@ static XEN g_report_counts(void)
   for (i = 0; i < top_counter; i++)
     for (j = 0; j < top_counter; j++)
       totals[j] += counts[i][j];
-  for (rpt = 0; rpt < 100; rpt++)
+  for (rpt = 0; rpt < 200; rpt++)
     {
       cmax = 0;
       for (i = 0; i < top_counter; i++)
@@ -2689,7 +2689,7 @@ static XEN g_report_counts(void)
   free(totals);
 
   fprintf(stderr, "funcs: %d\n", top_counter - 1);
-  for (rpt = 0; rpt < 100; rpt++)
+  for (rpt = 0; rpt < 200; rpt++)
     {
       cmax = 0;
       for (i = 0; i < top_counter; i++) 
@@ -2849,6 +2849,9 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define INT_ARG_4 pt->ints[args[4]]
 #define INT_ARG_5 pt->ints[args[5]]
 #define INT_ARG_6 pt->ints[args[6]]
+#define INT_ARG_7 pt->ints[args[7]]
+#define INT_ARG_8 pt->ints[args[8]]
+#define INT_ARG_9 pt->ints[args[9]]
 
 #define FLOAT_RESULT pt->dbls[args[0]]
 #define FLOAT_ARG_1 pt->dbls[args[1]]
@@ -2857,6 +2860,9 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define FLOAT_ARG_4 pt->dbls[args[4]]
 #define FLOAT_ARG_5 pt->dbls[args[5]]
 #define FLOAT_ARG_6 pt->dbls[args[6]]
+#define FLOAT_ARG_7 pt->dbls[args[7]]
+#define FLOAT_ARG_8 pt->dbls[args[8]]
+#define FLOAT_ARG_9 pt->dbls[args[9]]
 
 #define VCT_RESULT pt->vcts[args[0]]
 #define VCT_ARG_1 pt->vcts[args[1]]
@@ -2887,6 +2893,9 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define CLM_ARG_3 pt->clms[args[3]]
 #define CLM_ARG_4 pt->clms[args[4]]
 #define CLM_ARG_5 pt->clms[args[5]]
+#define CLM_ARG_6 pt->clms[args[6]]
+#define CLM_ARG_7 pt->clms[args[7]]
+#define CLM_ARG_8 pt->clms[args[8]]
 
 #if USE_SND
 #define SAMPLER_RESULT pt->samplers[args[0]]
@@ -2940,6 +2949,7 @@ static void jump_if_not_abs(int *args, ptree *pt) {if (INT_ARG_1 == 0) pt->pc = 
 
 static void jump_if_equal(int *args, ptree *pt) {if (INT_ARG_1 == INT_ARG_2) pt->pc = pt->program + pt->ints[args[0]];}
 static void jump_if_not_equal(int *args, ptree *pt) {if (INT_ARG_1 != INT_ARG_2) pt->pc = pt->program + pt->ints[args[0]];}
+
 static void inc_and_jump_if_not_equal(int *args, ptree *pt) 
 {
   (INT_ARG_1)++;                              /* i++ */
@@ -3062,6 +3072,171 @@ static void store_s(int *args, ptree *pt)
   STRING_RESULT = mus_strdup(STRING_ARG_1);
 }
 
+static void inc_i_1(int *args, ptree *pt);
+static void add_i2(int *args, ptree *pt);
+static void equal_i2(int *args, ptree *pt);
+static void gt_i2(int *args, ptree *pt);
+static void lt_i2(int *args, ptree *pt);
+static void geq_i2(int *args, ptree *pt);
+static void leq_i2(int *args, ptree *pt);
+
+static void equal_f2(int *args, ptree *pt);
+static void gt_f2(int *args, ptree *pt);
+static void lt_f2(int *args, ptree *pt);
+static void geq_f2(int *args, ptree *pt);
+static void leq_f2(int *args, ptree *pt);
+
+static void equal_i3(int *args, ptree *pt);
+static void gt_i3(int *args, ptree *pt);
+static void lt_i3(int *args, ptree *pt);
+static void geq_i3(int *args, ptree *pt);
+static void leq_i3(int *args, ptree *pt);
+
+static void equal_f3(int *args, ptree *pt);
+static void gt_f3(int *args, ptree *pt);
+static void lt_f3(int *args, ptree *pt);
+static void geq_f3(int *args, ptree *pt);
+static void leq_f3(int *args, ptree *pt);
+
+static void not_b(int *args, ptree *pt);
+
+static void odd_i(int *args, ptree *pt);
+static void even_i(int *args, ptree *pt);
+static void zero_i(int *args, ptree *pt);
+static void negative_i(int *args, ptree *pt);
+static void positive_i(int *args, ptree *pt);
+static void zero_f(int *args, ptree *pt);
+static void negative_f(int *args, ptree *pt);
+static void positive_f(int *args, ptree *pt);
+
+static void add_f2_mult(int *args, ptree *pt);
+static void add_f2(int *args, ptree *pt);
+static void add_f3_mult(int *args, ptree *pt);
+static void add_f3(int *args, ptree *pt);
+static void subtract_f2(int *args, ptree *pt);
+static void subtract_f2_mult(int *args, ptree *pt);
+static void subtract_f3(int *args, ptree *pt);
+static void subtract_f3_mult(int *args, ptree *pt);
+static void multiply_add_f2(int *args, ptree *pt);
+static void multiply_add_f2_mult(int *args, ptree *pt);
+static void oscil_0f_1(int *args, ptree *pt);
+static void oscil_0f_1_env(int *args, ptree *pt);
+static void oscil_0f_1_mult(int *args, ptree *pt);
+static void oscil_1f_1(int *args, ptree *pt);
+static void oscil_1f_1_env(int *args, ptree *pt);
+static void oscil_1f_1_mult(int *args, ptree *pt);
+static void oscil_1f_2(int *args, ptree *pt);
+static void oscil_1f_2_env(int *args, ptree *pt);
+static void oscil_1f_2_mult(int *args, ptree *pt);
+static void oscil_1f_2m(int *args, ptree *pt);
+static void oscil_1f_2m_env(int *args, ptree *pt);
+static void oscil_1f_2m_mult(int *args, ptree *pt);
+static void oscil_1f_3ma(int *args, ptree *pt);
+static void oscil_1f_3ma_mult(int *args, ptree *pt);
+static void oscil_1f_3ma_env(int *args, ptree *pt);
+static void oscil_1f_3(int *args, ptree *pt);
+static void oscil_1f_3_mult(int *args, ptree *pt);
+static void oscil_1f_3_env(int *args, ptree *pt);
+static void polywave_0f_env(int *args, ptree *pt);
+static void polywave_0f_mult(int *args, ptree *pt);
+static void polywave_0f(int *args, ptree *pt);
+static void polywave_1f_env(int *args, ptree *pt);
+static void polywave_1f_mult(int *args, ptree *pt);
+static void polywave_1f(int *args, ptree *pt);
+static void polywave_1f_2_env(int *args, ptree *pt);
+static void polywave_1f_2_mult(int *args, ptree *pt);
+static void polywave_1f_2(int *args, ptree *pt);
+static void random_f(int *args, ptree *pt);
+static void random_f_mult(int *args, ptree *pt);
+static void sin_f(int *args, ptree *pt);
+static void sin_f_mult(int *args, ptree *pt);
+static void cos_f(int *args, ptree *pt);
+static void cos_f_mult(int *args, ptree *pt);
+static void abs_f(int *args, ptree *pt);
+static void abs_f_mult(int *args, ptree *pt);
+static void sqrt_f(int *args, ptree *pt);
+static void sqrt_f_mult(int *args, ptree *pt);
+static void env_linear_0f_mult(int *args, ptree *pt);
+static void env_linear_0f_env(int *args, ptree *pt);
+static void env_linear_0f(int *args, ptree *pt);
+static void rand_0f(int *args, ptree *pt);
+static void rand_0f_env(int *args, ptree *pt);
+static void rand_0f_mult(int *args, ptree *pt);
+static void rand_interp_0f(int *args, ptree *pt);
+static void rand_interp_0f_env(int *args, ptree *pt);
+static void rand_interp_0f_mult(int *args, ptree *pt);
+static void vct_constant_ref_0(int *args, ptree *pt);
+static void vct_constant_ref_0_mult(int *args, ptree *pt);
+static void vct_ref_f(int *args, ptree *pt);
+static void vct_ref_f_mult(int *args, ptree *pt);
+static void vector_ref_f(int *args, ptree *pt);
+static void delay_1f(int *args, ptree *pt);
+static void delay_1f_env(int *args, ptree *pt);
+static void delay_1f_mult(int *args, ptree *pt);
+static void delay_1f_noz(int *args, ptree *pt);
+static void delay_1f_noz_env(int *args, ptree *pt);
+static void delay_1f_noz_mult(int *args, ptree *pt);
+static void granulate_0f_env(int *args, ptree *pt);
+static void granulate_0f_mult(int *args, ptree *pt);
+static void granulate_0f(int *args, ptree *pt);
+static void formant_1f(int *args, ptree *pt);
+static void formant_1f_mult(int *args, ptree *pt);
+static void formant_1f_env(int *args, ptree *pt);
+static void firmant_1f(int *args, ptree *pt);
+static void firmant_1f_mult(int *args, ptree *pt);
+static void firmant_1f_env(int *args, ptree *pt);
+static void firmant_2f(int *args, ptree *pt);
+static void firmant_2f_mult(int *args, ptree *pt);
+static void firmant_2f_env(int *args, ptree *pt);
+static void polyshape_1fn(int *args, ptree *pt);
+static void polyshape_1fn_mult(int *args, ptree *pt);
+static void polyshape_1fn_env(int *args, ptree *pt);
+static void oscil_0f_vect(int *args, ptree *pt);
+static void oscil_0f_vect_mult(int *args, ptree *pt);
+static void oscil_0f_vect_env(int *args, ptree *pt);
+static void oscil_1f_vect(int *args, ptree *pt);
+static void oscil_1f_vect_mult(int *args, ptree *pt);
+static void oscil_1f_vect_env(int *args, ptree *pt);
+static void formant_1f_vect(int *args, ptree *pt);
+static void formant_1f_vect_mult(int *args, ptree *pt);
+static void formant_1f_vect_env(int *args, ptree *pt);
+static void firmant_1f_vect(int *args, ptree *pt);
+static void firmant_1f_vect_mult(int *args, ptree *pt);
+static void firmant_1f_vect_env(int *args, ptree *pt);
+static void vct_set_f_add(int *args, ptree *pt);
+static void vct_set_f_mult(int *args, ptree *pt);
+
+static void rand_interp_0f_add(int *args, ptree *pt);
+static void formant_1f_add(int *args, ptree *pt);
+static void abs_f_add(int *args, ptree *pt);
+static void sin_f_add(int *args, ptree *pt);
+static void cos_f_add(int *args, ptree *pt);
+static void abs_f_mult_add(int *args, ptree *pt);
+static void mus_random_f_add(int *args, ptree *pt);
+static void mus_random_f(int *args, ptree *pt);
+static void random_f_add(int *args, ptree *pt);
+static void random_f(int *args, ptree *pt);
+static void subtract_f2_add(int *args, ptree *pt);
+static void sin_f_mult_add(int *args, ptree *pt);
+static void cos_f_mult_add(int *args, ptree *pt);
+static void subtract_f2_mult_add(int *args, ptree *pt);
+static void vct_ref_f_add(int *args, ptree *pt);
+
+static void locsig_3f_mono_no_rev(int *args, ptree *pt);
+static void locsig_v_mono_no_rev(int *args, ptree *pt);
+static void locsig_v_stereo(int *args, ptree *pt);
+static void locsig_v_mono(int *args, ptree *pt);
+static void outa_3f(int *args, ptree *pt);
+static void outa_multiply_f2(int *args, ptree *pt);
+static void outa_multiply_f3(int *args, ptree *pt);
+static void frame_set_0r(int *args, ptree *pt);
+static void set_scaler_f(int *args, ptree *pt);
+static void vct_set_f(int *args, ptree *pt);
+static void outa_polywave_1_mult(int *args, ptree *pt);
+static void outa_oscil_1_mult(int *args, ptree *pt);
+static void outa_add_f2_mult(int *args, ptree *pt);
+static void outa_add_f3_mult(int *args, ptree *pt);
+static void sound_data_set_f(int *args, ptree *pt);
 
 static xen_value *convert_int_to_dbl(ptree *prog, xen_value *i)
 {
@@ -3774,42 +3949,6 @@ static xen_value *coerce_to_boolean(ptree *prog, xen_value *v)
 }
 
 
-static void equal_i2(int *args, ptree *pt);
-static void gt_i2(int *args, ptree *pt);
-static void lt_i2(int *args, ptree *pt);
-static void geq_i2(int *args, ptree *pt);
-static void leq_i2(int *args, ptree *pt);
-
-static void equal_f2(int *args, ptree *pt);
-static void gt_f2(int *args, ptree *pt);
-static void lt_f2(int *args, ptree *pt);
-static void geq_f2(int *args, ptree *pt);
-static void leq_f2(int *args, ptree *pt);
-
-static void equal_i3(int *args, ptree *pt);
-static void gt_i3(int *args, ptree *pt);
-static void lt_i3(int *args, ptree *pt);
-static void geq_i3(int *args, ptree *pt);
-static void leq_i3(int *args, ptree *pt);
-
-static void equal_f3(int *args, ptree *pt);
-static void gt_f3(int *args, ptree *pt);
-static void lt_f3(int *args, ptree *pt);
-static void geq_f3(int *args, ptree *pt);
-static void leq_f3(int *args, ptree *pt);
-
-static void not_b(int *args, ptree *pt);
-
-static void odd_i(int *args, ptree *pt);
-static void even_i(int *args, ptree *pt);
-static void zero_i(int *args, ptree *pt);
-static void negative_i(int *args, ptree *pt);
-static void positive_i(int *args, ptree *pt);
-static void zero_f(int *args, ptree *pt);
-static void negative_f(int *args, ptree *pt);
-static void positive_f(int *args, ptree *pt);
-
-
 #define NUM_IF_OPS 29
 
 static opt_ops if_ops[NUM_IF_OPS] = {
@@ -4399,9 +4538,165 @@ static xen_value *do_warn_of_type_trouble(int var_type, int expr_type, XEN form)
   return(rv);
 }
 
+#define INC_AND_JUMP_MAYBE() \
+  (INT_ARG_1)++; \
+  if (INT_ARG_1 != INT_ARG_2) \
+    pt->pc = pt->program + pt->ints[args[0]]; \
+  else pt->pc += 2; 
 
-static void inc_i_1(int *args, ptree *pt);
-static void add_i2(int *args, ptree *pt);
+
+static void add_f2_inc_and_jump_maybe(int *args, ptree *pt) 
+{
+  FLOAT_ARG_3 = (FLOAT_ARG_4 + FLOAT_ARG_5);  /* all add 3 */
+  INC_AND_JUMP_MAYBE();
+}
+
+
+static void locsig_3f_mono_no_rev_inc_and_jump_maybe(int *args, ptree *pt)        
+{
+  mus_locsig_mono_no_reverb(CLM_ARG_4, INT_ARG_5, FLOAT_ARG_6);
+  INC_AND_JUMP_MAYBE();
+}
+
+
+static void locsig_v_mono_no_rev_inc_and_jump_maybe(int *args, ptree *pt) 
+{
+  mus_locsig_mono_no_reverb(CLM_ARG_8, INT_ARG_9, FLOAT_ARG_7 * mus_oscil_fm(CLM_ARG_4, FLOAT_ARG_5 + FLOAT_ARG_6));
+  INC_AND_JUMP_MAYBE();
+}
+
+
+static void sin_f_add_inc_and_jump_maybe(int *args, ptree *pt) 
+{
+  FLOAT_ARG_3 = FLOAT_ARG_5 + sin(FLOAT_ARG_4);
+  INC_AND_JUMP_MAYBE();
+}
+
+
+static void locsig_v_stereo_inc_and_jump_maybe(int *args, ptree *pt) 
+{
+  mus_locsig_stereo(CLM_ARG_8, INT_ARG_9, FLOAT_ARG_7 * mus_oscil_fm(CLM_ARG_4, FLOAT_ARG_5 + FLOAT_ARG_6));
+  INC_AND_JUMP_MAYBE();
+}
+
+
+static void outa_3f_inc_and_jump_maybe(int *args, ptree *pt)              
+{
+  mus_out_any_to_file(CLM_ARG_6, INT_ARG_4, 0, FLOAT_ARG_5);
+  INC_AND_JUMP_MAYBE();
+}
+
+
+static void outa_multiply_f3_inc_and_jump_maybe(int *args, ptree *pt)     
+{
+  mus_out_any_to_file(CLM_ARG_6, INT_ARG_4, 0, FLOAT_ARG_5 * FLOAT_ARG_7 * FLOAT_ARG_8);
+  INC_AND_JUMP_MAYBE();
+}
+
+
+static void frame_set_0r_inc_and_jump_maybe(int *args, ptree *pt) 
+{
+  mus_frame_set(CLM_ARG_4, INT_ARG_5, FLOAT_ARG_6);
+  INC_AND_JUMP_MAYBE();
+}
+
+
+static void vct_set_f_inc_and_jump_maybe(int *args, ptree *pt) 
+{
+  VCT_ARG_4->data[INT_ARG_5] = FLOAT_ARG_6; FLOAT_ARG_3 = FLOAT_ARG_6;
+  INC_AND_JUMP_MAYBE();
+}
+
+
+static void set_scaler_f_inc_and_jump_maybe(int *args, ptree *pt) 
+{
+  mus_set_scaler(CLM_ARG_3, FLOAT_ARG_4);
+  INC_AND_JUMP_MAYBE();
+}
+
+
+static void outa_multiply_f2_inc_and_jump_maybe(int *args, ptree *pt)     
+{
+  mus_out_any_to_file(CLM_ARG_6, INT_ARG_4, 0, FLOAT_ARG_5 * FLOAT_ARG_7);
+  INC_AND_JUMP_MAYBE();
+}
+
+
+static void outa_polywave_1_mult_inc_and_jump_maybe(int *args, ptree *pt) 
+{
+  mus_out_any_to_file(CLM_ARG_6, INT_ARG_4, 0, FLOAT_ARG_8 * mus_polywave(CLM_ARG_7, FLOAT_ARG_5));
+  INC_AND_JUMP_MAYBE();
+}
+
+
+static void outa_oscil_1_mult_inc_and_jump_maybe(int *args, ptree *pt)    
+{
+  mus_out_any_to_file(CLM_ARG_6, INT_ARG_4, 0, FLOAT_ARG_8 * mus_oscil_fm(CLM_ARG_7, FLOAT_ARG_5));
+  INC_AND_JUMP_MAYBE();
+}
+
+
+static void outa_add_f2_mult_inc_and_jump_maybe(int *args, ptree *pt)     
+{
+  mus_out_any_to_file(CLM_ARG_6, INT_ARG_4, 0, FLOAT_ARG_8 * (FLOAT_ARG_5 + FLOAT_ARG_7));
+  INC_AND_JUMP_MAYBE();
+}
+
+
+static void sound_data_set_f_inc_and_jump_maybe(int *args, ptree *pt) 
+{
+  SOUND_DATA_ARG_4->data[INT_ARG_5][INT_ARG_6] = FLOAT_ARG_7;
+  FLOAT_ARG_3 = FLOAT_ARG_7;
+  INC_AND_JUMP_MAYBE();
+}
+
+
+static void outa_add_f3_mult_inc_and_jump_maybe(int *args, ptree *pt)     
+{
+  mus_out_any_to_file(CLM_ARG_6, INT_ARG_4, 0, FLOAT_ARG_7 * (FLOAT_ARG_5 + FLOAT_ARG_8 + FLOAT_ARG_9));
+  INC_AND_JUMP_MAYBE();
+}
+
+
+static void locsig_v_mono_inc_and_jump_maybe(int *args, ptree *pt) 
+{
+  mus_locsig_mono(CLM_ARG_8, INT_ARG_9, FLOAT_ARG_7 * mus_oscil_fm(CLM_ARG_4, FLOAT_ARG_5 + FLOAT_ARG_6));
+}
+
+
+
+#define NUM_DO_OPS 17
+
+static opt_ops do_ops[NUM_DO_OPS] = {
+  {locsig_v_mono_no_rev, "locsig_v_mono_no_rev", locsig_v_mono_no_rev_inc_and_jump_maybe, "locsig_v_mono_no_rev_inc_and_jump_maybe", NULL, NULL},
+  {add_f2, "add_f2", add_f2_inc_and_jump_maybe, "add_f2_inc_and_jump_maybe", NULL, NULL},
+  {locsig_3f_mono_no_rev, "locsig_3f_mono_no_rev", locsig_3f_mono_no_rev_inc_and_jump_maybe, "locsig_3f_mono_no_rev_inc_and_jump_maybe", NULL, NULL},
+  {sin_f_add, "sin_f_add", sin_f_add_inc_and_jump_maybe, "sin_f_add_inc_and_jump_maybe", NULL, NULL},
+  {locsig_v_stereo, "locsig_v_stereo", locsig_v_stereo_inc_and_jump_maybe, "locsig_v_stereo_inc_and_jump_maybe", NULL, NULL},
+  {locsig_v_mono, "locsig_v_mono", locsig_v_mono_inc_and_jump_maybe, "locsig_v_mono_inc_and_jump_maybe", NULL, NULL},
+  {outa_3f, "outa_3f", outa_3f_inc_and_jump_maybe, "outa_3f_inc_and_jump_maybe", NULL, NULL},
+  {outa_multiply_f3, "outa_multiply_f3", outa_multiply_f3_inc_and_jump_maybe, "outa_multiply_f3_inc_and_jump_maybe", NULL, NULL},
+  {outa_multiply_f2, "outa_multiply_f2", outa_multiply_f2_inc_and_jump_maybe, "outa_multiply_f2_inc_and_jump_maybe", NULL, NULL},
+  {frame_set_0r, "frame_set_0r", frame_set_0r_inc_and_jump_maybe, "frame_set_0r_inc_and_jump_maybe", NULL, NULL}, 
+  {vct_set_f, "vct_set_f", vct_set_f_inc_and_jump_maybe, "vct_set_f_inc_and_jump_maybe", NULL, NULL}, 
+  {set_scaler_f, "set_scaler_f", set_scaler_f_inc_and_jump_maybe, "set_scaler_f_inc_and_jump_maybe", NULL, NULL},
+  {outa_polywave_1_mult, "outa_polywave_1_mult", outa_polywave_1_mult_inc_and_jump_maybe, "outa_polywave_1_mult_inc_and_jump_maybe", NULL, NULL},
+  {outa_oscil_1_mult, "outa_oscil_1_mult", outa_oscil_1_mult_inc_and_jump_maybe, "outa_oscil_1_mult_inc_and_jump_maybe", NULL, NULL},
+  {outa_add_f2_mult, "outa_add_f2_mult", outa_add_f2_mult_inc_and_jump_maybe, "outa_add_f2_mult_inc_and_jump_maybe", NULL, NULL},
+  {outa_add_f3_mult, "outa_add_f3_mult", outa_add_f3_mult_inc_and_jump_maybe, "outa_add_f3_mult_inc_and_jump_maybe", NULL, NULL},
+  {sound_data_set_f, "sound_data_set_f", sound_data_set_f_inc_and_jump_maybe, "sound_data_set_f_inc_and_jump_maybe", NULL, NULL},
+};
+
+
+static int find_do_op(triple *prev_op)
+{
+  int i;
+  for (i = 0; i < NUM_DO_OPS; i++)
+    if (prev_op->function == do_ops[i].func)
+      return(i);
+  return(-1);
+}
+
 
 static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 {
@@ -4628,15 +4923,47 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
 		 */
 		p_op->args[1] = prev_op->args[1];
 		p_op->args[2] = prev_op->args[2];
+		p_op->args[0] = jump_to_body->addr; 
+		p_op->types[0] = R_INT;
 
 		p_op->function = inc_and_jump_if_not_equal;
 		p_op->op_name = "inc_and_jump_if_not_equal";
-		p_op->args[0] = jump_to_body->addr; 
-		p_op->types[0] = R_INT;
 #if WITH_COUNTERS
 		p_op->func_loc = get_func_loc(p_op->function, p_op->op_name);
 #endif
 		/* prev_op has to be left in place -- it is the target of the original (pre increment) jump */
+
+		if (prog->triple_ctr > 1)
+		  {
+		    triple *p2_op;
+		    int loc;
+		    p2_op = prog->program[prog->triple_ctr - 3];
+		    loc = find_do_op(p2_op);
+		    if (loc >= 0)
+		      {
+			int k, p2_args;
+			p2_args = p2_op->num_args;
+
+			p2_op->types = (int *)realloc(p2_op->types, (p2_args + 3) * sizeof(int));
+			p2_op->args = (int *)realloc(p2_op->args, (p2_args + 3) * sizeof(int));
+			for (k = p2_args - 1; k >= 0; k--)
+			  {
+			    p2_op->args[k + 3] = p2_op->args[k];
+			    p2_op->types[k + 3] = p2_op->types[k];
+			  }
+			for (k = 0; k < 3; k++)
+			  {
+			    p2_op->args[k] = p_op->args[k];
+			    p2_op->types[k] = p_op->types[k];
+			  }
+			p2_op->num_args = p2_args + 3;
+			p2_op->function = do_ops[loc].mult_func;
+			p2_op->op_name = do_ops[loc].mult_func_name;
+#if WITH_COUNTERS
+			p2_op->func_loc = get_func_loc(p2_op->function, p2_op->op_name);
+#endif				  
+		      }
+		  }
 	      }
 	  }
 	/* change previous instruction to jump_if_not_equal */
@@ -5159,105 +5486,11 @@ static void multiply_f_i(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 * IN
 
 static void multiply_f_i_i(int *args, ptree *pt) {INT_RESULT = (Int)(FLOAT_ARG_1 * INT_ARG_2);}
 
-static void add_f2_mult(int *args, ptree *pt);
-static void add_f2(int *args, ptree *pt);
-static void add_f3_mult(int *args, ptree *pt);
-static void add_f3(int *args, ptree *pt);
-static void subtract_f2(int *args, ptree *pt);
-static void subtract_f2_mult(int *args, ptree *pt);
-static void subtract_f3(int *args, ptree *pt);
-static void subtract_f3_mult(int *args, ptree *pt);
-static void multiply_add_f2(int *args, ptree *pt);
-static void multiply_add_f2_mult(int *args, ptree *pt);
-static void oscil_0f_1(int *args, ptree *pt);
-static void oscil_0f_1_env(int *args, ptree *pt);
-static void oscil_0f_1_mult(int *args, ptree *pt);
-static void oscil_1f_1(int *args, ptree *pt);
-static void oscil_1f_1_env(int *args, ptree *pt);
-static void oscil_1f_1_mult(int *args, ptree *pt);
-static void oscil_1f_2(int *args, ptree *pt);
-static void oscil_1f_2_env(int *args, ptree *pt);
-static void oscil_1f_2_mult(int *args, ptree *pt);
-static void oscil_1f_2m(int *args, ptree *pt);
-static void oscil_1f_2m_env(int *args, ptree *pt);
-static void oscil_1f_2m_mult(int *args, ptree *pt);
-static void oscil_1f_3ma(int *args, ptree *pt);
-static void oscil_1f_3ma_mult(int *args, ptree *pt);
-static void oscil_1f_3ma_env(int *args, ptree *pt);
-static void oscil_1f_3(int *args, ptree *pt);
-static void oscil_1f_3_mult(int *args, ptree *pt);
-static void oscil_1f_3_env(int *args, ptree *pt);
-static void polywave_0f_env(int *args, ptree *pt);
-static void polywave_0f_mult(int *args, ptree *pt);
-static void polywave_0f(int *args, ptree *pt);
-static void polywave_1f_env(int *args, ptree *pt);
-static void polywave_1f_mult(int *args, ptree *pt);
-static void polywave_1f(int *args, ptree *pt);
-static void polywave_1f_2_env(int *args, ptree *pt);
-static void polywave_1f_2_mult(int *args, ptree *pt);
-static void polywave_1f_2(int *args, ptree *pt);
-static void sin_f(int *args, ptree *pt);
-static void sin_f_mult(int *args, ptree *pt);
-static void cos_f(int *args, ptree *pt);
-static void cos_f_mult(int *args, ptree *pt);
-static void abs_f(int *args, ptree *pt);
-static void abs_f_mult(int *args, ptree *pt);
-static void sqrt_f(int *args, ptree *pt);
-static void sqrt_f_mult(int *args, ptree *pt);
-static void env_linear_0f_mult(int *args, ptree *pt);
-static void env_linear_0f_env(int *args, ptree *pt);
-static void env_linear_0f(int *args, ptree *pt);
-static void rand_0f(int *args, ptree *pt);
-static void rand_0f_env(int *args, ptree *pt);
-static void rand_0f_mult(int *args, ptree *pt);
-static void rand_interp_0f(int *args, ptree *pt);
-static void rand_interp_0f_env(int *args, ptree *pt);
-static void rand_interp_0f_mult(int *args, ptree *pt);
-static void vct_constant_ref_0(int *args, ptree *pt);
-static void vct_constant_ref_0_mult(int *args, ptree *pt);
-static void vct_ref_f(int *args, ptree *pt);
-static void vct_ref_f_mult(int *args, ptree *pt);
-static void vector_ref_f(int *args, ptree *pt);
-static void delay_1f(int *args, ptree *pt);
-static void delay_1f_env(int *args, ptree *pt);
-static void delay_1f_mult(int *args, ptree *pt);
-static void delay_1f_noz(int *args, ptree *pt);
-static void delay_1f_noz_env(int *args, ptree *pt);
-static void delay_1f_noz_mult(int *args, ptree *pt);
-static void granulate_0f_env(int *args, ptree *pt);
-static void granulate_0f_mult(int *args, ptree *pt);
-static void granulate_0f(int *args, ptree *pt);
-static void formant_1f(int *args, ptree *pt);
-static void formant_1f_mult(int *args, ptree *pt);
-static void formant_1f_env(int *args, ptree *pt);
-static void firmant_1f(int *args, ptree *pt);
-static void firmant_1f_mult(int *args, ptree *pt);
-static void firmant_1f_env(int *args, ptree *pt);
-static void firmant_2f(int *args, ptree *pt);
-static void firmant_2f_mult(int *args, ptree *pt);
-static void firmant_2f_env(int *args, ptree *pt);
-static void polyshape_1fn(int *args, ptree *pt);
-static void polyshape_1fn_mult(int *args, ptree *pt);
-static void polyshape_1fn_env(int *args, ptree *pt);
-static void oscil_0f_vect(int *args, ptree *pt);
-static void oscil_0f_vect_mult(int *args, ptree *pt);
-static void oscil_0f_vect_env(int *args, ptree *pt);
-static void oscil_1f_vect(int *args, ptree *pt);
-static void oscil_1f_vect_mult(int *args, ptree *pt);
-static void oscil_1f_vect_env(int *args, ptree *pt);
-static void formant_1f_vect(int *args, ptree *pt);
-static void formant_1f_vect_mult(int *args, ptree *pt);
-static void formant_1f_vect_env(int *args, ptree *pt);
-static void firmant_1f_vect(int *args, ptree *pt);
-static void firmant_1f_vect_mult(int *args, ptree *pt);
-static void firmant_1f_vect_env(int *args, ptree *pt);
-static void vct_set_f_add(int *args, ptree *pt);
-static void vct_set_f_mult(int *args, ptree *pt);
 
 
 
 /* 2 arg ops that can be combined into a multiply */
-#define NUM_M2_OPS 11
+#define NUM_M2_OPS 12
 
 static opt_ops m2_ops[NUM_M2_OPS] = {
   {oscil_0f_1, "oscil_0f", oscil_0f_1_mult, "oscil_0f_mult", oscil_0f_1_env, "oscil_0f_env"},
@@ -5269,6 +5502,7 @@ static opt_ops m2_ops[NUM_M2_OPS] = {
   {rand_interp_0f, "rand_interp_0f", rand_interp_0f_mult, "rand_interp_0f_mult", rand_interp_0f_env, "rand_interp_0f_env"},
   {abs_f, "abs_f", abs_f_mult, "abs_f_mult", NULL, NULL},
   {sqrt_f, "sqrt_f", sqrt_f_mult, "sqrt_f_mult", NULL, NULL},
+  {random_f, "random_f", random_f_mult, "random_f_mult", NULL, NULL},
   {vct_constant_ref_0, "vct_constant_ref_0", vct_constant_ref_0_mult, "vct_constant_ref_0_mult", NULL, NULL},
   {granulate_0f, "granulate_0f", granulate_0f_mult, "granulate_0f_mult", granulate_0f_env, "granulate_0f_env"},
 };
@@ -5728,23 +5962,6 @@ static void add_i_f(int *args, ptree *pt) {FLOAT_RESULT = (INT_ARG_1 + FLOAT_ARG
 
 
 static void add_f_i(int *args, ptree *pt) {FLOAT_RESULT = (FLOAT_ARG_1 + INT_ARG_2);}
-
-
-static void rand_interp_0f_add(int *args, ptree *pt);
-static void formant_1f_add(int *args, ptree *pt);
-static void abs_f_add(int *args, ptree *pt);
-static void sin_f_add(int *args, ptree *pt);
-static void cos_f_add(int *args, ptree *pt);
-static void abs_f_mult_add(int *args, ptree *pt);
-static void mus_random_f_add(int *args, ptree *pt);
-static void mus_random_f(int *args, ptree *pt);
-static void random_f_add(int *args, ptree *pt);
-static void random_f(int *args, ptree *pt);
-static void subtract_f2_add(int *args, ptree *pt);
-static void sin_f_mult_add(int *args, ptree *pt);
-static void cos_f_mult_add(int *args, ptree *pt);
-static void subtract_f2_mult_add(int *args, ptree *pt);
-static void vct_ref_f_add(int *args, ptree *pt);
 
 
 #define NUM_A2_OPS 7
@@ -7717,6 +7934,7 @@ static xen_value *mus_random_1(ptree *prog, xen_value **args, int num_args)
 
 static void random_f(int *args, ptree *pt) {FLOAT_RESULT = s7_random(s7) * FLOAT_ARG_1;}
 static void random_f_add(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 + s7_random(s7) * FLOAT_ARG_1;}
+static void random_f_mult(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2 * s7_random(s7) * FLOAT_ARG_1;}
 static void random_i(int *args, ptree *pt) {INT_RESULT = (Int)(s7_random(s7) * INT_ARG_1);}
 
 static xen_value *random_1(ptree *prog, xen_value **args, int num_args)

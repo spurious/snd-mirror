@@ -8004,6 +8004,31 @@ This is normally done for you by with-sound, but if you have your own
 output streams,
 and you forget to call mus-close, the GC will eventually do it for you.
 </p>
+
+<p>Here's a function to convert a sound file to some other header or data type using file-&gt;frame and frame-&gt;file:
+</p>
+
+<table border=0 hspace=40><tr><td>
+<pre>
+(define* (convert-soundfile in-file out-file header data)
+  (with-sound (:output (or out-file "test.snd")
+	       :header-type (or header (mus-sound-header-type in-file))
+	       :data-format (or data (mus-sound-data-format in-file))
+	       :channels (mus-sound-chans in-file) 
+	       :srate (mus-sound-srate in-file))
+    (let ((r (<em class=red>make-file-&gt;frame</em> in-file))
+	  (len (mus-sound-frames in-file))
+	  (outf (make-frame (mus-sound-chans in-file))))
+      (run
+       (do ((i 0 (+ i 1)))
+	   ((= i len))
+	 (<em class=red>file-&gt;frame</em> r i outf)
+	 (<em class=red>frame-&gt;file</em> *output* i outf))))))
+
+(convert-soundfile "oboe.snd" "test.snd" mus-aifc mus-bfloat)
+</pre>
+</td></tr></table>
+
 <br><br>
 
 

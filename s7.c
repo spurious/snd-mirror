@@ -430,8 +430,12 @@ typedef struct s7_cell {
     s7_func_t *ffptr;
     
     struct {
-      struct s7_cell *car;
-      struct s7_cell *cdr;
+      struct s7_cell *car, *cdr;
+      struct s7_cell *csr;   
+      /* this could be made available to callers -- doubly linked lists? nets?
+       *   dur to the s7_num_t size, there is unused space in several of these union fields,
+       *   so csr ("sinister" as opposed to cdr = "dexter"??) currently holds some info for the symbol table
+       */
       int line;
     } cons;
     
@@ -460,6 +464,10 @@ typedef struct s7_cell {
 
   } object;
 } s7_cell;
+
+/* on 32 bit machines, s7_cell is 28 bytes because s7_num_t is 20 (2 doubles + type char) + 8 overhead (flag + hloc)
+ * on 64 bit machines, it is 40 (28 for continuation + 8 overhead + 4 pad bytes)
+ */
 
 
 #if HAVE_PTHREADS
@@ -634,7 +642,7 @@ struct s7_scheme {
 #define set_mark(p)                   typeflag(p)  |= T_GC_MARK
 #define clear_mark(p)                 typeflag(p)  &= (~T_GC_MARK)
 /* making this a separate bool field in the cell struct slightly speeds up the mark function,
- *   but at the cost of 4 bytes per object. Since the speedup was about 2% overall, I think
+ *   but at the cost of 4 (or 8!) bytes per object. Since the speedup was about .5% overall (2253 to 2262), I think
  *   the size increase is more important.
  */
 
@@ -729,6 +737,8 @@ struct s7_scheme {
 #define caddar(p)                     car(cdr(cdr(car(p))))
 #define pair_line_number(p)           (p)->object.cons.line
 #define port_file_number(p)           (p)->object.port->file_number
+
+#define csr(p)                   ((p)->object.cons.csr)
 
 #define string_value(p)               ((p)->object.string.svalue)
 #define string_length(p)              ((p)->object.string.length)
@@ -2046,6 +2056,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
       s7_pointer x;
       NEW_CELL(sc, x); 
       car(x) = slot;
+      csr(x) = variable;
       cdr(x) = e;
       set_type(x, T_PAIR);
       car(env) = x;
@@ -2083,6 +2094,7 @@ static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s
   NEW_CELL(sc, x);
   /* car(x) = immutable_cons(sc, variable, value); */
   car(x) = y;
+  csr(x) = variable;
   cdr(x) = car(sc->envir);
   set_type(x, T_PAIR);
 
@@ -2106,11 +2118,11 @@ static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl)
       if (s7_is_vector(y))
 	return(symbol_global_slot(hdl));
 
-      if (caar(y) == hdl)
+      if (csr(y) == hdl)
 	return(car(y));
       
       for (y = cdr(y); is_pair(y); y = cdr(y))
-	if (caar(y) == hdl)
+	if (csr(y) == hdl)
 	  return(car(y));
     }
   return(sc->NIL); 
@@ -2125,11 +2137,11 @@ static s7_pointer find_local_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hd
   if (s7_is_vector(y))
     return(symbol_global_slot(hdl));
 
-  if (caar(y) == hdl)
+  if (csr(y) == hdl)
     return(car(y));
       
   for (y = cdr(y); is_pair(y); y = cdr(y))
-    if (caar(y) == hdl)
+    if (csr(y) == hdl)
       return(car(y));
 
   return(sc->NIL); 
@@ -2195,7 +2207,7 @@ static bool lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym, s7_poi
 {
   s7_pointer x;
   for (x = car(sc->envir) /* presumably the arglist */; is_pair(x); x = cdr(x))
-    if (caar(x) == sym)
+    if (csr(x) == sym)
       {
 	/* car(x) is our binding (symbol value) */
 	cdar(x) = val;
@@ -16849,6 +16861,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		NEW_CELL(sc, x);
 		car(x) = y;
+		csr(x) = z;
 		cdr(x) = car(sc->envir);
 		set_type(x, T_PAIR);
 
@@ -17090,19 +17103,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* if we're defining a function, add its symbol to the new function's environment under the name __func__ */
       if ((is_closure(sc->value)) || 
 	  (is_closure_star(sc->value)))
-	closure_environment(sc->value) = 
-	  s7_cons(sc, 
-		  s7_cons(sc, 
-			  port_filename(sc->input_port) ? 
-			    immutable_cons(sc, 
-					      sc->__FUNC__, 									       
-					      make_list_3(sc, 
-							  sc->code,
-							  make_protected_string(sc, port_filename(sc->input_port)),
-							  s7_make_integer(sc, port_line_number(sc->input_port)))) :
-			    immutable_cons(sc, sc->__FUNC__, sc->code), 
-			  sc->NIL), 
-		  closure_environment(sc->value));
+	{
+	  if (port_filename(sc->input_port))
+	    sc->x = immutable_cons(sc, 
+			       sc->__FUNC__, 									       
+			       make_list_3(sc, 
+					   sc->code,
+					   make_protected_string(sc, port_filename(sc->input_port)),
+					   s7_make_integer(sc, port_line_number(sc->input_port))));
+	  else sc->x = immutable_cons(sc, sc->__FUNC__, sc->code);
+	  sc->x = s7_cons(sc, sc->x, sc->NIL);
+	  csr(sc->x) = sc->__FUNC__;
+	  closure_environment(sc->value) = s7_cons(sc, sc->x, closure_environment(sc->value));
+	}
       else
 	{
 	  if (s7_is_procedure_with_setter(sc->value))
