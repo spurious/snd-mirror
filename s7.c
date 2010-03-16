@@ -430,10 +430,9 @@ typedef struct s7_cell {
     s7_func_t *ffptr;
     
     struct {
-      struct s7_cell *car, *cdr;
-      struct s7_cell *csr;   
+      s7_pointer car, cdr, csr;
       /* this could be made available to callers -- doubly linked lists? nets?
-       *   dur to the s7_num_t size, there is unused space in several of these union fields,
+       *   due to the s7_num_t size, there is unused space in several of these union fields,
        *   so csr ("sinister" as opposed to cdr = "dexter"??) currently holds some info for the symbol table
        */
       int line;
@@ -738,7 +737,7 @@ struct s7_scheme {
 #define pair_line_number(p)           (p)->object.cons.line
 #define port_file_number(p)           (p)->object.port->file_number
 
-#define csr(p)                   ((p)->object.cons.csr)
+#define csr(p)                        ((p)->object.cons.csr)
 
 #define string_value(p)               ((p)->object.string.svalue)
 #define string_length(p)              ((p)->object.string.length)
@@ -1767,14 +1766,14 @@ static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char
   str = s7_make_permanent_string(name);
   x = permanent_cons(str, sc->NIL, T_SYMBOL | T_ATOM | T_SIMPLE | T_DONT_COPY | T_ETERNAL);
   symbol_location(x) = location;
-  symbol_global_slot(x) = sc->NIL;
+  symbol_global_slot(x) = sc->NIL; /* accesses car(x) */
 
 #if HAVE_PTHREADS
   pthread_mutex_lock(&symtab_lock);
 #endif
 
   vector_element(sc->symbol_table, location) = permanent_cons(x, vector_element(sc->symbol_table, location), 
-								 T_PAIR | T_ATOM | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY);
+							      T_PAIR | T_ATOM | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY);
 #if HAVE_PTHREADS
   pthread_mutex_unlock(&symtab_lock);
 #endif
@@ -14751,8 +14750,13 @@ s7_pointer s7_error_and_exit(s7_scheme *sc, s7_pointer type, s7_pointer info)
 
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj)
 {
-  return(s7_error(sc, sc->ERROR, 
-		  make_list_2(sc, make_protected_string(sc, errmsg), obj)));
+  return(s7_error(sc, sc->ERROR, make_list_2(sc, make_protected_string(sc, errmsg), obj)));
+}
+
+
+static s7_pointer eval_error_no_arg(s7_scheme *sc, const char *errmsg)
+{
+  return(s7_error(sc, sc->ERROR, s7_cons(sc, make_protected_string(sc, errmsg))));
 }
 
 
@@ -15576,6 +15580,8 @@ static token_t token(s7_scheme *sc)
 
 	 and ambiguous:
 	 :(defmacro hi (@foo foo) `(+ ,@foo 1))
+
+	 what about , @foo -- is the space significant?  We accept ,@ foo.
       */
 
       if ((c = inchar(sc, pt)) == '@') 
@@ -15919,9 +15925,9 @@ static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
     return(x);
 
   if (sym == sc->UNQUOTE)
-    return(eval_error(sc, "unquote (',') occurred outside quasiquote", sc->NIL));
+    return(eval_error_no_arg(sc, "unquote (',') occurred outside quasiquote"));
   if (sym == sc->UNQUOTE_SPLICING)
-    return(eval_error(sc, "unquote-splicing (',@') occurred outside quasiquote", sc->NIL));
+    return(eval_error_no_arg(sc, "unquote-splicing (',@') occurred outside quasiquote"));
 
   return(eval_error(sc, "~A: unbound variable", sym));
 }
@@ -16075,6 +16081,47 @@ static bool prepare_closure_star(s7_scheme *sc)
     }
   return(true);
 }
+
+
+static void prepare_do_step_variables(s7_scheme *sc)
+{
+  sc->args = safe_reverse_in_place(sc, sc->args);
+  sc->code = car(sc->args);                       /* saved at the start */
+  sc->args = cdr(sc->args);                       /* init values */
+  sc->envir = new_frame_in_env(sc, sc->envir); 
+  
+  sc->value = sc->NIL;
+  for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
+    sc->value = s7_cons(sc, add_to_local_environment(sc, caar(sc->x), car(sc->y)), sc->value);
+  
+  /* now we've set up the environment, next set up for the loop */
+  sc->y = safe_reverse_in_place(sc, sc->value);
+  
+  /* here args is a list of init values (in order of occurrence in the do var list), but those values are also in the bindings */
+  sc->args = sc->NIL;
+  
+  /* sc->y is the list of bindings, sc->x is the step variable info 
+   *    so car(sc->x) is a step variable's info,
+   *       caar is the variable name, cadar is its initial value (possibly an expression), caddar is the step expression, if any
+   */
+  for (sc->x = car(sc->code); sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y))       
+    if (cddar(sc->x) != sc->NIL)                /* else no incr expr, so ignore it henceforth */
+      sc->args = s7_cons(sc, 
+			 make_list_3(sc, 
+				     car(sc->y),      /* the binding pair in the local environment */
+				     caddar(sc->x),   /* the step expression */    
+				     cdar(sc->y)),    /* the initial value */
+			 sc->args);
+  
+  sc->args = safe_reverse_in_place(sc, sc->args);
+  sc->args = s7_cons(sc, sc->args, cadr(sc->code));
+  sc->code = cddr(sc->code);
+  
+  /* here args is a list of 2 or 3 lists, 1st is (list (list (var . binding) incr-expr init-value) ...), 2nd is end-expr, 3rd can be result expr
+   *   so for (do ((i 0 (+ i 1))) ((= i 3) (+ i 1)) ...) args is ((((i . 0) (+ i 1) 0)) (= i 3) (+ i 1) 0)
+   */
+}
+
 
 
 
@@ -16387,35 +16434,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto DO_END;
 	}
 
-      /* if run...
-       *   sc->x = cdddar(sc->args); -- we can assume this args list only has variables that need incrementing 
-       *   if (sc->x != sc->NIL)
-       *     sc->value = c_function_call(car(sc->x))(sc, cdr(sc->x))
-       *   else { goto the stuff below }
-       *
-       * args list: ((i . 0) (+ i 1) 0 [op + args predigested])
-       *                                ^pointer to the c_function itself ready for application
-       *                                      ^constants as themselves, var refs as direct env value ref, anything else give up a long time ago
-       *   so we're appending after the initial value location the list (op-lookedup arg-direct ...)
-       *   (see 16498 below make_list_3 -> make_list_4) [remember to check arg num]
-       *
-       * cadar
-       *    ^current arg from ((arg data) (arg data)...) list
-       *   ^ its second component (not the var name and binding in the environment)
-       *  ^  car of that of course (rest is value saved during binding pass, then presumably this predigested arg list)
-       *
-       * if expr, can we get it the same way but save as temp -- vector of these calls:
-       *
-       *  (+ i (* j 2))
-       *  (vector
-       *    ((arg_2 . 0) ...)
-       *    ([set!] binding_for_arg_2 (op_times binding_for_j 2))
-       *    (op_add binding_for_i binding_for_arg_2)
-       *  returning (l end)
-       */
-
       push_stack(sc, opcode(OP_DO_STEP2), sc->args, sc->code);
-
+      
       /* here sc->args is a list like (((i . 0) (+ i 1) 0) ...)
        *   so sc->code becomes (+ i 1) in this case 
        */
@@ -16471,11 +16491,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      if ((!is_pair(cddar(sc->code))) &&
 		  (cddar(sc->code) != sc->NIL))       /* (do ((i 0 . 1)) ...) */
-		return(eval_error(sc, "do: variable info is an improper list?: ~A", sc->code));
+		return(eval_error(sc, "do: step variable info is an improper list?: ~A", sc->code));
 
 	      if ((is_pair(cddar(sc->code))) && 
 		  (cdr(cddar(sc->code)) != sc->NIL))  /* (do ((i 0 1 (+ i 1))) ...) */
-		return(eval_error(sc, "do: variable info has extra stuff after the increment: ~A", sc->code));
+		return(eval_error(sc, "do: step variable info has extra stuff after the increment: ~A", sc->code));
 	    }
 
 	  push_stack(sc, opcode(OP_DO_INIT), sc->args, cdr(sc->code));
@@ -16484,36 +16504,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL;
 	}
 
+      /* all the initial values are now in the args list */
+
       if (sc->code != sc->NIL)                        /* (do ((i 0 i) . 1) ((= i 1))) */
 	return(eval_error(sc, "do: list of variables is improper: ~A", sc->code));
       
-      /* all done */
-      sc->args = safe_reverse_in_place(sc, sc->args);
-      sc->code = car(sc->args);                       /* saved at the start */
-      sc->args = cdr(sc->args);                       /* init values */
-      sc->envir = new_frame_in_env(sc, sc->envir); 
-
-      sc->value = sc->NIL;
-      for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
-	sc->value = s7_cons(sc, add_to_local_environment(sc, caar(sc->x), car(sc->y)), sc->value);
-
-      /* now we've set up the environment, next set up for the loop */
-      sc->y = safe_reverse_in_place(sc, sc->value);
-
-      /* here args is a list of init values (in order of occurence in the do var list), but those values are also in the bindings */
-      sc->args = sc->NIL;
-
-      for (sc->x = car(sc->code); sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y))       
-	if (cddar(sc->x) != sc->NIL)                  /* no incr expr, so ignore it henceforth */
-	  sc->args = s7_cons(sc, make_list_3(sc, car(sc->y), caddar(sc->x), cdar(sc->y)), sc->args);
-
-      sc->args = safe_reverse_in_place(sc, sc->args);
-      sc->args = s7_cons(sc, sc->args, cadr(sc->code));
-      sc->code = cddr(sc->code);
-      
-      /* here args is a list of 2 or 3 lists, 1st is (list (list (var . binding) incr-expr init-value) ...), 2nd is end-expr, 3rd can be result expr
-       *   so for (do ((i 0 (+ i 1))) ((= i 3) (+ i 1)) ...) args is ((((i . 0) (+ i 1))) (= i 3) (+ i 1) 0)
-       */
+      prepare_do_step_variables(sc);
 
       
     DO_END:
@@ -16529,10 +16525,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* evaluate the endtest */
 	  sc->code = cadr(sc->args);                /* end expr */
 	  sc->args = sc->NIL;
-
-	  /* if run... as in step above, if csr is a function, call it to get the end-test evaluation, rather than going to eval 
-	   */
-
 	  goto EVAL;
 	}
       else sc->value = sc->F;                       /* (do ((...)) () ...) -- no endtest */
@@ -17130,11 +17122,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if (port_filename(sc->input_port))
 	    sc->x = immutable_cons(sc, 
-			       sc->__FUNC__, 									       
-			       make_list_3(sc, 
-					   sc->code,
-					   make_protected_string(sc, port_filename(sc->input_port)),
-					   s7_make_integer(sc, port_line_number(sc->input_port))));
+				   sc->__FUNC__, 									       
+				   make_list_3(sc, 
+					       sc->code,
+					       make_protected_string(sc, port_filename(sc->input_port)),
+					       s7_make_integer(sc, port_line_number(sc->input_port))));
 	  else sc->x = immutable_cons(sc, sc->__FUNC__, sc->code);
 	  sc->x = s7_cons(sc, sc->x, sc->NIL);
 	  csr(sc->x) = sc->__FUNC__;
@@ -23312,6 +23304,11 @@ s7_scheme *s7_init(void)
   s7_define_set_function(sc, "list-set!",           g_list_set,                3, 0, false, H_list_set);
   s7_define_function(sc, "list-tail",               g_list_tail,               2, 0, false, H_list_tail);
   s7_define_function(sc, "make-list",               g_make_list,               1, 1, false, H_make_list);
+
+#if 0
+  f_identity = s7_make_function(sc, "internal_identity", g_identity, 1, 0, false, NULL);
+  f_ref = s7_make_function(sc, "internal_ref", g_cdr, 1, 0, false, NULL);
+#endif
 
   s7_define_function(sc, "length",                  g_length,                  1, 0, false, H_length);
   s7_define_function(sc, "copy",                    g_copy,                    1, 0, false, H_copy);
