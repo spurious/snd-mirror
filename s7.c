@@ -14756,7 +14756,7 @@ static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj)
 
 static s7_pointer eval_error_no_arg(s7_scheme *sc, const char *errmsg)
 {
-  return(s7_error(sc, sc->ERROR, s7_cons(sc, make_protected_string(sc, errmsg))));
+  return(s7_error(sc, sc->ERROR, s7_cons(sc, make_protected_string(sc, errmsg), sc->NIL)));
 }
 
 
@@ -16689,7 +16689,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   e1args: (6 2 1 +), value: +, code: ()
 	   */
 	}
-      
       
     EVAL_ARGS:
     case OP_EVAL_ARGS1:
