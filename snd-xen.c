@@ -2399,6 +2399,7 @@ static char *find_source_file(const char *orig)
 static XEN g_test_load(XEN name)
 {
   XEN_LOAD_FILE(XEN_TO_C_STRING(name));
+  return(XEN_FALSE);
 }
 #ifdef XEN_ARGIFY_1
   XEN_NARGIFY_1(g_test_load_w, g_test_load)

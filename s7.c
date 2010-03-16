@@ -334,7 +334,7 @@ typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_A
 
 
 typedef struct s7_num_t {
-  char type;
+  int type;
   union {
     
     s7_Int integer_value;
@@ -466,7 +466,7 @@ typedef struct s7_cell {
 } s7_cell;
 
 /* on 32 bit machines, s7_cell is 28 bytes because s7_num_t is 20 (2 doubles + type char) + 8 overhead (flag + hloc)
- * on 64 bit machines, it is 40 (28 for continuation + 8 overhead + 4 pad bytes)
+ * on 64 bit machines, it is 40 (28 for continuation + 8 overhead + 4 pad bytes) -- is there some use for the 4 unused bytes?
  */
 
 
@@ -3390,22 +3390,6 @@ static s7_num_t make_ratio(s7_Int numer, s7_Int denom)
   return(ret);
 }
 
-
-static s7_num_t make_complex(s7_Double rl, s7_Double im)
-{
-  s7_num_t ret;
-  if (im == 0.0)
-    {
-      ret.type = NUM_REAL;
-      real(ret) = rl;
-      return(ret);
-    }
-
-  ret.type = NUM_COMPLEX;
-  real_part(ret) = rl;
-  imag_part(ret) = im;
-  return(ret);
-}
 
 s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n) 
 {
@@ -14883,7 +14867,7 @@ static void improper_arglist_error(s7_scheme *sc)
   s7_pointer x, y;
 
   x = safe_reverse_in_place(sc, sc->args);
-  for (y = x; cdr(y) != sc->NIL; y = cdr(y));
+  for (y = x; cdr(y) != sc->NIL; y = cdr(y)) {};
   cdr(y) = sc->code;
   
   s7_error(sc, sc->ERROR, 
@@ -16403,6 +16387,33 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto DO_END;
 	}
 
+      /* if run...
+       *   sc->x = cdddar(sc->args); -- we can assume this args list only has variables that need incrementing 
+       *   if (sc->x != sc->NIL)
+       *     sc->value = c_function_call(car(sc->x))(sc, cdr(sc->x))
+       *   else { goto the stuff below }
+       *
+       * args list: ((i . 0) (+ i 1) 0 [op + args predigested])
+       *                                ^pointer to the c_function itself ready for application
+       *                                      ^constants as themselves, var refs as direct env value ref, anything else give up a long time ago
+       *   so we're appending after the initial value location the list (op-lookedup arg-direct ...)
+       *   (see 16498 below make_list_3 -> make_list_4) [remember to check arg num]
+       *
+       * cadar
+       *    ^current arg from ((arg data) (arg data)...) list
+       *   ^ its second component (not the var name and binding in the environment)
+       *  ^  car of that of course (rest is value saved during binding pass, then presumably this predigested arg list)
+       *
+       * if expr, can we get it the same way but save as temp -- vector of these calls:
+       *
+       *  (+ i (* j 2))
+       *  (vector
+       *    ((arg_2 . 0) ...)
+       *    ([set!] binding_for_arg_2 (op_times binding_for_j 2))
+       *    (op_add binding_for_i binding_for_arg_2)
+       *  returning (l end)
+       */
+
       push_stack(sc, opcode(OP_DO_STEP2), sc->args, sc->code);
 
       /* here sc->args is a list like (((i . 0) (+ i 1) 0) ...)
@@ -16518,6 +16529,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* evaluate the endtest */
 	  sc->code = cadr(sc->args);                /* end expr */
 	  sc->args = sc->NIL;
+
+	  /* if run... as in step above, if csr is a function, call it to get the end-test evaluation, rather than going to eval 
+	   */
+
 	  goto EVAL;
 	}
       else sc->value = sc->F;                       /* (do ((...)) () ...) -- no endtest */
@@ -16634,6 +16649,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       else 
 	{
 	  /* here sc->value is the func, sc->code is the entire expression */
+	  /*   we don't have to delay lookup of the func because arg evaluation order is not specified, so
+	   *     (let ((func +)) (func (let () (set! func -) 3)	2))
+	   *   can return 5.
+	   *
+	   * for a no-arg func, error if cdr(sc->code) is not nil, else simply call it now? 
+	   *   [sc->code = sc->value; sc->args = cdr(sc->code); goto APPLY]
+	   *   but this really slows us down?!? (and we seem to be doing lots more find_symbol calls??)
+	   */
+
 #if WITH_ENCAPSULATION
 	  if ((is_encapsulating(sc)) &&
 	      (cdr(sc->code) != sc->NIL) &&
@@ -23499,6 +23523,8 @@ s7_scheme *s7_init(void)
 		                      (set! result x)        \n\
 		                      result)))))))");
 #endif
+
+  /* fprintf(stderr, "size: %d %d\n", sizeof(s7_cell), sizeof(s7_num_t)); */
 	   
   return(sc);
 }

@@ -2222,8 +2222,13 @@ void hide_controls(snd_info *sp)
 
 bool showing_controls(snd_info *sp)
 {
+#if defined(GTK_WIDGET_VISIBLE)
   return((GTK_WIDGET_MAPPED(CONTROL_PANEL(sp))) && 
 	 (GTK_WIDGET_VISIBLE(CONTROL_PANEL(sp))));
+#else
+  return((gtk_widget_get_mapped(CONTROL_PANEL(sp))) && 
+	 (gtk_widget_get_visible(CONTROL_PANEL(sp))));
+#endif
 }
 
 

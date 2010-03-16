@@ -3542,6 +3542,12 @@
 (num-test (do ((i 0.0 (+ i 0.1))) ((>= i 0.9999) i)) 1.0)
 (num-test (do ((i 0 (- i 1/2))) ((< i -2) i)) -5/2)
 (num-test (do ((i 0+i (+ i 0+i))) ((> (magnitude i) 2) i)) 0+3i)
+(test (let ((x 0)) 
+	(do ((i 0 (+ i 1)))
+	    ((> i 4) x) 
+	  (set! x (+ x i))
+	  (set! i (+ i 0.5))))
+      4.5)
 
 (test (call/cc (lambda (return) (do () () (if #t (return 123))))) 123)
 (test (call/cc (lambda (return) (do () (#f) (if #t (return 123))))) 123)
@@ -46536,7 +46542,7 @@
 					;(test (do ((i 0 j) (i 0 j) (j 1 (+ j 1))) ((= j 3) i)) 'error) ; ??
 (test (do ((i 1) ()) (= i 1)) 'error)
 (test (do ((i 0 . 1)) ((= i 1)) i) 'error)
-
+(test (do ((i 0 (+ i 1))) ((= i 3)) (set! i "hiho")) 'error)
 
 (test (let ((a 1)) (set! a)) 'error)
 (test (let ((a 1)) (set! a 2 3)) 'error)

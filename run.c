@@ -3215,7 +3215,6 @@ static void abs_f_mult_add(int *args, ptree *pt);
 static void mus_random_f_add(int *args, ptree *pt);
 static void mus_random_f(int *args, ptree *pt);
 static void random_f_add(int *args, ptree *pt);
-static void random_f(int *args, ptree *pt);
 static void subtract_f2_add(int *args, ptree *pt);
 static void sin_f_mult_add(int *args, ptree *pt);
 static void cos_f_mult_add(int *args, ptree *pt);
