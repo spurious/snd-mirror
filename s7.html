@@ -220,7 +220,28 @@ above as an example:
 (hi :b 2 :a 3) -&gt; '(3 2 "hi")
 (hi 3 2 1) -&gt; '(3 2 1)
 </pre>
-<p>See s7test.scm for many examples.  If you want a version of define* that insists
+<p>See s7test.scm for many examples.  Here, for example, is an implementation of parameters (srfi-39?):
+</p>
+<pre>
+(define* (make-parameter initial-value converter)
+  (let* ((unspecified (if #f #f))   ; #&lt;unspecified&gt;
+	 (value (if (procedure? converter) (converter initial-value) initial-value)))
+    (<em class=red>lambda*</em> ((val unspecified))
+      (if (not (eq? val unspecified))
+	  (set! value (if (procedure? converter) (converter val) val)))
+      value)))
+
+&gt; (define hiho (make-parameter 12))
+hiho
+&gt; (hiho)
+12
+&gt; (hiho 32)
+32
+&gt; (hiho)
+32
+</pre>
+
+<p>If you want a version of define* that insists
 that any arguments before the keyword :optional are required:
 </p>
 
@@ -301,28 +322,8 @@ add-2
 </pre>
 
 <p>See s7test.scm for many examples including such perennial favorites as
-when, loop, dotimes, do*, enum, pushnew, and defstruct.  Here's my untutored
-guess at what "parameter" is supposed to be in other schemes:
+when, loop, dotimes, do*, enum, pushnew, and defstruct.
 </p>
-
-<pre>
-(<em class=red>define-macro*</em> (parameter name initial-value)
-  `(define ,name 
-     (let ((value ,initial-value))
-       (lambda* ((val :not-a-value))
-	 (if (not (eq? val :not-a-value))
-	     (set! value val))
-	 value))))
-
-&gt; (parameter hiho 12)
-hiho
-&gt; (hiho)
-12
-&gt; (hiho 32)
-32
-&gt; (hiho)
-32
-</pre>
 </dd>
 <br>
 
@@ -1185,8 +1186,8 @@ bind it to something else, which is asking for confusion).
 </dd>
 <br>
 
-
 <!-- -------------------------------------------------------------------------------- -->
+<!--
 <dt>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>encapsulation</h4></td></tr></table>
@@ -1228,6 +1229,7 @@ global-x
 </pre>
 </dd>
 <br>
+-->
 
 
 <!-- -------------------------------------------------------------------------------- -->

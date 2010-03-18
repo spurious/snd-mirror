@@ -16911,8 +16911,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      else 
 		{
 		  if (is_macro(sc->code))
-		    return(eval_error(sc, "~A: undefined argument to macro?", sc->x));
-		  else return(eval_error(sc, "~A: undefined argument to function?", sc->x));
+		    return(eval_error(sc, "~A: undefined argument to macro", sc->x));
+		  else return(eval_error(sc, "~A: undefined argument to function", sc->x));
 		}
 	    }
 
@@ -22749,6 +22749,21 @@ static void s7_gmp_init(s7_scheme *sc)
 /* WITH_GMP */
 
 
+/* an experiment */
+static s7_pointer g_is_macro(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_macro "(macro? arg) returns #t is its argument is a macro"
+
+  if (is_macro(car(args))) 
+    return(sc->T);
+
+  if (s7_is_symbol(car(args)))
+    return(make_boolean(sc, is_macro(s7_symbol_local_value(sc, car(args), sc->envir))));
+
+  return(sc->F);
+}
+
+
 
 /* -------------------------------- initialization -------------------------------- */
 
@@ -23076,6 +23091,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "defined?",                g_is_defined,              1, 1, false, H_is_defined);
   s7_define_function(sc, "constant?",               g_is_constant,             1, 0, false, H_is_constant);
 
+  s7_define_function(sc, "macro?",                  g_is_macro,                1, 0, false, H_is_macro);
+
   
   s7_define_function(sc, "keyword?",                g_is_keyword,              1, 0, false, H_is_keyword);
   s7_define_function(sc, "make-keyword",            g_make_keyword,            1, 0, false, H_make_keyword);
@@ -23097,6 +23114,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "output-port?",            g_is_output_port,          1, 0, false, H_is_output_port);
   s7_define_function(sc, "char-ready?",             g_is_char_ready,           0, 1, false, H_is_char_ready);
   s7_define_function(sc, "eof-object?",             g_is_eof_object,           1, 0, false, H_is_eof_object);
+  /* this should be named eof? (what isn't an object?) and we should also have (eof) -> #<eof> */
   
   s7_define_function(sc, "current-input-port",      g_current_input_port,      0, 0, false, H_current_input_port);
   s7_define_function(sc, "set-current-input-port",  g_set_current_input_port,  1, 0, false, H_set_current_input_port);
@@ -23533,3 +23551,5 @@ s7_scheme *s7_init(void)
 	   
   return(sc);
 }
+
+/* TODO: if tracing and traced func redefined, update trace? */

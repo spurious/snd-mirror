@@ -3116,6 +3116,12 @@
     control-ops))
  question-ops)
 
+(let ((unspecified (if #f #f)))
+  (for-each
+   (lambda (op)
+     (if (op unspecified)
+	 (format #t "(~A #<unspecified>) returned #t?~%" op)))
+   question-ops))
 
 (for-each 
  (lambda (s)
@@ -3140,6 +3146,7 @@
 (test (if 0 2 3) 2)
 (test (if (list) 2 3) 2)
 (test (if "" 2 3) 2)
+(test (eq? (if #f #f) (if #f #f)) #t) ; I assume there's only one #<unspecified>!
 
 					;(test (if () () ()) 'error) ; ?? s7 thinks it's ok
 
@@ -6699,6 +6706,15 @@
   (test (let () (defmacro hi (q) `(let ((q 32)) `(,,q))) (hi (* 2 3))) '(6))
   (test (let () (defmacro hi (q) `(let ((q 32)) `(,q))) (hi (* 2 3))) '(32))
   (test (let () (defmacro hi (q) `(let () ,@(list q))) (hi (* 2 3))) 6)
+
+  (define-macro (eval-case key . clauses)
+    ;; case with evaluated key-lists
+    `(cond ,@(map (lambda (lst)
+		    (if (pair? (car lst))
+			(cons `(member ,key (list ,@(car lst)))
+			      (cdr lst))
+			lst))
+		  clauses)))
   
   (test (let ()
 	  (define-macro (pop sym)
@@ -50477,7 +50493,7 @@
 		       ;;; (call/cc (lambda (a) a)) -- this causes us to start over!
 		       (make-hash-table 256)
 		       (symbol->value '_?__undefined__?_)                  ; -> #<undefined> hopefully
-		       (vector-fill! (vector 0) 0)                         ; -> #<unspecified>?
+		       (vector-fill! (vector 0) 0)                         ; -> #<unspecified>? [should probably use (if #f #f)]
 		       (with-input-from-string "" (lambda () (read-char))) ; -> #<eof>?
 		       (make-random-state 1234))))
       
