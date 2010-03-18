@@ -433,9 +433,15 @@ typedef struct s7_cell {
       s7_pointer car, cdr, csr;
       /* this could be made available to callers -- doubly linked lists? nets?
        *   due to the s7_num_t size, there is unused space in several of these union fields,
-       *   so csr ("sinister" as opposed to cdr = "dexter"??) currently holds some info for the symbol table
+       *   so csr currently holds some info for the symbol table
        */
       int line;
+#if 0
+       union {
+       int line;
+       s7_pointer cxr;
+       } liner;
+#endif
     } cons;
     
     struct {
@@ -1752,6 +1758,7 @@ static int symbol_table_hash(const char *key, int table_size)
     hashed = *c + hashed * 37;
   return(hashed % table_size); 
   /* using ints here is much faster, and the symbol table will not be enormous, so it's worth splitting out this case */
+  /* precomputing the * 37 and so on only saved about 10% compute time -- 1/2260 overall time */
 } 
 
 
@@ -2112,6 +2119,7 @@ static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl)
   for (x = env; is_pair(x); x = cdr(x)) 
     { 
       s7_pointer y;
+      /* using csr to hold the last found entity in each frame was much slower! */
       y = car(x);
 
       if (s7_is_vector(y))
@@ -17956,6 +17964,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  s7_pointer x;
 		  x = symbol_value(find_symbol(sc, sc->envir, car(sc->value)));
 		  sc->args = make_list_1(sc, sc->value); 
+		  /* fprintf(stderr, "args: %s\n", s7_object_to_c_string(sc, sc->args)); */
 		  sc->code = x;
 		  goto APPLY;
 		}

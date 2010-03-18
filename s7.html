@@ -39,7 +39,7 @@ for other applications, primarily Snd and Common Music.  It exists as just two f
 s7.h, that want only to disappear into someone else's source tree.  There are no libraries,
 no run-time init files, and no configuration scripts.
 It can be built as a stand-alone
-interpreter, if you insist (see below).  s7test.scm is a regression test for s7.
+interpreter (see below).  s7test.scm is a regression test for s7.
 If you're running s7 in a context
 that has getenv, file-exists?, and system (Snd for example), you can use s7-slib-init.scm
 to gain easy access to slib (this init file is named "s7.init" in the slib distribution).
@@ -301,8 +301,28 @@ add-2
 </pre>
 
 <p>See s7test.scm for many examples including such perennial favorites as
-when, loop, dotimes, do*, enum, pushnew, and defstruct.
+when, loop, dotimes, do*, enum, pushnew, and defstruct.  Here's my untutored
+guess at what "parameter" is supposed to be in other schemes:
 </p>
+
+<pre>
+(<em class=red>define-macro*</em> (parameter name initial-value)
+  `(define ,name 
+     (let ((value ,initial-value))
+       (lambda* ((val :not-a-value))
+	 (if (not (eq? val :not-a-value))
+	     (set! value val))
+	 value))))
+
+&gt; (parameter hiho 12)
+hiho
+&gt; (hiho)
+12
+&gt; (hiho 32)
+32
+&gt; (hiho)
+32
+</pre>
 </dd>
 <br>
 
@@ -1228,6 +1248,7 @@ global-x
 <li>__func__ is the name of the function currently being defined or called (as in C).
 <li>vector-for-each, vector-map, hash-table-for-each, string-for-each
 <li>syntactic names can be values: (define progn begin) (progn (display "progn!") (+ 3 4)) or (define function lambda), etc
+<li>begin returns the value of the last form (like progn)
 </ul>
 </dd>
 <br>
