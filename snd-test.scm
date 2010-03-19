@@ -47590,7 +47590,7 @@ EDITS: 1
 	 (do ((k 0 (+ k 1)))
 	     ((= k 3))
 	   (set! j (+ i k)))))
-      (if (not (= j 2)) (format #t ";loop 10 j=~A" j)))
+      (if (not (= j 4)) (format #t ";loop 10 j=~A" j)))
 
     
     (etst '(do ((i 0 (+ i 0.5)) (j 0 (+ 1 j))) ((>= j 3)) (display i)))

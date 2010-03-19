@@ -500,7 +500,7 @@
  (lambda (arg)
    (if (not arg)
        (format #t "(not ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1))))
+ (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) (if #f #f)))
 
 
 
@@ -594,7 +594,7 @@
  (lambda (arg)
    (if (char? arg)
        (format #t "(char? ~A) -> #t?~%" arg)))
- (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (lambda (a) (+ a 1))))
+ (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (if #f #f) (lambda (a) (+ a 1))))
 
 (do ((i 0 (+ i 1)))
     ((= i 256))
@@ -1104,7 +1104,7 @@
 (for-each
  (lambda (arg)
    (test (string? arg) #f))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 
 (test (string=? "foo" "foo") #t)
@@ -1686,7 +1686,7 @@
  (lambda (arg)
    (if (not (equal? (car (cons arg '())) arg))
        (format #t "(car '(~A)) returned ~A?~%" arg (car (cons arg '())))))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
 
 
 (test (cdr (list 1 2 3)) '(2 3))
@@ -1714,7 +1714,7 @@
  (lambda (arg)
    (if (not (equal? (cdr (cons '() arg)) arg))
        (format #t "(cdr '(() ~A) -> ~A?~%" arg (cdr (cons '() arg)))))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
 
 (define (cons-r a b n) (if (= 0 n) (cons a b) (cons (cons-r (+ a 1) (+ b 1) (- n 1)) (cons-r (- a 1) (- b 1) (- n 1)))))
 (define (list-r a b n) (if (= 0 n) (list a b) (list (list-r (+ a 1) (+ b 1) (- n 1)) (list-r (- a 1) (- b 1) (- n 1)))))
@@ -2077,7 +2077,7 @@
  (lambda (arg)
    (if (pair? arg)
        (format #t "(pair? ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
 
 
 
@@ -2115,7 +2115,7 @@
  (lambda (arg)
    (if (list? arg)
        (format #t "(list? ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
 
 
 
@@ -2151,7 +2151,7 @@
  (lambda (arg)
    (if (null? arg)
        (format #t "(null? ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
 
 
 (test (reverse! '(a b c d)) '(d c b a))
@@ -2231,7 +2231,7 @@
 (for-each
  (lambda (arg)
    (test (list-ref (list 1 arg) 1) arg))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
 
 (test (let ((x '(1 . 2))) (set-cdr! x x) (list-ref x 0)) 1)
 (test (let ((x '(1 . 2))) (set-cdr! x x) (list-ref x 1)) 1)
@@ -2250,7 +2250,7 @@
 (for-each
  (lambda (arg)
    (test (let ((x (list 1 2))) (list-set! x 0 arg) (list-ref x 0)) arg))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
 
 
 
@@ -2513,7 +2513,7 @@
 (for-each
  (lambda (arg)
    (test (vector? arg) #f))
- (list #\a 1 '() (list 1) '(1 . 2) #f "hi" 'a-symbol abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a 1 '() (list 1) '(1 . 2) #f "hi" 'a-symbol abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 
 (test (let ((v (make-vector 3 #f))) (and (vector? v) (= (vector-length v) 3) (eq? (vector-ref v 1) #f))) #t)
@@ -2801,7 +2801,7 @@
  (lambda (arg)
    (if (eof-object? arg)
        (format #t "(eof-object? ~A) -> #t?~%" arg)))
- (list "hi" -1 #\a 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (lambda (a) (+ a 1))))
+ (list "hi" -1 #\a 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (if #f #f) (lambda (a) (+ a 1))))
 
 (call-with-output-file "tmp1.r5rs" (lambda (p) (display "3.14" p)))
 (test (call-with-input-file "tmp1.r5rs" (lambda (p) (read p) (let ((val (read p))) (eof-object? val)))) #t)
@@ -4278,6 +4278,20 @@
 (test (let ((asdf 1)) (define (asdf a) (define (asdf a) (+ a 1)) (+ a (asdf a))) (asdf 4)) 9)
 (test (let () (define (a1 a) (define (a2 a) (define (a3 a) (define (a4 a) (+ a 1)) (+ (a4 a) 1)) (+ (a3 a) 1)) (+ (a2 a) 1)) (a1 0)) 4)
 
+(test (let () (define (hi1 a) (define (hi1 b) (+ b 1)) (hi1 a)) (hi1 1)) 2)
+(test (let () (define (hi1 a) (begin (define (hi1 b) (+ b 1))) (hi1 a)) (hi1 1)) 2)
+(test (let ((j 0) (k 0))
+	(define (hi1 a)
+	  (let ((hi1 (lambda (b) 
+		       (set! k (+ k 1)) 
+		       (hi1 (- b 1)))))
+	    (if (<= a 0)
+		(list j k)
+		(begin
+		  (set! j (+ j 1))
+		  (hi1 (- a 1))))))
+	(hi1 3))
+      '(2 2))
 
 
 
@@ -6716,6 +6730,17 @@
 			lst))
 		  clauses)))
   
+  (define-macro (fully-expand form)
+    (define (expand form)
+      ;; walk form looking for macros, expand any that are found
+      (if (pair? form)
+	  (if (macro? (car form))
+	      (expand ((eval (procedure-source (car form))) form))
+	      (cons (expand (car form))
+		    (expand (cdr form))))
+	  form))
+    (expand form))
+
   (test (let ()
 	  (define-macro (pop sym)
 	    (let ((v (gensym "v")))
@@ -45489,7 +45514,7 @@
    (for-each
     (lambda (arg)
       (test (op arg) 'error))
-    (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (lambda (a) (+ a 1)))))
+    (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (if #f #f) (lambda (a) (+ a 1)))))
  (list char-upper-case? char-lower-case? char-upcase char-downcase char-numeric? char-whitespace? char-alphabetic?))
 
 (for-each
@@ -45497,7 +45522,7 @@
    (for-each
     (lambda (arg)
       (test (op #\a arg) 'error))
-    (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (lambda (a) (+ a 1)))))
+    (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (if #f #f) (lambda (a) (+ a 1)))))
  (list char=? char<? char<=? char>? char>? char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?))
 
 (for-each
@@ -45505,7 +45530,7 @@
    (for-each
     (lambda (arg)
       (test (op arg #\a) 'error))
-    (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (lambda (a) (+ a 1)))))
+    (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (if #f #f) (lambda (a) (+ a 1)))))
  (list char=? char<? char<=? char>? char>? char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?))
 
 (test (char=? #\a) 'error)
@@ -45542,12 +45567,12 @@
 (for-each
  (lambda (arg)
    (test (char->integer arg) 'error))
- (list -1 1 0 123456789 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list -1 1 0 123456789 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (integer->char arg) 'error))
- (list -1 123456789 -123456789 #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list -1 123456789 -123456789 #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 
 					;(test (string? "das ist die eine haelfte" "und das die andere") 'error)
@@ -45567,80 +45592,80 @@
 (for-each
  (lambda (arg)
    (test (string=? "hi" arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string<? "hi" arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string>? "hi" arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string<=? "hi" arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string>=? "hi" arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string-ci=? "hi" arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 
 (for-each
  (lambda (arg)
    (test (string-ci<? "hi" arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string-ci>? "hi" arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string-ci<=? "hi" arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string-ci>=? "hi" arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string-length arg) 'error))
- (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string #\a arg) 'error))
- (list '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (test (make-string -1) 'error)
 
 (for-each
  (lambda (arg)
    (test (make-string 3 arg) 'error))
- (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (make-string arg #\a) 'error))
- (list #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (make-string arg) 'error))
- (list #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (test (string-ref "abcdef-dg1ndh" 20) 'error)
 (test (string-ref "abcdef-dg1ndh") 'error)
@@ -45656,12 +45681,12 @@
 (for-each
  (lambda (arg)
    (test (string-ref arg 0) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string-ref "hiho" arg) 'error))
- (list #\a -1 123 4 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a -1 123 4 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (test (let ((hi (string-copy "hi"))) (string-set! hi 2 #\H) hi) 'error)
 (test (let ((hi (string-copy "hi"))) (string-set! hi -1 #\H) hi) 'error)
@@ -45675,17 +45700,17 @@
 (for-each
  (lambda (arg)
    (test (string-set! arg 0 #\a) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string-set! "hiho" arg #\a) 'error))
- (list #\a -1 123 4 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a -1 123 4 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string-set! "hiho" 0 arg) 'error))
- (list 1 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list 1 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (test (string-fill! "" #\a) 'error)
 (test (string-fill! "hiho" #\a) 'error)
@@ -45702,22 +45727,22 @@
 (for-each
  (lambda (arg)
    (test (substring "hiho" arg 0) 'error))
- (list "hi" #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list "hi" #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (substring "hiho" 1 arg) 'error))
- (list "hi" #\a 0 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list "hi" #\a 0 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (substring arg 1 2) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string-append "hiho" arg) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (test (string-append '()) 'error)
 (test (string '()) 'error)
@@ -45725,39 +45750,39 @@
 (for-each
  (lambda (arg)
    (test (let ((hiho "hiho")) (string-fill! hiho arg) hiho) 'error))
- (list 1 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list 1 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string-fill! arg #\a) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string-copy arg) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string->list arg) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (test (let ((x (cons #\a #\b))) (set-cdr! x x) (list->string x)) 'error)
 
 (for-each
  (lambda (arg)
    (test (list->string arg) 'error))
- (list "hi" #\a 1 ''foo '(1 . 2) (cons #\a #\b) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list "hi" #\a 1 ''foo '(1 . 2) (cons #\a #\b) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (symbol->string arg) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a 1 '() (list 1) '(1 . 2) #f (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (string->symbol arg) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 
 
@@ -45769,7 +45794,7 @@
 	(if (not (eq? result 'error))
 	    (begin
 	      (display "(") (display op) (display " ") (display arg) (display ") returned ") (display result) (display "?") (newline)))))
-    (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1)))))
+    (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1)))))
  
  (list reverse cons car cdr set-car! set-cdr! caar cadr cdar cddr caaar caadr cadar cdaar caddr cdddr cdadr cddar 
        caaaar caaadr caadar cadaar caaddr cadddr cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar
@@ -45778,7 +45803,7 @@
 (for-each
  (lambda (arg)
    (test (length arg) 'error))
- (list (integer->char 65) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
+ (list (integer->char 65) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
 
 (test (cons 1 . 2) 'error)
 					;      (test '(1 . 2 . 3) 'error) ; gets reader error which is inconvenient
@@ -45943,7 +45968,7 @@
 (for-each
  (lambda (arg)
    (test (list-ref (list 1 2) arg) 'error))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
 
 (test (list-set! '() 0 1) 'error)
 (test (list-set! '(1) 1 2) 'error)
@@ -45956,7 +45981,7 @@
 (for-each
  (lambda (arg)
    (test (list-set! (list 1 2) arg arg) 'error))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
 
 (test (list 1 2 . 3) 'error)
 (test (list 1 2 , 3) 'error)
@@ -45974,7 +45999,7 @@
 (for-each
  (lambda (arg)
    (test (list-tail (list 1 2) arg) 'error))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
 
 
 (test (assq #f '(#f 2 . 3)) 'error)
@@ -46017,7 +46042,7 @@
 (for-each
  (lambda (arg)
    (test (vector->list arg) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol "hi" abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol "hi" abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (test (let ((x (cons #\a #\b))) (set-cdr! x x) (list->vector x)) 'error)
 (test (list->vector (cons 1 2)) 'error)
@@ -46026,12 +46051,12 @@
 (for-each
  (lambda (arg)
    (test (list->vector arg) 'error))
- (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (vector-length arg) 'error))
- (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (test (let ((v (make-vector 1 0))) (vector-ref v 1)) 'error)
 (test (let ((v (make-vector 1 0))) (vector-ref v -1)) 'error)
@@ -46057,7 +46082,7 @@
 (for-each
  (lambda (arg)
    (test (vector-set! arg 0 0) 'error))
- (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (let ((v (vector)))
   (test (vector-set! v 0 0) 'error)
@@ -46072,7 +46097,7 @@
 (for-each
  (lambda (arg)
    (test (vector-fill! arg 0) 'error))
- (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 
 
@@ -46245,7 +46270,7 @@
 	    (begin 
 	      (display "(") (display op) (display " ") (display arg) (display ") returned ")
 	      (display val) (display " but expected 'error") (newline)))))
-    (list "hi" '() #\a (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs #t (lambda (a) (+ a 1))
+    (list "hi" '() #\a (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs #t (if #f #f) (lambda (a) (+ a 1))
 	  (if (eof-object? (with-input-from-string "" (lambda () (read-char))))
 	      (with-input-from-string "" (lambda () (read-char)))
 	      :key)
@@ -46260,7 +46285,7 @@
    (for-each
     (lambda (arg) ;(format #t "(~A ~A)~%" op arg)
       (test (op arg) 'error))
-    (list (integer->char 65) 1 0 -1 (list 1) (cons 1 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1)))))
+    (list (integer->char 65) 1 0 -1 (list 1) (cons 1 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1)))))
  (list char-ready? set-current-output-port set-current-input-port set-current-error-port
        close-input-port close-output-port open-input-file open-output-file
        read-char peek-char read 
@@ -46298,7 +46323,7 @@
 	    (begin 
 	      (display "(") (display op) (display " ") (display arg) (display ") returned ")
 	      (display val) (display " but expected 'error") (newline)))))
-    (list "hi" '() #\a (list 1) '(1 . 2) '#(0) #f 'a-symbol (make-vector 3) abs #t (lambda (a) (+ a 1)))))
+    (list "hi" '() #\a (list 1) '(1 . 2) '#(0) #f 'a-symbol (make-vector 3) abs #t (if #f #f) (lambda (a) (+ a 1)))))
  (list cosh sinh tanh acosh asinh atanh))
 
 (for-each
@@ -46482,7 +46507,7 @@
 (for-each
  (lambda (arg)
    (test (char-ready? arg) 'error))
- (list "hi" -1 #\a 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (lambda (a) (+ a 1))))
+ (list "hi" -1 #\a 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (if #f #f) (lambda (a) (+ a 1))))
 
 (test (if #f) 'error)
 (test (if (< 2 3)) 'error)
@@ -50493,7 +50518,7 @@
 		       ;;; (call/cc (lambda (a) a)) -- this causes us to start over!
 		       (make-hash-table 256)
 		       (symbol->value '_?__undefined__?_)                  ; -> #<undefined> hopefully
-		       (vector-fill! (vector 0) 0)                         ; -> #<unspecified>? [should probably use (if #f #f)]
+		       (if #f #f)                                          ; #<unspecified>
 		       (with-input-from-string "" (lambda () (read-char))) ; -> #<eof>?
 		       (make-random-state 1234))))
       
@@ -50743,3 +50768,6 @@
 ;;; same:            (call/cc (lambda (a b) (a 1))) -> same
 ;;; same:            (call/cc (lambda arg ((car arg) 1))) -> 1
 ;;; (call/cc (lambda () 1)) -> error?
+
+
+;;; PERHAPS: tests for macro? eval-case fully-expand

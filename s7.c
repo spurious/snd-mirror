@@ -2103,7 +2103,6 @@ static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s
   csr(x) = variable;
   cdr(x) = car(sc->envir);
   set_type(x, T_PAIR);
-
   car(sc->envir) = x;
   set_local(variable);
 
@@ -23552,4 +23551,4 @@ s7_scheme *s7_init(void)
   return(sc);
 }
 
-/* TODO: if tracing and traced func redefined, update trace? */
+/* PERHAPS: if tracing and traced func redefined, update trace? */

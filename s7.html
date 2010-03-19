@@ -280,8 +280,8 @@ hi
 
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
-<table border=0 bordercolor="lightgreen" width=60% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define-macro, define-macro*, defmacro, defmacro*, macroexpand, gensym</h4></td></tr></table>
+<table border=0 bordercolor="lightgreen" width=80% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define-macro, define-macro*, defmacro, defmacro*, macroexpand, gensym, macro?</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -324,6 +324,31 @@ add-2
 <p>See s7test.scm for many examples including such perennial favorites as
 when, loop, dotimes, do*, enum, pushnew, and defstruct.
 </p>
+
+<p><b>macro?</b> returns #t is its argument is a macro or a symbol whose value is a macro.
+We can use it, and other macro-related stuff to make a version of macroexpand-all:
+</p>
+<pre>
+(define-macro (fully-expand form)
+  (define (expand form)
+    (if (pair? form)
+	(if (<em class=red>macro?</em> (car form))
+	    (expand ((eval (procedure-source (car form))) form))
+	    (cons (expand (car form))
+		  (expand (cdr form))))
+	form))
+  (expand form))
+
+
+&gt; (define-macro (hi a) `(+ 1 ,a))
+hi
+&gt; (define-macro (ha c) `(hi (+ ,c 1)))
+ha
+&gt; (fully-expand (define (ho b) (+ 1 (ha b))))
+ho
+&gt; (procedure-source ho)
+(lambda (b) (+ 1 (+ 1 (+ b 1))))
+</pre>
 </dd>
 <br>
 
@@ -1170,6 +1195,7 @@ signals that the symbol is in the Package-With-No-Name [offstage: harmonica, tub
 
 
 <!-- -------------------------------------------------------------------------------- -->
+<!--
 <dt>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define-expansion</h4></td></tr></table>
@@ -1185,6 +1211,7 @@ bind it to something else, which is asking for confusion).
 </p>
 </dd>
 <br>
+-->
 
 <!-- -------------------------------------------------------------------------------- -->
 <!--

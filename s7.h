@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.45"
-#define S7_DATE "27-Feb-10"
+#define S7_VERSION "1.46"
+#define S7_DATE "18-Mar-10"
 
 
 typedef long long int s7_Int;
@@ -65,6 +65,7 @@ typedef double s7_Double;
    *    trace and untrace       add or subtract functions from the trace list; (trace abs). 
    *    stacktrace              show a stack trace, the stack at the point of an error: (stacktrace *error-info*),
    *                               or the stack at a break point: (stacktrace break-continuation)
+   *    macro?                  returns #t is its argument is a macro or a symbol whose value is a macro
    *
    *    and various others mentioned at the start of s7.c -- nearly every Scheme implementation includes
    *    stuff like logior, sinh, read-line, format, define*, etc.  See also the start of s7.c for choices
@@ -72,7 +73,7 @@ typedef double s7_Double;
    *
    *    The functions length, copy, and fill! are generic.
    *
-   * s7 non-standard object:
+   * s7 non-standard object (this may go away -- it's not as useful as I expected):
    *  
    *    encapsulator           a data "continuation" -- save the current environment for later restoration.
    *       open-encapsulator        this returns an encapsulation that when called as a thunk restores the current environment
@@ -845,6 +846,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 18-Mar:    added macro?.
  * 27-Feb:    removed r4rs-style macro syntax.
  * 17-Feb:    s7_number_to_integer.
  * 20-Jan-10: removed the stack function.
