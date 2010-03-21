@@ -1,28 +1,18 @@
-Snd 11.3:
+Snd 11.4
 
-The old functional form of show-listener no longer works:
-  change (show-listener) to (set! (show-listener) #t).
+most of my effort in this version went into optimizations.
 
-in CLM, mus-file-probe et al changed to get bools working across the FFI,
-          (that is, mus-file-probe now returns either T or NIL, not 1 or 0),
-          and sound-frames and friends now follow the *clm-seach-list* list.
+the (sndlib) run macro's argument no longer has to be a "thunk".
 
-The rest of the Guile-dependent files have been removed.  As soon as
-  they are translated to s7, I'll put them back in.  This includes the
-  --with-snd-as-pd-external and --with-rt configuration switches.
+removed weird r4rs macro syntax from s7.
 
-About half of the CL functions have been implemented in s7test.scm (including
-  CLOS via tiny-clos); they pass the sacla/ansi/clisp tests (also in s7test.scm).
-
-flocsig in generators.scm (flanged locsig).
-
-moved sound|channel|mix|mark|edit-property to C.
-
-removed NLS support (the po directory and so on).
+I think I'll have to either rename or remove the encapsulation stuff
+  in s7.  It turns out that very similar names are being used in the Kernel
+  language and the r7rs discussions, and my use can only cause confusion.  
+  Let me know if you're using that stuff.
 
 
-checked: gtk 2.19.3|4|5, FC 12, sbcl 1.0.35
+checked: gtk 2.19.6|7, sbcl 1.0.36, gsl 1.14
 
-Thanks!: Kim Cascone, Mike Scholz, Michael McNabb, Rick Taube, Michael Edwards,
-	 Fernando Lopez-Lezcano, Geoff Lee
-
+Thanks!: Mike Scholz, Geoff Lee, Georgia Rodgers, Michael Edwards, Andrew Antle, 
+	 Rick Taube,  Rick's students.

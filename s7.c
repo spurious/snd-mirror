@@ -36,7 +36,6 @@
  *        true multiple-values, multiple-value-bind, multiple-value-set!
  *        threads (optional)
  *        multidimensional vectors (optional)
- *        encapsulation (optional)
  *
  *   many minor changes!
  *
@@ -206,12 +205,6 @@
    */
 #endif
 
-#ifndef WITH_ENCAPSULATION
-  #define WITH_ENCAPSULATION 0
-  /* this include open-encapsulator, close-encapsulator, encapsulator?, and encapsulator-bindings
-   */
-#endif
-
 #ifndef WITH_FORCE
   #define WITH_FORCE 0
   /* this includes the slib versions of force and delay.  The name "delay" collides with CLM,
@@ -242,7 +235,6 @@
  *    objects and functions
  *    eq?
  *    generic length, copy, fill!
- *    encapsulators
  *    format
  *    error handlers, stacktrace, trace
  *    sundry leftovers
@@ -550,10 +542,6 @@ struct s7_scheme {
   bool *tracing, *trace_all;          /* if tracing, each function on the *trace* list prints its args upon application */
   long *gensym_counter;
 
-#if WITH_ENCAPSULATION
-  s7_pointer encapsulators;
-#endif
-  
   #define INITIAL_STRBUF_SIZE 1024
   int strbuf_size;
   char *strbuf;
@@ -651,12 +639,7 @@ struct s7_scheme {
  *   the size increase is more important.
  */
 
-#define T_SETTER                      (1 << (TYPE_BITS + 5))
-#define is_setter(p)                  ((typeflag(p) & T_SETTER) != 0)
-/* this marks a function that sets something (for the encapsulator) */
-
-#define T_OBJECT                      (1 << (TYPE_BITS + 6))
-/* debugging sanity check */
+/* TYPE_BITS + 5 and 6 currently unused */
 
 #define T_FINALIZABLE                 (1 << (TYPE_BITS + 7))
 #define is_finalizable(p)             ((typeflag(p) & T_FINALIZABLE) != 0)
@@ -704,10 +687,10 @@ struct s7_scheme {
 #define UNUSED_BITS                   0xfc000000
 
 #if HAVE_PTHREADS
-#define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f) | T_OBJECT)
+#define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f))
 /* the gc call can be interrupted, leaving mark bits set -- we better not clear those bits */
 #else
-#define set_type(p, f)                typeflag(p) = ((f) | T_OBJECT)
+#define set_type(p, f)                typeflag(p) = f
 #endif
 
 #define is_true(Sc, p)                ((p) != Sc->F)
@@ -845,10 +828,6 @@ struct s7_scheme {
 #define c_object_type(p)              (p)->object.fobj.type
 #define c_object_value(p)             (p)->object.fobj.value
 
-#if WITH_ENCAPSULATION
-#define is_encapsulating(Sc)          ((Sc)->encapsulators != sc->NIL)
-#endif
-
 #define NUM_INT      0
 #define NUM_RATIO    1
 #define NUM_REAL     2
@@ -940,9 +919,6 @@ static s7_pointer make_string_uncopied(s7_scheme *sc, char *str);
 static s7_pointer make_protected_string(s7_scheme *sc, const char *str);
 
 
-#if WITH_ENCAPSULATION
-  static void encapsulate(s7_scheme *sc, s7_pointer sym);
-#endif
 #if HAVE_PTHREADS
   static s7_pointer g_is_thread(s7_scheme *sc, s7_pointer args);
 #endif
@@ -1336,10 +1312,6 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->output_port);
   S7_MARK(sc->error_port);
 
-#if WITH_ENCAPSULATION
-  S7_MARK(sc->encapsulators);
-#endif
-  
   S7_MARK(sc->protected_objects);
   {
     s7_pointer *tmps;
@@ -2154,9 +2126,6 @@ static s7_pointer find_local_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hd
 } 
 
 
-#define find_global_symbol(Hdl) symbol_global_slot(Hdl)
-
-
 s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just the global environment? */
 {
   s7_pointer x;
@@ -2354,10 +2323,7 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
   
   sym = s7_make_symbol(sc, name);
   s7_define(sc, s7_global_environment(sc), sym, value);
-
-  /* x = find_local_symbol(sc, s7_global_environment(sc), sym); */
-  x = find_global_symbol(sym);
-
+  x = symbol_global_slot(sym);
   s7_set_immutable(car(x));
 }
 
@@ -4728,7 +4694,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 #if (!WITH_GMP)
       s7_Double rl = 0.0, im = 0.0;
 #else
-      char e1, e2;
+      char e1 = 0, e2 = 0;
 #endif
       s7_pointer result;
       int len;
@@ -9185,10 +9151,6 @@ s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *dir)
   s7_pointer load_path;
   load_path = s7_make_symbol(sc, "*load-path*");
 
-#if WITH_ENCAPSULATION
-  if (is_encapsulating(sc)) encapsulate(sc, load_path);
-#endif
-
   s7_symbol_set_value(sc, 
 		      load_path,
 		      s7_cons(sc, 
@@ -9630,7 +9592,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   {
     char *buf;
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     type_name(obj),
 	     typeflag(obj),
@@ -9643,9 +9605,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     is_syntax(obj) ? " syntax" : "",
 	     dont_copy(obj) ? " dont-copy" : "",
 	     dont_copy_cdr(obj) ? "dont-copy-cdr" : "",
-	     ((typeflag(obj) & T_OBJECT) != 0) ? " obj" : "",
 	     is_finalizable(obj) ? " gc-finalize" : "",
-	     is_setter(obj) ? " setter" : "",
 	     is_any_macro(obj) ? " (anymac)" : "",
 	     is_expansion(obj) ? " (expansion)" : "",
 	     (!is_not_local(obj)) ? " (local)" : "",
@@ -11227,17 +11187,11 @@ static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
 
   features = s7_make_symbol(sc, "*features*");
   if (!is_member(car(args), s7_symbol_value(sc, features)))
-    {
-#if WITH_ENCAPSULATION
-      if (is_encapsulating(sc)) encapsulate(sc, features);
-#endif
-
-      s7_symbol_set_value(sc, 
-			  features,
-			  s7_cons(sc, 
-				  car(args), 
-				  s7_symbol_value(sc, features)));
-    }
+    s7_symbol_set_value(sc, 
+			features,
+			s7_cons(sc, 
+				car(args), 
+				s7_symbol_value(sc, features)));
   return(car(args));
 }
 
@@ -12447,18 +12401,6 @@ void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int re
 }
 
 
-void s7_define_set_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
-{
-  s7_pointer func;
-  int ftype = T_C_FUNCTION;
-  func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
-  if ((required_args == 0) && (rest_arg) && (optional_args == 0))
-    ftype = T_C_ANY_ARGS_FUNCTION;
-  set_type(func, ftype | T_ATOM | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_SETTER | T_DONT_COPY_CDR);
-  s7_define(sc, s7_global_environment(sc), s7_make_symbol(sc, name), func);
-}
-
-
 void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_pointer func;
@@ -13361,215 +13303,6 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
     }
   return(cadr(args));
 }
-
-
-
-/* -------------------------------- encapsulation -------------------------------- */
-
-/* encapsulate:
-
-   open-encapsulator, close-encapsulator, (obj) to restore, encapsulator-bindings
- 
-   (define-macro (encapsulate . body) 
-      (let ((encap (gensym)))
-        `(let ((,encap (open-encapsulator)))
-           (dynamic-wind
-              (lambda () 
-	        #f)
-              (lambda () 
-	        ,@body)
-              (lambda () 
-	        ((,encap))  ; restore saved vars
-                (close-encapsulator ,encap))))))
-*/
-
-#if WITH_ENCAPSULATION
-
-typedef struct {
-  s7_pointer bindings;
-  s7_pointer envir;
-} encap_t;
-
-static int encapsulator_tag = 0;
-
-
-static char *encapsulator_print(s7_scheme *sc, void *obj)
-{
-  /* show vars? */
-  char *buf;
-  buf = (char *)malloc(32 * sizeof(char));
-  snprintf(buf, 32, "#<encapsulator>");
-  return(buf);
-}
-
-
-static void encapsulator_free(void *obj)
-{
-  if (obj) free(obj);
-}
-
-
-static void encapsulator_mark(void *val)
-{
-  encap_t *f = (encap_t *)val;
-  if ((f) && (f->bindings)) /* possibly still in open_encapsulator */
-    {
-      S7_MARK(f->bindings);
-    }
-}
-
-
-static bool encapsulator_equal(void *obj1, void *obj2)
-{
-  return(obj1 == obj2);
-}
-
-
-static s7_pointer g_open_encapsulator(s7_scheme *sc, s7_pointer args)
-{
-  #define H_open_encapsulator "(open-encapsulator) opens an encapsulator; until it is closed, it will save variable values."
-
-  /* create object, add to s7 list */
-  encap_t *e;
-  s7_pointer obj;
-  e = (encap_t *)malloc(sizeof(encap_t));
-  e->bindings = sc->NIL;
-  e->envir = sc->envir;
-  obj = s7_make_object(sc, encapsulator_tag, (void *)e);  
-  sc->encapsulators = s7_cons(sc, obj, sc->encapsulators);
-  return(obj);
-}
-
-
-static s7_pointer g_close_encapsulator(s7_scheme *sc, s7_pointer args)
-{
-  #define H_close_encapsulator "(close-encapsulator obj) closes an encapsulator; it will no longer try to protect anything."
-
-  /* remove from s7 list */
-  encap_t *e;
-  s7_pointer x, obj;
-  
-  obj = car(args);
-  if ((!is_c_object(obj)) ||
-      (c_object_type(obj) != encapsulator_tag))
-    return(s7_wrong_type_arg_error(sc, "close-encapsulator", 0, obj, "an encapsulator"));
-
-  e = (encap_t *)s7_object_value(obj);
-  e->bindings = sc->NIL;
-  e->envir = sc->NIL;
-
-  if (obj == car(sc->encapsulators))
-    sc->encapsulators = cdr(sc->encapsulators);
-  else
-    {
-      for (x = sc->encapsulators; is_pair(x); x = cdr(x))
-	{
-	  s7_pointer y;
-	  y = cdr(x);
-	  if (obj == car(y))
-	    {
-	      cdr(x) = cdr(y);
-	      break;
-	    }
-	}
-    }
-  return(sc->UNSPECIFIED);
-}
-
-
-static s7_pointer g_is_encapsulator(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_encapsulator "(encapsulator? obj) returns #t if obj is an encapsulator"
-  return(make_boolean(sc, (is_c_object(car(args))) && (c_object_type(car(args)) == encapsulator_tag)));
-}
-
-
-static s7_pointer g_encapsulator_bindings(s7_scheme *sc, s7_pointer args)
-{
-  #define H_encapsulator_bindings "(encapsulator-bindings obj) returns the values currently awaiting restoration in an encapsulator."
-
-  encap_t *e;
-  s7_pointer obj;
-  
-  obj = car(args);
-  if ((!is_c_object(obj)) ||
-      (c_object_type(obj) != encapsulator_tag))
-    return(s7_wrong_type_arg_error(sc, "encapsulator-bindings", 0, obj, "an encapsulator"));
-
-  e = (encap_t *)s7_object_value(obj);
-  return(e->bindings);
-}
-
-
-static s7_pointer encapsulator_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
-{
-  encap_t *e;
-  e = (encap_t *)s7_object_value(obj);
-
-  if (args == sc->NIL)
-    {
-      /* no args, restore all values */
-      s7_pointer x, y;
-      for (x = e->bindings; is_pair(x); x = cdr(x)) 
-	{
-	  y = find_symbol(sc, sc->envir, caar(x));
-	  if (y != sc->NIL)
-	    set_symbol_value(y, cdar(x));
-	}
-      e->bindings = sc->NIL;
-    }
-  else
-    {
-      if (s7_is_symbol(car(args)))
-	{
-	  /* find symbol in this encapsulation, return its value */
-	  s7_pointer y, sym;
-	  sym = car(args);
-	  for (y = e->bindings; is_pair(y); y = cdr(y)) 
-	    if (sym == caar(y))
-	      return(cdar(y));
-	  
-	  return(sc->UNDEFINED);
-	}
-      else return(s7_wrong_type_arg_error(sc, "encapsulator", 0, car(args), "a symbol"));
-    }
-  return(obj);
-}
-
-
-static void encapsulate(s7_scheme *sc, s7_pointer sym)
-{
-  s7_pointer x;
-
-  for (x = sc->encapsulators; is_pair(x); x = cdr(x))
-    {
-      encap_t *e;
-      s7_pointer y;
-      bool ok = false;
-
-      e = (encap_t *)s7_object_value(car(x));
-
-      for (y = e->bindings; is_pair(y); y = cdr(y)) 
-	if (sym == caar(y))
-	  {
-	    ok = true;
-	    break;
-	  }
-
-      if (!ok)
-	{
-	  y = find_symbol(sc, e->envir, sym);
-	  if (y != sc->NIL)
-	    e->bindings = s7_cons(sc, 
-				  s7_cons(sc, sym, s7_copy(sc, symbol_value(y))), 
-				  e->bindings); 
-
-	  /* a C-side procedure-with-setter becomes a no-op here -- accessing the underlying value is too tricky */
-	}
-    }
-}
-#endif
-
 
 
 
@@ -16657,28 +16390,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   but this really slows us down?!? (and we seem to be doing lots more find_symbol calls??)
 	   */
 
-#if WITH_ENCAPSULATION
-	  if ((is_encapsulating(sc)) &&
-	      (cdr(sc->code) != sc->NIL) &&
-	      (is_setter(sc->value)) &&
-	      (s7_is_symbol(cadr(sc->code))))
-	    encapsulate(sc, cadr(sc->code));
-	  
-	  /* we currently ignore any case that involves an accessor such as (string-set! (vector-ref ...)).
-	   *   In cases that don't involve set-applicable objects, we can say (for example) that the vector itself is not
-	   *   being changed, and it is impossible to handle multi-level cases because we have to save both the values
-	   *   and the accessor-paths to those values: 
-	   *
-	   *     (let* ((s (make-string 8 #\x)) (v (vector s))) (encapsulate (string-set! (vector-ref v 0) 1 #\a)))
-	   *
-	   *   here both the vector string value, and its reference back to the string variable need to be saved,
-	   *   else a later string-set! is ambiguous (if a new string holds the original string value, "s" won't change
-	   *   in the post-encapsulated new string-set! case, but would have changed without the encapsulation).  The set-applicable 
-	   *   object case ought to be do-able, but then the check above becomes very messy -- we have to make sure 
-	   *   it's a single level reference, eval_symbol caadr(?), save, but then restore becomes problematic.
-	   * This has become trickier than I expected.
-	   */
-#endif
 	  sc->code = cdr(sc->code);
 
 	  /* here [after the cdr] sc->args is nil, sc->value is the operator (car of list), sc->code is the rest -- the args.
@@ -16702,6 +16413,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* this is where most of s7's compute time goes */
       /* expanding the function calls (s7_cons, new_cell, and eval_symbol) in place seems to speed up s7 by a noticeable amount! */
       /*    before expansion: sc->args = s7_cons(sc, sc->value, sc->args); */
+
+      /* I tried using prebuilt never-gc'd arglists here to drastically reduce consing etc, but
+       *   they are tricky (the arglist object needs to be in the regular heap so that errors and
+       *   call/cc's can hold references to internal objects in the list, but that slows down
+       *   decisions about when a given arglist can be returned to the arglist-heap). We have to
+       *   store the argument in the arglist and update the current location in any case, so
+       *   the savings won't be huge (the entire process involves not more than 1/4 of the total
+       *   compute time), and in my implementation, although gc-ing was greatly reduced, other
+       *   things took more time, and s7 ended up running slightly slower.  So, I think I could
+       *   get a slight speed-up this way, with a few more days of work, but the code would be
+       *   much more complicated.  I prefer simpler code in this case.
+       */
       {
         s7_pointer x;
 	NEW_CELL(sc, x); 
@@ -17235,10 +16958,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->y = find_symbol(sc, sc->envir, sc->code);
       if (sc->y != sc->NIL) 
 	{
-#if WITH_ENCAPSULATION
-	  if (is_encapsulating(sc))
-	    encapsulate(sc, sc->code);
-#endif
 	  set_symbol_value(sc->y, sc->value); 
 	  pop_stack(sc);
 	  goto START;
@@ -18101,10 +17820,6 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   new_sc->value = new_sc->NIL;
   new_sc->cur_code = ERROR_INFO_DEFAULT;
 
-#if WITH_ENCAPSULATION
-  new_sc->encapsulators = sc->NIL;
-#endif
-  
   new_sc->temps_size = GC_TEMPS_SIZE;
   new_sc->temps_ctr = 0;
   new_sc->temps = (s7_pointer *)malloc(new_sc->temps_size * sizeof(s7_pointer));
@@ -22891,10 +22606,6 @@ s7_scheme *s7_init(void)
   sc->tracing = (bool *)calloc(1, sizeof(bool));
   sc->trace_all = (bool *)calloc(1, sizeof(bool));
 
-#if WITH_ENCAPSULATION
-  sc->encapsulators = sc->NIL;
-#endif
-
   sc->trace_list = (s7_pointer *)calloc(INITIAL_TRACE_LIST_SIZE, sizeof(s7_pointer));
   sc->trace_list_size = INITIAL_TRACE_LIST_SIZE;
   sc->trace_top = 0;
@@ -22915,7 +22626,7 @@ s7_scheme *s7_init(void)
     {
       s7_pointer p;
       p = (s7_pointer)calloc(1, sizeof(s7_cell));
-      p->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
+      p->flag = T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
       p->hloc = NOT_IN_HEAP;
       number_type(p) = NUM_INT;
       integer(number(p)) = (s7_Int)i;
@@ -22926,7 +22637,7 @@ s7_scheme *s7_init(void)
     {
       s7_pointer p;
       p = (s7_pointer)calloc(1, sizeof(s7_cell));
-      p->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
+      p->flag = T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
       p->hloc = NOT_IN_HEAP;
       number_type(p) = NUM_INT;
       integer(number(p)) = (s7_Int)(-i);
@@ -22934,13 +22645,13 @@ s7_scheme *s7_init(void)
     }
   
   real_zero = (s7_pointer)calloc(1, sizeof(s7_cell));
-  real_zero->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
+  real_zero->flag = T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
   real_zero->hloc = NOT_IN_HEAP;
   number_type(real_zero) = NUM_REAL;
   real(number(real_zero)) = (s7_Double)0.0;
 
   real_one = (s7_pointer)calloc(1, sizeof(s7_cell));
-  real_one->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
+  real_one->flag = T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
   real_one->hloc = NOT_IN_HEAP;
   number_type(real_one) = NUM_REAL;
   real(number(real_one)) = (s7_Double)1.0;
@@ -23102,7 +22813,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "hash-table?",             g_is_hash_table,           1, 0, false, H_is_hash_table);
   s7_define_function(sc, "make-hash-table",         g_make_hash_table,         0, 1, false, H_make_hash_table);
   s7_define_function(sc, "hash-table-ref",          g_hash_table_ref,          2, 0, false, H_hash_table_ref);
-  s7_define_set_function(sc, "hash-table-set!",     g_hash_table_set,          3, 0, false, H_hash_table_set);
+  s7_define_function(sc, "hash-table-set!",         g_hash_table_set,          3, 0, false, H_hash_table_set);
   s7_define_function(sc, "hash-table-size",         g_hash_table_size,         1, 0, false, H_hash_table_size);
   s7_define_function(sc, "hash-table-for-each",     g_hash_table_for_each,     2, 0, true,  H_hash_table_for_each);  
   
@@ -23254,7 +22965,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "make-string",             g_make_string,             1, 1, false, H_make_string);
   s7_define_function(sc, "string-length",           g_string_length,           1, 0, false, H_string_length);
   s7_define_function(sc, "string-ref",              g_string_ref,              2, 0, false, H_string_ref);
-  s7_define_set_function(sc, "string-set!",         g_string_set,              3, 0, false, H_string_set);
+  s7_define_function(sc, "string-set!",             g_string_set,              3, 0, false, H_string_set);
   
   s7_define_function(sc, "string=?",                g_strings_are_equal,       2, 0, true,  H_strings_are_equal);
   s7_define_function(sc, "string<?",                g_strings_are_less,        2, 0, true,  H_strings_are_less);
@@ -23268,7 +22979,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "string-ci>=?",            g_strings_are_ci_geq,      2, 0, true,  H_strings_are_ci_geq);
   
   s7_define_function(sc, "string-append",           g_string_append,           0, 0, true,  H_string_append);
-  s7_define_set_function(sc, "string-fill!",        g_string_fill,             2, 0, false, H_string_fill);
+  s7_define_function(sc, "string-fill!",            g_string_fill,             2, 0, false, H_string_fill);
   s7_define_function(sc, "string-copy",             g_string_copy,             1, 0, false, H_string_copy);
   s7_define_function(sc, "substring",               g_substring,               2, 1, false, H_substring);
   s7_define_function(sc, "string",                  g_string,                  0, 0, true,  H_string);
@@ -23283,7 +22994,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "list?",                   g_is_list,                 1, 0, false, H_is_list);
   s7_define_function(sc, "pair?",                   g_is_pair,                 1, 0, false, H_is_pair);
   s7_define_function(sc, "reverse",                 g_reverse,                 1, 0, false, H_reverse);
-  s7_define_set_function(sc, "reverse!",            g_reverse_in_place,        1, 0, false, H_reverse_in_place); /* used by Snd code */
+  s7_define_function(sc, "reverse!",                g_reverse_in_place,        1, 0, false, H_reverse_in_place); /* used by Snd code */
   s7_define_function(sc, "cons",                    g_cons,                    2, 0, false, H_cons);
   s7_define_function(sc, "car",                     g_car,                     1, 0, false, H_car);
   s7_define_function(sc, "cdr",                     g_cdr,                     1, 0, false, H_cdr);
@@ -23326,7 +23037,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "append",                  g_append,                  0, 0, true,  H_append);
   s7_define_function(sc, "list",                    g_list,                    0, 0, true,  H_list);
   s7_define_function(sc, "list-ref",                g_list_ref,                2, 0, false, H_list_ref);
-  s7_define_set_function(sc, "list-set!",           g_list_set,                3, 0, false, H_list_set);
+  s7_define_function(sc, "list-set!",               g_list_set,                3, 0, false, H_list_set);
   s7_define_function(sc, "list-tail",               g_list_tail,               2, 0, false, H_list_tail);
   s7_define_function(sc, "make-list",               g_make_list,               1, 1, false, H_make_list);
 
@@ -23337,24 +23048,24 @@ s7_scheme *s7_init(void)
 
   s7_define_function(sc, "length",                  g_length,                  1, 0, false, H_length);
   s7_define_function(sc, "copy",                    g_copy,                    1, 0, false, H_copy);
-  s7_define_set_function(sc, "fill!",               g_fill,                    2, 0, false, H_fill);
+  s7_define_function(sc, "fill!",                   g_fill,                    2, 0, false, H_fill);
   
   
   s7_define_function(sc, "vector?",                 g_is_vector,               1, 0, false, H_is_vector);
   s7_define_function(sc, "vector->list",            g_vector_to_list,          1, 0, false, H_vector_to_list);
   s7_define_function(sc, "list->vector",            g_list_to_vector,          1, 0, false, H_list_to_vector);
-  s7_define_set_function(sc, "vector-fill!",        g_vector_fill,             2, 0, false, H_vector_fill);
+  s7_define_function(sc, "vector-fill!",            g_vector_fill,             2, 0, false, H_vector_fill);
   s7_define_function(sc, "vector",                  g_vector,                  0, 0, true,  H_vector);
   s7_define_function(sc, "vector-length",           g_vector_length,           1, 0, false, H_vector_length);
   s7_define_function(sc, "vector-ref",              g_vector_ref,              2, 0, VECTOR_REST_ARGS, H_vector_ref);
-  s7_define_set_function(sc, "vector-set!",         g_vector_set,              3, 0, VECTOR_REST_ARGS, H_vector_set);
+  s7_define_function(sc, "vector-set!",             g_vector_set,              3, 0, VECTOR_REST_ARGS, H_vector_set);
   s7_define_function(sc, "make-vector",             g_make_vector,             1, 1, false, H_make_vector);
 #if WITH_MULTIDIMENSIONAL_VECTORS
   s7_define_function(sc, "vector-dimensions",       g_vector_dimensions,       1, 0, false, H_vector_dimensions);
 #endif
   s7_define_function(sc, "vector-for-each",         g_vector_for_each,         2, 0, true,  H_vector_for_each);
   s7_define_function(sc, "vector-map",              g_vector_map,              2, 0, true,  H_vector_map);
-  s7_define_set_function(sc, "sort!",               g_sort_in_place,           2, 0, false, H_sort_in_place);
+  s7_define_function(sc, "sort!",                   g_sort_in_place,           2, 0, false, H_sort_in_place);
   
 
   s7_define_function(sc, "call/cc",                 g_call_cc,                 1, 0, false, H_call_cc);
@@ -23397,7 +23108,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "equal?",                  g_is_equal,                2, 0, false, H_is_equal);
   
   s7_define_function(sc, "s7-version",              g_s7_version,              0, 0, false, H_s7_version);
-  s7_define_set_function(sc, object_set_name,       g_object_set,              1, 0, true, "internal setter redirection");
+  s7_define_function(sc, object_set_name,           g_object_set,              1, 0, true, "internal setter redirection");
   
   s7_define_variable(sc, "*features*", sc->NIL);
   s7_define_variable(sc, "*load-path*", sc->NIL);
@@ -23428,15 +23139,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "thread-variable?",        g_is_thread_variable,      1, 0, false, H_is_thread_variable);
 
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "threads")));
-#endif
-
-#if WITH_ENCAPSULATION
-  encapsulator_tag = s7_new_type("<encapsulator>",  encapsulator_print, encapsulator_free, encapsulator_equal, encapsulator_mark, encapsulator_apply, NULL);
-  s7_define_function(sc, "open-encapsulator",       g_open_encapsulator,       0, 0, false, H_open_encapsulator);
-  s7_define_function(sc, "close-encapsulator",      g_close_encapsulator,      1, 0, false, H_close_encapsulator);
-  s7_define_function(sc, "encapsulator?",           g_is_encapsulator,         1, 0, false, H_is_encapsulator);
-  s7_define_function(sc, "encapsulator-bindings",   g_encapsulator_bindings,   1, 0, false, H_encapsulator_bindings);
-  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "encapsulation")));  
 #endif
 
 #if WITH_MULTIDIMENSIONAL_VECTORS
@@ -23509,23 +23211,7 @@ s7_scheme *s7_init(void)
                           (let ((local-vars (map (lambda (n) (gensym)) vars)))\n\
                             `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))");
 
-#if WITH_ENCAPSULATION
-  s7_eval_c_string(sc, "                                 \n\
-      (define-macro (encapsulate . body)                 \n\
-	(let ((encap (gensym)))                          \n\
-	  `(let ((,encap (open-encapsulator)))           \n\
-	     (dynamic-wind                               \n\
-		 (lambda ()                              \n\
-		   #f)                                   \n\
-		 (lambda ()                              \n\
-		   ,@body)                               \n\
-		 (lambda ()                              \n\
-		   ((,encap))                            \n\
-		   (close-encapsulator ,encap))))))");
-#endif
-
   /* s7_eval_c_string(sc, "(define (ratio? n) (and (rational? n) (not (integer? n))))"); */
-
 
 #if WITH_FORCE
   s7_eval_c_string("(define (force object) (object))");

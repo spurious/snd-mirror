@@ -370,7 +370,7 @@ static int add_new_type(const char *new_type)
     {
       int i;
       type_names_size += 8;
-      type_names = (const char **)realloc(type_names, type_names_size * sizeof(char *));
+      type_names = (const char **)realloc(type_names, type_names_size * sizeof(const char *));
       for (i = last_type + 1; i < type_names_size; i++) type_names[i] = NULL;
     }
   last_type++;

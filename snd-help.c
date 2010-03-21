@@ -493,6 +493,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+20-Mar:  Snd 11.4.\n\
 27-Feb:  the run macro's argument no longer has to be a thunk.\n\
 11-Feb:  Snd 11.3.\n\
 9-Feb:   removed NLS support (the po directory and so on).\n\
@@ -500,10 +501,6 @@ void about_snd_help(void)
 23-Jan:  The rest of the Guile-dependent files have been removed.\n\
            This includes pd-*, rt-*, and the --with-snd-as-pd-external\n\
             --with-hobbit, and --with-rt configuration switches.\n\
-5-Jan:   Snd 11.2.\n\
-26-Dec:  tools/sam.c.\n\
-21-Dec:  moved focus-follows-mouse to C as with-pointer-focus.\n\
-         removed def-optkey-fun and def-optkey-instrument (use define* and definstrument).\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",

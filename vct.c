@@ -1294,23 +1294,18 @@ void mus_vct_init(void)
   XEN_DEFINE_PROCEDURE(S_vector_to_vct,     g_vector_to_vct_w, 1, 0, 0, H_vector_to_vct);
   XEN_DEFINE_PROCEDURE(S_vct_to_vector,     g_vct_to_vector_w, 1, 0, 0, H_vct_to_vector);
   XEN_DEFINE_PROCEDURE(S_vct_length,        g_vct_length_w,    1, 0, 0, H_vct_length);
-  XEN_DEFINE_SET_PROCEDURE(S_vct_multiplyB, g_vct_multiply_w,  2, 0, 0, H_vct_multiplyB);
-  XEN_DEFINE_SET_PROCEDURE(S_vct_scaleB,    g_vct_scale_w,     2, 0, 0, H_vct_scaleB);
-  XEN_DEFINE_SET_PROCEDURE(S_vct_fillB,     g_vct_fill_w,      2, 0, 0, H_vct_fillB);
-  XEN_DEFINE_SET_PROCEDURE(S_vct_addB,      g_vct_add_w,       2, 1, 0, H_vct_addB);
-  XEN_DEFINE_SET_PROCEDURE(S_vct_subtractB, g_vct_subtract_w,  2, 0, 0, H_vct_subtractB);
-  XEN_DEFINE_SET_PROCEDURE(S_vct_offsetB,   g_vct_offset_w,    2, 0, 0, H_vct_offsetB);
+  XEN_DEFINE_PROCEDURE(S_vct_multiplyB,     g_vct_multiply_w,  2, 0, 0, H_vct_multiplyB);
+  XEN_DEFINE_PROCEDURE(S_vct_scaleB,        g_vct_scale_w,     2, 0, 0, H_vct_scaleB);
+  XEN_DEFINE_PROCEDURE(S_vct_fillB,         g_vct_fill_w,      2, 0, 0, H_vct_fillB);
+  XEN_DEFINE_PROCEDURE(S_vct_addB,          g_vct_add_w,       2, 1, 0, H_vct_addB);
+  XEN_DEFINE_PROCEDURE(S_vct_subtractB,     g_vct_subtract_w,  2, 0, 0, H_vct_subtractB);
+  XEN_DEFINE_PROCEDURE(S_vct_offsetB,       g_vct_offset_w,    2, 0, 0, H_vct_offsetB);
   XEN_DEFINE_PROCEDURE(S_vct_peak,          g_vct_peak_w,      1, 0, 0, H_vct_peak);
-  XEN_DEFINE_SET_PROCEDURE(S_vct_moveB,     g_vct_move_w,      3, 1, 0, H_vct_moveB);
+  XEN_DEFINE_PROCEDURE(S_vct_moveB,         g_vct_move_w,      3, 1, 0, H_vct_moveB);
   XEN_DEFINE_PROCEDURE(S_vct_subseq,        g_vct_subseq_w,    2, 2, 0, H_vct_subseq);
   XEN_DEFINE_PROCEDURE(S_vct,               g_vct_w,           0, 0, 1, H_vct);
-  XEN_DEFINE_SET_PROCEDURE(S_vct_reverse,   g_vct_reverse_w,   1, 1, 0, H_vct_reverse);
-
-#if HAVE_SCHEME && USE_SND
-  XEN_DEFINE_SET_PROCEDURE(S_vct_mapB,      g_vct_mapB_w,      2, 0, 0, H_vct_mapB);
-#else
+  XEN_DEFINE_PROCEDURE(S_vct_reverse,       g_vct_reverse_w,   1, 1, 0, H_vct_reverse);
   XEN_DEFINE_PROCEDURE(S_vct_mapB,          g_vct_mapB_w,      2, 0, 0, H_vct_mapB);
-#endif
 
 #if HAVE_SCHEME || HAVE_FORTH
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_vct_ref, g_vct_ref_w, H_vct_ref, "set-" S_vct_ref, g_vct_set_w,  2, 0, 3, 0);
@@ -1319,7 +1314,7 @@ void mus_vct_init(void)
 #endif
 
   XEN_DEFINE_PROCEDURE(S_vct_to_string,     g_vct_to_readable_string_w, 1, 0, 0, H_vct_to_string);
-  XEN_DEFINE_SET_PROCEDURE(S_vct_setB,      g_vct_set_w,       3, 0, 0, H_vct_setB);
-  XEN_DEFINE_SET_PROCEDURE(S_vct_times,     g_vct_times_w,     2, 0, 0, H_vct_times);
-  XEN_DEFINE_SET_PROCEDURE(S_vct_plus,      g_vct_plus_w,      2, 0, 0, H_vct_plus);
+  XEN_DEFINE_PROCEDURE(S_vct_setB,          g_vct_set_w,       3, 0, 0, H_vct_setB);
+  XEN_DEFINE_PROCEDURE(S_vct_times,         g_vct_times_w,     2, 0, 0, H_vct_times);
+  XEN_DEFINE_PROCEDURE(S_vct_plus,          g_vct_plus_w,      2, 0, 0, H_vct_plus);
 }

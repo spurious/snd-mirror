@@ -281,7 +281,6 @@
 	   ))))
 
 
-
 ;;; --------------------------------------------------------------------------------
 ;;; GENERIC STUFF
 ;;; --------------------------------------------------------------------------------
@@ -3578,6 +3577,8 @@
 (test (do ((equal =) (i 0 (+ i 1))) ((equal i 3) i)) 3)
 (test (do ((equal = >) (i 0 (+ i 1))) ((equal i 3) i)) 4)
 (test (do ((j 0) (plus + -) (i 0 (plus i 1))) ((= i -1) j) (set! j (+ j 1))) 3)
+(test (let ((expr `(+ i 1))) (do ((j 0) (i 0 (eval expr))) ((= i 3) j) (set! j (+ j 1)))) 3)
+(test (let ((expr `(+ i 1))) (do ((j 0) (i 0 (eval expr))) ((= i -3) j) (set! j (+ j 1)) (if (= j 3) (set! expr `(- i 1))))) 7)
 
 (test (let ((sum 0)) (do ((i_0 0 (+ i_0 0))(i_1 1 (+ i_1 1))(i_2 2 (+ i_2 2))(i_3 3 (+ i_3 3))(i_4 4 (+ i_4 4))(i_5 5 (+ i_5 5))(i_6 6 (+ i_6 6))(i_7 7 (+ i_7 7))(i_8 8 (+ i_8 8))(i_9 9 (+ i_9 9))(i_10 10 (+ i_10 10))(i_11 11 (+ i_11 11))(i_12 12 (+ i_12 12))(i_13 13 (+ i_13 13))(i_14 14 (+ i_14 14))(i_15 15 (+ i_15 15))(i_16 16 (+ i_16 16))(i_17 17 (+ i_17 17))(i_18 18 (+ i_18 18))(i_19 19 (+ i_19 19))(i_20 20 (+ i_20 20))(i_21 21 (+ i_21 21))(i_22 22 (+ i_22 22))(i_23 23 (+ i_23 23))(i_24 24 (+ i_24 24))(i_25 25 (+ i_25 25))(i_26 26 (+ i_26 26))(i_27 27 (+ i_27 27))(i_28 28 (+ i_28 28))(i_29 29 (+ i_29 29))(i_30 30 (+ i_30 30))(i_31 31 (+ i_31 31))(i_32 32 (+ i_32 32))(i_33 33 (+ i_33 33))(i_34 34 (+ i_34 34))(i_35 35 (+ i_35 35))(i_36 36 (+ i_36 36))(i_37 37 (+ i_37 37))(i_38 38 (+ i_38 38))(i_39 39 (+ i_39 39)))
     ((= i_1 10) sum)
@@ -16502,82 +16503,6 @@
 	      (set! ((car lst) 1) 3)
 	      (list val val1 (vset 1))))))
       (list 2 32 3))
-
-(if (defined? 'open-encapsulator) 
-    (begin
-      ;; encapsulator tests
-      (let ((gi 32)
-	    (gstr (make-string 8 #\x))
-	    (gx 3.14)
-	    (gcp 1.5+i)
-	    (gl (list 1 2 3))
-	    (gv (vector 1 2 3))
-	    (gc (cons 1 2))
-	    (gr 3/4)
-	    (gf (lambda () 123)))
-	(encapsulate
-	 (set! gi 3)
-	 (string-set! gstr 3 #\A)
-	 (set! gx 2.1718)
-	 (set! gcp -1.0-i)
-	 (list-set! gl 1 32)
-	 (set! gc "not a cons")
-	 (set! gr (list 3/4))
-	 (set! gi 1) ; see if duplicates intrude
-	 (set! gstr "hiho")
-	 (set! gf #f))
-	(test gi 32)
-	(test gstr "xxxxxxxx")
-	(test gx 3.14)
-	(test gcp 1.5+i)
-	(test gl (list 1 2 3))
-	(test gv (vector 1 2 3))
-	(test gc (cons 1 2))
-	(test gr 3/4)
-	(test (gf) 123))
-      
-      (let ((gsym 123))
-	(let ((e (open-encapsulator)))
-	  (set! gsym 321)
-	  (test (e 'gsym) 123)
-	  (test (encapsulator? e) #t)
-	  (test (encapsulator? 123) #f)
-	  (test (encapsulator-bindings e) (list (cons 'gsym 123)))
-	  (e)
-	  (test gsym 123)
-	  (close-encapsulator e)))
-      
-      (let ((g1 1))
-	(let ((e1 (open-encapsulator)))
-	  (let ((g2 2))
-	    (let ((e2 (open-encapsulator)))
-	      (let ((g3 3))
-		(set! g2 32)
-		(set! g1 43)
-		(set! g3 54)
-		(test (encapsulator-bindings e1) (list (cons 'g1 1)))
-		(test (encapsulator-bindings e2) (list (cons 'g1 1) (cons 'g2 2))))
-	      (test (equal? e1 e2) #f)
-	      (test (equal? e1 e1) #t)
-	      (e1)
-	      (close-encapsulator e2))
-	    (test g2 32)
-	    (test g1 1)
-	    (close-encapsulator e1))))
-      
-      (let ((g1 321))
-	(define (set-g1 val) (set! g1 val))
-	(let ((e (open-encapsulator)))
-	  (set-g1 1)
-	  (e)
-	  (test g1 321)
-	  (set-g1 2)
-	  (test g1 2)
-	  (e)
-	  (test g1 321)
-	  (close-encapsulator e)))
-      
-      ))
 
 (for-each
  (lambda (arg)
@@ -45484,7 +45409,10 @@
   )
 
 
+
+
 ;;; --------------------------------------------------------------------------------
+
 
 
 (test (eq?) 'error)
@@ -46101,6 +46029,7 @@
 
 
 
+
 (for-each
  (lambda (arg)
    (test (string->number arg) 'error))
@@ -46313,6 +46242,7 @@
 (test (atanh) 'error)
 (test (atanh "hi") 'error)
 (test (atanh 1.0+23.0i 1.0+23.0i) 'error)
+
 
 (for-each
  (lambda (op)
@@ -46612,6 +46542,7 @@
 (test (do ((i 1) ()) (= i 1)) 'error)
 (test (do ((i 0 . 1)) ((= i 1)) i) 'error)
 (test (do ((i 0 (+ i 1))) ((= i 3)) (set! i "hiho")) 'error)
+(test (let ((do+ +)) (do ((i 0 (do+ i 1))) ((= i 3)) (set! do+ abs))) 'error)
 
 (test (let ((a 1)) (set! a)) 'error)
 (test (let ((a 1)) (set! a 2 3)) 'error)

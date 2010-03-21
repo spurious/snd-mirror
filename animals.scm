@@ -1493,43 +1493,6 @@
 
 
 
-;;; ================ Mammals ================
-;;;
-;;;
-;;; Indri
-;;;
-;;; close in spectrum, amp, freq, but the original has what sounds like a ton of reverb
-;;;   if I add the reverb, it's close -- is this really what this animal sounds like?
-
-(definstrument (indri beg amp)
-  (let* ((pitch 900)
-	 (dur 1.5)
-	 (start (seconds->samples beg))
-	 (stop (+ start (seconds->samples dur)))
-	 (gen1 (make-oscil (* 2 pitch))) 
-	 (gen4 (make-oscil pitch))
-	 (gen2 (make-oscil (* 8 pitch))) 
-	 (gen3 (make-oscil pitch))
-	 (ampf (make-env '(0.0 0.0  0.05 0.4  0.1 0.65  0.2 0.5  0.27 1.0  0.4 0.43  0.43 0.53 
-			       0.5 0.5  0.53 0.36  0.6 1.0  0.64 0.99  0.69 0.6  0.7 0.3  0.77 0.15 
-			       0.8 0.04  1.0 0.0) :duration dur :scaler amp))
-	 (frqf (make-env '(0 1  2 0  6 0 7 3 9 3) :scaler (hz->radians 60) :duration dur))
-	 (vib (make-oscil 2)))
-    (run 
-     (do ((i start (+ i 1)))
-	 ((= i stop))
-       (let* ((frq (+ (env frqf)
-		      (* (hz->radians 10) (oscil vib))))
-	      (md (+ (* 2 frq)
-		     (* .125 (oscil gen4 frq)))))
-	 (outa i (* (env ampf)
-		    (+ (* .9 (oscil gen1 md))
-		       (* .1 (oscil gen2 (+ (* 8 frq) 
-					    (* .2 (oscil gen3 frq)))))))))))))
-
-;; (with-sound () (indri 0 .5))
-
-
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; Amargosa toad
@@ -1586,6 +1549,43 @@
 ;; (with-sound (:play #t) (amargosa-toad 0 .5))
 
 
+
+
+;;; ================ Mammals ================
+;;;
+;;;
+;;; Indri
+;;;
+;;; close in spectrum, amp, freq, but the original has what sounds like a ton of reverb
+;;;   if I add the reverb, it's close -- is this really what this animal sounds like?
+
+(definstrument (indri beg amp)
+  (let* ((pitch 900)
+	 (dur 1.5)
+	 (start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (gen1 (make-oscil (* 2 pitch))) 
+	 (gen4 (make-oscil pitch))
+	 (gen2 (make-oscil (* 8 pitch))) 
+	 (gen3 (make-oscil pitch))
+	 (ampf (make-env '(0.0 0.0  0.05 0.4  0.1 0.65  0.2 0.5  0.27 1.0  0.4 0.43  0.43 0.53 
+			       0.5 0.5  0.53 0.36  0.6 1.0  0.64 0.99  0.69 0.6  0.7 0.3  0.77 0.15 
+			       0.8 0.04  1.0 0.0) :duration dur :scaler amp))
+	 (frqf (make-env '(0 1  2 0  6 0 7 3 9 3) :scaler (hz->radians 60) :duration dur))
+	 (vib (make-oscil 2)))
+    (run 
+     (do ((i start (+ i 1)))
+	 ((= i stop))
+       (let* ((frq (+ (env frqf)
+		      (* (hz->radians 10) (oscil vib))))
+	      (md (+ (* 2 frq)
+		     (* .125 (oscil gen4 frq)))))
+	 (outa i (* (env ampf)
+		    (+ (* .9 (oscil gen1 md))
+		       (* .1 (oscil gen2 (+ (* 8 frq) 
+					    (* .2 (oscil gen3 frq)))))))))))))
+
+;; (with-sound () (indri 0 .5))
 
 
 ;;; ================ Insects ================

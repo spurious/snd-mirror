@@ -225,9 +225,9 @@
 	     (if output-to-file
 		 (mus-close *output*)))
 
-	 (let ((snd-output #f)
-	       (cur-sync #f))
-	   (if statistics
+	 (let ((snd-output #f) ; TODO: not needed
+	       (cur-sync #f))  ; also not needed
+	   (if statistics 
 	       (begin
 		 (set! cycles (exact->inexact (/ (- (get-internal-real-time) start) internal-time-units-per-second)))
 		 (display (format #f "~%;~A:~%  maxamp~A:~{ ~,4F~}~%~A  compute time: ~,3F~%"
@@ -258,6 +258,19 @@
 	       (if output-to-file
 		   ;; someday scale the output
 		   (display "can't scale output yet")
+
+		   ;; in Snd:
+;		   (let ((scale-output (or snd-output (open-sound output-1))))
+;		     (if scaled-to
+;			 (scale-to scaled-to scale-output)
+;			 (if scaled-by
+;			     (scale-by scaled-by scale-output)))
+;		     (save-sound scale-output)
+;		     (if (not to-snd) 
+;			 (close-sound scale-output)))
+
+;;; perhaps use fullmix?
+
 		   (if (vct? output-1)
 		       (if scaled-to
 			   (let ((pk (vct-peak output-1)))

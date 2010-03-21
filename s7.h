@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.46"
-#define S7_DATE "18-Mar-10"
+#define S7_VERSION "1.47"
+#define S7_DATE "19-Mar-10"
 
 
 typedef long long int s7_Int;
@@ -72,16 +72,6 @@ typedef double s7_Double;
    *    such as multiprecision arithmetic, multidimensional vectors, initial heap and stack size, etc.
    *
    *    The functions length, copy, and fill! are generic.
-   *
-   * s7 non-standard object (this may go away -- it's not as useful as I expected):
-   *  
-   *    encapsulator           a data "continuation" -- save the current environment for later restoration.
-   *       open-encapsulator        this returns an encapsulation that when called as a thunk restores the current environment
-   *       close-encapsulator       this closes (retires, puts an end to) an encapsulation
-   *       encapsulator-bindings    these are the currently saved bindings awaiting restoration
-   *       encapsulator?            #t if its argument is an encapsulator
-   * 
-   * --------------------------------------------------------------------------------
    *
    * I think s7 has built-in support for srfi-6 (basic string ports), srfi-8 (receive), srfi-17 (generalized-set!), 
    *   srfi-18 (multithreading), srfi-28 (format, also nearly all of srfi-48), srfi-30 (block comments),
@@ -635,9 +625,6 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
    *     s7_define_function(sc, "car", g_car, 1, 0, false, "(car obj)");
    *                                          one required arg, no optional arg, no "rest" arg
    *
-   * s7_define_set_function is the same as s7_define_function, but also informs the encapsulation
-   *   mechanism that the function sets something.
-   *
    * s7_define_function_with_setter defined a procedure-with-setter.
    *
    * s7_is_function returns true if its argument is a function defined in this manner.
@@ -846,6 +833,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 19-Mar:    removed encapsulation mechanism and s7_define_set_function.
  * 18-Mar:    added macro?.
  * 27-Feb:    removed r4rs-style macro syntax.
  * 17-Feb:    s7_number_to_integer.

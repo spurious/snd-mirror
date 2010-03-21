@@ -325,7 +325,7 @@ add-2
 when, loop, dotimes, do*, enum, pushnew, and defstruct.
 </p>
 
-<p><b>macro?</b> returns #t is its argument is a macro or a symbol whose value is a macro.
+<p>macro? returns #t if its argument is a macro or a symbol whose value is a macro.
 We can use it, and other macro-related stuff to make a version of macroexpand-all:
 </p>
 <pre>
@@ -1213,50 +1213,6 @@ bind it to something else, which is asking for confusion).
 <br>
 -->
 
-<!-- -------------------------------------------------------------------------------- -->
-<!--
-<dt>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>encapsulation</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd><p>encapsulation saves and restores environments.</p>
-<ul>
-<li>(open-encapsulator)
-<li>(close-encapsulator encap)
-<li>(encapsulator-bindings encap)
-<li>(encapsulator? obj)
-<li>(encapsulate . body)
-</ul>
-<p>An encapsulator is 
-a sort of data-side continuation.  open-encapsulator
-remembers the overall environment at the point it is called, returning an encapuslator
-object.  Whenever we want to return to that data state, we call that object as a thunk.
-encapsulator-bindings returns the alist of variables awaiting restoration.  When the encapsulator is called (restoring those bindings),
-the list is cleared, and the encapsulator starts saving values again (so repeated calls
-keep returning you to that data state).  close-encapsulator turns that encapsulator off.
-In a REPL, for example, you could save the initial state, then return to it at any time,
-without restarting the interpreter.  fluid-let is not what we want here because it has
-a body, and requires that you list in advance what variables you want to protect (and
-besides, it's not really a let (it uses "set!") and I can't see anything fluid about it).
-encapsulate is a macro that evaluates its body, then returns any variables global to that code to their prior value.
-</p>
-<pre>
-&gt; (define global-x 32)
-global-x
-
-&gt; (encapsulate 
-    (set! global-x 123) 
-    (format #f "x: ~A" global-x))
-  "x: 123"
-
-&gt; global-x
-32
-</pre>
-</dd>
-<br>
--->
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -1305,7 +1261,6 @@ compile-time flags:
     HAVE_COMPLEX_TRIG              1 if your math library has complex versions of the trig functions
     WITH_MULTIDIMENSIONAL_VECTORS  1 if you want multidimensional vectors (default is 1)
     WITH_PROFILING                 1 if you want profiling support (default is 0)
-    WITH_ENCAPSULATION             1 if you want encapsulation (default is 0)
     WITH_FORCE                     1 if you want force and delay (default is 0)
     S7_DISABLE_DEPRECATED          1 if you want to make sure you're not using any deprecated s7 stuff (default is 0)
 </pre>

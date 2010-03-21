@@ -52646,7 +52646,7 @@ EDITS: 1
 	(if (not (= (run (lambda () (length sd))) 10)) (snd-display ";length of sound-data: ~A" (length sd)))
 	(if (not (= (run (lambda () (length fr))) 2)) (snd-display ";length of frame: ~A" (length fr)))
 	(if (not (= (run (lambda () (length mx))) 2)) (snd-display ";length of mixer: ~A" (length mx)))
-	(if (not (= (run (lambda () (length mxv))) 3)) (snd-display ";length of mix: ~A" (length mxv)))
+	(if (and (mix? mxv) (not (= (run (lambda () (length mxv))) 3))) (snd-display ";length of mix: ~A" (length mxv)))
 	(if (not (= (run (lambda () (length reg))) 101)) (snd-display ";length of region: ~A" (length reg)))
 	(if (not (= (run (lambda () (length dly))) 32)) (snd-display ";length of delay: ~A" (length dly)))
 	)

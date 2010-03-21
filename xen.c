@@ -1529,16 +1529,16 @@ void xen_s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value, c
       if (constant_size == 0)
 	{
 	  constant_size = 128;
-	  constant_names = (const char **)calloc(constant_size, sizeof(char *));
-	  constant_helps = (const char **)calloc(constant_size, sizeof(char *));
+	  constant_names = (const char **)calloc(constant_size, sizeof(const char *));
+	  constant_helps = (const char **)calloc(constant_size, sizeof(const char *));
 	}
       else
 	{
 	  int i;
 	  i = constant_size;
 	  constant_size += 128;
-	  constant_names = (const char **)realloc(constant_names, constant_size * sizeof(char *));
-	  constant_helps = (const char **)realloc(constant_helps, constant_size * sizeof(char *));
+	  constant_names = (const char **)realloc(constant_names, constant_size * sizeof(const char *));
+	  constant_helps = (const char **)realloc(constant_helps, constant_size * sizeof(const char *));
 	  for (; i < constant_size; i++)
 	    {
 	      constant_names[i] = NULL;

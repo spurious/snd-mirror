@@ -15,6 +15,7 @@
 
 /* HISTORY:
  *
+ *  19-Mar:    removed s7_define_set_function (removed encapsulation from s7, so it's not useful anymore).
  *  17-Feb:    various s7 changes.
  *  5-Feb-10:  XEN_ASSOC_REF and XEN_ASSOC_SET.  XEN_ASSOC_REF returns the value, not the key/value pair.
  *  --------
@@ -1375,7 +1376,6 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
 
 
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc)     s7_define_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc)
-#define XEN_DEFINE_SET_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) s7_define_set_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc)
 #define XEN_DEFINE_PROCEDURE_STAR(Name, Func, Args, Doc)                  s7_define_function_star(s7, Name, Func, Args, Doc)
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
@@ -1769,7 +1769,6 @@ char *xen_strdup(const char *str);
   XEN c_to_xen_off_t(off_t val);
   int64_t xen_to_c_int64_t_or_else(XEN obj, int64_t fallback);
   int64_t xen_to_c_int64_t(XEN obj);
-  #define XEN_DEFINE_SET_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc)
 #endif
 
 char *xen_version(void);
