@@ -223,7 +223,7 @@ above as an example:
 <p>See s7test.scm for many examples.  Here, for example, is an implementation of parameters (srfi-39?):
 </p>
 <pre>
-(define* (make-parameter initial-value converter)
+(<em class=red>define*</em> (make-parameter initial-value converter)
   (let* ((unspecified (if #f #f))   ; #&lt;unspecified&gt;
 	 (value (if (procedure? converter) (converter initial-value) initial-value)))
     (<em class=red>lambda*</em> ((val unspecified))
@@ -281,11 +281,14 @@ hi
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <table border=0 bordercolor="lightgreen" width=80% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define-macro, define-macro*, defmacro, defmacro*, macroexpand, gensym, macro?</h4></td></tr></table>
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>macros</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
-<dd><p>These are the standard macro definers.  </p>
+<dd><p>define-macro, define-macro*, defmacro, defmacro*, macroexpand, gensym, and macro?
+implement the standard (CL-style) macro definers.  
+</p>
+
 <pre>
 (define-macro (add-1 arg) `(+ 1 ,arg))
 (defmacro add-1 (arg) `(+ 1 ,arg))
@@ -349,6 +352,7 @@ ho
 &gt; (procedure-source ho)
 (lambda (b) (+ 1 (+ 1 (+ b 1))))
 </pre>
+
 </dd>
 <br>
 

@@ -614,7 +614,6 @@
       (mixed-a-to-z (list #\a #\B #\c #\D #\e #\F #\g #\H #\I #\j #\K #\L #\m #\n #\O #\p #\Q #\R #\s #\t #\U #\v #\X #\y #\Z))
       (digits (list #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9)))
   
-  
   (test (char-upper-case? #\a) #f)
   (test (char-upper-case? #\A) #t)
   
@@ -6722,6 +6721,7 @@
   (test (let () (defmacro hi (q) `(let ((q 32)) `(,q))) (hi (* 2 3))) '(32))
   (test (let () (defmacro hi (q) `(let () ,@(list q))) (hi (* 2 3))) 6)
 
+  
   (define-macro (eval-case key . clauses)
     ;; case with evaluated key-lists
     `(cond ,@(map (lambda (lst)
@@ -6730,6 +6730,14 @@
 			      (cdr lst))
 			lst))
 		  clauses)))
+
+  (test (let ((a 1) (b 2)) (eval-case 1 ((a) 123) ((b) 321) (else 0))) 123)
+  (test (let ((a 1) (b 2) (c 3)) (eval-case 3 ((a c) 123) ((b) 321) (else 0))) 123)
+  (test (let ((a 1) (b 2)) (eval-case 3 ((a) 123) ((b) 321) (((+ a b)) -1) (else 0))) -1)
+  (test (let ((a 1) (b 2)) (eval-case 6 ((a (* (+ a 2) b)) 123) ((b) 321) (((+ a b)) -1) (else 0))) 123)
+
+  (test (macro? eval-case) #t)
+  (test (macro? pi) #f)
   
   (define-macro (fully-expand form)
     (define (expand form)
@@ -6741,6 +6749,19 @@
 		    (expand (cdr form))))
 	  form))
     (expand form))
+
+  (define fe1-called #f)
+  (define-macro (fe1 a) (set! fe1-called #t) `(+ ,a 1))
+  (define fe2-called #f)
+  (define-macro (fe2 b) (set! fe2-called #f) `(+ (fe1 ,b) 2))
+  (fully-expand (define (fe3 c) (+ (fe2 c) (fe1 (+ c 1)))))
+  (set! fe1-called #f)
+  (set! fe2-called #f)
+  (let ((val (fe3 3)))
+    (if (or (not (= val 11))
+	    fe1-called
+	    fe2-called)
+	(format #t "fully-expand: ~A ~A ~A ~A~%" val (procedure-source fe3) fe1-called fe2-called)))
 
   (test (let ()
 	  (define-macro (pop sym)
@@ -15880,6 +15901,8 @@
 					; subclass that allocates all its slots dynamically.
 					;
 					;
+;;; these tests take too long for what why return
+#|
   (define <dynamic-class>
     (make-class (list <class>)
 		(list 'alist-g-n-s)))
@@ -15993,7 +16016,6 @@
 	'specializers specializers
 	'procedure procedure)))
   
-  
   (define <around-generic> (make <entity-class>
 			     'direct-supers (list <generic>)))
   (define <around-method>  (make <class>
@@ -16025,6 +16047,7 @@
 					; And a simple example of using it.
 					;
 					;
+
   (define <baz> (make-class (list <object>) (list)))
   (define <bar> (make-class (list <baz>)    (list)))
   (define <foo> (make-class (list <bar>)    (list)))
@@ -16047,6 +16070,7 @@
   
   (test (test-around (make-generic))        '(foo bar baz))
   (test (test-around (make-around-generic)) '(bar foo baz))
+|#
   
   ) ;; end tiny-clos
 
@@ -50701,4 +50725,3 @@
 ;;; (call/cc (lambda () 1)) -> error?
 
 
-;;; PERHAPS: tests for macro? eval-case fully-expand

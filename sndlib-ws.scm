@@ -73,27 +73,27 @@
 
 (define* (with-sound-helper thunk 
 			    (srate *clm-srate*) 
-			          (output *clm-file-name*) 
-				  (channels *clm-channels*)
-				  (header-type *clm-header-type*)
-				  (data-format *clm-data-format*)
-				  (comment #f)
-				  (verbose *clm-verbose*)
-				  (reverb *clm-reverb*)
-				  (revfile "test.rev")
-				  (reverb-data *clm-reverb-data*)
-				  (reverb-channels *clm-reverb-channels*)
-				  (continue-old-file #f)
-				  (statistics *clm-statistics*)
-				  (scaled-to #f)
-				  (play *clm-play*)
-				  (clipped 'unset)
-				  (notehook *clm-notehook*)               ; (with-sound (:notehook (lambda args (display args))) (fm-violin 0 1 440 .1))
-				  (scaled-by #f)
-				  (ignore-output #f)
-				  (thread-output #f)
-				  (thread-reverb #f)
-				  (output-safety *clm-output-safety*))
+			    (output *clm-file-name*) 
+			    (channels *clm-channels*)
+			    (header-type *clm-header-type*)
+			    (data-format *clm-data-format*)
+			    (comment #f)
+			    (verbose *clm-verbose*)
+			    (reverb *clm-reverb*)
+			    (revfile "test.rev")
+			    (reverb-data *clm-reverb-data*)
+			    (reverb-channels *clm-reverb-channels*)
+			    (continue-old-file #f)
+			    (statistics *clm-statistics*)
+			    (scaled-to #f)
+			    (play *clm-play*)
+			    (clipped 'unset)
+			    (notehook *clm-notehook*)               ; (with-sound (:notehook (lambda args (display args))) (fm-violin 0 1 440 .1))
+			    (scaled-by #f)
+			    (ignore-output #f)
+			    (thread-output #f)
+			    (thread-reverb #f)
+			    (output-safety *clm-output-safety*))
   "with-sound-helper is the business portion of the with-sound macro"
   (let* ((old-srate (mus-srate))
 	 (old-*output* *output*)
@@ -101,8 +101,11 @@
 	 (in-debugger #f)
 	 (old-notehook *clm-notehook*)
 	 (old-verbose *clm-verbose*)
-	 (output-1 output)                    ; protect during nesting
 	 (output-to-file (string? output))
+	 (output-1 (if (and output-to-file
+			    (or scaled-to scaled-by))
+		       (string-append output ".temp") 
+		       output))                    ; protect during nesting
 	 (reverb-1 revfile)
 	 (reverb-to-file (and reverb (string? revfile))))
 
@@ -225,69 +228,67 @@
 	     (if output-to-file
 		 (mus-close *output*)))
 
-	 (let ((snd-output #f) ; TODO: not needed
-	       (cur-sync #f))  ; also not needed
-	   (if statistics 
-	       (begin
-		 (set! cycles (exact->inexact (/ (- (get-internal-real-time) start) internal-time-units-per-second)))
-		 (display (format #f "~%;~A:~%  maxamp~A:~{ ~,4F~}~%~A  compute time: ~,3F~%"
-				  (if output-to-file
-				      output-1
-				      (if (vct? output-1) "vct" 
-					  (if (sound-data? output-1) "sound-data"
-					      (if (procedure? output-1) "function" 
-						  "flush"))))
-				  (if (or scaled-to scaled-by) 
-				      " (before scaling)" 
-				      "")
-				  (if output-to-file
-				      (let ((lst (mus-sound-maxamp output-1)))
-					(do ((i 0 (+ i 2)))
-					    ((>= i (length lst)))
-					  (list-set! lst i (/ (list-ref lst i) (mus-srate))))
-					lst)
-				      (if (vct? output-1)
-					  (list (vct-peak output-1))
-					  (if (sound-data? output-1)
-					      (sound-data-maxamp output-1)
-					      0.0)))
-				  (if revmax (format #f "  rev max: ~,4F~%" revmax) "")
-				  cycles))))
+	 (if statistics 
+	     (begin
+	       (set! cycles (exact->inexact (/ (- (get-internal-real-time) start) internal-time-units-per-second)))
+	       (display (format #f "~%;~A:~%  maxamp~A:~{ ~,4F~}~%~A  compute time: ~,3F~%"
+				(if output-to-file
+				    (if (or scaled-to scaled-by)
+					(substring output-1 0 (- (string-length output-1) 5))
+					output-1)
+				    (if (vct? output-1) "vct" 
+					(if (sound-data? output-1) "sound-data"
+					    (if (procedure? output-1) "function" 
+						"flush"))))
+				(if (or scaled-to scaled-by) 
+				    " (before scaling)" 
+				    "")
+				(if output-to-file
+				    (let ((lst (mus-sound-maxamp output-1)))
+				      (do ((i 0 (+ i 2)))
+					  ((>= i (length lst)))
+					(list-set! lst i (/ (list-ref lst i) (mus-srate))))
+				      lst)
+				    (if (vct? output-1)
+					(list (vct-peak output-1))
+					(if (sound-data? output-1)
+					    (sound-data-maxamp output-1)
+					    0.0)))
+				(if revmax (format #f "  rev max: ~,4F~%" revmax) "")
+				cycles))))
 
-	   (if (or scaled-to scaled-by)
-	       (if output-to-file
-		   ;; someday scale the output
-		   (display "can't scale output yet")
+	 (if (or scaled-to scaled-by)
+	     (if output-to-file
+		 (let ((scaling
+			(or scaled-by
+			    (let* ((mx-lst (mus-sound-maxamp output-1))
+				   (mx (cadr mx-lst)))
+			      (do ((i 1 (+ 1 2)))
+				  ((>= i (length mx-lst)) (/ scaled-to mx))
+				(set! mx (max mx (list-ref mx-lst i)))))))
+		       (out-file (substring output-1 0 (- (string-length output-1) 5))))
+		   (mus-sound-close-output (mus-sound-open-output out-file srate channels data-format header-type) 0)
+		   (mus-mix out-file output-1 0 (mus-sound-frames output-1) 0 (make-scalar-mixer channels scaling))
+		   (delete-file output-1)
+		   (set! output-1 (substring output-1 0 (- (string-length output-1) 5))))
 
-		   ;; in Snd:
-;		   (let ((scale-output (or snd-output (open-sound output-1))))
-;		     (if scaled-to
-;			 (scale-to scaled-to scale-output)
-;			 (if scaled-by
-;			     (scale-by scaled-by scale-output)))
-;		     (save-sound scale-output)
-;		     (if (not to-snd) 
-;			 (close-sound scale-output)))
+		 (if (vct? output-1)
+		     (if scaled-to
+			 (let ((pk (vct-peak output-1)))
+			   (if (> pk 0.0)
+			       (vct-scale! output-1 (/ scaled-to pk))))
+			 (vct-scale! output-1 scaled-by))
+		     (if (sound-data? output-1)
+			 (if scaled-to
+			     (let ((pk (sound-data-peak output-1)))
+			       (if (> pk 0.0)
+				   (sound-data-scale! output-1 (/ scaled-to pk))))
+			     (sound-data-scale! output-1 scaled-by))))))
 
-;;; perhaps use fullmix?
+	 (if (and *clm-player* play output-to-file)
+	     (*clm-player* output-1)))
 
-		   (if (vct? output-1)
-		       (if scaled-to
-			   (let ((pk (vct-peak output-1)))
-			     (if (> pk 0.0)
-				 (vct-scale! output-1 (/ scaled-to pk))))
-			   (vct-scale! output-1 scaled-by))
-		       (if (sound-data? output-1)
-			   (if scaled-to
-			       (let ((pk (sound-data-peak output-1)))
-				 (if (> pk 0.0)
-				     (sound-data-scale! output-1 (/ scaled-to pk))))
-			       (sound-data-scale! output-1 scaled-by))))))
-
-	   (if (and *clm-player* play output-to-file)
-	       (*clm-player* output-1)))
-
-	 output-1))
+       output-1)
 
      (lambda () 
        (set! *clm-verbose* old-verbose)

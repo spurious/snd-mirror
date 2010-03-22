@@ -1301,7 +1301,8 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->envir);
   S7_MARK(sc->code);
   S7_MARK(sc->cur_code);
-  mark_vector(sc->stack, s7_stack_top(sc));
+  mark_vector(sc->stack, s7_stack_top(sc)); 
+  /* splitting out the stack case saves about 1/2000 total time (we can skip the op etc) */
   S7_MARK(sc->x);
   S7_MARK(sc->y);
   S7_MARK(sc->z);
@@ -4248,10 +4249,15 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
   char *tmp = (char *)str;
   char *tmp1;
 
-  if ((str[0] == '+') || (str[0] == '-'))
+  if (str[0] == '+')
+    tmp++;
+  else 
     {
-      if (str[0] == '-') negative = true;
-      tmp++;
+      if (str[0] == '-')
+	{
+	  negative = true;
+	  tmp++;
+	}
     }
   while (*tmp == '0') {tmp++;};
   tmp1 = tmp;
@@ -4381,8 +4387,9 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 #endif
       
       if (int_len <= max_len)
-	dval = int_part * pow((s7_Double)radix, (s7_Double)exponent);
-      else dval = int_part * pow((s7_Double)radix, (s7_Double)(exponent + int_len - max_len));
+	dval = int_part * pow((double)radix, (double)exponent);
+      else dval = int_part * pow((double)radix, (double)(exponent + int_len - max_len));
+
       /* shift by exponent, but if int_len > max_len then we assumed (see below) int_len - max_len 0's on the left */
       /*   using int_to_int or table lookups here instead of pow did not make any difference in speed */
 
@@ -4400,7 +4407,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	      for (i = 0; i < flen; i++)
 		frac_part = digits[(int)(*str++)] + (frac_part * radix);
 
-	      dval += frac_part * pow((s7_Double)radix, (s7_Double)(exponent - flen - k));
+	      dval += frac_part * pow((double)radix, (double)(exponent - flen - k));
 	    }
 	}
       else
@@ -4417,7 +4424,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	      for (i = 0; i < ilen; i++)
 		frac_part = digits[(int)(*str++)] + (frac_part * radix);
 
-	      dval += frac_part * pow((s7_Double)radix, (s7_Double)(exponent - ilen));
+	      dval += frac_part * pow((double)radix, (double)(exponent - ilen));
 	    }
 	}
 
@@ -4430,7 +4437,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	int_part = dig + (int_part * radix);
       
       if (exponent != 0)
-	dval = int_part * pow((s7_Double)radix, (s7_Double)exponent);
+	dval = int_part * pow((double)radix, (double)exponent);
       else dval = (s7_Double)int_part;
 
     }
@@ -4457,8 +4464,8 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	fpart = digits[(int)(*str++)] + (fpart * radix);
 
       if (len <= 0)
-	dval = int_part + fpart * pow((s7_Double)radix, (s7_Double)(len - flen));
-      else dval = int_part + fpart * pow((s7_Double)radix, (s7_Double)(-flen));
+	dval = int_part + fpart * pow((double)radix, (double)(len - flen));
+      else dval = int_part + fpart * pow((double)radix, (double)(-flen));
     }
 
   str = fpart;
@@ -4466,8 +4473,8 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
     {
       while ((dig = digits[(int)(*str++)]) < radix)
 	frac_part = dig + (frac_part * radix);
-
-      dval += frac_part * pow((s7_Double)radix, (s7_Double)(exponent - frac_len));
+      
+      dval += frac_part * pow((double)radix, (double)(exponent - frac_len));
     }
   else
     {
@@ -4476,7 +4483,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	  for (i = 0; i < max_len; i++)
 	    frac_part = digits[(int)(*str++)] + (frac_part * radix);
 
-	  dval += frac_part * pow((s7_Double)radix, (s7_Double)(exponent - max_len));
+	  dval += frac_part * pow((double)radix, (double)(exponent - max_len));
 	}
       else
 	{
@@ -4499,7 +4506,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	  for (i = 0; i < frac_len; i++)
 	    frac_part = digits[(int)(*str++)] + (frac_part * radix);
 	  
-	  dval += ipart + frac_part * pow((s7_Double)radix, (s7_Double)(-frac_len));
+	  dval += ipart + frac_part * pow((double)radix, (double)(-frac_len));
 	}
     }
 
@@ -4565,7 +4572,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	}
     }
   
-  for ( ; (c = *p) != 0; ++p) 
+  for ( ; (c = *p) != 0; ++p)
     {
       if (!ISDIGIT(c, current_radix)) 
 	{
@@ -5762,13 +5769,17 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
   if (args == sc->NIL)
     return(small_int(0));
 
-    if (!s7_is_number(car(args)))
-      return(s7_wrong_type_arg_error(sc, "+", 1, car(args), "a number"));
+  if (!s7_is_number(car(args)))
+    return(s7_wrong_type_arg_error(sc, "+", 1, car(args), "a number"));
 #endif
+    
+  x = cdr(args);
+  if (x == sc->NIL)
+    return(car(args));
 
+  i = 2;
   a = number(car(args));
-
-  for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
+  while (true)
     {
 #if WITH_GMP
       switch (a.type)
@@ -5850,6 +5861,12 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	  else a.type = NUM_COMPLEX;
 	  break;
 	}
+
+      x = cdr(x);
+      if (x == sc->NIL)
+	return(make_number(sc, a));
+
+      i++;
     }
 
   return(make_number(sc, a));
@@ -6192,10 +6209,14 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
   if (!s7_is_real(ap))
     return(s7_wrong_type_arg_error(sc, "max", 1, ap, "a real"));
 
+  x = cdr(args);
+  if (x == sc->NIL)
+    return(ap);
+
   result = ap;
   a = number(ap);
-
-  for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
+  i = 2;
+  while (true)
     {
       bp = car(x);
       if (!s7_is_real(bp))
@@ -6243,6 +6264,12 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 	    }
 	  break;
 	}
+
+      x = cdr(x);
+      if (x == sc->NIL)
+	return(result);
+
+      i++;
     }
   return(result);
 }
@@ -6259,10 +6286,14 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
   if (!s7_is_real(ap))
     return(s7_wrong_type_arg_error(sc, "min", 1, ap, "a real"));
 
+  x = cdr(args);
+  if (x == sc->NIL)
+    return(ap);
+
   result = ap;
   a = number(ap);
-
-  for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
+  i = 2;
+  while (true)
     {
       bp = car(x);
       if (!s7_is_real(bp))
@@ -6310,6 +6341,12 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 	    }
 	  break;
 	}
+
+      x = cdr(x);
+      if (x == sc->NIL)
+	return(result);
+
+      i++;
     }
   return(result);
 }
@@ -6420,7 +6457,9 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
   a = number(car(args));
   type_a = num_type(a);
 
-  for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
+  x = cdr(args);
+  i = 2;
+  while (true)
     {
       s7_pointer tmp;
       bool equal = true;
@@ -6548,8 +6587,13 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	  return(sc->F);
 	}
 
+      x = cdr(x);
+      if (x == sc->NIL)
+	return(sc->T);
+
       a = b;
       type_a = type_b;
+      i++;
     }
 
   return(sc->T);
@@ -6568,7 +6612,9 @@ static s7_pointer g_less_1(s7_scheme *sc, bool reversed, s7_pointer args)
   a = number(car(args));
   type_a = num_type(a);
 
-  for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
+  i = 2;
+  x = cdr(args);
+  while (true)
     {
       s7_pointer tmp;
       bool less = true;
@@ -6671,7 +6717,12 @@ static s7_pointer g_less_1(s7_scheme *sc, bool reversed, s7_pointer args)
 
 	  return(sc->F);
 	}
+
+      x = cdr(x);
+      if (x == sc->NIL)
+	return(sc->T);
       
+      i++;
       a = b;
       type_a = type_b;
     }
@@ -6706,7 +6757,9 @@ static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
   a = number(car(args));
   type_a = num_type(a);
 
-  for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
+  i = 2;
+  x = cdr(args);
+  while (true)
     {
       s7_pointer tmp;
       bool greater = true;
@@ -6814,7 +6867,12 @@ static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
 
 	  return(sc->F);
 	}
-      
+
+      x = cdr(x);
+      if (x == sc->NIL)
+	return(sc->T);
+
+      i++;
       a = b;
       type_a = type_b;
     }
@@ -12575,7 +12633,6 @@ static s7_c_object_t *object_types = NULL;
 static int object_types_size = 0;
 static int num_types = 0;
 
-
 int s7_new_type(const char *name, 
 		char *(*print)(s7_scheme *sc, void *value), 
 		void (*free)(void *value), 
@@ -12631,6 +12688,66 @@ int s7_new_type_x(const char *name,
   object_types[tag].copy = copy;
   object_types[tag].fill = fill;
   return(tag);
+}
+
+
+#if 0
+/*
+(make-type) returns a type-object: the value of the object is an alist of (op func) 
+  with a few guaranteed ops: '? 'make 'ref 
+  (the name "make-type" mimics "make-string" et al)
+
+(type-append type-object op func) adds (op func) to the type's alist
+  it might be like acons in CL for example
+  (the name "type-append" mimics "string-append")
+
+then types can be defined locally or globally:
+
+(let ((rec (make-type)))
+  (let ((rec? (cdr (assoc '? rec))) ; a function of 1 arg, #t if it's a rec
+        (make-rec (cdr (assoc 'make rec))) ; similar but makes a rec with that value
+	(rec-ref (cdr (assoc 'ref rec))))  ; similar but returns rec's value
+	;; perhaps make rec-ref a procedure-with-setter or add a set! op to the type list
+
+    (type-append rec 'display (lambda (obj) (display "#<rec>")))
+    (type-append rec 'equal? (lambda (r1 r2) (equal? (rec-ref r1) (rec-ref r2))))
+
+    (let ((r1 (make-rec (list 32 rec)))
+	  (r2 (make-rec (list (vector 1 2 3) rec))))
+	  ;; by appending "rec" we can access the ops from scheme 
+      (set! (cdr (assoc 'ref rec)) (list 'ref (lambda (obj) (car (rec-ref obj)))))
+      (equal? r1 r2)
+      ...)))
+*/
+#endif
+
+
+static s7_pointer g_make_type(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_type "(make-type) returns a new type object"
+  /* int tag; */
+
+  /* make an alist [gc-protected until we return], with 
+   *   (? func that check obj-tag and type-tag)
+   *   (make func to make object with value)
+   *   (ref func to return object's value) -- pws in this context?
+   */
+
+  /* any op that gets an object of this type needs to check for the relevant op in the type alist
+   *   will this be a huge burden?
+   */
+  
+  return(sc->F);
+}
+
+
+static s7_pointer g_type_append(s7_scheme *sc, s7_pointer args)
+{
+  #define H_type_append "(type-append type-object operator function) either adds the operator \
+and function to the type's alist, or replaces the function associated with operator to the new one."
+
+  /* look for op, if found change cdr to func, else add (op func) to type alist */
+  return(sc->F);
 }
 
 
@@ -17110,7 +17227,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (cddar(sc->code) != sc->NIL)       /* (let* ((x 1 2 3)) ...) */
 	return(eval_error(sc, "let* syntax error (more than one value?): ~A", car(sc->code)));
 
-      sc->envir = new_frame_in_env(sc, sc->envir); 
+      /* sc->envir = new_frame_in_env(sc, sc->envir); */
+      NEW_FRAME(sc, sc->envir, sc->envir);
       /* we can't skip this new frame -- we have to imitate a nested let, otherwise
        *
        *   (let ((f1 (lambda (arg) (+ arg 1))))
@@ -23144,6 +23262,9 @@ s7_scheme *s7_init(void)
 #if WITH_MULTIDIMENSIONAL_VECTORS
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "multidimensional-vectors")));
 #endif
+
+  s7_define_function(sc, "make-type",               g_make_type,              0, 0, false, H_make_type);
+  s7_define_function(sc, "type-append",             g_type_append,            3, 0, false, H_type_append);
 
 #if WITH_PROFILING
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "profiling")));  
