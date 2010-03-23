@@ -10336,7 +10336,7 @@ hopefully unobtrusively.  Here is an example, including a stereo reverb:
 <p>defgenerator is an extension of <a href="sndscm.html#def-clm-struct">def-clm-struct</a>
 that sets up all the usual generator methods (discussed under <a href="#genericfunctions">"generic functions"</a> above).
 It is used to define all the generators in generators.scm.  
-We could add a dither generator via defgenerator (pandering to the Temple of Tape Hiss?):
+We could add a dither generator via defgenerator:
 </p>
 
 <table border=0 hspace=40><tr><td>
@@ -10360,7 +10360,7 @@ We could add a dither generator via defgenerator (pandering to the Temple of Tap
 #|
   (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
     (let ((osc (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 440)) 
-          (noise (<em class=red>make-dither</em> .25))) ; yes, oh Lord of Hiss, I believe!!
+          (noise (<em class=red>make-dither</em> .25)))
       (run
        (do ((i 0 (+ 1 i))) 
            ((= i 20000)) 

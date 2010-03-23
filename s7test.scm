@@ -4124,6 +4124,17 @@
 (test ((lambda (x) "a useless string" x) 32) 32)
 (test ((lambda (>< =0=? .arg.) (+ >< =0=? .arg.)) 1 2 3) 6)
 
+(test
+ (let ()
+   (begin
+     (define f1 #f)
+     (define f2 #f)
+     (let ((lv 32))
+       (set! f1 (lambda (a) (+ a lv)))
+       (set! f2 (lambda (a) (- a lv)))))
+   (+ (f1 1) (f2 1)))
+ 2)
+
 
 
 
@@ -6640,7 +6651,26 @@
    (lambda (arg)
      (test (procedure-environment arg) 'error))
    (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
-  
+
+  (test (let ()
+	  (define (hi a)
+	    (let ((func (cdr (assoc '__func__ (car (procedure-environment hi))))))
+	      (list (if (symbol? func) func (car func))
+		    a)))
+	  (hi 1))
+	(list 'hi 1))
+
+  (test (let ()
+	  (define hi (let ((a 32)) 
+		       (lambda (b) 
+			 (+ a b))))
+	  (define ho (with-environment 
+		      (procedure-environment hi) 
+		      (lambda (b) 
+			(+ a b))))
+	  (list (hi 1) (ho 1)))
+	(list 33 33))
+
   (for-each
    (lambda (arg)
      (test (continuation? arg) #f))

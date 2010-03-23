@@ -12286,22 +12286,7 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
 
 
 
-/* -------------------------------- objects and functions --------------------------------
- *
- * this could be made available in Scheme:
- *
- * define-type (make-type in ext)
- * (define-type "name"
- *              (lambda (obj) (display obj))       ; print
- *	        #f                                 ; free
- *	        (lambda (obj1 obj2) (= obj1 obj2)) ; equal?
- *	        #f                                 ; gc mark
- *	        (lambda (obj arg) arg)             ; apply
- *	        #f                                 ; set
- *              #f #f #f)                          ; length copy fill!
- *  (make-object <tag> value)
- *  (object? <tag> obj) or maybe (name? obj) and (make-name value)
- */
+/* -------------------------------- objects and functions -------------------------------- */
 
 bool s7_is_function(s7_pointer p)  
 { 
@@ -12693,6 +12678,22 @@ int s7_new_type_x(const char *name,
 
 #if 0
 /*
+ * this could be made available in Scheme:
+ *
+ * define-type (make-type in ext)
+ * (define-type "name"
+ *              (lambda (obj) (display obj))       ; print
+ *	        #f                                 ; free
+ *	        (lambda (obj1 obj2) (= obj1 obj2)) ; equal?
+ *	        #f                                 ; gc mark
+ *	        (lambda (obj arg) arg)             ; apply
+ *	        #f                                 ; set
+ *              #f #f #f)                          ; length copy fill!
+ *  (make-object <tag> value)
+ *  (object? <tag> obj) or maybe (name? obj) and (make-name value)
+ */
+
+/*
 (make-type) returns a type-object: the value of the object is an alist of (op func) 
   with a few guaranteed ops: '? 'make 'ref 
   (the name "make-type" mimics "make-string" et al)
@@ -12718,6 +12719,12 @@ then types can be defined locally or globally:
       (set! (cdr (assoc 'ref rec)) (list 'ref (lambda (obj) (car (rec-ref obj)))))
       (equal? r1 r2)
       ...)))
+
+      Now I'm thinking this is too messy: just
+
+      (make-type :optkey equal? display apply set! length copy fill!)
+      which returns the ? make ref funcs and sets the others (to plausible defaults if not passed)
+
 */
 #endif
 
@@ -12740,7 +12747,7 @@ static s7_pointer g_make_type(s7_scheme *sc, s7_pointer args)
   return(sc->F);
 }
 
-
+#if 0
 static s7_pointer g_type_append(s7_scheme *sc, s7_pointer args)
 {
   #define H_type_append "(type-append type-object operator function) either adds the operator \
@@ -12749,6 +12756,7 @@ and function to the type's alist, or replaces the function associated with opera
   /* look for op, if found change cdr to func, else add (op func) to type alist */
   return(sc->F);
 }
+#endif
 
 
 static char *describe_object(s7_scheme *sc, s7_pointer a)
@@ -14710,7 +14718,8 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
   int line;
 
   x = sc->args;
-  while (is_pair(cdr(x))) x = cdr(x);
+  if (is_pair(x))
+    while (is_pair(cdr(x))) x = cdr(x);
   line = pair_line_number(x);
 
   if (line > 0)
@@ -14719,7 +14728,10 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
 				s7_make_string(sc, "missing close paren, list started around line ~D of ~S"), 
 				s7_make_integer(sc, remembered_line_number(line)),
 				make_protected_string(sc, port_filename(sc->input_port)))));
-  return(read_error(sc, "missing close paren"));
+  
+  /* we need a legit s7_error here, but we're lost... */
+  return(s7_error(sc, sc->ERROR, 
+		  make_list_1(sc, s7_make_string(sc, "missing close paren; where am I??"))));
 }
 
 
@@ -16690,6 +16702,29 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* (defmacro hi (a b) `(+ ,a ,b)) */
 	  /*   -> code: #<macro>, args: ((hi 2 3)), closure args: (defmac-9) */
 	  /*   then back again: code: #<closure>, args: (2 3), closure args: (a b) */
+
+	  /* although not the normal entry path, it is possible to apply a macro:
+	   *
+	   * (define-macro (hi a) `(+ ,a 1))
+	   * (apply hi '((hi 4)))
+	   * (+ 4 1)
+	   *
+	   * that is, you apply it to an expression that includes the macro name (or any name) --
+	   *   it's expecting an expression and ignores the function position, assuming it is
+	   *   its own name sitting there.  The result of the macro expansion, in this weird case,
+	   *   is returned without evaluation -- does this make it a "fexpr"?  Or is this more
+	   *   explicit:
+	   *
+	   * (define-macro (define-fexpr name-and-args . body)
+	   *   (let ((name (car name-and-args))
+	   *         (args (cdr name-and-args)))
+	   *     `(define-macro (,name ,@args)
+	   *        (list 'quote ((lambda ,args ,@body) ,@args)))))
+	   *
+	   * (define-fexpr (hi a) `(+ ,a 1))
+	   * (hi 4)
+	   * (+ 4 1)
+	   */
 
 	  for (sc->x = closure_args(sc->code), sc->y = sc->args; is_pair(sc->x); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 	    {
@@ -23264,7 +23299,9 @@ s7_scheme *s7_init(void)
 #endif
 
   s7_define_function(sc, "make-type",               g_make_type,              0, 0, false, H_make_type);
+#if 0
   s7_define_function(sc, "type-append",             g_type_append,            3, 0, false, H_type_append);
+#endif
 
 #if WITH_PROFILING
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "profiling")));  
@@ -23359,3 +23396,11 @@ s7_scheme *s7_init(void)
 }
 
 /* PERHAPS: if tracing and traced func redefined, update trace? */
+/* PERHAPS: all the built-in funcs (and Snd's too) should have something
+ *           reasonable for the procedure-environment:
+ *           (procedure-environment +) -> now it's just the global env
+ *               -> (((__func__ + "s7.c" 5761)) #(...))
+ *          This need not be attached to the function (but why not?).
+ *          can this be automated?
+ */
+
