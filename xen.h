@@ -1407,6 +1407,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 
 #define XEN_DEFINE_CONSTANT(Name, Value, Help)                        xen_s7_define_constant(s7, Name, s7_make_integer(s7, Value), Help)
 #define XEN_DEFINE(Name, Value)                                       s7_define_variable(s7, Name, Value)
+#define XEN_DEFINED_P(Name)                                           s7_is_defined(s7, Name)
 
 #define XEN_DEFINE_VARIABLE(Name, Var, Value)                         Var = xen_define_variable(Name, Value)
 #define XEN_VARIABLE_SET(Var, Val)                                    s7_symbol_set_value(s7, Var, Val)

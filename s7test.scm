@@ -3609,6 +3609,15 @@
 		    ((= i 4722366482869645213696) j))
 		60)))
 
+(test (do ((i 9223372036854775805 (+ i 1))
+	   (j 0 (+ j 1)))
+	  ((>= i 9223372036854775807) j))
+      2)
+(test (do ((i -9223372036854775805 (- i 1))
+	   (j 0 (+ j 1)))
+	  ((<= i -9223372036854775808) j))
+      3)
+
 (num-test (do ((x (list 1 2 3) (cdr x)) (j -1)) ((null? x) j) (set! j (car x))) 3)
 
 (test (let ((x 0)) 
@@ -4736,7 +4745,9 @@
 (test (let func1 ((a 1)) (+ (let func2 ((a 2)) a) a)) 3)
 (test (let func1 ((a 1)) (+ (if (> a 0) (func1 (- a 1)) (let func2 ((a 2)) (if (> a 0) (func2 (- a 1)) 0))) a)) 1)
 (test (let func ((a (let func ((a 1)) a))) a) 1)
-
+(test (let ((i 3)) (let func () (set! i (- i 1)) (if (> i 0) (func))) i) 0)
+(test (let func ((a 1)) (define (func a) 2) (func 1)) 2)
+(test (let func ((a 1)) (define func (lambda (a) (func a))) (if (> a 1) (func (- a 1)) 0)) 0)
 
 
 
@@ -6065,6 +6076,8 @@
 (test (eqv? (gensym) (gensym)) #f)
 (test (equal? (gensym) (gensym)) #f)
 (test (keyword? (gensym)) #f)
+(test (let* ((a (gensym)) (b a)) (eq? a b)) #t)
+(test (let* ((a (gensym)) (b a)) (eqv? a b)) #t)
 
 (let ((sym (gensym)))
   (test (eval `(let ((,sym 32)) (+ ,sym 1))) 33))
@@ -6671,6 +6684,67 @@
 	  (list (hi 1) (ho 1)))
 	(list 33 33))
 
+  (test (let ()
+	  (define (hi a) (+ a 1))
+	  (with-environment (procedure-environment hi) 
+            ((eval (procedure-source hi)) 2)))
+	3)
+  
+  (let ()
+    (define-macro (window func beg end . body)
+      `(call-with-exit
+	(lambda (quit)
+	  (do ((notes ',body (cdr notes)))
+	      ((null? notes))
+	    (let* ((note (car notes))
+		   (note-beg (cadr note)))
+	      (if (<= ,beg note-beg)
+		  (if (> note-beg (+ ,beg ,end))
+		      (quit)
+		      (,func note))))))))
+    
+    (test 
+     (let ((n 0))
+       (window (lambda (a-note) (set! n (+ n 1))) 0 1 
+	       (fm-violin 0 1 440 .1) 
+	       (fm-violin .5 1 550 .1) 
+	       (fm-violin 3 1 330 .1))
+       n)
+     2)
+    
+    (test 
+     (let ((notes 0)
+	   (env #f))
+       (set! env (current-environment))
+       (window (with-environment env (lambda (n) (set! notes (+ notes 1)))) 0 1 
+	       (fm-violin 0 1 440 .1) 
+	       (fm-violin .5 1 550 .1) 
+	       (fm-violin 3 1 330 .1))
+       notes)
+     2))
+
+  (test (let ()
+	  (define-macro (window func beg end . body)
+	    `(let ((e (current-environment)))
+	       (call-with-exit
+		(lambda (quit)
+		  (do ((notes ',body (cdr notes)))
+		      ((null? notes))
+		    (let* ((note (car notes))
+			   (note-beg (cadr note)))
+		      (if (<= ,beg note-beg)
+			  (if (> note-beg (+ ,beg ,end))
+			      (quit)
+			      ((with-environment e ,func) note)))))))))
+	  
+	  (let ((notes 0))
+	    (window (lambda (n) (set! notes (+ notes 1))) 0 1 
+		    (fm-violin 0 1 440 .1) 
+		    (fm-violin .5 1 550 .1) 
+		    (fm-violin 3 1 330 .1))
+	    notes))
+	2)
+
   (for-each
    (lambda (arg)
      (test (continuation? arg) #f))
@@ -6768,6 +6842,10 @@
 
   (test (macro? eval-case) #t)
   (test (macro? pi) #f)
+  (for-each
+   (lambda (arg)
+     (test (macro? arg) #f))
+   (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
   
   (define-macro (fully-expand form)
     (define (expand form)
@@ -28988,6 +29066,29 @@
 (num-test (angle 0) 0)
 (num-test (angle 0.0) 0.0)
 
+;; from libm tests
+(num-test (sin 32767.) 1.8750655394138942394239E-1)
+(num-test (cos 32767.) 9.8226335176928229845654E-1)
+(num-test (tan 32767.) 1.9089234430221485740826E-1)
+(num-test (sin 8388607.) 9.9234509376961249835628E-1)
+(num-test (cos 8388607.) -1.2349580912475928183718E-1)
+(num-test (tan 8388607.) -8.0354556223613614748329E0)
+(num-test (sin 2147483647.) -7.2491655514455639054829E-1)
+(num-test (cos 2147483647.) -6.8883669187794383467976E-1)
+(num-test (tan 2147483647.) 1.0523779637351339136698E0)
+
+;; ieetst
+(num-test (log (sqrt (- (expt 10 9) 1))) 1.036163291797320557783096154591297226743E1)
+(num-test (log (sqrt (- (expt 10 17) 1))) 1.957197329044938830915292736481709573957E1)
+(num-test (log (sqrt (- (expt 10 20) 1))) 2.302585092994045684017491454684364207599E1)
+(num-test (log (expt 2 16382)) 1.135513711193302405887309661372784853823E4)
+(num-test (log (expt 2 1022)) 7.083964185322641062244112281302564525734E2)
+(num-test (log (expt 2 125)) 8.664339756999316367715401518227207100938E1)
+(num-test (expt 2 1/3) 1.25992104989487316476721060727822835057E0)
+(num-test (expt 4 1/3) 1.587401051968199474751705639272308260393E0)
+(num-test (expt 1/2 1/3) 7.937005259840997373758528196361541301963E-1)
+(num-test (expt 1/4 1/3) 6.299605249474365823836053036391141752849E-1)
+
 
 ;; -------- floor, ceiling, truncate, round
 
@@ -44777,6 +44878,15 @@
   (test (string->number-1 "#i1+i1i") #f)
   (test (string->number-1 "#i1+1") #f)
   (test (string->number-1 "#i2i.") #f)
+
+  (test (string->number "1e0+i") 1+i)
+  (test (string->number "1+ie0") #f)
+  (test (string->number "1+e0") #f)
+  (test (string->number "1+1e0i") 1+i)
+  (test (string->number "1+1e0e0i") #f)
+  (test (string->number "1+1e00i") 1+i)
+  (test (string->number "1L") #f)
+  (test (string->number "1.L") #f)
   
   (num-test (string->number-1 "3.4e3") 3400.0)
   (num-test (string->number-1 "0") 0)
@@ -45465,18 +45575,24 @@
 
 
 
-;;; --------------------------------------------------------------------------------
+;;; -------------------------------- errors ------------------------------------------------
 
 
 
 (test (eq?) 'error)
 (test (eq? #t) 'error)
+(test (eq? #t #t #t) 'error)
+(test (eq? #f . 1) 'error)
 (test (eqv?) 'error)
 (test (eqv? #t) 'error)
+(test (eqv? #t #t #t) 'error)
 (test (equal?) 'error)
 (test (equal? #t) 'error)
+(test (equal? #t #t #t) 'error)
 (test (boolean?) 'error)
+(test (boolean? #f #t) 'error)
 (test (not) 'error)
+(test (not #f #t) 'error)
 (test (symbol?) 'error)
 (test (procedure?) 'error)
 (test (char?) 'error)
@@ -46687,7 +46803,6 @@
 
 					;(test (begin . 1) 'error)
 					;(test (let () (begin . 1)) 'error)
-					;(test (let ((x 0)) (set! x (+ x 1)) (begin (define y 1)) (+ x y)) 'error) ?? it's ok in s7
 
 (test (apply + #f) 'error)
 (test (apply #f '(2 3)) 'error)
@@ -46775,7 +46890,9 @@
 ;;      (test (let ((#z1 2)) 1) 'error)
 (test (let ('a 3) 1) 'error)
 (test (let 'a 1) 'error)
-;; what about: (let ('1 ) 1)
+;; what about: (let ('1 ) quote) -> 1
+(test (let* func ((a 1)) a) 'error)
+(test (letrec func ((a 1)) a) 'error)
 
 (test (let func ((a 1) . b) a) 'error)
 (test (let func ((a 1) . b) (if (> a 0) (func (- a 1) 2 3) b)) 'error)
@@ -46783,6 +46900,11 @@
 (test (let func (a . 1) a) 'error)
 (test (let ((a 1) . b) a) 'error)
 (test (let* ((a 1) . b) a) 'error)
+(test (let func ((a func) (i 1)) i) 'error)
+(test (let func ((i 0)) (if (< i 1) (func))) 'error)
+(test (let func (let ((i 0)) (if (< i 1) (begin (set! i (+ i 1)) (func))))) 'error)
+(test (let ((x 0)) (set! x (+ x 1)) (begin (define y 1)) (+ x y)) 2)
+
 
 (test (call/cc (lambda () 0)) 'error)
 (test (call/cc (lambda (a) 0) 123) 'error)

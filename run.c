@@ -100,6 +100,7 @@
  *
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
+ * PERHAPS: named let/tail recursion
  */
 
 

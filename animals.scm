@@ -1539,12 +1539,13 @@
 				  1.000 0.096))))
     (do ((call 0 (+ 1 call)))
 	((= call 5))
-      (amargosa-toad-1 (+ beg1 (vct-ref begs call))
-		       (vct-ref durs call)
-		       (vct-ref frqs call)
-		       (vector-ref frqenvs call)
-		       (* amp1 (vct-ref amps call))
-		       (vector-ref ampenvs call)))))
+      (amargosa-toad-1 
+       (+ beg1 (vct-ref begs call))
+       (vct-ref durs call)
+       (vct-ref frqs call)
+       (vector-ref frqenvs call)
+       (* amp1 (vct-ref amps call))
+       (vector-ref ampenvs call)))))
 
 ;; (with-sound (:play #t) (amargosa-toad 0 .5))
 

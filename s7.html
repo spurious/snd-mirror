@@ -353,6 +353,17 @@ ho
 (lambda (b) (+ 1 (+ 1 (+ b 1))))
 </pre>
 
+<p>fully-expand expands each macro it encounters by using the
+procedure-source of that macro, that is, the function that the macro definition
+expanded into:
+</p>
+<pre>
+(define-macro (hi a) `(+ ,a 1))
+
+&gt; (procedure-source hi)
+(lambda (defmac-13) (apply (lambda (a) (cons (quote +) (cons a (cons 1 (quote ()))))) (cdr defmac-13)))
+</pre>
+
 </dd>
 <br>
 
@@ -940,6 +951,7 @@ write a function that tells us where the source is for a function:
 &gt; (where-is profile)
 "profile is at line 1048 of extensions.scm"
 </pre>
+
 </dd>
 <br>
 

@@ -7349,6 +7349,34 @@ argument to granulate.  It cause the granulation to run backwards through the fi
 </pre>
 </td></tr></table>
 
+<p>But it's unnecessary to write clever input functions.  It is just as fast, and much more perspicuous,
+to use sound-let in cases like this.  Here's an example that takes any set of notes and calls granulate
+on the result:
+</p>
+<table border=0 hspace=40><tr><td>
+<pre>
+(define-macro (gran-any beg dur expansion . body)
+  `(<em class=red>sound-let</em> ((tmp () ,@body))
+     (let* ((start (floor (* (mus-srate) ,beg)))
+	    (end (+ start (* (mus-srate) ,dur)))
+	    (rd (make-readin tmp))
+	    (gran (<em class=red>make-granulate</em> :input rd :expansion ,expansion)))
+       (run
+	(do ((i start (+ i 1)))
+	    ((= i end))
+	  (outa i (granulate gran)))))))
+
+(with-sound () 
+  (gran-any 0 2.5 4 
+    (fm-violin 0 .1 440 .1) 
+    (fm-violin .2 .1 660 .1) 
+    (fm-violin .4 .1 880 .1)))
+</pre>
+</td></tr></table>
+
+<p>Any of the input-oriented generators (src, etc) can use this trick.
+</p>
+
 <p>
 The "edit" argument can
 be a function of one argument, the current granulate generator.  It is called just before
@@ -9103,10 +9131,10 @@ upon output (to track the original sound's amplitude envelope):
 
 <pre>
     (define (intensify index)
-      (let* ((mx (make-moving-max))
+      (let* ((mx (<em class=red>make-moving-max</em>))
 	     (flt (<a class=quiet href="sndscm.html#makelowpass" onmouseout="UnTip()" onmouseover="Tip(sndscm_makelowpass_tip)">make-lowpass</a> (* pi .1) 8))) ; smooth the maxamp signal
         (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (y)
-		       (let ((amp (max .1 (<a class=quiet href="#fir-filter" onmouseout="UnTip()" onmouseover="Tip(sndclm_fir_filter_tip)">fir-filter</a> flt (moving-max mx y)))))
+		       (let ((amp (max .1 (<a class=quiet href="#fir-filter" onmouseout="UnTip()" onmouseover="Tip(sndclm_fir_filter_tip)">fir-filter</a> flt (<em class=red>moving-max</em> mx y)))))
 		         (* amp (<a class=quiet href="#contrast-enhancement" onmouseout="UnTip()" onmouseover="Tip(sndclm_contrast_enhancement_tip)">contrast-enhancement</a> (/ y amp) index)))))))
 </pre>
 

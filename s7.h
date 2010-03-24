@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.47"
-#define S7_DATE "19-Mar-10"
+#define S7_VERSION "1.48"
+#define S7_DATE "24-Mar-10"
 
 
 typedef long long int s7_Int;
@@ -576,6 +576,7 @@ void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
 
 
 void s7_define(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value);
+bool s7_is_defined(s7_scheme *sc, const char *name);
 void s7_define_variable(s7_scheme *sc, const char *name, s7_pointer value);
 void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value);
 bool s7_is_constant(s7_pointer p);
@@ -833,6 +834,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 24-Mar:    s7_is_defined.
  * 19-Mar:    removed encapsulation mechanism and s7_define_set_function.
  * 18-Mar:    added macro?.
  * 27-Feb:    removed r4rs-style macro syntax.

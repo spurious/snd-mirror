@@ -3212,6 +3212,7 @@ bool snd_topic_help(const char *topic)
 {
   /* called only in snd-x|ghelp.c */
   int i, topic_len;
+
   for (i = 0; i < NUM_XREFS; i++)
     if (STRCMP(topic, xrefs[i]) == 0)
       {
@@ -3221,6 +3222,7 @@ bool snd_topic_help(const char *topic)
 	    return(true);
 	  }
       }
+
   topic_len = mus_strlen(topic);
   for (i = 0; i < NUM_XREFS; i++)
     {
@@ -3251,6 +3253,7 @@ bool snd_topic_help(const char *topic)
 	      }
 	  }
     }
+
   /* try respelling topic */
   {
     int min_diff = 1000, min_loc = 0, this_diff;
@@ -3270,6 +3273,7 @@ bool snd_topic_help(const char *topic)
 	return(true);
       }
   }
+
   /* go searching for it */
   {
     char *str;
@@ -3711,9 +3715,44 @@ and its value is returned."
 	    sym = text;
 	  }
       }
-    
+
     if (XEN_PROCEDURE_P(sym))
-      str = (char *)s7_procedure_documentation(s7, sym);
+      {
+	str = (char *)s7_procedure_documentation(s7, sym);
+#if HAVE_SCHEME
+	if ((str == NULL) || (mus_strlen(str) == 0))
+	  {
+	    const char *url = NULL;
+	    s7_pointer x;
+
+	    /* (cdr (assoc '__func__ (car (procedure-environment func))) => (name file line) or name */
+	    x = s7_procedure_environment(sym);
+	    if (s7_is_pair(x))
+	      {
+
+		x = s7_cdr(s7_assoc(s7, s7_make_symbol(s7, "__func__"), s7_car(x)));
+		subject = (char *)s7_symbol_name(s7_car(x));
+		url = snd_url(subject);
+		if (s7_is_pair(x))
+		  {
+		    /* unavoidable memleak I guess */
+		    str = (char *)calloc(256, sizeof(char));
+		    if (url)
+		      mus_snprintf(str, 256, "%s is defined at line %lld of %s, and documented at %s",
+				   subject, 
+				   s7_integer(s7_car(s7_cdr(s7_cdr(x)))),
+				   s7_string(s7_car(s7_cdr(x))),
+				   url);
+		    else 
+		      mus_snprintf(str, 256, "%s is defined at line %lld of %s",
+				   subject, 
+				   s7_integer(s7_car(s7_cdr(s7_cdr(x)))),
+				   s7_string(s7_car(s7_cdr(x))));
+		  }
+	      }
+	  }
+#endif	
+      }
     else
       {
 	if (XEN_HOOK_P(sym))

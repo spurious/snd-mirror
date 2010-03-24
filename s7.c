@@ -425,15 +425,10 @@ typedef struct s7_cell {
       s7_pointer car, cdr, csr;
       /* this could be made available to callers -- doubly linked lists? nets?
        *   due to the s7_num_t size, there is unused space in several of these union fields,
-       *   so csr currently holds some info for the symbol table
+       *   so csr currently holds some info for the symbol table.
+       * There's also room for another 4-bytes of info.
        */
       int line;
-#if 0
-       union {
-       int line;
-       s7_pointer cxr;
-       } liner;
-#endif
     } cons;
     
     struct {
@@ -530,6 +525,7 @@ struct s7_scheme {
   s7_pointer FEED_TO;                 /* => */
   s7_pointer OBJECT_SET;              /* applicable object set method */
   s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET;
+  s7_pointer S_IS_TYPE, S_TYPE_MAKE, S_TYPE_REF, S_TYPE_ARG;
   
   s7_pointer input_port;              /* current-input-port (nil = stdin) */
   s7_pointer input_port_stack;        /*   input port stack (load and read internally) */
@@ -639,7 +635,10 @@ struct s7_scheme {
  *   the size increase is more important.
  */
 
-/* TYPE_BITS + 5 and 6 currently unused */
+/* TYPE_BITS + 5 currently unused */
+
+#define T_S_OBJECT                    (1 << (TYPE_BITS + 6))
+#define is_s_object(p)                ((type(p) == T_C_OBJECT) && ((typeflag(p) & T_S_OBJECT) != 0))
 
 #define T_FINALIZABLE                 (1 << (TYPE_BITS + 7))
 #define is_finalizable(p)             ((typeflag(p) & T_FINALIZABLE) != 0)
@@ -2296,6 +2295,14 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
   
   x = find_symbol(sc, x, car(args));
   return(make_boolean(sc, (x != sc->NIL) && (x != sc->UNDEFINED)));
+}
+
+
+bool s7_is_defined(s7_scheme *sc, const char *name)
+{
+  s7_pointer x;
+  x = find_symbol(sc, sc->envir, s7_make_symbol(sc, name));
+  return((x != sc->NIL) && (x != sc->UNDEFINED));
 }
 
 
@@ -12605,6 +12612,9 @@ typedef struct {
   s7_pointer (*length)(s7_scheme *sc, s7_pointer obj);
   s7_pointer (*copy)(s7_scheme *sc, s7_pointer obj);
   s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
+
+  s7_pointer ops;
+
 } s7_c_object_t;
 
 /* for-each and map? currently these assume (obj i) gets and (set! (obj i) val) sets
@@ -12652,6 +12662,9 @@ int s7_new_type(const char *name,
   object_types[tag].length = NULL;
   object_types[tag].copy = NULL;
   object_types[tag].fill = NULL;
+
+  object_types[tag].ops = small_int(0); /* a placeholder -- we can't get sc->NIL at this point */
+
   return(tag);
 }
 
@@ -12674,89 +12687,6 @@ int s7_new_type_x(const char *name,
   object_types[tag].fill = fill;
   return(tag);
 }
-
-
-#if 0
-/*
- * this could be made available in Scheme:
- *
- * define-type (make-type in ext)
- * (define-type "name"
- *              (lambda (obj) (display obj))       ; print
- *	        #f                                 ; free
- *	        (lambda (obj1 obj2) (= obj1 obj2)) ; equal?
- *	        #f                                 ; gc mark
- *	        (lambda (obj arg) arg)             ; apply
- *	        #f                                 ; set
- *              #f #f #f)                          ; length copy fill!
- *  (make-object <tag> value)
- *  (object? <tag> obj) or maybe (name? obj) and (make-name value)
- */
-
-/*
-(make-type) returns a type-object: the value of the object is an alist of (op func) 
-  with a few guaranteed ops: '? 'make 'ref 
-  (the name "make-type" mimics "make-string" et al)
-
-(type-append type-object op func) adds (op func) to the type's alist
-  it might be like acons in CL for example
-  (the name "type-append" mimics "string-append")
-
-then types can be defined locally or globally:
-
-(let ((rec (make-type)))
-  (let ((rec? (cdr (assoc '? rec))) ; a function of 1 arg, #t if it's a rec
-        (make-rec (cdr (assoc 'make rec))) ; similar but makes a rec with that value
-	(rec-ref (cdr (assoc 'ref rec))))  ; similar but returns rec's value
-	;; perhaps make rec-ref a procedure-with-setter or add a set! op to the type list
-
-    (type-append rec 'display (lambda (obj) (display "#<rec>")))
-    (type-append rec 'equal? (lambda (r1 r2) (equal? (rec-ref r1) (rec-ref r2))))
-
-    (let ((r1 (make-rec (list 32 rec)))
-	  (r2 (make-rec (list (vector 1 2 3) rec))))
-	  ;; by appending "rec" we can access the ops from scheme 
-      (set! (cdr (assoc 'ref rec)) (list 'ref (lambda (obj) (car (rec-ref obj)))))
-      (equal? r1 r2)
-      ...)))
-
-      Now I'm thinking this is too messy: just
-
-      (make-type :optkey equal? display apply set! length copy fill!)
-      which returns the ? make ref funcs and sets the others (to plausible defaults if not passed)
-
-*/
-#endif
-
-
-static s7_pointer g_make_type(s7_scheme *sc, s7_pointer args)
-{
-  #define H_make_type "(make-type) returns a new type object"
-  /* int tag; */
-
-  /* make an alist [gc-protected until we return], with 
-   *   (? func that check obj-tag and type-tag)
-   *   (make func to make object with value)
-   *   (ref func to return object's value) -- pws in this context?
-   */
-
-  /* any op that gets an object of this type needs to check for the relevant op in the type alist
-   *   will this be a huge burden?
-   */
-  
-  return(sc->F);
-}
-
-#if 0
-static s7_pointer g_type_append(s7_scheme *sc, s7_pointer args)
-{
-  #define H_type_append "(type-append type-object operator function) either adds the operator \
-and function to the type's alist, or replaces the function associated with operator to the new one."
-
-  /* look for op, if found change cdr to func, else add (op func) to type alist */
-  return(sc->F);
-}
-#endif
 
 
 static char *describe_object(s7_scheme *sc, s7_pointer a)
@@ -12937,6 +12867,131 @@ static s7_pointer g_object_for_each(s7_scheme *sc, s7_pointer args)
   push_stack(sc, opcode(OP_OBJECT_FOR_EACH), sc->args, sc->code);
   return(sc->UNSPECIFIED);
 }
+
+
+
+
+/* ---------------- scheme-level new types ---------------- */
+
+typedef struct {
+  int type;
+  s7_pointer value;
+} s_type_t;
+
+
+static char *s_type_print(s7_scheme *sc, void *val)
+{
+  /* describe_object assumes the string is allocated here */
+  s_type_t *obj = (s_type_t *)val;
+  char *str, *full_str;
+  int len, tag;
+  
+  tag = obj->type;
+  str = s7_object_to_c_string(sc, obj->value);
+  len = safe_strlen(str) + safe_strlen(object_types[tag].name) + 16;
+  full_str = (char *)calloc(len, sizeof(char));
+  snprintf(full_str, len, "#<%s %s>", object_types[tag].name, str);
+  free(str);
+  return(full_str);
+}
+
+
+static void s_type_free(void *val)
+{
+  free(val);
+}
+
+
+static bool s_type_equal(void *val1, void* val2)
+{
+  return(val1 == val2);
+}
+
+
+static void s_type_gc_mark(void *val)
+{
+  s_type_t *obj = (s_type_t *)val;
+  s7_mark_object(obj->value);
+}
+
+
+static s7_pointer s_is_type(s7_scheme *sc, s7_pointer args)
+{
+  s_type_t *obj;
+  if (is_s_object(car(args)))
+    {
+      obj = (s_type_t *)s7_object_value(car(args));
+      return(s7_make_boolean(sc, obj->type == s7_integer(cadr(args))));
+    }
+  return(sc->F);
+}
+
+
+static s7_pointer s_type_make(s7_scheme *sc, s7_pointer args)
+{
+  s_type_t *obj;
+  s7_pointer result;
+  obj = (s_type_t *)calloc(1, sizeof(s_type_t));
+  obj->type = s7_integer(cadr(args)); /* placed here by s7, not by the user */
+  obj->value = car(args);
+  result = s7_make_object(sc, obj->type, (void *)obj);
+  typeflag(result) |= T_S_OBJECT;
+  return(result);
+}
+
+
+static s7_pointer s_type_ref(s7_scheme *sc, s7_pointer args)
+{
+  s_type_t *obj;
+  obj = (s_type_t *)s7_object_value(car(args));
+  return(obj->value);
+}
+
+
+static s7_pointer g_make_type(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_type "(make-type) returns a new type object"
+  int tag;
+  s7_pointer x, y, z;
+
+  tag = s7_new_type("anonymous-type", s_type_print, s_type_free, s_type_equal, s_type_gc_mark, NULL, NULL);
+
+  /* ? method: (lambda (arg) (s_is_type arg tag)) */
+  x = make_closure(sc, make_list_2(sc, 
+				   make_list_1(sc, sc->S_TYPE_ARG),
+				   make_list_3(sc, sc->S_IS_TYPE, sc->S_TYPE_ARG, s7_make_integer(sc, tag))),
+		   sc->envir,
+		   T_CLOSURE);
+				   
+  /* make method: (lambda (arg) (s_type_make arg tag)) */
+  y = make_closure(sc, make_list_2(sc, 
+				   make_list_1(sc, sc->S_TYPE_ARG),
+				   make_list_3(sc, sc->S_TYPE_MAKE, sc->S_TYPE_ARG, s7_make_integer(sc, tag))),
+		   sc->envir,
+		   T_CLOSURE);
+
+  /* ref method: (lambda (arg) (s_type_ref arg)) */
+  z = make_closure(sc, make_list_2(sc, 
+				   make_list_1(sc, sc->S_TYPE_ARG),
+				   make_list_2(sc, sc->S_TYPE_REF, sc->S_TYPE_ARG)),
+		   sc->envir,
+		   T_CLOSURE);
+  return(make_list_3(sc, x, y, z));
+}
+
+
+#if 0
+static s7_pointer g_type_append(s7_scheme *sc, s7_pointer args)
+{
+  #define H_type_append "(type-append type-object operator function) either adds the operator \
+and function to the type's alist, or replaces the function associated with operator to the new one."
+
+  /* look for op, if found change cdr to func, else add (op func) to type alist */
+  return(sc->F);
+}
+#endif
+
+
 
 
 
@@ -16722,8 +16777,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *        (list 'quote ((lambda ,args ,@body) ,@args)))))
 	   *
 	   * (define-fexpr (hi a) `(+ ,a 1))
-	   * (hi 4)
-	   * (+ 4 1)
+	   * (hi (+ 3 2))
+	   * (+ (+ 3 2) 1)
 	   */
 
 	  for (sc->x = closure_args(sc->code), sc->y = sc->args; is_pair(sc->x); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
@@ -17207,10 +17262,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  add_to_local_environment(sc, caar(sc->x), car(sc->y)); /* expansion here does not help */
 	}
+
       if (s7_is_symbol(car(sc->code))) 
-	{    /* named let */
+	{    
+	  /* named let */
 	  for (sc->x = cadr(sc->code), sc->args = sc->NIL; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
 	    sc->args = s7_cons(sc, caar(sc->x), sc->args);
+	  /* perhaps we could mimic the "do" setp var handling here to avoid the consing */
 	  
 	  sc->x = s7_make_closure(sc, s7_cons(sc, safe_reverse_in_place(sc, sc->args), cddr(sc->code)), sc->envir); 
 	  add_to_local_environment(sc, car(sc->code), sc->x); 
@@ -17230,8 +17288,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (!is_pair(cdr(sc->code))) ||           /* (let*) */
 	  ((!is_pair(car(sc->code))) &&          /* (let* 1 ...), also there's no named let* */
 	   (car(sc->code) != sc->NIL)))
-	return(eval_error(sc, "let* syntax error: ~A", sc->code));
-      
+	{
+	  if ((is_pair(sc->code)) &&
+	      (s7_is_symbol(car(sc->code))))
+	    return(eval_error(sc, "there is no named let*: ~A", sc->code));
+	  return(eval_error(sc, "let* syntax error: ~A", sc->code));
+	}
+
       if (car(sc->code) == sc->NIL) 
 	{
 	  sc->envir = new_frame_in_env(sc, sc->envir);
@@ -22859,6 +22922,24 @@ s7_scheme *s7_init(void)
   sc->OBJECT_SET = s7_make_symbol(sc, object_set_name);   /* will call g_object_set */
   typeflag(sc->OBJECT_SET) |= T_DONT_COPY; 
 
+
+  #define s_is_type_name "(?)"
+  sc->S_IS_TYPE = s7_make_symbol(sc, s_is_type_name);
+  typeflag(sc->S_IS_TYPE) |= T_DONT_COPY; 
+
+  #define s_type_make_name "(make)"
+  sc->S_TYPE_MAKE = s7_make_symbol(sc, s_type_make_name);
+  typeflag(sc->S_TYPE_MAKE) |= T_DONT_COPY; 
+
+  #define s_type_ref_name "(ref)"
+  sc->S_TYPE_REF = s7_make_symbol(sc, s_type_ref_name);
+  typeflag(sc->S_TYPE_REF) |= T_DONT_COPY; 
+
+  #define s_type_arg_name "(arg)"
+  sc->S_TYPE_ARG = s7_make_symbol(sc, s_type_arg_name);
+  typeflag(sc->S_TYPE_ARG) |= T_DONT_COPY; 
+
+
   sc->APPLY = s7_make_symbol(sc, "apply");
   typeflag(sc->APPLY) |= T_DONT_COPY; 
   
@@ -23194,11 +23275,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "list-tail",               g_list_tail,               2, 0, false, H_list_tail);
   s7_define_function(sc, "make-list",               g_make_list,               1, 1, false, H_make_list);
 
-#if 0
-  f_identity = s7_make_function(sc, "internal_identity", g_identity, 1, 0, false, NULL);
-  f_ref = s7_make_function(sc, "internal_ref", g_cdr, 1, 0, false, NULL);
-#endif
-
   s7_define_function(sc, "length",                  g_length,                  1, 0, false, H_length);
   s7_define_function(sc, "copy",                    g_copy,                    1, 0, false, H_copy);
   s7_define_function(sc, "fill!",                   g_fill,                    2, 0, false, H_fill);
@@ -23261,7 +23337,12 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "equal?",                  g_is_equal,                2, 0, false, H_is_equal);
   
   s7_define_function(sc, "s7-version",              g_s7_version,              0, 0, false, H_s7_version);
+
   s7_define_function(sc, object_set_name,           g_object_set,              1, 0, true, "internal setter redirection");
+  s7_define_function(sc, s_is_type_name,            s_is_type,                 2, 0, false, "internal object type check");
+  s7_define_function(sc, s_type_make_name,          s_type_make,               2, 0, false, "internal object creation");
+  s7_define_function(sc, s_type_ref_name,           s_type_ref,                1, 0, false, "internal object value");
+
   
   s7_define_variable(sc, "*features*", sc->NIL);
   s7_define_variable(sc, "*load-path*", sc->NIL);
@@ -23396,11 +23477,3 @@ s7_scheme *s7_init(void)
 }
 
 /* PERHAPS: if tracing and traced func redefined, update trace? */
-/* PERHAPS: all the built-in funcs (and Snd's too) should have something
- *           reasonable for the procedure-environment:
- *           (procedure-environment +) -> now it's just the global env
- *               -> (((__func__ + "s7.c" 5761)) #(...))
- *          This need not be attached to the function (but why not?).
- *          can this be automated?
- */
-
