@@ -1150,6 +1150,75 @@ is similar, but its argument is a string.
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>make-type</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
+<dd><p>
+<b>make-type</b> (borrowed from Alaric Snell-Pym)
+returns a type-object: a list of three functions
+'?, 'make, and 'ref.  The <b>?</b> func returns #t if its argument
+is of the new type, the <b>make</b> function returns a new object of the new type with the
+value of the argument to the make function, and the <b>ref</b> function returns that value
+when passed that object. 
+</p>
+
+<pre>
+(define special-value ((cadr (<em class=red>make-type</em>)) 'special))
+;; now special-value's value can't be eq? to any other scheme object
+
+;; expand, for example, (define-record rec (a 1) (b 2))
+(begin
+  (define rec? #f)
+  (define make-rec #f)
+  (define rec-a #f)
+  (define rec-b #f)
+
+  (let* ((rec-type (<em class=red>make-type</em>))
+	 (? (car rec-type))
+	 (make (cadr rec-type))
+	 (ref (caddr rec-type)))
+
+    (set! make-rec (lambda* ((a 1) (b 2))
+		     (make (vector a b))))
+
+    (set! rec? (lambda (obj)
+		 (? obj)))
+  
+    (set! rec-a (make-procedure-with-setter
+		 (lambda (obj)
+		   (and (rec? obj)
+			(vector-ref (ref obj) 0)))
+		 (lambda (obj val)
+		   (if (rec? obj)
+		       (vector-set! (ref obj) 0 val)))))
+
+    (set! rec-b (make-procedure-with-setter
+		 (lambda (obj)
+		   (and (rec? obj)
+			(vector-ref (ref obj) 1)))
+		 (lambda (obj val)
+		   (if (rec? obj)
+		       (vector-set! (ref obj) 1 val)))))))
+
+#|
+(let ((hi (make-rec 32 '(1 2))))
+  (set! (rec-b hi) 123)
+  (format #t "rec: ~A ~A" 
+	  (rec-a hi)
+	  (rec-b hi)))
+
+"rec: 32 123"
+|#
+</pre>
+
+</dd>
+<br>
+
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>blocks comments in #| ... |# and #! ... !#</h4></td></tr></table>
 </td></tr></table>
 </dt>
@@ -1265,20 +1334,6 @@ bind it to something else, which is asking for confusion).
 <li>syntactic names can be values: (define progn begin) (progn (display "progn!") (+ 3 4)) or (define function lambda), etc
 <li>begin returns the value of the last form (like progn)
 </ul>
-
-<p>s7.c has a C-level mechanism to declare a new Scheme-level type, used by the FFI
-to set up foreign objects (see s7_new_type below).  I can't decide how to tie this into s7, but I like
-Alaric Snell-Pym's idea which I would cast as:
-(<b>make-type</b>) returns a type-object: the value of the object is an alist of (op func) 
-pairs with three guaranteed ops: '?, 'make, and 'ref.  The <b>?</b> func returns #t if its argument
-is of the new type, the <b>make</b> function returns a new object of the new type with the
-value of the argument to the make function, and the <b>ref</b> function returns that value
-when passed that object.  If this alist were extendable (via "type-append"?), 
-all the object oriented stuff and record stuff could be based on it.  Or perhaps
-make-type could take an alist as its optional argument, giving whatever other
-operations we want that type to handle (display, equal? etc), and add its special 3.
-</p>
-
 </dd>
 <br>
 <br>
