@@ -1212,6 +1212,40 @@ when passed that object.
 |#
 </pre>
 
+<p>Currently make-type takes some optional arguments to specify other actions.  I
+might change this to be an alist of (operation function) pairs, but for now,
+the optional (optkey) arguments are: print equal getter setter length name.
+The optional argument values are functions that specify how objects of the new type display themselves (print, 1 argument),
+check for equality (equal, 2 args, both will be of the new type), apply themselves to arguments, (getter, any number
+of arguments), respond to the generalized set! and length generic functions, and finally,
+one special case: name sets the type name (a string), which only matters if you're not specifying the print function.
+In each case, the argument is the value of the object, not the object itself.
+So, remembering that (cadr type) is the make function:
+</p>
+<pre>
+&gt; ((cadr (make-type)) 3.14)
+#&lt;anonymous-type 3.14&gt;
+
+&gt; ((cadr (make-type :name "hiho")) 123)
+#&lt;hiho 123&gt;
+
+&gt; ((cadr (make-type :print (lambda (a) (format #f "#&lt;typo: |~S|&gt;" a)))) "gypo")
+#&lt;typo: |"gypo"|&gt;
+
+&gt; (((cadr (make-type :getter (lambda (a b) (vector-ref a b)))) (vector 1 2 3)) 1)
+2
+</pre>
+<p>The last is easier to read if we separate out the steps:
+</p>
+<pre>
+&gt; (let* ((type (make-type 
+                 :getter (lambda (a b) 
+                           (vector-ref a b))))   ; make a new type with its own getter function
+         (object ((cadr type) (vector 1 2 3))))  ; create an object of the new type, its value is a vector
+       (object 1))                               ; "apply" the object to 1 => (vector-ref object 1) via the getter
+2
+</pre>
+
 </dd>
 <br>
 
@@ -1332,7 +1366,7 @@ bind it to something else, which is asking for confusion).
 <li>__func__ is the name of the function currently being defined or called (as in C).
 <li>vector-for-each, vector-map, hash-table-for-each, string-for-each
 <li>syntactic names can be values: (define progn begin) (progn (display "progn!") (+ 3 4)) or (define function lambda), etc
-<li>begin returns the value of the last form (like progn)
+<li>begin returns the value of the last form (like progn); it can contain both definitions and other statements.
 </ul>
 </dd>
 <br>

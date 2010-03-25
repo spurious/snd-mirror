@@ -526,6 +526,7 @@ struct s7_scheme {
   s7_pointer OBJECT_SET;              /* applicable object set method */
   s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET;
   s7_pointer S_IS_TYPE, S_TYPE_MAKE, S_TYPE_REF, S_TYPE_ARG;
+  s7_pointer s_function_args;
   
   s7_pointer input_port;              /* current-input-port (nil = stdin) */
   s7_pointer input_port_stack;        /*   input port stack (load and read internally) */
@@ -12600,6 +12601,8 @@ static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* -------------------------------- new types -------------------------------- */
+
 typedef struct {
   int type;
   const char *name;
@@ -12612,16 +12615,9 @@ typedef struct {
   s7_pointer (*length)(s7_scheme *sc, s7_pointer obj);
   s7_pointer (*copy)(s7_scheme *sc, s7_pointer obj);
   s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
-
   s7_pointer ops;
-
+  s7_pointer s_print, s_equal, s_getter, s_setter, s_length;
 } s7_c_object_t;
-
-/* for-each and map? currently these assume (obj i) gets and (set! (obj i) val) sets
- *    aribtrary method list?
- * reverse append make section[subseq]
- */
-
 
 
 static s7_c_object_t *object_types = NULL;
@@ -12662,9 +12658,7 @@ int s7_new_type(const char *name,
   object_types[tag].length = NULL;
   object_types[tag].copy = NULL;
   object_types[tag].fill = NULL;
-
   object_types[tag].ops = small_int(0); /* a placeholder -- we can't get sc->NIL at this point */
-
   return(tag);
 }
 
@@ -12710,9 +12704,7 @@ static void free_object(s7_pointer a)
 
 static bool objects_are_equal(s7_pointer a, s7_pointer b)
 {
-  if ((is_c_object(a)) &&
-      (is_c_object(b)) &&
-      (c_object_type(a) == c_object_type(b)))
+  if (c_object_type(a) == c_object_type(b))
     {
       int tag;
       tag = c_object_type(a);
@@ -12879,6 +12871,62 @@ typedef struct {
 } s_type_t;
 
 
+static char *s_print(s7_scheme *sc, void *value)
+{
+  /* value here is the s_type_t object, the (scheme) function to call is object_types[tag].s_print */
+  /*   it will be passed the value, not the original object */
+  s_type_t *obj = (s_type_t *)value;
+  car(sc->s_function_args) = obj->value;
+  return((char *)s7_string(s7_call(sc, object_types[obj->type].s_print, sc->s_function_args)));
+}
+
+/* s_fill doesn't seem problematic, and s_copy could copy the object, then call s_copy for the value?
+ *   should these be the defaults (also for length and others)?
+ */
+
+static bool s_objects_are_equal(s7_pointer a, s7_pointer b)
+{
+  s_type_t *obj1, *obj2;
+  if (c_object_type(a) != c_object_type(b))
+    return(false);
+
+  obj1 = (s_type_t *)s7_object_value(a);
+  obj2 = (s_type_t *)s7_object_value(b);
+
+  /* TODO: call the equal method somehow
+  if (object_types[obj1->type].s_equal != sc->F)
+    return(s7_boolean(sc, s7_call(sc, object_types[obj1->type].s_equal, make_list_2(sc, obj1->value, obj2->value))));
+  */
+
+  return(s7_is_equal(obj1->value, obj2->value));
+}
+
+
+static s7_pointer s_getter(s7_scheme *sc, s7_pointer a, s7_pointer args)
+{
+  s_type_t *obj;
+  obj = (s_type_t *)s7_object_value(a);
+  return(s7_call(sc, object_types[obj->type].s_getter, s7_cons(sc, obj->value, args))); /* ?? */
+}
+
+
+static s7_pointer s_setter(s7_scheme *sc, s7_pointer a, s7_pointer args)
+{
+  s_type_t *obj;
+  obj = (s_type_t *)s7_object_value(a);
+  return(s7_call(sc, object_types[obj->type].s_setter, s7_cons(sc, obj->value, args))); /* ?? */
+}
+
+
+static s7_pointer s_length(s7_scheme *sc, s7_pointer a)
+{
+  s_type_t *obj;
+  obj = (s_type_t *)s7_object_value(a);
+  car(sc->s_function_args) = obj->value;
+  return(s7_call(sc, object_types[obj->type].s_length, sc->s_function_args));
+}
+
+
 static char *s_type_print(s7_scheme *sc, void *val)
 {
   /* describe_object assumes the string is allocated here */
@@ -12918,10 +12966,10 @@ static void s_type_gc_mark(void *val)
 static s7_pointer s_is_type(s7_scheme *sc, s7_pointer args)
 {
   s_type_t *obj;
-  if (is_s_object(car(args)))
+  if (is_s_object(cadr(args)))
     {
-      obj = (s_type_t *)s7_object_value(car(args));
-      return(s7_make_boolean(sc, obj->type == s7_integer(cadr(args))));
+      obj = (s_type_t *)s7_object_value(cadr(args));
+      return(s7_make_boolean(sc, obj->type == s7_integer(car(args))));
     }
   return(sc->F);
 }
@@ -12932,8 +12980,8 @@ static s7_pointer s_type_make(s7_scheme *sc, s7_pointer args)
   s_type_t *obj;
   s7_pointer result;
   obj = (s_type_t *)calloc(1, sizeof(s_type_t));
-  obj->type = s7_integer(cadr(args)); /* placed here by s7, not by the user */
-  obj->value = car(args);
+  obj->type = s7_integer(car(args));             /* placed here by s7, not by the user */
+  obj->value = cadr(args);
   result = s7_make_object(sc, obj->type, (void *)obj);
   typeflag(result) |= T_S_OBJECT;
   return(result);
@@ -12950,46 +12998,99 @@ static s7_pointer s_type_ref(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_make_type(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_type "(make-type) returns a new type object"
+  #define H_make_type "(make-type :optkey print equal getter setter length name) returns a new type object.\
+The optional arguments are functions that specify how objects of the new type display themselves (print, 1 argument), \
+check for equality (equal, 2 args, both will be of the new type), apply themselves to arguments, (getter, any number \
+of args, see vector for an example), respond to the generalized set! and length generic functions, and finally, \
+one special case: name sets the type name (a string), which only matters if you're not specifying the print function. \
+In each case, the argument is the value of the object, not the object itself."
+
   int tag;
   s7_pointer x, y, z;
 
   tag = s7_new_type("anonymous-type", s_type_print, s_type_free, s_type_equal, s_type_gc_mark, NULL, NULL);
+  object_types[tag].ops = args;
+  if (args != sc->NIL)
+    {
+      int i;
+      s7_pointer x;
 
-  /* ? method: (lambda (arg) (s_is_type arg tag)) */
+      s7_gc_protect(sc, args);
+
+      /* if any of the special functions are specified, store them in the type object so we can find them later */
+      for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x))
+	{
+	  s7_pointer func;
+	  /* the closure_star mechanism passes the args in declaration order */
+	  func = car(x);
+	  if (func != sc->F)            /* #f means arg was not set */
+	    {
+	      /* TODO: check arity and that it's a function etc, also make s7tests */
+	      switch (i)
+		{
+		case 0:                 /* print, ((cadr (make-type :print (lambda (a) (format #f "#<typo: ~S>" a)))) "gypo") -> #<typo: "gypo"> */
+		  object_types[tag].s_print = func;
+		  object_types[tag].print = s_print;
+		  break;
+
+		case 1:                 /* equal */
+		  /* TODO: equal doesn't work yet because there's no way to get it called */
+		  /* (let ((typo (make-type :equal (lambda (a b) (equal? a b))))) (let ((a ((cadr typo) 123)) (b ((cadr typo) 321))) (equal? a b))) */
+		  object_types[tag].s_equal = func;
+		  break;
+
+		case 2:                 /* getter: (((cadr (make-type :getter (lambda (a b) (vector-ref a b)))) (vector 1 2 3)) 1) -> 2 */
+		  object_types[tag].s_getter = func;
+		  object_types[tag].apply = s_getter;
+		  break;
+
+		case 3:                 /* setter: (set! (((cadr (make-type :setter (lambda (a b c) (vector-set! a b c)))) (vector 1 2 3)) 1) 23) */
+		  object_types[tag].s_setter = func;
+		  object_types[tag].set = s_setter;
+		  break;
+
+		case 4:                 /* length: (length ((cadr (make-type :length (lambda (a) (vector-length a)))) (vector 1 2 3))) -> 3 */
+		  object_types[tag].s_length = func;
+		  object_types[tag].length = s_length;
+		  break;
+
+		case 5:                 /* name, ((cadr (make-type :name "hiho")) 123) -> #<hiho 123> */
+		  object_types[tag].name = copy_string(s7_string(func));
+		  break;
+		}
+	    }
+	}
+    }
+
+  /* ? method: (lambda (arg) (s_is_type tag arg)) 
+   *     returns #t if arg is of the new type
+   */
   x = make_closure(sc, make_list_2(sc, 
 				   make_list_1(sc, sc->S_TYPE_ARG),
-				   make_list_3(sc, sc->S_IS_TYPE, sc->S_TYPE_ARG, s7_make_integer(sc, tag))),
+				   make_list_3(sc, sc->S_IS_TYPE, s7_make_integer(sc, tag), sc->S_TYPE_ARG)),
 		   sc->envir,
 		   T_CLOSURE);
 				   
-  /* make method: (lambda (arg) (s_type_make arg tag)) */
+  /* make method: (lambda (arg) (s_type_make tag arg))
+   *   returns an object of the new type with its value specified by arg
+   */
   y = make_closure(sc, make_list_2(sc, 
 				   make_list_1(sc, sc->S_TYPE_ARG),
-				   make_list_3(sc, sc->S_TYPE_MAKE, sc->S_TYPE_ARG, s7_make_integer(sc, tag))),
+				   make_list_3(sc, sc->S_TYPE_MAKE, s7_make_integer(sc, tag), sc->S_TYPE_ARG)),
 		   sc->envir,
 		   T_CLOSURE);
 
-  /* ref method: (lambda (arg) (s_type_ref arg)) */
+  /* ref method: (lambda (arg) (s_type_ref arg))
+   *   returns the value passed to make above 
+   */
   z = make_closure(sc, make_list_2(sc, 
 				   make_list_1(sc, sc->S_TYPE_ARG),
 				   make_list_2(sc, sc->S_TYPE_REF, sc->S_TYPE_ARG)),
 		   sc->envir,
 		   T_CLOSURE);
+
   return(make_list_3(sc, x, y, z));
 }
-
-
-#if 0
-static s7_pointer g_type_append(s7_scheme *sc, s7_pointer args)
-{
-  #define H_type_append "(type-append type-object operator function) either adds the operator \
-and function to the type's alist, or replaces the function associated with operator to the new one."
-
-  /* look for op, if found change cdr to func, else add (op func) to type alist */
-  return(sc->F);
-}
-#endif
 
 
 
@@ -13316,7 +13417,11 @@ bool s7_is_equal(s7_pointer x, s7_pointer y)
     return(strings_are_equal(string_value(x), string_value(y)));
   
   if (is_c_object(x))
-    return(objects_are_equal(x, y));
+    {
+      if (is_s_object(x))
+	return(s_objects_are_equal(x, y));
+      return(objects_are_equal(x, y));
+    }
   
   if ((s7_is_vector(x)) ||
       (s7_is_hash_table(x)))
@@ -22937,7 +23042,7 @@ s7_scheme *s7_init(void)
 
   #define s_type_arg_name "(arg)"
   sc->S_TYPE_ARG = s7_make_symbol(sc, s_type_arg_name);
-  typeflag(sc->S_TYPE_ARG) |= T_DONT_COPY; 
+  typeflag(sc->S_TYPE_ARG) |= T_DONT_COPY;
 
 
   sc->APPLY = s7_make_symbol(sc, "apply");
@@ -23007,6 +23112,8 @@ s7_scheme *s7_init(void)
 
   sc->SET = s7_make_symbol(sc, "set!");
   typeflag(sc->SET) |= T_DONT_COPY; 
+
+  sc->s_function_args = permanent_cons(sc->F, sc->NIL, T_PAIR);
 
   (*(sc->gc_off)) = false;
 
@@ -23338,12 +23445,12 @@ s7_scheme *s7_init(void)
   
   s7_define_function(sc, "s7-version",              g_s7_version,              0, 0, false, H_s7_version);
 
-  s7_define_function(sc, object_set_name,           g_object_set,              1, 0, true, "internal setter redirection");
+  s7_define_function(sc, object_set_name,           g_object_set,              1, 0, true,  "internal setter redirection");
   s7_define_function(sc, s_is_type_name,            s_is_type,                 2, 0, false, "internal object type check");
   s7_define_function(sc, s_type_make_name,          s_type_make,               2, 0, false, "internal object creation");
   s7_define_function(sc, s_type_ref_name,           s_type_ref,                1, 0, false, "internal object value");
+  s7_define_function_star(sc, "make-type", g_make_type, "print equal getter setter length name", H_make_type);
 
-  
   s7_define_variable(sc, "*features*", sc->NIL);
   s7_define_variable(sc, "*load-path*", sc->NIL);
   s7_define_variable(sc, "*vector-print-length*", small_ints[8]);
@@ -23377,11 +23484,6 @@ s7_scheme *s7_init(void)
 
 #if WITH_MULTIDIMENSIONAL_VECTORS
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "multidimensional-vectors")));
-#endif
-
-  s7_define_function(sc, "make-type",               g_make_type,              0, 0, false, H_make_type);
-#if 0
-  s7_define_function(sc, "type-append",             g_type_append,            3, 0, false, H_type_append);
 #endif
 
 #if WITH_PROFILING

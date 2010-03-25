@@ -4034,6 +4034,18 @@
       6)
 |#
 
+;;; the equivalent named let version:
+(test (let ((funcs (make-vector 3 #f)))
+	(let loop ((i 0))
+	  (if (< i 3)
+	      (begin
+		(vector-set! funcs i (lambda () (+ i 1)))
+		(loop (+ i 1)))))
+	(+ ((vector-ref funcs 0))
+	   ((vector-ref funcs 1))
+	   ((vector-ref funcs 2))))
+      6)
+
 (test (let ((i 1))
 	(let ((func1 (lambda () i)))
 	  (let ((i 2))

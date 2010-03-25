@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.48"
-#define S7_DATE "24-Mar-10"
+#define S7_VERSION "1.49"
+#define S7_DATE "25-Mar-10"
 
 
 typedef long long int s7_Int;
@@ -834,6 +834,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 25-Mar:    make-type.
  * 24-Mar:    s7_is_defined.
  * 19-Mar:    removed encapsulation mechanism and s7_define_set_function.
  * 18-Mar:    added macro?.
