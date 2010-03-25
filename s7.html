@@ -1229,8 +1229,8 @@ So, remembering that (cadr type) is the make function:
 &gt; ((cadr (make-type :name "hiho")) 123)
 #&lt;hiho 123&gt;
 
-&gt; ((cadr (make-type :print (lambda (a) (format #f "#&lt;typo: |~S|&gt;" a)))) "gypo")
-#&lt;typo: |"gypo"|&gt;
+&gt; ((cadr (make-type :print (lambda (a) (format #f "#&lt;typo: |~A|&gt;" a)))) 1)
+#&lt;typo: |1|&gt;
 
 &gt; (((cadr (make-type :getter (lambda (a b) (vector-ref a b)))) (vector 1 2 3)) 1)
 2

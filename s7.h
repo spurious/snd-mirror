@@ -1,7 +1,7 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.49"
+#define S7_VERSION "1.50"
 #define S7_DATE "25-Mar-10"
 
 
@@ -226,7 +226,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x);
 
 bool s7_is_eq(s7_pointer a, s7_pointer b);                                   /* (eq? a b) */
 bool s7_is_eqv(s7_pointer a, s7_pointer b);                                  /* (eqv? a b) */
-bool s7_is_equal(s7_pointer a, s7_pointer b);                                /* (equal? a b) */
+bool s7_is_equal(s7_scheme *sc, s7_pointer a, s7_pointer b);                 /* (equal? a b) */
 
 
 bool s7_is_boolean(s7_pointer x);                                            /* (boolean? x) */
@@ -834,7 +834,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
- * 25-Mar:    make-type.
+ * 25-Mar:    make-type.  s7_is_equal now includes an s7_scheme pointer as its first argument.
  * 24-Mar:    s7_is_defined.
  * 19-Mar:    removed encapsulation mechanism and s7_define_set_function.
  * 18-Mar:    added macro?.

@@ -1294,7 +1294,7 @@ static int gc(s7_scheme *sc)
 {
   int i;
   s7_cell **old_free_heap_top;
-  
+
   /* mark all live objects (the symbol table is in permanent memory, not the heap) */
   S7_MARK(sc->global_env);
   S7_MARK(sc->args);
@@ -10289,7 +10289,7 @@ s7_pointer s7_member(s7_scheme *sc, s7_pointer sym, s7_pointer lst)
   s7_pointer x;
 
   for (x = lst; is_pair(x); x = cdr(x))
-    if (s7_is_equal(sym, car(x)))
+    if (s7_is_equal(sc, sym, car(x)))
       return(x);
 
   return(sc->F);
@@ -10302,7 +10302,7 @@ s7_pointer s7_assoc(s7_scheme *sc, s7_pointer sym, s7_pointer lst)
 
   for (x = lst; is_pair(x); x = cdr(x))
     if ((is_pair(s7_car(x))) &&
-	(s7_is_equal(sym, car(car(x)))))
+	(s7_is_equal(sc, sym, car(car(x)))))
       return(car(x));
 
   return(sc->F);
@@ -11129,7 +11129,7 @@ static s7_pointer g_assq(s7_scheme *sc, s7_pointer args)
 }      
 
 
-static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, const char *name, bool (*eq_func)(s7_pointer a, s7_pointer b))
+static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, const char *name, bool (*eq_func)(s7_scheme *sc, s7_pointer a, s7_pointer b))
 {
   #define H_assv "(assv obj alist) returns the key-value pair associated (via eqv?) with the key obj in the association list alist"
   #define H_assoc "(assoc obj alist) returns the key-value pair associated (via equal?) with the key obj in the association list alist"
@@ -11147,7 +11147,7 @@ static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, const char *name, boo
       s7_pointer tmp;
       tmp = car(y);
       if ((is_pair(tmp)) &&
-	  (eq_func(x, car(tmp))))
+	  (eq_func(sc, x, car(tmp))))
 	{
 	  result = tmp;
 	  break;
@@ -11162,7 +11162,9 @@ static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, const char *name, boo
 }      
 
 
-static s7_pointer g_assv(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, args, "assv", s7_is_eqv));}
+static bool s7_is_eqv_1(s7_scheme *sc, s7_pointer a, s7_pointer b) {return(s7_is_eqv(a, b));}
+
+static s7_pointer g_assv(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, args, "assv", s7_is_eqv_1));}
 static s7_pointer g_assoc(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, args, "assoc", s7_is_equal));}
 
 
@@ -11192,7 +11194,7 @@ static s7_pointer g_memq(s7_scheme *sc, s7_pointer args)
 }     
 
 
-static s7_pointer g_memq_1(s7_scheme *sc, s7_pointer args, const char *name, bool (*eq_func)(s7_pointer a, s7_pointer b))
+static s7_pointer g_memq_1(s7_scheme *sc, s7_pointer args, const char *name, bool (*eq_func)(s7_scheme *sc, s7_pointer a, s7_pointer b))
 {
   #define H_memv "(memv obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. memv uses eqv?"
   #define H_member "(member obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. member uses equal?"
@@ -11205,7 +11207,7 @@ static s7_pointer g_memq_1(s7_scheme *sc, s7_pointer args, const char *name, boo
     return(sc->F);
 
   for (x = cadr(args); is_pair(x); x = cdr(x)) 
-    if (eq_func(car(args), car(x)))
+    if (eq_func(sc, car(args), car(x)))
       {
 	result = x;
 	break;
@@ -11219,7 +11221,7 @@ static s7_pointer g_memq_1(s7_scheme *sc, s7_pointer args, const char *name, boo
 }     
 
 
-static s7_pointer g_memv(s7_scheme *sc, s7_pointer args) {return(g_memq_1(sc, args, "memv", s7_is_eqv));}
+static s7_pointer g_memv(s7_scheme *sc, s7_pointer args) {return(g_memq_1(sc, args, "memv", s7_is_eqv_1));}
 static s7_pointer g_member(s7_scheme *sc, s7_pointer args) {return(g_memq_1(sc, args, "member", s7_is_equal));}
 
 
@@ -11502,7 +11504,7 @@ static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
 }
 
 
-static bool vectors_equal(s7_pointer x, s7_pointer y)
+static bool vectors_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 {
   s7_Int i, len;
 
@@ -11528,7 +11530,7 @@ static bool vectors_equal(s7_pointer x, s7_pointer y)
 #endif
 
   for (i = 0; i < len; i++)
-    if (!(s7_is_equal(vector_element(x, i), vector_element(y, i))))
+    if (!(s7_is_equal(sc, vector_element(x, i), vector_element(y, i))))
       return(false);
   return(true);
 }
@@ -12877,14 +12879,14 @@ static char *s_print(s7_scheme *sc, void *value)
   /*   it will be passed the value, not the original object */
   s_type_t *obj = (s_type_t *)value;
   car(sc->s_function_args) = obj->value;
-  return((char *)s7_string(s7_call(sc, object_types[obj->type].s_print, sc->s_function_args)));
+  return(copy_string((char *)s7_string(s7_call(sc, object_types[obj->type].s_print, sc->s_function_args))));
 }
 
 /* s_fill doesn't seem problematic, and s_copy could copy the object, then call s_copy for the value?
  *   should these be the defaults (also for length and others)?
  */
 
-static bool s_objects_are_equal(s7_pointer a, s7_pointer b)
+static bool s_objects_are_equal(s7_scheme *sc, s7_pointer a, s7_pointer b)
 {
   s_type_t *obj1, *obj2;
   if (c_object_type(a) != c_object_type(b))
@@ -12893,12 +12895,10 @@ static bool s_objects_are_equal(s7_pointer a, s7_pointer b)
   obj1 = (s_type_t *)s7_object_value(a);
   obj2 = (s_type_t *)s7_object_value(b);
 
-  /* TODO: call the equal method somehow
   if (object_types[obj1->type].s_equal != sc->F)
     return(s7_boolean(sc, s7_call(sc, object_types[obj1->type].s_equal, make_list_2(sc, obj1->value, obj2->value))));
-  */
 
-  return(s7_is_equal(obj1->value, obj2->value));
+  return(s7_is_equal(sc, obj1->value, obj2->value));
 }
 
 
@@ -13034,7 +13034,6 @@ In each case, the argument is the value of the object, not the object itself."
 		  break;
 
 		case 1:                 /* equal */
-		  /* TODO: equal doesn't work yet because there's no way to get it called */
 		  /* (let ((typo (make-type :equal (lambda (a b) (equal? a b))))) (let ((a ((cadr typo) 123)) (b ((cadr typo) 321))) (equal? a b))) */
 		  object_types[tag].s_equal = func;
 		  break;
@@ -13397,7 +13396,7 @@ bool s7_is_eqv(s7_pointer a, s7_pointer b)
 }
 
 
-bool s7_is_equal(s7_pointer x, s7_pointer y)
+bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 {
   if (x == y) 
     return(true);
@@ -13410,8 +13409,8 @@ bool s7_is_equal(s7_pointer x, s7_pointer y)
     return(false);
   
   if (is_pair(x))
-    return((s7_is_equal(car(x), car(y))) &&
-	   (s7_is_equal(cdr(x), cdr(y))));
+    return((s7_is_equal(sc, car(x), car(y))) &&
+	   (s7_is_equal(sc, cdr(x), cdr(y))));
   
   if (s7_is_string(x))
     return(strings_are_equal(string_value(x), string_value(y)));
@@ -13419,13 +13418,13 @@ bool s7_is_equal(s7_pointer x, s7_pointer y)
   if (is_c_object(x))
     {
       if (is_s_object(x))
-	return(s_objects_are_equal(x, y));
+	return(s_objects_are_equal(sc, x, y));
       return(objects_are_equal(x, y));
     }
   
   if ((s7_is_vector(x)) ||
       (s7_is_hash_table(x)))
-    return(vectors_equal(x, y));
+    return(vectors_equal(sc, x, y));
   
   if (s7_is_character(x)) 
     return(s7_character(x) == s7_character(y));
@@ -13454,7 +13453,7 @@ static s7_pointer g_is_eqv(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_equal "(equal? obj1 obj2) returns #t if obj1 is equal to obj2"
-  return(make_boolean(sc, s7_is_equal(car(args), cadr(args))));
+  return(make_boolean(sc, s7_is_equal(sc, car(args), cadr(args))));
 }
 
 
@@ -13629,8 +13628,6 @@ static char *format_error(s7_scheme *sc, const char *msg, const char *str, s7_po
 
   if (dat->str) free(dat->str);
   free(dat);
-
-  /* fprintf(stderr, "format error: %s\n", s7_object_to_c_string(sc, x)); */
 
   s7_error(sc, sc->FORMAT_ERROR, x);
   return(NULL);

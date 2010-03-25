@@ -1001,7 +1001,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
 
 #define XEN_EQ_P(Arg1, Arg2)                       s7_is_eq(Arg1, Arg2)
 #define XEN_EQV_P(Arg1, Arg2)                      s7_is_eqv(Arg1, Arg2)
-#define XEN_EQUAL_P(Arg1, Arg2)                    s7_is_equal(Arg1, Arg2)
+#define XEN_EQUAL_P(Arg1, Arg2)                    s7_is_equal(s7, Arg1, Arg2)
 
 #define XEN_CONS_P(Arg)                            s7_cons_p(Arg)
 #define XEN_CONS(Arg1, Arg2)                       s7_cons(s7, Arg1, Arg2)
