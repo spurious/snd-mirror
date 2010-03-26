@@ -104,7 +104,7 @@ static void watch_current_directory_contents(struct fam_info *famp, FAMEvent *fe
 	  fsb *fs = (fsb *)(famp->data);
 	  fs->reread_directory = true;
 	  if ((fs->dialog) &&
-	      (GTK_WIDGET_VISIBLE(fs->dialog)))
+	      (widget_is_active(fs->dialog)))
 	    {
 	      force_directory_reread(fs);
 	      fs->reread_directory = false;
@@ -650,7 +650,7 @@ static void reflect_file_in_popup(fsb *fs)
   
   for (i = filenames_to_display; i < FILENAME_LIST_SIZE; i++)
     if ((fs->file_text_items[i]) &&
-	(GTK_WIDGET_VISIBLE(fs->file_text_items[i])))
+	(widget_is_active(fs->file_text_items[i])))
       gtk_widget_hide(fs->file_text_items[i]);
 }
 
@@ -702,7 +702,7 @@ static void reflect_filter_in_popup(fsb *fs)
 
   for (i = filternames_to_display; i < FILENAME_LIST_SIZE; i++)
     if ((fs->file_filter_items[i]) &&
-	(GTK_WIDGET_VISIBLE(fs->file_filter_items[i])))
+	(widget_is_active(fs->file_filter_items[i])))
       gtk_widget_hide(fs->file_filter_items[i]);
 }
 
@@ -778,7 +778,7 @@ static bool fsb_directory_button_press_callback(GdkEventButton *ev, void *data)
 
       for (i = dirs_to_display; i < FILENAME_LIST_SIZE; i++)
 	if ((fs->file_dir_items[i]) &&
-	    (GTK_WIDGET_VISIBLE(fs->file_dir_items[i])))
+	    (widget_is_active(fs->file_dir_items[i])))
 	  gtk_widget_hide(fs->file_dir_items[i]);
 
       gtk_menu_popup(GTK_MENU(fs->dirs_menu), NULL, NULL, NULL, NULL, EVENT_BUTTON(ev), EVENT_TIME(ev));
@@ -887,7 +887,7 @@ static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
 				     XEN_TO_C_STRING(XEN_CAR(XEN_VECTOR_REF(ss->file_sorters, i))));
 		  reset_user_int_data(G_OBJECT(fs->file_list_items[k]), SORT_XEN + i);
 		  widget_modify_bg(fs->file_list_items[k], GTK_STATE_NORMAL, ss->sgx->lighter_blue);
-		  if (!(GTK_WIDGET_VISIBLE(fs->file_list_items[k])))
+		  if (!(widget_is_active(fs->file_list_items[k])))
 		    gtk_widget_show(fs->file_list_items[k]);
 		  k++;
 		}
@@ -901,7 +901,7 @@ static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
 				     XEN_TO_C_STRING(XEN_CAR(XEN_VECTOR_REF(ss->file_filters, i))));
 		  reset_user_int_data(G_OBJECT(fs->file_list_items[k]), i + FILE_FILTER_OFFSET);
 		  widget_modify_bg(fs->file_list_items[k], GTK_STATE_NORMAL, ss->sgx->light_blue);
-		  if (!(GTK_WIDGET_VISIBLE(fs->file_list_items[k])))
+		  if (!(widget_is_active(fs->file_list_items[k])))
 		    gtk_widget_show(fs->file_list_items[k]);
 		  k++;
 		}
@@ -913,7 +913,7 @@ static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data)
 	      gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(fs->file_list_items[k]))), NO_FILTER_LABEL);
 	      reset_user_int_data(G_OBJECT(fs->file_list_items[k]), NO_FILE_FILTER_OFFSET);
 	      widget_modify_bg(fs->file_list_items[k], GTK_STATE_NORMAL, ss->sgx->light_blue);
-	      if (!(GTK_WIDGET_VISIBLE(fs->file_list_items[k])))
+	      if (!(widget_is_active(fs->file_list_items[k])))
 		gtk_widget_show(fs->file_list_items[k]);
 	    }
 
@@ -1175,7 +1175,7 @@ void alert_new_file(void)
   if (odat)
     {
       odat->fs->reread_directory = true;
-      if (GTK_WIDGET_VISIBLE(odat->fs->dialog))
+      if (widget_is_active(odat->fs->dialog))
 	{
 	  force_directory_reread(odat->fs);
 	  odat->fs->reread_directory = false;
@@ -1184,7 +1184,7 @@ void alert_new_file(void)
   if (mdat)
     {
       mdat->fs->reread_directory = true;
-      if (GTK_WIDGET_VISIBLE(mdat->fs->dialog))
+      if (widget_is_active(mdat->fs->dialog))
 	{
 	  force_directory_reread(mdat->fs);
 	  mdat->fs->reread_directory = false;
@@ -1193,7 +1193,7 @@ void alert_new_file(void)
   if (idat)
     {
       idat->fs->reread_directory = true;
-      if (GTK_WIDGET_VISIBLE(idat->fs->dialog))
+      if (widget_is_active(idat->fs->dialog))
 	{
 	  force_directory_reread(idat->fs);
 	  idat->fs->reread_directory = false;
@@ -2538,7 +2538,7 @@ void reflect_region_in_save_as_dialog(void)
 {
   if ((save_region_as) &&
       (save_region_as->fs->dialog) &&
-      (GTK_WIDGET_VISIBLE(save_region_as->fs->dialog)) &&
+      (widget_is_active(save_region_as->fs->dialog)) &&
       (region_ok(region_dialog_region())))
     clear_dialog_error(save_region_as->panel_data);
 }
@@ -3161,7 +3161,7 @@ widget_t make_region_save_as_dialog(bool managed)
 
 void save_file_dialog_state(FILE *fd)
 {
-  if ((odat) && (GTK_WIDGET_VISIBLE(odat->fs->dialog)))
+  if ((odat) && (widget_is_active(odat->fs->dialog)))
     {
 #if HAVE_SCHEME
       fprintf(fd, "(%s #t)\n", S_open_file_dialog);
@@ -3173,7 +3173,7 @@ void save_file_dialog_state(FILE *fd)
       fprintf(fd, "#t %s drop\n", S_open_file_dialog);
 #endif
     }
-  if ((mdat) && (GTK_WIDGET_VISIBLE(mdat->fs->dialog)))
+  if ((mdat) && (widget_is_active(mdat->fs->dialog)))
     {
 #if HAVE_SCHEME
       fprintf(fd, "(%s #t)\n", S_mix_file_dialog);
@@ -3185,7 +3185,7 @@ void save_file_dialog_state(FILE *fd)
       fprintf(fd, "#t %s drop\n", S_mix_file_dialog);
 #endif
     }
-  if ((idat) && (GTK_WIDGET_VISIBLE(idat->fs->dialog)))
+  if ((idat) && (widget_is_active(idat->fs->dialog)))
     {
 #if HAVE_SCHEME
       fprintf(fd, "(%s #t)\n", S_insert_file_dialog);
@@ -3197,7 +3197,7 @@ void save_file_dialog_state(FILE *fd)
       fprintf(fd, "#t %s drop\n", S_insert_file_dialog);
 #endif
     }
-  if ((save_sound_as) && (GTK_WIDGET_VISIBLE(save_sound_as->fs->dialog)))
+  if ((save_sound_as) && (widget_is_active(save_sound_as->fs->dialog)))
     {
 #if HAVE_SCHEME
       fprintf(fd, "(%s #t)\n", S_save_sound_dialog);
@@ -3209,7 +3209,7 @@ void save_file_dialog_state(FILE *fd)
       fprintf(fd, "#t %s drop\n", S_save_sound_dialog);
 #endif
     }
-  if ((save_selection_as) && (GTK_WIDGET_VISIBLE(save_selection_as->fs->dialog)))
+  if ((save_selection_as) && (widget_is_active(save_selection_as->fs->dialog)))
     {
 #if HAVE_SCHEME
       fprintf(fd, "(%s #t)\n", S_save_selection_dialog);
@@ -3221,7 +3221,7 @@ void save_file_dialog_state(FILE *fd)
       fprintf(fd, "#t %s drop\n", S_save_selection_dialog);
 #endif
     }
-  if ((save_region_as) && (GTK_WIDGET_VISIBLE(save_region_as->fs->dialog)))
+  if ((save_region_as) && (widget_is_active(save_region_as->fs->dialog)))
     {
 #if HAVE_SCHEME
       fprintf(fd, "(%s #t)\n", S_save_region_dialog);
@@ -3268,7 +3268,7 @@ static raw_info *new_raw_dialog(void)
       int i;
       for (i = 0; i < raw_info_size; i++)
 	if ((!raw_infos[i]) ||
-	    (!(GTK_WIDGET_VISIBLE(raw_infos[i]->dialog))))
+	    (!(widget_is_active(raw_infos[i]->dialog))))
 	  {
 	    loc = i;
 	    break;
@@ -3866,7 +3866,7 @@ static edhead_info *new_edhead_dialog(void)
       int i;
       for (i = 0; i < edhead_info_size; i++)
 	if ((!edhead_infos[i]) ||
-	    (!(GTK_WIDGET_VISIBLE(edhead_infos[i]->dialog))))
+	    (!(widget_is_active(edhead_infos[i]->dialog))))
 	  {
 	    loc = i;
 	    break;
@@ -3974,7 +3974,7 @@ static void edit_header_watch_user_read_only(struct snd_info *sp, sp_watcher_rea
   edhead_info *ep;
   ep = (edhead_info *)(sp->watchers[loc]->context);
   if ((ep->dialog) && 
-      (GTK_WIDGET_VISIBLE(ep->dialog)) &&
+      (widget_is_active(ep->dialog)) &&
       (sp == ep->sp))
     {
       if (reason == SP_READ_ONLY_CHANGED)
@@ -4193,7 +4193,7 @@ void save_edit_header_dialog_state(FILE *fd)
 	edhead_info *ep;
 	ep = edhead_infos[i];
 	if ((ep->dialog) && 
-	    (GTK_WIDGET_VISIBLE(ep->dialog)) && 
+	    (widget_is_active(ep->dialog)) && 
 	    (snd_ok(ep->sp)))
 	  {
 #if HAVE_SCHEME
@@ -4267,7 +4267,7 @@ widget_t post_it(const char *subject, const char *str)
 
 void save_post_it_dialog_state(FILE *fd)
 {
-  if ((post_it_dialog) && (GTK_WIDGET_VISIBLE(post_it_dialog)))
+  if ((post_it_dialog) && (widget_is_active(post_it_dialog)))
     {
       char *subject;
       gchar *text;
@@ -4637,7 +4637,7 @@ void vf_reflect_sort_choice_in_menu(view_files_info *vdat)
   set_sensitive(vdat->small_to_big, vdat->sorter != SORT_SMALL_TO_BIG);
   set_sensitive(vdat->big_to_small, vdat->sorter != SORT_BIG_TO_SMALL);
   for (i = 0; i < vdat->sort_items_size; i++)
-    if (GTK_WIDGET_VISIBLE(vdat->sort_items[i]))
+    if (widget_is_active(vdat->sort_items[i]))
       set_sensitive(vdat->sort_items[i], vdat->sorter != (SORT_XEN + i));
 }
 

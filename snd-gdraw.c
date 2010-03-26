@@ -1087,7 +1087,7 @@ void view_color_orientation_callback(GtkWidget *w, gpointer context)
 
 bool color_orientation_dialog_is_active(void)
 {
-  return((ccd_dialog) && (GTK_WIDGET_VISIBLE(ccd_dialog)));
+  return((ccd_dialog) && (widget_is_active(ccd_dialog)));
 }
 
 

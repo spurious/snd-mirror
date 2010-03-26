@@ -7056,6 +7056,12 @@
 	 (test (rec3? arg) #f))
        (list "hi" -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #f #t '(1 . 2))))
 
+    (test ((cadr (make-type :name 123))) 'error)
+    (test ((cadr (make-type :length "hiho"))) 'error)
+    (test ((cadr (make-type :print (lambda (a b) (= a b)))) "hi") 'error)
+    (test ((cadr (make-type :length (lambda () 1))) "hi") 'error)
+
+
     ))
 
 (define-expansion (_expansion_ a) `(+ ,a 1))
@@ -46853,10 +46859,12 @@
 (test (set! #(1 2 3) 1) 'error)
 (test (set! (call/cc (lambda (a) a)) #f) 'error)
 (test (set! 3 1) 'error)
+(test (set! 3/4 1) 'error)
 (test (set! 3.14 1) 'error)
 (test (set! #\a 12) 'error)
 (test (set! (1 2) #t) 'error)
 (test (set! _not_a_var_ 1) 'error)
+(test (set! (_not_a_pws_) 1) 'error)
 
 (test (let ((a (lambda (x) (set! a 3) x))) (list (a 1) a)) 'error)
 (test (let ((a (let ((b 1)) (set! a 3) b))) a) 'error)            

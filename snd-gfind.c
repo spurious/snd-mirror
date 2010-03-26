@@ -17,7 +17,7 @@ static gboolean find_modify_key_press(GtkWidget *w, GdkEventKey *event, gpointer
 
 static void clear_find_error(void)
 {
-  if ((find_error_frame) && (GTK_WIDGET_VISIBLE(find_error_frame)))
+  if ((find_error_frame) && (widget_is_active(find_error_frame)))
     set_label(find_error_label, "");
   if (find_key_press_handler_id)
     {
@@ -224,7 +224,7 @@ void edit_find_callback(GtkWidget *w, gpointer context)
 
 void save_find_dialog_state(FILE *fd)
 {
-  if ((edit_find_dialog) && (GTK_WIDGET_VISIBLE(edit_find_dialog)))
+  if ((edit_find_dialog) && (widget_is_active(edit_find_dialog)))
     {
       char *text = NULL;
       text = sg_get_text(edit_find_text, 0, -1);

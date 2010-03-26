@@ -2373,6 +2373,9 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *    set needed: selection? sound 
  *
  * possible new objects: menu-item, file-filter|sorter, fft-window?, color? widget? variable-graph?
+ *  PERHAPS: make widgets and colors (at least) scheme-level object via make-type, look for other car=type name cases
+ *        this affects xm.c: new-types has the (very long) list.
+ *        But how to deal with C-side issues (clm.c methods that call defgenerator methods for example).
  *
  * color is currently a list with 'color as car -- perhaps make this a true object
  *   also clm method list "mus-name": clm2xen.c

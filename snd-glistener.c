@@ -1008,7 +1008,7 @@ bool listener_exists(void)
 
 int listener_height(void) 
 {
-  if ((listener_text) && (GTK_WIDGET_VISIBLE(listener_text)))
+  if ((listener_text) && (widget_is_active(listener_text)))
     return(widget_height(listener_text));
   else return(0);
 }
@@ -1016,7 +1016,7 @@ int listener_height(void)
 
 int listener_width(void) 
 {
-  if ((listener_text) && (GTK_WIDGET_VISIBLE(listener_text)))
+  if ((listener_text) && (widget_is_active(listener_text)))
     return(widget_width(listener_text)); 
   else return(0);
 }

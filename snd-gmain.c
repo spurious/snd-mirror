@@ -96,7 +96,7 @@ static gint window_iconify(GtkWidget *w, GdkEventWindowState *event, gpointer co
       for (i = 0; i < ss->sgx->num_dialogs; i++)
 	if (ss->sgx->dialogs[i])
 	  {
-	    if (GTK_WIDGET_VISIBLE(ss->sgx->dialogs[i]))
+	    if (widget_is_active(ss->sgx->dialogs[i]))
 	      iconify_active_dialogs[i] = ss->sgx->dialogs[i];
 	    gtk_widget_hide(ss->sgx->dialogs[i]);
 	  }

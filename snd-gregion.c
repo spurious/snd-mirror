@@ -185,7 +185,7 @@ static void region_ok_callback(GtkWidget *w, gpointer context)
 bool region_browser_is_active(void)
 {
   return((region_dialog) && 
-	 (GTK_WIDGET_VISIBLE(region_dialog)));
+	 (widget_is_active(region_dialog)));
 }
 
 
@@ -638,7 +638,7 @@ void view_region_callback(GtkWidget *w, gpointer context)
 bool region_dialog_is_active(void)
 {
   return((region_dialog != NULL) && 
-	 (GTK_WIDGET_VISIBLE(region_dialog)));
+	 (widget_is_active(region_dialog)));
 }
 
 

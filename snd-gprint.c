@@ -172,7 +172,7 @@ static void report_in_error_info(const char *msg, void *ignore)
   info_widget_display(print_error_text, msg);
   info_widget_set_size(print_error_text, 1 + mus_strlen(msg));
   print_error = true;
-  if (!(GTK_WIDGET_VISIBLE(print_error_text)))
+  if (!(widget_is_active(print_error_text)))
     {
       gtk_widget_show(print_error_text);
       print_watching = true;
@@ -354,7 +354,7 @@ widget_t make_file_print_dialog(bool managed, bool direct_to_printer)
 
 void save_print_dialog_state(FILE *fd)
 {
-  if ((print_dialog) && (GTK_WIDGET_VISIBLE(print_dialog)))
+  if ((print_dialog) && (widget_is_active(print_dialog)))
     {
 #if HAVE_SCHEME
       fprintf(fd, "(%s #t %s)\n", S_print_dialog, ((bool)(TOGGLE_BUTTON_ACTIVE(print_eps_or_lpr))) ? "#t" : "#f");

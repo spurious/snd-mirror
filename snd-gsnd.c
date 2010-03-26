@@ -2194,7 +2194,7 @@ void snd_info_cleanup(snd_info *sp)
 	  set_toggle_button(REVERB_RIGHT_BUTTON(sp), false, false, (void *)sp);
 	  set_toggle_button(UNITE_BUTTON(sp), false, false, (void *)sp);
 	}
-      if ((sx->dialog) && (GTK_WIDGET_VISIBLE(sx->dialog)))
+      if ((sx->dialog) && (widget_is_active(sx->dialog)))
 	gtk_widget_hide(sx->dialog);
 
       if ((sx->snd_widgets) && (SND_PANE(sp))) gtk_widget_hide(SND_PANE(sp));
@@ -2222,9 +2222,9 @@ void hide_controls(snd_info *sp)
 
 bool showing_controls(snd_info *sp)
 {
-#if defined(GTK_WIDGET_VISIBLE)
+#if defined(GTK_WIDGET_MAPPED)
   return((GTK_WIDGET_MAPPED(CONTROL_PANEL(sp))) && 
-	 (GTK_WIDGET_VISIBLE(CONTROL_PANEL(sp))));
+	 (widget_is_active(CONTROL_PANEL(sp))));
 #else
   return((gtk_widget_get_mapped(CONTROL_PANEL(sp))) && 
 	 (gtk_widget_get_visible(CONTROL_PANEL(sp))));

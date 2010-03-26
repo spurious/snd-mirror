@@ -1257,5 +1257,5 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 bool transform_dialog_is_active(void)
 {
   return((transform_dialog) && 
-	 (GTK_WIDGET_VISIBLE(transform_dialog)));
+	 (widget_is_active(transform_dialog)));
 }

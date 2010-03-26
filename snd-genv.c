@@ -1273,7 +1273,7 @@ void set_enved_base(mus_float_t val)
 
 bool enved_dialog_is_active(void)
 {
-  return((enved_dialog) && (GTK_WIDGET_VISIBLE(enved_dialog)));
+  return((enved_dialog) && (widget_is_active(enved_dialog)));
 }
 
 

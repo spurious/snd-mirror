@@ -12617,8 +12617,7 @@ typedef struct {
   s7_pointer (*length)(s7_scheme *sc, s7_pointer obj);
   s7_pointer (*copy)(s7_scheme *sc, s7_pointer obj);
   s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
-  s7_pointer ops;
-  s7_pointer s_print, s_equal, s_getter, s_setter, s_length;
+  s7_pointer print_func, equal_func, getter_func, setter_func, length_func;
 } s7_c_object_t;
 
 
@@ -12660,7 +12659,6 @@ int s7_new_type(const char *name,
   object_types[tag].length = NULL;
   object_types[tag].copy = NULL;
   object_types[tag].fill = NULL;
-  object_types[tag].ops = small_int(0); /* a placeholder -- we can't get sc->NIL at this point */
   return(tag);
 }
 
@@ -12873,20 +12871,21 @@ typedef struct {
 } s_type_t;
 
 
-static char *s_print(s7_scheme *sc, void *value)
+static char *call_s_object_print(s7_scheme *sc, void *value)
 {
-  /* value here is the s_type_t object, the (scheme) function to call is object_types[tag].s_print */
+  /* value here is the s_type_t object, the (scheme) function to call is object_types[tag].print_func */
   /*   it will be passed the value, not the original object */
   s_type_t *obj = (s_type_t *)value;
   car(sc->s_function_args) = obj->value;
-  return(copy_string((char *)s7_string(s7_call(sc, object_types[obj->type].s_print, sc->s_function_args))));
+  return(copy_string((char *)s7_string(s7_call(sc, object_types[obj->type].print_func, sc->s_function_args))));
+  /* describe_object assumes the value returned here can be freed */
 }
 
 /* s_fill doesn't seem problematic, and s_copy could copy the object, then call s_copy for the value?
  *   should these be the defaults (also for length and others)?
  */
 
-static bool s_objects_are_equal(s7_scheme *sc, s7_pointer a, s7_pointer b)
+static bool call_s_object_equal(s7_scheme *sc, s7_pointer a, s7_pointer b)
 {
   s_type_t *obj1, *obj2;
   if (c_object_type(a) != c_object_type(b))
@@ -12895,35 +12894,35 @@ static bool s_objects_are_equal(s7_scheme *sc, s7_pointer a, s7_pointer b)
   obj1 = (s_type_t *)s7_object_value(a);
   obj2 = (s_type_t *)s7_object_value(b);
 
-  if (object_types[obj1->type].s_equal != sc->F)
-    return(s7_boolean(sc, s7_call(sc, object_types[obj1->type].s_equal, make_list_2(sc, obj1->value, obj2->value))));
+  if (object_types[obj1->type].equal_func != sc->F)
+    return(s7_boolean(sc, s7_call(sc, object_types[obj1->type].equal_func, make_list_2(sc, obj1->value, obj2->value))));
 
   return(s7_is_equal(sc, obj1->value, obj2->value));
 }
 
 
-static s7_pointer s_getter(s7_scheme *sc, s7_pointer a, s7_pointer args)
+static s7_pointer call_s_object_getter(s7_scheme *sc, s7_pointer a, s7_pointer args)
 {
   s_type_t *obj;
   obj = (s_type_t *)s7_object_value(a);
-  return(s7_call(sc, object_types[obj->type].s_getter, s7_cons(sc, obj->value, args))); /* ?? */
+  return(s7_call(sc, object_types[obj->type].getter_func, s7_cons(sc, obj->value, args))); /* ?? */
 }
 
 
-static s7_pointer s_setter(s7_scheme *sc, s7_pointer a, s7_pointer args)
+static s7_pointer call_s_object_setter(s7_scheme *sc, s7_pointer a, s7_pointer args)
 {
   s_type_t *obj;
   obj = (s_type_t *)s7_object_value(a);
-  return(s7_call(sc, object_types[obj->type].s_setter, s7_cons(sc, obj->value, args))); /* ?? */
+  return(s7_call(sc, object_types[obj->type].setter_func, s7_cons(sc, obj->value, args))); /* ?? */
 }
 
 
-static s7_pointer s_length(s7_scheme *sc, s7_pointer a)
+static s7_pointer call_s_object_length(s7_scheme *sc, s7_pointer a)
 {
   s_type_t *obj;
   obj = (s_type_t *)s7_object_value(a);
   car(sc->s_function_args) = obj->value;
-  return(s7_call(sc, object_types[obj->type].s_length, sc->s_function_args));
+  return(s7_call(sc, object_types[obj->type].length_func, sc->s_function_args));
 }
 
 
@@ -13009,7 +13008,6 @@ In each case, the argument is the value of the object, not the object itself."
   s7_pointer x, y, z;
 
   tag = s7_new_type("anonymous-type", s_type_print, s_type_free, s_type_equal, s_type_gc_mark, NULL, NULL);
-  object_types[tag].ops = args;
   if (args != sc->NIL)
     {
       int i;
@@ -13020,40 +13018,72 @@ In each case, the argument is the value of the object, not the object itself."
       /* if any of the special functions are specified, store them in the type object so we can find them later */
       for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x))
 	{
-	  s7_pointer func;
+	  s7_pointer func, proc_args;
+	  int nargs = 0;
+	  bool rest_arg = false;
+
 	  /* the closure_star mechanism passes the args in declaration order */
 	  func = car(x);
 	  if (func != sc->F)            /* #f means arg was not set */
 	    {
-	      /* TODO: check arity and that it's a function etc, also make s7tests */
+	      if (i != 5)
+		{
+		  if (!s7_is_procedure(func))
+		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				    make_list_2(sc, 
+						s7_make_string(sc, "make-type arg, ~A, should be a function"),
+						func)));
+		  proc_args = s7_procedure_arity(sc, func);
+		  nargs = s7_integer(car(proc_args)) + s7_integer(cadr(proc_args));
+		  rest_arg = (caddr(proc_args) != sc->F);
+		}
+
 	      switch (i)
 		{
 		case 0:                 /* print, ((cadr (make-type :print (lambda (a) (format #f "#<typo: ~S>" a)))) "gypo") -> #<typo: "gypo"> */
-		  object_types[tag].s_print = func;
-		  object_types[tag].print = s_print;
+		  if ((s7_integer(car(proc_args)) > 1) || ((nargs == 0) && (!rest_arg)))
+		    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "make-type :print procedure, ~A, should take one argument"), func)));
+
+		  object_types[tag].print_func = func;
+		  object_types[tag].print = call_s_object_print;
 		  break;
 
 		case 1:                 /* equal */
 		  /* (let ((typo (make-type :equal (lambda (a b) (equal? a b))))) (let ((a ((cadr typo) 123)) (b ((cadr typo) 321))) (equal? a b))) */
-		  object_types[tag].s_equal = func;
+		  if ((s7_integer(car(proc_args)) > 2) || ((nargs < 2) && (!rest_arg)))
+		    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "make-type :equal procedure, ~A, should take two arguments"), func)));
+
+		  object_types[tag].equal_func = func;
 		  break;
 
 		case 2:                 /* getter: (((cadr (make-type :getter (lambda (a b) (vector-ref a b)))) (vector 1 2 3)) 1) -> 2 */
-		  object_types[tag].s_getter = func;
-		  object_types[tag].apply = s_getter;
+		  if ((nargs == 0) && (!rest_arg))
+		    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "make-type :getter procedure, ~A, should take at least one argument"), func)));
+
+		  object_types[tag].getter_func = func;
+		  object_types[tag].apply = call_s_object_getter;
 		  break;
 
 		case 3:                 /* setter: (set! (((cadr (make-type :setter (lambda (a b c) (vector-set! a b c)))) (vector 1 2 3)) 1) 23) */
-		  object_types[tag].s_setter = func;
-		  object_types[tag].set = s_setter;
+		  if ((nargs < 2) && (!rest_arg))
+		    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "make-type :setter procedure, ~A, should take at least two arguments"), func)));
+
+		  object_types[tag].setter_func = func;
+		  object_types[tag].set = call_s_object_setter;
 		  break;
 
 		case 4:                 /* length: (length ((cadr (make-type :length (lambda (a) (vector-length a)))) (vector 1 2 3))) -> 3 */
-		  object_types[tag].s_length = func;
-		  object_types[tag].length = s_length;
+		  if ((s7_integer(car(proc_args)) > 1) || ((nargs == 0) && (!rest_arg)))
+		    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "make-type :length procedure, ~A, should take at one argument"), func)));
+
+		  object_types[tag].length_func = func;
+		  object_types[tag].length = call_s_object_length;
 		  break;
 
 		case 5:                 /* name, ((cadr (make-type :name "hiho")) 123) -> #<hiho 123> */
+		  if (!s7_is_string(func))
+		    return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, s7_make_string(sc, "make-type :name arg, ~S, should be a string"), func)));
+
 		  object_types[tag].name = copy_string(s7_string(func));
 		  break;
 		}
@@ -13418,7 +13448,7 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
   if (is_c_object(x))
     {
       if (is_s_object(x))
-	return(s_objects_are_equal(sc, x, y));
+	return(call_s_object_equal(sc, x, y));
       return(objects_are_equal(x, y));
     }
   
@@ -17268,6 +17298,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->y != sc->NIL) 
 	{
 	  set_symbol_value(sc->y, sc->value); 
+	  /*
+	   * originally in Snd I wanted notification when a variable was set, and it's not very pretty
+	   *      to have to use pws's everywhere.  Too late to change Snd now, sad to say.  Or perhaps
+	   *      not -- Ruby has "hooked variables" that look like what I'd want.
+	   *
+	   *   It would not be burdensome to add a check for a notifier here.
+	   *   There is room in the symbol section (string) of the object for a pointer.
+	   *      (set! (setter sym) (lambda ...))
+	   *   This pointer could have all kinds of stuff -- a read-hook
+	   *   or write-hook, value history.  And I need a way to trace pws set side.
+	   *   But it also gives type/range checking before the set!
+	   *
+	   * (define-wrapped-variable var getter setter)
+	   *   The setter would be called here if symbol is_wrapped_variable or perhaps in set_symbol_value? [s7_symbol_set_value, OP_DEFINE1, s7_define, etc]
+	   *   The getter in the op_eval_args section? -- might slow us down a lot.
+	   * Or...
+	   *  PERHAPS: (wrap-variable var getter setter) -- could be called on any var, and use #f #f to unwrap
+	   * Or...
+	   *  use make-type to define the getter/setter and apply them even in the non pws-setting
+	   */
 	  pop_stack(sc);
 	  goto START;
 	}

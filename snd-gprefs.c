@@ -367,7 +367,7 @@ static gboolean remove_arrow_func(GtkWidget *w, GdkEventButton *ev, gpointer con
 static gint arrow_func_up(gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
-  if (GTK_WIDGET_IS_SENSITIVE(prf->arrow_up))
+  if (Widget_Is_Sensitive(prf->arrow_up))
     {
       if ((prf) && (prf->arrow_up_func))
 	{
@@ -386,7 +386,7 @@ static gint arrow_func_up(gpointer context)
 static gint arrow_func_down(gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
-  if (GTK_WIDGET_IS_SENSITIVE(prf->arrow_down))
+  if (Widget_Is_Sensitive(prf->arrow_down))
     {
       if ((prf) && (prf->arrow_down_func))
 	{
@@ -408,7 +408,7 @@ static gboolean call_arrow_down_press(GtkWidget *w, GdkEventButton *ev, gpointer
   if ((prf) && (prf->arrow_down_func))
     {
       (*(prf->arrow_down_func))(prf);
-      if (GTK_WIDGET_IS_SENSITIVE(w))
+      if (Widget_Is_Sensitive(w))
 	prf->power_id = g_timeout_add_full(0,
 					   POWER_INITIAL_WAIT_TIME,
 					   arrow_func_down,
@@ -425,7 +425,7 @@ static gboolean call_arrow_up_press(GtkWidget *w, GdkEventButton *ev, gpointer c
   if ((prf) && (prf->arrow_up_func))
     {
       (*(prf->arrow_up_func))(prf);
-      if (GTK_WIDGET_IS_SENSITIVE(w))
+      if (Widget_Is_Sensitive(w))
 	prf->power_id = g_timeout_add_full(0,
 					   POWER_INITIAL_WAIT_TIME,
 					   arrow_func_up,

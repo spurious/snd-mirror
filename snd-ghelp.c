@@ -398,5 +398,5 @@ void snd_help_back_to_top(void)
 bool help_dialog_is_active(void)
 {
   return((help_dialog) &&
-	 (GTK_WIDGET_VISIBLE(help_dialog)));
+	 (widget_is_active(help_dialog)));
 }

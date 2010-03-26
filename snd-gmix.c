@@ -392,7 +392,7 @@ static GtkWidget *error_frame = NULL, *error_label = NULL;
 
 static void clear_mix_error(void)
 {
-  if ((error_frame) && (GTK_WIDGET_VISIBLE(error_frame)))
+  if ((error_frame) && (widget_is_active(error_frame)))
     gtk_widget_hide(error_frame);
 }
 
@@ -959,7 +959,7 @@ GtkWidget *make_mix_dialog(void)
 void reflect_mix_change(int mix_id)
 {
   if ((mix_dialog) && 
-      (GTK_WIDGET_VISIBLE(mix_dialog)))
+      (widget_is_active(mix_dialog)))
     {
       if (mix_id != ANY_MIX_ID)
 	mix_dialog_id = mix_id;
