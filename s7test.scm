@@ -3507,6 +3507,7 @@
 (test (do ((vec (make-vector 5)) (i 0 (+ i 1))) ((= i 5) vec) (vector-set! vec i i)) '#(0 1 2 3 4))
 (test (let ((x '(1 3 5 7 9))) (do ((x x (cdr x)) (sum 0 (+ sum (car x))))  ((null? x) sum))) 25)
 (test (do ((i 4 (- i 1)) (a 1 (* a i))) ((zero? i) a)) 24)
+(test (do ((i 2 (+ i 1))) ((> i 0) 123)) 123)
 
 					;(test (do () (() ()) ()) '()) ; ?? -- is '() the same as ()? -- scheme bboard sez not necessarily
 (test (do () ('() '())) '())
@@ -4644,6 +4645,14 @@
 	(f))
       1)
 |#
+
+(test (let ((x 1))
+	(let ()
+	  (define (f) x)
+	  (let ((x 0))
+	    (define (g) (set! x 32) (f))
+	    (g))))
+      1)
 
 (let ((x 123))
   (define (hi b) (+ b x))
@@ -7061,6 +7070,15 @@
     (test ((cadr (make-type :print (lambda (a b) (= a b)))) "hi") 'error)
     (test ((cadr (make-type :length (lambda () 1))) "hi") 'error)
 
+    (test (let* ((vzt (make-type :name "vzt" 
+				 :length (lambda (v) (vector-length v))
+				 :getter (lambda (v n) (vector-ref v n))))
+		 (make-vzt (cadr vzt)))
+	    (let ((v (make-vzt (vector 1 2 3))))
+	      (let ((sum 0)) 
+		(for-each (lambda (n) (set! sum (+ sum n))) v)
+		sum)))
+	  6)
 
     ))
 
@@ -8159,6 +8177,70 @@
 
       (test (let ((sum 0)) (do* ((i 0 (+ i 1)) (j i (+ i 1))) ((= i 3) sum) (set! sum (+ sum j)))) 5)
 
+      (define-macro (fluid-let xexe . body)
+	;; taken with changes from Teach Yourself Scheme
+	(let ((xx (map car xexe))
+	      (ee (map cadr xexe))
+	      (old-xx (map (lambda (ig) (gensym)) xexe)))
+	  `(let ,(map (lambda (old-x x) `(,old-x ,x)) 
+		      old-xx xx)
+	     (dynamic-wind
+		 (lambda () #f)
+		 (lambda ()
+		   ,@(map (lambda (x e)
+			    `(set! ,x ,e)) 
+			  xx ee)
+		   (let ()
+		     ,@body))
+		 (lambda ()
+		   ,@(map (lambda (x old-x)
+			    `(set! ,x ,old-x)) 
+			  xx old-xx))))))
+      
+      (test (let ((x 32)
+		  (y 0))
+	      (define (gx) x)
+	      (fluid-let ((x 12))
+		(set! y (gx)))
+	      (list x y))
+	    '(32 12))
+      
+      (test (let ((x "hi")
+		  (y 0)
+		  (z '(1 2 3)))
+	      (define (gx) (+ x z))
+	      (fluid-let 
+		  ((x 32) (z (+ 123 (car z))))
+		(set! y (gx)))
+	      (list x y z))
+            '("hi" 156 (1 2 3)))
+      
+      (test (let ((x 32)
+		  (y 0))
+	      (define (gx) x)
+	      (call-with-exit
+	       (lambda (return)
+		 (fluid-let ((x 12))
+		   (set! y (gx))
+		   (return))))
+	      (list x y))
+	    '(32 12))
+
+      (test (let ((x 32)
+		  (y 0))
+	      (define (gx) x)
+	      (let ((x 100))
+		(fluid-let ((x 12))
+		  (set! y (gx))))
+	      (list x y))
+	    '(32 32))
+      ;; oops! fluid-let doesn't actually work!
+
+      ;; in CL: (defvar x 32) (let ((y 0)) (defun gx () x) (let ((x 12)) (setf y (gx))) (list x y)) -> '(32 12)
+      ;;                      (let ((y 0)) (defun gx () x) (let ((x 100)) (let ((x 12)) (setf y (gx)))) (list x y)) -> '(32 12))
+      ;; (the defvar makes x dynamic)
+
+      
       ;; define** treats args before :optional as required args
       (define-macro (define** declarations . forms)
 	(let ((name (car declarations))
@@ -8178,9 +8260,9 @@
 			      ',name ,required-args (if (> ,required-args 1) "s" "") func-args)
 		       (apply (lambda* ,args ,@forms) func-args)))
 		`(define* ,declarations ,@forms)))))
-
+      
       (let ()
-
+	
 	;; some common lispisms
 	;;   where names are the same, but functions are different (abs for example), 
 	;;   I'll prepend "cl-" to the CL version; otherwise we end up redefining
@@ -8191,8 +8273,8 @@
 	;; Series and generators are ignored.
 	;;
 	;;  ... later ... I've run out of gas.
-
-	;(define-macro (progn . body) `(let () ,@body))
+	
+					;(define-macro (progn . body) `(let () ,@body))
 	(define progn begin)
 	(define-macro (prog1 first . body) (let ((result (gensym))) `(let ((,result ,first)) ,@body ,result)))
 	(define-macro (prog2 first second . body) `(prog1 (progn ,first ,second) ,@body))

@@ -262,9 +262,12 @@
     (delete-file "optimizer.log"))
 (define optimizer-log (open-output-file "optimizer.log"))
 (define optimizer-test -1)
+
 (reset-hook! optimization-hook)
+(define *opt* #f)
 (add-hook! optimization-hook 
 	   (lambda (msg)
+	     (set! *opt* #f)
 	     (if (= (optimization) max-optimization)
 		 (begin
 		   (if (not (= test-number optimizer-test))
@@ -14415,6 +14418,12 @@ EDITS: 2
 	      
 	      (gc)
 	      ))
+
+	(let ((sum 0)) 
+	  (for-each (lambda (n) (set! sum (+ sum n))) (vct 1 2 3))
+	  (if (not (= sum 6.0))
+	      (snd-display ";object for-each (vct): ~A" sum)))
+
 	))))
 
 
@@ -53766,6 +53775,26 @@ EDITS: 1
 				    #t)
 				  #f))))
 	    (close-sound ind))
+	  
+	  (set! *opt* #t)
+	  (with-sound ()
+            (run
+	     (do ((i 0 (+ i 1)))
+		 ((= i 3))
+	       (let ((gen (make-oscil 440.0))
+		     (e (make-env (vct 0.0 0.0 1.0 1.0 2.0 0.0) 0.1 1.0)))
+		 (do ((k 0 (+ k 1)))
+		     ((= k 44100))
+		   (outa (+ k (* i 50000)) (* (env e) (oscil gen))))))))
+	  (if (not *opt*)
+	      (snd-display ";with-sound make-oscil in run loop optimization failed?"))
+	  (let ((ind (find-sound "test.snd")))
+	    (if (not (= (frames ind) 144100))
+		(snd-display ";with-sound make-oscil in run frames: ~A" (frames)))
+	    (if (fneq (maxamp ind) .1)
+		(snd-display ";with-sound make-oscil in run maxamp: ~A" (maxamp ind)))
+	    (close-sound ind))
+
 	  
 	  (if (file-exists? "ii.scm")
 	      (begin

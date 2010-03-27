@@ -6326,12 +6326,14 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
   (data #f :type vct) (dataloc 0 :type int))
 
 (define (moving-spectrum gen)
+  (declare (gen moving-spectrum))
+
   (let* ((n (moving-spectrum-n gen))
 	 (n2 (/ n 2))
-	 (amps (moving-spectrum-amps gen))
+	 (amps (moving-spectrum-amps gen))                           ; un-normalized
 	 (phases (moving-spectrum-phases gen))
 	 (amp-incs (moving-spectrum-amp-incs gen))
-	 (freqs (moving-spectrum-freqs gen))
+	 (freqs (moving-spectrum-freqs gen))                         ; in radians
 	 (new-freq-incs (moving-spectrum-new-freq-incs gen))
 	 (hop (moving-spectrum-hop gen))
 	 (outctr (moving-spectrum-outctr gen)))
@@ -6431,6 +6433,12 @@ the phases as mus-ycoeffs, and the current input data as mus-data."
 ; :(channel-distance 0 0 0 1)
 ; 7.902601100022e-9
 |#
+
+
+;;; TODO: moving spectrum returns freqs in radians, and does not try to find the interpolated peak,
+;;;         so we need another version that returns current freq/amp pairs that can be used directly in oscil
+;;;         cutoff, peaks, freqs, amps -- moving-peaks?
+;;;       This is the main portion of the "pins" instrument (also find-pitch in examp.scm)
 
 
 

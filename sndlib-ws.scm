@@ -262,7 +262,7 @@
 		 (let ((scaling
 			(or scaled-by
 			    (let* ((mx-lst (mus-sound-maxamp output-1))
-				   (mx (cadr mx-lst)))
+				   (mx (if (not (null? mx-lst)) (cadr mx-lst) 1.0)))
 			      (do ((i 1 (+ 1 2)))
 				  ((>= i (length mx-lst)) (/ scaled-to mx))
 				(set! mx (max mx (list-ref mx-lst i)))))))

@@ -79,6 +79,7 @@
  *            as in C, __func__ is the name of the function currently being defined.
  *        length, copy, fill!, map, for-each are generic
  *        vector-for-each, vector-map, string-for-each, hash-table-for-each, for-each of any applicable object
+ *        make-type creates a new scheme type
  *
  *
  *   perhaps add: (define ((f a) b) (* a b)) -> (define f (lambda (a) (lambda (b) (* a b))))
@@ -618,6 +619,7 @@ struct s7_scheme {
 #define is_syntax(p)                  ((typeflag(p) & T_SYNTAX) != 0) /* the != 0 business is for MS C++'s benefit */
 #define syntax_opcode(x)              ((x)->hloc)
 
+/* TODO: "immutable" is ugly jargon -- change this to T_CONSTANT */
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 2))
 #define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
 #define set_immutable(p)              typeflag(p) |= (T_IMMUTABLE | T_DONT_COPY)
@@ -1730,8 +1732,19 @@ static int symbol_table_hash(const char *key, int table_size)
   for (c = key; *c; c++) 
     hashed = *c + hashed * 37;
   return(hashed % table_size); 
+
   /* using ints here is much faster, and the symbol table will not be enormous, so it's worth splitting out this case */
   /* precomputing the * 37 and so on only saved about 10% compute time -- 1/2260 overall time */
+
+  /* actuals chain lengths histogram (after s7test): 
+   *   all chars: 43 159 329 441 395 349 217 152 69 35 12 4 1 0 0 1          max: 15
+   *    4 chars: 572 528 307 183 128 90 50 48 41 35 34 23 21 ...             max: 182!
+   *    8 chars: 114 307 404 411 301 197 146 98 77 35 28 18 11 16 ...        max: 79
+   *    16 chars: 44 160 344 400 435 348 206 143 72 31 16 4 0 1 0 0 0 2 1... max: 18
+   *
+   * currently the hash calculation is ca 8 (s7test) and the find_by_name process 3,
+   *   if we use 4 chars, this calc goes to 6/7 but the find calc to 8/9
+   */
 } 
 
 
@@ -15329,11 +15342,23 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer fargs;
+
   fargs = cdr(args);
   if ((fargs == sc->NIL) || (s7_is_list(sc, car(fargs))))
     return(g_list_map(sc, args));
+
   if (s7_is_vector(car(fargs)))
     return(g_vector_map(sc, args));
+
+  /* for s_objects, we need length/getter/setter and access to the make function 
+   *   PERHAPS: add a :make option to make-type to give s7 access to a make function
+   *            it would need to make an s_object of a given length, but then how
+   *            do we know what to pass to the setter? We could assume that
+   *            the type returned by the getter is what the setter wants at
+   *            that location.
+   *            
+   *            This could also be added to the c_object tables, giving vct-map etc
+   */
   
   return(s7_wrong_type_arg_error(sc, "map", 2, car(fargs), "a list or a vector"));
 }
@@ -17307,16 +17332,32 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   There is room in the symbol section (string) of the object for a pointer.
 	   *      (set! (setter sym) (lambda ...))
 	   *   This pointer could have all kinds of stuff -- a read-hook
-	   *   or write-hook, value history.  And I need a way to trace pws set side.
-	   *   But it also gives type/range checking before the set!
+	   *   or write-hook, value history. But it also gives type/range checking before the set!
 	   *
-	   * (define-wrapped-variable var getter setter)
-	   *   The setter would be called here if symbol is_wrapped_variable or perhaps in set_symbol_value? [s7_symbol_set_value, OP_DEFINE1, s7_define, etc]
-	   *   The getter in the op_eval_args section? -- might slow us down a lot.
-	   * Or...
-	   *  PERHAPS: (wrap-variable var getter setter) -- could be called on any var, and use #f #f to unwrap
-	   * Or...
-	   *  use make-type to define the getter/setter and apply them even in the non pws-setting
+	   *  PERHAPS: local constants: (let ((n (make-constant 32)))...)
+	   *    where the (symbol...) access applies only in the environment 
+	   *    somehow these two ideas (define-constant and a wrapped symbol) locally/globally should be combined (and tracing)
+	   * currently constants have the T_IMMUTABLE bit set and it's checked everwhere
+	   * so rather than a trace list and an immutable bit, (symbol-ref sym) (pws)
+	   * but for a constant we'd want to throw away the key so to speak -- make it impossible to unset the symbol-set! lock
+	   *
+	   * all these are in the same realm:
+	   *   typed var: restrict set! to the desired type or do auto-conversions
+	   *   constant: disallow set!
+	   *   traced var: report either read/write
+	   *   fluid-let: dynamic until exit (call/cc error normal)
+	   *   dynamic variables: insist any ref is to the current binding [dynamic-let]
+	   *
+	   * we have the direct-if-global pointer -- can this be extended?
+	   *   constant: (global) set this to type-constant and refuse set|bind
+	   *             (local)  add the constant business to the version in the current env?
+	   *   trace: add func reporting access, then handle as currently
+	   *   typed: same with type check/conversion
+	   *   dynamic: vector access to current dynamic binding
+	   *   fluid: similar but when exit, undo that handler somehow
+	   *
+	   * (make-type :transparent #t :read :write :bind)
+	   * If a transparent value causes an auto-rewrite in its symbol to (sym) we get the getter/setter stuff
 	   */
 	  pop_stack(sc);
 	  goto START;
@@ -17348,7 +17389,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_true(sc, sc->value))
 	sc->code = car(sc->code);
       else
-	sc->code = cadr(sc->code);              /* (if #f 1) ==> #<unspecified> because car(sc->NIL) = sc->UNSPECIFIED */
+	sc->code = cadr(sc->code);              /* as per r5rs spec, (if #f #f) ==> #<unspecified> because car(sc->NIL) = sc->UNSPECIFIED */
       goto EVAL;
       
       
