@@ -619,7 +619,7 @@ struct s7_scheme {
 #define is_syntax(p)                  ((typeflag(p) & T_SYNTAX) != 0) /* the != 0 business is for MS C++'s benefit */
 #define syntax_opcode(x)              ((x)->hloc)
 
-/* TODO: "immutable" is ugly jargon -- change this to T_CONSTANT */
+/* TODO: "immutable" is ugly jargon -- change this to T_CONSTANT or maybe T_UNSETTABLE */
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 2))
 #define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
 #define set_immutable(p)              typeflag(p) |= (T_IMMUTABLE | T_DONT_COPY)
@@ -1736,7 +1736,7 @@ static int symbol_table_hash(const char *key, int table_size)
   /* using ints here is much faster, and the symbol table will not be enormous, so it's worth splitting out this case */
   /* precomputing the * 37 and so on only saved about 10% compute time -- 1/2260 overall time */
 
-  /* actuals chain lengths histogram (after s7test): 
+  /* chain lengths (after s7test): 
    *   all chars: 43 159 329 441 395 349 217 152 69 35 12 4 1 0 0 1          max: 15
    *    4 chars: 572 528 307 183 128 90 50 48 41 35 34 23 21 ...             max: 182!
    *    8 chars: 114 307 404 411 301 197 146 98 77 35 28 18 11 16 ...        max: 79
@@ -12476,6 +12476,20 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
 }
 
 
+static s7_pointer g_is_macro(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_macro "(macro? arg) returns #t is its argument is a macro"
+
+  if (is_macro(car(args))) 
+    return(sc->T);
+
+  if (s7_is_symbol(car(args)))
+    return(make_boolean(sc, is_macro(s7_symbol_local_value(sc, car(args), sc->envir))));
+
+  return(sc->F);
+}
+
+
 void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc)
 {
   /* make an internal function of any args that calls fnc, then wrap it in define* and use eval_c_string */
@@ -13402,6 +13416,31 @@ void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function
 {
   s7_define_variable(sc, name, 
     s7_make_procedure_with_setter(sc, name, get_fnc, req_args, opt_args, set_fnc, req_args + 1, opt_args, doc));
+}
+
+
+/* symbol-access (an experiment) */
+
+#if 0
+s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer getter, s7_pointer setter, s7_pointer binder)
+{
+}
+#endif
+
+/* T_SYMBOL_SET T_SYMBOL_GET T_SYMBOL_BIND */
+
+static s7_pointer g_symbol_get_access(s7_scheme *sc, s7_pointer args)
+{
+  #define H_symbol_access "(symbol-access sym) is a procedure-with-setter that adds or removes controls on how a \
+symbol access its current binding."
+
+  return(sc->F);
+}
+
+
+static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
+{
+  return(sc->F);
 }
 
 
@@ -17334,30 +17373,55 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   This pointer could have all kinds of stuff -- a read-hook
 	   *   or write-hook, value history. But it also gives type/range checking before the set!
 	   *
-	   *  PERHAPS: local constants: (let ((n (make-constant 32)))...)
-	   *    where the (symbol...) access applies only in the environment 
-	   *    somehow these two ideas (define-constant and a wrapped symbol) locally/globally should be combined (and tracing)
-	   * currently constants have the T_IMMUTABLE bit set and it's checked everwhere
-	   * so rather than a trace list and an immutable bit, (symbol-ref sym) (pws)
-	   * but for a constant we'd want to throw away the key so to speak -- make it impossible to unset the symbol-set! lock
-	   *
 	   * all these are in the same realm:
 	   *   typed var: restrict set! to the desired type or do auto-conversions
 	   *   constant: disallow set!
 	   *   traced var: report either read/write
+	   * and sort of related:
 	   *   fluid-let: dynamic until exit (call/cc error normal)
 	   *   dynamic variables: insist any ref is to the current binding [dynamic-let]
 	   *
-	   * we have the direct-if-global pointer -- can this be extended?
-	   *   constant: (global) set this to type-constant and refuse set|bind
-	   *             (local)  add the constant business to the version in the current env?
-	   *   trace: add func reporting access, then handle as currently
-	   *   typed: same with type check/conversion
-	   *   dynamic: vector access to current dynamic binding
-	   *   fluid: similar but when exit, undo that handler somehow
+	   * a value wrapper or transparent object won't work:
+	   * (define-macro (trace sym)
+	   *   `(set! ,sym (wrap ,sym :setter (lambda (binding a) (format #t "~A set to ~A~%" (car binding) a)))))
+	   * 
+	   * (define-macro (untrace sym)
+	   *   `(set! ,sym ,sym) ??? -- oops...
 	   *
-	   * (make-type :transparent #t :read :write :bind)
-	   * If a transparent value causes an auto-rewrite in its symbol to (sym) we get the getter/setter stuff
+	   * PERHAPS: (symbol-access sym) -- a pws, if set! it affects the current binding actions
+	   *   (car binding) is copied and fixed, so global copy is unchanged, and so
+	   *   we automatically undo the local accessors when leaving the current scope).
+	   *   a list of 3 funcs: getter setter binder -- rest is ignored (see trace)
+	   *   
+	   * (define constant-access 
+	   *   (list (lambda (binding) binding)
+	   *         (lambda (binding new-value) (error "can't change a constant's value"))
+	   *         (lambda (old-binding new-binding) (error "can't bind a constant to a new value"))))
+	   *
+	   * (define-macro (define-constant symbol value)
+	   *   `(begin
+	   *      (define ,symbol ,value)
+	   *      (set! (symbol-access ',symbol) constant-access))))
+	   *
+	   * (define integer-access
+	   *   (list (lambda (binding) (cdr binding))
+	   *         (lambda (binding new-value)
+	   *           (if (real? new-value) (set-cdr! binding (floor new-value)) (error "~A can only take an integer value" (car binding)))
+	   *           binding)
+	   *         (lambda (old-binding new-binding) new-binding)))
+	   *
+	   * similarly, trace can save the current accessors in cadddr of the symbol-access list, 
+	   *    untrace uses that to restore the old form, etc
+	   *
+	   * C-notification:
+	   *
+	   * (define (notify-if-set var notifier) ; returns #t if it's ok to set
+	   *   (set! (symbol-access) 
+	   *         (list #f (lambda (binding new-value) (if (notifier binding new-value) (set-cdr! binding new-value)) binding) #f)))
+	   *
+	   * C side: s7_symbol_set_access, s7_symbol_access
+	   * Scheme side: Pws symbol-access + check (as now) on all sets/binds, + check on all lookups (will this be prohibitively slow?)
+	   *                                + copy slot and check it, not global symbol 
 	   */
 	  pop_stack(sc);
 	  goto START;
@@ -22872,20 +22936,6 @@ static void s7_gmp_init(s7_scheme *sc)
 /* WITH_GMP */
 
 
-/* an experiment */
-static s7_pointer g_is_macro(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_macro "(macro? arg) returns #t is its argument is a macro"
-
-  if (is_macro(car(args))) 
-    return(sc->T);
-
-  if (s7_is_symbol(car(args)))
-    return(make_boolean(sc, is_macro(s7_symbol_local_value(sc, car(args), sc->envir))));
-
-  return(sc->F);
-}
-
 
 
 /* -------------------------------- initialization -------------------------------- */
@@ -23623,6 +23673,7 @@ s7_scheme *s7_init(void)
 #endif
 
   /* s7_define_function(sc, "dump-heap", g_dump_heap, 0, 0, false, "hiho"); */
+  s7_define_function_with_setter(sc, "symbol-access", g_symbol_get_access, g_symbol_set_access, 1, 0, H_symbol_access);
 
   /* macroexpand */
   s7_eval_c_string(sc, "(define-macro (macroexpand mac) `(,(procedure-source (car mac)) ',mac))");

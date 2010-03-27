@@ -8237,7 +8237,8 @@
       ;; oops! fluid-let doesn't actually work!
 
       ;; in CL: (defvar x 32) (let ((y 0)) (defun gx () x) (let ((x 12)) (setf y (gx))) (list x y)) -> '(32 12)
-      ;;                      (let ((y 0)) (defun gx () x) (let ((x 100)) (let ((x 12)) (setf y (gx)))) (list x y)) -> '(32 12))
+      ;;                      (let ((y 0)) (defun gx () x) (let ((x 100)) (let ((x 12)) (setf y (gx)))) (list x y)) -> '(32 12)
+      ;;                      (let ((y 0)) (defun gx () x) (let ((x 100)) (let ((x 12)) (setf y (gx)) (setf x 123)) (list x y))) -> '(100 12) !
       ;; (the defvar makes x dynamic)
 
       
@@ -47107,6 +47108,19 @@
 ;; what about: (let ('1 ) quote) -> 1
 (test (let* func ((a 1)) a) 'error)
 (test (letrec func ((a 1)) a) 'error)
+
+(test (let ((1 3)) 3) 'error)
+(test (let ((#t 3)) 3) 'error)
+(test (let ((() 3)) 3) 'error)
+(test (let ((#\c 3)) 3) 'error)
+(test (let (("hi" 3)) 3) 'error)
+(test (let ((:hi 3)) 3) 'error)
+
+(test (let 1 ((i 0)) i) 'error)
+(test (let #f ((i 0)) i) 'error)
+(test (let "hi" ((i 0)) i) 'error)
+(test (let #\c ((i 0)) i) 'error)
+(test (let :hi ((i 0)) i) 'error)
 
 (test (let func ((a 1) . b) a) 'error)
 (test (let func ((a 1) . b) (if (> a 0) (func (- a 1) 2 3) b)) 'error)

@@ -364,6 +364,22 @@ expanded into:
 (lambda (defmac-13) (apply (lambda (a) (cons (quote +) (cons a (cons 1 (quote ()))))) (cdr defmac-13)))
 </pre>
 
+<p>I hesitate to mention this, but macros are "first-class" entities in s7.  You can
+pass one as a function argument, or apply it to a list:
+</p>
+<pre>
+&gt; (define-macro (hi a) `(+ ,a 1))
+hi
+&gt; (apply hi '((dummy-name 4)))
+(+ 4 1)
+&gt; (define (fmac mac) (apply mac '((xxx 4))))
+fmac
+&gt; (fmac hi)
+(+ 4 1)
+</pre>
+<p>The presence of the dummy name in the macro's arguments is an historical accident;
+it could be removed.
+</p>
 </dd>
 <br>
 
@@ -398,6 +414,30 @@ become constants:
  ;can't bind or set an immutable object: cvar
 </pre>
 <p>So, obviously, choose unique names for your constants, or don't use define-constant.
+</p>
+
+<p>define-constant is very similar to things like tracing a variable, restricting a
+variable's type (or doing automatic conversions upon set!), and notification (either in C or Scheme)
+when a variable is set (which I wanted many years ago in Snd).  All modify
+the path between a symbol and its value.  I'll probably add
+<b>symbol-access</b> as a procedure-with-setter that takes a symbol and either
+returns its current accessor functions, or changes them.  Then define-constant
+becomes;
+</p>
+<pre>
+(define constant-access 
+  (list #f ; use the default that simply grabs (cdr binding)
+	(lambda (binding new-value) 
+	  (error "can't change a constant ~A's value:" (car binding)))
+	(lambda (old-binding new-binding) 
+	  (error "can't bind a constant, ~A, to a new value, ~A" (car binding) (cdr new-binding)))))
+
+(define-macro (define-constant symbol value)
+  `(begin
+     (define ,symbol ,value)
+     (set! (symbol-access ',symbol) constant-access))))
+</pre>
+<p>and similarly for the others.
 </p>
 </dd>
 <br>
