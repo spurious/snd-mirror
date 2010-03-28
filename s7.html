@@ -452,26 +452,38 @@ variable trace (informative function upon set or keeping a history of past value
 variable's values or doing automatic conversions upon set), and notification upon set (either in Scheme
 or in C; I wanted this many years ago in Snd).  The notification function is especially useful if
 you have a Scheme variable and want to reflect any change in its value immediately in C.
-All modify
-the path between a symbol and its value.  I'll probably add
-<b>symbol-access</b> as a procedure-with-setter that takes a symbol and either
-returns its current accessor functions, or changes them.  Then define-constant
-becomes;
+All of these cases modify
+the path between a symbol and its value.  
+s7 gives you a handle on that path via the procedure-with-setter <b>symbol-access</b>.
+(symbol-access symbol) returns that symbol's accessors (if any), and (set! (symbol-access symbol) accessor-list)
+changes it.  The accessor-list is a list of three functions, the get, set, and bind functions.  (The get
+function is not yet implemented).  The set and bind functions take two arguments, the symbol in question
+and the value that it is about to be set or bound to.  We could replace define-constant, and add
+local constants with:
 </p>
 <pre>
 (define constant-access 
-  (list #f ; use the default that simply grabs (cdr binding)
-	(lambda (binding new-value) 
-	  (error "can't change a constant ~A's value:" (car binding)))
-	(lambda (old-binding new-binding) 
-	  (error "can't bind a constant, ~A, to a new value, ~A" (car binding) (cdr new-binding)))))
+  (list #f
+	(lambda (symbol new-value) 
+	  (error "can't change constant ~A's value to ~A" symbol new-value))
+	(lambda (symbol new-value) 
+	  (error "can't bind constant ~A to a new value, ~A" symbol new-value))))
 
 (define-macro (define-constant symbol value)
   `(begin
      (define ,symbol ,value)
-     (set! (symbol-access ',symbol) constant-access))))
+     (set! (<em class=red>symbol-access</em> ',symbol) constant-access)
+     ',symbol))
+
+(define-macro (let-constant vars . body)
+  (let ((varlist (map car vars)))
+    `(let ,vars
+       ,@(map (lambda (var)
+		`(set! (<em class=red>symbol-access</em> ',var) constant-access))
+	      varlist)
+       ,@body)))
 </pre>
-<p>and similarly for the others. I believe this is similar to Ruby's hooked variables.  
+<p>I believe this is similar to Ruby's hooked variables.  
 It seems to me that you could implement all kinds of fancy things
 with this mechanism.
 </p>
@@ -576,7 +588,7 @@ sets that element.  vector-dimensions returns a list of the dimensions of a vect
 
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
-<a name="hashtables"</a>
+<a name="hashtables"></a>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>hash-tables</h4></td></tr></table>
 </td></tr></table>
@@ -861,7 +873,7 @@ function call (that is, global to the function, not the function's local environ
 
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
-<a naame="stacktrace"></a>
+<a name="stacktrace"></a>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>stacktrace</h4></td></tr></table>
 </td></tr></table>

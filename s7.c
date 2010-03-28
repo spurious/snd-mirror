@@ -619,11 +619,12 @@ struct s7_scheme {
 #define is_syntax(p)                  ((typeflag(p) & T_SYNTAX) != 0) /* the != 0 business is for MS C++'s benefit */
 #define syntax_opcode(x)              ((x)->hloc)
 
-/* TODO: "immutable" is ugly jargon -- change this to T_CONSTANT or maybe T_UNSETTABLE */
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 2))
 #define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
 #define set_immutable(p)              typeflag(p) |= (T_IMMUTABLE | T_DONT_COPY)
-/* immutable means the object's value can't be changed via set! */
+/* immutable means the value can't be changed via set! or bind -- this is separate from the symbol access stuff
+ *   a string or vector constant for example is considered "immutable"
+ */
 
 #define T_ATOM                        (1 << (TYPE_BITS + 3))
 #define is_atom(p)                    ((typeflag(p) & T_ATOM) != 0)
@@ -638,10 +639,9 @@ struct s7_scheme {
  *   the size increase is more important.
  */
 
-/* TYPE_BITS + 5 currently unused */
-
 #define T_S_OBJECT                    (1 << (TYPE_BITS + 6))
 #define is_s_object(p)                ((type(p) == T_C_OBJECT) && ((typeflag(p) & T_S_OBJECT) != 0))
+/* this identifies c_objects that come from make-type -- scheme objects */
 
 #define T_FINALIZABLE                 (1 << (TYPE_BITS + 7))
 #define is_finalizable(p)             ((typeflag(p) & T_FINALIZABLE) != 0)
@@ -681,12 +681,28 @@ struct s7_scheme {
 #define T_DWIND_FINISH                (T_DWIND_INIT | T_DWIND_BODY)
 #define DWIND_STATE(p)                (typeflag(p) & T_DWIND_FINISH)
 #define DWIND_SET_STATE(p, n)         typeflag(p) = ((typeflag(p) & (~T_DWIND_FINISH)) | n)
+/* dynamic-wind state */
 
 #define T_DONT_COPY_CDR               (1 << (TYPE_BITS + 17))
 #define dont_copy_cdr(p)              ((typeflag(p) & T_DONT_COPY_CDR) != 0)
+/* copy_object (continuations) optimization */
 
+#define T_SYMBOL_SET                  (1 << (TYPE_BITS + 18))
+#define T_SYMBOL_GET                  (1 << (TYPE_BITS + 19))
+#define T_SYMBOL_BIND                 (1 << (TYPE_BITS + 20))
+#define has_symbol_set_accessor(p)    ((typeflag(p) & T_SYMBOL_SET) != 0)
+#define has_symbol_get_accessor(p)    ((typeflag(p) & T_SYMBOL_GET) != 0)
+#define has_symbol_bind_accessor(p)   ((typeflag(p) & T_SYMBOL_BIND) != 0)
+#define has_accessor(p)               ((typeflag(p) & (T_SYMBOL_SET | T_SYMBOL_GET | T_SYMBOL_BIND)) != 0)
+#define symbol_set_accessor_state(p, n) typeflag(p) = ((typeflag(p) & ~(T_SYMBOL_SET | T_SYMBOL_GET | T_SYMBOL_BIND)) | n)
 
-#define UNUSED_BITS                   0xfc000000
+#define T_SYMBOL_ACCESSED             (1 << (TYPE_BITS + 5))
+#define symbol_accessed(p)            ((typeflag(p) & T_SYMBOL_ACCESSED) != 0)
+#define is_immutable_or_accessed(p)   ((typeflag(p) & (T_IMMUTABLE | T_SYMBOL_ACCESSED)) != 0)
+#define symbol_set_accessed(p)        typeflag(p) |= T_SYMBOL_ACCESSED
+/* these mark symbol access specializations */
+
+#define UNUSED_BITS                   0xe0000000
 
 #if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f))
@@ -919,6 +935,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
 static const char *type_name(s7_pointer arg);
 static s7_pointer make_string_uncopied(s7_scheme *sc, char *str);
 static s7_pointer make_protected_string(s7_scheme *sc, const char *str);
+static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value);
 
 
 #if HAVE_PTHREADS
@@ -1000,19 +1017,6 @@ static s7_pointer g_is_boolean(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_boolean "(boolean? obj) returns #t if obj is #f or #t"
   return(s7_make_boolean(sc, s7_is_boolean(car(args))));
-}
-
-
-static bool s7_is_immutable(s7_pointer p) 
-{ 
-  return(is_immutable(p));
-}
-
-
-static s7_pointer s7_set_immutable(s7_pointer p) 
-{ 
-  set_immutable(p);
-  return(p);
 }
 
 
@@ -1248,6 +1252,11 @@ static void s7_mark_object_1(s7_pointer p)
     {
     case T_UNTYPED: /* 0 actually -- a cell still being set up when the GC was triggered */
       return;
+
+    case T_PAIR:
+      if (has_accessor(p))
+	S7_MARK(csr(p));
+      break;
 
     case T_VECTOR:
     case T_HASH_TABLE:
@@ -2061,9 +2070,13 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
 
 static s7_pointer add_to_current_environment(s7_scheme *sc, s7_pointer variable, s7_pointer value) 
 { 
-  if (is_immutable(variable))
-    return(s7_error(sc, sc->ERROR, 
-		    make_list_2(sc, s7_make_string(sc, "can't bind or set an immutable object: ~S"), variable)));
+  if (is_immutable_or_accessed(variable))
+    {
+      if (is_immutable(variable))
+	return(s7_error(sc, sc->ERROR, 
+			make_list_2(sc, s7_make_string(sc, "can't bind an immutable object: ~S"), variable)));
+      value = call_symbol_bind(sc, variable, value);
+    }
 
   return(add_to_environment(sc, sc->envir, variable, value)); 
 } 
@@ -2074,9 +2087,13 @@ static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s
   /* this is called when it is guaranteed that there is a local environment */
   s7_pointer x, y;
 
-  if (is_immutable(variable))
-    return(s7_error(sc, sc->ERROR, 
-		    make_list_2(sc, s7_make_string(sc, "can't bind or set an immutable object: ~S"), variable)));
+  if (is_immutable_or_accessed(variable))
+    {
+      if (is_immutable(variable))
+	return(s7_error(sc, sc->ERROR, 
+			make_list_2(sc, s7_make_string(sc, "can't bind an immutable object: ~S"), variable)));
+      value = call_symbol_bind(sc, variable, value);
+    }
 
   NEW_CELL(sc, y);
   car(y) = variable;
@@ -2185,6 +2202,7 @@ static s7_pointer g_symbol_to_value(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
 {
   s7_pointer x;
+  /* if immutable should this return an error?? */
   x = find_symbol(sc, sc->envir, sym);
   if (x != sc->NIL)
     set_symbol_value(x, val);
@@ -2326,7 +2344,7 @@ void s7_define(s7_scheme *sc, s7_pointer envir, s7_pointer symbol, s7_pointer va
   x = find_local_symbol(sc, envir, symbol);
   if (x != sc->NIL) 
     set_symbol_value(x, value); 
-  else add_to_environment(sc, envir, symbol, value); /* I think this means C code can override "constant" defs */
+  else add_to_environment(sc, envir, symbol, value); /* TODO: I think this means C code can override "constant" defs */
 }
 
 
@@ -2346,7 +2364,8 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
   sym = s7_make_symbol(sc, name);
   s7_define(sc, s7_global_environment(sc), sym, value);
   x = symbol_global_slot(sym);
-  s7_set_immutable(car(x));
+  set_immutable(car(x));
+  /* TODO: set constant access list? on x */
 }
 
 /*        (define (func a) (let ((cvar (+ a 1))) cvar))
@@ -2413,6 +2432,8 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
   if (x == sc->NIL) 
     add_to_environment(sc, sc->envir, sym, sym); /* its value is itself, skip the immutable check in add_to_current_environment */
   
+  /* TODO: add keyword access? on slot returned from add_to_env... */
+
   return(sym);
 }
 
@@ -7862,7 +7883,8 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "string-set!", 1, x, "a string"));
   if (!s7_is_character(caddr(args)))
     return(s7_wrong_type_arg_error(sc, "string-set!", 3, caddr(args), "a character"));
-  if (s7_is_immutable(x))
+
+  if (is_immutable(x))
     return(s7_wrong_type_arg_error(sc, "string-set!", 1, x, "a mutable string"));
   if (!s7_is_integer(index))
     return(s7_wrong_type_arg_error(sc, "string-set! index,", 2, index, "an integer"));
@@ -8199,7 +8221,8 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
 
   if (!s7_is_string(x))
     return(s7_wrong_type_arg_error(sc, "string-fill", 1, x, "a string"));
-  if (s7_is_immutable(x))
+
+  if (is_immutable(x))
     return(s7_wrong_type_arg_error(sc, "string-fill!", 1, x, "a mutable string"));
   if (!s7_is_character(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "string-fill filler,", 2, cadr(args), "a character"));
@@ -9671,7 +9694,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   {
     char *buf;
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     type_name(obj),
 	     typeflag(obj),
@@ -9688,7 +9711,11 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     is_any_macro(obj) ? " (anymac)" : "",
 	     is_expansion(obj) ? " (expansion)" : "",
 	     (!is_not_local(obj)) ? " (local)" : "",
-	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits at top" : "");
+	     symbol_accessed(obj) ? " (accessed)" : "",
+	     has_symbol_get_accessor(obj) ? " (get checked)" : "",
+	     has_symbol_set_accessor(obj) ? " (set checked)" : "",
+	     has_symbol_bind_accessor(obj) ? " (bind checked)" : "",
+	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
     return(buf);
   }
 }
@@ -10658,7 +10685,7 @@ static s7_pointer g_set_car(s7_scheme *sc, s7_pointer args)
   #define H_set_car "(set-car! pair val) sets the pair's first element to val"
   
   if (!is_pair(car(args)))  return(s7_wrong_type_arg_error(sc, "set-car!", 1, car(args), "a pair"));
-  if (s7_is_immutable(car(args))) return(s7_wrong_type_arg_error(sc, "set-car!", 1, car(args), "a mutable pair"));
+  if (is_immutable(car(args))) return(s7_wrong_type_arg_error(sc, "set-car!", 1, car(args), "a mutable pair"));
   
   caar(args) = cadr(args);
   /* return(args);
@@ -10675,7 +10702,7 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
   #define H_set_cdr "(set-cdr! pair val) sets the pair's second element to val"
   
   if (!is_pair(car(args))) return(s7_wrong_type_arg_error(sc, "set-cdr!", 1, car(args), "a pair"));
-  if (s7_is_immutable(car(args))) return(s7_wrong_type_arg_error(sc, "set-cdr!", 1, car(args), "a mutable pair"));
+  if (is_immutable(car(args))) return(s7_wrong_type_arg_error(sc, "set-cdr!", 1, car(args), "a mutable pair"));
   
   cdar(args) = cadr(args);
   return(sc->UNSPECIFIED); /* see above */
@@ -11435,7 +11462,7 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
 
   if (!s7_is_vector(x))
     return(s7_wrong_type_arg_error(sc, "vector-fill!", 1, x, "a vector"));
-  if (s7_is_immutable(x))
+  if (is_immutable(x))
     return(s7_wrong_type_arg_error(sc, "vector-fill!", 1, x, "a mutable vector"));
 
   s7_vector_fill(sc, x, cadr(args));
@@ -11676,7 +11703,7 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
   vec = car(args);
   if (!s7_is_vector(vec))
     return(s7_wrong_type_arg_error(sc, "vector-set!", 1, vec, "a vector"));
-  if (s7_is_immutable(vec))
+  if (is_immutable(vec))
     return(s7_wrong_type_arg_error(sc, "vector-set!", 1, vec, "a mutable vector"));
   
 #if WITH_MULTIDIMENSIONAL_VECTORS
@@ -13428,35 +13455,168 @@ void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function
 }
 
 
-/* symbol-access (an experiment) */
-
-/* 1. add T_SYMBOL*, change current is_immutables that refer to access (constants),
+/* -------------------------------- symbol-access ------------------------------------------------ */
+/*
+ * originally in Snd I wanted notification when a variable was set, and it's not very pretty
+ *      to have to use pws's everywhere.  Here (s7) we have constants and tracing.
+ * these are in the same realm:
+ *   typed var: restrict set! to the desired type or do auto-conversions
+ *   constant: disallow set!
+ *   traced var: report either read/write
+ *   keywords: can't set or bind, always return self as value
+ * and sort of related:
+ *   fluid-let: dynamic until exit (call/cc error normal)
+ *   dynamic variables: insist any ref is to the current binding [dynamic-let]
+ *
+ * a value wrapper or transparent object won't work:
+ * (define-macro (trace sym)
+ *   `(set! ,sym (wrap ,sym :setter (lambda (binding a) (format #t "~A set to ~A~%" (car binding) a)))))
+ * 
+ * (define-macro (untrace sym)
+ *   `(set! ,sym ,sym) ??? -- oops...
+ *
+ * (symbol-access sym) -- a pws, if set! it affects the current binding actions.
+ *   the actions are local to the current environment, so
+ *   we automatically undo the local accessors when leaving the current scope.
+ *   a list of 3 funcs: getter setter binder -- rest is ignored (see trace)
+ *
+ * trace can save the current accessors in cadddr of the symbol-access list, 
+ *    untrace uses that to restore the old form, etc
+ *
+ * (define (notify-if-set var notifier) ; returns #t if it's ok to set
+ *   (set! (symbol-access) 
+ *         (list #f (lambda (symbol new-value) (or (notifier symbol new-value) new-value)) #f)))
+ *
+ * C side: s7_symbol_set_access, s7_symbol_access
+ * Scheme side: Pws symbol-access + check (as now) on all sets/binds, + check on all lookups (will this be prohibitively slow?)
+ *                                + copy slot and check it, not global symbol 
+ *
+ *     add trace example, typed or restricted var
+ *     keywords?
+ *     C-side (or scheme) notification + example in s7.html
+ *     get side implemented?
  */
 
-#if 0
-s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym)
-{
-}
 
-s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer getter, s7_pointer setter, s7_pointer binder)
-{
-}
+#if 0
+/*
+
+(define constant-access 
+  (list #f
+	(lambda (symbol new-value) 
+	  (error "can't change constant ~A's value to ~A" symbol new-value))
+	(lambda (symbol new-value) 
+	  (error "can't bind constant ~A to a new value, ~A" symbol new-value))))
+
+(define-macro (define-constant symbol value)
+  `(begin
+     (define ,symbol ,value)
+     (set! (symbol-access ',symbol) constant-access)
+     ',symbol))
+
+(define-macro (let-constant vars . body)
+  (let ((varlist (map car vars)))
+    `(let ,vars
+       ,@(map (lambda (var)
+		`(set! (symbol-access ',var) constant-access))
+	      varlist)
+       ,@body)))
+
+*/
 #endif
 
-/* T_SYMBOL_SET T_SYMBOL_GET T_SYMBOL_BIND */
+
+
+s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym)
+{
+  s7_pointer x;
+  x = find_symbol(sc, sc->envir, sym);
+  if (x != sc->NIL)
+    {
+      if (has_accessor(x))
+	return(csr(x));
+    }
+  return(sc->F);
+}
+
+
+s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer funcs)
+{
+  s7_pointer x;
+  x = find_symbol(sc, sc->envir, symbol);
+  if (x == sc->NIL)
+    x = add_to_current_environment(sc, symbol, sc->F);
+  csr(x) = funcs;
+  if (is_pair(funcs))
+    {
+      symbol_set_accessor_state(x, ((is_procedure(car(funcs))) ? T_SYMBOL_GET : 0) |
+				   ((is_procedure(cadr(funcs))) ? T_SYMBOL_SET : 0) |
+			           ((is_procedure(caddr(funcs))) ? T_SYMBOL_BIND : 0));
+      symbol_set_accessed(symbol);
+    }
+  else symbol_set_accessor_state(x, 0);
+  return(x);
+}
+
+
 
 static s7_pointer g_symbol_get_access(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_access "(symbol-access sym) is a procedure-with-setter that adds or removes controls on how a \
 symbol access its current binding."
 
-  return(sc->F);
+  if (!s7_is_symbol(car(args)))
+    return(s7_wrong_type_arg_error(sc, "symbol-access,", 1, car(args), "a symbol"));
+  return(s7_symbol_access(sc, car(args)));
 }
 
 
 static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
 {
-  return(sc->F);
+  if (!s7_is_symbol(car(args)))
+    return(s7_wrong_type_arg_error(sc, "set! symbol-access,", 1, car(args), "a symbol"));
+  
+  return(s7_symbol_set_access(sc, car(args), cadr(args)));
+}
+
+
+static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value)
+{
+  s7_pointer x;
+  x = find_symbol(sc, sc->envir, symbol);
+  if (has_symbol_bind_accessor(x))
+    {
+      s7_pointer func, save_x, save_y, save_z;
+      func = caddr(csr(x));
+      save_x = sc->x;
+      save_y = sc->y;
+      save_z = sc->z;
+      new_value = s7_call(sc, func, make_list_2(sc, symbol, new_value));
+      sc->x = save_x;
+      sc->y = save_y;
+      sc->z = save_z;
+    }
+  return(new_value);
+}
+
+
+static s7_pointer call_symbol_set(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value)
+{
+  s7_pointer x;
+  x = find_symbol(sc, sc->envir, symbol);
+  if (has_symbol_set_accessor(x))
+    {
+      s7_pointer func, save_x, save_y, save_z;
+      func = cadr(csr(x));
+      save_x = sc->x;
+      save_y = sc->y;
+      save_z = sc->z;
+      new_value = s7_call(sc, func, make_list_2(sc, symbol, new_value));
+      sc->x = save_x;
+      sc->y = save_y;
+      sc->z = save_z;
+    }
+  return(new_value);
 }
 
 
@@ -15911,8 +16071,11 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 
       if (c == '"')
 	{
+	  s7_pointer x;
 	  sc->strbuf[i] = '\0';
-	  return(s7_set_immutable(s7_make_string_with_length(sc, sc->strbuf, i))); /* string constant can't be target of string-set! */
+	  x = s7_make_string_with_length(sc, sc->strbuf, i);
+	  set_immutable(x);                  /* string constant can't be target of string-set! */
+	  return(x);
 	}
       else
 	{
@@ -17014,9 +17177,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		s7_pointer x, y, z;
 
 		z = car(sc->x);
-		if (is_immutable(z))
-		  return(s7_error(sc, sc->ERROR,
-				  make_list_2(sc, s7_make_string(sc, "can't bind or set an immutable object: ~S"), z)));
+		if (is_immutable_or_accessed(z))
+		  {
+		    if (is_immutable(z))
+		      return(s7_error(sc, sc->ERROR,
+				      make_list_2(sc, s7_make_string(sc, "can't bind an immutable object: ~S"), z)));
+		    car(sc->y) = call_symbol_bind(sc, z, car(sc->y));
+		  }
 
 		NEW_CELL(sc, y);
 		car(y) = z;
@@ -17205,7 +17372,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /*   at this point, sc->value is the symbol that we want to be immutable, sc->code is the original pair */
 
       sc->x = find_local_symbol(sc, sc->envir, sc->value);
-      s7_set_immutable(car(sc->x));
+      set_immutable(car(sc->x));
+      /* TODO: perhaps use constant access */
+
       pop_stack(sc);
       goto START;
 
@@ -17242,8 +17411,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "define a non-symbol? ~S", sc->x));
       /* (define ((f a) b) (* a b)) -> (define f (lambda (a) (lambda (b) (* a b)))) */
 
-      if (s7_is_immutable(sc->x))                                           /* (define pi 3) or (define (pi a) a) */
-	return(eval_error(sc, "define: ~S is immutable", sc->x));
+      if (is_immutable_or_accessed(sc->x))
+	{
+	  if (is_immutable(sc->x))                                           /* (define pi 3) or (define (pi a) a) */
+	    return(eval_error(sc, "define: ~S is immutable", sc->x));
+	  sc->code = call_symbol_bind(sc, sc->x, sc->code);
+	}
       
       push_stack(sc, opcode(OP_DEFINE1), sc->NIL, sc->x);
       goto EVAL;
@@ -17306,8 +17479,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_SET:                                                 /* entry for set! */
       if (!is_pair(sc->code))
 	return(eval_error(sc, "set! syntax error ~A", sc->code)); /* set! . 1) */
-      if (s7_is_immutable(car(sc->code)))                         /* (set! pi 3) */
+
+      if (is_immutable(car(sc->code)))                         /* (set! pi 3) */
 	return(eval_error(sc, "set!: can't alter immutable object: ~S", car(sc->code)));
+	  
       if (cdr(sc->code) == sc->NIL)                               /* (set! var) */
 	return(eval_error(sc, "~A: set! takes two args", sc->code));
       if (cddr(sc->code) != sc->NIL)                              /* (set! var 1 2) */
@@ -17377,69 +17552,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->y = find_symbol(sc, sc->envir, sc->code);
       if (sc->y != sc->NIL) 
 	{
+	  if (symbol_accessed(sc->code))
+	    sc->value = call_symbol_set(sc, sc->code, sc->value);
 	  set_symbol_value(sc->y, sc->value); 
-	  /*
-	   * originally in Snd I wanted notification when a variable was set, and it's not very pretty
-	   *      to have to use pws's everywhere.  Too late to change Snd now, sad to say.  Or perhaps
-	   *      not -- Ruby has "hooked variables" that look like what I'd want.
-	   *
-	   *   It would not be burdensome to add a check for a notifier here.
-	   *   There is room in the symbol section (string) of the object for a pointer.
-	   *      (set! (setter sym) (lambda ...))
-	   *   This pointer could have all kinds of stuff -- a read-hook
-	   *   or write-hook, value history. But it also gives type/range checking before the set!
-	   *
-	   * all these are in the same realm:
-	   *   typed var: restrict set! to the desired type or do auto-conversions
-	   *   constant: disallow set!
-	   *   traced var: report either read/write
-	   *   keywords: can't set or bind, always return self as value
-	   * and sort of related:
-	   *   fluid-let: dynamic until exit (call/cc error normal)
-	   *   dynamic variables: insist any ref is to the current binding [dynamic-let]
-	   *
-	   * a value wrapper or transparent object won't work:
-	   * (define-macro (trace sym)
-	   *   `(set! ,sym (wrap ,sym :setter (lambda (binding a) (format #t "~A set to ~A~%" (car binding) a)))))
-	   * 
-	   * (define-macro (untrace sym)
-	   *   `(set! ,sym ,sym) ??? -- oops...
-	   *
-	   * PERHAPS: (symbol-access sym) -- a pws, if set! it affects the current binding actions
-	   *   (car binding) is copied and fixed, so global copy is unchanged, and so
-	   *   we automatically undo the local accessors when leaving the current scope).
-	   *   a list of 3 funcs: getter setter binder -- rest is ignored (see trace)
-	   *   
-	   * (define constant-access 
-	   *   (list (lambda (binding) binding)
-	   *         (lambda (binding new-value) (error "can't change a constant's value"))
-	   *         (lambda (old-binding new-binding) (error "can't bind a constant to a new value"))))
-	   *
-	   * (define-macro (define-constant symbol value)
-	   *   `(begin
-	   *      (define ,symbol ,value)
-	   *      (set! (symbol-access ',symbol) constant-access))))
-	   *
-	   * (define integer-access
-	   *   (list (lambda (binding) (cdr binding))
-	   *         (lambda (binding new-value)
-	   *           (if (real? new-value) (set-cdr! binding (floor new-value)) (error "~A can only take an integer value" (car binding)))
-	   *           binding)
-	   *         (lambda (old-binding new-binding) new-binding)))
-	   *
-	   * similarly, trace can save the current accessors in cadddr of the symbol-access list, 
-	   *    untrace uses that to restore the old form, etc
-	   *
-	   * C-notification:
-	   *
-	   * (define (notify-if-set var notifier) ; returns #t if it's ok to set
-	   *   (set! (symbol-access) 
-	   *         (list #f (lambda (binding new-value) (if (notifier binding new-value) (set-cdr! binding new-value)) binding) #f)))
-	   *
-	   * C side: s7_symbol_set_access, s7_symbol_access
-	   * Scheme side: Pws symbol-access + check (as now) on all sets/binds, + check on all lookups (will this be prohibitively slow?)
-	   *                                + copy slot and check it, not global symbol 
-	   */
 	  pop_stack(sc);
 	  goto START;
 	}
@@ -17528,11 +17643,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       for (sc->x = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 	{
 	  if (!(s7_is_symbol(caar(sc->x))))
-	    return(eval_error(sc, "bad variable ~S in let bindings", car(sc->code)));
+	    return(eval_error(sc, "bad variable ~S in let bindings", car(sc->x)));
 
 	  /* check for name collisions -- not sure this is required by Scheme */
 	  if (find_local_symbol(sc, sc->envir, caar(sc->x)) != sc->NIL)                               /* (let ((i 0) (i 1)) i) */
-	    return(eval_error(sc, "duplicate identifier in let: ~A", caar(sc->x)));
+	    return(eval_error(sc, "duplicate identifier in let: ~A", car(sc->x)));
 
 	  add_to_local_environment(sc, caar(sc->x), car(sc->y)); /* expansion here does not help */
 	}
@@ -17823,26 +17938,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_DEFMACRO:
     case OP_DEFMACRO_STAR:
-      
-      /* (defmacro name (args) body) ->
-       *
-       *    (macro (defmacro dform)
-       *      (let ((form (gensym "defmac")))            
-       *        `(macro (,(cadr dform) ,form)   
-       *          (apply
-       *            (lambda ,(caddr dform)      
-       *             ,@(cdddr dform))          
-       *            (cdr ,form)))))             
-       *    
-       *    end up with name as sc->x, args and body as sc->z going to OP_MACRO1, ((gensym) (lambda (args) body)) going to eval
-       */
 
       sc->x = car(sc->code);
       if (!s7_is_symbol(sc->x))
 	return(eval_error(sc, "defmacro: ~S is not a symbol?", sc->x)); /* (defmacro 3 (a) #f) */
 
-      if (is_immutable(sc->x))
-	return(eval_error(sc, "defmacro: ~S is immutable", sc->x));     /* (defmacro pi (a) `(+ ,a 1)) */
+      if (is_immutable_or_accessed(sc->x))
+	{
+	  if (is_immutable(sc->x))
+	    return(eval_error(sc, "defmacro: ~S is immutable", sc->x));     /* (defmacro pi (a) `(+ ,a 1)) */
+	  /* TODO: how to check binder?  	  sc->code = call_symbol_bind(sc, sc->x, sc->code);  */
+	}
 
       /* could we make macros safe automatically by doing the symbol lookups right now?
        *   we'd replace each name with a reference to the current binding cons.  I think
@@ -17910,8 +18016,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!s7_is_symbol(sc->x))
 	return(eval_error(sc, "define-macro: ~S is not a symbol?", sc->x));
 
-      if (is_immutable(sc->x))
-	return(eval_error(sc, "define-macro: ~S is immutable", sc->x));
+      if (is_immutable_or_accessed(sc->x))
+	{
+	  if (is_immutable(sc->x))
+	    return(eval_error(sc, "define-macro: ~S is immutable", sc->x));
+	  /* TODO: how to check binder? */
+	}
 
       /* (define-macro (hi a) `(+ ,a 1))
        *   in this case we want cadr, not caddr of defmacro
