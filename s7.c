@@ -12728,6 +12728,12 @@ static void free_object(s7_pointer a)
     (*(object_types[tag].free))(c_object_value(a));
 }
 
+/* perhaps: a free method called just before GC.
+ *            either we have to restrict somehow allocs during the mark pass, or
+ *            keep a list of these, and call their methods later (recursive GC possible?)
+ *            and the free might never be called -- too many complications
+ */
+
 
 static bool objects_are_equal(s7_pointer a, s7_pointer b)
 {
@@ -12908,7 +12914,7 @@ static char *call_s_object_print(s7_scheme *sc, void *value)
   /* describe_object assumes the value returned here can be freed */
 }
 
-/* s_fill doesn't seem problematic, and s_copy could copy the object, then call s_copy for the value?
+/* PERHAPS: s_fill doesn't seem problematic, and s_copy could copy the object, then call s_copy for the value?
  *   should these be the defaults (also for length and others)?
  */
 
@@ -13068,7 +13074,8 @@ In each case, the argument is the value of the object, not the object itself."
 	      switch (i)
 		{
 		case 0:                 /* print, ((cadr (make-type :print (lambda (a) (format #f "#<typo: ~S>" a)))) "gypo") -> #<typo: "gypo"> */
-		  if ((s7_integer(car(proc_args)) > 1) || ((nargs == 0) && (!rest_arg)))
+		  if ((s7_integer(car(proc_args)) > 1) || 
+		      ((nargs == 0) && (!rest_arg)))
 		    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "make-type :print procedure, ~A, should take one argument"), func)));
 
 		  object_types[tag].print_func = func;
@@ -13077,7 +13084,8 @@ In each case, the argument is the value of the object, not the object itself."
 
 		case 1:                 /* equal */
 		  /* (let ((typo (make-type :equal (lambda (a b) (equal? a b))))) (let ((a ((cadr typo) 123)) (b ((cadr typo) 321))) (equal? a b))) */
-		  if ((s7_integer(car(proc_args)) > 2) || ((nargs < 2) && (!rest_arg)))
+		  if ((s7_integer(car(proc_args)) > 2) || 
+		      ((nargs < 2) && (!rest_arg)))
 		    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "make-type :equal procedure, ~A, should take two arguments"), func)));
 
 		  object_types[tag].equal_func = func;
@@ -13100,7 +13108,8 @@ In each case, the argument is the value of the object, not the object itself."
 		  break;
 
 		case 4:                 /* length: (length ((cadr (make-type :length (lambda (a) (vector-length a)))) (vector 1 2 3))) -> 3 */
-		  if ((s7_integer(car(proc_args)) > 1) || ((nargs == 0) && (!rest_arg)))
+		  if ((s7_integer(car(proc_args)) > 1) || 
+		      ((nargs == 0) && (!rest_arg)))
 		    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "make-type :length procedure, ~A, should take at one argument"), func)));
 
 		  object_types[tag].length_func = func;
@@ -13421,7 +13430,14 @@ void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function
 
 /* symbol-access (an experiment) */
 
+/* 1. add T_SYMBOL*, change current is_immutables that refer to access (constants),
+ */
+
 #if 0
+s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym)
+{
+}
+
 s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer getter, s7_pointer setter, s7_pointer binder)
 {
 }
@@ -17377,6 +17393,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   typed var: restrict set! to the desired type or do auto-conversions
 	   *   constant: disallow set!
 	   *   traced var: report either read/write
+	   *   keywords: can't set or bind, always return self as value
 	   * and sort of related:
 	   *   fluid-let: dynamic until exit (call/cc error normal)
 	   *   dynamic variables: insist any ref is to the current binding [dynamic-let]
