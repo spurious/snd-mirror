@@ -17514,7 +17514,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    return(eval_error(sc, "bad variable ~S in let bindings", car(sc->code)));
 
 	  /* check for name collisions -- not sure this is required by Scheme */
-	  if (find_local_symbol(sc, sc->envir, caar(sc->x)) != sc->NIL)
+	  if (find_local_symbol(sc, sc->envir, caar(sc->x)) != sc->NIL)                               /* (let ((i 0) (i 1)) i) */
 	    return(eval_error(sc, "duplicate identifier in let: ~A", caar(sc->x)));
 
 	  add_to_local_environment(sc, caar(sc->x), car(sc->y)); /* expansion here does not help */
@@ -17528,6 +17528,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* perhaps we could mimic the "do" setp var handling here to avoid the consing */
 	  
 	  sc->x = s7_make_closure(sc, s7_cons(sc, safe_reverse_in_place(sc, sc->args), cddr(sc->code)), sc->envir); 
+	  if (find_local_symbol(sc, sc->envir, car(sc->code)) != sc->NIL)                              /* (let loop ((i 0) (loop 1)) i) */
+	    return(eval_error(sc, "named let name collides with a let variable: ~A", car(sc->code)));
+
 	  add_to_local_environment(sc, car(sc->code), sc->x); 
 	  sc->code = cddr(sc->code);
 	  sc->args = sc->NIL;
