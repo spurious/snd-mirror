@@ -80,6 +80,7 @@
  *        length, copy, fill!, map, for-each are generic
  *        vector-for-each, vector-map, string-for-each, hash-table-for-each, for-each of any applicable object
  *        make-type creates a new scheme type
+ *        symbol-access modifies symbol value lookup
  *
  *
  *   perhaps add: (define ((f a) b) (* a b)) -> (define f (lambda (a) (lambda (b) (* a b))))
@@ -687,14 +688,10 @@ struct s7_scheme {
 #define dont_copy_cdr(p)              ((typeflag(p) & T_DONT_COPY_CDR) != 0)
 /* copy_object (continuations) optimization */
 
-#define T_SYMBOL_SET                  (1 << (TYPE_BITS + 18))
-#define T_SYMBOL_GET                  (1 << (TYPE_BITS + 19))
-#define T_SYMBOL_BIND                 (1 << (TYPE_BITS + 20))
-#define has_symbol_set_accessor(p)    ((typeflag(p) & T_SYMBOL_SET) != 0)
-#define has_symbol_get_accessor(p)    ((typeflag(p) & T_SYMBOL_GET) != 0)
-#define has_symbol_bind_accessor(p)   ((typeflag(p) & T_SYMBOL_BIND) != 0)
-#define has_accessor(p)               ((typeflag(p) & (T_SYMBOL_SET | T_SYMBOL_GET | T_SYMBOL_BIND)) != 0)
-#define symbol_set_accessor_state(p, n) typeflag(p) = ((typeflag(p) & ~(T_SYMBOL_SET | T_SYMBOL_GET | T_SYMBOL_BIND)) | n)
+#define T_SYMBOL_HAS_ACCESSOR         (1 << (TYPE_BITS + 18))
+#define symbol_has_accessor(p)        ((typeflag(p) & T_SYMBOL_HAS_ACCESSOR) != 0)
+#define symbol_set_has_accessor(p)    typeflag(p) |= T_SYMBOL_HAS_ACCESSOR
+#define symbol_clear_has_accessor(p)  typeflag(p) &= ~(T_SYMBOL_HAS_ACCESSOR)
 
 #define T_SYMBOL_ACCESSED             (1 << (TYPE_BITS + 5))
 #define symbol_accessed(p)            ((typeflag(p) & T_SYMBOL_ACCESSED) != 0)
@@ -702,7 +699,7 @@ struct s7_scheme {
 #define symbol_set_accessed(p)        typeflag(p) |= T_SYMBOL_ACCESSED
 /* these mark symbol access specializations */
 
-#define UNUSED_BITS                   0xe0000000
+#define UNUSED_BITS                   0xf8000000
 
 #if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f))
@@ -1254,7 +1251,7 @@ static void s7_mark_object_1(s7_pointer p)
       return;
 
     case T_PAIR:
-      if (has_accessor(p))
+      if (symbol_has_accessor(p))
 	S7_MARK(csr(p));
       break;
 
@@ -9694,7 +9691,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   {
     char *buf;
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     type_name(obj),
 	     typeflag(obj),
@@ -9712,9 +9709,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     is_expansion(obj) ? " (expansion)" : "",
 	     (!is_not_local(obj)) ? " (local)" : "",
 	     symbol_accessed(obj) ? " (accessed)" : "",
-	     has_symbol_get_accessor(obj) ? " (get checked)" : "",
-	     has_symbol_set_accessor(obj) ? " (set checked)" : "",
-	     has_symbol_bind_accessor(obj) ? " (bind checked)" : "",
+	     symbol_has_accessor(obj) ? " (has accessor)" : "",
 	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
     return(buf);
   }
@@ -13459,11 +13454,13 @@ void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function
 /*
  * originally in Snd I wanted notification when a variable was set, and it's not very pretty
  *      to have to use pws's everywhere.  Here (s7) we have constants and tracing.
+ *
  * these are in the same realm:
  *   typed var: restrict set! to the desired type or do auto-conversions
  *   constant: disallow set!
  *   traced var: report either read/write
  *   keywords: can't set or bind, always return self as value
+ *
  * and sort of related:
  *   fluid-let: dynamic until exit (call/cc error normal)
  *   dynamic variables: insist any ref is to the current binding [dynamic-let]
@@ -13478,29 +13475,23 @@ void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function
  * (symbol-access sym) -- a pws, if set! it affects the current binding actions.
  *   the actions are local to the current environment, so
  *   we automatically undo the local accessors when leaving the current scope.
- *   a list of 3 funcs: getter setter binder -- rest is ignored (see trace)
- *
- * trace can save the current accessors in cadddr of the symbol-access list, 
- *    untrace uses that to restore the old form, etc
+ *   a list of 3 funcs: getter setter binder -- rest is ignored so that
+ *   trace can save the current accessors in cadddr of the symbol-access list, 
+ *   untrace uses that to restore the old form, etc
  *
  * (define (notify-if-set var notifier) ; returns #t if it's ok to set
  *   (set! (symbol-access) 
  *         (list #f (lambda (symbol new-value) (or (notifier symbol new-value) new-value)) #f)))
  *
- * C side: s7_symbol_set_access, s7_symbol_access
- * Scheme side: Pws symbol-access + check (as now) on all sets/binds, + check on all lookups (will this be prohibitively slow?)
- *                                + copy slot and check it, not global symbol 
- *
- *     add trace example, typed or restricted var
+ *     trace?
  *     keywords?
- *     C-side (or scheme) notification + example in s7.html
  *     get side implemented?
+ *     replace current define-constant ?
  */
 
 
 #if 0
 /*
-
 (define constant-access 
   (list #f
 	(lambda (symbol new-value) 
@@ -13522,6 +13513,18 @@ void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function
 	      varlist)
        ,@body)))
 
+(define-macro (define-integer var value)
+  `(begin
+     (define ,var ,value)
+     (set! (symbol-access ',var) 
+	   (list #f
+		 (lambda (symbol new-value)
+		   (if (real? new-value)
+		       (floor new-value)
+		       (error "~A can only take an integer value, not ~S" symbol new-value)))
+		 #f))
+     ',var))
+
 */
 #endif
 
@@ -13533,7 +13536,7 @@ s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym)
   x = find_symbol(sc, sc->envir, sym);
   if (x != sc->NIL)
     {
-      if (has_accessor(x))
+      if (symbol_has_accessor(x))
 	return(csr(x));
     }
   return(sc->F);
@@ -13547,17 +13550,15 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
   if (x == sc->NIL)
     x = add_to_current_environment(sc, symbol, sc->F);
   csr(x) = funcs;
-  if (is_pair(funcs))
-    {
-      symbol_set_accessor_state(x, ((is_procedure(car(funcs))) ? T_SYMBOL_GET : 0) |
-				   ((is_procedure(cadr(funcs))) ? T_SYMBOL_SET : 0) |
-			           ((is_procedure(caddr(funcs))) ? T_SYMBOL_BIND : 0));
-      symbol_set_accessed(symbol);
-    }
-  else symbol_set_accessor_state(x, 0);
+  symbol_set_accessed(symbol);
+  if ((is_pair(funcs)) &&
+      ((is_procedure(car(funcs))) ||
+       (is_procedure(cadr(funcs))) ||
+       (is_procedure(caddr(funcs)))))
+    symbol_set_has_accessor(x);
+  else symbol_clear_has_accessor(x);
   return(x);
 }
-
 
 
 static s7_pointer g_symbol_get_access(s7_scheme *sc, s7_pointer args)
@@ -13584,17 +13585,21 @@ static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer 
 {
   s7_pointer x;
   x = find_symbol(sc, sc->envir, symbol);
-  if (has_symbol_bind_accessor(x))
+  if (symbol_has_accessor(x))
     {
-      s7_pointer func, save_x, save_y, save_z;
+      s7_pointer func;
       func = caddr(csr(x));
-      save_x = sc->x;
-      save_y = sc->y;
-      save_z = sc->z;
-      new_value = s7_call(sc, func, make_list_2(sc, symbol, new_value));
-      sc->x = save_x;
-      sc->y = save_y;
-      sc->z = save_z;
+      if (is_procedure(func))
+	{
+	  s7_pointer save_x, save_y, save_z;
+	  save_x = sc->x;
+	  save_y = sc->y;
+	  save_z = sc->z;
+	  new_value = s7_call(sc, func, make_list_2(sc, symbol, new_value));
+	  sc->x = save_x;
+	  sc->y = save_y;
+	  sc->z = save_z;
+	}
     }
   return(new_value);
 }
@@ -13604,17 +13609,21 @@ static s7_pointer call_symbol_set(s7_scheme *sc, s7_pointer symbol, s7_pointer n
 {
   s7_pointer x;
   x = find_symbol(sc, sc->envir, symbol);
-  if (has_symbol_set_accessor(x))
+  if (symbol_has_accessor(x))
     {
-      s7_pointer func, save_x, save_y, save_z;
+      s7_pointer func;
       func = cadr(csr(x));
-      save_x = sc->x;
-      save_y = sc->y;
-      save_z = sc->z;
-      new_value = s7_call(sc, func, make_list_2(sc, symbol, new_value));
-      sc->x = save_x;
-      sc->y = save_y;
-      sc->z = save_z;
+      if (is_procedure(func))
+	{
+	  s7_pointer save_x, save_y, save_z;
+	  save_x = sc->x;
+	  save_y = sc->y;
+	  save_z = sc->z;
+	  new_value = s7_call(sc, func, make_list_2(sc, symbol, new_value));
+	  sc->x = save_x;
+	  sc->y = save_y;
+	  sc->z = save_z;
+	}
     }
   return(new_value);
 }
@@ -23402,6 +23411,7 @@ s7_scheme *s7_init(void)
 #if WITH_PROFILING
   s7_define_function(sc, "symbol-calls",            g_symbol_calls,            1, 0, false, H_symbol_calls);
 #endif
+  s7_define_function_with_setter(sc, "symbol-access", g_symbol_get_access, g_symbol_set_access, 1, 0, H_symbol_access);
   
   s7_define_function(sc, "global-environment",      g_global_environment,      0, 0, false, H_global_environment);
   s7_define_function(sc, "current-environment",     g_current_environment,     0, CURRENT_ENVIRONMENT_OPTARGS, false, H_current_environment);
@@ -23803,7 +23813,6 @@ s7_scheme *s7_init(void)
 #endif
 
   /* s7_define_function(sc, "dump-heap", g_dump_heap, 0, 0, false, "hiho"); */
-  s7_define_function_with_setter(sc, "symbol-access", g_symbol_get_access, g_symbol_set_access, 1, 0, H_symbol_access);
 
   /* macroexpand */
   s7_eval_c_string(sc, "(define-macro (macroexpand mac) `(,(procedure-source (car mac)) ',mac))");

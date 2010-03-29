@@ -837,6 +837,7 @@ void s7_mark_object(s7_pointer p);
  *        s7 changes
  *
  * 29-Mar:    symbol-access, s7_symbol_access, s7_symbol_set_access.
+ *            C example of notification in s7.html.
  * 25-Mar:    make-type.  s7_is_equal now includes an s7_scheme pointer as its first argument.
  * 24-Mar:    s7_is_defined.
  * 19-Mar:    removed encapsulation mechanism and s7_define_set_function.

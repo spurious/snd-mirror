@@ -68,8 +68,9 @@ and want a quick tour of where s7 is different.
   <li><a href="#multiprecision">multiprecision arithmetic</a>
   <li><a href="#math">math functions</a>
   <li><a href="#define*">define*</a>
-  <li><a href="#macros">macros</a>
-  <li><a href="#constants">constants</a>
+  <li><a href="#macros">define-macro</a>
+  <li><a href="#constants">define-constant, symbol-access</a>
+  <li><a href="#maketype">make-type</a>
   <li><a href="#pws">procedure-with-setter</a>
   <li><a href="#generalizedset">generalized set!</a>
   <li><a href="#multidimensionalvectors">multidimensional vectors</a>
@@ -86,9 +87,9 @@ and want a quick tour of where s7 is different.
   <li><a href="#procedureinfo">procedure info</a>
   <li><a href="#symbolinfo">symbol table info</a>
   <li><a href="#environments">environments</a>
-  <li><a href="#maketype">make-type</a>
   <li><a href="#miscellanea">miscellanea</a>
   <li><a href="#FFIexamples">FFI examples</a>
+
 </ul>
 
 <br>
@@ -451,7 +452,7 @@ become constants:
 variable trace (informative function upon set or keeping a history of past values), typed variables (restricting a
 variable's values or doing automatic conversions upon set), and notification upon set (either in Scheme
 or in C; I wanted this many years ago in Snd).  The notification function is especially useful if
-you have a Scheme variable and want to reflect any change in its value immediately in C.
+you have a Scheme variable and want to reflect any change in its value immediately in C (see example <a href="#notify">below</a>).
 All of these cases modify
 the path between a symbol and its value.  
 s7 gives you a handle on that path via the procedure-with-setter <b>symbol-access</b>.
@@ -483,12 +484,145 @@ local constants with:
 	      varlist)
        ,@body)))
 </pre>
+
+<p>In the next example, we restrict the values a variable can take to integers:
+</p>
+
+<pre>
+(define-macro (define-integer var value)
+  `(begin
+     (define ,var ,value)
+     (set! (<em class=red>symbol-access</em> ',var) 
+	   (list #f
+		 (lambda (symbol new-value)
+		   (if (real? new-value)
+		       (floor new-value)
+		       (error "~A can only take an integer value, not ~S" symbol new-value)))
+		 #f))
+     ',var))
+
+&gt; (define-integer int 123)
+int
+&gt; (set! int 321.67)
+321
+&gt; (set! int (list 1 2))
+;int can only take an integer value, not (1 2)
+</pre>
+
 <p>I believe this is similar to Ruby's hooked variables.  
 It seems to me that you could implement all kinds of fancy things
 with this mechanism.
 </p>
 </dd>
 <br>
+
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<a name="maketype"></a>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>make-type</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
+<dd><p>
+<b>make-type</b> (borrowed from Alaric Snell-Pym)
+returns a type-object: a list of three functions
+'?, 'make, and 'ref.  The <b>?</b> func returns #t if its argument
+is of the new type, the <b>make</b> function returns a new object of the new type with the
+value of the argument to the make function, and the <b>ref</b> function returns that value
+when passed that object. 
+</p>
+
+<pre>
+(define special-value ((cadr (<em class=red>make-type</em>)) 'special))
+;; now special-value's value can't be eq? to any other scheme object
+
+;; expand, for example, (define-record rec (a 1) (b 2))
+(begin
+  (define rec? #f)
+  (define make-rec #f)
+  (define rec-a #f)
+  (define rec-b #f)
+
+  (let* ((rec-type (<em class=red>make-type</em>))
+	 (? (car rec-type))
+	 (make (cadr rec-type))
+	 (ref (caddr rec-type)))
+
+    (set! make-rec (lambda* ((a 1) (b 2))
+		     (make (vector a b))))
+
+    (set! rec? (lambda (obj)
+		 (? obj)))
+  
+    (set! rec-a (make-procedure-with-setter
+		 (lambda (obj)
+		   (and (rec? obj)
+			(vector-ref (ref obj) 0)))
+		 (lambda (obj val)
+		   (if (rec? obj)
+		       (vector-set! (ref obj) 0 val)))))
+
+    (set! rec-b (make-procedure-with-setter
+		 (lambda (obj)
+		   (and (rec? obj)
+			(vector-ref (ref obj) 1)))
+		 (lambda (obj val)
+		   (if (rec? obj)
+		       (vector-set! (ref obj) 1 val)))))))
+
+#|
+(let ((hi (make-rec 32 '(1 2))))
+  (set! (rec-b hi) 123)
+  (format #t "rec: ~A ~A" 
+	  (rec-a hi)
+	  (rec-b hi)))
+
+"rec: 32 123"
+|#
+</pre>
+
+<p>Currently make-type takes some optional arguments to specify other actions.  I
+might change this to be an alist of (operation function) pairs, but for now,
+the optional (optkey) arguments are: print equal getter setter length name.
+The optional argument values are functions that specify how objects of the new type display themselves (print, 1 argument),
+check for equality (equal, 2 args, both will be of the new type), apply themselves to arguments, (getter, any number
+of arguments), respond to the generalized set! and length generic functions, and finally,
+one special case: name sets the type name (a string), which only matters if you're not specifying the print function.
+In each case, the argument is the value of the object, not the object itself.
+So, remembering that (cadr type) is the make function:
+</p>
+<pre>
+&gt; ((cadr (make-type)) 3.14)
+#&lt;anonymous-type 3.14&gt;
+
+&gt; ((cadr (make-type :name "hiho")) 123)
+#&lt;hiho 123&gt;
+
+&gt; ((cadr (make-type :print (lambda (a) (format #f "#&lt;typo: |~A|&gt;" a)))) 1)
+#&lt;typo: |1|&gt;
+
+&gt; (((cadr (make-type :getter (lambda (a b) (vector-ref a b)))) (vector 1 2 3)) 1)
+2
+</pre>
+<p>The last is easier to read if we separate out the steps:
+</p>
+<pre>
+&gt; (let* ((type (make-type 
+                 :getter (lambda (a b) 
+                           (vector-ref a b))))   ; make a new type with its own getter function
+         (object ((cadr type) (vector 1 2 3))))  ; create an object of the new type, its value is a vector
+       (object 1))                               ; "apply" the object to 1 => (vector-ref object 1) via the getter
+2
+</pre>
+
+<p>The objects created in this way, or via s7_new_type in C, can be passed to for-each
+if you supply the length and getter functions to make-type.
+</p>
+</dd>
+<br>
+
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -1170,114 +1304,6 @@ write "hygenic" macros:
 
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
-<a name="maketype"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>make-type</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd><p>
-<b>make-type</b> (borrowed from Alaric Snell-Pym)
-returns a type-object: a list of three functions
-'?, 'make, and 'ref.  The <b>?</b> func returns #t if its argument
-is of the new type, the <b>make</b> function returns a new object of the new type with the
-value of the argument to the make function, and the <b>ref</b> function returns that value
-when passed that object. 
-</p>
-
-<pre>
-(define special-value ((cadr (<em class=red>make-type</em>)) 'special))
-;; now special-value's value can't be eq? to any other scheme object
-
-;; expand, for example, (define-record rec (a 1) (b 2))
-(begin
-  (define rec? #f)
-  (define make-rec #f)
-  (define rec-a #f)
-  (define rec-b #f)
-
-  (let* ((rec-type (<em class=red>make-type</em>))
-	 (? (car rec-type))
-	 (make (cadr rec-type))
-	 (ref (caddr rec-type)))
-
-    (set! make-rec (lambda* ((a 1) (b 2))
-		     (make (vector a b))))
-
-    (set! rec? (lambda (obj)
-		 (? obj)))
-  
-    (set! rec-a (make-procedure-with-setter
-		 (lambda (obj)
-		   (and (rec? obj)
-			(vector-ref (ref obj) 0)))
-		 (lambda (obj val)
-		   (if (rec? obj)
-		       (vector-set! (ref obj) 0 val)))))
-
-    (set! rec-b (make-procedure-with-setter
-		 (lambda (obj)
-		   (and (rec? obj)
-			(vector-ref (ref obj) 1)))
-		 (lambda (obj val)
-		   (if (rec? obj)
-		       (vector-set! (ref obj) 1 val)))))))
-
-#|
-(let ((hi (make-rec 32 '(1 2))))
-  (set! (rec-b hi) 123)
-  (format #t "rec: ~A ~A" 
-	  (rec-a hi)
-	  (rec-b hi)))
-
-"rec: 32 123"
-|#
-</pre>
-
-<p>Currently make-type takes some optional arguments to specify other actions.  I
-might change this to be an alist of (operation function) pairs, but for now,
-the optional (optkey) arguments are: print equal getter setter length name.
-The optional argument values are functions that specify how objects of the new type display themselves (print, 1 argument),
-check for equality (equal, 2 args, both will be of the new type), apply themselves to arguments, (getter, any number
-of arguments), respond to the generalized set! and length generic functions, and finally,
-one special case: name sets the type name (a string), which only matters if you're not specifying the print function.
-In each case, the argument is the value of the object, not the object itself.
-So, remembering that (cadr type) is the make function:
-</p>
-<pre>
-&gt; ((cadr (make-type)) 3.14)
-#&lt;anonymous-type 3.14&gt;
-
-&gt; ((cadr (make-type :name "hiho")) 123)
-#&lt;hiho 123&gt;
-
-&gt; ((cadr (make-type :print (lambda (a) (format #f "#&lt;typo: |~A|&gt;" a)))) 1)
-#&lt;typo: |1|&gt;
-
-&gt; (((cadr (make-type :getter (lambda (a b) (vector-ref a b)))) (vector 1 2 3)) 1)
-2
-</pre>
-<p>The last is easier to read if we separate out the steps:
-</p>
-<pre>
-&gt; (let* ((type (make-type 
-                 :getter (lambda (a b) 
-                           (vector-ref a b))))   ; make a new type with its own getter function
-         (object ((cadr type) (vector 1 2 3))))  ; create an object of the new type, its value is a vector
-       (object 1))                               ; "apply" the object to 1 => (vector-ref object 1) via the getter
-2
-</pre>
-
-<p>The objects created in this way, or via s7_new_type in C, can be passed to for-each
-if you supply the length and getter functions to make-type.
-</p>
-</dd>
-<br>
-
-
-
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
 <a name="miscellanea"></a>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>miscellanea</h4></td></tr></table>
@@ -1447,22 +1473,24 @@ The examples that follow show:
 </p>
 
 <ul>
-<li>read-eval-print loop
-<li>define a function with arguments and a returned value, and define a variable 
-<li>call a scheme function from C, and get/set scheme variable values in C
-<li>C++ and Juce
-<li>load sndlib using the XEN functions and macros
-<li>add a new scheme type and a procedure-with-setter
-<li>redirect display output to a C procedure
-<li>extend a built-in operator ("+" in this case)
-<li>C-side define* (s7_define_function_star)
-<li>C-side define-macro (s7_define_macro)
-<li>signal handling (C-C to break out of an infinite loop)
-<li>direct multidimensional vector element access
+<li><a href="#repl">read-eval-print loop</a>
+<li><a href="#defun">define a function with arguments and a returned value, and define a variable </a>
+<li><a href="#defvar">call a scheme function from C, and get/set scheme variable values in C</a>
+<li><a href="#juce">C++ and Juce</a>
+<li><a href="#sndlib">load sndlib using the XEN functions and macros</a>
+<li><a href="#pwstype">add a new scheme type and a procedure-with-setter</a>
+<li><a href="#functionportexample">redirect display output to a C procedure</a>
+<li><a href="#extendop">extend a built-in operator ("+" in this case)</a>
+<li><a href="#definestar">C-side define* (s7_define_function_star)</a>
+<li><a href="#definemacro">C-side define-macro (s7_define_macro)</a>
+<li><a href="#signal">signal handling (C-C to break out of an infinite loop)</a>
+<li><a href="#vector">direct multidimensional vector element access</a>
+<li><a href="#notify">notification in C that a Scheme variable has been set!</a>
 </ul>
 
 <br><br>
 <p>
+<a name="repl"></a>
 First, a bare REPL:
 </p>
 
@@ -1531,6 +1559,7 @@ int main(int argc, char **argv)
 
 
 <br><br>
+<a name="defun"></a>
 <p>Define a function with arguments and a returned value, and a variable:
 </p>
 
@@ -1594,6 +1623,7 @@ int main(int argc, char **argv)
 
 
 <br><br>
+<a name="defvar"></a>
 <p>Call a scheme-defined function from C, and get/set scheme variable values in C:
 </p>
 
@@ -1640,6 +1670,7 @@ int main(int argc, char **argv)
 
 
 <br><br>
+<a name="juce"></a>
 <p>C++ and Juce, from Rick Taube:
 </p>
 
@@ -1677,6 +1708,7 @@ int main(int argc, const char* argv[])
 
 
 <br><br>
+<a name="sndlib"></a>
 <p>Load sndlib using the XEN functions and macros into an s7 repl:
 </p>
 
@@ -1776,6 +1808,7 @@ int main(int argc, char **argv)
 
 
 <br><br>
+<a name="pwstype"></a>
 <p>Add a new scheme type and procedure-with-setters:
 </p>
 
@@ -2019,6 +2052,7 @@ int main(int argc, char **argv)
 
 
 <br><br>
+<a name="extendop"></a>
 <p>Extend a built-in operator ("+" in this case):
 </p>
 
@@ -2086,6 +2120,7 @@ int main(int argc, char **argv)
 
 
 <br><br>
+<a name="definestar"></a>
 <p>C-side define* (s7_define_function_star):
 </p>
 
@@ -2144,6 +2179,7 @@ int main(int argc, char **argv)
 
 
 <br><br>
+<a name="definemacro"></a>
 <p>C-side define-macro (s7_define_macro):
 </p>
 
@@ -2199,6 +2235,7 @@ int main(int argc, char **argv)
 
 
 <br><br>
+<a name="signal"></a>
 <p>Signal handling (C-C to break out of an infinite loop), and s7_make_continuation
 to pick up where we were interrupted:
 </p>
@@ -2288,6 +2325,7 @@ int main(int argc, char **argv)
 
 
 <br><br>
+<a name="vector"></a>
 <p>Multidimensional vector element access:
 </p>
 
@@ -2359,6 +2397,78 @@ int main(int argc, char **argv)
  */
 </pre>
 </td></tr></table>
+
+
+
+<br><br>
+<a name="notify"></a>
+<p>Notification from Scheme that a given scheme variable has been set.
+</p>
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<tr><td bgcolor="#fbfbf0">
+<pre>
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+#include "s7.h"
+
+static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
+
+static s7_pointer scheme_set_notification(s7_scheme *sc, s7_pointer args)
+{
+  /* this function is called when the scheme variable is set! */
+  fprintf(stderr, "%s set to %s\n",
+	  s7_object_to_c_string(sc, s7_car(args)),
+	  s7_object_to_c_string(sc, s7_car(s7_cdr(args))));
+}
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  s7 = s7_init();  
+  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
+
+  s7_define_function(s7, "notify-C", scheme_set_notification, 2, 0, false, "called if notified-var is set!");
+  s7_define_variable(s7, "notified-var", s7_make_integer(s7, 0));
+  <em class=red>s7_symbol_set_access</em>(s7, 
+		       s7_make_symbol(s7, "notified-var"),
+		       s7_eval_c_string(s7, "(list #f (lambda (sym val) (notify-C sym val) val) #f)"));
+
+  if (argc == 2)
+    {
+      fprintf(stderr, "load %s\n", argv[1]);
+      s7_load(s7, argv[1]);
+    }
+  else
+    {
+      char buffer[512];
+      char response[1024];
+      while (1) 
+	{
+	  fprintf(stdout, "\n&gt; ");
+	  fgets(buffer, 512, stdin);
+	  
+	  if ((buffer[0] != '\n') || 
+	      (strlen(buffer) &gt; 1))
+	    {                            
+	      sprintf(response, "(write %s)", buffer);
+	      s7_eval_c_string(s7, response);
+	    }
+	}
+    }
+}
+
+/*    &gt; notified-var
+ *    0
+ *    &gt; (set! notified-var 32)
+ *    notified-var set to 32
+ *    32
+ */
+</pre>
+</td></tr></table>
+
 
 </body>
 </html>
