@@ -419,7 +419,7 @@ it could be removed.
 <dt>
 <a name="constants"></a>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define-constant, constant?</h4></td></tr></table>
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define-constant, constant?, symbol-access</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -459,7 +459,8 @@ s7 gives you a handle on that path via the procedure-with-setter <b>symbol-acces
 (symbol-access symbol) returns that symbol's accessors (if any), and (set! (symbol-access symbol) accessor-list)
 changes it.  The accessor-list is a list of three functions, the get, set, and bind functions.  (The get
 function is not yet implemented).  The set and bind functions take two arguments, the symbol in question
-and the value that it is about to be set or bound to.  We could replace define-constant, and add
+and the value that it is about to be set or bound to.  The variable is set or bound to the value they return.
+We could replace define-constant, and add
 local constants with:
 </p>
 <pre>
@@ -509,9 +510,33 @@ int
 ;int can only take an integer value, not (1 2)
 </pre>
 
-<p>I believe this is similar to Ruby's hooked variables.  
+<p>Here are trace and untrace.  We save the previous accessors in trace, restore them upon untrace,
+and in between, call the previous set accessor, if any, after reporting the set:
+</p>
+<pre>
+(define (trace var)
+  (let* ((cur-access (<em class=red>symbol-access</em> var))
+	 (cur-set (and cur-access (cadr cur-access))))
+    (set! (<em class=red>symbol-access</em> var)
+	  (list (and cur-access (car cur-access))
+		(lambda (symbol new-value) 
+		  (format #t "~A set to ~A~%" symbol new-value) 
+		  (if cur-set 
+		      (cur-set symbol new-value)
+		      new-value))
+		(and cur-access (caddr cur-access))
+		cur-access)))) ; save the old version 
+
+(define (untrace var)
+  (if (and (symbol-access var)
+	   (cdddr (symbol-access var)))
+      (set! (symbol-access var) (cadddr (symbol-access var)))))
+</pre>
+
+<p>I believe this mechanism is similar to Ruby's hooked variables.  
 It seems to me that you could implement all kinds of fancy things
-with this mechanism.
+with this mechanism.  (One amusing case: property lists.  Just tack
+the properties onto the end of the accessor list, as in trace above).
 </p>
 </dd>
 <br>

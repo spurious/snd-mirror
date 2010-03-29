@@ -635,7 +635,6 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
    *
    * s7_define_macro defines a scheme macro; its arguments are not evaluated (unlike a function),
    *   but its returned value (assumed to be some sort of scheme expression) is evaluated.
-   *   See the example below.
    */
 
   /* In s7, (define* (name . args) body) or (define name (lambda* args body))

@@ -2341,7 +2341,7 @@ void s7_define(s7_scheme *sc, s7_pointer envir, s7_pointer symbol, s7_pointer va
   x = find_local_symbol(sc, envir, symbol);
   if (x != sc->NIL) 
     set_symbol_value(x, value); 
-  else add_to_environment(sc, envir, symbol, value); /* TODO: I think this means C code can override "constant" defs */
+  else add_to_environment(sc, envir, symbol, value); /* I think this means C code can override "constant" defs */
 }
 
 
@@ -2362,13 +2362,12 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
   s7_define(sc, s7_global_environment(sc), sym, value);
   x = symbol_global_slot(sym);
   set_immutable(car(x));
-  /* TODO: set constant access list? on x */
 }
 
 /*        (define (func a) (let ((cvar (+ a 1))) cvar))
  *        (define-constant cvar 23)
  *        (func 1)
- *        ;can't bind or set an immutable object: cvar
+ *        ;can't bind an immutable object: cvar
  */
 
 
@@ -2428,8 +2427,6 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
   x = find_symbol(sc, sc->envir, sym);        /* is it already defined? */
   if (x == sc->NIL) 
     add_to_environment(sc, sc->envir, sym, sym); /* its value is itself, skip the immutable check in add_to_current_environment */
-  
-  /* TODO: add keyword access? on slot returned from add_to_env... */
 
   return(sym);
 }
@@ -13461,7 +13458,7 @@ void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function
  *   traced var: report either read/write
  *   keywords: can't set or bind, always return self as value
  *
- * and sort of related:
+ * and related (but much messier to implement):
  *   fluid-let: dynamic until exit (call/cc error normal)
  *   dynamic variables: insist any ref is to the current binding [dynamic-let]
  *
@@ -13483,51 +13480,8 @@ void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function
  *   (set! (symbol-access) 
  *         (list #f (lambda (symbol new-value) (or (notifier symbol new-value) new-value)) #f)))
  *
- *     trace?
- *     keywords?
- *     get side implemented?
- *     replace current define-constant ?
+ *     SOMEDAY: symbol-access get side implemented
  */
-
-
-#if 0
-/*
-(define constant-access 
-  (list #f
-	(lambda (symbol new-value) 
-	  (error "can't change constant ~A's value to ~A" symbol new-value))
-	(lambda (symbol new-value) 
-	  (error "can't bind constant ~A to a new value, ~A" symbol new-value))))
-
-(define-macro (define-constant symbol value)
-  `(begin
-     (define ,symbol ,value)
-     (set! (symbol-access ',symbol) constant-access)
-     ',symbol))
-
-(define-macro (let-constant vars . body)
-  (let ((varlist (map car vars)))
-    `(let ,vars
-       ,@(map (lambda (var)
-		`(set! (symbol-access ',var) constant-access))
-	      varlist)
-       ,@body)))
-
-(define-macro (define-integer var value)
-  `(begin
-     (define ,var ,value)
-     (set! (symbol-access ',var) 
-	   (list #f
-		 (lambda (symbol new-value)
-		   (if (real? new-value)
-		       (floor new-value)
-		       (error "~A can only take an integer value, not ~S" symbol new-value)))
-		 #f))
-     ',var))
-
-*/
-#endif
-
 
 
 s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym)
@@ -15771,6 +15725,12 @@ static s7_pointer g_quasiquote_2(s7_scheme *sc, s7_pointer form)
 }
 
 
+static s7_pointer g_quasiquote(s7_scheme *sc, s7_pointer args)
+{
+  return(g_quasiquote_2(sc, car(args)));
+}
+
+
 
 /* ---------------- reader funcs for eval ---------------- */
 
@@ -17382,7 +17342,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       sc->x = find_local_symbol(sc, sc->envir, sc->value);
       set_immutable(car(sc->x));
-      /* TODO: perhaps use constant access */
 
       pop_stack(sc);
       goto START;
@@ -17956,7 +17915,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if (is_immutable(sc->x))
 	    return(eval_error(sc, "defmacro: ~S is immutable", sc->x));     /* (defmacro pi (a) `(+ ,a 1)) */
-	  /* TODO: how to check binder?  	  sc->code = call_symbol_bind(sc, sc->x, sc->code);  */
+	  sc->code = call_symbol_bind(sc, sc->x, sc->code);
 	}
 
       /* could we make macros safe automatically by doing the symbol lookups right now?
@@ -18029,7 +17988,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if (is_immutable(sc->x))
 	    return(eval_error(sc, "define-macro: ~S is immutable", sc->x));
-	  /* TODO: how to check binder? */
+	  sc->code = call_symbol_bind(sc, sc->x, sc->code);
 	}
 
       /* (define-macro (hi a) `(+ ,a 1))
@@ -23816,6 +23775,7 @@ s7_scheme *s7_init(void)
 
   /* macroexpand */
   s7_eval_c_string(sc, "(define-macro (macroexpand mac) `(,(procedure-source (car mac)) ',mac))");
+  s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, "quasiquote");
 
   /* multiple values */
   /* call-with-values is almost a no-op in this context */

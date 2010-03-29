@@ -7085,6 +7085,65 @@
 		sum)))
 	  6)
 
+    (define (notify-if-set var notifier)
+      (set! (symbol-access var) (list #f notifier #f)))
+    
+    (define constant-access 
+      (list #f
+	    (lambda (symbol new-value) 
+	      (error "can't change constant ~A's value to ~A" symbol new-value))
+	    (lambda (symbol new-value) 
+	      (error "can't bind constant ~A to a new value, ~A" symbol new-value))))
+    
+    (define-macro (define-global-constant symbol value)
+      `(begin
+	 (define ,symbol ,value)
+	 (set! (symbol-access ',symbol) constant-access)
+	 ',symbol))
+    
+    (define-macro (let-constant vars . body)
+      (let ((varlist (map car vars)))
+	`(let ,vars
+	   ,@(map (lambda (var)
+		    `(set! (symbol-access ',var) constant-access))
+		  varlist)
+	   ,@body)))
+    
+    (define-macro (define-integer var value)
+      `(begin
+	 (define ,var ,value)
+	 (set! (symbol-access ',var) 
+	       (list #f
+		     (lambda (symbol new-value)
+		       (if (real? new-value)
+			   (floor new-value)
+			   (error "~A can only take an integer value, not ~S" symbol new-value)))
+		     #f))
+	 ',var))
+    
+    (define (trace-var var)
+      (let* ((cur-access (symbol-access var))
+	     (cur-set (and cur-access (cadr cur-access))))
+	(set! (symbol-access var)
+	      (list (and cur-access (car cur-access))
+		    (lambda (symbol new-value) 
+		      (format #t "~A set to ~A~%" symbol new-value) 
+		      (if cur-set 
+			  (cur-set symbol new-value)
+			  new-value))
+		    (and cur-access (caddr cur-access))
+		    cur-access))))
+    
+    (define (untrace-var var)
+      (if (and (symbol-access var)
+	       (cdddr (symbol-access var)))
+	  (set! (symbol-access var) (cadddr (symbol-access var)))))
+
+    (define-integer _int_ 32)
+    (test _int_ 32)
+    (set! _int_ 1.5)
+    (test _int_ 1)
+    
     ))
 
 (define-expansion (_expansion_ a) `(+ ,a 1))
