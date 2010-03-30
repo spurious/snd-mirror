@@ -153,7 +153,7 @@
 #define INITIAL_HEAP_SIZE 128000
 /* the heap grows as needed, this is its initial size. 
  *
- *    this size is not very important:
+ *    this size is not very important (it can be 32 or maybe smaller):
  *      8k: 2432, 32k: 2419, 128k: 2401, 512k: 2394, 8192k: 2417
  *    (valgrind timings from 23-Feb-10 running s7test.scm)
  */
@@ -692,12 +692,20 @@ struct s7_scheme {
 #define symbol_has_accessor(p)        ((typeflag(p) & T_SYMBOL_HAS_ACCESSOR) != 0)
 #define symbol_set_has_accessor(p)    typeflag(p) |= T_SYMBOL_HAS_ACCESSOR
 #define symbol_clear_has_accessor(p)  typeflag(p) &= ~(T_SYMBOL_HAS_ACCESSOR)
+/* has_accessor means that at least one of the 3 accessor functions is active on this binding.
+ *    this is a type bit for the pair (symbol . current-value), not for either the symbol or value themselves 
+ */
 
 #define T_SYMBOL_ACCESSED             (1 << (TYPE_BITS + 5))
 #define symbol_accessed(p)            ((typeflag(p) & T_SYMBOL_ACCESSED) != 0)
 #define is_immutable_or_accessed(p)   ((typeflag(p) & (T_IMMUTABLE | T_SYMBOL_ACCESSED)) != 0)
 #define symbol_set_accessed(p)        typeflag(p) |= T_SYMBOL_ACCESSED
-/* these mark symbol access specializations */
+/* this marks a symbol globally as one that has at some time had its accessors set. 
+ *    since it can be combined with the immutable checks we were already doing, we can
+ *    implement the symbol-access stuff at almost no additional cost (the csr field used
+ *    for the list was already available, and the only additional run-time cost is that
+ *    it needs to be marked during GC -- this adds less .1% total time.
+ */
 
 #define UNUSED_BITS                   0xf8000000
 
@@ -12933,7 +12941,7 @@ static char *call_s_object_print(s7_scheme *sc, void *value)
   /* describe_object assumes the value returned here can be freed */
 }
 
-/* PERHAPS: s_fill doesn't seem problematic, and s_copy could copy the object, then call s_copy for the value?
+/* PERHAPS: call_s_object_fill doesn't seem problematic, and call_s_object_copy could copy the object, then call copy for the value?
  *   should these be the defaults (also for length and others)?
  */
 
@@ -15393,6 +15401,8 @@ static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* ---------------------------------------- map and for-each ---------------------------------------- */
+
 static s7_pointer g_list_for_each(s7_scheme *sc, s7_pointer args)
 {
   #define H_list_for_each "(for-each proc lst . lists) applies proc to each element of the lists traversed in parallel"
@@ -15403,6 +15413,7 @@ static s7_pointer g_list_for_each(s7_scheme *sc, s7_pointer args)
       (is_thunk(sc, car(args))))
     return(s7_wrong_type_arg_error(sc, "for-each", 1, car(args), "a thunk"));
 
+  sc->y = args; /* gc protect */
   sc->code = car(args);
   lists = cdr(args);
   if (car(lists) == sc->NIL)
@@ -15458,6 +15469,7 @@ static s7_pointer g_list_map(s7_scheme *sc, s7_pointer args)
       (is_thunk(sc, car(args))))
     return(s7_wrong_type_arg_error(sc, "map", 1, car(args), "a thunk"));
 
+  sc->y = args; /* gc protect */
   sc->code = car(args);
   lists = cdr(args);
   if (car(lists) == sc->NIL)
@@ -16669,7 +16681,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  /* "real" schemes rebind here, rather than reset, but that is expensive,
 	   *    and only matters once in a blue moon (closure over enclosed lambda referring to a do var)
-	   *    and the caller can easily mimic the correct behavior in that case by adding a let,
+	   *    and the caller can easily mimic the correct behavior in that case by adding a let or using a named let,
 	   *    making the rebinding explicit.
 	   *
 	   * Hmmm... I'll leave this alone, but there are other less cut-and-dried cases:
@@ -23378,10 +23390,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "provide",                 g_provide,                 1, 0, false, H_provide);
   s7_define_function(sc, "defined?",                g_is_defined,              1, 1, false, H_is_defined);
   s7_define_function(sc, "constant?",               g_is_constant,             1, 0, false, H_is_constant);
-
   s7_define_function(sc, "macro?",                  g_is_macro,                1, 0, false, H_is_macro);
 
-  
   s7_define_function(sc, "keyword?",                g_is_keyword,              1, 0, false, H_is_keyword);
   s7_define_function(sc, "make-keyword",            g_make_keyword,            1, 0, false, H_make_keyword);
   s7_define_function(sc, "symbol->keyword",         g_symbol_to_keyword,       1, 0, false, H_symbol_to_keyword);
@@ -23812,8 +23822,7 @@ s7_scheme *s7_init(void)
 #endif
 
   /* fprintf(stderr, "size: %d %d\n", sizeof(s7_cell), sizeof(s7_num_t)); */
-	   
+	  
   return(sc);
 }
 
-/* PERHAPS: if tracing and traced func redefined, update trace? */
