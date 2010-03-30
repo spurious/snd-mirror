@@ -3603,10 +3603,8 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
 
       for (graph = 0; graph < up->graphs; graph++)
 	{
-	  if ((pixel_len > graph) &&
-	      (XEN_PIXEL_P(XEN_LIST_REF(pixel_list, graph))))
-	    set_foreground_color(ax, (color_t)XEN_UNWRAP_PIXEL(XEN_LIST_REF(pixel_list, graph)));
-	  else
+	  if ((pixel_len <= graph) ||
+	      (!foreground_color_ok(XEN_LIST_REF(pixel_list, graph), ax)))
 	    {
 	      switch (graph)
 		{
@@ -5549,11 +5547,9 @@ static bool run_time_graph_hook(chan_info *cp, axis_context *ax)
 			      XEN_LIST_2(C_INT_TO_XEN_SOUND(cp->sound->index),
 					 C_TO_XEN_INT(cp->chan)),
 			      S_time_graph_hook);
-      if (XEN_PIXEL_P(result))
-	{
-	  set_foreground_color(ax, (color_t)XEN_UNWRAP_PIXEL(result));
-	  return(true);
-	}
+
+      if (foreground_color_ok(result, ax))
+	return(true);
     }
   return(false);
 }

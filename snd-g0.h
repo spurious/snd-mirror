@@ -139,11 +139,6 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 
   #define picture_t GdkPixmap
 
-  #define XEN_WRAP_PIXEL(Value)    XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("color_t"), XEN_WRAP_C_POINTER((unsigned long)Value))
-  #define XEN_UNWRAP_PIXEL(Value)  (color_t)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value)))
-  #define XEN_PIXEL_P(Value)       (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
-                                    (strcmp("color_t", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
-
 #else
 
   #define rgb_t unsigned short
@@ -155,11 +150,6 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
   #define picture_t GdkPixmap
   typedef GdkColor* color_t;
   #define color_info GdkColor
-
-  #define XEN_WRAP_PIXEL(Value)    XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkColor_"), XEN_WRAP_C_POINTER((unsigned long)Value))
-  #define XEN_UNWRAP_PIXEL(Value)  (GdkColor*)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value)))
-  #define XEN_PIXEL_P(Value)       (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
-                                    (strcmp("GdkColor_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 #endif
 
 typedef struct {

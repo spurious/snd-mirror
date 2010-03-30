@@ -2455,11 +2455,32 @@ int main(int argc, char **argv)
   s7 = s7_init();  
   s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
 
+static s7_pointer scheme_set_notification(s7_scheme *sc, s7_pointer args)
+{
+  /* this function is called when the scheme variable is set! */
+  fprintf(stderr, "%s set to %s\n",
+	  s7_object_to_c_string(sc, s7_car(args)),
+	  s7_object_to_c_string(sc, s7_car(s7_cdr(args))));
+  return(s7_car(s7_cdr(args)));
+}
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  s7 = s7_init();  
+  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
+
   s7_define_function(s7, "notify-C", scheme_set_notification, 2, 0, false, "called if notified-var is set!");
   s7_define_variable(s7, "notified-var", s7_make_integer(s7, 0));
   <em class=red>s7_symbol_set_access</em>(s7, 
 		       s7_make_symbol(s7, "notified-var"),
-		       s7_eval_c_string(s7, "(list #f (lambda (sym val) (notify-C sym val) val) #f)"));
+		       s7_cons(s7, 
+			       s7_f(s7), 
+			       s7_cons(s7, 
+				       s7_name_to_value(s7, "notify-C"), 
+				       s7_cons(s7, 
+					       s7_f(s7),
+					       s7_nil(s7)))));
 
   if (argc == 2)
     {

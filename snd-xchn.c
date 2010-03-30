@@ -1629,58 +1629,6 @@ static XEN g_in(XEN ms, XEN code)
 }
 
 
-static XEN g_color_to_list(XEN obj)
-{
-  #define H_color_to_list "(" S_color_to_list " obj): 'obj' rgb values as a list of floats"
-  Colormap cmap;
-  XColor tmp_color;
-  Display *dpy;
-
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(obj), obj, XEN_ONLY_ARG, S_color_to_list, "a color"); 
-
-  dpy = XtDisplay(MAIN_SHELL(ss));
-  cmap = DefaultColormap(dpy, DefaultScreen(dpy));
-  tmp_color.flags = DoRed | DoGreen | DoBlue;
-  tmp_color.pixel = XEN_UNWRAP_PIXEL(obj);
-  XQueryColor(dpy, cmap, &tmp_color);
-  return(XEN_LIST_3(C_TO_XEN_DOUBLE(RGB_TO_FLOAT(tmp_color.red)),
-		    C_TO_XEN_DOUBLE(RGB_TO_FLOAT(tmp_color.green)),
-		    C_TO_XEN_DOUBLE(RGB_TO_FLOAT(tmp_color.blue))));
-}
-
-
-static XEN g_make_color(XEN r, XEN g, XEN b)
-{
-  #define H_make_color "(" S_make_color " r g b): return a color object with the indicated rgb values"
-  Colormap cmap;
-  XColor tmp_color;
-  Display *dpy;
-  mus_float_t rf, gf, bf;
-
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(r), r, XEN_ARG_1, S_make_color, "a number");
-  /* someday accept a list as r */
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(g), g, XEN_ARG_2, S_make_color, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(b), b, XEN_ARG_3, S_make_color, "a number");
-
-  rf = check_color_range(S_make_color, r);
-  gf = check_color_range(S_make_color, g);
-  bf = check_color_range(S_make_color, b);
-  dpy = XtDisplay(MAIN_SHELL(ss));
-  cmap = DefaultColormap(dpy, DefaultScreen(dpy));
-  tmp_color.flags = DoRed | DoGreen | DoBlue;
-  tmp_color.red = FLOAT_TO_RGB(rf);
-  tmp_color.green = FLOAT_TO_RGB(gf);
-  tmp_color.blue = FLOAT_TO_RGB(bf);
-
-  if ((XAllocColor(dpy, cmap, &tmp_color)) == 0)
-    XEN_ERROR(XEN_ERROR_TYPE("no-such-color"),
-	      XEN_LIST_4(C_TO_XEN_STRING(S_make_color ": can't allocate this color! (~A ~A ~A)"),
-			 r, g, b));
-
-  return(XEN_WRAP_PIXEL(tmp_color.pixel));
-}
-
-
 void color_unselected_graphs(color_t color)
 {
   int i;
@@ -1760,15 +1708,11 @@ static XEN g_set_graph_cursor(XEN curs)
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_2(g_in_w, g_in)
-XEN_NARGIFY_3(g_make_color_w, g_make_color)
-XEN_NARGIFY_1(g_color_to_list_w, g_color_to_list)
 XEN_NARGIFY_0(g_graph_cursor_w, g_graph_cursor)
 XEN_NARGIFY_1(g_set_graph_cursor_w, g_set_graph_cursor)
 XEN_ARGIFY_2(g_channel_widgets_w, g_channel_widgets)
 #else
 #define g_in_w g_in
-#define g_make_color_w g_make_color
-#define g_color_to_list_w g_color_to_list
 #define g_graph_cursor_w g_graph_cursor
 #define g_set_graph_cursor_w g_set_graph_cursor
 #define g_channel_widgets_w g_channel_widgets
@@ -1778,8 +1722,6 @@ XEN_ARGIFY_2(g_channel_widgets_w, g_channel_widgets)
 void g_init_gxchn(void)
 {
   XEN_DEFINE_PROCEDURE(S_in,            g_in_w,             2, 0, 0, H_in);
-  XEN_DEFINE_PROCEDURE(S_make_color,    g_make_color_w,     3, 0, 0, H_make_color);
-  XEN_DEFINE_PROCEDURE(S_color_to_list, g_color_to_list_w,  1, 0, 0, H_color_to_list);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
 				   S_setB S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);

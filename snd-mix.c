@@ -1035,8 +1035,7 @@ static int mix_tag_y_from_id(int id)
 }
 
 
-#if (!USE_NO_GUI)
-static color_t mix_color_from_id(int mix_id)
+color_t mix_color_from_id(int mix_id)
 {
   mix_info *md;
   md = md_from_id(mix_id);
@@ -1044,7 +1043,6 @@ static color_t mix_color_from_id(int mix_id)
     return(md->color);
   return(ss->sgx->mix_color);
 }
-#endif
 
 
 color_t mix_set_color_from_id(int id, color_t new_color)
@@ -2985,28 +2983,6 @@ void color_mixes(color_t color)
 }
 
 
-static XEN g_mix_color(XEN mix_id) 
-{
-  #define H_mix_color "(" S_mix_color " :optional mix-id): color of all mix tags (if mix-id is omitted), or of mix-id's tag"
-  if (XEN_MIX_P(mix_id))
-    return(XEN_WRAP_PIXEL(mix_color_from_id(XEN_MIX_TO_C_INT(mix_id))));
-  return(XEN_WRAP_PIXEL(ss->sgx->mix_color));
-}
-
-
-static XEN g_set_mix_color(XEN color, XEN mix_id)
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ARG_1, S_setB S_mix_color, "a color"); 
-  XEN_ASSERT_TYPE(XEN_MIX_P(mix_id) || XEN_NOT_BOUND_P(mix_id), mix_id, XEN_ARG_2, S_setB S_mix_color, "a mix");
-  if (XEN_MIX_P(mix_id))
-    mix_set_color_from_id(XEN_MIX_TO_C_INT(mix_id), XEN_UNWRAP_PIXEL(color));
-  else color_mixes(XEN_UNWRAP_PIXEL(color));
-  return(color);
-}
-
-WITH_TWO_SETTER_ARGS(g_set_mix_color_reversed, g_set_mix_color)
-
-
 double mix_maxamp(int mix_id)
 {
   mix_info *md;
@@ -3857,8 +3833,6 @@ XEN_NARGIFY_1(g_mix_properties_w, g_mix_properties)
 XEN_NARGIFY_2(g_set_mix_properties_w, g_set_mix_properties)
 XEN_NARGIFY_2(g_mix_property_w, g_mix_property)
 XEN_NARGIFY_3(g_set_mix_property_w, g_set_mix_property)
-XEN_ARGIFY_1(g_mix_color_w, g_mix_color)
-XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
 
 XEN_NARGIFY_0(g_mix_waveform_height_w, g_mix_waveform_height)
 XEN_NARGIFY_1(g_set_mix_waveform_height_w, g_set_mix_waveform_height)
@@ -3909,8 +3883,6 @@ XEN_NARGIFY_1(g_set_mix_dialog_mix_w, g_set_mix_dialog_mix)
 #define g_set_mix_properties_w g_set_mix_properties
 #define g_mix_property_w g_mix_property
 #define g_set_mix_property_w g_set_mix_property
-#define g_mix_color_w g_mix_color
-#define g_set_mix_color_w g_set_mix_color
 
 #define g_mix_waveform_height_w g_mix_waveform_height
 #define g_set_mix_waveform_height_w g_set_mix_waveform_height
@@ -3988,9 +3960,6 @@ void g_init_mix(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_width,  g_mix_tag_width_w,  H_mix_tag_width,  S_setB S_mix_tag_width,  g_set_mix_tag_width_w,  0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_tag_height, g_mix_tag_height_w, H_mix_tag_height, S_setB S_mix_tag_height, g_set_mix_tag_height_w, 0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_mix_color, g_mix_color_w, H_mix_color,
-					    S_setB S_mix_color, g_set_mix_color_w, g_set_mix_color_reversed, 0, 1, 1, 1);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mix_waveform_height, g_mix_waveform_height_w, H_mix_waveform_height,
 				   S_setB S_mix_waveform_height, g_set_mix_waveform_height_w, 0, 0, 1, 0);

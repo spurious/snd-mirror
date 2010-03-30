@@ -3,6 +3,30 @@
 
 #if (!USE_NO_GUI)
 
+#if USE_MOTIF
+#define XEN_WRAP_PIXEL(Value)        XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("Pixel"), C_TO_XEN_INT((int)Value))
+                                     /* not ulong here! -- messes up the equal? check */
+#define XEN_UNWRAP_PIXEL(Value)      (unsigned long)XEN_TO_C_INT(XEN_CADR(Value))
+#define XEN_PIXEL_P(Value)           (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+                                      (strcmp("Pixel", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+#else
+#if USE_CAIRO
+  #define XEN_WRAP_PIXEL(Value)    XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("color_t"), XEN_WRAP_C_POINTER((unsigned long)Value))
+  #define XEN_UNWRAP_PIXEL(Value)  (color_t)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value)))
+  #define XEN_PIXEL_P(Value)       (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+                                    (strcmp("color_t", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+#else
+  #define XEN_WRAP_PIXEL(Value)    XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkColor_"), XEN_WRAP_C_POINTER((unsigned long)Value))
+  #define XEN_UNWRAP_PIXEL(Value)  (GdkColor*)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value)))
+  #define XEN_PIXEL_P(Value)       (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
+                                    (strcmp("GdkColor_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
+#endif
+#endif
+
+/* unfortunately, we can't just make PIXEL into a C type here -- it is called
+ *   XM_PIXEL in xm.c and in that context, it assumes the layout given above.
+ */
+
 /* our "current path" */
 static point_t points[POINT_BUFFER_SIZE];
 static point_t points1[POINT_BUFFER_SIZE];
@@ -1683,6 +1707,7 @@ static XEN g_basic_color(void)
 
 
 #if USE_GTK
+
 static void recolor_everything_1(widget_t w, gpointer color)
 {
   if (GTK_IS_WIDGET(w)) 
@@ -1704,7 +1729,52 @@ static void recolor_everything(widget_t w, gpointer color)
   recolor_everything_1(w, color);
 #endif
 }
+
+
+static XEN g_color_to_list(XEN obj)
+{
+  #define H_color_to_list "(" S_color_to_list " obj): 'obj' rgb values as a list of floats"
+  color_info *v;
+  XEN_ASSERT_TYPE(XEN_PIXEL_P(obj), obj, XEN_ONLY_ARG, S_color_to_list, "a color"); 
+  v = XEN_UNWRAP_PIXEL(obj);
+  return(XEN_LIST_3(C_TO_XEN_DOUBLE(RGB_TO_FLOAT(v->red)),
+		    C_TO_XEN_DOUBLE(RGB_TO_FLOAT(v->green)),
+		    C_TO_XEN_DOUBLE(RGB_TO_FLOAT(v->blue))));
+}
+
+
+static XEN g_make_color(XEN r, XEN g, XEN b)
+{
+  #define H_make_color "(" S_make_color " r g b): return a color object with the indicated rgb values"
+  color_info *ccolor;
+  mus_float_t rf, gf, bf;
+
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(r), r, XEN_ARG_1, S_make_color, "a number");
+  /* someday accept a list as r */
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(g), g, XEN_ARG_2, S_make_color, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(b), b, XEN_ARG_3, S_make_color, "a number");
+
+  rf = check_color_range(S_make_color, r);
+  gf = check_color_range(S_make_color, g);
+  bf = check_color_range(S_make_color, b);
+#if USE_CAIRO
+  ccolor = (color_info *)calloc(1, sizeof(color_info)); /* memleak here -- need color smob + free to deal with this */
+  ccolor->red = rf;
+  ccolor->green = gf;
+  ccolor->blue = bf;
+#else
+  color_info gcolor;
+  gcolor.red = FLOAT_TO_RGB(rf);
+  gcolor.green = FLOAT_TO_RGB(gf);
+  gcolor.blue = FLOAT_TO_RGB(bf);
+  ccolor = gdk_color_copy(&gcolor);
+  gdk_rgb_find_color(gdk_colormap_get_system(), ccolor);
 #endif
+  return(XEN_WRAP_PIXEL(ccolor));
+}
+
+#endif
+
 
 
 #if USE_MOTIF
@@ -1717,6 +1787,57 @@ static void recolor_everything(widget_t w, color_t color)
       if (curcol == color)
 	XmChangeColor(w, ss->sgx->basic_color);
     }
+}
+
+static XEN g_color_to_list(XEN obj)
+{
+  #define H_color_to_list "(" S_color_to_list " obj): 'obj' rgb values as a list of floats"
+  Colormap cmap;
+  XColor tmp_color;
+  Display *dpy;
+
+  XEN_ASSERT_TYPE(XEN_PIXEL_P(obj), obj, XEN_ONLY_ARG, S_color_to_list, "a color"); 
+
+  dpy = XtDisplay(MAIN_SHELL(ss));
+  cmap = DefaultColormap(dpy, DefaultScreen(dpy));
+  tmp_color.flags = DoRed | DoGreen | DoBlue;
+  tmp_color.pixel = XEN_UNWRAP_PIXEL(obj);
+  XQueryColor(dpy, cmap, &tmp_color);
+  return(XEN_LIST_3(C_TO_XEN_DOUBLE(RGB_TO_FLOAT(tmp_color.red)),
+		    C_TO_XEN_DOUBLE(RGB_TO_FLOAT(tmp_color.green)),
+		    C_TO_XEN_DOUBLE(RGB_TO_FLOAT(tmp_color.blue))));
+}
+
+
+static XEN g_make_color(XEN r, XEN g, XEN b)
+{
+  #define H_make_color "(" S_make_color " r g b): return a color object with the indicated rgb values"
+  Colormap cmap;
+  XColor tmp_color;
+  Display *dpy;
+  mus_float_t rf, gf, bf;
+
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(r), r, XEN_ARG_1, S_make_color, "a number");
+  /* someday accept a list as r */
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(g), g, XEN_ARG_2, S_make_color, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(b), b, XEN_ARG_3, S_make_color, "a number");
+
+  rf = check_color_range(S_make_color, r);
+  gf = check_color_range(S_make_color, g);
+  bf = check_color_range(S_make_color, b);
+  dpy = XtDisplay(MAIN_SHELL(ss));
+  cmap = DefaultColormap(dpy, DefaultScreen(dpy));
+  tmp_color.flags = DoRed | DoGreen | DoBlue;
+  tmp_color.red = FLOAT_TO_RGB(rf);
+  tmp_color.green = FLOAT_TO_RGB(gf);
+  tmp_color.blue = FLOAT_TO_RGB(bf);
+
+  if ((XAllocColor(dpy, cmap, &tmp_color)) == 0)
+    XEN_ERROR(XEN_ERROR_TYPE("no-such-color"),
+	      XEN_LIST_4(C_TO_XEN_STRING(S_make_color ": can't allocate this color! (~A ~A ~A)"),
+			 r, g, b));
+
+  return(XEN_WRAP_PIXEL(tmp_color.pixel));
 }
 #endif
 
@@ -1747,6 +1868,38 @@ static XEN g_set_basic_color(XEN color)
   return(color);
 }
 
+
+static XEN g_mix_color(XEN mix_id) 
+{
+  #define H_mix_color "(" S_mix_color " :optional mix-id): color of all mix tags (if mix-id is omitted), or of mix-id's tag"
+  if (XEN_MIX_P(mix_id))
+    return(XEN_WRAP_PIXEL(mix_color_from_id(XEN_MIX_TO_C_INT(mix_id))));
+  return(XEN_WRAP_PIXEL(ss->sgx->mix_color));
+}
+
+
+static XEN g_set_mix_color(XEN color, XEN mix_id)
+{
+  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ARG_1, S_setB S_mix_color, "a color"); 
+  XEN_ASSERT_TYPE(XEN_MIX_P(mix_id) || XEN_NOT_BOUND_P(mix_id), mix_id, XEN_ARG_2, S_setB S_mix_color, "a mix");
+  if (XEN_MIX_P(mix_id))
+    mix_set_color_from_id(XEN_MIX_TO_C_INT(mix_id), XEN_UNWRAP_PIXEL(color));
+  else color_mixes(XEN_UNWRAP_PIXEL(color));
+  return(color);
+}
+
+WITH_TWO_SETTER_ARGS(g_set_mix_color_reversed, g_set_mix_color)
+
+
+bool foreground_color_ok(XEN color, axis_context *ax)
+{
+  if (XEN_PIXEL_P(color))
+    {
+      set_foreground_color(ax, (color_t)XEN_UNWRAP_PIXEL(color));
+      return(true);
+    }
+  return(false);
+}
 
 
 #ifdef XEN_ARGIFY_1
@@ -1828,8 +1981,13 @@ XEN_NARGIFY_1(g_set_basic_color_w, g_set_basic_color)
 XEN_NARGIFY_0(g_pushed_button_color_w, g_pushed_button_color)
 XEN_NARGIFY_1(g_set_pushed_button_color_w, g_set_pushed_button_color)
 XEN_NARGIFY_1(g_color_p_w, g_color_p)
+XEN_NARGIFY_3(g_make_color_w, g_make_color)
+XEN_NARGIFY_1(g_color_to_list_w, g_color_to_list)
+XEN_ARGIFY_1(g_mix_color_w, g_mix_color)
+XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
 
 #else
+
 #define g_draw_line_w g_draw_line
 #define g_draw_dot_w g_draw_dot
 #define g_draw_lines_w g_draw_lines
@@ -1908,6 +2066,10 @@ XEN_NARGIFY_1(g_color_p_w, g_color_p)
 #define g_pushed_button_color_w g_pushed_button_color
 #define g_set_pushed_button_color_w g_set_pushed_button_color
 #define g_color_p_w g_color_p
+#define g_make_color_w g_make_color
+#define g_color_to_list_w g_color_to_list
+#define g_mix_color_w g_mix_color
+#define g_set_mix_color_w g_set_mix_color
 
 #endif
 
@@ -2024,7 +2186,12 @@ void g_init_draw(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_pushed_button_color, g_pushed_button_color_w, H_pushed_button_color,
 				   S_setB S_pushed_button_color, g_set_pushed_button_color_w,  0, 0, 1, 0);
 
-  XEN_DEFINE_PROCEDURE(S_color_p, g_color_p_w, 1, 0, 0, H_color_p);
+  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_mix_color, g_mix_color_w, H_mix_color,
+					    S_setB S_mix_color, g_set_mix_color_w, g_set_mix_color_reversed, 0, 1, 1, 1);
+
+  XEN_DEFINE_PROCEDURE(S_color_p,       g_color_p_w,        1, 0, 0, H_color_p);
+  XEN_DEFINE_PROCEDURE(S_make_color,    g_make_color_w,     3, 0, 0, H_make_color);
+  XEN_DEFINE_PROCEDURE(S_color_to_list, g_color_to_list_w,  1, 0, 0, H_color_to_list);
 
 
   /* ---------------- unstable ---------------- */
@@ -2052,5 +2219,6 @@ void show_mark_triangle(chan_info *cp, int x) {}
 void erase_cursor(chan_info *cp) {}
 point_t *get_grf_points(void) {return(NULL);} 
 point_t *get_grf_points1(void) {return(NULL);}
+bool foreground_color_ok(XEN color, axis_context *ax) {return(true)};
 #endif
 

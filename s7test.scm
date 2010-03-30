@@ -7091,6 +7091,51 @@
 		sum)))
 	  6)
 
+    (test (let* ((rec-type (make-type))
+		 (? (car rec-type))
+		 (make (cadr rec-type))
+		 (ref (caddr rec-type)))
+	    (let ((val-1 (make "hi")))
+	      (let ((val-2 (make val-1)))
+		(let ((val-3 (make val-2)))
+		  (ref (ref (ref val-3)))))))
+	  "hi")
+
+    (test (let* ((rec1-type (make-type))
+		 (?1 (car rec1-type))
+		 (make1 (cadr rec1-type))
+		 (ref1 (caddr rec1-type)))
+	    (let* ((rec2-type (make-type))
+		   (?2 (car rec2-type))
+		   (make2 (cadr rec2-type))
+		   (ref2 (caddr rec2-type)))
+	      (let ((val-1 (make1 "hi")))
+		(let ((val-2 (make2 "hi")))
+		  (let ((val-3 (make1 val-2)))
+		    (and (string=? (ref2 (ref1 val-3)) "hi")
+			 (not (equal? val-1 val-2))
+			 (?1 val-1)
+			 (?2 val-2)
+			 (not (?2 val-3))))))))
+	  #t)
+
+    (test (let* ((rec-type (make-type :name "rec"))
+		 (make (cadr rec-type))
+		 (ref (caddr rec-type)))
+	    (let ((val (make "hi")))
+	      (ref (ref val))))
+	  'error)
+
+    (test (let* ((rec1-type (make-type))
+		 (make1 (cadr rec1-type))
+		 (ref1 (caddr rec1-type)))
+	    (let* ((rec2-type (make-type))
+		   (make2 (cadr rec2-type)))
+	      (let ((val-1 (make1 "hi")))
+		(let ((val-2 (make2 val-1)))
+		  (ref1 val-2)))))
+	  'error)
+
     (define (notify-if-set var notifier)
       (set! (symbol-access var) (list #f notifier #f)))
     
@@ -7149,6 +7194,11 @@
     (test _int_ 32)
     (set! _int_ 1.5)
     (test _int_ 1)
+
+    (for-each
+     (lambda (arg)
+       (test (symbol-access arg) 'error))
+     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() '#(()) (list 1 2 3) '(1 . 2) "hi"))
     
     ))
 
@@ -17012,15 +17062,6 @@
   (test (or (equal? (hiho 1) 'hiho)
 	    (equal? (car (hiho 1)) 'hiho))
 	#t))
-
-(num-test (log 8 2) 3)
-(num-test (log -1 -1) 1.0)
-(num-test (log 1 1) 'error)
-(num-test (log 1 -1) 0.0)
-(num-test (log 1.5 -1) 0-0.12906355241341i)
-
-(test (random 0 #t) 'error)
-(test (random 0.0 #(1 2)) 'error)
 
 
 
@@ -36146,6 +36187,15 @@
 (num-test (* 123.4 0.0+1.0i 0.0+1.0i) -123.4)
 (num-test (/ 123.4 0.0+1.0i 0.0+1.0i) -123.4)
 (num-test (= 123.4 0.0+1.0i 0.0+1.0i) #f)
+
+(num-test (log 8 2) 3)
+(num-test (log -1 -1) 1.0)
+(num-test (log 1 1) 'error)
+(num-test (log 1 -1) 0.0)
+(num-test (log 1.5 -1) 0-0.12906355241341i)
+
+(test (random 0 #t) 'error)
+(test (random 0.0 #(1 2)) 'error)
 
 (num-test (+ 1073741824 1073741824 1073741824 1073741824) (* 4 1073741824))
 

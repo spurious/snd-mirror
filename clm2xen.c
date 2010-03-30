@@ -1043,6 +1043,11 @@ static XEN g_mus_generator_p(XEN obj)
   return(XEN_FALSE);
 }
 
+/* if we used make-type in defgenerator, this could use the ? func,
+ *   but to keep Forth and Scheme together, maybe the type could be in C
+ *   mus-make-generator|generator?
+ */
+
 
 static XEN *make_vcts(int size)
 {

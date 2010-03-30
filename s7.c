@@ -13039,7 +13039,7 @@ static s7_pointer s_type_make(s7_scheme *sc, s7_pointer args)
   s_type_t *obj;
   s7_pointer result;
   obj = (s_type_t *)calloc(1, sizeof(s_type_t));
-  obj->type = s7_integer(car(args));             /* placed here by s7, not by the user */
+  obj->type = s7_integer(car(args));
   obj->value = cadr(args);
   result = s7_make_object(sc, obj->type, (void *)obj);
   typeflag(result) |= T_S_OBJECT;
@@ -13049,9 +13049,25 @@ static s7_pointer s_type_make(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer s_type_ref(s7_scheme *sc, s7_pointer args)
 {
+  s7_pointer x;
+  int tag;
   s_type_t *obj;
-  obj = (s_type_t *)s7_object_value(car(args));
-  return(obj->value);
+
+  tag = s7_integer(car(args));
+  x = cadr(args);
+  if (is_s_object(x))
+    {
+      obj = (s_type_t *)s7_object_value(x);
+      if (obj->type == tag)
+	return(obj->value);
+    }
+  return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+		  s7_cons(sc, 
+			  make_protected_string(sc, "~A type's 'ref' function argument, ~S, is ~A?"),
+			  make_list_3(sc, 
+				      make_protected_string(sc, object_types[tag].name),
+				      x,
+				      make_protected_string(sc, type_name(x))))));
 }
 
 
@@ -13177,7 +13193,7 @@ In each case, the argument is the value of the object, not the object itself."
    */
   z = make_closure(sc, make_list_2(sc, 
 				   make_list_1(sc, sc->S_TYPE_ARG),
-				   make_list_2(sc, sc->S_TYPE_REF, sc->S_TYPE_ARG)),
+				   make_list_3(sc, sc->S_TYPE_REF, s7_make_integer(sc, tag), sc->S_TYPE_ARG)),
 		   sc->envir,
 		   T_CLOSURE);
 
@@ -23695,7 +23711,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, object_set_name,           g_object_set,              1, 0, true,  "internal setter redirection");
   s7_define_function(sc, s_is_type_name,            s_is_type,                 2, 0, false, "internal object type check");
   s7_define_function(sc, s_type_make_name,          s_type_make,               2, 0, false, "internal object creation");
-  s7_define_function(sc, s_type_ref_name,           s_type_ref,                1, 0, false, "internal object value");
+  s7_define_function(sc, s_type_ref_name,           s_type_ref,                2, 0, false, "internal object value");
   s7_define_function_star(sc, "make-type", g_make_type, "print equal getter setter length name", H_make_type);
 
   s7_define_variable(sc, "*features*", sc->NIL);

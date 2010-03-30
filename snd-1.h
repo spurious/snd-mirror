@@ -1599,6 +1599,7 @@ void syncd_mix_set_speed(int id, mus_float_t amp);
 void syncd_mix_set_amp_env(int id, env *e);
 void syncd_mix_play(int id);
 void mix_unset_color_from_id(int id);
+color_t mix_color_from_id(int mix_id);
 color_t mix_set_color_from_id(int id, color_t new_color);
 void start_dragging_syncd_mixes(int mix_id);
 void keep_dragging_syncd_mixes(int mix_id);
@@ -1724,6 +1725,7 @@ axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller);
 void g_init_draw(void);
 void set_dialog_widget(snd_dialog_t which, widget_t wid);
 void run_new_widget_hook(widget_t w);
+bool foreground_color_ok(XEN color, axis_context *ax);
 
 #if HAVE_GL
   void sgl_save_currents(void);
