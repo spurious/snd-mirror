@@ -2219,6 +2219,6 @@ void show_mark_triangle(chan_info *cp, int x) {}
 void erase_cursor(chan_info *cp) {}
 point_t *get_grf_points(void) {return(NULL);} 
 point_t *get_grf_points1(void) {return(NULL);}
-bool foreground_color_ok(XEN color, axis_context *ax) {return(true)};
+bool foreground_color_ok(XEN color, axis_context *ax) {return(true);}
 #endif
 
