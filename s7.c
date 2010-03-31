@@ -13540,7 +13540,7 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
   csr(x) = funcs;
   symbol_set_accessed(symbol);
   if ((is_pair(funcs)) &&
-      (s7_list_length(funcs) >= 3) &&
+      (s7_list_length(sc, funcs) >= 3) &&
       ((is_procedure(car(funcs))) ||
        (is_procedure(cadr(funcs))) ||
        (is_procedure(caddr(funcs)))))
