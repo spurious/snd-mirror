@@ -84,6 +84,8 @@
  *
  *
  *   perhaps add: (define ((f a) b) (* a b)) -> (define f (lambda (a) (lambda (b) (* a b))))
+ *                  do users of this syntax expect it to continue in this manner?
+ *                  (define (((((f a) b) c) d) e) (* a b c d e))?
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -2184,6 +2186,14 @@ s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local
 }
 
 
+static bool is_environment(s7_scheme *sc, s7_pointer x)
+{
+  /* perhaps we need an environment type so this can't be fooled? */
+  return((is_pair(x)) &&
+	 ((car(x) == sc->NIL) || (is_pair(car(x))) || (s7_is_vector(car(x)))));
+}
+
+
 static s7_pointer g_symbol_to_value(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_to_value "(symbol->value sym :optional env) returns the binding of (the value associated with) the symbol sym in the given environment"
@@ -2194,7 +2204,7 @@ static s7_pointer g_symbol_to_value(s7_scheme *sc, s7_pointer args)
 
   if (cdr(args) != sc->NIL)
     {
-      if (!is_pair(cadr(args)))
+      if (!is_environment(sc, cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "symbol->value", 2, cadr(args), "an environment"));
       local_env = cadr(args);
     }
@@ -2324,7 +2334,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
   
   if (cdr(args) != sc->NIL)
     {
-      if (!is_pair(cadr(args)))
+      if (!is_environment(sc, cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "defined?", 2, cadr(args), "an environment"));
       x = cadr(args);
     }
@@ -9231,7 +9241,7 @@ defaults to the global environment; to load into the current environment instead
 
   if (cdr(args) != sc->NIL) 
     {
-      if (!is_pair(cadr(args)))
+      if (!is_environment(sc, cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "load", 2, cadr(args), "an environment"));
       sc->envir = cadr(args);
     }
@@ -9292,7 +9302,7 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
   
   if (cdr(args) != sc->NIL)
     {
-      if (!is_pair(cadr(args)))
+      if (!is_environment(sc, cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "eval", 2, cadr(args), "an environment"));
       sc->envir = cadr(args);
     }
@@ -13530,6 +13540,7 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
   csr(x) = funcs;
   symbol_set_accessed(symbol);
   if ((is_pair(funcs)) &&
+      (s7_list_length(funcs) >= 3) &&
       ((is_procedure(car(funcs))) ||
        (is_procedure(cadr(funcs))) ||
        (is_procedure(caddr(funcs)))))
@@ -15354,7 +15365,7 @@ pass (global-environment):\n\
   
   if (cdr(args) != sc->NIL)
     {
-      if (!is_pair(cadr(args)))
+      if (!is_environment(sc, cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "eval", 2, cadr(args), "an environment"));
       sc->envir = cadr(args);
     }
@@ -17914,9 +17925,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_MACRO1:
-      if (!s7_is_symbol(sc->code))
-	return(eval_error(sc, "macro name, ~A, is not a symbol?", sc->code));
-
+      /* symbol? macro name has already been checked */
       set_type(sc->value, T_MACRO | T_ANY_MACRO | T_DONT_COPY_CDR | T_DONT_COPY);
       
       /* find name in environment, and define it */
@@ -17935,9 +17944,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_DEFMACRO:
     case OP_DEFMACRO_STAR:
 
+      if (!is_pair(sc->code))                                               /* (defmacro . 1) */
+	return(eval_error(sc, "syntax error in defmacro (stray dot?): ~A", sc->code));
+
       sc->x = car(sc->code);
-      if (!s7_is_symbol(sc->x))
-	return(eval_error(sc, "defmacro: ~S is not a symbol?", sc->x)); /* (defmacro 3 (a) #f) */
+      if (!s7_is_symbol(sc->x))                                             /* (defmacro) or (defmacro 1 ...) */
+	return(eval_error(sc, "defmacro: ~S is not a symbol?", sc->x));     
 
       if (is_immutable_or_accessed(sc->x))
 	{
@@ -17946,17 +17958,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = call_symbol_bind(sc, sc->x, sc->code);
 	}
 
-      /* could we make macros safe automatically by doing the symbol lookups right now?
-       *   we'd replace each name with a reference to the current binding cons.  I think
-       *   this is how Guile implements hygenic macros -- is it worth the bother?
-       *
-       * Isn't it just as good to say:
+      /* could we make macros safe simply by carrying around the definition-time environment, as with closures?
+       *   why don't they already??  I must be missing something.
        *
        * (define-macro (mac a b) 
        *   `(with-environment (global-environment)
        *      (+ ,a ,b)))
-       *
-       * now if we rebind +
        *
        * (let ((+ -)) 
        *   (mac 1 2))
@@ -17964,6 +17971,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
 
       sc->z = cdr(sc->code);
+      if (!is_pair(sc->z))                                                  /* (defmacro a) */
+	return(eval_error(sc, "defmacro ~A, but no body?", sc->x));
+
       sc->y = s7_gensym(sc, "defmac");
       sc->code = s7_cons(sc, 
 			 sc->LAMBDA,
@@ -18005,7 +18015,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_DEFINE_MACRO:
     case OP_DEFINE_MACRO_STAR:
-      if (!is_pair(car(sc->code)))
+
+      if (!is_pair(sc->code))                                               /* (define-macro . 1) */
+	return(eval_error(sc, "syntax error in define-macro (stray dot?): ~A", sc->code));
+      if (!is_pair(car(sc->code)))                                          /* (define-macro a ...) */
 	return(s7_wrong_type_arg_error(sc, "define-macro", 1, car(sc->code), "a list (name ...)"));
 
       sc->x = caar(sc->code);
@@ -18024,6 +18037,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
 
       sc->z = cdr(sc->code);
+      if (!is_pair(sc->z))                /* (define-macro (...)) */
+	return(eval_error(sc, "define-macro ~A, but no body?", sc->x));
+
       sc->y = s7_gensym(sc, "defmac");
       sc->code = s7_cons(sc,
 			 sc->LAMBDA,

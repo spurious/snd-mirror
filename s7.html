@@ -271,6 +271,8 @@ hiho
 32
 </pre>
 
+<small>
+<blockquote>
 <p>If you want a version of define* that insists
 that any arguments before the keyword :optional are required:
 </p>
@@ -304,6 +306,8 @@ hi
 &gt; (hi)
 ;hi requires 1 argument: ()
 </pre>
+</blockquote>
+</small>
 </dd>
 <br>
 
@@ -497,7 +501,7 @@ local constants with:
 	   (list #f
 		 (lambda (symbol new-value)
 		   (if (real? new-value)
-		       (floor new-value)
+		       (floor new-value) ; or min/max to restrict it to some range etc
 		       (error "~A can only take an integer value, not ~S" symbol new-value)))
 		 #f))
      ',var))
@@ -538,6 +542,69 @@ It seems to me that you could implement all kinds of fancy things
 with this mechanism.  (One amusing case: property lists.  Just tack
 the properties onto the end of the accessor list, as in trace above).
 </p>
+
+<small>
+<blockquote>
+<p>We can use symbol-access to fix fluid-let.  The usual form of
+that macro claims to be implementing dynamic scope, but it isn't:
+</p>
+<pre>
+(let ((x 32)
+      (y 0))
+  (define (gx) x)
+  (let ((x 100))
+    (fluid-let ((x 12))
+      (set! y (gx))))
+  (list x y)))
+</pre>
+<p>which returns '(32 32) whereas the correct value is '(32 12).  To fix it,
+we block let-binding and add let-global:
+</p>
+<pre>
+(define-macro (define-global variable value)
+  `(begin
+     (define ,variable ,value)
+     (set! (symbol-access ',variable) 
+           (list #f #f (lambda (symbol new-value) 
+                         (error "use let-global to bind a global variable"))))))
+
+(define-macro (let-global xexe . body)
+  ;; all xexe vars are assumed to be global variables
+  ;;    this is fluid-let, taken with changes from Teach Yourself Scheme
+  (let ((xx (map car xexe))
+	(ee (map cadr xexe))
+	(old-xx (map (lambda (ig) 
+                       (gensym))
+                     xexe)))
+    `(let ,(map (lambda (old-x x) 
+                  `(,old-x ,x)) 
+		old-xx xx)
+       (dynamic-wind
+	   (lambda () #f)
+	   (lambda ()
+	     ,@(map (lambda (x e)
+		      `(set! ,x ,e)) 
+		    xx ee)
+	     (let ()
+	       ,@body))
+	   (lambda ()
+	     ,@(map (lambda (x old-x)
+		      `(set! ,x ,old-x)) 
+		    xx old-xx))))))
+
+(let ()
+  (define-global x 32)
+  (let ((y 0))
+    (define (gx) x)
+    (let-global ((x 100))
+      (let-global ((x 12))
+	(set! y (gx))))
+    (list x y)))
+</pre>
+<p>which returns '(32 12).
+</p>
+</blockquote>
+</small>
 </dd>
 <br>
 

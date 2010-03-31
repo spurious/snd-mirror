@@ -2377,13 +2377,6 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *        this affects xm.c: new-types has the (very long) list.
  *        But how to deal with C-side issues (clm.c methods that call defgenerator methods for example).
  *
- * color is currently a list with 'color as car -- perhaps make this a true object but that requires changes to xm.c
- *
- *   also clm method list "mus-name": clm2xen.c
- *        Font, XtAppContext, GC, etc in snd-draw.c [but needs to remain compatible with xm/xg]
- *        ladspa stuff
- *        window widget event snd-g|x0.h
- *
  * (scan-channel -> channel-for-each)
  *   and channel-map rather than map-channel
  *   channel-for-each in the multiarg case would make it easier to compare chans 

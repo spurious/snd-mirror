@@ -26,8 +26,9 @@
 (define with-bignum-function (defined? 'bignum))               ;   this is a function that turns its string arg into a bignum
 (define with-delay #f)                                         ; delay and force 
 (define with-error-data #f)                                    ; collect numerical error info and report at end
-(define with-the-bug-finding-machine #t)                       ; run the machine (this variable can be set to the number of tries)
+(define with-the-bug-finding-machine #f)                       ; run the machine (this variable can be set to the number of tries)
 					                       ;   the default number of tries is 10000
+(define with-test-at-random #f)
 
 (define our-pi 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930382)
 
@@ -4332,6 +4333,8 @@
 	(hi1 3))
       '(2 2))
 
+(test (procedure? (let () (define (a) a) (a))) #t)
+
 
 
 
@@ -7024,6 +7027,10 @@
 	    (b ((cadr typo) 321))
 	    (c ((cadr typo) 123)))
 	(test (equal? a b) #f)
+	(test (eq? a a) #t)
+	(test (eq? a b) #f)
+	(test (eqv? a a) #t)
+	(test (eqv? a b) #f)
 	(test (equal? a c) #t)
 	(test (equal? b c) #f)))
 
@@ -23323,6 +23330,9 @@
 (num-test (exp 500.0) 1.40359221785284E+217)
 (num-test (exp -100.0) 3.720075976020836E-44)
 (num-test (exp -500.0) 7.12457640674129E-218)
+(num-test (exp 5e-10) 1.000000000500000000125000031161629077797E0)
+(num-test (- (expt (exp 5e-8) 2e7) (exp 1)) 0.0)
+
 
 
 ;; -------- log
@@ -34155,494 +34165,6 @@
 (num-test (* 0 1.0+1.0i 0.0+1.0i) 0.0)
 (num-test (/ 0 1.0+1.0i 0.0+1.0i) 0.0)
 (num-test (= 0 1.0+1.0i 0.0+1.0i) #f)
-(num-test (+ 0 0 1) 1)
-(num-test (- 0 0 1) -1)
-(num-test (* 0 0 1) 0)
-(num-test (+ 0 0 1.0) 1.0)
-(num-test (- 0 0 1.0) -1.0)
-(num-test (* 0 0 1.0) 0.0)
-(num-test (+ 0 0 1/1) 1)
-(num-test (- 0 0 1/1) -1)
-(num-test (* 0 0 1/1) 0)
-(num-test (+ 0 0 1.0+1.0i) 1.0+1.0i)
-(num-test (- 0 0 1.0+1.0i) -1.0-1.0i)
-(num-test (* 0 0 1.0+1.0i) 0.0)
-(num-test (+ 0 0 0) 0)
-(num-test (- 0 0 0) 0)
-(num-test (* 0 0 0) 0)
-(num-test (+ 0 0 0.0) 0.0)
-(num-test (- 0 0 0.0) 0.0)
-(num-test (* 0 0 0.0) 0.0)
-(num-test (+ 0 0 1234) 1234)
-(num-test (- 0 0 1234) -1234)
-(num-test (* 0 0 1234) 0)
-(num-test (+ 0 0 123.4) 123.4)
-(num-test (- 0 0 123.4) -123.4)
-(num-test (* 0 0 123.4) 0.0)
-(num-test (+ 0 0 1234/11) 1234/11)
-(num-test (- 0 0 1234/11) -1234/11)
-(num-test (* 0 0 1234/11) 0)
-(num-test (+ 0 0 1.234+1.234i) 1.234+1.234i)
-(num-test (- 0 0 1.234+1.234i) -1.234-1.234i)
-(num-test (* 0 0 1.234+1.234i) 0.0)
-(num-test (+ 0 0 -1.0+1.0i) -1.0+1.0i)
-(num-test (- 0 0 -1.0+1.0i) 1.0-1.0i)
-(num-test (* 0 0 -1.0+1.0i) -0.0)
-(num-test (+ 0 0 0.0+1.0i) 0.0+1.0i)
-(num-test (- 0 0 0.0+1.0i) 0.0-1.0i)
-(num-test (* 0 0 0.0+1.0i) 0.0)
-(num-test (+ 0 0.0 1) 1.0)
-(num-test (- 0 0.0 1) -1.0)
-(num-test (* 0 0.0 1) 0.0)
-(num-test (+ 0 0.0 1.0) 1.0)
-(num-test (- 0 0.0 1.0) -1.0)
-(num-test (* 0 0.0 1.0) 0.0)
-(num-test (+ 0 0.0 1/1) 1.0)
-(num-test (- 0 0.0 1/1) -1.0)
-(num-test (* 0 0.0 1/1) 0.0)
-(num-test (+ 0 0.0 1.0+1.0i) 1.0+1.0i)
-(num-test (- 0 0.0 1.0+1.0i) -1.0-1.0i)
-(num-test (* 0 0.0 1.0+1.0i) 0.0)
-(num-test (+ 0 0.0 0) 0.0)
-(num-test (- 0 0.0 0) 0.0)
-(num-test (* 0 0.0 0) 0.0)
-(num-test (+ 0 0.0 0.0) 0.0)
-(num-test (- 0 0.0 0.0) 0.0)
-(num-test (* 0 0.0 0.0) 0.0)
-(num-test (+ 0 0.0 1234) 1234.0)
-(num-test (- 0 0.0 1234) -1234.0)
-(num-test (* 0 0.0 1234) 0.0)
-(num-test (+ 0 0.0 123.4) 123.4)
-(num-test (- 0 0.0 123.4) -123.4)
-(num-test (* 0 0.0 123.4) 0.0)
-(num-test (+ 0 0.0 1234/11) 112.18181818181819)
-(num-test (- 0 0.0 1234/11) -112.18181818181819)
-(num-test (* 0 0.0 1234/11) 0.0)
-(num-test (+ 0 0.0 1.234+1.234i) 1.234+1.234i)
-(num-test (- 0 0.0 1.234+1.234i) -1.234-1.234i)
-(num-test (* 0 0.0 1.234+1.234i) 0.0)
-(num-test (+ 0 0.0 -1.0+1.0i) -1.0+1.0i)
-(num-test (- 0 0.0 -1.0+1.0i) 1.0-1.0i)
-(num-test (* 0 0.0 -1.0+1.0i) -0.0)
-(num-test (+ 0 0.0 0.0+1.0i) 0.0+1.0i)
-(num-test (- 0 0.0 0.0+1.0i) 0.0-1.0i)
-(num-test (* 0 0.0 0.0+1.0i) 0.0)
-(num-test (+ 0 1234 1) 1235)
-(num-test (- 0 1234 1) -1235)
-(num-test (* 0 1234 1) 0)
-(num-test (/ 0 1234 1) 0)
-(num-test (= 0 1234 1) #f)
-(num-test (< 0 1234 1) #f)
-(num-test (<= 0 1234 1) #f)
-(num-test (> 0 1234 1) #f)
-(num-test (>= 0 1234 1) #f)
-(num-test (+ 0 1234 1.0) 1235.0)
-(num-test (- 0 1234 1.0) -1235.0)
-(num-test (* 0 1234 1.0) 0.0)
-(num-test (/ 0 1234 1.0) 0.0)
-(num-test (= 0 1234 1.0) #f)
-(num-test (< 0 1234 1.0) #f)
-(num-test (<= 0 1234 1.0) #f)
-(num-test (> 0 1234 1.0) #f)
-(num-test (>= 0 1234 1.0) #f)
-(num-test (+ 0 1234 1/1) 1235)
-(num-test (- 0 1234 1/1) -1235)
-(num-test (* 0 1234 1/1) 0)
-(num-test (/ 0 1234 1/1) 0)
-(num-test (= 0 1234 1/1) #f)
-(num-test (< 0 1234 1/1) #f)
-(num-test (<= 0 1234 1/1) #f)
-(num-test (> 0 1234 1/1) #f)
-(num-test (>= 0 1234 1/1) #f)
-(num-test (+ 0 1234 1.0+1.0i) 1235.0+1.0i)
-(num-test (- 0 1234 1.0+1.0i) -1235.0-1.0i)
-(num-test (* 0 1234 1.0+1.0i) 0.0)
-(num-test (/ 0 1234 1.0+1.0i) 0.0)
-(num-test (= 0 1234 1.0+1.0i) #f)
-(num-test (+ 0 1234 0) 1234)
-(num-test (- 0 1234 0) -1234)
-(num-test (* 0 1234 0) 0)
-(num-test (+ 0 1234 0.0) 1234.0)
-(num-test (- 0 1234 0.0) -1234.0)
-(num-test (* 0 1234 0.0) 0.0)
-(num-test (+ 0 1234 1234) 2468)
-(num-test (- 0 1234 1234) -2468)
-(num-test (* 0 1234 1234) 0)
-(num-test (/ 0 1234 1234) 0)
-(num-test (= 0 1234 1234) #f)
-(num-test (< 0 1234 1234) #f)
-(num-test (<= 0 1234 1234) #t)
-(num-test (> 0 1234 1234) #f)
-(num-test (>= 0 1234 1234) #f)
-(num-test (+ 0 1234 123.4) 1357.4)
-(num-test (- 0 1234 123.4) -1357.4)
-(num-test (* 0 1234 123.4) 0.0)
-(num-test (/ 0 1234 123.4) 0.0)
-(num-test (= 0 1234 123.4) #f)
-(num-test (< 0 1234 123.4) #f)
-(num-test (<= 0 1234 123.4) #f)
-(num-test (> 0 1234 123.4) #f)
-(num-test (>= 0 1234 123.4) #f)
-(num-test (+ 0 1234 1234/11) 14808/11)
-(num-test (- 0 1234 1234/11) -14808/11)
-(num-test (* 0 1234 1234/11) 0)
-(num-test (/ 0 1234 1234/11) 0)
-(num-test (= 0 1234 1234/11) #f)
-(num-test (< 0 1234 1234/11) #f)
-(num-test (<= 0 1234 1234/11) #f)
-(num-test (> 0 1234 1234/11) #f)
-(num-test (>= 0 1234 1234/11) #f)
-(num-test (+ 0 1234 1.234+1.234i) 1235.23399999999992+1.234i)
-(num-test (- 0 1234 1.234+1.234i) -1235.23399999999992-1.234i)
-(num-test (* 0 1234 1.234+1.234i) 0.0)
-(num-test (/ 0 1234 1.234+1.234i) 0.0)
-(num-test (= 0 1234 1.234+1.234i) #f)
-(num-test (+ 0 1234 -1.0+1.0i) 1233.0+1.0i)
-(num-test (- 0 1234 -1.0+1.0i) -1233.0-1.0i)
-(num-test (* 0 1234 -1.0+1.0i) -0.0)
-(num-test (/ 0 1234 -1.0+1.0i) -0.0)
-(num-test (= 0 1234 -1.0+1.0i) #f)
-(num-test (+ 0 1234 0.0+1.0i) 1234.0+1.0i)
-(num-test (- 0 1234 0.0+1.0i) -1234.0-1.0i)
-(num-test (* 0 1234 0.0+1.0i) 0.0)
-(num-test (/ 0 1234 0.0+1.0i) 0.0)
-(num-test (= 0 1234 0.0+1.0i) #f)
-(num-test (+ 0 123.4 1) 124.4)
-(num-test (- 0 123.4 1) -124.4)
-(num-test (* 0 123.4 1) 0.0)
-(num-test (/ 0 123.4 1) 0.0)
-(num-test (= 0 123.4 1) #f)
-(num-test (< 0 123.4 1) #f)
-(num-test (<= 0 123.4 1) #f)
-(num-test (> 0 123.4 1) #f)
-(num-test (>= 0 123.4 1) #f)
-(num-test (+ 0 123.4 1.0) 124.4)
-(num-test (- 0 123.4 1.0) -124.4)
-(num-test (* 0 123.4 1.0) 0.0)
-(num-test (/ 0 123.4 1.0) 0.0)
-(num-test (= 0 123.4 1.0) #f)
-(num-test (< 0 123.4 1.0) #f)
-(num-test (<= 0 123.4 1.0) #f)
-(num-test (> 0 123.4 1.0) #f)
-(num-test (>= 0 123.4 1.0) #f)
-(num-test (+ 0 123.4 1/1) 124.4)
-(num-test (- 0 123.4 1/1) -124.4)
-(num-test (* 0 123.4 1/1) 0.0)
-(num-test (/ 0 123.4 1/1) 0.0)
-(num-test (= 0 123.4 1/1) #f)
-(num-test (< 0 123.4 1/1) #f)
-(num-test (<= 0 123.4 1/1) #f)
-(num-test (> 0 123.4 1/1) #f)
-(num-test (>= 0 123.4 1/1) #f)
-(num-test (+ 0 123.4 1.0+1.0i) 124.4+1.0i)
-(num-test (- 0 123.4 1.0+1.0i) -124.4-1.0i)
-(num-test (* 0 123.4 1.0+1.0i) 0.0)
-(num-test (/ 0 123.4 1.0+1.0i) 0.0)
-(num-test (= 0 123.4 1.0+1.0i) #f)
-(num-test (+ 0 123.4 0) 123.4)
-(num-test (- 0 123.4 0) -123.4)
-(num-test (* 0 123.4 0) 0.0)
-(num-test (+ 0 123.4 0.0) 123.4)
-(num-test (- 0 123.4 0.0) -123.4)
-(num-test (* 0 123.4 0.0) 0.0)
-(num-test (+ 0 123.4 1234) 1357.4)
-(num-test (- 0 123.4 1234) -1357.4)
-(num-test (* 0 123.4 1234) 0.0)
-(num-test (/ 0 123.4 1234) 0.0)
-(num-test (= 0 123.4 1234) #f)
-(num-test (< 0 123.4 1234) #t)
-(num-test (<= 0 123.4 1234) #t)
-(num-test (> 0 123.4 1234) #f)
-(num-test (>= 0 123.4 1234) #f)
-(num-test (+ 0 123.4 123.4) 246.8)
-(num-test (- 0 123.4 123.4) -246.8)
-(num-test (* 0 123.4 123.4) 0.0)
-(num-test (/ 0 123.4 123.4) 0.0)
-(num-test (= 0 123.4 123.4) #f)
-(num-test (< 0 123.4 123.4) #f)
-(num-test (<= 0 123.4 123.4) #t)
-(num-test (> 0 123.4 123.4) #f)
-(num-test (>= 0 123.4 123.4) #f)
-(num-test (+ 0 123.4 1234/11) 235.58181818181819)
-(num-test (- 0 123.4 1234/11) -235.58181818181819)
-(num-test (* 0 123.4 1234/11) 0.0)
-(num-test (/ 0 123.4 1234/11) 0.0)
-(num-test (= 0 123.4 1234/11) #f)
-(num-test (< 0 123.4 1234/11) #f)
-(num-test (<= 0 123.4 1234/11) #f)
-(num-test (> 0 123.4 1234/11) #f)
-(num-test (>= 0 123.4 1234/11) #f)
-(num-test (+ 0 123.4 1.234+1.234i) 124.634+1.234i)
-(num-test (- 0 123.4 1.234+1.234i) -124.634-1.234i)
-(num-test (* 0 123.4 1.234+1.234i) 0.0)
-(num-test (/ 0 123.4 1.234+1.234i) 0.0)
-(num-test (= 0 123.4 1.234+1.234i) #f)
-(num-test (+ 0 123.4 -1.0+1.0i) 122.4+1.0i)
-(num-test (- 0 123.4 -1.0+1.0i) -122.4-1.0i)
-(num-test (* 0 123.4 -1.0+1.0i) -0.0)
-(num-test (/ 0 123.4 -1.0+1.0i) -0.0)
-(num-test (= 0 123.4 -1.0+1.0i) #f)
-(num-test (+ 0 123.4 0.0+1.0i) 123.4+1.0i)
-(num-test (- 0 123.4 0.0+1.0i) -123.4-1.0i)
-(num-test (* 0 123.4 0.0+1.0i) 0.0)
-(num-test (/ 0 123.4 0.0+1.0i) 0.0)
-(num-test (= 0 123.4 0.0+1.0i) #f)
-(num-test (+ 0 1234/11 1) 1245/11)
-(num-test (- 0 1234/11 1) -1245/11)
-(num-test (* 0 1234/11 1) 0)
-(num-test (/ 0 1234/11 1) 0)
-(num-test (= 0 1234/11 1) #f)
-(num-test (< 0 1234/11 1) #f)
-(num-test (<= 0 1234/11 1) #f)
-(num-test (> 0 1234/11 1) #f)
-(num-test (>= 0 1234/11 1) #f)
-(num-test (+ 0 1234/11 1.0) 113.18181818181819)
-(num-test (- 0 1234/11 1.0) -113.18181818181819)
-(num-test (* 0 1234/11 1.0) 0.0)
-(num-test (/ 0 1234/11 1.0) 0.0)
-(num-test (= 0 1234/11 1.0) #f)
-(num-test (< 0 1234/11 1.0) #f)
-(num-test (<= 0 1234/11 1.0) #f)
-(num-test (> 0 1234/11 1.0) #f)
-(num-test (>= 0 1234/11 1.0) #f)
-(num-test (+ 0 1234/11 1/1) 1245/11)
-(num-test (- 0 1234/11 1/1) -1245/11)
-(num-test (* 0 1234/11 1/1) 0)
-(num-test (/ 0 1234/11 1/1) 0)
-(num-test (= 0 1234/11 1/1) #f)
-(num-test (< 0 1234/11 1/1) #f)
-(num-test (<= 0 1234/11 1/1) #f)
-(num-test (> 0 1234/11 1/1) #f)
-(num-test (>= 0 1234/11 1/1) #f)
-(num-test (+ 0 1234/11 1.0+1.0i) 113.18181818181819+1.0i)
-(num-test (- 0 1234/11 1.0+1.0i) -113.18181818181819-1.0i)
-(num-test (* 0 1234/11 1.0+1.0i) 0.0)
-(num-test (/ 0 1234/11 1.0+1.0i) 0.0)
-(num-test (= 0 1234/11 1.0+1.0i) #f)
-(num-test (+ 0 1234/11 0) 1234/11)
-(num-test (- 0 1234/11 0) -1234/11)
-(num-test (* 0 1234/11 0) 0)
-(num-test (+ 0 1234/11 0.0) 112.18181818181819)
-(num-test (- 0 1234/11 0.0) -112.18181818181819)
-(num-test (* 0 1234/11 0.0) 0.0)
-(num-test (+ 0 1234/11 1234) 14808/11)
-(num-test (- 0 1234/11 1234) -14808/11)
-(num-test (* 0 1234/11 1234) 0)
-(num-test (/ 0 1234/11 1234) 0)
-(num-test (= 0 1234/11 1234) #f)
-(num-test (< 0 1234/11 1234) #t)
-(num-test (<= 0 1234/11 1234) #t)
-(num-test (> 0 1234/11 1234) #f)
-(num-test (>= 0 1234/11 1234) #f)
-(num-test (+ 0 1234/11 123.4) 235.58181818181819)
-(num-test (- 0 1234/11 123.4) -235.58181818181819)
-(num-test (* 0 1234/11 123.4) 0.0)
-(num-test (/ 0 1234/11 123.4) 0.0)
-(num-test (= 0 1234/11 123.4) #f)
-(num-test (< 0 1234/11 123.4) #t)
-(num-test (<= 0 1234/11 123.4) #t)
-(num-test (> 0 1234/11 123.4) #f)
-(num-test (>= 0 1234/11 123.4) #f)
-(num-test (+ 0 1234/11 1234/11) 2468/11)
-(num-test (- 0 1234/11 1234/11) -2468/11)
-(num-test (* 0 1234/11 1234/11) 0)
-(num-test (/ 0 1234/11 1234/11) 0)
-(num-test (= 0 1234/11 1234/11) #f)
-(num-test (< 0 1234/11 1234/11) #f)
-(num-test (<= 0 1234/11 1234/11) #t)
-(num-test (> 0 1234/11 1234/11) #f)
-(num-test (>= 0 1234/11 1234/11) #f)
-(num-test (+ 0 1234/11 1.234+1.234i) 113.41581818181818+1.234i)
-(num-test (- 0 1234/11 1.234+1.234i) -113.41581818181818-1.234i)
-(num-test (* 0 1234/11 1.234+1.234i) 0.0)
-(num-test (/ 0 1234/11 1.234+1.234i) 0.0)
-(num-test (= 0 1234/11 1.234+1.234i) #f)
-(num-test (+ 0 1234/11 -1.0+1.0i) 111.18181818181819+1.0i)
-(num-test (- 0 1234/11 -1.0+1.0i) -111.18181818181819-1.0i)
-(num-test (* 0 1234/11 -1.0+1.0i) -0.0)
-(num-test (/ 0 1234/11 -1.0+1.0i) -0.0)
-(num-test (= 0 1234/11 -1.0+1.0i) #f)
-(num-test (+ 0 1234/11 0.0+1.0i) 112.18181818181819+1.0i)
-(num-test (- 0 1234/11 0.0+1.0i) -112.18181818181819-1.0i)
-(num-test (* 0 1234/11 0.0+1.0i) 0.0)
-(num-test (/ 0 1234/11 0.0+1.0i) 0.0)
-(num-test (= 0 1234/11 0.0+1.0i) #f)
-(num-test (+ 0 1.234+1.234i 1) 2.234+1.234i)
-(num-test (- 0 1.234+1.234i 1) -2.234-1.234i)
-(num-test (* 0 1.234+1.234i 1) 0.0)
-(num-test (/ 0 1.234+1.234i 1) 0.0)
-(num-test (= 0 1.234+1.234i 1) #f)
-(num-test (+ 0 1.234+1.234i 1.0) 2.234+1.234i)
-(num-test (- 0 1.234+1.234i 1.0) -2.234-1.234i)
-(num-test (* 0 1.234+1.234i 1.0) 0.0)
-(num-test (/ 0 1.234+1.234i 1.0) 0.0)
-(num-test (= 0 1.234+1.234i 1.0) #f)
-(num-test (+ 0 1.234+1.234i 1/1) 2.234+1.234i)
-(num-test (- 0 1.234+1.234i 1/1) -2.234-1.234i)
-(num-test (* 0 1.234+1.234i 1/1) 0.0)
-(num-test (/ 0 1.234+1.234i 1/1) 0.0)
-(num-test (= 0 1.234+1.234i 1/1) #f)
-(num-test (+ 0 1.234+1.234i 1.0+1.0i) 2.234+2.234i)
-(num-test (- 0 1.234+1.234i 1.0+1.0i) -2.234-2.234i)
-(num-test (* 0 1.234+1.234i 1.0+1.0i) 0.0)
-(num-test (/ 0 1.234+1.234i 1.0+1.0i) 0.0)
-(num-test (= 0 1.234+1.234i 1.0+1.0i) #f)
-(num-test (+ 0 1.234+1.234i 0) 1.234+1.234i)
-(num-test (- 0 1.234+1.234i 0) -1.234-1.234i)
-(num-test (* 0 1.234+1.234i 0) 0.0)
-(num-test (+ 0 1.234+1.234i 0.0) 1.234+1.234i)
-(num-test (- 0 1.234+1.234i 0.0) -1.234-1.234i)
-(num-test (* 0 1.234+1.234i 0.0) 0.0)
-(num-test (+ 0 1.234+1.234i 1234) 1235.23399999999992+1.234i)
-(num-test (- 0 1.234+1.234i 1234) -1235.23399999999992-1.234i)
-(num-test (* 0 1.234+1.234i 1234) 0.0)
-(num-test (/ 0 1.234+1.234i 1234) 0.0)
-(num-test (= 0 1.234+1.234i 1234) #f)
-(num-test (+ 0 1.234+1.234i 123.4) 124.634+1.234i)
-(num-test (- 0 1.234+1.234i 123.4) -124.634-1.234i)
-(num-test (* 0 1.234+1.234i 123.4) 0.0)
-(num-test (/ 0 1.234+1.234i 123.4) 0.0)
-(num-test (= 0 1.234+1.234i 123.4) #f)
-(num-test (+ 0 1.234+1.234i 1234/11) 113.41581818181818+1.234i)
-(num-test (- 0 1.234+1.234i 1234/11) -113.41581818181818-1.234i)
-(num-test (* 0 1.234+1.234i 1234/11) 0.0)
-(num-test (/ 0 1.234+1.234i 1234/11) 0.0)
-(num-test (= 0 1.234+1.234i 1234/11) #f)
-(num-test (+ 0 1.234+1.234i 1.234+1.234i) 2.468+2.468i)
-(num-test (- 0 1.234+1.234i 1.234+1.234i) -2.468-2.468i)
-(num-test (* 0 1.234+1.234i 1.234+1.234i) 0.0)
-(num-test (/ 0 1.234+1.234i 1.234+1.234i) 0.0)
-(num-test (= 0 1.234+1.234i 1.234+1.234i) #f)
-(num-test (+ 0 1.234+1.234i -1.0+1.0i) 0.234+2.234i)
-(num-test (- 0 1.234+1.234i -1.0+1.0i) -0.234-2.234i)
-(num-test (* 0 1.234+1.234i -1.0+1.0i) -0.0)
-(num-test (/ 0 1.234+1.234i -1.0+1.0i) -0.0)
-(num-test (= 0 1.234+1.234i -1.0+1.0i) #f)
-(num-test (+ 0 1.234+1.234i 0.0+1.0i) 1.234+2.234i)
-(num-test (- 0 1.234+1.234i 0.0+1.0i) -1.234-2.234i)
-(num-test (* 0 1.234+1.234i 0.0+1.0i) 0.0)
-(num-test (/ 0 1.234+1.234i 0.0+1.0i) 0.0)
-(num-test (= 0 1.234+1.234i 0.0+1.0i) #f)
-(num-test (+ 0 -1.0+1.0i 1) 0.0+1.0i)
-(num-test (- 0 -1.0+1.0i 1) 0.0-1.0i)
-(num-test (* 0 -1.0+1.0i 1) -0.0)
-(num-test (/ 0 -1.0+1.0i 1) -0.0)
-(num-test (= 0 -1.0+1.0i 1) #f)
-(num-test (+ 0 -1.0+1.0i 1.0) 0.0+1.0i)
-(num-test (- 0 -1.0+1.0i 1.0) 0.0-1.0i)
-(num-test (* 0 -1.0+1.0i 1.0) -0.0)
-(num-test (/ 0 -1.0+1.0i 1.0) -0.0)
-(num-test (= 0 -1.0+1.0i 1.0) #f)
-(num-test (+ 0 -1.0+1.0i 1/1) 0.0+1.0i)
-(num-test (- 0 -1.0+1.0i 1/1) 0.0-1.0i)
-(num-test (* 0 -1.0+1.0i 1/1) -0.0)
-(num-test (/ 0 -1.0+1.0i 1/1) -0.0)
-(num-test (= 0 -1.0+1.0i 1/1) #f)
-(num-test (+ 0 -1.0+1.0i 1.0+1.0i) 0.0+2.0i)
-(num-test (- 0 -1.0+1.0i 1.0+1.0i) 0.0-2.0i)
-(num-test (* 0 -1.0+1.0i 1.0+1.0i) -0.0)
-(num-test (/ 0 -1.0+1.0i 1.0+1.0i) -0.0)
-(num-test (= 0 -1.0+1.0i 1.0+1.0i) #f)
-(num-test (+ 0 -1.0+1.0i 0) -1.0+1.0i)
-(num-test (- 0 -1.0+1.0i 0) 1.0-1.0i)
-(num-test (* 0 -1.0+1.0i 0) -0.0)
-(num-test (+ 0 -1.0+1.0i 0.0) -1.0+1.0i)
-(num-test (- 0 -1.0+1.0i 0.0) 1.0-1.0i)
-(num-test (* 0 -1.0+1.0i 0.0) -0.0)
-(num-test (+ 0 -1.0+1.0i 1234) 1233.0+1.0i)
-(num-test (- 0 -1.0+1.0i 1234) -1233.0-1.0i)
-(num-test (* 0 -1.0+1.0i 1234) -0.0)
-(num-test (/ 0 -1.0+1.0i 1234) -0.0)
-(num-test (= 0 -1.0+1.0i 1234) #f)
-(num-test (+ 0 -1.0+1.0i 123.4) 122.4+1.0i)
-(num-test (- 0 -1.0+1.0i 123.4) -122.4-1.0i)
-(num-test (* 0 -1.0+1.0i 123.4) -0.0)
-(num-test (/ 0 -1.0+1.0i 123.4) -0.0)
-(num-test (= 0 -1.0+1.0i 123.4) #f)
-(num-test (+ 0 -1.0+1.0i 1234/11) 111.18181818181819+1.0i)
-(num-test (- 0 -1.0+1.0i 1234/11) -111.18181818181819-1.0i)
-(num-test (* 0 -1.0+1.0i 1234/11) -0.0)
-(num-test (/ 0 -1.0+1.0i 1234/11) -0.0)
-(num-test (= 0 -1.0+1.0i 1234/11) #f)
-(num-test (+ 0 -1.0+1.0i 1.234+1.234i) 0.234+2.234i)
-(num-test (- 0 -1.0+1.0i 1.234+1.234i) -0.234-2.234i)
-(num-test (* 0 -1.0+1.0i 1.234+1.234i) -0.0)
-(num-test (/ 0 -1.0+1.0i 1.234+1.234i) -0.0)
-(num-test (= 0 -1.0+1.0i 1.234+1.234i) #f)
-(num-test (+ 0 -1.0+1.0i -1.0+1.0i) -2.0+2.0i)
-(num-test (- 0 -1.0+1.0i -1.0+1.0i) 2.0-2.0i)
-(num-test (* 0 -1.0+1.0i -1.0+1.0i) 0.0)
-(num-test (/ 0 -1.0+1.0i -1.0+1.0i) -0.0)
-(num-test (= 0 -1.0+1.0i -1.0+1.0i) #f)
-(num-test (+ 0 -1.0+1.0i 0.0+1.0i) -1.0+2.0i)
-(num-test (- 0 -1.0+1.0i 0.0+1.0i) 1.0-2.0i)
-(num-test (* 0 -1.0+1.0i 0.0+1.0i) -0.0)
-(num-test (/ 0 -1.0+1.0i 0.0+1.0i) -0.0)
-(num-test (= 0 -1.0+1.0i 0.0+1.0i) #f)
-(num-test (+ 0 0.0+1.0i 1) 1.0+1.0i)
-(num-test (- 0 0.0+1.0i 1) -1.0-1.0i)
-(num-test (* 0 0.0+1.0i 1) 0.0)
-(num-test (/ 0 0.0+1.0i 1) 0.0)
-(num-test (= 0 0.0+1.0i 1) #f)
-(num-test (+ 0 0.0+1.0i 1.0) 1.0+1.0i)
-(num-test (- 0 0.0+1.0i 1.0) -1.0-1.0i)
-(num-test (* 0 0.0+1.0i 1.0) 0.0)
-(num-test (/ 0 0.0+1.0i 1.0) 0.0)
-(num-test (= 0 0.0+1.0i 1.0) #f)
-(num-test (+ 0 0.0+1.0i 1/1) 1.0+1.0i)
-(num-test (- 0 0.0+1.0i 1/1) -1.0-1.0i)
-(num-test (* 0 0.0+1.0i 1/1) 0.0)
-(num-test (/ 0 0.0+1.0i 1/1) 0.0)
-(num-test (= 0 0.0+1.0i 1/1) #f)
-(num-test (+ 0 0.0+1.0i 1.0+1.0i) 1.0+2.0i)
-(num-test (- 0 0.0+1.0i 1.0+1.0i) -1.0-2.0i)
-(num-test (* 0 0.0+1.0i 1.0+1.0i) 0.0)
-(num-test (/ 0 0.0+1.0i 1.0+1.0i) 0.0)
-(num-test (= 0 0.0+1.0i 1.0+1.0i) #f)
-(num-test (+ 0 0.0+1.0i 0) 0.0+1.0i)
-(num-test (- 0 0.0+1.0i 0) 0.0-1.0i)
-(num-test (* 0 0.0+1.0i 0) 0.0)
-(num-test (+ 0 0.0+1.0i 0.0) 0.0+1.0i)
-(num-test (- 0 0.0+1.0i 0.0) 0.0-1.0i)
-(num-test (* 0 0.0+1.0i 0.0) 0.0)
-(num-test (+ 0 0.0+1.0i 1234) 1234.0+1.0i)
-(num-test (- 0 0.0+1.0i 1234) -1234.0-1.0i)
-(num-test (* 0 0.0+1.0i 1234) 0.0)
-(num-test (/ 0 0.0+1.0i 1234) 0.0)
-(num-test (= 0 0.0+1.0i 1234) #f)
-(num-test (+ 0 0.0+1.0i 123.4) 123.4+1.0i)
-(num-test (- 0 0.0+1.0i 123.4) -123.4-1.0i)
-(num-test (* 0 0.0+1.0i 123.4) 0.0)
-(num-test (/ 0 0.0+1.0i 123.4) 0.0)
-(num-test (= 0 0.0+1.0i 123.4) #f)
-(num-test (+ 0 0.0+1.0i 1234/11) 112.18181818181819+1.0i)
-(num-test (- 0 0.0+1.0i 1234/11) -112.18181818181819-1.0i)
-(num-test (* 0 0.0+1.0i 1234/11) 0.0)
-(num-test (/ 0 0.0+1.0i 1234/11) 0.0)
-(num-test (= 0 0.0+1.0i 1234/11) #f)
-(num-test (+ 0 0.0+1.0i 1.234+1.234i) 1.234+2.234i)
-(num-test (- 0 0.0+1.0i 1.234+1.234i) -1.234-2.234i)
-(num-test (* 0 0.0+1.0i 1.234+1.234i) 0.0)
-(num-test (/ 0 0.0+1.0i 1.234+1.234i) 0.0)
-(num-test (= 0 0.0+1.0i 1.234+1.234i) #f)
-(num-test (+ 0 0.0+1.0i -1.0+1.0i) -1.0+2.0i)
-(num-test (- 0 0.0+1.0i -1.0+1.0i) 1.0-2.0i)
-(num-test (* 0 0.0+1.0i -1.0+1.0i) -0.0)
-(num-test (/ 0 0.0+1.0i -1.0+1.0i) -0.0)
-(num-test (= 0 0.0+1.0i -1.0+1.0i) #f)
-(num-test (+ 0 0.0+1.0i 0.0+1.0i) 0.0+2.0i)
-(num-test (- 0 0.0+1.0i 0.0+1.0i) 0.0-2.0i)
-(num-test (* 0 0.0+1.0i 0.0+1.0i) 0.0)
-(num-test (/ 0 0.0+1.0i 0.0+1.0i) 0.0)
-(num-test (= 0 0.0+1.0i 0.0+1.0i) #f)
-(num-test (+ 0.0 1 1) 2.0)
-(num-test (- 0.0 1 1) -2.0)
-(num-test (* 0.0 1 1) 0.0)
-(num-test (/ 0.0 1 1) 0.0)
-(num-test (= 0.0 1 1) #f)
-(num-test (< 0.0 1 1) #f)
-(num-test (<= 0.0 1 1) #t)
-(num-test (> 0.0 1 1) #f)
 (num-test (>= 0.0 1 1) #f)
 (num-test (+ 0.0 1 1.0) 2.0)
 (num-test (- 0.0 1 1.0) -2.0)
@@ -42926,6 +42448,17 @@
  (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '() '#(()) (list 1 2 3) '(1 . 2)))
 
 
+(test (defmacro) 'error)
+(test (define-macro) 'error)
+(test (defmacro 1 2 3) 'error)
+(test (define-macro (1 2) 3) 'error)
+(test (defmacro a) 'error)
+(test (define-macro (a)) 'error)
+;(test (defmacro a (1) 2) 'error)
+;(test (define-macro (a 1) 2) 'error)
+(test (defmacro . a) 'error)
+(test (define-macro . a) 'error)
+
 
 (test (format #f "" 1) 'error)
 (test (format #f "hiho" 1) 'error)
@@ -46500,318 +46033,369 @@
 				      'error)))
 		(checker args result))))))
       ))
-;;; I made a fancier version that created nested expressions, but it didn't hit any new
-;;;   bugs, and it was too complicated.  
 
-
-(newline) (display ";all done!") (newline)
-      
       
 ;;; --------------------------------------------------------------------------------
       
 (define (s7-test-at-random)
-  (let ((ops (list gensym symbol-table symbol? symbol->string string->symbol symbol->value
-		   global-environment current-environment provided? provide defined? keyword?
-		   make-keyword symbol->keyword keyword->symbol hash-table? make-hash-table
-		   hash-table-ref hash-table-set! hash-table-size port-line-number port-filename
-		   input-port? output-port? char-ready? eof-object? current-input-port 
-		   current-output-port    
+  (let ((group-1 #t)
+	(group-2 #t))
+    
+    (let ((ops (list gensym symbol-table symbol? symbol->string string->symbol symbol->value 
+		     global-environment current-environment provided? provide defined? keyword?
+		     make-keyword symbol->keyword keyword->symbol hash-table? make-hash-table
+		     hash-table-ref hash-table-set! hash-table-size port-line-number port-filename
+		     input-port? output-port? char-ready? eof-object? current-input-port 
+		     current-output-port    
 					;set-current-output-port set-current-input-port set-current-error-port
-		   current-error-port 
-		   close-input-port close-output-port 
+		     current-error-port 
+		     ;close-input-port close-output-port 
 					;open-input-file open-output-file open-input-string
 					;open-output-string 
-		   get-output-string read-char peek-char read newline write-char
-		   write display read-byte write-byte read-line 
+		     get-output-string ;read-char peek-char read 
+		     ;newline write-char
+
+		     ;write display 
+		     ;read-byte write-byte read-line 
+		     ; read-line is trouble if arg is nil
+		     ;(lambda args (format #t "read-line ~A " args) (format #t "-> ~A~%" (apply read-line args)))
 					;call-with-input-string call-with-input-file
 					;with-input-from-string with-input-from-file 
 					;call-with-output-string call-with-output-file
 					;with-output-to-string with-output-to-file 
-		   number->string string->number make-polar 
-		   make-rectangular magnitude angle rationalize abs exp log sin cos tan asin acos atan
-		   sinh cosh tanh asinh acosh atanh sqrt expt floor ceiling truncate round lcm gcd + - * 
-					; / -- too many divide by 0 complaints
-		   max min quotient remainder modulo = < > <= >= number? integer? real? complex? rational?
-		   even? odd? zero? positive? negative? real-part imag-part numerator denominator inexact->exact
-		   exact->inexact exact? inexact? integer-length logior logxor logand lognot ash random
-		   make-random-state char-upcase char-downcase char->integer integer->char char-upper-case?
-		   char-lower-case? char-alphabetic? char-numeric? char-whitespace? char? char=? char<?
-		   char>? char<=? char>=? char-ci=? char-ci<? char-ci>? char-ci<=? char-ci>=? string?
-		   make-string string-length string-ref string-set! string=? string<? string>? string<=?
-		   string>=? string-ci=? string-ci<? string-ci>? string-ci<=? string-ci>=? string-append
-		   string-fill! string-copy substring string list->string string->list object->string format
-		   null? list? pair? reverse 
-					;reverse! set-car! set-cdr! sort!
-		   cons car cdr caar cadr cdar cddr
-		   caaar caadr cadar cdaar caddr cdddr cdadr cddar caaaar caaadr caadar cadaar caaddr cadddr
-		   cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar length assq assv
-		   assoc memq memv member append list list-ref 
-					;list-set! vector-set! 
-		   list-tail vector?
-		   vector->list list->vector vector-fill! vector vector-length vector-ref make-vector
+
+		     number->string string->number make-polar 
+		     make-rectangular magnitude angle rationalize abs exp log sin cos tan asin acos atan
+		     sinh cosh tanh asinh acosh atanh sqrt expt floor ceiling truncate round lcm gcd + - * 
+		     (lambda args (let ((divisor (apply * (cdr args)))) (if (not (zero? divisor)) (/ (car args) divisor) 0)))
+		     max min quotient remainder modulo = < > <= >= number? integer? real? complex? rational?
+		     even? odd? zero? positive? negative? real-part imag-part numerator denominator inexact->exact
+		     exact->inexact exact? inexact? integer-length logior logxor logand lognot ash random
+		     make-random-state char-upcase char-downcase char->integer integer->char char-upper-case?
+		     char-lower-case? char-alphabetic? char-numeric? char-whitespace? char? char=? char<?
+		     char>? char<=? char>=? char-ci=? char-ci<? char-ci>? char-ci<=? char-ci>=? string?
+		     make-string string-length string-ref string-set! string=? string<? string>? string<=?
+		     string>=? string-ci=? string-ci<? string-ci>? string-ci<=? string-ci>=? string-append
+		     string-fill! string-copy substring string list->string string->list object->string ;format
+		     null? list? pair? reverse 
+					;reverse! sort!
+		     cons car cdr caar cadr cdar cddr
+		     caaar caadr cadar cdaar caddr cdddr cdadr cddar caaaar caaadr caadar cadaar caaddr cadddr
+		     cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar length assq assv
+		     assoc memq memv member append list list-ref 
+
+		     (lambda (a b c) (if (not (pair? a)) (list-set! a b c)))
+		     (lambda (a b c) (if (not (vector? a)) (vector-set! a b c)))
+		     (lambda (a b) (if (not (pair? a)) (set-car! a b)))
+		     (lambda (a b) (if (not (pair? a)) (set-cdr! a b)))
+		     
+		     list-tail vector?
+		     vector->list list->vector vector-fill! vector vector-length vector-ref make-vector
+
 					;call/cc call-with-current-continuation call-with-exit load
-		   continuation? eval eval-string apply
-		   for-each map values call-with-values dynamic-wind ;catch error 
-					;quit gc
-		   procedure? procedure-documentation
-		   help procedure-arity procedure-source make-procedure-with-setter procedure-with-setter? 
-		   procedure-with-setter-setter-arity not boolean? eq? eqv? equal? s7-version)))
-    
-    (let ((argls (list #t #f 
-		       -1 0 1 1.5 1.0+1.0i 3/4 (if with-bignums (expt 2 100) (expt 2 30))
-		       (list 1 2) (cons 1 2) '() '((1 2) (3 4)) '((1 (2)) (((3) 4)))
-		       '#(1 2) (vector 1 #\a '(3)) (make-vector 0)
-		       (let ((x 3)) (lambda (y) (+ x y))) abs
-		       "hi" "" 
-		       'hi :hi 
-		       #\a #\newline 
-		       ;;; (call/cc (lambda (a) a)) -- this causes us to start over!
-		       (make-hash-table 256)
-		       (symbol->value '_?__undefined__?_)                  ; -> #<undefined> hopefully
-		       (if #f #f)                                          ; #<unspecified>
-		       (with-input-from-string "" (lambda () (read-char))) ; -> #<eof>?
-		       (make-random-state 1234))))
+		     continuation? ;eval eval-string apply
+		     for-each map values call-with-values dynamic-wind ;catch error 
+
+		     					;quit gc
+		     procedure? procedure-documentation procedure-environment
+		     help procedure-arity procedure-source make-procedure-with-setter procedure-with-setter? 
+		     procedure-with-setter-setter-arity not boolean? eq? eqv? equal? s7-version
+		     symbol-access make-type macro?
+
+		     )))
       
+      (let ((argls (list #t #f 
+			 -1 0 1 1.5 1.0+1.0i 3/4 (if with-bignums (expt 2 100) (expt 2 30))
+			 (list 1 2) (cons 1 2) '() '((1 2) (3 4)) '((1 (2)) (((3) 4)))
+			 '#(1 2) (vector 1 #\a '(3)) (make-vector 0)
+			 (let ((x 3)) (lambda (y) (+ x y))) abs
+			 "hi" "" 
+			 'hi :hi 
+			 #\a #\newline 
+			 ;; (call/cc (lambda (a) a)) -- this causes us to start over!
+			 (make-hash-table 256)
+			 (symbol->value '_?__undefined__?_)                  ; -> #<undefined> hopefully
+			 (if #f #f)                                          ; #<unspecified>
+			 (with-input-from-string "" (lambda () (read-char))) ; -> #<eof>?
+			 ((cadr (make-type)) 'special)
+			 ((cadr (make-type :name "test")) "hi")
+			 (((cadr (make-type :name "vect" :getter (lambda (a b) (vector-ref a b)))) (vector 1 2 3)) 1)
+			 (make-random-state 1234))))
+	
+	(if group-1
+	    (begin
 					;(display "no args") (newline)
-      (for-each
-       (lambda (f)
-	 (catch #t 
-		(lambda () 
-		  (f))
-		(lambda args #f)))
-       ops)
-      
+	      (for-each
+	       (lambda (f)
+		 (catch #t 
+			(lambda () 
+			  (f))
+			(lambda args #f)))
+	       ops)
+	      
 					;(display "one arg") (newline)
-      (for-each
-       (lambda (f)
-	 (for-each
-	  (lambda (a)
-	    (catch #t 
-		   (lambda () 
-		     (if (or (and (not (eq? f make-string))
-				  (not (eq? f ash)))
-			     (not (>= a (expt 2 30))))
-			 (f a)
-			 #f))
-		   (lambda args #f)))
-	  argls))
-       ops)
-      
+	      (for-each
+	       (lambda (f)
+		 (for-each
+		  (lambda (a)
+		    (catch #t 
+			   (lambda () 
+					;(format #t "(~A ~A) " f a)
+			     (if (or (and (not (eq? f make-string))
+					  (not (eq? f ash)))
+				     (not (>= a (expt 2 30))))
+				 (f a)
+				 #f))
+			   (lambda args #f)))
+		  argls))
+	       ops)
+	      
 					;(display "two args") (newline)
-      (for-each
-       (lambda (f)
-	 (for-each
-	  (lambda (a)
-	    (for-each
-	     (lambda (b)
-	       (catch #t 
-		      (lambda () 
-			(if (or (and (not (eq? f expt))
-				     (not (eq? f ash))
-				     (not (eq? f make-string)))
-				(and (not (>= a (expt 2 30)))
-				     (not (>= b (expt 2 30)))))
-			    (f a b)
-			    #f))
-		      (lambda args #f)))
-	     argls))
-	  argls))
-       ops)
-      
+	      (for-each
+	       (lambda (f)
+		 (for-each
+		  (lambda (a)
+		    (for-each
+		     (lambda (b)
+		       (catch #t 
+			      (lambda () 
+					;(format #t "(~A ~A ~A) " f a b)
+				(if (or (and (not (eq? f expt))
+					     (not (eq? f ash))
+					     (not (eq? f make-string)))
+					(and (not (>= a (expt 2 30)))
+					     (not (>= b (expt 2 30)))))
+				    (f a b)
+				    #f))
+			      (lambda args #f)))
+		     argls))
+		  argls))
+	       ops)
+	      
 					;(display "three args") (newline)
-      (for-each
-       (lambda (f)
-	 (for-each
-	  (lambda (a)
-	    (for-each
-	     (lambda (b)
-	       (for-each
-		(lambda (c)
-		  (catch #t 
-			 (lambda () 
+	      (for-each
+	       (lambda (f)
+		 (for-each
+		  (lambda (a)
+		    (for-each
+		     (lambda (b)
+		       (for-each
+			(lambda (c)
+			  (catch #t 
+				 (lambda () 
 					;(format #t "(~A ~A ~A ~A)~%" f a b c)
-			   (f a b c))
-			 (lambda args #f)))
-		argls))
-	     argls))
-	  argls))
-       ops)))
-  
-  (let ((ops (list 'lambda 'define 'quote 'if 'begin 'set! 'let 'let* 'letrec 'cond 'case 'and 'or 'do
-		   'call/cc 'apply 'for-each 'map 'values 'dynamic-wind))
-	
-	(args (list #t #f 
-		    -1 0 1 1.5 1.0+1.0i 3/4 (expt 2 30)
-		    (list 1 2) (cons 1 2) '() '((1 2) (3 4)) '((1 (2)) (((3) 4)))
-		    '#(1 2) (vector 1 #\a '(3)) (make-vector 0)
-		    (let ((x 3)) (lambda (y) (+ x y))) abs (lambda args args)
-		    "hi" "" 
-		    'hi :hi 
-		    #\a #\newline 
+				   (f a b c))
+				 (lambda args #f)))
+			argls))
+		     argls))
+		  argls))
+	       ops)
+	      ))
+	))
+    
+					;(display "second group") (newline)
+    
+    (let ((ops (list 'lambda 'define 'quote 'if 'begin 'set! 'let 'let* 'letrec 'cond 'case 'and 'or 'do
+		     'call-with-exit 'apply 'for-each 'map 'values 'dynamic-wind 'define* 'defmacro 'define-macro
+		     ))
+	  
+	  (args (list #t #f 
+		      -1 0 1 1.5 1.0+1.0i 3/4 (expt 2 30)
+		      (list 1 2) (cons 1 2) '() '((1 2) (3 4)) '((1 (2)) (((3) 4)))
+		      '#(1 2) (vector 1 #\a '(3)) (make-vector 0)
+		      (let ((x 3)) (lambda (y) (+ x y))) abs (lambda args args)
+		      "hi" "" 
+		      'hi :hi 
+		      #\a #\newline 
 		    ;;; (call/cc (lambda (a) a))
-		    (make-hash-table 256)
-		    (symbol->value '_?__undefined__?_)                  ; -> #<undefined> hopefully
-		    (vector-fill! (vector 0) 0)                         ; -> #<unspecified>?
-		    (with-input-from-string "" (lambda () (read-char))) ; -> #<eof>?
-		    (make-random-state 1234))))
-    (for-each
-     (lambda (op)
-       (for-each
-	(lambda (arg)
-	  (catch #t
-		 (lambda () 
-		   (if (or (and (not (eq? op make-string))
-				(not (eq? op ash)))
-			   (not (>= arg (expt 2 30))))
-		       (eval (list op arg))
-		       #f))
-		 (lambda args
-		   #f)))
-	
-	args))
-     ops)
-    
-    (for-each
-     (lambda (op)
-       (for-each
-	(lambda (arg1)
-	  (for-each
-	   (lambda (arg2)
-	     (catch #t
-		    (lambda () 
-		      (if (or (and (not (eq? op expt))
-				   (not (eq? op ash))
-				   (not (eq? op make-string)))
-			      (and (not (>= arg1 (expt 2 30)))
-				   (not (>= arg2 (expt 2 30)))))
-			  (eval (list op arg1 arg2))
-			  #f))
-		    (lambda args
-		      #f)))
-	   args))
-	args))
-     ops)
-    
-    (for-each
-     (lambda (op)
-       (for-each
-	(lambda (arg)
-	  (catch #t
-		 (lambda () 
-		   (eval (cons op arg)))
-		 (lambda args
-		   #f)))
-	args))
-     ops)
-    
-    (for-each
-     (lambda (op)
-       (for-each
-	(lambda (arg1)
-	  (for-each
-	   (lambda (arg2)
-	     (catch #t
-		    (lambda () 
-		      (eval (list op (cons arg1 arg2))))
-		    (lambda args
-		      #f)))
-	   args))
-	args))
-     ops)
-    
-    (for-each
-     (lambda (arg1)
-       (for-each
-	(lambda (arg2)
-	  (catch #t
-		 (lambda () 
-		   (eval (list 'set! (list arg1) arg2)))
-		 (lambda args
-		   #f)))
-	args))
-     args)
-    
-    (for-each
-     (lambda (arg1)
-       (for-each
-	(lambda (arg2)
-	  (catch #t
-		 (lambda () 
-		   (eval (list 'set! (list arg1) arg2)))
-		 (lambda args
-		   #f)))
-	ops))
-     args)
-    
-    (for-each
-     (lambda (arg1)
-       (for-each
-	(lambda (arg2)
-	  (catch #t
-		 (lambda () 
-		   (eval (list 'set! (cons arg1 arg2) arg1)))
-		 (lambda args
-		   #f)))
-	args))
-     args)
-    
-    (for-each
-     (lambda (op)
-       (for-each
-	(lambda (arg1)
-	  (for-each
-	   (lambda (arg2)
-	     (for-each
-	      (lambda (arg3)
-		(catch #t
-		       (lambda ()
-			 (eval (list op arg1 arg2 arg3)))
-		       (lambda args
-			 #f)))
-	      args))
-	   args))
-	args))
-     ops)
-    
-    (for-each
-     (lambda (op)
-       (for-each
-	(lambda (arg1)
-	  (for-each
-	   (lambda (arg2)
-	     (for-each
-	      (lambda (arg3)
-		(catch #t
-		       (lambda () 
-			 (eval (list op (list arg1 arg2 arg3))))
-		       (lambda args
-			 #f)))
-	      args))
-	   args))
-	ops))
-     ops)
-    
-    (for-each
-     (lambda (op)
-       (for-each
-	(lambda (arg1)
-	  (for-each
-	   (lambda (arg2)
-	     (for-each
-	      (lambda (arg3)
-		(catch #t
-		       (lambda () 
-			 (eval (list op arg1 (list arg2 arg3))))
-		       (lambda args
-			 #f)))
-	      args))
-	   ops))
-	args))
-     ops)
-    
+		      (make-hash-table 256)
+		      (symbol->value '_?__undefined__?_)                  ; -> #<undefined> hopefully
+		      (vector-fill! (vector 0) 0)                         ; -> #<unspecified>?
+		      (with-input-from-string "" (lambda () (read-char))) ; -> #<eof>?
+		      (((cadr (make-type :name "vect" :getter (lambda (a b) (vector-ref a b)))) (vector 1 2 3)) 1)
+		      (make-random-state 1234))))
+      
+      (if group-2
+	  (let ((long-cases #f))
+	    
+	    (for-each
+	     (lambda (op)
+	       (for-each
+		(lambda (arg)
+		  (catch #t
+			 (lambda () 
+			   (if (or (and (not (eq? op make-string))
+					(not (eq? op ash)))
+				   (not (>= arg (expt 2 30))))
+			       (eval (list op arg))
+			       #f))
+			 (lambda args
+			   #f)))
+		
+		args))
+	     ops)
+	    
+					;(display "group 2") (newline)
+	    (if long-cases 
+		(begin
+		  (for-each
+		   (lambda (op)
+		     (for-each
+		      (lambda (arg1)
+			(for-each
+			 (lambda (arg2)
+			   (catch #t
+				  (lambda () 
+				    (if (or (and (not (eq? op expt))
+						 (not (eq? op ash))
+						 (not (eq? op make-string)))
+					    (and (not (>= arg1 (expt 2 30)))
+						 (not (>= arg2 (expt 2 30)))))
+					(eval (list op arg1 arg2))
+					#f))
+				  (lambda args
+				    #f)))
+			 args))
+		      args))
+		   ops)
+		  ))
+	    
+					;(display "group 3") (newline)
+	    (for-each
+	     (lambda (op)
+	       (for-each
+		(lambda (arg)
+		  (catch #t
+			 (lambda ()                        ;(format #t "(~A . ~A) " op arg)
+			   (eval (cons op arg)))
+			 (lambda args
+			   #f)))
+		args))
+	     ops)
+	    
+					;(display "group 4") (newline)    
+	    (for-each
+	     (lambda (op)
+	       (for-each
+		(lambda (arg1)
+		  (for-each
+		   (lambda (arg2)
+		     (catch #t
+			    (lambda () 
+			      (eval (list op (cons arg1 arg2))))
+			    (lambda args
+			      #f)))
+		   args))
+		args))
+	     ops)
+	    
+					;(display "group 5") (newline)
+	    (for-each
+	     (lambda (arg1)
+	       (for-each
+		(lambda (arg2)
+		  (catch #t
+			 (lambda () 
+			   (eval (list 'set! (list arg1) arg2)))
+			 (lambda args
+			   #f)))
+		args))
+	     args)
+	    
+					;(display "group 6") (newline)
+	    (for-each
+	     (lambda (arg1)
+	       (for-each
+		(lambda (arg2)
+		  (catch #t
+			 (lambda () 
+			   (eval (list 'set! (list arg1) arg2)))
+			 (lambda args
+			   #f)))
+		ops))
+	     args)
+	    
+					;(display "group 7") (newline)
+	    (for-each
+	     (lambda (arg1)
+	       (for-each
+		(lambda (arg2)
+		  (catch #t
+			 (lambda () 
+			   (eval (list 'set! (cons arg1 arg2) arg1)))
+			 (lambda args
+			   #f)))
+		args))
+	     args)
+	    
+	    (if long-cases
+		(begin
+					;(display "group 8") (newline)
+		  (for-each
+		   (lambda (op)
+		     (for-each
+		      (lambda (arg1)
+			(for-each
+			 (lambda (arg2)
+			   (for-each
+			    (lambda (arg3)
+			      (catch #t
+				     (lambda ()
+				       (eval (list op arg1 arg2 arg3)))
+				     (lambda args
+				       #f)))
+			    args))
+			 args))
+		      args))
+		   ops)
+		  
+					;(display "group 9") (newline)    
+		  (for-each
+		   (lambda (op)
+		     (for-each
+		      (lambda (arg1)
+			(for-each
+			 (lambda (arg2)
+			   (for-each
+			    (lambda (arg3)
+			      (catch #t
+				     (lambda () 
+				       (eval (list op (list arg1 arg2 arg3))))
+				     (lambda args
+				       #f)))
+			    args))
+			 args))
+		      ops))
+		   ops)
+		  
+					;(display "group 10") (newline)    
+		  (for-each
+		   (lambda (op)
+		     (for-each
+		      (lambda (arg1)
+			(for-each
+			 (lambda (arg2)
+			   (for-each
+			    (lambda (arg3)
+			      (catch #t
+				     (lambda () 
+				       (eval (list op arg1 (list arg2 arg3))))
+				     (lambda args
+				       #f)))
+			    args))
+			 ops))
+		      args))
+		   ops)
+		  ))
+	    ))
+      )
     ))
 
+(if with-test-at-random
+    (s7-test-at-random))
 
+
+(newline) (display ";all done!") (newline)
 
 ;;; guile/s7 accept: (call/cc (lambda (a . b) (a 1))) -> 1
 ;;; same:            (call/cc (lambda (a b c) (a 1))) -> too many args
