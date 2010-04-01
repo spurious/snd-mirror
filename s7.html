@@ -462,7 +462,7 @@ the path between a symbol and its value.
 s7 gives you a handle on that path via the procedure-with-setter <b>symbol-access</b>.
 (symbol-access symbol) returns that symbol's accessors (if any), and (set! (symbol-access symbol) accessor-list)
 changes it.  The accessor-list is a list of three functions, the get, set, and bind functions.  (The get
-function is not yet implemented).  The set and bind functions take two arguments, the symbol in question
+function is not yet implemented, and is perhaps not needed at all).  The set and bind functions take two arguments, the symbol in question
 and the value that it is about to be set or bound to.  The variable is set or bound to the value they return.
 We could replace define-constant, and add
 local constants with:

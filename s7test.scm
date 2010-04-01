@@ -9390,7 +9390,8 @@
 	    ((vector bit-vector simple-vector) (make-vector size initial-element))
 	    ((hash-table) (make-hash-table size))
 	    ((string) (cl-make-string size (or initial-element #\null))) ; not #f!
-	    ((list) (cl-make-list size initial-element))))
+	    ((list) (cl-make-list size initial-element))
+            (else '())))
 
 	(define (cl-map type func . lists)
 	  (let* ((vals (apply mapcar func lists))
@@ -16568,7 +16569,7 @@
   (set! y (call-with-exit (lambda (return) ((lambda (a b) (return a) (set! x b)) 2 3))))
   (test (and (= x 1) (= y 2)) #t))
 
-(test (string=? (let ((hi (lambda (b) (+ b 1)))) (object->string hi)) "hi") #t)
+;(test (string=? (let ((hi (lambda (b) (+ b 1)))) (object->string hi)) "hi") #t) -- this has changed
 (test (string=? (object->string 32) "32") #t)
 (test (string=? (object->string 32.5) "32.5") #t)
 (test (string=? (object->string 32/5) "32/5") #t)
@@ -42160,6 +42161,7 @@
 (test (do ((i 0 . 1)) ((= i 1)) i) 'error)
 (test (do ((i 0 (+ i 1))) ((= i 3)) (set! i "hiho")) 'error)
 (test (let ((do+ +)) (do ((i 0 (do+ i 1))) ((= i 3)) (set! do+ abs))) 'error)
+(test (do () . 1) 'error)
 
 (test (let ((a 1)) (set! a)) 'error)
 (test (let ((a 1)) (set! a 2 3)) 'error)
@@ -42207,6 +42209,7 @@
 (test (cond 1 2 3 4) 'error)
 (test (cond (1 => (lambda (x y) #t))) 'error)
 (test (cond . 1) 'error)
+(test (cond ((1 2)) . 3) 'error)
 
 
 (test (case 1) 'error)
@@ -42217,9 +42220,17 @@
 (test (case "hi" (("hi" "ho") 123) ("ha" 321)) 'error)
 (test (case) 'error)
 (test (case . 1) 'error)
+(test (case 1 . 1) 'error)
 (test (case 1 (#t #f) ((1) #t)) 'error)
 (test (case 1 (#t #f)) 'error)
 (test (case -1 ((-1) => abs)) 'error)
+(test (case #t ((1 2) (3 4)) -1) 'error)
+(test (case 1 1) 'error)
+(test (case 1 ((2) 1) . 1) 'error)
+(test (case 1 (2 1) (1 1)) 'error)
+(test (case 1 (else)) 'error)
+(test (case () ((1 . 2) . 1) . 1) 'error)
+
 (test ((lambda () => abs)) 'error)
 (test ((lambda () => => 3)) 'error)
 ;; actually, both Guile and Gauche accept
@@ -42528,14 +42539,16 @@
 (test (let* hi () 1) 'error)
 (test (letrec (1 2) #t) 'error)
 (test (call/cc abs) 'error)
-(test (case #t ((1 2) (3 4)) -1) 'error)
 (test (quote . -1) 'error)
 (test (set! . -1) 'error)
 (test (and . #t) 'error)
 (test (and 1 . 2) 'error)
+(test (or . 1) 'error)
+(test (or #f . 1) 'error)
 (test (quote 1 1) 'error)
 (test (quote . 1) 'error)
 (test (quote . (1 2)) 'error)
+(test (quote 1 . 2) 'error)
 
 ;; I think these are correct, but they look odd
 (test (eq? (if #f #t) (if #f 3)) #t)

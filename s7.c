@@ -706,7 +706,7 @@ struct s7_scheme {
  *    since it can be combined with the immutable checks we were already doing, we can
  *    implement the symbol-access stuff at almost no additional cost (the csr field used
  *    for the list was already available, and the only additional run-time cost is that
- *    it needs to be marked during GC -- this adds less .1% total time.
+ *    it needs to be marked during GC -- this adds less .1% total time).
  */
 
 #define UNUSED_BITS                   0xf8000000
@@ -9665,14 +9665,10 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   
     case T_CLOSURE:
     case T_CLOSURE_STAR:
-      {
-	/* try to find obj in the current environment and return its name */
-	s7_pointer binding;
-	binding = find_value_in_environment(sc, obj);
-	if (is_pair(binding))
-	  return(copy_string(symbol_name(car(binding))));
-	return(copy_string("#<closure>"));
-      }
+      return(copy_string("#<closure>"));
+      /* this used to look in the current environment for the value, returning the associated name,
+       *   but that can be very confusing if two names share the value.
+       */
   
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION:
@@ -15053,20 +15049,26 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
 
   if (is_string_port(sc->input_port))
     {
-      #define QUOTE_SIZE 12
-      int start, end, slen;
+      #define QUOTE_SIZE 40
+      #define MIN_QUOTE_SIZE 8
+      int i, j, start = -1, end, slen;
       char *recent_input = NULL;
       
-      start = port_string_point(pt) - QUOTE_SIZE;
-      if (start < 0) start = 0;
-      end = port_string_point(pt) + QUOTE_SIZE;
-      if (end > port_string_length(pt))
-	end = port_string_length(pt);
+      for (i = port_string_point(pt), j = 0; (i >= 0) && (j < QUOTE_SIZE); i--, j++)
+	if ((port_string(pt)[start + i] == '\n') ||
+	    (port_string(pt)[start + i] == '\r'))
+	  break;
+      start = i;
+
+      for (i = port_string_point(pt), j = 0; (i < port_string_length(pt)) && (j < QUOTE_SIZE); i++, j++)
+	if ((port_string(pt)[start + i] == '\n') ||
+	    (port_string(pt)[start + i] == '\r'))
+	  break;
+      end = i;
       slen = end - start;
 
       if (slen > 0)
 	{
-	  int i;
 	  recent_input = (char *)malloc((slen + 8) * sizeof(char));
 	  for (i = 0; i < 3; i++) recent_input[i] = '.';
 	  recent_input[3] = ' ';
@@ -16766,6 +16768,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   (car(sc->code) != sc->NIL)))                       /* (do () ...) is ok */
 	return(eval_error(sc, "do: var list is not a list: ~S", sc->code));
 
+      if (!is_pair(cdr(sc->code)))                            /* (do () . 1) */
+	return(eval_error(sc, "do body is messed up: ~A", sc->code));
+
       if ((!is_pair(cadr(sc->code))) &&                       /* (do ((i 0)) 123) */
 	  (cadr(sc->code) != sc->NIL))                        /* no end-test? */
 	return(eval_error(sc, "do: end-test and end-value list is not a list: ~A", sc->code));
@@ -17316,7 +17321,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LAMBDA: 
       /* this includes unevaluated symbols (direct symbol table refs) in macro arg list */
       if ((!is_pair(sc->code)) ||
-	  (!is_pair(cdr(sc->code))))                               /* (lambda) or (lambda #f) */
+	  (!is_pair(cdr(sc->code))))                               /* (lambda) or (lambda #f) or (lambda . 1) */
 	return(eval_error(sc, "lambda: no args or no body? ~A", sc->code));
 
       if (!s7_is_list(sc, car(sc->code)))
@@ -17359,15 +17364,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		   (cddar(sc->x) != sc->NIL)))))
 	      return(eval_error(sc, "lambda* parameter ~S is confused", sc->x));
 	}
+
+      /* need to catch this as well:
+       *  (define* (test (a b)) a) ; where b is undefined at the point of definition
+       *  (let ((b 23)) (test)) -> b!
+       */
+
       sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE_STAR);
       pop_stack(sc);
       goto START;
       
       
     case OP_QUOTE:
-      if ((!is_pair(sc->code)) ||                /* (quote . -1) */
-	  (cdr(sc->code) != sc->NIL))            /* (quote . (1 2)) or (quote 1 1) */
-	return(eval_error(sc, "quote syntax error ~A", sc->code));
+      if (!is_pair(sc->code))                    /* (quote . -1) */
+	{
+	  if (sc->code == sc->NIL)
+	    return(eval_error(sc, "quote: not enough arguments: ~A", sc->code));
+	  return(eval_error(sc, "quote: stray dot?: ~A", sc->code));
+	}
+      if (cdr(sc->code) != sc->NIL)             /* (quote . (1 2)) or (quote 1 1) */
+	return(eval_error(sc, "quote: too many arguments ~A", sc->code));
 
       sc->value = car(sc->code);
       /* should this be immutable? (set-car! '(1 . 2) 3) */
@@ -17483,18 +17499,25 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = s7_cons(sc, s7_cons(sc, sc->value, sc->args), sc->code);
 
       
-    case OP_SET:                                                 /* entry for set! */
+    case OP_SET:                                                   /* entry for set! */
       if (!is_pair(sc->code))
-	return(eval_error(sc, "set! syntax error ~A", sc->code)); /* set! . 1) */
+	{
+	  if (sc->code == sc->NIL)                                           /* (set!) */
+	    return(eval_error(sc, "set!: not enough arguments: ~A", sc->code));
+	  return(eval_error(sc, "set!: stray dot? ~A", sc->code));           /* (set! . 1) */
+	}
+      if (!is_pair(cdr(sc->code)))                                
+	{
+	  if (cdr(sc->code) == sc->NIL)                                      /* (set! var) */
+	    return(eval_error(sc, "set!: not enough arguments: ~A", sc->code));
+	  return(eval_error(sc, "set!: stray dot? ~A", sc->code));           /* (set! var . 1) */
+	}
+      if (cddr(sc->code) != sc->NIL)                                         /* (set! var 1 2) */
+	return(eval_error(sc, "~A: too many arguments to set!", sc->code));
 
-      if (is_immutable(car(sc->code)))                         /* (set! pi 3) */
+      if (is_immutable(car(sc->code)))                                       /* (set! pi 3) */
 	return(eval_error(sc, "set!: can't alter immutable object: ~S", car(sc->code)));
 	  
-      if (cdr(sc->code) == sc->NIL)                               /* (set! var) */
-	return(eval_error(sc, "~A: set! takes two args", sc->code));
-      if (cddr(sc->code) != sc->NIL)                              /* (set! var 1 2) */
-	return(eval_error(sc, "~A: too many args to set!", sc->code));
-
       if (is_pair(car(sc->code)))                                 /* has accessor */
 	{
 	  if (is_pair(caar(sc->code)))
@@ -17605,13 +17628,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  ((!is_pair(car(sc->code))) &&         /* (let 1 ...) */
 	   (car(sc->code) != sc->NIL) &&
 	   (!s7_is_symbol(car(sc->code)))))
-	return(eval_error(sc, "let syntax error: ~A", sc->code));
+	return(eval_error(sc, "let variable list is messed up or missing: ~A", sc->code));
 
       if ((s7_is_symbol(car(sc->code))) &&
 	  (((!is_pair(cadr(sc->code))) &&       /* (let hi #t) */
 	    (cadr(sc->code) != sc->NIL)) ||
 	   (cddr(sc->code) == sc->NIL)))        /* (let hi ()) */
-      	return(eval_error(sc, "named let syntax error: ~A", sc->code));
+      	return(eval_error(sc, "named let variable list is messed up or missing: ~A", sc->code));
 
       sc->args = sc->NIL;
       sc->value = sc->code;
@@ -17623,13 +17646,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_pair(sc->code)) 
 	{ 
 	  if (!is_pair(car(sc->code)))          /* (let ((x)) ...) or (let ((x 1) . (y 2)) ...) */
-	    return(eval_error(sc, "let syntax error (no value?): ~A", car(sc->code)));
+	    return(eval_error(sc, "let variable declaration, but no value?: ~A", car(sc->code)));
 
 	  if (!(is_pair(cdar(sc->code))))       /* (let ((x . 1))...) */
-	    return(eval_error(sc, "let syntax error (not a proper list?): ~A", car(sc->code)));
+	    return(eval_error(sc, "let variable declaration is not a proper list?: ~A", car(sc->code)));
 
 	  if (cddar(sc->code) != sc->NIL)       /* (let ((x 1 2 3)) ...) */
-	    return(eval_error(sc, "let syntax error (more than one value?): ~A", car(sc->code)));
+	    return(eval_error(sc, "let variable declaration has more than one value?: ~A", car(sc->code)));
+
+	  /* currently if the extra value involves a read error, we get a kind of panicky-looking message:
+	   *   (let ((x . 2 . 3)) x)
+	   *   ;let variable declaration has more than one value?: (x error error "stray dot?: ...  ((x . 2 . 3)) x) ..")
+	   */
 
 	  push_stack(sc, opcode(OP_LET1), sc->args, cdr(sc->code));
 	  sc->code = cadar(sc->code);
@@ -17691,7 +17719,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if ((is_pair(sc->code)) &&
 	      (s7_is_symbol(car(sc->code))))
 	    return(eval_error(sc, "there is no named let*: ~A", sc->code));
-	  return(eval_error(sc, "let* syntax error: ~A", sc->code));
+	  return(eval_error(sc, "let* variable list is messed up: ~A", sc->code));
 	}
 
       if (car(sc->code) == sc->NIL) 
@@ -17704,7 +17732,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if ((!is_pair(car(sc->code))) ||            /* (let* x ... ) */
 	  (!is_pair(caar(sc->code))) ||           /* (let* (x) ...) */
 	  (!is_pair(cdaar(sc->code))))            /* (let* ((x . 1)) ...) */
-	return(eval_error(sc, "let* variable list syntax error: ~A", sc->code));
+	return(eval_error(sc, "let* variable declaration value is missing: ~A", sc->code));
       
       push_stack(sc, opcode(OP_LET_STAR1), cdr(sc->code), car(sc->code));
       sc->code = cadaar(sc->code);
@@ -17716,13 +17744,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "bad variable ~S in let* bindings", car(sc->code)));
 
       if (!is_pair(car(sc->code)))          /* (let* ((x)) ...) */
-	return(eval_error(sc, "let* syntax error (no value?): ~A", car(sc->code)));
+	return(eval_error(sc, "let* variable declaration, but no value?: ~A", car(sc->code)));
 
       if (!(is_pair(cdar(sc->code))))       /* (let* ((x . 1))...) */
-	return(eval_error(sc, "let* syntax error (not a proper list?): ~A", car(sc->code)));
+	return(eval_error(sc, "let* variable declaration is not a proper list?: ~A", car(sc->code)));
 
       if (cddar(sc->code) != sc->NIL)       /* (let* ((x 1 2 3)) ...) */
-	return(eval_error(sc, "let* syntax error (more than one value?): ~A", car(sc->code)));
+	return(eval_error(sc, "let* variable declaration has more than one value?: ~A", car(sc->code)));
 
       /* sc->envir = new_frame_in_env(sc, sc->envir); */
       NEW_FRAME(sc, sc->envir, sc->envir);
@@ -17759,7 +17787,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (!is_pair(cdr(sc->code))) ||            /* (letrec) */
 	  ((!is_pair(car(sc->code))) &&           /* (letrec 1 ...) */
 	   (car(sc->code) != sc->NIL)))
-	return(eval_error(sc, "letrec syntax error: ~A", sc->code));
+	return(eval_error(sc, "letrec variable list is messed up: ~A", sc->code));
       
       /* get all local vars and set to #undefined
        * get parallel list of values
@@ -17787,13 +17815,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_pair(sc->code)) 
 	{ 
 	  if (!is_pair(car(sc->code)))          /* (letrec ((x)) x) -- perhaps this is legal? */
-	    return(eval_error(sc, "letrec syntax error (no value?): ~A", car(sc->code)));
+	    return(eval_error(sc, "letrec variable declaration has no value?: ~A", car(sc->code)));
 
 	  if (!(is_pair(cdar(sc->code))))       /* (letrec ((x . 1))...) */
-	    return(eval_error(sc, "letrec syntax error (not a proper list?): ~A", car(sc->code)));
+	    return(eval_error(sc, "letrec variable declaration is not a proper list?: ~A", car(sc->code)));
 
 	  if (cddar(sc->code) != sc->NIL)       /* (letrec ((x 1 2 3)) ...) */
-	    return(eval_error(sc, "letrec syntax error (more than one value?): ~A", car(sc->code)));
+	    return(eval_error(sc, "letrec variable declaration has more than one value?: ~A", car(sc->code)));
 
 	  push_stack(sc, opcode(OP_LETREC1), sc->args, cdr(sc->code));
 	  sc->code = cadar(sc->code);
@@ -17815,11 +17843,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_COND:
-      if (!is_pair(sc->code))
-	return(eval_error(sc, "syntax error in cond: ~A", sc->code));
-      for (sc->x = sc->code; sc->x != sc->NIL; sc->x = cdr(sc->x))
-	if (!is_pair(car(sc->x)))    /* (cond 1) or (cond (#t 1) 3) */
+      if (!is_pair(sc->code))                                             /* (cond) or (cond . 1) */
+	return(eval_error(sc, "cond, but no body: ~A", sc->code));
+      for (sc->x = sc->code; is_pair(sc->x); sc->x = cdr(sc->x))
+	if (!is_pair(car(sc->x)))                                         /* (cond 1) or (cond (#t 1) 3) */
 	  return(eval_error(sc, "every clause in cond must be a list: ~A", car(sc->x)));
+      if (sc->x != sc->NIL)                                               /* (cond ((1 2)) . 1) */
+	return(eval_error(sc, "cond: stray dot? ~A", sc->code));
 
       push_stack(sc, opcode(OP_COND1), sc->NIL, sc->code);
       sc->code = caar(sc->code);
@@ -17835,13 +17865,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      pop_stack(sc);      /* no result clause, so return test, (cond (#t)) -> #t, (cond ((+ 1 2))) -> 3 */
 	      goto START;
 	    }
-	  if (!is_pair(sc->code)) /* (cond (1 . 2)...) */
-	    return(eval_error(sc, "syntax error in cond: ~A", sc->code));
 	  
 	  if (car(sc->code) == sc->FEED_TO) 
 	    {
-	      if (!is_pair(cdr(sc->code))) 
-		return(eval_error(sc, "syntax error in cond: ~A", cdr(sc->code)));
+	      if (!is_pair(cdr(sc->code)))                                  /* (cond (#t =>)) or (cond (#t => . 1)) */
+		return(eval_error(sc, "cond: '=>' target missing?  ~A", cdr(sc->code)));
 
 	      sc->x = make_list_2(sc, sc->QUOTE, sc->value); 
 	      sc->code = make_list_2(sc, cadr(sc->code), sc->x);
@@ -17871,8 +17899,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc);
 	  goto START;
 	}
-      if (!is_pair(sc->code))
-	return(eval_error(sc, "and: syntax error: ~A", sc->code));
+      if (!is_pair(sc->code))                                        /* (and . 1) */
+	return(eval_error(sc, "and: stray dot?: ~A", sc->code));
       push_stack(sc, opcode(OP_AND1), sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
@@ -17885,8 +17913,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc);
 	  goto START;
 	}
-      if (!is_pair(sc->code))
-	return(eval_error(sc, "and: syntax error: ~A", sc->code));
+      if (!is_pair(sc->code))                                       /* (and #t . 1) but (and #f . 1) returns #f */
+	return(eval_error(sc, "and: stray dot?: ~A", sc->code));
 
       if (cdr(sc->code) != sc->NIL)
 	push_stack(sc, opcode(OP_AND1), sc->NIL, cdr(sc->code));
@@ -17901,8 +17929,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc);
 	  goto START;
 	}
-      if (!is_pair(sc->code))
-	return(eval_error(sc, "or: syntax error: ~A", sc->code));
+      if (!is_pair(sc->code))                                       /* (or . 1) */
+	return(eval_error(sc, "or: stray dot?: ~A", sc->code));
       push_stack(sc, opcode(OP_OR1), sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
@@ -17915,8 +17943,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc);
 	  goto START;
 	}
-      if (!is_pair(sc->code))
-	return(eval_error(sc, "and: syntax error: ~A", sc->code));
+      if (!is_pair(sc->code))                                       /* (or #f . 1) but (or #t . 1) returns #t */
+	return(eval_error(sc, "or: stray dot?: ~A", sc->code));
 
       if (cdr(sc->code) != sc->NIL)
 	push_stack(sc, opcode(OP_OR1), sc->NIL, cdr(sc->code));
@@ -17945,7 +17973,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_DEFMACRO_STAR:
 
       if (!is_pair(sc->code))                                               /* (defmacro . 1) */
-	return(eval_error(sc, "syntax error in defmacro (stray dot?): ~A", sc->code));
+	return(eval_error(sc, "defmacro name missing (stray dot?): ~A", sc->code));
 
       sc->x = car(sc->code);
       if (!s7_is_symbol(sc->x))                                             /* (defmacro) or (defmacro 1 ...) */
@@ -17973,6 +18001,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->z = cdr(sc->code);
       if (!is_pair(sc->z))                                                  /* (defmacro a) */
 	return(eval_error(sc, "defmacro ~A, but no body?", sc->x));
+
+      /* arg list is not checked? -- these are accepted:
+       *    (defmacro hi (1 . 2) ...)
+       *    (defmacro hi hi . hi
+       *    (defmacro hi 1 . 2) [also lambda]
+       * also
+       *    (defmacro hi ())
+       */
 
       sc->y = s7_gensym(sc, "defmac");
       sc->code = s7_cons(sc, 
@@ -18017,7 +18053,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_DEFINE_MACRO_STAR:
 
       if (!is_pair(sc->code))                                               /* (define-macro . 1) */
-	return(eval_error(sc, "syntax error in define-macro (stray dot?): ~A", sc->code));
+	return(eval_error(sc, "define-macro name missing (stray dot?): ~A", sc->code));
       if (!is_pair(car(sc->code)))                                          /* (define-macro a ...) */
 	return(s7_wrong_type_arg_error(sc, "define-macro", 1, car(sc->code), "a list (name ...)"));
 
@@ -18065,10 +18101,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_CASE:      /* case, car(sc->code) is the selector */
-      if ((!is_pair(sc->code)) ||
-	  (!is_pair(cdr(sc->code))) ||
-	  (!is_pair(cadr (sc->code)))) 
-	return(eval_error(sc, "syntax error in case: ~A", sc->code));
+      if (!is_pair(sc->code))                                            /* (case) or (case . 1) */
+	return(eval_error(sc, "case has no selector:  ~A", sc->code));
+      if (!is_pair(cdr(sc->code)))                                       /* (case 1) or (case 1 . 1) */
+	return(eval_error(sc, "case has no clauses?:  ~A", sc->code));
+      if (!is_pair(cadr(sc->code)))                                      /* (case 1 1) */
+	return(eval_error(sc, "case clause is not a list? ~A", sc->code));
+
+      /* (case () ((1 . 2) . hi) . hi) -> segfault */
       
       push_stack(sc, opcode(OP_CASE1), sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
@@ -18078,17 +18118,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_CASE1: 
       for (sc->x = sc->code; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
 	{
-	  if ((!is_pair(sc->x)) ||
+	  if ((!is_pair(sc->x)) ||                                        /* (case 1 ((2) 1) . 1) */
 	      (!is_pair(car(sc->x))))
 	    return(eval_error(sc, "case clause ~A messed up", sc->x));	 
    
 	  sc->y = caar(sc->x);
 	  if (!is_pair(sc->y))
 	    {
-	      if (sc->y != sc->ELSE)
+	      if (sc->y != sc->ELSE)                                      /* (case 1 (2 1)) */
 		return(eval_error(sc, "case clause key list ~A is not a list or 'else'", sc->y));
-	      if (cdr(sc->x) != sc->NIL)
+	      if (cdr(sc->x) != sc->NIL)                                  /* (case 1 (else 1) ((2) 1)) */
 		return(eval_error(sc, "case 'else' clause, ~A, is not the last clause", sc->x));
+	      if (!is_pair(cdar(sc->x)))                                  /* (case 1 (else)) */
+		return(eval_error(sc, "case 'else' clause result missing: ~A", car(sc->x)));
 	      break;
 	    }
 
@@ -18096,8 +18138,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    break;
 
 	  for (sc->y = cdr(sc->y); sc->y != sc->NIL; sc->y = cdr(sc->y)) 
-	    if (s7_is_eqv(car(sc->y), sc->value)) 
-	      break;
+	    {
+	      if (!is_pair(sc->y))                                        /* (case () ((1 . 2) . hi) . hi) */
+		return(eval_error(sc, "case key list is improper? ~A", sc->x));
+	      if (s7_is_eqv(car(sc->y), sc->value)) 
+		break;
+	    }
 	  
 	  if (sc->y != sc->NIL) 
 	    break;
@@ -18115,7 +18161,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL;
 	} 
 
-      sc->value = sc->NIL;
+      sc->value = sc->UNSPECIFIED; /* this was sc->NIL but the spec says case value is unspecified if no clauses match */
       pop_stack(sc);
       goto START;
       
