@@ -2241,6 +2241,12 @@ static bool lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym, s7_poi
 
 static s7_pointer lambda_star_argument_default_value(s7_scheme *sc, s7_pointer val)
 {
+  /* if val is an expression, it needs to be evaluated in the definition environment
+   *   (let ((c 1)) (define* (a (b (+ c 1))) b) (set! c 2) (a)) -> 3
+   *
+   * TODO: s7test for the eval arg stuff
+   */
+
   s7_pointer x;
   if (s7_is_symbol(val))
     {
@@ -2248,9 +2254,21 @@ static s7_pointer lambda_star_argument_default_value(s7_scheme *sc, s7_pointer v
       if (x != sc->NIL) 
 	return(symbol_value(x));
     }
-  if ((is_pair(val)) &&
-      (car(val) == sc->QUOTE))
-    return(cadr(val));
+  
+  if (is_pair(val))
+    {
+      if (car(val) == sc->QUOTE)
+	return(cadr(val));
+
+      x = sc->z;
+      push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
+      sc->args = sc->NIL;
+      sc->code = val;
+      eval(sc, OP_EVAL);
+      sc->z = x;
+      return(sc->value);
+    }
+
   return(val);
 }
 
@@ -2418,7 +2436,7 @@ static s7_pointer find_value_in_environment(s7_scheme *sc, s7_pointer val)
 bool s7_is_keyword(s7_pointer obj)
 {
   return((s7_is_symbol(obj)) &&
-	 (symbol_name_length(obj) > 0) &&
+	 (symbol_name_length(obj) > 1) &&                           /* not 0, otherwise : is a keyword */
 	 ((symbol_name(obj)[0] == ':') ||
 	  (symbol_name(obj)[symbol_name_length(obj) - 1] == ':')));
 }
@@ -13838,9 +13856,8 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
       return(list_fill(sc, car(args), cadr(args)));
       
     }
-  /* TODO: should this be a wrong-type-arg error? (fill! 1 1) */
 
-  return(cadr(args));
+  return(s7_wrong_type_arg_error(sc, "fill!", 1, car(args), "a fillable object")); /* (fill! 1 0) */
 }
 
 
@@ -14327,7 +14344,7 @@ untrace without arguments to turn this off."
   
   for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x)) 
     if ((!s7_is_symbol(car(x))) &&
-	(!s7_is_procedure(car(x))) &&
+	(!is_procedure(car(x))) &&
 	(!is_any_macro(car(x))))
       return(s7_wrong_type_arg_error(sc, "trace", i + 1, car(x), "a symbol, a function, or some other applicable object"));
 
@@ -14352,10 +14369,8 @@ static s7_pointer g_untrace(s7_scheme *sc, s7_pointer args)
 {
   #define H_untrace "(untrace . args) removes each function in its arg list from the trace list. \
 If untrace is called with no arguments, all functions are removed, turning off all tracing."
-  int i, j;
+  int i, j, ctr;
   s7_pointer x;
-
-  /* TODO: wrong-type-arg check here (untrace "hi" ()) etc -- same for trace */
 
 #if HAVE_PTHREADS
   sc = sc->orig_sc;
@@ -14371,13 +14386,18 @@ If untrace is called with no arguments, all functions are removed, turning off a
       return(sc->F);
     }
 
-  for (x = args; x != sc->NIL; x = cdr(x)) 
+  for (ctr = 0, x = args; x != sc->NIL; ctr++, x = cdr(x)) 
     {
       s7_pointer value;
       if (s7_is_symbol(car(x)))
 	value = eval_symbol(sc, car(x));
-      else value = car(x);
-      
+      else 
+	{
+	  if ((is_procedure(car(x))) ||
+	      (is_any_macro(car(x))))
+	    value = car(x);
+	  else return(s7_wrong_type_arg_error(sc, "untrace", ctr, car(x), "a symbol or procedure")); /* (untrace "hi") */
+	}
       for (i = 0; i < sc->trace_top; i++)
 	if (value == sc->trace_list[i])
 	  sc->trace_list[i] = sc->NIL;
@@ -15223,10 +15243,8 @@ is a continuation, its stack is displayed.  If the trailing port argument is not
 output is sent to the current-output-port."
 
   int i, top = 0;
-  s7_pointer stk = sc->F, port;
+  s7_pointer stk = sc->F, port, obj;
   port = s7_current_output_port(sc);
-
-  /* TODO: (stacktrace #(1) 1) -> segfault */
 
   if (args != sc->NIL)
     {
@@ -15237,20 +15255,28 @@ output is sent to the current-output-port."
 	}
       else
 	{
-	  if ((cdr(args) != sc->NIL) &&
-	      (is_output_port(cadr(args))))
-	    port = cadr(args);
+	  if (cdr(args) != sc->NIL)
+	    {
+	      if (is_output_port(cadr(args)))
+		port = cadr(args);
+	      else return(s7_wrong_type_arg_error(sc, "stacktrace", 2, cadr(args), "an output port"));
+	    }
 	}
+      obj = car(args);
     }
+  else obj = sc->F;
 
   /* *error-info* is the special case here */
-  if (s7_is_vector(car(args)))
+  if (s7_is_vector(obj))
     {
+      if (vector_length(obj) < ERROR_INFO_SIZE)
+	return(s7_wrong_type_arg_error(sc, "stacktrace", 1, obj, "*error-info*"));
+
       for (i = ERROR_ENVIRONMENT; i < ERROR_INFO_SIZE; i++)
 	{
-	  if (vector_element(car(args), i) == ERROR_INFO_DEFAULT)
+	  if (vector_element(obj, i) == ERROR_INFO_DEFAULT)
 	    break;
-	  display_frame(sc, vector_element(car(args), i), port);
+	  display_frame(sc, vector_element(obj, i), port);
 	}
       return(sc->UNSPECIFIED);
     }
@@ -15262,10 +15288,10 @@ output is sent to the current-output-port."
     }
   else
     {
-      if (s7_is_continuation(car(args)))
+      if (s7_is_continuation(obj))
 	{
-	  top = continuation_stack_top(car(args));
-	  stk = continuation_stack(car(args));
+	  top = continuation_stack_top(obj);
+	  stk = continuation_stack(obj);
 	}
 #if HAVE_PTHREADS
       else
@@ -15273,7 +15299,7 @@ output is sent to the current-output-port."
 	  if (g_is_thread(sc, args) != sc->F)
 	    {
 	      thred *f;
-	      f = (thred *)s7_object_value(car(args));
+	      f = (thred *)s7_object_value(obj);
 	      top = s7_stack_top(f->sc);
 	      stk = f->sc->stack;
 	    }
@@ -15892,7 +15918,7 @@ static token_t token(s7_scheme *sc)
 	 3
 
 	 and ambiguous:
-	 :(defmacro hi (@foo foo) `(+ ,@foo 1))
+	 :(define-macro (hi @foo . foo) `(list ,@foo))
 
 	 what about , @foo -- is the space significant?  We accept ,@ foo.
       */
@@ -17337,7 +17363,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    return(eval_error(sc, "lambda parameter ~S is not a symbol", car(sc->code)));
 
 	  /* but we currently accept (lambda :hi 1) or (lambda (:hi) 1) or (lambda (:hi . :hi) 1)
-	   *   (lambda* complains in a similar case)
+	   *   (lambda i i . i) and (lambda (i i i i) (i)) and (lambda* ((i 1) i i) i)
 	   */
 	}
       else
@@ -17375,11 +17401,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		   (cddar(sc->x) != sc->NIL)))))
 	      return(eval_error(sc, "lambda* parameter ~S is confused", sc->x));
 	}
-
-      /* need to catch this as well:
-       *  (define* (test (a b)) a) ; where b is undefined at the point of definition
-       *  (let ((b 23)) (test)) -> b!
-       */
 
       sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE_STAR);
       pop_stack(sc);
@@ -17676,7 +17697,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL;
 	} 
 
-      /* we accept (let () ()) -- is this an error? -- Guile wants '() but it accepts '(() . ())
+      /* 
        *           (let ((:hi 1)) :hi) -- but (let ((pi 3)) pi) returns an error
        * TODO: uh oh: (define :hi 1), :hi -> 1
        */

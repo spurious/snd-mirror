@@ -4684,7 +4684,7 @@
 (define (get-fft-size choice n1)
   (let ((n (if (eq? choice :all) n1
 	       (if (not (eq? choice :prime)) (* 2 n1)
-		   (vector-ref primes n1)))))
+		   (vector-ref low-primes n1)))))
     (min (expt 2 16) 
 	 (expt 2 (ceiling (/ (log (* n 64)) (log 2)))))))
 
@@ -4772,7 +4772,7 @@
 		       (bin (if (= nc 0) (+ k 1)
 				(if (= nc 1) (+ 1 (* k 2))
 				    (if (= nc 2) (max 1 (* k 2))
-					(vector-ref primes k))))))
+					(vector-ref low-primes k))))))
 		   (vct-set! fft-rl bin (cos phi))
 		   (vct-set! fft-im bin (sin phi))))
 	       
@@ -4869,7 +4869,7 @@
 				  (bin (if (= nc 0) (+ m 1)
 					   (if (= nc 1) (+ 1 (* m 2))
 					       (if (= nc 2) (max 1 (* m 2))
-						   (vector-ref primes m))))))
+						   (vector-ref low-primes m))))))
 			      (vct-set! fft-rl bin (cos phi))
 			      (vct-set! fft-im bin (sin phi))))
 	       
@@ -5165,40 +5165,19 @@
 ;    even 0.5158 (64) to 0.5244 (22), dist: 86.9326
 ;    prime 0.5449 (24) to 0.5712 (117), dist: 288.4718
 
-;(test-all-phases) in test-phases.scm
-;prime 92: peak-phases value: 14.939027786255, current: 14.942423700008, diff: 0.0033959137531863
-;prime 99: peak-phases value: 16.0734, current: 16.078001679042, diff: 0.0046016790424446
-;prime 107: peak-phases value: 16.197, current: 16.201337191835, diff: 0.0043371918351554
-;prime 109: peak-phases value: 17.450512789654, current: 17.455397327522, diff: 0.0048845378684135
-;prime 111: peak-phases value: 16.662384420321, current: 16.66625708425, diff: 0.003872663929041
-;prime 113: peak-phases value: 16.785, current: 16.789843506579, diff: 0.0048435065788617
-;prime 115: peak-phases value: 17.152, current: 17.155924885318, diff: 0.003924885318078
-;prime 117: peak-phases value: 17.596, current: 17.599723716315, diff: 0.0037237163147843
-;prime 119: peak-phases value: 18.074548986628, current: 18.078119614047, diff: 0.003570627418906
-
-;all peaks... Fri 12-Feb-2010 07:17       
+;(test-all-phases #f) in test-phases.scm
+;all peaks... Fri 02-Apr-2010 02:56
 ;all 512: peak-phases value: 31.391244, current: 31.393507890848, diff: 0.0022638908477184
-;all 1024: peak-phases value: 49.867216, current: 49.863543040531, diff: -0.0036729594690641
-;odd peaks... Fri 12-Feb-2010 12:12
-;odd 69: peak-phases value: 10.744618415833, current: 10.746681770696, diff: 0.0020633548628162
-;odd 112: peak-phases value: 14.528804585299, current: 14.530885016168, diff: 0.0020804308690163
-;odd 121: peak-phases value: 15.185772112492, current: 15.187806181706, diff: 0.0020340692143197
-;odd 127: peak-phases value: 15.018874168396, current: 15.020894042853, diff: 0.0020198744566038
-;odd 512: peak-phases value: 35.541, current: 35.576147900962, diff: 0.035147900962443
-;odd 1024: peak-phases value: 52.508, current: 52.584187615232, diff: 0.07618761523203
-;odd 2048: peak-phases value: 83.108, current: 83.522838524996, diff: 0.41483852499564
-;odd 2048: peak-phases value: 78.937441, current: 78.931916185936, diff: -0.0055248140639037
-;even peaks... Fri 12-Feb-2010 16:51
-;even 74: peak-phases value: 11.869382858276, current: 11.871433893952, diff: 0.0020510356762511
-;even 99: peak-phases value: 13.341398779709, current: 13.343681585084, diff: 0.0022828053748594
-;even 117: peak-phases value: 14.875072951405, current: 14.87711313335, diff: 0.0020401819450893
-;even 119: peak-phases value: 15.519069915733, current: 15.521152127378, diff: 0.0020822116450496
-;even 120: peak-phases value: 15.824793168635, current: 15.827098582052, diff: 0.0023054134172753
-;even 256: peak-phases value: 21.147051, current: 21.149844044205, diff: 0.0027930442052018
-;even 512: peak-phases value: 35.776, current: 35.790130741508, diff: 0.014130741507891
+;all 1024: peak-phases value: 49.867216, current: 49.863543040531, diff: -0.0036729594690925
+
+;odd peaks... Fri 02-Apr-2010 03:42
+;odd 2048: peak-phases value: 78.937441, current: 78.931916185936, diff: -0.0055248140642448
+
+;even peaks... Fri 02-Apr-2010 04:23
+;even 256: peak-phases value: 21.147051, current: 21.149844044205, diff: 0.0027930442051805
 ;even 512: peak-phases value: 31.628149, current: 31.625265493922, diff: -0.0028835060781311
-;even 1024: peak-phases value: 51.895, current: 51.911624750293, diff: 0.016624750292998
 ;even 1024: peak-phases value: 51.627202, current: 51.61731817532, diff: -0.0098838246798678
-;even 2048: peak-phases value: 87.471149563312, current: 87.371366169887, diff: -0.099783393424573
-;even 2048: peak-phases value: 78.079325, current: 78.055349684919, diff: -0.02397531508052
-;prime peaks... Fri 12-Feb-2010 21:38
+;even 2048: peak-phases value: 78.079325, current: 78.055349684919, diff: -0.023975315080548
+
+;prime peaks... Fri 02-Apr-2010 05:14
+;primes.scm dropped the 1 somehow!

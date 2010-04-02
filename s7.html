@@ -208,6 +208,26 @@ Other math-related differences between s7 and r5rs:
 &gt; (rationalize 1.5)
 3/2
 </pre>
+
+<small>
+<blockquote>
+The exponent itself is always in base 10 (this follows gmp usage).
+Since Scheme uses "@" for its useless polar notation, s7 doesn't use it for the exponent marker, but that
+means (string-&gt;number "1e1", 16) is ambiguous &mdash is the "e" a digit or an exponent marker?
+s7 could perhaps substitute "s" in this case, but instead it just prohibits exponents if the
+radix is greater than 10.
+<pre>
+&gt; (string-&gt;number "1e9" 2)  ; (expt 2 9)
+512.0
+&gt; (string-&gt;number "1e1" 12) ; "e" is not a digit in base 12
+#f
+&gt; (string-&gt;number "1e1" 16) ; (+ (* 1 16 16) (* 14 16) 1)
+481
+&gt; (string-&gt;number "1.2e1" 3); (* 3 (+ 1 2/3))
+5.0
+</pre>
+</blockquote>
+</small>
 </dd>
 <br>
 
@@ -306,8 +326,33 @@ hi
 &gt; (hi)
 ;hi requires 1 argument: ()
 </pre>
+<hr>
+<p>If a define* argument's default value is an expression, it is evaluated in the definition environment at
+the time of the procedure call:
+</p>
+<pre>
+(let ((c 1))
+  (define* (a (b (+ c 1))) b)
+  (set! c 2)
+  (let ((c 123))
+    (a))) ; (+ c 1) here is (+ 2 1) so this returns 3
+</pre>
+<p>Since the expression is not evaluated until the procedure is called, it is ok
+to use variables that are undefined at the definition point:
+</p>
+<pre>
+&gt; (define* (a (b c)) b)
+a
+&gt; c
+;c: unbound variable
+&gt; (define c 123)
+c
+&gt; (a)
+123
+</pre>
 </blockquote>
 </small>
+
 </dd>
 <br>
 
@@ -399,6 +444,8 @@ expanded into:
 (lambda (defmac-13) (apply (lambda (a) (cons (quote +) (cons a (cons 1 (quote ()))))) (cdr defmac-13)))
 </pre>
 
+<small>
+<blockquote>
 <p>I hesitate to mention this, but macros are "first-class" entities in s7.  You can
 pass one as a function argument, or apply it to a list:
 </p>
@@ -415,6 +462,8 @@ fmac
 <p>The presence of the dummy name in the macro's arguments is an historical accident;
 it could be removed.
 </p>
+</blockquote>
+</small>
 </dd>
 <br>
 
@@ -1564,8 +1613,6 @@ define-macro, and the same result except that the macro is
 dealt with at read time!  (This means it does not respect attempts to
 bind it to something else, which is asking for confusion).
 </p>
-</dd>
-<br>
 -->
 
 <hr>
@@ -1584,6 +1631,18 @@ bind it to something else, which is asking for confusion).
 <li>syntactic names can be values: (define progn begin) (progn (display "progn!") (+ 3 4)) or (define function lambda), etc
 <li>begin returns the value of the last form (like progn); it can contain both definitions and other statements.
 </ul>
+
+<small>
+<blockquote>
+<p>Schemes vary in their treatment of ().  s7 considers it a constant that evaluates to itself,
+so you rarely (never?) need to quote it.  <code>(eq? () '())</code> is #t in s7.
+</p>
+<p>Schemes also vary in handling trailing arguments in cases such as:
+<code>(* 0 "hi")</code>.  Guile returns 0, s7 gives an error.
+</p>
+</blockquote>
+</small>
+
 </dd>
 <br>
 <br>
@@ -2594,7 +2653,7 @@ int main(int argc, char **argv)
 
   s7_define_function(s7, "notify-C", scheme_set_notification, 2, 0, false, "called if notified-var is set!");
   s7_define_variable(s7, "notified-var", s7_make_integer(s7, 0));
-  <em class=red>s7_symbol_set_access</em>(s7, 
+  <em class=red>s7_symbol_set_access</em>(s7,   /* set symbol-access of notified-var to (list #f notify-C #f) */
 		       s7_make_symbol(s7, "notified-var"),
 		       s7_cons(s7, 
 			       s7_f(s7), 

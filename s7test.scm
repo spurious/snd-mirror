@@ -172,7 +172,7 @@
 	   (number? expected))
       (check-error tst result expected))
   
-  ;; (number? +nan.0) returns #t in Guile and Gauche -- this strikes me as perverse
+  ;; (number? +nan.0) returns #t in Guile and Gauche
   
   (if (not (eq? result expected))
       (if (or (and (not (number? expected))
@@ -16887,6 +16887,7 @@
 (test (constant? #f) #t) 
 (test (constant? #t) #t) 
 (test (constant? '()) #t) 
+(test (constant? ()) #t) 
 (test (constant? '(a)) #t) 
 (test (constant? '*features*) #f)
 (test (let ((a 3)) (constant? 'a)) #f)
@@ -17044,6 +17045,8 @@
 (let ((cn (cons 1 2)))
   (fill! cn 100)
   (test cn (cons 100 100)))
+(test (fill! 1 0) 'error)
+(test (fill! 'hi 0) 'error)
 
 ;; generic for-each/map
 (test (let ((sum 0)) (for-each (lambda (n) (set! sum (+ sum n))) (vector 1 2 3)) sum) 6)      
