@@ -1736,7 +1736,7 @@ static int alsa_mus_error(int type, char *message)
 {
   if (message)
     {
-      mus_print(message);
+      mus_print("%s", message);
       free(message);
     }
   return(MUS_ERROR);

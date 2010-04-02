@@ -705,7 +705,7 @@ So, remembering that (cadr type) is the make function:
                  :getter (lambda (a b) 
                            (vector-ref a b))))   ; make a new type with its own getter function
          (object ((cadr type) (vector 1 2 3))))  ; create an object of the new type, its value is a vector
-       (object 1))                               ; "apply" the object to 1 => (vector-ref object 1) via the getter
+       (object 1))                               ; "apply" the object to 1 =&gt; (vector-ref object 1) via the getter
 2
 </pre>
 
@@ -790,6 +790,13 @@ when it is buried in vector-refs and vector-set!s!
 <p>This syntax makes it easy to write generic sequence functions, as in Common Lisp.
 See s7test.scm for examples.
 </p>
+
+<small>
+<blockquote>
+<p>Well, maybe applicable strings look weird: <code>("hi" 1)</code> is #\i, but worse,
+so is <code>(cond (1 =&gt; "hi"))</code>!
+</blockquote>
+</small>
 </dd>
 <br>
 

@@ -11321,6 +11321,7 @@ static s7_pointer g_list(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
 {
   #define H_append "(append ...) returns its argument lists appended into one list"
+  /* but weirdly (append '() 1) returns 1 */
   s7_pointer x, y;
   int i;
 
@@ -13837,6 +13838,8 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
       return(list_fill(sc, car(args), cadr(args)));
       
     }
+  /* TODO: should this be a wrong-type-arg error? (fill! 1 1) */
+
   return(cadr(args));
 }
 
@@ -14351,6 +14354,8 @@ static s7_pointer g_untrace(s7_scheme *sc, s7_pointer args)
 If untrace is called with no arguments, all functions are removed, turning off all tracing."
   int i, j;
   s7_pointer x;
+
+  /* TODO: wrong-type-arg check here (untrace "hi" ()) etc -- same for trace */
 
 #if HAVE_PTHREADS
   sc = sc->orig_sc;
@@ -15220,6 +15225,8 @@ output is sent to the current-output-port."
   int i, top = 0;
   s7_pointer stk = sc->F, port;
   port = s7_current_output_port(sc);
+
+  /* TODO: (stacktrace #(1) 1) -> segfault */
 
   if (args != sc->NIL)
     {
@@ -17328,6 +17335,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if (!s7_is_symbol(car(sc->code)))                        /* (lambda "hi" ...) */
 	    return(eval_error(sc, "lambda parameter ~S is not a symbol", car(sc->code)));
+
+	  /* but we currently accept (lambda :hi 1) or (lambda (:hi) 1) or (lambda (:hi . :hi) 1)
+	   *   (lambda* complains in a similar case)
+	   */
 	}
       else
 	{
@@ -17665,6 +17676,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL;
 	} 
 
+      /* we accept (let () ()) -- is this an error? -- Guile wants '() but it accepts '(() . ())
+       *           (let ((:hi 1)) :hi) -- but (let ((pi 3)) pi) returns an error
+       * TODO: uh oh: (define :hi 1), :hi -> 1
+       */
+
       if (sc->code != sc->NIL)                  /* (let* ((a 1) . b) a) */
 	return(eval_error(sc, "let var list improper?: ~A", sc->code));
 
@@ -17870,6 +17886,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      if (!is_pair(cdr(sc->code)))                                  /* (cond (#t =>)) or (cond (#t => . 1)) */
 		return(eval_error(sc, "cond: '=>' target missing?  ~A", cdr(sc->code)));
+
+	      /* currently we accept:
+	       *     (cond (1 2) (=> . =>)) and all variants thereof, e.g. (cond (1 2) (=> 1 . 2) (1 2)) or 
+	       *     (cond (1) (=>)) but Guile accepts this?
+	       *     (cond (1) (1 =>))
+	       *     (cond (1 => abs 1)) -- Guile says "wrong number of receiver expressions"
+	       * amusing (correct) case: (cond (1 => "hi")) -> #\i
+	       *  but so does (cond (1 => "hi" . =>)) or (cond (1 => "hi" 1))
+	       */
 
 	      sc->x = make_list_2(sc, sc->QUOTE, sc->value); 
 	      sc->code = make_list_2(sc, cadr(sc->code), sc->x);
@@ -18108,8 +18133,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!is_pair(cadr(sc->code)))                                      /* (case 1 1) */
 	return(eval_error(sc, "case clause is not a list? ~A", sc->code));
 
-      /* (case () ((1 . 2) . hi) . hi) -> segfault */
-      
       push_stack(sc, opcode(OP_CASE1), sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
@@ -18133,6 +18156,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		return(eval_error(sc, "case 'else' clause result missing: ~A", car(sc->x)));
 	      break;
 	    }
+
+	  /* we don't currently flag (case 1 ((1))) as an error -- is it one?
+	   *   what about (case 1 ((1) #t) ((1) #f))
+	   *              (case 1 ((1) #t) ())
+	   *              (case 1 ((1)) 1 . 2)
+	   *              (case () ((())))
+	   *              (case 1 ((2 2 2) 1))
+	   */
 
 	  if (s7_is_eqv(car(sc->y), sc->value)) 
 	    break;
@@ -18253,6 +18284,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_WITH_ENV:
       /* (with-environment env . body) */
+      if (!is_pair(sc->code))                            /* (with-environment . "hi") */
+	return(eval_error(sc, "with-environment takes an environment argument: ~A", sc->code));
+      if (!is_pair(cdr(sc->code)))
+	return(eval_error(sc, "with-environment body is messed up: ~A", sc->code));
+
       push_stack(sc, opcode(OP_WITH_ENV1), sc->envir, sc->NIL);  /* save current env */
       push_stack(sc, opcode(OP_WITH_ENV2), sc->NIL, sc->code);
       sc->args = sc->NIL;
@@ -18261,6 +18297,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     case OP_WITH_ENV2:
+      if (!is_environment(sc, sc->value))                    /* (with-environment . "hi") */
+	return(eval_error(sc, "with-environment takes an environment argument: ~A", sc->value));
+
       sc->envir = sc->value;                             /* in new env... */
       sc->code = cdr(sc->code);                          /*   handle body */
       goto BEGIN;
@@ -18739,12 +18778,16 @@ static char *key_print(s7_scheme *sc, void *obj)
 {
   char *buf, *val_str;
   s7_pointer val;
-  void *kval;
   int len;
-  kval = key_value((s7_pointer)obj);
-  if (kval)
-    val = (s7_pointer)kval;
-  else val = sc->F;
+
+  val = sc->F;
+  if (obj)
+    {
+      val = (s7_pointer)pthread_getspecific(*((pthread_key_t *)obj));
+      if (!val)
+	val = sc->F;
+    }
+
   val_str = s7_object_to_c_string(sc, val);
   len = 64 + safe_strlen(val_str);
   buf = (char *)malloc(len * sizeof(char));
@@ -18799,9 +18842,12 @@ static s7_pointer g_make_thread_variable(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_thread_variable "(make-thread-variable) returns a new thread specific variable (a pthread key)"
   pthread_key_t *key;
+  int err;
   key = (pthread_key_t *)malloc(sizeof(pthread_key_t));
-  pthread_key_create(key, NULL);
-  return(s7_make_object(sc, key_tag, (void *)key));  
+  err = pthread_key_create(key, NULL);
+  if (err == 0)
+    return(s7_make_object(sc, key_tag, (void *)key));  
+  return(s7_error(sc, sc->ERROR, make_list_1(sc, s7_make_string(sc, "make-thread-variable failed!?"))));
 }
 
 

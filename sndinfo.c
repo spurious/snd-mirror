@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 	  if ((chans > 0) && (mus_sound_maxamp_exists(argv[ctr])))
 	    {
 	      ampstr = display_maxamps(argv[ctr], chans);
-	      if (ampstr) fprintf(stdout, ampstr);
+	      if (ampstr) fprintf(stdout, "%s", ampstr);
 	    }
 	  fprintf(stdout, "\n");
 	  if (comment) fprintf(stdout, "  comment: %s\n", comment);

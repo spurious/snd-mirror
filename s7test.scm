@@ -16921,6 +16921,11 @@
 	  (with-environment e (list? *features*))))
       #t)
 
+(test (with-environment) 'error)
+(test (with-environment 1) 'error)
+(test (with-environment () 1) 'error)
+(test (with-environment (current-environment) 1) 1)
+
 (test (let ((local 123))
 	(define pws-test (make-procedure-with-setter
 			  (lambda () local)

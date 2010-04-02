@@ -294,7 +294,7 @@ static int main_alsa(int argc, char *argv[])
     {
       if (strcmp(argv[i], "-describe") == 0)
 	{
-	  fprintf(stdout, mus_audio_describe()); 
+	  fprintf(stdout, "%s", mus_audio_describe()); 
 	  exit(0);
 	}
       else 
