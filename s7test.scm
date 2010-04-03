@@ -4030,6 +4030,22 @@
 (test ((lambda lambda lambda) 'x) '(x))
 					;(test ((lambda (begin) (begin 1 2 3)) (lambda lambda lambda)) '(1 2 3))
 
+(test (let () ; PLP Scott p168
+	(define A
+	  (lambda ()
+	    (let* ((x 2)
+		   (C (lambda (P)
+			(let ((x 4))
+			  (P))))
+		   (D (lambda ()
+			x))
+		   (B (lambda ()
+			(let ((x 3))
+			  (C D)))))
+	      (B))))
+	(A))
+      2)
+
 #|
 ;;; here s7 "do" uses set!
 (test (let ((funcs (make-vector 3 #f)))
@@ -6037,10 +6053,10 @@
   (test (keyword? :3) #t)
   (test (keyword? ':3) #t)
   (test (keyword? '3) #f)
+  (test (keyword? ':) #f)
   (test (symbol->string (keyword->symbol hi:)) "hi")
   (test (symbol->string (keyword->symbol :hi)) "hi")
   (test (make-keyword ":") ::))
-
 
 
 
@@ -7241,6 +7257,8 @@
     (if (not (string=? str "(a1 (a . 1))\n(a2 (b . 1))\n(a3 (c . 1))\n"))
 	(format #t ";*error-info* stacktrace: ~A" str))))
 |#
+(test (stacktrace #(23)) 'error)
+
 
 (let ()
 
@@ -42477,6 +42495,10 @@
 ;(test (define-macro (a 1) 2) 'error)
 (test (defmacro . a) 'error)
 (test (define-macro . a) 'error)
+(test (define :hi 1) 'error)
+(test (define hi: 1) 'error)
+(test (define-macro (:hi a) `(+ ,a 1)) 'error)
+(test (defmacro :hi (a) `(+ ,a 1)) 'error)
 
 
 (test (format #f "" 1) 'error)

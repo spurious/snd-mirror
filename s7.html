@@ -447,7 +447,8 @@ expanded into:
 <small>
 <blockquote>
 <p>I hesitate to mention this, but macros are "first-class" entities in s7.  You can
-pass one as a function argument, or apply it to a list:
+pass one as a function argument, apply it to a list, return it from a function,
+and assign it to a variable:
 </p>
 <pre>
 &gt; (define-macro (hi a) `(+ ,a 1))
@@ -458,6 +459,17 @@ hi
 fmac
 &gt; (fmac hi)
 (+ 4 1)
+&gt; (define (fmac mac) (mac 4))
+fmac
+&gt; (fmac hi)
+5
+&gt; (define (make-mac)
+    (define-macro (hi a) `(+ ,a 1))
+    hi)
+make-mac
+&gt; (let ((x (make-mac)))
+    (x 2))
+3
 </pre>
 <p>The presence of the dummy name in the macro's arguments is an historical accident;
 it could be removed.
@@ -586,8 +598,8 @@ and in between, call the previous set accessor, if any, after reporting the set:
       (set! (symbol-access var) (cadddr (symbol-access var)))))
 </pre>
 
-<p>I believe this mechanism is similar to Ruby's hooked variables.  
-It seems to me that you could implement all kinds of fancy things
+<p>I believe symbol-access is similar to Ruby's hooked variables, or perhaps Perl's tied variables.
+You could implement all kinds of fancy things
 with this mechanism.  (One amusing case: property lists.  Just tack
 the properties onto the end of the accessor list, as in trace above).
 </p>

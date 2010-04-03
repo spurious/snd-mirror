@@ -16269,7 +16269,7 @@ static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
   if (sym == sc->UNQUOTE)
     return(eval_error_no_arg(sc, "unquote (',') occurred outside quasiquote"));
   if (sym == sc->UNQUOTE_SPLICING)
-    return(eval_error_no_arg(sc, "unquote-splicing (',@') occurred outside quasiquote"));
+    return(eval_error_no_arg(sc, "unquote-splicing (',@') occurred without quasiquote or outside of a list"));
 
   return(eval_error(sc, "~A: unbound variable", sym));
 }
@@ -17462,8 +17462,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->x = car(sc->code);
 	  sc->code = cadr(sc->code);
 	}
+
       if (!s7_is_symbol(sc->x))                                             /* (define (3 a) a) */
 	return(eval_error(sc, "define a non-symbol? ~S", sc->x));
+      if (s7_is_keyword(sc->x))                                             /* (define :hi 1) */
+	return(eval_error(sc, "define ~A: keywords are constants", sc->x));
+
       /* (define ((f a) b) (* a b)) -> (define f (lambda (a) (lambda (b) (* a b)))) */
 
       if (is_immutable_or_accessed(sc->x))
@@ -17698,8 +17702,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	} 
 
       /* 
-       *           (let ((:hi 1)) :hi) -- but (let ((pi 3)) pi) returns an error
-       * TODO: uh oh: (define :hi 1), :hi -> 1
+       * TODO:          (let ((:hi 1)) :hi) -- but (let ((pi 3)) pi) returns an error
        */
 
       if (sc->code != sc->NIL)                  /* (let* ((a 1) . b) a) */
@@ -18024,6 +18027,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->x = car(sc->code);
       if (!s7_is_symbol(sc->x))                                             /* (defmacro) or (defmacro 1 ...) */
 	return(eval_error(sc, "defmacro: ~S is not a symbol?", sc->x));     
+      if (s7_is_keyword(sc->x))                                             /* (defmacro :hi ...) */
+	return(eval_error(sc, "defmacro ~A: keywords are constants", sc->x));
 
       if (is_immutable_or_accessed(sc->x))
 	{
@@ -18106,6 +18111,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->x = caar(sc->code);
       if (!s7_is_symbol(sc->x))
 	return(eval_error(sc, "define-macro: ~S is not a symbol?", sc->x));
+      if (s7_is_keyword(sc->x))                                             /* (define-macro (:hi ...)) */
+	return(eval_error(sc, "define-macro ~A: keywords are constants", sc->x));
 
       if (is_immutable_or_accessed(sc->x))
 	{
@@ -18178,12 +18185,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      break;
 	    }
 
-	  /* we don't currently flag (case 1 ((1))) as an error -- is it one?
+	  /* we don't currently flag (case 1 ((1))) as an error -- is it one? [guile says yes]
 	   *   what about (case 1 ((1) #t) ((1) #f))
 	   *              (case 1 ((1) #t) ())
 	   *              (case 1 ((1)) 1 . 2)
 	   *              (case () ((())))
-	   *              (case 1 ((2 2 2) 1))
+	   *              (case 1 ((2 2 2) 1)): guile says #<unspecified>
 	   */
 
 	  if (s7_is_eqv(car(sc->y), sc->value)) 
