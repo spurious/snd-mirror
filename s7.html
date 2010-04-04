@@ -213,7 +213,7 @@ Other math-related differences between s7 and r5rs:
 <blockquote>
 The exponent itself is always in base 10 (this follows gmp usage).
 Since Scheme uses "@" for its useless polar notation, s7 doesn't use it for the exponent marker, but that
-means (string-&gt;number "1e1", 16) is ambiguous &mdash is the "e" a digit or an exponent marker?
+means (string-&gt;number "1e1", 16) is ambiguous &mdash; is the "e" a digit or an exponent marker?
 s7 could perhaps substitute "s" in this case, but instead it just prohibits exponents if the
 radix is greater than 10.
 <pre>
@@ -519,7 +519,8 @@ something a macro can do for us:
 	  (if (eq? (car val) 'quote)
 	      (or (car-member (cadr val) syms)
 		  (and (pair? (cadr val))
-		       (append (list 'list) (walker (cadr val))))
+		       (append (list 'list) 
+			       (walker (cadr val))))
 		  (cadr val))
 	      (cons (walker (car val))
 		    (walker (cdr val))))
@@ -533,29 +534,29 @@ something a macro can do for us:
 		     (not (car-member (cadr val) syms)))
 		(set! syms (cons 
 			    (cons (cadr val) 
-				  (gensym (symbol->string (cadr val))))
+				  (gensym (symbol-&gt;string (cadr val))))
 			    syms))))
 	  body)
 
-      (let* ((new-body (walker body))
-	     (new-syms (map (lambda (slot)
-			      (list (cdr slot) `(gensym)))
-			    syms))
-	     (new-globals 
-	      (let ((result '()))
-		(for-each
-		 (lambda (slot)
-		   (if (defined? (car slot))
-		       (set! result (cons
-				     (list 'set! (cdr slot) (car slot))
-				     result))))
-		 syms)
-		result)))
+    (let* ((new-body (walker body))
+	   (new-syms (map (lambda (slot)
+			    (list (cdr slot) `(gensym)))
+			  syms))
+	   (new-globals 
+	    (let ((result '()))
+	      (for-each
+	       (lambda (slot)
+		 (if (defined? (car slot))
+		     (set! result (cons
+				   (list 'set! (cdr slot) (car slot))
+				   result))))
+	       syms)
+	      result)))
 
-	`(define-macro ,name-and-args 
-	   (let ,new-syms
-	     ,@new-globals
-	     `(begin ,,@new-body))))))
+      `(define-macro ,name-and-args 
+	 (let ,new-syms
+	   ,@new-globals
+	   `(begin ,,@new-body))))))
 </pre>
 <p>Now we can automatically generate hygenic macros:
 </p>
@@ -711,7 +712,7 @@ that macro claims that it implements dynamic scope, but it doesn't:
   (let ((x 100))
     (fluid-let ((x 12))
       (set! y (gx))))
-  (list x y)))
+  (list x y))
 </pre>
 <p>which returns '(32 32) whereas the correct value is '(32 12).  To fix it,
 we block let-binding and add let-global:
@@ -951,6 +952,7 @@ See s7test.scm for examples.
 <blockquote>
 <p>Well, maybe applicable strings look weird: <code>("hi" 1)</code> is #\i, but worse,
 so is <code>(cond (1 =&gt; "hi"))</code>!
+</p>
 </blockquote>
 </small>
 </dd>
@@ -1065,7 +1067,7 @@ of pthread_getspecific, just call it: (var).
 			   (format #t "thread ~A " (a-thread-variable))
 			   (release-lock a-lock)))
 			threads))
-    (if (< i 8)
+    (if (&lt; i 8)
 	(loop (+ i 1))))
   (for-each 
    (lambda (thread) 
@@ -1586,8 +1588,20 @@ Here is an example of "apropos" that accesses both environments:
 </pre>
 
 <p>(with-environment env . body) evaluates its body in the environment env.
+Although the environment is a list of alists of (symbol . value) pairs, you can't simply
+add new pairs to it because symbol lookup is optimized to reduce the time
+spent pawing through it.  So, to add a new value to an environment,
+use <b>augment-environment</b>:
 </p>
+<pre>
+(let ((a 1)) 
+  (eval '(+ a b) 
+         (<em class=red>augment-environment</em>
+           (current-environment) 
+           (cons 'b 32)))) ; add 'b with the value 32 to this environment
 
+-&gt; 33
+</pre>
 </dd>
 <br>
 
@@ -2719,20 +2733,6 @@ int main(int argc, char **argv)
 #include "s7.h"
 
 static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
-
-static s7_pointer scheme_set_notification(s7_scheme *sc, s7_pointer args)
-{
-  /* this function is called when the scheme variable is set! */
-  fprintf(stderr, "%s set to %s\n",
-	  s7_object_to_c_string(sc, s7_car(args)),
-	  s7_object_to_c_string(sc, s7_car(s7_cdr(args))));
-}
-
-int main(int argc, char **argv)
-{
-  s7_scheme *s7;
-  s7 = s7_init();  
-  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
 
 static s7_pointer scheme_set_notification(s7_scheme *sc, s7_pointer args)
 {

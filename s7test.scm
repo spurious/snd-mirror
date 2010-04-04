@@ -6964,7 +6964,123 @@
 	      (and (= val 1)
 		   (equal? lst (list 2 3))))))
 	#t)
+
+  (define-macro (define-clean-macro name-and-args . body)
+    (let ((syms ()))
+      
+      (define (walk func lst)
+	(func lst)
+	(if (pair? lst)
+	    (begin
+	      (walk func (car lst))
+	      (walk func (cdr lst)))))
+      
+      (define (car-member sym lst)
+	(if (null? lst)
+	    #f
+	    (if (eq? sym (caar lst))
+		(cdar lst)
+		(car-member sym (cdr lst)))))
+      
+      (define (walker val)
+	(if (pair? val)
+	    (if (eq? (car val) 'quote)
+		(or (car-member (cadr val) syms)
+		    (and (pair? (cadr val))
+			 (append (list 'list) 
+				 (walker (cadr val))))
+		    (cadr val))
+		(cons (walker (car val))
+		      (walker (cdr val))))
+	    (or (car-member val syms)
+		val)))
+      
+      (walk (lambda (val)
+	      (if (and (pair? val)
+		       (eq? (car val) 'quote)
+		       (symbol? (cadr val))
+		       (not (car-member (cadr val) syms)))
+		  (set! syms (cons 
+			      (cons (cadr val) 
+				    (gensym (symbol->string (cadr val))))
+			      syms))))
+	    body)
+      
+      (let* ((new-body (walker body))
+	     (new-syms (map (lambda (slot)
+			      (list (cdr slot) `(gensym)))
+			    syms))
+	     (new-globals 
+	      (let ((result '()))
+		(for-each
+		 (lambda (slot)
+		   (if (defined? (car slot))
+		       (set! result (cons
+				     (list 'set! (cdr slot) (car slot))
+				     result))))
+		 syms)
+		result)))
+	
+	`(define-macro ,name-and-args 
+	   (let ,new-syms
+	     ,@new-globals
+	     `(begin ,,@new-body))))))
   
+  (test (let ()
+	  (define-clean-macro (hi a) `(+ ,a 1))
+	  (hi 1))
+	2)
+  
+  (test (let ()
+	  (define-clean-macro (hi a) `(+ ,a 1))
+	  (let ((+ *)
+		(a 12))
+	    (hi a)))
+	13)
+  
+  (test (let ()
+	  (define-clean-macro (hi a) `(let ((b 23)) (+ b ,a)))
+	  (hi 2))
+	25)
+  
+  (test (let ()
+	  (define-clean-macro (hi a) `(let ((b 23)) (+ b ,a)))
+	  (let ((+ *)
+		(b 12))
+	    (hi b)))
+	35)
+  
+  (test (let ()
+	  (define-clean-macro (mac a b) `(let ((c (+ ,a ,b))) (let ((d 12)) (* ,a ,b c d))))
+	  (mac 2 3))
+	360)
+  
+  (test (let ()
+	  (define-clean-macro (mac a b) `(let ((c (+ ,a ,b))) (let ((d 12)) (* ,a ,b c d))))
+	  (let ((c 2)
+		(d 3))
+	    (mac c d)))
+	360)
+  
+  (test (let ()
+	  (define-clean-macro (mac a . body)
+	    `(+ ,a ,@body))
+	  (mac 2 3 4))
+	9)
+  
+  (test (let ()
+	  (define-clean-macro (mac a . body)
+	    `(+ ,a ,@body))
+	  (let ((a 2)
+		(+ *))
+	    (mac a (- 5 a) (* a 2))))
+	9)
+
+  (test (let ()
+	  (define-clean-macro (mac) (let ((a 1)) `(+ ,a 1)))
+	  (mac))
+	2)
+
   
   (define-macro* (_mac1_) `(+ 1 2))
   (test (_mac1_) 3)
@@ -16595,6 +16711,8 @@
 (test (let ((__c2__ 32)) (defined? '__c3__ (current-environment))) #f)
 (test (let ((__c2__ 32)) (defined? '__c2__ (global-environment))) #f)
 (test (let ((__c2__ 32)) (defined? '__c3__ (global-environment))) #f)
+
+(test (let ((a 1)) (eval '(+ a b) (augment-environment (current-environment) (cons 'b 32)))) 33)
 
 (test (call-with-exit (lambda (c) (0 (c 1)))) 1)
 (test (call-with-exit (lambda (k) (k "foo"))) "foo")

@@ -2135,6 +2135,38 @@ static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s
 } 
 
 
+static bool is_environment(s7_scheme *sc, s7_pointer x)
+{
+  /* perhaps we need an environment type so this can't be fooled? */
+  return((is_pair(x)) &&
+	 ((car(x) == sc->NIL) || (is_pair(car(x))) || (s7_is_vector(car(x)))));
+}
+
+
+static s7_pointer g_augment_environment(s7_scheme *sc, s7_pointer args)
+{
+  #define H_augment_environment "(augment-environment env ...) adds its \
+arguments (each a cons: symbol value) to the environment env, and returns the \
+new environment."
+
+  s7_pointer x, e, new_e;
+  int gc_loc;
+  e = car(args);
+  if (!is_environment(sc, e))
+    return(s7_wrong_type_arg_error(sc, "augment-environment", 1, e, "an environment"));
+  
+  new_e = new_frame_in_env(sc, e);
+  gc_loc = s7_gc_protect(sc, new_e);
+
+  for (x = cdr(args); x != sc->NIL; x = cdr(x))
+    if (is_pair(car(x)))
+      add_to_environment(sc, new_e, caar(x), cdar(x));
+
+  s7_gc_unprotect_at(sc, gc_loc);
+  return(new_e);
+}
+
+
 static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
 { 
   s7_pointer x;
@@ -2199,14 +2231,6 @@ s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local
   if (x != sc->NIL)
     return(symbol_value(x));
   return(s7_symbol_value(sc, sym)); /* try sc->envir */
-}
-
-
-static bool is_environment(s7_scheme *sc, s7_pointer x)
-{
-  /* perhaps we need an environment type so this can't be fooled? */
-  return((is_pair(x)) &&
-	 ((car(x) == sc->NIL) || (is_pair(car(x))) || (s7_is_vector(car(x)))));
 }
 
 
@@ -23548,6 +23572,7 @@ s7_scheme *s7_init(void)
   
   s7_define_function(sc, "global-environment",      g_global_environment,      0, 0, false, H_global_environment);
   s7_define_function(sc, "current-environment",     g_current_environment,     0, CURRENT_ENVIRONMENT_OPTARGS, false, H_current_environment);
+  s7_define_function(sc, "augment-environment",     g_augment_environment,     1, 0, true,  H_augment_environment);
   s7_define_function(sc, "provided?",               g_is_provided,             1, 0, false, H_is_provided);
   s7_define_function(sc, "provide",                 g_provide,                 1, 0, false, H_provide);
   s7_define_function(sc, "defined?",                g_is_defined,              1, 1, false, H_is_defined);
