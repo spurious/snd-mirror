@@ -471,7 +471,7 @@ make-mac
     (x 2))
 3
 </pre>
-<p>The presence of the dummy name in the macro's arguments is an historical accident;
+<p>The presence of the dummy name in the applied macro's arguments is an historical accident;
 it could be removed.
 </p>
 </blockquote>
@@ -1491,20 +1491,15 @@ Here is an example of "apropos" that accesses both environments:
 </pre>
 
 <p>(with-environment env . body) evaluates its body in the environment env.
-Unless I'm missing something, I think this makes it possible to
-write "hygenic" macros:
 </p>
-<pre>
-        (define-macro (mac a b) 
-          `(with-environment (<em class=red>global-environment</em>)
-             (+ ,a ,b)))
-</pre>
-<p>Now if we rebind +, nothing goes wrong:</p>
-<pre>
-        (let ((+ -)) 
-          (mac 1 2))
-        3
-</pre>
+
+<!-- 
+
+(let ((a 1) (+ *)) (defmacro mac (b) `(let ((a 12)) (+ a ,b))) (mac a))
+144
+
+-->
+
 </dd>
 <br>
 
@@ -1608,6 +1603,8 @@ Keywords exist mainly for define*'s benefit.  The keyword functions are:
 A keyword is a symbol that starts or ends with a colon. The colon
 is considered to be a part of the symbol name (unlike CL where it
 signals that the symbol is in the Package-With-No-Name [offstage: harmonica, tubular bells...]).
+s7's keyword support is somewhat lackadaisical; I can't decide if it's worth complaining
+about stuff like <code>(let ((:hi 1)) :hi)</code>.
 </p>
 
 <hr>
@@ -1634,11 +1631,11 @@ bind it to something else, which is asking for confusion).
 <ul>
 <li>do sets its step variables, rather than rebinding them.
 <li>no syntax-rules or any of its friends.
-<li>force and delay are implemented as in slib and depend on the WITH_FORCE switch, normally 0
+<li>force and delay are implemented as in slib and depend on the WITH_FORCE switch, normally 0.
 <li>s7-version returns the current s7 version.
 <li>no scheme-report-environment, null-environment, or interaction-environment (= current-environment?).
 <li>no transcript-on or transcript-off.
-<li>__func__ is the name of the function currently being defined or called (as in C).
+<li>__func__ is the name (or name and location) of the function currently being defined or called (as in C).
 <li>vector-for-each, vector-map, hash-table-for-each, string-for-each
 <li>syntactic names can be values: (define progn begin) (progn (display "progn!") (+ 3 4)) or (define function lambda), etc
 <li>begin returns the value of the last form (like progn); it can contain both definitions and other statements.
@@ -1649,8 +1646,9 @@ bind it to something else, which is asking for confusion).
 <p>Schemes vary in their treatment of ().  s7 considers it a constant that evaluates to itself,
 so you rarely (never?) need to quote it.  <code>(eq? () '())</code> is #t in s7.
 </p>
-<p>Schemes also vary in handling trailing arguments in cases such as:
-<code>(* 0 "hi")</code>.  Guile returns 0, s7 gives an error.
+<p>Schemes also vary in handling trailing arguments:
+<code>(* 0 "hi")</code>.  Guile returns 0, s7 gives an error.  
+<code>(cond (1) (=&gt;))</code>, however, is 1 in both.
 </p>
 </blockquote>
 </small>

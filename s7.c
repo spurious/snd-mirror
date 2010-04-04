@@ -404,7 +404,11 @@ typedef struct s7_cell {
     struct {
       int  length;
       char *svalue;
-      s7_pointer global_slot; /* for strings that represent symbol names, this is the current global environment (symbol value) cons */
+      s7_pointer global_slot; /* for strings that represent symbol names, this is the global environment (symbol value) cons */
+      /* there's room here for a pointer -- property lists for symbols? or current env cons?
+       */
+      /* s7_pointer local_slot; */
+      int location;
     } string;
     
     s7_num_t number;
@@ -429,7 +433,7 @@ typedef struct s7_cell {
       s7_pointer car, cdr, csr;
       /* this could be made available to callers -- doubly linked lists? nets?
        *   due to the s7_num_t size, there is unused space in several of these union fields,
-       *   so csr currently holds some info for the symbol table.
+       *   so csr currently holds the symbol-access lists.
        * There's also room for another 4-bytes of info.
        */
       int line;
@@ -757,7 +761,7 @@ struct s7_scheme {
 #define string_length(p)              ((p)->object.string.length)
 #define character(p)                  ((p)->object.cvalue)
 
-#define symbol_location(p)            (p)->object.cons.line
+#define symbol_location(p)            (car(p))->object.string.location
   /* presumably the symbol table size will fit in an int, so this is safe */
 #define symbol_name(p)                string_value(car(p))
 #define symbol_name_length(p)         string_length(car(p))
@@ -1774,7 +1778,7 @@ static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char
   
   str = s7_make_permanent_string(name);
   x = permanent_cons(str, sc->NIL, T_SYMBOL | T_ATOM | T_SIMPLE | T_DONT_COPY | T_ETERNAL);
-  symbol_location(x) = location;
+  symbol_location(x) = location;   /* accesses car(x) */
   symbol_global_slot(x) = sc->NIL; /* accesses car(x) */
 
 #if HAVE_PTHREADS
@@ -2058,17 +2062,29 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
       loc = symbol_location(variable);
       vector_element(e, loc) = s7_cons(sc, slot, vector_element(e, loc));
       symbol_global_slot(variable) = slot;
+
+      /* so if we (define hi "hiho") at the top level,  "hi" hashes to 1746 with symbol table size 2207
+       *   s7->symbol_table->object.vector.elements[1746]->object.cons.car->object.cons.car->object.string.global_slot is (hi . \"hiho\")
+       */
     }
   else
     {
       s7_pointer x;
       NEW_CELL(sc, x); 
       car(x) = slot;
-      csr(x) = variable;
       cdr(x) = e;
       set_type(x, T_PAIR);
       car(env) = x;
       set_local(variable);
+      
+      /* if symbol_global_slot is nil 
+       *   if this was not local before now,
+       *     set local and local_slot
+       *     set multilocal
+       * so find could use both the not_local = use global_slot
+       *                        and not multilocal = use local_slot
+       * but how to catch out-of-scope ref?
+       */
     }
 
   return(slot);
@@ -2110,7 +2126,6 @@ static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s
   NEW_CELL(sc, x);
   /* car(x) = immutable_cons(sc, variable, value); */
   car(x) = y;
-  csr(x) = variable;
   cdr(x) = car(sc->envir);
   set_type(x, T_PAIR);
   car(sc->envir) = x;
@@ -2129,16 +2144,17 @@ static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl)
     { 
       s7_pointer y;
       /* using csr to hold the last found entity in each frame was much slower! */
+      /* using csr for caar was faster for awhile, then not -- these timings are becoming a pain */
       y = car(x);
 
       if (s7_is_vector(y))
 	return(symbol_global_slot(hdl));
 
-      if (csr(y) == hdl)
+      if (caar(y) == hdl)
 	return(car(y));
       
       for (y = cdr(y); is_pair(y); y = cdr(y))
-	if (csr(y) == hdl)
+	if (caar(y) == hdl)
 	  return(car(y));
     }
   return(sc->NIL); 
@@ -2153,11 +2169,11 @@ static s7_pointer find_local_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hd
   if (s7_is_vector(y))
     return(symbol_global_slot(hdl));
 
-  if (csr(y) == hdl)
+  if (caar(y) == hdl)
     return(car(y));
       
   for (y = cdr(y); is_pair(y); y = cdr(y))
-    if (csr(y) == hdl)
+    if (caar(y) == hdl)
       return(car(y));
 
   return(sc->NIL); 
@@ -2229,7 +2245,7 @@ static bool lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym, s7_poi
 {
   s7_pointer x;
   for (x = car(sc->envir) /* presumably the arglist */; is_pair(x); x = cdr(x))
-    if (csr(x) == sym)
+    if (caar(x) == sym)
       {
 	/* car(x) is our binding (symbol value) */
 	cdar(x) = val;
@@ -2243,8 +2259,6 @@ static s7_pointer lambda_star_argument_default_value(s7_scheme *sc, s7_pointer v
 {
   /* if val is an expression, it needs to be evaluated in the definition environment
    *   (let ((c 1)) (define* (a (b (+ c 1))) b) (set! c 2) (a)) -> 3
-   *
-   * TODO: s7test for the eval arg stuff
    */
 
   s7_pointer x;
@@ -13529,7 +13543,7 @@ void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function
  *   (set! (symbol-access) 
  *         (list #f (lambda (symbol new-value) (or (notifier symbol new-value) new-value)) #f)))
  *
- *     SOMEDAY: symbol-access get side implemented
+ *     PERHAPS: symbol-access get side implemented (is there any use for it?)
  */
 
 
@@ -16270,6 +16284,7 @@ static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
     return(eval_error_no_arg(sc, "unquote (',') occurred outside quasiquote"));
   if (sym == sc->UNQUOTE_SPLICING)
     return(eval_error_no_arg(sc, "unquote-splicing (',@') occurred without quasiquote or outside of a list"));
+  /* for example: (define-macro (hi . a) `,@a) */
 
   return(eval_error(sc, "~A: unbound variable", sym));
 }
@@ -17238,7 +17253,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		NEW_CELL(sc, x);
 		car(x) = y;
-		csr(x) = z;
 		cdr(x) = car(sc->envir);
 		set_type(x, T_PAIR);
 
@@ -17509,7 +17523,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 					       s7_make_integer(sc, port_line_number(sc->input_port))));
 	  else sc->x = immutable_cons(sc, sc->__FUNC__, sc->code);
 	  sc->x = s7_cons(sc, sc->x, sc->NIL);
-	  csr(sc->x) = sc->__FUNC__;
 	  closure_environment(sc->value) = s7_cons(sc, sc->x, closure_environment(sc->value));
 	}
       else
@@ -17701,8 +17714,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL;
 	} 
 
-      /* 
-       * TODO:          (let ((:hi 1)) :hi) -- but (let ((pi 3)) pi) returns an error
+      /* we accept (let ((:hi 1)) :hi)
        */
 
       if (sc->code != sc->NIL)                  /* (let* ((a 1) . b) a) */
@@ -18037,9 +18049,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = call_symbol_bind(sc, sc->x, sc->code);
 	}
 
-      /* could we make macros safe simply by carrying around the definition-time environment, as with closures?
-       *   why don't they already??  I must be missing something.
-       *
+      /* 
        * (define-macro (mac a b) 
        *   `(with-environment (global-environment)
        *      (+ ,a ,b)))

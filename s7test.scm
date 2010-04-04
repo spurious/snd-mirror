@@ -6704,6 +6704,37 @@
   (test (let ((hi (lambda* (a) 1))) (procedure-arity hi)) '(0 1 #f))
   (test (call/cc (lambda (func) (procedure-arity func))) '(0 0 #t))
   
+  (test (let ((c 1)) 
+	  (define* (a #:optional (b c)) b) 
+	  (set! c 2) 
+	  (a))
+	2)
+  
+  (test (let ((c 1)) 
+	  (define* (a #:optional (b c)) b) 
+	  (let ((c 32)) 
+	    (a)))
+	1)
+  
+  (test (let ((c 1)) 
+	  (define* (a (b (+ c 1))) b) 
+	  (set! c 2) 
+	  (a))
+	3)
+  
+  (test (let ((c 1))
+	  (define* (a (b (+ c 1))) b)
+	  (set! c 2)
+	  (let ((c 123))
+	    (a)))
+	3)
+  
+  (test (let* ((cc 1)
+	       (c (lambda () (set! cc (+ cc 1)) cc)))
+	  (define* (a (b (c))) b)
+	  (list cc (a) cc))
+	(list 1 2 2))
+
   (for-each
    (lambda (arg)
      (test (procedure-arity arg) 'error))
@@ -46250,7 +46281,6 @@
 		      "hi" "" 
 		      'hi :hi 
 		      #\a #\newline 
-		    ;;; (call/cc (lambda (a) a))
 		      (make-hash-table 256)
 		      (symbol->value '_?__undefined__?_)                  ; -> #<undefined> hopefully
 		      (vector-fill! (vector 0) 0)                         ; -> #<unspecified>?
@@ -46432,6 +46462,348 @@
 		  ))
 	    ))
       )
+
+    (let ((ops (list 'lambda 'define 'if 'begin 'set! 'let 'let* 'letrec 'cond 'case 'and 'or 
+		     'call-with-exit 'apply 'for-each 'map 'dynamic-wind 'define* 'defmacro 'define-macro 'define-constant
+		     ))
+	  ;; no 'do -> infinite loops, no 'values -> format error confusion
+
+	  (args (list "hi" :hi 'hi (list 1) (list 1 2) '(1 . 2) '() 1 '((1 2)) '((1)) '#(1) '(())
+		      'i '(i) '(i 1) '((i 0 (+ i 1))) '((i))))
+	  (printing #f))
+
+      (display "0...")
+      (for-each
+       (lambda (arg)
+	 (for-each
+	  (lambda (op)
+	    (let ((form (cons op arg))
+		  (result 'error)) ;(display form) (newline)
+	      (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
+		(if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+		)))
+	  ops))
+       args)
+      
+      (display "1...")
+      (for-each
+       (lambda (arg2)
+	 (for-each
+	  (lambda (arg1)
+	    (for-each
+	     (lambda (op) 
+	       (let ((form (cons op (cons arg1 arg2)))
+		     (result 'error)) ;(display form) (newline)
+		 (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
+		   (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+		   )))
+	     ops))
+	  args))
+       args)
+      
+      (display "2a...")
+      (for-each
+       (lambda (arg3)
+	 (for-each
+	  (lambda (arg2)
+	    (for-each
+	     (lambda (arg1)
+	       (for-each
+		(lambda (op)
+		  (let ((form (cons op (cons arg1 (cons arg2 arg3))))
+			(result 'error))
+		    (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
+		      (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+		      )))
+		ops))
+	     args))
+	  args))
+       args)
+      
+      (display "2b...")
+      (for-each
+       (lambda (arg3)
+	 (for-each
+	  (lambda (arg2)
+	    (for-each
+	     (lambda (arg1)
+	       (for-each
+		(lambda (op) 
+		  (let ((form (cons op (cons (cons arg1 arg2) arg3)))
+			(result 'error))
+		    (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
+		      (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+		      )))
+		ops))
+	     args))
+	  args))
+       args)
+      
+      (display "3a...")
+      (for-each
+       (lambda (arg4)
+	 (for-each
+	  (lambda (arg3)
+	    (for-each
+	     (lambda (arg2)
+	       (for-each
+		(lambda (arg1)
+		  (for-each
+		   (lambda (op)
+		     (let ((form (cons op (cons arg1 (cons arg2 (cons arg3 arg4)))))
+			   (result 'error))
+		       (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
+			 (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			 )))
+		   ops))
+		args))
+	     args))
+	  args))
+       args)
+      
+      (display "3b...")
+      (for-each
+       (lambda (arg4)
+	 (for-each
+	  (lambda (arg3)
+	    (for-each
+	     (lambda (arg2)
+	       (for-each
+		(lambda (arg1)
+		  (for-each
+		   (lambda (op)
+		     (let ((form (cons op (cons arg1 (cons (cons arg2 arg3) arg4))))
+			   (result 'error))
+		       (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
+			 (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			 )))
+		   ops))
+		args))
+	     args))
+	  args))
+       args)
+      
+      (display "3c...")
+      (for-each
+       (lambda (arg4)
+	 (for-each
+	  (lambda (arg3)
+	    (for-each
+	     (lambda (arg2)
+	       (for-each
+		(lambda (arg1)
+		  (for-each
+		   (lambda (op)
+		     (let ((form (cons op (cons (cons arg1 (cons arg2 arg3)) arg4)))
+			   (result 'error))
+		       (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
+			 (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			 )))
+		   ops))
+		args))
+	     args))
+	  args))
+       args)
+      
+      (display "3d...")
+      (for-each
+       (lambda (arg4)
+	 (for-each
+	  (lambda (arg3)
+	    (for-each
+	     (lambda (arg2)
+	       (for-each
+		(lambda (arg1)
+		  (for-each
+		   (lambda (op)
+		     (let ((form (cons op (cons (cons (cons arg1 arg2) arg3) arg4)))
+			   (result 'error))
+		       (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
+			 (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			 )))
+		   ops))
+		args))
+	     args))
+	  args))
+       args)
+      
+      (display "3e...")
+      (for-each
+       (lambda (arg4)
+	 (for-each
+	  (lambda (arg3)
+	    (for-each
+	     (lambda (arg2)
+	       (for-each
+		(lambda (arg1)
+		  (for-each
+		   (lambda (op)
+		     (let ((form (cons op (cons (cons arg1 arg2) (cons arg3 arg4))))
+			   (result 'error))
+		       (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
+			 (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			 )))
+		   ops))
+		args))
+	     args))
+	  args))
+       args)
+      
+      
+      (display "4a...")
+      (for-each
+       (lambda (arg5)
+	 (for-each
+	  (lambda (arg4)
+	    (for-each
+	     (lambda (arg3)
+	       (for-each
+		(lambda (arg2)
+		  (for-each
+		   (lambda (arg1)
+		     (for-each
+		      (lambda (op)
+			(let ((form (cons op (cons arg1 (cons arg2 (cons arg3 (cons arg4 arg5))))))
+			      (result 'error))
+			  (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
+			    (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			    )))
+		      ops))
+		   args))
+		args))
+	     args))
+	  args))
+       args)
+      
+      (display "4b...")
+      (for-each
+       (lambda (arg5)
+	 (for-each
+	  (lambda (arg4)
+	    (for-each
+	     (lambda (arg3)
+	       (for-each
+		(lambda (arg2)
+		  (for-each
+		   (lambda (arg1)
+		     (for-each
+		      (lambda (op)
+			(let ((form (cons op (cons (cons arg1 (cons arg2 (cons arg3 arg4))) arg5)))
+			      (result 'error))
+			  (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
+			    (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			    )))
+		      ops))
+		   args))
+		args))
+	     args))
+	  args))
+       args)
+      
+      
+      (display "4c...")
+      (for-each
+       (lambda (arg5)
+	 (for-each
+	  (lambda (arg4)
+	    (for-each
+	     (lambda (arg3)
+	       (for-each
+		(lambda (arg2)
+		  (for-each
+		   (lambda (arg1)
+		     (for-each
+		      (lambda (op)
+			(let ((form (cons op (cons (cons arg1 (cons arg2 arg3)) (cons arg4 arg5))))
+			      (result 'error))
+			  (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
+			    (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			    )))
+		      ops))
+		   args))
+		args))
+	     args))
+	  args))
+       args)
+      
+      
+      (display "4d...")
+      (for-each
+       (lambda (arg5)
+	 (for-each
+	  (lambda (arg4)
+	    (for-each
+	     (lambda (arg3)
+	       (for-each
+		(lambda (arg2)
+		  (for-each
+		   (lambda (arg1)
+		     (for-each
+		      (lambda (op)
+			(let ((form (cons op (cons (cons arg1 arg2) (cons arg3 (cons arg4 arg5)))))
+			      (result 'error))
+			  (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
+			    (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			    )))
+		      ops))
+		   args))
+		args))
+	     args))
+	  args))
+       args)
+      
+      (display "4e...")
+      (for-each
+       (lambda (arg5)
+	 (for-each
+	  (lambda (arg4)
+	    (for-each
+	     (lambda (arg3)
+	       (for-each
+		(lambda (arg2)
+		  (for-each
+		   (lambda (arg1)
+		     (for-each
+		      (lambda (op)
+			(let ((form (cons op (cons arg1 (cons (cons arg2 (cons arg3 arg4)) arg5))))
+			      (result 'error))
+			  (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
+			    (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			    )))
+		      ops))
+		   args))
+		args))
+	     args))
+	  args))
+       args)
+      
+      (display "4f...")
+      (for-each
+       (lambda (arg5)
+	 (for-each
+	  (lambda (arg4)
+	    (for-each
+	     (lambda (arg3)
+	       (for-each
+		(lambda (arg2)
+		  (for-each
+		   (lambda (arg1)
+		     (for-each
+		      (lambda (op)
+			(let ((form (cons op (cons arg1 (cons (cons arg2 arg3) (cons arg4 arg5)))))
+			      (result 'error))
+			  (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
+			    (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			    )))
+		      ops))
+		   args))
+		args))
+	     args))
+	  args))
+       args)
+      
+      )
+    
     ))
 
 (if with-test-at-random
