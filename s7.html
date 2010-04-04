@@ -476,6 +476,101 @@ it could be removed.
 </p>
 </blockquote>
 </small>
+
+<hr>
+
+<p>s7 macros are not "hygenic".  For example,
+</p>
+<pre>
+  (define-macro (mac b) 
+    `(let ((a 12)) 
+       (+ a ,b)))
+
+  (let ((a 1) 
+        (+ *))
+    (mac a))
+</pre>
+<p>returns 144 because "+" has turned into "*", and "a" is the internal "a",
+not the argument "a".  We get (* 12 12) where we probably expected (+ 12 1).
+It is possible to use gensym to clean this up, but that makes the macro 
+unreadable in all but the simplest cases, and besides, gensymification is
+something a macro can do for us:
+</p>
+<pre>
+(define-macro (define-clean-macro name-and-args . body)
+  (let ((syms ()))
+
+    (define (walk func lst)
+      (func lst)
+      (if (pair? lst)
+	  (begin
+	    (walk func (car lst))
+	    (walk func (cdr lst)))))
+
+    (define (car-member sym lst)
+      (if (null? lst)
+	  #f
+	  (if (eq? sym (caar lst))
+	      (cdar lst)
+	      (car-member sym (cdr lst)))))
+
+    (define (walker val)
+      (if (pair? val)
+	  (if (eq? (car val) 'quote)
+	      (or (car-member (cadr val) syms)
+		  (and (pair? (cadr val))
+		       (append (list 'list) (walker (cadr val))))
+		  (cadr val))
+	      (cons (walker (car val))
+		    (walker (cdr val))))
+	  (or (car-member val syms)
+	      val)))
+
+    (walk (lambda (val)
+	    (if (and (pair? val)
+		     (eq? (car val) 'quote)
+		     (symbol? (cadr val))
+		     (not (car-member (cadr val) syms)))
+		(set! syms (cons 
+			    (cons (cadr val) 
+				  (gensym (symbol->string (cadr val))))
+			    syms))))
+	  body)
+
+      (let* ((new-body (walker body))
+	     (new-syms (map (lambda (slot)
+			      (list (cdr slot) `(gensym)))
+			    syms))
+	     (new-globals 
+	      (let ((result '()))
+		(for-each
+		 (lambda (slot)
+		   (if (defined? (car slot))
+		       (set! result (cons
+				     (list 'set! (cdr slot) (car slot))
+				     result))))
+		 syms)
+		result)))
+
+	`(define-macro ,name-and-args 
+	   (let ,new-syms
+	     ,@new-globals
+	     `(begin ,,@new-body))))))
+</pre>
+<p>Now we can automatically generate hygenic macros:
+</p>
+<pre>
+  (define-clean-macro (mac b) 
+    `(let ((a 12)) 
+       (+ a ,b)))
+
+  (let ((a 1) 
+        (+ *))
+    (mac a))
+</pre>
+<p>which returns 13 as expected.
+</p>
+
 </dd>
 <br>
 
@@ -1492,13 +1587,6 @@ Here is an example of "apropos" that accesses both environments:
 
 <p>(with-environment env . body) evaluates its body in the environment env.
 </p>
-
-<!-- 
-
-(let ((a 1) (+ *)) (defmacro mac (b) `(let ((a 12)) (+ a ,b))) (mac a))
-144
-
--->
 
 </dd>
 <br>
