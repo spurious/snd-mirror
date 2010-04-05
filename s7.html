@@ -89,7 +89,6 @@ and want a quick tour of where s7 is different.
   <li><a href="#environments">environments</a>
   <li><a href="#miscellanea">miscellanea</a>
   <li><a href="#FFIexamples">FFI examples</a>
-
 </ul>
 
 <br>
@@ -141,6 +140,7 @@ Its argument is a string representing the desired number:
 &gt; (bignum "1.123123123123123123123123123")
 1.12312312312312312312312312300000000009E0
 </pre>
+
 </dd>
 <br>
 
@@ -293,6 +293,7 @@ hiho
 
 <small>
 <blockquote>
+<hr>
 <p>If you want a version of define* that insists
 that any arguments before the keyword :optional are required:
 </p>
@@ -446,6 +447,7 @@ expanded into:
 
 <small>
 <blockquote>
+<hr>
 <p>I hesitate to mention this, but macros are "first-class" entities in s7.  You can
 pass one as a function argument, apply it to a list, return it from a function,
 and assign it to a variable:
@@ -474,10 +476,10 @@ make-mac
 <p>The presence of the dummy name in the applied macro's arguments is an historical accident;
 it could be removed.
 </p>
+<hr>
 </blockquote>
 </small>
 
-<hr>
 
 <p>s7 macros are not "hygenic".  For example,
 </p>
@@ -607,7 +609,15 @@ become constants:
  ;can't bind or set an immutable object: cvar
 </pre>
 <p>So, obviously, choose unique names for your constants, or don't use define-constant.
+A function can also be a constant (think of define-constant as an extension of define):
 </p>
+<pre>
+&gt; (define-constant (I'll-never-change! . args) 'nope)
+I'll-never-change!
+
+&gt; (let ((I'll-never-change! 32)) 'oh-yeah?)
+;can't bind an immutable object: I'll-never-change!
+</pre>
 
 <p>Constants are very similar to things such as keywords (no set, always return itself as its value),
 variable trace (informative function upon set or keeping a history of past values), typed variables (restricting a
@@ -702,6 +712,7 @@ the properties onto the end of the accessor list, as in trace above).
 
 <small>
 <blockquote>
+<hr>
 <p>We can use symbol-access to fix fluid-let.  The usual form of
 that macro claims that it implements dynamic scope, but it doesn't:
 </p>
@@ -1118,15 +1129,6 @@ In s7 (+ (values 1 2 3) 4) is 10.  Similarly,
   -&gt; 10
 
   ;; let*-values is defined as a macro at the end of s7.c (commented out)
-</pre>
-<p>
-In Snd many functions take the same trailing arguments: sound-index, channel-number, and edit-position;
-we can package these up in a values call:
-</p>
-<pre>
-   ;; say we have those arguments in snd, chn, edpos
-   (defmacro sce () `(values ,snd ,chn ,edpos))
-   (maxamp (sce))
 </pre>
 </dd>
 <br>
@@ -1749,8 +1751,10 @@ bind it to something else, which is asking for confusion).
 so you rarely (never?) need to quote it.  <code>(eq? () '())</code> is #t in s7.
 </p>
 <p>Schemes also vary in handling trailing arguments:
-<code>(* 0 "hi")</code>.  Guile returns 0, s7 gives an error.  
-<code>(cond (1) (=&gt;))</code>, however, is 1 in both.
+<code>(* 0 "hi")</code> in Guile returns 0, but s7 gives an error.  
+<code>(cond (1) (=&gt;))</code> is 1 in both,  and
+<code>(or 1 2 . 3)</code> is an
+error in Guile, and 1 in s7!
 </p>
 </blockquote>
 </small>

@@ -16881,6 +16881,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  (cdr(cddar(sc->code)) != sc->NIL))  /* (do ((i 0 1 (+ i 1))) ...) */
 		return(eval_error(sc, "do: step variable info has extra stuff after the increment: ~A", sc->code));
 	    }
+	  else return(eval_error(sc, "do: step variable has no initial value: ~A", car(sc->code)));
+ 	                                              /* (do ((i)) ...) */
 
 	  push_stack(sc, opcode(OP_DO_INIT), sc->args, cdr(sc->code));
 	  sc->code = cadar(sc->code);
@@ -17739,6 +17741,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	} 
 
       /* we accept (let ((:hi 1)) :hi)
+       *           (let ('1) quote) [guile accepts this]
        */
 
       if (sc->code != sc->NIL)                  /* (let* ((a 1) . b) a) */
@@ -17766,7 +17769,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (s7_is_symbol(car(sc->code))) 
 	{    
 	  /* named let */
-	  for (sc->x = cadr(sc->code), sc->args = sc->NIL; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+	  for (sc->x = cadr(sc->code), sc->args = sc->NIL; is_pair(sc->x); sc->x = cdr(sc->x)) 
 	    sc->args = s7_cons(sc, caar(sc->x), sc->args);
 	  /* perhaps we could mimic the "do" setp var handling here to avoid the consing */
 	  
@@ -17816,6 +17819,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_LET_STAR1:    /* let* -- calculate parameters */
+      /* fprintf(stderr, "code: %s\n", s7_object_to_c_string(sc, sc->code)); */
+
       if (!(s7_is_symbol(caar(sc->code))))
 	return(eval_error(sc, "bad variable ~S in let* bindings", car(sc->code)));
 
@@ -17844,6 +17849,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = cdr(sc->code);
       if (is_pair(sc->code)) 
 	{ 
+	  if (!is_pair(cdar(sc->code)))            /* (let* ((a 1) (b . 2)) ...) */
+	    return(eval_error(sc, "let* variable setting is a dotted list? ~A", sc->code));
+
 	  push_stack(sc, opcode(OP_LET_STAR1), sc->args, sc->code);
 	  sc->code = cadar(sc->code);
 	  sc->args = sc->NIL;
@@ -17878,6 +17886,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       for (sc->x = sc->code; sc->x != sc->NIL; sc->x = cdr(sc->x))
 	{
+	  if (!is_pair(sc->x))                          /* (letrec ((a 1) . 2) ...) */
+	    return(eval_error(sc, "improper list of letrec variables? ~A", sc->code));
+
 	  if ((!is_pair(car(sc->x))) ||             /* (letrec (1 2) #t) */
 	      (!(s7_is_symbol(caar(sc->x)))))
 	    return(eval_error(sc, "bad variable ~S in letrec bindings", car(sc->x)));
@@ -24013,3 +24024,21 @@ s7_scheme *s7_init(void)
   return(sc);
 }
 
+/* TODO: check (or 1 . 2) (lambda quote i) (lambda (i . i) 1 . 2)
+ *       (lambda : : . #())
+ *       (defmacro : "" . #(1))
+ *       (defmacro : #(1) . :)
+ *       (lambda : 1 . "")
+ *       (define-macro (i 1) => (j 2))
+ *       (set! else #t)
+ *         if set to #f, (cond (#f 2) (else 1)) -> ()
+ *       (if else #t)
+ *       (cond (else else #t))
+ *       (do ((i 1) (i 2)) (#t i)) returns 2
+ *       (do () (1) . "hi") -- this is like (do () (#t #t) (asdf))
+ *
+ * add T_ELSE? or treat it as syntax?
+ *
+ * try (do (((i))) (1 2)) and (do ((i 1) ((j))) (1 2))
+ *     (do (((1) #<unspecified>)) (()))
+ */

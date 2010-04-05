@@ -317,8 +317,12 @@
 (test (eq? 'abc 'abc) #t)
 (test (eq? eq? eq?) #t)
 (test (eq? (if #f 1) 1) #f)
-					;(test (eq? call/cc call-with-current-continuation) #t)
+(test (eq? '() '(#||#)) #t)
+(test (eq? '() '(#!@%$&!#)) #t)
+(test (eq? #||# (#|%%|# append #|^|#) #|?|# (#|+|# list #|<>|#) #||||#) #t)
 
+
+					;(test (eq? call/cc call-with-current-continuation) #t)
 (test (eq? 3/4 3) #f)
 (test (eq? '() '()) #t)
 (test (eq? '() (list)) #t)
@@ -3519,6 +3523,7 @@
 					;(test (do () (() ()) ()) '()) ; ?? -- is '() the same as ()? -- scheme bboard sez not necessarily
 (test (do () ('() '())) '())
 (test (do () ('())) '())
+(test (do () (())) '())
 
 (test (let ((x 0) (y 0)) (set! y (do () (#t (set! x 32) 123))) (list x y)) (list 32 123))
 (test (let ((i 32)) (do ((i 0 (+ i 1)) (j i (+ j 1))) ((> j 33) i))) 2)
@@ -3790,6 +3795,7 @@
 (test (if (and) 1 2) 1)
 (test (if (+) 1 2) 1)
 (test (if (*) 1 2) 1)
+(test (and (if #f #f)) (if #f #f))
 
 (for-each
  (lambda (arg)
@@ -41201,6 +41207,7 @@
 ;;; -------------------------------- errors ------------------------------------------------
 
 
+(test (+ #| this is a comment |# 2 #! and this is another !# 3) 5)
 
 (test (eq?) 'error)
 (test (eq? #t) 'error)
@@ -42337,6 +42344,7 @@
 (test (do ((i 0 (+ i 1))) ((= i 3)) (set! i "hiho")) 'error)
 (test (let ((do+ +)) (do ((i 0 (do+ i 1))) ((= i 3)) (set! do+ abs))) 'error)
 (test (do () . 1) 'error)
+(test (do ((i)) (1 2)) 'error)
 
 (test (let ((a 1)) (set! a)) 'error)
 (test (let ((a 1)) (set! a 2 3)) 'error)
@@ -42555,6 +42563,10 @@
 (test (let loop loop) 'error)
 (test (let loop (loop)) 'error)
 (test (let loop ((i 0) (loop 1)) i) 'error)
+
+(test (letrec ((cons 1 (quote ())) . #(1)) 1) 'error)
+(test (letrec ((a 1) . 2) 1) 'error)
+(test (let* ((a 1) (b . 2) . 1) (())) 'error)
 
 
 (test (call/cc (lambda () 0)) 'error)
