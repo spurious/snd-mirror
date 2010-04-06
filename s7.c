@@ -528,8 +528,8 @@ struct s7_scheme {
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, UNQUOTE_SPLICING, MACROEXPAND;
   s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, VECTOR_FUNCTION, VALUES, ELSE, SET;
   s7_pointer ERROR, WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO;
-  s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS;
-  s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, __FUNC__, ERROR_HOOK, TRACE_HOOK;
+  s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, SYNTAX_ERROR;
+  s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, __FUNC__, ERROR_HOOK, TRACE_HOOK, UNBOUND_VARIABLE_HOOK;
   s7_pointer FEED_TO;                 /* => */
   s7_pointer OBJECT_SET;              /* applicable object set method */
   s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET;
@@ -1894,7 +1894,7 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
 
   if ((number_inits[(int)name[0]]) &&
       (make_atom(sc, (char *)name, 10, false) != sc->F))
-    return(s7_error(sc, sc->ERROR, 
+    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 		    make_list_2(sc, 
 				s7_make_string(sc, "identifier (symbol) name, ~A, can't be a number"), 
 				s7_make_string(sc, name))));
@@ -2096,7 +2096,7 @@ static s7_pointer add_to_current_environment(s7_scheme *sc, s7_pointer variable,
   if (is_immutable_or_accessed(variable))
     {
       if (is_immutable(variable))
-	return(s7_error(sc, sc->ERROR, 
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 			make_list_2(sc, s7_make_string(sc, "can't bind an immutable object: ~S"), variable)));
       value = call_symbol_bind(sc, variable, value);
     }
@@ -2113,7 +2113,7 @@ static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s
   if (is_immutable_or_accessed(variable))
     {
       if (is_immutable(variable))
-	return(s7_error(sc, sc->ERROR, 
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 			make_list_2(sc, s7_make_string(sc, "can't bind an immutable object: ~S"), variable)));
       value = call_symbol_bind(sc, variable, value);
     }
@@ -2821,7 +2821,7 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
       ((s7_integer(car(proc_args)) == 0) &&
        (s7_integer(cadr(proc_args)) == 0) &&
        (caddr(proc_args) == sc->F)))
-    return(s7_error(sc, sc->ERROR, 
+    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 		    make_list_2(sc, s7_make_string(sc, "call/cc procedure, ~A, should take one argument"), car(args))));
 
   sc->code = car(args);
@@ -9271,7 +9271,7 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
 static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
 {
   #define H_load "(load file :optional env) loads the scheme file 'file'. The 'env' argument \
-defaults to the global environment; to load into the current environment instead, pass (current-environment)."
+defaults to the global environment.  To load into the current environment instead, pass (current-environment)."
 
   FILE *fp = NULL;
   s7_pointer name, port;
@@ -9306,6 +9306,9 @@ defaults to the global environment; to load into the current environment instead
   push_stack(sc, opcode(OP_LOAD_CLOSE_AND_POP_IF_EOF), sc->NIL, sc->NIL);  /* was pushing args and code, but I don't think they're used later */
   push_stack(sc, opcode(OP_READ_INTERNAL), sc->NIL, sc->NIL);
   
+  /* now we've opened and moved to the file to be loaded, and set up the stack to return
+   *   to where we were when it is read.  This #<unspecified> is just a dummy value.
+   */
   return(sc->UNSPECIFIED);
 }
 
@@ -13182,7 +13185,7 @@ In each case, the argument is the value of the object, not the object itself."
 		case 0:                 /* print, ((cadr (make-type :print (lambda (a) (format #f "#<typo: ~S>" a)))) "gypo") -> #<typo: "gypo"> */
 		  if ((s7_integer(car(proc_args)) > 1) || 
 		      ((nargs == 0) && (!rest_arg)))
-		    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "make-type :print procedure, ~A, should take one argument"), func)));
+		    return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, s7_make_string(sc, "make-type :print procedure, ~A, should take one argument"), func)));
 
 		  object_types[tag].print_func = func;
 		  object_types[tag].print = call_s_object_print;
@@ -13192,14 +13195,14 @@ In each case, the argument is the value of the object, not the object itself."
 		  /* (let ((typo (make-type :equal (lambda (a b) (equal? a b))))) (let ((a ((cadr typo) 123)) (b ((cadr typo) 321))) (equal? a b))) */
 		  if ((s7_integer(car(proc_args)) > 2) || 
 		      ((nargs < 2) && (!rest_arg)))
-		    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "make-type :equal procedure, ~A, should take two arguments"), func)));
+		    return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, s7_make_string(sc, "make-type :equal procedure, ~A, should take two arguments"), func)));
 
 		  object_types[tag].equal_func = func;
 		  break;
 
 		case 2:                 /* getter: (((cadr (make-type :getter (lambda (a b) (vector-ref a b)))) (vector 1 2 3)) 1) -> 2 */
 		  if ((nargs == 0) && (!rest_arg))
-		    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "make-type :getter procedure, ~A, should take at least one argument"), func)));
+		    return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, s7_make_string(sc, "make-type :getter procedure, ~A, should take at least one argument"), func)));
 
 		  object_types[tag].getter_func = func;
 		  object_types[tag].apply = call_s_object_getter;
@@ -13207,7 +13210,7 @@ In each case, the argument is the value of the object, not the object itself."
 
 		case 3:                 /* setter: (set! (((cadr (make-type :setter (lambda (a b c) (vector-set! a b c)))) (vector 1 2 3)) 1) 23) */
 		  if ((nargs < 2) && (!rest_arg))
-		    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "make-type :setter procedure, ~A, should take at least two arguments"), func)));
+		    return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, s7_make_string(sc, "make-type :setter procedure, ~A, should take at least two arguments"), func)));
 
 		  object_types[tag].setter_func = func;
 		  object_types[tag].set = call_s_object_setter;
@@ -13216,7 +13219,7 @@ In each case, the argument is the value of the object, not the object itself."
 		case 4:                 /* length: (length ((cadr (make-type :length (lambda (a) (vector-length a)))) (vector 1 2 3))) -> 3 */
 		  if ((s7_integer(car(proc_args)) > 1) || 
 		      ((nargs == 0) && (!rest_arg)))
-		    return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, "make-type :length procedure, ~A, should take at one argument"), func)));
+		    return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, s7_make_string(sc, "make-type :length procedure, ~A, should take at one argument"), func)));
 
 		  object_types[tag].length_func = func;
 		  object_types[tag].length = call_s_object_length;
@@ -15087,13 +15090,13 @@ s7_pointer s7_error_and_exit(s7_scheme *sc, s7_pointer type, s7_pointer info)
 
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj)
 {
-  return(s7_error(sc, sc->ERROR, make_list_2(sc, make_protected_string(sc, errmsg), obj)));
+  return(s7_error(sc, sc->SYNTAX_ERROR, make_list_2(sc, make_protected_string(sc, errmsg), obj)));
 }
 
 
 static s7_pointer eval_error_no_arg(s7_scheme *sc, const char *errmsg)
 {
-  return(s7_error(sc, sc->ERROR, s7_cons(sc, make_protected_string(sc, errmsg), sc->NIL)));
+  return(s7_error(sc, sc->SYNTAX_ERROR, s7_cons(sc, make_protected_string(sc, errmsg), sc->NIL)));
 }
 
 
@@ -15169,7 +15172,7 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
 
   return(make_list_3(sc, 
 		     s7_symbol_value(sc, sc->ERROR), 
-		     sc->ERROR, 
+		     sc->READ_ERROR, 
 		     make_string_uncopied_with_length(sc, msg, len)));
 }
 
@@ -15201,15 +15204,15 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
   line = pair_line_number(x);
 
   if (line > 0)
-    return(s7_error(sc, sc->ERROR, 
+    return(s7_error(sc, sc->READ_ERROR, 
 		    make_list_3(sc, 
 				s7_make_string(sc, "missing close paren, list started around line ~D of ~S"), 
 				s7_make_integer(sc, remembered_line_number(line)),
 				make_protected_string(sc, port_filename(sc->input_port)))));
   
   /* we need a legit s7_error here, but we're lost... */
-  return(s7_error(sc, sc->ERROR, 
-		  make_list_1(sc, s7_make_string(sc, "missing close paren; where am I??"))));
+  return(s7_error(sc, sc->READ_ERROR, 
+		  make_list_1(sc, s7_make_string(sc, "missing close paren"))));
 }
 
 
@@ -15221,7 +15224,7 @@ static void improper_arglist_error(s7_scheme *sc)
   for (y = x; cdr(y) != sc->NIL; y = cdr(y)) {};
   cdr(y) = sc->code;
   
-  s7_error(sc, sc->ERROR, 
+  s7_error(sc, sc->SYNTAX_ERROR, 
 	   make_list_2(sc,
 		       s7_make_string(sc, "improper list of arguments: ~A"),
 		       x));
@@ -16293,6 +16296,30 @@ static s7_pointer read_expression(s7_scheme *sc)
 
 /* ---------------- */
 
+static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
+{
+  /* handle *unbound-variable-hook* */
+  s7_pointer unbound_variable_hook_binding;
+  unbound_variable_hook_binding = find_symbol(sc, sc->envir, sc->UNBOUND_VARIABLE_HOOK);
+  if ((unbound_variable_hook_binding != sc->NIL) &&
+      (is_procedure(symbol_value(unbound_variable_hook_binding))))
+    {
+      s7_pointer x, save_x, save_y, save_z;
+      save_x = sc->x;
+      save_y = sc->y;
+      save_z = sc->z;
+      x = s7_call(sc, 
+		  symbol_value(unbound_variable_hook_binding),
+		  make_list_1(sc, sym));
+      sc->x = save_x;
+      sc->y = save_y;
+      sc->z = save_z;
+      return(x);
+    }
+  return(sc->UNDEFINED);
+}
+
+
 static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
 {
   s7_pointer x;
@@ -16309,6 +16336,10 @@ static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
   if (sym == sc->UNQUOTE_SPLICING)
     return(eval_error_no_arg(sc, "unquote-splicing (',@') occurred without quasiquote or outside of a list"));
   /* for example: (define-macro (hi . a) `,@a) */
+
+  x = unbound_variable(sc, sym);
+  if (x != sc->UNDEFINED)
+    return(x);
 
   return(eval_error(sc, "~A: unbound variable", sym));
 }
@@ -17271,7 +17302,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (is_immutable_or_accessed(z))
 		  {
 		    if (is_immutable(z))
-		      return(s7_error(sc, sc->ERROR,
+		      return(s7_error(sc, sc->WRONG_TYPE_ARG,
 				      make_list_2(sc, s7_make_string(sc, "can't bind an immutable object: ~S"), z)));
 		    car(sc->y) = call_symbol_bind(sc, z, car(sc->y));
 		  }
@@ -17668,6 +17699,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc);
 	  goto START;
 	}
+      /* if unbound variable hook here, we need the binding, not the current value */
+
       return(eval_error(sc, "set! ~A: unbound variable", sc->code));
       
       
@@ -18097,13 +18130,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if ((!is_pair(sc->y)) &&
 	  (sc->y != sc->NIL) &&
 	  (!s7_is_symbol(sc->y)))
-	return(s7_error(sc, sc->ERROR,                                      /* (defmacro mac "hi" ...) */
+	return(s7_error(sc, sc->SYNTAX_ERROR,                                      /* (defmacro mac "hi" ...) */
 			make_list_3(sc, make_protected_string(sc, "defmacro ~A argument list is ~S?"), sc->x, sc->y)));
 
       for ( ; is_pair(sc->y); sc->y = cdr(sc->y))
 	if ((!s7_is_symbol(car(sc->y))) &&
 	    (sc->op == OP_DEFMACRO))
-	  return(s7_error(sc, sc->ERROR,                                    /* (defmacro mac (1) ...) */
+	  return(s7_error(sc, sc->SYNTAX_ERROR,                                    /* (defmacro mac (1) ...) */
 			  make_list_3(sc, make_protected_string(sc, "defmacro ~A argument name is not a symbol: ~S"), sc->x, sc->y)));
 
       if (cdr(sc->z) == sc->NIL)                                            /* (defmacro hi ()) */
@@ -18185,13 +18218,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if ((!is_pair(sc->y)) &&
 	  (sc->y != sc->NIL) &&
 	  (!s7_is_symbol(sc->y)))
-	return(s7_error(sc, sc->ERROR,                                      /* (define-macro (mac . 1) ...) */
+	return(s7_error(sc, sc->SYNTAX_ERROR,                                      /* (define-macro (mac . 1) ...) */
 			make_list_3(sc, make_protected_string(sc, "define-macro ~A argument list is ~S?"), sc->x, sc->y)));
 
       for ( ; is_pair(sc->y); sc->y = cdr(sc->y))
 	if ((!s7_is_symbol(car(sc->y))) &&
 	    (sc->op == OP_DEFINE_MACRO))
-	  return(s7_error(sc, sc->ERROR,                                    /* (define-macro (mac 1) ...) */
+	  return(s7_error(sc, sc->SYNTAX_ERROR,                                    /* (define-macro (mac 1) ...) */
 			  make_list_3(sc, make_protected_string(sc, "define-macro ~A argument name is not a symbol: ~S"), sc->x, sc->y)));
 
       sc->y = s7_gensym(sc, "defmac");
@@ -18940,7 +18973,7 @@ static s7_pointer g_make_thread_variable(s7_scheme *sc, s7_pointer args)
   err = pthread_key_create(key, NULL);
   if (err == 0)
     return(s7_make_object(sc, key_tag, (void *)key));  
-  return(s7_error(sc, sc->ERROR, make_list_1(sc, s7_make_string(sc, "make-thread-variable failed!?"))));
+  return(s7_error(sc, s7_make_symbol(sc, "thread-error"), make_list_1(sc, s7_make_string(sc, "make-thread-variable failed!?"))));
 }
 
 
@@ -23535,6 +23568,12 @@ s7_scheme *s7_init(void)
   sc->ERROR = s7_make_symbol(sc, "error");
   typeflag(sc->ERROR) |= T_DONT_COPY; 
 
+  sc->READ_ERROR = s7_make_symbol(sc, "read-error");
+  typeflag(sc->READ_ERROR) |= T_DONT_COPY; 
+
+  sc->SYNTAX_ERROR = s7_make_symbol(sc, "syntax-error");
+  typeflag(sc->SYNTAX_ERROR) |= T_DONT_COPY; 
+
   sc->WRONG_TYPE_ARG = s7_make_symbol(sc, "wrong-type-arg");
   typeflag(sc->WRONG_TYPE_ARG) |= T_DONT_COPY; 
 
@@ -23574,6 +23613,9 @@ s7_scheme *s7_init(void)
 
   sc->TRACE_HOOK = s7_make_symbol(sc, "*trace-hook*");
   typeflag(sc->TRACE_HOOK) |= T_DONT_COPY; 
+
+  sc->UNBOUND_VARIABLE_HOOK = s7_make_symbol(sc, "*unbound-variable-hook*");
+  typeflag(sc->UNBOUND_VARIABLE_HOOK) |= T_DONT_COPY; 
 
   sc->SET = s7_make_symbol(sc, "set!");
   typeflag(sc->SET) |= T_DONT_COPY; 
@@ -23889,6 +23931,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "trace",                   g_trace,                   0, 0, true,  H_trace);
   s7_define_function(sc, "untrace",                 g_untrace,                 0, 0, true,  H_untrace);
   s7_define_variable(sc, "*trace-hook*", sc->NIL);
+  s7_define_variable(sc, "*unbound-variable-hook*", sc->NIL);
   s7_define_function(sc, "stacktrace",              g_stacktrace,              0, 2, false, H_stacktrace);
 
   s7_define_function(sc, "gc",                      g_gc,                      0, 1, false, H_gc);

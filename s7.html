@@ -52,7 +52,7 @@ in libxm (in the Snd tarball, or at ftp://ccrma-ftp.stanford.edu/pub/Lisp/libxm.
 
 <p>s7 has full continuations, dynamic-wind, sort!, 
 error handling, ratios and complex numbers,
-defmacro and define-macro, keywords, hash-tables, block comments,
+define-macro, keywords, hash-tables, block comments,
 threads, multiprecision arithmetic for all numeric types,
 generalized set!, format, define*, and a host of other
 extensions of r5rs.  It does not have syntax-rules or any of
@@ -79,9 +79,8 @@ and want a quick tour of where s7 is different.
   <li><a href="#multiplevalues">multiple-values</a>
   <li><a href="#callwithexit">call-with-exit</a>
   <li><a href="#format">format</a>
-  <li><a href="#errors">errors</a>
+  <li><a href="#errors">errors, stacktrace</a>
   <li><a href="#trace">trace</a>
-  <li><a href="#stacktrace">stacktrace</a>
   <li><a href="#IO">string IO</a>
   <li><a href="#generic">generic functions</a>
   <li><a href="#procedureinfo">procedure info</a>
@@ -1255,9 +1254,37 @@ It is a function of 2 arguments, the values passed by the error function
 <pre>
 (set! *error-hook* (lambda (tag args) (apply format (cons #t args))))
 </pre>
-<p>See also stacktrace and trace below.  There is a break macro defined in Snd (see snd-xen.c)
-which allows you to stop at some point, then evaluate arbitrary expressions in that context.
+
+<p>stacktrace can be called anytime to see the chain of function calls.  Its optional argument
+can be *error-info* (as above) to show the stack at the point of the last error,
+a thread object to show that thread's stack, or a continuation to
+show the continuation stack. 
 </p>
+
+<pre>
+    (let ()
+      (define (a1 a) (+ a #\c))
+      (define (a2 b) (+ b (a1 b)))
+      (define (a3 c) (+ c (a2 c)))
+      (catch #t
+        (lambda () (a3 1))
+        (lambda args (<em class=red>stacktrace</em> *error-info*))))
+
+-&gt;    (a1 (a . 1))
+      (a2 (b . 1))
+      (a3 (c . 1))
+</pre>
+
+<p>
+See also trace below.  There is a break macro defined in Snd (see snd-xen.c)
+which allows you to stop at some point, then evaluate arbitrary expressions in that context.
+There's yet another hook, *unbound-variable-hook*, which is called when an unbound variable
+is encountered (before the error is signalled).  You can set it to be a function of
+one argument, the current (unbound) symbol.  The hope is to support autoloading with
+this hook eventually.
+</p>
+<p>The s7-built-in catch tags (error symbols) are 'wrong-type-arg, 'syntax-error, 'read-error, 'thread-error,
+'out-of-memory, 'wrong-number-of-args, 'format-error, 'out-of-range, 'division-by-zero, 'io-error, and 'bignum-error.  
 </dd>
 <br>
 
@@ -1308,37 +1335,6 @@ function call (that is, global to the function, not the function's local environ
     [hiho 2 3 4]
     sum of args: 9
      24
-</pre>
-</dd>
-<br>
-
-
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
-<A NAME="stacktrace"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>stacktrace</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd><p>stacktrace prints the stack contents.  Its optional argument
-can be *error-info* to show the stack at the point of the last error,
-a thread object to show that thread's stack, or a continuation to
-show the continuation stack. 
-</p>
-
-<pre>
-    (let ()
-      (define (a1 a) (+ a #\c))
-      (define (a2 b) (+ b (a1 b)))
-      (define (a3 c) (+ c (a2 c)))
-      (catch #t
-        (lambda () (a3 1))
-        (lambda args (<em class=red>stacktrace</em> *error-info*))))
-
--&gt;    (a1 (a . 1))
-      (a2 (b . 1))
-      (a3 (c . 1))
 </pre>
 </dd>
 <br>
@@ -1591,9 +1587,10 @@ Here is an example of "apropos" that accesses both environments:
 </pre>
 
 <p>(with-environment env . body) evaluates its body in the environment env.
-Although the environment is a list of alists of (symbol . value) pairs, you can't simply
-add new pairs to it because symbol lookup is optimized to reduce the time
-spent pawing through it.  So, to add a new value to an environment,
+Although the environment is just a list of alists of (symbol . value) pairs, you can't simply
+add new pairs to it (or use set-cdr! to change the value in an existing binding) 
+because symbol lookup is optimized to reduce the time
+spent pawing through the environment.  So, to add a new value to an environment,
 use <b>augment-environment</b>:
 </p>
 <pre>
@@ -1605,7 +1602,10 @@ use <b>augment-environment</b>:
 
 -&gt; 33
 </pre>
-<p>I think these two functions can implement the notions of libraries,
+<p>augment-environment does not change the environment passed to it.  It
+just prepends the new bindings (shadowing any old ones),
+as if you had called "let".  
+I think these two functions can implement the notions of libraries,
 separate namespaces, or modules.  The library file exports a list
 of bindings: <code>(cons name value)</code>, keeping all its own
 code in a let, or group of lets:
@@ -1633,11 +1633,13 @@ to "import" the exported values:
  (display (* (func1 var1) (func2 var1)))) ; displays 1122, i.e. (* 33 34)
 </pre>
 <p>If we want to import these things under different names, or use only some subset,
-the list passed to augment-environment is at our disposal.  In this "library" mechanism,
-loading a library file does not add anything to our environment unless we explicitly
+the list passed to augment-environment is at our disposal.  
+Loading a library file does not add anything to our environment unless we explicitly
 ask for it, and subsets and renaming are trivial.  To import many libraries, just
 nest the import statements, or make a version that loads up all the libraries,
 saving the exported lists, and pass them concatenated to augment-environment.
+And when we leave the with-environment body, all those new bindings go away too,
+so the global state is unaffected.
 </p>
 </dd>
 <br>

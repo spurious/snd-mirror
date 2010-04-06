@@ -3127,7 +3127,7 @@ static char *call_grep(const char *defstr, const char *name, const char *endstr,
 
 static char *snd_finder(const char *name, bool got_help)
 {
-  /* desperation -- search *.scm/rb then even *.html? for 'name' */
+  /* desperation -- search *.scm/rb/fs then even *.html? for 'name' */
   const char *url = NULL;
   char *fgrep = NULL, *tempfile = NULL, *command = NULL;
   bool is_defined = false;
@@ -3729,12 +3729,11 @@ and its value is returned."
 	    x = s7_procedure_environment(sym);
 	    if (s7_is_pair(x))
 	      {
-
 		x = s7_cdr(s7_assoc(s7, s7_make_symbol(s7, "__func__"), s7_car(x)));
-		subject = (char *)s7_symbol_name(s7_car(x));
-		url = snd_url(subject);
 		if (s7_is_pair(x))
 		  {
+		    subject = (char *)s7_symbol_name(s7_car(x));
+		    url = snd_url(subject);
 		    /* unavoidable memleak I guess */
 		    str = (char *)calloc(256, sizeof(char));
 		    if (url)

@@ -15385,7 +15385,7 @@
 				      (set! (ship2-y s1) 123.0))
 				    (lambda args (car args)))))
 		    tag)
-		  'error)
+		  'syntax-error)
 	    (set! (ship2-x s1) 123.0)
 	    (test (ship2-x s1)  123.0)))
 	

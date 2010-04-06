@@ -7668,6 +7668,7 @@ Not all the keyword arguments apply in all cases, though I hope to fill in the t
 
 <pre>
     (play)                                                       ; play current sound, all chans from start to end
+    (play 0 :channel 1)                                          ; play just the second channel of sound 0
     (play ((selected-sound) <a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>))                             ; play starting from the cursor
     (play (integer-&gt;sound 1) (round (* 3.0 (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))) :channel 3) ; play snd 1, chan 3 (4th chan), start at 3.0 secs
     (play (selected-sound) 0 :with-sync #t)                      ; play sync'd sounds
