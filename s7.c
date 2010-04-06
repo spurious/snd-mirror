@@ -16866,7 +16866,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_pair(sc->code))
 	{
 	  /* here sc->code is a list like: ((i 0 (+ i 1)) ...)
-	   *   so cadar gets the init value
+	   *   so cadar gets the init value.
+	   *
+	   * we accept:
+	   *       (do ((i 1) (i 2)) (#t i)) -> 2
+	   *       (do () (1) . "hi") -- this is like (do () (#t #t) (asdf))
 	   */
 	  if (!(is_pair(car(sc->code))))              /* (do (4) (= 3)) */
 	    return(eval_error(sc, "do: variable name missing? ~A", sc->code));
@@ -17404,6 +17408,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  /* but we currently accept (lambda :hi 1) or (lambda (:hi) 1) or (lambda (:hi . :hi) 1)
 	   *   (lambda i i . i) and (lambda (i i i i) (i)) and (lambda* ((i 1) i i) i)
+	   *   (lambda quote i) (lambda (i . i) 1 . 2)  (lambda : : . #()) (lambda : 1 . "")
 	   */
 	}
       else
@@ -18073,7 +18078,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       sc->x = car(sc->code);
       if (!s7_is_symbol(sc->x))                                             /* (defmacro) or (defmacro 1 ...) */
-	return(eval_error(sc, "defmacro: ~S is not a symbol?", sc->x));     
+	return(eval_error(sc, "defmacro name: ~S is not a symbol?", sc->x));     
       if (s7_is_keyword(sc->x))                                             /* (defmacro :hi ...) */
 	return(eval_error(sc, "defmacro ~A: keywords are constants", sc->x));
 
@@ -18084,26 +18089,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = call_symbol_bind(sc, sc->x, sc->code);
 	}
 
-      /* 
-       * (define-macro (mac a b) 
-       *   `(with-environment (global-environment)
-       *      (+ ,a ,b)))
-       *
-       * (let ((+ -)) 
-       *   (mac 1 2))
-       * 3
-       */
-
       sc->z = cdr(sc->code);
       if (!is_pair(sc->z))                                                  /* (defmacro a) */
-	return(eval_error(sc, "defmacro ~A, but no body?", sc->x));
+	return(eval_error(sc, "defmacro ~A, but no args or body?", sc->x));
 
-      /* arg list is not checked? -- these are accepted:
-       *    (defmacro hi (1 . 2) ...)
-       *    (defmacro hi hi . hi
-       *    (defmacro hi 1 . 2) [also lambda]
-       * also
-       *    (defmacro hi ())
+      sc->y = car(sc->z);            /* the arglist */
+      if ((!is_pair(sc->y)) &&
+	  (sc->y != sc->NIL) &&
+	  (!s7_is_symbol(sc->y)))
+	return(s7_error(sc, sc->ERROR,                                      /* (defmacro mac "hi" ...) */
+			make_list_3(sc, make_protected_string(sc, "defmacro ~A argument list is ~S?"), sc->x, sc->y)));
+
+      for ( ; is_pair(sc->y); sc->y = cdr(sc->y))
+	if ((!s7_is_symbol(car(sc->y))) &&
+	    (sc->op == OP_DEFMACRO))
+	  return(s7_error(sc, sc->ERROR,                                    /* (defmacro mac (1) ...) */
+			  make_list_3(sc, make_protected_string(sc, "defmacro ~A argument name is not a symbol: ~S"), sc->x, sc->y)));
+
+      if (cdr(sc->z) == sc->NIL)                                            /* (defmacro hi ()) */
+	return(eval_error(sc, "defmacro ~A has no body?", sc->x));
+
+      /* accepted:
+       *    (defmacro hi hi . hi)
        */
 
       sc->y = s7_gensym(sc, "defmac");
@@ -18173,6 +18180,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->z = cdr(sc->code);
       if (!is_pair(sc->z))                /* (define-macro (...)) */
 	return(eval_error(sc, "define-macro ~A, but no body?", sc->x));
+
+      sc->y = cdar(sc->code);            /* the arglist */
+      if ((!is_pair(sc->y)) &&
+	  (sc->y != sc->NIL) &&
+	  (!s7_is_symbol(sc->y)))
+	return(s7_error(sc, sc->ERROR,                                      /* (define-macro (mac . 1) ...) */
+			make_list_3(sc, make_protected_string(sc, "define-macro ~A argument list is ~S?"), sc->x, sc->y)));
+
+      for ( ; is_pair(sc->y); sc->y = cdr(sc->y))
+	if ((!s7_is_symbol(car(sc->y))) &&
+	    (sc->op == OP_DEFINE_MACRO))
+	  return(s7_error(sc, sc->ERROR,                                    /* (define-macro (mac 1) ...) */
+			  make_list_3(sc, make_protected_string(sc, "define-macro ~A argument name is not a symbol: ~S"), sc->x, sc->y)));
 
       sc->y = s7_gensym(sc, "defmac");
       sc->code = s7_cons(sc,
@@ -24024,21 +24044,3 @@ s7_scheme *s7_init(void)
   return(sc);
 }
 
-/* TODO: check (or 1 . 2) (lambda quote i) (lambda (i . i) 1 . 2)
- *       (lambda : : . #())
- *       (defmacro : "" . #(1))
- *       (defmacro : #(1) . :)
- *       (lambda : 1 . "")
- *       (define-macro (i 1) => (j 2))
- *       (set! else #t)
- *         if set to #f, (cond (#f 2) (else 1)) -> ()
- *       (if else #t)
- *       (cond (else else #t))
- *       (do ((i 1) (i 2)) (#t i)) returns 2
- *       (do () (1) . "hi") -- this is like (do () (#t #t) (asdf))
- *
- * add T_ELSE? or treat it as syntax?
- *
- * try (do (((i))) (1 2)) and (do ((i 1) ((j))) (1 2))
- *     (do (((1) #<unspecified>)) (()))
- */

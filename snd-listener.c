@@ -102,6 +102,7 @@ int find_matching_paren(const char *str, int parens, int pos, int *highlight_pos
   return(parens);
 }
 
+/* this doesn't know about block comments */
 
 int check_balance(const char *expr, int start, int end, bool in_listener) 
 {

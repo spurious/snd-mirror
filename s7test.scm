@@ -319,13 +319,19 @@
 (test (eq? (if #f 1) 1) #f)
 (test (eq? '() '(#||#)) #t)
 (test (eq? '() '(#!@%$&!#)) #t)
-(test (eq? #||# (#|%%|# append #|^|#) #|?|# (#|+|# list #|<>|#) #||||#) #t)
-
-
-					;(test (eq? call/cc call-with-current-continuation) #t)
+(test (eq? #||# (#|%%|# append #|^|#) #|?|# (#|+|# list #|<>|#) #||#) #t)
+(test (eq? '() ;a comment
+	   '()) #t)
 (test (eq? 3/4 3) #f)
 (test (eq? '() '()) #t)
+(test (eq? '()'()) #t)
+(test (eq? '()(list)) #t)
 (test (eq? '() (list)) #t)
+
+(display ";this should display #t: ")
+(begin #| ; |# (display #t))
+(newline)
+
 
 (let ((things (vector #t #f #\space '() "" 0 1 3/4 1+i 1.5 '(1 .2) '#() (vector) (vector 1) (list 1) 'f 't #\t)))
   (do ((i 0 (+ i 1)))
@@ -343,6 +349,7 @@
 (test (eqv? "()" '()) #f)
 (test (eqv? #\a #\b) #f)
 (test (eqv? #\a #\a) #t)
+(test (eqv? #\space #\space) #t)
 (test (let ((x (string-ref "hi" 0))) (eqv? x x)) #t)
 (test (eqv? #t #t) #t)
 (test (eqv? #f #f) #t)
@@ -449,6 +456,7 @@
 (test (equal? (cons 1 (cons 2 3)) '(1 2 . 3)) #t)
 (test (equal? '() '()) #t)
 (test (equal? '() (list)) #t)
+(test (equal? "\n" "\n") #t)
 
 (test (equal? "asd""asd") #t) ; is this the norm?
 (let ((streq (lambda (a b) (equal? a b)))) (test (streq "asd""asd") #t))
@@ -556,7 +564,7 @@
 ;;; --------------------------------------------------------------------------------
 
 (test (eqv? '#\  #\space) #t)
-(test (eqv? #\space '#\space) #t)
+(test (eqv? #\newline '#\newline) #t)
 
 (test (char? #\a) #t)
 (test (char? #\() #t)
@@ -1403,7 +1411,6 @@
 (test (string-ci>=? "Z6a8P" "^/VpmWwt):?o[a9\\_N" "8[^h)<KX?[utsc") #f)
 
 
-
 (test (string-length "abc") 3)
 (test (string-length "") 0)
 (test (string-length (string)) 0)
@@ -1433,7 +1440,7 @@
 (test (string) "")
 (test (string #\a #\b #\c) "abc")
 (test (string #\a) "a")
-
+(test (string=? (string #\space #\newline) " \n") #t)
 
 
 (test (make-string 0) "")
@@ -3325,6 +3332,7 @@
 (test (let ((sum 0)) (for-each (lambda (a b . args) (set! sum (+ sum a b (apply + args)))) '(0 1 2) '(2 1 0)) sum) 6)
 (test (let () (for-each + '(0 1 2) '(2 1 0)) 0) 0)
 (test (let () () ()) '())
+(test (for-each + ()) '())
 (test (let ((d 0))
 	(for-each (let ((a 0))
 		    (for-each (lambda (b) (set! a (+ a b))) (list 1 2))
@@ -3439,6 +3447,9 @@
 (test (map (lambda args (apply + args)) '(0 1 2) '(3 4 5) '(6 7 8) '(9 10 11) '(12 13 14)) '(30 35 40))
 (test (map (lambda (a b . args) (+ a b (apply + args))) '(0 1 2) '(3 4 5) '(6 7 8) '(9 10 11) '(12 13 14)) '(30 35 40))
 (test (map (lambda (a b . args) (+ a b (apply + args))) '(0 1 2) '(3 4 5)) '(3 5 7))
+(test (map + () ()) ())
+(test (map + (#(#() #()) 1)) #())
+(test (map + #(1) #(1) #(1)) #(3))
 
 (test (let ((d 0))
 	(map (let ((a 0))
@@ -17172,6 +17183,7 @@
 (test (length (vector 1 2)) 2)
 (test (length (make-hash-table 7)) 7)
 (test (length '()) 0)
+(test (length (#(#() #()) 1)) 0)
 
 (test (copy 3) 3)
 (test (copy 3/4) 3/4)
@@ -17182,6 +17194,9 @@
 (test (copy (list 1 (list 2 3))) (list 1 (list 2 3)))
 (test (copy (cons 1 2)) (cons 1 2))
 (test (copy '(1 2 . 3)) '(1 2 . 3))
+(test (copy (+)) 0)
+(test (copy +) +)
+(test (copy (#(#() #()) 1)) #())
 
 (if (not (provided? 'gmp))
     (let ((r1 (make-random-state 1234)))
@@ -41816,6 +41831,8 @@
   (test (vector-set! v 0 0) 'error)
   (test (vector-set! v 1 0) 'error)
   (test (vector-set! v -1 0) 'error))
+(test (vector-set! #() 0 123) 'error)
+(test (vector-set! #(1 2 3) 0 123) 'error)
 
 (test (let ((g (lambda () '#(1 2 3)))) (vector-set! (g) 0 #\?) (g)) 'error) ; not an error in Guile
 					;(test (let ((g (lambda () '(1 . 2)))) (set-car! (g) 123) (g)) 'error) ; should this also be an error?
@@ -42333,18 +42350,21 @@
 (test (do . 1) 'error)
 (test (do ((i i i)) (i i)) 'error)
 (test (do ((i 0 i (+ i 1))) (i i)) 'error)
-					;(test (do ((i)) (#t i)) 'error) ; there's some disagreement about this?
+(test (do ((i)) (#t i)) 'error)
 (test (do ((i 0 (+ i 1))) #t) 'error)
 (test (do 123 (#t 1)) 'error)
 (test (do ((i 1)) (#t . 1) 1) 'error)
 (test (do ((i 1) . 1) (#t 1) 1) 'error)
-					;(test (do ((i 0 j) (i 0 j) (j 1 (+ j 1))) ((= j 3) i)) 'error) ; ??
 (test (do ((i 1) ()) (= i 1)) 'error)
 (test (do ((i 0 . 1)) ((= i 1)) i) 'error)
 (test (do ((i 0 (+ i 1))) ((= i 3)) (set! i "hiho")) 'error)
 (test (let ((do+ +)) (do ((i 0 (do+ i 1))) ((= i 3)) (set! do+ abs))) 'error)
 (test (do () . 1) 'error)
 (test (do ((i)) (1 2)) 'error)
+(test (do (((i))) (1 2)) 'error)
+(test (do ((i 1) ((j))) (1 2)) 'error)
+(test (do (((1))) (1 2)) 'error)
+
 
 (test (let ((a 1)) (set! a)) 'error)
 (test (let ((a 1)) (set! a 2 3)) 'error)
@@ -42660,6 +42680,15 @@
 (test (define hi: 1) 'error)
 (test (define-macro (:hi a) `(+ ,a 1)) 'error)
 (test (defmacro :hi (a) `(+ ,a 1)) 'error)
+(test (defmacro hi (1 . 2) 1) 'error)
+(test (defmacro hi 1 . 2) 'error)                   ;TODO: [also lambda]
+(test (defmacro : "" . #(1)) 'error)
+(test (defmacro : #(1) . :) 'error)
+(test (defmacro hi ()) 'error)
+(test (define-macro (mac . 1) 1) 'error)
+(test (define-macro (mac 1) 1) 'error)
+(test (define-macro (a #()) 1) 'error)
+(test (define-macro (i 1) => (j 2)) 'error)
 
 
 (test (format #f "" 1) 'error)

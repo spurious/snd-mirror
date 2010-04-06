@@ -609,7 +609,7 @@ become constants:
  ;can't bind or set an immutable object: cvar
 </pre>
 <p>So, obviously, choose unique names for your constants, or don't use define-constant.
-A function can also be a constant (think of define-constant as an extension of define):
+A function can also be a constant (define-constant is an extension of define):
 </p>
 <pre>
 &gt; (define-constant (I'll-never-change! . args) 'nope)
@@ -794,6 +794,7 @@ value of the argument to the make function, and the <b>ref</b> function returns 
 when passed that object. 
 </p>
 
+<A NAME="recordexample"></a>
 <pre>
 (define special-value ((cadr (<em class=red>make-type</em>)) 'special))
 ;; now special-value's value can't be eq? to any other scheme object
@@ -1604,6 +1605,40 @@ use <b>augment-environment</b>:
 
 -&gt; 33
 </pre>
+<p>I think these two functions can implement the notions of libraries,
+separate namespaces, or modules.  The library file exports a list
+of bindings: <code>(cons name value)</code>, keeping all its own
+code in a let, or group of lets:
+</p>
+<pre>
+(let ((var1 32))
+  (define (func1 a) (+ a 1))
+  (define (func2 a) (+ a 2))
+  (list (cons 'func1 func1)
+	(cons 'func2 func2)
+	(cons 'var1 var1)))
+</pre>
+<p>Loading this file returns the list (load returns the last thing it evaluates).
+For explicitness, we could put the list of names at the top of the file (an "export" statement),
+and fill in the values as we define them (as in the make-type <a href="#recordexample">record</a> example above).
+The file that wants to use this library uses with-environment and augment-environment
+to "import" the exported values:
+</p>
+<pre>
+(define (import file)
+  (apply augment-environment (current-environment) (load file)))
+
+(with-environment
+ (import "lib1.scm")
+ (display (* (func1 var1) (func2 var1)))) ; displays 1122, i.e. (* 33 34)
+</pre>
+<p>If we want to import these things under different names, or use only some subset,
+the list passed to augment-environment is at our disposal.  In this "library" mechanism,
+loading a library file does not add anything to our environment unless we explicitly
+ask for it, and subsets and renaming are trivial.  To import many libraries, just
+nest the import statements, or make a version that loads up all the libraries,
+saving the exported lists, and pass them concatenated to augment-environment.
+</p>
 </dd>
 <br>
 
