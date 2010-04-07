@@ -1279,12 +1279,14 @@ show the continuation stack.
 See also trace below.  There is a break macro defined in Snd (see snd-xen.c)
 which allows you to stop at some point, then evaluate arbitrary expressions in that context.
 There's yet another hook, *unbound-variable-hook*, which is called when an unbound variable
-is encountered (before the error is signalled).  You can set it to be a function of
-one argument, the current (unbound) symbol.  The hope is to support autoloading with
-this hook eventually.
+is encountered (before the error is signalled).  Its value is a function of one argument,
+the unbound symbol.  In Snd, this is used to implement autoloading.
+
+
 </p>
 <p>The s7-built-in catch tags (error symbols) are 'wrong-type-arg, 'syntax-error, 'read-error, 'thread-error,
 'out-of-memory, 'wrong-number-of-args, 'format-error, 'out-of-range, 'division-by-zero, 'io-error, and 'bignum-error.  
+</p>
 </dd>
 <br>
 

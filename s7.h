@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.51"
-#define S7_DATE "29-Mar-10"
+#define S7_VERSION "1.52"
+#define S7_DATE "7-Apr-10"
 
 
 typedef long long int s7_Int;
@@ -40,6 +40,7 @@ typedef double s7_Double;
    *                               the error type (a symbol), and the info about it (a list).
    *    *error-info*            data describing last error (see below).
    *    *trace-hook*            called upon trace (a function of two args)
+   *    *unbound-variable-hook* called when an unbound symbol is accessed.
    *
    * s7 constants:
    *
@@ -835,6 +836,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 7-Apr:     *unbound-variable-hook*, augment-environment.
  * 29-Mar:    symbol-access, s7_symbol_access, s7_symbol_set_access.
  *            C example of notification in s7.html.
  * 25-Mar:    make-type.  s7_is_equal now includes an s7_scheme pointer as its first argument.

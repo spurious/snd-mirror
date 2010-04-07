@@ -493,6 +493,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+7-Apr:   autoload support via s7's *unbound-variable-hook*.\n\
 20-Mar:  Snd 11.4.\n\
 27-Feb:  the run macro's argument no longer has to be a thunk.\n\
 11-Feb:  Snd 11.3.\n\
@@ -3939,6 +3940,27 @@ static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
 }
 
 
+#if HAVE_SCHEME
+#define S_autoload_file "autoload-file"
+
+static XEN g_autoload_file(XEN symbol_name)
+{
+  #define H_autoload_file "(autoload-file symbol-name) looks for the file that contains a definition of the variable \
+whose name (as a string) is 'symbol-name'"
+
+  int i;
+  const char *name;
+  name = XEN_TO_C_STRING(symbol_name);
+
+  for (i = 0; i < AUTOLOAD_NAMES; i++)
+    if (strcmp(name, autoload_names[i]) == 0)
+      return(C_TO_XEN_STRING(autoload_files[autoload_indices[i]]));
+  
+  return(XEN_FALSE);
+}
+#endif
+
+
 #ifdef XEN_ARGIFY_1
 XEN_ARGIFY_2(g_listener_help_w, g_listener_help)
 XEN_NARGIFY_0(g_html_dir_w, g_html_dir)
@@ -3948,6 +3970,9 @@ XEN_NARGIFY_1(g_set_html_program_w, g_set_html_program)
 XEN_NARGIFY_1(g_snd_url_w, g_snd_url)
 XEN_NARGIFY_0(g_snd_urls_w, g_snd_urls)
 XEN_ARGIFY_4(g_help_dialog_w, g_help_dialog)
+#if HAVE_SCHEME
+XEN_NARGIFY_1(g_autoload_file_w, g_autoload_file)
+#endif
 #else
 #define g_listener_help_w g_listener_help
 #define g_html_dir_w g_html_dir
@@ -3957,6 +3982,9 @@ XEN_ARGIFY_4(g_help_dialog_w, g_help_dialog)
 #define g_snd_url_w g_snd_url
 #define g_snd_urls_w g_snd_urls
 #define g_help_dialog_w g_help_dialog
+#if HAVE_SCHEME
+#define g_autoload_file_w g_autoload_file
+#endif
 #endif
 
 void g_init_help(void)
@@ -3996,4 +4024,14 @@ If more than one hook function, each function gets the previous function's outpu
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_dir,     g_html_dir_w,     H_html_dir,     S_setB S_html_dir,     g_set_html_dir_w,      0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_html_program, g_html_program_w, H_html_program, S_setB S_html_program, g_set_html_program_w,  0, 0, 1, 0);
+
+#if HAVE_SCHEME
+  XEN_DEFINE_PROCEDURE(S_autoload_file, g_autoload_file_w,  1, 0, 0, H_autoload_file);
+
+  XEN_EVAL_C_STRING("(set! *unbound-variable-hook* \
+                       (lambda (sym) \
+			 (let ((file (autoload-file (symbol->string sym)))) \
+			   (if file (load file)) \
+			   (symbol->value sym))))");
+#endif
 }

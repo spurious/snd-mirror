@@ -1,5 +1,6 @@
 Snd change log
 
+ 7-Apr:     autoload support via s7's *unbound-variable-hook*.
  20-Mar:    Snd 11.4.
  27-Feb:    the run macro's argument no longer has to be a thunk.
  11-Feb:    Snd 11.3.

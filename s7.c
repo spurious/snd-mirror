@@ -13636,14 +13636,17 @@ static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer 
       func = caddr(csr(x));
       if (is_procedure(func))
 	{
-	  s7_pointer save_x, save_y, save_z;
-	  save_x = sc->x;
-	  save_y = sc->y;
-	  save_z = sc->z;
+	  int save_x, save_y, save_z;
+	  save_x = s7_gc_protect(sc, sc->x);
+	  save_y = s7_gc_protect(sc, sc->y);
+	  save_z = s7_gc_protect(sc, sc->z);
 	  new_value = s7_call(sc, func, make_list_2(sc, symbol, new_value));
-	  sc->x = save_x;
-	  sc->y = save_y;
-	  sc->z = save_z;
+	  sc->x = s7_gc_protected_at(sc, save_x);
+	  sc->y = s7_gc_protected_at(sc, save_y);
+	  sc->z = s7_gc_protected_at(sc, save_z);
+	  s7_gc_unprotect_at(sc, save_x);
+	  s7_gc_unprotect_at(sc, save_y);
+	  s7_gc_unprotect_at(sc, save_z);
 	}
     }
   return(new_value);
@@ -13660,14 +13663,17 @@ static s7_pointer call_symbol_set(s7_scheme *sc, s7_pointer symbol, s7_pointer n
       func = cadr(csr(x));
       if (is_procedure(func))
 	{
-	  s7_pointer save_x, save_y, save_z;
-	  save_x = sc->x;
-	  save_y = sc->y;
-	  save_z = sc->z;
+	  int save_x, save_y, save_z;
+	  save_x = s7_gc_protect(sc, sc->x);
+	  save_y = s7_gc_protect(sc, sc->y);
+	  save_z = s7_gc_protect(sc, sc->z);
 	  new_value = s7_call(sc, func, make_list_2(sc, symbol, new_value));
-	  sc->x = save_x;
-	  sc->y = save_y;
-	  sc->z = save_z;
+	  sc->x = s7_gc_protected_at(sc, save_x);
+	  sc->y = s7_gc_protected_at(sc, save_y);
+	  sc->z = s7_gc_protected_at(sc, save_z);
+	  s7_gc_unprotect_at(sc, save_x);
+	  s7_gc_unprotect_at(sc, save_y);
+	  s7_gc_unprotect_at(sc, save_z);
 	}
     }
   return(new_value);
@@ -16296,6 +16302,9 @@ static s7_pointer read_expression(s7_scheme *sc)
 
 /* ---------------- */
 
+/* (set! *unbound-variable-hook* (lambda (sym) (load "dsp.scm") (symbol->value sym))) */
+/* (set! *load-hook* (lambda (f) (format #t "loading ~S~%" f))) */
+
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 {
   /* handle *unbound-variable-hook* */
@@ -16304,16 +16313,23 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
   if ((unbound_variable_hook_binding != sc->NIL) &&
       (is_procedure(symbol_value(unbound_variable_hook_binding))))
     {
-      s7_pointer x, save_x, save_y, save_z;
-      save_x = sc->x;
-      save_y = sc->y;
-      save_z = sc->z;
+      int save_x, save_y, save_z;
+      s7_pointer x;
+      save_x = s7_gc_protect(sc, sc->x);
+      save_y = s7_gc_protect(sc, sc->y);
+      save_z = s7_gc_protect(sc, sc->z);
+
       x = s7_call(sc, 
 		  symbol_value(unbound_variable_hook_binding),
 		  make_list_1(sc, sym));
-      sc->x = save_x;
-      sc->y = save_y;
-      sc->z = save_z;
+
+      sc->x = s7_gc_protected_at(sc, save_x);
+      sc->y = s7_gc_protected_at(sc, save_y);
+      sc->z = s7_gc_protected_at(sc, save_z);
+      s7_gc_unprotect_at(sc, save_x);
+      s7_gc_unprotect_at(sc, save_y);
+      s7_gc_unprotect_at(sc, save_z);
+
       return(x);
     }
   return(sc->UNDEFINED);
