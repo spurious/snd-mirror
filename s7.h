@@ -466,6 +466,7 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
 
 s7_pointer s7_global_environment(s7_scheme *sc);                            /* (global-environment) */
 s7_pointer s7_current_environment(s7_scheme *sc);                           /* (current-environment) */
+s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer env, s7_pointer bindings);
 
   /* each environment is a list of the current frames (alists of symbols and values)
    *   and the global (top-level) definitions, a vector of alists (a hash-table).
@@ -836,7 +837,8 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
- * 7-Apr:     *unbound-variable-hook*, augment-environment.
+ * 7-Apr:     *unbound-variable-hook*.
+ *            augment-environment and s7_augment_environment.
  * 29-Mar:    symbol-access, s7_symbol_access, s7_symbol_set_access.
  *            C example of notification in s7.html.
  * 25-Mar:    make-type.  s7_is_equal now includes an s7_scheme pointer as its first argument.

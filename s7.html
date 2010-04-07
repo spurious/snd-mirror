@@ -608,15 +608,8 @@ become constants:
  ;can't bind or set an immutable object: cvar
 </pre>
 <p>So, obviously, choose unique names for your constants, or don't use define-constant.
-A function can also be a constant (define-constant is an extension of define):
+A function can also be a constant (define-constant is an extension of define).
 </p>
-<pre>
-&gt; (define-constant (I'll-never-change! . args) 'nope)
-I'll-never-change!
-
-&gt; (let ((I'll-never-change! 32)) 'oh-yeah?)
-;can't bind an immutable object: I'll-never-change!
-</pre>
 
 <p>Constants are very similar to things such as keywords (no set, always return itself as its value),
 variable trace (informative function upon set or keeping a history of past values), typed variables (restricting a
@@ -1641,7 +1634,8 @@ ask for it, and subsets and renaming are trivial.  To import many libraries, jus
 nest the import statements, or make a version that loads up all the libraries,
 saving the exported lists, and pass them concatenated to augment-environment.
 And when we leave the with-environment body, all those new bindings go away too,
-so the global state is unaffected.
+so the global state is unaffected.  To do all this in C, see the FFI <a href="#namespace">example</a>
+below.
 </p>
 </dd>
 <br>
@@ -1847,6 +1841,7 @@ The examples that follow show:
 <li><a href="#signal">signal handling (C-C to break out of an infinite loop)</a>
 <li><a href="#vector">direct multidimensional vector element access</a>
 <li><a href="#notify">notification in C that a Scheme variable has been set!</a>
+<li><a href="#namespace">Load C defined stuff into a separate namespace</a>
 </ul>
 
 <br><br>
@@ -2837,6 +2832,110 @@ int main(int argc, char **argv)
 </pre>
 </td></tr></table>
 
+
+<br><br>
+<A NAME="namespace"></a>
+<p>Load C defined stuff into a separate namespace.
+</p>
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<tr><td bgcolor="#fbfbf0">
+<pre>
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+#include "s7.h"
+
+static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
+
+static s7_pointer func1(s7_scheme *sc, s7_pointer args)
+{
+  return(s7_make_integer(sc, s7_integer(s7_car(args)) + 1));
+}
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  s7_pointer new_env;
+
+  s7 = s7_init();  
+  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
+
+  /* "func1" and "var1" will be placed in an anonymous environment,
+   *   accessible from Scheme via the global variable "lib-exports"
+   */
+  
+  new_env = <em class=red>s7_augment_environment</em>(s7, s7_cons(s7, s7_current_environment(s7), s7_nil(s7)), s7_nil(s7));
+  /* make a private environment for func1 and var1 below (this is our "namespace") */
+  s7_gc_protect(s7, new_env);
+
+  s7_define(s7, <em class=red>new_env</em>, 
+	    s7_make_symbol(s7, "func1"),
+	    <em class=red>s7_make_function</em>(s7, "func1", func1, 1, 0, false, "func1 adds 1 to its argument"));
+  
+  s7_define(s7, <em class=red>new_env</em>, s7_make_symbol(s7, "var1"), s7_make_integer(s7, 32));
+  /* those two symbols are now defined in the new environment */
+
+  /* add "lib-exports" to the global environment */
+  s7_define_variable(s7, "lib-exports", s7_car(new_env));
+
+  if (argc == 2)
+    {
+      fprintf(stderr, "load %s\n", argv[1]);
+      s7_load(s7, argv[1]);
+    }
+  else
+    {
+      char buffer[512];
+      char response[1024];
+      while (1) 
+	{
+	  fprintf(stdout, "\n&gt; ");
+	  fgets(buffer, 512, stdin);
+	  
+	  if ((buffer[0] != '\n') || 
+	      (strlen(buffer) &gt; 1))
+	    {                            
+	      sprintf(response, "(write %s)", buffer);
+	      s7_eval_c_string(s7, response);
+	    }
+	}
+    }
+}
+
+/*     &gt; func1
+ *     ;func1: unbound variable, line 1
+ *     &gt; lib-exports
+ *     ((var1 . 32) (func1 . func1))
+ *     ;; so lib-exports has the C-defined names and values
+ *     ;; we can use these directly:
+ *
+ *     &gt; (define lib-env (apply <em class=red>augment-environment</em> (current-environment) lib-exports))
+ *     lib-env
+ *     &gt; (<em class=red>with-environment</em> lib-env (func1 var1))
+ *     33
+ *
+ *     ;; or rename them to prepend "lib:"
+ *     &gt; (define lib-env (apply augment-environment 
+                                (current-environment) 
+                                (map (lambda (binding) 
+                                       (cons (string-&gt;symbol 
+                                               (string-append "lib:" (symbol-&gt;string (car binding)))) 
+                                             (cdr binding))) 
+                                     lib-exports)))
+ *     lib-env
+ *     &gt; (with-environment lib-env (lib:func1 lib:var1))
+ *     33
+ *
+ *     ;;; now for convenience, place "func1" in the global environment under the name "func2"
+ *     &gt; (define func2 (cdadr lib-exports)) 
+ *     func2
+ *     &gt; (func2 1)  
+ *     2
+ */
+</pre>
+</td></tr></table>
 
 </body>
 </html>

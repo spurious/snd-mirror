@@ -2167,6 +2167,12 @@ new environment."
 }
 
 
+s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer env, s7_pointer bindings)
+{
+  return(g_augment_environment(sc, s7_append(sc, env, bindings))); /* or perhaps make_list_2? */
+}
+
+
 static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
 { 
   s7_pointer x;
