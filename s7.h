@@ -595,8 +595,8 @@ bool s7_is_constant(s7_pointer p);
    *    (define *features* '())
    *
    * s7_define_variable is simply s7_define with string->symbol and the global environment.
-   * s7_define_constant is s7_define_variable but makes its "definee" immutable.
-   * s7_define is equivalent to define! in scheme (see below).
+   * s7_define_constant is s7_define but makes its "definee" immutable.
+   * s7_define is equivalent to define in scheme, but takes place in the global environment.
    */
 
 bool s7_is_function(s7_pointer p); 

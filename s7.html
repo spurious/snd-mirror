@@ -1273,10 +1273,17 @@ See also trace below.  There is a break macro defined in Snd (see snd-xen.c)
 which allows you to stop at some point, then evaluate arbitrary expressions in that context.
 There's yet another hook, *unbound-variable-hook*, which is called when an unbound variable
 is encountered (before the error is signalled).  Its value is a function of one argument,
-the unbound symbol.  In Snd, this is used to implement autoloading.
-
-
+the unbound symbol.  In Snd, this is used to implement autoloading:
 </p>
+<pre>
+(set! <em class=red>*unbound-variable-hook*</em>
+  (lambda (sym)
+    (let ((file (autoload-file (symbol-&gt;string sym))))
+      ;; autoload-file is a Snd function that knows where a lot of Snd's scheme functions are
+      (if file (load file))
+      (symbol->value sym)))) ; this will return #&lt;undefined&gt; if we didn't find its source file
+</pre>
+
 <p>The s7-built-in catch tags (error symbols) are 'wrong-type-arg, 'syntax-error, 'read-error, 'thread-error,
 'out-of-memory, 'wrong-number-of-args, 'format-error, 'out-of-range, 'division-by-zero, 'io-error, and 'bignum-error.  
 </p>
@@ -1774,7 +1781,7 @@ bind it to something else, which is asking for confusion).
 <li>no transcript-on or transcript-off.
 <li>__func__ is the name (or name and location) of the function currently being defined or called (as in C).
 <li>vector-for-each, vector-map, hash-table-for-each, string-for-each
-<li>syntactic names can be values: (define progn begin) (progn (display "progn!") (+ 3 4)) or (define function lambda), etc
+<li>syntactic names can be values: <code>(define progn begin) (progn (display "progn!") (+ 3 4))</code> or <code>(define function lambda)</code>, etc
 <li>begin returns the value of the last form (like progn); it can contain both definitions and other statements.
 </ul>
 

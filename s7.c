@@ -1914,7 +1914,7 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
   
   for (; (*(sc->gensym_counter)) < LONG_MAX; ) 
     { 
-      snprintf(name, len, "%s-%ld", prefix, (*(sc->gensym_counter))++); 
+      snprintf(name, len, "{%s}-%ld", prefix, (*(sc->gensym_counter))++); 
       location = symbol_table_hash(name, vector_length(sc->symbol_table)); 
       x = symbol_table_find_by_name(sc, name, location); 
       if (x != sc->NIL)
@@ -23953,7 +23953,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "trace",                   g_trace,                   0, 0, true,  H_trace);
   s7_define_function(sc, "untrace",                 g_untrace,                 0, 0, true,  H_untrace);
   s7_define_variable(sc, "*trace-hook*", sc->NIL);
-  s7_define_variable(sc, "*unbound-variable-hook*", sc->NIL);
   s7_define_function(sc, "stacktrace",              g_stacktrace,              0, 2, false, H_stacktrace);
 
   s7_define_function(sc, "gc",                      g_gc,                      0, 1, false, H_gc);
@@ -23989,6 +23988,7 @@ s7_scheme *s7_init(void)
   s7_define_variable(sc, "*error-hook*", sc->NIL);
   sc->error_info = s7_make_and_fill_vector(sc, ERROR_INFO_SIZE, ERROR_INFO_DEFAULT);
   s7_define_constant(sc, "*error-info*", sc->error_info);
+  s7_define_variable(sc, "*unbound-variable-hook*", sc->NIL);
   
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "s7")));
 

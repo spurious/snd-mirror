@@ -3954,7 +3954,39 @@ whose name (as a string) is 'symbol-name'"
 
   for (i = 0; i < AUTOLOAD_NAMES; i++)
     if (strcmp(name, autoload_names[i]) == 0)
-      return(C_TO_XEN_STRING(autoload_files[autoload_indices[i]]));
+      {
+	const char *filename;
+	char *str;
+	int len;
+	XEN result;
+
+	filename = autoload_files[autoload_indices[i]];
+	if (mus_file_probe(filename))
+	  return(C_TO_XEN_STRING(filename));
+
+	/* try /usr/local/share/snd */
+	len = strlen(filename) + 32;
+	str = (char *)calloc(len, sizeof(char));
+	snprintf(str, len, "/usr/local/share/snd/%s", filename);
+	if (mus_file_probe(str))
+	  {
+	    result = C_TO_XEN_STRING(str);
+	    free(str);
+	    return(result);
+	  }
+
+	/* try /usr/lib/snd/scheme */
+	snprintf(str, len, "/usr/lib/snd/scheme/%s", filename);
+	if (mus_file_probe(str))
+	  {
+	    result = C_TO_XEN_STRING(str);
+	    free(str);
+	    return(result);
+	  }
+
+	/* no luck */
+	free(str);
+      }
   
   return(XEN_FALSE);
 }

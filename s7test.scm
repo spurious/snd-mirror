@@ -6924,6 +6924,51 @@
   (test (let () (defmacro hi (q) `(let ((q 32)) `(,q))) (hi (* 2 3))) '(32))
   (test (let () (defmacro hi (q) `(let () ,@(list q))) (hi (* 2 3))) 6)
 
+  (test (let () (define-macro (tst a) ``(+ 1 ,,a)) (tst 2)) '(+ 1 2))
+  (test (let () (define-macro (tst a) ```(+ 1 ,,,a)) (eval (tst 2))) '(+ 1 2))
+  (test (let () (define-macro (tst a) ``(+ 1 ,,a)) (tst (+ 2 3))) '(+ 1 5))
+  (test (let () (define-macro (tst a) ``(+ 1 ,@,a)) (tst '(2 3))) '(+ 1 2 3))
+
+  (let ()
+    ;; inspired by Doug Hoyte, "Let Over Lambda"
+    (define (cxr path lst)
+      (define (cxr-1 path lst)
+	(if (null? path)
+	    lst
+	    (if (char=? (car path) #\a)
+		(cxr-1 (cdr path) (car lst))
+		(cxr-1 (cdr path) (cdr lst)))))
+      (let ((p (string->list (symbol->string path))))
+	(if (char=? (car p) #\c)
+	    (set! p (cdr p)))
+	(let ((p (reverse p)))
+	  (if (char=? (car p) #\r)
+	      (set! p (cdr p)))
+	  (cxr-1 p lst))))
+    
+    (test (cxr 'cr '(1 2 3)) '(1 2 3))
+    (test (cxr 'cadddddddr '(1 2 3 4 5 6 7 8)) 8)
+    (test (cxr 'caadadadadadadadr '(1 (2 (3 (4 (5 (6 (7 (8))))))))) 8)
+    
+    (define-macro (mcxr path lst)
+      (let ((p (string->list (symbol->string path))))
+	(if (char=? (car p) #\c)
+	    (set! p (cdr p)))
+	(let ((p (reverse p)))
+	  (if (char=? (car p) #\r)
+	      (set! p (cdr p)))
+	  (let ((func 'arg))
+	    (for-each
+	     (lambda (f)
+	       (set! func (list (if (char=? f #\a) 'car 'cdr) func)))
+	     p)
+	    `((lambda (arg) ,func) ,lst)))))
+    
+    (test (mcxr car '(1 2 3)) 1)
+    (test (mcxr cadddddddr '(1 2 3 4 5 6 7 8)) 8)
+    (test (mcxr caadadadadadadadr '(1 (2 (3 (4 (5 (6 (7 (8))))))))) 8)
+    )
+
   
   (define-macro (eval-case key . clauses)
     ;; case with evaluated key-lists
