@@ -6929,6 +6929,8 @@
   (test (let () (define-macro (tst a) ``(+ 1 ,,a)) (tst (+ 2 3))) '(+ 1 5))
   (test (let () (define-macro (tst a) ``(+ 1 ,@,a)) (tst '(2 3))) '(+ 1 2 3))
 
+  (test (let () (define-macro (tst a) `(+ 1 (if (> ,a 0) (tst (- ,a 1)) 0))) (tst 3)) 4)
+
   (let ()
     ;; inspired by Doug Hoyte, "Let Over Lambda"
     (define (cxr path lst)
@@ -6968,6 +6970,23 @@
     (test (mcxr cadddddddr '(1 2 3 4 5 6 7 8)) 8)
     (test (mcxr caadadadadadadadr '(1 (2 (3 (4 (5 (6 (7 (8))))))))) 8)
     )
+
+  (let ()
+    (define-macro (define-curried name-and-args . body)	
+      `(define ,@(let ((newlst `(begin ,@body)))
+		   (define (rewrap lst)
+		     (if (pair? (car lst))
+			 (begin
+			   (set! newlst (cons 'lambda (cons (cdr lst) (list newlst))))
+			   (rewrap (car lst)))
+			 (list (car lst) (list 'lambda (cdr lst) newlst))))
+		   (rewrap name-and-args))))
+
+    (define-curried (((((f a) b) c) d) e) (* a b c d e))
+    (test (((((f 1) 2) 3) 4) 5) 120)
+    (define-curried (((((f a b) c) d e) f) g) (* a b c d e f g))
+    (test (((((f 1 2) 3) 4 5) 6) 7) 5040))
+
 
   
   (define-macro (eval-case key . clauses)
@@ -42726,7 +42745,7 @@
 (test (define-macro (:hi a) `(+ ,a 1)) 'error)
 (test (defmacro :hi (a) `(+ ,a 1)) 'error)
 (test (defmacro hi (1 . 2) 1) 'error)
-(test (defmacro hi 1 . 2) 'error)                   ;TODO: [also lambda]
+(test (defmacro hi 1 . 2) 'error)
 (test (defmacro : "" . #(1)) 'error)
 (test (defmacro : #(1) . :) 'error)
 (test (defmacro hi ()) 'error)
@@ -42734,6 +42753,7 @@
 (test (define-macro (mac 1) 1) 'error)
 (test (define-macro (a #()) 1) 'error)
 (test (define-macro (i 1) => (j 2)) 'error)
+(test (define hi 1 . 2) 'error)
 
 
 (test (format #f "" 1) 'error)

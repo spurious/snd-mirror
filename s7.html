@@ -350,6 +350,29 @@ c
 &gt; (a)
 123
 </pre>
+<hr>
+<p>Another variant of define creates "curried" functions:
+</p>
+<pre>
+(define-macro (define-curried name-and-args . body)	
+  `(define ,@(let ((newlst `(begin ,@body)))
+	       (define (rewrap lst)
+		 (if (pair? (car lst))
+		     (begin
+		       (set! newlst (cons 'lambda (cons (cdr lst) (list newlst))))
+		       (rewrap (car lst)))
+		     (list (car lst) (list 'lambda (cdr lst) newlst))))
+	       (rewrap name-and-args))))
+
+&gt; (define-curried ((f a) b) (+ a b))
+f
+&gt; ((f 1) 2)
+3
+&gt; (define-curried (((((f a b) c) d e) f) g) (* a b c d e f g))
+f
+&gt; (((((f 1 2) 3) 4 5) 6) 7)
+5040
+</pre>
 </blockquote>
 </small>
 
@@ -476,8 +499,6 @@ make-mac
 it could be removed.
 </p>
 <hr>
-</blockquote>
-</small>
 
 
 <p>s7 macros are not "hygenic".  For example,
@@ -571,7 +592,45 @@ something a macro can do for us:
     (mac a))
 </pre>
 <p>which returns 13 as expected.
+If you just want to make sure your macro arguments don't get captured
+(how often does anyone actually redefine "+"?),
+use lambda:
 </p>
+<pre>
+(define-macro (mac a)
+  `((lambda (b) 
+      (let ((a 12))
+	(+ a b)))
+    ,a))
+</pre>
+<p>If you want to avoid the extra evaluation that happens when a macro
+is expanded, add another layer of quasiquote:
+</p>
+<pre>
+(define-macro (mac a)
+  ``((lambda (b) 
+      (let ((a 12))
+	(+ a b)))
+    ,,a))
+
+&gt; (mac (+ 1 2))
+((lambda (b) (let ((a 12)) (+ a b))) 3)
+</pre>
+<p>If you want to evaluate some arguments, and not others, use quote:
+</p>
+<pre>
+(define-macro (mac a b)
+  `((lambda (b c) 
+      (let ((a 12))
+	(+ a b (eval c))))
+    ,a ',b))
+
+&gt; (mac (+ 1 2) (+ 3 4))
+22
+</pre>
+</blockquote>
+</small>
+
 
 </dd>
 <br>
@@ -1634,6 +1693,7 @@ to "import" the exported values:
  (import "lib1.scm")
  (display (* (func1 var1) (func2 var1)))) ; displays 1122, i.e. (* 33 34)
 </pre>
+
 <p>If we want to import these things under different names, or use only some subset,
 the list passed to augment-environment is at our disposal.  
 Loading a library file does not add anything to our environment unless we explicitly
@@ -1641,9 +1701,22 @@ ask for it, and subsets and renaming are trivial.  To import many libraries, jus
 nest the import statements, or make a version that loads up all the libraries,
 saving the exported lists, and pass them concatenated to augment-environment.
 And when we leave the with-environment body, all those new bindings go away too,
-so the global state is unaffected.  To do all this in C, see the FFI <a href="#namespace">example</a>
+so the global state is unaffected.  
+If we actually want to affect the top-level, we can forego the with-environment wrapper:
+</p>
+<pre>
+(define lib1-exports (load "lib1.scm"))
+
+(define global-func
+  (let ((func1 (cdr (assoc 'func1 lib1-exports))))
+    (lambda (a)
+      (func1 a))))
+</pre>
+<p>
+To use namespaces from C, see the FFI <a href="#namespace">example</a>
 below.
 </p>
+
 </dd>
 <br>
 

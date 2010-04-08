@@ -83,11 +83,6 @@
  *        symbol-access modifies symbol value lookup
  *
  *
- *   perhaps add: (define ((f a) b) (* a b)) -> (define f (lambda (a) (lambda (b) (* a b))))
- *                  do users of this syntax expect it to continue in this manner?
- *                  (define (((((f a) b) c) d) e) (* a b c d e))?
- *
- *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
  * Rick Taube and Andrew Burnson provided the MS Visual C++ support
  *
