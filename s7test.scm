@@ -373,6 +373,8 @@
 (test (eqv? car car) #t)
 (test (eqv? car cdr) #f)
 (test (let ((x (lambda () 1))) (eqv? x x)) #t)
+(test (eqv? (lambda () 1) (lambda () 1)) #f)
+(test (let () (define (make-adder x) (lambda (y) (+ x y))) (eqv? (make-adder 1) (make-adder 1))) #f)
 (test (eqv? 9/2 9/2) #t)
 					;(test (eqv? 3.4 (+ 3.0 0.4)) #t) ; can be fooled
 (test (let ((x 3.141)) (eqv? x x)) #t)
@@ -444,7 +446,9 @@
 (test (equal? car car) #t)
 (test (equal? car cdr) #f)
 (test (let ((x (lambda () 1))) (equal? x x)) #t)
+(test (equal? (lambda () 1) (lambda () 1)) #f)
 (test (equal? 9/2 9/2) #t)
+(test (equal? #((())) #((()))) #t)
 					;(test (equal? 3.4 (+ 3.0 0.4)) #t)
 (test (let ((x 3.141)) (equal? x x)) #t)
 (test (equal? 3 3) #t)
@@ -457,6 +461,8 @@
 (test (equal? '() '()) #t)
 (test (equal? '() (list)) #t)
 (test (equal? "\n" "\n") #t)
+(test (equal? #f ((lambda () #f))) #t)
+(test (equal? (+) 0) #t)
 
 (test (equal? "asd""asd") #t) ; is this the norm?
 (let ((streq (lambda (a b) (equal? a b)))) (test (streq "asd""asd") #t))
@@ -2451,6 +2457,8 @@
 (test (append '(1 2) '(3 4) #f) '(1 2 3 4 . #f))
 (test (append '() '() '() #f) #f)
 (test (append '(1 2) '(3 4) '(5 6) #f) '(1 2 3 4 5 6 . #f))
+(test (append () () #()) #())
+(test (append () ((lambda () #f))) #f)
 
 (test (append 0) 0) ; is this correct?
 (test (append '() 0) 0)
@@ -6857,6 +6865,24 @@
   (test (string? (s7-version)) #t)
   (test (eval-string "(+ 1 2)") 3)
   (test (eval '(+ 1 2)) 3)
+  (test (eval `(+ 1 (eval `(* 2 3)))) 7)
+  (test (eval `(+ 1 (eval-string "(* 2 3)"))) 7)
+  (test (eval-string "(+ 1 (eval-string \"(* 2 3)\"))") 7)
+
+  (test (apply "hi" 1 ()) #\i)
+  (test (eval ("hi" 1)) #\i)
+  (test (apply + 1 1 (cons 1 (quote ()))) 3)
+  (test (eq? (eval (quote (quote ()))) ()) #t)
+  (test (apply (cons (quote cons) (cons 1 (quote ((quote ()))))) 1 ()) 1) ; essentially ((list 'cons 1 ...) 1) => 1
+  (test (eval ((cons (quote cons) (cons 1 (quote ((quote ()))))) 1)) 1)
+
+  (test (apply + (+ 1) ()) 1)
+  (test (apply #(1) (+) ()) 1)
+  (test (apply + (+) ()) 0)
+  (test (eval #()) #())
+  (test (apply (lambda () #f)) #f)
+  (test (eval '(if #f #f)) (if #f #f))
+
   (test (eval-string (string-append "(list 1 2 3)" (string #\newline) (string #\newline))) (list 1 2 3))
   (eval-string (string-append "(define evalstr_1 32)" (string #\newline) "(define evalstr_2 2)"))
   (test (eval-string "(+ evalstr_1 evalstr_2)") 34)
@@ -7003,6 +7029,15 @@
   (test (let ((a 1) (b 2)) (eval-case 3 ((a) 123) ((b) 321) (((+ a b)) -1) (else 0))) -1)
   (test (let ((a 1) (b 2)) (eval-case 6 ((a (* (+ a 2) b)) 123) ((b) 321) (((+ a b)) -1) (else 0))) 123)
 
+  (test (let ()
+	  (define (set-cadr! a b)
+	    (set-car! (cdr a) b)
+	    b)
+	  (let ((lst (list 1 2 3)))
+	    (set-cadr! lst 32)
+	    lst))
+	'(1 32 3))
+
   (test (macro? eval-case) #t)
   (test (macro? pi) #f)
   (for-each
@@ -7046,12 +7081,42 @@
 		   (equal? lst (list 2 3))))))
 	#t)
 
+  (define-macro (destructuring-bind lst expr . body)
+    `(let ((ex ,expr))
+       
+       (define (flatten lst)
+	 (cond ((null? lst) '())
+	       ((pair? lst)
+		(if (pair? (car lst))
+		    (append (flatten (car lst)) (flatten (cdr lst)))
+		    (cons (car lst) (flatten (cdr lst)))))
+	       (#t lst)))
+       
+       (define (structures-equal? l1 l2)
+	 (if (pair? l1)
+	     (and (pair? l2)
+		  (structures-equal? (car l1) (car l2))
+		  (structures-equal? (cdr l1) (cdr l2)))
+	     (not (pair? l2))))
+       
+       (if (not (structures-equal? ',lst ex))
+	   (error "~A and ~A do not match" ',lst ex))
+       
+       (let ((names (flatten ',lst))
+	     (vals (flatten ex)))
+	 (apply (eval (list 'lambda names ',@body)) vals))))
+  
+  (test (destructuring-bind (a b) (list 1 2) (+ a b)) 3)
+  (test (destructuring-bind ((a) b) (list (list 1) 2) (+ a b)) 3)
+  (test (destructuring-bind (a (b c)) (list 1 (list 2 3)) (+ a b c)) 6)
+  (test (let ((x 1)) (destructuring-bind (a b) (list x 2) (+ a b))) 3)
+
   (define-macro (define-clean-macro name-and-args . body)
     (let ((syms ()))
       
       (define (walk func lst)
-	(func lst)
-	(if (pair? lst)
+	(if (and (func lst)
+		 (pair? lst))
 	    (begin
 	      (walk func (car lst))
 	      (walk func (cdr lst)))))
@@ -7068,8 +7133,10 @@
 	    (if (eq? (car val) 'quote)
 		(or (car-member (cadr val) syms)
 		    (and (pair? (cadr val))
-			 (append (list 'list) 
-				 (walker (cadr val))))
+			 (or (and (eq? (caadr val) 'quote) ; 'sym -> (quote (quote sym))
+				  val)
+			     (append (list 'list) 
+				     (walker (cadr val)))))
 		    (cadr val))
 		(cons (walker (car val))
 		      (walker (cdr val))))
@@ -7084,7 +7151,11 @@
 		  (set! syms (cons 
 			      (cons (cadr val) 
 				    (gensym (symbol->string (cadr val))))
-			      syms))))
+			      syms)))
+	      (or (not (pair? val))
+		  (not (eq? (car val) 'quote))
+		  (not (pair? (cadr val)))
+		  (not (eq? (caadr val) 'quote))))
 	    body)
       
       (let* ((new-body (walker body))
@@ -7162,6 +7233,10 @@
 	  (mac))
 	2)
 
+  (test (let ()
+	  (define-clean-macro (hi a) `(list 'a ,a))
+	  (hi 1))
+	(list 'a 1))
   
   (define-macro* (_mac1_) `(+ 1 2))
   (test (_mac1_) 3)
@@ -42540,6 +42615,7 @@
 (test (apply . 1) 'error)
 (test (apply car ''foo) 'error)
 (test (apply + '(1 . 2)) 'error)
+(test (apply '() '()) 'error)
 
 (for-each
  (lambda (arg)

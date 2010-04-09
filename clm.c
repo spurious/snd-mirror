@@ -7800,7 +7800,8 @@ static void flush_buffers(rdout *gen)
   int fd;
 
   if ((gen->obufs == NULL) || 
-      (mus_file_probe(gen->file_name) == 0))
+      (mus_file_probe(gen->file_name) == 0) ||
+      (gen->chans == 0))
     return; /* can happen if output abandoned, then later mus_free called via GC sweep */
 
   fd = mus_sound_open_input(gen->file_name);
@@ -8040,10 +8041,13 @@ static int sample_to_file_end(mus_any *ptr)
   if ((gen) && (gen->obufs))
     {
       int i;
-      flush_buffers(gen); /* this forces the error handling stuff, unlike in free reader case */
-      for (i = 0; i < gen->chans; i++)
-	if (gen->obufs[i]) 
-	  clm_free(gen->obufs[i]);
+      if (gen->chans > 0)
+	{
+	  flush_buffers(gen); /* this forces the error handling stuff, unlike in free reader case */
+	  for (i = 0; i < gen->chans; i++)
+	    if (gen->obufs[i]) 
+	      clm_free(gen->obufs[i]);
+	}
       clm_free(gen->obufs);
       gen->obufs = NULL;
     }

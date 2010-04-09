@@ -669,6 +669,8 @@ static int default_sound_file_extensions = 0;
 static void add_sound_file_extension(const char *ext)
 {
   int i;
+  if ((!ext) || (!(*ext))) return;
+
   for (i = 0; i < sound_file_extensions_end; i++)
     if (strcmp(ext, sound_file_extensions[i]) == 0)
       return;

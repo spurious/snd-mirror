@@ -205,7 +205,5 @@
 
 
 
-;;; need autoloading, maybe autoload-hook in Snd
-;;;   in best case, snd-motif|gtk (or neither) based on gui choice
-;;;                 and a way for user to add autoload names -- autoload-hook perhaps
+;;; TODO: snd-motif|gtk (or neither) based on gui choice
 

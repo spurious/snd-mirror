@@ -10775,6 +10775,10 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* The rest are trivial: (define (set-cadr! a b) (set-car! (cdr a) b)) or (define-macro (set-cadr! a b) `(set-car! (cdr ,a) ,b)) 
+ */
+
+
 static s7_pointer g_caar(s7_scheme *sc, s7_pointer args)
 {
   #define H_caar "(caar lst) returns (car (car lst))"
@@ -24104,3 +24108,5 @@ s7_scheme *s7_init(void)
   return(sc);
 }
 
+/* TODO: macroexpand and fully-expand are buggy
+ */

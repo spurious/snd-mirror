@@ -1245,6 +1245,11 @@ env *xen_to_env(XEN res)
 		      data[i + 1] = XEN_TO_C_DOUBLE(XEN_CADR(el));
 		    }
 		}
+	      else
+		{
+		  /* something is screwed up */
+		  return(NULL);
+		}
 	    }
 	  if (data)
 	    {
@@ -1483,6 +1488,10 @@ env *get_env(XEN e, const char *origin) /* list in e */
 			 C_TO_XEN_STRING(origin), 
 			 e));
   new_env = xen_to_env(e);
+  if (!new_env)
+    XEN_ERROR(XEN_ERROR_TYPE("env-error"),
+	      XEN_LIST_2(C_TO_XEN_STRING("envelope break point list is screwed up: ~A"),
+			 e));
 
   for (i = 2; i < new_env->pts * 2; i += 2)
     if (new_env->data[i - 2] > new_env->data[i])
@@ -1495,7 +1504,7 @@ env *get_env(XEN e, const char *origin) /* list in e */
 	free(buf);
 	free_env(new_env);
 	XEN_ERROR(XEN_ERROR_TYPE("env-error"),
-		  XEN_LIST_3(C_TO_XEN_STRING(S_filter_channel ": ~A, ~A"),
+		  XEN_LIST_3(C_TO_XEN_STRING("~A, ~A"),
 			     msg,
 			     e));
       }

@@ -225,6 +225,7 @@ radix is greater than 10.
 &gt; (string-&gt;number "1.2e1" 3); (* 3 (+ 1 2/3))
 5.0
 </pre>
+
 </blockquote>
 </small>
 </dd>
@@ -523,8 +524,8 @@ something a macro can do for us:
   (let ((syms ()))
 
     (define (walk func lst)
-      (func lst)
-      (if (pair? lst)
+      (if (and (func lst)
+	       (pair? lst))
 	  (begin
 	    (walk func (car lst))
 	    (walk func (cdr lst)))))
@@ -541,8 +542,10 @@ something a macro can do for us:
 	  (if (eq? (car val) 'quote)
 	      (or (car-member (cadr val) syms)
 		  (and (pair? (cadr val))
-		       (append (list 'list) 
-			       (walker (cadr val))))
+		       (or (and (eq? (caadr val) 'quote) ; 'sym -&gt; (quote (quote sym))
+				val)
+			   (append (list 'list) 
+				   (walker (cadr val)))))
 		  (cadr val))
 	      (cons (walker (car val))
 		    (walker (cdr val))))
@@ -557,7 +560,11 @@ something a macro can do for us:
 		(set! syms (cons 
 			    (cons (cadr val) 
 				  (gensym (symbol-&gt;string (cadr val))))
-			    syms))))
+			    syms)))
+	    (or (not (pair? val))
+		(not (eq? (car val) 'quote))
+		(not (pair? (cadr val)))
+		(not (eq? (caadr val) 'quote))))
 	  body)
 
     (let* ((new-body (walker body))
