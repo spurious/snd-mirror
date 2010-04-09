@@ -3384,13 +3384,18 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
   bool close_mix_let = false;
   int i, edits;
   ed_list *ed;
+
   edits = cp->edit_ctr;
   while ((edits < (cp->edit_size - 1)) && 
 	 (cp->edits[edits + 1])) 
     edits++;
-  if ((end_pos > 0) && (end_pos < edits)) edits = end_pos;
+
+  if ((end_pos > 0) &&    /* end_pos can be -1 = end of edits (?) */
+      (end_pos < edits)) 
+    edits = end_pos;
   if (start_pos > edits)
     return(mus_strdup("(lambda (snd chn) #f)"));
+
   if (channel_has_mixes(cp))
     {
       char *mix_list;
@@ -3404,19 +3409,23 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
       else function = mus_strdup("(lambda (snd chn)");
     }
   else function = mus_strdup("(lambda (snd chn)");
+  
   for (i = start_pos; i <= edits; i++)
     {
       ed = cp->edits[i];
       if (ed)
 	{
 	  old_function = function;
+	  function = NULL;
+
 	  /* most of these depend on the caller to supply a usable re-call string (origin). */
 	  /*   In insert/change/ptree/xen cases, there's basically no choice */
 	  if (ed->backed_up)
 	    {
-	      if ((ed->origin) && (strncmp(ed->origin, "set!", 4) == 0))
-		function = mus_format("%s (%s)", function, ed->origin);
-	      else function = mus_format("%s (%s snd chn)", function, ed->origin);
+	      if ((ed->origin) && 
+		  (strncmp(ed->origin, "set!", 4) == 0))
+		function = mus_format("%s (%s)", old_function, ed->origin);
+	      else function = mus_format("%s (%s snd chn)", old_function, ed->origin);
 	    }
 	  else
 	    {
@@ -3436,10 +3445,10 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		      /* save data in temp file, use insert-samples with file name */
 		      char *ofile;
 		      ofile = edit_list_data_to_temp_file(cp, ed, DELETE_ME, false);
-		      function = mus_format("%s (%s " MUS_LD " " MUS_LD " \"%s\" snd chn)", function, S_insert_samples, ed->beg, ed->len, ofile);
+		      function = mus_format("%s (%s " MUS_LD " " MUS_LD " \"%s\" snd chn)", old_function, S_insert_samples, ed->beg, ed->len, ofile);
 		      free(ofile);
 		    }
-		  else function = mus_format("%s (%s snd chn)", function, ed->origin);
+		  else function = mus_format("%s (%s snd chn)", old_function, ed->origin);
 		  break;
 
 		case CHANGE_EDIT:
@@ -3449,23 +3458,23 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		      /* save data in temp file, use set-samples with file name */
 		      char *ofile;
 		      ofile = edit_list_data_to_temp_file(cp, ed, DELETE_ME, false);
-		      function = mus_format("%s (set-samples " MUS_LD " " MUS_LD " \"%s\" snd chn)", function, ed->beg, ed->len, ofile);
+		      function = mus_format("%s (set-samples " MUS_LD " " MUS_LD " \"%s\" snd chn)", old_function, ed->beg, ed->len, ofile);
 		      free(ofile);
 		    }
 		  else
 		    {
 		      if (strncmp(ed->origin, "set!", 4) == 0)
-			function = mus_format("%s (%s)", function, ed->origin);
-		      else function = mus_format("%s (%s snd chn)", function, ed->origin);
+			function = mus_format("%s (%s)", old_function, ed->origin);
+		      else function = mus_format("%s (%s snd chn)", old_function, ed->origin);
 		    }
 		  break;
 
 		case DELETION_EDIT:
-		  function = mus_format("%s (%s " MUS_LD " " MUS_LD " snd chn)", function, S_delete_samples, ed->beg, ed->len);
+		  function = mus_format("%s (%s " MUS_LD " " MUS_LD " snd chn)", old_function, S_delete_samples, ed->beg, ed->len);
 		  break;
 
 		case SCALED_EDIT: 
-		  function = mus_format("%s (%s snd chn)", function, ed->origin);
+		  function = mus_format("%s (%s snd chn)", old_function, ed->origin);
 		  break;
 
 		case EXTEND_EDIT:
@@ -3475,7 +3484,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		case PTREE_EDIT:
 		  if ((ed->origin) &&
 		      (strcmp(ed->origin, S_ptree_channel) != 0))
-		    function = mus_format("%s (%s snd chn)", function, ed->origin);
+		    function = mus_format("%s (%s snd chn)", old_function, ed->origin);
 		  else 
 		    {
 		      char *durstr, *temp = NULL;
@@ -3483,7 +3492,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 			durstr = mus_strdup("#f");
 		      else durstr = mus_format(MUS_LD, ed->len);
 		      function = mus_format("%s (%s %s " MUS_LD " %s snd chn)",
-					    function, S_ptree_channel,
+					    old_function, S_ptree_channel,
 					    temp = XEN_AS_STRING(mus_run_ptree_code(cp->ptrees[ed->ptree_location])),
 					    ed->beg, durstr);
 		      free(durstr);
@@ -3492,32 +3501,34 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		  break;
 
 		case RAMP_EDIT:
-		  function = mus_format("%s (%s snd chn)", function, ed->origin);
+		  function = mus_format("%s (%s snd chn)", old_function, ed->origin);
 		  break;
 
 		case ZERO_EDIT:
 		  /* origin here is useless (see extend_with_zeros cases) */
-		  function = mus_format("%s (%s " MUS_LD " " MUS_LD " snd chn)", function, S_pad_channel, ed->beg, ed->len);
+		  function = mus_format("%s (%s " MUS_LD " " MUS_LD " snd chn)", old_function, S_pad_channel, ed->beg, ed->len);
 		  break;
 
 		case MIX_EDIT:
-		  function = mus_format("%s %s", function, ed->origin);
+		  function = mus_format("%s %s", old_function, ed->origin);
 		  break;
 
 		case CHANGE_MIX_EDIT:
-		  function = mus_format("%s %s", function, ed->origin);
+		  function = mus_format("%s %s", old_function, ed->origin);
 		  break;
 
-		default: break;
+		default: 
+		  break;
 		}
 	    }
 	  if (old_function) {free(old_function); old_function = NULL;}
 	}
     }
+
   old_function = function;
   if (close_mix_let)
-    function = mus_format("%s))", function);
-  else function = mus_format("%s)", function);
+    function = mus_format("%s))", old_function);
+  else function = mus_format("%s)", old_function);
   free(old_function);
   return(function);
 #endif

@@ -6959,7 +6959,7 @@
 
   (let ()
     ;; inspired by Doug Hoyte, "Let Over Lambda"
-    (define (cxr path lst)
+    (define (mcxr path lst)
       (define (cxr-1 path lst)
 	(if (null? path)
 	    lst
@@ -6974,11 +6974,11 @@
 	      (set! p (cdr p)))
 	  (cxr-1 p lst))))
     
-    (test (cxr 'cr '(1 2 3)) '(1 2 3))
-    (test (cxr 'cadddddddr '(1 2 3 4 5 6 7 8)) 8)
-    (test (cxr 'caadadadadadadadr '(1 (2 (3 (4 (5 (6 (7 (8))))))))) 8)
+    (test (mcxr 'cr '(1 2 3)) '(1 2 3))
+    (test (mcxr 'cadddddddr '(1 2 3 4 5 6 7 8)) 8)
+    (test (mcxr 'caadadadadadadadr '(1 (2 (3 (4 (5 (6 (7 (8))))))))) 8)
     
-    (define-macro (mcxr path lst)
+    (define-macro (cxr path lst)
       (let ((p (string->list (symbol->string path))))
 	(if (char=? (car p) #\c)
 	    (set! p (cdr p)))
@@ -6992,11 +6992,99 @@
 	     p)
 	    `((lambda (arg) ,func) ,lst)))))
     
-    (test (mcxr car '(1 2 3)) 1)
-    (test (mcxr cadddddddr '(1 2 3 4 5 6 7 8)) 8)
-    (test (mcxr caadadadadadadadr '(1 (2 (3 (4 (5 (6 (7 (8))))))))) 8)
+    (test (cxr car '(1 2 3)) 1)
+    (test (cxr cadddddddr '(1 2 3 4 5 6 7 8)) 8)
+    (test (cxr caadadadadadadadr '(1 (2 (3 (4 (5 (6 (7 (8))))))))) 8)
     )
 
+  ;; this is the best of them!
+  (let ()
+    (define-macro (c?r path)
+      ;; here "path" is a list and "X" marks the spot in it that we are trying to access
+      ;; (a (b ((c X)))) -- anything after the X is ignored, other symbols are just placeholders
+      ;; c?r returns a function that gets X
+
+      ;; maybe ... for cdr?
+      ;; (c?r (a ...) -> cdr?
+      
+      ;; (c?r (a b X)) -> caddr, 
+      ;; (c?r (a (b X))) -> cadadr
+      ;; ((c?r (a a a X)) '(1 2 3 4 5 6)) -> 4
+      ;; ((c?r (a (b c X))) '(1 (2 3 4))) -> 4
+      ;; ((c?r (((((a (b (c (d (e X)))))))))) '(((((1 (2 (3 (4 (5 6)))))))))) -> 6
+      ;; ((c?r (((((a (b (c (X (e f)))))))))) '(((((1 (2 (3 (4 (5 6)))))))))) -> 4
+      ;; (procedure-source (c?r (((((a (b (c (X (e f))))))))))) -> (lambda (lst) (car (car (cdr (car (cdr (car (cdr (car (car (car (car lst))))))))))))
+      
+      (define (X-marks-the-spot accessor tree)
+	(if (pair? tree)
+	    (or (X-marks-the-spot (cons 'car accessor) (car tree))
+		(X-marks-the-spot (cons 'cdr accessor) (cdr tree)))
+	    (if (eq? tree 'X)
+		accessor
+		#f)))
+      
+      (let ((accessor (X-marks-the-spot '() path)))
+	(if (not accessor)
+	    (error "can't find the spot! ~A" path)
+	    (let ((len (length accessor)))
+	      (if (< len 5)                   ; it's a built-in function
+		  (let ((name (make-string (+ len 2))))
+		    (set! (name 0) #\c)
+		    (set! (name (+ len 1)) #\r)
+		    (do ((i 0 (+ i 1))
+			 (a accessor (cdr a)))
+			((= i len))
+		      (set! (name (+ i 1)) (if (eq? (car a) 'car) #\a #\d)))
+		    (string->symbol name))
+		  (let ((body 'lst))          ; make a new function to find the spot
+		    (for-each
+		     (lambda (f)
+		       (set! body (list f body)))
+		     (reverse accessor))
+		    `(lambda (lst) ,body)))))))
+    
+    (test ((c?r (a b X)) (list 1 2 3 4)) 3)
+    (test ((c?r (a (b X))) '(1 (2 3) ((4)))) 3)
+    (test ((c?r (a a a X)) '(1 2 3 4 5 6)) 4)
+    (test ((c?r (a (b c X))) '(1 (2 3 4))) 4)
+    (test ((c?r (((((a (b (c (d (e X)))))))))) '(((((1 (2 (3 (4 (5 6)))))))))) 6)
+    (test ((c?r (((((a (b (c (X (e f)))))))))) '(((((1 (2 (3 (4 (5 6)))))))))) 4))
+
+  (let ()
+    (define-macro (nested-for-each args func . lsts)
+      (let ((body `(,func ,@args)))
+	(for-each
+	 (lambda (arg lst)
+	   (set! body `(for-each
+			(lambda (,arg)
+			  ,body)
+			,lst)))
+	 args lsts)
+	body))
+    
+    ;;(nested-for-each (a b) + '(1 2) '(3 4)) ->
+    ;;  (for-each (lambda (b) (for-each (lambda (a) (+ a b)) '(1 2))) '(3 4))
+    
+    (define-macro (nested-map args func . lsts)
+      (let ((body `(,func ,@args)))
+	(for-each
+	 (lambda (arg lst)
+	   (set! body `(map
+			(lambda (,arg)
+			  ,body)
+			,lst)))
+	 args lsts)
+	body))
+    
+    ;;(nested-map (a b) + '(1 2) '(3 4))
+    ;;   ((4 5) (5 6))
+    ;;(nested-map (a b) / '(1 2) '(3 4))
+    ;;   ((1/3 2/3) (1/4 1/2))
+
+    (test (nested-map (a b) + '(1 2) '(3 4)) '((4 5) (5 6)))
+    (test (nested-map (a b) / '(1 2) '(3 4)) '((1/3 2/3) (1/4 1/2)))
+    )
+    
   (let ()
     (define-macro (define-curried name-and-args . body)	
       `(define ,@(let ((newlst `(begin ,@body)))

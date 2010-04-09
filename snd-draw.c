@@ -458,7 +458,7 @@ static XEN g_draw_lines(XEN pts, XEN snd, XEN chn, XEN ax)
 static XEN g_draw_dots(XEN pts, XEN size, XEN snd, XEN chn, XEN ax)
 {
   /* pts should be a vector of integers as (x y) pairs */
-  #define H_draw_dots "(" S_draw_dots " positions dot-size :optional snd chn (ax " S_time_graph ")): draw a vector of dots"
+  #define H_draw_dots "(" S_draw_dots " positions :optional dot-size snd chn (ax " S_time_graph ")): draw a vector of dots"
  
   point_t *pack_pts;
   axis_context *ax1;
@@ -466,6 +466,7 @@ static XEN g_draw_dots(XEN pts, XEN size, XEN snd, XEN chn, XEN ax)
 
   ASSERT_CHANNEL(S_draw_dots, snd, chn, 3);
   XEN_ASSERT_TYPE(XEN_VECTOR_P(pts), pts, XEN_ARG_1, S_draw_dots, "a vector");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, XEN_ARG_2, S_draw_dots, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_5, S_draw_dots, "an integer such as " S_time_graph);
 
   ax1 = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_dots);

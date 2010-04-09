@@ -8732,6 +8732,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 		    ((XEN_NUMBER_P(XEN_CAR(ldata))) || (MUS_VCT_P(XEN_CAR(ldata)))))),
 		  ldata, XEN_ARG_1, S_graph, "a vct or a list");
 
+  XEN_ASSERT_TYPE(XEN_STRING_P(xlabel) || XEN_NOT_BOUND_P(xlabel), xlabel, XEN_ARG_2, S_graph, "a string (x axis label)");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(x0), x0, XEN_ARG_3, S_graph, "a number (x0)");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(x1), x1, XEN_ARG_4, S_graph, "a number (x1)");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(y0), y0, XEN_ARG_5, S_graph, "a number (y0)");

@@ -2744,6 +2744,7 @@ static XEN g_bomb(XEN snd, XEN on)
   snd_info *sp;
 
   ASSERT_SOUND(S_bomb, snd, 1);
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(on), on, XEN_ARG_2, S_bomb, "a boolean");
 
   sp = get_sp(snd); /* could also be a variable display handler here */
   if ((sp == NULL) || 
@@ -5210,6 +5211,7 @@ where each inner list entry can also be " PROC_FALSE "."
   snd_info *sp;
   chan_info *cp;
 
+  XEN_ASSERT_TYPE(XEN_LIST_P(settings), settings, XEN_ARG_1, S_controls_to_channel, "a list");
   ASSERT_CHANNEL(S_controls_to_channel, snd, chn, 4);
   XEN_ASSERT_TYPE(XEN_INT64_T_P(beg) || XEN_FALSE_P(beg) || XEN_NOT_BOUND_P(beg), beg, XEN_ARG_2, S_controls_to_channel, "an integer");
   XEN_ASSERT_TYPE(XEN_INT64_T_P(dur) || XEN_FALSE_P(dur) || XEN_NOT_BOUND_P(dur), dur, XEN_ARG_3, S_controls_to_channel, "an integer");

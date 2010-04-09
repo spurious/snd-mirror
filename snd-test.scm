@@ -65311,7 +65311,7 @@ EDITS: 1
 				    (lambda args (car args)))))
 			(if (not (eq? tag 'no-such-sound))
 			    (snd-display ";snd no-such-sound ~A: ~A" n tag))))
-		    (list amp-control bomb apply-controls channels chans comment contrast-control 
+		    (list amp-control apply-controls channels chans comment contrast-control 
 			  amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 			  reverb-control-length-bounds reverb-control-scale-bounds
 			  contrast-control-amp contrast-control? data-format data-location data-size 

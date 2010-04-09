@@ -4640,14 +4640,13 @@ static XEN g_view_files_dialog(XEN managed, XEN make_new)
 static XEN g_add_directory_to_view_files_list(XEN directory, XEN dialog) 
 {
   #define H_add_directory_to_view_files_list "(" S_add_directory_to_view_files_list " dir :optional w): adds any sound files in 'dir' to the View:Files dialog"
+  
   XEN_ASSERT_TYPE(XEN_STRING_P(directory), directory, XEN_ARG_1, S_add_directory_to_view_files_list, "a string");
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog) || XEN_NOT_BOUND_P(dialog), dialog, XEN_ARG_2, S_add_directory_to_view_files_list, "a view-files dialog widget"); 
+
   if (XEN_NOT_BOUND_P(dialog))
     view_files_add_directory(NULL_WIDGET, XEN_TO_C_STRING(directory));
-  else
-    {
-      XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ARG_2, S_add_directory_to_view_files_list, "a view-files dialog widget"); 
-      view_files_add_directory((widget_t)(XEN_UNWRAP_WIDGET(dialog)), XEN_TO_C_STRING(directory));
-    }
+  else view_files_add_directory((widget_t)(XEN_UNWRAP_WIDGET(dialog)), XEN_TO_C_STRING(directory));
   return(directory);
 }
 
@@ -4656,17 +4655,16 @@ static XEN g_add_file_to_view_files_list(XEN file, XEN dialog)
 {
   #define H_add_file_to_view_files_list "(" S_add_file_to_view_files_list " file :optional w): adds file to the View:Files dialog's list"
   char *name = NULL;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_add_file_to_view_files_list, "a string");
+  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog) || XEN_NOT_BOUND_P(dialog), dialog, XEN_ARG_2, S_add_file_to_view_files_list, "a view-files dialog widget"); 
+
   name = mus_expand_filename(XEN_TO_C_STRING(file));
   if (mus_file_probe(name))
     {
       if (XEN_NOT_BOUND_P(dialog))
 	view_files_add_file(NULL_WIDGET, name);
-      else
-	{
-	  XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ARG_2, S_add_file_to_view_files_list, "a view-files dialog widget"); 
-	  view_files_add_file((widget_t)(XEN_UNWRAP_WIDGET(dialog)), name);
-	}
+      else view_files_add_file((widget_t)(XEN_UNWRAP_WIDGET(dialog)), name);
     }
   if (name) free(name);
   return(file);

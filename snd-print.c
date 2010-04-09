@@ -749,9 +749,11 @@ void gl2ps_text(const char *msg)
 
 #else
 
-static XEN g_gl_graph_to_ps(XEN filename_ignore, XEN output_type_ignore, XEN snd_ignore, XEN chn_ignore)
+static XEN g_gl_graph_to_ps(XEN filename, XEN output_type, XEN snd_ignore, XEN chn_ignore)
 {
   #define H_gl_graph_to_ps "gl-graph->ps is a no-op in this version of Snd"
+  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, XEN_ARG_1, S_gl_graph_to_ps, "a string (filename)");
+  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(output_type), output_type, XEN_ARG_2, S_gl_graph_to_ps, "an integer, 0=eps");
   return(XEN_FALSE);
 }
 #endif

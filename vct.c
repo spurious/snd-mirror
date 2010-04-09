@@ -359,7 +359,8 @@ static XEN g_make_vct(XEN len, XEN filler)
 initial-element: \n  " vct_make_example
 
   mus_long_t size;
-  XEN_ASSERT_TYPE(XEN_INT64_T_P(len), len, XEN_ONLY_ARG, S_make_vct, "an integer");
+  XEN_ASSERT_TYPE(XEN_INT64_T_P(len), len, XEN_ARG_1, S_make_vct, "an integer");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(filler) || XEN_NOT_BOUND_P(filler), filler, XEN_ARG_2, S_make_vct, "a number");
 
   size = XEN_TO_C_INT64_T(len);
   if (size <= 0) 
@@ -754,10 +755,15 @@ XEN xen_list_to_vct(XEN lst)
 
   if (len == 0) 
     return(XEN_FALSE);
+
   scv = xen_make_vct(len, (mus_float_t *)calloc(len, sizeof(mus_float_t)));
   v = XEN_TO_VCT(scv);
   for (i = 0, lst1 = XEN_COPY_ARG(lst); i < len; i++, lst1 = XEN_CDR(lst1)) 
-    v->data[i] = (mus_float_t)XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst1), 0.0);
+    {
+      if (XEN_NUMBER_P(XEN_CAR(lst1)))
+	v->data[i] = (mus_float_t)XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst1), 0.0);
+      else XEN_WRONG_TYPE_ARG_ERROR(S_list_to_vct, i, XEN_CAR(lst1), "a number");
+    }
 
   return(scv);
 }
