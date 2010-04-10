@@ -1063,6 +1063,51 @@ it is set:
 32
 </pre>
 
+<small>
+<blockquote>
+<hr>
+<p>Here is a pretty example of make-procedure-with-setter:
+</p>
+<pre>
+(define-macro (c?r path)
+  ;; "path" is a list and "X" marks the spot in it that we are trying to access
+  ;; (a (b ((c X)))) -- anything after the X is ignored, other symbols are just placeholders
+  ;; c?r returns a procedure-with-setter that gets/sets X
+
+  (define (X-marks-the-spot accessor tree)
+    (if (pair? tree)
+	(or (X-marks-the-spot (cons 'car accessor) (car tree))
+	    (X-marks-the-spot (cons 'cdr accessor) (cdr tree)))
+	(if (eq? tree 'X) accessor #f)))
+
+  (let ((body 'lst))
+    (for-each
+     (lambda (f)
+       (set! body (list f body)))
+     (reverse (X-marks-the-spot '() path)))
+
+    `(<em class=red>make-procedure-with-setter</em>
+      (lambda (lst) 
+	,body)
+      (lambda (lst val)
+	(set! ,body val)))))
+
+&gt ((c?r (a b (X))) '(1 2 (3 4) 5))
+3
+&gt (let ((lst (list 1 2 (list 3 4) 5))) 
+   (set! ((c?r (a b (X))) lst) 32)
+   lst)
+(1 2 (32 4) 5)
+&gt; ((c?r (((((a (b (c (d (e X)))))))))) '(((((1 (2 (3 (4 (5 6)))))))))) 
+6
+&gt; (let ((lst '(((((1 (2 (3 (4 (5 6))))))))))) 
+    (set! ((c?r (((((a (b (c (d (e X)))))))))) lst) 32) 
+    lst)
+(((((1 (2 (3 (4 (5 32)))))))))
+</pre>	
+</blockquote>
+</small>
+
 </dd>
 <br>
 
