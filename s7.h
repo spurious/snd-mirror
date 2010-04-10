@@ -2,7 +2,7 @@
 #define S7_H
 
 #define S7_VERSION "1.52"
-#define S7_DATE "7-Apr-10"
+#define S7_DATE "9-Apr-10"
 
 
 typedef long long int s7_Int;

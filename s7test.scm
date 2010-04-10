@@ -1463,6 +1463,7 @@
 (test (string-ref "\"\\\"" 1) #\\)
 (test (string-ref "\"\\\"" 2) #\")
 
+(test (let ((str (make-string 3 #\x))) (set! (string-ref str 1) #\a) str) "xax")
 
 
 (test (let ((hi (string-copy "hi"))) (string-set! hi 0 #\H) hi) "Hi")
@@ -2206,6 +2207,9 @@
 
 					;(set-car! '(1 . 2) 3)  ??
 
+(test (let ((x (list 1 2))) (set! (car x) 0) x) (list 0 2))
+(test (let ((x (cons 1 2))) (set! (cdr x) 0) x) (cons 1 0))
+
 
 (test (let ((x (cons 1 2))) (set-cdr! x 3) x) (cons 1 3))
 (test (let ((x (list 1 2))) (set-cdr! x 3) x) (cons 1 3))
@@ -2230,6 +2234,8 @@
 (test (list-ref (list-ref (list (list 1 2) (list 3 4)) 1) 1) 4)
 (test (let ((x (list 1 2 3))) (list-ref x (list-ref x 1))) 3)
 					; (list-ref '(1 2 . 3) 0) -- why is this acceptable?
+
+(test (let ((lst (list 1 2))) (set! (list-ref lst 1) 0) lst) (list 1 0))
 
 (for-each
  (lambda (name op1 op2)
@@ -2546,6 +2552,8 @@
 (test (make-vector 3 '#(hi)) '#(#(hi) #(hi) #(hi)))
 (test (make-vector 3 (list)) '#(() () ()))
 (test (make-vector 3 (make-vector 1 (make-vector 1 'hi))) '#(#(#(hi)) #(#(hi)) #(#(hi))))
+
+(test (let ((v (make-vector 3 0))) (set! (vector-ref v 1) 32) v) #(0 32 0))
 
 (for-each
  (lambda (arg)
@@ -6008,6 +6016,9 @@
   (test (let () (hash-table-set! ht 3.14 "hi") (hash-table-ref ht 3.14)) "hi")
   (test (let () (hash-table-set! ht our-pi "hiho") (hash-table-ref ht our-pi)) "hiho")
   (test (hash-table-ref ht "123") #f)
+
+  (test (let () (set! (hash-table-ref ht 'key) 32) (hash-table-ref ht 'key)) 32)
+
   (for-each
    (lambda (arg)
      (test (let () (hash-table-set! ht 'key arg) (hash-table-ref ht 'key)) arg))
@@ -7004,8 +7015,7 @@
       ;; (a (b ((c X)))) -- anything after the X is ignored, other symbols are just placeholders
       ;; c?r returns a function that gets X
 
-      ;; maybe ... for cdr?
-      ;; (c?r (a ...) -> cdr?
+      ;; maybe ... for cdr? (c?r (a ...);  right now it's using dot: (c?r (a . X)) -> cdr
       
       ;; (c?r (a b X)) -> caddr, 
       ;; (c?r (a (b X))) -> cadadr

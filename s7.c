@@ -376,6 +376,7 @@ typedef struct s7_func_t {
   char *doc;
   int required_args, optional_args, all_args;
   bool rest_arg;
+  s7_pointer setter;
 } s7_func_t;
 
 
@@ -811,6 +812,7 @@ struct s7_scheme {
 #define c_function_optional_args(f)   (f)->object.ffptr->optional_args
 #define c_function_has_rest_arg(f)    (f)->object.ffptr->rest_arg
 #define c_function_all_args(f)        (f)->object.ffptr->all_args
+#define c_function_setter(f)          (f)->object.ffptr->setter
 
 #define is_c_macro(p)                 (type(p) == T_C_MACRO)
 #define c_macro_call(f)               (f)->object.ffptr->ff
@@ -12437,6 +12439,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
 
   c_function(x) = ptr;
   c_function_call(x) = f;
+  c_function_setter(x) = sc->F;
   c_function_name(x) = name;       /* (procedure-name proc) => (format #f "~A" proc); perhaps add this as a built-in function? */
   if (doc)
     c_function_documentation(x) = make_permanent_string(doc);
@@ -12468,6 +12471,13 @@ static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_procedure "(procedure? obj) returns #t if obj is a procedure"
   return(make_boolean(sc, s7_is_procedure(car(args))));
+}
+
+
+static void s7_function_set_setter(s7_scheme *sc, const char *getter, const char *setter)
+{
+  /* perhaps these functions should be procedure-with-setter's? */
+  c_function_setter(s7_name_to_value(sc, getter)) = s7_name_to_value(sc, setter);
 }
 
 
@@ -17693,6 +17703,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	    case T_HASH_TABLE:
 	      sc->code = s7_cons(sc, sc->HASH_TABLE_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
+	      break;
+
+	    case T_C_ANY_ARGS_FUNCTION:                       /* (let ((lst (list 1 2))) (set! (list-ref lst 1) 2) lst) */
+	    case T_C_FUNCTION:
+	      /* perhaps it has a setter */
+	      
+	      if (is_procedure(c_function_setter(sc->x)))
+		sc->code = s7_cons(sc, c_function_setter(sc->x), s7_append(sc, cdar(sc->code), cdr(sc->code)));
+	      else return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
 	      break;
 
 	    default:                                         /* (set! (1 2) 3) */
@@ -23835,7 +23854,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "string-length",           g_string_length,           1, 0, false, H_string_length);
   s7_define_function(sc, "string-ref",              g_string_ref,              2, 0, false, H_string_ref);
   s7_define_function(sc, "string-set!",             g_string_set,              3, 0, false, H_string_set);
-  
   s7_define_function(sc, "string=?",                g_strings_are_equal,       2, 0, true,  H_strings_are_equal);
   s7_define_function(sc, "string<?",                g_strings_are_less,        2, 0, true,  H_strings_are_less);
   s7_define_function(sc, "string>?",                g_strings_are_greater,     2, 0, true,  H_strings_are_greater);
@@ -24032,6 +24050,14 @@ s7_scheme *s7_init(void)
 
   sc->STRING_SET = s7_symbol_value(sc, s7_make_symbol(sc, "string-set!"));
   typeflag(sc->STRING_SET) |= T_DONT_COPY; 
+
+  s7_function_set_setter(sc, "car", "set-car!");
+  s7_function_set_setter(sc, "cdr", "set-cdr!");
+  s7_function_set_setter(sc, "hash-table-ref", "hash-table-set!");
+  s7_function_set_setter(sc, "vector-ref", "vector-set!");
+  s7_function_set_setter(sc, "list-ref", "list-set!");
+  s7_function_set_setter(sc, "string-ref", "string-set!");
+
 
   {
     int i, top;

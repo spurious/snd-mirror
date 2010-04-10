@@ -610,34 +610,8 @@ use lambda:
 	(+ a b)))
     ,a))
 </pre>
-<p>If you want to avoid the extra evaluation that happens when a macro
-is expanded, add another layer of quasiquote:
-</p>
-<pre>
-(define-macro (mac a)
-  ``((lambda (b) 
-      (let ((a 12))
-	(+ a b)))
-    ,,a))
-
-&gt; (mac (+ 1 2))
-((lambda (b) (let ((a 12)) (+ a b))) 3)
-</pre>
-<p>If you want to evaluate some arguments, and not others, use quote:
-</p>
-<pre>
-(define-macro (mac a b)
-  `((lambda (b c) 
-      (let ((a 12))
-	(+ a b (eval c))))
-    ,a ',b))
-
-&gt; (mac (+ 1 2) (+ 3 4))
-22
-</pre>
 </blockquote>
 </small>
-
 
 </dd>
 <br>
@@ -939,6 +913,110 @@ So, remembering that (cadr type) is the make function:
 <p>The objects created in this way, or via s7_new_type in C, can be passed to for-each
 if you supply the length and getter functions to make-type.
 </p>
+
+<small>
+<blockquote>
+<hr>
+<p>Here is define-record using make-type.  It has a few Common Lisp extensions:
+</p>
+<pre>
+(define-macro (define-record struct-name . fields)
+  (let* ((name (if (list? struct-name) (car struct-name) struct-name))
+	 (sname (if (string? name) name (symbol-&gt;string name)))
+		 
+	 (fsname (if (list? struct-name)
+		     (let ((cname (assoc :conc-name (cdr struct-name))))
+		       (if cname 
+			   (symbol-&gt;string (cadr cname))
+			   sname))
+		     sname))
+		 
+	 (make-name (if (list? struct-name)
+			(let ((cname (assoc :constructor (cdr struct-name))))
+			  (if cname 
+			      (cadr cname)
+			      (string-&gt;symbol (string-append "make-" sname))))
+			(string-&gt;symbol (string-append "make-" sname))))
+
+	 (is-name (string-&gt;symbol (string-append sname "?")))
+		 
+	 (copy-name (if (list? struct-name)
+			(let ((cname (assoc :copier (cdr struct-name))))
+			  (if cname 
+			      (cadr cname)
+			      (string-&gt;symbol (string-append "copy-" sname))))
+			(string-&gt;symbol (string-append "copy-" sname))))
+		 
+	 (field-names (map (lambda (n)
+			     (symbol-&gt;string (if (list? n) (car n) n)))
+			   fields))
+		 
+	 (field-types (map (lambda (field)
+			     (if (list? field)
+				 (apply (lambda* (val type read-only) type) (cdr field))
+				 #f))
+			   fields))
+		 
+	 (field-read-onlys (map (lambda (field)
+				  (if (list? field)
+				      (apply (lambda* (val type read-only) read-only) (cdr field))
+				      #f))
+				fields)))
+    `(begin
+
+       ;; declare our globally-accessible names
+       (define ,is-name #f)
+       (define ,make-name #f)
+       (define ,copy-name #f)
+
+       ,@(map (lambda (n)
+		`(define ,(string-&gt;symbol (string-append fsname "-" n)) #f))
+	      field-names)
+
+       (let* ((rec-type (<em class=red>make-type</em>))
+	      (? (car rec-type))
+	      (make (cadr rec-type))
+	      (ref (caddr rec-type)))
+	       
+	 (set! ,is-name ?)
+
+	 (set! ,make-name (lambda* ,(map (lambda (n)
+					    (if (and (list? n)
+						     (&gt;= (length n) 2))
+						(list (car n) (cadr n))
+						(list n #f)))
+					  fields)
+			    (make (vector ',(string-&gt;symbol sname) ,@(map string-&gt;symbol field-names)))))
+
+	 (set! ,copy-name (lambda (obj) 
+			    (make (copy (ref obj)))))	       
+
+	 ,@(map (let ((ctr 1))
+		  (lambda (n type read-only)
+		    (let ((val (if read-only
+				   `(set! ,(string-&gt;symbol (string-append fsname "-" n))
+					  (lambda (arg) ((ref arg) ,ctr)))
+				   `(set! ,(string-&gt;symbol (string-append fsname "-" n))
+					  (make-procedure-with-setter 
+					   (lambda (arg) ((ref arg) ,ctr)) 
+					   (lambda (arg val) (set! ((ref arg) ,ctr) val)))))))
+		      (set! ctr (+ 1 ctr))
+		      val)))
+		field-names field-types field-read-onlys)
+
+	',struct-name))))
+
+&gt; (define-record point (x 0.0) (y 0.0))
+point
+&gt; (let ((pt (make-point 1.0))) 
+       (set! (point-y pt) 3.0)
+       (list (point? pt) (point-x pt) (point-y pt)))
+(#t 1.0 3.0)
+</pre>	
+</blockquote>
+</small>
+
+
 </dd>
 <br>
 
@@ -1347,7 +1425,7 @@ the unbound symbol.  In Snd, this is used to implement autoloading:
     (let ((file (autoload-file (symbol-&gt;string sym))))
       ;; autoload-file is a Snd function that knows where a lot of Snd's scheme functions are
       (if file (load file))
-      (symbol->value sym)))) ; this will return #&lt;undefined&gt; if we didn't find its source file
+      (symbol-&gt;value sym)))) ; this will return #&lt;undefined&gt; if we didn't find its source file
 </pre>
 
 <p>The s7-built-in catch tags (error symbols) are 'wrong-type-arg, 'syntax-error, 'read-error, 'thread-error,
