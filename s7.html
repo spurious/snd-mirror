@@ -82,7 +82,6 @@ and want a quick tour of where s7 is different.
   <li><a href="#errors">errors, stacktrace</a>
   <li><a href="#trace">trace</a>
   <li><a href="#IO">string IO</a>
-  <li><a href="#generic">generic functions</a>
   <li><a href="#procedureinfo">procedure info</a>
   <li><a href="#symbolinfo">symbol table info</a>
   <li><a href="#environments">environments</a>
@@ -1094,16 +1093,25 @@ it is set:
 
 &gt ((c?r (a b (X))) '(1 2 (3 4) 5))
 3
+
 &gt (let ((lst (list 1 2 (list 3 4) 5))) 
    (set! ((c?r (a b (X))) lst) 32)
    lst)
 (1 2 (32 4) 5)
+
+&gt; (procedure-source (c?r (a b (X))))
+(lambda (lst) (car (car (cdr (cdr lst)))))
+
 &gt; ((c?r (((((a (b (c (d (e X)))))))))) '(((((1 (2 (3 (4 (5 6)))))))))) 
 6
+
 &gt; (let ((lst '(((((1 (2 (3 (4 (5 6))))))))))) 
     (set! ((c?r (((((a (b (c (d (e X)))))))))) lst) 32) 
     lst)
 (((((1 (2 (3 (4 (5 32)))))))))
+
+&gt; (procedure-source (c?r (((((a (b (c (d (e X)))))))))))
+(lambda (lst) (car (cdr (car (cdr (car (cdr (car (cdr (car (cdr (car (car (car (car lst)))))))))))))))
 </pre>	
 </blockquote>
 </small>
@@ -1116,7 +1124,7 @@ it is set:
 <dt>
 <A NAME="generalizedset"></a>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>applicable objects, generalized set!</h4></td></tr></table>
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>applicable objects, generalized set!, generic functions</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -1136,10 +1144,6 @@ are both applicable and settable.  I think the syntax is pretty:
 </pre>
 <p>You can use list-ref and friends, of course, but just try to read any serious vector arithmetic code
 when it is buried in vector-refs and vector-set!s! 
-</p>
-<p>This syntax makes it easy to write generic sequence functions, as in Common Lisp.
-See s7test.scm for examples.
-</p>
 
 <small>
 <blockquote>
@@ -1148,7 +1152,58 @@ so is <code>(cond (1 =&gt; "hi"))</code>!
 </p>
 </blockquote>
 </small>
+
+</p>
+<p>This syntax makes it easy to write generic functions.
+For example, s7test.scm has implementations of Common Lisp's sequence functions.
+length, copy, fill!, map and for-each are generic in this sense.
+We can write an FFT procedure that accepts lists or vectors:
+</p>
+<pre>
+        (define* (cfft! data n (dir 1)) ; (complex data)
+          (if (not n) (set! n (<em class=red>length</em> data)))
+          (do ((i 0 (+ i 1))
+               (j 0))
+              ((= i n))
+            (if (&gt; j i)
+        	(let ((temp (data j)))
+        	  (set! (data j) (data i))
+        	  (set! (data i) temp)))
+            (let ((m (/ n 2)))
+              (do () 
+        	  ((or (&lt; m 2) (&lt; j m)))
+        	(set! j (- j m))
+        	(set! m (/ m 2)))
+              (set! j (+ j m))))
+          (let ((ipow (floor (log n 2)))
+        	(prev 1))
+            (do ((lg 0 (+ lg 1))
+        	 (mmax 2 (* mmax 2))
+        	 (pow (/ n 2) (/ pow 2))
+        	 (theta (make-rectangular 0.0 (* pi dir)) (* theta 0.5)))
+        	((= lg ipow))
+              (let ((wpc (exp theta))
+        	    (wc 1.0))
+        	(do ((ii 0 (+ ii 1)))
+        	    ((= ii prev))
+        	  (do ((jj 0 (+ jj 1))
+        	       (i ii (+ i mmax))
+        	       (j (+ ii prev) (+ j mmax)))
+        	      ((&gt;= jj pow))
+        	    (let ((tc (* wc (data j))))
+        	      (set! (data j) (- (data i) tc))
+        	      (set! (data i) (+ (data i) tc))))
+        	  (set! wc (* wc wpc)))
+        	(set! prev mmax))))
+          data)
+        
+        &gt; (cfft! (list 0.0 1+i 0.0 0.0))
+        (1+1i -1+1i -1-1i 1-1i)
+        &gt; (cfft! (vector 0.0 1+i 0.0 0.0))
+        #(1+1i -1+1i -1-1i 1-1i)
+</pre>
 </dd>
+
 <br>
 
 
@@ -1581,67 +1636,6 @@ for an example.
 
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
-<A NAME="generic"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>generic functions</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd><p>length, copy, and fill! are generic functions in the sense that their argument can be
-a list, string, vector, hash-table, or C-defined object.  Since vectors and lists are set-applicable, 
-and length is generic, we can write a generic FFT that accepts both types or any other object that follows this syntax:
-</p>
-<pre>
-        (define* (cfft! data n (dir 1)) ; (complex data)
-          (if (not n) (set! n (<em class=red>length</em> data)))
-          (do ((i 0 (+ i 1))
-               (j 0))
-              ((= i n))
-            (if (&gt; j i)
-        	(let ((temp (data j)))
-        	  (set! (data j) (data i))
-        	  (set! (data i) temp)))
-            (let ((m (/ n 2)))
-              (do () 
-        	  ((or (&lt; m 2) (&lt; j m)))
-        	(set! j (- j m))
-        	(set! m (/ m 2)))
-              (set! j (+ j m))))
-          (let ((ipow (floor (log n 2)))
-        	(prev 1))
-            (do ((lg 0 (+ lg 1))
-        	 (mmax 2 (* mmax 2))
-        	 (pow (/ n 2) (/ pow 2))
-        	 (theta (make-rectangular 0.0 (* pi dir)) (* theta 0.5)))
-        	((= lg ipow))
-              (let ((wpc (exp theta))
-        	    (wc 1.0))
-        	(do ((ii 0 (+ ii 1)))
-        	    ((= ii prev))
-        	  (do ((jj 0 (+ jj 1))
-        	       (i ii (+ i mmax))
-        	       (j (+ ii prev) (+ j mmax)))
-        	      ((&gt;= jj pow))
-        	    (let ((tc (* wc (data j))))
-        	      (set! (data j) (- (data i) tc))
-        	      (set! (data i) (+ (data i) tc))))
-        	  (set! wc (* wc wpc)))
-        	(set! prev mmax))))
-          data)
-        
-        &gt; (cfft! (list 0.0 1+i 0.0 0.0))
-        (1+1i -1+1i -1-1i 1-1i)
-        &gt; (cfft! (vector 0.0 1+i 0.0 0.0))
-        #(1+1i -1+1i -1-1i 1-1i)
-</pre>
-<p>map and for-each are also generic.
-</p>
-</dd>
-<br>
-
-
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
 <A NAME="procedureinfo"></a>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>procedure info</h4></td></tr></table>
@@ -1920,8 +1914,10 @@ is similar, but its argument is a string.
 <hr>
 
 <p>Multi-line comments can be enclosed in either #| and |#, or #! and !# (the latter
-is for compatibility with Guile).
+is for compatibility with Guile).  These are also useful for in-line comments:
+<code>(+ #| add |# 1 2)</code>.
 </p>
+
 
 <hr>
 

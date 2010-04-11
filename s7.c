@@ -24135,4 +24135,6 @@ s7_scheme *s7_init(void)
 }
 
 /* TODO: macroexpand and fully-expand are buggy
+ *       can symbol-access constrain a vector to contain one type?
+ *       mdvect ex: solve matrix? do-all-symbols?
  */
