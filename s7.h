@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.52"
-#define S7_DATE "9-Apr-10"
+#define S7_VERSION "1.53"
+#define S7_DATE "12-Apr-10"
 
 
 typedef long long int s7_Int;
@@ -837,6 +837,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 12-Apr:    removed immutable constant checks -- see s7.html.
  * 7-Apr:     *unbound-variable-hook*.
  *            augment-environment and s7_augment_environment.
  * 29-Mar:    symbol-access, s7_symbol_access, s7_symbol_set_access.

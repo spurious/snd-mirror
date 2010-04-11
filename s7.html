@@ -659,8 +659,8 @@ All of these cases modify
 the path between a symbol and its value.  
 s7 gives you a handle on that path via the procedure-with-setter <b>symbol-access</b>.
 (symbol-access symbol) returns that symbol's accessors (if any), and (set! (symbol-access symbol) accessor-list)
-changes it.  The accessor-list is a list of three functions, the get, set, and bind functions.  (The get
-function is not yet implemented, and is perhaps not needed at all).  The set and bind functions take two arguments, the symbol in question
+changes it.  The accessor-list is a list of three functions, the get, set, and bind functions.
+The set and bind functions take two arguments, the symbol in question
 and the value that it is about to be set or bound to.  The variable is set or bound to the value they return.
 We could replace define-constant, and add
 local constants with:
@@ -735,7 +735,8 @@ and in between, call the previous set accessor, if any, after reporting the set:
       (set! (symbol-access var) (cadddr (symbol-access var)))))
 </pre>
 
-<p>I believe symbol-access is similar to Ruby's hooked variables, or perhaps Perl's tied variables.
+<p>The "get" function is currently not implemented.
+I believe symbol-access is similar to Ruby's hooked variables, or perhaps Perl's tied variables.
 You could implement all kinds of fancy things
 with this mechanism.  (One amusing case: property lists.  Just tack
 the properties onto the end of the accessor list, as in trace above).
@@ -1101,6 +1102,17 @@ it is set:
 
 &gt; (procedure-source (c?r (a b (X))))
 (lambda (lst) (car (car (cdr (cdr lst)))))
+
+&gt ((c?r (a b . X)) '(1 2 (3 4) 5))
+((3 4) 5)
+
+&gt (let ((lst (list 1 2 (list 3 4) 5))) 
+   (set! ((c?r (a b . X)) lst) '(32))
+   lst)
+(1 2 32)
+
+&gt; (procedure-source (c?r (a b . X)))
+(lambda (lst) (cdr (cdr lst)))
 
 &gt; ((c?r (((((a (b (c (d (e X)))))))))) '(((((1 (2 (3 (4 (5 6)))))))))) 
 6
@@ -1986,14 +1998,79 @@ bind it to something else, which is asking for confusion).
 
 <small>
 <blockquote>
+<hr>
 <p>Schemes vary in their treatment of ().  s7 considers it a constant that evaluates to itself,
 so you rarely (never?) need to quote it.  <code>(eq? () '())</code> is #t in s7.
 </p>
+<hr>
 <p>Schemes also vary in handling trailing arguments:
 <code>(* 0 "hi")</code> in Guile returns 0, but s7 gives an error.  
 <code>(cond (1) (=&gt;))</code> is 1 in both,  and
 <code>(or 1 2 . 3)</code> is an
 error in Guile, and 1 in s7!
+</p>
+<hr>
+<p>And a harder one... How should s7 treat this:
+<code>(string-set! "hiho" 1 #\z)</code>, or 
+<code>(vector-set! #(1 2 3) 1 32)</code>, or
+<code>(list-set! '(1 2 3) 1 32)</code>?
+Originally, in s7, the first two were errors, and the third was allowed, which doesn't make much sense.
+Guile (and Common Lisp) accept all three, but that leads to weird cases where we can reach
+into a function's body:
+</p>
+<pre>
+&gt; (let ((x (lambda () '(1 2 3)))) (list-set! (x) 1 32) (x))
+(1 32 3) ; s7, Guile
+
+&gt; (flet ((x () '(1 2 3))) (setf (nth 1 (x)) 32) (x))
+(1 32 3) ; Clisp
+
+&gt (let ((x (lambda () (list 1 2 3)))) (list-set! (x) 1 32) (x))
+(1 2 3)
+</pre>
+<p>
+But it's possible to reach into a function's closure, even when the
+closed-over thing is a constant:
+</p>
+<pre>
+&gt; (flet ((x () '(1 2 3))) (setf (nth 1 (x)) 32) (x))
+(1 32 3)
+
+&gt; (let ((xx (let ((x '(1 2 3))) (lambda () x)))) (list-set! (xx) 1 32) (xx))
+(1 32 3)
+&gt; (let ((xx (let ((x (list 1 2 3))) (lambda () x)))) (list-set! (xx) 1 32) (xx))
+(1 32 3)
+</pre>
+<p>And it's possible to reach into a constant list via list-set! (or set-car! of course):
+</p>
+<pre>
+&gt; (let* ((x '(1 2)) (y (list x)) (z (car y))) (list-set! z 1 32) (list x y z))
+((1 32) ((1 32)) (1 32))
+</pre>
+<p>
+It would be a programmer's nightmare to have to keep track of which piece of a list is
+constant, and an implementor's nightmare to copy every list.  set! in all its forms is
+used for its side-effects, so why should we try to put a fence around them?
+If we flush "immutable constant" because it is a ham-fisted, whack-it-with-a-shovel approach,
+the only real problem I can see is symbol-&gt;string.  In CL, this is explicitly an error:
+</p>
+<pre>
+&gt; (setf (elt (symbol-name 'xyz) 1) #\X)
+*** - Attempt to modify a read-only string: "XYZ"
+</pre>
+<p>And in Guile:
+</p>
+<pre>
+&gt; (string-set! (symbol-&gt;string 'symbol-&gt;string) 1 #\X)
+ERROR: string is read-only: "symbol-&gt;string"
+</pre>
+<p>So both have a notion of immutable strings.  
+I wonder what other Scheme programmers (not implementors!) want in this situation.
+Currently in s7, symbol-&gt;string
+returns a copy of the string, and I might
+add <b>element-access</b> (paralleling symbol-access) to let the programmer
+decide in each case how to handle the other ostensible constants.
+With this we could also implement, for example, float vectors etc.
 </p>
 </blockquote>
 </small>

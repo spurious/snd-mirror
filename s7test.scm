@@ -29,6 +29,7 @@
 (define with-the-bug-finding-machine #f)                       ; run the machine (this variable can be set to the number of tries)
 					                       ;   the default number of tries is 10000
 (define with-test-at-random #f)
+(define with-immutable-constants #f)                           ; (string-set! "hiho" 1 #\X) etc
 
 (define our-pi 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930382)
 
@@ -3762,6 +3763,20 @@
 (test (let ((a 1)) (call/cc (lambda (r) (set! a (let () (if (= a 1) (r 123)) 321)))) a) 1)
 (test (let ((a (lambda (b) (+ b 1)))) (set! a (lambda (b) (+ b 2))) (a 3)) 5)
 (test (let ((a (lambda (x) (set! x 3) x))) (a 1)) 3)
+
+(test (let ((x (vector 1 2 3))) (set! (x 1) 32) x) #(1 32 3))
+(test (let* ((x (vector 1 2 3))
+	     (y (lambda () x)))
+	(set! ((y) 1) 32)
+	x)
+      #(1 32 3))
+(test (let* ((x (vector 1 2 3))
+	     (y (lambda () x))
+	     (z (lambda () y)))
+	(set! (((z)) 1) 32)
+	x)
+      #(1 32 3))
+;; is it assumed in Scheme that a vector returned from a function is not a copy?
 
 
 
@@ -41670,11 +41685,11 @@
 
 (test (let ((hi (string-copy "hi"))) (string-set! hi 2 #\H) hi) 'error)
 (test (let ((hi (string-copy "hi"))) (string-set! hi -1 #\H) hi) 'error)
-(test (let ((g (lambda () "***"))) (string-set! (g) 0 #\?)) 'error) 
+(if with-immutable-constants (test (let ((g (lambda () "***"))) (string-set! (g) 0 #\?)) 'error))
 (test (string-set! "" 0 #\a) 'error)
 (test (string-set! "" 1 #\a) 'error)
 (test (string-set! (string) 0 #\a) 'error)
-(test (string-set! (symbol->string 'lambda) 0 #\a) 'error)
+(if with-immutable-constants (test (string-set! (symbol->string 'lambda) 0 #\a) 'error))
 (test (let ((ho (make-string 0 #\x))) (string-set! ho 0 #\a) ho) 'error)
 
 (for-each
@@ -41692,9 +41707,11 @@
    (test (string-set! "hiho" 0 arg) 'error))
  (list 1 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
+(if with-immutable-constants (begin
 (test (string-fill! "" #\a) 'error)
 (test (string-fill! "hiho" #\a) 'error)
 (test (let ((g (lambda () "***"))) (string-fill! (g) #\?)) 'error)
+))
 
 (test (substring "ab" 0 3) 'error)
 (test (substring "ab" 3 3) 'error)
@@ -41928,9 +41945,13 @@
 (test (reverse! (cons 1 (cons 2 3))) 'error)
 
 (test (set-car! '() 32) 'error)
+(test (set-car! () 32) 'error)
+(test (set-car! (list) 32) 'error)
 (test (set-car! 'x 32) 'error)
 (test (set-car! #f 32) 'error)
 (test (set-cdr! '() 32) 'error)
+(test (set-cdr! () 32) 'error)
+(test (set-cdr! (list) 32) 'error)
 (test (set-cdr! 'x 32) 'error)
 (test (set-cdr! #f 32) 'error)
 
@@ -42050,8 +42071,8 @@
 					;(test (vector-set! '#(0 1 2) 1 "doe") 'error)
 (test (let ((v (vector 1 2 3))) (vector-set! v -1 0)) 'error)
 (test (let ((v (vector 1 2 3))) (vector-set! v 3 0)) 'error)
-(test (vector-set! '#(1 2) 0 2) 'error)
-(test (vector-fill! '#(1 2) 2) 'error)
+(if with-immutable-constants (test (vector-set! '#(1 2) 0 2) 'error))
+(if with-immutable-constants (test (vector-fill! '#(1 2) 2) 'error))
 
 (let ((v (vector 1 2 3)))
   (for-each
@@ -42069,12 +42090,14 @@
   (test (vector-set! v 1 0) 'error)
   (test (vector-set! v -1 0) 'error))
 (test (vector-set! #() 0 123) 'error)
-(test (vector-set! #(1 2 3) 0 123) 'error)
+(if with-immutable-constants (test (vector-set! #(1 2 3) 0 123) 'error))
 
+(if with-immutable-constants (begin
 (test (let ((g (lambda () '#(1 2 3)))) (vector-set! (g) 0 #\?) (g)) 'error) ; not an error in Guile
 					;(test (let ((g (lambda () '(1 . 2)))) (set-car! (g) 123) (g)) 'error) ; should this also be an error?
 					;(test (let ((g (lambda () '(1 2)))) (list-set! (g) 0 123) (g)) 'error)
 (test (let ((g (lambda () (symbol->string 'hi)))) (string-set! (g) 1 #\a) (symbol->string 'hi)) 'error)
+))
 
 (for-each
  (lambda (arg)

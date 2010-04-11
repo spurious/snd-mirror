@@ -1974,7 +1974,11 @@ static s7_pointer g_symbol_to_string(s7_scheme *sc, s7_pointer args)
   #define H_symbol_to_string "(symbol->string sym) returns the symbol sym converted to a string"
   if (!s7_is_symbol(car(args)))
     return(s7_wrong_type_arg_error(sc, "symbol->string", 0, car(args), "a symbol"));
+#if 0
   return(make_protected_string(sc, s7_symbol_name(car(args))));
+#else
+  return(s7_make_string(sc, s7_symbol_name(car(args)))); /* return a copy */
+#endif
 }
 
 
@@ -2092,7 +2096,7 @@ static s7_pointer add_to_current_environment(s7_scheme *sc, s7_pointer variable,
 { 
   if (is_immutable_or_accessed(variable))
     {
-      if (is_immutable(variable))
+      if (is_immutable(variable))                          /* (let ((pi 3)) pi) */
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 			make_list_2(sc, s7_make_string(sc, "can't bind an immutable object: ~S"), variable)));
       value = call_symbol_bind(sc, variable, value);
@@ -7954,19 +7958,23 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "string-set!", 1, x, "a string"));
   if (!s7_is_character(caddr(args)))
     return(s7_wrong_type_arg_error(sc, "string-set!", 3, caddr(args), "a character"));
-
+#if 0
   if (is_immutable(x))
+    {
+      fprintf(stderr, "immutable string: %s\n", string_value(x));
     return(s7_wrong_type_arg_error(sc, "string-set!", 1, x, "a mutable string"));
+    }
+#endif
   if (!s7_is_integer(index))
     return(s7_wrong_type_arg_error(sc, "string-set! index,", 2, index, "an integer"));
-
+  
   ind = s7_integer(index);
 
   if (ind < 0)
     return(s7_wrong_type_arg_error(sc, "string-set! index,", 2, index, "a non-negative integer"));
   if (ind >= string_length(x))
     return(s7_out_of_range_error(sc, "string-set! index,", 2, index, "should be less than string length"));
-  
+
   /* I believe this does not need a lock in the multithread case -- local vars are specific
    *   to each thread, and it should be obvious to anyone writing such code that a global
    *   variable needs its lock (caller-supplied) -- it's not s7's job to protect even the
@@ -8292,9 +8300,13 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
 
   if (!s7_is_string(x))
     return(s7_wrong_type_arg_error(sc, "string-fill", 1, x, "a string"));
-
+#if 0
   if (is_immutable(x))
+    {
+      fprintf(stderr, "fill immutable string %s\n", string_value(x));
     return(s7_wrong_type_arg_error(sc, "string-fill!", 1, x, "a mutable string"));
+    }
+#endif
   if (!s7_is_character(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "string-fill filler,", 2, cadr(args), "a character"));
 
@@ -10752,8 +10764,18 @@ static s7_pointer g_set_car(s7_scheme *sc, s7_pointer args)
 {
   #define H_set_car "(set-car! pair val) sets the pair's first element to val"
   
-  if (!is_pair(car(args)))  return(s7_wrong_type_arg_error(sc, "set-car!", 1, car(args), "a pair"));
-  if (is_immutable(car(args))) return(s7_wrong_type_arg_error(sc, "set-car!", 1, car(args), "a mutable pair"));
+  if (!is_pair(car(args)))  
+    return(s7_wrong_type_arg_error(sc, "set-car!", 1, car(args), "a pair"));
+#if 0
+  if (is_immutable(car(args))) 
+    
+{      fprintf(stderr, "immutable cons! %s\n", s7_object_to_c_string(sc, args));
+      /* as far as I can tell, this currently can't happen 
+       *    the only immutable objects (outside define-constant) are constant strings and vectors
+       */
+      return(s7_wrong_type_arg_error(sc, "set-car!", 1, car(args), "a mutable pair"));
+    }
+#endif
   
   caar(args) = cadr(args);
   /* return(args);
@@ -10769,8 +10791,15 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
 {
   #define H_set_cdr "(set-cdr! pair val) sets the pair's second element to val"
   
-  if (!is_pair(car(args))) return(s7_wrong_type_arg_error(sc, "set-cdr!", 1, car(args), "a pair"));
-  if (is_immutable(car(args))) return(s7_wrong_type_arg_error(sc, "set-cdr!", 1, car(args), "a mutable pair"));
+  if (!is_pair(car(args))) 
+    return(s7_wrong_type_arg_error(sc, "set-cdr!", 1, car(args), "a pair"));
+#if 0
+  if (is_immutable(car(args))) 
+    {
+      fprintf(stderr, "cdr: immutable cons! %s\n", s7_object_to_c_string(sc, args));
+    return(s7_wrong_type_arg_error(sc, "set-cdr!", 1, car(args), "a mutable pair"));
+    }
+#endif
   
   cdar(args) = cadr(args);
   return(sc->UNSPECIFIED); /* see above */
@@ -11535,9 +11564,13 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
 
   if (!s7_is_vector(x))
     return(s7_wrong_type_arg_error(sc, "vector-fill!", 1, x, "a vector"));
+#if 0
   if (is_immutable(x))
+    {
+      fprintf(stderr, "fill immutable vector: %s\n", s7_object_to_c_string(sc, x));
     return(s7_wrong_type_arg_error(sc, "vector-fill!", 1, x, "a mutable vector"));
-
+    }
+#endif
   s7_vector_fill(sc, x, cadr(args));
   return(sc->UNSPECIFIED);
 }
@@ -11776,8 +11809,13 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
   vec = car(args);
   if (!s7_is_vector(vec))
     return(s7_wrong_type_arg_error(sc, "vector-set!", 1, vec, "a vector"));
+#if 0
   if (is_immutable(vec))
+    {
+            fprintf(stderr, "set immutable vector: %s\n", s7_object_to_c_string(sc, vec));
     return(s7_wrong_type_arg_error(sc, "vector-set!", 1, vec, "a mutable vector"));
+    }
+#endif
   
 #if WITH_MULTIDIMENSIONAL_VECTORS
   if (vector_is_multidimensional(vec))
@@ -12294,6 +12332,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
 {
   s7_Int location;
   s7_pointer x;
+
   location = hash_table_hash(name, vector_length(table)); 
   
   /* if it exists, update value, else add to table */
@@ -17676,6 +17715,84 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* code here is the accessor and the value without the "set!": ((window-width) 800) */
 	  /*    (set! (hi 0) (* 2 3)) -> ((hi 0) (* 2 3)) */
 
+	  /* for these kinds of objects, it would be nice to have some way to restrict set!
+	   *   symbol-access doesn't make sense because we're dealing with the object itself here,
+	   *   not the binding between a symbol and the object.
+	   *
+	   * element-access? set-immutable is too fat-fisted.  We already check is_immutable
+	   *   (for set and fill) on strings, vectors, cons-cells?
+	   *
+	   * (list-set! '(1 2 3) 1 32) is accepted but does it make sense?
+	   *   how to distinguish from (let ((x '(1 2 3))) (list-set! x 1 32) x)?
+	   * (set-car! '(1 . 2) 32) -> ok?
+	   *   how can a pair currently be immutable?
+	   *
+	   * (string-set! "hiho" 1 #\z) -> error
+	   * (vector-set! #(1 2 3) 1 32) -> error
+	   * (let ((x (lambda () "hiho"))) (string-set! (x) 1 #\a)) ->error
+	   * (let ((x (lambda () #(1 2 3)))) (vector-set! (x) 1 32)) ->error 
+	   *    [guile accepts all of these]
+	   *    [I believe r5rs says they're all immutable]
+	   *
+	   * (let ((str "hiho")) (string-set! str 1 #\x) str) -> error which strikes me as stupid
+	   * (let ((v #(1 2 3))) (vector-set! v 1 32) v) -> the same
+	   *
+	   * I think all this arises from:
+	   *   (let ((x (lambda () "hiho"))) (string-set! (x) 1 #\x) (x)) -> "hxho" (this happens in Guile)
+	   *      which violates the "privacy" of the function's body
+	   * but (let ((x (lambda () '(1 2 3)))) (list-set! (x) 1 32) (x))
+	   *   currently returns (1 32 3)!!  (also in Guile)
+	   * (let ((x (lambda () #(1 2 3)))) (vector-set! (x) 1 32) (x))
+	   *   (an error in s7, #(1 32 3) in guile)
+	   *
+	   * The other point is that this makes '(1 2 3) different from (list 1 2 3) (similarly in other cases)
+	   *   (let ((x (lambda () (vector 1 2 3)))) (vector-set! (x) 1 32) (x)) -> #(1 2 3)
+	   *   (let ((x (lambda () (list 1 2 3)))) (list-set! (x) 1 32) (x)) -> '(1 2 3) etc
+	   *
+	   * only string and vector constants (including symbol names of course) are currently marked as immutable, and
+	   *   define-constant refers to the symbol, so no lists/hash-tables/c_objects are themselves immutable currently
+	   *
+	   * in CL:
+	   *   [3]> (svref '#(1 2 3) 1)
+	   *   2
+	   *   [4]> (setf (svref '#(1 2 3) 1) 32)
+	   *   32
+	   *   [5]> (setf (nth 1 '(1 2 3)) 32)
+	   *   32
+	   *   [6]> (setf (elt "hiho" 1) #\c)
+	   *   #\c				
+	   *   [1]> (flet ((x () "hiho")) (setf (elt (x) 1) #\c) (x))
+	   *   "hcho"
+	   *   [2]> (flet ((x () '#(1 2 3))) (setf (svref (x) 1) 32) (x))
+	   *   #(1 32 3)
+	   *   [3]> (flet ((x () '(1 2 3))) (setf (nth 1 (x)) 32) (x))
+	   *   (1 32 3)
+	   *
+	   * so what is the right thing?
+	   *   It seems weird that we can reach into both the function body, and its closure:
+	   *   (let ((xx (let ((x '(1 2 3))) (lambda () x)))) (list-set! (xx) 1 32) (xx)) -> '(1 32 3)
+	   *
+	   * TODO: (also, all these set procs should return the value -- need to check this and add to s7test)
+	   *
+	   * (let* ((x '(1 2)) (y (list x)) (z (append x x))) (list-set! z 1 32) (list x y z))
+	   * ((1 2) ((1 2)) (1 32 1 2))
+	   * (let* ((x '(1 2)) (y (list x)) (z (append x x))) (list-set! z 1 32) (set-car! (car y) 32) (list x y z))
+	   * ((32 2) ((32 2)) (1 32 32 2))
+	   * (let* ((x '(1 2)) (y (list x)) (z (car y))) (list-set! z 1 32) (list x y z))
+	   * ((1 32) ((1 32)) (1 32))
+	   *
+	   * (string-set! (symbol->string 'symbol->string) 1 #\X) -> error currently also in Guile "string is read-only"
+	   * (setf (elt (symbol-name 'xyz) 1) #\X) -> error in CL "read-only string"
+	   *
+	   * (catch #t (lambda () (+ 1 #\a)) (lambda args (let ((x (caadr args))) (string-set! x 1 #\X))))
+	   *    error in s7, not in Guile
+	   */
+
+	  /* TODO: if string-fill! "" is not an error, neither should be fill () or vector-fill! #()
+	   *         or if the set case complains, so should the fill case
+	   * TODO: is there any need for the T_IMMUTABLE flag? or any of the related procedures? [constants use it...]
+	   */
+
 	  switch (type(sc->x))
 	    {
 	    case T_C_OBJECT:
@@ -17715,6 +17832,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      break;
 
 	    default:                                         /* (set! (1 2) 3) */
+	      if (s7_is_symbol(caar(sc->code)))              /* (set! (asdf) 1) */
+		return(eval_error(sc, "set unbound variable? ~A", caar(sc->code)));
 	      return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
 	    }
 	}
@@ -24136,5 +24255,5 @@ s7_scheme *s7_init(void)
 
 /* TODO: macroexpand and fully-expand are buggy
  *       can symbol-access constrain a vector to contain one type?
- *       mdvect ex: solve matrix? do-all-symbols?
+ *       mdvect ex: solve matrix?
  */
