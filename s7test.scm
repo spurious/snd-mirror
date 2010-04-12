@@ -1483,6 +1483,9 @@
   (string-set! str 3 #\x)
   (test (string=? str "xxxxaxxxxx") #t))
 
+(test (string-set! "hiho" 1 #\c) #\c)
+(test (string-fill! "hiho" #\c) #\c)
+
 (test (let ((hi (make-string 3 #\a)))
 	(string-set! hi 1 (let ((ho (make-string 4 #\x)))
 			    (string-set! ho 1 #\b)
@@ -2270,6 +2273,11 @@
 (test (let ((x (list 1 2))) (list-set! x 0 x) (list? x)) #t)
 (test (let ((x (list 1 2))) (list-set! x 1 x) (list? x)) #t)
 
+(test (list-set! '(1 2 3) 1 4) 4)
+(test (set-car! '(1 2) 4) 4)
+(test (set-cdr! '(1 2) 4) 4)
+(test (fill! (list 1 2) 4) 4)
+
 (for-each
  (lambda (arg)
    (test (let ((x (list 1 2))) (list-set! x 0 arg) (list-ref x 0)) arg))
@@ -2649,7 +2657,8 @@
 (test (let ((v (vector #f))) (vector-set! v 0 (vector)) v) '#(#()))
 (test (let ((v (vector 1 (list 2) (vector 1 2 3)))) (vector-set! (vector-ref v 2) 0 21) v) '#(1 (2) #(21 2 3)))
 
-
+(test (vector-set! (vector 1 2) 0 4) 4)
+(test (fill! (vector 1 2) 4) 4)
 
 (test (let ((v (vector 1 2 3))) (vector-fill! v 0) v) '#(0 0 0))
 (test (let ((v (vector))) (vector-fill! v #f) v) '#())

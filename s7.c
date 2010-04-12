@@ -10755,12 +10755,7 @@ static s7_pointer g_set_car(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "set-car!", 1, car(args), "a pair"));
   
   caar(args) = cadr(args);
-  /* return(args);
-   * (set-car! (cdr (cons 1 (cons 2 3))) 4) -> ((4 . 3) 4)?? 
-   *    perhaps this should return #<unspecified> instead since:
-   * (let ((lst (cons 1 (cons 2 3)))) (set-car! (cdr lst) 4) lst) -> (1 4 . 3)
-   */
-  return(sc->UNSPECIFIED);
+  return(cadr(args));
 }
 
 
@@ -10772,7 +10767,7 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "set-cdr!", 1, car(args), "a pair"));
   
   cdar(args) = cadr(args);
-  return(sc->UNSPECIFIED); /* see above */
+  return(cadr(args));
 }
 
 
@@ -17669,79 +17664,25 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* code here is the accessor and the value without the "set!": ((window-width) 800) */
 	  /*    (set! (hi 0) (* 2 3)) -> ((hi 0) (* 2 3)) */
 
-	  /* for these kinds of objects, it would be nice to have some way to restrict set!
-	   *   symbol-access doesn't make sense because we're dealing with the object itself here,
-	   *   not the binding between a symbol and the object.
-	   *
-	   * element-access? set-immutable is too fat-fisted.  We already check is_immutable
-	   *   (for set and fill) on strings, vectors, cons-cells?
-	   *
+	  /* for these kinds of objects, some Schemes restrict set!
 	   * (list-set! '(1 2 3) 1 32) is accepted but does it make sense?
-	   *   how to distinguish from (let ((x '(1 2 3))) (list-set! x 1 32) x)?
-	   * (set-car! '(1 . 2) 32) -> ok?
-	   *   how can a pair currently be immutable?
+	   * (set-car! '(1 . 2) 32)
+	   * (string-set! "hiho" 1 #\z)
+	   * (vector-set! #(1 2 3) 1 32)
+	   * (let ((x (lambda () "hiho"))) (string-set! (x) 1 #\a))
+	   * (let ((x (lambda () #(1 2 3)))) (vector-set! (x) 1 32))
+	   * (let ((str "hiho")) (string-set! str 1 #\x) str)
+	   * (let ((v #(1 2 3))) (vector-set! v 1 32) v)
+	   * (let ((x (lambda () "hiho"))) (string-set! (x) 1 #\x) (x))
 	   *
-	   * (string-set! "hiho" 1 #\z) -> error
-	   * (vector-set! #(1 2 3) 1 32) -> error
-	   * (let ((x (lambda () "hiho"))) (string-set! (x) 1 #\a)) ->error
-	   * (let ((x (lambda () #(1 2 3)))) (vector-set! (x) 1 32)) ->error 
-	   *    [guile accepts all of these]
-	   *    [I believe r5rs says they're all immutable]
-	   *
-	   * (let ((str "hiho")) (string-set! str 1 #\x) str) -> error which strikes me as stupid
-	   * (let ((v #(1 2 3))) (vector-set! v 1 32) v) -> the same
-	   *
-	   * I think all this arises from:
-	   *   (let ((x (lambda () "hiho"))) (string-set! (x) 1 #\x) (x)) -> "hxho" (this happens in Guile)
-	   *      which violates the "privacy" of the function's body
-	   * but (let ((x (lambda () '(1 2 3)))) (list-set! (x) 1 32) (x))
-	   *   currently returns (1 32 3)!!  (also in Guile)
-	   * (let ((x (lambda () #(1 2 3)))) (vector-set! (x) 1 32) (x))
-	   *   (an error in s7, #(1 32 3) in guile)
-	   *
-	   * The other point is that this makes '(1 2 3) different from (list 1 2 3) (similarly in other cases)
-	   *   (let ((x (lambda () (vector 1 2 3)))) (vector-set! (x) 1 32) (x)) -> #(1 2 3)
-	   *   (let ((x (lambda () (list 1 2 3)))) (list-set! (x) 1 32) (x)) -> '(1 2 3) etc
-	   *
-	   * only string and vector constants (including symbol names of course) are currently marked as immutable, and
-	   *   define-constant refers to the symbol, so no lists/hash-tables/c_objects are themselves immutable currently
-	   *
-	   * in CL:
-	   *   [3]> (svref '#(1 2 3) 1)
-	   *   2
-	   *   [4]> (setf (svref '#(1 2 3) 1) 32)
-	   *   32
-	   *   [5]> (setf (nth 1 '(1 2 3)) 32)
-	   *   32
-	   *   [6]> (setf (elt "hiho" 1) #\c)
-	   *   #\c				
-	   *   [1]> (flet ((x () "hiho")) (setf (elt (x) 1) #\c) (x))
-	   *   "hcho"
-	   *   [2]> (flet ((x () '#(1 2 3))) (setf (svref (x) 1) 32) (x))
-	   *   #(1 32 3)
-	   *   [3]> (flet ((x () '(1 2 3))) (setf (nth 1 (x)) 32) (x))
-	   *   (1 32 3)
-	   *
-	   * so what is the right thing?
 	   *   It seems weird that we can reach into both the function body, and its closure:
 	   *   (let ((xx (let ((x '(1 2 3))) (lambda () x)))) (list-set! (xx) 1 32) (xx)) -> '(1 32 3)
 	   *
-	   * (let* ((x '(1 2)) (y (list x)) (z (append x x))) (list-set! z 1 32) (list x y z))
-	   * ((1 2) ((1 2)) (1 32 1 2))
-	   * (let* ((x '(1 2)) (y (list x)) (z (append x x))) (list-set! z 1 32) (set-car! (car y) 32) (list x y z))
-	   * ((32 2) ((32 2)) (1 32 32 2))
 	   * (let* ((x '(1 2)) (y (list x)) (z (car y))) (list-set! z 1 32) (list x y z))
 	   * ((1 32) ((1 32)) (1 32))
 	   *
 	   * (string-set! (symbol->string 'symbol->string) 1 #\X) -> error currently also in Guile "string is read-only"
 	   * (setf (elt (symbol-name 'xyz) 1) #\X) -> error in CL "read-only string"
-	   *
-	   * (catch #t (lambda () (+ 1 #\a)) (lambda args (let ((x (caadr args))) (string-set! x 1 #\X))))
-	   *    error in s7, not in Guile
-	   *
-	   * element-access would affect only the sets below -- string/list/vector/hash-table/object
-	   *   here we'd need a get func so we copy if the value is returned, etc
-	   *   but that will slow us down on all normal value accesses -- a problem for the refs and car -- forget it!
 	   */
 
 	  switch (type(sc->x))
@@ -24204,6 +24145,5 @@ s7_scheme *s7_init(void)
 }
 
 /* TODO: macroexpand and fully-expand are buggy
- *       can symbol-access constrain a vector to contain one type?
- *       mdvect ex: solve matrix?
+ * TODO: can symbol_accessed and immutable be combined now?
  */

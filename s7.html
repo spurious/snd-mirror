@@ -846,8 +846,7 @@ when passed that object.
     (set! make-rec (lambda* ((a 1) (b 2))
 		     (make (vector a b))))
 
-    (set! rec? (lambda (obj)
-		 (? obj)))
+    (set! rec? ?)
   
     (set! rec-a (make-procedure-with-setter
 		 (lambda (obj)
@@ -1013,6 +1012,53 @@ point
        (list (point? pt) (point-x pt) (point-y pt)))
 (#t 1.0 3.0)
 </pre>	
+<hr>
+<p>In the next example, we define a float-vector type:
+</p>
+<pre>
+(begin
+  (define make-float-vector #f)
+  (define float-vector? #f)
+  (define float-vector #f)
+
+  (let* ((fv-type (<em class=red>make-type</em>
+		   :getter (lambda (obj index)
+			     (vector-ref obj index))
+		   :setter (lambda (obj index value)
+			     (if (not (real? value))
+				 (error 'wrong-type-arg-error "float-vector element must be real: ~S" value))
+			     (vector-set! obj index (exact->inexact value)))
+		   :name "float-vector"))
+	 (fv? (car fv-type))
+	 (make-fv (cadr fv-type))
+	 (fv-ref (caddr fv-type)))
+
+    (set! make-float-vector 
+      (lambda* (len (initial-element 0.0))
+        (if (not (real? initial-element))
+	    (error 'wrong-type-arg-error "make-float-vector initial element must be real: ~S" initial-element))
+	(make-fv (make-vector len (exact->inexact initial-element)))))
+    
+    (set! float-vector? fv?)
+    
+    (set! float-vector
+      (lambda args
+	(let* ((len (length args))
+	       (fv (make-float-vector len))
+	       (v (ref fv)))
+	  (do ((lst args (cdr lst)))
+	      ((null? lst) v)
+	    (let ((arg (car lst)))
+	      (if (not (real? arg))
+		  (error 'wrong-type-arg-error "float-vector element must be real: ~S in ~S" arg args))
+	      (set! (v i) (exact->inexact arg)))))))))
+
+&gt; (let ((v (make-float-vector 3))) (set! (v 1) 32) v)
+#&lt;float-vector #(0.0 32.0 0.0)&gt;
+
+&gt; (let ((v (make-float-vector 3))) (set! (v 1) "hi") v)
+;float-vector element must be real: "hi"
+
 </blockquote>
 </small>
 
@@ -1162,8 +1208,6 @@ when it is buried in vector-refs and vector-set!s!
 <p>Well, maybe applicable strings look weird: <code>("hi" 1)</code> is #\i, but worse,
 so is <code>(cond (1 =&gt; "hi"))</code>!
 </p>
-</blockquote>
-</small>
 
 </p>
 <p>This syntax makes it easy to write generic functions.
@@ -1214,6 +1258,8 @@ We can write an FFT procedure that accepts lists or vectors:
         &gt; (cfft! (vector 0.0 1+i 0.0 0.0))
         #(1+1i -1+1i -1-1i 1-1i)
 </pre>
+</blockquote>
+</small>
 </dd>
 
 <br>
@@ -1253,6 +1299,28 @@ sets that element.  vector-dimensions returns a list of the dimensions of a vect
     (v 0 1)
     -&gt; 2.0
 </pre>
+<hr>
+<small>
+<blockquote>
+<p>matrix multiplication:
+</p>
+<pre>
+(define (matrix-multiply A B)
+  ;; assume square matrices and so on here for simplicity
+  (let* ((size (car (vector-dimensions A)))
+	 (C (make-vector (list size size) 0.0)))
+    (do ((i 0 (+ i 1)))
+	((= i size) C)
+      (do ((j 0 (+ j 1)))
+	  ((= j size))
+	(let ((sum 0.0))
+	  (do ((k 0 (+ k 1)))
+	      ((= k size))
+	    (set! sum (+ sum (* (A i k) (B k j)))))
+	  (set! (C i j) sum))))))
+</pre>
+</blockquote>
+</small>
 </dd>
 <br>
 
@@ -1395,7 +1463,7 @@ In s7 (+ (values 1 2 3) 4) is 10.  Similarly,
 </td></tr></table>
 </dt>
 
-<dd><p>call-with-exit is call/cc without the ability to return (an escape or goto, "call/exit"?).
+<dd><p><b>call-with-exit</b> is call/cc without the ability to return (an escape or goto, "call/exit"?).
 </p>
 <pre>
 (define (find-first-even-number arg)
@@ -1409,9 +1477,35 @@ In s7 (+ (values 1 2 3) 4) is 10.  Similarly,
 
 (find-first-even-number (list 1 3 9 13 8 2 4)) -&gt; 8
 </pre>
-<p>continuation? returns #t if its argument is a continuation,
-as opposed to a normal procedure.
+<p><b>continuation?</b> returns #t if its argument is a continuation,
+as opposed to a normal procedure.  I don't know why Scheme hasn't had this function from
+the very beginning, but it's needed if you want to write a continuable error
+handler.  Here is a sketch of the situation:
 </p>
+<pre>
+(let ()
+  (catch #t
+	 (lambda ()
+	   (let ((res (call/cc 
+                        (lambda (ok) 
+			  (error 'cerror "an error" ok)))))
+	     (display res) (newline)))
+	 (lambda args
+	   (if (and (eq? (car args) 'cerror)
+		    (<em class=red>continuation?</em> (cadadr args)))
+	       (begin
+		 (display "continuing...")
+		 ((cadadr args) 2)))
+	   (display "oops"))))
+
+  -&gt; continuing...2
+</pre>
+<p>In a more general case, the error handler is separate from the
+catch body, and needs a way to distinguish a real continuation
+from a simple procedure.  Otherwise, it blithely announces that
+it is continuing from the point of the error, but then fails to do so.
+</p>
+
 </dd>
 <br>
 
