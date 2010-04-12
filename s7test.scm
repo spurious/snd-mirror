@@ -42279,9 +42279,7 @@
     (list "hi" '() #\a (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs #t (if #f #f) (lambda (a) (+ a 1))
 	  (if (eof-object? (with-input-from-string "" (lambda () (read-char))))
 	      (with-input-from-string "" (lambda () (read-char)))
-	      :key)
-	  (vector-fill! (vector 0) 0))))
- 
+	      :key))))
  (list exact? inexact? zero? positive? negative? even? odd? quotient remainder modulo truncate floor ceiling round
        abs max min gcd lcm expt exact->inexact inexact->exact rationalize numerator denominator imag-part real-part
        magnitude angle make-polar make-rectangular sqrt exp log sin cos tan asin acos atan number->string))

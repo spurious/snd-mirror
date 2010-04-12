@@ -2066,12 +2066,15 @@ ERROR: string is read-only: "symbol-&gt;string"
 </pre>
 <p>So both have a notion of immutable strings.  
 I wonder what other Scheme programmers (not implementors!) want in this situation.
-Currently in s7, symbol-&gt;string
-returns a copy of the string, and I might
-add <b>element-access</b> (paralleling symbol-access) to let the programmer
-decide in each case how to handle the other ostensible constants.
-With this we could also implement, for example, float vectors etc.
+Currently in s7, there are no immutable list, string, or vector constants, and
+symbol-&gt;string
+returns a copy of the string.
+One simple way to ensure immutability is to use copy:
 </p>
+<pre>
+&gt (let ((x (lambda () (copy "hiho")))) (string-set! (x) 1 #\x) (x))
+"hiho"
+</pre>
 </blockquote>
 </small>
 

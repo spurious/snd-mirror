@@ -990,7 +990,7 @@ bool s7_is_unspecified(s7_scheme *sc, s7_pointer val)
 }
 
 
-s7_pointer s7_eof_object(s7_scheme *sc) 
+s7_pointer s7_eof_object(s7_scheme *sc)          /* returns #<eof> -- not equivalent to "eof-object?" */
 {
   return(sc->EOF_OBJECT);
 }
@@ -7958,13 +7958,6 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "string-set!", 1, x, "a string"));
   if (!s7_is_character(caddr(args)))
     return(s7_wrong_type_arg_error(sc, "string-set!", 3, caddr(args), "a character"));
-#if 0
-  if (is_immutable(x))
-    {
-      fprintf(stderr, "immutable string: %s\n", string_value(x));
-    return(s7_wrong_type_arg_error(sc, "string-set!", 1, x, "a mutable string"));
-    }
-#endif
   if (!s7_is_integer(index))
     return(s7_wrong_type_arg_error(sc, "string-set! index,", 2, index, "an integer"));
   
@@ -7982,7 +7975,7 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
    */
   str = string_value(x);
   str[ind] = (char)s7_character(caddr(args));
-  return(x);
+  return(caddr(args));
 }
 
 
@@ -8300,13 +8293,6 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
 
   if (!s7_is_string(x))
     return(s7_wrong_type_arg_error(sc, "string-fill", 1, x, "a string"));
-#if 0
-  if (is_immutable(x))
-    {
-      fprintf(stderr, "fill immutable string %s\n", string_value(x));
-    return(s7_wrong_type_arg_error(sc, "string-fill!", 1, x, "a mutable string"));
-    }
-#endif
   if (!s7_is_character(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "string-fill filler,", 2, cadr(args), "a character"));
 
@@ -8316,8 +8302,9 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
    *         char *str; char c; str = string_value(car(args)); c = character(cadr(args));
    *         int i, len = 0; if (str) len = safe_strlen(str); if (len > 0) for (i = 0; i < len; i++) str[i] = c; 
    */
-  memset((void *)(string_value(x)), (int)character(cadr(args)), string_length(x)); /* presumably memset can fill 0 bytes if empty string */
-  return(x); /* or perhaps sc->UNSPECIFIED */
+  if (string_length(x) > 0)
+    memset((void *)(string_value(x)), (int)character(cadr(args)), string_length(x));
+  return(cadr(args)); 
 }
 
 
@@ -10766,16 +10753,6 @@ static s7_pointer g_set_car(s7_scheme *sc, s7_pointer args)
   
   if (!is_pair(car(args)))  
     return(s7_wrong_type_arg_error(sc, "set-car!", 1, car(args), "a pair"));
-#if 0
-  if (is_immutable(car(args))) 
-    
-{      fprintf(stderr, "immutable cons! %s\n", s7_object_to_c_string(sc, args));
-      /* as far as I can tell, this currently can't happen 
-       *    the only immutable objects (outside define-constant) are constant strings and vectors
-       */
-      return(s7_wrong_type_arg_error(sc, "set-car!", 1, car(args), "a mutable pair"));
-    }
-#endif
   
   caar(args) = cadr(args);
   /* return(args);
@@ -10793,13 +10770,6 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
   
   if (!is_pair(car(args))) 
     return(s7_wrong_type_arg_error(sc, "set-cdr!", 1, car(args), "a pair"));
-#if 0
-  if (is_immutable(car(args))) 
-    {
-      fprintf(stderr, "cdr: immutable cons! %s\n", s7_object_to_c_string(sc, args));
-    return(s7_wrong_type_arg_error(sc, "set-cdr!", 1, car(args), "a mutable pair"));
-    }
-#endif
   
   cdar(args) = cadr(args);
   return(sc->UNSPECIFIED); /* see above */
@@ -11564,15 +11534,9 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
 
   if (!s7_is_vector(x))
     return(s7_wrong_type_arg_error(sc, "vector-fill!", 1, x, "a vector"));
-#if 0
-  if (is_immutable(x))
-    {
-      fprintf(stderr, "fill immutable vector: %s\n", s7_object_to_c_string(sc, x));
-    return(s7_wrong_type_arg_error(sc, "vector-fill!", 1, x, "a mutable vector"));
-    }
-#endif
+
   s7_vector_fill(sc, x, cadr(args));
-  return(sc->UNSPECIFIED);
+  return(cadr(args));
 }
 
 
@@ -11809,13 +11773,6 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
   vec = car(args);
   if (!s7_is_vector(vec))
     return(s7_wrong_type_arg_error(sc, "vector-set!", 1, vec, "a vector"));
-#if 0
-  if (is_immutable(vec))
-    {
-            fprintf(stderr, "set immutable vector: %s\n", s7_object_to_c_string(sc, vec));
-    return(s7_wrong_type_arg_error(sc, "vector-set!", 1, vec, "a mutable vector"));
-    }
-#endif
   
 #if WITH_MULTIDIMENSIONAL_VECTORS
   if (vector_is_multidimensional(vec))
@@ -13933,7 +13890,7 @@ static s7_pointer list_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
 	    cdr(obj) = val;
 	}
     }
-  return(obj);
+  return(val);
 }
 
 
@@ -15176,7 +15133,6 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
   if (is_string_port(sc->input_port))
     {
       #define QUOTE_SIZE 40
-      #define MIN_QUOTE_SIZE 8
       int i, j, start = -1, end, slen;
       char *recent_input = NULL;
       
@@ -16218,7 +16174,6 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 	  s7_pointer x;
 	  sc->strbuf[i] = '\0';
 	  x = s7_make_string_with_length(sc, sc->strbuf, i);
-	  set_immutable(x);                  /* string constant can't be target of string-set! */
 	  return(x);
 	}
       else
@@ -17564,7 +17519,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "quote: too many arguments ~A", sc->code));
 
       sc->value = car(sc->code);
-      /* should this be immutable? (set-car! '(1 . 2) 3) */
       pop_stack(sc);
       goto START;
 
@@ -17772,8 +17726,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   It seems weird that we can reach into both the function body, and its closure:
 	   *   (let ((xx (let ((x '(1 2 3))) (lambda () x)))) (list-set! (xx) 1 32) (xx)) -> '(1 32 3)
 	   *
-	   * TODO: (also, all these set procs should return the value -- need to check this and add to s7test)
-	   *
 	   * (let* ((x '(1 2)) (y (list x)) (z (append x x))) (list-set! z 1 32) (list x y z))
 	   * ((1 2) ((1 2)) (1 32 1 2))
 	   * (let* ((x '(1 2)) (y (list x)) (z (append x x))) (list-set! z 1 32) (set-car! (car y) 32) (list x y z))
@@ -17786,11 +17738,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *
 	   * (catch #t (lambda () (+ 1 #\a)) (lambda args (let ((x (caadr args))) (string-set! x 1 #\X))))
 	   *    error in s7, not in Guile
-	   */
-
-	  /* TODO: if string-fill! "" is not an error, neither should be fill () or vector-fill! #()
-	   *         or if the set case complains, so should the fill case
-	   * TODO: is there any need for the T_IMMUTABLE flag? or any of the related procedures? [constants use it...]
+	   *
+	   * element-access would affect only the sets below -- string/list/vector/hash-table/object
+	   *   here we'd need a get func so we copy if the value is returned, etc
+	   *   but that will slow us down on all normal value accesses -- a problem for the refs and car -- forget it!
 	   */
 
 	  switch (type(sc->x))
@@ -18754,7 +18705,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_READ_VECTOR:
       sc->value = g_vector(sc, sc->value);
-      set_immutable(sc->value); /* a vector constant should be immutable? */
       pop_stack(sc);
       goto START;
 
