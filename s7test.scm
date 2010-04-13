@@ -563,6 +563,16 @@
        (format #t "(procedure? ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f))
 
+(test (letrec* ((p (lambda (x)
+		     (+ 1 (q (- x 1)))))
+		(q (lambda (y)
+		     (if (zero? y)
+			 0
+			 (+ 1 (p (- y 1))))))
+		(x (p 5))
+		(y x))
+	       y)
+      5)
 
 
 

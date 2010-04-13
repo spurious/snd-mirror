@@ -626,7 +626,6 @@ struct s7_scheme {
 #define is_immutable(p)               ((typeflag(p) & T_IMMUTABLE) != 0)
 #define set_immutable(p)              typeflag(p) |= (T_IMMUTABLE | T_DONT_COPY)
 /* immutable means the value can't be changed via set! or bind -- this is separate from the symbol access stuff
- *   a string or vector constant for example is considered "immutable"
  */
 
 #define T_ATOM                        (1 << (TYPE_BITS + 3))
@@ -10771,7 +10770,7 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* The rest are trivial: (define (set-cadr! a b) (set-car! (cdr a) b)) or (define-macro (set-cadr! a b) `(set-car! (cdr ,a) ,b)) 
+/* The rest are trivial: (define (set-cadr! a b) (set-car! (cdr a) b)) or (define-macro (set-cadr! a b) `(set-car! (cdr ,a) ,b)) -- use c?r
  */
 
 
@@ -12831,6 +12830,13 @@ static void free_object(s7_pointer a)
  *            either we have to restrict somehow allocs during the mark pass, or
  *            keep a list of these, and call their methods later (recursive GC possible?)
  *            and the free might never be called -- too many complications
+ *
+ * perhaps: a method list in the object struct,
+ *   catch 'wrong-type-arg-error in the evaluator,
+ *   if 1st arg is v_object, look for method?
+ *   this would not slow the rest of s7 down, but would let us handle anything 
+ *   but the error handler would need the caller's name, and all the original args unchanged
+ *   this would make map possible if a make method is on the list
  */
 
 
@@ -24118,6 +24124,15 @@ s7_scheme *s7_init(void)
                           (let ((local-vars (map (lambda (n) (gensym)) vars)))\n\
                             `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))");
 
+  s7_eval_c_string(sc, "(define-macro (letrec* bindings . body) \n\
+                          `(let (,@(map (lambda (var&init) \n\
+                                          (list (car var&init) #f)) \n\
+                                        bindings)) \n\
+                            ,@(map (lambda (var&init) \n\
+                                     (list 'set! (car var&init) (cadr var&init))) \n\
+                                    bindings) \n\
+                            ,@body))");
+
   /* s7_eval_c_string(sc, "(define (ratio? n) (and (rational? n) (not (integer? n))))"); */
 
 #if WITH_FORCE
@@ -24145,5 +24160,12 @@ s7_scheme *s7_init(void)
 }
 
 /* TODO: macroexpand and fully-expand are buggy
- * TODO: can symbol_accessed and immutable be combined now?
+ * PERHAPS: method lists for c_objects
+ * PERHAPS: example of scheme-side repl/break in cerror?
+ * one path to compilation: scheme->cl package
+ * function IO completed -- tie into scheme for tests?
+ * s7.html could use a good example for multiple values, threads, perhaps a walker? 
+ *  (end with useful stuff?)
+ * TODO: better help strings (pictures for cxr)
+ * maybe make the mmult ex take any (compatible) sizes
  */

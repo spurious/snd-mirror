@@ -224,7 +224,23 @@ radix is greater than 10.
 &gt; (string-&gt;number "1.2e1" 3); (* 3 (+ 1 2/3))
 5.0
 </pre>
-
+<p>Perhaps s7 should use "@"!
+</p>
+<hr>
+<p>It seems too bad to waste "rational?".  
+Perhaps we should just get rid of "exact?" and "inexact?", 
+leaving "rational?" and "not rational?" which seems much less ambiguous.
+Also "inexact->exact" is not useful in s7,
+and "exact->inexact", although useful, is a verbose and silly name 
+(it's not an error to pass it a number that is already inexact).
+By the way, "rational" in s7 does not mean "could possibly be
+expressed equally well as a ratio (floats are approximations!)", but "is actually expressed as a ratio (or an integer of course)";
+otherwise "rational?" is the same as "real?":
+</p>
+<pre>
+(not-s7-scheme)> (rational? (sqrt 2))
+#t
+</pre>
 </blockquote>
 </small>
 </dd>
@@ -1058,10 +1074,60 @@ point
 
 &gt; (let ((v (make-float-vector 3))) (set! (v 1) "hi") v)
 ;float-vector element must be real: "hi"
+</pre>
 
+<hr>
+<p>I seem to be using the same construct over and over; a begin to hold the names defined in the outer
+environment, a let to hold internal stuff, and set!s to give the names values.  It's a clumsy, but 
+simple way for multiple functions to share a closure.
+Maybe it rates a macro:
+</p>
+<pre>
+(define-macro (blet* names bindings . body)
+  `(begin
+     ,@(map (lambda (name)
+	      `(define ,name #f))
+	    names)
+     (let* ,bindings
+	,@body)))
+
+(blet* (make-adjustable-vector adjustable-vector? adjust-vector)
+
+       ((av-type (<em class=red>make-type</em> :name "adjustable-vector"
+			    :getter (lambda (obj index)
+				      ((car obj) index))
+			    :setter (lambda (obj index value)
+				      (set! ((car obj) index) value))
+			    :print (lambda (obj)
+				     (object-&gt;string (car obj)))))
+	(av? (car av-type))
+	(make-av (cadr av-type))
+	(av-ref (caddr av-type)))
+
+  (set! make-adjustable-vector (lambda args 
+				 (make-av (list (apply make-vector args)))))
+  (set! adjustable-vector? av?)
+  (set! adjust-vector (lambda* (obj new-length initial-element)
+		        (let* ((new-obj (make-adjustable-vector new-length initial-element))
+			       (copy-len (min new-length (length (car (av-ref obj))))))
+			  (do ((i 0 (+ i 1)))
+			      ((= i copy-len))
+			    (set! (new-obj i) (obj i)))
+			  (set! (car (av-ref obj)) new-obj)))))
+
+&gt; (define v (make-adjustable-vector 3 #f))
+v
+&gt; v
+#(#f #f #f)
+&gt; (set! (v 1) 32.0)
+32.0
+&gt; v
+#(#f 32.0 #f)
+&gt; (adjust-vector v 10 #f)
+#(#f 32.0 #f #f #f #f #f #f #f #f)
+</pre>
 </blockquote>
 </small>
-
 
 </dd>
 <br>
