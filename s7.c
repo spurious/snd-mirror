@@ -997,7 +997,7 @@ s7_pointer s7_eof_object(s7_scheme *sc)          /* returns #<eof> -- not equiva
 
 static s7_pointer g_not(s7_scheme *sc, s7_pointer args)
 {
-  #define H_not "(not obj) returns #t if obj is #f, otherwise #t"
+  #define H_not "(not obj) returns #t if obj is #f, otherwise #t: (not '()) -> #f"
   return(make_boolean(sc, is_false(sc, car(args))));
 }
 
@@ -1022,7 +1022,7 @@ s7_pointer s7_make_boolean(s7_scheme *sc, bool x)
 
 static s7_pointer g_is_boolean(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_boolean "(boolean? obj) returns #t if obj is #f or #t"
+  #define H_is_boolean "(boolean? obj) returns #t if obj is #f or #t: (boolean? '()) -> #f"
   return(s7_make_boolean(sc, s7_is_boolean(car(args))));
 }
 
@@ -1932,7 +1932,7 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
 
 static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args) 
 {
-  #define H_gensym "(gensym :optional prefix) returns a new (or at least an un-used) symbol"
+  #define H_gensym "(gensym :optional prefix) returns a new (currently unused) symbol"
   if (args != sc->NIL)
     {
       if (!s7_is_string(car(args)))
@@ -8386,6 +8386,8 @@ static s7_pointer g_string_for_each(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "string-for-each", 2, str, "a string"));
 
   len = string_length(str);
+  if (len == 0)
+    return(str);
   fargs = s7_cons(sc, sc->NIL, sc->NIL);
 
   if (cddr(args) != sc->NIL)
@@ -10776,7 +10778,7 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_caar(s7_scheme *sc, s7_pointer args)
 {
-  #define H_caar "(caar lst) returns (car (car lst))"
+  #define H_caar "(caar lst) returns (car (car lst)): (caar '((1 2))) -> 1"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "caar", 0, lst, "a pair"));
@@ -10788,7 +10790,7 @@ static s7_pointer g_caar(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_cadr(s7_scheme *sc, s7_pointer args)
 {
-  #define H_cadr "(cadr lst) returns (car (cdr lst))"
+  #define H_cadr "(cadr lst) returns (car (cdr lst)): (cadr '(1 2 3)) -> 2"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "cadr", 0, lst, "a pair"));
@@ -10800,7 +10802,7 @@ static s7_pointer g_cadr(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_cdar(s7_scheme *sc, s7_pointer args)
 {
-  #define H_cdar "(cdar lst) returns (cdr (car lst))"
+  #define H_cdar "(cdar lst) returns (cdr (car lst)): (cdar '((1 2 3))) -> '(2 3)"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "cdar", 0, lst, "a pair"));
@@ -10812,7 +10814,7 @@ static s7_pointer g_cdar(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_cddr(s7_scheme *sc, s7_pointer args)
 {
-  #define H_cddr "(cddr lst) returns (cdr (cdr lst))"
+  #define H_cddr "(cddr lst) returns (cdr (cdr lst)): (cddr '(1 2 3 4)) -> '(3 4)"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "cddr", 0, lst, "a pair"));
@@ -10824,7 +10826,7 @@ static s7_pointer g_cddr(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_caaar(s7_scheme *sc, s7_pointer args)
 {
-  #define H_caaar "(caaar lst) returns (car (car (car lst)))"
+  #define H_caaar "(caaar lst) returns (car (car (car lst))): (caaar '(((1 2)))) -> 1"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "caaar", 0, lst, "a pair"));
@@ -10837,7 +10839,7 @@ static s7_pointer g_caaar(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_caadr(s7_scheme *sc, s7_pointer args)
 {
-  #define H_caadr "(caadr lst) returns (car (car (cdr lst)))"
+  #define H_caadr "(caadr lst) returns (car (car (cdr lst))): (caadr '(1 (2 3))) -> 2"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "caadr", 0, lst, "a pair"));
@@ -10850,7 +10852,7 @@ static s7_pointer g_caadr(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_cadar(s7_scheme *sc, s7_pointer args)
 {
-  #define H_cadar "(cadar lst) returns (car (cdr (car lst)))"
+  #define H_cadar "(cadar lst) returns (car (cdr (car lst))): (cadar '((1 2 3))) -> 2"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "cadar", 0, lst, "a pair"));
@@ -10863,7 +10865,7 @@ static s7_pointer g_cadar(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_cdaar(s7_scheme *sc, s7_pointer args)
 {
-  #define H_cdaar "(cdaar lst) returns (cdr (car (car lst)))"
+  #define H_cdaar "(cdaar lst) returns (cdr (car (car lst))): (cdaar '(((1 2 3)))) -> '(2 3)"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "cdaar", 0, lst, "a pair"));
@@ -10876,7 +10878,7 @@ static s7_pointer g_cdaar(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_caddr(s7_scheme *sc, s7_pointer args)
 {
-  #define H_caddr "(caddr lst) returns (car (cdr (cdr lst)))"
+  #define H_caddr "(caddr lst) returns (car (cdr (cdr lst))): (caddr '(1 2 3 4)) -> 3"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "caddr", 0, lst, "a pair"));
@@ -10889,7 +10891,7 @@ static s7_pointer g_caddr(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_cdddr(s7_scheme *sc, s7_pointer args)
 {
-  #define H_cdddr "(cdddr lst) returns (cdr (cdr (cdr lst)))"
+  #define H_cdddr "(cdddr lst) returns (cdr (cdr (cdr lst))): (cdddr '(1 2 3 4)) -> '(4)"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "cdddr", 0, lst, "a pair"));
@@ -10902,7 +10904,7 @@ static s7_pointer g_cdddr(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_cdadr(s7_scheme *sc, s7_pointer args)
 {
-  #define H_cdadr "(cdadr lst) returns (cdr (car (cdr lst)))"
+  #define H_cdadr "(cdadr lst) returns (cdr (car (cdr lst))): (cdadr '(1 (2 3 4))) -> '(3 4)"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "cdadr", 0, lst, "a pair"));
@@ -10915,7 +10917,7 @@ static s7_pointer g_cdadr(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_cddar(s7_scheme *sc, s7_pointer args)
 {
-  #define H_cddar "(cddar lst) returns (cdr (cdr (car lst)))"
+  #define H_cddar "(cddar lst) returns (cdr (cdr (car lst))): (cddar '((1 2 3 4))) -> '(3 4)"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "cddar", 0, lst, "a pair"));
@@ -10928,7 +10930,7 @@ static s7_pointer g_cddar(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_caaaar(s7_scheme *sc, s7_pointer args)
 {
-  #define H_caaaar "(caaaar lst) returns (car (car (car (car lst))))"
+  #define H_caaaar "(caaaar lst) returns (car (car (car (car lst)))): (caaaar '((((1 2))))) -> 1"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "caaaar", 0, lst, "a pair"));
@@ -10942,7 +10944,7 @@ static s7_pointer g_caaaar(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_caaadr(s7_scheme *sc, s7_pointer args)
 {
-  #define H_caaadr "(caaadr lst) returns (car (car (car (cdr lst))))"
+  #define H_caaadr "(caaadr lst) returns (car (car (car (cdr lst)))): (caaadr '(1 ((2 3)))) -> 2"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "caaadr", 0, lst, "a pair"));
@@ -10956,7 +10958,7 @@ static s7_pointer g_caaadr(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_caadar(s7_scheme *sc, s7_pointer args)
 {
-  #define H_caadar "(caadar lst) returns (car (car (cdr (car lst))))"
+  #define H_caadar "(caadar lst) returns (car (car (cdr (car lst)))): (caadar '((1 (2 3)))) -> 2"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "caadar", 0, lst, "a pair"));
@@ -10970,7 +10972,7 @@ static s7_pointer g_caadar(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_cadaar(s7_scheme *sc, s7_pointer args)
 {
-  #define H_cadaar "(cadaar lst) returns (car (cdr (car (car lst))))"
+  #define H_cadaar "(cadaar lst) returns (car (cdr (car (car lst)))): (cadaar '(((1 2 3)))) -> 2"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "cadaar", 0, lst, "a pair"));
@@ -10984,7 +10986,7 @@ static s7_pointer g_cadaar(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_caaddr(s7_scheme *sc, s7_pointer args)
 {
-  #define H_caaddr "(caaddr lst) returns (car (car (cdr (cdr lst))))"
+  #define H_caaddr "(caaddr lst) returns (car (car (cdr (cdr lst)))): (caaddr '(1 2 (3 4))) -> 3"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "caaddr", 0, lst, "a pair"));
@@ -10998,7 +11000,7 @@ static s7_pointer g_caaddr(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_cadddr(s7_scheme *sc, s7_pointer args)
 {
-  #define H_cadddr "(cadddr lst) returns (car (cdr (cdr (cdr lst))))"
+  #define H_cadddr "(cadddr lst) returns (car (cdr (cdr (cdr lst)))): (cadddr '(1 2 3 4 5)) -> 4"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "cadddr", 0, lst, "a pair"));
@@ -11012,7 +11014,7 @@ static s7_pointer g_cadddr(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_cadadr(s7_scheme *sc, s7_pointer args)
 {
-  #define H_cadadr "(cadadr lst) returns (car (cdr (car (cdr lst))))"
+  #define H_cadadr "(cadadr lst) returns (car (cdr (car (cdr lst)))): (cadadr '(1 (2 3 4))) -> 3"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "cadadr", 0, lst, "a pair"));
@@ -11026,7 +11028,7 @@ static s7_pointer g_cadadr(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_caddar(s7_scheme *sc, s7_pointer args)
 {
-  #define H_caddar "(caddar lst) returns (car (cdr (cdr (car lst))))"
+  #define H_caddar "(caddar lst) returns (car (cdr (cdr (car lst)))): (caddar '((1 2 3 4))) -> 3"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "caddar", 0, lst, "a pair"));
@@ -11040,7 +11042,7 @@ static s7_pointer g_caddar(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_cdaaar(s7_scheme *sc, s7_pointer args)
 {
-  #define H_cdaaar "(cdaaar lst) returns (cdr (car (car (car lst))))"
+  #define H_cdaaar "(cdaaar lst) returns (cdr (car (car (car lst)))): (cdaaar '((((1 2 3))))) -> '(2 3)"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "cdaaar", 0, lst, "a pair"));
@@ -11054,7 +11056,7 @@ static s7_pointer g_cdaaar(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_cdaadr(s7_scheme *sc, s7_pointer args)
 {
-  #define H_cdaadr "(cdaadr lst) returns (cdr (car (car (cdr lst))))"
+  #define H_cdaadr "(cdaadr lst) returns (cdr (car (car (cdr lst)))): (cdaadr '(1 ((2 3 4)))) -> '(3 4)"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "cdaadr", 0, lst, "a pair"));
@@ -11068,7 +11070,7 @@ static s7_pointer g_cdaadr(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_cdadar(s7_scheme *sc, s7_pointer args)
 {
-  #define H_cdadar "(cdadar lst) returns (cdr (car (cdr (car lst))))"
+  #define H_cdadar "(cdadar lst) returns (cdr (car (cdr (car lst)))): (cdadar '((1 (2 3 4)))) -> '(3 4)"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "cdadar", 0, lst, "a pair"));
@@ -11082,7 +11084,7 @@ static s7_pointer g_cdadar(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_cddaar(s7_scheme *sc, s7_pointer args)
 {
-  #define H_cddaar "(cddaar lst) returns (cdr (cdr (car (car lst))))"
+  #define H_cddaar "(cddaar lst) returns (cdr (cdr (car (car lst)))): (cddaar '(((1 2 3 4)))) -> '(3 4)"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "cddaar", 0, lst, "a pair"));
@@ -11096,7 +11098,7 @@ static s7_pointer g_cddaar(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_cdaddr(s7_scheme *sc, s7_pointer args)
 {
-  #define H_cdaddr "(cdaddr lst) returns (cdr (car (cdr (cdr lst))))"
+  #define H_cdaddr "(cdaddr lst) returns (cdr (car (cdr (cdr lst)))): (cdaddr '(1 2 (3 4 5))) -> '(4 5)"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "cdaddr", 0, lst, "a pair"));
@@ -11110,7 +11112,7 @@ static s7_pointer g_cdaddr(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_cddddr(s7_scheme *sc, s7_pointer args)
 {
-  #define H_cddddr "(cddddr lst) returns (cdr (cdr (cdr (cdr lst))))"
+  #define H_cddddr "(cddddr lst) returns (cdr (cdr (cdr (cdr lst)))): (cddddr '(1 2 3 4 5)) -> '(5)"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "cddddr", 0, lst, "a pair"));
@@ -11124,7 +11126,7 @@ static s7_pointer g_cddddr(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_cddadr(s7_scheme *sc, s7_pointer args)
 {
-  #define H_cddadr "(cddadr lst) returns (cdr (cdr (car (cdr lst))))"
+  #define H_cddadr "(cddadr lst) returns (cdr (cdr (car (cdr lst)))): (cddadr '(1 (2 3 4 5))) -> '(4 5)"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "cddadr", 0, lst, "a pair"));
@@ -11138,7 +11140,7 @@ static s7_pointer g_cddadr(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_cdddar(s7_scheme *sc, s7_pointer args)
 {
-  #define H_cdddar "(cdddar lst) returns (cdr (cdr (cdr (car lst))))"
+  #define H_cdddar "(cdddar lst) returns (cdr (cdr (cdr (car lst)))): (cdddar '((1 2 3 4 5))) -> '(4 5)"
   s7_pointer lst = car(args);
 
   if (!is_pair(lst)) return(s7_wrong_type_arg_error(sc, "cdddar", 0, lst, "a pair"));
@@ -11961,6 +11963,9 @@ static s7_pointer g_vector_for_each(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "vector-for-each", 2, vect, "a vector"));
 
   len = vector_length(vect);
+  if (len == 0)
+    return(vect);
+
   fargs = s7_cons(sc, sc->NIL, sc->NIL);
 
   if (cddr(args) != sc->NIL)
@@ -12006,6 +12011,9 @@ static s7_pointer g_hash_table_for_each(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "hash-table-for-each", 2, vect, "a hash-table"));
 
   len = vector_length(vect);
+  if (len == 0)
+    return(sc->UNSPECIFIED);
+
   fargs = s7_cons(sc, sc->NIL, sc->NIL);
 
   if (cddr(args) != sc->NIL)
@@ -15529,9 +15537,8 @@ static s7_pointer g_list_for_each(s7_scheme *sc, s7_pointer args)
   s7_pointer lists, y;
   int i;
 
-  if ((!is_procedure(car(args))) ||
-      (is_thunk(sc, car(args))))
-    return(s7_wrong_type_arg_error(sc, "for-each", 1, car(args), "a thunk"));
+  if (!is_procedure(car(args)))
+    return(s7_wrong_type_arg_error(sc, "for-each", 1, car(args), "a procedure"));
 
   sc->y = args; /* gc protect */
   sc->code = car(args);
@@ -15629,6 +15636,8 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer fargs;
   fargs = cdr(args);
+
+  /* this assumes all args are the same type */
 
   if ((fargs == sc->NIL) || (s7_is_list(sc, car(fargs))))
     return(g_list_for_each(sc, args));
@@ -24120,17 +24129,17 @@ s7_scheme *s7_init(void)
   /* (multiple-value-bind (a b) (values 1 2) (+ a b)) */
   /*   named "receive" in srfi-8 which strikes me as perverse */
 
-  s7_eval_c_string(sc, "(define-macro (multiple-value-set! vars expr . body)\n\
-                          (let ((local-vars (map (lambda (n) (gensym)) vars)))\n\
+  s7_eval_c_string(sc, "(define-macro (multiple-value-set! vars expr . body)   \n\
+                          (let ((local-vars (map (lambda (n) (gensym)) vars))) \n\
                             `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))");
 
-  s7_eval_c_string(sc, "(define-macro (letrec* bindings . body) \n\
-                          `(let (,@(map (lambda (var&init) \n\
-                                          (list (car var&init) #f)) \n\
-                                        bindings)) \n\
-                            ,@(map (lambda (var&init) \n\
+  s7_eval_c_string(sc, "(define-macro (letrec* bindings . body)                   \n\
+                          `(let (,@(map (lambda (var&init)                        \n\
+                                          (list (car var&init) #f))               \n\
+                                        bindings))                                \n\
+                            ,@(map (lambda (var&init)                             \n\
                                      (list 'set! (car var&init) (cadr var&init))) \n\
-                                    bindings) \n\
+                                    bindings)                                     \n\
                             ,@body))");
 
   /* s7_eval_c_string(sc, "(define (ratio? n) (and (rational? n) (not (integer? n))))"); */
@@ -24166,6 +24175,25 @@ s7_scheme *s7_init(void)
  * function IO completed -- tie into scheme for tests?
  * s7.html could use a good example for multiple values, threads, perhaps a walker? 
  *  (end with useful stuff?)
- * TODO: better help strings (pictures for cxr)
- * maybe make the mmult ex take any (compatible) sizes
+ * TODO: better help strings
+ * TODO: make map/for-each actually generic (mixed type args)
+
+(define (pfor-each func . args)
+  (if (null? args)
+      (error 'wrong-number-of-args "pfor-each: not enough arguments")
+      (if (null? (cdr args))
+	  (apply for-each func args)
+	  ;; there's no way currently to tell whether all the types are the same
+	  (let ((len (length (car args))))
+	    (for-each
+	     (lambda (arg)
+	       (if (not (= len (length arg)))
+		   (error 'wrong-type-arg "pfor-each: all lengths have to be the same: ~A" args)))
+	     (cdr args))
+	    (do ((i 0 (+ i 1)))
+		((= i len))
+	      (apply func (map (lambda (arg) (arg i)) args)))))))
+
+;(pfor-each (lambda (a b) (format #t "~A ~A~%" a b)) (list 1 2) (vector 3 4))
+
  */

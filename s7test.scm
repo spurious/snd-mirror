@@ -42546,7 +42546,7 @@
 (test (if _no_var_ 1) 'error)
 
 (test (for-each (lambda (x) (display "for-each should not have called this"))) 'error)
-(test (for-each (lambda () 1) '()) 'error)
+;(test (for-each (lambda () 1) '()) 'error)
 (test (let ((ctr 0)) (for-each (lambda (x y z) (set! ctr (+ ctr x y z))) '(1) '(3) '()) ctr) 'error)
 (test (let ((ctr 0)) (for-each (lambda (x y z) (set! ctr (+ ctr x y z))) '(0 1) '(2 3) '(4 5 6)) ctr) 'error)
 (test (for-each (lambda (a b) (+ a b)) (list 1)) 'error)

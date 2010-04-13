@@ -230,15 +230,15 @@ radix is greater than 10.
 <p>It seems too bad to waste "rational?".  
 Perhaps we should just get rid of "exact?" and "inexact?", 
 leaving "rational?" and "not rational?" which seems much less ambiguous.
-Also "inexact->exact" is not useful in s7,
-and "exact->inexact", although useful, is a verbose and silly name 
+Also "inexact-&gt;exact" is not useful in s7,
+and "exact-&gt;inexact", although useful, is a verbose and silly name 
 (it's not an error to pass it a number that is already inexact).
 By the way, "rational" in s7 does not mean "could possibly be
 expressed equally well as a ratio (floats are approximations!)", but "is actually expressed as a ratio (or an integer of course)";
 otherwise "rational?" is the same as "real?":
 </p>
 <pre>
-(not-s7-scheme)> (rational? (sqrt 2))
+(not-s7-scheme)&gt; (rational? (sqrt 2))
 #t
 </pre>
 </blockquote>
@@ -1513,12 +1513,33 @@ In s7 (+ (values 1 2 3) 4) is 10.  Similarly,
 
   ;; let*-values is defined as a macro at the end of s7.c (commented out)
 </pre>
+
+<small>
+<blockquote>
+<hr>
+<p>Is there any real need for multiple-values (even in its CL form)? 
+I can't think of (and have never seen) an uncontrived use for it.
+Daniel Weinreb says the original intention was to avoid consing,
+which it does in s7, but that's a gnat's eyelash of an optimization.
+He goes on to say that he also could not think of any use for multiple-values.
+And what is: 
+</p>
+<pre>
+(+ (values (values 1 2) (values 4 5)))
+</pre>
+<p>In Guile, the + operator returns multiple-values (1 and 4) in this case, 
+whereas s7 returns 12.  But
+</p>
+<pre>(+ (values (values 1 2) (values 4 5)) 0)
+</pre>
+<p>
+in Guile just returns 1!  In Clisp, both cases return 1. 
+</p>
+</blockquote>
+</small>
 </dd>
 <br>
 
-<!-- should this work? (let ((var (values (values 1 2 3)))) (+ var 4)) 
-     currently you need: (let ((var (values (values 1 2 3)))) (+ (eval var) 4)) -> 10
--->
 
 
 <!-- -------------------------------------------------------------------------------- -->
