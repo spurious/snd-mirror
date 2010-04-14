@@ -836,6 +836,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 15-Apr:    multiple-values support is now on the WITH_MULTIPLE_VALUES switch (default 1).
  * 13-Apr:    removed hash-table|vector|string-for-each -- these are handled by for-each.
  *            also removed vector-map -- map is generic, but always returns a list.
  * 12-Apr:    removed immutable constant checks -- see s7.html.

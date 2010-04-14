@@ -209,6 +209,7 @@ Other math-related differences between s7 and r5rs:
 
 <small>
 <blockquote>
+<hr>
 The exponent itself is always in base 10 (this follows gmp usage).
 Since Scheme uses "@" for its useless polar notation, s7 doesn't use it for the exponent marker, but that
 means (string-&gt;number "1e1", 16) is ambiguous &mdash; is the "e" a digit or an exponent marker?
@@ -241,6 +242,7 @@ otherwise "rational?" is the same as "real?":
 (not-s7-scheme)&gt; (rational? (sqrt 2))
 #t
 </pre>
+<hr>
 </blockquote>
 </small>
 </dd>
@@ -389,6 +391,7 @@ f
 &gt; (((((f 1 2) 3) 4 5) 6) 7)
 5040
 </pre>
+<hr>
 </blockquote>
 </small>
 
@@ -625,6 +628,7 @@ use lambda:
 	(+ a b)))
     ,a))
 </pre>
+<hr>
 </blockquote>
 </small>
 
@@ -819,6 +823,7 @@ we block let-binding and add let-global:
 </pre>
 <p>which returns '(32 12).
 </p>
+<hr>
 </blockquote>
 </small>
 </dd>
@@ -1043,7 +1048,7 @@ point
 		   :setter (lambda (obj index value)
 			     (if (not (real? value))
 				 (error 'wrong-type-arg-error "float-vector element must be real: ~S" value))
-			     (vector-set! obj index (exact->inexact value)))
+			     (vector-set! obj index (exact-&gt;inexact value)))
 		   :length (lambda (obj)
 			     (vector-length obj))
 		   :name "float-vector"))
@@ -1055,7 +1060,7 @@ point
       (lambda* (len (initial-element 0.0))
         (if (not (real? initial-element))
 	    (error 'wrong-type-arg-error "make-float-vector initial element must be real: ~S" initial-element))
-	(make-fv (make-vector len (exact->inexact initial-element)))))
+	(make-fv (make-vector len (exact-&gt;inexact initial-element)))))
     
     (set! float-vector? fv?)
     
@@ -1070,7 +1075,7 @@ point
 	    (let ((arg (car lst)))
 	      (if (not (real? arg))
 		  (error 'wrong-type-arg-error "float-vector element must be real: ~S in ~S" arg args))
-	      (set! (v i) (exact->inexact arg)))))))))
+	      (set! (v i) (exact-&gt;inexact arg))))))))
 
 &gt; (let ((v (make-float-vector 3))) (set! (v 1) 32) v)
 #&lt;float-vector #(0.0 32.0 0.0)&gt;
@@ -1134,6 +1139,7 @@ v
 &gt; (adjust-vector v 10 #f)
 #(#f 32.0 #f #f #f #f #f #f #f #f)
 </pre>
+<hr>
 </blockquote>
 </small>
 
@@ -1212,10 +1218,10 @@ it is set:
       (lambda (lst val)
 	(set! ,body val)))))
 
-&gt ((c?r (a b (X))) '(1 2 (3 4) 5))
+&gt; ((c?r (a b (X))) '(1 2 (3 4) 5))
 3
 
-&gt (let ((lst (list 1 2 (list 3 4) 5))) 
+&gt; (let ((lst (list 1 2 (list 3 4) 5))) 
    (set! ((c?r (a b (X))) lst) 32)
    lst)
 (1 2 (32 4) 5)
@@ -1223,10 +1229,10 @@ it is set:
 &gt; (procedure-source (c?r (a b (X))))
 (lambda (lst) (car (car (cdr (cdr lst)))))
 
-&gt ((c?r (a b . X)) '(1 2 (3 4) 5))
+&gt; ((c?r (a b . X)) '(1 2 (3 4) 5))
 ((3 4) 5)
 
-&gt (let ((lst (list 1 2 (list 3 4) 5))) 
+&gt; (let ((lst (list 1 2 (list 3 4) 5))) 
    (set! ((c?r (a b . X)) lst) '(32))
    lst)
 (1 2 32)
@@ -1245,6 +1251,7 @@ it is set:
 &gt; (procedure-source (c?r (((((a (b (c (d (e X)))))))))))
 (lambda (lst) (car (cdr (car (cdr (car (cdr (car (cdr (car (cdr (car (car (car (car lst)))))))))))))))
 </pre>	
+<hr>
 </blockquote>
 </small>
 
@@ -1276,14 +1283,15 @@ are both applicable and settable.  I think the syntax is pretty:
 </pre>
 <p>You can use list-ref and friends, of course, but just try to read any serious vector arithmetic code
 when it is buried in vector-refs and vector-set!s! 
+</p>
 
 <small>
 <blockquote>
+<hr>
 <p>Well, maybe applicable strings look weird: <code>("hi" 1)</code> is #\i, but worse,
 so is <code>(cond (1 =&gt; "hi"))</code>!
 </p>
-
-</p>
+<hr>
 <p>This syntax makes it easy to write generic functions.
 For example, s7test.scm has implementations of Common Lisp's sequence functions.
 length, copy, fill!, map and for-each are generic in this sense (map always returns a list).
@@ -1294,6 +1302,7 @@ length, copy, fill!, map and for-each are generic in this sense (map always retu
 &gt; (length "hi")
 2
 </pre>
+<p>
 We can write an FFT procedure that accepts lists or vectors:
 </p>
 <pre>
@@ -1339,6 +1348,7 @@ We can write an FFT procedure that accepts lists or vectors:
         &gt; (cfft! (vector 0.0 1+i 0.0 0.0))
         #(1+1i -1+1i -1-1i 1-1i)
 </pre>
+<hr>
 </blockquote>
 </small>
 </dd>
@@ -1400,6 +1410,7 @@ sets that element.  vector-dimensions returns a list of the dimensions of a vect
 	    (set! sum (+ sum (* (A i k) (B k j)))))
 	  (set! (C i j) sum))))))
 </pre>
+<hr>
 </blockquote>
 </small>
 </dd>
@@ -1551,6 +1562,7 @@ in Guile just returns 1!  In Clisp, both cases return 1.  This causes total conf
 <pre>
 (apply + (map (lambda (n) (values n (+ n 1))) (list 1 2)))
 </pre>
+<hr>
 </blockquote>
 </small>
 </dd>
@@ -2130,6 +2142,9 @@ is for compatibility with Guile).  These are also useful for in-line comments:
 
 <hr>
 
+<p>(<b>make-list</b> length (initial-element #f)) returns a list of 'length' elements defaulting to 'initial-element'.
+</p>
+
 <p><b>reverse!</b> is an in-place version of the built-in function reverse.  That is, 
 it modifies the list passed to it in the process of reversing its contents.
 <b>list-set!</b> sets a member of a list.  <b>sort!</b> sorts a list or a vector using the
@@ -2162,8 +2177,22 @@ about stuff like <code>(let ((:hi 1)) :hi)</code>.
 <hr>
 
 <p><b>help</b> tries to find information about its argument.</p>
+<pre>
+&gt; (help 'caadar)
+"(caadar lst) returns (car (car (cdr (car lst)))): (caadar '((1 (2 3)))) -> 2"
+</pre>
+<p>If the initial expression in a function body is a string constant, it is assumed to be a documentation string:
+</p>
+<pre>
+(define (add1 a)
+  "(add1 a) adds 1 to its argument"
+  (+ a 1))
+
+&gt; (help add1)
+"(add1 a) adds 1 to its argument"
+</pre>
+<hr>
 <p><b>quit</b> exits s7.</p>
-<p>(<b>make-list</b> length (initial-element #f)) returns a list of 'length' elements defaulting to 'initial-element'.</p>
 <p><b>gc</b> calls the garbage collector.  (gc #f) turns off the GC, and (gc #t) turns it on.</p>
 
 <!--
@@ -2221,7 +2250,7 @@ into a function's body:
 &gt; (flet ((x () '(1 2 3))) (setf (nth 1 (x)) 32) (x))
 (1 32 3) ; Clisp
 
-&gt (let ((x (lambda () (list 1 2 3)))) (list-set! (x) 1 32) (x))
+&gt; (let ((x (lambda () (list 1 2 3)))) (list-set! (x) 1 32) (x))
 (1 2 3)
 </pre>
 <p>
@@ -2268,7 +2297,7 @@ returns a copy of the string.
 One simple way to ensure immutability is to use copy:
 </p>
 <pre>
-&gt (let ((x (lambda () (copy "hiho")))) (string-set! (x) 1 #\x) (x))
+&gt; (let ((x (lambda () (copy "hiho")))) (string-set! (x) 1 #\x) (x))
 "hiho"
 </pre>
 <hr>
@@ -2280,9 +2309,9 @@ One simple way to ensure immutability is to use copy:
 </p>
 
 <ul>
-<li>remove exact?, inexact?, exact->inexact, and inexact->exact (perhaps "float" as a replacement?).
+<li>remove exact?, inexact?, exact-&gt;inexact, and inexact-&gt;exact (perhaps "float" as a replacement?).
 <li>allow "@" as an exponent marker in any base.
-<li>make multiple-values optional, like delay.
+<li>perhaps remove cxxxxr (the 4-way list accessors) and replace them with c?r.
 </ul>
 </dd>
 <br>
@@ -2312,6 +2341,7 @@ compile-time flags:
     WITH_MULTIDIMENSIONAL_VECTORS  1 if you want multidimensional vectors (default is 1)
     WITH_PROFILING                 1 if you want profiling support (default is 0)
     WITH_FORCE                     1 if you want force and delay (default is 0)
+    WITH_MULTIPLE_VALUES           1 if you want multiple-values and its friends (default is 1)
     S7_DISABLE_DEPRECATED          1 if you want to make sure you're not using any deprecated s7 stuff (default is 0)
 </pre>
 <p>See the comment at the start of s7.c for more information about these switches.
