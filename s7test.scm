@@ -283,6 +283,7 @@
 	   ))))
 
 
+
 ;;; --------------------------------------------------------------------------------
 ;;; GENERIC STUFF
 ;;; --------------------------------------------------------------------------------
@@ -1569,7 +1570,7 @@
 
 (test (let ((str (make-string 4 #\x))
 	    (ctr 0))
-	(string-for-each
+	(for-each
 	 (lambda (c)
 	   (string-set! str ctr c)
 	   (set! ctr (+ ctr 1)))
@@ -1579,7 +1580,7 @@
 
 (test (let ((str (make-string 8 #\x))
 	    (ctr 0))
-	(string-for-each
+	(for-each
 	 (lambda (c1 c2)
 	   (string-set! str ctr c1)
 	   (string-set! str (+ ctr 1) c2)
@@ -2250,6 +2251,10 @@
 					; (list-ref '(1 2 . 3) 0) -- why is this acceptable?
 
 (test (let ((lst (list 1 2))) (set! (list-ref lst 1) 0) lst) (list 1 0))
+(test (((lambda () list)) 'a 'b 'c) '(a b c))
+(test (apply ((lambda () list)) (list 'a 'b 'c) (list 'c 'd 'e)) '((a b c) c d e))
+(test (((lambda () (values list))) 1 2 3) '(1 2 3))
+(test (apply list 'a 'b '(c)) '(a b c))
 
 (for-each
  (lambda (name op1 op2)
@@ -2684,26 +2689,26 @@
 
 
 
-(test (let ((sum 0)) (vector-for-each (lambda (n) (set! sum (+ sum n))) (vector 1 2 3)) sum) 6)
-(test (let ((sum 0)) (vector-for-each (lambda (n m) (set! sum (+ sum n (- m)))) (vector 1 2 3) (vector 4 5 6)) sum) -9)
-(test (let () (vector-for-each (lambda (n) (error "oops")) (vector)) #f) #f)
-(test (let ((sum 0)) (vector-for-each (lambda (n m p) (set! sum (+ sum n (- m) (* 2 p)))) (vector 1 2 3) (vector 4 5 6) (vector 6 7 8)) sum) 33)
-(test (let ((sum 0)) (vector-for-each (lambda (n) (vector-for-each (lambda (m) (set! sum (+ sum (* m n)))) (vector 1 2 3))) (vector 4 5 6)) sum) 90)
-(test (call/cc (lambda (return) (vector-for-each (lambda (n) (return "oops")) (vector 1 2 3)))) "oops")
-(test (call/cc (lambda (return) (vector-for-each (lambda (n) (if (even? n) (return n))) (vector 1 3 8 7 9 10)))) 8)
+(test (let ((sum 0)) (for-each (lambda (n) (set! sum (+ sum n))) (vector 1 2 3)) sum) 6)
+(test (let ((sum 0)) (for-each (lambda (n m) (set! sum (+ sum n (- m)))) (vector 1 2 3) (vector 4 5 6)) sum) -9)
+(test (let () (for-each (lambda (n) (error "oops")) (vector)) #f) #f)
+(test (let ((sum 0)) (for-each (lambda (n m p) (set! sum (+ sum n (- m) (* 2 p)))) (vector 1 2 3) (vector 4 5 6) (vector 6 7 8)) sum) 33)
+(test (let ((sum 0)) (for-each (lambda (n) (for-each (lambda (m) (set! sum (+ sum (* m n)))) (vector 1 2 3))) (vector 4 5 6)) sum) 90)
+(test (call/cc (lambda (return) (for-each (lambda (n) (return "oops")) (vector 1 2 3)))) "oops")
+(test (call/cc (lambda (return) (for-each (lambda (n) (if (even? n) (return n))) (vector 1 3 8 7 9 10)))) 8)
 
 
-(test (vector-map (lambda (n) (+ 1 n)) (vector 1 2 3)) '#(2 3 4))
-(test (vector-map (lambda (n m) (- n m)) (vector 1 2 3) (vector 4 5 6)) '#(-3 -3 -3))
-(test (vector-map (lambda (n m p) (+ n m p)) (vector 1 2 3) (vector 4 5 6) (vector 6 7 8)) '#(11 14 17))
-(test (vector-map (lambda (n) (vector-map (lambda (m) (* m n)) (vector 1 2 3))) (vector 4 5 6)) '#(#(4 8 12) #(5 10 15) #(6 12 18)))
-(test (call/cc (lambda (return) (vector-map (lambda (n) (return "oops")) (vector 1 2 3)))) "oops")
-(test (call/cc (lambda (return) (vector-map (lambda (n) (if (even? n) (return n))) (vector 1 3 8 7 9 10)))) 8)
+(test (map (lambda (n) (+ 1 n)) (vector 1 2 3)) '(2 3 4))
+(test (map (lambda (n m) (- n m)) (vector 1 2 3) (vector 4 5 6)) '(-3 -3 -3))
+(test (map (lambda (n m p) (+ n m p)) (vector 1 2 3) (vector 4 5 6) (vector 6 7 8)) '(11 14 17))
+(test (map (lambda (n) (map (lambda (m) (* m n)) (vector 1 2 3))) (vector 4 5 6)) '((4 8 12) (5 10 15) (6 12 18)))
+(test (call/cc (lambda (return) (map (lambda (n) (return "oops")) (vector 1 2 3)))) "oops")
+(test (call/cc (lambda (return) (map (lambda (n) (if (even? n) (return n))) (vector 1 3 8 7 9 10)))) 8)
 
 (test (let ((val 0) 
 	    (ht (make-hash-table))) 
 	(set! (ht "hi") 123) 
-	(hash-table-for-each 
+	(for-each 
 	 (lambda (alist) 
 	   (if (not (null? alist)) 
 	       (set! val (cdr (assoc "hi" alist)))))
@@ -2713,7 +2718,7 @@
 (test (let ((ht (make-hash-table)))
 	(set! (ht "hi") 123) 
 	(call/cc (lambda (return)
-		   (hash-table-for-each 
+		   (for-each 
 		    (lambda (alist) 
 		      (if (not (null? alist)) 
 			  ( return (cdr (assoc "hi" alist)))))
@@ -2760,7 +2765,7 @@
       (test (let ((v1 (make-vector '(3 2) 1))
 		  (v2 (make-vector '(3 2) 2))
 		  (sum 0))
-	      (vector-for-each (lambda (n m) (set! sum (+ sum n m))) v1 v2)
+	      (for-each (lambda (n m) (set! sum (+ sum n m))) v1 v2)
 	      sum)
 	    18)
       
@@ -3460,6 +3465,11 @@
  (list "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi" "hi"))
 
 
+;; now some mixed cases
+(test (let ((sum 0)) (for-each (lambda (n m) (set! sum (+ sum n m))) (list 1 2) (vector 3 4)) sum) 10)
+(test (let ((sum 0)) (for-each (lambda (n m) (set! sum (+ sum n m))) (vector 1 2) (list 3 4)) sum) 10)
+(test (let ((sum 0)) (for-each (lambda (n m p) (set! sum (+ sum n m))) (vector 1 2) (list 3 4) (vector 5 6)) sum) 10)
+(test (let ((sum 0)) (for-each (lambda (n m p) (if (char=? p #\x) (set! sum (+ sum n m)))) (vector 1 2 3) (list 3 4 5) "xax") sum) 12)
 
 
 
@@ -3484,8 +3494,11 @@
 (test (map (lambda (a b . args) (+ a b (apply + args))) '(0 1 2) '(3 4 5) '(6 7 8) '(9 10 11) '(12 13 14)) '(30 35 40))
 (test (map (lambda (a b . args) (+ a b (apply + args))) '(0 1 2) '(3 4 5)) '(3 5 7))
 (test (map + () ()) ())
-(test (map + (#(#() #()) 1)) #())
-(test (map + #(1) #(1) #(1)) #(3))
+(test (map + (#(#() #()) 1)) '())
+(test (map + #(1) #(1) #(1)) '(3))
+(test (map list '(a b c)) '((a) (b) (c)))
+(test (map (lambda (a b) (- a b)) (list 1 2) (vector 3 4)) '(-2 -2))
+(test (map (lambda (a b c) (if (char=? a #\a) (+ b c) (- b c))) "axa" (list 1 2 3) (vector 4 5 6)) '(5 -3 9))
 
 (test (let ((d 0))
 	(map (let ((a 0))
@@ -3543,8 +3556,13 @@
       (list 5 5 (list 4 3 2 1 0)))
 
 (test (map (lambda (a) a) (map (lambda (b) b) (list 1 2 3))) (list 1 2 3))
+(test (map cons '(a b c) '(() () ())) '((a) (b) (c)))
 
-
+(test (map list "hi") '((#\h) (#\i)))
+(test (map string "hi") '("h" "i"))
+(test (map vector "hi") '(#(#\h) #(#\i)))
+(test (map char-upcase "hi") '(#\H #\I))
+(test (map append #(#() #())) '(#() #()))
 
 
 ;;; --------- do --------
@@ -4457,7 +4475,7 @@
 (test (+ (with-input-from-string "(values 1 2 3)" (lambda () (read))) 2) 8)
 (test (< (values 1 2 3)) #t)
 
-(test (let ((sum 0)) (for-each (lambda (n m p) (set! sum (+ sum n m p))) (values (list 1 2 3) (list 4 5 6) (list 7 8 9)))) 45)
+(test (let ((sum 0)) (for-each (lambda (n m p) (set! sum (+ sum n m p))) (values (list 1 2 3) (list 4 5 6) (list 7 8 9))) sum) 45)
 (test (map (lambda (n m p) (+ n m p)) (values (list 1 2 3) (list 4 5 6) (list 7 8 9))) '(12 15 18))
 (test (string-append (values "123" "4" "5") "6" (values "78" "90")) "1234567890")
 (test (+ (dynamic-wind (lambda () #f) (lambda () (values 1 2 3)) (lambda () #f)) 4) 10)
@@ -7593,6 +7611,99 @@
 		(let ((val-2 (make2 val-1)))
 		  (ref1 val-2)))))
 	  'error)
+
+    (let ()
+      (define make-float-vector #f)
+      (define float-vector? #f)
+      (define float-vector #f)
+      
+      (let* ((fv-type (make-type 
+		       :getter (lambda (obj index)
+					;(format #t "obj: ~A, index: ~A ~A -> ~A~%" obj index (vector? obj) (vector-ref obj index))
+				 (vector-ref obj index))
+		       :setter (lambda (obj index value)
+				 (if (not (real? value))
+				     (error 'wrong-type-arg-error "float-vector element must be real: ~S" value))
+				 (vector-set! obj index (exact->inexact value)))
+		       :length (lambda (obj)
+				 (vector-length obj))
+		       :name "float-vector"))
+	     (fv? (car fv-type))
+	     (make-fv (cadr fv-type))
+	     (fv-ref (caddr fv-type)))
+	
+	(set! make-float-vector 
+	      (lambda* (len (initial-element 0.0))
+		       (if (not (real? initial-element))
+			   (error 'wrong-type-arg-error "make-float-vector initial element must be real: ~S" initial-element))
+		       (make-fv (make-vector len (exact->inexact initial-element)))))
+	
+	(set! float-vector? fv?)
+	
+	(set! float-vector
+	      (lambda args
+		(let* ((len (length args))
+		       (fv (make-float-vector len))
+		       (v (fv-ref fv)))
+		  (do ((lst args (cdr lst))
+		       (i 0 (+ i 1)))
+		      ((null? lst) fv)
+		    (let ((arg (car lst)))
+		      (if (not (real? arg))
+			  (error 'wrong-type-arg-error "float-vector element must be real: ~S in ~S" arg args))
+		      (set! (v i) (exact->inexact arg))))))))
+      
+      (let ((v (make-float-vector 3 0.0)))
+	(test (length v) 3)
+	(set! (v 1) 32.0)
+	(test (v 0) 0.0)
+	(test (v 1) 32.0)
+	(test (map + (list 1 2 3) (float-vector 1 2 3)) '(2.0 4.0 6.0))
+	))
+
+    (let ()
+      (define-macro (blet* names bindings . body)
+	`(begin
+	   ,@(map (lambda (name)
+		    `(define ,name #f))
+		  names)
+	   (let* ,bindings
+	     ,@body)))
+      
+      (blet* (make-adjustable-vector adjustable-vector? adjust-vector)
+	     
+	     ((av-type (make-type :name "adjustable-vector"
+				  :getter (lambda (obj index)
+					    ((car obj) index))
+				  :setter (lambda (obj index value)
+					    (set! ((car obj) index) value))
+				  :length (lambda (obj)
+					    (vector-length (car obj)))
+				  :print (lambda (obj)
+					   (object->string (car obj)))))
+	      (av? (car av-type))
+	      (make-av (cadr av-type))
+	      (av-ref (caddr av-type)))
+	     
+	     (set! make-adjustable-vector (lambda args 
+					    (make-av (list (apply make-vector args)))))
+	     (set! adjustable-vector? av?)
+	     (set! adjust-vector (lambda* (obj new-length initial-element)
+					  (let* ((new-vector (make-vector new-length initial-element))
+						 (copy-len (min new-length (length obj))))
+					    (do ((i 0 (+ i 1)))
+						((= i copy-len))
+					      (set! (new-vector i) (obj i)))
+					    (set! (car (av-ref obj)) new-vector)))))
+      
+      (let ((v (make-adjustable-vector 3 #f)))
+	(test (length v) 3)
+	(test (v 0) #f)
+	(set! (v 1) 32.0)
+	(adjust-vector v 10 #f)
+	(test (length v) 10)
+	(test (v 1) 32.0)))
+
 
     (define (notify-if-set var notifier)
       (set! (symbol-access var) (list #f notifier #f)))
@@ -15783,7 +15894,7 @@
 		       (cond ((null? tail)
 			      (if (pair? not-found)
 				  (car not-found)
-				  (error "GETL couldn't find" name)))
+				  (error "GETL couldn't find ~A" name)))
 			     ((eq? (car tail) name) (cadr tail))
 			     (else (scan (cddr tail)))))))
 	(scan initargs))))
@@ -16240,7 +16351,7 @@
 	     (entry (assq slot-name getters-n-setters)))
 	(if entry
 	    (cdr entry)
-	    (error "No slot" slot-name "in instances of" class)))))
+	    (error "No slot ~A in instances of ~A" slot-name class)))))
 					;
 					; Given that the early version of MAKE is allowed to call accessors on
 					; class metaobjects, the definitions for them come here, before the
@@ -17105,7 +17216,7 @@
 		     #o000 #o126 #o042 #o000 #o000 #o000 #o001 #o000 #o000 #o000 #o000 #o000 #o001)))
   (with-output-to-file "tmp1.r5rs"
     (lambda ()
-      (vector-for-each
+      (for-each
        (lambda (b)
 	 (write-byte b))
        bytes)))
@@ -17509,7 +17620,8 @@
 
 ;; generic for-each/map
 (test (let ((sum 0)) (for-each (lambda (n) (set! sum (+ sum n))) (vector 1 2 3)) sum) 6)      
-(test (map (lambda (n) (+ n 1)) (vector 1 2 3)) '#(2 3 4))
+(test (map (lambda (n) (+ n 1)) (vector 1 2 3)) '(2 3 4))
+(test (map (lambda (a b) (/ a b)) (list 1 2 3) (list 4 5 6)) '(1/4 2/5 1/2))
 
 ;; try some applicable stuff
 (test (let ((lst (list 1 2 3)))
@@ -42586,7 +42698,7 @@
 
 
 (test (map (lambda (x) (display "map should not have called this"))) 'error)
-(test (map (lambda () 1) '()) 'error)
+;(test (map (lambda () 1) '()) 'error)
 (test (let ((ctr 0)) (map (lambda (x y z) (set! ctr (+ ctr x y z)) ctr) '(1) '(3) '())) 'error)
 (test (let ((ctr 0)) (map (lambda (x y z) (set! ctr (+ ctr x y z)) ctr) '(0 1) '(2 3) '(4 5 6))) 'error)
 
@@ -42620,7 +42732,7 @@
 (for-each
  (lambda (arg)
    (test (map (lambda (a) a) arg) 'error))
- (list "hi" -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #f #t '(1 . 2)))
+ (list -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #f #t '(1 . 2)))
 
 					;(test (do '() ('() '())) 'error) ; ?? -- isn't this the same as before?
 (test (do '() (#t 1)) 'error)

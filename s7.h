@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.53"
-#define S7_DATE "12-Apr-10"
+#define S7_VERSION "1.54"
+#define S7_DATE "13-Apr-10"
 
 
 typedef long long int s7_Int;
@@ -387,7 +387,7 @@ s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, const char *name);
 s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, s7_pointer value);  
                                                                             /* (hash-table-set! table name value) */
   /* a hash-table is a vector of alists '((symbol value)), so to iterate over a hash-table
-   *   use hash-table-for-each which calls its function with each of these alists.  An entry defaults to nil.
+   *   use for-each which calls its function with each of these alists.  An entry defaults to nil.
    */
   /* hash-tables are applicable:
       (let ((hash (make-hash-table)))
@@ -836,6 +836,8 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 13-Apr:    removed hash-table|vector|string-for-each -- these are handled by for-each.
+ *            also removed vector-map -- map is generic, but always returns a list.
  * 12-Apr:    removed immutable constant checks -- see s7.html.
  * 7-Apr:     *unbound-variable-hook*.
  *            augment-environment and s7_augment_environment.

@@ -1044,6 +1044,8 @@ point
 			     (if (not (real? value))
 				 (error 'wrong-type-arg-error "float-vector element must be real: ~S" value))
 			     (vector-set! obj index (exact->inexact value)))
+		   :length (lambda (obj)
+			     (vector-length obj))
 		   :name "float-vector"))
 	 (fv? (car fv-type))
 	 (make-fv (cadr fv-type))
@@ -1061,9 +1063,10 @@ point
       (lambda args
 	(let* ((len (length args))
 	       (fv (make-float-vector len))
-	       (v (ref fv)))
+	       (v (fv-ref fv)))
 	  (do ((lst args (cdr lst)))
-	      ((null? lst) v)
+	       (i 0 (+ i 1)))
+	      ((null? lst) fv)
 	    (let ((arg (car lst)))
 	      (if (not (real? arg))
 		  (error 'wrong-type-arg-error "float-vector element must be real: ~S in ~S" arg args))
@@ -1074,6 +1077,9 @@ point
 
 &gt; (let ((v (make-float-vector 3))) (set! (v 1) "hi") v)
 ;float-vector element must be real: "hi"
+
+&gt; (map + (list 1 2 3) (float-vector 1 2 3)) ; we have a getter and length, so map and for-each will work
+(2.0 4.0 6.0)
 </pre>
 
 <hr>
@@ -1098,6 +1104,8 @@ Maybe it rates a macro:
 				      ((car obj) index))
 			    :setter (lambda (obj index value)
 				      (set! ((car obj) index) value))
+		            :length (lambda (obj)
+			              (vector-length (car obj)))
 			    :print (lambda (obj)
 				     (object-&gt;string (car obj)))))
 	(av? (car av-type))
@@ -1108,12 +1116,12 @@ Maybe it rates a macro:
 				 (make-av (list (apply make-vector args)))))
   (set! adjustable-vector? av?)
   (set! adjust-vector (lambda* (obj new-length initial-element)
-		        (let* ((new-obj (make-adjustable-vector new-length initial-element))
-			       (copy-len (min new-length (length (car (av-ref obj))))))
+		        (let* ((new-vector (make-vector new-length initial-element))
+			       (copy-len (min new-length (length obj))))
 			  (do ((i 0 (+ i 1)))
 			      ((= i copy-len))
-			    (set! (new-obj i) (obj i)))
-			  (set! (car (av-ref obj)) new-obj)))))
+			    (set! (new-vector i) (obj i)))
+			  (set! (car (av-ref obj)) new-vector)))))
 
 &gt; (define v (make-adjustable-vector 3 #f))
 v
@@ -1278,7 +1286,14 @@ so is <code>(cond (1 =&gt; "hi"))</code>!
 </p>
 <p>This syntax makes it easy to write generic functions.
 For example, s7test.scm has implementations of Common Lisp's sequence functions.
-length, copy, fill!, map and for-each are generic in this sense.
+length, copy, fill!, map and for-each are generic in this sense (map always returns a list).
+</p>
+<pre>
+&gt; (map (lambda (a b) (- a b)) (list 1 2) (vector 3 4))
+(5 -3 9)
+&gt; (length "hi")
+2
+</pre>
 We can write an FFT procedure that accepts lists or vectors:
 </p>
 <pre>
@@ -1518,10 +1533,8 @@ In s7 (+ (values 1 2 3) 4) is 10.  Similarly,
 <blockquote>
 <hr>
 <p>Is there any real need for multiple-values (even in its CL form)? 
-I can't think of (and have never seen) an uncontrived use for it.
 Daniel Weinreb says the original intention was to avoid consing,
 which it does in s7, but that's a gnat's eyelash of an optimization.
-He goes on to say that he also could not think of any use for multiple-values.
 And what is: 
 </p>
 <pre>
@@ -1533,8 +1546,11 @@ whereas s7 returns 12.  But
 <pre>(+ (values (values 1 2) (values 4 5)) 0)
 </pre>
 <p>
-in Guile just returns 1!  In Clisp, both cases return 1. 
+in Guile just returns 1!  In Clisp, both cases return 1.  This causes total confusion:
 </p>
+<pre>
+(apply + (map (lambda (n) (values n (+ n 1))) (list 1 2)))
+</pre>
 </blockquote>
 </small>
 </dd>
@@ -2172,7 +2188,6 @@ bind it to something else, which is asking for confusion).
 <li>no scheme-report-environment, null-environment, or interaction-environment (= current-environment?).
 <li>no transcript-on or transcript-off.
 <li>__func__ is the name (or name and location) of the function currently being defined or called (as in C).
-<li>vector-for-each, vector-map, hash-table-for-each, string-for-each
 <li>syntactic names can be values: <code>(define progn begin) (progn (display "progn!") (+ 3 4))</code> or <code>(define function lambda)</code>, etc
 <li>begin returns the value of the last form (like progn); it can contain both definitions and other statements.
 </ul>
@@ -2256,9 +2271,19 @@ One simple way to ensure immutability is to use copy:
 &gt (let ((x (lambda () (copy "hiho")))) (string-set! (x) 1 #\x) (x))
 "hiho"
 </pre>
+<hr>
 </blockquote>
 </small>
 
+
+<p>So, to gather the various threads, here are some further changes I'd like:
+</p>
+
+<ul>
+<li>remove exact?, inexact?, exact->inexact, and inexact->exact (perhaps "float" as a replacement?).
+<li>allow "@" as an exponent marker in any base.
+<li>make multiple-values optional, like delay.
+</ul>
 </dd>
 <br>
 <br>
