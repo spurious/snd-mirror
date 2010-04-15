@@ -853,7 +853,7 @@ echo ' '
 echo ' '
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                g++ --with-static-xm --with-hobbit --without-gsl --with-alsa '
+echo ' -----                g++ --with-static-xm --without-gsl --with-alsa '
 echo ' -------------------------------------------------------------------------------- '
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet CC=g++ --with-static-xm --without-gsl --with-alsa
 make

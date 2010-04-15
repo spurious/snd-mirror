@@ -2425,7 +2425,7 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
  *        ;can't bind an immutable object: cvar
  */
 
-
+#if 0
 static s7_pointer find_value_in_environment(s7_scheme *sc, s7_pointer val)
 { 
   s7_pointer x, y, vec; 
@@ -2447,6 +2447,7 @@ static s7_pointer find_value_in_environment(s7_scheme *sc, s7_pointer val)
     }
   return(sc->F); 
 } 
+#endif
 
 
 
@@ -12644,17 +12645,58 @@ static void free_object(s7_pointer a)
     (*(object_types[tag].free))(c_object_value(a));
 }
 
-/* perhaps: a free method called just before GC.
- *            either we have to restrict somehow allocs during the mark pass, or
- *            keep a list of these, and call their methods later (recursive GC possible?)
- *            and the free might never be called -- too many complications
- *
- * perhaps: a method list in the object struct,
+/* OBJECTS...
+ * perhaps: a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)
  *   catch 'wrong-type-arg-error in the evaluator,
  *   if 1st arg is v_object, look for method?
  *   this would not slow the rest of s7 down, but would let us handle anything 
- *   but the error handler would need the caller's name, and all the original args unchanged
+ *   but the error handler would need the caller's name, and all the original args unchanged [see below]
  *   this would make map possible if a make method is on the list
+ *
+ * So a standard object would have its own type, notion of fields and so on (like define-record in s7.html),
+ *   and the basic things provided directly by make-type, but also a methods function that is expected to
+ *   return an alist of (name . function).  Inheritance would mean prepending the current record's
+ *   method list on that of its ancestors.  MOP stuff could be had by wrapping inherited functions and so on.
+ * This way leaves the actual object structure up to the object definer.  It is very similar to the
+ *   namespace business in s7.html, and requires no new names or functions.  For speed, we could
+ *   provide immediate dispatch for built-ins, and use macros in Scheme to do the alist search just once.
+ *   It's also very close to defgenerator.  Call-next-method would just continue down the alist from 
+ *   (cdr current-method) indefinitely.  On C side, we could make our dispatch table available and expandable.
+ *   Then if C-side func sees a type it doesn't handle explicitly, it knows (without assoc) what to call.
+ * This also makes it possible to specialize down to the level of the object (it prepends its own methods).
+ * A "class" in this case is define-record (for the local fields and type) + a list of methods and a methods accessor.
+ * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
+ * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
+ *
+ * On the scheme side, if (f o ...), syntactic sugar for ((assoc f (methods o)) o ...) where
+ *   we can (I think) predigest this.
+ *
+ *  (define-macro (defgeneric f)
+ *    `(define-macro (,f obj . args)
+ *       ((or (assoc ',f (methods obj))
+ *            (error ...))
+ *        obj ,@args)))
+ *
+ *   if (...)
+ *     return(s7_wrong_type_arg_error(sc, "procedure-documentation", 0, x, "a procedure"))
+ *
+ *    we know sc->args is the arglist [sc->code is the func]
+ *    x is our object and it's at nth arg position, in func "pr..."
+ *    so we have all we need!
+ *  if x is object, assoc f (methods x) -> func = call it else error
+ *
+ *  the method itself exists only in the alists
+ *
+ * in s7, a procedure is (cons evallable-list environment) (with locals = args)
+ *        an object      (cons locals-list    environment)
+ *        record is just the locals-list + globally defined accessors
+ *        a namespace (module) is just the environment
+ *        a thread is a function + environment + its own evaluator (stack etc)
+ *        does it make sense: locals + env + stack? -- any method invocation takes place on its private stack?
+ *          so continuations would be into its own world, each object would be completely independent,
+ *          placing all new functions and so on in its own env
+ *        (this can be done via s7 clones and (eval ... env) etc)
+ * list environment stack -- is there anything else?
  */
 
 
@@ -13064,6 +13106,12 @@ In each case, the argument is the value of the object, not the object itself."
   return(make_list_3(sc, x, y, z));
 }
 
+/* here it would be neat if we allowed any keywords, and those not handled explicitly could
+ *    be added to the methods list under the key-word->symbol name.  define* without the need
+ *    to state in advance what keys -- undeclared key would be bound in the func env under its
+ *    name and value -- define+?  -- the extra args would be in an alist accessible under
+ *    the rest arg name?  
+ */
 
 
 
@@ -15448,7 +15496,7 @@ static void next_map(s7_scheme *sc)
 {
   /* func = sc->code, results so far = caddr(sc->args), counter = car(sc->args), len = cadr(sc->args), object(s) = cdddr(sc->args) */
   s7_pointer y, z, vargs, results;
-  int loc, zloc;
+  int loc, zloc = -1;
 
   z = sc->NIL;
   vargs = cdddr(sc->args);
@@ -15489,6 +15537,10 @@ static void next_map(s7_scheme *sc)
 
 	case T_STRING:
 	  x = s7_make_character(sc, string_value(car(y))[loc]);
+	  break;
+
+	default: /* make the compiler happy */
+	  x = sc->F;
 	  break;
 	}
       
@@ -15614,6 +15666,13 @@ s7_pointer s7_values(s7_scheme *sc, int num_values, ...)
   va_end(ap);
 
   return(g_values(sc, s7_reverse(sc, args)));
+}
+
+#else
+
+s7_pointer s7_values(s7_scheme *sc, int num_values, ...)
+{
+  return(sc->F);
 }
 
 #endif
@@ -18397,8 +18456,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 }
 
 
-/* -------------------------------- threads -------------------------------- */
-
 #if HAVE_PTHREADS
 
 static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
@@ -18406,7 +18463,7 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   int i;
   s7_scheme *new_sc;
 
-  /* make_thread which calls us has grabbed alloc_lock for the duration */
+  /* whoever called us has presumably grabbed alloc_lock for the duration */
 
   new_sc = (s7_scheme *)malloc(sizeof(s7_scheme));
   memcpy((void *)new_sc, (void *)sc, sizeof(s7_scheme));
@@ -18491,6 +18548,18 @@ static void mark_s7(s7_scheme *sc)
 #endif
 }
 
+
+/* to make these accessible in scheme, we need c_object to hold them
+ *   the thred object does that already -- we'd just need to make another
+ *   path into it that does not assume pthreads.
+ */
+#endif
+
+
+
+/* -------------------------------- threads -------------------------------- */
+
+#if HAVE_PTHREADS
 
 static int thread_tag = 0;
 
@@ -23900,11 +23969,9 @@ s7_scheme *s7_init(void)
 /* TODO: macroexpand and fully-expand are buggy
  * PERHAPS: method lists for c_objects
  * PERHAPS: example of scheme-side repl/break in cerror?
- * PERHAPS: one path to compilation: scheme->cl package
  * TODO: function IO completed -- tie into scheme for tests?
  * SOMEDAY: s7.html could use a good example for multiple values, threads, perhaps a walker? 
- *  (end with useful stuff?)
  * TODO: better help strings
- * TODO: the changes mentioned in s7.html...
  * TODO: how to connect from C to scheme-side make-type (defgenerator)
+ * TODO: s7.html example of error handling in C
  */
