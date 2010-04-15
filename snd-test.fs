@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Sat Feb 06 20:01:40 CET 2010
+\ Changed: Thu Apr 15 16:15:47 CEST 2010
 
 \ Commentary:
 \
@@ -2341,7 +2341,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   #t set-with-background-processes drop
   reset-all-hooks
   nil nil { prc tag }
-  #( <'> amp-control <'> bomb <'> apply-controls <'> close-sound <'> comment <'> contrast-control
+  #( <'> amp-control <'> apply-controls <'> close-sound <'> comment <'> contrast-control
      <'> amp-control-bounds <'> speed-control-bounds <'> expand-control-bounds
      <'> contrast-control-bounds <'> reverb-control-length-bounds <'> reverb-control-scale-bounds
      <'> contrast-control-amp <'> contrast-control? <'> data-format <'> data-location
@@ -2918,7 +2918,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   :coeffs 4 0 make-vct :ycoeffs 4 0 make-vct <'> make-iir-filter 'mus-error check-error-tag
   :coeffs 4 0 make-vct :xcoeffs 4 0 make-vct <'> make-fir-filter 'mus-error check-error-tag
   :size 123456789            <'> make-table-lookup      'out-of-range     check-error-tag
-  :srate -0.5                <'> make-src               'out-of-range     check-error-tag
   :ramp -0.5                 <'> make-granulate         'out-of-range     check-error-tag
   :ramp 1.5                  <'> make-granulate         'out-of-range     check-error-tag
   :expansion 32000.0         <'> make-granulate         'mus-error        check-error-tag

@@ -3,7 +3,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Oct 11 18:23:12 CEST 2005
-\ Changed: Sat Feb 06 18:13:53 CET 2010
+\ Changed: Thu Apr 15 15:58:17 CEST 2010
 
 \ Commentary:
 \
@@ -217,9 +217,11 @@ previous
   12.0 f/ 2.0 swap f** src-mixes
 ;
 
-: color-mixes     ( mix-list col -- )     { col } each { m } m col set-mix-color drop end-each ;
-: set-mixes-tag-y ( mix-list new-y -- ) { new-y } each { m } m new-y set-mix-tag-y drop end-each ;
-: mixes-maxamp    ( mix-list -- mx )     0.0 swap each { m } m mix-maxamp fmax end-each ;
+'snd-nogui provided? [unless]
+  : color-mixes     ( mix-list col -- )     { col } each { m } m col set-mix-color drop end-each ;
+  : set-mixes-tag-y ( mix-list new-y -- ) { new-y } each { m } m new-y set-mix-tag-y drop end-each ;
+  : mixes-maxamp    ( mix-list -- mx )     0.0 swap each { m } m mix-maxamp fmax end-each ;
+[then]
 
 hide
 : scale-tempo-cb { mix-list tempo-scl first-beg -- prc; self -- }

@@ -392,6 +392,37 @@ f
 5040
 </pre>
 <hr>
+
+<p>To try to catch what I believe are usually mistakes, I added two
+error checks.  One is triggered if you set the same parameter twice
+in the same call, and the other if an unknown keyword is encountered
+in the key position.  These problems arise in a case such as
+</p>
+<pre>
+(define* (f (a 1) (b 2)) (list a b))
+</pre>
+<p>You could do any of the following by accident:
+</p>
+<pre>
+(f 1 :a 2)  ; what is a?
+(f :b 1 2)  ; what is b?
+(f :c 3)    ; did you really want a to be :c and b to be 3?
+</pre>
+<p>In the last case, to pass a keyword deliberately, include the
+argument keyword:
+</p>
+<pre>
+(f :a :c)
+</pre>
+
+<!--
+(define* (f a b . c) (list a b c))
+(f 1 2 :d 4)
+(1 2 (:d 4))
+(f :d 1)
+;f: unknown key: (:d 1) in (:d 1)
+-->
+
 </blockquote>
 </small>
 

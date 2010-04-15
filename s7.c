@@ -2246,17 +2246,24 @@ s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
 }
 
 
-static bool lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
+typedef enum {LSTAR_NO_SUCH_KEY, LSTAR_OK, LSTAR_ALREADY_SET, LSTAR_TOO_MANY_ARGS} lstar_err_t;
+
+static lstar_err_t lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
 {
   s7_pointer x;
+
   for (x = car(sc->envir) /* presumably the arglist */; is_pair(x); x = cdr(x))
     if (caar(x) == sym)
       {
-	/* car(x) is our binding (symbol value) */
+	/* car(x) is our binding (symbol . value) */
+	if (is_not_local(car(x)))
+	  set_local(car(x));
+	else return(LSTAR_ALREADY_SET);
 	cdar(x) = val;
-	return(true);
+	return(LSTAR_OK);
       }
-  return(false);
+
+  return(LSTAR_NO_SUCH_KEY);
 }
 
 
@@ -12547,6 +12554,32 @@ static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer closure_name(s7_scheme *sc, s7_pointer closure)
+{
+  s7_pointer x;
+
+  x = find_local_symbol(sc, closure_environment(closure), sc->__FUNC__);  /* returns nil if no __func__ */
+  if (is_pair(x))
+    {
+      x = symbol_value(x);
+      if (s7_is_symbol(x))
+	return(x);
+      if ((is_pair(x)) &&
+	  (s7_is_symbol(car(x))))
+	return(car(x));
+    }
+
+  if (is_pair(sc->cur_code))
+    return(sc->cur_code);
+
+  return(caar(closure)); /* desperation -- this is the parameter list */
+}
+
+/* (define* (hi (a 1) (b 2)) a) (hi :b 1 2) */
+/* (let ((x (lambda* ((a 1) (b 2)) a))) (x :b 1 2)) */
+
+
+
 /* -------------------------------- new types -------------------------------- */
 
 typedef struct {
@@ -12689,8 +12722,8 @@ static void free_object(s7_pointer a)
  *
  * in s7, a procedure is (cons evallable-list environment) (with locals = args)
  *        an object      (cons locals-list    environment)
- *        record is just the locals-list + globally defined accessors
- *        a namespace (module) is just the environment
+ *        record is just the locals-list + globally defined accessors (an exploded alist essentially)
+ *        a namespace (module) is just the environment (an alist)
  *        a thread is a function + environment + its own evaluator (stack etc)
  *        does it make sense: locals + env + stack? -- any method invocation takes place on its private stack?
  *          so continuations would be into its own world, each object would be completely independent,
@@ -16283,7 +16316,7 @@ static void assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
 }
 
 
-static bool prepare_closure_star(s7_scheme *sc)
+static lstar_err_t prepare_closure_star(s7_scheme *sc)
 {
   /* sc->code is a closure: ((args body) envir)
    * (define* (hi a (b 1)) (+ a b))
@@ -16303,8 +16336,11 @@ static bool prepare_closure_star(s7_scheme *sc)
    *
    * all args are optional, any arg with no default value defaults to #f.
    *   but the rest arg should default to '().
+   *
+   * I later decided to add two warnings: if a parameter is set twice and if
+   *   an unknown keyword is seen in a keyword position and there is no rest arg.
    */
-  
+
   /* set all default values */
   for (sc->z = closure_args(sc->code); is_pair(sc->z); sc->z = cdr(sc->z))
     {
@@ -16343,14 +16379,19 @@ static bool prepare_closure_star(s7_scheme *sc)
 	sc->x = cdr(sc->x);                                 /* everything is :key and :optional, so these are ignored */
       else
 	{
-	  if (car(sc->x) == sc->KEY_REST)
+	  lstar_err_t err = LSTAR_OK;
+
+	  if (car(sc->x) == sc->KEY_REST)           /* the rest arg */
 	    {
 	      /* next arg is bound to trailing args from this point as a list */
 	      sc->z = sc->KEY_REST;
 	      sc->x = cdr(sc->x);
+
 	      if (is_pair(car(sc->x)))
-		lambda_star_argument_set_value(sc, caar(sc->x), sc->y);
-	      else lambda_star_argument_set_value(sc, car(sc->x), sc->y);
+		err = lambda_star_argument_set_value(sc, caar(sc->x), sc->y);
+	      else err = lambda_star_argument_set_value(sc, car(sc->x), sc->y);
+	      if (err != LSTAR_OK) return(err);
+
 	      sc->y = cdr(sc->y);
 	      sc->x = cdr(sc->x);
 	    }
@@ -16358,7 +16399,7 @@ static bool prepare_closure_star(s7_scheme *sc)
 	    {
 	      if (s7_is_keyword(car(sc->y)))
 		{
-		  char *name;                       /* need to remove the ':' before checking the lambda args */
+		  char *name;                       /* found a keyword, need to remove the ':' before checking the lambda args */
 		  s7_pointer sym;
 		  name = symbol_name(car(sc->y));
 		  if (name[0] == ':')
@@ -16370,21 +16411,18 @@ static bool prepare_closure_star(s7_scheme *sc)
 		      sym = s7_make_symbol(sc, name);
 		      name[symbol_name_length(car(sc->y)) - 1] = ':';
 		    }
-		  if (lambda_star_argument_set_value(sc, sym, car(cdr(sc->y))))
-		    sc->y = cddr(sc->y);
-		  else                             /* might be passing a keyword as a normal argument value! */
-		    {
-		      if (is_pair(car(sc->x)))
-			lambda_star_argument_set_value(sc, caar(sc->x), car(sc->y));
-		      else lambda_star_argument_set_value(sc, car(sc->x), car(sc->y));
-		      sc->y = cdr(sc->y);
-		    }
+
+		  err = lambda_star_argument_set_value(sc, sym, car(cdr(sc->y)));
+		  if (err != LSTAR_OK) return(err);
+		  sc->y = cddr(sc->y);
 		}
-	      else 
+	      else                                  /* not a key/value pair */
 		{
 		  if (is_pair(car(sc->x)))
-		    lambda_star_argument_set_value(sc, caar(sc->x), car(sc->y));
-		  else lambda_star_argument_set_value(sc, car(sc->x), car(sc->y));
+		    err = lambda_star_argument_set_value(sc, caar(sc->x), car(sc->y));
+		  else err = lambda_star_argument_set_value(sc, car(sc->x), car(sc->y));
+		  if (err != LSTAR_OK) return(err);
+
 		  sc->y = cdr(sc->y);
 		}
 	      sc->x = cdr(sc->x);
@@ -16399,7 +16437,7 @@ static bool prepare_closure_star(s7_scheme *sc)
 	  (is_pair(sc->y)))
 	{
 	  if (sc->z != sc->KEY_REST)
-	    return(false);
+	    return(LSTAR_TOO_MANY_ARGS);
 	} 
       else 
 	{
@@ -16408,7 +16446,7 @@ static bool prepare_closure_star(s7_scheme *sc)
 	    add_to_local_environment(sc, sc->x, sc->y); 
 	}
     }
-  return(true);
+  return(LSTAR_OK);
 }
 
 
@@ -17101,8 +17139,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				sc->WRONG_NUMBER_OF_ARGS, 
 				make_list_3(sc, 
 					    make_protected_string(sc, "~A: not enough arguments: ~A"),
-					    g_procedure_source(sc, make_list_1(sc, sc->code)), 
-					    sc->args)));
+					    closure_name(sc, sc->code), sc->args)));
 #if HAVE_PTHREADS
 	      add_to_local_environment(sc, car(sc->x), car(sc->y));
 	      /* if the expansion (below) is not thread-safe, neither is this, but at least the trouble stays local to the function */
@@ -17146,8 +17183,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				sc->WRONG_NUMBER_OF_ARGS, 
 				make_list_3(sc, 
 					    make_protected_string(sc, "~A: too many arguments: ~A"), 
-					    g_procedure_source(sc, make_list_1(sc, sc->code)), 
-					    sc->args)));
+					    closure_name(sc, sc->code), sc->args)));
 	    } 
 	  else 
 	    {
@@ -17167,16 +17203,35 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	case T_CLOSURE_STAR:	                  /* -------- define* (lambda*) -------- */
 	  { 
+	    lstar_err_t err;
+
 	    sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); 
-	    
-	    if (!prepare_closure_star(sc))
-	      return(s7_error(sc, 
-			      sc->WRONG_NUMBER_OF_ARGS, 
-			      make_list_3(sc, 
-					  make_protected_string(sc, "~A: too many arguments: ~A"),
-					  g_procedure_source(sc, make_list_1(sc, sc->code)), 
-					  sc->args)));
-	      
+	    err = prepare_closure_star(sc);
+
+	    switch (err)
+	      {
+	      case LSTAR_OK:
+		break;
+
+	      case LSTAR_TOO_MANY_ARGS:
+		return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, 
+				make_list_3(sc, 
+					    make_protected_string(sc, "~A: too many arguments: ~A"),
+					    closure_name(sc, sc->code), sc->args)));
+
+	      case LSTAR_NO_SUCH_KEY:
+		return(s7_error(sc, sc->WRONG_TYPE_ARG,
+				s7_cons(sc,
+					make_protected_string(sc, "~A: unknown key: ~A in ~A"),
+					make_list_3(sc, closure_name(sc, sc->code), sc->y, sc->args))));
+
+	      case LSTAR_ALREADY_SET:
+		return(s7_error(sc, sc->WRONG_TYPE_ARG,
+				s7_cons(sc,
+					make_protected_string(sc, "~A: parameter set twice, ~A in ~A"),
+					make_list_3(sc, closure_name(sc, sc->code), sc->y, sc->args))));
+	      }
+
 	    /* evaluate the function body */
 	    sc->code = closure_body(sc->code);
 	    sc->args = sc->NIL;

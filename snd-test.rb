@@ -121,6 +121,30 @@ $VERBOSE        = false
 $DEBUG          = false
 $ERROR_AND_EXIT = false
 
+require "clm"
+
+if provided?(:snd_nogui)
+  # snd-nogui.c provides them with fixed args
+  undef x_bounds
+  undef y_bounds
+  undef set_x_bounds
+  undef set_y_bounds
+  def x_bounds(*args)
+    []
+  end
+  
+  def y_bounds(*args)
+    []
+  end
+  def set_x_bounds(bounds, *args)
+    bounds
+  end
+  
+  def set_y_bounds(bounds, *args)
+    bounds
+  end
+end
+
 require "rational"
 require "examp"
 require "ws"
@@ -1327,7 +1351,7 @@ def test00
             [:mark_tag_height, 4],
             [:mark_tag_width, 10],
             [:max_regions, 16],
-            [:max_virtual_ptrees, 3],
+            [:max_virtual_ptrees, 32],
             [:max_transform_peaks, 100],
             [:min_dB, -60.0],
             [:minibuffer_history_length, 8],
@@ -1539,7 +1563,7 @@ def test01
                 [:listener_prompt, ">"],
                 [:log_freq_start, 32.0],
                 [:max_regions, 16],
-                [:max_virtual_ptrees, 3],
+                [:max_virtual_ptrees, 32],
                 [:max_transform_peaks, 100],
                 [:min_dB, -60.0],
                 [:minibuffer_history_length, 8],
@@ -1922,24 +1946,6 @@ def test02
     test_headers("tomf8.aud", 1, 8000, 2.016000, "INRS", "little endian short (16 bits)")
     test_headers("Xhs001x.nsp", 1, 10000, 6.017400, "CSL", "little endian short (16 bits)")
     test_headers("zulu_a4.w11", 1, 33000, 1.21987879276276, "TX-16W", "unknown")
-    [["/home/bil/./sf1/o2.voc",      "/home/bil/sf1/o2.voc"],
-      ["~/./sf1/o2.voc",             $home_dir + "/sf1/o2.voc"],
-      ["~/cl/../sf1/o2.voc",         $home_dir + "/sf1/o2.voc"],
-      ["/home/bil/cl/../sf1/o2.voc", "/home/bil/sf1/o2.voc"]].each do |in_name, real_name|
-      if mus_expand_filename(in_name) != real_name
-        snd_display("mus_expand_filename %s => %s?", in_name, mus_expand_filename(in_name))
-      end
-      if File.exist?("/home/bil/./sf1/o2.voc")
-        if sound?(ind = open_sound(in_name))
-          if file_name(ind) != real_name
-            snd_display("expand file name %s: %s?", in_name, file_name(ind))
-          end
-          close_sound(ind)
-        else
-          snd_display("can\'t open %s", in_name)
-        end
-      end
-    end
     $after_test_hook.call(2)
   end
 end
@@ -29547,7 +29553,7 @@ def test0219
     snd_display("edit_list2function 19 re-filter: %s %s?", mx, res)
   end
   revert_sound(ind)
-  if provided? :xm or provided? :xg
+  if provided? :xm
     [[lambda { insert_vct(vct(1.0, 0.5), 0, 2) },
       "Proc.new {|snd, chn|  insert_vct(vct(1.000, 0.500), 0, 2, snd, chn) }"],
      [lambda { clm_channel_test },
@@ -29653,7 +29659,7 @@ def test0219
      [lambda { effects_zecho_1(0.75, 0.75, 6.0, 10.0, false, 0, false) },
       "Proc.new {|snd, chn|  effects_zecho_1(0.75, 0.75, 6.0, 10.0, false, 0, false, snd, chn) }"],
      #[lambda { effects_comb_filter(0.1, 50, 0, false) },
-      #"Proc.new {|snd, chn|  effects_comb_filter(0.1, 50, 0, false, snd, chn) }"],
+     #"Proc.new {|snd, chn|  effects_comb_filter(0.1, 50, 0, false, snd, chn) }"],
      [lambda { effects_moog(10000, 0.5, 0, false) },
       "Proc.new {|snd, chn|  effects_moog(10000, 0.5, 0, false, snd, chn) }"],
      [lambda { effects_remove_dc },
@@ -32867,27 +32873,6 @@ def sinc_train(gen, fm = 0.0)
   gen.sinc_train(fm)
 end
 
-def make_cndf(n, freq)
-  amps = Vct.new(n - 1, 0.0)
-  oscs = Array.new(n - 1, false)
-  r = 1.0
-  1.upto(n - 1) do |i|
-    amps[i - 1] = 1.0 / r
-    oscs[i - 1] = make_oscil(freq * r * r)
-    r *= (i + 1)
-  end
-  [amps, oscs]
-end
-
-def cndf(gen)
-  oscil_bank(gen[0], gen[1])
-end
-
-def cndf_ins(start, dur, amp, freq, n)
-  gen = make_cndf(n, freq)
-  run_instrument(start, dur) do amp * cndf(gen) end
-end
-
 def ws_sine(freq)
   os = make_oscil(freq)
   100.times do |i| outa(i, oscil(os), $output) end
@@ -34380,7 +34365,7 @@ $a_sound = false
 
 def test0028
   procs1 =
-    [:amp_control, :bomb, :apply_controls, :comment,
+    [:amp_control, :apply_controls, :comment,
      :contrast_control, :amp_control_bounds, :speed_control_bounds, :expand_control_bounds,
      :contrast_control_bounds, :reverb_control_length_bounds, :reverb_control_scale_bounds,
      :contrast_control_amp, :contrast_control?, :data_format, :data_location, :data_size,
@@ -34926,7 +34911,6 @@ def test0228
   check_error_tag(:mus_error) do make_iir_filter(:coeffs, make_vct(4), :ycoeffs, make_vct(4)) end
   check_error_tag(:mus_error) do make_iir_filter(:coeffs, make_vct(4), :xcoeffs, make_vct(4)) end
   check_error_tag(:out_of_range) do make_table_lookup(:size, 123456789) end
-  check_error_tag(:out_of_range) do make_src(:srate, -0.5) end
   check_error_tag(:out_of_range) do make_granulate(:ramp, -0.5) end
   check_error_tag(:out_of_range) do make_granulate(:ramp, 1.5) end
   check_error_tag(:mus_error) do make_granulate(:expansion, 32000.0) end

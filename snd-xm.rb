@@ -2,13 +2,13 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Changed: Wed Oct 14 23:13:02 CEST 2009
+# Changed: Thu Apr 15 13:23:22 CEST 2010
 
 # Commentary:
 #
-# Requires --with-motif or --with-gtk and module libxm.so or --with-static-xm!
+# Requires --with-motif|gtk and module libxm.so|libxg.so or --with-static-xm|xg!
 #
-# Tested with Snd 7.13, Motif 2.2.2, Gtk+ 2.2.1, Ruby 1.6.6, 1.6.8 and 1.9.0.
+# Tested with Snd 11, Motif 2.2.3, Gtk+ 2.18.6, Ruby 1.8.7.
 #
 # module Snd_XM
 #  make_snd_menu(name, args) do ... end
@@ -33,7 +33,6 @@
 #  find_child(widget, name)
 #  each_child(widget) do |w| .... end
 #  widget?(obj)
-#  is_managed(widget)
 #  widget_name(widget)
 #  set_scale_value(widget, value, scaler)
 #  get_scale_value(widget, info, scaler)
@@ -89,6 +88,7 @@
 # >  g_list_each(glist) do |val| ... end
 #
 # Snd_Motif only:
+# > is_managed(widget)
 # > module Snd_Motif
 # >  string2compound(*args)
 # >  compound2string(xstr)
@@ -593,27 +593,7 @@ module Snd_Gtk
   alias for_each_child each_child
 
   def widget?(obj)
-    old_sigsegv = trap("SIGSEGV", "SIG_IGN")
-    RGTK_IS_WIDGET(obj)
-  rescue
-    false
-  ensure
-    case old_sigsegv
-    when Proc
-      trap("SIGSEGV", &old_sigsegv)
-    when String
-      trap("SIGSEGV", old_sigsegv)
-    else
-      trap("SIGSEGV", "SIG_DFL")
-    end
-  end
-
-  def is_managed(widget)
-    if widget?(widget)
-      RGTK_WIDGET_REALIZED(widget)
-    else
-      false
-    end
+    obj.kind_of?(Array) and obj.length == 2 and obj.first == :GtkWidget_
   end
 
   # you should have set the name before:
@@ -632,7 +612,8 @@ module Snd_Gtk
   end
 
   def raise_dialog(widget)
-    Rgdk_window_raise(Rwindow(widget))
+    Rgtk_widget_show(widget)
+    Rgtk_window_present(RGTK_WINDOW(widget))
   end
 
   def activate_dialog(dialog)
@@ -713,7 +694,7 @@ module Snd_Gtk
       Rgtk_widget_show(@meter)
       add_event_handler(@meter, "expose_event") do |w, e, d| self.display end
       add_event_handler(@meter, "configure_event") do |w, e, d|
-        xy = Rgdk_drawable_get_size(RGDK_DRAWABLE(Rwindow(w)))
+        xy = Rgdk_drawable_get_size(RGDK_DRAWABLE(Rgtk_widget_get_window(w)))
         @width = xy.car
         @height = xy.cadr
         self.display
@@ -721,7 +702,7 @@ module Snd_Gtk
     end
 
     def display
-      win = RGDK_DRAWABLE(Rwindow(@meter))
+      win = RGDK_DRAWABLE(Rgtk_widget_get_window(@meter))
       major_tick = (@width / 24.0).round
       minor_tick = (major_tick * 0.6).round
       ang0 = 45 * 64
@@ -802,7 +783,7 @@ module Snd_Gtk
   def with_level_meters(n)
     if widget?(parent = (main_widgets[Notebook_outer_pane] or main_widgets[Main_sound_pane]))
       height = n > 2 ? 70 : 85
-      width = (Rgdk_drawable_get_size(RGDK_DRAWABLE(Rwindow(parent))).cadr / Float(n)).floor
+      width = (Rgdk_drawable_get_size(RGDK_DRAWABLE(Rgtk_widget_get_window(parent))).cadr / Float(n)).floor
       meters = Rgtk_hbox_new(true, 4)
       Rgtk_box_pack_start(RGTK_BOX(parent), meters, false, false, 4)
       Rgtk_widget_set_size_request(meters, width, height)
@@ -869,7 +850,7 @@ module Snd_Gtk
 
     def initialize(parent)
       @parent = if RGTK_IS_DIALOG(parent)
-                  Rvbox(RGTK_DIALOG(parent))
+                  Rgtk_dialog_get_content_area(RGTK_DIALOG(parent))
                 else
                   parent
                 end
@@ -1002,7 +983,7 @@ widget "*.clear_button" style "clear"})
       add_event_handler(@dialog, "delete_event") do |w, e, d|
         Rgtk_widget_hide(@dialog)
       end
-      Rgtk_box_pack_start(RGTK_BOX(Raction_area(RGTK_DIALOG(@dialog))),
+      Rgtk_box_pack_start(RGTK_BOX(Rgtk_dialog_get_action_area(RGTK_DIALOG(@dialog))),
                           @doit_button, true, true, 20)
       if proc?(@ok_cb)
         add_callback(@doit_button, "clicked") do |w, d|
@@ -1011,7 +992,7 @@ widget "*.clear_button" style "clear"})
       end
       Rgtk_widget_show(@doit_button)
       if @clear_cb
-        Rgtk_box_pack_start(RGTK_BOX(Raction_area(RGTK_DIALOG(@dialog))),
+        Rgtk_box_pack_start(RGTK_BOX(Rgtk_dialog_get_action_area(RGTK_DIALOG(@dialog))),
                             @clear_button, true, true, 20)
         if proc?(@clear_cb)
           add_callback(@clear_button, "clicked") do |w, d|
@@ -1021,7 +1002,7 @@ widget "*.clear_button" style "clear"})
         Rgtk_widget_show(@clear_button)
       end
       if @reset_cb
-        Rgtk_box_pack_start(RGTK_BOX(Raction_area(RGTK_DIALOG(@dialog))),
+        Rgtk_box_pack_start(RGTK_BOX(Rgtk_dialog_get_action_area(RGTK_DIALOG(@dialog))),
                             @reset_button, true, true, 20)
         if proc?(@reset_cb)
           add_callback(@reset_button, "clicked") do |w, d|
@@ -1030,13 +1011,13 @@ widget "*.clear_button" style "clear"})
         end
         Rgtk_widget_show(@reset_button)
       end
-      Rgtk_box_pack_start(RGTK_BOX(Raction_area(RGTK_DIALOG(@dialog))),
+      Rgtk_box_pack_start(RGTK_BOX(Rgtk_dialog_get_action_area(RGTK_DIALOG(@dialog))),
                           @dismiss_button, true, true, 20)
       add_callback(@dismiss_button, "clicked") do |w, d|
         Rgtk_widget_hide(@dialog)
       end
       Rgtk_widget_show(@dismiss_button)
-      Rgtk_box_pack_start(RGTK_BOX(Raction_area(RGTK_DIALOG(@dialog))),
+      Rgtk_box_pack_start(RGTK_BOX(Rgtk_dialog_get_action_area(RGTK_DIALOG(@dialog))),
                           @help_button, true, true, 20)
       if proc?(@help_cb)
         add_callback(@help_button, "clicked") do |w, d|
@@ -1045,7 +1026,7 @@ widget "*.clear_button" style "clear"})
       end
       Rgtk_widget_show(@help_button)
       Rgtk_widget_set_name(@dialog, @label)
-      @parent = Rvbox(RGTK_DIALOG(@dialog))
+      @parent = Rgtk_dialog_get_content_area(RGTK_DIALOG(@dialog))
     end
 
     # kind :log, :linear

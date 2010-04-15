@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Oct 14 23:02:57 CEST 2009
-# Changed: Tue Jan 12 00:12:48 CET 2010
+# Changed: Thu Apr 15 13:32:46 CEST 2010
 
 # Commentary:
 #
@@ -534,23 +534,6 @@ if provided? :snd
   end
   alias sine_summation  nrxysin
   alias sine_summation? nrxysin?
-
-  if provided?(:snd_nogui)
-    def x_bounds(*args)
-      []
-    end
-    
-    def y_bounds(*args)
-      []
-    end
-    def set_x_bounds(bounds, *args)
-      bounds
-    end
-    
-    def set_y_bounds(bounds, *args)
-      bounds
-    end
-  end
 end
 
 # enum("foo", :bar, "FOO_BAR")
@@ -2683,7 +2666,7 @@ def snd_error_to_message
                                 0
                               end)
           else
-            format(str.strip, *if string?(s = str.slice!(str.index("[")..str.index("]")))
+            format(str.strip, if string?(s = str.slice!(str.index("[")..str.index("]")))
                                 eval(s)
                               else
                                 [0] * len
