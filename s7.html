@@ -2093,6 +2093,46 @@ To use namespaces from C, see the FFI <a href="#namespace">example</a>
 below.
 </p>
 
+<small>
+<blockquote>
+<hr>
+<p>
+In s7 we have atoms, lists, namespaces (alists),
+environments (lists of alists), procedures (a cons of 
+source code, and the definition-time environment),
+and threads
+(a procedure, an environment, and a prviate stack).
+So it
+seems reasonable to define an object (in the "object-oriented" sense)
+as a cons of a list (the object's private
+fields), and an environment
+(an alist, or in the class-inheritance case, an environment of methods).
+A generic function is:
+</p>
+<pre>
+(define-macro (define-generic f)
+  `(define (,f obj . args)
+     (apply (cdr (or (assoc ',f (cdr obj))
+		     (error "can't find the ~A method for ~A" ',f obj)))
+	    obj args)))
+</pre>
+<p>and all the rest of the object machinery is equally straightforward,
+at least conceptually.  We can even conjure up objects without any
+explicit class:
+</p>
+<pre>
+(define hi (cons (list (cons 'a 1) (cons 'b 2))                    ; its local data
+                 (list (cons 'splice (lambda (obj) "splicing"))))) ; its "splice" method
+(define-generic splice)
+(splice hi)
+"splicing"
+</pre>
+
+<hr>
+</blockquote>
+</small>
+
+
 </dd>
 <br>
 

@@ -6638,7 +6638,7 @@
     (test (hi 1 :b 2) (list 1 2))
     (test (hi :b 3 :a 1) (list 1 3))
     (test (hi :a 3 :b 1) (list 3 1))
-    (test (hi 1 :a 3) (list 3 "hi"))
+    (test (hi 1 :a 3) 'error)
     (test (hi 1 2 :a 3) 'error) ; trailing (extra) args
     (test (hi :a 2 :c 1) 'error)
     (test (hi 1 :c 2) 'error)
@@ -6699,12 +6699,6 @@
     (num-test (+ (hi 1.0) (hi 1.0 2.0) (hi)) 4.0)
     (num-test (+ (hi 1.0 2.0) (hi) (hi 1.0)) 4.0))
   
-  (let ((hi (lambda* ((a 3)) a)))
-    (test :hi (hi :hi)))
-  (let ((hi (lambda* ((a 3) (b 0)) a)))
-    (test :hi (hi :hi))
-    (test 0 (hi 0 :hi)))
-  
   (test (let ((hi (lambda*))) (hi)) 'error)
   (test (let ((hi (lambda* #f))) (hi)) 'error)
   (test (let ((hi (lambda* "hi" #f))) (hi)) 'error)
@@ -6747,7 +6741,7 @@
   (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :b 1)) '(#f 1 ()))
   (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :c 1)) '(#f 22 1))
   (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :a 1 2)) '(1 2 ()))
-  (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :b 1 2 3)) '(#f 2 (3)))
+  (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :b 1 2 3)) 'error) ; b set twice
   (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :c 1 2 3)) '(#f 2 (3)))
   (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :b 1 :a 2 3)) '(2 1 (3)))
   
