@@ -2097,17 +2097,16 @@ below.
 <blockquote>
 <hr>
 <p>
-In s7 we have atoms, lists, namespaces (alists),
-environments (lists of alists), procedures (a cons of 
-source code, and the definition-time environment),
+We have atoms, lists, namespaces (alists),
+environments (lists of alists), procedures (source code and its environment),
 and threads
-(a procedure, an environment, and a prviate stack).
+(a procedure with a private stack).
 So it
 seems reasonable to define an object (in the "object-oriented" sense)
-as a cons of a list (the object's private
-fields), and an environment
-(an alist, or in the class-inheritance case, an environment of methods).
-A generic function is:
+as a cons of two alists, the object's private
+fields and its methods (in the class-inheritance case, we'd have
+an environment of methods).
+Then a generic function is:
 </p>
 <pre>
 (define-macro (define-generic f)
@@ -2203,6 +2202,61 @@ is similar, but its argument is a string.
 3
 </pre>
 
+<small>
+<blockquote>
+<p>The environment argument is mainly useful in debugging.  A breakpoint can be set, for
+example, then any input is evaluated in the environment of the break.  Say we have the
+following code in ex.scm:
+</p>
+<pre>
+(define-macro (break)
+  `(let ((break-env (<em class=red>current-environment</em>))
+	 (prompt (format #f "~%~A &gt; " (if (defined? '__func__) __func__ "break"))))
+     (call-with-exit
+      (lambda (return)
+	(do () ()                       ; our debugger's own REPL
+	  (display prompt)              ; show where we stopped
+	  (let ((str (read-line '())))  ; read a line of input, :go -&gt; exit the debugger
+	    ;; the nil argument to read-line makes sure that we read C's stdin.  In any normal
+	    ;;    program, we'd get the string from a text widget.
+	    (if (&gt; (length str) 0)
+		(catch #t               ; try to handle typing mistakes etc
+		       (lambda ()
+			 (let ((val (<em class=red>eval-string</em> str <em class=red>break-env</em>)))
+			   (if (eq? val :go)
+			       (return))
+			   (write val)))
+		       (lambda args
+			 (format #t "error: ~A" args))))))))))
+
+;; now some random code that has a breakpoint
+(define (a-function b)
+  (let ((x 32))
+    (do ((i 0 (+ i 1)))
+	((= i 10))
+      (if (= i 3)
+	  (<em class=red>break</em>)))
+    x))
+
+(a-function 123)
+
+(display "done!") (newline)
+</pre>
+<p>
+Start up a REPL, and:
+</p>
+<pre>
+&gt; (load "ex.scm")
+
+(a-function "ex.scm" 26) &gt; x    ; here we're in the debugger
+32
+(a-function "ex.scm" 26) &gt; (+ b i)
+126
+(a-function "ex.scm" 26) &gt; :go
+done!
+</pre>
+</blockquote>
+</small>
 <hr>
 
 <p>Multi-line comments can be enclosed in either #| and |#, or #! and !# (the latter
@@ -2281,6 +2335,7 @@ bind it to something else, which is asking for confusion).
 <p>Some other differences from r5rs:
 </p>
 <ul>
+<li>letrec*.
 <li>do sets its step variables, rather than rebinding them.
 <li>no syntax-rules or any of its friends.
 <li>force and delay are implemented as in slib and depend on the WITH_FORCE switch, normally 0.
@@ -2435,6 +2490,7 @@ The examples that follow show:
 <li><a href="#vector">direct multidimensional vector element access</a>
 <li><a href="#notify">notification in C that a Scheme variable has been set!</a>
 <li><a href="#namespace">Load C defined stuff into a separate namespace</a>
+<li><a href="#Cerrors">Error handling in C</a>
 </ul>
 
 <br><br>
@@ -3529,6 +3585,121 @@ int main(int argc, char **argv)
  */
 </pre>
 </td></tr></table>
+
+
+
+<br><br>
+<A NAME="Cerrors"></a>
+<p>Handle scheme errors in C.
+</p>
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<tr><td bgcolor="#fbfbf0">
+<pre>
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+#include "s7.h"
+
+static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
+
+static s7_pointer error_handler(s7_scheme *sc, s7_pointer args)
+{
+  /* put &lt;&lt;&gt;&gt; around the string so it's obvious who is producing what */
+
+  fprintf(stdout, "&lt;&lt;%s&gt;&gt;", s7_string(s7_car(args)));
+  return(s7_make_symbol(sc, "our-error"));
+}
+
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  char buffer[512];
+  char response[1024];
+  bool with_error_hook = false;
+
+  s7 = s7_init();  
+  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
+  s7_define_function(s7, "error-handler", error_handler, 1, 0, false, "our error handler");
+
+  if (with_error_hook)
+    s7_eval_c_string(s7, "(set! *error-hook*                               \n\
+                            (lambda (tag args)                             \n\
+                              (error-handler                               \n\
+                                (apply format #f (car args) (cdr args)))))");
+
+  while (1) 
+    {
+      fprintf(stdout, "\n&gt; ");
+      fgets(buffer, 512, stdin);
+	  
+      if ((buffer[0] != '\n') || 
+	  (strlen(buffer) &gt; 1))
+	{                            
+	  s7_pointer old_port, result;
+	  int gc_loc = -1;
+	  const char *errmsg = NULL;
+
+	  /* trap error messages */
+	  old_port = s7_set_current_error_port(s7, s7_open_output_string(s7));
+	  if (old_port != s7_nil(s7))
+	    gc_loc = s7_gc_protect(s7, old_port);
+
+	  /* evaluate the input string */
+	  result = s7_eval_c_string(s7, buffer);
+
+	  /* print out the value wrapped in "{}" so we can tell it from other IO paths */
+	  fprintf(stdout, "{%s}", s7_object_to_c_string(s7, result));
+
+	  /* look for error messages */
+	  errmsg = s7_get_output_string(s7, s7_current_error_port(s7));
+
+	  /* if we got something, wrap it in "[]" */
+	  if ((errmsg) && (*errmsg))
+	    fprintf(stdout, "[%s]", errmsg); 
+
+	  s7_close_output_port(s7, s7_current_error_port(s7));
+	  s7_set_current_error_port(s7, old_port);
+	  if (gc_loc != -1)
+	    s7_gc_unprotect_at(s7, gc_loc);
+	}
+    }
+}
+
+/* 
+ *   gcc -c s7.c -I. -g3
+ *   gcc -o ex3 ex3.c s7.o -lm -I.
+ *
+ * if with_error_hook is false,
+ *
+ *   &gt; (+ 1 2)
+ *   {3}
+ *   &gt; (+ 1 #\c)
+ *   {wrong-type-arg}[
+ *   ;+ argument 2, #\c, is character but should be a number, line 1
+ *   ]
+ *
+ * so s7 by default prepends ";" to the error message, and appends "\n",
+ *   sending that to current-error-port, and the error type ('wrong-type-arg here)
+ *   is returned.
+ *
+ * if with_error_hook is true,
+ *
+ *   &gt; (+ 1 2)
+ *   {3}
+ *   &gt; (+ 1 #\c)
+ *   &lt;&lt;+ argument 2, #\c, is character but should be a number&gt;&gt;{our-error}
+ *
+ * so now the *error-hook* code handles both the error reporting and
+ *   the value returned ('our-error in this case).
+ */
+</pre>
+</td></tr></table>
+
+
+
 
 </body>
 </html>

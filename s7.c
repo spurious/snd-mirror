@@ -1048,7 +1048,7 @@ bool s7_is_constant(s7_pointer p)
 
 static s7_pointer g_is_constant(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_constant "(constant? obj) returns #t if obj is a constant (unsettable)"
+  #define H_is_constant "(constant? obj) returns #t if obj is a constant (unsettable): (constant? pi) -> #t"
   return(s7_make_boolean(sc, s7_is_constant(car(args))));
 }
 
@@ -1523,7 +1523,8 @@ static s7_pointer new_cell(s7_scheme *sc)
 
 static s7_pointer g_gc(s7_scheme *sc, s7_pointer args)
 {
-  #define H_gc "(gc :optional on) runs the garbage collector.  If 'on' is supplied, it turns the GC on or off."
+  #define H_gc "(gc :optional on) runs the garbage collector.  If 'on' is supplied, it turns the GC on or off. \
+Evaluation produces a surprising amount of garbage, so don't leave the GC off for very long!"
 
   if (args != sc->NIL)
     {
@@ -2121,7 +2122,7 @@ static bool is_environment(s7_scheme *sc, s7_pointer x)
 static s7_pointer g_augment_environment(s7_scheme *sc, s7_pointer args)
 {
   #define H_augment_environment "(augment-environment env ...) adds its \
-arguments (each a cons: symbol value) to the environment env, and returns the \
+arguments (each a cons: symbol . value) to the environment env, and returns the \
 new environment."
 
   s7_pointer x, e, new_e;
@@ -2217,7 +2218,9 @@ s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local
 
 static s7_pointer g_symbol_to_value(s7_scheme *sc, s7_pointer args)
 {
-  #define H_symbol_to_value "(symbol->value sym :optional env) returns the binding of (the value associated with) the symbol sym in the given environment"
+  #define H_symbol_to_value "(symbol->value sym :optional env) returns the binding of (the value associated with) the \
+symbol sym in the given environment: (let ((x 32)) (symbol->value 'x)) -> 32"
+
   s7_pointer local_env;
 
   if (!s7_is_symbol(car(args)))
@@ -2301,7 +2304,8 @@ static s7_pointer lambda_star_argument_default_value(s7_scheme *sc, s7_pointer v
 
 static s7_pointer g_global_environment(s7_scheme *sc, s7_pointer ignore)
 {
-  #define H_global_environment "(global-environment) returns the current s7 top-level definitions (symbol bindings)"
+  #define H_global_environment "(global-environment) returns the current top-level definitions (symbol bindings). \
+It is a list ending with a hash-table."
   return(sc->global_env);
 }
 
@@ -9043,7 +9047,13 @@ If 'with-eol' is not #f, include the trailing end-of-line character."
 	  sc->read_line_buf = (char *)realloc(sc->read_line_buf, sc->read_line_buf_size * sizeof(char));
 	}
 
-      c = inchar(sc, port);
+      if (port == sc->NIL)
+	{
+	  fgets(sc->read_line_buf, sc->read_line_buf_size, stdin);
+	  return(s7_make_string(sc, sc->read_line_buf)); /* fgets adds the trailing '\0' */
+	}
+      else c = inchar(sc, port);
+
       if (c == EOF)
 	{
 	  if (i == 0)
@@ -23970,6 +23980,16 @@ s7_scheme *s7_init(void)
   s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, "quasiquote");
 
 
+  s7_eval_c_string(sc, "(define-macro (letrec* bindings . body)                   \n\
+                          `(let (,@(map (lambda (var&init)                        \n\
+                                          (list (car var&init) #f))               \n\
+                                        bindings))                                \n\
+                            ,@(map (lambda (var&init)                             \n\
+                                     (list 'set! (car var&init) (cadr var&init))) \n\
+                                    bindings)                                     \n\
+                            ,@body))");
+
+
 #if WITH_MULTIPLE_VALUES
   /* call-with-values is almost a no-op in this context */
   s7_eval_c_string(sc, "(define-macro (call-with-values producer consumer) `(,consumer (,producer)))"); 
@@ -23986,14 +24006,6 @@ s7_scheme *s7_init(void)
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "values")));
 #endif
 
-  s7_eval_c_string(sc, "(define-macro (letrec* bindings . body)                   \n\
-                          `(let (,@(map (lambda (var&init)                        \n\
-                                          (list (car var&init) #f))               \n\
-                                        bindings))                                \n\
-                            ,@(map (lambda (var&init)                             \n\
-                                     (list 'set! (car var&init) (cadr var&init))) \n\
-                                    bindings)                                     \n\
-                            ,@body))");
 
 #if WITH_FORCE
   s7_eval_c_string("(define (force object) (object))");
@@ -24023,10 +24035,8 @@ s7_scheme *s7_init(void)
 
 /* TODO: macroexpand and fully-expand are buggy
  * PERHAPS: method lists for c_objects
- * PERHAPS: example of scheme-side repl/break in cerror?
  * TODO: function IO completed -- tie into scheme for tests?
- * SOMEDAY: s7.html could use a good example for multiple values, threads, perhaps a walker? 
- * TODO: better help strings
  * TODO: how to connect from C to scheme-side make-type (defgenerator)
- * TODO: s7.html example of error handling in C
+ * SOMEDAY: eval-string (or eval?) with jump outside the eval (call/cc external) -> segfault or odd error
+ *             (is this the case in dynamic-wind also?)
  */
