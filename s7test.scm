@@ -4324,6 +4324,7 @@
 (test (let ((z 0)) (begin (define x 32)) (begin (define y x)) (set! z y) z) 32) ; so begin is like let*? -- guile uses letrec here = error
 (test (let ((z 0)) (begin (define x 32) (define y x)) (set! z y) z) 32)         ; similarly here
 ;;; I can't find anything in r5rs.html that mandates letrec here, or that says it's in error
+;;; Guile is now (1.9.5) happy with these
 
 (test (let () (begin (define b 1) (begin (define a b) (define b 3)) a)) 1)
 (test (let () (begin (begin (define a1 1) (begin (define a1 b1) (define b1 3))) a1)) 'error)

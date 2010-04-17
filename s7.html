@@ -86,6 +86,7 @@ and want a quick tour of where s7 is different.
   <li><a href="#symbolinfo">symbol table info</a>
   <li><a href="#environments">environments</a>
   <li><a href="#miscellanea">miscellanea</a>
+  <li><a href="#s7rundoc">the run macro</a>
   <li><a href="#FFIexamples">FFI examples</a>
 </ul>
 
@@ -2443,6 +2444,72 @@ One simple way to ensure immutability is to use copy:
 <br>
 <br>
 
+
+
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<A NAME="s7rundoc"></a>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>the run macro</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
+<dd><p>s7 is primarily aimed at computer music, CLM-based sound synthesis in particular.
+A CLM "instrument" is usually a do-loop running things like oscillators and envelopes
+for zillions of sound samples.  These calculations do not involve recursion, or
+complex numbers, or fancy list processing, so it is not too hard to write an
+optimizer for them.  In sndlib, that optimizer is called "run".  It is a macro
+that can be wrapped around any piece of Scheme code that you want to speed up.
+If it can't optimize the code, it passes it to the s7 interpreter.  If run is successful,
+you will normally get a speed up by a factor of 10 to 30.  For CLM instruments,
+the result runs close to the speed of the equivalent compiled and optimized
+C code.  Here are my timings for two instruments, "bird" and "fm-violin".
+I've included sbcl times for comparison.
+</p>
+<pre>
+          s7 interpreted  s7+run  C (-O2)      sbcl
+bird          9.6          .7       .65         .65
+violin       21.6         1.44     1.28        1.28
+</pre>
+
+<p>
+The sbcl and C compiler cases are the same because
+CLM in sbcl uses a version of the run macro that translates the CL code to C, calls the C compiler
+on that, then loads it as a foreign function, so it is essentially the
+same as the straight C case.  In s7, however, we're running interpreted; there is
+no separate compilation step.  Another comparison: the fft benchmark from the Gabriel
+tests.  In s7 interpreted, it runs 1000 1024 point FFTs in 53 seconds; with "run",
+the same takes 2 seconds.  In Guile 1.9.5 after compilation, it takes 10 seconds.
+So, in general, s7 is not so slow as to be an annoyance.  
+</p>
+
+<!--
+sbcl: (with-sound (:play nil :statistics t) (bird 0 100 440.0 10.0 0.5 '(0 0 1 1) '(0 0 1 1 2 1 3 0)))
+      (with-sound (:play nil :statistics t) (fm-violin 0 100 440.0 .4))
+
+C: in sndlib configure make
+   gcc time-bird.c -o time-bird -O2 -I. libsndlib.a -lasound -lgsl -lgslcblas
+   time time-bird
+
+s7: use the sndlib example in s7.html
+    gcc -o ex1 ex1.c s7.o -lm -I. -O2
+    ex1
+    (load "sndlib-ws.scm")
+    (load "bird.scm")
+    (load "v.scm")
+
+(with-sound (:play #f :statistics #t) (bird 0 100 440.0 10.0 0.5 '(0 0 1 1) '(0 0 1 1 2 1 3 0)))
+(with-sound (:play #f :statistics #t) (fm-violin 0 100 440.0 .4))
+
+
+fft.sch interpreted: 53,  run: 2
+guile 1.9.5 after compilation: 10.5
+-->
+
+</dd>
+<br><br>
+
 </dl>
 
 
@@ -3698,6 +3765,7 @@ int main(int argc, char **argv)
 </pre>
 </td></tr></table>
 
+<br><br>
 
 
 
