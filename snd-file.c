@@ -7,8 +7,6 @@
 #endif
 
 
-/* TODO: show listener from menu sometimes doesn't open the listener pane */
-
 
 /* -------------------------------- basic file attributes -------------------------------- */
 

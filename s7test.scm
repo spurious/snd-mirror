@@ -336,6 +336,15 @@
 (begin #| ; |# (display #t))
 (newline)
 
+(test (;
+       eq? ';
+       (;)()
+	);((")"
+       ;"#|)#"
+       '#|";"|#(#!;!#); ;#
+	 ;\;"#"#f 
+	       )#t)
+
 
 (let ((things (vector #t #f #\space '() "" 0 1 3/4 1+i 1.5 '(1 .2) '#() (vector) (vector 1) (list 1) 'f 't #\t)))
   (do ((i 0 (+ i 1)))
@@ -6745,6 +6754,9 @@
   (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :b 1 2 3)) 'error) ; b set twice
   (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :c 1 2 3)) '(#f 2 (3)))
   (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :b 1 :a 2 3)) '(2 1 (3)))
+
+  (test (let () (define* (f (a :b)) a) (list (f) (f 1) (f :c) (f :a :c) (f :a 1) (f))) '(:b 1 :c :c 1 :b))
+  (test (let () (define* (f a (b :c)) b) (f :b 1 :d)) 'error)
   
   (test (let () (define* (hi b) b) (procedure? hi)) #t)
   (test (let () (define-macro (hi a) `(+ ,a 1)) (procedure? hi)) #f)
@@ -42808,6 +42820,9 @@
 (test (cond (1 => (lambda (x y) #t))) 'error)
 (test (cond . 1) 'error)
 (test (cond ((1 2)) . 3) 'error)
+(test (cond (1 => + abs)) 'error)
+(test (cond (1 =>)) 'error)
+(if with-values (test (cond ((values 1 2) => + abs)) 'error))
 
 
 (test (case 1) 'error)

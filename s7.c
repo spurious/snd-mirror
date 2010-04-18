@@ -212,6 +212,7 @@
 
 #ifndef WITH_MULTIPLE_VALUES
   #define WITH_MULTIPLE_VALUES 1
+  /* this includes values and all the related macros */
 #endif
 
 
@@ -948,9 +949,8 @@ static s7_pointer make_string_uncopied(s7_scheme *sc, char *str);
 static s7_pointer make_protected_string(s7_scheme *sc, const char *str);
 static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value);
 
-
 #if HAVE_PTHREADS
-  static s7_pointer g_is_thread(s7_scheme *sc, s7_pointer args);
+  static bool is_thread(s7_pointer obj);
 #endif
 
 #if WITH_MULTIPLE_VALUES
@@ -2323,7 +2323,7 @@ static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
   #define H_current_environment "(current-environment :optional thread) returns the current definitions (symbol bindings)"
   if (args != sc->NIL)
     {
-      if (g_is_thread(sc, args) == sc->F)
+      if (!(is_thread(car(args))))
 	return(s7_wrong_type_arg_error(sc, "current-environment", 0, car(args), "a thread object"));
       return(thread_environment(sc, car(args)));
     }
@@ -9591,6 +9591,24 @@ static char *slashify_string(const char *p)
 }
 
 
+static const char *c_closure_name(s7_scheme *sc, s7_pointer closure)
+{
+  s7_pointer x;
+
+  x = find_local_symbol(sc, closure_environment(closure), sc->__FUNC__);  /* returns nil if no __func__ */
+  if (is_pair(x))
+    {
+      x = symbol_value(x);
+      if (s7_is_symbol(x))
+	return(symbol_name(x));
+      if ((is_pair(x)) &&
+	  (s7_is_symbol(car(x))))
+	return(symbol_name(car(x)));
+    }
+  return("#<closure>");
+}
+
+
 static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 {
   switch (type(obj))
@@ -9686,10 +9704,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   
     case T_CLOSURE:
     case T_CLOSURE_STAR:
-      return(copy_string("#<closure>"));
-      /* this used to look in the current environment for the value, returning the associated name,
-       *   but that can be very confusing if two names share the value.
-       */
+      return(copy_string(c_closure_name(sc, obj)));
   
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION:
@@ -12352,6 +12367,16 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
   if (s7_is_symbol(car(args)))
     p = s7_symbol_value(sc, car(args));
   else p = car(args);
+
+#if HAVE_PTHREADS
+  if (is_thread(p))
+    {
+      thred *f;
+      f = (thred *)s7_object_value(p);
+      p = f->func;
+    }
+#endif
+
   if ((!is_procedure(p)) &&
       (!is_macro(p)))
     return(s7_wrong_type_arg_error(sc, "procedure-source", 0, p, "a procedure or a macro"));
@@ -12688,60 +12713,6 @@ static void free_object(s7_pointer a)
     (*(object_types[tag].free))(c_object_value(a));
 }
 
-/* OBJECTS...
- * perhaps: a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)
- *   catch 'wrong-type-arg-error in the evaluator,
- *   if 1st arg is v_object, look for method?
- *   this would not slow the rest of s7 down, but would let us handle anything 
- *   but the error handler would need the caller's name, and all the original args unchanged [see below]
- *   this would make map possible if a make method is on the list
- *
- * So a standard object would have its own type, notion of fields and so on (like define-record in s7.html),
- *   and the basic things provided directly by make-type, but also a methods function that is expected to
- *   return an alist of (name . function).  Inheritance would mean prepending the current record's
- *   method list on that of its ancestors.  MOP stuff could be had by wrapping inherited functions and so on.
- * This way leaves the actual object structure up to the object definer.  It is very similar to the
- *   namespace business in s7.html, and requires no new names or functions.  For speed, we could
- *   provide immediate dispatch for built-ins, and use macros in Scheme to do the alist search just once.
- *   It's also very close to defgenerator.  Call-next-method would just continue down the alist from 
- *   (cdr current-method) indefinitely.  On C side, we could make our dispatch table available and expandable.
- *   Then if C-side func sees a type it doesn't handle explicitly, it knows (without assoc) what to call.
- * This also makes it possible to specialize down to the level of the object (it prepends its own methods).
- * A "class" in this case is define-record (for the local fields and type) + a list of methods and a methods accessor.
- * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
- * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
- *
- * On the scheme side, if (f o ...), syntactic sugar for ((assoc f (methods o)) o ...) where
- *   we can (I think) predigest this.
- *
- *  (define-macro (defgeneric f)
- *    `(define-macro (,f obj . args)
- *       ((or (assoc ',f (methods obj))
- *            (error ...))
- *        obj ,@args)))
- *
- *   if (...)
- *     return(s7_wrong_type_arg_error(sc, "procedure-documentation", 0, x, "a procedure"))
- *
- *    we know sc->args is the arglist [sc->code is the func]
- *    x is our object and it's at nth arg position, in func "pr..."
- *    so we have all we need!
- *  if x is object, assoc f (methods x) -> func = call it else error
- *
- *  the method itself exists only in the alists
- *
- * in s7, a procedure is (cons evallable-list environment) (with locals = args)
- *        an object      (cons locals-list    environment)
- *        record is just the locals-list + globally defined accessors (an exploded alist essentially)
- *        a namespace (module) is just the environment (an alist)
- *        a thread is a function + environment + its own evaluator (stack etc)
- *        does it make sense: locals + env + stack? -- any method invocation takes place on its private stack?
- *          so continuations would be into its own world, each object would be completely independent,
- *          placing all new functions and so on in its own env
- *        (this can be done via s7 clones and (eval ... env) etc)
- * list environment stack -- is there anything else?
- */
-
 
 static bool objects_are_equal(s7_pointer a, s7_pointer b)
 {
@@ -13068,7 +13039,8 @@ In each case, the argument is the value of the object, not the object itself."
 		case 0:                 /* print, ((cadr (make-type :print (lambda (a) (format #f "#<typo: ~S>" a)))) "gypo") -> #<typo: "gypo"> */
 		  if ((s7_integer(car(proc_args)) > 1) || 
 		      ((nargs == 0) && (!rest_arg)))
-		    return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, s7_make_string(sc, "make-type :print procedure, ~A, should take one argument"), func)));
+		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				    make_list_2(sc, s7_make_string(sc, "make-type :print procedure, ~A, should take one argument"), func)));
 
 		  object_types[tag].print_func = func;
 		  object_types[tag].print = call_s_object_print;
@@ -13078,14 +13050,16 @@ In each case, the argument is the value of the object, not the object itself."
 		  /* (let ((typo (make-type :equal (lambda (a b) (equal? a b))))) (let ((a ((cadr typo) 123)) (b ((cadr typo) 321))) (equal? a b))) */
 		  if ((s7_integer(car(proc_args)) > 2) || 
 		      ((nargs < 2) && (!rest_arg)))
-		    return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, s7_make_string(sc, "make-type :equal procedure, ~A, should take two arguments"), func)));
+		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				    make_list_2(sc, s7_make_string(sc, "make-type :equal procedure, ~A, should take two arguments"), func)));
 
 		  object_types[tag].equal_func = func;
 		  break;
 
 		case 2:                 /* getter: (((cadr (make-type :getter (lambda (a b) (vector-ref a b)))) (vector 1 2 3)) 1) -> 2 */
 		  if ((nargs == 0) && (!rest_arg))
-		    return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, s7_make_string(sc, "make-type :getter procedure, ~A, should take at least one argument"), func)));
+		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				    make_list_2(sc, s7_make_string(sc, "make-type :getter procedure, ~A, should take at least one argument"), func)));
 
 		  object_types[tag].getter_func = func;
 		  object_types[tag].apply = call_s_object_getter;
@@ -13093,7 +13067,8 @@ In each case, the argument is the value of the object, not the object itself."
 
 		case 3:                 /* setter: (set! (((cadr (make-type :setter (lambda (a b c) (vector-set! a b c)))) (vector 1 2 3)) 1) 23) */
 		  if ((nargs < 2) && (!rest_arg))
-		    return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, s7_make_string(sc, "make-type :setter procedure, ~A, should take at least two arguments"), func)));
+		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				    make_list_2(sc, s7_make_string(sc, "make-type :setter procedure, ~A, should take at least two arguments"), func)));
 
 		  object_types[tag].setter_func = func;
 		  object_types[tag].set = call_s_object_setter;
@@ -13102,7 +13077,8 @@ In each case, the argument is the value of the object, not the object itself."
 		case 4:                 /* length: (length ((cadr (make-type :length (lambda (a) (vector-length a)))) (vector 1 2 3))) -> 3 */
 		  if ((s7_integer(car(proc_args)) > 1) || 
 		      ((nargs == 0) && (!rest_arg)))
-		    return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, s7_make_string(sc, "make-type :length procedure, ~A, should take at one argument"), func)));
+		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				    make_list_2(sc, s7_make_string(sc, "make-type :length procedure, ~A, should take at one argument"), func)));
 
 		  object_types[tag].length_func = func;
 		  object_types[tag].length = call_s_object_length;
@@ -13110,7 +13086,8 @@ In each case, the argument is the value of the object, not the object itself."
 
 		case 5:                 /* name, ((cadr (make-type :name "hiho")) 123) -> #<hiho 123> */
 		  if (!s7_is_string(func))
-		    return(s7_error(sc, sc->WRONG_TYPE_ARG, make_list_2(sc, s7_make_string(sc, "make-type :name arg, ~S, should be a string"), func)));
+		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				    make_list_2(sc, s7_make_string(sc, "make-type :name arg, ~S, should be a string"), func)));
 
 		  object_types[tag].name = copy_string(s7_string(func));
 		  break;
@@ -15235,7 +15212,7 @@ output is sent to the current-output-port."
 #if HAVE_PTHREADS
       else
 	{
-	  if (g_is_thread(sc, args) != sc->F)
+	  if (is_thread(obj))
 	    {
 	      thred *f;
 	      f = (thred *)s7_object_value(obj);
@@ -16259,20 +16236,12 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
     {
       int save_x, save_y, save_z;
       s7_pointer x;
-      save_x = s7_gc_protect(sc, sc->x);
-      save_y = s7_gc_protect(sc, sc->y);
-      save_z = s7_gc_protect(sc, sc->z);
 
+      SAVE_X_Y_Z(save_x, save_y, save_z);
       x = s7_call(sc, 
 		  symbol_value(unbound_variable_hook_binding),
 		  make_list_1(sc, sym));
-
-      sc->x = s7_gc_protected_at(sc, save_x);
-      sc->y = s7_gc_protected_at(sc, save_y);
-      sc->z = s7_gc_protected_at(sc, save_z);
-      s7_gc_unprotect_at(sc, save_x);
-      s7_gc_unprotect_at(sc, save_y);
-      s7_gc_unprotect_at(sc, save_z);
+      RESTORE_X_Y_Z(save_x, save_y, save_z);
 
       return(x);
     }
@@ -16411,6 +16380,7 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 		{
 		  char *name;                       /* found a keyword, need to remove the ':' before checking the lambda args */
 		  s7_pointer sym;
+
 		  name = symbol_name(car(sc->y));
 		  if (name[0] == ':')
 		    sym = s7_make_symbol(sc, (const char *)(name + 1));
@@ -16422,9 +16392,38 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 		      name[symbol_name_length(car(sc->y)) - 1] = ':';
 		    }
 
-		  err = lambda_star_argument_set_value(sc, sym, car(cdr(sc->y)));
+		  err = lambda_star_argument_set_value(sc, sym, car(cdr(sc->y))); /* cdr(sc->y) is the next arg */
+
+		  if (err == LSTAR_NO_SUCH_KEY)
+		    {
+		      /* if default value is a key, go ahead and use this value.
+		       *    (define* (f (a :b)) a) (f :c) 
+		       * this has become much trickier than I anticipated...
+		       */
+		      if ((is_pair(car(sc->x))) &&
+			  (s7_is_keyword(cadar(sc->x))))
+			{
+			  /* sc->x is the closure args list, not the copy of it in the current environment */
+			  s7_pointer x;
+
+			  x = find_symbol(sc, sc->envir, caar(sc->x));
+			  if (x != sc->NIL)
+			    {
+			      if (is_not_local(x))
+				{
+				  err = LSTAR_OK;
+				  set_local(x);
+				  cdr(x) = car(sc->y);
+				}
+			      else err = LSTAR_ALREADY_SET;
+			    }
+			  /* (define* (f a (b :c)) b) (f :b 1 :d) */
+			}
+		    }
+		  else sc->y = cdr(sc->y);
+
 		  if (err != LSTAR_OK) return(err);
-		  sc->y = cddr(sc->y);
+		  sc->y = cdr(sc->y);
 		}
 	      else                                  /* not a key/value pair */
 		{
@@ -17907,14 +17906,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      if (!is_pair(cdr(sc->code)))                                  /* (cond (#t =>)) or (cond (#t => . 1)) */
 		return(eval_error(sc, "cond: '=>' target missing?  ~A", cdr(sc->code)));
+	      if (is_pair(cddr(sc->code)))                                  /* (cond (1 => + abs)) */
+		return(eval_error(sc, "cond: '=>' has too many targets: ~A", sc->code));
 
 	      /* currently we accept:
 	       *     (cond (1 2) (=> . =>)) and all variants thereof, e.g. (cond (1 2) (=> 1 . 2) (1 2)) or 
 	       *     (cond (1) (=>)) but Guile accepts this?
 	       *     (cond (1) (1 =>))
-	       *     (cond (1 => abs 1)) -- Guile says "wrong number of receiver expressions"
 	       * amusing (correct) case: (cond (1 => "hi")) -> #\i
-	       *  but so does (cond (1 => "hi" . =>)) or (cond (1 => "hi" 1))
 	       */
 
 	      sc->x = make_list_2(sc, sc->QUOTE, sc->value); 
@@ -18713,10 +18712,17 @@ static s7_pointer g_make_thread(s7_scheme *sc, s7_pointer args)
 }
 
 
+static bool is_thread(s7_pointer obj)
+{
+  return((is_c_object(obj)) && 
+	 (c_object_type(obj) == thread_tag));
+}
+
+
 static s7_pointer g_is_thread(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_thread "(thread? obj) returns #t if obj is a thread object"
-  return(make_boolean(sc, (is_c_object(car(args))) && (c_object_type(car(args)) == thread_tag)));
+  return(make_boolean(sc, is_thread(car(args))));
 }
 
 
@@ -18724,7 +18730,7 @@ static s7_pointer g_join_thread(s7_scheme *sc, s7_pointer args)
 {
   #define H_join_thread "(join-thread thread) causes the current thread to wait for the thread to finish"
   thred *f;
-  if (g_is_thread(sc, args) == sc->F)
+  if (!is_thread(car(args)))
     return(s7_wrong_type_arg_error(sc, "join-thread", 0, car(args), "a thread"));
   
   f = (thred *)s7_object_value(car(args));
@@ -24039,4 +24045,74 @@ s7_scheme *s7_init(void)
  * TODO: how to connect from C to scheme-side make-type (defgenerator)
  * SOMEDAY: eval-string (or eval?) with jump outside the eval (call/cc external) -> segfault or odd error
  *             (is this the case in dynamic-wind also?)
+ *
+ * procedure-source actually makes arity/doc unnecessary (except in the c-function cases):
+ *    (define* (hi (a 1) (b 2)) "hi is a function" (+ a b))
+ *    (procedure-source hi)
+ *    (lambda* ((a 1) (b 2)) "hi is a function" (+ a b))
+ * procedure-source of built-ins? threads?
+ * describe for vectors (dims), ports
+ *  also envs as debugging aids: how to show file/line tags as well
+ *  and perhaps store cur-code?  __form__ ? make a cartoon of entire state? [need only the pointer, not a copy]
+ *
+ * this would be good in ws too -- a way to show which notes are active at a given point in the graph
+ *  [c-macros in Snd/sndlib -- even with-sound!]
+ *  [runtime call picture -- like the old days...]
+ *
+ * a way to walk up the stack?  (current-environment 10) [20-Jan-10] 11.2
  */
+
+/* OBJECTS...
+ * perhaps: a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)
+ *   catch 'wrong-type-arg-error in the evaluator,
+ *   if 1st arg is v_object, look for method?
+ *   this would not slow the rest of s7 down, but would let us handle anything 
+ *   but the error handler would need the caller's name, and all the original args unchanged [see below]
+ *   this would make map possible if a make method is on the list
+ *
+ * So a standard object would have its own type, notion of fields and so on (like define-record in s7.html),
+ *   and the basic things provided directly by make-type, but also a methods function that is expected to
+ *   return an alist of (name . function).  Inheritance would mean prepending the current record's
+ *   method list on that of its ancestors.  MOP stuff could be had by wrapping inherited functions and so on.
+ * This way leaves the actual object structure up to the object definer.  It is very similar to the
+ *   namespace business in s7.html, and requires no new names or functions.  For speed, we could
+ *   provide immediate dispatch for built-ins, and use macros in Scheme to do the alist search just once.
+ *   It's also very close to defgenerator.  Call-next-method would just continue down the alist from 
+ *   (cdr current-method) indefinitely.  On C side, we could make our dispatch table available and expandable.
+ *   Then if C-side func sees a type it doesn't handle explicitly, it knows (without assoc) what to call.
+ * This also makes it possible to specialize down to the level of the object (it prepends its own methods).
+ * A "class" in this case is define-record (for the local fields and type) + a list of methods and a methods accessor.
+ * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
+ * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
+ *
+ * On the scheme side, if (f o ...), syntactic sugar for ((assoc f (methods o)) o ...) where
+ *   we can (I think) predigest this.
+ *
+ *  (define-macro (defgeneric f)
+ *    `(define-macro (,f obj . args)
+ *       ((or (assoc ',f (methods obj))
+ *            (error ...))
+ *        obj ,@args)))
+ *
+ *   if (...)
+ *     return(s7_wrong_type_arg_error(sc, "procedure-documentation", 0, x, "a procedure"))
+ *
+ *    we know sc->args is the arglist [sc->code is the func]
+ *    x is our object and it's at nth arg position, in func "pr..."
+ *    so we have all we need!
+ *  if x is object, assoc f (methods x) -> func = call it else error
+ *
+ *  the method itself exists only in the alists
+ *
+ * in s7, a procedure is (cons evallable-list environment) (with locals = args)
+ *        an object      (cons locals-list    environment)
+ *        record is just the locals-list + globally defined accessors (an exploded alist essentially)
+ *        a namespace (module) is just the environment (an alist)
+ *        a thread is a function + environment + its own evaluator (stack etc)
+ *        does it make sense: locals + env + stack? -- any method invocation takes place on its private stack?
+ *          so continuations would be into its own world, each object would be completely independent,
+ *          placing all new functions and so on in its own env
+ *        (this can be done via s7 clones and (eval ... env) etc)
+ * list environment stack -- is there anything else?
+ */
+

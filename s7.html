@@ -85,6 +85,7 @@ and want a quick tour of where s7 is different.
   <li><a href="#procedureinfo">procedure info</a>
   <li><a href="#symbolinfo">symbol table info</a>
   <li><a href="#environments">environments</a>
+  <li><a href="#evalstring">eval</a>
   <li><a href="#miscellanea">miscellanea</a>
   <li><a href="#s7rundoc">the run macro</a>
   <li><a href="#FFIexamples">FFI examples</a>
@@ -141,7 +142,7 @@ Its argument is a string representing the desired number:
 </pre>
 
 </dd>
-<br>
+<br><br>
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -210,7 +211,10 @@ Other math-related differences between s7 and r5rs:
 
 <small>
 <blockquote>
-<hr>
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 The exponent itself is always in base 10 (this follows gmp usage).
 Since Scheme uses "@" for its useless polar notation, s7 doesn't use it for the exponent marker, but that
 means (string-&gt;number "1e1", 16) is ambiguous &mdash; is the "e" a digit or an exponent marker?
@@ -228,7 +232,10 @@ radix is greater than 10.
 </pre>
 <p>Perhaps s7 should use "@"!
 </p>
-<hr>
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>It seems too bad to waste "rational?".  
 Perhaps we should just get rid of "exact?" and "inexact?", 
 leaving "rational?" and "not rational?" which seems much less ambiguous.
@@ -243,11 +250,11 @@ otherwise "rational?" is the same as "real?":
 (not-s7-scheme)&gt; (rational? (sqrt 2))
 #t
 </pre>
-<hr>
+
 </blockquote>
 </small>
 </dd>
-<br>
+<br><br>
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -311,7 +318,9 @@ hiho
 
 <small>
 <blockquote>
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>If you want a version of define* that insists
 that any arguments before the keyword :optional are required:
 </p>
@@ -345,7 +354,9 @@ hi
 &gt; (hi)
 ;hi requires 1 argument: ()
 </pre>
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>If a define* argument's default value is an expression, it is evaluated in the definition environment at
 the time of the procedure call:
 </p>
@@ -369,7 +380,9 @@ c
 &gt; (a)
 123
 </pre>
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>Another variant of define creates "curried" functions:
 </p>
 <pre>
@@ -392,7 +405,9 @@ f
 &gt; (((((f 1 2) 3) 4 5) 6) 7)
 5040
 </pre>
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 
 <p>To try to catch what I believe are usually mistakes, I added two
 error checks.  One is triggered if you set the same parameter twice
@@ -409,12 +424,10 @@ in the key position.  These problems arise in a case such as
 (f :b 1 2)  ; what is b?
 (f :c 3)    ; did you really want a to be :c and b to be 3?
 </pre>
-<p>In the last case, to pass a keyword deliberately, include the
-argument keyword:
-</p>
-<pre>
-(f :a :c)
-</pre>
+<p>In the last case, to pass a keyword deliberately, either include the
+argument keyword: <code>(f :a :c)</code>, or make the default value a keyword:
+<code>(define* (f (a :c) ...))</code>.
+<p>
 
 <!--
 (define* (f a b . c) (list a b c))
@@ -428,7 +441,7 @@ argument keyword:
 </small>
 
 </dd>
-<br>
+<br><br>
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -520,7 +533,9 @@ expanded into:
 
 <small>
 <blockquote>
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>I hesitate to mention this, but macros are "first-class" entities in s7.  You can
 pass one as a function argument, apply it to a list, return it from a function,
 and assign it to a variable:
@@ -549,7 +564,9 @@ make-mac
 <p>The presence of the dummy name in the applied macro's arguments is an historical accident;
 it could be removed.
 </p>
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 
 
 <p>s7 macros are not "hygenic".  For example,
@@ -660,12 +677,12 @@ use lambda:
 	(+ a b)))
     ,a))
 </pre>
-<hr>
+
 </blockquote>
 </small>
 
 </dd>
-<br>
+<br><br>
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -796,7 +813,9 @@ the properties onto the end of the accessor list, as in trace above).
 
 <small>
 <blockquote>
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>We can use symbol-access to fix fluid-let.  The usual form of
 that macro claims that it implements dynamic scope, but it doesn't:
 </p>
@@ -855,11 +874,11 @@ we block let-binding and add let-global:
 </pre>
 <p>which returns '(32 12).
 </p>
-<hr>
+
 </blockquote>
 </small>
 </dd>
-<br>
+<br><br>
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -968,7 +987,9 @@ if you supply the length and getter functions to make-type.
 
 <small>
 <blockquote>
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>Here is define-record using make-type.  It has a few Common Lisp extensions:
 </p>
 <pre>
@@ -1065,7 +1086,9 @@ point
        (list (point? pt) (point-x pt) (point-y pt)))
 (#t 1.0 3.0)
 </pre>	
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>In the next example, we define a float-vector type:
 </p>
 <pre>
@@ -1119,7 +1142,9 @@ point
 (2.0 4.0 6.0)
 </pre>
 
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>I seem to be using the same construct over and over; a begin to hold the names defined in the outer
 environment, a let to hold internal stuff, and set!s to give the names values.  It's a clumsy, but 
 simple way for multiple functions to share a closure.
@@ -1171,12 +1196,12 @@ v
 &gt; (adjust-vector v 10 #f)
 #(#f 32.0 #f #f #f #f #f #f #f #f)
 </pre>
-<hr>
+
 </blockquote>
 </small>
 
 </dd>
-<br>
+<br><br>
 
 
 
@@ -1223,7 +1248,9 @@ it is set:
 
 <small>
 <blockquote>
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>Here is a pretty example of make-procedure-with-setter:
 </p>
 <pre>
@@ -1283,12 +1310,12 @@ it is set:
 &gt; (procedure-source (c?r (((((a (b (c (d (e X)))))))))))
 (lambda (lst) (car (cdr (car (cdr (car (cdr (car (cdr (car (cdr (car (car (car (car lst)))))))))))))))
 </pre>	
-<hr>
+
 </blockquote>
 </small>
 
 </dd>
-<br>
+<br><br>
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -1319,11 +1346,15 @@ when it is buried in vector-refs and vector-set!s!
 
 <small>
 <blockquote>
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>Well, maybe applicable strings look weird: <code>("hi" 1)</code> is #\i, but worse,
 so is <code>(cond (1 =&gt; "hi"))</code>!
 </p>
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>This syntax makes it easy to write generic functions.
 For example, s7test.scm has implementations of Common Lisp's sequence functions.
 length, copy, fill!, map and for-each are generic in this sense (map always returns a list).
@@ -1380,12 +1411,12 @@ We can write an FFT procedure that accepts lists or vectors:
         &gt; (cfft! (vector 0.0 1+i 0.0 0.0))
         #(1+1i -1+1i -1-1i 1-1i)
 </pre>
-<hr>
+
 </blockquote>
 </small>
 </dd>
 
-<br>
+<br><br>
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -1422,9 +1453,12 @@ sets that element.  vector-dimensions returns a list of the dimensions of a vect
     (v 0 1)
     -&gt; 2.0
 </pre>
-<hr>
+
 <small>
 <blockquote>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>matrix multiplication:
 </p>
 <pre>
@@ -1442,11 +1476,11 @@ sets that element.  vector-dimensions returns a list of the dimensions of a vect
 	    (set! sum (+ sum (* (A i k) (B k j)))))
 	  (set! (C i j) sum))))))
 </pre>
-<hr>
+
 </blockquote>
 </small>
 </dd>
-<br>
+<br><br>
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -1475,7 +1509,7 @@ sets that element.  vector-dimensions returns a list of the dimensions of a vect
 -&gt; 123
 </pre>
 </dd>
-<br>
+<br><br>
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -1527,7 +1561,7 @@ of pthread_getspecific, just call it: (var).
    threads))
 </pre>
 </dd>
-<br>
+<br><br>
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -1574,7 +1608,9 @@ In s7 (+ (values 1 2 3) 4) is 10.  Similarly,
 
 <small>
 <blockquote>
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>Is there any real need for multiple-values (even in its CL form)? 
 Daniel Weinreb says the original intention was to avoid consing,
 which it does in s7, but that's a gnat's eyelash of an optimization.
@@ -1594,11 +1630,11 @@ in Guile just returns 1!  In Clisp, both cases return 1.  This causes total conf
 <pre>
 (apply + (map (lambda (n) (values n (+ n 1))) (list 1 2)))
 </pre>
-<hr>
+
 </blockquote>
 </small>
 </dd>
-<br>
+<br><br>
 
 
 
@@ -1654,7 +1690,7 @@ it is continuing from the point of the error, but then fails to do so.
 </p>
 
 </dd>
-<br>
+<br><br>
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -1680,7 +1716,7 @@ it is continuing from the point of the error, but then fails to do so.
 "\"hiho\""
 </pre>
 </dd>
-<br>
+<br><br>
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -1785,7 +1821,7 @@ the unbound symbol.  In Snd, this is used to implement autoloading:
 'out-of-memory, 'wrong-number-of-args, 'format-error, 'out-of-range, 'division-by-zero, 'io-error, and 'bignum-error.  
 </p>
 </dd>
-<br>
+<br><br>
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -1836,7 +1872,7 @@ function call (that is, global to the function, not the function's local environ
      24
 </pre>
 </dd>
-<br>
+<br><br>
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -1884,7 +1920,7 @@ for an example.
 <p>s7 also includes current-error-port and set-current-error-port.
 </p>
 </dd>
-<br>
+<br><br>
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -1931,7 +1967,7 @@ write a function that tells us where the source is for a function:
 </pre>
 
 </dd>
-<br>
+<br><br>
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -1965,7 +2001,7 @@ Here we scan the symbol table for any function that doesn't have documentation:
                lst))))
 </pre>
 </dd>
-<br>
+<br><br>
 
 
 <!-- -------------------------------------------------------------------------------- -->
@@ -2096,7 +2132,9 @@ below.
 
 <small>
 <blockquote>
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>
 We have atoms, lists, namespaces (alists),
 environments (lists of alists), procedures (source code and its environment),
@@ -2128,67 +2166,24 @@ explicit class:
 "splicing"
 </pre>
 
-<hr>
 </blockquote>
 </small>
 
 
 </dd>
-<br>
+<br><br>
 
 
 
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
-<A NAME="miscellanea"></a>
+<A NAME="evalstring"></a>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>miscellanea</h4></td></tr></table>
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>eval</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
-<dd><p><b>*load-path*</b> is a list of directories to search when loading a file.
-<b>*load-hook*</b> is a function called just before a file is loaded.  Its argument is the filename.
-While loading, port-filename and port-line-number (of the current-input-port) can tell you
-where you are in the file.
-</p>
-<pre>
-(set! *load-hook* (lambda (name) (format #t "loading ~S...~%" name)))
-</pre>
-
-<p>Here's a *load-hook* function that adds the loaded file's directory
-to the *load-path* variable so that subsequent loads don't need to specify
-the directory:
-</p>
-<pre>
-(set! <em class=red>*load-hook*</em>
-  (lambda (filename)
-    (let ((pos -1)
-	  (len (length filename)))
-      (do ((i 0 (+ i 1)))
-	  ((= i len))
-	(if (char=? (filename i) #\/)
-	    (set! pos i)))
-      (if (positive? pos)
-	  (let ((directory-name (substring filename 0 pos)))
-	    (if (not (member directory-name <em class=red>*load-path*</em>))
-		(set! <em class=red>*load-path*</em> (cons directory-name *load-path*))))))))
-</pre>
-
-<hr>
-
-<p>As in Common Lisp, <b>*features*</b> is a list describing what is currently loaded into s7.  You can
-check it with the <b>provided?</b> function, or add something to it with <b>provide</b>.  In my version of Snd,
-at startup *features* is:
-</p>
-<pre>
-&gt; *features*
-(snd10 snd snd-s7 snd-motif gsl alsa xm snd-ladspa run clm4 clm sndlib gmp multidimensional-vectors s7)
-
-&gt; (provided? 'gmp)
-#t
-</pre>
-
-<hr>
+<dd>
 
 <p>
 <b>eval</b> evaluates its argument (a list representing a piece of code).  It takes an optional
@@ -2205,6 +2200,9 @@ is similar, but its argument is a string.
 
 <small>
 <blockquote>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>The environment argument is mainly useful in debugging.  A breakpoint can be set, for
 example, then any input is evaluated in the environment of the break.  Say we have the
 following code in ex.scm:
@@ -2256,9 +2254,69 @@ Start up a REPL, and:
 (a-function "ex.scm" 26) &gt; :go
 done!
 </pre>
+
 </blockquote>
 </small>
-<hr>
+</dd>
+<br><br>
+
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<A NAME="miscellanea"></a>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>miscellanea</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
+<dd><p><b>*load-path*</b> is a list of directories to search when loading a file.
+<b>*load-hook*</b> is a function called just before a file is loaded.  Its argument is the filename.
+While loading, port-filename and port-line-number (of the current-input-port) can tell you
+where you are in the file.
+</p>
+<pre>
+(set! *load-hook* (lambda (name) (format #t "loading ~S...~%" name)))
+</pre>
+
+<p>Here's a *load-hook* function that adds the loaded file's directory
+to the *load-path* variable so that subsequent loads don't need to specify
+the directory:
+</p>
+<pre>
+(set! <em class=red>*load-hook*</em>
+  (lambda (filename)
+    (let ((pos -1)
+	  (len (length filename)))
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
+	(if (char=? (filename i) #\/)
+	    (set! pos i)))
+      (if (positive? pos)
+	  (let ((directory-name (substring filename 0 pos)))
+	    (if (not (member directory-name <em class=red>*load-path*</em>))
+		(set! <em class=red>*load-path*</em> (cons directory-name *load-path*))))))))
+</pre>
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+
+<p>As in Common Lisp, <b>*features*</b> is a list describing what is currently loaded into s7.  You can
+check it with the <b>provided?</b> function, or add something to it with <b>provide</b>.  In my version of Snd,
+at startup *features* is:
+</p>
+<pre>
+&gt; *features*
+(snd10 snd snd-s7 snd-motif gsl alsa xm snd-ladspa run clm4 clm sndlib gmp multidimensional-vectors s7)
+
+&gt; (provided? 'gmp)
+#t
+</pre>
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+
 
 <p>Multi-line comments can be enclosed in either #| and |#, or #! and !# (the latter
 is for compatibility with Guile).  These are also useful for in-line comments:
@@ -2266,7 +2324,9 @@ is for compatibility with Guile).  These are also useful for in-line comments:
 </p>
 
 
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 
 <p>(<b>make-list</b> length (initial-element #f)) returns a list of 'length' elements defaulting to 'initial-element'.
 </p>
@@ -2288,7 +2348,9 @@ function passed as its second argument to choose the new ordering.
 but vectors are sorted in place.
 </p>
 
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 
 <p>
 Keywords exist mainly for define*'s benefit.  The keyword functions are:
@@ -2300,7 +2362,9 @@ s7's keyword support is somewhat lackadaisical; I can't decide if it's worth com
 about stuff like <code>(let ((:hi 1)) :hi)</code>.
 </p>
 
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 
 <p><b>help</b> tries to find information about its argument.</p>
 <pre>
@@ -2317,7 +2381,9 @@ about stuff like <code>(let ((:hi 1)) :hi)</code>.
 &gt; (help add1)
 "(add1 a) adds 1 to its argument"
 </pre>
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p><b>quit</b> exits s7.</p>
 <p><b>gc</b> calls the garbage collector.  (gc #f) turns off the GC, and (gc #t) turns it on.</p>
 
@@ -2331,7 +2397,9 @@ bind it to something else, which is asking for confusion).
 </p>
 -->
 
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 
 <p>Some other differences from r5rs:
 </p>
@@ -2350,18 +2418,24 @@ bind it to something else, which is asking for confusion).
 
 <small>
 <blockquote>
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>Schemes vary in their treatment of ().  s7 considers it a constant that evaluates to itself,
 so you rarely (never?) need to quote it.  <code>(eq? () '())</code> is #t in s7.
 </p>
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>Schemes also vary in handling trailing arguments:
 <code>(* 0 "hi")</code> in Guile returns 0, but s7 gives an error.  
 <code>(cond (1) (=&gt;))</code> is 1 in both,  and
 <code>(or 1 2 . 3)</code> is an
 error in Guile, and 1 in s7!
 </p>
-<hr>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>And a harder one... How should s7 treat this:
 <code>(string-set! "hiho" 1 #\z)</code>, or 
 <code>(vector-set! #(1 2 3) 1 32)</code>, or
@@ -2427,22 +2501,13 @@ One simple way to ensure immutability is to use copy:
 &gt; (let ((x (lambda () (copy "hiho")))) (string-set! (x) 1 #\x) (x))
 "hiho"
 </pre>
-<hr>
+
 </blockquote>
 </small>
 
-
-<p>So, to gather the various threads, here are some further changes I'd like:
-</p>
-
-<ul>
-<li>remove exact?, inexact?, exact-&gt;inexact, and inexact-&gt;exact (perhaps "float" as a replacement?).
-<li>allow "@" as an exponent marker in any base.
-<li>perhaps remove cxxxxr (the 4-way list accessors) and replace them with c?r.
-</ul>
 </dd>
 <br>
-<br>
+<br><br>
 
 
 
