@@ -3484,6 +3484,7 @@
 (test (let ((sum 0)) (for-each (lambda (n m p) (set! sum (+ sum n m))) (vector 1 2) (list 3 4) (vector 5 6)) sum) 10)
 (test (let ((sum 0)) (for-each (lambda (n m p) (if (char=? p #\x) (set! sum (+ sum n m)))) (vector 1 2 3) (list 3 4 5) "xax") sum) 12)
 
+(test (let* ((x (list (list 1 2 3))) (y (apply for-each abs x))) x) '((1 2 3)))
 
 
 ;;; -------- map --------
@@ -3512,6 +3513,8 @@
 (test (map list '(a b c)) '((a) (b) (c)))
 (test (map (lambda (a b) (- a b)) (list 1 2) (vector 3 4)) '(-2 -2))
 (test (map (lambda (a b c) (if (char=? a #\a) (+ b c) (- b c))) "axa" (list 1 2 3) (vector 4 5 6)) '(5 -3 9))
+
+(test (let* ((x (list (list 1 2 3))) (y (apply map abs x))) (list x y)) '(((1 2 3)) (1 2 3)))
 
 (test (let ((d 0))
 	(map (let ((a 0))

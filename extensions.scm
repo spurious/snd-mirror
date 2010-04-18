@@ -25,19 +25,19 @@
 	  ((pred (car l)) (loop (cdr l) result))
 	  (else (loop (cdr l) (cons (car l) result))))))
 
-
-(define (all-chans)
-  "(all-chans) -> two parallel lists, the first sound objects, the second channel numbers.  If we have
+(if (not (defined? 'all-chans))
+    (define (all-chans)
+      "(all-chans) -> two parallel lists, the first sound objects, the second channel numbers.  If we have
 two sounds open (indices 0 and 1 for example), and the second has two channels, (all-chans) returns '((#<sound 0> #<sound 1> #<sound 1>) (0 0 1))"
-  (let ((sndlist '())
-	(chnlist '()))
-    (for-each (lambda (snd)
-		(do ((i (- (channels snd) 1) (- i 1)))
-		    ((< i 0))
-		  (set! sndlist (cons snd sndlist))
-		  (set! chnlist (cons i chnlist))))
-	      (sounds))
-    (list sndlist chnlist)))
+      (let ((sndlist '())
+	    (chnlist '()))
+	(for-each (lambda (snd)
+		    (do ((i (- (channels snd) 1) (- i 1)))
+			((< i 0))
+		      (set! sndlist (cons snd sndlist))
+		      (set! chnlist (cons i chnlist))))
+		  (sounds))
+	(list sndlist chnlist))))
 
 
 (define channel-sync

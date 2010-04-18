@@ -15488,6 +15488,10 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
     }
 
   sc->x = s7_cons(sc, sc->NIL, sc->NIL);
+  sc->z = s7_cons(sc, obj, sc->NIL);
+  /* we have to copy the args if any of them is a list:
+   * (let* ((x (list (list 1 2 3))) (y (apply for-each abs x))) (list x y))
+   */
 
   if (cddr(args) != sc->NIL)
     {
@@ -15500,12 +15504,14 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	  if (len != nlen)
 	    return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "an object whose length matches the other objects"));
 	  sc->x = s7_cons(sc, sc->NIL, sc->x);
+	  sc->z = s7_cons(sc, car(x), sc->z);
 	}
     }
 
   sc->args = s7_cons(sc, make_mutable_integer(sc, 0),
                s7_cons(sc, s7_make_integer(sc, len), 
-                 s7_cons(sc, sc->x, cdr(args))));
+                 s7_cons(sc, sc->x, 
+                   safe_reverse_in_place(sc, sc->z))));
 
   push_stack(sc, opcode(OP_FOR_EACH), sc->args, sc->code);
   return(sc->UNSPECIFIED);
@@ -15603,6 +15609,11 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
       return(sc->NIL);
     }
 
+  sc->z = s7_cons(sc, obj, sc->NIL);
+  /* we have to copy the args if any of them is a list:
+   * (let* ((x (list (list 1 2 3))) (y (apply map abs x))) (list x y))
+   */
+
   if (cddr(args) != sc->NIL)
     {
       for (i = 3, x = cddr(args); x != sc->NIL; x = cdr(x), i++)
@@ -15613,20 +15624,19 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	    return(s7_wrong_type_arg_error(sc, "map", i, car(x), "a vector, list, string, or applicable object"));
 	  if (len != nlen)
 	    return(s7_wrong_type_arg_error(sc, "map", i, car(x), "an object whose length matches the other objects"));
+	  sc->z = s7_cons(sc, car(x), sc->z);
 	}
     }
-
   sc->args = s7_cons(sc, make_mutable_integer(sc, 0), 
                s7_cons(sc, s7_make_integer(sc, len), 
-		 s7_cons(sc, sc->NIL, cdr(args))));
+		 s7_cons(sc, sc->NIL, 
+                   safe_reverse_in_place(sc, sc->z))));
 
   next_map(sc);
   push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
 
   return(sc->NIL);
 }
-
-
 
 
 

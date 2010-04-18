@@ -38,17 +38,18 @@
   (DefaultScreenOfDisplay 
     (XtDisplay (cadr (main-widgets)))))
 
-(define (all-chans)
-  "(all-chans) returns a list of all current sound objects and channel numbers"
-  (let ((sndlist '())
-	(chnlist '()))
-    (for-each (lambda (snd)
-		(do ((i (- (channels snd) 1) (- i 1)))
-		    ((< i 0))
-		  (set! sndlist (cons snd sndlist))
-		  (set! chnlist (cons i chnlist))))
-	      (sounds))
-    (list sndlist chnlist)))
+(if (not (defined? 'all-chans))
+    (define (all-chans)
+      "(all-chans) returns a list of all current sound objects and channel numbers"
+      (let ((sndlist '())
+	    (chnlist '()))
+	(for-each (lambda (snd)
+		    (do ((i (- (channels snd) 1) (- i 1)))
+			((< i 0))
+		      (set! sndlist (cons snd sndlist))
+		      (set! chnlist (cons i chnlist))))
+		  (sounds))
+	(list sndlist chnlist))))
 
 (define (update-label effects)
   "(update-label effects) evaluates the elements of the list 'effects'"
