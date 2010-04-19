@@ -17809,7 +17809,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_pair(sc->code)) 
 	{ 
 	  if (!is_pair(cdar(sc->code)))            /* (let* ((a 1) (b . 2)) ...) */
-	    return(eval_error(sc, "let* variable setting is a dotted list? ~A", sc->code));
+	    return(eval_error(sc, "let* variable list is messed up? ~A", sc->code));
 
 	  push_stack(sc, opcode(OP_LET_STAR1), sc->args, sc->code);
 	  sc->code = cadar(sc->code);

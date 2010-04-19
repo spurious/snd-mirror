@@ -284,6 +284,21 @@
 	       (number-ok? big-test big-result ,expected)))
 	   ))))
 
+(define-macro (reinvert n op1 op2 arg)
+  (let ((body `(,op2 (,op1 ,arg))))
+    (do ((i 1 (+ i 1)))
+	((= i n))
+      (set! body `(,op2 (,op1 ,body))))
+    body))
+
+(define-macro (recompose n op arg)
+  (define (recompose-1 n)
+    (if (= n 1)
+	`(,op ,arg)
+	`(,op ,(recompose-1 (- n 1)))))
+  (recompose-1 n))
+
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -513,6 +528,7 @@
        (format #t "(boolean? ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1))))
 
+(test (recompose 12 boolean? #f) #t)
 
 
 (test (not #f) #t)
@@ -533,6 +549,7 @@
        (format #t "(not ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) (if #f #f)))
 
+(test (recompose 12 not #f) #f)
 
 
 (test (symbol? 't) #t)
@@ -716,6 +733,10 @@
     (if (and (not (char=? (integer->char i) (char-upcase (integer->char i))))
 	     (not (char-alphabetic? (integer->char i))))
 	(format #t "(char-upcase ~A) -> ~A but not alphabetic?~%" (integer->char i) (char-upcase (integer->char i)))))
+
+  (test (recompose 12 char-upcase #\a) #\A)
+  (test (reinvert 12 char-upcase char-downcase #\a) #\a)
+
   
   (test (char-downcase #\A) #\a)
   (test (char-downcase #\a) #\a)
@@ -736,6 +757,8 @@
 	 (format #t "(char-downcase ~A) != ~A?~%" arg1 arg2)))
    cap-a-to-z
    a-to-z)
+
+  (test (recompose 12 char-downcase #\A) #\a)
   
   
   (test (char-numeric? #\a) #f)
@@ -1126,6 +1149,7 @@
 (test (integer->char (char->integer #\a)) #\a)
 (test (integer->char (char->integer #\space)) #\space)
 
+(test (reinvert 12 integer->char char->integer 60) 60)
 
 
 
@@ -1531,6 +1555,9 @@
 	(string=? str "012345"))
       #t)
 
+(test (recompose 12 (lambda (a) (substring a 0 3)) "12345") "123")
+(test (reinvert 12 (lambda (a) (substring a 0 3)) (lambda (a) (string-append a "45")) "12345") "12345")
+
 
 (test (string-append "hi" "ho") "hiho")
 (test (string-append "hi") "hi")
@@ -1571,12 +1598,20 @@
 	     (string=? str2 "hahiho")))
       #t)
 
+(test (recompose 12 string-append "x") "x")
+(test (recompose 12 (lambda (a) (string-append a "x")) "a") "axxxxxxxxxxxx")
+(test (recompose 12 (lambda (a) (string-append "x" a)) "a") "xxxxxxxxxxxxa")
+
 
 
 (test (let ((hi (string-copy "hi"))) (string-fill! hi #\s) hi) "ss")
 (test (let ((hi (string-copy ""))) (string-fill! hi #\x) hi) "")
 (test (let ((str (make-string 0))) (string-fill! str #\a) str) "")
 (test (let ((hi (make-string 8 (integer->char 0)))) (string-fill! hi #\a) hi) "aaaaaaaa") ; is this result widely accepted?
+(test (recompose 12 string-copy "xax") "xax")
+(test (let ((hi (make-string 3 #\x))) (recompose 12 (lambda (a) (string-fill! a #\a) a) hi)) "aaa")
+(test (let ((hi (make-string 3 #\x))) (recompose 12 (lambda (a) (string-fill! hi a)) #\a) hi) "aaa")
+
 
 
 (test (let ((str (make-string 4 #\x))
@@ -1639,6 +1674,8 @@
 (test (string #\' #\' #\` #\") '"''`\"")
 ;;; some schemes accept \' and other such sequences in a string, but the spec only mentions \\ and \"
 
+(test (reinvert 12 string->list list->string "12345") "12345")
+
 
 (test (symbol->string 'hi) "hi")
 (test (symbol->string (string->symbol "()")) "()")
@@ -1673,6 +1710,9 @@
 (test (string->symbol "1+i") 'error)
 (test (string->symbol ":0") ':0)
 (test (symbol->string (string->symbol "")) "")
+
+(test (reinvert 12 string->symbol symbol->string "hiho") "hiho")
+
 
 
 
@@ -1730,6 +1770,8 @@
    (if (not (equal? (car (cons arg '())) arg))
        (format #t "(car '(~A)) returned ~A?~%" arg (car (cons arg '())))))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
+
+(test (reinvert 12 car (lambda (a) (cons a '())) '(1)) '(1))
 
 
 (test (cdr (list 1 2 3)) '(2 3))
@@ -2023,6 +2065,8 @@
 (test (cdddar '((a aa aaa . aaaa) b c)) 'aaaa)
 (test (cddddr '(a b c d . e)) 'e)
 
+(test (recompose 10 cdr '(1 2 3 4 5 6 7 8 9 10 11 12)) '(11 12))
+(test (recompose 10 car '(((((((((((1 2 3)))))))))))) '(1 2 3))
 
 
 
@@ -2085,6 +2129,9 @@
        (if (not (equal? lst (reverse (reverse (reverse (reverse lst))))))
 	   (format #t "(reverse...(4x) ~A) -> ~A?~%" lst (reverse (reverse (reverse (reverse lst))))))))
  lists)
+
+(test (let ((x (list 1 2 3))) (list (recompose 32 reverse x) x)) '((1 2 3) (1 2 3)))
+(test (let ((x (list 1 2 3))) (list (recompose 31 reverse x) x)) '((3 2 1) (1 2 3)))
 
 
 
@@ -2214,6 +2261,8 @@
 (test (reverse! ''foo) '(foo quote))
 (test (reverse (reverse! (list 1 2 3))) (list 1 2 3))
 (test (reverse (reverse! (reverse! (reverse (list 1 2 3))))) (list 1 2 3))
+
+(test (let ((x (list 1 2 3))) (recompose 31 reverse! x)) '(3 2 1))
 
 
 (test (let ((x (cons 1 2))) (set-car! x 3) x) (cons 3 2))
@@ -2388,6 +2437,8 @@
   (test (assq 3.0 e) #f)
   (test (assq 5/3 e) #f))
 
+(test (assq 'x (cdr (assq 'a '((b . 32) (a . ((a . 12) (b . 32) (x . 1))) (c . 1))))) '(x . 1))
+
 
 
 (let ((e '((a 1) (b 2) (c 3))))
@@ -2520,6 +2571,8 @@
 	       (= (caddr y) 3))
 	  #t)))
 
+(test (let ((xx (list 1 2))) (recompose 12 (lambda (x) (append (list (car x)) (cdr x))) xx)) '(1 2))
+
 
 (test (memq 'a '(a b c)) '(a b c))
 (test (memq 'b '(a b c)) '(b c))
@@ -2530,6 +2583,7 @@
 (test (memq #f '(1 a #t "hi" #f 2)) '(#f 2))
 (test (memq eq? (list 2 eqv? 1 eq?)) (list eq?))
 (test (memq eq? (list 2 eqv? 2)) #f)
+(test (memq 6 (memq 5 (memq 4 (memq 3 (memq 2 (memq 1 '(1 2 3 4 5 6))))))) '(6))
 
 
 (test (memv 101 '(100 101 102)) '(101 102))
@@ -2643,6 +2697,8 @@
 (test (list->vector (vector->list (vector 1))) '#(1))
 (test (vector->list (list->vector (list))) '())
 (test (vector->list (list->vector (list 1))) '(1))
+
+(test (reinvert 12 vector->list list->vector #(1 2 3)) #(1 2 3))
 
 
 
@@ -3515,6 +3571,11 @@
 (test (map (lambda (a b c) (if (char=? a #\a) (+ b c) (- b c))) "axa" (list 1 2 3) (vector 4 5 6)) '(5 -3 9))
 
 (test (let* ((x (list (list 1 2 3))) (y (apply map abs x))) (list x y)) '(((1 2 3)) (1 2 3)))
+(test (let* ((x (quote ((1 2) (3 4)))) (y (apply map ash x))) (list x y)) '(((1 2) (3 4)) (8 32)))
+(test (let* ((x (quote ((1 2 3) (4 5 6) (7 8 9)))) (y (apply map + x))) (list x y)) '(((1 2 3) (4 5 6) (7 8 9)) (12 15 18)))
+(test (map * (map + '(1 2 3) '(4 5 6)) '(1 2 3)) '(5 14 27))
+(test (apply map * (apply map + '(1 2 3) '((4 5 6))) '((1 2 3))) '(5 14 27))
+(test (let* ((x (lambda () '(1 2 3))) (y (apply map - (list (x))))) (x)) '(1 2 3))
 
 (test (let ((d 0))
 	(map (let ((a 0))
