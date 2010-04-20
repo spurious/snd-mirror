@@ -430,8 +430,9 @@ typedef struct s7_cell {
     
     struct {
       s7_pointer car, cdr, csr;
-      /* this could be made available to callers -- doubly linked lists? nets?
-       *   due to the s7_num_t size, there is unused space in several of these union fields,
+      /* this could be made available to callers -- doubly linked lists? nets? 
+       *   I'm told this idea was once called a "hunk" and was considered a disaster.
+       *   Due to the s7_num_t size, there is unused space in several of these union fields,
        *   so csr currently holds the symbol-access lists.
        * There's also room for another 4-bytes of info.
        */
@@ -1405,6 +1406,7 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
     if (typeflag(sc->temps[i]) != 0)
       fprintf(fd, "%s\n", s7_object_to_c_string(sc, sc->temps[i]));
 
+  fflush(fd);
   fclose(fd);
   return(sc->NIL);
 }
@@ -3295,7 +3297,9 @@ static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *numer, s7_Int *
     {
       val = (double)p0 / (double)q0;
       
-      if ((x0 <= val) && (val <= x1))
+      if (((x0 <= val) && (val <= x1)) ||
+	  (e1 == 0) ||
+	  (e1p == 0))
 	{
 	  (*numer) = p0;
 	  (*denom) = q0;
@@ -3320,6 +3324,7 @@ static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *numer, s7_Int *
       p0 = old_p1 + r * p0;
       q0 = old_q1 + r * q0;
       e1 = old_e0p - r * e1p;
+      /* if the error is set too low, we can get e1 = 0 here: (rationalize (/ pi) 1e-17) */
       e1p = old_e0 - r * old_e1;
     }
   return(false);
@@ -3577,8 +3582,20 @@ static s7_pointer make_number(s7_scheme *sc, s7_num_t n)
 }
 
 
+#if WITH_GMP
+  static s7_pointer s7_number_to_big_real(s7_scheme *sc, s7_pointer p);
+#endif
+
 static s7_pointer exact_to_inexact(s7_scheme *sc, s7_pointer x)
 {
+  /* this is tricky because a big int can mess up when turned into a double:
+   *   (truncate (exact->inexact most-positive-fixnum)) -> -9223372036854775808
+   */
+#if WITH_GMP
+  if ((number_type(x) == NUM_INT) &&
+      (s7_integer(x) > LONG_MAX))
+    return(s7_number_to_big_real(sc, x));
+#endif
   if (s7_is_rational(x))
     return(s7_make_real(sc, s7_number_to_real(x)));
   return(x);
@@ -5020,6 +5037,10 @@ static s7_pointer g_make_rectangular(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if WITH_GMP
+  static s7_pointer big_abs(s7_scheme *sc, s7_pointer args);
+#endif
+
 static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
 {
   #define H_abs "(abs x) returns the absolute value of the real number x"
@@ -5031,10 +5052,22 @@ static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
   n = number(car(args));
   switch (num_type(n))
     {
-    case NUM_INT:     return(s7_make_integer(sc, s7_Int_abs(integer(n))));
-    case NUM_RATIO:   return(s7_make_ratio(sc, s7_Int_abs(numerator(n)), denominator(n)));
+    case NUM_INT:     
+      /* as in exact->inexact, (abs most-negative-fixnum) is a bother */
+#if WITH_GMP
+      /* TODO: make this LLONG_MIN into a choice via s7_Int */
+      /* TODO: and gather all these forward decls! */
+      if ((integer(n)) == LLONG_MIN)
+	return(big_abs(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(n)), sc->NIL)));
+#endif
+      return(s7_make_integer(sc, s7_Int_abs(integer(n))));
+
+    case NUM_RATIO:   
+      return(s7_make_ratio(sc, s7_Int_abs(numerator(n)), denominator(n)));
+
     case NUM_REAL2:
-    case NUM_REAL:    return(s7_make_real(sc, s7_Double_abs(real(n))));
+    case NUM_REAL:    
+      return(s7_make_real(sc, s7_Double_abs(real(n))));
     }
   return(sc->NIL); /* make compiler happy */
 }
@@ -5093,6 +5126,11 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
       err = s7_number_to_real(cadr(args));
     }
   else err = default_rationalize_error;
+
+  if ((s7_is_integer(x)) &&
+      (err < 1.0) &&
+      (err > -1.0))
+    return(x);
 
   if (c_rationalize(s7_number_to_real(x), err, &numer, &denom))
     return(s7_make_ratio(sc, numer, denom));
@@ -5592,6 +5630,9 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 		return(n);
 	      return(small_int(1));
 	    }
+
+	  if (y == LLONG_MIN) /* TODO: most-negative-fixnum */
+	    return(small_int(0)); /* (expt x most-negative-fixnum) !! */
 
 	  if (int_pow_ok(x, s7_Int_abs(y)))
 	    {
@@ -7305,7 +7346,11 @@ static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
   if (arg2 >= s7_int_bits)
     return(s7_out_of_range_error(sc, "ash", 2, cadr(args), "shift is too large"));
   if (arg2 < -s7_int_bits)
-    return(small_int(0));
+    {
+      if (arg1 < 0)                      /* (ash -31 -100) */
+	return(small_negative_ints[1]);
+      return(small_int(0));
+    }
 
   if (arg2 >= 0)
     return(s7_make_integer(sc, arg1 << arg2));
@@ -8616,6 +8661,7 @@ void s7_close_output_port(s7_scheme *sc, s7_pointer p)
     {
       if (port_file(p))
 	{
+	  fflush(port_file(p));
 	  fclose(port_file(p));
 	  port_file(p) = NULL;
 	}
@@ -18543,7 +18589,7 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   memcpy((void *)new_sc, (void *)sc, sizeof(s7_scheme));
   
   /* share the heap, symbol table and global environment, protected objects list, and all the startup stuff (all via the memcpy),
-   *   but have separate stacks and eval locals
+   *   but have separate stacks and eval locals (and GC temps)
    */
   
   new_sc->longjmp_ok = false;
@@ -22102,8 +22148,12 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
 	  {
 	    mpfr_set_z(val, p0, GMP_RNDN);
 	    mpfr_div_z(val, val, q0, GMP_RNDN);  /* val = p0/q0 */
-	    if ((mpfr_cmp(x0, val) <= 0) &&      /* if ((x0 <= val) && (val <= x1)) */
-		(mpfr_cmp(val, x1) <= 0))
+
+	    if (((mpfr_cmp(x0, val) <= 0) &&      /* if ((x0 <= val) && (val <= x1)) */
+		 (mpfr_cmp(val, x1) <= 0)) ||
+		(mpfr_cmp_ui(e1, 0) == 0) ||
+		(mpfr_cmp_ui(e1p, 0) == 0)) 
+	      /* these last 2 are probably not needed -- they protect against running out of bits in the standard C case above */
 	      {
 		mpq_t *q;
 		q = (mpq_t *)malloc(sizeof(mpq_t));
@@ -24056,11 +24106,6 @@ s7_scheme *s7_init(void)
  * SOMEDAY: eval-string (or eval?) with jump outside the eval (call/cc external) -> segfault or odd error
  *             (is this the case in dynamic-wind also?)
  *
- * procedure-source actually makes arity/doc unnecessary (except in the c-function cases):
- *    (define* (hi (a 1) (b 2)) "hi is a function" (+ a b))
- *    (procedure-source hi)
- *    (lambda* ((a 1) (b 2)) "hi is a function" (+ a b))
- * procedure-source of built-ins? threads?
  * describe for vectors (dims), ports
  *  also envs as debugging aids: how to show file/line tags as well
  *  and perhaps store cur-code?  __form__ ? make a cartoon of entire state? [need only the pointer, not a copy]
@@ -24070,6 +24115,11 @@ s7_scheme *s7_init(void)
  *  [runtime call picture -- like the old days...]
  *
  * a way to walk up the stack?  (current-environment 10) [20-Jan-10] 11.2
+ * and a way to jump into the error environment, cerror 
+ *   an error handling dialog (gui) in snd?
+ *
+ * if *unbound-variable-hook* is set, and something actually unbound is encountered,
+ *   we seem to lose the file/line and so on?
  */
 
 /* OBJECTS...
@@ -24094,35 +24144,5 @@ s7_scheme *s7_init(void)
  * A "class" in this case is define-record (for the local fields and type) + a list of methods and a methods accessor.
  * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
  * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
- *
- * On the scheme side, if (f o ...), syntactic sugar for ((assoc f (methods o)) o ...) where
- *   we can (I think) predigest this.
- *
- *  (define-macro (defgeneric f)
- *    `(define-macro (,f obj . args)
- *       ((or (assoc ',f (methods obj))
- *            (error ...))
- *        obj ,@args)))
- *
- *   if (...)
- *     return(s7_wrong_type_arg_error(sc, "procedure-documentation", 0, x, "a procedure"))
- *
- *    we know sc->args is the arglist [sc->code is the func]
- *    x is our object and it's at nth arg position, in func "pr..."
- *    so we have all we need!
- *  if x is object, assoc f (methods x) -> func = call it else error
- *
- *  the method itself exists only in the alists
- *
- * in s7, a procedure is (cons evallable-list environment) (with locals = args)
- *        an object      (cons locals-list    environment)
- *        record is just the locals-list + globally defined accessors (an exploded alist essentially)
- *        a namespace (module) is just the environment (an alist)
- *        a thread is a function + environment + its own evaluator (stack etc)
- *        does it make sense: locals + env + stack? -- any method invocation takes place on its private stack?
- *          so continuations would be into its own world, each object would be completely independent,
- *          placing all new functions and so on in its own env
- *        (this can be done via s7 clones and (eval ... env) etc)
- * list environment stack -- is there anything else?
  */
 

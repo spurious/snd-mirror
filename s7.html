@@ -34,6 +34,7 @@
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>s7</h2></td></tr></table>
 </td></tr></table>
 
+
 <p>s7 is a Scheme implementation intended as an extension language
 for other applications, primarily Snd and Common Music.  It exists as just two files, s7.c and
 s7.h, that want only to disappear into someone else's source tree.  There are no libraries,
@@ -1341,8 +1342,17 @@ are both applicable and settable.  I think the syntax is pretty:
 -&gt; 32
 </pre>
 <p>You can use list-ref and friends, of course, but just try to read any serious vector arithmetic code
-when it is buried in vector-refs and vector-set!s! 
+when it is buried in vector-refs and vector-set!s!  set! can also apply to string-ref, list-ref, vector-ref,
+hash-table-ref, car, and cdr.  That is,
 </p>
+<pre>
+&gt; (let ((str "123")) 
+    (set! (string-ref str 1) #\x) str)
+"1x3"
+&gt; (let ((str "123")) 
+    (set! (str 1) #\x) str)
+"1x3"
+</pre>
 
 <small>
 <blockquote>
