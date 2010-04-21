@@ -960,6 +960,8 @@ static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer 
 
 
 
+
+
 /* -------------------------------- constants -------------------------------- */
 
 s7_pointer s7_f(s7_scheme *sc) 
@@ -2874,8 +2876,10 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   static s7_pointer big_divide(s7_scheme *sc, s7_pointer args);
   static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args);
   static s7_pointer big_random(s7_scheme *sc, s7_pointer args);
+  static s7_pointer big_abs(s7_scheme *sc, s7_pointer args);
   static s7_pointer s7_Int_to_big_integer(s7_scheme *sc, s7_Int val);
   static s7_pointer s7_ratio_to_big_ratio(s7_scheme *sc, s7_Int num, s7_Int den);
+  static s7_pointer s7_number_to_big_real(s7_scheme *sc, s7_pointer p);
 #endif
 
 
@@ -3581,10 +3585,6 @@ static s7_pointer make_number(s7_scheme *sc, s7_num_t n)
     }
 }
 
-
-#if WITH_GMP
-  static s7_pointer s7_number_to_big_real(s7_scheme *sc, s7_pointer p);
-#endif
 
 static s7_pointer exact_to_inexact(s7_scheme *sc, s7_pointer x)
 {
@@ -5037,10 +5037,6 @@ static s7_pointer g_make_rectangular(s7_scheme *sc, s7_pointer args)
 }
 
 
-#if WITH_GMP
-  static s7_pointer big_abs(s7_scheme *sc, s7_pointer args);
-#endif
-
 static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
 {
   #define H_abs "(abs x) returns the absolute value of the real number x"
@@ -5055,8 +5051,6 @@ static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
     case NUM_INT:     
       /* as in exact->inexact, (abs most-negative-fixnum) is a bother */
 #if WITH_GMP
-      /* TODO: make this LLONG_MIN into a choice via s7_Int */
-      /* TODO: and gather all these forward decls! */
       if ((integer(n)) == LLONG_MIN)
 	return(big_abs(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(n)), sc->NIL)));
 #endif
@@ -5631,8 +5625,8 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	      return(small_int(1));
 	    }
 
-	  if (y == LLONG_MIN) /* TODO: most-negative-fixnum */
-	    return(small_int(0)); /* (expt x most-negative-fixnum) !! */
+	  if (y == LLONG_MIN)
+	    return(small_int(0));                      /* (expt x most-negative-fixnum) !! */
 
 	  if (int_pow_ok(x, s7_Int_abs(y)))
 	    {
@@ -17703,12 +17697,37 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* sc->code is everything after the let: (let ((a 1)) a) so sc->code is (((a 1)) a) */
       /*   car it can be either a list or a symbol ("named let") */
 
-      if ((!is_pair(sc->code)) ||               /* (let . 1) */
-	  (!is_pair(cdr(sc->code))) ||          /* (let) */
-	  ((!is_pair(car(sc->code))) &&         /* (let 1 ...) */
-	   (car(sc->code) != sc->NIL) &&
-	   (!s7_is_symbol(car(sc->code)))))
+      if (!is_pair(sc->code))               /* (let . 1) */
+	return(eval_error(sc, "let form is an improper list? ~A", sc->code));
+
+      if (cdr(sc->code) == sc->NIL)         /* (let) */
+	return(eval_error(sc, "let has no variables or body: ~A", sc->code));
+
+      if (!is_pair(cdr(sc->code)))          /* (let () ) */
+	return(eval_error(sc, "let has no body: ~A", sc->code));
+	
+      if ((!is_pair(car(sc->code))) &&      /* (let 1 ...) */
+	  (car(sc->code) != sc->NIL) &&
+	  (!s7_is_symbol(car(sc->code))))
 	return(eval_error(sc, "let variable list is messed up or missing: ~A", sc->code));
+
+      /* TODO: we're accepting these in let (should say "no exprs"):
+       * (let () (define (hi) (+ 1 2)))
+       * (let () (begin (define x 3)))
+       * (let () 3 (begin (define x 3)))
+       * (let () (define x 3))
+       * (let () (if #t (define (x) 3)))
+       *
+       * are these legal? (Guile sez "definition in expression context")
+       *   (case 0 ((0) (define (x) 3) (x)))
+       *   (cond (0 (define (x) 3) (x)))
+       *
+       * and these look odd but we don't flag them as errors -- maybe they're ok
+       *   (and (define (x) x) 1)
+       *   (begin (define (x y) y) (x (define (x y) y)))
+       *   (if (define (x) 1) 2 3)
+       *   (do () ((define (x) 1) (define (y) 2)))
+       */
 
       if ((s7_is_symbol(car(sc->code))) &&
 	  (((!is_pair(cadr(sc->code))) &&       /* (let hi #t) */
@@ -21947,24 +21966,47 @@ static s7_pointer big_ash(s7_scheme *sc, s7_pointer args)
     {
       mpz_t *n;
       s7_Int shift;
+      bool p0_is_big;
 
-      if (((is_c_object(p0)) &&
+      p0_is_big = is_c_object(p0);
+
+      if (((p0_is_big) &&
 	   (mpz_cmp_ui(S7_BIG_INTEGER(p0), 0) == 0)) || 
-	  ((!is_c_object(p0)) &&
+	  ((!p0_is_big) &&
 	   (s7_integer(p0) == 0)))
 	return(small_int(0));
-	
+
       if (is_c_object(p1))
 	{
 	  if (!mpz_fits_sint_p(S7_BIG_INTEGER(p1)))
 	    {
 	      if (mpz_cmp_ui(S7_BIG_INTEGER(p1), 0) > 0)
 		return(s7_out_of_range_error(sc, "ash", 2, p1, "shift is too large"));
-	      return(small_int(0));
+
+	      /* here if p0 is negative, we need to return -1 */
+	      if (((p0_is_big) &&
+		   (mpz_cmp_ui(S7_BIG_INTEGER(p0), 0) > 0)) ||
+		  ((!p0_is_big) &&
+		   (s7_integer(p0) > 0)))
+		return(small_int(0));
+	      return(small_negative_ints[1]);
 	    }
 	  shift = mpz_get_si(S7_BIG_INTEGER(p1));
 	}
-      else shift = s7_integer(p1);
+      else 
+	{
+	  shift = s7_integer(p1);
+	  if (shift < LONG_MIN)
+	    {
+	      if (((p0_is_big) &&
+		   (mpz_cmp_ui(S7_BIG_INTEGER(p0), 0) > 0)) ||
+		  ((!p0_is_big) &&
+		   (s7_integer(p0) > 0)))
+		return(small_int(0));
+	      return(small_negative_ints[1]);
+	    }
+	}
+
       n = (mpz_t *)malloc(sizeof(mpz_t));
       mpz_init_set(*n, S7_BIG_INTEGER(promote_number(sc, T_BIG_INTEGER, p0)));
       if (shift > 0)     /* left */

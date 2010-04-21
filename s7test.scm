@@ -2812,6 +2812,50 @@
 (test (call/cc (lambda (return) (for-each (lambda (n) (return "oops")) (vector 1 2 3)))) "oops")
 (test (call/cc (lambda (return) (for-each (lambda (n) (if (even? n) (return n))) (vector 1 3 8 7 9 10)))) 8)
 
+(for-each
+ (lambda (data)
+   (let ((v data)
+	 (c #f)
+	 (y 0))
+     
+     (do ((i 0 (+ i 1)))
+	 ((= i 10))
+       (set! (v i) i))
+     
+     (let ((tag 
+	    (call/cc
+	     (lambda (exit)
+	       
+	       (for-each
+		(lambda (x)
+		  
+		  (call/cc
+		   (lambda (return)
+		     (set! c return)))
+		  
+		  (if (and (even? (inexact->exact x))
+			   (> x y) 
+			   (< x 10)) 
+		      (begin 
+			(set! (v (inexact->exact y)) 100)
+			(set! y x) 
+			(exit x)) 
+		      (set! y x)))
+		v)))))
+       
+       (if (and (number? tag) (< tag 10))
+	   (c)))
+     
+     (let ((correct (vector 0 100 2 100 4 100 6 100 8 9)))
+       (do ((i 0 (+ i 1)))
+	   ((= i 10))
+	 (if (not (= (correct i) (inexact->exact (v i))))
+	     (format #t ";for-each call/cc data: ~A~%" v))))))
+ 
+ (list (make-vector 10)
+;       (make-vct 10)
+       (make-list 10)))
+
 
 (test (map (lambda (n) (+ 1 n)) (vector 1 2 3)) '(2 3 4))
 (test (map (lambda (n m) (- n m)) (vector 1 2 3) (vector 4 5 6)) '(-3 -3 -3))
@@ -4188,6 +4232,8 @@
 (test (let ((a 1)) (let ((b (lambda (x) (define y 1) (define z 2) (define a 3) (+ x y z a)))) (b a))) 7)
 (test ((lambda (f x) (f x x)) + 11) 22)
 (test ((lambda () (+ 2 3))) 5)
+(test (let ((x (let () (lambda () (+ 1 2))))) (x)) 3)
+(test (cond (0 => (lambda (x) x))) 0)
 
 (test (letrec ((f (lambda (x) (g x)))
 	       (g (lambda (x) x)))
@@ -39419,6 +39465,7 @@
 (num-test (ash -31 -60) -1)
 (num-test (ash -31 -70) -1)
 (num-test (ash -31 -100) -1)
+(num-test (ash -31 most-negative-fixnum) -1)
 
 (num-test (/ 0/3) 'error)
 (num-test (/ 2/3 0) 'error)
