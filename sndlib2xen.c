@@ -1121,7 +1121,7 @@ static XEN g_mus_audio_close(XEN line)
 /* these take a sndlib buffer (sound_data) and handle the conversion to the interleaved char* internally */
 /* so, they take "frames", not "bytes", and a sound_data object, not char* etc */
 
-static XEN g_mus_audio_write(XEN line, XEN sdata, XEN frames)
+static XEN g_mus_audio_write(XEN line, XEN sdata, XEN frames, XEN start)
 {
   #define H_mus_audio_write "(" S_mus_audio_write " line sdata frames): write frames of data (channels * frames = samples) \
 to the audio line from sound-data sdata."
@@ -1129,23 +1129,26 @@ to the audio line from sound-data sdata."
   char *obuf;
   sound_data *sd;
   int outbytes, val, fmt, fd;
-  mus_long_t frms;
+  mus_long_t frms, beg = 0;
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(line), line, XEN_ARG_1, S_mus_audio_write, "an integer");
   XEN_ASSERT_TYPE(sound_data_p(sdata), sdata, XEN_ARG_2, S_mus_audio_write, "a sound-data object");
   XEN_ASSERT_TYPE(XEN_INT64_T_P(frames), frames, XEN_ARG_3, S_mus_audio_write, "an integer");
+  XEN_ASSERT_TYPE(XEN_INT64_T_P(start) || XEN_NOT_BOUND_P(start), start, XEN_ARG_4, S_mus_audio_write, "an integer");
 
   sd = XEN_TO_SOUND_DATA(sdata);
   frms = XEN_TO_C_INT64_T(frames);
   if (frms > sd->length)
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_write, 3, frames, "frames ~A > sound-data buffer length");
+  if (XEN_BOUND_P(start))
+    beg = XEN_TO_C_INT64_T(start);
 
   fd = XEN_TO_C_INT(line);
   fmt = audio_io_write_format(fd);
   outbytes = frms * sd->chans * mus_bytes_per_sample(fmt);
   obuf = (char *)calloc(outbytes, sizeof(char));
 #if SNDLIB_USE_FLOATS
-  mus_file_write_buffer(fmt, 0, frms - 1, sd->chans, sd->data, obuf, true); /* true -> clipped */
+  mus_file_write_buffer(fmt, beg, beg + frms - 1, sd->chans, sd->data, obuf, true); /* true -> clipped */
 #else
   {
     mus_sample_t **sdata;
@@ -2412,7 +2415,7 @@ XEN_NARGIFY_1(g_mus_sound_close_input_w, g_mus_sound_close_input)
 
 XEN_NARGIFY_0(g_mus_audio_describe_w, g_mus_audio_describe)
 XEN_NARGIFY_1(g_mus_audio_close_w, g_mus_audio_close)
-XEN_NARGIFY_3(g_mus_audio_write_w, g_mus_audio_write)
+XEN_ARGIFY_4(g_mus_audio_write_w, g_mus_audio_write)
 XEN_NARGIFY_3(g_mus_audio_read_w, g_mus_audio_read)
 XEN_NARGIFY_5(g_mus_audio_open_output_w, g_mus_audio_open_output)
 XEN_NARGIFY_5(g_mus_audio_open_input_w, g_mus_audio_open_input)
@@ -2722,7 +2725,7 @@ void mus_sndlib_xen_initialize(void)
 
   XEN_DEFINE_PROCEDURE(S_mus_audio_describe,       g_mus_audio_describe_w,         0, 0, 0, H_mus_audio_describe);
   XEN_DEFINE_PROCEDURE(S_mus_audio_close,          g_mus_audio_close_w,            1, 0, 0, H_mus_audio_close);
-  XEN_DEFINE_PROCEDURE(S_mus_audio_write,          g_mus_audio_write_w,            3, 0, 0, H_mus_audio_write);
+  XEN_DEFINE_PROCEDURE(S_mus_audio_write,          g_mus_audio_write_w,            3, 1, 0, H_mus_audio_write);
   XEN_DEFINE_PROCEDURE(S_mus_audio_read,           g_mus_audio_read_w,             3, 0, 0, H_mus_audio_read);
   XEN_DEFINE_PROCEDURE(S_mus_audio_open_output,    g_mus_audio_open_output_w,      5, 0, 0, H_mus_audio_open_output);
   XEN_DEFINE_PROCEDURE(S_mus_audio_open_input,     g_mus_audio_open_input_w,       5, 0, 0, H_mus_audio_open_input);

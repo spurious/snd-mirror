@@ -220,6 +220,7 @@ int check_balance(const char *expr, int start, int end, bool in_listener)
 	  break;
 
 	case '\'' :
+	case '`' :                  /* `(1 2) */
 	  if (prev_separator) 
 	    quote_wait = true;
 	  non_whitespace_p = true;

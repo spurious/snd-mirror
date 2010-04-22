@@ -3983,9 +3983,23 @@ mus-audio-read reads 'frames' frames of data into the sound-data object 'sd' fro
 
 
 <!-- mus-audio-write -->
-<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="musaudiowrite">mus-audio-write</a> line sd frames</code>
+<tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="musaudiowrite">mus-audio-write</a> line sd frames (start 0)</code>
 </td></tr><tr><td></td><td>
-mus-audio-write writes 'frames' frames of data from the sound-data object 'sd' to the audio output port 'line'.
+<p>mus-audio-write writes 'frames' frames of data from the sound-data object 'sd' to the audio output port 'line'.
+If 'start' is given, it sets where to start reading in the sound-data buffers.
+</p>
+<pre>
+(let ((sd (make-sound-data 1 44100)))
+  (with-sound (:output sd)
+    (fm-violin 0 1 440 .1)
+    (fm-violin .5 .1 660 .1))
+
+  (let* ((audio-fd (mus-audio-open-output mus-audio-default 44100 1 mus-lfloat (* 4 1024))))
+    (do ((i 0 (+ i 1024)))
+	((&gt;= i 44100))
+      (mus-audio-write audio-fd sd 1024 i))
+    (mus-audio-close audio-fd)))
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

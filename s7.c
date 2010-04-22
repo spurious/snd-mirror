@@ -526,7 +526,7 @@ struct s7_scheme {
   s7_pointer global_env;              /* global environment */
   
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, UNQUOTE_SPLICING, MACROEXPAND;
-  s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, VECTOR_FUNCTION, ELSE, SET;
+  s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, ELSE, SET;
   s7_pointer ERROR, WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO;
   s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, SYNTAX_ERROR;
   s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, __FUNC__, ERROR_HOOK, TRACE_HOOK, UNBOUND_VARIABLE_HOOK;
@@ -15797,9 +15797,6 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
       (car(cdr(l)) == car(form)))
     return(make_list_2(sc, sc->QUOTE, form));
 
-  if (l == sc->VECTOR_FUNCTION)
-    return(g_vector(sc, make_list_1(sc, r))); /* eval? */
-
   return(make_list_3(sc, sc->CONS, l, r));
 }
 
@@ -17843,7 +17840,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_LET_STAR1:    /* let* -- calculate parameters */
-      /* fprintf(stderr, "code: %s\n", s7_object_to_c_string(sc, sc->code)); */
 
       if (!(s7_is_symbol(caar(sc->code))))
 	return(eval_error(sc, "bad variable ~S in let* bindings", car(sc->code)));
@@ -18497,7 +18493,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  s7_pointer x;
 		  x = symbol_value(find_symbol(sc, sc->envir, car(sc->value)));
 		  sc->args = make_list_1(sc, sc->value); 
-		  /* fprintf(stderr, "args: %s\n", s7_object_to_c_string(sc, sc->args)); */
 		  sc->code = x;
 		  goto APPLY;
 		}
@@ -18568,6 +18563,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* this works only if the backquote is right next to the #( of the read-time vector,
        *    and then only if the vector can be dealt with at read time.  It doesn't seem
        *    very useful to me.  To get a vector in a macro, use "vector", not "#()".
+       *
+       *    (let ((x (list 1 2))) `(,@x)) -> '(1 2)
+       * so (let ((x (list 1 2))) `#(,@x)) -> '#(1 2)
        */
       sc->value = make_list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_2(sc, sc->value));
       pop_stack(sc);
@@ -24041,8 +24039,6 @@ s7_scheme *s7_init(void)
 #if WITH_PROFILING
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "profiling")));  
 #endif
-
-  sc->VECTOR_FUNCTION = s7_name_to_value(sc, "vector");
 
   sc->VECTOR_SET = s7_symbol_value(sc, s7_make_symbol(sc, "vector-set!"));
   typeflag(sc->VECTOR_SET) |= T_DONT_COPY; 
