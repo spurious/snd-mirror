@@ -6234,7 +6234,9 @@
 (test (let ((x '(1 2 3))) `#(0 ,x)) '#(0 (1 2 3)))
 					;(test (let ((x '(1 2 3))) `#(0 . ,x)) '#(0 1 2 3))
 
-
+(test (let () (define-macro (tryqv . lst) `(map abs ',lst)) (tryqv 1 2 3 -4 5)) '(1 2 3 4 5))
+(test (let () (define-macro (tryqv . lst) `(map abs '(,@lst))) (tryqv 1 2 3 -4 5)) '(1 2 3 4 5))
+(test (let () (define-macro (tryqv . lst) `(map abs (vector ,@lst))) (tryqv 1 2 3 -4 5)) '#(1 2 3 4 5))
 
 
 (let ((ht (make-hash-table)))

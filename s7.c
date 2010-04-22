@@ -16179,7 +16179,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	case TOKEN_EOF:
 	  return(sc->EOF_OBJECT);
 	  
-	case TOKEN_VECTOR:  /* already read #( */
+	case TOKEN_VECTOR:  /* already read #( -- TOKEN_VECTOR is triggered by #( */
 	  push_stack(sc, opcode(OP_READ_VECTOR), sc->NIL, sc->NIL);
 	  /* fall through */
 	  
@@ -18565,10 +18565,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_READ_QUASIQUOTE_VECTOR:
+      /* this works only if the backquote is right next to the #( of the read-time vector,
+       *    and then only if the vector can be dealt with at read time.  It doesn't seem
+       *    very useful to me.  To get a vector in a macro, use "vector", not "#()".
+       */
       sc->value = make_list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_2(sc, sc->value));
       pop_stack(sc);
       goto START;
-      
+
       
     case OP_READ_UNQUOTE:
       sc->value = make_list_2(sc, sc->UNQUOTE, sc->value);
@@ -18586,6 +18590,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = g_vector(sc, sc->value);
       pop_stack(sc);
       goto START;
+
+      /* TODO: add read-time multivector via #n()
+       *   does this require a new multivector function? (dims = how many args, args are the vals in lists)
+       */
 
       
     default:
@@ -21967,13 +21975,24 @@ static s7_pointer big_ash(s7_scheme *sc, s7_pointer args)
       mpz_t *n;
       s7_Int shift;
       bool p0_is_big;
+      int p0_compared_to_zero = 0;
 
       p0_is_big = is_c_object(p0);
+      if (p0_is_big)
+	p0_compared_to_zero = mpz_cmp_ui(S7_BIG_INTEGER(p0), 0);
+      else 
+	{
+	  if (s7_integer(p0) > 0)
+	    p0_compared_to_zero = 1;
+	  else
+	    {
+	      if (s7_integer(p0) < 0)
+		p0_compared_to_zero = -1;
+	      else p0_compared_to_zero = 0;
+	    }
+	}
 
-      if (((p0_is_big) &&
-	   (mpz_cmp_ui(S7_BIG_INTEGER(p0), 0) == 0)) || 
-	  ((!p0_is_big) &&
-	   (s7_integer(p0) == 0)))
+      if (p0_compared_to_zero == 0)
 	return(small_int(0));
 
       if (is_c_object(p1))
@@ -21984,10 +22003,7 @@ static s7_pointer big_ash(s7_scheme *sc, s7_pointer args)
 		return(s7_out_of_range_error(sc, "ash", 2, p1, "shift is too large"));
 
 	      /* here if p0 is negative, we need to return -1 */
-	      if (((p0_is_big) &&
-		   (mpz_cmp_ui(S7_BIG_INTEGER(p0), 0) > 0)) ||
-		  ((!p0_is_big) &&
-		   (s7_integer(p0) > 0)))
+	      if (p0_compared_to_zero == 1)
 		return(small_int(0));
 	      return(small_negative_ints[1]);
 	    }
@@ -21998,10 +22014,7 @@ static s7_pointer big_ash(s7_scheme *sc, s7_pointer args)
 	  shift = s7_integer(p1);
 	  if (shift < LONG_MIN)
 	    {
-	      if (((p0_is_big) &&
-		   (mpz_cmp_ui(S7_BIG_INTEGER(p0), 0) > 0)) ||
-		  ((!p0_is_big) &&
-		   (s7_integer(p0) > 0)))
+	      if (p0_compared_to_zero == 1)
 		return(small_int(0));
 	      return(small_negative_ints[1]);
 	    }

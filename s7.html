@@ -1487,6 +1487,13 @@ sets that element.  vector-dimensions returns a list of the dimensions of a vect
 	  (set! (C i j) sum))))))
 </pre>
 
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>I can't think of a nice syntax for a constant multidimensional vector.  One idea is
+to mimic CL and use <code>#n(...)</code> where the n gives the number of dimensions, and the data is
+enclosed in n lists.  Also, the vector printout should probably show the dimensions in some way.
+</p>
 </blockquote>
 </small>
 </dd>
@@ -2350,9 +2357,21 @@ function passed as its second argument to choose the new ordering.
 &gt; (sort! (list 3 4 8 2 0 1 5 9 7 6) &lt;)
 (0 1 2 3 4 5 6 7 8 9)
 
-&gt; (sort! (list (list 'u 1) (list 'i 0) (list 'a 2))
-     (lambda (a b) (&lt; (cadr a) (cadr b))))
-((i 0) (u 1) (a 2))
+(define (mix-notelists . notelists)
+  ;; assume the 2nd parameter is the begin time in seconds (the 1st is the instrument name)
+  (<em class=red>sort!</em>
+   (apply append notelists)
+   (lambda (note1 note2)
+     (&lt; (cadr note1) (cadr note2)))))
+
+(mix-notelists '((fm-violin 0 1 440 .1)
+		 (fm-violin 1 1 550 .1))
+	       '((bird 0 .1 )
+		 (bird .2 .1)
+		 (bird 1.2 .3)
+		 (bird .5 .5)))
+
+ -&gt; ((bird 0 0.1) (fm-violin 0 1 440 0.1) (bird 0.2 0.1) (bird 0.5 0.5) (fm-violin 1 1 550 0.1) (bird 1.2 0.3))
 </pre>
 <p>Despite the "!" in its name, sort! actually copies any list argument passed to it,
 but vectors are sorted in place.

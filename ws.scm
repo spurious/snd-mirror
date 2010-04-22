@@ -161,7 +161,6 @@
 		       (set! (mus-safety *output*) output-safety)))
 		 (begin
 		   (if (not continue-old-file)
-		       ;; if s7 we could just use fill! here (and below)
 		       (if (or (vct? output-1)
 			       (sound-data? output-1)
 			       (vector? output-1))
@@ -1109,3 +1108,37 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	   ((= i len))
 	 (outa i (* .5 (file->sample fd i 0))))))))
 |#
+
+
+(define (mix-notelists . notelists)
+  ;; assume the 2nd parameter is the begin time in seconds (the 1st is the instrument name)
+  (sort! 
+   (apply append notelists)
+   (lambda (note1 note2)
+     (< (cadr note1) (cadr note2)))))
+
+#|
+(mix-notelists '((fm-violin 0 1 440 .1)
+		 (fm-violin 1 1 550 .1))
+	       '((bird 0 .1 )
+		 (bird .2 .1)
+		 (bird 1.2 .3)
+		 (bird .5 .5)))
+((bird 0 0.1) (fm-violin 0 1 440 0.1) (bird 0.2 0.1) (bird 0.5 0.5) (fm-violin 1 1 550 0.1) (bird 1.2 0.3))
+|#
+
+
+(define* (with-simple-sound-helper thunk (output "test.snd") (channels 1) (srate 44100) (data-format mus-lfloat) (header-type mus-next))
+  (let ((old-output *output*))
+    (dynamic-wind
+	(lambda ()
+	  (set! *output* (make-sample->file output channels data-format header-type "with-simple-sound output")))
+	(lambda ()
+	  (thunk)
+	  output)
+	(lambda ()
+	  (mus-close *output*)
+	  (set! *output* old-output)))))
+
+(defmacro with-simple-sound (args . body)
+  `(with-simple-sound-helper (lambda () ,@body) ,@args))
