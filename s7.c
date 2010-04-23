@@ -560,7 +560,7 @@ struct s7_scheme {
   token_t tok;
   s7_pointer value;
   opcode_t op;
-  s7_pointer x, y, z;            /* evaluator local vars */
+  s7_pointer w, x, y, z;         /* evaluator local vars */
 
   s7_pointer *temps;             /* short-term gc protection */
   int temps_ctr, temps_size;
@@ -1249,6 +1249,7 @@ static void mark_vector(s7_pointer p, s7_Int top)
   set_mark(p); /* might be called outside s7_mark_object */
 
   tp = (s7_pointer *)(vector_elements(p));
+  if (!tp) return;
   tend = (s7_pointer *)(tp + top);
 
   while (tp < tend) 
@@ -1332,6 +1333,7 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->cur_code);
   mark_vector(sc->stack, s7_stack_top(sc)); 
   /* splitting out the stack case saves about 1/2000 total time (we can skip the op etc) */
+  S7_MARK(sc->w);
   S7_MARK(sc->x);
   S7_MARK(sc->y);
   S7_MARK(sc->z);
@@ -1373,7 +1375,7 @@ static int gc(s7_scheme *sc)
 	      {
 		if (is_finalizable(p))
 		  finalize_s7_cell(sc, p); 
-		typeflag(p) = 0;
+		typeflag(p) = 0;  /* (this is needed -- otherwise we try to free some objects twice) */
 		(*fp++) = p;
 	      }
 	  }
@@ -1498,7 +1500,10 @@ static s7_pointer new_cell(s7_scheme *sc)
    * I think this is no longer needed.
    */
 
+#if 0
+  /* I don't think this is safe */
   if (sc->free_heap_top <= sc->free_heap_trigger)
+#endif
     {
       nsc->temps[nsc->temps_ctr++] = p;
       if (nsc->temps_ctr >= nsc->temps_size)
@@ -2025,23 +2030,24 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 
 static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer variable, s7_pointer value) 
 { 
-  s7_pointer slot, e;
+  s7_pointer e;
 
   e = car(env);
-  slot = immutable_cons(sc, variable, value);
-
   if (s7_is_vector(e))
     {
       int loc;
+      s7_pointer slot;
 
       if ((is_closure(value)) ||
 	  (is_closure_star(value)) ||
 	  (is_macro(value)))
 	s7_remove_from_heap(sc, closure_source(value));
 
+      slot = immutable_cons(sc, variable, value);
       loc = symbol_location(variable);
       vector_element(e, loc) = s7_cons(sc, slot, vector_element(e, loc));
       symbol_global_slot(variable) = slot;
+      return(slot);
 
       /* so if we (define hi "hiho") at the top level,  "hi" hashes to 1746 with symbol table size 2207
        *   s7->symbol_table->object.vector.elements[1746]->object.cons.car->object.cons.car->object.string.global_slot is (hi . \"hiho\")
@@ -2051,11 +2057,12 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
     {
       s7_pointer x;
       NEW_CELL(sc, x); 
-      car(x) = slot;
       cdr(x) = e;
       set_type(x, T_PAIR);
       car(env) = x;
       set_local(variable);
+      car(x) = immutable_cons(sc, variable, value);
+      return(car(x));
       
       /* if symbol_global_slot is nil 
        *   if this was not local before now,
@@ -2066,8 +2073,6 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
        * but how to catch out-of-scope ref?
        */
     }
-
-  return(slot);
 } 
 
 
@@ -2444,6 +2449,7 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
 static s7_pointer find_value_in_environment(s7_scheme *sc, s7_pointer val)
 { 
   s7_pointer x, y, vec; 
+
   for (x = sc->envir; (x != sc->NIL) && (!s7_is_vector(car(x))); x = cdr(x)) 
     for (y = car(x); y != sc->NIL; y = cdr(y)) 
       if (cdr(car(y)) == val)
@@ -2612,6 +2618,7 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
   memcpy((void *)nobj, (void *)obj, sizeof(s7_cell));
   nobj->hloc = nloc;
   
+  /* nobj is safe here because the gc is off */
   if (dont_copy(car(obj)))
     car(nobj) = car(obj);
   else car(nobj) = copy_object(sc, car(obj));
@@ -4631,9 +4638,6 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	  dval += ipart + frac_part * pow((double)radix, (double)(-frac_len));
 	}
     }
-
-  /* fprintf(stderr, "%s -> %.20f (int: %d, frac: %d, max: %d, exp: %d)\n", ur_str, dval * sign, int_len, frac_len, max_len, exponent); */
-
   return(sign * dval);
 }
 
@@ -8381,8 +8385,7 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
   
   int i, len = 0;
   char *str;
-  s7_pointer lst;
-  lst = sc->NIL;
+  s7_pointer p;
   
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "string->list", 0, car(args), "a string"));
@@ -8391,10 +8394,14 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
   if (str) len = safe_strlen(str);
   if (len == 0)
     return(sc->NIL);
-  for (i = 0; i < len; i++)
-    lst = s7_cons(sc, s7_make_character(sc, str[i]), lst);
 
-  return(safe_reverse_in_place(sc, lst));
+  sc->w = sc->NIL;
+  for (i = 0; i < len; i++)
+    sc->w = s7_cons(sc, s7_make_character(sc, str[i]), sc->w);
+  p = sc->w;
+  sc->w = sc->NIL;
+
+  return(safe_reverse_in_place(sc, p));
 }
 
 
@@ -9166,9 +9173,11 @@ static FILE *search_load_path(s7_scheme *sc, const char *name)
 {
   int i, len, name_len;
   s7_pointer lst;
+
   lst = s7_load_path(sc);
   len = s7_list_length(sc, lst);
   name_len = safe_strlen(name);
+
   for (i = 0; i < len; i++)
     {
       const char *new_dir;
@@ -9186,6 +9195,7 @@ static FILE *search_load_path(s7_scheme *sc, const char *name)
 	  if (fp) return(fp);
 	}
     }
+
   return(NULL);
 }
 
@@ -9335,8 +9345,10 @@ static s7_pointer eval_string_1(s7_scheme *sc, const char *str)
 
   port = s7_open_input_string(sc, str);
   push_input_port(sc, port);
+
   push_stack(sc, opcode(OP_EVAL_STRING), sc->args, sc->code);
   eval(sc, OP_READ_INTERNAL);
+
   pop_input_port(sc);
   s7_close_input_port(sc, port);
 
@@ -9389,9 +9401,10 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
     }
   
   stack_reset(sc); 
+  push_stack(sc, opcode(OP_EVAL_STRING), old_envir, sc->NIL); /* GC protect envir */
+
   port = s7_open_input_string(sc, str);
   push_input_port(sc, port);
-  push_stack(sc, opcode(OP_EVAL_STRING), sc->NIL, sc->NIL);
   
   old_longjmp = sc->longjmp_ok;
   if (!sc->longjmp_ok)
@@ -10438,10 +10451,14 @@ s7_pointer s7_assoc(s7_scheme *sc, s7_pointer sym, s7_pointer lst)
 s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a) 
 {
   /* reverse list -- produce new list */
-  s7_pointer p = sc->NIL;
+  s7_pointer p;
 
+  sc->w = sc->NIL;
   for ( ; is_pair(a); a = cdr(a)) 
-    p = s7_cons(sc, car(a), p);
+    sc->w = s7_cons(sc, car(a), sc->w);
+  p = sc->w;
+  sc->w = sc->NIL;
+
   if (a == sc->NIL)
     return(p);
 
@@ -10607,7 +10624,7 @@ static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_list "(make-list length (initial-element #f)) returns a list of 'length' elements whose value is 'initial-element'."
 
-  s7_pointer init, result;
+  s7_pointer init, p;
   int i, len;
 
   if (!s7_is_integer(car(args)))
@@ -10620,16 +10637,14 @@ static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
   if (is_pair(cdr(args)))
     init = cadr(args);
   else init = sc->F;
-  
-  result = sc->NIL;
-  if ((int)(sc->free_heap_top - sc->free_heap) <= len) gc(sc);
 
-  s7_gc_on(sc, false);
+  sc->w = sc->NIL;
   for (i = 0; i < len; i++)
-    result = s7_cons(sc, init, result);
-  s7_gc_on(sc, true);
+    sc->w = s7_cons(sc, init, sc->w);
+  p = sc->w;
+  sc->w = sc->NIL;
 
-  return(result);
+  return(p);
 }
 
 
@@ -11213,10 +11228,15 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_remv(s7_scheme *sc, s7_pointer a, s7_pointer obj) 
 {
   /* used in xen.c */
-  s7_pointer p = sc->NIL;
+  s7_pointer p;
+
+  sc->w = sc->NIL;
   for ( ; is_pair(a); a = cdr(a))
     if (car(a) != obj)
-      p = s7_cons(sc, car(a), p);
+      sc->w = s7_cons(sc, car(a), sc->w);
+  p = sc->w;
+  sc->w = sc->NIL;
+
   return(s7_reverse(sc, p));
 }
 
@@ -11457,20 +11477,25 @@ static s7_pointer s7_make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
 
   /* this has to follow the error checks!  (else garbage in temps array confuses GC when "vector" is finalized) */
   NEW_CELL(sc, x);
+  vector_length(x) = 0;
+  vector_elements(x) = NULL;
   set_type(x, T_VECTOR | T_FINALIZABLE | T_DONT_COPY);
-  vector_length(x) = len;
+
+  /* in multithread case, we can be interrupted here, and a subsequent GC mark sweep can see
+   *    this half-allocated vector.  If length>0, and a non-null "elements" field is left over
+   *    from some previous use, the mark_vector function segfaults.  
+   */
+
   if (len > 0)
     {
       vector_elements(x) = (s7_pointer *)malloc(len * sizeof(s7_pointer));
       if (!(vector_elements(x)))
-	{
-	  vector_length(x) = 0;
-	  return(s7_error(sc, s7_make_symbol(sc, "out-of-memory"), s7_make_string(sc, "make-vector allocation failed!")));
-	}
+	return(s7_error(sc, s7_make_symbol(sc, "out-of-memory"), s7_make_string(sc, "make-vector allocation failed!")));
 
+      vector_length(x) = len;
       if (filled) s7_vector_fill(sc, x, sc->NIL);
     }
-  else vector_elements(x) = NULL;
+
 #if WITH_MULTIDIMENSIONAL_VECTORS
   x->object.vector.dim_info = NULL;
 #endif
@@ -11610,12 +11635,15 @@ s7_Int *s7_vector_offsets(s7_pointer vec)
 
 s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect)
 {
-  s7_pointer lst = sc->NIL;
   s7_Int i, len;
+  s7_pointer p;
   len = vector_length(vect);
+  sc->w = sc->NIL;
   for (i = len - 1; i >= 0; i--)
-    lst = s7_cons(sc, vector_element(vect, i), lst);
-  return(lst);
+    sc->w = s7_cons(sc, vector_element(vect, i), sc->w);
+  p = sc->w;
+  sc->w = sc->NIL;
+  return(p);
 }
 
 
@@ -11953,11 +11981,12 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
   if (vector_is_multidimensional(x))
     {
       int i;
-      s7_pointer lst;
-      lst = sc->NIL;
+      sc->w = sc->NIL;
       for (i = vector_ndims(x) - 1; i >= 0; i--)
-	lst = s7_cons(sc, s7_make_integer(sc, vector_dimension(x, i)), lst);
-      return(lst);
+	sc->w = s7_cons(sc, s7_make_integer(sc, vector_dimension(x, i)), sc->w);
+      x = sc->w;
+      sc->w = sc->NIL;
+      return(x);
     }
   
   return(make_list_1(sc, s7_make_integer(sc, vector_length(x))));
@@ -12027,7 +12056,6 @@ If its first argument is a list, the list is copied (despite the '!')."
 
     if (s7_stack_top(sc) < start)
       {
-	/* s7_gc_on(sc, true); */
 	longjmp(sc->goto_qsort_end, 1);
       }
     if (is_true(sc, sc->value))
@@ -12044,7 +12072,6 @@ If its first argument is a list, the list is copied (despite the '!')."
       int gc_loc_1;
 
       /* if (sc->free_heap_top < 4096) gc(sc); */
-      /* s7_gc_on(sc, false); */
       /* sort! can be called recursively, so this gc-on/off stuff can get confused. */
 
       lst = make_list_2(sc, g_list_to_vector(sc, make_list_1(sc, vect)), cadr(args));
@@ -12056,7 +12083,6 @@ If its first argument is a list, the list is copied (despite the '!')."
 	val = s7_vector_to_list(sc, val);
       s7_gc_unprotect_at(sc, gc_loc_1);
 
-      /* s7_gc_on(sc, true); */
       return(val);
     }
 
@@ -14881,9 +14907,6 @@ GOT_CATCH:
 	  /* if info is not a list, send object->string to current error port,
 	   *   else assume car(info) is a format control string, and cdr(info) are its args
 	   */
-
-	  /* fprintf(stderr, "s7_error type: %s, info: %s\n", s7_object_to_c_string(sc, type), s7_object_to_c_string(sc, info)); */
-
 	  if ((!s7_is_list(sc, info)) ||
 	      (!s7_is_string(car(info))))
 	    format_to_output(sc, 
@@ -15723,19 +15746,23 @@ static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
 
 s7_pointer s7_values(s7_scheme *sc, int num_values, ...)
 {
-  s7_pointer args = sc->NIL;
   int i;
   va_list ap;
+  s7_pointer p;
   
   if (num_values == 0)
     return(sc->NIL);
 
+  sc->w = sc->NIL;
   va_start(ap, num_values);
   for (i = 0; i < num_values; i++)
-    args = s7_cons(sc, va_arg(ap, s7_pointer), args);
+    sc->w = s7_cons(sc, va_arg(ap, s7_pointer), sc->w);
   va_end(ap);
 
-  return(g_values(sc, s7_reverse(sc, args)));
+  p = sc->w;
+  sc->w = sc->NIL;
+
+  return(g_values(sc, s7_reverse(sc, p))); /* PERHAPS: can't this be safe_reverse_in_place? */
 }
 
 #else
@@ -16130,10 +16157,8 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 
       if (c == '"')
 	{
-	  s7_pointer x;
 	  sc->strbuf[i] = '\0';
-	  x = s7_make_string_with_length(sc, sc->strbuf, i);
-	  return(x);
+	  return(s7_make_string_with_length(sc, sc->strbuf, i));
 	}
       else
 	{
@@ -18563,9 +18588,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* this works only if the backquote is right next to the #( of the read-time vector,
        *    and then only if the vector can be dealt with at read time.  It doesn't seem
        *    very useful to me.  To get a vector in a macro, use "vector", not "#()".
-       *
-       *    (let ((x (list 1 2))) `(,@x)) -> '(1 2)
-       * so (let ((x (list 1 2))) `#(,@x)) -> '#(1 2)
        */
       sc->value = make_list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_2(sc, sc->value));
       pop_stack(sc);
@@ -18588,10 +18610,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = g_vector(sc, sc->value);
       pop_stack(sc);
       goto START;
-
-      /* TODO: add read-time multivector via #n()
-       *   does this require a new multivector function? (dims = how many args, args are the vals in lists)
-       */
 
       
     default:
@@ -18630,6 +18648,7 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   new_sc->stack_size = INITIAL_STACK_SIZE;
   new_sc->stack_resize_trigger = (s7_pointer *)(new_sc->stack_start + new_sc->stack_size / 2);
   
+  new_sc->w = new_sc->NIL;
   new_sc->x = new_sc->NIL;
   new_sc->y = new_sc->NIL;
   new_sc->z = new_sc->NIL;
@@ -18681,8 +18700,10 @@ static void mark_s7(s7_scheme *sc)
   S7_MARK(sc->args);
   S7_MARK(sc->envir);
   S7_MARK(sc->code);
+  S7_MARK(sc->cur_code);
   mark_vector(sc->stack, s7_stack_top(sc));
   S7_MARK(sc->value);
+  S7_MARK(sc->w);
   S7_MARK(sc->x);
   S7_MARK(sc->y);
   S7_MARK(sc->z);
@@ -18764,23 +18785,24 @@ static s7_pointer g_make_thread(s7_scheme *sc, s7_pointer args)
   #define H_make_thread "(make-thread thunk) creates a new thread running thunk"
   thred *f;
   s7_pointer obj, vect, frame;
+  int floc, vloc, oloc;
 
   if (!is_procedure(car(args)))
     return(s7_wrong_type_arg_error(sc, "make-thread", 0, car(args), "a thunk"));
   
-  pthread_mutex_lock(&alloc_lock); /* if currently in GC in some thread, wait for it */
-  pthread_mutex_unlock(&alloc_lock);
-  
   frame = immutable_cons(sc, sc->NIL, sc->envir);
+  floc = s7_gc_protect(sc, frame);
   vect = s7_make_vector(sc, INITIAL_STACK_SIZE);
+  vloc = s7_gc_protect(sc, vect);
   
   f = (thred *)calloc(1, sizeof(thred));
   f->func = car(args);
   
   obj = s7_make_object(sc, thread_tag, (void *)f);
+  oloc = s7_gc_protect(sc, obj);
   
   pthread_mutex_lock(&alloc_lock);
-
+  
   f->sc = clone_s7(sc, vect);
   f->sc->envir = frame;
   f->sc->y = obj;
@@ -18788,7 +18810,11 @@ static s7_pointer g_make_thread(s7_scheme *sc, s7_pointer args)
 
   pthread_create(f->thread, NULL, run_thread_func, (void *)f);
   pthread_mutex_unlock(&alloc_lock);
-  
+
+  s7_gc_unprotect_at(sc, floc);
+  s7_gc_unprotect_at(sc, vloc);
+  s7_gc_unprotect_at(sc, oloc);
+
   return(obj);
 }
 
@@ -23407,6 +23433,7 @@ s7_scheme *s7_init(void)
   sc->cur_code = ERROR_INFO_DEFAULT;
   sc->args = sc->NIL;
   sc->value = sc->NIL;
+  sc->w = sc->NIL;
   sc->x = sc->NIL;
   sc->y = sc->NIL;
   sc->z = sc->NIL;

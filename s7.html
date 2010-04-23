@@ -1492,7 +1492,8 @@ sets that element.  vector-dimensions returns a list of the dimensions of a vect
 
 <p>I can't think of a nice syntax for a constant multidimensional vector.  One idea is
 to mimic CL and use <code>#n(...)</code> where the n gives the number of dimensions, and the data is
-enclosed in n lists.  Also, the vector printout should probably show the dimensions in some way.
+enclosed in n lists.  But I tried this and it is too subtle.  Perhaps #[...] would be better?
+Also, the vector printout should probably show the dimensions in some way.
 </p>
 </blockquote>
 </small>
@@ -2414,7 +2415,8 @@ about stuff like <code>(let ((:hi 1)) :hi)</code>.
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p><b>quit</b> exits s7.</p>
-<p><b>gc</b> calls the garbage collector.  (gc #f) turns off the GC, and (gc #t) turns it on.</p>
+<p><b>gc</b> calls the garbage collector.  (gc #f) turns off the GC, and (gc #t) turns it on.
+</p>
 
 <!--
 <p>

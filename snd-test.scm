@@ -470,7 +470,7 @@
 			      (set! test-number n)
 			      (vector-set! timings n (real-time))
 			      (snd-display ";test ~D" n)
-			      (gc)(gc)
+			      
 			      ))
 
 
@@ -494,7 +494,7 @@
 	   (lambda (n)
 	     (clear-save-state-files)
 	     (clear-listener)
-	     (gc)(gc)
+	     
 	     (if (not (null? (sounds)))
 		 (begin
 		   (snd-display ";end test ~D: open sounds: ~A" n (map short-file-name (sounds)))
@@ -506,7 +506,7 @@
 (snd-display ";~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 
 (define (log-mem tst) 
-  (if (> tests 1) (begin (snd-display ";test ~D:~D " test-number (+ 1 tst)) (gc)(gc))))
+  (if (> tests 1) (begin (snd-display ";test ~D:~D " test-number (+ 1 tst)) )))
 
 (defmacro without-errors (func)
   `(catch #t 
@@ -14360,7 +14360,7 @@ EDITS: 2
 		)
 
 	      ;; big vectors/hash-tables also
-	      (gc)
+	      
 	      
 	      (let ((size (+ 2 (expt 2 31))))
 		(if (not (= size 2147483650))
@@ -14380,7 +14380,7 @@ EDITS: 2
 		  (if (not (= (vector-ref hi (expt 2 31)) 2))
 		      (snd-display ";big vector fill: ~A" (vector-ref hi (expt 2 31))))))
 	      
-	      (gc)
+	      
 	      
 	      (let ((hi (make-vector (list (+ 2 (expt 2 30)) 2) '())))
 		(if (not (= (vector-length hi) (* 2 (+ 2 (expt 2 30)))))
@@ -14396,7 +14396,7 @@ EDITS: 2
 		(if (not (= (vector-ref hi (expt 2 30) 0) 2))
 		    (snd-display ";big vector 2dim fill: ~A" (vector-ref hi (expt 2 30) 0))))
 	      
-	      (gc)
+	      
 	      
 	      (let ((hi (make-hash-table (+ 2 (expt 2 31)))))
 		(if (not (= (hash-table-size hi) (+ 2 (expt 2 31))))
@@ -14416,7 +14416,7 @@ EDITS: 2
 				 "hiho"))
 		    (snd-display ";big hash big symbol: ~A" (hash-table-ref hi 12345678912345))))
 	      
-	      (gc)
+	      
 	      ))
 
 	(let ((sum 0)) 
@@ -16352,7 +16352,7 @@ EDITS: 2
   
   ;; ----------------
   (define* (print-and-check gen name desc (desc1 "") (desc2 ""))
-    (gc)
+    
     (if (not (string=? (mus-name gen) name))
 	(snd-display ";mus-name ~A: ~A?" name (mus-name gen)))
     (if (and (not (string=? (mus-describe gen) desc))
@@ -16366,7 +16366,7 @@ EDITS: 2
   ;; ----------------
   (define (test-gen-equal g0 g1 g2)
     ;; g0 = g1 at start != g2
-    (gc)
+    
     (let ((g3 g0)
 	  (gad (make-frame 2)))
       (if (not (eq? g0 g3))
@@ -34889,6 +34889,7 @@ EDITS: 2
 	   (cur-amp (maxamp cursnd curchn))
 	   (cur-edit (edit-position cursnd curchn))
 	   (cur-frame (frames cursnd curchn)))
+      
       (case choice
 	;; scale-channel
 	((0) (let* ((scaler (if (< (maxamp cursnd curchn) 1.0) (+ 1.0 (random 1.0)) (+ 0.5 (random 0.5))))
@@ -37907,7 +37908,7 @@ EDITS: 3
 				 (old-opt (optimization)))
 			     (set! (squelch-update ind) #t)
 			     (set! (optimization) max-optimization)
-			     (gc)(gc)
+			     
 			     (let ((times (map
 					   (lambda (function)
 					     (let ((start (real-time)))
@@ -51009,7 +51010,7 @@ EDITS: 1
 	 (let* ((gen (n))
 		(val1 (format #f "~A" gen))
 		(val2 (run (lambda () (format #f "~A" gen)))))
-	   (gc)(gc)
+	   
 	   (if (not (string=? val1 val2))
 	       (snd-display ";run format gen: format: ~A, run format: ~A (~A)" val1 val2 gen))))
        make-procs))
@@ -51017,7 +51018,7 @@ EDITS: 1
     (let ((val1 (run-eval '(format #f "~A" (make-all-pass))))
 	  (val2 (run (lambda () (let ((gen (make-all-pass))) (format #f "~A" gen)))))
 	  (val3 (format #f "~A" (make-all-pass))))
-      (gc)(gc)
+      
       (if (or (not (string=? val1 val2))
 	      (not (string=? val2 val3)))
 	  (snd-display ";run-eval format: ~A ~A ~A" val1 val2 val3)))
@@ -51026,7 +51027,7 @@ EDITS: 1
     (let ((val1 (run-eval '(format #f "~A" (make-asymmetric-fm ))))
 	  (val2 (run (lambda () (let ((gen (make-asymmetric-fm ))) (format #f "~A" gen)))))
 	  (val3 (format #f "~A" (make-asymmetric-fm ))))
-      (gc)(gc)
+      
       (if (or (not (string=? val1 val2))
 	      (not (string=? val2 val3)))
 	  (snd-display ";run-eval format: ~A ~A ~A" val1 val2 val3)))
@@ -51751,11 +51752,11 @@ EDITS: 1
 	     (test-run-protection-release))))
     
     (let ((o (make-osc 440)))
-      (gc) (gc)
+       
       (oscil o))
     
     (let ((o (make-fc .8 128)))
-      (gc) (gc)
+       
       (filtered-comb o (random 1.0)))
     
     (let ((sd (make-sound-data 4 10)))
@@ -61055,7 +61056,7 @@ EDITS: 1
 		   struct-accessors
 		   struct-accessor-names))
 		(list dpy win '(Atom 0) '(Colormap 0) 1.5 "/hiho" 1234 #f #\c '(Time 0) '(Font 0) (make-vector 0) '(Cursor 1))))
-	     (gc)(gc))
+	     )
 	   (show-sounds-in-directory)
 					;(show-all-atoms)
      )))
@@ -65467,7 +65468,7 @@ EDITS: 1
 				      triangle-wave? two-pole? two-zero? wave-train? color? mix-sampler? moving-average? ssb-am?
 				      sampler? region-sampler? vct? )))
 		    (list (make-vector 1) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1)))
-	  (gc)(gc)
+	  
 	  
 	  (for-each (lambda (n)
 		      (let ((tag
@@ -65541,7 +65542,7 @@ EDITS: 1
 					ncos nsin table-lookup tap triangle-wave
 					two-pole two-zero wave-train ssb-am))))
 		    (list (make-vector 1) color-95 (sqrt -1.0) (list 1.0)))
-	  (gc)(gc)
+	  
 	  
 	  (for-each (lambda (n)
 		      (let ((tag
@@ -65584,7 +65585,7 @@ EDITS: 1
 			  mus-feedback mus-feedforward mus-frequency mus-hop mus-increment mus-length
 			  mus-location mus-mix mus-name mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
 			  mus-ycoeffs))
-	  (gc)(gc)
+	  
 	  
 	  (for-each (lambda (n)
 		      (let ((tag
@@ -65657,7 +65658,7 @@ EDITS: 1
 			    transform->vct transform-frames transform-type update-transform-graph update-time-graph
 			    update-lisp-graph update-sound wavelet-type time-graph? time-graph-type wavo-hop wavo-trace x-bounds
 			    x-position-slider x-zoom-slider x-axis-label y-axis-label y-bounds y-position-slider y-zoom-slider zero-pad))
-	    (gc)(gc))
+	    )
 	  
 	  (let ((ctr 0))
 	    (for-each (lambda (n)
@@ -65808,7 +65809,7 @@ EDITS: 1
 			    wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider y-bounds y-position-slider
 			    y-zoom-slider zero-pad x-axis-label
 			    ))
-	    (gc)(gc)
+	    
 	    (close-sound index))
 	  
 	  (let ((ctr 0))
@@ -65909,7 +65910,7 @@ EDITS: 1
 			  (set! ctr (+ ctr 1))))
 		      (list mark-name mark-sample mark-sync))
 	    (close-sound index)
-	    (gc)(gc))
+	    )
 	  
 	  (for-each (lambda (arg)
 		      (let ((ctr 0))
@@ -65973,7 +65974,7 @@ EDITS: 1
 			    mix-tag-width with-relative-panes clm-table-size clm-default-frequency mark-tag-width mark-tag-height
 			    quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 			    ))
-	    (gc)(gc))
+	    )
 	  
 	  (for-each (lambda (n)
 		      (let* ((hook (car n))
@@ -66456,7 +66457,7 @@ EDITS: 1
 		    keyargs))
 		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 delay-32))))
 	  
-	  (gc)(gc)
+	  
 	  
 	  ;;	(set! a-sound (new-sound "test.snd" mus-next mus-bshort 22050 1 "set-samples test" 100))
 
@@ -66473,7 +66474,7 @@ EDITS: 1
 		   (snd-display ";procs0: ~A ~A" err (procedure-property n 'documentation)))))
 	   procs0)
 	  (dismiss-all-dialogs)
-	  (gc)(gc)
+	  
 
 	  (let* ((main-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 				 (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 -1.0 
@@ -66505,7 +66506,7 @@ EDITS: 1
 			(snd-display ";procs1 wna: ~A ~A" err (procedure-property n 'documentation)))))
 		procs1))
 	     main-args)
-	    (gc)(gc)
+	    
 	    
 	    ;; ---------------- 2 Args
 	    (for-each 
@@ -66522,7 +66523,7 @@ EDITS: 1
 		   procs2))
 		main-args))
 	     main-args)
-	    (gc)(gc)
+	    
 	    
 	    ;; ---------------- set! no Args
 	    (for-each 
@@ -66536,7 +66537,7 @@ EDITS: 1
 			(snd-display ";set-procs0: ~A ~A" err (procedure-property n 'documentation)))))
 		set-procs0))
 	     main-args)
-	    (gc)(gc)
+	    
 	    
 	    ;; ---------------- set! 1 Arg
 	    (for-each 
@@ -66553,7 +66554,7 @@ EDITS: 1
 		   set-procs1))
 		main-args))
 	     main-args)
-	    (gc)(gc)
+	    
 	    
 	    ;; ---------------- set! 2 Args
 	    (for-each 
@@ -66573,7 +66574,7 @@ EDITS: 1
 		   less-args))
 		less-args))
 	     less-args)
-	    (gc)(gc)
+	    
 	    
 	    (if (and all-args (= test-28 0))
 		;; these can take awhile...
@@ -66600,7 +66601,7 @@ EDITS: 1
 			   less-args))
 			less-args)))
 		   less-args)
-		  (gc)(gc)
+		  
 		  
 		  (snd-display ";set 3 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 
@@ -66625,7 +66626,7 @@ EDITS: 1
 			 less-args))
 		      less-args))
 		   less-args)
-		  (gc)(gc)
+		  
 		  
 		  (snd-display ";4 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 
@@ -66650,7 +66651,7 @@ EDITS: 1
 			 few-args))
 		      few-args))
 		   few-args)
-		  (gc)(gc)
+		  
 		  
 		  (snd-display ";set 4 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 
@@ -66678,7 +66679,7 @@ EDITS: 1
 			 fewer-args))
 		      fewer-args))
 		   fewer-args)
-		  (gc)(gc)
+		  
 		  
 		  (clear-sincs)
 		  (stop-playing)
@@ -66709,7 +66710,7 @@ EDITS: 1
 			 fewer-args))
 		      fewer-args))
 		   fewer-args)
-		  (gc)(gc)
+		  
 		  
 		  (clear-sincs)
 		  
@@ -66742,7 +66743,7 @@ EDITS: 1
 			 (list 1.5 "/hiho" -1234 vct-3 -1 #f #t delay-32)))
 		      (list 1.5 -1234 vct-3 vct-5 -1 0 #f #t delay-32)))
 		   (list 1.5 "/hiho" -1234 #f #t vct-5 delay-32))
-		  (gc)(gc)
+		  
 		  
 		  (snd-display ";8 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 
@@ -66779,7 +66780,7 @@ EDITS: 1
 			 (list 2 #f #t 1234 vct-5 -1 delay-32)))
 		      (list #f #t -1 1234 vct-3 delay-32)))
 		   (list 1.5 -1 '() 1234 "/hiho" delay-32))
-		  (gc)(gc)
+		  
 		  
 		  (clear-sincs)
 		  
@@ -66824,7 +66825,7 @@ EDITS: 1
 			 (list 1.5 -1 "/hiho" '() delay-32)))
 		      (list 1.5 -1 '() delay-32)))
 		   (list #f -1 1234 delay-32))
-		  (gc)(gc)
+		  
 		  
 		  ))))
 
@@ -67136,7 +67137,7 @@ EDITS: 1
 	(run-hook before-test-hook snd-test)
 	((vector-ref test-funcs snd-test))
 	(run-hook after-test-hook snd-test)
-	(gc) (gc)))
+	 ))
 
     (if (and (not full-test)
 	     (not keep-going)
@@ -67321,7 +67322,7 @@ EDITS: 1
 	       (lambda (d)
 		 (set! (view-files-files d) '()))
 	       vfs)))))
-(gc)(gc)
+
 
 (if (defined? 'run-report-counts) (run-report-counts))
 

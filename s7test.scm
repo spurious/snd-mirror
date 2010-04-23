@@ -4955,6 +4955,21 @@
     (test y 125))
   (test (hi 1) 125))
 
+(test (let ((j 0)
+	    (k 0))
+	(let xyz
+	    ((i 0))
+	  (let xyz
+	      ((i 0))
+	    (set! j (+ j 1))
+	    (if (< i 3)
+		(xyz (+ i 1))))
+	  (set! k (+ k 1))
+	  (if (< i 3)
+	      (xyz (+ i 1))))
+	(list j k))
+      (list 16 4))
+
 (test (let ((x 123)) (begin (define x 0)) x) 0) ; this strikes me as weird, since (let ((x 123) (x 0)) x) is illegal, so...
 (test (let ((x 123)) (begin (define (hi a) (+ x a)) (define x 0)) (hi 1)) 1) ; is non-lexical reference?
 
@@ -5059,6 +5074,8 @@
 (test (let ((j 123)) (define (f g) (set! j 0) (g 0)) (let loop ((i 1)) (if (> i 0) (f loop))) j) 0)
 (test (procedure? (let loop () loop)) #t)
 (test (let loop1 ((func 0)) (let loop2 ((i 0)) (if (not (procedure? func)) (loop1 loop2)) func)) 0)
+(test (let ((k 0)) (let ((x (let xyz ((i 0)) (set! k (+ k 1)) xyz))) (x 0)) k) 2)
+
 
 
 
@@ -43382,6 +43399,7 @@
 (test (let ((a (let ((b 1)) (set! a 3) b))) a) 'error)            
 (test (let ((a (lambda () "hi"))) (set! (a) "ho")) 'error)
 (test (let ((a (let ((b 1)) (set! a 3) b))) a) 'error) 
+(test (let ((x 1) ((y 2))) x) 'error)
 
 (test (cond) 'error)
 					;(test (cond ((= 1 2) 3) (else 4) (4 5)) 'error)
