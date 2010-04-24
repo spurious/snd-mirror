@@ -237,13 +237,8 @@ radix is greater than 10.
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<p>It seems too bad to waste "rational?".  
-Perhaps we should just get rid of "exact?" and "inexact?", 
-leaving "rational?" and "not rational?" which seems much less ambiguous.
-Also "inexact-&gt;exact" is not useful in s7,
-and "exact-&gt;inexact", although useful, is a verbose and silly name 
-(it's not an error to pass it a number that is already inexact).
-By the way, "rational" in s7 does not mean "could possibly be
+<p>
+"rational" in s7 does not mean "could possibly be
 expressed equally well as a ratio (floats are approximations!)", but "is actually expressed as a ratio (or an integer of course)";
 otherwise "rational?" is the same as "real?":
 </p>
@@ -251,6 +246,14 @@ otherwise "rational?" is the same as "real?":
 (not-s7-scheme)&gt; (rational? (sqrt 2))
 #t
 </pre>
+<p>I wonder if it might be more useful if 
+"exact" meant "is represented exactly in the computer".  We'd have integers and ratios exact; 
+reals and complex exact if they are exactly
+represented in the current floating point implementation.  So, 1+i is just as exact as 1;
+0.0 and 0.5 might be exact if the printout isn't misleading, and 0.1 is inexact.
+"integer?" and friends would refer instead to the programmer's point of view.
+</p>
+
 
 </blockquote>
 </small>
@@ -2602,6 +2605,33 @@ s7: use the sndlib example in s7.html
 fft.sch interpreted: 53,  run: 2
 guile 1.9.5 after compilation: 10.5
 -->
+
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<small>
+<blockquote>
+<p>I can't resist giving another example.  Here's some vector arithmetic:
+</p>
+<pre>
+(let* ((size (* 128 1024))
+       (v1 (make-vector size 0.0))
+       (v2 (make-vector size 0.0))
+       (sum 0.0))
+  (<em class=red>run</em>
+   (do ((i 0 (+ i 1)))
+       ((= i size))
+     (vector-set! v1 i (- (random 2.0) 1.0))
+     (vector-set! v2 i (- (random 2.0) 1.0)))
+   (do ((i 0 (+ i 1)))
+       ((= i size) sum)
+     (set! sum (+ sum (* (vector-ref v1 i) (vector-ref v2 i)))))))
+</pre>
+<p>With run, this takes .092 seconds on my old machine; without run, it takes 1.94 seconds.
+</p>
+</blockquote>
+</small>
 
 </dd>
 <br><br>

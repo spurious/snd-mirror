@@ -7207,6 +7207,12 @@ static s7_pointer g_is_inexact(s7_scheme *sc, s7_pointer args)
   return(make_boolean(sc, s7_is_inexact(car(args))));
 }
 
+/* if these two meant "are represented exactly in the computer", we'd have int/ratios exact
+ *    (up to most-positive-fixnum, if any); reals and complex exact if they can be exactly
+ *    handled in floats (1.0 is exact, as is 0.5, if the printout isn't misleading us).  0.1 is inexact.
+ *    And we'd have both exact and inexact complex (1+i is just as exact as 1). 
+ */
+
 
 bool s7_is_ulong(s7_pointer arg) 
 {
@@ -11476,12 +11482,13 @@ static s7_pointer s7_make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
     }
 
   /* this has to follow the error checks!  (else garbage in temps array confuses GC when "vector" is finalized) */
+
   NEW_CELL(sc, x);
   vector_length(x) = 0;
   vector_elements(x) = NULL;
   set_type(x, T_VECTOR | T_FINALIZABLE | T_DONT_COPY);
 
-  /* in multithread case, we can be interrupted here, and a subsequent GC mark sweep can see
+  /* in the multithread case, we can be interrupted here, and a subsequent GC mark sweep can see
    *    this half-allocated vector.  If length>0, and a non-null "elements" field is left over
    *    from some previous use, the mark_vector function segfaults.  
    */
@@ -11502,6 +11509,12 @@ static s7_pointer s7_make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
 
   return(x);
 }
+
+/* SOMEDAY: there's a problem with very large vectors -- the GC does not notice how much RAM
+ *   they are taking up, and unless we call gc ourselves, we run out of memory.  Since each
+ *   element has the vector pointer, the heap pointer, and the free-list pointer (worst case),
+ *   we're consuming 28 + 12 or 40 + 24 bytes per element!
+ */
 
 
 s7_pointer s7_make_vector(s7_scheme *sc, s7_Int len)
@@ -18290,8 +18303,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      break;
 	    }
 
-	  /* we don't currently flag (case 1 ((1))) as an error -- is it one? [guile says yes]
-	   *   what about (case 1 ((1) #t) ((1) #f))
+	  /* we don't currently flag (case 1 ((1))) as an error -- is it one? [guile says yes, but has a confused error message]
+	   *   what about (case 1 ((1) #t) ((1) #f)) [this is ok by guile]
 	   *              (case 1 ((1) #t) ())
 	   *              (case 1 ((1)) 1 . 2)
 	   *              (case () ((())))

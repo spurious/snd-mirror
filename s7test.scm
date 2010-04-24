@@ -2576,6 +2576,7 @@
 (test (append '() '()) '())
 (test (append '() (list 'a 'b 'c)) '(a b c))
 (test (append) '())
+(test (append '() 1) 1)
 (test (append 'a) 'a)
 (test (append '(x) '(y))  '(x y))
 (test (append '(a) '(b c d)) '(a b c d))
@@ -4173,6 +4174,8 @@
 (test (let ((x 1)) (case x ((1) "hi") (else "ho"))) "hi")
 (test (let ((x 1)) (case x (('x) "hi") (else "ho"))) "ho")
 (test (let ((x 1)) (case 'x ((x) "hi") (else "ho"))) "hi")
+(test (case '() ((()) 1)) 1)
+;;; but not (case #() ((#()) 1)) ?
 
 (test (let ((x 1)) (case (+ 1 x) ((0 "hi" #f) 3/4) ((#\a 1+3i '(1 . 2)) "3") ((-1 'hi 2 2.0) #\f))) #\f)
 (test (case (case 1 ((0 2) 3) (else 2)) ((0 1) 2) ((4 2) 3) (else 45)) 3)
@@ -5075,6 +5078,8 @@
 (test (procedure? (let loop () loop)) #t)
 (test (let loop1 ((func 0)) (let loop2 ((i 0)) (if (not (procedure? func)) (loop1 loop2)) func)) 0)
 (test (let ((k 0)) (let ((x (let xyz ((i 0)) (set! k (+ k 1)) xyz))) (x 0)) k) 2)
+(test (let ((hi' 3) (a'b 2)) (+ hi' a'b)) 5)
+(test (let ((hi''' 3) (a'''b 2)) (+ hi''' a'''b)) 5)
 
 
 
@@ -17551,6 +17556,45 @@
 	      (and (= ctr 2)
 		   (= (+ ctr1 ctr2) 3)))
 	    #t)
+
+      (let ((v1 (make-vector 4096))
+	    (v2 (make-vector 4096))
+	    (dsum 0.0)
+	    (dlock (make-lock)))
+	
+	(do ((i 0 (+ i 1)))
+	    ((= i 4096))
+	  (set! (v1 i) (- (random 2.0) 1.0))
+	  (set! (v2 i) (- (random 2.0) 1.0)))
+
+	(let ((threads '()))
+	  (let loop 
+	      ((i 0))
+	    (set! threads (cons (make-thread
+				 (lambda ()
+				   (let ((sum 0.0)
+					 (end (+ i 1024)))
+				     (do ((k i (+ k 1)))
+					 ((= k end))
+				       (set! sum (+ sum (* (v1 k) (v2 k)))))
+				     (grab-lock dlock)
+				     (set! dsum (+ dsum sum))
+				     (release-lock dlock))))
+				threads))
+	    (if (< i 3072)
+		(loop (+ i 1024))))
+
+	  (for-each 
+	   (lambda (thread) 
+	     (join-thread thread))
+	   threads))
+
+	(let ((xsum 0.0))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 4096))
+	    (set! xsum (+ xsum (* (v1 i) (v2 i)))))
+
+	  (test (< (abs (- xsum dsum)) .001) #t)))
       
       (for-each
        (lambda (arg)
