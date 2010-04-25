@@ -8254,15 +8254,6 @@ mus_any *mus_continue_frame_to_file(const char *filename)
 }
 
 
-/* I toyed with sample_to_dac so that instruments using *output* and the run loop could
- *   go straight out, rather than through a file.  See ~/old/direct-to-dac.c.  This output
- *   choice could be made in with-sound, or triggered in play (Snd).  But after writing
- *   the code, I can't see any real use for it -- it saves the wait while the file is
- *   being written, but doesn't provide the kind of "real-time" handles you'd need for
- *   note controls.  The function option for play (DAC_XEN in snd-dac.c)
- *   could provide that, I think, though the instrument code has to be redone (fmv.scm).
- */
-
 
 
 /* ---------------- locsig ---------------- */

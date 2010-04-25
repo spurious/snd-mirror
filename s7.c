@@ -2030,24 +2030,23 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 
 static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer variable, s7_pointer value) 
 { 
-  s7_pointer e;
+  s7_pointer slot, e;
 
   e = car(env);
+  slot = immutable_cons(sc, variable, value);
+
   if (s7_is_vector(e))
     {
       int loc;
-      s7_pointer slot;
 
       if ((is_closure(value)) ||
 	  (is_closure_star(value)) ||
 	  (is_macro(value)))
 	s7_remove_from_heap(sc, closure_source(value));
 
-      slot = immutable_cons(sc, variable, value);
       loc = symbol_location(variable);
       vector_element(e, loc) = s7_cons(sc, slot, vector_element(e, loc));
       symbol_global_slot(variable) = slot;
-      return(slot);
 
       /* so if we (define hi "hiho") at the top level,  "hi" hashes to 1746 with symbol table size 2207
        *   s7->symbol_table->object.vector.elements[1746]->object.cons.car->object.cons.car->object.string.global_slot is (hi . \"hiho\")
@@ -2057,13 +2056,13 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
     {
       s7_pointer x;
       NEW_CELL(sc, x); 
+      car(x) = slot;
+      csr(x) = variable;
       cdr(x) = e;
       set_type(x, T_PAIR);
       car(env) = x;
       set_local(variable);
-      car(x) = immutable_cons(sc, variable, value);
-      return(car(x));
-      
+
       /* if symbol_global_slot is nil 
        *   if this was not local before now,
        *     set local and local_slot
@@ -2073,6 +2072,8 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
        * but how to catch out-of-scope ref?
        */
     }
+
+  return(slot);
 } 
 
 
@@ -15775,7 +15776,7 @@ s7_pointer s7_values(s7_scheme *sc, int num_values, ...)
   p = sc->w;
   sc->w = sc->NIL;
 
-  return(g_values(sc, s7_reverse(sc, p))); /* PERHAPS: can't this be safe_reverse_in_place? */
+  return(g_values(sc, safe_reverse_in_place(sc, p)));
 }
 
 #else
@@ -17166,9 +17167,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_C_MACRO: 	                    /* -------- C-based macro -------- */
 	  {
 	    int len;
-	    s7_pointer macsym;
 
-	    macsym = car(sc->args);
+	    sc->w = car(sc->args);
 	    sc->args = cdr(sc->args);
 	    len = safe_list_length(sc, sc->args);
 
@@ -17177,14 +17177,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      sc->WRONG_NUMBER_OF_ARGS, 
 			      make_list_3(sc, 
 					  make_protected_string(sc, "~A: not enough arguments: ~A"), 
-					  macsym, sc->args)));
+					  sc->w, sc->args)));
 	    
 	    if (c_macro_all_args(sc->code) < len)
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
 			      make_list_3(sc, 
 					  make_protected_string(sc, "~A: too many arguments: ~A"),
-					  macsym, sc->args)));
+					  sc->w, sc->args)));
 
 	    sc->code = c_macro_call(sc->code)(sc, sc->args);
 	    sc->args = sc->NIL;

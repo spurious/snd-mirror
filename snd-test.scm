@@ -1,35 +1,35 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                           [632]
-;;;  test 1: defaults                            [1215]
-;;;  test 2: headers                             [1414]
-;;;  test 3: variables                           [1731]
-;;;  test 4: sndlib                              [2365]
-;;;  test 5: simple overall checks               [5105]
-;;;  test 6: vcts                                [14173]
-;;;  test 7: colors                              [14568]
-;;;  test 8: clm                                 [15065]
-;;;  test 9: mix                                 [26971]
-;;;  test 10: marks                              [29212]
-;;;  test 11: dialogs                            [30194]
-;;;  test 12: extensions                         [30415]
-;;;  test 13: menus, edit lists, hooks, etc      [30686]
-;;;  test 14: all together now                   [32299]
-;;;  test 15: chan-local vars                    [33229]
-;;;  test 16: regularized funcs                  [35047]
-;;;  test 17: dialogs and graphics               [40115]
-;;;  test 18: enved                              [40207]
-;;;  test 19: save and restore                   [40226]
-;;;  test 20: transforms                         [42002]
-;;;  test 21: new stuff                          [44192]
-;;;  test 22: run                                [46199]
-;;;  test 23: with-sound                         [52991]
-;;;  test 25: X/Xt/Xm                            [57541]
-;;;  test 26: Gtk                                [61311]
-;;;  test 27: GL                                 [64854]
-;;;  test 28: errors                             [64978]
-;;;  test all done                               [67489]
-;;;  test the end                                [67676]
+;;;  test 0: constants                           [599]
+;;;  test 1: defaults                            [1144]
+;;;  test 2: headers                             [1346]
+;;;  test 3: variables                           [1663]
+;;;  test 4: sndlib                              [2288]
+;;;  test 5: simple overall checks               [4961]
+;;;  test 6: vcts                                [14029]
+;;;  test 7: colors                              [14430]
+;;;  test 8: clm                                 [14937]
+;;;  test 9: mix                                 [26835]
+;;;  test 10: marks                              [29076]
+;;;  test 11: dialogs                            [30058]
+;;;  test 12: extensions                         [30270]
+;;;  test 13: menus, edit lists, hooks, etc      [30541]
+;;;  test 14: all together now                   [32142]
+;;;  test 15: chan-local vars                    [33061]
+;;;  test 16: regularized funcs                  [34861]
+;;;  test 17: dialogs and graphics               [39812]
+;;;  test 18: enved                              [39904]
+;;;  test 19: save and restore                   [39923]
+;;;  test 20: transforms                         [41699]
+;;;  test 21: new stuff                          [43889]
+;;;  test 22: run                                [45895]
+;;;  test 23: with-sound                         [52764]
+;;;  test 25: X/Xt/Xm                            [57348]
+;;;  test 26: Gtk                                [61066]
+;;;  test 27: GL                                 [64541]
+;;;  test 28: errors                             [64665]
+;;;  test all done                               [67140]
+;;;  test the end                                [67326]
 
 (define tests 1)
 (define keep-going #f)
@@ -66421,7 +66421,6 @@ EDITS: 1
 	  
 	  (if (and all-args (= test-28 0))
 	      (begin
-
 		(for-each
 		 (lambda (arg1)
 		   (for-each 
@@ -66457,10 +66456,7 @@ EDITS: 1
 		    keyargs))
 		 (list 1.5 "/hiho" (list 0 1) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 delay-32))))
 	  
-	  
-	  
 	  ;;	(set! a-sound (new-sound "test.snd" mus-next mus-bshort 22050 1 "set-samples test" 100))
-
 	  (if all-args (snd-display ";args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time)))))
 
 	  ;; ---------------- 0 Args
@@ -66475,7 +66471,6 @@ EDITS: 1
 	   procs0)
 	  (dismiss-all-dialogs)
 	  
-
 	  (let* ((main-args (list 1.5 "/hiho" (list 0 1) 1234 vct-3 color-95  '#(0 1) 3/4 'mus-error (sqrt -1.0) delay-32
 				 (lambda () #t) vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t #\c 0.0 -1.0 
 				 '() '3 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
@@ -66507,7 +66502,6 @@ EDITS: 1
 		procs1))
 	     main-args)
 	    
-	    
 	    ;; ---------------- 2 Args
 	    (for-each 
 	     (lambda (arg1)
@@ -66524,7 +66518,6 @@ EDITS: 1
 		main-args))
 	     main-args)
 	    
-	    
 	    ;; ---------------- set! no Args
 	    (for-each 
 	     (lambda (arg)
@@ -66537,7 +66530,6 @@ EDITS: 1
 			(snd-display ";set-procs0: ~A ~A" err (procedure-property n 'documentation)))))
 		set-procs0))
 	     main-args)
-	    
 	    
 	    ;; ---------------- set! 1 Arg
 	    (for-each 
@@ -66554,7 +66546,6 @@ EDITS: 1
 		   set-procs1))
 		main-args))
 	     main-args)
-	    
 	    
 	    ;; ---------------- set! 2 Args
 	    (for-each 
@@ -66574,7 +66565,6 @@ EDITS: 1
 		   less-args))
 		less-args))
 	     less-args)
-	    
 	    
 	    (if (and all-args (= test-28 0))
 		;; these can take awhile...
@@ -66602,7 +66592,6 @@ EDITS: 1
 			less-args)))
 		   less-args)
 		  
-		  
 		  (snd-display ";set 3 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 
 		  ;; ---------------- set! 3 Args
@@ -66627,7 +66616,6 @@ EDITS: 1
 		      less-args))
 		   less-args)
 		  
-		  
 		  (snd-display ";4 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 
 		  ;; ---------------- 4 Args
@@ -66651,7 +66639,6 @@ EDITS: 1
 			 few-args))
 		      few-args))
 		   few-args)
-		  
 		  
 		  (snd-display ";set 4 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 
@@ -66680,10 +66667,8 @@ EDITS: 1
 		      fewer-args))
 		   fewer-args)
 		  
-		  
 		  (clear-sincs)
 		  (stop-playing)
-		  
 		  (snd-display ";5 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 
 		  ;; ---------------- 5 Args
@@ -66711,9 +66696,7 @@ EDITS: 1
 		      fewer-args))
 		   fewer-args)
 		  
-		  
 		  (clear-sincs)
-		  
 		  (snd-display ";6 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 
 		  ;; ---------------- 6 Args
@@ -66743,7 +66726,6 @@ EDITS: 1
 			 (list 1.5 "/hiho" -1234 vct-3 -1 #f #t delay-32)))
 		      (list 1.5 -1234 vct-3 vct-5 -1 0 #f #t delay-32)))
 		   (list 1.5 "/hiho" -1234 #f #t vct-5 delay-32))
-		  
 		  
 		  (snd-display ";8 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 
@@ -66781,9 +66763,7 @@ EDITS: 1
 		      (list #f #t -1 1234 vct-3 delay-32)))
 		   (list 1.5 -1 '() 1234 "/hiho" delay-32))
 		  
-		  
 		  (clear-sincs)
-		  
 		  (snd-display ";10 args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time))))
 
 		  ;; ---------------- 10 Args
@@ -66825,8 +66805,6 @@ EDITS: 1
 			 (list 1.5 -1 "/hiho" '() delay-32)))
 		      (list 1.5 -1 '() delay-32)))
 		   (list #f -1 1234 delay-32))
-		  
-		  
 		  ))))
 
 	(snd-display ";end args")

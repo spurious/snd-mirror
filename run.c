@@ -2140,7 +2140,7 @@ static xen_value *add_some_var_to_ptree(ptree *prog, int type, xen_value_constan
     case R_CLM:          return(make_xen_value(type, add_clm_to_ptree(prog, NULL, XEN_FALSE), ctype)); break;
     case R_FUNCTION:     return(make_xen_value(type, add_fnc_to_ptree(prog, NULL), ctype));            break;
 #if USE_SND
-    case R_SAMPLER:       return(make_xen_value(type, add_sampler_to_ptree(prog, NULL), ctype));       break;
+    case R_SAMPLER:      return(make_xen_value(type, add_sampler_to_ptree(prog, NULL), ctype));        break;
     case R_SOUND:
     case R_MIX:
     case R_MARK:
@@ -2467,7 +2467,7 @@ static xen_value *add_value_to_ptree(ptree *prog, XEN val, int type)
     case R_VCT:        v = make_xen_value(R_VCT, add_vct_to_ptree(prog, xen_to_vct(val)), R_VARIABLE);                                 break;
     case R_SOUND_DATA: v = make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, XEN_TO_SOUND_DATA(val)), R_VARIABLE);            break;
 #if USE_SND
-    case R_SAMPLER:     v = make_xen_value(R_SAMPLER, add_sampler_to_ptree(prog, xen_to_sampler(val)), R_VARIABLE);                       break;
+    case R_SAMPLER:    v = make_xen_value(R_SAMPLER, add_sampler_to_ptree(prog, xen_to_sampler(val)), R_VARIABLE);                     break;
     case R_MIX:        v = make_xen_value(R_MIX, add_int_to_ptree(prog, XEN_MIX_TO_C_INT(val)), R_VARIABLE);                           break;
     case R_MARK:       v = make_xen_value(R_MARK, add_int_to_ptree(prog, XEN_MARK_TO_C_INT(val)), R_VARIABLE);                         break;
     case R_REGION:     v = make_xen_value(R_REGION, add_int_to_ptree(prog, XEN_REGION_TO_C_INT(val)), R_VARIABLE);                     break;
@@ -3290,7 +3290,7 @@ static triple *set_var(ptree *pt, xen_value *var, xen_value *init_val)
 	  case R_SOUND_DATA:   return(add_triple_to_ptree(pt, va_make_triple(store_b_sd, "set_sd", 2, var, init_val))); break;
 	  case R_CLM:          return(add_triple_to_ptree(pt, va_make_triple(store_b_clm, "set_clm", 2, var, init_val))); break;
 #if USE_SND
-	  case R_SAMPLER:       return(add_triple_to_ptree(pt, va_make_triple(store_b_sampler, "set_rd", 2, var, init_val))); break;
+	  case R_SAMPLER:      return(add_triple_to_ptree(pt, va_make_triple(store_b_sampler, "set_rd", 2, var, init_val))); break;
 #endif
 	  default:
 	    {
@@ -6973,7 +6973,7 @@ static xen_value *eq_p(ptree *prog, xen_value **args, int num_args)
     case R_SOUND_DATA:   return(package(prog, R_BOOL, sd_eq_b, "sd_eq_b", args, 2));                  break;
     case R_CLM:          return(package(prog, R_BOOL, clm_eq_b, "clm_eq_b", args, 2));                break;
 #if USE_SND
-    case R_SAMPLER:       return(package(prog, R_BOOL, sampler_eq_b, "sampler_eq_b", args, 2));          break;
+    case R_SAMPLER:      return(package(prog, R_BOOL, sampler_eq_b, "sampler_eq_b", args, 2));        break;
 #endif
     case R_KEYWORD:
     case R_SYMBOL:       return(package(prog, R_BOOL, xen_eq_b, "xen_eq_b", args, 2));                break;
@@ -7021,7 +7021,7 @@ static xen_value *eqv_p(ptree *prog, xen_value **args, int num_args)
     case R_FLOAT:        return(package(prog, R_BOOL, eqv_fb, "eqv_fb", args, 2));                   break;
     case R_CLM:          return(package(prog, R_BOOL, eqv_clm, "eqv_clm", args, 2));                 break;
 #if USE_SND
-    case R_SAMPLER:       return(package(prog, R_BOOL, sampler_eq_b, "sampler_eq_b", args, 2));         break;
+    case R_SAMPLER:      return(package(prog, R_BOOL, sampler_eq_b, "sampler_eq_b", args, 2));       break;
 #endif
     case R_VCT:          return(package(prog, R_BOOL, vct_eqv_b, "vct_eqv_b", args, 2));             break;
     case R_SOUND_DATA:   return(package(prog, R_BOOL, sd_eqv_b, "sd_eqv_b", args, 2));               break;
@@ -8286,7 +8286,7 @@ static xen_value *display_1(ptree *pt, xen_value **args, int num_args)
     case R_SYMBOL:       return(package(pt, R_BOOL, display_symbol, "display_symbol", args, 1));  break;
     case R_KEYWORD:      return(package(pt, R_BOOL, display_key, "display_key", args, 1));        break;
 #if USE_SND
-    case R_SAMPLER:       return(package(pt, R_BOOL, display_rd, "display_rd", args, 1));          break;
+    case R_SAMPLER:      return(package(pt, R_BOOL, display_rd, "display_rd", args, 1));          break;
 #endif
     case R_FLOAT_VECTOR:
     case R_VCT:          return(package(pt, R_BOOL, display_vct, "display_vct", args, 1));        break;
@@ -9851,7 +9851,7 @@ static void list_set(int *args, ptree *pt)
     case R_VCT:          pt->vcts[addr] = VCT_ARG_3;                 break;
     case R_SOUND_DATA:   pt->sds[addr] = SOUND_DATA_ARG_3;           break;
 #if USE_SND
-    case R_SAMPLER:       pt->samplers[addr] = SAMPLER_ARG_3;           break;
+    case R_SAMPLER:      pt->samplers[addr] = SAMPLER_ARG_3;         break;
 #endif
     case R_LIST:         pt->lists[addr] = LIST_ARG_3;               break;
     case R_LIST_VECTOR:
@@ -15242,7 +15242,7 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
 	    case R_SOUND_DATA:   pt->sds[addr] = NULL;           break;
 	    case R_CLM:          pt->clms[addr] = NULL;          break;
 #if USE_SND
-	    case R_SAMPLER:       pt->samplers[addr] = NULL;       break;
+	    case R_SAMPLER:      pt->samplers[addr] = NULL;      break;
 #endif
 	    case R_LIST:         pt->lists[addr] = NULL;         break;
 	    case R_LIST_VECTOR:
@@ -15277,7 +15277,7 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
     case R_SOUND_DATA:   pt->sds[addr] = XEN_TO_SOUND_DATA(arg);            break;
     case R_CLM:          pt->clms[addr] = XEN_TO_MUS_ANY(arg);              break;
 #if USE_SND
-    case R_SAMPLER:       pt->samplers[addr] = xen_to_sampler(arg);           break;
+    case R_SAMPLER:      pt->samplers[addr] = xen_to_sampler(arg);          break;
     case R_MARK:         pt->ints[addr] = XEN_MARK_TO_C_INT(arg);           break;
     case R_MIX:          pt->ints[addr] = XEN_MIX_TO_C_INT(arg);            break;
     case R_REGION:       pt->ints[addr] = XEN_REGION_TO_C_INT(arg);         break;
@@ -15898,8 +15898,8 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 #if USE_SND
 	case R_SOUND:   return(make_xen_value(R_SOUND,   add_int_to_ptree(prog, XEN_SOUND_TO_C_INT(form)), R_CONSTANT));             break;
 	case R_MIX:     return(make_xen_value(R_MIX,     add_int_to_ptree(prog, XEN_MIX_TO_C_INT(form)), R_CONSTANT));               break;
-	case R_MARK:    return(make_xen_value(R_MARK,     add_int_to_ptree(prog, XEN_MARK_TO_C_INT(form)), R_CONSTANT));             break;
-	case R_REGION:  return(make_xen_value(R_REGION,     add_int_to_ptree(prog, XEN_REGION_TO_C_INT(form)), R_CONSTANT));         break;
+	case R_MARK:    return(make_xen_value(R_MARK,    add_int_to_ptree(prog, XEN_MARK_TO_C_INT(form)), R_CONSTANT));              break;
+	case R_REGION:  return(make_xen_value(R_REGION,  add_int_to_ptree(prog, XEN_REGION_TO_C_INT(form)), R_CONSTANT));            break;
 #endif
 	}
 
@@ -16268,7 +16268,7 @@ mus_float_t mus_run_evaluate_ptreec(struct ptree *pt, mus_float_t arg, XEN objec
 	case R_SOUND_DATA:   if (pt->sds) pt->sds[addr] = XEN_TO_SOUND_DATA(object);                        break;
 	case R_CLM:          if (pt->clms) pt->clms[addr] = XEN_TO_MUS_ANY(object);                         break;
 #if USE_SND
-	case R_SAMPLER:       if (pt->samplers) pt->samplers[addr] = xen_to_sampler(object);                   break;
+	case R_SAMPLER:      if (pt->samplers) pt->samplers[addr] = xen_to_sampler(object);                 break;
 	case R_MIX:          pt->ints[addr] = XEN_MIX_TO_C_INT(object);                                     break;
 	case R_MARK:         pt->ints[addr] = XEN_MARK_TO_C_INT(object);                                    break;
 	case R_REGION:       pt->ints[addr] = XEN_REGION_TO_C_INT(object);                                  break;

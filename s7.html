@@ -431,7 +431,7 @@ in the key position.  These problems arise in a case such as
 <p>In the last case, to pass a keyword deliberately, either include the
 argument keyword: <code>(f :a :c)</code>, or make the default value a keyword:
 <code>(define* (f (a :c) ...))</code>.
-<p>
+</p>
 
 <!--
 (define* (f a b . c) (list a b c))
@@ -1451,20 +1451,24 @@ an integer (the one dimensional case):
     (make-vector '(2 3) 1.0)
     (vector-dimensions (make-vector (list 2 3 4))) -&gt; (2 3 4)
 </pre>
-<p>The second example includes the optional default vector element.  Once defined,
-(vect i ...) or (to be very verbose, (vector-ref vect i ...)) returns the given
-element, and (set! (vect i ...) m), (or verbose and unreadable, (vector-set! vect i ... m))
-sets that element.  vector-dimensions returns a list of the dimensions of a vector.
+<p>The second example includes the optional initial element.
+<code>(vect i ...)</code> or <code>(vector-ref vect i ...)</code> return the given
+element, and <code>(set! (vect i ...) value)</code> and <code>(vector-set! vect i ... value)</code>
+set it.  vector-length (or just length) returns the total number of elements.
+vector-dimensions returns a list of the dimensions.
 </p>
 <pre>
-    (define v (make-vector '(2 3) 1.0))
-    -&gt; #(1.0 1.0 1.0 1.0 1.0 1.0)
+    &gt; (define v (make-vector '(2 3) 1.0))
+    #(1.0 1.0 1.0 1.0 1.0 1.0) ; perhaps this should show the dimensional grouping
 
-    (set! (v 0 1) 2.0)
-    -&gt; #(1.0 2.0 1.0 1.0 1.0 1.0)
+    &gt; (set! (v 0 1) 2.0)
+    #(1.0 2.0 1.0 1.0 1.0 1.0)
 
-    (v 0 1)
-    -&gt; 2.0
+    &gt; (v 0 1)
+    2.0
+
+    &gt; (vector-length v)
+    6
 </pre>
 
 <small>
@@ -1581,6 +1585,7 @@ of pthread_getspecific, just call it: (var).
      (join-thread thread))
    threads))
 </pre>
+
 </dd>
 <br><br>
 
@@ -2212,7 +2217,7 @@ second argument, the environment in which the evaluation should take place.  <b>
 is similar, but its argument is a string.
 </p>
 <pre>
-&gt; (eval `(+ 1 2))
+&gt; (eval '(+ 1 2))
 3
 
 &gt; (eval-string "(+ 1 2)")
@@ -2389,8 +2394,7 @@ but vectors are sorted in place.
 Keywords exist mainly for define*'s benefit.  The keyword functions are:
 <b>keyword?</b>, <b>make-keyword</b>, <b>symbol-&gt;keyword</b>, and <b>keyword-&gt;symbol</b>.
 A keyword is a symbol that starts or ends with a colon. The colon
-is considered to be a part of the symbol name (unlike CL where it
-signals that the symbol is in the Package-With-No-Name [offstage: harmonica, tubular bells...]).
+is considered to be a part of the symbol name.
 s7's keyword support is somewhat lackadaisical; I can't decide if it's worth complaining
 about stuff like <code>(let ((:hi 1)) :hi)</code>.
 </p>
@@ -2419,6 +2423,7 @@ about stuff like <code>(let ((:hi 1)) :hi)</code>.
 
 <p><b>quit</b> exits s7.</p>
 <p><b>gc</b> calls the garbage collector.  (gc #f) turns off the GC, and (gc #t) turns it on.
+In the multithread case, don't call gc yourself except from the top-level.
 </p>
 
 <!--
