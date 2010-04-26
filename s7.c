@@ -7807,7 +7807,7 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY); /* should this follow the malloc? */
   string_value(x) = (char *)malloc((len + 1) * sizeof(char)); 
   memcpy((void *)string_value(x), (void *)str, len + 1);
   string_length(x) = len;
@@ -11515,6 +11515,12 @@ static s7_pointer s7_make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
  *   they are taking up, and unless we call gc ourselves, we run out of memory.  Since each
  *   element has the vector pointer, the heap pointer, and the free-list pointer (worst case),
  *   we're consuming 28 + 12 or 40 + 24 bytes per element!
+ */
+
+/* in CL:  (make-array (list 2 3) :initial-element 0) -> #2A((0 0 0) (0 0 0))
+ * in s7:  (make-vector (list 2 3) 0) -> #(0 0 0 0 0 0)
+ *
+ * so whatever constant vector syntax we choose should be used in the vector display code (vector_to_c_string)
  */
 
 
@@ -18123,6 +18129,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* PERHAPS: define defmacro(*) in terms of define-macro(*) */
     case OP_DEFMACRO:
     case OP_DEFMACRO_STAR:
 
