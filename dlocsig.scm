@@ -23,6 +23,7 @@
 ;;; http://www.york.ac.uk/inst/mustech/3d_audio/ambison.htm for more details...
 
 ;;; CHANGES:
+;;; 04/26/2010: add delay hack to remove artifacts in delay output, fix other bugs (Nando)
 ;;; 06/28/2009: remove class/method stuff for s7 (Bill)
 ;;; 01/08/2007: make a few functions local etc (Bill)
 ;;; 07/05/2006: translate to scheme, use move-sound generator (Bill)
@@ -2079,6 +2080,9 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	 (min-dist #f)
 	 (max-dist #f)
 	 (min-delay #f)
+	 ;; without this the delay apparently stomps over something else in the structure
+	 ;; and we get artifacts in the output, probably a off-by-one error somewhere
+	 (delay-hack 1)
 	 (min-dist-unity #f)
 	 (unity-gain 1.0)
 	 (unity-rev-gain 1.0)
@@ -2729,34 +2733,6 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	      (fminimum-segment-length xi yi zi ti xb yb zb tb)))))
 
 
-    ;; structure that defines the unit generator
-    (define* (make-dlocs                    ; order of fields must match make-move-sound expectations
-			 (start 0)               ; absolute sample number at which samples first reach the listener
-			 (end 0)                 ; absolute sample number of end of input samples
-			 (out-channels 0)        ; number of output channels in soundfile
-			 (rev-channels 0)        ; number of reverb channels in soundfile
-			 path                    ; interpolated delay line for doppler
-			 delay                   ; doppler env
-			 rev                     ; reverberation amount
-			 out-delays              ; delay lines for output channels that have additional delays
-			 gains                   ; gain envelopes, one for each output channel
-			 rev-gains               ; reverb gain envelopes, one for each reverb channel
-			 out-map)                ; mapping of speakers to output channels
-      (list 'dlocs start end out-channels rev-channels path delay rev out-delays gains rev-gains out-map))
-
-    ;; (define dlocs-start (make-procedure-with-setter (lambda (a) (list-ref a 1)) (lambda (a b) (list-set! a 1 b))))
-    ;; (define dlocs-end (make-procedure-with-setter (lambda (a) (list-ref a 2)) (lambda (a b) (list-set! a 2 b))))
-    ;; (define dlocs-out-channels (make-procedure-with-setter (lambda (a) (list-ref a 3)) (lambda (a b) (list-set! a 3 b))))
-    ;; (define dlocs-rev-channels (make-procedure-with-setter (lambda (a) (list-ref a 4)) (lambda (a b) (list-set! a 4 b))))
-    ;; (define dlocs-path (make-procedure-with-setter (lambda (a) (list-ref a 5)) (lambda (a b) (list-set! a 5 b))))
-    ;; (define dlocs-delay (make-procedure-with-setter (lambda (a) (list-ref a 6)) (lambda (a b) (list-set! a 6 b))))
-    ;; (define dlocs-rev (make-procedure-with-setter (lambda (a) (list-ref a 7)) (lambda (a b) (list-set! a 7 b))))
-    ;; (define dlocs-out-delays (make-procedure-with-setter (lambda (a) (list-ref a 8)) (lambda (a b) (list-set! a 8 b))))
-    ;; (define dlocs-gains (make-procedure-with-setter (lambda (a) (list-ref a 9)) (lambda (a b) (list-set! a 9 b))))
-    ;; (define dlocs-rev-gains (make-procedure-with-setter (lambda (a) (list-ref a 10)) (lambda (a b) (list-set! a 10 b))))
-    ;; (define dlocs-out-map (make-procedure-with-setter (lambda (a) (list-ref a 11)) (lambda (a b) (list-set! a 11 b))))
-
-
     ;; Loop for each pair of points in the position envelope and render them
     (if (= (length xpoints) 1)
 	;; static source (we should check if this is inside the inner radius?)
@@ -2778,7 +2754,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	      (if (= i len)
 		  (walk-all-rooms xb yb zb tb 4))))))
 
-      ;; create delay lines for output channels that need them
+    ;; create delay lines for output channels that need them
     (let* ((delays (speaker-config-delays speakers))
 	   (len (length delays)))
       (do ((channel 0 (+ 1 channel)))
@@ -2789,18 +2765,24 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 					      #f))
 	  (set! max-out-delay (max max-out-delay delayo)))))
 
-    (set! min-delay (dist->samples min-dist))                                   ; delay from the minimum distance to the listener
-    (set! start (dist->samples (- first-dist (if initial-delay 0.0 min-dist)))) ; sample at which signal first arrives to the listener
-    (set! real-dur (+ duration (dist->seconds (- last-dist first-dist))))       ; duration of sound at listener's position after doppler src
-    (set! run-beg (inexact->exact (floor (time->samples start-time))))          ; start and end of the run loop in samples
-    (set! run-end (inexact->exact (floor (- (+ (time->samples (+ start-time duration))
+    ;; delay from the minimum distance to the listener
+    (set! min-delay (dist->samples min-dist))
+    ;; duration of sound at listener's position after doppler src
+    (set! real-dur (+ duration (dist->seconds (- last-dist first-dist))))
+    ;; start and end of the run loop in samples
+    (set! run-beg (inexact->exact (floor (time->samples start-time))))
+    (set! run-end (inexact->exact (floor (- (+ (time->samples (+ start-time real-dur))
 					       (dist->samples last-dist)
 					       (time->samples max-out-delay))
 					    (if initial-delay 0.0 min-delay)))))
-    (set! min-dist-unity (if (< min-dist inside-radius)                         ; minimum distance for unity gain calculation
+    ;; sample at which signal first arrives to the listener
+    (set! start (+ run-beg (dist->samples (- first-dist (if initial-delay 0.0 min-dist)))))
+    ;; minimum distance for unity gain calculation
+    (set! min-dist-unity (if (< min-dist inside-radius)
 			     inside-radius 
 			     min-dist))
-    (set! unity-gain (* scaler                                                  ; unity-gain gain scalers
+    ;; unity-gain gain scalers
+    (set! unity-gain (* scaler
 			(if (number? unity-gain-dist)
 			    (expt unity-gain-dist direct-power)
 			    (if (not unity-gain-dist)
@@ -2809,47 +2791,56 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
     (set! unity-rev-gain (* scaler
 			    (if (number? unity-gain-dist)
 				(expt unity-gain-dist reverb-power)
-				(if (not unity-gain-dist)                ; defaults to #f above
+				(if (not unity-gain-dist) ; defaults to #f above
 				    (expt min-dist-unity reverb-power)
 				    1.0))))
+
     (list 
-    (make-move-sound
-     ;; return runtime structure with all the information
-
-     (cdr
-     (make-dlocs :start start
-		 :end (inexact->exact (floor (* (+ start-time duration) (mus-srate))))
-		 :out-channels (speaker-config-number speakers)
-		 :rev-channels rev-channels
-		 :out-map (speaker-config-map speakers)
-		 :out-delays out-delays
-		 :gains (let ((v (make-vector out-channels)))
-			  (do ((i 0 (+ 1 i)))
-			      ((= i out-channels))
-			    (vector-set! v i (make-env (reverse (vector-ref channel-gains i))
-						       :scaler (if (= render-using b-format-ambisonics) 1.0 unity-gain)
-						       :duration real-dur)))
-			  v)
-		 :rev-gains (if (> rev-channels 0)
-				(let ((v (make-vector rev-channels)))
-				  (do ((i 0 (+ 1 i)))
-				      ((= i rev-channels))
-				    (vector-set! v i (make-env (reverse (vector-ref channel-rev-gains i))
-							       :scaler (if (= render-using b-format-ambisonics) 1.0 unity-rev-gain)
-							       :duration real-dur)))
-				  v)
-				#f)
-		 :delay (make-env (reverse delay)
-				  :offset (if initial-delay 0.0 (- min-delay))
-				  :duration real-dur)
-		 :path (make-delay 0 :max-size (max 1 (+ (ceiling (dist->samples max-dist)) 1)))
-		 :rev (make-env (if (number? reverb-amount) ; as opposed to an envelope I guess
-				    (list 0 reverb-amount 1 reverb-amount)
-				    reverb-amount)
-				:duration real-dur)))
-     *output*
-     *reverb*)
-
+     (make-move-sound
+      (list
+       ;; :start 
+       start
+       ;; :end 
+       (time->samples (+ start-time real-dur))
+       ;; :out-channels 
+       (speaker-config-number speakers)
+       ;; :rev-channels 
+       rev-channels
+       ;; :path 
+       (make-delay delay-hack :max-size (max 1 (+ (ceiling (dist->samples max-dist)) delay-hack)))
+       ;; :delay 
+       (make-env (reverse delay)
+		 :offset (if initial-delay 0.0 (- min-delay))
+		 :duration real-dur)
+       ;; :rev 
+       (make-env (if (number? reverb-amount) ; as opposed to an envelope I guess
+		     (list 0 reverb-amount 1 reverb-amount)
+		     reverb-amount)
+		 :duration real-dur)
+       ;; :out-delays 
+       out-delays
+       ;; :gains 
+       (let ((v (make-vector out-channels)))
+	 (do ((i 0 (+ 1 i)))
+	     ((= i out-channels))
+	   (vector-set! v i (make-env (reverse (vector-ref channel-gains i))
+				      :scaler (if (= render-using b-format-ambisonics) 1.0 unity-gain)
+				      :duration real-dur)))
+	 v)
+       ;; :rev-gains 
+       (if (> rev-channels 0)
+	   (let ((v (make-vector rev-channels)))
+	     (do ((i 0 (+ 1 i)))
+		 ((= i rev-channels))
+	       (vector-set! v i (make-env (reverse (vector-ref channel-rev-gains i))
+					  :scaler (if (= render-using b-format-ambisonics) 1.0 unity-rev-gain)
+					  :duration real-dur)))
+	     v)
+	   #f)
+       ;; :out-map 
+       (speaker-config-map speakers))
+      *output*
+      *reverb*)
      ;; return start and end samples for the run loop
      run-beg
      run-end)))

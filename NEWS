@@ -1,18 +1,21 @@
-Snd 11.4
+Snd 11.5
 
-most of my effort in this version went into optimizations.
+autoload support via s7's *unbound-variable-hook*.  If you try to
+  use some undefined function, Snd first looks through a table
+  of (nearly) everything defined in the scheme files that come 
+  with Snd, loading the needed files automatically. To turn this 
+  off, (set! *unbound-variable-hook* #f).
 
-the (sndlib) run macro's argument no longer has to be a "thunk".
+removed encapsulation from s7.  Added augment-environment.
 
-removed weird r4rs macro syntax from s7.
+added make-type to s7: scheme-level type creation.
+      symbol-access: trap/modify the symbol value lookup mechanism.
 
-I think I'll have to either rename or remove the encapsulation stuff
-  in s7.  It turns out that very similar names are being used in the Kernel
-  language and the r7rs discussions, and my use can only cause confusion.  
-  Let me know if you're using that stuff.
+mix-notelists in ws.scm.
+
+checked: gtk 2.20.0, sbcl 1.0.37
+
+Thanks!: Rick Taube, Rick's students, Oded Ben-Tal, Cazzaniga Sandro,
+  Mike Scholz
 
 
-checked: gtk 2.19.6|7, sbcl 1.0.36, gsl 1.14
-
-Thanks!: Mike Scholz, Geoff Lee, Georgia Rodgers, Michael Edwards, Andrew Antle, 
-	 Rick Taube,  Rick's students.

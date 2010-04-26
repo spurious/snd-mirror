@@ -152,6 +152,8 @@
  *    this size is not very important (it can be 32 or maybe smaller):
  *      8k: 2432, 32k: 2419, 128k: 2401, 512k: 2394, 8192k: 2417
  *    (valgrind timings from 23-Feb-10 running s7test.scm)
+ *
+ * If the initial heap is small, s7 can run in less than 1 Mbyte of memory.
  */
 
 #define SYMBOL_TABLE_SIZE 2207
@@ -18129,9 +18131,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
-      /* PERHAPS: define defmacro(*) in terms of define-macro(*) */
     case OP_DEFMACRO:
     case OP_DEFMACRO_STAR:
+      /* defmacro(*) could be defined in terms of define-macro(*), but I guess this gives us better error messages */
 
       if (!is_pair(sc->code))                                               /* (defmacro . 1) */
 	return(eval_error(sc, "defmacro name missing (stray dot?): ~A", sc->code));
@@ -18157,13 +18159,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if ((!is_pair(sc->y)) &&
 	  (sc->y != sc->NIL) &&
 	  (!s7_is_symbol(sc->y)))
-	return(s7_error(sc, sc->SYNTAX_ERROR,                                      /* (defmacro mac "hi" ...) */
+	return(s7_error(sc, sc->SYNTAX_ERROR,                               /* (defmacro mac "hi" ...) */
 			make_list_3(sc, make_protected_string(sc, "defmacro ~A argument list is ~S?"), sc->x, sc->y)));
 
       for ( ; is_pair(sc->y); sc->y = cdr(sc->y))
 	if ((!s7_is_symbol(car(sc->y))) &&
 	    (sc->op == OP_DEFMACRO))
-	  return(s7_error(sc, sc->SYNTAX_ERROR,                                    /* (defmacro mac (1) ...) */
+	  return(s7_error(sc, sc->SYNTAX_ERROR,                             /* (defmacro mac (1) ...) */
 			  make_list_3(sc, make_protected_string(sc, "defmacro ~A argument name is not a symbol: ~S"), sc->x, sc->y)));
 
       if (cdr(sc->z) == sc->NIL)                                            /* (defmacro hi ()) */
@@ -18453,7 +18455,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     case OP_WITH_ENV2:
-      if (!is_environment(sc, sc->value))                    /* (with-environment . "hi") */
+      if (!is_environment(sc, sc->value))                /* (with-environment . "hi") */
 	return(eval_error(sc, "with-environment takes an environment argument: ~A", sc->value));
 
       sc->envir = sc->value;                             /* in new env... */

@@ -2,7 +2,7 @@
 #define S7_H
 
 #define S7_VERSION "1.54"
-#define S7_DATE "13-Apr-10"
+#define S7_DATE "26-Apr-10"
 
 
 typedef long long int s7_Int;
@@ -331,52 +331,6 @@ s7_Int *s7_vector_offsets(s7_pointer vec);                                      
    *  (make-vector '(2 3) 1.0) returns a 2-dim vector with all elements set to 1.0
    */
   
-  /* since vectors and lists are set-applicable, and length is generic, we can write a
-   *   generic FFT that accepts both types or any other object that follows this syntax.
-
-        (define* (cfft! data n (dir 1)) ; (complex data)
-          (if (not n) (set! n (length data)))
-          (do ((i 0 (+ i 1))
-               (j 0))
-              ((= i n))
-            (if (> j i)
-        	(let ((temp (data j)))
-        	  (set! (data j) (data i))
-        	  (set! (data i) temp)))
-            (let ((m (/ n 2)))
-              (do () 
-        	  ((or (< m 2) (< j m)))
-        	(set! j (- j m))
-        	(set! m (/ m 2)))
-              (set! j (+ j m))))
-          (let ((ipow (floor (log n 2)))
-        	(prev 1))
-            (do ((lg 0 (+ lg 1))
-        	 (mmax 2 (* mmax 2))
-        	 (pow (/ n 2) (/ pow 2))
-        	 (theta (make-rectangular 0.0 (* pi dir)) (* theta 0.5)))
-        	((= lg ipow))
-              (let ((wpc (exp theta))
-        	    (wc 1.0))
-        	(do ((ii 0 (+ ii 1)))
-        	    ((= ii prev))
-        	  (do ((jj 0 (+ jj 1))
-        	       (i ii (+ i mmax))
-        	       (j (+ ii prev) (+ j mmax)))
-        	      ((>= jj pow))
-        	    (let ((tc (* wc (data j))))
-        	      (set! (data j) (- (data i) tc))
-        	      (set! (data i) (+ (data i) tc))))
-        	  (set! wc (* wc wpc)))
-        	(set! prev mmax))))
-          data)
-        
-        > (cfft! (list 0.0 1+i 0.0 0.0))
-        (1+1i -1+1i -1-1i 1-1i)
-        > (cfft! (vector 0.0 1+i 0.0 0.0))
-        #(1+1i -1+1i -1-1i 1-1i)
-  */
-        
 
 bool s7_is_hash_table(s7_pointer p);                                        /* (hash-table? p) */
 s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size);                  /* (make-hash-table size) */
@@ -507,36 +461,6 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer env, s7_pointer bind
 	             (apropos-1 (vector-ref frame i))))
 	         (apropos-1 frame)))
            (current-environment)))
-   *
-   * It's also possible to change the current environment:
-   *
-      (define (push-environment e binding)
-        (if (vector? (car e))
-            (begin
-              (set-cdr! e (list (car e)))
-              (set-car! e (list binding)))
-            (set-car! e (cons binding (car e)))))
-   
-      (define (pop-environment e)
-        (if (not (vector? (car e)))
-            (begin
-              (set-car! e (cadr e))
-              (set-cdr! e (cddr e)))))
-   
-      (define-macro (define! e var val) 
-        `(push-environment ,e (cons ',var ,val)))
-
-      (define (make-environment . initial-bindings)
-         (cons initial-bindings (global-environment)))
-
-   *   (let ((x 3)) 
-   *     (define! (current-environment) hi 21)
-   *     (+ x hi))
-   *   -> 24
-   *
-   *   (let ((x 32)) 
-   *     (eval `(+ x y) (make-environment '(x . 2) '(y . 4))))
-   *   -> 6
    */
 
 s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);

@@ -303,6 +303,7 @@ static mus_float_t region_sample(int reg, int chn, mus_long_t samp)
 	      free_snd_fd(sf);
 	      return(val);
 	      break;
+
 	    case REGION_DEFERRED:
 	      drp = r->dr;
 	      return(chn_sample(samp + r->begs[chn], drp->cps[chn], drp->edpos[chn]));
@@ -350,6 +351,7 @@ static void region_samples(int reg, int chn, mus_long_t beg, mus_long_t num, mus
 		data[j] = read_sample(sf);
 	      free_snd_fd(sf);
 	      break;
+
 	    case REGION_DEFERRED:
 	      drp = r->dr;
 	      sf = init_sample_read_any(beg + r->begs[chn], drp->cps[chn], READ_FORWARD, drp->edpos[chn]);
@@ -567,11 +569,14 @@ int remove_region_from_list(int pos) /* region browser */
   int i, id;
   id = region_list_position_to_id(pos);
   if (id == INVALID_REGION) return(INVALID_REGION);
+
   stop_playing_region(id, PLAY_CLOSE);
+
   free_region(id_to_region(id), COMPLETE_DELETION);
   for (i = pos; i < regions_size - 1; i++) 
     regions[i] = regions[i + 1]; 
   regions[regions_size - 1] = NULL;
+
   return(check_regions());
 }
 

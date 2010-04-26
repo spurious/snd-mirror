@@ -1,6 +1,6 @@
 /* run macro
  *   
- *   Rather than write/compile (via gcc) a C source file, as in CLM, this
+ *   Rather than write/compile (via gcc) a C source file, as in CL/CLM, this
  *   produces the intermediate "triples" on the fly, packaging them into
  *   a "program" (a list of triples), and precomputing all function, program,
  *   and data addresses.
@@ -12,13 +12,7 @@
  *
  * Snd optimization flag determines how safe we try to be:
  *   0: no use of ptrees at all (fallback on Scheme)
- *   1: allow simple ops (if complex result possible, give up)
- *   2: [currently non-functional] assume nothing will return a complex number (i.e. user says acos args are between -1 and 1 and so on)
- *   3: if undefined global variable encountered, try to determine eventual type from context;
- *      this is dangerous -- the tree may not recognize trouble until evaluation time.
- *   4: make more assumptions about non-local variables -- lots of errors will be unnoticed until eval time.
- *   5: try to set variable value in outer environment
- *   6: try to splice in function source
+ *   6: all opts
  *
  *
  * exported:
@@ -257,7 +251,13 @@ static s7_pointer scheme_false, scheme_true, scheme_nil, scheme_undefined, schem
 #define scheme_caar(a)        s7_car(s7_car(a))
 #define scheme_cdar(a)        s7_cdr(s7_car(a))
 #define scheme_cdadr(a)       s7_cdr(s7_car(s7_cdr(a)))
+#define scheme_list_1(Arg)    s7_cons(s7, Arg, scheme_nil)
+#define scheme_list_2(Arg1, Arg2) s7_cons(s7, Arg1, s7_cons(s7, Arg2, scheme_nil))
 
+static s7_pointer scheme_make_string(const char *str)
+{
+  return((str) ? s7_make_string(s7, str) : scheme_false);
+}
 
 static s7_pointer optimization_hook;
 #define S_optimization_hook "optimization-hook"
@@ -277,8 +277,8 @@ static s7_pointer optimization_hook;
 #define DOUBLE_TO_STRING_WITH_RADIX(a, b)   s7_number_to_string(s7, s7_make_real(s7, a), b)
 
 static s7_pointer walker_hash_table;
-#define XEN_WALKER(Obj)                     s7_hash_table_ref(s7, walker_hash_table, s7_symbol_name(Obj))
-#define XEN_SET_WALKER(Obj, Val)            s7_hash_table_set(s7, walker_hash_table, s7_symbol_name(Obj), Val)
+#define scheme_walker(Obj)                     s7_hash_table_ref(s7, walker_hash_table, s7_symbol_name(Obj))
+#define scheme_set_walker(Obj, Val)            s7_hash_table_set(s7, walker_hash_table, s7_symbol_name(Obj), Val)
 
 
 #define UNLIMITED_ARGS -1
@@ -580,11 +580,11 @@ XEN run_hook(s7_pointer hook, s7_pointer args, const char *caller)
   s7_pointer procs = XEN_HOOK_PROCEDURES(hook);
   gc_loc = s7_gc_protect(s7, args);
 
-  while (XEN_NOT_NULL_P(procs))
+  while (procs != scheme_nil)
     {
       if (!(s7_is_eq(args, scheme_nil)))
-	XEN_APPLY(s7_car(procs), args, caller);
-      else XEN_CALL_0(s7_car(procs), caller);
+	s7_call(s7, s7_car(procs), args);
+      else s7_call(s7, s7_car(procs), scheme_nil);
       procs = s7_cdr(procs);
     }
 
@@ -618,7 +618,7 @@ static xen_value *run_warn(const char *format, ...)
 
   if (XEN_HOOKED(optimization_hook))
     run_hook(optimization_hook, 
-	     XEN_LIST_1(C_TO_XEN_STRING(optimizer_warning_buffer)),
+	     scheme_list_1(scheme_make_string(optimizer_warning_buffer)),
 	     S_optimization_hook);
 
   return(NULL); /* this is so we can insert the call into the error return call chain */
@@ -629,12 +629,12 @@ static xen_value *run_warn_with_free(char *str)
 {
   s7_pointer msg;
   run_warned = true;
-  msg = C_TO_XEN_STRING(str);
+  msg = scheme_make_string(str);
   free(str);
 
   if (XEN_HOOKED(optimization_hook))
     run_hook(optimization_hook, 
-	     XEN_LIST_1(msg),
+	     scheme_list_1(msg),
 	     S_optimization_hook);
 
   return(NULL);
@@ -1367,10 +1367,7 @@ static list *xen_to_list(ptree *pt, s7_pointer lst)
 	{
 	  for (i = 1; i < len; i++)
 	    if (type != mus_run_xen_to_run_type(s7_list_ref(s7, lst, i)))
-	      {
-		/* fprintf(stderr,"%s type %s != %s\n", s7_object_to_c_string(s7, s7_list_ref(s7, lst, i)), type_name(mus_run_xen_to_run_type(s7_list_ref(s7, lst, i))), type_name(type)); */
-		return(NULL); /* we have to be able to predict each element type */
-	      }
+	      return(NULL); /* we have to be able to predict each element type */
 	}
     }
 
@@ -1455,8 +1452,8 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 		case R_FLOAT:  xen_symbol_name_set_value(var->name, s7_make_real(s7, prog->dbls[var->v->addr]));       break;
 		case R_INT:    xen_symbol_name_set_value(var->name, s7_make_integer(s7, prog->ints[var->v->addr]));        break;
 		case R_BOOL:   xen_symbol_name_set_value(var->name, s7_make_boolean(s7, prog->ints[var->v->addr]));      break;
-		case R_STRING: xen_symbol_name_set_value(var->name, C_TO_XEN_STRING(prog->strs[var->v->addr]));       break;
-		case R_CHAR:   xen_symbol_name_set_value(var->name, C_TO_XEN_CHAR((char)(prog->ints[var->v->addr]))); break;
+		case R_STRING: xen_symbol_name_set_value(var->name, scheme_make_string(prog->strs[var->v->addr]));       break;
+		case R_CHAR:   xen_symbol_name_set_value(var->name, s7_make_character(s7, (char)(prog->ints[var->v->addr]))); break;
 
 		case R_KEYWORD:
 		case R_SYMBOL: xen_symbol_name_set_value(var->name, prog->xens[var->v->addr]);                        break;
@@ -1485,8 +1482,8 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 		case R_FLOAT:  symbol_set_value(prog->code, s7_make_symbol(s7, var->name), s7_make_real(s7, prog->dbls[var->v->addr]));       break;
 		case R_INT:    symbol_set_value(prog->code, s7_make_symbol(s7, var->name), s7_make_integer(s7, prog->ints[var->v->addr]));        break;
 		case R_BOOL:   symbol_set_value(prog->code, s7_make_symbol(s7, var->name), s7_make_boolean(s7, prog->ints[var->v->addr]));      break;
-		case R_STRING: symbol_set_value(prog->code, s7_make_symbol(s7, var->name), C_TO_XEN_STRING(prog->strs[var->v->addr]));       break;
-		case R_CHAR:   symbol_set_value(prog->code, s7_make_symbol(s7, var->name), C_TO_XEN_CHAR((char)(prog->ints[var->v->addr]))); break;
+		case R_STRING: symbol_set_value(prog->code, s7_make_symbol(s7, var->name), scheme_make_string(prog->strs[var->v->addr]));       break;
+		case R_CHAR:   symbol_set_value(prog->code, s7_make_symbol(s7, var->name), s7_make_character(s7, (char)(prog->ints[var->v->addr]))); break;
 
 		case R_KEYWORD:
 		case R_SYMBOL: symbol_set_value(prog->code, s7_make_symbol(s7, var->name), prog->xens[var->v->addr]);                        break;
@@ -2026,8 +2023,8 @@ static int add_xen_to_ptree(ptree *pt, s7_pointer value)
       int i;
       pt->xens_size += 8;
       if (pt->xens)
-	pt->xens = (s7_pointer *)realloc(pt->xens, pt->xens_size * sizeof(XEN));
-      else pt->xens = (s7_pointer *)calloc(pt->xens_size, sizeof(XEN));
+	pt->xens = (s7_pointer *)realloc(pt->xens, pt->xens_size * sizeof(s7_pointer));
+      else pt->xens = (s7_pointer *)calloc(pt->xens_size, sizeof(s7_pointer));
       for (i = cur; i < pt->xens_size; i++) pt->xens[i] = scheme_undefined;
     }
   pt->xens[cur] = value;
@@ -2276,7 +2273,7 @@ static vect *read_int_vector(s7_pointer vectr)
       s7_pointer datum;
       datum = s7_vector_ref(s7, vectr, i);
       if (s7_is_integer(datum))
-	v->data.ints[i] = XEN_TO_C_INT64_T(datum);
+	v->data.ints[i] = s7_number_to_integer(datum);
       else
 	{
 	  char *temp = NULL;
@@ -2401,7 +2398,7 @@ int mus_run_xen_to_run_type(s7_pointer val)
 {
   if (s7_is_real(val))
     {
-      if ((XEN_EXACT_P(val)) && (s7_is_integer(val)))
+      if ((s7_is_exact(val)) && (s7_is_integer(val)))
 	return(R_INT);
       return(R_FLOAT);
     }
@@ -2417,7 +2414,7 @@ int mus_run_xen_to_run_type(s7_pointer val)
 
   if (s7_is_list(s7, val)) 
     {
-      if ((XEN_NOT_NULL_P(val)) &&
+      if ((val != scheme_nil) &&
 	  (s7_is_symbol(s7_car(val))))
 	{
 	  int type;
@@ -2435,7 +2432,7 @@ int mus_run_xen_to_run_type(s7_pointer val)
       val0 = s7_vector_ref(s7, val, 0);
       if (s7_is_real(val0))
 	{
-	  if (XEN_EXACT_P(val0))
+	  if (s7_is_exact(val0))
 	    return(R_INT_VECTOR);
 	  return(R_FLOAT_VECTOR);
 	}
@@ -2463,7 +2460,7 @@ static xen_value *add_value_to_ptree(ptree *prog, s7_pointer val, int type)
 
   switch (type)
     {
-    case R_INT:        v = make_xen_value(R_INT, add_int_to_ptree(prog, XEN_TO_C_INT64_T(val)), R_VARIABLE);                             break;
+    case R_INT:        v = make_xen_value(R_INT, add_int_to_ptree(prog, s7_number_to_integer(val)), R_VARIABLE);                             break;
     case R_FLOAT:      v = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, s7_number_to_real(val)), R_VARIABLE);                          break;
     case R_BOOL:       v = make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)scheme_to_c_bool(val)), R_VARIABLE);                     break;
     case R_VCT:        v = make_xen_value(R_VCT, add_vct_to_ptree(prog, xen_to_vct(val)), R_VARIABLE);                                 break;
@@ -2476,7 +2473,7 @@ static xen_value *add_value_to_ptree(ptree *prog, s7_pointer val, int type)
     case R_SOUND:      v = make_xen_value(R_SOUND, add_int_to_ptree(prog, XEN_SOUND_TO_C_INT(val)), R_VARIABLE);                       break;
 #endif
     case R_CHAR:       v = make_xen_value(R_CHAR, add_int_to_ptree(prog, (Int)(s7_character(val))), R_VARIABLE);                      break;
-    case R_STRING:     v = make_xen_value(R_STRING, add_string_to_ptree(prog, mus_strdup(XEN_TO_C_STRING(val))), R_VARIABLE);          break;
+    case R_STRING:     v = make_xen_value(R_STRING, add_string_to_ptree(prog, mus_strdup(s7_string(val))), R_VARIABLE);          break;
     case R_SYMBOL:     v = make_xen_value(R_SYMBOL, add_xen_to_ptree(prog, val), R_VARIABLE);                                          break;
     case R_KEYWORD:    v = make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, val), R_VARIABLE);                                         break;
     case R_CLM:        v = make_xen_value(R_CLM, add_clm_to_ptree(prog, XEN_TO_MUS_ANY(val), val), R_VARIABLE);                        break;
@@ -2555,16 +2552,16 @@ static xen_value *add_global_var_to_ptree(ptree *prog, s7_pointer form, s7_point
 
   val = symbol_to_value(prog->code, form, &local_var);
   (*rtn) = val;
-  if (XEN_NOT_BOUND_P(val))
+  if (val == scheme_undefined)
     {
       ptree *upper = NULL;
       upper = prog;
-      while ((XEN_NOT_BOUND_P(val)) && (upper->outer_tree))
+      while ((val == scheme_undefined) && (upper->outer_tree))
 	{
 	  upper = upper->outer_tree;
 	  val = symbol_to_value(upper->code, form, &local_var);
 	}
-      if (XEN_NOT_BOUND_P(val))	
+      if (val == scheme_undefined)	
 	return(run_warn("can't find %s", varname));
     }
   type = mus_run_xen_to_run_type(val);
@@ -2924,11 +2921,10 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define FNC_ARG_5 ((ptree **)(pt->fncs))[args[5]]
 #define FNC_ARG_6 ((ptree **)(pt->fncs))[args[6]]
 
-#define XEN_RESULT pt->xens[args[0]]
-#define RXEN_ARG_1 pt->xens[args[1]]
-#define RXEN_ARG_2 pt->xens[args[2]]
-#define RXEN_ARG_3 pt->xens[args[3]]
-/* using "RXEN" here because XEN_ARG_* is already used in xen.h */
+#define SCHEME_RESULT pt->xens[args[0]]
+#define SCHEME_ARG_1 pt->xens[args[1]]
+#define SCHEME_ARG_2 pt->xens[args[2]]
+#define SCHEME_ARG_3 pt->xens[args[3]]
 
 #define VECT_RESULT pt->vects[args[0]]
 #define VECT_ARG_1 pt->vects[args[1]]
@@ -3066,7 +3062,7 @@ static void store_b_sd(int *args, ptree *pt) {BOOL_RESULT = (bool)(SOUND_DATA_AR
 static void store_c(int *args, ptree *pt) {CHAR_RESULT = (int)CHAR_ARG_1;}
 
 
-static void store_x(int *args, ptree *pt) {XEN_RESULT = RXEN_ARG_1;}
+static void store_x(int *args, ptree *pt) {SCHEME_RESULT = SCHEME_ARG_1;}
 
 
 static void store_s(int *args, ptree *pt) 
@@ -3348,7 +3344,7 @@ static xen_value *walk_sequence(ptree *prog, s7_pointer body, walk_result_t need
   int i, body_forms;
   s7_pointer lbody;
 
-  if (XEN_NOT_BOUND_P(body)) return(NULL);
+  if (body == scheme_undefined) return(NULL);
 
   body_forms = s7_list_length(s7, body);
   if (body_forms == 0) 
@@ -3449,7 +3445,7 @@ static s7_pointer handle_defines(ptree *prog, s7_pointer forms)
       char *temp = NULL;
       form = s7_car(forms);
       if ((s7_is_list(s7, form)) && 
-	  (XEN_NOT_NULL_P(form)) &&
+	  (form != scheme_nil) &&
 	  (safe_strcmp("define", temp = s7_object_to_c_string(s7, s7_car(form))) == 0))
 	{
 	  char *err;
@@ -3656,11 +3652,11 @@ static char *declare_args(ptree *prog, s7_pointer form, int default_arg_type, bo
     {
       declarations = scheme_caddr(form);                     /* either declare or snd-declare */
       if ((s7_is_string(declarations)) &&                 /* possible doc string */
-	  (XEN_NOT_NULL_P(scheme_cdddr(form))))
+	  (scheme_cdddr(form) != scheme_nil))
 	declarations = scheme_cadddr(form);
 
       if ((s7_is_list(s7, declarations)) && 
-	  (XEN_NOT_NULL_P(declarations)) &&
+	  (declarations != scheme_nil) &&
 	  (s7_is_symbol(s7_car(declarations))) &&
 	  ((safe_strcmp(s7_symbol_name(s7_car(declarations)), "declare") == 0) ||
 	   (safe_strcmp(s7_symbol_name(s7_car(declarations)), "snd-declare") == 0)))
@@ -3704,7 +3700,7 @@ static char *declare_args(ptree *prog, s7_pointer form, int default_arg_type, bo
       /* first look for a declared type */
       
       if ((s7_is_list(s7, declarations)) &&
-	  (XEN_NOT_NULL_P(declarations)))
+	  (declarations != scheme_nil))
 	{
 	  s7_pointer declaration;
 	  /* (declare (x real) (a integer) (b string) ... */
@@ -3786,7 +3782,7 @@ static char *declare_args(ptree *prog, s7_pointer form, int default_arg_type, bo
 	  switch (arg_type)
 	    {
 	    case R_INT:     
-	      v = make_xen_value(arg_type, add_int_to_ptree(prog, XEN_TO_C_INT64_T(template_default)), R_CONSTANT);                 
+	      v = make_xen_value(arg_type, add_int_to_ptree(prog, s7_number_to_integer(template_default)), R_CONSTANT);                 
 	      break;
 			  
 	    case R_FLOAT:   
@@ -3794,7 +3790,7 @@ static char *declare_args(ptree *prog, s7_pointer form, int default_arg_type, bo
 	      break;
 	      
 	    case R_STRING:  
-	      v = make_xen_value(arg_type, add_string_to_ptree(prog, mus_strdup(XEN_TO_C_STRING(template_default))), R_CONSTANT); 
+	      v = make_xen_value(arg_type, add_string_to_ptree(prog, mus_strdup(s7_string(template_default))), R_CONSTANT); 
 	      break;
 			  
 	    case R_CHAR:    
@@ -4441,7 +4437,7 @@ static xen_value *case_form(ptree *prog, s7_pointer form, walk_result_t need_res
 		  if (temp) free(temp);
 		  goto CASE_ERROR;
 		}
-	      cur_key = XEN_TO_C_INT(key);
+	      cur_key = s7_number_to_integer(key);
 	      keyval = make_xen_value(R_INT, add_int_to_ptree(prog, cur_key), R_CONSTANT);
 	      locval = make_xen_value(R_INT, add_int_to_ptree(prog, locations[i]), R_CONSTANT);
 	      add_triple_to_ptree(prog, va_make_triple(jump_if_equal, "jump_if_equal", 3, locval, selval, keyval));
@@ -4495,7 +4491,7 @@ static xen_value *case_form(ptree *prog, s7_pointer form, walk_result_t need_res
 static bool list_member(s7_pointer symb, s7_pointer varlst)
 {
   s7_pointer lst;
-  for (lst = varlst; (XEN_NOT_NULL_P(lst)); lst = s7_cdr(lst))
+  for (lst = varlst; lst != scheme_nil; lst = s7_cdr(lst))
     if (s7_is_eq(symb, s7_car(lst)))
       return(true);
   return(false);
@@ -4755,7 +4751,8 @@ static xen_value *do_form(ptree *prog, s7_pointer form, walk_result_t need_resul
 	      var = s7_car(vars);
 	      /* current var is CAR(var), init can be ignored (it would refer to outer var), update is CADDR(var) */
 	      /*   we'll scan CADDR for any member of varlst */
-	      if ((XEN_NOT_NULL_P(scheme_cddr(var))) && (XEN_NOT_NULL_P(scheme_caddr(var))))
+	      if ((scheme_cddr(var) != scheme_nil) && 
+		  (scheme_caddr(var) != scheme_nil))
 		{
 		  /* if update null, can't be ref */
 		  update = scheme_caddr(var);
@@ -4776,7 +4773,8 @@ static xen_value *do_form(ptree *prog, s7_pointer form, walk_result_t need_resul
       for (vars = scheme_cadr(form), i = 0; i < varlen; i++, vars = s7_cdr(vars))
 	{
 	  var = s7_car(vars);
-	  if ((XEN_NOT_NULL_P(scheme_cddr(var))) && (XEN_NOT_NULL_P(scheme_caddr(var))))
+	  if ((scheme_cddr(var) != scheme_nil) && 
+	      (scheme_caddr(var) != scheme_nil))
 	    {
 	      if ((sequential) && (expr)) free(expr);
 	      expr = walk(prog, scheme_caddr(var), NEED_ANY_RESULT);
@@ -5000,7 +4998,7 @@ static xen_value *do_form(ptree *prog, s7_pointer form, walk_result_t need_resul
   free(test);
 
   /* now the result block */
-  if (XEN_NOT_NULL_P(results))
+  if (results != scheme_nil)
     result = walk_sequence(prog, results, NEED_ANY_RESULT, "do");
   else result = make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)false), R_CONSTANT);
   undefine_locals(prog, locals_loc);
@@ -5203,19 +5201,19 @@ static xen_value *generalized_set_form(ptree *prog, s7_pointer form)
 	}
 
       in_settee = s7_car(settee);    
-      if (XEN_NOT_NULL_P(s7_cdr(settee)))
+      if (s7_cdr(settee) != scheme_nil)
 	{
 	  in_v0 = walk(prog, scheme_cadr(settee), NEED_ANY_RESULT);
 	  if ((in_v0) &&
 	      (in_v0->type != R_UNSPECIFIED))
 	    {
-	      if (XEN_NOT_NULL_P(scheme_cddr(settee)))
+	      if (scheme_cddr(settee) != scheme_nil)
 		{
 		  in_v1 = walk(prog, scheme_caddr(settee), NEED_ANY_RESULT);
 		  if ((in_v1) &&
 		      (in_v1->type != R_UNSPECIFIED))
 		    {
-		      if (XEN_NOT_NULL_P(scheme_cdddr(settee)))
+		      if (scheme_cdddr(settee) != scheme_nil)
 			{
 			  in_v2 = walk(prog, scheme_cadddr(settee), NEED_ANY_RESULT);
 			  if ((in_v2) &&
@@ -6946,7 +6944,7 @@ static void list_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(LIST_ARG_1 == L
 
 static void sd_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(SOUND_DATA_ARG_1 == SOUND_DATA_ARG_2);} 
 
-static void xen_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)s7_is_eq(RXEN_ARG_1, RXEN_ARG_2);}
+static void xen_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)s7_is_eq(SCHEME_ARG_1, SCHEME_ARG_2);}
 
 static void clm_eq_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(CLM_ARG_1 == CLM_ARG_2);}
 
@@ -6997,7 +6995,7 @@ static void vct_eqv_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(mus_vct_equalp(
 
 static void sd_eqv_b(int *args, ptree *pt) {BOOL_RESULT = (Int)(sound_data_equalp(SOUND_DATA_ARG_1, SOUND_DATA_ARG_2));} 
 
-static void xen_eqv_b(int *args, ptree *pt) {BOOL_RESULT = (Int)XEN_EQV_P(RXEN_ARG_1, RXEN_ARG_2);}
+static void xen_eqv_b(int *args, ptree *pt) {BOOL_RESULT = (Int)s7_is_eqv(SCHEME_ARG_1, SCHEME_ARG_2);}
 
 static void eqv_fb(int *args, ptree *pt) {BOOL_RESULT = (Int)(FLOAT_ARG_1 == FLOAT_ARG_2);}
 
@@ -7039,7 +7037,7 @@ static xen_value *eqv_p(ptree *prog, xen_value **args, int num_args)
 }
 
 
-static void xen_equal_b(int *args, ptree *pt) {BOOL_RESULT = (Int)s7_is_equal(s7, RXEN_ARG_1, RXEN_ARG_2);}
+static void xen_equal_b(int *args, ptree *pt) {BOOL_RESULT = (Int)s7_is_equal(s7, SCHEME_ARG_1, SCHEME_ARG_2);}
 
 static void xen_equal_s(int *args, ptree *pt) {BOOL_RESULT = mus_strcmp(STRING_ARG_1, STRING_ARG_2);}
 
@@ -8182,7 +8180,7 @@ static void display_flt(int *args, ptree *pt) {fprintf(stdout, "%.6f", FLOAT_ARG
 static void display_symbol(int *args, ptree *pt) 
 {
   char *temp = NULL;
-  fprintf(stdout, "%s", temp = s7_object_to_c_string(s7, RXEN_ARG_1));
+  fprintf(stdout, "%s", temp = s7_object_to_c_string(s7, SCHEME_ARG_1));
   if (temp) free(temp);
 }
 
@@ -8190,7 +8188,7 @@ static void display_symbol(int *args, ptree *pt)
 static void display_key(int *args, ptree *pt) 
 {
   char *temp = NULL;
-  fprintf(stdout, "%s", temp = s7_object_to_c_string(s7, RXEN_ARG_1));
+  fprintf(stdout, "%s", temp = s7_object_to_c_string(s7, SCHEME_ARG_1));
   if (temp) free(temp);
 }
 
@@ -8777,7 +8775,7 @@ static void funcall_nf(int *args, ptree *pt)
 
     case R_SYMBOL: 
     case R_KEYWORD:
-      XEN_RESULT = pt->xens[fres->addr];
+      SCHEME_RESULT = pt->xens[fres->addr];
       break;
 
     case R_FUNCTION:   
@@ -9727,7 +9725,7 @@ static void list_ref(int *args, ptree *pt)
 
     case R_SYMBOL: 
     case R_KEYWORD:
-      XEN_RESULT = pt->xens[addr];
+      SCHEME_RESULT = pt->xens[addr];
       break;
 
     case R_FUNCTION:   
@@ -9848,7 +9846,7 @@ static void list_set(int *args, ptree *pt)
     case R_CLM:          pt->clms[addr] = CLM_ARG_3;                 break;
     case R_STRING:       pt->strs[addr] = mus_strdup(STRING_ARG_3);  break;
     case R_KEYWORD:
-    case R_SYMBOL:       pt->xens[addr] = RXEN_ARG_3;                break;
+    case R_SYMBOL:       pt->xens[addr] = SCHEME_ARG_3;                break;
     case R_FLOAT_VECTOR:
     case R_VCT:          pt->vcts[addr] = VCT_ARG_3;                 break;
     case R_SOUND_DATA:   pt->sds[addr] = SOUND_DATA_ARG_3;           break;
@@ -11986,7 +11984,7 @@ static xen_value *splice_in_method(ptree *prog, xen_value **args, int num_args, 
 
   if (s7_is_list(s7, methods))
     {
-      pair = XEN_ASSOC(s7_make_symbol(s7, method_name), 
+      pair = s7_assoc(s7, s7_make_symbol(s7, method_name), 
 		       methods);
       if (s7_is_list(s7, pair))
 	{
@@ -13405,7 +13403,7 @@ static xen_value *outn_1(ptree *prog, int chan, xen_value **args, int num_args, 
 		true_args[3] = make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, XEN_TO_SOUND_DATA(output)), R_VARIABLE);
 	      else
 		{
-		  if (XEN_PROCEDURE_P(output))
+		  if (s7_is_procedure(output))
 		    {
 		      xen_value *func_args[5];
 		      for (k = 0; k < 3; k++) func_args[k] = args[k];
@@ -13469,7 +13467,7 @@ static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
 		true_args[4] = make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, XEN_TO_SOUND_DATA(output)), R_VARIABLE);
 	      else
 		{
-		  if (XEN_PROCEDURE_P(output))
+		  if (s7_is_procedure(output))
 		    {
 		      for (k = 0; k < 4; k++) true_args[k] = args[k];
 		      true_args[4] = out_any_function_body(prog, output, true_args, 3, NULL);
@@ -14713,8 +14711,8 @@ static s7_pointer xen_value_to_xen(ptree *pt, xen_value *v)
     {
     case R_FLOAT:   return(s7_make_real(s7, pt->dbls[v->addr]));       break;
     case R_INT:     return(s7_make_integer(s7, pt->ints[v->addr]));        break;
-    case R_CHAR:    return(C_TO_XEN_CHAR((char)(pt->ints[v->addr]))); break;
-    case R_STRING:  return(C_TO_XEN_STRING(pt->strs[v->addr]));       break;
+    case R_CHAR:    return(s7_make_character(s7, (char)(pt->ints[v->addr]))); break;
+    case R_STRING:  return(scheme_make_string(pt->strs[v->addr]));       break;
     case R_BOOL:    return(s7_make_boolean(s7, pt->ints[v->addr]));      break;
     case R_XEN:     return(pt->xens[v->addr]);                        break;
 
@@ -14743,7 +14741,7 @@ static s7_pointer xen_value_to_xen(ptree *pt, xen_value *v)
 	{
 	  /* (let ((hi (vector 1 2 3))) (run (lambda () (vector-set! hi 2 4) hi))) */
 	  /* (run (lambda () (let ((v (make-vector 3 0))) (vector-set! v 1 2) v))) */
-	  val = XEN_MAKE_VECTOR(pt->vects[v->addr]->length, scheme_false);
+	  val = s7_make_and_fill_vector(s7, pt->vects[v->addr]->length, scheme_false);
 	  int_vect_into_vector(pt->vects[v->addr], val);
 	}
       break;
@@ -14781,7 +14779,7 @@ static s7_pointer xen_value_to_xen(ptree *pt, xen_value *v)
 	  xl = pt->lists[v->addr];
 	  for (i = 0; i < xl->len; i++)
 	    val = s7_cons(s7, xen_value_to_xen(pt, xl->vals[i]), val);
-	  val = XEN_LIST_REVERSE(val);
+	  val = s7_reverse(s7, val);
 	  s7_gc_unprotect_at(s7, loc);
 	}
     }
@@ -14893,12 +14891,12 @@ static xen_value *s7_version_1(ptree *prog, xen_value **args, int num_args)
 
 static void open_output_file_s2(int *args, ptree *pt)
 {
-  XEN_RESULT = s7_open_output_file(s7, STRING_ARG_1, STRING_ARG_2);
+  SCHEME_RESULT = s7_open_output_file(s7, STRING_ARG_1, STRING_ARG_2);
 }
 
 static void open_output_file_s1(int *args, ptree *pt)
 {
-  XEN_RESULT = s7_open_output_file(s7, STRING_ARG_1, "w");
+  SCHEME_RESULT = s7_open_output_file(s7, STRING_ARG_1, "w");
 }
 
 static xen_value *open_output_file_1(ptree *prog, xen_value **args, int num_args)
@@ -14913,7 +14911,7 @@ static xen_value *open_output_file_1(ptree *prog, xen_value **args, int num_args
 
 static void close_output_port_s(int *args, ptree *pt)
 {
-  s7_close_output_port(s7, RXEN_ARG_1);
+  s7_close_output_port(s7, SCHEME_ARG_1);
   BOOL_RESULT = false;
 }
 
@@ -14925,7 +14923,7 @@ static xen_value *close_output_port_1(ptree *prog, xen_value **args, int num_arg
 
 static void close_input_port_s(int *args, ptree *pt)
 {
-  s7_close_input_port(s7, RXEN_ARG_1);
+  s7_close_input_port(s7, SCHEME_ARG_1);
   BOOL_RESULT = false;
 }
 
@@ -14937,7 +14935,7 @@ static xen_value *close_input_port_1(ptree *prog, xen_value **args, int num_args
 
 static void is_output_port_s(int *args, ptree *pt)
 {
-  BOOL_RESULT = s7_is_output_port(s7, RXEN_ARG_1);
+  BOOL_RESULT = s7_is_output_port(s7, SCHEME_ARG_1);
 }
 
 static xen_value *is_output_port_1(ptree *prog, xen_value **args, int num_args)
@@ -14948,7 +14946,7 @@ static xen_value *is_output_port_1(ptree *prog, xen_value **args, int num_args)
 
 static void is_input_port_s(int *args, ptree *pt)
 {
-  BOOL_RESULT = s7_is_input_port(s7, RXEN_ARG_1);
+  BOOL_RESULT = s7_is_input_port(s7, SCHEME_ARG_1);
 }
 
 static xen_value *is_input_port_1(ptree *prog, xen_value **args, int num_args)
@@ -14959,7 +14957,7 @@ static xen_value *is_input_port_1(ptree *prog, xen_value **args, int num_args)
 
 static void current_output_port_x(int *args, ptree *pt)
 {
-  XEN_RESULT = s7_current_output_port(s7);
+  SCHEME_RESULT = s7_current_output_port(s7);
 }
 
 static xen_value *current_output_port_1(ptree *prog, xen_value **args, int num_args)
@@ -14972,7 +14970,7 @@ static xen_value *current_output_port_1(ptree *prog, xen_value **args, int num_a
 
 static void current_input_port_x(int *args, ptree *pt)
 {
-  XEN_RESULT = s7_current_input_port(s7);
+  SCHEME_RESULT = s7_current_input_port(s7);
 }
 
 static xen_value *current_input_port_1(ptree *prog, xen_value **args, int num_args)
@@ -14985,7 +14983,7 @@ static xen_value *current_input_port_1(ptree *prog, xen_value **args, int num_ar
 
 static void current_error_port_x(int *args, ptree *pt)
 {
-  XEN_RESULT = s7_current_error_port(s7);
+  SCHEME_RESULT = s7_current_error_port(s7);
 }
 
 static xen_value *current_error_port_1(ptree *prog, xen_value **args, int num_args)
@@ -15036,7 +15034,7 @@ static void throw_s_1(int *args, ptree *pt)
    */
   saw_mus_error = 0;
   pt = NULL;
-  XEN_THROW(res, scheme_false);
+  s7_error(s7, res, scheme_false);
 }
 
 static xen_value *throw_1(ptree *prog, xen_value **args, int num_args)
@@ -15143,7 +15141,7 @@ static walk_info *walker_with_declare(walk_info *w, int arg, int args, ...)
 static void make_ ## Name ## _0(int *args, ptree *pt) \
 { \
   s7_pointer res; \
-  res = XEN_APPLY(s7_symbol_value(s7, s7_make_symbol(s7, S_make_ ## Name)), xen_values_to_list(pt, args), S_make_ ## Name); \
+  res = s7_call(s7, s7_symbol_value(s7, s7_make_symbol(s7, S_make_ ## Name)), xen_values_to_list(pt, args)); \
   if (mus_xen_p(res)) \
     { \
       if (CLM_LOC >= 0) s7_gc_unprotect_at(s7, CLM_LOC); \
@@ -15207,7 +15205,7 @@ CLM_MAKE_FUNC(polywave)
 static void make_fft_window_0(int *args, ptree *pt)
 {
   s7_pointer res;
-  res = XEN_APPLY(s7_symbol_value(s7, s7_make_symbol(s7, S_make_fft_window)), xen_values_to_list(pt, args), S_make_fft_window);
+  res = s7_call(s7, s7_symbol_value(s7, s7_make_symbol(s7, S_make_fft_window)), xen_values_to_list(pt, args));
   add_loc_to_protected_list(pt, s7_gc_protect(s7, res));
   VCT_RESULT = xen_to_vct(res);
 }
@@ -15272,7 +15270,7 @@ static int xen_to_addr(ptree *pt, s7_pointer arg, int type, int addr)
   switch (type)
     {
     case R_FLOAT:        pt->dbls[addr] = (Double)s7_number_to_real(arg);     break;
-    case R_INT:          pt->ints[addr] = XEN_TO_C_INT64_T(arg);              break;
+    case R_INT:          pt->ints[addr] = s7_number_to_integer(arg);              break;
     case R_CHAR:         pt->ints[addr] = (Int)s7_character(arg);          break;
     case R_BOOL:         pt->ints[addr] = (Int)scheme_to_c_bool(arg);       break;
     case R_VCT:          pt->vcts[addr] = xen_to_vct(arg);                  break;
@@ -15290,7 +15288,7 @@ static int xen_to_addr(ptree *pt, s7_pointer arg, int type, int addr)
 
     case R_STRING:
       if (!(pt->strs[addr]))
-	pt->strs[addr] = mus_strdup(XEN_TO_C_STRING(arg)); 
+	pt->strs[addr] = mus_strdup(s7_string(arg)); 
       break;
 
     case R_FLOAT_VECTOR:
@@ -15366,15 +15364,15 @@ static int add_clm_type(s7_pointer name)
   int run_type;
   walk_info *w;
 
-  run_type = add_new_type(XEN_TO_C_STRING(name));
+  run_type = add_new_type(s7_string(name));
   type_predicate_name = (char *)calloc(strlen(type_name(run_type)) + 2, sizeof(char));
   sprintf(type_predicate_name, "%s?", type_name(run_type));
 
   w = make_walker(clm_struct_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY);
   w->data = run_type;
 
-  XEN_SET_WALKER((XEN)(s7_make_symbol(s7, type_predicate_name)), 
-		 XEN_WRAP_C_POINTER(w));
+  scheme_set_walker((s7_pointer)(s7_make_symbol(s7, type_predicate_name)), 
+		 s7_make_c_pointer(s7, (void *)w));
 
   return(run_type);
 }
@@ -15400,20 +15398,20 @@ static s7_pointer g_add_clm_field(s7_pointer struct_name, s7_pointer name, s7_po
   dcs *d;
   walk_info *w;
 
-  XEN_ASSERT_TYPE(s7_is_string(struct_name), struct_name, XEN_ARG_1, S_add_clm_field, "string");
-  XEN_ASSERT_TYPE(s7_is_string(name), name, XEN_ARG_2, S_add_clm_field, "string");
-  XEN_ASSERT_TYPE(s7_is_integer(offset), offset, XEN_ARG_3, S_add_clm_field, "int");
-  XEN_ASSERT_TYPE(s7_is_symbol(type), type, XEN_ARG_4, S_add_clm_field, "symbol");
+  XEN_ASSERT_TYPE(s7_is_string(struct_name), struct_name, 1, S_add_clm_field, "string");
+  XEN_ASSERT_TYPE(s7_is_string(name), name, 2, S_add_clm_field, "string");
+  XEN_ASSERT_TYPE(s7_is_integer(offset), offset, 3, S_add_clm_field, "int");
+  XEN_ASSERT_TYPE(s7_is_symbol(type), type, 4, S_add_clm_field, "symbol");
 
-  clm_struct_type = name_to_type(XEN_TO_C_STRING(struct_name));
+  clm_struct_type = name_to_type(s7_string(struct_name));
   if (clm_struct_type == R_UNSPECIFIED)
     clm_struct_type = add_clm_type(struct_name);
 
-  field_name = XEN_TO_C_STRING(name);
+  field_name = s7_string(name);
   field_type = name_to_type(s7_symbol_name(type));
-  field_offset = XEN_TO_C_INT(offset);
+  field_offset = s7_number_to_integer(offset);
 
-  /* fprintf(stderr, "add %s to %s (%d) at %d type %s\n", field_name, XEN_TO_C_STRING(struct_name), clm_struct_type, field_offset, type_name(field_type)); */
+  /* fprintf(stderr, "add %s to %s (%d) at %d type %s\n", field_name, s7_string(struct_name), clm_struct_type, field_offset, type_name(field_type)); */
 
   if (clm_struct_type >= def_clm_structs_size)
     {
@@ -15448,8 +15446,8 @@ static s7_pointer g_add_clm_field(s7_pointer struct_name, s7_pointer name, s7_po
   w = make_walker(list_ref_1, NULL, clm_struct_field_set_1, 1, 1, field_type, false, 1, R_LIST);
   w->data = field_offset;
 
-  XEN_SET_WALKER((XEN)(s7_make_symbol(s7, field_name)), 
-		 XEN_WRAP_C_POINTER(w));
+  scheme_set_walker((s7_pointer)(s7_make_symbol(s7, field_name)), 
+		 s7_make_c_pointer(s7, (void *)w));
 
   return(name);
 }
@@ -15553,10 +15551,10 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
       num_args = s7_list_length(s7, all_args);
       if (s7_is_symbol(function))
 	{
-	  walker = XEN_WALKER(function);
-	  if (XEN_WRAPPED_C_POINTER_P(walker))
+	  walker = scheme_walker(function);
+	  if (s7_is_c_pointer(walker))
 	    {
-	      w = (walk_info *)(XEN_UNWRAP_C_POINTER(walker));
+	      w = (walk_info *)(s7_c_pointer(walker));
 	      if ((w) && (w->special_walker))
 		{
 		  if (num_args < w->required_args)
@@ -15598,8 +15596,8 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 		  /* transform (back) to (set! (moog-y gen) .1) */
 		  /* fprintf(stderr, "got setter: %s\n", s7_object_to_c_string(s7, form)); */
 		  return(generalized_set_form(prog,
-					      s7_append(s7, XEN_LIST_2(s7_make_symbol(s7, "set!"),
-								    XEN_LIST_2(scheme_cadr(function),
+					      s7_append(s7, scheme_list_2(s7_make_symbol(s7, "set!"),
+								    scheme_list_2(scheme_cadr(function),
 									       s7_car(all_args))),
 							 s7_cdr(all_args))));
 		  /* should this be all but last in accessor, then last as set value? */
@@ -15860,7 +15858,7 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
       /* check for function defined elsewhere, get source, splice in if possible */
       if ((v == NULL) && 
 	  (current_optimization >= SOURCE_OK) &&
-	  (XEN_PROCEDURE_P(rtnval)) &&
+	  (s7_is_procedure(rtnval)) &&
 	  (!(s7_is_procedure_with_setter(rtnval)))
 	  )
 	{
@@ -15891,9 +15889,9 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 
       switch (type)
 	{
-	case R_INT:     return(make_xen_value(R_INT,     add_int_to_ptree(prog, XEN_TO_C_INT64_T(form)), R_CONSTANT));                 break;
+	case R_INT:     return(make_xen_value(R_INT,     add_int_to_ptree(prog, s7_number_to_integer(form)), R_CONSTANT));                 break;
 	case R_FLOAT:   return(make_xen_value(R_FLOAT,   add_dbl_to_ptree(prog, s7_number_to_real(form)), R_CONSTANT));                break;
-	case R_STRING:  return(make_xen_value(R_STRING,  add_string_to_ptree(prog, mus_strdup(XEN_TO_C_STRING(form))), R_CONSTANT)); break;
+	case R_STRING:  return(make_xen_value(R_STRING,  add_string_to_ptree(prog, mus_strdup(s7_string(form))), R_CONSTANT)); break;
 	case R_CHAR:    return(make_xen_value(R_CHAR,    add_int_to_ptree(prog, (Int)(s7_character(form))), R_CONSTANT));           break;
 	case R_BOOL:    return(make_xen_value(R_BOOL,    add_int_to_ptree(prog, (form == scheme_false) ? 0 : 1), R_CONSTANT));          break;
 	case R_KEYWORD: return(make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, form), R_CONSTANT));                                 break;
@@ -15935,10 +15933,10 @@ static xen_value *lookup_generalized_set(ptree *prog, s7_pointer acc_form, xen_v
   s7_pointer walker;
   walk_info *w = NULL;
 
-  walker = XEN_WALKER(acc_form);
-  if (XEN_WRAPPED_C_POINTER_P(walker))
+  walker = scheme_walker(acc_form);
+  if (s7_is_c_pointer(walker))
     {
-      w = (walk_info *)(XEN_UNWRAP_C_POINTER(walker));
+      w = (walk_info *)(s7_c_pointer(walker));
       if (w)
 	{
 	  if ((w->set_walker) &&
@@ -16040,7 +16038,7 @@ static s7_pointer g_show_ptree(s7_pointer on)
   #define H_show_ptree "(show-ptree arg): if arg is not 0, the optimizer's parse tree is displayed. \
 arg = 1 sends it to stderr, 2 to the listener, 3 is for gcat's use. "
 
-  ptree_on = (ptree_display_t)XEN_TO_C_INT(on);
+  ptree_on = (ptree_display_t)s7_number_to_integer(on);
   return(on);
 }
 
@@ -16262,7 +16260,7 @@ mus_float_t mus_run_evaluate_ptreec(struct ptree *pt, mus_float_t arg, s7_pointe
       switch (type)
 	{
 	case R_FLOAT:        pt->dbls[addr] = (Double)s7_number_to_real(object);                              break;
-	case R_INT:          pt->ints[addr] = XEN_TO_C_INT64_T(object);                                       break;
+	case R_INT:          pt->ints[addr] = s7_number_to_integer(object);                                       break;
 	case R_CHAR:         pt->ints[addr] = (Int)s7_character(object);                                   break;
 	case R_BOOL:         pt->ints[addr] = (Int)scheme_to_c_bool(object);                                break;
 	case R_VCT:          if (pt->vcts) pt->vcts[addr] = XEN_TO_VCT(object);                             break;
@@ -16280,7 +16278,7 @@ mus_float_t mus_run_evaluate_ptreec(struct ptree *pt, mus_float_t arg, s7_pointe
 	  if (pt->strs)
 	    {
 	      if (pt->strs[addr]) free(pt->strs[addr]);
-	      pt->strs[addr] = mus_strdup(XEN_TO_C_STRING(object));
+	      pt->strs[addr] = mus_strdup(s7_string(object));
 	    }
 	  break; 
 	case R_SYMBOL:
@@ -16347,10 +16345,10 @@ static s7_pointer eval_ptree_to_xen(ptree *pt)
 
 static void init_walkers(void)
 {
-  #define INIT_WALKER(Name, Val) XEN_SET_WALKER((XEN)(s7_make_symbol(s7, Name)), XEN_WRAP_C_POINTER(Val))
+  #define INIT_WALKER(Name, Val) scheme_set_walker((s7_pointer)(s7_make_symbol(s7, Name)), s7_make_c_pointer(s7, (void *)Val))
 
   walk_sym = s7_make_symbol(s7, "snd-walk");
-  XEN_PROTECT_FROM_GC(walk_sym);
+  s7_gc_protect(s7, walk_sym);
 
   /* make_walker: walker, special walker, set walker, req args, max args, result type, need int, num arg types, ... */
 
@@ -16986,7 +16984,7 @@ static s7_pointer g_run_eval(s7_pointer code, s7_pointer arg, s7_pointer arg1, s
 	    {
 	      mus_run_free_ptree(pt); 
 	      s7_error(s7, s7_make_symbol(s7, "wrong-number-of-args"), 
-			XEN_LIST_2(C_TO_XEN_STRING("run-eval: wrong number of args for function: ~A"),
+			scheme_list_2(scheme_make_string("run-eval: wrong number of args for function: ~A"),
 				   code)); 
 	      return(scheme_false);
 	    }
@@ -16996,7 +16994,7 @@ static s7_pointer g_run_eval(s7_pointer code, s7_pointer arg, s7_pointer arg1, s
   if (pt) mus_run_free_ptree(pt);
 
   s7_error(s7, s7_make_symbol(s7, "cannot-parse"),
-	    XEN_LIST_2(C_TO_XEN_STRING("run-eval: can't parse ~A"),
+	    scheme_list_2(scheme_make_string("run-eval: can't parse ~A"),
 		       code));
 
   return(scheme_false);
@@ -17017,7 +17015,7 @@ to Scheme and is equivalent to (thunk)."
   s7_pointer result;
   int gc_loc;
 
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc_and_code) && (XEN_REQUIRED_ARGS_OK(proc_and_code, 0)), proc_and_code, 1, S_run, "a thunk");
+  XEN_ASSERT_TYPE(s7_is_procedure(proc_and_code) && (XEN_REQUIRED_ARGS_OK(proc_and_code, 0)), proc_and_code, 1, S_run, "a thunk");
   
   code = s7_cons(s7, s7_append(s7, s7_cons(s7, s7_make_symbol(s7, "lambda"), 
 				      scheme_nil),
@@ -17028,7 +17026,7 @@ to Scheme and is equivalent to (thunk)."
   pt = form_to_ptree(code);
   if (pt)
     result = eval_ptree_to_xen(pt);
-  else result = XEN_CALL_0(proc_and_code, S_run);
+  else result = s7_call(s7, proc_and_code, scheme_nil);
     
   s7_gc_unprotect_at(s7, gc_loc);
   return(result);
@@ -17036,28 +17034,28 @@ to Scheme and is equivalent to (thunk)."
 
 
 #if USE_SND
-static s7_pointer g_optimization(void) {return(C_TO_XEN_INT(optimization(ss)));}
+static s7_pointer g_optimization(void) {return(s7_make_integer(s7, optimization(ss)));}
 
 static s7_pointer g_set_optimization(s7_pointer val) 
 {
   #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 6 is the max, 0 = no optimization)"
   XEN_ASSERT_TYPE(s7_is_integer(val), val, 1, S_setB S_optimization, "an integer");
-  set_optimization(mus_iclamp(0, XEN_TO_C_INT(val), MAX_OPTIMIZATION));
-  return(C_TO_XEN_INT(optimization(ss)));
+  set_optimization(mus_iclamp(0, (int)s7_number_to_integer(val), MAX_OPTIMIZATION));
+  return(s7_make_integer(s7, optimization(ss)));
 }
 
 #else
 
 #define S_optimization "optimization"
 
-static s7_pointer g_optimization(void) {return(C_TO_XEN_INT(current_optimization));}
+static s7_pointer g_optimization(void) {return(s7_make_integer(s7, current_optimization));}
 
 static s7_pointer g_set_optimization(s7_pointer val) 
 {
   #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 6 is the max, 0 = no optimization)"
   XEN_ASSERT_TYPE(s7_is_integer(val), val, 1, S_setB S_optimization, "an integer");
-  current_optimization = mus_iclamp(0, XEN_TO_C_INT(val), MAX_OPTIMIZATION);
-  return(C_TO_XEN_INT(current_optimization));
+  current_optimization = mus_iclamp(0, (int)s7_number_to_integer(val), MAX_OPTIMIZATION);
+  return(s7_make_integer(s7, current_optimization));
 }
 
 #endif
