@@ -17181,21 +17181,22 @@ You can often slightly rewrite the form to make run happy."
 
 #define S_run "run"
 
-struct ptree *mus_run_form_to_ptree_1_b(s7_pointer code) {return(NULL);}
-struct ptree *mus_run_form_to_ptree_1_f(s7_pointer code) {return(NULL);}
+/* XEN here, not s7_pointer in case no s7 */
+struct ptree *mus_run_form_to_ptree_1_b(XEN code) {return(NULL);}
+struct ptree *mus_run_form_to_ptree_1_f(XEN code) {return(NULL);}
 mus_float_t mus_run_evaluate_ptree_1f1v1b2f(struct ptree *pt, mus_float_t arg, vct *v, bool dir) {return(0.0);}
 mus_float_t mus_run_evaluate_ptree_1f2f(struct ptree *pt, mus_float_t arg) {return(0.0);}
 int mus_run_evaluate_ptree_1f2b(struct ptree *pt, mus_float_t arg) {return(0);}
 void mus_run_free_ptree(struct ptree *pt) {}
-XEN mus_run_ptree_code(struct ptree *pt) {return(scheme_false);}
-mus_float_t mus_run_evaluate_ptreec(struct ptree *pt, mus_float_t arg, s7_pointer object, bool dir, int type) {return(0.0);}
-int mus_run_xen_to_run_type(s7_pointer val) {return(0);}
+XEN mus_run_ptree_code(struct ptree *pt) {return(XEN_FALSE);}
+mus_float_t mus_run_evaluate_ptreec(struct ptree *pt, mus_float_t arg, XEN object, bool dir, int type) {return(0.0);}
+int mus_run_xen_to_run_type(XEN val) {return(0);}
 
 #define S_optimization "optimization"
-static s7_pointer g_optimization(void) {return(scheme_zero);}
-static s7_pointer g_set_optimization(s7_pointer val) {return(scheme_zero);}
+static XEN g_optimization(void) {return(XEN_ZERO);}
+static XEN g_set_optimization(XEN val) {return(XEN_ZERO);}
 
-static s7_pointer optimization_hook;
+static XEN optimization_hook;
 
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_0(g_optimization_w, g_optimization)

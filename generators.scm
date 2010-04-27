@@ -267,7 +267,7 @@
 		  (let ((val `(define ,(string->symbol (string-append sname "-" n))
 				(make-procedure-with-setter
 				 (lambda (arg)
-				   "clm struct field accessor"
+				   "generator field accessor"
 				   (list-ref arg ,ctr))
 				 (lambda (arg val)
 				   (list-set! arg ,ctr val))))))

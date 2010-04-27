@@ -11513,18 +11513,6 @@ static s7_pointer s7_make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
   return(x);
 }
 
-/* SOMEDAY: there's a problem with very large vectors -- the GC does not notice how much RAM
- *   they are taking up, and unless we call gc ourselves, we run out of memory.  Since each
- *   element has the vector pointer, the heap pointer, and the free-list pointer (worst case),
- *   we're consuming 28 + 12 or 40 + 24 bytes per element!
- */
-
-/* in CL:  (make-array (list 2 3) :initial-element 0) -> #2A((0 0 0) (0 0 0))
- * in s7:  (make-vector (list 2 3) 0) -> #(0 0 0 0 0 0)
- *
- * so whatever constant vector syntax we choose should be used in the vector display code (vector_to_c_string)
- */
-
 
 s7_pointer s7_make_vector(s7_scheme *sc, s7_Int len)
 {
@@ -13092,6 +13080,7 @@ In each case, the argument is the value of the object, not the object itself."
   s7_pointer x, y, z;
 
   tag = s7_new_type("anonymous-type", s_type_print, s_type_free, s_type_equal, s_type_gc_mark, NULL, NULL);
+
   if (args != sc->NIL)
     {
       int i;
@@ -23618,19 +23607,19 @@ s7_scheme *s7_init(void)
   typeflag(sc->OBJECT_SET) |= T_DONT_COPY; 
 
 
-  #define s_is_type_name "(?)"
+  #define s_is_type_name "[?]"                            /* these were "(?)" etc, but the procedure-source needs to be usable */
   sc->S_IS_TYPE = s7_make_symbol(sc, s_is_type_name);
   typeflag(sc->S_IS_TYPE) |= T_DONT_COPY; 
 
-  #define s_type_make_name "(make)"
+  #define s_type_make_name "[make]"
   sc->S_TYPE_MAKE = s7_make_symbol(sc, s_type_make_name);
   typeflag(sc->S_TYPE_MAKE) |= T_DONT_COPY; 
 
-  #define s_type_ref_name "(ref)"
+  #define s_type_ref_name "[ref]"
   sc->S_TYPE_REF = s7_make_symbol(sc, s_type_ref_name);
   typeflag(sc->S_TYPE_REF) |= T_DONT_COPY; 
 
-  #define s_type_arg_name "(arg)"
+  #define s_type_arg_name "[arg]"
   sc->S_TYPE_ARG = s7_make_symbol(sc, s_type_arg_name);
   typeflag(sc->S_TYPE_ARG) |= T_DONT_COPY;
 
@@ -24202,11 +24191,30 @@ s7_scheme *s7_init(void)
 /* TODO: macroexpand and fully-expand are buggy
  * PERHAPS: method lists for c_objects
  * TODO: function IO completed -- tie into scheme for tests?
- * TODO: how to connect from C to scheme-side make-type (defgenerator)
+ *
+ * TODO: how to connect from C to scheme-side make-type (defgenerator) [s7.html example]
+ *       :(let ((lst (make-type))) (procedure-source (car lst)))
+ *       (lambda ([arg]) ([?] 22 [arg]))
+ *       for C side to check/make/refer to these it needs the list returned by make-type and some identifying name?
+ *   s7_type_info(sc, var-of-that-type)?
+ *   does s7_object_type return the tag in this case? yes!
+ *   what else is needed -- access to the type table functions via the tag? or via the object?
+ *
  * SOMEDAY: eval-string (or eval?) with jump outside the eval (call/cc external) -> segfault or odd error
  *             (is this the case in dynamic-wind also?)
+ * TODO: multidim vector constant input syntax
  *
- * describe for vectors (dims), ports
+ * SOMEDAY: there's a problem with very large vectors -- the GC does not notice how much RAM
+ *   they are taking up, and unless we call gc ourselves, we run out of memory.  Since each
+ *   element has the vector pointer, the heap pointer, and the free-list pointer (worst case),
+ *   we're consuming 28 + 12 or 40 + 24 bytes per element!
+ *
+ * in CL:  (make-array (list 2 3) :initial-element 0) -> #2A((0 0 0) (0 0 0))
+ * in s7:  (make-vector (list 2 3) 0) -> #(0 0 0 0 0 0)
+ *
+ * so whatever constant vector syntax we choose should be used in the vector display code (vector_to_c_string)
+ *
+ * describe for vectors (dims), ports [describe_object for gdb, but also printout in vector case, vector_to_c_string]
  *  also envs as debugging aids: how to show file/line tags as well
  *  and perhaps store cur-code?  __form__ ? make a cartoon of entire state? [need only the pointer, not a copy]
  *
@@ -24220,6 +24228,12 @@ s7_scheme *s7_init(void)
  *
  * if *unbound-variable-hook* is set, and something actually unbound is encountered,
  *   we seem to lose the file/line and so on?
+ *
+ * inexact->exact: return closest exact float [or leave alone if not float]
+ * exact->inexact: return closest float [or leave alone if float]
+ * exact? #t if it was represented exactly and has not been touched by anything that might make it inexact (or is not a float)
+ * inexact? == not exact?
+ * in complex case, exact only if both real/imag are exact (ignore polar case I guess)
  */
 
 /* OBJECTS...

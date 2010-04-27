@@ -712,8 +712,8 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 ;;; --------------------------------------------------------------------------------
 ;;;
-;;; generics from Snd that are used in some instruments
-;;;   these replacements assume Snd types are not present
+;;; functions from Snd that are used in some instruments
+;;;   these replacements assume that the Snd functions are not present
 
 (define file-name mus-expand-filename)
 
@@ -730,3 +730,11 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
   (if (string? obj)
       (mus-sound-frames obj)
       (length obj)))
+
+
+(define snd-print display)
+(define snd-warning display)
+(define snd-display display)
+(define (snd-error str) (error 'mus-error str))
+(define snd-tempnam tmpnam)
+
