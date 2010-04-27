@@ -9890,7 +9890,11 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth, bool 
        *     (let ((vect (make-vector (+ *vector-print-length* 2) 1.0))) 
        *       (write vect))))
        */
+
       plen = s7_integer(s7_symbol_value(sc, s7_make_symbol(sc, "*vector-print-length*")));
+      if (plen <= 0)
+	return(copy_string("#(...)"));
+
       if (len > plen)
 	{
 	  too_long = true;
