@@ -19,6 +19,15 @@
 	((pred (car l)) (car l))
 	(else (find-if pred (cdr l)))))
 
+(if (not (defined? 'snd-display))
+    (define (snd-display . args)
+      (let ((str (if (null? (cdr args))
+		     (car args)
+		     (apply format #f args))))
+	(newline) 
+	(display str))))
+
+
 
 
 (defmacro defgenerator (struct-name . fields)

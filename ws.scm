@@ -509,8 +509,6 @@
 
 
 ;;; -------- clm-load --------
-;;;
-;;; CM wants this to be a function so that it can use apply
 
 (define (clm-load file . args) 
   "(clm-load file . args) loads 'file' in the context of with-sound"

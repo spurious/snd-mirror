@@ -321,7 +321,7 @@
      ;; with-sound but using tempnam for output (can be over-ridden by explicit :output)
      (dynamic-wind
 	 (lambda () 
-	   (set! *clm-file-name* (snd-tempnam)))
+	   (set! *clm-file-name* (tmpnam)))
 	 (lambda ()
 	   (with-sound-helper (lambda () ,@body) ,@args)) ; dynamic-wind returns this as its result
 	 (lambda ()
@@ -329,8 +329,6 @@
 
 
 ;;; -------- clm-load --------
-;;;
-;;; CM wants this to be a function so that it can use apply
 
 (define (clm-load file . args) 
   "(clm-load file . args) loads 'file' in the context of with-sound"
@@ -514,11 +512,6 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 ;;; -------- def-clm-struct --------
 
-(define (snd-error-1 .args)
-  (if (defined? 'snd-error)
-      (apply snd-error args)
-      (apply display args)))
-
 ;;;  :(def-clm-struct (osc :make-wrapper (lambda (gen) (set! (osc-freq gen) (hz->radians (osc-freq gen))) gen)) freq phase)
 ;;;  #<unspecified>
 ;;;  :(define hi (make-osc 440.0 0.0))
@@ -555,7 +548,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 			   fields))
 	 (field-types (map (lambda (n)
 			     (if (and (list? n) (cadr n) (eq? (cadr n) :type)) 
-				 (snd-error-1 (format #f ":type indication for def-clm-struct (~A) field (~A) should be after the default value" name n)))
+				 (error 'wrong-type-arg ":type indication for def-clm-struct (~A) field (~A) should be after the default value" name n))
 			     (if (and (list? n)
 				      (= (length n) 4)
 				      (eq? (list-ref n 2) :type))

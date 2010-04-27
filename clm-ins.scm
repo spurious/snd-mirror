@@ -2212,7 +2212,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (if (or (<= (min-envelope rampdata) 0.0)
 	    (>= (max-envelope rampdata) 0.5))
-	(snd-warning (format #f "ramp argument to expsnd must always be between 0.0 and 0.5: ~A" ramp))
+	(format #t "ramp argument to expsnd must always be between 0.0 and 0.5: ~A" ramp)
 	(run
 	 (do ((i st (+ i 1)))
 	     ((= i nd))
@@ -2441,7 +2441,6 @@ nil doesnt print anything, which will speed up a bit the process.
 	     (set! samp (+ 1 samp))
 	     (if (= samp (mus-srate))
 		 (begin
-		   (snd-print (format #f "~% ~F" (/ i (mus-srate))))
 		   (set! samp 0)))))
        (let ((outval 0.0)
 	     (inval (readin RdA)))
@@ -3055,7 +3054,7 @@ mjkoskin@sci.fi
 				    (if (env? outn)
 					(vector-set! envs (+ off outp) outn)
 					(vector-set! envs (+ off outp) (make-env outn :duration dur))))
-				  (snd-warning (format #f "unknown element in matrix: ~A" outn)))))))))
+				  (format #t "unknown element in matrix: ~A" outn))))))))
 	      (do ((inp 0 (+ 1 inp))) ; matrix is a number in this case (a global scaler)
 		  ((= inp in-chans))
 		(if (< inp out-chans)

@@ -68,7 +68,7 @@
 				    (if (env? outn)
 					(vector-set! envs (+ off outp) outn)
 					(vector-set! envs (+ off outp) (make-env outn :duration dur))))
-				  (snd-warning (format #f "unknown element in matrix: ~A" outn)))))))))
+				  (format #t "unknown element in matrix: ~A" outn))))))))
 	      (do ((inp 0 (+ 1 inp))) ; matrix is a number in this case (a global scaler)
 		  ((= inp in-chans))
 		(if (< inp out-chans)

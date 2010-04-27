@@ -83,7 +83,7 @@
 	(format #t ";;; freeverb: ~d input channels, ~d output channels~%" in-chans out-chans))
     (if (and (> in-chans 1)
 	     (not (= in-chans out-chans)))
-	(snd-error "input must be mono or input channels must equal output channels"))
+	(error "input must be mono or input channels must equal output channels"))
     (if (not (mixer? output-mixer))
 	(if (vector? output-mixer)
 	    (do ((i 0 (+ 1 i)))

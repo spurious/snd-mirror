@@ -6,12 +6,12 @@
 ;; changed slightly 14-Jun-06 Bill to match bess.scm, fix pitch problem in make-oscil.
 ;;   then again 18-Dec-09 to use s7 rather than Guile
 
-(if (not (provided? 'snd-motif)) (snd-error "bess1.scm needs motif"))
+(if (not (provided? 'snd-motif)) (error "bess1.scm needs motif"))
 
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))
       (if (string? hxm)
-	  (snd-error (format #f "bess1.scm needs the xm module (either 'make xm' or build Snd with --with-static-xm): ~A" hxm))
+	  (error "bess1.scm needs the xm module (either 'make xm' or build Snd with --with-static-xm): ~A" hxm)
 	  (dlinit hxm "Init_libxm"))))
 
 

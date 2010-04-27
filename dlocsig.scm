@@ -24,6 +24,7 @@
 
 ;;; CHANGES:
 ;;; 04/26/2010: add delay hack to remove artifacts in delay output, fix other bugs (Nando)
+;;;             added proper doppler src conversion thanks to Bill's code in dsp.scm
 ;;; 06/28/2009: remove class/method stuff for s7 (Bill)
 ;;; 01/08/2007: make a few functions local etc (Bill)
 ;;; 07/05/2006: translate to scheme, use move-sound generator (Bill)
@@ -293,14 +294,14 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	 m))))
 
   (if (null? speakers)
-      (snd-error "a speaker configuration must have at least one speaker!"))
+      (format #t "ERROR: a speaker configuration must have at least one speaker!~%"))
 
   (if (not (null? groups))
       (let ((first-len (length (car groups))))
 	(for-each
 	 (lambda (group)
 	   (if (not (= (length group) first-len))
-	       (snd-error (format #f "all groups must be of the same length! (~A)" first-len))))
+	       (format #t "ERROR: all groups must be of the same length! (~A)~%" first-len)))
 	 groups))
 
     ;; if the speakers are defined with only azimuth angles (no elevation)
@@ -320,42 +321,42 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	     (set! groups (reverse groups)))))))
 
   (if (null? groups)
-      (snd-error "no groups specified, speakers must be arranged in groups"))
+      (format #t "ERROR: no groups specified, speakers must be arranged in groups~%"))
 
   (if (and (not (null? delays))
 	   (not (null? distances)))
-      (snd-error "please specify delays or distances but not both"))
+      (format #t "ERROR: please specify delays or distances but not both~%"))
 
   (if (not (null? delays))
       (if (> (length speakers) (length delays))
-	  (snd-error (format #f "all speaker delays have to be specified, only ~A supplied [~A]" (length delays) delays))
+	  (format #t "ERROR: all speaker delays have to be specified, only ~A supplied [~A]~%" (length delays) delays)
 	(if (< (length speakers) (length delays))
-	    (snd-error (format #f "more speaker delays than speakers, ~A supplied instead of ~A [~A]" (length delays) (length speakers) delays)))))
+	    (format #t "ERROR: more speaker delays than speakers, ~A supplied instead of ~A [~A]~%" (length delays) (length speakers) delays))))
 
   (if (not (null? delays))
       (for-each
        (lambda (delay)
-	 (if (< delay 0.0) (snd-error (format #f "delays must be all positive, ~A is negative" delay))))
+	 (if (< delay 0.0) (format #t "ERROR: delays must be all positive, ~A is negative~%" delay)))
        delays))
 
   (if (not (null? distances))
       (if (> (length speakers) (length distances))
-	  (snd-error (format #f "all speaker distances have to be specified, only ~A supplied [~A]" (length distances) distances))
+	  (format #t "ERROR: all speaker distances have to be specified, only ~A supplied [~A]~%" (length distances) distances)
 	(if (< (length speakers) (length distances))
-	    (snd-error (format #f "more speaker distances than speakers, ~A supplied instead of ~A [~A]" (length distances) (length speakers) distances)))))
+	    (format #t "ERROR: more speaker distances than speakers, ~A supplied instead of ~A [~A]~%" (length distances) (length speakers) distances))))
 
   (if (not (null? distances))
       (for-each
        (lambda (delay)
-	 (if (< delay 0.0) (snd-error (format #f "distances must be all positive, ~A is negative" delay))))
+	 (if (< delay 0.0) (format #t "ERROR: distances must be all positive, ~A is negative~%" delay)))
        distances))
 
   (if (not (null? channel-map))
       (if (> (length speakers) (length channel-map))
-	  (snd-error (format #f "must map all speakers to output channels, only ~A mapped [~A]" (length channel-map) channel-map))
+	  (format #t "ERROR: must map all speakers to output channels, only ~A mapped [~A]~%" (length channel-map) channel-map)
 	(if (< (length speakers) (length channel-map))
-	    (snd-error (format #f "trying to map more channels than there are speakers, ~A supplied instead of ~A [~A]" 
-			       (length channel-map) (length speakers) channel-map)))))
+	    (format #t "ERROR: trying to map more channels than there are speakers, ~A supplied instead of ~A [~A]~%" 
+		    (length channel-map) (length speakers) channel-map))))
 
   ;; collect unit vectors describing the speaker positions
   (let* ((coords
@@ -439,10 +440,10 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	  (for-each
 	   (lambda (entry)
 	     (if (>= entry entries)
-		 (snd-error (format #f "channel ~A in map ~A is out of range (max=~A)" entry channel-map entries))))
+		 (format #t "ERROR: channel ~A in map ~A is out of range (max=~A)~%" entry channel-map entries)))
 	   channel-map)
 	  (if (has-duplicates? channel-map)
-	      (snd-error (format #f "there are duplicate channels in channel-map ~A" channel-map)))))
+	      (format #t "ERROR: there are duplicate channels in channel-map ~A~%" channel-map))))
 
     ;; create the speaker configuration structure
 
@@ -548,9 +549,9 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
   "(get-speaker-configuration channels (3d dlocsig-3d) (configs dlocsig-speaker-configs)) returns a dlocsig speaker configuration"
   (let* ((config (if 3d (list-ref (cadr configs) channels) (list-ref (car configs) channels))))
     (if (null? config)
-	(snd-error (format #f "no speaker configuration exists for ~A ~A output channel~A~%" 
-			   (if 3d "tridimensional" "bidimensional")
-			   channels (if (= channels 1) "s" ""))))
+	(format #t "ERROR: no speaker configuration exists for ~A ~A output channel~A~%~%" 
+		(if 3d "tridimensional" "bidimensional")
+		channels (if (= channels 1) "s" "")))
     config))
 
 
@@ -729,11 +730,11 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 		    final-direction)
   ;; some sanity checks
   (if (null? path)
-      (snd-error "Can't define a path with no points in it"))
+      (format #t "ERROR: Can't define a path with no points in it~%"))
   (if (and closed initial-direction)
-      (snd-error (format #f "Can't specify initial direction ~A for a closed path ~A" initial-direction path)))
+      (format #t "ERROR: Can't specify initial direction ~A for a closed path ~A~%" initial-direction path))
   (if (and closed final-direction)
-      (snd-error (format #f "Can't specify final direction ~A for a closed path ~A" final-direction path)))
+      (format #t "ERROR: Can't specify final direction ~A for a closed path ~A~%" final-direction path))
 
   (if (and closed
 	   (not (if (list? (car path))
@@ -748,7 +749,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 			 (= (cadr path) (cadr end))
 			 (if path-3d
 			     (= (third path) (third end)) #t))))))
-      (snd-error (format #f "Closed path ~A is not closed" path)))
+      (format #t "ERROR: Closed path ~A is not closed~%" path))
 
   ;; create the path structure
   (if closed
@@ -976,7 +977,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
    (lambda (v)
      (if (and (number? v) 
 	      (< v 0))
-	 (snd-error (format #f "velocities for path ~A must be all positive" (bezier-path xpath)))))
+	 (format #t "ERROR: velocities for path ~A must be all positive~%" (bezier-path xpath))))
    (bezier-v xpath))
   (reset-fit xpath))
 
@@ -1240,12 +1241,12 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 				  (lambda (ci)
 				    (vector-set! cs i (if (list? ci) 
 							  (if (not (= (length ci) 2))
-							      (snd-error (format #f "curvature sublist must have two elements ~A" ci))
+							      (format #t "ERROR: curvature sublist must have two elements ~A~%" ci)
 							      ci)
 							  (list ci ci)))
 				    (set! i (+ 1 i)))
 				  c))
-			       (snd-error (format #f "bad curvature argument ~A to path, need ~A elements" c n)))))
+			       (format #t "ERROR: bad curvature argument ~A to path, need ~A elements~%" c n))))
 
 		   ;; calculate control points
 		   (let ((xc '())
@@ -1391,7 +1392,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 			   (height '(0 0 1 0))
 			   (velocity '(0 1 1 1)))
   (if (and total-angle (not (null? turns)))
-      (snd-error (format #f "can't specify total-angle [~A] and turns [~A] at the same time for the spiral path" total-angle turns)))
+      (format #t "ERROR: can't specify total-angle [~A] and turns [~A] at the same time for the spiral path~%" total-angle turns))
   
   (list 'spiral-path '() '() '() '() '() '() '() '() '() '() path-3d #f 
 	start-angle total-angle 
@@ -1691,7 +1692,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 		    (* (/ (spiral-total-angle path) dlocsig-one-turn) 2 pi)
 		    (if (spiral-turns path)
 			(* (spiral-turns path) 2 pi)
-			(snd-error (format #f "a spiral-path needs either a total-angle or turns, none specified")))))
+			(format #t "ERROR: a spiral-path needs either a total-angle or turns, none specified~%"))))
 	 (steps (abs (/ total (* (/ (spiral-step-angle path) dlocsig-one-turn) 2 pi))))
 	 (step (/ total (ceiling steps)
 		  (if (< (spiral-step-angle path) 0) -1 1)))
@@ -1842,9 +1843,9 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	     (yc (path-y path))
 	     (zc (path-z path)))
 	(if (and rotation-center (not (= (length rotation-center) 3)))
-	    (snd-error "rotation center has to have all three coordinates"))
+	    (format #t "ERROR: rotation center has to have all three coordinates~%"))
 	(if (and rotation-axis (not (= (length rotation-axis) 3)))
-	    (snd-error "rotation axis has to have all three coordinates"))
+	    (format #t "ERROR: rotation axis has to have all three coordinates~%"))
 	(let ((len (length xc))
 	      (xtr '())
 	      (ytr '())
@@ -2027,20 +2028,20 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 		       rev-channels)
 
   (if (null? start-time)
-      (snd-error "a start time is required in make-dlocsig"))
+      (format #t "ERROR: a start time is required in make-dlocsig~%"))
   (if (null? duration)
-      (snd-error "a duration has to be specified in make-dlocsig"))
+      (format #t "ERROR: a duration has to be specified in make-dlocsig~%"))
 
   ;; check to see if we have the rigth number of channels for b-format ambisonics
   (if (and (= render-using b-format-ambisonics)
 	   (not (= (or out-channels (channels *output*)) 4)))
-      (snd-error (format #f "ambisonics b-format requires four output channels, current number is ~A" (or out-channels (channels *output*)))))
+      (format #t "ERROR: ambisonics b-format requires four output channels, current number is ~A~%" (or out-channels (channels *output*))))
 
   (if (not out-channels)
       (if *output*
 	  (set! out-channels (channels *output*))
 	  (begin
-	    (snd-warning "no *output*?  Will set out-channels to 2~%")
+	    (format #t "WARNING: no *output*?  Will set out-channels to 2~%~%")
 	    (set! out-channels 2))))
   (if (not rev-channels)
       (set! rev-channels (if *reverb* (channels *reverb*) 0)))
@@ -2067,7 +2068,9 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 			    (- (car (last tpoints)) (car tpoints)))
 			 duration))
 	 (start 0)
+	 (end 0)
 	 (delay '())
+	 (doppler '())
 	 (real-dur 0)
 	 (prev-time #f)
 	 (prev-dist #f)
@@ -2327,7 +2330,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	    (if (not (= time prev-time))
 		(let* ((speed (/ (- dist prev-dist) (- time prev-time))))
 		  (if (> speed speed-limit)
-		      (snd-warning (format #f "supersonic radial movement at [~F,~F,~F, ~F], speed=~F~%" x y z time speed)))))
+		      (format #t "WARNING: supersonic radial movement at [~F,~F,~F, ~F], speed=~F~%~%" x y z time speed))))
 	    (if inside
 		;; still in the same group
 		(begin
@@ -2374,7 +2377,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 					    (if inside
 						(push-gains group gains di ti 3)
 						;; how did we get here?
-						(snd-error (format #f "Outside of both adjacent groups [~A:~A:~A @~A]~%" xi yi zi ti)))))))))
+						(format #t "ERROR: Outside of both adjacent groups [~A:~A:~A @~A]~%~%" xi yi zi ti))))))))
 
 			    (if (and (= (length edge) 1) (= (group-size group) 2))
 				;; two two-speaker groups share one point
@@ -2404,7 +2407,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 						(if inside
 						    (push-gains group gains di ti 5)
 						    ;; how did we get here?
-						    (snd-error (format #f "Outside of both adjacent groups [~A:~A @~A]~%" xi yi ti)))))))))
+						    (format #t "Outside of both adjacent groups [~A:~A @~A]~%~%" xi yi ti))))))))
 				(if (= (length edge) 1)
 				    ;; groups share only one point... for now a warning
 				    ;; we should calculate two additional interpolated
@@ -2420,16 +2423,15 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 										 (group-vertices prev-group)))
 						      (edge2 (equal-intersection (group-vertices int-group)
 										 (group-vertices group))))
-						 (format #t "e1=~A; e2=~A~%" edge1 edge2))))
+						 (format #t "e1=~A; e2=~A~%~%" edge1 edge2))))
 					 (speaker-config-groups speakers))
-					(snd-warning 
-					 (format #t "crossing between groups with only one point in common~%  prev=~A~%  curr=~A~%" prev-group group)))
+					(format #t "WARNING: crossing between groups with only one point in common~%  prev=~A~%  curr=~A~%~%" prev-group group))
 
 				      ;; groups don't share points... how did we get here?
 				      (if (= (length edge) 0)
-					  (snd-warning (format #t "crossing between groups with no common points, ~A~A to ~A~A~%"
-							       (group-id prev-group) (group-speakers prev-group)
-							       (group-id group) (group-speakers group)))))))
+					  (format #t "WARNING: crossing between groups with no common points, ~A~A to ~A~A~%~%"
+						  (group-id prev-group) (group-speakers prev-group)
+						  (group-id group) (group-speakers group))))))
 
 			;; finally push gains for current group
 			(push-gains group gains dist time 6)
@@ -2455,10 +2457,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 		  (set! prev-z z))
 		(begin
 		  (push-zero-gains time)
-		  (set! prev-group #f)))))
-      ;; remember current parameters for next point
-      (set! prev-time time)
-      (set! prev-dist dist))
+		  (set! prev-group #f))))))
 
     ;; Render a trajectory breakpoint for ambisonics b-format coding
     ;; http://www.york.ac.uk/inst/mustech/3d_audio/ambis2.htm
@@ -2621,8 +2620,18 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 		(> time (cadr delay)))
 	    (begin
 	      (set! delay (cons time delay))
-	      (set! delay (cons (dist->samples dist) delay))))
-
+	      (set! delay (cons (dist->samples dist) delay))
+	      ;; doppler should be easy, yeah right. We use "relativistic" correction
+	      ;; as the sound object can be travelling close to the speed of sound. 
+	      ;; http://www.mathpages.com/rr/s2-04/2-04.htm, 
+	      ;; va = 0 (stationary listener)
+	      ;; ve = moving object
+	      ;; va = (* ve (/ 1 (+ 1 (/ ve c))) (sqrt (- 1 (* (/ ve c) (/ ve c)))))
+	      (if prev-time
+		  (let* ((ratio (/ (- dist prev-dist)
+				   (* duration (- time prev-time) dlocsig-speed-of-sound))))
+		    (set! doppler (cons (/ (+ prev-time time) 2) doppler))
+		    (set! doppler (cons (* (/ 1 (+ 1 ratio)) (sqrt (- 1 (* ratio ratio)))) doppler))))))
 	;; do the rendering of the point
 	(if (= render-using amplitude-panning)
 	    ;; amplitude panning
@@ -2635,6 +2644,9 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 		    (fdecoded-ambisonics x y z dist time))))
 
 	(set! room (+ 1 room))
+	;; remember current time and distance for next point
+	(set! prev-time time)
+	(set! prev-dist dist)
 	;; return number of rooms processed
 	room))
 
@@ -2754,6 +2766,27 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	      (if (= i len)
 		  (walk-all-rooms xb yb zb tb 4))))))
 
+    ;; returns the new duration of a sound after using an envelope for time-varying sampling-rate conversion
+    ;; (from Bill's dsp.scm)
+    (define (src-duration e)
+      (let* ((len (length e))
+	     (ex0 (car e))
+	     (ex1 (list-ref e (- len 2)))
+	     (all-x (- ex1 ex0))
+	     (dur 0.0))
+	(do ((i 0 (+ i 2)))
+	    ((>= i (- len 2)) dur)
+	  (let* ((x0 (list-ref e i))
+		 (x1 (list-ref e (+ i 2)))
+		 (y0 (list-ref e (+ i 1))) ; 1/x x points
+		 (y1 (list-ref e (+ i 3)))
+		 (area (if (< (abs (- y0 y1)) .0001)
+			   (/ (- x1 x0) (* y0 all-x))
+			   (* (/ (- (log y1) (log y0)) 
+				 (- y1 y0)) 
+			      (/ (- x1 x0) all-x)))))
+	    (set! dur (+ dur (abs area)))))))
+
     ;; create delay lines for output channels that need them
     (let* ((delays (speaker-config-delays speakers))
 	   (len (length delays)))
@@ -2768,10 +2801,15 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
     ;; delay from the minimum distance to the listener
     (set! min-delay (dist->samples min-dist))
     ;; duration of sound at listener's position after doppler src
-    (set! real-dur (+ duration (dist->seconds (- last-dist first-dist))))
+    ;;
+    ;; this does not work quite right but the error leads to a longer
+    ;; run with zeroed samples at the end so it should be fine
+    (set! real-dur (* duration (src-duration (reverse doppler)))) 
+    ;; end of the run according to the duration of the note
+    (set! end (time->samples duration))
     ;; start and end of the run loop in samples
-    (set! run-beg (inexact->exact (floor (time->samples start-time))))
-    (set! run-end (inexact->exact (floor (- (+ (time->samples (+ start-time real-dur))
+    (set! run-beg (time->samples start-time))
+    (set! run-end (inexact->exact (floor (- (+ (time->samples (+ start-time (max duration real-dur)))
 					       (dist->samples last-dist)
 					       (time->samples max-out-delay))
 					    (if initial-delay 0.0 min-delay)))))
@@ -2801,7 +2839,7 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
        ;; :start 
        start
        ;; :end 
-       (time->samples (+ start-time real-dur))
+       (time->samples (+ start-time (max duration real-dur)))
        ;; :out-channels 
        (speaker-config-number speakers)
        ;; :rev-channels 
