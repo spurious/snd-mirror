@@ -715,7 +715,10 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 ;;; functions from Snd that are used in some instruments
 ;;;   these replacements assume that the Snd functions are not present
 
-(define file-name mus-expand-filename)
+(define (file-name name) 
+  (if (string? name) 
+      (mus-expand-filename name) 
+      (mus-file-name name)))
 
 (define srate mus-sound-srate)
 
