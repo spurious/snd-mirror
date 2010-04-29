@@ -6331,6 +6331,11 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	    i2 = num_to_imag_part(b);
 	    den = (r2 * r2 + i2 * i2);
 
+	    /* SOMEDAY: avoid the squaring (see Knuth II p613 16)
+	     *    not a big deal: (/ 1.0e308+1.0e308i 2.0e308+2.0e308i) => nan
+	     *    (gmp case is ok here) 
+	     */
+
 	    real_part(a) = (r1 * r2 + i1 * i2) / den;
 	    imag_part(a) = (r2 * i1 - r1 * i2) / den;
 	    if (imag_part(a) == 0.0)
@@ -24238,6 +24243,9 @@ s7_scheme *s7_init(void)
  * exact? #t if it was represented exactly and has not been touched by anything that might make it inexact (or is not a float)
  * inexact? == not exact?
  * in complex case, exact only if both real/imag are exact (ignore polar case I guess)
+ *
+ * or perhaps inexact? either #f or the interval (as in interval arithmetic)
+ *   but then exact? is a problem -- we want to return the interval when not exact which scheme thinks is not false
  */
 
 /* OBJECTS...
