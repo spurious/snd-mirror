@@ -11,7 +11,6 @@
 ;;;   sacla test suite
 ;;;   Kent Dybvig's "The Scheme Programming Language"
 ;;;   Brad Lucier (who also pointed out many bugs)
-;;;   numtst.c
 ;;;   GSL tests
 ;;;   Abramowitz and Stegun, "Handbook of Mathematical Functions"
 ;;;   Weisstein, "Encyclopedia of Mathematics"
@@ -30851,6 +30850,12 @@
 (test (number? #f) #f)
 (test (number? (cons 1 2)) #f)
 (test (number? 2.5-.5i) #t)
+(test (number? most-negative-fixnum) #t)
+(test (number? 1e-308) #t)
+(test (number? 1e308) #t)
+(test (number? 0+0i) #t)
+(test (number? (log 0)) #t)
+(test (number? (real-part (log 0))) #t)
 
 (test (real? (+ 1+i 1-i)) #t)
 (test (real? (- 1+i 1+i)) #t)
@@ -30867,6 +30872,228 @@
 (test (real? (real-part 1+i)) #t)
 (test (real? (imag-part 1+i)) #t)
 (test (real? (expt 0+i 0+i)) #t)
+(test (real? (log 0)) #f)
+(test (real? (real-part (log 0))) #t)
+
+
+;;; (real-part (log 0)) -> -inf.0
+;;; (- (real-part (log 0))) -> inf.0
+;;; (real-part (/ (log 0))) -> nan.0
+;;;  but (- (real-part (/ (log 0)))) is not -nan.0
+
+(let* ((inf+ (- (real-part (log 0))))
+       (inf- (real-part (log 0)))
+       (nan (real-part (/ (log 0)))) ;; perhaps this should be 0.0 -- 1/inf
+       (complex-nan (make-polar 0.0 inf+))
+       (complex-inf++ (make-rectangular inf+ inf+))
+       (complex-inf+- (make-rectangular inf+ inf-))
+       (complex-inf-- (make-rectangular inf- inf-))
+       (complex-inf-+ (make-rectangular inf- inf+))
+       (complex-inf+-nan (+ complex-inf++ complex-inf+-))
+       (complex-inf--nan (+ complex-inf-- complex-inf-+))
+       ;; and so on!!
+       )
+  
+  (define (nan? x) (and (number? x) (not (= x x))))
+  (define (infinite? x) (and (number? x) (= x x) (or (= x inf+) (= x inf-))))
+
+  (if (zero? nan)
+      (set! nan (/ (real-part (log 0)) (real-part (log 0))))) ; inf/inf
+  
+  (test (equal? inf+ inf+) #t)
+  (test (equal? inf+ inf-) #f)
+
+  ;; these are from r6rs.html
+  (test (number? nan) #t)
+  (test (complex? nan) #t)
+  (test (real? nan) #t)
+  (test (rational? nan) #f)
+  (test (complex? inf+) #t)
+  (test (real? inf-) #t)
+  (test (rational? inf-) #f)
+  (test (integer? inf-) #f)
+  (test (inexact? inf+) #t)
+  (test (zero? nan) #f)
+  (test (positive? inf+) #t)
+  (test (negative? inf-) #t)
+  (test (positive? nan) #f)
+  (test (negative? nan) #f)
+  (test (infinite? inf+) #t)
+  (test (nan? complex-nan) #t)
+  (test (number? complex-nan) #t)
+  (test (complex? complex-nan) #t)
+  (test (real? complex-nan) #f)
+  (test (number? complex-inf--) #t)
+  (test (complex? complex-inf++) #t)
+  (test (real? complex-inf-+) #f)
+
+  (test (< inf+ inf-) #f)
+  (test (< inf- inf+) #t)
+  (test (< inf- 0.0) #t)
+  (test (> inf+ 0.0) #t)
+  (test (= inf+ inf+) #t)
+  (test (= inf- inf+) #f)
+  (test (= inf- inf-) #t)
+  (test (= inf+ 0.0) #f)
+  (test (= inf+ nan) #f)
+  (test (= 0.0 nan) #f)
+  (test (= nan nan) #f)
+  (test (nan? (* 0 inf+)) #t)
+  (test (= inf+ most-positive-fixnum) #f)
+  (test (> inf+ most-positive-fixnum) #t)
+  (test (> inf+ 1.0e308) #t)
+  (test (nan? (- inf+ inf+)) #t)
+  (test (= (+ inf+ inf+) inf+) #t)
+  (test (= (* inf+ inf+) inf+) #t)
+  (test (nan? (/ inf+ inf+)) #t)
+  (test (= (+ 1 inf+) inf+) #t)
+  (test (nan? (- inf- inf-)) #t)
+  (test (nan? (- nan nan)) #t)
+  (test (nan? (/ inf+ inf-)) #t)
+  (test (nan? (/ inf- inf-)) #t)
+  (test (nan? (/ nan nan)) #t)
+  (test (nan? (/ nan inf+)) #t)
+  (test (nan? (/ inf+ nan)) #t)
+  (test (= (/ 0.0 inf+) 0.0) #t)
+  (test (= (- 0.0 inf+) inf-) #t)
+  (test (= (- inf+) inf-) #t)
+  (test (= (- inf-) inf+) #t)
+  (test (nan? (- nan)) #t)
+  (test (= (* inf+ inf-) inf-) #t)
+  (test (= (* inf- inf-) inf+) #t)
+  (test (<= inf- 0.0 inf+ inf+) #t)
+  (test (>= inf+ inf- 0.0) #f)
+  (test (= (* (+ inf+ inf+) inf-) inf-) #t)
+  (test (= nan complex-nan) #f)
+  (test (= complex-nan complex-nan) #f)
+  (test (= nan (real-part complex-nan)) #f)
+  (test (nan? (real-part complex-nan)) #t)
+  (test (nan? (imag-part complex-nan)) #t)
+
+  (test (nan? (+ complex-inf-- complex-inf++)) #t)
+  
+  ;; the following are not specified by IEEE 754
+  (test (= (expt 1 inf+) 1.0) #t)
+  (test (= (expt 1 inf-) 1.0) #t)
+  (test (= (expt 0.0 inf+) 0.0) #t)
+  ;(test (= (expt 2 inf+) inf+) #t)
+  (test (= (expt 2 inf-) 0.0) #t)
+  (test (= (exp inf-) 0.0) #t)
+  (test (= (exp inf+) inf+) #t)
+  (test (nan? (exp nan)) #t)
+  (test (= (expt nan 0) 1.0) #t) ;hmmm
+  ;(test (= (expt nan nan) 0) #t)
+  ;(test (= (expt inf+ inf-) 0.0) #t)
+  ;(test (= (expt inf+ inf+) inf+) #t)
+  (test (= (expt 1 nan) 1) #t)
+  ;(test (= (expt 1 complex-nan) 1) #t) ; or maybe NaN?
+  (test (= (expt inf+ 0) 1.0) #t)
+  (test (= (expt inf- 0) 1.0) #t)
+  (test (= (log inf+) inf+) #t)
+  (test (nan? (log nan)) #t)
+  (test (nan? (log complex-nan)) #t)
+  (test (nan? (exp complex-nan)) #t)
+  (test (nan? (sqrt nan)) #t)
+  (test (= (sqrt inf+) inf+) #t)
+
+  (test (= (abs inf+) inf+) #t)
+  (test (= (abs inf-) inf+) #t)
+  (test (nan? (abs nan)) #t)
+  (test (= (magnitude inf+) inf+) #t)
+  (test (= (magnitude inf-) inf+) #t)
+  (test (nan? (magnitude nan)) #t)
+  (test (nan? (magnitude complex-nan)) #t)
+
+  (test (= (make-polar inf+ 0) inf+) #t)
+  (test (nan? (make-polar 0 inf-)) #t)
+  (test (nan? (make-polar nan 0)) #t)
+  (test (nan? (make-polar 0 nan)) #t)
+  (test (= (make-rectangular inf+ 0) inf+) #t)
+  (test (= (make-rectangular 0 inf+) (sqrt inf-)) #t)   ; (sqrt inf-) -> 0+infi !
+  (test (nan? (make-rectangular nan 0)) #t)
+  (test (nan? (make-rectangular 0 nan)) #t)
+
+  (test (nan? (sin nan)) #t)
+  (test (nan? (sin inf+)) #t)
+  (test (nan? (sin inf-)) #t)
+  (test (nan? (/ 0 nan)) #t)
+  (test (nan? (* 0 nan)) #t)
+  
+  (test (= (exp most-positive-fixnum) inf+) #t)
+  (test (= (exp most-negative-fixnum) 0.0) #t)
+  (test (= (* -3.4 inf-) inf+) #t)
+
+  (test (= (exact->inexact inf+) inf+) #t)
+  (test (exact? inf+) #f)
+  (test (exact? nan) #f)
+  (test (inexact? inf+) #t)
+  (test (inexact? nan) #t)
+  (test (= (max inf- inf+) inf+) #t)
+  (test (= (min inf- inf+) inf-) #t)
+
+  (test (nan? (+ (values inf+ inf-) inf+)) #t)
+
+  (test (rationalize inf+) 'error)
+  (test (rationalize inf-) 'error)
+  (test (rationalize nan) 'error)
+
+  (test (rationalize 198797.5 inf+) 0)
+  (test (rationalize 178978.5 inf-) 0)
+  (test (rationalize 178978.5 complex-inf-) 'error)
+  (test (rationalize 178987.5 nan) 'error)
+
+  (for-each
+   (lambda (op)
+     (test (number? (op inf+)) #t)
+     (test (number? (op inf-)) #t)
+     (test (number? (op nan)) #t))
+   (list floor ceiling truncate round exact->inexact
+	 magnitude abs exp angle sin cos tan sinh cosh tanh atan sqrt log asinh acosh atanh acos asin
+	 real-part imag-part))
+
+  (num-test (tanh inf-) -1.0)
+  (num-test (tanh inf+) 1.0)
+  (num-test (angle inf+) 0.0)
+  (num-test (angle inf-) our-pi)
+  (test (nan? (angle nan)) #t)
+
+  ; (atanh inf-) 0+1.5707963267949i
+
+  (for-each
+   (lambda (op)
+     (test (number? (op inf+ inf+)) #t)
+     (test (number? (op nan inf-)) #t))
+   (list + - * / expt min max make-rectangular make-polar))
+
+  (for-each
+   (lambda (op)
+     (test (boolean? (op inf+)) #t)
+     (test (boolean? (op nan)) #t))
+   (list number? integer? real? complex? rational? zero? positive? negative? inexact? exact?))
+
+  (for-each
+   (lambda (op)
+     (test (boolean? (op inf+ inf-)) #t)
+     (test (boolean? (op nan inf-)) #t))
+   (list  = < > <= >=))
+
+  (for-each
+   (lambda (op)
+     (test (op inf+) 'error)
+     (test (op nan) 'error))
+   (list even? odd? numerator denominator lcm gcd inexact->exact
+	 logior logxor logand lognot ash integer-length))
+
+#|
+    TODO: quotient remainder -> most-neg-fix?? also floor etc]
+    TODO: modulo :(modulo nan 1) nan.0 (modulo inf- 1) inf- -- surely a bug? what is the fraction? I guess it should be nan.
+    TODO: add nan? and infinite? (test doc etc) -- does gmp have special values here?
+    (= (string->number (number->string inf-)) inf-) -- too many choices here
+|#
+
+  ; outside gmp (* 1e12000 1e12000) -> inf+
+  )
+
 
 (test (number? 3) #t )
 (test (complex? 3) #t )
@@ -30909,6 +31136,8 @@
 
 (if (not (rational? 2)) 
     (format #t "(rational? 2) is #f?~%"))
+
+(test (rational? (sqrt 2)) #f)
 
 
 

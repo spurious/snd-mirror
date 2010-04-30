@@ -179,7 +179,6 @@ Other math-related differences between s7 and r5rs:
 <li>lcm and gcd can take integer or ratio arguments.
 <li>log takes an optional 2nd arg (the base).
 <li>'.' and an exponent can occur in a number in any base.
-<li>NaN and inf handling is left up to the underlying C or C++.
 <li>rationalize returns a ratio! 
 </ul>
 <pre>
@@ -2462,7 +2461,7 @@ bind it to something else, which is asking for confusion).
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>Schemes vary in their treatment of ().  s7 considers it a constant that evaluates to itself,
-so you rarely (never?) need to quote it.  <code>(eq? () '())</code> is #t in s7.
+so you rarely (never?) need to quote it.  <code>(eq? () '())</code> is #t.
 </p>
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
@@ -2472,6 +2471,8 @@ so you rarely (never?) need to quote it.  <code>(eq? () '())</code> is #t in s7.
 <code>(cond (1) (=&gt;))</code> is 1 in both,  and
 <code>(or 1 2 . 3)</code> is an
 error in Guile, and 1 in s7!
+(In <code>(* 0 +inf.0)</code>, Guile gives an incorrect result
+ &mdash; this should be NaN).
 </p>
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
@@ -2532,7 +2533,7 @@ ERROR: string is read-only: "symbol-&gt;string"
 </pre>
 <p>So both have a notion of immutable strings.  
 I wonder what other Scheme programmers (not implementors!) want in this situation.
-Currently in s7, there are no immutable list, string, or vector constants, and
+Currently, there are no immutable list, string, or vector constants, and
 symbol-&gt;string
 returns a copy of the string.
 One simple way to ensure immutability is to use copy:

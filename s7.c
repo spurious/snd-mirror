@@ -2934,6 +2934,10 @@ double cbrt(double x)
     return(pow(x, 1.0 / 3.0));
   return(-pow(-x, 1.0 / 3.0));
 }
+
+#define isnan(x) ((x) != (x))
+#define isinf(x) ((!isnan(x)) && (isnan((x) - (x))))
+
 #endif
 
 #if WITH_COMPLEX
@@ -3620,7 +3624,13 @@ static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x)
       (!s7_is_rational(x)))
     {
       s7_Int numer = 0, denom = 1;
-      if (c_rationalize(s7_real_part(x), default_rationalize_error, &numer, &denom))
+      s7_Double val;
+
+      val = s7_real_part(x);
+      if ((isinf(val)) || (isnan(val)))
+	return(s7_wrong_type_arg_error(sc, "inexact->exact", 1, x, "a normal real"));
+
+      if (c_rationalize(val, default_rationalize_error, &numer, &denom))
 	return(s7_make_ratio(sc, numer, denom));
     }
   return(x);
@@ -5112,7 +5122,7 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 {
   #define H_rationalize "(rationalize x err) returns the ratio with lowest denominator within err of x"
-  s7_Double err;
+  s7_Double err, rat;
   s7_Int numer = 0, denom = 1;
   s7_pointer x;
 
@@ -5133,7 +5143,18 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
       (err > -1.0))
     return(x);
 
-  if (c_rationalize(s7_number_to_real(x), err, &numer, &denom))
+  rat = s7_number_to_real(x);
+
+  /* (rationalize (real-part (log 0))) */
+  if ((isnan(rat)) || (isinf(rat)))
+    return(s7_wrong_type_arg_error(sc, "rationalize", 1, x, "a normal real"));
+  if (isnan(err))
+    return(s7_wrong_type_arg_error(sc, "rationalize", 2, cadr(args), "a normal real"));
+
+  if (s7_Double_abs(rat) < s7_Double_abs(err))
+    return(small_int(0));
+
+  if (c_rationalize(rat, err, &numer, &denom))
     return(s7_make_ratio(sc, numer, denom));
   return(sc->F);
 }
@@ -7183,8 +7204,10 @@ static s7_pointer g_is_negative(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
 {
   #define H_inexact_to_exact "(inexact->exact num) converts num to an exact number; (inexact->exact 1.5) = 3/2"
+  
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "inexact->exact", 0, car(args), "a number"));
+
   return(inexact_to_exact(sc, car(args)));
 }
 
