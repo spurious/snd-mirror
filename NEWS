@@ -13,9 +13,11 @@ added make-type to s7: scheme-level type creation.
 
 mix-notelists in ws.scm.
 
+Fernando fixed some problems in dlocsig.scm.
+
 checked: gtk 2.20.0, sbcl 1.0.37
 
 Thanks!: Rick Taube, Rick's students, Oded Ben-Tal, Cazzaniga Sandro,
-  Mike Scholz
+  Mike Scholz, Fernando Lopez-Lezcano
 
 

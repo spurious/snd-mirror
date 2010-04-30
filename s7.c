@@ -249,7 +249,7 @@
  *    multiprecision arithmetic
  *    s7 init
  *
- * naming conventions: s7_* usually are C accessible (snd.h), g_* are scheme accessible (FFI), H_* are documentation strings,
+ * naming conventions: s7_* usually are C accessible (s7.h), g_* are scheme accessible (FFI), H_* are documentation strings,
  *   *_1 are auxilliary functions, big_* refer to gmp and friends, scheme "?" corresponds to C "_is_", scheme "->" to C "_to_".
  */
 
@@ -1042,7 +1042,7 @@ static s7_pointer g_is_boolean(s7_scheme *sc, s7_pointer args)
 
 bool s7_is_constant(s7_pointer p) 
 { 
-  /* this means "not settable": numbers, characters, strings, keywords, #f #t pi etc */
+  /* this means "not settable": numbers, characters, #f #t pi etc */
   /*   so to be non-constant, it has to be a non-keyword symbol with the immutable bit not set, I think */
   
   return((type(p) != T_SYMBOL) ||
@@ -2893,10 +2893,10 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 #endif
 
 
-#define s7_Int_abs(x) (x >= 0 ? x : -x)
+#define s7_Int_abs(x) ((x) >= 0 ? (x) : -(x))
 /* can't use abs even in gcc -- it doesn't work with long long ints! */
 #define s7_Double_abs(x) fabs(x)
-#define s7_fabsl(x) ((x < 0.0) ? -x : x)
+#define s7_fabsl(x) (((x) < 0.0) ? -(x) : (x))
 /* fabsl doesn't exist in netBSD! */
 
 
@@ -3862,7 +3862,7 @@ static bool s7_is_zero(s7_pointer x)
 
 
 static bool s7_is_one(s7_pointer x)
-{
+  {
   switch (number_type(x))
     {
     case NUM_INT:   return(s7_integer(x) == 1);
@@ -6331,7 +6331,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	    i2 = num_to_imag_part(b);
 	    den = (r2 * r2 + i2 * i2);
 
-	    /* SOMEDAY: avoid the squaring (see Knuth II p613 16)
+	    /* PERHAPS: avoid the squaring (see Knuth II p613 16)
 	     *    not a big deal: (/ 1.0e308+1.0e308i 2.0e308+2.0e308i) => nan
 	     *    (gmp case is ok here) 
 	     */
