@@ -162,6 +162,7 @@ s7 includes:
 <li>sinh, cosh, tanh, asinh, acosh, atanh
 <li>logior, logxor, logand, lognot, ash, integer-length
 <li>random
+<li>nan?, infinite?
 </ul>
 <p>
 The random function can take any numeric argument, including 0 (don't get me started...).
@@ -2471,8 +2472,7 @@ so you rarely (never?) need to quote it.  <code>(eq? () '())</code> is #t.
 <code>(cond (1) (=&gt;))</code> is 1 in both,  and
 <code>(or 1 2 . 3)</code> is an
 error in Guile, and 1 in s7!
-(In <code>(* 0 +inf.0)</code>, Guile gives an incorrect result
- &mdash; this should be NaN).
+(Because it flushes trailing arguments, Guile returns 0 from <code>(* 0 +inf.0)</code>, but it should return NaN).
 </p>
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>

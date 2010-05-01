@@ -928,6 +928,28 @@ static char *copy_string(const char *str)
 /* newlib code here was slower */
 
 
+static int safe_strcmp(const char *s1, const char *s2)
+{
+  int val;
+  if (s1 == NULL)
+    {
+      if (s2 == NULL)
+	return(0);
+      return(-1);
+    }
+  if (s2 == NULL)
+    return(1);
+
+  val = strcmp(s1, s2); /* strcmp can return stuff like -97, but we want -1, 0, or 1 */
+
+  if (val <= -1)
+    return(-1);
+  if (val >= 1)
+    return(1);
+  return(val);
+}
+
+
 static bool is_proper_list(s7_scheme *sc, s7_pointer lst);
 static void mark_embedded_objects(s7_pointer a); /* called by gc, calls fobj's mark func */
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op);
@@ -2935,8 +2957,9 @@ double cbrt(double x)
   return(-pow(-x, 1.0 / 3.0));
 }
 
-#define isnan(x) ((x) != (x))
-#define isinf(x) ((!isnan(x)) && (isnan((x) - (x))))
+static bool isnan(s7_Double x) {return(x != x);}
+
+static bool isinf(s7_Double x) {return((x == x) && (isnan(x - x)));}
 
 #endif
 
@@ -6612,7 +6635,18 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 			   num_to_denominator(a) * num_to_denominator(b)));
 
     default:
-      return(s7_make_real(sc, num_to_real(a) - num_to_real(b) * (s7_Int)floor(num_to_real(a) / num_to_real(b))));
+      {
+	s7_Double ax, bx;
+	ax = num_to_real(a);
+	bx = num_to_real(b);
+
+	if (isnan(ax)) return(ap);
+	if (isnan(bx)) return(bp);
+	if ((isinf(ax)) || (isinf(bx)))
+	  return(s7_make_real(sc, sqrt(-1))); /* this is supposed to be a NaN */
+
+	return(s7_make_real(sc, ax - bx * (s7_Int)floor(ax / bx)));
+      }
     }
 }
 
@@ -7118,6 +7152,22 @@ static s7_pointer g_denominator(s7_scheme *sc, s7_pointer args)
   if (!s7_is_rational(car(args)))
     return(s7_wrong_type_arg_error(sc, "denominator", 0, car(args), "a rational"));
   return(s7_make_integer(sc, num_to_denominator(number(car(args)))));
+}
+
+
+static s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args) 
+{
+  #define H_is_nan "(nan? obj) returns #t if obj is a NaN"
+  return(make_boolean(sc, ((s7_is_real(car(args))) &&
+			   (isnan(s7_real_part(car(args)))))));
+}
+
+
+static s7_pointer g_is_infinite(s7_scheme *sc, s7_pointer args) 
+{
+  #define H_is_infinite "(infinite? obj) returns #t if obj is an infinite real"
+  return(make_boolean(sc, ((s7_is_real(car(args))) &&
+			   (isinf(s7_real_part(car(args)))))));
 }
 
 
@@ -8136,28 +8186,6 @@ static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_object_to_string "(object->string obj) returns a string representation of obj"
   return(s7_object_to_string(sc, car(args)));
-}
-
-
-static int safe_strcmp(const char *s1, const char *s2)
-{
-  int val;
-  if (s1 == NULL)
-    {
-      if (s2 == NULL)
-	return(0);
-      return(-1);
-    }
-  if (s2 == NULL)
-    return(1);
-
-  val = strcmp(s1, s2); /* strcmp can return stuff like -97, but we want -1, 0, or 1 */
-
-  if (val <= -1)
-    return(-1);
-  if (val >= 1)
-    return(1);
-  return(val);
 }
 
 
@@ -23877,6 +23905,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "real?",                   g_is_real,                 1, 0, false, H_is_real);
   s7_define_function(sc, "complex?",                g_is_complex,              1, 0, false, H_is_complex);
   s7_define_function(sc, "rational?",               g_is_rational,             1, 0, false, H_is_rational);
+  s7_define_function(sc, "nan?",                    g_is_nan,                  1, 0, false, H_is_nan);
+  s7_define_function(sc, "infinite?",               g_is_infinite,             1, 0, false, H_is_infinite);
   s7_define_function(sc, "even?",                   g_is_even,                 1, 0, false, H_is_even);
   s7_define_function(sc, "odd?",                    g_is_odd,                  1, 0, false, H_is_odd);
   s7_define_function(sc, "zero?",                   g_is_zero,                 1, 0, false, H_is_zero);

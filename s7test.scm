@@ -30893,10 +30893,10 @@
        (complex-inf--nan (+ complex-inf-- complex-inf-+))
        ;; and so on!!
        )
-  
-  (define (nan? x) (and (number? x) (not (= x x))))
-  (define (infinite? x) (and (number? x) (= x x) (or (= x inf+) (= x inf-))))
 
+  ;; (define (nan? x) (and (number? x) (not (= x x))))
+  ;; (define (infinite? x) (and (number? x) (= x x) (or (= x inf+) (= x inf-))))
+  
   (if (zero? nan)
       (set! nan (/ (real-part (log 0)) (real-part (log 0))))) ; inf/inf
   
@@ -30919,7 +30919,7 @@
   (test (positive? nan) #f)
   (test (negative? nan) #f)
   (test (infinite? inf+) #t)
-  (test (nan? complex-nan) #t)
+  (test (nan? (imag-part complex-nan)) #t)
   (test (number? complex-nan) #t)
   (test (complex? complex-nan) #t)
   (test (real? complex-nan) #f)
@@ -30970,7 +30970,7 @@
   (test (nan? (real-part complex-nan)) #t)
   (test (nan? (imag-part complex-nan)) #t)
 
-  (test (nan? (+ complex-inf-- complex-inf++)) #t)
+  (test (nan? (imag-part (+ complex-inf-- complex-inf++))) #t)
   
   ;; the following are not specified by IEEE 754
   (test (= (expt 1 inf+) 1.0) #t)
@@ -30990,10 +30990,10 @@
   (test (= (expt inf+ 0) 1.0) #t)
   (test (= (expt inf- 0) 1.0) #t)
   (test (= (log inf+) inf+) #t)
-  (test (nan? (log nan)) #t)
-  (test (nan? (log complex-nan)) #t)
-  (test (nan? (exp complex-nan)) #t)
-  (test (nan? (sqrt nan)) #t)
+  (test (nan? (real-part (log nan))) #t)
+  (test (nan? (real-part (log complex-nan))) #t)
+  (test (nan? (real-part (exp complex-nan))) #t)
+  (test (nan? (real-part (sqrt nan))) #t)
   (test (= (sqrt inf+) inf+) #t)
 
   (test (= (abs inf+) inf+) #t)
@@ -31005,13 +31005,13 @@
   (test (nan? (magnitude complex-nan)) #t)
 
   (test (= (make-polar inf+ 0) inf+) #t)
-  (test (nan? (make-polar 0 inf-)) #t)
+  (test (nan? (real-part (make-polar 0 inf-))) #t)
   (test (nan? (make-polar nan 0)) #t)
-  (test (nan? (make-polar 0 nan)) #t)
+  (test (nan? (real-part (make-polar 0 nan))) #t)
   (test (= (make-rectangular inf+ 0) inf+) #t)
   (test (= (make-rectangular 0 inf+) (sqrt inf-)) #t)   ; (sqrt inf-) -> 0+infi !
   (test (nan? (make-rectangular nan 0)) #t)
-  (test (nan? (make-rectangular 0 nan)) #t)
+  (test (nan? (imag-part (make-rectangular 0 nan))) #t)
 
   (test (nan? (sin nan)) #t)
   (test (nan? (sin inf+)) #t)
@@ -31055,7 +31055,8 @@
   (num-test (tanh inf+) 1.0)
   (num-test (angle inf+) 0.0)
   (num-test (angle inf-) our-pi)
-  (test (nan? (angle nan)) #t)
+  ;; (test (nan? (angle nan)) #t)
+  ;; this could also be (angle complex-inf) etc -- need to check both sides
 
   ; (atanh inf-) 0+1.5707963267949i
 
@@ -31084,14 +31085,32 @@
    (list even? odd? numerator denominator lcm gcd inexact->exact
 	 logior logxor logand lognot ash integer-length))
 
-#|
-    TODO: quotient remainder -> most-neg-fix?? also floor etc]
-    TODO: modulo :(modulo nan 1) nan.0 (modulo inf- 1) inf- -- surely a bug? what is the fraction? I guess it should be nan.
-    TODO: add nan? and infinite? (test doc etc) -- does gmp have special values here?
-    (= (string->number (number->string inf-)) inf-) -- too many choices here
-|#
+  (let ((d1 1e-312)
+	(d2 1e-316)
+	(d3 1e-320))
+    (if (not (zero? d3))
+	(begin
+	  (test (= d1 d2 d3) #f)
+	  (test (< d1 d2 d3) #f)
+	  (test (> d1 d2 d3) #t)
+	  (test (rationalize d1) 0)
+	  (test (rationalize d3) 0)
+	  (test (rationalize (- d1)) 0)
+	  (test (not (= d2 (* 2 d1))) #t)
+	  (num-test (string->number (number->string d1)) d1)
+	  )))
 
-  ; outside gmp (* 1e12000 1e12000) -> inf+
+  (test (nan? (modulo nan 1)) #t)
+  (test (nan? (modulo inf+ 1)) #t)
+  (test (nan? (modulo 1 nan)) #t)
+  (test (nan? (modulo 1 inf+)) #t)
+
+;;    quotient remainder -> most-neg-fix also floor etc
+;;    does gmp have special values for nan and inf?
+;;    "nan" at start -> nan.0
+;;    "+||-inf" at start -> +|-inf
+;;    but this means inf.0 and nan.0 are built-in numbers
+;;    outside gmp (* 1e12000 1e12000) -> inf+
   )
 
 
