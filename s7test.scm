@@ -157,10 +157,6 @@
       (and (integer? x)
 	   (not (= 1 (+ (if (even? x) 1 0)
 			(if (odd? x) 1 0)))))
-      (not (= 1 (+ (if (zero? x) 1 0)
-		   (if (or (= x most-negative-fixnum)
-			   (> (magnitude x) 0))
-		       1 0))))
       (let ((type (+ (if (integer? x) 1 0)
 		     (if (rational? x) 2 0)
 		     (if (real? x) 4 0)
@@ -169,7 +165,7 @@
 	     (not (= type 12))
 	     (not (= type 14))
 	     (not (= type 15))))
-      (not (zero? (- x x))))) ; inf probably
+      (nan? x)))
 
 
 (define (number-ok? tst result expected)
@@ -5081,6 +5077,23 @@
 (test (let ((k 0)) (let ((x (let xyz ((i 0)) (set! k (+ k 1)) xyz))) (x 0)) k) 2)
 (test (let ((hi' 3) (a'b 2)) (+ hi' a'b)) 5)
 (test (let ((hi''' 3) (a'''b 2)) (+ hi''' a'''b)) 5)
+
+
+(let ()
+  (define (block-comment-test a b c)
+    (+ a b c))
+
+  (let ((val (block-comment-test 
+#|
+	    a comment
+|#
+	    1 #| this is a |# 
+#!
+            another comment
+!#
+ 2 #! this is b !# 3)))
+
+    (test val 6)))
 
 
 
@@ -31102,6 +31115,13 @@
 	  (test (rationalize (- d1)) 0)
 	  (test (not (= d2 (* 2 d1))) #t)
 	  (num-test (string->number (number->string d1)) d1)
+	  (test (infinite? (log d1)) #f)
+
+	  (test (< (sin d3) (sin d2) (sin d1)) #t)
+	  (test (< (log d3) (log d2) (log d1)) #t)
+	  (test (< (abs d3) (abs d2) (abs d1)) #t)
+	  (test (< (sqrt d3) (sqrt d2) (sqrt d1)) #t)
+	  (test (<= (exp d3) (exp d2) (exp d3)) #t) ; all might be 1.0
 	  )))
 
   (test (nan? (modulo nan 1)) #t)

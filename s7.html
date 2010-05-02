@@ -1831,6 +1831,8 @@ show the continuation stack.
 <p>
 See also trace below.  There is a break macro defined in Snd (see snd-xen.c)
 which allows you to stop at some point, then evaluate arbitrary expressions in that context.
+<!-- INDEX autoload:autoload -->
+<A NAME="autoload"></A>
 There's yet another hook, *unbound-variable-hook*, which is called when an unbound variable
 is encountered (before the error is signalled).  Its value is a function of one argument,
 the unbound symbol.  In Snd, this is used to implement autoloading:
@@ -1838,11 +1840,33 @@ the unbound symbol.  In Snd, this is used to implement autoloading:
 <pre>
 (set! <em class=red>*unbound-variable-hook*</em>
   (lambda (sym)
+    ;; add your own symbol checks here
     (let ((file (autoload-file (symbol-&gt;string sym))))
       ;; autoload-file is a Snd function that knows where a lot of Snd's scheme functions are
       (if file (load file))
       (symbol-&gt;value sym)))) ; this will return #&lt;undefined&gt; if we didn't find its source file
 </pre>
+
+<small>
+<blockquote>
+<p>Sly evil-doers can subvert this hook to provide something similar to Common Lisp's symbol-macros:
+</p>
+<pre>
+&gt; (set! *unbound-variable-hook* 
+    (lambda (sym)
+      (if (eq? sym 'hiho)
+          (sin (random 1.0))
+          (symbol-&gt;value sym))))
+&lt;closure&gt;
+&gt; hiho
+0.46727567824396
+&gt; hiho
+0.64985453979392
+</pre>
+
+</blockquote>
+</small>
+
 
 <p>The s7-built-in catch tags (error symbols) are 'wrong-type-arg, 'syntax-error, 'read-error, 'thread-error,
 'out-of-memory, 'wrong-number-of-args, 'format-error, 'out-of-range, 'division-by-zero, 'io-error, and 'bignum-error.  
@@ -2350,6 +2374,23 @@ is for compatibility with Guile).  These are also useful for in-line comments:
 <code>(+ #| add |# 1 2)</code>.
 </p>
 
+<p>Leaving aside these two cases, and the booleans, #f and #t, you can specify your own handlers for 
+tokens that start with "#".  <b>*#readers*</b> is a list of pairs: (char . func).
+"char" refers to the first character after the sharp sign (#). "func" is a function of
+one argument, the string that follows the #-sign up to the next delimiter.  "func" is called
+when #&lt;char&gt; is encountered.  If it returns something other than #f, the #-expression
+is replaced with that value.  Scheme has several predefined #-readers for cases such
+as #b1, #\a, #i123, and so on, but you can override these if you like.  If the string
+passed in is not the complete #-expression, the function can use read-char to get the
+rest.
+</p>
+
+<pre>
+  &gt; (set! *#readers* (list (cons #\s (lambda (str) 123))))
+  ((#\s . #&lt;closure&gt;))
+  &gt; (+ 1 #s1)
+  124
+</pre>
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>

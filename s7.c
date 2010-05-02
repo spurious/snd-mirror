@@ -70,8 +70,8 @@
  *        port-line-number, port-filename
  *        object->string, eval-string
  *        reverse!, list-set!, sort!, make-list
- *        gc, quit, *load-hook*, *error-hook*, *error-info*
- *        *features*, *load-path*, *vector-print-length*
+ *        gc, quit, *load-hook*, *error-hook*, *error-info*, *unbound-variable-hook*
+ *        *features*, *load-path*, *vector-print-length*, *#readers*
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
  *            a constant is really constant -- it can't be bound or set.
  *        symbol-calls if profiling is enabled
@@ -546,6 +546,7 @@ struct s7_scheme {
   s7_pointer output_port;             /* current-output-port (nil = stderr) */
   s7_pointer error_port;              /* current-error-port (nil = stderr) */
   s7_pointer error_info;              /* the vector bound to *error-info* */
+  s7_pointer sharp_readers;           /* the binding pair for the global *#readers* list */
   
   /* these 6 are pointers so that all thread refs are to the same thing */
   bool *gc_off;                       /* if true, the GC won't run */
@@ -4264,6 +4265,47 @@ static bool is_radix_prefix(char prefix)
 }
 
 
+static s7_pointer check_sharp_readers(s7_scheme *sc, const char *name)
+{
+  s7_pointer reader, value, args;
+  int args_loc = -1;
+  value = sc->F;
+
+  /* *#reader* is assumed to be an alist of (char . proc)
+   *    where each proc takes one argument, the string from the "#" to the next delimiter.
+   *    The procedure can call read-char to read ahead in the current-input-port.
+   *    If it returns anything other than #f, that is the value of the sharp expression.
+   * This search happens after #:, #|, #!, #t, and #f.
+   */
+
+  for (reader = symbol_value(sc->sharp_readers); reader != sc->NIL; reader = cdr(reader))
+    {
+      if (name[0] == s7_character(caar(reader)))
+	{
+	  if (args_loc == -1)
+	    {
+	      args = s7_cons(sc, s7_make_string(sc, name), sc->NIL);
+	      args_loc = s7_gc_protect(sc, args);
+	    }
+	  value = s7_call(sc, cdar(reader), args);
+	  if (value != sc->F)
+	    break;
+	}
+    }
+  if (args_loc != -1)
+    s7_gc_unprotect_at(sc, args_loc);
+
+  return(value);
+}
+
+/* TODO: test #readers */
+/* :(set! *#readers* (list (cons #\s (lambda (str) (format #t "S: ~S~%" str) 123))))
+ * ((#\s . #<closure>))
+ * :(+ 1 #s1)
+ * 124
+ */
+
+
 static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top) 
 {
   /* name is the stuff after the '#', return sc->NIL if not a recognized #... entity */
@@ -4276,13 +4318,13 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
   if (strings_are_equal(name, "f"))
     return(sc->F);
 
-  /* SOMEDAY: here is where the *#readers* list could come into play
-   *  
-   * if (at_top) etc -- but we need the current input port 
-   *   (looks like it is sc->input_port, name is up to the next delimiter)
-   *   (so for #<sound 1>, name is "<sound")
-   * read-char is inchar
-   */
+  if ((at_top) &&
+      (symbol_value(sc->sharp_readers) != sc->NIL))
+    {
+      x = check_sharp_readers(sc, name);
+      if (x != sc->F)
+	return(x);
+    }
   
   len = safe_strlen(name);
   if (len == 0)
@@ -16397,14 +16439,20 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
   if ((unbound_variable_hook_binding != sc->NIL) &&
       (is_procedure(symbol_value(unbound_variable_hook_binding))))
     {
-      int save_x, save_y, save_z;
-      s7_pointer x;
+      int save_x, save_y, save_z, cur_code_loc;
+      s7_pointer x, cur_code;
+
+      cur_code = sc->cur_code;
+      cur_code_loc = s7_gc_protect(sc, cur_code);   /* we need to save this because it has the file/line number of the unbound symbol */
 
       SAVE_X_Y_Z(save_x, save_y, save_z);
       x = s7_call(sc, 
 		  symbol_value(unbound_variable_hook_binding),
 		  make_list_1(sc, sym));
       RESTORE_X_Y_Z(save_x, save_y, save_z);
+
+      sc->cur_code = cur_code;
+      s7_gc_unprotect_at(sc, cur_code_loc);
 
       return(x);
     }
@@ -24094,6 +24142,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "untrace",                 g_untrace,                 0, 0, true,  H_untrace);
   s7_define_variable(sc, "*trace-hook*", sc->NIL);
   s7_define_function(sc, "stacktrace",              g_stacktrace,              0, 2, false, H_stacktrace);
+  s7_define_variable(sc, "*#readers*", sc->NIL);
+  sc->sharp_readers = symbol_global_slot(s7_make_symbol(sc, "*#readers*"));
 
   s7_define_function(sc, "gc",                      g_gc,                      0, 1, false, H_gc);
   s7_define_function(sc, "quit",                    g_quit,                    0, 0, false, H_quit);
@@ -24307,9 +24357,6 @@ s7_scheme *s7_init(void)
  * a way to walk up the stack?  (current-environment 10) [20-Jan-10] 11.2
  * and a way to jump into the error environment, cerror 
  *   an error handling dialog (gui) in snd?
- *
- * if *unbound-variable-hook* is set, and something actually unbound is encountered,
- *   we seem to lose the file/line and so on?
  */
 
 /* OBJECTS...
@@ -24334,16 +24381,5 @@ s7_scheme *s7_init(void)
  * A "class" in this case is define-record (for the local fields and type) + a list of methods and a methods accessor.
  * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
  * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
- *
- *
- * READER EXTENSION:
- *
- * *#readers* == nil at start
- *   is an alist of (char . proc) 
- *   char refers to the 1st char after the #
- *   we run through the list looing for char, if found (proc char input-port)
- *   if proc returns #f, continue looking, else return value
- *   at end return #f -> unknown sharp syntax
- * this needs to happen before make_sharp_constant? -- in token, I think
  */
 

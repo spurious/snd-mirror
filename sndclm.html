@@ -9801,7 +9801,7 @@ can calculate the safe maximum r, given the current srate and frequency (this fu
         (min 0.999999 (expt (* .001 topk) (/ 1.0 topk)))))
 </pre>
 
-<p>
+<p>Similar to rkcos is (expt (asin (sqrt (oscil x))) 2).
 rksin and rkcos provide a nice demonstration of how insensitive the ear is to phase.  These two waveforms look different, but
 have the same timbre. The sawtooth sounds louder to me, despite having the same peak amplitude.
 </p>
