@@ -914,7 +914,7 @@ void mus_rectangular_to_polar(mus_float_t *rl, mus_float_t *im, mus_long_t size)
   mus_long_t i; 
   for (i = 0; i < size; i++)
     {
-      mus_float_t temp; /* apparently floating underflows in sqrt are bringing us to a halt */
+      mus_float_t temp; /* apparently floating underflows (denormals?) in sqrt are bringing us to a halt */
       temp = rl[i] * rl[i] + im[i] * im[i];
       im[i] = -atan2(im[i], rl[i]); /* "-" here so that clockwise is positive? is this backwards? */
       if (temp < .00000001) 

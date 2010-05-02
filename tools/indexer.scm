@@ -117,7 +117,7 @@
 	 (lambda (binding)
 	   (let ((symbol (car binding))
 		 (value (cdr binding)))
-	     (if (procedure? value)
+	     (if (procedure? value) 
 		 (let ((file (where-is value)))
 		   (if (and file
 			    (not (string=? file "~/.snd_s7"))
@@ -131,6 +131,69 @@
 			     (set! places (cons file places)))))))))
 	 alist))
       
+      ;; handle the main macros by hand
+      (for-each
+       (lambda (symbol-and-file)
+	 (let ((symbol (car symbol-and-file))
+	       (file (cadr symbol-and-file)))
+	   (set! names (cons (cons symbol file) names))
+	   (if (not (member file places))
+	       (set! places (cons file places)))))
+       (list 
+	(list 'with-sound "ws.scm")
+	(list 'with-mixed-sound "ws.scm")
+	(list 'with-full-sound "ws.scm")
+	(list 'with-threaded-sound "ws.scm")
+	(list 'with-temp-sound "ws.scm")
+	(list 'with-marked-sound "ws.scm")
+	(list 'with-simple-sound "ws.scm")
+	(list 'sound-let "ws.scm")
+	(list 'def-clm-struct "ws.scm")
+	(list 'ws-interrupt? "ws.scm")
+	(list 'definstrument "ws.scm")
+	(list 'defgenerator "generators.scm")
+	(list 'do? "examp.scm")))
+
+      ;; and some of the main variables
+      (for-each
+       (lambda (symbol-and-file)
+	 (let ((symbol (car symbol-and-file))
+	       (file (cadr symbol-and-file)))
+	   (set! names (cons (cons symbol file) names))
+	   (if (not (member file places))
+	       (set! places (cons file places)))))
+       (list
+	(list '*clm-srate* "ws.scm")
+	(list '*clm-file-name* "ws.scm")
+	(list '*clm-channels* "ws.scm")
+	(list '*clm-data-format* "ws.scm")
+	(list '*clm-header-type* "ws.scm")
+	(list '*clm-verbose* "ws.scm")
+	(list '*clm-play* "ws.scm")
+	(list '*clm-statistics* "ws.scm")
+	(list '*clm-reverb* "ws.scm")
+	(list '*clm-reverb-channels* "ws.scm")
+	(list '*clm-reverb-data* "ws.scm")
+	(list '*clm-table-size* "ws.scm")
+	(list '*clm-file-buffer-size* "ws.scm")
+	(list '*clm-locsig-type* "ws.scm")
+	(list '*clm-clipped* "ws.scm")
+	(list '*clm-array-print-length* "ws.scm")
+	(list '*clm-player* "ws.scm")
+	(list '*clm-notehook* "ws.scm")
+	(list '*clm-with-sound-depth* "ws.scm")
+	(list '*clm-default-frequency* "ws.scm")
+	(list '*clm-safety* "ws.scm")
+	(list '*clm-delete-reverb* "ws.scm")
+	(list '*clm-threads* "ws.scm")
+	(list '*clm-output-safety* "ws.scm")
+	(list '*to-snd* "ws.scm")
+	(list '*clm-search-list* "ws.scm")
+	(list '*definstrument-hook* "ws.scm")))
+
+
+      
+
       (for-each
        (lambda (frame)
 	 (if (vector? frame)
@@ -206,4 +269,3 @@
 
 
 ;;; TODO: snd-motif|gtk (or neither) based on gui choice
-

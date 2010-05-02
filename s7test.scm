@@ -18296,6 +18296,10 @@
   (num-test (- val1 val2) 0.0))
 
 (num-test (sin 22) -8.851309290403875921690256815772332463307E-3)
+(if with-bigfloats
+    (num-test (sin 1e22) -8.522008497671888017727058937530293682616E-1)) 
+;; not even close if not bignums: 0.4626130407646
+;; we start to lose around 1e18 -- running out of bits of fraction I guess
 
 
 ;; -------- cos
@@ -31106,7 +31110,6 @@
   (test (nan? (modulo 1 inf+)) #t)
 
 ;;    quotient remainder -> most-neg-fix also floor etc
-;;    does gmp have special values for nan and inf?
 ;;    "nan" at start -> nan.0
 ;;    "+||-inf" at start -> +|-inf
 ;;    but this means inf.0 and nan.0 are built-in numbers
@@ -36874,7 +36877,8 @@
 
 (num-test (log 8 2) 3)
 (num-test (log -1 -1) 1.0)
-(num-test (log 1 1) 'error)
+;(num-test (log 1 1) 'error) -- could also be 0
+(num-test (log 2 1) 'error)
 (num-test (log 1 -1) 0.0)
 (num-test (log 1.5 -1) 0-0.12906355241341i)
 

@@ -4275,12 +4275,20 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
   
   if (strings_are_equal(name, "f"))
     return(sc->F);
+
+  /* SOMEDAY: here is where the *#readers* list could come into play
+   *  
+   * if (at_top) etc -- but we need the current input port 
+   *   (looks like it is sc->input_port, name is up to the next delimiter)
+   *   (so for #<sound 1>, name is "<sound")
+   * read-char is inchar
+   */
   
   len = safe_strlen(name);
   if (len == 0)
     return(sc->NIL);
 
-  if (len < 2)          /* #<any other char> (except ':', sigh) is an error in this scheme */
+  if (len < 2)          /* #<any other char> (except ':', sigh -- #: is the same as : for compatibility with Guile) is an error in this scheme */
     return(sc->NIL);
       
   switch (name[0])
@@ -5191,7 +5199,7 @@ static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
   x = car(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "exp", 0, x, "a number"));
-  if (x == small_int(0)) return(small_int(1));
+  if (x == small_int(0)) return(small_int(1));                       /* (exp 0) -> 1 */
 
   if (s7_is_real(x))
     return(s7_make_real(sc, exp(num_to_real(number(x)))));
@@ -5212,12 +5220,14 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
   if ((is_pair(cdr(args))) &&
       (!(s7_is_number(cadr(args)))))
     return(s7_wrong_type_arg_error(sc, "log base,", 2, cadr(args), "a number"));
-  
+
   if (is_pair(cdr(args)))
     {
       s7_pointer y;
 
       y = cadr(args);
+      if ((x == small_int(1)) && (y == small_int(1))) return(small_int(0));
+
       if ((s7_is_zero(y)) || (s7_is_one(y)))
 	return(s7_out_of_range_error(sc, "log base,", 2, y, "can't be 0.0 or 1.0"));
       
@@ -5234,14 +5244,14 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 	      res = log(num_to_real(number(x))) / log(num_to_real(number(y)));
 	      ires = (s7_Int)res;
 	      if (res - ires == 0.0)
-		return(s7_make_integer(sc, ires));
+		return(s7_make_integer(sc, ires));                    /* (log i i) -> 1 */
 	      return(s7_make_real(sc, res));
 	    }
 	  return(s7_make_real(sc, log(num_to_real(number(x))) / log(num_to_real(number(y)))));
 	}
       return(s7_from_c_complex(sc, clog(s7_complex(x)) / clog(s7_complex(y))));
     }
-
+  
   if (s7_is_real(x))
     {
       if (s7_is_positive(x))
@@ -5261,10 +5271,13 @@ static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
   x = car(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "sin", 0, x, "a number"));
-  if (x == small_int(0)) return(x);
+  if (x == small_int(0)) return(x);                                 /* (sin 0) -> 0 */
 
   if (s7_is_real(x))
     return(s7_make_real(sc, sin(num_to_real(number(x)))));
+  /* sin is totally inaccurate over about 1e18.  There's a way to get true results,
+   *   but it involves fancy "range reduction" techniques. 
+   */
   return(s7_from_c_complex(sc, csin(s7_complex(x))));
 }
 
@@ -5277,7 +5290,7 @@ static s7_pointer g_cos(s7_scheme *sc, s7_pointer args)
   x = car(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "cos", 0, x, "a number"));
-  if (x == small_int(0)) return(small_int(1));
+  if (x == small_int(0)) return(small_int(1));                     /* (cos 0) -> 1 */
 
   if (s7_is_real(x))
     return(s7_make_real(sc, cos(num_to_real(number(x)))));
@@ -5293,7 +5306,7 @@ static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
   x = car(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "tan", 0, x, "a number"));
-  if (x == small_int(0)) return(x);
+  if (x == small_int(0)) return(x);                                /* (tan 0) -> 0 */
 
   if (s7_is_real(x))
     return(s7_make_real(sc, tan(num_to_real(number(x)))));
@@ -5416,8 +5429,11 @@ static s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
     {
       if (!s7_is_number(x))
 	return(s7_wrong_type_arg_error(sc, "atan", 1, x, "a number"));
+
+      if (x == small_int(0)) return(x);                                /* (atan 0) -> 0 */
       if (s7_is_real(x))
 	return(s7_make_real(sc, atan(num_to_real(number(x)))));
+
       return(s7_from_c_complex(sc, catan(s7_complex(x))));
     } 
 
@@ -5440,7 +5456,7 @@ static s7_pointer g_sinh(s7_scheme *sc, s7_pointer args)
   x = car(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "sinh", 0, x, "a number"));
-  if (x == small_int(0)) return(x);
+  if (x == small_int(0)) return(x);                              /* (sinh 0) -> 0 */
 
   if (s7_is_real(x))
     return(s7_make_real(sc, sinh(num_to_real(number(x)))));
@@ -5456,7 +5472,7 @@ static s7_pointer g_cosh(s7_scheme *sc, s7_pointer args)
   x = car(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "cosh", 0, x, "a number"));
-  if (x == small_int(0)) return(small_int(1));
+  if (x == small_int(0)) return(small_int(1));                    /* (cosh 0) -> 1 */
 
   if (s7_is_real(x))
     return(s7_make_real(sc, cosh(num_to_real(number(x)))));
@@ -5473,8 +5489,10 @@ static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "tanh", 0, x, "a number"));
 
+  if (x == small_int(0)) return(x);                                /* (tanh 0) -> 0 */
   if (s7_is_real(x))
     return(s7_make_real(sc, tanh(num_to_real(number(x)))));
+
   if (s7_real_part(x) > 350.0)
     return(real_one);               /* closer than 0.0 which is what ctanh is about to return! */
   if (s7_real_part(x) < -350.0)
@@ -5526,9 +5544,11 @@ static s7_pointer g_atanh(s7_scheme *sc, s7_pointer args)
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "atanh", 0, x, "a number"));
 
+  if (x == small_int(0)) return(x);                                /* (atanh 0) -> 0 */
   if ((s7_is_real(x)) &&
       (s7_Double_abs(num_to_real(number(x))) < 1.0))
     return(s7_make_real(sc, atanh(num_to_real(number(x)))));
+
   return(s7_from_c_complex(sc, catanh(s7_complex(x))));
 }
 
@@ -24290,15 +24310,6 @@ s7_scheme *s7_init(void)
  *
  * if *unbound-variable-hook* is set, and something actually unbound is encountered,
  *   we seem to lose the file/line and so on?
- *
- * inexact->exact: return closest exact float [or leave alone if not float]
- * exact->inexact: return closest float [or leave alone if float]
- * exact? #t if it was represented exactly and has not been touched by anything that might make it inexact (or is not a float)
- * inexact? == not exact?
- * in complex case, exact only if both real/imag are exact (ignore polar case I guess)
- *
- * or perhaps inexact? either #f or the interval (as in interval arithmetic)
- *   but then exact? is a problem -- we want to return the interval when not exact which scheme thinks is not false
  */
 
 /* OBJECTS...
@@ -24323,5 +24334,16 @@ s7_scheme *s7_init(void)
  * A "class" in this case is define-record (for the local fields and type) + a list of methods and a methods accessor.
  * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
  * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
+ *
+ *
+ * READER EXTENSION:
+ *
+ * *#readers* == nil at start
+ *   is an alist of (char . proc) 
+ *   char refers to the 1st char after the #
+ *   we run through the list looing for char, if found (proc char input-port)
+ *   if proc returns #f, continue looking, else return value
+ *   at end return #f -> unknown sharp syntax
+ * this needs to happen before make_sharp_constant? -- in token, I think
  */
 
