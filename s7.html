@@ -165,13 +165,12 @@ s7 includes:
 <li>nan?, infinite?
 </ul>
 <p>
-The random function can take any numeric argument, including 0 (don't get me started...).
+The random function can take any numeric argument, including 0.
 The following constants are predefined: pi, most-positive-fixnum, most-negative-fixnum.
 Other math-related differences between s7 and r5rs:
 </p>
 <ul>
-<li>exact means integer or ratio, inexact means not exact.
-<li>rational? is a synonym for exact?.
+<li>rational? and exact mean integer or ratio, inexact means not exact.
 <li>floor, ceiling, truncate, and round return (exact) integer results.
 <li>"#" does not stand for an unknown digit.
 <li>the "@" complex number notation is not supported.
@@ -247,14 +246,34 @@ otherwise "rational?" is the same as "real?":
 (not-s7-scheme)&gt; (rational? (sqrt 2))
 #t
 </pre>
-<p>I wonder if it might be more useful if 
-"exact" meant "is represented exactly in the computer".  We'd have integers and ratios exact; 
+<!--
+<p>Or even worse, <code>(rational? 0.1)</code> returns #t!  How can that be justified?
+Currently in s7 inexact-&gt;exact is a synonym for rationalize, exact? is the same as rational?, and
+inexact? means not exact, so the only useful portion of the exact number business is exact-&gt;inexact,
+but surely a better name would be "float" or maybe "-&gt;float"?
+</p>
+<p>Ideally perhaps, 
+"exact" would mean "is represented exactly in the computer".  We'd have integers and ratios exact; 
 reals and complex exact if they are exactly
-represented in the current floating point implementation.  So, 1+i is just as exact as 1;
+represented in the current floating point implementation.  So, 1+i is just as exact as 1 (but its polar representation 
+involves sqrt(2) and pi/4 which are usually handled as floats);
 0.0 and 0.5 might be exact if the printout isn't misleading, and 0.1 is inexact.
 "integer?" and friends would refer instead to the programmer's point of view.
+But then what would inexact-&gt;exact do?  C's nextafter is not what anyone expects.
+And to keep exactness in view, we'd have
+to monitor which operations introduce inexactness &mdash; a kind of interval arithmetic.
+In other schemes, inexact means "has a dot, an exponent, or an imaginary part" which is silly.
+Similarly "integer?" means "has zero fractional part", but that is useless in a case
+like <code>(- 9007199254740993.0 9007199254740992.0)</code> which I bet is 0.0, even
+though these things are called integers.  Or worse, you want a vector index, but
+because integer? includes floats, you end
+up putting ugly junk like <code>(inexact->exact (floor index))</code> everywhere, and
+even then you worry that you're going to get some ridiculous fraction.
+Since the exact/inexact distinction is an incoherent jumble that constantly gets in the way,
+I think the best thing
+would be to flush it entirely.
 </p>
-
+-->
 
 </blockquote>
 </small>
@@ -1777,7 +1796,7 @@ The default action (in the absence of any catch) is to treat the message as
 a format control string, apply format to it and the other arguments, and
 send that info to the current-error-port.
 </p>
-<p>When an error is encountered, the variable *error-info* (a vector) contains
+<p>When an error is encountered, the variable <a name="errorinfo">*error-info*</a> (a vector) contains
 additional info about that error:
 </p>
 <ul>
@@ -1800,7 +1819,7 @@ additional info about that error:
 (stacktrace *error-info*)
 </pre>
 
-<p>The variable *error-hook* provides a way to specialize error reporting.
+<p>The variable <a name="errorhook">*error-hook*</a> provides a way to specialize error reporting.
 It is a function of 2 arguments, the values passed by the error function
 (the error type and whatever other info accompanies it).
 </p>
@@ -1833,7 +1852,7 @@ See also trace below.  There is a break macro defined in Snd (see snd-xen.c)
 which allows you to stop at some point, then evaluate arbitrary expressions in that context.
 <!-- INDEX autoload:autoload -->
 <A NAME="autoload"></A>
-There's yet another hook, *unbound-variable-hook*, which is called when an unbound variable
+There's yet another hook, <a name="unboundvariablehook">*unbound-variable-hook*</a>, which is called when an unbound variable
 is encountered (before the error is signalled).  Its value is a function of one argument,
 the unbound symbol.  In Snd, this is used to implement autoloading:
 </p>
@@ -1847,6 +1866,7 @@ the unbound symbol.  In Snd, this is used to implement autoloading:
       (symbol-&gt;value sym)))) ; this will return #&lt;undefined&gt; if we didn't find its source file
 </pre>
 
+<!--
 <small>
 <blockquote>
 <p>Sly evil-doers can subvert this hook to provide something similar to Common Lisp's symbol-macros:
@@ -1866,7 +1886,7 @@ the unbound symbol.  In Snd, this is used to implement autoloading:
 
 </blockquote>
 </small>
-
+-->
 
 <p>The s7-built-in catch tags (error symbols) are 'wrong-type-arg, 'syntax-error, 'read-error, 'thread-error,
 'out-of-memory, 'wrong-number-of-args, 'format-error, 'out-of-range, 'division-by-zero, 'io-error, and 'bignum-error.  
@@ -1908,7 +1928,7 @@ the unbound symbol.  In Snd, this is used to implement autoloading:
 trace with no arguments causes everything to be traced, and untrace with no arguments
 turns this off.
 </p>
-<p>There is also a hook, *trace-hook*, a function of 2 arguments (the currently traced
+<p>There is also a hook, <a name="tracehook">*trace-hook*</a>, a function of 2 arguments (the currently traced
 function and the list of current arguments).  It is evaluated in the environment of the
 function call (that is, global to the function, not the function's local environment).
 </p>
@@ -1961,7 +1981,7 @@ are:
 <li>read-byte and write-byte (binary IO) (named "read-u8" and "write-u8" in r6rs, I think)
 <li>read-line (line-at-a-time reads)
 </ul>
-<p>The variable *vector-print-length* sets
+<p>The variable <a name="vectorprintlength">*vector-print-length*</a> sets
 the upper limit on how many vector elements are printed by object-&gt;string and format.
 </p>
 <p>When running s7 behind a GUI, you often want input to come from and output to go to
@@ -2320,8 +2340,8 @@ done!
 </td></tr></table>
 </dt>
 
-<dd><p><b>*load-path*</b> is a list of directories to search when loading a file.
-<b>*load-hook*</b> is a function called just before a file is loaded.  Its argument is the filename.
+<dd><p><b><a name="loadpath">*load-path*</a></b> is a list of directories to search when loading a file.
+<b><a name="loadhook">*load-hook*</a></b> is a function called just before a file is loaded.  Its argument is the filename.
 While loading, port-filename and port-line-number (of the current-input-port) can tell you
 where you are in the file.
 </p>
@@ -2352,7 +2372,7 @@ the directory:
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 
-<p>As in Common Lisp, <b>*features*</b> is a list describing what is currently loaded into s7.  You can
+<p>As in Common Lisp, <b><a name="featureslist">*features*</a></b> is a list describing what is currently loaded into s7.  You can
 check it with the <b>provided?</b> function, or add something to it with <b>provide</b>.  In my version of Snd,
 at startup *features* is:
 </p>
@@ -2375,7 +2395,7 @@ is for compatibility with Guile).  These are also useful for in-line comments:
 </p>
 
 <p>Leaving aside these two cases, and the booleans, #f and #t, you can specify your own handlers for 
-tokens that start with "#".  <b>*#readers*</b> is a list of pairs: (char . func).
+tokens that start with "#".  <b><a name="sharpreaders">*#readers*</a></b> is a list of pairs: (char . func).
 "char" refers to the first character after the sharp sign (#). "func" is a function of
 one argument, the string that follows the #-sign up to the next delimiter.  "func" is called
 when #&lt;char&gt; is encountered.  If it returns something other than #f, the #-expression

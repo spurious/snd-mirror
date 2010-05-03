@@ -17,6 +17,7 @@
 ;;;   the arprec package of David Bailey et al
 ;;;   Maxima, William Schelter et al
 ;;;   H Cohen, "A Course in Computational Algebraic Number Theory"
+;;;   N Higham, "Accuracy and Stability of Numerical Algorithms"
 ;;;   various mailing lists and websites (see individual cases below)
 
 
@@ -5079,6 +5080,29 @@
 (test (let ((hi''' 3) (a'''b 2)) (+ hi''' a'''b)) 5)
 
 
+(let ((enter 0)
+      (exit 0)
+      (inner 0))
+  (define (j1) 
+    (set! enter (+ enter 1))
+    (let ((result 
+	   (let hiho
+	       ((i 0))
+	     (set! inner (+ inner 1))
+	     (if (< i 3) 
+		 hiho
+		 i))))
+      (set! exit (+ exit 1))
+      result))
+
+  (let ((j2 (j1)))
+    (test (and (procedure? j2) (= enter 1) (= exit 1) (= inner 1)) #t)
+    (let ((result (j2 1)))
+      (test (and (procedure? result) (= enter 1) (= exit 1) (= inner 2)) #t)
+      (set! result (j2 3))
+      (test (and (= result 3) (= enter 1) (= exit 1) (= inner 3)) #t))))
+
+
 (let ()
   (define (block-comment-test a b c)
     (+ a b c))
@@ -7632,6 +7656,12 @@
   (test (_mac14_ 2 :b 3) 5)
   (test (_mac14_ :b 10 :a 12) 22)
   (test (_mac14_ :a 4) 6)
+
+  (let ()
+    (set! *#readers* (list (cons #\s (lambda (str) 123))))
+    (let ((val (eval-string "(+ 1 #s1)"))) ; force this into the current reader
+      (test val 124))
+    (set! *#readers* '()))
   
   (begin
     (define-macro (hi a) `(+ ,a 1))
@@ -40039,6 +40069,20 @@
 (num-test (/ 123412341234) 1/123412341234)
 (num-test (/ 1/123412341234) 123412341234)
 
+(test (< (abs (- (do ((x0 11/2) 
+		      (x1 61/11)
+		      (i 0 (+ i 1))) 
+		     ((= i 100) x1)
+		   (let ((tmp x1)) 
+		     (set! x1 (- 111 (/ (- 1130 (/ 3000 x0)) x1)))
+		     (set! x0 tmp)))
+		 6))                  ; (6 - 1/(1+(6/5)^k))
+	 0.00001)
+      #t)
+
+;; in floats this heads for 100:
+;; (do ((x0 (exact->inexact 11/2)) (x1 (exact->inexact 61/11)) (i 0 (+ i 1))) ((= i 100) x1) (let ((tmp x1)) (set! x1 (- 111 (/ (- 1130 (/ 3000 x0)) x1))) (set! x0 tmp)))
+
 
 (let ((tag (catch #t (lambda () (log 10.0 10.0)) (lambda args 'error))))
   (if (and (number? tag)
@@ -43986,11 +44030,13 @@
 (test (define . x) 'error)
 (test (define x 1 2) 'error)
 (test (define (x 1)) 'error)
+(test (define (x)) 'error)
 (test (define 1 2) 'error)
 (test (define "hi" 2) 'error)
 (test (define x 1 2) 'error)
 (test (define x 1 . 2) 'error)
 (test (define x . 1) 'error)
+(test (define x (lambda ())) 'error)
 					;(test (define 'hi 1) 'error) ; this redefines quote, which maybe isn't an error
 (test (let () (define . 1) 1) 'error)
 (test (let ((hi (lambda (a 0.0) (b 0.0) (+ a b)))) (hi)) 'error)
@@ -48489,8 +48535,6 @@ nannani
 :(+ 1.0e-30 (+ 1.0e30 -1.0e30))
 9.999999999999999999999999999999999999995E-31
 
-;;;   N Higham, "Accuracy and Stability of Numerical Algorithms"
-
 (define (mu)
   (let* ((x 1)
 	 (xp (+ x 1)))
@@ -48501,9 +48545,12 @@ nannani
 
 ; (1/1152921504606846976 8.673617379884e-19)
 
-(do ((x0 11/2) (x1 61/11) (i 0 (+ i 1))) ((= i 100)) (let ((tmp x1)) (set! x1 (- 111 (/ (- 1130 (/ 3000 x0)) x1))) (set! x0 tmp) (format #t "~A~% " (exact->inexact x1))))
-; converges to 6
-; (6 - 1/(1+(6/5)^k))
-; in floats it heads for 100:
-(do ((x0 (exact->inexact 11/2)) (x1 (exact->inexact 61/11)) (i 0 (+ i 1))) ((= i 100)) (let ((tmp x1)) (set! x1 (- 111 (/ (- 1130 (/ 3000 x0)) x1))) (set! x0 tmp) (format #t "~A~% " (exact->inexact x1))))
+smallest positive normalized fp	2-1022 = 2.225 10-308
+largest normalized fp  2+1023 (2 - 2-52) 2+1024 - 2+971 = 1.798 10+308
+smallest positive denormal  2-1023 2-52	 2-1075 = 2.470 10-324
+largest denormal  2-1023 (1 - 2-52)	 2-1023 - 2-1075 = 1.113 10-308
+largest fp integer	 2+1024 - 2+971 = 1.798 10+308
+gap from largest fp integer to previous fp integer	2+971 = 1.996 10+292
+largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
+
 |#

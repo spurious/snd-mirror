@@ -4298,13 +4298,6 @@ static s7_pointer check_sharp_readers(s7_scheme *sc, const char *name)
   return(value);
 }
 
-/* TODO: test #readers */
-/* :(set! *#readers* (list (cons #\s (lambda (str) (format #t "S: ~S~%" str) 123))))
- * ((#\s . #<closure>))
- * :(+ 1 #s1)
- * 124
- */
-
 
 static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top) 
 {
@@ -6437,7 +6430,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	    i2 = num_to_imag_part(b);
 	    den = (r2 * r2 + i2 * i2);
 
-	    /* PERHAPS: avoid the squaring (see Knuth II p613 16)
+	    /* we could avoid the squaring (see Knuth II p613 16)
 	     *    not a big deal: (/ 1.0e308+1.0e308i 2.0e308+2.0e308i) => nan
 	     *    (gmp case is ok here) 
 	     */
@@ -13634,8 +13627,6 @@ void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function
  * (define (notify-if-set var notifier) ; returns #t if it's ok to set
  *   (set! (symbol-access) 
  *         (list #f (lambda (symbol new-value) (or (notifier symbol new-value) new-value)) #f)))
- *
- *     PERHAPS: symbol-access get side implemented (is there any use for it?)
  */
 
 
@@ -17871,18 +17862,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (!s7_is_symbol(car(sc->code))))
 	return(eval_error(sc, "let variable list is messed up or missing: ~A", sc->code));
 
-      /* TODO: we're accepting these in let (should say "no exprs"):
-       * (let () (define (hi) (+ 1 2)))
-       * (let () (begin (define x 3)))
-       * (let () 3 (begin (define x 3)))
-       * (let () (define x 3))
-       * (let () (if #t (define (x) 3)))
+      /* we accept these (other schemes complain, but I can't see why -- a no-op is the user's business!):
+       *   (let () (define (hi) (+ 1 2)))
+       *   (let () (begin (define x 3)))
+       *   (let () 3 (begin (define x 3)))
+       *   (let () (define x 3))
+       *   (let () (if #t (define (x) 3)))
        *
-       * are these legal? (Guile sez "definition in expression context")
+       * similar cases:
        *   (case 0 ((0) (define (x) 3) (x)))
        *   (cond (0 (define (x) 3) (x)))
-       *
-       * and these look odd but we don't flag them as errors -- maybe they're ok
        *   (and (define (x) x) 1)
        *   (begin (define (x y) y) (x (define (x y) y)))
        *   (if (define (x) 1) 2 3)
@@ -20878,7 +20867,7 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
 
 
 #if 0
-/* SOMEDAY: we need to catch gmp exceptions somehow: SIGFPE (exception=deliberate /0 -- see gmp/errno.c) */
+/* someday we need to catch gmp exceptions somehow: SIGFPE (exception=deliberate /0 -- see gmp/errno.c) */
 #include <signal.h>
 
 static void s7_sigfpe(int ignored)
@@ -24331,20 +24320,21 @@ s7_scheme *s7_init(void)
  *   s7_type_info(sc, var-of-that-type)?
  *   does s7_object_type return the tag in this case? yes!
  *   what else is needed -- access to the type table functions via the tag? or via the object?
+ *   current if a list is seen, we call assoc on the last list in that list with the desired method name
  *
  * SOMEDAY: eval-string (or eval?) with jump outside the eval (call/cc external) -> segfault or odd error
  *             (is this the case in dynamic-wind also?)
  * TODO: multidim vector constant input syntax
  *
- * SOMEDAY: there's a problem with very large vectors -- the GC does not notice how much RAM
- *   they are taking up, and unless we call gc ourselves, we run out of memory.  Since each
- *   element has the vector pointer, the heap pointer, and the free-list pointer (worst case),
- *   we're consuming 28 + 12 or 40 + 24 bytes per element!
- *
  * in CL:  (make-array (list 2 3) :initial-element 0) -> #2A((0 0 0) (0 0 0))
  * in s7:  (make-vector (list 2 3) 0) -> #(0 0 0 0 0 0)
  *
  * so whatever constant vector syntax we choose should be used in the vector display code (vector_to_c_string)
+ *
+ * SOMEDAY: there's a problem with very large vectors -- the GC does not notice how much RAM
+ *   they are taking up, and unless we call gc ourselves, we run out of memory.  Since each
+ *   element has the vector pointer, the heap pointer, and the free-list pointer (worst case),
+ *   we're consuming 28 + 12 or 40 + 24 bytes per element!
  *
  * describe for vectors (dims), ports [describe_object for gdb, but also printout in vector case, vector_to_c_string]
  *  also envs as debugging aids: how to show file/line tags as well

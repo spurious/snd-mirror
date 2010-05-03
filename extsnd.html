@@ -1366,9 +1366,6 @@ and <a href="#sndsounds">sounds</a> (as objects or as integers).
 <A NAME="genericsync">sync</A> accesses the '<a href="#sync">sync</a>' field of a sound, mark, or mix.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
-
-
-
 </table>
 
 <br><br>
@@ -4546,9 +4543,27 @@ in marks.scm finds a named mark in any channel (a global version of find-mark).
 <!-- integer->mark -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="integertomark">integer-&gt;mark</a> i</code>
 </td></tr><tr><td></td><td>
-In olden times, a mark was handled in Snd code as an integer; nowadays, it's an object.
-This function, and its companion <a href="#marktointeger">mark-&gt;integer</a>, exist mainly to convert
-old code to the current style.
+<p>In olden times, a mark was handled in Snd code as an integer; nowadays, it's an object.
+Originally I said, "this function, and its companion <a href="#marktointeger">mark-&gt;integer</a>, exist mainly to convert
+old code to the current style", but that was premature.  The mark-as-integer approach was handy
+because it's easy to type the mark's identifying integer.  I changed from integers to mark objects to
+make it possible to treat marks in the various generic functions, but that meant 
+that if you forget to save the mark object in some handy variable, 
+you end up typing "integer-&gt;mark" over and over.
+One way out is to define
+a #-reader that sees something like "#m12" and expands that into <code>(integer-&gt;mark 12)</code>:
+</p>
+<pre>
+&gt; <em class=typing>(set! <a href="s7.html#sharpreaders">*#readers*</a>
+    (cons (cons #\m (lambda (str)
+                      (integer-&gt;mark (string-&gt;number (substring str 1)))))
+          *#readers*))</em>
+<em class=listener>((#\m . #&lt;closure&gt;))</em>
+&gt; <em class=typing>#m1</em>
+<em class=listener>#&lt;mark 1&gt;</em>
+&gt; <em class=typing>(mark-sample #m1)</em>
+<em class=listener>38694</em>
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.54"
-#define S7_DATE "26-Apr-10"
+#define S7_VERSION "1.55"
+#define S7_DATE "3-May-10"
 
 
 typedef long long int s7_Int;
@@ -41,6 +41,7 @@ typedef double s7_Double;
    *    *error-info*            data describing last error (see below).
    *    *trace-hook*            called upon trace (a function of two args)
    *    *unbound-variable-hook* called when an unbound symbol is accessed.
+   *    *#readers*              #... readers
    *
    * s7 constants:
    *
@@ -758,6 +759,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 3-May:     *#readers* to customize #... reading.  Also nan? and infinite?.
  * 15-Apr:    multiple-values support is now on the WITH_MULTIPLE_VALUES switch (default 1).
  * 13-Apr:    removed hash-table|vector|string-for-each -- these are handled by for-each.
  *            also removed vector-map -- map is generic, but always returns a list.

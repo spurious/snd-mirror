@@ -523,10 +523,9 @@
 	      (offset (ceiling n cols)))
 	  (do ((i 0 (1+ i)))
 	      ((>= row offset))
-	    (let* ((x (+ row (* ctr offset)))
-		   (name (aref tnames x)))
+	    (let* ((x (+ row (* ctr offset))))
 	      (if (< x n)
-		  (progn
+		  (let ((name (aref tnames x)))
 		    (format ofil 
 			    "<td~A>~A~A~A</td>" 
 			    (if (not (ind-name name))

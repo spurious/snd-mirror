@@ -95,6 +95,7 @@
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
  * PERHAPS: named let/tail recursion
+ * SOMEDAY: generics like length
  */
 
 
@@ -15986,7 +15987,9 @@ static xen_value *lookup_generalized_set(ptree *prog, s7_pointer acc_form, xen_v
 	  {
 	    /* (let ((v (vct 1.0 2.0 3.0))) (run (lambda () (set! (v 1) 0.5)))) */
 	    vct_set_1(prog, val, in_v, NULL, v);
-	    /* SOMEDAY: in_v1 here for multidim vect? but the latter aren't accepted because vcts are 1-dim */
+	    /* SOMEDAY: in_v1 here for multidim vect? but the latter aren't accepted because vcts are 1-dim 
+	     *            couldn't we use sd objects?
+	     */
 	    happy = 1;
 	  }
 	else
