@@ -175,9 +175,23 @@ int check_balance(const char *expr, int start, int end, bool in_listener)
 	    return(i);
 	  else 
 	    {
-	      if ((prev_separator) && (i + 1 < end) && (expr[i + 1] =='('))
-		i++;
-	      else
+	      bool found_it = false;
+	      if (prev_separator)
+		{
+		  int k, incr = 0;
+		  for (k = i + 1; k < end; k++)
+		    if (expr[k] == '(')
+		      {
+			incr = k - i;
+			break;
+		      }
+		  if (incr > 0)
+		    {
+		      i += incr;
+		      found_it = true;
+		    }
+		}
+	      if (!found_it)
 		{
 		  if ((i + 2 < end) && (expr[i + 1] == '\\') && 
 		      ((expr[i + 2] == ')') || (expr[i + 2] == ';') || (expr[i + 2] == '\"') || (expr[i + 2] == '(')))

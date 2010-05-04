@@ -5310,9 +5310,18 @@ static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
 
   if (s7_is_real(x))
     return(s7_make_real(sc, sin(num_to_real(number(x)))));
+
   /* sin is totally inaccurate over about 1e18.  There's a way to get true results,
    *   but it involves fancy "range reduction" techniques. 
+   *   This mean lots of things are inaccurate:
+   * (sin (remainder 1e22 (* 2 pi)))
+   * -0.57876806033477
+   * but it should be -8.522008497671888065747423101326159661908E-1
+   * ---
+   * (remainder 1e22 (* 2 pi)) -> 1.0057952155665e+22 !!
+   *   it should be 5.263007914620499494429139986095833592117E0
    */
+
   return(s7_from_c_complex(sc, csin(s7_complex(x))));
 }
 
@@ -6652,7 +6661,17 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 			   num_to_denominator(a) * num_to_denominator(b)));
 
     default:
+      /* if a < b we can just return a */
+
       return(s7_make_real(sc, num_to_real(a) - num_to_real(b) * quotient(a, b)));
+
+      /* see under sin -- this calculation is completely bogus if "a" is large
+       * (quotient 1e22 (* 2 pi)) -> -9223372036854775808 -- should this return arithmetic-overflow?
+       *          but it should be 1591549430918953357688, 
+       * (remainder 1e22 (* 2 pi)) -> 1.0057952155665e+22
+       * -- the "remainder" is greater than the original argument!
+       * Clisp gives 0.0 here, as does sbcl
+       */
     }
 }
 
@@ -12116,6 +12135,94 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
   
   return(make_list_1(sc, s7_make_integer(sc, vector_length(x))));
 }
+
+
+#define MV_TOO_MANY_ELEMENTS -1
+#define MV_NOT_ENOUGH_ELEMENTS -2
+
+static int traverse_vector_data(s7_scheme *sc, s7_pointer vec, int flat_ref, int dimension, int dimensions, int *sizes, s7_pointer lst)
+{
+  /* we're filling vec, we're currently looking for element (flat-wise) flat_ref,
+   *   we're at ref in dimension of dimensions, where sizes gives the bounds, and lst is our data
+   *   #3D(((1 2 3) (4 5 6)) ((7 8 9) (10 11 12)))
+   */
+  int i;
+  s7_pointer x;
+
+  for (i = 0, x = lst; i < sizes[dimension]; i++, x = cdr(x))
+    {
+      if (!is_pair(x))
+	return(MV_NOT_ENOUGH_ELEMENTS);
+
+      if (dimension == (dimensions - 1))
+	vector_element(vec, flat_ref++) = car(x);
+      else 
+	{
+	  flat_ref = traverse_vector_data(sc, vec, flat_ref, dimension + 1, dimensions, sizes, car(x));
+	  if (flat_ref < 0) return(flat_ref);
+	}
+    }
+
+  if (x != sc->NIL)
+    return(MV_TOO_MANY_ELEMENTS);
+  return(flat_ref);
+}
+
+
+static s7_pointer s7_multivector_error(s7_scheme *sc, const char *message, s7_pointer data)
+{
+  return(s7_error(sc, s7_make_symbol(sc, "read-error"), 
+		  s7_cons(sc, 
+			  make_protected_string(sc, "reading constant vector, ~A: ~A"),
+			  make_list_2(sc, 
+				      make_protected_string(sc, message),
+				      data))));
+}
+
+
+static s7_pointer g_multivector(s7_scheme *sc, int dims, s7_pointer data)
+{
+  /* get the dimension bounds from data, make the new vector, fill it from data */
+  s7_pointer vec, x;
+  int i, total_size = 1, vec_loc, err;
+  int *sizes;
+  
+  /* (#2d((1 2 3) (4 5 6)) 0 0) -> 1
+   * (#2d((1 2 3) (4 5 6)) 0 1) -> 2
+   * (#2d((1 2 3) (4 5 6)) 1 1) -> 5
+   * (#3D(((1 2) (3 4)) ((5 6) (7 8))) 0 0 0) -> 1
+   * (#3D(((1 2) (3 4)) ((5 6) (7 8))) 1 1 0) -> 7
+   * #3D(((1 2) (3 4)) ((5 6) (7))) -> error, #3D(((1 2) (3 4)) ((5 6) (7 8 9))), #3D(((1 2) (3 4)) (5 (7 8 9))) etc
+   */
+
+  /* TODO: doc test #nD() */
+
+  sc->w = sc->NIL;
+  sizes = (int *)calloc(dims, sizeof(int));
+  for (x = data, i = 0; i < dims; i++)
+    {
+      sizes[i] = s7_list_length(sc, x);
+      total_size *= sizes[i];
+      sc->w = s7_cons(sc, s7_make_integer(sc, sizes[i]), sc->w);
+      x = car(x);
+      if ((i < (dims - 1)) && 
+	  (!is_pair(x)))
+	return(s7_multivector_error(sc, "a list that fully specifies the vector's elements", data));
+    }
+
+  vec = g_make_vector(sc, s7_cons(sc, safe_reverse_in_place(sc, sc->w), sc->NIL));
+  vec_loc = s7_gc_protect(sc, vec);
+
+  /* now fill the vector checking that all the lists match */
+  err = traverse_vector_data(sc, vec, 0, 0, dims, sizes, data);
+
+  s7_gc_unprotect_at(sc, vec_loc);
+  if (err < 0) 
+    return(s7_multivector_error(sc, (err == MV_TOO_MANY_ELEMENTS) ? "too many elements" : "not enough elements", data));
+
+  return(vec);
+}
+
 #endif
 
 
@@ -14883,6 +14990,21 @@ static int remember_file_name(const char *file)
       (apply error continue ',args))))
 
 ;;; now ((vector-ref *error-info* 0)) will continue from the error
+
+(define (cerror . args)
+  (format #t "error: ~A" (car args))
+  (if (not (null? (cdr args)))
+      (if (and (string? (cadr args))
+	       (not (null? (cddr args))))
+	  (let ((str (apply format (cdr args))))
+	    (format #t "~S~%" str))
+	  (format #t "~S~%" (cadr args))))
+  (format #t "continue? (<cr>=yes) ")
+  (let ((val (read-line ())))
+    (if (not (char=? (val 0) #\newline))
+	(error (car args)))))
+
+;;; so perhaps wrap the caller-passed stuff in "continue?" etc?
 */
 
 
@@ -16098,8 +16220,38 @@ static token_t token(s7_scheme *sc)
       
     case '#':
       c = inchar(sc, pt);
+      sc->w = small_int(1);
       if (c == '(') 
 	return(TOKEN_VECTOR);
+
+#if WITH_MULTIDIMENSIONAL_VECTORS
+      if (isdigit(c)) /* #2D(...) */
+	{
+	  int dims, dig, d, loc = 0;
+	  sc->strbuf[loc++] = c;
+	  dims = digits[c];
+	  while ((dig = digits[d = inchar(sc, pt)]) < 10)
+	    {
+	      dims = dig + (dims * 10);
+	      sc->strbuf[loc++] = d;
+	    }
+	  sc->strbuf[loc++] = d;
+	  if ((d == 'D') || (d == 'd'))
+	    {
+	      d = inchar(sc, pt);
+	      sc->strbuf[loc++] = d;
+	      if (d == '(')
+		{
+		  sc->w = s7_make_integer(sc, dims);
+		  return(TOKEN_VECTOR);
+		}
+	    }
+
+	  /* try to back out */
+	  for (d = loc - 1; d > 0; d--)
+	    backchar(sc, sc->strbuf[d], pt);
+	}
+#endif
 
       if (c == ':')  /* turn #: into : */
 	{
@@ -16326,7 +16478,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  return(sc->EOF_OBJECT);
 	  
 	case TOKEN_VECTOR:  /* already read #( -- TOKEN_VECTOR is triggered by #( */
-	  push_stack(sc, opcode(OP_READ_VECTOR), sc->NIL, sc->NIL);
+	  push_stack(sc, opcode(OP_READ_VECTOR), sc->w, sc->NIL);   /* sc->w is the dimensions */
 	  /* fall through */
 	  
 	case TOKEN_LEFT_PAREN:
@@ -16357,7 +16509,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  sc->tok = token(sc);
 	  if (sc->tok == TOKEN_VECTOR) 
 	    {
-	      push_stack(sc, opcode(OP_READ_QUASIQUOTE_VECTOR), sc->NIL, sc->NIL);
+	      push_stack(sc, opcode(OP_READ_QUASIQUOTE_VECTOR), sc->w, sc->NIL);
 	      sc->tok= TOKEN_LEFT_PAREN;
 	    } 
 	  else push_stack(sc, opcode(OP_READ_QUASIQUOTE), sc->NIL, sc->NIL);
@@ -18716,6 +18868,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* this works only if the backquote is right next to the #( of the read-time vector,
        *    and then only if the vector can be dealt with at read time.  It doesn't seem
        *    very useful to me.  To get a vector in a macro, use "vector", not "#()".
+       * It's also limited to 1-dimensional cases, since I think it's a bad idea to begin with.
        */
       sc->value = make_list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_2(sc, sc->value));
       pop_stack(sc);
@@ -18735,7 +18888,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_READ_VECTOR:
+#if WITH_MULTIDIMENSIONAL_VECTORS
+      if (sc->args == small_int(1))
+	sc->value = g_vector(sc, sc->value);
+      else sc->value = g_multivector(sc, (int)s7_integer(sc->args), sc->value);
+#else
       sc->value = g_vector(sc, sc->value);
+#endif
       pop_stack(sc);
       goto START;
 
@@ -18784,6 +18943,11 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   new_sc->args = new_sc->NIL;
   new_sc->value = new_sc->NIL;
   new_sc->cur_code = ERROR_INFO_DEFAULT;
+
+  /* should threads share the current ports and associated stack?
+   * sc->input_port = sc->NIL;
+   * sc->input_port_stack = sc->NIL;
+   */
 
   new_sc->temps_size = GC_TEMPS_SIZE;
   new_sc->temps_ctr = 0;
@@ -24312,6 +24476,7 @@ s7_scheme *s7_init(void)
 /* TODO: macroexpand and fully-expand are buggy
  * PERHAPS: method lists for c_objects
  * TODO: function IO completed -- tie into scheme for tests?
+ * also Ruby's arr[-1] = index from end of arr is a nice feature
  *
  * TODO: how to connect from C to scheme-side make-type (defgenerator) [s7.html example]
  *       :(let ((lst (make-type))) (procedure-source (car lst)))
@@ -24320,7 +24485,7 @@ s7_scheme *s7_init(void)
  *   s7_type_info(sc, var-of-that-type)?
  *   does s7_object_type return the tag in this case? yes!
  *   what else is needed -- access to the type table functions via the tag? or via the object?
- *   current if a list is seen, we call assoc on the last list in that list with the desired method name
+ *   currently if a list is seen, we call assoc on the last list in that list with the desired method name
  *
  * SOMEDAY: eval-string (or eval?) with jump outside the eval (call/cc external) -> segfault or odd error
  *             (is this the case in dynamic-wind also?)
@@ -24328,6 +24493,7 @@ s7_scheme *s7_init(void)
  *
  * in CL:  (make-array (list 2 3) :initial-element 0) -> #2A((0 0 0) (0 0 0))
  * in s7:  (make-vector (list 2 3) 0) -> #(0 0 0 0 0 0)
+ * how about #2d(...) or #2D(...) -- that seems less invisible
  *
  * so whatever constant vector syntax we choose should be used in the vector display code (vector_to_c_string)
  *
@@ -24371,5 +24537,7 @@ s7_scheme *s7_init(void)
  * A "class" in this case is define-record (for the local fields and type) + a list of methods and a methods accessor.
  * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
  * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
+ *
+ * TODO: loading s7test simultaneously in several threads hits a segfault in token.
  */
 

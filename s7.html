@@ -170,7 +170,7 @@ The following constants are predefined: pi, most-positive-fixnum, most-negative-
 Other math-related differences between s7 and r5rs:
 </p>
 <ul>
-<li>rational? and exact mean integer or ratio, inexact means not exact.
+<li>rational? and exact mean integer or ratio (i.e. not floating point), inexact means not exact.
 <li>floor, ceiling, truncate, and round return (exact) integer results.
 <li>"#" does not stand for an unknown digit.
 <li>the "@" complex number notation is not supported.
@@ -1519,7 +1519,8 @@ vector-dimensions returns a list of the dimensions.
 
 <p>I can't think of a nice syntax for a constant multidimensional vector.  One idea is
 to mimic CL and use <code>#n(...)</code> where the n gives the number of dimensions, and the data is
-enclosed in n lists.  But I tried this and it is too subtle.  Perhaps #[...] would be better?
+enclosed in n lists.  But I tried this and it is too subtle.  Now (several days later), I think
+I've settled on #nd(...) or #nD(...) where "n" is an integer possibly larger than 9: #123D(...).
 Also, the vector printout should probably show the dimensions in some way.
 </p>
 </blockquote>

@@ -18342,7 +18342,16 @@
 (if with-bigfloats
     (num-test (sin 1e22) -8.522008497671888017727058937530293682616E-1)) 
 ;; not even close if not bignums: 0.4626130407646
-;; we start to lose around 1e18 -- running out of bits of fraction I guess
+;; we start to lose around 1e18 -- running out of bits of fraction?
+
+(test (>= 0.0000001 (sin 0.0000001)) #t)
+(test (>= 0.000000001 (sin 0.000000001)) #t)
+;(test (>= 0.0000001 (sin (+ (* 2 our-pi) 0.0000001))) #t)
+; this fails because "pi" is inaccurate?
+(num-test (sin 31415926.0) -0.5106132968486)
+(num-test (sin (+ (* 200 our-pi) 0.001)) 9.999998333333416874831395573527051109993E-4)
+(test (< (abs (- (sin (+ (* 200 our-pi) 0.001)) (- (sin (- (* 200 our-pi) 0.001))))) 1e-14) #t)
+
 
 
 ;; -------- cos
