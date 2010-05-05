@@ -9999,6 +9999,43 @@ static char *object_to_c_string_with_circle_check(s7_scheme *sc, s7_pointer vr, 
 }
 
 
+#if WITH_MULTIDIMENSIONAL_VECTORS
+static int display_multivector(s7_scheme *sc, s7_pointer vec, int out_len, int flat_ref, int dimension, int dimensions, char *out_str, char **elements, char *last)
+{
+  int i;
+
+  if (*last == ')')
+    strcat(out_str, " ");
+
+  strcat(out_str, "(");
+  (*last) = '(';
+
+  for (i = 0; i < vector_dimension(vec, dimension); i++)
+    {
+      if (dimension == (dimensions - 1))
+	{
+	  strcat(out_str, elements[flat_ref++]);
+	  if (out_len < flat_ref)
+	    {
+	      strcat(out_str, "...");
+	      return(flat_ref);
+	    }
+	  if (i < (vector_dimension(vec, dimension) - 1))
+	    strcat(out_str, " ");
+	}
+      else 
+	{
+	  if (flat_ref < out_len)
+	    flat_ref = display_multivector(sc, vec, out_len, flat_ref, dimension + 1, dimensions, out_str, elements, last);
+	}
+    }
+  strcat(out_str, ")");
+  (*last) = ')';
+  return(flat_ref);
+}
+#endif
+
+
 static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth, bool to_file)
 {
   s7_Int i, len, bufsize = 0;
@@ -10036,6 +10073,7 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth, bool 
     sc->circular_refs[depth] = vect;             /* (let ((v (vector 1 2))) (vector-set! v 0 v) v) */
 
   elements = (char **)malloc(len * sizeof(char *));
+
   for (i = 0; i < len; i++)
     {
       elements[i] = object_to_c_string_with_circle_check(sc, vector_element(vect, i), depth);
@@ -10044,8 +10082,24 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth, bool 
 
   bufsize += (len * 2 + 256);
   buf = (char *)malloc(bufsize * sizeof(char));
-  sprintf(buf, "#(");
 
+#if WITH_MULTIDIMENSIONAL_VECTORS
+
+  if (vector_is_multidimensional(vect))
+    {
+      char *c;
+      (*c) = '#';
+      sprintf(buf, "#%dD", vector_ndims(vect));
+      display_multivector(sc, vect, len, 0, 0, vector_ndims(vect), buf, elements, c);
+      for (i = 0; i < len; i++)
+	free(elements[i]);
+      free(elements);
+      return(buf);
+    }
+
+#endif
+
+  sprintf(buf, "#(");
   for (i = 0; i < len - 1; i++)
     {
       if (elements[i])
@@ -10055,11 +10109,13 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth, bool 
 	  strcat(buf, " ");
 	}
     }
+
   if (elements[len - 1])
     {
       strcat(buf, elements[len - 1]);
       free(elements[len - 1]);
     }
+
   free(elements);
   if (too_long)
     strcat(buf, " ...");
@@ -12195,10 +12251,9 @@ static s7_pointer g_multivector(s7_scheme *sc, int dims, s7_pointer data)
    * #3D(((1 2) (3 4)) ((5 6) (7))) -> error, #3D(((1 2) (3 4)) ((5 6) (7 8 9))), #3D(((1 2) (3 4)) (5 (7 8 9))) etc
    */
 
-  /* TODO: doc test #nD() */
-
   sc->w = sc->NIL;
   sizes = (int *)calloc(dims, sizeof(int));
+
   for (x = data, i = 0; i < dims; i++)
     {
       sizes[i] = s7_list_length(sc, x);
@@ -12212,10 +12267,12 @@ static s7_pointer g_multivector(s7_scheme *sc, int dims, s7_pointer data)
 
   vec = g_make_vector(sc, s7_cons(sc, safe_reverse_in_place(sc, sc->w), sc->NIL));
   vec_loc = s7_gc_protect(sc, vec);
+  sc->w = sc->NIL;
 
   /* now fill the vector checking that all the lists match */
   err = traverse_vector_data(sc, vec, 0, 0, dims, sizes, data);
 
+  free(sizes);
   s7_gc_unprotect_at(sc, vec_loc);
   if (err < 0) 
     return(s7_multivector_error(sc, (err == MV_TOO_MANY_ELEMENTS) ? "too many elements" : "not enough elements", data));
@@ -24489,20 +24546,12 @@ s7_scheme *s7_init(void)
  *
  * SOMEDAY: eval-string (or eval?) with jump outside the eval (call/cc external) -> segfault or odd error
  *             (is this the case in dynamic-wind also?)
- * TODO: multidim vector constant input syntax
- *
- * in CL:  (make-array (list 2 3) :initial-element 0) -> #2A((0 0 0) (0 0 0))
- * in s7:  (make-vector (list 2 3) 0) -> #(0 0 0 0 0 0)
- * how about #2d(...) or #2D(...) -- that seems less invisible
- *
- * so whatever constant vector syntax we choose should be used in the vector display code (vector_to_c_string)
  *
  * SOMEDAY: there's a problem with very large vectors -- the GC does not notice how much RAM
  *   they are taking up, and unless we call gc ourselves, we run out of memory.  Since each
  *   element has the vector pointer, the heap pointer, and the free-list pointer (worst case),
  *   we're consuming 28 + 12 or 40 + 24 bytes per element!
  *
- * describe for vectors (dims), ports [describe_object for gdb, but also printout in vector case, vector_to_c_string]
  *  also envs as debugging aids: how to show file/line tags as well
  *  and perhaps store cur-code?  __form__ ? make a cartoon of entire state? [need only the pointer, not a copy]
  *

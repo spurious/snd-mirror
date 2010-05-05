@@ -1479,10 +1479,10 @@ vector-dimensions returns a list of the dimensions.
 </p>
 <pre>
     &gt; (define v (make-vector '(2 3) 1.0))
-    #(1.0 1.0 1.0 1.0 1.0 1.0) ; perhaps this should show the dimensional grouping
+    #2D((1.0 1.0 1.0) (1.0 1.0 1.0))
 
     &gt; (set! (v 0 1) 2.0)
-    #(1.0 2.0 1.0 1.0 1.0 1.0)
+    #2D((1.0 2.0 1.0) (1.0 1.0 1.0))
 
     &gt; (v 0 1)
     2.0
@@ -1502,12 +1502,12 @@ vector-dimensions returns a list of the dimensions.
 (define (matrix-multiply A B)
   ;; assume square matrices and so on here for simplicity
   (let* ((size (car (vector-dimensions A)))
-	 (C (make-vector (list size size) 0.0)))
+	 (C (make-vector (list size size) 0)))
     (do ((i 0 (+ i 1)))
 	((= i size) C)
       (do ((j 0 (+ j 1)))
 	  ((= j size))
-	(let ((sum 0.0))
+	(let ((sum 0))
 	  (do ((k 0 (+ k 1)))
 	      ((= k size))
 	    (set! sum (+ sum (* (A i k) (B k j)))))
@@ -1517,12 +1517,16 @@ vector-dimensions returns a list of the dimensions.
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<p>I can't think of a nice syntax for a constant multidimensional vector.  One idea is
-to mimic CL and use <code>#n(...)</code> where the n gives the number of dimensions, and the data is
-enclosed in n lists.  But I tried this and it is too subtle.  Now (several days later), I think
-I've settled on #nd(...) or #nD(...) where "n" is an integer possibly larger than 9: #123D(...).
-Also, the vector printout should probably show the dimensions in some way.
+<p>Multidimensional vector constant syntax is modelled after CL: #nd(...) or #nD(...) 
+signals that the lists specify the elements of an 'n' dimensional vector:
 </p>
+<pre>
+    #2D((1 2 3) (4 5 6))
+
+    &gt; (matrix-multiply #2d((-1 0) (0 -1)) #2d((2 0) (-2 2)))
+    #2D((-2 0) (2 -2))
+</pre>
+
 </blockquote>
 </small>
 </dd>
@@ -3660,7 +3664,7 @@ int main(int argc, char **argv)
  *    z: 0, y: 1, x: 0, (3dvec z y x): 0
  *    z: 0, y: 1, x: 1, (3dvec z y x): 32
  *    z: 0, y: 1, x: 2, (3dvec z y x): 0
- *    #(0 0 0 0 32 0)
+ *    #3D(((0 0 0) (0 32 0)))
  */
 </pre>
 </td></tr></table>
