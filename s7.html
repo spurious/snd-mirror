@@ -971,14 +971,22 @@ when passed that object.
 |#
 </pre>
 
-<p>Currently make-type takes some optional arguments to specify other actions.  I
-might change this to be an alist of (operation function) pairs, but for now,
-the optional (optkey) arguments are: print equal getter setter length name.
-The optional argument values are functions that specify how objects of the new type display themselves (print, 1 argument),
-check for equality (equal, 2 args, both will be of the new type), apply themselves to arguments, (getter, any number
-of arguments), respond to the generalized set! and length generic functions, and finally,
-one special case: name sets the type name (a string), which only matters if you're not specifying the print function.
-In each case, the argument is the value of the object, not the object itself.
+<p>Currently make-type takes some optional arguments to specify other actions.  
+I might change this to be an alist of (operation function) pairs, but for now,
+the optional (optkey) arguments are: print equal getter setter length name copy fill.
+Except for the 'name' argument, these are functions.
+When these functions are called, the argument representing the object is
+the value of the object, not the object itself (see the examples below).
+If no print function is specified, the 'name' argument is used when the
+object is displayed.
+The 'equal' function checks two objects of the new type for equality.
+The 'getter' function applies the object to whatever arguments are
+passed, and the 'setter' function does the same in the context of set!.
+The 'length' function returns the length of the object's value.
+The 'copy function returns a new object of the same type with the copy
+function applied to the old object's value.
+The 'fill' function takes two arguments, the object and what to
+fill its value with.
 So, remembering that (cadr type) is the make function:
 </p>
 <pre>
@@ -1122,14 +1130,11 @@ point
   (define float-vector #f)
 
   (let* ((fv-type (<em class=red>make-type</em>
-		   :getter (lambda (obj index)
-			     (vector-ref obj index))
+		   :getter vector-ref :length length :copy copy :fill fill!
 		   :setter (lambda (obj index value)
 			     (if (not (real? value))
 				 (error 'wrong-type-arg-error "float-vector element must be real: ~S" value))
 			     (vector-set! obj index (exact-&gt;inexact value)))
-		   :length (lambda (obj)
-			     (vector-length obj))
 		   :name "float-vector"))
 	 (fv? (car fv-type))
 	 (make-fv (cadr fv-type))

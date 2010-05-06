@@ -46,7 +46,6 @@
  *           (exact? has no obvious meaning in regard to complex numbers anyway -- are we referring to the polar or
  *            the rectangular form, and are both real and imaginary parts included? -- why can't they be separate?)
  *           In s7, exact? is a synonym for rational?, inexact->exact is a synonym for rationalize.
- *           Also, why isn't 1e2 considered exact?  The e2 business is 10^2 -- not a float!
  *        '#' does not stand for an unknown digit, and the '@' complex number notation is ignored
  *           I also choose not to include numbers such as +i (= 0+i) -- include the real part!
  *
@@ -8834,10 +8833,12 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
 {
   s7_pointer port;
   long size;
+  int port_loc;
   char *content = NULL;
 
   NEW_CELL(sc, port);
   set_type(port, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
+  port_loc = s7_gc_protect(sc, port);
   port->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_is_closed(port) = false;
   port_filename(port) = make_permanent_string(name);
@@ -8877,6 +8878,8 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
       port_type(port) = FILE_PORT;
       port_needs_free(port) = false;
     }
+
+  s7_gc_unprotect_at(sc, port_loc);
   return(port);
 }
 
@@ -12984,7 +12987,7 @@ typedef struct {
   s7_pointer (*length)(s7_scheme *sc, s7_pointer obj);
   s7_pointer (*copy)(s7_scheme *sc, s7_pointer obj);
   s7_pointer (*fill)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
-  s7_pointer print_func, equal_func, getter_func, setter_func, length_func;
+  s7_pointer print_func, equal_func, getter_func, setter_func, length_func, copy_func, fill_func;
 } s7_c_object_t;
 
 
@@ -13216,9 +13219,6 @@ static char *call_s_object_print(s7_scheme *sc, void *value)
   /* describe_object assumes the value returned here can be freed */
 }
 
-/* PERHAPS: call_s_object_fill doesn't seem problematic, and call_s_object_copy could copy the object, then call copy for the value?
- *   should these be the defaults (also for length and others)?
- */
 
 static bool call_s_object_equal(s7_scheme *sc, s7_pointer a, s7_pointer b)
 {
@@ -13258,6 +13258,33 @@ static s7_pointer call_s_object_length(s7_scheme *sc, s7_pointer a)
   obj = (s_type_t *)s7_object_value(a);
   car(sc->s_function_args) = obj->value;
   return(s7_call(sc, object_types[obj->type].length_func, sc->s_function_args));
+}
+
+
+static s7_pointer call_s_object_copy(s7_scheme *sc, s7_pointer a)
+{
+  s_type_t *obj, *new_obj;
+  s7_pointer result;
+
+  obj = (s_type_t *)s7_object_value(a);
+  car(sc->s_function_args) = obj->value;
+
+  new_obj = (s_type_t *)calloc(1, sizeof(s_type_t));
+  new_obj->type = obj->type;
+
+  new_obj->value = s7_call(sc, object_types[new_obj->type].copy_func, sc->s_function_args);
+  result = s7_make_object(sc, new_obj->type, (void *)new_obj);
+  typeflag(result) |= T_S_OBJECT;
+
+  return(result);
+}
+
+
+static s7_pointer call_s_object_fill(s7_scheme *sc, s7_pointer a, s7_pointer val)
+{
+  s_type_t *obj;
+  obj = (s_type_t *)s7_object_value(a);
+  return(s7_call(sc, object_types[obj->type].fill_func, make_list_2(sc, obj->value, val)));
 }
 
 
@@ -13348,7 +13375,7 @@ static s7_pointer s_type_ref(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_make_type(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_type "(make-type :optkey print equal getter setter length name) returns a new type object.\
+  #define H_make_type "(make-type :optkey print equal getter setter length name copy fill) returns a new type object.\
 The optional arguments are functions that specify how objects of the new type display themselves (print, 1 argument), \
 check for equality (equal, 2 args, both will be of the new type), apply themselves to arguments, (getter, any number \
 of args, see vector for an example), respond to the generalized set! and length generic functions, and finally, \
@@ -13446,6 +13473,26 @@ In each case, the argument is the value of the object, not the object itself."
 				    make_list_2(sc, s7_make_string(sc, "make-type :name arg, ~S, should be a string"), func)));
 
 		  object_types[tag].name = copy_string(s7_string(func));
+		  break;
+
+		case 6:                 /* copy */
+		  if ((s7_integer(car(proc_args)) > 1) || 
+		      ((nargs == 0) && (!rest_arg)))
+		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				    make_list_2(sc, s7_make_string(sc, "make-type :copy procedure, ~A, should take at one argument"), func)));
+
+		  object_types[tag].copy_func = func;
+		  object_types[tag].copy = call_s_object_copy;
+		  break;
+
+		case 7:                 /* fill */
+		  if ((s7_integer(car(proc_args)) > 2) || 
+		      ((nargs == 0) && (!rest_arg)))
+		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+				    make_list_2(sc, s7_make_string(sc, "make-type :fill procedure, ~A, should take at two arguments"), func)));
+
+		  object_types[tag].fill_func = func;
+		  object_types[tag].fill = call_s_object_fill;
 		  break;
 		}
 	    }
@@ -19061,6 +19108,10 @@ static void mark_s7(s7_scheme *sc)
 #if HAVE_PTHREADS
   S7_MARK(sc->key_values);
 #endif
+  S7_MARK(sc->input_port);
+  S7_MARK(sc->input_port_stack);
+  S7_MARK(sc->output_port);
+  S7_MARK(sc->error_port);
 }
 
 
@@ -22581,7 +22632,7 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
 		 (mpfr_cmp(val, x1) <= 0)) ||
 		(mpfr_cmp_ui(e1, 0) == 0) ||
 		(mpfr_cmp_ui(e1p, 0) == 0)) 
-	      /* these last 2 are probably not needed -- they protect against running out of bits in the standard C case above */
+	      /* these last 2 are probably not needed -- they protect against running out of bits in the non-gmp case above */
 	      {
 		mpq_t *q;
 		q = (mpq_t *)malloc(sizeof(mpq_t));
@@ -24378,7 +24429,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, s_is_type_name,            s_is_type,                 2, 0, false, "internal object type check");
   s7_define_function(sc, s_type_make_name,          s_type_make,               2, 0, false, "internal object creation");
   s7_define_function(sc, s_type_ref_name,           s_type_ref,                2, 0, false, "internal object value");
-  s7_define_function_star(sc, "make-type", g_make_type, "print equal getter setter length name", H_make_type);
+  s7_define_function_star(sc, "make-type", g_make_type, "print equal getter setter length name copy fill", H_make_type);
 
   s7_define_variable(sc, "*features*", sc->NIL);
   s7_define_variable(sc, "*load-path*", sc->NIL);
@@ -24587,6 +24638,9 @@ s7_scheme *s7_init(void)
  * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
  * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
  *
- * TODO: loading s7test simultaneously in several threads hits a segfault in token.
+ * TODO: loading s7test simultaneously in several threads hangs after awhile in join_thread (call/cc?) 
+ *         why are list-ref tests getting 'wrong-type-arg?
+ *         (qsort is not thread safe -- should we use guile's quicksort rewrite? libguile/quicksort.i.c)
+ *         (ideally it would be wrapped inside the evaluator)
  */
 

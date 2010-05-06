@@ -7884,15 +7884,11 @@
       (define float-vector #f)
       
       (let* ((fv-type (make-type 
-		       :getter (lambda (obj index)
-					;(format #t "obj: ~A, index: ~A ~A -> ~A~%" obj index (vector? obj) (vector-ref obj index))
-				 (vector-ref obj index))
+		       :getter vector-ref :length length :copy copy :fill fill!
 		       :setter (lambda (obj index value)
 				 (if (not (real? value))
 				     (error 'wrong-type-arg-error "float-vector element must be real: ~S" value))
 				 (vector-set! obj index (exact->inexact value)))
-		       :length (lambda (obj)
-				 (vector-length obj))
 		       :name "float-vector"))
 	     (fv? (car fv-type))
 	     (make-fv (cadr fv-type))
@@ -7968,7 +7964,54 @@
 	(set! (v 1) 32.0)
 	(adjust-vector v 10 #f)
 	(test (length v) 10)
-	(test (v 1) 32.0)))
+	(test (v 1) 32.0))
+
+      (blet* (rec-a rec? rec-b make-rec)
+	     
+	     ((rec-type (make-type :name "rec" :length length :copy copy :fill fill!))
+	      (? (car rec-type))
+	      (make (cadr rec-type))
+	      (ref (caddr rec-type)))
+	     
+	     (set! make-rec (lambda* ((a 1) (b 2))
+				     (make (vector a b))))
+	     
+	     (set! rec? ?)
+	     
+	     (set! rec-a (make-procedure-with-setter
+			  (lambda (obj)
+			    (and (rec? obj)
+				 (vector-ref (ref obj) 0)))
+			  (lambda (obj val)
+			    (if (rec? obj)
+				(vector-set! (ref obj) 0 val)))))
+	     
+	     (set! rec-b (make-procedure-with-setter
+			  (lambda (obj)
+			    (and (rec? obj)
+				 (vector-ref (ref obj) 1)))
+			  (lambda (obj val)
+			    (if (rec? obj)
+				(vector-set! (ref obj) 1 val))))))
+      
+      (let ((r1 (make-rec)))
+	(let ((r2 (copy r1)))
+	  (test (eq? r1 r2) #f)
+	  (test (rec? r2) #t)
+	  (test (rec-a r1) 1)
+	  (test (rec-b r1) 2)
+	  (test (rec-a r2) 1)
+	  (test (rec-b r2) 2)
+	  (set! (rec-b r2) 32)
+	  (test (rec-b r2) 32)
+	  (test (rec-b r1) 2)
+	  (fill! r2 123)
+	  (test (rec-a r1) 1)
+	  (test (rec-b r1) 2)
+	  (test (rec-a r2) 123)
+	  (test (rec-b r2) 123)
+	  )
+	))
 
 
     (define (notify-if-set var notifier)
