@@ -265,7 +265,3 @@
   
   (report-places))
 (exit)
-
-
-
-;;; TODO: snd-motif|gtk (or neither) based on gui choice

@@ -61,7 +61,7 @@
  *        random for any numeric type and any numeric argument, including 0 ferchrissake!
  *        sinh, cosh, tanh, asinh, acosh, atanh
  *        read-line, read-byte, write-byte
- *        logior, logxor, logand, lognot, ash, integer-length
+ *        logior, logxor, logand, lognot, ash, integer-length, nan?, infinite?
  *        procedure-source, procedure-arity, procedure-documentation, help
  *          if the initial expression in a function body is a string constant, it is assumed to be a documentation string
  *        symbol-table, symbol->value, global-environment, current-environment, stack
@@ -15132,6 +15132,10 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   vector_element(sc->error_info, ERROR_ENVIRONMENT) = sc->envir;
   s7_gc_on(sc, true);  /* this is in case we were triggered from the sort function -- clumsy! */
 
+  /* currently sc->error_info is shared by all threads, so if two get an error at the same
+   *   time, could we get a confused error message?
+   */
+
   /* (let ((x 32)) (define (h1 a) (* a "hi")) (define (h2 b) (+ b (h1 b))) (h2 1)) */
 
   if (is_pair(sc->cur_code))
@@ -24584,16 +24588,22 @@ s7_scheme *s7_init(void)
 /* TODO: macroexpand and fully-expand are buggy
  * PERHAPS: method lists for c_objects
  * TODO: function IO completed -- tie into scheme for tests?
- * also Ruby's arr[-1] = index from end of arr is a nice feature
+ *         what is needed? -- scheme "soft-port"?  C-side listener stuff? [snd-g|xlistener, and snd-xen -- 4 altogether]
+ *       a guile sort port is a vector: write-char func, write-string, flush, read-char, close
+ *       which seems completely random.
  *
- * TODO: how to connect from C to scheme-side make-type (defgenerator) [s7.html example]
- *       :(let ((lst (make-type))) (procedure-source (car lst)))
- *       (lambda ([arg]) ([?] 22 [arg]))
- *       for C side to check/make/refer to these it needs the list returned by make-type and some identifying name?
- *   s7_type_info(sc, var-of-that-type)?
- *   does s7_object_type return the tag in this case? yes!
- *   what else is needed -- access to the type table functions via the tag? or via the object?
- *   currently if a list is seen, we call assoc on the last list in that list with the desired method name
+ * (define p (make-soft-port
+ *   (vector
+ *     (lambda (c) (write c stdout))
+ *     (lambda (s) (display s stdout))
+ *     (lambda () (display \".\" stdout))
+ *     (lambda () (char-upcase (read-char)))
+ *     (lambda () (display \"@@\" stdout)))
+ *
+ * s7 has input/output function ports with
+ *   typedef enum {S7_READ, S7_READ_CHAR, S7_READ_LINE, S7_READ_BYTE, S7_PEEK_CHAR, S7_IS_CHAR_READY} s7_read_t;
+ *   choosing the input function, but output is just the char-at-a-time case
+ *
  *
  * SOMEDAY: eval-string (or eval?) with jump outside the eval (call/cc external) -> segfault or odd error
  *             (is this the case in dynamic-wind also?)

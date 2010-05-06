@@ -15987,9 +15987,6 @@ static xen_value *lookup_generalized_set(ptree *prog, s7_pointer acc_form, xen_v
 	  {
 	    /* (let ((v (vct 1.0 2.0 3.0))) (run (lambda () (set! (v 1) 0.5)))) */
 	    vct_set_1(prog, val, in_v, NULL, v);
-	    /* SOMEDAY: in_v1 here for multidim vect? but the latter aren't accepted because vcts are 1-dim 
-	     *            couldn't we use sd objects?
-	     */
 	    happy = 1;
 	  }
 	else

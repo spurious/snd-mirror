@@ -5795,7 +5795,7 @@ static XEN g_fpsa(XEN x_choice, XEN x_n, XEN x_size, XEN x_increment, XEN x_coun
   #define H_fpsa "(" S_fpsa " choice n (size 2000) (increment 1.0) (counts 50) (output-file \"test.data\") (report-best #t)) searches \
 for a peak-amp minimum using a simulated annealing form of the genetic algorithm.  choice: 0=all, 1=odd, 2=even, 3=prime."
 
-  #define FFT_MULT 128
+  #define FFT_MULT 64
   #define INCR_DOWN 0.9
   #define INCR_MAX 1.0
   #define INCR_MIN 0.001
@@ -6176,7 +6176,7 @@ static XEN g_fpsaf(XEN mult, XEN x_choice, XEN x_n, XEN x_size, XEN x_increment,
   #define H_fpsaf "(" S_fpsaf " mult choice n (size 2000) (increment 1.0) (counts 50) (output-file #f) (report-best #t)) searches \
 for a peak-amp minimum using a simulated annealing form of the genetic algorithm.  choice: 0=all, 1=odd, 2=even, 3=prime."
 
-  #define FFT_MULT 128
+  #define FFT_MULT 64
   #define INCR_DOWN 0.9
   #define INCR_MAX 1.0
   #define INCR_MIN 0.001
@@ -6620,7 +6620,7 @@ static XEN g_fpsap(XEN x_choice, XEN x_n, XEN start_phases, XEN x_size, XEN x_in
   #define H_fpsap "(" S_fpsap " choice n phases (size 6000) (increment 0.06)) searches \
 for a peak-amp minimum using a simulated annealing form of the genetic algorithm.  choice: 0=all, 1=odd, 2=even, 3=prime."
 
-  #define FFT_MULT 128
+  #define FFT_MULT 64
   #define INCR_DOWN 0.9
   #define INCR_MAX 1.0
   #define INCR_MIN 0.001

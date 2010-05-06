@@ -22991,6 +22991,14 @@ EDITS: 2
       (if (not (eq? (car var) 'out-of-range))
 	  (snd-display ";make-sample->file bad type: ~A" var)))
     
+    (let ((v (vector 1.0 0.5 0.25 0.125 0.0))
+	  (v1 (make-vct 5 0.0)))
+      (do ((i 0 (+ i 1)))
+	  ((= i 5))
+	(set! (v1 i) (in-any i 0 v)))
+      (if (not (vequal v1 (vct 1.0 0.5 0.25 0.125 0.0)))
+	  (snd-display ";vector in-any -> ~A?" v1)))
+
     (let ((sum 0.0))
       (let ((result (with-sound (:output (make-vct 10))
 				(do ((i 0 (+ 1 i)))
@@ -67385,3 +67393,4 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
  2,383,162,838  s7.c:s7_make_real [/home/bil/snd-s7/snd]
  2,256,089,964  clm.c:mus_formant [/home/bil/snd-s7/snd]
 |#
+

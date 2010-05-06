@@ -3611,65 +3611,78 @@ int main(int argc, char **argv)
 #include &lt;stdlib.h&gt;
 #include &lt;stdio.h&gt;
 #include &lt;string.h&gt;
+#include &lt;stdarg.h&gt;
 
 #include "s7.h"
 
-static s7_pointer ref3(s7_scheme *sc, s7_pointer args)
+static s7_pointer multivector_ref(s7_scheme *sc, s7_pointer vector, int indices, ...)
 {
-  /* (ref3 vec) prints out a multidimensional vector's contents, assuming a 3-D vector here */
-  int x, y, z;
-  s7_pointer *elements;
-  s7_Int *offsets, *dimensions;
+  /* multivector_ref returns an element of a multidimensional vector */
+  int ndims;
+  ndims = <em class=red>s7_vector_rank</em>(vector);
 
-  elements = <em class=red>s7_vector_elements</em>(s7_car(args));
-  dimensions = <em class=red>s7_vector_dimensions</em>(s7_car(args));
-  offsets = <em class=red>s7_vector_offsets</em>(s7_car(args));
+  if (ndims == indices)
+    {
+      va_list ap;
+      s7_Int index = 0;
+      va_start(ap, indices);
 
-  for (z = 0; z &lt; dimensions[0]; z++)
-    for (y = 0; y &lt; dimensions[1]; y++)
-      for (x = 0; x &lt; dimensions[2]; x++)
-	fprintf(stdout, "z: %d, y: %d, x: %d, (3dvec z y x): %s\n",
-		z, y, x,
-		s7_object_to_c_string(sc, elements[z * offsets[0] + y * offsets[1] + x * offsets[2]]));
+      if (ndims == 1)
+	{
+	  index = va_arg(ap, s7_Int);
+	  va_end(ap);
+	  return(s7_vector_ref(sc, vector, index));
+	}
+      else
+	{
+	  int i;
+	  s7_pointer *elements;
+	  s7_Int *offsets, *dimensions;
 
-  return(s7_car(args));
+	  elements = <em class=red>s7_vector_elements</em>(vector);
+	  dimensions = <em class=red>s7_vector_dimensions</em>(vector);
+	  offsets = <em class=red>s7_vector_offsets</em>(vector);
+
+	  for (i = 0; i &lt; indices; i++)
+	    {
+	      int ind;
+	      ind = va_arg(ap, int);
+	      if ((ind &lt; 0) ||
+		  (ind &gt;= dimensions[i]))
+		{
+		  va_end(ap);
+		  return(s7_out_of_range_error(sc, 
+                                               "multivector_ref", i, 
+                                               s7_make_integer(sc, ind), 
+                                               "index should be between 0 and the dimension size"));
+		}
+	      index += (ind * offsets[i]);
+	    }
+	  va_end(ap);
+	  return(elements[index]);
+	}
+    }
+  return(s7_wrong_number_of_args_error(sc, 
+                                       "multivector_ref: wrong number of indices: ~A", 
+                                       s7_make_integer(sc, indices)));
 }
 
 int main(int argc, char **argv)
 {
-  s7_scheme *s7;
   char buffer[512];
   char response[1024];
+  s7_scheme *s7;
 
   s7 = s7_init(); 
-  s7_define_function(s7, "ref3", ref3, 1, 0, false, "(ref3 vect) prints the elements of the vector");
+  s7_eval_c_string(s7, "(define vect (make-vector '(2 3 4) 0))");
+  s7_eval_c_string(s7, "(set! (vect 1 1 1) 32)");
 
-  while (1)
-    {
-      fprintf(stdout, "\n&gt; "); 
-      fgets(buffer, 512, stdin);
-      if ((buffer[0] != '\n') || 
-	  (strlen(buffer) &gt; 1))
-	{                            
-	  sprintf(response, "(write %s)", buffer);
-	  s7_eval_c_string(s7, response); /* evaluate input and write the result */
-	}
-    }
+  fprintf(stdout, "vect[0,0,0]: %s, vect[1,1,1]: %s\n",
+	  s7_object_to_c_string(s7, <em class=red>multivector_ref</em>(s7, s7_name_to_value(s7, "vect"), 3, 0, 0, 0)),
+	  s7_object_to_c_string(s7, <em class=red>multivector_ref</em>(s7, s7_name_to_value(s7, "vect"), 3, 1, 1, 1)));
 }
 
-/*
- *    &gt; (define vect (make-vector (list 1 2 3) 0))
- *    vect
- *    &gt; (set! (vect 0 1 1) 32)
- *    32
- *    &gt; (ref3 vect)
- *    z: 0, y: 0, x: 0, (3dvec z y x): 0
- *    z: 0, y: 0, x: 1, (3dvec z y x): 0
- *    z: 0, y: 0, x: 2, (3dvec z y x): 0
- *    z: 0, y: 1, x: 0, (3dvec z y x): 0
- *    z: 0, y: 1, x: 1, (3dvec z y x): 32
- *    z: 0, y: 1, x: 2, (3dvec z y x): 0
- *    #3D(((0 0 0) (0 32 0)))
+/* vect[0,0,0]: 0, vect[1,1,1]: 32
  */
 </pre>
 </td></tr></table>

@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: fix the multisound multichannel update resize bug! */
-
 #if HAVE_XPM
   #include <X11/xpm.h>
 #endif
@@ -127,6 +125,9 @@ void display_minibuffer_error(snd_info *sp, const char *str)
   XmString s1;
   int lines = 0;
   Dimension y;
+
+  if ((!str) || (!(*str)))
+    return; /* this is causing a segfault in _XmStringEntryCopy? */
 
   if (sp->sgx->minibuffer_height == 0)
     {

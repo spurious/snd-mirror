@@ -5446,7 +5446,7 @@ static XEN g_in_any_1(const char *caller, XEN frame, int in_chan, XEN inp)
   if (XEN_VECTOR_P(inp))
     {
       if (pos < XEN_VECTOR_LENGTH(inp))
-	return(XEN_VECTOR_REF(inp, pos)); /* TODO: doc/test vector in-any, and add chan arg if s7 and multidim vects */
+	return(XEN_VECTOR_REF(inp, pos));
     }
 
   return(C_TO_XEN_DOUBLE(0.0));
