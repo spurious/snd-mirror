@@ -8276,100 +8276,64 @@ non-optimal (but still very good) path.
 </p>
 
 
-<!--
-But to return to our storyline...
-The change to a "centered iterative genetic search with simulated annealing"
-gave a big boost to the search speed, but by Feb 2010 things had once again
-ground to a halt.  
-
-         graph here by month?
-;; (09)
-;; 1 Mar 5446.42, 
-;; 1 Apr 5405.890
-;; 1 May 5138.261
-;; 1 Jun 5061.829
-;; 1 Jul 4669.101
-;; 1 Aug 4633.454
-;; 1 Sep 4616.517
-;; 1 Oct 4592.994
-;; 1 Nov 4560.903
-;; 1 Dec 4541.710
-;; (10)
-;; 1 Jan 4360.644
-;; 1 Feb 4292.451
-;; 1 Mar 4280.782
-;; 1 Apr 4272.964
-;; 1 May 4267.719
-
-My incredibly patient colleagues at CCRMA were starting to make jokes about the square root of 2.
-Another major
-speed-up was needed before I got booted off the CCRMA machines, or I was going to go broke sending checks to PG&E
-(leaving aside problems of cooling, running a machine flat-out for a month costs about $40 &mdash; that can add
-up fast if you're trying to run lots of machines).
+<p>
 Since all the compute time (more than 99%) is spent in the FFT,
 we obviously want to know how big the FFT needs to be
 to give a reasonably accurate peak (say 
-within 0.001 of the true peak).  The "all harmonics"
-cases are the most well-behaved, and in that case,
-I had found earlier that I needed an FFT size of
-"n" (the number of harmonics) times about 128.
-I used that as the multiplier
-for a long time, but then (under the gun so to speak) started
-taking a much closer look at the FFT.
-
+within 0.001 of the true peak).  
 According to N Higham in "Accuracy and Stability of Numerical Algorithms",
 the FFT is stable and very accurate.  He has a graph showing accumulated
-numerical errors down in the 10^-15 range!  But that is not where the
+numerical errors down in the 10^-15 range!   But that is not where the
 inverse FFT loses.  We get n points back from an n-point FFT, so
 effectively we're sampling the resultant waveform at those n points.
 This subsampling can easily miss the peak.
-I compared
-the inverse FFT peak at various 'n' to the peak calculated using a phase increment
-of 0.0001 and multiprecision sinusoids (using the mpfr library),
-I got the following results:
-
+Here are the errors for inverse FFT's of various sizes for the
+8 and 128 all harmonics case (all initial phases = 0.0,
+multiply "mult" by the number of harmonics to get the FFT size):
+</p>
+<!--
 (let ((phases (make-vector 8 0.0))
       (correct 6.1442))
   (do ((i 2 (* i 2)))
       ((> i 8192))
     (let ((fftval (fft-all 8 i phases)))
       (format #t "~D: ~A -> ~A~%" i fftval (abs (- fftval correct))))))
+-->
+<pre>
+              8 harmonics                     128 harmonics    
+                 
+mult    reported peak    error           reported peak     error
 
-2: 5.0273394921258 -> 1.1168605078742
-4: 5.5765851938044 -> 0.56761480619557
-8: 6.1077429487584 -> 0.036457051241581
-16: 6.1077429487584 -> 0.036457051241581
-32: 6.1424792281072 -> 0.0017207718927752
-64: 6.1424792281072 -> 0.0017207718927752
-128: 6.1439194309132 -> 0.00028056908677065
-256: 6.1440559580855 -> 0.00014404191452844
-512: 6.144201227721 -> 1.227720992425e-06
-1024: 6.144201227721 -> 1.2277209933131e-06
-2048: 6.1442049976948 -> 4.9976947913422e-06
-4096: 6.1442064504397 -> 6.4504396704024e-06
-8192: 6.1442065586557 -> 6.5586557145281e-06
+2        5.02733      1.11686e0           81.48324      11.62779
+4        5.57658      5.67621e-1          81.98630      11.12473
+8        6.10774      3.64636e-2          93.08931      0.021721
+16       6.10774      3.64636e-2          93.08931      0.021721
+32       6.14247      1.72736e-3          93.08931      0.021721
+64       6.14247      1.72736e-3          93.08931      0.021721
+128      6.14391      2.87163e-4          93.10728      0.003753
+256      6.14405      1.50636e-4          93.10980      0.001232
+512      6.14420      5.36694e-6          93.11143      0.000391
+1024     6.14420      5.36694e-6          93.11143      0.000391
+2048     6.14420      1.59697e-6          93.11156      0.000525
+4096     6.14420      1.44227e-7          93.11156      0.000525
+8192     6.14420      3.60112e-8          93.11156      0.000526
+</pre>
 
-Or even worse, try 128 sines:
 
-2: 81.483240206546 -> 11.627799044454
-4: 81.986308206625 -> 11.124731044375
-8: 93.089318104869 -> 0.021721146130659
-16: 93.089318104869 -> 0.021721146130659
-32: 93.089318104869 -> 0.021721146130659
-64: 93.089318104869 -> 0.021721146130659
-128: 93.107285755773 -> 0.0037534952270164
-256: 93.109806802023 -> 0.0012324489768787
-512: 93.111430997859 -> 0.00039174685880994
-1024: 93.111430997859 -> 0.00039174685879573
-2048: 93.111565183538 -> 0.00052593253792566
-4096: 93.111565183538 -> 0.00052593253791144
-8192: 93.111565428442 -> 0.0005261774418841
+<p>
+128 seems pretty good.  Those are spikey cases.  If we try the
+best minimum-peak case, the errors are much smaller.  Here are graphs of both
+the 0.0 phase and minimum phase cases for 8 harmonics:
+</p>
 
-Hence the 128, mentioned above (and even that is obviously
-right on the edge).
-Those are spikey cases.  If we try the actual
-best min case:
+<table border=0 hspace=20 vspace=10>
+<tr><td>
+<img src="pix/8.png"></td><td width=20></td><td>
+<img src="pix/88.png">
+</td></tr></table>
 
+
+<!--
 (let ((phases #(0.000000 0.666709 0.807769 1.605408 0.837217 0.044625 0.144433 1.873342))
       (correct 2.7949089))
   (do ((i 2 (* i 2)))
@@ -8413,7 +8377,75 @@ accuracy to hit the one peak just right).
 Perhaps we could reduce the FFT size once we narrow the search down
 to a good candidate, but that seems like asking for trouble.
 
+(let ((dur 2048))
 
+  (let ((old (find-sound "test.snd")))
+    (if (sound? old)
+	(close-sound old)))
+  
+(let ((ns (new-sound "test.snd" :channels 5))
+      (data (make-vct dur)))
+
+  (let ((phases (make-vector 8 0.0))
+	(correct 6.1442))
+
+    (set! (y-bounds) (list -6.2 6.2))
+
+    (do ((chan 0 (+ chan 1))
+	 (n 4 (* n 4)))
+	((> n 512))
+
+      (let* ((size (expt 2 (ceiling (/ (log (* 8 n)) (log 2)))))
+	     (fft-rl (make-vct size))
+	     (fft-im (make-vct size))
+	     (pi2 (/ pi 2)))
+	
+	(do ((m 0 (+ m 1)))
+	    ((= m 8))
+	  (let ((phi (+ (* pi (vector-ref phases m)) pi2))
+		(bin (+ m 1)))
+	    (vct-set! fft-rl bin (cos phi))
+	    (vct-set! fft-im bin (sin phi))))
+		 
+	(mus-fft fft-rl fft-im size -1)
+
+	(do ((i 0 (+ i 1))
+	     (k 0)
+	     (step (/ dur size))
+	     (step-ctr 0 (+ step-ctr 1)))
+	    ((= i dur))
+	  (set! (data i) (fft-rl k))
+	  (if (>= step-ctr step)
+	      (begin
+		(set! k (+ k 1))
+		(set! step-ctr (- step-ctr step)))))
+
+	(vct->channel data 0 dur ns chan)))
+
+    (let ((len 8)
+	  (incr (/ (* 2 pi) dur)))
+      (do ((x 0.0 (+ x incr))
+	   (i 0 (+ i 1)))
+	  ((>= i dur))
+	(let ((val 0.0))
+	  (do ((k 0 (+ k 1))
+	       (j 1 (+ j 1)))
+	      ((= k len))
+	    (set! val (+ val (sin (+ (* j x) (* pi (phases k)))))))
+	  (set! (data i) val)))
+      (vct->channel data 0 dur ns 4))
+
+    (set! (selected-graph-color) (make-color 1 1 1))
+    (set! (selected-data-color) (make-color 0 0 0))
+
+    (set! (x-axis-label ns 0) "fft size: 32")
+    (set! (x-axis-label ns 1) "fft size: 128")
+    (set! (x-axis-label ns 2) "fft size: 512")
+    (set! (x-axis-label ns 3) "fft size: 2048")
+
+    (set! (x-axis-label ns 4) "sum of sines")
+
+    )))
 -->
 
 

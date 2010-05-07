@@ -188,7 +188,9 @@ int check_balance(const char *expr, int start, int end, bool in_listener)
 			}
 		      else
 			{
-			  if (!isdigit(expr[k]))
+			  if ((!isdigit(expr[k])) &&
+			      (expr[k] != 'D') && 
+			      (expr[k] != 'd'))
 			    break;
 			}
 		    }
