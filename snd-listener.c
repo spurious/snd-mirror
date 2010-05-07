@@ -180,11 +180,18 @@ int check_balance(const char *expr, int start, int end, bool in_listener)
 		{
 		  int k, incr = 0;
 		  for (k = i + 1; k < end; k++)
-		    if (expr[k] == '(')
-		      {
-			incr = k - i;
-			break;
-		      }
+		    {
+		      if (expr[k] == '(')
+			{
+			  incr = k - i;
+			  break;
+			}
+		      else
+			{
+			  if (!isdigit(expr[k]))
+			    break;
+			}
+		    }
 		  if (incr > 0)
 		    {
 		      i += incr;

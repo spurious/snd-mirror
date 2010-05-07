@@ -5747,9 +5747,9 @@ that give a minimum peak amplitude when the signals are added together."
      17827, 17837, 17839, 17851, 17863};
 #endif
 
-  static mus_float_t all_mins[128] = {1.0000, 1.7600, 1.9797, 2.0390, 2.3435, 2.5493, 2.6394, 2.7947, 2.9618, 3.1027, 3.2184, 3.3891, 3.5249, 3.6131, 3.7690, 3.8751, 3.9815, 4.1454, 4.2237, 4.2901, 4.4844, 4.5881, 4.6077, 4.7308, 4.8556, 5.0083, 5.0665, 5.1610, 5.2447, 5.3667, 5.4835, 5.5298, 5.6351, 5.7213, 5.7695, 5.9314, 5.9340, 6.1411, 6.1310, 6.2990, 6.3364, 6.4658, 6.4824, 6.5525, 6.7031, 6.6997, 6.8394, 6.8711, 6.9216, 7.0407, 7.1289, 7.1497, 7.2114, 7.3372, 7.3621, 7.3719, 7.5207, 7.6146, 7.6748, 7.6195, 7.7868, 7.8677, 7.9218, 7.9862, 8.0570, 8.1118, 8.1712, 8.1976, 8.3453, 8.3468, 8.4245, 8.5148, 8.5279, 8.5725, 8.6943, 8.7156, 8.7312, 8.8480, 8.8770, 8.8986, 9.0186, 9.1158, 9.1852, 9.0496, 9.2689, 9.2397, 9.3995, 9.3913, 9.5523, 9.5718, 9.5660, 9.6547, 9.7038, 10.0367, 10.0036, 9.9564, 9.8937, 9.8164, 9.9063, 10.2353, 10.2223, 10.2586, 10.3631, 10.1881, 10.2269, 10.3949, 10.5097, 10.5434, 10.7085, 10.7391, 10.6273, 10.6695, 10.8235, 10.8344, 10.9368, 10.8960, 10.9612, 11.0541, 11.1182, 11.0013, 11.2427, 11.1853, 11.2551, 11.3159, 11.4204, 11.3113, 11.4579, 11.6009};
+  static mus_float_t all_mins[128] = {1.0000, 1.7600, 1.9797, 2.0390, 2.3435, 2.5493, 2.6394, 2.7947, 2.9618, 3.1027, 3.2184, 3.3891, 3.5249, 3.6131, 3.7690, 3.8751, 3.9815, 4.1454, 4.2237, 4.2901, 4.4844, 4.5881, 4.6077, 4.7308, 4.8556, 5.0083, 5.0665, 5.1610, 5.2447, 5.3667, 5.4835, 5.5298, 5.6351, 5.7213, 5.7695, 5.9314, 5.9340, 6.1411, 6.1310, 6.2990, 6.3364, 6.4658, 6.4824, 6.5525, 6.7031, 6.6997, 6.8394, 6.8711, 6.9216, 7.0407, 7.1289, 7.1497, 7.2114, 7.3372, 7.3621, 7.3719, 7.5207, 7.6146, 7.6748, 7.6195, 7.7868, 7.8677, 7.9218, 7.9862, 8.0570, 8.1118, 8.1712, 8.1976, 8.3453, 8.3468, 8.4245, 8.5148, 8.5279, 8.5725, 8.6943, 8.7156, 8.7312, 8.8480, 8.8770, 8.8986, 9.0186, 9.1158, 9.1812, 9.0496, 9.2689, 9.2397, 9.3995, 9.3913, 9.5523, 9.5718, 9.5660, 9.6547, 9.7038, 10.0367, 10.0036, 9.9564, 9.8937, 9.8164, 9.9063, 10.2353, 10.2223, 10.2586, 10.3631, 10.1881, 10.2269, 10.3949, 10.5097, 10.5434, 10.7085, 10.7391, 10.6273, 10.6695, 10.8235, 10.8344, 10.9368, 10.8960, 10.9612, 11.0541, 11.1182, 11.0013, 11.2427, 11.1853, 11.2551, 11.3159, 11.4204, 11.3113, 11.4579, 11.6009};
 
-  static mus_float_t odd_mins[128] = {1.0000, 1.5390, 1.7387, 2.0452, 2.3073, 2.5227, 2.6184, 2.7908, 2.8865, 3.0538, 3.1771, 3.3627, 3.4755, 3.5994, 3.7398, 3.8582, 3.9278, 4.0712, 4.1739, 4.3601, 4.4504, 4.5828, 4.6639, 4.7891, 4.8892, 5.0085, 5.0916, 5.0926, 5.2674, 5.3569, 5.4235, 5.5676, 5.6070, 5.7451, 5.8382, 5.9961, 6.0249, 6.1502, 6.1875, 6.2779, 6.3276, 6.4085, 6.4809, 6.6048, 6.6310, 6.7167, 6.8040, 6.9153, 6.9979, 6.9553, 7.1024, 7.0875, 7.2716, 7.3707, 7.4259, 7.4388, 7.4982, 7.6006, 7.6434, 7.7768, 7.7859, 7.8935, 7.9226, 8.0647, 8.0648, 8.1870, 8.2132, 8.3132, 8.3173, 8.3994, 8.5486, 8.6664, 8.5917, 8.5058, 8.7238, 8.6919, 8.7389, 8.8023, 9.0193, 8.9753, 8.9849, 8.9686, 9.1609, 9.3064, 9.4538, 9.4823, 9.4553, 9.5579, 9.5014, 9.5974, 9.5958, 9.7285, 9.8782, 9.9480, 9.8316, 9.9004, 9.9332, 10.1273, 10.1887, 10.2555, 10.1100, 10.1469, 10.3442, 10.5181, 10.3811, 10.4386, 10.7280, 10.6927, 10.8034, 10.5207, 10.7940, 10.9266, 10.7439, 10.8481, 11.0566, 11.0095, 11.0903, 11.3184, 11.2736, 11.2233, 11.3530, 11.3189, 11.4946, 11.4548, 11.6878, 11.6207, 11.5727, 11.5816};
+  static mus_float_t odd_mins[128] = {1.0000, 1.5390, 1.7387, 2.0452, 2.3073, 2.5227, 2.6184, 2.7908, 2.8865, 3.0538, 3.1771, 3.3627, 3.4755, 3.5994, 3.7398, 3.8582, 3.9278, 4.0712, 4.1739, 4.3601, 4.4504, 4.5828, 4.6639, 4.7891, 4.8892, 5.0085, 5.0916, 5.0926, 5.2674, 5.3569, 5.4235, 5.5676, 5.6070, 5.7451, 5.8382, 5.9961, 6.0249, 6.1502, 6.1875, 6.2779, 6.3276, 6.4085, 6.4809, 6.6048, 6.6310, 6.7167, 6.7948, 6.9153, 6.9979, 6.9553, 7.1024, 7.0875, 7.2716, 7.3707, 7.4235, 7.4388, 7.4982, 7.6006, 7.6434, 7.7768, 7.7859, 7.8935, 7.9226, 8.0647, 8.0648, 8.1870, 8.2108, 8.3132, 8.3173, 8.3994, 8.5486, 8.6664, 8.5917, 8.5058, 8.7238, 8.6919, 8.7389, 8.8023, 9.0193, 8.9753, 8.9849, 8.9664, 9.1609, 9.2998, 9.4500, 9.4805, 9.4553, 9.5569, 9.4982, 9.5933, 9.5880, 9.7285, 9.8740, 9.9475, 9.8316, 9.9004, 9.9323, 10.1273, 10.1887, 10.2555, 10.1100, 10.1469, 10.3442, 10.5181, 10.3811, 10.4222, 10.7167, 10.6872, 10.8034, 10.5154, 10.7940, 10.8972, 10.7439, 10.8481, 11.0532, 11.0095, 11.0903, 11.3184, 11.2660, 11.2146, 11.3530, 11.3119, 11.4851, 11.4548, 11.6878, 11.6207, 11.5687, 11.5816};
 
   static mus_float_t prime_mins[128] = {1.0000, 1.7600, 1.9798, 2.1921, 2.4768, 2.8055, 3.0619, 3.2630, 3.3824, 3.6023, 3.7790, 3.9366, 4.1551, 4.3254, 4.4680, 4.6025, 4.7203, 4.8567, 5.0167, 5.1901, 5.3299, 5.4469, 5.5674, 5.6505, 5.8178, 6.0653, 6.2081, 6.1965, 6.3721, 6.4568, 6.7151, 6.8684, 6.9144, 7.0538, 7.2291, 7.4042, 7.3551, 7.5736, 7.6340, 7.8117, 7.8967, 8.0162, 8.1174, 8.2153, 8.3261, 8.3882, 8.4967, 8.6045, 8.7217, 8.6988, 8.8050, 9.0379, 9.2928, 9.2154, 9.4256, 9.5635, 9.6958, 9.8552, 9.5883, 9.7591, 10.0939, 10.1512, 9.9367, 10.2679, 10.4742, 10.5562, 10.5489, 10.6922, 10.7636, 10.6987, 10.8841, 11.0362, 11.1187, 11.1436, 11.2561, 11.2994, 11.2399, 11.6393, 11.8223, 11.8510, 11.6859, 11.7939, 11.7819, 12.0045, 12.0393, 11.8403, 12.2786, 12.2679, 12.6520, 12.5783, 12.6296, 12.5320, 12.7409, 12.7509, 13.1423, 13.2047, 13.1303, 13.2481, 13.4171, 13.3503, 13.3679, 13.7348, 13.7727, 13.9934, 13.7340, 14.0443, 14.1183, 14.2221, 14.4192, 14.4269, 14.3588, 14.5122, 14.7860, 14.9489, 15.0036, 15.0120, 15.1811, 15.1379, 15.0064, 15.0844, 15.3211, 15.2519, 15.2207, 15.5409, 15.3624, 15.5629, 15.4239, 15.6868};
 
@@ -5782,20 +5782,22 @@ static mus_float_t local_frandom(mus_float_t val)
 }
 
 
-#define S_fpsa "fpsa"
-
 typedef struct {
   mus_float_t pk;
   mus_float_t *phases;
 } pk_data;
 
 
+#if 0
+
+#define S_fpsa "fpsa"
+
 static XEN g_fpsa(XEN x_choice, XEN x_n, XEN x_size, XEN x_increment, XEN x_counts, XEN x_file, XEN x_just_best)
 {
   #define H_fpsa "(" S_fpsa " choice n (size 2000) (increment 1.0) (counts 50) (output-file \"test.data\") (report-best #t)) searches \
 for a peak-amp minimum using a simulated annealing form of the genetic algorithm.  choice: 0=all, 1=odd, 2=even, 3=prime."
 
-  #define FFT_MULT 64
+  #define FFT_MULT 128
   #define INCR_DOWN 0.9
   #define INCR_MAX 1.0
   #define INCR_MIN 0.001
@@ -6176,7 +6178,7 @@ static XEN g_fpsaf(XEN mult, XEN x_choice, XEN x_n, XEN x_size, XEN x_increment,
   #define H_fpsaf "(" S_fpsaf " mult choice n (size 2000) (increment 1.0) (counts 50) (output-file #f) (report-best #t)) searches \
 for a peak-amp minimum using a simulated annealing form of the genetic algorithm.  choice: 0=all, 1=odd, 2=even, 3=prime."
 
-  #define FFT_MULT 64
+  #define FFT_MULT 128
   #define INCR_DOWN 0.9
   #define INCR_MAX 1.0
   #define INCR_MIN 0.001
@@ -6608,6 +6610,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   return(xen_make_vct(n, min_phases));
 }
 
+#endif
 
 
 
@@ -6620,7 +6623,7 @@ static XEN g_fpsap(XEN x_choice, XEN x_n, XEN start_phases, XEN x_size, XEN x_in
   #define H_fpsap "(" S_fpsap " choice n phases (size 6000) (increment 0.06)) searches \
 for a peak-amp minimum using a simulated annealing form of the genetic algorithm.  choice: 0=all, 1=odd, 2=even, 3=prime."
 
-  #define FFT_MULT 64
+  #define FFT_MULT 128
   #define INCR_DOWN 0.9
   #define INCR_MAX 1.0
   #define INCR_MIN 0.001
@@ -6717,8 +6720,6 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 	if (mxtemp > mx_cos)
 	  mx_cos = mxtemp;
       }
-
-    return(mx_sin); /* ignore cos case since we're trying to follow a path */
 
     if (mx_sin <= mx_cos)
       return(mx_sin);
@@ -6893,7 +6894,7 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
     increment = XEN_TO_C_DOUBLE(x_increment);
   else increment = 0.06; /* was .03 */
 
-  counts = 100;
+  counts = 50; /* was 100 */
   orig_incr = increment;
   incr_mult = INCR_DOWN;
   file = "test.data";
@@ -6936,67 +6937,63 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
 	choices[start]->phases = (mus_float_t *)calloc(n, sizeof(mus_float_t));
       }
 
-
+    free_top = 0;
+    day_counter = 0;
+    local_best = (mus_float_t)n;
+    increment = orig_incr;
+    
+    for (start = 0; start < size; start++)
       {
-	free_top = 0;
-	day_counter = 0;
-	local_best = (mus_float_t)n;
-	increment = orig_incr;
-
-	for (start = 0; start < size; start++)
+	mus_float_t pk, local_pk = 100000.0;
+	int k, init_try;
+	
+	for (init_try = 0;  init_try < INIT_TRIES; init_try++)
 	  {
-	    mus_float_t pk, local_pk = 100000.0;
-	    int k, init_try;
-
-	    for (init_try = 0;  init_try < INIT_TRIES; init_try++)
+	    if (initial_phases)
 	      {
-		if (initial_phases)
+		for (k = 1; k < n; k++) 
+		  temp_phases[k] = initial_phases[k] + local_random(increment);
+	      }
+	    else
+	      {
+		for (k = 1; k < n; k++) 
+		  temp_phases[k] = local_frandom(2.0);
+	      }
+	    pk = get_peak(temp_phases);
+	    
+	    if (pk < local_best)
+	      {
+		local_best = pk;
+		if ((!just_best) ||
+		    (pk < overall_min))
 		  {
-		    for (k = 1; k < n; k++) 
-		      temp_phases[k] = initial_phases[k] + local_random(increment);
-		  }
-		else
-		  {
-		    for (k = 1; k < n; k++) 
-		      temp_phases[k] = local_frandom(2.0);
-		  }
-		pk = get_peak(temp_phases);
-
-		if (pk < local_best)
-		  {
-		    local_best = pk;
-		    if ((!just_best) ||
-			(pk < overall_min))
+		    FILE *ofile;
+		    for (k = 1; k < n; k++) min_phases[k] = temp_phases[k];
+		    if (pk < overall_min)
 		      {
-			FILE *ofile;
-			for (k = 1; k < n; k++) min_phases[k] = temp_phases[k];
-			if (pk < overall_min)
-			  {
-			    if (file)
-			      ofile = fopen(file, "a");
-			    else ofile = stderr;
-			    fprintf(ofile, "[%d, %f, %f]: %s, %d %f #(", size, orig_incr, increment, choice_name[choice], n, pk);
-			    for (k = 0; k < n - 1; k++) fprintf(ofile, "%f ", min_phases[k]);
-			    fprintf(ofile, "%f)\n\n", min_phases[n - 1]);
-			    if (file) fclose(ofile);
-			    overall_min = pk;
-			  }
+			if (file)
+			  ofile = fopen(file, "a");
+			else ofile = stderr;
+			fprintf(ofile, "[%d, %f, %f]: %s, %d %f #(", size, orig_incr, increment, choice_name[choice], n, pk);
+			for (k = 0; k < n - 1; k++) fprintf(ofile, "%f ", min_phases[k]);
+			fprintf(ofile, "%f)\n\n", min_phases[n - 1]);
+			if (file) fclose(ofile);
+			overall_min = pk;
 		      }
 		  }
-
-		if (pk < local_pk)
-		  {
-		    for (k = 1; k < n; k++) choices[start]->phases[k] = temp_phases[k];
-		    choices[start]->pk = pk;
-		    local_pk = pk;
-		  }
+	      }
+	    
+	    if (pk < local_pk)
+	      {
+		for (k = 1; k < n; k++) choices[start]->phases[k] = temp_phases[k];
+		choices[start]->pk = pk;
+		local_pk = pk;
 	      }
 	  }
-
-	while (day()) {}
       }
+    while (day()) {}
   }
-
+  
   free(temp_phases);
   free(diff_phases);
   free(rl);
@@ -7017,8 +7014,8 @@ for a peak-amp minimum using a simulated annealing form of the genetic algorithm
   return(XEN_LIST_2(C_TO_XEN_DOUBLE(local_best), 
 		    xen_make_vct(n, min_phases)));
 }
-
 #endif
+
 
 
 
@@ -7064,8 +7061,10 @@ XEN_NARGIFY_1(g_set_sinc_width_w, g_set_sinc_width)
 XEN_ARGIFY_9(g_ptree_channel_w, g_ptree_channel)
 #if HAVE_NESTED_FUNCTIONS
 XEN_VARGIFY(g_find_min_peak_phases_w, g_find_min_peak_phases)
+#if 0
 XEN_ARGIFY_7(g_fpsa_w, g_fpsa)
 XEN_ARGIFY_9(g_fpsaf_w, g_fpsaf)
+#endif
 XEN_ARGIFY_5(g_fpsap_w, g_fpsap)
 #endif
 #else
@@ -7110,8 +7109,10 @@ XEN_ARGIFY_5(g_fpsap_w, g_fpsap)
 #define g_ptree_channel_w g_ptree_channel
 #if HAVE_NESTED_FUNCTIONS
 #define g_find_min_peak_phases_w g_find_min_peak_phases
+#if 0
 #define g_fpsa_w g_fpsa
 #define g_fpsaf_w g_fpsaf
+#endif
 #define g_fpsap_w g_fpsap
 #endif
 #endif
@@ -7163,8 +7164,10 @@ void g_init_sig(void)
 				   S_setB S_sinc_width, g_set_sinc_width_w,  0, 0, 1, 0);
 #if HAVE_NESTED_FUNCTIONS
   XEN_DEFINE_PROCEDURE(S_find_min_peak_phases, g_find_min_peak_phases_w, 0, 0, 1, H_find_min_peak_phases);
+#if 0
   XEN_DEFINE_PROCEDURE(S_fpsa, g_fpsa_w, 2, 5, 0, H_fpsa);
   XEN_DEFINE_PROCEDURE(S_fpsaf, g_fpsaf_w, 3, 6, 0, H_fpsaf);
+#endif
   XEN_DEFINE_PROCEDURE(S_fpsap, g_fpsap_w, 3, 2, 0, H_fpsap);
 #endif
 }
