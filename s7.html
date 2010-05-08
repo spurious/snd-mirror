@@ -1114,8 +1114,8 @@ if you supply the length and getter functions to make-type.
 &gt; (define-record point (x 0.0) (y 0.0))
 point
 &gt; (let ((pt (make-point 1.0))) 
-       (set! (point-y pt) 3.0)
-       (list (point? pt) (point-x pt) (point-y pt)))
+    (set! (point-y pt) 3.0)
+    (list (point? pt) (point-x pt) (point-y pt)))
 (#t 1.0 3.0)
 </pre>	
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
