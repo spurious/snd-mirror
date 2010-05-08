@@ -10090,10 +10090,10 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth, bool 
 
   if (vector_is_multidimensional(vect))
     {
-      char *c;
-      (*c) = '#';
-      sprintf(buf, "#%dD", vector_ndims(vect));
-      display_multivector(sc, vect, len, 0, 0, vector_ndims(vect), buf, elements, c);
+      char c;
+      c = '#';
+      snprintf(buf, bufsize, "#%dD", vector_ndims(vect));
+      display_multivector(sc, vect, len, 0, 0, vector_ndims(vect), buf, elements, &c);
       for (i = 0; i < len; i++)
 	free(elements[i]);
       free(elements);
@@ -10102,7 +10102,7 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth, bool 
 
 #endif
 
-  sprintf(buf, "#(");
+  snprintf(buf, bufsize, "#(");
   for (i = 0; i < len - 1; i++)
     {
       if (elements[i])
@@ -14365,7 +14365,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		  i++;
 		  if (((str[i] == 'C') || (str[i] == 'c')) &&
 		      (!s7_is_character(car(fdat->args))))
-		    return(format_error(sc, "~C directive requires a character argument", str, args, fdat));
+		    return(format_error(sc, "'C' directive requires a character argument", str, args, fdat));
 
 		  tmp = s7_object_to_c_string_1(sc, car(fdat->args), (str[i] == 'S') || (str[i] == 's'), 0, false);
 		  format_append_string(fdat, tmp);
@@ -14403,7 +14403,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		      return(format_error(sc, "'{' directive, but no matching '}'", str, args, fdat));
 
 		    if (curly_len <= 1)
-		      return(format_error(sc, "~{...~} doesn't consume any arguments!", str, args, fdat));
+		      return(format_error(sc, "'{...}' doesn't consume any arguments!", str, args, fdat));
 
 		    curly_str = (char *)malloc(curly_len * sizeof(char));
 		    for (k = 0; k < curly_len - 1; k++)
@@ -14420,7 +14420,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			if (curly_arg == new_arg)
 			  {
 			    if (curly_str) free(curly_str);
-			    return(format_error(sc, "~{...~} doesn't consume any arguments!", str, args, fdat));
+			    return(format_error(sc, "'{...}' doesn't consume any arguments!", str, args, fdat));
 			  }
 			curly_arg = new_arg;
 		      }
@@ -16982,8 +16982,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
   switch (sc->op) 
     {
-      /* in gcc, this becomes a jump table, so we're not doing a linear search (gcc s7.c -S -I.) */
+      /* in gcc, this becomes a jump table, so we're not doing a linear search (gcc s7.c -S -I.) 
+       */
+
     case OP_READ_INTERNAL:
+      /* if we're loading a file, and in the file we evaluate something like:
+       *    (let ()
+       *      (set-current-input-port (open-input-file "tmp2.r5rs"))
+       *      (close-input-port (current-input-port)))
+       *    ... (with no reset of input port to its original value)
+       * the load process tries to read the loaded string, but the sc->input_port is now closed,
+       * and the original is inaccessible!  So we get a segfault in token.  We don't want to put
+       * a port_is_closed check there because token only rarely is in this danger.  I think this
+       * is the only place where we can be about to call token, and someone has screwed up our port.
+       *
+       * We can't call read_error here because it assumes the input string is ok!
+       */
+
+      if (port_is_closed(sc->input_port))
+	return(s7_error(sc, sc->READ_ERROR, s7_cons(sc, make_protected_string(sc, "our input port gort clobbered!"), sc->NIL)));
+
       sc->tok = token(sc);
 
       switch (sc->tok)
@@ -24604,16 +24622,15 @@ s7_scheme *s7_init(void)
  *   typedef enum {S7_READ, S7_READ_CHAR, S7_READ_LINE, S7_READ_BYTE, S7_PEEK_CHAR, S7_IS_CHAR_READY} s7_read_t;
  *   choosing the input function, but output is just the char-at-a-time case
  *
+ *  why not just tie in open-input|output-function on scheme side (distinguish read-char from read-line?)
+ *     port_input_function would be a C->scheme wrapper and function held perhaps in port struct?
+ *  then also open-input|output-string.
+ *
  *
  * SOMEDAY: eval-string (or eval?) with jump outside the eval (call/cc external) -> segfault or odd error
  *             (is this the case in dynamic-wind also?)
  *
- * SOMEDAY: there's a problem with very large vectors -- the GC does not notice how much RAM
- *   they are taking up, and unless we call gc ourselves, we run out of memory.  Since each
- *   element has the vector pointer, the heap pointer, and the free-list pointer (worst case),
- *   we're consuming 28 + 12 or 40 + 24 bytes per element!
- *
- *  also envs as debugging aids: how to show file/line tags as well
+ *  envs as debugging aids: how to show file/line tags as well
  *  and perhaps store cur-code?  __form__ ? make a cartoon of entire state? [need only the pointer, not a copy]
  *
  * this would be good in ws too -- a way to show which notes are active at a given point in the graph
