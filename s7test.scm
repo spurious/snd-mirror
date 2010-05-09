@@ -55,6 +55,11 @@
 	     (eq? result 'error))
 	 (format #t "~A got ~A~%~%" ',tst result))))
 
+(defmacro test-e (tst op arg) ;(display tst) (newline)
+  `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
+     (if (not (eq? result 'error))
+	 (format #t "(~A ~A) got ~A but expected 'error~%~%" ,op ,arg result))))
+
 
 ;;; the error limits below are pretty expansive in some cases, so with-error-data
 ;;;   tries to keep a record of the worst case error for each operator.  error-data
@@ -3684,8 +3689,6 @@
 
 (test (#(1 2) 1) 2)
 (test (#(1 2) 1 2) 'error)
-
-
 (test (make-vector) 'error)
 
 (for-each
@@ -4802,7 +4805,220 @@
     (lambda (arg)
       (test (op arg) 'error))
     (list "hi" 1 1.0 1+i 2/3 'a-symbol (make-vector 3) '(1 2) (cons 1 2) abs (if #f #f) (lambda (a) (+ a 1)))))
- (list set-current-input-port set-current-error-port set-current-output-port))
+ (list set-current-input-port set-current-error-port set-current-output-port close-input-port close-output-port))
+
+(let ((hi (open-output-string)))
+  (close-output-port hi)
+  (test (get-output-string hi) 'error))
+
+;; since read of closed port will generate garbage, it needs to be an error,
+;;   so I guess write of closed port should also be an error
+
+(let ((hi (open-output-string)))
+  (close-output-port hi)
+  (for-each
+   (lambda (op)
+     (test-e (op hi) (object->string op) 'closed-port))
+   (list (lambda (p) (display 1 p))
+	 (lambda (p) (write 1 p))
+	 (lambda (p) (write-char #\a p))
+	 (lambda (p) (write-byte 0 p))
+	 (lambda (p) (format p "hiho"))
+	 set-current-output-port
+	 set-current-input-port
+	 set-current-error-port
+	 newline)))
+
+(let ((hi (open-input-string "hiho")))
+  (close-input-port hi)
+  (for-each
+   (lambda (op)
+     (test-e (op hi) (object->string op) 'closed-port))
+   (list read read-char read-byte peek-char char-ready? read-line 
+	 port-filename port-line-number
+	 set-current-output-port
+	 set-current-input-port
+	 set-current-error-port
+	 )))
+  
+(test (close-output-port (open-input-string "hiho")) 'error)
+(test (close-input-port (open-output-string)) 'error)
+
+(let* ((new-error-port (open-output-string))
+       (old-error-port (set-current-error-port new-error-port)))
+  (catch #t
+	 (lambda ()
+	   (format #f "~R" 123))
+	 (lambda args
+	   (format (current-error-port) "oops")))
+  (let ((str (get-output-string new-error-port)))
+    (set-current-error-port old-error-port)
+    (test str "oops")))
+
+
+(let ((hi (open-input-string "hiho")))
+  (for-each
+   (lambda (op)
+     (test-e (op hi) (object->string op) 'input-port))
+   (list (lambda (p) (display 1 p))
+	 (lambda (p) (write 1 p))
+	 (lambda (p) (write-char #\a p))
+	 (lambda (p) (write-byte 0 p))
+	 (lambda (p) (format p "hiho"))
+	 newline))
+  (close-input-port hi))
+
+(let ((hi (open-output-string)))
+  (for-each
+   (lambda (op)
+     (test-e (op hi) (object->string op) 'output-port))
+   (list read read-char read-byte peek-char char-ready? read-line))
+  (close-output-port hi))
+
+(test (output-port? (current-error-port)) #t)
+(test (and (not (null? (current-error-port))) (input-port? (current-error-port))) #f)
+
+(call-with-output-file "tmp1.r5rs"
+  (lambda (p)
+    (do ((i 0 (+ i 1)))
+	((= i 256))
+      (write-byte i p))))
+(call-with-input-file "tmp1.r5rs"
+  (lambda (p)
+    (do ((i 0 (+ i 1)))
+	((= i 256))
+      (let ((b (read-byte p)))
+	(if (not (= b i))
+	    (format #t "read-byte got ~A, expected ~A~%" b i))))
+    (let ((eof (read-byte p)))
+      (if (not (eof-object? eof))
+	  (format #t "read-byte at end: ~A~%" eof)))))
+
+(call-with-output-file "tmp1.r5rs"
+  (lambda (p)
+    (do ((i 0 (+ i 1)))
+	((= i 256))
+      (write-char (integer->char i) p))))
+
+(define our-eof #f)
+
+(call-with-input-file "tmp1.r5rs"
+  (lambda (p)
+    (do ((i 0 (+ i 1)))
+	((= i 256))
+      (let ((b (read-char p)))
+	(if (or (not (char? b))
+		(not (char=? b (integer->char i))))
+	    (format #t "read-char got ~A, expected ~A (~D: char? ~A)~%" b (integer->char i) i (char? (integer->char i))))))
+    (let ((eof (read-char p)))
+      (if (not (eof-object? eof))
+	  (format #t "read-char at end: ~A~%" eof))
+      (set! our-eof eof))))
+
+(test (eof-object? (integer->char 255)) #f)
+(test (eof-object? our-eof) #t)
+(test (char->integer our-eof) 'error)
+(test (char? our-eof) #f)
+(test (eof-object? ((lambda () our-eof))) #t)
+
+(test (open-input-file "[*not-a-file!*]-") 'error)
+(test (call-with-input-file "[*not-a-file!*]-" (lambda (p) p)) 'error)
+(test (with-input-from-file "[*not-a-file!*]-" (lambda () #f)) 'error)
+
+(test (open-input-file "") 'error)
+(test (call-with-input-file "" (lambda (p) p)) 'error)
+(test (with-input-from-file "" (lambda () #f)) 'error)
+
+;(test (open-output-file "/bad-dir/badness/[*not-a-file!*]-") 'error)
+;(test (call-with-output-file "/bad-dir/badness/[*not-a-file!*]-" (lambda (p) p)) 'error)
+;(test (with-output-to-file "/bad-dir/badness/[*not-a-file!*]-" (lambda () #f)) 'error)
+
+(with-output-to-file "tmp.r5rs"
+  (lambda ()
+    (write-char #\a)
+    (with-output-to-file "tmp1.r5rs"
+      (lambda ()
+	(format #t "~C" #\b)
+	(with-output-to-file "tmp2.r5rs"
+	  (lambda ()
+	    (display #\c)))
+	(display (with-input-from-file "tmp2.r5rs"
+		   (lambda ()
+		     (read-char))))))
+    (with-input-from-file "tmp1.r5rs"
+      (lambda ()
+	(write-byte (read-byte))
+	(write-char (read-char))))))
+
+(with-input-from-file "tmp.r5rs"
+  (lambda ()
+    (test (read-line) "abc")))
+
+(with-input-from-file "tmp.r5rs" ; this assumes tmp.r5rs has "abc" as above
+  (lambda ()
+    (test (read-char) #\a)
+    (test (eval-string "(+ 1 2)") 3)
+    (test (read-char) #\b)
+    (with-input-from-string "(+ 3 4)"
+      (lambda ()
+	(test (read) '(+ 3 4))))
+    (test (read-char) #\c)))
+
+(test (eval-string (object->string (with-input-from-string "(+ 1 2)" (lambda () (read))))) 3)
+(test (eval (eval-string "(with-input-from-string \"(+ 1 2)\" (lambda () (read)))")) 3)
+
+(for-each
+ (lambda (arg)
+   (test
+    (with-input-from-string (format #f "~A" arg)
+      (lambda ()
+	(read)))
+    arg))
+ (list 1 3/4 '(1 2) #(1 2) :hi))
+
+(test
+ (let ((cin #f)
+       (cerr #f))
+   (catch #t
+	  (lambda ()
+	    (with-input-from-string "123"
+	      (lambda ()
+		(set! cin (current-input-port))
+		(error 'testing "jump out"))))
+	  (lambda args
+	    (set! cerr #t)))
+   (format #f "~A ~A" cin cerr))
+ "<port string input (closed)> #t")
+
+(test
+ (let ((cout #f)
+       (cerr #f))
+   (catch #t
+	  (lambda ()
+	    (with-output-to-string
+	      (lambda ()
+		(set! cout (current-output-port))
+		(error 'testing "jump out"))))
+	  (lambda args
+	    (set! cerr #t)))
+   (format #f "~A ~A" cout cerr))
+ "<port string output (closed)> #t")
+
+(call-with-output-file "tmp1.r5rs"
+  (lambda (p)
+    (display "1" p)
+    (newline p)
+    (newline p)
+    (display "2345" p)
+    (newline p)))
+
+(call-with-input-file "tmp1.r5rs"
+  (lambda (p)
+    (test (read-line p) "1")
+    (test (read-line p) "")
+    (test (read-line p) "2345")
+    (test (eof-object? (read-line p)) #t)))
+
 
 
 

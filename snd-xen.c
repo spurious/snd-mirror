@@ -2602,7 +2602,7 @@ static s7_pointer listener_read(s7_scheme *sc, s7_read_t read_choice, s7_pointer
   return(xen_false);
 }
 
-static void listener_write(s7_scheme *sc, char c, s7_pointer port)
+static void listener_write(s7_scheme *sc, unsigned char c, s7_pointer port)
 {
   char str[2];
   str[0] = c;

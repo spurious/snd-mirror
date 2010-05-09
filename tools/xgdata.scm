@@ -7077,8 +7077,20 @@
 (CFNC-2190 "void gtk_widget_set_mapped GtkWidget* widget gboolean mapped")
 (CFNC-2190 "gboolean gtk_widget_get_mapped GtkWidget* widget")
 
-;;; 2.19.6
 #|
+
+;;; 2.19.6
 (CFUNC-2190 "void gdk_keymap_add_virtual_modifiers GdkKeymap* keymap GdkModifierType* state")
 (CFUNC-2190 "void gtk_widget_get_requisition GtkWidget* widget GtkRequisition* requisition")
+
+;;; 2.21.0
+(CFUNC-2190 "void gdk_window_coords_to_parent GdkWindow* window gdouble x gdouble y gdouble* [parent_x] gdouble* [parent_y]")
+(CFUNC-2190 "void gdk_window_coords_from_parent GdkWindow* window gdouble parent_x gdouble parent_y gdouble* [x] gdouble* [y]")
+(CFUNC-2190 "GdkWindow* gdk_window_get_effective_parent GdkWindow* window")
+(CFUNC-2190 "GdkWindow* gdk_window_get_effective_toplevel GdkWindow* window")
+(CFUNC-2190 "GtkWidget* gtk_accessible_get_widget GtkAccessible* accessible")
+(CFUNC-2190 "GtkAdjustment* gtk_text_view_get_hadjustment GtkTextView* text_view")
+(CFUNC-2190 "GtkAdjustment* gtk_text_view_get_vadjustment GtkTextView* text_view")
+(CFUNC-2190 "gboolean gtk_widget_send_focus_change GtkWidget* widget GdkEvent* event")
+
 |#

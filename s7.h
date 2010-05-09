@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.55"
-#define S7_DATE "3-May-10"
+#define S7_VERSION "1.56"
+#define S7_DATE "9-May-10"
 
 
 typedef long long int s7_Int;
@@ -373,16 +373,16 @@ const char *s7_get_output_string(s7_scheme *sc, s7_pointer out_port);       /* (
   /*    don't free the string */
 
 typedef enum {S7_READ, S7_READ_CHAR, S7_READ_LINE, S7_READ_BYTE, S7_PEEK_CHAR, S7_IS_CHAR_READY} s7_read_t;
-s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc, char c, s7_pointer port));  
+s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc, unsigned char c, s7_pointer port));  
 s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port));
 void *s7_port_data(s7_pointer port);
 void *s7_port_set_data(s7_pointer port, void *stuff);
 
-char s7_read_char(s7_scheme *sc, s7_pointer port);                          /* (read-char port) */
-char s7_peek_char(s7_scheme *sc, s7_pointer port);                          /* (peek-char port) */
+int s7_read_char(s7_scheme *sc, s7_pointer port);                           /* (read-char port) */
+int s7_peek_char(s7_scheme *sc, s7_pointer port);                           /* (peek-char port) */
 s7_pointer s7_read(s7_scheme *sc, s7_pointer port);                         /* (read port) */
 void s7_newline(s7_scheme *sc, s7_pointer port);                            /* (newline port) */
-void s7_write_char(s7_scheme *sc, char c, s7_pointer port);                 /* (write-char c port) */
+void s7_write_char(s7_scheme *sc, int c, s7_pointer port);                  /* (write-char c port) */
 void s7_write(s7_scheme *sc, s7_pointer obj, s7_pointer port);              /* (write obj port) */
 void s7_display(s7_scheme *sc, s7_pointer obj, s7_pointer port);            /* (display obj port) */
 const char *s7_format(s7_scheme *sc, s7_pointer args);                      /* (format ... */
@@ -759,6 +759,8 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 9-May:     s7_read_char and s7_peek_char have to return an int, not a char (<eof>=-1, but 255 is a legit char).
+ *            s7_write_char and s7_open_output_function have similar changes.
  * 3-May:     *#readers* to customize #... reading.  Also nan? and infinite?.
  *            multidimensional vector constants using #nD(...): (#2D((1 2 3) (4 5 6)) 0 0) -> 1.
  * 15-Apr:    multiple-values support is now on the WITH_MULTIPLE_VALUES switch (default 1).
