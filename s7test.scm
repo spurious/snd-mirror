@@ -4722,8 +4722,8 @@
 
 (test (call-with-input-file "tmp1.r5rs"
 	(lambda (p)
-	  (read-line p))) ; I guess this omits the <cr>?
-      (format #f "1234567890"))
+	  (read-line p)))
+      "1234567890")
 
 (call-with-output-file "tmp1.r5rs"
   (lambda (p)
@@ -4764,8 +4764,45 @@
 
 (test (call-with-input-file "tmp1.r5rs"
 	(lambda (p)
-	  (read-line p))) ; I guess this omits the <cr>?
-      (format #f "1234567890"))
+	  (read-line p)))
+      "1234567890")
+
+(for-each 
+ (lambda (op)
+   (for-each
+    (lambda (arg)
+      (test (op arg display) 'error))
+    (list 1 1.0 1+i 2/3 'a-symbol (make-vector 3) '(1 2) (cons 1 2) abs #f #t (if #f #f) (lambda (a) (+ a 1)))))
+ (list call-with-output-file call-with-input-file
+       call-with-output-string call-with-input-string
+       with-input-from-string with-input-from-file
+       with-output-to-file))
+
+(for-each 
+ (lambda (op)
+   (for-each
+    (lambda (arg)
+      (test (op arg) 'error))
+    (list 1 1.0 1+i 2/3 'a-symbol (make-vector 3) '(1 2) (cons 1 2) abs #f #t (if #f #f) (lambda (a) (+ a 1)))))
+ (list open-output-file open-input-file 
+       open-input-string))
+
+(for-each
+ (lambda (op)
+   (for-each 
+    (lambda (arg)
+      (test (op "hi" arg) 'error))
+    (list "hi" 1 1.0 1+i 2/3 'a-symbol (make-vector 3) '(1 2) (cons 1 2) abs #f #t (if #f #f) (lambda (a) (+ a 1)))))
+ (list write display write-byte newline write-char 
+       read read-char read-byte peek-char char-ready? read-line))
+
+(for-each
+ (lambda (op)
+   (for-each
+    (lambda (arg)
+      (test (op arg) 'error))
+    (list "hi" 1 1.0 1+i 2/3 'a-symbol (make-vector 3) '(1 2) (cons 1 2) abs (if #f #f) (lambda (a) (+ a 1)))))
+ (list set-current-input-port set-current-error-port set-current-output-port))
 
 
 

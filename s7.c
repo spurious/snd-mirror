@@ -16987,10 +16987,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_READ_INTERNAL:
       /* if we're loading a file, and in the file we evaluate something like:
+       *
        *    (let ()
        *      (set-current-input-port (open-input-file "tmp2.r5rs"))
        *      (close-input-port (current-input-port)))
        *    ... (with no reset of input port to its original value)
+       *
        * the load process tries to read the loaded string, but the sc->input_port is now closed,
        * and the original is inaccessible!  So we get a segfault in token.  We don't want to put
        * a port_is_closed check there because token only rarely is in this danger.  I think this
@@ -17000,7 +17002,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
 
       if (port_is_closed(sc->input_port))
-	return(s7_error(sc, sc->READ_ERROR, s7_cons(sc, make_protected_string(sc, "our input port gort clobbered!"), sc->NIL)));
+	return(s7_error(sc, sc->READ_ERROR, s7_cons(sc, make_protected_string(sc, "our input port got clobbered!"), sc->NIL)));
 
       sc->tok = token(sc);
 
