@@ -1755,6 +1755,11 @@
 (test (string-length "#| comment |#") 13)
 (test (let ((str (string #\# #\\ #\t))) (string-length str)) 3)
 
+(test (string-length "#\\(") 3)
+(test (string-length ")()") 3)
+(test (string-length "(()") 3)
+(test (string-length "(string #\\( #\\+ #\\space #\\1 #\\space #\\3 #\\))") 44)
+
 (for-each
  (lambda (arg)
    (test (string-length arg) 'error))
@@ -2102,6 +2107,71 @@
 ;;; some schemes accept \' and other such sequences in a string, but the spec only mentions \\ and \"
 
 (test (reinvert 12 string->list list->string "12345") "12345")
+
+#|
+(define (all-strs len file)
+  (let* ((funny-chars (list #\` #\# #\, #\@ #\' #\" #\. #\( #\) #\\))
+	 (num-chars (length funny-chars)))
+    (let ((ctrs (make-vector len 0)))
+
+      (do ((i 0 (+ i 1)))
+	  ((= i (expt num-chars len)))
+	(let ((carry #t))
+	  (do ((k 0 (+ k 1)))
+	      ((or (= k len)
+		   (not carry)))
+	    (vector-set! ctrs k (+ 1 (vector-ref ctrs k)))
+	    (if (= (vector-ref ctrs k) num-chars)
+		(vector-set! ctrs k 0)
+		(set! carry #f)))
+
+	  (let ((strlst '()))
+	    (do ((k 0 (+ k 1)))
+		((= k len))
+	      (let ((c (list-ref funny-chars (vector-ref ctrs k))))
+		(set! strlst (cons c strlst))))
+
+	    (let ((str (list->string strlst)))
+	      (format file "(test (and (string=? ~S (string ~{#\\~C~^ ~})) (equal? '~A (string->list ~S))) #t)~%" str strlst strlst str))))))))
+
+(call-with-output-file "strtst.scm"
+  (lambda (p)
+    (do ((len 3 (+ len 1)))
+	((= len 5))
+      (all-strs len p))))
+
+(load "strtst.scm")
+|#
+
+(test (and (string=? "\"" (string #\")) (equal? '(#\") (string->list "\""))) #t)
+(test (and (string=? "#\\" (string #\# #\\)) (equal? '(#\# #\\) (string->list "#\\"))) #t)
+(test (and (string=? "#(" (string #\# #\()) (equal? '(#\# #\() (string->list "#("))) #t)
+(test (and (string=? "\"@" (string #\" #\@)) (equal? '(#\" #\@) (string->list "\"@"))) #t)
+(test (and (string=? ")(" (string #\) #\()) (equal? '(#\) #\() (string->list ")("))) #t)
+(test (and (string=? "`)#" (string #\` #\) #\#)) (equal? '(#\` #\) #\#) (string->list "`)#"))) #t)
+(test (and (string=? "##\\" (string #\# #\# #\\)) (equal? '(#\# #\# #\\) (string->list "##\\"))) #t)
+(test (and (string=? "#\"(" (string #\# #\" #\()) (equal? '(#\# #\" #\() (string->list "#\"("))) #t)
+(test (and (string=? "#.@" (string #\# #\. #\@)) (equal? '(#\# #\. #\@) (string->list "#.@"))) #t)
+(test (and (string=? ",`@" (string #\, #\` #\@)) (equal? '(#\, #\` #\@) (string->list ",`@"))) #t)
+(test (and (string=? "',@" (string #\' #\, #\@)) (equal? '(#\' #\, #\@) (string->list "',@"))) #t)
+(test (and (string=? "\"#@" (string #\" #\# #\@)) (equal? '(#\" #\# #\@) (string->list "\"#@"))) #t)
+(test (and (string=? "\")\"" (string #\" #\) #\")) (equal? '(#\" #\) #\") (string->list "\")\""))) #t)
+(test (and (string=? ")#(" (string #\) #\# #\()) (equal? '(#\) #\# #\() (string->list ")#("))) #t)
+(test (and (string=? "`(,@" (string #\` #\( #\, #\@)) (equal? '(#\` #\( #\, #\@) (string->list "`(,@"))) #t)
+(test (and (string=? "`)#\"" (string #\` #\) #\# #\")) (equal? '(#\` #\) #\# #\") (string->list "`)#\""))) #t)
+(test (and (string=? "#\"'#" (string #\# #\" #\' #\#)) (equal? '(#\# #\" #\' #\#) (string->list "#\"'#"))) #t)
+(test (and (string=? "#(@\\" (string #\# #\( #\@ #\\)) (equal? '(#\# #\( #\@ #\\) (string->list "#(@\\"))) #t)
+(test (and (string=? "#(\\\\" (string #\# #\( #\\ #\\)) (equal? '(#\# #\( #\\ #\\) (string->list "#(\\\\"))) #t)
+(test (and (string=? ",,.@" (string #\, #\, #\. #\@)) (equal? '(#\, #\, #\. #\@) (string->list ",,.@"))) #t)
+(test (and (string=? ",@`\"" (string #\, #\@ #\` #\")) (equal? '(#\, #\@ #\` #\") (string->list ",@`\""))) #t)
+(test (and (string=? "\"'\")" (string #\" #\' #\" #\))) (equal? '(#\" #\' #\" #\)) (string->list "\"'\")"))) #t)
+(test (and (string=? "\")#\"" (string #\" #\) #\# #\")) (equal? '(#\" #\) #\# #\") (string->list "\")#\""))) #t)
+(test (and (string=? "(\\`)" (string #\( #\\ #\` #\))) (equal? '(#\( #\\ #\` #\)) (string->list "(\\`)"))) #t)
+(test (and (string=? "))\"'" (string #\) #\) #\" #\')) (equal? '(#\) #\) #\" #\') (string->list "))\"'"))) #t)
+(test (and (string=? "\\,\\\"" (string #\\ #\, #\\ #\")) (equal? '(#\\ #\, #\\ #\") (string->list "\\,\\\""))) #t)
+(test (and (string=? "\\\"`\"" (string #\\ #\" #\` #\")) (equal? '(#\\ #\" #\` #\") (string->list "\\\"`\""))) #t)
+(test (and (string=? "\\\\#\"" (string #\\ #\\ #\# #\")) (equal? '(#\\ #\\ #\# #\") (string->list "\\\\#\""))) #t)
+
 
 
 (test (symbol->string 'hi) "hi")
@@ -3286,6 +3356,38 @@
 (test (member 1 '(1 2 . 3)) 'error)
 
 
+#|
+(test (list #b) 'error)
+(test (char? #\spaces) 'error)
+(test (car '( . 1)) 'error) 
+(test (car '(. )) 'error)
+(test (car '( . )) 'error)
+(test (car '(. . . )) 'error)
+(test '#( . 1) 'error) 
+(test '(1 2 . ) 'error)
+(test '#(1 2 . ) 'error)
+(test (+ 1 . . ) 'error)
+(test (car '(1 . )) 'error)
+(test (car '(1 . . 2)) 'error)
+(test '#( . ) 'error) 
+(test '#(1 . ) 'error)
+(test '#(. . . ) 'error)
+(test '#(1 . . 2) 'error)
+(test '(. 1) 'error)
+(test '#(. 1) 'error)
+(test '(. ) 'error)
+(test '#(. ) 'error)
+(test (list 1 . 2) 'error)
+(test (+ 1 . 2) 'error)
+(test (car '@#`') 'error)
+(test (list . ) 'error)
+(test '#( .) 'error)
+(test (car '( .)) 'error)
+(test '#(1 . 2) 'error)
+(test (let ((. 3)) .) 'error)
+|#
+      
+      
 
 
 
@@ -4966,6 +5068,11 @@
 
 (test (eval-string (object->string (with-input-from-string "(+ 1 2)" (lambda () (read))))) 3)
 (test (eval (eval-string "(with-input-from-string \"(+ 1 2)\" (lambda () (read)))")) 3)
+(test (eval-string "(eval (with-input-from-string \"(+ 1 2)\" (lambda () (read))))") 3)
+(test (eval-string "(eval-string (format #f \"(+ 1 2)\"))") 3)
+(test (eval-string (object->string (eval-string (format #f "(+ 1 2)")))) 3)
+(test (eval-string "(eval-string \"(+ 1 2)\")") 3)
+(test (eval-string "(eval-string (object->string (eval-string \"(+ 1 2)\")))") 3)
 
 (for-each
  (lambda (arg)
@@ -5019,6 +5126,82 @@
     (test (read-line p) "2345")
     (test (eof-object? (read-line p)) #t)))
 
+(for-each
+ (lambda (arg)
+   (test (port-filename arg) 'error))
+ (list "hi" -1 #\a 1 0 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t '() (list 1 2 3) '(1 . 2)))
+
+(for-each
+ (lambda (arg)
+   (test (port-line-number arg) 'error))
+ (list "hi" -1 #\a 1 0 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t '() (list 1 2 3) '(1 . 2)))
+
+
+
+
+;(test (string=? (let ((hi (lambda (b) (+ b 1)))) (object->string hi)) "hi") #t) -- this has changed
+(test (string=? (object->string 32) "32") #t)
+(test (string=? (object->string 32.5) "32.5") #t)
+(test (string=? (object->string 32/5) "32/5") #t)
+(test (string=? (object->string "hiho") "\"hiho\"") #t)
+(test (string=? (object->string 'symb) "symb") #t)
+(test (string=? (object->string (list 1 2 3)) "(1 2 3)") #t)
+(test (string=? (object->string (cons 1 2)) "(1 . 2)") #t)
+(test (string=? (object->string '#(1 2 3)) "#(1 2 3)") #t)
+(test (string=? (object->string +) "+") #t)
+
+(test (let ((l (list 1 2))) 
+	(list-set! l 0 l) 
+	(string=? (object->string l) "([circular list] 2)")) 
+      #t)
+(test (let ((lst (cons 1 2))) 
+	(set-cdr! lst lst)
+	(string=? (object->string lst) "[circular list]"))
+      #t)
+(test (let ((lst (cons 1 2))) 
+	(set-car! lst lst)
+	(string=? (object->string lst) "([circular list] . 2)"))
+      #t)
+(test (let ((lst (cons (cons 1 2) 3))) 
+	(set-car! (car lst) lst)
+	(string=? (object->string lst) "(([circular list] . 2) . 3)"))
+      #t)
+(test (let ((v (vector 1 2))) 
+	(vector-set! v 0 v) 
+	(string=? (object->string v) "#([circular vector] 2)")) 
+      #t)
+(test (let* ((l1 (list 1 2)) (l2 (list l1))) 
+	(list-set! l1 0 l1) 
+	(string=? (object->string l2) "(([circular list] 2))")) 
+      #t)
+(test (let* ((v1 (vector 1 2)) (v2 (vector v1))) 
+	(vector-set! v1 1 v1) 
+	(string=? (object->string v2) "#(#(1 [circular vector]))")) 
+      #t)
+(test (let ((v1 (make-vector 3 1))) 
+	(vector-set! v1 0 (cons 3 v1)) 
+	(string=? (object->string v1) "#((3 . [circular vector]) 1 1)")) 
+      #t)
+(test (let ((h1 (make-hash-table 11))
+	    (old-print-length *vector-print-length*))
+	(set! *vector-print-length* 32)
+	(hash-table-set! h1 'hi h1)
+	(let ((result (object->string h1)))
+	  (set! *vector-print-length* old-print-length)
+	  (let ((val (string=? result "#(() () () () ((\"hi\" . [circular hash-table])) () () () () () ())")))
+	    (if (not val)
+		(format #t ";hash display:~%  ~A~%  ~A~%" (object->string h1) "#(() () () () ((\"hi\" . [circular hash-table])) () () () () () ())"))
+	    val)))
+      #t)
+
+(test (let* ((l1 (list 1 2))
+	     (v1 (vector 1 2))
+	     (l2 (list 1 l1 2))
+	     (v2 (vector l1 v1 l2)))
+	(vector-set! v1 0 v2)
+	(list-set! l1 1 l2)
+	(string=? (object->string v2) "#((1 (1 [circular list] 2)) #([circular vector] 2) (1 (1 [circular list]) 2))"))
+      #t)
 
 
 
@@ -6729,6 +6912,16 @@
        (list "hi" -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
       (test (call-with-values (lambda () (values -1 2)) abs) 'error)
 
+      (test (multiple-value-bind (a b) (values 1 2) (+ a b)) 3)
+      (test (multiple-value-bind (a) 1 a) 1)
+      (test (multiple-value-bind (a . rest) (values 1 2 3) (+ a (apply + rest))) 6)
+      (test (multiple-value-bind a (values 1 2 3) a) '(1 2 3))
+
+      (test (let ((a 1)
+		  (b 2))
+	      (multiple-value-set! (a b) (values 32 64))
+	      (+ a b))
+	    96)
       ))
 
 
@@ -9936,6 +10129,397 @@
 (test (macroexpand (_expansion_ 3)) `(+ 3 1))
 (test '(_expansion_ 3) (quote (_expansion_ 3)))
 (test (_expansion_ (+ (_expansion_ 1) 2)) 5)
+
+(test (let () (define-constant __c1__ 32) __c1__) 32)
+(test (let () __c1__) 'error)
+(test (let ((__c1__ 3)) __c1__) 'error)
+(test (let* ((__c1__ 3)) __c1__) 'error)
+(test (letrec ((__c1__ 3)) __c1__) 'error)
+(test (let () (define (__c1__ a) a) (__c1__ 3)) 'error)
+(test (let () (set! __c1__ 3)) 'error)
+
+(test (constant? '__c1__) #t)
+(test (constant? pi) #t)
+(test (constant? 'pi) #t) ; take that, Clisp!
+(test (constant? 12345) #t)
+(test (constant? 3.14) #t)
+(test (constant? :asdf) #t) 
+(test (constant? "hi") #t) 
+(test (constant? #\a) #t) 
+(test (constant? #f) #t) 
+(test (constant? #t) #t) 
+(test (constant? '()) #t) 
+(test (constant? ()) #t) 
+(test (constant? '(a)) #t) 
+(test (constant? '*features*) #f)
+(test (let ((a 3)) (constant? 'a)) #f)
+(test (constant? 'abs) #f)
+(test (constant? abs) #t)
+
+
+(test (defined? 'pi) #t)
+(test (defined? 'pi (global-environment)) #t)
+(test (defined? 'abs (global-environment)) #t)
+(test (defined? 'abs (current-environment)) #t)
+(test (let ((__c2__ 32)) (defined? '__c2__)) #t)
+(test (let ((__c2__ 32)) (defined? '__c2__ (current-environment))) #t)
+(test (let ((__c2__ 32)) (defined? '__c3__ (current-environment))) #f)
+(test (let ((__c2__ 32)) (defined? '__c2__ (global-environment))) #f)
+(test (let ((__c2__ 32)) (defined? '__c3__ (global-environment))) #f)
+
+(test (let ((a 1)) (eval '(+ a b) (augment-environment (current-environment) (cons 'b 32)))) 33)
+
+(test (call-with-exit (lambda (c) (0 (c 1)))) 1)
+(test (call-with-exit (lambda (k) (k "foo"))) "foo")
+(test (call-with-exit (lambda (k) "foo")) "foo")
+(test (call-with-exit (lambda (k) (k "foo") "oops")) "foo")
+(test (let ((memb (lambda (x ls)
+		    (call-with-exit
+		     (lambda (break)
+		       (do ((ls ls (cdr ls)))
+			   ((null? ls) #f)
+			 (if (equal? x (car ls))
+			     (break ls))))))))
+	(list (memb 'd '(a b c))
+	      (memb 'b '(a b c))))
+      '(#f (b c)))
+
+(let ((x 1))
+  (define y (call-with-exit (lambda (return) (set! x (return 32)))))
+  (test (and (= x 1) (= y 32)) #t)
+  (set! y (call-with-exit (lambda (return) ((lambda (a b c) (set! x a)) 1 2 (return 33)))))
+  (test (and (= x 1) (= y 33)) #t)
+  (set! y (call-with-exit (lambda (return) ((lambda (a b) (return a) (set! x b)) 2 3))))
+  (test (and (= x 1) (= y 2)) #t))
+
+(if (and (defined? 'provided?)
+	 (provided? 'threads))
+    (begin
+      
+      (test (let ((ctr 0))
+	      (let ((t1 (make-thread (lambda () (set! ctr (+ ctr 1))))))
+		(join-thread t1))
+	      ctr)
+	    1)
+      
+      (test (let ((ctr 0))
+	      (let ((t1 (make-thread (lambda () (set! ctr (+ ctr 1))))))
+		(join-thread t1)
+		(thread? t1)))
+	    #t)
+      
+      (test (let ((ctr 0)
+		  (loc (make-thread-variable)))
+	      (let ((t1 (make-thread (lambda () (set! (loc) (+ ctr 1)) (set! ctr (loc))))))
+		(join-thread t1)
+		ctr))
+	    1)
+      
+      (test (let ((ctr 0)
+		  (loc (make-thread-variable)))
+	      (let ((t1 (make-thread (lambda () (set! (loc) (+ ctr 1)) (set! ctr (thread-variable? loc))))))
+		(join-thread t1)
+		ctr))
+	    #t)
+      
+      (test (let ((ctr 0)
+		  (lock (make-lock)))
+	      (let ((t1 (make-thread (lambda () (grab-lock lock) (set! ctr (+ ctr 1)) (release-lock lock)))))
+		(join-thread t1))
+	      ctr)
+	    1)
+      
+      (test (let ((ctr 0)
+		  (lock (make-lock)))
+	      (let ((t1 (make-thread (lambda () (grab-lock lock) (set! ctr (lock? lock)) (release-lock lock)))))
+		(join-thread t1))
+	      ctr)
+	    #t)
+      
+      (test (let ((ctr 0)
+		  (lock (make-lock)))
+	      (let ((t1 (make-thread (lambda () (grab-lock lock) (set! ctr (+ ctr 1)) (release-lock lock))))
+		    (t2 (make-thread (lambda () (grab-lock lock) (set! ctr (+ ctr 1)) (release-lock lock)))))
+		(join-thread t1)
+		(join-thread t2))
+	      ctr)
+	    2)
+      
+      (test (let ((ctr 0)
+		  (lock (make-lock)))
+	      (let ((threads '()))
+		(do ((i 0 (+ 1 i)))
+		    ((= i 8))
+		  (let ((t1 (make-thread (lambda () (grab-lock lock) (set! ctr (+ ctr 1)) (release-lock lock)))))
+		    (set! threads (cons t1 threads))))
+		(for-each
+		 (lambda (tn)
+		   (join-thread tn))
+		 threads))
+	      ctr)
+	    8)
+      
+      (test (let ((ctr 0)
+		  (ctr1 0)
+		  (ctr2 0)
+		  (lock (make-lock))
+		  (var (make-thread-variable)))
+	      (let ((t1 (make-thread (lambda () (grab-lock lock) (set! ctr (+ ctr 1)) (set! (var) ctr) (release-lock lock) (set! ctr1 (var)))))
+		    (t2 (make-thread (lambda () (grab-lock lock) (set! ctr (+ ctr 1)) (set! (var) ctr) (release-lock lock) (set! ctr2 (var))))))
+		(join-thread t1)
+		(join-thread t2))
+	      (and (= ctr 2)
+		   (= (+ ctr1 ctr2) 3)))
+	    #t)
+
+      (let ((v1 (make-vector 4096))
+	    (v2 (make-vector 4096))
+	    (dsum 0.0)
+	    (dlock (make-lock)))
+	
+	(do ((i 0 (+ i 1)))
+	    ((= i 4096))
+	  (set! (v1 i) (- (random 2.0) 1.0))
+	  (set! (v2 i) (- (random 2.0) 1.0)))
+
+	(let ((threads '()))
+	  (let loop 
+	      ((i 0))
+	    (set! threads (cons (make-thread
+				 (lambda ()
+				   (let ((sum 0.0)
+					 (end (+ i 1024)))
+				     (do ((k i (+ k 1)))
+					 ((= k end))
+				       (set! sum (+ sum (* (v1 k) (v2 k)))))
+				     (grab-lock dlock)
+				     (set! dsum (+ dsum sum))
+				     (release-lock dlock))))
+				threads))
+	    (if (< i 3072)
+		(loop (+ i 1024))))
+
+	  (for-each 
+	   (lambda (thread) 
+	     (join-thread thread))
+	   threads))
+
+	(let ((xsum 0.0))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 4096))
+	    (set! xsum (+ xsum (* (v1 i) (v2 i)))))
+
+	  (test (< (abs (- xsum dsum)) .001) #t)))
+      
+      (for-each
+       (lambda (arg)
+	 (test (thread? arg) #f))
+       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+      
+      (for-each
+       (lambda (arg)
+	 (test (lock? arg) #f))
+       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+      
+      (for-each
+       (lambda (arg)
+	 (test (thread-variable? arg) #f))
+       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+      
+      (for-each
+       (lambda (arg)
+	 (test (make-thread arg) 'error))
+       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" '#(()) (list 1 2 3) '(1 . 2)))
+      
+      (for-each
+       (lambda (arg)
+	 (test (grab-lock arg) 'error))
+       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" '#(()) (list 1 2 3) '(1 . 2)))
+      
+      (for-each
+       (lambda (arg)
+	 (test (release-lock arg) 'error))
+       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" '#(()) (list 1 2 3) '(1 . 2)))))
+
+(test (apply "hi" '(1 2)) 'error)
+(test ("hi" 1 2) 'error)
+(test (apply '(1 2) '(1 2)) 'error)
+(test ((list 1 2 3) 1 2) 'error)
+
+(test (apply "hi" '(1)) #\i)
+(test ("hi" 1) #\i)
+(test (apply '(1 2) '(1)) 2)
+(test ((list 1 2 3) 1) 2)
+
+(test (let ((pi 3)) pi) 'error)
+;;   or ... (let ((:asdf 3)) :asdf) and worse (let ((:key 1)) :key) or even worse (let ((:3 1)) 1)
+(test (let ((x_x_x 32)) (let () (define-constant x_x_x 3) x_x_x) (set! x_x_x 31) x_x_x) 'error)
+
+
+(test (with-environment (current-environment) (let ((x 1)) x)) 1)
+
+(test (let ((x 12))
+	(let ((e (current-environment)))
+	  (let ((x 32))
+	    (with-environment e (* x 2)))))
+      24)
+
+(test (let ((*features* 123))
+	(let ((e (global-environment)))
+	  (with-environment e (list? *features*))))
+      #t)
+
+(test (with-environment) 'error)
+(test (with-environment 1) 'error)
+(test (with-environment () 1) 'error)
+(test (with-environment (current-environment) 1) 1)
+
+(test (let ((local 123))
+	(define pws-test (make-procedure-with-setter
+			  (lambda () local)
+			  (lambda (val) (set! local val))))
+	(pws-test))
+      123)
+
+(test (let ((local 123))
+	(define pws-test (make-procedure-with-setter
+			  (lambda () local)
+			  (lambda (val) (set! local val))))
+	(pws-test 32))
+      'error)
+
+(test (let ((local 123))
+	(define pws-test (make-procedure-with-setter
+			  (lambda () local)
+			  (lambda (val) (set! local val))))
+	(set! (pws-test 32) 123))
+      'error)
+
+(test (call-with-exit (lambda (return) (let ((local 123))
+					 (define pws-test (make-procedure-with-setter
+							   (lambda () (return "oops"))
+							   (lambda (val) (set! local val))))
+					 (pws-test))))
+      "oops")
+(test (call-with-exit (lambda (return) (let ((local 123))
+					 (define pws-test (make-procedure-with-setter
+							   (lambda () 123)
+							   (lambda (val) (return "oops"))))
+					 (set! (pws-test) 1))))
+      "oops")
+
+(test (let ((local 123))
+	(define pws-test (make-procedure-with-setter
+			  (lambda () local)
+			  (lambda (val) (set! local val))))
+	(set! (pws-test) 321)
+	(pws-test))
+      321)
+
+(test (let ((v (vector 1 2 3)))
+	(define vset (make-procedure-with-setter
+		      (lambda (loc)
+			(vector-ref v loc))
+		      (lambda (loc val)
+			(vector-set! v loc val))))
+	(let ((lst (list vset)))
+	  (let ((val (vset 1)))
+	    (set! (vset 1) 32)
+	    (let ((val1 (vset 1)))
+	      (set! ((car lst) 1) 3)
+	      (list val val1 (vset 1))))))
+      (list 2 32 3))
+
+;; generic length/copy/fill!
+(test (length (list 1 2)) 2)
+(test (length "hiho") 4)
+(test (length (vector 1 2)) 2)
+(test (length (make-hash-table 7)) 7)
+(test (length '()) 0)
+(test (length (#(#() #()) 1)) 0)
+
+(test (copy 3) 3)
+(test (copy 3/4) 3/4)
+(test (copy "hi") "hi")
+(test (copy (list 1 2 3)) (list 1 2 3))
+(test (copy (vector 0.0)) (vector 0.0))
+(test (copy #\f) #\f)
+(test (copy (list 1 (list 2 3))) (list 1 (list 2 3)))
+(test (copy (cons 1 2)) (cons 1 2))
+(test (copy '(1 2 . 3)) '(1 2 . 3))
+(test (copy (+)) 0)
+(test (copy +) +)
+(test (copy (#(#() #()) 1)) #())
+
+(if (not (provided? 'gmp))
+    (let ((r1 (make-random-state 1234)))
+      (random 1.0 r1)
+      (let ((r2 (copy r1)))
+	(let ((v1 (random 1.0 r1))
+	      (v2 (random 1.0 r2)))
+	  (test (= v1 v2) #t)
+	  (let ((v3 (random 1.0 r1)))
+	    (random 1.0 r1)
+	    (random 1.0 r1)
+	    (let ((v4 (random 1.0 r2)))
+	      (test (= v3 v4) #t)))))))
+
+(if (provided? 'gmp)
+    (let ((i (copy (bignum "1")))
+	  (r (copy (bignum "3/4")))
+	  (f (copy (bignum "1.5")))
+	  (c (copy (bignum "1.0+1.0i"))))
+      (test (= i (bignum "1")) #t)
+      (test (= r (bignum "3/4")) #t)
+      (test (= f (bignum "1.5")) #t)
+      (test (= c (bignum "1.0+1.0i")) #t)))
+
+(let ((str (string #\1 #\2 #\3)))
+  (fill! str #\x)
+  (test str "xxx"))
+(let ((v (vector 1 2 3)))
+  (fill! v 0.0)
+  (test v (vector 0.0 0.0 0.0)))
+(let ((lst (list 1 2 (list (list 3) 4))))
+  (fill! lst 100)
+  (test lst '(100 100 ((100) 100))))
+(let ((cn (cons 1 2)))
+  (fill! cn 100)
+  (test cn (cons 100 100)))
+(test (fill! 1 0) 'error)
+(test (fill! 'hi 0) 'error)
+
+;; generic for-each/map
+(test (let ((sum 0)) (for-each (lambda (n) (set! sum (+ sum n))) (vector 1 2 3)) sum) 6)      
+(test (map (lambda (n) (+ n 1)) (vector 1 2 3)) '(2 3 4))
+(test (map (lambda (a b) (/ a b)) (list 1 2 3) (list 4 5 6)) '(1/4 2/5 1/2))
+
+;; try some applicable stuff
+(test (let ((lst (list 1 2 3)))
+	(set! (lst 1) 32)
+	(list (lst 0) (lst 1)))
+      (list 1 32))
+
+(test (let ((hash (make-hash-table)))
+	(set! (hash 'hi) 32)
+	(hash 'hi))
+      32)
+
+(test (let ((str (string #\1 #\2 #\3)))
+	(set! (str 1) #\a)
+	(str 1))
+      #\a)
+
+(test (let ((v (vector 1 2 3)))
+	(set! (v 1) 0)
+	(v 1))
+      0)
+
+(let ()
+  (define (hiho a) __func__)
+  (test (or (equal? (hiho 1) 'hiho)
+	    (equal? (car (hiho 1)) 'hiho))
+	#t))
 
 
 #|
@@ -19251,484 +19835,6 @@
 
 
 
-
-(test (let () (define-constant __c1__ 32) __c1__) 32)
-(test (let () __c1__) 'error)
-(test (let ((__c1__ 3)) __c1__) 'error)
-(test (let* ((__c1__ 3)) __c1__) 'error)
-(test (letrec ((__c1__ 3)) __c1__) 'error)
-(test (let () (define (__c1__ a) a) (__c1__ 3)) 'error)
-(test (let () (set! __c1__ 3)) 'error)
-(test (constant? '__c1__) #t)
-(test (constant? 'abs) #f)
-(test (constant? '*features*) #f)
-
-(test (defined? 'pi) #t)
-(test (defined? 'pi (global-environment)) #t)
-(test (defined? 'abs (global-environment)) #t)
-(test (defined? 'abs (current-environment)) #t)
-(test (let ((__c2__ 32)) (defined? '__c2__)) #t)
-(test (let ((__c2__ 32)) (defined? '__c2__ (current-environment))) #t)
-(test (let ((__c2__ 32)) (defined? '__c3__ (current-environment))) #f)
-(test (let ((__c2__ 32)) (defined? '__c2__ (global-environment))) #f)
-(test (let ((__c2__ 32)) (defined? '__c3__ (global-environment))) #f)
-
-(test (let ((a 1)) (eval '(+ a b) (augment-environment (current-environment) (cons 'b 32)))) 33)
-
-(test (call-with-exit (lambda (c) (0 (c 1)))) 1)
-(test (call-with-exit (lambda (k) (k "foo"))) "foo")
-(test (call-with-exit (lambda (k) "foo")) "foo")
-(test (call-with-exit (lambda (k) (k "foo") "oops")) "foo")
-(test (let ((memb (lambda (x ls)
-		    (call-with-exit
-		     (lambda (break)
-		       (do ((ls ls (cdr ls)))
-			   ((null? ls) #f)
-			 (if (equal? x (car ls))
-			     (break ls))))))))
-	(list (memb 'd '(a b c))
-	      (memb 'b '(a b c))))
-      '(#f (b c)))
-(let ((x 1))
-  (define y (call-with-exit (lambda (return) (set! x (return 32)))))
-  (test (and (= x 1) (= y 32)) #t)
-  (set! y (call-with-exit (lambda (return) ((lambda (a b c) (set! x a)) 1 2 (return 33)))))
-  (test (and (= x 1) (= y 33)) #t)
-  (set! y (call-with-exit (lambda (return) ((lambda (a b) (return a) (set! x b)) 2 3))))
-  (test (and (= x 1) (= y 2)) #t))
-
-;(test (string=? (let ((hi (lambda (b) (+ b 1)))) (object->string hi)) "hi") #t) -- this has changed
-(test (string=? (object->string 32) "32") #t)
-(test (string=? (object->string 32.5) "32.5") #t)
-(test (string=? (object->string 32/5) "32/5") #t)
-(test (string=? (object->string "hiho") "\"hiho\"") #t)
-(test (string=? (object->string 'symb) "symb") #t)
-(test (string=? (object->string (list 1 2 3)) "(1 2 3)") #t)
-(test (string=? (object->string (cons 1 2)) "(1 . 2)") #t)
-(test (string=? (object->string '#(1 2 3)) "#(1 2 3)") #t)
-(test (string=? (object->string +) "+") #t)
-
-(test (let ((l (list 1 2))) 
-	(list-set! l 0 l) 
-	(string=? (object->string l) "([circular list] 2)")) 
-      #t)
-(test (let ((lst (cons 1 2))) 
-	(set-cdr! lst lst)
-	(string=? (object->string lst) "[circular list]"))
-      #t)
-(test (let ((lst (cons 1 2))) 
-	(set-car! lst lst)
-	(string=? (object->string lst) "([circular list] . 2)"))
-      #t)
-(test (let ((lst (cons (cons 1 2) 3))) 
-	(set-car! (car lst) lst)
-	(string=? (object->string lst) "(([circular list] . 2) . 3)"))
-      #t)
-(test (let ((v (vector 1 2))) 
-	(vector-set! v 0 v) 
-	(string=? (object->string v) "#([circular vector] 2)")) 
-      #t)
-(test (let* ((l1 (list 1 2)) (l2 (list l1))) 
-	(list-set! l1 0 l1) 
-	(string=? (object->string l2) "(([circular list] 2))")) 
-      #t)
-(test (let* ((v1 (vector 1 2)) (v2 (vector v1))) 
-	(vector-set! v1 1 v1) 
-	(string=? (object->string v2) "#(#(1 [circular vector]))")) 
-      #t)
-(test (let ((v1 (make-vector 3 1))) 
-	(vector-set! v1 0 (cons 3 v1)) 
-	(string=? (object->string v1) "#((3 . [circular vector]) 1 1)")) 
-      #t)
-(test (let ((h1 (make-hash-table 11))
-	    (old-print-length *vector-print-length*))
-	(set! *vector-print-length* 32)
-	(hash-table-set! h1 'hi h1)
-	(let ((result (object->string h1)))
-	  (set! *vector-print-length* old-print-length)
-	  (let ((val (string=? result "#(() () () () ((\"hi\" . [circular hash-table])) () () () () () ())")))
-	    (if (not val)
-		(format #t ";hash display:~%  ~A~%  ~A~%" (object->string h1) "#(() () () () ((\"hi\" . [circular hash-table])) () () () () () ())"))
-	    val)))
-      #t)
-
-(test (let* ((l1 (list 1 2))
-	     (v1 (vector 1 2))
-	     (l2 (list 1 l1 2))
-	     (v2 (vector l1 v1 l2)))
-	(vector-set! v1 0 v2)
-	(list-set! l1 1 l2)
-	(string=? (object->string v2) "#((1 (1 [circular list] 2)) #([circular vector] 2) (1 (1 [circular list]) 2))"))
-      #t)
-
-(if with-values (begin
-(test (multiple-value-bind (a b) (values 1 2) (+ a b)) 3)
-(test (multiple-value-bind (a) 1 a) 1)
-(test (multiple-value-bind (a . rest) (values 1 2 3) (+ a (apply + rest))) 6)
-(test (multiple-value-bind a (values 1 2 3) a) '(1 2 3))
-
-(test (let ((a 1)
-	    (b 2))
-	(multiple-value-set! (a b) (values 32 64))
-	(+ a b))
-      96)
-))
-
-(if (and (defined? 'provided?)
-	 (provided? 'threads))
-    (begin
-      
-      (test (let ((ctr 0))
-	      (let ((t1 (make-thread (lambda () (set! ctr (+ ctr 1))))))
-		(join-thread t1))
-	      ctr)
-	    1)
-      
-      (test (let ((ctr 0))
-	      (let ((t1 (make-thread (lambda () (set! ctr (+ ctr 1))))))
-		(join-thread t1)
-		(thread? t1)))
-	    #t)
-      
-      (test (let ((ctr 0)
-		  (loc (make-thread-variable)))
-	      (let ((t1 (make-thread (lambda () (set! (loc) (+ ctr 1)) (set! ctr (loc))))))
-		(join-thread t1)
-		ctr))
-	    1)
-      
-      (test (let ((ctr 0)
-		  (loc (make-thread-variable)))
-	      (let ((t1 (make-thread (lambda () (set! (loc) (+ ctr 1)) (set! ctr (thread-variable? loc))))))
-		(join-thread t1)
-		ctr))
-	    #t)
-      
-      (test (let ((ctr 0)
-		  (lock (make-lock)))
-	      (let ((t1 (make-thread (lambda () (grab-lock lock) (set! ctr (+ ctr 1)) (release-lock lock)))))
-		(join-thread t1))
-	      ctr)
-	    1)
-      
-      (test (let ((ctr 0)
-		  (lock (make-lock)))
-	      (let ((t1 (make-thread (lambda () (grab-lock lock) (set! ctr (lock? lock)) (release-lock lock)))))
-		(join-thread t1))
-	      ctr)
-	    #t)
-      
-      (test (let ((ctr 0)
-		  (lock (make-lock)))
-	      (let ((t1 (make-thread (lambda () (grab-lock lock) (set! ctr (+ ctr 1)) (release-lock lock))))
-		    (t2 (make-thread (lambda () (grab-lock lock) (set! ctr (+ ctr 1)) (release-lock lock)))))
-		(join-thread t1)
-		(join-thread t2))
-	      ctr)
-	    2)
-      
-      (test (let ((ctr 0)
-		  (lock (make-lock)))
-	      (let ((threads '()))
-		(do ((i 0 (+ 1 i)))
-		    ((= i 8))
-		  (let ((t1 (make-thread (lambda () (grab-lock lock) (set! ctr (+ ctr 1)) (release-lock lock)))))
-		    (set! threads (cons t1 threads))))
-		(for-each
-		 (lambda (tn)
-		   (join-thread tn))
-		 threads))
-	      ctr)
-	    8)
-      
-      (test (let ((ctr 0)
-		  (ctr1 0)
-		  (ctr2 0)
-		  (lock (make-lock))
-		  (var (make-thread-variable)))
-	      (let ((t1 (make-thread (lambda () (grab-lock lock) (set! ctr (+ ctr 1)) (set! (var) ctr) (release-lock lock) (set! ctr1 (var)))))
-		    (t2 (make-thread (lambda () (grab-lock lock) (set! ctr (+ ctr 1)) (set! (var) ctr) (release-lock lock) (set! ctr2 (var))))))
-		(join-thread t1)
-		(join-thread t2))
-	      (and (= ctr 2)
-		   (= (+ ctr1 ctr2) 3)))
-	    #t)
-
-      (let ((v1 (make-vector 4096))
-	    (v2 (make-vector 4096))
-	    (dsum 0.0)
-	    (dlock (make-lock)))
-	
-	(do ((i 0 (+ i 1)))
-	    ((= i 4096))
-	  (set! (v1 i) (- (random 2.0) 1.0))
-	  (set! (v2 i) (- (random 2.0) 1.0)))
-
-	(let ((threads '()))
-	  (let loop 
-	      ((i 0))
-	    (set! threads (cons (make-thread
-				 (lambda ()
-				   (let ((sum 0.0)
-					 (end (+ i 1024)))
-				     (do ((k i (+ k 1)))
-					 ((= k end))
-				       (set! sum (+ sum (* (v1 k) (v2 k)))))
-				     (grab-lock dlock)
-				     (set! dsum (+ dsum sum))
-				     (release-lock dlock))))
-				threads))
-	    (if (< i 3072)
-		(loop (+ i 1024))))
-
-	  (for-each 
-	   (lambda (thread) 
-	     (join-thread thread))
-	   threads))
-
-	(let ((xsum 0.0))
-	  (do ((i 0 (+ i 1)))
-	      ((= i 4096))
-	    (set! xsum (+ xsum (* (v1 i) (v2 i)))))
-
-	  (test (< (abs (- xsum dsum)) .001) #t)))
-      
-      (for-each
-       (lambda (arg)
-	 (test (thread? arg) #f))
-       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
-      
-      (for-each
-       (lambda (arg)
-	 (test (lock? arg) #f))
-       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
-      
-      (for-each
-       (lambda (arg)
-	 (test (thread-variable? arg) #f))
-       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
-      
-      (for-each
-       (lambda (arg)
-	 (test (make-thread arg) 'error))
-       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" '#(()) (list 1 2 3) '(1 . 2)))
-      
-      (for-each
-       (lambda (arg)
-	 (test (grab-lock arg) 'error))
-       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" '#(()) (list 1 2 3) '(1 . 2)))
-      
-      (for-each
-       (lambda (arg)
-	 (test (release-lock arg) 'error))
-       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" '#(()) (list 1 2 3) '(1 . 2)))))
-
-(test (constant? pi) #t)
-(test (constant? 'pi) #t) ; take that, Clisp!
-(test (constant? 12345) #t)
-(test (constant? 3.14) #t)
-(test (constant? :asdf) #t) 
-(test (constant? "hi") #t) 
-(test (constant? #\a) #t) 
-(test (constant? #f) #t) 
-(test (constant? #t) #t) 
-(test (constant? '()) #t) 
-(test (constant? ()) #t) 
-(test (constant? '(a)) #t) 
-(test (constant? '*features*) #f)
-(test (let ((a 3)) (constant? 'a)) #f)
-(test (constant? 'abs) #f)
-(test (constant? abs) #t)
-
-(test (apply "hi" '(1 2)) 'error)
-(test ("hi" 1 2) 'error)
-(test (apply '(1 2) '(1 2)) 'error)
-(test ((list 1 2 3) 1 2) 'error)
-
-(test (apply "hi" '(1)) #\i)
-(test ("hi" 1) #\i)
-(test (apply '(1 2) '(1)) 2)
-(test ((list 1 2 3) 1) 2)
-
-(test (let ((pi 3)) pi) 'error)
-;;   or ... (let ((:asdf 3)) :asdf) and worse (let ((:key 1)) :key) or even worse (let ((:3 1)) 1)
-(test (let ((x_x_x 32)) (let () (define-constant x_x_x 3) x_x_x) (set! x_x_x 31) x_x_x) 'error)
-
-
-(test (with-environment (current-environment) (let ((x 1)) x)) 1)
-
-(test (let ((x 12))
-	(let ((e (current-environment)))
-	  (let ((x 32))
-	    (with-environment e (* x 2)))))
-      24)
-
-(test (let ((*features* 123))
-	(let ((e (global-environment)))
-	  (with-environment e (list? *features*))))
-      #t)
-
-(test (with-environment) 'error)
-(test (with-environment 1) 'error)
-(test (with-environment () 1) 'error)
-(test (with-environment (current-environment) 1) 1)
-
-(test (let ((local 123))
-	(define pws-test (make-procedure-with-setter
-			  (lambda () local)
-			  (lambda (val) (set! local val))))
-	(pws-test))
-      123)
-
-(test (let ((local 123))
-	(define pws-test (make-procedure-with-setter
-			  (lambda () local)
-			  (lambda (val) (set! local val))))
-	(pws-test 32))
-      'error)
-
-(test (let ((local 123))
-	(define pws-test (make-procedure-with-setter
-			  (lambda () local)
-			  (lambda (val) (set! local val))))
-	(set! (pws-test 32) 123))
-      'error)
-
-(test (call-with-exit (lambda (return) (let ((local 123))
-					 (define pws-test (make-procedure-with-setter
-							   (lambda () (return "oops"))
-							   (lambda (val) (set! local val))))
-					 (pws-test))))
-      "oops")
-(test (call-with-exit (lambda (return) (let ((local 123))
-					 (define pws-test (make-procedure-with-setter
-							   (lambda () 123)
-							   (lambda (val) (return "oops"))))
-					 (set! (pws-test) 1))))
-      "oops")
-
-(test (let ((local 123))
-	(define pws-test (make-procedure-with-setter
-			  (lambda () local)
-			  (lambda (val) (set! local val))))
-	(set! (pws-test) 321)
-	(pws-test))
-      321)
-
-(test (let ((v (vector 1 2 3)))
-	(define vset (make-procedure-with-setter
-		      (lambda (loc)
-			(vector-ref v loc))
-		      (lambda (loc val)
-			(vector-set! v loc val))))
-	(let ((lst (list vset)))
-	  (let ((val (vset 1)))
-	    (set! (vset 1) 32)
-	    (let ((val1 (vset 1)))
-	      (set! ((car lst) 1) 3)
-	      (list val val1 (vset 1))))))
-      (list 2 32 3))
-
-(for-each
- (lambda (arg)
-   (test (port-filename arg) 'error))
- (list "hi" -1 #\a 1 0 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t '() (list 1 2 3) '(1 . 2)))
-
-(for-each
- (lambda (arg)
-   (test (port-line-number arg) 'error))
- (list "hi" -1 #\a 1 0 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t '() (list 1 2 3) '(1 . 2)))
-
-;; generic length/copy/fill!
-(test (length (list 1 2)) 2)
-(test (length "hiho") 4)
-(test (length (vector 1 2)) 2)
-(test (length (make-hash-table 7)) 7)
-(test (length '()) 0)
-(test (length (#(#() #()) 1)) 0)
-
-(test (copy 3) 3)
-(test (copy 3/4) 3/4)
-(test (copy "hi") "hi")
-(test (copy (list 1 2 3)) (list 1 2 3))
-(test (copy (vector 0.0)) (vector 0.0))
-(test (copy #\f) #\f)
-(test (copy (list 1 (list 2 3))) (list 1 (list 2 3)))
-(test (copy (cons 1 2)) (cons 1 2))
-(test (copy '(1 2 . 3)) '(1 2 . 3))
-(test (copy (+)) 0)
-(test (copy +) +)
-(test (copy (#(#() #()) 1)) #())
-
-(if (not (provided? 'gmp))
-    (let ((r1 (make-random-state 1234)))
-      (random 1.0 r1)
-      (let ((r2 (copy r1)))
-	(let ((v1 (random 1.0 r1))
-	      (v2 (random 1.0 r2)))
-	  (test (= v1 v2) #t)
-	  (let ((v3 (random 1.0 r1)))
-	    (random 1.0 r1)
-	    (random 1.0 r1)
-	    (let ((v4 (random 1.0 r2)))
-	      (test (= v3 v4) #t)))))))
-
-(if (provided? 'gmp)
-    (let ((i (copy (bignum "1")))
-	  (r (copy (bignum "3/4")))
-	  (f (copy (bignum "1.5")))
-	  (c (copy (bignum "1.0+1.0i"))))
-      (test (= i (bignum "1")) #t)
-      (test (= r (bignum "3/4")) #t)
-      (test (= f (bignum "1.5")) #t)
-      (test (= c (bignum "1.0+1.0i")) #t)))
-
-(let ((str (string #\1 #\2 #\3)))
-  (fill! str #\x)
-  (test str "xxx"))
-(let ((v (vector 1 2 3)))
-  (fill! v 0.0)
-  (test v (vector 0.0 0.0 0.0)))
-(let ((lst (list 1 2 (list (list 3) 4))))
-  (fill! lst 100)
-  (test lst '(100 100 ((100) 100))))
-(let ((cn (cons 1 2)))
-  (fill! cn 100)
-  (test cn (cons 100 100)))
-(test (fill! 1 0) 'error)
-(test (fill! 'hi 0) 'error)
-
-;; generic for-each/map
-(test (let ((sum 0)) (for-each (lambda (n) (set! sum (+ sum n))) (vector 1 2 3)) sum) 6)      
-(test (map (lambda (n) (+ n 1)) (vector 1 2 3)) '(2 3 4))
-(test (map (lambda (a b) (/ a b)) (list 1 2 3) (list 4 5 6)) '(1/4 2/5 1/2))
-
-;; try some applicable stuff
-(test (let ((lst (list 1 2 3)))
-	(set! (lst 1) 32)
-	(list (lst 0) (lst 1)))
-      (list 1 32))
-
-(test (let ((hash (make-hash-table)))
-	(set! (hash 'hi) 32)
-	(hash 'hi))
-      32)
-
-(test (let ((str (string #\1 #\2 #\3)))
-	(set! (str 1) #\a)
-	(str 1))
-      #\a)
-
-(test (let ((v (vector 1 2 3)))
-	(set! (v 1) 0)
-	(v 1))
-      0)
-
-(let ()
-  (define (hiho a) __func__)
-  (test (or (equal? (hiho 1) 'hiho)
-	    (equal? (car (hiho 1)) 'hiho))
-	#t))
 
 
 
@@ -45028,38 +45134,6 @@
  (list '1e311 '1e-311 '0e311 '2.1e40000))
 
 
-#|
-(test (list #b) 'error)
-(test (char? #\spaces) 'error)
-(test (car '( . 1)) 'error) 
-(test (car '(. )) 'error)
-(test (car '( . )) 'error)
-(test (car '(. . . )) 'error)
-(test '#( . 1) 'error) 
-(test '(1 2 . ) 'error)
-(test '#(1 2 . ) 'error)
-(test (+ 1 . . ) 'error)
-(test (car '(1 . )) 'error)
-(test (car '(1 . . 2)) 'error)
-(test '#( . ) 'error) 
-(test '#(1 . ) 'error)
-(test '#(. . . ) 'error)
-(test '#(1 . . 2) 'error)
-(test '(. 1) 'error)
-(test '#(. 1) 'error)
-(test '(. ) 'error)
-(test '#(. ) 'error)
-(test (list 1 . 2) 'error)
-(test (+ 1 . 2) 'error)
-(test (car '@#`') 'error)
-(test (list . ) 'error)
-(test '#( .) 'error)
-(test (car '( .)) 'error)
-(test '#(1 . 2) 'error)
-(test (let ((. 3)) .) 'error)
-|#
-      
-      
 ;;; ----------------
       
 ;;; due primarily to stupidities on my part, the "expected" values are sometimes not more

@@ -33,7 +33,7 @@
  *        no invidious distinction between built-in and "foreign"
  *          (this makes it easy to extend built-in operators like "+" -- see s7.html for a simple example)
  *        lists, strings, vectors, and hash-tables are (set-)applicable objects
- *        true multiple-values, multiple-value-bind, multiple-value-set! (all optional: see WITH_MULTIPLE_VALUES)
+ *        true multiple-values (optional)
  *        threads (optional)
  *        multidimensional vectors (optional)
  *
@@ -16600,6 +16600,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 			{
 			  if (!isspace(c))
 			    return(sc->T); /* #f here would give confusing error message "end of input", so return #t=bad backslash */
+			  /* this in my opinion is not optimal. It's easy to forget that backslash needs to be backslashed. */
 			}
 		    }
 		}
@@ -16676,10 +16677,12 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  
 	case TOKEN_DOUBLE_QUOTE:
 	  sc->value = read_string_constant(sc, sc->input_port);
+
 	  if (sc->value == sc->F)                                /* can happen if input code ends in the middle of a string */
 	    return(read_error(sc, "end of input encountered while in a string"));
 	  if (sc->value == sc->T)
-	    return(read_error(sc, "unknown backslash usage"));
+	    return(read_error(sc, "unknown backslash usage -- perhaps you meant two backslashes?"));
+
 	  return(sc->value);
 	  
 	case TOKEN_SHARP_CONST:
