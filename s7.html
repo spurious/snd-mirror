@@ -1794,7 +1794,14 @@ via the error function, and can be trapped and dealt with via catch.
     (apply format (append (list #t) (cadr args)))))
 
 -&gt; "abs: too many arguments: (1 2)"
+
+(<em class=red>catch</em> 'division-by-zero
+  (lambda () (/ 1.0 0.0))
+  (lambda args (string-&gt;number "inf.0")))
+
+-&gt; inf.0
 </pre>
+
 <p>
 catch has 3 arguments: a tag indicating what error to catch (#t = anything),
 the code (a thunk) that the catch is protecting, and the function to call

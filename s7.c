@@ -1066,8 +1066,7 @@ static s7_pointer g_is_boolean(s7_scheme *sc, s7_pointer args)
 
 bool s7_is_constant(s7_pointer p) 
 { 
-  /* this means "not settable": numbers, characters, #f #t pi etc */
-  /*   so to be non-constant, it has to be a non-keyword symbol with the immutable bit not set, I think */
+  /* this means "always evaluates to the same thing" */
   
   return((type(p) != T_SYMBOL) ||
 	 (is_immutable(p)) ||
@@ -3924,8 +3923,39 @@ static void s7_Int_to_string(char *p, s7_Int n, int radix, int width)
       return;
     }
 
+  if (n == LLONG_MIN)
+    {
+      /* a special case -- we can't use abs on this because it goes to 0, we won't get here if gmp.
+      /* (number->string most-negative-fixnum 2) -> "-0" unless we do something special 
+       */
+      int j;
+      p[0] = '-';
+      /* build it backwards (will reverse digits below) */
+      p[1] = dignum[-(n % (s7_Int)radix)];
+      n /= (s7_Int)radix;
+      n = -n;
+      for (i = 2; n >= (s7_Int)radix; i++)
+	{
+	  p[i] = dignum[n % (s7_Int)radix];
+	  n /= (s7_Int)radix;
+	}
+      p[i] = dignum[n];
+      len = i;
+      /* reverse digits (leave sign alone) */
+      for (i = 1, j = len; i < j; i++, j--)
+	{
+	  char tmp;
+	  tmp = p[i];
+	  p[i] = p[j];
+	  p[j] = tmp;
+	}
+      p[len + 1] = 0;
+      return;
+      /* there has to be a better way... */
+    }
+      
   sign = (n < 0);
-  n = s7_Int_abs(n); /* most-negative-fixnum loses... */
+  n = s7_Int_abs(n); 
 
   /* the previous version that counted up to n, rather than dividing down below n, as here,
    *   could be confused by large ints on 64 bit machines
@@ -4134,7 +4164,8 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
 
 char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
 {
-  return(number_to_string_with_radix(sc, obj, radix, 0, 20, 'g')); /* (log top 10) so we get all the digits */
+  return(number_to_string_with_radix(sc, obj, radix, 0, 20, 'g')); 
+  /* (log top 10) so we get all the digits in base 10 (??) */
 }
 
 
@@ -5031,15 +5062,26 @@ static s7_pointer s7_string_to_number(s7_scheme *sc, char *str, int radix)
 }
 
 
+#ifndef INFINITY
+  #define INFINITY (-log(0.0))
+#endif
+
+#ifndef NAN
+  #define NAN (INFINITY / INFINITY)
+#endif
+
+
 static s7_pointer g_string_to_number(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_to_number "(string->number str :optional (radix 10)) converts str into a number"
   s7_Int radix = 0;
+  char *str;
 
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "string->number", 1, car(args), "a string"));
 
-  if (!(string_value(car(args))))
+  str = (char *)string_value(car(args));
+  if (!str)
     return(sc->F);
 
   if (is_pair(cdr(args)))
@@ -5055,7 +5097,18 @@ static s7_pointer g_string_to_number(s7_scheme *sc, s7_pointer args)
     }
   else radix = 10;
 
-  return(s7_string_to_number(sc, string_value(car(args)), radix));
+  if (safe_strcmp(str, "nan.0") == 0)
+    return(s7_make_real(sc, NAN));
+
+  if ((safe_strcmp(str, "inf.0") == 0) || 
+      (safe_strcmp((const char *)(str + 1), "inf.0") == 0))
+    {
+      if (str[0] == '-')
+	return(s7_make_real(sc, -INFINITY));
+      return(s7_make_real(sc, INFINITY));
+    }
+
+  return(s7_string_to_number(sc, str, radix));
 }
 
 
@@ -5700,7 +5753,8 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	}
 
       if ((s7_is_real(pw)) && (s7_is_negative(pw)))            /* (expt 0 -1) */
-	return(division_by_zero_error(sc, "expt", args));   /* what about (expt 0 -1+i)? */
+	return(division_by_zero_error(sc, "expt", args));      /* what about (expt 0 -1+i)? */
+      /* (Clisp gives divide-by-zero error here, Guile returns inf.0) */
 
       if ((s7_is_integer(n)) && (s7_is_integer(pw)))           /* pw != 0, (expt 0 2312) */
 	return(small_int(0));
@@ -11990,10 +12044,12 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 	  s7_Int n;
 	  if (!s7_is_integer(car(x)))
 	    return(s7_wrong_type_arg_error(sc, "vector ref index,", i + 2, car(x), "an integer"));
+
 	  n = s7_integer(car(x));
 	  if ((n < 0) || 
 	      (n >= vector_dimension(vect, i)))
 	    return(s7_out_of_range_error(sc, "vector ref", i + 2, car(x), "index should be between 0 and the dimension size"));
+
 	  index += n * vector_offset(vect, i);
 	}
       if ((x != sc->NIL) ||
@@ -12004,6 +12060,7 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 #endif
     {
       /* (let ((hi (make-vector 3 0.0)) (sum 0.0)) (do ((i 0 (+ i 1))) ((= i 3)) (set! sum (+ sum (hi i)))) sum) */
+
       if (!s7_is_integer(car(indices)))
 	return(s7_wrong_type_arg_error(sc, "vector ref index,", 2, car(indices), "an integer"));
       if (cdr(indices) != sc->NIL)                            /* (#(1 2) 1 2) */
@@ -12065,10 +12122,12 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
 	  s7_Int n;
 	  if (!s7_is_integer(car(x)))
 	    return(s7_wrong_type_arg_error(sc, "vector-set! index,", i + 2, car(x), "an integer"));
+
 	  n = s7_integer(car(x));
 	  if ((n < 0) || 
 	      (n >= vector_dimension(vec, i)))
 	    return(s7_out_of_range_error(sc, "vector-set!", i, car(x), "index should be between 0 and the dimension size"));
+
 	  index += n * vector_offset(vec, i);
 	}
 
@@ -12084,6 +12143,10 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
     {
       if (!s7_is_integer(cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "vector-set! index,", 2, cadr(args), "an integer"));
+#if WITH_MULTIDIMENSIONAL_VECTORS
+      if (cdddr(args) != sc->NIL)                            /* (vector-set! #(1 2) 1 2 3) */
+	return(s7_wrong_number_of_args_error(sc, "vector set: ~A", args));
+#endif
 
       index = s7_integer(cadr(args));
       if ((index < 0) ||
@@ -24649,16 +24712,12 @@ s7_scheme *s7_init(void)
  * PERHAPS: method lists for c_objects
  * TODO: function IO completed -- tie into scheme for tests?
  *         what is needed? -- scheme "soft-port"?  C-side listener stuff? [snd-g|xlistener, and snd-xen -- 4 altogether]
- *       a guile sort port is a vector: write-char func, write-string, flush, read-char, close
- *       which seems completely random.
- *
- * (define p (make-soft-port
- *   (vector
- *     (lambda (c) (write c stdout))
- *     (lambda (s) (display s stdout))
- *     (lambda () (display \".\" stdout))
- *     (lambda () (char-upcase (read-char)))
- *     (lambda () (display \"@@\" stdout)))
+ *       a guile sort port is a vector: write-char func, write-string, flush, read-char, close which seems completely random (why mix in/out?)
+ *       function-port scheme side a port object with a callable function f(val choice)
+ *           val = thing to write (or omitted on read side)
+ *           choice = symbol of caller: 'read-byte or 'display for example
+ *           this is then passed as the "port" arg to everything else
+ *       what does this buy that string ports don't?
  *
  * s7 has input/output function ports with
  *   typedef enum {S7_READ, S7_READ_CHAR, S7_READ_LINE, S7_READ_BYTE, S7_PEEK_CHAR, S7_IS_CHAR_READY} s7_read_t;

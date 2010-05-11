@@ -654,6 +654,7 @@
  (list "hi" (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1))))
 
 (test (symbol?) 'error)
+(test (symbol? 'hi 'ho) 'error)
 
 
 
@@ -676,7 +677,7 @@
  (list "hi" (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f #() (if #f #f)))
 
 (test (procedure?) 'error)
-
+(test (procedure? abs car) 'error)
 
 
 
@@ -736,7 +737,8 @@
       (format #t "(char? (integer->char ~A)) -> #f?~%" i)))
 
 (test (char?) 'error)
-					;(test (char? '#\xxx) 'error) ; or possibly #f??
+(test (char? #\a #\b) 'error)					;(test (char? '#\xxx) 'error) ; or possibly #f??
+
 
 
 (num-test (let ((str (make-string 258 #\space)))
@@ -774,6 +776,7 @@
   (test (char-upper-case?) 'error)
   (test (char-upper-case? 1) 'error)
   (test (char-upper-case?) 'error)
+  (test (char-upper-case? #\a #\b) 'error)
 
   
   (test (char-lower-case? #\A) #f)
@@ -795,7 +798,7 @@
   (test (char-lower-case?) 'error)
   (test (char-lower-case? 1) 'error)
   (test (char-lower-case?) 'error)
-
+  (test (char-lower-case? #\a #\b) 'error)
 
   
   (test (char-upcase #\A) #\A)
@@ -829,6 +832,7 @@
   (test (reinvert 12 char-upcase char-downcase #\a) #\a)
 
   (test (char-upcase) 'error)
+  (test (char-upcase #\a #\b) 'error)
 
 
   
@@ -855,7 +859,7 @@
   (test (recompose 12 char-downcase #\A) #\a)
 
   (test (char-downcase) 'error)
-  
+  (test (char-downcase #\a #\b) 'error)  
 
   
   (test (char-numeric? #\a) #f)
@@ -883,7 +887,8 @@
    a-to-z)
 
   (test (char-numeric?) 'error)
-  
+  (test (char-numeric? #\a #\b) 'error)  
+
   
   (test (char-whitespace? #\a) #f)
   (test (char-whitespace? #\A) #f)
@@ -908,7 +913,7 @@
    digits)
 
   (test (char-whitespace?) 'error)
- 
+  (test (char-whitespace? #\a #\b) 'error)   
  
   
   (test (char-alphabetic? #\a) #t)
@@ -939,6 +944,7 @@
    mixed-a-to-z)
 
   (test (char-alphabetic?) 'error)
+  (test (char-alphabetic? #\a #\b) 'error)  
 
   (for-each
    (lambda (op)
@@ -1029,6 +1035,7 @@
 
   (test (char=? #\a) 'error)
   (test (char=?) 'error)
+  (test (char=? #\a 0) 'error)
   
   
   (test (char<? #\z #\0) #f)
@@ -1328,6 +1335,8 @@
 (test (integer->char) 'error)
 (test (integer->char (expt 2 31)) 'error)
 (test (integer->char (expt 2 32)) 'error)
+(test (integer->char 12 14) 'error)
+(test (char->integer #\a #\b) 'error)
 
 (for-each
  (lambda (arg)
@@ -1362,6 +1371,7 @@
  (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (test (string?) 'error)
+(test (string? "hi" "ho") 'error)
 
 
 
@@ -1391,6 +1401,13 @@
 (test (let ((str (string #\\ #\"))) (string=? str "\\\"")) #t)
 (test (let ((str (string #\space #\? #\)))) (string=? str " ?)")) #t)
 (test (let ((str (string #\# #\\ #\t))) (string=? str "#\\t")) #t)
+
+(test (string=? (string) "") #t)
+(test (string=? (string) (make-string 0)) #t)
+(test (string=? (string-copy (string)) (make-string 0)) #t)
+(test (string=? "" (make-string 0)) #t)
+(test (string=? "" (string-append)) #t)
+(test (string=? (string #\space #\newline) " \n") #t)
 
 
 
@@ -1759,6 +1776,8 @@
 (test (string-length ")()") 3)
 (test (string-length "(()") 3)
 (test (string-length "(string #\\( #\\+ #\\space #\\1 #\\space #\\3 #\\))") 44)
+(test (string-length) 'error)
+(test (string-length "hi" "ho") 'error)
 
 (for-each
  (lambda (arg)
@@ -1769,6 +1788,17 @@
  (lambda (arg)
    (test (string #\a arg) 'error))
  (list '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
+
+(test (string) "")
+(test (string #\a #\b #\c) "abc")
+(test (string #\a) "a")
+
+
+(test (make-string 0) "")
+(test (make-string 3 #\a) "aaa")
+(test (make-string 0 #\a) "")
+(test (make-string 3 #\space) "   ")
+(test (let ((hi (make-string 3 #\newline))) (string-length hi)) 3)
 
 (test (make-string -1) 'error)
 
@@ -1786,26 +1816,6 @@
  (lambda (arg)
    (test (make-string arg) 'error))
  (list #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
-
-(test (string=? (string) "") #t)
-(test (string=? (string) (make-string 0)) #t)
-(test (string=? (string-copy (string)) (make-string 0)) #t)
-(test (string=? "" (make-string 0)) #t)
-(test (string=? "" (string-append)) #t)
-
-
-
-(test (string) "")
-(test (string #\a #\b #\c) "abc")
-(test (string #\a) "a")
-(test (string=? (string #\space #\newline) " \n") #t)
-
-
-(test (make-string 0) "")
-(test (make-string 3 #\a) "aaa")
-(test (make-string 0 #\a) "")
-(test (make-string 3 #\space) "   ")
-(test (let ((hi (make-string 3 #\newline))) (string-length hi)) 3)
 
 
 
@@ -1827,6 +1837,9 @@
 (test (string-ref "" 1) 'error)
 (test (string-ref "hiho" (expt 2 32)) 'error)
 
+(test ("hi" 1) #\i)
+(test (("hi" 1) 0) 'error)
+
 
 
 (test (let ((hi (string-copy "hi"))) (string-set! hi 0 #\H) hi) "Hi")
@@ -1834,7 +1847,16 @@
 (test (let ((hi (string-copy "\"\\\""))) (string-set! hi 0 #\a) hi) "a\\\"")
 (test (let ((hi (string-copy "\"\\\""))) (string-set! hi 1 #\a) hi) "\"a\"")
 (test (let ((hi (string #\a #\newline #\b))) (string-set! hi 1 #\c) hi) "acb")
+(test (string-copy "ab") "ab")
+(test (string-copy "") "")
+(test (string-copy "\"\\\"") "\"\\\"")
+(test (let ((hi "abc")) (eq? hi (string-copy hi))) #f)
+(test (let ((hi (string-copy (make-string 8 (integer->char 0))))) (string-fill! hi #\a) hi) "aaaaaaaa") ; is this result widely accepted?
+(test (string-copy (string-copy (string-copy "a"))) "a")
+(test (string-copy (string-copy (string-copy ""))) "")
 
+(test (string-copy) 'error)
+(test (string-copy "hi" "ho") 'error)
 
 
 (let ((str (make-string 10 #\x)))
@@ -1852,6 +1874,8 @@
 ;(test (string-fill! "" #\a) 'error)
 ;(test (string-fill! "hiho" #\a) 'error)
 ;(test (let ((g (lambda () "***"))) (string-fill! (g) #\?)) 'error)
+(test (string-fill!) 'error)
+(test (string-fill! "hiho" #\a #\b) 'error)
 
 
 (test (let ((hi (string-copy "hi"))) (string-fill! hi #\s) hi) "ss")
@@ -1881,7 +1905,6 @@
 			    (string-ref ho 0)))
 	hi)
       "axa")
-
 
 (test (string-set! "hiho" (expt 2 32) #\a) 'error)
 
@@ -1978,6 +2001,8 @@
 (test (substring "" -1 0) 'error)
 (test (substring "abc" -1 0) 'error)
 (test (substring "hiho" (expt 2 32) (+ 2 (expt 2 32))) 'error)
+(test (substring) 'error)
+(test (substring "hiho" 0 1 2) 'error)
 
 (for-each
  (lambda (arg)
@@ -2044,6 +2069,7 @@
 (test (recompose 12 (lambda (a) (string-append a "x")) "a") "axxxxxxxxxxxx")
 (test (recompose 12 (lambda (a) (string-append "x" a)) "a") "xxxxxxxxxxxxa")
 
+(test (string-append "hi" 1) 'error)
 
 
 (test (let ((str (make-string 4 #\x))
@@ -2067,16 +2093,6 @@
 	 "hiho")
 	str)
       "1h2i3h4o")
-
-
-(test (string-copy "ab") "ab")
-(test (string-copy "") "")
-(test (string-copy "\"\\\"") "\"\\\"")
-(test (let ((hi "abc")) (eq? hi (string-copy hi))) #f)
-(test (let ((hi (string-copy (make-string 8 (integer->char 0))))) (string-fill! hi #\a) hi) "aaaaaaaa") ; is this result widely accepted?
-(test (string-copy (string-copy (string-copy "a"))) "a")
-(test (string-copy (string-copy (string-copy ""))) "")
-
 
 
 (test (string->list "abc") (list #\a #\b #\c))
@@ -2107,6 +2123,12 @@
 ;;; some schemes accept \' and other such sequences in a string, but the spec only mentions \\ and \"
 
 (test (reinvert 12 string->list list->string "12345") "12345")
+
+(test (string->list) 'error)
+(test (list->string) 'error)
+(test (string->list "hi" "ho") 'error)
+(test (list->string '() '(1 2)) 'error)
+
 
 #|
 (define (all-strs len file)
@@ -2147,6 +2169,7 @@
 (test (and (string=? "#\\" (string #\# #\\)) (equal? '(#\# #\\) (string->list "#\\"))) #t)
 (test (and (string=? "#(" (string #\# #\()) (equal? '(#\# #\() (string->list "#("))) #t)
 (test (and (string=? "\"@" (string #\" #\@)) (equal? '(#\" #\@) (string->list "\"@"))) #t)
+(test (and (string=? "\";" (string #\" #\;)) (equal? '(#\" #\;) (string->list "\";"))) #t)
 (test (and (string=? ")(" (string #\) #\()) (equal? '(#\) #\() (string->list ")("))) #t)
 (test (and (string=? "`)#" (string #\` #\) #\#)) (equal? '(#\` #\) #\#) (string->list "`)#"))) #t)
 (test (and (string=? "##\\" (string #\# #\# #\\)) (equal? '(#\# #\# #\\) (string->list "##\\"))) #t)
@@ -2209,6 +2232,11 @@
 (test (symbol->string (string->symbol "")) "")
 
 (test (reinvert 12 string->symbol symbol->string "hiho") "hiho")
+
+(test (symbol->string) 'error)
+(test (string->symbol) 'error)
+(test (symbol->string 'hi 'ho) 'error)
+(test (string->symbol "hi" "ho") 'error)
 
 
 
@@ -2565,565 +2593,6 @@
 (test (recompose 10 cdr '(1 2 3 4 5 6 7 8 9 10 11 12)) '(11 12))
 (test (recompose 10 car '(((((((((((1 2 3)))))))))))) '(1 2 3))
 
-
-
-(test (length (list 'a 'b 'c 'd 'e 'f)) 6)
-(test (length (list 'a 'b 'c 'd)) 4)
-(test (length (list 'a (list 'b 'c) 'd)) 3)
-(test (length '()) 0)
-(test (length '(this-that)) 1)
-(test (length '(this - that)) 3)
-(test (length '(a b)) 2)
-(test (length '(a b c)) 3)
-(test (length '(a (b) (c d e))) 3)
-(test (length (list 1 (cons 1 2))) 2)
-(test (length (list 1 (cons 1 '()))) 2)
-
-
-(test (reverse '(a b c d)) '(d c b a))
-(test (reverse '(a b c))  '(c b a))
-(test (reverse '(a (b c) d (e (f))))  '((e (f)) d (b c) a))
-(test (reverse '()) '())
-(test (reverse (list 1 2 3)) '(3 2 1))
-(test (reverse (list 1)) '(1))
-(test (reverse (list)) (list))
-(test (reverse '(1 2 3)) (list 3 2 1))
-(test (reverse '(1)) '(1))
-(test (reverse '((1 2) 3)) '(3 (1 2)))
-(test (reverse '(((1 . 2) . 3) 4)) '(4 ((1 . 2) . 3)))
-(test (reverse (list (list) (list 1 2))) '((1 2) ()))
-(test (reverse '((a) b c d)) '(d c b (a)))
-(test (reverse (reverse (list 1 2 3 4))) (list 1 2 3 4))
-(test (reverse ''foo) '(foo quote))
-(test (let ((x (list 1 2 3 4)))
-	(let ((y (reverse x)))
-	  (and (equal? x (list 1 2 3 4))
-	       (equal? y (list 4 3 2 1)))))
-      #t)
-(test (letrec ((hi (lambda (lst n)
-		     (if (= n 0)
-			 lst
-			 (hi (reverse lst) (- n 1))))))
-	(hi (list 1 2 3) 100))
-      (list 1 2 3))
-(test (let ((var (list 1 2 3))) (reverse (cdr var)) var) (list 1 2 3))
-(test (let ((var '(1 2 3))) (reverse (cdr var)) var) '(1 2 3))
-(test (let ((var (list 1 (list 2 3)))) (reverse (cdr var)) var) (list 1 (list 2 3)))
-(test (let ((var '(1 (2 3)))) (reverse (cdr var)) var) '(1 (2 3)))
-(test (let ((var (list (list 1 2) (list 3 4 5)))) (reverse (car var)) var) '((1 2) (3 4 5)))
-(test (let ((x '(1 2 3))) (list (reverse x) x)) '((3 2 1) (1 2 3)))
-
-(for-each
- (lambda (lst)
-   (if (list? lst)
-       (if (not (equal? lst (reverse (reverse lst))))
-	   (format #t "(reverse (reverse ~A)) -> ~A?~%" (reverse (reverse lst))))))
- lists)
-
-(for-each
- (lambda (lst)
-   (if (list? lst)
-       (if (not (equal? lst (reverse (reverse (reverse (reverse lst))))))
-	   (format #t "(reverse...(4x) ~A) -> ~A?~%" lst (reverse (reverse (reverse (reverse lst))))))))
- lists)
-
-(test (let ((x (list 1 2 3))) (list (recompose 32 reverse x) x)) '((1 2 3) (1 2 3)))
-(test (let ((x (list 1 2 3))) (list (recompose 31 reverse x) x)) '((3 2 1) (1 2 3)))
-
-
-
-(test (pair? 'a) #f)
-(test (pair? '()) #f)
-(test (pair? '(a b c)) #t)
-(test (pair? (cons 1 2)) #t)
-(test (pair? ''()) #t)
-(test (pair? #f) #f)
-(test (pair? (make-vector 6)) #f)
-(test (pair? #t) #f)
-(test (pair? '(a . b)) #t)
-(test (pair? '#(a b))  #f)
-(test (pair? (list 1 2)) #t)
-(test (pair? (list)) #f)
-(test (pair? ''foo) #t)
-(test (pair? (list 'a 'b 'c 'd 'e 'f)) #t)
-(test (pair? '(this-that)) #t)
-(test (pair? '(this - that)) #t)
-(let ((x (list 1 2)))
-  (set-cdr! x x)
-  (test (pair? x) #t))
-(test (pair? (list 1 (cons 1 2))) #t)
-(test (pair? (list 1 (cons 1 '()))) #t)
-(test (pair? (cons 1 '())) #t)
-(test (pair? (cons '() '())) #t)
-(test (pair? (cons '() 1)) #t)
-(test (pair? (list (list))) #t)
-(test (pair? '(())) #t)
-(test (pair? (cons 1 (cons 2 3))) #t)
-
-(for-each
- (lambda (arg)
-   (if (pair? arg)
-       (format #t "(pair? ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
-
-
-
-(test (list? 'a) #f)
-(test (list? '()) #t)
-(test (list? '(a b c)) #t)
-(test (list? (cons 1 2)) #f)
-(test (list? ''()) #t)
-(test (list? #f) #f)
-(test (list? (make-vector 6)) #f)
-(test (list? #t) #f)
-(test (list? '(a . b)) #f)
-(test (list? '#(a b))  #f)
-(test (list? (list 1 2)) #t)
-(test (list? (list)) #t)
-(test (list? ''foo) #t)
-(test (list? (list 'a 'b 'c 'd 'e 'f)) #t)
-(test (list? '(this-that)) #t)
-(test (list? '(this - that)) #t)
-(let ((x (list 1 2)))
-  (set-cdr! x x)
-  (test (list? x) #f))
-(test (list? (list 1 (cons 1 2))) #t)
-(test (list? (list 1 (cons 1 '()))) #t)
-(test (list? (cons 1 '())) #t)
-(test (list? (cons '() '())) #t)
-(test (list? (cons '() 1)) #f)
-(test (list? (list (list))) #t)
-(test (list? '(())) #t)
-(test (list? '(1 2 . 3)) #f)
-(test (list? (cons 1 (cons 2 3))) #f)
-(test (list? '(1 . ())) #t)
-
-(for-each
- (lambda (arg)
-   (if (list? arg)
-       (format #t "(list? ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
-
-
-
-(test (null? 'a) '#f)
-(test (null? '()) #t)
-(test (null? '(a b c)) #f)
-(test (null? (cons 1 2)) #f)
-(test (null? ''()) #f)
-(test (null? #f) #f)
-(test (null? (make-vector 6)) #f)
-(test (null? #t) #f)
-(test (null? '(a . b)) #f)
-(test (null? '#(a b))  #f)
-(test (null? (list 1 2)) #f)
-(test (null? (list)) #t)
-(test (null? ''foo) #f)
-(test (null? (list 'a 'b 'c 'd 'e 'f)) #f)
-(test (null? '(this-that)) #f)
-(test (null? '(this - that)) #f)
-(let ((x (list 1 2)))
-  (set-cdr! x x)
-  (test (null? x) #f))
-(test (null? (list 1 (cons 1 2))) #f)
-(test (null? (list 1 (cons 1 '()))) #f)
-(test (null? (cons 1 '())) #f)
-(test (null? (cons '() '())) #f)
-(test (null? (cons '() 1)) #f)
-(test (null? (list (list))) #f)
-(test (null? '(())) #f)
-(test (null? '#()) #f)
-
-(for-each
- (lambda (arg)
-   (if (null? arg)
-       (format #t "(null? ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
-
-
-(test (reverse! '(a b c d)) '(d c b a))
-(test (reverse! '(a b c))  '(c b a))
-(test (reverse! '(a (b c) d (e (f))))  '((e (f)) d (b c) a))
-(test (reverse! '()) '())
-(test (reverse! (list 1 2 3)) '(3 2 1))
-(test (reverse! (list 1)) '(1))
-(test (reverse! (list)) (list))
-(test (reverse! '(1 2 3)) (list 3 2 1))
-(test (reverse! '(1)) '(1))
-(test (reverse! '((1 2) 3)) '(3 (1 2)))
-(test (reverse! '(((1 . 2) . 3) 4)) '(4 ((1 . 2) . 3)))
-(test (reverse! (list (list) (list 1 2))) '((1 2) ()))
-(test (reverse! '((a) b c d)) '(d c b (a)))
-(test (reverse! (reverse! (list 1 2 3 4))) (list 1 2 3 4))
-(test (reverse! ''foo) '(foo quote))
-(test (reverse (reverse! (list 1 2 3))) (list 1 2 3))
-(test (reverse (reverse! (reverse! (reverse (list 1 2 3))))) (list 1 2 3))
-
-(test (let ((x (list 1 2 3))) (recompose 31 reverse! x)) '(3 2 1))
-
-
-(test (let ((x (cons 1 2))) (set-car! x 3) x) (cons 3 2))
-(test (let ((x (list 1 2))) (set-car! x 3) x) (list 3 2))
-(test (let ((x (list (list 1 2) 3))) (set-car! x 22) x) (list 22 3))
-(test (let ((x (cons 1 2))) (set-car! x '()) x) (cons '() 2))
-(test (let ((x (list 1 (list 2 3 4)))) (set-car! x (list 5 (list 6))) x) (list (list 5 (list 6)) (list 2 3 4)))
-(test (let ((x '(((1) 2) (3)))) (set-car! x '((2) 1)) x) '(((2) 1) (3)))
-(test (let ((x ''foo)) (set-car! x "hi") x) (list "hi" 'foo))
-(test (let ((x '((1 . 2) . 3))) (set-car! x 4) x) '(4 . 3))
-(test (let ((x '(1 . 2))) (set-car! x (cdr x)) x) '(2 . 2))
-(test (let ((x '(1 . 2))) (set-car! x x) (list? x)) #f)
-(test (let ((x (list 1))) (set-car! x '()) x) '(()))
-(test (let ((x '(((1 2) . 3) 4))) (set-car! x 1) x) '(1 4))
-(test (let ((lst (cons 1 (cons 2 3)))) (set-car! (cdr lst) 4) lst) (cons 1 (cons 4 3)))
-(test (let ((lst (cons 1 (cons 2 3)))) (set-car! lst 4) lst) (cons 4 (cons 2 3)))
-
-					;(set-car! '(1 . 2) 3)  ??
-
-(test (let ((x (list 1 2))) (set! (car x) 0) x) (list 0 2))
-(test (let ((x (cons 1 2))) (set! (cdr x) 0) x) (cons 1 0))
-
-
-(test (let ((x (cons 1 2))) (set-cdr! x 3) x) (cons 1 3))
-(test (let ((x (list 1 2))) (set-cdr! x 3) x) (cons 1 3))
-(test (let ((x (list (list 1 2) 3))) (set-cdr! x 22) x) '((1 2) . 22))
-(test (let ((x (cons 1 2))) (set-cdr! x '()) x) (list 1))
-(test (let ((x (list 1 (list 2 3 4)))) (set-cdr! x (list 5 (list 6))) x) '(1 5 (6)))
-(test (let ((x '(((1) 2) (3)))) (set-cdr! x '((2) 1)) x) '(((1) 2) (2) 1))
-(test (let ((x ''foo)) (set-cdr! x "hi") x) (cons 'quote "hi"))
-(test (let ((x '((1 . 2) . 3))) (set-cdr! x 4) x) '((1 . 2) . 4))
-(test (let ((x '(1 . 2))) (set-cdr! x (cdr x)) x) '(1 . 2))
-(test (let ((x '(1 . 2))) (set-cdr! x x) (list? x)) #f)
-(test (let ((x (list 1))) (set-cdr! x '()) x) (list 1))
-(test (let ((x '(1 . (2 . (3 (4 5)))))) (set-cdr! x 4) x) '(1 . 4))
-(test (let ((lst (cons 1 (cons 2 3)))) (set-cdr! (cdr lst) 4) lst) (cons 1 (cons 2 4)))
-
-
-(test (list-ref (list 1 2) 1) 2)
-(test (list-ref '(a b c d) 2) 'c)
-(test (list-ref (cons 1 2) 0) 1) ; !!
-(test (list-ref ''foo 0) 'quote)
-(test (list-ref '((1 2) (3 4)) 1) '(3 4))
-(test (list-ref (list-ref (list (list 1 2) (list 3 4)) 1) 1) 4)
-(test (let ((x (list 1 2 3))) (list-ref x (list-ref x 1))) 3)
-					; (list-ref '(1 2 . 3) 0) -- why is this acceptable?
-
-(test (let ((lst (list 1 2))) (set! (list-ref lst 1) 0) lst) (list 1 0))
-(test (((lambda () list)) 'a 'b 'c) '(a b c))
-(test (apply ((lambda () list)) (list 'a 'b 'c) (list 'c 'd 'e)) '((a b c) c d e))
-(if with-values (test (((lambda () (values list))) 1 2 3) '(1 2 3)))
-(test (apply list 'a 'b '(c)) '(a b c))
-
-(for-each
- (lambda (name op1 op2)
-   (for-each
-    (lambda (lst)
-      (let ((val1 (catch #t (lambda () (op1 lst)) (lambda args 'error)))
-	    (val2 (catch #t (lambda () (op2 lst)) (lambda args 'error))))
-	(if (not (equal? val1 val2))
-	    (format #t "(~A ~A) -> ~A ~A?~%" name lst val1 val2))))
-    lists))
- (list 'list-ref:0 'list-ref:1 'list-ref:2 'list-ref:3)
- (list car cadr caddr cadddr)
- (list (lambda (l) (list-ref l 0)) (lambda (l) (list-ref l 1)) (lambda (l) (list-ref l 2)) (lambda (l) (list-ref l 3))))
-
-(for-each
- (lambda (arg)
-   (test (list-ref (list 1 arg) 1) arg))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
-
-(test (let ((x '(1 . 2))) (set-cdr! x x) (list-ref x 0)) 1)
-(test (let ((x '(1 . 2))) (set-cdr! x x) (list-ref x 1)) 1)
-(test (let ((x '(1 . 2))) (set-cdr! x x) (list-ref x 100)) 1)
-
-
-
-(test (let ((x (list 1))) (list-set! x 0 2) x) (list 2))
-(test (let ((x (cons 1 2))) (list-set! x 0 3) x) '(3 . 2))
-(test (let ((x '((1) 2))) (list-set! x 0 1) x) '(1 2))
-(test (let ((x '(1 2))) (list-set! x 1 (list 3 4)) x) '(1 (3 4)))
-(test (let ((x ''foo)) (list-set! x 0 "hi") x ) '("hi" foo))
-(test (let ((x (list 1 2))) (list-set! x 0 x) (list? x)) #t)
-(test (let ((x (list 1 2))) (list-set! x 1 x) (list? x)) #t)
-
-(test (list-set! '(1 2 3) 1 4) 4)
-(test (set-car! '(1 2) 4) 4)
-(test (set-cdr! '(1 2) 4) 4)
-(test (fill! (list 1 2) 4) 4)
-
-(for-each
- (lambda (arg)
-   (test (let ((x (list 1 2))) (list-set! x 0 arg) (list-ref x 0)) arg))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
-
-
-
-(test (let ((tree1 (list 1 (list 1 2) (list (list 1 2 3)) (list (list (list 1 2 3 4)))))) tree1) '(1 (1 2) ((1 2 3)) (((1 2 3 4)))))
-(test (let ((tree2 (list "one" (list "one" "two") (list (list "one" "two" "three"))))) tree2) '("one" ("one" "two") (("one" "two" "three"))))
-(test (let ((tree1 (list 1 (list 1 2) (list 1 2 3) (list 1 2 3 4)))) tree1) '(1 (1 2) (1 2 3) (1 2 3 4)))
-(test (let ((tree1 (list 1 (list 1 2))) (tree2 (list 1 (list 1 2)))) tree2) '(1 (1 2)))
-(test (let ((tree1 (list 1 (list 1 2))) (tree2 (list 1 (list 1 2)))) (eqv? tree1 tree2)) #f)
-(test (let ((tree1 (list ''a (list ''b ''c))) (tree2 (list ''a (list ''b ''c)))) tree2) '('a ('b 'c)))
-(test (let ((lst (list 1 (list 2 3)))) lst) '(1 (2 3)))
-(test (let* ((lst (list 1 (list 2 3))) (slst lst)) slst) '(1 (2 3)))
-(test (list 1) '(1))
-(test (let ((a 1)) (list a 2)) '(1 2))
-(test (let ((a 1)) (list 'a '2)) '(a 2))
-(test (let ((a 1)) (list 'a 2)) '(a 2))
-(test (list) '())
-(test (let ((a (list 1 2))) a) '(1 2))
-(test (let ((a (list 1 2))) (list 3 4 'a (car (cons 'b 'c)) (+ 6 -2))) '(3 4 a b 4))
-(test (list) '())
-(test (length (list quote do map call/cc lambda define if begin set! let let* cond and or for-each)) 15)
-
-
-(test (list-tail '(1 2 3) 0) '(1 2 3))
-(test (list-tail '(1 2 3) 2) '(3))
-(test (list-tail '(1 2 3) 3) '())
-(test (list-tail '(1 2 3 . 4) 2) '(3 . 4))
-(test (list-tail '(1 2 3 . 4) 3) 4)
-(test (let ((x (list 1 2 3))) (eq? (list-tail x 2) (cddr x))) #t)
-(test (list-tail '() 0) '())
-(test (list-tail (list 1 2) 2) '())
-(test (list-tail (cons 1 2) 0) '(1 . 2))
-(test (list-tail (cons 1 2) 1) 2)
-(test (list-tail ''foo 1) '(foo))
-(test (list-tail '((1 2) (3 4)) 1) '((3 4)))
-(test (list-tail (list-tail (list-tail '(1 2 3 4) 1) 1) 1) '(4))
-
-(let ((x '(1 . 2))) (set-cdr! x x) (test (list-tail x 0) x))
-(let ((x '(1 . 2))) (set-cdr! x x) (test (list-tail x 1) (cdr x)))
-(let ((x '(1 . 2))) (set-cdr! x x) (test (list-tail x 100) x))
-
-(for-each
- (lambda (name op1 op2)
-   (for-each
-    (lambda (lst)
-      (let ((val1 (catch #t (lambda () (op1 lst)) (lambda args 'error)))
-	    (val2 (catch #t (lambda () (op2 lst)) (lambda args 'error))))
-	(if (not (equal? val1 val2))
-	    (format #t "(~A ~A) -> ~A ~A?~%" name lst val1 val2))))
-    lists))
- (list 'list-tail:0 'list-tail:1 'list-tail:2 'list-tail:3 'list-tail:4)
- (list (lambda (l) l) cdr cddr cdddr cddddr)
- (list (lambda (l) (list-tail l 0)) (lambda (l) (list-tail l 1)) (lambda (l) (list-tail l 2)) (lambda (l) (list-tail l 3)) (lambda (l) (list-tail l 4))))
-
-
-
-(let ((e '((a 1) (b 2) (c 3))))
-  (test (assq 'a e) '(a 1))
-  (test (assq 'b e) '(b 2))
-  (test (assq 'd e) #f))
-(test (assq (list 'a) '(((a)) ((b)) ((c))))  #f)
-
-(let ((xcons (cons 1 2))
-      (xvect (vector 1 2))
-      (xlambda (lambda () 1))
-      (xstr "abs"))
-  (let ((e (list (list #t 1) (list #f 2) (list 'a 3) (list xcons 4) (list xvect 5) (list xlambda 6) (list xstr 7) (list car 8))))
-    (test (assq #t e) (list #t 1))
-    (test (assq #f e) (list #f 2))
-    (test (assq 'a e) (list 'a 3))
-    (test (assq xcons e) (list xcons 4))
-    (test (assq xvect e) (list xvect 5))
-    (test (assq xlambda e) (list xlambda 6))
-    (test (assq xstr e) (list xstr 7))
-    (test (assq car e) (list car 8))))
-
-(let ((e '((1+i 1) (3.0 2) (5/3 3))))
-  (test (assq 1+i e) #f)
-  (test (assq 3.0 e) #f)
-  (test (assq 5/3 e) #f))
-
-(test (assq 'x (cdr (assq 'a '((b . 32) (a . ((a . 12) (b . 32) (x . 1))) (c . 1))))) '(x . 1))
-
-
-
-(let ((e '((a 1) (b 2) (c 3))))
-  (test (assv 'a e) '(a 1))
-  (test (assv 'b e) '(b 2))
-  (test (assv 'd e) #f))
-(test (assv (list 'a) '(((a)) ((b)) ((c))))  #f)
-
-(let ((xcons (cons 1 2))
-      (xvect (vector 1 2))
-      (xlambda (lambda () 1))
-      (xstr "abs"))
-  (let ((e (list (list #t 1) (list #f 2) (list 'a 3) (list xcons 4) (list xvect 5) (list xlambda 6) (list xstr 7) (list car 8))))
-    (test (assv #t e) (list #t 1))
-    (test (assv #f e) (list #f 2))
-    (test (assv 'a e) (list 'a 3))
-    (test (assv xcons e) (list xcons 4))
-    (test (assv xvect e) (list xvect 5))
-    (test (assv xlambda e) (list xlambda 6))
-    (test (assv xstr e) (list xstr 7))
-    (test (assv car e) (list car 8))))
-
-(let ((e '((1+i 1) (3.0 2) (5/3 3) (#\a 4) ("hiho" 5))))
-  (test (assv 1+i e) '(1+i 1))
-  (test (assv 3.0 e) '(3.0 2))
-  (test (assv 5/3 e) '(5/3 3))
-  (test (assv #\a e) '(#\a 4))
-  (test (assv "hiho" e) #f))
-
-(let ((e '(((a) 1) (#(a) 2) ("c" 3))))
-  (test (assv '(a) e) #f)
-  (test (assv '#(a) e) #f)
-  (test (assv (string #\c) e) #f))
-
-(let ((lst '((2 . a) (3 . b))))
-  (set-cdr! (assv 3 lst) 'c)
-  (test lst '((2 . a) (3 . c))))
-
-
-(let ((e '((a 1) (b 2) (c 3))))
-  (test (assoc 'a e) '(a 1))
-  (test (assoc 'b e) '(b 2))
-  (test (assoc 'd e) #f))
-(test (assoc (list 'a) '(((a)) ((b)) ((c))))  '((a)))
-
-(let ((xcons (cons 1 2))
-      (xvect (vector 1 2))
-      (xlambda (lambda () 1))
-      (xstr "abs"))
-  (let ((e (list (list #t 1) (list #f 2) (list 'a 3) (list xcons 4) (list xvect 5) (list xlambda 6) (list xstr 7) (list car 8))))
-    (test (assoc #t e) (list #t 1))
-    (test (assoc #f e) (list #f 2))
-    (test (assoc 'a e) (list 'a 3))
-    (test (assoc xcons e) (list xcons 4))
-    (test (assoc xvect e) (list xvect 5))
-    (test (assoc xlambda e) (list xlambda 6))
-    (test (assoc xstr e) (list xstr 7))
-    (test (assoc car e) (list car 8))))
-
-(let ((e '((1+i 1) (3.0 2) (5/3 3) (#\a 4) ("hiho" 5))))
-  (test (assoc 1+i e) '(1+i 1))
-  (test (assoc 3.0 e) '(3.0 2))
-  (test (assoc 5/3 e) '(5/3 3))
-  (test (assoc #\a e) '(#\a 4))
-  (test (assoc "hiho" e) '("hiho" 5)))
-
-(let ((e '(((a) 1) (#(a) 2) ("c" 3))))
-  (test (assoc '(a) e) '((a) 1))
-  (test (assoc '#(a) e) '(#(a) 2))
-  (test (assoc (string #\c) e) '("c" 3)))
-
-(test (assoc 'a '((b c) (a u) (a i))) '(a u))
-(test (assoc 'a '((b c) ((a) u) (a i))) '(a i))
-(test (assoc (list 'a) '(((a)) ((b)) ((c))))  '((a)))
-(test (assoc 5 '((2 3) (5 7) (11 13))) '(5 7))
-(test (assoc 'key '()) #f)
-(test (assoc 'key '(() ())) #f)
-(test (assoc '() '()) #f)
-
-(test (append '(a b c) '()) '(a b c))
-(test (append '() '(a b c)) '(a b c))
-(test (append '(a b) '(c d)) '(a b c d))
-(test (append '(a b) 'c) '(a b . c))
-(test (equal? (append (list 'a 'b 'c) (list 'd 'e 'f) '() '(g)) '(a b c d e f g)) #t)
-(test (append (list 'a 'b 'c) (list 'd 'e 'f) '() (list 'g)) '(a b c d e f g))
-(test (append (list 'a 'b 'c) 'd) '(a b c . d))
-(test (append '() '()) '())
-(test (append '() (list 'a 'b 'c)) '(a b c))
-(test (append) '())
-(test (append '() 1) 1)
-(test (append 'a) 'a)
-(test (append '(x) '(y))  '(x y))
-(test (append '(a) '(b c d)) '(a b c d))
-(test (append '(a (b)) '((c)))  '(a (b) (c)))
-(test (append '(a b) '(c . d))  '(a b c . d))
-(test (append '() 'a)  'a)
-(test (append '(a b) (append (append '(c)) '(e) 'f)) '(a b c e . f))
-(test (append ''foo 'foo) '(quote foo . foo))
-(test (append '() (cons 1 2)) '(1 . 2))
-(test (append '() '() '()) '())
-(test (append (cons 1 2)) '(1 . 2))
-
-(test (append #f) #f)
-(test (append '() #f) #f)
-(test (append '(1 2) #f) '(1 2 . #f))
-(test (append '() '() #f) #f)
-(test (append '() '(1 2) #f) '(1 2 . #f))
-(test (append '(1 2) '() #f) '(1 2 . #f))
-(test (append '(1 2) '(3 4) #f) '(1 2 3 4 . #f))
-(test (append '() '() '() #f) #f)
-(test (append '(1 2) '(3 4) '(5 6) #f) '(1 2 3 4 5 6 . #f))
-(test (append () () #()) #())
-(test (append () ((lambda () #f))) #f)
-
-(test (append 0) 0) ; is this correct?
-(test (append '() 0) 0)
-(test (append '() '() 0) 0)
-(test (let* ((x '(1 2 3)) (y (append x '()))) (eq? x y)) #f) ; check that append returns a new list
-(test (let* ((x '(1 2 3)) (y (append x '()))) (equal? x y)) #t)
-(test (let* ((x (list 1 2 3)) (y (append x (list)))) (eq? x y)) #f) 
-(test (append '(1) 2) '(1 . 2))
-(let ((x (list 1 2 3)))
-  (let ((y (append x '())))
-    (set-car! x 0)
-    (test (= (car y) 1) #t)))
-(let ((x (list 1 2 3)))
-  (let ((y (append x '())))
-    (set-cdr! x 0)
-    (test (and (= (car y) 1)
-	       (= (cadr y) 2)
-	       (= (caddr y) 3))
-	  #t)))
-
-(test (let ((xx (list 1 2))) (recompose 12 (lambda (x) (append (list (car x)) (cdr x))) xx)) '(1 2))
-
-
-(test (memq 'a '(a b c)) '(a b c))
-(test (memq 'b '(a b c)) '(b c))
-(test (memq 'a '(b c d)) #f)
-(test (memq (list 'a) '(b (a) c))  #f)
-(test (memq 'a '(b a c a d a)) '(a c a d a))
-(let ((v (vector 'a))) (test (memq v (list 'a 1.2 v "hi")) (list v "hi")))
-(test (memq #f '(1 a #t "hi" #f 2)) '(#f 2))
-(test (memq eq? (list 2 eqv? 1 eq?)) (list eq?))
-(test (memq eq? (list 2 eqv? 2)) #f)
-(test (memq 6 (memq 5 (memq 4 (memq 3 (memq 2 (memq 1 '(1 2 3 4 5 6))))))) '(6))
-
-
-(test (memv 101 '(100 101 102)) '(101 102))
-(test (memv 3.4 '(1.2 2.3 3.4 4.5)) '(3.4 4.5))
-(test (memv 3.4 '(1.3 2.5 3.7 4.9)) #f)
-(let ((ls (list 'a 'b 'c)))
-  (set-car! (memv 'b ls) 'z)
-  (test ls '(a z c)))
-
-
-(test (member (list 'a) '(b (a) c)) '((a) c))
-(test (member "b" '("a" "c" "b")) '("b"))
-(test (member 1 '(3 2 1 4)) '(1 4))
-(test (member car (list abs car modulo)) (list car modulo))
-(test (member do (list quote map do)) (list do))
-(test (member 5/2 (list 1/3 2/4 5/2)) '(5/2))
-(test (member 'a '(a b c d)) '(a b c d))
-(test (member 'b '(a b c d)) '(b c d))
-(test (member 'c '(a b c d)) '(c d))
-(test (member 'd '(a b c d)) '(d))
-(test (member 'e '(a b c d)) #f)
-
-
-(for-each
- (lambda (op)
-   (for-each
-    (lambda (arg)
-      (let ((result (catch #t (lambda () (op arg)) (lambda args 'error))))
-	(if (not (eq? result 'error))
-	    (begin
-	      (display "(") (display op) (display " ") (display arg) (display ") returned ") (display result) (display "?") (newline)))))
-    (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1)))))
- 
- (list reverse cons car cdr set-car! set-cdr! caar cadr cdar cddr caaar caadr cadar cdaar caddr cdddr cdadr cddar 
-       caaaar caaadr caadar cadaar caaddr cadddr cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar
-       assq assv assoc memq memv member list-ref list-tail))
-
-(for-each
- (lambda (arg)
-   (test (length arg) 'error))
- (list (integer->char 65) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
-
 (test (cons 1 . 2) 'error)
 					;      (test '(1 . 2 . 3) 'error) ; gets reader error which is inconvenient
 (test (car (list)) 'error)
@@ -3251,12 +2720,84 @@
 (test (cddddr '(a c . b)) 'error)
 (test (cddddr '(a c e . b)) 'error)
 
+
+
+
+(test (length (list 'a 'b 'c 'd 'e 'f)) 6)
+(test (length (list 'a 'b 'c 'd)) 4)
+(test (length (list 'a (list 'b 'c) 'd)) 3)
+(test (length '()) 0)
+(test (length '(this-that)) 1)
+(test (length '(this - that)) 3)
+(test (length '(a b)) 2)
+(test (length '(a b c)) 3)
+(test (length '(a (b) (c d e))) 3)
+(test (length (list 1 (cons 1 2))) 2)
+(test (length (list 1 (cons 1 '()))) 2)
+
+(for-each
+ (lambda (arg)
+   (test (length arg) 'error))
+ (list (integer->char 65) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
+
 (test (length 'x) 'error)
 (test (length (cons 1 2)) 'error)
 (let ((x (list 1 2)))
   (set-cdr! x x)
   (test (length x) 'error))
 (test (length '(1 2 . 3)) 'error)
+
+
+
+(test (reverse '(a b c d)) '(d c b a))
+(test (reverse '(a b c))  '(c b a))
+(test (reverse '(a (b c) d (e (f))))  '((e (f)) d (b c) a))
+(test (reverse '()) '())
+(test (reverse (list 1 2 3)) '(3 2 1))
+(test (reverse (list 1)) '(1))
+(test (reverse (list)) (list))
+(test (reverse '(1 2 3)) (list 3 2 1))
+(test (reverse '(1)) '(1))
+(test (reverse '((1 2) 3)) '(3 (1 2)))
+(test (reverse '(((1 . 2) . 3) 4)) '(4 ((1 . 2) . 3)))
+(test (reverse (list (list) (list 1 2))) '((1 2) ()))
+(test (reverse '((a) b c d)) '(d c b (a)))
+(test (reverse (reverse (list 1 2 3 4))) (list 1 2 3 4))
+(test (reverse ''foo) '(foo quote))
+(test (let ((x (list 1 2 3 4)))
+	(let ((y (reverse x)))
+	  (and (equal? x (list 1 2 3 4))
+	       (equal? y (list 4 3 2 1)))))
+      #t)
+(test (letrec ((hi (lambda (lst n)
+		     (if (= n 0)
+			 lst
+			 (hi (reverse lst) (- n 1))))))
+	(hi (list 1 2 3) 100))
+      (list 1 2 3))
+(test (let ((var (list 1 2 3))) (reverse (cdr var)) var) (list 1 2 3))
+(test (let ((var '(1 2 3))) (reverse (cdr var)) var) '(1 2 3))
+(test (let ((var (list 1 (list 2 3)))) (reverse (cdr var)) var) (list 1 (list 2 3)))
+(test (let ((var '(1 (2 3)))) (reverse (cdr var)) var) '(1 (2 3)))
+(test (let ((var (list (list 1 2) (list 3 4 5)))) (reverse (car var)) var) '((1 2) (3 4 5)))
+(test (let ((x '(1 2 3))) (list (reverse x) x)) '((3 2 1) (1 2 3)))
+
+(for-each
+ (lambda (lst)
+   (if (list? lst)
+       (if (not (equal? lst (reverse (reverse lst))))
+	   (format #t "(reverse (reverse ~A)) -> ~A?~%" (reverse (reverse lst))))))
+ lists)
+
+(for-each
+ (lambda (lst)
+   (if (list? lst)
+       (if (not (equal? lst (reverse (reverse (reverse (reverse lst))))))
+	   (format #t "(reverse...(4x) ~A) -> ~A?~%" lst (reverse (reverse (reverse (reverse lst))))))))
+ lists)
+
+(test (let ((x (list 1 2 3))) (list (recompose 32 reverse x) x)) '((1 2 3) (1 2 3)))
+(test (let ((x (list 1 2 3))) (list (recompose 31 reverse x) x)) '((3 2 1) (1 2 3)))
 
 (test (reverse (cons 1 2)) 'error)
 (test (reverse '(1 . 2)) 'error)
@@ -3265,6 +2806,176 @@
 (test (reverse! '(1 . 2)) 'error)
 (test (reverse! (cons 1 2)) 'error)
 (test (reverse! (cons 1 (cons 2 3))) 'error)
+
+
+
+(test (pair? 'a) #f)
+(test (pair? '()) #f)
+(test (pair? '(a b c)) #t)
+(test (pair? (cons 1 2)) #t)
+(test (pair? ''()) #t)
+(test (pair? #f) #f)
+(test (pair? (make-vector 6)) #f)
+(test (pair? #t) #f)
+(test (pair? '(a . b)) #t)
+(test (pair? '#(a b))  #f)
+(test (pair? (list 1 2)) #t)
+(test (pair? (list)) #f)
+(test (pair? ''foo) #t)
+(test (pair? (list 'a 'b 'c 'd 'e 'f)) #t)
+(test (pair? '(this-that)) #t)
+(test (pair? '(this - that)) #t)
+(let ((x (list 1 2)))
+  (set-cdr! x x)
+  (test (pair? x) #t))
+(test (pair? (list 1 (cons 1 2))) #t)
+(test (pair? (list 1 (cons 1 '()))) #t)
+(test (pair? (cons 1 '())) #t)
+(test (pair? (cons '() '())) #t)
+(test (pair? (cons '() 1)) #t)
+(test (pair? (list (list))) #t)
+(test (pair? '(())) #t)
+(test (pair? (cons 1 (cons 2 3))) #t)
+
+(for-each
+ (lambda (arg)
+   (if (pair? arg)
+       (format #t "(pair? ~A) -> #t?~%" arg)))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
+
+
+
+(test (list? 'a) #f)
+(test (list? '()) #t)
+(test (list? '(a b c)) #t)
+(test (list? (cons 1 2)) #f)
+(test (list? ''()) #t)
+(test (list? #f) #f)
+(test (list? (make-vector 6)) #f)
+(test (list? #t) #f)
+(test (list? '(a . b)) #f)
+(test (list? '#(a b))  #f)
+(test (list? (list 1 2)) #t)
+(test (list? (list)) #t)
+(test (list? ''foo) #t)
+(test (list? (list 'a 'b 'c 'd 'e 'f)) #t)
+(test (list? '(this-that)) #t)
+(test (list? '(this - that)) #t)
+(let ((x (list 1 2)))
+  (set-cdr! x x)
+  (test (list? x) #f))
+(test (list? (list 1 (cons 1 2))) #t)
+(test (list? (list 1 (cons 1 '()))) #t)
+(test (list? (cons 1 '())) #t)
+(test (list? (cons '() '())) #t)
+(test (list? (cons '() 1)) #f)
+(test (list? (list (list))) #t)
+(test (list? '(())) #t)
+(test (list? '(1 2 . 3)) #f)
+(test (list? (cons 1 (cons 2 3))) #f)
+(test (list? '(1 . ())) #t)
+
+(test (list? '(1 2) '()) 'error)
+(for-each
+ (lambda (arg)
+   (if (list? arg)
+       (format #t "(list? ~A) -> #t?~%" arg)))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
+
+
+
+(test (null? 'a) '#f)
+(test (null? '()) #t)
+(test (null? '(a b c)) #f)
+(test (null? (cons 1 2)) #f)
+(test (null? ''()) #f)
+(test (null? #f) #f)
+(test (null? (make-vector 6)) #f)
+(test (null? #t) #f)
+(test (null? '(a . b)) #f)
+(test (null? '#(a b))  #f)
+(test (null? (list 1 2)) #f)
+(test (null? (list)) #t)
+(test (null? ''foo) #f)
+(test (null? (list 'a 'b 'c 'd 'e 'f)) #f)
+(test (null? '(this-that)) #f)
+(test (null? '(this - that)) #f)
+(let ((x (list 1 2)))
+  (set-cdr! x x)
+  (test (null? x) #f))
+(test (null? (list 1 (cons 1 2))) #f)
+(test (null? (list 1 (cons 1 '()))) #f)
+(test (null? (cons 1 '())) #f)
+(test (null? (cons '() '())) #f)
+(test (null? (cons '() 1)) #f)
+(test (null? (list (list))) #f)
+(test (null? '(())) #f)
+(test (null? '#()) #f)
+
+(test (null? () '()) 'error)
+
+(for-each
+ (lambda (arg)
+   (if (null? arg)
+       (format #t "(null? ~A) -> #t?~%" arg)))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
+
+
+(test (reverse! '(a b c d)) '(d c b a))
+(test (reverse! '(a b c))  '(c b a))
+(test (reverse! '(a (b c) d (e (f))))  '((e (f)) d (b c) a))
+(test (reverse! '()) '())
+(test (reverse! (list 1 2 3)) '(3 2 1))
+(test (reverse! (list 1)) '(1))
+(test (reverse! (list)) (list))
+(test (reverse! '(1 2 3)) (list 3 2 1))
+(test (reverse! '(1)) '(1))
+(test (reverse! '((1 2) 3)) '(3 (1 2)))
+(test (reverse! '(((1 . 2) . 3) 4)) '(4 ((1 . 2) . 3)))
+(test (reverse! (list (list) (list 1 2))) '((1 2) ()))
+(test (reverse! '((a) b c d)) '(d c b (a)))
+(test (reverse! (reverse! (list 1 2 3 4))) (list 1 2 3 4))
+(test (reverse! ''foo) '(foo quote))
+(test (reverse (reverse! (list 1 2 3))) (list 1 2 3))
+(test (reverse (reverse! (reverse! (reverse (list 1 2 3))))) (list 1 2 3))
+
+(test (let ((x (list 1 2 3))) (recompose 31 reverse! x)) '(3 2 1))
+
+
+(test (let ((x (cons 1 2))) (set-car! x 3) x) (cons 3 2))
+(test (let ((x (list 1 2))) (set-car! x 3) x) (list 3 2))
+(test (let ((x (list (list 1 2) 3))) (set-car! x 22) x) (list 22 3))
+(test (let ((x (cons 1 2))) (set-car! x '()) x) (cons '() 2))
+(test (let ((x (list 1 (list 2 3 4)))) (set-car! x (list 5 (list 6))) x) (list (list 5 (list 6)) (list 2 3 4)))
+(test (let ((x '(((1) 2) (3)))) (set-car! x '((2) 1)) x) '(((2) 1) (3)))
+(test (let ((x ''foo)) (set-car! x "hi") x) (list "hi" 'foo))
+(test (let ((x '((1 . 2) . 3))) (set-car! x 4) x) '(4 . 3))
+(test (let ((x '(1 . 2))) (set-car! x (cdr x)) x) '(2 . 2))
+(test (let ((x '(1 . 2))) (set-car! x x) (list? x)) #f)
+(test (let ((x (list 1))) (set-car! x '()) x) '(()))
+(test (let ((x '(((1 2) . 3) 4))) (set-car! x 1) x) '(1 4))
+(test (let ((lst (cons 1 (cons 2 3)))) (set-car! (cdr lst) 4) lst) (cons 1 (cons 4 3)))
+(test (let ((lst (cons 1 (cons 2 3)))) (set-car! lst 4) lst) (cons 4 (cons 2 3)))
+
+					;(set-car! '(1 . 2) 3)  ??
+
+(test (let ((x (list 1 2))) (set! (car x) 0) x) (list 0 2))
+(test (let ((x (cons 1 2))) (set! (cdr x) 0) x) (cons 1 0))
+
+
+(test (let ((x (cons 1 2))) (set-cdr! x 3) x) (cons 1 3))
+(test (let ((x (list 1 2))) (set-cdr! x 3) x) (cons 1 3))
+(test (let ((x (list (list 1 2) 3))) (set-cdr! x 22) x) '((1 2) . 22))
+(test (let ((x (cons 1 2))) (set-cdr! x '()) x) (list 1))
+(test (let ((x (list 1 (list 2 3 4)))) (set-cdr! x (list 5 (list 6))) x) '(1 5 (6)))
+(test (let ((x '(((1) 2) (3)))) (set-cdr! x '((2) 1)) x) '(((1) 2) (2) 1))
+(test (let ((x ''foo)) (set-cdr! x "hi") x) (cons 'quote "hi"))
+(test (let ((x '((1 . 2) . 3))) (set-cdr! x 4) x) '((1 . 2) . 4))
+(test (let ((x '(1 . 2))) (set-cdr! x (cdr x)) x) '(1 . 2))
+(test (let ((x '(1 . 2))) (set-cdr! x x) (list? x)) #f)
+(test (let ((x (list 1))) (set-cdr! x '()) x) (list 1))
+(test (let ((x '(1 . (2 . (3 (4 5)))))) (set-cdr! x 4) x) '(1 . 4))
+(test (let ((lst (cons 1 (cons 2 3)))) (set-cdr! (cdr lst) 4) lst) (cons 1 (cons 2 4)))
 
 (test (set-car! '() 32) 'error)
 (test (set-car! () 32) 'error)
@@ -3277,6 +2988,45 @@
 (test (set-cdr! 'x 32) 'error)
 (test (set-cdr! #f 32) 'error)
 
+
+
+(test (list-ref (list 1 2) 1) 2)
+(test (list-ref '(a b c d) 2) 'c)
+(test (list-ref (cons 1 2) 0) 1) ; !!
+(test (list-ref ''foo 0) 'quote)
+(test (list-ref '((1 2) (3 4)) 1) '(3 4))
+(test (list-ref (list-ref (list (list 1 2) (list 3 4)) 1) 1) 4)
+(test (let ((x (list 1 2 3))) (list-ref x (list-ref x 1))) 3)
+					; (list-ref '(1 2 . 3) 0) -- why is this acceptable?
+
+(test (let ((lst (list 1 2))) (set! (list-ref lst 1) 0) lst) (list 1 0))
+(test (((lambda () list)) 'a 'b 'c) '(a b c))
+(test (apply ((lambda () list)) (list 'a 'b 'c) (list 'c 'd 'e)) '((a b c) c d e))
+(if with-values (test (((lambda () (values list))) 1 2 3) '(1 2 3)))
+(test (apply list 'a 'b '(c)) '(a b c))
+
+(for-each
+ (lambda (name op1 op2)
+   (for-each
+    (lambda (lst)
+      (let ((val1 (catch #t (lambda () (op1 lst)) (lambda args 'error)))
+	    (val2 (catch #t (lambda () (op2 lst)) (lambda args 'error))))
+	(if (not (equal? val1 val2))
+	    (format #t "(~A ~A) -> ~A ~A?~%" name lst val1 val2))))
+    lists))
+ (list 'list-ref:0 'list-ref:1 'list-ref:2 'list-ref:3)
+ (list car cadr caddr cadddr)
+ (list (lambda (l) (list-ref l 0)) (lambda (l) (list-ref l 1)) (lambda (l) (list-ref l 2)) (lambda (l) (list-ref l 3))))
+
+(for-each
+ (lambda (arg)
+   (test (list-ref (list 1 arg) 1) arg))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
+
+(test (let ((x '(1 . 2))) (set-cdr! x x) (list-ref x 0)) 1)
+(test (let ((x '(1 . 2))) (set-cdr! x x) (list-ref x 1)) 1)
+(test (let ((x '(1 . 2))) (set-cdr! x x) (list-ref x 100)) 1)
+
 (test (list-ref '() 0) 'error)
 (test (list-ref (list 1 2) 2) 'error)
 (test (list-ref (list 1 2) -1) 'error)
@@ -3286,29 +3036,106 @@
 (test (list-ref (cons 1 2) 1) 'error)
 (test (list-ref (cons 1 2) 2) 'error)
 (test (list-ref (list 1 2 3) (expt 2 32)) 'error)
-(test (list-set! (list 1 2 3) (expt 2 32)  0) 'error)
+(test (list-ref '(1 2 3) 1 2) 'error)
 
 (for-each
  (lambda (arg)
    (test (list-ref (list 1 2) arg) 'error))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
 
+
+
+(test (let ((x (list 1))) (list-set! x 0 2) x) (list 2))
+(test (let ((x (cons 1 2))) (list-set! x 0 3) x) '(3 . 2))
+(test (let ((x '((1) 2))) (list-set! x 0 1) x) '(1 2))
+(test (let ((x '(1 2))) (list-set! x 1 (list 3 4)) x) '(1 (3 4)))
+(test (let ((x ''foo)) (list-set! x 0 "hi") x ) '("hi" foo))
+(test (let ((x (list 1 2))) (list-set! x 0 x) (list? x)) #t)
+(test (let ((x (list 1 2))) (list-set! x 1 x) (list? x)) #t)
+
+(test (list-set! '(1 2 3) 1 4) 4)
+(test (set-car! '(1 2) 4) 4)
+(test (set-cdr! '(1 2) 4) 4)
+(test (fill! (list 1 2) 4) 4)
+
+(for-each
+ (lambda (arg)
+   (test (let ((x (list 1 2))) (list-set! x 0 arg) (list-ref x 0)) arg))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
+
 (test (list-set! '() 0 1) 'error)
+(test (list-set! '() -1 1) 'error)
 (test (list-set! '(1) 1 2) 'error)
 (test (list-set! '(1 2 3) -1 2) 'error)
 (test (list-set! '(1) 1.5 2) 'error)
 (test (list-set! '(1) 3/2 2) 'error)
 (test (list-set! '(1) 1+3i 2) 'error)
 (test (let ((x (cons 1 2))) (list-set! x 1 3) x) 'error)
+(test (list-set! '(1 2 3) 1 2 3) 'error)
+(test (list-set! (list 1 2 3) (expt 2 32)  0) 'error)
 
 (for-each
  (lambda (arg)
    (test (list-set! (list 1 2) arg arg) 'error))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
 
+
+
+
+(test (let ((tree1 (list 1 (list 1 2) (list (list 1 2 3)) (list (list (list 1 2 3 4)))))) tree1) '(1 (1 2) ((1 2 3)) (((1 2 3 4)))))
+(test (let ((tree2 (list "one" (list "one" "two") (list (list "one" "two" "three"))))) tree2) '("one" ("one" "two") (("one" "two" "three"))))
+(test (let ((tree1 (list 1 (list 1 2) (list 1 2 3) (list 1 2 3 4)))) tree1) '(1 (1 2) (1 2 3) (1 2 3 4)))
+(test (let ((tree1 (list 1 (list 1 2))) (tree2 (list 1 (list 1 2)))) tree2) '(1 (1 2)))
+(test (let ((tree1 (list 1 (list 1 2))) (tree2 (list 1 (list 1 2)))) (eqv? tree1 tree2)) #f)
+(test (let ((tree1 (list ''a (list ''b ''c))) (tree2 (list ''a (list ''b ''c)))) tree2) '('a ('b 'c)))
+(test (let ((lst (list 1 (list 2 3)))) lst) '(1 (2 3)))
+(test (let* ((lst (list 1 (list 2 3))) (slst lst)) slst) '(1 (2 3)))
+(test (list 1) '(1))
+(test (let ((a 1)) (list a 2)) '(1 2))
+(test (let ((a 1)) (list 'a '2)) '(a 2))
+(test (let ((a 1)) (list 'a 2)) '(a 2))
+(test (list) '())
+(test (let ((a (list 1 2))) a) '(1 2))
+(test (let ((a (list 1 2))) (list 3 4 'a (car (cons 'b 'c)) (+ 6 -2))) '(3 4 a b 4))
+(test (list) '())
+(test (length (list quote do map call/cc lambda define if begin set! let let* cond and or for-each)) 15)
+
 (test (list 1 2 . 3) 'error)
 (test (list 1 2 , 3) 'error)
 (test (list 1 2 ,@ 3) 'error)
+
+
+
+(test (list-tail '(1 2 3) 0) '(1 2 3))
+(test (list-tail '(1 2 3) 2) '(3))
+(test (list-tail '(1 2 3) 3) '())
+(test (list-tail '(1 2 3 . 4) 2) '(3 . 4))
+(test (list-tail '(1 2 3 . 4) 3) 4)
+(test (let ((x (list 1 2 3))) (eq? (list-tail x 2) (cddr x))) #t)
+(test (list-tail '() 0) '())
+(test (list-tail (list 1 2) 2) '())
+(test (list-tail (cons 1 2) 0) '(1 . 2))
+(test (list-tail (cons 1 2) 1) 2)
+(test (list-tail ''foo 1) '(foo))
+(test (list-tail '((1 2) (3 4)) 1) '((3 4)))
+(test (list-tail (list-tail (list-tail '(1 2 3 4) 1) 1) 1) '(4))
+
+(let ((x '(1 . 2))) (set-cdr! x x) (test (list-tail x 0) x))
+(let ((x '(1 . 2))) (set-cdr! x x) (test (list-tail x 1) (cdr x)))
+(let ((x '(1 . 2))) (set-cdr! x x) (test (list-tail x 100) x))
+
+(for-each
+ (lambda (name op1 op2)
+   (for-each
+    (lambda (lst)
+      (let ((val1 (catch #t (lambda () (op1 lst)) (lambda args 'error)))
+	    (val2 (catch #t (lambda () (op2 lst)) (lambda args 'error))))
+	(if (not (equal? val1 val2))
+	    (format #t "(~A ~A) -> ~A ~A?~%" name lst val1 val2))))
+    lists))
+ (list 'list-tail:0 'list-tail:1 'list-tail:2 'list-tail:3 'list-tail:4)
+ (list (lambda (l) l) cdr cddr cdddr cddddr)
+ (list (lambda (l) (list-tail l 0)) (lambda (l) (list-tail l 1)) (lambda (l) (list-tail l 2)) (lambda (l) (list-tail l 3)) (lambda (l) (list-tail l 4))))
 
 (test (list-tail (list 1 2) 3) 'error)
 (test (list-tail (list 1 2) -1) 'error)
@@ -3325,10 +3152,118 @@
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
 
 
+
+(let ((e '((a 1) (b 2) (c 3))))
+  (test (assq 'a e) '(a 1))
+  (test (assq 'b e) '(b 2))
+  (test (assq 'd e) #f))
+(test (assq (list 'a) '(((a)) ((b)) ((c))))  #f)
+
+(let ((xcons (cons 1 2))
+      (xvect (vector 1 2))
+      (xlambda (lambda () 1))
+      (xstr "abs"))
+  (let ((e (list (list #t 1) (list #f 2) (list 'a 3) (list xcons 4) (list xvect 5) (list xlambda 6) (list xstr 7) (list car 8))))
+    (test (assq #t e) (list #t 1))
+    (test (assq #f e) (list #f 2))
+    (test (assq 'a e) (list 'a 3))
+    (test (assq xcons e) (list xcons 4))
+    (test (assq xvect e) (list xvect 5))
+    (test (assq xlambda e) (list xlambda 6))
+    (test (assq xstr e) (list xstr 7))
+    (test (assq car e) (list car 8))))
+
+(let ((e '((1+i 1) (3.0 2) (5/3 3))))
+  (test (assq 1+i e) #f)
+  (test (assq 3.0 e) #f)
+  (test (assq 5/3 e) #f))
+
+(test (assq 'x (cdr (assq 'a '((b . 32) (a . ((a . 12) (b . 32) (x . 1))) (c . 1))))) '(x . 1))
+
 (test (assq #f '(#f 2 . 3)) 'error)
 (test (assq #f '((#f 2) . 3)) 'error) ; an a-list is a proper list sez kd
 (test (assv 1 '(1 2 . 3)) 'error)
 (test (assv 1 '((1 2) . 3)) 'error) ; an a-list is a proper list sez kd
+
+
+
+(let ((e '((a 1) (b 2) (c 3))))
+  (test (assv 'a e) '(a 1))
+  (test (assv 'b e) '(b 2))
+  (test (assv 'd e) #f))
+(test (assv (list 'a) '(((a)) ((b)) ((c))))  #f)
+
+(let ((xcons (cons 1 2))
+      (xvect (vector 1 2))
+      (xlambda (lambda () 1))
+      (xstr "abs"))
+  (let ((e (list (list #t 1) (list #f 2) (list 'a 3) (list xcons 4) (list xvect 5) (list xlambda 6) (list xstr 7) (list car 8))))
+    (test (assv #t e) (list #t 1))
+    (test (assv #f e) (list #f 2))
+    (test (assv 'a e) (list 'a 3))
+    (test (assv xcons e) (list xcons 4))
+    (test (assv xvect e) (list xvect 5))
+    (test (assv xlambda e) (list xlambda 6))
+    (test (assv xstr e) (list xstr 7))
+    (test (assv car e) (list car 8))))
+
+(let ((e '((1+i 1) (3.0 2) (5/3 3) (#\a 4) ("hiho" 5))))
+  (test (assv 1+i e) '(1+i 1))
+  (test (assv 3.0 e) '(3.0 2))
+  (test (assv 5/3 e) '(5/3 3))
+  (test (assv #\a e) '(#\a 4))
+  (test (assv "hiho" e) #f))
+
+(let ((e '(((a) 1) (#(a) 2) ("c" 3))))
+  (test (assv '(a) e) #f)
+  (test (assv '#(a) e) #f)
+  (test (assv (string #\c) e) #f))
+
+(let ((lst '((2 . a) (3 . b))))
+  (set-cdr! (assv 3 lst) 'c)
+  (test lst '((2 . a) (3 . c))))
+
+
+
+(let ((e '((a 1) (b 2) (c 3))))
+  (test (assoc 'a e) '(a 1))
+  (test (assoc 'b e) '(b 2))
+  (test (assoc 'd e) #f))
+(test (assoc (list 'a) '(((a)) ((b)) ((c))))  '((a)))
+
+(let ((xcons (cons 1 2))
+      (xvect (vector 1 2))
+      (xlambda (lambda () 1))
+      (xstr "abs"))
+  (let ((e (list (list #t 1) (list #f 2) (list 'a 3) (list xcons 4) (list xvect 5) (list xlambda 6) (list xstr 7) (list car 8))))
+    (test (assoc #t e) (list #t 1))
+    (test (assoc #f e) (list #f 2))
+    (test (assoc 'a e) (list 'a 3))
+    (test (assoc xcons e) (list xcons 4))
+    (test (assoc xvect e) (list xvect 5))
+    (test (assoc xlambda e) (list xlambda 6))
+    (test (assoc xstr e) (list xstr 7))
+    (test (assoc car e) (list car 8))))
+
+(let ((e '((1+i 1) (3.0 2) (5/3 3) (#\a 4) ("hiho" 5))))
+  (test (assoc 1+i e) '(1+i 1))
+  (test (assoc 3.0 e) '(3.0 2))
+  (test (assoc 5/3 e) '(5/3 3))
+  (test (assoc #\a e) '(#\a 4))
+  (test (assoc "hiho" e) '("hiho" 5)))
+
+(let ((e '(((a) 1) (#(a) 2) ("c" 3))))
+  (test (assoc '(a) e) '((a) 1))
+  (test (assoc '#(a) e) '(#(a) 2))
+  (test (assoc (string #\c) e) '("c" 3)))
+
+(test (assoc 'a '((b c) (a u) (a i))) '(a u))
+(test (assoc 'a '((b c) ((a) u) (a i))) '(a i))
+(test (assoc (list 'a) '(((a)) ((b)) ((c))))  '((a)))
+(test (assoc 5 '((2 3) (5 7) (11 13))) '(5 7))
+(test (assoc 'key '()) #f)
+(test (assoc 'key '(() ())) #f)
+(test (assoc '() '()) #f)
 
 (test (assoc '() 1) 'error)
 (test (assoc (cons 1 2) 1) 'error)
@@ -3340,6 +3275,61 @@
 
 					;(test (let ((lst '((1 2)))) (assq #t (reverse! lst lst))) #f)
 
+(test (append '(a b c) '()) '(a b c))
+(test (append '() '(a b c)) '(a b c))
+(test (append '(a b) '(c d)) '(a b c d))
+(test (append '(a b) 'c) '(a b . c))
+(test (equal? (append (list 'a 'b 'c) (list 'd 'e 'f) '() '(g)) '(a b c d e f g)) #t)
+(test (append (list 'a 'b 'c) (list 'd 'e 'f) '() (list 'g)) '(a b c d e f g))
+(test (append (list 'a 'b 'c) 'd) '(a b c . d))
+(test (append '() '()) '())
+(test (append '() (list 'a 'b 'c)) '(a b c))
+(test (append) '())
+(test (append '() 1) 1)
+(test (append 'a) 'a)
+(test (append '(x) '(y))  '(x y))
+(test (append '(a) '(b c d)) '(a b c d))
+(test (append '(a (b)) '((c)))  '(a (b) (c)))
+(test (append '(a b) '(c . d))  '(a b c . d))
+(test (append '() 'a)  'a)
+(test (append '(a b) (append (append '(c)) '(e) 'f)) '(a b c e . f))
+(test (append ''foo 'foo) '(quote foo . foo))
+(test (append '() (cons 1 2)) '(1 . 2))
+(test (append '() '() '()) '())
+(test (append (cons 1 2)) '(1 . 2))
+
+(test (append #f) #f)
+(test (append '() #f) #f)
+(test (append '(1 2) #f) '(1 2 . #f))
+(test (append '() '() #f) #f)
+(test (append '() '(1 2) #f) '(1 2 . #f))
+(test (append '(1 2) '() #f) '(1 2 . #f))
+(test (append '(1 2) '(3 4) #f) '(1 2 3 4 . #f))
+(test (append '() '() '() #f) #f)
+(test (append '(1 2) '(3 4) '(5 6) #f) '(1 2 3 4 5 6 . #f))
+(test (append () () #()) #())
+(test (append () ((lambda () #f))) #f)
+
+(test (append 0) 0) ; is this correct?
+(test (append '() 0) 0)
+(test (append '() '() 0) 0)
+(test (let* ((x '(1 2 3)) (y (append x '()))) (eq? x y)) #f) ; check that append returns a new list
+(test (let* ((x '(1 2 3)) (y (append x '()))) (equal? x y)) #t)
+(test (let* ((x (list 1 2 3)) (y (append x (list)))) (eq? x y)) #f) 
+(test (append '(1) 2) '(1 . 2))
+(let ((x (list 1 2 3)))
+  (let ((y (append x '())))
+    (set-car! x 0)
+    (test (= (car y) 1) #t)))
+(let ((x (list 1 2 3)))
+  (let ((y (append x '())))
+    (set-cdr! x 0)
+    (test (and (= (car y) 1)
+	       (= (cadr y) 2)
+	       (= (caddr y) 3))
+	  #t)))
+
+(test (let ((xx (list 1 2))) (recompose 12 (lambda (x) (append (list (car x)) (cdr x))) xx)) '(1 2))
 
 (test (append 'a 'b) 'error)
 (test (append 'a '()) 'error)
@@ -3347,14 +3337,81 @@
 (test (append '(1) 2 '(3)) 'error)
 (test (append '(1) 2 3) 'error)
 
+
+
+
+(test (memq 'a '(a b c)) '(a b c))
+(test (memq 'b '(a b c)) '(b c))
+(test (memq 'a '(b c d)) #f)
+(test (memq (list 'a) '(b (a) c))  #f)
+(test (memq 'a '(b a c a d a)) '(a c a d a))
+(let ((v (vector 'a))) (test (memq v (list 'a 1.2 v "hi")) (list v "hi")))
+(test (memq #f '(1 a #t "hi" #f 2)) '(#f 2))
+(test (memq eq? (list 2 eqv? 1 eq?)) (list eq?))
+(test (memq eq? (list 2 eqv? 2)) #f)
+(test (memq 6 (memq 5 (memq 4 (memq 3 (memq 2 (memq 1 '(1 2 3 4 5 6))))))) '(6))
+
 					;(test (memq 'a (cons a b)) 'error)                  ; there is disagreement about this
 (test (memq 'a (list a b . c)) 'error)
+(test (memq) 'error)
+(test (memq 'a) 'error)
+(test (memq 'a 'b) 'error)
+
+
+
+(test (memv 101 '(100 101 102)) '(101 102))
+(test (memv 3.4 '(1.2 2.3 3.4 4.5)) '(3.4 4.5))
+(test (memv 3.4 '(1.3 2.5 3.7 4.9)) #f)
+(let ((ls (list 'a 'b 'c)))
+  (set-car! (memv 'b ls) 'z)
+  (test ls '(a z c)))
 					;(test (memv 1 (cons 1 2)) 'error)                   ; there is disagreement about this
 (test (memv 'a (list a b . c)) 'error)
+(test (memv) 'error)
+(test (memv 'a) 'error)
+(test (memv 'a 'b) 'error)
+
+
+
+(test (member (list 'a) '(b (a) c)) '((a) c))
+(test (member "b" '("a" "c" "b")) '("b"))
+(test (member 1 '(3 2 1 4)) '(1 4))
+(test (member car (list abs car modulo)) (list car modulo))
+(test (member do (list quote map do)) (list do))
+(test (member 5/2 (list 1/3 2/4 5/2)) '(5/2))
+(test (member 'a '(a b c d)) '(a b c d))
+(test (member 'b '(a b c d)) '(b c d))
+(test (member 'c '(a b c d)) '(c d))
+(test (member 'd '(a b c d)) '(d))
+(test (member 'e '(a b c d)) #f)
 					;(test (member 1 (cons 1 2)) 'error)                 ; there is disagreement about this
 (test (member 'a (list a b . c)) 'error)
 (test (member 1 '(1 2 . 3)) 'error)
+(test (member) 'error)
+(test (member 'a) 'error)
+(test (member 'a 'b) 'error)
 
+
+(for-each
+ (lambda (op)
+   (test (op) 'error)
+   (for-each
+    (lambda (arg)
+      (let ((result (catch #t (lambda () (op arg)) (lambda args 'error))))
+	(if (not (eq? result 'error))
+	    (begin
+	      (display "(") (display op) (display " ") (display arg) (display ") returned ") (display result) (display "?") (newline)))))
+    (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1)))))
+ (list reverse cons car cdr set-car! set-cdr! caar cadr cdar cddr caaar caadr cadar cdaar caddr cdddr cdadr cddar 
+       caaaar caaadr caadar cadaar caaddr cadddr cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar
+       assq assv assoc memq memv member list-ref list-tail))
+
+(for-each
+ (lambda (op)
+   (test (op '(1) '(2)) 'error))
+ (list reverse car cdr caar cadr cdar cddr caaar caadr cadar cdaar caddr cdddr cdadr cddar 
+       caaaar caaadr caadar cadaar caaddr cadddr cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar
+       list-ref list-tail list-set!))
 
 #|
 (test (list #b) 'error)
@@ -3410,6 +3467,10 @@
    (test (vector? arg) #f))
  (list #\a 1 '() (list 1) '(1 . 2) #f "hi" 'a-symbol abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
+(test (vector?) 'error)
+(test (vector? #() #(1)) 'error)
+
+
 
 (test (let ((v (make-vector 3 #f))) (and (vector? v) (= (vector-length v) 3) (eq? (vector-ref v 1) #f))) #t)
 (test (let ((v (make-vector 1 1))) (and (vector? v) (= (vector-length v) 1) (vector-ref v 0))) 1)
@@ -3430,6 +3491,17 @@
  (lambda (arg)
    (test (vector-ref (make-vector 1 arg) 0) arg))
  (list #\a 1 '() (list 1) '(1 . 2) #f "hi" 'a-symbol abs 3.14 3/4 1.0+1.0i #t (vector 1 2 3) (lambda (a) (+ a 1))))
+
+(test (make-vector) 'error)
+(test (make-vector 1 #f #t) 'error)
+(test (make-vector 1 2 3) 'error)
+
+(for-each
+ (lambda (arg)
+   (test (make-vector arg) 'error))
+ (list #\a '() -1 #f "hi" 'a-symbol abs 3.14 3/4 1.0+1.0i #t (vector 1 2 3) (lambda (a) (+ a 1))))
+
+
 
 (test (vector 1 2 3) '#(1 2 3))
 (test (vector 1 '(2) 3) '#(1 (2) 3))
@@ -3483,6 +3555,25 @@
 
 (test (reinvert 12 vector->list list->vector #(1 2 3)) #(1 2 3))
 
+(test (vector->list) 'error)
+(test (list->vector) 'error)
+(test (vector->list #(1) #(2)) 'error)
+(test (list->vector '(1) '(2)) 'error)
+
+(for-each
+ (lambda (arg)
+   (test (vector->list arg) 'error))
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol "hi" abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
+
+(test (let ((x (cons #\a #\b))) (set-cdr! x x) (list->vector x)) 'error)
+(test (list->vector (cons 1 2)) 'error)
+(test (list->vector '(1 2 . 3)) 'error)
+
+(for-each
+ (lambda (arg)
+   (test (list->vector arg) 'error))
+ (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
+
 
 
 (test (vector-length (vector)) 0)
@@ -3496,6 +3587,15 @@
 (test (vector-length (let ((v (vector 1 2))) (vector-set! v 1 v) v)) 2)
 (test (vector-length (let ((v (vector 1 2))) (vector-set! v 1 v) (vector-ref v 1))) 2)
 
+(test (vector-length) 'error)
+(test (vector-length #(1) #(2)) 'error)
+
+(for-each
+ (lambda (arg)
+   (test (vector-length arg) 'error))
+ (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
+
+
 
 (test (vector-ref '#(1 1 2 3 5 8 13 21) 5) 8)
 (test (vector-ref '#(1 1 2 3 5 8 13 21) (let ((i (round (* 2 (acos -1))))) (if (inexact? i) (inexact->exact i)  i))) 13)
@@ -3508,6 +3608,29 @@
 (test (vector-ref '#(#()) 0) '#())
 (test (vector-ref (vector-ref (vector-ref '#(1 (2) #(3 (4) #(5))) 2) 2) 0) 5)
 (test (let ((v (vector 1 2))) (vector-set! v 1 v) (eq? (vector-ref v 1) v)) #t)
+
+(test (vector-ref) 'error)
+(test (vector-ref #(1)) 'error)
+(test (vector-ref #(1) 0 0) 'error)
+
+(test (let ((v (make-vector 1 0))) (vector-ref v 1)) 'error)
+(test (let ((v (make-vector 1 0))) (vector-ref v -1)) 'error)
+(test (let ((v (vector 1 (list 2) (make-vector 3 #\a)))) (vector-ref (vector-ref v 2) 3)) 'error)
+(test (let ((v (vector 1 (list 2) (make-vector 3 #\a)))) (vector-ref (vector-ref v 3) 0)) 'error)
+(test (vector-ref (vector) 0) 'error)
+(test (vector-ref '#() 0) 'error)
+(test (vector-ref '#() -1) 'error)
+(test (vector-ref '#() 1) 'error)
+
+(test (#(1 2) 1) 2)
+(test (#(1 2) 1 2) 'error)
+(test ((#("hi" "ho") 0) 1) #\i)
+(test (((vector (list 1 2) (cons 3 4)) 0) 1) 2)
+(test ((#(#(1 2) #(3 4)) 0) 1) 2)
+(test ((((vector (vector (vector 1 2) 0) 0) 0) 0) 0) 1)
+(test ((((list (list (list 1 2) 0) 0) 0) 0) 0) 1)
+(test ((((list (list (list 1 2) 0) 0) 0) 0) ((((vector (vector (vector 1 2) 0) 0) 0) 0) 0)) 2)
+
 
 
 (test (let ((vec (vector 0 '(2 2 2 2) "Anna"))) (vector-set! vec 1 '("Sue" "Sue")) vec) '#(0 ("Sue" "Sue") "Anna"))
@@ -3536,6 +3659,47 @@
 
 (test (let ((str "hi") (v (make-vector 3))) (vector-fill! v str) (string-set! (vector-ref v 0) 1 #\a) str) "ha")
 (test (let ((lst (list 1 2)) (v (make-vector 3))) (vector-fill! v lst) (list-set! (vector-ref v 0) 1 #\a) lst) '(1 #\a))
+
+(test (vector-set!) 'error)
+(test (vector-set! #(1)) 'error)
+(test (vector-set! #(1) 0) 'error)
+(test (vector-set! #(1) 0 0 1) 'error)
+(test (vector-set! #(1) 0 0 1 2 3) 'error)
+(test (vector-set! #(1) #(0) 1) 'error)
+
+					;(test (vector-set! '#(0 1 2) 1 "doe") 'error)
+(test (let ((v (vector 1 2 3))) (vector-set! v -1 0)) 'error)
+(test (let ((v (vector 1 2 3))) (vector-set! v 3 0)) 'error)
+;(test (vector-set! '#(1 2) 0 2) 'error)
+;(test (vector-fill! '#(1 2) 2) 'error)
+
+(let ((v (vector 1 2 3)))
+  (for-each
+   (lambda (arg)
+     (test (vector-set! v arg 0) 'error))
+   (list "hi" #\a -1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #t (make-vector 3) (lambda (a) (+ a 1)))))
+
+(for-each
+ (lambda (arg)
+   (test (vector-set! arg 0 0) 'error))
+ (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
+
+(let ((v (vector)))
+  (test (vector-set! v 0 0) 'error)
+  (test (vector-set! v 1 0) 'error)
+  (test (vector-set! v -1 0) 'error))
+;(test (vector-set! #() 0 123) 'error)
+;(test (vector-set! #(1 2 3) 0 123) 'error)
+
+;(test (let ((g (lambda () '#(1 2 3)))) (vector-set! (g) 0 #\?) (g)) 'error) ; not an error in Guile
+					;(test (let ((g (lambda () '(1 . 2)))) (set-car! (g) 123) (g)) 'error) ; should this also be an error?
+					;(test (let ((g (lambda () '(1 2)))) (list-set! (g) 0 123) (g)) 'error)
+;(test (let ((g (lambda () (symbol->string 'hi)))) (string-set! (g) 1 #\a) (symbol->string 'hi)) 'error)
+
+(for-each
+ (lambda (arg)
+   (test (vector-fill! arg 0) 'error))
+ (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 
 (test (let ((sum 0)) (for-each (lambda (n) (set! sum (+ sum n))) (vector 1 2 3)) sum) 6)
@@ -3789,79 +3953,6 @@
       (test (string=? (object->string #3d(((#2d((1 2) (3 4)) #(1)) (#3d(((1))) 6)))) "#3D(((#2D((1 2) (3 4)) #(1)) (#3D(((1))) 6)))") #t)
       ))
 
-(test (#(1 2) 1) 2)
-(test (#(1 2) 1 2) 'error)
-(test (make-vector) 'error)
-
-(for-each
- (lambda (arg)
-   (test (make-vector arg) 'error))
- (list #\a '() -1 #f "hi" 'a-symbol abs 3.14 3/4 1.0+1.0i #t (vector 1 2 3) (lambda (a) (+ a 1))))
-
-(for-each
- (lambda (arg)
-   (test (vector->list arg) 'error))
- (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol "hi" abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
-
-(test (let ((x (cons #\a #\b))) (set-cdr! x x) (list->vector x)) 'error)
-(test (list->vector (cons 1 2)) 'error)
-(test (list->vector '(1 2 . 3)) 'error)
-
-(for-each
- (lambda (arg)
-   (test (list->vector arg) 'error))
- (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
-
-(for-each
- (lambda (arg)
-   (test (vector-length arg) 'error))
- (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
-
-(test (let ((v (make-vector 1 0))) (vector-ref v 1)) 'error)
-(test (let ((v (make-vector 1 0))) (vector-ref v -1)) 'error)
-(test (let ((v (vector 1 (list 2) (make-vector 3 #\a)))) (vector-ref (vector-ref v 2) 3)) 'error)
-(test (let ((v (vector 1 (list 2) (make-vector 3 #\a)))) (vector-ref (vector-ref v 3) 0)) 'error)
-(test (vector-ref (vector) 0) 'error)
-(test (vector-ref '#() 0) 'error)
-(test (vector-ref '#() -1) 'error)
-(test (vector-ref '#() 1) 'error)
-
-					;(test (vector-set! '#(0 1 2) 1 "doe") 'error)
-(test (let ((v (vector 1 2 3))) (vector-set! v -1 0)) 'error)
-(test (let ((v (vector 1 2 3))) (vector-set! v 3 0)) 'error)
-;(test (vector-set! '#(1 2) 0 2) 'error)
-;(test (vector-fill! '#(1 2) 2) 'error)
-
-(let ((v (vector 1 2 3)))
-  (for-each
-   (lambda (arg)
-     (test (vector-set! v arg 0) 'error))
-   (list "hi" #\a -1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #t (make-vector 3) (lambda (a) (+ a 1)))))
-
-(for-each
- (lambda (arg)
-   (test (vector-set! arg 0 0) 'error))
- (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
-
-(let ((v (vector)))
-  (test (vector-set! v 0 0) 'error)
-  (test (vector-set! v 1 0) 'error)
-  (test (vector-set! v -1 0) 'error))
-;(test (vector-set! #() 0 123) 'error)
-;(test (vector-set! #(1 2 3) 0 123) 'error)
-
-;(test (let ((g (lambda () '#(1 2 3)))) (vector-set! (g) 0 #\?) (g)) 'error) ; not an error in Guile
-					;(test (let ((g (lambda () '(1 . 2)))) (set-car! (g) 123) (g)) 'error) ; should this also be an error?
-					;(test (let ((g (lambda () '(1 2)))) (list-set! (g) 0 123) (g)) 'error)
-;(test (let ((g (lambda () (symbol->string 'hi)))) (string-set! (g) 1 #\a) (symbol->string 'hi)) 'error)
-
-(for-each
- (lambda (arg)
-   (test (vector-fill! arg 0) 'error))
- (list "hi" #\a 1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
-
-(test (make-vector 1 2 3) 'error)
-
 
 
 
@@ -3929,7 +4020,18 @@
 
 (test (hash-table?) 'error)
 (test (hash-table? 1 2) 'error)
+
 (test (make-hash-table 10 1) 'error)
+
+(let ((ht (make-hash-table)))
+  (test (hash-table? ht ht) 'error)
+  (test (hash-table-ref ht #\a #\b) 'error)
+  (test (hash-table-ref ht) 'error)
+  (test (hash-table-ref) 'error)
+  (test (hash-table-set!) 'error)
+  (test (hash-table-set! ht) 'error)
+  (test (hash-table-set! ht #\a) 'error)
+  (test (hash-table-set! ht #\a #\b #\c) 'error))
 
 (let ((ht (make-hash-table)))
   (test (hash-table-set! ht #\a 'key) 'error)
@@ -5231,7 +5333,7 @@
        (format #t "~A not equal? to itself?~%" op)))
  control-ops)
 
-(define question-ops (list boolean? eof-object? string? 
+(define question-ops (list boolean? eof-object? string?
 		           number? integer? real? rational? complex? char?
 			   list? vector? pair? null?))
 
@@ -10144,6 +10246,7 @@
 (test (constant? 12345) #t)
 (test (constant? 3.14) #t)
 (test (constant? :asdf) #t) 
+(test (constant? 'asdf) #f)
 (test (constant? "hi") #t) 
 (test (constant? #\a) #t) 
 (test (constant? #f) #t) 
@@ -10155,6 +10258,23 @@
 (test (let ((a 3)) (constant? 'a)) #f)
 (test (constant? 'abs) #f)
 (test (constant? abs) #t)
+(test (constant? most-positive-fixnum) #t)
+(test (constant? (/ (log 0))) #t)       ; nan.0 is a constant as a number I guess
+(test (constant? (log 0)) #t)
+
+;; and some I wonder about -- in CL's terms, these always evaluate to the same thing, so they're constantp
+;;   but Clisp:
+;;     (constantp (cons 1 2)) ->NIL
+;;     (constantp #(1 2)) -> T
+;;     (constantp '(1 . 2)) -> NIL
+;; etc -- what a mess!
+
+(test (constant? (cons 1 2)) #t)
+(test (constant? #(1 2)) #t)
+(test (constant? (list 1 2)) #t)
+(test (constant? (vector 1 2)) #t)
+(test (let ((v (vector 1 2))) (constant? v)) #t) ;!! surely this is a bug -- same with string/list
+;; it's returning #t unless the arg is a symbol that is not a keyword or a defined constant
 
 
 (test (defined? 'pi) #t)
@@ -13161,9 +13281,13 @@
 
 	(define svref vector-ref)
 	(define aref vector-ref)
-	(if (provided? 'multidimensional-vectors) (define array-dimensions vector-dimensions) (define array-dimensions (lambda (a) (list 1 1))))
+	(if (provided? 'multidimensional-vectors) 
+            (define array-dimensions vector-dimensions) 
+            (define array-dimensions (lambda (a) (list 1 1))))
 	(define array-total-size vector-length)
-	(define (array-dimension array num) (list-ref (vector-dimensions array) num))
+	(if (provided? 'multidimensional-vectors) 
+            (define (array-dimension array num) (list-ref (vector-dimensions array) num))
+            (define array-dimension vector-length))
 
 	(define-constant array-dimension-limit 16777215)
 	(define-constant array-rank-limit 4096)
@@ -33069,6 +33193,13 @@
   (test (nan? (modulo 1 nan)) #t)
   (test (nan? (modulo 1 inf+)) #t)
 
+  (test (nan? (string->number "nan.0")) #t)
+  (test (infinite? (string->number "inf.0")) #t)
+  (test (infinite? (string->number "+inf.0")) #t)
+  (test (infinite? (string->number "-inf.0")) #t)
+  (test (positive? (string->number "+inf.0")) #t)
+  (test (negative? (string->number "-inf.0")) #t)
+
 ;;    quotient remainder -> most-neg-fix also floor etc
 ;;    "nan" at start -> nan.0
 ;;    "+||-inf" at start -> +|-inf
@@ -43382,6 +43513,101 @@
 (num-test (string->number "1.1e4" 3) 108.0)
 (num-test (string->number "1.1e4" 2) 24.0)
 
+(num-test #b111111111111111111111111111111111111111111111111111111111111111 most-positive-fixnum)
+(num-test #o777777777777777777777 most-positive-fixnum)
+(num-test #x7fffffffffffffff most-positive-fixnum)
+(num-test #d9223372036854775807 most-positive-fixnum)
+
+(num-test #d-9223372036854775808 most-negative-fixnum)
+(num-test #o-1000000000000000000000 most-negative-fixnum)
+(num-test #x-8000000000000000 most-negative-fixnum)
+(num-test #b-1000000000000000000000000000000000000000000000000000000000000000 most-negative-fixnum)
+
+
+(test (number->string most-positive-fixnum 2) "111111111111111111111111111111111111111111111111111111111111111")
+(test (number->string most-positive-fixnum 8) "777777777777777777777")
+(test (number->string most-positive-fixnum 16) "7fffffffffffffff")
+(test (number->string most-positive-fixnum 10) "9223372036854775807")
+(test (number->string most-negative-fixnum 10) "-9223372036854775808")
+(test (number->string most-negative-fixnum 8) "-1000000000000000000000")
+(test (number->string most-negative-fixnum 16) "-8000000000000000")
+(test (number->string most-negative-fixnum 2) "-1000000000000000000000000000000000000000000000000000000000000000")
+
+(test (string->number "111111111111111111111111111111111111111111111111111111111111111" 2) most-positive-fixnum)
+(test (string->number "777777777777777777777" 8) most-positive-fixnum)
+(test (string->number "7fffffffffffffff" 16) most-positive-fixnum)
+(test (string->number "9223372036854775807" 10) most-positive-fixnum)
+(test (string->number "-9223372036854775808" 10) most-negative-fixnum)
+(test (string->number "-1000000000000000000000" 8) most-negative-fixnum)
+(test (string->number "-8000000000000000" 16) most-negative-fixnum)
+(test (string->number "-1000000000000000000000000000000000000000000000000000000000000000" 2) most-negative-fixnum)
+
+
+(num-test #b1.0e8 256.0)
+(num-test #o1.0e8 16777216.0)
+(num-test #d1.0e8 100000000.0)
+
+;;; no #x here because e is a digit
+;;; #b1.1111111111111111111111111111111111111111111111111110011101010100100100011001011011111011000011001110110101010011110011000100111E1023 1.7976931348623156E308
+;;; currently (number->string 1/9 2) returns "1/1001" -- is this expected?
+
+(num-test #b1.0e-8 0.00390625)
+(num-test #o1.0e-8 5.9604644775391e-08)
+(num-test #d1.0e-8 1.0e-8)
+
+(num-test #b-.1 -0.5)
+(num-test #o-.1 -0.125)
+(num-test #d-.1 -0.1)
+(num-test #x-.1 -0.0625)
+
+(num-test #b+.1 +0.5)
+(num-test #o+.1 +0.125)
+(num-test #d+.1 +0.1)
+(num-test #x+.1 +0.0625)
+
+(num-test #b+.1e+1 1.0)
+(num-test #d+.1e+1 1.0)
+(num-test #o+.1e+1 1.0)
+
+(num-test #b000000001 1)
+(num-test #b1e1 2.0)
+(num-test #b1.e1 2.0)
+
+(num-test #b#e-.1 -1/2)
+(num-test #o#e-.1 -1/8)
+(num-test #d#e-.1 -1/10)
+(num-test #x#e-.1 -1/16)
+
+(num-test #b#e1.1e2 6)
+(num-test #o#e1.1e2 72)
+(num-test #d#e1.1e2 110)
+
+(num-test #b#i-1.1e-2 -0.375)
+(num-test #o#i-1.1e-2 -0.017578125)
+(num-test #d#i-1.1e-2 -0.011)
+
+(num-test #e#b+1.1 3/2)
+(num-test #e#o+1.1 9/8)
+(num-test #e#d+1.1 11/10)
+(num-test #e#x+1.1 17/16)
+
+(num-test #e#b+1.1e+2 6)
+(num-test #e#o+1.1e+2 72)
+(num-test #e#d+1.1e+2 110)
+
+(num-test #i#b.001 0.125)
+(num-test #i#b000000000011 3.0)
+(num-test #i#b-000000000011e1 -6.0)
+(num-test #i#b-000000000011e+11 -6144.0)
+
+(num-test #x-AAF -2735)
+(num-test #x-aAf -2735)
+
+(num-test #b1+1.1i 1+1.5i)  ; yow...
+(num-test #b#e0+i 0+1i)
+(num-test #b#e0+1.1i 0+1.5i) ; oh well 
+
+
 (do ((i 2 (+ i 1)))
     ((= i 17)) 
   (num-test (string->number (number->string 12345.67890987654321 i) i) 12345.67890987654321))
@@ -44246,8 +44472,6 @@
 	(format #t ";number->string rounding checks worst case relative error ~A ~A ~S~%" maxdiff (car maxdiff-case) (cadr maxdiff-case)))
     ))
 
-
-;;; every scheme disagrees about stuff like #b.1 or #b+i etc -- I'll just omit them
 
 (for-each
  (lambda (p)
