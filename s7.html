@@ -1532,6 +1532,16 @@ signals that the lists specify the elements of an 'n' dimensional vector:
     #2D((-2 0) (2 -2))
 </pre>
 
+<p>If any dimension has 0 length, you get an n-dimensional empty vector.  It is not
+equal? to a 1-dimensional empty vector.
+</p>
+<pre>
+    &gt; (make-vector '(10 0 3))
+    #3D()
+    &gt; (equal? #() #3D())
+    #f
+</pre>
+
 </blockquote>
 </small>
 </dd>

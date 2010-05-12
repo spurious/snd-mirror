@@ -10145,7 +10145,19 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth, bool 
   
   len = vector_length(vect);
   if (len == 0)
+#if WITH_MULTIDIMENSIONAL_VECTORS
+    {
+      if (vector_is_multidimensional(vect))
+	{
+	  buf = (char *)calloc(16, sizeof(char));
+	  snprintf(buf, 16, "#%dD()", vector_ndims(vect));
+	  return(buf);
+	}
+      else return(copy_string("#()"));
+    }
+#else    
     return(copy_string("#()"));
+#endif
   
   if (!to_file)
     {
@@ -12054,6 +12066,9 @@ static s7_pointer g_vector_length(s7_scheme *sc, s7_pointer args)
 static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indices)
 {
   s7_Int index = 0;
+  if (vector_length(vect) == 0)
+    return(s7_out_of_range_error(sc, "vector-ref", 1, vect, "this vector has no elements, so vector-ref is hopeless"));
+
 #if WITH_MULTIDIMENSIONAL_VECTORS
   if (vector_is_multidimensional(vect))
     {
@@ -12074,7 +12089,7 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 	}
       if ((x != sc->NIL) ||
 	  (i != vector_ndims(vect)))
-	return(s7_wrong_number_of_args_error(sc, "vector ref: ~A", indices));
+	return(s7_wrong_number_of_args_error(sc, "too many args for vector ref: ~A", indices));
     }
   else
 #endif
@@ -12083,8 +12098,9 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 
       if (!s7_is_integer(car(indices)))
 	return(s7_wrong_type_arg_error(sc, "vector ref index,", 2, car(indices), "an integer"));
+
       if (cdr(indices) != sc->NIL)                            /* (#(1 2) 1 2) */
-	return(s7_wrong_number_of_args_error(sc, "vector ref: ~A", indices));
+	return(s7_wrong_number_of_args_error(sc, "too many args for vector ref: ~A", indices));
 
       index = s7_integer(car(indices));
       if ((index < 0) ||
@@ -12130,6 +12146,8 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
   vec = car(args);
   if (!s7_is_vector(vec))
     return(s7_wrong_type_arg_error(sc, "vector-set!", 1, vec, "a vector"));
+  if (vector_length(vec) == 0)
+    return(s7_out_of_range_error(sc, "vector-set!", 1, vec, "this vector has no elements, so vector-set! is hopeless"));
   
 #if WITH_MULTIDIMENSIONAL_VECTORS
   if (vector_is_multidimensional(vec))
@@ -12151,10 +12169,10 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
 	  index += n * vector_offset(vec, i);
 	}
 
-      if ((cdr(x) != sc->NIL) ||
-	  ((i != vector_ndims(vec)) &&
-	   (i != 1)))
-	return(s7_wrong_number_of_args_error(sc, "vector-set!: ~A", args));
+      if (cdr(x) != sc->NIL)
+	return(s7_wrong_number_of_args_error(sc, "too many args for vector-set!: ~A", args));
+      if (i != vector_ndims(vec))
+	return(s7_wrong_number_of_args_error(sc, "not enough args for vector-set!: ~A", args));
 
       val = car(x);
     }
@@ -12165,7 +12183,7 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
 	return(s7_wrong_type_arg_error(sc, "vector-set! index,", 2, cadr(args), "an integer"));
 #if WITH_MULTIDIMENSIONAL_VECTORS
       if (cdddr(args) != sc->NIL)                            /* (vector-set! #(1 2) 1 2 3) */
-	return(s7_wrong_number_of_args_error(sc, "vector set: ~A", args));
+	return(s7_wrong_number_of_args_error(sc, "too many args for vector set: ~A", args));
 #endif
 
       index = s7_integer(cadr(args));
@@ -12236,7 +12254,7 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
     fill = cadr(args);
 
   vec = s7_make_vector_1(sc, len, false);
-  s7_vector_fill(sc, vec, fill);
+  if (len > 0) s7_vector_fill(sc, vec, fill);
 
 #if WITH_MULTIDIMENSIONAL_VECTORS
   if ((is_pair(x)) &&
@@ -12370,10 +12388,17 @@ static s7_pointer g_multivector(s7_scheme *sc, int dims, s7_pointer data)
    * (#3D(((1 2) (3 4)) ((5 6) (7 8))) 0 0 0) -> 1
    * (#3D(((1 2) (3 4)) ((5 6) (7 8))) 1 1 0) -> 7
    * #3D(((1 2) (3 4)) ((5 6) (7))) -> error, #3D(((1 2) (3 4)) ((5 6) (7 8 9))), #3D(((1 2) (3 4)) (5 (7 8 9))) etc
+   *
+   * but a special case: #nD() is an n-dimensional empty vector
    */
 
   sc->w = sc->NIL;
   sizes = (int *)calloc(dims, sizeof(int));
+  if (data == sc->NIL)
+    {
+      /* dims are already 0 (calloc above) */
+      return(g_make_vector(sc, s7_cons(sc, g_make_list(sc, make_list_2(sc, s7_make_integer(sc, dims), small_int(0))), sc->NIL)));
+    }
 
   for (x = data, i = 0; i < dims; i++)
     {
@@ -16390,8 +16415,9 @@ static void back_up_stack(s7_scheme *sc)
   if (top_op == OP_READ_QUOTE)
     pop_stack(sc);
 
-  if (top_op == OP_EVAL_STRING) /* ?? */
-    pop_stack(sc);
+  /* we used to backup past OP_EVAL_STRING here, but that leads to segfaults if
+   *   the input is (+ 1 . . ) or (list . ).  Why were we backing past it?
+   */
 }
 
 
@@ -17516,7 +17542,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_PAIR:
 	  /* using a local s7_pointer for sc->x here drastically slows things down?!? */
 	  sc->x = car(sc->code);
-	  if (is_syntax(sc->x))
+	  if /* ((is_not_local(sc->x)) && */     /* (let () (define (if a) a) (if 1)) but this slows us down by a huge amount (50%!) */
+	    (is_syntax(sc->x))
 	    {     
 	      sc->code = cdr(sc->code);
 	      sc->op = (opcode_t)syntax_opcode(sc->x);
@@ -17923,14 +17950,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	case T_STRING:                            /* -------- string as applicable object -------- */
 	  if (cdr(sc->args) != sc->NIL)
-	    return(s7_wrong_number_of_args_error(sc, "string ref (via string as applicable object): ~A", sc->args));
+	    return(s7_wrong_number_of_args_error(sc, "too many args for string ref (via string as applicable object): ~A", sc->args));
 	  sc->value = string_ref_1(sc, sc->code, car(sc->args));
 	  pop_stack(sc);
 	  goto START;
 
 	case T_PAIR:                              /* -------- list as applicable object -------- */
 	  if (cdr(sc->args) != sc->NIL)
-	    return(s7_wrong_number_of_args_error(sc, "list ref (via list as applicable object): ~A", sc->args));
+	    return(s7_wrong_number_of_args_error(sc, "too many args for list ref (via list as applicable object): ~A", sc->args));
 	  /* 
 	   * I suppose we could take n args here = repeated list-refs
 	   * ((list (list 1 2) 3) 0 0) -> 1 (caar)
@@ -17941,7 +17968,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	case T_HASH_TABLE:                        /* -------- hash-table as applicable object -------- */
 	  if (cdr(sc->args) != sc->NIL)
-	    return(s7_wrong_number_of_args_error(sc, "hash-table ref (via hash-table as applicable object): ~A", sc->args));
+	    return(s7_wrong_number_of_args_error(sc, "too many args for hash-table ref (via hash-table as applicable object): ~A", sc->args));
 	  sc->value = hash_table_ref_1(sc, sc->code, car(sc->args));
 	  pop_stack(sc);
 	  goto START;
