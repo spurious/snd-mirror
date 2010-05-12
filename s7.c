@@ -969,6 +969,7 @@ static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, int type);
 static void write_string(s7_scheme *sc, const char *s, s7_pointer pt);
 static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj);
+static s7_pointer apply_error(s7_scheme *sc, s7_pointer obj, s7_pointer args);
 static bool is_thunk(s7_scheme *sc, s7_pointer x);
 static int remember_file_name(const char *file);
 static const char *type_name(s7_pointer arg);
@@ -1906,7 +1907,7 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
       (make_atom(sc, (char *)name, 10, false) != sc->F))
     return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 		    make_list_2(sc, 
-				s7_make_string(sc, "identifier (symbol) name, ~A, can't be a number"), 
+				make_protected_string(sc, "identifier (symbol) name, ~A, can't be a number"), 
 				s7_make_string(sc, name))));
 
   return(symbol_table_add_by_name_at_location(sc, name, location)); 
@@ -2108,7 +2109,7 @@ static s7_pointer add_to_current_environment(s7_scheme *sc, s7_pointer variable,
     {
       if (is_immutable(variable))                          /* (let ((pi 3)) pi) */
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-			make_list_2(sc, s7_make_string(sc, "can't bind an immutable object: ~S"), variable)));
+			make_list_2(sc, make_protected_string(sc, "can't bind an immutable object: ~S"), variable)));
       value = call_symbol_bind(sc, variable, value);
     }
 
@@ -2125,7 +2126,7 @@ static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s
     {
       if (is_immutable(variable))
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-			make_list_2(sc, s7_make_string(sc, "can't bind an immutable object: ~S"), variable)));
+			make_list_2(sc, make_protected_string(sc, "can't bind an immutable object: ~S"), variable)));
       value = call_symbol_bind(sc, variable, value);
     }
 
@@ -2854,7 +2855,7 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
        (s7_integer(cadr(proc_args)) == 0) &&
        (caddr(proc_args) == sc->F)))
     return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-		    make_list_2(sc, s7_make_string(sc, "call/cc procedure, ~A, should take one argument"), car(args))));
+		    make_list_2(sc, make_protected_string(sc, "call/cc procedure, ~A, should take one argument"), car(args))));
 
   sc->code = car(args);
   sc->args = make_list_1(sc, s7_make_continuation(sc));
@@ -9381,7 +9382,12 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
   if (is_function_port(port))
     return((*(port_input_function(port)))(sc, S7_READ, port));
   
+  if ((is_string_port(port)) &&
+      (port_string_length(port) <= port_string_point(port)))
+    return(sc->EOF_OBJECT);
+
   push_input_port(sc, port);
+
   push_stack(sc, opcode(OP_READ_POP_AND_RETURN_EXPRESSION), sc->NIL, sc->NIL); /* this stops the internal read process so we only get one form */
   push_stack(sc, opcode(OP_READ_INTERNAL), sc->NIL, sc->NIL);
   return(port);
@@ -9594,6 +9600,20 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 	return(s7_wrong_type_arg_error(sc, "eval", 2, cadr(args), "an environment"));
       sc->envir = cadr(args);
     }
+
+  /* if we had an independent stack+evaluator here, we wouldn't have to worry
+   *    about an error in eval-string screwing up everything else.  But if we
+   *    clone_s7 (with a reasonable stack size!), how do we make sure it is
+   *    gc protected?  Currently this does the right thing:
+
+     (define t1 (make-thread
+	          (lambda ()
+	            (eval-string "#2d((1 2) #2d((3 4) 5 6))"))))
+     (join-thread t1)
+
+   * so we'd need (with-evaluator ...)?
+   * and some way to set initial stack sizes -- the current 4000 seems excessive
+   */
 
   return(eval_string_1(sc, s7_string(car(args))));
 }
@@ -11782,7 +11802,7 @@ static s7_pointer s7_make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
     {
       vector_elements(x) = (s7_pointer *)malloc(len * sizeof(s7_pointer));
       if (!(vector_elements(x)))
-	return(s7_error(sc, s7_make_symbol(sc, "out-of-memory"), s7_make_string(sc, "make-vector allocation failed!")));
+	return(s7_error(sc, s7_make_symbol(sc, "out-of-memory"), make_protected_string(sc, "make-vector allocation failed!")));
 
       vector_length(x) = len;
       if (filled) s7_vector_fill(sc, x, sc->NIL);
@@ -13031,6 +13051,23 @@ static bool is_thunk(s7_scheme *sc, s7_pointer x)
 }
 
 
+static bool args_match(s7_scheme *sc, s7_pointer x, int args)
+{
+  switch (type(x))
+    {
+    case T_C_FUNCTION:
+      return((c_function_required_args(x) <= args) &&
+	     (c_function_all_args(x) >= args));
+
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+      return((s7_is_symbol(closure_args(x))) ||
+	     (safe_list_length(sc, closure_args(x)) >= args));
+    }
+  return(false);
+}
+
+
 static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
 {
   #define H_procedure_arity "(procedure-arity func) returns a list '(required optional rest)"
@@ -13210,7 +13247,7 @@ static s7_pointer apply_object(s7_scheme *sc, s7_pointer obj, s7_pointer args)
   if (object_types[tag].apply)
     return((*(object_types[tag].apply))(sc, obj, args));
 
-  return(eval_error(sc, "attempt to apply ~A?", obj));
+  return(apply_error(sc, obj, args));
 }
 
 
@@ -13508,7 +13545,7 @@ In each case, the argument is the value of the object, not the object itself."
 		  if (!s7_is_procedure(func))
 		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 				    make_list_2(sc, 
-						s7_make_string(sc, "make-type arg, ~A, should be a function"),
+						make_protected_string(sc, "make-type arg, ~A, should be a function"),
 						func)));
 		  proc_args = s7_procedure_arity(sc, func);
 		  nargs = s7_integer(car(proc_args)) + s7_integer(cadr(proc_args));
@@ -13521,7 +13558,7 @@ In each case, the argument is the value of the object, not the object itself."
 		  if ((s7_integer(car(proc_args)) > 1) || 
 		      ((nargs == 0) && (!rest_arg)))
 		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				    make_list_2(sc, s7_make_string(sc, "make-type :print procedure, ~A, should take one argument"), func)));
+				    make_list_2(sc, make_protected_string(sc, "make-type :print procedure, ~A, should take one argument"), func)));
 
 		  object_types[tag].print_func = func;
 		  object_types[tag].print = call_s_object_print;
@@ -13532,7 +13569,7 @@ In each case, the argument is the value of the object, not the object itself."
 		  if ((s7_integer(car(proc_args)) > 2) || 
 		      ((nargs < 2) && (!rest_arg)))
 		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				    make_list_2(sc, s7_make_string(sc, "make-type :equal procedure, ~A, should take two arguments"), func)));
+				    make_list_2(sc, make_protected_string(sc, "make-type :equal procedure, ~A, should take two arguments"), func)));
 
 		  object_types[tag].equal_func = func;
 		  break;
@@ -13540,7 +13577,7 @@ In each case, the argument is the value of the object, not the object itself."
 		case 2:                 /* getter: (((cadr (make-type :getter (lambda (a b) (vector-ref a b)))) (vector 1 2 3)) 1) -> 2 */
 		  if ((nargs == 0) && (!rest_arg))
 		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				    make_list_2(sc, s7_make_string(sc, "make-type :getter procedure, ~A, should take at least one argument"), func)));
+				    make_list_2(sc, make_protected_string(sc, "make-type :getter procedure, ~A, should take at least one argument"), func)));
 
 		  object_types[tag].getter_func = func;
 		  object_types[tag].apply = call_s_object_getter;
@@ -13549,7 +13586,7 @@ In each case, the argument is the value of the object, not the object itself."
 		case 3:                 /* setter: (set! (((cadr (make-type :setter (lambda (a b c) (vector-set! a b c)))) (vector 1 2 3)) 1) 23) */
 		  if ((nargs < 2) && (!rest_arg))
 		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				    make_list_2(sc, s7_make_string(sc, "make-type :setter procedure, ~A, should take at least two arguments"), func)));
+				    make_list_2(sc, make_protected_string(sc, "make-type :setter procedure, ~A, should take at least two arguments"), func)));
 
 		  object_types[tag].setter_func = func;
 		  object_types[tag].set = call_s_object_setter;
@@ -13559,7 +13596,7 @@ In each case, the argument is the value of the object, not the object itself."
 		  if ((s7_integer(car(proc_args)) > 1) || 
 		      ((nargs == 0) && (!rest_arg)))
 		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				    make_list_2(sc, s7_make_string(sc, "make-type :length procedure, ~A, should take at one argument"), func)));
+				    make_list_2(sc, make_protected_string(sc, "make-type :length procedure, ~A, should take at one argument"), func)));
 
 		  object_types[tag].length_func = func;
 		  object_types[tag].length = call_s_object_length;
@@ -13568,7 +13605,7 @@ In each case, the argument is the value of the object, not the object itself."
 		case 5:                 /* name, ((cadr (make-type :name "hiho")) 123) -> #<hiho 123> */
 		  if (!s7_is_string(func))
 		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				    make_list_2(sc, s7_make_string(sc, "make-type :name arg, ~S, should be a string"), func)));
+				    make_list_2(sc, make_protected_string(sc, "make-type :name arg, ~S, should be a string"), func)));
 
 		  object_types[tag].name = copy_string(s7_string(func));
 		  break;
@@ -13577,7 +13614,7 @@ In each case, the argument is the value of the object, not the object itself."
 		  if ((s7_integer(car(proc_args)) > 1) || 
 		      ((nargs == 0) && (!rest_arg)))
 		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				    make_list_2(sc, s7_make_string(sc, "make-type :copy procedure, ~A, should take at one argument"), func)));
+				    make_list_2(sc, make_protected_string(sc, "make-type :copy procedure, ~A, should take at one argument"), func)));
 
 		  object_types[tag].copy_func = func;
 		  object_types[tag].copy = call_s_object_copy;
@@ -13587,7 +13624,7 @@ In each case, the argument is the value of the object, not the object itself."
 		  if ((s7_integer(car(proc_args)) > 2) || 
 		      ((nargs == 0) && (!rest_arg)))
 		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-				    make_list_2(sc, s7_make_string(sc, "make-type :fill procedure, ~A, should take at two arguments"), func)));
+				    make_list_2(sc, make_protected_string(sc, "make-type :fill procedure, ~A, should take at two arguments"), func)));
 
 		  object_types[tag].fill_func = func;
 		  object_types[tag].fill = call_s_object_fill;
@@ -14669,7 +14706,7 @@ static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char
       if (args != sc->NIL)
 	return(s7_error(sc, 
 			sc->FORMAT_ERROR, 
-			make_list_2(sc, s7_make_string(sc, "format control string is null, but there are other arguments: ~A"), args)));
+			make_list_2(sc, make_protected_string(sc, "format control string is null, but there are other arguments: ~A"), args)));
       return(s7_make_string(sc, ""));
     }
 
@@ -15075,6 +15112,21 @@ each a function of no arguments, guaranteeing that finish is called even if body
     return(s7_wrong_type_arg_error(sc, "dynamic-wind", 2, cadr(args), "a thunk"));
   if (!is_thunk(sc, caddr(args)))
     return(s7_wrong_type_arg_error(sc, "dynamic-wind", 3, caddr(args), "a thunk"));
+
+  /* this won't work:
+
+       (let ((final (lambda (a b c) (list a b c))))
+         (dynamic-wind
+           (lambda () #f)
+           (lambda () (set! final (lambda () (display "in final"))))
+           final))
+
+   * but why not?  'final' is a thunk by the time it is evaluated.
+   *   catch (the error handler) is similar.
+   *
+   * It can't work here because we set up the dynamic_wind_out slot below and
+   *   even if the thunk check was removed, we'd still be trying to apply the original function.
+   */
   
   NEW_CELL(sc, p);
   dynamic_wind_in(p) = car(args);
@@ -15328,6 +15380,16 @@ GOT_CATCH:
       sc->code = catch_handler(catcher);
       loc = catch_goto_loc(catcher);
       sc->stack_end = (s7_pointer *)(sc->stack_start + loc);
+
+      /* if user (i.e. yers truly!) copies/pastes the preceding lambda () into the
+       *   error handler portion of the catch, he gets the inexplicable message:
+       *       ;(): too many arguments: (a1 ())
+       *   when this apply tries to call the handler.  So, we need a special case
+       *   error check here!
+       */
+      if (!args_match(sc, sc->code, 2))
+	return(s7_wrong_number_of_args_error(sc, "catch error handler has wrong number of args: ~A", sc->args));
+
       sc->op = OP_APPLY;
 
       /* explicit eval needed if s7_call called into scheme where a caught error occurred (ex6 in exs7.c)
@@ -15480,6 +15542,12 @@ s7_pointer s7_error_and_exit(s7_scheme *sc, s7_pointer type, s7_pointer info)
 }
 
 
+static s7_pointer apply_error(s7_scheme *sc, s7_pointer obj, s7_pointer args)
+{
+  return(s7_error(sc, sc->SYNTAX_ERROR, make_list_3(sc, make_protected_string(sc, "attempt to apply ~S to ~S?"), obj, args)));
+}
+
+
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj)
 {
   return(s7_error(sc, sc->SYNTAX_ERROR, make_list_2(sc, make_protected_string(sc, errmsg), obj)));
@@ -15597,13 +15665,13 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
   if (line > 0)
     return(s7_error(sc, sc->READ_ERROR, 
 		    make_list_3(sc, 
-				s7_make_string(sc, "missing close paren, list started around line ~D of ~S"), 
+				make_protected_string(sc, "missing close paren, list started around line ~D of ~S"), 
 				s7_make_integer(sc, remembered_line_number(line)),
 				make_protected_string(sc, port_filename(sc->input_port)))));
   
   /* we need a legit s7_error here, but we're lost... */
   return(s7_error(sc, sc->READ_ERROR, 
-		  make_list_1(sc, s7_make_string(sc, "missing close paren"))));
+		  make_list_1(sc, make_protected_string(sc, "missing close paren"))));
 }
 
 
@@ -15617,7 +15685,7 @@ static void improper_arglist_error(s7_scheme *sc)
   
   s7_error(sc, sc->SYNTAX_ERROR, 
 	   make_list_2(sc,
-		       s7_make_string(sc, "improper list of arguments: ~A"),
+		       make_protected_string(sc, "improper list of arguments: ~A"),
 		       x));
 }
 
@@ -15811,7 +15879,7 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
       if (!is_proper_list(sc, sc->args))        /* (apply + #f) etc */
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 			make_list_2(sc, 
-				    s7_make_string(sc, "apply's last argument should be a list: ~A"),
+				    make_protected_string(sc, "apply's last argument should be a list: ~A"),
 				    args)));
     }
   push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
@@ -17749,7 +17817,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    if (is_immutable(z))
 		      return(s7_error(sc, sc->WRONG_TYPE_ARG,
-				      make_list_2(sc, s7_make_string(sc, "can't bind an immutable object: ~S"), z)));
+				      make_list_2(sc, make_protected_string(sc, "can't bind an immutable object: ~S"), z)));
 		    car(sc->y) = call_symbol_bind(sc, z, car(sc->y));
 		  }
 
@@ -17879,7 +17947,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	default:
-	  return(eval_error(sc, "attempt to apply ~S?", sc->code));
+	  return(apply_error(sc, sc->code, sc->args));
 	}
       /* ---------------- end OP_APPLY ---------------- */
 
@@ -19163,7 +19231,7 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   new_sc->stack = vect;
   new_sc->stack_start = vector_elements(vect);
   new_sc->stack_end = new_sc->stack_start;
-  new_sc->stack_size = INITIAL_STACK_SIZE;
+  new_sc->stack_size = vector_length(vect);
   new_sc->stack_resize_trigger = (s7_pointer *)(new_sc->stack_start + new_sc->stack_size / 2);
   
   new_sc->w = new_sc->NIL;
@@ -19309,17 +19377,24 @@ static void *run_thread_func(void *obj)
 
 static s7_pointer g_make_thread(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_thread "(make-thread thunk) creates a new thread running thunk"
+  #define H_make_thread "(make-thread thunk (initial-stack-size 4000)) creates a new thread running thunk"
   thred *f;
   s7_pointer obj, vect, frame;
-  int floc, vloc, oloc;
+  int floc, vloc, oloc, stack_size = INITIAL_STACK_SIZE;
 
   if (!is_procedure(car(args)))
-    return(s7_wrong_type_arg_error(sc, "make-thread", 0, car(args), "a thunk"));
+    return(s7_wrong_type_arg_error(sc, "make-thread", 1, car(args), "a thunk"));
+
+  if (cdr(args) != sc->NIL)
+    {
+      if (!s7_is_integer(cadr(args)))
+	return(s7_wrong_type_arg_error(sc, "make-thread stack-size", 2, cadr(args), "an integer"));
+      stack_size = s7_integer(cadr(args));
+    }
   
   frame = immutable_cons(sc, sc->NIL, sc->envir);
   floc = s7_gc_protect(sc, frame);
-  vect = s7_make_vector(sc, INITIAL_STACK_SIZE);
+  vect = s7_make_vector(sc, stack_size);
   vloc = s7_gc_protect(sc, vect);
   
   f = (thred *)calloc(1, sizeof(thred));
@@ -19537,7 +19612,7 @@ static s7_pointer g_make_thread_variable(s7_scheme *sc, s7_pointer args)
   err = pthread_key_create(key, NULL);
   if (err == 0)
     return(s7_make_object(sc, key_tag, (void *)key));  
-  return(s7_error(sc, s7_make_symbol(sc, "thread-error"), make_list_1(sc, s7_make_string(sc, "make-thread-variable failed!?"))));
+  return(s7_error(sc, s7_make_symbol(sc, "thread-error"), make_list_1(sc, make_protected_string(sc, "make-thread-variable failed!?"))));
 }
 
 
@@ -19545,7 +19620,7 @@ static s7_pointer get_key(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
   if (args != sc->NIL)
     return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS,
-		    make_list_3(sc, s7_make_string(sc, "thread variable is a function of no arguments: ~A ~A"),	obj, args)));
+		    make_list_3(sc, make_protected_string(sc, "thread variable is a function of no arguments: ~A ~A"),	obj, args)));
   return(s7_thread_variable_value(sc, obj));
 }
 
@@ -24575,7 +24650,7 @@ s7_scheme *s7_init(void)
   lock_tag =   s7_new_type("<lock>",            lock_print,   lock_free,   lock_equal,   NULL,        NULL, NULL);
   key_tag =    s7_new_type("<thread-variable>", key_print,    key_free,    key_equal,    NULL,        get_key, set_key);
 
-  s7_define_function(sc, "make-thread",             g_make_thread,             1, 0, false, H_make_thread);
+  s7_define_function(sc, "make-thread",             g_make_thread,             1, 1, false, H_make_thread);
   s7_define_function(sc, "join-thread",             g_join_thread,             1, 0, false, H_join_thread);
   s7_define_function(sc, "thread?",                 g_is_thread,               1, 0, false, H_is_thread);
 

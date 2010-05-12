@@ -1576,8 +1576,12 @@ void snd_close_file(snd_info *sp)
 
   remember_filename(sp->filename, preloaded_files); /* for open dialog(s) previous files list in case dialog doesn't yet exist */
 
-  /* an experiment -- event queue seems to be glomming up when lots of fast open/close */
-  /* but squelch updates just in case a redisplay event is in the queue */
+  /* an experiment -- event queue seems to be glomming up when lots of fast open/close,
+   * but squelch updates just in case a redisplay event is in the queue.  But check_for_event
+   * here is dangerous because a channel might be closed and deallocated already, then
+   * this check lets a mouse event through, cp->axis is NULL, cp->active has been stomped on,
+   * segfault!  
+   */
 
   for (i = 0; i < sp->nchans; i++) 
     sp->chans[i]->squelch_update = true;

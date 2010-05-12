@@ -301,6 +301,20 @@
 	`(,op ,(recompose-1 (- n 1)))))
   (recompose-1 n))
 
+(define-macro (with-evaluator . body)
+  (if (provided? 'threads)
+      `(join-thread (make-thread (lambda () ,@body) 200))
+      'error))
+
+(define-macro (test-w tst) ; (display tst) (newline)
+  `(let* ((old-error-port (set-current-error-port (open-output-string)))
+	  (result (with-evaluator (eval-string ,tst))))
+     (close-output-port (current-error-port))
+     (set-current-error-port old-error-port)
+     (if (or (not result)
+	     (eq? result 'error))
+	 (format #t "~A got ~A~%~%" ',tst result))))
+
 
 
 
@@ -2594,7 +2608,7 @@
 (test (recompose 10 car '(((((((((((1 2 3)))))))))))) '(1 2 3))
 
 (test (cons 1 . 2) 'error)
-					;      (test '(1 . 2 . 3) 'error) ; gets reader error which is inconvenient
+(test-w "(1 . 2 . 3)")
 (test (car (list)) 'error)
 (test (car '()) 'error)
 (test (cdr (list)) 'error)
@@ -3413,37 +3427,37 @@
        caaaar caaadr caadar cadaar caaddr cadddr cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar
        list-ref list-tail list-set!))
 
-#|
-(test (list #b) 'error)
-(test (char? #\spaces) 'error)
-(test (car '( . 1)) 'error) 
-(test (car '(. )) 'error)
-(test (car '( . )) 'error)
-(test (car '(. . . )) 'error)
-(test '#( . 1) 'error) 
-(test '(1 2 . ) 'error)
-(test '#(1 2 . ) 'error)
-(test (+ 1 . . ) 'error)
-(test (car '(1 . )) 'error)
-(test (car '(1 . . 2)) 'error)
-(test '#( . ) 'error) 
-(test '#(1 . ) 'error)
-(test '#(. . . ) 'error)
-(test '#(1 . . 2) 'error)
-(test '(. 1) 'error)
-(test '#(. 1) 'error)
-(test '(. ) 'error)
-(test '#(. ) 'error)
-(test (list 1 . 2) 'error)
-(test (+ 1 . 2) 'error)
-(test (car '@#`') 'error)
-(test (list . ) 'error)
-(test '#( .) 'error)
-(test (car '( .)) 'error)
-(test '#(1 . 2) 'error)
-(test (let ((. 3)) .) 'error)
-|#
-      
+
+(test-w "(list #b)")
+(test-w "(char? #\\spaces)")
+(test-w "(car '( . 1))")
+(test-w "(car '(. ))")
+(test-w "(car '( . ))")
+(test-w "(car '(. . . ))")
+(test-w "'#( . 1)")
+(test-w "'(1 2 . )")
+(test-w "'#(1 2 . )")
+;(test-w "(+ 1 . . )")
+(test-w "(car '(1 . ))")
+(test-w "(car '(1 . . 2))")
+(test-w "'#( . )")
+(test-w "'#(1 . )")
+(test-w "'#(. . . )")
+(test-w "'#(1 . . 2)")
+(test-w "'(. 1)")
+(test-w "'#(. 1)")
+(test-w "'(. )")
+(test-w "'#(. )")
+(test-w "(list 1 . 2)")
+(test-w "(+ 1 . 2)")
+(test-w "(car '@#`')")
+;(test-w "(list . )")
+(test-w "'#( .)")
+(test-w "(car '( .))")
+(test-w "'#(1 . 2)")
+(test-w "(let ((. 3)) .)")
+
+;; TODO: the 2 commented out cause a segfault in ordinary usage (not thread-related)      
       
 
 
@@ -3948,7 +3962,7 @@
 
       (test (let ((v #2d((1 2) (3 4)))) (vector-fill! v #t) v) #2D((#t #t) (#t #t)))
       
-      ;(test #2d((1 2) #2d((3 4) 5 6)) 'error) -- read error
+      (test-w "#2d((1 2) #2d((3 4) 5 6))")
       (test (string=? (object->string #2d((1 2) (3 #2d((3 4) (5 6))))) "#2D((1 2) (3 #2D((3 4) (5 6))))") #t)
       (test (string=? (object->string #3d(((#2d((1 2) (3 4)) #(1)) (#3d(((1))) 6)))) "#3D(((#2D((1 2) (3 4)) #(1)) (#3D(((1))) 6)))") #t)
       ))
@@ -4493,7 +4507,12 @@
 	  (format #t "read: ~A~%" val)))
     (let ((val (read)))
       (if (not (eof-object? val))
-	  (format #t "read: ~A~%" val)))))
+	  (format #t "read: ~A~%" val)))
+    (let ((val (read)))
+      (if (not (eof-object? val))
+	  (format #t "read again: ~A~%" val)))))
+
+;; TODO: test all the read* procs for repeated eofs
 
 (for-each
  (lambda (arg)
@@ -5238,6 +5257,37 @@
    (test (port-line-number arg) 'error))
  (list "hi" -1 #\a 1 0 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t '() (list 1 2 3) '(1 . 2)))
 
+(for-each
+ (lambda (op)
+   (let ((tag (catch #t (lambda () (op)) (lambda args 'error))))
+     (if (not (eq? tag 'error))
+	 (format #t "(~A) -> ~A (expected 'error)~%" op tag))))
+ (list set-current-input-port set-current-error-port set-current-output-port 
+       close-input-port close-output-port
+       write display write-byte write-char format                     ; newline
+       ;read read-char read-byte peek-char char-ready? read-line      ; these can default to current input
+       call-with-output-file call-with-input-file
+       call-with-output-string call-with-input-string
+       with-input-from-string with-input-from-file
+       with-output-to-file
+       open-output-file open-input-file 
+       open-input-string))
+
+(for-each
+ (lambda (op)
+   (let ((tag (catch #t (lambda () (op 1 2 3 4 5)) (lambda args 'error))))
+     (if (not (eq? tag 'error))
+	 (format #t "(~A 1 2 3 4 5) -> ~A (expected 'error)~%" op tag))))
+ (list set-current-input-port set-current-error-port set-current-output-port 
+       close-input-port close-output-port
+       write display write-byte write-char format newline
+       read read-char read-byte peek-char char-ready? read-line
+       call-with-output-file call-with-input-file
+       call-with-output-string call-with-input-string
+       with-input-from-string with-input-from-file
+       with-output-to-file
+       open-output-file open-input-file 
+       open-input-string))
 
 
 
@@ -8738,7 +8788,9 @@
 (test (let () (define-macro (tryqv . lst) `(map abs '(,@lst))) (tryqv 1 2 3 -4 5)) '(1 2 3 4 5))
 (test (let () (define-macro (tryqv . lst) `(map abs (vector ,@lst))) (tryqv 1 2 3 -4 5)) '(1 2 3 4 5))
 
-
+(test (quasiquote) 'error)
+(let ((d 1))
+  (test (quasiquote (a b c ,d)) '(a b c 1)))
 
 
 
@@ -8791,12 +8843,71 @@
    (test (symbol->keyword arg) 'error))
  (list "hi" -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '() '#(()) (list 1 2 3) '(1 . 2)))
 
+(test (keyword?) 'error)
+(test (keyword? 1 2) 'error)
+(test (make-keyword) 'error)
+(test (make-keyword 'hi 'ho) 'error)
+(test (keyword->symbol) 'error)
+(test (keyword->symbol :hi :ho) 'error)
+(test (symbol->keyword) 'error)
+(test (symbol->keyword 'hi 'ho) 'error)
+
+
 
 (for-each
  (lambda (arg)
    (test (gensym arg) 'error))
  (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '() '#(()) (list 1 2 3) '(1 . 2)))
 
+(test (gensym "hi" "ho") 'error)
+
+(test (symbol? (gensym)) #t)
+(test (symbol? (gensym "temp")) #t)
+(test (eq? (gensym) (gensym)) #f)
+(test (eqv? (gensym) (gensym)) #f)
+(test (equal? (gensym) (gensym)) #f)
+(test (keyword? (gensym)) #f)
+(test (let* ((a (gensym)) (b a)) (eq? a b)) #t)
+(test (let* ((a (gensym)) (b a)) (eqv? a b)) #t)
+
+(let ((sym (gensym)))
+  (test (eval `(let ((,sym 32)) (+ ,sym 1))) 33))
+
+(let ((sym1 (gensym))
+      (sym2 (gensym)))
+  (test (eval `(let ((,sym1 32) (,sym2 1)) (+ ,sym1 ,sym2))) 33))
+
+(test (let ((hi (gensym))) (eq? hi (string->symbol (symbol->string hi)))) #t)
+
+
+(test (provided?) 'error)
+(test (provide) 'error)
+(test (or (null? *features*) (pair? *features*)) #t)
+(test (provided? 1 2 3) 'error)
+(test (provide 1 2 3) 'error)
+(provide 's7test)
+(test (provided? 's7test) #t)
+(test (provided? 'not-provided!) #f)
+
+(for-each
+ (lambda (arg)
+   (test (provide arg) 'error))
+ (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '() '#(()) (list 1 2 3) '(1 . 2)))
+
+(for-each
+ (lambda (arg)
+   (test (provided? arg) 'error))
+ (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '() '#(()) (list 1 2 3) '(1 . 2)))
+
+
+(test (integer? *vector-print-length*) #t)
+(test (or (null? *trace-hook*) (procedure? *trace-hook*)) #t)
+(test (or (null? *#readers*) (pair? *#readers*)) #t)
+(test (or (null? *load-hook*) (procedure? *load-hook*)) #t)
+(test (or (null? *load-path*) (pair? *load-path*)) #t)
+(test (or (null? *error-hook*) (procedure? *error-hook*)) #t)
+(test (or (null? *unbound-variable-hook*) (procedure? *unbound-variable-hook*)) #t)
+(test (vector? *error-info*) #t)
 
 
 
@@ -8859,25 +8970,107 @@
 	  (apply < vals)))
       #t)
 
+(test (sort!) 'error)
+(test (sort! '(1 2 3)) 'error)
+(test (sort! '(1 2 3) 1) 'error)
+(test (sort! '(1 2 3) < <) 'error)
+
+(for-each
+ (lambda (arg)
+   (test (sort! arg <) 'error))
+ (list -1 #\a 1 0 'a-symbol 3.14 3/4 1.0+1.0i #f #t))
+
+(for-each
+ (lambda (arg)
+   (test (sort! '(1 2 3) arg) 'error))
+ (list -1 #\a 1 0 'a-symbol 3.14 3/4 1.0+1.0i #f #t #(1) '(1) "hi" :hi))
+
+(test (sort! '(1 2 "hi" 3) <) 'error)
+(test (sort! '(1 -2 "hi" 3) (lambda (a b) 
+			     (let ((a1 (if (number? a) a (length a)))
+				   (b1 (if (number? b) b (length b))))
+			       (< a1 b1))))
+      '(-2 1 "hi" 3))
+
+(let ((ok #f))
+  (catch #t
+	 (lambda ()
+	   (dynamic-wind
+	       (lambda () #f)
+	       (lambda () (sort! '(1 2 "hi" 3) <))
+	       (lambda () (set! ok #t))))
+	 (lambda args 'error))
+  (if (not ok) (format #t "dynamic-wind out of sort! skipped cleanup?~%")))
 
 
-(test (symbol? (gensym)) #t)
-(test (symbol? (gensym "temp")) #t)
-(test (eq? (gensym) (gensym)) #f)
-(test (eqv? (gensym) (gensym)) #f)
-(test (equal? (gensym) (gensym)) #f)
-(test (keyword? (gensym)) #f)
-(test (let* ((a (gensym)) (b a)) (eq? a b)) #t)
-(test (let* ((a (gensym)) (b a)) (eqv? a b)) #t)
 
-(let ((sym (gensym)))
-  (test (eval `(let ((,sym 32)) (+ ,sym 1))) 33))
+;;; -------- catch --------
 
-(let ((sym1 (gensym))
-      (sym2 (gensym)))
-  (test (eval `(let ((,sym1 32) (,sym2 1)) (+ ,sym1 ,sym2))) 33))
+(define (catch-test sym)
+  (let ((errs '()))
+    (catch 'a1
+	 (lambda ()
+	   (catch 'a2
+		  (lambda ()
+		    (catch 'a3
+			   (lambda ()
+			     (catch 'a4
+				    (lambda ()
+				      (error sym "hit error!"))
+				    (lambda args
+				      (set! errs (cons 'a4 errs))
+				      'a4)))
+			   (lambda args
+			     (set! errs (cons 'a3 errs))
+			     'a3)))
+		  (lambda args
+		    (set! errs (cons 'a2 errs))
+		    'a2)))
+	 (lambda args
+	   (set! errs (cons 'a1 errs))
+	   'a1))
+    errs))
 
-(test (let ((hi (gensym))) (eq? hi (string->symbol (symbol->string hi)))) #t)
+(test (catch-test 'a1) '(a1))
+(test (catch-test 'a2) '(a2))
+(test (catch-test 'a3) '(a3))
+(test (catch-test 'a4) '(a4))
+
+(define (catch-test-1 sym)
+  (let ((errs '()))
+    (catch 'a1
+	 (lambda ()
+	   (catch 'a2
+		  (lambda ()
+		    (catch 'a3
+			   (lambda ()
+			     (catch 'a4
+				    (lambda ()
+				      (error sym "hit error!"))
+				    (lambda args
+				      (set! errs (cons 'a4 errs))
+				      (error 'a3)
+				      'a4)))
+			   (lambda args
+			     (set! errs (cons 'a3 errs))
+			     (error 'a2)
+			     'a3)))
+		  (lambda args
+		    (set! errs (cons 'a2 errs))
+		    (error 'a1)
+		    'a2)))
+	 (lambda args
+	   (set! errs (cons 'a1 errs))
+	   'a1))
+    errs))
+
+(test (catch-test-1 'a1) '(a1))
+(test (catch-test-1 'a2) '(a1 a2))
+(test (catch-test-1 'a3) '(a1 a2 a3))
+(test (catch-test-1 'a4) '(a1 a2 a3 a4))
+
+
+
 
 (define (last-pair l) ; needed also by loop below
   (if (pair? (cdr l)) 
@@ -9354,6 +9547,14 @@
    (lambda (arg)
      (test (procedure-source arg) 'error))
    (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
+  (test (procedure-documentation) 'error)
+  (test (procedure-documentation abs abs) 'error)
+  (test (procedure-arity) 'error)
+  (test (procedure-arity abs abs) 'error)
+  (test (procedure-source) 'error)
+  (test (procedure-source abs abs) 'error)
+
   
   (test (make-list 0) '())
   (test (make-list 0 123) '())
@@ -9362,12 +9563,17 @@
   (test (make-list 1 '()) '(()))
   (test (make-list 2) '(#f #f))
   (test (make-list 2 1) '(1 1))
+  (test (make-list 2 (make-list 1 1)) '((1) (1)))
   (test (make-list -1) 'error)
   
   (for-each
    (lambda (arg)
      (test (make-list arg) 'error))
    (list #\a '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
+  (test (make-list) 'error)
+  (test (make-list 1 2 3) 'error)
+
   
   (test (let () (defmacro hiho (a) `(+ ,a 1)) (hiho 3)) 4)
   (test (let () (defmacro hiho () `(+ 3 1)) (hiho)) 4)
@@ -9600,6 +9806,7 @@
    (lambda (arg)
      (test (macro? arg) #f))
    (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+  (test (macro?) 'error)
   
   (define-macro (fully-expand form)
     (define (expand form)
@@ -32465,6 +32672,11 @@
 (num-test (floor (exact->inexact most-negative-fixnum)) most-negative-fixnum)
 (if with-bigfloats (test (floor (exact->inexact most-positive-fixnum)) most-positive-fixnum))
 
+(num-test (floor 9007199254740992.95) 9007199254740992)
+;; but unfortunately (floor 9007199254740993.95) is also 9007199254740992...
+;; and (floor (bignum "9007199254740993.95")) is as well!  Isn't this a bug?
+;; I'm going through mpfr_get_z, so the bug must be in mpfr?
+
 (num-test (ceiling 19) 19)
 (num-test (ceiling 2/3) 1)
 (num-test (ceiling -2/3) 0)
@@ -44307,6 +44519,8 @@
        "0d-+i" "1f-+i" "0f-+i" "1e++i" "0e++i" "1d++i" ".10-10." "-1.e++i" "0e--01i" "1-00." "0-00." "#xf+b" 
        "#x1+d" "0f++1i" "1+0d-i" ".0f--i" "1-0d-i" "#xe-ff" "0-" "0-e0"
        
+       "-#b1" "#b.i" "#b+i" "#b1e.1" "#b1+1" "#b#e#e1" "#b#ee1" "#b#e0e" "#d#d1" "#d#1d1"
+       "#b+1ei" "#b-1ei" "#b+0ei" "#b-0ei" "#b+1di" "#b-1di" "#b+0di" "#b-0di" "#b+1fi" "#b-1fi" "#b+0fi" "#b-0fi" "#b0e-+i" "#b1d-+i" 
        ))
 
 (num-test (string->number "2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427") 2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427)
@@ -49397,6 +49611,10 @@
 
 (newline) (display ";all done!") (newline)
 
+
+
+#|
+
 ;;; guile/s7 accept: (call/cc (lambda (a . b) (a 1))) -> 1
 ;;; same:            (call/cc (lambda (a b c) (a 1))) -> too many args
 ;;; same:            (call/cc (lambda (a b) (a 1))) -> same
@@ -49404,9 +49622,6 @@
 ;;; (call/cc (lambda () 1)) -> error?
 
 
-
-
-#|
 :(+ 11111111111111113.0 (+ -11111111111111111.0 7.5111111111111))
 8.0
 :(+ (+ 11111111111111113.0 -11111111111111111.0) 7.5111111111111)

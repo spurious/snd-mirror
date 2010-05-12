@@ -4672,7 +4672,7 @@ void check_cursor_shape(chan_info *cp, int x, int y)
   click_loc_t where;
   chan_info *ncp;
   
-  if ((!cp) || (!cp->sound) || (cp->active == CHANNEL_INACTIVE)) return;
+  if ((!cp) || (!cp->sound) || (cp->active == CHANNEL_INACTIVE) || (cp->squelch_update)) return;
 
   if (cp->sound->channel_style == CHANNELS_COMBINED) 
     ncp = which_channel(cp->sound, y);
