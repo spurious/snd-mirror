@@ -25,7 +25,6 @@
 (define with-bigfloats (provided? 'gmp))                       ; scheme real has any number of bits
 (define with-bignum-function (defined? 'bignum))               ;   this is a function that turns its string arg into a bignum
 (define with-delay (provided? 'force))                         ; delay and force 
-(define with-error-data #f)                                    ; collect numerical error info and report at end
 (define with-the-bug-finding-machine #t)                       ; run the machine (this variable can be set to the number of tries)
 					                       ;   the default number of tries is 10000
 (define with-test-at-random #f)
@@ -60,12 +59,6 @@
      (if (not (eq? result 'error))
 	 (format #t "(~A ~A) got ~A but expected 'error~%~%" ,op ,arg result))))
 
-
-;;; the error limits below are pretty expansive in some cases, so with-error-data
-;;;   tries to keep a record of the worst case error for each operator.  error-data
-;;;   is a list: '(#(op worst-error worst-error-case) ...). 
-
-(define error-data '())
 
 (define (op-error op result expected)
   
@@ -106,28 +99,6 @@
 
 
 ;;; relative error (/ (abs (- x res) (abs x)))
-
-(define (check-error tst result expected)
-  (if (and (number? result)
-	   (number? expected)
-	   (pair? tst))
-      (let ((err (op-error (car tst) result expected)))
-	(if (> err 0.0)
-	    (letrec ((find-if (lambda (pred l)
-				(cond ((null? l) #f)
-				      ((pred (car l)) (car l))
-				      (else (find-if pred (cdr l)))))))
-	      (let* ((op (car tst))
-		     (err-op (find-if (lambda (n) (eq? op (vector-ref n 0))) error-data)))
-		(if err-op
-		    (if (> err (vector-ref err-op 1))
-			(begin
-			  (vector-set! err-op 1 err)
-			  (vector-set! err-op 2 tst)
-			  (vector-set! err-op 3 result)
-			  (vector-set! err-op 4 expected)))
-		    (set! error-data (cons (vector op err tst result expected) error-data)))))))))
-
 
 (define (types-consistent? n)
   (not (or (and (integer? n) 
@@ -173,11 +144,6 @@
 
 
 (define (number-ok? tst result expected)
-  (if (and with-error-data
-	   (number? result)
-	   (number? expected))
-      (check-error tst result expected))
-  
   ;; (number? +nan.0) returns #t in Guile and Gauche
   
   (if (not (eq? result expected))
@@ -210,64 +176,62 @@
 			" ")
 		    expected)
 	    
-	    (if (defined? 'format) 
-		(begin
-		  (if (and (not (number? expected))
-			   (not (eq? result expected)))
-		      (format #t ", (eq? ~A ~A) -> #f" result expected)
-		      (if (and (number? expected)
-			       (or (not (number? result))
-				   (our-nan? result)))
-			  (begin
-			    (if (not (number? result))
-				(format #t ", (number? ~A) but not (number? ~A)" expected result)
-				(format #t ", (number? ~A) but (nan? ~A)" expected result)))
-			  (if (and (rational? expected)
-				   (exact? expected)
-				   (rational? result)
-				   (exact? result)
-				   (not (= result expected)))
-			      (format #t ", exact results but not (= ~A ~A): ~A" expected result (= result expected))
-			      (if (and (or (and (rational? expected) 
-						(exact? expected))
-					   (and (rational? result)
-						(exact? result)))
-				       (real? expected)
-				       (real? result)
-				       (> (abs (- result expected)) 1.0e-12))
-				  (format #t ", rational results but diff > 1e-12: ~A" (> (abs (- result expected)) 1.0e-12))
-				  (if (and (pair? tst)
-					   (< (op-error (car tst) result expected) 1.0e-6))
-				      (let ((n result))
-					(format #t ", result not internally consistent")
-					(if (and (integer? n) 
-						 (or (not (= (denominator n) 1))
-						     (not (= n (numerator n)))
-						     (not (= (imag-part n) 0))
-						     (not (= (floor n) (ceiling n) (truncate n) (round n) n))
-						     (not (= n (real-part n)))))
-					    (format #t ", ~A integer but den: ~A, num: ~A, imag: ~A, real: ~A, floors: ~A ~A ~A ~A"
-						    n (denominator n) (numerator n) (imag-part n) (real-part n)
-						    (floor n) (ceiling n) (truncate n) (round n))
-					    (if (and (rational? n)
-						     (not (integer? n))
-						     (or (not (= (imag-part n) 0))
-							 (= (denominator n) 1)
-							 (= (denominator n) 0)
-							 (not (= n (real-part n)))
-							 (not (= n (/ (numerator n) (denominator n))))))
-						(format #t ", ~A ratio but imag: ~A, den: ~A, real: ~A, ~A/~A=~A"
-							n (imag-part n) (denominator n) (real-part n) 
-							(numerator n) (denominator n) (exact->inexact (/ (numerator n) (denominator n))))
-						(if (and (real? n)
-							 (not (rational? n))
-							 (or (not (= (imag-part n) 0))
-							     (not (= n (real-part n)))))
-						    (format #t ", ~A real but rational: ~A, imag: ~A, real: ~A"
-							    n (rational? n) (imag-part n) (real-part n))
-						    (format #t ", ~A complex but real? ~A, imag: ~A, ~A+~A=~A"
-							    n (real? n) (imag-part n) (real-part n) (imag-part n)
-							    (+ (real-part n) (* 0+i (imag-part n)))))))))))))))
+	    (if (and (not (number? expected))
+		     (not (eq? result expected)))
+		(format #t ", (eq? ~A ~A) -> #f" result expected)
+		(if (and (number? expected)
+			 (or (not (number? result))
+			     (our-nan? result)))
+		    (begin
+		      (if (not (number? result))
+			  (format #t ", (number? ~A) but not (number? ~A)" expected result)
+			  (format #t ", (number? ~A) but (nan? ~A)" expected result)))
+		    (if (and (rational? expected)
+			     (exact? expected)
+			     (rational? result)
+			     (exact? result)
+			     (not (= result expected)))
+			(format #t ", exact results but not (= ~A ~A): ~A" expected result (= result expected))
+			(if (and (or (and (rational? expected) 
+					  (exact? expected))
+				     (and (rational? result)
+					  (exact? result)))
+				 (real? expected)
+				 (real? result)
+				 (> (abs (- result expected)) 1.0e-12))
+			    (format #t ", rational results but diff > 1e-12: ~A" (> (abs (- result expected)) 1.0e-12))
+			    (if (and (pair? tst)
+				     (< (op-error (car tst) result expected) 1.0e-6))
+				(let ((n result))
+				  (format #t ", result not internally consistent")
+				  (if (and (integer? n) 
+					   (or (not (= (denominator n) 1))
+					       (not (= n (numerator n)))
+					       (not (= (imag-part n) 0))
+					       (not (= (floor n) (ceiling n) (truncate n) (round n) n))
+					       (not (= n (real-part n)))))
+				      (format #t ", ~A integer but den: ~A, num: ~A, imag: ~A, real: ~A, floors: ~A ~A ~A ~A"
+					      n (denominator n) (numerator n) (imag-part n) (real-part n)
+					      (floor n) (ceiling n) (truncate n) (round n))
+				      (if (and (rational? n)
+					       (not (integer? n))
+					       (or (not (= (imag-part n) 0))
+						   (= (denominator n) 1)
+						   (= (denominator n) 0)
+						   (not (= n (real-part n)))
+						   (not (= n (/ (numerator n) (denominator n))))))
+					  (format #t ", ~A ratio but imag: ~A, den: ~A, real: ~A, ~A/~A=~A"
+						  n (imag-part n) (denominator n) (real-part n) 
+						  (numerator n) (denominator n) (exact->inexact (/ (numerator n) (denominator n))))
+					  (if (and (real? n)
+						   (not (rational? n))
+						   (or (not (= (imag-part n) 0))
+						       (not (= n (real-part n)))))
+					      (format #t ", ~A real but rational: ~A, imag: ~A, real: ~A"
+						      n (rational? n) (imag-part n) (real-part n))
+					      (format #t ", ~A complex but real? ~A, imag: ~A, ~A+~A=~A"
+						      n (real? n) (imag-part n) (real-part n) (imag-part n)
+						      (+ (real-part n) (* 0+i (imag-part n)))))))))))))
 	    (newline) (newline)))))
 
 (defmacro num-test (tst expected) ;(display tst) (newline)
@@ -385,7 +349,6 @@
 (test (eq? #t #t #t) 'error)
 (test (eq? #f . 1) 'error)
 
-
 (let ((things (vector #t #f #\space '() "" 0 1 3/4 1+i 1.5 '(1 .2) '#() (vector) (vector 1) (list 1) 'f 't #\t)))
   (do ((i 0 (+ i 1)))
       ((= i (- (vector-length things) 1)))
@@ -393,6 +356,13 @@
 	((= j (vector-length things)))
       (if (eq? (vector-ref things i) (vector-ref things j))
 	  (format #t "(eq? ~A ~A) -> #t?~%" (vector-ref things i) (vector-ref things j))))))
+
+
+;;; these are defined at user-level in s7 -- why are other schemes so coy about them?
+(test (eq? (if #f #f) #<unspecified>) #t)
+(test (eof-object? #<eof>) #t)
+(test (eq? (symbol->value '_?__undefined__?_) #<undefined>) #t)
+
 
 
 (test (eqv? 'a 3) #f)
@@ -3644,6 +3614,7 @@
 (test (vector-ref '#() -1) 'error)
 (test (vector-ref '#() 1) 'error)
 
+
 (test (#(1 2) 1) 2)
 (test (#(1 2) 1 2) 'error)
 (test ((#("hi" "ho") 0) 1) #\i)
@@ -3652,6 +3623,12 @@
 (test ((((vector (vector (vector 1 2) 0) 0) 0) 0) 0) 1)
 (test ((((list (list (list 1 2) 0) 0) 0) 0) 0) 1)
 (test ((((list (list (list 1 2) 0) 0) 0) 0) ((((vector (vector (vector 1 2) 0) 0) 0) 0) 0)) 2)
+
+(for-each
+ (lambda (arg)
+   (test (vector-ref arg 0) 'error))
+ (list "hi" #\a -1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1)) (make-hash-table)))
+
 
 
 
@@ -3675,6 +3652,11 @@
 (test (vector-set! #(1) 0 0 1 2 3) 'error)
 (test (vector-set! #(1) #(0) 1) 'error)
 ;(test (vector-set! '#(1 2) 0 2) 'error)
+
+(for-each
+ (lambda (arg)
+   (test (vector-set! arg 0 0) 'error))
+ (list "hi" #\a -1 '(1 . 2) (cons #\a #\b) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1)) (make-hash-table)))
 
 (let ((v (vector 1 2 3)))
   (for-each
@@ -3913,6 +3895,8 @@
       (test (#2d((() (2) ()) (4 5 6)) 0 2) '())
       
       (test (equal? (make-vector 0) (make-vector '(0))) #t)
+      (test (equal? #() (make-vector '(0))) #t)
+
       (test (equal? #2d((1 2) (3 4)) #2D((1 2) (3 4))) #t)
       (test (eq? #2d((1 2) (3 4)) #2D((1 2) (3 4))) #f)
       (test (eqv? #2d((1 2) (3 4)) #2D((1 2) (3 4))) #f)
@@ -4065,10 +4049,23 @@
 
       (test (((#(("hi") ("ho")) 0) 0) 1) #\i)
       (test (string-ref (list-ref (vector-ref #(("hi") ("ho")) 0) 0) 1) #\i)
+
+      (test (equal? #2D() (make-vector '(0 0))) #t)
+      (test (equal? #2D() (make-vector '(1 0))) #f)
+      (test (equal? (make-vector '(2 2) 2) #2D((2 2) (2 2))) #t)
+      (test (equal? (make-vector '(2 2) 2) #2D((2 2) (1 2))) #f)
+      (test (equal? (make-vector '(1 2 3) 0) (make-vector '(1 2 3) 0)) #t)
+      (test (equal? (make-vector '(1 2 3) 0) (make-vector '(1 3 2) 0)) #f)
+      (test (make-vector '1 2 3) 'error)
+
+      (test (equal? (make-vector 10 '()) (make-hash-table 10)) #f)
       ))
 
 
-;;;  TODO: other math ops with nan/inf (remainder etc)
+;;;  TODO: other math ops with nan/inf (remainder exact? etc)
+;; TODO: test all the read* procs for repeated eofs
+;;; TODO: test symbol->value symbol-table port-filename pws stuff? 
+      
 
 
 
@@ -4078,6 +4075,7 @@
 
 (let ((ht (make-hash-table)))
   (test (hash-table? ht) #t)
+  (test (equal? ht ht) #t)
   (test (let () (hash-table-set! ht 'key 3.14) (hash-table-ref ht 'key)) 3.14)
   (test (let () (hash-table-set! ht "ky" 3.14) (hash-table-ref ht "ky")) 3.14)
   (test (let () (hash-table-set! ht 123 "hiho") (hash-table-ref ht 123)) "hiho")
@@ -4091,6 +4089,12 @@
    (lambda (arg)
      (test (let () (hash-table-set! ht 'key arg) (hash-table-ref ht 'key)) arg))
    (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2))))
+
+(for-each
+ (lambda (arg)
+   (test (hash-table-set! arg 'key 32) 'error))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+
 
 (let ((ht (make-hash-table 277)))
   (test (hash-table? ht) #t)
@@ -4122,8 +4126,14 @@
   (hash-table-set! ht 'asd 1234)
   (test (hash-table-ref ht 'asd) 1234))
 
+(for-each
+ (lambda (arg)
+   (test (hash-table-ref arg 'key) 'error))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+
 (let ((ht1 (make-hash-table 653))
       (ht2 (make-hash-table 277)))
+  (test (equal? ht1 ht2) #f)
   (hash-table-set! ht1 'key 'hiho)
   (hash-table-set! ht2 (hash-table-ref ht1 'key) 3.14)
   (test (hash-table-size ht1) 653)
@@ -4171,6 +4181,16 @@
  (lambda (arg)
    (test (make-hash-table arg) 'error))
  (list "hi" -1 0 #\a 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+
+(let ((ht1 (make-hash-table))
+      (ht2 (make-hash-table)))
+  (test (equal? ht1 ht2) #t)
+  (test (equal? ht1 (make-vector (hash-table-size ht1) '())) #f)
+  (hash-table-set! ht1 'key 'hiho)
+  (test (equal? ht1 ht2) #f)
+  (hash-table-set! ht2 'key 'hiho)
+  (test (equal? ht1 ht2) #t)
+  )
 
 
 
@@ -4616,7 +4636,6 @@
       (if (not (eof-object? val))
 	  (format #t "read again: ~A~%" val)))))
 
-;; TODO: test all the read* procs for repeated eofs
 
 (for-each
  (lambda (arg)
@@ -4801,45 +4820,19 @@
 (test (format #f "~10b" -123) "  -1111011")
 (test (format #f "~10o" -123) "      -173")
 
-(if (and (defined? 'most-positive-fixnum)
-	 (= most-positive-fixnum 9223372036854775807))
-    (begin
+(test (format #f "~D" most-positive-fixnum) "9223372036854775807")
+(test (format #f "~D" (+ 1 most-negative-fixnum)) "-9223372036854775807")
       
-      (test (format #f "~D" most-positive-fixnum) "9223372036854775807")
-      (test (format #f "~D" (+ 1 most-negative-fixnum)) "-9223372036854775807")
+(test (format #f "~X" most-positive-fixnum) "7fffffffffffffff")
+(test (format #f "~X" (+ 1 most-negative-fixnum)) "-7fffffffffffffff")
       
-      (test (format #f "~X" most-positive-fixnum) "7fffffffffffffff")
-      (test (format #f "~X" (+ 1 most-negative-fixnum)) "-7fffffffffffffff")
+(test (format #f "~O" most-positive-fixnum) "777777777777777777777")
+(test (format #f "~O" (+ 1 most-negative-fixnum)) "-777777777777777777777")
       
-      (test (format #f "~O" most-positive-fixnum) "777777777777777777777")
-      (test (format #f "~O" (+ 1 most-negative-fixnum)) "-777777777777777777777")
+(test (format #f "~B" most-positive-fixnum) "111111111111111111111111111111111111111111111111111111111111111")
+(test (format #f "~B" (+ 1 most-negative-fixnum)) "-111111111111111111111111111111111111111111111111111111111111111")
       
-      (test (format #f "~B" most-positive-fixnum) "111111111111111111111111111111111111111111111111111111111111111")
-      (test (format #f "~B" (+ 1 most-negative-fixnum)) "-111111111111111111111111111111111111111111111111111111111111111")
-      
-      (num-test (inexact->exact most-positive-fixnum) most-positive-fixnum)
-      
-      ))
-
-(if (and (defined? 'most-positive-fixnum)
-	 (= most-positive-fixnum 2147483647))
-    (begin
-      
-      (test (format #f "~D" most-positive-fixnum) "2147483647")
-      (test (format #f "~D" (+ 1 most-negative-fixnum)) "-2147483647")
-      
-      (test (format #f "~X" most-positive-fixnum) "7fffffff")
-      (test (format #f "~X" (+ 1 most-negative-fixnum)) "-7fffffff")
-      
-      (test (format #f "~O" most-positive-fixnum) "17777777777")
-      (test (format #f "~O" (+ 1 most-negative-fixnum)) "-17777777777")
-      
-      (test (format #f "~B" most-positive-fixnum) "1111111111111111111111111111111")
-      (test (format #f "~B" (+ 1 most-negative-fixnum)) "-1111111111111111111111111111111")
-      
-      (num-test (inexact->exact most-positive-fixnum) most-positive-fixnum)
-      
-      ))
+(num-test (inexact->exact most-positive-fixnum) most-positive-fixnum)
 
 (test (format #f "~0D" 123) "123")
 (test (format #f "~0X" 123) "7b")
@@ -6267,7 +6260,19 @@
 (test (do ((i 1) ((j))) (1 2)) 'error)
 (test (do (((1))) (1 2)) 'error)
 
-
+(test (let ((j #f))
+	(do ((i 0 (let ((x 0))
+		    (dynamic-wind
+			(lambda ()
+			  (set! x i))
+			(lambda ()
+			  (+ x 1))
+			(lambda ()
+			  (if (> x 3)
+			      (set! j #t)))))))
+	    (j i)))
+      5)
+(test (let ((j 0)) (do ((i 0 (eval-string "(+ j 1)"))) ((= i 4) j) (set! j i))) 3)
 
 
 
@@ -33861,12 +33866,10 @@
 (test (inexact? 1/2) #f)
 (test (exact? 1.5+0.123i) #f)
 (test (inexact? 1.5+0.123i) #t)
-
-(num-test (inexact->exact 1.5) 3/2)
-(num-test (exact->inexact 3/2) 1.5)
-(num-test (inexact->exact 1) 1)
-(num-test (exact->inexact 1) 1.0)
-(num-test (exact->inexact 1.0) 1.0)
+(test (exact? 1.0) #f)
+(test (inexact? 1.0) #t)
+(test (exact? most-positive-fixnum) #t)
+(test (exact? our-pi) #f)
 
 (test (exact?) 'error)
 (test (exact? "hi") 'error)
@@ -33874,6 +33877,15 @@
 (test (inexact?) 'error)
 (test (inexact? "hi") 'error)
 (test (inexact? 1.0+23.0i 1.0+23.0i) 'error)
+
+
+(num-test (inexact->exact 1.5) 3/2)
+(num-test (exact->inexact 3/2) 1.5)
+(num-test (inexact->exact 1) 1)
+(num-test (inexact->exact 1.0) 1)
+(num-test (exact->inexact 1) 1.0)
+(num-test (exact->inexact 1.0) 1.0)
+
 (test (exact->inexact) 'error)
 (test (exact->inexact "hi") 'error)
 (test (exact->inexact 1.0+23.0i 1.0+23.0i) 'error)
@@ -43903,8 +43915,7 @@
 			 (return (search last-good (- (* 2 last-good) 1)))))))))))
     (set! number-to-string-top first-bad)
     (if (and (integer? first-bad)
-	     (or (not (defined? 'most-positive-fixnum))
-		 (< first-bad most-positive-fixnum)))
+	     (< first-bad most-positive-fixnum))
 	(format #t "string->number ints fail around ~A (2^~A)~%" first-bad (log first-bad 2))))
   
   (let* ((last-good 0)
@@ -45586,40 +45597,37 @@
       (num-test (ash 1267650600228229401496703205376 -100) 1)
       ))
 
-(if (defined? 'most-positive-fixnum)
-    (begin
-      (test (> 0 most-negative-fixnum) #t)
-      (test (> most-negative-fixnum 0) #f)
-      (test (> most-positive-fixnum 0) #t)
-      (test (> 0 most-positive-fixnum) #f)
-      (test (> most-positive-fixnum most-negative-fixnum) #t)
-      (test (> most-negative-fixnum most-positive-fixnum) #f)
-      (test (< 0 most-negative-fixnum) #f)
-      (test (< most-negative-fixnum 0) #t)
-      (test (< most-positive-fixnum 0) #f)
-      (test (< 0 most-positive-fixnum) #t)
-      (test (< most-positive-fixnum most-negative-fixnum) #f)
-      (test (< most-negative-fixnum most-positive-fixnum) #t)
-      (test (negative? most-negative-fixnum) #t)
-      (test (positive? most-negative-fixnum) #f)
-      (test (zero? most-negative-fixnum) #f)
-      (test (zero? most-positive-fixnum) #f)
-      (test (negative? most-positive-fixnum) #f)
-      (test (positive? most-positive-fixnum) #t)
-      (test (= (+ most-negative-fixnum 1) (- most-positive-fixnum)) #t)
-      (test (= (abs (+ most-negative-fixnum 1)) most-positive-fixnum) #t)
-      (test (= (+ most-negative-fixnum most-positive-fixnum) -1) #t)
-      (test (= (- most-negative-fixnum (- most-positive-fixnum)) -1) #t)
-      (test (even? most-positive-fixnum) #f)
-      (test (odd? most-positive-fixnum) #t)
-      (test (even? most-negative-fixnum) #t)
-      (test (odd? most-negative-fixnum) #f)
-      (test (integer? most-negative-fixnum) #t)
-      (test (= (* most-positive-fixnum -1) (+ most-negative-fixnum 1)) #t)
-      (test (= (* most-negative-fixnum 1) (- (* -1 most-positive-fixnum) 1)) #t)
-      (if with-bignums
-	  (test (= most-positive-fixnum (- (/ most-negative-fixnum -1) 1)) #t))
-      ))
+(test (> 0 most-negative-fixnum) #t)
+(test (> most-negative-fixnum 0) #f)
+(test (> most-positive-fixnum 0) #t)
+(test (> 0 most-positive-fixnum) #f)
+(test (> most-positive-fixnum most-negative-fixnum) #t)
+(test (> most-negative-fixnum most-positive-fixnum) #f)
+(test (< 0 most-negative-fixnum) #f)
+(test (< most-negative-fixnum 0) #t)
+(test (< most-positive-fixnum 0) #f)
+(test (< 0 most-positive-fixnum) #t)
+(test (< most-positive-fixnum most-negative-fixnum) #f)
+(test (< most-negative-fixnum most-positive-fixnum) #t)
+(test (negative? most-negative-fixnum) #t)
+(test (positive? most-negative-fixnum) #f)
+(test (zero? most-negative-fixnum) #f)
+(test (zero? most-positive-fixnum) #f)
+(test (negative? most-positive-fixnum) #f)
+(test (positive? most-positive-fixnum) #t)
+(test (= (+ most-negative-fixnum 1) (- most-positive-fixnum)) #t)
+(test (= (abs (+ most-negative-fixnum 1)) most-positive-fixnum) #t)
+(test (= (+ most-negative-fixnum most-positive-fixnum) -1) #t)
+(test (= (- most-negative-fixnum (- most-positive-fixnum)) -1) #t)
+(test (even? most-positive-fixnum) #f)
+(test (odd? most-positive-fixnum) #t)
+(test (even? most-negative-fixnum) #t)
+(test (odd? most-negative-fixnum) #f)
+(test (integer? most-negative-fixnum) #t)
+(test (= (* most-positive-fixnum -1) (+ most-negative-fixnum 1)) #t)
+(test (= (* most-negative-fixnum 1) (- (* -1 most-positive-fixnum) 1)) #t)
+(if with-bignums
+    (test (= most-positive-fixnum (- (/ most-negative-fixnum -1) 1)) #t))
 
 (let ()
   (define (2^n? x) (zero? (logand x (- x 1))))
@@ -45773,577 +45781,370 @@
  (list '1e311 '1e-311 '0e311 '2.1e40000))
 
 
-;;; ----------------
-      
-;;; due primarily to stupidities on my part, the "expected" values are sometimes not more
-;;;   accurate than say 1e-7 or so
-      
-(if (and (not (null? error-data))
-	 with-error-data)
-    (begin
-      (format #t "op~16Terror~44Ttest~76Tresult~115Texpected~%")
-      (for-each
-       (lambda (op)
-	 (format #t "~A: ~16T~A ~40T~A ~70T~A ~110T~A~%" 
-		 (vector-ref op 0) (vector-ref op 1) (vector-ref op 2) (vector-ref op 3) (vector-ref op 4)))
-       error-data)
-      
-      (let ((data '((3.0 0.14159265358979323846 0.1411200080598672)
-		    (31.0 0.41592653589793238462 0.404037645323065)
-		    (314.0 0.15926535897932384626 0.1585929060285728)
-		    (3141.0 0.59265358979323846264 0.5585640372121817)
-		    (31415.0 0.92653589793238462643 0.7995441773754675)
-		    (314159.0 0.26535897932384626433 0.262255699519879)
-		    (3141592.0 0.65358979323846264338 0.6080402764374114)
-		    (31415926.0 0.53589793238462643383 0.5106132968486387)
-		    (314159265.0 0.35897932384626433832 0.3513188023745885)
-		    (3141592653.0 0.58979323846264338327 0.5561892044494355)
-		    (31415926535.0 0.89793238462643383279 0.7820399858427447)
-		    (314159265358.0 0.97932384626433832795 0.8301205477998297)
-		    (3141592653589.0 0.79323846264338327950 0.7126289202333107)
-		    (31415926535897.0 0.93238462643383279502 0.8030432710678118)
-		    (314159265358979.0 0.32384626433832795028 0.3182152351447919)
-		    (3141592653589793.0 0.23846264338327950288 0.2362090532517409)
-		    (31415926535897932.0 0.38462643383279502884 0.3752128900123344)
-		    (314159265358979323.0 0.84626433832795028841 0.7488096950162713)
-		    (3141592653589793238.0 0.46264338327950288419 0.4463151633593201)
-		    (31415926535897932384.0 0.62643383279502884197 0.5862594566145847)
-		    (314159265358979323846.0 0.26433832795028841971 0.2612706361296674)
-		    (3141592653589793238462.0 0.64338327950288419716 0.5999057324027754)
-		    (31415926535897932384626.0 0.43383279502884197169 0.4203516113275538)
-		    (314159265358979323846264.0 0.33832795028841971693 0.3319102940355321)
-		    (3141592653589793238462643.0 0.38327950288419716939 .3739640276557301))) 
-	    (vals '())
-	    (mx-sin-err 0.0))
-	
-	(for-each
-	 (lambda (p)
-	   (let ((arg1 (car p))
-		 (arg2 (cadr p))
-		 (mxerr 0.0))
-	     (do ((i 0 (+ i 1))
-		  (x 0.0 (+ x .1)))
-		 ((= i 10))
-	       (let ((err (abs (- (abs (sin (- arg1 x))) (abs (sin (+ arg2 x)))))))
-		 (if (> err mxerr)
-		     (set! mxerr err))))
-	     (set! vals (cons mxerr vals))
-	     (set! mx-sin-err (max mx-sin-err (abs (- (sin arg2) (caddr p)))))))
-	 data)
-	
-	(if (> mx-sin-err 1e-8)
-	    (begin
-	      (display "base sine seems inaccurate!  error: ") 
-	      (display mx-sin-err) 
-	      (newline)))
-	
-	(set! vals (reverse vals))
-	
-	(let ((stop #f))
-	  (do ((i 0 (+ i 1)))
-	      ((or (number? stop)
-		   (= i (length vals))))
-	    (if (> (list-ref vals i) 1e-6)
-		(set! stop i)))
-	  (if (number? stop)
-	      (begin
-		(display "sin error > 1e-6 after 2^")
-		(display (/ (log (car (list-ref data stop))) (log 2.0)))
-		(display " or thereabouts")
-		(newline)))))
-      
-      (let ((data (list
-		   2.71828182845904523536028747135266249775724709369995957
-		   27.1828182845904523536028747135266249775724709369995957
-		   271.828182845904523536028747135266249775724709369995957
-		   2718.28182845904523536028747135266249775724709369995957
-		   27182.8182845904523536028747135266249775724709369995957
-		   271828.182845904523536028747135266249775724709369995957
-		   2718281.82845904523536028747135266249775724709369995957
-		   27182818.2845904523536028747135266249775724709369995957
-		   271828182.845904523536028747135266249775724709369995957
-		   2718281828.45904523536028747135266249775724709369995957
-		   27182818284.5904523536028747135266249775724709369995957
-		   271828182845.904523536028747135266249775724709369995957
-		   2718281828459.04523536028747135266249775724709369995957
-		   27182818284590.4523536028747135266249775724709369995957
-		   271828182845904.523536028747135266249775724709369995957
-		   2718281828459045.23536028747135266249775724709369995957
-		   27182818284590452.3536028747135266249775724709369995957
-		   271828182845904523.536028747135266249775724709369995957
-		   2718281828459045235.36028747135266249775724709369995957
-		   27182818284590452353.6028747135266249775724709369995957
-		   271828182845904523536.028747135266249775724709369995957
-		   2718281828459045235360.28747135266249775724709369995957
-		   27182818284590452353602.8747135266249775724709369995957
-		   271828182845904523536028.747135266249775724709369995957
-		   2718281828459045235360287.47135266249775724709369995957
-		   27182818284590452353602874.7135266249775724709369995957
-		   271828182845904523536028747.135266249775724709369995957
-		   2718281828459045235360287471.35266249775724709369995957
-		   27182818284590452353602874713.5266249775724709369995957)))
-	(let ((happy #t))
-	  (do ((i 0 (+ i 1))
-	       (dec 1.0 (* dec 10.0)))
-	      ((or (not happy)
-		   (= i (length data))))
-	    (let ((val (exp (+ 1.0 (log dec)))))
-	      (let ((err (abs (- (list-ref data i) val))))
-		(if (> err 1e-6)
-		    (begin
-		      (set! happy #f)
-		      (display "exp+log error > 1e-6 around 2^") (display (/ (log val) (log 2))) (newline))))))))
-      
-      (let ((data (list ; table[Tan[10^k], {k, 0, 30}] 
-		   1.55740772465490223050697480745836017308725077238152003838394660569886
-		   0.64836082745908667125912493300980867681687434298372497563362796739585
-		   -0.58721391515692907667780963564458789425876598687291954412663968360989
-		   1.47032415570271844598020880490391856915748389146711182025455665358979
-		   0.32097113462381472460896162480876337966088525010731594977977206336933
-		   -0.03577166295289877341133054456893096203777589491986804979647879769616
-		   -0.37362445398759902917349708857538141978530379801059302641978134928241
-		   -0.46353082785018908581469758918080168755473695345937070670149218665289
-		   -2.56377890672837725789840319603083470729708859667680805828679070820622
-		   0.65145220214514128858645272422054798185112543058289784681820964602226
-		   -0.55834963781124184656189340731863681858164809933060716499623295934358
-		   2.50424481449822111118237373761381771825510968075886393173926375110559
-		   -0.77230596813187614161063494471423746038444882506077057787558499031077
-		   -0.30175082856983471199636858701688775346296430492149675721730025846251
-		   0.21415652428250396225222102422385566728114779011753338339645623774420
-		   -1.67241478212758304295552142696079055033040910554091189243737002950172
-		   -1.24517343571840642168009129451609763781317676741030141327973693611564
-		   0.52456243090255001593041672482494038697466467439258592602675334853162
-		   -8.38854968059368800013526842602194492647448392917034135131083409265520
-		   2.47279376584652736033818679563656602249667799226358809957010483326311
-		   -0.84460246301988425418409323400055358116535547279258431245425813826798
-		   -0.89552329255426546888442598272446987755918451773757800611680045521648
-		   -1.62877822560689887854937593693954851354515116817021717086346127966844
-		   -0.98333523138083649717001389546802280189805226009031609173028377317771
-		   -11.87362630545544227571094967408372098364257316309876130680769667747893
-		   1.11612596981774655887307362253927728556627435787456734029790793087502
-		   -1.63758698713112186463163321344320618241852069893975176926240178134592
-		   -1.03173363516910726343237554775898936974208941138122693037794681869065
-		   6.35083773135836351463817396716338533781524290151157250457191403689220
-		   -110.81342510911236031336859049236316125148742351166700266651506403034426
-		   0.09048506806330217256622313805004127372738954023205417991033965089185)))
-	(let ((happy #t))
-	  (do ((i 0 (+ i 1))
-	       (dec 1.0 (* dec 10.0)))
-	      ((or (not happy)
-		   (= i (length data))))
-	    (let ((val (tan dec))) 
-	      (let ((err (abs (- (list-ref data i) val)))
-		    (err1 (- (tan (+ 0.1 (* our-pi dec))) (tan 0.1)))
-		    (err2 (- (tan (+ 1.0 (* our-pi dec))) (tan 1.0))))
-		(if (or (> err 1e-6)
-			(> err1 1e-6)
-			(> err2 1e-6))
-		    (begin
-		      (set! happy #f)
-		      (display "tan error > 1e-6 around 2^") (display (/ (log dec) (log 2))) (newline))))))))
-      
-      ;; table[(1/10^k)/(((1/10^k)^(1/10^k)) - 1), {k, 1, 30}]
-      ;;   the test came from calc_errors.txt from the web by "dave"
-      (let ((expts (list
-		    -0.48621160938616180680870317336747983548142173621715706851490974881717
-		    -0.22218561601345857583044966876729715619642038672598556073380084629504
-		    -0.14526540294689938889864991134840220307566223888497162784858064408875
-		    -0.10862362815109649171007844591526444220973735508130191198062253212652
-		    -0.08686389647659141105044978528770239308857034812798554177686261943193
-		    -0.07238291365169326382168151357331039782973682143307349669152489742891
-		    -0.06204211884333512141082278643490234288550259196615819050849846987015
-		    -0.05428681523790663196206398113420109019962541643547760927657854324749
-		    -0.04825494293369464924373092184737925979664303236414611590980578553450
-		    -0.04342944824032518278430110099994422226122739720915846151097610557365
-		    -0.03948131654165925705940460838351885560840418164027583205682137097699
-		    -0.03619120682577098563759637916147675090355043511246085981138602579761
-		    -0.03340726783876167905008686486133377017608955166698061593202699553920
-		    -0.03102103442166584483222349447696386196557178259759899539894506586562
-		    -0.02895296546021728851007526126398523685253569082526692705926181546848
-		    -0.02714340511895328922819555743231851877797306680518273360154914602559
-		    -0.02554673422960305368536052464215356633451937057629542604571806752914
-		    -0.02412747121684732425839605105092250802578858425793889081112350331353
-		    -0.02285760431069746466321731152192658331511007129540571803806313398860
-		    -0.02171472409516259138755644594583025411510361447234900258639235440074
-		    -0.02068068961444056322198232947221928963307055360980162368063530687389
-		    -0.01974065826832962852964676904166386737701808793240851850210059107980
-		    -0.01888236877840225337614103995289587314323465286757518193028428290776
-		    -0.01809560341263549281879753828819187842893320857975794377409033233328
-		    -0.01737177927613007310604520675666420329177588023219463316734886061171
-		    -0.01670363391935583952504342495833096470363065406937228989783888395986
-		    -0.01608498081123154917226403453394833638127396317791358170357400676126
-		    -0.01551051721083042241611174715416446722479989306441666312924319204483
-		    -0.01497567178976730440176306617453810628601368985529884710795141610434
-		    -0.01447648273010839425503763063105350274314656686012221887048754923492)))
-	(let ((happy #t))
-	  (do ((i 1 (+ i 1))) 
-	      ((or (= i (length expts))
-		   (not happy)))
-	    (catch #t
-		   (lambda ()
-		     (let ((val (/ (expt .1 i)
-				   (- (expt (expt .1 i) (expt .1 i)) 1))))
-		       (if (> (abs (- val (list-ref expts (- i 1)))) 1e-6)
-			   (begin
-			     (set! happy #f)
-			     (display "expt error > 1e-6 around 2^") (display (/ (log (expt .1 i)) (log 2))) (newline)))))
-		   (lambda args 
-		     (display "expt no accurate below around 2^") (display (/ (log (expt .1 i)) (log 2))) (newline))))))
-      
-      (let ((sin-err 0.0)
-	    (cos-err 0.0)
-	    (log-err 0.0)
-	    (asin-err 0.0)
-	    (atan-err 0.0)
-	    (sqrt-err 0.0))
-	;; data generated by mathtool in the arprec package
-	
-	;; another baddy: (tan 314159265358979323) should be -1.129792652308908544253650171110
-	
-	(let ((sins (list 
-		     0.00000000000000000000000000000000000000000000000000000000000000000000
-		     0.09983341664682815230681419841062202698991538801798225999276686156165
-		     0.19866933079506121545941262711838975037020672954020540398639599139797
-		     0.29552020666133957510532074568502737367783211174261844850153103617326
-		     0.38941834230865049166631175679570526459306018344395889511584896585734
-		     0.47942553860420300027328793521557138808180336794060067518861661312553
-		     0.56464247339503535720094544565865790710988808499415177102426589426735
-		     0.64421768723769105367261435139872018306581384457368964474396308809382
-		     0.71735609089952276162717461058138536619278523779142282098968252068287
-		     0.78332690962748338846138231571354862314014792572030960356048515256195
-		     0.84147098480789650665250232163029899962256306079837106567275170999191
-		     0.89120736006143533995180257787170353831890931945282652766035329176720
-		     0.93203908596722634967013443549482599541507058820873073536659789445024
-		     0.96355818541719296470134863003955481534204849131773911795564922309212
-		     0.98544972998846018065947457880609751735626167234736563194021894560084
-		     0.99749498660405443094172337114148732270665142592211582194997482405934
-		     0.99957360304150516434211382554623417197949791475491995534260751586102
-		     0.99166481045246861534613339864787565240681957116712372532710249102330
-		     0.97384763087819518653237317884335760670293947136523395566725825917196
-		     0.94630008768741448848970961163495776211399866559491176443047155279581
-		     0.90929742682568169539601986591174484270225497144789026837897301153096
-		     0.86320936664887377068075931326902458492047242489508107697183045949721
-		     0.80849640381959018430403691041611906515855960597557707903336060873485
-		     0.74570521217672017738540621164349953894264877802047425750762828050000
-		     0.67546318055115092656577152534128337425336495789352584226890212866520
-		     0.59847214410395649405185470218616227170359717157722357330262703263874
-		     0.51550137182146423525772693520936824389387858775426312126259173008382
-		     0.42737988023382993455605308585788064749647642266670256499017776070511
-		     0.33498815015590491954385375271242210603030652888358671068410107309479
-		     0.23924932921398232818425691873957537221555293029961877411621026588071
-		     0.14112000805986722210074480280811027984693326425226558415188264123242
-		     0.04158066243329057919469827159667310055461342296380675064800900076588
-		     -0.05837414342757990913721741461909518512512509908292656970935025422273)))
-	  (let ((mxerr 0.0))
-	    (do ((i 0 (+ i 1))
-		 (x 0.0 (+ x 0.1)))
-		((= i 32))
-	      (let ((err (abs (- (sin x) (list-ref sins i)))))
-		(if (> err mxerr)
-		    (set! mxerr err))))
-	    (set! sin-err mxerr)))
-	
-	(let ((coss (list 
-		     1.00000000000000000000000000000000000000000000000000000000000000000000
-		     0.99500416527802576609556198780387029483857622541508403595935274468526
-		     0.98006657784124163112419651674816887739352436080656799405254829012618
-		     0.95533648912560601964231022756804989824421408263203767451761361222758
-		     0.92106099400288508279852673205180161402585956931985044561508926713514
-		     0.87758256189037271611628158260382965199164519710974405299761086831595
-		     0.82533561490967829724095249895537603887809103918847038136974977367156
-		     0.76484218728448842625585999019186490926821055037370335607293245825206
-		     0.69670670934716542092074998164232492610178601370806078363714489414924
-		     0.62160996827066445648471615140713350872176136659123900757638348453897
-		     0.54030230586813971740093660744297660373231042061792222767009725538110
-		     0.45359612142557738777137005178471612212146729566259504745593805541880
-		     0.36235775447667357763837335562307602033994778557664862648774972093613
-		     0.26749882862458740699798410929287135927592992167912966191725336742182
-		     0.16996714290024093861674803520364980292818392102853430898236521149464
-		     0.07073720166770291008818985143426870908509102756334686942264541719092
-		     -0.02919952230128872620577046294649852444486472109384694500313007908245
-		     -0.12884449429552468408764285733487351410164007964520297633178213994289
-		     -0.22720209469308705531667430653058073247695158653826107158496911100681
-		     -0.32328956686350342227883369508031017459419076544223959990115436505106
-		     -0.41614683654714238699756822950076218976600077107554489075514997378196
-		     -0.50484610459985745162093852371916747040702337674136205964819622353659
-		     -0.58850111725534570852414261265492841629376036669872798974753517400616
-		     -0.66627602127982419331788057116601723016327537100376988865266957182167
-		     -0.73739371554124549960882222733478290843301289199228479878436568873073
-		     -0.80114361554693371483350279046735166442856784876782013507459799166202
-		     -0.85688875336894723379770215164520111235392263823324404910501242714241
-		     -0.90407214201706114798252728194333012633184973516362471104126694868604
-		     -0.94222234066865815258678811736615401246341423446824662018098201995710
-		     -0.97095816514959052178110666934553217911761475942423954213867099245327
-		     -0.98999249660044545727157279473126130239367909661558832881408593292832
-		     -0.99913515027327946449237605454146626283664166994794274354471598254947
-		     -0.99829477579475308466166072228358269144701258595166016759508002045139)))
-	  (let ((mxerr 0.0))
-	    (do ((i 0 (+ i 1))
-		 (x 0.0 (+ x 0.1)))
-		((= i 32))
-	      (let ((err (abs (- (cos x) (list-ref coss i)))))
-		(if (> err mxerr)
-		    (set! mxerr err))))
-	    (set! cos-err mxerr)))
-	
-	(let ((logs-1 (list
-		       -4.60517018598809136803598290936872841520220297725754595206665580193514
-		       -3.91202300542814605861875078791055184712670284289729069794597579244175
-		       -3.50655789731998167664073767244620271055471241943479650033196146829765
-		       -3.21887582486820074920151866645237527905120270853703544382529578294835
-		       -2.99573227355399099343522357614254077567660162298902823015400791046096
-		       -2.81341071676003636722350555098802614247921228507454124621128145880425
-		       -2.65926003693277806293063016592554868556511824767568476360726565199756
-		       -2.52572864430825543978428654499419871097570257417678018970461577345496
-		       -2.40794560865187198524549243552367700590722186161204704859726713466015
-		       -2.30258509299404568401799145468436420760110148862877297603332790096757
-		       -2.20727491318972082397403933140359911538049612332012877684808809280457
-		       -2.12026353620009105780627342952984957440371215071428599209060144931086
-		       -2.04022082852655463198249546780340981039693503249733883564761029127168
-		       -1.96611285637283275351339804446737211748961811331542950948658564250417
-		       -1.89711998488588130203997833922001507102911106516627877841931357682347
-		       -1.83258146374831013036705442353602214290020243981652493558393576396157
-		       -1.77195684193187528778644829149560187961399996467180116476941806405285
-		       -1.71479842809192667582826031406550043783172172725179179447658712516676
-		       -1.66073120682165090802695547748087487796482371595841713352869556552585
-		       -1.60943791243410037460075933322618763952560135426851772191264789147417))
-	      (logs-2 (list
-		       2.30258509299404568401799145468436420760110148862877297603332790096757
-		       2.99573227355399099343522357614254077567660162298902823015400791046096
-		       3.40119738166215537541323669160688991224859204645152242776802223460506
-		       3.68887945411393630285245569760071734375210175734928348427468791995435
-		       3.91202300542814605861875078791055184712670284289729069794597579244175
-		       4.09434456222210068483046881306506648032409218081177768188870224409846
-		       4.24849524204935898912334419812754393723818621821063416449271805090515
-		       4.38202663467388161226968781905889391182760189170953873839536792944775
-		       4.49980967033026506680848192852941561689608260427427187950271656824256
-		       4.60517018598809136803598290936872841520220297725754595206665580193514
-		       4.70048036579241622807993503264949350742280834256619015125189561009814
-		       4.78749174278204599424770093452324304839959231517203293600938225359185
-		       4.86753445045558242007147889624968281240636943338898009245237341163103
-		       4.94164242260930429854057631958572050531368635257088941861339806039854
-		       5.01063529409625575001399602483307755177419340072004014968067012607924
-		       5.07517381523382692168691994051707047990310202606979399251604793894114
-		       5.13579843705026176426752607255749074318930450121451776333056563884986
-		       5.19295685089021037622571404998759218497158273863452713362339657773595
-		       5.24702407216048614402701888657221774483848074992790179457128813737686
-		       5.29831736654803667745321503082690498327770311161780120618733581142853)))
-	  (let ((mxerr 0.0))
-	    (do ((i 0 (+ i 1))
-		 (x 0.01 (+ x 0.01))
-		 (y 10.0 (+ y 10.0)))
-		((= i 20))
-	      (let ((err (max (abs (- (log x) (list-ref logs-1 i)))
-			      (abs (- (log y) (list-ref logs-2 i))))))
-		(if (> err mxerr)
-		    (set! mxerr err))))
-	    (set! log-err mxerr)))
-	
-	(let ((asins (list
-		      0.00000000000000000000000000000000000000000000000000000000000000000000
-		      0.02500260489936113599406838915349107150195748368840710160729904233944
-		      0.05002085680577001466274438682046411497780608049468789272874398055703
-		      0.07507049107671654265775143572317089898194705496817785120910161299955
-		      0.10016742116155979634552317945269331856867597222962954139102385503640
-		      0.12532783116806539687456698635708471804814772683867237523396403098649
-		      0.15056827277668602642326030146739539047425784470580485344319902595849
-		      0.17590576816371628737774199743846051972730948209298253171964068749984
-		      0.20135792079033079145512555221762341024003808140222838625725124345560
-		      0.22694303617851994909359260763689579636930963064761339672521677581090
-		      0.25268025514207865348565743699371097225219373309683819363392377874057
-		      0.27858970239165058217050815183568882129133935843106227203280647300877
-		      0.30469265401539750797200296122752916695456003170677638739297794874647
-		      0.33101172808929452771961639961139035858195303667932389628972377319123
-		      0.35757110364551028671483849232064256784674132498948776325141270863037
-		      0.38439677449563908303819487296704697375277948430656504155058375479079
-		      0.41151684606748801938473789761733560485570113512702585178394678070009
-		      0.43896188560976067483321619602147236009843505358239561712817387552271
-		      0.46676533904729636185033976030413712126156503909241369925276357159851
-		      0.49496403171689461363027991615293072605447706550005723007748628111125
-		      0.52359877559829887307710723054658381403286156656251763682915743205130
-		      0.55271511309678317285035596261806027710654731438452549350875265730232
-		      0.58236423786874344183204729090997636797897358751436418853659347126034
-		      0.61260414804862246566851988030718610964520075565860642564808142300476
-		      0.64350110879328438680280922871732263804151059111531238286560611871351
-		      0.67513153293703164720905626529438801420418535124967921737841984904557
-		      0.70758443672535557545286474430459468476197717933193633785448106190261
-		      0.74096470220302000164595109317351452207440076171206748884906746063949
-		      0.77539749661075306374035335271498711355578873864116199359771996373272
-		      0.81103439428758154765966499519016990220446846078107874166646027112837
-		      0.84806207898148100805294433899841808007336621326311264286071816357020
-		      0.88671509499956738294114522105877020358977872696702934222169938478807
-		      0.92729521800161223242851246292242880405707410857224052762186617744039
-		      0.97020219992884564627294507144637975649395034794671876838355202607208
-		      1.01598529381482513116231792163105149400316379682053508778250056579494
-		      1.06543581651073931226000681765232949759419723349387652321962473867275
-		      1.11976951499863418668667705584539961589516218640330288237568186391443
-		      1.18103559399742179696187441797151603545275866323114802494551011137296
-		      1.25323589750337525873710391866600599574114067342736145636046515573871
-		      1.34672104149307735953151290762049740983950868154764854526693662237423
-		      1.57079632679489661923132169163975144209858469968755291048747229615390)))
-	  (let ((mxerr 0.0))
-	    (do ((i 0 (+ i 1))
-		 (x 0.0 (+ x (/ 1.0 40.0))))
-		((= i 40))
-	      (let ((err (abs (- (asin x) (list-ref asins i)))))
-		(if (> err mxerr)
-		    (set! mxerr err))))
-	    (set! asin-err mxerr)))
-	
-	(let ((atans (list
-		      0.00000000000000000000000000000000000000000000000000000000000000000000
-		      0.04995839572194276141000628703484488149127708042350717441085345482998
-		      0.09966865249116202737844611987802059024327832250431464801550877681002
-		      0.14888994760949725058653039165586728099052584656913639751654183508627
-		      0.19739555984988075837004976519479029344758510378785210151768894024103
-		      0.24497866312686415417208248121127581091414409838118406712737591466735
-		      0.29145679447786709199560462143289119350316759901206541927220608308729
-		      0.33667481938672718139669863134176645842796861176681965716976593102220
-		      0.38050637711236488630358791681043310449740571365810083757630562232420
-		      0.42285392613294071296648279098114197360332058559089653470801277782477
-		      0.46364760900080611621425623146121440202853705428612026381093308872019
-		      0.50284321092786082733088202924527755577645581499776483101147435179592
-		      0.54041950027058415544357836460859991013514825146259238811636023340959
-		      0.57637522059118368022757047839377004593402018294846332167674413471879
-		      0.61072596438920861654375887649023609381850306612882761584286773000023
-		      0.64350110879328438680280922871732263804151059111531238286560611871351
-		      0.67474094222355266305652097360981361507400625484071242312092170496930
-		      0.70449406424221771665748034078199625698360683805607748632242138272858
-		      0.73281510178650659164079207273428025198575567935825608631050693192821
-		      0.75976275487577082892296119539998182400552294838843900175686400378812
-		      0.78539816339744830961566084581987572104929234984377645524373614807695
-		      0.80978357257016684662414585801888523310377327237135123533486105150550
-		      0.83298126667443170541769356183636123851585134443710842085342312250327
-		      0.85505273712601651097815432807058769283799489703232752323972864020297
-		      0.87605805059819342311404752112834133907534524616033200346065614838499
-		      0.89605538457134395617480071802993782702457844484684048736655059118459
-		      0.91510070055336041656680197245527296654755880944161873770852665151657
-		      0.93324752865620386989366255071265925262560793377140310475404520234906
-		      0.95054684081207514789478913546381917504767901030880427426177057808809
-		      0.96704699339746024466331914650201513140746494542545306371969751473184
-		      0.98279372324732906798571061101466601449687745363162855676142508831798
-		      0.99783018390619045494496187944270463542510496590550026609871776901127
-		      1.01219701145133418325981347523809017175213711715353810435383625801215
-		      1.02593241134335292660599590143869494280346122674543977431139573494988
-		      1.03907225953609102762125033790727884531233378855364699989530509706554
-		      1.05165021254837366745986731208629982963024430034204461753698029655611
-		      1.06369782240255966094389111605254547856256296541932752568273985366635
-		      1.07524465330906808242086208732184320752064516718532174460312177009311
-		      1.08631839775787341806397958192567762897580047046812780208748680606431
-		      1.09694499030013626798639002132512259906130967805041989207206852796014
-		      1.10714871779409050301706546017853704007004764540143264667653920743371)))
-	  (let ((mxerr 0.0))
-	    (do ((i 0 (+ i 1))
-		 (x 0.0 (+ x 0.05)))
-		((= i 40))
-	      (let ((err (abs (- (atan x) (list-ref atans i)))))
-		(if (> err mxerr)
-		    (set! mxerr err))))
-	    (set! atan-err mxerr)))
-	
-	(let ((sqrts (list
-		      1.00000000000000000000000000000000000000000000000000000000000000000000
-		      1.41421356237309504880168872420969807856967187537694807317667973799073
-		      1.73205080756887729352744634150587236694280525381038062805580697945193
-		      2.00000000000000000000000000000000000000000000000000000000000000000000
-		      2.23606797749978969640917366873127623544061835961152572427089724541052
-		      2.44948974278317809819728407470589139196594748065667012843269256725096
-		      2.64575131106459059050161575363926042571025918308245018036833445920106
-		      2.82842712474619009760337744841939615713934375075389614635335947598146
-		      3.00000000000000000000000000000000000000000000000000000000000000000000
-		      3.16227766016837933199889354443271853371955513932521682685750485279259
-		      3.31662479035539984911493273667068668392708854558935359705868214611648
-		      3.46410161513775458705489268301174473388561050762076125611161395890386
-		      3.60555127546398929311922126747049594625129657384524621271045305622716
-		      3.74165738677394138558374873231654930175601980777872694630374546732003
-		      3.87298334620741688517926539978239961083292170529159082658757376611348
-		      4.00000000000000000000000000000000000000000000000000000000000000000000
-		      4.12310562561766054982140985597407702514719922537362043439863357309495
-		      4.24264068711928514640506617262909423570901562613084421953003921397219
-		      4.35889894354067355223698198385961565913700392523244493689034413815955
-		      4.47213595499957939281834733746255247088123671922305144854179449082104
-		      4.58257569495584000658804719372800848898445657676797190260724212390686
-		      4.69041575982342955456563011354446628058822835341173715360570189101702
-		      4.79583152331271954159743806416269391999670704190412934648530911444825
-		      4.89897948556635619639456814941178278393189496131334025686538513450192
-		      5.00000000000000000000000000000000000000000000000000000000000000000000
-		      5.09901951359278483002822410902278198956377094609959640758497080442593
-		      5.19615242270663188058233902451761710082841576143114188416742093835579
-		      5.29150262212918118100323150727852085142051836616490036073666891840213
-		      5.38516480713450403125071049154032955629512016164478883768038867001664
-		      5.47722557505166113456969782800802133952744694997983254226894449732493
-		      5.56776436283002192211947129891854952047639337757041430396843258560358
-		      5.65685424949238019520675489683879231427868750150779229270671895196292
-		      5.74456264653802865985061146821892931822026445798279236769987747056590
-		      5.83095189484530047087415287754558307652139833488597195445000674486781
-		      5.91607978309961604256732829156161704841550123079434032287971966914282
-		      6.00000000000000000000000000000000000000000000000000000000000000000000
-		      6.08276253029821968899968424520206706208497009478641118641915304648633
-		      6.16441400296897645025019238145424422523562402344457454487457207245839
-		      6.24499799839839820584689312093979446107295997799165630845297193060961
-		      6.32455532033675866399778708886543706743911027865043365371500970558518)))
-	  (let ((mxerr 0.0))
-	    (do ((i 1 (+ i 1)))
-		((> i 40))
-	      (let ((err (abs (- (sqrt i) (list-ref sqrts (- i 1))))))
-		(if (> err mxerr)
-		    (set! mxerr err))))
-	    (set! sqrt-err mxerr)))
-	
-	(if (> sin-err 1e-12) (format #t "sin err: ~A~%" sin-err))
-	(if (> cos-err 1e-12) (format #t "cos err: ~A~%" cos-err))
-	(if (> log-err 1e-12) (format #t "log err: ~A~%" log-err))
-	(if (> asin-err 1e-12) (format #t "asin err: ~A~%" asin-err))
-	(if (> atan-err 1e-12) (format #t "atan err: ~A~%" atan-err))
-	(if (> sqrt-err 1e-12) (format #t "sqrt err: ~A~%" sqrt-err))
-	)
-      
-      ))
 
-'(
-;;; this is the current s7 output from loading this file:
+(let ()
+
+  ;; table[(1/10^k)/(((1/10^k)^(1/10^k)) - 1), {k, 1, 30}]
+  ;;   the test came from calc_errors.txt from the web by "dave"
+  (let ((expts (list
+		-0.48621160938616180680870317336747983548142173621715706851490974881717
+		-0.22218561601345857583044966876729715619642038672598556073380084629504
+		-0.14526540294689938889864991134840220307566223888497162784858064408875
+		-0.10862362815109649171007844591526444220973735508130191198062253212652
+		-0.08686389647659141105044978528770239308857034812798554177686261943193
+		-0.07238291365169326382168151357331039782973682143307349669152489742891
+		-0.06204211884333512141082278643490234288550259196615819050849846987015
+		-0.05428681523790663196206398113420109019962541643547760927657854324749
+		-0.04825494293369464924373092184737925979664303236414611590980578553450
+		-0.04342944824032518278430110099994422226122739720915846151097610557365
+		-0.03948131654165925705940460838351885560840418164027583205682137097699
+		-0.03619120682577098563759637916147675090355043511246085981138602579761
+		-0.03340726783876167905008686486133377017608955166698061593202699553920
+		-0.03102103442166584483222349447696386196557178259759899539894506586562
+		-0.02895296546021728851007526126398523685253569082526692705926181546848
+		-0.02714340511895328922819555743231851877797306680518273360154914602559
+		-0.02554673422960305368536052464215356633451937057629542604571806752914
+		-0.02412747121684732425839605105092250802578858425793889081112350331353
+		-0.02285760431069746466321731152192658331511007129540571803806313398860
+		-0.02171472409516259138755644594583025411510361447234900258639235440074
+		-0.02068068961444056322198232947221928963307055360980162368063530687389
+		-0.01974065826832962852964676904166386737701808793240851850210059107980
+		-0.01888236877840225337614103995289587314323465286757518193028428290776
+		-0.01809560341263549281879753828819187842893320857975794377409033233328
+		-0.01737177927613007310604520675666420329177588023219463316734886061171
+		-0.01670363391935583952504342495833096470363065406937228989783888395986
+		-0.01608498081123154917226403453394833638127396317791358170357400676126
+		-0.01551051721083042241611174715416446722479989306441666312924319204483
+		-0.01497567178976730440176306617453810628601368985529884710795141610434
+		-0.01447648273010839425503763063105350274314656686012221887048754923492)))
+    (let ((happy #t))
+      (do ((i 1 (+ i 1))) 
+	  ((or (= i (length expts))
+	       (not happy)))
+	(catch #t
+	       (lambda ()
+		 (let ((val (/ (expt .1 i)
+			       (- (expt (expt .1 i) (expt .1 i)) 1))))
+		   (if (> (abs (- val (list-ref expts (- i 1)))) 1e-6)
+		       (begin
+			 (set! happy #f)
+			 (display "expt error > 1e-6 around 2^") (display (/ (log (expt .1 i)) (log 2))) (newline)))))
+	       (lambda args 
+		 (display "expt no accurate below around 2^") (display (/ (log (expt .1 i)) (log 2))) (newline))))))
   
-  " "
-  (let ((funcs (make-vector 3 #f))) (do ((i 0 (+ i 1))) ((= i 3)) (vector-set! funcs i (lambda () (+ i 1)))) (+ ((vector-ref funcs 0)) ((vector-ref funcs 1)) ((vector-ref funcs 2)))) got 12 but expected 6
-  
-  (let* ((x (quote (1 2 3))) (y (apply list x))) (not (eq? x y))) got #f but expected #t
-  
-  format #t 1 output-port: 2! (this is testing output ports)
-  
-  op              error                      test                            result                                 expected
-  bes-i0:         4.728274528735e-07      (bes-i0 100.0)                1.0737511994318e+42                     1.0737517071311e+42
-  *:              1.4453905801655e-16     (* 1234/11 1234/11 1+1i)      12584.760330579+12584.760330579i        12584.760330579+12584.760330579i
-  +:              1.2356560980092e-17     (+ 1.234+1.234i -1+1i)        0.234+2.234i                            0.234+2.234i
-  -:              7.065416064077e-15      (- 1234/11 1234/11 -1+1i)     1-1i                                    1-1i
-  /:              6.7706212385519e-12     (/ 1+1i 123.4 123.4)          6.5670402874788e-05+6.5670402874788e-05i 6.567040287e-05+6.567040287e-05i
-  magnitude:      4.3762690498963e-15     (magnitude 1e-08+1e-08i)      1.4142135623731e-08                     1.414214e-08
-  angle:          5.2180482157382e-15     (angle 3.1415926535898+1i)    0.30816907111599                        0.30816907111598
-  make-polar:     5.1075947370453e-12     (make-polar 1e-08 1234.0)     -7.9855062358758e-09+6.019276547625e-09i -7.98551e-09+6.01928e-09i
-  remainder:      1.1102230246252e-16     (remainder -3.1 2.5)          -0.6                                    -0.6
-  modulo:         1.1102230246252e-16     (modulo -3.1 2.0)             0.9                                     0.9
-  expt:           5.3037918931232e-12     (expt -1234-2.718281828459i -1-1e-08i) -0.00081036881365486+1.7851555921329e-06i -0.00081036881365+1.78515559e-06i
-  log:            1.9801079834368e-14     (log 8.0 1+1i)                0.97790391649038-2.2161063668189i       0.97790391649038-2.2161063668189i
-  exp:            6.2082941131998e-11     (exp 2.718281828459+1234000000i) 2.4081506430049-14.961700256459i     2.4081506420759-14.961700256608i
-  sqrt:           4.9628289840723e-12     (sqrt 1e-08+1e-08i)           0.00010986841134678+4.5508986056223e-05i 0.00010986841135+4.550898606e-05i
-  atanh:          3.3019134302818e-14     (atanh 1e-08+1e-08i)          9.9999999669809e-09+1e-08i              1e-08+1e-08i
-  acosh:          3.0063814632876e-11     (acosh 0-1234i)               7.8111635492012-1.5707963267949i        7.8111635489617-1.5707963267949i
-  asinh:          1.8798350372034e-07     (asinh -181440)               -12.801827480089                        -12.801829886622
-  tanh:           3.9570983863574e-10     (tanh 1e-08+1234000000i)      3.9600648213873e-07-6.2129419934418i    3.9600648244422e-07-6.2129419959003i
-  cosh:           3.8571780349279e-10     (cosh 1e-08+1234000000i)      0.15890913095152-9.8729321283003e-09i   0.15890913089022-9.8729321283989e-09i
-  sinh:           6.1863103554352e-11     (sinh 3.1415926535898+1234000000i) 1.8352001348474-11.444656792365i   1.8352001341396-11.44465679248i
-  atan:           1.6781042865365e-14     (atan 0+1e-08i)               0+1.0000000016781e-08i                  0+1e-08i
-  acos:           1.8259451651704e-08     (acos 181440)                 -0+12.801827480074i                     0+12.80182724632i
-  asin:           6.2060307610322e-09     (asin 1e-08+1234000000i)      8.1037277147488e-18+21.62667394299i     8.1037250521496e-18+21.626673808774i
-  tan:            4.2096697956986e-07     (tan 1234000000/3)            -18.780955178921                        -18.780947272762
-  cos:            2.2319583216357e-08     (cos 1234000000/3)            -0.053170110875237                      -0.05317013319482
-  sin:            1.1884160322495e-09     (sin 1234000000/3)            0.99858546920607                        0.99858546801766
-  string->number: 3.514766724748e-14      (string->number "1234567890123456789012345678901234567890.123456789e-30") 1234567890.1235 1234567890.1235
-  sin error > 1e-6 after 2^38.192705173229 or thereabouts
-  exp+log error > 1e-6 around 2^31.340047894875
-  tan error > 1e-6 around 2^46.506993328423
-  expt error > 1e-6 around 2^-46.506993328423
+  (let ((sin-err 0.0)
+	(cos-err 0.0)
+	(log-err 0.0)
+	(asin-err 0.0)
+	(atan-err 0.0)
+	(sqrt-err 0.0))
+    ;; data generated by mathtool in the arprec package
+    
+    ;; another baddy: (tan 314159265358979323) should be -1.129792652308908544253650171110
+    
+    (let ((sins (list 
+		 0.00000000000000000000000000000000000000000000000000000000000000000000
+		 0.09983341664682815230681419841062202698991538801798225999276686156165
+		 0.19866933079506121545941262711838975037020672954020540398639599139797
+		 0.29552020666133957510532074568502737367783211174261844850153103617326
+		 0.38941834230865049166631175679570526459306018344395889511584896585734
+		 0.47942553860420300027328793521557138808180336794060067518861661312553
+		 0.56464247339503535720094544565865790710988808499415177102426589426735
+		 0.64421768723769105367261435139872018306581384457368964474396308809382
+		 0.71735609089952276162717461058138536619278523779142282098968252068287
+		 0.78332690962748338846138231571354862314014792572030960356048515256195
+		 0.84147098480789650665250232163029899962256306079837106567275170999191
+		 0.89120736006143533995180257787170353831890931945282652766035329176720
+		 0.93203908596722634967013443549482599541507058820873073536659789445024
+		 0.96355818541719296470134863003955481534204849131773911795564922309212
+		 0.98544972998846018065947457880609751735626167234736563194021894560084
+		 0.99749498660405443094172337114148732270665142592211582194997482405934
+		 0.99957360304150516434211382554623417197949791475491995534260751586102
+		 0.99166481045246861534613339864787565240681957116712372532710249102330
+		 0.97384763087819518653237317884335760670293947136523395566725825917196
+		 0.94630008768741448848970961163495776211399866559491176443047155279581
+		 0.90929742682568169539601986591174484270225497144789026837897301153096
+		 0.86320936664887377068075931326902458492047242489508107697183045949721
+		 0.80849640381959018430403691041611906515855960597557707903336060873485
+		 0.74570521217672017738540621164349953894264877802047425750762828050000
+		 0.67546318055115092656577152534128337425336495789352584226890212866520
+		 0.59847214410395649405185470218616227170359717157722357330262703263874
+		 0.51550137182146423525772693520936824389387858775426312126259173008382
+		 0.42737988023382993455605308585788064749647642266670256499017776070511
+		 0.33498815015590491954385375271242210603030652888358671068410107309479
+		 0.23924932921398232818425691873957537221555293029961877411621026588071
+		 0.14112000805986722210074480280811027984693326425226558415188264123242
+		 0.04158066243329057919469827159667310055461342296380675064800900076588
+		 -0.05837414342757990913721741461909518512512509908292656970935025422273)))
+      (let ((mxerr 0.0))
+	(do ((i 0 (+ i 1))
+	     (x 0.0 (+ x 0.1)))
+	    ((= i 32))
+	  (let ((err (abs (- (sin x) (list-ref sins i)))))
+	    (if (> err mxerr)
+		(set! mxerr err))))
+	(set! sin-err mxerr)))
+    
+    (let ((coss (list 
+		 1.00000000000000000000000000000000000000000000000000000000000000000000
+		 0.99500416527802576609556198780387029483857622541508403595935274468526
+		 0.98006657784124163112419651674816887739352436080656799405254829012618
+		 0.95533648912560601964231022756804989824421408263203767451761361222758
+		 0.92106099400288508279852673205180161402585956931985044561508926713514
+		 0.87758256189037271611628158260382965199164519710974405299761086831595
+		 0.82533561490967829724095249895537603887809103918847038136974977367156
+		 0.76484218728448842625585999019186490926821055037370335607293245825206
+		 0.69670670934716542092074998164232492610178601370806078363714489414924
+		 0.62160996827066445648471615140713350872176136659123900757638348453897
+		 0.54030230586813971740093660744297660373231042061792222767009725538110
+		 0.45359612142557738777137005178471612212146729566259504745593805541880
+		 0.36235775447667357763837335562307602033994778557664862648774972093613
+		 0.26749882862458740699798410929287135927592992167912966191725336742182
+		 0.16996714290024093861674803520364980292818392102853430898236521149464
+		 0.07073720166770291008818985143426870908509102756334686942264541719092
+		 -0.02919952230128872620577046294649852444486472109384694500313007908245
+		 -0.12884449429552468408764285733487351410164007964520297633178213994289
+		 -0.22720209469308705531667430653058073247695158653826107158496911100681
+		 -0.32328956686350342227883369508031017459419076544223959990115436505106
+		 -0.41614683654714238699756822950076218976600077107554489075514997378196
+		 -0.50484610459985745162093852371916747040702337674136205964819622353659
+		 -0.58850111725534570852414261265492841629376036669872798974753517400616
+		 -0.66627602127982419331788057116601723016327537100376988865266957182167
+		 -0.73739371554124549960882222733478290843301289199228479878436568873073
+		 -0.80114361554693371483350279046735166442856784876782013507459799166202
+		 -0.85688875336894723379770215164520111235392263823324404910501242714241
+		 -0.90407214201706114798252728194333012633184973516362471104126694868604
+		 -0.94222234066865815258678811736615401246341423446824662018098201995710
+		 -0.97095816514959052178110666934553217911761475942423954213867099245327
+		 -0.98999249660044545727157279473126130239367909661558832881408593292832
+		 -0.99913515027327946449237605454146626283664166994794274354471598254947
+		 -0.99829477579475308466166072228358269144701258595166016759508002045139)))
+      (let ((mxerr 0.0))
+	(do ((i 0 (+ i 1))
+	     (x 0.0 (+ x 0.1)))
+	    ((= i 32))
+	  (let ((err (abs (- (cos x) (list-ref coss i)))))
+	    (if (> err mxerr)
+		(set! mxerr err))))
+	(set! cos-err mxerr)))
+    
+    (let ((logs-1 (list
+		   -4.60517018598809136803598290936872841520220297725754595206665580193514
+		   -3.91202300542814605861875078791055184712670284289729069794597579244175
+		   -3.50655789731998167664073767244620271055471241943479650033196146829765
+		   -3.21887582486820074920151866645237527905120270853703544382529578294835
+		   -2.99573227355399099343522357614254077567660162298902823015400791046096
+		   -2.81341071676003636722350555098802614247921228507454124621128145880425
+		   -2.65926003693277806293063016592554868556511824767568476360726565199756
+		   -2.52572864430825543978428654499419871097570257417678018970461577345496
+		   -2.40794560865187198524549243552367700590722186161204704859726713466015
+		   -2.30258509299404568401799145468436420760110148862877297603332790096757
+		   -2.20727491318972082397403933140359911538049612332012877684808809280457
+		   -2.12026353620009105780627342952984957440371215071428599209060144931086
+		   -2.04022082852655463198249546780340981039693503249733883564761029127168
+		   -1.96611285637283275351339804446737211748961811331542950948658564250417
+		   -1.89711998488588130203997833922001507102911106516627877841931357682347
+		   -1.83258146374831013036705442353602214290020243981652493558393576396157
+		   -1.77195684193187528778644829149560187961399996467180116476941806405285
+		   -1.71479842809192667582826031406550043783172172725179179447658712516676
+		   -1.66073120682165090802695547748087487796482371595841713352869556552585
+		   -1.60943791243410037460075933322618763952560135426851772191264789147417))
+	  (logs-2 (list
+		   2.30258509299404568401799145468436420760110148862877297603332790096757
+		   2.99573227355399099343522357614254077567660162298902823015400791046096
+		   3.40119738166215537541323669160688991224859204645152242776802223460506
+		   3.68887945411393630285245569760071734375210175734928348427468791995435
+		   3.91202300542814605861875078791055184712670284289729069794597579244175
+		   4.09434456222210068483046881306506648032409218081177768188870224409846
+		   4.24849524204935898912334419812754393723818621821063416449271805090515
+		   4.38202663467388161226968781905889391182760189170953873839536792944775
+		   4.49980967033026506680848192852941561689608260427427187950271656824256
+		   4.60517018598809136803598290936872841520220297725754595206665580193514
+		   4.70048036579241622807993503264949350742280834256619015125189561009814
+		   4.78749174278204599424770093452324304839959231517203293600938225359185
+		   4.86753445045558242007147889624968281240636943338898009245237341163103
+		   4.94164242260930429854057631958572050531368635257088941861339806039854
+		   5.01063529409625575001399602483307755177419340072004014968067012607924
+		   5.07517381523382692168691994051707047990310202606979399251604793894114
+		   5.13579843705026176426752607255749074318930450121451776333056563884986
+		   5.19295685089021037622571404998759218497158273863452713362339657773595
+		   5.24702407216048614402701888657221774483848074992790179457128813737686
+		   5.29831736654803667745321503082690498327770311161780120618733581142853)))
+      (let ((mxerr 0.0))
+	(do ((i 0 (+ i 1))
+	     (x 0.01 (+ x 0.01))
+	     (y 10.0 (+ y 10.0)))
+	    ((= i 20))
+	  (let ((err (max (abs (- (log x) (list-ref logs-1 i)))
+			  (abs (- (log y) (list-ref logs-2 i))))))
+	    (if (> err mxerr)
+		(set! mxerr err))))
+	(set! log-err mxerr)))
+    
+    (let ((asins (list
+		  0.00000000000000000000000000000000000000000000000000000000000000000000
+		  0.02500260489936113599406838915349107150195748368840710160729904233944
+		  0.05002085680577001466274438682046411497780608049468789272874398055703
+		  0.07507049107671654265775143572317089898194705496817785120910161299955
+		  0.10016742116155979634552317945269331856867597222962954139102385503640
+		  0.12532783116806539687456698635708471804814772683867237523396403098649
+		  0.15056827277668602642326030146739539047425784470580485344319902595849
+		  0.17590576816371628737774199743846051972730948209298253171964068749984
+		  0.20135792079033079145512555221762341024003808140222838625725124345560
+		  0.22694303617851994909359260763689579636930963064761339672521677581090
+		  0.25268025514207865348565743699371097225219373309683819363392377874057
+		  0.27858970239165058217050815183568882129133935843106227203280647300877
+		  0.30469265401539750797200296122752916695456003170677638739297794874647
+		  0.33101172808929452771961639961139035858195303667932389628972377319123
+		  0.35757110364551028671483849232064256784674132498948776325141270863037
+		  0.38439677449563908303819487296704697375277948430656504155058375479079
+		  0.41151684606748801938473789761733560485570113512702585178394678070009
+		  0.43896188560976067483321619602147236009843505358239561712817387552271
+		  0.46676533904729636185033976030413712126156503909241369925276357159851
+		  0.49496403171689461363027991615293072605447706550005723007748628111125
+		  0.52359877559829887307710723054658381403286156656251763682915743205130
+		  0.55271511309678317285035596261806027710654731438452549350875265730232
+		  0.58236423786874344183204729090997636797897358751436418853659347126034
+		  0.61260414804862246566851988030718610964520075565860642564808142300476
+		  0.64350110879328438680280922871732263804151059111531238286560611871351
+		  0.67513153293703164720905626529438801420418535124967921737841984904557
+		  0.70758443672535557545286474430459468476197717933193633785448106190261
+		  0.74096470220302000164595109317351452207440076171206748884906746063949
+		  0.77539749661075306374035335271498711355578873864116199359771996373272
+		  0.81103439428758154765966499519016990220446846078107874166646027112837
+		  0.84806207898148100805294433899841808007336621326311264286071816357020
+		  0.88671509499956738294114522105877020358977872696702934222169938478807
+		  0.92729521800161223242851246292242880405707410857224052762186617744039
+		  0.97020219992884564627294507144637975649395034794671876838355202607208
+		  1.01598529381482513116231792163105149400316379682053508778250056579494
+		  1.06543581651073931226000681765232949759419723349387652321962473867275
+		  1.11976951499863418668667705584539961589516218640330288237568186391443
+		  1.18103559399742179696187441797151603545275866323114802494551011137296
+		  1.25323589750337525873710391866600599574114067342736145636046515573871
+		  1.34672104149307735953151290762049740983950868154764854526693662237423
+		  1.57079632679489661923132169163975144209858469968755291048747229615390)))
+      (let ((mxerr 0.0))
+	(do ((i 0 (+ i 1))
+	     (x 0.0 (+ x (/ 1.0 40.0))))
+	    ((= i 40))
+	  (let ((err (abs (- (asin x) (list-ref asins i)))))
+	    (if (> err mxerr)
+		(set! mxerr err))))
+	(set! asin-err mxerr)))
+    
+    (let ((atans (list
+		  0.00000000000000000000000000000000000000000000000000000000000000000000
+		  0.04995839572194276141000628703484488149127708042350717441085345482998
+		  0.09966865249116202737844611987802059024327832250431464801550877681002
+		  0.14888994760949725058653039165586728099052584656913639751654183508627
+		  0.19739555984988075837004976519479029344758510378785210151768894024103
+		  0.24497866312686415417208248121127581091414409838118406712737591466735
+		  0.29145679447786709199560462143289119350316759901206541927220608308729
+		  0.33667481938672718139669863134176645842796861176681965716976593102220
+		  0.38050637711236488630358791681043310449740571365810083757630562232420
+		  0.42285392613294071296648279098114197360332058559089653470801277782477
+		  0.46364760900080611621425623146121440202853705428612026381093308872019
+		  0.50284321092786082733088202924527755577645581499776483101147435179592
+		  0.54041950027058415544357836460859991013514825146259238811636023340959
+		  0.57637522059118368022757047839377004593402018294846332167674413471879
+		  0.61072596438920861654375887649023609381850306612882761584286773000023
+		  0.64350110879328438680280922871732263804151059111531238286560611871351
+		  0.67474094222355266305652097360981361507400625484071242312092170496930
+		  0.70449406424221771665748034078199625698360683805607748632242138272858
+		  0.73281510178650659164079207273428025198575567935825608631050693192821
+		  0.75976275487577082892296119539998182400552294838843900175686400378812
+		  0.78539816339744830961566084581987572104929234984377645524373614807695
+		  0.80978357257016684662414585801888523310377327237135123533486105150550
+		  0.83298126667443170541769356183636123851585134443710842085342312250327
+		  0.85505273712601651097815432807058769283799489703232752323972864020297
+		  0.87605805059819342311404752112834133907534524616033200346065614838499
+		  0.89605538457134395617480071802993782702457844484684048736655059118459
+		  0.91510070055336041656680197245527296654755880944161873770852665151657
+		  0.93324752865620386989366255071265925262560793377140310475404520234906
+		  0.95054684081207514789478913546381917504767901030880427426177057808809
+		  0.96704699339746024466331914650201513140746494542545306371969751473184
+		  0.98279372324732906798571061101466601449687745363162855676142508831798
+		  0.99783018390619045494496187944270463542510496590550026609871776901127
+		  1.01219701145133418325981347523809017175213711715353810435383625801215
+		  1.02593241134335292660599590143869494280346122674543977431139573494988
+		  1.03907225953609102762125033790727884531233378855364699989530509706554
+		  1.05165021254837366745986731208629982963024430034204461753698029655611
+		  1.06369782240255966094389111605254547856256296541932752568273985366635
+		  1.07524465330906808242086208732184320752064516718532174460312177009311
+		  1.08631839775787341806397958192567762897580047046812780208748680606431
+		  1.09694499030013626798639002132512259906130967805041989207206852796014
+		  1.10714871779409050301706546017853704007004764540143264667653920743371)))
+      (let ((mxerr 0.0))
+	(do ((i 0 (+ i 1))
+	     (x 0.0 (+ x 0.05)))
+	    ((= i 40))
+	  (let ((err (abs (- (atan x) (list-ref atans i)))))
+	    (if (> err mxerr)
+		(set! mxerr err))))
+	(set! atan-err mxerr)))
+    
+    (let ((sqrts (list
+		  1.00000000000000000000000000000000000000000000000000000000000000000000
+		  1.41421356237309504880168872420969807856967187537694807317667973799073
+		  1.73205080756887729352744634150587236694280525381038062805580697945193
+		  2.00000000000000000000000000000000000000000000000000000000000000000000
+		  2.23606797749978969640917366873127623544061835961152572427089724541052
+		  2.44948974278317809819728407470589139196594748065667012843269256725096
+		  2.64575131106459059050161575363926042571025918308245018036833445920106
+		  2.82842712474619009760337744841939615713934375075389614635335947598146
+		  3.00000000000000000000000000000000000000000000000000000000000000000000
+		  3.16227766016837933199889354443271853371955513932521682685750485279259
+		  3.31662479035539984911493273667068668392708854558935359705868214611648
+		  3.46410161513775458705489268301174473388561050762076125611161395890386
+		  3.60555127546398929311922126747049594625129657384524621271045305622716
+		  3.74165738677394138558374873231654930175601980777872694630374546732003
+		  3.87298334620741688517926539978239961083292170529159082658757376611348
+		  4.00000000000000000000000000000000000000000000000000000000000000000000
+		  4.12310562561766054982140985597407702514719922537362043439863357309495
+		  4.24264068711928514640506617262909423570901562613084421953003921397219
+		  4.35889894354067355223698198385961565913700392523244493689034413815955
+		  4.47213595499957939281834733746255247088123671922305144854179449082104
+		  4.58257569495584000658804719372800848898445657676797190260724212390686
+		  4.69041575982342955456563011354446628058822835341173715360570189101702
+		  4.79583152331271954159743806416269391999670704190412934648530911444825
+		  4.89897948556635619639456814941178278393189496131334025686538513450192
+		  5.00000000000000000000000000000000000000000000000000000000000000000000
+		  5.09901951359278483002822410902278198956377094609959640758497080442593
+		  5.19615242270663188058233902451761710082841576143114188416742093835579
+		  5.29150262212918118100323150727852085142051836616490036073666891840213
+		  5.38516480713450403125071049154032955629512016164478883768038867001664
+		  5.47722557505166113456969782800802133952744694997983254226894449732493
+		  5.56776436283002192211947129891854952047639337757041430396843258560358
+		  5.65685424949238019520675489683879231427868750150779229270671895196292
+		  5.74456264653802865985061146821892931822026445798279236769987747056590
+		  5.83095189484530047087415287754558307652139833488597195445000674486781
+		  5.91607978309961604256732829156161704841550123079434032287971966914282
+		  6.00000000000000000000000000000000000000000000000000000000000000000000
+		  6.08276253029821968899968424520206706208497009478641118641915304648633
+		  6.16441400296897645025019238145424422523562402344457454487457207245839
+		  6.24499799839839820584689312093979446107295997799165630845297193060961
+		  6.32455532033675866399778708886543706743911027865043365371500970558518)))
+      (let ((mxerr 0.0))
+	(do ((i 1 (+ i 1)))
+	    ((> i 40))
+	  (let ((err (abs (- (sqrt i) (list-ref sqrts (- i 1))))))
+	    (if (> err mxerr)
+		(set! mxerr err))))
+	(set! sqrt-err mxerr)))
+    
+    (if (> sin-err 1e-12) (format #t "sin err: ~A~%" sin-err))
+    (if (> cos-err 1e-12) (format #t "cos err: ~A~%" cos-err))
+    (if (> log-err 1e-12) (format #t "log err: ~A~%" log-err))
+    (if (> asin-err 1e-12) (format #t "asin err: ~A~%" asin-err))
+    (if (> atan-err 1e-12) (format #t "atan err: ~A~%" atan-err))
+    (if (> sqrt-err 1e-12) (format #t "sqrt err: ~A~%" sqrt-err))
+    )
   )
 
+
+
+
+;;; --------------------------------------------------------------------------------
 
 (if with-the-bug-finding-machine
     (let ((tries (if (integer? with-the-bug-finding-machine) with-the-bug-finding-machine 10000))
@@ -49110,7 +48911,7 @@
 
       
 ;;; --------------------------------------------------------------------------------
-      
+
 (define (s7-test-at-random)
   (let ((group-1 #t)
 	(group-2 #t))

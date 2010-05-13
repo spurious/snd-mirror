@@ -4361,6 +4361,15 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
       
   switch (name[0])
     {
+    case '<':
+      if (strings_are_equal(name, "<unspecified>"))
+	return(sc->UNSPECIFIED);
+      if (strings_are_equal(name, "<undefined>"))
+	return(sc->UNDEFINED);
+      if (strings_are_equal(name, "<eof>"))
+	return(sc->EOF_OBJECT);
+      return(sc->NIL);
+      
     case 'o':   /* #o (octal) */
     case 'd':   /* #d (decimal) */
     case 'x':   /* #x (hex) */
@@ -17542,9 +17551,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_PAIR:
 	  /* using a local s7_pointer for sc->x here drastically slows things down?!? */
 	  sc->x = car(sc->code);
-	  if /* ((is_not_local(sc->x)) && */     /* (let () (define (if a) a) (if 1)) but this slows us down by a huge amount (50%!) */
-	    (is_syntax(sc->x))
+	  if (is_syntax(sc->x))
 	    {     
+#if 0
+	      /* (let () (define (if a) a) (if 1)) or (let let ((i 0)) (if (< i 3) (let (+ i 1)) i))
+	       * but this slows us down by a huge amount (30%!) [I don't know why...]
+	       */
+	      if ((!(is_not_local(sc->x))) &&
+		  (find_symbol(sc, sc->envir, sc->x) != sc->NIL))
+		{
+		  push_stack(sc, opcode(OP_EVAL_ARGS), sc->NIL, sc->code);
+		  sc->code = sc->x;
+		  goto EVAL;
+		}
+#endif		  
 	      sc->code = cdr(sc->code);
 	      sc->op = (opcode_t)syntax_opcode(sc->x);
 	      goto START;
@@ -24872,5 +24892,7 @@ s7_scheme *s7_init(void)
  *         why are list-ref tests getting 'wrong-type-arg?
  *         (qsort is not thread safe -- should we use guile's quicksort rewrite? libguile/quicksort.i.c)
  *         (ideally it would be wrapped inside the evaluator)
+ *
+ * perhaps an example for s7.html of reading a sound file header (endianess etc)
  */
 

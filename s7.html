@@ -1523,17 +1523,17 @@ vector-dimensions returns a list of the dimensions.
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>Multidimensional vector constant syntax is modelled after CL: #nd(...) or #nD(...) 
-signals that the lists specify the elements of an 'n' dimensional vector:
+signals that the lists specify the elements of an 'n' dimensional vector: <code>#2D((1 2 3) (4 5 6))</code>
 </p>
 <pre>
-    #2D((1 2 3) (4 5 6))
-
+    &gt; (vector-ref #2D((1 2 3) (4 5 6)) 1 2)
+    6
     &gt; (matrix-multiply #2d((-1 0) (0 -1)) #2d((2 0) (-2 2)))
     #2D((-2 0) (2 -2))
 </pre>
 
 <p>If any dimension has 0 length, you get an n-dimensional empty vector.  It is not
-equal? to a 1-dimensional empty vector.
+equal to a 1-dimensional empty vector.
 </p>
 <pre>
     &gt; (make-vector '(10 0 3))
@@ -2497,7 +2497,7 @@ about stuff like <code>(let ((:hi 1)) :hi)</code>.
 &gt; (help 'caadar)
 "(caadar lst) returns (car (car (cdr (car lst)))): (caadar '((1 (2 3)))) -> 2"
 </pre>
-<p>If the initial expression in a function body is a string constant, it is assumed to be a documentation string:
+<p>If the initial expression in a function body is a string constant, it is assumed to be a documentation string (accessible via help or procedure-documentation):
 </p>
 <pre>
 (define (add1 a)
@@ -2542,6 +2542,7 @@ bind it to something else, which is asking for confusion).
 <li>__func__ is the name (or name and location) of the function currently being defined or called (as in C).
 <li>syntactic names can be values: <code>(define progn begin) (progn (display "progn!") (+ 3 4))</code> or <code>(define function lambda)</code>, etc
 <li>begin returns the value of the last form (like progn); it can contain both definitions and other statements.
+<li>#&lt;unspecified&gt;, #&lt;eof&gt;, and #&lt;undefined&gt; are defined.
 </ul>
 
 <small>
