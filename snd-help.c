@@ -493,15 +493,10 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+29-Apr:  Snd 11.5.\n\
 7-Apr:   autoload support via s7's *unbound-variable-hook*.\n\
 20-Mar:  Snd 11.4.\n\
 27-Feb:  the run macro's argument no longer has to be a thunk.\n\
-11-Feb:  Snd 11.3.\n\
-9-Feb:   removed NLS support (the po directory and so on).\n\
-8-Feb:   moved sound|channel|mix|mark|edit-property to C.\n\
-23-Jan:  The rest of the Guile-dependent files have been removed.\n\
-           This includes pd-*, rt-*, and the --with-snd-as-pd-external\n\
-            --with-hobbit, and --with-rt configuration switches.\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",

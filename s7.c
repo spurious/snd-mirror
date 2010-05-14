@@ -2159,7 +2159,7 @@ static s7_pointer g_augment_environment(s7_scheme *sc, s7_pointer args)
 {
   #define H_augment_environment "(augment-environment env ...) adds its \
 arguments (each a cons: symbol . value) to the environment env, and returns the \
-new environment."
+new environment. "
 
   s7_pointer x, e, new_e;
   int gc_loc;
@@ -18075,7 +18075,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (s7_is_constant(car(sc->code)))                       /* (lambda :a ...) */
 	    return(eval_error(sc, "lambda parameter '~A is a constant", car(sc->code)));
 
-	  /* SOMEDAY: we currently accept (lambda i i . i) (lambda quote i)  (lambda : : . #()) (lambda : 1 . "")
+	  /* we currently accept (lambda i i . i) (lambda quote i)  (lambda : : . #()) (lambda : 1 . "")
+	   *   at this level, but when the lambda form is evaluated, it will trigger an error.
 	   */
 	}
       else
@@ -18854,6 +18855,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    (sc->op == OP_DEFMACRO))
 	  return(s7_error(sc, sc->SYNTAX_ERROR,                             /* (defmacro mac (1) ...) */
 			  make_list_3(sc, make_protected_string(sc, "defmacro ~A argument name is not a symbol: ~S"), sc->x, sc->y)));
+
+      /* other parameter error checks are handled by lambda/lambda* (see OP_LAMBDA above) at macro expansion time */
 
       if (cdr(sc->z) == sc->NIL)                                            /* (defmacro hi ()) */
 	return(eval_error(sc, "defmacro ~A has no body?", sc->x));
@@ -24475,7 +24478,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "output-port?",            g_is_output_port,          1, 0, false, H_is_output_port);
   s7_define_function(sc, "char-ready?",             g_is_char_ready,           0, 1, false, H_is_char_ready);
   s7_define_function(sc, "eof-object?",             g_is_eof_object,           1, 0, false, H_is_eof_object);
-  /* this should be named eof? (what isn't an object?) and we should also have (eof) -> #<eof> */
+  /* this should be named eof? (what isn't an object?) */
   
   s7_define_function(sc, "current-input-port",      g_current_input_port,      0, 0, false, H_current_input_port);
   s7_define_function(sc, "set-current-input-port",  g_set_current_input_port,  1, 0, false, H_set_current_input_port);
@@ -24975,9 +24978,14 @@ s7_scheme *s7_init(void)
  *         why are list-ref tests getting 'wrong-type-arg?
  *         (qsort is not thread safe -- should we use guile's quicksort rewrite? libguile/quicksort.i.c)
  *         (ideally it would be wrapped inside the evaluator)
+ *       perhaps use procedure-source?
  *
  * perhaps an example for s7.html of reading a sound file header (endianess etc)
  * perhaps the built-in funcs should have legit __func__ settings? [snd for example -- means index not needed]
+ *    also pws case!
+ *    if there is a doc string, and it ends in (__func__ symbol filename line)
+ *    then s7_make_function ... has no place to put it ...
+ *
  * perhaps :allow-other-keys in lambda*
  * c-side local define?  or is this in the namespace example?
  */

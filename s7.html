@@ -63,7 +63,7 @@ as an "inexact integer" (what were those guys smoking?).
 </p>
 
 <p>This file assumes you know about Scheme and all its problems,
-and want a quick tour of where s7 is different.  (You're about to be disappointed &mdash resolutely ignore the fine print).
+and want a quick tour of where s7 is different.  (You're about to be disappointed &mdash; resolutely ignore the fine print).
 </p>
 
 <ul>
@@ -247,10 +247,11 @@ otherwise "rational?" is the same as "real?":
 #t
 </pre>
 
-<p>Did "inexact" originally mean "floating point"?  Ineluctably, 0.0 becomes an "inexact" integer (although it is exactly represented in floating
+<!--
+<p>Did "inexact" originally mean "floating point"?  Ineluctably, 0.0 becomes an "inexact" integer (although it can be represented exactly in floating
 point).  Then someone looks at floor, and says "it takes an inexact argument, surely it's only logical that it
 return an inexact result", and the race is on to see how silly we can make this business.  +inf.0 is an integer &mdash;
-it's fractional part is explicitly zero!  But +nan.0... 
+its fractional part is explicitly zero!  But +nan.0... 
 And then there's:
 </p>
 <pre>
@@ -266,13 +267,13 @@ use it all the time is to make a float into a vector index, but you can't do it 
 (not-s7-scheme)&gt; (vector-ref #(0) (floor 0.1))
 ERROR: Wrong type (expecting exact integer): 0.0
 </pre>
-<p>Not to worry, I'll use inexact->exact!
+<p>Not to worry, I'll use inexact-&gt;exact!
 </p>
 <pre>
-(not-s7-scheme)&gt; (inexact->exact 0.1)
+(not-s7-scheme)&gt; (inexact-&gt;exact 0.1)
 3602879701896397/36028797018963968
 </pre>
-<p>So my code gets littered with ridiculous verbosity, <code>(inexact->exact (floor ...))</code>, and even
+<p>So my code gets littered with ridiculous verbosity, <code>(inexact-&gt;exact (floor ...))</code>, and even
 then I have no guarantee that I'll get a legal vector index.  This all happens because Humpty Dumpty is
 on the standards committee ("integer" means whatever I say it means).  Let's push him off the wall, and start over.
 One approach that initially looked interesting was to say that "exact"
@@ -291,7 +292,7 @@ The upshot?
 The exact/inexact distinction is an incoherent jumble that only gets in the way.
 It should be flushed entirely.  And floor should return an honest integer.
 </p>
-
+-->
 
 </blockquote>
 </small>
@@ -2544,7 +2545,7 @@ about stuff like <code>(let ((:hi 1)) :hi)</code>.
 <p><b>help</b> tries to find information about its argument.</p>
 <pre>
 &gt; (help 'caadar)
-"(caadar lst) returns (car (car (cdr (car lst)))): (caadar '((1 (2 3)))) -> 2"
+"(caadar lst) returns (car (car (cdr (car lst)))): (caadar '((1 (2 3)))) -&gt; 2"
 </pre>
 <p>If the initial expression in a function body is a string constant, it is assumed to be a documentation string (accessible via help or procedure-documentation):
 </p>
@@ -4050,7 +4051,6 @@ int main(int argc, char **argv)
 </td></tr></table>
 
 <br><br>
-
 
 
 </body>

@@ -399,7 +399,7 @@
 (test (eqv? (lambda () 1) (lambda () 1)) #f)
 (test (let () (define (make-adder x) (lambda (y) (+ x y))) (eqv? (make-adder 1) (make-adder 1))) #f)
 (test (eqv? 9/2 9/2) #t)
-					;(test (eqv? 3.4 (+ 3.0 0.4)) #t) ; can be fooled
+
 (test (eqv? most-positive-fixnum most-positive-fixnum) #t)
 (test (eqv? most-positive-fixnum most-negative-fixnum) #f)
 (test (eqv? 9223372036854775807 9223372036854775806) #f)
@@ -516,7 +516,6 @@
 (test (let* ((x 1+i) (y x)) (equal? x y)) #t)
 (test (let* ((x 3/4) (y x)) (equal? x y)) #t)
 
-					;(test (equal? 3.4 (+ 3.0 0.4)) #t)
 (test (let ((x 3.141)) (equal? x x)) #t)
 (test (equal? 3 3) #t)
 (test (equal? 3 3.0) #f)
@@ -721,7 +720,11 @@
       (format #t "(char? (integer->char ~A)) -> #f?~%" i)))
 
 (test (char?) 'error)
-(test (char? #\a #\b) 'error)					;(test (char? '#\xxx) 'error) ; or possibly #f??
+(test (char? #\a #\b) 'error)
+(test (char? #\x65) #t)
+(test (char? #\x0) #t)
+(test (char? #\xff) #t)
+;; any larger number is a reader error
 
 
 
@@ -1008,6 +1011,7 @@
   (let ((i (char->integer #\space)))
     (test (char=? (integer->char i) #\space) #t))
   (test (char=? (integer->char (char->integer #\")) #\") #t)
+  (test (char=? #\x65 #\e) #t)
   
   (test (char=? #\d #\d #\d #\d) #t)
   (test (char=? #\d #\d #\x #\d) #f)
@@ -5318,6 +5322,21 @@
 (test (eval-string "(eval-string \"(+ 1 2)\")") 3)
 (test (eval-string "(eval-string (object->string (eval-string \"(+ 1 2)\")))") 3)
 
+(test (let ((name '+))
+	(let ((+ *))	
+	  (eval (list name 2 3))))
+      6)
+(test (let ((name +))
+	(let ((+ *))	
+	  (eval (list name 2 3))))
+      5)
+;; why is this considered confusing?  It has nothing to do with eval!
+
+(test (let ((call/cc (lambda (x)
+		       (let ((c (call/cc x))) c))))
+	(call/cc (lambda (r) (r 1))))
+      1)
+
 (for-each
  (lambda (arg)
    (test
@@ -6023,6 +6042,21 @@
    (test (map (lambda (a) a) arg) 'error))
  (list -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #f #t '(1 . 2)))
 
+(test (map (lambda (a1 a2 a3 a4 a5 a6 a7 a8 a9 a10)
+	     (max a1 a2 a3 a4 a5 a6 a7 a8 a9 a10))
+	   (list 6 7 8 9 10)
+	   (list 21 22 23 24 25)
+	   (list 16 17 18 19 20)
+	   (list 11 12 13 14 15)
+	   (list 26 27 28 29 30)
+	   (list 1 2 3 4 5)
+	   (list 36 37 38 39 40)
+	   (list 41 42 43 44 45)
+	   (list 46 47 48 49 50)
+	   (list 31 32 33 34 35))
+      (list 46 47 48 49 50))
+  
+
 
 
 
@@ -6717,7 +6751,7 @@
 (test (let ((g (lambda () '3))) (= (g) 3)) #t)
 
 (test ((lambda lambda lambda) 'x) '(x))
-					;(test ((lambda (begin) (begin 1 2 3)) (lambda lambda lambda)) '(1 2 3))
+					;(test ((lambda (begin) (begin 1 2 3)) (lambda lambda lambda)) 3)
 
 (test (let () ; PLP Scott p168
 	(define A
@@ -6882,15 +6916,15 @@
 (test (lambda 1) 'error)
 (test (lambda (x 1) x) 'error)
 (test (lambda "hi" 1) 'error)
-					;(test (lambda (x x) x) 'error)
-					;(test ((lambda (x x) x) 1 2) 'error) returns 2 in s7
+(test (lambda (x x) x) 'error)
+(test ((lambda (x x) x) 1 2) 'error) 
 (test (lambda (x "a")) 'error)
 (test ((lambda (x y) (+ x y a)) 1 2) 'error)
 (test ((lambda ())) 'error)
 (test (lambda (x (y)) x) 'error)
 (test ((lambda (x) x . 5) 2) 'error)
 (test (lambda (1) #f) 'error)
-;(test (lambda (x . y z) x) 'error)  ; this is apparently uncatchable in Guile, in s7 it triggers a reader error
+;(test (lambda (x . y z) x) 'error) 
 (test ((lambda () 1) 1) 'error)
 (test ((lambda (()) 1) 1) 'error)
 (test ((lambda (x) x) 1 2) 'error)
@@ -6943,9 +6977,9 @@
 (test (let ((begin 3)) (+ begin 1)) 4)
 (test ((lambda (x) (begin (set! x 1) (let ((a x)) (+ a 1)))) 2) 2)
 ;;; apparently these can be considered errors or not (guile says error, stklos and gauche do not)
-					;(test (begin (define x 0) (+ x 1)) 1)
-					;(test ((lambda () (begin (define x 0) (+ x 1)))) 1)
-					;(test (let ((f (lambda () (begin (define x 0) (+ x 1))))) (f)) 1)
+(test (begin (define x 0) (+ x 1)) 1)
+(test ((lambda () (begin (define x 0) (+ x 1)))) 1)
+(test (let ((f (lambda () (begin (define x 0) (+ x 1))))) (f)) 1)
 
 (test ((lambda () (begin (define x 0)) (+ x 1))) 1)
 (test (let ((f (lambda () (begin (define x 0)) (+ x 1)))) (f)) 1)
@@ -6987,7 +7021,7 @@
 (test (apply apply (list list 1 2 '(3))) (list 1 2 3))
 (test (vector? (apply make-vector '(1))) #t)
 (test (apply make-vector '(1 1)) '#(1))
-					;(test (let* ((x '(1 2 3)) (y (apply list x))) (not (eq? x y))) #t) ; is this standard?
+					;(test (let* ((x '(1 2 3)) (y (apply list x))) (not (eq? x y))) #f) ; is this standard?
 (test (apply min '(1 2 3 5 4 0 9)) 0)
 (test (apply min 1 2 4 3 '(4 0 9)) 0)
 (test (apply vector 1 2 '(3)) '#(1 2 3))
@@ -9531,9 +9565,7 @@
   (test ((lambda* ((b 3) :rest x (c 1)) (list b c x)) 1 2 3 4 5) '(1 3 (2 3 4 5)))
   (test ((lambda* ((a 1) :rest b :rest c) (list a b c)) 1 2 3 4 5) '(1 (2 3 4 5) (3 4 5)))
 
-
-  ;; TODO: defmacro(*) repeated args
-
+  (test (let () (define-macro (hi a a) `(+ ,a 1)) (hi 1 2)) 'error)
 
   (test (procedure-arity car) '(1 0 #f))
   (test (procedure-arity 'car) '(1 0 #f))
@@ -9814,8 +9846,8 @@
   (test (define-macro (1 2) 3) 'error)
   (test (defmacro a) 'error)
   (test (define-macro (a)) 'error)
-					;(test (defmacro a (1) 2) 'error)
-					;(test (define-macro (a 1) 2) 'error)
+  (test (defmacro a (1) 2) 'error)
+  (test (define-macro (a 1) 2) 'error)
   (test (defmacro . a) 'error)
   (test (define-macro . a) 'error)
   (test (define :hi 1) 'error)
@@ -10695,7 +10727,23 @@
 (test (let ((__c2__ 32)) (defined? '__c2__ (global-environment))) #f)
 (test (let ((__c2__ 32)) (defined? '__c3__ (global-environment))) #f)
 
+(test (current-environment 1) 'error)
+(test (global-environment 1) 'error)
+
+
 (test (let ((a 1)) (eval '(+ a b) (augment-environment (current-environment) (cons 'b 32)))) 33)
+(test (augment-environment) 'error)
+(for-each
+ (lambda (arg)
+   (test (augment-environment arg '(a . 32)) 'error))
+     (list -1 #\a 1 3.14 3/4 1.0+1.0i "hi"))
+(let ((e (augment-environment (current-environment)
+			      (cons 'a 32)
+			      (cons 'b 12))))
+  (test (eval '(+ a b) e) 44)
+  (test (eval '(+ a b c) (augment-environment e (cons 'c 3))) 47)
+  (test (eval '(+ a b) (augment-environment e (cons 'b 3))) 35))
+
 
 (test (call-with-exit (lambda (c) (0 (c 1)))) 1)
 (test (call-with-exit (lambda (k) (k "foo"))) "foo")
@@ -45493,8 +45541,7 @@
 (for-each
  (lambda (n name)
    (if (number? n)
-       (begin
-	 (display "(number? ") (display name) (display ") returned #t?") (newline))))
+       (format #t "(number? ~A) returned #t?~%" name)))
  (list
   'a9 'aa 'aA 'a! 'a$ 'a% 'a& 'a* 'a+ 'a- 'a. 'a/ 'a: 'a< 'a= 'a> 'a? 'a@ 'a^ 'a_ 'a~ 'A9 'Aa 'AA 'A! 'A$ 'A% 'A& 'A* 'A+ 'A- 'A. 'A/ 'A: 'A< 'A= 'A> 'A? 'A@ 'A^ 'A_ 'A~ '!9 '!a '!A '!! '!$ '!% '!& '!* '!+ '!- '!. '!/ '!: '!< '!= '!> '!? '!@ '!^ '!_ '!~ '$9 '$a '$A '$! '$$ '$% '$& '$* '$+ '$- '$. '$/ '$: '$< '$= '$> '$? '$@ '$^ '$_ '$~ '%9 '%a '%A '%! '%$ '%% '%& '%* '%+ '%- '%. '%/ '%: '%< '%= '%> '%? '%@ '%^ '%_ '%~ '&9 '&a '&A '&! '&$ '&% '&& '&* '&+ '&- '&. '&/ '&: '&< '&= '&> '&? '&@ '&^ '&_ '&~ '*9 '*a '*A '*! '*$ '*% '*& '** '*+ '*- '*. '*/ '*: '*< '*= '*> '*? '*@ '*^ '*_ '*~ '/9 '/a '/A '/! '/$ '/% '/& '/* '/+ '/- '/. '// '/: '/< '/= '/> '/? '/@ '/^ '/_ '/~ ':9 ':a ':A ':! ':$ ':% ':& ':* ':+ ':- ':. ':/ ':: ':< ':= ':> ':? ':@ ':^ ':_ ':~ '<9 '<a '<A '<! '<$ '<% '<& '<* '<+ '<- '<. '</ '<: '<< '<= '<> '<? '<@ '<^ '<_ '<~ '=9 '=a '=A '=! '=$ '=% '=& '=* '=+ '=- '=. '=/ '=: '=< '== '=> '=? '=@ '=^ '=_ '=~ '>9 '>a '>A '>! '>$ '>% '>& '>* '>+ '>- '>. '>/ '>: '>< '>= '>> '>? '>@ '>^ '>_ '>~ '?9 '?a '?A '?! '?$ '?% '?& '?* '?+ '?- '?. '?/ '?: '?< '?= '?> '?? '?@ '?^ '?_ '?~ '^9 '^a '^A '^! '^$ '^% '^& '^* '^+ '^- '^. '^/ '^: '^< '^= '^> '^? '^@ '^^ '^_ '^~ '_9 '_a '_A '_! '_$ '_% '_& '_* '_+ '_- '_. '_/ '_: '_< '_= '_> '_? '_@ '_^ '__ '_~ '~9 '~a '~A '~! '~$ '~% '~& '~* '~+ '~- '~. '~/ '~: '~< '~= '~> '~? '~@ '~^ '~_ '~~)
  
@@ -45513,11 +45560,11 @@
 (for-each
  (lambda (z)
    (if (not (zero? z))
-       (begin (display z) (display " is not zero?") (newline)))
+       (format #t "~A is not zero?~%" z))
    (if (and (real? z) (positive? z))
-       (begin (display z) (display " is positive?") (newline)))
+       (format #t "~A is positive?~%" z))
    (if (and (real? z) (negative? z))
-       (begin (display z) (display " is negative?") (newline))))
+       (format #t "~A is negative?~%" z)))
  '(0 -0 +0 0.0 -0.0 +0.0 0/1 -0/1 +0/24 0+0i 0-0i -0-0i +0-0i 0.0-0.0i -0.0+0i #b0 #o-0 #x000 #e0 #e0.0 #e#b0 #b#e0 #e0/1 #b+0))
 
 
