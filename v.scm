@@ -33,8 +33,7 @@
 	    (degree #f)
 	    (distance 1.0)
 	    (reverb-amount 0.01)
-	    (base 1.0)
-	    :allow-other-keys)
+	    (base 1.0))
 
     "(fm-violin startime dur frequency amplitude
    (fm-index 1.0) (amp-env '(0 0  25 1  75 1  100 0)) 
@@ -109,7 +108,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
       (ws-interrupt?)
       (if (or (not easy-case) ind-noi amp-noi (> noise-amount 0.0) (not modulate))
 	  (run
-	   (do ((i beg (+ 1 i)))
+	   (do ((i beg (+ i 1)))
 	       ((= i end))
 	     (if (not (= 0.0 noise-amount))
 		 (set! fuzz (rand fm-noi)))

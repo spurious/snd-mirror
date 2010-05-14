@@ -1328,7 +1328,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       int y0, majy, miny, i;
       const char *label = NULL;
       mus_float_t freq = 0.0, freq10 = 0.0;
-      /* get min (log-freq or spectro-start), max, add major ticks and brief labels, then if room add log-style minor ticks (100's, 1000's) */
+      /* get min (log-freq or spectrum-start), max, add major ticks and brief labels, then if room add log-style minor ticks (100's, 1000's) */
       y0 = ap->x_axis_y0;
       majy = y0 + major_tick_length;
       miny = y0 + minor_tick_length;
@@ -1390,7 +1390,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       int x0, majx, minx, i;
       const char *label = NULL;
       mus_float_t freq = 0.0, freq10 = 0.0;
-      /* get min (log-freq or spectro-start), max, add major ticks and brief labels, then if room add log-style minor ticks (100's, 1000's) */
+      /* get min (log-freq or spectrum-start), max, add major ticks and brief labels, then if room add log-style minor ticks (100's, 1000's) */
       x0 = ap->y_axis_x0;
       majx = x0 - major_tick_length;
       minx = x0 - minor_tick_length;

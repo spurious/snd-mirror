@@ -5883,8 +5883,4 @@ files list of the View Files dialog.  If it returns " PROC_TRUE ", the default a
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_clipping, g_clipping_w, H_clipping,
 				   S_setB S_clipping, g_set_clipping_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER("data-clipped", g_clipping_w, H_clipping,
-				   S_setB "data-clipped", g_set_clipping_w,  0, 0, 1, 0);
-
 }

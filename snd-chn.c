@@ -9580,14 +9580,6 @@ void g_init_chn(void)
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectrum_start, g_spectrum_start_w, H_spectrum_start,
 					    S_setB S_spectrum_start, g_set_spectrum_start_w, g_set_spectrum_start_reversed, 0, 2, 1, 2);
   
-  /* for backwards compatibility */
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER("spectro-cutoff", g_spectrum_end_w, H_spectrum_end,
-					    S_setB "spectro-cutoff", g_set_spectrum_end_w, g_set_spectrum_end_reversed, 0, 2, 1, 2);
-  /* for backwards compatibility */  
-  XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER("spectro-start", g_spectrum_start_w, H_spectrum_start,
-					    S_setB "spectro-start", g_set_spectrum_start_w, g_set_spectrum_start_reversed, 0, 2, 1, 2);
-  
-
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_spectro_x_angle, g_spectro_x_angle_w, H_spectro_x_angle,
 					    S_setB S_spectro_x_angle, g_set_spectro_x_angle_w, g_set_spectro_x_angle_reversed, 0, 2, 1, 2);
   

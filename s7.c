@@ -5161,10 +5161,15 @@ static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
   
   mag = num_to_real(number(car(args)));
   ang = num_to_real(number(cadr(args)));
+
   if (ang == 0.0)
     return(s7_make_real(sc, mag));
   if (ang == M_PI)
     return(s7_make_real(sc, -mag));
+
+  if ((isnan(mag)) || (isnan(ang)) || (isinf(ang)))
+    return(s7_make_real(sc, NAN));
+
   return(s7_make_complex(sc, mag * cos(ang), mag * sin(ang)));
 }
 
@@ -5234,6 +5239,7 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
 {
   #define H_angle "(angle z) returns the angle of z"
   s7_pointer x;
+  s7_Double f;
 
   x = car(args);
   if (!s7_is_number(x))
@@ -5241,10 +5247,15 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
 
   if (!s7_is_real(x))
     return(s7_make_real(sc, atan2(s7_imag_part(x), s7_real_part(x))));
-  if (num_to_real(number(x)) < 0.0)
+
+  f = num_to_real(number(x));
+  if (isnan(f)) return(x);
+
+  if (f < 0.0)
     return(s7_make_real(sc, M_PI));
   if (number_type(x) <= NUM_RATIO)
     return(small_int(0));
+
   return(real_zero);
 }
 
@@ -5905,6 +5916,7 @@ static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
       }
 
     default:        
+      if (isnan(real(number(x)))) return(x);
       return(s7_make_integer(sc, (s7_Int)floor(real(number(x))))); 
     }
 }
@@ -5934,6 +5946,7 @@ static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
       }
 
     default:        
+      if (isnan(real(number(x)))) return(x);
       return(s7_make_integer(sc, (s7_Int)ceil(real(number(x))))); 
     }
 }
@@ -5957,6 +5970,7 @@ static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
       return(s7_make_integer(sc, (s7_Int)(numerator(number(x)) / denominator(number(x))))); /* C "/" already truncates */
 
     default: 
+      if (isnan(real(number(x)))) return(x);
       return(s7_make_integer(sc, s7_truncate(real(number(x))))); 
     }
 }
@@ -5997,7 +6011,8 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
       }
 
     default: 
-      return(s7_make_integer(sc, (s7_Int)round_per_R5RS(num_to_real(number(x))))); 
+      if (isnan(real(number(x)))) return(x);
+      return(s7_make_integer(sc, (s7_Int)round_per_R5RS(real(number(x))))); 
     }
 }
 
@@ -6540,6 +6555,7 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 
   result = ap;
   a = number(ap);
+  if ((a.type > NUM_RATIO) && (isnan(real(a)))) return(s7_make_real(sc, NAN));
   i = 2;
   while (true)
     {
@@ -6582,6 +6598,7 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 	  break;
       
 	default:
+	  if ((b.type > NUM_RATIO) && (isnan(real(b)))) return(s7_make_real(sc, NAN));
 	  if (num_to_real(a) < num_to_real(b))
 	    {
 	      a = b;
@@ -6617,6 +6634,7 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 
   result = ap;
   a = number(ap);
+  if ((a.type > NUM_RATIO) && (isnan(real(a)))) return(s7_make_real(sc, NAN));
   i = 2;
   while (true)
     {
@@ -6659,6 +6677,7 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 	  break;
 
 	default:
+	  if ((b.type > NUM_RATIO) && (isnan(real(b)))) return(s7_make_real(sc, NAN));
 	  if (num_to_real(a) > num_to_real(b))
 	    {
 	      a = b;
@@ -6727,7 +6746,6 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 
     default:
       /* if a < b we can just return a */
-
       return(s7_make_real(sc, num_to_real(a) - num_to_real(b) * quotient(a, b)));
 
       /* see under sin -- this calculation is completely bogus if "a" is large
@@ -6957,6 +6975,8 @@ static s7_pointer g_less_1(s7_scheme *sc, bool reversed, s7_pointer args)
 
   a = number(car(args));
   type_a = num_type(a);
+  if ((type_a > NUM_RATIO) && (isnan(real(a))))
+    return(sc->F);
 
   i = 2;
   x = cdr(args);
@@ -6971,6 +6991,8 @@ static s7_pointer g_less_1(s7_scheme *sc, bool reversed, s7_pointer args)
 
       b = number(tmp);
       type_b = num_type(b);
+      if ((type_b > NUM_RATIO) && (isnan(real(b))))
+	return(sc->F);
 
       switch (type_a)
 	{
@@ -7102,6 +7124,8 @@ static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
 
   a = number(car(args));
   type_a = num_type(a);
+  if ((type_a > NUM_RATIO) && (isnan(real(a))))
+    return(sc->F);
 
   i = 2;
   x = cdr(args);
@@ -7116,6 +7140,8 @@ static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
 
       b = number(tmp);
       type_b = num_type(b);
+      if ((type_b > NUM_RATIO) && (isnan(real(b))))
+	return(sc->F);
 
       /* the ">" operator here is a problem.
        *   we get different results depending on the gcc optimization level for cases like (< 1234/11 1234/11)
@@ -7297,16 +7323,18 @@ static s7_pointer g_denominator(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args) 
 {
   #define H_is_nan "(nan? obj) returns #t if obj is a NaN"
-  return(make_boolean(sc, ((s7_is_real(car(args))) &&
-			   (isnan(s7_real_part(car(args)))))));
+  s7_pointer x;
+  x = car(args);
+  return(make_boolean(sc, (isnan(s7_real_part(x))) || (isnan(s7_imag_part(x)))));
 }
 
 
 static s7_pointer g_is_infinite(s7_scheme *sc, s7_pointer args) 
 {
   #define H_is_infinite "(infinite? obj) returns #t if obj is an infinite real"
-  return(make_boolean(sc, ((s7_is_real(car(args))) &&
-			   (isinf(s7_real_part(car(args)))))));
+  s7_pointer x;
+  x = car(args);
+  return(make_boolean(sc, (isinf(s7_real_part(x))) || (isinf(s7_imag_part(x)))));
 }
 
 
@@ -17569,6 +17597,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->op = (opcode_t)syntax_opcode(sc->x);
 	      goto START;
 	    } 
+
 	  push_stack(sc, opcode(OP_EVAL_ARGS), sc->NIL, sc->code);
 	  sc->code = sc->x;
 	  goto EVAL;
@@ -18107,6 +18136,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_pair(car(sc->code))) 
 	{
 	  sc->x = caar(sc->code);
+
+	  /* here cdar(sc->code) is the arg list, so if any arg (possibly defaulted) is a keyword, complain
+	   *    (define (hi :a) 1) etc
+	   * but ignore :key :rest and :optional of course
+	   */
+	  for (sc->w = cdar(sc->code); is_pair(sc->w); sc->w = cdr(sc->w))
+	    {
+	      if (is_pair(car(sc->w)))
+		{
+		  if (s7_is_constant(caar(sc->w)))
+		    return(eval_error(sc, "argument ~A is a constant", caar(sc->w)));
+		}
+	      else 
+		{
+		  if ((s7_is_constant(car(sc->w))) &&
+		      (car(sc->w) != sc->KEY_KEY) &&
+		      (car(sc->w) != sc->KEY_OPTIONAL) &&
+		      (car(sc->w) != sc->KEY_REST))
+		    return(eval_error(sc, "argument ~A is a constant", car(sc->w)));
+		}
+	    }
+
 	  if (sc->op == OP_DEFINE_STAR)
 	    sc->code = s7_cons(sc, sc->LAMBDA_STAR, s7_cons(sc, cdar(sc->code), cdr(sc->code)));
 	  else sc->code = s7_cons(sc, sc->LAMBDA, s7_cons(sc, cdar(sc->code), cdr(sc->code)));
@@ -24894,5 +24945,7 @@ s7_scheme *s7_init(void)
  *         (ideally it would be wrapped inside the evaluator)
  *
  * perhaps an example for s7.html of reading a sound file header (endianess etc)
+ * perhaps the built-in funcs should have legit __func__ settings? [snd for example -- means index not needed]
+ * perhaps :allow-other-keys in lambda*
  */
 

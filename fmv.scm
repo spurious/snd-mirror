@@ -35,8 +35,7 @@
 	    (fm1-index #f) 
 	    (fm2-index #f) 
 	    (fm3-index #f)
-	    (base 1.0)
-	    :allow-other-keys)
+	    (base 1.0))
 
 "(make-fm-violin frequency amplitude 
   (fm-index 1.0) (amp-env #f) (periodic-vibrato-rate 5.0) 
@@ -157,8 +156,8 @@ fm-violin takes the value returned by make-fm-violin and returns a new sample ea
       (vct->channel data beg dur))))
 |#
 
-(define* (fm-violin-ins startime dur freq amp (degree #f) (reverb-amount 0.0) (distance 1.0) :allow-other-keys :rest args)
-  "(fm-violin-ins startime dur freq amp (degree #f) (reverb-amount 0.0) (distance 1.0) :allow-other-keys :rest args) 
+(define* (fm-violin-ins startime dur freq amp (degree #f) (reverb-amount 0.0) (distance 1.0) :rest args)
+  "(fm-violin-ins startime dur freq amp (degree #f) (reverb-amount 0.0) (distance 1.0) :rest args) 
 calls the fm-violin with the given args and mixes the results into the current sound"
     (let* ((beg (floor (* startime (srate))))
 	   (len (floor (* dur (srate))))

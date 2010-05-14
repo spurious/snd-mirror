@@ -263,7 +263,8 @@ But then what would inexact-&gt;exact do?  C's nextafter is not what anyone expe
 And to keep exactness in view, we'd have
 to monitor which operations introduce inexactness &mdash; a kind of interval arithmetic.
 In other schemes, inexact means "has a dot, an exponent, or an imaginary part" which is silly.
-Similarly "integer?" means "has zero fractional part", but that is useless in a case
+Similarly "integer?" means "has zero fractional part, as in +inf.0, but not +nan.0", 
+but that is useless in a case
 like <code>(- 9007199254740993.0 9007199254740992.0)</code> which I bet is 0.0, even
 though these things are called integers.  Or worse, you want a vector index, but
 because integer? includes floats, you end

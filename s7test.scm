@@ -2232,6 +2232,22 @@
 
 
 
+(let ((sym 0))
+  (test (symbol->value 'sym) 0)
+  (for-each
+   (lambda (arg)
+     (set! sym arg)
+     (test (symbol->value 'sym) arg))
+   (list #\a 1 '() (list 1) '(1 . 2) #f (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) #<eof> (lambda (a) (+ a 1)))))
+
+(for-each
+ (lambda (arg)
+   (test (symbol->value arg) 'error))
+ (list #\a 1 '() (list 1) '(1 . 2) #f (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) #<eof> (lambda (a) (+ a 1))))
+  
+(test (symbol->value) 'error)
+(test (symbol->value 'hi 'ho) 'error)
+
 
 
 
@@ -3772,6 +3788,9 @@
 (test (call/cc (lambda (return) (map (lambda (n) (return "oops")) (vector 1 2 3)))) "oops")
 (test (call/cc (lambda (return) (map (lambda (n) (if (even? n) (return n))) (vector 1 3 8 7 9 10)))) 8)
 
+(test (vector? (symbol-table)) #t)
+(test (symbol? (((symbol-table) 0) 0)) #t)
+
 (test (let ((val 0) 
 	    (ht (make-hash-table))) 
 	(set! (ht "hi") 123) 
@@ -4061,11 +4080,6 @@
       (test (equal? (make-vector 10 '()) (make-hash-table 10)) #f)
       ))
 
-
-;;;  TODO: other math ops with nan/inf (remainder exact? etc)
-;; TODO: test all the read* procs for repeated eofs
-;;; TODO: test symbol->value symbol-table port-filename pws stuff? 
-      
 
 
 
@@ -4581,10 +4595,8 @@
   
   (let ((ctr 0))
     (call-with-input-file "tmp1.r5rs"
-      (lambda (p)
-	
-	(if (not (string=? (port-filename p) "tmp1.r5rs")) (display (port-filename p)))
-	
+      (lambda (p)	
+	(if (not (string=? (port-filename p) "tmp1.r5rs")) (display (port-filename p)))	
 	(let loop ((val (read-byte p)))
 	  (if (eof-object? val)
 	      (if (not (= ctr 26))
@@ -4611,12 +4623,14 @@
 
 (with-output-to-file "tmp1.r5rs"
   (lambda ()
+    (if (not (string=? (port-filename (current-output-port)) "tmp1.r5rs")) (display (port-filename (current-output-port))))
     (display "(+ 1 2) 32")
     (newline)
     (display "#\\a  -1")))
 
 (with-input-from-file "tmp1.r5rs"
   (lambda ()
+    (if (not (string=? (port-filename (current-input-port)) "tmp1.r5rs")) (display (port-filename (current-input-port))))
     (let ((val (read)))
       (if (not (equal? val (list '+ 1 2)))
 	  (format #t "read: ~A~%" val)))
@@ -4919,7 +4933,10 @@
       (let ((line3 (read-line)))
 	(test (string=? line3 "line 3") #t))
       (let ((eof (read-line)))
+	(test (eof-object? eof) #t))
+      (let ((eof (read-line)))
 	(test (eof-object? eof) #t)))))
+
 
 (let ((val (format #f "line 1~%line 2~%line 3")))
   (call-with-input-string val
@@ -4930,6 +4947,8 @@
 			      (test (string=? line2 (string-append "line 2" (string #\newline))) #t))
 			    (let ((line3 (read-line p #t)))
 			      (test (string=? line3 "line 3") #t))
+			    (let ((eof (read-line p #t)))
+			      (test (eof-object? eof) #t))
 			    (let ((eof (read-line p #t)))
 			      (test (eof-object? eof) #t)))))
 
@@ -5203,6 +5222,7 @@
     (do ((i 0 (+ i 1)))
 	((= i 256))
       (write-byte i p))))
+
 (call-with-input-file "tmp1.r5rs"
   (lambda (p)
     (do ((i 0 (+ i 1)))
@@ -5210,6 +5230,9 @@
       (let ((b (read-byte p)))
 	(if (not (= b i))
 	    (format #t "read-byte got ~A, expected ~A~%" b i))))
+    (let ((eof (read-byte p)))
+      (if (not (eof-object? eof))
+	  (format #t "read-byte at end: ~A~%" eof)))
     (let ((eof (read-byte p)))
       (if (not (eof-object? eof))
 	  (format #t "read-byte at end: ~A~%" eof)))))
@@ -5233,7 +5256,10 @@
     (let ((eof (read-char p)))
       (if (not (eof-object? eof))
 	  (format #t "read-char at end: ~A~%" eof))
-      (set! our-eof eof))))
+      (set! our-eof eof))
+    (let ((eof (read-char p)))
+      (if (not (eof-object? eof))
+	  (format #t "read-char again at end: ~A~%" eof)))))
 
 (test (eof-object? (integer->char 255)) #f)
 (test (eof-object? our-eof) #t)
@@ -9470,6 +9496,18 @@
 			    (lambda args (car args)))))
 	    (eq? tag 'wrong-number-of-args)))
 	#t)
+
+  (test (let () (define (hi :a) :a) (hi 1)) 'error)
+  (test (let () (define* (hi :a) :a) (hi 1)) 'error)
+  (test (let () (define* (hi (:a 2)) a) (hi 1)) 'error)
+  (test (let () (define* (hi (a 1) (:a 2)) a) (hi 1)) 'error)
+  (test (let () (define* (hi (pi 1)) pi) (hi 2)) 'error)
+  (test (let () (define* (hi (:b 1) (:a 2)) a) (hi)) 'error)
+
+;;; TODO: check for repeated arg names
+;  (test (let () (define* (hi (a 1) (a 2)) a) (hi 2)) 'error)
+;  (test (let () (define (hi a a) a) (hi 1 2)) 'error)
+
   
   (test (procedure-arity car) '(1 0 #f))
   (test (procedure-arity 'car) '(1 0 #f))
@@ -33563,7 +33601,10 @@
 (let* ((inf+ (- (real-part (log 0))))
        (inf- (real-part (log 0)))
        (nan (real-part (/ (log 0)))) ;; perhaps this should be 0.0 -- 1/inf
-       (complex-nan (make-polar 0.0 inf+))
+       (nan.0 nan)
+       (inf.0 inf+)
+       (-inf.0 inf-)
+       (complex-nan (make-rectangular nan.0 nan.0))
        (complex-inf++ (make-rectangular inf+ inf+))
        (complex-inf+- (make-rectangular inf+ inf-))
        (complex-inf-- (make-rectangular inf- inf-))
@@ -33743,7 +33784,7 @@
    (lambda (op)
      (test (number? (op inf+ inf+)) #t)
      (test (number? (op nan inf-)) #t))
-   (list + - * / expt min max make-rectangular make-polar))
+   (list + - * / expt make-rectangular make-polar))
 
   (for-each
    (lambda (op)
@@ -33799,11 +33840,181 @@
   (test (positive? (string->number "+inf.0")) #t)
   (test (negative? (string->number "-inf.0")) #t)
 
-;;    quotient remainder -> most-neg-fix also floor etc
-;;    "nan" at start -> nan.0
-;;    "+||-inf" at start -> +|-inf
-;;    but this means inf.0 and nan.0 are built-in numbers
-;;    outside gmp (* 1e12000 1e12000) -> inf+
+  (if (not (provided? 'gmp)) (test (* 1e12000 1e12000) inf+))
+
+  (test (zero? nan.0) #f)
+  (test (positive? nan.0) #f)
+  (test (negative? nan.0) #f)
+  (test (exact? nan.0) #f)
+  (test (inexact? nan.0) #t)
+  (test (imag-part nan.0) 0.0)
+  (test (nan? (asin nan.0)) #t)
+  (test (nan? (make-polar nan.0 nan.0)) #t)
+  (test (nan? (make-rectangular nan.0 nan.0)) #t)
+  (test (nan? (log nan.0 nan.0)) #t)
+  (test (= nan.0 nan.0) #f)
+  (test (< nan.0 nan.0) #f)
+  (test (> nan.0 nan.0) #f)
+  (test (magnitude inf.0) inf.0)
+  (test (angle inf.0) 0.0)
+  (test (abs inf.0) inf.0)
+  (test (exp inf.0) inf.0)
+  (test (log inf.0) inf.0)
+  (test (nan? (asin inf.0)) #t)
+  (test (nan? (acos inf.0)) #t)
+  (num-test (atan inf.0) 1.5707963267949)
+  (test (sinh inf.0) inf.0)
+  (test (cosh inf.0) inf.0)
+  (test (tanh inf.0) 1.0)
+  (test (asinh inf.0) inf.0)
+  (test (acosh inf.0) inf.0)
+  (num-test (atanh inf.0) 0+1.5707963267949i)
+  (test (sqrt inf.0) inf.0)
+  (test (+ inf.0) inf.0)
+  (test (- inf.0) -inf.0)
+  (test (* inf.0) inf.0)
+  (test (/ inf.0) 0.0)
+  (test (max inf.0) inf.0)
+  (test (min inf.0) inf.0)
+  (test (number? inf.0) #t)
+  (test (integer? inf.0) #f)
+  (test (real? inf.0) #t)
+  (test (complex? inf.0) #t)
+  (test (rational? inf.0) #f)
+  (test (even? inf.0) 'error)
+  (test (odd? inf.0) 'error)
+  (test (zero? inf.0) #f)
+  (test (positive? inf.0) #t)
+  (test (negative? inf.0) #f)
+  (test (real-part inf.0) inf.0)
+  (test (imag-part inf.0) 0.0)
+  (test (numerator inf.0) 'error)
+  (test (denominator inf.0) 'error)
+  (test (inexact->exact inf.0) 'error)
+  (test (exact->inexact inf.0) inf.0)
+  (test (exact? inf.0) #f)
+  (test (inexact? inf.0) #t)
+  (test (infinite? (make-rectangular -inf.0 inf.0)) #t)
+  (test (* -inf.0 inf.0) -inf.0)
+  (test (max -inf.0 inf.0) inf.0)
+  (test (min -inf.0 inf.0) -inf.0)
+  (test (= -inf.0 inf.0) #f)
+  (test (< -inf.0 inf.0) #t)
+  (test (> -inf.0 inf.0) #f)
+  (test (<= -inf.0 inf.0) #t)
+  (test (>= -inf.0 inf.0) #f)
+  (test (- -inf.0 inf.0) -inf.0)
+  (test (nan? (make-rectangular nan.0 inf.0)) #t)
+  (test (= nan.0 inf.0) #f)
+  (test (< nan.0 inf.0) #f)
+  (test (> nan.0 inf.0) #f)
+  (test (+ 0 inf.0) inf.0)
+  (test (- 0 inf.0) -inf.0)
+  (test (/ 0 inf.0) 0.0)
+  (test (max 0 inf.0) inf.0)
+  (test (min 0 inf.0) 0)
+  (test (= 0 inf.0) #f)
+  (test (< 0 inf.0) #t)
+  (test (> 0 inf.0) #f)
+  (test (<= 0 inf.0) #t)
+  (test (>= 0 inf.0) #f)
+  (test (= 0 inf.0 -inf.0) #f)
+  (test (< 0 inf.0 -inf.0) #f)
+  (test (> 0 inf.0 -inf.0) #f)
+  (test (<= 0 inf.0 -inf.0) #f)
+  (test (max 0 inf.0 -inf.0) inf.0)
+  (test (min 0 inf.0 -inf.0) -inf.0)
+  (test (real-part (make-rectangular 1 inf.0)) 1.0)
+  (test (imag-part (make-rectangular 1 inf.0)) inf.0)
+  (test (exact? (make-rectangular 1 inf.0)) #f)
+  (test (inexact? (make-rectangular 1 inf.0)) #t)
+  (test (zero? (make-rectangular 1 inf.0)) #f)
+  (test (nan? (max 0 inf.0 nan.0)) #t)
+  (test (nan? (min 0 inf.0 nan.0)) #t)
+  (test (nan? (max 1 nan.0)) #t)
+  (test (nan? (min 1 nan.0)) #t)
+  (test (infinite? (+ (make-rectangular 1 inf.0))) #t)
+  (test (expt nan.0) 'error)
+  (test (nan? (random nan.0)) #t)
+  (test (random nan.0 inf.0) 'error)
+
+  ;; these are errors because the arg is a real
+  (test (lcm nan.0) 'error)
+  (test (lcm nan.0 nan.0) 'error)
+  (test (gcd nan.0 nan.0) 'error)
+  (test (lcm nan.0 inf.0) 'error)
+  (test (gcd nan.0 inf.0) 'error)
+  (test (lcm -inf.0 inf.0) 'error)
+  (test (gcd -inf.0 inf.0) 'error)
+  (test (logior nan.0 nan.0) 'error)
+  (test (logxor nan.0 nan.0) 'error)
+  (test (logand nan.0 nan.0) 'error)
+  (test (lognot nan.0 nan.0) 'error)
+  (test (logior nan.0 inf.0) 'error)
+  (test (logxor nan.0 inf.0) 'error)
+  (test (logand nan.0 inf.0) 'error)
+  (test (lognot nan.0 inf.0) 'error)
+  (test (logior -inf.0 inf.0) 'error)
+  (test (logxor -inf.0 inf.0) 'error)
+  (test (logand -inf.0 inf.0) 'error)
+  (test (lognot -inf.0 inf.0) 'error)
+  (test (ash nan.0 inf.0) 'error)
+  (test (ash -inf.0 inf.0) 'error)
+  (test (ash nan.0 nan.0) 'error)
+
+  (test (nan? (make-polar -inf.0 inf.0)) #t)
+  (test (nan? (floor nan.0)) #t)
+  (test (nan? (ceiling nan.0)) #t)
+  (test (nan? (truncate nan.0)) #t)
+  (test (nan? (round nan.0)) #t)
+  (test (nan? (angle nan.0)) #t)
+  (test (rationalize nan.0) 'error)
+  (test (rationalize inf.0) 'error)
+  (test (rationalize nan.0 nan.0) 'error)
+
+#|
+;; bad?
+
+  ;; these are broken in the gmp case
+  (test (<= 1 nan.0) #f)
+  (test (>= 1 nan.0) #f)
+  (test (<= 0 inf.0 nan.0) #f)
+  (test (<= nan.0 inf.0) #f)
+  (test (>= nan.0 inf.0) #f)
+  (test (<= nan.0 1) #f)
+  (test (>= nan.0 1) #f)
+  (test (<= nan.0 nan.0) #f)
+  (test (>= nan.0 nan.0) #f)
+
+  (test (>= 0 inf.0 -inf.0) #t)
+  (test (/ 0 inf.0 -inf.0) 0.0)
+  (test (nan? (expt 0 nan.0)) #t)
+  (test (nan? (expt 0 inf.0)) #t)
+  (test (nan? (expt 1 nan.0)) #t)
+  (test (nan? (expt nan.0 inf.0)) #t)
+  (test (nan? (expt nan.0 nan.0)) #t)
+  (test (nan? (quotient nan.0 nan.0)) #t)
+  (test (nan? (quotient nan.0 1)) #t)
+  (test (nan? (quotient 1 nan.0)) #t)
+  (test (nan? (quotient nan.0 inf.0)) #t)
+  (test (nan? (quotient -inf.0 inf.0)) #t)
+  (test (nan? (atan -inf.0 inf.0)) #t) ; ??
+|#
+
+#|
+  ;; what are these?
+
+  (test (nan? (floor inf.0)) #t)
+  (test (nan? (ceiling inf.0)) #t)
+  (test (nan? (truncate inf.0)) #t)
+  (test (nan? (round inf.0)) #t)
+  (test (inexact->exact (make-rectangular 1 inf.0)) 1+infi) ; error or nan?
+  (test (angle (make-rectangular 1 inf.0)) 1.5707963267949)
+  (test (tan (make-rectangular 1 inf.0)) 0+1i)
+  (test (atanh (make-rectangular 1 inf.0)) -0+1.5707963267949i)
+|#
+
+
   )
 
 
