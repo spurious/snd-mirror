@@ -5773,10 +5773,15 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	  return(real_zero);                                   /* (expt 0.0 0) -> 0.0 */
 	}
 
-      if ((s7_is_real(pw)) && (s7_is_negative(pw)))            /* (expt 0 -1) */
-	return(division_by_zero_error(sc, "expt", args));      /* what about (expt 0 -1+i)? */
-      /* (Clisp gives divide-by-zero error here, Guile returns inf.0) */
+      if (s7_is_real(pw))
+	{
+	  if (s7_is_negative(pw))                              /* (expt 0 -1) */
+	    return(division_by_zero_error(sc, "expt", args));  /* what about (expt 0 -1+i)? */
+	  /* (Clisp gives divide-by-zero error here, Guile returns inf.0) */
 
+	  if (isnan(s7_real(pw)))                              /* (expt 0 +nan.0) */
+	    return(pw);
+	}
       if ((s7_is_integer(n)) && (s7_is_integer(pw)))           /* pw != 0, (expt 0 2312) */
 	return(small_int(0));
       return(real_zero);                                       /* (expt 0.0 123123) */
@@ -5797,6 +5802,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
       y = s7_integer(pw);
       if (y == 0)
 	{
+	  /* (expt +nan.0 0) ?? */
 	  if ((number_type(n) == NUM_INT) || (number_type(n) == NUM_RATIO))
 	    return(small_int(1));
 	  return(real_one);
@@ -5879,8 +5885,11 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 
       x = num_to_real(number(n));
       y = num_to_real(number(pw));
-      if (y == 0.0)
-	return(real_one);
+
+      if (isnan(x)) return(n);
+      if (isnan(y)) return(pw);
+      if (y == 0.0) return(real_one);
+
       if ((x > 0.0) ||
 	  ((y - floor(y)) < 1.0e-16))
 	return(s7_make_real(sc, pow(x, y)));
@@ -10792,6 +10801,27 @@ s7_pointer s7_member(s7_scheme *sc, s7_pointer sym, s7_pointer lst)
       return(x);
 
   return(sc->F);
+}
+
+
+static bool symbol_is_in_list(s7_scheme *sc, s7_pointer sym, s7_pointer lst)
+{
+  s7_pointer x;
+  for (x = lst; is_pair(x); x = cdr(x))
+    if (is_pair(car(x)))
+      {
+	if (sym == caar(x))
+	  return(true);
+      }
+    else 
+      {
+	if (sym == car(x))
+	  return(true);
+      }
+  if (sym == x)
+    return(true);
+
+  return(false);
 }
 
 
@@ -18042,21 +18072,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (!s7_is_list(sc, car(sc->code)))
 	{
-	  if (!s7_is_symbol(car(sc->code)))                        /* (lambda "hi" ...) */
-	    return(eval_error(sc, "lambda parameter ~S is not a symbol", car(sc->code)));
+	  if (s7_is_constant(car(sc->code)))                       /* (lambda :a ...) */
+	    return(eval_error(sc, "lambda parameter '~A is a constant", car(sc->code)));
 
-	  /* but we currently accept (lambda :hi 1) or (lambda (:hi) 1) or (lambda (:hi . :hi) 1)
-	   *   (lambda i i . i) and (lambda (i i i i) (i)) and (lambda* ((i 1) i i) i)
-	   *   (lambda quote i) (lambda (i . i) 1 . 2)  (lambda : : . #()) (lambda : 1 . "")
+	  /* SOMEDAY: we currently accept (lambda i i . i) (lambda quote i)  (lambda : : . #()) (lambda : 1 . "")
 	   */
 	}
       else
 	{
-	  for (sc->x = car(sc->code); sc->x != sc->NIL; sc->x = cdr(sc->x))
-	    if ((!s7_is_symbol(sc->x)) &&                          /* (lambda (a . b) 0) */
-		((!is_pair(sc->x)) ||                              /* (lambda (a . 0.0) a) */
-		 (!s7_is_symbol(car(sc->x)))))                     /* (lambda ("a") a) or (lambda (a "a") a) */
-	      return(eval_error(sc, "lambda parameter ~S is not a symbol", sc->x));
+	  for (sc->x = car(sc->code); is_pair(sc->x); sc->x = cdr(sc->x))
+	    {
+	      if (s7_is_constant(car(sc->x)))                      /* (lambda (pi) pi) */
+		return(eval_error(sc, "lambda parameter '~A is a constant", car(sc->x)));
+	      if (symbol_is_in_list(sc, car(sc->x), cdr(sc->x)))   /* (lambda (a a) ...) or (lambda (a . a) ...) */
+		return(eval_error(sc, "lambda parameter '~A is used twice in the lambda argument list", car(sc->x)));
+	    }
+	  if ((sc->x != sc->NIL) &&
+	      (s7_is_constant(sc->x)))                             /* (lambda (a . 0.0) a) or (lambda (a . :b) a) */
+	    return(eval_error(sc, "lambda :rest parameter '~A is a constant", sc->x));
 	}
       sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE);
       pop_stack(sc);
@@ -18070,20 +18103,40 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (!s7_is_list(sc, car(sc->code)))
 	{
-	  if (!s7_is_symbol(car(sc->code)))                        /* (lambda* "hi" ...) */
-	    return(eval_error(sc, "lambda* parameter ~S is not a symbol", car(sc->code)));
+	  if (s7_is_constant(car(sc->code)))                       /* (lambda* :a ...) */
+	    return(eval_error(sc, "lambda* parameter '~A is a constant", car(sc->code)));
 	}
       else
 	{ 
-	  for (sc->x = car(sc->code); sc->x != sc->NIL; sc->x = cdr(sc->x))
-	    if ((!s7_is_symbol(sc->x)) &&                          
-		((!is_pair(sc->x)) ||
-		 ((!s7_is_symbol(car(sc->x))) &&
-		  ((!is_pair(car(sc->x))) ||                       /* check for stuff like (lambda* (()) 1) (lambda* ((a . 0)) 1) etc */
-		   (!s7_is_symbol(caar(sc->x))) ||
-		   (cdar(sc->x) == sc->NIL) ||
-		   (cddar(sc->x) != sc->NIL)))))
-	      return(eval_error(sc, "lambda* parameter ~S is confused", sc->x));
+	  for (sc->w = car(sc->code); is_pair(sc->w); sc->w = cdr(sc->w))
+	    {
+	      if (is_pair(car(sc->w)))
+		{
+		  if (s7_is_constant(caar(sc->w)))                            /* (lambda* ((:a 1)) ...) */
+		    return(eval_error(sc, "lambda* parameter '~A is a constant", caar(sc->w)));
+		  if (symbol_is_in_list(sc, caar(sc->w), cdr(sc->w)))         /* (lambda* ((a 1) a) ...) */
+		    return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", caar(sc->w)));
+		  if (!is_pair(cdar(sc->w)))                                  /* (lambda* ((a . 0.0)) a) */
+		    return(eval_error(sc, "lambda* parameter is a dotted pair? '~A", car(sc->w)));
+		  if (cddar(sc->w) != sc->NIL)                                /* (lambda* ((a 0.0 "hi")) a) */
+		    return(eval_error(sc, "lambda* parameter has multiple default values? '~A", car(sc->w)));
+		}
+	      else 
+		{
+		  if (car(sc->w) != sc->KEY_REST)
+		    {
+		      if ((s7_is_constant(car(sc->w))) &&
+			  (car(sc->w) != sc->KEY_KEY) &&
+			  (car(sc->w) != sc->KEY_OPTIONAL))                   /* (lambda* (pi) ...) */
+			return(eval_error(sc, "lambda* parameter '~A is a constant", car(sc->w)));
+		      if (symbol_is_in_list(sc, car(sc->w), cdr(sc->w)))      /* (lambda* (a a) ...) or (lambda* (a . a) ...) */
+			return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", car(sc->w)));
+		    }
+		}
+	    }
+	  if ((sc->w != sc->NIL) &&
+	      (s7_is_constant(sc->w)))                             /* (lambda* (a . 0.0) a) or (lambda* (a . :b) a) */
+	    return(eval_error(sc, "lambda* :rest parameter '~A is a constant", sc->w));
 	}
 
       sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE_STAR);
@@ -18133,31 +18186,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (cddr(sc->code) != sc->NIL))                                       /* (define var 1 . 2) */
 	return(eval_error(sc, "define: more than 1 value? ~A", sc->code));   /* (define var 1 2) */
 
+      /* parameter error checks are handled by lambda/lambda* (see OP_LAMBDA above) */
       if (is_pair(car(sc->code))) 
 	{
 	  sc->x = caar(sc->code);
-
-	  /* here cdar(sc->code) is the arg list, so if any arg (possibly defaulted) is a keyword, complain
-	   *    (define (hi :a) 1) etc
-	   * but ignore :key :rest and :optional of course
-	   */
-	  for (sc->w = cdar(sc->code); is_pair(sc->w); sc->w = cdr(sc->w))
-	    {
-	      if (is_pair(car(sc->w)))
-		{
-		  if (s7_is_constant(caar(sc->w)))
-		    return(eval_error(sc, "argument ~A is a constant", caar(sc->w)));
-		}
-	      else 
-		{
-		  if ((s7_is_constant(car(sc->w))) &&
-		      (car(sc->w) != sc->KEY_KEY) &&
-		      (car(sc->w) != sc->KEY_OPTIONAL) &&
-		      (car(sc->w) != sc->KEY_REST))
-		    return(eval_error(sc, "argument ~A is a constant", car(sc->w)));
-		}
-	    }
-
 	  if (sc->op == OP_DEFINE_STAR)
 	    sc->code = s7_cons(sc, sc->LAMBDA_STAR, s7_cons(sc, cdar(sc->code), cdr(sc->code)));
 	  else sc->code = s7_cons(sc, sc->LAMBDA, s7_cons(sc, cdar(sc->code), cdr(sc->code)));
@@ -24947,5 +24979,6 @@ s7_scheme *s7_init(void)
  * perhaps an example for s7.html of reading a sound file header (endianess etc)
  * perhaps the built-in funcs should have legit __func__ settings? [snd for example -- means index not needed]
  * perhaps :allow-other-keys in lambda*
+ * c-side local define?  or is this in the namespace example?
  */
 

@@ -9504,11 +9504,37 @@
   (test (let () (define* (hi (pi 1)) pi) (hi 2)) 'error)
   (test (let () (define* (hi (:b 1) (:a 2)) a) (hi)) 'error)
 
-;;; TODO: check for repeated arg names
-;  (test (let () (define* (hi (a 1) (a 2)) a) (hi 2)) 'error)
-;  (test (let () (define (hi a a) a) (hi 1 2)) 'error)
+  (test (let () (define* (hi (a 1) (a 2)) a) (hi 2)) 'error)
+  (test (let () (define (hi a a) a) (hi 1 2)) 'error)
+  (test (let () (define hi (lambda (a a) a)) (hi 1 1)) 'error)
+  (test (let () (define hi (lambda* ((a 1) (a 2)) a)) (hi 1 2)) 'error)
+  (test (let () (define (hi (a 1)) a) (hi 1)) 'error)
+  (let () 
+    (define* (hi (a #2d((1 2) (3 4)))) (a 1 0))
+    (test (hi) 3)
+    (test (hi #2d((7 8) (9 10))) 9))
+  (let () (define* (f :rest a) a) (test (f :a 1) '(:a 1)))
+  (let () (define* (f :rest a :rest b) (list a b)) (test (f :a 1 :b 2) '((:a 1 :b 2) (1 :b 2))))
 
-  
+  (test (lambda :hi 1) 'error)
+  (test (lambda (:hi) 1) 'error)
+  (test (lambda (:hi . :hi) 1) 'error)
+  (test (lambda (i . i) 1 . 2) 'error)
+  (test (lambda (i i i i) (i)) 'error)
+  (test (lambda "hi" 1) 'error)
+  (test (lambda* ((i 1) i i) i) 'error)
+  (test (lambda* ((a 1 2)) a) 'error)
+  (test (lambda* ((a . 1)) a) 'error)
+  (test (lambda* ((0.0 1)) 0.0) 'error)
+
+  (test ((lambda* ((b 3) :rest x (c 1)) (list b c x)) 32) '(32 1 ()))
+  (test ((lambda* ((b 3) :rest x (c 1)) (list b c x)) 1 2 3 4 5) '(1 3 (2 3 4 5)))
+  (test ((lambda* ((a 1) :rest b :rest c) (list a b c)) 1 2 3 4 5) '(1 (2 3 4 5) (3 4 5)))
+
+
+  ;; TODO: defmacro(*) repeated args
+
+
   (test (procedure-arity car) '(1 0 #f))
   (test (procedure-arity 'car) '(1 0 #f))
   (test (procedure-arity +) '(0 0 #t))
@@ -33701,11 +33727,11 @@
   (test (= (exp inf-) 0.0) #t)
   (test (= (exp inf+) inf+) #t)
   (test (nan? (exp nan)) #t)
-  (test (= (expt nan 0) 1.0) #t) ;hmmm
+  ;(test (= (expt nan 0) 1.0) #t) ;hmmm
   ;(test (= (expt nan nan) 0) #t)
   ;(test (= (expt inf+ inf-) 0.0) #t)
   ;(test (= (expt inf+ inf+) inf+) #t)
-  (test (= (expt 1 nan) 1) #t)
+  ;(test (= (expt 1 nan) 1) #t)
   ;(test (= (expt 1 complex-nan) 1) #t) ; or maybe NaN?
   (test (= (expt inf+ 0) 1.0) #t)
   (test (= (expt inf- 0) 1.0) #t)
@@ -33972,27 +33998,27 @@
   (test (rationalize inf.0) 'error)
   (test (rationalize nan.0 nan.0) 'error)
 
+(if (not (provided? 'gmp))
+    (begin
+      (test (nan? (expt 1 nan.0)) #t)
+      (test (nan? (expt nan.0 inf.0)) #t)
+      (test (nan? (expt nan.0 nan.0)) #t)
+      (test (nan? (expt 0 nan.0)) #t)
+      (test (<= 1 nan.0) #f)
+      (test (>= 1 nan.0) #f)
+      (test (<= 0 inf.0 nan.0) #f)
+      (test (<= nan.0 inf.0) #f)
+      (test (>= nan.0 inf.0) #f)
+      (test (<= nan.0 1) #f)
+      (test (>= nan.0 1) #f)
+      (test (<= nan.0 nan.0) #f)
+      (test (>= nan.0 nan.0) #f)))
+
 #|
 ;; bad?
-
-  ;; these are broken in the gmp case
-  (test (<= 1 nan.0) #f)
-  (test (>= 1 nan.0) #f)
-  (test (<= 0 inf.0 nan.0) #f)
-  (test (<= nan.0 inf.0) #f)
-  (test (>= nan.0 inf.0) #f)
-  (test (<= nan.0 1) #f)
-  (test (>= nan.0 1) #f)
-  (test (<= nan.0 nan.0) #f)
-  (test (>= nan.0 nan.0) #f)
-
   (test (>= 0 inf.0 -inf.0) #t)
   (test (/ 0 inf.0 -inf.0) 0.0)
-  (test (nan? (expt 0 nan.0)) #t)
   (test (nan? (expt 0 inf.0)) #t)
-  (test (nan? (expt 1 nan.0)) #t)
-  (test (nan? (expt nan.0 inf.0)) #t)
-  (test (nan? (expt nan.0 nan.0)) #t)
   (test (nan? (quotient nan.0 nan.0)) #t)
   (test (nan? (quotient nan.0 1)) #t)
   (test (nan? (quotient 1 nan.0)) #t)
