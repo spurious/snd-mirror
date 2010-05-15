@@ -44,7 +44,7 @@ interpreter (see below).  s7test.scm is a regression test for s7.
 If you're running s7 in a context
 that has getenv, file-exists?, and system (Snd for example), you can use s7-slib-init.scm
 to gain easy access to slib (this init file is named "s7.init" in the slib distribution).
-A tarball is available: ftp://ccrma-ftp.stanford.edu/pub/Lisp/s7.tar.gz.
+A tarball is available: ftp://ccrma-ftp.stanford.edu/pub/Lisp/s7.tar.gz.  
 </p>
 <p>
 s7 is the default extension language of Snd and sndlib (http://ccrma.stanford.edu/software/snd/),
@@ -52,18 +52,19 @@ and Rick Taube's Common Music (commonmusic at sourceforge).  There are X, Motif,
 in libxm (in the Snd tarball, or at ftp://ccrma-ftp.stanford.edu/pub/Lisp/libxm.tar.gz).
 </p>
 
-<p>s7 has full continuations, dynamic-wind, sort!, 
+<p>As a dialect of Scheme, s7 is close to Guile 1.8.n (r5rs).
+It has full continuations, dynamic-wind, sort!, 
 error handling, ratios and complex numbers,
 define-macro, keywords, hash-tables, block comments,
 threads, multiprecision arithmetic for all numeric types,
 generalized set!, format, define*, and a host of other
 extensions of r5rs.  It does not have syntax-rules or any of
 its friends, and it does not think there is any such thing
-as an "inexact integer" (what were those guys smoking?).
+as an "inexact integer".  
 </p>
 
 <p>This file assumes you know about Scheme and all its problems,
-and want a quick tour of where s7 is different.  (You're about to be disappointed &mdash; resolutely ignore the fine print).
+and want a quick tour of where s7 is different. 
 </p>
 
 <ul>

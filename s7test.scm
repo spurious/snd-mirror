@@ -44604,6 +44604,24 @@
 (num-test #b#e0+i 0+1i)
 (num-test #b#e0+1.1i 0+1.5i) ; oh well 
 
+#|
+TODO: try these #... choices
+#e+inf.0    
+#e+nan.0
+
+:#i#xf/c
+1.25
+:#b0/1
+0
+:#d3/4
+3/4
+:
+#x+inf.0
+#b+nan.0
+
+apparently any number can follow #d etc
+|#
+
 
 (do ((i 2 (+ i 1)))
     ((= i 17)) 
