@@ -5021,6 +5021,26 @@
 (test (string=? (format #f "abc ~^ xyz") "abc ") #t)
 (test (format (values #f "~A ~D" 1 2)) "1 2")
 
+(test (string=? (format #f "~B" 123) "1111011") #t)
+(test (string=? (format #f "~B" 123/25) "1111011/11001") #t)
+(test (string=? (format #f "~B" 123.25) "1111011.01") #t)
+(test (string=? (format #f "~B" 123+i) "1111011.0+1.0i") #t)
+
+(test (string=? (format #f "~D" 123) "123") #t)
+(test (string=? (format #f "~D" 123/25) "123/25") #t)
+;(test (string=? (format #f "~D" 123.25) "123.25") #t)
+;(test (string=? (format #f "~D" 123+i) "123.0+1.0i") #t)
+
+(test (string=? (format #f "~O" 123) "173") #t)
+(test (string=? (format #f "~O" 123/25) "173/31") #t)
+(test (string=? (format #f "~O" 123.25) "173.2") #t)
+(test (string=? (format #f "~O" 123+i) "173.0+1.0i") #t)
+
+(test (string=? (format #f "~X" 123) "7b") #t)
+(test (string=? (format #f "~X" 123/25) "7b/19") #t)
+(test (string=? (format #f "~X" 123.25) "7b.4") #t)
+(test (string=? (format #f "~X" 123+i) "7b.0+1.0i") #t)
+
 (for-each
  (lambda (arg)
    (test (format #f "~F" arg) 'error))
@@ -44604,23 +44624,27 @@
 (num-test #b#e0+i 0+1i)
 (num-test #b#e0+1.1i 0+1.5i) ; oh well 
 
-#|
-TODO: try these #... choices
-#e+inf.0    
-#e+nan.0
+(num-test #xf/c 5/4)
+(num-test #x+f/c 5/4)
+(num-test #x-f/c -5/4)
+(num-test #i#xf/c 1.25)
+(num-test #e#x1.4 5/4)
 
-:#i#xf/c
-1.25
-:#b0/1
-0
-:#d3/4
-3/4
-:
-#x+inf.0
-#b+nan.0
+;; nutty: #e+inf.0 #e+nan.0 
+;;    these don't arise in s7 because we don't define inf.0 and nan.0 
 
-apparently any number can follow #d etc
-|#
+(num-test #b0/1 0)
+(num-test #d3/4 3/4)
+(num-test #o7/6 7/6)
+(num-test #o11/2 9/2)
+(num-test #d11/2 11/2)
+(num-test #x11/2 17/2)
+(num-test #b111/11 7/3)
+(num-test #b111111111111111111111111111111111111111111111111111111111111111/111 1317624576693539401)
+(num-test #d9223372036854775807/7 1317624576693539401)
+(num-test (* 1317624576693539401 7) most-positive-fixnum)
+(num-test #o777777777777777777777/7 1317624576693539401)
+(num-test #x7fffffffffffffff/7 1317624576693539401)
 
 
 (do ((i 2 (+ i 1)))

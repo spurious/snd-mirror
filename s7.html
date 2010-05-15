@@ -248,10 +248,9 @@ otherwise "rational?" is the same as "real?":
 #t
 </pre>
 
-<!--
-<p>Did "inexact" originally mean "floating point"?  Ineluctably, 0.0 becomes an "inexact" integer (although it can be represented exactly in floating
-point).  Then someone looks at floor, and says "it takes an inexact argument, surely it's only logical that it
-return an inexact result", and the race is on to see how silly we can make this business.  +inf.0 is an integer &mdash;
+<p>Did "inexact" originally mean "floating point"?  So 0.0 becomes an "inexact" integer (although it can be represented exactly in floating
+point).  
++inf.0 is an integer &mdash;
 its fractional part is explicitly zero!  But +nan.0... 
 And then there's:
 </p>
@@ -259,10 +258,9 @@ And then there's:
 (not-s7-scheme)&gt; (integer? 9007199254740993.1)
 #t
 </pre>
-<p>I guess something is an integer when 'integer?' says so, and that's all you can say about it.
-Well, at least we can say "1 is exact"!  or maybe not: 1+i and 1e1.
-When do you actually need something like floor?  One place I
-use it all the time is to make a float into a vector index, but you can't do it in standard scheme:
+<p>
+When does this matter?  I often need to index into a vector, but the index is inexact.
+In standard scheme:
 </p>
 <pre>
 (not-s7-scheme)&gt; (vector-ref #(0) (floor 0.1))
@@ -274,26 +272,23 @@ ERROR: Wrong type (expecting exact integer): 0.0
 (not-s7-scheme)&gt; (inexact-&gt;exact 0.1)
 3602879701896397/36028797018963968
 </pre>
-<p>So my code gets littered with ridiculous verbosity, <code>(inexact-&gt;exact (floor ...))</code>, and even
-then I have no guarantee that I'll get a legal vector index.  This all happens because Humpty Dumpty is
-on the standards committee ("integer" means whatever I say it means).  Let's push him off the wall, and start over.
-One approach that initially looked interesting was to say that "exact"
-means "is represented exactly in the computer".  We'd have integers and ratios exact; 
+<p>So I end up using the verbose <code>(inexact-&gt;exact (floor ...))</code> everywhere, and even
+then I have no guarantee that I'll get a legal vector index.
+When I started work on s7, I thought perhaps
+"exact" could mean "is represented exactly in the computer".  We'd have integers and ratios exact; 
 reals and complex exact if they are exactly
 represented in the current floating point implementation.  
 0.0 and 0.5 might be exact if the printout isn't misleading, and 0.1 is inexact.
 "integer?" and friends would refer instead to the programmer's point of view.
 That is, if the programmer uses 1 or if the thing prints as 1, it is the integer 1, whereas 1.0
 means floating point (not integer!).
-But then what would inexact-&gt;exact do?  C's nextafter is not what anyone expects.
+But then what would inexact-&gt;exact do? 
 And to keep exactness in view, we'd have
 to monitor which operations introduce inexactness &mdash; a kind of interval arithmetic.
-Too much pain for almost no gain.
-The upshot?
-The exact/inexact distinction is an incoherent jumble that only gets in the way.
-It should be flushed entirely.  And floor should return an honest integer.
+I may remove the exact/inexact distinction from s7.  The only useful part is
+exact-&gt;inexact, but perhaps it would be better named "-&gt;float"?
 </p>
--->
+
 
 </blockquote>
 </small>
@@ -1832,6 +1827,44 @@ it is continuing from the point of the error, but then fails to do so.
 &gt; (format #f "~S" "hiho")
 "\"hiho\""
 </pre>
+
+<small>
+<blockquote>
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>Floats can occur in any base, so:
+<pre>
+&gt; #xf.c
+15.75
+</pre>
+<p>This also affects format.  In most schemes, <code>(format #f "~X" 1.25)</code> is
+an error (in CL, it is equivalent to using ~A which is perverse).  But 
+</p>
+<pre>
+&gt; (number-&gt;string 1.25 16)
+"1.4"
+</pre>
+<p>and there's no obvious way to get the same effect from format unless we accept
+floats in the "~X" case.  So in s7, 
+</p>
+<pre>
+&gt; (format #f "~X" 21)
+"15"
+&gt; (format #f "~X" 1.25)
+"1.4"
+&gt; (format #f "~X" 1.25+i)
+"1.4+1.0i"
+&gt; (format #f "~X" 21/4)
+"15/4"
+</pre>
+<p>That is, the output choice matches the argument.
+</p>
+
+</blockquote>
+</small>
+
 </dd>
 <br><br>
 
@@ -2480,14 +2513,19 @@ when #&lt;char&gt; is encountered.  If it returns something other than #f, the #
 is replaced with that value.  Scheme has several predefined #-readers for cases such
 as #b1, #\a, #i123, and so on, but you can override these if you like.  If the string
 passed in is not the complete #-expression, the function can use read-char to get the
-rest.
+rest.  Say we'd like #t&lt;number&gt; to interpret the number in base 12:
 </p>
 
 <pre>
-  &gt; (set! *#readers* (list (cons #\s (lambda (str) 123))))
-  ((#\s . #&lt;closure&gt;))
-  &gt; (+ 1 #s1)
-  124
+(set! *#readers* 
+          (cons (cons #\t (lambda (str) 
+			(string-&gt;number (substring str 1) 12)))
+	    *#readers*))
+
+&gt; #tb
+11
+&gt; #t11.3
+13.25
 </pre>
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">

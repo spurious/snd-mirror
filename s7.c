@@ -14497,7 +14497,33 @@ static void format_number(s7_scheme *sc, format_data *fdat, int radix, int width
 {
   char *tmp;
   if (width < 0) width = 0;
+
+  /* precision choice depends on float_choice if it's -1 */
+  if (precision < 0)
+    {
+      if ((float_choice == 'e') ||
+	  (float_choice == 'f') ||
+	  (float_choice == 'g'))
+	precision = 6;
+      else
+	{
+	  /* in the "int" cases, precision depends on the arg type */
+	  switch (number_type(car(fdat->args)))
+	    {
+	    case NUM_INT: 
+	    case NUM_RATIO:
+	      precision = 0; 
+	      break;
+
+	    default:
+	      precision = 6;
+	      break;
+	    }
+	}
+    }
+
   tmp = number_to_string_with_radix(sc, car(fdat->args), radix, width, precision, float_choice);
+
   if (pad != ' ')
     {
       char *padtmp;
@@ -14676,8 +14702,10 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		    int width = -1, precision = -1;
 		    char pad = ' ';
 		    i++;
+
 		    if (isdigit(str[i]))
 		      width = format_read_integer(sc, &i, str_len, str, args, fdat);
+
 		    if (str[i] == ',')
 		      {
 			i++;
@@ -14731,31 +14759,36 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 
 			/* -------- numbers -------- */
 		      case 'F': case 'f':
-			format_number(sc, fdat, 10, width, (precision < 0) ? 6 : precision, 'f', pad);
+			format_number(sc, fdat, 10, width, precision, 'f', pad);
 			break;
 
 		      case 'G': case 'g':
-			format_number(sc, fdat, 10, width, (precision < 0) ? 6 : precision, 'g', pad);
+			format_number(sc, fdat, 10, width, precision, 'g', pad);
 			break;
 
 		      case 'E': case 'e':
-			format_number(sc, fdat, 10, width, (precision < 0) ? 6 : precision, 'e', pad);
+			format_number(sc, fdat, 10, width, precision, 'e', pad);
 			break;
 
+			/* how to handle non-integer arguments in the next 4 cases?  clisp just returns
+			 *   the argument: (format nil "~X" 1.25) -> "1.25" which is perverse (ClTl2 p 581:
+			 *   "if arg is not an integer, it is printed in ~A format and decimal base"!!
+			 *   Guile raises an error ("argument is not an integer").  slib also raise an error.
+			 */
 		      case 'D': case 'd':
-			format_number(sc, fdat, 10, width, (precision < 0) ? 0 : precision, 'd', pad);
+			format_number(sc, fdat, 10, width, precision, 'd', pad);
 			break;
 
 		      case 'O': case 'o':
-			format_number(sc, fdat, 8, width, (precision < 0) ? 0 : precision, 'o', pad);
+			format_number(sc, fdat, 8, width, precision, 'o', pad);
 			break;
 
 		      case 'X': case 'x':
-			format_number(sc, fdat, 16, width, (precision < 0) ? 0 : precision, 'x', pad);
+			format_number(sc, fdat, 16, width, precision, 'x', pad);
 			break;
 
 		      case 'B': case 'b':
-			format_number(sc, fdat, 2, width, (precision < 0) ? 0 : precision, 'b', pad);
+			format_number(sc, fdat, 2, width, precision, 'b', pad);
 			break;
 		      
 		      default:
