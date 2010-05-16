@@ -4468,15 +4468,24 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 			else 
 			  {
 			    if ((name[1] == 'x') && 
-				(name[2] != 0))          /* #\x is just x, but apparently #\x<num> is int->char? #\x65 -> #\e */
+				(name[2] != 0))        /* #\x is just x, but apparently #\x<num> is int->char? #\x65 -> #\e */
 			      {
-				int c1 = 0;
-				if ((sscanf(name + 2, "%x", &c1) == 1) && 
-				    (c1 < 256))
-				  c = c1;
-				else return(sc->NIL);    /* #\xx -> "undefined sharp expression" */
+				/* sscanf here misses errors like #\x1.4, but even this check misses #\x6/3!
+				 */
+				s7_pointer result;
+				result = make_atom(sc, (char *)(name + 2), 16, false);
+				if (s7_is_integer(result))
+				  {
+				    int c1 = 0;
+				    c1 = s7_integer(result);
+				    if ((c1 < 256) &&
+					(c1 >= 0))         /* not #\x-65 */
+				      c = c1;
+				    else return(sc->NIL);  /* #\xx -> "undefined sharp expression" */
+				  }
+				else return(sc->NIL);
 			      }
-			    else 
+			    else                       /* #\<char> */
 			      {
 				if (name[2] == 0) 
 				  c = name[1];
@@ -14635,6 +14644,25 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		    }
 		  i++;
 		  break;
+
+		case '@':                           /* -------- plural, 'y' or 'ies' -------- */
+		  i += 2;
+		  if ((str[i] != 'P') && (str[i] != 'p'))
+		    return(format_error(sc, "unknown '@' directive", str, args, fdat));
+
+		  if (!s7_is_one(car(fdat->args)))
+		    format_append_string(fdat, "ies");
+		  else format_append_char(fdat, 'y');
+
+		  fdat->args = cdr(fdat->args);
+		  break;
+
+		case 'P': case 'p':                 /* -------- plural in 's' -------- */
+		  if (!s7_is_one(car(fdat->args)))
+		    format_append_char(fdat, 's');
+		  i++;
+		  fdat->args = cdr(fdat->args);
+		  break;
 		  
 		case 'A': case 'a':                 /* -------- object->string -------- */
 		case 'C': case 'c':
@@ -14720,6 +14748,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		  /* -------- numeric args -------- */
 		case '0': case '1': case '2': case '3': case '4': case '5':
 		case '6': case '7': case '8': case '9': case ',':
+
 		case 'B': case 'b':
 		case 'D': case 'd':
 		case 'E': case 'e':
@@ -14804,6 +14833,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			 *   the argument: (format nil "~X" 1.25) -> "1.25" which is perverse (ClTl2 p 581:
 			 *   "if arg is not an integer, it is printed in ~A format and decimal base"!!
 			 *   Guile raises an error ("argument is not an integer").  slib also raise an error.
+			 *   I think I'll use the type of the number to choose the output format.
 			 */
 		      case 'D': case 'd':
 			format_number(sc, fdat, 10, width, precision, 'd', pad);

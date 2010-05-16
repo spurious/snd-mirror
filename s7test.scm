@@ -268,17 +268,16 @@
 (define-macro (with-evaluator . body)
   (if (provided? 'threads)
       `(join-thread (make-thread (lambda () ,@body) 200))
-      'error))
+      ''error)) ; yow! otherwise we get the error procedure, not the symbol 'error!
 
-(define-macro (test-w tst) ; (display tst) (newline)
+(define-macro (test-w tst)  ;(display "test-w: ") (display tst) (newline)
   `(let* ((old-error-port (set-current-error-port (open-output-string)))
 	  (result (with-evaluator (eval-string ,tst))))
      (close-output-port (current-error-port))
      (set-current-error-port old-error-port)
      (if (or (not result)
-	     (eq? result 'error))
+	     (not (eq? result 'error)))
 	 (format #t "~A got ~A~%~%" ',tst result))))
-
 
 
 
@@ -722,10 +721,27 @@
 (test (char?) 'error)
 (test (char? #\a #\b) 'error)
 (test (char? #\x65) #t)
+(test (char? #\x000000000065) #t)
+(test (char=? #\x+65 #\x0000000000065) #t)
 (test (char? #\x0) #t)
 (test (char? #\xff) #t)
 ;; any larger number is a reader error
 
+(test-w "(char? #\\100)")
+(test-w "(char? #\\x-65)")
+(test-w "(char? #\\x6.5)")
+(test-w "(char? #\\x6/5)")
+(test-w "(char? #\\x6+i)")
+(test-w "(char? #\\x6asd)")
+(test-w "(char? #\\x6#)")
+
+(test (char=? #\x6a #\j) #t)
+
+(test (char? #\return) #t)
+(test (char? #\null) #t)
+(test (char? #\linefeed) #t)
+(test (char? #\tab) #t)
+(test (char? #\space) #t)
 
 
 (num-test (let ((str (make-string 258 #\space)))
@@ -1397,6 +1413,16 @@
 (test (string=? "" (string-append)) #t)
 (test (string=? (string #\space #\newline) " \n") #t)
 
+(test (string=? "......" "...\ ...") #t)
+(test (string=? "......" "...\
+...") #t)
+(test (string=? "" "\ \ \ \ \ \ \ ") #t)
+(test (string=? "\n" (string #\newline)) #t)
+(test (string=? "\
+\
+\
+\
+" "") #t)
 
 
 (test (string<? "aaaa" "aaab") #t)
@@ -1766,6 +1792,7 @@
 (test (string-length "(string #\\( #\\+ #\\space #\\1 #\\space #\\3 #\\))") 44)
 (test (string-length) 'error)
 (test (string-length "hi" "ho") 'error)
+(test (string-length "..\ ..") 4)
 
 (for-each
  (lambda (arg)
@@ -1812,6 +1839,7 @@
 (test (string-ref "abcdef-dg1ndh" 6) #\-)
 (test (string-ref "\"\\\"" 1) #\\)
 (test (string-ref "\"\\\"" 2) #\")
+(test (string-ref "12\ 34" 2) #\3)
 
 (test (let ((str (make-string 3 #\x))) (set! (string-ref str 1) #\a) str) "xax")
 
@@ -1962,6 +1990,17 @@
 	  (string-set! str1 1 #\x))
 	(string=? str "012345"))
       #t)
+(test (substring (substring "hiho" 0 2) 1) "i")
+(test (substring (substring "hiho" 0 2) 2) "")
+(test (substring (substring "hiho" 0 2) 0 1) "h")
+(test (substring "hi\nho" 3 5) "ho")
+(test (substring (substring "hi\nho" 1 4) 2) "h")
+(test (substring (substring "hi\nho" 3 5) 1 2) "o")
+(test (substring "hi\"ho" 3 5) "ho")
+(test (substring (substring "hi\"ho" 1 4) 2) "h")
+(test (substring (substring "hi\"ho" 3 5) 1 2) "o")
+(test (substring "01\ \ 34" 2) "34")
+
 
 (test (recompose 12 (lambda (a) (substring a 0 3)) "12345") "123")
 (test (reinvert 12 (lambda (a) (substring a 0 3)) (lambda (a) (string-append a "45")) "12345") "12345")
@@ -2282,6 +2321,9 @@
 (test (let ((lst (list 1 2))) (list (apply cons lst) lst)) '((1 . 2) (1 2)))
 (test (let ((lst (list 1 2))) (list lst (apply cons lst))) '((1 2) (1 . 2)))
 (test (cdadr (let ((lst (list 1 2))) (list (apply cons lst) lst))) '(2))
+(test (cons 1 '()) '(
+                      1
+		       ))
 
 (test (car (list 1 2 3)) 1)
 (test (car (cons 1 2)) 1)
@@ -2760,6 +2802,8 @@
   (set-cdr! x x)
   (test (length x) 'error))
 (test (length '(1 2 . 3)) 'error)
+(test (length) 'error)
+(test (length '(1 2 3) #(1 2 3)) 'error)
 
 
 
@@ -2816,10 +2860,34 @@
 (test (reverse (cons 1 2)) 'error)
 (test (reverse '(1 . 2)) 'error)
 (test (reverse '(1 2 . 3)) 'error)
+(test (reverse) 'error)
+(test (reverse '(1 2 3) '(3 2 1)) 'error)
 
 (test (reverse! '(1 . 2)) 'error)
 (test (reverse! (cons 1 2)) 'error)
 (test (reverse! (cons 1 (cons 2 3))) 'error)
+(test (reverse!) 'error)
+(test (reverse! '(1 2 3) '(3 2 1)) 'error)
+
+(test (reverse! '(a b c d)) '(d c b a))
+(test (reverse! '(a b c))  '(c b a))
+(test (reverse! '(a (b c) d (e (f))))  '((e (f)) d (b c) a))
+(test (reverse! '()) '())
+(test (reverse! (list 1 2 3)) '(3 2 1))
+(test (reverse! (list 1)) '(1))
+(test (reverse! (list)) (list))
+(test (reverse! '(1 2 3)) (list 3 2 1))
+(test (reverse! '(1)) '(1))
+(test (reverse! '((1 2) 3)) '(3 (1 2)))
+(test (reverse! '(((1 . 2) . 3) 4)) '(4 ((1 . 2) . 3)))
+(test (reverse! (list (list) (list 1 2))) '((1 2) ()))
+(test (reverse! '((a) b c d)) '(d c b (a)))
+(test (reverse! (reverse! (list 1 2 3 4))) (list 1 2 3 4))
+(test (reverse! ''foo) '(foo quote))
+(test (reverse (reverse! (list 1 2 3))) (list 1 2 3))
+(test (reverse (reverse! (reverse! (reverse (list 1 2 3))))) (list 1 2 3))
+
+(test (let ((x (list 1 2 3))) (recompose 31 reverse! x)) '(3 2 1))
 
 
 
@@ -2850,6 +2918,7 @@
 (test (pair? (list (list))) #t)
 (test (pair? '(())) #t)
 (test (pair? (cons 1 (cons 2 3))) #t)
+(test (pair?) 'error)
 
 (for-each
  (lambda (arg)
@@ -2890,6 +2959,7 @@
 (test (list? '(1 . ())) #t)
 
 (test (list? '(1 2) '()) 'error)
+(test (list?) 'error)
 (for-each
  (lambda (arg)
    (if (list? arg)
@@ -2927,33 +2997,13 @@
 (test (null? '#()) #f)
 
 (test (null? () '()) 'error)
+(test (null?) 'error)
 
 (for-each
  (lambda (arg)
    (if (null? arg)
        (format #t "(null? ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
-
-
-(test (reverse! '(a b c d)) '(d c b a))
-(test (reverse! '(a b c))  '(c b a))
-(test (reverse! '(a (b c) d (e (f))))  '((e (f)) d (b c) a))
-(test (reverse! '()) '())
-(test (reverse! (list 1 2 3)) '(3 2 1))
-(test (reverse! (list 1)) '(1))
-(test (reverse! (list)) (list))
-(test (reverse! '(1 2 3)) (list 3 2 1))
-(test (reverse! '(1)) '(1))
-(test (reverse! '((1 2) 3)) '(3 (1 2)))
-(test (reverse! '(((1 . 2) . 3) 4)) '(4 ((1 . 2) . 3)))
-(test (reverse! (list (list) (list 1 2))) '((1 2) ()))
-(test (reverse! '((a) b c d)) '(d c b (a)))
-(test (reverse! (reverse! (list 1 2 3 4))) (list 1 2 3 4))
-(test (reverse! ''foo) '(foo quote))
-(test (reverse (reverse! (list 1 2 3))) (list 1 2 3))
-(test (reverse (reverse! (reverse! (reverse (list 1 2 3))))) (list 1 2 3))
-
-(test (let ((x (list 1 2 3))) (recompose 31 reverse! x)) '(3 2 1))
 
 
 (test (let ((x (cons 1 2))) (set-car! x 3) x) (cons 3 2))
@@ -3001,7 +3051,10 @@
 (test (set-cdr! (list) 32) 'error)
 (test (set-cdr! 'x 32) 'error)
 (test (set-cdr! #f 32) 'error)
-
+(test (set-car!) 'error)
+(test (set-cdr!) 'error)
+(test (set-car! '(1 2) 1 2) 'error)
+(test (set-cdr! '(1 2) 1 2) 'error)
 
 
 (test (list-ref (list 1 2) 1) 2)
@@ -3051,6 +3104,7 @@
 (test (list-ref (cons 1 2) 2) 'error)
 (test (list-ref (list 1 2 3) (expt 2 32)) 'error)
 (test (list-ref '(1 2 3) 1 2) 'error)
+(test (list-ref) 'error)
 
 (for-each
  (lambda (arg)
@@ -4086,6 +4140,77 @@
 
 
 
+#|
+;;; TODO: fill out the circular list/vector tests
+;;; eq? eqv? length? list-tail? fill!? reverse? vector->list list->vector vector? pair? list? null? cdr? copy? map? for-each? do as cdr? list->string
+;;;   the latter could have a jump to get out
+
+(let ((lst1 (list 1 2))) 
+  (list-set! lst1 0 lst1)
+  (let ((lst2 (list 1 2)))
+    (set-car! lst2 lst2)
+    (equal? lst1 lst2)))
+
+(let ((lst1 (list 1))) 
+  (set-cdr! lst1 lst1)
+  (let ((lst2 (cons 1 '())))
+    (set-cdr! lst2 lst2)
+    (equal? lst1 lst2)))
+
+(let ((lst1 (list 1))
+      (lst2 (list 1)))
+  (set-car! lst1 lst2)
+  (set-car! lst2 lst1)
+  (equal? lst1 lst2))
+
+(let ((v1 (make-vector 1 0)))
+  (set! (v1 0) v1)
+  (let ((v2 (vector 0)))
+    (vector-set! v2 0 v2)
+    (equal? v1 v2)))
+
+(let ((v1 (make-vector 1 0))
+      (v2 (vector 0)))
+  (set! (v1 0) v2)
+  (set! (v2 0) v1)
+  (equal? lst1 lst2))
+
+(let* ((l1 (list 1 2))
+       (v1 (vector 1 2))
+       (l2 (list 1 l1 2))
+       (v2 (vector l1 v1 l2)))
+  (vector-set! v1 0 v2)
+  (list-set! l1 1 l2)
+  (equal? v1 v2)) ; #f I think
+
+(let ((lst (list "nothing" "can" "go" "wrong")))
+  (let ((slst (cddr lst)))
+    (set! (cdr (cdddr lst)) slst)
+    (do ((i 0 (+ i 1))
+	 (l lst (cdr l)))
+	((or (null? l) (= i 10)))
+      (display (car l)) (display " "))))
+
+;;; here is a circular function!
+(let ()
+  (define (cfunc)
+    (begin
+      (display "cfunc! ")
+      #f))
+
+  (let ((clst (procedure-source cfunc)))
+    (set! (cdr (cdr (car (cdr (cdr clst)))))
+	  (cdr (car (cdr (cdr clst))))))
+
+  (cfunc))
+
+;; could you implement goto's with circular lists?
+
+|#
+
+
+
+
 
 ;;; --------------------------------------------------------------------------------
 ;;; HASH-TABLES
@@ -4660,6 +4785,9 @@
    (test (char-ready? arg) 'error))
  (list "hi" -1 #\a 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (if #f #f) (lambda (a) (+ a 1))))
 
+
+;;; -------- format --------
+
 (test (format #f "hiho") "hiho")
 (test (format #f "") "")
 (test (format #f "a") "a")
@@ -4784,6 +4912,22 @@
 (test (format #f "~D~" 9) "9~")
 (test (format #f "~&" 9) 'error)
 (test (format #f "~D~100T~D" 1 1) "1                                                                                                   1")
+(test (format #f ".~P." 1) "..")
+(test (format #f ".~P." 1.0) "..")
+(test (format #f ".~P." 1.2) ".s.")
+(test (format #f ".~P." 2) ".s.")
+(test (format #f ".~p." 1) "..")
+(test (format #f ".~p." 1.0) "..")
+(test (format #f ".~p." 1.2) ".s.")
+(test (format #f ".~p." 2) ".s.")
+(test (format #f ".~@P." 1) ".y.")
+(test (format #f ".~@P." 1.0) ".y.")
+(test (format #f ".~@P." 1.2) ".ies.")
+(test (format #f ".~@P." 2) ".ies.")
+(test (format #f ".~@p." 1) ".y.")
+(test (format #f ".~@p." 1.0) ".y.")
+(test (format #f ".~@p." 1.2) ".ies.")
+(test (format #f ".~@p." 2) ".ies.")
 
 (test (format #f (string #\~ #\a) 1) "1")
 (test (format #f (format #f "~~a") 1) "1")
@@ -4796,6 +4940,8 @@
       (test (format #f "~D" -7043009959286724629649270926654940933664689003233793014518979272497911394287216967075767325693021717277238746020477538876750544587281879084559996466844417586093291189295867052594478662802691926547232838591510540917276694295393715934079679531035912244103731582711556740654671309980075069010778644542022/670550434139267031632063192770201289106737062379324644110801846820471752716238484923370056920388400273070254958650831435834503195629325418985020030706879602898158806736813101434594805676212779217311897830937606064579213895527844045511878668289820732425014254579493444623868748969110751636786165152601) "-7043009959286724629649270926654940933664689003233793014518979272497911394287216967075767325693021717277238746020477538876750544587281879084559996466844417586093291189295867052594478662802691926547232838591510540917276694295393715934079679531035912244103731582711556740654671309980075069010778644542022/670550434139267031632063192770201289106737062379324644110801846820471752716238484923370056920388400273070254958650831435834503195629325418985020030706879602898158806736813101434594805676212779217311897830937606064579213895527844045511878668289820732425014254579493444623868748969110751636786165152601")
     ))
 (test (format #f "~@F" 1.23) 'error)
+(test (format #f "~{testing ~D ~C ~}" (list 0 #\( 1 #\) 2 #\* 3 #\+ 4 #\, 5 #\- 6 #\. 7 #\/ 8 #\0 9 #\1 10 #\2 11 #\3 12 #\4 13 #\5 14 #\6 15 #\7 16 #\8 17 #\9 18 #\: 19 #\; 20 #\< 21 #\= 22 #\> 23 #\? 24 #\@ 25 #\A 26 #\B 27 #\C 28 #\D 29 #\E 30 #\F 31 #\G 32 #\H 33 #\I 34 #\J 35 #\K 36 #\L 37 #\M 38 #\N 39 #\O 40 #\P 41 #\Q 42 #\R 43 #\S 44 #\T 45 #\U 46 #\V 47 #\W 48 #\X 49 #\Y 50 #\( 51 #\) 52 #\* 53 #\+ 54 #\, 55 #\- 56 #\. 57 #\/ 58 #\0 59 #\1 60 #\2 61 #\3 62 #\4 63 #\5 64 #\6 65 #\7 66 #\8 67 #\9 68 #\: 69 #\; 70 #\< 71 #\= 72 #\> 73 #\? 74 #\@ 75 #\A 76 #\B 77 #\C 78 #\D 79 #\E 80 #\F 81 #\G 82 #\H 83 #\I 84 #\J 85 #\K 86 #\L 87 #\M 88 #\N 89 #\O 90 #\P 91 #\Q 92 #\R 93 #\S 94 #\T 95 #\U 96 #\V 97 #\W 98 #\X 99 #\Y))
+      "testing 0 ( testing 1 ) testing 2 * testing 3 + testing 4 , testing 5 - testing 6 . testing 7 / testing 8 0 testing 9 1 testing 10 2 testing 11 3 testing 12 4 testing 13 5 testing 14 6 testing 15 7 testing 16 8 testing 17 9 testing 18 : testing 19 ; testing 20 < testing 21 = testing 22 > testing 23 ? testing 24 @ testing 25 A testing 26 B testing 27 C testing 28 D testing 29 E testing 30 F testing 31 G testing 32 H testing 33 I testing 34 J testing 35 K testing 36 L testing 37 M testing 38 N testing 39 O testing 40 P testing 41 Q testing 42 R testing 43 S testing 44 T testing 45 U testing 46 V testing 47 W testing 48 X testing 49 Y testing 50 ( testing 51 ) testing 52 * testing 53 + testing 54 , testing 55 - testing 56 . testing 57 / testing 58 0 testing 59 1 testing 60 2 testing 61 3 testing 62 4 testing 63 5 testing 64 6 testing 65 7 testing 66 8 testing 67 9 testing 68 : testing 69 ; testing 70 < testing 71 = testing 72 > testing 73 ? testing 74 @ testing 75 A testing 76 B testing 77 C testing 78 D testing 79 E testing 80 F testing 81 G testing 82 H testing 83 I testing 84 J testing 85 K testing 86 L testing 87 M testing 88 N testing 89 O testing 90 P testing 91 Q testing 92 R testing 93 S testing 94 T testing 95 U testing 96 V testing 97 W testing 98 X testing 99 Y ")
 
 
 (test (format #f "~D" 123) "123")
@@ -4916,8 +5062,15 @@
 
 (test (format #f "~D") 'error)
 					;	    (test (format () "hi") "hi") ; not sure this is a good idea
-
-
+(test (format #f "~F" "hi") 'error)
+(test (format #f "~D" #\x) 'error)
+(test (format #f "~C" (list 1 2 3)) 'error)
+(test (format #f "~1/4F" 1.4) 'error)
+(test (format #f "~1.4F" 1.4) 'error)
+(test (format #f "~F" (real-part (log 0.0))) "-inf.0")
+(test (format #f "~F" (/ (real-part (log 0.0)) (real-part (log 0.0)))) "nan.0")
+(test (format #f "~1/4T~A" 1) 'error)
+(test (format #f "~T") "")
 
 
 (call-with-output-file "tmp1.r5rs" (lambda (p) (format p "this ~A ~C test ~D" "is" #\a 3)))
@@ -7558,31 +7711,31 @@
 					;(let ((initial-chars "aA!$%&*/:<=>?^_~")
 					;      (subsequent-chars "9aA!$%&*+-./:<=>?@^_~")
 					;      (ctr 0))
-					;  (display (format #f "(let ("))
+					;  (format #t "(let (")
 					;  (do ((i 0 (+ i 1)))
 					;      ((= i (string-length initial-chars)))
-					;    (display (format #f "(~A ~D) " (string (string-ref initial-chars i)) ctr))
+					;    (format #t "(~A ~D) " (string (string-ref initial-chars i)) ctr)
 					;    (set! ctr (+ ctr 1)))
 					;
 					;  (do ((i 0 (+ i 1)))
 					;      ((= i (string-length initial-chars)))
 					;    (do ((k 0 (+ k 1)))
 					;	((= k (string-length subsequent-chars)))
-					;      (display (format #f "(~A ~D) " (string (string-ref initial-chars i) (string-ref subsequent-chars k)) ctr))
+					;      (format #t "(~A ~D) " (string (string-ref initial-chars i) (string-ref subsequent-chars k)) ctr)
 					;      (set! ctr (+ ctr 1))))
 					;
-					;  (display (format #f ")~%  (+ "))
+					;  (format #t ")~%  (+ ")
 					;  (do ((i 0 (+ i 1)))
 					;      ((= i (string-length initial-chars)))
-					;    (display (format #f "~A " (string (string-ref initial-chars i)))))
+					;    (format #t "~A " (string (string-ref initial-chars i))))
 					;
 					;  (do ((i 0 (+ i 1)))
 					;      ((= i (string-length initial-chars)))
 					;    (do ((k 0 (+ k 1)))
 					;	((= k (string-length subsequent-chars)))
-					;      (display (format #f "~A " (string (string-ref initial-chars i) (string-ref subsequent-chars k))))))
+					;      (format #t "~A " (string (string-ref initial-chars i) (string-ref subsequent-chars k)))))
 					;
-					;  (display (format #f "))~%")))
+					;  (format #t "))~%"))
 
 (num-test (let ((a 0) (A 1) (! 2) ($ 3) (% 4) (& 5) (* 6) (/ 7) (: 8) (< 9) (= 10) (> 11) (? 12) (^ 13) (_ 14) (~ 15) (a9 16) (aa 17) (aA 18) (a! 19) (a$ 20) (a% 21) (a& 22) (a* 23) (a+ 24) (a- 25) (a. 26) (a/ 27) (a: 28) (a< 29) (a= 30) (a> 31) (a? 32) (a@ 33) (a^ 34) (a_ 35) (a~ 36) (A9 37) (Aa 38) (AA 39) (A! 40) (A$ 41) (A% 42) (A& 43) (A* 44) (A+ 45) (A- 46) (A. 47) (A/ 48) (A: 49) (A< 50) (A= 51) (A> 52) (A? 53) (A@ 54) (A^ 55) (A_ 56) (A~ 57) (!9 58) (!a 59) (!A 60) (!! 61) (!$ 62) (!% 63) (!& 64) (!* 65) (!+ 66) (!- 67) (!. 68) (!/ 69) (!: 70) (!< 71) (!= 72) (!> 73) (!? 74) (!@ 75) (!^ 76) (!_ 77) (!~ 78) ($9 79) ($a 80) ($A 81) ($! 82) ($$ 83) ($% 84) ($& 85) ($* 86) ($+ 87) ($- 88) ($. 89) ($/ 90) ($: 91) ($< 92) ($= 93) ($> 94) ($? 95) ($@ 96) ($^ 97) ($_ 98) ($~ 99) (%9 100) (%a 101) (%A 102) (%! 103) (%$ 104) (%% 105) (%& 106) (%* 107) (%+ 108) (%- 109) (%. 110) (%/ 111) (%: 112) (%< 113) (%= 114) (%> 115) (%? 116) (%@ 117) (%^ 118) (%_ 119) (%~ 120) (&9 121) (&a 122) (&A 123) (&! 124) (&$ 125) (&% 126) (&& 127) (&* 128) (&+ 129) (&- 130) (&. 131) (&/ 132) (&: 133) (&< 134) (&= 135) (&> 136) (&? 137) (&@ 138) (&^ 139) (&_ 140) (&~ 141) (*9 142) (*a 143) (*A 144) (*! 145) (*$ 146) (*% 147) (*& 148) (** 149) (*+ 150) (*- 151) (*. 152) (*/ 153) (*: 154) (*< 155) (*= 156) (*> 157) (*? 158) (*@ 159) (*^ 160) (*_ 161) (*~ 162) (/9 163) (/a 164) (/A 165) (/! 166) (/$ 167) (/% 168) (/& 169) (/* 170) (/+ 171) (/- 172) (/. 173) (// 174) (/: 175) (/< 176) (/= 177) (/> 178) (/? 179) (/@ 180) (/^ 181) (/_ 182) (/~ 183) (:9 184) (ca 185) (CA 186) (:! 187) (:$ 188) (:% 189) (:& 190) (:* 191) (:+ 192) (:- 193) (:. 194) (:/ 195) (cc 196) (:< 197) (:= 198) (:> 199) (:? 200) (:@ 201) (:^ 202) (:_ 203) (:~ 204) (<9 205) (<a 206) (<A 207) (<! 208) (<$ 209) (<% 210) (<& 211) (<* 212) (<+ 213) (<- 214) (<. 215) (</ 216) (<: 217) (<< 218) (<= 219) (<> 220) (<? 221) (<@ 222) (<^ 223) (<_ 224) (<~ 225) (=9 226) (=a 227) (=A 228) (=! 229) (=$ 230) (=% 231) (=& 232) (=* 233) (=+ 234) (=- 235) (=. 236) (=/ 237) (=: 238) (=< 239) (== 240) (=> 241) (=? 242) (=@ 243) (=^ 244) (=_ 245) (=~ 246) (>9 247) (>a 248) (>A 249) (>! 250) (>$ 251) (>% 252) (>& 253) (>* 254) (>+ 255) (>- 256) (>. 257) (>/ 258) (>: 259) (>< 260) (>= 261) (>> 262) (>? 263) (>@ 264) (>^ 265) (>_ 266) (>~ 267) (?9 268) (?a 269) (?A 270) (?! 271) (?$ 272) (?% 273) (?& 274) (?* 275) (?+ 276) (?- 277) (?. 278) (?/ 279) (?: 280) (?< 281) (?= 282) (?> 283) (?? 284) (?@ 285) (?^ 286) (?_ 287) (?~ 288) (^9 289) (^a 290) (^A 291) (^! 292) (^$ 293) (^% 294) (^& 295) (^* 296) (^+ 297) (^- 298) (^. 299) (^/ 300) (^: 301) (^< 302) (^= 303) (^> 304) (^? 305) (^@ 306) (^^ 307) (^_ 308) (^~ 309) (_9 310) (_a 311) (_A 312) (_! 313) (_$ 314) (_% 315) (_& 316) (_* 317) (_+ 318) (_- 319) (_. 320) (_/ 321) (_: 322) (_< 323) (_= 324) (_> 325) (_? 326) (_@ 327) (_^ 328) (__ 329) (_~ 330) (~9 331) (~a 332) (~A 333) (~! 334) (~$ 335) (~% 336) (~& 337) (~* 338) (~+ 339) (~- 340) (~. 341) (~/ 342) (~: 343) (~< 344) (~= 345) (~> 346) (~? 347) (~@ 348) (~^ 349) (~_ 350) (~~ 351) )
 	    (+ a A ! $ % & * / : < = > ? ^ _ ~ a9 aa aA a! a$ a% a& a* a+ a- a. a/ a: a< a= a> a? a@ a^ a_ a~ A9 Aa AA A! A$ A% A& A* A+ A- A. A/ A: A< A= A> A? A@ A^ A_ A~ !9 !a !A !! !$ !% !& !* !+ !- !. !/ !: !< != !> !? !@ !^ !_ !~ $9 $a $A $! $$ $% $& $* $+ $- $. $/ $: $< $= $> $? $@ $^ $_ $~ %9 %a %A %! %$ %% %& %* %+ %- %. %/ %: %< %= %> %? %@ %^ %_ %~ &9 &a &A &! &$ &% && &* &+ &- &. &/ &: &< &= &> &? &@ &^ &_ &~ *9 *a *A *! *$ *% *& ** *+ *- *. */ *: *< *= *> *? *@ *^ *_ *~ /9 /a /A /! /$ /% /& /* /+ /- /. // /: /< /= /> /? /@ /^ /_ /~ :9 ca CA :! :$ :% :& :* :+ :- :. :/ cc :< := :> :? :@ :^ :_ :~ <9 <a <A <! <$ <% <& <* <+ <- <. </ <: << <= <> <? <@ <^ <_ <~ =9 =a =A =! =$ =% =& =* =+ =- =. =/ =: =< == => =? =@ =^ =_ =~ >9 >a >A >! >$ >% >& >* >+ >- >. >/ >: >< >= >> >? >@ >^ >_ >~ ?9 ?a ?A ?! ?$ ?% ?& ?* ?+ ?- ?. ?/ ?: ?< ?= ?> ?? ?@ ?^ ?_ ?~ ^9 ^a ^A ^! ^$ ^% ^& ^* ^+ ^- ^. ^/ ^: ^< ^= ^> ^? ^@ ^^ ^_ ^~ _9 _a _A _! _$ _% _& _* _+ _- _. _/ _: _< _= _> _? _@ _^ __ _~ ~9 ~a ~A ~! ~$ ~% ~& ~* ~+ ~- ~. ~/ ~: ~< ~= ~> ~? ~@ ~^ ~_ ~~ ))
@@ -8284,7 +8437,7 @@
 				  (#f)
 				(set! a (+ (* a1 tt) a2)) 
 				(set! b (+ (* tt b1) b2))
-					;(display (format #f "~A ~A~%" a (- b a)))
+					;(format #t "~A ~A~%" a (- b a))
 				(if (or (<= (abs (- ux (/ a b))) err)
 					(> ctr 1000))
 				    (return (/ a b)))
@@ -9660,6 +9813,14 @@
    (lambda (arg)
      (test (procedure-arity arg) 'error))
    (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
+  (for-each
+   (lambda (arg)
+     (eval-string (format #f "(define (func) ~S)" arg))
+     (let ((source (procedure-source func)))
+       (let ((val (func)))
+	 (test val arg))))
+   (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '() '#(()) ':hi "hi"))
   
   (test (string=? (let () (define (hi) "this is a string" 1) (procedure-documentation hi)) "this is a string") #t)
   
@@ -34031,6 +34192,7 @@
   (test (numerator inf.0) 'error)
   (test (denominator inf.0) 'error)
   (test (inexact->exact inf.0) 'error)
+  (test (inexact->exact nan.0) 'error)
   (test (exact->inexact inf.0) inf.0)
   (test (exact? inf.0) #f)
   (test (inexact? inf.0) #t)
@@ -34194,13 +34356,44 @@
        (format #t "(real? ~A) -> #f?~%" arg)))
  (list 1 1.0 1/2))
 
-(if (not (rational? 1/2))
-    (format #t "(rational? 1/2) is #f?~%"))
-
-(if (not (rational? 2)) 
-    (format #t "(rational? 2) is #f?~%"))
-
+(test (rational? 1/2) #t)
+(test (rational? 2) #t)
 (test (rational? (sqrt 2)) #f)
+(test (rational? 1.0) #f)
+(test (rational? 1+i) #f)
+(test (rational? most-negative-fixnum) #t)
+
+(test (integer? 1/2) #f)
+(test (integer? 2) #t)
+(test (integer? (sqrt 2)) #f)
+(test (integer? 1.0) #f)
+(test (integer? 1+i) #f)
+(test (integer? most-negative-fixnum) #t)
+
+(test (real? 1/2) #t)
+(test (real? 2) #t)
+(test (real? (sqrt 2)) #t)
+(test (real? 1.0) #t)
+(test (real? 1+i) #f)
+(test (real? most-negative-fixnum) #t)
+
+(test (complex? 1/2) #t)
+(test (complex? 2) #t)
+(test (complex? (sqrt 2)) #t)
+(test (complex? 1.0) #t)
+(test (complex? 1+i) #t)
+(test (complex? most-negative-fixnum) #t)
+
+(test (integer?) 'error)
+(test (rational?) 'error)
+(test (real?) 'error)
+(test (complex?) 'error)
+
+(test (integer? 1 2) 'error)
+(test (rational? 1 2) 'error)
+(test (real? 1 2) 'error)
+(test (complex? 1 2) 'error)
+
 
 
 
@@ -45606,13 +45799,13 @@
 					;	    ((= k len))
 					;	  (string-set! sym k (list-ref chars (vector-ref ctrs k)))))
 					;
-					;      ;(display (format #f "~S " sym))
+					;      ;(format #t "~S " sym)
 					;
 					;      (let ((tag (catch #t (lambda () (string->number sym)) (lambda args (car args)))))
 					;	(if (not with-file)
 					;	    (if (and (number? tag)
 					;		     (= tag 1))
-					;		(display (format #f "~S " sym)))
+					;		(format #t "~S " sym))
 					;	    (begin
 					;	      (if (number? tag)
 					;		  (display (format file "(if (not (number? (string->number ~S))) (begin (display ~S) (display #\space)))"))
@@ -45642,7 +45835,7 @@
 					;      ((= i (string-length initial-chars)))
 					;    (do ((k 0 (+ k 1)))
 					;	((= k (string-length subsequent-chars)))
-					;      (display (format #f "'~A " (string (string-ref initial-chars i) (string-ref subsequent-chars k)))))))
+					;      (format #t "'~A " (string (string-ref initial-chars i) (string-ref subsequent-chars k))))))
 
 
 (for-each
@@ -45659,8 +45852,7 @@
 (for-each 
  (lambda (x) 
    (if (string->number x)
-       (begin
-	 (display "(string->number ") (display x) (display ") returned ") (display (string->number x)) (newline))))
+       (format #t "(string->number ~A) returned ~A~%" x (string->number x))))
  '("" "q" "1q" "6+7iq" "8+9q" "10+11" "13+" "18@19q" "20@q" "23@"
    "+25iq" "26i" "-q" "-iq" "i" "5#.0" "8/" "10#11" ".#" "."
    "3.4q" "15.16e17q" "18.19e+q" ".q" ".17#18" "10q" "#b2" "#b12" "#b-12"
@@ -45681,8 +45873,7 @@
 		(and (exact? y)
 		     (not (eqv? xx y)))
 		(> (abs (- xx y)) 1e-12))
-	    (begin
-	      (display "(string->number ") (display x) (display ") returned ") (display (string->number x)) (display " but expected ") (display y) (newline)))))
+	    (format #t "(string->number ~A) returned ~A but expected ~A~%" x (string->number x) y))))
     couple))
  `(;; Radix:
    ("#b0" 0)  ("#b1" 1) ("#o0" 0) ("#b-1" -1) ("#b+1" 1)
@@ -49653,7 +49844,7 @@
 	    (let ((form (cons op arg))
 		  (result 'error)) ;(display form) (newline)
 	      (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
-		(if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+		(if (and printing (not (eq? tag 'error))) (format #t "     ~A -> ~A~%" form result))
 		)))
 	  ops))
        args)
@@ -49668,7 +49859,7 @@
 	       (let ((form (cons op (cons arg1 arg2)))
 		     (result 'error)) ;(display form) (newline)
 		 (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
-		   (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+		   (if (and printing (not (eq? tag 'error))) (format #t "     ~A -> ~A~%" form result))
 		   )))
 	     ops))
 	  args))
@@ -49686,7 +49877,7 @@
 		  (let ((form (cons op (cons arg1 (cons arg2 arg3))))
 			(result 'error))
 		    (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
-		      (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+		      (if (and printing (not (eq? tag 'error))) (format #t "     ~A -> ~A~%" form result))
 		      )))
 		ops))
 	     args))
@@ -49705,7 +49896,7 @@
 		  (let ((form (cons op (cons (cons arg1 arg2) arg3)))
 			(result 'error))
 		    (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
-		      (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+		      (if (and printing (not (eq? tag 'error))) (format #t "     ~A -> ~A~%" form result))
 		      )))
 		ops))
 	     args))
@@ -49726,7 +49917,7 @@
 		     (let ((form (cons op (cons arg1 (cons arg2 (cons arg3 arg4)))))
 			   (result 'error))
 		       (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
-			 (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			 (if (and printing (not (eq? tag 'error))) (format #t "     ~A -> ~A~%" form result))
 			 )))
 		   ops))
 		args))
@@ -49748,7 +49939,7 @@
 		     (let ((form (cons op (cons arg1 (cons (cons arg2 arg3) arg4))))
 			   (result 'error))
 		       (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
-			 (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			 (if (and printing (not (eq? tag 'error))) (format #t "     ~A -> ~A~%" form result))
 			 )))
 		   ops))
 		args))
@@ -49770,7 +49961,7 @@
 		     (let ((form (cons op (cons (cons arg1 (cons arg2 arg3)) arg4)))
 			   (result 'error))
 		       (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
-			 (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			 (if (and printing (not (eq? tag 'error))) (format #t "     ~A -> ~A~%" form result))
 			 )))
 		   ops))
 		args))
@@ -49792,7 +49983,7 @@
 		     (let ((form (cons op (cons (cons (cons arg1 arg2) arg3) arg4)))
 			   (result 'error))
 		       (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
-			 (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			 (if (and printing (not (eq? tag 'error))) (format #t "     ~A -> ~A~%" form result))
 			 )))
 		   ops))
 		args))
@@ -49814,7 +50005,7 @@
 		     (let ((form (cons op (cons (cons arg1 arg2) (cons arg3 arg4))))
 			   (result 'error))
 		       (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
-			 (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			 (if (and printing (not (eq? tag 'error))) (format #t "     ~A -> ~A~%" form result))
 			 )))
 		   ops))
 		args))
@@ -49839,7 +50030,7 @@
 			(let ((form (cons op (cons arg1 (cons arg2 (cons arg3 (cons arg4 arg5))))))
 			      (result 'error))
 			  (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
-			    (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			    (if (and printing (not (eq? tag 'error))) (format #t "     ~A -> ~A~%" form result))
 			    )))
 		      ops))
 		   args))
@@ -49864,7 +50055,7 @@
 			(let ((form (cons op (cons (cons arg1 (cons arg2 (cons arg3 arg4))) arg5)))
 			      (result 'error))
 			  (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
-			    (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			    (if (and printing (not (eq? tag 'error))) (format #t "     ~A -> ~A~%" form result))
 			    )))
 		      ops))
 		   args))
@@ -49890,7 +50081,7 @@
 			(let ((form (cons op (cons (cons arg1 (cons arg2 arg3)) (cons arg4 arg5))))
 			      (result 'error))
 			  (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
-			    (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			    (if (and printing (not (eq? tag 'error))) (format #t "     ~A -> ~A~%" form result))
 			    )))
 		      ops))
 		   args))
@@ -49916,7 +50107,7 @@
 			(let ((form (cons op (cons (cons arg1 arg2) (cons arg3 (cons arg4 arg5)))))
 			      (result 'error))
 			  (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
-			    (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			    (if (and printing (not (eq? tag 'error))) (format #t "     ~A -> ~A~%" form result))
 			    )))
 		      ops))
 		   args))
@@ -49941,7 +50132,7 @@
 			(let ((form (cons op (cons arg1 (cons (cons arg2 (cons arg3 arg4)) arg5))))
 			      (result 'error))
 			  (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
-			    (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			    (if (and printing (not (eq? tag 'error))) (format #t "     ~A -> ~A~%" form result))
 			    )))
 		      ops))
 		   args))
@@ -49966,7 +50157,7 @@
 			(let ((form (cons op (cons arg1 (cons (cons arg2 arg3) (cons arg4 arg5)))))
 			      (result 'error))
 			  (let ((tag (catch #t (lambda () (set! result (eval form))) (lambda args 'error))))
-			    (if (and printing (not (eq? tag 'error))) (display (format #f "     ~A -> ~A~%" form result)))
+			    (if (and printing (not (eq? tag 'error))) (format #t "     ~A -> ~A~%" form result))
 			    )))
 		      ops))
 		   args))
@@ -49983,7 +50174,7 @@
     (s7-test-at-random))
 
 
-(newline) (display ";all done!") (newline)
+(format #t "~%;all done!~%")
 
 
 

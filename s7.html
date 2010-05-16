@@ -1828,6 +1828,33 @@ it is continuing from the point of the error, but then fails to do so.
 "\"hiho\""
 </pre>
 
+<p>The format directives (tilde chars) are:</p>
+<pre>
+~%        insert newline
+~&amp;        insert newline if preceding char was not newline
+~~        insert tilde
+~\n       (tilde followed by newline): trim white space
+~{        begin iteration (take arguments from a list)
+~}        end iteration
+~^        jump out of iteration
+~*        ignore the current argument
+~A        object-&gt;string as in display
+~S        object-&gt;string as in write
+~C        print as character
+~B        number-&gt;string in base 2
+~O        number-&gt;string in base 8
+~D        number-&gt;string in base 10
+~X        number-&gt;string in base 16
+~E        float to string, (format #f "~E" 100.1) -&gt; "1.001000e+02", (%e in C)
+~F        float to string, (format #f "~F" 100.1) -&gt; "100.100000",   (%f in C)
+~G        float to string, (format #f "~G" 100.1) -&gt; "100.1",        (%g in C)
+~T        insert spaces (padding)
+~P        insert 's' if current argument is not 1 or 1.0 (use ~@P for "ies" or "y")
+</pre>
+
+<p>The last eight take the usual numeric arguments to specify field width and precision.
+</p>
+
 <small>
 <blockquote>
 
@@ -2147,6 +2174,36 @@ write a function that tells us where the source is for a function:
 &gt; (where-is profile)
 "profile is at line 1048 of extensions.scm"
 </pre>
+
+
+<small>
+<blockquote>
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>procedure-source returns the actual function source &mdash;
+more fun than a barrel of monkeys.  Here is a circular function:
+</p>
+<pre>
+(define (cfunc)
+  (begin
+    (display "func! ")
+    #f))
+
+(let ((clst (<em class=red>procedure-source</em> cfunc)))
+  (set! (cdr (cdr (car (cdr (cdr clst))))) (cdr (car (cdr (cdr clst))))))
+
+(cfunc) ; displays "func! " until you kill it
+</pre>
+
+<p>Could you implement goto this way?  Now we can write code that
+is not only unreadable, but unprintable!
+</p>
+
+</blockquote>
+</small>
+
 
 </dd>
 <br><br>
