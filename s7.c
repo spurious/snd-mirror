@@ -12154,9 +12154,10 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 
 	  index += n * vector_offset(vect, i);
 	}
-      if ((x != sc->NIL) ||
-	  (i != vector_ndims(vect)))
-	return(s7_wrong_number_of_args_error(sc, "too many args for vector ref: ~A", indices));
+      if (x != sc->NIL)
+	return(s7_wrong_number_of_args_error(sc, "too many indices for vector ref: ~A", indices));
+      if (i < vector_ndims(vect))
+	return(s7_wrong_number_of_args_error(sc, "not enough indices for vector ref: ~A", indices));
     }
   else
 #endif
@@ -13108,18 +13109,44 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 	    return(make_list_3(sc, small_int(0), small_int(0), sc->T));
 	  len = s7_list_length(sc, closure_args(x));
 	}
-      
+
       if (is_closure_star(x))
-	return(make_list_3(sc, small_int(0), s7_make_integer(sc, abs(len)), make_boolean(sc, len < 0)));
+	{
+	  s7_pointer tmp;        /* make sure we aren't counting :optional and friends as arguments */
+	  int opts = 0;
+
+	  if (is_pair(x))
+	    tmp = car(x);
+	  else tmp = closure_args(x);
+
+	  for (; is_pair(tmp); tmp = cdr(tmp))
+	    {
+	      if ((car(tmp) == sc->KEY_KEY) ||
+		  (car(tmp) == sc->KEY_OPTIONAL))
+		opts++;
+	      if (car(tmp) == sc->KEY_REST)
+		{
+		  opts += 2;     /* both :rest and the arg name are not counted as optional args */
+		  if (len > 0) len = -len;
+		}
+	    }
+	  return(make_list_3(sc, small_int(0), s7_make_integer(sc, abs(len) - opts), make_boolean(sc, len < 0)));
+	}
+
       return(make_list_3(sc, s7_make_integer(sc, abs(len)), small_int(0), make_boolean(sc, len < 0)));
     }
   
   if (s7_is_procedure_with_setter(x))
-    return(make_list_3(sc, 
-		       s7_make_integer(sc, pws_get_req_args(x)),
-		       s7_make_integer(sc, pws_get_opt_args(x)),
-		       sc->F));
-  
+    {
+      if (s7_procedure_with_setter_getter(x) != sc->NIL)
+	return(s7_procedure_arity(sc, s7_procedure_with_setter_getter(x)));
+
+      return(make_list_3(sc, 
+			 s7_make_integer(sc, pws_get_req_args(x)),
+			 s7_make_integer(sc, pws_get_opt_args(x)),
+			 sc->F));
+    }
+
   if ((object_is_applicable(x)) ||
       (s7_is_continuation(x)))
     return(make_list_3(sc, small_int(0), small_int(0), sc->T));
@@ -13939,7 +13966,7 @@ occurs as the object of set!."
   f->scheme_setter = setter;
   if ((is_closure(setter)) ||
       (is_closure_star(setter)))
-    f->set_req_args = s7_list_length(sc, closure_args(setter));
+    f->set_req_args = s7_list_length(sc, closure_args(setter)); /* this can be -1 if dotted list for rest arg */
   else f->set_req_args = s7_list_length(sc, caadr(args));
   
   return(p);
@@ -14004,6 +14031,9 @@ static s7_pointer g_procedure_with_setter_setter_arity(s7_scheme *sc, s7_pointer
     return(s7_wrong_type_arg_error(sc, "procedure-with-setter-setter-arity", 0, car(args), "a procedure-with-setter"));
 
   f = (s7_pws_t *)s7_object_value(car(args));
+  if (f->scheme_setter != sc->NIL)
+    return(s7_procedure_arity(sc, f->scheme_setter));
+
   return(make_list_3(sc,
 		     s7_make_integer(sc, f->set_req_args),
 		     s7_make_integer(sc, f->set_opt_args),

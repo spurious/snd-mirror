@@ -580,8 +580,30 @@ as the generator object:
 </td></tr></table>
 
 <p>There are many more such generators scattered around the Snd package, most now collected in generators.scm.
-I'm also writing pure-scheme versions of the built-in generators: big-gens.scm.
+I'm also writing pure-scheme versions of the built-in generators: big-gens.scm.  For comparison, here is the sinewave
+instrument in Grace (Common Music) and Snd-rt:
 </p>
+<table border=0 hspace=40><tr><td>
+<pre>
+
+file "test.wav" () 
+  with osc = make-oscil(440) 
+  loop for i below 44100 
+       outa(i, .1 * oscil(osc)) 
+  end 
+end 
+
+
+snd-rt:
+
+(&lt;rt-out&gt; :len 1 (oscil :freq 440)) 
+
+(&lt;rt-stalin&gt;
+   (sound :dur 1:-s 
+     (out (oscil :freq 440)))) 
+</pre>
+</td></tr></table>
+
 <br><br>
 
 

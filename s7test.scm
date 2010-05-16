@@ -9593,6 +9593,8 @@
   (test (procedure-arity '+) '(0 0 #t))
   (test (procedure-arity log) '(1 1 #f))
   (test (procedure-arity '/) '(1 0 #t))
+  (test (procedure-arity) 'error)
+  (test (procedure-arity abs abs) 'error)
 					;(test (procedure-arity vector-set!) '(3 0 #f)) ; can be '(3 0 #t)
   (test (let ((hi (lambda () 1))) (procedure-arity hi)) '(0 0 #f))
   (test (let ((hi (lambda (a) 1))) (procedure-arity hi)) '(1 0 #f))
@@ -9607,7 +9609,22 @@
   (test (let () (define* (hi (a 1) (b 2)) a) (procedure-arity hi)) '(0 2 #f))
   (test (let ((hi (lambda* (a) 1))) (procedure-arity hi)) '(0 1 #f))
   (test (call/cc (lambda (func) (procedure-arity func))) '(0 0 #t))
-  
+
+  (test (procedure-arity (lambda* (a :rest b) a)) '(0 1 #t))
+  (test (procedure-arity (lambda* (:optional a :rest b) a)) '(0 1 #t))
+  (test (procedure-arity (lambda* (:optional a :key b :rest c) a)) '(0 2 #t))
+  (test (procedure-arity (lambda* (:optional a b) a)) '(0 2 #f))
+  (test (procedure-arity (lambda* (:rest args) args)) '(0 0 #t))
+  (test (procedure-arity (lambda* (a :optional b . c) a)) '(0 2 #t))
+  (test (procedure-arity (lambda* (:rest a . b) a)) '(0 0 #t))
+  (test (procedure-arity (lambda* (:key :optional a) a)) '(0 1 #f))
+  (test (procedure-arity (lambda* a a)) '(0 0 #t))
+  (test (let () (define-macro (hi a) `(+ ,a 1)) (procedure-arity hi)) 'error)
+  (test (procedure-arity (make-procedure-with-setter (lambda (a) a) (lambda (a b) a))) '(1 0 #f))
+  (test (procedure-arity (make-procedure-with-setter (lambda (a . b) a) (lambda (a b) a))) '(1 0 #t))
+  (test (procedure-arity (make-procedure-with-setter (lambda* (a :optional b) a) (lambda (a b) a))) '(0 2 #f))
+
+    
   (test (let ((c 1)) 
 	  (define* (a #:optional (b c)) b) 
 	  (set! c 2) 
@@ -9731,6 +9748,7 @@
 	    notes))
 	2)
 
+
   (for-each
    (lambda (arg)
      (test (continuation? arg) #f))
@@ -9740,6 +9758,9 @@
 	  (and (call/cc (lambda (x) (set! cont x) (continuation? x)))
 	       (continuation? cont)))
 	#t)
+  (test (continuation?) 'error)
+  (test (continuation? 1 2) 'error)
+
   
   (test (string? (s7-version)) #t)
   (test (eval-string "(+ 1 2)") 3)
@@ -9788,6 +9809,7 @@
   (test (let ((hi (lambda (x) "this is a test" (+ x 1)))) 
 	  (list (hi 1) (procedure-documentation hi)))
 	(list 2 "this is a test"))
+  (test (procedure-documentation (lambda* (a b) "docs" a)) "docs")
   
   (for-each
    (lambda (arg)
@@ -9822,7 +9844,12 @@
   (for-each
    (lambda (arg)
      (test (make-list arg) 'error))
-   (list #\a '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+   (list #\a '#(1 2 3) 3.14 3/4 1.0+1.0i '() #t 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
+  (for-each
+   (lambda (arg)
+     (test ((make-list 1 arg) 0) arg))
+   (list #\a '#(1 2 3) 3.14 3/4 1.0+1.0i '() #f 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
 
   (test (make-list) 'error)
   (test (make-list 1 2 3) 'error)
@@ -11025,6 +11052,25 @@
 	      (set! ((car lst) 1) 3)
 	      (list val val1 (vset 1))))))
       (list 2 32 3))
+
+(test (make-procedure-with-setter) 'error)
+(test (make-procedure-with-setter abs) 'error)
+(test (make-procedure-with-setter 1 2) 'error)
+(test (make-procedure-with-setter (lambda () 1) (lambda (a) a) (lambda () 2)) 'error)
+(test (make-procedure-with-setter (lambda () 1) 2) 'error)
+
+(test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda (a) a)))) (procedure-with-setter-setter-arity pws)) '(1 0 #f))
+(test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda (a b c) a)))) (procedure-with-setter-setter-arity pws)) '(3 0 #f))
+(test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda (a . b) a)))) (procedure-with-setter-setter-arity pws)) '(1 0 #t))
+(test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda* (a (b 1)) a)))) (procedure-with-setter-setter-arity pws)) '(0 2 #f))
+(test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda* (a :rest b) a)))) (procedure-with-setter-setter-arity pws)) '(0 1 #t))
+(test (procedure-with-setter-setter-arity symbol-access) '(2 0 #f))
+
+(test (make-procedure-with-setter-setter-arity) 'error)
+(test (make-procedure-with-setter-setter-arity abs) 'error)
+(test (make-procedure-with-setter-setter-arity 1 2) 'error)
+(test (make-procedure-with-setter-setter-arity (lambda () 1)) 'error)
+
 
 ;; generic length/copy/fill!
 (test (length (list 1 2)) 2)
