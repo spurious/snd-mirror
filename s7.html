@@ -2575,9 +2575,9 @@ rest.  Say we'd like #t&lt;number&gt; to interpret the number in base 12:
 
 <pre>
 (set! *#readers* 
-          (cons (cons #\t (lambda (str) 
-			(string-&gt;number (substring str 1) 12)))
-	    *#readers*))
+      (cons (cons #\t (lambda (str) 
+                        (string-&gt;number (substring str 1) 12)))
+            *#readers*))
 
 &gt; #tb
 11

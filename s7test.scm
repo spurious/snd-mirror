@@ -25,7 +25,7 @@
 (define with-bigfloats (provided? 'gmp))                       ; scheme real has any number of bits
 (define with-bignum-function (defined? 'bignum))               ;   this is a function that turns its string arg into a bignum
 (define with-delay (provided? 'force))                         ; delay and force 
-(define with-the-bug-finding-machine #t)                       ; run the machine (this variable can be set to the number of tries)
+(define with-the-bug-finding-machine #f)                       ; run the machine (this variable can be set to the number of tries)
 					                       ;   the default number of tries is 10000
 (define with-test-at-random #f)
 (define with-values (provided? 'values))
@@ -4140,29 +4140,188 @@
 
 
 
-#|
+;;; -------- circular structures --------
+
 ;;; TODO: fill out the circular list/vector tests
-;;; eq? eqv? length? list-tail? fill!? reverse? vector->list list->vector vector? pair? list? null? cdr? copy? map? for-each? do as cdr? list->string
-;;;   the latter could have a jump to get out
+;;; reverse? copy? map? for-each? print-list
+
+(define (clist-equal? x y)
+  (define (clist-equal-1? x y x1 y1 choice)
+    (if (eq? x x1)
+	(eq? y y1)
+	(if (eq? y y1)
+	    #f
+	    (if (= choice 2)
+		(if (not (pair? x1))
+		    #t ; this is the slow guy, so the fast one must have already check equality here and returned #t
+		    (and (pair? y1)
+			 (clist-equal-1? x y (car x1) (car y1) 0)
+			 (clist-equal-1? x y (cdr x1) (cdr y1) 0)))
+		(if (not (pair? x))
+		    (equal? x y)
+		    (and (pair? y)
+			 (clist-equal-1? (car x) (car y) x1 y1 (+ choice 1))
+			 (clist-equal-1? (cdr x) (cdr y) x1 y1 (+ choice 1))))))))
+  (or (eq? x y)
+      (if (not (pair? x))
+	  (equal? x y)
+	  (and (pair? y)
+	       (clist-equal-1? (car x) (car y) x y 1)
+	       (clist-equal-1? (cdr x) (cdr y) x y 1)))))
+
+(define (clist-length lst)
+  (define (clist-length-1 fast slow len)
+    (if (not (pair? fast))
+	(if (null? fast)
+	    len
+	    (- len))
+	(begin
+	  (set! fast (cdr fast))
+	  (if (not (pair? fast))
+	      (if (null? fast)
+		  (+ len 1)
+		  (- (+ len 1)))
+	      (begin
+		(set! fast (cdr fast))
+		(set! slow (cdr slow))
+		(if (eq? fast slow)
+		    #f
+		    (clist-length-1 fast slow (+ len 2))))))))
+  (clist-length-1 lst lst 0))
+
+(define (clist-fill! lst value)
+  (do ((slow lst)
+       (fast lst))
+      ((null? fast) value)
+    (set-car! fast value)
+    (if (pair? (cdr fast))
+	(begin
+	  (set! fast (cdr fast))
+	  (set-car! fast value)
+	  (if (pair? (cdr fast))
+	      (begin
+		(set! fast (cdr fast))
+		(set! slow (cdr slow))
+		(if (eq? fast slow)
+		    (set! fast '())))
+	      (begin
+		(if (not (null? (cdr fast)))
+		    (set-cdr! fast value))
+		(set! fast '()))))
+	(begin
+	  (if (not (null? (cdr fast)))
+	      (set-cdr! fast value))
+	  (set! fast '())))))
+
+(define (clist-memq value lst)
+  (do ((slow lst)
+       (fast lst)
+       (step #f (not step)))
+      ((or (not (pair? fast))
+	   (eq? (car fast) value))
+       (if (not (pair? fast))
+	   #f
+	   fast))
+    (set! fast (cdr fast))
+    (if step
+	(begin
+	  (set! slow (cdr slow))
+	  (if (eq? fast slow)
+	      (set! fast '()))))))
+
+(define (clist-assq value lst)
+  (do ((slow lst)
+       (fast lst)
+       (step #f (not step)))
+      ((or (not (pair? fast))
+	   (not (pair? (car fast)))
+	   (eq? (caar fast) value))
+       (if (or (not (pair? fast))
+	       (not (pair? (car fast))))
+	   #f
+	   (car fast)))
+    (set! fast (cdr fast))
+    (if step
+	(begin
+	  (set! slow (cdr slow))
+	  (if (eq? fast slow)
+	      (set! fast '()))))))
+
+  
+
+(test (clist-length '()) 0)
+(test (clist-length (cons 1 2)) -1)
+(test (clist-length '(1 2 3)) 3)
+
+(test (let ((lst (list))) (clist-fill! lst 0) lst) '())
+(test (let ((lst (list 1))) (clist-fill! lst 0) lst) '(0))
+(test (let ((lst (list 1 2))) (clist-fill! lst 0) lst) '(0 0))
+(test (let ((lst (list 1 (list 2 3)))) (clist-fill! lst 0) lst) '(0 0))
+(test (let ((lst (cons 1 2))) (clist-fill! lst 0) lst) '(0 . 0))
+(test (let ((lst (cons 1 (cons 2 3)))) (clist-fill! lst 0) lst) '(0 0 . 0))
+
+(test (clist-memq 'a '(c d a b c)) '(a b c))
+(test (clist-memq 'a '(c d f b c)) #f)
+(test (clist-memq 'a '()) #f)
+(test (clist-memq 'a '(c d a b . c)) '(a b . c))
+(test (clist-memq 'a '(c d f b . c)) #f)
+
 
 (let ((lst1 (list 1 2))) 
+  (test (clist-length lst1) 2)
   (list-set! lst1 0 lst1)
+  (test (clist-length lst1) 2) ; its car is a circular list, but it isn't
   (let ((lst2 (list 1 2)))
     (set-car! lst2 lst2)
-    (equal? lst1 lst2)))
+    (test (clist-equal? lst1 lst2) #t)
+    (test (eq? lst1 lst2) #f)
+    (test (eqv? lst1 lst2) #f)
+    (test (pair? lst1) #t)
+    (test (null? lst1) #f)
+    (test (car lst2) lst2)
+    (test (car lst1) lst1)
+    (test (let ()
+	    (clist-fill! lst1 32)
+	    lst1)
+	  '(32 32))))
 
 (let ((lst1 (list 1))) 
+  (test (clist-length lst1) 1)
   (set-cdr! lst1 lst1)
+  (test (clist-length lst1) #f)
   (let ((lst2 (cons 1 '())))
     (set-cdr! lst2 lst2)
-    (equal? lst1 lst2)))
+    (test (clist-equal? lst1 lst2) #t)
+    (set-car! lst2 0)
+    (test (clist-equal? lst1 lst2) #f)
+    (test (clist-length lst2) #f)))
 
 (let ((lst1 (list 1))
       (lst2 (list 1)))
   (set-car! lst1 lst2)
   (set-car! lst2 lst1)
-  (equal? lst1 lst2))
+  (test (clist-equal? lst1 lst2) #t)
+  (test (clist-length lst1) 1)
+  (let ((lst3 (list 1)))
+    (test (clist-equal? lst1 lst3) #f)
+    (set-cdr! lst3 lst3)
+    (test (clist-equal? lst1 lst3) #f)))
 
+(let ((lst1 (list 'a 'b 'c)))
+  (set! (cdr (cddr lst1)) lst1)
+  (test (clist-length lst1) #f)
+  (test (clist-memq 'd lst1) #f)
+  (test (clist-memq 'a lst1) lst1)
+  (test (clist-memq 'b lst1) (cdr lst1)))
+
+(let ((lst1 (list 1 2 3)))
+  (list-set! lst1 1 lst1)
+  (object->string lst1))
+
+;; (let ((l (list 1 2 3))) (list-set! l 1 (cdr l)) l) but (let ((l (list 1 2 3))) (list-set! l 1 (cddr l)) l)
+
+#|
+;;; vectors
 (let ((v1 (make-vector 1 0)))
   (set! (v1 0) v1)
   (let ((v2 (vector 0)))
@@ -4205,7 +4364,6 @@
   (cfunc))
 
 ;; could you implement goto's with circular lists?
-
 |#
 
 
@@ -5619,35 +5777,35 @@
 
 (test (let ((l (list 1 2))) 
 	(list-set! l 0 l) 
-	(string=? (object->string l) "([circular list] 2)")) 
+	(string=? (object->string l) "(#1# 2)")) 
       #t)
 (test (let ((lst (cons 1 2))) 
 	(set-cdr! lst lst)
-	(string=? (object->string lst) "[circular list]"))
+	(string=? (object->string lst) "(1 #1#)")) ; not dotted because we replaced the cdr with a list
       #t)
 (test (let ((lst (cons 1 2))) 
 	(set-car! lst lst)
-	(string=? (object->string lst) "([circular list] . 2)"))
+	(string=? (object->string lst) "(#1# . 2)"))
       #t)
 (test (let ((lst (cons (cons 1 2) 3))) 
 	(set-car! (car lst) lst)
-	(string=? (object->string lst) "(([circular list] . 2) . 3)"))
+	(string=? (object->string lst) "((#1# . 2) . 3)"))
       #t)
 (test (let ((v (vector 1 2))) 
 	(vector-set! v 0 v) 
-	(string=? (object->string v) "#([circular vector] 2)")) 
+	(string=? (object->string v) "#(#1# 2)")) 
       #t)
 (test (let* ((l1 (list 1 2)) (l2 (list l1))) 
 	(list-set! l1 0 l1) 
-	(string=? (object->string l2) "(([circular list] 2))")) 
+	(string=? (object->string l2) "((#1# 2))")) 
       #t)
 (test (let* ((v1 (vector 1 2)) (v2 (vector v1))) 
 	(vector-set! v1 1 v1) 
-	(string=? (object->string v2) "#(#(1 [circular vector]))")) 
+	(string=? (object->string v2) "#(#(1 #1#))")) 
       #t)
 (test (let ((v1 (make-vector 3 1))) 
 	(vector-set! v1 0 (cons 3 v1)) 
-	(string=? (object->string v1) "#((3 . [circular vector]) 1 1)")) 
+	(string=? (object->string v1) "#((3 . #1#) 1 1)")) 
       #t)
 (test (let ((h1 (make-hash-table 11))
 	    (old-print-length *vector-print-length*))
@@ -5655,9 +5813,9 @@
 	(hash-table-set! h1 'hi h1)
 	(let ((result (object->string h1)))
 	  (set! *vector-print-length* old-print-length)
-	  (let ((val (string=? result "#(() () () () ((\"hi\" . [circular hash-table])) () () () () () ())")))
+	  (let ((val (string=? result "#(() () () () ((\"hi\" . #1#)) () () () () () ())")))
 	    (if (not val)
-		(format #t ";hash display:~%  ~A~%  ~A~%" (object->string h1) "#(() () () () ((\"hi\" . [circular hash-table])) () () () () () ())"))
+		(format #t ";hash display:~%  ~A~%  ~A~%" (object->string h1) "#(() () () () ((\"hi\" . #1#)) () () () () () ())"))
 	    val)))
       #t)
 
@@ -5667,7 +5825,7 @@
 	     (v2 (vector l1 v1 l2)))
 	(vector-set! v1 0 v2)
 	(list-set! l1 1 l2)
-	(string=? (object->string v2) "#((1 (1 [circular list] 2)) #([circular vector] 2) (1 (1 [circular list]) 2))"))
+	(string=? (object->string v2) "#((1 (1 #1# 2)) #(#2# 2) #3#)"))
       #t)
 
 
@@ -5744,8 +5902,6 @@
 (test (eq? (if #f #f) (if #f #f)) #t) ; I assume there's only one #<unspecified>!
 (test (if . (1 2)) 2)
 
-					;(test (if () () ()) 'error) ; ?? s7 thinks it's ok
-
 (test (let ((a #t) (b #f) (c #t) (d #f)) (if (if (if (if d d c) d b) d a) 'a 'd)) 'a)
 (test (let ((a #t) (b #f) (c #t) (d #f)) (if a (if b (if c (if d d c) c) 'b) 'a)) 'b)
 					;(test (let ((a #t) (b #f) (c #t) (d #f)) (((if a if 'gad) c if 'gad) (not d) 'a 'gad)) 'a)
@@ -5766,14 +5922,15 @@
 (test (let ((ctr 0) (a #t)) (if a (let ((b ctr)) (set! ctr (+ ctr 1)) (list b ctr)) (let ((c ctr)) (set! ctr (+ ctr 100)) (list c ctr)))) (list 0 1))
 
 (test (if if if if) if)
-					;(test (((if if if) if if) if if 'gad) if)
+(test (((if if if) if if) if if 'gad) if)
 (test (if if (if if if) if) if)
-					;(test (let ((car if)) (car #t 0 1)) 0)
-					;(test ((car (list if)) #t 0 1) 0)
+(test (let ((car if)) (car #t 0 1)) 0)
+(test ((car (list if)) #t 0 1) 0)
 (test (symbol->string 'if) "if")
 (test (if (and if (if if if)) if 'gad) if)
-					;(test (let ((if #t)) (or if)) #t)
-					;(test (let ((if +)) (if 1 2 3)) 6)
+(test (let ((if #t)) (or if)) #t)
+;(test (let ((if +)) (if 1 2 3)) 6)
+; this is another of the "syntax" as car choices
 (test (let ((ctr 0)) (if (let () (set! ctr (+ ctr 1)) (= ctr 1)) 0 1)) 0)
 (test (let ((ctr 0)) (if (let () (set! ctr (+ ctr 1)) (if (= ctr 1) (> 3 2) (< 3 2))) 0 1)) 0)
 (test (        if (> 3 2) 1 2) 1)
@@ -5783,11 +5940,11 @@
 (test (let ((alist (list map car if do))) (member if alist)) (list if do))
 (test (let ((alist (list map car if do))) (memv if alist)) (list if do))
 (test (let ((alist (list map car if do))) (memq if alist)) (list if do))
-					;(test ((vector-ref (vector if) 0) #t 1 2) 1)
-					;(test ((vector-ref (make-vector 1 if) 0) #t 1 2) 1)
+(test ((vector-ref (vector if) 0) #t 1 2) 1)
+(test ((vector-ref (make-vector 1 if) 0) #t 1 2) 1)
 (test ((if #t + -) 3 4) 7)
 (test (list (if 0 1 2)) (list 1))
-					;(test ((car (list if map)) #f 1 2) 2)
+(test ((car (list if map)) #f 1 2) 2)
 (test (let ((ctr 0)) (if (= ctr 0) (let () (set! ctr (+ ctr 1)) (if (= ctr 1) 2 3)) (let () (set! ctr (+ ctr 1)) (if (= ctr 1) 4 5)))) 2)
 (test (let ((x (cons 1 2))) (set-cdr! x x) (if x 1 2)) 1)
 (test (let ((ctr 0)) (if (let ((ctr 123)) (set! ctr (+ ctr 1)) (= ctr 124)) (let () (set! ctr (+ ctr 100)) ctr) (let () (set! ctr (+ ctr 1000)) ctr)) ctr) 100)
@@ -6563,7 +6720,9 @@
 (test (let ((a (let ((b 1)) (set! a 3) b))) a) 'error) 
 
 (test (set! . -1) 'error)
-
+(test (set!) 'error)
+(test (let ((x 1)) (set! x x x)) 'error)
+(test (let ((x 1)) (set! x x) x) 1)
 
 
 

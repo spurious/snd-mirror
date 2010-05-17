@@ -567,9 +567,6 @@ struct s7_scheme {
   s7_pointer *temps;             /* short-term gc protection */
   int temps_ctr, temps_size;
 
-  #define CIRCULAR_REFS_SIZE 8
-  s7_pointer *circular_refs;     /* printer circular list/vector checks */
-
   jmp_buf goto_start, goto_qsort_end;
   bool longjmp_ok;
   void (*error_exiter)(void);
@@ -2593,7 +2590,10 @@ void *s7_c_pointer(s7_pointer p)
     return(NULL); /* special case where the null pointer has been cons'd up by hand */
 
   if (type(p) != T_C_POINTER)
-    fprintf(stderr, "s7_c_pointer argument is not a c pointer?");
+    {
+      fprintf(stderr, "s7_c_pointer argument is not a c pointer?");
+      return(NULL);
+    }
 
   return(p->object.c_pointer);
 }
@@ -7342,8 +7342,29 @@ static s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_nan "(nan? obj) returns #t if obj is a NaN"
   s7_pointer x;
+
   x = car(args);
+#if WITH_GMP
   return(make_boolean(sc, (isnan(s7_real_part(x))) || (isnan(s7_imag_part(x)))));
+#else
+  if (s7_is_number(x))
+    {
+      switch (number_type(x))
+	{
+	case NUM_INT:
+	case NUM_RATIO:
+	  return(sc->F);
+
+	case NUM_REAL:
+	case NUM_REAL2:
+	  return(make_boolean(sc, isnan(real(number(x)))));
+	  
+	default:
+	  return(make_boolean(sc, (isnan(s7_real_part(x))) || (isnan(s7_imag_part(x)))));
+	}
+    }
+#endif
+  return(sc->F);
 }
 
 
@@ -10117,43 +10138,6 @@ bool s7_is_valid_pointer(s7_pointer arg)
 }
 
 
-static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth, bool to_file);
-static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, int depth);
-
-static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_write, int depth, bool to_file)
-{
-  if ((s7_is_vector(obj)) ||
-      (s7_is_hash_table(obj)))
-    return(vector_to_c_string(sc, obj, depth, to_file));
-
-  if (is_pair(obj))
-    return(list_to_c_string(sc, obj, depth));
-
-  return(atom_to_c_string(sc, obj, use_write));
-}
-
-
-static char *object_to_c_string_with_circle_check(s7_scheme *sc, s7_pointer vr, int depth)
-{
-  int k, lim;
-
-  lim = depth;
-  if (lim >= CIRCULAR_REFS_SIZE) lim = CIRCULAR_REFS_SIZE - 1;
-
-  for (k = 0; k <= lim; k++)
-    if (s7_is_eq(vr, sc->circular_refs[k]))
-      {
-	if (s7_is_vector(vr))
-	  return(copy_string("[circular vector]"));
-	if (s7_is_hash_table(vr))
-	  return(copy_string("[circular hash-table]"));
-	return(copy_string("[circular list]"));
-      }
-
-  return(s7_object_to_c_string_1(sc, vr, true, depth + 1, false));
-}
-
-
 #if WITH_MULTIDIMENSIONAL_VECTORS
 static int display_multivector(s7_scheme *sc, s7_pointer vec, int out_len, int flat_ref, int dimension, int dimensions, char *out_str, char **elements, char *last)
 {
@@ -10191,7 +10175,101 @@ static int display_multivector(s7_scheme *sc, s7_pointer vec, int out_len, int f
 #endif
 
 
-static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth, bool to_file)
+typedef struct {
+  s7_pointer *objs;
+  int size, top, ref;
+  int *refs;
+} circle_info;
+
+#define INITIAL_CIRCLE_INFO_SIZE 4
+
+
+static circle_info *make_circle_info(int initial_size)
+{
+  circle_info *ci;
+  ci = (circle_info *)calloc(1, sizeof(circle_info));
+  ci->top = 0;
+  ci->ref = 0;
+  ci->size = initial_size;
+  ci->objs = (s7_pointer *)malloc(initial_size * sizeof(s7_pointer));
+  ci->refs = (int *)calloc(initial_size, sizeof(int));   /* finder expects 0 = unseen previously */
+  return(ci);
+}
+
+
+static circle_info *free_circle_info(circle_info *ci)
+{
+  if (ci)
+    {
+      if (ci->objs) free(ci->objs);
+      if (ci->refs) free(ci->refs);
+      ci->objs = NULL;
+      free(ci);
+    }
+  return(NULL);
+}
+
+
+static void add_circle_info(circle_info *ci, s7_pointer p)
+{
+  if (ci->top == ci->size)
+    {
+      int i;
+      ci->size *= 2;
+      ci->objs = (s7_pointer *)realloc(ci->objs, ci->size * sizeof(s7_pointer));
+      ci->refs = (int *)realloc(ci->refs, ci->size * sizeof(int));
+      for (i = ci->top; i < ci->size; i++) ci->refs[i] = 0;
+    }
+  ci->objs[ci->top++] = p;
+}
+
+
+static int find_circular_ref(circle_info *ci, s7_pointer p)
+{
+  int i;
+  for (i = 0; i < ci->top; i++)
+    if (ci->objs[i] == p)
+      {
+	if (ci->refs[i] == 0)
+	  ci->refs[i] = ++ci->ref;
+	return(ci->refs[i]);
+      }
+  return(-1);
+}
+
+
+static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, circle_info *ci);
+static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, circle_info *ci);
+
+static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_write, bool to_file, circle_info *ci)
+{
+  if ((s7_is_vector(obj)) ||
+      (s7_is_hash_table(obj)))
+    return(vector_to_c_string(sc, obj, to_file, ci));
+
+  if (is_pair(obj))
+    return(list_to_c_string(sc, obj, ci));
+
+  return(atom_to_c_string(sc, obj, use_write));
+}
+
+
+static char *object_to_c_string_with_circle_check(s7_scheme *sc, s7_pointer vr, circle_info *ci)
+{
+  int ref;
+  ref = find_circular_ref(ci, vr);
+  if (ref >= 0)
+    {
+      char *name;
+      name = (char *)calloc(32, sizeof(char));
+      snprintf(name, 32, "#%d#", ref);
+      return(name);
+    }
+  return(s7_object_to_c_string_1(sc, vr, true, false, ci));
+}
+
+
+static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, circle_info *ci)
 {
   s7_Int i, len, bufsize = 0;
   bool too_long = false;
@@ -10211,9 +10289,11 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth, bool 
       else return(copy_string("#()"));
     }
 #else    
-    return(copy_string("#()"));
+  return(copy_string("#()"));
 #endif
   
+  add_circle_info(ci, vect);
+    
   if (!to_file)
     {
       int plen;
@@ -10236,14 +10316,11 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth, bool 
 	}
     }
 
-  if (depth < CIRCULAR_REFS_SIZE)
-    sc->circular_refs[depth] = vect;             /* (let ((v (vector 1 2))) (vector-set! v 0 v) v) */
-
   elements = (char **)malloc(len * sizeof(char *));
 
   for (i = 0; i < len; i++)
     {
-      elements[i] = object_to_c_string_with_circle_check(sc, vector_element(vect, i), depth);
+      elements[i] = object_to_c_string_with_circle_check(sc, vector_element(vect, i), ci);
       bufsize += safe_strlen(elements[i]);
     }
 
@@ -10293,15 +10370,35 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, int depth, bool 
 
 static s7_pointer vector_to_string(s7_scheme *sc, s7_pointer vect)
 {
-  return(make_string_uncopied(sc, vector_to_c_string(sc, vect, 0, false)));
+  s7_pointer result;
+  circle_info *ci;
+  ci = make_circle_info(INITIAL_CIRCLE_INFO_SIZE);
+  result = make_string_uncopied(sc, vector_to_c_string(sc, vect, false, ci));
+  free_circle_info(ci);
+  return(result);
 }
 
 
-static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, int depth)
+static int circular_list_entries(s7_scheme *sc, s7_pointer lst)
 {
-  bool dotted = false;
+  int i;
   s7_pointer x;
-  int i, len, bufsize = 0;
+  for (i = 1, x = cdr(lst); ; i++, x = cdr(x))
+    {
+      int j;
+      s7_pointer y;
+      for (y = lst, j = 0; j < i; y = cdr(y), j++)
+	if (x == y)
+	  return(i);
+    }
+}
+
+
+static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, circle_info *ci)
+{
+  bool dotted = false, circular = false;
+  s7_pointer x;
+  int i, len, bufsize = 0, ref;
   char **elements = NULL;
   char *buf;
 
@@ -10311,37 +10408,41 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, int depth)
       len = (-len + 1);
       dotted = true;
     }
-  
+
   if (len == 0)                   /* either '() or a circular list */
     {
       if (lst != sc->NIL)
-	return(copy_string("[circular list]"));
-      return(copy_string("()"));
+	{
+	  len = circular_list_entries(sc, lst);
+	  circular = true;
+	}
+      else return(copy_string("()"));
     }
-  
-  if (depth < CIRCULAR_REFS_SIZE)
-    sc->circular_refs[depth] = lst;            /* (let ((l (list 1 2))) (list-set! l 0 l) l) */
 
-  elements = (char **)malloc(len * sizeof(char *));
+  add_circle_info(ci, lst);
+  elements = (char **)malloc((len + ((circular) ? 1 : 0)) * sizeof(char *));
   for (x = lst, i = 0; is_pair(x) && (i < len); i++, x = cdr(x))
     {
-      elements[i] = object_to_c_string_with_circle_check(sc, car(x), depth);
+      elements[i] = object_to_c_string_with_circle_check(sc, car(x), ci);
       bufsize += safe_strlen(elements[i]);
     }
 
-  if (dotted)
+  if ((dotted) || (circular))
     {
-      if (s7_is_eq(x, lst))
-	elements[i] = copy_string("[circular list]");
-      elements[i] = object_to_c_string_with_circle_check(sc, x, depth);
+      elements[i] = object_to_c_string_with_circle_check(sc, x, ci);
+      if (circular) len++;
       bufsize += safe_strlen(elements[i]);
     }
   
   bufsize += (256 + len * 2); /* len spaces */
+  bufsize += (ci->top * 16);
   buf = (char *)malloc(bufsize * sizeof(char));
   
+  /* TODO: insert #1(...) or #[...] etc, also in vector printout 
+   */
+
   sprintf(buf, "(");
-  for (i = 0; i < len - 1; i++)
+  for (i = 0, x = lst; i < len - 1; i++, x = cdr(x))
     {
       if (elements[i])
 	{
@@ -10349,12 +10450,14 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, int depth)
 	  strcat(buf, " ");
 	}
     }
+
   if (dotted) strcat(buf, ". ");
   if (elements[len - 1])
     {
       strcat(buf, elements[len - 1]);
       strcat(buf, ")");
     }
+
   for (i = 0; i < len; i++)
     if (elements[i])
       free(elements[i]);
@@ -10365,13 +10468,24 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, int depth)
 
 static s7_pointer list_to_string(s7_scheme *sc, s7_pointer lst)
 {
-  return(make_string_uncopied(sc, list_to_c_string(sc, lst, 0)));
+  s7_pointer result;
+  circle_info *ci;
+  ci = make_circle_info(INITIAL_CIRCLE_INFO_SIZE);
+  result = make_string_uncopied(sc, list_to_c_string(sc, lst, ci));
+  free_circle_info(ci);
+  return(result);
 }
 
 
 char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj)
 {
-  return(s7_object_to_c_string_1(sc, obj, true, 0, false));
+  char *result;
+  circle_info *ci = NULL;
+  if ((is_pair(obj)) || (s7_is_vector(obj)) || (s7_is_hash_table(obj)))
+    ci = make_circle_info(INITIAL_CIRCLE_INFO_SIZE);
+  result = s7_object_to_c_string_1(sc, obj, true, false, ci);
+  if (ci) free_circle_info(ci);
+  return(result);
 }
 
 
@@ -10445,8 +10559,12 @@ static s7_pointer g_write_char(s7_scheme *sc, s7_pointer args)
 static void write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool use_write)
 {
   char *val;
-  val = s7_object_to_c_string_1(sc, obj, use_write, 0, is_file_port(port));
+  circle_info *ci = NULL;
+  if ((is_pair(obj)) || (s7_is_vector(obj)) || (s7_is_hash_table(obj)))
+    ci = make_circle_info(INITIAL_CIRCLE_INFO_SIZE);
+  val = s7_object_to_c_string_1(sc, obj, use_write, is_file_port(port), ci);
   write_string(sc, val, port);
+  if (ci) free_circle_info(ci);
   if (val) free(val);
 }
 
@@ -10933,6 +11051,7 @@ static int safe_list_length(s7_scheme *sc, s7_pointer a)
 
 int s7_list_length(s7_scheme *sc, s7_pointer a) 
 {
+  /* returns -len if list is dotted, 0 if it's circular */
   int i;
   s7_pointer slow, fast;
   
@@ -10957,13 +11076,7 @@ int s7_list_length(s7_scheme *sc, s7_pointer a)
       fast = cdr(fast);
       slow = cdr(slow);
       if (fast == slow) 
-	{
-	  /* the fast pointer has looped back around and caught up
-	   *  with the slow pointer, hence the structure is circular,
-	   *  not of finite length, and therefore not a list 
-	   */
-	  return(0);
-	}
+	return(0);
     }
   return(0);
 }
@@ -12104,7 +12217,8 @@ static s7_pointer g_vector(s7_scheme *sc, s7_pointer args)
   s7_pointer vec;
   
   len = s7_list_length(sc, args);
-  if (len < 0) 
+  if ((len < 0) ||
+      ((len == 0) && (args != sc->NIL)))
     return(s7_wrong_type_arg_error(sc, "vector", 1, car(args), "a proper list"));
   
   vec = s7_make_vector_1(sc, len, false);
@@ -12479,7 +12593,7 @@ static s7_pointer g_multivector(s7_scheme *sc, int dims, s7_pointer data)
 
   for (x = data, i = 0; i < dims; i++)
     {
-      sizes[i] = s7_list_length(sc, x);
+      sizes[i] = safe_list_length(sc, x);
       total_size *= sizes[i];
       sc->w = s7_cons(sc, s7_make_integer(sc, sizes[i]), sc->w);
       x = car(x);
@@ -14667,21 +14781,32 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		case 'A': case 'a':                 /* -------- object->string -------- */
 		case 'C': case 'c':
 		case 'S': case 's':
+		  {
+		    circle_info *ci = NULL;
+		    s7_pointer obj;
 
-		  /* slib suggests num arg to ~A and ~S to truncate: ~20A sends only (up to) 20 chars of object->string result,
-		   *   but that could easily(?) be handled with substring and an embedded format arg.
-		   */
-		  if (fdat->args == sc->NIL)
-		    return(format_error(sc, "missing argument", str, args, fdat));
-		  i++;
-		  if (((str[i] == 'C') || (str[i] == 'c')) &&
-		      (!s7_is_character(car(fdat->args))))
-		    return(format_error(sc, "'C' directive requires a character argument", str, args, fdat));
+		    /* slib suggests num arg to ~A and ~S to truncate: ~20A sends only (up to) 20 chars of object->string result,
+		     *   but that could easily(?) be handled with substring and an embedded format arg.
+		     */
 
-		  tmp = s7_object_to_c_string_1(sc, car(fdat->args), (str[i] == 'S') || (str[i] == 's'), 0, false);
-		  format_append_string(fdat, tmp);
-		  if (tmp) free(tmp);
-		  fdat->args = cdr(fdat->args);
+		    if (fdat->args == sc->NIL)
+		      return(format_error(sc, "missing argument", str, args, fdat));
+		    i++;
+		    obj = car(fdat->args);
+
+		    if (((str[i] == 'C') || (str[i] == 'c')) &&
+			(!s7_is_character(obj)))
+		      return(format_error(sc, "'C' directive requires a character argument", str, args, fdat));
+
+		    if ((is_pair(obj)) || (s7_is_vector(obj)) || (s7_is_hash_table(obj)))
+		      ci = make_circle_info(INITIAL_CIRCLE_INFO_SIZE);
+		    tmp = s7_object_to_c_string_1(sc, obj, (str[i] == 'S') || (str[i] == 's'), false, ci);
+		    if (ci) free_circle_info(ci);
+
+		    format_append_string(fdat, tmp);
+		    if (tmp) free(tmp);
+		    fdat->args = cdr(fdat->args);
+		  }
 		  break;
 		  
 		case '{':                           /* -------- iteration -------- */
@@ -19480,7 +19605,6 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   for (i = 0; i < new_sc->temps_size; i++)
     new_sc->temps[i] = new_sc->NIL;
 
-  new_sc->circular_refs = (s7_pointer *)calloc(CIRCULAR_REFS_SIZE, sizeof(s7_pointer));
 #if HAVE_PTHREADS
   new_sc->key_values = sc->NIL;
 
@@ -24295,8 +24419,6 @@ s7_scheme *s7_init(void)
   for (i = 0; i < sc->temps_size; i++)
     sc->temps[i] = sc->NIL;
 
-  sc->circular_refs = (s7_pointer *)calloc(CIRCULAR_REFS_SIZE, sizeof(s7_pointer));
-  
   sc->protected_objects_size = (int *)malloc(sizeof(int));
   (*(sc->protected_objects_size)) = INITIAL_PROTECTED_OBJECTS_SIZE;
   sc->protected_objects_loc = (int *)malloc(sizeof(int));
