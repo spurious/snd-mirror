@@ -973,6 +973,7 @@ static const char *type_name(s7_pointer arg);
 static s7_pointer make_string_uncopied(s7_scheme *sc, char *str);
 static s7_pointer make_protected_string(s7_scheme *sc, const char *str);
 static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value);
+static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj);
 
 #if HAVE_PTHREADS
   static bool is_thread(s7_pointer obj);
@@ -10248,6 +10249,17 @@ static int circular_ref(circle_info *ci, s7_pointer p)
 }
 
 
+#if 0
+static circle_info *collect_circle_info(cirle_info *ci, s7_pointer top)
+{
+  add_circle_info(ci, top);
+  if (is_pair(top))
+
+  if ((is_pair(obj)) || (s7_is_vector(obj)) || (s7_is_hash_table(obj)))    
+}
+#endif
+
+
 static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, circle_info *ci);
 static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, circle_info *ci);
 
@@ -10302,8 +10314,6 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, ci
   return(copy_string("#()"));
 #endif
   
-  add_circle_info(ci, vect);
-    
   if (!to_file)
     {
       int plen;
@@ -10326,6 +10336,7 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, ci
 	}
     }
 
+  add_circle_info(ci, vect);
   elements = (char **)malloc(len * sizeof(char *));
 
   for (i = 0; i < len; i++)
@@ -10453,9 +10464,6 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, circle_info *ci)
   bufsize += (ci->top * 16);
   buf = (char *)malloc(bufsize * sizeof(char));
   
-  /* ((let ((lst (list 1 2 3))) (set! (lst 2) lst) lst) -> "#1#(1 2 #1#)" */
-  /* (let* ((l1 (list 1 2)) (l2 (list 3 4)) (l3 (list 5 l1 6 l2 7))) (set! (cdr (cdr l1)) l1) (set! (cdr (cdr l2)) l2) l3) -> "(5 #1#(1 2 #1#) 6 #2#(3 4 #2#) 7)" */
-
   ref = circular_ref(ci, lst);
   if (ref > 0)
     snprintf(buf, bufsize, "#%d=(", ref);
@@ -10484,9 +10492,6 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, circle_info *ci)
   return(buf);
 }
 
-/* TODO: the reader should catch #n#, keep a table of these and the pointers, if a
- *   known n is seen again, plug it in at that point.
- */
 
 static s7_pointer list_to_string(s7_scheme *sc, s7_pointer lst)
 {
@@ -12028,7 +12033,7 @@ static s7_pointer s7_make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
 	return(s7_error(sc, s7_make_symbol(sc, "out-of-memory"), make_protected_string(sc, "make-vector allocation failed!")));
 
       vector_length(x) = len;
-      if (filled) s7_vector_fill(sc, x, sc->NIL);
+      if (filled) s7_vector_fill(sc, x, sc->NIL); /* make_hash_table assumes nil as the default value */
     }
 
 #if WITH_MULTIDIMENSIONAL_VECTORS
@@ -12081,22 +12086,6 @@ static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 
   tend = (s7_pointer *)(tp + len);
   while (tp != tend) {(*tp++) = obj;}
-}
-
-
-static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect)
-{
-  s7_Int len;
-  s7_pointer new_vect;
-
-  len = vector_length(old_vect);
-  new_vect = s7_make_vector_1(sc, len, false);
-  /* 
-   * here and in vector-fill! we have a problem with bignums -- should new bignums be allocated? (copy_list also)
-   */
-  memcpy((void *)(vector_elements(new_vect)), (void *)(vector_elements(old_vect)), len * sizeof(s7_pointer));
-
-  return(new_vect);
 }
 
 
@@ -12578,6 +12567,28 @@ static int traverse_vector_data(s7_scheme *sc, s7_pointer vec, int flat_ref, int
 }
 
 
+static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect)
+{
+  s7_Int len;
+  s7_pointer new_vect;
+
+  len = vector_length(old_vect);
+
+#if WITH_MULTIDIMENSIONAL_VECTORS
+  if (vector_is_multidimensional(old_vect))
+    new_vect = g_make_vector(sc, s7_cons(sc, g_vector_dimensions(sc, s7_cons(sc, old_vect, sc->NIL)), sc->NIL));
+  else new_vect = s7_make_vector_1(sc, len, false);
+#else
+  new_vect = s7_make_vector_1(sc, len, false);
+#endif
+
+  /* here and in vector-fill! we have a problem with bignums -- should new bignums be allocated? (copy_list also) */
+
+  memcpy((void *)(vector_elements(new_vect)), (void *)(vector_elements(old_vect)), len * sizeof(s7_pointer));
+  return(new_vect);
+}
+
+
 static s7_pointer s7_multivector_error(s7_scheme *sc, const char *message, s7_pointer data)
 {
   return(s7_error(sc, s7_make_symbol(sc, "read-error"), 
@@ -12805,7 +12816,7 @@ static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
 {
   s7_pointer table;
-  table = s7_make_vector(sc, size);
+  table = s7_make_vector(sc, size);   /* nil is the default value */
   set_type(table, T_HASH_TABLE | T_FINALIZABLE | T_DONT_COPY);
   return(table);
 }
@@ -12870,45 +12881,36 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
 
 #define HASHED_INTEGER_BUFFER_SIZE 64
 
-static char *hashed_integer_name(s7_Int key, char *intbuf) /* not const here because snprintf is declared char* */
+static char *hashed_name(s7_scheme *sc, s7_pointer key, char *intbuf)
 {
-  snprintf(intbuf, HASHED_INTEGER_BUFFER_SIZE, "\b%lld\b", (long long int)key);
-  return(intbuf);
-}
+  if (s7_is_string(key))
+    return(string_value(key));
 
-
-static char *hashed_real_name(s7_Double key, char *intbuf)
-{
-  /* this is actually not safe due to the challenges faced by %f */
-  snprintf(intbuf, HASHED_INTEGER_BUFFER_SIZE, "\b%.20f\b", key); /* default precision is not enough */
+  if (s7_is_symbol(key))
+    snprintf(intbuf, HASHED_INTEGER_BUFFER_SIZE, "\b%s\b", symbol_name(key));
+  else
+    {
+      if (s7_is_integer(key))
+	snprintf(intbuf, HASHED_INTEGER_BUFFER_SIZE, "\b%lld\b", (long long int)s7_integer(key));
+      else
+	{
+	  if ((s7_is_real(key)) && (!s7_is_ratio(key)))
+	    snprintf(intbuf, HASHED_INTEGER_BUFFER_SIZE, "\b%.20f\b", s7_real(key)); /* default precision is not enough, but this still won't work in general */
+	  else
+	    {
+	      s7_wrong_type_arg_error(sc, "hash-table-ref key,", 2, key, "a string, symbol, integer, or (non-ratio) real");
+	      return(NULL);
+	    }
+	}
+    }
   return(intbuf);
 }
 
 
 static s7_pointer hash_table_ref_1(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
-  const char *name;
   char intbuf[HASHED_INTEGER_BUFFER_SIZE];
-
-  if (s7_is_string(key))
-    name = string_value(key);
-  else 
-    {
-      if (s7_is_symbol(key))
-	name = s7_symbol_name(key);
-      else
-	{
-	  if (s7_is_integer(key))
-	    name = hashed_integer_name(s7_integer(key), intbuf);
-	  else
-	    {
-	      if ((s7_is_real(key)) && (!s7_is_ratio(key)))
-		name = hashed_real_name(s7_real(key), intbuf);
-	      else return(s7_wrong_type_arg_error(sc, "hash-table-ref key,", 2, key, "a string, symbol, integer, or (non-ratio) real"));
-	    }
-	}
-    }
-  return(s7_hash_table_ref(sc, table, name));
+  return(s7_hash_table_ref(sc, table, hashed_name(sc, key, intbuf)));
 }
 
 
@@ -12930,7 +12932,7 @@ static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
 {
   #define H_hash_table_set "(hash-table-set! table key value) sets the value associated with key (a string or symbol) in the hash table to value"
-  const char *name;
+
   char intbuf[HASHED_INTEGER_BUFFER_SIZE];
   s7_pointer table, key;
 
@@ -12940,27 +12942,47 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
   if (!s7_is_hash_table(table))
     return(s7_wrong_type_arg_error(sc, "hash-table-set!", 1, table, "a hash-table"));
 
-  if (s7_is_string(key))
-    name = string_value(key);
-  else 
-    {
-      if (s7_is_symbol(key))
-	name = s7_symbol_name(key);
-      else
-	{
-	  if (s7_is_integer(key))
-	    name = hashed_integer_name(s7_integer(key), intbuf);
-	  else
-	    {
-	      if ((s7_is_real(key)) && (!s7_is_ratio(key)))
-		name = hashed_real_name(s7_real(key), intbuf);
-	      else return(s7_wrong_type_arg_error(sc, "hash-table-set! key,", 2, key, "a string, symbol, integer, or (non-ratio) real"));
-	    }
-	}
-    }
-  
-  return(s7_hash_table_set(sc, table, name, caddr(args)));
+  return(s7_hash_table_set(sc, table, hashed_name(sc, key, intbuf), caddr(args)));
 }
+
+
+static s7_pointer hash_list_copy(s7_scheme *sc, s7_pointer obj)
+{
+  if (is_pair(obj))
+    return(s7_cons(sc, s7_copy(sc, car(obj)), hash_list_copy(sc, cdr(obj))));
+  return(obj);
+}
+
+
+static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash)
+{
+  /* this has to copy not only the lists but the cons's in the lists! */
+  s7_Int i, len;
+  s7_pointer new_hash;
+  s7_pointer *old_lists, *new_lists;
+
+  len = vector_length(old_hash);
+  new_hash = s7_make_hash_table(sc, len);
+  old_lists = vector_elements(old_hash);
+  new_lists = vector_elements(new_hash);
+
+  for (i = 0; i < len; i++)
+    if (old_lists[i] != sc->NIL)
+      new_lists[i] = hash_list_copy(sc, old_lists[i]);
+
+  return(new_hash);
+}
+
+
+static s7_pointer hash_table_clear(s7_scheme *sc, s7_pointer table)
+{
+  int i, len;
+  len = vector_length(table);
+  for (i = 0; i < len; i++)
+    vector_element(table, i) = sc->NIL;
+  return(table);
+}
+
 
 
 
@@ -14522,12 +14544,14 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
     case T_C_OBJECT:
       return(object_copy(sc, obj));
 
-    case T_HASH_TABLE:
+    case T_HASH_TABLE:              /* this has to copy nearly everything */
+      return(hash_table_copy(sc, obj));
+      
     case T_VECTOR:
-      return(vector_copy(sc, obj));
+      return(vector_copy(sc, obj)); /* "shallow" copy */
 
     case T_PAIR:
-      return(list_copy(sc, obj)); /* should vector/list copy the objects as well as the container? */
+      return(list_copy(sc, obj));   /* should vector/list copy the objects as well as the container? */
     }
   return(obj);
 }
@@ -14570,6 +14594,10 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
       return(g_string_fill(sc, args));
 
     case T_HASH_TABLE:
+      if (cadr(args) != sc->NIL)
+	return(s7_wrong_type_arg_error(sc, "copy hash-table value,", 2, cadr(args), "nil"));
+      return(hash_table_clear(sc, car(args)));
+
     case T_VECTOR:
       return(g_vector_fill(sc, args));
 

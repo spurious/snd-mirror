@@ -4136,22 +4136,48 @@
       (test (make-vector '1 2 3) 'error)
 
       (test (equal? (make-vector 10 '()) (make-hash-table 10)) #f)
+
+      (test (equal? #2d((1 2) (3 4)) (copy #2d((1 2) (3 4)))) #t)
+      (test (equal? #3d() #3d(((())))) #f)
+      (test (equal? #3d() #3d()) #t)
+      (test (equal? #3d() #2d()) #f)
+      (test (equal? #3d() (copy #3d())) #t)
+      (test (equal? #2d((1) (2)) #2d((1) (3))) #f)
+      (test (equal? #2d((1) (2)) (copy #2d((1) (2)))) #t)
+      (let ((v1 (make-vector '(3 2 1) #f))
+	    (v2 (make-vector '(3 2 1) #f)))
+	(test (equal? v1 v2) #t)
+	(set! (v2 0 0 0) 1)
+	(test (equal? v1 v2) #f))
+      (test (equal? (make-vector '(3 2 1) #f) (make-vector '(1 2 3) #f)) #f)
+
+      (test (map (lambda (n) n) #2d((1 2) (3 4))) '(1 2 3 4))
+      (test (let ((vals '())) (for-each (lambda (n) (set! vals (cons n vals))) #2d((1 2) (3 4))) vals) '(4 3 2 1))
+      (test (map (lambda (x y) (+ x y)) #2d((1 2) (3 4)) #1d(4 3 2 1)) '(5 5 5 5))
+      (test (let ((vals '())) (for-each (lambda (x y) (set! vals (cons (+ x y) vals))) #2d((1 2) (3 4)) #1d(4 3 2 1)) vals) '(5 5 5 5))
       ))
 
 
 
 ;;; -------- circular structures --------
 
-;;; TODO: fill out the circular list/vector tests
-;;; reverse? copy? map? for-each? 
-;;; TODO: at least clist-equal? should be the default in C
-;;;   copy-list is shallow but follows cdr, so it will break (also there are 2 list copiers in s7.c?)
+;;; TODO: at least clist-equal? and cvects-equal? should be the default in C
+;;;   (also there are 2 list copiers in s7.c?)
 ;;;   copy vector is just memcpy so it should not be a problem
-;;;   list->vector checks for (issues error for) circular list
 ;;;   equal? cvects dies horribly
 ;;;   equal? clists hangs
 ;;;
-;;; unchecked: list->string sort! copy reverse!
+;;; unchecked: sort! (with cvect) reverse!
+;;;   :(let ((l1 (list 1 2))) (list-set! l1 0 l1) (list->vector l1))
+;;;   #(#1=(#1# 2) 2)
+;;;
+;;; map and for-each are like do -- circles might be intentional
+;;; what would it mean to reverse a circular list?
+;;;
+;;; for vector print/equal? we could start under the assumption of no embedded structs,
+;;;   then if any encountered, take all the needed stats.  To do that in list print/equal
+;;;   would require carrying the list head along -- not too bad.
+
 
 (define (clist-equal? x y)
   (define (clist-equal-1? x y x1 y1 choice)
@@ -4255,6 +4281,32 @@
 	  (if (eq? fast slow)
 	      (set! fast '()))))))
 
+(define (copy-clist lst)
+  (define (copy-clist-1 fast slow step)
+    (if (or (not (pair? fast))
+	    (eq? fast slow))
+	fast
+	(cons (car fast) (copy-clist-1 (cdr fast) (if step (cdr slow) slow) (not step)))))
+  (if (not (pair? lst))
+      lst
+      (cons (car lst) (copy-clist-1 (cdr lst) lst #t))))
+
+(define (reverse-clist lst)
+  (if (null? lst)
+      '()
+      (let ((nlst (list (car lst)))
+	    (slow lst))
+	(do ((l (cdr lst) (cdr l))
+	     (step #f (not step)))
+	    ((or (not (pair? l))
+		 (eq? slow l))
+	     (if (null? l)
+		 nlst
+		 (cons l nlst))) ; perhaps throw an error here
+	  (set! nlst (cons (car l) nlst))
+	  (if step (set! slow (cdr slow)))))))
+
+
 (define (cvects-equal? v1 v2) ; assume 1-D for now
   ;; here the vect|list|hash-as-element might contain one of the current vects, or a circle might be formed somehow
 
@@ -4330,6 +4382,7 @@
   (test (clist-length lst1) 2)
   (list-set! lst1 0 lst1)
   (test (clist-length lst1) 2) ; its car is a circular list, but it isn't
+  (test (list->string lst1) 'error)
   (let ((lst2 (list 1 2)))
     (set-car! lst2 lst2)
     (test (clist-equal? lst1 lst2) #t)
@@ -4378,9 +4431,29 @@
   (test (object->string lst1) "#1=(1 #1# 3)"))
 
 
+(test (copy-clist (list 1 2 (list 3 4))) '(1 2 (3 4)))
+(test (copy-clist (cons 1 2)) '(1 . 2))
+(test (copy-clist '(1 2 (3 4) . 5)) '(1 2 (3 4) . 5))
+(test (copy-clist '()) '())
+
+(test (object->string (let ((l1 (list 0 1))) (set! (l1 1) l1) (copy-clist l1))) "(0 #1=(0 #1#))")
+;; has the same effect but won't be equal?
+;; (let ((l1 (list 0 1))) (set! (l1 1) l1) (clist-equal? l1 (copy-clist l1)))
+
+(test (reverse-clist '(1 2 (3 4))) '((3 4) 2 1))
+(test (reverse-clist '(1 2 3)) '(3 2 1))
+(test (reverse-clist '()) '())
+(test (let ((lst (list 1 2 3))) (set! (lst 2) lst) (object->string (reverse-clist lst))) "(#1=(1 2 #1#) 2 1)")
+(test (reverse-clist (cons 1 2)) (list 2 1)) ; is this a good idea?
+(test (let ((l1 (cons 1 '()))) (set-cdr! l1 l1) (object->string (reverse-clist l1))) "(#1=(1 #1#) 1)")
+;; as in copy-clist this isn't equal, but it has the same effect
+
+
+
 ;; (let ((l (list 1 2 3))) (list-set! l 1 (cdr l)) l) but (let ((l (list 1 2 3))) (list-set! l 1 (cddr l)) l)
 
 ;; mutually recursive lists, chains, etc
+;; multivectors
 
 ;;; vectors
 
@@ -4429,6 +4502,10 @@
   (set! (v1 0) v1)
   (test (object->string v1) "#1=#(#1#)"))
 
+(let ((l1 (cons 0 '()))) 
+  (set-cdr! l1 l1) 
+  (test (list->vector l1) 'error))
+
 #|
 (let ((lst (list "nothing" "can" "go" "wrong")))
   (let ((slst (cddr lst)))
@@ -4451,7 +4528,18 @@
 
   (cfunc))
 
-;; could you implement goto's with circular lists?
+;; for goto, we don't want a circle (so the syntax isn't right):
+(define (jumper)
+  (begin
+    (display "start")
+    (if (> 3 1) (go :end))
+    (display "oops")
+    end:
+    (display "done!")))
+
+;; if we see go with a known key (saved automatically in the current env with its cdr), jump to that 
+;;    else error I guess -- computed goto if we eval the arg
+;;    at read time, if key seen as separate statement, add it to the func's env with its cdr
 |#
 
 (test (let ((l (list 1 2))) 
@@ -4489,7 +4577,7 @@
 (test (let ((h1 (make-hash-table 11))
 	    (old-print-length *vector-print-length*))
 	(set! *vector-print-length* 32)
-	(hash-table-set! h1 'hi h1)
+	(hash-table-set! h1 "hi" h1)
 	(let ((result (object->string h1)))
 	  (set! *vector-print-length* old-print-length)
 	  (let ((val (string=? result "#1=#(() () () () ((\"hi\" . #1#)) () () () () () ())")))
@@ -4504,8 +4592,21 @@
 	     (v2 (vector l1 v1 l2)))
 	(vector-set! v1 0 v2)
 	(list-set! l1 1 l2)
-	(string=? (object->string v2) "#2=#(#1=(1 (1 #1# 2)) #(#2# 2) #3#)"))
+	(string=? (object->string v2) "#2=#(#1=(1 (1 #1# 2)) #(#2# 2) #3#)")) 
+      ;; actually this should be "#2=#(#1=(1 #3=(1 #1# 2)) #(#2# 2) #3#)" 
+      ;;   but that requires a 2-pass algorithm
       #t)
+
+#|
+;; similar problem but simpler:
+(let ((l1 (list 1 2))
+      (l2 (list 1 2)))
+  (set! (car l1) l2)
+  (set! (car l2) l1)
+  (list l1 l2))
+;; (#1=((#1# 2) 2) #2#)
+;; should be (#1=(#2=(#1# 2) 2) #2#)
+|#
 
 (test (let* ((l1 (list 1 2)) 
 	     (l2 (list 3 4)) 
@@ -4538,7 +4639,20 @@
   (test (let () (hash-table-set! ht 3.14 "hi") (hash-table-ref ht 3.14)) "hi")
   (test (let () (hash-table-set! ht our-pi "hiho") (hash-table-ref ht our-pi)) "hiho")
   (test (hash-table-ref ht "123") #f)
-
+  (let ((ht1 (copy ht)))
+    (test (hash-table? ht1) #t)
+    (test (= (length ht) (length ht1)) #t)
+    (test (equal? ht ht1) #t)
+    (set! (ht 'key) 32)
+    (set! (ht1 'key) 123)
+    (test (and (= (ht 'key) 32) (= (ht1 'key) 123)) #t)
+    (set! (ht "key") 321)
+    (test (ht "key") 321)
+    (test (ht 'key) 32)
+    (set! (ht 123) 43)
+    (set! (ht "123") 45)
+    (test (ht 123) 43)
+    (test (ht "123") 45))
   (test (let () (set! (hash-table-ref ht 'key) 32) (hash-table-ref ht 'key)) 32)
 
   (for-each
@@ -4575,7 +4689,7 @@
   (hash-table-set! ht 'key 3/4)
   (hash-table-set! ht "key" "hi")
   (test (hash-table-ref ht "key") "hi")
-  (test (hash-table-ref ht 'key) "hi")
+  (test (hash-table-ref ht 'key) 3/4)
   
   (hash-table-set! ht 'asd 'hiho)
   (test (hash-table-ref ht 'asd) 'hiho)
@@ -4615,7 +4729,15 @@
   (test (hash-table-set!) 'error)
   (test (hash-table-set! ht) 'error)
   (test (hash-table-set! ht #\a) 'error)
-  (test (hash-table-set! ht #\a #\b #\c) 'error))
+  (test (hash-table-set! ht #\a #\b #\c) 'error)
+  (test (fill! ht 123) 'error)
+  (set! (ht 'key) 32)
+  (test (ht 'key) 32)
+  (set! (ht :key) 123)
+  (test (ht 'key) 32)
+  (test (ht :key) 123)
+  (fill! ht '())
+  (test (ht 'key) #f))
 
 (let ((ht (make-hash-table)))
   (test (hash-table-set! ht #\a 'key) 'error)
@@ -11514,6 +11636,9 @@
 (test (copy (+)) 0)
 (test (copy +) +)
 (test (copy (#(#() #()) 1)) #())
+(test (copy #f) #f)
+(test (copy '()) '())
+
 
 (if (not (provided? 'gmp))
     (let ((r1 (make-random-state 1234)))
@@ -12950,12 +13075,10 @@
 	(define list-length length)
 	(define* (cl-make-list size (initial-element '())) (make-list size initial-element))
 
-	(define (copy-list lis) ; need to handle dotted lists too
-	  (if (null? list)
-	      '()
-	      (if (not (pair? lis))
-		  lis
-		  (cons (car lis) (copy-list (cdr lis))))))
+	(define (copy-list lis) 
+	  (if (not (pair? lis))
+	      lis
+	      (cons (car lis) (copy-list (cdr lis)))))
 
 	(define (rplaca x y) (set-car! x y) x)
 	(define (rplacd x y) (set-cdr! x y) x)
