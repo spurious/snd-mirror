@@ -4143,7 +4143,15 @@
 ;;; -------- circular structures --------
 
 ;;; TODO: fill out the circular list/vector tests
-;;; reverse? copy? map? for-each? print-list
+;;; reverse? copy? map? for-each? 
+;;; TODO: at least clist-equal? should be the default in C
+;;;   copy-list is shallow but follows cdr, so it will break (also there are 2 list copiers in s7.c?)
+;;;   copy vector is just memcpy so it should not be a problem
+;;;   list->vector checks for (issues error for) circular list
+;;;   equal? cvects dies horribly
+;;;   equal? clists hangs
+;;;
+;;; unchecked: list->string sort! copy reverse!
 
 (define (clist-equal? x y)
   (define (clist-equal-1? x y x1 y1 choice)
@@ -4153,7 +4161,7 @@
 	    #f
 	    (if (= choice 2)
 		(if (not (pair? x1))
-		    #t ; this is the slow guy, so the fast one must have already check equality here and returned #t
+		    #t ; this is the slow guy, so the fast one must have already checked equality here and returned #t
 		    (and (pair? y1)
 			 (clist-equal-1? x y (car x1) (car y1) 0)
 			 (clist-equal-1? x y (cdr x1) (cdr y1) 0)))
@@ -4247,7 +4255,58 @@
 	  (if (eq? fast slow)
 	      (set! fast '()))))))
 
+(define (cvects-equal? v1 v2) ; assume 1-D for now
+  ;; here the vect|list|hash-as-element might contain one of the current vects, or a circle might be formed somehow
+
+  (define (cvects-equal-1? v1 v2 len vects)
+    (call-with-exit
+     (lambda (return)
+       (do ((i 0 (+ i 1)))
+	   ((= i len) #t)
+	 (let ((e1 (v1 i))
+	       (e2 (v2 i)))
+
+	   (if (or (vector? e1) (pair? e1) (hash-table? e1)) 
+	       (begin
+		 (if (or (memq e1 vects)
+			 (memq e2 vects))
+		     (if (not (eq? e1 e2)) ; a bit draconian
+			 (return #f))
+		     (begin                ; not in our list, so take a chance
+		       (if (vector? e1)
+			   (if (or (not (vector? e2))
+				   (not (= (vector-length e1) (vector-length e2)))
+				   (not (cvects-equal-1? e1 e2 (vector-length e1) vects)))
+			       (return #f))
+			   (if (pair? e1)
+			       (if (or (not (pair? e2))
+				       (not (clist-equal? e1 e2)))
+				   (return #f))
+			       (if (not (equal? e1 e2)) ; hash...
+				   (return #f))))
+		       (set! vects (cons e1 vects))
+		       (if (not (eq? e1 e2))
+			   (set! vects (cons e2 vects))))))
+
+	       (if (not (equal? e1 e2))
+		   (return #f))))))))
+
+  (let ((len (vector-length v1)))
+    (and (= len (vector-length v2))
+	 (cvects-equal-1? v1 v2 len (list v1 v2)))))
+
+
   
+(let ((x (list 1 2)))
+  (test (clist-equal? x x) #t)
+  (test (clist-equal? x (cdr x)) #f)
+  (test (clist-equal? x '()) #f))
+(let ((x (list 1 (list 2 3) (list (list 4 (list 5)))))
+      (y (list 1 (list 2 3) (list (list 4 (list 5))))))
+  (test (clist-equal? x y) #t))
+(let ((x (list 1 (list 2 3) (list (list 4 (list 5)))))
+      (y (list 1 (list 2 3) (list (list 4 (list 5) 6)))))
+  (test (clist-equal? x y) #f))
 
 (test (clist-length '()) 0)
 (test (clist-length (cons 1 2)) -1)
@@ -4316,23 +4375,41 @@
 
 (let ((lst1 (list 1 2 3)))
   (list-set! lst1 1 lst1)
-  (object->string lst1))
+  (test (object->string lst1) "#1=(1 #1# 3)"))
+
 
 ;; (let ((l (list 1 2 3))) (list-set! l 1 (cdr l)) l) but (let ((l (list 1 2 3))) (list-set! l 1 (cddr l)) l)
 
-#|
+;; mutually recursive lists, chains, etc
+
 ;;; vectors
+
+(test (cvects-equal? (vector 0) (vector 0)) #t)
+(test (cvects-equal? (vector 0 #\a "hi" (list 1 2 3)) (vector 0 #\a "hi" (list 1 2 3))) #t)
+(test (let ((v (vector 0))) (cvects-equal? (vector v) (vector v))) #t)
+
 (let ((v1 (make-vector 1 0)))
   (set! (v1 0) v1)
+  (test (vector? v1) #t)
   (let ((v2 (vector 0)))
     (vector-set! v2 0 v2)
-    (equal? v1 v2)))
+    (test (vector-length v1) 1)
+    (test (cvects-equal? v1 v2) #f)
+    (test (cvects-equal? (vector-ref v1 0) v1) #t)
+    (test (clist-equal? (vector->list v1) (list v1)) #t)
+    (vector-fill! v1 0)
+    (test (equal? v1 (vector 0)) #t)
+    (let ((v3 (copy v2)))
+      (test (cvects-equal? v2 v3) #t)
+      (vector-set! v3 0 0)
+      (test (equal? v3 (vector 0)) #t))
+    ))
 
 (let ((v1 (make-vector 1 0))
       (v2 (vector 0)))
   (set! (v1 0) v2)
   (set! (v2 0) v1)
-  (equal? lst1 lst2))
+  (test (cvects-equal? v1 v2) #f)) ; ?? 
 
 (let* ((l1 (list 1 2))
        (v1 (vector 1 2))
@@ -4340,8 +4417,19 @@
        (v2 (vector l1 v1 l2)))
   (vector-set! v1 0 v2)
   (list-set! l1 1 l2)
-  (equal? v1 v2)) ; #f I think
+  (test (cvects-equal? v1 v2) #f))
 
+(let ((v1 (make-vector 1 0)))
+  (set! (v1 0) v1)
+  (let ((v2 (vector 0)))
+    (vector-set! v2 0 v2)
+    (test (cvects-equal? v1 v2) #f)))
+
+(let ((v1 (make-vector 1 0)))
+  (set! (v1 0) v1)
+  (test (object->string v1) "#1=#(#1#)"))
+
+#|
 (let ((lst (list "nothing" "can" "go" "wrong")))
   (let ((slst (cddr lst)))
     (set! (cdr (cdddr lst)) slst)
@@ -4365,6 +4453,73 @@
 
 ;; could you implement goto's with circular lists?
 |#
+
+(test (let ((l (list 1 2))) 
+	(list-set! l 0 l) 
+	(string=? (object->string l) "#1=(#1# 2)")) 
+      #t)
+(test (let ((lst (cons 1 2))) 
+	(set-cdr! lst lst)
+	(string=? (object->string lst) "#1=(1 #1#)")) ; not dotted because we replaced the cdr with a list
+      #t)
+(test (let ((lst (cons 1 2))) 
+	(set-car! lst lst)
+	(string=? (object->string lst) "#1=(#1# . 2)"))
+      #t)
+(test (let ((lst (cons (cons 1 2) 3))) 
+	(set-car! (car lst) lst)
+	(string=? (object->string lst) "#1=((#1# . 2) . 3)"))
+      #t)
+(test (let ((v (vector 1 2))) 
+	(vector-set! v 0 v) 
+	(string=? (object->string v) "#1=#(#1# 2)")) 
+      #t)
+(test (let* ((l1 (list 1 2)) (l2 (list l1))) 
+	(list-set! l1 0 l1) 
+	(string=? (object->string l2) "(#1=(#1# 2))")) 
+      #t)
+(test (let* ((v1 (vector 1 2)) (v2 (vector v1))) 
+	(vector-set! v1 1 v1) 
+	(string=? (object->string v2) "#(#1=#(1 #1#))")) 
+      #t)
+(test (let ((v1 (make-vector 3 1))) 
+	(vector-set! v1 0 (cons 3 v1)) 
+	(string=? (object->string v1) "#1=#((3 . #1#) 1 1)")) 
+      #t)
+(test (let ((h1 (make-hash-table 11))
+	    (old-print-length *vector-print-length*))
+	(set! *vector-print-length* 32)
+	(hash-table-set! h1 'hi h1)
+	(let ((result (object->string h1)))
+	  (set! *vector-print-length* old-print-length)
+	  (let ((val (string=? result "#1=#(() () () () ((\"hi\" . #1#)) () () () () () ())")))
+	    (if (not val)
+		(format #t ";hash display:~%  ~A~%" (object->string h1)))
+	    val)))
+      #t)
+
+(test (let* ((l1 (list 1 2))
+	     (v1 (vector 1 2))
+	     (l2 (list 1 l1 2))
+	     (v2 (vector l1 v1 l2)))
+	(vector-set! v1 0 v2)
+	(list-set! l1 1 l2)
+	(string=? (object->string v2) "#2=#(#1=(1 (1 #1# 2)) #(#2# 2) #3#)"))
+      #t)
+
+(test (let* ((l1 (list 1 2)) 
+	     (l2 (list 3 4)) 
+	     (l3 (list 5 l1 6 l2 7))) 
+	(set! (cdr (cdr l1)) l1) 
+	(set! (cdr (cdr l2)) l2)
+	(string=? (object->string l3) "(5 #1=(1 2 #1#) 6 #2=(3 4 #2#) 7)"))
+      #t)
+(test (let* ((lst1 (list 1 2))
+	     (lst2 (list (list (list 1 (list (list (list 2 (list (list (list 3 (list (list (list 4 lst1 5))))))))))))))
+	(set! (cdr (cdr lst1)) lst1)
+	(string=? (object->string lst2) "(((1 (((2 (((3 (((4 #1=(1 2 #1#) 5))))))))))))"))
+      #t)
+
 
 
 
@@ -5774,59 +5929,6 @@
 (test (string=? (object->string (cons 1 2)) "(1 . 2)") #t)
 (test (string=? (object->string '#(1 2 3)) "#(1 2 3)") #t)
 (test (string=? (object->string +) "+") #t)
-
-(test (let ((l (list 1 2))) 
-	(list-set! l 0 l) 
-	(string=? (object->string l) "(#1# 2)")) 
-      #t)
-(test (let ((lst (cons 1 2))) 
-	(set-cdr! lst lst)
-	(string=? (object->string lst) "(1 #1#)")) ; not dotted because we replaced the cdr with a list
-      #t)
-(test (let ((lst (cons 1 2))) 
-	(set-car! lst lst)
-	(string=? (object->string lst) "(#1# . 2)"))
-      #t)
-(test (let ((lst (cons (cons 1 2) 3))) 
-	(set-car! (car lst) lst)
-	(string=? (object->string lst) "((#1# . 2) . 3)"))
-      #t)
-(test (let ((v (vector 1 2))) 
-	(vector-set! v 0 v) 
-	(string=? (object->string v) "#(#1# 2)")) 
-      #t)
-(test (let* ((l1 (list 1 2)) (l2 (list l1))) 
-	(list-set! l1 0 l1) 
-	(string=? (object->string l2) "((#1# 2))")) 
-      #t)
-(test (let* ((v1 (vector 1 2)) (v2 (vector v1))) 
-	(vector-set! v1 1 v1) 
-	(string=? (object->string v2) "#(#(1 #1#))")) 
-      #t)
-(test (let ((v1 (make-vector 3 1))) 
-	(vector-set! v1 0 (cons 3 v1)) 
-	(string=? (object->string v1) "#((3 . #1#) 1 1)")) 
-      #t)
-(test (let ((h1 (make-hash-table 11))
-	    (old-print-length *vector-print-length*))
-	(set! *vector-print-length* 32)
-	(hash-table-set! h1 'hi h1)
-	(let ((result (object->string h1)))
-	  (set! *vector-print-length* old-print-length)
-	  (let ((val (string=? result "#(() () () () ((\"hi\" . #1#)) () () () () () ())")))
-	    (if (not val)
-		(format #t ";hash display:~%  ~A~%  ~A~%" (object->string h1) "#(() () () () ((\"hi\" . #1#)) () () () () () ())"))
-	    val)))
-      #t)
-
-(test (let* ((l1 (list 1 2))
-	     (v1 (vector 1 2))
-	     (l2 (list 1 l1 2))
-	     (v2 (vector l1 v1 l2)))
-	(vector-set! v1 0 v2)
-	(list-set! l1 1 l2)
-	(string=? (object->string v2) "#((1 (1 #1# 2)) #(#2# 2) #3#)"))
-      #t)
 
 
 

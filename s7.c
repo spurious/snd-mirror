@@ -10238,6 +10238,16 @@ static int find_circular_ref(circle_info *ci, s7_pointer p)
 }
 
 
+static int circular_ref(circle_info *ci, s7_pointer p)
+{
+  int i;
+  for (i = 0; i < ci->top; i++)
+    if (ci->objs[i] == p)
+      return(ci->refs[i]);
+  return(-1);
+}
+
+
 static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, circle_info *ci);
 static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, circle_info *ci);
 
@@ -10258,7 +10268,7 @@ static char *object_to_c_string_with_circle_check(s7_scheme *sc, s7_pointer vr, 
 {
   int ref;
   ref = find_circular_ref(ci, vr);
-  if (ref >= 0)
+  if (ref > 0)
     {
       char *name;
       name = (char *)calloc(32, sizeof(char));
@@ -10271,7 +10281,7 @@ static char *object_to_c_string_with_circle_check(s7_scheme *sc, s7_pointer vr, 
 
 static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, circle_info *ci)
 {
-  s7_Int i, len, bufsize = 0;
+  s7_Int i, len, bufsize = 0, ref;
   bool too_long = false;
   char **elements = NULL;
   char *buf;
@@ -10343,7 +10353,11 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, ci
 
 #endif
 
-  snprintf(buf, bufsize, "#(");
+  ref = circular_ref(ci, vect);
+  if (ref > 0)
+    snprintf(buf, bufsize, "#%d=#(", ref);
+  else snprintf(buf, bufsize, "#(");
+
   for (i = 0; i < len - 1; i++)
     {
       if (elements[i])
@@ -10420,6 +10434,7 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, circle_info *ci)
     }
 
   add_circle_info(ci, lst);
+
   elements = (char **)malloc((len + ((circular) ? 1 : 0)) * sizeof(char *));
   for (x = lst, i = 0; is_pair(x) && (i < len); i++, x = cdr(x))
     {
@@ -10438,11 +10453,15 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, circle_info *ci)
   bufsize += (ci->top * 16);
   buf = (char *)malloc(bufsize * sizeof(char));
   
-  /* TODO: insert #1(...) or #[...] etc, also in vector printout 
-   */
+  /* ((let ((lst (list 1 2 3))) (set! (lst 2) lst) lst) -> "#1#(1 2 #1#)" */
+  /* (let* ((l1 (list 1 2)) (l2 (list 3 4)) (l3 (list 5 l1 6 l2 7))) (set! (cdr (cdr l1)) l1) (set! (cdr (cdr l2)) l2) l3) -> "(5 #1#(1 2 #1#) 6 #2#(3 4 #2#) 7)" */
 
-  sprintf(buf, "(");
-  for (i = 0, x = lst; i < len - 1; i++, x = cdr(x))
+  ref = circular_ref(ci, lst);
+  if (ref > 0)
+    snprintf(buf, bufsize, "#%d=(", ref);
+  else sprintf(buf, "(");
+
+  for (i = 0; i < len - 1; i++)
     {
       if (elements[i])
 	{
@@ -10465,6 +10484,9 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, circle_info *ci)
   return(buf);
 }
 
+/* TODO: the reader should catch #n#, keep a table of these and the pointers, if a
+ *   known n is seen again, plug it in at that point.
+ */
 
 static s7_pointer list_to_string(s7_scheme *sc, s7_pointer lst)
 {
@@ -12194,6 +12216,7 @@ static bool vectors_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
     }
 #endif
 
+  /* TODO: vectors_equal will core-up and die if passed a circular vector */
   for (i = 0; i < len; i++)
     if (!(s7_is_equal(sc, vector_element(x, i), vector_element(y, i))))
       return(false);
@@ -14480,6 +14503,9 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer list_copy(s7_scheme *sc, s7_pointer obj)
 {
+  /* why is this slightly different from copy_list above? */
+  /*   I think that copy_list will not handle dotted lists correctly, and neither of these handles circular lists */
+
   if (is_pair(obj))
     return(s7_cons(sc, car(obj), list_copy(sc, cdr(obj))));
   return(obj);

@@ -2201,6 +2201,17 @@ more fun than a barrel of monkeys.  Here is a circular function:
 is not only unreadable, but unprintable!
 </p>
 
+<!--
+:(define q (list 1 2 3))
+q
+:(set! (cdr (cddr q)) q)
+#1#(1 2 3 #1#)
+:(set! (car q) 4)
+4
+:(set! q (cdr q))
+#1#(2 3 4 #1#)
+-->
+
 </blockquote>
 </small>
 
