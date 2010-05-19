@@ -10176,6 +10176,11 @@ static int display_multivector(s7_scheme *sc, s7_pointer vec, int out_len, int f
 #endif
 
 
+/* TODO: only keep the circle info if there's a question about circles
+ *       fix the dot and #= bugs in printout
+ *       equal? copy fill! mem* ass* can handle circular lists
+ */
+
 typedef struct {
   s7_pointer *objs;
   int size, top, ref;

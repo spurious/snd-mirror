@@ -489,7 +489,7 @@ argument:
 &gt; ((lambda* ((b 3) :rest x (c 1)) (list b c x)) 1 2 3 4 5)
 (1 3 (2 3 4 5))
 </pre>
-<p>CL would agree with the first case (if we used &key for 'c'), but would give an error in the second.
+<p>CL would agree with the first case (if we used &amp;key for 'c'), but would give an error in the second.
 Of course, the major difference is that s7 keyword arguments don't insist that the key be present.
 The :rest argument is needed in cases like these because we can't use expression
 such as:
@@ -1862,6 +1862,7 @@ it is continuing from the point of the error, but then fails to do so.
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>Floats can occur in any base, so:
+</p>
 <pre>
 &gt; #xf.c
 15.75
