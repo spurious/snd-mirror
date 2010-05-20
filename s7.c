@@ -546,6 +546,7 @@ struct s7_scheme {
   s7_pointer error_port;              /* current-error-port (nil = stderr) */
   s7_pointer error_info;              /* the vector bound to *error-info* */
   s7_pointer sharp_readers;           /* the binding pair for the global *#readers* list */
+  s7_pointer vector_print_length;     /* same for *vector-print-length* */
   
   /* these 6 are pointers so that all thread refs are to the same thing */
   bool *gc_off;                       /* if true, the GC won't run */
@@ -10176,34 +10177,15 @@ static int display_multivector(s7_scheme *sc, s7_pointer vec, int out_len, int f
 #endif
 
 
-/* TODO: only keep the circle info if there's a question about circles
- *       fix the dot and #= bugs in printout
- *       equal? copy fill! mem* ass* can handle circular lists
- */
-
 typedef struct {
   s7_pointer *objs;
   int size, top, ref;
   int *refs;
-} circle_info;
+} shared_info;
 
-#define INITIAL_CIRCLE_INFO_SIZE 4
+#define INITIAL_SHARED_INFO_SIZE 4
 
-
-static circle_info *make_circle_info(int initial_size)
-{
-  circle_info *ci;
-  ci = (circle_info *)calloc(1, sizeof(circle_info));
-  ci->top = 0;
-  ci->ref = 0;
-  ci->size = initial_size;
-  ci->objs = (s7_pointer *)malloc(initial_size * sizeof(s7_pointer));
-  ci->refs = (int *)calloc(initial_size, sizeof(int));   /* finder expects 0 = unseen previously */
-  return(ci);
-}
-
-
-static circle_info *free_circle_info(circle_info *ci)
+static shared_info *free_shared_info(shared_info *ci)
 {
   if (ci)
     {
@@ -10216,59 +10198,131 @@ static circle_info *free_circle_info(circle_info *ci)
 }
 
 
-static void add_circle_info(circle_info *ci, s7_pointer p)
-{
-  if (ci->top == ci->size)
-    {
-      int i;
-      ci->size *= 2;
-      ci->objs = (s7_pointer *)realloc(ci->objs, ci->size * sizeof(s7_pointer));
-      ci->refs = (int *)realloc(ci->refs, ci->size * sizeof(int));
-      for (i = ci->top; i < ci->size; i++) ci->refs[i] = 0;
-    }
-  ci->objs[ci->top++] = p;
-}
-
-
-static int find_circular_ref(circle_info *ci, s7_pointer p)
+static int shared_ref(shared_info *ci, s7_pointer p)
 {
   int i;
   for (i = 0; i < ci->top; i++)
     if (ci->objs[i] == p)
       {
-	if (ci->refs[i] == 0)
-	  ci->refs[i] = ++ci->ref;
-	return(ci->refs[i]);
+	int val;
+	val = ci->refs[i];
+	if (val > 0)
+	  ci->refs[i] = -ci->refs[i];
+	return(val);
       }
-  return(-1);
+  return(0);
 }
 
 
-static int circular_ref(circle_info *ci, s7_pointer p)
+static int peek_shared_ref(shared_info *ci, s7_pointer p)
 {
   int i;
   for (i = 0; i < ci->top; i++)
     if (ci->objs[i] == p)
       return(ci->refs[i]);
-  return(-1);
+  return(0);
 }
 
 
-#if 0
-static circle_info *collect_circle_info(cirle_info *ci, s7_pointer top)
+static bool has_structure(s7_pointer obj)
 {
-  add_circle_info(ci, top);
-  if (is_pair(top))
-
-  if ((is_pair(obj)) || (s7_is_vector(obj)) || (s7_is_hash_table(obj)))    
+  return((is_pair(obj)) || (s7_is_vector(obj)) || (s7_is_hash_table(obj)));
 }
-#endif
 
 
-static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, circle_info *ci);
-static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, circle_info *ci);
+static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_pointer top)
+{
+  int i, ref = -1;
 
-static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_write, bool to_file, circle_info *ci)
+  /* look for top in current list */
+  for (i = 0; i < ci->top; i++)
+    if (ci->objs[i] == top)
+      {
+	if (ci->refs[i] == 0)
+	  ci->refs[i] = ++ci->ref;  /* if found, set the ref number */
+	ref = ci->refs[i];
+	break;
+      }
+
+  if (ref == -1)
+    {
+      /* top not found -- add it to the list */
+      if (ci->top == ci->size)
+	{
+	  int i;
+	  ci->size *= 2;
+	  ci->objs = (s7_pointer *)realloc(ci->objs, ci->size * sizeof(s7_pointer));
+	  ci->refs = (int *)realloc(ci->refs, ci->size * sizeof(int));
+	  for (i = ci->top; i < ci->size; i++) ci->refs[i] = 0;
+	}
+      ci->objs[ci->top++] = top;
+
+      /* now search the rest of this structure */
+      if (is_pair(top))
+	{
+	  if (has_structure(car(top)))
+	    collect_shared_info(sc, ci, car(top));
+	  if (has_structure(cdr(top)))
+	    collect_shared_info(sc, ci, cdr(top));
+	}
+      else
+	{
+	  int i, plen;
+	  plen = s7_integer(symbol_value(sc->vector_print_length));
+	  if (plen > vector_length(top))
+	    plen = vector_length(top);
+	  for (i = 0; i < plen; i++)
+	    if (has_structure(vector_element(top, i)))
+	      collect_shared_info(sc, ci, vector_element(top, i));
+	}
+    }
+  return(ci);
+}
+
+
+static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top)
+{
+  shared_info *ci;
+  int i, refs;
+
+  ci = (shared_info *)calloc(1, sizeof(shared_info));
+  ci->top = 0;
+  ci->ref = 0;
+  ci->size = INITIAL_SHARED_INFO_SIZE;
+  ci->objs = (s7_pointer *)malloc(ci->size * sizeof(s7_pointer));
+  ci->refs = (int *)calloc(ci->size, sizeof(int));   /* finder expects 0 = unseen previously */
+
+  /* collect all pointers associated with top */
+  collect_shared_info(sc, ci, top);
+
+  /* find if any were referenced twice */
+  for (i = 0, refs = 0; i < ci->top; i++)
+    if (ci->refs[i] > 0)
+      {
+	if (i == refs)
+	  refs++;
+	else
+	  {
+	    ci->objs[refs] = ci->objs[i];
+	    ci->refs[refs++] = ci->refs[i];
+	  }
+      }
+  ci->top = refs;
+
+  if (refs == 0)
+    {
+      free_shared_info(ci);
+      return(NULL);
+    }
+  return(ci);
+}
+
+
+
+static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, shared_info *ci);
+static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci);
+
+static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_write, bool to_file, shared_info *ci)
 {
   if ((s7_is_vector(obj)) ||
       (s7_is_hash_table(obj)))
@@ -10281,22 +10335,37 @@ static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_wri
 }
 
 
-static char *object_to_c_string_with_circle_check(s7_scheme *sc, s7_pointer vr, circle_info *ci)
+static char *object_to_c_string_with_circle_check(s7_scheme *sc, s7_pointer vr, bool use_write, bool to_file, shared_info *ci)
 {
-  int ref;
-  ref = find_circular_ref(ci, vr);
-  if (ref > 0)
+  if (ci)
     {
-      char *name;
-      name = (char *)calloc(32, sizeof(char));
-      snprintf(name, 32, "#%d#", ref);
-      return(name);
+      int ref;
+      ref = shared_ref(ci, vr);
+      if (ref != 0)
+	{
+	  char *name;
+	  if (ref > 0)
+	    {
+	      char *element;
+	      element = s7_object_to_c_string_1(sc, vr, true, false, ci);
+	      name = (char *)calloc(strlen(element) + 32, sizeof(char));
+	      sprintf(name, "#%d=%s", ref, element);
+	      free(element);
+	      return(name);
+	    }
+	  else
+	    {
+	      name = (char *)calloc(32, sizeof(char));
+	      snprintf(name, 32, "#%d#", -ref);
+	      return(name);
+	    }
+	}
     }
-  return(s7_object_to_c_string_1(sc, vr, true, false, ci));
+  return(s7_object_to_c_string_1(sc, vr, use_write, to_file, ci));
 }
 
 
-static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, circle_info *ci)
+static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, shared_info *ci)
 {
   s7_Int i, len, bufsize = 0, ref;
   bool too_long = false;
@@ -10330,7 +10399,7 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, ci
        *       (write vect))))
        */
 
-      plen = s7_integer(s7_symbol_value(sc, s7_make_symbol(sc, "*vector-print-length*")));
+      plen = s7_integer(symbol_value(sc->vector_print_length));
       if (plen <= 0)
 	return(copy_string("#(...)"));
 
@@ -10341,12 +10410,10 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, ci
 	}
     }
 
-  add_circle_info(ci, vect);
   elements = (char **)malloc(len * sizeof(char *));
-
   for (i = 0; i < len; i++)
     {
-      elements[i] = object_to_c_string_with_circle_check(sc, vector_element(vect, i), ci);
+      elements[i] = object_to_c_string_with_circle_check(sc, vector_element(vect, i), true, false, ci);
       bufsize += safe_strlen(elements[i]);
     }
 
@@ -10369,11 +10436,7 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, ci
 
 #endif
 
-  ref = circular_ref(ci, vect);
-  if (ref > 0)
-    snprintf(buf, bufsize, "#%d=#(", ref);
-  else snprintf(buf, bufsize, "#(");
-
+  sprintf(buf, "#(");
   for (i = 0; i < len - 1; i++)
     {
       if (elements[i])
@@ -10401,10 +10464,11 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, ci
 static s7_pointer vector_to_string(s7_scheme *sc, s7_pointer vect)
 {
   s7_pointer result;
-  circle_info *ci;
-  ci = make_circle_info(INITIAL_CIRCLE_INFO_SIZE);
-  result = make_string_uncopied(sc, vector_to_c_string(sc, vect, false, ci));
-  free_circle_info(ci);
+  int shared_refs = 0;
+  shared_info *ci = NULL;
+  ci = make_shared_info(sc, vect);
+  result = make_string_uncopied(sc, object_to_c_string_with_circle_check(sc, vect, true, false, ci));
+  if (ci) free_shared_info(ci);
   return(result);
 }
 
@@ -10419,14 +10483,13 @@ static int circular_list_entries(s7_scheme *sc, s7_pointer lst)
       s7_pointer y;
       for (y = lst, j = 0; j < i; y = cdr(y), j++)
 	if (x == y)
-	  return(i);
+	  return(i + 1);
     }
 }
 
 
-static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, circle_info *ci)
+static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci)
 {
-  bool dotted = false, circular = false;
   s7_pointer x;
   int i, len, bufsize = 0, ref;
   char **elements = NULL;
@@ -10434,46 +10497,45 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, circle_info *ci)
 
   len = s7_list_length(sc, lst);
   if (len < 0)                    /* a dotted list -- handle cars, then final cdr */
+    len = (-len + 1);
+  else
     {
-      len = (-len + 1);
-      dotted = true;
-    }
-
-  if (len == 0)                   /* either '() or a circular list */
-    {
-      if (lst != sc->NIL)
+      if (len == 0)               /* either '() or a circular list */
 	{
-	  len = circular_list_entries(sc, lst);
-	  circular = true;
+	  if (lst != sc->NIL)
+	    len = circular_list_entries(sc, lst);
+	  else return(copy_string("()"));
 	}
-      else return(copy_string("()"));
     }
 
-  add_circle_info(ci, lst);
+  elements = (char **)calloc(len, sizeof(char *));
 
-  elements = (char **)malloc((len + ((circular) ? 1 : 0)) * sizeof(char *));
-  for (x = lst, i = 0; is_pair(x) && (i < len); i++, x = cdr(x))
+  for (x = lst, i = 0; (x != sc->NIL) && (i < len); i++, x = cdr(x))
     {
-      elements[i] = object_to_c_string_with_circle_check(sc, car(x), ci);
-      bufsize += safe_strlen(elements[i]);
-    }
-
-  if ((dotted) || (circular))
-    {
-      elements[i] = object_to_c_string_with_circle_check(sc, x, ci);
-      if (circular) len++;
+      if (is_pair(x))
+	{
+	  if ((ci) && (i != 0) && (peek_shared_ref(ci, x) != 0))
+	    {
+	      elements[i] = object_to_c_string_with_circle_check(sc, x, true, false, ci);
+	      len = i + 1;
+	      break;
+	    }
+	  else elements[i] = object_to_c_string_with_circle_check(sc, car(x), true, false, ci);
+	}
+      else 
+	{
+	  elements[i] = object_to_c_string_with_circle_check(sc, x, true, false, ci);
+	  len = i + 1;
+	  break;
+	}
       bufsize += safe_strlen(elements[i]);
     }
   
   bufsize += (256 + len * 2); /* len spaces */
-  bufsize += (ci->top * 16);
+  if (ci) bufsize += (ci->top * 16);
   buf = (char *)malloc(bufsize * sizeof(char));
   
-  ref = circular_ref(ci, lst);
-  if (ref > 0)
-    snprintf(buf, bufsize, "#%d=(", ref);
-  else sprintf(buf, "(");
-
+  sprintf(buf, "(");
   for (i = 0; i < len - 1; i++)
     {
       if (elements[i])
@@ -10483,7 +10545,9 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, circle_info *ci)
 	}
     }
 
-  if (dotted) strcat(buf, ". ");
+  if (x != sc->NIL)
+    strcat(buf, ". ");
+
   if (elements[len - 1])
     {
       strcat(buf, elements[len - 1]);
@@ -10498,13 +10562,14 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, circle_info *ci)
 }
 
 
-static s7_pointer list_to_string(s7_scheme *sc, s7_pointer lst)
+static s7_pointer list_as_string(s7_scheme *sc, s7_pointer lst)
 {
   s7_pointer result;
-  circle_info *ci;
-  ci = make_circle_info(INITIAL_CIRCLE_INFO_SIZE);
-  result = make_string_uncopied(sc, list_to_c_string(sc, lst, ci));
-  free_circle_info(ci);
+  int shared_refs = 0;
+  shared_info *ci;
+  ci = make_shared_info(sc, lst);
+  result = make_string_uncopied(sc, object_to_c_string_with_circle_check(sc, lst, true, false, ci));
+  if (ci) free_shared_info(ci);
   return(result);
 }
 
@@ -10512,11 +10577,11 @@ static s7_pointer list_to_string(s7_scheme *sc, s7_pointer lst)
 char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj)
 {
   char *result;
-  circle_info *ci = NULL;
-  if ((is_pair(obj)) || (s7_is_vector(obj)) || (s7_is_hash_table(obj)))
-    ci = make_circle_info(INITIAL_CIRCLE_INFO_SIZE);
-  result = s7_object_to_c_string_1(sc, obj, true, false, ci);
-  if (ci) free_circle_info(ci);
+  shared_info *ci = NULL;
+  if (has_structure(obj))
+    ci = make_shared_info(sc, obj);
+  result = object_to_c_string_with_circle_check(sc, obj, true, false, ci);
+  if (ci) free_shared_info(ci);
   return(result);
 }
 
@@ -10528,7 +10593,7 @@ s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj)
     return(vector_to_string(sc, obj));
 
   if (is_pair(obj))
-    return(list_to_string(sc, obj));
+    return(list_as_string(sc, obj));
 
   return(make_string_uncopied(sc, atom_to_c_string(sc, obj, true)));
 }
@@ -10591,12 +10656,12 @@ static s7_pointer g_write_char(s7_scheme *sc, s7_pointer args)
 static void write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool use_write)
 {
   char *val;
-  circle_info *ci = NULL;
-  if ((is_pair(obj)) || (s7_is_vector(obj)) || (s7_is_hash_table(obj)))
-    ci = make_circle_info(INITIAL_CIRCLE_INFO_SIZE);
-  val = s7_object_to_c_string_1(sc, obj, use_write, is_file_port(port), ci);
+  shared_info *ci = NULL;
+  if (has_structure(obj))
+    ci = make_shared_info(sc, obj);
+  val = object_to_c_string_with_circle_check(sc, obj, use_write, is_file_port(port), ci);
   write_string(sc, val, port);
-  if (ci) free_circle_info(ci);
+  if (ci) free_shared_info(ci);
   if (val) free(val);
 }
 
@@ -11276,7 +11341,7 @@ static s7_pointer g_list_tail(s7_scheme *sc, s7_pointer args)
   if (index < 0)
     return(s7_out_of_range_error(sc, "list-tail index,", 2, cadr(args), "should be non-negative"));
   
-  for (i = 0, p = car(args); (i < index) && is_pair(p); i++, p = cdr(p)) {}
+  for (i = 0, p = car(args); (i < index) && (is_pair(p)); i++, p = cdr(p)) {}
   
   if (i < index)
     return(s7_out_of_range_error(sc, "list-tail", 2, cadr(args), "index should be less than list length"));
@@ -14908,7 +14973,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		case 'C': case 'c':
 		case 'S': case 's':
 		  {
-		    circle_info *ci = NULL;
+		    shared_info *ci = NULL;
 		    s7_pointer obj;
 
 		    /* slib suggests num arg to ~A and ~S to truncate: ~20A sends only (up to) 20 chars of object->string result,
@@ -14924,10 +14989,10 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			(!s7_is_character(obj)))
 		      return(format_error(sc, "'C' directive requires a character argument", str, args, fdat));
 
-		    if ((is_pair(obj)) || (s7_is_vector(obj)) || (s7_is_hash_table(obj)))
-		      ci = make_circle_info(INITIAL_CIRCLE_INFO_SIZE);
-		    tmp = s7_object_to_c_string_1(sc, obj, (str[i] == 'S') || (str[i] == 's'), false, ci);
-		    if (ci) free_circle_info(ci);
+		    if (has_structure(obj))
+		      ci = make_shared_info(sc, obj);
+		    tmp = object_to_c_string_with_circle_check(sc, obj, (str[i] == 'S') || (str[i] == 's'), false, ci);
+		    if (ci) free_shared_info(ci);
 
 		    format_append_string(fdat, tmp);
 		    if (tmp) free(tmp);
@@ -25110,6 +25175,7 @@ s7_scheme *s7_init(void)
   s7_define_variable(sc, "*features*", sc->NIL);
   s7_define_variable(sc, "*load-path*", sc->NIL);
   s7_define_variable(sc, "*vector-print-length*", small_ints[8]);
+  sc->vector_print_length = symbol_global_slot(s7_make_symbol(sc, "*vector-print-length*"));
   s7_define_variable(sc, "*load-hook*", sc->NIL);
 
   s7_define_variable(sc, "*error-hook*", sc->NIL);

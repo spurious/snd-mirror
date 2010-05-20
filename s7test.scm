@@ -3181,6 +3181,8 @@
 (test (list-tail '(1 2 3 . 4) 3) 4)
 (test (let ((x (list 1 2 3))) (eq? (list-tail x 2) (cddr x))) #t)
 (test (list-tail '() 0) '())
+(test (list-tail '() 1) 'error)
+(test (list-tail '() -1) 'error)
 (test (list-tail (list 1 2) 2) '())
 (test (list-tail (cons 1 2) 0) '(1 . 2))
 (test (list-tail (cons 1 2) 1) 2)
@@ -3212,7 +3214,11 @@
 (test (list-tail (list 1 2) 1+2.0i) 'error)
 (test (list-tail (cons 1 2) 2) 'error)
 (test (list-tail '(1 2 . 3)) 'error)
+(test (list-tail '(1 2 . 3) 1) '(2 . 3))
+(test (list-tail '(1 2 . 3) 0) '(1 2 . 3))
 (test (list-tail (list 1 2 3) (+ 1 (expt 2 32))) 'error)
+(test (list-tail) 'error)
+(test (list-tail '(1)) 'error)
 
 (for-each
  (lambda (arg)
@@ -4210,18 +4216,14 @@
 ;;;
 ;;; safe: memq memv member assq assv assoc (but needs tests)
 ;;;       length -- might add circular-list-length
-;;;       vector-fill! 
-;;;       list->vector list->string
+;;;       vector-fill! vector->list list->vector 
+;;;       object->string list->string
+;;;       list-tail
 ;;;
 ;;; unsafe: equal?
-;;;
-;;; unknown: copy sort! reverse eval apply list-tail append
-;;;          vector->list (list-)fill!
-;;; broken: object->string
-;;;
-;;; not checking: map for-each
-;;;
 ;;; needs check: list /make-list/vector/values etc with circular args
+;;; unknown: copy sort! reverse|! eval apply append (list-)fill!
+;;; not checking: map for-each
 
 ;;; TODO: at least clist-equal? and cvects-equal? should be the default in C
 ;;;   (also there are 2 list copiers in s7.c?)
@@ -4230,16 +4232,9 @@
 ;;;   equal? clists hangs
 ;;;
 ;;; unchecked: sort! (with cvect) reverse!
-;;;   :(let ((l1 (list 1 2))) (list-set! l1 0 l1) (list->vector l1))
-;;;   #(#1=(#1# 2) 2)
 ;;;
 ;;; map and for-each are like do -- circles might be intentional
 ;;; what would it mean to reverse a circular list?
-;;;
-;;; for vector print/equal? we could start under the assumption of no embedded structs,
-;;;   then if any encountered, take all the needed stats.  To do that in list print/equal
-;;;   would require carrying the list head along -- not too bad.
-
 
 (define (clist-equal? x y)
 
@@ -4462,7 +4457,7 @@
 (test (reverse-clist '()) '())
 (test (let ((lst (list 1 2 3))) (set! (lst 2) lst) (object->string (reverse-clist lst))) "(#1=(1 2 #1#) 2 1)")
 (test (reverse-clist (cons 1 2)) (list 2 1)) ; is this a good idea?
-(test (let ((l1 (cons 1 '()))) (set-cdr! l1 l1) (object->string (reverse-clist l1))) "(#1=(1 #1#) 1)")
+(test (let ((l1 (cons 1 '()))) (set-cdr! l1 l1) (object->string (reverse-clist l1))) "(#1=(1 . #1#) 1)")
 ;; as in copy-clist this isn't equal, but it has the same effect
 
 
@@ -4565,7 +4560,7 @@
       #t)
 (test (let ((lst (cons 1 2))) 
 	(set-cdr! lst lst)
-	(string=? (object->string lst) "#1=(1 #1#)")) ; not dotted because we replaced the cdr with a list
+	(string=? (object->string lst) "#1=(1 . #1#)"))
       #t)
 (test (let ((lst (cons 1 2))) 
 	(set-car! lst lst)
@@ -4583,6 +4578,15 @@
 	(list-set! l1 0 l1) 
 	(string=? (object->string l2) "(#1=(#1# 2))")) 
       #t)
+
+(test (let ((lst (list 1 2 3))) (set! (cdr (cdr (cdr lst))) lst) (object->string lst)) "#1=(1 2 3 . #1#)")
+(test (let ((lst (list 1 2 3))) (set! (cdr (cdr (cdr lst))) (cdr lst)) (object->string lst)) "(1 . #1=(2 3 . #1#))")
+(test (let ((lst (list 1 2 3))) (set! (cdr (cdr (cdr lst))) (cdr (cdr lst))) (object->string lst)) "(1 2 . #1=(3 . #1#))")
+(test (let ((lst (list 1 2 3))) (set! (car lst) (cdr lst)) (object->string lst)) "(#1=(2 3) . #1#)")
+(test (let ((lst (list 1 2 3))) (set! (car (cdr lst)) (cdr lst)) (object->string lst)) "(1 . #1=(#1# 3))")
+(test (let ((lst (list 1 2 3))) (set! (car (cdr lst)) lst) (object->string lst)) "#1=(1 #1# 3)")
+(test (let ((l1 (list 1))) (let ((l2 (list l1 l1))) (object->string l2))) "(#1=(1) #1#)")
+
 (test (let* ((v1 (vector 1 2)) (v2 (vector v1))) 
 	(vector-set! v1 1 v1) 
 	(string=? (object->string v2) "#(#1=#(1 #1#))")) 
@@ -4609,33 +4613,27 @@
 	     (v2 (vector l1 v1 l2)))
 	(vector-set! v1 0 v2)
 	(list-set! l1 1 l2)
-	(string=? (object->string v2) "#2=#(#1=(1 (1 #1# 2)) #(#2# 2) #3#)")) 
-      ;; actually this should be "#2=#(#1=(1 #3=(1 #1# 2)) #(#2# 2) #3#)" 
-      ;;   but that requires a 2-pass algorithm
+	(string=? (object->string v2) "#2=#(#1=(1 #3=(1 #1# 2)) #(#2# 2) #3#)"))
       #t)
 
-#|
-;; similar problem but simpler:
-(let ((l1 (list 1 2))
-      (l2 (list 1 2)))
-  (set! (car l1) l2)
-  (set! (car l2) l1)
-  (list l1 l2))
-;; (#1=((#1# 2) 2) #2#)
-;; should be (#1=(#2=(#1# 2) 2) #2#)
-|#
+(test (let ((l1 (list 1 2))
+	    (l2 (list 1 2)))
+	(set! (car l1) l2)
+	(set! (car l2) l1)
+	(object->string (list l1 l2)))
+      "(#1=(#2=(#1# 2) 2) #2#)")
 
 (test (let* ((l1 (list 1 2)) 
 	     (l2 (list 3 4)) 
-	     (l3 (list 5 l1 6 l2 7))) 
+	     (l3 (list 5 l1 6 l2 7)))
 	(set! (cdr (cdr l1)) l1) 
 	(set! (cdr (cdr l2)) l2)
-	(string=? (object->string l3) "(5 #1=(1 2 #1#) 6 #2=(3 4 #2#) 7)"))
+	(string=? (object->string l3) "(5 #1=(1 2 . #1#) 6 #2=(3 4 . #2#) 7)"))
       #t)
 (test (let* ((lst1 (list 1 2))
 	     (lst2 (list (list (list 1 (list (list (list 2 (list (list (list 3 (list (list (list 4 lst1 5))))))))))))))
 	(set! (cdr (cdr lst1)) lst1)
-	(string=? (object->string lst2) "(((1 (((2 (((3 (((4 #1=(1 2 #1#) 5))))))))))))"))
+	(string=? (object->string lst2) "(((1 (((2 (((3 (((4 #1=(1 2 . #1#) 5))))))))))))"))
       #t)
 
 ;;; TODO: do a systematic check of equal? both normal and ab lists
