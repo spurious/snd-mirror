@@ -3248,12 +3248,16 @@
 
 (test (assq 'x (cdr (assq 'a '((b . 32) (a . ((a . 12) (b . 32) (x . 1))) (c . 1))))) '(x . 1))
 
-(test (assq #f '(#f 2 . 3)) 'error)
-(test (assq #f '((#f 2) . 3)) 'error) ; an a-list is a proper list sez kd
-(test (assv 1 '(1 2 . 3)) 'error)
-(test (assv 1 '((1 2) . 3)) 'error) ; an a-list is a proper list sez kd
+(test (assq #f '(#f 2 . 3)) #f)
+(test (assq #f '((#f 2) . 3)) '(#f 2))
+(test (assq '() '((() 1) (#f 2))) '(() 1))
+(test (assq '() '((1) (#f 2))) #f)
+(test (assq #() '((#f 1) (() 2) (#() 3))) #f)  ; (eq? #() #()) -> #f
 
 
+
+(test (assv 1 '(1 2 . 3)) #f)
+(test (assv 1 '((1 2) . 3)) '(1 2))
 
 (let ((e '((a 1) (b 2) (c 3))))
   (test (assv 'a e) '(a 1))
@@ -3290,6 +3294,11 @@
 (let ((lst '((2 . a) (3 . b))))
   (set-cdr! (assv 3 lst) 'c)
   (test lst '((2 . a) (3 . c))))
+
+(test (assv '() '((() 1) (#f 2))) '(() 1))
+(test (assv '() '((1) (#f 2))) #f)
+(test (assv #() '((#f 1) (() 2) (#() 3))) #f)  ; (eqv? #() #()) -> #f ??
+
 
 
 
@@ -3338,10 +3347,121 @@
 (test (assoc (let ((x (cons 1 2))) (set-cdr! x x)) 1) 'error)
 (test (assoc '((1 2) .3) 1) 'error)
 (test (assoc ''foo quote) 'error)
-(test (assoc 1 '(1 2 . 3)) 'error)
-(test (assoc 1 '((1 2) . 3)) 'error) ; an a-list is a proper list sez kd
+(test (assoc 1 '(1 2 . 3)) #f)
+(test (assoc 1 '((1 2) . 3)) '(1 2))
 
-					;(test (let ((lst '((1 2)))) (assq #t (reverse! lst lst))) #f)
+(test (assoc '() '((() 1) (#f 2))) '(() 1))
+(test (assoc '() '((1) (#f 2))) #f)
+(test (assoc #() '((#f 1) (() 2) (#() 3))) '(#() 3))
+
+(for-each
+ (lambda (arg)
+   (test (assoc arg (list (list 1 2) (list arg 3))) (list arg 3)))
+ (list "hi" (integer->char 65) #f 'a-symbol #() abs 3/4 #\f #t (if #f #f)))
+
+
+
+
+(test (memq 'a '(a b c)) '(a b c))
+(test (memq 'b '(a b c)) '(b c))
+(test (memq 'a '(b c d)) #f)
+(test (memq (list 'a) '(b (a) c))  #f)
+(test (memq 'a '(b a c a d a)) '(a c a d a))
+(let ((v (vector 'a))) (test (memq v (list 'a 1.2 v "hi")) (list v "hi")))
+(test (memq #f '(1 a #t "hi" #f 2)) '(#f 2))
+(test (memq eq? (list 2 eqv? 1 eq?)) (list eq?))
+(test (memq eq? (list 2 eqv? 2)) #f)
+(test (memq 6 (memq 5 (memq 4 (memq 3 (memq 2 (memq 1 '(1 2 3 4 5 6))))))) '(6))
+(test (memq 'a (cons 'a 'b)) '(a . b))
+(test (memq 'a (list a b . c)) 'error)
+(test (memq) 'error)
+(test (memq 'a) 'error)
+(test (memq 'a 'b) 'error)
+(test (memq 'a '(a b . c)) '(a b . c))
+(test (memq 'b '(a b . c)) '(b . c))
+(test (memq 'c '(a b . c)) #f) ; or should it be 'c?
+(test (memq '() '(1 () 3)) '(() 3))
+(test (memq '() '(1 2)) #f)
+(test (memq 'a '(c d a b c)) '(a b c))
+(test (memq 'a '(c d f b c)) #f)
+(test (memq 'a '()) #f)
+(test (memq 'a '(c d a b . c)) '(a b . c))
+(test (memq 'a '(c d f b . c)) #f)
+
+
+
+(test (memv 101 '(100 101 102)) '(101 102))
+(test (memv 3.4 '(1.2 2.3 3.4 4.5)) '(3.4 4.5))
+(test (memv 3.4 '(1.3 2.5 3.7 4.9)) #f)
+(let ((ls (list 'a 'b 'c)))
+  (set-car! (memv 'b ls) 'z)
+  (test ls '(a z c)))
+(test (memv 1 (cons 1 2)) '(1 . 2))
+(test (memv 'a (list a b . c)) 'error)
+(test (memv) 'error)
+(test (memv 'a) 'error)
+(test (memv 'a 'b) 'error)
+
+
+
+(test (member (list 'a) '(b (a) c)) '((a) c))
+(test (member "b" '("a" "c" "b")) '("b"))
+(test (member 1 '(3 2 1 4)) '(1 4))
+(test (member car (list abs car modulo)) (list car modulo))
+(test (member do (list quote map do)) (list do))
+(test (member 5/2 (list 1/3 2/4 5/2)) '(5/2))
+(test (member 'a '(a b c d)) '(a b c d))
+(test (member 'b '(a b c d)) '(b c d))
+(test (member 'c '(a b c d)) '(c d))
+(test (member 'd '(a b c d)) '(d))
+(test (member 'e '(a b c d)) #f)
+(test (member 1 (cons 1 2)) '(1 . 2))
+(test (member 'a (list a b . c)) 'error)
+(test (member 1 '(1 2 . 3)) '(1 2 . 3))
+(test (member) 'error)
+(test (member 'a) 'error)
+(test (member 'a 'b) 'error)
+(test (member '() '(1 2 3)) #f)
+(test (member '() '(1 2 ())) '(()))
+
+(for-each
+ (lambda (arg)
+   (test (member arg (list 1 2 arg 3)) (list arg 3)))
+ (list "hi" (integer->char 65) #f 'a-symbol abs 3/4 #\f #t (if #f #f)))
+
+
+(for-each
+ (lambda (op)
+   (test (op) 'error)
+   (for-each
+    (lambda (arg)
+      (let ((result (catch #t (lambda () (op arg)) (lambda args 'error))))
+	(if (not (eq? result 'error))
+	    (format #t "(~A ~A) returned ~A?~%" op arg result))
+	(test (op arg '() arg) 'error)))
+    (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1)))))
+ (list reverse cons car cdr set-car! set-cdr! caar cadr cdar cddr caaar caadr cadar cdaar caddr cdddr cdadr cddar 
+       caaaar caaadr caadar cadaar caaddr cadddr cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar
+       assq assv assoc memq memv member list-ref list-tail))
+
+(for-each
+ (lambda (op)
+   (test (op '(1) '(2)) 'error))
+ (list reverse car cdr caar cadr cdar cddr caaar caadr cadar cdaar caddr cdddr cdadr cddar 
+       caaaar caaadr caadar cadaar caaddr cadddr cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar
+       list-ref list-tail list-set!))
+
+(for-each
+ (lambda (op)
+   (for-each
+    (lambda (arg)
+      (let ((result (catch #t (lambda () (op #f arg)) (lambda args 'error))))
+	(if (not (eq? result 'error))
+	    (format #t "(~A #f ~A) returned ~A?~%" op arg result))))
+    (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1)))))
+ (list assq assv assoc memq memv member))
+
+
 
 (test (append '(a b c) '()) '(a b c))
 (test (append '() '(a b c)) '(a b c))
@@ -3407,79 +3527,6 @@
 
 
 
-
-(test (memq 'a '(a b c)) '(a b c))
-(test (memq 'b '(a b c)) '(b c))
-(test (memq 'a '(b c d)) #f)
-(test (memq (list 'a) '(b (a) c))  #f)
-(test (memq 'a '(b a c a d a)) '(a c a d a))
-(let ((v (vector 'a))) (test (memq v (list 'a 1.2 v "hi")) (list v "hi")))
-(test (memq #f '(1 a #t "hi" #f 2)) '(#f 2))
-(test (memq eq? (list 2 eqv? 1 eq?)) (list eq?))
-(test (memq eq? (list 2 eqv? 2)) #f)
-(test (memq 6 (memq 5 (memq 4 (memq 3 (memq 2 (memq 1 '(1 2 3 4 5 6))))))) '(6))
-
-					;(test (memq 'a (cons a b)) 'error)                  ; there is disagreement about this
-(test (memq 'a (list a b . c)) 'error)
-(test (memq) 'error)
-(test (memq 'a) 'error)
-(test (memq 'a 'b) 'error)
-
-
-
-(test (memv 101 '(100 101 102)) '(101 102))
-(test (memv 3.4 '(1.2 2.3 3.4 4.5)) '(3.4 4.5))
-(test (memv 3.4 '(1.3 2.5 3.7 4.9)) #f)
-(let ((ls (list 'a 'b 'c)))
-  (set-car! (memv 'b ls) 'z)
-  (test ls '(a z c)))
-					;(test (memv 1 (cons 1 2)) 'error)                   ; there is disagreement about this
-(test (memv 'a (list a b . c)) 'error)
-(test (memv) 'error)
-(test (memv 'a) 'error)
-(test (memv 'a 'b) 'error)
-
-
-
-(test (member (list 'a) '(b (a) c)) '((a) c))
-(test (member "b" '("a" "c" "b")) '("b"))
-(test (member 1 '(3 2 1 4)) '(1 4))
-(test (member car (list abs car modulo)) (list car modulo))
-(test (member do (list quote map do)) (list do))
-(test (member 5/2 (list 1/3 2/4 5/2)) '(5/2))
-(test (member 'a '(a b c d)) '(a b c d))
-(test (member 'b '(a b c d)) '(b c d))
-(test (member 'c '(a b c d)) '(c d))
-(test (member 'd '(a b c d)) '(d))
-(test (member 'e '(a b c d)) #f)
-					;(test (member 1 (cons 1 2)) 'error)                 ; there is disagreement about this
-(test (member 'a (list a b . c)) 'error)
-(test (member 1 '(1 2 . 3)) 'error)
-(test (member) 'error)
-(test (member 'a) 'error)
-(test (member 'a 'b) 'error)
-
-
-(for-each
- (lambda (op)
-   (test (op) 'error)
-   (for-each
-    (lambda (arg)
-      (let ((result (catch #t (lambda () (op arg)) (lambda args 'error))))
-	(if (not (eq? result 'error))
-	    (begin
-	      (display "(") (display op) (display " ") (display arg) (display ") returned ") (display result) (display "?") (newline)))))
-    (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1)))))
- (list reverse cons car cdr set-car! set-cdr! caar cadr cdar cddr caaar caadr cadar cdaar caddr cdddr cdadr cddar 
-       caaaar caaadr caadar cadaar caaddr cadddr cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar
-       assq assv assoc memq memv member list-ref list-tail))
-
-(for-each
- (lambda (op)
-   (test (op '(1) '(2)) 'error))
- (list reverse car cdr caar cadr cdar cddr caaar caadr cadar cdaar caddr cdddr cdadr cddar 
-       caaaar caaadr caadar cadaar caaddr cadddr cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar
-       list-ref list-tail list-set!))
 
 
 (test-w "(list #b)")
@@ -4160,6 +4207,21 @@
 
 
 ;;; -------- circular structures --------
+;;;
+;;; safe: memq memv member assq assv assoc (but needs tests)
+;;;       length -- might add circular-list-length
+;;;       vector-fill! 
+;;;       list->vector list->string
+;;;
+;;; unsafe: equal?
+;;;
+;;; unknown: copy sort! reverse eval apply list-tail append
+;;;          vector->list (list-)fill!
+;;; broken: object->string
+;;;
+;;; not checking: map for-each
+;;;
+;;; needs check: list /make-list/vector/values etc with circular args
 
 ;;; TODO: at least clist-equal? and cvects-equal? should be the default in C
 ;;;   (also there are 2 list copiers in s7.c?)
@@ -4180,48 +4242,41 @@
 
 
 (define (clist-equal? x y)
+
   (define (clist-equal-1? x y x1 y1 choice)
-    (if (eq? x x1)
-	(eq? y y1)
-	(if (eq? y y1)
-	    #f
-	    (if (= choice 2)
-		(if (not (pair? x1))
-		    #t ; this is the slow guy, so the fast one must have already checked equality here and returned #t
-		    (and (pair? y1)
-			 (clist-equal-1? x y (car x1) (car y1) 0)
-			 (clist-equal-1? x y (cdr x1) (cdr y1) 0)))
-		(if (not (pair? x))
-		    (equal? x y)
-		    (and (pair? y)
-			 (clist-equal-1? (car x) (car y) x1 y1 (+ choice 1))
+
+; this is not right...
+;    (format #t "~A ~A ~A ~A ~A~%" x y x1 y1 choice)
+
+    (if (= choice 2)
+	(if (or (not (pair? x1))
+		(not (pair? y1)))
+	    #t ; this is the slow guy, so the fast one must have already checked equality here and returned #t
+	    (and (clist-equal-1? x y (car x1) (car y1) 0)
+		 (clist-equal-1? x y (cdr x1) (cdr y1) 0)))
+	
+	(if (or (not (pair? x))
+		(not (pair? y)))
+	    (equal? x y)
+
+	    (if (eq? x x1)
+		(eq? y y1)
+
+		;; x=pair x!=x1
+		(if (eq? y y1)
+		    #f
+		    (and (clist-equal-1? (car x) (car y) x1 y1 (+ choice 1))
 			 (clist-equal-1? (cdr x) (cdr y) x1 y1 (+ choice 1))))))))
   (or (eq? x y)
-      (if (not (pair? x))
+      (if (or (not (pair? x))
+	      (not (pair? y)))
 	  (equal? x y)
-	  (and (pair? y)
-	       (clist-equal-1? (car x) (car y) x y 1)
+	  (and (clist-equal-1? (car x) (car y) x y 1)
 	       (clist-equal-1? (cdr x) (cdr y) x y 1)))))
 
-(define (clist-length lst)
-  (define (clist-length-1 fast slow len)
-    (if (not (pair? fast))
-	(if (null? fast)
-	    len
-	    (- len))
-	(begin
-	  (set! fast (cdr fast))
-	  (if (not (pair? fast))
-	      (if (null? fast)
-		  (+ len 1)
-		  (- (+ len 1)))
-	      (begin
-		(set! fast (cdr fast))
-		(set! slow (cdr slow))
-		(if (eq? fast slow)
-		    #f
-		    (clist-length-1 fast slow (+ len 2))))))))
-  (clist-length-1 lst lst 0))
+;;; (let ((lst (list 1 2 3 4))) (fill! lst "hi") (equal? lst '("hi" "hi" "hi" "hi")))
+;;;   fill! so x==x1 even though not a list
+
 
 (define (clist-fill! lst value)
   (do ((slow lst)
@@ -4247,39 +4302,6 @@
 	      (set-cdr! fast value))
 	  (set! fast '())))))
 
-(define (clist-memq value lst)
-  (do ((slow lst)
-       (fast lst)
-       (step #f (not step)))
-      ((or (not (pair? fast))
-	   (eq? (car fast) value))
-       (if (not (pair? fast))
-	   #f
-	   fast))
-    (set! fast (cdr fast))
-    (if step
-	(begin
-	  (set! slow (cdr slow))
-	  (if (eq? fast slow)
-	      (set! fast '()))))))
-
-(define (clist-assq value lst)
-  (do ((slow lst)
-       (fast lst)
-       (step #f (not step)))
-      ((or (not (pair? fast))
-	   (not (pair? (car fast)))
-	   (eq? (caar fast) value))
-       (if (or (not (pair? fast))
-	       (not (pair? (car fast))))
-	   #f
-	   (car fast)))
-    (set! fast (cdr fast))
-    (if step
-	(begin
-	  (set! slow (cdr slow))
-	  (if (eq? fast slow)
-	      (set! fast '()))))))
 
 (define (copy-clist lst)
   (define (copy-clist-1 fast slow step)
@@ -4360,9 +4382,9 @@
       (y (list 1 (list 2 3) (list (list 4 (list 5) 6)))))
   (test (clist-equal? x y) #f))
 
-(test (clist-length '()) 0)
-(test (clist-length (cons 1 2)) -1)
-(test (clist-length '(1 2 3)) 3)
+(test (length '()) 0)
+;;; (test (length (cons 1 2)) -1)
+(test (length '(1 2 3)) 3)
 
 (test (let ((lst (list))) (clist-fill! lst 0) lst) '())
 (test (let ((lst (list 1))) (clist-fill! lst 0) lst) '(0))
@@ -4371,17 +4393,12 @@
 (test (let ((lst (cons 1 2))) (clist-fill! lst 0) lst) '(0 . 0))
 (test (let ((lst (cons 1 (cons 2 3)))) (clist-fill! lst 0) lst) '(0 0 . 0))
 
-(test (clist-memq 'a '(c d a b c)) '(a b c))
-(test (clist-memq 'a '(c d f b c)) #f)
-(test (clist-memq 'a '()) #f)
-(test (clist-memq 'a '(c d a b . c)) '(a b . c))
-(test (clist-memq 'a '(c d f b . c)) #f)
 
 
 (let ((lst1 (list 1 2))) 
-  (test (clist-length lst1) 2)
+  (test (length lst1) 2)
   (list-set! lst1 0 lst1)
-  (test (clist-length lst1) 2) ; its car is a circular list, but it isn't
+  (test (length lst1) 2) ; its car is a circular list, but it isn't
   (test (list->string lst1) 'error)
   (let ((lst2 (list 1 2)))
     (set-car! lst2 lst2)
@@ -4398,22 +4415,22 @@
 	  '(32 32))))
 
 (let ((lst1 (list 1))) 
-  (test (clist-length lst1) 1)
+  (test (length lst1) 1)
   (set-cdr! lst1 lst1)
-  (test (clist-length lst1) #f)
+  (test (length lst1) 'error)
   (let ((lst2 (cons 1 '())))
     (set-cdr! lst2 lst2)
     (test (clist-equal? lst1 lst2) #t)
     (set-car! lst2 0)
-    (test (clist-equal? lst1 lst2) #f)
-    (test (clist-length lst2) #f)))
+    (test (clist-equal? lst1 lst2) 'error)
+    (test (length lst2) 'error)))
 
 (let ((lst1 (list 1))
       (lst2 (list 1)))
   (set-car! lst1 lst2)
   (set-car! lst2 lst1)
   (test (clist-equal? lst1 lst2) #t)
-  (test (clist-length lst1) 1)
+  (test (length lst1) 1)
   (let ((lst3 (list 1)))
     (test (clist-equal? lst1 lst3) #f)
     (set-cdr! lst3 lst3)
@@ -4421,10 +4438,10 @@
 
 (let ((lst1 (list 'a 'b 'c)))
   (set! (cdr (cddr lst1)) lst1)
-  (test (clist-length lst1) #f)
-  (test (clist-memq 'd lst1) #f)
-  (test (clist-memq 'a lst1) lst1)
-  (test (clist-memq 'b lst1) (cdr lst1)))
+  (test (length lst1) 'error)
+  (test (memq 'd lst1) #f)
+  (test (memq 'a lst1) lst1)
+  (test (memq 'b lst1) (cdr lst1)))
 
 (let ((lst1 (list 1 2 3)))
   (list-set! lst1 1 lst1)
@@ -4621,7 +4638,8 @@
 	(string=? (object->string lst2) "(((1 (((2 (((3 (((4 #1=(1 2 #1#) 5))))))))))))"))
       #t)
 
-
+;;; TODO: do a systematic check of equal? both normal and ab lists
+;;;   and try to get == case as in fill!
 
 
 
@@ -50604,5 +50622,14 @@ largest denormal  2-1023 (1 - 2-52)	 2-1023 - 2-1075 = 1.113 10-308
 largest fp integer	 2+1024 - 2+971 = 1.798 10+308
 gap from largest fp integer to previous fp integer	2+971 = 1.996 10+292
 largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
+
+
+
+:(let ((lst (list "hi" "hi" "hi"))) (fill! lst "hi") (equal? lst '("hi" "hi" "hi")))
+#f
+:(let ((lst (list "hi" "hi"))) (fill! lst "hi") (equal? lst '("hi" "hi")))
+#t
+:(let ((lst (list 1 2 3 4))) (fill! lst "hi") (equal? lst '("hi" "hi" "hi" "hi")))
+#f
 
 |#

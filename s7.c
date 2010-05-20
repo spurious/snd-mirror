@@ -11083,7 +11083,7 @@ static int safe_list_length(s7_scheme *sc, s7_pointer a)
 
 int s7_list_length(s7_scheme *sc, s7_pointer a) 
 {
-  /* returns -len if list is dotted, 0 if it's circular */
+  /* returns -len if list is dotted, 0 if it's (directly) circular */
   int i;
   s7_pointer slow, fast;
   
@@ -11788,67 +11788,66 @@ s7_pointer s7_remv(s7_scheme *sc, s7_pointer a, s7_pointer obj)
 static s7_pointer g_assq(s7_scheme *sc, s7_pointer args)
 {
   #define H_assq "(assq obj alist) returns the key-value pair associated (via eq?) with the key obj in the association list alist"
-  s7_pointer x, y, result = sc->F;
+  /* this version accepts any kind of list */
 
-  if (!s7_is_list(sc, cadr(args)))
-    return(s7_wrong_type_arg_error(sc, "assq alist", 2, cadr(args), "a list"));
+  s7_pointer x, y, obj;
 
-  if (cadr(args) == sc->NIL)
-    return(sc->F);
-  
-  x = car(args);
-  for (y = cadr(args); is_pair(y); y = cdr(y)) 
+  x = cadr(args);
+  if (x == sc->NIL) return(sc->F);
+
+  if (!is_pair(x))
+    return(s7_wrong_type_arg_error(sc, "assq", 2, x, "a list"));
+
+  y = x;
+  obj = car(args);
+
+  while (true)
     {
-      s7_pointer tmp;
-      tmp = car(y);
-      if ((is_pair(tmp)) &&
-	  (x == car(tmp)))
-	{
-	  result = tmp;
-	  break;
-	}
-    }
+      if ((is_pair(car(x))) && (obj == caar(x))) return(car(x));
+      x = cdr(x);
+      if (!is_pair(x)) return(sc->F);
 
-  /* check for wrong-type-arg error */
-  while (is_pair(y)) {y = cdr(y);}
-  if (y != sc->NIL)
-    return(s7_wrong_type_arg_error(sc, "assq alist", 2, cadr(args), "a proper list"));
-  
-  return(result);
-}      
+      if ((is_pair(car(x))) && (obj == caar(x))) return(car(x));
+      x = cdr(x);
+      if (!is_pair(x)) return(sc->F);
+
+      y = cdr(y);
+      if (x == y) return(sc->F);
+    }
+  return(sc->F); /* not reached */
+}
 
 
 static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, const char *name, bool (*eq_func)(s7_scheme *sc, s7_pointer a, s7_pointer b))
 {
   #define H_assv "(assv obj alist) returns the key-value pair associated (via eqv?) with the key obj in the association list alist"
   #define H_assoc "(assoc obj alist) returns the key-value pair associated (via equal?) with the key obj in the association list alist"
-  s7_pointer x, y, result = sc->F;
+  s7_pointer x, y, obj;
 
-  if (!s7_is_list(sc, cadr(args)))
-    return(s7_wrong_type_arg_error(sc, name, 2, cadr(args), "a list"));
+  x = cadr(args);
+  if (x == sc->NIL) return(sc->F);
 
-  if (cadr(args) == sc->NIL)
-    return(sc->F);
+  if (!is_pair(x))
+    return(s7_wrong_type_arg_error(sc, name, 2, x, "a list"));
 
-  x = car(args);
-  for (y = cadr(args); is_pair(y); y = cdr(y)) 
+  y = x;
+  obj = car(args);
+
+  while (true)
     {
-      s7_pointer tmp;
-      tmp = car(y);
-      if ((is_pair(tmp)) &&
-	  (eq_func(sc, x, car(tmp))))
-	{
-	  result = tmp;
-	  break;
-	}
-    }
-  
-  while (is_pair(y)) {y = cdr(y);}
-  if (y != sc->NIL)
-    return(s7_wrong_type_arg_error(sc, name, 2, cadr(args), "a proper list"));
+      if ((is_pair(car(x))) && (eq_func(sc, obj, caar(x)))) return(car(x));
+      x = cdr(x);
+      if (!is_pair(x)) return(sc->F);
 
-  return(result);
-}      
+      if ((is_pair(car(x))) && (eq_func(sc, obj, caar(x)))) return(car(x));
+      x = cdr(x);
+      if (!is_pair(x)) return(sc->F);
+
+      y = cdr(y);
+      if (x == y) return(sc->F);
+    }
+  return(sc->F); /* not reached */
+}
 
 
 static bool s7_is_eqv_1(s7_scheme *sc, s7_pointer a, s7_pointer b) {return(s7_is_eqv(a, b));}
@@ -11860,55 +11859,71 @@ static s7_pointer g_assoc(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, a
 static s7_pointer g_memq(s7_scheme *sc, s7_pointer args)
 {
   #define H_memq "(memq obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. memq uses eq?"
-  s7_pointer x, result = sc->F;
 
-  if (!s7_is_list(sc, cadr(args)))
-    return(s7_wrong_type_arg_error(sc, "memq", 2, cadr(args), "a list"));
+  /* this version accepts any kind of list (the previous one insisted on proper lists for some reason) */
+  s7_pointer x, y, obj;
 
-  if (cadr(args) == sc->NIL)
-    return(sc->F);
+  x = cadr(args);
+  if (x == sc->NIL) return(sc->F);
 
-  for (x = cadr(args); is_pair(x); x = cdr(x)) 
-    if (car(args) == car(x))
-      {
-	result = x;
-	break;
-      }
-  
-  while (is_pair(x)) {x = cdr(x);}
-  if (x != sc->NIL)
-    return(s7_wrong_type_arg_error(sc, "memq", 2, cadr(args), "a proper list"));
+  if (!is_pair(x))
+    return(s7_wrong_type_arg_error(sc, "memq", 2, x, "a list"));
 
-  return(result);
-}     
+  y = x;
+  obj = car(args);
+
+  while (true)
+    {
+      if (obj == car(x)) return(x);
+      x = cdr(x);
+      if (!is_pair(x)) return(sc->F);
+
+      /* I think (memq 'c '(a b . c)) should return #f because otherwise
+       *   (memq '() ...) would return the '() at the end.
+       */
+
+      if (obj == car(x)) return(x);
+      x = cdr(x);
+      if (!is_pair(x)) return(sc->F);
+
+      y = cdr(y);
+      if (x == y) return(sc->F);
+    }
+  return(sc->F); /* not reached */
+}
 
 
 static s7_pointer g_memq_1(s7_scheme *sc, s7_pointer args, const char *name, bool (*eq_func)(s7_scheme *sc, s7_pointer a, s7_pointer b))
 {
   #define H_memv "(memv obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. memv uses eqv?"
   #define H_member "(member obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. member uses equal?"
-  s7_pointer x, result = sc->F;
 
-  if (!s7_is_list(sc, cadr(args)))
-    return(s7_wrong_type_arg_error(sc, name, 2, cadr(args), "a list"));
+  s7_pointer x, y, obj;
 
-  if (cadr(args) == sc->NIL)
-    return(sc->F);
+  x = cadr(args);
+  if (x == sc->NIL) return(sc->F);
 
-  for (x = cadr(args); is_pair(x); x = cdr(x)) 
-    if (eq_func(sc, car(args), car(x)))
-      {
-	result = x;
-	break;
-      }
-  
-  while (is_pair(x)) {x = cdr(x);}
-  if (x != sc->NIL)
-    return(s7_wrong_type_arg_error(sc, name, 2, cadr(args), "a proper list"));
+  if (!is_pair(x))
+    return(s7_wrong_type_arg_error(sc, name, 2, x, "a list"));
 
-  return(result);
-}     
+  y = x;
+  obj = car(args);
 
+  while (true)
+    {
+      if (eq_func(sc, obj, car(x))) return(x);
+      x = cdr(x);
+      if (!is_pair(x)) return(sc->F);
+
+      if (eq_func(sc, obj, car(x))) return(x);
+      x = cdr(x);
+      if (!is_pair(x)) return(sc->F);
+
+      y = cdr(y);
+      if (x == y) return(sc->F);
+    }
+  return(sc->F); /* not reached */
+}
 
 static s7_pointer g_memv(s7_scheme *sc, s7_pointer args) {return(g_memq_1(sc, args, "memv", s7_is_eqv_1));}
 static s7_pointer g_member(s7_scheme *sc, s7_pointer args) {return(g_memq_1(sc, args, "member", s7_is_equal));}
@@ -12212,8 +12227,18 @@ static bool vectors_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 
   /* TODO: vectors_equal will core-up and die if passed a circular vector */
   for (i = 0; i < len; i++)
-    if (!(s7_is_equal(sc, vector_element(x, i), vector_element(y, i))))
-      return(false);
+    {
+      if (vector_element(x, i) != x)
+	{
+	  if (!(s7_is_equal(sc, vector_element(x, i), vector_element(y, i))))
+	    return(false);
+	}
+      else
+	{
+	  if (vector_element(y, i) != y)
+	    return(false);
+	}
+    }
   return(true);
 }
 
@@ -14415,6 +14440,48 @@ bool s7_is_eqv(s7_pointer a, s7_pointer b)
 }
 
 
+static bool lists_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
+{
+  /* this works without too much overhead for simple cycles.
+   * at this point we know x and y are pairs.
+   */
+  
+  s7_pointer x1, x2, y1, y2;
+
+  x1 = x;
+  y1 = y;
+  x2 = x;
+  y2 = y;
+
+  while (true)
+    {
+      int step;
+      for (step = 0; step < 2; step++)
+	{
+	  if (!s7_is_equal(sc, car(x1), car(y1)))
+	    return(false);
+	  x1 = cdr(x1);
+	  y1 = cdr(y1);
+
+	  if (!is_pair(x1))
+	    return(s7_is_equal(sc, x1, y1));
+	  if (!is_pair(y1))
+	    return(false);
+	}
+
+      /* check for cycles */
+      x2 = cdr(x2);
+      y2 = cdr(y2);
+      if (x1 == x2)
+	return(y1 == y2);
+      if (y1 == y2)
+	return(x1 == x2);
+    }
+
+  return(false);
+}
+
+
 bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 {
   if (x == y) 
@@ -14428,9 +14495,8 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
     return(false);
   
   if (is_pair(x))
-    return((s7_is_equal(sc, car(x), car(y))) &&
-	   (s7_is_equal(sc, cdr(x), cdr(y))));
-  
+    return(lists_equal(sc, x, y));
+
   if (s7_is_string(x))
     return(strings_are_equal(string_value(x), string_value(y)));
   
@@ -14500,6 +14566,7 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
 	int len;
 	len = s7_list_length(sc, lst);
   
+	/* TODO: don't trigger an error in list length!  return maybe '(:dotted len) and '(:circular len) */
 	if (len < 0) 
 	  return(s7_wrong_type_arg_error(sc, "length:", 0, lst, "a proper (not a dotted) list"));
 	if (len == 0)
