@@ -717,7 +717,9 @@ struct s7_scheme {
 
 #define T_STRUCTURE                   (1 << (TYPE_BITS + 19))
 #define has_structure(p)              ((typeflag(p) & T_STRUCTURE) != 0)
-/* for quick recognition of lists, vectors, hash-tables in print and equal? */
+/* for quick recognition of lists, vectors, hash-tables in print.
+ *   This flag does not buy us much, so if a bit is ever needed, flush this first.
+ */
 
 #define UNUSED_BITS                   0xf0000000
 
@@ -11101,6 +11103,24 @@ s7_pointer s7_assoc(s7_scheme *sc, s7_pointer sym, s7_pointer lst)
 s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a) 
 {
   /* reverse list -- produce new list */
+  s7_pointer p;
+
+  sc->w = sc->NIL;
+  for ( ; is_pair(a); a = cdr(a)) 
+    sc->w = s7_cons(sc, car(a), sc->w);
+  p = sc->w;
+  sc->w = sc->NIL;
+
+  if (a == sc->NIL)
+    return(p);
+
+  return(sc->NIL);
+}
+
+#if 0
+s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a) 
+{
+  /* reverse list -- produce new list */
   s7_pointer x, p;
 
   if (a == sc->NIL) return(a);
@@ -11131,6 +11151,7 @@ s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a)
 
   return(p);
 }
+#endif
 
 
 static s7_pointer reverse_in_place(s7_scheme *sc, s7_pointer term, s7_pointer list) 
@@ -14968,6 +14989,8 @@ static void format_number(s7_scheme *sc, format_data *fdat, int radix, int width
 	    }
 	}
     }
+
+  /* should (format #f "~F" 1/3) return "1/3"?? in CL it's "0.33333334" */
 
   tmp = number_to_string_with_radix(sc, car(fdat->args), radix, width, precision, float_choice);
 

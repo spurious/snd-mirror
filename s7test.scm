@@ -4223,13 +4223,6 @@
 
 
 ;;; TODO: fill! needs tests! -- there are only about 10 altogether
-#|
-(let ((lst (list 1 2 3 4)))
-   (set! (cdr (cddr lst)) lst) (fill! lst 0) lst)
-#1=(0 0 0 . #1#)
-|#
-;;; (let ((lst (list 1 2 3 4))) (fill! lst "hi") (equal? lst '("hi" "hi" "hi" "hi")))
-;;;   fill! so x==x1 even though not a list
 
 (let ((lst (list 1 2 3)))
    (set! (cdr (cddr lst)) lst)
@@ -4532,8 +4525,162 @@
 	(string=? (object->string lst2) "(((1 (((2 (((3 (((4 #1=(1 2 . #1#) 5))))))))))))"))
       #t)
 
-;;; TODO: do a systematic check of equal? both normal and ab lists
-;;;   and try to get == case as in fill!
+
+(test (equal? '(a) (list 'a)) #t)
+(test (equal? '(a b . c) '(a b . c)) #t)
+(test (equal? '(a b (c . d)) '(a b (c . d))) #t)
+(test (equal? (list "hi" "hi" "hi") '("hi" "hi" "hi")) #t)
+(let ((l1 (list "hi" "hi" "hi"))
+      (l2 (list "hi" "hi" "hi")))
+  (fill! l1 "ho")
+  (test (equal? l1 l2) #f)
+  (fill! l2 (car l1))
+  (test (equal? l1 l2) #t))
+(let ((lst (list 1 2 3 4))) 
+  (fill! lst "hi") 
+  (test (equal? lst '("hi" "hi" "hi" "hi")) #t))
+(let ((vect (vector 1 2 3 4)))
+  (fill! vect "hi")
+  (test (equal? vect #("hi" "hi" "hi" "hi")) #t))
+(let ((lst (list 1 2 (list 3 4) (list (list 5) 6))))
+  (test (equal? lst '(1 2 (3 4) ((5) 6))) #t)
+  (fill! lst #f)
+  (test (equal? lst '(#f #f #f #f)) #t))
+(let ((lst (list 1 2 3 4)))
+  (set! (cdr (cdddr lst)) lst)
+  (test (equal? lst lst) #t)
+  (test (eq? lst lst) #t)
+  (test (eqv? lst lst) #t)
+  (fill! lst #f)
+  (test (object->string lst) "#1=(#f #f #f #f . #1#)")
+  (let ((l1 (copy lst)))
+    (test (equal? lst l1) #t)
+    (test (eq? lst l1) #f)
+    (test (eqv? lst l1) #f)))
+
+(test (let ((lst (list "hi" "hi" "hi"))) (fill! lst "hi") (equal? lst '("hi" "hi" "hi"))) #t)
+(test (let ((lst (list "hi" "hi"))) (fill! lst "hi") (equal? lst '("hi" "hi"))) #t)
+(test (let ((lst (list 1 2 3 4))) (fill! lst "hi") (equal? lst '("hi" "hi" "hi" "hi"))) #t)
+
+
+(let ((lst '(#\( #\) #\* #\+ #\, #\- #\. #\/ #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 #\: #\; #\< #\= #\> #\? #\@ #\A #\B #\C #\D #\E #\F #\G #\H #\I #\J #\K #\L #\M #\N #\O #\P #\Q #\R #\S #\T #\U #\V #\W #\X #\Y #\Z #\[ #\\ #\] #\^ #\_ #\` #\a #\b #\c #\d #\e #\f #\g #\h #\i #\j #\k #\l #\m #\n #\o #\p #\q #\r #\s #\t #\u #\v #\w #\x #\y #\z #\{ #\| #\} #\~)))
+  (let ((str (apply string lst)))
+    (let ((lstr (list->string lst)))
+      (let ((strl (string->list str)))
+	(test (eq? str str) #t)
+	(test (eq? str lstr) #f)
+	(test (eqv? str str) #t)
+	(test (eqv? str lstr) #f)
+	(test (equal? str lstr) #t)
+	(test (equal? str str) #t)
+	(test (eq? lst strl) #f)	
+	(test (eqv? lst strl) #f)	
+	(test (equal? lst strl) #t)
+	(let ((l2 (copy lst))
+	      (s2 (copy str)))
+	  (test (eq? l2 lst) #f)
+	  (test (eq? s2 str) #f)
+	  (test (eqv? l2 lst) #f)
+	  (test (eqv? s2 str) #f)
+	  (test (equal? l2 lst) #t)
+	  (test (equal? s2 str) #t))))))
+
+
+(let ((vect #(#\( #\) #\* #\+ #\, #\- #\. #\/ #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 #\: #\; #\< #\= #\> #\? #\@ #\A #\B #\C #\D #\E #\F #\G #\H #\I #\J #\K #\L #\M #\N #\O #\P #\Q #\R #\S #\T #\U #\V #\W #\X #\Y #\Z #\[ #\\ #\] #\^ #\_ #\` #\a #\b #\c #\d #\e #\f #\g #\h #\i #\j #\k #\l #\m #\n #\o #\p #\q #\r #\s #\t #\u #\v #\w #\x #\y #\z #\{ #\| #\} #\~)))
+  (let ((lst (vector->list vect)))
+    (let ((vect1 (list->vector lst)))
+	(test (eq? lst lst) #t)
+	(test (eq? lst vect) #f)
+	(test (eqv? lst lst) #t)
+	(test (eqv? lst vect) #f)
+	(test (equal? vect1 vect) #t)
+	(test (equal? lst lst) #t)
+	(test (eq? vect vect1) #f)	
+	(test (eqv? vect vect1) #f)	
+	(test (equal? vect vect1) #t)
+	(let ((l2 (copy vect))
+	      (s2 (copy lst)))
+	  (test (eq? l2 vect) #f)
+	  (test (eq? s2 lst) #f)
+	  (test (eqv? l2 vect) #f)
+	  (test (eqv? s2 lst) #f)
+	  (test (equal? l2 vect) #t)
+	  (test (equal? s2 lst) #t)))))
+
+(let* ((vals (list "hi" #\A 1 'a #(1) abs 3.14 3/4 1.0+1.0i #\f '(1 . 2)))
+       (vlen (length vals)))
+  (do ((i 0 (+ i 1)))
+      ((= i 100))
+    (let* ((size (max 1 (random 20)))
+	   (vect (make-vector size '())))
+      (do ((n 0 (+ n 1)))
+	  ((= n size))
+	(let ((choice (random 4))
+	      (len (random 4)))
+	  (if (= choice 0)
+	      (let ((v (make-vector len)))
+		(do ((k 0 (+ k 1)))
+		    ((= k len))
+		  (vector-set! v k (list-ref vals (random vlen))))
+		(vector-set! vect n v))
+	      (if (= choice 1)
+		  (let ((lst (make-list len #f)))
+		    (do ((k 0 (+ k 1)))
+			((= k len))
+		      (list-set! lst k (list-ref vals (random vlen))))
+		    (vector-set! vect n lst))
+		  (vector-set! vect n (list-ref vals (random vlen)))))))
+      (test (eq? vect vect) #t)
+      (test (eqv? vect vect) #t)
+      (test (equal? vect vect) #t)
+      (let ((lst1 (vector->list vect)))
+	(let ((lst2 (copy lst1)))
+	  (test (eq? lst1 lst2) #f)
+	  (test (eqv? lst1 lst2) #f)
+	  (test (equal? lst1 lst2) #t))))))
+
+(let* ((lst1 (list 1 2 3))
+       (vec1 (vector 1 2 lst1)))
+  (list-set! lst1 2 vec1)
+  (let* ((lst2 (list 1 2 3))
+	 (vec2 (vector 1 2 lst2)))
+    (list-set! lst2 2 vec2)
+    (test (equal? lst1 lst2) #t)
+    (test (equal? vec1 vec2) #t)
+    (vector-set! vec1 1 vec1)
+    (test (equal? lst1 lst2) #f)
+    (test (equal? vec1 vec2) #f)
+    ))
+  
+(let* ((base (list #f))
+       (lst1 (list 1 2 3))
+       (vec1 (vector 1 2 base)))
+  (list-set! lst1 2 vec1)
+  (let* ((lst2 (list 1 2 3))
+	 (vec2 (vector 1 2 base)))
+    (list-set! lst2 2 vec2)
+    (set! (car lst1) lst1)
+    (set! (car lst2) lst2)
+    (set! (cdr (cddr lst1)) base)
+    (set! (cdr (cddr lst2)) base)
+    (test (equal? lst1 lst2) #t)
+    (test (equal? vec1 vec2) #t)
+    (test (object->string lst1) "#1=(#1# 2 #(1 2 #2=(#f)) . #2#)")))
+
+(let ((base (list 0 #f)))
+  (let ((lst1 (list 1 base 2))
+	(lst2 (list 1 base 2)))
+    (set! (cdr (cdr base)) base)
+    (test (equal? lst1 lst2) #t)))
+
+(let ((base1 (list 0 #f))
+      (base2 (list 0 #f)))
+  (let ((lst1 (list 1 base1 2))
+	(lst2 (list 1 base2 2)))
+    (set! (cdr (cdr base1)) lst2)
+    (set! (cdr (cdr base2)) lst1)
+    (test (equal? lst1 lst2) #t)
+    (test (object->string lst1) "#1=(1 (0 #f 1 (0 #f . #1#) 2) 2)")))
 
 
 
@@ -5279,6 +5426,11 @@
 (test (format #f (string #\~ #\a) 1) "1")
 (test (format #f (format #f "~~a") 1) "1")
 (test (format #f (format #f "~~a") (format #f "~D" 1)) "1")
+
+(test (format #f "~f" (/ 1 3)) "1/3") ; hmmm -- should it call exact->inexact?
+(test (format #f "~f" 1) "1")
+
+
 
 
 (if with-bignums
@@ -50512,14 +50664,4 @@ largest denormal  2-1023 (1 - 2-52)	 2-1023 - 2-1075 = 1.113 10-308
 largest fp integer	 2+1024 - 2+971 = 1.798 10+308
 gap from largest fp integer to previous fp integer	2+971 = 1.996 10+292
 largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
-
-
-
-:(let ((lst (list "hi" "hi" "hi"))) (fill! lst "hi") (equal? lst '("hi" "hi" "hi")))
-#f
-:(let ((lst (list "hi" "hi"))) (fill! lst "hi") (equal? lst '("hi" "hi")))
-#t
-:(let ((lst (list 1 2 3 4))) (fill! lst "hi") (equal? lst '("hi" "hi" "hi" "hi")))
-#f
-
 |#
