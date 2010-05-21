@@ -10422,6 +10422,8 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, sh
 
 #if WITH_MULTIDIMENSIONAL_VECTORS
 
+  /* TODO: check cyclic multivects */
+
   if (vector_is_multidimensional(vect))
     {
       char c;
@@ -11065,18 +11067,35 @@ s7_pointer s7_assoc(s7_scheme *sc, s7_pointer sym, s7_pointer lst)
 s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a) 
 {
   /* reverse list -- produce new list */
-  s7_pointer p;
+  s7_pointer x, p;
 
+  if (a == sc->NIL) return(a);
+  if (!is_pair(cdr(a)))
+    {
+      if (cdr(a) != sc->NIL)
+	return(s7_cons(sc, cdr(a), car(a)));
+      return(a);
+    }
+  sc->w = s7_cons(sc, car(a), sc->NIL);
+
+  for (x = cdr(a), p = a; is_pair(x); x = cdr(x), p = cdr(p))
+    {
+      sc->w = s7_cons(sc, car(x), sc->w);
+      if (is_pair(cdr(x)))
+	{
+	  x = cdr(x);
+	  sc->w = s7_cons(sc, car(x), sc->w);
+	}
+      if (x == p) /* this can take awhile to notice there's a cycle, but what does the caller expect? */
+	break;
+    }
+
+  if (x != sc->NIL)
+    p = s7_cons(sc, x, sc->w);    /* ?? this means that (reverse '(1 2 . 3)) returns '(3 2 1) -- we used to return '() here */
+  else p = sc->w;
   sc->w = sc->NIL;
-  for ( ; is_pair(a); a = cdr(a)) 
-    sc->w = s7_cons(sc, car(a), sc->w);
-  p = sc->w;
-  sc->w = sc->NIL;
 
-  if (a == sc->NIL)
-    return(p);
-
-  return(sc->NIL);
+  return(p);
 }
 
 
@@ -12061,7 +12080,7 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
 	return(s7_append(sc, x, car(y)));
       
       if (!is_proper_list(sc, car(y)))
-	return(s7_wrong_type_arg_error(sc, "append", i, car(y), "a list"));
+	return(s7_wrong_type_arg_error(sc, "append", i, car(y), "a proper list"));
       
       x = s7_append(sc, x, car(y));
     }
@@ -14703,18 +14722,38 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer list_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
 {
-  if (is_pair(obj))
-    {
-      if (is_pair(car(obj)))
-	list_fill(sc, car(obj), val);
-      else car(obj) = val;
+  /* ambiguous ("tree-fill"?) but if it's like vector-fill, we just stomp on the top level */
+  s7_pointer x, y;
 
-      if (is_pair(cdr(obj)))
-	list_fill(sc, cdr(obj), val);
+  x = obj;
+  y = obj;
+
+  while (true)
+    {
+      if (!is_pair(x)) return(val);
+      car(x) = val;
+      if (is_pair(cdr(x)))
+	{
+	  x = cdr(x);
+	  car(x) = val;
+	  if (is_pair(cdr(x)))
+	    {
+	      x = cdr(x);
+	      y = cdr(y);
+	      if (x == y) return(val);
+	    }
+	  else
+	    {
+	      if (cdr(x) != sc->NIL)
+		cdr(x) = val;
+	      return(val);
+	    }
+	}
       else
 	{
-	  if (cdr(obj) != sc->NIL)
-	    cdr(obj) = val;
+	  if (cdr(x) != sc->NIL)
+	    cdr(x) = val;
+	  return(val);
 	}
     }
   return(val);
@@ -14743,7 +14782,9 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
 
     case T_PAIR:
       return(list_fill(sc, car(args), cadr(args)));
-      
+
+    case T_NIL:
+      return(cadr(args));        /* this parallels the empty vector case */
     }
 
   return(s7_wrong_type_arg_error(sc, "fill!", 1, car(args), "a fillable object")); /* (fill! 1 0) */
@@ -15147,7 +15188,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 
 			/* how to handle non-integer arguments in the next 4 cases?  clisp just returns
 			 *   the argument: (format nil "~X" 1.25) -> "1.25" which is perverse (ClTl2 p 581:
-			 *   "if arg is not an integer, it is printed in ~A format and decimal base"!!
+			 *   "if arg is not an integer, it is printed in ~A format and decimal base")!!
 			 *   Guile raises an error ("argument is not an integer").  slib also raise an error.
 			 *   I think I'll use the type of the number to choose the output format.
 			 */
@@ -16380,7 +16421,7 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
       if (!is_proper_list(sc, sc->args))        /* (apply + #f) etc */
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 			make_list_2(sc, 
-				    make_protected_string(sc, "apply's last argument should be a list: ~A"),
+				    make_protected_string(sc, "apply's last argument should be a proper list: ~A"),
 				    args)));
     }
   push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
@@ -25144,6 +25185,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "untrace",                 g_untrace,                 0, 0, true,  H_untrace);
   s7_define_variable(sc, "*trace-hook*", sc->NIL);
   s7_define_function(sc, "stacktrace",              g_stacktrace,              0, 2, false, H_stacktrace);
+
   s7_define_variable(sc, "*#readers*", sc->NIL);
   sc->sharp_readers = symbol_global_slot(s7_make_symbol(sc, "*#readers*"));
 
@@ -25174,9 +25216,10 @@ s7_scheme *s7_init(void)
 
   s7_define_variable(sc, "*features*", sc->NIL);
   s7_define_variable(sc, "*load-path*", sc->NIL);
+  s7_define_variable(sc, "*load-hook*", sc->NIL);
+
   s7_define_variable(sc, "*vector-print-length*", small_ints[8]);
   sc->vector_print_length = symbol_global_slot(s7_make_symbol(sc, "*vector-print-length*"));
-  s7_define_variable(sc, "*load-hook*", sc->NIL);
 
   s7_define_variable(sc, "*error-hook*", sc->NIL);
   sc->error_info = s7_make_and_fill_vector(sc, ERROR_INFO_SIZE, ERROR_INFO_DEFAULT);

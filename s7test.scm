@@ -421,7 +421,6 @@
 
 (test (eqv? (cons 'a 'b) (cons 'a 'c)) #f)
 (test (eqv? eqv? eqv?) #t)
-					;(test (let ((quote -)) (eqv? '1 1)) #f)
 (test (eqv? '#(1) '#(1)) #f)
 (test (eqv? '(1) '(1)) #f)
 (test (eqv? '() '()) #t)
@@ -1923,11 +1922,11 @@
 
 (test (let ((hi (string-copy "hi"))) (string-set! hi 2 #\H) hi) 'error)
 (test (let ((hi (string-copy "hi"))) (string-set! hi -1 #\H) hi) 'error)
-;(test (let ((g (lambda () "***"))) (string-set! (g) 0 #\?)) 'error)
+(test (let ((g (lambda () "***"))) (string-set! (g) 0 #\?)) #\?)
 (test (string-set! "" 0 #\a) 'error)
 (test (string-set! "" 1 #\a) 'error)
 (test (string-set! (string) 0 #\a) 'error)
-;(test (string-set! (symbol->string 'lambda) 0 #\a) 'error)
+(test (string-set! (symbol->string 'lambda) 0 #\a) #\a)
 (test (let ((ho (make-string 0 #\x))) (string-set! ho 0 #\a) ho) 'error)
 
 (for-each
@@ -1949,9 +1948,9 @@
 
 
 (test (string-fill! "hiho" #\c) #\c)
-;(test (string-fill! "" #\a) 'error)
-;(test (string-fill! "hiho" #\a) 'error)
-;(test (let ((g (lambda () "***"))) (string-fill! (g) #\?)) 'error)
+(test (string-fill! "" #\a) #\a)
+(test (string-fill! "hiho" #\a) #\a)
+(test (let ((g (lambda () "***"))) (string-fill! (g) #\?)) #\?)
 (test (string-fill!) 'error)
 (test (string-fill! "hiho" #\a #\b) 'error)
 
@@ -2108,7 +2107,6 @@
 
 (test (string->list "abc") (list #\a #\b #\c))
 (test (string->list "") '())
-					;(test (string->list (make-string 3 (integer->char 0))) '()) ; others return a list of #\nul or #\null
 (test (string->list (list->string (list #\a #\b #\c))) (list #\a #\b #\c))
 (test (string->list (list->string '())) '())
 (test (list->string (string->list "abc")) "abc")
@@ -2839,6 +2837,9 @@
 (test (let ((var '(1 (2 3)))) (reverse (cdr var)) var) '(1 (2 3)))
 (test (let ((var (list (list 1 2) (list 3 4 5)))) (reverse (car var)) var) '((1 2) (3 4 5)))
 (test (let ((x '(1 2 3))) (list (reverse x) x)) '((3 2 1) (1 2 3)))
+(test (reverse '(1 2)) '(2 1))
+(test (reverse '(1 2 3)) '(3 2 1))
+(test (reverse '(1 2 3 4)) '(4 3 2 1))
 
 (for-each
  (lambda (lst)
@@ -2857,11 +2858,13 @@
 (test (let ((x (list 1 2 3))) (list (recompose 32 reverse x) x)) '((1 2 3) (1 2 3)))
 (test (let ((x (list 1 2 3))) (list (recompose 31 reverse x) x)) '((3 2 1) (1 2 3)))
 
-(test (reverse (cons 1 2)) 'error)
-(test (reverse '(1 . 2)) 'error)
-(test (reverse '(1 2 . 3)) 'error)
+(test (reverse (cons 1 2)) '(2 . 1))
+(test (reverse '(1 . 2)) '(2 . 1))
+(test (reverse '(1 2 . 3)) '(3 2 1))
 (test (reverse) 'error)
 (test (reverse '(1 2 3) '(3 2 1)) 'error)
+
+
 
 (test (reverse! '(1 . 2)) 'error)
 (test (reverse! (cons 1 2)) 'error)
@@ -3778,7 +3781,7 @@
 (test (vector-set! #(1) 0 0 1) 'error)
 (test (vector-set! #(1) 0 0 1 2 3) 'error)
 (test (vector-set! #(1) #(0) 1) 'error)
-;(test (vector-set! '#(1 2) 0 2) 'error)
+(test (vector-set! '#(1 2) 0 2) 2)
 
 (for-each
  (lambda (arg)
@@ -3801,16 +3804,15 @@
   (test (vector-set! v 1 0) 'error)
   (test (vector-set! v -1 0) 'error))
 (test (vector-set! #() 0 123) 'error)
-;(test (vector-set! #(1 2 3) 0 123) 'error)
+(test (vector-set! #(1 2 3) 0 123) 123)
 
-;(test (let ((g (lambda () '#(1 2 3)))) (vector-set! (g) 0 #\?) (g)) 'error) ; not an error in Guile
-					;(test (let ((g (lambda () '(1 . 2)))) (set-car! (g) 123) (g)) 'error) ; should this also be an error?
-					;(test (let ((g (lambda () '(1 2)))) (list-set! (g) 0 123) (g)) 'error)
-;(test (let ((g (lambda () (symbol->string 'hi)))) (string-set! (g) 1 #\a) (symbol->string 'hi)) 'error)
+(test (let ((g (lambda () '#(1 2 3)))) (vector-set! (g) 0 #\?) (g)) #(#\? 2 3))
+(test (let ((g (lambda () '(1 . 2)))) (set-car! (g) 123) (g)) '(123 . 2))
+(test (let ((g (lambda () '(1 2)))) (list-set! (g) 0 123) (g)) '(123 2))
+(test (let ((g (lambda () (symbol->string 'hi)))) (string-set! (g) 1 #\a) (symbol->string 'hi)) "hi")
 
 
 
-					;(test (vector-set! '#(0 1 2) 1 "doe") 'error)
 (test (fill! (vector 1 2) 4) 4)
 
 (test (let ((v (vector 1 2 3))) (vector-fill! v 0) v) '#(0 0 0))
@@ -3827,11 +3829,9 @@
 
 (test (let ((v (vector 1 2 3))) (vector-set! v -1 0)) 'error)
 (test (let ((v (vector 1 2 3))) (vector-set! v 3 0)) 'error)
-;(test (vector-fill! '#(1 2) 2) 'error)
-
-; these aren't errors in Guile
-;(test (vector-fill! #() 0) 'error)
-;(test (vector-fill! (vector) 0) 'error)
+(test (vector-fill! '#(1 2) 2) 2)
+(test (vector-fill! #() 0) 0)
+(test (vector-fill! (vector) 0) 0)
 
 (for-each
  (lambda (arg)
@@ -4214,27 +4214,25 @@
 
 ;;; -------- circular structures --------
 ;;;
-;;; safe: memq memv member assq assv assoc (but needs tests)
+;;; safe: memq memv member assq assv assoc (but needs tests) reverse
 ;;;       length -- might add circular-list-length
-;;;       vector-fill! vector->list list->vector 
-;;;       object->string list->string
-;;;       list-tail
+;;;       vector-fill! vector->list list->vector vector
+;;;       object->string list->string list make-list
+;;;       list-tail apply append sort! values fill!
 ;;;
 ;;; unsafe: equal?
-;;; needs check: list /make-list/vector/values etc with circular args
-;;; unknown: copy sort! reverse|! eval apply append (list-)fill!
-;;; not checking: map for-each
+;;; unknown: copy
 
-;;; TODO: at least clist-equal? and cvects-equal? should be the default in C
-;;;   (also there are 2 list copiers in s7.c?)
-;;;   copy vector is just memcpy so it should not be a problem
-;;;   equal? cvects dies horribly
-;;;   equal? clists hangs
-;;;
-;;; unchecked: sort! (with cvect) reverse!
-;;;
-;;; map and for-each are like do -- circles might be intentional
-;;; what would it mean to reverse a circular list?
+;;; eval, map, and for-each are like do -- circles might be intentional
+
+
+;;; TODO: fill! needs tests! -- there are only about 10 altogether
+#|
+(let ((lst (list 1 2 3 4)))
+   (set! (cdr (cddr lst)) lst) (fill! lst 0) lst)
+#1=(0 0 0 . #1#)
+|#
+
 
 (define (clist-equal? x y)
 
@@ -4273,31 +4271,6 @@
 ;;;   fill! so x==x1 even though not a list
 
 
-(define (clist-fill! lst value)
-  (do ((slow lst)
-       (fast lst))
-      ((null? fast) value)
-    (set-car! fast value)
-    (if (pair? (cdr fast))
-	(begin
-	  (set! fast (cdr fast))
-	  (set-car! fast value)
-	  (if (pair? (cdr fast))
-	      (begin
-		(set! fast (cdr fast))
-		(set! slow (cdr slow))
-		(if (eq? fast slow)
-		    (set! fast '())))
-	      (begin
-		(if (not (null? (cdr fast)))
-		    (set-cdr! fast value))
-		(set! fast '()))))
-	(begin
-	  (if (not (null? (cdr fast)))
-	      (set-cdr! fast value))
-	  (set! fast '())))))
-
-
 (define (copy-clist lst)
   (define (copy-clist-1 fast slow step)
     (if (or (not (pair? fast))
@@ -4307,22 +4280,6 @@
   (if (not (pair? lst))
       lst
       (cons (car lst) (copy-clist-1 (cdr lst) lst #t))))
-
-(define (reverse-clist lst)
-  (if (null? lst)
-      '()
-      (let ((nlst (list (car lst)))
-	    (slow lst))
-	(do ((l (cdr lst) (cdr l))
-	     (step #f (not step)))
-	    ((or (not (pair? l))
-		 (eq? slow l))
-	     (if (null? l)
-		 nlst
-		 (cons l nlst))) ; perhaps throw an error here
-	  (set! nlst (cons (car l) nlst))
-	  (if step (set! slow (cdr slow)))))))
-
 
 (define (cvects-equal? v1 v2) ; assume 1-D for now
   ;; here the vect|list|hash-as-element might contain one of the current vects, or a circle might be formed somehow
@@ -4366,6 +4323,38 @@
 
 
   
+(let ((lst (list 1 2 3)))
+   (set! (cdr (cddr lst)) lst)
+   (test (apply + lst) 'error))
+
+(let ((lst (list 1 2 3)))
+   (set! (cdr (cddr lst)) lst)
+   (test (object->string (append '(1) lst)) "(1 . #1=(1 2 3 . #1#))"))
+(let ((lst (list 1 2 3)))
+   (set! (cdr (cddr lst)) lst)
+   (test (append lst '()) 'error)) 
+
+(let ((lst (list 1 2 3)))
+   (set! (cdr (cddr lst)) lst)
+   (test (sort! lst <) 'error))
+
+(let ((lst (list 1 2 3)))
+   (set! (cdr (cddr lst)) lst)
+   (test (object->string (list lst)) "(#1=(1 2 3 . #1#))"))
+
+(let ((lst (list 1 2 3)))
+   (set! (cdr (cddr lst)) lst)
+   (test (object->string (make-list 4 lst)) "(#1=(1 2 3 . #1#) #1# #1# #1#)"))
+
+(let ((lst (list 1 2 3)))
+   (set! (cdr (cddr lst)) lst)
+   (test (object->string (vector lst lst)) "#(#1=(1 2 3 . #1#) #1#)"))
+
+(let ((lst `(+ 1 2 3)))
+   (set! (cdr (cdddr lst)) (cddr lst)) 
+   (test (object->string lst) "(+ 1 . #1=(2 3 . #1#))"))
+
+
 (let ((x (list 1 2)))
   (test (clist-equal? x x) #t)
   (test (clist-equal? x (cdr x)) #f)
@@ -4381,12 +4370,12 @@
 ;;; (test (length (cons 1 2)) -1)
 (test (length '(1 2 3)) 3)
 
-(test (let ((lst (list))) (clist-fill! lst 0) lst) '())
-(test (let ((lst (list 1))) (clist-fill! lst 0) lst) '(0))
-(test (let ((lst (list 1 2))) (clist-fill! lst 0) lst) '(0 0))
-(test (let ((lst (list 1 (list 2 3)))) (clist-fill! lst 0) lst) '(0 0))
-(test (let ((lst (cons 1 2))) (clist-fill! lst 0) lst) '(0 . 0))
-(test (let ((lst (cons 1 (cons 2 3)))) (clist-fill! lst 0) lst) '(0 0 . 0))
+(test (let ((lst (list))) (fill! lst 0) lst) '())
+(test (let ((lst (list 1))) (fill! lst 0) lst) '(0))
+(test (let ((lst (list 1 2))) (fill! lst 0) lst) '(0 0))
+(test (let ((lst (list 1 (list 2 3)))) (fill! lst 0) lst) '(0 0))
+(test (let ((lst (cons 1 2))) (fill! lst 0) lst) '(0 . 0))
+(test (let ((lst (cons 1 (cons 2 3)))) (fill! lst 0) lst) '(0 0 . 0))
 
 
 
@@ -4405,7 +4394,7 @@
     (test (car lst2) lst2)
     (test (car lst1) lst1)
     (test (let ()
-	    (clist-fill! lst1 32)
+	    (fill! lst1 32)
 	    lst1)
 	  '(32 32))))
 
@@ -4452,13 +4441,11 @@
 ;; has the same effect but won't be equal?
 ;; (let ((l1 (list 0 1))) (set! (l1 1) l1) (clist-equal? l1 (copy-clist l1)))
 
-(test (reverse-clist '(1 2 (3 4))) '((3 4) 2 1))
-(test (reverse-clist '(1 2 3)) '(3 2 1))
-(test (reverse-clist '()) '())
-(test (let ((lst (list 1 2 3))) (set! (lst 2) lst) (object->string (reverse-clist lst))) "(#1=(1 2 #1#) 2 1)")
-(test (reverse-clist (cons 1 2)) (list 2 1)) ; is this a good idea?
-(test (let ((l1 (cons 1 '()))) (set-cdr! l1 l1) (object->string (reverse-clist l1))) "(#1=(1 . #1#) 1)")
-;; as in copy-clist this isn't equal, but it has the same effect
+(test (reverse '(1 2 (3 4))) '((3 4) 2 1))
+(test (reverse '(1 2 3)) '(3 2 1))
+(test (reverse '()) '())
+(test (let ((lst (list 1 2 3))) (set! (lst 2) lst) (object->string (reverse lst))) "(#1=(1 2 #1#) 2 1)")
+(test (let ((l1 (cons 1 '()))) (set-cdr! l1 l1) (object->string (reverse l1))) "(#1=(1 . #1#) 1 1 1)")
 
 
 
@@ -4540,7 +4527,7 @@
 
   (cfunc))
 
-;; for goto, we don't want a circle (so the syntax isn't right):
+;; for goto?
 (define (jumper)
   (begin
     (display "start")
@@ -5632,8 +5619,6 @@
 
 (test (string=? (format #f "~D" 123) "123") #t)
 (test (string=? (format #f "~D" 123/25) "123/25") #t)
-;(test (string=? (format #f "~D" 123.25) "123.25") #t)
-;(test (string=? (format #f "~D" 123+i) "123.0+1.0i") #t)
 
 (test (string=? (format #f "~O" 123) "173") #t)
 (test (string=? (format #f "~O" 123/25) "173/31") #t)
@@ -6056,8 +6041,6 @@
        open-input-string))
 
 
-
-;(test (string=? (let ((hi (lambda (b) (+ b 1)))) (object->string hi)) "hi") #t) -- this has changed
 (test (string=? (object->string 32) "32") #t)
 (test (string=? (object->string 32.5) "32.5") #t)
 (test (string=? (object->string 32/5) "32/5") #t)
@@ -11687,7 +11670,7 @@
   (test v (vector 0.0 0.0 0.0)))
 (let ((lst (list 1 2 (list (list 3) 4))))
   (fill! lst 100)
-  (test lst '(100 100 ((100) 100))))
+  (test lst '(100 100 100)))
 (let ((cn (cons 1 2)))
   (fill! cn 100)
   (test cn (cons 100 100)))
