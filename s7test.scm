@@ -4214,15 +4214,11 @@
 
 ;;; -------- circular structures --------
 ;;;
-;;; safe: memq memv member assq assv assoc (but needs tests) reverse
+;;; safe: memq memv member assq assv assoc (but needs tests) reverse copy equal?
 ;;;       length -- might add circular-list-length
 ;;;       vector-fill! vector->list list->vector vector
 ;;;       object->string list->string list make-list
 ;;;       list-tail apply append sort! values fill!
-;;;
-;;; unsafe: equal?
-;;; unknown: copy
-
 ;;; eval, map, and for-each are like do -- circles might be intentional
 
 
@@ -4232,97 +4228,9 @@
    (set! (cdr (cddr lst)) lst) (fill! lst 0) lst)
 #1=(0 0 0 . #1#)
 |#
-
-
-(define (clist-equal? x y)
-
-  (define (clist-equal-1? x y x1 y1 choice)
-
-; this is not right...
-;    (format #t "~A ~A ~A ~A ~A~%" x y x1 y1 choice)
-
-    (if (= choice 2)
-	(if (or (not (pair? x1))
-		(not (pair? y1)))
-	    #t ; this is the slow guy, so the fast one must have already checked equality here and returned #t
-	    (and (clist-equal-1? x y (car x1) (car y1) 0)
-		 (clist-equal-1? x y (cdr x1) (cdr y1) 0)))
-	
-	(if (or (not (pair? x))
-		(not (pair? y)))
-	    (equal? x y)
-
-	    (if (eq? x x1)
-		(eq? y y1)
-
-		;; x=pair x!=x1
-		(if (eq? y y1)
-		    #f
-		    (and (clist-equal-1? (car x) (car y) x1 y1 (+ choice 1))
-			 (clist-equal-1? (cdr x) (cdr y) x1 y1 (+ choice 1))))))))
-  (or (eq? x y)
-      (if (or (not (pair? x))
-	      (not (pair? y)))
-	  (equal? x y)
-	  (and (clist-equal-1? (car x) (car y) x y 1)
-	       (clist-equal-1? (cdr x) (cdr y) x y 1)))))
-
 ;;; (let ((lst (list 1 2 3 4))) (fill! lst "hi") (equal? lst '("hi" "hi" "hi" "hi")))
 ;;;   fill! so x==x1 even though not a list
 
-
-(define (copy-clist lst)
-  (define (copy-clist-1 fast slow step)
-    (if (or (not (pair? fast))
-	    (eq? fast slow))
-	fast
-	(cons (car fast) (copy-clist-1 (cdr fast) (if step (cdr slow) slow) (not step)))))
-  (if (not (pair? lst))
-      lst
-      (cons (car lst) (copy-clist-1 (cdr lst) lst #t))))
-
-(define (cvects-equal? v1 v2) ; assume 1-D for now
-  ;; here the vect|list|hash-as-element might contain one of the current vects, or a circle might be formed somehow
-
-  (define (cvects-equal-1? v1 v2 len vects)
-    (call-with-exit
-     (lambda (return)
-       (do ((i 0 (+ i 1)))
-	   ((= i len) #t)
-	 (let ((e1 (v1 i))
-	       (e2 (v2 i)))
-
-	   (if (or (vector? e1) (pair? e1) (hash-table? e1)) 
-	       (begin
-		 (if (or (memq e1 vects)
-			 (memq e2 vects))
-		     (if (not (eq? e1 e2)) ; a bit draconian
-			 (return #f))
-		     (begin                ; not in our list, so take a chance
-		       (if (vector? e1)
-			   (if (or (not (vector? e2))
-				   (not (= (vector-length e1) (vector-length e2)))
-				   (not (cvects-equal-1? e1 e2 (vector-length e1) vects)))
-			       (return #f))
-			   (if (pair? e1)
-			       (if (or (not (pair? e2))
-				       (not (clist-equal? e1 e2)))
-				   (return #f))
-			       (if (not (equal? e1 e2)) ; hash...
-				   (return #f))))
-		       (set! vects (cons e1 vects))
-		       (if (not (eq? e1 e2))
-			   (set! vects (cons e2 vects))))))
-
-	       (if (not (equal? e1 e2))
-		   (return #f))))))))
-
-  (let ((len (vector-length v1)))
-    (and (= len (vector-length v2))
-	 (cvects-equal-1? v1 v2 len (list v1 v2)))))
-
-
-  
 (let ((lst (list 1 2 3)))
    (set! (cdr (cddr lst)) lst)
    (test (apply + lst) 'error))
@@ -4356,15 +4264,15 @@
 
 
 (let ((x (list 1 2)))
-  (test (clist-equal? x x) #t)
-  (test (clist-equal? x (cdr x)) #f)
-  (test (clist-equal? x '()) #f))
+  (test (equal? x x) #t)
+  (test (equal? x (cdr x)) #f)
+  (test (equal? x '()) #f))
 (let ((x (list 1 (list 2 3) (list (list 4 (list 5)))))
       (y (list 1 (list 2 3) (list (list 4 (list 5))))))
-  (test (clist-equal? x y) #t))
+  (test (equal? x y) #t))
 (let ((x (list 1 (list 2 3) (list (list 4 (list 5)))))
       (y (list 1 (list 2 3) (list (list 4 (list 5) 6)))))
-  (test (clist-equal? x y) #f))
+  (test (equal? x y) #f))
 
 (test (length '()) 0)
 ;;; (test (length (cons 1 2)) -1)
@@ -4386,7 +4294,7 @@
   (test (list->string lst1) 'error)
   (let ((lst2 (list 1 2)))
     (set-car! lst2 lst2)
-    (test (clist-equal? lst1 lst2) #t)
+    (test (equal? lst1 lst2) #t)
     (test (eq? lst1 lst2) #f)
     (test (eqv? lst1 lst2) #f)
     (test (pair? lst1) #t)
@@ -4404,21 +4312,21 @@
   (test (length lst1) 'error)
   (let ((lst2 (cons 1 '())))
     (set-cdr! lst2 lst2)
-    (test (clist-equal? lst1 lst2) #t)
+    (test (equal? lst1 lst2) #t)
     (set-car! lst2 0)
-    (test (clist-equal? lst1 lst2) 'error)
+    (test (equal? lst1 lst2) #f)
     (test (length lst2) 'error)))
 
 (let ((lst1 (list 1))
       (lst2 (list 1)))
   (set-car! lst1 lst2)
   (set-car! lst2 lst1)
-  (test (clist-equal? lst1 lst2) #t)
+  (test (equal? lst1 lst2) #t)
   (test (length lst1) 1)
   (let ((lst3 (list 1)))
-    (test (clist-equal? lst1 lst3) #f)
+    (test (equal? lst1 lst3) #f)
     (set-cdr! lst3 lst3)
-    (test (clist-equal? lst1 lst3) #f)))
+    (test (equal? lst1 lst3) #f)))
 
 (let ((lst1 (list 'a 'b 'c)))
   (set! (cdr (cddr lst1)) lst1)
@@ -4432,14 +4340,15 @@
   (test (object->string lst1) "#1=(1 #1# 3)"))
 
 
-(test (copy-clist (list 1 2 (list 3 4))) '(1 2 (3 4)))
-(test (copy-clist (cons 1 2)) '(1 . 2))
-(test (copy-clist '(1 2 (3 4) . 5)) '(1 2 (3 4) . 5))
-(test (copy-clist '()) '())
+(test (copy (list 1 2 (list 3 4))) '(1 2 (3 4)))
+(test (copy (cons 1 2)) '(1 . 2))
+(test (copy '(1 2 (3 4) . 5)) '(1 2 (3 4) . 5))
+(test (copy '()) '())
 
-(test (object->string (let ((l1 (list 0 1))) (set! (l1 1) l1) (copy-clist l1))) "(0 #1=(0 #1#))")
-;; has the same effect but won't be equal?
-;; (let ((l1 (list 0 1))) (set! (l1 1) l1) (clist-equal? l1 (copy-clist l1)))
+(test (object->string (let ((l1 (list 0 1))) (set! (l1 1) l1) (copy l1))) "(0 #1=(0 #1#))")
+(test (object->string (let ((lst (list 1 2))) (set! (cdr lst) lst) (copy lst))) "(1 . #1=(1 . #1#))")
+(test (object->string (let ((l1 (list 1 2))) (copy (list l1 4 l1)))) "(#1=(1 2) 4 #1#)")
+(test (object->string (let ((lst (list 1 2 3))) (set! (cdr (cddr lst)) (cdr lst)) (copy lst))) "(1 2 3 . #1=(2 3 . #1#))")
 
 (test (reverse '(1 2 (3 4))) '((3 4) 2 1))
 (test (reverse '(1 2 3)) '(3 2 1))
@@ -4456,9 +4365,9 @@
 
 ;;; vectors
 
-(test (cvects-equal? (vector 0) (vector 0)) #t)
-(test (cvects-equal? (vector 0 #\a "hi" (list 1 2 3)) (vector 0 #\a "hi" (list 1 2 3))) #t)
-(test (let ((v (vector 0))) (cvects-equal? (vector v) (vector v))) #t)
+(test (equal? (vector 0) (vector 0)) #t)
+(test (equal? (vector 0 #\a "hi" (list 1 2 3)) (vector 0 #\a "hi" (list 1 2 3))) #t)
+(test (let ((v (vector 0))) (equal? (vector v) (vector v))) #t)
 
 (let ((v1 (make-vector 1 0)))
   (set! (v1 0) v1)
@@ -4466,13 +4375,13 @@
   (let ((v2 (vector 0)))
     (vector-set! v2 0 v2)
     (test (vector-length v1) 1)
-    (test (cvects-equal? v1 v2) #f)
-    (test (cvects-equal? (vector-ref v1 0) v1) #t)
-    (test (clist-equal? (vector->list v1) (list v1)) #t)
+    (test (equal? v1 v2) #t)
+    (test (equal? (vector-ref v1 0) v1) #t)
+    (test (equal? (vector->list v1) (list v1)) #t)
     (vector-fill! v1 0)
     (test (equal? v1 (vector 0)) #t)
     (let ((v3 (copy v2)))
-      (test (cvects-equal? v2 v3) #t)
+      (test (equal? v2 v3) #t)
       (vector-set! v3 0 0)
       (test (equal? v3 (vector 0)) #t))
     ))
@@ -4481,7 +4390,7 @@
       (v2 (vector 0)))
   (set! (v1 0) v2)
   (set! (v2 0) v1)
-  (test (cvects-equal? v1 v2) #f)) ; ?? 
+  (test (equal? v1 v2) #t)) 
 
 (let* ((l1 (list 1 2))
        (v1 (vector 1 2))
@@ -4489,13 +4398,13 @@
        (v2 (vector l1 v1 l2)))
   (vector-set! v1 0 v2)
   (list-set! l1 1 l2)
-  (test (cvects-equal? v1 v2) #f))
+  (test (equal? v1 v2) #f))
 
 (let ((v1 (make-vector 1 0)))
   (set! (v1 0) v1)
   (let ((v2 (vector 0)))
     (vector-set! v2 0 v2)
-    (test (cvects-equal? v1 v2) #f)))
+    (test (equal? v1 v2) #t)))
 
 (let ((v1 (make-vector 1 0)))
   (set! (v1 0) v1)

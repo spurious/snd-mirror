@@ -715,7 +715,11 @@ struct s7_scheme {
  *    it needs to be marked during GC -- this adds less .1% total time).
  */
 
-#define UNUSED_BITS                   0xf8000000
+#define T_STRUCTURE                   (1 << (TYPE_BITS + 19))
+#define has_structure(p)              ((typeflag(p) & T_STRUCTURE) != 0)
+/* for quick recognition of lists, vectors, hash-tables in print and equal? */
+
+#define UNUSED_BITS                   0xf0000000
 
 #if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f))
@@ -1796,7 +1800,7 @@ static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char
 #endif
 
   vector_element(sc->symbol_table, location) = permanent_cons(x, vector_element(sc->symbol_table, location), 
-							      T_PAIR | T_ATOM | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY);
+							      T_PAIR | T_ATOM | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY | T_STRUCTURE);
 #if HAVE_PTHREADS
   pthread_mutex_unlock(&symtab_lock);
 #endif
@@ -2036,7 +2040,7 @@ static s7_pointer g_symbol_calls(s7_scheme *sc, s7_pointer args)
       NEW_CELL(Sc, x); \
       car(x) = Sc->NIL; \
       cdr(x) = Old_Env; \
-      set_type(x, T_PAIR); \
+      set_type(x, T_PAIR | T_STRUCTURE); \
       New_Env = x; \
      } while (0)
 
@@ -2048,7 +2052,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
   NEW_CELL(sc, x);
   car(x) = sc->NIL;
   cdr(x) = old_env;
-  set_type(x, T_PAIR);
+  set_type(x, T_PAIR | T_STRUCTURE);
   return(x);
 } 
 
@@ -2084,7 +2088,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
       car(x) = slot;
       csr(x) = variable;
       cdr(x) = e;
-      set_type(x, T_PAIR);
+      set_type(x, T_PAIR | T_STRUCTURE);
       car(env) = x;
       set_local(variable);
 
@@ -2132,13 +2136,13 @@ static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s
   NEW_CELL(sc, y);
   car(y) = variable;
   cdr(y) = value;
-  set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+  set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY | T_STRUCTURE);
 
   NEW_CELL(sc, x);
   /* car(x) = immutable_cons(sc, variable, value); */
   car(x) = y;
   cdr(x) = car(sc->envir);
-  set_type(x, T_PAIR);
+  set_type(x, T_PAIR | T_STRUCTURE);
   car(sc->envir) = x;
   set_local(variable);
 
@@ -10216,6 +10220,7 @@ static int shared_ref(shared_info *ci, s7_pointer p)
 
 static int peek_shared_ref(shared_info *ci, s7_pointer p)
 {
+  /* returns 0 if not found, otherwise the ref value for p */
   int i;
   for (i = 0; i < ci->top; i++)
     if (ci->objs[i] == p)
@@ -10224,9 +10229,37 @@ static int peek_shared_ref(shared_info *ci, s7_pointer p)
 }
 
 
-static bool has_structure(s7_pointer obj)
+static void check_shared_info_size(shared_info *ci)
 {
-  return((is_pair(obj)) || (s7_is_vector(obj)) || (s7_is_hash_table(obj)));
+  if (ci->top == ci->size)
+    {
+      int i;
+      ci->size *= 2;
+      ci->objs = (s7_pointer *)realloc(ci->objs, ci->size * sizeof(s7_pointer));
+      ci->refs = (int *)realloc(ci->refs, ci->size * sizeof(int));
+      for (i = ci->top; i < ci->size; i++) ci->refs[i] = 0;
+    }
+}
+
+
+static void add_equal_ref(shared_info *ci, s7_pointer x, s7_pointer y)
+{
+  /* assume neither x nor y is in the table, and that they should share a ref value */
+  check_shared_info_size(ci);
+  ci->ref++;
+  ci->objs[ci->top] = x;
+  ci->refs[ci->top++] = ci->ref;
+  check_shared_info_size(ci);
+  ci->objs[ci->top] = y;
+  ci->refs[ci->top++] = ci->ref;
+}
+
+
+static void add_shared_ref(shared_info *ci, s7_pointer x, int ref_x)
+{
+  check_shared_info_size(ci);
+  ci->objs[ci->top] = x;
+  ci->refs[ci->top++] = ref_x;
 }
 
 
@@ -10247,14 +10280,7 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
   if (ref == -1)
     {
       /* top not found -- add it to the list */
-      if (ci->top == ci->size)
-	{
-	  int i;
-	  ci->size *= 2;
-	  ci->objs = (s7_pointer *)realloc(ci->objs, ci->size * sizeof(s7_pointer));
-	  ci->refs = (int *)realloc(ci->refs, ci->size * sizeof(int));
-	  for (i = ci->top; i < ci->size; i++) ci->refs[i] = 0;
-	}
+      check_shared_info_size(ci);
       ci->objs[ci->top++] = top;
 
       /* now search the rest of this structure */
@@ -10280,17 +10306,25 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 }
 
 
-static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top)
+static shared_info *new_shared_info(s7_scheme *sc)
 {
   shared_info *ci;
-  int i, refs;
-
   ci = (shared_info *)calloc(1, sizeof(shared_info));
   ci->top = 0;
   ci->ref = 0;
   ci->size = INITIAL_SHARED_INFO_SIZE;
   ci->objs = (s7_pointer *)malloc(ci->size * sizeof(s7_pointer));
   ci->refs = (int *)calloc(ci->size, sizeof(int));   /* finder expects 0 = unseen previously */
+  return(ci);
+}
+
+
+static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top)
+{
+  shared_info *ci;
+  int i, refs;
+
+  ci = new_shared_info(sc);
 
   /* collect all pointers associated with top */
   collect_shared_info(sc, ci, top);
@@ -10885,7 +10919,7 @@ static s7_pointer immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
   NEW_CELL(sc, x); /* might trigger gc, expansion here does not help */
   car(x) = a;
   cdr(x) = b;
-  set_type(x, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+  set_type(x, T_PAIR | T_IMMUTABLE | T_DONT_COPY | T_STRUCTURE);
   return(x);
 }
 
@@ -10896,7 +10930,7 @@ s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
   NEW_CELL(sc, x);
   car(x) = a;
   cdr(x) = b;
-  set_type(x, T_PAIR);
+  set_type(x, T_PAIR | T_STRUCTURE);
   return(x);
 }
 
@@ -10952,7 +10986,7 @@ static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a)
   NEW_CELL(sc, x);
   car(x) = a;
   cdr(x) = sc->NIL;
-  set_type(x, T_PAIR);
+  set_type(x, T_PAIR | T_STRUCTURE);
   return(x);
 }
 
@@ -10963,11 +10997,11 @@ static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b)
   NEW_CELL(sc, y);
   car(y) = b;
   cdr(y) = sc->NIL;
-  set_type(y, T_PAIR);
+  set_type(y, T_PAIR | T_STRUCTURE);
   NEW_CELL(sc, x); /* order matters because the GC will see "y" and expect it to have legit car/cdr */
   car(x) = a;
   cdr(x) = y;
-  set_type(x, T_PAIR);
+  set_type(x, T_PAIR | T_STRUCTURE);
   return(x);
 }
 
@@ -10978,15 +11012,15 @@ static s7_pointer make_list_3(s7_scheme *sc, s7_pointer a, s7_pointer b, s7_poin
   NEW_CELL(sc, z);
   car(z) = c;
   cdr(z) = sc->NIL;
-  set_type(z, T_PAIR);
+  set_type(z, T_PAIR | T_STRUCTURE);
   NEW_CELL(sc, y);
   car(y) = b;
   cdr(y) = z;
-  set_type(y, T_PAIR);
+  set_type(y, T_PAIR | T_STRUCTURE);
   NEW_CELL(sc, x);
   car(x) = a;
   cdr(x) = y;
-  set_type(x, T_PAIR);
+  set_type(x, T_PAIR | T_STRUCTURE);
   return(x);
 }
 
@@ -11404,7 +11438,7 @@ static s7_pointer g_cons(s7_scheme *sc, s7_pointer args)
   NEW_CELL(sc, x);
   car(x) = car(args);
   cdr(x) = cadr(args);
-  set_type(x, T_PAIR);
+  set_type(x, T_PAIR | T_STRUCTURE);
   return(x);
 }
 
@@ -12123,7 +12157,7 @@ static s7_pointer s7_make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
   NEW_CELL(sc, x);
   vector_length(x) = 0;
   vector_elements(x) = NULL;
-  set_type(x, T_VECTOR | T_FINALIZABLE | T_DONT_COPY);
+  set_type(x, T_VECTOR | T_FINALIZABLE | T_DONT_COPY | T_STRUCTURE);
 
   /* in the multithread case, we can be interrupted here, and a subsequent GC mark sweep can see
    *    this half-allocated vector.  If length>0, and a non-null "elements" field is left over
@@ -12281,49 +12315,6 @@ static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
   if (!s7_is_vector(car(args)))
     return(s7_wrong_type_arg_error(sc, "vector->list", 0, car(args), "a vector"));
   return(s7_vector_to_list(sc, car(args)));
-}
-
-
-static bool vectors_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
-{
-  s7_Int i, len;
-
-  len = vector_length(x);
-  if (len != vector_length(y)) return(false);
-
-#if WITH_MULTIDIMENSIONAL_VECTORS
-  if (vector_is_multidimensional(x))
-    {
-      if (!(vector_is_multidimensional(y)))
-	return(false);
-      if (vector_ndims(x) != vector_ndims(y))
-	return(false);
-      for (i = 0; i < vector_ndims(x); i++)
-	if (vector_dimension(x, i) != vector_dimension(y, i))
-	  return(false);
-    }
-  else
-    {
-      if (vector_is_multidimensional(y))
-	return(false);
-    }
-#endif
-
-  /* TODO: vectors_equal will core-up and die if passed a circular vector */
-  for (i = 0; i < len; i++)
-    {
-      if (vector_element(x, i) != x)
-	{
-	  if (!(s7_is_equal(sc, vector_element(x, i), vector_element(y, i))))
-	    return(false);
-	}
-      else
-	{
-	  if (vector_element(y, i) != y)
-	    return(false);
-	}
-    }
-  return(true);
 }
 
 
@@ -12769,6 +12760,7 @@ static s7_pointer g_multivector(s7_scheme *sc, int dims, s7_pointer data)
 
 
 
+
 /* -------- sort! -------- */
 
 #if (!HAVE_NESTED_FUNCTIONS)
@@ -12931,7 +12923,7 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
 {
   s7_pointer table;
   table = s7_make_vector(sc, size);   /* nil is the default value */
-  set_type(table, T_HASH_TABLE | T_FINALIZABLE | T_DONT_COPY);
+  set_type(table, T_HASH_TABLE | T_FINALIZABLE | T_DONT_COPY | T_STRUCTURE);
   return(table);
 }
 
@@ -14524,45 +14516,107 @@ bool s7_is_eqv(s7_pointer a, s7_pointer b)
 }
 
 
-static bool lists_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
+/* -------- structure equality -------- 
+ *
+ * equal? examines the entire structure (possibly a tree etc), which might contain
+ *   cycles (vector element is the vector etc), so list/vector/hash-table equality
+ *   needs to carry along a list of pointers seen so far.
+ */
+
+static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
+
+bool s7_is_equal_ci(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
-  /* this works without too much overhead for simple cycles.
-   * at this point we know x and y are pairs.
-   */
+  if (x == y) 
+    return(true);
   
-  s7_pointer x1, x2, y1, y2;
+#if WITH_GMP
+  if (big_numbers_are_eqv(x, y)) return(true); /* T_NUMBER != T_C_OBJECT but both can represent numbers */
+#endif
 
-  x1 = x;
-  y1 = y;
-  x2 = x;
-  y2 = y;
-
-  while (true)
+  if (type(x) != type(y)) 
+    return(false);
+  
+  switch (type(x))
     {
-      int step;
-      for (step = 0; step < 2; step++)
-	{
-	  if (!s7_is_equal(sc, car(x1), car(y1)))
-	    return(false);
-	  x1 = cdr(x1);
-	  y1 = cdr(y1);
+    case T_STRING:
+      return(strings_are_equal(string_value(x), string_value(y)));
 
-	  if (!is_pair(x1))
-	    return(s7_is_equal(sc, x1, y1));
-	  if (!is_pair(y1))
-	    return(false);
-	}
+    case T_C_OBJECT:
+      if (is_s_object(x))
+	return(call_s_object_equal(sc, x, y));
+      return(objects_are_equal(x, y));
 
-      /* check for cycles */
-      x2 = cdr(x2);
-      y2 = cdr(y2);
-      if (x1 == x2)
-	return(y1 == y2);
-      if (y1 == y2)
-	return(x1 == x2);
+    case T_CHARACTER:
+      return(s7_character(x) == s7_character(y));
+  
+    case T_NUMBER:
+      return(numbers_are_eqv(x, y));
+
+    case T_VECTOR:
+    case T_HASH_TABLE:
+    case T_PAIR:
+      return(structures_are_equal(sc, x, y, ci));
     }
 
-  return(false);
+  return(false); /* we already checked that x != y (port etc) */
+}
+
+
+static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+{
+  /* here we know x and y are pointers to the same type of structure */
+  int ref_x, ref_y;
+
+  ref_x = peek_shared_ref(ci, x);
+  ref_y = peek_shared_ref(ci, y);
+
+  if ((ref_x != 0) && (ref_y != 0))
+    return(ref_x == ref_y);
+  
+  if ((ref_x != 0) || (ref_y != 0))
+    {
+      /* try to harmonize the new guy -- there can be more than one structure equal to the current one */
+      if (ref_x != 0)
+	add_shared_ref(ci, y, ref_x);
+      else add_shared_ref(ci, x, ref_y);
+    }
+  else add_equal_ref(ci, x, y);
+  
+  /* now compare the elements of the structures. */
+  if (is_pair(x))
+    return((s7_is_equal_ci(sc, car(x), car(y), ci)) &&
+	   (s7_is_equal_ci(sc, cdr(x), cdr(y), ci)));
+
+  /* vector or hash table */
+  {
+    s7_Int i, len;
+    len = vector_length(x);
+    if (len != vector_length(y)) return(false);
+
+#if WITH_MULTIDIMENSIONAL_VECTORS
+    if (vector_is_multidimensional(x))
+      {
+	if (!(vector_is_multidimensional(y)))
+	  return(false);
+	if (vector_ndims(x) != vector_ndims(y))
+	  return(false);
+	for (i = 0; i < vector_ndims(x); i++)
+	  if (vector_dimension(x, i) != vector_dimension(y, i))
+	    return(false);
+      }
+    else
+      {
+	if (vector_is_multidimensional(y))
+	  return(false);
+      }
+#endif
+
+    for (i = 0; i < len; i++)
+      if (!(s7_is_equal_ci(sc, vector_element(x, i), vector_element(y, i), ci)))
+	return(false);
+  }
+  return(true);
 }
 
 
@@ -14578,29 +14632,39 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
   if (type(x) != type(y)) 
     return(false);
   
-  if (is_pair(x))
-    return(lists_equal(sc, x, y));
-
-  if (s7_is_string(x))
-    return(strings_are_equal(string_value(x), string_value(y)));
-  
-  if (is_c_object(x))
+  switch (type(x))
     {
+    case T_STRING:
+      return(strings_are_equal(string_value(x), string_value(y)));
+
+    case T_C_OBJECT:
       if (is_s_object(x))
 	return(call_s_object_equal(sc, x, y));
       return(objects_are_equal(x, y));
+
+    case T_CHARACTER:
+      return(s7_character(x) == s7_character(y));
+  
+    case T_NUMBER:
+      return(numbers_are_eqv(x, y));
+
+    case T_VECTOR:
+    case T_HASH_TABLE:
+      if (vector_length(x) != vector_length(y))
+	return(false);
+      /* fall through */
+
+    case T_PAIR:
+      {
+	shared_info *ci;
+	bool result;
+	ci = new_shared_info(sc);
+	result = structures_are_equal(sc, x, y, ci);
+	free_shared_info(ci);
+	return(result);
+      }
     }
-  
-  if ((s7_is_vector(x)) ||
-      (s7_is_hash_table(x)))
-    return(vectors_equal(sc, x, y));
-  
-  if (s7_is_character(x)) 
-    return(s7_character(x) == s7_character(y));
-  
-  if (s7_is_number(x))
-    return(numbers_are_eqv(x, y));
-  
+
   return(false); /* we already checked that x != y (port etc) */
 }
 
@@ -14679,14 +14743,12 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer list_copy(s7_scheme *sc, s7_pointer obj)
+static s7_pointer list_copy(s7_scheme *sc, s7_pointer x, s7_pointer y, bool step)
 {
-  /* why is this slightly different from copy_list above? */
-  /*   I think that copy_list will not handle dotted lists correctly, and neither of these handles circular lists */
-
-  if (is_pair(obj))
-    return(s7_cons(sc, car(obj), list_copy(sc, cdr(obj))));
-  return(obj);
+  if ((!is_pair(x)) ||
+       (x == y))
+    return(x);
+  return(s7_cons(sc, car(x), list_copy(sc, cdr(x), (step) ? cdr(y) : y, !step)));
 }
 
 
@@ -14707,7 +14769,7 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
       return(vector_copy(sc, obj)); /* "shallow" copy */
 
     case T_PAIR:
-      return(list_copy(sc, obj));   /* should vector/list copy the objects as well as the container? */
+      return(s7_cons(sc, car(obj), list_copy(sc, cdr(obj), obj, true)));  /* this is the only use of list_copy */
     }
   return(obj);
 }
@@ -18183,7 +18245,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	NEW_CELL(sc, x); 
 	car(x) = sc->value;
 	cdr(x) = sc->args;
-	set_type(x, T_PAIR);
+	set_type(x, T_PAIR | T_STRUCTURE);
 	sc->args = x;
       }
 
@@ -18380,12 +18442,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		NEW_CELL(sc, y);
 		car(y) = z;
 		cdr(y) = car(sc->y);
-		set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY);
+		set_type(y, T_PAIR | T_IMMUTABLE | T_DONT_COPY | T_STRUCTURE);
 
 		NEW_CELL(sc, x);
 		car(x) = y;
 		cdr(x) = car(sc->envir);
-		set_type(x, T_PAIR);
+		set_type(x, T_PAIR | T_STRUCTURE);
 
 		car(sc->envir) = x;
 		set_local(z);
@@ -19617,7 +19679,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	NEW_CELL(sc, x);
 	car(x) = sc->value;
 	cdr(x) = sc->args;
-	set_type(x, T_PAIR);
+	set_type(x, T_PAIR | T_STRUCTURE);
 	sc->args = x;
       }
       sc->tok = token(sc);
@@ -24667,7 +24729,7 @@ s7_scheme *s7_init(void)
   
   /* keep the symbol table out of the heap */
   sc->symbol_table = (s7_pointer)calloc(1, sizeof(s7_cell));
-  set_type(sc->symbol_table, T_VECTOR | T_FINALIZABLE | T_DONT_COPY);
+  set_type(sc->symbol_table, T_VECTOR | T_FINALIZABLE | T_DONT_COPY | T_STRUCTURE);
   vector_length(sc->symbol_table) = SYMBOL_TABLE_SIZE;
   vector_elements(sc->symbol_table) = (s7_pointer *)malloc(SYMBOL_TABLE_SIZE * sizeof(s7_pointer));
   s7_vector_fill(sc, sc->symbol_table, sc->NIL);
@@ -24833,7 +24895,7 @@ s7_scheme *s7_init(void)
 
   sc->WRONG_TYPE_ARG_INFO = sc->NIL;
   for (i = 0; i < 6; i++)
-    sc->WRONG_TYPE_ARG_INFO = permanent_cons(sc->F, sc->WRONG_TYPE_ARG_INFO, T_PAIR);
+    sc->WRONG_TYPE_ARG_INFO = permanent_cons(sc->F, sc->WRONG_TYPE_ARG_INFO, T_PAIR | T_STRUCTURE);
   s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 0, s7_make_permanent_string("~A argument ~D, ~S, is ~A but should be ~A"));
 
   sc->WRONG_NUMBER_OF_ARGS = s7_make_symbol(sc, "wrong-number-of-args");
@@ -24847,7 +24909,7 @@ s7_scheme *s7_init(void)
 
   sc->OUT_OF_RANGE_INFO = sc->NIL;
   for (i = 0; i < 5; i++)
-    sc->OUT_OF_RANGE_INFO = permanent_cons(sc->F, sc->OUT_OF_RANGE_INFO, T_PAIR);
+    sc->OUT_OF_RANGE_INFO = permanent_cons(sc->F, sc->OUT_OF_RANGE_INFO, T_PAIR | T_STRUCTURE);
   s7_list_set(sc, sc->OUT_OF_RANGE_INFO, 0, s7_make_permanent_string("~A argument ~D, ~S, is out of range (~A)"));
 
   sc->KEY_KEY = s7_make_keyword(sc, "key");
@@ -24874,7 +24936,7 @@ s7_scheme *s7_init(void)
   sc->SET = s7_make_symbol(sc, "set!");
   typeflag(sc->SET) |= T_DONT_COPY; 
 
-  sc->s_function_args = permanent_cons(sc->F, sc->NIL, T_PAIR);
+  sc->s_function_args = permanent_cons(sc->F, sc->NIL, T_PAIR | T_STRUCTURE);
 
   (*(sc->gc_off)) = false;
 
