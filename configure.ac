@@ -1626,6 +1626,8 @@ case "$host" in
 	    JACK)
 		AC_DEFINE(HAVE_JACK_IN_LINUX)
 		AC_DEFINE(HAVE_OSS)
+		JACK_LIBS="$JACK_LIBS -lpthread"
+# added -lpthread 21-May-10 for FC13 (Bill S)
 		AUDIO_LIB="-lsamplerate"
 		;;
 	    OSS)

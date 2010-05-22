@@ -10803,6 +10803,8 @@ $as_echo "$alsa_ok" >&6; }
 
 		$as_echo "#define HAVE_OSS 1" >>confdefs.h
 
+		JACK_LIBS="$JACK_LIBS -lpthread"
+# added -lpthread 21-May-10 for FC13 (Bill S)
 		AUDIO_LIB="-lsamplerate"
 		;;
 	    OSS)

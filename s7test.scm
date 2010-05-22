@@ -2343,6 +2343,7 @@
 (test (car '(1 .. 2)) 1)
 (test (car ''foo) 'quote)
 (test (car '(1 2 . 3)) 1)
+(test (car (cons 1 '())) 1)
 
 (for-each
  (lambda (arg)
@@ -3263,6 +3264,12 @@
 (test (assq '() '((1) (#f 2))) #f)
 (test (assq #() '((#f 1) (() 2) (#() 3))) #f)  ; (eq? #() #()) -> #f
 
+(test (assq 'b '((a . 1) (b . 2) () (c . 3) #f)) '(b . 2))
+(test (assq 'c '((a . 1) (b . 2) () (c . 3) #f)) '(c . 3))
+(test (assq 'b '((a . 1) (b . 2) () (c . 3) . 4)) '(b . 2))
+(test (assq 'c '((a . 1) (b . 2) () (c . 3) . 4)) '(c . 3))
+(test (assq 'b (list '(a . 1) '(b . 2) '() '(c . 3) #f)) '(b . 2))
+(test (assq 'asdf (list '(a . 1) '(b . 2) '() '(c . 3) #f))#f)
 
 
 (test (assv 1 '(1 2 . 3)) #f)
@@ -3308,7 +3315,12 @@
 (test (assv '() '((1) (#f 2))) #f)
 (test (assv #() '((#f 1) (() 2) (#() 3))) #f)  ; (eqv? #() #()) -> #f ??
 
-
+(test (assv 'b '((a . 1) (b . 2) () (c . 3) #f)) '(b . 2))
+(test (assv 'c '((a . 1) (b . 2) () (c . 3) #f)) '(c . 3))
+(test (assv 'b '((a . 1) (b . 2) () (c . 3) . 4)) '(b . 2))
+(test (assv 'c '((a . 1) (b . 2) () (c . 3) . 4)) '(c . 3))
+(test (assv 'asdf '((a . 1) (b . 2) () (c . 3) . 4)) #f)
+(test (assv 'd '((a . 1) (b . 2) () (c . 3) (d . 5))) '(d . 5))
 
 
 (let ((e '((a 1) (b 2) (c 3))))
@@ -3368,6 +3380,12 @@
    (test (assoc arg (list (list 1 2) (list arg 3))) (list arg 3)))
  (list "hi" (integer->char 65) #f 'a-symbol #() abs 3/4 #\f #t (if #f #f)))
 
+(test (assoc 'b '((a . 1) (b . 2) () (c . 3) #f)) '(b . 2))
+(test (assoc 'c '((a . 1) (b . 2) () (c . 3) #f)) '(c . 3))
+(test (assoc 'b '((a . 1) (b . 2) () (c . 3) . 4)) '(b . 2))
+(test (assoc 'c '((a . 1) (b . 2) () (c . 3) . 4)) '(c . 3))
+(test (assoc 'c '(() (a . 1) (b . 2) () (c . 3) (c . 4) . 4)) '(c . 3))
+(test (assoc 'asdf '(() (a . 1) (b . 2) () (c . 3) (c . 4) . 4)) #f)
 
 
 
@@ -3407,9 +3425,13 @@
   (test ls '(a z c)))
 (test (memv 1 (cons 1 2)) '(1 . 2))
 (test (memv 'a (list a b . c)) 'error)
+(test (memv 'a '(a b . c)) '(a b . c))
+(test (memv 'asdf '(a b . c)) #f)
 (test (memv) 'error)
 (test (memv 'a) 'error)
 (test (memv 'a 'b) 'error)
+(test (memv 'c '(a b c)) '(c))
+(test (memv 'c '(a b . c)) #f)
 
 
 
@@ -3427,16 +3449,20 @@
 (test (member 1 (cons 1 2)) '(1 . 2))
 (test (member 'a (list a b . c)) 'error)
 (test (member 1 '(1 2 . 3)) '(1 2 . 3))
+(test (member 4 '(1 2 . 3)) #f)
 (test (member) 'error)
 (test (member 'a) 'error)
 (test (member 'a 'b) 'error)
 (test (member '() '(1 2 3)) #f)
 (test (member '() '(1 2 ())) '(()))
+(test (member #() '(1 () 2 #() 3)) '(#() 3))
+(test (member #2d((1 2) (3 4)) '(1 #() #2d((1 2) (1 2)))) #f)
+(test (member #2d((1 2) (3 4)) '(1 #() #2d((1 2) (3 4)))) '(#2d((1 2) (3 4))))
 
 (for-each
  (lambda (arg)
    (test (member arg (list 1 2 arg 3)) (list arg 3)))
- (list "hi" (integer->char 65) #f 'a-symbol abs 3/4 #\f #t (if #f #f)))
+ (list "hi" (integer->char 65) #f 'a-symbol abs 3/4 #\f #t (if #f #f) '(1 2 (3 (4))) most-positive-fixnum))
 
 
 (for-each
@@ -4214,15 +4240,12 @@
 
 ;;; -------- circular structures --------
 ;;;
-;;; safe: memq memv member assq assv assoc (but needs tests) reverse copy equal?
+;;; safe: memq memv member assq assv assoc reverse copy equal?
 ;;;       length -- might add circular-list-length
 ;;;       vector-fill! vector->list list->vector vector
 ;;;       object->string list->string list make-list
 ;;;       list-tail apply append sort! values fill!
 ;;; eval, map, and for-each are like do -- circles might be intentional
-
-
-;;; TODO: fill! needs tests! -- there are only about 10 altogether
 
 (let ((lst (list 1 2 3)))
    (set! (cdr (cddr lst)) lst)
@@ -4277,8 +4300,6 @@
 (test (let ((lst (list 1 (list 2 3)))) (fill! lst 0) lst) '(0 0))
 (test (let ((lst (cons 1 2))) (fill! lst 0) lst) '(0 . 0))
 (test (let ((lst (cons 1 (cons 2 3)))) (fill! lst 0) lst) '(0 0 . 0))
-
-
 
 (let ((lst1 (list 1 2))) 
   (test (length lst1) 2)
@@ -4350,14 +4371,6 @@
 (test (let ((l1 (cons 1 '()))) (set-cdr! l1 l1) (object->string (reverse l1))) "(#1=(1 . #1#) 1 1 1)")
 
 
-
-;; (let ((l (list 1 2 3))) (list-set! l 1 (cdr l)) l) but (let ((l (list 1 2 3))) (list-set! l 1 (cddr l)) l)
-
-;; mutually recursive lists, chains, etc
-;; multivectors
-
-;;; vectors
-
 (test (equal? (vector 0) (vector 0)) #t)
 (test (equal? (vector 0 #\a "hi" (list 1 2 3)) (vector 0 #\a "hi" (list 1 2 3))) #t)
 (test (let ((v (vector 0))) (equal? (vector v) (vector v))) #t)
@@ -4407,15 +4420,18 @@
   (set-cdr! l1 l1) 
   (test (list->vector l1) 'error))
 
-#|
 (let ((lst (list "nothing" "can" "go" "wrong")))
-  (let ((slst (cddr lst)))
+  (let ((slst (cddr lst))
+	(result '()))
     (set! (cdr (cdddr lst)) slst)
-    (do ((i 0 (+ i 1))
-	 (l lst (cdr l)))
-	((or (null? l) (= i 10)))
-      (display (car l)) (display " "))))
+    (test (do ((i 0 (+ i 1))
+	       (l lst (cdr l)))
+	      ((or (null? l) (= i 12))
+	       (reverse result))
+	    (set! result (cons (car l) result)))
+	  '("nothing" "can" "go" "wrong" "go" "wrong" "go" "wrong" "go" "wrong" "go" "wrong"))))
 
+#|
 ;;; here is a circular function!
 (let ()
   (define (cfunc)
@@ -4428,19 +4444,6 @@
 	  (cdr (car (cdr (cdr clst))))))
 
   (cfunc))
-
-;; for goto?
-(define (jumper)
-  (begin
-    (display "start")
-    (if (> 3 1) (go :end))
-    (display "oops")
-    end:
-    (display "done!")))
-
-;; if we see go with a known key (saved automatically in the current env with its cdr), jump to that 
-;;    else error I guess -- computed goto if we eval the arg
-;;    at read time, if key seen as separate statement, add it to the func's env with its cdr
 |#
 
 (test (let ((l (list 1 2))) 
@@ -4682,6 +4685,136 @@
     (test (equal? lst1 lst2) #t)
     (test (object->string lst1) "#1=(1 (0 #f 1 (0 #f . #1#) 2) 2)")))
 
+(let ()
+  (define-macro (c?r path)
+
+  (define (X-marks-the-spot accessor tree)
+    (if (pair? tree)
+	(or (X-marks-the-spot (cons 'car accessor) (car tree))
+	    (X-marks-the-spot (cons 'cdr accessor) (cdr tree)))
+	(if (eq? tree 'X) accessor #f)))
+
+  (let ((body 'lst))
+    (for-each
+     (lambda (f)
+       (set! body (list f body)))
+     (reverse (X-marks-the-spot '() path)))
+
+    `(make-procedure-with-setter
+      (lambda (lst) 
+	,body)
+      (lambda (lst val)
+	(set! ,body val)))))
+
+  (define (copy-tree lis)
+    (if (pair? lis)
+	(cons (copy-tree (car lis))
+	      (copy-tree (cdr lis)))
+	lis))
+
+  (let* ((l1 '(0 (1 (2 (3 (4 (5 (6 (7 (8))))))))))
+	 (l2 (list 0 (list 1 (list 2 (list 3 (list 4 (list 5 (list 6 (list 7 (list 8))))))))))
+	 (l3 (copy-tree l1))
+	 (cxr (c?r (0 (1 (2 (3 (4 (5 (6 (7 (X))))))))))))
+    (set! (cxr l1) 3)
+    (set! (cxr l2) 4)
+    (test (equal? l1 l2) #f)
+    (test (equal? l1 l3) #f)
+    (set! (cxr l2) 3)
+    (test (cxr l2) 3)
+    (test (cxr l1) 3)
+    (test (cxr l3) 8)
+    (test (equal? l1 l2) #t)
+    (test (equal? l2 l3) #f))
+
+  (let* ((l1 '(0 (1 (2 (3 (4 (5 (6 (7 (8))))))))))
+	 (l2 (list 0 (list 1 (list 2 (list 3 (list 4 (list 5 (list 6 (list 7 (list 8))))))))))
+	 (l3 (copy-tree l1))
+	 (cxr (c?r (0 (1 (2 (3 (4 (5 (6 (7 (8 . X))))))))))))
+    (set! (cxr l1) l1)
+    (set! (cxr l2) l2)
+    (test (equal? l1 l2) #t)
+    (test (equal? l1 l3) #f)
+    (test (object->string l2) "#1=(0 (1 (2 (3 (4 (5 (6 (7 (8 . #1#)))))))))"))
+
+  (let* ((l1 '(0 ((((((1))))))))
+	 (l2 (copy-tree l1))
+	 (cxr (c?r (0 ((((((1 . X))))))))))
+    (set! (cxr l1) l2)
+    (set! (cxr l2) l1)
+    (test (equal? l1 l2) #t))
+
+  (let* ((l1 '(0 1 (2 3) 4 5))
+	 (cxr (c?r (0 1 (2 3 . X) 4 5))))
+    (set! (cxr l1) (cdr l1))
+    (test (object->string l1) "(0 . #1=(1 (2 3 . #1#) 4 5))"))
+
+  (let* ((l1 '(0 1 (2 3) 4 5))
+	 (l2 '(6 (7 8 9) 10))
+	 (cxr1 (c?r (0 1 (2 3 . X) 4 5)))
+	 (cxr2 (c?r (6 . X)))
+	 (cxr3 (c?r (6 (7 8 9) 10 . X)))
+	 (cxr4 (c?r (0 . X))))
+    (set! (cxr1 l1) (cxr2 l2))
+    (set! (cxr3 l2) (cxr4 l1))
+    (test (object->string l1) "(0 . #1=(1 (2 3 (7 8 9) 10 . #1#) 4 5))")
+    (test (cadr l1) 1)
+    (test (cadddr l1) 4)
+    )
+
+  (let ((l1 '((a . 2) (b . 3) (c . 4)))
+	(cxr (c?r ((a . 2) (b . 3) (c . 4) . X))))
+    (set! (cxr l1) (cdr l1))
+    (test (assq 'a l1) '(a . 2))
+    (test (assv 'b l1) '(b . 3))
+    (test (assoc 'c l1) '(c . 4))
+    (test (object->string l1) "((a . 2) . #1=((b . 3) (c . 4) . #1#))")
+    (test (assq 'asdf l1) #f)
+    (test (assv 'asdf l1) #f)
+    (test (assoc 'asdf l1) #f)
+    )
+
+  (let ((l1 '(a b c d e))
+	(cxr (c?r (a b c d e . X))))
+    (set! (cxr l1) (cddr l1))
+    (test (memq 'b l1) (cdr l1))
+    (test (memv 'c l1) (cddr l1))
+    (test (member 'd l1) (cdddr l1))
+    (test (object->string l1) "(a b . #1=(c d e . #1#))")
+    (test (memq 'asdf l1) #f)
+    (test (memv 'asdf l1) #f)
+    (test (member 'asdf l1) #f)
+    (test (pair? (member 'd l1)) #t) ; #1=(d e c . #1#)
+    )
+  )
+  
+(let ((v #2d((1 2) (3 4))))
+  (set! (v 1 0) v)
+  (test (object->string v) "#1=#2D((1 2) (#1# 4))")
+  (test (length v) 4)
+  (test ((((v 1 0) 1 0) 1 0) 0 0) 1))
+
+(let ((lst (list 1 2 3)))
+  (set! (cdr (cddr lst)) lst)
+  (test (lst 100) 2)
+  (test ((cdddr (cdddr (cdddr lst))) 100) 2)
+  (set! (lst 100) 32)
+  (test (object->string lst) "#1=(1 32 3 . #1#)"))
+
+(let* ((l1 (list 1 2))
+       (l2 (list l1 l1)))
+  (set! (l1 0) 32)
+  (test (equal? l2 '((32 2) (32 2))) #t))
+
+(let ((q (list 1 2 3 4)))
+  (set! (cdr (cdddr q)) q) 
+  (test (car q) 1)
+  (set! (car q) 5)
+  (set! q (cdr q))
+  (test (car q) 2)
+  (test (object->string q) "#1=(2 3 4 5 . #1#)"))
+
+;;; TODO: reverse append, also hash tables
 
 
 
@@ -11622,17 +11755,21 @@
 	(set! (pws-test 32) 123))
       'error)
 
-(test (call-with-exit (lambda (return) (let ((local 123))
-					 (define pws-test (make-procedure-with-setter
-							   (lambda () (return "oops"))
-							   (lambda (val) (set! local val))))
-					 (pws-test))))
+(test (call-with-exit 
+       (lambda (return) 
+	 (let ((local 123))
+	   (define pws-test (make-procedure-with-setter
+			     (lambda () (return "oops"))
+			     (lambda (val) (set! local val))))
+	   (pws-test))))
       "oops")
-(test (call-with-exit (lambda (return) (let ((local 123))
-					 (define pws-test (make-procedure-with-setter
-							   (lambda () 123)
-							   (lambda (val) (return "oops"))))
-					 (set! (pws-test) 1))))
+(test (call-with-exit 
+       (lambda (return)
+	 (let ((local 123))
+	   (define pws-test (make-procedure-with-setter
+			     (lambda () 123)
+			     (lambda (val) (return "oops"))))
+	   (set! (pws-test) 1))))
       "oops")
 
 (test (let ((local 123))
@@ -11656,6 +11793,27 @@
 	      (set! ((car lst) 1) 3)
 	      (list val val1 (vset 1))))))
       (list 2 32 3))
+
+(let ((local 123))
+  (define pws-test (make-procedure-with-setter
+		    (lambda () local)
+		    (lambda (val) (set! local val))))
+  (test (pws-test) 123)
+  (set! (pws-test) 32)
+  (test (pws-test) 32)
+  (set! (pws-test) 0)
+  (test (pws-test) 0))
+
+(let ((local 123))
+  (define pws-test (make-procedure-with-setter
+		    (lambda (val) (+ local val))
+		    (lambda (val new-val) (set! local new-val) (+ local val))))
+  (test (pws-test 1) 124)
+  (set! (pws-test 1) 32)
+  (test (pws-test 2) 34)
+  (set! (pws-test 3) 0)
+  (test (pws-test 3) 3))
+
 
 (test (make-procedure-with-setter) 'error)
 (test (make-procedure-with-setter abs) 'error)
@@ -46635,6 +46793,13 @@
 (test (= (* most-negative-fixnum 1) (- (* -1 most-positive-fixnum) 1)) #t)
 (if with-bignums
     (test (= most-positive-fixnum (- (/ most-negative-fixnum -1) 1)) #t))
+(test (/ most-positive-fixnum most-positive-fixnum) 1)
+(test (/ -9223372036854775808 -9223372036854775808) 1)
+(test (+ -9223372036854775808 9223372036854775807) -1)
+(test (/ -9223372036854775808 9223372036854775807) -9223372036854775808/9223372036854775807)
+(test (abs most-positive-fixnum) most-positive-fixnum)
+(test (floor most-positive-fixnum) most-positive-fixnum)
+(test (floor most-negative-fixnum) most-negative-fixnum)
 
 (let ()
   (define (2^n? x) (zero? (logand x (- x 1))))
@@ -46647,10 +46812,14 @@
   (define-macro (<=> x y) `(begin (set! ,x (logxor ,x ,y)) (set! ,y (logxor ,y ,x)) (set! ,x (logxor ,x ,y))))
   
   (test (2^n? 32) #t)
+  (test (2^n? 2305843009213693952) #t)
+  (test (2^n? 2305843009213693950) #f)
   (test (2^n? 17) #f)
   (test (2^n? 1) #t)
   (test (2^n-1? 31) #t)
   (test (2^n-1? 32) #f)
+  (test (2^n-1? 18014398509481985) #f)
+  (test (2^n-1? 18014398509481983) #t)
   (test (x+y 41 3) 44)
   (test (0? 0) #t)
   (test (0? 123) #f)

@@ -11099,7 +11099,7 @@ s7_pointer s7_assoc(s7_scheme *sc, s7_pointer sym, s7_pointer lst)
   return(sc->F);
 }
 
-
+#if 0
 s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a) 
 {
   /* reverse list -- produce new list */
@@ -11117,19 +11117,22 @@ s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a)
   return(sc->NIL);
 }
 
-#if 0
+#else
+
 s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a) 
 {
-  /* reverse list -- produce new list */
+  /* reverse list -- produce new list (other code assumes this function does not return the original!) */
   s7_pointer x, p;
 
   if (a == sc->NIL) return(a);
+
   if (!is_pair(cdr(a)))
     {
       if (cdr(a) != sc->NIL)
 	return(s7_cons(sc, cdr(a), car(a)));
-      return(a);
+      return(s7_cons(sc, car(a), sc->NIL)); /* don't return a itself */
     }
+
   sc->w = s7_cons(sc, car(a), sc->NIL);
 
   for (x = cdr(a), p = a; is_pair(x); x = cdr(x), p = cdr(p))
@@ -11147,8 +11150,8 @@ s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a)
   if (x != sc->NIL)
     p = s7_cons(sc, x, sc->w);    /* ?? this means that (reverse '(1 2 . 3)) returns '(3 2 1) -- we used to return '() here */
   else p = sc->w;
-  sc->w = sc->NIL;
 
+  sc->w = sc->NIL;
   return(p);
 }
 #endif
