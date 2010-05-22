@@ -286,9 +286,15 @@ But then what would inexact-&gt;exact do?
 And to keep exactness in view, we'd have
 to monitor which operations introduce inexactness &mdash; a kind of interval arithmetic.
 I may remove the exact/inexact distinction from s7.  The only useful part is
-exact-&gt;inexact, but perhaps it would be better named "-&gt;float"?
+exact-&gt;inexact, but perhaps it would be better named "-&gt;float"?  Then if 
+you have to run code that uses those guys:
 </p>
-
+<pre>
+    (define exact? rational?)
+    (define (inexact? x) (not (rational? x)))
+    (define inexact-&gt;exact rationalize)
+    (define (exact-&gt;inexact x) (* x 1.0))
+</pre>
 
 </blockquote>
 </small>
@@ -1439,7 +1445,7 @@ so is <code>(cond (1 =&gt; "hi"))</code>!
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<p>This syntax makes it easy to write generic functions.
+<p>The applicable object syntax makes it easy to write generic functions.
 For example, s7test.scm has implementations of Common Lisp's sequence functions.
 length, copy, fill!, map and for-each are generic in this sense (map always returns a list).
 </p>
@@ -1605,6 +1611,7 @@ equal to a 1-dimensional empty vector.
 <dd><br>
 <ul>
 <li>(make-hash-table (size 461))
+<li>(hash-table ...)
 <li>(hash-table-ref ht obj)
 <li>(hash-table-set! ht obj val)
 <li>(hash-table? obj)
@@ -1619,6 +1626,32 @@ equal to a 1-dimensional empty vector.
 
 -&gt; 123
 </pre>
+
+<p>hash-table parallels vector, list, and string.  Its arguments are cons's containing the key/value pair.
+The result is a new hash-table with those values preinstalled: <code>(hash-table '("hi" . 32) '("ho" 1))</code>.
+</p>
+
+<small>
+<blockquote>
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>Since hash-tables accept the same applicable-object syntax that vectors use, we can 
+treat a hash-table as, for example, a sparse array:
+</p>
+<pre>
+&gt; (define make-sparse-array make-hash-table)
+make-sparse-array
+&gt; (let ((arr (make-sparse-array)))
+   (set! (arr 1032) "1032")
+   (set! (arr -23) "-23")
+   (list (arr 1032) (arr -23)))
+("1032" "-23")
+</pre>
+
+</blockquote>
+</small>
+
 </dd>
 <br><br>
 

@@ -11099,25 +11099,6 @@ s7_pointer s7_assoc(s7_scheme *sc, s7_pointer sym, s7_pointer lst)
   return(sc->F);
 }
 
-#if 0
-s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a) 
-{
-  /* reverse list -- produce new list */
-  s7_pointer p;
-
-  sc->w = sc->NIL;
-  for ( ; is_pair(a); a = cdr(a)) 
-    sc->w = s7_cons(sc, car(a), sc->w);
-  p = sc->w;
-  sc->w = sc->NIL;
-
-  if (a == sc->NIL)
-    return(p);
-
-  return(sc->NIL);
-}
-
-#else
 
 s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a) 
 {
@@ -11154,7 +11135,10 @@ s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a)
   sc->w = sc->NIL;
   return(p);
 }
-#endif
+
+/* PERHAPS: s7_reverse sometimes tacks extra nodes on the end of a reversed circular list (it detects the cycle too late) 
+ *  (let ((lst (list 0))) (set! (cdr lst) lst) (reverse lst)) -> (#1=(0 . #1#) 0 0 0)
+ */
 
 
 static s7_pointer reverse_in_place(s7_scheme *sc, s7_pointer term, s7_pointer list) 
@@ -11930,7 +11914,14 @@ s7_pointer s7_remv(s7_scheme *sc, s7_pointer a, s7_pointer obj)
 static s7_pointer g_assq(s7_scheme *sc, s7_pointer args)
 {
   #define H_assq "(assq obj alist) returns the key-value pair associated (via eq?) with the key obj in the association list alist"
-  /* this version accepts any kind of list */
+  /* this version accepts any kind of list 
+   *   my little essay: the scheme standard should not unnecessarily restrict the kinds of arguments
+   *                    a function can take (such as saying memq only accepts proper lists).  It is
+   *                    trivial for the programmer to add such a check to a built-in function, but
+   *                    not trivial to re-invent the built-in function with that restriction removed.
+   *                    If some structure exists as a normal scheme object (a dotted or circular list),
+   *                    every built-in function should be able to deal with it, if it makes sense at all.
+   */
 
   s7_pointer x, y, obj;
 
@@ -13011,7 +13002,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
 
 #define HASHED_INTEGER_BUFFER_SIZE 64
 
-static char *hashed_name(s7_scheme *sc, s7_pointer key, char *intbuf)
+static char *hashed_name(s7_scheme *sc, s7_pointer key, char *intbuf, const char *caller)
 {
   if (s7_is_string(key))
     return(string_value(key));
@@ -13028,7 +13019,7 @@ static char *hashed_name(s7_scheme *sc, s7_pointer key, char *intbuf)
 	    snprintf(intbuf, HASHED_INTEGER_BUFFER_SIZE, "\b%.20f\b", s7_real(key)); /* default precision is not enough, but this still won't work in general */
 	  else
 	    {
-	      s7_wrong_type_arg_error(sc, "hash-table-ref key,", 2, key, "a string, symbol, integer, or (non-ratio) real");
+	      s7_wrong_type_arg_error(sc, caller, 2, key, "a string, symbol, integer, or (non-ratio) real");
 	      return(NULL);
 	    }
 	}
@@ -13040,7 +13031,7 @@ static char *hashed_name(s7_scheme *sc, s7_pointer key, char *intbuf)
 static s7_pointer hash_table_ref_1(s7_scheme *sc, s7_pointer table, s7_pointer key)
 {
   char intbuf[HASHED_INTEGER_BUFFER_SIZE];
-  return(s7_hash_table_ref(sc, table, hashed_name(sc, key, intbuf)));
+  return(s7_hash_table_ref(sc, table, hashed_name(sc, key, intbuf, "hash-table-ref")));
 }
 
 
@@ -13072,7 +13063,33 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
   if (!s7_is_hash_table(table))
     return(s7_wrong_type_arg_error(sc, "hash-table-set!", 1, table, "a hash-table"));
 
-  return(s7_hash_table_set(sc, table, hashed_name(sc, key, intbuf), caddr(args)));
+  return(s7_hash_table_set(sc, table, hashed_name(sc, key, intbuf, "hash-table-set!"), caddr(args)));
+}
+
+
+static s7_pointer g_hash_table(s7_scheme *sc, s7_pointer args)
+{
+  #define H_hash_table "(hash-table ...) returns a hash-table containing the cons's passed as its arguments. \
+That is, (hash-table '(\"hi\" . 3) (\"ho\" . 32)) returns a new hash-table with the two key/value pairs preinstalled."
+
+  s7_Int i, len;
+  s7_pointer ht;
+  char intbuf[HASHED_INTEGER_BUFFER_SIZE];
+  
+  len = s7_list_length(sc, args);
+  if ((len < 0) ||
+      ((len == 0) && (args != sc->NIL)))
+    return(s7_wrong_type_arg_error(sc, "hash-table", 1, car(args), "a proper list"));
+  
+  ht = s7_make_hash_table(sc, 461);
+  if (len > 0)
+    {
+      s7_pointer x;
+      for (x = args, i = 0; is_pair(x); x = cdr(x), i++) 
+	if (is_pair(car(x)))
+	  s7_hash_table_set(sc, ht, hashed_name(sc, caar(x), intbuf, "hash-table"), cdar(x));
+    }
+  return(ht);
 }
 
 
@@ -24999,13 +25016,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "symbol->keyword",         g_symbol_to_keyword,       1, 0, false, H_symbol_to_keyword);
   s7_define_function(sc, "keyword->symbol",         g_keyword_to_symbol,       1, 0, false, H_keyword_to_symbol);
   
-
-  s7_define_function(sc, "hash-table?",             g_is_hash_table,           1, 0, false, H_is_hash_table);
-  s7_define_function(sc, "make-hash-table",         g_make_hash_table,         0, 1, false, H_make_hash_table);
-  s7_define_function(sc, "hash-table-ref",          g_hash_table_ref,          2, 0, false, H_hash_table_ref);
-  s7_define_function(sc, "hash-table-set!",         g_hash_table_set,          3, 0, false, H_hash_table_set);
-  s7_define_function(sc, "hash-table-size",         g_hash_table_size,         1, 0, false, H_hash_table_size);
-  
   s7_define_function(sc, "port-line-number",        g_port_line_number,        1, 0, false, H_port_line_number);
   s7_define_function(sc, "port-filename",           g_port_filename,           1, 0, false, H_port_filename);
   
@@ -25111,6 +25121,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "zero?",                   g_is_zero,                 1, 0, false, H_is_zero);
   s7_define_function(sc, "positive?",               g_is_positive,             1, 0, false, H_is_positive);
   s7_define_function(sc, "negative?",               g_is_negative,             1, 0, false, H_is_negative);
+
   s7_define_function(sc, "inexact->exact",          g_inexact_to_exact,        1, 0, false, H_inexact_to_exact);
   s7_define_function(sc, "exact->inexact",          g_exact_to_inexact,        1, 0, false, H_exact_to_inexact);
   s7_define_function(sc, "exact?",                  g_is_exact,                1, 0, false, H_is_exact);
@@ -25248,6 +25259,14 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "vector-dimensions",       g_vector_dimensions,       1, 0, false, H_vector_dimensions);
 #endif
   s7_define_function(sc, "sort!",                   g_sort_in_place,           2, 0, false, H_sort_in_place);
+  
+
+  s7_define_function(sc, "hash-table",              g_hash_table,              0, 0, true,  H_hash_table);
+  s7_define_function(sc, "hash-table?",             g_is_hash_table,           1, 0, false, H_is_hash_table);
+  s7_define_function(sc, "make-hash-table",         g_make_hash_table,         0, 1, false, H_make_hash_table);
+  s7_define_function(sc, "hash-table-ref",          g_hash_table_ref,          2, 0, false, H_hash_table_ref);
+  s7_define_function(sc, "hash-table-set!",         g_hash_table_set,          3, 0, false, H_hash_table_set);
+  s7_define_function(sc, "hash-table-size",         g_hash_table_size,         1, 0, false, H_hash_table_size);
   
 
   s7_define_function(sc, "call/cc",                 g_call_cc,                 1, 0, false, H_call_cc);
@@ -25525,6 +25544,19 @@ s7_scheme *s7_init(void)
  *    then s7_make_function ... has no place to put it ...
  *
  * perhaps :allow-other-keys in lambda*
- * c-side local define?  or is this in the namespace example?
+ * some way for an error handler to tell where we are during load
+ * Clojure/Gauche-style *1 *2 etc for recent REPL entries
+ * pretty-printing in the REPL
+ * a reader for the cyclic list syntax
+ * lint 
+ * reverse of vector? string? [reverse-hash-ref?]
+ * hash-table <-> list, does vector->list work with hash-tables? [not currently] what about the other way?
+ *   guile calls this hash-table->alist I think
+ * hash-table needs s7test tests
+ * we often need tree-copy and so on.
+ * hash-table map and for-each should be entry-oriented, not alist-oriented
+ *   (would hash reverse exchange keys and values?)
+ * access to the pws setter 
+ * environment? (ref would lookup up symbol? etc)
  */
 

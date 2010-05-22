@@ -3559,7 +3559,7 @@
 (test (append (cons 1 2) '()) 'error)
 (test (append '(1) 2 '(3)) 'error)
 (test (append '(1) 2 3) 'error)
-
+(test (let ((lst (list 1 2 3))) (append lst lst)) '(1 2 3 1 2 3))
 
 
 
@@ -4814,7 +4814,78 @@
   (test (car q) 2)
   (test (object->string q) "#1=(2 3 4 5 . #1#)"))
 
-;;; TODO: reverse append, also hash tables
+(let ()
+  (define (make-node prev data next) (vector prev data next))
+  (define prev (make-procedure-with-setter (lambda (node) (node 0)) (lambda (node val) (set! (node 0) val))))
+  (define next (make-procedure-with-setter (lambda (node) (node 2)) (lambda (node val) (set! (node 2) val))))
+  (define data (make-procedure-with-setter (lambda (node) (node 1)) (lambda (node val) (set! (node 1) val))))
+  (let* ((head (make-node () 0 ()))
+	 (cur head))
+    (do ((i 1 (+ i 1)))
+	((= i 8))
+      (let ((next-node (make-node cur i ())))
+	(set! (next cur) next-node)
+	(set! cur (next cur))))
+    (set! (next cur) head)
+    (set! (prev head) cur)
+    (test (object->string head) "#1=#(#7=#(#6=#(#5=#(#4=#(#3=#(#2=#(#8=#(#1# 1 #2#) 2 #3#) 3 #4#) 4 #5#) 5 #6#) 6 #7#) 7 #1#) 0 #8#)")
+#|
+    ;; in CL:
+    (let* ((head (vector nil 0 nil))
+	   (cur head))
+      (do ((i 1 (+ i 1)))
+	  ((= i 8))
+	(let ((node (vector nil i nil)))
+	  (setf (aref node 0) cur)
+	  (setf (aref cur 2) node)
+	  (setf cur node)))
+      (setf (aref head 0) cur)
+      (setf (aref cur 2) head)
+      (format t "~A~%" head)) -> "#1=#(#2=#(#3=#(#4=#(#5=#(#6=#(#7=#(#8=#(#1# 1 #7#) 2 #6#) 3 #5#) 4 #4#) 5 #3#) 6 #2#) 7 #1#) 0 #8#)"
+|#
+    (let ((ahead (do ((cur head (next cur))
+		      (dat '() (cons (data cur) dat)))
+		     ((member (data cur) dat)
+		      (reverse dat)))))
+      (let ((behind (do ((cur (prev head) (prev cur))
+			 (dat '() (cons (data cur) dat)))
+			((member (data cur) dat)
+			 dat))))
+	(test (equal? ahead behind) #t)))))
+
+(let ()
+  (define (make-node prev data next) (list prev data next))
+  (define prev (make-procedure-with-setter (lambda (node) (node 0)) (lambda (node val) (set! (node 0) val))))
+  (define next (make-procedure-with-setter (lambda (node) (node 2)) (lambda (node val) (set! (node 2) val))))
+  (define data (make-procedure-with-setter (lambda (node) (node 1)) (lambda (node val) (set! (node 1) val))))
+  (let* ((head (make-node () 0 ()))
+	 (cur head))
+    (do ((i 1 (+ i 1)))
+	((= i 8))
+      (let ((next-node (make-node cur i ())))
+	(set! (next cur) next-node)
+	(set! cur (next cur))))
+    (set! (next cur) head)
+    (set! (prev head) cur)
+    (test (object->string head) "#1=(#7=(#6=(#5=(#4=(#3=(#2=(#8=(#1# 1 #2#) 2 #3#) 3 #4#) 4 #5#) 5 #6#) 6 #7#) 7 #1#) 0 #8#)")
+    (let ((ahead (do ((cur head (next cur))
+		      (dat '() (cons (data cur) dat)))
+		     ((member (data cur) dat)
+		      (reverse dat)))))
+      (let ((behind (do ((cur (prev head) (prev cur))
+			 (dat '() (cons (data cur) dat)))
+			((member (data cur) dat)
+			 dat))))
+	(test (equal? ahead behind) #t)))))
+
+(test (let ((lst (list 1 2 3))) (set! (cdr (cddr lst)) lst) (append lst lst ())) 'error)
+(test (let ((lst (list 1 2 3))) (set! (cdr (cddr lst)) lst) (object->string (append (list lst) (list lst) ()))) "(#1=(1 2 3 . #1#) #1#)")
+
+(let ((ht (make-hash-table 3)))
+  (set! (ht "hi") ht)
+  (test (object->string ht) "#1=#(() () ((\"hi\" . #1#)))")
+  (test (equal? (ht "hi") ht) #t))
+
 
 
 
@@ -33435,6 +33506,9 @@
 (num-test (make-rectangular 1.0 1.0+0.1i) 'error)
 (num-test (make-rectangular 1.0+0.1i 1.0) 'error)
 
+(num-test (make-polar 1.0 (* 200 pi)) 1.0)
+(num-test (make-polar 1.0 (* 2000000 pi)) 1.0)
+(num-test (make-polar 1.0 (* 2000000000 pi)) 1.0)
 
 
 
