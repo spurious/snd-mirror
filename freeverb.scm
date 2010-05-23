@@ -135,7 +135,7 @@
 	(let* ((tuning (list-ref allpasstuning i))
 	       (len (floor (* srate-scale tuning))))
 	  (if (odd? c)
-	      (set! len (+ len (floor (inexact->exact (* srate-scale stereo-spread))))))
+	      (set! len (+ len (floor (* srate-scale stereo-spread)))))
 	  (vector-set! allpasses (+ (* c numallpasses) i)
 		       (make-all-pass :size len :feedforward -1 :feedback 0.5)))))
     (ws-interrupt?)

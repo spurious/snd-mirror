@@ -188,7 +188,7 @@
       (set-flabel fm-label index))
 
     (define (ratio-callback w c i)
-      (set! ratio (inexact->exact (* (.value i) (/ high-ratio 100.0))))
+      (set! ratio (floor (* (.value i) (/ high-ratio 100.0))))
       (set-ilabel cm-label ratio))
 
     ;; add scale-change (drag and value-changed) callbacks
@@ -212,10 +212,10 @@
     (set-flabel fm-label index)
     (set-ilabel cm-label ratio)
 
-    (XmScaleSetValue freq-scale (inexact->exact (floor (* 100 (/ (- frequency low-frequency) (- high-frequency low-frequency))))))
-    (XmScaleSetValue amp-scale (inexact->exact (* 100 amplitude)))
-    (XmScaleSetValue fm-scale (inexact->exact (floor (* 100 (/ index high-index)))))
-    (XmScaleSetValue cm-scale (inexact->exact (floor (* ratio (/ 100 high-ratio)))))
+    (XmScaleSetValue freq-scale (floor (* 100 (/ (- frequency low-frequency) (- high-frequency low-frequency)))))
+    (XmScaleSetValue amp-scale (floor (* 100 amplitude)))
+    (XmScaleSetValue fm-scale (floor (* 100 (/ index high-index))))
+    (XmScaleSetValue cm-scale (floor (* ratio (/ 100 high-ratio))))
 
     (XtManageChild shell)
     (XtRealizeWidget shell)

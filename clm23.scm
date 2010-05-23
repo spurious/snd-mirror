@@ -9,7 +9,6 @@
 ;;; definstrument -> define (+ change open paren placement)
 ;;; *srate* -> (mus-srate)
 ;;; run loop ... -> run (lambda () (do... + extra end close paren
-;;; floor, [round, ceiling] wrapped in inexact->exact
 ;;; aref -> vct-ref
 ;;; setf -> set!
 ;;; remove declare (or change order of args and remove ":")
@@ -1579,7 +1578,7 @@
 				  #f
 				  #f
 				  (lambda (closure)
-				    (let ((N2 (inexact->exact (/ size 2))))
+				    (let ((N2 (floor (/ size 2))))
 				      (do ((k 0 (+ 1 k)))
 					  ((= k N2))
 					(set! (vct-ref (phase-vocoder-amps sr) k) (+ (vct-ref (phase-vocoder-amps sr) k) 
@@ -1606,7 +1605,7 @@
 	 (end (+ start (seconds->samples dur)))
 	 (rd (make-readin file))
 	 (sr (make-phase-vocoder :fft-size size :interp (/ size 4) :overlap 4))
-	 (N2 (inexact->exact (/ size 2)))
+	 (N2 (floor (/ size 2)))
 	 (lastphases (make-vct N2 0.0))
 	 (two-pi (* 2 pi)))
     (run
@@ -1618,7 +1617,7 @@
 				  (lambda (dir) (readin rd))
 				  #f
 				  (lambda (closure)
-				    (let* ((D (inexact->exact (/ size 4))) ; overlap = 4
+				    (let* ((D (floor (/ size 4))) ; overlap = 4
 					   (pscl (/ 1.0 D))
 					   (kscl (/ two-pi size)))
 				      (do ((k 0 (+ 1 k))
@@ -1657,13 +1656,13 @@
 	 (end (+ start (seconds->samples dur)))
 	 (rd (make-readin file))
 	 (sr (make-phase-vocoder :fft-size size :interp (/ size 4) :overlap 4))
-	 (N2 (inexact->exact (/ size 2)))
+	 (N2 (floor (/ size 2)))
 	 (lastphases (make-vct N2 0.0))
 	 (in-data (make-vct size 0.0))
 	 (two-pi (* 2 pi))
 	 (filptr 0)
 	 (window (make-fft-window hamming-window size 0.0))
-	 (D (inexact->exact (/ size 4)))) ; overlap = 4
+	 (D (floor (/ size 4)))) ; overlap = 4
     (vct-scale! window (/ 2.0 (* 0.54 size)))
     (run
      (declare (n2 integer) (D integer))
@@ -2069,7 +2068,7 @@
 	     ((= k 3))
 	   (let* ((frm (env (vector-ref frmfs k)))
 		  (frm0 (/ frm frq))
-		  (frm-int (inexact->exact (floor frm0)))
+		  (frm-int (floor frm0))
 		  (even-amp 0.0) (odd-amp 0.0) 
 		  (even-freq 0.0) (odd-freq 0.0))
 	     (if (even? frm-int)
@@ -2314,7 +2313,7 @@
 				     (* index (triangle-wave modulator)))))))))
 
 (define* (sndclmdoc-make-sinc-train (frequency 440.0) (width #f))
-  (let ((range (or width (* pi (- (* 2 (inexact->exact (floor (/ (mus-srate) (* 2.2 frequency))))) 1)))))
+  (let ((range (or width (* pi (- (* 2 (floor (/ (mus-srate) (* 2.2 frequency)))) 1)))))
     ;; 2.2 leaves a bit of space before srate/2, (* 3 pi) is the minimum width, normally
     (list (- (* range 0.5))
 	  range
@@ -2486,7 +2485,7 @@
 
 (definstrument (sndclmdoc-granulate-sound file beg dur (orig-beg 0.0) (exp-amt 1.0))
   (let* ((f-srate (srate file))
-	 (f-start (inexact->exact (round (* f-srate orig-beg))))
+	 (f-start (round (* f-srate orig-beg)))
          (f (make-readin file :start f-start))
 	 (st (seconds->samples beg))
 	 (new-dur (or dur (- (mus-sound-duration file) orig-beg)))
@@ -2631,8 +2630,8 @@
 		 (let* ((scaler (max 0.1 (exact->inexact (/ (- i beg) len))))
 			(comb-len 32)
 			(c1 (make-comb scaler comb-len))
-			(c2 (make-comb scaler (inexact->exact (floor (* comb-len .75)))))
-			(c3 (make-comb scaler (inexact->exact (floor (* comb-len 1.25))))))
+			(c2 (make-comb scaler (floor (* comb-len .75))))
+			(c3 (make-comb scaler (floor (* comb-len 1.25)))))
 		   (do ((k 0 (+ 1 k)))
 		       ((= k grain-size))
 		     (let ((x (vct-ref original-grain k)))
@@ -2686,12 +2685,12 @@
 	((= k num-combs0))
       (vector-set! cmbs0 k 
 		   (make-comb scaler 
-			      (inexact->exact (floor (* comb-len (list-ref combs0 k)))))))
+			      (floor (* comb-len (list-ref combs0 k))))))
     (do ((k 0 (+ 1 k)))
 	((= k num-combs1))
       (vector-set! cmbs1 k 
 		   (make-comb scaler 
-			      (inexact->exact (floor (* comb-len (list-ref combs1 k)))))))
+			      (floor (* comb-len (list-ref combs1 k))))))
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))

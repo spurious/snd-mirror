@@ -709,7 +709,7 @@ Reverb-feedback sets the scaler on the feedback.
 					   (list XmNorientation XmHORIZONTAL
 						 XmNshowValue   #t
 						 XmNbackground  (basic-color)
-						 XmNvalue       (inexact->exact frequency)
+						 XmNvalue       (floor frequency)
 						 XmNmaximum     1000
 						 XmNtitleString freqstr
 						 XmNdecimalPoints 0)))
@@ -719,7 +719,7 @@ Reverb-feedback sets the scaler on the feedback.
 					   (list XmNorientation XmHORIZONTAL
 						 XmNshowValue   #t
 						 XmNbackground  (basic-color)
-						 XmNvalue       (inexact->exact (* 10 fm-index))
+						 XmNvalue       (floor (* 10 fm-index))
 						 XmNmaximum     100
 						 XmNtitleString indexstr
 						 XmNdecimalPoints 1)))
@@ -729,7 +729,7 @@ Reverb-feedback sets the scaler on the feedback.
 					   (list XmNorientation XmHORIZONTAL
 						 XmNshowValue   #t
 						 XmNbackground  (basic-color)
-						 XmNvalue       (inexact->exact (* 100 noise-amount))
+						 XmNvalue       (floor (* 100 noise-amount))
 						 XmNmaximum     100
 						 XmNtitleString noisestr
 						 XmNdecimalPoints 3))))
@@ -2004,8 +2004,8 @@ Reverb-feedback sets the scaler on the feedback.
     (if (<= val minval) 0
 	(if (>= val maxval) 9000
 	    (if (>= val 1.0)
-		(inexact->exact (* 4500 (+ 1.0 (/ (- val 1.0) (- maxval 1.0)))))
-		(inexact->exact (* 4500 (/ (- val minval) (- 1.0 minval))))))))
+		(floor (* 4500 (+ 1.0 (/ (- val 1.0) (- maxval 1.0)))))
+		(floor (* 4500 (/ (- val minval) (- 1.0 minval))))))))
   
   (define (scroll->amp snd val)
     (if (<= val 0)
@@ -2738,7 +2738,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	((spectrum)
 	 (let* ((form (XtCreateManagedWidget var-label xmFormWidgetClass pane
 					     (list XmNpaneMinimum 100)))
-		(snd (make-variable-graph form variable-name 2048 (inexact->exact (mus-srate)))))
+		(snd (make-variable-graph form variable-name 2048 (floor (mus-srate)))))
 	   (set! (time-graph? snd 0) #f)
 	   (set! (transform-graph? snd 0) #t)
 	   (set! (x-axis-label snd 0 transform-graph) (string-append variable-name ": frequency"))
@@ -2975,7 +2975,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 				     (list XmNorientation XmHORIZONTAL
 					   XmNshowValue   #t
 					   XmNbackground  (basic-color)
-					   XmNvalue       (inexact->exact old-freq)
+					   XmNvalue       (floor old-freq)
 					   XmNmaximum     1000
 					   XmNtitleString freqstr
 					   XmNdecimalPoints 0)))
@@ -2985,7 +2985,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 				     (list XmNorientation XmHORIZONTAL
 					   XmNshowValue   #t
 					   XmNbackground  (basic-color)
-					   XmNvalue       (inexact->exact new-freq)
+					   XmNvalue       (floor new-freq)
 					   XmNmaximum     1000
 					   XmNtitleString ratiostr
 					   XmNdecimalPoints 0)))
@@ -3126,7 +3126,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 					   (list XmNorientation XmHORIZONTAL
 						 XmNshowValue   #t
 						 XmNbackground  (basic-color)
-						 XmNvalue       (inexact->exact frequency)
+						 XmNvalue       (floor frequency)
 						 XmNmaximum     20000
 						 XmNtitleString freqstr
 						 XmNdecimalPoints 0))))

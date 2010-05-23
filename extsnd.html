@@ -1716,7 +1716,7 @@ the fft starts from the left window edge.  To have it start at mid-window:
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <em class=red>before-transform-hook</em>
   (lambda (snd chn)        ; 0.5 * (left + right) = midpoint
-    (inexact-&gt;exact (round (* 0.5 (+ (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a> snd chn) (<a class=quiet href="#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a> snd chn)))))))
+    (round (* 0.5 (+ (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a> snd chn) (<a class=quiet href="#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a> snd chn))))))
 </pre></td></tr></table>
 
 The following 
@@ -2116,8 +2116,8 @@ and if the <a href="#marksync">mark-sync</a> is not 0, the hook is called on eac
 	           (bps (/ (<a class=quiet href="#beatsperminute" onmouseout="UnTip()" onmouseover="Tip(extsnd_beatsperminute_tip)">beats-per-minute</a> snd chn) 60.0))
 		   (sr (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd))
 		   (beat (floor (/ (* samp bps) sr)))
-		   (lower (inexact-&gt;exact (/ (* beat sr) bps)))
-		   (higher (inexact-&gt;exact (/ (* (+ 1 beat) sr) bps))))
+		   (lower (floor (/ (* beat sr) bps)))
+		   (higher (floor (/ (* (+ 1 beat) sr) bps))))
 	      (set! (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> mrk)
 	      (if (&lt; (- samp lower) (- higher samp))
 		  lower
@@ -2189,10 +2189,10 @@ This hook is called upon a mouse button release or click (with various exception
 (define (click-to-center snd chn button state x y axis)
   ;; if mouse click in time domain graph, set cursor as normally, but also center the window
   (if (= axis <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_time_graph_tip)">time-graph</a>)
-      (let ((samp (inexact-&gt;exact (* (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd) (<a class=quiet href="#positiontox" onmouseout="UnTip()" onmouseover="Tip(extsnd_positiontox_tip)">position-&gt;x</a> x snd chn)))))
+      (let ((samp (floor (* (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd) (<a class=quiet href="#positiontox" onmouseout="UnTip()" onmouseover="Tip(extsnd_positiontox_tip)">position-&gt;x</a> x snd chn)))))
 	(set! (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a> snd chn) samp)
 	(set! (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a> snd chn) 
-          (- samp (inexact-&gt;exact (* .5 (- (<a class=quiet href="#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a> snd chn) (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a> snd chn))))))
+          (- samp (floor (* .5 (- (<a class=quiet href="#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a> snd chn) (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a> snd chn))))))
 	(<a class=quiet href="#updatetimegraph" onmouseout="UnTip()" onmouseover="Tip(extsnd_updatetimegraph_tip)">update-time-graph</a>)
 	#t)
       #f))
@@ -5040,7 +5040,7 @@ feedback:
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
 (define (frequency-&gt;tag-y freq lo octs) ; tag height dependent on freq
-  (inexact-&gt;exact (round (* 100 (- 1.0 (/ (log (/ freq lo)) (* (log 2.0) octs)))))))
+  (round (* 100 (- 1.0 (/ (log (/ freq lo)) (* (log 2.0) octs))))))
 
 (let ((violin-sync 1)
       (violin-color (<a class=quiet href="#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 0 0 1)) ; blue
@@ -5220,7 +5220,7 @@ higher tag-y values position the tag lower in the graph. For
 example, if you know the frequency of the mix sound, you can reflect that in the tag height with:
 <pre>
    (set! (mix-tag-y mix-id) 
-         (inexact-&gt;exact (round (* 100 (- 1.0 (/ (log (/ freq 40.0)) (* (log 2.0) 7)))))))
+         (round (* 100 (- 1.0 (/ (log (/ freq 40.0)) (* (log 2.0) 7))))))
 </pre>
 See, for example, check-mix-tags in sndscm.html.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -5643,7 +5643,7 @@ See popup.scm for an example.
 (define (brksnd dur base)
   "(brksnd dur base) divides the current sound into dur-sized pieces, 
    saving them in files named 'base'.n: (brksnd 1.0 \"sec\")"
-  (let ((hop (inexact-&gt;exact (* (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>) dur)))
+  (let ((hop (floor (* (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>) dur)))
 	(len (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
         (old-sync (<a class=quiet href="#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a>)))
     (set! (<a class=quiet href="#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a>) 1) ; save all chans
@@ -6034,7 +6034,7 @@ could be:
 	 (x1 (list-ref axinfo 4))
 	 (axis-left (list-ref axinfo 10))
 	 (axis-right (list-ref axinfo 12)))
-    (inexact-&gt;exact 
+    (floor
      (+ axis-left
 	(* (- x x0) 
 	   (/ (- axis-right axis-left)
@@ -6450,7 +6450,7 @@ replaces the normal "+" cursor with an "x":
   (let* ((point (<em class=red>cursor-position</em>))
          (x (car point))
          (y (cadr point))
-         (size (inexact-&gt;exact (/ (<em class=red>cursor-size</em>) 2))))
+         (size (floor (/ (<em class=red>cursor-size</em>) 2))))
     (<a class=quiet href="#drawline" onmouseout="UnTip()" onmouseover="Tip(extsnd_drawline_tip)">draw-line</a> (- x size) (- y size) (+ x size) (+ y size) snd chn <em class=red>cursor-context</em>)    
     (<a class=quiet href="#drawline" onmouseout="UnTip()" onmouseover="Tip(extsnd_drawline_tip)">draw-line</a> (- x size) (+ y size) (+ x size) (- y size) snd chn <em class=red>cursor-context</em>)))
 
@@ -7175,7 +7175,7 @@ channels are inserted. To append one sound to another, padding at the end with s
 <pre>
     (define* (<a name="appendsound">append-sound</a> file (silence 1.0))
       (<em class=red>insert-sound</em> file (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
-      (<em class=red>insert-silence</em> (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) (inexact-&gt;exact (round (* (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>) silence)))))
+      (<em class=red>insert-silence</em> (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) (round (* (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>) silence))))
 </pre>
 'file' is not deleted by Snd unless 'auto-delete' is #t. 
 </td></tr><tr><td colspan=2 height=18></td></tr>
@@ -7898,7 +7898,7 @@ This returns #t if 'obj' is an active <a href="#makeplayer">player</a>.
 This returns the x axis value that corresponds to the graph (screen pixel) position 'xpos'.
 To find the sample that the mouse is pointing at, given the current mouse position,
 <pre>
-    (inexact-&gt;exact (round (* (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd) (position-&gt;x x snd chn))))
+    (round (* (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd) (position-&gt;x x snd chn)))
 </pre>
 See gui.scm for examples.
 </td></tr><tr><td colspan=2 height=18></td></tr>
@@ -8291,7 +8291,7 @@ result appear to be one operation in the edit history list.
 	     (set! y0 y1)
 	     (set! x1 (list-ref envelope i))
 	     (set! y1 (list-ref envelope (+ i 1)))
-	     (let* ((curdur (inexact-&gt;exact (round (* fulldur (/ (- x1 x0) xrange))))))
+	     (let* ((curdur (round (* fulldur (/ (- x1 x0) xrange)))))
 	       (<em class=red>xramp-channel</em> y0 y1 base curbeg curdur snd chn edpos)
 	       (set! curbeg (+ curbeg curdur)))
 	     (set! base (list-ref envelope (+ i 2)))))))))
@@ -9457,7 +9457,7 @@ For example, the following function reverses the channel order:
 (define* (<a name="reversechannels">reverse-channels</a> snd)
   (let* ((ind (or snd (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>) (car (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>))))
 	 (chns (<a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">channels</a> ind)))
-    (let ((swaps (inexact-&gt;exact (floor (/ chns 2)))))
+    (let ((swaps (floor (/ chns 2))))
       (<a class=quiet href="#asoneedit" onmouseout="UnTip()" onmouseover="Tip(extsnd_asoneedit_tip)">as-one-edit</a>
        (lambda ()
 	 (do ((i 0 (+ 1 i))
@@ -10837,7 +10837,7 @@ Here's an example that displays a histogram of the current values in 16 bins:
       (do ((i 0 (+ 1 i))) 
           ((= i len) v)
         (let* ((val (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> fd))
-               (bin (inexact-&gt;exact (* (abs val) 16.0))))
+               (bin (floor (* (abs val) 16.0))))
           (do ((j 0 (+ 1 j))) 
               ((= j steps))
             (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> v 
@@ -12113,7 +12113,7 @@ A similar set rebinds the arrow keys to give much more precise window position a
 	 (hi (list-ref ax 1))
 	 (lo-pix (list-ref ax 10))
 	 (hi-pix (list-ref ax 12))
-	 (samps-per-pixel (max 1 (inexact-&gt;exact (round (/ (- hi lo) (- hi-pix lo-pix))))))
+	 (samps-per-pixel (max 1 (round (/ (- hi lo) (- hi-pix lo-pix)))))
 	 (change (if right 
                      (- (min (+ hi samps-per-pixel) (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> s c)) hi)
                      (- (max 0 (- lo samps-per-pixel)) lo))))
@@ -12137,7 +12137,7 @@ A similar set rebinds the arrow keys to give much more precise window position a
 	 (hi (list-ref ax 1))
 	 (lo-pix (list-ref ax 10))
 	 (hi-pix (list-ref ax 12))
-	 (samps-per-pixel (max 1 (inexact-&gt;exact (round (/ (- hi lo) (- hi-pix lo-pix))))))
+	 (samps-per-pixel (max 1 (round (/ (- hi lo) (- hi-pix lo-pix)))))
 	 (len (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> s c)))
     (if in
 	(if (&gt; (- hi-pix lo-pix) samps-per-pixel)
@@ -13539,9 +13539,9 @@ This draws a filled polygon whose vertices are in the vector 'points'.
       (<em class=red>fill-polygon</em> points snd chn))
     (arrow-head x0 y0)
     (<a class=quiet href="#fillrectangle" onmouseout="UnTip()" onmouseover="Tip(extsnd_fillrectangle_tip)">fill-rectangle</a> (- x0 (* 4 size)) 
-		    (inexact-&gt;exact (- y0 (* .4 size)))
+		    (floor (- y0 (* .4 size)))
 		    (* 2 size)
-		    (inexact-&gt;exact (* .8 size))
+		    (floor (* .8 size))
                     snd chn)))	
 </pre></td></tr></table>
 
@@ -13608,9 +13608,9 @@ sound over another at an arbitrary point, and so on (see draw.scm):
 		     (size (length low-data))
 		     (samps (- right left))
 		     (left-offset (max 0 (- 1000 left)))
-		     (left-bin (inexact-&gt;exact (round (/ (* size left-offset) samps))))
+		     (left-bin (round (/ (* size left-offset) samps)))
 		     (right-offset (- (min 2000 right) left))
-		     (right-bin (inexact-&gt;exact (round (/ (* size right-offset) samps))))
+		     (right-bin (round (/ (* size right-offset) samps)))
 		     (new-low-data (<a class=quiet href="#vctsubseq" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctsubseq_tip)">vct-subseq</a> low-data left-bin right-bin))
 		     (new-high-data (<a class=quiet href="#vctsubseq" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctsubseq_tip)">vct-subseq</a> high-data left-bin right-bin)))
 		(set! (<a class=quiet href="#foregroundcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_foregroundcolor_tip)">foreground-color</a> snd chn) red)

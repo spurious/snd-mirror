@@ -1172,7 +1172,7 @@
 	  (list icon-mid-window
 		(lambda (w c i) 
 		  (if (not (null? (sounds))) 
-		      (set! (cursor) (inexact->exact (round (/ (+ (left-sample) (right-sample)) 2))))))
+		      (set! (cursor) (round (/ (+ (left-sample) (right-sample)) 2)))))
 		"Move to mid-window")
 	  
 	  (list icon-forward-one-sample

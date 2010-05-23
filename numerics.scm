@@ -243,7 +243,7 @@
 (define* (automorph a b c d snd chn)
   (let* ((len (frames snd chn))
 	 (pow2 (ceiling (/ (log len) (log 2))))
-	 (fftlen (inexact->exact (expt 2 pow2)))
+	 (fftlen (floor (expt 2 pow2)))
 	 (fftscale (/ 1.0 fftlen))
 	 (rl (channel->vct 0 fftlen snd chn))
 	 (im (make-vct fftlen)))

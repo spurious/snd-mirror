@@ -29,7 +29,6 @@
 
 
 
-
 (defmacro defgenerator (struct-name . fields)
 
   ;; an extension of def-clm-struct
@@ -68,7 +67,7 @@
 				 (if (and (list? n)
 					  (= (length n) 2))
 				     (if (number? (cadr n))
-					 (if (exact? (cadr n))
+					 (if (rational? (cadr n))
 					     'int
 					     'float)
 					 (if (string? (cadr n))
@@ -5744,7 +5743,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (j 0 (+ j 1)))
 	((or (= j amps-len)
 	     (= i data-len)))
-      (let* ((hn (inexact->exact (vct-ref original-data i)))
+      (let* ((hn (floor (vct-ref original-data i)))
 	     (amp (env (vector-ref amps j)))
 	     (phase (env (vector-ref phases j))))
 	(vct-set! tn hn (* amp (sin phase)))

@@ -206,7 +206,7 @@
 	     (rs (right-sample snd 0))
 	     (ilen (+ 1 (- rs ls)))
 	     (pow2 (ceiling (/ (log ilen) (log 2))))
-	     (fftlen (inexact->exact (expt 2 pow2)))
+	     (fftlen (floor (expt 2 pow2)))
 	     (fftscale (/ 1.0 fftlen))
 	     (rl1 (channel->vct ls fftlen snd 0))
 	     (rl2 (channel->vct ls fftlen snd 1))
@@ -304,7 +304,7 @@
 	(let* ((ls (left-sample snd chn))
 	       (rs (right-sample snd chn))
 	       (pow2 (ceiling (/ (log (- rs ls)) (log 2))))
-	       (fftlen (inexact->exact (expt 2 pow2))))
+	       (fftlen (floor (expt 2 pow2))))
 	  (if (> pow2 2)
 	      (let ((ffts '()))
 		(for-each
@@ -996,7 +996,7 @@ current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is 
 (define* (fft-smoother cutoff start samps snd chn)
   "(fft-smoother cutoff start samps snd chn) uses fft-filtering to smooth a 
 section: (vct->channel (fft-smoother .1 (cursor) 400) (cursor) 400)"
-  (let* ((fftpts (inexact->exact (expt 2 (ceiling (/ (log (+ 1 samps)) (log 2.0))))))
+  (let* ((fftpts (floor (expt 2 (ceiling (/ (log (+ 1 samps)) (log 2.0))))))
 	 (rl (channel->vct start fftpts snd chn))
 	 (im (make-vct fftpts))
 	 (top (floor (* fftpts cutoff))))
@@ -1043,7 +1043,7 @@ in a hurry use: (clm-channel (make-comb .8 32)) instead"
 
 (define (comb-chord scaler size amp)
   "(comb-chord scaler size amp) returns a set of harmonically-related comb filters: (map-channel (comb-chord .95 100 .3))"
-  (let ((c1 (make-comb scaler (inexact->exact size)))
+  (let ((c1 (make-comb scaler (floor size)))
 	(c2 (make-comb scaler (floor (* size .75))))
 	(c3 (make-comb scaler (floor (* size 1.2)))))
     (lambda (x) 
@@ -1060,7 +1060,7 @@ envelope: (map-channel (zcomb .8 32 '(0 0 1 10)))"
 	mx
 	(max-envelope-1 (cddr e) (max mx (abs (cadr e))))))
 
-  (let ((cmb (make-comb scaler size :max-size (inexact->exact (+ size 1 (max-envelope-1 pm 0.0)))))
+  (let ((cmb (make-comb scaler size :max-size (floor (+ size 1 (max-envelope-1 pm 0.0)))))
 	(penv (make-env pm :length (frames))))
     (lambda (x)
       (comb cmb x (env penv)))))
@@ -1142,7 +1142,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
   "(zecho scaler secs freq amp) returns a modulated echo maker: (map-channel (zecho .5 .75 6 10.0) 0 65000)"
   (let* ((os (make-oscil frq))
 	 (len (round (* secs (srate))))
-	 (del (make-delay len :max-size (inexact->exact (+ len amp 1)))))
+	 (del (make-delay len :max-size (floor (+ len amp 1)))))
     (lambda (inval)
       (+ inval 
 	 (delay del 
@@ -2526,8 +2526,8 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	 (format fd "~%(~A ~S" ins-name (string-append dir-name "/" sound))
 	 (do ((bnd 0 (+ bnd 2)))
 	     ((>= bnd segments))
-	   (let* ((segbeg (inexact->exact (vct-ref boundaries bnd)))
-		  (segdur (inexact->exact (- (vct-ref boundaries (+ 1 bnd)) segbeg))))
+	   (let* ((segbeg (floor (vct-ref boundaries bnd)))
+		  (segdur (floor (- (vct-ref boundaries (+ 1 bnd)) segbeg))))
 	     (format fd " (~A ~A ~A)" segbeg segdur (segment-maxamp sound-name segbeg segdur))))
 	 (format fd ")")
 	 (mus-sound-forget (string-append dir-name "/" sound))))

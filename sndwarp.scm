@@ -228,7 +228,7 @@
 			   ;; flag = #f,  however, allows 1st section to start as determined by time-ptr instead.
 			   (adj-time-val (if zero-start-time-ptr 0.0 time-val)))
 		       (set! readstart (round (* fsr (+ inputbeg overlap-start adj-time-val))))
-		       (if (not (= overlap 0)) (set! winsamps (inexact->exact (* winsamps overlap-ratio)))))
+		       (if (not (= overlap 0)) (set! winsamps (floor (* winsamps overlap-ratio)))))
 		     ;; remaining sections
 		     (set! readstart (round (* fsr (+ inputbeg time-val)))))
 		 ;; STRETCH mode
@@ -244,7 +244,7 @@
 				0)))
 		       (begin
 			 (set! readstart (round (* fsr (+ inputbeg init-read-start))))
-			 (if (not (= overlap 0)) (set! winsamps (inexact->exact (* winsamps overlap-ratio))))))
+			 (if (not (= overlap 0)) (set! winsamps (floor (* winsamps overlap-ratio))))))
 		     ;; remaining sections
 		     (set! readstart (round (+ readstart (* fsr (/ winlen time-val)))))))
 	     ;; Set readin position and sampling rate

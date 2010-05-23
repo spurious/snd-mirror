@@ -142,7 +142,7 @@
 	      blackman2-window our-dac-buffer-size-in-shorts #t)
 	     "spectrum"
 	     0.0 x1)
-	    (let ((maxpt (inexact->exact (floor (* x1 our-dac-buffer-size-in-shorts)))))
+	    (let ((maxpt (floor (* x1 our-dac-buffer-size-in-shorts))))
 	      (graph
 	       (snd-spectrum
 		(vct-subseq (sound-data->vct data our-chan vobj) 0 maxpt)

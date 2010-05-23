@@ -23,7 +23,7 @@
 	 (num-beans 64)
 	 (j 0)
 	 (sndamp (/ amp 16384.0))
-	 (srate4 (inexact->exact (floor (/ (mus-srate) 4))))
+	 (srate4 (floor (/ (mus-srate) 4)))
 	 (gain (/ (* (/ (log num-beans) (log 4.0)) 40) num-beans)))
     (ws-interrupt?)
     ;; gourd resonance filter

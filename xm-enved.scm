@@ -339,20 +339,18 @@
 		px0
 		(min px1
 		     (max px0
-			  (inexact->exact
-			   (floor (+ px0 (* (- px1 px0)
-				     (/ (- x ix0)
-					(- ix1 ix0))))))))))
+			  (floor (+ px0 (* (- px1 px0)
+					   (/ (- x ix0)
+					      (- ix1 ix0)))))))))
 	  
 	  (define (xe-grfy drawer y)
 	    (if (= py0 py1)
 		py0
 		(min py0 ; grows downward so y1 < y0
 		     (max py1
-			  (inexact->exact
-			   (floor (+ py1 (* (- py0 py1)
-				     (/ (- y iy1)
-					(- iy0 iy1))))))))))
+			  (floor (+ py1 (* (- py0 py1)
+					   (/ (- y iy1)
+					      (- iy0 iy1)))))))))
 
 	  (if (> py0 py1)
 	      (begin

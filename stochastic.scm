@@ -36,7 +36,7 @@
 	 (b (expt 2 (- bits 1))); because we use signed ints - see (- b) below
 	 ;;make vct to hold x,y breakpoints
 	 (xy-array (make-vct (* (length init-array) 2)))
-	 (xy-array-l (inexact->exact (length xy-array)))
+	 (xy-array-l (floor (length xy-array)))
 	 )
     ;;fill xy-array with values from init-array
     (do ((iy 0 (+ iy 2));;index for reading values from init-array (a 2-dimensional list)
@@ -55,9 +55,9 @@
 	 ((= i end))
        (if (= dx dt);;when current sample is a breakpoint
 	   (begin
-	     (set! dx (inexact->exact (vct-ref xy-array (modulo m xy-array-l))))
+	     (set! dx (floor (vct-ref xy-array (modulo m xy-array-l))))
 	     (set! y (vct-ref xy-array (+ (modulo m xy-array-l) 1)))
-	     (set! prev-dx (inexact->exact (vct-ref xy-array (modulo (- m 2) xy-array-l))))
+	     (set! prev-dx (floor (vct-ref xy-array (modulo (- m 2) xy-array-l))))
 	     (set! dy (- y oldy))
 	     (set! oldy y)
 	     ;;straight uniform distribution for y

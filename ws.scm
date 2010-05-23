@@ -958,7 +958,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 				 (if (and (list? n)
 					  (= (length n) 2))
 				     (if (number? (cadr n))
-					 (if (exact? (cadr n))
+					 (if (rational? (cadr n))
 					     'int
 					     'float)
 					 (if (string? (cadr n))

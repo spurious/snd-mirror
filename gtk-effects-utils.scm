@@ -100,7 +100,7 @@
 	 (log-lo (/ (log (max lo 1.0)) log2))
 	 (log-hi (/ (log hi) log2))
 	 (log-val (/ (log val) log2)))
-    (inexact->exact (floor (* log-scale-ticks (/ (- log-val log-lo) (- log-hi log-lo)))))))
+    (floor (* log-scale-ticks (/ (- log-val log-lo) (- log-hi log-lo))))))
   
 (define (scale-linear->log lo val hi)
   ;; given user-relative lo..hi and scale-relative val, return user-relative val

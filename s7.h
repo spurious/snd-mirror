@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.56"
-#define S7_DATE "9-May-10"
+#define S7_VERSION "1.57"
+#define S7_DATE "22-May-10"
 
 
 typedef long long int s7_Int;
@@ -322,8 +322,7 @@ int s7_vector_rank(s7_pointer vect);                                            
 s7_Int *s7_vector_dimensions(s7_pointer vec);                                         /* dimensions */
 s7_Int *s7_vector_offsets(s7_pointer vec);                                            /* precalculated offsets to speed-up addressing */
 
-  /* if s7 is built with multidimensional and applicable vectors, 
-   *
+  /* 
    *  (vect i) is the same as (vector-ref vect i)
    *  (set! (vect i) x) is the same as (vector-set! vect i x)
    *  (vect i j k) accesses the 3-dimensional vect
@@ -759,6 +758,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 22-May:    multidimensional vectors are no longer optional.
  * 9-May:     s7_read_char and s7_peek_char have to return an int, not a char (<eof>=-1, but 255 is a legit char).
  *            s7_write_char and s7_open_output_function have similar changes.
  * 3-May:     *#readers* to customize #... reading.  Also nan? and infinite?.

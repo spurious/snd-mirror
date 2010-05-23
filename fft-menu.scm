@@ -66,16 +66,16 @@ removes all energy below the low frequency and above the high frequency, then co
 			 (lambda (w data)
 			   (set! fft-edit-low-frequency initial-fft-edit-low-frequency)
 			   (set! fft-edit-high-frequency initial-fft-edit-high-frequency)
-			   (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders))  (inexact->exact fft-edit-low-frequency))
+			   (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders))  (floor fft-edit-low-frequency))
 			   ;;; (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car sliders)))
-			   (gtk_adjustment_set_value (GTK_ADJUSTMENT (cadr sliders))  (inexact->exact fft-edit-high-frequency))
+			   (gtk_adjustment_set_value (GTK_ADJUSTMENT (cadr sliders))  (floor fft-edit-high-frequency))
 			   ;;; (gtk_adjustment_value_changed (GTK_ADJUSTMENT (cadr sliders)))
 			   )
 			 (lambda (w c i)
 			   (set! fft-edit-low-frequency initial-fft-edit-low-frequency)
 			   (set! fft-edit-high-frequency initial-fft-edit-high-frequency)
-			   (XtSetValues (car sliders) (list XmNvalue (inexact->exact fft-edit-low-frequency)))
-			   (XtSetValues (cadr sliders) (list XmNvalue (inexact->exact fft-edit-high-frequency)))))))
+			   (XtSetValues (car sliders) (list XmNvalue (floor fft-edit-low-frequency)))
+			   (XtSetValues (cadr sliders) (list XmNvalue (floor fft-edit-high-frequency)))))))
 	      
               (set! sliders
 		    (add-sliders 

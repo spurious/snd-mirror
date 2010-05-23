@@ -292,7 +292,7 @@ you have to run code that uses those guys:
 <pre>
     (define exact? rational?)
     (define (inexact? x) (not (rational? x)))
-    (define inexact-&gt;exact rationalize)
+    (define inexact-&gt;exact rationalize) ; or floor
     (define (exact-&gt;inexact x) (* x 1.0))
 </pre>
 
@@ -1518,7 +1518,7 @@ We can write an FFT procedure that accepts lists or vectors:
 </dt>
 
 <dd><p>
-If s7 is built with WITH_MULTIDIMENSIONAL_VECTORS (the default), it supports 
+s7 supports
 vectors with any number of dimensions.  It is here, in particular, that the generalized
 set! stuff shines.  make-vector's 2nd argument can be a list of dimensions, rather than
 an integer (the one dimensional case):
@@ -2591,7 +2591,7 @@ at startup *features* is:
 </p>
 <pre>
 &gt; *features*
-(snd10 snd snd-s7 snd-motif gsl alsa xm snd-ladspa run clm4 clm sndlib gmp multidimensional-vectors s7)
+(snd10 snd snd-s7 snd-motif gsl alsa xm snd-ladspa run clm4 clm sndlib gmp s7)
 
 &gt; (provided? 'gmp)
 #t
@@ -2960,7 +2960,6 @@ compile-time flags:
     WITH_GMP                       1 if you want multiprecision arithmetic (requires gmp, mpfr, and mpc, default is 0)
     WITH_COMPLEX                   1 if your compiler supports complex numbers
     HAVE_COMPLEX_TRIG              1 if your math library has complex versions of the trig functions
-    WITH_MULTIDIMENSIONAL_VECTORS  1 if you want multidimensional vectors (default is 1)
     WITH_PROFILING                 1 if you want profiling support (default is 0)
     WITH_FORCE                     1 if you want force and delay (default is 0)
     WITH_MULTIPLE_VALUES           1 if you want multiple-values and its friends (default is 1)

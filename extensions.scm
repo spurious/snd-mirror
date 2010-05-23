@@ -234,8 +234,7 @@ If 'check' is #f, the hooks are removed."
 	      (format fd "~S" field)
 	      (format fd "\"~S\"" field)) ; sometimes format omits the double quotes!
 	  (if (number? field)
-	      (if (and (exact? field)
-		       (rational? field)) ; get these out of our way before float stuff
+	      (if (rational? field) ; get these out of our way before float stuff
 		  (format fd "~A" field)
 		  (format fd "~,4F" field))
 	      (if (procedure? field)

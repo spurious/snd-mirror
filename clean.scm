@@ -24,7 +24,7 @@
 (define* (check-freq freq snd chn)
   (let ((hum 0.0))
     (do ((i 0 (1+ i))
-	 (loc 0.0 (+ loc (inexact->exact (round (/ (frames snd chn) 5))))))
+	 (loc 0.0 (+ loc (round (/ (frames snd chn) 5)))))
 	((= i 4))
       (set! hum (+ hum (goertzel-channel freq loc 2048 snd chn))))
     (/ hum 4.0)))
@@ -436,7 +436,7 @@
     (if (> hum 30.0)
 	(let ((humf (if (> hum60 hum55) 60.0 55.0)))
 	  (notch-channel (list humf) 4096 0 (frames snd chn) snd chn #f #t 4)
-	  (snd-display "; notch out ~D cycle hum: ~A -> ~A" (inexact->exact humf) hum (check-freq humf snd chn)))))
+	  (snd-display "; notch out ~D cycle hum: ~A -> ~A" (floor humf) hum (check-freq humf snd chn)))))
 
   ;; look for DC
   (let ((dc (check-freq 0.0 snd chn)))

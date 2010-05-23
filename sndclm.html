@@ -3171,7 +3171,7 @@ we can truncate its spectrum at the desired number of harmonics:
 		 (rl (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
 		 (im (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
 		 (incr (/ (* 2 pi) size))
-		 (index (or B (max 1 (inexact-&gt;exact (floor (/ n 2)))))))
+		 (index (or B (max 1 (floor (/ n 2))))))
 	    (do ((i 0 (+ 1 i))
 		 (x 0.0 (+ x incr)))
 		((= i size))
@@ -4773,7 +4773,7 @@ We would replace the current make-ssb-am line with:
 </p>
 <pre>
     (vector-set! ssbs (- i 1) (<em class=red>make-ssb-am</em> (+ (* i factor old-freq)
-                                             (* new-freq (inexact-&gt;exact (round (* i <em class=red>stretch</em>)))))))
+                                             (* new-freq (round (* i <em class=red>stretch</em>))))))
 </pre>
 
 
@@ -4972,8 +4972,8 @@ using the same frequency envelope as the wave-train, so we have some idea when t
                  (let* ((scaler (max 0.1 (exact-&gt;inexact (/ (- i beg) len))))
                         (comb-len 32)
                         (c1 (<a class=quiet href="#make-comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_comb_tip)">make-comb</a> scaler comb-len))
-                        (c2 (<a class=quiet href="#make-comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_comb_tip)">make-comb</a> scaler (inexact-&gt;exact (floor (* comb-len .75)))))
-                        (c3 (<a class=quiet href="#make-comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_comb_tip)">make-comb</a> scaler (inexact-&gt;exact (floor (* comb-len 1.25))))))
+                        (c2 (<a class=quiet href="#make-comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_comb_tip)">make-comb</a> scaler (floor (* comb-len .75))))
+                        (c3 (<a class=quiet href="#make-comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_comb_tip)">make-comb</a> scaler (floor (* comb-len 1.25)))))
                    (do ((k 0 (+ 1 k)))
                        ((= k grain-size))
                      (let ((x (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> original-grain k)))
@@ -5189,7 +5189,7 @@ do perfectly well:
 	(do ((k 0 (+ 1 k)))
 	    ((= k n))
 	  (set! sum (+ sum (<em class=red>rand</em> (vector-ref rands k)))))
-	(let ((bin (inexact-&gt;exact (+ 100 (round sum)))))
+	(let ((bin (floor (+ 100 (round sum)))))
 	  (vector-set! bins bin (+ (vector-ref bins bin) 1)))))
     bins))
 
@@ -5250,7 +5250,7 @@ but 0.5 should happen three times as often as either of the others:
     (let ((vals (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0.0 0.5 0.5 0.5 1.0)))
       (do ((i 0 (+ 1 i)))
           ((= i 10))
-        (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f ";~A " (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> vals (inexact-&gt;exact (floor (random 5.0))))))))
+        (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f ";~A " (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> vals (floor (random 5.0)))))))
 </pre>
 
 <p>These "distributions" refer to the values returned by the random number
@@ -6427,12 +6427,12 @@ delay line as the coefficients for an FIR filter:
         ((= k num-combs0))
       (vector-set! cmbs0 k 
                    (<em class=red>make-comb</em> scaler 
-                              (inexact-&gt;exact (floor (* comb-len (list-ref combs0 k)))))))
+                              (floor (* comb-len (list-ref combs0 k))))))
     (do ((k 0 (+ 1 k)))
         ((= k num-combs1))
       (vector-set! cmbs1 k 
                    (<em class=red>make-comb</em> scaler 
-                              (inexact-&gt;exact (floor (* comb-len (list-ref combs1 k)))))))
+                              (floor (* comb-len (list-ref combs1 k))))))
     (<a class=quiet href="extsnd.html#run" onmouseout="UnTip()" onmouseover="Tip(extsnd_run_tip)">run</a>
      (do ((i beg (+ 1 i)))
          ((= i end))
@@ -7333,7 +7333,7 @@ one argument that return a new input sample whenever they are called by granulat
 <pre>
 (<a class=quiet href="sndscm.html#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> (granulate-sound file beg dur (orig-beg 0.0) (exp-amt 1.0))
   (let* ((f-srate (srate file))
-	 (f-start (inexact-&gt;exact (round (* f-srate orig-beg))))
+	 (f-start (round (* f-srate orig-beg)))
          (f (<a class=quiet href="#make-readin" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_readin_tip)">make-readin</a> file :start f-start))
 	 (st (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> beg))
 	 (new-dur (or dur (- (<a class=quiet href="extsnd.html#mussoundduration" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundduration_tip)">mus-sound-duration</a> file) orig-beg)))
@@ -10901,10 +10901,10 @@ only difference is that mus-fft includes the fft length as an argument, whereas
 <table border=0 hspace=40><tr><td>
 <pre>
 (let* ((len (mus-sound-frames "oboe.snd"))
-       (fsize (expt 2 (inexact-&gt;exact (ceiling (/ (log len) (log 2.0))))))
+       (fsize (expt 2 (ceiling (/ (log len) (log 2.0)))))
        (rdata (make-vct fsize))
        (idata (make-vct fsize))
-       (cutoff (inexact-&gt;exact (round (/ fsize 10))))
+       (cutoff (round (/ fsize 10)))
        (fsize2 (/ fsize 2)))
   (file-&gt;array "oboe.snd" 0 0 len rdata)
   

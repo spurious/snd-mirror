@@ -506,7 +506,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 (define (->sample beg)
   "(->sample time-in-seconds) -> time-in-samples"
-  (inexact->exact (round (* (if (not (null? (sounds))) (srate) (mus-srate)) beg))))
+  (round (* (if (not (null? (sounds))) (srate) (mus-srate)) beg)))
 
 
 

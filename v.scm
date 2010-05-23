@@ -68,14 +68,14 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 			   (= fm1-rat (floor fm1-rat))
 			   (= fm2-rat (floor fm2-rat))
 			   (= fm3-rat (floor fm3-rat))
-			   (integer? (inexact->exact (/ fm2-rat fm1-rat))) ; might be 2=2 but 1=3 or whatever
-			   (integer? (inexact->exact (/ fm3-rat fm1-rat)))))
+			   (integer? (rationalize (/ fm2-rat fm1-rat))) ; might be 2=2 but 1=3 or whatever
+			   (integer? (rationalize (/ fm3-rat fm1-rat)))))
 	   (norm (or (and easy-case modulate 1.0) index1))
 	   (carrier (make-oscil frequency))
 	   (fmosc1  (if modulate 
 			(if easy-case 
 			    (make-polywave (* fm1-rat frequency) 
-					   (list (inexact->exact fm1-rat) index1
+					   (list (floor fm1-rat) index1
 						 (floor (/ fm2-rat fm1-rat)) index2
 						 (floor (/ fm3-rat fm1-rat)) index3)
 					   mus-chebyshev-second-kind)

@@ -35,7 +35,7 @@
  *        lists, strings, vectors, and hash-tables are (set-)applicable objects
  *        true multiple-values (optional)
  *        threads (optional)
- *        multidimensional vectors (optional)
+ *        multidimensional vectors
  *
  *   many minor changes!
  *
@@ -187,13 +187,6 @@
   #define WITH_GMP 0
   /* this includes multiprecision arithmetic for all numeric types and functions, using gmp, mpfr, and mpc
    * WITH_GMP adds the following functions: bignum, bignum?, bignum-precision
-   */
-#endif
-
-#ifndef WITH_MULTIDIMENSIONAL_VECTORS
-  #define WITH_MULTIDIMENSIONAL_VECTORS 1
-  /* this includes the multidimension vector support
-   *   added function: vector-dimensions returns a list of dimensions
    */
 #endif
 
@@ -384,12 +377,10 @@ typedef struct s7_func_t {
 } s7_func_t;
 
 
-#if WITH_MULTIDIMENSIONAL_VECTORS
 typedef struct s7_vdims_t {
   int ndims;
   s7_Int *dims, *offsets;
 } s7_vdims_t;
-#endif
 
 
 /* cell structure */
@@ -422,9 +413,7 @@ typedef struct s7_cell {
     struct {
       s7_Int length;
       s7_pointer *elements;
-#if WITH_MULTIDIMENSIONAL_VECTORS
       s7_vdims_t *dim_info;
-#endif
     } vector;
     
     s7_func_t *ffptr;
@@ -784,15 +773,10 @@ struct s7_scheme {
 #define vector_element(p, i)          ((p)->object.vector.elements[i])
 #define vector_elements(p)            (p)->object.vector.elements
 
-#if WITH_MULTIDIMENSIONAL_VECTORS
-  #define vector_dimension(p, i)      ((p)->object.vector.dim_info->dims[i])
-  #define vector_ndims(p)             ((p)->object.vector.dim_info->ndims)
-  #define vector_offset(p, i)         ((p)->object.vector.dim_info->offsets[i])
-  #define vector_is_multidimensional(p) ((p)->object.vector.dim_info)
-  #define VECTOR_REST_ARGS            true
-#else
-  #define VECTOR_REST_ARGS            false
-#endif
+#define vector_dimension(p, i)        ((p)->object.vector.dim_info->dims[i])
+#define vector_ndims(p)               ((p)->object.vector.dim_info->ndims)
+#define vector_offset(p, i)           ((p)->object.vector.dim_info->offsets[i])
+#define vector_is_multidimensional(p) ((p)->object.vector.dim_info)
 
 #define small_int(Val)                small_ints[Val]
 #define opcode(Op)                    small_ints[(int)Op]
@@ -1246,14 +1230,12 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
       if (vector_length(a) > 0)
 	{
 	  free(vector_elements(a));
-#if WITH_MULTIDIMENSIONAL_VECTORS
 	  if (vector_is_multidimensional(a))
 	    {
 	      free(a->object.vector.dim_info->dims);
 	      free(a->object.vector.dim_info->offsets);
 	      free(a->object.vector.dim_info);
 	    }
-#endif
 	}
       break;
       
@@ -7502,12 +7484,6 @@ static s7_pointer g_is_inexact(s7_scheme *sc, s7_pointer args)
   return(make_boolean(sc, s7_is_inexact(car(args))));
 }
 
-/* if these two meant "are represented exactly in the computer", we'd have int/ratios exact
- *    (up to most-positive-fixnum, if any); reals and complex exact if they can be exactly
- *    handled in floats (1.0 is exact, as is 0.5, if the printout isn't misleading us).  0.1 is inexact.
- *    And we'd have both exact and inexact complex (1+i is just as exact as 1). 
- */
-
 
 bool s7_is_ulong(s7_pointer arg) 
 {
@@ -10146,7 +10122,6 @@ bool s7_is_valid_pointer(s7_pointer arg)
 }
 
 
-#if WITH_MULTIDIMENSIONAL_VECTORS
 static int display_multivector(s7_scheme *sc, s7_pointer vec, int out_len, int flat_ref, int dimension, int dimensions, char *out_str, char **elements, char *last)
 {
   int i;
@@ -10180,7 +10155,6 @@ static int display_multivector(s7_scheme *sc, s7_pointer vec, int out_len, int f
   (*last) = ')';
   return(flat_ref);
 }
-#endif
 
 
 typedef struct {
@@ -10410,7 +10384,6 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, sh
   
   len = vector_length(vect);
   if (len == 0)
-#if WITH_MULTIDIMENSIONAL_VECTORS
     {
       if (vector_is_multidimensional(vect))
 	{
@@ -10420,9 +10393,6 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, sh
 	}
       else return(copy_string("#()"));
     }
-#else    
-  return(copy_string("#()"));
-#endif
   
   if (!to_file)
     {
@@ -10456,10 +10426,6 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, sh
   bufsize += (len * 2 + 256);
   buf = (char *)malloc(bufsize * sizeof(char));
 
-#if WITH_MULTIDIMENSIONAL_VECTORS
-
-  /* TODO: check cyclic multivects */
-
   if (vector_is_multidimensional(vect))
     {
       char c;
@@ -10471,8 +10437,6 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, sh
       free(elements);
       return(buf);
     }
-
-#endif
 
   sprintf(buf, "#(");
   for (i = 0; i < len - 1; i++)
@@ -12189,10 +12153,7 @@ static s7_pointer s7_make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
       if (filled) s7_vector_fill(sc, x, sc->NIL); /* make_hash_table assumes nil as the default value */
     }
 
-#if WITH_MULTIDIMENSIONAL_VECTORS
   x->object.vector.dim_info = NULL;
-#endif
-
   return(x);
 }
 
@@ -12287,10 +12248,8 @@ s7_pointer *s7_vector_elements(s7_pointer vec)
 s7_Int *s7_vector_dimensions(s7_pointer vec)
 {
   s7_Int *dims;
-#if WITH_MULTIDIMENSIONAL_VECTORS
   if (vector_is_multidimensional(vec))
     return(vec->object.vector.dim_info->dims);
-#endif
   dims = (s7_Int *)malloc(sizeof(s7_Int));
   dims[0] = vector_length(vec);
   return(dims);
@@ -12300,10 +12259,8 @@ s7_Int *s7_vector_dimensions(s7_pointer vec)
 s7_Int *s7_vector_offsets(s7_pointer vec)
 {
   s7_Int *offs;
-#if WITH_MULTIDIMENSIONAL_VECTORS
   if (vector_is_multidimensional(vec))
     return(vec->object.vector.dim_info->offsets);
-#endif
   offs = (s7_Int *)malloc(sizeof(s7_Int));
   offs[0] = 1;
   return(offs);
@@ -12391,7 +12348,6 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
   if (vector_length(vect) == 0)
     return(s7_out_of_range_error(sc, "vector-ref", 1, vect, "this vector has no elements, so vector-ref is hopeless"));
 
-#if WITH_MULTIDIMENSIONAL_VECTORS
   if (vector_is_multidimensional(vect))
     {
       int i;
@@ -12415,7 +12371,6 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 	return(s7_wrong_number_of_args_error(sc, "not enough indices for vector ref: ~A", indices));
     }
   else
-#endif
     {
       /* (let ((hi (make-vector 3 0.0)) (sum 0.0)) (do ((i 0 (+ i 1))) ((= i 3)) (set! sum (+ sum (hi i)))) sum) */
 
@@ -12437,13 +12392,9 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 
 static s7_pointer g_vector_ref(s7_scheme *sc, s7_pointer args)
 {
-#if WITH_MULTIDIMENSIONAL_VECTORS
   #define H_vector_ref "(vector-ref v i) returns the i-th element of vector v.  If v \
 is a multidimensional vector, you can also use (vector-ref v ...) where the trailing args \
 are the indices, or omit 'vector-ref': (v ...)."
-#else
-  #define H_vector_ref "(vector-ref v i) returns the i-th element of vector v"
-#endif
 
   s7_pointer vec;
   vec = car(args);
@@ -12456,13 +12407,10 @@ are the indices, or omit 'vector-ref': (v ...)."
 
 static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
 {
-#if WITH_MULTIDIMENSIONAL_VECTORS
   #define H_vector_set "(vector-set! v i value) sets the i-th element of vector v to value.  If 'v' is \
 multidimensional you can also use (vector-set! v ... val) where the ellipsis refers to the indices.  You \
 can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this form much easier to read."
-#else
-  #define H_vector_set "(vector-set! v i value) sets the i-th element of vector v to value"
-#endif
+
   s7_pointer vec, val;
   s7_Int index;
   
@@ -12472,7 +12420,6 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
   if (vector_length(vec) == 0)
     return(s7_out_of_range_error(sc, "vector-set!", 1, vec, "this vector has no elements, so vector-set! is hopeless"));
   
-#if WITH_MULTIDIMENSIONAL_VECTORS
   if (vector_is_multidimensional(vec))
     {
       int i;
@@ -12500,14 +12447,11 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
       val = car(x);
     }
   else
-#endif
     {
       if (!s7_is_integer(cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "vector-set! index,", 2, cadr(args), "an integer"));
-#if WITH_MULTIDIMENSIONAL_VECTORS
       if (cdddr(args) != sc->NIL)                            /* (vector-set! #(1 2) 1 2 3) */
 	return(s7_wrong_number_of_args_error(sc, "too many args for vector set: ~A", args));
-#endif
 
       index = s7_integer(cadr(args));
       if ((index < 0) ||
@@ -12524,14 +12468,10 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
 
 static s7_pointer g_make_vector(s7_scheme *sc, s7_pointer args)
 {
-#if WITH_MULTIDIMENSIONAL_VECTORS
   #define H_make_vector "(make-vector len :optional (value #f)) returns a vector of len elements initialized to value. \
 To create a multidimensional vector, put the dimension bounds in a list (this is to avoid ambiguities such as \
 (make-vector 1 2) where it's not clear whether the '2' is an initial value or a dimension size).  (make-vector '(2 3) 1.0) \
 returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
-#else
-  #define H_make_vector "(make-vector len :optional (value #f)) returns a vector of len elements initialized to value"
-#endif
 
   s7_Int len;
   s7_pointer x, fill, vec;
@@ -12544,7 +12484,6 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
 	return(s7_wrong_type_arg_error(sc, "make-vector length,", 1, x, "a non-negative integer"));
       len = s7_integer(x);
     }
-#if WITH_MULTIDIMENSIONAL_VECTORS
   else
     {
       s7_pointer y;
@@ -12571,7 +12510,6 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
 	    }
 	}
     }
-#endif
   
   if (cdr(args) != sc->NIL) 
     fill = cadr(args);
@@ -12579,7 +12517,6 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
   vec = s7_make_vector_1(sc, len, false);
   if (len > 0) s7_vector_fill(sc, vec, fill);
 
-#if WITH_MULTIDIMENSIONAL_VECTORS
   if ((is_pair(x)) &&
       (is_pair(cdr(x))))
     {
@@ -12604,7 +12541,6 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
 
       vec->object.vector.dim_info = v;
     }
-#endif
 
   return(vec);
 }
@@ -12619,15 +12555,12 @@ static s7_pointer g_is_vector(s7_scheme *sc, s7_pointer args)
 
 int s7_vector_rank(s7_pointer vect)
 {
-#if WITH_MULTIDIMENSIONAL_VECTORS
   if (vector_is_multidimensional(vect))
     return(vector_ndims(vect));
-#endif
   return(1);
 }
 
 
-#if WITH_MULTIDIMENSIONAL_VECTORS
 static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
 {
   #define H_vector_dimensions "(vector-dimensions vect) returns a list of vect's dimensions.  In srfi-63 terms:\n\
@@ -12684,28 +12617,6 @@ static int traverse_vector_data(s7_scheme *sc, s7_pointer vec, int flat_ref, int
   if (x != sc->NIL)
     return(MV_TOO_MANY_ELEMENTS);
   return(flat_ref);
-}
-
-
-static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect)
-{
-  s7_Int len;
-  s7_pointer new_vect;
-
-  len = vector_length(old_vect);
-
-#if WITH_MULTIDIMENSIONAL_VECTORS
-  if (vector_is_multidimensional(old_vect))
-    new_vect = g_make_vector(sc, s7_cons(sc, g_vector_dimensions(sc, s7_cons(sc, old_vect, sc->NIL)), sc->NIL));
-  else new_vect = s7_make_vector_1(sc, len, false);
-#else
-  new_vect = s7_make_vector_1(sc, len, false);
-#endif
-
-  /* here and in vector-fill! we have a problem with bignums -- should new bignums be allocated? (copy_list also) */
-
-  memcpy((void *)(vector_elements(new_vect)), (void *)(vector_elements(old_vect)), len * sizeof(s7_pointer));
-  return(new_vect);
 }
 
 
@@ -12771,7 +12682,24 @@ static s7_pointer g_multivector(s7_scheme *sc, int dims, s7_pointer data)
   return(vec);
 }
 
-#endif
+
+static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect)
+{
+  s7_Int len;
+  s7_pointer new_vect;
+
+  len = vector_length(old_vect);
+
+  if (vector_is_multidimensional(old_vect))
+    new_vect = g_make_vector(sc, s7_cons(sc, g_vector_dimensions(sc, s7_cons(sc, old_vect, sc->NIL)), sc->NIL));
+  else new_vect = s7_make_vector_1(sc, len, false);
+
+  /* here and in vector-fill! we have a problem with bignums -- should new bignums be allocated? (copy_list also) */
+
+  memcpy((void *)(vector_elements(new_vect)), (void *)(vector_elements(old_vect)), len * sizeof(s7_pointer));
+  return(new_vect);
+}
+
 
 
 
@@ -14635,7 +14563,6 @@ static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shar
     len = vector_length(x);
     if (len != vector_length(y)) return(false);
 
-#if WITH_MULTIDIMENSIONAL_VECTORS
     if (vector_is_multidimensional(x))
       {
 	if (!(vector_is_multidimensional(y)))
@@ -14651,7 +14578,6 @@ static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shar
 	if (vector_is_multidimensional(y))
 	  return(false);
       }
-#endif
 
     for (i = 0; i < len; i++)
       if (!(s7_is_equal_ci(sc, vector_element(x, i), vector_element(y, i), ci)))
@@ -17148,7 +17074,6 @@ static token_t token(s7_scheme *sc)
       if (c == '(') 
 	return(TOKEN_VECTOR);
 
-#if WITH_MULTIDIMENSIONAL_VECTORS
       if (isdigit(c)) /* #2D(...) */
 	{
 	  int dims, dig, d, loc = 0;
@@ -17175,7 +17100,6 @@ static token_t token(s7_scheme *sc)
 	  for (d = loc - 1; d > 0; d--)
 	    backchar(sc, sc->strbuf[d], pt);
 	}
-#endif
 
       if (c == ':')  /* turn #: into : */
 	{
@@ -19875,13 +19799,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_READ_VECTOR:
-#if WITH_MULTIDIMENSIONAL_VECTORS
       if (sc->args == small_int(1))
 	sc->value = g_vector(sc, sc->value);
       else sc->value = g_multivector(sc, (int)s7_integer(sc->args), sc->value);
-#else
-      sc->value = g_vector(sc, sc->value);
-#endif
+
       pop_stack(sc);
       goto START;
 
@@ -25252,12 +25173,10 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "vector-fill!",            g_vector_fill,             2, 0, false, H_vector_fill);
   s7_define_function(sc, "vector",                  g_vector,                  0, 0, true,  H_vector);
   s7_define_function(sc, "vector-length",           g_vector_length,           1, 0, false, H_vector_length);
-  s7_define_function(sc, "vector-ref",              g_vector_ref,              2, 0, VECTOR_REST_ARGS, H_vector_ref);
-  s7_define_function(sc, "vector-set!",             g_vector_set,              3, 0, VECTOR_REST_ARGS, H_vector_set);
+  s7_define_function(sc, "vector-ref",              g_vector_ref,              2, 0, true,  H_vector_ref);
+  s7_define_function(sc, "vector-set!",             g_vector_set,              3, 0, true,  H_vector_set);
   s7_define_function(sc, "make-vector",             g_make_vector,             1, 1, false, H_make_vector);
-#if WITH_MULTIDIMENSIONAL_VECTORS
   s7_define_function(sc, "vector-dimensions",       g_vector_dimensions,       1, 0, false, H_vector_dimensions);
-#endif
   s7_define_function(sc, "sort!",                   g_sort_in_place,           2, 0, false, H_sort_in_place);
   
 
@@ -25355,9 +25274,7 @@ s7_scheme *s7_init(void)
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "threads")));
 #endif
 
-#if WITH_MULTIDIMENSIONAL_VECTORS
-  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "multidimensional-vectors")));
-#endif
+  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "multidimensional-vectors"))); /* backwards compatibility */
 
 #if WITH_PROFILING
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "profiling")));  
@@ -25552,11 +25469,16 @@ s7_scheme *s7_init(void)
  * reverse of vector? string? [reverse-hash-ref?]
  * hash-table <-> list, does vector->list work with hash-tables? [not currently] what about the other way?
  *   guile calls this hash-table->alist I think
- * hash-table needs s7test tests
  * we often need tree-copy and so on.
  * hash-table map and for-each should be entry-oriented, not alist-oriented
  *   (would hash reverse exchange keys and values?)
- * access to the pws setter 
+ * access to the pws setter -- this could replace pws-setter-arity
  * environment? (ref would lookup up symbol? etc)
+ * loop
+ * if we remove exact/inexact, we need also to remove #i and #e?
+ *   (but these are useless in s7 -- we allow floats in #b and so on)
+ *
+ * call-with-exit should just be the name and a body:
+ *   (define-macro (block . body) `(call-with-exit (lambda (return) ,@body)))
  */
 

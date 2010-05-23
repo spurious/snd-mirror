@@ -28,7 +28,7 @@
 	 (dly-len (list 1433 1601 1867 2053 2251 2399 347 113 37 59 53 43 37 29 19)))
     (do ((i 0 (+ i 1)))
 	((= i 15))
-      (let ((val (inexact->exact (floor (* srscale (list-ref dly-len i))))))
+      (let ((val (floor (* srscale (list-ref dly-len i)))))
 	(if (even? val) (set! val (+ 1 val)))
 	(list-set! dly-len i (next-prime val))))
 
