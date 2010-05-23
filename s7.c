@@ -14267,6 +14267,7 @@ static int pws_get_opt_args(s7_pointer x)
 }
 
 
+#if 0
 static s7_pointer g_procedure_with_setter_setter_arity(s7_scheme *sc, s7_pointer args)
 {
   s7_pws_t *f;
@@ -14282,6 +14283,7 @@ static s7_pointer g_procedure_with_setter_setter_arity(s7_scheme *sc, s7_pointer
 		     s7_make_integer(sc, f->set_opt_args),
 		     sc->F));
 }
+#endif
 
 
 static s7_pointer pws_source(s7_scheme *sc, s7_pointer x)
@@ -17095,6 +17097,13 @@ static token_t token(s7_scheme *sc)
 		  return(TOKEN_VECTOR);
 		}
 	    }
+
+	  /* PERHAPS: read #n=(...), #n=#(...), and #n# here? or put it off to read_sharp_constant?
+	   *          I think we can't put it off because TOKEN_SHARP_CONST expects a "delimited string" after the "#"
+	   *          this will require a read op and token because these guys can be nested
+	   *          There's also the #/..../ business in CL/Gauche.
+	   *          and much nicer: #<name ...> would call whatever is associated with "name" -- or can this be done with *#readers*?
+	   */
 
 	  /* try to back out */
 	  for (d = loc - 1; d > 0; d--)
@@ -24908,7 +24917,9 @@ s7_scheme *s7_init(void)
   /* pws first so that make-procedure-with-setter has a type tag */
   s7_define_function(sc, "make-procedure-with-setter",         g_make_procedure_with_setter,         2, 0, false, H_make_procedure_with_setter);
   s7_define_function(sc, "procedure-with-setter?",             g_is_procedure_with_setter,           1, 0, false, H_is_procedure_with_setter);
+  /*
   s7_define_function(sc, "procedure-with-setter-setter-arity", g_procedure_with_setter_setter_arity, 1, 0, false, "kludge to get setter's arity");
+  */
   pws_tag = s7_new_type("<procedure-with-setter>", pws_print, pws_free,	pws_equal, pws_mark, pws_apply,	pws_set);
   
 
@@ -25423,30 +25434,6 @@ s7_scheme *s7_init(void)
  * a way to walk up the stack?  (current-environment 10) [20-Jan-10] 11.2
  * and a way to jump into the error environment, cerror 
  *   an error handling dialog (gui) in snd?
- */
-
-/* OBJECTS...
- * perhaps: a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)
- *   catch 'wrong-type-arg-error in the evaluator,
- *   if 1st arg is v_object, look for method?
- *   this would not slow the rest of s7 down, but would let us handle anything 
- *   but the error handler would need the caller's name, and all the original args unchanged [see below]
- *   this would make map possible if a make method is on the list
- *
- * So a standard object would have its own type, notion of fields and so on (like define-record in s7.html),
- *   and the basic things provided directly by make-type, but also a methods function that is expected to
- *   return an alist of (name . function).  Inheritance would mean prepending the current record's
- *   method list on that of its ancestors.  MOP stuff could be had by wrapping inherited functions and so on.
- * This way leaves the actual object structure up to the object definer.  It is very similar to the
- *   namespace business in s7.html, and requires no new names or functions.  For speed, we could
- *   provide immediate dispatch for built-ins, and use macros in Scheme to do the alist search just once.
- *   It's also very close to defgenerator.  Call-next-method would just continue down the alist from 
- *   (cdr current-method) indefinitely.  On C side, we could make our dispatch table available and expandable.
- *   Then if C-side func sees a type it doesn't handle explicitly, it knows (without assoc) what to call.
- * This also makes it possible to specialize down to the level of the object (it prepends its own methods).
- * A "class" in this case is define-record (for the local fields and type) + a list of methods and a methods accessor.
- * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
- * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
  *
  * TODO: loading s7test simultaneously in several threads hangs after awhile in join_thread (call/cc?) 
  *         why are list-ref tests getting 'wrong-type-arg?
@@ -25472,13 +25459,40 @@ s7_scheme *s7_init(void)
  * we often need tree-copy and so on.
  * hash-table map and for-each should be entry-oriented, not alist-oriented
  *   (would hash reverse exchange keys and values?)
- * access to the pws setter -- this could replace pws-setter-arity
+ * access to the pws setter
  * environment? (ref would lookup up symbol? etc)
  * loop
  * if we remove exact/inexact, we need also to remove #i and #e?
- *   (but these are useless in s7 -- we allow floats in #b and so on)
  *
  * call-with-exit should just be the name and a body:
  *   (define-macro (block . body) `(call-with-exit (lambda (return) ,@body)))
+ *
+ * map/for-each unequal length args (string?)
+ * assoc/member opt 3rd arg = predicate
+ * delete-file file-exists? get-env system
+ */
+
+/* OBJECTS...
+ * perhaps: a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)
+ *   catch 'wrong-type-arg-error in the evaluator,
+ *   if 1st arg is v_object, look for method?
+ *   this would not slow the rest of s7 down, but would let us handle anything 
+ *   but the error handler would need the caller's name, and all the original args unchanged [see below]
+ *   this would make map possible if a make method is on the list
+ *
+ * So a standard object would have its own type, notion of fields and so on (like define-record in s7.html),
+ *   and the basic things provided directly by make-type, but also a methods function that is expected to
+ *   return an alist of (name . function).  Inheritance would mean prepending the current record's
+ *   method list on that of its ancestors.  MOP stuff could be had by wrapping inherited functions and so on.
+ * This way leaves the actual object structure up to the object definer.  It is very similar to the
+ *   namespace business in s7.html, and requires no new names or functions.  For speed, we could
+ *   provide immediate dispatch for built-ins, and use macros in Scheme to do the alist search just once.
+ *   It's also very close to defgenerator.  Call-next-method would just continue down the alist from 
+ *   (cdr current-method) indefinitely.  On C side, we could make our dispatch table available and expandable.
+ *   Then if C-side func sees a type it doesn't handle explicitly, it knows (without assoc) what to call.
+ * This also makes it possible to specialize down to the level of the object (it prepends its own methods).
+ * A "class" in this case is define-record (for the local fields and type) + a list of methods and a methods accessor.
+ * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
+ * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
  */
 

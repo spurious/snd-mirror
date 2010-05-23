@@ -295,6 +295,17 @@ you have to run code that uses those guys:
     (define inexact-&gt;exact rationalize) ; or floor
     (define (exact-&gt;inexact x) (* x 1.0))
 </pre>
+<p>I'd also remove #i and #e, but they're useless already in s7 because you can
+have any number after, for example, #b:
+</p>
+<pre>
+    &gt; #b1.1
+    1.5
+    &gt; #b1e2
+    4.0
+    &gt; #o17.5+i
+    15.625+1i
+</pre>
 
 </blockquote>
 </small>
@@ -1874,6 +1885,7 @@ it is continuing from the point of the error, but then fails to do so.
 ~A        object-&gt;string as in display
 ~S        object-&gt;string as in write
 ~C        print as character
+~P        insert 's' if current argument is not 1 or 1.0 (use ~@P for "ies" or "y")
 ~B        number-&gt;string in base 2
 ~O        number-&gt;string in base 8
 ~D        number-&gt;string in base 10
@@ -1882,7 +1894,6 @@ it is continuing from the point of the error, but then fails to do so.
 ~F        float to string, (format #f "~F" 100.1) -&gt; "100.100000",   (%f in C)
 ~G        float to string, (format #f "~G" 100.1) -&gt; "100.1",        (%g in C)
 ~T        insert spaces (padding)
-~P        insert 's' if current argument is not 1 or 1.0 (use ~@P for "ies" or "y")
 </pre>
 
 <p>The last eight take the usual numeric arguments to specify field width and precision.

@@ -11904,6 +11904,8 @@
 (test (make-procedure-with-setter (lambda () 1) (lambda (a) a) (lambda () 2)) 'error)
 (test (make-procedure-with-setter (lambda () 1) 2) 'error)
 
+#|
+(define (procedure-with-setter-setter-arity proc) (procedure-arity (procedure-with-setter-setter proc))) 
 (test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda (a) a)))) (procedure-with-setter-setter-arity pws)) '(1 0 #f))
 (test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda (a b c) a)))) (procedure-with-setter-setter-arity pws)) '(3 0 #f))
 (test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda (a . b) a)))) (procedure-with-setter-setter-arity pws)) '(1 0 #t))
@@ -11915,6 +11917,7 @@
 (test (make-procedure-with-setter-setter-arity abs) 'error)
 (test (make-procedure-with-setter-setter-arity 1 2) 'error)
 (test (make-procedure-with-setter-setter-arity (lambda () 1)) 'error)
+|#
 
 
 ;; generic length/copy/fill!
@@ -50232,7 +50235,7 @@
 		     					;quit gc
 		     procedure? procedure-documentation procedure-environment
 		     help procedure-arity procedure-source make-procedure-with-setter procedure-with-setter? 
-		     procedure-with-setter-setter-arity not boolean? eq? eqv? equal? s7-version
+		     not boolean? eq? eqv? equal? s7-version
 		     symbol-access make-type macro?
 
 		     )))
