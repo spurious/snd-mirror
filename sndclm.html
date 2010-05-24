@@ -4969,7 +4969,7 @@ using the same frequency envelope as the wave-train, so we have some idea when t
            (outa i (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf) (<em class=red>wave-train</em> grains gliss)))
            (let ((click (<em class=red>pulse-train</em> click-track gliss)))
              (if (&gt; click 0.0)
-                 (let* ((scaler (max 0.1 (exact-&gt;inexact (/ (- i beg) len))))
+                 (let* ((scaler (max 0.1 (* 1.0 (/ (- i beg) len))))
                         (comb-len 32)
                         (c1 (<a class=quiet href="#make-comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_comb_tip)">make-comb</a> scaler comb-len))
                         (c2 (<a class=quiet href="#make-comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_comb_tip)">make-comb</a> scaler (floor (* comb-len .75))))
@@ -8512,7 +8512,7 @@ Here is an example of move-locsig:
          (let ((sig (* .5 (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc))))
            (<em class=red>locsig</em> loc j sig)
 	   (set! j (+ 1 j))))
-       (<em class=red>move-locsig</em> loc (exact-&gt;inexact i) 1.0)))))
+       (<em class=red>move-locsig</em> loc (* 1.0 i) 1.0)))))
 </pre>
 </td></tr></table>
 
@@ -10272,7 +10272,7 @@ via mus-data.
       (set! last-pitch pitch)
       (set! pitch (<em class=red>moving-pitch</em> scn))
       (if (not (= last-pitch pitch))
-	  (format #t "~A: ~A~%" (exact-&gt;inexact (/ i cur-srate)) pitch))))
+	  (format #t "~A: ~A~%" (* 1.0 (/ i cur-srate)) pitch))))
   (set! (mus-srate) old-srate))
 </pre>
 <br>

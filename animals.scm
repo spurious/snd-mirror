@@ -332,10 +332,10 @@
 	(if (> (- hi-pix lo-pix) samps-per-pixel)
 	    (begin
 	      (set! (left-sample) (+ lo samps-per-pixel))
-	      (set! (x-zoom-slider) (exact->inexact (/ (max samps-per-pixel (- hi lo (* 2 samps-per-pixel))) len)))))
+	      (set! (x-zoom-slider) (* 1.0 (/ (max samps-per-pixel (- hi lo (* 2 samps-per-pixel))) len)))))
 	(begin
 	  (set! (left-sample) (max 0 (- lo samps-per-pixel)))
-	  (set! (x-zoom-slider) (exact->inexact (/ (min len (+ (- hi lo) (* 2 samps-per-pixel))) len)))))
+	  (set! (x-zoom-slider) (* 1.0 (/ (min len (+ (- hi lo) (* 2 samps-per-pixel))) len)))))
     keyboard-no-action))
 
 (bind-key "Up" 0 (lambda () "zoom out one pixel" (zoom-one-pixel (selected-sound) (selected-channel) #f))) ;up

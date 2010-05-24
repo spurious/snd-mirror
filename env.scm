@@ -455,11 +455,11 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 (define* (envelope-exp e (power 1.0) (xgrid 100))
   "(envelope-exp e (power 1.0) (xgrid 100)) approximates an exponential curve connecting the breakpoints"
   (let* ((mn (min-envelope e))
-	 (largest-diff (exact->inexact (- (max-envelope e) mn)))
+	 (largest-diff (* 1.0 (- (max-envelope e) mn)))
 	 (x-min (car e))
 	 (len (length e))
 	 (x-max (list-ref e (- len 2)))
-	 (x-incr (exact->inexact (/ (- x-max x-min) xgrid)))
+	 (x-incr (* 1.0 (/ (- x-max x-min) xgrid)))
 	 (new-e '()))
     (do ((x x-min (+ x x-incr)))
 	((>= x x-max))
@@ -485,7 +485,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 	 (incrsamps (round (* incr fsr)))
 	 (start (round (* beg fsr)))
 	 (reader (make-sampler start file))
-	 (end (if dur (min (inexact->exact (+ start (round (* fsr dur))))
+	 (end (if dur (min (* 1.0 (+ start (round (* fsr dur))))
 			   (mus-sound-frames file))
 		  (mus-sound-frames file)))
 	 (rms (make-moving-average incrsamps))) ; this could use make-moving-rms from dsp.scm
@@ -497,7 +497,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 	    ((= j incrsamps))
 	  (let ((val (reader)))
 	    (set! rms-val (moving-average rms (* val val)))))
-	(set! e (cons (exact->inexact (/ i fsr)) e))
+	(set! e (cons (* 1.0 (/ i fsr)) e))
 	(set! rms-val (sqrt rms-val))
 	(if db 
 	    (if (< rms-val .00001)

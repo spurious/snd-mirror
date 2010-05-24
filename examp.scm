@@ -189,8 +189,8 @@
 	  (srate file)
 	  (mus-header-type-name (mus-sound-header-type file))
 	  (mus-data-format-name (mus-sound-data-format file))
-	  (exact->inexact (/ (mus-sound-samples file)
-			     (* (channels file) (srate file))))))
+	  (/ (mus-sound-samples file)
+	     (* 1.0 (channels file) (srate file)))))
 
 
 ;;; -------- Correlation --------
@@ -517,7 +517,7 @@ read an ASCII sound file"
        (let loop ((val (read in-fd)))
 	 (or (eof-object? val)
 	     (begin
-	       (vct-set! data loc (* (exact->inexact val) short->float))
+	       (vct-set! data loc (* val short->float))
 	       (set! loc (+ 1 loc))
 	       (if (= loc bufsize)
 		   (begin

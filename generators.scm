@@ -1631,7 +1631,7 @@
     (set! (npos3cos-angle gen) (+ x fm (npos3cos-frequency gen)))
 
     (if (< (abs den) nearly-zero)
-	(exact->inexact n)
+	(* 1.0 n)
 
 	(/ (- 2 (cos (* n x)) (cos (* (+ n 1) x)))
 	   den))))
@@ -3613,7 +3613,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (bess-frequency g) (hz->radians (bess-frequency g)))
 			       (if (>= (bess-n g) (length bessel-peaks)) 
-				   (set! (bess-norm g) (/ 0.67 (expt (bess-n g) (exact->inexact 1/3))))
+				   (set! (bess-norm g) (/ 0.67 (expt (bess-n g) 1/3)))
 				   ;; this formula comes from V P Krainov, "Selected Mathetical Methods in Theoretical Physics"
 				   (set! (bess-norm g) (vct-ref bessel-peaks (bess-n g))))
 			       g))
@@ -6643,7 +6643,7 @@ taking input from the readin generator 'reader'.  The output data is available v
       (set! last-pitch pitch)
       (set! pitch (moving-pitch scn))
       (if (not (= last-pitch pitch))
-	  (format #t "~A: ~A~%" (exact->inexact (/ i cur-srate)) pitch))))
+	  (format #t "~A: ~A~%" (* 1.0 (/ i cur-srate)) pitch))))
   (set! (mus-srate) old-srate))
 |#
 

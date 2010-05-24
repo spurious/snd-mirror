@@ -168,9 +168,9 @@
 		(info-dialog 
 		 "Selection info"
 		 (format #f "start ~A, ~,3F~%end: ~A, ~,3F~%duration: ~A, ~,3F~%chans: ~D~%maxamp: ~,3F"
-			 beg (exact->inexact (/ beg (srate)))
-			 (+ beg len) (exact->inexact (/ (+ beg len) (srate)))
-			 len (exact->inexact (/ len (srate)))
+			 beg (* 1.0 (/ beg (srate)))
+			 (+ beg len) (* 1.0 (/ (+ beg len) (srate)))
+			 len (* 1.0 (/ len (srate)))
 			 (selection-chans)
 			 (selection-maxamp))))))
       (list "Apply controls" xmPushButtonWidgetClass every-menu (lambda (w c i) (apply-controls (selected-sound) 2))) ; 2=selection
@@ -308,7 +308,7 @@
 			(srate snd)
 			(mus-header-type-name (header-type snd))
 			(mus-data-format-name (data-format snd))
-			(exact->inexact (/ (frames snd graph-popup-chn) (srate snd)))
+			(* 1.0 (/ (frames snd graph-popup-chn) (srate snd)))
 			(maxamp snd #t)
 			(if (comment snd)
 			    (format #f "  comment: \"~A\"~%" (comment snd))

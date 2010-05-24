@@ -306,7 +306,7 @@
 				   (srate snd)
 				   (mus-header-type-name (header-type snd))
 				   (mus-data-format-name (data-format snd))
-				   (exact->inexact (/ (frames snd graph-popup-chn) (srate snd)))
+				   (* 1.0 (/ (frames snd graph-popup-chn) (srate snd)))
 				   (maxamp snd #t)
 				   (if (comment snd)
 				       (format #f "  comment: \"~A\"~%" (comment snd))

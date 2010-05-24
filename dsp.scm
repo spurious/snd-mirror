@@ -6,7 +6,7 @@
 
 (define (log10 a) 
   "(log10 a) returns the log base 10 of 'a'"
-  (/ (log a) (log 10)))
+  (log a 10))
 
 ;;; src-duration (see src-channel in extsnd.html)
 
@@ -1048,14 +1048,14 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 (define* (notch-channel freqs (filter-order #f) beg dur snd chn edpos (truncate #t) (notch-width 2))
   "(notch-channel freqs (filter-order #f) beg dur snd chn edpos (truncate #t) (notch-width 2)) -> notch filter removing freqs"
-  (filter-channel (make-notch-frequency-response (exact->inexact (srate snd)) freqs notch-width)
+  (filter-channel (make-notch-frequency-response (* 1.0 (srate snd)) freqs notch-width)
 		  (or filter-order (expt 2 (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0)))))
 		  beg dur snd chn edpos truncate
 		  (format #f "notch-channel '~A ~A ~A ~A" freqs filter-order beg dur)))
 
 (define* (notch-sound freqs filter-order snd chn (notch-width 2))
   "(notch-sound freqs filter-order snd chn (notch-width 2)) -> notch filter removing freqs"
-  (filter-sound (make-notch-frequency-response (exact->inexact (srate snd)) freqs notch-width)
+  (filter-sound (make-notch-frequency-response (* 1.0 (srate snd)) freqs notch-width)
 		(or filter-order (expt 2 (ceiling (/ (log (/ (srate snd) notch-width)) (log 2.0)))))
 		snd chn #f
 		(format #f "notch-channel '~A ~A 0 #f" freqs filter-order)))
@@ -1063,7 +1063,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 (define* (notch-selection freqs filter-order (notch-width 2))
   "(notch-selection freqs filter-order (notch-width 2)) -> notch filter removing freqs"
   (if (selection?)
-      (filter-selection (make-notch-frequency-response (exact->inexact (selection-srate)) freqs notch-width)
+      (filter-selection (make-notch-frequency-response (* 1.0 (selection-srate)) freqs notch-width)
 			(or filter-order (expt 2 (ceiling (/ (log (/ (selection-srate) notch-width)) (log 2.0))))))))
 
 
@@ -1187,7 +1187,7 @@ the era when computers were human beings"
 	  (letrec ((next-random 
 		    (lambda ()
 		      (let* ((len (length e))
-			     (x (random (exact->inexact (list-ref e (- len 2)))))
+			     (x (random (* 1.0 (list-ref e (- len 2)))))
 			     (y (random 1.0)))
 			(if (or (<= y (envelope-interp x e))
 				(c-g?))
@@ -1228,12 +1228,12 @@ the era when computers were human beings"
 
 (define* (inverse-integrate dist (data-size 512) (e-size 50))
   (let* ((e '())
-	 (sum (exact->inexact (cadr dist)))
+	 (sum (cadr dist))
 	 (first-sum sum)
 	 (data (make-vct data-size))
 	 (x0 (car dist))
 	 (x1 (list-ref dist (- (length dist) 2)))
-	 (xincr (exact->inexact (/ (- x1 x0) e-size))))
+	 (xincr (/ (- x1 x0) e-size)))
     (do ((i 0 (+ i 1))
 	 (x x0 (+ x xincr)))
 	((> i e-size))
@@ -1443,7 +1443,7 @@ shift the given channel in pitch without changing its length.  The higher 'order
 						 (hz->2pi (+ aff bwf)) 
 						 order))
 	(vector-set! frenvs (- i 1) (make-env freq-env 
-					     :scaler (hz->radians (exact->inexact i)) 
+					     :scaler (hz->radians (* 1.0 i)) 
 					     :length (frames)))))
     (as-one-edit
      (lambda ()
@@ -1636,7 +1636,7 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
 	 (windows (+ 1 (floor (/ (- end start) incrsamps))))
 	 (results (make-vct windows))
 	 (fft2 (floor (/ fftsize 2)))
-	 (binwidth (exact->inexact (/ fsr fftsize)))
+	 (binwidth (* 1.0 (/ fsr fftsize)))
 	 (rd (make-readin file)))
     (run
      (do ((i start (+ i incrsamps))

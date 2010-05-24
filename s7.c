@@ -10163,7 +10163,7 @@ typedef struct {
   int *refs;
 } shared_info;
 
-#define INITIAL_SHARED_INFO_SIZE 4
+#define INITIAL_SHARED_INFO_SIZE 8
 
 static shared_info *free_shared_info(shared_info *ci)
 {
@@ -14267,7 +14267,6 @@ static int pws_get_opt_args(s7_pointer x)
 }
 
 
-#if 0
 static s7_pointer g_procedure_with_setter_setter_arity(s7_scheme *sc, s7_pointer args)
 {
   s7_pws_t *f;
@@ -14283,7 +14282,6 @@ static s7_pointer g_procedure_with_setter_setter_arity(s7_scheme *sc, s7_pointer
 		     s7_make_integer(sc, f->set_opt_args),
 		     sc->F));
 }
-#endif
 
 
 static s7_pointer pws_source(s7_scheme *sc, s7_pointer x)
@@ -24917,9 +24915,7 @@ s7_scheme *s7_init(void)
   /* pws first so that make-procedure-with-setter has a type tag */
   s7_define_function(sc, "make-procedure-with-setter",         g_make_procedure_with_setter,         2, 0, false, H_make_procedure_with_setter);
   s7_define_function(sc, "procedure-with-setter?",             g_is_procedure_with_setter,           1, 0, false, H_is_procedure_with_setter);
-  /*
   s7_define_function(sc, "procedure-with-setter-setter-arity", g_procedure_with_setter_setter_arity, 1, 0, false, "kludge to get setter's arity");
-  */
   pws_tag = s7_new_type("<procedure-with-setter>", pws_print, pws_free,	pws_equal, pws_mark, pws_apply,	pws_set);
   
 
@@ -25450,7 +25446,7 @@ s7_scheme *s7_init(void)
  * perhaps :allow-other-keys in lambda*
  * some way for an error handler to tell where we are during load
  * Clojure/Gauche-style *1 *2 etc for recent REPL entries
- * pretty-printing in the REPL
+ * pretty-printing in the REPL or in format
  * a reader for the cyclic list syntax
  * lint 
  * reverse of vector? string? [reverse-hash-ref?]
@@ -25459,7 +25455,7 @@ s7_scheme *s7_init(void)
  * we often need tree-copy and so on.
  * hash-table map and for-each should be entry-oriented, not alist-oriented
  *   (would hash reverse exchange keys and values?)
- * access to the pws setter
+ * access to the pws setter [and figure out how to get from the C setter to its arity list -- used in snd-test]
  * environment? (ref would lookup up symbol? etc)
  * loop
  * if we remove exact/inexact, we need also to remove #i and #e?
@@ -25467,7 +25463,7 @@ s7_scheme *s7_init(void)
  * call-with-exit should just be the name and a body:
  *   (define-macro (block . body) `(call-with-exit (lambda (return) ,@body)))
  *
- * map/for-each unequal length args (string?)
+ * map/for-each unequal length args
  * assoc/member opt 3rd arg = predicate
  * delete-file file-exists? get-env system
  */

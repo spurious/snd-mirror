@@ -26,7 +26,7 @@
 	 (file-dur (frames *reverb*))
 	 (decay-dur (mus-srate))
 	 (len (floor (+ decay-dur file-dur)))
-	 (envA (if amp-env (make-env :envelope amp-env :scaler volume :duration (exact->inexact (/ len (mus-srate)))) #f))
+	 (envA (if amp-env (make-env :envelope amp-env :scaler volume :duration (/ len (mus-srate))) #f))
 	 (scl volume))
     (ws-interrupt?)
     (if (or amp-env low-pass)

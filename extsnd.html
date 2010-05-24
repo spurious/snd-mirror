@@ -12144,12 +12144,11 @@ A similar set rebinds the arrow keys to give much more precise window position a
 	    (begin
 	      (set! (<a class=quiet href="#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>) (+ lo samps-per-pixel))
 	      (set! (<a class=quiet href="#xzoomslider" onmouseout="UnTip()" onmouseover="Tip(extsnd_xzoomslider_tip)">x-zoom-slider</a>) 
-                (exact-&gt;inexact 
-                  (round (/ (max samps-per-pixel (- hi lo (* 2 samps-per-pixel))) len))))))
+                (* 1.0 (round (/ (max samps-per-pixel (- hi lo (* 2 samps-per-pixel))) len))))))
 	(begin
 	  (set! (<a class=quiet href="#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>) (max 0 (- lo samps-per-pixel)))
 	  (set! (<a class=quiet href="#xzoomslider" onmouseout="UnTip()" onmouseover="Tip(extsnd_xzoomslider_tip)">x-zoom-slider</a>) 
-            (exact-&gt;inexact (round (/ (min len (+ (- hi lo) (* 2 samps-per-pixel))) len))))))
+            (* 1.0 (round (/ (min len (+ (- hi lo) (* 2 samps-per-pixel))) len))))))
     keyboard-no-action))
 
 (<em class=red>bind-key</em> "Up" 0     ;up arrow
@@ -13207,16 +13206,16 @@ of FractInt's royal colormap):
     (let ((r (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
 	  (g (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
 	  (b (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
-	  (incr (exact-&gt;inexact (/ 256.0 size)))
+	  (incr (/ 256.0 size))
 	  (er (list 0 60 60 116 128 252 192 252 256 60))
 	  (eg (list 0 0  64 0   128 252 192 252 256 0))
 	  (eb (list 0 80        128 252 192 0   256 80)))
       (do ((i 0 (+ 1 i))
 	   (x 0.0 (+ x incr)))
 	  ((= i size))
-        (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> r i (exact-&gt;inexact (/ (<a class=quiet href="sndscm.html#envelopeinterp" onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopeinterp_tip)">envelope-interp</a> x er) 256.0))) ; from env.scm
-        (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> g i (exact-&gt;inexact (/ (<a class=quiet href="sndscm.html#envelopeinterp" onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopeinterp_tip)">envelope-interp</a> x eg) 256.0)))
-        (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> b i (exact-&gt;inexact (/ (<a class=quiet href="sndscm.html#envelopeinterp" onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopeinterp_tip)">envelope-interp</a> x eb) 256.0))))
+        (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> r i (/ (<a class=quiet href="sndscm.html#envelopeinterp" onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopeinterp_tip)">envelope-interp</a> x er) 256.0)) ; from env.scm
+        (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> g i (/ (<a class=quiet href="sndscm.html#envelopeinterp" onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopeinterp_tip)">envelope-interp</a> x eg) 256.0))
+        (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> b i (/ (<a class=quiet href="sndscm.html#envelopeinterp" onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopeinterp_tip)">envelope-interp</a> x eb) 256.0)))
       (list r g b))))
 
 ;;; another amusing colormap from FractInt:
@@ -13225,7 +13224,7 @@ of FractInt's royal colormap):
     (let ((r (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
 	  (g (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
 	  (b (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
-	  (incr (exact-&gt;inexact (/ 3.14159 size))))
+	  (incr (/ 3.14159 size)))
       (do ((i 0 (+ 1 i))
 	   (x 0.0 (+ x incr)))
 	  ((= i size))

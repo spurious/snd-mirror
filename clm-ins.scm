@@ -1698,7 +1698,7 @@ is a physical model of a flute:
 	(*db-drop-per-second* -10.0))
 
     (define (get-piano-partials freq)
-      (let ((pitch (round (* 12 (/ (log (/ freq 32.703)) (log 2))))))
+      (let ((pitch (round (* 12 (log (/ freq 32.703) 2)))))
 	(list-ref piano-spectra pitch)))
 
     (define (make-piano-ampfun dur)

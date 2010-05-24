@@ -168,7 +168,7 @@
 	    (format #t "~A got ~A~Abut expected ~A" 
 		    tst result 
 		    (if (and (rational? result) (not (rational? expected)))
-			(format #f " (~A) " (exact->inexact result))
+			(format #f " (~A) " (* 1.0 result))
 			" ")
 		    expected)
 	    
@@ -214,7 +214,7 @@
 						   (not (= n (/ (numerator n) (denominator n))))))
 					  (format #t ", ~A ratio but imag: ~A, den: ~A, real: ~A, ~A/~A=~A"
 						  n (imag-part n) (denominator n) (real-part n) 
-						  (numerator n) (denominator n) (exact->inexact (/ (numerator n) (denominator n))))
+						  (numerator n) (denominator n) (* 1.0 (/ (numerator n) (denominator n))))
 					  (if (and (real? n)
 						   (not (rational? n))
 						   (or (not (= (imag-part n) 0))
@@ -11341,7 +11341,7 @@
 		       :setter (lambda (obj index value)
 				 (if (not (real? value))
 				     (error 'wrong-type-arg-error "float-vector element must be real: ~S" value))
-				 (vector-set! obj index (exact->inexact value)))
+				 (vector-set! obj index (* 1.0 value)))
 		       :name "float-vector"))
 	     (fv? (car fv-type))
 	     (make-fv (cadr fv-type))
@@ -11351,7 +11351,7 @@
 	      (lambda* (len (initial-element 0.0))
 		       (if (not (real? initial-element))
 			   (error 'wrong-type-arg-error "make-float-vector initial element must be real: ~S" initial-element))
-		       (make-fv (make-vector len (exact->inexact initial-element)))))
+		       (make-fv (make-vector len (* 1.0 initial-element)))))
 	
 	(set! float-vector? fv?)
 	
@@ -11366,7 +11366,7 @@
 		    (let ((arg (car lst)))
 		      (if (not (real? arg))
 			  (error 'wrong-type-arg-error "float-vector element must be real: ~S in ~S" arg args))
-		      (set! (v i) (exact->inexact arg))))))))
+		      (set! (v i) (* 1.0 arg))))))))
       
       (let ((v (make-float-vector 3 0.0)))
 	(test (length v) 3)
@@ -13679,7 +13679,7 @@
 	(define minusp negative?)
 	(define realpart real-part)
 	(define imagpart imag-part)
-	(define* (float x ignore) (exact->inexact x))
+	(define* (float x ignore) (* 1.0 x))
 	(define rational rationalize)
 	(define mod modulo)
 	(define rem remainder)
@@ -13838,10 +13838,10 @@
 	(define* (cl-ceiling x (divisor 1)) (ceiling (/ x divisor)))
 	(define* (cl-truncate x (divisor 1)) (truncate (/ x divisor)))
 	(define* (cl-round x (divisor 1)) (round (/ x divisor)))
-	(define* (ffloor x divisor) (exact->inexact (cl-floor x divisor)))
-	(define* (fceling x divisor) (exact->inexact (cl-ceiling x divisor)))
-	(define* (ftruncate x divisor) (exact->inexact (cl-truncate x divisor)))
-	(define* (fround x divisor) (exact->inexact (cl-round x divisor)))
+	(define* (ffloor x divisor) (* 1.0 (cl-floor x divisor)))
+	(define* (fceling x divisor) (* 1.0 (cl-ceiling x divisor)))
+	(define* (ftruncate x divisor) (* 1.0 (cl-truncate x divisor)))
+	(define* (fround x divisor) (* 1.0 (cl-round x divisor)))
        
 	(define (/= . args) 
 	  (if (null? (cdr args))
@@ -27194,8 +27194,7 @@
 (num-test (sqrt (sqrt (sqrt 256))) 2)
 (num-test (sqrt (sqrt (sqrt 1/256))) 1/2)
 
-(if (and (integer? (sqrt 4))
-	 (exact? (sqrt 4)))
+(if (integer? (sqrt 4))
     (begin
       (for-each
        (lambda (n sqn)
@@ -27213,7 +27212,7 @@
 	     (let ((val (sqrt n)))
 	       (if (or (integer? val)
 		       (> (abs (- (* val val) n)) .001))
-		   (format #t "(sqrt ~A) expected ~A but got ~A~%" n (sqrt (exact->inexact n)) val)))))
+		   (format #t "(sqrt ~A) expected ~A but got ~A~%" n (sqrt (* 1.0 n)) val)))))
        (list 10 491400 19439282 1248844920 235565593200))
       
       (test (eqv? (expt 2 3) 8) #t)
@@ -28320,6 +28319,18 @@
 	  (if (> y err) (begin (set! err y) (set! mx x))))))
   (if (> err 1e-14)
       (format #t "(exp (log ~A)) error: ~A~%" mx err)))
+
+(do ((i 0 (+ i 1)))
+    ((= i 100))
+  (let ((val (+ .001 (random 100.0)))
+	(base (+ 2 (random 20))))
+    (num-test (log val base) (/ (log val) (log base)))))
+
+(do ((i 0 (+ i 1)))
+    ((= i 100))
+  (let ((val (+ .001 (random 10000.0)))
+	(base (+ 1.0 (random 20.0))))
+    (num-test (log val base) (/ (log val) (log base)))))
 
 (num-test (log (sqrt (- (expt 10 9) 1))) 1.036163291797320557783096154591297226743E1)
 (num-test (log (sqrt (- (expt 10 17) 1))) 1.957197329044938830915292736481709573957E1)
@@ -46426,7 +46437,7 @@
       (let* ((form (caar lst))
 	     (str (cadar lst))
 	     (num (eval form))
-	     (fnum (exact->inexact num))
+	     (fnum (* 1.0 num))
 	     (n2s (number->string fnum))
 	     (s2n (string->number n2s))
 	     (mnum (string->number str))
@@ -46557,7 +46568,7 @@
     (lambda (x y)
       (let ((xx (string->number x)))
 	(if (or (eq? xx #f)
-		(and (exact? y)
+		(and (rational? y)
 		     (not (eqv? xx y)))
 		(> (abs (- xx y)) 1e-12))
 	    (format #t "(string->number ~A) returned ~A but expected ~A~%" x (string->number x) y))))
@@ -48116,7 +48127,7 @@
 		      (lambda (nlst v)
 			(ok-number-to-bool 'rational? nlst v 
 					   (lambda (n v)
-					     (eq? v (exact? n)))))
+					     (eq? v (rational? n)))))
 		      choose-number)
 		
 		(list real?
@@ -48399,7 +48410,7 @@
 			(ok-number 'exact->inexact nlst v
 				   (lambda (n v)
 				     (and (< (abs (- n v)) 1e-11)
-					  (inexact? v)))))
+					  (not (rational? v))))))
 		      choose-rational)
 		
 		(list inexact->exact 
@@ -48407,7 +48418,7 @@
 			(ok-number 'inexact->exact nlst v
 				   (lambda (n v)
 				     (and (< (abs (- n v)) 1e-11)
-					  (exact? v)))))
+					  (rational? v)))))
 		      choose-real)
 		
 		(list gcd 
@@ -49432,9 +49443,9 @@
 			     ((eq? x y))
 			     ((number? x)
 			      (and (number? y)
-				   (if (exact? x)
-				       (and (exact? y) (= x y))
-				       (and (inexact? y) (= x y)))))
+				   (if (rational? x)
+				       (and (rational? y) (= x y))
+				       (and (not (rational? y)) (= x y)))))
 			     ((char? x) (and (char? y) (char=? x y)))
 			     (else #f)))
 			  (if (or (not (boolean? v))

@@ -257,7 +257,7 @@
 	 (let ((snd-output #f)
 	       (cur-sync #f))
 	   (if statistics
-	       (set! cycles (exact->inexact (/ (- (get-internal-real-time) start) internal-time-units-per-second))))
+	       (set! cycles (/ (* 1.0 (- (get-internal-real-time) start)) internal-time-units-per-second)))
 
 	   (if (and to-snd output-to-file)
 	       (let* ((cur (find-sound output-1)))
@@ -561,7 +561,7 @@
 			  (report-in-minibuffer (format #f "mix ~A: ~A" 
 						      id (or (and info
 								  (cadddr info))
-							     (exact->inexact (/ (mix-position id) (srate outsnd))))))
+							     (/ (mix-position id) (* 1.0 (srate outsnd))))))
 			  #t))) ; #t -> don't print the mix id in the minibuffer
 
 	   (dynamic-wind
@@ -627,8 +627,8 @@
 		     (if (not (= (cadr info) (mix-position id)))
 			 (display (format #f "  (~A ~,3F~{ ~A~})~%"
 					  (car call) 
-					  (exact->inexact (/ (mix-position id) (srate snd)))
-					  (cddr call)) 
+					  (/ (mix-position id) (* 1.0 (srate snd)))
+					  (cddr call))
 				  oput)
 			 (display (format #f "  ~A~%" call) oput)))
 		   (report-in-minibuffer "can't find note associated with mix ~A" id))))
