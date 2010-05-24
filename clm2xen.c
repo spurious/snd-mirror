@@ -2698,14 +2698,14 @@ static XEN g_mus_rand_seed(void)
   #define H_mus_rand_seed "(" S_mus_rand_seed "): the random number seed; \
 this can be used to re-run a particular random number sequence."
 
-  return(C_TO_XEN_ULONG(mus_rand_seed()));
+  return(C_TO_XEN_INT(mus_rand_seed()));
 }
 
 
 static XEN g_mus_set_rand_seed(XEN a) 
 {
-  XEN_ASSERT_TYPE(XEN_ULONG_P(a), a, XEN_ONLY_ARG, S_setB S_mus_rand_seed, "an unsigned integer");
-  mus_set_rand_seed(XEN_TO_C_ULONG(a)); 
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(a), a, XEN_ONLY_ARG, S_setB S_mus_rand_seed, "an integer");
+  mus_set_rand_seed((unsigned long)XEN_TO_C_INT(a)); 
   return(a);
 }
 

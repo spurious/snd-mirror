@@ -1418,8 +1418,48 @@ it is set:
 </td></tr></table>
 </dt>
 
-<dd><p>Lists, strings, vectors, hash-tables, and any cooperating C or Scheme-defined objects
-are both applicable and settable.  I think the syntax is pretty:
+<dd><p>procedure-with-setters can be viewed as one generalization of set!.  Another
+treats objects as having predefined get and set functions.  In s7
+lists, strings, vectors, hash-tables, and any cooperating C or Scheme-defined objects
+are both applicable and settable.  I think the syntax is pretty (the less noise, the better!):
+</p>
+<pre>
+;; an example taken from R Cox's website
+
+(define dense (make-vector 128))
+(define sparse (make-vector 128))
+(define n 0)
+
+(define (add-member i)
+  (set! (dense n) i)
+  (set! (sparse i) n)
+  (set! n (+ n 1)))
+
+(define (is-member i)
+  (and (number? (sparse i))
+       (&lt; (sparse i) n)
+       (= (dense (sparse i)) i)))
+
+(define (clear-all) (set! n 0))
+
+(define (remove-member i)
+  (if (is-member i)
+      (begin
+	(let ((j (dense (- n 1))))
+	  (set! (dense (sparse i)) j)
+	  (set! (sparse j) (sparse i))
+	  (set! n (- n 1))))))
+
+(add-member 32)
+1
+(add-member 12)
+2
+(is-member 14)
+#f
+(is-member 12)
+#t
+</pre>
+<p>Lists and hash-tables behave similarly:
 </p>
 <pre>
 (let ((lst (list 1 2 3)))
@@ -1433,7 +1473,8 @@ are both applicable and settable.  I think the syntax is pretty:
 -&gt; 32
 </pre>
 <p>You can use list-ref and friends, of course, but just try to read any serious vector arithmetic code
-when it is buried in vector-refs and vector-set!s!  set! can also apply to string-ref, list-ref, vector-ref,
+when it is buried in vector-refs and vector-set!s!  
+set! can also apply to string-ref, list-ref, vector-ref,
 hash-table-ref, car, and cdr.  That is,
 </p>
 <pre>
@@ -1458,7 +1499,7 @@ so is <code>(cond (1 =&gt; "hi"))</code>!
 
 <p>The applicable object syntax makes it easy to write generic functions.
 For example, s7test.scm has implementations of Common Lisp's sequence functions.
-length, copy, fill!, map and for-each are generic in this sense (map always returns a list).
+length, copy, reverse, fill!, map and for-each are generic in this sense (map always returns a list).
 </p>
 <pre>
 &gt; (map (lambda (a b) (- a b)) (list 1 2) (vector 3 4))
@@ -1815,6 +1856,13 @@ in Guile just returns 1!  In Clisp, both cases return 1.  This causes total conf
       arg))))
 
 (find-first-even-number (list 1 3 9 13 8 2 4)) -&gt; 8
+
+(define-macro (block . body) 
+  `(<em class=red>call-with-exit</em> 
+     (lambda (return) 
+       ,@body)))
+
+(block (display "hi") (return 32) (display "oops")) -&gt; 32
 </pre>
 <p><b>continuation?</b> returns #t if its argument is a continuation,
 as opposed to a normal procedure.  I don't know why Scheme hasn't had this function from
@@ -2639,6 +2687,22 @@ rest.  Say we'd like #t&lt;number&gt; to interpret the number in base 12:
 11
 &gt; #t11.3
 13.25
+</pre>
+<p>I use *#readers* primarily to implement a way to get the current line number and file name, along
+the lines of C's __LINE__ and __FILE__.  port-line-number works if we're reading a file (during load
+for example), and *error-info* has the same information if an error happens.  But during Snd's auto-test
+sequence, there are many cases that aren't errors, and the file is no longer being loaded, but
+I need to know where something unexpected happened.  So:
+</p>
+<pre>
+(set! *#readers* 
+      (cons (cons #\_ (lambda (str)
+			(if (string=? str "__line__")
+			    (port-line-number)
+			    (if (string=? str "__file__")
+			        (port-filename)
+			        #f))))
+            *#readers*))
 </pre>
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
