@@ -573,7 +573,7 @@ struct s7_scheme {
 
   #define BLOCK_VECTOR_SIZE 100
   s7_pointer *nil_vector, *unspecified_vector;
-
+  
   void *default_rng;
 #if WITH_GMP
   void *default_big_rng;
@@ -8682,16 +8682,16 @@ static s7_pointer g_port_line_number(s7_scheme *sc, s7_pointer args)
 {
   #define H_port_line_number "(port-line-number input-file-port) returns the current read line number of port"
   s7_pointer x;
-  x = car(args);
+
+  if (args == sc->NIL)
+    x = sc->input_port;
+  else x = car(args);
 
   if ((!(is_input_port(x))) ||
       (port_is_closed(x)))
     return(s7_wrong_type_arg_error(sc, "port-line-number", 1, x, "an open input port"));
 
-  if (is_file_port(x))
-    return(s7_make_integer(sc, port_line_number(x)));
-
-  return(sc->F); /* not an error! */
+  return(s7_make_integer(sc, port_line_number(x)));
 }
 
 
@@ -8710,7 +8710,10 @@ static s7_pointer g_port_filename(s7_scheme *sc, s7_pointer args)
   #define H_port_filename "(port-filename file-port) returns the filename associated with port"
   s7_pointer x;
 
-  x = car(args);
+  if (args == sc->NIL)
+    x = sc->input_port;
+  else x = car(args);
+
   if (((is_input_port(x)) ||
        (is_output_port(x))) &&
       (!port_is_closed(x)))
@@ -11819,26 +11822,7 @@ static s7_pointer g_cdddar(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_reverse(s7_scheme *sc, s7_pointer args)
-{
-  #define H_reverse "(reverse lst) returns a list with the elements of lst in reverse order"
-  s7_pointer p, np;
-  
-  p = car(args);
-  if (p == sc->NIL)
-    return(sc->NIL);
-
-  if (!is_pair(p))
-    return(s7_wrong_type_arg_error(sc, "reverse", 0, p, "a list"));
-  
-  np = s7_reverse(sc, p);
-  if (np == sc->NIL)
-    return(s7_wrong_type_arg_error(sc, "reverse", 0, p, "a proper list"));
-  
-  return(np);
-}
-
-
+/* reverse is in the generic function section */
 static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 {
   #define H_reverse_in_place "(reverse! lst) reverses lst in place"
@@ -14749,6 +14733,62 @@ static s7_pointer g_copy(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer g_reverse(s7_scheme *sc, s7_pointer args)
+{
+  #define H_reverse "(reverse lst) returns a list with the elements of lst in reverse order.  reverse \
+also accepts a string or vector argument."
+  s7_pointer p, np;
+  
+  p = car(args);
+  np = sc->NIL;
+
+  switch (type(p))
+    {
+    case T_NIL:
+      return(sc->NIL);
+
+    case T_PAIR:
+      if (p == sc->NIL)
+	return(sc->NIL);
+      np = s7_reverse(sc, p);
+      if (np == sc->NIL)
+	return(s7_wrong_type_arg_error(sc, "reverse", 0, p, "a proper list"));
+      break;
+
+    case T_STRING:
+      {
+	int i, j, len;
+	len = string_length(p);
+	np = make_empty_string(sc, len, 0);
+	if (len > 0)
+	  for (i = 0, j = len - 1; i < len; i++, j--)
+	    string_value(np)[i] = string_value(p)[j];
+      }
+      break;
+
+    case T_VECTOR:
+      {
+	s7_Int i, j, len;
+	len = vector_length(p);
+	if (vector_is_multidimensional(p))
+	  np = g_make_vector(sc, s7_cons(sc, g_vector_dimensions(sc, s7_cons(sc, p, sc->NIL)), sc->NIL));
+	else np = s7_make_vector_1(sc, len, false);
+	if (len > 0)
+	  for (i = 0, j = len - 1; i < len; i++, j--)
+	    vector_element(np, i) = vector_element(p, j);
+      }
+      break;
+
+      /* would (reverse hash) exchange keys and values? */
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "reverse", 0, p, "a list, string, or vector"));
+    }
+  
+  return(np);
+}
+
+
 static s7_pointer list_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
 {
   /* ambiguous ("tree-fill"?) but if it's like vector-fill, we just stomp on the top level */
@@ -16661,6 +16701,10 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	    return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "a vector, list, string, or applicable object"));
 	  if (len != nlen)
 	    return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "an object whose length matches the other objects"));
+
+	  /* PERHAPS: to allow different length objects, we'd remove the preceding error check(s),
+	   *   and set len to (min len nlen).  The same fix works for map.
+	   */
 	  sc->x = s7_cons(sc, sc->NIL, sc->x);
 	  sc->z = s7_cons(sc, car(x), sc->z);
 	}
@@ -17069,6 +17113,7 @@ static token_t token(s7_scheme *sc)
       return(TOKEN_COMMA);
       
     case '#':
+    SHARP:
       c = inchar(sc, pt);
       sc->w = small_int(1);
       if (c == '(') 
@@ -17095,13 +17140,6 @@ static token_t token(s7_scheme *sc)
 		  return(TOKEN_VECTOR);
 		}
 	    }
-
-	  /* PERHAPS: read #n=(...), #n=#(...), and #n# here? or put it off to read_sharp_constant?
-	   *          I think we can't put it off because TOKEN_SHARP_CONST expects a "delimited string" after the "#"
-	   *          this will require a read op and token because these guys can be nested
-	   *          There's also the #/..../ business in CL/Gauche.
-	   *          and much nicer: #<name ...> would call whatever is associated with "name" -- or can this be done with *#readers*?
-	   */
 
 	  /* try to back out */
 	  for (d = loc - 1; d > 0; d--)
@@ -17334,8 +17372,8 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  return(sc->EOF_OBJECT);
 	  
 	case TOKEN_VECTOR:  /* already read #( -- TOKEN_VECTOR is triggered by #( */
-	  push_stack(sc, opcode(OP_READ_VECTOR), sc->w, sc->NIL);   /* sc->w is the dimensions */
-	  /* fall through */
+	    push_stack(sc, opcode(OP_READ_VECTOR), sc->w, sc->NIL);   /* sc->w is the dimensions */
+	    /* fall through */
 	  
 	case TOKEN_LEFT_PAREN:
 	  sc->tok = token(sc);
@@ -19809,6 +19847,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->args == small_int(1))
 	sc->value = g_vector(sc, sc->value);
       else sc->value = g_multivector(sc, (int)s7_integer(sc->args), sc->value);
+
+      if (sc->code != sc->NIL)
+	{
+	  /* code = shared num to be assigned */
+	}
 
       pop_stack(sc);
       goto START;
@@ -24944,8 +24987,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "symbol->keyword",         g_symbol_to_keyword,       1, 0, false, H_symbol_to_keyword);
   s7_define_function(sc, "keyword->symbol",         g_keyword_to_symbol,       1, 0, false, H_keyword_to_symbol);
   
-  s7_define_function(sc, "port-line-number",        g_port_line_number,        1, 0, false, H_port_line_number);
-  s7_define_function(sc, "port-filename",           g_port_filename,           1, 0, false, H_port_filename);
+  s7_define_function(sc, "port-line-number",        g_port_line_number,        0, 1, false, H_port_line_number);
+  s7_define_function(sc, "port-filename",           g_port_filename,           0, 1, false, H_port_filename);
   
   s7_define_function(sc, "input-port?",             g_is_input_port,           1, 0, false, H_is_input_port);
   s7_define_function(sc, "output-port?",            g_is_output_port,          1, 0, false, H_is_output_port);
@@ -25442,27 +25485,14 @@ s7_scheme *s7_init(void)
  *    also pws case!
  *    if there is a doc string, and it ends in (__func__ symbol filename line)
  *    then s7_make_function ... has no place to put it ...
- *
  * perhaps :allow-other-keys in lambda*
- * some way for an error handler to tell where we are during load
- * Clojure/Gauche-style *1 *2 etc for recent REPL entries
  * pretty-printing in the REPL or in format
- * a reader for the cyclic list syntax
  * lint 
- * reverse of vector? string? [reverse-hash-ref?]
  * hash-table <-> list, does vector->list work with hash-tables? [not currently] what about the other way?
  *   guile calls this hash-table->alist I think
- * we often need tree-copy and so on.
  * hash-table map and for-each should be entry-oriented, not alist-oriented
- *   (would hash reverse exchange keys and values?)
  * access to the pws setter [and figure out how to get from the C setter to its arity list -- used in snd-test]
- * environment? (ref would lookup up symbol? etc)
  * loop
- * if we remove exact/inexact, we need also to remove #i and #e?
- *
- * call-with-exit should just be the name and a body:
- *   (define-macro (block . body) `(call-with-exit (lambda (return) ,@body)))
- *
  * map/for-each unequal length args
  * assoc/member opt 3rd arg = predicate
  * delete-file file-exists? get-env system

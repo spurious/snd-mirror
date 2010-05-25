@@ -219,7 +219,7 @@ Other math-related differences between s7 and r5rs:
 
 The exponent itself is always in base 10 (this follows gmp usage).
 Since Scheme uses "@" for its useless polar notation, s7 doesn't use it for the exponent marker, but that
-means (string-&gt;number "1e1", 16) is ambiguous &mdash; is the "e" a digit or an exponent marker?
+means (string-&gt;number "1e1" 16) is ambiguous &mdash; is the "e" a digit or an exponent marker?
 s7 could perhaps substitute "s" in this case, but instead it just prohibits exponents if the
 radix is greater than 10.
 <pre>
@@ -2912,7 +2912,10 @@ The print syntax is borrowed from CL:
     lst)
 #1=(1 2 3 . #1#)
 </pre>
-
+<p>But should this syntax be readable as well?  I'm inclined to say no because
+then it is part of the language, and it doesn't look like the rest of the language.
+(I think it's kind of ugly).  Perhaps we could implement it via *#readers*.
+</p>
 
 </blockquote>
 </small>

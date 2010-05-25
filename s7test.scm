@@ -42,7 +42,7 @@
 
 (define (ok? tst result expected)
   (if (not (equal? result expected))
-      (format #t "~A got ~A but expected ~A~%~%" tst result expected)))
+      (format #t "~A: ~A got ~A but expected ~A~%~%" (port-line-number) tst result expected)))
 
 (defmacro test (tst expected) ;(display tst) (newline)
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
@@ -52,12 +52,12 @@
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
      (if (or (not result)
 	     (eq? result 'error))
-	 (format #t "~A got ~A~%~%" ',tst result))))
+	 (format #t "~A: ~A got ~A~%~%" (port-line-number) ',tst result))))
 
 (defmacro test-e (tst op arg) ;(display tst) (newline)
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
      (if (not (eq? result 'error))
-	 (format #t "(~A ~A) got ~A but expected 'error~%~%" ,op ,arg result))))
+	 (format #t "~A: (~A ~A) got ~A but expected 'error~%~%" (port-line-number) ,op ,arg result))))
 
 
 (define (op-error op result expected)
@@ -165,8 +165,8 @@
 	      (and (number? result)
 		   (not (types-consistent? result))))
 	  (begin
-	    (format #t "~A got ~A~Abut expected ~A" 
-		    tst result 
+	    (format #t "~A: ~A got ~A~Abut expected ~A" 
+		    (port-line-number) tst result 
 		    (if (and (rational? result) (not (rational? expected)))
 			(format #f " (~A) " (* 1.0 result))
 			" ")
@@ -269,7 +269,7 @@
      (set-current-error-port old-error-port)
      (if (or (not result)
 	     (not (eq? result 'error)))
-	 (format #t "~A got ~A~%~%" ',tst result))))
+	 (format #t "~A: ~A got ~A~%~%" (port-line-number) ',tst result))))
 
 
 
@@ -2857,6 +2857,11 @@
 (test (reverse) 'error)
 (test (reverse '(1 2 3) '(3 2 1)) 'error)
 
+(for-each
+ (lambda (arg)
+   (test (reverse arg) 'error))
+ (list (integer->char 65) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
+
 
 
 (test (reverse! '(1 . 2)) 'error)
@@ -2884,6 +2889,11 @@
 (test (reverse (reverse! (reverse! (reverse (list 1 2 3))))) (list 1 2 3))
 
 (test (let ((x (list 1 2 3))) (recompose 31 reverse! x)) '(3 2 1))
+
+(for-each
+ (lambda (arg)
+   (test (reverse! arg) 'error))
+ (list (integer->char 65) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) #(1 2 3) "hiho" (lambda (a) (+ a 1))))
 
 
 
@@ -3467,7 +3477,7 @@
 	    (format #t "(~A ~A) returned ~A?~%" op arg result))
 	(test (op arg '() arg) 'error)))
     (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1)))))
- (list reverse cons car cdr set-car! set-cdr! caar cadr cdar cddr caaar caadr cadar cdaar caddr cdddr cdadr cddar 
+ (list cons car cdr set-car! set-cdr! caar cadr cdar cddr caaar caadr cadar cdaar caddr cdddr cdadr cddar 
        caaaar caaadr caadar cadaar caaddr cadddr cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar
        assq assv assoc memq memv member list-ref list-tail))
 
@@ -4225,6 +4235,26 @@
     (test (let ((vals '())) (for-each (lambda (n) (set! vals (cons n vals))) #2d((1 2) (3 4))) vals) '(4 3 2 1))
     (test (map (lambda (x y) (+ x y)) #2d((1 2) (3 4)) #1d(4 3 2 1)) '(5 5 5 5))
     (test (let ((vals '())) (for-each (lambda (x y) (set! vals (cons (+ x y) vals))) #2d((1 2) (3 4)) #1d(4 3 2 1)) vals) '(5 5 5 5))
+
+    (let ((v #2D((#(1 2) #(3 4)) (#2d((5 6) (7 8)) #2D((9 10 11) (12 13 14))))))
+      (test (v 0 0) #(1 2))
+      (test (v 0 1) #(3 4))
+      (test (v 1 0) #2d((5 6) (7 8)))
+      (test (v 1 1) #2D((9 10 11) (12 13 14)))
+      (test ((v 1 0) 0 1) 6)
+      (test ((v 0 1) 1) 4)
+      (test ((v 1 1) 1 2) 14))
+
+    (let ((v #2D((#((1) #(2)) #(#(3) (4))) (#2d(((5) #(6)) (#(7) #(8))) #2D((#2d((9 10) (11 12)) (13)) (14 15))))))
+      (test (v 0 0) #((1) #(2)))
+      (test (v 0 1) #(#(3) (4)))
+      (test (v 1 0) #2D(((5) #(6)) (#(7) #(8))))
+      (test (v 1 1) #2D((#2D((9 10) (11 12)) (13)) (14 15)))
+      (test ((v 1 0) 0 1) #(6))
+      (test (((v 1 0) 0 1) 0) 6)
+      (test ((v 0 1) 1) '(4))
+      (test (((v 1 1) 0 0) 1 0) 11))
+
     ))
 
 
@@ -11920,7 +11950,7 @@
 |#
 
 
-;; generic length/copy/fill!
+;; generic length/reverse/copy/fill!
 (test (length (list 1 2)) 2)
 (test (length "hiho") 4)
 (test (length (vector 1 2)) 2)
@@ -11943,6 +11973,14 @@
 (test (copy #f) #f)
 (test (copy '()) '())
 
+(test (reverse "hi") "ih")
+(test (reverse "") "")
+(test (reverse "123") "321")
+(test (reverse "1234") "4321")
+(test (reverse #()) #())
+(test (reverse #(1 2 3)) #(3 2 1))
+(test (reverse #(1 2 3 4)) #(4 3 2 1))
+(test (reverse #2D((1 2) (3 4))) #2D((4 3) (2 1)))
 
 (if (not (provided? 'gmp))
     (let ((r1 (make-random-state 1234)))
@@ -28345,11 +28383,46 @@
 (test (log "hi" (expt 2 30)) 'error)
 (test (log (expt 2 30) #t) 'error)
 (num-test (log 3 0) 'error)
+(num-test (log 2 2) 1)
+(num-test (log (sqrt 2) 2) 0.5)
+(num-test (log -2 -2) 1)
+(num-test (log (sqrt -2) -2) 0.5)
+(num-test (log (sqrt 1+i) 1+i) 0.5)
 
 (for-each
  (lambda (arg)
    (test (log 10.0 arg) 'error))
  (list "hi" #\a 0 '#(1 2 3) #t #f '() abs 'hi (list 1 2 3) '(1 . 2)))
+
+(do ((i 0 (+ i 1)))
+    ((= i 100))
+  (let ((val (+ .001 (random 100.0)))
+	(base (+ 2 (random 20))))
+    (if (> (random 1.0) 0.5) (set! val (- val)))
+    (if (> (random 1.0) 0.5) (set! base (- base)))
+    (num-test (log val base) (/ (log val) (log base)))))
+
+(do ((i 0 (+ i 1)))
+    ((= i 100))
+  (let ((val (+ .001 (random 10000.0)))
+	(base (+ 1.0 (random 20.0))))
+    (if (> (random 1.0) 0.5) (set! val (- val)))
+    (if (> (random 1.0) 0.5) (set! base (- base)))
+    (num-test (log val base) (/ (log val) (log base)))))
+
+(do ((i 0 (+ i 1)))
+    ((= i 100))
+  (let ((val1 (+ .001 (random 10000.0)))
+	(val2 (+ .001 (random 10000.0)))
+	(base1 (+ 1.0 (random 20.0)))
+	(base2 (+ 1.0 (random 20.0))))
+    (if (> (random 1.0) 0.5) (set! val1 (- val1)))
+    (if (> (random 1.0) 0.5) (set! val2 (- val2)))
+    (if (> (random 1.0) 0.5) (set! base1 (- base1)))
+    (if (> (random 1.0) 0.5) (set! base2 (- base2)))
+    (let ((val (make-rectangular val1 val2))
+	  (base (make-rectangular base1 base2)))
+      (num-test (log val base) (/ (log val) (log base))))))
 
 
 
