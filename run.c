@@ -96,6 +96,15 @@
  *         there's no warning, but it doesn't handle the closed-over variables correctly
  * PERHAPS: named let/tail recursion
  * SOMEDAY: generics like length
+ * TODO: if(when?) vectors/vcts etc work in the applicable form, change all the scm files
+ *     (let ((v1 (vector (vct 1 2 3)))) (run ((v1 0) 1)))
+ *       opt: lambda: can't handle ((v1 0) 1)
+ * but (let ((v1 (vector (vct 0 1)))) (run (vct-ref (vector-ref v1 0) 1)))
+ *       1.0
+ * and (let ((v1 (vector (vct 0 1)))) (run ((vector-ref v1 0) 1)))
+ *       1.0
+ * the problem here is that only float-vectors (vcts internally) can use the direct syntax
+ * it is possible to remove all vct-refs thoughout Snd, and no problems occur
  */
 
 

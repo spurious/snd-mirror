@@ -2236,7 +2236,7 @@ for an example.
 <dd><p>procedure-source, procedure-arity, procedure-documentation, and help provide a look into a
 scheme function.
 procedure-documentation returns the documentation string associated with a procedure (the initial string in the
-function's body). procedure-arity returns a list describing the argument list of a function: '(required-args optional-args rest-arg).
+function's body). procedure-arity returns a list describing the argument list of a function: '(required-args optional-args rest-arg?).
 procedure-source returns the source (as a list) of a procedure. procedure-environment returns
 a procedure's environment.
 </p>
@@ -2304,6 +2304,13 @@ q
 :(set! q (cdr q))
 #1#(2 3 4 #1#)
 -->
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>Since define* accepts multiple rest arguments, perhaps procedure-arity should return that number,
+rather than a boolean.  I haven't run into a case where it matters.
+</p>
 
 </blockquote>
 </small>
@@ -2809,6 +2816,7 @@ bind it to something else, which is asking for confusion).
 <li>syntactic names can be values: <code>(define progn begin) (progn (display "progn!") (+ 3 4))</code> or <code>(define function lambda)</code>, etc
 <li>begin returns the value of the last form (like progn); it can contain both definitions and other statements.
 <li>#&lt;unspecified&gt;, #&lt;eof&gt;, and #&lt;undefined&gt; are defined.
+<li>for-each and map accept different length arguments (operation stops when any argument reaches its end).
 </ul>
 
 <small>
@@ -2915,6 +2923,10 @@ The print syntax is borrowed from CL:
 <p>But should this syntax be readable as well?  I'm inclined to say no because
 then it is part of the language, and it doesn't look like the rest of the language.
 (I think it's kind of ugly).  Perhaps we could implement it via *#readers*.
+</p>
+<p>Length returns +inf.0 if passed a circular list, and returns a negative
+number if passed a dotted list (its absolute value is the list length not counting
+the final cdr).  <code>(define (circular? lst) (infinite? (length lst)))</code>.
 </p>
 
 </blockquote>

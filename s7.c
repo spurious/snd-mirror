@@ -14651,7 +14651,9 @@ static s7_pointer g_is_equal(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
 {
-  #define H_length "(length obj) returns the length of obj, which can be a list, vector, string, or hash-table"
+  #define H_length "(length obj) returns the length of obj, which can be a list, vector, string, or hash-table. \
+The length of a dotted list does not include the final cdr, and is returned as a negative number.  A circular \
+list has infinite length."
   
   s7_pointer lst = car(args);
   
@@ -14664,13 +14666,11 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
       {
 	int len;
 	len = s7_list_length(sc, lst);
-  
-	/* TODO: don't trigger an error in list length!  return maybe '(:dotted len) and '(:circular len) */
-	if (len < 0) 
-	  return(s7_wrong_type_arg_error(sc, "length:", 0, lst, "a proper (not a dotted) list"));
+	/* len < 0 -> dotted and (abs len) is length not counting the final cdr
+	 * len == 0, circular so length is infinite
+	 */
 	if (len == 0)
-	  return(s7_wrong_type_arg_error(sc, "length:", 0, lst, "a proper (not a circular) list"));
-	
+	  return(s7_make_real(sc, INFINITY));
 	return(s7_make_integer(sc, len));
       }
 
@@ -16584,7 +16584,15 @@ static int applicable_length(s7_scheme *sc, s7_pointer obj)
   switch (type(obj))
     {
     case T_PAIR:
-      return(s7_list_length(sc, obj));
+      {
+	int len;
+	len = s7_list_length(sc, obj);
+	if (len < 0)             /* dotted (does not include the final cdr) */
+	  return(-len);
+	if (len == 0)            /* circular */
+	  return(LONG_MAX);
+	return(len);
+      }
 
     case T_C_OBJECT:
       return(s7_integer(object_length(sc, obj)));
@@ -16673,17 +16681,11 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 
   sc->y = args;
   obj = cadr(args); 
+
   len = applicable_length(sc, obj);
   if (len < 0)
     return(s7_wrong_type_arg_error(sc, "for-each", 2, obj, "a vector, list, string, or applicable object"));
-  if (len == 0)
-    {
-      /* this for-each is a no-op, but we'll still check for unequal length args */
-      for (i = 3, x = cddr(args); x != sc->NIL; x = cdr(x), i++)
-	if (applicable_length(sc, car(x)) != 0)
-	  return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "an object whose length matches the other objects"));
-      return(obj);
-    }
+  if (len == 0) return(sc->UNSPECIFIED);
 
   sc->x = s7_cons(sc, sc->NIL, sc->NIL);
   sc->z = s7_cons(sc, obj, sc->NIL);
@@ -16696,15 +16698,13 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
       for (i = 3, x = cddr(args); x != sc->NIL; x = cdr(x), i++)
 	{
 	  int nlen;
+
 	  nlen = applicable_length(sc, car(x));
 	  if (nlen < 0)
 	    return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "a vector, list, string, or applicable object"));
-	  if (len != nlen)
-	    return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "an object whose length matches the other objects"));
+	  if (nlen == 0) return(sc->UNSPECIFIED);
+	  if (nlen < len) len = nlen;
 
-	  /* PERHAPS: to allow different length objects, we'd remove the preceding error check(s),
-	   *   and set len to (min len nlen).  The same fix works for map.
-	   */
 	  sc->x = s7_cons(sc, sc->NIL, sc->x);
 	  sc->z = s7_cons(sc, car(x), sc->z);
 	}
@@ -16768,6 +16768,7 @@ static void next_map(s7_scheme *sc)
 	  break;
 
 	default: /* make the compiler happy */
+	  fprintf(stderr, "vargs: %s, loc: %d, len: %d\n", s7_object_to_c_string(sc, vargs), loc, s7_integer(cadr(sc->args)));
 	  x = sc->F;
 	  break;
 	}
@@ -16799,17 +16800,11 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
   sc->y = args;            /* gc protect */
   obj = cadr(args); 
+
   len = applicable_length(sc, obj);
   if (len < 0)
     return(s7_wrong_type_arg_error(sc, "map", 2, obj, "a vector, list, string, or applicable object"));
-  if (len == 0)
-    {
-      /* this for-each is a no-op, but we'll still check for unequal length args */
-      for (i = 3, x = cddr(args); x != sc->NIL; x = cdr(x), i++)
-	if (applicable_length(sc, car(x)) != 0)
-	  return(s7_wrong_type_arg_error(sc, "map", i, car(x), "an object whose length matches the other objects"));
-      return(sc->NIL);
-    }
+  if (len == 0) return(sc->NIL);
 
   sc->z = s7_cons(sc, obj, sc->NIL);
   /* we have to copy the args if any of them is a list:
@@ -16821,11 +16816,13 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
       for (i = 3, x = cddr(args); x != sc->NIL; x = cdr(x), i++)
 	{
 	  int nlen;
+
 	  nlen = applicable_length(sc, car(x));
 	  if (nlen < 0)
 	    return(s7_wrong_type_arg_error(sc, "map", i, car(x), "a vector, list, string, or applicable object"));
-	  if (len != nlen)
-	    return(s7_wrong_type_arg_error(sc, "map", i, car(x), "an object whose length matches the other objects"));
+	  if (nlen == 0) return(sc->NIL);
+	  if (nlen < len) len = nlen;
+
 	  sc->z = s7_cons(sc, car(x), sc->z);
 	}
     }
@@ -25492,10 +25489,6 @@ s7_scheme *s7_init(void)
  *   guile calls this hash-table->alist I think
  * hash-table map and for-each should be entry-oriented, not alist-oriented
  * access to the pws setter [and figure out how to get from the C setter to its arity list -- used in snd-test]
- * loop
- * map/for-each unequal length args
- * assoc/member opt 3rd arg = predicate
- * delete-file file-exists? get-env system
  */
 
 /* OBJECTS...

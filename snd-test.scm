@@ -43231,9 +43231,6 @@ EDITS: 1
 	  (set! (transform-graph-type ind 0) graph-once)
 	  (set! (transform-graph? ind 0) #t)
 	  (set! (cursor ind 0) 12000)
-	  (let* ((samps (transform->vct ind 0)))
-	    (if (fneq (vct-ref samps 2) .002)
-		(snd-display #__line__ ";add-transform filtering (~A): ~A" ftype samps)))
 	  (if (file-exists? "s61.scm") (delete-file "s61.scm"))
 	  (save-state "s61.scm")
 	  (delete-file "s61.scm") ; added transform needs to be saved somehow?
