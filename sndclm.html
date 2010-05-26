@@ -2066,8 +2066,8 @@ in phase and amplitude at run-time by setting a vct value.
 				   (do ((k 1 (+ k 3))
 					(i 0 (+ i 2)))
 				       ((= i (* 5 2)))
-				     (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> harms i k) ; harmonic number (k*freq)
-				     (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> harms (+ i 1) (/ 1.0 (sqrt k)))) ; harmonic amplitude
+				     (set! (harms i) k) ; harmonic number (k*freq)
+				     (set! (harms (+ i 1)) (/ 1.0 (sqrt k)))) ; harmonic amplitude
 				   harms)))
 	 (ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 10 1 11 0) :duration 1.0 :scaler .5)))
     (do ((i 0 (+ 1 i)))
@@ -2280,8 +2280,8 @@ get changing spectra is to interpolate between two or more sets of coefficients.
     (do ((i 0 (+ 1 i)))
 	((= i samps))
       (let ((harm (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> harmf)))
-	(<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> coeffs 3 harm)
-	(<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> coeffs 4 (- .25 harm))
+	(set! (coeffs 3) harm)
+	(set! (coeffs 4) (- .25 harm))
 	(<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf)
 		   (<em class=red>mus-chebyshev-t-sum</em> x coeffs)))
 	(set! x (+ x incr))))))
@@ -3165,7 +3165,7 @@ we can truncate its spectrum at the desired number of harmonics:
     (lambda* (n B)
       (or (and (&lt; n 128)
 	       (not B)
-	       (vector-ref previous-results n))
+	       (previous-results n))
 	  (let* ((coeffs (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> (* 2 n)))
 		 (size (expt 2 12))
 		 (rl (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
@@ -3175,16 +3175,16 @@ we can truncate its spectrum at the desired number of harmonics:
 	    (do ((i 0 (+ 1 i))
 		 (x 0.0 (+ x incr)))
 		((= i size))
-	      (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> rl i (<em class=red>tanh</em> (* index (<em class=red>sin</em> x))))) ; make our desired square wave
+	      (set! (rl i) (<em class=red>tanh</em> (* index (<em class=red>sin</em> x))))) ; make our desired square wave
 	    (<a class=quiet href="#spectrum" onmouseout="UnTip()" onmouseover="Tip(sndclm_spectrum_tip)">spectrum</a> rl im #f 2)                       ; get its spectrum
 	    (do ((i 0 (+ i 1))
 		 (j 0 (+ j 2)))
 		((= i n))
-	      (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> coeffs j (+ j 1))
-	      (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> coeffs (+ j 1) (/ (* 2 (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> rl (+ j 1))) size)))
+	      (set! (coeffs j) (+ j 1))
+	      (set! (coeffs (+ j 1)) (/ (* 2 (rl (+ j 1))) size)))
 	    (if (and (&lt; n 128)                          ; save this set so we don't have to compute it again
 		     (not B))
-		(vector-set! previous-results n coeffs))
+		(set! (previous-results n) coeffs))
 	    coeffs)))))
 
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
@@ -3702,7 +3702,7 @@ getting waveforms and results like these:
 				 (do ((i 0 (+ 1 i)))
 				     ((= i n))
 				   (if (vct? phases)
-				       (vector-set! (ngencos-arr g) i (make-oscil (* frq (+ 1 i)) (vct-ref phases i)))
+				       (vector-set! (ngencos-arr g) i (make-oscil (* frq (+ 1 i)) (phases i)))
 				       (vector-set! (ngencos-arr g) i (make-oscil (* frq (+ 1 i)) (random (* 2 pi)))))))
 			       g))
   (frequency 0.0) (n 1 :type int) (phases #f :type vct) (arr #f :type clm-vector))
@@ -4813,7 +4813,7 @@ We would replace the current make-ssb-am line with:
                        (set! (mus-phase g) (* -0.5 pi))
                        (do ((i 0 (+ 1 i))) 
                            ((= i 64)) 
-                         (vct-set! v i (ncos g))) 
+                         (set! (v i) (ncos g))) 
                        v))))
     (do ((i 0 (+ 1 i)))
         ((= i 44100))
@@ -4885,7 +4885,7 @@ make-wave-train-with-env (defined in generators.scm) returns a new wave-train ge
                                                 (g (make-sum-of-cosines 10 400 (* -0.5 pi)))) 
                                             (do ((i 0 (+ 1 i))) 
                                                 ((= i 64)) 
-                                              (vct-set! v i (sum-of-cosines g))) 
+                                              (set! (v i) (sum-of-cosines g))) 
                                             v))))
     (run 
        (do ((i 0 (+ 1 i)))
@@ -4918,7 +4918,7 @@ Here is a FOF instrument based loosely on fof.c of Perry Cook and the article
          (wt0 (<em class=red>make-wave-train</em> :wave foftab :frequency frq)))
     (do ((i 0 (+ 1 i)))
         ((= i foflen))
-      (set! (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> foftab i) ;; this is not the pulse shape used by B&amp;R
+      (set! (foftab i) ;; this is not the pulse shape used by B&amp;R
             (* (+ (* a0 (sin (* i frq0))) 
                   (* a1 (sin (* i frq1))) 
                   (* a2 (sin (* i frq2)))) 
@@ -4976,8 +4976,8 @@ using the same frequency envelope as the wave-train, so we have some idea when t
                         (c3 (<a class=quiet href="#make-comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_comb_tip)">make-comb</a> scaler (floor (* comb-len 1.25)))))
                    (do ((k 0 (+ 1 k)))
                        ((= k grain-size))
-                     (let ((x (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> original-grain k)))
-                       (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> grain k (+ (<a class=quiet href="#comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_comb_tip)">comb</a> c1 x) (<a class=quiet href="#comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_comb_tip)">comb</a> c2 x) (<a class=quiet href="#comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_comb_tip)">comb</a> c3 x))))))))))))))
+                     (let ((x (original-grain k)))
+                       (set! (grain k) (+ (<a class=quiet href="#comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_comb_tip)">comb</a> c1 x) (<a class=quiet href="#comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_comb_tip)">comb</a> c2 x) (<a class=quiet href="#comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_comb_tip)">comb</a> c3 x))))))))))))))
 
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (when? 0 4 2.0 8.0 "right-now.snd"))
 </pre>
@@ -5250,7 +5250,7 @@ but 0.5 should happen three times as often as either of the others:
     (let ((vals (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0.0 0.5 0.5 0.5 1.0)))
       (do ((i 0 (+ 1 i)))
           ((= i 10))
-        (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f ";~A " (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> vals (floor (random 5.0)))))))
+        (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f ";~A " (vals (floor (random 5.0)))))))
 </pre>
 
 <p>These "distributions" refer to the values returned by the random number
@@ -5979,21 +5979,13 @@ order (it is the size of the coefficient array).
 <td>
 <pre>
   (let ((xout 0.0))
-    (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> state 0 input)
-
+    (set! (state 0) input)
     (do ((j (- order 1) (- j 1)))
         ((= j 0))
-      (set! xout (+ xout 
-                    (* (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> xcoeffs j)
-                       (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> state j))))
-      (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> state 0 (- (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> state 0) 
-                           (* (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> ycoeffs j) 
-                              (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> state j))))
-      (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> state j (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> state (- j 1))))
-
-    (+ xout 
-       (* (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> state 0) 
-          (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> xcoeffs 0))))
+      (set! xout (+ xout (* (xcoeffs j) (state j))))
+      (set! (state 0) (- (state 0) (* (ycoeffs j) (state j))))
+      (set! (state j) (state (- j 1))))
+    (+ xout (* (state 0) (xcoeffs 0))))
 </pre>
 </td>
 </tr></table>
@@ -6029,9 +6021,9 @@ The Hilbert transform can be implemented with an fir-filter:
              (denom (* pi i))
              (num (- 1.0 (cos (* pi i)))))
         (if (or (= num 0.0) (= i 0))
-            (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> arr k 0.0)
-            (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> arr k (* (/ num denom) 
-                               (+ .54 (* .46 (cos (/ (* i pi) len)))))))))
+            (set! (arr k) 0.0)
+            (set! (arr k) (* (/ num denom) 
+                             (+ .54 (* .46 (cos (/ (* i pi) len)))))))))
     (<em class=red>make-fir-filter</em> arrlen arr)))
 
 (define hilbert-transform <em class=red>fir-filter</em>)
@@ -6185,7 +6177,7 @@ mus-interp-lagrange, mus-interp-bezier, or mus-interp-hermite.
 <br>
 <pre>
 (let ((result (<a class=quiet href="#array-interp" onmouseout="UnTip()" onmouseover="Tip(sndclm_array_interp_tip)">array-interp</a> line (- loc pm))))
-  (set! (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> line loc) input)
+  (set! (line loc) input)
   (set! loc (+ 1 loc))
   (if (&lt;= size loc) (set! loc 0))
   result)
@@ -7901,7 +7893,7 @@ writes out the new "sound":
 	((= i size))
       (do ((j 0 (+ j 1)))
 	  ((= j size))
-	(vct-set! samps samp (<em class=red>mixer-ref</em> mx i j))
+	(set! (samps samp) (<em class=red>mixer-ref</em> mx i j))
 	(set! samp (+ samp 1))))
 
     (vct-&gt;channel samps 0 (* size size) nsnd)))
@@ -10719,7 +10711,7 @@ We could define our own FIR filter using dot-product:
 	 (xs (cadr flt))
 	 (xlen (length xs)))
     (<a class=quiet href="extsnd.html#vctmove" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctmove_tip)">vct-move!</a> xs (- xlen 1) (- xlen 2) #t)
-    (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> xs 0 x)
+    (set! (xs 0) x)
     (<em class=red>dot-product</em> coeffs xs xlen)))
 </pre>
 </td></tr></table>
@@ -10912,10 +10904,10 @@ only difference is that mus-fft includes the fft length as an argument, whereas
   (do ((i cutoff (+ 1 i))
        (j (- fsize 1) (- j 1)))
       ((= i fsize2))
-    (vct-set! rdata i 0.0)
-    (vct-set! idata i 0.0)
-    (vct-set! rdata j 0.0)
-    (vct-set! idata j 0.0))
+    (set! (rdata i) 0.0)
+    (set! (idata i) 0.0)
+    (set! (rdata j) 0.0)
+    (set! (idata j) 0.0))
   (<em class=red>mus-fft</em> rdata idata fsize -1)
   
   (array-&gt;file "test.snd" 

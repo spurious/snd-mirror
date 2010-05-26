@@ -49098,7 +49098,23 @@ EDITS: 1
 	      (fneq (vector-ref v1 1) 1.5)
 	      (not vp))
 	  (snd-display #__line__ ";run vector-set: ~A ~A ~A ~A" v1 v2 v3 vp)))
-    
+
+    (let ((oscs (vector (make-oscil 440.)))) 
+      (let ((val (run (outa 0 (oscil (oscs 0))) 
+		      (outa 0 (oscil (oscs 0))))))
+	(if (fneq val 0.06265)
+	    (snd-display #__line__ ";run clm vector: ~A" val))))
+
+    (let ((v (vector 1 2 3 4)))
+      (let ((val (run (outa 0 (* .1 (v 1))))))
+	(if (fneq val 0.2)
+	    (snd-display #__line__ ";run int vector: ~A" val))))
+
+    (let ((v (vector (vct .1 .2 .3))))
+      (let ((val (run (outa 0 (* .1 ((v 0) 1))))))
+	(if (fneq val 0.02)
+	    (snd-display #__line__ ";run vct vector: ~A" val))))
+
     (let ((rdat (make-vct 16))
 	  (idat (make-vct 16))
 	  (v (make-vct 1)))
@@ -54646,7 +54662,7 @@ EDITS: 1
 		    (sample-cnv1 3.0 .45 1 1 "oboe.snd")
 		    (sample-pvoc1 3.5 .45 1 512 "oboe.snd")
 		    (sample-pvoc2 4.0 .45 1 512 "oboe.snd")
-		    (if all-args (sample-pvoc3 4.5 .001 1 512 "oboe.snd"))
+		    (sample-pvoc3 4.5 .001 1 512 "oboe.snd")
 		    (sample-mxf 5 .2 440 .1)
 		    (sample-osc 5.25 .2 440 .1)
 		    (if all-args (sample-ardcl 5.5 .2 440 .1))

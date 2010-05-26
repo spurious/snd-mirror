@@ -105,6 +105,11 @@
  *       1.0
  * the problem here is that only float-vectors (vcts internally) can use the direct syntax
  * it is possible to remove all vct-refs thoughout Snd, and no problems occur
+ * 
+ * TODO: run-time non-float vector-ref can't be omitted even if we (declare (var clm-vector))...
+  (let ((oscs (vector (make-oscil 440.)))) (run (outa 0 (oscil (oscs 0)))))
+  added this -- now to test it, and int/vct vectors
+  then clm23 again (and sndclm.html)
  */
 
 
@@ -2406,6 +2411,8 @@ static vect *read_vector(ptree *pt, s7_pointer vector, int type)
 
 int mus_run_xen_to_run_type(s7_pointer val)
 {
+  /* fprintf(stderr, "get type of %s\n", s7_object_to_c_string(s7, val)); */
+
   if (s7_is_real(val))
     {
       if ((s7_is_exact(val)) && (s7_is_integer(val)))
@@ -2447,7 +2454,7 @@ int mus_run_xen_to_run_type(s7_pointer val)
 	  return(R_FLOAT_VECTOR);
 	}
       if (MUS_VCT_P(val0)) return(R_VCT_VECTOR); 
-      if ((mus_xen_p(val0)) || (val0 == scheme_false)) return(R_CLM_VECTOR); 
+      if ((mus_xen_p(val0)) || (val0 == scheme_false)) return(R_CLM_VECTOR);
       if (s7_is_list(s7, val0)) return(R_LIST_VECTOR);
     }
 
@@ -15344,7 +15351,7 @@ static xen_value *quote_form(ptree *prog, s7_pointer form, walk_result_t ignore)
     {
       xen_value *rv;
       char *temp = NULL;
-      rv = run_warn("can't handle %s", temp = s7_object_to_c_string(s7, form));
+      rv = run_warn("quote can't handle %s", temp = s7_object_to_c_string(s7, form));
       if (temp) free(temp);
       return(rv);
     }
@@ -15715,6 +15722,24 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 		  res = vct_n(prog, args, num_args, v);
 		  break;
 
+		case R_CLM_VECTOR:
+		  args[0] = make_xen_value(R_CLM, add_clm_to_ptree(prog, NULL, scheme_false), R_VARIABLE);
+		  add_triple_to_ptree(prog, va_make_triple(vector_ref_c, "clm_vector_ref", 3, args[0], v, args[1]));
+		  res = args[0];
+		  break;
+
+		case R_INT_VECTOR:
+		  args[0] = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
+		  add_triple_to_ptree(prog, va_make_triple(vector_ref_i, "int_vector_ref", 3, args[0], v, args[1]));
+		  res = args[0];
+		  break;
+
+		case R_VCT_VECTOR:
+		  args[0] = make_xen_value(R_VCT, add_vct_to_ptree(prog, NULL), R_VARIABLE);
+		  add_triple_to_ptree(prog, va_make_triple(vector_ref_v, "vct_vector_ref", 3, args[0], v, args[1]));
+		  res = args[0];
+		  break;
+
 		case R_SOUND_DATA:
 		  res = sound_data_n(prog, args, num_args, v);
 		  break;
@@ -15872,6 +15897,8 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 	  (!(s7_is_procedure_with_setter(rtnval)))
 	  )
 	{
+	  /* fprintf(stderr, "look for %s\n", s7_object_to_c_string(s7, rtnval)); */
+
 	  v = splice_in_function_body(prog, rtnval, args, num_args, funcname);
 	  if (v) 
 	    return(clean_up(v, args, num_args));
@@ -15895,7 +15922,7 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 	}
 
       type = mus_run_xen_to_run_type(form);
-      /* fprintf(stderr, "line 15765 %s %s\n", s7_object_to_c_string(s7, form), type_name(type)); */
+      /* fprintf(stderr, "line 15924 %s %s\n", s7_object_to_c_string(s7, form), type_name(type)); */
 
       switch (type)
 	{
@@ -15926,7 +15953,7 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
     {
       xen_value *rv;
       char *temp1 = NULL, *temp2 = NULL;
-      /* fprintf(stderr, "can't handle %s\n", s7_object_to_c_string(s7, form)); */
+      /* fprintf(stderr, "walker can't handle %s\n", s7_object_to_c_string(s7, form)); */
       rv = run_warn("can't handle: %s (%s)", temp1 = s7_object_to_c_string(s7, form), temp2 = s7_object_to_c_string(s7, s7_procedure_source(s7, prog->code)));
       if (temp1) free(temp1);
       if (temp2) free(temp2);

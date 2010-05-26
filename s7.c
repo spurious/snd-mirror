@@ -16651,6 +16651,11 @@ static void next_for_each(s7_scheme *sc)
       case T_HASH_TABLE:
 	car(x) = vector_element(car(y), loc); 
 	break;
+	/* for hash tables to go by entries, we'd need to set the "length" to the number of entries,
+	 *   then find the next entry here.  This would require independent "loc" and current element
+	 *   values.   Or when we initially get the length, also set up a parallel vector pointing
+	 *   to them, and walk down it, freeing it at the end -- perhaps this is simpler.
+	 */
 
       case T_STRING:
 	car(x) = s7_make_character(sc, string_value(car(y))[loc]);
@@ -25482,13 +25487,12 @@ s7_scheme *s7_init(void)
  *    also pws case!
  *    if there is a doc string, and it ends in (__func__ symbol filename line)
  *    then s7_make_function ... has no place to put it ...
- * perhaps :allow-other-keys in lambda*
- * pretty-printing in the REPL or in format
+ * :allow-other-keys in lambda*
+ * PERHAPS: pretty-printing in the REPL or in format (~W in CL I think)
  * lint 
- * hash-table <-> list, does vector->list work with hash-tables? [not currently] what about the other way?
- *   guile calls this hash-table->alist I think
- * hash-table map and for-each should be entry-oriented, not alist-oriented
- * access to the pws setter [and figure out how to get from the C setter to its arity list -- used in snd-test]
+ * TODO: hash-table map and for-each should be entry-oriented, not alist-oriented
+ * TODO: access to the pws setter [and figure out how to get from the C setter to its arity list -- used in snd-test]
+ * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
  */
 
 /* OBJECTS...

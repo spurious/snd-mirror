@@ -4344,6 +4344,8 @@
   (test (length lst1) 1)
   (set-cdr! lst1 lst1)
   (test (infinite? (length lst1)) #t)
+  (test (null? lst1) #f)
+  (test (pair? lst1) #t)
   (let ((lst2 (cons 1 '())))
     (set-cdr! lst2 lst2)
     (test (equal? lst1 lst2) #t)
@@ -34995,6 +34997,9 @@
   (test (abs inf.0) inf.0)
   (test (exp inf.0) inf.0)
   (test (log inf.0) inf.0)
+  ;; so (log inf.0 inf.0) should be a nan? inf/inf
+  (test (log 8.0 inf.0) 0.0) 
+  (test (nan? (log 8.0 nan.0)) #t)
   (test (nan? (asin inf.0)) #t)
   (test (nan? (acos inf.0)) #t)
   (num-test (atan inf.0) 1.5707963267949)

@@ -3,13 +3,12 @@
 (provide 'snd-clm23.scm)
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 (if (not (provided? 'snd-dsp.scm)) (load "dsp.scm"))
-(if (not (provided? 'snd-snd9.scm)) (load "snd9.scm")) ; sine-bank
 
 
 ;;; definstrument -> define (+ change open paren placement)
 ;;; *srate* -> (mus-srate)
 ;;; run loop ... -> run (lambda () (do... + extra end close paren
-;;; aref -> vct-ref
+;;; aref -> 
 ;;; setf -> set!
 ;;; remove declare (or change order of args and remove ":")
 ;;;   however in granulate run-time edit-func, the "(declare (g clm))" is necessary
@@ -29,10 +28,18 @@
 ;;; integerp -> integer? and others like it (null -> null?)
 ;;; sound-duration -> mus-sound-duration and similarly for others
 ;;; various array info procs like array-dimension
-;;; no length arg to sine-bank
 ;;; #'(lambda ...) to just (lambda...)
 ;;; nth -> list-ref
 ;;; loop -> do
+
+(define (clm23-sine-bank amps phases len)
+  (let ((sum 0.0))
+    (do ((i 0 (+ 1 i)))
+	((= i len))
+      (set! sum (+ sum (* (vct-ref amps i)
+			  (sin (vct-ref phases i))))))
+    sum))
+
 
 (define* (make-double-array len initial-contents initial-element)
   "(make-double-array len initial-contents initial-element) is for CL/Scheme compatibility; it makes a vct"
@@ -41,7 +48,7 @@
 	(let ((clen (min len (length initial-contents))))
 	  (do ((i 0 (+ i 1)))
 	      ((= i clen))
-	    (vct-set! v i (list-ref initial-contents i)))))
+	    (set! (v i) (list-ref initial-contents i)))))
     v))
 
 (define make-double-float-array make-double-array)
@@ -235,14 +242,14 @@
 	 (freqs (make-double-array 3 :initial-element 0.0)))
     (do ((i 0 (+ i 1)))
 	((= i 3))
-      (set! (vct-ref freqs i) (double (* freq (+ i 1))))
-      (set! (vct-ref amps i) (double (/ amp (+ i 2)))))
+      (set! (freqs i) (double (* freq (+ i 1))))
+      (set! (amps i) (double (/ amp (+ i 2)))))
     (run
      (do ((i start (+ i 1))) ((= i end))
        (do ((i 0 (+ i 1)))
 	   ((= i (vct-length phases)))
-	 (set! (vct-ref phases i) (+ (vct-ref phases i) (hz->radians (vct-ref freqs i)))))
-       (out-any i (sine-bank amps phases) 0)))))
+	 (set! (phases i) (+ (phases i) (hz->radians (freqs i)))))
+       (out-any i (clm23-sine-bank amps phases 3) 0)))))
 
 (define (simple-oz beg dur freq amp)
   "(simple-oz beg dur freq amp) test instrument for one-zero"
@@ -408,7 +415,7 @@
 	 (table (mus-data buf)))
     (do ((i 0 (+ i 1)))
 	((= i table-size))
-      (set! (vct-ref table i) (double (/ i table-size))))
+      (set! (table i) (double (/ i table-size))))
     (run
      (do ((i start (+ i 1))) ((= i end))
        (out-any i (* amp (table-lookup buf)) 0)))))
@@ -421,8 +428,8 @@
 	 (os (make-oscil freq)))
     (do ((i 0 (+ i 1)))
 	((= i 8))
-      (set! (vct-ref (mus-xcoeffs flt) i) (double (/ i 16)))
-      (set! (vct-ref (mus-ycoeffs flt) i) (- 0.5 (double (/ i 16)))))
+      (set! ((mus-xcoeffs flt) i) (double (/ i 16)))
+      (set! ((mus-ycoeffs flt) i) (- 0.5 (double (/ i 16)))))
     (run
      (do ((i start (+ i 1))) ((= i end))
        (out-any i (* amp (filter flt (oscil os))) 0)))))
@@ -435,7 +442,7 @@
 	 (os (make-oscil freq)))
     (do ((i 0 (+ i 1)))
 	((= i 8))
-      (set! (vct-ref (mus-xcoeffs flt) i) (double (/ i 16))))
+      (set! ((mus-xcoeffs flt) i) (double (/ i 16))))
     (run
      (do ((i start (+ i 1))) ((= i end))
        (out-any i (* amp (fir-filter flt (oscil os))) 0)))))
@@ -448,7 +455,7 @@
 	 (os (make-oscil freq)))
     (do ((i 0 (+ i 1)))
 	((= i 8))
-      (set! (vct-ref (mus-ycoeffs flt) i) (double (/ i 16))))
+      (set! ((mus-ycoeffs flt) i) (double (/ i 16))))
     (run
      (do ((i start (+ i 1))) ((= i end))
        (out-any i (* amp (iir-filter flt (oscil os))) 0)))))
@@ -528,7 +535,7 @@
          (wt0 (make-wave-train :size foflen :frequency frq))
          (foftab (mus-data wt0)))
     (do ((i 0 (+ i 1))) ((= i foflen))
-      (set! (vct-ref foftab i) (double
+      (set! (foftab i) (double
 				;; this is not the pulse shape used by B&R
 				(* (+ (* a0 (sin (* i frq0))) 
 				      (* a1 (sin (* i frq1))) 
@@ -570,8 +577,8 @@
   (let* ((start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur)))
 	 (filt (make-double-array 8)))
-    (do ((i 0 (+ i 1))) ((= i 8)) (set! (vct-ref filt i) (double 0.0)))
-    (set! (vct-ref filt 4) (double 1.0))
+    (do ((i 0 (+ i 1))) ((= i 8)) (set! (filt i) (double 0.0)))
+    (set! (filt 4) (double 1.0))
     (let ((ff (make-convolve :input (make-readin file) :filter filt)))
       (run
        (do ((i start (+ i 1))) ((= i end))
@@ -583,8 +590,8 @@
 	 (end (+ start (seconds->samples dur)))
 	 (rd (make-readin file))
 	 (filt (make-double-array 8)))
-    (do ((i 0 (+ i 1))) ((= i 8)) (set! (vct-ref filt i) (double 0.0)))
-    (set! (vct-ref filt 4) (double 1.0))
+    (do ((i 0 (+ i 1))) ((= i 8)) (set! (filt i) (double 0.0)))
+    (set! (filt 4) (double 1.0))
     (let ((ff (make-convolve :filter filt)))
       (run
        (do ((i start (+ i 1))) ((= i end))
@@ -597,8 +604,8 @@
 	 (end (+ start (seconds->samples dur)))
 	 (rd (make-readin file))
 	 (filt (make-double-array 8)))
-    (do ((i 0 (+ i 1))) ((= i 8)) (set! (vct-ref filt i) (double 0.0)))
-    (set! (vct-ref filt 4) (double 1.0))
+    (do ((i 0 (+ i 1))) ((= i 8)) (set! (filt i) (double 0.0)))
+    (set! (filt 4) (double 1.0))
     (let ((ff (make-convolve :filter filt)))
       (run
        (do ((i start (+ i 1))) ((= i end))
@@ -614,8 +621,8 @@
 	 (end (+ start (seconds->samples dur)))
 	 (rd (make-readin file))
 	 (filt (make-double-array 8)))
-    (do ((i 0 (+ i 1))) ((= i 8)) (set! (vct-ref filt i) (double 0.0)))
-    (set! (vct-ref filt 4) (double 1.0))
+    (do ((i 0 (+ i 1))) ((= i 8)) (set! (filt i) (double 0.0)))
+    (set! (filt 4) (double 1.0))
     (let ((ff (make-convolve :filter filt))
 	  (ff1 (make-convolve :filter filt :input (make-readin file))))
       (run
@@ -840,10 +847,10 @@
 	 (table (mus-data buf)))
     (do ((i 0 (+ i 1)))
 	((= i table-size))
-      (set! (vct-ref table i) (double (/ i table-size))))
+      (set! (table i) (double (/ i table-size))))
     (run
      (do ((i start (+ i 1))) ((= i end))
-       (out-any i (* amp (vct-ref (mus-data buf) j) (table-lookup buf)) 0)
+       (out-any i (* amp ((mus-data buf) j) (table-lookup buf)) 0)
        (set! j (+ 1 j))
        (if (>= j table-size) (set! j 0))))))
 
@@ -855,13 +862,13 @@
 	 (os (make-oscil freq)))
     (do ((i 0 (+ i 1)))
 	((= i 8))
-      (set! (vct-ref (mus-xcoeffs flt) i) (double (/ i 16)))
-      (set! (vct-ref (mus-ycoeffs flt) i) (- 0.5 (double (/ i 16)))))
+      (set! ((mus-xcoeffs flt) i) (double (/ i 16)))
+      (set! ((mus-ycoeffs flt) i) (- 0.5 (double (/ i 16)))))
     (run
      (do ((i start (+ i 1))) ((= i end))
        (out-any i (* amp
-		     (+ (vct-ref (mus-xcoeffs flt) 4)
-			(vct-ref (mus-ycoeffs flt) 4))
+		     (+ ((mus-xcoeffs flt) 4)
+			((mus-ycoeffs flt) 4))
 		     (filter flt (oscil os))) 
 		0)))))
 
@@ -873,14 +880,14 @@
 	 (os (make-oscil freq)))
     (do ((i 0 (+ i 1)))
 	((= i 8))
-      (set! (vct-ref (mus-xcoeffs flt) i) (double (/ i 16)))
-      (set! (vct-ref (mus-ycoeffs flt) i) (- 0.5 (double (/ i 16)))))
+      (set! ((mus-xcoeffs flt) i) (double (/ i 16)))
+      (set! ((mus-ycoeffs flt) i) (- 0.5 (double (/ i 16)))))
     (run
      (do ((i start (+ i 1))) ((= i end))
-       (set! (vct-ref (mus-xcoeffs flt) 0) .5)
-       (set! (vct-ref (mus-ycoeffs flt) 0) .5)       
+       (vct-set! (mus-xcoeffs flt) 0 .5)
+       (vct-set! (mus-ycoeffs flt) 0 .5)       
        (out-any i (* amp
-		     (+ (vct-ref (mus-xcoeffs flt) 0)
+		     (+ ((mus-xcoeffs flt) 0)
 			(mus-ycoeff flt 0))
 		     (filter flt (oscil os))) 
 		0)))))
@@ -969,8 +976,8 @@
 	 (rd (make-readin file))
 	 (sr (make-src :srate speed))	 
 	 (filt (make-double-array 8)))
-    (do ((i 0 (+ i 1))) ((= i 8)) (set! (vct-ref filt i) (double 0.0)))
-    (set! (vct-ref filt 4) (double 1.0))
+    (do ((i 0 (+ i 1))) ((= i 8)) (set! (filt i) (double 0.0)))
+    (set! (filt 4) (double 1.0))
     (let ((ff (make-convolve :filter filt)))
       (run
        (do ((i start (+ i 1))) ((= i end))
@@ -986,8 +993,8 @@
 	 (rd (make-readin file))
 	 (sr (make-src :srate speed :input rd))	 
 	 (filt (make-double-array 8)))
-    (do ((i 0 (+ i 1))) ((= i 8)) (set! (vct-ref filt i) (double 0.0)))
-    (set! (vct-ref filt 4) (double 1.0))
+    (do ((i 0 (+ i 1))) ((= i 8)) (set! (filt i) (double 0.0)))
+    (set! (filt 4) (double 1.0))
     (let ((ff (make-convolve :filter filt)))
       (run
        (do ((i start (+ i 1))) ((= i end))
@@ -1047,17 +1054,17 @@
 					(set! k 0)
 					(do ()
 					    ((= k N2))
-					  (set! (vct-ref (phase-vocoder-amps sr) k) 
-						(+ (vct-ref (phase-vocoder-amps sr) k) 
-						   (vct-ref (phase-vocoder-amp-increments sr) k)))
-					  (set! (vct-ref (phase-vocoder-phase-increments sr) k) 
-						(+ (vct-ref (phase-vocoder-phase-increments sr) k) 
-						   (vct-ref (phase-vocoder-freqs sr) k)))
-					  (set! (vct-ref (phase-vocoder-phases sr) k) 
-						(+ (vct-ref (phase-vocoder-phases sr) k)
-						   (vct-ref (phase-vocoder-phase-increments sr) k)))
+					  (vct-set! (phase-vocoder-amps sr) k
+						(+ ((phase-vocoder-amps sr) k) 
+						   ((phase-vocoder-amp-increments sr) k)))
+					  (vct-set! (phase-vocoder-phase-increments sr) k
+						(+ ((phase-vocoder-phase-increments sr) k) 
+						   ((phase-vocoder-freqs sr) k)))
+					  (vct-set! (phase-vocoder-phases sr) k
+						(+ ((phase-vocoder-phases sr) k)
+						   ((phase-vocoder-phase-increments sr) k)))
 					  (set! k (+ 1 k)))
-					(sine-bank (phase-vocoder-amps sr) (phase-vocoder-phases sr) N2)))) 
+					(clm23-sine-bank (phase-vocoder-amps sr) (phase-vocoder-phases sr) N2)))) 
 		0)))))
 
 (define (sample-mxf beg dur freq amp)
@@ -1160,7 +1167,7 @@
 	 (arrfrq (make-double-array 20 :initial-element (double 0.0))))
     (do ((i 0 (+ i 1)))
 	((= i 20))
-      (set! (vct-ref arrfrq i) (double (* (+ i 1) 100.0)))
+      (set! (arrfrq i) (double (* (+ i 1) 100.0)))
       (vector-set! arr i (make-oscil (* (+ i 1) 100))))
     (run
      (do ((k start (+ 1 k))) ((= k end))
@@ -1169,9 +1176,9 @@
 	     ((= i (length arr)))
 	   (if (oscil? (vector-ref arr i))
 	       (begin
-		 (set! (mus-frequency (vector-ref arr i)) (vct-ref arrfrq i))
-		 (if (> (abs (- (mus-frequency (vector-ref arr i)) (vct-ref arrfrq i))) .001)
-		     (clm-print "oops ~A ~A" (mus-frequency (vector-ref arr i)) (vct-ref arrfrq i)))
+		 (set! (mus-frequency (vector-ref arr i)) (arrfrq i))
+		 (if (> (abs (- (mus-frequency (vector-ref arr i)) (arrfrq i))) .001)
+		     (clm-print "oops ~A ~A" (mus-frequency (vector-ref arr i)) (arrfrq i)))
 		 (set! sum (+ sum (oscil (vector-ref arr i)))))))
 	 (out-any k (* amp .05 sum) 0))))))
 
@@ -1185,18 +1192,18 @@
 	 (ints (make-vector 3 32)))
     (do ((i 0 (+ i 1)))
 	((= i 3))
-      (set! (vct-ref freqs i) (double (* freq (+ i 1))))
-      (set! (vct-ref amps i) (double (/ amp (+ i 2)))))
+      (set! (freqs i) (double (* freq (+ i 1))))
+      (set! (amps i) (double (/ amp (+ i 2)))))
     (run
      (do ((i start (+ i 1))) ((= i end))
        (do ((i 0 (+ i 1)))
 	   ((= i (vct-length phases)))
-	 (set! (vct-ref phases i) (+ (vct-ref phases i) (hz->radians (vct-ref freqs i)))))
+	 (set! (phases i) (+ (phases i) (hz->radians (freqs i)))))
        (if (not (= (vector-ref ints 0) 32)) (clm-print "int array trouble"))
        (vector-set! ints 1 3)
        (if (not (= (vector-ref ints 1) 3)) (clm-print "set int array trouble"))
        (if (not (= (length amps) 3)) (clm-print "amps len: ~A" (length amps)))
-       (out-any i (sine-bank amps phases) 0)))))
+       (out-any i (clm23-sine-bank amps phases 3) 0)))))
 
 (define (sample-strs beg dur freq amp)
   "(sample-strs beg dur freq amp) test instrument for strings"
@@ -1233,20 +1240,20 @@
 	 (os (make-oscil freq)))
     (do ((i 0 (+ i 1)))
 	((= i 8))
-      (set! (vct-ref (mus-xcoeffs flt) i) (double (/ i 16)))
-      (set! (vct-ref (mus-ycoeffs flt) i) (- 0.5 (double (/ i 16)))))
+      (set! ((mus-xcoeffs flt) i) (double (/ i 16)))
+      (set! ((mus-ycoeffs flt) i) (- 0.5 (double (/ i 16)))))
     (run
      (do ((i start (+ i 1))) ((= i end))
        (let ((xs (mus-xcoeffs flt)))
-	 (if (or (> (abs (- (vct-ref xs 1) (mus-xcoeff flt 1))) .001)
-		 (> (abs (- (vct-ref xs 1) 0.0625)) .001))
-	     (clm-print "~A ~A~%" (vct-ref xs 1) (mus-xcoeff flt 1))))
+	 (if (or (> (abs (- (xs 1) (mus-xcoeff flt 1))) .001)
+		 (> (abs (- (xs 1) 0.0625)) .001))
+	     (clm-print "~A ~A~%" (xs 1) (mus-xcoeff flt 1))))
        (let ((data (mus-data flt)))
-	 (if (> (vct-ref data 0) 1.0) (clm-print "data overflow? ~A~%" (vct-ref data 0))))
+	 (if (> (data 0) 1.0) (clm-print "data overflow? ~A~%" (data 0))))
        (let ((is intdat)
 	     (fs fltdat))
-	 (if (not (= (vct-ref is 1) 3)) (clm-print "intdat let: ~A~%" (vct-ref is 1)))
-	 (if (> (abs (- (vct-ref fs 1) 3.14)) .001) (clm-print "fltdat let: ~A~%" (vct-ref fs 1))))
+	 (if (not (= (is 1) 3)) (clm-print "intdat let: ~A~%" (is 1)))
+	 (if (> (abs (- (fs 1) 3.14)) .001) (clm-print "fltdat let: ~A~%" (fs 1))))
        (out-any i (* amp (filter flt (oscil os))) 0)))))
 
 (define (sample-arrintp beg dur freq amp)
@@ -1261,7 +1268,7 @@
     (do ((i 0 (+ i 1))
 	 (x 0.0 (+ x .01)))
 	((= i 100))
-      (set! (vct-ref arr i) (double x)))
+      (set! (arr i) (double x)))
     (run
      (do ((i start (+ i 1))) ((= i end))
        (out-any i (* amp (array-interp arr loc) (oscil os)) 0)
@@ -1346,15 +1353,15 @@
 	 (dir 1))
     (do ((i 0 (+ i 1)))
 	((= i 100))
-      (set! (vct-ref arr i) (double (* amp (+ -.5 (* i .01))))))
+      (set! (arr i) (double (* amp (+ -.5 (* i .01))))))
     (array->file "testx.data" arr 100 22050 1)
     (do ((i 0 (+ i 1)))
 	((= i 100))
-      (set! (vct-ref arr i) (double 0.0)))
+      (set! (arr i) (double 0.0)))
     (file->array "testx.data" 0 0 100 arr)
     (run
      (do ((i start (+ i 1))) ((= i end))
-       (out-any i (* (vct-ref arr ctr) (oscil os)) 0)
+       (out-any i (* (arr ctr) (oscil os)) 0)
        (set! ctr (+ ctr dir))
        (if (>= ctr 99) (set! dir -1)
 	   (if (<= ctr 0) (set! dir 1)))))))
@@ -1421,7 +1428,7 @@
 					    (len (length g))) ; current grain length
 					(do ((i 0 (+ i 1)))
 					    ((= i len) len)       ; grain length unchanged in this case
-					  (vct-set! grain i (* 2 (vct-ref grain i)))))
+					  (set! (grain i) (* 2 (grain i)))))
 				      0)))
 		0)))))
 
@@ -1581,13 +1588,13 @@
 				    (let ((N2 (floor (/ size 2))))
 				      (do ((k 0 (+ 1 k)))
 					  ((= k N2))
-					(set! (vct-ref (phase-vocoder-amps sr) k) (+ (vct-ref (phase-vocoder-amps sr) k) 
-										     (vct-ref (phase-vocoder-amp-increments sr) k)))
-					(set! (vct-ref (phase-vocoder-phase-increments sr) k) (+ (vct-ref (phase-vocoder-phase-increments sr) k) 
-												 (vct-ref (phase-vocoder-freqs sr) k)))
-					(set! (vct-ref (phase-vocoder-phases sr) k) (+ (vct-ref (phase-vocoder-phases sr) k)
-										       (vct-ref (phase-vocoder-phase-increments sr) k))))
-				      (sine-bank (phase-vocoder-amps sr) (phase-vocoder-phases sr) N2)))
+					(vct-set! (phase-vocoder-amps sr) k (+ ((phase-vocoder-amps sr) k) 
+									       ((phase-vocoder-amp-increments sr) k)))
+					(vct-set! (phase-vocoder-phase-increments sr) k (+ ((phase-vocoder-phase-increments sr) k) 
+											   ((phase-vocoder-freqs sr) k)))
+					(vct-set! (phase-vocoder-phases sr) k (+ ((phase-vocoder-phases sr) k)
+										 ((phase-vocoder-phase-increments sr) k))))
+				      (clm23-sine-bank (phase-vocoder-amps sr) (phase-vocoder-phases sr) N2)))
 				  ))
 		0)))))
 
@@ -1623,23 +1630,23 @@
 				      (do ((k 0 (+ 1 k))
 					   (ks 0.0 (+ ks kscl)))
 					  ((= k N2))
-					(let* ((freq (vct-ref (phase-vocoder-freqs sr) k))
-					       (diff (- freq (vct-ref lastphases k))))
-					  (vct-set! lastphases k freq)
+					(let* ((freq ((phase-vocoder-freqs sr) k))
+					       (diff (- freq (lastphases k))))
+					  (set! (lastphases k) freq)
 					  (if (> diff pi) (set! diff (- diff two-pi)))
 					  (if (< diff (- pi)) (set! diff (+ diff two-pi)))
-					  (vct-set! (phase-vocoder-freqs sr) k (+ (* diff  pscl) ks))))
+					  (set! ((phase-vocoder-freqs sr) k) (+ (* diff  pscl) ks))))
 				      #f))
 				  (lambda (closure)
 				    (do ((k 0 (+ 1 k)))
 					((= k N2))
-				      (set! (vct-ref (phase-vocoder-amps sr) k) (+ (vct-ref (phase-vocoder-amps sr) k) 
-										   (vct-ref (phase-vocoder-amp-increments sr) k)))
-				      (set! (vct-ref (phase-vocoder-phase-increments sr) k) (+ (vct-ref (phase-vocoder-phase-increments sr) k) 
-											       (vct-ref (phase-vocoder-freqs sr) k)))
-				      (set! (vct-ref (phase-vocoder-phases sr) k) (+ (vct-ref (phase-vocoder-phases sr) k)
-										     (vct-ref (phase-vocoder-phase-increments sr) k))))
-				    (sine-bank (phase-vocoder-amps sr) (phase-vocoder-phases sr) N2))
+				      (vct-set! (phase-vocoder-amps sr) k (+ ((phase-vocoder-amps sr) k) 
+									     ((phase-vocoder-amp-increments sr) k)))
+				      (vct-set! (phase-vocoder-phase-increments sr) k (+ ((phase-vocoder-phase-increments sr) k) 
+											 ((phase-vocoder-freqs sr) k)))
+				      (vct-set! (phase-vocoder-phases sr) k (+ ((phase-vocoder-phases sr) k)
+									       ((phase-vocoder-phase-increments sr) k))))
+				    (clm23-sine-bank (phase-vocoder-amps sr) (phase-vocoder-phases sr) N2))
 				  ))
 		0)))))
 
@@ -1678,18 +1685,18 @@
 				      (if (= filptr 0)
 					  (do ((k 0 (+ 1 k)))
 					      ((= k size))
-					    (vct-set! in-data k (readin rd)))
+					    (set! (in-data k) (readin rd)))
 					  (begin
 					    (do ((k 0 (+ 1 k))
 						 (j D (+ 1 j)))
 						((= j size))
-					      (vct-set! in-data k (vct-ref in-data j)))
+					      (set! (in-data k) (in-data j)))
 					    (do ((k (- size D) (+ 1 k)))
 						((= k size))
-					      (vct-set! in-data k (readin rd)))))
+					      (set! (in-data k) (readin rd)))))
 				      (do ((k 0 (+ 1 k)))
 					  ((= k size))
-					(vct-set! (phase-vocoder-amp-increments sr) buf (* (vct-ref in-data k) (vct-ref window k)))
+					(set! ((phase-vocoder-amp-increments sr) buf) (* (in-data k) (window k)))
 					(set! buf (+ 1 buf))
 					(if (>= buf size) (set! buf 0)))
 				      (set! filptr (+ filptr D))
@@ -1703,24 +1710,24 @@
 				      (do ((k 0 (+ 1 k))
 					   (ks 0.0 (+ ks kscl)))
 					  ((= k N2))
-					(let* ((freq (vct-ref (phase-vocoder-freqs sr) k))
-					       (diff (- freq (vct-ref lastphases k))))
-					  (vct-set! lastphases k freq)
+					(let* ((freq ((phase-vocoder-freqs sr) k))
+					       (diff (- freq (lastphases k))))
+					  (set! (lastphases k) freq)
 					  (if (> diff pi) (set! diff (- diff two-pi)))
 					  (if (< diff (- pi)) (set! diff (+ diff two-pi)))
-					  (vct-set! (phase-vocoder-freqs sr) k (+ (* diff  pscl) ks))))
+					  (set! ((phase-vocoder-freqs sr) k) (+ (* diff  pscl) ks))))
 				      #f))
 				  
 				  (lambda (closure)
 				    (do ((k 0 (+ 1 k)))
 					((= k N2))
-				      (set! (vct-ref (phase-vocoder-amps sr) k) (+ (vct-ref (phase-vocoder-amps sr) k) 
-										   (vct-ref (phase-vocoder-amp-increments sr) k)))
-				      (set! (vct-ref (phase-vocoder-phase-increments sr) k) (+ (vct-ref (phase-vocoder-phase-increments sr) k) 
-											       (vct-ref (phase-vocoder-freqs sr) k)))
-				      (set! (vct-ref (phase-vocoder-phases sr) k) (+ (vct-ref (phase-vocoder-phases sr) k)
-										     (vct-ref (phase-vocoder-phase-increments sr) k))))
-				    (sine-bank (phase-vocoder-amps sr) (phase-vocoder-phases sr) N2))
+				      (vct-set! (phase-vocoder-amps sr) k (+ ((phase-vocoder-amps sr) k) 
+									     ((phase-vocoder-amp-increments sr) k)))
+				      (vct-set! (phase-vocoder-phase-increments sr) k (+ ((phase-vocoder-phase-increments sr) k) 
+											 ((phase-vocoder-freqs sr) k)))
+				      (vct-set! (phase-vocoder-phases sr) k (+ ((phase-vocoder-phases sr) k)
+									       ((phase-vocoder-phase-increments sr) k))))
+				    (clm23-sine-bank (phase-vocoder-amps sr) (phase-vocoder-phases sr) N2))
 				  ))
 		0)))))
 
@@ -1819,7 +1826,7 @@
        (if (not (or f2 f1))
 	   (clm-print ";or3 2~%"))
        (if (and f2 f1)
-	   (set! ok1 (+ ok1 (vct-ref f1 1)))
+	   (set! ok1 (+ ok1 (f1 1)))
 	   (clm-print ";or3 b~%"))
        (if (or i1 i2)
 	   (set! oki (+ oki (vector-ref i2 0)))
@@ -1970,14 +1977,14 @@
     (do ((i 0 (+ i 1)))
 	((= i n))
       (vector-set! modulators i (make-oscil (* freq (list-ref mc-ratios i)) (list-ref mod-phases i)))
-      (vct-set! fm-indices i (hz->radians (* freq (list-ref indexes i) (list-ref mc-ratios i)))))
+      (set! (fm-indices i) (hz->radians (* freq (list-ref indexes i) (list-ref mc-ratios i)))))
     (run
      (do ((i start (+ i 1)))
 	 ((= i end))
        (let ((sum 0.0))
 	 (do ((k 0 (+ 1 k)))
 	     ((= k n))
-	   (set! sum (+ sum (* (vct-ref fm-indices k) (oscil (vector-ref modulators k))))))
+	   (set! sum (+ sum (* (fm-indices k) (oscil (vector-ref modulators k))))))
 	 (outa i (* amp (oscil cr sum))))))))
 
 (define (fmdoc-violin beg dur frequency amplitude fm-index)
@@ -2082,13 +2089,13 @@
 		   (set! even-freq (hz->radians (* (+ frm-int 1) frq)))
 		   (set! even-amp (- frm0 frm-int))
 		   (set! odd-amp (- 1.0 even-amp))))
-	     (set! sum (+ sum (+ (* (vct-ref amps k) 
+	     (set! sum (+ sum (+ (* (amps k) 
 				    (+ (* even-amp 
 					  (oscil (vector-ref evens k) 
-						 (+ even-freq (* (vct-ref indices k) car))))
+						 (+ even-freq (* (indices k) car))))
 				       (* odd-amp 
 					  (oscil (vector-ref odds k) 
-						 (+ odd-freq (* (vct-ref indices k) car)))))))))))
+						 (+ odd-freq (* (indices k) car)))))))))))
 	 (outa i (* (env ampf) sum)))))))
 
 ;;; --------------------------------------------------------------------------------
@@ -2152,12 +2159,12 @@
 (define (make-my-oscil frequency)       ; we want our own oscil!
   (vct 0.0 (hz->radians frequency)))    ; current phase and frequency-based phase increment
 
-(define (my-oscil gen fm)               ; the corresponding generator
-  (let ((result (sin (vct-ref gen 0)))) ; return sin(current-phase)
-    (vct-set! gen 0 (+ (vct-ref gen 0)  ; increment current phase
-                       (vct-ref gen 1)  ;    by frequency
-                       fm))             ;    and FM
-    result))                            ; return sine wave
+(define (my-oscil gen fm)     ; the corresponding generator
+  (let ((result (sin (gen 0)))) ; return sin(current-phase)
+    (set! (gen 0) (+ (gen 0)  ; increment current phase
+		     (gen 1)  ;    by frequency
+		     fm))     ;    and FM
+    result))                  ; return sine wave
 
 (define (sndclmdoc-simp-5 start end freq amp frq-env)
   (let ((os (make-oscil freq)) 
@@ -2335,16 +2342,16 @@
   (vct 0.0 (hz->radians frequency) (* 1.0 n)))
 
 (define (sndclmdoc-sum-of-odd-sines gen fm)
-  (let* ((angle (vct-ref gen 0))
+  (let* ((angle (gen 0))
 	 (a2 (* angle 0.5))
-	 (n (vct-ref gen 2))
+	 (n (gen 2))
 	 (den (* n (sin a2)))
 	 (result (if (< (abs den) 1.0e-9)
 		     0.0
 		     (/ (* (sin (* n a2)) 
 			   (sin (* (+ 1 n) a2)))
 			den))))
-    (vct-set! gen 0 (+ (vct-ref gen 0) (vct-ref gen 1) fm))
+    (set! (gen 0) (+ (gen 0) (gen 1) fm))
     result))
 
 (definstrument (sndclmdoc-shift-pitch beg dur file freq (order 40))
@@ -2399,7 +2406,7 @@
          (wt0 (make-wave-train :wave foftab :frequency frq)))
     (do ((i 0 (+ i 1)))
         ((= i foflen))
-      (set! (vct-ref foftab i) ;; this is not the pulse shape used by B&R
+      (set! (foftab i) ;; this is not the pulse shape used by B&R
             (* (+ (* a0 (sin (* i frq0))) 
                   (* a1 (sin (* i frq1))) 
                   (* a2 (sin (* i frq2)))) 
@@ -2634,8 +2641,8 @@
 			(c3 (make-comb scaler (floor (* comb-len 1.25)))))
 		   (do ((k 0 (+ 1 k)))
 		       ((= k grain-size))
-		     (let ((x (vct-ref original-grain k)))
-		       (vct-set! grain k (+ (comb c1 x) (comb c2 x) (comb c3 x))))))))))))))
+		     (let ((x (original-grain k)))
+		       (set! (grain k) (+ (comb c1 x) (comb c2 x) (comb c3 x))))))))))))))
 
 (definstrument (move-formants start file amp radius move-env num-formants)
   (let* ((frms (make-vector num-formants))

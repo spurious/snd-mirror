@@ -1543,9 +1543,9 @@
        (+ beg1 (begs call))
        (durs call)
        (frqs call)
-       (vector-ref frqenvs call)
+       (frqenvs call)
        (* amp1 (amps call))
-       (vector-ref ampenvs call)))))
+       (ampenvs call)))))
 
 ;; (with-sound (:play #t) (amargosa-toad 0 .5))
 
@@ -1756,7 +1756,7 @@
 	 (gens (let ((v (make-vector num #f)))
 		 (do ((i 0 (+ i 1)))
 		     ((= i num))
-		   (vector-set! v i (make-oscil (list-ref freqs i))))
+		   (set! (v i) (make-oscil (list-ref freqs i))))
 		 v))
 	 (pulse-dur .02)
 	 (pulse-count 0)
@@ -1787,11 +1787,11 @@
 		   (mus-reset pulsef)
 		   (do ((k 0 (+ 1 k)))
 		       ((= k num))
-		     (mus-reset (vector-ref gens k)))))))
+		     (mus-reset (gens k)))))))
        (let ((sum 0.0))
 	 (do ((k 0 (+ 1 k)))
 	     ((= k num))
-	   (set! sum (+ sum (* (amps k) (oscil (vector-ref gens k))))))
+	   (set! sum (+ sum (* (amps k) (oscil (gens k))))))
 	 (outa i (* (env ampf) 
 		    (env pulsef)
 		    sum)))))))
@@ -2462,7 +2462,7 @@
 	 (durs (let ((v (make-vector 10 0.0)))
 		 (do ((i 0 (+ i 1)))
 		     ((= i 10))
-		   (vector-set! v i (- (vector-ref ends i) (vector-ref begs i))))
+		   (set! (v i) (- (ends i) (begs i))))
 		 v))
 	 (scls (vector .09 .19 .22 .19 .27 .23 .21 .04 .17 .17))
 	 (amps (vector (list 0.000 0.000  0.17 0.13  0.38 0.67  0.64 1.0   0.78 0.79  0.9  0.04  1.0 0.0)
@@ -2489,17 +2489,17 @@
 		       (list 0 1 1 .3 2 0)))
 	 (song-start start)
 	 (next-song-start (+ start (seconds->samples (+ 8.75 (random .1)))))
-	 (next-peep (+ start (seconds->samples (vector-ref begs 1))))
+	 (next-peep (+ start (seconds->samples (begs 1))))
 	 (rnd (make-rand-interp 100 .01)))
     (do ((i 0 (+ i 1)))
 	((= i 10))
-      (vector-set! amp-envs i (make-env (vector-ref amps i) 
-					:scaler (/ (* amp (vector-ref scls i)) .27) 
-					:duration (vector-ref durs i)))
-      (vector-set! frq-envs i (make-env (vector-ref frqs i) 
-					:scaler (hz->radians (- (vector-ref high-frqs i) (vector-ref low-frqs i))) 
-					:offset (hz->radians (vector-ref low-frqs i))
-					:duration (vector-ref durs i))))
+      (set! (amp-envs i) (make-env (amps i) 
+					:scaler (/ (* amp (scls i)) .27) 
+					:duration (durs i)))
+      (set! (frq-envs i) (make-env (frqs i) 
+					:scaler (hz->radians (- (high-frqs i) (low-frqs i))) 
+					:offset (hz->radians (low-frqs i))
+					:duration (durs i))))
     (run
      (do ((i start (+ i 1)))
 	 ((= i stop))
@@ -2511,14 +2511,14 @@
        (if (= i next-peep)
 	   (begin
 	     (set! peep (+ 1 peep))
-	     (mus-reset (vector-ref amp-envs peep))
-	     (mus-reset (vector-ref frq-envs peep))
+	     (mus-reset (amp-envs peep))
+	     (mus-reset (frq-envs peep))
 	     (if (< peep 9)
-		 (set! next-peep (+ song-start (seconds->samples (vector-ref begs (+ 1 peep)))))
+		 (set! next-peep (+ song-start (seconds->samples (begs (+ 1 peep)))))
 		 (set! next-peep next-song-start))))
-       (let ((frq (+ (env (vector-ref frq-envs peep))
+       (let ((frq (+ (env (frq-envs peep))
 		     (rand-interp rnd))))
-	 (outa i (* (env (vector-ref amp-envs peep))
+	 (outa i (* (env (amp-envs peep))
 		    (oscil gen1 frq 
 			   (* .03 (oscil gen2 (* 2 frq)))))))))))
 
@@ -3247,9 +3247,9 @@
     
     (do ((i 0 (+ i 1)))
 	((= i 4))
-      (vector-set! ampfs i (make-env '(0 0 1 .8 1.5 1 2 .8 3 0) :duration (durs i) :scaler (* amp (amps i))))
-      (vector-set! starts i (+ start (seconds->samples (begs i))))
-      (vector-set! stops i (+ (vector-ref starts i) (seconds->samples (durs i)))))
+      (set! (ampfs i) (make-env '(0 0 1 .8 1.5 1 2 .8 3 0) :duration (durs i) :scaler (* amp (amps i))))
+      (set! (starts i) (+ start (seconds->samples (begs i))))
+      (set! (stops i) (+ (starts i) (seconds->samples (durs i)))))
     
     (run
      
@@ -3257,9 +3257,9 @@
      (do ((tone 0 (+ 1 tone)))
 	 ((= tone 4))
        (set! (mus-frequency gen1) (frqs tone))
-       (let ((ampf (vector-ref ampfs tone))
-	     (end (vector-ref stops tone)))
-	 (do ((i (vector-ref starts tone) (+ i 1)))
+       (let ((ampf (ampfs tone))
+	     (end (stops tone)))
+	 (do ((i (starts tone) (+ i 1)))
 	     ((= i end))
 	   (outa i (* (env ampf)
 		      (oscil gen1))))))
@@ -3339,18 +3339,18 @@
     
     (do ((i 0 (+ i 1)))
 	((= i 4))
-      (vector-set! ampfs i (make-env (vector-ref amp-envs i) :duration (durs i) :scaler (* amp (amps i))))
-      (vector-set! frqfs i (make-env (vector-ref frq-envs i) :duration (durs i) :scaler (hz->radians 5000)))
-      (vector-set! starts i (+ start (seconds->samples (begs i))))
-      (vector-set! stops i (+ (vector-ref starts i) (seconds->samples (durs i)))))
+      (set! (ampfs i) (make-env (amp-envs i) :duration (durs i) :scaler (* amp (amps i))))
+      (set! (frqfs i) (make-env (frq-envs i) :duration (durs i) :scaler (hz->radians 5000)))
+      (set! (starts i) (+ start (seconds->samples (begs i))))
+      (set! (stops i) (+ (starts i) (seconds->samples (durs i)))))
     
     (run
      (do ((tone 0 (+ 1 tone)))
 	 ((= tone 4))
-       (let ((ampf (vector-ref ampfs tone))
-	     (frqf (vector-ref frqfs tone))
-	     (end (vector-ref stops tone)))
-	 (do ((i (vector-ref starts tone) (+ i 1)))
+       (let ((ampf (ampfs tone))
+	     (frqf (frqfs tone))
+	     (end (stops tone)))
+	 (do ((i (starts tone) (+ i 1)))
 	     ((= i end))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf))))))))))
@@ -3494,20 +3494,20 @@
     
     (do ((i 0 (+ i 1)))
 	((= i 3))
-      (vector-set! ampfs i (make-env (vector-ref amp-envs i) :duration (durs i) :scaler (* amp (amps i))))
-      (vector-set! frqf1s i (make-env (vector-ref frq1-envs i) :duration (durs i) :scaler (hz->radians 10000)))
-      (vector-set! frqf2s i (make-env (vector-ref frq2-envs i) :duration (durs i) :scaler (hz->radians 10000)))
-      (vector-set! starts i (+ start (seconds->samples (begs i))))
-      (vector-set! stops i (+ (vector-ref starts i) (seconds->samples (durs i)))))
+      (set! (ampfs i) (make-env (amp-envs i) :duration (durs i) :scaler (* amp (amps i))))
+      (set! (frqf1s i) (make-env (frq1-envs i) :duration (durs i) :scaler (hz->radians 10000)))
+      (set! (frqf2s i) (make-env (frq2-envs i) :duration (durs i) :scaler (hz->radians 10000)))
+      (set! (starts i) (+ start (seconds->samples (begs i))))
+      (set! (stops i) (+ (starts i) (seconds->samples (durs i)))))
     
     (run
      (do ((tone 0 (+ 1 tone)))
 	 ((= tone 3))
-       (let ((ampf (vector-ref ampfs tone))
-	     (frqf1 (vector-ref frqf1s tone))
-	     (frqf2 (vector-ref frqf2s tone))
-	     (end (vector-ref stops tone)))
-	 (do ((i (vector-ref starts tone) (+ i 1)))
+       (let ((ampf (ampfs tone))
+	     (frqf1 (frqf1s tone))
+	     (frqf2 (frqf2s tone))
+	     (end (stops tone)))
+	 (do ((i (starts tone) (+ i 1)))
 	     ((= i end))
 	   (outa i (* (env ampf)
 		      (+ (* .55 (polywave gen1 (env frqf1)))
@@ -3574,8 +3574,8 @@
     
     (do ((i 0 (+ i 1)))
 	((= i 6))
-      (vector-set! starts i (+ start (seconds->samples (begs i)))))
-    (vector-set! starts 6 (+ 1 stop))
+      (set! (starts i) (+ start (seconds->samples (begs i)))))
+    (set! (starts 6) (+ 1 stop))
     
     (run
      (do ((i start (+ i 1)))
@@ -3585,7 +3585,7 @@
 	     (set! peep-amp (amps peep-ctr))
 	     (set! (mus-frequency gen1) (frqs peep-ctr))
 	     (set! peep-ctr (+ 1 peep-ctr))
-	     (set! next-start (vector-ref starts peep-ctr))
+	     (set! next-start (starts peep-ctr))
 	     (mus-reset ampf)
 	     (mus-reset frqf)))
        (outa i (* (env ampf)
@@ -3885,8 +3885,8 @@
     
     (do ((call 0 (+ 1 call)))
 	((= call 4))
-      (let* ((ampf (vector-ref ampfs call))
-	     (frqf (vector-ref frqfs call))
+      (let* ((ampf (ampfs call))
+	     (frqf (frqfs call))
 	     (start (seconds->samples (+ beg (begs call))))
 	     (stop (+ start (seconds->samples (durs call)))))
 	(run
@@ -4501,29 +4501,29 @@
     
     (do ((i 0 (+ i 1)))
 	((= i 3))
-      (vector-set! starts i (seconds->samples (+ beg (begs i))))
-      (vector-set! stops i (+ (vector-ref starts i) (seconds->samples (durs i)))))
+      (set! (starts i) (seconds->samples (+ beg (begs i))))
+      (set! (stops i) (+ (starts i) (seconds->samples (durs i)))))
     
-    (vector-set! gens 0 (make-nrxysin 530 1.0 8 .5))
-    (vector-set! gens 1 (make-nrxysin 450 1.0 15 .6))
-    (vector-set! gens 2 (make-nrxysin 400 1.0 8 .5))
+    (set! (gens 0) (make-nrxysin 530 1.0 8 .5))
+    (set! (gens 1) (make-nrxysin 450 1.0 15 .6))
+    (set! (gens 2) (make-nrxysin 400 1.0 8 .5))
     
-    (vector-set! ampfs 0 (make-env '(0 0 1.25 1 1.75 1 3 0) :base 10 :duration (durs 0) :scaler (* amp 0.25)))
-    (vector-set! ampfs 1 (make-env '(0.000 0.000 0.208 0.719 0.292 0.965 0.809 0.869 0.928 0.682 1.000 0.000) :base 10 :duration (durs 1) :scaler (* 0.5 amp)))
-    (vector-set! ampfs 2 (make-env '(0 0 1 1 3 1 6 0) :base 10 :duration (durs 2) :scaler (* amp .375)))
+    (set! (ampfs 0) (make-env '(0 0 1.25 1 1.75 1 3 0) :base 10 :duration (durs 0) :scaler (* amp 0.25)))
+    (set! (ampfs 1) (make-env '(0.000 0.000 0.208 0.719 0.292 0.965 0.809 0.869 0.928 0.682 1.000 0.000) :base 10 :duration (durs 1) :scaler (* 0.5 amp)))
+    (set! (ampfs 2) (make-env '(0 0 1 1 3 1 6 0) :base 10 :duration (durs 2) :scaler (* amp .375)))
     
-    (vector-set! frqfs 0 (make-env '(0 0 1.3 1 2 0) :duration (durs 0) :scaler (hz->radians 300)))
-    (vector-set! frqfs 1 (make-env '(0 0  1.5 .8 2.5 1 4 .95 5 .25) :base .03 :duration (durs 1) :scaler (hz->radians 520)))
-    (vector-set! frqfs 2 (make-env '(0 0 .2 .7  .3 1  1 .5) :duration (durs 2) :scaler (hz->radians 450.0)))
+    (set! (frqfs 0) (make-env '(0 0 1.3 1 2 0) :duration (durs 0) :scaler (hz->radians 300)))
+    (set! (frqfs 1) (make-env '(0 0  1.5 .8 2.5 1 4 .95 5 .25) :base .03 :duration (durs 1) :scaler (hz->radians 520)))
+    (set! (frqfs 2) (make-env '(0 0 .2 .7  .3 1  1 .5) :duration (durs 2) :scaler (hz->radians 450.0)))
     
     (run
      (do ((k 0 (+ 1 k)))
 	 ((= k 3))
-       (let ((start (vector-ref starts k))
-	     (stop (vector-ref stops k))
-	     (ampf (vector-ref ampfs k))
-	     (frqf (vector-ref frqfs k))
-	     (gen (vector-ref gens k)))
+       (let ((start (starts k))
+	     (stop (stops k))
+	     (ampf (ampfs k))
+	     (frqf (frqfs k))
+	     (gen (gens k)))
 	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((val (* (env ampf)
@@ -7262,21 +7262,21 @@
 	 (ampfs (make-vector 5)))
     (do ((i 0 (+ i 1)))
 	((= i 5))
-      (vector-set! oscs i (make-oscil)))
+      (set! (oscs i) (make-oscil)))
     
-    (vector-set! ampfs 0 (make-env '(0.000 0.000 0.061 0.000 0.201 0.997 0.278 0.997 0.441 0.000 0.662 0.000 
+    (set! (ampfs 0) (make-env '(0.000 0.000 0.061 0.000 0.201 0.997 0.278 0.997 0.441 0.000 0.662 0.000 
 					   0.783 0.456 0.864 0.459 0.970 0.000 1.000 0.000)
 				   :duration dur :scaler .1))
-    (vector-set! ampfs 1 (make-env '(0.000 0.000 0.153 0.639 0.307 0.639 0.457 0.109 0.617 0.107 0.739 1.000 
+    (set! (ampfs 1) (make-env '(0.000 0.000 0.153 0.639 0.307 0.639 0.457 0.109 0.617 0.107 0.739 1.000 
 					   0.913 1.000 1.000 0.298)
 				   :duration dur :scaler .4))
-    (vector-set! ampfs 2 (make-env '(0.000 0.000 0.190 0.842 0.266 0.514 0.297 1.000 0.456 0.257 0.599 0.260 
+    (set! (ampfs 2) (make-env '(0.000 0.000 0.190 0.842 0.266 0.514 0.297 1.000 0.456 0.257 0.599 0.260 
 					   0.670 0.702 0.707 0.579 0.739 0.710 0.808 0.325 0.865 0.519 1.000 0.402)
 				   :duration dur :scaler .2))
-    (vector-set! ampfs 3 (make-env '(0.000 0.000 0.064 0.077 0.157 0.653 0.255 0.699 0.311 0.995 0.352 0.615 
+    (set! (ampfs 3) (make-env '(0.000 0.000 0.064 0.077 0.157 0.653 0.255 0.699 0.311 0.995 0.352 0.615 
 					   0.389 0.986 0.458 0.178 0.667 0.363 0.750 0.000 1.000 0.000)
 				   :duration dur :scaler .07))
-    (vector-set! ampfs 4 (make-env '(0.000 0.000 0.159 0.995 0.314 0.997 0.598 0.000 1.000 0.000)
+    (set! (ampfs 4) (make-env '(0.000 0.000 0.159 0.995 0.314 0.997 0.598 0.000 1.000 0.000)
 				   :duration dur :scaler .01))
     
     (run
@@ -7286,7 +7286,7 @@
 	     (sum 0.0))
 	 (do ((k 0 (+ 1 k)))
 	     ((= k 5))
-	   (set! sum (+ sum (* (env (vector-ref ampfs k)) (oscil (vector-ref oscs k) (* (+ 1 k) frq))))))
+	   (set! sum (+ sum (* (env (ampfs k)) (oscil (oscs k) (* (+ 1 k) frq))))))
 	 (outa i (* (env ampf) sum) )))))
   
   ;; part 2
@@ -9285,7 +9285,7 @@
 				     0.701 0.778 0.738 0.967 0.770 0.892 0.797 0.898 0.819 0.790 0.835 0.931 0.852 0.892 
 				     0.874 0.997 0.903 0.775 0.928 0.718 0.957 0.736 1.000 0.000)
 			     :duration dur :scaler (* amp (amps call))))
-	     (frqf (make-env (vector-ref frqs call) :duration dur :scaler (hz->radians 22000.0))))
+	     (frqf (make-env (frqs call) :duration dur :scaler (hz->radians 22000.0))))
 	(run
 	 (do ((i start (+ i 1)))
 	     ((= i stop))
@@ -10298,9 +10298,9 @@
       (kirtlands-warbler-1 (+ beg1 (begs call))
 			   (durs call)
 			   (frqs call)
-			   (vector-ref frqenvs call)
+			   (frqenvs call)
 			   (* amp1 (amps call))
-			   (vector-ref ampenvs call)))))
+			   (ampenvs call)))))
 
 ;; (with-sound (:play #t) (kirtlands-warbler 0 .5))
 

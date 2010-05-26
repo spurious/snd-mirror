@@ -1701,6 +1701,25 @@ make-sparse-array
 ("1032" "-23")
 </pre>
 
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>for-each and map accept hash-table arguments.  Currently, the map or for-each function is passed the
+internal lists, rather than the key/value pairs (this is a bug; someday I'll fix it!).
+</p>
+<pre>
+(define (hash-table-&gt;alist table)
+  (let ((alist '()))
+    (for-each 
+     (lambda (lst) ; this outer for-each should not be necessary
+       (for-each 
+	(lambda (key.value)
+	  (set! alist (cons key.value alist)))
+	lst))
+     table)
+    alist))
+</pre>
+
 </blockquote>
 </small>
 
