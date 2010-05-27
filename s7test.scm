@@ -9651,7 +9651,7 @@
 ;;; jorgen-schafer
 
 (test (let loop ()  
-	(call-with-current-continuation 
+	(call-with-exit
 	 (lambda (k)  
 	   (dynamic-wind  
 	       (lambda () #t)  
@@ -9659,6 +9659,81 @@
 	       k))) 
 	(loop))
       'error)
+;; that example calls to mind a bunch like it:
+(test (call-with-exit (lambda (k) (dynamic-wind (lambda () #t) (lambda () (let loop () (loop))) k))) 'error)
+(test (call-with-exit (lambda (k) (dynamic-wind (lambda () #t) k (lambda () #t)))) 'error)
+(test (call-with-exit (lambda (k) (dynamic-wind k (lambda () #f) (lambda () #t)))) 'error)
+
+(test (call-with-exit (lambda (k) (procedure-documentation k))) "")
+(test (call-with-exit (lambda (k) (procedure-arity k))) '())
+(test (call-with-exit (lambda (k) (procedure-source k))) '())
+(test (procedure-arity (call-with-exit (lambda (k) (make-procedure-with-setter k k)))) '())
+(test (procedure-arity (make-procedure-with-setter vector-ref vector-set!)) '(2 0 #t))
+(test (let ((pws (make-procedure-with-setter vector-ref vector-set!))) 
+	(let ((pws1 (make-procedure-with-setter pws vector-set!))) 
+	  (let ((v (vector 1 2))) 
+	    (set! (pws1 v 1) 32) 
+	    (pws1 v 1))))
+      32)
+(test (call-with-exit (lambda (k) (map k '(1 2 3)))) 1)
+(test (call-with-exit (lambda (k) (for-each k '(1 2 3)))) 1)
+(test (call-with-exit (lambda (k) (catch #t k k))) 'error)
+(test (call-with-exit (lambda (k) (catch #t (lambda () #f) k))) #f)
+(test (call-with-exit (lambda (k) (catch #t (lambda () (error 'an-error)) k))) 'error)
+(test (call-with-exit (lambda (k) (sort! '(1 2 3) k))) 'error)
+(test (sort! '(1 2 3) (lambda () #f)) 'error)
+(test (sort! '(1 2 3) (lambda (a) #f)) 'error)
+(test (sort! '(1 2 3) (lambda (a b c) #f)) 'error)
+(test (let () (define-macro (asdf a b) `(< ,a ,b)) (sort! '(1 2 3) asdf)) 'error)
+(test (let () (let asdf () (sort! '(1 2 3) asdf))) 'error)
+(test (let () (let asdf () (map asdf '(1 2 3)))) 'error)
+(test (let () (let asdf () (for-each asdf '(1 2 3)))) 'error)
+
+(test (let ((ctr 0))
+	(call-with-exit
+	 (lambda (exit)
+	   (let asdf
+	       ()
+	     (set! ctr (+ ctr 1))
+	     (if (> ctr 2)
+		 (exit ctr))
+	     (dynamic-wind
+		 (lambda () #f)
+		 (lambda () #f)
+		 asdf)))))
+      3)
+
+(test (let ((ctr 0))
+	(dynamic-wind
+	    (lambda () #f)
+	    (lambda ()
+	      (call-with-exit
+	       (lambda (exit)
+		 (catch #t
+			(lambda ()
+			  (error 'error))
+			(lambda args
+			  (exit 'error)))
+		 (set! ctr 1))))
+	    (lambda ()
+	      (set! ctr (+ ctr 2))))
+	ctr)
+      2)
+
+
+(let ((pws (make-procedure-with-setter < >))) (test (sort! '(2 3 1 4) pws) '(1 2 3 4)))
+(test (call-with-exit (lambda (k) (call-with-input-string "123" k))) 'error)
+(test (call-with-exit (lambda (k) (call-with-input-file "tmp1.r5rs" k))) 'error)
+(test (call-with-exit (lambda (k) (call-with-output-file "tmp1.r5rs" k))) 'error)
+(test (call-with-exit (lambda (k) (call-with-output-string k))) 'error)
+(let ((pws (make-procedure-with-setter (lambda (a) (+ a 1)) (lambda (a b) b))))
+  (test (map pws '(1 2 3)) '(2 3 4))
+  (test (apply pws '(1)) 2))
+(test (let ((ctr 0)) (call-with-exit (lambda (top-exit) (set! ctr (+ ctr 1)) (call-with-exit top-exit) (set! ctr (+ ctr 16)))) ctr) 1)
+(test (apply dynamic-wind (list (lambda () #f) (lambda () 1) (lambda () #f))) 1)
+(test (apply call-with-exit (list (lambda (exit) 1))) 1)
+(test (apply call-with-exit (list (lambda (exit) (exit 1) 32))) 1)
+(test (apply catch (list #t (lambda () 1) (lambda args 'error))) 1)
 
 
 
@@ -12102,6 +12177,13 @@
 (test (make-procedure-with-setter 1 2) 'error)
 (test (make-procedure-with-setter (lambda () 1) (lambda (a) a) (lambda () 2)) 'error)
 (test (make-procedure-with-setter (lambda () 1) 2) 'error)
+
+(let ((pws (make-procedure-with-setter vector-ref vector-set!)))
+  (let ((v (vector 1 2 3)))
+    (test (pws v 1) 2)
+    (set! (pws v 1) 32)
+    (test (pws v 1) 32)
+    (test (procedure-arity pws) '(2 0 #t))))
 
 #|
 (define (procedure-with-setter-setter-arity proc) (procedure-arity (procedure-with-setter-setter proc))) 

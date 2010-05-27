@@ -2623,87 +2623,6 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
      
    (lambda (y data forward)
      (let* ((sum 0.0)
-	    (order (floor (vct-ref data 0)))
-	    (cur-loc (floor (vct-ref data 1)))
-	    (init-time (> (vct-ref data 2) 0.0))
-	    (last-forward (> (vct-ref data 3) 0.0))
-	    (coeffs-0 4)
-	    (state-0 (+ coeffs-0 order)))
-       
-       (if (eq? last-forward forward)
-	   (if init-time
-	       (begin
-		 (vct-set! data 2 -1.0))
-	       (begin
-		 (if forward
-		     (begin
-		       (do ((i (- order 1) (- i 1)))
-			   ((= i 0))
-			 (vct-set! data (+ i state-0) (vct-ref data (+ i -1 state-0))))
-		       (vct-set! data state-0 y)
-		       (set! cur-loc (+ 1 cur-loc)))
-		     
-		     (let ((pos (max 0 (- cur-loc order))))
-		       (if (< pos 0)
-			   (set! y 0.0)
-			   (set! y (sample pos snd chn edpos)))
-		       (do ((i 0 (+ i 1)))
-			   ((= i (- order 1)))
-			 (vct-set! data (+ i state-0) (vct-ref data (+ i 1 state-0))))
-		       (vct-set! data (+ state-0 order -1) y)
-		       (set! cur-loc (- cur-loc 1))))))
-	   )
-       
-       (do ((i 0 (+ i 1)))
-	   ((= i order))
-	 (set! sum (+ sum (* (vct-ref data (+ coeffs-0 i)) 
-			     (vct-ref data (+ state-0 i))))))
-       
-       (vct-set! data 1 cur-loc)
-       (if forward (vct-set! data 3 1.0) (vct-set! data 3 -1.0))
-       
-       sum))
-   
-   beg dur snd chn edpos #f
-   
-   (lambda (frag-beg frag-dur forward)
-     (let* ((order (length coeffs))
-	    (coeffs-0 4)
-	    (state-0 (+ order coeffs-0))
-	    (d (make-vct (+ coeffs-0 (* 2 order)))))
-       (vct-set! d 0 order)
-       (vct-set! d 2 1.0) ; first sample flag
-       (if forward (vct-set! d 3 1.0) (vct-set! d 3 -1.0))
-       
-       (do ((i 0 (+ i 1)))
-	   ((= i order))
-	 (vct-set! d (+ i coeffs-0) (vct-ref coeffs i)))
-       
-       (let ((start (- (+ 1 frag-beg beg) order))
-	     (i (- order 1)))
-	 (if (< start 0)
-	     (do ()
-		 ((= start 0))
-	       (vct-set! d (+ i state-0) 0)
-	       (set! i (- i 1))
-	       (set! start (+ 1 start))))
-	 (if (>= i 0)
-	     (let ((rd (make-sampler start snd chn 1 edpos)))
-	       (do ()
-		   ((= i -1))
-		 (vct-set! d (+ i state-0) (rd))
-		 (set! i (- i 1)))
-	       (free-sampler rd)))
-	 (vct-set! d 1 (+ frag-beg beg))
-	   
-	 d)))))
-
-
-(define (virtual-filter-channel-1 coeffs beg dur snd chn edpos)
-  (ptree-channel
-     
-   (lambda (y data forward)
-     (let* ((sum 0.0)
 	    (order (floor (data 0)))
 	    (cur-loc (floor (data 1)))
 	    (init-time (> (data 2) 0.0))
@@ -2778,6 +2697,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	 (set! (d 1) (+ frag-beg beg))
 	   
 	 d)))))
+
 
 
 

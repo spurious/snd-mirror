@@ -81,8 +81,8 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 	 (envs (make-vector 1))
 	 (inenvs (make-vector 1)))
     (mus-sound-close-output tmpfil 0)
-    (vector-set! inenvs 0 (make-env env :length len))
-    (vector-set! envs 0 inenvs)
+    (set! (inenvs 0) (make-env env :length len))
+    (set! (envs 0) inenvs)
     (mus-mix tmp-name filename 0 len 0 mx envs)
     (mix tmp-name beg)
     (delete-file tmp-name)))
@@ -527,13 +527,13 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   ;; vct: angle incr off scl
   (ptree-channel
    (lambda (y data forward)
-     (let* ((angle (vct-ref data 0))
-	    (incr (vct-ref data 1))
-	    (val (* y (+ (vct-ref data 2) (* (vct-ref data 3) (+ 0.5 (* 0.5 (cos angle))))))))
+     (let* ((angle (data 0))
+	    (incr (data 1))
+	    (val (* y (+ (data 2) (* (data 3) (+ 0.5 (* 0.5 (cos angle))))))))
        ;; this could be optimized into offset=off+scl/2 and scl=scl/2, then (* y (+ off (* scl cos)))
        (if forward
-	   (vct-set! data 0 (+ angle incr))
-	   (vct-set! data 0 (- angle incr)))
+	   (set! (data 0) (+ angle incr))
+	   (set! (data 0) (- angle incr)))
        val))
    beg dur snd chn edpos #t
    (lambda (frag-beg frag-dur)
@@ -562,16 +562,16 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   ;; vct: angle incr off scl
   (ptree-channel
    (lambda (y data forward)
-     (let* ((angle (vct-ref data 0))
-	    (incr (vct-ref data 1))
+     (let* ((angle (data 0))
+	    (incr (data 1))
 	    (cx (cos angle))
-	    (val (* y (+ (vct-ref data 2) 
-			 (* (vct-ref data 3) 
+	    (val (* y (+ (data 2) 
+			 (* (data 3) 
 			    (+ .084037 (* cx (+ -.29145 (* cx (+ .375696 (* cx (+ -.20762 (* cx .041194)))))))))))))
        ;; blackman2 would be: (+ .34401 (* cx (+ -.49755 (* cx .15844))))
        (if forward
-	   (vct-set! data 0 (+ angle incr))
-	   (vct-set! data 0 (- angle incr)))
+	   (set! (data 0) (+ angle incr))
+	   (set! (data 0) (- angle incr)))
        val))
    beg dur snd chn edpos #t
    (lambda (frag-beg frag-dur)
@@ -600,12 +600,12 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   ;; vct: start incr off scl
   (ptree-channel
    (lambda (y data forward)
-     (let* ((angle (vct-ref data 0))
-	    (incr (vct-ref data 1))
-	    (val (* y (+ (vct-ref data 2) (* angle angle (vct-ref data 3))))))
+     (let* ((angle (data 0))
+	    (incr (data 1))
+	    (val (* y (+ (data 2) (* angle angle (data 3))))))
        (if forward
-	   (vct-set! data 0 (+ angle incr))
-	   (vct-set! data 0 (- angle incr)))
+	   (set! (data 0) (+ angle incr))
+	   (set! (data 0) (- angle incr)))
        val))
    beg dur snd chn edpos #t
    (lambda (frag-beg frag-dur)
@@ -636,12 +636,12 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   ;; a^x = exp(x * log(a))
   (ptree-channel
    (lambda (y data forward)
-     (let* ((angle (vct-ref data 0))
-	    (incr (vct-ref data 1))
-	    (val (* y (+ (vct-ref data 2) (* (exp (* (log angle) (vct-ref data 4))) (vct-ref data 3))))))
+     (let* ((angle (data 0))
+	    (incr (data 1))
+	    (val (* y (+ (data 2) (* (exp (* (log angle) (data 4))) (data 3))))))
        (if forward
-	   (vct-set! data 0 (+ angle incr))
-	   (vct-set! data 0 (- angle incr)))
+	   (set! (data 0) (+ angle incr))
+	   (set! (data 0) (- angle incr)))
        val))
    beg dur snd chn edpos #t
    (lambda (frag-beg frag-dur)
@@ -783,24 +783,24 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 		       (edit-position snd chn)
 		       edpos)))
     (ptree-channel (lambda (y data dir)
-		     (let* ((pos (floor (vct-ref data 0)))
-			    (len (floor (vct-ref data 1)))
-			    (val (vct-ref data (+ pos 2))))
-		       (vct-set! data (+ pos 2) y)
+		     (let* ((pos (floor (data 0)))
+			    (len (floor (data 1)))
+			    (val (data (+ pos 2))))
+		       (set! (data (+ pos 2)) y)
 		       (set! pos (+ 1 pos))
-		       (if (>= pos len) (vct-set! data 0 0) (vct-set! data 0 pos))
+		       (if (>= pos len) (set! (data 0) 0) (set! (data 0) pos))
 		       val))
 		   beg dur snd chn edpos #f
 		   (lambda (fpos fdur)
 		     (let ((data (make-vct (+ dly 2))))
-		       (vct-set! data 0 0.0)
-		       (vct-set! data 1 dly)
+		       (set! (data 0) 0.0)
+		       (set! (data 1) dly)
 		       (if (= fpos 0)
 			   data
 			   (let* ((reader (make-sampler (- fpos 1) snd chn -1 cur-edpos)))
 			     (do ((i (- dly 1) (- i 1)))
 				 ((< i 0))
-			       (vct-set! data (+ i 2) (reader)))
+			       (set! (data (+ i 2)) (reader)))
 			     data)))))))
 |#
 
@@ -1020,19 +1020,19 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	    (call 0))
 	(do ((i 0 (+ i 1))) 
 	    ((= i (length st)))
-	  (let ((lst (vector-ref st i)))
+	  (let ((lst (st i)))
 	    (for-each
 	     (lambda (sym)
 	       (if (and (defined? sym) 
 			(procedure? (symbol->value sym)))
 		   (begin
-		     (vector-set! calls call (list sym (symbol-calls sym)))
+		     (set! (calls call) (list sym (symbol-calls sym)))
 		     (set! call (+ call 1)))))
 	     lst)))
 	(let ((new-calls (make-vector call)))
 	  (do ((i 0 (+ i 1)))
 	      ((= i call))
-	    (vector-set! new-calls i (vector-ref calls i)))
+	    (set! (new-calls) i (calls i)))
 	  (let ((sorted-calls (sort! new-calls 
 				     (lambda (a b) 
 				       (or (> (cadr a) (cadr b))
@@ -1043,5 +1043,5 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	      (lambda ()
 		(do ((i 0 (+ i 1)))
 		    ((= i call))
-		  (let ((c (vector-ref sorted-calls i)))
+		  (let ((c (sorted-calls i)))
 		    (format #t "~A:~40T~A~%" (car c) (cadr c)))))))))))

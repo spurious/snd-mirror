@@ -824,6 +824,7 @@ struct s7_scheme {
 
 #define s7_stack_top(Sc)              ((Sc)->stack_end - (Sc)->stack_start)
 
+#define is_continuation(p)            (type(p) == T_CONTINUATION)
 #define is_goto(p)                    (type(p) == T_GOTO)
 #define is_macro(p)                   (type(p) == T_MACRO)
 
@@ -2605,15 +2606,14 @@ s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr)
 
 bool s7_is_continuation(s7_pointer p)    
 { 
-  return(type(p) == T_CONTINUATION);
+  return(is_continuation(p));
 }
 
 
 static s7_pointer g_is_continuation(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_continuation "(continuation? obj) returns #t if obj is a continuation"
-  return(make_boolean(sc, (s7_is_continuation(car(args))) ||
-		          (is_goto(car(args)))));
+  return(make_boolean(sc, (is_continuation(car(args))) || (is_goto(car(args)))));
 }
 
 
@@ -9754,6 +9754,8 @@ static s7_pointer g_call_with_input_string(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "call-with-input-string", 1, car(args), "a string"));
   if (!is_procedure(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "call-with-input-string", 2, cadr(args), "a procedure"));
+  if ((is_continuation(cadr(args))) || is_goto(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "call-with-input-string", 2, cadr(args), "a normal procedure (not a continuation)"));
   
   return(call_with_input(sc, s7_open_input_string(sc, s7_string(car(args))), args));
 }
@@ -9767,6 +9769,8 @@ static s7_pointer g_call_with_input_file(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "call-with-input-file", 1, car(args), "a string (a filename)"));
   if (!is_procedure(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "call-with-input-file", 2, cadr(args), "a procedure"));
+  if ((is_continuation(cadr(args))) || is_goto(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "call-with-input-file", 2, cadr(args), "a normal procedure (not a continuation)"));
   
   return(call_with_input(sc, s7_open_input_file(sc, s7_string(car(args)), "r"), args));
 }
@@ -10788,6 +10792,8 @@ static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
 
   if (!is_procedure(car(args)))
     return(s7_wrong_type_arg_error(sc, "call-with-output-string", 1, car(args), "a procedure"));
+  if ((is_continuation(cadr(args))) || is_goto(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "call-with-output-string", 2, cadr(args), "a normal procedure (not a continuation)"));
   
   port = s7_open_output_string(sc);
   push_stack(sc, opcode(OP_UNWIND_OUTPUT), sc->F, port);
@@ -10809,6 +10815,8 @@ static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "call-with-output-file filename,", 1, car(args), "a string"));
   if (!is_procedure(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "call-with-output-file", 2, cadr(args), "a procedure"));
+  if ((is_continuation(cadr(args))) || is_goto(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "call-with-output-file", 2, cadr(args), "a normal procedure (not a continuation)"));
   
   port = s7_open_output_file(sc, s7_string(car(args)), "w");
   push_stack(sc, opcode(OP_UNWIND_OUTPUT), sc->F, port);
@@ -11179,7 +11187,7 @@ int s7_list_length(s7_scheme *sc, s7_pointer a)
   /* returns -len if list is dotted, 0 if it's (directly) circular */
   int i;
   s7_pointer slow, fast;
-  
+
   slow = fast = a;
   for (i = 0; ; i += 2)
     {
@@ -12781,10 +12789,14 @@ If its first argument is a list, the list is copied (despite the '!')."
 
   if (!s7_is_vector(vect))
     return(s7_wrong_type_arg_error(sc, "sort!", 1, vect, "a vector or a list"));
-  if (!s7_is_procedure(cadr(args)))
-    return(s7_wrong_type_arg_error(sc, "sort!", 2, cadr(args), "a procedure"));
 
   compare_proc = cadr(args);
+  if (!s7_is_procedure(compare_proc))
+    return(s7_wrong_type_arg_error(sc, "sort!", 2, compare_proc, "a procedure"));
+
+  if ((is_continuation(compare_proc)) || is_goto(compare_proc))
+    return(s7_wrong_type_arg_error(sc, "sort!", 2, compare_proc, "a normal procedure (not a continuation)"));
+
 #if (!HAVE_NESTED_FUNCTIONS)
   compare_sc = sc;
 #endif
@@ -14170,7 +14182,7 @@ static s7_pointer g_make_procedure_with_setter(s7_scheme *sc, s7_pointer args)
 two function arguments as a procedure-with-setter.  The 'getter' is called unless the procedure \
 occurs as the object of set!."
 
-  s7_pointer p, getter, setter;
+  s7_pointer p, getter, setter, arity;
   s7_pws_t *f;
   /* the two args should be functions, the setter taking one more arg than the getter */
 
@@ -14185,16 +14197,14 @@ occurs as the object of set!."
   f = (s7_pws_t *)s7_object_value(p);
 
   f->scheme_getter = getter;
-  if ((is_closure(getter)) ||
-      (is_closure_star(getter)))
-    f->get_req_args = s7_list_length(sc, closure_args(getter));
-  else f->get_req_args = s7_list_length(sc, caar(args));
+  arity = s7_procedure_arity(sc, getter);
+  if (is_pair(arity))
+    f->get_req_args = s7_integer(car(arity));
   
   f->scheme_setter = setter;
-  if ((is_closure(setter)) ||
-      (is_closure_star(setter)))
-    f->set_req_args = s7_list_length(sc, closure_args(setter)); /* this can be -1 if dotted list for rest arg */
-  else f->set_req_args = s7_list_length(sc, caadr(args));
+  arity = s7_procedure_arity(sc, setter);
+  if (is_pair(arity))
+    f->set_req_args = s7_integer(car(arity));
   
   return(p);
 }

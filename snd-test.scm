@@ -39522,10 +39522,10 @@ EDITS: 1
 	  
 	  ;; forward all
 	  (filter-channel (vct 1.0 0.5 0.25))
-	  (let ((data (channel->vct 0 20)))
+	  (let ((data (channel->vct 0 20 ind 0)))
 	    (undo)
 	    (virtual-filter-channel (vct 1.0 0.5 0.25) 0 #f ind 0 1)
-	    (let ((vdata (channel->vct 0 20)))
+	    (let ((vdata (channel->vct 0 20 ind 0)))
 	      (undo)
 	      (if (not (vequal data vdata))
 		  (snd-display #__line__ ";virtual filter: ~%  standard: ~A~%   virtual: ~A~%" data vdata))))
@@ -50283,7 +50283,7 @@ EDITS: 1
       
       (close-sound ind0)
       (close-sound ind1)
-      (snd-display #__line__ ";timings:~{~%       ~A~}" ts))
+      (snd-display #__line__ ";timings:~{~%~20T~A~}" ts))
     
     (let ((v0 (make-vct 10))
 	  (v1 (make-vct 10)))
@@ -50347,7 +50347,7 @@ EDITS: 1
 	(if (not (vequal v0 v1)) (snd-display #__line__ ";jcrev: opt: ~A ~A" v0 v1))
 	(set! ts (cons (list "jcrev  " (hundred t0) (hundred t1) (round (safe-divide t0 t1))) ts))
 	(close-sound ind))
-      (snd-display #__line__ "~&~{       ~A~%~}~%" ts))
+      (snd-display #__line__ "~{~%~20T~A~}~%" ts))
     (if with-gui
 	(let* ((osc (make-oscil 440))
 	       (vi (make-vector 2 1))
@@ -50432,6 +50432,11 @@ EDITS: 1
 	  (snd-display #__line__ ";embedded func 18: ~A" val)))
     (mus-reset efunc-gen)
     
+    (let ((v (vct 1.0 2.0)))
+      (run (set! (v 1) 32))
+      (if (fneq (v 1) 32.0)
+	  (snd-display #__line__ ";vct set i 32: ~A" v)))
+
     (let* ((arg 3)
 	   (val (run (lambda () (t22-i->i arg)))))
       (if (not (equal? val 35)) (snd-display #__line__ ";run func i->i: ~A (35)" val)))

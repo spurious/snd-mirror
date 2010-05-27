@@ -10381,21 +10381,27 @@ static void vct_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value 
   /* set! vct-ref */
   xen_var *var;
   xen_value *arg0 = NULL;
-  /* arg0 = add_temporary_var_to_ptree(prog, R_FLOAT); */
-  /* this is needed only if vct_set* above sets FLOAT_RESULT */
+  arg0 = add_temporary_var_to_ptree(prog, R_FLOAT);
+
   var = find_var_in_ptree_via_addr(prog, in_v->type, in_v->addr);
   if (var) var->unclean = true;
-  /* v->type is guaranteed float in this case (generalized set will insist on it) */
+
+  if (v->type == R_INT)
+    {
+      add_triple_to_ptree(prog, va_make_triple(vct_set_i, "vct_set_i(2)", 4, arg0, in_v, in_v1, v));
+      return;
+    }
+
   if (in_v1->constant == R_CONSTANT)
     {
       if (prog->ints[in_v1->addr] == 0)
-	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_0, "vct_constant_set_0", 4, arg0, in_v, in_v1, v));
+	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_0, "vct_constant_set_0(1)", 4, arg0, in_v, in_v1, v));
       else if (prog->ints[in_v1->addr] == 1)
-	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_1, "vct_constant_set_1", 4, arg0, in_v, in_v1, v));
+	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_1, "vct_constant_set_1(1)", 4, arg0, in_v, in_v1, v));
       else if (prog->ints[in_v1->addr] == 2)
-	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_2, "vct_constant_set_2", 4, arg0, in_v, in_v1, v));
+	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_2, "vct_constant_set_2(1)", 4, arg0, in_v, in_v1, v));
       else if (prog->ints[in_v1->addr] == 3)
-	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_3, "vct_constant_set_3", 4, arg0, in_v, in_v1, v));
+	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_3, "vct_constant_set_3(1)", 4, arg0, in_v, in_v1, v));
       else add_triple_to_ptree(prog, va_make_triple(vct_set_f, "vct_set_f(2)", 4, arg0, in_v, in_v1, v));
     }
   else add_triple_to_ptree(prog, va_make_triple(vct_set_f, "vct_set_f(3)", 4, arg0, in_v, in_v1, v));
@@ -10413,13 +10419,13 @@ static xen_value *vct_set_2(ptree *prog, xen_value **args, int num_args)
       if (args[2]->constant == R_CONSTANT)
 	{
 	  if (prog->ints[args[2]->addr] == 0)
-	    return(package(prog, R_FLOAT, vct_constant_set_0, "vct_constant_set_0", args, 3));
+	    return(package(prog, R_FLOAT, vct_constant_set_0, "vct_constant_set_0(0)", args, 3));
 	  if (prog->ints[args[2]->addr] == 1)
-	    return(package(prog, R_FLOAT, vct_constant_set_1, "vct_constant_set_1", args, 3));
+	    return(package(prog, R_FLOAT, vct_constant_set_1, "vct_constant_set_1(0)", args, 3));
 	  if (prog->ints[args[2]->addr] == 2)
-	    return(package(prog, R_FLOAT, vct_constant_set_2, "vct_constant_set_2", args, 3));
+	    return(package(prog, R_FLOAT, vct_constant_set_2, "vct_constant_set_2(0)", args, 3));
 	  if (prog->ints[args[2]->addr] == 3)
-	    return(package(prog, R_FLOAT, vct_constant_set_3, "vct_constant_set_3", args, 3));
+	    return(package(prog, R_FLOAT, vct_constant_set_3, "vct_constant_set_3(0)", args, 3));
 	}
 
       if (prog->triple_ctr > 0)
@@ -13400,6 +13406,7 @@ static xen_value *out_any_function_body(ptree *prog, s7_pointer proc, xen_value 
 
 
 /* here if num_args == 2 *output* is used by default */
+
 static xen_value *outn_1(ptree *prog, int chan, xen_value **args, int num_args, xen_value *(*out_func)(ptree *prog, xen_value **args, int num_args))
 {
   if (num_args == 2)
@@ -13432,11 +13439,13 @@ static xen_value *outn_1(ptree *prog, int chan, xen_value **args, int num_args, 
 		      true_args[3] = out_any_function_body(prog, output, func_args, 3, NULL);
 		      protect_ptree = true;
 		      free(func_args[3]);
+		      if (true_args[3] == NULL) return(NULL);
 		    }
 		  else true_args[3] = make_xen_value(R_XEN, add_xen_to_ptree(prog, output), R_VARIABLE);
 		}
 	    }
 	}
+
       for (k = 0; k < 3; k++) true_args[k] = args[k];
       rtn = out_func(prog, true_args, 3);
       if (!protect_ptree) free(true_args[3]); /* otherwise the embedded ptree is gc'd twice */
@@ -13492,6 +13501,7 @@ static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
 		    {
 		      for (k = 0; k < 4; k++) true_args[k] = args[k];
 		      true_args[4] = out_any_function_body(prog, output, true_args, 3, NULL);
+		      if (true_args[4] == NULL) return(NULL);
 		      protect_ptree = true;
 		    }
 		  else true_args[4] = make_xen_value(R_XEN, add_xen_to_ptree(prog, output), R_VARIABLE);
