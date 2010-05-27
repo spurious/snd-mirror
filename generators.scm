@@ -340,7 +340,7 @@
 	   (den (sin a2)))
       (if (= den 0.0)
 	  0.0
-	  (/ (* (sin (* n a2)) (sin (* (1+ n) a2))) den))))
+	  (/ (* (sin (* n a2)) (sin (* (+ 1 n) a2))) den))))
 
   (define (nodds x n) 
     (let* ((den (sin x))
@@ -946,7 +946,7 @@
 	   (den (sin a2)))
       (if (= den 0.0)
 	  0.0
-	  (/ (* (sin (* n a2)) (sin (* (1+ n) a2))) den))))
+	  (/ (* (sin (* n a2)) (sin (* (+ 1 n) a2))) den))))
 
   (define (find-mid-max n lo hi)
     (let ((mid (/ (+ lo hi) 2)))

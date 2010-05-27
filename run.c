@@ -96,20 +96,8 @@
  *         there's no warning, but it doesn't handle the closed-over variables correctly
  * PERHAPS: named let/tail recursion
  * SOMEDAY: generics like length
- * TODO: if(when?) vectors/vcts etc work in the applicable form, change all the scm files
- *     (let ((v1 (vector (vct 1 2 3)))) (run ((v1 0) 1)))
- *       opt: lambda: can't handle ((v1 0) 1)
- * but (let ((v1 (vector (vct 0 1)))) (run (vct-ref (vector-ref v1 0) 1)))
- *       1.0
- * and (let ((v1 (vector (vct 0 1)))) (run ((vector-ref v1 0) 1)))
- *       1.0
- * the problem here is that only float-vectors (vcts internally) can use the direct syntax
- * it is possible to remove all vct-refs thoughout Snd, and no problems occur
- * 
- * TODO: run-time non-float vector-ref can't be omitted even if we (declare (var clm-vector))...
-  (let ((oscs (vector (make-oscil 440.)))) (run (outa 0 (oscil (oscs 0)))))
-  added this -- now to test it, and int/vct vectors
-  then clm23 again (and sndclm.html)
+ * PERHAPS: can we get rid of "declare" now?
+ * TODO: check virtual-filter problem in examp
  */
 
 
@@ -4693,7 +4681,7 @@ static opt_ops do_ops[NUM_DO_OPS] = {
   {outa_multiply_f3, "outa_multiply_f3", outa_multiply_f3_inc_and_jump_maybe, "outa_multiply_f3_inc_and_jump_maybe", NULL, NULL},
   {outa_multiply_f2, "outa_multiply_f2", outa_multiply_f2_inc_and_jump_maybe, "outa_multiply_f2_inc_and_jump_maybe", NULL, NULL},
   {frame_set_0r, "frame_set_0r", frame_set_0r_inc_and_jump_maybe, "frame_set_0r_inc_and_jump_maybe", NULL, NULL}, 
-  {vct_set_f, "vct_set_f", vct_set_f_inc_and_jump_maybe, "vct_set_f_inc_and_jump_maybe", NULL, NULL}, 
+  {vct_set_f, "vct_set_f(1)", vct_set_f_inc_and_jump_maybe, "vct_set_f_inc_and_jump_maybe", NULL, NULL}, 
   {set_scaler_f, "set_scaler_f", set_scaler_f_inc_and_jump_maybe, "set_scaler_f_inc_and_jump_maybe", NULL, NULL},
   {outa_polywave_1_mult, "outa_polywave_1_mult", outa_polywave_1_mult_inc_and_jump_maybe, "outa_polywave_1_mult_inc_and_jump_maybe", NULL, NULL},
   {outa_oscil_1_mult, "outa_oscil_1_mult", outa_oscil_1_mult_inc_and_jump_maybe, "outa_oscil_1_mult_inc_and_jump_maybe", NULL, NULL},
@@ -10154,6 +10142,13 @@ static void vector_set_v(int *args, ptree *pt) {VECT_ARG_1->data.vcts[INT_ARG_2]
 
 static void vector_set_c(int *args, ptree *pt) {VECT_ARG_1->data.gens[INT_ARG_2] = CLM_ARG_3;}
 
+static void int_vector_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
+{
+  xen_var *var;
+  var = find_var_in_ptree_via_addr(prog, in_v->type, in_v->addr);
+  if (var) var->unclean = true;
+  add_triple_to_ptree(prog, va_make_triple(vector_set_i, "vector_set_i", 4, NULL, in_v, in_v1, v));
+}
 
 static xen_value *vector_set_1(ptree *prog, xen_value **args, int num_args)
 {
@@ -10355,46 +10350,55 @@ static void vct_nf(int *args, ptree *pt) {if (VCT_ARG_1) FLOAT_RESULT = VCT_ARG_
 static xen_value *vct_n(ptree *prog, xen_value **args, int num_args, xen_value *sf)
 {
   /* this is handling the vct-as-applicable-func stuff (v ind) = (vct-ref v ind) */
-  /* (let ((v (make-vct 3 1.0))) (run (lambda () (v 0)))) */
+  /* (let ((v (make-vct 3 1.0))) (run (lambda () (v 0))))
+   * (run ((make-vct 3 1.0) 1))
+   */
+
   if (args[0]) free(args[0]);
+  if (args[1]->type != R_INT)
+    return(run_warn("vct index should be an integer"));
+    
   args[0] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(vct_nf, "vct_nf", 3, args[0], sf, args[1]));
   return(args[0]);
 }
 
 
-static void vct_constant_set_0(int *args, ptree *pt) {VCT_ARG_1->data[0] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
-static void vct_constant_set_1(int *args, ptree *pt) {VCT_ARG_1->data[1] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
-static void vct_constant_set_2(int *args, ptree *pt) {VCT_ARG_1->data[2] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
-static void vct_constant_set_3(int *args, ptree *pt) {VCT_ARG_1->data[3] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
+static void vct_constant_set_0(int *args, ptree *pt) {VCT_ARG_1->data[0] = FLOAT_ARG_3; /* FLOAT_RESULT = FLOAT_ARG_3; */}
+static void vct_constant_set_1(int *args, ptree *pt) {VCT_ARG_1->data[1] = FLOAT_ARG_3; /* FLOAT_RESULT = FLOAT_ARG_3; */}
+static void vct_constant_set_2(int *args, ptree *pt) {VCT_ARG_1->data[2] = FLOAT_ARG_3; /* FLOAT_RESULT = FLOAT_ARG_3; */}
+static void vct_constant_set_3(int *args, ptree *pt) {VCT_ARG_1->data[3] = FLOAT_ARG_3; /* FLOAT_RESULT = FLOAT_ARG_3; */}
 
-static void vct_set_f(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
-static void vct_set_f_add(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] += FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
-static void vct_set_f_mult(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] *= FLOAT_ARG_3; FLOAT_RESULT = FLOAT_ARG_3;}
+static void vct_set_f(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = FLOAT_ARG_3; /* FLOAT_RESULT = FLOAT_ARG_3; */}
+static void vct_set_f_add(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] += FLOAT_ARG_3; /* FLOAT_RESULT = FLOAT_ARG_3; */}
+static void vct_set_f_mult(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] *= FLOAT_ARG_3; /* FLOAT_RESULT = FLOAT_ARG_3; */}
 
-static void vct_set_i(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = (mus_float_t)INT_ARG_3; FLOAT_RESULT = (Double)INT_ARG_3;}
+static void vct_set_i(int *args, ptree *pt) {VCT_ARG_1->data[INT_ARG_2] = (mus_float_t)INT_ARG_3; /* FLOAT_RESULT = (Double)INT_ARG_3; */}
 
 
 static void vct_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
 {
   /* set! vct-ref */
   xen_var *var;
+  xen_value *arg0 = NULL;
+  /* arg0 = add_temporary_var_to_ptree(prog, R_FLOAT); */
+  /* this is needed only if vct_set* above sets FLOAT_RESULT */
   var = find_var_in_ptree_via_addr(prog, in_v->type, in_v->addr);
   if (var) var->unclean = true;
   /* v->type is guaranteed float in this case (generalized set will insist on it) */
   if (in_v1->constant == R_CONSTANT)
     {
       if (prog->ints[in_v1->addr] == 0)
-	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_0, "vct_constant_set_0", 4, NULL, in_v, in_v1, v));
+	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_0, "vct_constant_set_0", 4, arg0, in_v, in_v1, v));
       else if (prog->ints[in_v1->addr] == 1)
-	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_1, "vct_constant_set_1", 4, NULL, in_v, in_v1, v));
+	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_1, "vct_constant_set_1", 4, arg0, in_v, in_v1, v));
       else if (prog->ints[in_v1->addr] == 2)
-	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_2, "vct_constant_set_2", 4, NULL, in_v, in_v1, v));
+	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_2, "vct_constant_set_2", 4, arg0, in_v, in_v1, v));
       else if (prog->ints[in_v1->addr] == 3)
-	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_3, "vct_constant_set_3", 4, NULL, in_v, in_v1, v));
-      else add_triple_to_ptree(prog, va_make_triple(vct_set_f, "vct_set_f", 4, NULL, in_v, in_v1, v));
+	add_triple_to_ptree(prog, va_make_triple(vct_constant_set_3, "vct_constant_set_3", 4, arg0, in_v, in_v1, v));
+      else add_triple_to_ptree(prog, va_make_triple(vct_set_f, "vct_set_f(2)", 4, arg0, in_v, in_v1, v));
     }
-  else add_triple_to_ptree(prog, va_make_triple(vct_set_f, "vct_set_f", 4, NULL, in_v, in_v1, v));
+  else add_triple_to_ptree(prog, va_make_triple(vct_set_f, "vct_set_f(3)", 4, arg0, in_v, in_v1, v));
 }
 
 
@@ -10442,7 +10446,7 @@ static xen_value *vct_set_2(ptree *prog, xen_value **args, int num_args)
 	    }
 	}
 
-      return(package(prog, R_FLOAT, vct_set_f, "vct_set_f", args, 3));
+      return(package(prog, R_FLOAT, vct_set_f, "vct_set_f(4)", args, 3));
     }
   return(package(prog, R_FLOAT, vct_set_i, "vct_set_i", args, 3));
 }
@@ -10844,13 +10848,13 @@ static xen_value *sound_data_n(ptree *prog, xen_value **args, int num_args, xen_
 static void sound_data_set_f(int *args, ptree *pt) 
 {
   SOUND_DATA_ARG_1->data[INT_ARG_2][INT_ARG_3] = FLOAT_ARG_4;
-  FLOAT_RESULT = FLOAT_ARG_4;
+  /* FLOAT_RESULT = FLOAT_ARG_4; */
 }
 
 static void sound_data_set_i(int *args, ptree *pt) 
 {
   SOUND_DATA_ARG_1->data[INT_ARG_2][INT_ARG_3] = (mus_float_t)INT_ARG_4;
-  FLOAT_RESULT = (Double)INT_ARG_4;
+  /* FLOAT_RESULT = (Double)INT_ARG_4; */
 }
 
 
@@ -13787,7 +13791,7 @@ static void clm_set_f(int *args, ptree *pt)
 	    mus_mixer_set(CLM_ARG_1, INT_ARG_2, INT_ARG_3, FLOAT_ARG_4);
 	}
     }
-  FLOAT_RESULT = FLOAT_ARG_4;
+  /* FLOAT_RESULT = FLOAT_ARG_4; */
 }
 
 static void clm_set_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
@@ -16041,6 +16045,15 @@ static xen_value *lookup_generalized_set(ptree *prog, s7_pointer acc_form, xen_v
 		    /* (let ((fr (make-frame 2))) (run (lambda () (set! (fr 1) 1.0))) fr) */
 		    clm_set_1(prog, val, in_v, in_v1, v);
 		    happy = 1;
+		  }
+		else 
+		  {
+		    if (val->type == R_INT_VECTOR)
+		      {
+			/* (let ((v (vector 1 2 3))) (run (set! (v 1) 32) (v 1))) */
+			int_vector_set_1(prog, val, in_v, NULL, v);
+			happy = 1;
+		      }
 		  }
 	      }
 	  }

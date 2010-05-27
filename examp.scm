@@ -148,7 +148,7 @@
 		  (* 20.0 (log10 val))))
 	    (do ((i 0 (+ i 1)))
 		((= i len))
-	      (vct-set! data i (+ 60.0 (dB (abs (vct-ref data i))))))
+	      (set! (data i) (+ 60.0 (dB (abs (data i))))))
 	    (graph data "dB" 
 		   (/ (left-sample snd chn) sr) (/ (right-sample snd chn) sr)  
 		   0.0 60.0
@@ -517,7 +517,7 @@ read an ASCII sound file"
        (let loop ((val (read in-fd)))
 	 (or (eof-object? val)
 	     (begin
-	       (vct-set! data loc (* val short->float))
+	       (set! (data loc) (* val short->float))
 	       (set! loc (+ 1 loc))
 	       (if (= loc bufsize)
 		   (begin
@@ -684,7 +684,7 @@ otherwise it moves the cursor to the first offending sample"
     (scan-channel
      (lambda (y)
        (let ((bin (floor (* (abs y) nbins))))
-	 (vector-set! bins bin (+ (vector-ref bins bin) 1))
+	 (set! (bins bin) (+ (bins bin) 1))
 	 #f)))
     bins))
 
@@ -736,23 +736,23 @@ then inverse ffts."
     (fft rdata idata 1)
     (if (> lo 0)
 	(begin
-	  (vct-set! rdata 0 0.0)
-	  (vct-set! idata 0 0.0)
+	  (set! (rdata 0) 0.0)
+	  (set! (idata 0) 0.0)
 	  (do ((i 1 (+ i 1))
 	       (j (- fsize 1) (- j 1)))
 	      ((= i lo))
-	    (vct-set! rdata i 0.0)
-	    (vct-set! rdata j 0.0)
-	    (vct-set! idata i 0.0)
-	    (vct-set! idata j 0.0))))
+	    (set! (rdata i) 0.0)
+	    (set! (rdata j) 0.0)
+	    (set! (idata i) 0.0)
+	    (set! (idata j) 0.0))))
     (if (< hi (/ fsize 2))
 	(do ((i hi (+ i 1))
 	     (j (- fsize hi) (- j 1)))
 	    ((= i (/ fsize 2)))
-	  (vct-set! rdata i 0.0)
-	  (vct-set! rdata j 0.0)
-	  (vct-set! idata i 0.0)
-	  (vct-set! idata j 0.0)))
+	  (set! (rdata i) 0.0)
+	  (set! (rdata j) 0.0)
+	  (set! (idata i) 0.0)
+	  (set! (idata j) 0.0)))
     (fft rdata idata -1)
     (vct-scale! rdata (/ 1.0 fsize))
     (vct->channel rdata 0 (- len 1) snd chn #f (format #f "fft-edit ~A ~A" bottom top))))
@@ -772,20 +772,20 @@ then inverse ffts."
       (rectangular->polar vr vi)
       (set! scaler (vct-peak vr)))
     (let ((scl-squelch (* squelch scaler)))
-      (if (< (sqrt (+ (* (vct-ref rdata 0) (vct-ref rdata 0)) (* (vct-ref idata 0) (vct-ref idata 0)))) scl-squelch)
+      (if (< (sqrt (+ (* (rdata 0) (rdata 0)) (* (idata 0) (idata 0)))) scl-squelch)
 	  (begin
-	    (vct-set! rdata 0 0.0)
-	    (vct-set! idata 0 0.0)))
+	    (set! (rdata 0) 0.0)
+	    (set! (idata 0) 0.0)))
       (do ((i 1 (+ i 1))
 	   (j (- fsize 1) (- j 1)))
 	  ((= i fsize2))
-	(let ((magnitude (sqrt (+ (* (vct-ref rdata i) (vct-ref rdata i)) (* (vct-ref idata i) (vct-ref idata i))))))
+	(let ((magnitude (sqrt (+ (* (rdata i) (rdata i)) (* (idata i) (idata i))))))
 	  (if (< magnitude scl-squelch)
 	      (begin
-		(vct-set! rdata i 0.0)
-		(vct-set! rdata j 0.0)
-		(vct-set! idata i 0.0)
-		(vct-set! idata j 0.0)))))
+		(set! (rdata i) 0.0)
+		(set! (rdata j) 0.0)
+		(set! (idata i) 0.0)
+		(set! (idata j) 0.0)))))
       (fft rdata idata -1)
       (vct-scale! rdata (/ 1.0 fsize)))
     (vct->channel rdata 0 (- len 1) snd chn #f (format #f "fft-squelch ~A" squelch))
@@ -806,10 +806,10 @@ then inverse ffts."
       (do ((i lo-bin (+ i 1))
 	   (j (- fsize lo-bin) (- j 1)))
 	  ((> i hi-bin))
-	(vct-set! rdata i 0.0) ; ignoring window side lobes for now
-	(vct-set! idata i 0.0)
-	(vct-set! rdata j 0.0)
-	(vct-set! idata j 0.0)))
+	(set! (rdata i) 0.0) ; ignoring window side lobes for now
+	(set! (idata i) 0.0)
+	(set! (rdata j) 0.0)
+	(set! (idata j) 0.0)))
     (fft rdata idata -1)
     (vct-scale! rdata (/ 1.0 fsize))
     (vct->channel rdata 0 (- len 1) snd chn #f (format #f "fft-cancel ~A ~A" lo-freq hi-freq))))
@@ -825,10 +825,10 @@ then inverse ffts."
   ;;  at 1.0, and a ramp down when 'up' is #f, sticking at 0.0
   ;;
   ;; this could use the moving-average generator, though the resultant envelopes would be slightly less bumpy
-  (let* ((ctr (vct-ref gen 0))
-	 (size (vct-ref gen 1))
+  (let* ((ctr (gen 0))
+	 (size (gen 1))
 	 (val (/ ctr size)))
-    (vct-set! gen 0 (min size (max 0 (+ ctr (if up 1 -1)))))
+    (set! (gen 0) (min size (max 0 (+ ctr (if up 1 -1)))))
     val))
 
 (define* (make-ramp (size 128))
@@ -849,10 +849,10 @@ then inverse ffts."
 	 (in-vowel #f))
     (do ((i 0 (+ i 1)))
 	((= i (- fft-size 1)))
-      (vct-set! rl i (read-ahead)))
+      (set! (rl i) (read-ahead)))
     (set! ctr (- fft-size 1))
     (map-channel (lambda (y)
-		   (vct-set! rl ctr (read-ahead))
+		   (set! (rl ctr) (read-ahead))
 		   (set! ctr (+ 1 ctr))
 		   (if (= ctr fft-size)
 		       (begin
@@ -860,7 +860,7 @@ then inverse ffts."
 			 (vct-multiply! rl rl)
 			 (vct-multiply! im im)
 			 (vct-add! rl im)
-			 (set! in-vowel (> (+ (vct-ref rl 0) (vct-ref rl 1) (vct-ref rl 2) (vct-ref rl 3)) peak))
+			 (set! in-vowel (> (+ (rl 0) (rl 1) (rl 2) (rl 3)) peak))
 			 ;; fancier version checked here ratio of this sum and
 			 ;;   sum of all rl vals, returned vowel if > 0.5
 			 (set! ctr 0)
@@ -884,16 +884,16 @@ then inverse ffts."
 	 (e (make-env fft-env :length fsize2)))
     (fft rdata idata 1)
     (let ((val (env e)))
-      (vct-set! rdata 0 (* val (vct-ref rdata 0)))
-      (vct-set! idata 0 (* val (vct-ref idata 0))))
+      (set! (rdata 0) (* val (rdata 0)))
+      (set! (idata 0) (* val (idata 0))))
     (do ((i 1 (+ i 1))
 	 (j (- fsize 1) (- j 1)))
 	((= i fsize2))
       (let ((val (env e)))
-	(vct-set! rdata i (* val (vct-ref rdata i)))
-	(vct-set! idata i (* val (vct-ref idata i)))
-	(vct-set! rdata j (* val (vct-ref rdata j)))
-	(vct-set! idata j (* val (vct-ref idata j)))))
+	(set! (rdata i) (* val (rdata i)))
+	(set! (idata i) (* val (idata i)))
+	(set! (rdata j) (* val (rdata j)))
+	(set! (idata j) (* val (idata j)))))
     (fft rdata idata -1)
     (vct-scale! rdata (/ 1.0 fsize))))
 
@@ -914,9 +914,9 @@ spectral envelopes) following interp (an env between 0 and 1)"
     (do ((i 0 (+ i 1)))
 	((= i len))
       (let ((pan (env e)))
-	(vct-set! new-data i 
-		  (+ (* (- 1.0 pan) (vct-ref data1 i))
-		     (* pan (vct-ref data2 i))))))
+	(set! (new-data i) 
+	      (+ (* (- 1.0 pan) (data1 i))
+		 (* pan (data2 i))))))
     (vct->channel new-data 0 (- len 1) snd chn #f (format #f "fft-env-interp '~A '~A '~A" env1 env2 interp))))
 
 
@@ -932,24 +932,24 @@ current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is 
 	 (idata (make-vct fsize))
 	 (spect (snd-spectrum rdata rectangular-window fsize #t 1.0 #f normalize))) ; not in-place!
     (fft rdata idata 1)
-    (flt (vct-ref spect 0))
+    (flt (spect 0))
     (do ((i 1 (+ i 1))
 	 (j (- fsize 1) (- j 1)))
 	((= i fsize2))
-      (let* ((orig (vct-ref spect i))
+      (let* ((orig (spect i))
 	     (cur (flt orig)))
 	(if (>  (abs orig) .000001)
 	    (let ((scl (/ cur orig)))
-	      (vct-set! rdata i (* scl (vct-ref rdata i)))
-	      (vct-set! idata i (* scl (vct-ref idata i)))
-	      (vct-set! rdata j (* scl (vct-ref rdata j)))
-	      (vct-set! idata j (* scl (vct-ref idata j))))
+	      (set! (rdata i) (* scl (rdata i)))
+	      (set! (idata i) (* scl (idata i)))
+	      (set! (rdata j) (* scl (rdata j)))
+	      (set! (idata j) (* scl (idata j))))
 	    (if (> (abs cur) .000001)
 		(let ((scl (/ cur (sqrt 2.0))))
-		  (vct-set! rdata i scl)
-		  (vct-set! idata i scl)
-		  (vct-set! rdata j scl)
-		  (vct-set! idata j (- scl)))))))
+		  (set! (rdata i) scl)
+		  (set! (idata i) scl)
+		  (set! (rdata j) scl)
+		  (set! (idata j) (- scl)))))))
     (fft rdata idata -1)
     (if (not (= mx 0.0))
 	(let ((pk (vct-peak rdata)))
@@ -977,17 +977,17 @@ current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is 
 	 (lo 0.0 (+ lo .12)))
 	((= i 8))
       (env-sound (list 0 0 lo 1 1 0) 0 #f 32.0 ind 0 (+ i 1))
-      (vector-set! mixers i (make-sampler 0 ind 0 1 (edit-position ind 0))))
+      (set! (mixers i) (make-sampler 0 ind 0 1 (edit-position ind 0))))
     (scale-by 0.0)
     (map-channel
      (lambda (y)
        (let ((sum 0.0))
 	 (do ((i 0 (+ i 1)))
 	     ((= i 8) sum)
-	   (set! sum (+ sum (read-sample (vector-ref mixers i))))))))
+	   (set! sum (+ sum (read-sample (mixers i))))))))
     (do ((i 0 (+ i 1)))
 	((= i 8))
-      (free-sampler (vector-ref mixers i))))
+      (free-sampler (mixers i))))
   (scale-to mx))
 |#
 
@@ -1000,14 +1000,14 @@ section: (vct->channel (fft-smoother .1 (cursor) 400) (cursor) 400)"
 	 (rl (channel->vct start fftpts snd chn))
 	 (im (make-vct fftpts))
 	 (top (floor (* fftpts cutoff))))
-    (let* ((old0 (vct-ref rl 0))
-	   (old1 (vct-ref rl (- samps 1)))
+    (let* ((old0 (rl 0))
+	   (old1 (rl (- samps 1)))
 	   (oldmax (vct-peak rl)))
       (fft rl im 1)
       (do ((i top (+ i 1)))
 	  ((= i fftpts))
-	(vct-set! rl i 0.0)
-	(vct-set! im i 0.0))
+	(set! (rl i) 0.0)
+	(set! (im i) 0.0))
       (fft rl im -1)
       (vct-scale! rl (/ 1.0 fftpts))
       (let ((newmax (vct-peak rl)))
@@ -1016,15 +1016,15 @@ section: (vct->channel (fft-smoother .1 (cursor) 400) (cursor) 400)"
 	    (begin
 	      (if (> (/ oldmax newmax) 1.5)
 		  (vct-scale! rl (/ oldmax newmax)))
-	      (let* ((new0 (vct-ref rl 0))
-		     (new1 (vct-ref rl (- samps 1)))
+	      (let* ((new0 (rl 0))
+		     (new1 (rl (- samps 1)))
 		     (offset0 (- old0 new0))
 		     (offset1 (- old1 new1))
 		     (incr (if (= offset1 offset0) 0.0 (/ (- offset1 offset0) samps))))
 		(do ((i 0 (+ i 1))
 		     (trend offset0 (+ trend incr)))
 		    ((= i samps))
-		  (vct-set! rl i (+ (vct-ref rl i) trend)))
+		  (set! (rl i) (+ (rl i) trend)))
 		rl)))))))
 
 
@@ -1112,19 +1112,19 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 	 (oscs (make-vector len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (vector-set! frms i (make-formant (vct-ref bases i) radius))
-      (vector-set! oscs i (make-oscil (vct-ref freqs i))))
+      (set! (frms i) (make-formant (bases i) radius))
+      (set! (oscs i) (make-oscil (freqs i))))
     (map-channel
      (lambda (x)
        (let ((val 0.0))
 	 (do ((i 0 (+ i 1)))
 	     ((= i len))
-	   (let ((frm (vector-ref frms i)))
+	   (let ((frm (frms i)))
 	     (set! val (+ val (formant frm x)))
 	     (set! (mus-frequency frm) 
-		   (+ (vct-ref bases i)
-		      (* (vct-ref amounts i) 
-			 (oscil (vector-ref oscs i)))))))
+		   (+ (bases i)
+		      (* (amounts i) 
+			 (oscil (oscs i)))))))
 	 val)))))
 
 
@@ -1206,7 +1206,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 	 (rd (make-src :srate 1.0 
 		       :input (lambda (dir) 
 				(let ((val (if (and (>= i 0) (< i len)) 
-					       (vct-ref in-data i) 
+					       (in-data i) 
 					       0.0)))
 				  (set! i (+ i dir)) 
 				  val)))))
@@ -1297,7 +1297,7 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 	   (lambda (dir)
 	     (granulate gr
 			(lambda (dir)
-			  (let ((val (vct-ref v inctr)))
+			  (let ((val (v inctr)))
 			    (set! inctr (+ inctr dir))
 			    (if (>= inctr vsize)
 				(begin
@@ -1348,7 +1348,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
 	 (formants (make-vector freq-inc)))
     (do ((i 0 (+ i 1)))
 	((= i freq-inc))
-      (vector-set! formants i (make-formant (* i bin) radius)))
+      (set! (formants i) (make-formant (* i bin) radius)))
     (lambda (inval)
       (if (= ctr freq-inc)
 	  (begin
@@ -1385,7 +1385,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
 	 (new-peak-amp 0.0))
     (do ((i 0 (+ i 1)))
 	((= i freq-inc))
-      (vector-set! formants i (make-formant (* i bin) radius)))
+      (set! (formants i) (make-formant (* i bin) radius)))
     (call-with-exit                 ; setup non-local exit (for C-g interrupt)
      (lambda (break)                ;   now (break value) will exit the call-with-exit returning value
        (do ((k 0 (+ 1 k)))
@@ -1407,7 +1407,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
 	   (vct-add! spectr fdr)
 	   (set! outval (formant-bank spectr formants (rand noi)))
 	   (if (> (abs outval) new-peak-amp) (set! new-peak-amp (abs outval)))
-	   (vct-set! out-data k outval)))
+	   (set! (out-data k) outval)))
        (vct-scale! out-data (* amp (/ old-peak-amp new-peak-amp)))
        (vct->channel out-data 0 (max len outlen) snd chn #f 
 		     (format #f "voiced->unvoiced ~A ~A ~A ~A" amp fftsize r tempo))))))
@@ -1433,7 +1433,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
 	 (new-peak-amp 0.0))
     (do ((i 0 (+ i 1)))
 	((= i freq-inc))
-      (vector-set! formants i (make-formant (* i bin) radius)))
+      (set! (formants i) (make-formant (* i bin) radius)))
     (call-with-exit                 ; setup non-local exit (for C-g interrupt)
      (lambda (break)
        (do ((k 0 (+ 1 k)))
@@ -1454,7 +1454,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
 	   (vct-add! spectr fdr)
 	   (set! outval (formant-bank spectr formants (ncos pulse)))
 	   (if (> (abs outval) new-peak-amp) (set! new-peak-amp (abs outval)))
-	   (vct-set! out-data k outval)))
+	   (set! (out-data k) outval)))
        (vct-scale! out-data (* amp (/ old-peak-amp new-peak-amp)))
        (vct->channel out-data 0 (max len len) snd chn)))))
 
@@ -1492,14 +1492,14 @@ selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
 	 (es (make-vector 8)))
     (do ((i 0 (+ i 1)))
 	((= i 8))
-      (vector-set! es i (make-env (list 0 (list-ref coeffs i) 1 0) :length 100)))
-    (vector-set! es 5 (make-env '(0 .4 1 1) :duration 1.0))
+      (set! (es i) (make-env (list 0 (list-ref coeffs i) 1 0) :length 100)))
+    (set! (es 5) (make-env '(0 .4 1 1) :duration 1.0))
     (lambda (x)
       (let ((val (fir-filter flt x))
 	    (xcof (mus-xcoeffs flt)))
 	(do ((i 0 (+ i 1)))
 	    ((= i 8))
-	  (vct-set! xcof i (env (vector-ref es i))))
+	  (set! (xcof i) (env (es i))))
 	val))))
 
 ;;; for something this simple (like a notch filter), we can use a two-zero filter:
@@ -1622,7 +1622,7 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 
     (do ((i 0 (+ i 1)))
 	((= i num-readers))
-      (vector-set! grain-envs i (make-env grain-envelope :length grain-frames)))
+      (set! (grain-envs i) (make-env grain-envelope :length grain-frames)))
 
     (do ((i 0 (+ i 1)))
 	((= i newlen))
@@ -1630,9 +1630,9 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 
 	(if (>= i next-reader-starts-at)
 	    (begin
-	      (vector-set! readers next-reader 
-			   (make-sampler (max 0 (round (+ position-in-original (mus-random jitter)))) snd chn))
-	      (mus-reset (vector-ref grain-envs next-reader)) ; restart grain env
+	      (set! (readers next-reader)
+		    (make-sampler (max 0 (round (+ position-in-original (mus-random jitter)))) snd chn))
+	      (mus-reset (grain-envs next-reader)) ; restart grain env
 	      (set! next-reader (+ 1 next-reader))
 	      (if (>= next-reader num-readers) (set! next-reader 0))
 	      (set! next-reader-starts-at (+ next-reader-starts-at hop-frames))))
@@ -1640,8 +1640,8 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 	(let ((sum 0.0))
 	  (do ((i 0 (+ i 1)))
 	      ((= i num-readers))
-	    (if (sampler? (vector-ref readers i))
-		(set! sum (+ sum (* (env (vector-ref grain-envs i)) (next-sample (vector-ref readers i)))))))
+	    (if (sampler? (readers i))
+		(set! sum (+ sum (* (env (grain-envs i)) (next-sample (readers i)))))))
 	  (sound-data-set! data 0 data-ctr sum))
 
 	(set! data-ctr (+ 1 data-ctr))
@@ -1856,7 +1856,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 	 (set! samp0 samp1)
 	 (set! samp1 samp2)
 	 (set! samp2 (next-sample reader))
-	 (vct-set! samps samps-ctr samp0)
+	 (set! (samps samps-ctr) samp0)
 	 (if (< samps-ctr 9)
 	     (set! samps-ctr (+ samps-ctr 1))
 	     (set! samps-ctr 0))
@@ -1893,7 +1893,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
       (set! samp0 samp1)
       (set! samp1 samp2)
       (set! samp2 val)
-      (vct-set! samps sctr val)
+      (set! (samps sctr) val)
       (set! sctr (+ sctr 1))
       (if (>= sctr 10) (set! sctr 0))
       (let ((local-max (max .1 (vct-peak samps))))
@@ -1941,7 +1941,7 @@ In most cases, this will be slightly offset from the true beginning of the note"
   (let ((data (make-vct (transform-size)))
 	(data-loc 0))
     (lambda (n)
-      (vct-set! data data-loc n)
+      (set! (data data-loc) n)
       (set! data-loc (+ 1 data-loc))
       (let ((rtn #f))
 	(if (= data-loc (transform-size))
@@ -1958,14 +1958,14 @@ In most cases, this will be slightly offset from the true beginning of the note"
 					(= peak-loc 0))
 				    0.0
 				    (/ (* (+ pkloc
-					     (interpolated-peak-offset (vct-ref spectr (- pkloc 1))
+					     (interpolated-peak-offset (spectr (- pkloc 1))
 								       pk
-								       (vct-ref spectr (+ 1 pkloc))))
+								       (spectr (+ 1 pkloc))))
 					  (srate))
 				       (transform-size))))
-			     (if (> (vct-ref spectr i) pk)
+			     (if (> (spectr i) pk)
 				 (begin
-				   (set! pk (vct-ref spectr i))
+				   (set! pk (spectr i))
 				   (set! pkloc i))))))
 		      (if (< (abs (- pitch pit)) (/ (srate) (* 2 (transform-size)))) ; uh... why not do it direct?
 			  (set! rtn (- (/ (transform-size) 2)))))))
@@ -1982,7 +1982,7 @@ In most cases, this will be slightly offset from the true beginning of the note"
 	 (data (make-vct len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (vct-set! data i (next-sample reader)))
+      (set! (data i) (next-sample reader)))
     (free-sampler reader)
     data))
 
@@ -2171,7 +2171,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 	 ;; using do and vector here for the run macro's benefit
 	 (do ((i 0 (+ i 1)))
 	     ((= i len))
-	   (let ((gen (vector-ref dsp-chain i)))
+	   (let ((gen (dsp-chain i)))
 	     (if (env? gen)
 		 (set! val (* (gen) val))
 		 (if (readin? gen)
@@ -2250,20 +2250,20 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 	 (data (vct 0.0 0.0 init-angle off scale)))
     (ptree-channel
      (lambda (y data forward)
-       (let* ((angle (vct-ref data 0))
-	      (incr (vct-ref data 1))
-	      (val (+ (vct-ref data 3) 
-		      (* (vct-ref data 4) 
-			 (cos (+ (vct-ref data 2) angle))))))
+       (let* ((angle (data 0))
+	      (incr (data 1))
+	      (val (+ (data 3) 
+		      (* (data 4) 
+			 (cos (+ (data 2) angle))))))
        (if forward
-	   (vct-set! data 0 (+ angle incr))
-	   (vct-set! data 0 (- angle incr)))
+	   (set! (data 0) (+ angle incr))
+	   (set! (data 0) (- angle incr)))
        val))
      beg dur snd chn edpos #t
      (lambda (frag-beg frag-dur)
        (let ((incr (/ pi frag-dur)))
-	 (vct-set! data 1 incr)
-	 (vct-set! data 0 (* frag-beg incr))
+	 (set! (data 1) incr)
+	 (set! (data 0) (* frag-beg incr))
 	 data))
      (format #f "smooth-channel-via-ptree ~A ~A" beg dur))))
 
@@ -2274,12 +2274,12 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
   "(ring-modulate-channel freq (beg 0) dur snd chn edpos) ring-modulates the given channel"
   (ptree-channel
    (lambda (y data forward)
-     (let* ((angle (vct-ref data 0))
-	    (incr (vct-ref data 1))
+     (let* ((angle (data 0))
+	    (incr (data 1))
 	    (val (* y (sin angle))))
        (if forward
-	   (vct-set! data 0 (+ angle incr))
-	   (vct-set! data 0 (- angle incr)))
+	   (set! (data 0) (+ angle incr))
+	   (set! (data 0) (- angle incr)))
        val))
    beg dur snd chn edpos #f
    (lambda (frag-beg frag-dur)
@@ -2301,20 +2301,20 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
     (let ((pos #f))
       (do ((i 0 (+ i 1)))
 	  ((or pos (= i len)) pos)
-	(if (= (vector-ref chans i) chan)
+	(if (= (chans i) chan)
 	    (set! pos i)))))
 
   (define (scramble-channels-1 cur-chans end-chans chans loc)
     (if (> chans loc)
-	(let* ((end-chan (vector-ref end-chans loc)) ; we want this channel at loc
-	       (cur-chan (vector-ref cur-chans loc)) ; this (original) channel is currently at loc
+	(let* ((end-chan (end-chans loc)) ; we want this channel at loc
+	       (cur-chan (cur-chans loc)) ; this (original) channel is currently at loc
 	       (end-loc (find-chan cur-chans end-chan chans))) ; where is end-chan currently?
 	  ;; end-chan goes in cur-chan's slot
 	  (if (not (= cur-chan end-chan))
 	      (begin
 		(swap-channels #f end-loc #f loc)
-		(vector-set! cur-chans end-loc cur-chan)
-		(vector-set! cur-chans loc end-chan)))
+		(set! (cur-chans end-loc) cur-chan)
+		(set! (cur-chans loc) end-chan)))
 	  (scramble-channels-1 cur-chans end-chans chans (+ 1 loc)))))
 
   (let ((len (length new-order)))
@@ -2323,7 +2323,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	      (cur-chans (make-vector len)))
 	  (do ((i 0 (+ i 1)))
 	      ((= i len))
-	    (vector-set! cur-chans i i))
+	    (set! (cur-chans i) i))
 	  (scramble-channels-1 cur-chans end-chans len 0)))))
 
 
@@ -2357,7 +2357,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	      (ctr 0))
 	 (for-each
 	  (lambda (end)
-	    (vector-set! pieces ctr (make-region start end))
+	    (set! (pieces ctr) (make-region start end))
 	    (set! ctr (+ 1 ctr))
 	    (set! start end))
 	  edges)
@@ -2368,21 +2368,21 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	    (do ((i 0 (+ i 1)))
 		((= i len))
 	      (let* ((this (random len))
-		     (reg (vector-ref pieces this)))
-		(vector-set! pieces this #f)
+		     (reg (pieces this)))
+		(set! (pieces this) #f)
 		(if (not reg)
 		    (begin
 		      (do ((j (+ 1 this) (+ 1 j)))
 			  ((or (= j len)
 			       reg))
-			(set! reg (vector-ref pieces j))
-			(if reg (vector-set! pieces j #f)))
+			(set! reg (pieces j))
+			(if reg (set! (pieces j) #f)))
 		      (if (not reg)
 			  (do ((j (- this 1) (- j 1)))
 			      ((or (< j 0)
 				   reg))
-			    (set! reg (vector-ref pieces j))
-			    (if reg (vector-set! pieces j #f))))))
+			    (set! reg (pieces j))
+			    (if reg (set! (pieces j) #f))))))
 		(mix-region reg start)
 		(set! start (+ start (frames reg)))
 		(forget-region reg)))))))
@@ -2499,18 +2499,18 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 		     (set! possible-end i)
 		     (if (< lval low)
 			 (begin
-			   (vct-set! segments segctr (+ possible-end 128))
+			   (set! (segments segctr) (+ possible-end 128))
 			   (set! segctr (+ 1 segctr))
 			   (set! in-sound #f)))))
 	       (if (> val high)
 		   (begin
-		     (vct-set! segments segctr (- i 128))
+		     (set! (segments segctr) (- i 128))
 		     (set! segctr (+ 1 segctr))
 		     (set! in-sound #t)))))))
       (free-sampler reader)
       (if in-sound
 	  (begin
-	    (vct-set! segments segctr end)
+	    (set! (segments segctr) end)
 	    (list (+ 1 segctr) segments))
 	  (list segctr segments))))
 
@@ -2526,8 +2526,8 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	 (format fd "~%(~A ~S" ins-name (string-append dir-name "/" sound))
 	 (do ((bnd 0 (+ bnd 2)))
 	     ((>= bnd segments))
-	   (let* ((segbeg (floor (vct-ref boundaries bnd)))
-		  (segdur (floor (- (vct-ref boundaries (+ 1 bnd)) segbeg))))
+	   (let* ((segbeg (floor (boundaries bnd)))
+		  (segdur (floor (- (boundaries (+ 1 bnd)) segbeg))))
 	     (format fd " (~A ~A ~A)" segbeg segdur (segment-maxamp sound-name segbeg segdur))))
 	 (format fd ")")
 	 (mus-sound-forget (string-append dir-name "/" sound))))
@@ -2698,6 +2698,89 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	   
 	 d)))))
 
+
+(define (virtual-filter-channel-1 coeffs beg dur snd chn edpos)
+  (ptree-channel
+     
+   (lambda (y data forward)
+     (let* ((sum 0.0)
+	    (order (floor (data 0)))
+	    (cur-loc (floor (data 1)))
+	    (init-time (> (data 2) 0.0))
+	    (last-forward (> (data 3) 0.0))
+	    (coeffs-0 4)
+	    (state-0 (+ coeffs-0 order)))
+       
+       (if (eq? last-forward forward)
+	   (if init-time
+	       (begin
+		 (set! (data 2) -1.0))
+	       (begin
+		 (if forward
+		     (begin
+		       (do ((i (- order 1) (- i 1)))
+			   ((= i 0))
+			 (set! (data (+ i state-0)) (data (+ i -1 state-0))))
+		       (set! (data state-0) y)
+		       (set! cur-loc (+ 1 cur-loc)))
+		     
+		     (let ((pos (max 0 (- cur-loc order))))
+		       (if (< pos 0)
+			   (set! y 0.0)
+			   (set! y (sample pos snd chn edpos)))
+		       (do ((i 0 (+ i 1)))
+			   ((= i (- order 1)))
+			 (set! (data (+ i state-0)) (data (+ i 1 state-0))))
+		       (set! (data (+ state-0 order -1)) y)
+		       (set! cur-loc (- cur-loc 1))))))
+	   )
+       
+       (do ((i 0 (+ i 1)))
+	   ((= i order))
+	 (set! sum (+ sum (* (data (+ coeffs-0 i)) 
+			     (data (+ state-0 i))))))
+       
+       (set! (data 1) cur-loc)
+       (if forward (set! (data 3) 1.0) (set! (data 3) -1.0))
+       
+       sum))
+   
+   beg dur snd chn edpos #f
+   
+   (lambda (frag-beg frag-dur forward)
+     (let* ((order (length coeffs))
+	    (coeffs-0 4)
+	    (state-0 (+ order coeffs-0))
+	    (d (make-vct (+ coeffs-0 (* 2 order)))))
+       (set! (d 0) order)
+       (set! (d 2) 1.0) ; first sample flag
+       (if forward (set! (d 3) 1.0) (set! (d 3) -1.0))
+       
+       (do ((i 0 (+ i 1)))
+	   ((= i order))
+	 (set! (d (+ i coeffs-0)) (coeffs i)))
+       
+       (let ((start (- (+ 1 frag-beg beg) order))
+	     (i (- order 1)))
+	 (if (< start 0)
+	     (do ()
+		 ((= start 0))
+	       (set! (d (+ i state-0)) 0)
+	       (set! i (- i 1))
+	       (set! start (+ 1 start))))
+	 (if (>= i 0)
+	     (let ((rd (make-sampler start snd chn 1 edpos)))
+	       (do ()
+		   ((= i -1))
+		 (set! (d (+ i state-0)) (rd))
+		 (set! i (- i 1)))
+	       (free-sampler rd)))
+	 (set! (d 1) (+ frag-beg beg))
+	   
+	 d)))))
+
+
+
 #|
 ;;; if we could stack up ptrees like mixes:
 
@@ -2714,8 +2797,8 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
    
    (lambda (frag-beg frag-dur forward)
      (make-sampler (+ frag-beg orig-beg) snd chn 
-			 (if forward 1 -1) 
-			 (if (>= edpos 0) edpos (edit-position snd chn))))))
+		   (if forward 1 -1) 
+		   (if (>= edpos 0) edpos (edit-position snd chn))))))
 
 ;;; (add-channel 0.5 0 10000 (frames 0 0) 0 0 0)
 
@@ -2727,7 +2810,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
        (scale-channel 0.0 beg dur snd chn edpos) ; so that filter replaces original
        (do ((i 0 (+ i 1)))
 	   ((= i order))
-	 (add-channel (vct-ref coeffs i) beg (+ beg i) dur snd chn pos))))))
+	 (add-channel (coeffs i) beg (+ beg i) dur snd chn pos))))))
 
 ;;; (virtual-filter-channel (vct 1.0 0.5 0.25) 0 (frames 0 0) 0 0 0)
 |#

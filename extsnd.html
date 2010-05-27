@@ -3114,7 +3114,7 @@ read-region-sample returns the next sample read by the region-sampler 'obj'.
 		 (data (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> len)))
 	    (do ((i 0 (+ 1 i)))
 		((= i len) data)
-	      (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> data i (<em class=red>reader</em>))))
+	      (set! (data i) (<em class=red>reader</em>))))
 	  (throw 'no-such-channel (list "region-&gt;vct" reg chn)))
       (throw 'no-such-region (list "region-&gt;vct" reg))))
 </pre></td></tr></table>
@@ -3223,7 +3223,7 @@ the added complexity.
 <a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> creates a new vct object.  It is freed by the
 garbage collector when it can't be referenced any further.  To get 
 an element of a vct, use <a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a>; similarly <a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a>
-sets an element.
+sets an element.  (vct's are applicable objects, so vct-ref can always be omitted, and set! can replace vct-set!).
 Once created, a vct can be passed to a variety of built-in
 functions:</p>
 
@@ -3592,10 +3592,10 @@ channel:
 (define (vct-polynomial v coeffs)
   (let* ((v-len (<em class=red>length</em> v))
 	 (num-coeffs (<em class=red>length</em> coeffs))
-	 (new-v (<em class=red>make-vct</em> v-len (<em class=red>vct-ref</em> coeffs (- num-coeffs 1)))))
+	 (new-v (<em class=red>make-vct</em> v-len (coeffs (- num-coeffs 1)))))
     (do ((i (- num-coeffs 2) (- i 1)))
 	((&lt; i 0))
-      (<em class=red>vct-offset!</em> (<em class=red>vct-multiply!</em> new-v v) (<em class=red>vct-ref</em> coeffs i)))
+      (<em class=red>vct-offset!</em> (<em class=red>vct-multiply!</em> new-v v) (coeffs i)))
     new-v))
 
 (define* (channel-polynomial coeffs snd chn)
@@ -8070,12 +8070,12 @@ Here is an example that mixes a sine wave into the current channel:
 (define* (sine-channel freq amp (beg 0) dur snd chn edpos)
   (<em class=red>ptree-channel</em>
    (lambda (y data forward)
-     (let* ((angle (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> data 0))
-	    (incr (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> data 1))
-	    (val (+ y (* (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> data 2) (sin angle)))))
+     (let* ((angle (data 0))
+	    (incr (data 1))
+	    (val (+ y (* (data 2) (sin angle)))))
        (if forward
-	   (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> data 0 (+ angle incr))
-	   (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> data 0 (- angle incr)))
+	   (set! (data 0) (+ angle incr))
+	   (set! (data 0) (- angle incr)))
        val))
    beg dur snd chn edpos #f
    (lambda (frag-beg frag-dur)
@@ -8084,8 +8084,8 @@ Here is an example that mixes a sine wave into the current channel:
 </pre></td></tr></table>
 
 In the normal case,
-this function just mixes in a sine wave: <code>(+ y (* (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> data 2) (sin angle)))</code>
-where the amplitude scaler is stored in <code>(<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> data 2)</code>.  In subsequent
+this function just mixes in a sine wave: <code>(+ y (* (data 2) (sin angle)))</code>
+where the amplitude scaler is stored in <code>(data 2)</code>.  In subsequent
 reads, the init-func sets up a vct with the current phase (dependent on the frequency
 and the fragment begin sample), the phase increment (dependent on the frequency), and
 the amplitude (passed as an argument to sine-channel, but stored in the vct since
@@ -8112,12 +8112,12 @@ version of cosine-channel given under
   ;; vct: angle increment
   (<em class=red>ptree-channel</em>
    (lambda (y data forward)
-     (let* ((angle (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> data 0))
-	    (incr (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> data 1))
+     (let* ((angle (data 0))
+	    (incr (data 1))
 	    (val (* y (cos angle))))
        (if forward
-	   (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> data 0 (+ angle incr))
-	   (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> data 0 (- angle incr)))
+	   (set! (data 0) (+ angle incr))
+	   (set! (data 0) (- angle incr)))
        val))
    beg dur snd chn edpos <em class=red>#t</em>
    (lambda (frag-beg frag-dur)
@@ -8196,8 +8196,8 @@ could in this case be:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
   (<em class=red>ptree-channel</em> (lambda (y data forward)
-		   (let ((val (* 0.5 (+ y (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> data 0)))))
-		     (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> data 0 y)
+		   (let ((val (* 0.5 (+ y (data 0)))))
+		     (set! (data 0) y)
 		     val))
 		 0 (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) ind 0 #f #f ; "ind" is the sound 
 		 (let ((edpos (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a> ind 0)))
@@ -8225,15 +8225,15 @@ Here are several more examples:
   (let* ((base (if (&gt; r0 r1) (/ 1.0 ubase) ubase)))
     (<em class=red>ptree-channel</em>
      (lambda (y data forward)
-       (let* ((lr0 (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> data 0))
-	      (lbase (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> data 1))
-	      (incr (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> data 2))
-	      (scl (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> data 3))
-	      (power (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> data 4))
+       (let* ((lr0 (data 0))
+	      (lbase (data 1))
+	      (incr (data 2))
+	      (scl (data 3))
+	      (power (data 4))
 	      (val (* y (+ lr0 (* scl (- (expt lbase power) 1.0))))))
 	 (if forward
-	     (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> data 4 (+ power incr))
-	     (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> data 4 (- power incr)))
+	     (set! (data 4) (+ power incr))
+	     (set! (data 4) (- power incr)))
 	 val))
      beg dur snd chn edpos #t
      (lambda (frag-beg frag-dur)
@@ -8669,7 +8669,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 (begin (<a class=quiet href="#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> "temp.snd") (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> "temp.snd" 0) (delete-file "temp.snd"))
 
 (let ((flt (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 8)))
-  (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> flt 0 2.0)
+  (set! (flt 0) 2.0)
   (let ((cnv (<a class=quiet href="sndclm.html#make-convolve" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_convolve_tip)">make-convolve</a> :filter flt))
 	(sf (<a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> 0)))
     (<a class=quiet href="#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a>
@@ -9039,8 +9039,7 @@ the end points:
 	 (scale (* 0.5 (abs (- y1 y0)))))
      (do ((i 0 (+ 1 i)))
          ((= i num) v)
-       (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> v i 
-         (+ off (* scale (cos (+ angle (* i (/ pi num))))))))))
+       (set! (v i) (+ off (* scale (cos (+ angle (* i (/ pi num))))))))))
 </pre></td></tr></table>
 
 <img src="pix/click.png" alt="smoother">
@@ -10840,9 +10839,7 @@ Here's an example that displays a histogram of the current values in 16 bins:
                (bin (floor (* (abs val) 16.0))))
           (do ((j 0 (+ 1 j))) 
               ((= j steps))
-            (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> v 
-                      (+ j bin) 
-                      (+ step (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> v (+ j bin))))))))))
+            (set! (v (+ j bin)) (+ step (v (+ j bin))))))))))
 </pre></td></tr></table>
 
 This code ties the Hilbert transform in dsp.scm into the user-interface:
@@ -10866,7 +10863,7 @@ If GSL is included in Snd, the following code ties in the (slow) Hankel transfor
 (<em class=red>add-transform</em> "Hankel" "Hankel" 0.0 1.0
    (lambda (n rd)
       (let ((v (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> n)))
-         (do ((i 0 (+ 1 i))) ((= i n)) (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> v i (rd)))
+         (do ((i 0 (+ 1 i))) ((= i n)) (set! (v i) (rd)))
          (gsl-dht n v 1.0 1.0)
          v)))
 </pre></td></tr></table></td></tr><tr><td colspan=2 height=16></td></tr>
@@ -10901,10 +10898,10 @@ and initial-phase:
 	 (im (make-vct fft-size)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (let ((amp (vct-ref amps i))
-	    (phase (vct-ref phases i)))
-	(vct-set! rl (+ i 1) (* amp (sin phase)))
-	(vct-set! im (+ i 1) (* amp (cos phase)))))
+      (let ((amp (amps i))
+	    (phase (phases i)))
+	(set! (rl (+ i 1)) (* amp (sin phase)))
+	(set! (im (+ i 1)) (* amp (cos phase)))))
     (<em class=red>fft</em> rl im -1)
     rl))
 </pre>
@@ -12304,7 +12301,7 @@ exit back to the top level, (break-exit):
 	        (z (vct .1 .2 .3)))
 	    (break)
 	    (display y)
-	    (+ x (string-length y) (vct-ref z 1))))
+	    (+ x (string-length y) (z 1))))
         (hiho 1)
         (break)
         (* y 2)))</em>
@@ -12467,8 +12464,8 @@ is named "<a name="callin">call_in</a>".
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define (at hour minute func)
   (let* ((cur-time (localtime (current-time)))
-	 (cur-minute (vector-ref cur-time 1))
-	 (cur-hour (vector-ref cur-time 2))
+	 (cur-minute (cur-time 1))
+	 (cur-hour (cur-time 2))
 	 (now (+ (* cur-hour 60) cur-minute))
 	 (then (+ (* hour 60) minute)))
     (<em class=red>in</em> (* 1000 60 (- then now)) func)))
@@ -13213,9 +13210,9 @@ of FractInt's royal colormap):
       (do ((i 0 (+ 1 i))
 	   (x 0.0 (+ x incr)))
 	  ((= i size))
-        (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> r i (/ (<a class=quiet href="sndscm.html#envelopeinterp" onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopeinterp_tip)">envelope-interp</a> x er) 256.0)) ; from env.scm
-        (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> g i (/ (<a class=quiet href="sndscm.html#envelopeinterp" onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopeinterp_tip)">envelope-interp</a> x eg) 256.0))
-        (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> b i (/ (<a class=quiet href="sndscm.html#envelopeinterp" onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopeinterp_tip)">envelope-interp</a> x eb) 256.0)))
+        (set! (r i) (/ (<a class=quiet href="sndscm.html#envelopeinterp" onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopeinterp_tip)">envelope-interp</a> x er) 256.0)) ; from env.scm
+        (set! (g i) (/ (<a class=quiet href="sndscm.html#envelopeinterp" onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopeinterp_tip)">envelope-interp</a> x eg) 256.0))
+        (set! (b i) (/ (<a class=quiet href="sndscm.html#envelopeinterp" onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopeinterp_tip)">envelope-interp</a> x eb) 256.0)))
       (list r g b))))
 
 ;;; another amusing colormap from FractInt:
@@ -13228,9 +13225,9 @@ of FractInt's royal colormap):
       (do ((i 0 (+ 1 i))
 	   (x 0.0 (+ x incr)))
 	  ((= i size))
-	(<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> r i (abs (sin (* 1.5 x))))
-	(<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> g i (abs (sin (* 3.5 x))))
-	(<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> b i (abs (sin (* 2.5 x)))))
+	(set! (r i) (abs (sin (* 1.5 x))))
+	(set! (g i) (abs (sin (* 3.5 x))))
+	(set! (b i) (abs (sin (* 2.5 x)))))
       (list r g b))))
 </pre></td></tr></table>
 
@@ -13528,8 +13525,8 @@ This draws a filled polygon whose vertices are in the vector 'points'.
   "draw an arrow pointing (from the left) at the point (x0 y0)"
   (let ((points (make-vector 8)))
     (define (point i x y)
-      (vector-set! points (* i 2) x)
-      (vector-set! points (+ (* i 2) 1) y))
+      (set! (points (* i 2)) x)
+      (set! (points (+ (* i 2) 1)) y))
     (define (arrow-head x y)
       (point 0 x y)
       (point 1 (- x (* 2 size)) (- y size))
@@ -13677,7 +13674,7 @@ The result can be used in the lisp graph:
 	          (* 20.0 (log10 val))))
             (do ((i 0 (+ 1 i)))
 	        ((= i len))
-	      (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> data i (+ 60.0 (dB (abs (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> data i))))))
+	      (set! (data i) (+ 60.0 (dB (abs (data i))))))
               (<a class=quiet href="#graph" onmouseout="UnTip()" onmouseover="Tip(extsnd_graph_tip)">graph</a> data "dB" 
 	            (/ (<a class=quiet href="#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a> snd chn) sr) (/ (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a> snd chn) sr)  
 	            0.0 60.0

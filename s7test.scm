@@ -4259,17 +4259,13 @@
 
 
 ;;; -------- circular structures --------
-;;;
-;;; safe: memq memv member assq assv assoc reverse copy equal?
-;;;       length -- might add circular-list-length
-;;;       vector-fill! vector->list list->vector vector
-;;;       object->string list->string list make-list
-;;;       list-tail apply append sort! values fill!
-;;; eval, map, and for-each are like do -- circles might be intentional
 
 (let ((lst (list 1 2 3)))
    (set! (cdr (cddr lst)) lst)
    (test (apply + lst) 'error))
+
+(let ((l1 (list 1)))
+  (test (object->string (list l1 1 l1)) "(#1=(1) 1 #1#)"))
 
 (let ((lst (list 1 2 3)))
    (set! (cdr (cddr lst)) lst)
@@ -8699,6 +8695,36 @@
 ;(test (let begin ((i 0)) (if (< i 3) (begin (+ i 1)) i)) 3)
 
 
+;;; from the scheme wiki
+;;; http://community.schemewiki.org/?sieve-of-eratosthenes
+
+(let ((results '(2)))
+  (define (primes n) 
+    (let ((pvector (make-vector (+ 1 n) #t))) ; if slot k then 2k+1 is a prime 
+      (let loop ((p 3) ; Maintains invariant p = 2j + 1 
+		 (q 4) ; Maintains invariant q = 2j + 2jj 
+		 (j 1) 
+		 (k '()) 
+		 (vec pvector)) 
+	(letrec ((lp (lambda (p q j k vec) 
+		       (loop (+ 2 p) 
+			     (+ q (- (* 2 (+ 2 p)) 2)) 
+			     (+ 1 j) 
+			     k 
+			     vec))) 
+		 (eradicate (lambda (q p vec) 
+			      (if (<= q n) 
+				  (begin (vector-set! vec q #f) 
+					 (eradicate (+ q p) p vec)) 
+				  vec)))) 
+          (if (<= j n) 
+	      (if (eq? #t (vector-ref vec j)) 
+		  (begin (set! results (cons p results))
+			 (lp p q j q (eradicate q p vec))) 
+		  (lp p q j k vec)) 
+	      (reverse results))))))
+  (test (primes 10) '(2 3 5 7 11 13 17 19)))
+
 
 
 ;;; -------- call/cc --------
@@ -9334,6 +9360,71 @@
 
 
 
+;;; from scheme wiki
+;;; http://community.schemewiki.org/?quines
+;;; Tanaka Tomoyuki
+;;; Moshe Zadka
+
+(test (object->string (call/cc 
+		       (lambda (c) 
+			 (call/cc 
+			  (lambda (cc) 
+			    (c ((lambda (c) 
+				  `(call/cc 
+				    (lambda (c) (call/cc (lambda (cc) (c (,c ',c))))))) 
+				'(lambda (c) 
+				   `(call/cc 
+				     (lambda (c) (call/cc (lambda (cc) (c (,c ',c))))))))))))))
+      "(call/cc (lambda (c) (call/cc (lambda (cc) (c (#1=(lambda (c) (cons (quote call/cc) (cons (cons (quote lambda) (cons (quote (c)) (cons (cons (quote call/cc) (cons (cons (quote lambda) (cons (quote (cc)) (cons (cons (quote c) (cons (cons c (cons (cons (quote quote) (cons c (quote ()))) (quote ()))) (quote ()))) (quote ())))) (quote ()))) (quote ())))) (quote ())))) (quote #1#)))))))")
+
+(test (object->string ((lambda (x) 
+			 (list x (list (quote quote) x))) 
+		       (quote 
+			(lambda (x) 
+			  (list x (list (quote quote) x))))))
+		      "(#1=(lambda (x) (list x (list (quote quote) x))) (quote #1#))")
+
+(test (object->string ((lambda (q qq) ((lambda (x) `((lambda (q qq) ,(q x)) . ,(q qq))) 
+				       '(lambda (x) `((lambda (q qq) ,(q x)) . ,(q qq))))) 
+		       (lambda (q) `(,q ',q)) 
+		       '(lambda (q) `(,q ',q))))
+      "((lambda (q qq) (#1=(lambda (x) (cons (cons (quote lambda) (cons (quote (q qq)) (cons (q x) (quote ())))) (q qq))) (quote #1#))) #2=(lambda (q) (cons q (cons (cons (quote quote) (cons q (quote ()))) (quote ())))) (quote #2#))")
+
+(test (object->string ((lambda (c) 
+			 (if (procedure? c) (c 0) 
+			     ((lambda (c) `((lambda (c) (if (procedure? c) (c 0) (,c ',c))) 
+					    (call/cc call/cc))) 
+			      '(lambda (c) `((lambda (c) (if (procedure? c) (c 0) (,c ',c))) 
+					     (call/cc call/cc)))))) 
+		       (call/cc call/cc)))
+      "((lambda (c) (if (procedure? c) (c 0) (#1=(lambda (c) (cons (cons (quote lambda) (cons (quote (c)) (cons (cons (quote if) (cons (quote (procedure? c)) (cons (cons (quote c) (cons 0 (quote ()))) (cons (cons c (cons (cons (quote quote) (cons c (quote ()))) (quote ()))) (quote ()))))) (quote ())))) (quote ((call/cc call/cc))))) (quote #1#)))) (call/cc call/cc))")
+
+(test (object->string ((lambda (c) 
+			 (if (procedure? c) 
+			     (c '`((lambda (c) (if (procedure? c) (c ',c) ,c)) (call/cc call/cc))) 
+			     `((lambda (c) (if (procedure? c) (c ',c) ,c)) (call/cc call/cc)))) 
+		       (call/cc call/cc)))
+      "((lambda (c) (if (procedure? c) (c (quote #1=(cons (cons (quote lambda) (cons (quote (c)) (cons (cons (quote if) (cons (quote (procedure? c)) (cons (cons (quote c) (cons (cons (quote quote) (cons c (quote ()))) (quote ()))) (cons c (quote ()))))) (quote ())))) (quote ((call/cc call/cc)))))) #1#)) (call/cc call/cc))")
+
+
+(test (object->string ((lambda (x) `((lambda (x) ,x) ',x)) '`((lambda (x) ,x) ',x)))
+      "((lambda (x) #1=(cons (cons (quote lambda) (cons (quote (x)) (cons x (quote ())))) (cons (cons (quote quote) (cons x (quote ()))) (quote ())))) (quote #1#))")
+
+
+(test (object->string ((lambda (q) ((lambda (x) `((lambda (q) ,((eval q) x)) ',q)) 
+				    '(lambda (x) `((lambda (q) ,((eval q) x)) ',q)))) 
+		       '(lambda (x) `(,x ',x))))
+      "((lambda (q) (#1=(lambda (x) (cons (cons (quote lambda) (cons (quote (q)) (cons ((eval q) x) (quote ())))) (cons (cons (quote quote) (cons q (quote ()))) (quote ())))) (quote #1#))) (quote (lambda (x) (cons x (cons (cons (quote quote) (cons x (quote ()))) (quote ()))))))")
+
+(test (with-output-to-string (lambda ()
+			       ((lambda (p) (write (list p (list (quote quote) p)))) 
+				(quote (lambda (p) (write (list p (list (quote quote) p))))))))
+      "(#1=(lambda (p) (write (list p (list (quote quote) p)))) (quote #1#))")
+
+(test (object->string ((lambda (x) `(,(reverse x) ',x)) '(`(,(reverse x) ',x) (x) lambda)))
+      "((lambda #2=(x) #1=(cons (reverse x) (cons (cons (quote quote) (cons x (quote ()))) (quote ())))) (quote (#1# #2# lambda)))")
+
+
 
 
 ;;; -------- dynamic-wind --------
@@ -9555,6 +9646,19 @@
 (test (dynamic-wind (lambda () 1) #f (lambda () 2)) 'error)
 (test (dynamic-wind . 1) 'error)
 
+;;; from scheme wiki
+;;; http://community.schemewiki.org/?hose-the-repl
+;;; jorgen-schafer
+
+(test (let loop ()  
+	(call-with-current-continuation 
+	 (lambda (k)  
+	   (dynamic-wind  
+	       (lambda () #t)  
+	       (lambda () (let loop () (loop)))  
+	       k))) 
+	(loop))
+      'error)
 
 
 

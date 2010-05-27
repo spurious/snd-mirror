@@ -932,11 +932,11 @@ are times when nothing but a ton of oscils will do:
 
    (do ((i 0 (+ 1 i)))
        ((= i len))
-     (vector-set! freqs i (list-ref peaks (* i 2)))
-     (vector-set! oscs i (<em class=red>make-oscil</em> (vector-ref freqs i) (random pi)))
-     (vector-set! amps i (list-ref peaks (+ 1 (* 2 i))))
-     (vector-set! ramps i (<a class=quiet href="#make-rand-interp" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_rand_interp_tip)">make-rand-interp</a> (+ 1.0 (* i (/ 20.0 len))) 
-					    (* (+ .1 (* i (/ 3.0 len))) (vector-ref amps i)))))
+     (set! (freqs i) (peaks (* i 2)))
+     (set! (oscs i) (<em class=red>make-oscil</em> (freqs i) (random pi)))
+     (set! (amps i) (peaks (+ 1 (* 2 i))))
+     (set! (ramps i) (<a class=quiet href="#make-rand-interp" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_rand_interp_tip)">make-rand-interp</a> (+ 1.0 (* i (/ 20.0 len))) 
+				       (* (+ .1 (* i (/ 3.0 len))) (amps i)))))
    (run
     (do ((i 0 (+ 1 i)))
 	((= i samps))
@@ -944,9 +944,9 @@ are times when nothing but a ton of oscils will do:
 	    (fm (<a class=quiet href="#rand-interp" onmouseout="UnTip()" onmouseover="Tip(sndclm_rand_interp_tip)">rand-interp</a> vib)))
         (do ((k 0 (+ 1 k)))
 	    ((= k len))
-	  (set! sum (+ sum (* (+ (vector-ref amps k)
-			         (<a class=quiet href="#rand-interp" onmouseout="UnTip()" onmouseover="Tip(sndclm_rand_interp_tip)">rand-interp</a> (vector-ref ramps k)))
-			      (<em class=red>oscil</em> (vector-ref oscs k) (* (vector-ref freqs k) fm))))))
+	  (set! sum (+ sum (* (+ (amps k)
+			         (<a class=quiet href="#rand-interp" onmouseout="UnTip()" onmouseover="Tip(sndclm_rand_interp_tip)">rand-interp</a> (ramps k)))
+			      (<em class=red>oscil</em> (oscs k) (* (freqs k) fm))))))
 	(<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf) sum)))))))
 </pre>
 </td></tr></table>
@@ -2185,7 +2185,7 @@ is scaled to be -1..1, so that adds another layer of confusion). There's a longe
 		      (let ((oscs (make-vector 3 #f)))
 			(do ((i 0 (+ 1 i)))
 			    ((= i 3))
-			  (vector-set! oscs i (make-oscil (* freq (+ 1 i)))))
+			  (set! (oscs i) (make-oscil (* freq (+ 1 i)))))
 			oscs)
 		      (if (= type 1)
 			  (make-ncos freq 3)
@@ -2217,7 +2217,7 @@ is scaled to be -1..1, so that adds another layer of confusion). There's a longe
 		       (let ((sum 0.0))
 			 (do ((k 0 (+ 1 k)))
 			     ((= k 3))
-			   (set! sum (+ sum (oscil (vector-ref carrier k) (* (+ 1 k) md))))) ; or leave unscaled
+			   (set! sum (+ sum (oscil (carrier k) (* (+ 1 k) md))))) ; or leave unscaled
 			 (/ sum 3))
 		       (if (= type 1)
 			   (sum-of-cosines carrier md)
@@ -4741,10 +4741,10 @@ And the fourth used the ssb-am-bank function in dsp.scm rewritten here for with-
         ((&gt; i pairs))
       (let* ((aff (* i old-freq))
              (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
-        (vector-set! ssbs (- i 1) (<em class=red>make-ssb-am</em> (* i factor old-freq)))
-        (vector-set! bands (- i 1) (<a class=quiet href="sndscm.html#makebandpass" onmouseout="UnTip()" onmouseover="Tip(sndscm_makebandpass_tip)">make-bandpass</a> (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (- aff bwf)) ; bandpass is in dsp.scm
-                                                 (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (+ aff bwf)) 
-                                                 order))))
+        (set! (ssbs (- i 1)) (<em class=red>make-ssb-am</em> (* i factor old-freq)))
+        (set! (bands (- i 1)) (<a class=quiet href="sndscm.html#makebandpass" onmouseout="UnTip()" onmouseover="Tip(sndscm_makebandpass_tip)">make-bandpass</a> (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (- aff bwf)) ; bandpass is in dsp.scm
+                                             (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (+ aff bwf)) 
+                                             order))))
     (<a class=quiet href="extsnd.html#run" onmouseout="UnTip()" onmouseover="Tip(extsnd_run_tip)">run</a>
      (do ((i start (+ 1 i))) 
          ((= i end))
@@ -4752,8 +4752,8 @@ And the fourth used the ssb-am-bank function in dsp.scm rewritten here for with-
              (y (<a class=quiet href="#readin" onmouseout="UnTip()" onmouseover="Tip(sndclm_readin_tip)">readin</a> rd)))
          (do ((band 0 (+ 1 band)))
              ((= band pairs))
-           (set! sum (+ sum (<em class=red>ssb-am</em> (vector-ref ssbs band) 
-                                    (<a class=quiet href="sndscm.html#makebandpass" onmouseout="UnTip()" onmouseover="Tip(sndscm_makebandpass_tip)">bandpass</a> (vector-ref bands band) y)))))
+           (set! sum (+ sum (<em class=red>ssb-am</em> (ssbs band) 
+                                    (<a class=quiet href="sndscm.html#makebandpass" onmouseout="UnTip()" onmouseover="Tip(sndscm_makebandpass_tip)">bandpass</a> (bands band) y)))))
          (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* amp sum)))))))
 
  (let* ((sound "oboe.snd")
@@ -4773,7 +4773,7 @@ We would replace the current make-ssb-am line with:
 </p>
 <pre>
     (vector-set! ssbs (- i 1) (<em class=red>make-ssb-am</em> (+ (* i factor old-freq)
-                                             (* new-freq (round (* i <em class=red>stretch</em>))))))
+                                              (* new-freq (round (* i <em class=red>stretch</em>))))))
 </pre>
 
 
@@ -5181,16 +5181,16 @@ do perfectly well:
 	(rands (make-vector n #f)))
     (do ((i 0 (+ 1 i)))
 	((= i n))
-      (vector-set! rands i (<em class=red>make-rand</em> :frequency (<a class=quiet href="#mussrate" onmouseout="UnTip()" onmouseover="Tip(sndclm_mussrate_tip)">mus-srate</a>) :amplitude (/ 100 n)))
-      (rand (vector-ref rands i)))
+      (set! (rands i) (<em class=red>make-rand</em> :frequency (<a class=quiet href="#mussrate" onmouseout="UnTip()" onmouseover="Tip(sndclm_mussrate_tip)">mus-srate</a>) :amplitude (/ 100 n)))
+      (rand (rands i)))
     (do ((i 0 (+ 1 i)))
 	((= i 100000))
       (let ((sum 0.0))
 	(do ((k 0 (+ 1 k)))
 	    ((= k n))
-	  (set! sum (+ sum (<em class=red>rand</em> (vector-ref rands k)))))
+	  (set! sum (+ sum (<em class=red>rand</em> (rands k)))))
 	(let ((bin (floor (+ 100 (round sum)))))
-	  (vector-set! bins bin (+ (vector-ref bins bin) 1)))))
+	  (set! (bins bin) (+ (bins bin) 1)))))
     bins))
 
 (let ((ind (<a class=quiet href="extsnd.html#newsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_newsound_tip)">new-sound</a> "test.snd")))
@@ -5272,14 +5272,14 @@ than the preceding:
   (let ((rans (make-vector n)))
     (do ((i 0 (+ 1 i))) 
         ((= i n) rans)
-      (vector-set! rans i (<em class=red>make-rand</em> :frequency (/ (<a class=quiet href="#mussrate" onmouseout="UnTip()" onmouseover="Tip(sndclm_mussrate_tip)">mus-srate</a>) (expt 2 i)))))))
+      (set! (rans i) (<em class=red>make-rand</em> :frequency (/ (<a class=quiet href="#mussrate" onmouseout="UnTip()" onmouseover="Tip(sndclm_mussrate_tip)">mus-srate</a>) (expt 2 i)))))))
 
 (define (1f-noise rans)
   (let ((val 0.0) 
         (len (length rans)))
     (do ((i 0 (+ 1 i)))
         ((= i len) (/ val len))
-      (set! val (+ val (<em class=red>rand</em> (vector-ref rans i)))))))
+      (set! val (+ val (<em class=red>rand</em> (rans i)))))))
 </pre>
 </td></tr></table>
 
@@ -5831,7 +5831,7 @@ If "radius" is .99, you get a glass-harmonica effect; if it's less, you get more
     (let ((start-frq (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> menv)))
       (do ((i 0 (+ 1 i)))
 	  ((= i num-formants))
-	(vector-set! frms i (<em class=red>make-formant</em> (* (+ i 1) start-frq) radius))))
+	(set! (frms i) (<em class=red>make-formant</em> (* (+ i 1) start-frq) radius))))
     (<a class=quiet href="extsnd.html#run" onmouseout="UnTip()" onmouseover="Tip(extsnd_run_tip)">run</a>
      (do ((k beg (+ 1 k)))
          ((= k end))
@@ -5840,10 +5840,10 @@ If "radius" is .99, you get a glass-harmonica effect; if it's less, you get more
 	     (frq (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> menv)))
 	 (do ((i 0 (+ 1 i)))
 	     ((= i num-formants))
-	   (set! sum (+ sum (<em class=red>formant</em> (vector-ref frms i) x)))
+	   (set! sum (+ sum (<em class=red>formant</em> (frms i) x)))
 	   (let ((curfrq (* (+ i 1) frq)))
 	     (if (&lt; (* 2 curfrq) (<a class=quiet href="#mussrate" onmouseout="UnTip()" onmouseover="Tip(sndclm_mussrate_tip)">mus-srate</a>))
-	         (set! (<em class=red>mus-frequency</em> (vector-ref frms i)) curfrq))))
+	         (set! (<em class=red>mus-frequency</em> (frms i)) curfrq))))
          (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> k (* amp sum)))))))
 
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
@@ -6417,14 +6417,14 @@ delay line as the coefficients for an FIR filter:
          (rd (<a class=quiet href="#make-readin" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_readin_tip)">make-readin</a> file)))
     (do ((k 0 (+ 1 k)))
         ((= k num-combs0))
-      (vector-set! cmbs0 k 
-                   (<em class=red>make-comb</em> scaler 
-                              (floor (* comb-len (list-ref combs0 k))))))
+      (set! (cmbs0 k)
+            (<em class=red>make-comb</em> scaler 
+              (floor (* comb-len (list-ref combs0 k))))))
     (do ((k 0 (+ 1 k)))
         ((= k num-combs1))
-      (vector-set! cmbs1 k 
-                   (<em class=red>make-comb</em> scaler 
-                              (floor (* comb-len (list-ref combs1 k))))))
+      (set! (cmbs1 k)
+            (<em class=red>make-comb</em> scaler 
+              (floor (* comb-len (list-ref combs1 k))))))
     (<a class=quiet href="extsnd.html#run" onmouseout="UnTip()" onmouseover="Tip(extsnd_run_tip)">run</a>
      (do ((i beg (+ 1 i)))
          ((= i end))
@@ -6434,10 +6434,10 @@ delay line as the coefficients for an FIR filter:
               (x (<a class=quiet href="#readin" onmouseout="UnTip()" onmouseover="Tip(sndclm_readin_tip)">readin</a> rd)))
          (do ((k 0 (+ 1 k)))
              ((= k num-combs0))
-           (set! sum0 (+ sum0 (<em class=red>comb</em> (vector-ref cmbs0 k) x))))
+           (set! sum0 (+ sum0 (<em class=red>comb</em> (cmbs0 k) x))))
          (do ((k 0 (+ 1 k)))
              ((= k num-combs1))
-           (set! sum1 (+ sum1 (<em class=red>comb</em> (vector-ref cmbs1 k) x))))
+           (set! sum1 (+ sum1 (<em class=red>comb</em> (cmbs1 k) x))))
          (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (+ (* interp sum0) (* (- 1.0 interp) sum1))))))))
 
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:scaled-to .5) 

@@ -51,7 +51,7 @@
 			  ))))
     (ws-interrupt?) ;;does this really belong here?
     (run
-     (do ((i beg (1+ i)))
+     (do ((i beg (+ 1 i)))
 	 ((= i end))
        (if (= dx dt);;when current sample is a breakpoint
 	   (begin

@@ -1186,13 +1186,13 @@ these declarations in ~/.snd:
 (define (run-gen func)        ; func is a function of no arguments (a "thunk")
   (do ((i 0 (+ 1 i))) 
       ((= i data-size))
-    (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> data i (func))) ; fill data vct with output of 'func'
+    (set! (data i) (func))) ; fill data vct with output of 'func'
   (<a class=quiet href="extsnd.html#graph" onmouseout="UnTip()" onmouseover="Tip(extsnd_graph_tip)">graph</a> data))               ; display data as a graph
 
 (define (run-fft func)
   (do ((i 0 (+ 1 i))) 
       ((= i data-size))
-    (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> data i (func)))
+    (set! (data i) (func)))
   (<a class=quiet href="extsnd.html#graph" onmouseout="UnTip()" onmouseover="Tip(extsnd_graph_tip)">graph</a> (<a class=quiet href="extsnd.html#sndspectrum" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndspectrum_tip)">snd-spectrum</a> data blackman2-window data-size #t)))
 </pre></td></tr></table>
 
@@ -1382,7 +1382,7 @@ an oscil or a sawtooth-wave:
 	  (lambda (dir)
 	    (<a class=quiet href="sndclm.html#granulate" onmouseout="UnTip()" onmouseover="Tip(sndclm_granulate_tip)">granulate</a> gr
 	      (lambda (dir)
-		(let ((val (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> v inctr)))
+		(let ((val (v inctr)))
 		  (set! inctr (+ inctr dir))
 		  (if (&gt;= inctr vsize)
 		      (begin

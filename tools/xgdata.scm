@@ -313,6 +313,8 @@
 (CINT "GDK_SETTING" "GdkEventType")
 (CINT-250 "GDK_OWNER_CHANGE" "GdkEventType")
 (CINT-273 "GDK_GRAB_BROKEN" "GdkEventType")
+
+;;; these may be out 2.90.1
 (CINT "GDK_EXPOSURE_MASK" "GdkEventMask")
 (CINT "GDK_POINTER_MOTION_MASK" "GdkEventMask")
 (CINT "GDK_POINTER_MOTION_HINT_MASK" "GdkEventMask")
@@ -335,6 +337,8 @@
 (CINT "GDK_SUBSTRUCTURE_MASK" "GdkEventMask")
 (CINT "GDK_SCROLL_MASK" "GdkEventMask")
 (CINT "GDK_ALL_EVENTS_MASK" "GdkEventMask")
+
+
 (CINT "GDK_VISIBILITY_UNOBSCURED " "GdkVisibilityState")
 (CINT "GDK_VISIBILITY_PARTIAL " "GdkVisibilityState")
 (CINT "GDK_VISIBILITY_FULLY_OBSCURED" "GdkVisibilityState")
@@ -4263,7 +4267,7 @@
 (CFNC-21 "void gdk_display_beep GdkDisplay* display")
 (CFNC-21 "void gdk_display_sync GdkDisplay* display")
 (CFNC-21 "void gdk_display_close GdkDisplay* display")
-(CFNC-21 "GList* gdk_display_list_devices GdkDisplay* display")
+;;;; 2-90.1 (CFNC-21 "GList* gdk_display_list_devices GdkDisplay* display")
 (CFNC-21 "GdkEvent* gdk_display_get_event GdkDisplay* display")
 (CFNC-21 "GdkEvent* gdk_display_peek_event GdkDisplay* display")
 (CFNC-21 "void gdk_display_put_event GdkDisplay* display GdkEvent* event")
@@ -4832,7 +4836,7 @@
 
 (CFNC-236 "void gdk_display_set_double_click_distance GdkDisplay* display guint distance")
 (CFNC-236 "GdkWindow* gdk_display_get_default_group GdkDisplay* display") 
-(CFNC-236 "void gdk_window_set_accept_focus GdkWindow* window gboolean accept_focus")
+;;; changed return type 2.90.1 (CFNC-236 "void gdk_window_set_accept_focus GdkWindow* window gboolean accept_focus")
 (CFNC-236 "GdkWindow* gdk_window_get_group GdkWindow* window")
 (CFNC-236 "gboolean gtk_action_group_get_sensitive GtkActionGroup* action_group")
 (CFNC-236 "void gtk_action_group_set_sensitive GtkActionGroup* action_group gboolean sensitive")
@@ -4936,7 +4940,7 @@
 ;;; out 2.5.6 (CFNC-250 "void gtk_cell_view_set_cell_data GtkCellView* cellview")
 ;;; out 2.17.2 (CFNC-250 "GList* gtk_cell_view_get_cell_renderers GtkCellView* cellview") ; FREE (g_list_free)
 
-(CFNC-250 "void gdk_window_set_focus_on_map GdkWindow* window gboolean focus_on_map")
+;;; changed return type 2.90.1 (CFNC-250 "void gdk_window_set_focus_on_map GdkWindow* window gboolean focus_on_map")
 (CFNC-250 "void gdk_window_enable_synchronized_configure GdkWindow* window")
 (CFNC-250 "void gdk_window_configure_finished GdkWindow* window")
 ;;;(CFNC-250 "gchar* gtk_action_group_translate_string GtkActionGroup* action_group gchar* string") -- out 2.5.2
@@ -7080,17 +7084,84 @@
 #|
 
 ;;; 2.19.6
-(CFUNC-2190 "void gdk_keymap_add_virtual_modifiers GdkKeymap* keymap GdkModifierType* state")
-(CFUNC-2190 "void gtk_widget_get_requisition GtkWidget* widget GtkRequisition* requisition")
+(CFUNC-2901 "void gdk_keymap_add_virtual_modifiers GdkKeymap* keymap GdkModifierType* state")
+(CFUNC-2901 "void gtk_widget_get_requisition GtkWidget* widget GtkRequisition* requisition")
 
 ;;; 2.21.0
-(CFUNC-2190 "void gdk_window_coords_to_parent GdkWindow* window gdouble x gdouble y gdouble* [parent_x] gdouble* [parent_y]")
-(CFUNC-2190 "void gdk_window_coords_from_parent GdkWindow* window gdouble parent_x gdouble parent_y gdouble* [x] gdouble* [y]")
-(CFUNC-2190 "GdkWindow* gdk_window_get_effective_parent GdkWindow* window")
-(CFUNC-2190 "GdkWindow* gdk_window_get_effective_toplevel GdkWindow* window")
-(CFUNC-2190 "GtkWidget* gtk_accessible_get_widget GtkAccessible* accessible")
-(CFUNC-2190 "GtkAdjustment* gtk_text_view_get_hadjustment GtkTextView* text_view")
-(CFUNC-2190 "GtkAdjustment* gtk_text_view_get_vadjustment GtkTextView* text_view")
-(CFUNC-2190 "gboolean gtk_widget_send_focus_change GtkWidget* widget GdkEvent* event")
+(CFUNC-2901 "void gdk_window_coords_to_parent GdkWindow* window gdouble x gdouble y gdouble* [parent_x] gdouble* [parent_y]")
+(CFUNC-2901 "void gdk_window_coords_from_parent GdkWindow* window gdouble parent_x gdouble parent_y gdouble* [x] gdouble* [y]")
+(CFUNC-2901 "GdkWindow* gdk_window_get_effective_parent GdkWindow* window")
+(CFUNC-2901 "GdkWindow* gdk_window_get_effective_toplevel GdkWindow* window")
+(CFUNC-2901 "GtkWidget* gtk_accessible_get_widget GtkAccessible* accessible")
+(CFUNC-2901 "GtkAdjustment* gtk_text_view_get_hadjustment GtkTextView* text_view")
+(CFUNC-2901 "GtkAdjustment* gtk_text_view_get_vadjustment GtkTextView* text_view")
+(CFUNC-2901 "gboolean gtk_widget_send_focus_change GtkWidget* widget GdkEvent* event")
+
+
+;;; 2.90.1? -- use gtk_scale_new in configure?
+
+(CFNC-2901 "void gdk_display_get_device_state GdkDisplay* display GdkDevice* device GdkScreen** screen gint* x gint* y GdkModifierType* mask")
+(CFNC-2901 "GdkWindow* gdk_display_get_window_at_device_position GdkDisplay* display GdkDevice* device gint* win_x gint* win_y")
+(CFNC-2901 "void gdk_display_warp_device GdkDisplay* display GdkDevice* device GdkScreen* screen gint x gint y")
+(CFNC-2901 "GdkDeviceManager* gdk_display_get_device_manager GdkDisplay* display")
+(CFNC-2901 "void gdk_drag_context_set_device GdkDragContext* context GdkDevice* device")
+(CFNC-2901 "GdkDevice* gdk_drag_context_get_device GdkDragContext* context")
+(CFNC-2901 "GList* gdk_drag_context_list_targets GdkDragContext* context")
+(CFNC-2901 "GdkDragAction gdk_drag_context_get_actions GdkDragContext* context")
+(CFNC-2901 "GdkDragAction gdk_drag_context_get_suggested_action GdkDragContext* context")
+(CFNC-2901 "GdkDragAction gdk_drag_context_get_action GdkDragContext* context")
+(CFNC-2901 "void gdk_event_set_device GdkEvent* event GdkDevice* device")
+(CFNC-2901 "GdkDevice* gdk_event_get_device const GdkEvent* event")
+(CFNC-2901 "gboolean gdk_events_get_distance GdkEvent* event1 GdkEvent* event2 gdouble* distance")
+(CFNC-2901 "gboolean gdk_events_get_angle GdkEvent* event1 GdkEvent* event2 gdouble* angle")
+(CFNC-2901 "gboolean gdk_events_get_center GdkEvent* event1 GdkEvent* event2 gdouble* x gdouble* y")
+(CFNC-2901 "GdkImageType gdk_image_get_image_type GdkImage* image")
+(CFNC-2901 "GdkVisual* gdk_image_get_visual GdkImage* image")
+(CFNC-2901 "GdkByteOrder gdk_image_get_byte_order GdkImage* image")
+(CFNC-2901 "gint gdk_image_get_width GdkImage* image")
+(CFNC-2901 "gint gdk_image_get_height GdkImage* image")
+(CFNC-2901 "guint16 gdk_image_get_depth GdkImage* image")
+(CFNC-2901 "guint16 gdk_image_get_bytes_per_pixel GdkImage* image")
+(CFNC-2901 "guint16 gdk_image_get_bytes_per_line GdkImage* image")
+(CFNC-2901 "guint16 gdk_image_get_bits_per_pixel GdkImage* image")
+(CFNC-2901 "gboolean gdk_window_get_accept_focus GdkWindow* window")
+(CFNC-2901 "gboolean gdk_window_get_focus_on_map GdkWindow* window")
+(CFNC-2901 "gboolean gdk_window_get_composited GdkWindow* window")
+(CFNC-2901 "gboolean gdk_window_is_input_only GdkWindow* window")
+(CFNC-2901 "gboolean gdk_window_is_shaped GdkWindow* window")
+(CFNC-2901 "gboolean gdk_window_get_modal_hint GdkWindow* window")
+(CFNC-2901 "void gdk_window_get_background GdkWindow* window GdkColor* color")
+(CFNC-2901 "void gdk_window_get_back_pixmap GdkWindow* window GdkPixmap** pixmap gboolean* parent_relative")
+(CFNC-2901 "void gdk_window_set_device_cursor GdkWindow* window GdkDevice* device GdkCursor* cursor")
+(CFNC-2901 "GdkCursor* gdk_window_get_device_cursor GdkWindow* window GdkDevice* device")
+(CFNC-2901 "GdkWindow* gdk_window_get_device_position GdkWindow* window GdkDevice* device gint* x gint* y GdkModifierType* mask")
+(CFNC-2901 "void gdk_window_set_device_events GdkWindow* window GdkDevice* device GdkEventMask event_mask")
+(CFNC-2901 "GdkEventMask gdk_window_get_device_events GdkWindow* window GdkDevice* device")
+(CFNC-2901 "void gtk_combo_box_popup_for_device GtkComboBox* combo_box GdkDevice* device")
+(CFNC-2901 "void gtk_device_grab_add GtkWidget* widget GdkDevice* device gboolean block_others")
+(CFNC-2901 "void gtk_device_grab_remove GtkWidget* widget GdkDevice* device")
+(CFNC-2901 "GdkDevice* gtk_get_current_event_device void")
+(CFNC-2901 "void gtk_menu_popup_for_device GtkMenu* menu GdkDevice* device GtkWidget* parent_menu_shell GtkWidget* parent_menu_item GtkMenuPositionFunc func gpointer data guint button guint32 activate_time")
+(CFNC-2901 "GtkWidget* gtk_paned_new GtkOrientation orientation")
+(CFNC-2901 "void gtk_radio_action_join_group GtkRadioAction* action GtkRadioAction* group_source")
+(CFNC-2901 "GtkWidget* gtk_ruler_new GtkOrientation orientation")
+(CFNC-2901 "GtkWidget* gtk_scale_new GtkOrientation orientation GtkAdjustment* adjustment")
+(CFNC-2901 "GtkWidget* gtk_scale_new_with_range GtkOrientation orientation gdouble min gdouble max gdouble step")
+(CFNC-2901 "GtkWidget* gtk_scrollbar_new GtkOrientation orientation GtkAdjustment* adjustment")
+(CFNC-2901 "GtkWidget* gtk_separator_new GtkOrientation orientation")
+(CFNC-2901 "gboolean gtk_widget_device_is_shadowed GtkWidget* widget GdkDevice* device")
+(CFNC-2901 "void gtk_widget_set_device_events GtkWidget* widget GdkDevice* device GdkEventMask events")
+(CFNC-2901 "void gtk_widget_add_device_events GtkWidget* widget GdkDevice* device GdkEventMask events")
+(CFNC-2901 "gboolean gtk_widget_get_support_multidevice GtkWidget* widget")
+(CFNC-2901 "void gtk_widget_set_support_multidevice GtkWidget* widget gboolean support_multidevice")
+(CFNC-2901 "GdkEventMask gtk_widget_get_device_events GtkWidget* widget GdkDevice* device")
+(CFNC-2901 "GtkWidget* gtk_window_group_get_current_device_grab GtkWindowGroup* window_group GdkDevice* device")
+
+
+
+! GTK_MULTIDEVICE = 1 << 23
+ } GtkWidgetFlags
+
+
 
 |#

@@ -87,7 +87,7 @@
     (set! cycle-length size)
     (set! cycle-start 0)
     (if (< cycle-length old-length)
-	(do ((i cycle-length (1+ i)))
+	(do ((i cycle-length (+ 1 i)))
 	    ((>= i old-length))
 	  (sound-data-set! oscope-graph-data 0 i 0.0)))
     (set! oscope-frozen old-frozen)

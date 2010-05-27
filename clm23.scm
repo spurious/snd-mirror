@@ -105,16 +105,16 @@
 	 (start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur)))
 	 (arr (make-vector 3)))
-    (vector-set! arr 0 os)
-    (vector-set! arr 1 #f)
-    (vector-set! arr 2 (make-ssb-am 660 40))
+    (set! (arr 0) os)
+    (set! (arr 1) #f)
+    (set! (arr 2) (make-ssb-am 660 40))
     (run
      (do ((i start (+ i 1))) ((= i end))
        (let* ((sum 0.0))
 	 (do ((i 0 (+ i 1)))
 	     ((= i (length arr)))
-	   (if (ssb-am? (vector-ref arr i))
-	       (set! sum (+ sum (ssb-am (vector-ref arr i) 1.0)))))
+	   (if (ssb-am? (arr i))
+	       (set! sum (+ sum (ssb-am (arr i) 1.0)))))
 	 (out-any i (* amp sum) 0))))))
 
 (define (simple-multiarr beg dur freq amp)
@@ -124,15 +124,15 @@
 	 (len (seconds->samples dur))
 	 (end (+ start len))
 	 (arr (make-vector 3)))
-    (vector-set! arr 0 (make-oscil freq))
-    (vector-set! arr 1 (make-env '(0 0 1 1) :scaler amp :duration dur))
-    (vector-set! arr 2 (make-oscil (* freq 2)))
+    (set! (arr 0) (make-oscil freq))
+    (set! (arr 1) (make-env '(0 0 1 1) :scaler amp :duration dur))
+    (set! (arr 2) (make-oscil (* freq 2)))
     (run
      (do ((i start (+ i 1))) 
 	 ((= i end))
-       (out-any i (* (env (vector-ref arr 1))
-		     (oscil (vector-ref arr 0)
-			    (* .1 (oscil (vector-ref arr 2)))))
+       (out-any i (* (env (arr 1))
+		     (oscil (arr 0)
+			    (* .1 (oscil (arr 2)))))
 		0)))))
 
 (define (simple-nsin beg dur amp)
@@ -178,14 +178,14 @@
 	 (arr (make-vector 20)))
     (do ((i 0 (+ i 1)))
 	((= i 20))
-      (vector-set! arr i (make-oscil (* (+ i 1) 100))))
+      (set! (arr i) (make-oscil (* (+ i 1) 100))))
     (run
      (do ((i start (+ i 1))) ((= i end))
        (let ((sum 0.0))
 	 (do ((i 0 (+ i 1)))
 	     ((= i (length arr)))
-	   (if (oscil? (vector-ref arr i))
-	       (set! sum (+ sum (oscil (vector-ref arr i))))))
+	   (if (oscil? (arr i))
+	       (set! sum (+ sum (oscil (arr i))))))
 	 (out-any i (* amp .05 sum) 0))))))
 
 (define (simple-asy beg dur amp)
@@ -1168,18 +1168,18 @@
     (do ((i 0 (+ i 1)))
 	((= i 20))
       (set! (arrfrq i) (double (* (+ i 1) 100.0)))
-      (vector-set! arr i (make-oscil (* (+ i 1) 100))))
+      (set! (arr i) (make-oscil (* (+ i 1) 100))))
     (run
      (do ((k start (+ 1 k))) ((= k end))
        (let ((sum 0.0))
 	 (do ((i 0 (+ i 1)))
 	     ((= i (length arr)))
-	   (if (oscil? (vector-ref arr i))
+	   (if (oscil? (arr i))
 	       (begin
-		 (set! (mus-frequency (vector-ref arr i)) (arrfrq i))
-		 (if (> (abs (- (mus-frequency (vector-ref arr i)) (arrfrq i))) .001)
-		     (clm-print "oops ~A ~A" (mus-frequency (vector-ref arr i)) (arrfrq i)))
-		 (set! sum (+ sum (oscil (vector-ref arr i)))))))
+		 (set! (mus-frequency (arr i)) (arrfrq i))
+		 (if (> (abs (- (mus-frequency (arr i)) (arrfrq i))) .001)
+		     (clm-print "oops ~A ~A" (mus-frequency (arr i)) (arrfrq i)))
+		 (set! sum (+ sum (oscil (arr i)))))))
 	 (out-any k (* amp .05 sum) 0))))))
 
 (define (sample-ardcl beg dur freq amp)
@@ -1199,9 +1199,9 @@
        (do ((i 0 (+ i 1)))
 	   ((= i (vct-length phases)))
 	 (set! (phases i) (+ (phases i) (hz->radians (freqs i)))))
-       (if (not (= (vector-ref ints 0) 32)) (clm-print "int array trouble"))
-       (vector-set! ints 1 3)
-       (if (not (= (vector-ref ints 1) 3)) (clm-print "set int array trouble"))
+       (if (not (= (ints 0) 32)) (clm-print "int array trouble"))
+       (set! (ints 1) 3)
+       (if (not (= (ints 1) 3)) (clm-print "set int array trouble"))
        (if (not (= (length amps) 3)) (clm-print "amps len: ~A" (length amps)))
        (out-any i (clm23-sine-bank amps phases 3) 0)))))
 
@@ -1821,7 +1821,7 @@
        (cond (e1 (set! ok1 (+ ok1 (env e1))))
 	     (#t (clm-print ";or3 1~%")))
        (if (or f1 f2)
-	   (set! ok1 (+ ok1 (vector-ref f2 0)))
+	   (set! ok1 (+ ok1 (f2 0)))
 	   (clm-print ";or3 a~%"))
        (if (not (or f2 f1))
 	   (clm-print ";or3 2~%"))
@@ -1829,12 +1829,12 @@
 	   (set! ok1 (+ ok1 (f1 1)))
 	   (clm-print ";or3 b~%"))
        (if (or i1 i2)
-	   (set! oki (+ oki (vector-ref i2 0)))
+	   (set! oki (+ oki (i2 0)))
 	   (clm-print ";or3 d~%"))
        (if (not (or i2 i1))
 	   (clm-print ";or3 3~%"))
        (if (and i2 i1)
-	   (set! oki (+ oki (vector-ref i1 1)))
+	   (set! oki (+ oki (i1 1)))
 	   (clm-print ";or3 e~%"))))))
 
 (define (or4)
@@ -1976,7 +1976,7 @@
          (fm-indices (make-vct n)))
     (do ((i 0 (+ i 1)))
 	((= i n))
-      (vector-set! modulators i (make-oscil (* freq (list-ref mc-ratios i)) (list-ref mod-phases i)))
+      (set! (modulators i) (make-oscil (* freq (list-ref mc-ratios i)) (list-ref mod-phases i)))
       (set! (fm-indices i) (hz->radians (* freq (list-ref indexes i) (list-ref mc-ratios i)))))
     (run
      (do ((i start (+ i 1)))
@@ -1984,7 +1984,7 @@
        (let ((sum 0.0))
 	 (do ((k 0 (+ 1 k)))
 	     ((= k n))
-	   (set! sum (+ sum (* (fm-indices k) (oscil (vector-ref modulators k))))))
+	   (set! sum (+ sum (* (fm-indices k) (oscil (modulators k))))))
 	 (outa i (* amp (oscil cr sum))))))))
 
 (define (fmdoc-violin beg dur frequency amplitude fm-index)
@@ -2058,12 +2058,12 @@
          (ran-vib (make-rand-interp 20 :amplitude (* freq .5 .02))))
     (do ((i 0 (+ i 1)))
 	((= i 3))
-      (vector-set! evens i (make-oscil 0))
-      (vector-set! odds i (make-oscil 0)))
+      (set! (evens i) (make-oscil 0))
+      (set! (odds i) (make-oscil 0)))
 
-    (vector-set! frmfs 0 (make-env '(0 520 100 490) :duration dur)) 
-    (vector-set! frmfs 1 (make-env '(0 1190 100 1350) :duration dur)) 
-    (vector-set! frmfs 2 (make-env '(0 2390 100 1690) :duration dur))
+    (set! (frmfs 0) (make-env '(0 520 100 490) :duration dur)) 
+    (set! (frmfs 1) (make-env '(0 1190 100 1350) :duration dur)) 
+    (set! (frmfs 2) (make-env '(0 2390 100 1690) :duration dur))
 
     (run
      (do ((i start (+ i 1)))
@@ -2073,7 +2073,7 @@
 	      (sum 0.0))
 	 (do ((k 0 (+ 1 k)))
 	     ((= k 3))
-	   (let* ((frm (env (vector-ref frmfs k)))
+	   (let* ((frm (env (frmfs k)))
 		  (frm0 (/ frm frq))
 		  (frm-int (floor frm0))
 		  (even-amp 0.0) (odd-amp 0.0) 
@@ -2091,10 +2091,10 @@
 		   (set! odd-amp (- 1.0 even-amp))))
 	     (set! sum (+ sum (+ (* (amps k) 
 				    (+ (* even-amp 
-					  (oscil (vector-ref evens k) 
+					  (oscil (evens k) 
 						 (+ even-freq (* (indices k) car))))
 				       (* odd-amp 
-					  (oscil (vector-ref odds k) 
+					  (oscil (odds k) 
 						 (+ odd-freq (* (indices k) car)))))))))))
 	 (outa i (* (env ampf) sum)))))))
 
@@ -2192,14 +2192,14 @@
 	 (arr (make-vector 20)))     ; we'll create a tone with 20 equal amplitude harmonics
     (do ((i 0 (+ i 1)))               ;   use the 'f' button to check out the spectrum
 	((= i 20))
-      (vector-set! arr i (make-oscil (* (+ i 1) freq))))
+      (set! (arr i) (make-oscil (* (+ i 1) freq))))
     (run
      (do ((i start (+ i 1))) 
 	 ((= i end))
        (let ((sum 0.0))
 	 (do ((k 0 (+ 1 k)))
 	     ((= k 20))
-	   (set! sum (+ sum (oscil (vector-ref arr k)))))
+	   (set! sum (+ sum (oscil (arr k)))))
 	 (out-any i (* amp .05 sum) 0))))))
 
 (definstrument (sndclmdoc-mapenv beg dur frq amp en)
@@ -2376,8 +2376,8 @@
 	((> i pairs))
       (let* ((aff (* i old-freq))
 	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
-	(vector-set! ssbs (- i 1) (make-ssb-am (* i factor old-freq)))
-	(vector-set! bands (- i 1) (make-bandpass (hz->radians (- aff bwf)) 
+	(set! (ssbs (- i 1)) (make-ssb-am (* i factor old-freq)))
+	(set! (bands (- i 1)) (make-bandpass (hz->radians (- aff bwf)) 
 						 (hz->radians (+ aff bwf)) 
 						 order))))
     (run
@@ -2387,8 +2387,8 @@
 	     (y (readin rd)))
 	 (do ((band 0 (+ 1 band)))
 	     ((= band pairs))
-	   (set! sum (+ sum (ssb-am (vector-ref ssbs band) 
-				    (bandpass (vector-ref bands band) y)))))
+	   (set! sum (+ sum (ssb-am (ssbs band) 
+				    (bandpass (bands band) y)))))
 	   (outa i (* amp sum)))))))
 
 (definstrument (sndclmdoc-fofins beg dur frq amp vib f0 a0 f1 a1 f2 a2 ve ae)
@@ -2654,7 +2654,7 @@
     (let ((start-frq (env menv)))
       (do ((i 0 (+ i 1)))
 	  ((= i num-formants))
-	(vector-set! frms i (make-formant (* (+ i 1) start-frq) radius))))
+	(set! (frms i) (make-formant (* (+ i 1) start-frq) radius))))
     (run
      (do ((k beg (+ 1 k)))
 	 ((= k end))
@@ -2663,10 +2663,10 @@
 	     (frq (env menv)))
 	 (do ((i 0 (+ i 1)))
 	     ((= i num-formants))
-	   (set! sum (+ sum (formant (vector-ref frms i) x)))
+	   (set! sum (+ sum (formant (frms i) x)))
 	   (let ((curfrq (* (+ i 1) frq)))
 	     (if (< (* 2 curfrq) (mus-srate))
-		 (set! (mus-frequency (vector-ref frms i)) curfrq))))
+		 (set! (mus-frequency (frms i)) curfrq))))
 	 (outa k (* amp sum)))))))
 
 (define (test-filter flt)
@@ -2690,14 +2690,14 @@
 	 (rd (make-readin file)))
     (do ((k 0 (+ 1 k)))
 	((= k num-combs0))
-      (vector-set! cmbs0 k 
-		   (make-comb scaler 
-			      (floor (* comb-len (list-ref combs0 k))))))
+      (set! (cmbs0 k)
+	    (make-comb scaler 
+		       (floor (* comb-len (list-ref combs0 k))))))
     (do ((k 0 (+ 1 k)))
 	((= k num-combs1))
-      (vector-set! cmbs1 k 
-		   (make-comb scaler 
-			      (floor (* comb-len (list-ref combs1 k))))))
+      (set! (cmbs1 k)
+	    (make-comb scaler 
+		       (floor (* comb-len (list-ref combs1 k))))))
     (run
      (do ((i beg (+ i 1)))
 	 ((= i end))
@@ -2707,10 +2707,10 @@
 	      (x (readin rd)))
 	 (do ((k 0 (+ 1 k)))
 	     ((= k num-combs0))
-	   (set! sum0 (+ sum0 (comb (vector-ref cmbs0 k) x))))
+	   (set! sum0 (+ sum0 (comb (cmbs0 k) x))))
 	 (do ((k 0 (+ 1 k)))
 	     ((= k num-combs1))
-	   (set! sum1 (+ sum1 (comb (vector-ref cmbs1 k) x))))
+	   (set! sum1 (+ sum1 (comb (cmbs1 k) x))))
 	 (outa i (+ (* interp sum0) (* (- 1.0 interp) sum1))))))))
 
 

@@ -13,7 +13,7 @@
 	(len (length data)))
     (do ((i 0 (+ i 2)))
 	((>= i len))
-      (let ((x (list-ref data (1+ i)))
+      (let ((x (list-ref data (+ 1 i)))
 	    (y (list-ref data i)))
 	(set! unseg (cons x unseg))
 	(set! unseg (cons y unseg))))

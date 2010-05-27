@@ -303,7 +303,7 @@ amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitud
   (let* ((len 22050)
 	 (osc (make-oscil freq)))
     (play (lambda ()
-	    (set! len (1- len))
+	    (set! len (- len 1))
 	    (if (<= len 0)
 		#f
 		(* amp (oscil osc)))))))
@@ -320,7 +320,7 @@ amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitud
       (vector-set! oscs i (make-oscil (car (list-ref freqs-and-amps i))))
       (vector-set! amps i (cadr (list-ref freqs-and-amps i))))
     (play (lambda ()
-	    (set! len (1- len))
+	    (set! len (- len 1))
 	    (if (<= len 0)
 		#f
 		(let ((sum 0.0))

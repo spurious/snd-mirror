@@ -47,11 +47,11 @@
 
     (define (grf-it val v)
       (round
-       (if (>= val (vct-ref v 1))
-	   (vct-ref v 3)
-	   (if (<= val (vct-ref v 0))
-	       (vct-ref v 2)
-	       (+ (vct-ref v 5) (* val (vct-ref v 4)))))))
+       (if (>= val (v 1))
+	   (v 3)
+	   (if (<= val (v 0))
+	       (v 2)
+	       (+ (v 5) (* val (v 4)))))))
 
     (define* (make-moving-rms (size 128))
       (make-moving-average size))
@@ -86,24 +86,24 @@
 		 (let ((first-sample (next-sample reader)))
 		   (set! x0 (grf-it (* left sr) xdata))
 		   (set! y0 (grf-it first-sample ydata))
-		   (vector-set! lines 0 x0)        ; first graph point
-		   (vector-set! lines 1 y0))
+		   (set! (lines 0) x0)        ; first graph point
+		   (set! (lines 1) y0))
 		 (do ((i (+ left 1) (+ 1 i)))       ; loop through all samples calling moving-rms
 		     ((= i right))
 		   (let* ((x1 (grf-it (* i sr) xdata))
 			  (y (moving-rms rms (next-sample reader))))
 		     (if (> x1 x0)                 ; very often many samples are represented by one pixel
 			 (let ((y1 (grf-it y ydata)))
-			   (vector-set! lines line-ctr x1)
-			   (vector-set! lines (+ 1 line-ctr) y1)
+			   (set! (lines line-ctr) x1)
+			   (set! (lines (+ 1 line-ctr)) y1)
 			   (set! line-ctr (+ line-ctr 2))
 			   (set! x0 x1)
 			   (set! y0 y1))))))      ; else should we do "max" here? or draw a vertical line from min to max?
 		(if (< line-ctr (length lines))
 		    (do ((j line-ctr (+ j 2)))       ; off-by-one in vector size calc -- need to pad so we don't get a bogus line to (0, 0)
 			((>= j (length lines)))
-		      (vector-set! lines j x0)
-		      (vector-set! lines (+ j 1) y0)))
+		      (set! (lines j) x0)
+		      (set! (lines (+ j 1)) y0)))
 		(draw-lines lines snd chn)
 		(set! (channel-property 'rms-lines snd chn) lines)  ; save current data for possible redisplay
 		(set! (channel-property 'rms-axis-info snd chn) axinf))
@@ -227,7 +227,7 @@ whenever they're in the current view."
 
     (define (samples-1 cur-data)
       (let* ((x0 (x->position (/ left (srate snd))))
-	     (y0 (y->position (vct-ref cur-data 0)))
+	     (y0 (y->position (cur-data 0)))
 	     (colors (make-vector (colormap-size) #f))
 	     (len (length cur-data))
 	     (incr (/ (+ 1 (- right left)) len)))
@@ -236,12 +236,12 @@ whenever they're in the current view."
 	    ((or (>= i right)
 		 (>= j len)))
 	  (let* ((x1 (x->position (/ i (srate snd))))
-		 (y1 (y->position (vct-ref cur-data j)))
-		 (x (abs (vct-ref cur-data j)))
+		 (y1 (y->position (cur-data j)))
+		 (x (abs (cur-data j)))
 		 (ref (floor (* (colormap-size) x)))
-		 (color (or (vector-ref colors ref)
+		 (color (or (colors ref)
 			    (let ((new-color (apply make-color (colormap-ref (colormap) x))))
-			      (vector-set! colors ref new-color)
+			      (set! (colors ref) new-color)
 			      new-color))))
 	    (set! (foreground-color snd chn) color)
 	    (draw-line x0 y0 x1 y1)

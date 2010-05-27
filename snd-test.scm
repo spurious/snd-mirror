@@ -49115,6 +49115,17 @@ EDITS: 1
 	(if (fneq val 0.02)
 	    (snd-display #__line__ ";run vct vector: ~A" val))))
 
+    (let ((v (vector 1 2 3))) 
+      (let ((val (run (set! (v 1) 32) (v 1))))
+	(if (not (= val 32))
+	    (snd-display #__line__ ";run set int vector: ~A" val))))
+
+    (let ((v1 (vector (vct 1 2 3)))) 
+      (let ((val (run ((v1 0) 1))))
+	(if (fneq val 2.0)
+	    (snd-display #__line__ ";run vct + vector: ~A" val))))
+	
+
     (let ((rdat (make-vct 16))
 	  (idat (make-vct 16))
 	  (v (make-vct 1)))
@@ -50336,7 +50347,7 @@ EDITS: 1
 	(if (not (vequal v0 v1)) (snd-display #__line__ ";jcrev: opt: ~A ~A" v0 v1))
 	(set! ts (cons (list "jcrev  " (hundred t0) (hundred t1) (round (safe-divide t0 t1))) ts))
 	(close-sound ind))
-      (snd-display #__line__ "~{       ~A~%~}~%" ts))
+      (snd-display #__line__ "~&~{       ~A~%~}~%" ts))
     (if with-gui
 	(let* ((osc (make-oscil 440))
 	       (vi (make-vector 2 1))
@@ -53540,9 +53551,9 @@ EDITS: 1
 	
 	;; 8-chans
 	(let* ((snd (find-sound (with-sound (:channels 8)
-					    (do ((i 0 (1+ i)))
+					    (do ((i 0 (+ 1 i)))
 						((= i 8))
-					      (fm-violin 0 1 (* (1+ i) 100.0) .3 :degree (* i (/ 360 8)))))))
+					      (fm-violin 0 1 (* (+ 1 i) 100.0) .3 :degree (* i (/ 360 8)))))))
 	       (len (frames snd)))
 	  (with-threaded-channels snd (lambda (snd chn) (src-channel 2.0 0 #f snd chn)))
 	  (do ((i 0 (+ i 1))) 
