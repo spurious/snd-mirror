@@ -78,7 +78,6 @@
 		(set! (foreground-color snd chn) red))
 	      (lambda ()
 		(run
-		 (declare (int-vector lines))
 		 (if (< start left)                ; check previous samples to get first rms value
 		     (do ((i start (+ 1 i)))
 			 ((= i left))

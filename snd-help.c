@@ -493,6 +493,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+27-May:  removed snd6.scm.\n\
 29-Apr:  Snd 11.5.\n\
 7-Apr:   autoload support via s7's *unbound-variable-hook*.\n\
 20-Mar:  Snd 11.4.\n\

@@ -10097,7 +10097,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   {
     char *buf;
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     type_name(obj),
 	     typeflag(obj),
@@ -10115,7 +10115,8 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     is_expansion(obj) ? " (expansion)" : "",
 	     (!is_not_local(obj)) ? " (local)" : "",
 	     symbol_accessed(obj) ? " (accessed)" : "",
-	     symbol_has_accessor(obj) ? " (has accessor)" : "",
+	     symbol_has_accessor(obj) ? " (accessor)" : "",
+	     has_structure(obj) ? " (structure)" : "",
 	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
     return(buf);
   }
@@ -10792,8 +10793,8 @@ static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
 
   if (!is_procedure(car(args)))
     return(s7_wrong_type_arg_error(sc, "call-with-output-string", 1, car(args), "a procedure"));
-  if ((is_continuation(cadr(args))) || is_goto(cadr(args)))
-    return(s7_wrong_type_arg_error(sc, "call-with-output-string", 2, cadr(args), "a normal procedure (not a continuation)"));
+  if ((is_continuation(car(args))) || is_goto(car(args)))
+    return(s7_wrong_type_arg_error(sc, "call-with-output-string", 2, car(args), "a normal procedure (not a continuation)"));
   
   port = s7_open_output_string(sc);
   push_stack(sc, opcode(OP_UNWIND_OUTPUT), sc->F, port);
@@ -25503,6 +25504,8 @@ s7_scheme *s7_init(void)
  * TODO: hash-table map and for-each should be entry-oriented, not alist-oriented
  * TODO: access to the pws setter [and figure out how to get from the C setter to its arity list -- used in snd-test]
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
+ *
+ * string->object? should be inverse of object->string, if possible
  */
 
 /* OBJECTS...

@@ -193,7 +193,6 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
 	     :eps (* 2.0 (sin (/ (* pi frequency) (mus-srate))))))
 
 (define (mfilter-1 m x-input y-input)
-  ;; no optional args, for 'run'
   (let* ((xn1 (+ x-input
 		 (* (mflt-decay m) (- (mflt-xn m) 
 				      (* (mflt-eps m) (mflt-yn m))))))

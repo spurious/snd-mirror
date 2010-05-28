@@ -4,7 +4,7 @@
 ;(load "edit123.scm")		   
 (load "snd7.scm")
 (load "snd11.scm")
-(load "snd6.scm")
+;(load "snd6.scm")
 (load "snd9.scm")
 (load "snd8.scm")
 (load "snd10.scm")

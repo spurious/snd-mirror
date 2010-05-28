@@ -97,7 +97,6 @@
  * PERHAPS: named let/tail recursion
  * SOMEDAY: generics like length
  * PERHAPS: can we get rid of "declare" now?
- * TODO: check virtual-filter problem in examp
  */
 
 
@@ -17187,8 +17186,6 @@ void mus_init_run(void)
   s7_define_function(s7, "run-clear-counts", g_clear_counts_w, 0, 0, 0, "clear run stats");
 #endif
 		       
-  s7_provide(s7, "run");
-
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_optimization, g_optimization_w, H_optimization, S_setB S_optimization, g_set_optimization_w,  0, 0, 1, 0);
   s7_define_function(s7, S_snd_declare, g_snd_declare_w, 1, 0, 0, H_snd_declare);
 
