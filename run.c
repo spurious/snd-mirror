@@ -97,6 +97,8 @@
  * PERHAPS: named let/tail recursion
  * SOMEDAY: generics like length
  * PERHAPS: can we get rid of "declare" now?
+ *
+ * perhaps we can access s7 globals directly -- no need to copy each way for ints/dbls/strings
  */
 
 

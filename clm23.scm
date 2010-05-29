@@ -1616,7 +1616,6 @@
 	 (lastphases (make-vct N2 0.0))
 	 (two-pi (* 2 pi)))
     (run
-     (declare (n2 integer))
      (do ((i start (+ i 1))) ((= i end))
        (out-any i 
 		(* amp
@@ -1672,7 +1671,6 @@
 	 (D (floor (/ size 4)))) ; overlap = 4
     (vct-scale! window (/ 2.0 (* 0.54 size)))
     (run
-     (declare (n2 integer) (D integer))
      (do ((i start (+ i 1))) ((= i end))
        (out-any i 
 		(* amp
@@ -1696,7 +1694,7 @@
 					      (set! (in-data k) (readin rd)))))
 				      (do ((k 0 (+ 1 k)))
 					  ((= k size))
-					(set! ((phase-vocoder-amp-increments sr) buf) (* (in-data k) (window k)))
+					(vct-set! (phase-vocoder-amp-increments sr) buf (* (in-data k) (window k)))
 					(set! buf (+ 1 buf))
 					(if (>= buf size) (set! buf 0)))
 				      (set! filptr (+ filptr D))
@@ -1715,7 +1713,7 @@
 					  (set! (lastphases k) freq)
 					  (if (> diff pi) (set! diff (- diff two-pi)))
 					  (if (< diff (- pi)) (set! diff (+ diff two-pi)))
-					  (set! ((phase-vocoder-freqs sr) k) (+ (* diff  pscl) ks))))
+					  (vct-set! (phase-vocoder-freqs sr) k (+ (* diff  pscl) ks))))
 				      #f))
 				  
 				  (lambda (closure)

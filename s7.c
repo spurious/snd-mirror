@@ -61,7 +61,7 @@
  *        random for any numeric type and any numeric argument, including 0 ferchrissake!
  *        sinh, cosh, tanh, asinh, acosh, atanh
  *        read-line, read-byte, write-byte
- *        logior, logxor, logand, lognot, ash, integer-length, nan?, infinite?
+ *        logior, logxor, logand, lognot, ash, integer-length, integer-decode-float, nan?, infinite?
  *        procedure-source, procedure-arity, procedure-documentation, help
  *          if the initial expression in a function body is a string constant, it is assumed to be a documentation string
  *        symbol-table, symbol->value, global-environment, current-environment, stack
@@ -954,6 +954,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 static bool object_is_applicable(s7_pointer x);
 static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a);
 static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b);
+static s7_pointer make_list_3(s7_scheme *sc, s7_pointer a, s7_pointer b, s7_pointer c);
 static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, int type);
 static void write_string(s7_scheme *sc, const char *s, s7_pointer pt);
 static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
@@ -7547,6 +7548,46 @@ static s7_pointer g_integer_length(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer g_integer_decode_float(s7_scheme *sc, s7_pointer args)
+{
+  #define H_integer_decode_float "(integer-decode-float x) returns a list containing the significand, exponent, and sign of 'x'"
+
+  s7_Int ix;
+  s7_pointer arg;
+  arg = car(args);
+
+  /* frexp doesn't work in edge cases.  Since the double and long long int fields are equivalenced
+   *   in the s7_num struct, we can get the actual bits from the double.  The problem with doing this
+   *   is that bignums don't use that struct.  Assume IEEE 754 and double = s7_Double.
+   */
+
+  if ((!s7_is_real(arg)) ||
+      (s7_is_rational(arg)))
+    return(s7_wrong_type_arg_error(sc, "integer-decode-float", 0, arg, "a non-rational real"));
+
+  if (s7_real(arg) == 0.0)
+    return(make_list_3(sc, small_int(0), small_int(0), small_int(1)));
+
+#if WITH_GMP
+  if (is_c_object(arg)) 
+    {
+      s7_num_t num;
+      real(num) = s7_number_to_real(arg);
+      ix = integer(num);
+    }
+  else
+#endif
+
+  ix = integer(number(arg));
+  return(make_list_3(sc,
+		     s7_make_integer(sc, (s7_Int)((ix & 0xfffffffffffffLL) | 0x10000000000000LL)),
+		     s7_make_integer(sc, (s7_Int)(((ix & 0x7fffffffffffffffLL) >> 52) - 1023 - 52)),
+		     s7_make_integer(sc, ((ix & 0x8000000000000000LL) != 0) ? -1 : 1)));
+}
+
+  /* TODO: binary-io finished, tested, doc'd, add to ccrma dirs etc */
+
+
 static s7_pointer g_logior(s7_scheme *sc, s7_pointer args)
 {
   #define H_logior "(logior i1 ...) returns the bitwise OR of its integer arguments"
@@ -9808,6 +9849,12 @@ static s7_pointer g_with_input_from_string(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "with-input-from-string", 1, car(args), "a string"));
   if (!is_thunk(sc, cadr(args)))
     return(s7_wrong_type_arg_error(sc, "with-input-from-string", 2, cadr(args), "a thunk"));
+  
+  /* since the arguments are evaluated before we get here, we can get some confusing situations:
+   *   (with-input-from-string "#x2.1" (read))
+   *   (read) -> whatever it can get from the current input port!
+   *   ";with-input-from-string argument 2, #<eof>, is untyped but should be a thunk"
+   */
   
   return(with_input(sc, s7_open_input_string(sc, s7_string(car(args))), args));
 }
@@ -25112,6 +25159,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "inexact?",                g_is_inexact,              1, 0, false, H_is_inexact);
 
   s7_define_function(sc, "integer-length",          g_integer_length,          1, 0, false, H_integer_length);
+  s7_define_function(sc, "integer-decode-float",    g_integer_decode_float,    1, 0, false, H_integer_decode_float);
   s7_define_function(sc, "logior",                  g_logior,                  1, 0, true,  H_logior);
   s7_define_function(sc, "logxor",                  g_logxor,                  1, 0, true,  H_logxor);
   s7_define_function(sc, "logand",                  g_logand,                  1, 0, true,  H_logand);
@@ -25500,12 +25548,20 @@ s7_scheme *s7_init(void)
  *    then s7_make_function ... has no place to put it ...
  * :allow-other-keys in lambda*
  * PERHAPS: pretty-printing in the REPL or in format (~W in CL I think)
+ *    also read/write float (binary), perhaps something like frexp (integer-decode-float)
+ * TODO: doc/test integer-decode-float if it turns out to work as desired
  * lint 
  * TODO: hash-table map and for-each should be entry-oriented, not alist-oriented
  * TODO: access to the pws setter [and figure out how to get from the C setter to its arity list -- used in snd-test]
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
+ * SOMEDAY: checkpoint
+ *   state: everything in s7 struct including heap/temps/stack (+ structs pointed to like vector dims)
+ *          this requires some way to read/write all objects (including Snd stuff) without loss of info
+ *          all the permanent heaps (we'd need to keep pointers to these guys)
+ *             and all the stuff removed from the heap
+ *          c_object and s_type tables, pws structs
  *
- * string->object? should be inverse of object->string, if possible
+ * can't set! just take anything in parens and eval it -- why not support (set! (cdddr ...) )?
  */
 
 /* OBJECTS...

@@ -1889,7 +1889,6 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 	(samps (make-vct 10))
 	(sctr 0))
     (lambda (val)
-      (declare (val float))
       (set! samp0 samp1)
       (set! samp1 samp2)
       (set! samp2 val)
@@ -1897,22 +1896,19 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
       (set! sctr (+ sctr 1))
       (if (>= sctr 10) (set! sctr 0))
       (let ((local-max (max .1 (vct-peak samps))))
-	(if (and (>= (abs (- samp0 samp1)) local-max)
-		 (>= (abs (- samp1 samp2)) local-max)
-		 (<= (abs (- samp0 samp2)) (/ local-max 2)))
-	    -1
-	    #f)))))
+	(and (>= (abs (- samp0 samp1)) local-max)
+	     (>= (abs (- samp1 samp2)) local-max)
+	     (<= (abs (- samp0 samp2)) (/ local-max 2)))))))
 
 
 (define (zero+)
   "(zero+) finds the next positive-going zero crossing (if searching forward) (for use with C-s)"
   (let ((lastn 0.0))
     (lambda (n)
-      (declare (n float))
       (let ((rtn (and (< lastn 0.0)
 		      (>= n 0.0))))
 	(set! lastn n)
-	(if rtn -1 #f)))))
+	rtn))))
 
 
 (define (next-peak)
@@ -1925,7 +1921,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 			  (and (> last0 last1) (< last1 n))))))
 	(set! last0 last1)
 	(set! last1 n)
-	(if rtn -1 #f)))))
+	rtn))))
 
 
 (define (find-pitch pitch)
@@ -1968,7 +1964,7 @@ In most cases, this will be slightly offset from the true beginning of the note"
 				   (set! pk (spectr i))
 				   (set! pkloc i))))))
 		      (if (< (abs (- pitch pit)) (/ (srate) (* 2 (transform-size)))) ; uh... why not do it direct?
-			  (set! rtn (- (/ (transform-size) 2)))))))
+			  (set! rtn #t)))))
 	       (vct-fill! data 0.0)))
 	 rtn))))
 
@@ -2697,40 +2693,3 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 	 (set! (d 1) (+ frag-beg beg))
 	   
 	 d)))))
-
-
-
-
-#|
-;;; if we could stack up ptrees like mixes:
-
-(define (add-channel scl orig-beg new-beg dur snd chn edpos)
-  (ptree-channel
-     
-   (lambda (y data forward)
-     (declare (y real) (data sampler) (forward boolean))
-     (+ y (* scl (if forward 
-		     (next-sample data) 
-		     (previous-sample data)))))
-   
-   new-beg dur snd chn -1 #f
-   
-   (lambda (frag-beg frag-dur forward)
-     (make-sampler (+ frag-beg orig-beg) snd chn 
-		   (if forward 1 -1) 
-		   (if (>= edpos 0) edpos (edit-position snd chn))))))
-
-;;; (add-channel 0.5 0 10000 (frames 0 0) 0 0 0)
-
-(define (virtual-filter-channel coeffs beg dur snd chn edpos)
-  (let ((order (length coeffs))
-	(pos (if (>= edpos 0) edpos (edit-position snd chn))))
-    (as-one-edit
-     (lambda ()
-       (scale-channel 0.0 beg dur snd chn edpos) ; so that filter replaces original
-       (do ((i 0 (+ i 1)))
-	   ((= i order))
-	 (add-channel (coeffs i) beg (+ beg i) dur snd chn pos))))))
-
-;;; (virtual-filter-channel (vct 1.0 0.5 0.25) 0 (frames 0 0) 0 0 0)
-|#

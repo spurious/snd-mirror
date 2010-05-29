@@ -8501,7 +8501,7 @@ declare is modelled after Common Lisp's declare; it is specific to run.
 <br><br>
 The use of the run macro is hidden in many contexts: <a class=quiet href="#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a>, 
 <a class=quiet href="#findchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_findchannel_tip)">find-channel</a>, etc.  Internally the Snd run macro
-uses 64-bit ints and doubles, so large sounds should not present any numerical problems.
+uses 64-bit ints and doubles.
 See <a href="#optimization">optimization</a>
 for some timings.  In Ruby, it's possible to use the <a href="http://www.zenspider.com/Languages/Ruby/">RubyInline</a> module instead.
 </td></tr><tr><td colspan=2 height=18></td></tr>
@@ -12715,7 +12715,7 @@ to put the date and time in the Snd title bar.
 <pre>
     :<em class=typing>(window-property "SND_VERSION" "SND_VERSION")</em>
     <em class=listener>"1-Jun-06"</em>
-    :<em class=typing>(set! (<em class=red>window-property</em> "SND_VERSION" "WM_NAME") "a new name")</em>
+    :<em class=typing>(set! (window-property "SND_VERSION" "WM_NAME") "a new name")</em>
     <em class=listener>#f</em>
 </pre>
 </td></tr>

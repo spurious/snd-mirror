@@ -52,7 +52,7 @@ and Rick Taube's Common Music (commonmusic at sourceforge).  There are X, Motif,
 in libxm (in the Snd tarball, or at ftp://ccrma-ftp.stanford.edu/pub/Lisp/libxm.tar.gz).
 </p>
 
-<p>Although it is a descendent of tinyScheme, as a Scheme dialect s7 is closest to Guile 1.8 (r5rs).
+<p>Although it is a descendent of tinyScheme, s7 is closest as a Scheme dialect to Guile 1.8 (r5rs).
 It has full continuations, dynamic-wind, sort!, 
 error handling, ratios and complex numbers,
 define-macro, keywords, hash-tables, block comments,
@@ -161,7 +161,7 @@ s7 includes:
 </p>
 <ul>
 <li>sinh, cosh, tanh, asinh, acosh, atanh
-<li>logior, logxor, logand, lognot, ash, integer-length
+<li>logior, logxor, logand, lognot, ash, integer-length, integer-decode-float
 <li>random
 <li>nan?, infinite?
 </ul>
@@ -295,7 +295,7 @@ you have to run code that uses those guys:
     (define inexact-&gt;exact rationalize) ; or floor
     (define (exact-&gt;inexact x) (* x 1.0))
 </pre>
-<p>I'd also remove #i and #e, but they're useless already in s7 because you can
+<p>I'd also remove #i and #e &mdash; they're already useless because you can
 have any number after, for example, #b:
 </p>
 <pre>
@@ -1929,15 +1929,7 @@ it is continuing from the point of the error, but then fails to do so.
 (format #f "~A ~D ~F" 'hi 123 3.14)
 -&gt; "hi 123 3.140000"
 </pre>
-<p>object-&gt;string returns the string representation of its argument, like format with ~S:
-</p>
-<pre>
-&gt; (object-&gt;string "hiho")
-"\"hiho\""
 
-&gt; (format #f "~S" "hiho")
-"\"hiho\""
-</pre>
 
 <p>The format directives (tilde chars) are:</p>
 <pre>
@@ -2001,18 +1993,25 @@ floats in the "~X" case.  So in s7,
 <p>That is, the output choice matches the argument.
 </p>
 
-<!--
+</blockquote>
+</small>
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<p>Since for-each and map work with strings, and the 'string' function can be applied to a list of characters,
-there's no need for string-&gt;list and list-&gt;string.  Then if string-&gt;object was the inverse of
-object-&gt;string, there would be no need for number-&gt;string aand string-&gt;number.
+<p>object-&gt;string returns the string representation of its argument, like format with ~S:
 </p>
--->
+<pre>
+&gt; (object-&gt;string "hiho")
+"\"hiho\""
 
-</blockquote>
-</small>
+&gt; (format #f "~S" "hiho")
+"\"hiho\""
+</pre>
+
+<p>I added object-&gt;string before deciding to include format; it's no longer very useful.  Similarly,
+string-&gt;list can be replaced by map, and list-&gt;string by string (using apply).
+</p>
 
 </dd>
 <br><br>
@@ -2980,7 +2979,7 @@ the final cdr).  <code>(define (circular? lst) (infinite? (length lst)))</code>.
 A CLM "instrument" is usually a do-loop running things like oscillators and envelopes
 for zillions of sound samples.  These calculations do not involve recursion, or
 complex numbers, or fancy list processing, so it is not too hard to write an
-optimizer for them.  In sndlib, that optimizer is called "run".  It is a macro
+optimizer for them.  In sndlib, that optimizer is called "run".  It is a macro (in modern jargon, a JIT byte compiler)
 that can be wrapped around any piece of Scheme code that you want to speed up.
 If it can't optimize the code, it passes it to the s7 interpreter.  If run is successful,
 you will normally get a speed up by a factor of 10 to 30.  For CLM instruments,

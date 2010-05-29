@@ -2005,6 +2005,9 @@
 (test (substring "hiho" (expt 2 32) (+ 2 (expt 2 32))) 'error)
 (test (substring) 'error)
 (test (substring "hiho" 0 1 2) 'error)
+(test (substring "1234" -1 -1) 'error)
+(test (substring "1234" 1 0) 'error)
+(test (substring "" most-positive-fixnum 1) 'error)
 
 (for-each
  (lambda (arg)
@@ -3111,6 +3114,7 @@
 (test (list-ref (list 1 2 3) (expt 2 32)) 'error)
 (test (list-ref '(1 2 3) 1 2) 'error)
 (test (list-ref) 'error)
+(test (list-ref '(1 2)) 'error)
 
 (for-each
  (lambda (arg)
@@ -3772,7 +3776,6 @@
 (test (vector-ref '#() -1) 'error)
 (test (vector-ref '#() 1) 'error)
 
-
 (test (#(1 2) 1) 2)
 (test (#(1 2) 1 2) 'error)
 (test ((#("hi" "ho") 0) 1) #\i)
@@ -3781,6 +3784,7 @@
 (test ((((vector (vector (vector 1 2) 0) 0) 0) 0) 0) 1)
 (test ((((list (list (list 1 2) 0) 0) 0) 0) 0) 1)
 (test ((((list (list (list 1 2) 0) 0) 0) 0) ((((vector (vector (vector 1 2) 0) 0) 0) 0) 0)) 2)
+(test (#(1 2) -1) 'error)
 
 (for-each
  (lambda (arg)
@@ -4894,7 +4898,17 @@
 			 (dat '() (cons (data cur) dat)))
 			((member (data cur) dat)
 			 dat))))
-	(test (equal? ahead behind) #t)))))
+	(test (equal? ahead behind) #t))))
+  (let* ((head (make-node () 0 ()))
+	 (cur head))
+    (do ((i 1 (+ i 1)))
+	((= i 32))
+      (let ((next-node (make-node cur i ())))
+	(set! (next cur) next-node)
+	(set! cur (next cur))))
+    (set! (next cur) head)
+    (set! (prev head) cur)
+    (test (object->string head) "#1=(#31=(#30=(#29=(#28=(#27=(#26=(#25=(#24=(#23=(#22=(#21=(#20=(#19=(#18=(#17=(#16=(#15=(#14=(#13=(#12=(#11=(#10=(#9=(#8=(#7=(#6=(#5=(#4=(#3=(#2=(#32=(#1# 1 #2#) 2 #3#) 3 #4#) 4 #5#) 5 #6#) 6 #7#) 7 #8#) 8 #9#) 9 #10#) 10 #11#) 11 #12#) 12 #13#) 13 #14#) 14 #15#) 15 #16#) 16 #17#) 17 #18#) 18 #19#) 19 #20#) 20 #21#) 21 #22#) 22 #23#) 23 #24#) 24 #25#) 25 #26#) 26 #27#) 27 #28#) 28 #29#) 29 #30#) 30 #31#) 31 #1#) 0 #32#)")))
 
 (test (let ((lst (list 1 2 3))) (set! (cdr (cddr lst)) lst) (append lst lst ())) 'error)
 (test (let ((lst (list 1 2 3))) (set! (cdr (cddr lst)) lst) (object->string (append (list lst) (list lst) ()))) "(#1=(1 2 3 . #1#) #1#)")
@@ -4973,7 +4987,8 @@
 	ctr)
       0)
 
-
+(test (let ((lst (list 1))) (set! (cdr lst) (car lst)) (object->string lst)) "(1 . 1)")
+(test (let ((lst (list 1))) (set! (car lst) (cdr lst)) (object->string lst)) "(())")
 
 
   
@@ -6319,7 +6334,14 @@
       (lambda ()
 	(read)))
     arg))
- (list 1 3/4 '(1 2) #(1 2) :hi))
+ (list 1 3/4 '(1 2) #(1 2) :hi #f #t))
+
+(num-test (with-input-from-string "3.14" (lambda () (read))) 3.14)
+(num-test (with-input-from-string "3.14+2i" (lambda () (read))) 3.14+2i)
+(num-test (with-input-from-string "#x2.1" (lambda () (read))) 2.0625)
+(test (with-input-from-string "'hi" (lambda () (read))) ''hi)
+(test (with-input-from-string "'(1 . 2)" (lambda () (read))) ''(1 . 2))
+
 
 (test
  (let ((cin #f)
@@ -6416,6 +6438,8 @@
 (test (string=? (object->string (cons 1 2)) "(1 . 2)") #t)
 (test (string=? (object->string '#(1 2 3)) "#(1 2 3)") #t)
 (test (string=? (object->string +) "+") #t)
+
+;;; (string-set! (with-input-from-string "\"1234\"" (lambda () (read))) 1 #\a)
 
 
 
@@ -7252,6 +7276,21 @@
 	    (j i)))
       5)
 (test (let ((j 0)) (do ((i 0 (eval-string "(+ j 1)"))) ((= i 4) j) (set! j i))) 3)
+(test (do ((i (do ((i (do ((i 0 (+ i 1)))
+			  ((= i 3) (+ i 1)))
+		      (do ((j 0 (+ j 1)))
+			  ((= j 3)) (+ j i))))
+		  ((> (do ((k 0 (+ k 1)))
+			  ((= k 2) (* k 4)))
+		      (do ((n 0 (+ n 1)))
+			  ((= n 3) n)))
+		   (do ((m 0 (+ m 1)))
+		       ((= m 3) (+ m i)))))
+	      i))
+	  ((> i 6) i))
+      7)
+
+
 
 
 
@@ -9195,7 +9234,8 @@
       '(2 4 3 4 3))
 
 (test (let ((call/cc 2)) (+ call/cc 1)) 3)
-
+(test (+ 1 (call/cc (lambda (r) (r 2 3 4))) 5) 15)
+(test (string-ref (call/cc (lambda (s) (s "hiho" 1)))) #\i)
 
 (let ((r5rs-ratify (lambda (ux err)
 		     (if (= ux 0.0) 
@@ -9719,7 +9759,9 @@
 	      (set! ctr (+ ctr 2))))
 	ctr)
       2)
-
+(test (call-with-exit (lambda (r1) (call-with-exit (lambda (r2) (call-with-exit (lambda (r3) (r1 12) (r2 1))) (r1 2))) 3)) 12)
+(test (call-with-exit (lambda (r1) (call-with-exit (lambda (r2) (call-with-exit (lambda (r3) (r2 12) (r2 1))) (r1 2))) 3)) 3)
+(test (call-with-exit (lambda (r1) (call-with-exit (lambda (r2) (call-with-exit (lambda (r3) (r3 12) (r2 1))) (r1 2))) 3)) 2)
 
 (let ((pws (make-procedure-with-setter < >))) (test (sort! '(2 3 1 4) pws) '(1 2 3 4)))
 (test (call-with-exit (lambda (k) (call-with-input-string "123" k))) 'error)
@@ -10876,6 +10918,7 @@
   (test (eval #()) #())
   (test (apply (lambda () #f)) #f)
   (test (eval '(if #f #f)) (if #f #f))
+  (test (let ((ho 32)) (symbol? (eval (eval (eval (eval '''''ho)))))) #t)
 
   (test (eval-string (string-append "(list 1 2 3)" (string #\newline) (string #\newline))) (list 1 2 3))
   (eval-string (string-append "(define evalstr_1 32)" (string #\newline) "(define evalstr_2 2)"))
@@ -47163,6 +47206,79 @@
 (num-test (integer-length -128) 7)
 (num-test (integer-length -129) 8)
 
+
+(test (integer-decode-float) 'error)
+(test (integer-decode-float 0.0) '(0 0 1))
+(test (integer-decode-float -0.0) '(0 0 1))
+(test (integer-decode-float 1.0) '(4503599627370496 -52 1))
+(test (integer-decode-float -1.0) '(4503599627370496 -52 -1))
+(test (integer-decode-float 0.2) '(7205759403792794 -55 1))
+(test (integer-decode-float -0.2) '(7205759403792794 -55 -1))
+(test (integer-decode-float 3.0) '(6755399441055744 -51 1))
+(test (integer-decode-float -3.0) '(6755399441055744 -51 -1))
+(test (integer-decode-float 0.04) '(5764607523034235 -57 1))
+(test (integer-decode-float -0.04) '(5764607523034235 -57 -1))
+(test (integer-decode-float 50.0) '(7036874417766400 -47 1))
+(test (integer-decode-float -50.0) '(7036874417766400 -47 -1))
+(test (integer-decode-float 0.006) '(6917529027641082 -60 1))
+(test (integer-decode-float -0.006) '(6917529027641082 -60 -1))
+(test (integer-decode-float 7000.0) '(7696581394432000 -40 1))
+(test (integer-decode-float -7000.0) '(7696581394432000 -40 -1))
+(test (integer-decode-float 0.0008) '(7378697629483821 -63 1))
+(test (integer-decode-float -0.0008) '(7378697629483821 -63 -1))
+(test (integer-decode-float 90000.0) '(6184752906240000 -36 1))
+(test (integer-decode-float -90000.0) '(6184752906240000 -36 -1))
+(test (integer-decode-float 0.00001) '(5902958103587057 -69 1))
+(test (integer-decode-float 1.0d-6) '(4722366482869645 -72 1))
+(test (integer-decode-float 1.0d-8) '(6044629098073146 -79 1))
+(test (integer-decode-float 1.0d-12) '(4951760157141521 -92 1))
+(test (integer-decode-float 1.0d-16) '(8112963841460668 -106 1))
+(test (integer-decode-float 1.0d-17) '(6490371073168535 -109 1))
+(test (integer-decode-float 1.0d-18) '(5192296858534828 -112 1))
+(test (integer-decode-float 1.0d-19) '(8307674973655724 -116 1))
+(test (integer-decode-float 1.0d-25) '(8711228593176025 -136 1))
+(test (integer-decode-float 1.0d6)  '(8589934592000000 -33 1))
+(test (integer-decode-float 1.0d12) '(8192000000000000 -13 1))
+(test (integer-decode-float 1.0d17) '(6250000000000000 4 1))
+(test (integer-decode-float 1.0d18) '(7812500000000000 7 1))
+(test (integer-decode-float 1.0d19) '(4882812500000000 11 1))
+(test (integer-decode-float 1.0d20) '(6103515625000000 14 1))
+(test (integer-decode-float 1.0d-100) '(7880401239278896 -385 1))
+(test (integer-decode-float 1.0d100) '(5147557589468029 280 1))
+(test (integer-decode-float 1.0d200) '(5883593420661338 612 1))
+(test (integer-decode-float 1.0d-200) '(6894565328877484 -717 1))
+(test (integer-decode-float 1.0d307) '(8016673440035891 967 1))
+(if (provided? 'gmp)
+    (test (integer-decode-float 1.0d-307) '(5060056332682765 -1072 1))
+    (test (integer-decode-float 1.0d-307) '(5060056332682766 -1072 1)))
+(test (integer-decode-float (/ 1.0d-307 100.0d0)) '(4706001880677807 -1075 1)) ; denormal
+(test (integer-decode-float (/ (log 0.0))) '(6755399441055744 972 -1)) ; nan
+(test (integer-decode-float (- (real-part (log 0.0)))) '(4503599627370496 972 1)) ; +inf
+(test (integer-decode-float (real-part (log 0.0))) '(4503599627370496 972 -1)) ; -inf
+(if (provided? 'gmp)
+    (test (integer-decode-float 2.225e-308) '(9007049763458157 -1075 1))
+    (test (integer-decode-float 2.225e-308) '(9007049763458133 -1075 1)))
+(test (integer-decode-float 1.797e308) '(9003726357340310 971 1))
+(test (integer-decode-float 1.0e-322) '(4503599627370516 -1075 1))
+(test (integer-decode-float (expt 2.0 31)) (list #x10000000000000 -21 1))
+(test (integer-decode-float (expt 2.0 52)) (list #x10000000000000 0 1))
+
+(for-each
+ (lambda (arg)
+   (test (integer-decode-float arg) 'error))
+ (list -1 0 #\a '#(1 2 3) 2/3 1.5+0.3i 1+i '() 'hi abs "hi" '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+(test (integer-decode-float 1.0 1.0) 'error)
+
+(do ((i 0 (+ i 1)))
+    ((= i 100))
+  (let ((val (- 1.0e6 (random 2.0e6))))
+    (let* ((data (integer-decode-float val))
+	   (signif (car data))
+	   (expon (cadr data))
+	   (sign (caddr data))) 
+      (num-test (* sign signif (expt 2.0 expon)) val))))
+
+
 (if with-bignums
     (begin
       (num-test (logand (+ (expt 2 48) (expt 2 46)) (expt 2 48)) 281474976710656)
@@ -51256,4 +51372,8 @@ largest denormal  2-1023 (1 - 2-52)	 2-1023 - 2-1075 = 1.113 10-308
 largest fp integer	 2+1024 - 2+971 = 1.798 10+308
 gap from largest fp integer to previous fp integer	2+971 = 1.996 10+292
 largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
+
+#x7ff0000000000000 +inf
+#xfff0000000000000 -inf
+#xfff8000000000000 nan
 |#
