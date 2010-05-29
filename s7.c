@@ -7585,7 +7585,7 @@ static s7_pointer g_integer_decode_float(s7_scheme *sc, s7_pointer args)
 		     s7_make_integer(sc, ((ix & 0x8000000000000000LL) != 0) ? -1 : 1)));
 }
 
-  /* TODO: binary-io finished, tested, doc'd, add to ccrma dirs etc */
+  /* TODO: binary-io finished, tested, doc'd etc */
 
 
 static s7_pointer g_logior(s7_scheme *sc, s7_pointer args)
@@ -25541,7 +25541,6 @@ s7_scheme *s7_init(void)
  *         (ideally it would be wrapped inside the evaluator)
  *       perhaps use procedure-source?
  *
- * perhaps an example for s7.html of reading a sound file header (endianess etc)
  * perhaps the built-in funcs should have legit __func__ settings? [snd for example -- means index not needed]
  *    also pws case!
  *    if there is a doc string, and it ends in (__func__ symbol filename line)

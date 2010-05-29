@@ -1,4 +1,8 @@
 ;;; read/write binary (sound) files
+;;;
+;;; names are read|write b|l int|float n, 
+;;;   so read-bint32 reads the current input, returning a big-endian 32-bit integer
+
 
 ;;; -------- strings (0-terminated)
 (define (read-string)
@@ -91,7 +95,7 @@
 ;;; -------- 32-bit floats (IEEE 754, sign + 23(+1) bits significand + 8 bits exponent)
 
 (define (int_to_float32 int)
-  (if (zerop int)
+  (if (zero? int)
       0.0
       (* (if (zero? (ash int -31)) 1.0 -1.0) 
 	 (expt 2 (- (logand (ash int -23) #xff) 127)) 
@@ -102,7 +106,7 @@
   (int_to_float32 (read-bint32)))
 
 (define (read-lfloat32)
-  (int_to_float32 (read-bint32)))
+  (int_to_float32 (read-lint32)))
 
 (define (float32_to_int flt)
   (let* ((data (integer-decode-float flt))
@@ -117,14 +121,14 @@
   (write-bint32 (float_to_int flt)))
 
 (define (write-lfloat32 flt)
-  (write-bint32 (float_to_int flt)))
+  (write-lint32 (float_to_int flt)))
 
 
 
 ;;; -------- 64-bit floats (IEEE 754, sign + 52(+1) bits significand + 11 bits exponent)
 
 (define (int_to_float64 int)
-  (if (zerop int)
+  (if (zero? int)
       0.0
       (* (if (zero? (ash int -63)) 1.0 -1.0) 
 	 (expt 2 (- (logand (ash int -52) #x7ff) 1023)) 
@@ -135,7 +139,7 @@
   (int_to_float64 (read-bint64)))
 
 (define (read-lfloat64)
-  (int_to_float64 (read-bint64)))
+  (int_to_float64 (read-lint64)))
 
 (define (float64_to_int flt)
   (let* ((data (integer-decode-float flt))
@@ -150,10 +154,62 @@
   (write-bint64 (float_to_int flt)))
 
 (define (write-lfloat64 flt)
-  (write-bint64 (float_to_int flt)))
+  (write-lint64 (float_to_int flt)))
 
 
-;;; -------- read "au/snd" header
+
+;;; -------- 80-bit floats (IEEE 754, sign + 63(+1) bits significand + 15 bits exponent, needed for aifc headers)
+
+(define (read-bfloat80->int)
+  (let* ((exp 0)
+	 (mant1 0)
+	 (mant0 0)
+	 (sign 0)
+	 (buf (make-vector 10)))
+    (do ((i 0 (+ i 1)))
+	((= i 10))
+      (vector-set! buf i (read-byte)))
+    (set! exp (logior (ash (vector-ref buf 0) 8) (vector-ref buf 1)))
+    (set! sign (if (/= (logand exp #x8000) 0) 1 0))
+    (set! exp (logand exp #x7FFF))
+    (set! mant1 (+ (ash (vector-ref buf 2) 24) (ash (vector-ref buf 3) 16) (ash (vector-ref buf 4) 8) (vector-ref buf 5)))
+    (set! mant0 (+ (ash (vector-ref buf 6) 24) (ash (vector-ref buf 7) 16) (ash (vector-ref buf 8) 8) (vector-ref buf 9)))
+    (if (= mant1 mant0 exp sign 0) 
+	0
+      (round (* (if (= sign 1) -1 1)
+		(expt 2.0 (- exp 16383.0))
+		(+ (* (expt 2.0 -31.0) mant1)
+		   (* (expt 2.0 -63.0) mant0)))))))
+
+(define (write-int->bfloat80 val)
+  (let ((exp 0)    
+	(sign 0)
+	(mant1 0)
+	(mant0 0))
+    (if (minusp val) 
+	(begin
+	  (set! sign 1) 
+	  (set! val (abs val))))
+    (if (not (zero? val))
+	(begin
+	  (set! exp (round (+ (log val 2.0) 16383.0)))
+	  (set! val (* val (expt 2 (- (+ 16383 31) exp))))
+	  (set! mant1 (floor val))
+	  (set! val (- val mant1))
+	  (set! mant0 (floor (* val (expt 2 32))))))
+    (write-byte (logior (ash sign 7) (ash exp -8)))
+    (write-byte (logand exp #xFF))
+    (do ((i 2 (+ i 1))
+	 (j 24 (- j 8)))
+	((= i 6))
+      (write-byte (logand (ash mant1 (- j)) #xFF)))
+    (do ((i 6 (+ i 1))
+	 (j 24 (- j 8)))
+	((= i 10))
+      (write-byte (logand (ash mant0 (- j)) #xFF)))))
+
+
+;;; -------- read "au" (NeXT/Sun) header
 
 (define (read-au-header file)
   (with-input-from-file file
@@ -168,3 +224,4 @@
 		   (chans (read-bint32))
 		   (comment (read-string)))
 	      (list magic data-location data-size data-format srate chans comment)))))))
+
