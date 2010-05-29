@@ -60,11 +60,11 @@
   (write-byte (logand (ash int -8) #xff))
   (write-byte (logand int #xff)))
 
-(define (write-lint16 int)
+(define (write-lint32 int)
   (write-byte (logand int #xff))
   (write-byte (logand (ash int -8) #xff))
   (write-byte (logand (ash int -16) #xff))
-  (write-byte (logand (ash int -32) #xff)))
+  (write-byte (logand (ash int -24) #xff)))
 
 
 ;;; -------- 64-bit ints
@@ -108,20 +108,25 @@
 (define (read-lfloat32)
   (int_to_float32 (read-lint32)))
 
-(define (float32_to_int flt)
+(define (float64_to_int32 flt)
   (let* ((data (integer-decode-float flt))
 	 (signif (car data))
 	 (expon (cadr data))
 	 (sign (caddr data)))
-    (logior (if (negative? sign) #x80000000 0)
-	    (ash (+ expon 23 127) 23)
-	    signif)))
+    (if (and (= expon 0)
+	     (= signif 0))
+	0
+	;; we're assuming floats are (64-bit) doubles in s7, so this is coercing to a 32-bit float in a sense
+	;;   this causes some round-off error
+	(logior (if (negative? sign) #x80000000 0)
+		(ash (+ expon 52 127) 23)
+		(logand (ash signif -29) #x7fffff)))))
 
 (define (write-bfloat32 flt)
-  (write-bint32 (float_to_int flt)))
+  (write-bint32 (float64_to_int32 flt)))
 
 (define (write-lfloat32 flt)
-  (write-lint32 (float_to_int flt)))
+  (write-lint32 (float64_to_int32 flt)))
 
 
 
@@ -141,20 +146,23 @@
 (define (read-lfloat64)
   (int_to_float64 (read-lint64)))
 
-(define (float64_to_int flt)
+(define (float64_to_int64 flt)
   (let* ((data (integer-decode-float flt))
 	 (signif (car data))
 	 (expon (cadr data))
 	 (sign (caddr data)))
-    (logior (if (negative? sign) #x8000000000000000 0)
-	    (ash (+ expon 52 1023) 52)
-	    signif)))
+    (if (and (= expon 0)
+	     (= signif 0))
+	0
+	(logior (if (negative? sign) #x8000000000000000 0)
+		(ash (+ expon 52 1023) 52)
+		(logand signif #xfffffffffffff)))))
 
 (define (write-bfloat64 flt)
-  (write-bint64 (float_to_int flt)))
+  (write-bint64 (float64_to_int64 flt)))
 
 (define (write-lfloat64 flt)
-  (write-lint64 (float_to_int flt)))
+  (write-lint64 (float64_to_int64 flt)))
 
 
 
@@ -214,7 +222,10 @@
 (define (read-au-header file)
   (with-input-from-file file
     (lambda ()
-      (let ((magic (string (integer->char (read-byte)) (integer->char (read-byte)) (integer->char (read-byte)) (integer->char (read-byte)))))
+      (let ((magic (string (integer->char (read-byte)) 
+			   (integer->char (read-byte)) 
+			   (integer->char (read-byte)) 
+			   (integer->char (read-byte)))))
 	(if (not (string=? magic ".snd"))
 	    (error 'bad-header (format #f "magic word is ~S" magic))
 	    (let* ((data-location (read-bint32))

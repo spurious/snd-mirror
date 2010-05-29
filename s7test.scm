@@ -47279,6 +47279,103 @@
       (num-test (* sign signif (expt 2.0 expon)) val))))
 
 
+(if (not (provided? 'gmp))
+    (begin
+      (load "binary-io.scm")
+
+      (with-output-to-file "idf1.data"
+	(lambda ()
+	  (let* ((LONG_MAX 2147483647)
+		 (LONG_MIN -2147483648)
+		 (LLONG_MAX most-positive-fixnum)
+		 (LLONG_MIN most-negative-fixnum))
+	    (let ((ints (list 0 1 -1 10 -10 1234 -1234 LONG_MAX LONG_MIN 65536 -65536))
+		  (shorts (list 0 1 -1 10 -10 1234 -1234 32767 -32768 8191 -8191))
+		  (longs (list 0 1 -1 11 -11 LONG_MAX LONG_MIN LLONG_MAX LLONG_MIN 1000 -1000))
+		  (floats (list 0.0 1.0 -1.0 0.1 -0.1 10.0 -10.0 1234.0 65536.0 -1234.0 -0.003))
+		  (doubles (list 0.0 1.0 -1.0 0.1 -0.1 10.0 -10.0 1234.0 65536.0 -1234.0 -0.003)))
+	      
+	      (write-lint32 123)
+	      (write-bint32 321)
+	      
+	      (do ((i 0 (+ i 1)))
+		  ((= i 11))
+		(write-lint32 (list-ref ints i))
+		(write-bint32 (list-ref ints i)))
+	      
+	      (do ((i 0 (+ i 1)))
+		  ((= i 11))
+		(write-lint16 (list-ref shorts i))
+		(write-bint16 (list-ref shorts i)))
+	      
+	      (do ((i 0 (+ i 1)))
+		  ((= i 11))
+		(write-lint64 (list-ref longs i))
+		(write-bint64 (list-ref longs i)))
+	      
+	      (do ((i 0 (+ i 1)))
+		  ((= i 11))
+		(write-lfloat32 (list-ref floats i))
+		(write-bfloat32 (list-ref floats i)))
+	      
+	      (do ((i 0 (+ i 1)))
+		  ((= i 11))
+		(write-lfloat64 (list-ref doubles i))
+		(write-bfloat64 (list-ref doubles i)))
+	      ))))
+      
+      (with-input-from-file "idf1.data" 
+	(lambda ()
+	  (let* ((LONG_MAX 2147483647)
+		 (LONG_MIN -2147483648)
+		 (LLONG_MAX most-positive-fixnum)
+		 (LLONG_MIN most-negative-fixnum))
+	    (let ((ints (list 0 1 -1 10 -10 1234 -1234 LONG_MAX LONG_MIN 65536 -65536))
+		  (shorts (list 0 1 -1 10 -10 1234 -1234 32767 -32768 8191 -8191))
+		  (longs (list 0 1 -1 11 -11 LONG_MAX LONG_MIN LLONG_MAX LLONG_MIN 1000 -1000))
+		  (floats (list 0.0 1.0 -1.0 0.1 -0.1 10.0 -10.0 1234.0 65536.0 -1234.0 -0.003))
+		  (doubles (list 0.0 1.0 -1.0 0.1 -0.1 10.0 -10.0 1234.0 65536.0 -1234.0 -0.003)))
+	      
+	      (define (testf val1 val2 name)
+		(if (not (= val1 val2))
+		    (if (and (not (eq? name 'lfloat32))
+			     (not (eq? name 'bfloat32)))
+			(format #t ";~A: ~A != ~A~%" name val1 val2)
+			(if (> (abs (- val1 val2)) 1.0e-6)
+			    (format #t ";~A: ~A != ~A (~A)~%" name val1 val2 (abs (- val1 val2)))))))
+	      
+	      (testf (read-lint32) 123 'lint32)
+	      (testf (read-bint32) 321 'bint32)
+	      
+	      (do ((i 0 (+ i 1)))
+		  ((= i 11))
+		(testf (read-lint32) (list-ref ints i) 'lint32)
+		(testf (read-bint32) (list-ref ints i) 'bint32))
+	      
+	      (do ((i 0 (+ i 1)))
+		  ((= i 11))
+		(testf (read-lint16) (list-ref shorts i) 'lint16)
+		(testf (read-bint16) (list-ref shorts i) 'bint16))
+	      
+	      (do ((i 0 (+ i 1)))
+		  ((= i 11))
+		(testf (read-lint64) (list-ref longs i) 'lint64)
+		(testf (read-bint64) (list-ref longs i) 'bint64))
+	      
+	      (do ((i 0 (+ i 1)))
+		  ((= i 11))
+		(testf (read-lfloat32) (list-ref floats i) 'lfloat32)
+		(testf (read-bfloat32) (list-ref floats i) 'bfloat32))
+	      
+	      (do ((i 0 (+ i 1)))
+		  ((= i 11))
+		(testf (read-lfloat64) (list-ref doubles i) 'lfloat64)
+		(testf (read-bfloat64) (list-ref doubles i) 'bfloat64))
+	      ))))
+      ))
+
+
+
 (if with-bignums
     (begin
       (num-test (logand (+ (expt 2 48) (expt 2 46)) (expt 2 48)) 281474976710656)

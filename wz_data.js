@@ -1363,6 +1363,8 @@ var autosave_doc_tip = "periodically save current sound edits in a backup file, 
 var bess_doc_tip = "This sets up a dialog to experiment with simple FM, <br>" +
                    "the fm-violin, or with a compositional algorithm";
 
+var binary_io_doc_tip = "This file has functions to read and write binary files";
+
 var bird_doc_tip = "simple synthesis of about 50 birds using additive synthesis.<br>" +
                    "see animals.scm for much more elaborate versions of these birds";
 

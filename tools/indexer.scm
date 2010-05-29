@@ -14,6 +14,7 @@
 ;;; (load "new-effects.scm")
 (load "autosave.scm")	   
 (load "noise.scm")
+(load "binary-io.scm")
 ;(load "bess1.scm")		   
 (load "nrev.scm")
 ;(load "bess.scm")		  

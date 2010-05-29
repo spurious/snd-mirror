@@ -7585,8 +7585,6 @@ static s7_pointer g_integer_decode_float(s7_scheme *sc, s7_pointer args)
 		     s7_make_integer(sc, ((ix & 0x8000000000000000LL) != 0) ? -1 : 1)));
 }
 
-  /* TODO: binary-io finished, tested, doc'd etc */
-
 
 static s7_pointer g_logior(s7_scheme *sc, s7_pointer args)
 {
@@ -16637,7 +16635,7 @@ static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 
 /* ---------------------------------------- map and for-each ---------------------------------------- */
 
-static int applicable_length(s7_scheme *sc, s7_pointer obj)
+static long int applicable_length(s7_scheme *sc, s7_pointer obj)
 {
   switch (type(obj))
     {
@@ -16831,7 +16829,7 @@ static void next_map(s7_scheme *sc)
 	  break;
 
 	default: /* make the compiler happy */
-	  fprintf(stderr, "vargs: %s, loc: %d, len: %d\n", s7_object_to_c_string(sc, vargs), loc, s7_integer(cadr(sc->args)));
+	  /* fprintf(stderr, "vargs: %s, loc: %d, len: %lld\n", s7_object_to_c_string(sc, vargs), loc, s7_integer(cadr(sc->args))); */
 	  x = sc->F;
 	  break;
 	}
@@ -25561,6 +25559,7 @@ s7_scheme *s7_init(void)
  *          c_object and s_type tables, pws structs
  *
  * can't set! just take anything in parens and eval it -- why not support (set! (cdddr ...) )?
+ * TODO: binary-io finished, tested, doc'd etc
  */
 
 /* OBJECTS...
