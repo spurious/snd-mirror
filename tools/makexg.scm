@@ -157,6 +157,13 @@
 (define names-2190 '())
 (define types-2190 '())
 
+(define funcs-2901 '())
+(define casts-2901 '())
+(define checks-2901 '())
+(define names-2901 '())
+(define types-2901 '())
+(define ints-2901 '())
+
 (define cairo-funcs '())
 (define cairo-png-funcs '())
 (define cairo-ints '())
@@ -213,11 +220,13 @@
 	"GdkFillRule" "GdkGCValuesMask"
 	"GdkPropMode" "GdkRgbDither" "GdkWMFunction" "GdkWindowEdge" "GdkWindowHints" "GtkAccelFlags" "GtkArrowType"
 	"GtkAttachOptions" "GtkCellRendererState" "GtkCurveType" "GtkDestDefaults" "GtkDestroyNotify" "GtkDialogFlags"
-	"GtkDirectionType" "GtkExpanderStyle" "GtkIconLookupFlags" "GtkMenuPositionFunc" "GtkPathType" "GtkSpinType"
+	"GtkDirectionType" "GtkExpanderStyle" "GtkIconLookupFlags" ;"GtkMenuPositionFunc" 
+	"GtkPathType" "GtkSpinType"
 	"GtkTextSearchFlags" "GtkTreeIterCompareFunc" "GtkTreeSelectionFunc" "GtkUIManagerItemType" "GtkWindowPosition"
 	"GtkWindowType" "PangoGlyph" "PangoUnderline" "gssize" 
 
-	"GtkMenuBar*" "GtkTranslateFunc" "GtkMenuPositionFunc" "GtkTreeIterCompareFunc" "GtkTreeSelectionFunc"
+	"GtkMenuBar*" "GtkTranslateFunc" ;"GtkMenuPositionFunc" 
+	"GtkTreeIterCompareFunc" "GtkTreeSelectionFunc"
 	"GtkDestroyNotify"
 
 	"GtkAssistant*" "GtkRecentChooser*" "GtkRecentChooserMenu*"
@@ -251,7 +260,9 @@
 	"GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
 	"GtkImageType" "GtkTreeModelFlags" "gint8" "gshort" "guint8" "lambda" 
 
-	"time_t" "GtkWindowGroup*" "GtkSettings*" "GdkDevice*" "GtkScaleButton*"
+	"time_t" ;"GtkWindowGroup*" 
+	"GtkSettings*" ;"GdkDevice*" 
+	"GtkScaleButton*"
 	"GtkPrintOperationResult" "GtkPrintStatus"
 	"cairo_font_type_t" "cairo_pattern_type_t" "cairo_surface_type_t"
 	))
@@ -268,7 +279,9 @@
 	"GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
 	"GtkImageType" "GtkTreeModelFlags" "etc" "gshort"
 
-	"GtkWindowGroup*" "time_t" "GtkSettings*" "GdkDevice*" "GtkScaleButton*"
+	;"GtkWindowGroup*" 
+	"time_t" "GtkSettings*" ;"GdkDevice*" 
+	"GtkScaleButton*"
 	"GtkPrintOperationResult" "GtkPrintStatus"
 
 	"cairo_surface_type_t" "cairo_pattern_type_t" "cairo_font_type_t"
@@ -477,6 +490,7 @@
 				((2173 callback-2173) (set! types-2173 (cons type types-2173)))
 				((2177 callback-2177) (set! types-2177 (cons type types-2177)))
 				((2190)               (set! types-2190 (cons type types-2190)))
+				((2901)               (set! types-2901 (cons type types-2901)))
 				((cairo)              (set! cairo-types (cons type cairo-types)))
 				(else   	      (if (not (member type types))
 							  (set! types (cons type types)))))))
@@ -1352,6 +1366,22 @@
 		(set! funcs-2190 (cons (list name type strs args) funcs-2190)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
+(define* (CFNC-2901 data spec)
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (if (assoc name names)
+	(no-way "CFNC-2901: ~A~%" (list name data))
+	(let ((type (car-str data)))
+	  (if (not (member type all-types))
+	      (begin
+		(set! all-types (cons type all-types))
+		(set! types-2901 (cons type types-2901))))
+	  (let ((strs (parse-args args '2901)))
+	    (if spec
+		(set! funcs-2901 (cons (list name type strs args spec) funcs-2901))
+		(set! funcs-2901 (cons (list name type strs args) funcs-2901)))
+	    (set! names (cons (cons name (func-type strs)) names)))))))
+
 (define* (CAIRO-FUNC data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
@@ -1733,6 +1763,14 @@
 	(set! ints-2177 (cons name ints-2177))
 	(set! names (cons (cons name 'int) names)))))
 
+(define* (CINT-2901 name type)
+  (save-declared-type type)
+  (if (assoc name names)
+      (no-way "~A CINT-2901~%" name)
+      (begin
+	(set! ints-2901 (cons name ints-2901))
+	(set! names (cons (cons name 'int) names)))))
+
 (define* (CAIRO-INT name type)
   (save-declared-type type)
   (if (assoc name names)
@@ -1844,6 +1882,13 @@
 	(set! casts-2190 (cons (list name type) casts-2190))
 	(set! names (cons (cons name 'def) names)))))
 
+(define (CCAST-2901 name type)
+  (if (assoc name names)
+      (no-way "~A CCAST-2901~%" name)
+      (begin
+	(set! casts-2901 (cons (list name type) casts-2901))
+	(set! names (cons (cons name 'def) names)))))
+
 (define (CCHK name type)
   (if (assoc name names)
       (no-way "~A CCHK~%" name)
@@ -1926,6 +1971,13 @@
       (no-way "~A CCHK-2190~%" name)
       (begin
 	(set! checks-2190 (cons (list name type) checks-2190))
+	(set! names (cons (cons name 'def) names)))))
+
+(define (CCHK-2901 name type)
+  (if (assoc name names)
+      (no-way "~A CCHK-2901~%" name)
+      (begin
+	(set! checks-2901 (cons (list name type) checks-2901))
 	(set! names (cons (cons name 'def) names)))))
 
 
@@ -2089,6 +2141,11 @@
 
 (define (with-2190 dpy thunk)
   (dpy "#if HAVE_GTK_WIDGET_GET_MAPPED~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
+(define (with-2901 dpy thunk)
+  (dpy "#if HAVE_GTK_SCALE_NEW~%")
   (thunk)
   (dpy "#endif~%~%"))
 
@@ -2427,7 +2484,7 @@
 (hey "#define C_TO_XEN_GtkLinkButtonUriFunc(Arg) WRAP_FOR_XEN(\"GtkLinkButtonUriFunc\", Arg)~%")
 ;(hey "#define C_TO_XEN_GtkTreeIterCompareFunc(Arg) WRAP_FOR_XEN(\"GtkTreeViewSearchEqualFunc\", Arg)~%")
 ;(hey "#define C_TO_XEN_GtkTreeSelectionFunc(Arg) WRAP_FOR_XEN(\"GtkTreeSelectionFunc\", Arg)~%")
-;(hey "#define C_TO_XEN_GtkMenuPositionFunc(Arg) WRAP_FOR_XEN(\"GtkMenuPositionFunc\", Arg)~%")
+(hey "#define C_TO_XEN_GtkMenuPositionFunc(Arg) WRAP_FOR_XEN(\"GtkMenuPositionFunc\", Arg)~%")
 ;(hey "#define C_TO_XEN_GtkDestroyNotify(Arg) WRAP_FOR_XEN(\"GtkDestroyNotify\", Arg)~%")
 (hey "#define XEN_TO_C_GdkFilterReturn(Arg) (GdkFilterReturn)XEN_TO_C_INT(Arg)~%")
 
@@ -2457,10 +2514,10 @@
        (with-func hey (lambda () 
 			(for-each type-it (reverse type-list))))))
  (list types-21 types-22 types-23 types-236 types-250 types-256 types-260 types-270 types-290 
-       types-210 types-211 types-213 types-2134 types-2150 types-2172 types-2173 types-2177 types-2190 
+       types-210 types-211 types-213 types-2134 types-2150 types-2172 types-2173 types-2177 types-2190 types-2901
        cairo-types cairo-types-140 cairo-types-164)
  (list with-21 with-22 with-23 with-236 with-250 with-256 with-260 with-270 with-290 
-       with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 
+       with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901
        with-cairo with-cairo-140 with-cairo-164))
 
 
@@ -3081,10 +3138,10 @@
        (with-func hey (lambda () 
 			(for-each handle-func (reverse func-list))))))
  (list funcs-21 funcs-22 funcs-23 funcs-236 funcs-250 funcs-256 funcs-260 funcs-270 funcs-273 funcs-290
-       funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190
+       funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-2901
        cairo-funcs cairo-png-funcs cairo-funcs-140 cairo-funcs-164)
  (list with-21 with-22 with-23 with-236 with-250 with-256 with-260 with-270 with-273 with-290
-       with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190
+       with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901
        with-cairo with-cairo-png with-cairo-140 with-cairo-164))
 
 
@@ -3106,8 +3163,8 @@
    (if (not (null? cast-list)) 
        (cast-func hey (lambda () 
 			(for-each cast-it (reverse cast-list))))))
- (list casts-21 casts-23 casts-236 casts-250 casts-256 casts-290 casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190)
- (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190))
+ (list casts-21 casts-23 casts-236 casts-250 casts-256 casts-290 casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901)
+ (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 ;;; checks have to use the built-in macros, not local symbol-based type checks
 
@@ -3121,8 +3178,8 @@
    (if (not (null? check-list)) 
        (check-func hey (lambda () 
 			(for-each make-check (reverse check-list))))))
- (list checks-21 checks-23 checks-236 checks-250 checks-256 checks-290 checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190)
- (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190))
+ (list checks-21 checks-23 checks-236 checks-250 checks-256 checks-290 checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-2901)
+ (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 (hey "~%~%/* ---------------------------------------- special functions ---------------------------------------- */~%~%")
 
@@ -3437,10 +3494,10 @@
        (with-func hey (lambda () 
 			(for-each argify-func (reverse func-list))))))
  (list funcs-21 funcs-22 funcs-23 funcs-236 funcs-250 funcs-256 funcs-260 funcs-270 funcs-273 funcs-290
-       funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190
+       funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-2901
        cairo-funcs cairo-png-funcs cairo-funcs-140 cairo-funcs-164)
  (list with-21 with-22 with-23 with-236 with-250 with-256 with-260 with-270 with-273 with-290
-       with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190
+       with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901
        with-cairo with-cairo-png with-cairo-140 with-cairo-164))
 
 
@@ -3462,8 +3519,8 @@
    (if (not (null? cast-list)) 
        (cast-func hey (lambda () 
 			(for-each ruby-cast (reverse cast-list))))))
- (list casts-21 casts-23 casts-236 casts-250 casts-256 casts-290 casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190)
- (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190))
+ (list casts-21 casts-23 casts-236 casts-250 casts-256 casts-290 casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901)
+ (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 (define (ruby-check func) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func))))
 (for-each ruby-check (reverse checks))
@@ -3472,8 +3529,8 @@
    (if (not (null? check-list)) 
        (check-func hey (lambda () 
 			(for-each ruby-check (reverse check-list))))))
- (list checks-21 checks-23 checks-236 checks-250 checks-256 checks-290 checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190)
- (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190))
+ (list checks-21 checks-23 checks-236 checks-250 checks-256 checks-290 checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-2901)
+ (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 
 (for-each (lambda (field) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field)) struct-fields)
@@ -3510,10 +3567,10 @@
        (with-func hey (lambda () 
 			(for-each unargify-func (reverse func-list))))))
  (list funcs-21 funcs-22 funcs-23 funcs-236 funcs-250 funcs-256 funcs-260 funcs-270 funcs-273 funcs-290
-       funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190
+       funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-2901
        cairo-funcs cairo-png-funcs cairo-funcs-140 cairo-funcs-164)
  (list with-21 with-22 with-23 with-236 with-250 with-256 with-260 with-270 with-273 with-290
-       with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190
+       with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901
        with-cairo with-cairo-png with-cairo-140 with-cairo-164))
 
 
@@ -3533,8 +3590,8 @@
    (if (not (null? cast-list)) 
        (cast-func hey (lambda () 
 			(for-each ruby-uncast (reverse cast-list))))))
- (list casts-21 casts-23 casts-236 casts-250 casts-256 casts-290 casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190)
- (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190))
+ (list casts-21 casts-23 casts-236 casts-250 casts-256 casts-290 casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901)
+ (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 
 (define (ruby-uncheck func) (hey "#define gxg_~A_w gxg_~A~%" (no-arg (car func)) (no-arg (car func))))
@@ -3544,8 +3601,8 @@
    (if (not (null? check-list)) 
        (check-func hey (lambda () 
 			(for-each ruby-uncheck (reverse check-list))))))
- (list checks-21 checks-23 checks-236 checks-250 checks-256 checks-290 checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190)
- (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190))
+ (list checks-21 checks-23 checks-236 checks-250 checks-256 checks-290 checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-2901)
+ (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 (for-each (lambda (field) (hey "#define gxg_~A_w gxg_~A~%" field field)) struct-fields)
 (for-each (lambda (field) (hey "#define gxg_~A_w gxg_~A~%" field field)) settable-struct-fields)
@@ -3605,10 +3662,10 @@
        (with-func hey (lambda () 
 			(for-each defun (reverse func-list))))))
  (list funcs-21 funcs-22 funcs-23 funcs-236 funcs-250 funcs-256 funcs-260 funcs-270 funcs-273 funcs-290
-       funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190
+       funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-2901
        cairo-funcs cairo-png-funcs cairo-funcs-140 cairo-funcs-164)
  (list with-21 with-22 with-23 with-236 with-250 with-256 with-260 with-270 with-273 with-290
-       with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190
+       with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901
        with-cairo with-cairo-png with-cairo-140 with-cairo-164))
 
 (define (cast-out func)
@@ -3626,8 +3683,8 @@
    (if (not (null? cast-list)) 
        (cast-func hey (lambda () 
 			(for-each cast-out (reverse cast-list))))))
- (list casts-21 casts-23 casts-236 casts-250 casts-256 casts-290 casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190)
- (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190))
+ (list casts-21 casts-23 casts-236 casts-250 casts-256 casts-290 casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901)
+ (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 
 (hey "  XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);~%")
@@ -3651,8 +3708,8 @@
    (if (not (null? check-list)) 
        (check-func hey (lambda () 
 			(for-each check-out (reverse check-list))))))
- (list checks-21 checks-23 checks-236 checks-250 checks-256 checks-290 checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190)
- (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190))
+ (list checks-21 checks-23 checks-236 checks-250 checks-256 checks-290 checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-2901)
+ (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 (hey "}~%~%")
 
@@ -3719,10 +3776,10 @@
 				    (hey "  DEFINE_INTEGER(~A);~%" val)) 
 				  (reverse ints-list))))))
  (list ints-22 ints-23 ints-236 ints-250 ints-256 ints-260 ints-270 ints-273 ints-290
-       ints-210 ints-211 ints-213 ints-2134 ints-2150 ints-2172 ints-2173 ints-2177
+       ints-210 ints-211 ints-213 ints-2134 ints-2150 ints-2172 ints-2173 ints-2177 ints-2901
        cairo-ints cairo-ints-140 cairo-ints-164)
  (list with-22 with-23 with-236 with-250 with-256 with-260 with-270 with-273 with-290
-       with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177
+       with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2901
        with-cairo with-cairo-140 with-cairo-164))
 
 

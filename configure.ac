@@ -967,14 +967,41 @@ else
 
   if test "$with_gtk" = yes ; then
 
-    AM_PATH_GTK_2_0(2.0.0,
-      [
-	with_gtk=yes
-      ],
-      [
-    	AC_MSG_WARN([trouble with gtk -- will try to make Snd without any GUI])
-      	with_gtk=no
-      ])
+    if test x$PKG_CONFIG != xno ; then
+      if $PKG_CONFIG gtk+-3.0 --exists ; then
+
+        AM_PATH_GTK_3_0(2.90.0,
+          [
+	    with_gtk=yes
+          ],
+          [
+    	    AC_MSG_WARN([trouble with gtk -- will try to make Snd without any GUI])
+      	    with_gtk=no
+          ])
+      else
+
+        AM_PATH_GTK_2_0(2.0.0,
+          [
+	    with_gtk=yes
+          ],
+          [
+    	    AC_MSG_WARN([trouble with gtk -- will try to make Snd without any GUI])
+      	    with_gtk=no
+          ])
+      fi
+
+    else
+
+        AM_PATH_GTK_2_0(2.0.0,
+          [
+	    with_gtk=yes
+          ],
+          [
+    	    AC_MSG_WARN([trouble with gtk -- will try to make Snd without any GUI])
+      	    with_gtk=no
+          ])
+    fi
+
     if test "$with_gtk" = yes ; then
      	GX_FILES="G_O_FILES"
       	GX_HEADERS="SND_G_HEADERS"
@@ -993,10 +1020,18 @@ else
 
 	GTK_LD_LIBS="$GTK_LIBS"
 	if test x$PKG_CONFIG != xno ; then
-          if test "$with_directfb" = yes ; then
-            GTK_LD_LIBS="`$PKG_CONFIG gtk+-directfb-2.0 --libs-only-L` `$PKG_CONFIG gtk+-directfb-2.0 --libs-only-l`"
+          if $PKG_CONFIG gtk+-3.0 --exists ; then
+            if test "$with_directfb" = yes ; then
+              GTK_LD_LIBS="`$PKG_CONFIG gtk+-directfb-3.0 --libs-only-L` `$PKG_CONFIG gtk+-directfb-3.0 --libs-only-l`"
+            else
+              GTK_LD_LIBS="`$PKG_CONFIG gtk+-3.0 --libs-only-L` `$PKG_CONFIG gtk+-3.0 --libs-only-l`"
+            fi
           else
-            GTK_LD_LIBS="`$PKG_CONFIG gtk+-2.0 --libs-only-L` `$PKG_CONFIG gtk+-2.0 --libs-only-l`"
+            if test "$with_directfb" = yes ; then
+              GTK_LD_LIBS="`$PKG_CONFIG gtk+-directfb-2.0 --libs-only-L` `$PKG_CONFIG gtk+-directfb-2.0 --libs-only-l`"
+            else
+              GTK_LD_LIBS="`$PKG_CONFIG gtk+-2.0 --libs-only-L` `$PKG_CONFIG gtk+-2.0 --libs-only-l`"
+            fi
           fi
           pango_version="`$PKG_CONFIG pango --modversion`"
           AC_DEFINE_UNQUOTED(MUS_PANGO_VERSION,"${pango_version}")
@@ -1082,6 +1117,8 @@ else
 	AC_CHECK_LIB(m, gtk_widget_get_visible, [AC_DEFINE(HAVE_GTK_WIDGET_GET_VISIBLE)], ,$GTK_LIBS)
 	# for 2.19.n
 	AC_CHECK_LIB(m, gtk_entry_get_text_window, [AC_DEFINE(HAVE_GTK_ENTRY_GET_TEXT_WINDOW)], ,$GTK_LIBS)
+	# for 2.90
+	AC_CHECK_LIB(m, gtk_scale_new, [AC_DEFINE(HAVE_GTK_SCALE_NEW)], ,$GTK_LIBS)
 
 	# for gdk|pango_cairo 
 	AC_CHECK_LIB(m, gdk_cairo_create, 

@@ -7081,41 +7081,41 @@
 (CFNC-2190 "void gtk_widget_set_mapped GtkWidget* widget gboolean mapped")
 (CFNC-2190 "gboolean gtk_widget_get_mapped GtkWidget* widget")
 
-#|
 
 ;;; 2.19.6
-(CFUNC-2901 "void gdk_keymap_add_virtual_modifiers GdkKeymap* keymap GdkModifierType* state")
-(CFUNC-2901 "void gtk_widget_get_requisition GtkWidget* widget GtkRequisition* requisition")
+(CFNC-2901 "void gdk_keymap_add_virtual_modifiers GdkKeymap* keymap GdkModifierType* state")
+(CFNC-2901 "void gtk_widget_get_requisition GtkWidget* widget GtkRequisition* requisition")
 
 ;;; 2.21.0
-(CFUNC-2901 "void gdk_window_coords_to_parent GdkWindow* window gdouble x gdouble y gdouble* [parent_x] gdouble* [parent_y]")
-(CFUNC-2901 "void gdk_window_coords_from_parent GdkWindow* window gdouble parent_x gdouble parent_y gdouble* [x] gdouble* [y]")
-(CFUNC-2901 "GdkWindow* gdk_window_get_effective_parent GdkWindow* window")
-(CFUNC-2901 "GdkWindow* gdk_window_get_effective_toplevel GdkWindow* window")
-(CFUNC-2901 "GtkWidget* gtk_accessible_get_widget GtkAccessible* accessible")
-(CFUNC-2901 "GtkAdjustment* gtk_text_view_get_hadjustment GtkTextView* text_view")
-(CFUNC-2901 "GtkAdjustment* gtk_text_view_get_vadjustment GtkTextView* text_view")
-(CFUNC-2901 "gboolean gtk_widget_send_focus_change GtkWidget* widget GdkEvent* event")
+(CFNC-2901 "void gdk_window_coords_to_parent GdkWindow* window gdouble x gdouble y gdouble* [parent_x] gdouble* [parent_y]")
+(CFNC-2901 "void gdk_window_coords_from_parent GdkWindow* window gdouble parent_x gdouble parent_y gdouble* [x] gdouble* [y]")
+(CFNC-2901 "GdkWindow* gdk_window_get_effective_parent GdkWindow* window")
+(CFNC-2901 "GdkWindow* gdk_window_get_effective_toplevel GdkWindow* window")
+(CFNC-2901 "GtkWidget* gtk_accessible_get_widget GtkAccessible* accessible")
+(CFNC-2901 "GtkAdjustment* gtk_text_view_get_hadjustment GtkTextView* text_view")
+(CFNC-2901 "GtkAdjustment* gtk_text_view_get_vadjustment GtkTextView* text_view")
+(CFNC-2901 "gboolean gtk_widget_send_focus_change GtkWidget* widget GdkEvent* event")
 
-
-;;; 2.90.1? -- use gtk_scale_new in configure?
-
-(CFNC-2901 "void gdk_display_get_device_state GdkDisplay* display GdkDevice* device GdkScreen** screen gint* x gint* y GdkModifierType* mask")
-(CFNC-2901 "GdkWindow* gdk_display_get_window_at_device_position GdkDisplay* display GdkDevice* device gint* win_x gint* win_y")
+;;; 2.90.1
+(CFNC-2901 "void gdk_display_get_device_state GdkDisplay* display GdkDevice* device GdkScreen** [screen] gint* [x] gint* [y] GdkModifierType* [mask]")
+(CFNC-2901 "GdkWindow* gdk_display_get_window_at_device_position GdkDisplay* display GdkDevice* device gint* [win_x] gint* [win_y]")
 (CFNC-2901 "void gdk_display_warp_device GdkDisplay* display GdkDevice* device GdkScreen* screen gint x gint y")
 (CFNC-2901 "GdkDeviceManager* gdk_display_get_device_manager GdkDisplay* display")
 (CFNC-2901 "void gdk_drag_context_set_device GdkDragContext* context GdkDevice* device")
 (CFNC-2901 "GdkDevice* gdk_drag_context_get_device GdkDragContext* context")
 (CFNC-2901 "GList* gdk_drag_context_list_targets GdkDragContext* context")
+#|
+;;; aren't these public?
 (CFNC-2901 "GdkDragAction gdk_drag_context_get_actions GdkDragContext* context")
 (CFNC-2901 "GdkDragAction gdk_drag_context_get_suggested_action GdkDragContext* context")
 (CFNC-2901 "GdkDragAction gdk_drag_context_get_action GdkDragContext* context")
-(CFNC-2901 "void gdk_event_set_device GdkEvent* event GdkDevice* device")
-(CFNC-2901 "GdkDevice* gdk_event_get_device const GdkEvent* event")
-(CFNC-2901 "gboolean gdk_events_get_distance GdkEvent* event1 GdkEvent* event2 gdouble* distance")
-(CFNC-2901 "gboolean gdk_events_get_angle GdkEvent* event1 GdkEvent* event2 gdouble* angle")
-(CFNC-2901 "gboolean gdk_events_get_center GdkEvent* event1 GdkEvent* event2 gdouble* x gdouble* y")
 (CFNC-2901 "GdkImageType gdk_image_get_image_type GdkImage* image")
+|#
+(CFNC-2901 "void gdk_event_set_device GdkEvent* event GdkDevice* device")
+(CFNC-2901 "GdkDevice* gdk_event_get_device GdkEvent* event")
+(CFNC-2901 "gboolean gdk_events_get_distance GdkEvent* event1 GdkEvent* event2 gdouble* [distance]")
+(CFNC-2901 "gboolean gdk_events_get_angle GdkEvent* event1 GdkEvent* event2 gdouble* [angle]")
+(CFNC-2901 "gboolean gdk_events_get_center GdkEvent* event1 GdkEvent* event2 gdouble* [x] gdouble* [y]")
 (CFNC-2901 "GdkVisual* gdk_image_get_visual GdkImage* image")
 (CFNC-2901 "GdkByteOrder gdk_image_get_byte_order GdkImage* image")
 (CFNC-2901 "gint gdk_image_get_width GdkImage* image")
@@ -7131,17 +7131,17 @@
 (CFNC-2901 "gboolean gdk_window_is_shaped GdkWindow* window")
 (CFNC-2901 "gboolean gdk_window_get_modal_hint GdkWindow* window")
 (CFNC-2901 "void gdk_window_get_background GdkWindow* window GdkColor* color")
-(CFNC-2901 "void gdk_window_get_back_pixmap GdkWindow* window GdkPixmap** pixmap gboolean* parent_relative")
+(CFNC-2901 "void gdk_window_get_back_pixmap GdkWindow* window GdkPixmap** [pixmap] gboolean* [parent_relative]")
 (CFNC-2901 "void gdk_window_set_device_cursor GdkWindow* window GdkDevice* device GdkCursor* cursor")
 (CFNC-2901 "GdkCursor* gdk_window_get_device_cursor GdkWindow* window GdkDevice* device")
-(CFNC-2901 "GdkWindow* gdk_window_get_device_position GdkWindow* window GdkDevice* device gint* x gint* y GdkModifierType* mask")
+(CFNC-2901 "GdkWindow* gdk_window_get_device_position GdkWindow* window GdkDevice* device gint* [x] gint* [y] GdkModifierType* [mask]")
 (CFNC-2901 "void gdk_window_set_device_events GdkWindow* window GdkDevice* device GdkEventMask event_mask")
 (CFNC-2901 "GdkEventMask gdk_window_get_device_events GdkWindow* window GdkDevice* device")
 (CFNC-2901 "void gtk_combo_box_popup_for_device GtkComboBox* combo_box GdkDevice* device")
 (CFNC-2901 "void gtk_device_grab_add GtkWidget* widget GdkDevice* device gboolean block_others")
 (CFNC-2901 "void gtk_device_grab_remove GtkWidget* widget GdkDevice* device")
 (CFNC-2901 "GdkDevice* gtk_get_current_event_device void")
-(CFNC-2901 "void gtk_menu_popup_for_device GtkMenu* menu GdkDevice* device GtkWidget* parent_menu_shell GtkWidget* parent_menu_item GtkMenuPositionFunc func gpointer data guint button guint32 activate_time")
+(CFNC-2901 "void gtk_menu_popup_for_device GtkMenu* menu GdkDevice* device GtkWidget* parent_menu_shell GtkWidget* parent_menu_item GtkMenuPositionFunc func lambda_data #func_info guint button guint32 activate_time")
 (CFNC-2901 "GtkWidget* gtk_paned_new GtkOrientation orientation")
 (CFNC-2901 "void gtk_radio_action_join_group GtkRadioAction* action GtkRadioAction* group_source")
 (CFNC-2901 "GtkWidget* gtk_ruler_new GtkOrientation orientation")
@@ -7157,11 +7157,5 @@
 (CFNC-2901 "GdkEventMask gtk_widget_get_device_events GtkWidget* widget GdkDevice* device")
 (CFNC-2901 "GtkWidget* gtk_window_group_get_current_device_grab GtkWindowGroup* window_group GdkDevice* device")
 
+(CINT-2901 "GTK_MULTIDEVICE" "GtkWidgetFlags")
 
-
-! GTK_MULTIDEVICE = 1 << 23
- } GtkWidgetFlags
-
-
-
-|#

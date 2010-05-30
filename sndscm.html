@@ -742,14 +742,18 @@ Michael Scholz, based on CLM's bess5.cl and rt.lisp.
 <!-- main-index |binaryiodoc:binary files -->
 <A NAME="binaryio"></A>
 
-<p>This file has functions to read and write numbers to and from binary files.
-</p>
-
 <table border=0><tr><td bgcolor="#f2f3ff">
 <em class=emdef>read|write-l|bint16|32|64</em><br>
 <em class=emdef>read|write-l|bfloat32|64</em><br>
-<em class=emdef>read-au-header</em>
+<em class=emdef>read|write-au-header</em>
 </td></tr></table>
+
+<p>This file has functions to read and write numbers and strings to and from binary files.
+The function names are similar to those used for data-format names, so for example,
+read-bint32 reads the next 4 bytes from the current input port,
+interpreting them as a big-endian 32-bit integer.
+</p>
+
 <br>
 <br>
 
