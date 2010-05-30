@@ -1,16 +1,19 @@
 ;;; read/write binary (sound) files
 ;;;
 ;;; names are read|write b|l int|float n, 
-;;;   so read-bint32 reads the current input, returning a big-endian 32-bit integer
+;;;   so read-bint32 reads the next 4 bytes from the current input port,
+;;;   interpreting them as a big-endian 32-bit integer
 
 
 ;;; -------- strings (0-terminated)
+
 (define (read-string)
   (let ((chars '()))
     (do ((c (read-byte) (read-byte)))
 	((or (= c 0)
 	     (eof-object? c))
-	 (apply string (reverse chars))))))
+	 (apply string (reverse chars)))
+      (set! chars (cons (integer->char c) chars)))))
 
 (define (write-string str)
   (for-each write-char str) ; or maybe (lambda (c) (write-byte (char->integer c)))
@@ -217,7 +220,8 @@
       (write-byte (logand (ash mant0 (- j)) #xFF)))))
 
 
-;;; -------- read "au" (NeXT/Sun) header
+
+;;; -------- "au" (NeXT/Sun) header
 
 (define (read-au-header file)
   (with-input-from-file file
@@ -235,4 +239,30 @@
 		   (chans (read-bint32))
 		   (comment (read-string)))
 	      (list magic data-location data-size data-format srate chans comment)))))))
+
+(define (write-au-header file chans srate data-size data-format comment)
+  (with-output-to-file file
+    (lambda ()
+      (let* ((comlen (length comment))
+	     (data-location (+ 24 (* 4 (floor (+ 1 (/ comlen 4))))))
+	     (curloc 24))
+	(write-byte (char->integer #\.))
+	(write-byte (char->integer #\s))
+	(write-byte (char->integer #\n))
+	(write-byte (char->integer #\d))
+	(write-bint32 data-location)
+	(write-bint32 data-size)
+	(write-bint32 data-format)
+	(write-bint32 srate)
+	(write-bint32 chans)
+	(if (> comlen 0)
+	    (begin
+	      (write-string comment)
+	      (set! curloc (+ curloc comlen 1)))) ; write-string adds a trailing 0
+	(do ((i curloc (+ i 1)))
+	    ((>= i data-location))
+	  (write-byte 0))))))
+
+
+;;; -------- "wav" (RIFF) header
 

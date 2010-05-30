@@ -25559,7 +25559,7 @@ s7_scheme *s7_init(void)
  *          c_object and s_type tables, pws structs
  *
  * can't set! just take anything in parens and eval it -- why not support (set! (cdddr ...) )?
- * TODO: binary-io finished, tested, doc'd etc
+ * TODO: binary-io finished
  */
 
 /* OBJECTS...
