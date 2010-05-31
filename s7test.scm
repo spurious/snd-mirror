@@ -1416,6 +1416,7 @@
 " "") #t)
 
 
+
 (test (string<? "aaaa" "aaab") #t)
 (test (string<? "aaaa" "aaaaa") #t)
 (test (string<? "" "abcdefgh") #t)
@@ -1790,6 +1791,7 @@
    (test (string-length arg) 'error))
  (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
+
 (for-each
  (lambda (arg)
    (test (string #\a arg) 'error))
@@ -1798,6 +1800,15 @@
 (test (string) "")
 (test (string #\a #\b #\c) "abc")
 (test (string #\a) "a")
+(test (map string '(#\a #\b)) '("a" "b"))
+(test (map string '(#\a #\b) '(#\c #\d)) '("ac" "bd"))
+(test (map string '(#\a #\b #\c) '(#\d #\e #\f) '(#\g #\h #\i)) '("adg" "beh" "cfi"))
+(test (map string "abc" "def" "ghi") '("adg" "beh" "cfi"))
+(test (string #\" #\# #\") "\"#\"")
+(test (string #\\ #\\ #\# #\\ #\# #\#) "\\\\#\\##")
+(test (string #\' #\' #\` #\") '"''`\"")
+;;; some schemes accept \' and other such sequences in a string, but the spec only mentions \\ and \"
+(test (string '()) 'error)
 
 
 (test (make-string 0) "")
@@ -2121,11 +2132,6 @@
 (test (list->string (list #\" #\# #\")) "\"#\"")
 (test (list->string (list #\\ #\\ #\# #\\ #\# #\#)) "\\\\#\\##")
 (test (list->string (list #\' #\' #\` #\")) '"''`\"")
-(test (string #\" #\# #\") "\"#\"")
-(test (string #\\ #\\ #\# #\\ #\# #\#) "\\\\#\\##")
-(test (string #\' #\' #\` #\") '"''`\"")
-;;; some schemes accept \' and other such sequences in a string, but the spec only mentions \\ and \"
-(test (string '()) 'error)
 
 (test (reinvert 12 string->list list->string "12345") "12345")
 
@@ -5526,6 +5532,8 @@
     (newline)))
     
 (test (call-with-input-file "tmp1.r5rs" (lambda (p) (integer->char (read-byte p)))) #\t)
+(test (with-input-from-string "123" (lambda () (read-byte))) 49)
+(test (with-input-from-string "1/0" (lambda () (read))) 'error) ; this is a reader error in CL
 
 (let ((bytes (vector #o000 #o000 #o000 #o034 #o000 #o001 #o215 #o030 #o000 #o000 #o000 #o022 #o000 
 		     #o000 #o126 #o042 #o000 #o000 #o000 #o001 #o000 #o000 #o000 #o000 #o000 #o001)))
@@ -6438,6 +6446,11 @@
 (test (string=? (object->string (cons 1 2)) "(1 . 2)") #t)
 (test (string=? (object->string '#(1 2 3)) "#(1 2 3)") #t)
 (test (string=? (object->string +) "+") #t)
+(test (object->string (object->string (object->string "123"))) "\"\\\"\\\\\\\"123\\\\\\\"\\\"\"")
+(test (object->string) 'error)
+(test (object->string 1 2) 'error)
+(test (object->string abs) "abs")
+
 
 ;;; (string-set! (with-input-from-string "\"1234\"" (lambda () (read))) 1 #\a)
 
@@ -6845,7 +6858,7 @@
 
 (test (for-each abs '() abs) #<unspecified>)
 (test (for-each abs '(1) '#(1)) 'error)
-
+(test (let ((vals '())) (for-each for-each (list (lambda (a) (set! vals (cons (abs a) vals)))) (list (list -1 -2))) vals) '(2 1))
 
 
 
@@ -6999,6 +7012,12 @@
 	   (list 31 32 33 34 35))
       (list 46 47 48 49 50))
   
+(test (map map (list abs) (list (list -1))) '((1)))
+(test (map map (list map) (list (list abs)) (list (list (list -1)))) '(((1))))
+(test (map map (list map) (list (list map)) (list (list (list abs))) (list (list (list (list -1 -3))))) '((((1 3)))))
+(test (let () (define (mrec a b) (if (<= b 0) (list a) (map mrec (list a) (list (- b 1))))) (mrec (list 1 2) 5)) '(((((((1 2))))))))
+
+
 
 
 
@@ -7351,6 +7370,11 @@
 (test (set!) 'error)
 (test (let ((x 1)) (set! x x x)) 'error)
 (test (let ((x 1)) (set! x x) x) 1)
+(test (set! set! 123) 'error) ; TODO: I get "set! set!: unbound variable"?
+(test (set! (cons 1 2) 3) 'error)
+(test (let ((var 1) (val 2)) (set! var set!) (var val 3) val) 3)
+(test (let ((var 1) (val 2)) (set! var +) (var val 3)) 5)
+
 
 
 
@@ -7623,6 +7647,7 @@
 (test (case 1 (2 1) (1 1)) 'error)
 (test (case 1 (else)) 'error)
 (test (case () ((1 . 2) . 1) . 1) 'error)
+(test (case case ((case) 1) ((cond) 3)) 1)
 
 
 
@@ -7957,8 +7982,10 @@
 (test (let () (begin (begin (define (a3) 1)) (begin (define (a3) b3) (define b3 3)) (a3))) 3) ; yow
 (test (let () (begin (begin (define (a) 1)) (a))) 1)
 (test (let ((a 1)) (begin (define a 2)) a) 2)
+(test (+ 1 (begin (values 2 3)) 4) 10)
+(test (+ 1 (begin (values 5 6) (values 2 3)) 4) 10)
 
-;;; begin is a mess...
+
 
 
 
@@ -7981,6 +8008,7 @@
 (test (apply apply (list list 1 2 '(3))) (list 1 2 3))
 (test (vector? (apply make-vector '(1))) #t)
 (test (apply make-vector '(1 1)) '#(1))
+(test (let ((f +)) (apply f '(1 2))) 3)
 					;(test (let* ((x '(1 2 3)) (y (apply list x))) (not (eq? x y))) #f) ; is this standard?
 (test (apply min '(1 2 3 5 4 0 9)) 0)
 (test (apply min 1 2 4 3 '(4 0 9)) 0)
@@ -8020,6 +8048,7 @@
 (test (let ((x (list 1 2))) (set-cdr! x x) (apply + x)) 'error)
 (test (apply + '(1 2 . 3)) 'error)
 (test (apply + '(1 2) (list 3 4)) 'error)
+(test (let () (define (mrec a b) (if (<= b 0) (list a) (apply mrec (list a) (list (- b 1))))) (mrec (list 1 2) 5)) '(((((((1 2))))))))
 
 
 
@@ -8222,6 +8251,7 @@
 	      (+ a b))
 	    96)
       ))
+(test (let ((add (lambda (a b) (values (+ a 1) (+ b 1))))) (+ 1 (add 2 3))) 8)
 
 
 
@@ -10911,6 +10941,8 @@
   (test (eq? (eval (quote (quote ()))) ()) #t)
   (test (apply (cons (quote cons) (cons 1 (quote ((quote ()))))) 1 ()) 1) ; essentially ((list 'cons 1 ...) 1) => 1
   (test (eval ((cons (quote cons) (cons 1 (quote ((quote ()))))) 1)) 1)
+  (test (eval (eval (list '+ 1 2))) 3)
+
 
   (test (apply + (+ 1) ()) 1)
   (test (apply #(1) (+) ()) 1)
@@ -10929,6 +10961,9 @@
   (if with-values (test (+ (eval `(values 1 2 3)) 4) 10))
   (if with-values (test (+ (eval-string "(values 1 2 3)") 4) 10))
   (test (+ 1 (eval-string "(+ 2 3)") 4) 10)
+  (test ((eval-string "(lambda (a) (+ a 1))") 2) 3)
+  (test (eval ((eval-string "(lambda (a) (list '+ a 1))") 2)) 3)
+  (test (eval-string "(+ 1 (eval (list '+ 1 2)))") 4)
 
   (for-each
    (lambda (arg)
@@ -14100,8 +14135,6 @@
 	(define (ldb-test byte int) (not (zero? (ldb byte int))))
 	(define (mask-field byte int) (logand int (dpb -1 byte 0)))
 	(define (deposit-field byte spec int) (logior (logand byte (byte-mask spec)) (logand int (lognot (byte-mask spec)))))
-
-	;; decode-float strikes me as a bad idea, as do all the others in this section!
 	(define (scale-float x k) (* x (expt 2.0 k)))
 	
 	;; from clisp -- can't see any point to most of these
@@ -47048,6 +47081,7 @@
 (test (logior -1) -1)
 (test (logior 12341234 10001111) 12378103)
 (test (logior 1 2 4 8) 15)
+(test (logior) 'error)
 
 
 (test (logand 0 1) 0)
@@ -47067,6 +47101,7 @@
 (test (logand 1 -1) 1)
 (test (logand 1 1) 1)
 (test (logand 16 31) 16)
+(test (logand) 'error)
 
 
 (test (logxor 0 1) 1)
@@ -47077,6 +47112,7 @@
 (test (logxor #b1 #b11 #b111 #b1111) #b1010)
 (test (logxor 12341234 10001111) 2413861)
 (test (logxor 1 3 7 15) 10)
+(test (logxor) 'error)
 
 
 (test (lognot 0) -1)
@@ -47087,6 +47123,8 @@
 (test (lognot 12341234) -12341235)
 (test (lognot #b-101) 4)
 (test (lognot (+ 1 (lognot 1000))) 999)
+(test (lognot) 'error)
+
 
 ;; from CL spec
 (test (let ((str ""))
@@ -47154,6 +47192,9 @@
 (num-test (ash 1 (- (expt 2 31))) 0)
 (num-test (ash (expt 2 31) (- (expt 2 31))) 0)
 (num-test (ash -129876 -1026) -1)
+(num-test (ash -2 -3) -1)
+(num-test (ash -3 -3) -1)
+(num-test (ash (ash 1 31) -31) 1)
 
 (do ((i 0 (+ i 1))) 
     ((= i 15)) 
@@ -47175,6 +47216,15 @@
 (num-test (ash -31 most-negative-fixnum) -1)
 
 (test (ash 1 (expt 2 32)) 'error)
+(test (ash) 'error)
+(test (ash 1) 'error)
+(test (ash 1 2 3) 'error)
+
+(for-each
+ (lambda (arg)
+   (test (ash 1 arg) 'error)
+   (test (ash arg 1) 'error))
+ (list #\a '#(1 2 3) 3.14 2/3 1.5+0.3i 1+i '() 'hi abs "hi" '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
 
 
 (num-test (integer-length 0) 0)
@@ -47205,6 +47255,9 @@
 (num-test (integer-length -127) 7)
 (num-test (integer-length -128) 7)
 (num-test (integer-length -129) 8)
+
+(test (integer-length) 'error)
+(test (integer-length 1 2) 'error)
 
 
 (test (integer-decode-float) 'error)
@@ -47262,6 +47315,7 @@
 (test (integer-decode-float 1.0e-322) '(4503599627370516 -1075 1))
 (test (integer-decode-float (expt 2.0 31)) (list #x10000000000000 -21 1))
 (test (integer-decode-float (expt 2.0 52)) (list #x10000000000000 0 1))
+(test (integer-decode-float 1d23) '(5960464477539062 24 1))
 
 (for-each
  (lambda (arg)

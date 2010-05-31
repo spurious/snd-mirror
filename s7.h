@@ -29,7 +29,7 @@ typedef double s7_Double;
    *
    * s7 (scheme) variables:
    *
-   *    *features*              a list of symbols describing what is current available (initially '(s7)).
+   *    *features*              a list of symbols describing what is currently available (initially '(s7)).
    *                               "provide" adds a symbol to the list, 
    *                               "provided?" returns #t if its symbol arg is in the list.
    *    *vector-print-length*   how many elements of a vector are printed (initially 8)
@@ -113,7 +113,7 @@ s7_scheme *s7_init(void);
    * s7_init creates the interpreter.
    */
 
-typedef s7_pointer (*s7_function)(s7_scheme *sc, s7_pointer args);   /* obj = func(s7, args) -- args is a list of arguments */
+typedef s7_pointer (*s7_function)(s7_scheme *sc, s7_pointer args);   /* that is, obj = func(s7, args) -- args is a list of arguments */
 
 
 s7_pointer s7_f(s7_scheme *sc);                                      /* #f */

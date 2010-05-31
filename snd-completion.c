@@ -9,9 +9,6 @@ static char *current_match = NULL;
  *   around in the symbol tables
  */
 
-/* TODO: apparently this thinks '/' can't occur in a scheme name
- */
-
 #if HAVE_SCHEME
 
 typedef struct {
@@ -172,6 +169,7 @@ bool separator_char_p(char c)
 	 (c != '+') &&
 	 (c != '%') &&
 	 (c != ':') &&
+	 (c != '/') &&
 #endif
 	 (c != '$'));
 }

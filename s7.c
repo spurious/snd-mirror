@@ -1880,7 +1880,7 @@ void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
 }
 
 
-static bool *number_inits;
+static bool *number_inits; /* bad symbol name error check */
 
 s7_pointer s7_make_symbol(s7_scheme *sc, const char *name) 
 { 
@@ -25546,7 +25546,6 @@ s7_scheme *s7_init(void)
  * :allow-other-keys in lambda*
  * PERHAPS: pretty-printing in the REPL or in format (~W in CL I think)
  *    also read/write float (binary), perhaps something like frexp (integer-decode-float)
- * TODO: doc/test integer-decode-float if it turns out to work as desired
  * lint 
  * TODO: hash-table map and for-each should be entry-oriented, not alist-oriented
  * TODO: access to the pws setter [and figure out how to get from the C setter to its arity list -- used in snd-test]
@@ -25584,5 +25583,13 @@ s7_scheme *s7_init(void)
  * A "class" in this case is define-record (for the local fields and type) + a list of methods and a methods accessor.
  * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
  * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
+ *
+ *
+ * TODO: something doesn't make sense here:
+ *    (eval-string "(object->string (list '+ 1 2))") -> "(+ 1 2)"
+ *      (eval-string "(+ 1 2)") -> 3
+ *    (eval-string "(eval-string \"(object->string (list '+ 1 2))\")") -> "(+ 1 2)"
+ *    and the trace level is not reset -- are we actually returning? [subsequent eval-string seems confused]
+ *    (eval (eval (list '+ 1 2))) -> 3
  */
 

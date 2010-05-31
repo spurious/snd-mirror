@@ -4,6 +4,8 @@
 ;;;   so read-bint32 reads the next 4 bytes from the current input port,
 ;;;   interpreting them as a big-endian 32-bit integer
 
+(provide 'snd-binary-io.scm)
+
 
 ;;; -------- strings (0-terminated)
 
@@ -18,6 +20,18 @@
 (define (write-string str)
   (for-each write-char str) ; or maybe (lambda (c) (write-byte (char->integer c)))
   (write-byte 0))
+
+
+;;; -------- strings (unterminated)
+
+(define (read-chars len)
+  (let ((str (make-string len)))
+    (do ((i 0 (+ i 1)))
+	((= i len) str)
+      (string-set! str i (read-char)))))
+	 
+(define (write-chars str)
+  (for-each write-char str))
 
 
 ;;; -------- 16-bit ints
@@ -197,7 +211,7 @@
 	(sign 0)
 	(mant1 0)
 	(mant0 0))
-    (if (minusp val) 
+    (if (negative? val) 
 	(begin
 	  (set! sign 1) 
 	  (set! val (abs val))))
@@ -226,12 +240,9 @@
 (define (read-au-header file)
   (with-input-from-file file
     (lambda ()
-      (let ((magic (string (integer->char (read-byte)) 
-			   (integer->char (read-byte)) 
-			   (integer->char (read-byte)) 
-			   (integer->char (read-byte)))))
+      (let ((magic (read-chars 4)))
 	(if (not (string=? magic ".snd"))
-	    (error 'bad-header (format #f "magic word is ~S" magic))
+	    (error 'bad-header "~A is not an au file: ~A" file)
 	    (let* ((data-location (read-bint32))
 		   (data-size (read-bint32))
 		   (data-format (read-bint32))
@@ -240,16 +251,13 @@
 		   (comment (read-string)))
 	      (list magic data-location data-size data-format srate chans comment)))))))
 
-(define (write-au-header file chans srate data-size data-format comment)
+(define (write-au-header file chans srate data-size data-format comment) ; data-size in bytes
   (with-output-to-file file
     (lambda ()
       (let* ((comlen (length comment))
 	     (data-location (+ 24 (* 4 (floor (+ 1 (/ comlen 4))))))
 	     (curloc 24))
-	(write-byte (char->integer #\.))
-	(write-byte (char->integer #\s))
-	(write-byte (char->integer #\n))
-	(write-byte (char->integer #\d))
+	(write-chars ".snd")
 	(write-bint32 data-location)
 	(write-bint32 data-size)
 	(write-bint32 data-format)
@@ -263,6 +271,4 @@
 	    ((>= i data-location))
 	  (write-byte 0))))))
 
-
-;;; -------- "wav" (RIFF) header
 
