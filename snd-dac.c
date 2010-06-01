@@ -7,6 +7,10 @@
  *   channels can come and go as a play is in progress
  */
 
+/* TODO: how to use (play func) on a multichannel file? */
+
+
+
 /* -------------------------------- per-channel control-panel state -------------------------------- */
 
 typedef struct {

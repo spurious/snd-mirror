@@ -11496,10 +11496,6 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* The rest are trivial: (define (set-cadr! a b) (set-car! (cdr a) b)) or (define-macro (set-cadr! a b) `(set-car! (cdr ,a) ,b)) -- use c?r
- */
-
-
 static s7_pointer g_caar(s7_scheme *sc, s7_pointer args)
 {
   #define H_caar "(caar lst) returns (car (car lst)): (caar '((1 2))) -> 1"
@@ -18977,6 +18973,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       /* if unbound variable hook here, we need the binding, not the current value */
 
+      if (is_syntax(sc->code))
+	return(eval_error(sc, "set! ~A: this is not allowed for some reason", sc->code));
       return(eval_error(sc, "set! ~A: unbound variable", sc->code));
       
       
@@ -25408,7 +25406,6 @@ s7_scheme *s7_init(void)
   s7_function_set_setter(sc, "list-ref", "list-set!");
   s7_function_set_setter(sc, "string-ref", "string-set!");
 
-
   {
     int i, top;
     #define LOG_LLONG_MAX 43.668274
@@ -25500,7 +25497,6 @@ s7_scheme *s7_init(void)
 }
 
 /* TODO: macroexpand and fully-expand are buggy
- * PERHAPS: method lists for c_objects
  * TODO: function IO completed -- tie into scheme for tests?
  *         what is needed? -- scheme "soft-port"?  C-side listener stuff? [snd-g|xlistener, and snd-xen -- 4 altogether]
  *       a guile sort port is a vector: write-char func, write-string, flush, read-char, close which seems completely random (why mix in/out?)
@@ -25539,30 +25535,15 @@ s7_scheme *s7_init(void)
  *         (ideally it would be wrapped inside the evaluator)
  *       perhaps use procedure-source?
  *
- * perhaps the built-in funcs should have legit __func__ settings? [snd for example -- means index not needed]
- *    also pws case!
- *    if there is a doc string, and it ends in (__func__ symbol filename line)
- *    then s7_make_function ... has no place to put it ...
  * :allow-other-keys in lambda*
  * PERHAPS: pretty-printing in the REPL or in format (~W in CL I think)
- *    also read/write float (binary), perhaps something like frexp (integer-decode-float)
  * lint 
  * TODO: hash-table map and for-each should be entry-oriented, not alist-oriented
  * TODO: access to the pws setter [and figure out how to get from the C setter to its arity list -- used in snd-test]
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
- * SOMEDAY: checkpoint
- *   state: everything in s7 struct including heap/temps/stack (+ structs pointed to like vector dims)
- *          this requires some way to read/write all objects (including Snd stuff) without loss of info
- *          all the permanent heaps (we'd need to keep pointers to these guys)
- *             and all the stuff removed from the heap
- *          c_object and s_type tables, pws structs
  *
- * can't set! just take anything in parens and eval it -- why not support (set! (cdddr ...) )?
- * TODO: binary-io finished
- */
-
-/* OBJECTS...
- * perhaps: a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)
+ * PERHAPS: method lists for c_objects
+ *   a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)
  *   catch 'wrong-type-arg-error in the evaluator,
  *   if 1st arg is v_object, look for method?
  *   this would not slow the rest of s7 down, but would let us handle anything 
@@ -25583,13 +25564,5 @@ s7_scheme *s7_init(void)
  * A "class" in this case is define-record (for the local fields and type) + a list of methods and a methods accessor.
  * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
  * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
- *
- *
- * TODO: something doesn't make sense here:
- *    (eval-string "(object->string (list '+ 1 2))") -> "(+ 1 2)"
- *      (eval-string "(+ 1 2)") -> 3
- *    (eval-string "(eval-string \"(object->string (list '+ 1 2))\")") -> "(+ 1 2)"
- *    and the trace level is not reset -- are we actually returning? [subsequent eval-string seems confused]
- *    (eval (eval (list '+ 1 2))) -> 3
  */
 

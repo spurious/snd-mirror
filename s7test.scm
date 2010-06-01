@@ -6315,10 +6315,11 @@
 (test (eval-string (object->string (with-input-from-string "(+ 1 2)" (lambda () (read))))) 3)
 (test (eval (eval-string "(with-input-from-string \"(+ 1 2)\" (lambda () (read)))")) 3)
 (test (eval-string "(eval (with-input-from-string \"(+ 1 2)\" (lambda () (read))))") 3)
-(test (eval-string "(eval-string (format #f \"(+ 1 2)\"))") 3)
 (test (eval-string (object->string (eval-string (format #f "(+ 1 2)")))) 3)
-(test (eval-string "(eval-string \"(+ 1 2)\")") 3)
-(test (eval-string "(eval-string (object->string (eval-string \"(+ 1 2)\")))") 3)
+
+;; (eval-string "(eval-string ...)") is not what it appears to be -- the outer call
+;;    still sees the full string when it evaluates, not the string that results from
+;;    the inner call.
 
 (test (let ((name '+))
 	(let ((+ *))	
@@ -7337,7 +7338,6 @@
 	(set! (((z)) 1) 32)
 	x)
       #(1 32 3))
-;; is it assumed in Scheme that a vector returned from a function is not a copy?
 
 (test (let ((a 1)) (set! a)) 'error)
 (test (let ((a 1)) (set! a 2 3)) 'error)
@@ -7370,10 +7370,14 @@
 (test (set!) 'error)
 (test (let ((x 1)) (set! x x x)) 'error)
 (test (let ((x 1)) (set! x x) x) 1)
-(test (set! set! 123) 'error) ; TODO: I get "set! set!: unbound variable"?
+(test (set! set! 123) 'error)
 (test (set! (cons 1 2) 3) 'error)
 (test (let ((var 1) (val 2)) (set! var set!) (var val 3) val) 3)
 (test (let ((var 1) (val 2)) (set! var +) (var val 3)) 5)
+(test (let ((sym0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789 1))
+	(set! sym0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789 2)
+	sym0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789)
+      2)
 
 
 
@@ -7517,7 +7521,8 @@
 
 (test (cond ((+ 1 2) => (lambda (x) (+ 1 x)))) 4)
 (test (cond ((cons 1 2) => car)) 1)
-					; (cond ((values 1 2) => +)) -- seems like it ought to work
+;(test (cond ((values 1 2) => +)) 'error)
+;(cond (1 2 => +))
 (if with-values (test (cond ((values -1) => abs)) 1))
 
 (test (cond (else 1)) 1)
@@ -7572,7 +7577,6 @@
 (test (cond (1 => + abs)) 'error)
 (test (cond (1 =>)) 'error)
 (if with-values (test (cond ((values 1 2) => + abs)) 'error))
-
 
 
 
@@ -7648,6 +7652,7 @@
 (test (case 1 (else)) 'error)
 (test (case () ((1 . 2) . 1) . 1) 'error)
 (test (case case ((case) 1) ((cond) 3)) 1)
+(test (case 101 ((0 1 2) 200) ((3 4 5 6) 600) ((7) 700) ((8) 800) ((9 10 11 12 13) 1300) ((14 15 16) 1600) ((17 18 19 20) 2000) ((21 22 23 24 25) 2500) ((26 27 28 29) 2900) ((30 31 32) 3200) ((33 34 35) 3500) ((36 37 38 39) 3900) ((40) 4000) ((41 42) 4200) ((43) 4300) ((44 45 46) 4600) ((47 48 49 50 51) 5100) ((52 53 54) 5400) ((55) 5500) ((56 57) 5700) ((58 59 60) 6000) ((61 62) 6200) ((63 64 65) 6500) ((66 67 68 69) 6900) ((70 71 72 73) 7300) ((74 75 76 77) 7700) ((78 79 80) 8000) ((81) 8100) ((82 83) 8300) ((84 85 86 87) 8700) ((88 89 90 91 92) 9200) ((93 94 95) 9500) ((96 97 98) 9800) ((99) 9900) ((100 101 102) 10200) ((103 104 105 106 107) 10700) ((108 109) 10900) ((110 111) 11100) ((112 113 114 115) 11500) ((116) 11600) ((117) 11700) ((118) 11800) ((119 120) 12000) ((121 122 123 124 125) 12500) ((126 127) 12700) ((128) 12800) ((129 130) 13000) ((131 132) 13200) ((133 134 135 136) 13600) ((137 138) 13800)) 10200)
 
 
 
@@ -7982,8 +7987,8 @@
 (test (let () (begin (begin (define (a3) 1)) (begin (define (a3) b3) (define b3 3)) (a3))) 3) ; yow
 (test (let () (begin (begin (define (a) 1)) (a))) 1)
 (test (let ((a 1)) (begin (define a 2)) a) 2)
-(test (+ 1 (begin (values 2 3)) 4) 10)
-(test (+ 1 (begin (values 5 6) (values 2 3)) 4) 10)
+(if with-values (test (+ 1 (begin (values 2 3)) 4) 10))
+(if with-values (test (+ 1 (begin (values 5 6) (values 2 3)) 4) 10))
 
 
 
@@ -9590,12 +9595,12 @@
       '(a b c d e f g b c d e f g h))
 
 (if with-values 
-(test (list (dynamic-wind 
-		(lambda () #f)
-		(lambda () (values 'a 'b 'c))
-		(lambda () #f)))
-      (list 'a 'b 'c))
-)
+    (test (list (dynamic-wind 
+		    (lambda () #f)
+		    (lambda () (values 'a 'b 'c))
+		    (lambda () #f)))
+	  (list 'a 'b 'c))
+    )
 
 (test (let ((dynamic-wind 1)) (+ dynamic-wind 2)) 3)
 
@@ -9806,6 +9811,63 @@
 (test (apply call-with-exit (list (lambda (exit) 1))) 1)
 (test (apply call-with-exit (list (lambda (exit) (exit 1) 32))) 1)
 (test (apply catch (list #t (lambda () 1) (lambda args 'error))) 1)
+
+(test (let ((cur '()))
+	(define (step pos)
+	  (dynamic-wind
+	      (lambda ()
+		(set! cur (cons pos cur)))
+	      (lambda ()
+		(set! cur (cons (+ pos 1) cur))
+		(if (< pos 40)
+		    (step (+ pos 10)))
+		(set! cur (cons (+ pos 2) cur))
+		cur)
+	      (lambda ()
+		(set! cur (cons (+ pos 3) cur)))))
+	(reverse (step 0)))
+      '(0 1 10 11 20 21 30 31 40 41 42 43 32 33 22 23 12 13 2))
+
+
+(test (let ((cur '()))
+	(define (step pos)
+	  (dynamic-wind
+	      (lambda ()
+		(set! cur (cons pos cur)))
+	      (lambda ()
+		(set! cur (cons (+ pos 1) cur))
+		(if (< pos 40)
+		    (step (+ pos 10))
+		    (error 'all-done))
+		(set! cur (cons (+ pos 2) cur))
+		cur)
+	      (lambda ()
+		(set! cur (cons (+ pos 3) cur)))))
+	(catch 'all-done
+	       (lambda ()
+		 (reverse (step 0)))
+	       (lambda args (reverse cur))))
+      '(0 1 10 11 20 21 30 31 40 41 43 33 23 13 3))
+
+(test (let ((cur '()))
+	(define (step pos ret)
+	  (dynamic-wind
+	      (lambda ()
+		(set! cur (cons pos cur)))
+	      (lambda ()
+		(set! cur (cons (+ pos 1) cur))
+		(if (< pos 40)
+		    (step (+ pos 10) ret)
+		    (ret (reverse cur)))
+		(set! cur (cons (+ pos 2) cur))
+		cur)
+	      (lambda ()
+		(set! cur (cons (+ pos 3) cur)))))
+	(list (call-with-exit
+	       (lambda (ret)
+		 (step 0 ret)))
+	      (reverse cur)))
+      '((0 1 10 11 20 21 30 31 40 41) (0 1 10 11 20 21 30 31 40 41 43 33 23 13 3)))
 
 
 
@@ -20331,12 +20393,13 @@
 	(test (let ((val (list 1 2 3 4 5 6 7 8 9 10))) (nth 7 val)) 8)
 	(test (let ((val (list 1 2 3 4 5 6 7 8 9 10))) (nth 17 val)) '())
 	
-        (if with-values (begin
-	(test (let*-values (((x) (values 1))) x) 1)
-	(test (let*-values ((x (values 1))) x) '(1))
-	(test (let*-values (((x) (values 1)) ((y) (values 2))) (list x y)) '(1 2))
-	(test (let*-values (((x) (values 1)) ((y) (values (+ x 1)))) (list x y)) '(1 2))
-	))
+        (if with-values 
+          (begin
+	    (test (let*-values (((x) (values 1))) x) 1)
+	    (test (let*-values ((x (values 1))) x) '(1))
+	    (test (let*-values (((x) (values 1)) ((y) (values 2))) (list x y)) '(1 2))
+	    (test (let*-values (((x) (values 1)) ((y) (values (+ x 1)))) (list x y)) '(1 2))
+	    ))
 	
 	(test (let () (enum one two three) (list one two three)) '(0 1 2))
 	
@@ -35150,7 +35213,7 @@
   (test (= (max inf- inf+) inf+) #t)
   (test (= (min inf- inf+) inf-) #t)
 
-  (test (nan? (+ (values inf+ inf-) inf+)) #t)
+  (if with-values (test (nan? (+ (values inf+ inf-) inf+)) #t))
 
   (test (rationalize inf+) 'error)
   (test (rationalize inf-) 'error)

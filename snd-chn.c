@@ -4463,8 +4463,9 @@ void show_cursor_info(chan_info *cp)
   samp = CURSOR(cp);
   y = chn_sample(samp, cp, cp->edit_ctr);
   absy = fabs(y);
-  if (absy < .0001) digits = 4;
-  else if (absy<.001) digits = 3;
+  if (absy < .0001) digits = 5;
+  else if (absy<.01) digits = 4;
+  else if (absy<1.0) digits = 3;
   else digits = 2;
   len = PRINT_BUFFER_SIZE;
   expr_str = (char *)calloc(len, sizeof(char));

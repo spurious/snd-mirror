@@ -522,31 +522,31 @@ Extensions to Snd can be found in:
     <td bgcolor="#f2f4ff" onmouseout="UnTip()" onmouseover="Tip(rgb_doc_tip)">color names</td></tr>
 
 <tr><td><a href="sndscm.html#rtiodoc">rtio</a></td>
-    <tdonmouseout="UnTip()" onmouseover="Tip(rtio_doc_tip)">real-time stuff</td></tr>
+    <td onmouseout="UnTip()" onmouseover="Tip(rtio_doc_tip)">real-time stuff</td></tr>
 
 <tr><td bgcolor="#f2f4ff"><a href="sndscm.html#rubberdoc">rubber</a></td>
     <td bgcolor="#f2f4ff" onmouseout="UnTip()" onmouseover="Tip(rubber_doc_tip)">rubber-sound</td></tr>
 
 <tr><td><a href="sndscm.html#selectiondoc">selection</a></td>
-    <tdonmouseout="UnTip()" onmouseover="Tip(selection_doc_tip)">functions acting on the current selection</td></tr>
+    <td onmouseout="UnTip()" onmouseover="Tip(selection_doc_tip)">functions acting on the current selection</td></tr>
 
 <tr><td bgcolor="#f2f4ff"><a href="sndscm.html#singerdoc">singer</a></td>
     <td bgcolor="#f2f4ff" onmouseout="UnTip()" onmouseover="Tip(singer_doc_tip)">Perry Cook's vocal-tract physical model</td></tr>
 
 <tr><td><a href="sndscm.html#sndolddoc">snd6|7|8|9|10|11.scm</a></td>
-    <tdonmouseout="UnTip()" onmouseover="Tip(sndold_doc_tip)">Backwards compatibility</td></tr>
+    <td onmouseout="UnTip()" onmouseover="Tip(sndold_doc_tip)">Backwards compatibility</td></tr>
 
 <tr><td bgcolor="#f2f4ff"><a href="sndscm.html#snddiffdoc">snddiff</a></td>
     <td bgcolor="#f2f4ff" onmouseout="UnTip()" onmouseover="Tip(snddiff_doc_tip)">sound difference detection</td></tr>
 
 <tr><td><a href="sndscm.html#sndgldoc">snd-gl</a></td>
-    <tdonmouseout="UnTip()" onmouseover="Tip(snd_gl_doc_tip)">OpenGL examples (gl.c)</td></tr>
+    <td onmouseout="UnTip()" onmouseover="Tip(snd_gl_doc_tip)">OpenGL examples (gl.c)</td></tr>
 
 <tr><td bgcolor="#f2f4ff"><a href="sndscm.html#sndmotifdoc">snd-motif, snd-gtk, snd-xm</a></td>
     <td bgcolor="#f2f4ff" onmouseout="UnTip()" onmouseover="Tip(snd_motif_doc_tip)">Motif/Gtk module (xm.c, xg.c)</td></tr>
 
 <tr><td><a href="sndscm.html#sndtestdoc">snd-test</a></td>
-    <tdonmouseout="UnTip()" onmouseover="Tip(snd_test_doc_tip)">Snd regression tests</td></tr>
+    <td onmouseout="UnTip()" onmouseover="Tip(snd_test_doc_tip)">Snd regression tests</td></tr>
 
 <tr><td bgcolor="#f2f4ff"><a href="sndscm.html#sndwarpdoc">sndwarp</a></td>
     <td bgcolor="#f2f4ff" onmouseout="UnTip()" onmouseover="Tip(sndwarp_doc_tip)">Bret Battey's sndwarp instrument</td></tr>
@@ -7795,6 +7795,27 @@ function option to time the playing of each mix in a sequence of mixes.  Another
 		#f
 		(* amp (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc)))))))
 </pre></td></tr></table>
+
+<p>Here's another example that plays a sound file, skipping any portion that looks like silence:
+</p>
+<table border=0 cellpadding=5><tr><td><pre>
+(define (play-skipping-silence file)
+  (let ((buffer (make-moving-average 128))
+        (silence (/ .001 128))
+	(rd (make-sampler 0 file))
+	(sum-of-squares 0.0)
+	(y 0.0))
+    (<em class=red>play</em> (lambda ()
+	    (let loop ()
+	      (set! y (rd))
+	      (set! sum-of-squares (moving-average buffer (* y y)))
+	      (if (sampler-at-end? rd)
+		  #f
+		  (if (&gt; sum-of-squares silence)
+		      y
+		      (loop))))))))
+</pre></td></tr></table>
+
 
 <!-- INDEX playexamples:Playing -->
 <A NAME="playexamples"></a>
