@@ -82,22 +82,18 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define TOGGLE_BUTTON_ACTIVE(Button) gtk_toggle_button_get_active((GTK_TOGGLE_BUTTON(Button)))
 #define BIN_CHILD(Bin) gtk_bin_get_child(GTK_BIN(Bin))
 
-#define EVENT_STATE(Ev) (Ev)->state
-/* perhaps #define EVENT_STATE(Ev) ({ GdkModifierType type;  gdk_event_get_state(Ev, &Type); Type; })
-   do we need GDK_EVENT_ANY(Ev)?
-*/
-
-#define EVENT_TIME(Ev) (Ev)->time
-/* perhaps #define EVENT_TIME(Ev) gdk_event_get_time(Ev)
- */
-
-#define EVENT_X(Ev) (Ev)->x
-/* perhaps #define EVENT_X(Ev) ({ gdouble x, y; gdk_event_get_coords(Ev, &x, &y); x; })
- */
-
-#define EVENT_Y(Ev) (Ev)->y
-/* perhaps #define EVENT_Y(Ev) ({ gdouble x, y; gdk_event_get_coords(Ev, &x, &y); y; })
- */
+#if (HAVE_GTK_SCALE_NEW) && defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define EVENT_STATE(Ev) ({ GdkModifierType Type;  gdk_event_get_state((GdkEvent *)Ev, &Type); Type; })
+  #define EVENT_TIME(Ev) gdk_event_get_time((GdkEvent *)Ev)
+  #define EVENT_X(Ev) ({ gdouble x, y; gdk_event_get_coords((GdkEvent *)Ev, &x, &y); x; })
+  #define EVENT_Y(Ev) ({ gdouble x, y; gdk_event_get_coords((GdkEvent *)Ev, &x, &y); y; })
+  /* there's also gtk_get_event_widget */
+#else
+  #define EVENT_STATE(Ev) (Ev)->state
+  #define EVENT_TIME(Ev) (Ev)->time
+  #define EVENT_X(Ev) (Ev)->x
+  #define EVENT_Y(Ev) (Ev)->y
+#endif
 
 /* no accessors: */
 #define EVENT_WINDOW(Ev)      (Ev)->window

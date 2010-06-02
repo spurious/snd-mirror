@@ -115,14 +115,17 @@
 
 ;;; -------- play region over and over until C-g typed
 
-(define (play-region-forever reg)
+(define (play-region-forever reg1)
   "(play-region-forever reg) plays region 'reg' until you interrupt it via C-g"
-  (define (play-region-again reason)
-    (if (and (not (c-g?))  ; be extra careful (probably superfluous)
-	     (= reason 0)) ; 0=play completed normally
-	(play-region reg #f play-region-again)))
-  (play-region reg #f play-region-again))
 
+  (let ((reg (if (integer? reg1) (integer->region reg1) reg1)))
+
+    (define (play-region-again reason)
+      (if (and (not (c-g?))  ; be extra careful (probably superfluous)
+	       (= reason 0)) ; 0=play completed normally
+	  (play reg :wait #f :stop play-region-again)))
+
+    (play reg :wait #f :stop play-region-again)))
 
 ;(bind-key #\p 0 (lambda (n) "play region forever" (play-region-forever (list-ref (regions) (max 0 n)))))
 

@@ -163,21 +163,21 @@
 ;(set! (x-bounds) 
 ;    (list (/ (selection-position) (srate))
 ;          (/ (+ (selection-position) (selection-frames)) (srate))))
-(play-selection))
+(play (selection)))
 
 (define (test-mark-forw name  length)
 (stop-playing)
 (select-channel 0)
 (goto-named-mark name)
 (make-selection (cursor)  (+ (cursor) length))
-(play-selection))
+(play (selection)))
 
 (define (test-mark-backw name  length)
 (stop-playing)
 (select-channel 0)
 (goto-named-mark name)
 (make-selection (- (cursor) length) (cursor)  )
-(play-selection))
+(play (selection)))
 
 
 
@@ -189,7 +189,7 @@
 (set! (cursor) (+ (cursor) dif))
 (mark-named "start")
 (make-selection (cursor)  (+ (cursor) length))
-(play-selection))
+(play (selection)))
 
 (define (move-end dif length)
 (stop-playing) 
@@ -199,7 +199,7 @@
 (set! (cursor) (+ (cursor) dif))
 (mark-named "end")
 (make-selection (- (cursor) length) (cursor))
-(play-selection))
+(play (selection)))
 
 
 
@@ -211,7 +211,7 @@
 ;(set! (x-bounds) 
 ;    (list (/ (selection-position) (srate))
 ;          (/ (+ (selection-position) (selection-frames)) (srate))))
-(play-selection))
+(play (selection)))
 
 
 
@@ -220,7 +220,7 @@
 (select-channel 0)
 (set! (cursor) (- (cursor) dif))
 (make-selection (cursor)  (+ (cursor) length))
-(play-selection))
+(play (selection)))
 
 
 
@@ -238,7 +238,7 @@
 	(stop-playing)
 	(eos)
 	(make-selection (cursor)  (+ (cursor) (selection-frames)))))
- (play-selection))
+ (play (selection)))
 
 
 (define (backward-selection)
@@ -255,7 +255,7 @@
 	(stop-playing)
 	(set! (cursor) (selection-position))))
  (make-selection  (- (cursor) (selection-frames)) (cursor) )
- (play-selection))
+ (play (selection)))
 
 
 (define (mark-start  length)
@@ -270,7 +270,7 @@
 (make-selection (cursor)  (+ (cursor) length))
 (stop-playing)
 (key (char->integer #\t) 4)
-(play-selection))
+(play (selection)))
 
 (define (mark-end  length)
 (select-channel 0)
@@ -283,7 +283,7 @@
 (set! status 3)
 (make-selection  (- (cursor) length) (cursor) )
 (key (char->integer #\t) 4)
-(play-selection))
+(play (selection)))
 
 (define (stop-song)
 (set! curpos (cursor))
@@ -377,7 +377,7 @@
 (bind-key (char->integer #\z) 0  (lambda () (double-selection)));english version
 (bind-key (char->integer #\^) 0 (lambda () (my-play-selection-forw 50000 50000)))
 (bind-key (char->integer #\^) 4 (lambda () (my-play-selection-backw 50000 50000)))
-(bind-key (char->integer #\t) 8 (lambda () (play-selection)))
+(bind-key (char->integer #\t) 8 (lambda () (play (selection))))
 (bind-key (char->integer #\p) 0 (lambda () (play-song)))
 (bind-key (char->integer #\P) 1 (lambda () (play-end)))
 (bind-key (char->integer #\p) 8 (lambda () (toggle-play)))

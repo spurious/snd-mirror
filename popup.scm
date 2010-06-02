@@ -89,7 +89,7 @@
 		    (change-label w "Stop")
 		    (set! stop-widget w)
 		    (set! stopping #t)
-		    (play-selection)))))
+		    (play (selection))))))
       (list "Loop play"      xmPushButtonWidgetClass every-menu ; play over and over
 	    (lambda (w c i) 
 	      (define (stop-playing-selection)
@@ -103,7 +103,7 @@
 		(if (and (not (c-g?))
 			 (= reason 0)
 			 stopping1)
-		    (play-selection #f play-selection-again)
+		    (play (selection) :wait #f :stop play-selection-again)
 		    (stop-playing-selection)))
 	      (if stopping1
 		  (begin
@@ -113,7 +113,7 @@
 		    (change-label w "Stop!")
 		    (set! stop-widget1 w) ; needs to be separate from Play case since we're stopping/restarting deliberately
 		    (set! stopping1 #t)
-		    (play-selection #f play-selection-again)))))
+		    (play (selection) :wait #f :stop play-selection-again)))))
       (list "Delete"    xmPushButtonWidgetClass every-menu (lambda (w c i) (delete-selection)))
       (list "Zero"      xmPushButtonWidgetClass every-menu (lambda (w c i) (scale-selection-by 0.0)))
       (list "Crop"      xmPushButtonWidgetClass every-menu

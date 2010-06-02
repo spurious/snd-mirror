@@ -76,9 +76,9 @@
 			      (change-label w "Stop")
 			      (set! stop-widget w)
 			      (set! stopping #t)
-			      (play-selection #f (lambda (reason)
-						   (set! stopping #f)
-						   (change-label w "Play")))))))
+			      (play (selection) :wait #f :stop (lambda (reason)
+								 (set! stopping #f)
+								 (change-label w "Play")))))))
 		(list "Loop play" every-menu
 		      (lambda (w data) 
 			(define (stop-playing-selection)
@@ -92,7 +92,7 @@
 			  (if (and (not (c-g?))
 				   (= reason 0)
 				   stopping1)
-			      (play-selection #f play-selection-again)
+			      (play (selection) :wait #f :stop play-selection-again)
 			      (stop-playing-selection)))
 			(if stopping1
 			    (begin
@@ -102,7 +102,7 @@
 			      (change-label w "Stop!")
 			      (set! stop-widget1 w) ; needs to be separate from Play case since we're stopping/restarting deliberately
 			      (set! stopping1 #t)
-			      (play-selection #f play-selection-again)))))
+			      (play (selection) :wait #f :stop play-selection-again)))))
 		(list "Delete"    every-menu (lambda (w data) (delete-selection)))
 		(list "Zero"      every-menu (lambda (w data) (scale-selection-by 0.0)))
 		(list "Crop"      every-menu

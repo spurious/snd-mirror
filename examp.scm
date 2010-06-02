@@ -2011,7 +2011,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
      (let ((time (floor (* 1000 (cadr tone))))
 	   (region (car tone)))
        (if (region? region)
-	   (in time (lambda () (play-region region))))))
+	   (in time (lambda () (play region))))))
    data))
 
 

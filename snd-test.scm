@@ -1653,7 +1653,7 @@
 		  (list "/home/bil/sf1/o2.voc" "/home/bil/sf1/o2.voc" "/home/bil/sf1/o2.voc" "/home/bil/sf1/o2.voc"))
 	
 	(let ((lst (mus-sound-mark-info (string-append sf-dir "forest.aiff"))))
-	  (if (not (equal? lst '((4 1) (3 0) (2 144332) (1 24981))))
+	  (if (not (equal? lst '((4 0) (3 0) (2 144332) (1 24981))))
 	      (snd-display #__line__ ";mus-sound-mark-info forest: ~A" lst)))
 	(let ((lst (mus-sound-mark-info (string-append sf-dir "traffic.aiff"))))
 	  (if (not (equal? lst '((4 1) (3 0) (2 171931) (1 99461))))
@@ -2192,8 +2192,8 @@
 		       'parzen-window 'pausing 'peak-env-hook 'peaks 'peaks-font
 		       'phase-partials->wave 'phase-vocoder 'phase-vocoder-amp-increments 'phase-vocoder-amps 'phase-vocoder-freqs
 		       'phase-vocoder-phase-increments 'phase-vocoder-phases 'phase-vocoder? 'play
-		       'play-and-wait 'play-channel 'play-hook 'play-mix 'play-region
-		       'play-selection 'player-home 'player? 'players
+		       'play-and-wait 'play-channel 'play-hook
+		       'player-home 'player? 'players
 		       'playing 'poisson-window 'polar->rectangular 'polynomial 'polyshape 'polywave
 		       'polyshape? 'polywave? 'position->x 'position->y 'position-color 'preferences-dialog
 		       'previous-sample 'print-dialog 'print-hook 'print-length 'progress-report
@@ -9437,7 +9437,7 @@ EDITS: 5
 	  (if (file-exists? "temp.dat")
 	      (delete-file "temp.dat")
 	      (snd-display #__line__ ";save-region file disappeared?"))
-	  (play-region r0 #t) ;needs to be #t here or it never gets run
+	  (play r0 :wait #t) ;needs to be #t here or it never gets run
 	  (if (not (= (length (regions)) 1)) (snd-display #__line__ ";regions: ~A?" (regions)))
 	  (if (not (selection-member? index)) (snd-display #__line__ ";selection-member?: ~A" (selection-member? index)))
 	  (if (not (= (region-srate r0) 22050)) (snd-display #__line__ ";region-srate: ~A?" (region-srate r0)))
@@ -11604,14 +11604,14 @@ EDITS: 5
 	       (rid0 (make-region 2000 2020 ind 0))
 	       (rid0-data (region2vct rid0 0 20)))
 	  (scale-sound-by 2.0)
-	  (play-region rid0 #t)
+	  (play rid0 :wait #t)
 	  (let ((nv (region2vct rid0 0 20)))
 	    (if (not (vequal rid0-data nv)) (snd-display #__line__ ";deferred region after scaling:~%  ~A~%  ~A" rid0-data nv)))
 	  (let ((nv (region-to-vct rid0 0 20)))
 	    (if (not (vequal rid0-data nv)) (snd-display #__line__ ";deferred region after scaling (rs):~%  ~A~%  ~A" rid0-data nv)))
 	  (undo)
 	  (scale-by 4.0)
-	  (play-region rid0 #t)
+	  (play rid0 :wait #t)
 	  (let ((nv (region2vct rid0 0 20)))
 	    (if (not (vequal rid0-data nv)) (snd-display #__line__ ";file region after scaling:~%  ~A~%  ~A" rid0-data nv)))
 	  (let ((nv (region-to-vct rid0 0 20)))
@@ -11622,8 +11622,8 @@ EDITS: 5
 	    (let ((nv (region2vct rid1 0 20)))
 	      (if (not (vequal rid1-data nv)) (snd-display #__line__ ";deferred region after scale-to:~%  ~A~%  ~A" rid1-data nv)))
 	    (close-sound ind)
-	    (play-region rid0 #t)
-	    (play-region rid1 #t)
+	    (play rid0 :wait #t)
+	    (play rid1 :wait #t)
 	    (let ((nv (region2vct rid1 0 20)))
 	      (if (not (vequal rid1-data nv)) (snd-display #__line__ ";deferred region after close:~%  ~A~%  ~A" rid1-data nv)))
 	    (let ((nv (region2vct rid0 0 20)))
@@ -28939,10 +28939,10 @@ EDITS: 2
 		(if (fneq spd 1.0) (snd-display #__line__ ";mix-speed: ~A?" spd))
 		(if nam (snd-display #__line__ ";mix-name: ~A" nam))
 		(catch 'mus-error
-		       (lambda () (play-mix mix-id))
+		       (lambda () (play mix-id))
 		       (lambda args (snd-display #__line__ ";can't play mix: ~A" args)))
 		(catch 'mus-error
-		       (lambda () (play-mix mix-id 1000))
+		       (lambda () (play mix-id 1000))
 		       (lambda args (snd-display #__line__ ";can't play mix from 1000: ~A" args)))
 		(set! (mix-name mix-id) "test-mix")
 		(if (or (not (string? (mix-name mix-id)))
@@ -31573,8 +31573,8 @@ EDITS: 2
 	  (set! (selection-creates-region) #t)
 	  (add-hook! stop-playing-selection-hook (lambda () (set! ss #t)))
 	  (let ((reg (select-all)))
-	    (play-selection #t)
-	    (play-region reg #t)
+	    (play (selection) :wait #t)
+	    (if (region? reg) (play reg :wait #t))
 	    (if (not ss) (snd-display #__line__ ";stop-playing-selection-hook: ~A" ss)))
 	  (reset-hook! stop-playing-selection-hook)
 	  (set! (selection-creates-region) old-reg))
@@ -32494,7 +32494,7 @@ EDITS: 2
 	  (forward-graph 1)
 	  (backward-graph 1)
 	  
-	  (without-errors (play-region (list-ref (regions) 2) #t))
+	  (without-errors (if (region? (cadr (regions))) (play (cadr (regions)) :wait #t)))
 	  (without-errors (mix-region (car (regions))))
 	  (if (< (frames) 100000) (play-and-wait))
 	  (scale-to .1 (choose-fd))
@@ -33590,7 +33590,7 @@ EDITS: 2
 		(if (fneq (sample 10) 0.0) (snd-display #__line__ ";remove-clicks: ~A" (channel->vct)))
 		(undo)
 		(let ((vals (scan-channel (search-for-click))))
-		  (if (not (equal? vals (list -1 11)))
+		  (if (not (equal? vals (list #t 11)))
 		      (snd-display #__line__ ";search-for-click: ~A" vals)))
 		(close-sound ind))
 	      (set! (mus-srate) old-srate))
@@ -33611,16 +33611,16 @@ EDITS: 2
 	      (let ((val -.5)) (map-channel (lambda (y) (set! val (+ val .05)) val)))
 	      (let ((val (scan-channel (zero+))))
 		(if (or (not val)
-			(not (equal? val (list -1 10)))) ; optimization > 0 wants bool (change in run wrecked the back-one cursor placement)
+			(not (equal? val (list #t 10)))) 
 		    (snd-display #__line__ ";zero+: ~A" val)))
 	      (set! (sample 8) .8)
 	      (let ((val (scan-channel (next-peak))))
 		(if (or (not val)
-			(not (equal? val (list -1 9))))  ; this gets the -1 because run can't deal with the bool/float mismatch
+			(not (equal? val (list #t 9)))) 
 		    (snd-display #__line__ ";next-peak: ~A" val)))
 	      (let ((val (scan-channel (search-for-click))))
 		(if (or (not val)
-			(not (equal? val (list -1 9))))
+			(not (equal? val (list #t 9))))
 		    (snd-display #__line__ ";search-for-click: ~A" val)))
 	      (if (not (= (find-click 0) 8)) (snd-display #__line__ ";find-click: ~A" (find-click 0)))
 	      (let ((new-file-name (file-name ind1)))
@@ -65122,8 +65122,7 @@ EDITS: 1
 					;new-sound in add-watcher
 		     read-mix-sample next-sample read-region-sample
 		     transform-normalization open-file-dialog-directory open-raw-sound open-sound previous-sample
-		     peaks ;play play-and-wait play-mix play-region play-selection
-		     player? players
+		     peaks player? players
 		     position-color position->x position->y add-directory-to-view-files-list add-file-to-view-files-list view-files-sort 
 		     view-files-amp view-files-speed view-files-files view-files-selected-files view-files-speed-style view-files-amp-env
 		     print-length progress-report prompt-in-minibuffer pushed-button-color read-only
@@ -66276,8 +66275,6 @@ EDITS: 1
 		  (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind mus-voc mus-bshort)))
 		  (check-error-tag 'cannot-save (lambda () (save-selection "test.snd" mus-riff mus-bshort)))
 		  (check-error-tag 'cannot-save (lambda () (save-selection "test.snd" mus-voc mus-bshort)))
-		  (check-error-tag 'wrong-type-arg (lambda () (play-selection 0 (lambda () #f))))
-		  (check-error-tag 'wrong-type-arg (lambda () (play-selection 0 0)))
 		  (check-error-tag 'no-data (lambda () (draw-lines '#())))
 		  (check-error-tag 'bad-length (lambda () (draw-lines '#(1 2 3))))
 		  (check-error-tag 'out-of-range (lambda () (src-channel (make-env '(0 0 1 1) :length 11))))
@@ -66350,7 +66347,6 @@ EDITS: 1
 		  (check-error-tag 'no-such-channel (lambda () (samples->sound-data 0 100 ind 1234)))
 		  (check-error-tag 'no-such-sound (lambda () (graph (vct 0 1) "hi" 0 1 0 1 1234)))
 		  (check-error-tag 'no-such-channel (lambda () (graph (vct 0 1) "hi" 0 1 0 1 ind 1234)))
-					;		  (check-error-tag 'wrong-type-arg (lambda () (play-region (car (regions)) #f (lambda () #f))))
 		  (set! (selection-member? #t) #f)
 		  (check-error-tag 'no-active-selection (lambda () (filter-selection (vct 0 0 1 1) 4)))
 		  (check-error-tag 'no-active-selection (lambda () (save-selection "/bad/baddy.snd")))
@@ -66493,7 +66489,6 @@ EDITS: 1
 		(check-error-tag 'wrong-type-arg (lambda () (set! (mus-header-raw-defaults) (list 44100 2.123 "hi"))))
 		(check-error-tag 'no-such-mix (lambda () (mix-properties (integer->mix (+ 1 (mix-sync-max))))))
 		(check-error-tag 'no-such-mix (lambda () (set! (mix-properties (integer->mix (+ 1 (mix-sync-max)))) 1)))
-		(check-error-tag 'no-such-mix (lambda () (play-mix (integer->mix (+ 1 (mix-sync-max))))))
 		))
 	  
 	  (if (provided? 'snd-motif)

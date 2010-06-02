@@ -369,7 +369,7 @@
      (let ((time (* 1000 (car tone)))
            (region (cadr tone)))
        (if (region? region)
-           (in time (lambda () (play-region region))))))
+           (in time (lambda () (play region))))))
    data))
 
 ;;; (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0 2) (list 1.0 0)))

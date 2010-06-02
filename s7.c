@@ -25221,8 +25221,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "null?",                   g_is_null,                 1, 0, false, H_is_null);
   s7_define_function(sc, "list?",                   g_is_list,                 1, 0, false, H_is_list);
   s7_define_function(sc, "pair?",                   g_is_pair,                 1, 0, false, H_is_pair);
-  s7_define_function(sc, "reverse",                 g_reverse,                 1, 0, false, H_reverse);
-  s7_define_function(sc, "reverse!",                g_reverse_in_place,        1, 0, false, H_reverse_in_place); /* used by Snd code */
   s7_define_function(sc, "cons",                    g_cons,                    2, 0, false, H_cons);
   s7_define_function(sc, "car",                     g_car,                     1, 0, false, H_car);
   s7_define_function(sc, "cdr",                     g_cdr,                     1, 0, false, H_cdr);
@@ -25272,6 +25270,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "length",                  g_length,                  1, 0, false, H_length);
   s7_define_function(sc, "copy",                    g_copy,                    1, 0, false, H_copy);
   s7_define_function(sc, "fill!",                   g_fill,                    2, 0, false, H_fill);
+  s7_define_function(sc, "reverse",                 g_reverse,                 1, 0, false, H_reverse);
+  s7_define_function(sc, "reverse!",                g_reverse_in_place,        1, 0, false, H_reverse_in_place); /* used by Snd code */
   
   
   s7_define_function(sc, "vector?",                 g_is_vector,               1, 0, false, H_is_vector);
@@ -25541,6 +25541,7 @@ s7_scheme *s7_init(void)
  * TODO: hash-table map and for-each should be entry-oriented, not alist-oriented
  * TODO: access to the pws setter [and figure out how to get from the C setter to its arity list -- used in snd-test]
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
+ * generic append? slice? member?
  *
  * PERHAPS: method lists for c_objects
  *   a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)

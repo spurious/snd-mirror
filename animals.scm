@@ -274,13 +274,16 @@
 		     (if (and (selection?)
 			      (selection-member? snd))
 			 (begin
-			   (play-selection)
+			   (play (selection))
 			   #t)
 			 (if (> (frames snd) (* 10 (srate snd)))
 			     (let ((chn (or (selected-channel) 0)))
 			       (with-temporary-selection 
-				play-selection 
-				(left-sample snd chn) (- (right-sample snd chn) (left-sample snd chn)) snd chn)
+				(lambda () (play (selection)))
+				(left-sample snd chn) 
+				(- (right-sample snd chn) 
+				   (left-sample snd chn)) 
+				snd chn)
 			       #t)
 			     #f))
 		     #f))))
