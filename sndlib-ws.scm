@@ -499,7 +499,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		 (et-pitch (+ base-pitch (* 12 octave))))
 	    (set! last-octave octave)
 	    (if pythagorean
-		(* main-pitch (expt 2 octave) (vector-ref ratios base-pitch))
+		(* main-pitch (expt 2 octave) (ratios base-pitch))
 		(* main-pitch (expt 2.0 (/ et-pitch 12)))))
 	  pitch))))
 

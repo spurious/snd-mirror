@@ -201,7 +201,7 @@
 	     (let ((len (vector-length frame)))
 	       (do ((i 0 (+ i 1)))
 		   ((= i len))
-		 (apropos-1 (vector-ref frame i))))
+		 (apropos-1 (frame i))))
 	     (apropos-1 frame)))
        (global-environment))
       

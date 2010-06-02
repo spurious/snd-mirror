@@ -8803,6 +8803,19 @@
 	      (reverse results))))))
   (test (primes 10) '(2 3 5 7 11 13 17 19)))
 
+(test (let ((gvar 32)) (define (hi1 a) (+ a gvar)) (let ((gvar 0)) (hi1 2))) 34)
+(test (let ((gvar 32)) (define-macro (hi2 b) `(* gvar ,b)) (define (hi1 a) (+ (hi2 a) gvar)) (let ((gvar 0)) (hi1 2))) 96)
+(test (let ((gvar 32)) (define-macro (hi2 b) `(* gvar ,b)) (define (hi1 a) (+ a gvar)) (let ((gvar 0)) (hi1 (hi2 2)))) 32)
+(test (let ((gvar 32)) (define-macro (hi2 b) `(* gvar ,b)) (define (hi1 a) (+ (a 2) gvar)) (let ((gvar 0)) (define (hi2 a) (* a 2)) (hi1 hi2))) 36)
+(test (let ((gvar 32)) (define-macro (hi2 b) `(* gvar ,b)) (define (hi1 a) (+ (a 2) gvar)) (let ((gvar 0) (hi2 (lambda (a) (hi2 a)))) (hi1 hi2))) 96)
+(test (let ((gvar 32)) (define-macro (hi2 b) `(* gvar ,b)) (define (hi1 a) (+ (a 2) gvar)) (let* ((gvar 0) (hi2 (lambda (a) (hi2 a)))) (hi1 hi2))) 32)
+(test (let () ((let ((gvar 32)) (define-macro (hi2 b) `(* gvar ,b)) (define (hi1 a) (+ (hi2 2) gvar)) hi1) 2)) 96)
+(test (let ((gvar 0)) ((let ((gvar 1)) (define-macro (hi2 b) `(+ gvar ,b)) (define (hi1 a) (let ((gvar 2)) (hi2 a))) hi1) 2)) 4)
+(test (let ((gvar 0)) (define-macro (hi2 b) `(+ gvar ,b)) ((let ((gvar 1)) (define (hi1 a) (let ((gvar 2)) (a 2))) hi1) hi2)) 4)
+(test (let ((gvar 0)) (define-macro (hi2 b) `(+ gvar ,b)) ((let ((gvar 1)) (define (hi1 a) (a 2)) hi1) hi2)) 3)
+(test (let () (define-macro (hi2 b) `(+ gvar ,b)) ((let ((gvar 1)) (define (hi1 a) (a 2)) hi1) hi2)) 3)
+
+
 
 
 ;;; -------- call/cc --------

@@ -204,7 +204,7 @@ read, even if not playing.  'files' is a list of files to be played."
 	      (begin
 		(do ((i 0 (+ 1 i)))
 		    ((= i files-len))
-		  (vector-set! pframes i (frames (list-ref files i))))
+		  (set! (pframes i) (frames (list-ref files i))))
 		(catch #t
 		       (lambda ()
 			 (while reading
@@ -213,9 +213,9 @@ read, even if not playing.  'files' is a list of files to be played."
 				      (let* ((ramp-down 1.0)
 					     (ramp (/ 1.0 bufsize))
 					     (current (list-ref readers current-file))
-					     (current-loc (vector-ref locs current-file))
+					     (current-loc (locs current-file))
 					     (next (list-ref readers next-file))
-					     (next-loc (vector-ref locs next-file))
+					     (next-loc (locs next-file))
 					     (downs (channels current))
 					     (ups (channels next))
 					     (up (make-frame ups))
@@ -237,13 +237,13 @@ read, even if not playing.  'files' is a list of files to be played."
 					(if read-even-when-not-playing
 					    (do ((i 0 (+ 1 i)))
 						((= i files-len))
-					      (vector-set! locs i (+ (vector-ref locs i) bufsize)))
+					      (set! (locs i) (+ (locs i) bufsize)))
 					    (begin
-					      (vector-set! locs current-file (+ (vector-ref locs current-file) bufsize))
-					      (vector-set! locs next-file (+ (vector-ref locs next-file) bufsize))))
+					      (set! (locs current-file) (+ (locs current-file) bufsize))
+					      (set! (locs next-file) (+ (locs next-file) bufsize))))
 					(set! current-file next-file))
 				      (let* ((current (list-ref readers current-file))
-					     (current-loc (vector-ref locs current-file))
+					     (current-loc (locs current-file))
 					     (ons (channels current))
 					     (on (make-frame ons)))
 					(do ((i 0 (+ 1 i)))
@@ -255,15 +255,15 @@ read, even if not playing.  'files' is a list of files to be played."
 					(if read-even-when-not-playing
 					    (do ((i 0 (+ 1 i)))
 						((= i files-len))
-					      (vector-set! locs i (+ (vector-ref locs i) bufsize)))
-					    (vector-set! locs current-file (+ (vector-ref locs current-file) bufsize)))))
+					      (set! (locs i) (+ (locs i) bufsize)))
+					    (set! (locs current-file) (+ (locs current-file) bufsize)))))
 				  (mus-audio-write out-port data bufsize)
 				  (set! reading (and (not (c-g?))
 						     (letrec ((any-data-left 
 							       (lambda (f)
 								 (if (= f files-len)
 								     #f
-								     (or (< (vector-ref locs f) (vector-ref pframes f))
+								     (or (< (locs f) (pframes f))
 									 (any-data-left (+ 1 f)))))))
 						       (any-data-left 0)))))))
 		       (lambda args (begin (snd-print (format #f "error ~A" args)) (car args))))
@@ -320,8 +320,8 @@ amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitud
 	 (amps (make-vector num-oscs)))
     (do ((i 0 (+ 1 i)))
 	((= i num-oscs))
-      (vector-set! oscs i (make-oscil (car (list-ref freqs-and-amps i))))
-      (vector-set! amps i (cadr (list-ref freqs-and-amps i))))
+      (set! (oscs i) (make-oscil (car (list-ref freqs-and-amps i))))
+      (set! (amps i) (cadr (list-ref freqs-and-amps i))))
     (play (lambda ()
 	    (set! len (- len 1))
 	    (if (<= len 0)
@@ -329,7 +329,7 @@ amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitud
 		(let ((sum 0.0))
 		  (do ((i 0 (+ 1 i)))
 		      ((= i num-oscs))
-		    (set! sum (+ sum (* (vector-ref amps i) (oscil (vector-ref oscs i))))))
+		    (set! sum (+ sum (* (amps i) (oscil (oscs i))))))
 		  sum))))))
 
 ;(play-sines '((425 .05) (450 .01) (470 .01) (546 .02) (667 .01) (789 .034) (910 .032)))

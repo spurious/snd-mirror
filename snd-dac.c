@@ -3399,43 +3399,8 @@ If it returns " PROC_TRUE ", the sound is not played."
 
 
 #ifndef SND_DISABLE_DEPRECATED
-#if HAVE_SCHEME
-  /* TODO: these have not been replaced in *.scm or elsewhere! 
-   *    play-region|selection|mix are now out of *.scm|html
-   */
-
-  XEN_EVAL_C_STRING("(define* (play-region reg wait stop-func)\
-                       (play (if (integer? reg) (integer->region reg) reg) :wait wait :stop stop-func))");
-
-  XEN_EVAL_C_STRING("(define* (play-selection wait stop-func)\
-                       (play (selection) :wait wait :stop stop-func))");
-
-  XEN_EVAL_C_STRING("(define* (play-mix id (beg 0))\
-                       (play (if (integer? id) (integer->mix id) id) beg))");
-
-  XEN_EVAL_C_STRING("(define* (play-and-wait (start 0) snd chn syncd end (pos -1) stop-proc)\
-                       (if (string? start)\
-                           (play start (or snd 0) :end (or chn -1) :wait #t) \
-                           (play (if (integer? snd) (integer->sound snd)\
-                                     (if (sound? snd) snd\
-                                         (or (selected-sound) (car (sounds)))))\
-                                 :channel (or chn -1) :wait #t :with-sync syncd :start start :end (or end -1) \
-                                 :stop stop-proc :edit-position pos)))");
-
-  XEN_EVAL_C_STRING("(define* (old-play (start 0) snd chn syncd end (pos -1) stop-proc (out-chan -1))\
-                       (play (if (integer? snd) (integer->sound snd)\
-                                 (if (sound? snd) snd\
-                                     (or (selected-sound) (car (sounds)))))\
-                             :channel (or chn -1) :with-sync syncd :start start :end (or end -1) \
-                             :stop stop-proc :out-channel out-chan :edit-position pos))");
-
-  XEN_EVAL_C_STRING("(define* (play-channel (beg 0) dur snd chn (pos -1) stop-proc (out-chan -1))\
-                       (play (if (integer? snd) (integer->sound snd)\
-                                 (if (sound? snd) snd\
-                                     (or (selected-sound) (car (sounds)))))\
-                             :channel (or chn -1) :with-sync #f :start beg :end (if dur (+ beg dur) -1) \
-                             :stop stop-proc :out-channel out-chan :edit-position pos))");
-#endif
+  /* the scheme versions have been moved to snd11.scm */
+  /* TODO: play-* in rb and fs */
 
 #if HAVE_RUBY
   XEN_EVAL_C_STRING("def play_region(reg, wait = false, stop_proc = false)\n\

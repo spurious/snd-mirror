@@ -25514,7 +25514,6 @@ s7_scheme *s7_init(void)
  *     port_input_function would be a C->scheme wrapper and function held perhaps in port struct?
  *  then also open-input|output-string.
  *
- *
  * SOMEDAY: eval-string (or eval?) with jump outside the eval (call/cc external) -> segfault or odd error
  *             (is this the case in dynamic-wind also?)
  *
@@ -25540,7 +25539,7 @@ s7_scheme *s7_init(void)
  * lint 
  * TODO: hash-table map and for-each should be entry-oriented, not alist-oriented
  * TODO: access to the pws setter [and figure out how to get from the C setter to its arity list -- used in snd-test]
- * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
+ * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html) (also the deprecated stuff in snd-dac)
  * generic append? slice? member?
  *
  * PERHAPS: method lists for c_objects

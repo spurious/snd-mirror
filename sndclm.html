@@ -964,7 +964,7 @@ are times when nothing but a ton of oscils will do:
    (do ((i 0 (+ i 1))
 	(k 0 (+ k 2)))
        ((= i len))
-     (vct-set! amps (list-ref peaks k) (list-ref peaks (+ k 1))))
+     (set! (amps (list-ref peaks k)) (list-ref peaks (+ k 1))))
    ...
    (outa i (* (env ampf) (<em class=red>mus-chebyshev-t-sum</em> angle amps)))
    (set! angle (+ angle freq (rand-interp vib)))
@@ -1006,7 +1006,7 @@ are times when nothing but a ton of oscils will do:
    (do ((i 0 (+ i 1))
 	(k 0 (+ k 2)))
        ((= i len))
-     (vct-set! amps (list-ref peaks k) (list-ref peaks (+ k 1))))
+     (set! (amps (list-ref peaks k)) (list-ref peaks (+ k 1))))
 
    (run
       (do ((i 0 (+ 1 i)))
@@ -1773,7 +1773,7 @@ If you're trying to produce a sum of sinusoids, use polywave &mdash; it makes a 
   (let* ((pitch 2.0)
 	 (size 64)
 	 (wave (let ((v (make-vct size 0.0)))
-		 (vct-set! v (/ size 2) 1.0)
+		 (set! (v (/ size 2)) 1.0)
 		 v))
 	 (tbl1 (make-table-lookup pitch 0.0 wave size mus-interp-none))
 	 (tbl2 (make-table-lookup pitch 0.0 wave size mus-interp-linear))
@@ -3838,7 +3838,7 @@ compare ncos as FM and direct sum of cos:
 	     (mods (make-vector n)))
 	(do ((i 0 (+ 1 i)))
 	    ((= i n))
-	  (vector-set! mods i (make-oscil (* (+ 1 i) 100) (* 0.5 pi))))
+	  (set! (mods i) (make-oscil (* (+ 1 i) 100) (* 0.5 pi))))
 	(do ((i start (+ 1 i)))
 	    ((= i stop))
 	  (let ((amp (env ampf)))
@@ -8327,7 +8327,7 @@ use its :output argument:
       (do ((i 0 (+ 1 i)))
 	  ((= i 10))
 	(outa i (* i .1) (lambda (loc val chan)
-			   (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> outv loc val))))))
+			   (set! (outv loc) val))))))
   outv) ; this is equivalent to using :output (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 10) as a with-sound argument
 </pre>
 </td></tr></table>
@@ -8801,7 +8801,7 @@ set of components and component amplitudes.  We could, for example, change noid 
 </p>
 
 <pre>
-    (vct-set! amps (+ j 1) (/ (expt r (- i 1)) norm))
+    (set! (amps (+ j 1)) (/ (expt r (- i 1)) norm))
 </pre>
 
 <p>where "r" is the ratio between successive component amplitude: "nroid"?

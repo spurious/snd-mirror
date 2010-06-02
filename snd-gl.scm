@@ -110,7 +110,7 @@
     (define (tick-audio id)
       ;; background process reads incoming audio data, creates spectrum, displays next trace
       (mus-audio-read input-port input-data (* bins 2))
-      (let ((rl-data (sound-data->vct input-data 0 (vector-ref data slice))))
+      (let ((rl-data (sound-data->vct input-data 0 (data slice))))
 	(snd-spectrum rl-data blackman2-window bins #t 0.0 #t #f)
 	(redraw-graph))
       (set! slice (+ 1 slice))
@@ -130,7 +130,7 @@
 	    (set! input-proc 0)))
       (do ((i 0 (+ 1 i)))
 	  ((= i slices))
-	(vct-scale! (vector-ref data i) 0.0)))
+	(vct-scale! (data i) 0.0)))
     
     (define (start-it)
       (define (add-main-pane name type args)
@@ -168,7 +168,7 @@
 		   (set! input-data (make-sound-data 1 (* bins 2)))
 		   (do ((i 0 (+ 1 i)))
 		       ((= i slices))
-		     (vector-set! data i (make-vct bins)))
+		     (set! (data i) (make-vct bins)))
 		   (start-it))
 		 (stop-it)))))
 
@@ -453,7 +453,7 @@
 	    (do ((i 0 (+ 1 i)))
 		((= i 256))
 	      (glVertex3f (/ i 256.0) 0.0 0.0)
-	      (glVertex3f (/ i 256.0) (vct-ref rl i) (vct-ref im i)))
+	      (glVertex3f (/ i 256.0) (rl i) (im i)))
 	    (glEnd)
 	  (glEndList))
 	(let ((vals (XtVaGetValues drawer (list XmNwidth 0 XmNheight 0))))

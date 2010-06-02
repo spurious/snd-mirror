@@ -2192,8 +2192,7 @@
 		       'parzen-window 'pausing 'peak-env-hook 'peaks 'peaks-font
 		       'phase-partials->wave 'phase-vocoder 'phase-vocoder-amp-increments 'phase-vocoder-amps 'phase-vocoder-freqs
 		       'phase-vocoder-phase-increments 'phase-vocoder-phases 'phase-vocoder? 'play
-		       'play-and-wait 'play-channel 'play-hook
-		       'player-home 'player? 'players
+		       'play-hook 'player-home 'player? 'players
 		       'playing 'poisson-window 'polar->rectangular 'polynomial 'polyshape 'polywave
 		       'polyshape? 'polywave? 'position->x 'position->y 'position-color 'preferences-dialog
 		       'previous-sample 'print-dialog 'print-hook 'print-length 'progress-report
@@ -9170,16 +9169,16 @@ EDITS: 5
 					;	    (snd-display #__line__ ";completion: ~A" (snd-completion " open-so")))
 	(if (not (string=? (snd-completion " zoom-focus-r") " zoom-focus-right"))
 	    (snd-display #__line__ ";completion: ~A" (snd-completion " zoom-focus-r")))
-	(play-and-wait "oboe.snd")
-	(play-and-wait "oboe.snd" 12000)
-	(play-and-wait "oboe.snd" 12000 15000)
-	(play-and-wait 0 #f #f #f #f (- (edit-position) 1))
+	(play "oboe.snd" :wait #t)
+	(play "oboe.snd" :start 12000 :wait #t)
+	(play "oboe.snd" :start 12000 :end 15000 :wait #t)
+	(play :edit-position (- (edit-position) 1) :wait #t)
 	(let ((old-speed (speed-control index))
 	      (old-style (speed-control-style))
 	      (old-open (show-controls index)))
 	  (set! (show-controls index) #t)
 	  (set! (speed-control index) -2.0)
-	  (play-and-wait 12345 index)
+	  (play index :start 12345 :wait #t)
 	  (set! (speed-control-style) speed-control-as-semitone)
 	  (set! (speed-control index) 0.5)
 	  (set! (speed-control-style) speed-control-as-ratio)
@@ -9412,7 +9411,7 @@ EDITS: 5
 	      (snd-display #__line__ ";edits: ~A?" eds))
 	  (if (not (= (edit-position) (car eds)))
 	      (snd-display #__line__ ";edit-position: ~A ~A?" (edit-position) eds)))
-	(play-and-wait 0 index 0)
+	(play index :channel 0 :wait #t)
 	
 	(bomb index #f)
 	(if (not (selection-creates-region)) (set! (selection-creates-region) #t))
@@ -10747,11 +10746,7 @@ EDITS: 5
 	   ind1)
 	  
 	  (src-sound 2.0 1.0 ind1 0)
-	  (play-and-wait 0 ind1 0 #f #f 0)
-	  (play-and-wait 0 ind1 0 #f #f 1)
-	  (play-and-wait 0 ind1 0 #f #f (lambda (snd chn) (edit-position snd chn)))
 	  (undo 1 ind1 0)
-	  (play-and-wait 0 ind1 0 #f #f 1)
 	  
 	  (delete-samples 0 10000 ind1 0)
 	  (save-sound-as "fmv.snd" ind1 :edit-position 0)
@@ -10809,7 +10804,7 @@ EDITS: 5
 	    (if (not (cursor-follows-play)) (snd-display #__line__ ";cursor-follows-play set to #t: ~A" (cursor-follows-play)))
 	    
 	    (set! (transform-graph-type) graph-as-sonogram) 
-	    (play-and-wait)
+	    (play :wait #t)
 	    (set! (transform-graph?) #t) 
 	    
 	    (close-sound ind))
@@ -11737,7 +11732,7 @@ EDITS: 5
 	  (fp 1.0 0.3 20)
 	  (let ((old-curse (with-tracking-cursor)))
 	    (set! (with-tracking-cursor) #t)
-	    (play-and-wait)
+	    (play :wait #t)
 	    (set! (with-tracking-cursor) old-curse))
 	  (close-sound ind))
 	(let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1)))
@@ -14287,7 +14282,7 @@ EDITS: 2
 	(let ((ind (open-sound "oboe.snd"))
 	      (ctr 0))
 	  (set! (speed-control ind) .5)
-	  (play-and-wait)
+	  (play :wait #t)
 	  (apply-controls)
 	  (revert-sound)
 	  (reset-controls ind)
@@ -14309,7 +14304,7 @@ EDITS: 2
 	  (add-hook! dac-hook (lambda (data) 
 				(set! ctr (+ 1 ctr))
 				(if (>= ctr 3) (c-g!))))
-	  (play-and-wait)
+	  (play :wait #t)
 	  (if (not (= ctr 3)) (snd-display #__line__ ";ctr after dac-hook: ~A" ctr))
 	  (set! ctr 0)
 	  (set! (speed-control) 1.5)
@@ -14322,7 +14317,7 @@ EDITS: 2
 	  (add-hook! dac-hook (lambda (data) 
 				(set! ctr (+ 1 ctr))
 				(if (= ctr 3) (apply-controls))))
-	  (play-and-wait)
+	  (play :wait #t)
 	  (if (not (= (edit-position ind 0) 1)) (snd-display #__line__ ";apply-controls from hook: ~A ~A" (edits ind) (edit-tree ind)))
 	  (revert-sound)
 	  (reset-hook! dac-hook)
@@ -20177,7 +20172,7 @@ EDITS: 2
 	      (mus-set-formant-radius-and-frequency filt (env re) (env fe))
 	      outval))))
       (map-chan (poltergeist 300 0.1 0.0 30.0 '(0 100 1 4000.0) '(0 0.99 1 .9)))  ;; should sound like "whyieee?"
-      (play-and-wait 0 ob)
+      (play ob :wait #t)
       (close-sound ob))
     
     (let ((gen (make-firmant 1200.0 0.9))
@@ -25756,7 +25751,7 @@ EDITS: 2
     
     (let ((nind (new-sound "fmv.snd" mus-aifc mus-bshort 22050 1 "this is a comment")))
       (time (mix-vct (with-temp-sound (:output (make-vct 22050)) (fm-violin 0 1 440 .1)) 0 nind 0))
-      (play-and-wait 0 nind)
+      (play nind :wait #t)
       (save-sound nind)
       (if (not (sound? nind)) (snd-display #__line__ ";save sound clobbered ~A?" nind))
       (let ((oboe-index (or (find-sound "oboe.snd") (open-sound "oboe.snd"))))
@@ -25767,7 +25762,7 @@ EDITS: 2
 	(if (not (equal? (selected-sound) nind)) (snd-display #__line__ ";selected-sound: ~A?" (selected-sound)))
 	(if (not (= (selected-channel) 0)) (snd-display #__line__ ";selected-channel: ~A?" (selected-channel)))
 	(snd-test-jc-reverb 1.0 #f .1 #f) 
-	(play-and-wait 0 nind)
+	(play nind :wait #t)
 	(voiced->unvoiced 1.0 256 2.0 2.0) 
 	(pulse-voice 80 20.0 1.0 1024 0.01)
 	(map-chan (fltit))
@@ -25828,7 +25823,6 @@ EDITS: 2
       (if (not (= (frames nind) 22050)) (snd-display #__line__ "; new-sound initial-length: ~A" (frames nind)))
       (mix "pistol.snd") 
       (map-chan (expsrc 2.0 nind)) 
-					;(play-and-wait 0 nind)
       (undo) 
       (let ((eds (edits)))
 	(if (or (not (= (car eds) 1)) (not (= (cadr eds) 1)))
@@ -25840,7 +25834,6 @@ EDITS: 2
       (map-chan (formants .99 900 .02 1800 .01 2700)) 
       (map-chan (moving-formant .99 '(0 1200 1 2400))) 
       (scale-to .3) 
-					;(play-and-wait 0)
       (let ((eds (edits)))
 	(if (or (not (= (car eds) 6)) (not (= (cadr eds) 0)))
 	    (snd-display #__line__ ";edits(6): ~A?" eds))
@@ -25861,7 +25854,6 @@ EDITS: 2
       (key (char->integer #\x) 4)
       (key (char->integer #\c) 0) ; trigger mark-define-region
       (reverse-sound nind) 
-					;(play-and-wait 0 nind)
       (revert-sound nind)
       (let ((mid (mix-sound "pistol.snd" 0)))
 	(if (and (mix? mid)
@@ -25869,11 +25861,9 @@ EDITS: 2
 	    (snd-display #__line__ ";mix-sound mix-home: ~A" (mix-home mid))))
       (hello-dentist 40.0 .1) 
       (fp 1.0 .3 20) 
-					;(play-and-wait 0 nind)
       (revert-sound nind)
       (enveloped-mix "oboe.snd" 0 '(0 0 1 1 2 0)) 
       (if all-args (pvoc :pitch 0.5 :time 1.0 :snd nind))
-					;(play-and-wait 0 nind)
       (revert-sound nind)
       (close-sound nind))
     
@@ -31272,7 +31262,7 @@ EDITS: 2
     (if (not (hook-empty? open-raw-sound-hook)) (reset-hook! open-raw-sound-hook))
     (add-hook! open-raw-sound-hook (lambda (file choices) (list 1 22050 mus-bshort)))
     (let* ((ind (open-sound "../sf1/addf8.nh")))
-      (play-and-wait 0 ind)
+      (play ind :wait #t)
       (reset-hook! open-raw-sound-hook)
       (if (or (not (= (chans ind) 1))
 	      (not (= (srate ind) 22050))
@@ -31538,7 +31528,7 @@ EDITS: 2
 	
 	(set! (expand-control? ind) #t)
 	(set! (reverb-control? ind) #t)
-	(play-and-wait 0 ind)
+	(play ind :wait #t)
 	(set! (reverb-control? ind) #f)
 	(set! (expand-control? ind) #f)
 	
@@ -31561,7 +31551,7 @@ EDITS: 2
 		     (set! (reverb-control-lowpass) .02)
 		     (set! (reverb-control-feedback) .02)))
 	
-	(play-and-wait 0 ind)
+	(play ind :wait #t)
 	(reset-hook! play-hook)
 	
 	(add-hook! start-playing-hook (lambda (sp) #t))
@@ -31584,7 +31574,7 @@ EDITS: 2
 		     (lambda (n)
 		       (set! ctr (+ 1 ctr))
 		       (stop-playing)))
-	  (play-and-wait 0 ind)
+	  (play ind :wait #t)
 	  (if (> ctr 2) (snd-display #__line__ ";stop-playing: ~A" ctr))
 	  (reset-hook! dac-hook))
 	
@@ -31775,7 +31765,7 @@ EDITS: 2
 	      (in2 (open-sound "2.snd")))
 	  (set! (sync in1) 1)
 	  (set! (sync in2) 1)
-	  (play-and-wait 0 #f #f #t)
+	  (play :with-sync #t :wait #t)
 	  (close-sound in1)
 	  (close-sound in2)))
     
@@ -32496,7 +32486,7 @@ EDITS: 2
 	  
 	  (without-errors (if (region? (cadr (regions))) (play (cadr (regions)) :wait #t)))
 	  (without-errors (mix-region (car (regions))))
-	  (if (< (frames) 100000) (play-and-wait))
+	  (if (< (frames) 100000) (play :wait #t))
 	  (scale-to .1 (choose-fd))
 	  (scale-by 2.0 (choose-fd))
 	  (save-controls)
@@ -32572,7 +32562,7 @@ EDITS: 2
 	      (begin
 		(make-region 0 (frames))
 		(convolve-selection-with "fyow.snd" .5)
-		(play-and-wait)))
+		(play :wait #t)))
 	  (if (and (> (frames) 1)
 		   (< (frames) 1000000))
 	      (convolve-with "fyow.snd" .25))
@@ -32756,7 +32746,7 @@ EDITS: 2
 	      (set! (speed-control) 2.0) 
 	      (test-panel speed-control 'speed-control)
 	      (apply-controls) 
-	      (if (< (frames) 100000) (play-and-wait))
+	      (if (< (frames) 100000) (play :wait #t))
 	      
 	      (if (fneq (reverb-control-decay cfd) (reverb-control-decay))
 		  (snd-display #__line__ ";reverb-control-decay local: ~A, global: ~A" (reverb-control-decay cfd) (reverb-control-decay)))
@@ -32767,13 +32757,13 @@ EDITS: 2
 	      (test-panel reverb-control-lowpass 'reverb-control-lowpass)
 	      (test-panel reverb-control-feedback 'reverb-control-feedback)
 	      (apply-controls) 
-	      (if (< (frames) 100000) (play-and-wait))
+	      (if (< (frames) 100000) (play :wait #t))
 	      (set! (contrast-control?) #t)
 	      (set! (contrast-control) .5) 
 	      (test-panel contrast-control 'contrast-control)
 	      (test-panel contrast-control-amp 'contrast-control-amp)
 	      (apply-controls) 
-	      (if (< (frames) 100000) (play-and-wait))
+	      (if (< (frames) 100000) (play :wait #t))
 	      (set! (expand-control?) #t)
 	      (set! (expand-control) 2.5) 
 	      (test-panel expand-control 'expand-control)
@@ -32781,18 +32771,18 @@ EDITS: 2
 	      (test-panel expand-control-hop 'expand-control-hop)
 	      (test-panel expand-control-ramp 'expand-control-ramp)
 	      (apply-controls) 
-	      (if (< (frames) 100000) (play-and-wait))
+	      (if (< (frames) 100000) (play :wait #t))
 	      (set! (filter-control?) #t)
 	      (set! (filter-control-order) 40) 
 	      (test-panel filter-control-order 'filter-control-order)
 	      (set! (filter-control-envelope) '(0 0 .1 1 .2 0 1 0)) 
 	      (filter-control-envelope) 
 	      (apply-controls) 
-	      (if (< (frames) 100000) (play-and-wait))
+	      (if (< (frames) 100000) (play :wait #t))
 	      (set! (amp-control) 1.5) 
 	      (test-panel amp-control 'amp-control)
 	      (apply-controls) 
-	      (if (< (frames) 100000) (play-and-wait))
+	      (if (< (frames) 100000) (play :wait #t))
 	      (swap-channels cfd 0 cfd2 0)
 	      (set! (amp-control #t) .75)
 	      (test-panel amp-control 'amp-control)
@@ -35520,7 +35510,7 @@ EDITS: 2
 	  (lambda () (mix-channel "pistol.snd" 0 0 oboe))
 	  (lambda () (insert-channel "pistol.snd" 0 0 oboe))
 	  (lambda () (reverse-channel 0 0 oboe))
-	  (lambda () (play-channel 0 0 oboe))
+	  (lambda () (play oboe :start 0 :end 0))
 	  (lambda () (scale-sound-by 2.0 0 0 oboe))
 	  (lambda () (env-sound '(0 0 1 1) 0 0 oboe))
 	  (lambda () (set-samples 0 0 (make-vct 3) oboe))
@@ -35528,7 +35518,7 @@ EDITS: 2
 	  (lambda () (insert-silence 0 0 oboe)))
 	 (list 
 	  "scale-channel" "env-channel" "clm-channel" "vct->channel" "smooth-channel" "pad-channel" "src-channel"
-	  "mix-channel" "insert-channel" "reverse-channel" "play-channel" 
+	  "mix-channel" "insert-channel" "reverse-channel" "play" 
 	  "scale-sound-by" "env-sound" "set-samples" "smooth-sound" "insert-silence"))
 	
 	(for-each
@@ -35577,7 +35567,7 @@ EDITS: 2
 	(reverse-channel 12345678 123 oboe)
 	(if (not (= (edit-position oboe) 0))
 	    (snd-display #__line__ ";beg:12345678 reverse-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-	(play-channel 12345678 123 oboe)
+	(play oboe :start 12345678 :end (+ 12345678 123))
 	
 	(scale-channel 2.0 0 123 oboe 0)
 	(if (not (= (edit-position oboe) 1))
@@ -35695,8 +35685,6 @@ EDITS: 2
 	(let ((tag (catch #t (lambda () (reverse-channel 0 123 oboe 0 123)) (lambda args (car args)))))
 	  (if (not (= (edit-position oboe) 0))
 	      (snd-display #__line__ ";edpos 123 reverse-channel? ~A ~A" (edit-position oboe) (edit-fragment))))
-	(let ((tag (catch #t (lambda () (play-channel 0 123 oboe 0 123)) (lambda args (car args)))))
-	  (if (not (eq? tag 'no-such-edit)) (snd-display #__line__ ";bad edpos play-channel: ~A" tag)))
 	(revert-sound oboe)
 	
 	(let ((oldv (channel->vct 1000 10 oboe)))
@@ -41350,7 +41338,7 @@ EDITS: 1
 	
 	(let ((ind (open-sound "pistol.snd")))
 	  (transposed-echo 1.1 .95 .25)
-	  (play-and-wait)
+	  (play :wait #t)
 	  (set! (channel-property 'colored-samples ind 0) (list (list (cursor-color) 0 100)))
 	  (add-hook! after-graph-hook display-samples-in-color)
 	  (update-time-graph)
@@ -53726,7 +53714,7 @@ EDITS: 1
 	    (if (not (= (srate ind) 22050)) (snd-display #__line__ ";with-sound srate: ~A (~A, ~A)" 
 							 (srate ind) (mus-srate) (mus-sound-srate "test.snd")))
 	    (if (not (= (frames ind) 2205)) (snd-display #__line__ ";with-sound frames: ~A" (frames ind))))
-	  (play-and-wait 0 ind)))
+	  (play ind :wait #t)))
       (set! (optimization) old-opt))
     
     (with-sound (:continue-old-file #t) (fm-violin .2 .1 440 .25))
@@ -54133,7 +54121,7 @@ EDITS: 1
 			   ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4  )))
     
     (let ((ind (find-sound "test.snd")))
-      (play-and-wait 0 ind)
+      (play ind :wait #t)
       (close-sound ind))
     
     (with-sound (:srate 22050) 
@@ -54233,7 +54221,7 @@ EDITS: 1
 		(graphEq "oboe.snd")
 		)
     (let ((ind (find-sound "test.snd")))
-      (play-and-wait 0 ind)
+      (play ind :wait #t)
       (close-sound ind))
     
     (with-sound (:play #f) (defopt-simp 0 10000) (defopt-simp 10000 10000 550.0 0.1) (defopt-simp 20000 10000 :amplitude .2))
@@ -65202,7 +65190,7 @@ EDITS: 1
 		     two-zero? wave-train wave-train?  make-vct vct-add! vct-subtract!  vct-copy
 		     vct-length vct-multiply! vct-offset! vct-ref vct-scale! vct-fill! vct-set! vct-peak
 		     vct? list->vct vct->list vector->vct vct->vector vct-move! vct-reverse! vct-subseq vct little-endian? vct->string
-		     clm-channel env-channel env-channel-with-base map-channel scan-channel play-channel 
+		     clm-channel env-channel env-channel-with-base map-channel scan-channel
 		     reverse-channel seconds->samples samples->seconds
 		     smooth-channel vct->channel channel->vct src-channel scale-channel ramp-channel pad-channel normalize-channel
 		     cursor-position clear-listener mus-sound-prune mus-sound-forget xramp-channel ptree-channel
@@ -65783,7 +65771,7 @@ EDITS: 1
 			    graph graph-style lisp-graph? insert-region insert-sound left-sample
 			    time-graph-style lisp-graph-style transform-graph-style
 			    make-graph-data map-chan max-transform-peaks maxamp maxamp-position min-dB mix-region transform-normalization
-			    peaks play play-and-wait position->x position->y reverse-sound right-sample sample
+			    peaks play position->x position->y reverse-sound right-sample sample
 			    save-sound-as scan-chan show-axes show-transform-peaks show-marks
 			    show-mix-waveforms show-y-zero show-grid show-sonogram-cursor 
 			    spectrum-end spectro-hop spectrum-start spectro-x-angle
@@ -65812,8 +65800,6 @@ EDITS: 1
 			    graph-data graph-style lisp-graph? left-sample
 			    time-graph-style lisp-graph-style transform-graph-style
 			    make-graph-data max-transform-peaks maxamp maxamp-position min-dB transform-normalization
-					;			    (lambda (snd) (play snd 0))
-					;			    (lambda (snd) (play-and-wait 0 snd)) 
 			    (lambda (snd) (position->x 0 snd))
 			    (lambda (snd) (position->y 0 snd))
 			    (lambda (snd) (redo 1 snd)) reverse-sound revert-sound right-sample 
@@ -65845,7 +65831,7 @@ EDITS: 1
 			  (if (not (eq? tag 'no-such-sound))
 			      (snd-display #__line__ ";~D: snd(1) chn procs ~A: ~A" ctr n tag))
 			  (set! ctr (+ ctr 1))))
-		      (list delete-sample edit-fragment graph-data graph-style play play-and-wait position->x position->y redo
+		      (list delete-sample edit-fragment graph-data graph-style play position->x position->y redo
 			    time-graph-style lisp-graph-style transform-graph-style
 			    scale-by scale-to undo x->position y->position x-axis-label)))
 	  

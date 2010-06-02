@@ -26,7 +26,7 @@
 (define *clm-locsig-type*       mus-interp-linear)
 (define *clm-clipped*           #t)
 (define *clm-array-print-length* (print-length))
-(define *clm-player*            #f)          ; default is play-and-wait (takes index of newly created sound, not the sound's file name)
+(define *clm-player*            #f)
 (define *clm-notehook*          #f)
 (define *clm-with-sound-depth*  0)           ; for CM, not otherwise used
 (define *clm-default-frequency* 0.0)
@@ -36,6 +36,7 @@
 (define *clm-output-safety*     0)           ; if 1, assume output buffers will not need to be flushed except at the very end
 
 (define *to-snd*                #t)
+(define *default-player* (lambda (s) (play s :wait #t))) ; we need to perserve "play" because it is used as a keyword argument in with-sound
 
 
 (define (times->samples beg dur) 
@@ -335,18 +336,18 @@
 				     (if (> pk 0.0)
 					 (let ((scl (/ scaled-to pk)))
 					   (do ((i 0 (+ i 1)))
-					       ((= i (vector-length output-1)))
-					     (vector-set! output-1 i (* scl (vector-ref output-1 i)))))))
+					       ((= i (length output-1)))
+					     (set! (output-1 i) (* scl (output-1 i)))))))
 				   (do ((i 0 (+ i 1)))
-				       ((= i (vector-length output-1)))
-				     (vector-set! output-1 i (* scaled-by (vector-ref output-1 i))))))))))
+				       ((= i (length output-1)))
+				     (set! (output-1 i) (* scaled-by (output-1 i))))))))))
 
 	   (if (and play output-to-file)
 	       (if to-snd
 		   (if *clm-player*
 		       (*clm-player* snd-output)
-		       (play-and-wait 0 snd-output))
-		   (play output-1)))
+		       (*default-player* snd-output))
+		   (*default-player* output-1))) ; this was (play output-1) which could not have worked?!
 
 	   (if (and to-snd output-to-file)
 	       (begin
@@ -825,7 +826,7 @@ finish-with-sound to complete the process."
 			   (if scaled-by
 			       (scale-by scaled-by snd-output)))
 		       (save-sound snd-output)))
-	      (if play (play-and-wait 0 snd-output))
+	      (if play (*default-player* snd-output))
 	      (update-time-graph snd-output)))
 	(set! (mus-srate) old-srate)
 	output)
@@ -899,7 +900,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		 (et-pitch (+ base-pitch (* 12 octave))))
 	    (set! last-octave octave)
 	    (if pythagorean
-		(* main-pitch (expt 2 octave) (vector-ref ratios base-pitch))
+		(* main-pitch (expt 2 octave) (ratios base-pitch))
 		(* main-pitch (expt 2.0 (/ et-pitch 12)))))
 	  pitch))))
 

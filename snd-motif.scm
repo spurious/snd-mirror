@@ -869,10 +869,10 @@ Reverb-feedback sets the scaler on the feedback.
       (define circle-vct-ref 
 	(lambda (v i)
 	  (if (< i 0)
-	      (vct-ref v (+ size i))
+	      (v (+ size i))
 	      (if (>= i size)
-		  (vct-ref v (- i size))
-		  (vct-ref v i)))))
+		  (v (- i size))
+		  (v i)))))
       (let* ((dm (/ damp mass))
 	     (km (/ xspring mass))
 	     (denom (+ 1.0 dm))
@@ -881,10 +881,10 @@ Reverb-feedback sets the scaler on the feedback.
 	     (p3 (/ -1.0 denom)))
 	(do ((i 0 (+ i 1)))
 	    ((= i size))
-	  (vct-set! x0 i (min (+ (* p1 (vct-ref x1 i))
-				 (* p2 (+ (circle-vct-ref x1 (- i 1)) (circle-vct-ref x1 (+ i 1))))
-				 (* p3 (vct-ref x2 i)))
-			      1000.0)))
+	  (set! (x0 i) (min (+ (* p1 (x1 i))
+			       (* p2 (+ (circle-vct-ref x1 (- i 1)) (circle-vct-ref x1 (+ i 1))))
+			       (* p3 (x2 i)))
+			    1000.0)))
 	(vct-fill! x2 0.0)
 	(vct-add! x2 x1)
 	(vct-fill! x1 0.0)
@@ -972,8 +972,8 @@ Reverb-feedback sets the scaler on the feedback.
 		 (j 0 (+ j 2))
 		 (xi ax0 (+ xi xincr)))
 		((= i size))
-	      (vector-set! vect j (floor xi))
-	      (vector-set! vect (+ j 1) (y->grfy (vct-ref gx0 i) diff)))
+	      (set! (vect j) (floor xi))
+	      (set! (vect (+ j 1)) (y->grfy (gx0 i) diff)))
 	    (if pts1 (freeXPoints pts1))
 	    (set! pts0 (vector->XPoints vect))
 	    (set! pts1 pts0)
@@ -1007,7 +1007,7 @@ Reverb-feedback sets the scaler on the feedback.
       (do ((i 0 (+ i 1)))
 	  ((= i 12))
 	(let ((val (sin (/ (* 2 pi i) 12.0))))
-	  (vct-set! gx1 (+ i (- (/ size 4) 6)) val)))
+	  (set! (gx1 (+ i (- (/ size 4) 6))) val)))
       (set! work-proc (XtAppAddWorkProc app tick-synthesis)))
     
     (define (continue-synthesis)
@@ -1422,7 +1422,7 @@ Reverb-feedback sets the scaler on the feedback.
       ;; it's actually possible to simply redraw on one pixmap, but updates are unpredictable
       (let* ((pix (XCreatePixmap dpy win 16 16 (screen-depth)))
 	     (pixwin (list 'Window (cadr pix)))) ; C-style cast to Window for X graphics procedures
-	(vector-set! clock-pixmaps i pix)
+	(set! (clock-pixmaps i) pix)
 	(XSetForeground dpy dgc (basic-color))
 	(XFillRectangle dpy pixwin dgc 0 0 16 16)
 	(XSetForeground dpy dgc (white-pixel))
@@ -1437,7 +1437,7 @@ Reverb-feedback sets the scaler on the feedback.
     (lambda (snd hour)
       (if hour
 	  (XtSetValues (list-ref (sound-widgets snd) 8)
-		       (list XmNlabelPixmap (vector-ref clock-pixmaps hour)))
+		       (list XmNlabelPixmap (clock-pixmaps hour)))
 	  (bomb snd #f))))) ; using bomb to clear the icon
 
 
@@ -1467,7 +1467,7 @@ Reverb-feedback sets the scaler on the feedback.
 	   (max ay1
 		(round (+ ay1
 			  (* height (- 1.0 y)))))))
-    (let* ((ly (y->grfy (vct-ref pts 0) range))
+    (let* ((ly (y->grfy (pts 0) range))
 	   (lx left-margin)
 	   (len (length pts))
 	   (xinc (/ (- width left-margin right-margin) len))
@@ -1475,7 +1475,7 @@ Reverb-feedback sets the scaler on the feedback.
       (do ((i 1 (+ i 1))
 	   (x lx (+ x xinc)))
 	  ((= i len))
-	(set! y (y->grfy (vct-ref pts i) range))
+	(set! y (y->grfy (pts i) range))
 	(XDrawLine dpy wn gc lx ly (round x) y)
 	(set! lx (round x))
 	(set! ly y)))))
@@ -2942,7 +2942,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 		(if running
 		    (do ((i 0 (+ i 1)))
 			((= i ssb-pairs))
-		      (set! (mus-frequency (vector-ref ssbs i)) (* (+ i 1) ratio old-freq))))))
+		      (set! (mus-frequency (ssbs i)) (* (+ i 1) ratio old-freq))))))
 	     (set-ratio
 	      (lambda (nfreq)
 		(set! new-freq nfreq)
@@ -2950,7 +2950,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 		(if running
 		    (do ((i 0 (+ i 1)))
 			((= i ssb-pairs))
-		      (set! (mus-frequency (vector-ref ssbs i)) (* (+ i 1) ratio old-freq))))))
+		      (set! (mus-frequency (ssbs i)) (* (+ i 1) ratio old-freq))))))
 	     (set-pairs 
 	      (lambda (pairs)
 		(set! ssb-pairs pairs)))
@@ -3036,8 +3036,8 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 					 ((> i ssb-pairs))
 				       (let* ((aff (* i old-freq))
 					      (bwf (* bw (+ 1.0 (/ i (* 2 ssb-pairs))))))
-					 (vector-set! ssbs (- i 1) (make-ssb-am (* i ratio old-freq)))
-					 (vector-set! bands (- i 1) (make-bandpass (hz->2pi (- aff bwf)) 
+					 (set! (ssbs (- i 1)) (make-ssb-am (* i ratio old-freq)))
+					 (set! (bands (- i 1)) (make-bandpass (hz->2pi (- aff bwf)) 
 										  (hz->2pi (+ aff bwf)) 
 										  hilbert-order))))
     				     (set! reader (make-sampler 0))

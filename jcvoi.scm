@@ -32,10 +32,10 @@
 	  100)))
 
 (define (setf-aref vect a b c d val)
-  (vector-set! vect (+ a (* 3 b) (* 3 6 c) (* 3 6 4 d)) val))
+  (set! (vect (+ a (* 3 b) (* 3 6 c) (* 3 6 4 d))) val))
   
 (define (aref vect a b c d)
-  (vector-ref vect (+ a (* 3 b) (* 3 6 c) (* 3 6 4 d))))
+  (vect (+ a (* 3 b) (* 3 6 c) (* 3 6 4 d))))
   
 (define (fillfnc)
   (if (not fnc)
@@ -141,16 +141,16 @@
 
 	;; these are vibrato frequencies functions (pitch dependent);
 
-	(vector-set! vibfreqfun 1 (flipxy '(4.5 138.8 5 1568)))
-	(vector-set! vibfreqfun 2 (flipxy '(4.5  16.5 5 130.8)))
+	(set! (vibfreqfun 1) (flipxy '(4.5 138.8 5 1568)))
+	(set! (vibfreqfun 2) (flipxy '(4.5  16.5 5 130.8)))
 
 	;; these are index functions for cascade modulater (pitch dependent);
 
-	(vector-set! i3fun1 1 (flipxy '(4 138.8 4 784 1 1568)))
-	(vector-set! i3fun1 2 (flipxy '(4  16.5 4 65.41 1 130.8)))
+	(set! (i3fun1 1) (flipxy '(4 138.8 4 784 1 1568)))
+	(set! (i3fun1 2) (flipxy '(4  16.5 4 65.41 1 130.8)))
 
-	(vector-set! i3fun2 1 (flipxy '(.4 138.8 .1 1568)))
-	(vector-set! i3fun2 2 (flipxy '(.4  16.5 .1 130.8)))
+	(set! (i3fun2 1) (flipxy '(.4 138.8 .1 1568)))
+	(set! (i3fun2 2) (flipxy '(.4  16.5 .1 130.8)))
 	)))
 
 (define (fncval ptr pitch)
@@ -164,7 +164,7 @@
 	 (sex (floor sex-1))
 	 (ampref (expt amp .8))
 	 (deg (- deg 45))
-	 (vibfreq (fncval (vector-ref vibfreqfun sex) pitch))
+	 (vibfreq (fncval (vibfreqfun sex) pitch))
 	 (vibpc (* .01 (/ (log pitch) (log 2)) (+ .15 (sqrt amp)) vibscl))
 	 (ranfreq 20)
 	 (ranpc (* .002 (/ (log pitch) (log 2)) (- 2 (expt amp .25)) pcran))
@@ -203,8 +203,8 @@
 	 (indx0 (if (or (= vowel 3) (= vowel 4)) 0 1.5))
 	 (indx1 1)
 	 (i3 (if (< pitch (/ c 2)) 
-		 (fncval (vector-ref i3fun1 sex) pitch) 
-		 (fncval (vector-ref i3fun2 sex) pitch)))
+		 (fncval (i3fun1 sex) pitch) 
+		 (fncval (i3fun2 sex) pitch)))
 	 (dev (hz->radians (* i3 mfq)))
 	 (dev0 (hz->radians (* indx0 mfq)))
 	 (dev1 (hz->radians (* (- indx1 indx0) mfq))))

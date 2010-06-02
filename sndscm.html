@@ -2565,9 +2565,9 @@ z-transform performs a z-transform returning a vector (to accommodate complex re
     :<em class=typing>(define d0 (make-vct 8))</em>
     <em class=listener>#&lt;unspecified&gt;</em>
     ;; and similarly for d1 and d2 ...
-    :<em class=typing>(vct-set! d0 2 1.0)</em>
+    :<em class=typing>(set! (d0 2) 1.0)</em>
     <em class=listener>1.0</em>
-    :<em class=typing>(vct-set! d1 2 1.0)</em>
+    :<em class=typing>(set! (d1 2) 1.0)</em>
     <em class=listener>1.0</em>
     :<em class=typing>(z-transform d0 8 (exp (make-rectangular 0.0 (* .25 pi))))</em>
     ;; Ruby: z_transform(d0, 8, exp(Complex(0.0, (2.0 / 8) * PI)))
