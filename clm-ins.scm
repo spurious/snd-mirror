@@ -142,18 +142,18 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	((= i fs))
       (let ((amp (list-ref formant-amps i))
 	    (index (list-ref formant-indices i)))
-	(vector-set! evens i (make-oscil 0))
-	(vector-set! odds i (make-oscil 0))
-	(vct-set! amps i amp)
-	(vct-set! indices i index)
-	(vector-set! frmfs i (make-env (vox-fun phonemes i) :duration dur))))
+	(set! (evens i) (make-oscil 0))
+	(set! (odds i) (make-oscil 0))
+	(set! (amps i) amp)
+	(set! (indices i) index)
+	(set! (frmfs i) (make-env (vox-fun phonemes i) :duration dur))))
     (run
      (do ((i start (+ i 1))) ((= i end))
        (set! frq (+ (env freqf) (triangle-wave per-vib) (rand-interp ran-vib)))
        (set! carrier (oscil car-os (hz->radians frq)))
        (set! sum 0.0)
        (do ((k 0 (+ 1 k))) ((= k fs))
-	 (set! frm (env (vector-ref frmfs k)))
+	 (set! frm (env (frmfs k)))
 	 (set! frm0 (/ frm frq))
 	 (set! frm-int (floor frm0))
 	 (if (even? frm-int)
@@ -168,11 +168,11 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	       (set! even-amp (- frm0 frm-int))
 	       (set! odd-amp (- 1.0 even-amp))))
 	 (set! sum (+ sum 
-		      (* (vct-ref amps k) 
-			 (+ (* even-amp (oscil (vector-ref evens k) 
-					       (+ even-freq (* (vct-ref indices k) carrier))))
-			    (* odd-amp (oscil (vector-ref odds k) 
-					      (+ odd-freq (* (vct-ref indices k) carrier)))))))))
+		      (* (amps k) 
+			 (+ (* even-amp (oscil (evens k) 
+					       (+ even-freq (* (indices k) carrier))))
+			    (* odd-amp (oscil (odds k) 
+					      (+ odd-freq (* (indices k) carrier)))))))))
        (locsig loc i (* (env ampf) sum)))))))
 
 ;;; (vox 0 2 170 .4 '(0 0 25 1 75 1 100 0) '(0 0 5 .5 10 0 100 1) .1 '(0 E 25 AE 35 ER 65 ER 75 I 100 UH) '(.8 .15 .05) '(.005 .0125 .025) .05 .1)
@@ -361,14 +361,14 @@ vocal sounds using phase quadrature waveshaping"
       (let* ((amp (list-ref formant-amps i))
 	     (fshape (list-ref formant-shapes i))
 	     (shape (normalize-partials fshape)))
-	(vector-set! sin-evens i (make-oscil 0))
-	(vector-set! sin-odds i (make-oscil 0))
-	(vector-set! cos-evens i (make-oscil 0 :initial-phase (/ pi 2.0)))
-	(vector-set! cos-odds i (make-oscil 0 :initial-phase (/ pi 2.0)))
-	(vector-set! amps i amp)
-	(vector-set! cos-coeffs i (partials->polynomial shape mus-chebyshev-first-kind))
-	(vector-set! sin-coeffs i (partials->polynomial shape mus-chebyshev-second-kind))
-	(vector-set! frmfs i (make-env (vox-fun phonemes i '()) :duration dur))))
+	(set! (sin-evens i) (make-oscil 0))
+	(set! (sin-odds i) (make-oscil 0))
+	(set! (cos-evens i) (make-oscil 0 :initial-phase (/ pi 2.0)))
+	(set! (cos-odds i) (make-oscil 0 :initial-phase (/ pi 2.0)))
+	(set! (amps i) amp)
+	(set! (cos-coeffs i) (partials->polynomial shape mus-chebyshev-first-kind))
+	(set! (sin-coeffs i) (partials->polynomial shape mus-chebyshev-second-kind))
+	(set! (frmfs i) (make-env (vox-fun phonemes i '()) :duration dur))))
     (ws-interrupt?)
     (run
      (do ((i start (+ i 1)))
@@ -384,7 +384,7 @@ vocal sounds using phase quadrature waveshaping"
 	      (sum 0.0))
 	 (do ((k 0 (+ 1 k)))
 	     ((= k fs))
-	   (let* ((frm (env (vector-ref frmfs k)))
+	   (let* ((frm (env (frmfs k)))
 		  (frm0 (/ frm frq))
 		  (frm-int (floor frm0)))
 	     (if (even? frm-int)
@@ -398,13 +398,13 @@ vocal sounds using phase quadrature waveshaping"
 		   (set! even-freq (hz->radians (* (+ frm-int 1) frq)))
 		   (set! even-amp (- frm0 frm-int))
 		   (set! odd-amp (- 1.0 even-amp))))
-	     (let* ((fax (polynomial (vector-ref cos-coeffs k) carcos))
-		    (yfax (* carsin (polynomial (vector-ref sin-coeffs k) carcos))))
-	       (set! sum (+ sum (* (vector-ref amps k)
-				   (+ (* even-amp (- (* yfax (oscil (vector-ref sin-evens k) even-freq))
-						     (* fax (oscil (vector-ref cos-evens k) even-freq))))
-				      (* odd-amp (- (* yfax (oscil (vector-ref sin-odds k) odd-freq))
-						    (* fax (oscil (vector-ref cos-odds k) odd-freq)))))))))))
+	     (let* ((fax (polynomial (cos-coeffs k) carcos))
+		    (yfax (* carsin (polynomial (sin-coeffs k) carcos))))
+	       (set! sum (+ sum (* (amps k)
+				   (+ (* even-amp (- (* yfax (oscil (sin-evens k) even-freq))
+						     (* fax (oscil (cos-evens k) even-freq))))
+				      (* odd-amp (- (* yfax (oscil (sin-odds k) odd-freq))
+						    (* fax (oscil (cos-odds k) odd-freq)))))))))))
 	 (outa i (* (env ampf) sum)))))))
 
 ;;; (pqw-vox 0 1 300 300 .1 '(0 0 50 1 100 0) '(0 0 100 0) 0 '(0 L 100 L) '(.33 .33 .33) '((1 1 2 .5) (1 .5 2 .5 3 1) (1 1 4 .5)))
@@ -1065,12 +1065,12 @@ is a physical model of a flute:
 	(if (zero? ampdc) (set! ampdc 75))
 	(if (zero? indxat) (set! indxat 25))
 	(if (zero? indxdc) (set! indxdc 75))
-	(vector-set! indfs i (make-env (stretch-envelope indxfun 25 indxat 75 indxdc) :duration dur
+	(set! (indfs i) (make-env (stretch-envelope indxfun 25 indxat 75 indxdc) :duration dur
 				       :scaler (- dev1 dev0) :offset dev0))
-	(vector-set! ampfs i (make-env (stretch-envelope ampf 25 ampat 75 ampdc) :duration dur
+	(set! (ampfs i) (make-env (stretch-envelope ampf 25 ampat 75 ampdc) :duration dur
 				       :scaler (* rsamp amp (/ rfamp totalamp))))
-	(vector-set! c-rats i harm)
-	(vector-set! carriers i (make-oscil cfq))))
+	(set! (c-rats i) harm)
+	(set! (carriers i) (make-oscil cfq))))
     (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
@@ -1081,10 +1081,10 @@ is a physical model of a flute:
 	 (do ((k 0 (+ 1 k)))
 	     ((= k numformants))
 	   (set! outsum (+ outsum
-			   (* (env (vector-ref ampfs k))
-			      (oscil (vector-ref carriers k) 
-				     (+ (* vib (vector-ref c-rats k))
-					(* (env (vector-ref indfs k)) modsig)))))))
+			   (* (env (ampfs k))
+			      (oscil (carriers k) 
+				     (+ (* vib (c-rats k))
+					(* (env (indfs k)) modsig)))))))
 	 (locsig loc i outsum))))))
 
 
@@ -1176,7 +1176,7 @@ is a physical model of a flute:
 	 (grain (mus-data grains)))
     (do ((i 0 (+ i 1)))
 	((= i grain-size))
-      (vct-set! grain i (* (env grain-env) (oscil carrier))))
+      (set! (grain i) (* (env grain-env) (oscil carrier))))
     (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
@@ -1746,7 +1746,7 @@ is a physical model of a flute:
 	   (j 0 (+ 1 j)))
 	  ((= i (length partials)))
 	(vct-set! alist j (vct-ref partials (+ i 1)))
-	(vector-set! oscils j (make-oscil (* (vct-ref partials i) frequency))))
+	(set! (oscils j) (make-oscil (* (vct-ref partials i) frequency))))
       (ws-interrupt?)
     (run
      (do ((i beg (+ i 1)))
@@ -1756,7 +1756,7 @@ is a physical model of a flute:
 	 (do ((k 0 (+ 1 k)))
 	     ((= k siz))
 	   (set! sum (+ sum (* (vct-ref alist k)
-			       (oscil (vector-ref oscils k))))))
+			       (oscil (oscils k))))))
 	 (locsig locs i (* sum
 			   (if (> sktr env1samples) 
 			       (env ampenv2) 
@@ -1928,7 +1928,7 @@ is a physical model of a flute:
 
     (do ((i 0 (+ i 1)))
 	((= i max-oscils))
-      (vector-set! resynth-oscils i (make-oscil 0)))
+      (set! (resynth-oscils i) (make-oscil 0)))
     (set! trigger outhop)
     (vct-scale! window fftscale)
     (ws-interrupt?)
@@ -2084,7 +2084,7 @@ is a physical model of a flute:
 		   (if (= ramp-ind ramped) (set! ramped 0))))
 	     (do ((k 0 (+ 1 k)))
 		 ((= k cur-oscils))
-	       (set! sum (+ sum (* (vct-ref amps k) (oscil (vector-ref resynth-oscils k) (vct-ref freqs k)))))
+	       (set! sum (+ sum (* (vct-ref amps k) (oscil (resynth-oscils k) (vct-ref freqs k)))))
 	       (vct-set! amps k (+ (vct-ref amps k) (vct-ref rates k)))
 	       (vct-set! freqs k (+ (vct-ref freqs k) (vct-ref sweeps k))))
 	     (outa i (* amp sum))))))))
@@ -2423,15 +2423,15 @@ nil doesnt print anything, which will speed up a bit the process.
 	    (fval (list-ref freq-list k)))
 	(if (list? gval)
 	  (begin
-	    (vector-set! env-size k (make-env gval
-					      :scaler filt-gain-scale
-					      :duration durata :base filt-gain-base))
-	    (vector-set! frm-size k (make-formant fval a1)))
+	    (set! (env-size k) (make-env gval
+					 :scaler filt-gain-scale
+					 :duration durata :base filt-gain-base))
+	    (set! (frm-size k) (make-formant fval a1)))
 	  (begin
-	    (vector-set! frm-size k (make-formant fval a1))
-	    (vct-set! gains k (if (< (+ offset-gain gval) 0) 
-				  0
-				  (+ offset-gain gval)))))))
+	    (set! (frm-size k) (make-formant fval a1))
+	    (set! (gains k) (if (< (+ offset-gain gval) 0) 
+				0
+				(+ offset-gain gval)))))))
     (ws-interrupt?)
     (run
      (do ((i st (+ i 1)))
@@ -2447,9 +2447,9 @@ nil doesnt print anything, which will speed up a bit the process.
 	 (do ((k 0 (+ 1 k)))
 	     ((= k half-list))
 	   (if if-list-in-gain
-	       (vct-set! gains k (* (env (vector-ref env-size k)) (- 1.0 a1))))
-	   (set! outval (+ outval (* (vct-ref gains k)
-				     (formant (vector-ref frm-size k) inval)))))
+	       (set! (gains k) (* (env (env-size k)) (- 1.0 a1))))
+	   (set! outval (+ outval (* (gains k)
+				     (formant (frm-size k) inval)))))
 	 (outa i (* (env ampenv) outval)))))))
 
 
@@ -2477,7 +2477,7 @@ nil doesnt print anything, which will speed up a bit the process.
 	 (samp 0))
     (do ((ctr 0 (+ 1 ctr)))
 	((= ctr freq-inc))
-      (vector-set! fs ctr (make-formant (* ctr bin) radius)))
+      (set! (fs ctr) (make-formant (* ctr bin) radius)))
     (ws-interrupt?)
     (run 
      (do ((i beg (+ i 1)))
@@ -2506,7 +2506,7 @@ nil doesnt print anything, which will speed up a bit the process.
 	   (do ((ctr 1 (+ 1 ctr)))
 	       ((= ctr freq-inc))
 	     (let ((cur-scale (vct-ref scales ctr)))
-	       (set! outval (+ outval (* cur-scale (formant (vector-ref fs ctr) inval))))
+	       (set! outval (+ outval (* cur-scale (formant (fs ctr) inval))))
 	       (vct-set! scales ctr (+ (vct-ref scales ctr) (vct-ref diffs ctr)))))
 	   (outa i (* amp outval))))))))
 
@@ -2739,13 +2739,13 @@ mjkoskin@sci.fi
 	  ;; setup granulate generators
 	  (do ((i 0 (+ i 1)))
 	      ((= i in-chans))
-	    (vector-set! ex-array i (make-granulate :input (make-readin fnam :start start :channel i)
-						    :expansion (if (list? expand) (cadr expand) expand)
-						    :max-size max-len
-						    :ramp (if (list? ramp) (cadr ramp) ramp)
-						    :hop (if (list? hop) (cadr hop) hop)
-						    :length (if (list? seglen) (cadr seglen) seglen)
-						    :scaler segment-scaler)))
+	    (set! (ex-array i) (make-granulate :input (make-readin fnam :start start :channel i)
+					       :expansion (if (list? expand) (cadr expand) expand)
+					       :max-size max-len
+					       :ramp (if (list? ramp) (cadr ramp) ramp)
+					       :hop (if (list? hop) (cadr hop) hop)
+					       :length (if (list? seglen) (cadr seglen) seglen)
+					       :scaler segment-scaler)))
 	  (if matrix
 	      (begin
 		(do ((inp 0 (+ 1 inp)))
@@ -2758,7 +2758,7 @@ mjkoskin@sci.fi
 
 	  ;; split out 1 and 2 chan input 
 	  (if (= in-chans 1)
-	      (let ((ingen (vector-ref ex-array 0))
+	      (let ((ingen (ex-array 0))
 		    (sample-0 0.0)
 		    (sample-1 0.0))
 		(run
@@ -2817,8 +2817,8 @@ mjkoskin@sci.fi
 			(sample-1-0 0.0)
 			(sample-0-1 0.0)
 			(sample-1-1 0.0)
-			(ingen0 (vector-ref ex-array 0))
-			(ingen1 (vector-ref ex-array 1)))
+			(ingen0 (ex-array 0))
+			(ingen1 (ex-array 1)))
 		    (run
 		     (do ((i beg (+ i 1)))
 			 ((= i end))

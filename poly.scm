@@ -14,7 +14,7 @@
   (let ((len (min (length p1) (length p2)))) 
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (set! (p1 i) (+ (vector-ref p1 i) (p2 i))))
+      (set! (p1 i) (+ (p1 i) (p2 i))))
     p1))
 
 (define (vector-scale! p1 scl)

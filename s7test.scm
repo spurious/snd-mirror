@@ -25,7 +25,7 @@
 (define with-bigfloats (provided? 'gmp))                       ; scheme real has any number of bits
 (define with-bignum-function (defined? 'bignum))               ;   this is a function that turns its string arg into a bignum
 (define with-delay (provided? 'force))                         ; delay and force 
-(define with-the-bug-finding-machine #f)                       ; run the machine (this variable can be set to the number of tries)
+(define with-the-bug-finding-machine #t)                       ; run the machine (this variable can be set to the number of tries)
 					                       ;   the default number of tries is 10000
 (define with-test-at-random #f)
 (define with-values (provided? 'values))
@@ -5207,6 +5207,13 @@
 	  (lambda (q)
             (- (+ (read p) (read q)) (read p) (read q))))))
       -99990)
+
+(call-with-output-file "empty-file" (lambda (p) #f))
+(test (call-with-input-file "empty-file" (lambda (p) (eof-object? (read-char p)))) #t)
+(test (call-with-input-file "empty-file" (lambda (p) (eof-object? (read p)))) #t)
+(test (call-with-input-file "empty-file" (lambda (p) (eof-object? (read-byte p)))) #t)
+(test (call-with-input-file "empty-file" (lambda (p) (eof-object? (read-line p)))) #t)
+
 
 (test (output-port? (current-output-port)) #t)
 (write-char #\space (current-output-port))
@@ -12011,8 +12018,24 @@
 (test (constant? #(1 2)) #t)
 (test (constant? (list 1 2)) #t)
 (test (constant? (vector 1 2)) #t)
-(test (let ((v (vector 1 2))) (constant? v)) #t) ;!! surely this is a bug -- same with string/list
+(test (let ((v (vector 1 2))) (constant? v)) #t) ;!!
 ;; it's returning #t unless the arg is a symbol that is not a keyword or a defined constant
+;; (it's seeing the value of v, not v):
+(test (let ((v (vector 1 2))) (constant? 'v)) #f)
+
+;; not sure this is the right thing...
+;; but CL makes no sense: 
+;; [3]> (constantp (vector 1))
+;; T
+;; [4]> (constantp (cons 1 2))
+;; NIL
+;; [5]> (constantp (list 1))
+;; NIL
+;; [7]> (constantp "hi")
+;; T
+;; (setf (elt "hi" 1) #\a)
+;; #\a
+;; at least they finally agree that pi is a constant!
 
 
 (test (defined? 'pi) #t)
@@ -12030,6 +12053,9 @@
 
 
 (test (let ((a 1)) (eval '(+ a b) (augment-environment (current-environment) (cons 'b 32)))) 33)
+(test (let ((a 1)) (+ (eval '(+ a b) (augment-environment (current-environment) (cons 'b 32))) a)) 34)
+(test (let ((a 1)) (+ (eval '(+ a b) (augment-environment (current-environment) (cons 'b 32) (cons 'a 12))) a)) 45)
+
 (test (augment-environment) 'error)
 (for-each
  (lambda (arg)
@@ -12041,6 +12067,31 @@
   (test (eval '(+ a b) e) 44)
   (test (eval '(+ a b c) (augment-environment e (cons 'c 3))) 47)
   (test (eval '(+ a b) (augment-environment e (cons 'b 3))) 35))
+
+(test (with-environment (current-environment) (let ((x 1)) x)) 1)
+
+(test (let ((x 12))
+	(let ((e (current-environment)))
+	  (let ((x 32))
+	    (with-environment e (* x 2)))))
+      24)
+
+(test (let ((*features* 123))
+	(let ((e (global-environment)))
+	  (with-environment e (list? *features*))))
+      #t)
+
+(test (with-environment) 'error)
+(test (with-environment 1) 'error)
+(test (with-environment () 1) 'error)
+(test (with-environment (current-environment) 1) 1)
+(test (let ((a 1))
+	(+ (with-environment
+	    (augment-environment (current-environment) (cons 'a 10))
+	    a)
+	   a))
+      11)
+
 
 
 (test (call-with-exit (lambda (c) (0 (c 1)))) 1)
@@ -12229,24 +12280,6 @@
 ;;   or ... (let ((:asdf 3)) :asdf) and worse (let ((:key 1)) :key) or even worse (let ((:3 1)) 1)
 (test (let ((x_x_x 32)) (let () (define-constant x_x_x 3) x_x_x) (set! x_x_x 31) x_x_x) 'error)
 
-
-(test (with-environment (current-environment) (let ((x 1)) x)) 1)
-
-(test (let ((x 12))
-	(let ((e (current-environment)))
-	  (let ((x 32))
-	    (with-environment e (* x 2)))))
-      24)
-
-(test (let ((*features* 123))
-	(let ((e (global-environment)))
-	  (with-environment e (list? *features*))))
-      #t)
-
-(test (with-environment) 'error)
-(test (with-environment 1) 'error)
-(test (with-environment () 1) 'error)
-(test (with-environment (current-environment) 1) 1)
 
 (test (let ((local 123))
 	(define pws-test (make-procedure-with-setter
@@ -35228,6 +35261,7 @@
   (test (nan? (sin inf-)) #t)
   (test (nan? (/ 0 nan)) #t)
   (test (nan? (* 0 nan)) #t)
+  (test (nan? (/ nan)) #t)
   
   (test (= (exp most-positive-fixnum) inf+) #t)
   (test (= (exp most-negative-fixnum) 0.0) #t)
@@ -35242,6 +35276,7 @@
   (test (= (min inf- inf+) inf-) #t)
 
   (if with-values (test (nan? (+ (values inf+ inf-) inf+)) #t))
+  (test (/ nan 0) 'error)
 
   (test (rationalize inf+) 'error)
   (test (rationalize inf-) 'error)
@@ -47392,9 +47427,12 @@
 (test (integer-decode-float 1.0d200) '(5883593420661338 612 1))
 (test (integer-decode-float 1.0d-200) '(6894565328877484 -717 1))
 (test (integer-decode-float 1.0d307) '(8016673440035891 967 1))
-(if (provided? 'gmp)
-    (test (integer-decode-float 1.0d-307) '(5060056332682765 -1072 1))
-    (test (integer-decode-float 1.0d-307) '(5060056332682766 -1072 1)))
+
+(let ((val (integer-decode-float 1.0d-307)))
+  (if (and (not (equal? val '(5060056332682765 -1072 1)))
+	   (not (equal? val '(5060056332682766 -1072 1))))
+      (format #t "(integer-decode-float 1.0d-307) got ~A?~%" val)))
+
 (test (integer-decode-float (/ 1.0d-307 100.0d0)) '(4706001880677807 -1075 1)) ; denormal
 (test (integer-decode-float (/ (log 0.0))) '(6755399441055744 972 -1)) ; nan
 (test (integer-decode-float (- (real-part (log 0.0)))) '(4503599627370496 972 1)) ; +inf
@@ -51523,4 +51561,5 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 #x7ff0000000000000 +inf
 #xfff0000000000000 -inf
 #xfff8000000000000 nan
+
 |#

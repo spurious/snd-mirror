@@ -3918,7 +3918,7 @@ static void s7_Int_to_string(char *p, s7_Int n, int radix, int width)
   if (n == LLONG_MIN)
     {
       /* a special case -- we can't use abs on this because it goes to 0, we won't get here if gmp.
-      /* (number->string most-negative-fixnum 2) -> "-0" unless we do something special 
+       * (number->string most-negative-fixnum 2) -> "-0" unless we do something special 
        */
       int j;
       p[0] = '-';
@@ -9278,7 +9278,7 @@ static int inchar(s7_scheme *sc, s7_pointer pt)
   if (pt == sc->NIL) return(EOF);
   
   if (is_file_port(pt))
-    c = (unsigned char)fgetc(port_file(pt));
+    c = fgetc(port_file(pt)); /* not unsigned char! -- could be EOF */
   else 
     {
       if ((!(port_string(pt))) ||
@@ -10430,7 +10430,7 @@ static char *object_to_c_string_with_circle_check(s7_scheme *sc, s7_pointer vr, 
 
 static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, shared_info *ci)
 {
-  s7_Int i, len, bufsize = 0, ref;
+  s7_Int i, len, bufsize = 0;
   bool too_long = false;
   char **elements = NULL;
   char *buf;
@@ -10519,7 +10519,6 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, sh
 static s7_pointer vector_to_string(s7_scheme *sc, s7_pointer vect)
 {
   s7_pointer result;
-  int shared_refs = 0;
   shared_info *ci = NULL;
   ci = make_shared_info(sc, vect);
   result = make_string_uncopied(sc, object_to_c_string_with_circle_check(sc, vect, true, false, ci));
@@ -10546,7 +10545,7 @@ static int circular_list_entries(s7_scheme *sc, s7_pointer lst)
 static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci)
 {
   s7_pointer x;
-  int i, len, bufsize = 0, ref;
+  int i, len, bufsize = 0;
   char **elements = NULL;
   char *buf;
 
@@ -10620,7 +10619,6 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci)
 static s7_pointer list_as_string(s7_scheme *sc, s7_pointer lst)
 {
   s7_pointer result;
-  int shared_refs = 0;
   shared_info *ci;
   ci = make_shared_info(sc, lst);
   result = make_string_uncopied(sc, object_to_c_string_with_circle_check(sc, lst, true, false, ci));
@@ -10840,6 +10838,8 @@ static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "call-with-output-string", 1, car(args), "a procedure"));
   if ((is_continuation(car(args))) || is_goto(car(args)))
     return(s7_wrong_type_arg_error(sc, "call-with-output-string", 2, car(args), "a normal procedure (not a continuation)"));
+  if (is_thunk(sc, car(args)))
+    return(s7_wrong_type_arg_error(sc, "call-with-output-string", 2, car(args), "a procedure of one argument (the port)"));
   
   port = s7_open_output_string(sc);
   push_stack(sc, opcode(OP_UNWIND_OUTPUT), sc->F, port);
@@ -10863,6 +10863,8 @@ static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "call-with-output-file", 2, cadr(args), "a procedure"));
   if ((is_continuation(cadr(args))) || is_goto(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "call-with-output-file", 2, cadr(args), "a normal procedure (not a continuation)"));
+  if (is_thunk(sc, car(args)))
+    return(s7_wrong_type_arg_error(sc, "call-with-output-file", 2, car(args), "a procedure of one argument (the port)"));
   
   port = s7_open_output_file(sc, s7_string(car(args)), "w");
   push_stack(sc, opcode(OP_UNWIND_OUTPUT), sc->F, port);
@@ -16710,7 +16712,7 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 Each object can be a list (the normal case), string, vector, hash-table, or any applicable object."
 
   /* (for-each (lambda (n) (format #t "~A " n)) (vct 1.0 2.0 3.0)) */
-  int i, len;
+  long int i, len; /* the "long" matters on 64-bit machines */
   s7_pointer obj, x;
 
   sc->code = car(args);
@@ -16735,7 +16737,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
     {
       for (i = 3, x = cddr(args); x != sc->NIL; x = cdr(x), i++)
 	{
-	  int nlen;
+	  long int nlen;
 
 	  nlen = applicable_length(sc, car(x));
 	  if (nlen < 0)
@@ -16829,7 +16831,7 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
   #define H_map "(map proc object . objectss) applies proc to a list made up of the next element of each of its arguments, returning \
 a list of the results.  Its arguments can be lists, vectors, strings, hash-tables, or any applicable objects."
 
-  int i, len;
+  long int i, len;
   s7_pointer obj, x;
   
   sc->code = car(args);
@@ -16853,7 +16855,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
     {
       for (i = 3, x = cddr(args); x != sc->NIL; x = cdr(x), i++)
 	{
-	  int nlen;
+	  long int nlen;
 
 	  nlen = applicable_length(sc, car(x));
 	  if (nlen < 0)
@@ -17148,7 +17150,6 @@ static token_t token(s7_scheme *sc)
       return(TOKEN_COMMA);
       
     case '#':
-    SHARP:
       c = inchar(sc, pt);
       sc->w = small_int(1);
       if (c == '(') 

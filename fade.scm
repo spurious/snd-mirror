@@ -33,7 +33,7 @@
 
     (do ((k 0 (+ 1 k)))
 	((= k fs))
-      (vector-set! fs1 k (make-formant (* k bin) radius)))
+      (set! (fs1 k) (make-formant (* k bin) radius)))
 
     (run
      (do ((i start (+ 1 i)))
@@ -54,7 +54,7 @@
 		     (set! bank1 (+ bank1 bank-incr))
 		     (do ((k 0 (+ 1 k)))
 			 ((= k (- fs 1)))
-		       (set! outval (+ outval (formant (vector-ref fs1 (+ 1 k)) inval))))
+		       (set! outval (+ outval (formant (fs1 (+ 1 k)) inval))))
 		     (set! val (+ (* bank1 outval) (* (- 1.0 bank1) inval))))
 		   
 		   (if (> i ramp-end)
@@ -64,7 +64,7 @@
 			 (set! bank2 (- bank2 bank-incr))
 			 (do ((k 0 (+ 1 k)))
 			     ((= k (- fs 1)))
-			   (set! outval (+ outval (formant (vector-ref fs1 (+ 1 k)) inval))))
+			   (set! outval (+ outval (formant (fs1 (+ 1 k)) inval))))
 			 (set! val (+ (* bank2 outval) (* (- 1.0 bank2) inval))))
 		       
 		       ;; in the fade section
@@ -80,7 +80,7 @@
 			       (do ((k 0 (+ 1 k)))
 				   ((= k (- fs 1)))
 				 (let ((rfs (max 0.0 (min 1.0 (- r2 (* k ifs))))))
-				   (set! outval (+ outval (formant (vector-ref fs1 (+ 1 k)) 
+				   (set! outval (+ outval (formant (fs1 (+ 1 k)) 
 								   (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
 			       (set! val outval))
 			     
@@ -90,7 +90,7 @@
 				   (do ((k 0 (+ 1 k)))
 				       ((= k (- fs 1)))
 				     (let ((rfs (max 0.0 (min 1.0 (- r2 (* (- fs k) ifs))))))
-				       (set! outval (+ outval (formant (vector-ref fs1 (+ 1 k)) 
+				       (set! outval (+ outval (formant (fs1 (+ 1 k)) 
 								       (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
 				   (set! val outval))
 				 
@@ -99,12 +99,12 @@
 				   (do ((k 0 (+ 1 k)))
 				       ((= k half-fs))
 				     (let ((rfs (max 0.0 (min 1.0 (- (+ r2 0.5) (* (- fs k) ifs))))))
-				       (set! outval (+ outval (formant (vector-ref fs1 (+ 1 k)) 
+				       (set! outval (+ outval (formant (fs1 (+ 1 k)) 
 								       (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
 				   (do ((k 0 (+ 1 k)))
 				       ((= k (- half-fs 1)))
 				     (let ((rfs (max 0.0 (min 1.0 (- r2 (/ k half-fs))))))
-				       (set! outval (+ outval (formant (vector-ref fs1 (+ k 1 half-fs)) 
+				       (set! outval (+ outval (formant (fs1 (+ k 1 half-fs)) 
 								       (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
 				   (set! val outval)))))))))
        (outa i (* amp val))))))
@@ -134,7 +134,7 @@
     (if (not (number? hi)) (set! hi freq-inc))
     (do ((k 0 (+ 1 k)))
 	((= k hi))
-      (vector-set! fs k (make-formant (* k bin) radius)))
+      (set! (fs k) (make-formant (* k bin) radius)))
     
     (run
      (do ((i start (+ 1 i)))
@@ -169,7 +169,7 @@
 	 (do ((k lo (+ 1 k)))
 	     ((= k hi))
 	   (let ((sp (vct-ref spectrum k)))
-	     (set! outval (+ outval (formant (vector-ref fs k) (+ (* sp inval1) (* (- 1.0 sp) inval2)))))
+	     (set! outval (+ outval (formant (fs k) (+ (* sp inval1) (* (- 1.0 sp) inval2)))))
 	     (if (> 1.0 sp 0.0)
 		 (vct-set! spectrum k (- (vct-ref spectrum k) ramp-inc)))))
 	 (outa i (* amp outval)))))))

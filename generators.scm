@@ -1282,7 +1282,7 @@
 	((= i 20))
       (oboish (/ (random 32) 8) 
 		(/ (+ 3 (random 8)) 8)
-		(* 16.351 16 (vector-ref rats (vector-ref mode (random 12))))
+		(* 16.351 16 (rats (mode (random 12))))
 		(+ .25 (random .25))
 		(let* ((pt1 (random 1.0))
 		       (pt2 (+ pt1 (random 1.0)))
@@ -4749,20 +4749,20 @@ index 10 (so 10/2 is the bes-jn arg):
 	     (index1 (hz->radians (* fm-index frq (/ 5.0 (log frq)))))
 	     (index2 (hz->radians (* fm-index frq 3.0 (/ (- 8.5 (log frq)) (+ 3.0 (* frq .001))))))
 	     (index3 (hz->radians (* fm-index frq (/ 4.0 (sqrt frq))))))
-	(vector-set! carriers i (make-oscil frq))
-	(vector-set! fmoscs i (make-polyshape :frequency frq
-					      :coeffs (partials->polynomial 
-						       (list 1 index1
-							     3 index2
-							     4 index3))))))
+	(set! (carriers i) (make-oscil frq))
+	(set! (fmoscs i) (make-polyshape :frequency frq
+					 :coeffs (partials->polynomial 
+						  (list 1 index1
+							3 index2
+							4 index3))))))
 
-    (vector-set! ampfs 0 (make-env (or amp-env '(0 0 1 1 2 1 3 0)) :scaler amp :duration dur))
-    (vector-set! ampfs 1 (make-env (list 0 0  .04 1  .075 0 dur 0) :scaler (* amp .0125) :duration dur))
-    (vector-set! ampfs 2 (make-env (list 0 0  .02 1  .05 0 dur 0) :scaler (* amp .025) :duration dur))
+    (set! (ampfs 0) (make-env (or amp-env '(0 0 1 1 2 1 3 0)) :scaler amp :duration dur))
+    (set! (ampfs 1) (make-env (list 0 0  .04 1  .075 0 dur 0) :scaler (* amp .0125) :duration dur))
+    (set! (ampfs 2) (make-env (list 0 0  .02 1  .05 0 dur 0) :scaler (* amp .025) :duration dur))
 
     ;; also good:
-    ;(vector-set! ampfs 1 (make-env (list 0 0  .02 1  .05 0  (- dur .1) 0  (- dur .05) 1 dur 0) :scaler (* amp .025) :duration dur))
-    ;(vector-set! ampfs 2 (make-env (list 0 0  .01 1 .025 0  (- dur .15) 0 (- dur .1) 1 dur 0) :scaler (* amp .05) :duration dur))
+    ;(set! (ampfs 1) (make-env (list 0 0  .02 1  .05 0  (- dur .1) 0  (- dur .05) 1 dur 0) :scaler (* amp .025) :duration dur))
+    ;(set! (ampfs 2) (make-env (list 0 0  .01 1 .025 0  (- dur .15) 0 (- dur .1) 1 dur 0) :scaler (* amp .05) :duration dur))
 
     (run
      (do ((i start (+ i 1)))
@@ -4773,10 +4773,10 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (do ((k 0 (+ 1 k))
 	      (n 1 (* n 2)))
 	     ((= k 3))
-	   (set! sum (+ sum (* (env (vector-ref ampfs k))
-			       (oscil (vector-ref carriers k)
+	   (set! sum (+ sum (* (env (ampfs k))
+			       (oscil (carriers k)
 				      (+ (* n vib)
-					 (polyshape (vector-ref fmoscs k) 1.0 (* n vib))))))))
+					 (polyshape (fmoscs k) 1.0 (* n vib))))))))
 	 (outa i sum))))))
 
 #|
@@ -5250,8 +5250,8 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (set! (pink-noise-rands g) (make-vector n))
 				 (do ((i 0 (+ i 1)))
 				     ((= i n))
-				   (vector-set! (pink-noise-rands g) i (make-rand :frequency (/ (mus-srate) (expt 2 i))))
-				   (set! (mus-phase (vector-ref (pink-noise-rands g) i)) (random pi))))
+				   (set! ((pink-noise-rands g) i) (make-rand :frequency (/ (mus-srate) (expt 2 i))))
+				   (set! (mus-phase ((pink-noise-rands g) i)) (random pi))))
 			       g))
   (n 1) (rands #f :type clm-vector))
 
@@ -5265,7 +5265,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	(n (pink-noise-n gen)))
     (do ((i 0 (+ i 1)))
         ((= i n))
-      (set! val (+ val (rand (vector-ref rands i)))))
+      (set! val (+ val (rand (rands i)))))
     (/ val (* 2.5 (sqrt n))))) ; this normalization is not quite right
 
 
@@ -5744,8 +5744,8 @@ index 10 (so 10/2 is the bes-jn arg):
 	((or (= j amps-len)
 	     (= i data-len)))
       (let* ((hn (floor (vct-ref original-data i)))
-	     (amp (env (vector-ref amps j)))
-	     (phase (env (vector-ref phases j))))
+	     (amp (env (amps j)))
+	     (phase (env (phases j))))
 	(vct-set! tn hn (* amp (sin phase)))
 	(vct-set! un hn (* amp (cos phase)))))
     (polyoid gen fm)))
@@ -5901,7 +5901,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		    (case choice
 		      ((all)   (vct-set! amps j i))
 		      ((odd)   (vct-set! amps j (- (* 2 i) 1)))
-		      ((prime) (vct-set! amps j (vector-ref some-primes (- i 1)))) ; defined below up to 1024th or so -- probably should use low-primes.scm
+		      ((prime) (vct-set! amps j (some-primes (- i 1)))) ; defined below up to 1024th or so -- probably should use low-primes.scm
 		      ((even)  (vct-set! amps j (max 1 (* 2 (- i 1))))))
 		    
 		    (vct-set! amps (+ j 1) (/ 1.0 n))
@@ -5923,7 +5923,7 @@ index 10 (so 10/2 is the bes-jn arg):
 						    ((or (= i len)
 							 result)
 						     result)
-						  (set! result (func (vector-ref vect i))))))))
+						  (set! result (func (vect i))))))))
 
 			(if (not (defined? 'noid-min-peak-phases))
 			    (load "peak-phases.scm"))
@@ -5932,17 +5932,17 @@ index 10 (so 10/2 is the bes-jn arg):
 					(lambda (val)
 					  (and val
 					       (vector? val)
-					       (= (vector-ref val 0) n)
-					       (let* ((a-val (vector-ref val 1))
+					       (= (val 0) n)
+					       (let* ((a-val (val 1))
 						      (a-len (length val))
-						      (a-data (list a-val (vector-ref val 2))))
+						      (a-data (list a-val (val 2))))
 						 (do ((k 2 (+ 1 k)))
 						     ((= k a-len))
-						   (if (and (number? (vector-ref val k))
-							    (< (vector-ref val k) a-val))
+						   (if (and (number? (val k))
+							    (< (val k) a-val))
 						       (begin
-							 (set! a-val (vector-ref val k))
-							 (set! a-data (list a-val (vector-ref val (+ k 1)))))))
+							 (set! a-val (val k))
+							 (set! a-data (list a-val (val (+ k 1)))))))
 						 a-data)))
 					(case choice
 					  ((all) noid-min-peak-phases)
@@ -5956,7 +5956,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				     (j 0 (+ j 3)))
 				    ((> i n))
 				  (vct-set! amps (+ j 1) (/ 1.0 n)) ;(/ 0.999 norm)) -- can't decide about this -- I guess it should be consistent with the #f case
-				  (vct-set! amps (+ j 2) (* pi (vector-ref rats (- i 1))))))))))
+				  (vct-set! amps (+ j 2) (* pi (rats (- i 1))))))))))
 			      
 		  amps)))
 
@@ -6137,7 +6137,7 @@ index 10 (so 10/2 is the bes-jn arg):
 						    ((or (= i len)
 							 result)
 						     result)
-						  (set! result (func (vector-ref vect i))))))))
+						  (set! result (func (vect i))))))))
 
 			(if (not (defined? 'roid-min-peak-phases))
 			    (load "peak-phases.scm"))
@@ -6146,17 +6146,17 @@ index 10 (so 10/2 is the bes-jn arg):
 					(lambda (val)
 					  (and val
 					       (vector? val)
-					       (= (vector-ref val 0) n)
-					       (let* ((a-val (vector-ref val 1))
+					       (= (val 0) n)
+					       (let* ((a-val (val 1))
 						      (a-len (length val))
-						      (a-data (list a-val (vector-ref val 2))))
+						      (a-data (list a-val (val 2))))
 						 (do ((k 2 (+ 1 k)))
 						     ((= k a-len))
-						   (if (and (number? (vector-ref val k))
-							    (< (vector-ref val k) a-val))
+						   (if (and (number? (val k))
+							    (< (val k) a-val))
 						       (begin
-							 (set! a-val (vector-ref val k))
-							 (set! a-data (list a-val (vector-ref val (+ k 1)))))))
+							 (set! a-val (val k))
+							 (set! a-data (list a-val (val (+ k 1)))))))
 						 a-data)))
 					roid-min-peak-phases)))
 			  (if min-dat
@@ -6168,7 +6168,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				    ((> i n))
 				  (vct-set! amps (+ j 1) rn)
 				  (set! rn (* rn r))
-				  (vct-set! amps (+ j 2) (* pi (vector-ref rats (- i 1))))))))))
+				  (vct-set! amps (+ j 2) (* pi (rats (- i 1))))))))))
 			      
 		  amps)))
 

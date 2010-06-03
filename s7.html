@@ -144,6 +144,35 @@ Its argument is a string representing the desired number:
 1.12312312312312312312312312300000000009E0
 </pre>
 
+<small>
+<blockquote>
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>In the non-gmp case, if s7 is built using doubles (s7_Double in s7.h), the float "epsilon" is
+around (expt 2 -53), or about 1e-16.  In the gmp case, it is around (expt 2 (- (bignum-precision))).
+So in the default case (precision = 128), using gmp:
+</p>
+<pre>
+&gt; (= 1.0 (+ 1.0 (expt 2.0 -128)))
+#t
+&gt; (= 1.0 (+ 1.0 (expt 2.0 -127)))
+#f
+</pre>
+<p>and in the non-gmp case:
+</p>
+<pre>
+&gt; (= 1.0 (+ 1.0 (expt 2 -53)))
+#t
+&gt; (= 1.0 (+ 1.0 (expt 2 -52)))
+#f
+</pre>
+
+</blockquote>
+</small>
+
+
 </dd>
 <br><br>
 
@@ -305,6 +334,29 @@ have any number after, for example, #b:
     4.0
     &gt; #o17.5+i
     15.625+1i
+</pre>
+
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>Should s7 predefine the numbers +inf.0, -inf.0, and nan.0?  It doesn't currently, but you can
+get them via log:
+</p>
+<pre>
+(define -inf.0 (real-part (log 0.0)))
+(define +inf.0 (- (real-part (log 0.0))))
+(define nan.0 (/ +inf.0 +inf.0))
+</pre>
+<p>There are some situations involving NaNs and infinities that I believe the IEEE doesn't specify.
+I've made what I hope are reasonable choices:
+</p>
+<pre>
+&gt; (expt 1.0 +inf.0)
+1.0
+&gt; (sin nan.0)
+nan.0
+;; etc
 </pre>
 
 </blockquote>
