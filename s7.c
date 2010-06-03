@@ -7557,7 +7557,7 @@ static s7_pointer g_integer_decode_float(s7_scheme *sc, s7_pointer args)
   arg = car(args);
 
   /* frexp doesn't work in edge cases.  Since the double and long long int fields are equivalenced
-   *   in the s7_num struct, we can get the actual bits from the double.  The problem with doing this
+   *   in the s7_num struct, we can get the actual bits of the double from the int.  The problem with doing this
    *   is that bignums don't use that struct.  Assume IEEE 754 and double = s7_Double.
    */
 
@@ -13174,8 +13174,7 @@ static void s7_function_set_setter(s7_scheme *sc, const char *getter, const char
 
 static char *pws_documentation(s7_pointer x);
 static s7_pointer pws_source(s7_scheme *sc, s7_pointer x);
-static int pws_get_req_args(s7_pointer x);
-static int pws_get_opt_args(s7_pointer x);
+static s7_pointer pws_arity(s7_scheme *sc, s7_pointer obj);
 
 
 s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
@@ -13420,12 +13419,11 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
   if (s7_is_procedure_with_setter(x))
     {
       if (s7_procedure_with_setter_getter(x) != sc->NIL)
-	return(s7_procedure_arity(sc, s7_procedure_with_setter_getter(x)));
+	return(s7_append(sc, 
+			 s7_procedure_arity(sc, s7_procedure_with_setter_getter(x)),
+			 s7_procedure_arity(sc, s7_procedure_with_setter_setter(x))));
 
-      return(make_list_3(sc, 
-			 s7_make_integer(sc, pws_get_req_args(x)),
-			 s7_make_integer(sc, pws_get_opt_args(x)),
-			 sc->F));
+      return(pws_arity(sc, x));
     }
 
   if ((object_is_applicable(x)) ||
@@ -14218,6 +14216,20 @@ static s7_pointer pws_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 }
 
 
+static s7_pointer pws_arity(s7_scheme *sc, s7_pointer obj)
+{
+  s7_pws_t *f;
+  f = (s7_pws_t *)s7_object_value(obj);
+
+  return(s7_cons(sc, s7_make_integer(sc, f->get_req_args),
+	   s7_cons(sc, s7_make_integer(sc, f->get_opt_args),
+	     s7_cons(sc, sc->F,
+	       s7_cons (sc, s7_make_integer(sc, f->set_req_args),
+		 s7_cons(sc, s7_make_integer(sc, f->set_opt_args),
+	           s7_cons(sc, sc->F, sc->NIL)))))));
+}
+
+
 static s7_pointer g_make_procedure_with_setter(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_procedure_with_setter "(make-procedure-with-setter getter setter) combines its \
@@ -14286,37 +14298,6 @@ static char *pws_documentation(s7_pointer x)
 {
   s7_pws_t *f = (s7_pws_t *)s7_object_value(x);
   return(f->documentation);
-}
-
-
-static int pws_get_req_args(s7_pointer x)
-{
-  s7_pws_t *f = (s7_pws_t *)s7_object_value(x);
-  return(f->get_req_args);
-}
-
-
-static int pws_get_opt_args(s7_pointer x)
-{
-  s7_pws_t *f = (s7_pws_t *)s7_object_value(x);
-  return(f->get_opt_args);
-}
-
-
-static s7_pointer g_procedure_with_setter_setter_arity(s7_scheme *sc, s7_pointer args)
-{
-  s7_pws_t *f;
-  if (!s7_is_procedure_with_setter(car(args)))
-    return(s7_wrong_type_arg_error(sc, "procedure-with-setter-setter-arity", 0, car(args), "a procedure-with-setter"));
-
-  f = (s7_pws_t *)s7_object_value(car(args));
-  if (f->scheme_setter != sc->NIL)
-    return(s7_procedure_arity(sc, f->scheme_setter));
-
-  return(make_list_3(sc,
-		     s7_make_integer(sc, f->set_req_args),
-		     s7_make_integer(sc, f->set_opt_args),
-		     sc->F));
 }
 
 
@@ -25014,7 +24995,6 @@ s7_scheme *s7_init(void)
   /* pws first so that make-procedure-with-setter has a type tag */
   s7_define_function(sc, "make-procedure-with-setter",         g_make_procedure_with_setter,         2, 0, false, H_make_procedure_with_setter);
   s7_define_function(sc, "procedure-with-setter?",             g_is_procedure_with_setter,           1, 0, false, H_is_procedure_with_setter);
-  s7_define_function(sc, "procedure-with-setter-setter-arity", g_procedure_with_setter_setter_arity, 1, 0, false, "kludge to get setter's arity");
   pws_tag = s7_new_type("<procedure-with-setter>", pws_print, pws_free,	pws_equal, pws_mark, pws_apply,	pws_set);
   
 
@@ -25538,8 +25518,7 @@ s7_scheme *s7_init(void)
  * PERHAPS: pretty-printing in the REPL or in format (~W in CL I think)
  * lint 
  * TODO: hash-table map and for-each should be entry-oriented, not alist-oriented
- * TODO: access to the pws setter [and figure out how to get from the C setter to its arity list -- used in snd-test]
- * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html) (also the deprecated stuff in snd-dac)
+ * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
  * generic append? slice? member?
  *
  * PERHAPS: method lists for c_objects

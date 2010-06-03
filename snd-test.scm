@@ -543,7 +543,7 @@
 (define (set-arity-ok func args)
   "set proc accepts args"
   (let ((arity (if (procedure-with-setter? func)
-		   (procedure-with-setter-setter-arity func)
+		   (cdddr (procedure-arity func))
 		   (procedure-arity func))))
     (and (list-p arity)
 	 (>= args (car arity))

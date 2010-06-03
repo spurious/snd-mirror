@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.57"
-#define S7_DATE "22-May-10"
+#define S7_VERSION "1.58"
+#define S7_DATE "2-June-10"
 
 
 typedef long long int s7_Int;
@@ -758,6 +758,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 2-June:    removed procedure-with-setter-setter-arity and folded that info into procedure-arity (use cdddr).
  * 22-May:    multidimensional vectors are no longer optional.
  * 9-May:     s7_read_char and s7_peek_char have to return an int, not a char (<eof>=-1, but 255 is a legit char).
  *            s7_write_char and s7_open_output_function have similar changes.

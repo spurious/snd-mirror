@@ -14,7 +14,7 @@
   (let ((len (min (length p1) (length p2)))) 
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (vector-set! p1 i (+ (vector-ref p1 i) (vector-ref p2 i))))
+      (set! (p1 i) (+ (vector-ref p1 i) (p2 i))))
     p1))
 
 (define (vector-scale! p1 scl)
@@ -22,7 +22,7 @@
   (let ((len (length p1)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (vector-set! p1 i (* scl (vector-ref p1 i))))
+      (set! (p1 i) (* scl (p1 i))))
     p1))
 
 (define (vector-copy p1)
@@ -31,15 +31,15 @@
 	 (v (make-vector len)))
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (vector-set! v i (vector-ref p1 i)))
+      (set! (v i) (p1 i)))
     v))
 
 (define (poly-as-vector-eval v x)
   "(poly-as-vector-eval v x) treats 'v' as a vector of polynomial coefficients, returning the value of the polynomial at x"
-  (let ((sum (vector-ref v (- (length v) 1))))
+  (let ((sum (v (- (length v) 1))))
     (do ((i (- (length v) 2) (- i 1)))
 	((< i 0) sum)
-      (set! sum (+ (* sum x) (vector-ref v i))))))
+      (set! sum (+ (* sum x) (v i))))))
 
 
 (define (poly-as-vector-reduce p1)
@@ -47,18 +47,18 @@
   ;; always return at least a 0 coeff (rather than return #f=0 polynomial)
   (let ((new-len (do ((i (- (length p1) 1) (- i 1)))
 		     ((or (= i 0)
-			  (not (= (vector-ref p1 i) 0.0)))
+			  (not (= (p1 i) 0.0)))
 		      (+ i 1)))))
     (if (= new-len (length p1))
 	p1
 	(let ((np (make-vector new-len)))
 	  (do ((i 0 (+ i 1)))
 	      ((= i new-len))
-	    (vector-set! np i (vector-ref p1 i)))
+	    (set! (np i) (p1 i)))
 	  np))))
 
 (define (poly-reduce p1)
-  "(poly-reduce p1) removes trailing (high-degree) zeros from the vector or vct p1"
+  "(poly-reduce p1) removes trailing (high-degree) zeros from the vct p1"
   (if (= (vct-ref p1 (- (length p1) 1)) 0.0)
       (vector->vct (poly-as-vector-reduce (vct->vector p1)))
       p1))
@@ -76,10 +76,10 @@
 	      (vector-add! (vector-copy p1) p2)
 	      (vector-add! (vector-copy p2) p1))
 	  (let ((v (vector-copy p1)))
-	    (vector-set! v 0 (+ (vector-ref v 0) p2))
+	    (set! (v 0) (+ (v 0) p2))
 	    v))
       (let ((v (vector-copy p2)))
-	(vector-set! v 0 (+ (vector-ref v 0) p1))
+	(set! (v 0) (+ (v 0) p1))
 	v)))
 
 (define (poly+ p1 p2) 
@@ -106,7 +106,7 @@
 		((= i p1len))
 	      (do ((j 0 (+ 1 j)))
 		  ((= j p2len))
-		(vector-set! m (+ i j) (+ (vector-ref m (+ i j)) (* (vector-ref p1 i) (vector-ref p2 j))))))
+		(set! (m (+ i j)) (+ (m (+ i j)) (* (p1 i) (p2 j))))))
 	    m)
 	  (vector-scale! (vector-copy p1) p2))
       (vector-scale! (vector-copy p2) p1)))
@@ -139,18 +139,18 @@
 		       (q (make-vector len 0)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i len))
-		    (vector-set! r i (vector-ref p1 i)))
+		    (set! (r i) (p1 i)))
 		  (let ((n (- p1len 1))
 			(nv (- p2len 1)))
 		    (do ((k (- n nv) (- k 1)))
 			((< k 0))
-		      (vector-set! q k (/ (vector-ref r (+ nv k)) (vector-ref p2 nv)))
+		      (set! (q k) (/ (r (+ nv k)) (p2 nv)))
 		      (do ((j (+ nv k -1) (- j 1)))
 			  ((< j k))
-			(vector-set! r j (- (vector-ref r j) (* (vector-ref q k) (vector-ref p2 (- j k)))))))
+			(set! (r j) (- (r j) (* (q k) (p2 (- j k)))))))
 		    (do ((j nv (+ 1 j)))
 			((> j n))
-		      (vector-set! r j 0))
+		      (set! (r j) 0))
 		    (list q r)))))
 	  (list (poly-as-vector* p1 (/ 1 p2)) (vector 0)))
       (list (vector 0) p2)))
@@ -175,7 +175,7 @@
     (do ((i (- len 1) (- i 1))
 	 (j len (- j 1)))
 	((< i 0) v)
-      (vector-set! v i (* j (vector-ref p1 j))))))
+      (set! (v i) (* j (p1 j))))))
 
 (define (poly-derivative p1) 
   "(poly-derivative p1) returns the derivative of p1, either a vct or vector"
@@ -199,12 +199,12 @@
 	((= i (- n 1)))
       (do ((j 0 (+ 1 j)))
 	  ((= j m))
-	(mixer-set! mat i (+ i j) (vector-ref p1 (- m j 1)))))
+	(mixer-set! mat i (+ i j) (p1 (- m j 1)))))
     (do ((i 0 (+ i 1)))
 	((= i (- m 1)))
       (do ((j 0 (+ 1 j)))
 	  ((= j n))
-	(mixer-set! mat (+ i n -1) (+ i j) (vector-ref p2 (- n j 1)))))
+	(mixer-set! mat (+ i n -1) (+ i j) (p2 (- n j 1)))))
     (mixer-determinant mat)))
 
 (define (poly-resultant p1 p2) 
@@ -271,7 +271,7 @@
       (let ((qr (map poly-as-vector-reduce (poly-as-vector/ p1 p2))))
 	;(display (format #f ";poly-as-vector-gcd ~A ~A ->~A ~%" p1 p2 qr))
 	(if (= (length (cadr qr)) 1)
-	    (if (= (vector-ref (cadr qr) 0) 0.0)
+	    (if (= ((cadr qr) 0) 0.0)
 		p2
 		(vector 0))
 	    (apply poly-as-vector-gcd qr)))))
@@ -379,65 +379,65 @@
     (if (= deg 0)                                     ; just constant
 	'()
 
-	(if (= (vector-ref p1 0) 0.0)                 ; constant=0.0, divide through by x, recurse on new
+	(if (= (p1 0) 0.0)                 ; constant=0.0, divide through by x, recurse on new
 	    (if (= deg 1)
 		(list 0.0)
 		(let ((pnew (make-vector deg)))
 		  (do ((i 1 (+ i 1)))
 		      ((> i deg))
-		    (vector-set! pnew (- i 1) (vector-ref p1 i)))
+		    (set! (pnew (- i 1)) (p1 i)))
 		  (append (list 0.0) (poly-as-vector-roots pnew))))
 
 	    (if (= deg 1)                             ; ax + b -> -b/a
-		(linear-root (vector-ref p1 1) (vector-ref p1 0))
+		(linear-root (p1 1) (p1 0))
 
 		(if (= deg 2)                         ; ax^2 + bx + c -> -b +/- sqrt(b^2 - 4ac) / 2a
-		    (quadratic-roots (vector-ref p1 2) (vector-ref p1 1) (vector-ref p1 0))
+		    (quadratic-roots (p1 2) (p1 1) (p1 0))
 
 		    (or (and (= deg 3)
 			;; it may be better to fall into Newton's method here
-			     (cubic-roots (vector-ref p1 3) (vector-ref p1 2) (vector-ref p1 1) (vector-ref p1 0)))
+			     (cubic-roots (p1 3) (p1 2) (p1 1) (p1 0)))
 			
 			(and (= deg 4)
-			     (quartic-roots (vector-ref p1 4) (vector-ref p1 3) (vector-ref p1 2) (vector-ref p1 1) (vector-ref p1 0)))
+			     (quartic-roots (p1 4) (p1 3) (p1 2) (p1 1) (p1 0)))
 
 			;; degree>4 (or trouble above), use Newton's method unless some simple case pops up
 			(let ((ones 0))
 			      (do ((i 1 (+ i 1)))
 				  ((> i deg))
-				(if (not (= (vector-ref p1 i) 0.0))
+				(if (not (= (p1 i) 0.0))
 				    (set! ones (+ 1 ones))))
 
 			      (if (= ones 1)                  ; x^n + b -- "linear" in x^n
-				  (nth-roots (vector-ref p1 deg) (vector-ref p1 0) deg)
+				  (nth-roots (p1 deg) (p1 0) deg)
 
 				  (if (and (= ones 2)
 					   (even? deg)
-					   (not (= (vector-ref p1 (/ deg 2)) 0.0)))
+					   (not (= (p1 (/ deg 2)) 0.0)))
 				      (let ((roots '())       ; quadratic in x^(n/2)
 					    (n (/ deg 2)))
 					(for-each
 					 (lambda (r)
 					   (set! roots (append roots (nth-roots 1.0 (- r) n))))
-					 (poly-as-vector-roots (vector (vector-ref p1 0) 
-								       (vector-ref p1 (/ deg 2)) 
-								       (vector-ref p1 deg))))
+					 (poly-as-vector-roots (vector (p1 0) 
+								       (p1 (/ deg 2)) 
+								       (p1 deg))))
 					roots)
 
 				      (if (and (> deg 3)
 					       (= ones 3)
 					       (= (modulo deg 3) 0)
-					       (not (= (vector-ref p1 (/ deg 3)) 0.0))
-					       (not (= (vector-ref p1 (/ (* 2 deg) 3)) 0.0)))
+					       (not (= (p1 (/ deg 3)) 0.0))
+					       (not (= (p1 (/ (* 2 deg) 3)) 0.0)))
 					  (let ((roots '())   ; cubic in x^(n/3)
 						(n (/ deg 3)))
 					    (for-each
 					     (lambda (r)
 					       (set! roots (append roots (nth-roots 1.0 (- r) n))))
-					     (poly-as-vector-roots (vector (vector-ref p1 0) 
-									   (vector-ref p1 (/ deg 3)) 
-									   (vector-ref p1 (/ (* 2 deg) 3))
-									   (vector-ref p1 deg))))
+					     (poly-as-vector-roots (vector (p1 0) 
+									   (p1 (/ deg 3)) 
+									   (p1 (/ (* 2 deg) 3))
+									   (p1 deg))))
 					    roots)
 
 					  ;; perhaps get derivative roots, plug in main -- need to get nth derivative to be safe in this

@@ -4200,15 +4200,17 @@ static xen_value *if_form(ptree *prog, s7_pointer form, walk_result_t need_resul
 #endif
 		false_result->type = true_result->type;
 	      else
+		{
 #if USE_SND
-		if ((true_result->type == R_BOOL) &&
-		    ((false_result->type == R_CLM) || 
-		     (false_result->type == R_SAMPLER)))
+		  if ((true_result->type == R_BOOL) &&
+		      ((false_result->type == R_CLM) || 
+		       (false_result->type == R_SAMPLER)))
 #else
-		if ((true_result->type == R_BOOL) &&
-		    (false_result->type == R_CLM))
+		  if ((true_result->type == R_BOOL) &&
+		      (false_result->type == R_CLM))
 #endif
-		  true_result->type = false_result->type;
+		    true_result->type = false_result->type;
+		}
 	    }
 
 	  if (false_result->type != true_result->type)

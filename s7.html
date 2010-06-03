@@ -436,32 +436,6 @@ c
 &gt; (a)
 123
 </pre>
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
-
-<p>Another variant of define creates "curried" functions:
-</p>
-<pre>
-(define-macro (define-curried name-and-args . body)	
-  `(define ,@(let ((newlst `(begin ,@body)))
-	       (define (rewrap lst)
-		 (if (pair? (car lst))
-		     (begin
-		       (set! newlst (cons 'lambda (cons (cdr lst) (list newlst))))
-		       (rewrap (car lst)))
-		     (list (car lst) (list 'lambda (cdr lst) newlst))))
-	       (rewrap name-and-args))))
-
-&gt; (define-curried ((f a) b) (+ a b))
-f
-&gt; ((f 1) 2)
-3
-&gt; (define-curried (((((f a b) c) d e) f) g) (* a b c d e f g))
-f
-&gt; (((((f 1 2) 3) 4 5) 6) 7)
-5040
-</pre>
-
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
@@ -2353,7 +2327,11 @@ q
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>Since define* accepts multiple rest arguments, perhaps procedure-arity should return that number,
-rather than a boolean.  I haven't run into a case where it matters.
+rather than a boolean.  I haven't run into a case where it matters.  If procedure-arity is passed
+a procedure-with-setter, it returns 6 values, rather than 3.  The first 3 describe the "getter"
+and the following 3 describe the "setter".  I wonder if it would be more consistent to use the
+name "procedure/setter" in place of "make-procedure-with-setter".  (Its syntax is closer to
+vector than make-vector, for example).
 </p>
 
 </blockquote>
