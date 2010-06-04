@@ -25,7 +25,7 @@
 (define with-bigfloats (provided? 'gmp))                       ; scheme real has any number of bits
 (define with-bignum-function (defined? 'bignum))               ;   this is a function that turns its string arg into a bignum
 (define with-delay (provided? 'force))                         ; delay and force 
-(define with-the-bug-finding-machine #t)                       ; run the machine (this variable can be set to the number of tries)
+(define with-the-bug-finding-machine #f)                       ; run the machine (this variable can be set to the number of tries)
 					                       ;   the default number of tries is 10000
 (define with-test-at-random #f)
 (define with-values (provided? 'values))
@@ -2113,6 +2113,10 @@
 
 (test (string->list "abc") (list #\a #\b #\c))
 (test (string->list "") '())
+(test (string->list (make-string 0)) '())
+(test (string->list (string #\null)) '()) ; should this be '(#\null) ? -- this is what Guile returns
+(test (string->list (string)) '())
+(test (string->list (substring "hi" 0 0)) '())
 (test (string->list (list->string (list #\a #\b #\c))) (list #\a #\b #\c))
 (test (string->list (list->string '())) '())
 (test (list->string (string->list "abc")) "abc")
@@ -5213,6 +5217,36 @@
 (test (call-with-input-file "empty-file" (lambda (p) (eof-object? (read p)))) #t)
 (test (call-with-input-file "empty-file" (lambda (p) (eof-object? (read-byte p)))) #t)
 (test (call-with-input-file "empty-file" (lambda (p) (eof-object? (read-line p)))) #t)
+
+(call-with-output-file "empty-file" (lambda (p) (write-char #\a p)))
+(test (call-with-input-file "empty-file" (lambda (p) (and (char=? (read-char p) #\a) (eof-object? (read-char p))))) #t)
+(test (call-with-input-file "empty-file" (lambda (p) (and (string=? (symbol->string (read p)) "a") (eof-object? (read p))))) #t)
+(test (call-with-input-file "empty-file" (lambda (p) (and (char=? (integer->char (read-byte p)) #\a) (eof-object? (read-byte p))))) #t)
+(test (call-with-input-file "empty-file" (lambda (p) (and (string=? (read-line p) "a") (eof-object? (read-line p))))) #t)
+
+(call-with-output-file "empty-file" (lambda (p) (for-each (lambda (c) (write-char c p)) "#b11")))
+(test (call-with-input-file "empty-file" (lambda (p) 
+					   (and (char=? (read-char p) #\#) 
+						(char=? (read-char p) #\b) 
+						(char=? (read-char p) #\1) 
+						(char=? (read-char p) #\1) 
+						(eof-object? (read-char p))))) 
+      #t)
+(test (call-with-input-file "empty-file" (lambda (p) 
+					   (and (= (read p) 3) 
+						(eof-object? (read p))))) 
+      #t)
+(test (call-with-input-file "empty-file" (lambda (p) 
+					   (and (= (read-byte p) (char->integer #\#))
+						(= (read-byte p) (char->integer #\b))
+						(= (read-byte p) (char->integer #\1))
+						(= (read-byte p) (char->integer #\1))
+						(eof-object? (read-byte p))))) 
+      #t)
+(test (call-with-input-file "empty-file" (lambda (p) 
+					   (and (string=? (read-line p) "#b11") 
+						(eof-object? (read-line p))))) 
+      #t)
 
 
 (test (output-port? (current-output-port)) #t)
@@ -47188,6 +47222,11 @@
 (test (number->string) 'error)
 (test (number->string "hi") 'error)
 (test (number->string 1.0+23.0i 1.0+23.0i 1.0+23.0i) 'error)
+(test (string->number "") #f)
+(test (string->number (make-string 0)) #f)
+(test (string->number (string #\null)) #f)
+(test (string->number (string)) #f)
+(test (string->number (substring "hi" 0 0)) #f)
 
 
 

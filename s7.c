@@ -5091,7 +5091,7 @@ static s7_pointer g_string_to_number(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "string->number", 1, car(args), "a string"));
 
   str = (char *)string_value(car(args));
-  if (!str)
+  if ((!str) || (!(*str)))
     return(sc->F);
 
   if (is_pair(cdr(args)))
@@ -8688,7 +8688,7 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
   
   str = string_value(car(args));
   if (str) len = safe_strlen(str);
-  if (len == 0)
+  if (len == 0)                     /* (string->list (string #\null)) will return '() -- not sure that's correct */
     return(sc->NIL);
 
   sc->w = sc->NIL;
