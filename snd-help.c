@@ -493,6 +493,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+7-June:  Snd 11.6.\n\
 27-May:  removed snd6.scm. added binary-io.scm.\n\
 29-Apr:  Snd 11.5.\n\
 7-Apr:   autoload support via s7's *unbound-variable-hook*.\n\

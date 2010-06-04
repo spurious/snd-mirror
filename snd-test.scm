@@ -3511,6 +3511,7 @@
 		  (list mus-ubshort mus-next))))
 	 (list 1 2 4 8))
 	
+#|
 	;; big sound-data objects (needs 32 Gbytes):
 	(if (and (string? (getenv "HOSTNAME"))
 		 (string=? (getenv "HOSTNAME") "fatty8"))
@@ -3561,6 +3562,7 @@
 		  (if (fneq (vct-ref v (expt 2 31)) 1.0)
 		      (snd-display #__line__ ";big sd, sd->v ref: ~A" (vct-ref v (expt 2 31)))))
 		)))
+|#
 	
 	(let ((ind (open-sound (string-append "/usr//usr/include/" home-dir "/cl/oboe.snd"))))
 	  (show-input-1)
@@ -14377,6 +14379,7 @@ EDITS: 2
 	    (vector->vct vect)
 	    (set! v1 (vector->vct vect))))
 	
+#|
 	;; a test of big vcts (needs 16 Gbytes):
 	(if (and (string? (getenv "HOSTNAME"))
 		 (string=? (getenv "HOSTNAME") "fatty8"))
@@ -14490,6 +14493,7 @@ EDITS: 2
 	      
 	      
 	      ))
+|#
 	
 	(let ((sum 0)) 
 	  (for-each (lambda (n) (set! sum (+ sum n))) (vct 1 2 3))
@@ -41417,9 +41421,7 @@ EDITS: 1
 	
 	
 	;; ---- *.scm
-	(if (or (not (list? (procedure-source (lambda () (+ 1 2)))))
-		(eq? (car (procedure-source (lambda () (+ 1 2)))) '%internal-eval))
-	    (snd-display #__line__ ";skipping edit-list->function tests since procedure-source is useless")
+	(if (defined? 'effects-squelch-channel)
 	    (begin
 	      (if (or (provided? 'xm) (provided? 'xg))
 		  (let ((ctr 1))
@@ -61354,7 +61356,7 @@ EDITS: 1
 		 (_GList1_ (gdk_screen_get_toplevel_windows _GdkScreen_))
 		 (_gchar1_ (gdk_screen_make_display_name _GdkScreen_))
 		 (_int6 (gdk_screen_get_n_monitors _GdkScreen_))
-		 (_GList2_ (gdk_display_list_devices _GdkDisplay_))
+;		 (_GList2_ (gdk_display_list_devices _GdkDisplay_))
 		 (_guint (gdk_display_get_default_cursor_size _GdkDisplay_))
 		 (_GtkWidget_ (gtk_check_button_new))
 		 (_GdkColormap7_ (gtk_widget_get_colormap _GtkWidget_))
@@ -61604,7 +61606,8 @@ EDITS: 1
 		 (_GtkEntryCompletion1_ (gtk_entry_get_completion _GtkEntry_))
 		 (_GtkWidget_ (gtk_entry_completion_get_entry _GtkEntryCompletion_))
 		 (_gint2 (gtk_entry_completion_get_minimum_key_length _GtkEntryCompletion_))
-		 (_list (gtk_entry_get_layout_offsets _GtkEntry_)))
+;		 (_list (gtk_entry_get_layout_offsets _GtkEntry_))
+		 )
 	    (if (not _gboolean) (snd-display #__line__ ";entry not visible"))
 	    (if (not _gboolean1) (snd-display #__line__ ";entry no frame"))
 	    (if _gboolean2 (snd-display #__line__ ";entry activates default"))
@@ -63534,7 +63537,7 @@ EDITS: 1
 		(gdk_window_move _GdkWindow_ 0 0)
 		(gdk_window_move_resize _GdkWindow_ 0 0 500 800)
 		(gdk_window_resize _GdkWindow_ 500 800)
-		(gdk_window_set_accept_focus _GdkWindow_ #t)
+;		(gdk_window_set_accept_focus _GdkWindow_ #t)
 		(gdk_window_set_background _GdkWindow_ red-pixel)
 		(gdk_window_set_cursor _GdkWindow_ (gdk_cursor_new GDK_BOTTOM_TEE))
 		(gdk_window_set_icon_name _GdkWindow_ "hiho")
@@ -63821,7 +63824,7 @@ EDITS: 1
 		   gdk_display_add_client_message_filter gdk_display_beep gdk_display_close gdk_display_flush ;gdk_display_get_core_pointer
 		   gdk_display_get_default gdk_display_get_default_cursor_size gdk_display_get_default_group gdk_display_get_default_screen gdk_display_get_event
 		   gdk_display_get_maximal_cursor_size gdk_display_get_n_screens gdk_display_get_name gdk_display_get_pointer gdk_display_get_screen
-		   gdk_display_get_window_at_pointer gdk_display_keyboard_ungrab gdk_display_list_devices gdk_display_open
+		   gdk_display_get_window_at_pointer gdk_display_keyboard_ungrab gdk_display_open
 		   gdk_display_peek_event gdk_display_pointer_is_grabbed gdk_display_pointer_ungrab gdk_display_put_event gdk_display_set_double_click_distance
 		   gdk_display_set_double_click_time gdk_display_supports_clipboard_persistence gdk_display_supports_cursor_alpha 
 		   gdk_display_supports_cursor_color gdk_display_sync
@@ -63899,8 +63902,8 @@ EDITS: 1
 		   gdk_window_lookup gdk_window_lower gdk_window_maximize gdk_window_merge_child_shapes gdk_window_move
 		   gdk_window_move_resize gdk_window_new gdk_window_peek_children gdk_window_process_all_updates gdk_window_process_updates
 		   gdk_window_raise gdk_window_register_dnd gdk_window_remove_filter gdk_window_reparent gdk_window_resize
-		   gdk_window_scroll gdk_window_set_accept_focus gdk_window_set_back_pixmap gdk_window_set_background gdk_window_set_child_shapes
-		   gdk_window_set_cursor gdk_window_set_debug_updates gdk_window_set_decorations gdk_window_set_events gdk_window_set_focus_on_map
+		   gdk_window_scroll gdk_window_set_back_pixmap gdk_window_set_background gdk_window_set_child_shapes
+		   gdk_window_set_cursor gdk_window_set_debug_updates gdk_window_set_decorations gdk_window_set_events 
 		   gdk_window_set_functions gdk_window_set_geometry_hints gdk_window_set_group gdk_window_set_icon gdk_window_set_icon_list
 		   gdk_window_set_icon_name gdk_window_set_keep_above gdk_window_set_keep_below gdk_window_set_modal_hint gdk_window_set_override_redirect
 		   gdk_window_set_role gdk_window_set_static_gravities gdk_window_set_title gdk_window_set_transient_for gdk_window_set_type_hint
@@ -64018,7 +64021,7 @@ EDITS: 1
 		   gtk_entry_completion_set_inline_completion gtk_entry_completion_set_match_func 
 		   gtk_entry_completion_set_minimum_key_length gtk_entry_completion_set_model gtk_entry_completion_set_popup_completion
 		   gtk_entry_completion_set_text_column gtk_entry_get_activates_default gtk_entry_get_alignment gtk_entry_get_completion gtk_entry_get_has_frame
-		   gtk_entry_get_invisible_char gtk_entry_get_layout gtk_entry_get_layout_offsets gtk_entry_get_max_length gtk_entry_get_text
+		   gtk_entry_get_invisible_char gtk_entry_get_layout gtk_entry_get_max_length gtk_entry_get_text
 		   gtk_entry_get_visibility gtk_entry_get_width_chars gtk_entry_layout_index_to_text_index gtk_entry_new
 		   gtk_entry_set_activates_default gtk_entry_set_alignment gtk_entry_set_completion gtk_entry_set_has_frame gtk_entry_set_invisible_char
 		   gtk_entry_set_max_length gtk_entry_set_text gtk_entry_set_visibility gtk_entry_set_width_chars gtk_entry_text_index_to_layout_index

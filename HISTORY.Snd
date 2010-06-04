@@ -1,5 +1,6 @@
 Snd change log
 
+ 7-June:    Snd 11.6.
  27-May:    removed snd6.scm. added binary-io.scm.
  29-Apr:    Snd 11.5.
  7-Apr:     autoload support via s7's *unbound-variable-hook*.

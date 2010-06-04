@@ -808,6 +808,7 @@
   (test (char-upcase #\_) #\_)
   (test (char-upcase #\space) #\space)
   (test (char-upcase #\newline) #\newline)
+  (test (char-upcase #\null) #\null)
   
   (for-each
    (lambda (arg1 arg2)
@@ -1785,6 +1786,9 @@
 (test (string-length) 'error)
 (test (string-length "hi" "ho") 'error)
 (test (string-length "..\ ..") 4)
+(test (string-length (string #\null)) 1) ; ??
+(test (string-length (string #\null #\null)) 2) ; ??
+(test (string-length (string #\null #\newline)) 2) ; ??
 
 (for-each
  (lambda (arg)
@@ -1854,6 +1858,9 @@
 (test (string-ref "" 0) 'error)  
 (test (string-ref "" 1) 'error)
 (test (string-ref "hiho" (expt 2 32)) 'error)
+(test (char=? (string-ref (string #\null) 0) #\null) #t)
+(test (char=? (string-ref (string #\newline) 0) #\newline) #t)
+(test (char=? (string-ref (string #\space) 0) #\space) #t)
 
 (for-each
  (lambda (arg)
@@ -5220,7 +5227,7 @@
 
 (call-with-output-file "empty-file" (lambda (p) (write-char #\a p)))
 (test (call-with-input-file "empty-file" (lambda (p) (and (char=? (read-char p) #\a) (eof-object? (read-char p))))) #t)
-(test (call-with-input-file "empty-file" (lambda (p) (and (string=? (symbol->string (read p)) "a") (eof-object? (read p))))) #t)
+(test (call-with-input-file "empty-file" (lambda (p) (and (string=? (symbol->string (read p)) "a") (eof-object? (read p))))) #t) ; Guile also returns a symbol here
 (test (call-with-input-file "empty-file" (lambda (p) (and (char=? (integer->char (read-byte p)) #\a) (eof-object? (read-byte p))))) #t)
 (test (call-with-input-file "empty-file" (lambda (p) (and (string=? (read-line p) "a") (eof-object? (read-line p))))) #t)
 

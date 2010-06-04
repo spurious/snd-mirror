@@ -36,6 +36,7 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-oss            use OSS 
 #   --with-jack           use Jack
 #   --with-static-alsa    use ALSA statically loaded (for RPM generation)
+#   --without-audio       stub out all audio
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
 #   --with-doubles        use doubles throughout (default is floats)
 #   --with-float-samples  represent samples internally as floats or doubles (default=yes)
@@ -113,6 +114,7 @@ AC_ARG_WITH(extension-language, [  --with-extension-language	use some extension 
 
 # an experiment
 AC_ARG_WITH(directfb,    [  --with-directfb	  use directfb config scripts, rather than gtk, default=no])
+AC_ARG_WITH(audio,       [  --without-audio       don't include any audio functionality])
 
 
 # -------- internal sample data type --------
@@ -1498,6 +1500,9 @@ SO_LD="ld"
 JACK_LIBS=""
 JACK_FLAGS=""
 
+
+if test "$with_audio" != no ; then
+
 # we need the sndlib.h equivalents to try to find the native sound support (see config.guess)
 # this only matters for those cases where we've implemented the audio code in audio.c
 # test for ALSA courtesy of Paul Davis
@@ -1789,6 +1794,7 @@ case "$host" in
 esac
 AC_MSG_CHECKING([for audio system])
 AC_MSG_RESULT($AUDIO_SYSTEM)
+fi
 fi
 
 AC_SUBST(AUDIO_LIB)
@@ -2113,6 +2119,10 @@ if test "$ac_snd_have_extension_language" = no ; then
     fi
     AC_MSG_WARN([Snd needs either an extension language (s7, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless.])
   fi
+fi
+
+if test "$ac_snd_have_extension_language" = yes && test "$with_audio" = no && test "$ac_snd_have_gui" = no && test "$ac_cv_header_dlfcn_h" = yes ; then
+  LDFLAGS="$LDFLAGS -ldl"
 fi
 
 AC_SUBST(CFLAGS)

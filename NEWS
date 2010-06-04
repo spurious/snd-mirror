@@ -1,23 +1,23 @@
-Snd 11.5
+Snd 11.6
 
-autoload support via s7's *unbound-variable-hook*.  If you try to
-  use some undefined function, Snd first looks through a table
-  of (nearly) everything defined in the scheme files that come 
-  with Snd, loading the needed files automatically. To turn this 
-  off, (set! *unbound-variable-hook* #f).
+in s7: *#readers* for your own #... readers
+       nan? and infinite?
+       #nD(...) multidimensional vector constant syntax
+       support for circular and shared structures
+       integer-decode-float and binary file IO (binary-io.scm).
 
-removed encapsulation from s7.  Added augment-environment.
+play-skipping-silence in extsnd.html
 
-added make-type to s7: scheme-level type creation.
-      symbol-access: trap/modify the symbol value lookup mechanism.
+removed snd6.scm.
 
-mix-notelists in ws.scm.
+if --with-gtk, the configure script looks first for gtk 3.0 now 
+  (actually 2.90.n, but the libraries and headers use the name 3.0), then 
+  falls back on 2.0.
 
-Fernando fixed some problems in dlocsig.scm.
+added --without-audio configure switch.
 
-checked: gtk 2.20.0, sbcl 1.0.37
+checked: sbcl 1.0.38|39, gtk 2.20.1|21.0|90.0|1, mpc 0.8.2
 
-Thanks!: Rick Taube, Rick's students, Oded Ben-Tal, Cazzaniga Sandro,
-  Mike Scholz, Fernando Lopez-Lezcano
+Thanks!: Fernando Lopez-Lezcano, Kjetil Matheussen
 
 
