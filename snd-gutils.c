@@ -995,7 +995,7 @@ static GtkWidget *slist_new_item(slist *lst, const char *label, int row)
   gtk_widget_set_name(item, "white_button");
   slist_set_row(item, row);
   gtk_button_set_relief(GTK_BUTTON(item), GTK_RELIEF_HALF);
-#if HAVE_GTK_BUTTON_SET_ALIGNMENT
+#if HAVE_GTK_ABOUT_DIALOG_NEW
   gtk_button_set_alignment(GTK_BUTTON(item), 0.05, 1.0);
 #endif
   gtk_box_pack_start(GTK_BOX(lst->topics), item, false, false, 0);

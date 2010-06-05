@@ -1490,7 +1490,7 @@ static GtkWidget *make_top_level_label(const char *label, GtkWidget *parent)
   gtk_box_pack_start(GTK_BOX(parent), w1, false, false, 8);
   gtk_widget_show(w1);
 
-#if HAVE_GTK_BUTTON_SET_ALIGNMENT
+#if HAVE_GTK_ABOUT_DIALOG_NEW
   w = snd_gtk_highlight_label_new(label);
   gtk_button_set_alignment(GTK_BUTTON(w), 0.01, 0.5);
   widget_modify_bg(w, GTK_STATE_NORMAL, ss->sgx->light_blue);
@@ -1534,7 +1534,7 @@ static GtkWidget *make_inner_label(const char *label, GtkWidget *parent)
   gtk_box_pack_start(GTK_BOX(parent), w1, false, false, 8);
   gtk_widget_show(w1);
 
-#if HAVE_GTK_BUTTON_SET_ALIGNMENT
+#if HAVE_GTK_ABOUT_DIALOG_NEW
   w = snd_gtk_highlight_label_new(label);
   gtk_button_set_alignment(GTK_BUTTON(w), 0.0, 0.5);
 #else

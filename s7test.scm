@@ -1368,6 +1368,7 @@
 
 (test (string?) 'error)
 (test (string? "hi" "ho") 'error)
+(test (string? #\null) #f)
 
 
 
@@ -1415,6 +1416,12 @@
 \
 \
 " "") #t)
+(test (string=? "" (string #\null)) #t) ; ??
+(test (string=? (string #\null #\null) (string #\null)) #t) ; ?? their lengths are different!
+(test (string=? "" "asd") #f)
+(test (string=? "asd" "") #f)
+(test (string=? "xx" (make-string 2 #\x) (string #\x #\x) (list->string (list #\x #\x)) (substring "axxb" 1 3) (string-append "x" "x")) #t)
+
 
 
 
@@ -1822,6 +1829,8 @@
 (test (let ((hi (make-string 3 #\newline))) (string-length hi)) 3)
 
 (test (make-string -1) 'error)
+(test (make-string 2 #\a #\b) 'error)
+(test (make-string) 'error)
 
 (for-each
  (lambda (arg)
@@ -1903,6 +1912,7 @@
    (test (string-copy arg) 'error))
  (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
+(test (length (string-copy (string #\null))) 1)
 
 
 
@@ -1971,6 +1981,7 @@
 (test (recompose 12 string-copy "xax") "xax")
 (test (let ((hi (make-string 3 #\x))) (recompose 12 (lambda (a) (string-fill! a #\a) a) hi)) "aaa")
 (test (let ((hi (make-string 3 #\x))) (recompose 12 (lambda (a) (string-fill! hi a)) #\a) hi) "aaa")
+(test (let ((str (string #\null #\null))) (fill! str #\x) str) "xx")
 
 (for-each
  (lambda (arg)
@@ -3021,6 +3032,7 @@
 (test (null? (list (list))) #f)
 (test (null? '(())) #f)
 (test (null? '#()) #f)
+(test (null? "") #f)
 
 (test (null? () '()) 'error)
 (test (null?) 'error)
@@ -3292,7 +3304,8 @@
 (test (assq 'b '((a . 1) (b . 2) () (c . 3) . 4)) '(b . 2))
 (test (assq 'c '((a . 1) (b . 2) () (c . 3) . 4)) '(c . 3))
 (test (assq 'b (list '(a . 1) '(b . 2) '() '(c . 3) #f)) '(b . 2))
-(test (assq 'asdf (list '(a . 1) '(b . 2) '() '(c . 3) #f))#f)
+(test (assq 'asdf (list '(a . 1) '(b . 2) '() '(c . 3) #f)) #f)
+(test (assq "" (list '("a" . 1) '("" . 2) '(#() . 3))) #f) ; since (eq? "" "") is #f
 
 
 (test (assv 1 '(1 2 . 3)) #f)
@@ -3409,6 +3422,7 @@
 (test (assoc 'c '((a . 1) (b . 2) () (c . 3) . 4)) '(c . 3))
 (test (assoc 'c '(() (a . 1) (b . 2) () (c . 3) (c . 4) . 4)) '(c . 3))
 (test (assoc 'asdf '(() (a . 1) (b . 2) () (c . 3) (c . 4) . 4)) #f)
+(test (assoc "" (list '("a" . 1) '("" . 2) '(#() . 3))) '("" . 2))
 
 
 

@@ -1,6 +1,6 @@
 # Configuration script for Snd
 
-AC_INIT(snd, 11.6, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-11.tar.gz)
+AC_INIT(snd, 11.7, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-11.tar.gz)
 
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
@@ -19,7 +19,7 @@ LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
 PACKAGE=Snd
-VERSION=11.6
+VERSION=11.7
 AC_DEFINE_UNQUOTED(SND_PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(SND_VERSION, "$VERSION")
 AC_SUBST(SND_PACKAGE)
@@ -1041,35 +1041,6 @@ else
 
       	AC_SUBST(GTK_LD_LIBS)
 
-	AC_CHECK_LIB(m, gdk_draw_pixbuf, [AC_DEFINE(HAVE_GDK_DRAW_PIXBUF)], ,$GTK_LIBS)
-	# gtk 2.1
-	AC_CHECK_LIB(m, gtk_tree_view_column_cell_get_position, [AC_DEFINE(HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION)], ,$GTK_LIBS)
-        AC_CHECK_LIB(m, gtk_widget_get_clipboard, [AC_DEFINE(HAVE_GTK_WIDGET_GET_CLIPBOARD)], ,$GTK_LIBS)
-	# gtk 2.2
-	AC_CHECK_LIB(m, gtk_file_chooser_dialog_new, [AC_DEFINE(HAVE_GTK_FILE_CHOOSER_DIALOG_NEW)], ,$GTK_LIBS)
-	# gtk 2.3
-        AC_CHECK_LIB(m, gtk_text_buffer_select_range, [AC_DEFINE(HAVE_GTK_TEXT_BUFFER_SELECT_RANGE)], ,$GTK_LIBS)
-	AC_CHECK_LIB(m, gtk_file_chooser_set_filename,
-	[
-    	  OLD_CFLAGS="$CFLAGS"
-          CFLAGS="$GTK_CFLAGS $CFLAGS"
-	  AC_MSG_CHECKING([for gboolean gtk_file_chooser_set_filename])
-	  AC_COMPILE_IFELSE(
-	    [AC_LANG_PROGRAM([#include <gtk/gtk.h>],
-			     [ GtkWidget *w; 
-			       gboolean result;
-			       result = gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(w), "hiho")
-			     ])],
-	    [
-             AC_DEFINE(HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME)
-	     AC_MSG_RESULT(yes)
- 	    ],
-            [AC_MSG_RESULT(no)])
-	  CFLAGS="$OLD_CFLAGS"
-	], ,$GTK_LIBS)
-	# gtk 2.3.6
-	AC_CHECK_LIB(m, gtk_button_set_alignment, [AC_DEFINE(HAVE_GTK_BUTTON_SET_ALIGNMENT)], ,$GTK_LIBS)
-	# gtk 2.4.0|1|2|3|4: no API changes
 	AC_CHECK_LIB(m, gtk_about_dialog_new, [AC_DEFINE(HAVE_GTK_ABOUT_DIALOG_NEW)], ,$GTK_LIBS)
 	# gtk 2.5.0
 	AC_CHECK_LIB(m, gdk_pango_renderer_new, [AC_DEFINE(HAVE_GDK_PANGO_RENDERER_NEW)],  ,$GTK_LIBS)

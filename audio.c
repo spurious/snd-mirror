@@ -5010,7 +5010,7 @@ static int osx_chans(int dev1)
   AudioDeviceID dev = kAudioDeviceUnknown;
   OSStatus err = noErr;
   UInt32 size;
-  int i, curdev;
+  int curdev;
   bool in_case = false;
 
   curdev = MUS_AUDIO_DEVICE(dev1);

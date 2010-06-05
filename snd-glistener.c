@@ -279,7 +279,7 @@ static void clear_back_to_prompt(GtkWidget *w)
 }
 
 
-#if HAVE_GTK_TEXT_BUFFER_SELECT_RANGE && HAVE_GTK_WIDGET_GET_CLIPBOARD
+#if HAVE_GTK_ABOUT_DIALOG_NEW
 static void ctrl_k(GtkWidget *w)
 {
   GtkTextIter beg, end;
@@ -653,7 +653,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 							}
 						      else
 							{
-#if HAVE_GTK_TEXT_BUFFER_SELECT_RANGE && HAVE_GTK_WIDGET_GET_CLIPBOARD
+#if HAVE_GTK_ABOUT_DIALOG_NEW
 							  if ((EVENT_KEYVAL(event) == snd_K_k) && (EVENT_STATE(event) & snd_ControlMask))
 							    {
 							      /* select to line end, copy to clipboard, delete */
@@ -900,7 +900,7 @@ static void make_listener_widget(int height)
 
 	/* C-k delete to end of line -- see explicit handling above */
 	gtk_binding_entry_remove(set, GDK_k, GDK_CONTROL_MASK);
-#if (!(HAVE_GTK_TEXT_BUFFER_SELECT_RANGE && HAVE_GTK_WIDGET_GET_CLIPBOARD))
+#if (!HAVE_GTK_ABOUT_DIALOG_NEW)
 	gtk_binding_entry_add_signal(set, GDK_k, GDK_CONTROL_MASK,
 				     "delete_from_cursor", 2,
 				     G_TYPE_ENUM, GTK_DELETE_PARAGRAPH_ENDS,

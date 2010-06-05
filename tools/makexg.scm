@@ -18,37 +18,21 @@
 (define checks '())
 (define atoms '())
 (define strings '())
-(define strings-236 '())
-(define strings-250 '())
+
 (define structs '())
 (define make-structs '()) ; these have a xg-specific make function
 (define cairo-make-structs '())
 (define struct-fields '())
 (define settable-struct-fields '())
 
-(define funcs-21 '())
-(define types-21 '())
-(define casts-21 '())
-(define checks-21 '())
-(define ulongs-21 '())
-
-(define ints-22 '())
-(define funcs-22 '())
-(define types-22 '())
-
-(define names-23 '())
-(define funcs-23 '())
-(define types-23 '())
-(define casts-23 '())
-(define checks-23 '())
-(define ulongs-23 '())
-(define ints-23 '())
 (define ints-236 '())
-
 (define funcs-236 '())
 (define casts-236 '())
 (define checks-236 '())
 (define types-236 '())
+(define ulongs-236 '())
+(define strings-236 '())
+(define names-236 '())
 
 (define names-250 '())
 (define funcs-250 '())
@@ -57,6 +41,7 @@
 (define checks-250 '())
 (define ulongs-250 '())
 (define ints-250 '())
+(define strings-250 '())
 
 (define ints-256 '())
 (define funcs-256 '())
@@ -472,9 +457,6 @@
 			    (begin
 			      (set! all-types (cons type all-types))
 			      (case extra
-				((21)                 (set! types-21 (cons type types-21)))
-				((22)                 (set! types-22 (cons type types-22)))
-				((23 callback-23)     (set! types-23 (cons type types-23)))
 				((236)                (set! types-236 (cons type types-236)))
 				((250 callback-250)   (set! types-250 (cons type types-250)))
 				((256 callback-256)   (set! types-256 (cons type types-256)))
@@ -644,16 +626,16 @@
 			; GCallback 'lambda can be whatever is indicated by caller (2 or more args)
 			))
 
-(define callbacks-23 (list
+(define callbacks-236 (list
 			(list 'GtkFileFilterFunc
 			      "gboolean"
 			      "file_filter"
-			      (parse-args "GtkFileFilterInfo* info lambda_data func_info" 'callback-23)
+			      (parse-args "GtkFileFilterInfo* info lambda_data func_info" 'callback-236)
 			      'permanent)
 			(list 'GtkEntryCompletionMatchFunc
 			      "gboolean"
 			      "entry_completion_match"
-			      (parse-args "GtkEntryCompletion* completion gchar* key GtkTreeIter* iter lambda_data func_info" 'callback-23)
+			      (parse-args "GtkEntryCompletion* completion gchar* key GtkTreeIter* iter lambda_data func_info" 'callback-236)
 			      'permanent)
 			))
 
@@ -737,7 +719,7 @@
 	 (or (test (car funcs))
 	     (find-callback-1 test (cdr funcs)))))
   (or (find-callback-1 test callbacks)
-      (find-callback-1 test callbacks-23)
+      (find-callback-1 test callbacks-236)
       (find-callback-1 test callbacks-250)
       (find-callback-1 test callbacks-256)
       (find-callback-1 test callbacks-290)
@@ -1064,43 +1046,11 @@
   (let ((step (length types)))
     (CFNC data 'etc (list min-len max-len types))))
 
-(define* (CFNC-21 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "~A CFNC-21~%" name)
-	(let ((type (car-str data)))
-	  (if (not (member type all-types)) 
-	      (begin
-		(set! all-types (cons type all-types))
-		(set! types-21 (cons type types-21))))
-	  (let ((strs (parse-args args '21)))
-	    (if spec
-		(set! funcs-21 (cons (list name type strs args spec) funcs-21))
-		(set! funcs-21 (cons (list name type strs args) funcs-21)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
-
-(define* (CFNC-23 data spec spec-data)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "~A CFNC-23~%" name)
-	(let ((type (car-str data)))
-	  (if (not (member type all-types)) 
-	      (begin
-		(set! all-types (cons type all-types))
-		(set! types-23 (cons type types-23))))
-	  (let ((strs (parse-args args '23)))
-	    (if spec
-		(set! funcs-23 (cons (list name type strs args spec spec-data) funcs-23))
-		(set! funcs-23 (cons (list name type strs args) funcs-23)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
-
 (define (CFNC-23-PA data min-len max-len types)
   (let ((step (length types)))
-    (CFNC-23 data 'etc (list min-len max-len types))))
+    (CFNC-236 data 'etc (list min-len max-len types))))
 
-(define* (CFNC-236 data)
+(define* (CFNC-236 data spec spec-data) ; 'const -> const for arg cast, 'etc for ... args, 'free -> must free C val before return
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
     (if (assoc name names)
@@ -1111,7 +1061,9 @@
 		(set! all-types (cons type all-types))
 		(set! types-236 (cons type types-236))))
 	  (let ((strs (parse-args args '236)))
-	    (set! funcs-236 (cons (list name type strs args) funcs-236))
+	    (if spec
+		(set! funcs-236 (cons (list name type strs args spec spec-data) funcs-236))
+		(set! funcs-236 (cons (list name type strs args) funcs-236)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
 (define* (CFNC-250 data spec)
@@ -1494,11 +1446,11 @@
 	(set! names (cons (cons name 'string) names)))))
 
 (define (CSTR-236 name)
-  (if (assoc name names-23)
+  (if (assoc name names-236)
       (no-way "~A CSTR-236~%" name)
       (begin
 	(set! strings-236 (cons name strings-236))
-	(set! names-23 (cons (cons name 'string) names-23)))))
+	(set! names-236 (cons (cons name 'string) names-236)))))
 
 (define (CSTR-250 name)
   (if (assoc name names-250)
@@ -1563,20 +1515,12 @@
 	(set! ulongs (cons (list name type spec-name) ulongs))
 	(set! names (cons (cons name 'ulong) names)))))
 
-(define* (CLNG-21 name type spec-name)
+(define* (CLNG-236 name type spec-name)
   (save-declared-type type)
   (if (assoc name names)
-      (no-way "~A CLNG-21~%" name)
+      (no-way "~A CLNG-236~%" name)
       (begin
-	(set! ulongs-21 (cons (list name type spec-name) ulongs-21))
-	(set! names (cons (cons name 'ulong) names)))))
-
-(define* (CLNG-23 name type spec-name)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CLNG-23~%" name)
-      (begin
-	(set! ulongs-23 (cons (list name type spec-name) ulongs-23))
+	(set! ulongs-236 (cons (list name type spec-name) ulongs-236))
 	(set! names (cons (cons name 'ulong) names)))))
 
 (define* (CLNG-250 name type spec-name)
@@ -1625,22 +1569,6 @@
       (no-way "~A CINT~%" name)
       (begin
 	(set! ints (cons name ints))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-22 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-22~%" name)
-      (begin
-	(set! ints-22 (cons name ints-22))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-23 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-23~%" name)
-      (begin
-	(set! ints-23 (cons name ints-23))
 	(set! names (cons (cons name 'int) names)))))
 
 (define* (CINT-236 name type)
@@ -1805,20 +1733,6 @@
 	(set! casts (cons (list name type) casts))
 	(set! names (cons (cons name 'def) names)))))
 
-(define (CCAST-21 name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-21~%" name)
-      (begin
-	(set! casts-21 (cons (list name type) casts-21))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCAST-23 name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-23~%" name)
-      (begin
-	(set! casts-23 (cons (list name type) casts-23))
-	(set! names (cons (cons name 'def) names)))))
-
 (define (CCAST-236 name type)
   (if (assoc name names)
       (no-way "~A CCAST-236~%" name)
@@ -1894,20 +1808,6 @@
       (no-way "~A CCHK~%" name)
       (begin
 	(set! checks (cons (list name type) checks))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCHK-21 name type)
-  (if (assoc name names)
-      (no-way "~A CCHK-21~%" name)
-      (begin
-	(set! checks-21 (cons (list name type) checks-21))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCHK-23 name type)
-  (if (assoc name names)
-      (no-way "~A CCHK-23~%" name)
-      (begin
-	(set! checks-23 (cons (list name type) checks-23))
 	(set! names (cons (cons name 'def) names)))))
 
 (define (CCHK-236 name type)
@@ -2049,23 +1949,8 @@
  types)
 
 
-(define (with-21 dpy thunk)
-  (dpy "#if HAVE_GDK_DRAW_PIXBUF~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-22 dpy thunk)
-  (dpy "#if HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-23 dpy thunk)
-  (dpy "#if HAVE_GTK_FILE_CHOOSER_DIALOG_NEW~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
 (define (with-236 dpy thunk)
-  (dpy "#if HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME~%")
+  (dpy "#if HAVE_GTK_ABOUT_DIALOG_NEW~%")
   (thunk)
   (dpy "#endif~%~%"))
 
@@ -2453,7 +2338,7 @@
        (length (callback-args func))))
 
 (for-each callback-p callbacks)
-(with-23 hey (lambda () (for-each callback-p callbacks-23)))
+(with-236 hey (lambda () (for-each callback-p callbacks-236)))
 (with-250 hey (lambda () (for-each callback-p callbacks-250)))
 (with-256 hey (lambda () (for-each callback-p callbacks-256)))
 (with-290 hey (lambda () (for-each callback-p callbacks-290)))
@@ -2467,7 +2352,7 @@
        (callback-func func)))
 
 (for-each xen-callback callbacks)
-(with-23 hey (lambda () (for-each xen-callback callbacks-23)))
+(with-236 hey (lambda () (for-each xen-callback callbacks-236)))
 (with-250 hey (lambda () (for-each xen-callback callbacks-250)))
 (with-256 hey (lambda () (for-each xen-callback callbacks-256)))
 (with-290 hey (lambda () (for-each xen-callback callbacks-290)))
@@ -2513,10 +2398,10 @@
    (if (not (null? type-list)) 
        (with-func hey (lambda () 
 			(for-each type-it (reverse type-list))))))
- (list types-21 types-22 types-23 types-236 types-250 types-256 types-260 types-270 types-290 
+ (list types-236 types-250 types-256 types-260 types-270 types-290 
        types-210 types-211 types-213 types-2134 types-2150 types-2172 types-2173 types-2177 types-2190 types-2901
        cairo-types cairo-types-140 cairo-types-164)
- (list with-21 with-22 with-23 with-236 with-250 with-256 with-260 with-270 with-290 
+ (list with-236 with-250 with-256 with-260 with-270 with-290 
        with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901
        with-cairo with-cairo-140 with-cairo-164))
 
@@ -2694,7 +2579,7 @@
 		   (hey "  #endif~%")))
 	     (hey "}~%~%")))))))
     (for-each xc callbacks)
-    (with-23 hey (lambda () (for-each xc callbacks-23)))
+    (with-236 hey (lambda () (for-each xc callbacks-236)))
     (with-250 hey (lambda () (for-each xc callbacks-250)))
     (with-256 hey (lambda () (for-each xc callbacks-256)))
     (with-290 hey (lambda () (for-each xc callbacks-290)))
@@ -3137,10 +3022,10 @@
    (if (not (null? func-list)) 
        (with-func hey (lambda () 
 			(for-each handle-func (reverse func-list))))))
- (list funcs-21 funcs-22 funcs-23 funcs-236 funcs-250 funcs-256 funcs-260 funcs-270 funcs-273 funcs-290
+ (list funcs-236 funcs-250 funcs-256 funcs-260 funcs-270 funcs-273 funcs-290
        funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-2901
        cairo-funcs cairo-png-funcs cairo-funcs-140 cairo-funcs-164)
- (list with-21 with-22 with-23 with-236 with-250 with-256 with-260 with-270 with-273 with-290
+ (list with-236 with-250 with-256 with-260 with-270 with-273 with-290
        with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901
        with-cairo with-cairo-png with-cairo-140 with-cairo-164))
 
@@ -3163,8 +3048,8 @@
    (if (not (null? cast-list)) 
        (cast-func hey (lambda () 
 			(for-each cast-it (reverse cast-list))))))
- (list casts-21 casts-23 casts-236 casts-250 casts-256 casts-290 casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901)
- (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
+ (list casts-236 casts-250 casts-256 casts-290 casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901)
+ (list with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 ;;; checks have to use the built-in macros, not local symbol-based type checks
 
@@ -3178,8 +3063,8 @@
    (if (not (null? check-list)) 
        (check-func hey (lambda () 
 			(for-each make-check (reverse check-list))))))
- (list checks-21 checks-23 checks-236 checks-250 checks-256 checks-290 checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-2901)
- (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
+ (list checks-236 checks-250 checks-256 checks-290 checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-2901)
+ (list with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 (hey "~%~%/* ---------------------------------------- special functions ---------------------------------------- */~%~%")
 
@@ -3493,10 +3378,10 @@
    (if (not (null? func-list)) 
        (with-func hey (lambda () 
 			(for-each argify-func (reverse func-list))))))
- (list funcs-21 funcs-22 funcs-23 funcs-236 funcs-250 funcs-256 funcs-260 funcs-270 funcs-273 funcs-290
+ (list funcs-236 funcs-250 funcs-256 funcs-260 funcs-270 funcs-273 funcs-290
        funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-2901
        cairo-funcs cairo-png-funcs cairo-funcs-140 cairo-funcs-164)
- (list with-21 with-22 with-23 with-236 with-250 with-256 with-260 with-270 with-273 with-290
+ (list with-236 with-250 with-256 with-260 with-270 with-273 with-290
        with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901
        with-cairo with-cairo-png with-cairo-140 with-cairo-164))
 
@@ -3519,8 +3404,8 @@
    (if (not (null? cast-list)) 
        (cast-func hey (lambda () 
 			(for-each ruby-cast (reverse cast-list))))))
- (list casts-21 casts-23 casts-236 casts-250 casts-256 casts-290 casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901)
- (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
+ (list casts-236 casts-250 casts-256 casts-290 casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901)
+ (list with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 (define (ruby-check func) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func))))
 (for-each ruby-check (reverse checks))
@@ -3529,8 +3414,8 @@
    (if (not (null? check-list)) 
        (check-func hey (lambda () 
 			(for-each ruby-check (reverse check-list))))))
- (list checks-21 checks-23 checks-236 checks-250 checks-256 checks-290 checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-2901)
- (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
+ (list checks-236 checks-250 checks-256 checks-290 checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-2901)
+ (list with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 
 (for-each (lambda (field) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field)) struct-fields)
@@ -3566,10 +3451,10 @@
    (if (not (null? func-list)) 
        (with-func hey (lambda () 
 			(for-each unargify-func (reverse func-list))))))
- (list funcs-21 funcs-22 funcs-23 funcs-236 funcs-250 funcs-256 funcs-260 funcs-270 funcs-273 funcs-290
+ (list funcs-236 funcs-250 funcs-256 funcs-260 funcs-270 funcs-273 funcs-290
        funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-2901
        cairo-funcs cairo-png-funcs cairo-funcs-140 cairo-funcs-164)
- (list with-21 with-22 with-23 with-236 with-250 with-256 with-260 with-270 with-273 with-290
+ (list with-236 with-250 with-256 with-260 with-270 with-273 with-290
        with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901
        with-cairo with-cairo-png with-cairo-140 with-cairo-164))
 
@@ -3590,8 +3475,8 @@
    (if (not (null? cast-list)) 
        (cast-func hey (lambda () 
 			(for-each ruby-uncast (reverse cast-list))))))
- (list casts-21 casts-23 casts-236 casts-250 casts-256 casts-290 casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901)
- (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
+ (list casts-236 casts-250 casts-256 casts-290 casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901)
+ (list with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 
 (define (ruby-uncheck func) (hey "#define gxg_~A_w gxg_~A~%" (no-arg (car func)) (no-arg (car func))))
@@ -3601,8 +3486,8 @@
    (if (not (null? check-list)) 
        (check-func hey (lambda () 
 			(for-each ruby-uncheck (reverse check-list))))))
- (list checks-21 checks-23 checks-236 checks-250 checks-256 checks-290 checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-2901)
- (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
+ (list checks-236 checks-250 checks-256 checks-290 checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-2901)
+ (list with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 (for-each (lambda (field) (hey "#define gxg_~A_w gxg_~A~%" field field)) struct-fields)
 (for-each (lambda (field) (hey "#define gxg_~A_w gxg_~A~%" field field)) settable-struct-fields)
@@ -3661,10 +3546,10 @@
    (if (not (null? func-list)) 
        (with-func hey (lambda () 
 			(for-each defun (reverse func-list))))))
- (list funcs-21 funcs-22 funcs-23 funcs-236 funcs-250 funcs-256 funcs-260 funcs-270 funcs-273 funcs-290
+ (list funcs-236 funcs-250 funcs-256 funcs-260 funcs-270 funcs-273 funcs-290
        funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-2901
        cairo-funcs cairo-png-funcs cairo-funcs-140 cairo-funcs-164)
- (list with-21 with-22 with-23 with-236 with-250 with-256 with-260 with-270 with-273 with-290
+ (list with-236 with-250 with-256 with-260 with-270 with-273 with-290
        with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901
        with-cairo with-cairo-png with-cairo-140 with-cairo-164))
 
@@ -3683,8 +3568,8 @@
    (if (not (null? cast-list)) 
        (cast-func hey (lambda () 
 			(for-each cast-out (reverse cast-list))))))
- (list casts-21 casts-23 casts-236 casts-250 casts-256 casts-290 casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901)
- (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
+ (list casts-236 casts-250 casts-256 casts-290 casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901)
+ (list with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 
 (hey "  XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);~%")
@@ -3708,8 +3593,8 @@
    (if (not (null? check-list)) 
        (check-func hey (lambda () 
 			(for-each check-out (reverse check-list))))))
- (list checks-21 checks-23 checks-236 checks-250 checks-256 checks-290 checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-2901)
- (list with-21 with-23 with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
+ (list checks-236 checks-250 checks-256 checks-290 checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-2901)
+ (list with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 (hey "}~%~%")
 
@@ -3775,10 +3660,10 @@
 			(for-each (lambda (val) 
 				    (hey "  DEFINE_INTEGER(~A);~%" val)) 
 				  (reverse ints-list))))))
- (list ints-22 ints-23 ints-236 ints-250 ints-256 ints-260 ints-270 ints-273 ints-290
+ (list ints-236 ints-250 ints-256 ints-260 ints-270 ints-273 ints-290
        ints-210 ints-211 ints-213 ints-2134 ints-2150 ints-2172 ints-2173 ints-2177 ints-2901
        cairo-ints cairo-ints-140 cairo-ints-164)
- (list with-22 with-23 with-236 with-250 with-256 with-260 with-270 with-273 with-290
+ (list with-236 with-250 with-256 with-260 with-270 with-273 with-290
        with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2901
        with-cairo with-cairo-140 with-cairo-164))
 
@@ -3797,8 +3682,8 @@
 				   (let ((val (car vals))) 
 				     (hey "  DEFINE_ULONG(~A);~%" val))) 
 				 (reverse ulongs-list))))))
- (list ulongs-21 ulongs-23 ulongs-250 ulongs-256 ulongs-290 ulongs-211 ulongs-213 ulongs-2134 ulongs-2150 ulongs-2173)
- (list with-21 with-23 with-250 with-256 with-290 with-211 with-213 with-2134 with-2150 with-2173))
+ (list ulongs-236 ulongs-250 ulongs-256 ulongs-290 ulongs-211 ulongs-213 ulongs-2134 ulongs-2150 ulongs-2173)
+ (list with-236 with-250 with-256 with-290 with-211 with-213 with-2134 with-2150 with-2173))
 
 (hey "}~%~%")
 

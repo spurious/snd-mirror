@@ -1018,7 +1018,7 @@ bool restore_fft_pix(chan_info *cp, axis_context *ax)
   cairo_destroy(cr);
   return(true);
 #else
-#if HAVE_GDK_DRAW_PIXBUF
+#if HAVE_GTK_ABOUT_DIALOG_NEW
   gdk_draw_pixbuf(ax->wn,
 		  copy_GC(cp),
 		  cp->cgx->fft_pix,
@@ -1036,7 +1036,7 @@ bool restore_fft_pix(chan_info *cp, axis_context *ax)
 void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y0)
 {
   if ((fwidth <= 0) || (fheight <= 0)) return;
-#if HAVE_GDK_DRAW_PIXBUF
+#if HAVE_GTK_ABOUT_DIALOG_NEW
   cp->cgx->fft_pix_width = fwidth;
   cp->cgx->fft_pix_height = fheight;
   cp->cgx->fft_pix_x0 = x0;

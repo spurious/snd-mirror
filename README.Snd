@@ -71,7 +71,8 @@ The configure script has a bunch of arguments:
                                  with --with-alsa)
 
      --with-pulseaudio         use PulseAudio (untested)
-  
+     --without-audio
+
 
    Numerics:
 
@@ -178,11 +179,6 @@ cmdist@ccrma.stanford.edu.  To subscribe, visit
 
   http://ccrma-mail.stanford.edu/mailman/listinfo/cmdist
 
-The mailing list has been auto-archived since Apr 2002;
-the previous posts (going back to late 1993) are in
-ftp://ccrma-ftp.stanford.edu/pub/Lisp/old-cmdist.html.
-
-
 To follow the Snd CVS repository, the first time you need to
 
        cvs -d:pserver:anonymous@snd.cvs.sourceforge.net:/cvsroot/snd login 
@@ -241,7 +237,7 @@ Plus many other contributions from
 
 In terms of number of lines, the languages used in Snd/Sndlib are:
 C, Scheme, Ruby, Forth, m4, Common Lisp, Emacs Lisp, javascript,
-Fortran, expect, and postscript (altogether about 710,000 lines).
+Fortran, expect, and postscript (altogether about 700,000 lines).
 
 
 ----------------------------------------------------------------
@@ -296,11 +292,8 @@ Snd:
   http://linux.oreillynet.com/pub/a/linux/2001/10/05/snd_partone.html
   http://linux.oreillynet.com/pub/a/linux/2001/10/18/snd_parttwo.html
   http://www.saunalahti.fi/~mjkoskin/
-  http://www.cosy.sbg.ac.at/~gwesp/mma-sound.html (Mathematica)
   http://www.notam02.no/9
-  http://www.justlinux.org
   http://www.linuxjournal.com/article.php?sid=7274
-  http://cvs.freebsoft.org/repository/fvoxedit/
   http://www.blastwave.org/packages/snd (Solaris package)
   http://www.notam02.no/arkiv/src/snd/ (snd-ls)
   http://www.notam02.no/~kjetism/sandysth/
@@ -330,10 +323,6 @@ OpenGL:
   http://mesa3d.sourceforge.net/
   http://www.geuz.org/gl2ps/
 
-Linux audio:
-  http://linux-sound.org
-  http://www.linuxsound.at
-
 GSL:
   ftp://ftp.gnu.org/gnu/gsl
 
@@ -343,9 +332,6 @@ Ruby:
 
 fftw:  
   http://www.fftw.org
-
-Stalin: 
- http://cobweb.ecn.purdue.edu/~qobi/software.html 
 
 Rollendurchmesserzeitsammler: (at least v0.0.3) 
  http://www.notam02.no/arkiv/src/ 
