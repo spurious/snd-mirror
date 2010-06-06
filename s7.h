@@ -761,6 +761,7 @@ void s7_mark_object(s7_pointer p);
  * 7-June:    changed key arg in s7_hash_table_ref|set to be s7_pointer, not const char*.
  *            hash-tables can now handle any s7 object as the key.
  *            map and for-each now pass a hash-table entry to the function, rather than an internal alist.
+ *            reverse of a hash-table reverses the keys and values (i.e. old value becomes new key, etc).
  * 2-June:    removed procedure-with-setter-setter-arity and folded that info into procedure-arity (use cdddr).
  * 22-May:    multidimensional vectors are no longer optional.
  * 9-May:     s7_read_char and s7_peek_char have to return an int, not a char (<eof>=-1, but 255 is a legit char).

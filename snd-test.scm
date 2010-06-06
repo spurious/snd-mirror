@@ -14168,6 +14168,16 @@ EDITS: 2
 	(if (not (vequal (vct 2 1) (vct-reverse! (vct 1 2) 2))) (snd-display #__line__ ";vct-reverse: ~A" (vct-reverse! (vct 1 2))))
 	(if (not (vequal (vct 1) (vct-reverse! (vct 1) 1))) (snd-display #__line__ ";vct-reverse: ~A" (vct-reverse! (vct 1))))
 	
+	(if (not (vequal (vct 3 2 1) (reverse (vct 1 2 3)))) (snd-display #__line__ ";reverse(vct): ~A" (reverse (vct 1 2 3))))
+	(let ((v (vct 3 2 1)))
+	  (let ((rv (reverse v)))
+	    (if (or (not (vequal v (vct 3 2 1)))
+		    (not (vequal rv (vct 1 2 3))))
+		(snd-display #__line__ ";reverse(vct) -> ~A ~A" v rv))))
+
+	;; TODO: shouldn't (vct) return an empty vct?  It currently returns #f
+	;;        and also inconsistent (make-vct 0) returns an error
+	
 	(let ((v0 (make-vct 3)))
 	  (let ((var (catch #t (lambda () (vct-ref v0 10)) (lambda args args))))
 	    (if (not (eq? (car var) 'out-of-range))

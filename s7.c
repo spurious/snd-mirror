@@ -13270,9 +13270,12 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash)
   s7_Int i, len;
   s7_pointer new_hash;
   s7_pointer *old_lists, *new_lists;
+  int gc_loc;
 
   len = vector_length(old_hash);
   new_hash = s7_make_hash_table(sc, len);
+  gc_loc = s7_gc_protect(sc, new_hash);
+
   old_lists = vector_elements(old_hash);
   new_lists = vector_elements(new_hash);
 
@@ -13282,6 +13285,34 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash)
 
   hash_table_entries(new_hash) = hash_table_entries(old_hash);
   hash_table_function(new_hash) = hash_table_function(old_hash);
+
+  s7_gc_unprotect_at(sc, gc_loc);
+  return(new_hash);
+}
+
+
+static s7_pointer hash_table_reverse(s7_scheme *sc, s7_pointer old_hash)
+{
+  s7_Int i, len;
+  s7_pointer new_hash;
+  s7_pointer *old_lists;
+  int gc_loc;
+
+  len = vector_length(old_hash);
+  new_hash = s7_make_hash_table(sc, len);
+  gc_loc = s7_gc_protect(sc, new_hash);
+
+  old_lists = vector_elements(old_hash);
+  /* don't set entries or function -- s7_hash_table_set below will handle those */
+
+  for (i = 0; i < len; i++)
+    {
+      s7_pointer x;
+      for (x = old_lists[i]; x != sc->NIL; x = cdr(x))
+	s7_hash_table_set(sc, new_hash, cdar(x), caar(x));
+    }
+
+  s7_gc_unprotect_at(sc, gc_loc);
   return(new_hash);
 }
 
@@ -13298,13 +13329,11 @@ static s7_pointer hash_table_clear(s7_scheme *sc, s7_pointer table)
 }
 
 
-/* TODO: map/for-each use hash_table_entries */
-/* TODO: test func changes and all keys */
 /* (let ((ht (make-hash-table))) (set! (ht 1) 32) (for-each (lambda (x) (format #t "~A~%" x)) ht)) */
 
 static s7_pointer hash_table_entry(s7_scheme *sc, s7_pointer table, s7_Int loc)
 {
-  /* a stop-gap... */
+  /* SOMEDAY: optimize hash_table_entry */
   s7_Int entry = 0, vloc, len;
   s7_pointer *elements;
 
@@ -13316,7 +13345,8 @@ static s7_pointer hash_table_entry(s7_scheme *sc, s7_pointer table, s7_Int loc)
       s7_pointer x;
       for (x = elements[vloc]; x != sc->NIL; x = cdr(x))
 	{
-	  if (entry == loc) return(car(x));
+	  if (entry == loc) 
+	    return(car(x));
 	  entry++;
 	}
     }
@@ -13957,7 +13987,81 @@ static s7_pointer object_fill(s7_scheme *sc, s7_pointer obj, s7_pointer val)
 }
 
 
+#define SAVE_X_Y_Z(X, Y, Z)	     \
+  do {                               \
+      X = s7_gc_protect(sc, sc->x);  \
+      Y = s7_gc_protect(sc, sc->y);  \
+      Z = s7_gc_protect(sc, sc->z);  \
+     } while (0)
 
+#define RESTORE_X_Y_Z(X, Y, Z)                \
+  do {                                        \
+      sc->x = s7_gc_protected_at(sc, save_x); \
+      sc->y = s7_gc_protected_at(sc, save_y); \
+      sc->z = s7_gc_protected_at(sc, save_z); \
+      s7_gc_unprotect_at(sc, save_x);         \
+      s7_gc_unprotect_at(sc, save_y);         \
+      s7_gc_unprotect_at(sc, save_z);         \
+      } while (0)
+
+
+static s7_pointer object_reverse(s7_scheme *sc, s7_pointer obj)
+{
+  int tag;
+  tag = c_object_type(obj);
+  if ((object_types[tag].copy) &&
+      (object_types[tag].length) &&
+      (object_types[tag].set) &&
+      (object_types[tag].apply))
+    {
+      s7_pointer new_obj, i_args, j_args, i_set_args, j_set_args;
+      int new_obj_gc_loc, i_gc_loc, j_gc_loc, i_set_gc_loc, j_set_gc_loc;
+      s7_Int i, j, len;
+      int save_x, save_y, save_z;
+
+      if (is_s_object(obj))
+	SAVE_X_Y_Z(save_x, save_y, save_z);
+
+      new_obj = object_copy(sc, obj);
+      new_obj_gc_loc = s7_gc_protect(sc, new_obj);
+      len = s7_integer(object_length(sc, obj));
+
+      i_args = s7_cons(sc, make_mutable_integer(sc, 0), sc->NIL);
+      i_gc_loc = s7_gc_protect(sc, i_args);
+      j_args = s7_cons(sc, make_mutable_integer(sc, len - 1), sc->NIL);
+      j_gc_loc = s7_gc_protect(sc, j_args);
+      i_set_args = make_list_2(sc, car(i_args), sc->NIL);
+      i_set_gc_loc = s7_gc_protect(sc, i_set_args);
+      j_set_args = make_list_2(sc, car(j_args), sc->NIL);
+      j_set_gc_loc = s7_gc_protect(sc, j_set_args);
+      /* all that to reduce consing during the loop! */
+
+      for (i = 0, j = len - 1; i < j; i++, j--)
+	{
+	  s7_pointer tmp;
+	  integer(number(car(i_args))) = i;
+	  integer(number(car(j_args))) = j;
+
+	  tmp = apply_object(sc, obj, i_args);         /* tmp = obj[i] */
+	  cadr(i_set_args) = apply_object(sc, obj, j_args);
+	  object_set(sc, new_obj, i_set_args);         /* obj[i] = obj[j] */
+	  cadr(j_set_args) = tmp;
+	  object_set(sc, new_obj, j_set_args);         /* obj[j] = tmp */
+	}
+
+      s7_gc_unprotect_at(sc, i_gc_loc);
+      s7_gc_unprotect_at(sc, j_gc_loc);
+      s7_gc_unprotect_at(sc, i_set_gc_loc);
+      s7_gc_unprotect_at(sc, j_set_gc_loc);
+      s7_gc_unprotect_at(sc, new_obj_gc_loc);
+      if (is_s_object(obj))
+	RESTORE_X_Y_Z(save_x, save_y, save_z);
+		     
+      return(new_obj);
+    }
+
+  return(s7_wrong_type_arg_error(sc, "reverse", 0, obj, "a reversible object"));
+}
 
 
 
@@ -13973,9 +14077,11 @@ static char *call_s_object_print(s7_scheme *sc, void *value)
 {
   /* value here is the s_type_t object, the (scheme) function to call is object_types[tag].print_func */
   /*   it will be passed the value, not the original object */
+
   s_type_t *obj = (s_type_t *)value;
   car(sc->s_function_args) = obj->value;
   return(copy_string((char *)s7_string(s7_call(sc, object_types[obj->type].print_func, sc->s_function_args))));
+
   /* describe_object assumes the value returned here can be freed */
 }
 
@@ -14146,6 +14252,7 @@ In each case, the argument is the value of the object, not the object itself."
   s7_pointer x, y, z;
 
   tag = s7_new_type("anonymous-type", s_type_print, s_type_free, s_type_equal, s_type_gc_mark, NULL, NULL);
+  object_types[tag].equal_func = sc->F;  /* see call_s_object_equal */
 
   if (args != sc->NIL)
     {
@@ -14637,24 +14744,6 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
 }
 
 
-#define SAVE_X_Y_Z(X, Y, Z)	     \
-  do {                               \
-      X = s7_gc_protect(sc, sc->x);  \
-      Y = s7_gc_protect(sc, sc->y);  \
-      Z = s7_gc_protect(sc, sc->z);  \
-     } while (0)
-
-#define RESTORE_X_Y_Z(X, Y, Z)                \
-  do {                                        \
-      sc->x = s7_gc_protected_at(sc, save_x); \
-      sc->y = s7_gc_protected_at(sc, save_y); \
-      sc->z = s7_gc_protected_at(sc, save_z); \
-      s7_gc_unprotect_at(sc, save_x);         \
-      s7_gc_unprotect_at(sc, save_y);         \
-      s7_gc_unprotect_at(sc, save_z);         \
-      } while (0)
-
-
 static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value)
 {
   s7_pointer x;
@@ -15037,10 +15126,15 @@ also accepts a string or vector argument."
       }
       break;
 
-      /* would (reverse hash) exchange keys and values? */
+    case T_HASH_TABLE:
+      return(hash_table_reverse(sc, p));
+
+    case T_C_OBJECT:
+      return(object_reverse(sc, p));
+      break;
 
     default:
-      return(s7_wrong_type_arg_error(sc, "reverse", 0, p, "a list, string, or vector"));
+      return(s7_wrong_type_arg_error(sc, "reverse", 0, p, "a list, string, vector, or hash-table"));
     }
   
   return(np);
@@ -25748,10 +25842,9 @@ s7_scheme *s7_init(void)
  * :allow-other-keys in lambda*
  * PERHAPS: pretty-printing in the REPL or in format (~W in CL I think)
  * lint 
- * TODO: hash-table map and for-each should be entry-oriented, not alist-oriented
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
- * generic append? slice? member? null? make?
- * reverse for c|s_object
+ * generic append? slice? member? null?
+ * TODO: test reverse c_object
  *
  * PERHAPS: method lists for c_objects
  *   a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)

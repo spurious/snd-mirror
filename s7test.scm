@@ -42,7 +42,7 @@
 
 (define (ok? tst result expected)
   (if (not (equal? result expected))
-      (format #t "~A: ~A got ~A but expected ~A~%~%" (port-line-number) tst result expected)))
+      (format #t "~A: ~A got ~S but expected ~S~%~%" (port-line-number) tst result expected)))
 
 (defmacro test (tst expected) ;(display tst) (newline)
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
@@ -52,12 +52,12 @@
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
      (if (or (not result)
 	     (eq? result 'error))
-	 (format #t "~A: ~A got ~A~%~%" (port-line-number) ',tst result))))
+	 (format #t "~A: ~A got ~S~%~%" (port-line-number) ',tst result))))
 
 (defmacro test-e (tst op arg) ;(display tst) (newline)
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
      (if (not (eq? result 'error))
-	 (format #t "~A: (~A ~A) got ~A but expected 'error~%~%" (port-line-number) ,op ,arg result))))
+	 (format #t "~A: (~A ~S) got ~S but expected 'error~%~%" (port-line-number) ,op ,arg result))))
 
 
 (define (op-error op result expected)
@@ -5170,6 +5170,106 @@
 
 ;; no null hash-tables?
 
+(let ((ht (make-hash-table)))
+  (test (map (lambda (x) x) ht) '())
+  (test (let ((ctr 0)) (for-each (lambda (x) (set! ctr (+ ctr 1))) ht) ctr) 0)
+  (test (map (lambda (x y) (cons x y)) (list 1 2 3) ht) '())
+  (test (let ((ctr 0)) (for-each (lambda (x) (set! ctr (+ ctr 1))) #(1 2 3) ht) ctr) 0)
+  (test (map (lambda (x y) (cons x y)) ht "123") '())
+  (test (let ((ctr 0)) (for-each (lambda (x) (set! ctr (+ ctr 1))) ht '()) ctr) 0)
+
+  (let ((rt (reverse ht)))
+    (test (map (lambda (x) x) rt) '())
+    (test (let ((ctr 0)) (for-each (lambda (x) (set! ctr (+ ctr 1))) rt) ctr) 0))
+
+  (set! (ht 1) 32)
+  ;; these need to be independent of entry order
+  
+  (test (sort! (map (lambda (x) (cdr x)) ht) <) '(32))
+  (test (let ((ctr 0)) (for-each (lambda (x) (set! ctr (+ ctr 1))) ht) ctr) 1)
+  (test (map (lambda (x y) (cons x y)) '() ht) '())
+  (test (let ((ctr 0)) (for-each (lambda (x y) (set! ctr (+ ctr 1))) ht "") ctr) 0)
+  (test (sort! (map (lambda (x y) (max (cdr x) y)) ht (list 1 2 3)) <) '(32))
+  (test (let ((ctr 0)) (for-each (lambda (x y) (set! ctr (max (cdr x) y))) ht #(1 2 3)) ctr) 32)
+
+  (let ((rt (reverse ht)))
+    (test (equal? (rt 32) 1) #t)
+    (test (equal? (rt 1) #f) #t)
+    (test (ht (rt 32)) 32)
+    (test (sort! (map (lambda (x) (cdr x)) rt) <) '(1))
+    (test (let ((ctr 0)) (for-each (lambda (x) (set! ctr (+ ctr 1))) rt) ctr) 1)
+    (for-each (lambda (x) (test (ht (rt (cdr x))) (cdr x)) (test (rt (ht (car x))) (car x))) ht)
+    (set! (rt 32) 123)
+    (test (rt 32) 123)
+    (test (ht 32) #f)
+    (test (ht 1) 32))
+
+  (set! (ht 2) 1)
+  (test (ht (ht 2)) 32)
+  (test (sort! (map (lambda (x) (cdr x)) ht) <) '(1 32))
+  (test (let ((ctr 0)) (for-each (lambda (x) (set! ctr (+ ctr 1))) ht) ctr) 2)
+  (set! (ht 3) 123)
+  (test (sort! (map (lambda (x) (cdr x)) ht) <) '(1 32 123))
+  (test (let ((ctr 0)) (for-each (lambda (x) (set! ctr (+ ctr 1))) ht) ctr) 3)
+  (test (let ((ctr 0)) (for-each (lambda (x y) (set! ctr (+ ctr 1))) ht '(1)) ctr) 1)
+  (test (let ((ctr 0)) (for-each (lambda (x y z) (set! ctr (+ ctr 1))) "12" ht '(1)) ctr) 1)
+  (test (let ((ctr 0)) (for-each (lambda (x y z) (set! ctr (+ ctr 1))) "12" ht '(1 2)) ctr) 2)
+  (test (let ((ctr 0)) (for-each (lambda (x y z) (set! ctr (+ ctr 1))) "12345" ht '(1 2 3 4 5 6)) ctr) 3)
+  
+  (test (sort! (map (lambda (x y) (max x (cdr y))) (list -1 -2 -3 -4) ht) <) '(1 32 123))
+  (test (let ((sum 0)) (for-each (lambda (x y) (set! sum (+ sum x (cdr y)))) #(10 20 30) ht) sum) 216)
+  
+  (let ((rt (reverse ht)))
+    (for-each (lambda (x) (test (ht (rt (cdr x))) (cdr x)) (test (rt (ht (car x))) (car x))) ht))
+  
+  (set! (ht (list 1 2 3)) "hi")
+  (test (ht '(1 2 3)) "hi")
+  (test (ht 2) 1)
+  (test (let ((ctr 0)) (for-each (lambda (x) (set! ctr (+ ctr 1))) ht) ctr) 4)
+  (set! (ht "hi") 2)
+  (test (ht "hi") 2)
+  (test (ht (ht (ht "hi"))) 32)
+
+  (let ((rt (reverse ht)))
+    (test (rt "hi") '(1 2 3))
+    (test (rt 2) "hi")
+    (for-each (lambda (x) (test (ht (rt (cdr x))) (cdr x)) (test (rt (ht (car x))) (car x))) ht)
+    (set! (rt 2) "ho")
+    (test (rt 2) "ho")
+    (test (ht '(1 2 3)) "hi")
+    (set! (rt 123) 321)
+    (test (rt 123) 321)
+    (test (ht 3) 123))
+
+  (fill! ht '())
+  (set! (ht "hi") 1)
+  (set! (ht "hoi") 2)
+  (test (sort! (map (lambda (x) (cdr x)) ht) <) '(1 2))
+  (test (let ((ctr 0)) (for-each (lambda (x) (set! ctr (+ ctr 1))) ht) ctr) 2)
+  
+  (let ((rt (reverse ht)))
+    (test (rt 2) "hoi")
+    (set! (rt 2) "ha")
+    (test (ht "hoi") 2))
+
+  (set! (ht #\a) #\b)
+  (test (ht #\a) #\b)
+  (test (ht "hi") 1)
+
+  (fill! ht '())
+  (set! (ht #(1)) #(2))
+  (test (ht #(1)) #(2))
+  (set! (ht '(1)) '(3))
+  (set! (ht "1") "4")
+  (set! (ht ht) "5")
+  (test (ht ht) "5")
+  (test (ht '(1)) '(3))
+  (test (let ((ctr 0)) (for-each (lambda (x) (set! ctr (+ ctr 1))) ht) ctr) 4)  
+    
+  (let ((rt (reverse ht)))
+    (test (rt "5") ht)
+    (for-each (lambda (x) (test (ht (rt (cdr x))) (cdr x)) (test (rt (ht (car x))) (car x))) ht))
+)  
 
 
 
@@ -6914,6 +7014,10 @@
 (test (for-each abs '() abs) #<unspecified>)
 (test (for-each abs '(1) '#(1)) 'error)
 (test (let ((vals '())) (for-each for-each (list (lambda (a) (set! vals (cons (abs a) vals)))) (list (list -1 -2))) vals) '(2 1))
+(test (let ((c #f)) (for-each (lambda (x) (set! c x)) "a") c) #\a)
+(test (let ((c #f)) (for-each (lambda (x) (set! c x)) "") c) #f)
+(test (let ((c #f)) (for-each (lambda (x) (set! c x)) (string #\null)) c) #\null)
+
 
 
 
@@ -11767,6 +11871,8 @@
 		sum)))
 	  6)
 
+    ;; TODO: test all the optional funcs explicitly
+
     (test (let* ((rec-type (make-type))
 		 (? (car rec-type))
 		 (make (cadr rec-type))
@@ -11854,7 +11960,9 @@
 	(set! (v 1) 32.0)
 	(test (v 0) 0.0)
 	(test (v 1) 32.0)
+	(test (equal? v (float-vector 0.0 32.0 0.0)) #t)
 	(test (map + (list 1 2 3) (float-vector 1 2 3)) '(2.0 4.0 6.0))
+	(test (reverse (float-vector 1.0 2.0 3.0)) (float-vector 3.0 2.0 1.0))
 	))
 
     (let ()
