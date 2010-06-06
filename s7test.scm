@@ -3965,26 +3965,6 @@
 (test (vector? (symbol-table)) #t)
 (test (symbol? (((symbol-table) 0) 0)) #t)
 
-(test (let ((val 0) 
-	    (ht (make-hash-table))) 
-	(set! (ht "hi") 123) 
-	(for-each 
-	 (lambda (alist) 
-	   (if (not (null? alist)) 
-	       (set! val (cdr (assoc "hi" alist)))))
-	 ht)
-	val)
-      123)
-(test (let ((ht (make-hash-table)))
-	(set! (ht "hi") 123) 
-	(call/cc (lambda (return)
-		   (for-each 
-		    (lambda (alist) 
-		      (if (not (null? alist)) 
-			  ( return (cdr (assoc "hi" alist)))))
-		    ht))))
-      123)
-
 (let ((v (make-vector 3 (vector 1 2))))
   (test (equal? (v 0) (v 1)) #t)
   (test (eq? (v 0) (v 1)) #t)
@@ -4546,7 +4526,7 @@
 	(hash-table-set! h1 "hi" h1)
 	(let ((result (object->string h1)))
 	  (set! *vector-print-length* old-print-length)
-	  (let ((val (string=? result "#1=#(() () () () ((\"hi\" . #1#)) () () () () () ())")))
+	  (let ((val (string=? result "#1=#(() ((\"hi\" . #1#)) () () () () () () () () () () () () () ())")))
 	    (if (not val)
 		(format #t ";hash display:~%  ~A~%" (object->string h1)))
 	    val)))
@@ -4946,7 +4926,7 @@
 
 (let ((ht (make-hash-table 3)))
   (set! (ht "hi") ht)
-  (test (object->string ht) "#1=#(() () ((\"hi\" . #1#)))")
+  (test (object->string ht) "#1=#(() ((\"hi\" . #1#)) () ())")
   (test (equal? (ht "hi") ht) #t))
 
 (let ((l1 '(0)) (l2 '(0))) 
@@ -5072,7 +5052,7 @@
 
 (let ((ht (make-hash-table 277)))
   (test (hash-table? ht) #t)
-  (test (hash-table-size ht) 277)
+  (test (>= (hash-table-size ht) 277) #t)
   (test (let () (hash-table-set! ht 'key 3.14) (hash-table-ref ht 'key)) 3.14)
   (test (let () (hash-table-set! ht "ky" 3.14) (hash-table-ref ht "ky")) 3.14)
   (for-each
@@ -5110,7 +5090,7 @@
   (test (equal? ht1 ht2) #f)
   (hash-table-set! ht1 'key 'hiho)
   (hash-table-set! ht2 (hash-table-ref ht1 'key) 3.14)
-  (test (hash-table-size ht1) 653)
+  (test (>= (hash-table-size ht1) 653) #t)
   (test (hash-table-ref ht2 'hiho) 3.14)
   (test (hash-table-ref ht2 (hash-table-ref ht1 'key)) 3.14))
 
@@ -5144,14 +5124,14 @@
   (test (ht 'key) #f))
 
 (let ((ht (make-hash-table)))
-  (test (hash-table-set! ht #\a 'key) 'error)
+  (test (hash-table-set! ht #\a 'key) 'key)
   (for-each
    (lambda (arg)
-     (test (hash-table-set! ht arg 3.14) 'error))
+     (test (hash-table-set! ht arg 3.14) 3.14))
    (list #\a '#(1 2 3) 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
   (for-each
    (lambda (arg)
-     (test (hash-table-ref ht arg) 'error))
+     (test (hash-table-ref ht arg) 3.14))
    (list #\a '#(1 2 3) 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2))))
 
 (for-each
@@ -5174,13 +5154,21 @@
   (test (equal? ht1 ht2) #t)
   )
 
+(let ((ht (make-hash-table 1)))
+  (test (>= (length ht) 1) #t)
+  (set! (ht 1) 32)
+  (test (>= (length ht) 1) #t))
+
 (let ((ht (hash-table '("hi" . 32) '("ho" . 1))))
   (test (ht "hi") 32)
   (test (ht "ho") 1))
 
 (let ((ht (hash-table)))
-  (test (hash-table? ht) #t))
+  (test (hash-table? ht) #t)
+  (test (>= (length ht) 461) #t)
+  (test (ht 1) #f))
 
+;; no null hash-tables?
 
 
 
@@ -12445,7 +12433,7 @@
 (test (length (list 1 2)) 2)
 (test (length "hiho") 4)
 (test (length (vector 1 2)) 2)
-(test (length (make-hash-table 7)) 7)
+(test (>= (length (make-hash-table 7)) 7) #t)
 (test (length '()) 0)
 (test (length (#(#() #()) 1)) 0)
 

@@ -413,7 +413,11 @@ typedef struct s7_cell {
     struct {
       s7_Int length;
       s7_pointer *elements;
-      s7_vdims_t *dim_info;
+      union {
+	s7_vdims_t *dim_info;
+	s7_Int entries;
+      } vextra;
+      int hash_func;
     } vector;
     
     s7_func_t *ffptr;
@@ -773,10 +777,15 @@ struct s7_scheme {
 #define vector_element(p, i)          ((p)->object.vector.elements[i])
 #define vector_elements(p)            (p)->object.vector.elements
 
-#define vector_dimension(p, i)        ((p)->object.vector.dim_info->dims[i])
-#define vector_ndims(p)               ((p)->object.vector.dim_info->ndims)
-#define vector_offset(p, i)           ((p)->object.vector.dim_info->offsets[i])
-#define vector_is_multidimensional(p) ((p)->object.vector.dim_info)
+#define vector_dimension(p, i)        ((p)->object.vector.vextra.dim_info->dims[i])
+#define vector_ndims(p)               ((p)->object.vector.vextra.dim_info->ndims)
+#define vector_offset(p, i)           ((p)->object.vector.vextra.dim_info->offsets[i])
+#define vector_is_multidimensional(p) ((p)->object.vector.vextra.dim_info)
+
+#define hash_table_length(p)          (p)->object.vector.length
+#define hash_table_elements(p)        (p)->object.vector.elements
+#define hash_table_entries(p)         (p)->object.vector.vextra.entries
+#define hash_table_function(p)        (p)->object.vector.hash_func
 
 #define small_int(Val)                small_ints[Val]
 #define opcode(Op)                    small_ints[(int)Op]
@@ -1228,17 +1237,21 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
       break;
       
     case T_VECTOR:
-    case T_HASH_TABLE:
       if (vector_length(a) > 0)
 	{
 	  free(vector_elements(a));
 	  if (vector_is_multidimensional(a))
 	    {
-	      free(a->object.vector.dim_info->dims);
-	      free(a->object.vector.dim_info->offsets);
-	      free(a->object.vector.dim_info);
+	      free(a->object.vector.vextra.dim_info->dims);
+	      free(a->object.vector.vextra.dim_info->offsets);
+	      free(a->object.vector.vextra.dim_info);
 	    }
 	}
+      break;
+
+    case T_HASH_TABLE:
+      if (hash_table_length(a) > 0)
+	free(hash_table_elements(a));
       break;
       
     default:
@@ -1293,8 +1306,11 @@ static void s7_mark_object_1(s7_pointer p)
       break;
 
     case T_VECTOR:
-    case T_HASH_TABLE:
       mark_vector(p, vector_length(p));
+      return;
+
+    case T_HASH_TABLE:
+      mark_vector(p, hash_table_length(p));
       return;
       
     case T_C_OBJECT:
@@ -1634,6 +1650,14 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
       break;
 
     case T_HASH_TABLE:
+      {
+	s7_Int i;
+	for (i = 0; i < hash_table_length(x); i++)
+	  if (hash_table_elements(x)[i] != sc->NIL)
+	    s7_remove_from_heap(sc, hash_table_elements(x)[i]);
+      }
+      break;
+
     case T_VECTOR:
       {
 	s7_Int i;
@@ -10438,7 +10462,8 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, sh
   len = vector_length(vect);
   if (len == 0)
     {
-      if (vector_is_multidimensional(vect))
+      if ((s7_is_vector(vect)) &&                    /* might be a hash-table */
+	  (vector_is_multidimensional(vect)))
 	{
 	  buf = (char *)calloc(16, sizeof(char));
 	  snprintf(buf, 16, "#%dD()", vector_ndims(vect));
@@ -10479,7 +10504,8 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, sh
   bufsize += (len * 2 + 256);
   buf = (char *)malloc(bufsize * sizeof(char));
 
-  if (vector_is_multidimensional(vect))
+  if ((s7_is_vector(vect)) &&
+      (vector_is_multidimensional(vect)))
     {
       char c;
       c = '#';
@@ -12189,7 +12215,7 @@ static s7_pointer s7_make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
       if (filled) s7_vector_fill(sc, x, sc->NIL); /* make_hash_table assumes nil as the default value */
     }
 
-  x->object.vector.dim_info = NULL;
+  x->object.vector.vextra.dim_info = NULL;
   return(x);
 }
 
@@ -12285,7 +12311,7 @@ s7_Int *s7_vector_dimensions(s7_pointer vec)
 {
   s7_Int *dims;
   if (vector_is_multidimensional(vec))
-    return(vec->object.vector.dim_info->dims);
+    return(vec->object.vector.vextra.dim_info->dims);
   dims = (s7_Int *)malloc(sizeof(s7_Int));
   dims[0] = vector_length(vec);
   return(dims);
@@ -12296,7 +12322,7 @@ s7_Int *s7_vector_offsets(s7_pointer vec)
 {
   s7_Int *offs;
   if (vector_is_multidimensional(vec))
-    return(vec->object.vector.dim_info->offsets);
+    return(vec->object.vector.vextra.dim_info->offsets);
   offs = (s7_Int *)malloc(sizeof(s7_Int));
   offs[0] = 1;
   return(offs);
@@ -12575,7 +12601,7 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
 	  offset *= v->dims[i];
 	}
 
-      vec->object.vector.dim_info = v;
+      vec->object.vector.vextra.dim_info = v;
     }
 
   return(vec);
@@ -12898,15 +12924,43 @@ static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args)
   #define H_hash_table_size "(hash-table-size obj) returns the size of the hash-table obj"
   if (!s7_is_hash_table(car(args)))
     return(s7_wrong_type_arg_error(sc, "hash-table-size", 0, car(args), "a hash-table"));
-  return(s7_make_integer(sc, vector_length(car(args))));
+  return(s7_make_integer(sc, hash_table_length(car(args))));
 }
+
+
+#define HASH_EMPTY  0
+#define HASH_EQUAL  1
+#define HASH_INT    2
+#define HASH_STRING 3
+#define HASH_SYMBOL 4 
+#define HASH_CHAR   5
+#define HASH_FLOAT  6 
+
+#define DEFAULT_HASH_TABLE_SIZE 511
 
 
 s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
 {
   s7_pointer table;
-  table = s7_make_vector(sc, size);   /* nil is the default value */
+  /* size is rounded up to the next power of 2 */
+
+  if ((size & (size + 1)) != 0)      /* already 2^n - 1 ? */
+    {
+      size--;
+      size |= (size >> 1);
+      size |= (size >> 2);
+      size |= (size >> 4);
+      size |= (size >> 8);
+      size |= (size >> 16);
+      if (s7_int_bits > 31) /* this is either 31 or 63 */
+	size |= (size >> 32);
+    }
+
+  table = s7_make_vector(sc, size + 1);   /* nil is the default value */
   set_type(table, T_HASH_TABLE | T_FINALIZABLE | T_DONT_COPY | T_STRUCTURE);
+  hash_table_function(table) = HASH_EMPTY;
+  hash_table_entries(table) = 0;
+
   return(table);
 }
 
@@ -12914,7 +12968,7 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
 static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_hash_table "(make-hash-table :optional size) returns a new hash table"
-  s7_Int size = 461;
+  s7_Int size = DEFAULT_HASH_TABLE_SIZE;
 
   if (args != sc->NIL)
     {
@@ -12931,75 +12985,220 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 }
 
 
-s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, const char *name)
+static bool hash_key_fits(s7_pointer table, s7_pointer key)
 {
-  s7_Int location;
+  switch (hash_table_function(table))
+    {
+    case HASH_EMPTY: 
+      return(false);
+
+    case HASH_EQUAL:
+      return(true);
+
+    case HASH_INT:
+      return(s7_is_integer(key));
+
+    case HASH_STRING:
+      return(s7_is_string(key));
+
+    case HASH_SYMBOL:
+      return(s7_is_symbol(key));
+
+    case HASH_CHAR:
+      return(s7_is_character(key));
+
+    case HASH_FLOAT:
+      return(s7_is_real(key) && (!s7_is_rational(key)));
+    }
+
+  return(false);
+}
+
+
+static s7_Int hash_loc(s7_pointer key)
+{
+  s7_Int loc = 0, len;
+  const char *c; 
+
+  switch (type(key))
+    {
+    case T_STRING:
+      for (c = string_value(key); *c; c++) 
+	loc = *c + loc * 37;
+      return(loc);
+
+    case T_NUMBER:
+      if (number_type(key) == NUM_INT)
+	{
+	  loc = s7_integer(key);
+	  if (loc < 0) return(-loc);
+	  return(loc);
+	}
+      
+      if ((number_type(key) == NUM_REAL) ||
+	  (number_type(key) == NUM_REAL2))
+	{
+	  loc = (s7_Int)floor(s7_real(key));
+	  if (loc < 0) loc = -loc;
+	  return(loc);
+	}
+
+      /* ratio or complex -- use type */
+      break;
+
+    case T_SYMBOL:
+      for (c = symbol_name(key); *c; c++) 
+	loc = *c + loc * 37;
+      return(loc);
+
+    case T_CHARACTER:
+      return((s7_Int)character(key));
+
+    case T_VECTOR:
+      return(vector_length(key));
+
+    default:
+      break;
+    }
+
+  return(type(key));
+}
+
+
+static s7_pointer hash_table_binding(s7_scheme *sc, s7_pointer table, s7_pointer key)
+{
+  #define HASH_FLOAT_EPSILON 1.0e-12
+
+  if (hash_key_fits(table, key))
+    {
+      s7_pointer x;
+      s7_Int hash_len, loc;
+      hash_len = hash_table_length(table) - 1;
+      loc = hash_loc(key) & hash_len;
+
+      switch (hash_table_function(table))
+	{
+	case HASH_EMPTY:
+	  break;
+
+	case HASH_INT:
+	  {
+	    s7_Int keyval;
+	    keyval = s7_integer(key);
+	    for (x = hash_table_elements(table)[loc]; x != sc->NIL; x = cdr(x))
+	      if (s7_integer(caar(x)) == keyval)
+		return(car(x));
+	  }
+	  break;
+
+	case HASH_CHAR:
+	  for (x = hash_table_elements(table)[loc]; x != sc->NIL; x = cdr(x))
+	    if (character(caar(x)) == character(key))
+	      return(car(x));
+	  break;
+	  
+	case HASH_STRING:
+	  for (x = hash_table_elements(table)[loc]; x != sc->NIL; x = cdr(x))
+	    if (strings_are_equal(string_value(caar(x)), string_value(key)))
+	      return(car(x));
+	  break;
+
+	case HASH_SYMBOL:
+	  for (x = hash_table_elements(table)[loc]; x != sc->NIL; x = cdr(x))
+	    if (caar(x) == key)
+	      return(car(x));
+	  break;
+
+	case HASH_FLOAT:
+	  {
+	    /* give the equality check some room */
+	    s7_Double keyval;
+	    keyval = s7_real(key);
+	    for (x = hash_table_elements(table)[loc]; x != sc->NIL; x = cdr(x))
+	      if (fabs(s7_real(caar(x)) - keyval) < HASH_FLOAT_EPSILON)
+		return(car(x));
+	  }
+	  break;
+
+	case HASH_EQUAL:
+	  for (x = hash_table_elements(table)[loc]; x != sc->NIL; x = cdr(x))
+	    if (s7_is_equal(sc, caar(x), key))
+	      return(car(x));
+	  break;
+	}
+    }
+  return(sc->NIL);
+}
+
+
+s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, s7_pointer key)
+{
   s7_pointer x;
-  
-  location = hash_table_hash(name, vector_length(table));
-  for (x = vector_element(table, location); x != sc->NIL; x = cdr(x)) 
-    if (strings_are_equal(name, string_value(caar(x)))) 
-      return(cdar(x)); 
-  
+  x = hash_table_binding(sc, table, key);
+
+  if (x != sc->NIL)
+    return(cdr(x));
   return(sc->F);
 }
 
 
-s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, s7_pointer value)
+s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7_pointer value)
 {
-  s7_Int location;
   s7_pointer x;
+  x = hash_table_binding(sc, table, key);
 
-  location = hash_table_hash(name, vector_length(table)); 
-  
-  /* if it exists, update value, else add to table */
-  for (x = vector_element(table, location); x != sc->NIL; x = cdr(x)) 
-    if (strings_are_equal(name, string_value(caar(x))))
-      {
-	cdar(x) = value;
-	return(value);
-      }
-  vector_element(table, location) = s7_cons(sc, 
-					    s7_cons(sc, 
-						    s7_make_string(sc, name), 
-						    value),
-					    vector_element(table, location)); 
-  return(value);
-}
-
-
-#define HASHED_INTEGER_BUFFER_SIZE 64
-
-static char *hashed_name(s7_scheme *sc, s7_pointer key, char *intbuf, const char *caller)
-{
-  if (s7_is_string(key))
-    return(string_value(key));
-
-  if (s7_is_symbol(key))
-    snprintf(intbuf, HASHED_INTEGER_BUFFER_SIZE, "\b%s\b", symbol_name(key));
+  if (x != sc->NIL)
+    cdr(x) = value;
   else
     {
-      if (s7_is_integer(key))
-	snprintf(intbuf, HASHED_INTEGER_BUFFER_SIZE, "\b%lld\b", (long long int)s7_integer(key));
-      else
+      s7_Int hash_len, loc;
+
+      hash_len = hash_table_length(table) - 1;
+      loc = hash_loc(key) & hash_len;
+      hash_table_entries(table)++;
+
+      if (hash_table_function(table) == HASH_EMPTY)
 	{
-	  if ((s7_is_real(key)) && (!s7_is_ratio(key)))
-	    snprintf(intbuf, HASHED_INTEGER_BUFFER_SIZE, "\b%.20f\b", s7_real(key)); /* default precision is not enough, but this still won't work in general */
-	  else
+	  switch (type(key))
 	    {
-	      s7_wrong_type_arg_error(sc, caller, 2, key, "a string, symbol, integer, or (non-ratio) real");
-	      return(NULL);
+	    case T_STRING:
+	      hash_table_function(table) = HASH_STRING;
+	      break;
+
+	    case T_NUMBER:
+	      if (number_type(key) == NUM_INT)
+		hash_table_function(table) = HASH_INT;
+	      else
+		{
+		  if ((number_type(key) == NUM_REAL) ||
+		      (number_type(key) == NUM_REAL2))
+		    hash_table_function(table) = HASH_FLOAT;
+		  else hash_table_function(table) = HASH_EQUAL;
+		}
+	      break;
+
+	    case T_SYMBOL:
+	      hash_table_function(table) = HASH_SYMBOL;
+	      break;
+
+	    case T_CHARACTER:
+	      hash_table_function(table) = HASH_CHAR;
+	      break;
+	      
+	    default:
+	      hash_table_function(table) = HASH_EQUAL;
+	      break;
 	    }
 	}
+      else
+	{
+	  if (!hash_key_fits(table, key))
+	    hash_table_function(table) = HASH_EQUAL;
+	}
+
+      hash_table_elements(table)[loc] = s7_cons(sc, s7_cons(sc, key, value), hash_table_elements(table)[loc]);
     }
-  return(intbuf);
-}
-
-
-static s7_pointer hash_table_ref_1(s7_scheme *sc, s7_pointer table, s7_pointer key)
-{
-  char intbuf[HASHED_INTEGER_BUFFER_SIZE];
-  return(s7_hash_table_ref(sc, table, hashed_name(sc, key, intbuf, "hash-table-ref")));
+  return(value);
 }
 
 
@@ -13014,24 +13213,21 @@ static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
   if (!s7_is_hash_table(table))
     return(s7_wrong_type_arg_error(sc, "hash-table-ref", 1, table, "a hash-table"));
 
-  return(hash_table_ref_1(sc, table, cadr(args)));
+  return(s7_hash_table_ref(sc, table, cadr(args)));
 }
 
 
 static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
 {
   #define H_hash_table_set "(hash-table-set! table key value) sets the value associated with key (a string or symbol) in the hash table to value"
-
-  char intbuf[HASHED_INTEGER_BUFFER_SIZE];
-  s7_pointer table, key;
+  s7_pointer table;
 
   table = car(args);
-  key = cadr(args);
   
   if (!s7_is_hash_table(table))
     return(s7_wrong_type_arg_error(sc, "hash-table-set!", 1, table, "a hash-table"));
 
-  return(s7_hash_table_set(sc, table, hashed_name(sc, key, intbuf, "hash-table-set!"), caddr(args)));
+  return(s7_hash_table_set(sc, table, cadr(args), caddr(args)));
 }
 
 
@@ -13042,20 +13238,19 @@ That is, (hash-table '(\"hi\" . 3) (\"ho\" . 32)) returns a new hash-table with 
 
   s7_Int i, len;
   s7_pointer ht;
-  char intbuf[HASHED_INTEGER_BUFFER_SIZE];
   
   len = s7_list_length(sc, args);
   if ((len < 0) ||
       ((len == 0) && (args != sc->NIL)))
     return(s7_wrong_type_arg_error(sc, "hash-table", 1, car(args), "a proper list"));
   
-  ht = s7_make_hash_table(sc, 461);
+  ht = s7_make_hash_table(sc, 511);
   if (len > 0)
     {
       s7_pointer x;
       for (x = args, i = 0; is_pair(x); x = cdr(x), i++) 
 	if (is_pair(car(x)))
-	  s7_hash_table_set(sc, ht, hashed_name(sc, caar(x), intbuf, "hash-table"), cdar(x));
+	  s7_hash_table_set(sc, ht, caar(x), cdar(x));
     }
   return(ht);
 }
@@ -13085,6 +13280,8 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash)
     if (old_lists[i] != sc->NIL)
       new_lists[i] = hash_list_copy(sc, old_lists[i]);
 
+  hash_table_entries(new_hash) = hash_table_entries(old_hash);
+  hash_table_function(new_hash) = hash_table_function(old_hash);
   return(new_hash);
 }
 
@@ -13095,9 +13292,37 @@ static s7_pointer hash_table_clear(s7_scheme *sc, s7_pointer table)
   len = vector_length(table);
   for (i = 0; i < len; i++)
     vector_element(table, i) = sc->NIL;
+  hash_table_entries(table) = 0;
+  hash_table_function(table) = HASH_EMPTY;
   return(table);
 }
 
+
+/* TODO: map/for-each use hash_table_entries */
+/* TODO: test func changes and all keys */
+/* (let ((ht (make-hash-table))) (set! (ht 1) 32) (for-each (lambda (x) (format #t "~A~%" x)) ht)) */
+
+static s7_pointer hash_table_entry(s7_scheme *sc, s7_pointer table, s7_Int loc)
+{
+  /* a stop-gap... */
+  s7_Int entry = 0, vloc, len;
+  s7_pointer *elements;
+
+  len = hash_table_length(table);
+  elements = hash_table_elements(table);
+
+  for (vloc = 0; vloc < len;  vloc++)
+    {
+      s7_pointer x;
+      for (x = elements[vloc]; x != sc->NIL; x = cdr(x))
+	{
+	  if (entry == loc) return(car(x));
+	  entry++;
+	}
+    }
+
+  return(sc->F);
+}
 
 
 
@@ -14582,20 +14807,23 @@ static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shar
     len = vector_length(x);
     if (len != vector_length(y)) return(false);
 
-    if (vector_is_multidimensional(x))
+    if (s7_is_vector(x))
       {
-	if (!(vector_is_multidimensional(y)))
-	  return(false);
-	if (vector_ndims(x) != vector_ndims(y))
-	  return(false);
-	for (i = 0; i < vector_ndims(x); i++)
-	  if (vector_dimension(x, i) != vector_dimension(y, i))
-	    return(false);
-      }
-    else
-      {
-	if (vector_is_multidimensional(y))
-	  return(false);
+	if (vector_is_multidimensional(x))
+	  {
+	    if (!(vector_is_multidimensional(y)))
+	      return(false);
+	    if (vector_ndims(x) != vector_ndims(y))
+	      return(false);
+	    for (i = 0; i < vector_ndims(x); i++)
+	      if (vector_dimension(x, i) != vector_dimension(y, i))
+		return(false);
+	  }
+	else
+	  {
+	    if (vector_is_multidimensional(y))
+	      return(false);
+	  }
       }
 
     for (i = 0; i < len; i++)
@@ -14678,11 +14906,6 @@ static s7_pointer g_is_equal(s7_scheme *sc, s7_pointer args)
 
 
 /* ---------------------------------------- length, copy, fill ---------------------------------------- */
-
-/* this returns 2:         (let ((x (list 1 2))) (set-car! x x) (length x))
- *   but this is an error: (let ((x (list 1 2))) (set-cdr! x x) (length x))
- *   because length just looks at cdrs (this is also true of other schemes).
- */
 
 static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
 {
@@ -15634,9 +15857,9 @@ static const char *type_name(s7_pointer arg)
     case T_STRING:       return("string");
     case T_SYMBOL:       return("symbol");
     case T_PAIR:         return("pair");
-    case T_CLOSURE:
-    case T_CLOSURE_STAR: return("closure");
-    case T_GOTO:
+    case T_CLOSURE:      return("closure");
+    case T_CLOSURE_STAR: return("closure*");
+    case T_GOTO:         return("goto");
     case T_CONTINUATION: return("continuation");
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION:   return("function");
@@ -16636,8 +16859,10 @@ static long int applicable_length(s7_scheme *sc, s7_pointer obj)
       return(string_length(obj));
 
     case T_VECTOR:
-    case T_HASH_TABLE:
       return(vector_length(obj));
+
+    case T_HASH_TABLE:
+      return(hash_table_entries(obj));
 
     case T_NIL:
       return(0);
@@ -16683,14 +16908,19 @@ static void next_for_each(s7_scheme *sc)
 	break;
 	
       case T_VECTOR:
-      case T_HASH_TABLE:
 	car(x) = vector_element(car(y), loc); 
 	break;
+
+      case T_HASH_TABLE:
+	car(x) = hash_table_entry(sc, car(y), loc);
+	break;
+
 	/* for hash tables to go by entries, we'd need to set the "length" to the number of entries,
 	 *   then find the next entry here.  This would require independent "loc" and current element
 	 *   values.   Or when we initially get the length, also set up a parallel vector pointing
 	 *   to them, and walk down it, freeing it at the end -- perhaps this is simpler.
 	 */
+	break;
 
       case T_STRING:
 	car(x) = s7_make_character(sc, string_value(car(y))[loc]);
@@ -16745,12 +16975,12 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	  if (nlen == 0) return(sc->UNSPECIFIED);
 	  if (nlen < len) len = nlen;
 
-	  sc->x = s7_cons(sc, sc->NIL, sc->x);
+	  sc->x = s7_cons(sc, sc->NIL, sc->x);          /* we're making a list to be filled in later with the individual args */
 	  sc->z = s7_cons(sc, car(x), sc->z);
 	}
     }
 
-  sc->args = s7_cons(sc, make_mutable_integer(sc, 0),
+  sc->args = s7_cons(sc, make_mutable_integer(sc, 0),   /* '(counter applicable-len func-args-holder . objects) */
                s7_cons(sc, s7_make_integer(sc, len), 
                  s7_cons(sc, sc->x, 
                    safe_reverse_in_place(sc, sc->z))));
@@ -16799,8 +17029,11 @@ static void next_map(s7_scheme *sc)
 	  break;
 	
 	case T_VECTOR:
-	case T_HASH_TABLE:
 	  x = vector_element(car(y), loc); 
+	  break;
+
+	case T_HASH_TABLE:
+	  x = hash_table_entry(sc, car(y), loc);
 	  break;
 
 	case T_STRING:
@@ -17806,9 +18039,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
   switch (sc->op) 
     {
-      /* in gcc, this becomes a jump table, so we're not doing a linear search (gcc s7.c -S -I.) 
-       */
-
     case OP_READ_INTERNAL:
       /* if we're loading a file, and in the file we evaluate something like:
        *
@@ -17980,7 +18210,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  for (sc->x = sc->code; sc->x != sc->NIL; sc->x = cdr(sc->x))
 	    set_symbol_value(caar(sc->x), caddar(sc->x));
 
-	  /* "real" schemes rebind here, rather than reset, but that is expensive,
+	  /* some schemes rebind here, rather than reset, but that is expensive,
 	   *    and only matters once in a blue moon (closure over enclosed lambda referring to a do var)
 	   *    and the caller can easily mimic the correct behavior in that case by adding a let or using a named let,
 	   *    making the rebinding explicit.
@@ -17990,7 +18220,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   (let ((j (lambda () 0))
 	   *         (k 0))
 	   *     (do ((i (j) (j))
-	   *          (j (lambda () 1) (lambda () (+ i 1)))) ; bind here hits different "i" than reset
+	   *          (j (lambda () 1) (lambda () (+ i 1)))) ; bind here hits different "i" than set!
 	   *         ((= i 3) k)
 	   *       (set! k (+ k i))))
 	   *
@@ -18608,7 +18838,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_HASH_TABLE:                        /* -------- hash-table as applicable object -------- */
 	  if (cdr(sc->args) != sc->NIL)
 	    return(s7_wrong_number_of_args_error(sc, "too many args for hash-table ref (via hash-table as applicable object): ~A", sc->args));
-	  sc->value = hash_table_ref_1(sc, sc->code, car(sc->args));
+	  sc->value = s7_hash_table_ref(sc, sc->code, car(sc->args));
 	  pop_stack(sc);
 	  goto START;
 
@@ -25520,7 +25750,8 @@ s7_scheme *s7_init(void)
  * lint 
  * TODO: hash-table map and for-each should be entry-oriented, not alist-oriented
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
- * generic append? slice? member?
+ * generic append? slice? member? null? make?
+ * reverse for c|s_object
  *
  * PERHAPS: method lists for c_objects
  *   a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)

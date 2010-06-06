@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.58"
-#define S7_DATE "2-June-10"
+#define S7_VERSION "1.59"
+#define S7_DATE "7-June-10"
 
 
 typedef long long int s7_Int;
@@ -334,10 +334,10 @@ s7_Int *s7_vector_offsets(s7_pointer vec);                                      
 
 bool s7_is_hash_table(s7_pointer p);                                        /* (hash-table? p) */
 s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size);                  /* (make-hash-table size) */
-s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, const char *name);   
-                                                                            /* (hash-table-ref table name) */
-s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, s7_pointer value);  
-                                                                            /* (hash-table-set! table name value) */
+s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, s7_pointer key);   
+                                                                            /* (hash-table-ref table key) */
+s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7_pointer value);  
+                                                                            /* (hash-table-set! table key value) */
   /* a hash-table is a vector of alists '((symbol value)), so to iterate over a hash-table
    *   use for-each which calls its function with each of these alists.  An entry defaults to nil.
    */
@@ -758,6 +758,9 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 7-June:    changed key arg in s7_hash_table_ref|set to be s7_pointer, not const char*.
+ *            hash-tables can now handle any s7 object as the key.
+ *            map and for-each now pass a hash-table entry to the function, rather than an internal alist.
  * 2-June:    removed procedure-with-setter-setter-arity and folded that info into procedure-arity (use cdddr).
  * 22-May:    multidimensional vectors are no longer optional.
  * 9-May:     s7_read_char and s7_peek_char have to return an int, not a char (<eof>=-1, but 255 is a legit char).

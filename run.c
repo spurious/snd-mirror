@@ -282,8 +282,8 @@ static s7_pointer optimization_hook;
 #define DOUBLE_TO_STRING_WITH_RADIX(a, b)   s7_number_to_string(s7, s7_make_real(s7, a), b)
 
 static s7_pointer walker_hash_table;
-#define scheme_walker(Obj)                     s7_hash_table_ref(s7, walker_hash_table, s7_symbol_name(Obj))
-#define scheme_set_walker(Obj, Val)            s7_hash_table_set(s7, walker_hash_table, s7_symbol_name(Obj), Val)
+#define scheme_walker(Obj)                     s7_hash_table_ref(s7, walker_hash_table, Obj)
+#define scheme_set_walker(Obj, Val)            s7_hash_table_set(s7, walker_hash_table, Obj, Val)
 
 
 #define UNLIMITED_ARGS -1
@@ -15407,7 +15407,7 @@ static int add_clm_type(s7_pointer name)
   w->data = run_type;
 
   scheme_set_walker((s7_pointer)(s7_make_symbol(s7, type_predicate_name)), 
-		 s7_make_c_pointer(s7, (void *)w));
+		    s7_make_c_pointer(s7, (void *)w));
 
   return(run_type);
 }
