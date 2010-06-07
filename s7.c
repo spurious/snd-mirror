@@ -869,6 +869,13 @@ struct s7_scheme {
 #define NO_NUM_SHIFT 3
 #define IS_NUM(n)    (n < NO_NUM)
 
+#if WITH_GMP
+#define T_BIG_INTEGER 0
+#define T_BIG_RATIO 1
+#define T_BIG_REAL 2
+#define T_BIG_COMPLEX 3
+#endif
+
 #define number(p)                     (p)->object.number
 #define number_type(p)                (p)->object.number.type
 #define num_type(n)                   (n.type)
@@ -2929,6 +2936,9 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   static s7_pointer s7_Int_to_big_integer(s7_scheme *sc, s7_Int val);
   static s7_pointer s7_ratio_to_big_ratio(s7_scheme *sc, s7_Int num, s7_Int den);
   static s7_pointer s7_number_to_big_real(s7_scheme *sc, s7_pointer p);
+  static s7_pointer promote_number(s7_scheme *sc, int type, s7_pointer x);
+  static s7_pointer big_negate(s7_scheme *sc, s7_pointer args);
+  static s7_pointer big_invert(s7_scheme *sc, s7_pointer args);
 #endif
 
 
@@ -3508,6 +3518,9 @@ static s7_num_t make_ratio(s7_Int numer, s7_Int denom)
     {
       numer = -numer;
       denom = -denom;
+      /* this doesn't work in the case (/ most-positive-fixnum most-negative-fixnum)
+       *   because (= (- most-negative-fixnum) most-negative-fixnum) is #t.
+       */
     }
   
   divisor = c_gcd(numer, denom);
@@ -3608,6 +3621,31 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
 
   if (b == 0)
     return(division_by_zero_error(sc, "make-ratio", make_list_2(sc, s7_make_integer(sc, a), s7_make_integer(sc, b))));
+
+#if (!WITH_GMP)
+  if (b == LLONG_MIN)
+    {
+      if (a == b)
+	return(small_int(1));
+
+      /* we've got a problem... This should not trigger an error during reading -- we might have the
+       *   ratio on a switch with-bignums or whatever, so its mere occurrence is just an annoyance.
+       *   We'll try to do something...
+       */
+      if (a & 1)
+	{
+	  if (a == 1)
+	    return(s7_out_of_range_error(sc, "(/ most-negative-fixnum),", 1, s7_make_integer(sc, b), "can't be inverted"));
+	  /* 1/-9223372036854775808 -> "unbound variable" */
+	  b = b + 1;
+	}
+      else
+	{
+	  a /= 2;
+	  b /= 2;
+	}
+    }
+#endif
 
   NEW_CELL(sc, x);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
@@ -3800,6 +3838,10 @@ static s7_pointer s7_negate(s7_scheme *sc, s7_pointer p)     /* can't use "negat
   switch (a.type)
     {
     case NUM_INT: 
+#if WITH_GMP
+      if (integer(a) == LLONG_MIN)
+	return(big_negate(sc, s7_cons(sc, promote_number(sc, T_BIG_INTEGER, p), sc->NIL)));
+#endif	
       return(s7_make_integer(sc, -integer(a)));
       
     case NUM_RATIO:
@@ -3823,6 +3865,10 @@ static s7_pointer s7_invert(s7_scheme *sc, s7_pointer p)      /* s7_ to be consi
   switch (a.type)
     {
     case NUM_INT:
+#if WITH_GMP
+      if (integer(a) == LLONG_MIN)
+	return(big_invert(sc, s7_cons(sc, promote_number(sc, T_BIG_INTEGER, p), sc->NIL)));
+#endif
       return(s7_make_ratio(sc, 1, integer(a)));      /* a already checked, not 0 */
       
     case NUM_RATIO:
@@ -5800,12 +5846,19 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
       if (s7_is_real(pw))
 	{
 	  if (s7_is_negative(pw))                              /* (expt 0 -1) */
-	    return(division_by_zero_error(sc, "expt", args));  /* what about (expt 0 -1+i)? */
+	    return(division_by_zero_error(sc, "expt", args));  
 	  /* (Clisp gives divide-by-zero error here, Guile returns inf.0) */
 
-	  if (isnan(s7_real(pw)))                              /* (expt 0 +nan.0) */
+	  if ((!s7_is_rational(pw)) &&                         /* (expt 0 most-positive-fixnum) */
+	      (isnan(s7_real(pw))))                            /* (expt 0 +nan.0) */
 	    return(pw);
 	}
+      else
+	{                                                      /* (expt 0 a+bi) */
+	  if (s7_real_part(pw) < 0.0)                          /* (expt 0 -1+i) */
+	    return(division_by_zero_error(sc, "expt", args));  
+	}
+
       if ((s7_is_integer(n)) && (s7_is_integer(pw)))           /* pw != 0, (expt 0 2312) */
 	return(small_int(0));
       return(real_zero);                                       /* (expt 0.0 123123) */
@@ -6502,7 +6555,23 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
       switch (ret_type)
 	{
 	case NUM_INT: 
-	  a = make_ratio(integer(a), integer(b));  /* b checked for 0 above */
+	  if (integer(b) == LLONG_MIN)
+	    {
+#if WITH_GMP
+	      return(big_divide(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(a)), x)));
+#else
+	      if (integer(a) == integer(b))
+		integer(a) = 1;
+	      else
+		{
+		  if (integer(a) & 1)
+		    a = make_ratio(integer(a), integer(b) + 1);
+		  else a = make_ratio(integer(a) / 2, integer(b) / 2);
+		}
+#endif
+	    }
+	  else
+	    a = make_ratio(integer(a), integer(b));  /* b checked for 0 above */
 	  break;
 
 	case NUM_RATIO:
@@ -20680,8 +20749,6 @@ static void mpc_init_set(mpc_ptr z, mpc_ptr y, mpc_rnd_t rnd)
 }
 
 
-static s7_pointer promote_number(s7_scheme *sc, int type, s7_pointer x);
-
 static int big_integer_tag = 0;
 static int big_ratio_tag = 0;
 static int big_real_tag = 0;
@@ -21712,11 +21779,6 @@ static s7_pointer string_to_either_complex_1(s7_scheme *sc, char *q, char *slash
   return(NULL);
 }
 
-
-#define T_BIG_INTEGER 0
-#define T_BIG_RATIO 1
-#define T_BIG_REAL 2
-#define T_BIG_COMPLEX 3
 
 static s7_pointer string_to_either_complex(s7_scheme *sc,
 					   char *q, char *slash1, char *ex1, bool has_dec_point1, 
@@ -23048,8 +23110,16 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	  (big_is_zero_1(sc, y) == sc->T))
 	return(small_int(1));
 
-      if ((s7_is_real(y)) && (s7_is_negative(y)))
-	return(division_by_zero_error(sc, "expt", args));
+      if (s7_is_real(y))
+	{
+	  if (s7_is_negative(y))
+	    return(division_by_zero_error(sc, "expt", args));
+	}
+      else
+	{
+	  if (s7_is_negative(big_real_part(sc, cdr(args))))
+	    return(division_by_zero_error(sc, "expt", args));
+	}
 
       if ((s7_is_rational(x)) && 
 	  (s7_is_rational(y)))
@@ -25830,11 +25900,16 @@ s7_scheme *s7_init(void)
  *         (ideally it would be wrapped inside the evaluator)
  *       perhaps use procedure-source?
  *
- * :allow-other-keys in lambda*
+ * :allow-other-keys in lambda* ("lambda!")
  * PERHAPS: pretty-printing in the REPL or in format (~W in CL I think)
+ *   *formats* ? -- like *#readers* where '(char func) is ~char -> (func next-arg)
+ *
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
- * generic append? slice? member? null?
- * TODO: test reverse c_object
+ * generic append? member? null?
+ *   (member #\a "hiasd") (member 1 #(2 .30)) [(member table 'a) as key? seems pointless]
+ *   (null? "") (null? #()) (null? #3d())     [(null? table) if no entries?]
+ *   (append "hi" "ho") (append #(1) #(2))    [(append table1 table] = new table with both? what about collisions?]
+ *
  *
  * PERHAPS: method lists for c_objects
  *   a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)

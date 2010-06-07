@@ -11907,8 +11907,6 @@
 		sum)))
 	  6)
 
-    ;; TODO: test all the optional funcs explicitly
-
     (test (let* ((rec-type (make-type))
 		 (? (car rec-type))
 		 (make (cadr rec-type))
@@ -11996,9 +11994,22 @@
 	(set! (v 1) 32.0)
 	(test (v 0) 0.0)
 	(test (v 1) 32.0)
+	(test (eq? v v) #t)
+	(test (eq? v (float-vector 0.0 32.0 0.0)) #f)
 	(test (equal? v (float-vector 0.0 32.0 0.0)) #t)
 	(test (map + (list 1 2 3) (float-vector 1 2 3)) '(2.0 4.0 6.0))
 	(test (reverse (float-vector 1.0 2.0 3.0)) (float-vector 3.0 2.0 1.0))
+	(test (copy (float-vector 1.0 2.0 3.0)) (float-vector 1.0 2.0 3.0))
+	(test (let () (fill! v 1.0) v) (float-vector 1.0 1.0 1.0))
+	(test (object->string v) "#<float-vector #(1.0 1.0 1.0)>")
+	(test (let ((sum 0.0))
+		(for-each
+		 (lambda (x)
+		   (set! sum (+ sum x)))
+		 (float-vector 1.0 2.0 3.0))
+		sum)
+	      6.0)
+	(test (length v) 3)
 	))
 
     (let ()
@@ -29305,12 +29316,32 @@
 (test (expt 1.0+23.0i 1.0+23.0i 1.0+23.0i) 'error)
 (test (expt #t 0) 'error)
 (test (expt 0 -1) 'error)
+(test (expt 0 -1/4) 'error)
 (test (expt 0.0 -1.0) 'error)
+(test (expt 0.0 -0.1) 'error)
 (test (expt 0 -1.0) 'error)
-					;      (test (expt 0 -1.0+i) 'error)
-					;      (test (expt 0 0-i) 0.0) ; sbcl and clisp say division by 0 here
+(test (expt 0 -1.0+i) 'error)
+
+;;      (test (expt 0 0-i) 0.0) ; sbcl and clisp say division by 0 here, guile says NaN
+;;      but (expt 0.0 1e-15-i) is 0.0??
+;; clisp says (expt 0 1+i) is 0, but (expt 0 0+i) is division by zero??) -- sbcl agrees
+
+(test (expt 0.0 1e-15+i) 0.0)
+(test (expt 0.0 0+i) 0.0) ; why would they be radically different?
+(test (expt 0.0 1e-15-i) 0.0)
+(test (expt 0.0 0-i) 0.0)
+
+(num-test (expt 1e-15 0+i) -0.999824358967590-0.018741697229594i)
+(num-test (expt 1e-15 0-i) -0.999824358967590+0.018741697229594i)
+
+
+
 (test (expt 0 -255) 'error)
 (test (expt 0 (- (expt 2 32))) 'error)
+(test (expt 0 most-positive-fixnum) 0)
+(test (expt 0 most-negative-fixnum) 'error)
+(test (expt -0.0 most-positive-fixnum) 0.0)
+(test (expt 0.0 most-negative-fixnum) 'error)
 
 
 
@@ -35146,45 +35177,11 @@
 (test (zero? 1) #f )
 (test (zero? -1) #f )
 (test (zero? -100) #f )
-(test (positive? 4/3) #t )
-(test (positive? 4) #t )
-(test (positive? -4) #f )
-(test (positive? -4/3) #f )
-(test (positive? 0) #f )
-(test (positive? 0.0) #f )
-(test (positive? -0) #f )
-(test (negative? 4) #f )
-(test (negative? 4/3) #f )
-(test (negative? -4) #t )
-(test (negative? -4/3) #t )
-(test (negative? 0) #f )
-(test (negative? -0) #f )
-(test (negative? 0.0) #f )
-(test (negative? -0.0) #f )
-
-(for-each
- (lambda (n)
-   (if (not (positive? n))
-       (format #t "(positive? ~A) -> #f?~%") n))
- (list 1 123 123456123 1.4 0.001 1/2 124124124.2))
-
-(for-each
- (lambda (n)
-   (if (negative? n)
-       (format #t "(negative? ~A) -> #t?~%" n)))
- (list 1 123 123456123 1.4 0.001 1/2 12341243124.2))
-
-(for-each
- (lambda (n)
-   (if (positive? n)
-       (format #t "(positive? ~A) -> #t?~%" n)))
- (list -1 -123 -123456123 -3/2 -0.00001 -1.4 -123124124.1))
-
-(for-each
- (lambda (n)
-   (if (not (negative? n))
-       (format #t "(negative? ~A) -> #f?~%" n)))
- (list -1 -123 -123456123 -2/3 -0.00001 -1.4 -123124124.1))
+(test (zero? -0/4) #t)
+(test (zero? 0+0i) #t)
+(test (zero?) 'error)
+(test (zero? "hi") 'error)
+(test (zero? 1.0+23.0i 1.0+23.0i) 'error)
 
 (for-each
  (lambda (n)
@@ -35198,15 +35195,59 @@
        (format #t "(zero? ~A) -> #t?~%" n)))
  (list 1 1/100 -0.001 0.0+1.0i))
 
+
+(test (positive? 4/3) #t )
+(test (positive? 4) #t )
+(test (positive? -4) #f )
+(test (positive? -4/3) #f )
+(test (positive? 0) #f )
+(test (positive? 0.0) #f )
+(test (positive? -0) #f )
 (test (positive?) 'error)
 (test (positive? 1.23+1.0i) 'error)
 (test (positive? 1.23 1.23) 'error)
+
+(for-each
+ (lambda (n)
+   (if (not (positive? n))
+       (format #t "(positive? ~A) -> #f?~%") n))
+ (list 1 123 123456123 1.4 0.001 1/2 124124124.2))
+
+(for-each
+ (lambda (n)
+   (if (positive? n)
+       (format #t "(positive? ~A) -> #t?~%" n)))
+ (list -1 -123 -123456123 -3/2 -0.00001 -1.4 -123124124.1))
+
+
+(test (negative? 4) #f )
+(test (negative? 4/3) #f )
+(test (negative? -4) #t )
+(test (negative? -4/3) #t )
+(test (negative? -0/4) #f)
+(test (negative? 0) #f )
+(test (negative? -0) #f )
+(test (negative? 0.0) #f )
+(test (negative? -0.0) #f )
+(test (negative? (expt -0.0 1)) #f)
+(test (negative? (/ -0.0 1.0)) #f)
+(test (negative? (* -0.0 1.0)) #f)
 (test (negative?) 'error)
 (test (negative? 1.23+1.0i) 'error)
 (test (negative? 1.23 1.23) 'error)
-(test (zero?) 'error)
-(test (zero? "hi") 'error)
-(test (zero? 1.0+23.0i 1.0+23.0i) 'error)
+
+(for-each
+ (lambda (n)
+   (if (negative? n)
+       (format #t "(negative? ~A) -> #t?~%" n)))
+ (list 1 123 123456123 1.4 0.001 1/2 12341243124.2))
+
+(for-each
+ (lambda (n)
+   (if (not (negative? n))
+       (format #t "(negative? ~A) -> #f?~%" n)))
+ (list -1 -123 -123456123 -2/3 -0.00001 -1.4 -123124124.1))
+
 
 
 
@@ -35219,6 +35260,21 @@
 (test (odd? -1) #t )
 (test (odd? 0) #f)
 (test (odd? -0) #f)
+
+(for-each
+ (lambda (n)
+   (if (odd? n)
+       (format #t "(odd? ~A) -> #t?~%" n)))
+ (list 0 2 1234 -4 -10000002 1000000006))
+
+(for-each
+ (lambda (n)
+   (if (not (odd? n))
+       (format #t "(odd? ~A) -> #f?~%" n)))
+ (list 1 -1 31 50001 543321))
+
+
+
 (test (even? 3) #f )
 (test (even? 2) #t )
 (test (even? -4) #t )
@@ -35233,21 +35289,11 @@
 
 (for-each
  (lambda (n)
-   (if (odd? n)
-       (format #t "(odd? ~A) -> #t?~%" n)))
- (list 0 2 1234 -4 -10000002 1000000006))
-
-(for-each
- (lambda (n)
    (if (even? n)
        (format #t "(even? ~A) -> #t?~%" n)))
  (list 1 -1 31 50001 543321))
 
-(for-each
- (lambda (n)
-   (if (not (odd? n))
-       (format #t "(odd? ~A) -> #f?~%" n)))
- (list 1 -1 31 50001 543321))
+
 
 (let ((top-exp 60))
   (let ((happy #t))
@@ -36868,6 +36914,16 @@
 (num-test (- -1234000000.0+2.71828182845905i) 1234000000.0-2.71828182845905i)
 (num-test (* -1234000000.0+2.71828182845905i) -1234000000.0+2.71828182845905i)
 (num-test (/ -1234000000.0+2.71828182845905i) -0.00000000081037-0.0i)
+
+(let ((err? (catch #t (lambda () (/ 1.0 0.0)) (lambda args 'err!))))
+  (if (number? err?)
+      (begin
+	(test (infinite? (/ 1.0 0.0)) #t)
+	(test (positive? (/ 1.0 0.0)) #t)
+	(test (infinite? (/ -1.0 0.0)) #t)
+	(test (negative? (/ -1.0 0.0)) #t)
+	(test (infinite? (/ 1.0 -0.0)) #t)
+	(test (positive? (/ 1.0 -0.0)) #t))))
 
 (num-test (+ 1 1) 2)
 (num-test (- 1 1) 0)
@@ -44449,8 +44505,8 @@
 (num-test (logand -9223372036854775808 -9223372036854775808) -9223372036854775808)
 (num-test (+ -9223372036854775808 -9223372036854775808) -18446744073709551616)
 (num-test (- -9223372036854775808 -9223372036854775808) 0)
-(num-test (* -9223372036854775808 -9223372036854775808) 85070591730234615865843651857942052864)
-(num-test (/ -9223372036854775808 -9223372036854775808) 1)
+(if with-bignums (num-test (* -9223372036854775808 -9223372036854775808) 85070591730234615865843651857942052864))
+(if with-bignums (num-test (/ -9223372036854775808 -9223372036854775808) 1))
 
 (num-test (lcm 9223372036854775807 -9223372036854775808) 85070591730234615856620279821087277056)
 (num-test (gcd 9223372036854775807 -9223372036854775808) 1)
@@ -44468,8 +44524,8 @@
 (num-test (logxor 9223372036854775807 -9223372036854775808) -1)
 (num-test (logand 9223372036854775807 -9223372036854775808) 0)
 (num-test (+ 9223372036854775807 -9223372036854775808) -1)
-(num-test (- 9223372036854775807 -9223372036854775808) 18446744073709551615)
-(num-test (* 9223372036854775807 -9223372036854775808) -85070591730234615856620279821087277056)
+(if with-bignums (num-test (- 9223372036854775807 -9223372036854775808) 18446744073709551615))
+(if with-bignums (num-test (* 9223372036854775807 -9223372036854775808) -85070591730234615856620279821087277056))
 (if with-bignums (num-test (/ 9223372036854775807 -9223372036854775808) -9223372036854775807/9223372036854775808))
 
 (num-test (max 1.110223024625156799999999999999999999997E-16 -9223372036854775808) 1.110223024625156799999999999999999999997E-16)
@@ -44515,7 +44571,7 @@
 (num-test (logand 9223372036854775807 9223372036854775807) 9223372036854775807)
 (num-test (+ 9223372036854775807 9223372036854775807) 18446744073709551614)
 (num-test (- 9223372036854775807 9223372036854775807) 0)
-(num-test (* 9223372036854775807 9223372036854775807) 85070591730234615847396907784232501249)
+(if with-bignums (num-test (* 9223372036854775807 9223372036854775807) 85070591730234615847396907784232501249))
 (num-test (/ 9223372036854775807 9223372036854775807) 1)
 
 (num-test (expt 5.551115123125783999999999999999999999984E-17 1.110223024625156799999999999999999999997E-16) 9.999999999999958444410197170329529649165E-1)
@@ -44551,7 +44607,7 @@
 (num-test (* -9223372036854775808 5.551115123125783999999999999999999999984E-17) -5.120000000000001197084708550423347199985E2)
 (num-test (/ -9223372036854775808 5.551115123125783999999999999999999999984E-17) -1.661534994731144452653560599947843044136E35)
 
-(num-test (lcm -9223372036854775808 9223372036854775807 -9223372036854775808) 85070591730234615856620279821087277056)
+(if with-bignums (num-test (lcm -9223372036854775808 9223372036854775807 -9223372036854775808) 85070591730234615856620279821087277056))
 (num-test (gcd -9223372036854775808 9223372036854775807 -9223372036854775808) 1)
 (num-test (max -9223372036854775808 9223372036854775807 -9223372036854775808) 9223372036854775807)
 (num-test (min -9223372036854775808 9223372036854775807 -9223372036854775808) -9223372036854775808)
@@ -44565,7 +44621,7 @@
 (num-test (logand -9223372036854775808 9223372036854775807 -9223372036854775808) 0)
 (num-test (+ -9223372036854775808 9223372036854775807 -9223372036854775808) -9223372036854775809)
 (num-test (- -9223372036854775808 9223372036854775807 -9223372036854775808) -9223372036854775807)
-(num-test (* -9223372036854775808 9223372036854775807 -9223372036854775808) 784637716923335095394403086170723686146950778700062261248)
+(if with-bignums (num-test (* -9223372036854775808 9223372036854775807 -9223372036854775808) 784637716923335095394403086170723686146950778700062261248))
 (if with-bignums (num-test (/ -9223372036854775808 9223372036854775807 -9223372036854775808) 1/9223372036854775807))
 
 (num-test (max 1.110223024625156799999999999999999999997E-16 5.551115123125783999999999999999999999984E-17 5.42101086242752217060000000000000000001E-20) 1.110223024625156799999999999999999999997E-16)
@@ -46229,7 +46285,25 @@
 
 ;;; no #x here because e is a digit
 ;;; #b1.1111111111111111111111111111111111111111111111111110011101010100100100011001011011111011000011001110110101010011110011000100111E1023 1.7976931348623156E308
-;;; currently (number->string 1/9 2) returns "1/1001" -- is this expected?
+
+(test (number->string 1/9 2) "1/1001")
+(test (number->string -11/4 2) "-1011/100")
+(test (number->string -11/4 8) "-13/4")
+(test (number->string -15/4 16) "-f/4")
+(test (string->number "f/4" 16) 15/4)
+
+(if with-bignums 
+    (begin
+      (test (number->string (/ most-positive-fixnum most-negative-fixnum) 2) "-111111111111111111111111111111111111111111111111111111111111111/1000000000000000000000000000000000000000000000000000000000000000")
+      (test (string->number "-111111111111111111111111111111111111111111111111111111111111111/1000000000000000000000000000000000000000000000000000000000000000" 2) -9223372036854775807/9223372036854775808)
+      (test (positive? (/ most-positive-fixnum most-negative-fixnum)) #f))
+    (begin
+      (test (/ most-positive-fixnum most-negative-fixnum) 'error)
+      (test (/ most-negative-fixnum) 'error)
+      ;; (/ most-positive-fixnum most-negative-fixnum) -> 9223372036854775807/-9223372036854775808 
+      ;; so
+      ;; (positive? (/ most-positive-fixnum most-negative-fixnum)) -> #t!
+      ))
 
 (num-test #b1.0e-8 0.00390625)
 (num-test #o1.0e-8 5.9604644775391e-08)
@@ -46265,6 +46339,9 @@
 (num-test #b#i-1.1e-2 -0.375)
 (num-test #o#i-1.1e-2 -0.017578125)
 (num-test #d#i-1.1e-2 -0.011)
+(num-test #i-0 0.0)
+(num-test #e-0.0 0)
+;;; in guile #e1e-10 is 7737125245533627/77371252455336267181195264
 
 (num-test #e#b+1.1 3/2)
 (num-test #e#o+1.1 9/8)
@@ -47726,6 +47803,13 @@
 (test (abs most-positive-fixnum) most-positive-fixnum)
 (test (floor most-positive-fixnum) most-positive-fixnum)
 (test (floor most-negative-fixnum) most-negative-fixnum)
+(num-test (/ 2 -9223372036854775808) -1/4611686018427387904)
+(num-test (/ -9223372036854775808 2) -4611686018427387904)
+(num-test (/ 2 most-negative-fixnum) -1/4611686018427387904)
+(num-test (/ most-negative-fixnum 2) -4611686018427387904)
+(if with-bignums (num-test (/ most-negative-fixnum) -1/9223372036854775808))
+(if with-bignums (num-test (- most-negative-fixnum) 9223372036854775808))
+(if with-bignums (num-test (* 1/256 1/256 1/256 1/256 1/256 1/256 1/256 -1/128) (/ most-negative-fixnum)))
 
 (let ()
   (define (2^n? x) (zero? (logand x (- x 1))))

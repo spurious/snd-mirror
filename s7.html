@@ -358,6 +358,15 @@ I've made what I hope are reasonable choices:
 nan.0
 ;; etc
 </pre>
+<p>But what is <code>(/ 1.0 0.0)</code>?  s7 gives a "division by zero" error here, and also in <code>(/ 1 0)</code>.
+Guile returns +inf.0 in the first case, which seems reasonable, but a "numerical overflow" error in the second.
+(Is it a bug that Guile thinks <code>(/ 1.0 -0.0)</code> is -inf.0?)
+Slightly weirder is <code>(expt 0.0 0+i)</code>.  Currently s7 returns 0.0, Guile returns +nan.0+nan.0i,
+Clisp and sbcl throw an error.  Everybody agrees that <code>(expt 0 0)</code> is 1, and Guile (alone) thinks
+that <code>(expt 0.0 0.0)</code> is 1.0.  But <code>(expt 0 0.0)</code> and <code>(expt 0.0 0)</code> return different
+results in Guile (1 and 1.0), both are 0.0 in s7, the first is an error in Clisp, but the second returns 1,
+and so on &mdash; what a mess!
+</p>
 
 </blockquote>
 </small>
@@ -1579,6 +1588,15 @@ We can write an FFT procedure that accepts lists or vectors:
         #(1+1i -1+1i -1-1i 1-1i)
 </pre>
 
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>By my count, around 20 of the standard scheme built-in functions are already generic in the sense
+that they accept arguments of many types (leaving aside numbers).  s7 extends that list with map, for-each, reverse,
+and length, and adds a few others such as copy, fill!, sort!, object-&gt;string, and continuation?.
+I may add similar extensions for append, member, and null?.
+</p>
+
 </blockquote>
 </small>
 </dd>
@@ -1695,9 +1713,9 @@ equal to a 1-dimensional empty vector.
 <li>(hash-table-size ht)
 </ul>
 <p>
-If you pass a table size that is not a power of 2, it will be rounded up to the next power of 2.
 Any s7 object can be the key or the key's value.
 Each hash-table keeps track of the keys it contains, optimizing the search wherever possible.
+If you pass a table size that is not a power of 2, make-hash-table rounds it up to the next power of 2.
 </p>
 <pre>
 (let ((ht (make-hash-table)))
@@ -3000,20 +3018,32 @@ number if passed a dotted list (its absolute value is the list length not counti
 the final cdr).  <code>(define (circular? lst) (infinite? (length lst)))</code>.
 </p>
 
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>s7 (and Snd) use "*" in a variable name (*features* for example) to indicate
+that the variable is predefined.  It may occur unprotected in a macro, for
+example.  The "*" doesn't mean that the variable is "special" in the CL sense (dynamic scope),
+but some clear marker is needed for a global variable so that the programmer
+doesn't accidentally step on it.  
+</p>
+
+
+
+
 <!--
 <p>Other odd corners:
 </p>
 <pre>
 (length (string #\null))
 (string=? "" (string #\null))
-(call/cc procedure?)
-(expt 0 -1+i)
 (eq? (char-ci<? #\_ #\e) (char<? #\_ #\e))
 (format #f "~F" 1/3)
 (cond (1) (=>))
 (case 1 ((1) #t) ((1) #f))
 (string->symbol "")
 (let ('1) quote)
+(positive? (/ most-positive-fixnum most-negative-fixnum)) -- can use the latter as ratio denom if it's not a bignum
 </pre>
 -->
 
