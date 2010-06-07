@@ -564,7 +564,7 @@
  (lambda (arg)
    (if (boolean? arg)
        (format #t "(boolean? ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) (if #f #f)))
+ (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) (if #f #f) #<eof> #<undefined>))
 
 (test (recompose 12 boolean? #f) #t)
 
@@ -624,7 +624,7 @@
  (lambda (arg)
    (if (symbol? arg)
        (format #t "(symbol? ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1))))
+ (list "hi" (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) #<eof> #<undefined>))
 
 (test (symbol?) 'error)
 (test (symbol? 'hi 'ho) 'error)
@@ -697,6 +697,7 @@
 (test (char? #\') #t)
 (test (char? #\`) #t)
 (test (char? #\@) #t)
+(test (char? #<eof>) #f)
 
 (for-each
  (lambda (arg)
@@ -828,6 +829,7 @@
 
   (test (char-upcase) 'error)
   (test (char-upcase #\a #\b) 'error)
+  (test (char-upcase #<eof>) 'error)
 
 
   
@@ -5387,7 +5389,7 @@
  (lambda (arg)
    (if (eof-object? arg)
        (format #t "(eof-object? ~A) -> #t?~%" arg)))
- (list "hi" -1 #\a 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (if #f #f) (lambda (a) (+ a 1))))
+ (list "hi" -1 #\a 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (if #f #f) #<undefined> (lambda (a) (+ a 1))))
 
 (call-with-output-file "tmp1.r5rs" (lambda (p) (display "3.14" p)))
 (test (call-with-input-file "tmp1.r5rs" (lambda (p) (read p) (let ((val (read p))) (eof-object? val)))) #t)
@@ -6602,6 +6604,14 @@
 (test (string=? (object->string '#(1 2 3)) "#(1 2 3)") #t)
 (test (string=? (object->string +) "+") #t)
 (test (object->string (object->string (object->string "123"))) "\"\\\"\\\\\\\"123\\\\\\\"\\\"\"")
+(test (object->string #<eof>) "#<eof>")
+(test (object->string (if #f #f)) "#<unspecified>")
+(test (object->string #f) "#f")
+(test (object->string #t) "#t")
+(test (object->string '()) "()")
+(test (object->string #()) "#()")
+(test (object->string "") "\"\"")
+
 (test (object->string) 'error)
 (test (object->string 1 2) 'error)
 (test (object->string abs) "abs")
@@ -7889,7 +7899,7 @@
 (test ((lambda (x . y) y) 1 2 '(3 . 4)) '(2 (3 . 4)))
 (test ((lambda (x . y) y) 1) '())
 (test ((lambda x x) '()) '(()))
-(test ((lambda x x)) '())        ; ??
+(test ((lambda x x)) '())
 (test ((lambda (x) x) '()) '())
 (test (let ((lambda 4)) (+ lambda 1)) 5)
 (test ((lambda (x) (+ x ((lambda (x) (+ x 1)) 2))) 3) 6)
@@ -9975,6 +9985,7 @@
 (test (call-with-exit (lambda (k) (call-with-output-file "tmp1.r5rs" k))) 'error)
 (test (call-with-exit (lambda (k) (call-with-output-string k))) 'error)
 (let ((pws (make-procedure-with-setter (lambda (a) (+ a 1)) (lambda (a b) b))))
+  (test (procedure? pws) #t)
   (test (map pws '(1 2 3)) '(2 3 4))
   (test (apply pws '(1)) 2))
 (test (let ((ctr 0)) (call-with-exit (lambda (top-exit) (set! ctr (+ ctr 1)) (call-with-exit top-exit) (set! ctr (+ ctr 16)))) ctr) 1)
@@ -11746,13 +11757,17 @@
       (let ((type (make-type)))
 	((cadr type) 'special)))
 
+    (test (eq? special-value special-value) #t)
+    (test (eqv? special-value special-value) #t)
+    (test (equal? special-value special-value) #t)
+    (test (procedure? special-value) #f)
     (for-each
      (lambda (arg)
        (test (or (eq? arg special-value)
 		 (eqv? arg special-value)
 		 (equal? arg special-value))
 	     #f))
-       (list "hi" -1 #\a 1 'special 3.14 3/4 1.0+1.0i #f #t '(1 . 2)))
+       (list "hi" -1 #\a 1 'special 3.14 3/4 1.0+1.0i #f #t '(1 . 2) #<unspecified> #<undefined>))
 
     (begin
       (define rec? #f)
@@ -11789,11 +11804,32 @@
 
     (let ((hi (make-rec 32 '(1 2))))
       (test (rec? hi) #t)
+      (test (equal? hi hi) #t)
       (test (rec? 32) #f)
       (test (rec-a hi) 32)
       (test (rec-b hi) '(1 2))
       (set! (rec-b hi) 123)
-      (test (rec-b hi) 123))
+      (test (rec-b hi) 123)
+      (let ((ho (make-rec 32 '(1 2))))
+	(test (eq? hi ho) #f)
+	(test (eqv? hi ho) #f)
+	(test (equal? hi ho) #f)
+	(set! (rec-b ho) 123)
+	(test (equal? hi ho) #t))
+      (let ((ho (make-rec 123 '())))
+	(test (eq? hi ho) #f)
+	(test (eqv? hi ho) #f)
+	(test (equal? hi ho) #f))
+      (test (copy hi) 'error)
+      (test (fill! hi 1.0) 'error)
+      (test (object->string hi) "#<anonymous-type #(32 123)>")
+      (test (length hi) 'error)
+      (test (reverse hi) 'error)
+      (test (for-each abs hi) 'error)
+      (test (map abs hi) 'error)
+      (test (hi 1) 'error)
+      (test (set! (hi 1) 2) 'error)
+      )
 
     (let ((typo (make-type :equal (lambda (a b) (equal? a b)))))
       (let ((a ((cadr typo) 123))
@@ -12157,6 +12193,9 @@
 (test (constant? most-positive-fixnum) #t)
 (test (constant? (/ (log 0))) #t)       ; nan.0 is a constant as a number I guess
 (test (constant? (log 0)) #t)
+(test (constant?) 'error)
+(test (constant? 1 2) 'error)
+(test (constant? #<eof>) #t) ; ?
 
 ;; and some I wonder about -- in CL's terms, these always evaluate to the same thing, so they're constantp
 ;;   but Clisp:
@@ -12198,6 +12237,13 @@
 (test (let ((__c2__ 32)) (defined? '__c3__ (current-environment))) #f)
 (test (let ((__c2__ 32)) (defined? '__c2__ (global-environment))) #f)
 (test (let ((__c2__ 32)) (defined? '__c3__ (global-environment))) #f)
+(test (defined?) 'error)
+(test (defined? 'a 'b) 'error)
+(for-each
+ (lambda (arg)
+   (test (defined? arg) 'error))
+ (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
 
 (test (current-environment 1) 'error)
 (test (global-environment 1) 'error)

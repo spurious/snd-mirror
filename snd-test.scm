@@ -34793,7 +34793,7 @@ EDITS: 2
 	    (if (not (= (length lst) 5)) (snd-display #__line__ ";length of list: ~A" (length lst)))
 	    (if (not (= (length str) 6)) (snd-display #__line__ ";length of string: ~A" (length str)))
 	    (if (not (= (length sd) 10)) (snd-display #__line__ ";length of sound-data: ~A" (length sd)))
-	    (if (not (= (length hsh) 100)) (snd-display #__line__ ";length of hash-table: ~A" (length hsh)))
+	    (if (not (>= (length hsh) 100)) (snd-display #__line__ ";length of hash-table: ~A" (length hsh)))
 	    (if (not (= (length fr) 2)) (snd-display #__line__ ";length of frame: ~A" (length fr)))
 	    (if (not (= (length mx) 2)) (snd-display #__line__ ";length of mixer: ~A" (length mx)))
 	    (if (not (= (length mxv) 3)) (snd-display #__line__ ";length of mix: ~A" (length mxv)))

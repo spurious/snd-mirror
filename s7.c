@@ -20209,12 +20209,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->args == small_int(1))
 	sc->value = g_vector(sc, sc->value);
       else sc->value = g_multivector(sc, (int)s7_integer(sc->args), sc->value);
-
-      if (sc->code != sc->NIL)
-	{
-	  /* code = shared num to be assigned */
-	}
-
       pop_stack(sc);
       goto START;
 
@@ -25824,10 +25818,7 @@ s7_scheme *s7_init(void)
  *
  *  envs as debugging aids: how to show file/line tags as well
  *  and perhaps store cur-code?  __form__ ? make a cartoon of entire state? [need only the pointer, not a copy]
- *
  * this would be good in ws too -- a way to show which notes are active at a given point in the graph
- *  [c-macros in Snd/sndlib -- even with-sound!]
- *  [runtime call picture -- like the old days...]
  *
  * a way to walk up the stack?  (current-environment 10) [20-Jan-10] 11.2
  * and a way to jump into the error environment, cerror 
@@ -25841,7 +25832,6 @@ s7_scheme *s7_init(void)
  *
  * :allow-other-keys in lambda*
  * PERHAPS: pretty-printing in the REPL or in format (~W in CL I think)
- * lint 
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
  * generic append? slice? member? null?
  * TODO: test reverse c_object
