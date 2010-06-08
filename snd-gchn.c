@@ -920,7 +920,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 	  cw[W_gzy] = NULL;
 	}
       if ((GTK_IS_VPANED(cw[W_main_window])) || (GTK_IS_HPANED(cw[W_main_window])))
-	gtk_paned_set_position(GTK_PANED(cw[W_main_window]), 0);
+	gtk_paned_set_position(GTK_PANED(cw[W_main_window]), 1);  /* 0 is a no-op here, leaving the edit history pane open */
       gtk_widget_show(cw[W_graph_window]);
 
     }

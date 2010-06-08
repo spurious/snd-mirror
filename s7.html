@@ -360,12 +360,26 @@ nan.0
 </pre>
 <p>But what is <code>(/ 1.0 0.0)</code>?  s7 gives a "division by zero" error here, and also in <code>(/ 1 0)</code>.
 Guile returns +inf.0 in the first case, which seems reasonable, but a "numerical overflow" error in the second.
-(Is it a bug that Guile thinks <code>(/ 1.0 -0.0)</code> is -inf.0?)
 Slightly weirder is <code>(expt 0.0 0+i)</code>.  Currently s7 returns 0.0, Guile returns +nan.0+nan.0i,
 Clisp and sbcl throw an error.  Everybody agrees that <code>(expt 0 0)</code> is 1, and Guile (alone) thinks
 that <code>(expt 0.0 0.0)</code> is 1.0.  But <code>(expt 0 0.0)</code> and <code>(expt 0.0 0)</code> return different
 results in Guile (1 and 1.0), both are 0.0 in s7, the first is an error in Clisp, but the second returns 1,
-and so on &mdash; what a mess!
+and so on &mdash; what a mess!  This mess was made a lot worse than it needs to be when the IEEE decreed that
+0.0 equals -0.0, but that they produce different results in nearly every use!  
+</p>
+<pre>
+scheme@(guile-user)&gt; (= -0.0 0.0)
+#t
+scheme@(guile-user)&gt; (negative? -0.0)
+#f
+scheme@(guile-user)&gt; (= (/ 1.0 0.0) (/ 1.0 -0.0))
+#f
+scheme@(guile-user)&gt;  (&lt; (/ 1.0 -0.0) -1e100 1e100 (/ 1.0 0.0))
+#t
+</pre>
+<p>
+How can they be equal? In s7, the sign
+of -0.0 is ignored, and they really are equal.
 </p>
 
 </blockquote>
@@ -3035,15 +3049,11 @@ doesn't accidentally step on it.
 <p>Other odd corners:
 </p>
 <pre>
-(length (string #\null))
-(string=? "" (string #\null))
+(length (string #\null)) but (string=? "" (string #\null))
 (eq? (char-ci<? #\_ #\e) (char<? #\_ #\e))
-(format #f "~F" 1/3)
-(cond (1) (=>))
 (case 1 ((1) #t) ((1) #f))
 (string->symbol "")
 (let ('1) quote)
-(positive? (/ most-positive-fixnum most-negative-fixnum)) -- can use the latter as ratio denom if it's not a bignum
 </pre>
 -->
 

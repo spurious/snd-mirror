@@ -36972,6 +36972,7 @@ who says the continuation has to restart the map from the top?
 (num-test (* -1234000000.0+2.71828182845905i) -1234000000.0+2.71828182845905i)
 (num-test (/ -1234000000.0+2.71828182845905i) -0.00000000081037-0.0i)
 
+;;; some of these do not follow IEEE 754
 (let ((val1 (catch #t (lambda () (/ 1.0 0.0)) (lambda args 'error)))
       (val2 (catch #t (lambda () (/ 1.0 -0.0)) (lambda args 'error))))
   (test (equal? val1 val2) #t))
@@ -37002,6 +37003,8 @@ who says the continuation has to restart the map from the top?
 (let ((val1 (catch #t (lambda () (negative? 0.0)) (lambda args 'error)))
       (val2 (catch #t (lambda () (negative? -0.0)) (lambda args 'error))))
   (test (equal? val1 val2) #t))
+(test (< (real-part (log 0.0)) (real-part (- (log 0.0)))) #t)
+
 
 (num-test (+ 1 1) 2)
 (num-test (- 1 1) 0)
