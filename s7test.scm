@@ -8426,6 +8426,10 @@
       ))
 (test (let ((add (lambda (a b) (values (+ a 1) (+ b 1))))) (+ 1 (add 2 3))) 8)
 
+;;; in guile: (map (lambda (x) (values x (+ x 1))) (list 1 2 3)) returns (#<values (1 2)> #<values (2 3)> #<values (3 4)>)
+;;; but s7 thinks it's an error
+
+
 
 
 ;;; -------- let, let*, letrec --------
@@ -9679,6 +9683,59 @@
 
 (test (object->string ((lambda (x) `(,(reverse x) ',x)) '(`(,(reverse x) ',x) (x) lambda)))
       "((lambda #2=(x) #1=(cons (reverse x) (cons (cons (quote quote) (cons x (quote ()))) (quote ())))) (quote (#1# #2# lambda)))")
+
+
+#|
+;;; from bug-guile
+(define k #f)
+(define result #f)
+(define results '())
+(set! result (map (lambda (x)
+                    (if x x (call/cc (lambda (c)
+                                       (set! k c)
+                                       1))))
+                  '(#t #f)))
+(set! results (cons result results))
+(write results)
+(newline)
+(if (< (cadr result) 5)
+    (k (+ 1 (cadr result))))
+(newline)
+
+the claim is that this should return 
+
+((#t 1))
+((#t 2) (#t 1))
+((#t 3) (#t 2) (#t 1))
+((#t 4) (#t 3) (#t 2) (#t 1))
+((#t 5) (#t 4) (#t 3) (#t 2) (#t 1))
+
+but I think that depends on how we interpret the sequence of top-level statements.
+The test should be written:
+
+(let* ((k #f)
+       (results '()))
+  (let ((result (map (lambda (x)
+		       (if x x (call/cc (lambda (c)
+					  (set! k c)
+					  1))))
+		     '(#t #f))))
+    (set! results (cons result results))
+    (write results)
+    (newline)
+    (if (< (cadr result) 5)
+	(k (+ 1 (cadr result))))
+    (newline)))
+
+and then s7 is not following r6rs because it stops at 
+
+((#t 1))
+((1 . #1=(#t 2)) #1#)
+
+saying cadr is not a number. I don't think this example is correct in any case --
+who says the continuation has to restart the map from the top?
+|#
+
 
 
 
@@ -36915,15 +36972,36 @@
 (num-test (* -1234000000.0+2.71828182845905i) -1234000000.0+2.71828182845905i)
 (num-test (/ -1234000000.0+2.71828182845905i) -0.00000000081037-0.0i)
 
-(let ((err? (catch #t (lambda () (/ 1.0 0.0)) (lambda args 'err!))))
-  (if (number? err?)
-      (begin
-	(test (infinite? (/ 1.0 0.0)) #t)
-	(test (positive? (/ 1.0 0.0)) #t)
-	(test (infinite? (/ -1.0 0.0)) #t)
-	(test (negative? (/ -1.0 0.0)) #t)
-	(test (infinite? (/ 1.0 -0.0)) #t)
-	(test (positive? (/ 1.0 -0.0)) #t))))
+(let ((val1 (catch #t (lambda () (/ 1.0 0.0)) (lambda args 'error)))
+      (val2 (catch #t (lambda () (/ 1.0 -0.0)) (lambda args 'error))))
+  (test (equal? val1 val2) #t))
+(let ((val1 (catch #t (lambda () (log 0.0)) (lambda args 'error)))
+      (val2 (catch #t (lambda () (log -0.0)) (lambda args 'error))))
+  (test (equal? val1 val2) #t))
+(let ((val1 (catch #t (lambda () (* 1.0 0.0)) (lambda args 'error)))
+      (val2 (catch #t (lambda () (* 1.0 -0.0)) (lambda args 'error))))
+  (test (equal? val1 val2) #t))
+(let ((val1 (catch #t (lambda () (expt 0.0 0.0)) (lambda args 'error)))
+      (val2 (catch #t (lambda () (expt 0.0 -0.0)) (lambda args 'error))))
+  (test (equal? val1 val2) #t))
+(let ((val1 (catch #t (lambda () (expt 2.0 0.0)) (lambda args 'error)))
+      (val2 (catch #t (lambda () (expt 2.0 -0.0)) (lambda args 'error))))
+  (test (equal? val1 val2) #t))
+(let ((val1 (catch #t (lambda () (floor 0.0)) (lambda args 'error)))
+      (val2 (catch #t (lambda () (floor -0.0)) (lambda args 'error))))
+  (test (equal? val1 val2) #t))
+(let ((val1 (catch #t (lambda () (ceiling 0.0)) (lambda args 'error)))
+      (val2 (catch #t (lambda () (ceiling -0.0)) (lambda args 'error))))
+  (test (equal? val1 val2) #t))
+(let ((val1 (catch #t (lambda () (angle 0.0)) (lambda args 'error)))
+      (val2 (catch #t (lambda () (angle -0.0)) (lambda args 'error))))
+  (test (equal? val1 val2) #t))
+(let ((val1 (catch #t (lambda () (make-polar 1.0 0.0)) (lambda args 'error)))
+      (val2 (catch #t (lambda () (make-polar 1.0 -0.0)) (lambda args 'error))))
+  (test (equal? val1 val2) #t))
+(let ((val1 (catch #t (lambda () (negative? 0.0)) (lambda args 'error)))
+      (val2 (catch #t (lambda () (negative? -0.0)) (lambda args 'error))))
+  (test (equal? val1 val2) #t))
 
 (num-test (+ 1 1) 2)
 (num-test (- 1 1) 0)
@@ -47810,6 +47888,9 @@
 (if with-bignums (num-test (/ most-negative-fixnum) -1/9223372036854775808))
 (if with-bignums (num-test (- most-negative-fixnum) 9223372036854775808))
 (if with-bignums (num-test (* 1/256 1/256 1/256 1/256 1/256 1/256 1/256 -1/128) (/ most-negative-fixnum)))
+(num-test (/ most-negative-fixnum most-negative-fixnum) 1)
+(num-test (/ most-negative-fixnum most-negative-fixnum 2) 1/2)
+(num-test (/ -9223372036854775808 -9223372036854775808 4) 1/4)
 
 (let ()
   (define (2^n? x) (zero? (logand x (- x 1))))
