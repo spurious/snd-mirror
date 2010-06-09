@@ -1,40 +1,38 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                           [599]
-;;;  test 1: defaults                            [1144]
-;;;  test 2: headers                             [1346]
-;;;  test 3: variables                           [1663]
-;;;  test 4: sndlib                              [2288]
-;;;  test 5: simple overall checks               [4961]
-;;;  test 6: vcts                                [14029]
-;;;  test 7: colors                              [14430]
-;;;  test 8: clm                                 [14937]
-;;;  test 9: mix                                 [26835]
-;;;  test 10: marks                              [29076]
-;;;  test 11: dialogs                            [30058]
-;;;  test 12: extensions                         [30270]
-;;;  test 13: menus, edit lists, hooks, etc      [30541]
-;;;  test 14: all together now                   [32142]
-;;;  test 15: chan-local vars                    [33061]
-;;;  test 16: regularized funcs                  [34861]
-;;;  test 17: dialogs and graphics               [39812]
-;;;  test 18: enved                              [39904]
-;;;  test 19: save and restore                   [39923]
-;;;  test 20: transforms                         [41699]
-;;;  test 21: new stuff                          [43889]
-;;;  test 22: run                                [45895]
-;;;  test 23: with-sound                         [52764]
-;;;  test 25: X/Xt/Xm                            [57348]
-;;;  test 26: Gtk                                [61066]
-;;;  test 27: GL                                 [64541]
-;;;  test 28: errors                             [64665]
-;;;  test all done                               [67140]
-;;;  test the end                                [67326]
-
-;;; TODO: get rid of all the obsolete stuff! 
+;;;  test 0: constants                           [620]
+;;;  test 1: defaults                            [1165]
+;;;  test 2: headers                             [1367]
+;;;  test 3: variables                           [1682]
+;;;  test 4: sndlib                              [2306]
+;;;  test 5: simple overall checks               [5034]
+;;;  test 6: vcts                                [14049]
+;;;  test 7: colors                              [14459]
+;;;  test 8: clm                                 [14966]
+;;;  test 9: mix                                 [26812]
+;;;  test 10: marks                              [29041]
+;;;  test 11: dialogs                            [30014]
+;;;  test 12: extensions                         [30225]
+;;;  test 13: menus, edit lists, hooks, etc      [30494]
+;;;  test 14: all together now                   [32091]
+;;;  test 15: chan-local vars                    [32988]
+;;;  test 16: regularized funcs                  [34788]
+;;;  test 17: dialogs and graphics               [39737]
+;;;  test 18: enved                              [39829]
+;;;  test 19: save and restore                   [39848]
+;;;  test 20: transforms                         [41622]
+;;;  test 21: new stuff                          [43809]
+;;;  test 22: run                                [45805]
+;;;  test 23: with-sound                         [52699]
+;;;  test 25: X/Xt/Xm                            [57203]
+;;;  test 26: Gtk                                [60921]
+;;;  test 27: GL                                 [64397]
+;;;  test 28: errors                             [64521]
+;;;  test all done                               [66987]
+;;;  test the end                                [67172]
 
 (define tests 1)
-(define keep-going #t)
+(define keep-going #f)
 (define all-args #f)
 (define test-at-random 0)
 					;(show-ptree 1)
@@ -609,8 +607,6 @@
 
 
 (if (not (provided? 'snd-snd9.scm)) (load "snd9.scm")) ; make-ppolar|zpolar, various generators later moved to generators.scm
-(if (not (provided? 'snd-snd10.scm)) (load "snd10.scm"))
-(if (not (provided? 'snd-snd11.scm)) (load "snd11.scm"))
 
 (define default-file-buffer-size 65536)
 (set! (mus-file-buffer-size) default-file-buffer-size)
@@ -52849,33 +52845,6 @@ EDITS: 1
 	   (len (mus-sound-frames tempfile)))
       (set-samples 0 (- len 1) tempfile #f #f #t "step-src" 0 #f #t)))
   
-  (define (check-with-mix num dur total-dur amp opts calls old-date chkmx)
-    (let ((ind (find-sound "test.snd")))
-      (if (not (sound? ind)) (snd-display #__line__ ";with-mix (~A) init: no test.snd?" num))
-      (if (and chkmx (fneq (maxamp ind) amp)) (snd-display #__line__ ";with-mix (~A) maxamp: ~A (~A)" num (maxamp ind) amp))
-      (if (not (file-exists? "with-mix.snd")) (snd-display #__line__ ";with-mix (~A) output doesn't exist" num))
-      (let ((mx (mus-sound-maxamp "with-mix.snd"))
-	    (date (mus-sound-write-date "with-mix.snd"))
-	    (duration (mus-sound-duration "with-mix.snd")))
-	(if (fneq duration dur) (snd-display #__line__ ";with-mix (~A) dur: ~A ~A" num dur duration))
-	(if (fneq total-dur (/ (frames ind) (srate ind))) 
-	    (snd-display #__line__ ";with-mix (~A) total dur: ~A ~A" num total-dur (/ (frames ind) (srate ind))))
-	(if (and old-date
-		 (> (- date old-date) 1)) ; these can be off by some amount in Linux
-	    (snd-display #__line__ ";with-mix (~A) rewrote output?: ~A ~A ~A" num (- date old-date)
-			 (strftime "%d-%b-%g %H:%M:%S" (localtime old-date))
-			 (strftime "%d-%b-%g %H:%M:%S" (localtime date))))
-	(if (and chkmx (or (not mx) (fneq (cadr mx) amp))) (snd-display #__line__ ";with-mix sndf (~A) maxamp: ~A (~A)" num mx amp))
-	(let ((header-str (mus-sound-comment "with-mix.snd")))
-	  (if (not (string? header-str)) (snd-display #__line__ ";with-mix (~A) comment unwritten?: ~A" num (mus-sound-comment "with-mix.snd")))
-	  (let ((header (eval-string header-str)))
-	    (if (not (list? header)) (snd-display #__line__ ";with-mix (~A) comment: ~A -> ~A" num header-str header))
-	    (if (or (not (string=? (car header) opts))
-		    (not (string=? (cadr header) calls)))
-		(snd-display #__line__ ";with-mix (~A) header values: ~A" num header))))
-	(close-sound ind)
-	date)))
-  
   (define* (clm-reverb-sound reverb-amount reverb (reverb-data '()) snd)
     (let ((output (snd-tempnam))
 	  (revout (snd-tempnam))
@@ -54155,24 +54124,6 @@ EDITS: 1
       (if (sound? ind) (close-sound ind) (snd-display #__line__ ";cnvrev no output?")))
     
     
-    (if (file-exists? "with-mix.snd") (delete-file "with-mix.snd"))
-    (with-sound () (with-mix () "with-mix" 0 (fm-violin 0 .1 440 .1)))
-    (let ((old-date (check-with-mix 1 .1 .1 .1 "()" "((fm-violin 0 0.1 440 0.1))" #f #t)))
-      (with-sound () (with-mix () "with-mix" 0 (fm-violin 0 .1 440 .1)))
-      (check-with-mix 1 .1 .1 .1 "()" "((fm-violin 0 0.1 440 0.1))" old-date #t))
-    
-    (if (file-exists? "with-mix.snd") (delete-file "with-mix.snd"))
-    (with-sound () (fm-violin 0 .1 660 .1) (with-mix () "with-mix" .1 (fm-violin 0 .1 440 .1)))
-    (let ((old-date (check-with-mix 2 .1 .2 .1 "()" "((fm-violin 0 0.1 440 0.1))" #f #t)))
-      (with-sound () (fm-violin 0 .1 660 .1) (with-mix () "with-mix" .1 (fm-violin 0 .1 440 .1)))
-      (check-with-mix 2 .1 .2 .1 "()" "((fm-violin 0 0.1 440 0.1))" old-date #t))
-    
-    (if (file-exists? "with-mix.snd") (delete-file "with-mix.snd"))
-    (with-sound () (fm-violin 0 .1 660 .1) (with-mix () "with-mix" .1 (fm-violin 0 .1 440 .1) (fm-violin .1 .1 660 .2)))
-    (let ((old-date (check-with-mix 3 .2 .3 .2 "()" "((fm-violin 0 0.1 440 0.1) (fm-violin 0.1 0.1 660 0.2))" #f #t)))
-      (with-sound () (fm-violin 0 .1 660 .1) (with-mix () "with-mix" .1 (fm-violin 0 .1 440 .1) (fm-violin .1 .1 660 .2)))
-      (check-with-mix 3 .2 .3 .2 "()" "((fm-violin 0 0.1 440 0.1) (fm-violin 0.1 0.1 660 0.2))" old-date #t))
-    
     (with-sound ()
 		(sound-let ((temp-1 () (fm-violin 0 1 440 .1))
 			    (temp-2 () (fm-violin 0 2 660 .1 :base 32.0)
@@ -54184,36 +54135,6 @@ EDITS: 1
       (if (or (> (maxamp ind) .2) (< (maxamp ind) .15))  (snd-display #__line__ ";with-mix+sound-lets maxamp: ~A" (maxamp ind)))
       (if (fneq 3.0 (/ (frames ind) (srate ind))) (snd-display #__line__ ";with-sound+sound-lets dur: ~A" (/ (frames ind) (srate ind))))
       (close-sound ind))
-    
-    (if (file-exists? "with-mix.snd") (delete-file "with-mix.snd"))
-    (with-sound ()
-		(with-mix () "with-mix" 0
-			  (sound-let ((tmp () (fm-violin 0 1 440 .1))) (mus-mix *output* tmp 0))))
-    (let ((old-date (check-with-mix 4 1 1 .1 "()" "((sound-let ((tmp () (fm-violin 0 1 440 0.1))) (mus-mix *output* tmp 0)))" #f #t)))
-      (with-sound ()
-		  (with-mix () "with-mix" 0
-			    (sound-let ((tmp () (fm-violin 0 1 440 .1))) (mus-mix *output* tmp 0))))
-      (check-with-mix 4 1 1 .1 "()" "((sound-let ((tmp () (fm-violin 0 1 440 0.1))) (mus-mix *output* tmp 0)))" old-date #t))
-    
-    (if (file-exists? "with-mix.snd") (delete-file "with-mix.snd"))
-    (with-sound (:channels 2) (fm-violin 0 .1 440 .1 :degree 0) (with-mix () "with-mix" 0 (fm-violin 0 .1 550 .3 :degree 90)))
-    (let ((ind (find-sound "test.snd")))
-      (if (or (fneq (maxamp ind 0) .1)
-	      (fneq (maxamp ind 1) .3))
-	  (snd-display #__line__ ";with-mix stereo: ~A" (maxamp ind #t)))
-      (if (not (= (mus-sound-chans "with-mix.snd") 2)) (snd-display #__line__ ";with-mix stereo out: ~A" (mus-sound-chans "with-mix.snd"))))
-    (let ((old-date (mus-sound-write-date "with-mix.snd")))
-      (with-sound (:channels 2) (fm-violin 0 .1 440 .1 :degree 0) (with-mix () "with-mix" 0 (fm-violin 0 .1 550 .3 :degree 90)))
-      (if (not (= (mus-sound-write-date "with-mix.snd") old-date)) 
-	  (snd-display #__line__ ";stereo with-mix dates: ~A ~A" old-date (mus-sound-write-date "with-mix.snd"))))
-    (let ((ind (find-sound "test.snd")))
-      (close-sound ind))
-    
-    (if (file-exists? "with-mix.snd") (delete-file "with-mix.snd"))
-    (with-sound (:reverb jc-reverb) (fm-violin 0 .1 440 .1) (with-mix () "with-mix" 0 (fm-violin 0 .1 550 .3)))
-    (let ((old-date (check-with-mix 6 .1 1.1 .398 "()" "((fm-violin 0 0.1 550 0.3))" #f #f)))
-      (with-sound (:reverb jc-reverb) (fm-violin 0 .1 440 .1) (with-mix () "with-mix" 0 (fm-violin 0 .1 550 .3)))
-      (check-with-mix 6 .1 1.1 .398 "()" "((fm-violin 0 0.1 550 0.3))" old-date #f))
     
     (with-sound (:srate 44100 :play #f) (bigbird 0 2 60 0 .5 '(0 0 1 1) '(0 0 1 1 2 1 3 0) '(1 1 2 1 3 1 4 1 5 1 6 1 7 1 8 1 9 1 10 1)))
     (let ((ind (or (find-sound "test.snd") (open-sound "oboe.snd"))))

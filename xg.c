@@ -48807,7 +48807,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_HAS_GRAB);
   DEFINE_INTEGER(GTK_RC_STYLE);
   DEFINE_INTEGER(GTK_COMPOSITE_CHILD);
-  DEFINE_INTEGER(GTK_NO_REPARENT);
   DEFINE_INTEGER(GTK_APP_PAINTABLE);
   DEFINE_INTEGER(GTK_RECEIVES_DEFAULT);
   DEFINE_INTEGER(GTK_DOUBLE_BUFFERED);
@@ -49776,7 +49775,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("04-Jun-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("09-Jun-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

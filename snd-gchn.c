@@ -1,5 +1,6 @@
 #include "snd.h"
 
+/* TODO: it would be nice if the "peaks" display did not flash */
 
 enum {
     W_main_window,
@@ -596,12 +597,14 @@ static gboolean real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer dat
   bool theirs;
   int x, y;
   GdkModifierType key_state;
+
   gdk_window_get_pointer(EVENT_WINDOW(ev), &x, &y, &key_state);
   key_state = (GdkModifierType)(EVENT_STATE(ev));
   keysym = EVENT_KEYVAL(ev);
   theirs = key_press_callback(cp, x, y, EVENT_STATE(ev), keysym);
   if (theirs) ss->sgx->graph_is_active = false;
   g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
+
   return(true);
 }
 
@@ -613,11 +616,13 @@ gboolean graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer data)
   bool theirs;
   int x, y;
   GdkModifierType key_state;
+
   gdk_window_get_pointer(EVENT_WINDOW(ev), &x, &y, &key_state);
   key_state = (GdkModifierType)(EVENT_STATE(ev));
   keysym = EVENT_KEYVAL(ev);
   theirs = key_press_callback(cp, x, y, EVENT_STATE(ev), keysym);
   if (theirs) ss->sgx->graph_is_active = true;
+
   return(true);
 }
  
@@ -694,6 +699,7 @@ static void channel_drag_watcher(GtkWidget *w, const char *filename, int x, int 
   snd_info *sp;
   chan_info *cp;
   float seconds;
+
   data = get_user_int_data(G_OBJECT(w));
   chn = UNPACK_CHANNEL(data);
   snd = UNPACK_SOUND(data);
@@ -732,11 +738,13 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
   axis_context *cax;
   state_context *sx;
   bool make_widgets, need_extra_scrollbars;
+
   make_widgets = ((sp->chans[channel]) == NULL);
   sp->chans[channel] = make_chan_info(sp->chans[channel], channel, sp);
   cp = sp->chans[channel];
   cx = cp->cgx;
   cx->current_hourglass = -1;
+
   if (cx->chan_widgets == NULL) 
     {
       cw = (GtkWidget **)calloc(NUM_CHAN_WIDGETS, sizeof(GtkWidget *));
@@ -1140,6 +1148,7 @@ void cleanup_cw(chan_info *cp)
     {
       chan_context *cx;
       GtkWidget **cw;
+
       free_fft_pix(cp);
       cx = cp->cgx;
 #if USE_CAIRO
@@ -1147,13 +1156,16 @@ void cleanup_cw(chan_info *cp)
       free_sono_cursor_pix(cp);
       cx->progress_pct = -1.0;
 #endif
+
       if (EDIT_HISTORY_LIST(cp)) 
 	{
 	  slist_clear(EDIT_HISTORY_LIST(cp));
 	  gtk_paned_set_position(GTK_PANED(cx->chan_widgets[W_main_window]), 1);
 	}
+
       cx->selected = false;
       cw = cx->chan_widgets;
+
       if (cw)
 	{
 	  if (cw[W_w])
@@ -1197,6 +1209,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		    channel_set_mix_tags_erased(sp->chans[i]);
 		}
 	    }
+
 	  if (old_style == CHANNELS_SUPERIMPOSED)
 	    {
 	      syncb(sp, sp->previous_sync);
@@ -1214,6 +1227,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  for (i = 1; i < sp->nchans; i++) CURSOR(sp->chans[i]) = CURSOR(sp->chans[0]);
 		}
 	    }
+
 	  height[0] = widget_height(w_snd_pane(sp)) - control_panel_height(sp);
 	  if (old_style == CHANNELS_SEPARATE)
 	    {
@@ -1265,6 +1279,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  if (sp->selected_channel > 0) color_selected_channel(sp);
 		}
 	    }
+
 	  if ((new_style == CHANNELS_COMBINED) && 
 	      (sp->selected_channel > 0)) 
 	    color_selected_channel(sp);

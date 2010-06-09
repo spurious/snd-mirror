@@ -8230,8 +8230,34 @@ In code:
 -->
 
 
-<p>I wonder if minimizing the peak amplitude maximizes the length of the curve.
+<p>I wonder if minimizing the peak amplitude maximizes the length of the curve.  (In the 57 harmonics case, the cosine
+version (peak=57) has a length of 485.45, whereas the sqrt version (peak=7.547) has a length of 909.52).
 </p>
+
+<!--
+  (let* ((samples 10000)
+	 (incr (/ (* 2 pi) samples))
+	 (len 0.0)
+	 (last-sum 0.0)
+	 (sum 0.0)
+	 (mx 0.0))
+    (run
+      (do ((i 0 (+ i 1))
+	   (x 0.0 (+ x incr)))
+	  ((= i samples))
+	(set! sum 0.0)
+	(do ((k 1 (+ k 1)))
+	    ((= k 58))
+	  (let ((val (sin (+ (* k x) (* pi (phases (- k 1)))))))
+	    (set! sum (+ sum val))))
+	  
+	;(set! len (+ len (abs (- sum last-sum))))
+	(set! len (+ len (sqrt (+ (* (- sum last-sum) (- sum last-sum)) (* incr incr)))))
+	(set! last-sum sum)
+	(if (< mx (abs sum)) (set! mx (abs sum)))))
+      (list len mx))
+-->
+
 <p>
 We can also use <a href="#withmixedsound">with-mixed-sound</a> to watch the waveforms "in real-time":
 </p>

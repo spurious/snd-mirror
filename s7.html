@@ -66,7 +66,7 @@ as an "inexact integer".
 
 <p>This file assumes you know about Scheme and all its problems,
 and want a quick tour of where s7 is different.  (Well, it was "quick" once upon a time,
-but I find the dark corners fascinating, and can't resist adding one garrulous scolium
+but I find the dark corners fascinating, and can't resist adding one garrulous scholium
 after another).
 </p>
 
@@ -314,9 +314,9 @@ represented in the current floating point implementation.
 "integer?" and friends would refer instead to the programmer's point of view.
 That is, if the programmer uses 1 or if the thing prints as 1, it is the integer 1, whereas 1.0
 means floating point (not integer!).
-But then what would inexact-&gt;exact do? 
 And to keep exactness in view, we'd have
 to monitor which operations introduce inexactness &mdash; a kind of interval arithmetic.
+But then what would inexact-&gt;exact do? 
 I may remove the exact/inexact distinction from s7.  The only useful part is
 exact-&gt;inexact, but perhaps it would be better named "-&gt;float"?  Then if 
 you have to run code that uses those guys:

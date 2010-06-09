@@ -3370,7 +3370,7 @@
 (CINT "GTK_RC_STYLE" "GtkWidgetFlags")
 ;;; this is also defined in gtkrc.h
 (CINT "GTK_COMPOSITE_CHILD" "GtkWidgetFlags")
-(CINT "GTK_NO_REPARENT" "GtkWidgetFlags")
+;;; out 2.90.2 (CINT "GTK_NO_REPARENT" "GtkWidgetFlags")
 (CINT "GTK_APP_PAINTABLE" "GtkWidgetFlags")
 (CINT "GTK_RECEIVES_DEFAULT" "GtkWidgetFlags")
 (CINT "GTK_DOUBLE_BUFFERED" "GtkWidgetFlags")
@@ -7110,6 +7110,7 @@
 (CFNC-2901 "GdkDragAction gdk_drag_context_get_suggested_action GdkDragContext* context")
 (CFNC-2901 "GdkDragAction gdk_drag_context_get_action GdkDragContext* context")
 (CFNC-2901 "GdkImageType gdk_image_get_image_type GdkImage* image")
+;;; there's also get_action and get_selected something -- forgot to add it
 |#
 (CFNC-2901 "void gdk_event_set_device GdkEvent* event GdkDevice* device")
 (CFNC-2901 "GdkDevice* gdk_event_get_device GdkEvent* event")
@@ -7159,3 +7160,10 @@
 
 (CINT-2901 "GTK_MULTIDEVICE" "GtkWidgetFlags")
 
+#|
+;;; 2.90.2
+(CFNC-2902 "gint gtk_icon_view_get_item_row GtkIconView* icon_view GtkTreePath* path")
+(CFNC-2902 "gint gtk_icon_view_get_item_column GtkIconView* icon_view GtkTreePath* path")
+(CFNC-2902 "void gtk_statusbar_remove_all GtkStatusbar* statusbar guint	context_id")
+(CFNC-2902 "gboolean gtk_window_has_group GtkWindow* window")
+|#
