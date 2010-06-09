@@ -11362,6 +11362,8 @@ static s7_pointer g_is_null(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_null "(null? obj) returns #t if obj is the empty list"
   return(make_boolean(sc, car(args) == sc->NIL));
+
+  /* perhaps: has_structure and length == 0 */
 }
 
 
@@ -25901,8 +25903,6 @@ s7_scheme *s7_init(void)
  *       perhaps use procedure-source?
  *
  * :allow-other-keys in lambda* ("lambda!")
- * PERHAPS: pretty-printing in the REPL or in format (~W in CL I think)
- *   *formats* ? -- like *#readers* where '(char func) is ~char -> (func next-arg)
  *
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
  * generic append? member? null?

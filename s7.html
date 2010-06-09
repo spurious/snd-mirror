@@ -41,18 +41,19 @@ s7.h, that want only to disappear into someone else's source tree.  There are no
 no run-time init files, and no configuration scripts.
 It can be built as a stand-alone
 interpreter (see below).  s7test.scm is a regression test for s7.
-If you're running s7 in a context
-that has getenv, file-exists?, and system (Snd for example), you can use s7-slib-init.scm
-to gain easy access to slib (this init file is named "s7.init" in the slib distribution).
 A tarball is available: ftp://ccrma-ftp.stanford.edu/pub/Lisp/s7.tar.gz.  
 </p>
 <p>
 s7 is the default extension language of Snd and sndlib (http://ccrma.stanford.edu/software/snd/),
 and Rick Taube's Common Music (commonmusic at sourceforge).  There are X, Motif, Gtk, and openGL bindings
 in libxm (in the Snd tarball, or at ftp://ccrma-ftp.stanford.edu/pub/Lisp/libxm.tar.gz).
+If you're running s7 in a context
+that has getenv, file-exists?, and system (Snd for example), you can use s7-slib-init.scm
+to gain easy access to slib (this init file is named "s7.init" in the slib distribution).
 </p>
 
-<p>Although it is a descendent of tinyScheme, s7 is closest as a Scheme dialect to Guile 1.8 (r5rs).
+<p>Although it is a descendent of tinyScheme, s7 is closest as a Scheme dialect to Guile 1.8.
+I believe it is compatible with r5rs:  you can just ignore all the additions discussed in this file.
 It has full continuations, dynamic-wind, sort!, 
 error handling, ratios and complex numbers,
 define-macro, keywords, hash-tables, block comments,
@@ -64,7 +65,9 @@ as an "inexact integer".
 </p>
 
 <p>This file assumes you know about Scheme and all its problems,
-and want a quick tour of where s7 is different. 
+and want a quick tour of where s7 is different.  (Well, it was "quick" once upon a time,
+but I find the dark corners fascinating, and can't resist adding one garrulous scolium
+after another).
 </p>
 
 <ul>
@@ -365,7 +368,7 @@ Clisp and sbcl throw an error.  Everybody agrees that <code>(expt 0 0)</code> is
 that <code>(expt 0.0 0.0)</code> is 1.0.  But <code>(expt 0 0.0)</code> and <code>(expt 0.0 0)</code> return different
 results in Guile (1 and 1.0), both are 0.0 in s7, the first is an error in Clisp, but the second returns 1,
 and so on &mdash; what a mess!  This mess was made a lot worse than it needs to be when the IEEE decreed that
-0.0 equals -0.0, but that they produce different results in nearly every use!  
+0.0 equals -0.0 (so we can't tell them apart), but that they produce different results in nearly every use!  
 </p>
 <pre>
 scheme@(guile-user)&gt; (= -0.0 0.0)
@@ -1608,7 +1611,7 @@ We can write an FFT procedure that accepts lists or vectors:
 <p>By my count, around 20 of the standard scheme built-in functions are already generic in the sense
 that they accept arguments of many types (leaving aside numbers).  s7 extends that list with map, for-each, reverse,
 and length, and adds a few others such as copy, fill!, sort!, object-&gt;string, and continuation?.
-I may add similar extensions for append, member, and null?.
+I may add similar extensions to append. 
 </p>
 
 </blockquote>
@@ -1917,7 +1920,8 @@ in Guile just returns 1!  In Clisp, both cases return 1.  This causes total conf
 </td></tr></table>
 </dt>
 
-<dd><p><b>call-with-exit</b> is call/cc without the ability to return (an escape or goto, "call/exit"?).
+<dd><p><b>call-with-exit</b> is call/cc without the ability to jump back into the original context,
+similar to "return" in C, or "goto".
 </p>
 <pre>
 (define (find-first-even-number arg)
@@ -2045,7 +2049,8 @@ floats in the "~X" case.  So in s7,
 &gt; (format #f "~X" 21/4)
 "15/4"
 </pre>
-<p>That is, the output choice matches the argument.
+<p>That is, the output choice matches the argument.  A case that came up in the Guile mailing lists is:
+<code>(format #f "~F" 1/3)</code>.  s7 currently returns "1/3", but Clisp returns "0.33333334".
 </p>
 
 </blockquote>
@@ -2412,7 +2417,7 @@ rather than a boolean.  I haven't run into a case where it matters.  If procedur
 a procedure-with-setter, it returns 6 values, rather than 3.  The first 3 describe the "getter"
 and the following 3 describe the "setter".  I wonder if it would be more consistent to use the
 name "procedure/setter" in place of "make-procedure-with-setter".  (Its syntax is closer to
-vector than make-vector, for example).
+vector than make-vector, for example).  (Similarly "call/exit" rather than "call-with-exit").
 </p>
 
 </blockquote>
