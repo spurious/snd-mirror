@@ -1,6 +1,6 @@
 ;;; inf-snd.el -- Inferior Snd Process (Ruby/Scheme/Forth)
 
-;; Copyright (c) 2002--2009 Michael Scholz <mike@fth-devel.net>
+;; Copyright (c) 2002--2010 Michael Scholz <mi-scholz@users.sourceforge.net>
 ;; All rights reserved.
 ;; 
 ;; Redistribution and use in source and binary forms, with or without
@@ -213,13 +213,14 @@
 ;;;; The inf-snd-ruby-mode, inf-snd-scheme-mode, and inf-snd-forth-mode.
 
 (require 'comint)
-(require 'ruby-mode)
 (require 'scheme)
-(require 'inf-ruby)
 (require 'cmuscheme)
-(require 'forth-mode "gforth")
+;; (require FEATURE &optional FILENAME NOERROR)
+(require 'inf-ruby   "inf-ruby"  t)
+(require 'ruby-mode  "ruby-mode" t)
+(require 'forth-mode "gforth"    t)
 
-(defconst inf-snd-version "30-June-2009"
+(defconst inf-snd-version "05-May-2010"
   "Version date of inf-snd.el.")
 
 ;; snd-ruby

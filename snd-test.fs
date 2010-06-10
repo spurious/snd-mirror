@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Thu Apr 15 16:15:47 CEST 2010
+\ Changed: Wed Jun 09 23:58:15 CEST 2010
 
 \ Commentary:
 \
@@ -105,11 +105,11 @@ listener-prompt        		  value original-prompt
 #f to *clm-verbose*
 #f to *clm-debug*
 
-let: ( -- )
-  file-pwd "/peaks" $+ { dir }
-  dir file-directory? unless dir 0o755 file-mkdir then
-  dir set-peak-env-dir drop
-;let
+\ let: ( -- )
+\   file-pwd "/peaks" $+ { dir }
+\   dir file-directory? unless dir 0o755 file-mkdir then
+\   dir set-peak-env-dir drop
+\ ;let
 
 *clm-search-list* file-pwd array-push to *clm-search-list*
 
@@ -678,34 +678,7 @@ let: ( -- )
   \
   3 0.1 make-vct 100 #f #f #t "" mix-vct drop
   0 set-cursor drop
-  1 #f #f forward-mix { nid }
-  nid mix? false? unless
-    cursor { curs }
-    curs nid mix-position <> if
-      $" 1 forward-mix: %s %s %s?" #( nid curs nid mix-position ) snd-display
-    then
-  else
-    $" 1 forward-mix: not a mix %s?" #( nid ) snd-display
-  then
-  2 #f #f forward-mix { nid1 }
-  nid1 mix? false? unless
-    cursor { curs }
-    curs nid1 mix-position <> if
-      $" 2 forward-mix: m0 %s m1 %s c %s p %s?" #( nid nid1 curs nid mix-position ) snd-display
-    then
-  else
-    $" 2 forward-mix: not a mix %s?" #( nid1 ) snd-display
-  then
-  1 #f #f backward-mix to nid1
-  nid1 mix? false? unless
-    cursor { curs }
-    curs nid1 mix-position <> if
-      $" 1 backward-mix: m0 %s m1 %s c %s p %s?" #( nid nid1 curs nid mix-position ) snd-display
-    then
-  else
-    $" 1 backward-mix: not a mix %s?" #( nid1 ) snd-display
-  then
-  100 #f #f find-mix to nid
+  100 #f #f find-mix { nid }
   nid mix? false? unless
     nid mix-position 100 <> if
       new-index 0 mixes map *key* mix-position end-map { mx-pos }
@@ -3055,8 +3028,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   "/bad/baddy.snd"           <'> save-sound-as          'cannot-save      check-error-tag
   0 1 1234                   <'> transform-sample       'no-such-sound    check-error-tag
   0 1 ind 1234               <'> transform-sample       'no-such-channel  check-error-tag
-  0 100 1234                 <'> samples->sound-data    'no-such-sound    check-error-tag
-  0 100 ind 1234             <'> samples->sound-data    'no-such-channel  check-error-tag
   vct( 0 1 ) "hi" 0 1 0 1 1234     <'> graph            'no-such-sound    check-error-tag
   vct( 0 1 ) "hi" 0 1 0 1 ind 1234 <'> graph            'no-such-channel  check-error-tag
   #f #t set-selection-member? drop

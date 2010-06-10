@@ -8304,6 +8304,8 @@
 (test (define x (lambda ())) 'error)
 					;(test (define 'hi 1) 'error) ; this redefines quote, which maybe isn't an error
 (test (let () (define . 1) 1) 'error)
+(test (let () (define func (do () (#t (lambda (y) 2)))) (func 1)) 2)
+
 
 
 
@@ -9585,6 +9587,19 @@
 	      (call/cc receiver))))
 	(product-list '(1 2 3 0 4 5)))
       0)
+
+(begin
+  (define fact
+    ((lambda (f)
+       ((lambda (u) (u (lambda (x)
+			 (lambda (n) ((f (u x)) n)))))
+	(call/cc (call/cc (call/cc 
+			   (call/cc (call/cc (lambda (x) x))))))))
+     (lambda (f) (lambda (n)
+		   (if (<= n 0) 1 (* n (f (- n 1))))))))
+  (test (map fact '(5 6 7)) '(120 720 5040)))
+
+;; http://okmij.org/ftp/Scheme/callcc-calc-page.html
 
 (test (let ()
 	(define product-list
