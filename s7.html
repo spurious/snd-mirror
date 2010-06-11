@@ -1708,6 +1708,27 @@ equal to a 1-dimensional empty vector.
     #f
 </pre>
 
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>To save on costly parentheses, and make it easier to write generic multidimensional sequence functions,
+you can use this same syntax with lists.</p>
+<pre>
+&gt; (let ((L '((1 2 3) (4 5 6))))
+       (L 1 0))            ; same as (list-ref (list-ref L 1) 0) or ((L 1) 0)
+4
+&gt; (let ((L '(((1 2 3) (4 5 6)) ((7 8 9) (10 11 12))))) 
+       (set! (L 1 0 2) 32) ; same as (list-set! (list-ref (list-ref L 1) 0) 2 32) which is unreadable!
+       L)
+(((1 2 3) (4 5 6)) ((7 8 32) (10 11 12))))
+</pre>
+<p>Or with vectors of vectors, of course:
+</p>
+<pre>
+&gt; (let ((V '#(#(1 2 3) #(4 5 6)))) (V 1 2)) ; same as (vector-ref (vector-ref V 1) 2) or ((V 1) 2)
+6
+</pre>
+
 </blockquote>
 </small>
 </dd>
@@ -2418,10 +2439,23 @@ q
 rather than a boolean.  I haven't run into a case where it matters.  If procedure-arity is passed
 a procedure-with-setter, it returns 6 values, rather than 3.  The first 3 describe the "getter"
 and the following 3 describe the "setter".  I wonder if it would be more consistent to use the
-name "procedure/setter" in place of "make-procedure-with-setter" (and "call/exit" for "call-with-exit").
+name "procedure/setter" in place of "make-procedure-with-setter".
 Its syntax is closer to
 vector than make-vector, for example.  
-Even better: "dilambda": <code>(dilambda (get-args . get-body) (set-args . set-body))</code>.
+Even better: "dilambda":
+</p>
+<pre>
+(define-macro (dilambda getter setter)
+  `(make-procedure-with-setter
+     (lambda ,@getter)
+     (lambda ,@setter)))
+
+(let ((a 32)) 
+  (dilambda (() a) 
+            ((b) (set! a b))))
+</pre>
+
+<p>"bilambda" would mix Latin and Greek (the Romans used "el", not "lambda", according to Wikipedia).
 </p>
 
 </blockquote>

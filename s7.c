@@ -11490,22 +11490,35 @@ static s7_pointer list_ref_1(s7_scheme *sc, s7_pointer lst, s7_pointer ind)
 
 static s7_pointer g_list_ref(s7_scheme *sc, s7_pointer args)
 {
-  #define H_list_ref "(list-ref lst i) returns the i-th element (0-based) of the list"
+  #define H_list_ref "(list-ref lst i ...) returns the i-th element (0-based) of the list"
   
+  /* (let ((L '((1 2 3) (4 5 6)))) (list-ref L 1 2)) */
+
   if (!is_pair(car(args)))
     return(s7_wrong_type_arg_error(sc, "list-ref", 1, car(args), "a pair"));
 
-  return(list_ref_1(sc, car(args), cadr(args)));
+  /*
+    (define (lref L . args) 
+      (if (null? (cdr args))
+          (list-ref L (car args))
+          (apply lref (list-ref L (car args)) (cdr args))))
+  */
+
+  if (cddr(args) == sc->NIL)
+    return(list_ref_1(sc, car(args), cadr(args)));
+  return(g_list_ref(sc, s7_cons(sc, list_ref_1(sc, car(args), cadr(args)), cddr(args))));
 }
 
 
 static s7_pointer g_list_set(s7_scheme *sc, s7_pointer args)
 {
-  #define H_list_set "(list-set! lst i val) sets the i-th element (0-based) of the list to val"
+  #define H_list_set "(list-set! lst i ... val) sets the i-th element (0-based) of the list to val"
   
   int i;
   s7_Int index;
   s7_pointer p;
+
+  /* (let ((L '((1 2 3) (4 5 6)))) (list-set! L 1 2 32) L) */
   
   if (!is_pair(car(args)))
     return(s7_wrong_type_arg_error(sc, "list-set!", 1, car(args), "a pair"));
@@ -11524,7 +11537,9 @@ static s7_pointer g_list_set(s7_scheme *sc, s7_pointer args)
   if (!is_pair(p))
     return(s7_wrong_type_arg_error(sc, "list-set!", i, p, "a proper list"));
   
-  car(p) = caddr(args);
+  if (cdddr(args) == sc->NIL)
+    car(p) = caddr(args);
+  else return(g_list_set(sc, s7_cons(sc, car(p), cddr(args))));
   return(caddr(args));
 }
 
@@ -12535,13 +12550,20 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
       if (!s7_is_integer(car(indices)))
 	return(s7_wrong_type_arg_error(sc, "vector ref index,", 2, car(indices), "an integer"));
 
-      if (cdr(indices) != sc->NIL)                            /* (#(1 2) 1 2) */
-	return(s7_wrong_number_of_args_error(sc, "too many args for vector ref: ~A", indices));
-
       index = s7_integer(car(indices));
       if ((index < 0) ||
 	  (index >= vector_length(vect)))
 	return(s7_out_of_range_error(sc, "vector ref index,", 2, s7_make_integer(sc, index), "should be between 0 and the vector length"));
+      
+      if (cdr(indices) != sc->NIL)                 /* (let ((L '#(#(1 2 3) #(4 5 6)))) (vector-ref L 1 2)) */
+	{
+	  s7_pointer new_vect;
+	  new_vect = vector_element(vect, index);
+	  if (!s7_is_vector(new_vect))             /* (vector-ref #(1) 0 0) */
+	    return(s7_wrong_type_arg_error(sc, "vector-ref", 1, new_vect, "a vector"));
+
+	  return(vector_ref_1(sc, new_vect, cdr(indices))); 
+	}
     }
 
   return(vector_element(vect, index));
@@ -12550,7 +12572,7 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 
 static s7_pointer g_vector_ref(s7_scheme *sc, s7_pointer args)
 {
-  #define H_vector_ref "(vector-ref v i) returns the i-th element of vector v.  If v \
+  #define H_vector_ref "(vector-ref v ... i) returns the i-th element of vector v.  If v \
 is a multidimensional vector, you can also use (vector-ref v ...) where the trailing args \
 are the indices, or omit 'vector-ref': (v ...)."
 
@@ -12565,7 +12587,7 @@ are the indices, or omit 'vector-ref': (v ...)."
 
 static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
 {
-  #define H_vector_set "(vector-set! v i value) sets the i-th element of vector v to value.  If 'v' is \
+  #define H_vector_set "(vector-set! v i ... value) sets the i-th element of vector v to value.  If 'v' is \
 multidimensional you can also use (vector-set! v ... val) where the ellipsis refers to the indices.  You \
 can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this form much easier to read."
 
@@ -12608,13 +12630,14 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
     {
       if (!s7_is_integer(cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "vector-set! index,", 2, cadr(args), "an integer"));
-      if (cdddr(args) != sc->NIL)                            /* (vector-set! #(1 2) 1 2 3) */
-	return(s7_wrong_number_of_args_error(sc, "too many args for vector set: ~A", args));
 
       index = s7_integer(cadr(args));
       if ((index < 0) ||
 	  (index >= vector_length(vec)))
 	return(s7_out_of_range_error(sc, "vector-set! index,", 2, cadr(args), "should be between 0 and the vector length"));
+
+      if (cdddr(args) != sc->NIL)
+	return(g_vector_set(sc, s7_cons(sc, vector_element(vec, index), cddr(args))));
 
       val = caddr(args);
     }
@@ -19015,19 +19038,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	case T_PAIR:                              /* -------- list as applicable object -------- */
-	  if (cdr(sc->args) != sc->NIL)
-	    return(s7_wrong_number_of_args_error(sc, "too many args for list ref (via list as applicable object): ~A", sc->args));
-	  /* 
-	   * I suppose we could take n args here = repeated list-refs
-	   * ((list (list 1 2) 3) 0 0) -> 1 (caar)
-	   */
-	  sc->value = list_ref_1(sc, sc->code, car(sc->args));
+	  if (cdr(sc->args) == sc->NIL)
+	    sc->value = list_ref_1(sc, sc->code, car(sc->args));            /* (L 1) */
+	  else sc->value = g_list_ref(sc, s7_cons(sc, sc->code, sc->args)); /* (L 1 2) */
 	  pop_stack(sc);
 	  goto START;
 
 	case T_HASH_TABLE:                        /* -------- hash-table as applicable object -------- */
-	  if (cdr(sc->args) != sc->NIL)
-	    return(s7_wrong_number_of_args_error(sc, "too many args for hash-table ref (via hash-table as applicable object): ~A", sc->args));
 	  sc->value = s7_hash_table_ref(sc, sc->code, car(sc->args));
 	  pop_stack(sc);
 	  goto START;
@@ -19249,6 +19266,39 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_SET2:
+      /*
+      fprintf(stderr, "set2: %s %s %s\n", 
+	      s7_object_to_c_string(sc, sc->value),
+	      s7_object_to_c_string(sc, sc->args),
+	      s7_object_to_c_string(sc, sc->code));
+      */
+      if (is_pair(sc->value))
+	{
+	  /* (let ((L '((1 2 3)))) (set! ((L 0) 1) 32) L)
+	   * (let ((L '(((1 2 3))))) (set! ((L 0) 0 1) 32) L)
+	   * any deeper nesting was handled already by the first eval:
+	   *   set! looks at its first argument, if it's a symbol, it sets the associated value,
+	   *   if it's a list, it looks at the car of that list to decide which setter to call,
+	   *   if it's a list of lists, it passes the embedded lists to eval, then looks at the
+	   *   car of the result.  
+	   *
+	   * the other args need to be evaluated (but not the list as if it were code):
+	   *   (let ((L '((1 2 3))) (index 1)) (set! ((L 0) index) 32) L)
+	   */
+	  sc->code = s7_cons(sc, sc->LIST_SET, s7_cons(sc, make_list_2(sc, sc->QUOTE, sc->value), s7_append(sc, sc->args, sc->code)));
+	  goto EVAL;
+	}
+
+      if (s7_is_vector(sc->value))
+	{
+	  /* sc->code = s7_cons(sc, sc->VECTOR_SET, s7_cons(sc, make_list_2(sc, sc->QUOTE, sc->value), s7_append(sc, sc->args, sc->code))); */
+
+	  /* vector arg (sc->value) doesn't need to be quoted since eval won't treat it as code */
+
+	  sc->code = s7_cons(sc, sc->VECTOR_SET, s7_cons(sc, sc->value, s7_append(sc, sc->args, sc->code)));
+	  goto EVAL;
+	}
+
       sc->code = s7_cons(sc, s7_cons(sc, sc->value, sc->args), sc->code);
 
       
@@ -19273,10 +19323,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
       if (is_pair(car(sc->code)))                                 /* has accessor */
 	{
+	  /*
+	  fprintf(stderr, "car(code): %s\n", s7_object_to_c_string(sc, car(sc->code)));
+	  */
 	  if (is_pair(caar(sc->code)))
 	    {
+	      /*
+	      fprintf(stderr, "push %s %s\n", 
+		      s7_object_to_c_string(sc, cdar(sc->code)),
+		      s7_object_to_c_string(sc, cdr(sc->code)));
+	      */
 	      push_stack(sc, opcode(OP_SET2), cdar(sc->code), cdr(sc->code));
 	      sc->code = caar(sc->code);
+
+	      /*
+	      fprintf(stderr, "eval %s\n", s7_object_to_c_string(sc, sc->code));
+	      */
 	      goto EVAL;
 	    }
 	  
@@ -25658,8 +25720,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "member",                  g_member,                  2, 0, false, H_member);
   s7_define_function(sc, "append",                  g_append,                  0, 0, true,  H_append);
   s7_define_function(sc, "list",                    g_list,                    0, 0, true,  H_list);
-  s7_define_function(sc, "list-ref",                g_list_ref,                2, 0, false, H_list_ref);
-  s7_define_function(sc, "list-set!",               g_list_set,                3, 0, false, H_list_set);
+  s7_define_function(sc, "list-ref",                g_list_ref,                2, 0, true,  H_list_ref);
+  s7_define_function(sc, "list-set!",               g_list_set,                3, 0, true,  H_list_set);
   s7_define_function(sc, "list-tail",               g_list_tail,               2, 0, false, H_list_tail);
   s7_define_function(sc, "make-list",               g_make_list,               1, 1, false, H_make_list);
 
@@ -25973,28 +26035,32 @@ s7_scheme *s7_init(void)
  * (make-rectangular 1 inf.0) -> 1+infi ??
  *
  *
- * extend the multivector syntax to lists:
- *   (L a b c) = (((L a) b) c)
-
-(define (lref L . args) 
-  (if (null? (cdr args))
-      (list-ref L (car args))
-      (apply lref (list-ref L (car args)) (cdr args))))
-
+ * on multidim syntax:
  * what about list-tail?
  * and hash tables?
- *
 
 (define (href H . args) 
   (if (null? (cdr args))
       (hash-table-ref H (car args))
       (apply href (hash-table-ref H (car args)) (cdr args))))
 
- *
- * and we'd want the corresponding sets.  What is a multistring? n-dim arr of char? read/write syntax?
+ * and we'd want the corresponding set.  What is a multistring? n-dim arr of char? read/write syntax?
  * what about C objects?  (this could be done independent of the object if (C a) can return another C)
+ *
+ * we need T_SLICE for multidim vector slice equivalent to the vector-of-vectors (V ...)
+ *   (no room for mark pointer in s7_cell)
+ * also same syntax for hash-tables
+ *
  *
  * a name for pws: dilambda or bilambda
  * (dilambda ((...) . body1) ((...) . body2))
+
+(define-macro (dilambda getter setter)
+  `(make-procedure-with-setter
+     (lambda ,@getter)
+     (lambda ,@setter)))
+
+ *
+ * should this be built-in?
  */
 
