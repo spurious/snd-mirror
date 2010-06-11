@@ -208,7 +208,7 @@ Other math-related differences between s7 and r5rs:
 <li>"+i" is not considered a number; include the real part.
 <li>modulo, remainder, and quotient take integer, ratio, or real arguments.
 <li>lcm and gcd can take integer or ratio arguments.
-<li>log takes an optional 2nd arg (the base).
+<li>log takes an optional second argument (the base).
 <li>'.' and an exponent can occur in a number in any base.
 <li>rationalize returns a ratio! 
 </ul>
@@ -216,11 +216,14 @@ Other math-related differences between s7 and r5rs:
 &gt; (exact? 1.0)
 #f
 
+&gt; (rational? 1.5)
+#f
+
 &gt; (floor 1.4)
 1
 
-&gt; (rational? 1.5)
-#f
+&gt; (remainder 2.4 1)
+0.4
 
 &gt; (modulo 1.4 1.0)
 0.4
@@ -289,14 +292,15 @@ And then there's:
 #t
 </pre>
 <p>
-When does this matter?  I often need to index into a vector, but the index is inexact.
+When does this matter?  I often need to index into a vector, but the index is a float (a "real" in Scheme-speak: its
+fractional part can be non-zero).
 In standard scheme:
 </p>
 <pre>
 (not-s7-scheme)&gt; (vector-ref #(0) (floor 0.1))
 ERROR: Wrong type (expecting exact integer): 0.0
 </pre>
-<p>Not to worry, I'll use inexact-&gt;exact!
+<p>Not to worry, I'll use inexact-&gt;exact:
 </p>
 <pre>
 (not-s7-scheme)&gt; (inexact-&gt;exact 0.1)
@@ -316,7 +320,7 @@ And to keep exactness in view, we'd have
 to monitor which operations introduce inexactness &mdash; a kind of interval arithmetic.
 But then what would inexact-&gt;exact do? 
 I may remove the exact/inexact distinction from s7.  The only useful part is
-exact-&gt;inexact, but perhaps it would be better named "-&gt;float"?  Then if 
+exact-&gt;inexact, but perhaps a better name would be "float".  Then if 
 you have to run code that uses those guys:
 </p>
 <pre>
@@ -1609,7 +1613,7 @@ We can write an FFT procedure that accepts lists or vectors:
 <p>By my count, around 20 of the standard scheme built-in functions are already generic in the sense
 that they accept arguments of many types (leaving aside numbers).  s7 extends that list with map, for-each, reverse,
 and length, and adds a few others such as copy, fill!, sort!, object-&gt;string, and continuation?.
-I may add similar extensions to append. 
+I may add similar extensions to append (what to do if the argument types are mixed?). 
 </p>
 
 </blockquote>
@@ -1630,7 +1634,7 @@ I may add similar extensions to append.
 <dd><p>
 s7 supports
 vectors with any number of dimensions.  It is here, in particular, that the generalized
-set! stuff shines.  make-vector's 2nd argument can be a list of dimensions, rather than
+set! stuff shines.  make-vector's second argument can be a list of dimensions, rather than
 an integer (the one dimensional case):
 </p>
 <pre>
@@ -1919,7 +1923,7 @@ in Guile just returns 1!  In Clisp, both cases return 1.  This causes total conf
 </dt>
 
 <dd><p><b>call-with-exit</b> is call/cc without the ability to jump back into the original context,
-similar to "return" in C, or "goto".
+similar to "return" in C.
 </p>
 <pre>
 (define (find-first-even-number arg)
@@ -2414,8 +2418,10 @@ q
 rather than a boolean.  I haven't run into a case where it matters.  If procedure-arity is passed
 a procedure-with-setter, it returns 6 values, rather than 3.  The first 3 describe the "getter"
 and the following 3 describe the "setter".  I wonder if it would be more consistent to use the
-name "procedure/setter" in place of "make-procedure-with-setter".  (Its syntax is closer to
-vector than make-vector, for example).  (Similarly "call/exit" rather than "call-with-exit").
+name "procedure/setter" in place of "make-procedure-with-setter" (and "call/exit" for "call-with-exit").
+Its syntax is closer to
+vector than make-vector, for example.  
+Even better: "dilambda": <code>(dilambda (get-args . get-body) (set-args . set-body))</code>.
 </p>
 
 </blockquote>

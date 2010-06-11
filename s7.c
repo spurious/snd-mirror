@@ -2731,6 +2731,7 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
 
   if ((int)(sc->free_heap_top - sc->free_heap) < (int)(sc->heap_size / 4))
     gc(sc);
+
   /* this gc call is needed if there are lots of call/cc's -- by pure bad luck
    *   we can end up hitting the end of the gc free list time after time while
    *   in successive copy_stack's below, causing s7 to core up until it runs out of memory.
@@ -3698,19 +3699,30 @@ static double default_rationalize_error = 1.0e-12;
 
 static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x)
 {
-  if ((s7_is_real(x)) && 
-      (!s7_is_rational(x)))
+  switch (number_type(x))
     {
-      s7_Int numer = 0, denom = 1;
-      s7_Double val;
+    case NUM_INT:
+    case NUM_RATIO:
+      return(x);
 
-      val = s7_real_part(x);
-      if ((isinf(val)) || (isnan(val)))
-	return(s7_wrong_type_arg_error(sc, "inexact->exact", 1, x, "a normal real"));
+    case NUM_REAL:
+    case NUM_REAL2:
+      {
+	s7_Int numer = 0, denom = 1;
+	s7_Double val;
 
-      if (c_rationalize(val, default_rationalize_error, &numer, &denom))
-	return(s7_make_ratio(sc, numer, denom));
+	val = s7_real_part(x);
+	if ((isinf(val)) || (isnan(val)))
+	  return(s7_wrong_type_arg_error(sc, "inexact->exact", 1, x, "a normal real"));
+
+	if (c_rationalize(val, default_rationalize_error, &numer, &denom))
+	  return(s7_make_ratio(sc, numer, denom));
+      }
+
+    default:
+      return(s7_wrong_type_arg_error(sc, "inexact->exact", 1, x, "a real"));
     }
+
   return(x);
 }
 
@@ -5311,6 +5323,8 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   s7_Double f;
 
+  /* (angle inf+infi) -> 0.78539816339745 ? */
+
   x = car(args);
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "angle", 0, x, "a number"));
@@ -5612,6 +5626,8 @@ static s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
 {
   #define H_atan "(atan z) returns atan(z)"
   s7_pointer x, y;
+
+  /* TODO: (atan inf.0 inf.0) -> 0.78539816339745, and (atan inf.0 -inf.0) -> 2.3561944901923 (etc) */
 
   x = car(args);
   if (!is_pair(cdr(args)))
@@ -5965,12 +5981,15 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 
       if (isnan(x)) return(n);
       if (isnan(y)) return(pw);
+      /* TODO: something is wrong here, (expt nan.0 inf.0) -> 0 (etc) (I think this is big_expt not g_expt) */
       if (y == 0.0) return(real_one);
 
       if ((x > 0.0) ||
 	  ((y - floor(y)) < 1.0e-16))
 	return(s7_make_real(sc, pow(x, y)));
     }
+
+  /* what about inf/nan complex cases? (expt +inf.0 -inf.0) currently return 0.0 ? */
 
   return(s7_from_c_complex(sc, cpow(s7_complex(n), s7_complex(pw))));
 }
@@ -6097,7 +6116,7 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
       }
 
     default: 
-      if (isnan(real(number(x)))) return(x);
+      if (isnan(real(number(x)))) return(x);  /* should this return an error (also in the inf cases)? */
       return(s7_make_integer(sc, (s7_Int)round_per_R5RS(real(number(x))))); 
     }
 }
@@ -6809,6 +6828,8 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
   if (s7_is_zero(cadr(args)))
     return(division_by_zero_error(sc, "quotient", args));
 
+  /* TODO: if either is inf or nan, return nan? (same for remainder) */
+
   return(s7_make_integer(sc, quotient(number(car(args)), number(cadr(args)))));
 }
 
@@ -7220,6 +7241,8 @@ static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
   int i, type_a, type_b;
   s7_pointer x;
   s7_num_t a, b;
+
+  /* TODO: (>= nan.0 inf.0) returns #t, but in Guile it's #f (and others similar) */
   
   if (!s7_is_real(car(args)))
     return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", 1, car(args), "a real"));
@@ -7393,6 +7416,8 @@ static s7_pointer g_imag_part(s7_scheme *sc, s7_pointer args)
   if (!s7_is_number(p))
     return(s7_wrong_type_arg_error(sc, "imag-part", 0, p, "a number"));
 
+  /* currently (imag-part nan.0) -> 0.0 ? it's true but maybe confusing */
+
   switch (number_type(p))
     {
     case NUM_INT:   
@@ -7545,8 +7570,8 @@ static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
 {
   #define H_inexact_to_exact "(inexact->exact num) converts num to an exact number; (inexact->exact 1.5) = 3/2"
   
-  if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "inexact->exact", 0, car(args), "a number"));
+  if (!s7_is_real(car(args)))
+    return(s7_wrong_type_arg_error(sc, "inexact->exact", 0, car(args), "a real number"));
 
   return(inexact_to_exact(sc, car(args)));
 }
@@ -18824,7 +18849,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_MACRO:
 	  /* sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); */
 	  NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
-	  
+
 	  /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
 
 	  /* (defmacro hi (a b) `(+ ,a ,b)) */
@@ -25905,10 +25930,9 @@ s7_scheme *s7_init(void)
  * :allow-other-keys in lambda* ("lambda!")
  *
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
- * generic append? member? null?
- *   (member #\a "hiasd") (member 1 #(2 .30)) [(member table 'a) as key? seems pointless]
- *   (null? "") (null? #()) (null? #3d())     [(null? table) if no entries?]
+ * generic append?
  *   (append "hi" "ho") (append #(1) #(2))    [(append table1 table] = new table with both? what about collisions?]
+ *   what about mixed cases -- what is the result type?
  *
  *
  * PERHAPS: method lists for c_objects
@@ -25933,5 +25957,44 @@ s7_scheme *s7_init(void)
  * A "class" in this case is define-record (for the local fields and type) + a list of methods and a methods accessor.
  * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
  * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
+ *
+ *
+ * (quotient -1 nan.0) -> -9223372036854775808
+ * (min -1 nan.0) -> nan.0 ??
+ * (max -1 nan.0) -> nan.0 ??
+ * (round inf.0) -> -9223372036854775808
+ * (ceiling inf.0) -> -9223372036854775808
+ * (expt -infnani -1) -> 0.0
+ * (expt -inf.0 -infnani) -> 0.0
+ * (expt -1 inf+infi) -> 0.0
+ * (expt -1 inf.0) [nan]
+ * (expt 1.0 nan.0) -> 1.000E0
+ * (atan -inf.0 -inf.0) -> -2.3561944901923
+ * (make-rectangular 1 inf.0) -> 1+infi ??
+ *
+ *
+ * extend the multivector syntax to lists:
+ *   (L a b c) = (((L a) b) c)
+
+(define (lref L . args) 
+  (if (null? (cdr args))
+      (list-ref L (car args))
+      (apply lref (list-ref L (car args)) (cdr args))))
+
+ * what about list-tail?
+ * and hash tables?
+ *
+
+(define (href H . args) 
+  (if (null? (cdr args))
+      (hash-table-ref H (car args))
+      (apply href (hash-table-ref H (car args)) (cdr args))))
+
+ *
+ * and we'd want the corresponding sets.  What is a multistring? n-dim arr of char? read/write syntax?
+ * what about C objects?  (this could be done independent of the object if (C a) can return another C)
+ *
+ * a name for pws: dilambda or bilambda
+ * (dilambda ((...) . body1) ((...) . body2))
  */
 

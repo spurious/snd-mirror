@@ -6692,6 +6692,7 @@
 (test (if "" 2 3) 2)
 (test (eq? (if #f #f) (if #f #f)) #t) ; I assume there's only one #<unspecified>!
 (test (if . (1 2)) 2)
+(test (if (if #f #f) #f #t) #f)
 
 (test (let ((a #t) (b #f) (c #t) (d #f)) (if (if (if (if d d c) d b) d a) 'a 'd)) 'a)
 (test (let ((a #t) (b #f) (c #t) (d #f)) (if a (if b (if c (if d d c) c) 'b) 'a)) 'b)
@@ -8992,6 +8993,40 @@
 ;;;
 ;;; some of these were originally from Al Petrovsky, Scott G Miller, Matthias Radestock, J H Brown, Dorai Sitaram, 
 ;;;   and probably others.
+
+(let ((calls (make-vector 3 #f))
+      (travels (make-vector 5 0))
+      (ctr 0))
+  (set! (travels 0) (+ (travels 0) 1))
+  (call/cc (lambda (c0) (set! (calls 0) c0)))
+  (set! (travels 1) (+ (travels 1) 1))
+  (call/cc (lambda (c1) (set! (calls 1) c1)))
+  (set! (travels 2) (+ (travels 2) 1))
+  (call/cc (lambda (c2) (set! (calls 2) c2)))
+  (set! (travels 3) (+ (travels 3) 1))
+  (let ((ctr1 ctr))
+    (set! ctr (+ ctr1 1))
+    (if (< ctr1 3)
+	((calls ctr1) ctr1)))
+  (set! (travels 4) (+ (travels 4) 1))
+  (test travels #(1 2 3 4 1)))
+
+(let ((calls (make-vector 5 #f))
+      (travels (make-vector 5 0))
+      (ctr2 0))
+  (let loop ((ctr 0))
+    (if (< ctr 3)
+	(begin
+	  (set! (travels ctr) (+ (travels ctr) 1))
+	  (call/cc (lambda (c0) (set! (calls ctr) c0)))
+	  (loop (+ ctr 1)))))
+  (set! (travels 3) (+ (travels 3) 1))
+  (let ((ctr1 ctr2))
+    (set! ctr2 (+ ctr1 1))
+    (if (< ctr1 3)
+	((calls ctr1) ctr1)))
+  (set! (travels 4) (+ (travels 4) 1))
+  (test travels #(1 2 3 4 1)))
 
 (let* ((next-leaf-generator (lambda (obj eot)
 			      (letrec ((return #f)
@@ -22923,6 +22958,21 @@ who says the continuation has to restart the map from the top?
 (test (cos 1.0+23.0i 1.0+23.0i) 'error)
 (test (cos 0 1) 'error)
 
+;; these are from the error analysis package from ETH, Gaston H. Gonnet
+(num-test (cos -1.79424124483688191e-11) 9.999999999999999999998390349177663098196E-1)
+(num-test (sin 80143857.0000000149) 1.283143758817470627530994988383551176295E-10)
+(num-test (sqrt 3.63861067050296029e-308) 1.907514264822929257351751954551699751189E-154)
+(num-test (tan 10526671570.5) 1.140653720398103887405511659009364634384E12)
+
+(let* ((x (* #x1.6000022202b1076a (expt 2 -58))) 
+       (a (expt (- 1.01 x) (- 1.01 x))) 
+       (b (expt x (- 1.01 (expt x (- 1.01 x)))))) 
+  (num-test a 1.010100503341741589854787064753636627742E0)
+  (num-test b 3.201463978607038931337314838029261023486E-18)
+  (num-test x 4.770489999999999999978271189676737354422E-18)
+  (num-test (+ a b -1.01) 1.005033417415841744668463594232356924E-4)
+  (test (positive? (+ a b -1.01)) #t))
+
 
 
 ;; -------- tan
@@ -27679,6 +27729,8 @@ who says the continuation has to restart the map from the top?
 (num-test (sqrt 0.00000001-1234000000.0i) 24839.48469674844091-24839.48469674844091i)
 (num-test (sqrt -0.00000001-1234000000.0i) 24839.48469674844091-24839.48469674844091i)
 (num-test (sqrt 1.0+0.0i) 1.0)
+(num-test (sqrt -0.0) 0.0)
+(num-test (sqrt 0.0) 0.0)
 (num-test (sqrt -1.0+0.0i) 0.0+1.0i)
 (num-test (sqrt 1.0-0.0i) 1.0)
 (num-test (sqrt -1.0-0.0i) 0.0+1.0i)
@@ -29185,7 +29237,15 @@ who says the continuation has to restart the map from the top?
 (num-test (expt 1 -1234) 1)
 (num-test (expt -0 -0) 1)
 (num-test (expt -0.0 0) 0.0)
+(num-test (expt 0 -0.0) 0.0)
 (num-test (expt 1 -0) 1)
+(num-test (expt 1.0 -0.0) 1.0)
+(num-test (expt 0 -0/4) 1)
+(num-test (expt 0 1/4) 0)
+(num-test (expt 1 most-negative-fixnum) 1)
+(num-test (expt 1 -1e-15) 1)
+(num-test (expt -1 0) 1)
+(num-test (expt -1 -0.0) 1.0)
 
 (num-test (expt 0 1234000000) 0)
 (num-test (expt 0 500029) 0)
@@ -29371,6 +29431,8 @@ who says the continuation has to restart the map from the top?
 (num-test (expt (expt 1 1/123) 123) 1)
 (num-test (expt (expt -1 1/123) 123) -1)
 (num-test (expt -1/8 -3) -512)
+(num-test (expt 1.0 1/2) 1.0)
+(num-test (expt 1.0 -1/2) 1.0)
 
 (num-test (+ 1 (expt 2 54)) 18014398509481985)
 (num-test (- (expt 2 54) 18014398509481984) 0)
@@ -29405,8 +29467,26 @@ who says the continuation has to restart the map from the top?
 
 (num-test (expt 1e-15 0+i) -0.999824358967590-0.018741697229594i)
 (num-test (expt 1e-15 0-i) -0.999824358967590+0.018741697229594i)
+(num-test (expt 1e-15 1e-15) 9.99999999999965461223605089908597123527E-1)
+(num-test (expt 1e-15 -1e-15) 1.000000000000034538776394911284329951335E0)
+(num-test (expt 1e15 1e1) 1e150)
+(num-test (expt 1e15 -1e1) 1e-150)
+(num-test (expt 1e-15 1e100) 0.0)
+(num-test (expt 1e-1 1e2) 1e-100)
+(num-test (expt 1e-1 1e1) 1e-10)
+(num-test (expt .1 -1) 10.0)
+(num-test (expt .1 -2) 100.0)
 
-
+(num-test (expt 1 1+i) 1)
+(num-test (expt 2 1+i) 1.538477802727944253156659987322541402879E0+1.277922552627269602300065822929403568513E0i)
+(num-test (expt 0+i 0+i)     2.078795763507619085469556198349787700342E-1)
+(num-test (expt 0-i 1-i) 0.0-2.078795763507619085469556198349787700342E-1i)
+(num-test (expt 0+i 0-i)     4.810477380965351655473035666703833126401E0)
+(num-test (expt 0-i 1+i) 0.0-4.810477380965351655473035666703833126401E0i)
+(num-test (expt 0+1e-15i 0-1e-15i) 1.0000000000000015707963267943015114538E0+3.453877639491074211979699606989171173842E-14i)
+(num-test (expt 0+i 2) -1.0)
+(num-test (expt (expt 0+i 0.5) 2) 0+i)
+(num-test (expt 1/4 1/2) 1/2)
 
 (test (expt 0 -255) 'error)
 (test (expt 0 (- (expt 2 32))) 'error)
@@ -35583,6 +35663,8 @@ who says the continuation has to restart the map from the top?
   (test (= (* -3.4 inf-) inf+) #t)
 
   (test (= (exact->inexact inf+) inf+) #t)
+  (test (inexact->exact inf+) 'error)
+  (test (inexact->exact nan.0) 'error)
   (test (exact? inf+) #f)
   (test (exact? nan) #f)
   (test (inexact? inf+) #t)
@@ -35978,7 +36060,7 @@ who says the continuation has to restart the map from the top?
 (test (inexact->exact) 'error)
 (test (inexact->exact "hi") 'error)
 (test (inexact->exact 1.0+23.0i 1.0+23.0i) 'error)
-
+(test (inexact->exact 1+i) 'error)
 
 
 
