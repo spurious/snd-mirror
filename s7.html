@@ -1712,21 +1712,29 @@ equal to a 1-dimensional empty vector.
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>To save on costly parentheses, and make it easier to write generic multidimensional sequence functions,
-you can use this same syntax with lists.</p>
+you can use this same syntax with lists.
+</p>
+
 <pre>
 &gt; (let ((L '((1 2 3) (4 5 6))))
-       (L 1 0))            ; same as (list-ref (list-ref L 1) 0) or ((L 1) 0)
+    (L 1 0))              ; same as (list-ref (list-ref L 1) 0) or ((L 1) 0)
 4
 &gt; (let ((L '(((1 2 3) (4 5 6)) ((7 8 9) (10 11 12))))) 
-       (set! (L 1 0 2) 32) ; same as (list-set! (list-ref (list-ref L 1) 0) 2 32) which is unreadable!
-       L)
-(((1 2 3) (4 5 6)) ((7 8 32) (10 11 12))))
+    (set! (L 1 0 2) 32)   ; same as (list-set! (list-ref (list-ref L 1) 0) 2 32) which is unreadable!
+    L)
+(((1 2 3) (4 5 6)) ((7 8 32) (10 11 12)))
 </pre>
+
 <p>Or with vectors of vectors, of course:
 </p>
+
 <pre>
-&gt; (let ((V '#(#(1 2 3) #(4 5 6)))) (V 1 2)) ; same as (vector-ref (vector-ref V 1) 2) or ((V 1) 2)
+&gt; (let ((V '#(#(1 2 3) #(4 5 6)))) 
+    (V 1 2))              ; same as (vector-ref (vector-ref V 1) 2) or ((V 1) 2)
 6
+&gt; (let ((V #2d((1 2 3) (4 5 6))))
+    (V 0))
+#(1 2 3)
 </pre>
 
 </blockquote>

@@ -380,6 +380,7 @@ typedef struct s7_func_t {
 typedef struct s7_vdims_t {
   int ndims;
   s7_Int *dims, *offsets;
+  s7_pointer original;
 } s7_vdims_t;
 
 
@@ -781,6 +782,7 @@ struct s7_scheme {
 #define vector_ndims(p)               ((p)->object.vector.vextra.dim_info->ndims)
 #define vector_offset(p, i)           ((p)->object.vector.vextra.dim_info->offsets[i])
 #define vector_is_multidimensional(p) ((p)->object.vector.vextra.dim_info)
+#define shared_vector(p)              ((p)->object.vector.vextra.dim_info->original)
 
 #define hash_table_length(p)          (p)->object.vector.length
 #define hash_table_elements(p)        (p)->object.vector.elements
@@ -1246,13 +1248,17 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
     case T_VECTOR:
       if (vector_length(a) > 0)
 	{
-	  free(vector_elements(a));
 	  if (vector_is_multidimensional(a))
 	    {
-	      free(a->object.vector.vextra.dim_info->dims);
-	      free(a->object.vector.vextra.dim_info->offsets);
+	      if (shared_vector(a) == sc->F)
+		{
+		  free(a->object.vector.vextra.dim_info->dims);
+		  free(a->object.vector.vextra.dim_info->offsets);
+		  free(vector_elements(a));
+		}
 	      free(a->object.vector.vextra.dim_info);
 	    }
+	  else free(vector_elements(a));
 	}
       break;
 
@@ -1313,7 +1319,9 @@ static void s7_mark_object_1(s7_pointer p)
       break;
 
     case T_VECTOR:
-      mark_vector(p, vector_length(p));
+      if (vector_is_multidimensional(p))
+	S7_MARK(shared_vector(p));
+      else mark_vector(p, vector_length(p));
       return;
 
     case T_HASH_TABLE:
@@ -1668,8 +1676,12 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_VECTOR:
       {
 	s7_Int i;
-	for (i = 0; i < vector_length(x); i++)
-	  s7_remove_from_heap(sc, vector_element(x, i));
+	if ((!vector_is_multidimensional(x)) ||
+	    (shared_vector(x) == sc->F))
+	  {
+	    for (i = 0; i < vector_length(x); i++)
+	      s7_remove_from_heap(sc, vector_element(x, i));
+	  }
       }
       break;
     }
@@ -10603,7 +10615,9 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, sh
     {
       char c;
       c = '#';
-      snprintf(buf, bufsize, "#%dD", vector_ndims(vect));
+      if (vector_ndims(vect) > 1)
+	snprintf(buf, bufsize, "#%dD", vector_ndims(vect));
+      else snprintf(buf, bufsize, "#");
       display_multivector(sc, vect, len, 0, 0, vector_ndims(vect), buf, elements, &c);
       for (i = 0; i < len; i++)
 	free(elements[i]);
@@ -11566,6 +11580,8 @@ static s7_pointer g_list_tail(s7_scheme *sc, s7_pointer args)
   
   if (i < index)
     return(s7_out_of_range_error(sc, "list-tail", 2, cadr(args), "index should be less than list length"));
+
+  /* I guess this would make sense with more than one index, but I'm not sure it's very important */
   
   return(p);
 }
@@ -12283,7 +12299,7 @@ bool s7_is_vector(s7_pointer p)
 }
 
 
-static s7_pointer s7_make_vector_1(s7_scheme *sc, s7_Int len, bool filled) 
+static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled) 
 {
   s7_pointer x;
   if (len > 0)
@@ -12333,7 +12349,7 @@ static s7_pointer s7_make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
 
 s7_pointer s7_make_vector(s7_scheme *sc, s7_Int len)
 {
-  return(s7_make_vector_1(sc, len, true));
+  return(make_vector_1(sc, len, true));
 }
 
 
@@ -12401,9 +12417,6 @@ s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, s7_Int index)
 
 s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_Int index, s7_pointer a) 
 {
-  /* it's possible to have a vector that points to itself:
-   *   (let ((v (make-vector 2))) (vector-set! v 0 v) v)
-   */
   if (index >= vector_length(vec))
     return(s7_out_of_range_error(sc, "vector-set! index,", 2, s7_make_integer(sc, index), "should be less than vector length"));
 
@@ -12466,7 +12479,7 @@ static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_make_and_fill_vector(s7_scheme *sc, s7_Int len, s7_pointer fill)
 {
   s7_pointer vect;
-  vect = s7_make_vector_1(sc, len, false);
+  vect = make_vector_1(sc, len, false);
   s7_vector_fill(sc, vect, fill);
   return(vect);
 }
@@ -12483,7 +12496,7 @@ static s7_pointer g_vector(s7_scheme *sc, s7_pointer args)
       ((len == 0) && (args != sc->NIL)))
     return(s7_wrong_type_arg_error(sc, "vector", 1, car(args), "a proper list"));
   
-  vec = s7_make_vector_1(sc, len, false);
+  vec = make_vector_1(sc, len, false);
   if (len > 0)
     {
       s7_pointer x;
@@ -12515,6 +12528,35 @@ static s7_pointer g_vector_length(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer make_shared_vector(s7_scheme *sc, s7_pointer vect, int skip_dims, s7_Int index)
+{
+  s7_pointer x;
+  s7_vdims_t *v;
+
+  /* (let ((v #2d((1 2) (3 4)))) (v 1)) 
+   * (let ((v (make-vector '(2 3 4) 0))) (v 1 2))
+   * (let ((v #3d(((0 1 2 3) (4 5 6 7) (8 9 10 11)) ((12 13 14 15) (16 17 18 19) (20 21 22 23))))) (v 0 1))
+   */
+
+  NEW_CELL(sc, x);
+  vector_length(x) = 0;
+  vector_elements(x) = NULL;
+  set_type(x, T_VECTOR | T_FINALIZABLE | T_DONT_COPY | T_STRUCTURE);
+
+  v = (s7_vdims_t *)malloc(sizeof(s7_vdims_t));
+ 
+  v->ndims = vector_ndims(vect) - skip_dims;
+  v->dims = (s7_Int *)((vect)->object.vector.vextra.dim_info->dims + skip_dims);
+  v->offsets = (s7_Int *)((vect)->object.vector.vextra.dim_info->offsets + skip_dims);
+  v->original = vect;
+  x->object.vector.vextra.dim_info = v;  
+
+  vector_length(x) = vector_offset(vect, skip_dims - 1);
+  vector_elements(x) = (s7_pointer *)(vector_elements(vect) + index);
+  return(x);
+}
+
+
 static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indices)
 {
   s7_Int index = 0;
@@ -12540,8 +12582,10 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 	}
       if (x != sc->NIL)
 	return(s7_wrong_number_of_args_error(sc, "too many indices for vector ref: ~A", indices));
+
+      /* if not enough indices, return a shared vector covering whatever is left */
       if (i < vector_ndims(vect))
-	return(s7_wrong_number_of_args_error(sc, "not enough indices for vector ref: ~A", indices));
+	return(make_shared_vector(sc, vect, i, index));
     }
   else
     {
@@ -12695,7 +12739,7 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
   if (cdr(args) != sc->NIL) 
     fill = cadr(args);
 
-  vec = s7_make_vector_1(sc, len, false);
+  vec = make_vector_1(sc, len, false);
   if (len > 0) s7_vector_fill(sc, vec, fill);
 
   if ((is_pair(x)) &&
@@ -12710,6 +12754,7 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
       v->ndims = safe_list_length(sc, x);
       v->dims = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
       v->offsets = (s7_Int *)malloc(v->ndims * sizeof(s7_Int));
+      v->original = sc->F;
 
       for (i = 0, y = x; y != sc->NIL; i++, y = cdr(y))
 	v->dims[i] = s7_integer(car(y));
@@ -12873,7 +12918,7 @@ static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect)
 
   if (vector_is_multidimensional(old_vect))
     new_vect = g_make_vector(sc, s7_cons(sc, g_vector_dimensions(sc, s7_cons(sc, old_vect, sc->NIL)), sc->NIL));
-  else new_vect = s7_make_vector_1(sc, len, false);
+  else new_vect = make_vector_1(sc, len, false);
 
   /* here and in vector-fill! we have a problem with bignums -- should new bignums be allocated? (copy_list also) */
 
@@ -13332,7 +13377,16 @@ static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
   if (!s7_is_hash_table(table))
     return(s7_wrong_type_arg_error(sc, "hash-table-ref", 1, table, "a hash-table"));
 
-  return(s7_hash_table_ref(sc, table, cadr(args)));
+  /*
+    (define (href H . args) 
+      (if (null? (cdr args))
+          (hash-table-ref H (car args))
+          (apply href (hash-table-ref H (car args)) (cdr args))))
+  */
+
+  if (cddr(args) == sc->NIL)
+    return(s7_hash_table_ref(sc, table, cadr(args)));
+  return(g_hash_table_ref(sc, s7_cons(sc, s7_hash_table_ref(sc, table, cadr(args)), cddr(args))));
 }
 
 
@@ -13345,6 +13399,10 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
   
   if (!s7_is_hash_table(table))
     return(s7_wrong_type_arg_error(sc, "hash-table-set!", 1, table, "a hash-table"));
+
+  /* how would (set! (ht a b) c) choose the inner table if (ht a b) is not found?
+   *   I'm not sure the multi-index case makes sense here
+   */
 
   return(s7_hash_table_set(sc, table, cadr(args), caddr(args)));
 }
@@ -15017,21 +15075,21 @@ static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shar
 
     if (s7_is_vector(x))
       {
+	/* there's one special case: shared vectors can have 1 dimension but include the dimension info */
+	int x_dims = 1, y_dims = 1, j;
+
 	if (vector_is_multidimensional(x))
-	  {
-	    if (!(vector_is_multidimensional(y)))
+	  x_dims = vector_ndims(x);
+	if (vector_is_multidimensional(y))
+	  y_dims = vector_ndims(y);
+
+	if (x_dims != y_dims)
+	  return(false);
+
+	if (x_dims > 1)
+	  for (j = 0; j < x_dims; j++)
+	    if (vector_dimension(x, j) != vector_dimension(y, j))
 	      return(false);
-	    if (vector_ndims(x) != vector_ndims(y))
-	      return(false);
-	    for (i = 0; i < vector_ndims(x); i++)
-	      if (vector_dimension(x, i) != vector_dimension(y, i))
-		return(false);
-	  }
-	else
-	  {
-	    if (vector_is_multidimensional(y))
-	      return(false);
-	  }
       }
 
     for (i = 0; i < len; i++)
@@ -15238,7 +15296,7 @@ also accepts a string or vector argument."
 	len = vector_length(p);
 	if (vector_is_multidimensional(p))
 	  np = g_make_vector(sc, s7_cons(sc, g_vector_dimensions(sc, s7_cons(sc, p, sc->NIL)), sc->NIL));
-	else np = s7_make_vector_1(sc, len, false);
+	else np = make_vector_1(sc, len, false);
 	if (len > 0)
 	  for (i = 0, j = len - 1; i < len; i++, j--)
 	    vector_element(np, i) = vector_element(p, j);
@@ -19045,7 +19103,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	case T_HASH_TABLE:                        /* -------- hash-table as applicable object -------- */
-	  sc->value = s7_hash_table_ref(sc, sc->code, car(sc->args));
+	  if (cdr(sc->args) == sc->NIL)
+	    sc->value = s7_hash_table_ref(sc, sc->code, car(sc->args));
+	  else sc->value = g_hash_table_ref(sc, s7_cons(sc, sc->code, sc->args));
 	  pop_stack(sc);
 	  goto START;
 
@@ -19280,7 +19340,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   set! looks at its first argument, if it's a symbol, it sets the associated value,
 	   *   if it's a list, it looks at the car of that list to decide which setter to call,
 	   *   if it's a list of lists, it passes the embedded lists to eval, then looks at the
-	   *   car of the result.  
+	   *   car of the result.  This means that we can do crazy things like:
+	   *   (let ((x '(1)) (y '(2))) (set! ((if #t x y) 0) 32) x)
 	   *
 	   * the other args need to be evaluated (but not the list as if it were code):
 	   *   (let ((L '((1 2 3))) (index 1)) (set! ((L 0) index) 32) L)
@@ -19291,10 +19352,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (s7_is_vector(sc->value))
 	{
-	  /* sc->code = s7_cons(sc, sc->VECTOR_SET, s7_cons(sc, make_list_2(sc, sc->QUOTE, sc->value), s7_append(sc, sc->args, sc->code))); */
-
 	  /* vector arg (sc->value) doesn't need to be quoted since eval won't treat it as code */
-
 	  sc->code = s7_cons(sc, sc->VECTOR_SET, s7_cons(sc, sc->value, s7_append(sc, sc->args, sc->code)));
 	  goto EVAL;
 	}
@@ -25748,7 +25806,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "hash-table",              g_hash_table,              0, 0, true,  H_hash_table);
   s7_define_function(sc, "hash-table?",             g_is_hash_table,           1, 0, false, H_is_hash_table);
   s7_define_function(sc, "make-hash-table",         g_make_hash_table,         0, 1, false, H_make_hash_table);
-  s7_define_function(sc, "hash-table-ref",          g_hash_table_ref,          2, 0, false, H_hash_table_ref);
+  s7_define_function(sc, "hash-table-ref",          g_hash_table_ref,          2, 0, true,  H_hash_table_ref);
   s7_define_function(sc, "hash-table-set!",         g_hash_table_set,          3, 0, false, H_hash_table_set);
   s7_define_function(sc, "hash-table-size",         g_hash_table_size,         1, 0, false, H_hash_table_size);
   
@@ -26033,34 +26091,5 @@ s7_scheme *s7_init(void)
  * (expt 1.0 nan.0) -> 1.000E0
  * (atan -inf.0 -inf.0) -> -2.3561944901923
  * (make-rectangular 1 inf.0) -> 1+infi ??
- *
- *
- * on multidim syntax:
- * what about list-tail?
- * and hash tables?
-
-(define (href H . args) 
-  (if (null? (cdr args))
-      (hash-table-ref H (car args))
-      (apply href (hash-table-ref H (car args)) (cdr args))))
-
- * and we'd want the corresponding set.  What is a multistring? n-dim arr of char? read/write syntax?
- * what about C objects?  (this could be done independent of the object if (C a) can return another C)
- *
- * we need T_SLICE for multidim vector slice equivalent to the vector-of-vectors (V ...)
- *   (no room for mark pointer in s7_cell)
- * also same syntax for hash-tables
- *
- *
- * a name for pws: dilambda or bilambda
- * (dilambda ((...) . body1) ((...) . body2))
-
-(define-macro (dilambda getter setter)
-  `(make-procedure-with-setter
-     (lambda ,@getter)
-     (lambda ,@setter)))
-
- *
- * should this be built-in?
  */
 
