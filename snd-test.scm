@@ -2238,7 +2238,7 @@
 		       'select-sound-hook 'selected-channel 'selected-data-color 'selected-graph-color 'selected-sound
 		       'selection-chans 'selection-color 'selection-context 'selection-creates-region
 		       'selection-frames 'selection-maxamp 'selection-maxamp-position 'selection-member? 'selection-position
-		       'selection-srate 'selection? 'send-mozilla
+		       'selection-srate 'selection?
 		       'short-file-name 'show-all-axes 'show-all-axes-unlabelled 'show-bare-x-axis
 		       'show-axes 'show-controls 'show-grid 'show-indices
 		       'show-listener 'show-marks 'show-mix-waveforms 'show-no-axes 'show-selection-transform
@@ -66186,7 +66186,6 @@ EDITS: 1
 		(check-error-tag 'no-such-key (lambda () (key-binding -1 0)))
 		(check-error-tag 'no-such-key (lambda () (key-binding 12 17)))
 		(check-error-tag 'no-such-key (lambda () (key-binding 12 -1)))
-		(if (defined? 'send-mozilla) (check-error-tag 'wrong-type-arg (lambda () (send-mozilla -1))))
 		(check-error-tag 'bad-header (lambda () (file->array (string-append sf-dir "bad_chans.snd") 0 0 123 (make-vct 123))))
 		(check-error-tag 'bad-header (lambda () (make-readin (string-append sf-dir "bad_chans.snd"))))
 		(check-error-tag 'mus-error (lambda () (make-iir-filter 30 (make-vct 3))))

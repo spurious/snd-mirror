@@ -8,7 +8,6 @@ void snd_help_back_to_top(void) {}
 color_t get_in_between_color(color_t fg, color_t bg) {return(0);}
 void set_find_dialog_label(const char *str) {}
 void save_find_dialog_state(FILE *fd) {}
-bool send_mozilla(const char *html_viewer, const char *url) {return(false);}
 void check_menu_labels(int key, int state, bool extended) {}
 int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, widget_t main, fw_button_t arrows, bool with_events) {return(0);}
 int snd_help(const char *subject, const char *help, with_word_wrap_t with_wrap) {fprintf(stdout, "%s", help); return(0);}
@@ -441,7 +440,6 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("(define (" S_make_graph_data " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_menu_widgets " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_reset_listener_cursor ") #f)");
-  XEN_EVAL_C_STRING("(define (" S_send_mozilla " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_sound_widgets " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_view_regions_dialog " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_find_dialog " . args) #f)");
@@ -553,7 +551,6 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("def set_widget_position (a) false end");
   XEN_EVAL_C_STRING("def colormap? (a) false end");
   XEN_EVAL_C_STRING("def in (a, b) false end");
-  XEN_EVAL_C_STRING("def send_mozilla (a) false end");
   XEN_EVAL_C_STRING("def widget_text (a) false end");
 
   XEN_EVAL_C_STRING("def y2position (a) false end");
@@ -703,7 +700,6 @@ void snd_doit(int argc, char **argv)
 : " S_make_graph_data " { a b c } #f ;\n\
 : " S_menu_widgets " { s } #f ;\n\
 : " S_reset_listener_cursor " #f ;\n\
-: " S_send_mozilla " { a } #f ;\n\
 : " S_sound_widgets " { s } #f ;\n\
 : " S_view_regions_dialog " #f ;\n\
 : " S_widget_text " { a } #f ;\n\

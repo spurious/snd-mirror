@@ -2809,7 +2809,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_init_env();
   g_init_find();
 #if (!USE_NO_GUI)
-  g_init_gxutils();
   g_init_gxcolormaps();
   g_init_gxfile();
   g_init_gxdraw();

@@ -37,11 +37,7 @@ and if one is found, and the Snd documentation can be found, calls (html-program
 							 "/usr/doc/snd-10"
 							 #f))))))))))
 		(if dir
-		    (if (or (string=? (html-program) "netscape")
-			    (string=? (html-program) "mozilla")
-			    (string=? (html-program) "firefox"))
-			(send-mozilla (string-append dir "/" n)) ; definition in snd-gxutils.c
-			(system (string-append (html-program) " file:" dir "/" n))))))))
+		    (system (string-append (html-program) " file:" dir "/" n)))))))
     
     (let ((name (if (string? obj) 
 		    obj

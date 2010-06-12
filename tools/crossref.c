@@ -4,7 +4,6 @@
 #include <stddef.h>
 #include <math.h>
 #include <stdio.h>
-#include <errno.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <string.h>
@@ -55,6 +54,7 @@ int add_name(char *name, char *hdr)
   if ((isdigit(name[0])) || (strlen(name) == 1)) return(-1);
 
   if (isupper(name[0])) return(-1);
+
   if ((strcmp(hdr, "snd-nogui0.h") == 0) ||
       (strcmp(hdr, "snd-nogui1.h") == 0))
     nnames[nname_ctr++] = name;
@@ -300,7 +300,6 @@ int main(int argc, char **argv)
   add_file("snd-xmix.c");
   add_file("snd-xrec.c");
   add_file("snd-xenv.c");
-  add_file("snd-gxutils.c");
   add_file("snd-gxbitmaps.c");
   add_file("snd-gxcolormaps.c");
   add_file("snd-xfft.c");
@@ -321,7 +320,6 @@ int main(int argc, char **argv)
   add_file("snd-gmix.c");
   add_file("snd-grec.c");
   add_file("snd-genv.c");
-  add_file("snd-gxutils.c");
   add_file("snd-gfft.c");
   add_file("snd-gprint.c");
   add_file("snd-gfile.c");
@@ -356,7 +354,6 @@ int main(int argc, char **argv)
 	  do 
 	    {
 	      chars = read(fd, input, MAX_CHARS);
-	      /* fprintf(stderr,"%s %d ", headers[i], chars); */
 	      for (j = 0; j < chars; j++)
 		{
 		  if ((in_comment == 0) && (in_curly == 0))
@@ -403,7 +400,7 @@ int main(int argc, char **argv)
 				    }
 				}
 			    }
-			  /* else if (k > 0) fprintf(stderr,"drop %s %d %d\n",curname,in_parens, in_quotes); */
+			  /* else if (k > 0) fprintf(stderr,"drop %s %d %d\n",curname, in_parens, in_quotes); */
 			  k = 0;
 			  if ((input[j] == '/') && (input[j + 1] == '*'))
 			    in_comment = 1;
@@ -506,7 +503,7 @@ int main(int argc, char **argv)
 				in_comment = 1;
 			      else
 				{
-				  if ((input[j] == '#') && (input[j + 1] == 'd'))
+				  if ((input[j] == '#') && ((input[j + 1] == 'd') || (input[j + 1] == 'u')))
 				    {
 				      in_define = 1;
 				      got_macro = false;
@@ -565,7 +562,10 @@ int main(int argc, char **argv)
 					    all_names_counts[m]++;
 					  }
 				      
-				      if (((!got_macro) && (in_define == 1) && (strcmp(curname, "define") != 0)) ||
+				      if (((!got_macro) && 
+					   (in_define == 1) && 
+					   (strcmp(curname, "define") != 0) &&
+					   (strcmp(curname, "undef") != 0)) ||
 					  (in_enum))
 					{
 					  got_macro = true;

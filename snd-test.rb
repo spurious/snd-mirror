@@ -34952,9 +34952,6 @@ def test0228
   check_error_tag(:no_such_key) do key_binding(-1, 0) end
   check_error_tag(:no_such_key) do key_binding(12, 17) end
   check_error_tag(:no_such_key) do key_binding(12, -1) end
-  if defined? send_mozilla
-    check_error_tag(:wrong_type_arg) do send_mozilla(-1) end
-  end
   check_error_tag(:bad_header) do file2array($sf_dir + "bad_chans.snd", 0, 0, 123, Vct.new(123)) end
   check_error_tag(:bad_header) do make_readin($sf_dir + "bad_chans.snd") end
   check_error_tag(:mus_error) do make_iir_filter(30, Vct.new(3)) end

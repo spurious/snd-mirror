@@ -3101,7 +3101,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   "/bad/baddy.snd"           <'> view-sound             'no-such-file     check-error-tag
   0 "/bad/baddy.snd"         <'> make-sampler           'no-such-file     check-error-tag
   1234567 integer->region 0  <'> make-region-sampler    'no-such-region   check-error-tag
-  -1                         <'> send-mozilla           'wrong-type-arg   check-error-tag
   sf-dir "bad_chans.snd" $+ 0 0 123 234 0.0 make-vct <'> file->array 'bad-header check-error-tag
   sf-dir "bad_chans.snd" $+  <'> make-readin            'bad-header       check-error-tag
   30 3 0 make-vct            <'> make-iir-filter        'mus-error        check-error-tag

@@ -493,12 +493,12 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+12-Jun:  removed window-property, window-property-changed-hook, send-mozilla.\n\
 7-June:  Snd 11.6.\n\
 27-May:  removed snd6.scm. added binary-io.scm.\n\
 29-Apr:  Snd 11.5.\n\
 7-Apr:   autoload support via s7's *unbound-variable-hook*.\n\
 20-Mar:  Snd 11.4.\n\
-27-Feb:  the run macro's argument no longer has to be a thunk.\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",
@@ -3530,24 +3530,13 @@ void url_to_html_viewer(const char *url)
       if (program)
 	{
 	  char *path;
-	  int len;
+	  int len, err;
 	  len = strlen(dir_path) + strlen(url) + 256;
 	  path = (char *)calloc(len, sizeof(char));
-	  if ((strcmp(program, "netscape") == 0) ||
-	      (strcmp(program, "mozilla") == 0) ||
-	      (strcmp(program, "firefox") == 0))
-	    {
-	      snprintf(path, len, "%s/%s", dir_path, url);
-	      send_mozilla(program, path);
-	    }
-	  else
-	    {
-	      int err;
-	      snprintf(path, len, "%s file:%s/%s", program, dir_path, url);
-	      err = system(path);
-	      if (err == -1)
-		fprintf(stderr, "can't start %s?", program);
-	    }
+	  snprintf(path, len, "%s file:%s/%s", program, dir_path, url);
+	  err = system(path);
+	  if (err == -1)
+	    fprintf(stderr, "can't start %s?", program);
 	  free(path);
 	}
       free(dir_path);

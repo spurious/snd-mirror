@@ -167,13 +167,6 @@ int regrow_get_pos(void *ur);
 void g_init_gxregion(void);
 
 
-/* -------- snd-gxutils -------- */
-
-bool send_mozilla(const char *html_viewer, const char *url);
-void g_init_gxutils(void);
-
-
-
 /* -------- snd-gxbitmaps.c -------- */
 
 const char **mini_bomb_bits(int n);
