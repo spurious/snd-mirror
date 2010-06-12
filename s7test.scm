@@ -4550,8 +4550,40 @@
   (test (((v 1 1) 0 0) 1 0) 11))
 
 
-;;; TODO: shared vector tests
+(test (let ((V #2D((1 2 3) (4 5 6)))) (V 0)) '#(1 2 3))
+(test (let ((V #2D((1 2 3) (4 5 6)))) (V 1)) '#(4 5 6))
+(test (let ((V #2D((1 2 3) (4 5 6)))) (V 2)) 'error)
+(test (let ((V #2D((1 2 3) (4 5 6)))) (set! (V 1) 0)) 'error)
+(test (let ((V #2D((1 2 3) (4 5 6)))) (let ((V1 (V 0))) (set! (V1 1) 32) V)) '#2D((1 32 3) (4 5 6)))
+(test (let ((V #2D((1 2 3) (4 5 6)))) (let ((V1 (V 0))) (set! (V1 3) 32) V)) 'error)
 
+(test (let ((V '#3D(((1 2 3) (4 5 6)) ((7 8 9) (10 11 12))))) (V 1)) '#2D((7 8 9) (10 11 12)))
+(test (let ((V '#3D(((1 2 3) (4 5 6)) ((7 8 9) (10 11 12))))) (V 1 1)) '#(10 11 12))
+(test (let ((V '#3D(((1 2 3) (4 5 6)) ((7 8 9) (10 11 12))))) (V 0 1)) '#(4 5 6))
+(test (let ((V '#3D(((1 2 3) (4 5 6)) ((7 8 9) (10 11 12))))) (V 2 1)) 'error)
+(test (let ((V '#3D(((1 2 3) (4 5 6)) ((7 8 9) (10 11 12))))) ((V 0) 1)) '#(4 5 6))
+(test (let ((V '#3D(((1 2 3) (4 5 6)) ((7 8 9) (10 11 12))))) (set! (((V 0) 1) 1) 32) V) '#3D(((1 2 3) (4 32 6)) ((7 8 9) (10 11 12))))
+(test (let ((V '#3D(((1 2 3) (4 5 6)) ((7 8 9) (10 11 12))))) (vector-set! V 0 1 1 32) V) '#3D(((1 2 3) (4 32 6)) ((7 8 9) (10 11 12))))
+(test (let ((V '#3D(((1 2 3) (4 5 6)) ((7 8 9) (10 11 12))))) (vector-set! V 1 1 0 32) V) '#3D(((1 2 3) (4 5 6)) ((7 8 9) (32 11 12))))
+(test (let ((V '#3D(((1 2 3) (4 5 6)) ((7 8 9) (10 11 12))))) (vector-length (V 1))) 6)
+(test (let ((V '#3D(((1 2 3) (4 5 6)) ((7 8 9) (10 11 12))))) (vector-dimensions (V 1))) '(2 3))
+(test (let ((V '#3D(((1 2 3) (4 5 6)) ((7 8 9) (10 11 12))))) (vector-length (V 0 1))) 3)
+(test (let ((V '#3D(((1 2 3) (4 5 6)) ((7 8 9) (10 11 12))))) (vector-dimensions (V 0 1))) '(3))
+(test (let ((V '#3D(((1 2 3) (4 5 6)) ((7 8 9) (10 11 12)))) (one 1) (zero 0)) 
+	(let ((V1 (V one zero))
+	      (sum 0))
+	  (for-each (lambda (n) (set! sum (+ sum n))) V1)
+	  sum))
+      24) ; 7 8 9
+(test (let ((V '#3D(((1 2 3) (4 5 6)) ((7 8 9) (10 11 12)))) (two 2) (one 1) (zero 0)) 
+	(let ((V10 (V one zero))
+	      (V00 (V zero zero))
+	      (V01 (V zero one))
+	      (V11 (V one one))
+	      (sum 0))
+	  (for-each (lambda (n0 n1 n2 n3) (set! sum (+ sum n0 n1 n2 n3))) V00 V01 V10 V11)
+	  sum))
+      78)
 
 
 
@@ -35971,6 +36003,11 @@ who says the continuation has to restart the map from the top?
   (test (rationalize 178978.5 inf-) 0)
   (test (rationalize 178978.5 complex-inf-) 'error)
   (test (rationalize 178987.5 nan) 'error)
+
+  (test (quotient 1 nan) 'error)
+  (test (quotient nan 1) 'error)
+  (test (remainder 1 nan) 'error)
+  (test (remainder nan 1) 'error)
 
   (for-each
    (lambda (op)

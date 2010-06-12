@@ -16383,6 +16383,7 @@ static void watch_for_mus_error_in_run(ss_watcher_reason_t reason, void *ignore)
 static s7_pointer eval_ptree_to_xen(ptree *pt)
 {
   s7_pointer result = scheme_false;
+  int gc_loc;
 
   if ((saw_mus_error == 2) && (last_ptree) && (last_ptree == last_error_ptree))
     mus_run_free_ptree(last_ptree);
@@ -16397,11 +16398,14 @@ static s7_pointer eval_ptree_to_xen(ptree *pt)
   ss->cg_seen = false;
 #endif
   result = xen_value_to_xen(pt, pt->result);
+  gc_loc = s7_gc_protect(s7, result);
+
   mus_run_free_ptree(pt);
 
   last_ptree = NULL;
   saw_mus_error = 0;
 
+  s7_gc_unprotect_at(s7, gc_loc);
   return(result);
 }
 

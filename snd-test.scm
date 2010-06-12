@@ -52687,6 +52687,21 @@ EDITS: 1
 	(if (fneq (run (lambda () (maxamp reg))) .02139) (snd-display #__line__ ";maxamp of region: ~A" (maxamp reg)))
 	)
       (close-sound snd))
+
+    (let* ((size (* 128 1024))
+	   (v1 (make-vector size 0.0))
+	   (v2 (make-vector size 0.0))
+	   (sum 0.0))
+      (run
+       (do ((i 0 (+ i 1)))
+	   ((= i size))
+	 (set! (v1 i) (- (random 2.0) 1.0))
+	 (set! (v2 i) (- (random 2.0) 1.0)))
+       (do ((i 0 (+ i 1)))
+	   ((= i size) sum)
+	 (set! sum (+ sum (* (v1 i) (v2 i))))))
+      (if (= sum 0.0)
+	  (snd-display ";run -> sum vectors: ~A" sum)))
     
     ))
 

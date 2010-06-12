@@ -215,31 +215,22 @@ Other math-related differences between s7 and r5rs:
 <pre>
 &gt; (exact? 1.0)
 #f
-
 &gt; (rational? 1.5)
 #f
-
 &gt; (floor 1.4)
 1
-
 &gt; (remainder 2.4 1)
 0.4
-
 &gt; (modulo 1.4 1.0)
 0.4
-
 &gt; (lcm 3/4 1/6)
 3/2
-
 &gt; (log 8 2)
 3
-
 &gt; (number-&gt;string 0.5 2)
 "0.1"
-
 &gt; (string-&gt;number "0.1" 2)
 0.5
-
 &gt; (rationalize 1.5)
 3/2
 </pre>
@@ -1737,6 +1728,17 @@ you can use this same syntax with lists.
 #(1 2 3)
 </pre>
 
+<p>There's one difference between a vector-of-vectors and a multidimensional vector:
+in the latter case, you can't clobber one of the inner vectors. 
+</p>
+
+<pre>
+&gt; (let ((V '#(#(1 2 3) #(4 5 6)))) (set! (V 1) 32) V)
+#(#(1 2 3) 32)
+&gt; (let ((V #2d((1 2 3) (4 5 6)))) (set! (V 1) 32) V)
+;not enough args for vector-set!: (#2D((1 2 3) (4 5 6)) 1 32)
+</pre>
+
 </blockquote>
 </small>
 </dd>
@@ -3194,11 +3196,11 @@ guile 1.9.5 after compilation: 10.5
   (<em class=red>run</em>
    (do ((i 0 (+ i 1)))
        ((= i size))
-     (vector-set! v1 i (- (random 2.0) 1.0))
-     (vector-set! v2 i (- (random 2.0) 1.0)))
+     (set! (v1 i) (- (random 2.0) 1.0))
+     (set! (v2 i) (- (random 2.0) 1.0)))
    (do ((i 0 (+ i 1)))
        ((= i size) sum)
-     (set! sum (+ sum (* (vector-ref v1 i) (vector-ref v2 i)))))))
+     (set! sum (+ sum (* (v1 i) (v2 i)))))))
 </pre>
 <p>With run, this takes .092 seconds on my old machine; without run, it takes 1.94 seconds.
 </p>

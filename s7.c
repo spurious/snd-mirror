@@ -1777,17 +1777,6 @@ static void increase_stack_size(s7_scheme *sc)
 
 /* -------------------------------- symbols -------------------------------- */
 
-static s7_Int hash_table_hash(const char *key, s7_Int table_size) 
-{ 
-  /* I tried several other hash functions, but they gave about the same incidence of collisions */
-  unsigned long long int hashed = 0; 
-  const char *c; 
-  for (c = key; *c; c++) 
-    hashed = *c + hashed * 37;
-  return(hashed % table_size); 
-} 
-
-
 static int symbol_table_hash(const char *key, int table_size) 
 { 
   unsigned int hashed = 0;
@@ -5639,7 +5628,7 @@ static s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
   #define H_atan "(atan z) returns atan(z)"
   s7_pointer x, y;
 
-  /* TODO: (atan inf.0 inf.0) -> 0.78539816339745, and (atan inf.0 -inf.0) -> 2.3561944901923 (etc) */
+  /* currently (atan inf.0 inf.0) -> 0.78539816339745, and (atan inf.0 -inf.0) -> 2.3561944901923 (etc) */
 
   x = car(args);
   if (!is_pair(cdr(args)))
@@ -6833,14 +6822,24 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 {
   #define H_quotient "(quotient x1 x2) returns the integer quotient of x1 and x2; (quotient 4 3) = 1"
   
-  if (!s7_is_real(car(args)))
-    return(s7_wrong_type_arg_error(sc, "quotient", 1, car(args), "a real"));
-  if (!s7_is_real(cadr(args)))
-    return(s7_wrong_type_arg_error(sc, "quotient", 2, cadr(args), "a real"));
-  if (s7_is_zero(cadr(args)))
+  s7_pointer x, y;
+  x = car(args);
+  y = cadr(args);
+
+  if (!s7_is_real(x))
+    return(s7_wrong_type_arg_error(sc, "quotient", 1, x, "a real"));
+  if (!s7_is_real(y))
+    return(s7_wrong_type_arg_error(sc, "quotient", 2, y, "a real"));
+
+  if (s7_is_zero(y))
     return(division_by_zero_error(sc, "quotient", args));
 
-  /* TODO: if either is inf or nan, return nan? (same for remainder) */
+  if ((number_type(x) > NUM_RATIO) &&
+      (isnan(real(number(x)))))
+    return(s7_wrong_type_arg_error(sc, "quotient", 1, x, "a normal real"));
+  if ((number_type(y) > NUM_RATIO) &&
+      (isnan(real(number(y)))))
+    return(s7_wrong_type_arg_error(sc, "quotient", 2, y, "a normal real"));
 
   return(s7_make_integer(sc, quotient(number(car(args)), number(cadr(args)))));
 }
@@ -6864,6 +6863,13 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 
   if (s7_is_zero(bp))
     return(division_by_zero_error(sc, "remainder", args));
+
+  if ((number_type(ap) > NUM_RATIO) &&
+      (isnan(real(number(ap)))))                                 /* (remainder 1 (string->number "nan.0")) */
+    return(s7_wrong_type_arg_error(sc, "remainder", 1, ap, "a normal real"));
+  if ((number_type(bp) > NUM_RATIO) &&
+      (isnan(real(number(bp)))))
+    return(s7_wrong_type_arg_error(sc, "remainder", 2, bp, "a normal real"));
 
   a = number(ap);
   b = number(bp);
@@ -13181,7 +13187,7 @@ static bool hash_key_fits(s7_pointer table, s7_pointer key)
 
 static s7_Int hash_loc(s7_pointer key)
 {
-  s7_Int loc = 0, len;
+  s7_Int loc = 0;
   const char *c; 
 
   switch (type(key))
@@ -26079,9 +26085,6 @@ s7_scheme *s7_init(void)
  * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
  *
  *
- * (quotient -1 nan.0) -> -9223372036854775808
- * (min -1 nan.0) -> nan.0 ??
- * (max -1 nan.0) -> nan.0 ??
  * (round inf.0) -> -9223372036854775808
  * (ceiling inf.0) -> -9223372036854775808
  * (expt -infnani -1) -> 0.0
@@ -26089,7 +26092,5 @@ s7_scheme *s7_init(void)
  * (expt -1 inf+infi) -> 0.0
  * (expt -1 inf.0) [nan]
  * (expt 1.0 nan.0) -> 1.000E0
- * (atan -inf.0 -inf.0) -> -2.3561944901923
- * (make-rectangular 1 inf.0) -> 1+infi ??
  */
 

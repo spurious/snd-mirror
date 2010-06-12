@@ -2,12 +2,7 @@
 
 #if HAVE_X
 
-#if USE_GTK
-  #include <gdk/gdkx.h>
-  #define MAIN_DISPLAY(a) GDK_DISPLAY()
-#endif
-
-#if (!USE_GTK) || (!HAVE_OSX)
+#if (!USE_GTK) && (!HAVE_OSX)
 
 #include <X11/Xatom.h>
 

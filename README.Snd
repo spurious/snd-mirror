@@ -32,8 +32,9 @@ The configure script has a bunch of arguments:
    Graphics:
 
      --with-motif              use Motif (the default, if it exists)
-       --with-static-motif     same, but load Motif statically (for RPM)
+       --with-static-motif     same, but load Motif statically
        --with-motif-prefix     set Motif location (will append lib and include)
+                               on my machine: --with-motif-prefix=/usr/X11R6
   
      --with-gtk                use Gtk+
        --with-builtin-gtkrc    include built-in gtkrc fallbacks (default=yes)
@@ -61,9 +62,9 @@ The configure script has a bunch of arguments:
    Audio:
 
      --with-alsa               use ALSA if possible (the default in Linux)
-       --with-static-alsa      use ALSA statically loaded (for RPM generation)
+       --with-static-alsa      use ALSA statically loaded
 
-     --with-oss                use OSS
+     --with-oss                use OSS (not tested in a long time)
   
      --with-esd                use the enlightened sound daemon, if possible
   
@@ -98,7 +99,6 @@ The configure script has a bunch of arguments:
                                  by built-in code.
   
      --with-snd-as-widget      make Snd a loadable widget, not a standalone program
-     --with-snd-as-pd-external make Snd a loadable pd external, not a standalone program
 
      --with-temp-dir           directory to use for temp files (default: ".")
      --with-save-dir           directory to use for saved-state files (default: ".")
@@ -107,9 +107,6 @@ The configure script has a bunch of arguments:
      --with-shared-sndlib      try to use libsndlib.so (default: no).  The path to
                                  sndlib-config can be specified via SNDLIB_CONFIG_path.
   			         Normally, sndlib is built into Snd at compile time.
-
-     --disable-nls             the gettext (internationalization) support is on
-                                 by default; this turns it off.
 
      --without-gsl, --without-fftw 
                                these turn off the default inclusion of FFTW and the
@@ -135,7 +132,7 @@ are different enough that gl.c can be a pain to build).
 
 
 Version info:
-  if Gtk, then Gtk+ 2.0.0 or later
+  if Gtk, then Gtk+ 2.0.0 or later (preferably 2.7 or later)
   if Motif, then Motif 2.n but not Lesstif
   in Linux, if ALSA, then ALSA 1.0 or later (or any version of OSS)
   if Ruby, Ruby 1.8.0 or later.  
@@ -169,7 +166,7 @@ Forth:  "/home/bil/cl" add-load-path
 ----------------------------------------------------------------
 
 The documentation is in snd.html, extsnd.html, grfsnd.html, sndscm.html,
-sndlib.html, sndclm.html, fm.html, and libxm.html.  There's also a fancier 
+sndlib.html, sndclm.html, fm.html, s7.html, and libxm.html.  There's also a fancier 
 wrapper for the documentation: snd1.html.  A brief change log is in HISTORY.Snd.
 Dave Phillips has written a tutorial: see the tutorial directory.
 
@@ -260,8 +257,7 @@ be helpful to move to the first Snd-related function in the stack
 info locals
 
 This will print out the value of the local variables.  In most cases,
-that's all I need to fix the bug immediately.  On the SGI, the debugger
-is named dbx, and the local variable command is named dump.  If Snd
+that's all I need to fix the bug immediately.  If Snd
 appears to be hung, you can 
 
 gdb snd
@@ -332,12 +328,6 @@ Ruby:
 
 fftw:  
   http://www.fftw.org
-
-Rollendurchmesserzeitsammler: (at least v0.0.3) 
- http://www.notam02.no/arkiv/src/ 
-
-libpcl: 
- http://www.xmailserver.org/libpcl.html 
 
 
 On LADSPA, Dave Phillips adds: "I have used the LADSPA plugins as standalone 
@@ -476,21 +466,6 @@ broken.
 
 
 
----- fonts: ----
-
-If you're getting empty boxes where characters should be, or Xt
-warnings about missing font characters, check your LANG and
-SUPPORTED environment variables.  If they're UTF-8, you should
-probably add lines such as:
-
-setenv LANG en_US
-setenv SUPPORTED en_US:en
-
-to your .cshrc file to override the bogus settings.  (In RedHat
-Linux, the bad settings come either from /etc/profile or from 
-the lang.csh file in /etc/profile.d).
-
-
 ---- Motif: ----
 
 Only Motif 2.n is supported.  Be sure to get the Motif development
@@ -498,9 +473,6 @@ package if you want to build Snd (you need the Motif headers).
 
 If you have installed Motif in some weird place, use the --with-motif-prefix
 configure argument.
-
-If Snd using Lesstif is messed up, that's Lesstif's problem!  I'm
-not trying to support this anymore.
 
 In Fedora 7 and later, openMotif will need /usr/include/X11/extensions/Print.h
 /usr/include/X11/bitmaps/gray, and /usr/X11R6/lib/libXp.so.  I copy these
