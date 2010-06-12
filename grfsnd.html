@@ -78,7 +78,6 @@
   <li><a href="#sndandladspa" onmouseout="UnTip()" onmouseover="Tip('This is a Linux-based sound-effects plugin system')">Snd and LADSPA plugins</a>
   <li><a href="#sndandalsa" onmouseout="UnTip()" onmouseover="Tip('This is the no-longer-very-new Linux audio library')">Snd and ALSA</a>
   <li><a href="#sndandjack" onmouseout="UnTip()" onmouseover="Tip('This is the Jack audio library')">Snd and Jack</a>
-  <li><a href="#sndandx" onmouseout="UnTip()" onmouseover="Tip('other programs can control Snd through window properties')">Driving Snd remotely</a>
   <li><a href="#sndandgl" onmouseout="UnTip()" onmouseover="Tip('OpenGL (Mesa) extensions via gl.c')">Snd and OpenGL</a>
   <li><a href="#sndandgsl" onmouseout="UnTip()" onmouseover="Tip('include some special functions from GSL')">Snd and GSL</a>
   <li><a href="#sndandgmp" onmouseout="UnTip()" onmouseover="Tip('include multiprecision arithmetic')">Snd and multiprecision arithmetic (gmp, mpfr, mpc)</a>
@@ -616,11 +615,6 @@ output-comment-hook lambda: &lt;{ str -- s }&gt;
     sounds each close-sound drop end-each
     #t
   ; add-hook! 
-
-  window-property-changed-hook lambda: &lt;{ cmd -- }&gt;
-    $" remote command received: %S" #( cmd ) clm-message
-    #f
-  ; add-hook!
 
   after-open-hook lambda: &lt;{ snd -- }&gt;
     snd channels 0 ?do snd short-file-name snd i time-graph set-x-axis-label drop loop
@@ -2480,22 +2474,6 @@ SNDLIB_NUM_JACK_CHANNELS</td><td>Number of in and out jack ports created by snd
 
 <br><br>
 
-
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandx">Driving Snd remotely</a></h3></td></tr></table>
-
-<p>It is possible to send to Snd arbitrary Scheme, Ruby, or Forth code from any other program;
-see the program sndctrl.c.  Snd has two X window properties:
-"SND_VERSION" and "SND_COMMAND"; the former is the Snd version (a date),
-and the latter is the communication path for other programs.  Any time
-such a program changes the SND_COMMAND property, Snd notices and evaluates
-the new value (as a string, as if typed in the Snd listener).  To get
-a response from Snd, use <code>(set! (window-property consat name) command)</code> where
-'consat' is the property name Snd should search for (to find the sending window), 
-'name' is the property to change (the X window property that Snd will change), and 
-'command' is the string
-that replaces the current property value (which Snd will evaluate).
-</p>
-<br>
 
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndandgl">Snd and OpenGL</a></h3></td></tr></table>
 

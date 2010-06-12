@@ -86,8 +86,7 @@ require examp
      stop-playing-hook
      stop-playing-selection-hook
      update-hook
-     view-files-select-hook
-     window-property-changed-hook )
+     view-files-select-hook )
 [else]
   #()
 [then] constant snd-hooks

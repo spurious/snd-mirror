@@ -32,7 +32,6 @@
 ;;; convolution (convolve)
 ;;; time varying FIR filter, notch filter
 ;;; sound-interp, env-sound-interp
-;;; add date and time to title bar
 ;;; filtered-env (low-pass and amplitude follow envelope)
 ;;; multi-colored rxvt printout
 ;;; lisp graph with draggable x axis
@@ -1663,29 +1662,6 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 ;;; (granulated-sound-interp '(0 0 1 1) 2.0)
 ;;; (granulated-sound-interp '(0 0 1 .1 2 1) 1.0 0.2 '(0 0 1 1 2 0) 0.02)
 
-
-
-;;; -------- add date and time to title bar
-;;;
-;;; The window manager's property that holds the Snd window's title is WM_NAME,
-;;;   we can use the window-property function (used normally for CLM/Snd communication)
-;;;   to reset this value.  The Snd window's identifier is SND_VERSION.
-;;;   Here we're also using the #t argument to short-file-name to get a list of all current sounds.
-
-(define retitle-time (* 60 1000)) ;once a minute
-
-(define (title-with-date)
-  "(title-with-date) causes Snd's main window to display the time of day.  To turn off 
-this clock, set retitle-time to 0"
-  (let ((names (short-file-name #t)))
-    (set! (window-property "SND_VERSION" "WM_NAME")
-	  (format #f "snd (~A)~A"
-		  (strftime "%d-%b %H:%M %Z" (localtime (current-time)))
-		  (if (null? names)
-		      ""
-		      (format #f ":~{~A~^, ~}" names))))
-    (if (> retitle-time 0)
-	(in retitle-time title-with-date))))
 
 
 

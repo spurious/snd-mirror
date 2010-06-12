@@ -89,7 +89,6 @@
 \ sound-interp        	    ( func loc -- val )
 \ env-sound-interp    	    ( envelope :optional time-scale snd chn -- file-name )
 \ granulated-sound-interp   ( e :optional tscale grain-len grain-env out-hop snd chn -- file-name )
-\ title-with-data           ( -- )
 \ filtered-env        	    ( e :optional snd chn -- val )
 \  
 \ switch-to-buffer          ( -- val )
@@ -128,8 +127,6 @@
   <'> noop alias hide-widget		\ ( a -- b )
   <'> noop alias widget-size		\ ( a -- b )
   : set-widget-size     ( a b -- c )    drop ;
-  : window-property     ( a b -- c )    drop ;
-  : set-window-property ( a b c -- d ) 2drop ;
 [then]
 
 \ #( #( snd0 chn0 ) #( snd0 chn1 ) ... )
@@ -1667,26 +1664,6 @@ previous
 \ #( 0 0 1 .1 2 1 ) 1.0 0.2 #( 0 0 1 1 2 0 )      granulated-sound-interp
 \ #( 0 0 1 1 ) 2.0                                granulated-sound-interp
 \ #( 0 0 1 .1 2 1 ) 1.0 0.2 #( 0 0 1 1 2 0 ) 0.02 granulated-sound-interp
-
-\ ;;; -------- add date and time to title bar
-\ ;;;
-\ ;;; The window manager's property that holds the Snd window's title is WM_NAME,
-\ ;;;  we can use the window-property function (used normally for CLM/Snd communication)
-\ ;;;  to reset this value.  The Snd window's identifier is SND_VERSION.
-\ ;;;  Here we're also using the #t argument to short-file-name to get a list of all current sounds.
-
-60 1000 * value retitle-time
-
-: title-with-data ( -- )
-  doc" Causes Snd's main window to display the time of day.  \
-To turn off this clock, set retitle-time to 0"
-  #t short-file-name { names }
-  "SND_VERSION" "WM_NAME"
-  $" snd (%s) %s"
-  #( $" %d-%b %H:%M %Z" current-time strftime names nil? if "" else names then ) string-format
-  set-window-property drop
-  retitle-time 0> if retitle-time recurse in drop then
-;
 
 \ ;;; -------- filtered-env 
 

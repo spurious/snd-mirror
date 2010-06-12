@@ -2651,6 +2651,22 @@ static void init_listener_ports(void)
 
 #endif
 
+#if HAVE_GL
+static XEN g_snd_glx_context(void)
+{
+  return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GLXContext"), 
+		    XEN_WRAP_C_POINTER(ss->sgx->cx)));
+} 
+
+
+#ifdef XEN_ARGIFY_1
+XEN_NARGIFY_0(g_snd_glx_context_w, g_snd_glx_context)
+#else
+#define g_snd_glx_context_w g_snd_glx_context
+#endif
+#endif
+
+
 
 /* -------------------------------------------------------------------------------- */
 void g_xen_initialize(void)
@@ -2800,7 +2816,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_init_gxenv();
   g_init_gxmenu();
   g_init_axis();
-  g_init_gxmain();
   g_init_gxlistener();
   g_init_gxchn();
   g_init_draw();
@@ -2941,6 +2956,9 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                        (snd-print (apply format #f args)))");
 #endif
 
+#if HAVE_GL
+  XEN_DEFINE_PROCEDURE("snd-glx-context", g_snd_glx_context_w, 0, 0, 0, "OpenGL GLXContext");
+#endif
 
 #if HAVE_STATIC_XM
   #if USE_MOTIF

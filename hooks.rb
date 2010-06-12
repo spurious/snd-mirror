@@ -164,7 +164,6 @@ need a String or Symbol, not %s"
   $stop_playing_hook            = Hook.new("$stop_playing_hook", 1)
   $mouse_enter_listener_hook    = Hook.new("$mouse_enter_listener_hook", 1)
   $mouse_leave_listener_hook    = Hook.new("$mouse_leave_listener_hook", 1)
-  $window_property_changed_hook = Hook.new("$window_property_changed_hook", 1)
   $select_sound_hook            = Hook.new("$select_sound_hook", 1)
   $print_hook                   = Hook.new("$print_hook", 1)
   $exit_hook                    = Hook.new("$exit_hook", 0)
@@ -294,7 +293,6 @@ if defined? $after_graph_hook
                $stop_playing_hook,
                $mouse_enter_listener_hook,
                $mouse_leave_listener_hook,
-               $window_property_changed_hook,
                $select_sound_hook,
                $print_hook,
                $exit_hook,

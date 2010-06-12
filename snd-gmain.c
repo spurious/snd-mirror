@@ -148,46 +148,6 @@ void auto_update_restart(void) {}
 #endif
 
 
-static GdkAtom snd_v, snd_c;
-
-#if HAVE_EXTENSION_LANGUAGE
-static XEN window_property_changed_hook;
-
-static gboolean who_called(GtkWidget *w, GdkEvent *event, gpointer context) 
-{
-  /* watch for communication from some other program via the SND_COMMAND property */
-  GdkEventProperty *ev = (GdkEventProperty *)event;
-  if (EVENT_ATOM(ev) == snd_c)
-    {
-      GdkAtom type;
-      gint format, nitems;
-      guchar *version[1];
-      if (gdk_property_get(MAIN_WINDOW(ss), snd_c, 
-			   GDK_TARGET_STRING, 0L, (long)BUFSIZ, false,
-			   &type, &format, &nitems, (guchar **)version))
-	{
-	  if (version[0])
-	    {
-	      char *buf;
-	      buf = (char *)(version[0]);
-	      if ((mus_strlen(buf) > 1) ||
-		  ((mus_strlen(buf) == 1) && (buf[0] != '\n')))
-		{
-		  if ((!(XEN_HOOKED(window_property_changed_hook))) ||
-		      (!(XEN_TRUE_P(run_or_hook(window_property_changed_hook,
-						XEN_LIST_1(C_TO_XEN_STRING(buf)),
-						S_window_property_changed_hook)))))
-		    snd_report_result(snd_catch_any(eval_str_wrapper, (void *)buf, buf), NULL);
-		}
-	      free(version[0]);
-	    }
-	}
-    }
-  return(false);
-}
-#endif
-
-
 #if HAVE_SETJMP_H
 #include <setjmp.h>
 
@@ -411,21 +371,6 @@ static void startup_funcs(void)
   static int auto_open_ctr = 0;
 
 #ifndef SND_AS_WIDGET
-  /* add X property level communication path (see sndctrl.c for the other side) */
-  snd_v = gdk_atom_intern("SND_VERSION", false);
-  snd_c = gdk_atom_intern("SND_COMMAND", false);
-
-  gdk_property_change(MAIN_WINDOW(ss), 
-		      snd_v, 
-		      GDK_TARGET_STRING, 8, 
-		      GDK_PROP_MODE_REPLACE, 
-		      (guchar *)(SND_DATE), 
-		      strlen(SND_DATE) + 1);
-
-#if HAVE_EXTENSION_LANGUAGE
-  gtk_widget_add_events(MAIN_SHELL(ss), GDK_PROPERTY_CHANGE_MASK);
-  SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "property_notify_event", who_called, NULL);
-#endif
   /* trap outer-level Close for cleanup check */
   SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "delete_event", window_close, NULL);
   /* when iconified, we need to hide any dialogs as well */
@@ -1089,11 +1034,3 @@ class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n			\
 #endif
 }
  
-
-void g_init_gxmain(void)
- {
-#if HAVE_EXTENSION_LANGUAGE
-#define H_window_property_changed_hook S_window_property_changed_hook "(command): called upon receipt of a change in SND_COMMAND (an X window property)"
-  window_property_changed_hook = XEN_DEFINE_HOOK(S_window_property_changed_hook, 1, H_window_property_changed_hook);
-#endif
-}

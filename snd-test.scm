@@ -1749,8 +1749,6 @@
 	(snd-display #__line__ ";mouse-leave-graph-hook: ~A?" mouse-leave-graph-hook))
     (if (or (not (hook? mouse-leave-listener-hook)) (not (hook-empty? mouse-leave-listener-hook)))
 	(snd-display #__line__ ";mouse-leave-listener-hook: ~A?" mouse-leave-listener-hook))
-    (if (or (not (hook? window-property-changed-hook)) (not (hook-empty? window-property-changed-hook)))
-	(snd-display #__line__ ";window-property-changed-hook: ~A?" window-property-changed-hook))
     (if (or (not (hook? initial-graph-hook)) (not (hook-empty? initial-graph-hook)))
 	(snd-display #__line__ ";initial-graph-hook: ~A?" initial-graph-hook))
     (if (or (not (hook? after-graph-hook)) (not (hook-empty? after-graph-hook)))
@@ -2285,7 +2283,7 @@
 		       'walsh-transform
 		       'wave-train 'wave-train? 'wavelet-transform 'wavelet-type
 		       'wavo-hop 'wavo-trace 'welch-window 'widget-position
-		       'widget-size 'widget-text 'window-height 'window-property 'window-property-changed-hook
+		       'widget-size 'widget-text 'window-height
 		       'window-width 'window-x 'window-y 'with-background-processes 'with-file-monitor 'with-gl
 		       'with-mix-tags 'with-relative-panes 'with-tracking-cursor 'with-verbose-cursor 'with-inset-graph 'with-pointer-focus
 		       'x->position 'x-axis-as-clock 'x-axis-as-percentage 'x-axis-in-beats 'x-axis-in-measures
@@ -30674,7 +30672,6 @@ EDITS: 2
     (add-hook! stop-playing-hook arg1) (carg1 stop-playing-hook)
     (add-hook! mouse-enter-listener-hook arg1) (carg1 mouse-enter-listener-hook)
     (add-hook! mouse-leave-listener-hook arg1) (carg1 mouse-leave-listener-hook)
-    (add-hook! window-property-changed-hook arg1) (carg1 window-property-changed-hook)
     (add-hook! select-sound-hook arg1) (carg1 select-sound-hook)
     (add-hook! print-hook arg1) (carg1 print-hook)
     (add-hook! read-hook arg1) (carg1 read-hook)
@@ -65901,7 +65898,6 @@ EDITS: 1
 			  (list stop-playing-hook 'stop-playing-hook)
 			  (list mouse-enter-listener-hook 'mouse-enter-listener-hook)
 			  (list mouse-leave-listener-hook 'mouse-leave-listener-hook)
-			  (list window-property-changed-hook 'window-property-changed-hook)
 			  (list select-sound-hook 'select-sound-hook)
 			  (list view-files-select-hook 'view-files-select-hook)
 			  (list during-open-hook 'during-open-hook)

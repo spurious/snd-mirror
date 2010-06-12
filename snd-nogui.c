@@ -382,7 +382,6 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("(define " S_mouse_leave_text_hook " (make-hook 1))");
   XEN_EVAL_C_STRING("(define " S_new_widget_hook " (make-hook 1))");
   XEN_EVAL_C_STRING("(define " S_orientation_hook " (make-hook 0))");
-  XEN_EVAL_C_STRING("(define " S_window_property_changed_hook " (make-hook 1))");
 
   XEN_EVAL_C_STRING("(define " S_copy_context " 0)");
   XEN_EVAL_C_STRING("(define " S_cursor_context " 3)");
@@ -450,7 +449,6 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("(define (" S_goto_listener_end ") #f)");
   XEN_EVAL_C_STRING("(define (" S_y_to_position " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_x_to_position " . args) #f)");
-  XEN_EVAL_C_STRING("(define (" S_window_property " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_snd_gcs " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_show_widget " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_position_to_y " . args) #f)");
@@ -562,7 +560,6 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("def x2position (a) false end");
   XEN_EVAL_C_STRING("def position2y (a) false end");
   XEN_EVAL_C_STRING("def position2x (a) false end");
-  XEN_EVAL_C_STRING("def window_property (a) false end");
   XEN_EVAL_C_STRING("def snd_gcs (a) false end");
   XEN_EVAL_C_STRING("def show_widget (a) false end");
   XEN_EVAL_C_STRING("def listener_selection (a) false end");
@@ -596,7 +593,6 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("$mouse_leave_text_hook = false");
   XEN_EVAL_C_STRING("$new_widget_hook = false");
   XEN_EVAL_C_STRING("$orientation_hook = false");
-  XEN_EVAL_C_STRING("$window_property_changed_hook = false");
 
   XEN_EVAL_C_STRING("Copy_context = 0");
   XEN_EVAL_C_STRING("Cursor_context = 3");
@@ -627,7 +623,6 @@ void snd_doit(int argc, char **argv)
 1 #f create-hook " S_mouse_leave_text_hook "\n\
 1 #f create-hook " S_new_widget_hook "\n\
 0 #f create-hook " S_orientation_hook "\n\
-1 #f create-hook " S_window_property_changed_hook "\n");
 
   XEN_EVAL_C_STRING("\
 0 constant " S_copy_context "\n\

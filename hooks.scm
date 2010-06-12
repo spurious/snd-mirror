@@ -10,7 +10,7 @@
 	mouse-enter-graph-hook mouse-leave-graph-hook open-raw-sound-hook select-channel-hook after-open-hook close-hook drop-hook update-hook
 	mark-click-hook mark-drag-hook name-click-hook open-hook help-hook before-save-state-hook
 	output-comment-hook play-hook snd-error-hook snd-warning-hook start-hook start-playing-hook stop-playing-hook
-	mouse-enter-listener-hook mouse-leave-listener-hook window-property-changed-hook select-sound-hook
+	mouse-enter-listener-hook mouse-leave-listener-hook select-sound-hook
 	print-hook exit-hook output-name-hook during-open-hook after-transform-hook mouse-enter-label-hook mouse-leave-label-hook initial-graph-hook
 	graph-hook key-press-hook mouse-drag-hook mouse-press-hook enved-hook read-hook mouse-click-hook new-widget-hook
 	mark-hook view-files-select-hook dac-hook stop-dac-hook stop-playing-selection-hook after-apply-controls-hook draw-mark-hook

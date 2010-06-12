@@ -84,7 +84,6 @@
 #  sound_via_sound(snd1, snd2)
 #  env_sound_interp(envelope, time_scale, snd, chn)
 #  granulated_sound_interp(envelope, time_scale, grain_length, grain_envelope, output_hop, snd, chn)
-#  title_with_date
 #  filtered_env(en, snd, chn)
 #
 #  class Mouse
@@ -1608,29 +1607,6 @@ reads snd's channel chn according to env and time-scale")
   # granulated_sound_interp([0, 0, 1, 0.1, 2, 1], 1.0, 0.2, [0, 0, 1, 1, 2, 0])
   # granulated_sound_interp([0, 0, 1, 1], 2.0)
   # granulated_sound_interp([0, 0, 1, 0.1, 2, 1], 1.0, 0.2, [0, 0, 1, 1, 2, 0], 0.02)
-  
-  # add date and time to title bar
-  # 
-  # The window manager's property that holds the Snd window's title is
-  # WM_NAME, we can use the window_property function (used normally
-  # for CLM/Snd communication) to reset this value.  The Snd window's
-  # identifier is SND_VERSION.  Here we're also using the true
-  # argument to short_file_name to get a list of all current sounds.
-
-  $retitle_time = 60 * 1000                       # once a minute
-  add_help(:title_with_date,
-           "title_with_date() \
-causes Snd's main window to display the time of day.  \
-To turn off this clock, set $retitle_time to 0")
-  def title_with_date
-    names = short_file_name(true)
-    set_window_property("SND_VERSION", "WM_NAME",
-                        format("snd (%s)%s", Time.new.localtime.strftime("%d-%b %H:%M %Z"),
-                               names ? format(": %s", names.inspect) : ""))
-    if $retitle_time > 0
-      call_in($retitle_time, title_with_date)
-    end
-  end
   
   # filtered-env 
 

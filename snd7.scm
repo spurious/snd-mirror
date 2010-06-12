@@ -17,10 +17,6 @@
 (define filter-control-env filter-control-envelope)
 (define filter-waveform-color filter-control-waveform-color)
 
-(define (change-window-property w a v)
-  "obsolete way to set a window-property"
-  (set! (window-property w a) v))
-
 (define (recolor-widget w col)
   "(recolor-widget w color) tries to redraw the widget 'w' in the given color"
   (if (and (provided? 'xm)

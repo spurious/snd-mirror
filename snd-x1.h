@@ -111,8 +111,6 @@ void save_colors(FILE *Fp);
   void snd_as_widget(int argc, char **argv, XtAppContext app, Widget parent, Arg *caller_args, int caller_argn);
 #endif
 
-void g_init_gxmain(void);
-
 
 
 /* -------- snd-xfft.c -------- */

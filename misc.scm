@@ -28,7 +28,6 @@
 (if (not (provided? 'snd-edit123.scm)) (load "edit123.scm"))
 (if (not (provided? 'snd-effects-utils.scm)) (load "effects-utils.scm"))
 
-(title-with-date)
 (keep-file-dialog-open-upon-ok)
 (make-hidden-controls-dialog)
 (check-for-unsaved-edits #t)

@@ -93,8 +93,6 @@ void save_colors(FILE *Fp);
   GtkWidget *snd_as_widget(int argc, char **argv, GtkWidget *parent, void (*error_func)(const char *));
 #endif
 
-void g_init_gxmain(void);
-
 
 
 /* -------- snd-gmenu.c -------- */

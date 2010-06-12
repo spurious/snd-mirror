@@ -34653,7 +34653,7 @@ def test0128
     :new_widget_hook, :read_hook, :bad_header_hook, :snd_error_hook,
     :snd_warning_hook, :start_hook, :start_playing_hook, :stop_playing_hook,
     :mouse_enter_listener_hook, :mouse_leave_listener_hook,
-    :window_property_changed_hook, :select_sound_hook, :view_files_select_hook,
+    :select_sound_hook, :view_files_select_hook,
     :during_open_hook, :after_transform_hook, :mouse_enter_label_hook,
     :mouse_leave_label_hook, :initial_graph_hook, :graph_hook, :key_press_hook,
     :mouse_drag_hook, :mouse_press_hook, :mouse_click_hook, :enved_hook].each_with_index do |n, i|

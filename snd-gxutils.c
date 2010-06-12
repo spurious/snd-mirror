@@ -101,89 +101,15 @@ string 'cmd'.  cmd should be a URL."
 }
 
 
-static void change_window_property(const char *winat, const char *name, const char *command)
-{
-  Window window;
-  Display *dpy;
-  dpy = MAIN_DISPLAY(ss);
-  window = find_window(dpy, DefaultRootWindow(dpy), winat, compare_window);
-  if (window)
-    {
-      XChangeProperty(dpy, 
-		      window, 
-		      XInternAtom(dpy, name, 0), 
-		      XA_STRING, 8, 
-		      PropModeReplace, 
-		      (unsigned char *)command, 
-		      strlen(command) + 1);
-      XFlush(dpy);
-    }
-}
-
-
-static XEN g_window_property(XEN winat, XEN name)
-{
-  #define H_window_property "(" S_window_property " win-name name): get or set the window property."
-  Window window;
-  Display *dpy;
-  Atom type = None;
-  int format;
-  unsigned long len, bytesafter;
-  unsigned char *data[1];
-  XEN result = XEN_FALSE;
-  XEN_ASSERT_TYPE(XEN_STRING_P(winat), winat, XEN_ARG_1, S_window_property, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_window_property, "a string");
-  dpy = MAIN_DISPLAY(ss);
-  if (((window = find_window(dpy, DefaultRootWindow(dpy), XEN_TO_C_STRING(winat), compare_window))) &&
-      ((XGetWindowProperty(dpy, window, 
-			   XInternAtom(dpy, XEN_TO_C_STRING(name), 0), 
-			   0L, (long)BUFSIZ, False, 
-			   XA_STRING, &type, &format, &len, &bytesafter,
-			   (unsigned char **)data)) == Success) &&
-      (type != None) &&
-      (len > 0))
-    {
-      if (type == XA_STRING)
-	result = C_TO_XEN_STRING((char *)data[0]);
-      else result = C_TO_XEN_STRINGN((char *)data[0], len * format / 8); 
-      if (data[0]) 
-	XFree((char *)(data[0]));
-    }
-  return(result);
-}
-
-
-static XEN g_set_window_property(XEN winat, XEN name, XEN command)
-{
-  char *c = NULL;
-  /* winat arg needed as well as command arg because we need an atom that is guaranteed to have a value */
-  /*   Supposedly WM_STATE is just such an atom */
-  XEN_ASSERT_TYPE(XEN_STRING_P(winat), name, XEN_ARG_1, S_setB S_window_property, "a string");
-  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_setB S_window_property, "a string");
-  if (XEN_STRING_P(command))
-    c = mus_strdup(XEN_TO_C_STRING(command));
-  else c = g_print_1(command);
-  change_window_property(XEN_TO_C_STRING(winat), XEN_TO_C_STRING(name), c);
-  if (c) free(c);
-  return(XEN_FALSE);
-}
-
-
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_send_mozilla_w, g_send_mozilla)
-XEN_NARGIFY_2(g_window_property_w, g_window_property)
-XEN_NARGIFY_3(g_set_window_property_w, g_set_window_property)
 #else
 #define g_send_mozilla_w g_send_mozilla
-#define g_window_property_w g_window_property
-#define g_set_window_property_w g_set_window_property
 #endif
 
 void g_init_gxutils(void)
 {
   XEN_DEFINE_PROCEDURE(S_send_mozilla, g_send_mozilla_w, 1, 0, 0, H_send_mozilla);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_window_property, g_window_property_w, H_window_property,
-				   S_setB S_window_property, g_set_window_property_w, 2, 0, 3, 0);
 }
 
 #else

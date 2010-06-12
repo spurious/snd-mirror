@@ -268,50 +268,6 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
 #endif
 
 
-#ifndef SND_AS_WIDGET
-static Atom snd_v, snd_c;
-#endif
-
-
-#if HAVE_EXTENSION_LANGUAGE
-static XEN window_property_changed_hook;
-
-#ifndef SND_AS_WIDGET
-static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
-{
-  /* watch for communication from some other program via the SND_COMMAND property */
-  XPropertyEvent *ev = (XPropertyEvent *)event;
-  if (ev->atom == snd_c)
-    {
-      Atom type;
-      int format;
-      unsigned long nitems, bytesafter;
-      unsigned char *version[1];
-      if (((XGetWindowProperty(XtDisplay(w), XtWindow(w), snd_c, 0L, (long)BUFSIZ, False,
-			       XA_STRING, &type, &format, &nitems, &bytesafter, 
-			       (unsigned char **)version)) == Success) && 
-	  (type != None))
-	if (version[0])
-	  {
-	    char *buf;
-	    buf = (char *)(version[0]);
-	    if ((mus_strlen(buf) > 1) ||
-		((mus_strlen(buf) == 1) && (buf[0] != '\n')))
-	      {
-		if ((!(XEN_HOOKED(window_property_changed_hook))) ||
-		    (!(XEN_TRUE_P(run_or_hook(window_property_changed_hook,
-					      XEN_LIST_1(C_TO_XEN_STRING(buf)),
-					      S_window_property_changed_hook)))))
-		  snd_report_result(snd_catch_any(eval_str_wrapper, (void *)buf, buf), NULL);
-	      }
-	    free(version[0]);
-	  }
-    }
-}
-#endif
-#endif
-
-
 #if HAVE_SETJMP_H
 #include <setjmp.h>
 
@@ -404,15 +360,6 @@ static void startup_funcs(void)
   /* trap outer-level Close for cleanup check */
   wm_delete_window = XmInternAtom(dpy, (char *)"WM_DELETE_WINDOW", false);
   XmAddWMProtocolCallback(shell, wm_delete_window, window_close, NULL);
-
-  snd_v = XInternAtom(dpy, "SND_VERSION", false);
-  snd_c = XInternAtom(dpy, "SND_COMMAND", false);
-  XChangeProperty(dpy, XtWindow(shell), snd_v, XA_STRING, 8, PropModeReplace, 
-		  (unsigned char *)(SND_DATE), strlen(SND_DATE) + 1);
-
-#if HAVE_EXTENSION_LANGUAGE
-  XtAddEventHandler(shell, PropertyChangeMask, false, who_called, NULL);
-#endif
   XtAddEventHandler(shell, StructureNotifyMask, false, minify_maxify_window, NULL);
 #endif
 
@@ -1162,32 +1109,5 @@ void snd_doit(int argc, char **argv)
   
 #ifndef SND_AS_WIDGET
   XtAppMainLoop(app);
-#endif
-}
-
-
-#if HAVE_GL
-static XEN g_snd_glx_context(void)
-{
-  return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GLXContext"), 
-		    XEN_WRAP_C_POINTER(ss->sgx->cx)));
-} 
-
-
-#ifdef XEN_ARGIFY_1
-XEN_NARGIFY_0(g_snd_glx_context_w, g_snd_glx_context)
-#else
-#define g_snd_glx_context_w g_snd_glx_context
-#endif
-#endif
-
-void g_init_gxmain(void)
-{
-#if HAVE_EXTENSION_LANGUAGE
-  #define H_window_property_changed_hook S_window_property_changed_hook "(command): called upon receipt of a change in SND_COMMAND (an X window property)"
-  window_property_changed_hook = XEN_DEFINE_HOOK(S_window_property_changed_hook, 1, H_window_property_changed_hook);
-#endif
-#if HAVE_GL
-  XEN_DEFINE_PROCEDURE("snd-glx-context", g_snd_glx_context_w, 0, 0, 0, "OpenGL GLXContext");
 #endif
 }

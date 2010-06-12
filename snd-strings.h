@@ -672,8 +672,6 @@
 #define S_widget_size                   "widget-size"
 #define S_widget_text                   "widget-text"
 #define S_window_height                 "window-height"
-#define S_window_property               "window-property"
-#define S_window_property_changed_hook  "window-property-changed-hook"
 #define S_window_width                  "window-width"
 #define S_window_x                      "window-x"
 #define S_window_y                      "window-y"

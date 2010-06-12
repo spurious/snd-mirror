@@ -258,11 +258,6 @@ output-comment-hook lambda: <{ str -- s }>
     #t
   ; add-hook! 
 
-  window-property-changed-hook lambda: <{ cmd -- }>
-    $" remote command received: %S" #( cmd ) clm-message
-    #f
-  ; add-hook!
-
   after-open-hook lambda: <{ snd -- }>
     snd channels 0 ?do snd short-file-name snd i time-graph set-x-axis-label drop loop
     #t snd set-with-tracking-cursor drop

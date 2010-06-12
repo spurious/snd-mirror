@@ -4462,15 +4462,6 @@ It's possible to use the same escape sequences in a normal shell script, of cour
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- title-with-date -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<A class=def NAME="titlewithdate">title-with-date</a> 
-</td></tr><tr><td></td><td>
-title-with-date adds a clock to the Snd window's title bar.
-Set the variable 'retitle-time' to 0 to turn this off.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-<tr><td colspan=2 height=16></td></tr>
-
 
 
 <!-- -------------------------------- examp MISCELLANEOUS EXTENSIONS -------------------------------- -->
@@ -11439,23 +11430,8 @@ To continue adding notes to an existing file, set 'continue-old-file':
 
 <p>
 The arguments passed to the notehook function are the current instrument name (a string) and all its
-arguments.  <a name="definstrument">definstrument</a> implements the notehook feature.  Here's a version
-of the previous notehook that displays
-the first argument to the instrument (assuming it is the
-begin time) in the Snd window title bar, and tries to use the xm module if it is available:
-</p>
-
-<pre>
-    :notehook (lambda (name . args) 
-	        (let ((new-title (string-append "snd: " (number-&gt;string (car args)))))
-		  (if (provided? 'xm)
-		      (XtVaSetValues  (cadr (<a class=quiet href="extsnd.html#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>)) (list XmNtitle new-title))
-		      (if (provided? 'xg)
-			  (gtk_window_set_title (GTK_WINDOW (cadr (<a class=quiet href="extsnd.html#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>))) new-title)
-			  (set! (<a class=quiet href="extsnd.html#windowproperty" onmouseout="UnTip()" onmouseover="Tip(extsnd_windowproperty_tip)">window-property</a> "SND_VERSION" "WM_NAME") new-title)))))
-</pre>
-
-<p>The "output" argument can be a vct, a vector, or a sound-data object, as well as a filename:
+arguments.  <a name="definstrument">definstrument</a> implements the notehook feature. 
+The "output" argument can be a vct, a vector, or a sound-data object, as well as a filename:
 </p>
 <pre>
     (with-sound (:output (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 44100)) (fm-violin 0 1 440 .1))
