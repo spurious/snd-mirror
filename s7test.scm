@@ -7349,6 +7349,9 @@
 (test (let ((c #f)) (for-each (lambda (x) (set! c x)) "") c) #f)
 (test (let ((c #f)) (for-each (lambda (x) (set! c x)) (string #\null)) c) #\null)
 
+(test (let ((L (list 1 2 3 4 5)) (sum 0)) (for-each (lambda (x) (set-cdr! (cddr L) 5) (set! sum (+ sum x))) L) sum) 6)
+;;; map (below) has more tests along this line
+
 
 
 
@@ -7507,7 +7510,30 @@
 (test (map map (list map) (list (list map)) (list (list (list abs))) (list (list (list (list -1 -3))))) '((((1 3)))))
 (test (let () (define (mrec a b) (if (<= b 0) (list a) (map mrec (list a) (list (- b 1))))) (mrec (list 1 2) 5)) '(((((((1 2))))))))
 
-
+;; from scheme working group 
+(test (let ((L (list 1 2 3 4 5))) (map (lambda (x) (set-cdr! (cddr L) 5) x) L)) '(1 2 3))
+(test (let ((L (list 1 2))) (map (lambda (x) (set! (cdr (cdr L)) L) x) L)) '(1 2))
+(test (let ((L (list 1 2))) (object->string (map (lambda (x) (set! (car (cdr L)) L) x) L))) "(1 #1=(1 #1#))")
+;;;(test (let ((L (list 1 2))) (map (lambda (x) (set-cdr! L L) x) L)) '(1 2)) ;?? this depends on when we cdr? infinite loop in Guile
+;;;(let ((L (list 1 2 3 4 5))) (map (lambda (x) (set-cdr! L '()) x) L)) ; another similar case -- s7 doesn't notice what happened
+;;;  does that mean a GC during this map would leave us accessing freed memory? 
+;;;  I think not because the original list is held by map (eval) locals that are protected
+;;;  we simply stepped on something after looking at it, similar to:
+(test (let ((L (list 1 2 3 4 5))) (map (lambda (x) (set-car! L 123) x) L)) '(1 2 3 4 5))
+(test (let ((L (list 1 2 3 4 5))) (map (lambda (x) (set-cdr! (cddr L) (list 6 7 8)) x) L)) '(1 2 3 6 7))
+;;; we could do something similar with strings:
+(test (let ((S "12345")) (map (lambda (x) (set! (S 2) #\null) x) S)) '(#\1 #\2 #\null #\4 #\5))
+;;; (length S) is still 5 even with the embedded null
+(test (let ((L (list 1 2 3))) (map (lambda (x) (set! L (list 6 7 8)) x) L)) '(1 2 3))
+(test (let ((L1 (list 1 2 3)) (L2 (list 4 5 6 7))) (map (lambda (x1 x2) (set-cdr! (cdr L1) '()) (cons x1 x2)) L1 L2)) '((1 . 4) (2 . 5)))
+(test (let ((L (list 1 2 3))) (map (lambda (x) (set-car! (cddr L) 32) x) L)) '(1 2 32))
+;;; should these notice the increased length?:
+(test (let ((L1 (list 1 2)) (L2 (list 6 7 8 9))) (map (lambda (x y) (set-cdr! (cdr L1) (list 10 11 12 13 14)) (cons x y)) L1 L2)) '((1 . 6) (2 . 7)))
+(test (let ((L1 (list 1)) (L2 (list 6 7 8))) (map (lambda (x y) (set-cdr! L1 (list 10 11 12)) (cons x y)) L1 L2)) '((1 . 6)))
+(test (let ((L1 (list 1 2))) (map (lambda (x) (set-cdr! (cdr L1) (list 10 11 12)) x) L1)) '(1 2))
+;;; a similar case could be made from hash-tables
+(test (let ((H (hash-table '(a . 3) '(b . 4)))) (map (lambda (x) (set! (H 'c) 32) (cdr x)) H)) '(3 4))
+(test (let ((H (hash-table '(a . 3) '(b . 4)))) (map (lambda (x) (set! (H 'b) 32) (cdr x)) H)) '(3 32))
 
 
 
@@ -7799,7 +7825,15 @@
 	  ((> i 6) i))
       7)
 
-
+(test (let ((L (list 1 2))) 
+	(do ((sum 0 (+ sum (car lst))) 
+	     (i 0 (+ i 1)) 
+	     (lst L (cdr lst))) 
+	    ((or (null? lst) 
+		 (> i 10)) 
+	     sum) 
+	  (set-cdr! (cdr L) L))) 
+      16)
 
 
 
@@ -9305,6 +9339,17 @@
 (test (let ((gvar 0)) (define-macro (hi2 b) `(+ gvar ,b)) ((let ((gvar 1)) (define (hi1 a) (let ((gvar 2)) (a 2))) hi1) hi2)) 4)
 (test (let ((gvar 0)) (define-macro (hi2 b) `(+ gvar ,b)) ((let ((gvar 1)) (define (hi1 a) (a 2)) hi1) hi2)) 3)
 (test (let () (define-macro (hi2 b) `(+ gvar ,b)) ((let ((gvar 1)) (define (hi1 a) (a 2)) hi1) hi2)) 3)
+
+(test (let loop ((lst (list 1 2)) 
+		 (i 0) 
+		 (sum 0))
+	(if (or (null? lst)
+		(> i 10))
+	    sum
+	    (begin
+	      (set-cdr! (cdr lst) lst)
+	      (loop (cdr lst) (+ i 1) (+ sum (car lst))))))
+      16)
 
 
 

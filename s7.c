@@ -17149,7 +17149,7 @@ static long int applicable_length(s7_scheme *sc, s7_pointer obj)
 }
 
 
-static void next_for_each(s7_scheme *sc)
+static bool next_for_each(s7_scheme *sc)
 {
   /* func = sc->code, func-args = caddr(sc->args), counter = car(sc->args), len = cadr(sc->args), object(s) = cdddr(sc->args) */
   s7_pointer x, y, z, vargs, fargs;
@@ -17202,6 +17202,12 @@ static void next_for_each(s7_scheme *sc)
       case T_STRING:
 	car(x) = s7_make_character(sc, string_value(car(y))[loc]);
 	break;
+
+      default:           /* see comment in next_map: (let ((L (list 1 2 3 4 5))) (for-each (lambda (x) (set-cdr! (cddr L) 5) (display x)) L)) */
+	if (z != sc->NIL)
+	  s7_gc_unprotect_at(sc, zloc);
+	return(false);
+	break;
       }
 
   if (z != sc->NIL)
@@ -17210,6 +17216,7 @@ static void next_for_each(s7_scheme *sc)
   integer(number(car(sc->args))) = loc + 1;
   push_stack(sc, opcode(OP_FOR_EACH), sc->args, sc->code);
   sc->args = fargs;
+  return(true);
 }
 
 
@@ -17267,7 +17274,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 }
 
 
-static void next_map(s7_scheme *sc)
+static bool next_map(s7_scheme *sc)
 {
   /* func = sc->code, results so far = caddr(sc->args), counter = car(sc->args), len = cadr(sc->args), object(s) = cdddr(sc->args) */
   s7_pointer y, z, vargs, results;
@@ -17317,9 +17324,15 @@ static void next_map(s7_scheme *sc)
 	  x = s7_make_character(sc, string_value(car(y))[loc]);
 	  break;
 
-	default: /* make the compiler happy */
-	  /* fprintf(stderr, "vargs: %s, loc: %d, len: %lld\n", s7_object_to_c_string(sc, vargs), loc, s7_integer(cadr(sc->args))); */
-	  x = sc->F;
+	default: 
+	  /* this can happen if one of the args is clobbered by the map function, so our initial
+	   *   length is messed up:
+	   *   (let ((L (list 1 2 3 4 5))) (map (lambda (x) (set-cdr! (cddr L) 5) x) L))
+	   */
+
+	  if (z != sc->NIL)
+	    s7_gc_unprotect_at(sc, zloc);
+	  return(false);                  /* this stops the map process, so the code mentioned above returns '(1 2 3) */
 	  break;
 	}
       
@@ -17333,6 +17346,7 @@ static void next_map(s7_scheme *sc)
   integer(number(car(sc->args))) = loc + 1;
   push_stack(sc, opcode(OP_MAP), sc->args, sc->code);
   sc->args = sc->x;
+  return(true);
 }
 
 
@@ -17381,8 +17395,8 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 		 s7_cons(sc, sc->NIL, 
                    safe_reverse_in_place(sc, sc->z))));
 
-  next_map(sc);
-  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+  if (next_map(sc))
+    push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
 
   return(sc->NIL);
 }
@@ -18440,8 +18454,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (s7_integer(car(sc->args)) < s7_integer(cadr(sc->args)))
 	{
-	  next_map(sc);
-	  goto APPLY;
+	  if (next_map(sc))
+	    goto APPLY;
 	}
       
       sc->value = safe_reverse_in_place(sc, caddr(sc->args));
@@ -18453,8 +18467,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* func = sc->code, func-args = caddr(sc->args), counter = car(sc->args), len = cadr(sc->args), object(s) = cdddr(sc->args) */
       if (s7_integer(car(sc->args)) < s7_integer(cadr(sc->args)))
 	{
-	  next_for_each(sc);
-	  goto APPLY;
+	  if (next_for_each(sc))
+	    goto APPLY;
 	}
       sc->value = sc->UNSPECIFIED;
       pop_stack(sc);
