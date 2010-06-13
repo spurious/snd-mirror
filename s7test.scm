@@ -1966,6 +1966,8 @@
    (test (string-set! "hiho" 0 arg) 'error))
  (list 1 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
+(test (let ((str "hiho")) (string-set! str 2 #\null) str) "hi")
+;;; this is not how Guile handles this case
 
 
 
@@ -36263,6 +36265,12 @@ who says the continuation has to restart the map from the top?
   (test (nan? (ceiling nan.0)) #t)
   (test (nan? (truncate nan.0)) #t)
   (test (nan? (round nan.0)) #t)
+
+  (test (infinite? (floor inf.0)) #t)
+  (test (infinite? (ceiling inf.0)) #t)
+  (test (infinite? (truncate inf.0)) #t)
+  (test (infinite? (round inf.0)) #t)
+
   (test (nan? (angle nan.0)) #t)
   (test (rationalize nan.0) 'error)
   (test (rationalize inf.0) 'error)

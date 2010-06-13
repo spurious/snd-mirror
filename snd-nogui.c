@@ -619,7 +619,7 @@ void snd_doit(int argc, char **argv)
 1 #f create-hook " S_mouse_leave_listener_hook "\n\
 1 #f create-hook " S_mouse_leave_text_hook "\n\
 1 #f create-hook " S_new_widget_hook "\n\
-0 #f create-hook " S_orientation_hook "\n\
+0 #f create-hook " S_orientation_hook "\n");
 
   XEN_EVAL_C_STRING("\
 0 constant " S_copy_context "\n\

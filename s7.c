@@ -6022,7 +6022,8 @@ static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
       }
 
     default:        
-      if (isnan(real(number(x)))) return(x);
+      if ((isnan(real(number(x)))) || (isinf(real(number(x))))) 
+	return(x);
       return(s7_make_integer(sc, (s7_Int)floor(real(number(x))))); 
     }
 }
@@ -6052,7 +6053,8 @@ static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
       }
 
     default:        
-      if (isnan(real(number(x)))) return(x);
+      if ((isnan(real(number(x)))) || (isinf(real(number(x))))) 
+	return(x);
       return(s7_make_integer(sc, (s7_Int)ceil(real(number(x))))); 
     }
 }
@@ -6076,7 +6078,8 @@ static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
       return(s7_make_integer(sc, (s7_Int)(numerator(number(x)) / denominator(number(x))))); /* C "/" already truncates */
 
     default: 
-      if (isnan(real(number(x)))) return(x);
+      if ((isnan(real(number(x)))) || (isinf(real(number(x)))))
+	return(x);
       return(s7_make_integer(sc, s7_truncate(real(number(x))))); 
     }
 }
@@ -6117,7 +6120,8 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
       }
 
     default: 
-      if (isnan(real(number(x)))) return(x);  /* should this return an error (also in the inf cases)? */
+      if ((isnan(real(number(x)))) || (isinf(real(number(x))))) 
+	return(x);  /* should this return an error (also in the inf cases)? */
       return(s7_make_integer(sc, (s7_Int)round_per_R5RS(real(number(x))))); 
     }
 }
@@ -26099,11 +26103,8 @@ s7_scheme *s7_init(void)
  * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
  *
  *
- * (round inf.0) -> -9223372036854775808
- * (ceiling inf.0) -> -9223372036854775808
  * (expt -infnani -1) -> 0.0
  * (expt -inf.0 -infnani) -> 0.0
- * (expt -1 inf+infi) -> 0.0
  * (expt -1 inf.0) [nan]
  * (expt 1.0 nan.0) -> 1.000E0
  */
