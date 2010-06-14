@@ -2429,9 +2429,42 @@ more fun than a barrel of monkeys.  Here is a circular function:
 (cfunc) ; displays "func! " until you kill it
 </pre>
 
-<p>Could you implement goto this way?  Now we can write code that
-is not only unreadable, but unprintable!
+<p>Now we can write code that
+is not only unreadable, but unprintable!  
+Here is a self-modifying factorial function:
 </p>
+
+<pre>
+(define fact         ; Reini Urban, http://autocad.xarch.at/lisp/self-mod.lsp.txt
+  (let ((old '())
+	(result '()))
+
+    (define (last lst)
+      (list-tail lst (- (length lst) 1)))
+
+    (define (butlast lis)
+      (let ((len (length lis)))
+	(if (&lt;= len 1) '()
+	    (let ((result '()))
+	      (do ((i 0 (+ i 1))
+		   (lst lis (cdr lst)))
+		  ((= i (- len 1)) (reverse result))
+		(set! result (cons (car lst) result)))))))
+
+    (lambda (n)
+      (cond ((zero? n) 1)
+	    (#t 
+	     (set! old (<em class=red>procedure-source</em> fact))
+	     (set! fact (eval `(lambda (n) 
+				 (cond 
+				  ,@(butlast (cdr (car (cdr (cdr old)))))
+				  ((= n ,n) ,(let ()
+					       (set! result (* n (fact (- n 1))))
+					       result))
+				  ,@(last (cdr (car (cdr (cdr old)))))))))
+	     result)))))
+</pre>
+
 
 <!--
 :(define q (list 1 2 3))
@@ -2443,6 +2476,9 @@ q
 :(set! q (cdr q))
 #1#(2 3 4 #1#)
 -->
+
+
+
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>

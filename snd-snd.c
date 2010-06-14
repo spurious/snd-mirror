@@ -2348,7 +2348,7 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
  *               [location?]     port->line number?, mus cases = mus_location?, player? widget? cursor if sound?
  *               (CL has position)
  *
- *             properties:     edit|mark|mix|sound|channel-properties procedure-property?  window-property? [also property as accessor]
+ *             properties:     edit|mark|mix|sound|channel-properties procedure-property?  [also property as accessor]
  *               but then typos lead to seriously confusing behavior -- I think I'll leave out properties for now.
  *
  *             name:           mark|mix-name file-name (widget name via XtName) mus-name colormap

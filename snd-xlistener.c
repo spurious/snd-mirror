@@ -1128,11 +1128,6 @@ static void listener_modify_callback(Widget w, XtPointer context, XtPointer info
       (XtIsManaged(completions_pane)))
     XtUnmanageChild(completions_pane);
 
-#if HAVE_SCHEME
-  if (cbs->text->length == 1)
-    ss->listener_char = cbs->text->ptr[0];
-#endif
-
   if (((cbs->text)->length > 0) || (dont_check_motion))
     cbs->doit = true;
   else

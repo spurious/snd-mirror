@@ -527,7 +527,6 @@
 #define S_selection_p                   "selection?"
 #define S_selection_position            "selection-position"
 #define S_selection_srate               "selection-srate"
-#define S_send_mozilla                  "send-mozilla"
 #define S_short_file_name               "short-file-name"
 #define S_show_all_axes                 "show-all-axes"
 #define S_show_all_axes_unlabelled      "show-all-axes-unlabelled"

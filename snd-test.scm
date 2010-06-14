@@ -23400,8 +23400,6 @@ EDITS: 2
       (if (fneq (vct-peak vals) .1)
 	  (snd-display #__line__ ";locsig to vct fm-violin peak: ~A" (vct-peak vals))))
     
-    ;; TODO: get vector with-sound output to work in run 
-    
     (let ((vals (with-sound (:output (make-sound-data 2 4410))
 			    (fm-violin 0 .1 440 .1 :degree 30))))
       (let ((mxs (sound-data-maxamp vals)))

@@ -523,6 +523,9 @@ static gboolean listener_key_release(GtkWidget *w, GdkEventKey *event, gpointer 
 
 static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
+  guint key;
+  GdkModifierType state;
+
   if ((completion_pane) &&
       (completion_list_active))
     {
@@ -538,38 +541,36 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
       return(true); /* don't repeat the keystroke */
     }
 
-#if HAVE_SCHEME
-  /* TODO: set ss->listener_char = char */
-#endif
+  key = EVENT_KEYVAL(event);
+  state = (GdkModifierType)EVENT_STATE(event);
 
-
-  if (EVENT_KEYVAL(event) == GDK_Tab)
+  if (key == GDK_Tab)
     {
       listener_completion(gtk_text_buffer_get_char_count(LISTENER_BUFFER));
       return(true);
     }
 
-  if (EVENT_KEYVAL(event) == GDK_Return)
+  if (key == GDK_Return)
     listener_return_callback();
   else
     {
-      if (((EVENT_KEYVAL(event) == snd_K_g) || (EVENT_KEYVAL(event) == snd_K_G)) && 
-	  (EVENT_STATE(event) & snd_ControlMask))
+      if (((key == snd_K_g) || (key == snd_K_G)) && 
+	  (state & snd_ControlMask))
 	{
-	  if (EVENT_STATE(event) & snd_MetaMask)
+	  if (state & snd_MetaMask)
 	    clear_listener();
 	  else control_g(any_selected_sound());
 	}
       else
 	{
-	  if (((EVENT_KEYVAL(event) == snd_K_a) || (EVENT_KEYVAL(event) == snd_K_A)) && 
-	      (EVENT_STATE(event) & snd_ControlMask))
+	  if (((key == snd_K_a) || (key == snd_K_A)) && 
+	      (state & snd_ControlMask))
 	    {
 	      back_to_start();
 	    }
 	  else
 	    {
-	      if (EVENT_KEYVAL(event) == GDK_BackSpace)
+	      if (key == GDK_BackSpace)
 		{
 		  int current_position;
 		  char *fstr;
@@ -588,7 +589,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 		}
 	      else
 		{
-		  if ((EVENT_KEYVAL(event) == snd_K_greater) && (EVENT_STATE(event) & snd_MetaMask))
+		  if ((key == snd_K_greater) && (state & snd_MetaMask))
 		    {
 		      int end;
 		      end = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
@@ -596,65 +597,65 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 		    }
 		  else
 		    {
-		      if ((EVENT_KEYVAL(event) == snd_K_less) && (EVENT_STATE(event) & snd_MetaMask))
+		      if ((key == snd_K_less) && (state & snd_MetaMask))
 			{
 			  sg_set_cursor(listener_text, 2);
 			}
 		      else 
 			{
-			  if (((EVENT_KEYVAL(event) == snd_K_p) || (EVENT_KEYVAL(event) == snd_K_P)) && (EVENT_STATE(event) & snd_MetaMask))
+			  if (((key == snd_K_p) || (key == snd_K_P)) && (state & snd_MetaMask))
 			    {
 			      clear_back_to_prompt(listener_text);
 			      restore_listener_string(true);
 			    }
 			  else 
 			    {
-			      if (((EVENT_KEYVAL(event) == snd_K_n) || (EVENT_KEYVAL(event) == snd_K_N)) && (EVENT_STATE(event) & snd_MetaMask))
+			      if (((key == snd_K_n) || (key == snd_K_N)) && (state & snd_MetaMask))
 				{
 				  clear_back_to_prompt(listener_text);
 				  restore_listener_string(false);
 				}
 			      else 
 				{
-				  if ((EVENT_KEYVAL(event) == GDK_question) && (EVENT_STATE(event) & snd_ControlMask))
+				  if ((key == GDK_question) && (state & snd_ControlMask))
 				    {
 				      listener_help();
 				    }
 				  else
 				    {
-				      if (((EVENT_KEYVAL(event) == snd_K_c) || (EVENT_KEYVAL(event) == snd_K_C)) && (EVENT_STATE(event) & snd_MetaMask))
+				      if (((key == snd_K_c) || (key == snd_K_C)) && (state & snd_MetaMask))
 					{
 					  /* M-c (as opposed to M-C) is trapped somewhere else */
 					  word_upper(listener_text, true, false);
 					} 
 				      else
 					{
-					  if (((EVENT_KEYVAL(event) == snd_K_l) || (EVENT_KEYVAL(event) == snd_K_L)) && (EVENT_STATE(event) & snd_MetaMask))
+					  if (((key == snd_K_l) || (key == snd_K_L)) && (state & snd_MetaMask))
 					    {
 					      word_upper(listener_text, false, false);
 					    }
 					  else
 					    {
-					      if (((EVENT_KEYVAL(event) == snd_K_u) || (EVENT_KEYVAL(event) == snd_K_U)) && (EVENT_STATE(event) & snd_MetaMask))
+					      if (((key == snd_K_u) || (key == snd_K_U)) && (state & snd_MetaMask))
 						{
 						  word_upper(listener_text, false, true);
 						}
 					      else
 						{
-						  if (((EVENT_KEYVAL(event) == snd_K_t) || (EVENT_KEYVAL(event) == snd_K_T)) && (EVENT_STATE(event) & snd_ControlMask))
+						  if (((key == snd_K_t) || (key == snd_K_T)) && (state & snd_ControlMask))
 						    {
 						      text_transpose(listener_text);
 						    }
 						  else
 						    {
-						      if ((EVENT_KEYVAL(event) == snd_K_underscore) && (EVENT_STATE(event) & snd_ControlMask))
+						      if ((key == snd_K_underscore) && (state & snd_ControlMask))
 							{
 							  backup_listener_to_previous_expression();
 							}
 						      else
 							{
 #if HAVE_GTK_ABOUT_DIALOG_NEW
-							  if ((EVENT_KEYVAL(event) == snd_K_k) && (EVENT_STATE(event) & snd_ControlMask))
+							  if ((key == snd_K_k) && (state & snd_ControlMask))
 							    {
 							      /* select to line end, copy to clipboard, delete */
 							      ctrl_k(listener_text);

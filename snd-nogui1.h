@@ -302,12 +302,6 @@ widget_t record_file(void);
 
 
 
-/* -------- snd-gxutils.c -------- */
-
-bool send_mozilla(const char *html_viewer, const char *url);
-
-
-
 /* -------- snd-xprint.c -------- */
 
 widget_t make_file_print_dialog(bool managed, bool direct_to_printer);

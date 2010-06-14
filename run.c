@@ -91,12 +91,12 @@
  *
  * this doesn't get optimized yet: (set! ((mus-data gen) 123) .1)
  *   but the ref side does work: (let ((fr (frame .1 .2 .3))) (run (lambda () ((mus-data fr) 0))))
+ *   set! needs to look down a level if caar is a list
  *
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
  * PERHAPS: named let/tail recursion
  * SOMEDAY: generics like length
- * PERHAPS: can we get rid of "declare" now?
  * SOMEDAY: if return int and bool
  *
  * perhaps we can access s7 globals directly -- no need to copy each way for ints/dbls/strings
@@ -9975,7 +9975,7 @@ static xen_value *length_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
-/* TODO fill and copy (and "run set! of globals": (set! ((mus-data gen) 123) .1))
+/* TODO fill and copy 
    static xen_value *string_fill_1(ptree *pt, xen_value **args, int num_args)
    static xen_value *vct_fill_1(ptree *pt, xen_value **args, int num_args)
    static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)

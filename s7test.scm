@@ -542,6 +542,7 @@
 (test (equal? #t #t #t) 'error)
 
 
+
 (test (boolean? #f) #t)
 (test (boolean? #t) #t)
 (test (boolean? 0) #f)
@@ -570,6 +571,8 @@
 
 (test (boolean?) 'error)
 (test (boolean? #f #t) 'error)
+(test (boolean? (lambda (x) #f)) #f)
+
 
 
 
@@ -628,6 +631,7 @@
 
 (test (symbol?) 'error)
 (test (symbol? 'hi 'ho) 'error)
+(test (symbol? begin) #t) ; ?? this is an error in Guile
 
 
 
@@ -642,6 +646,8 @@
 (test (let ((a 1)) (let ((a (lambda () (procedure? a)))) (a))) #f)
 (test (let () (define (hi) 1) (procedure? hi)) #t)
 (test (let () (define-macro (hi a) `(+ ,a 1)) (procedure? hi)) #f)
+(test (procedure? begin) #f)
+(test (procedure? (lambda* ((a 1)) a)) #t)
 
 (for-each
  (lambda (arg)
@@ -5368,7 +5374,45 @@
 (test (let ((lst (vector 1 2 3))) (fill! lst lst) (object->string lst)) "#1=#(#1# #1# #1#)")
 (test (let ((lst #2d((1) (1)))) (fill! lst lst) (object->string lst)) "#1=#2D((#1#) (#1#))")
 
+(let ((ctr 0) (lst `(let ((x 3)) (set! ctr (+ ctr 1)) (set! (cdr (cddr lst)) `((+ x ctr))) (+ x 1))))
+  (test (eval lst) 4)
+  (test (eval lst) 5)
+  (test (eval lst) 6))
   
+(let ()
+  (define fact
+    (let ((old '())
+	  (result '()))
+      
+      (define (last lst)
+	(list-tail lst (- (length lst) 1)))
+      
+      (define (butlast lis)
+	(let ((len (length lis)))
+	     (if (<= len 1) '()
+		 (let ((result '()))
+		   (do ((i 0 (+ i 1))
+			(lst lis (cdr lst)))
+		       ((= i (- len 1)) (reverse result))
+		     (set! result (cons (car lst) result)))))))
+      
+      (lambda (n)
+	(cond ((zero? n) 1)
+	      (#t 
+	       (set! old (procedure-source fact))
+	       (set! fact (eval `(lambda (n) 
+				   (cond 
+				    ,@(butlast (cdr (car (cdr (cdr old)))))
+				    ((= n ,n) ,(let ()
+						 (set! result (* n (fact (- n 1))))
+						 result))
+				    ,@(last (cdr (car (cdr (cdr old)))))))))
+	       result)))))
+
+  (test (fact 3) 6)
+  (test (fact 5) 120)
+  (test (fact 2) 2))
+
 
 
 
@@ -5642,6 +5686,16 @@
     (test (hash-table-ref ht 'a0 'a1) 'b1)
     (test (ht 'a0 'a1) 'b1)))
 
+;; there's no real need for multidim hashes:
+
+(let ((ht (make-hash-table)))
+   (set! (ht (cons 'a 1)) 'b)
+   (set! (ht (cons 'a 2)) 'c)
+   (set! (ht (cons 'b 1)) 'd)
+   (test (ht '(a . 1)) 'b)
+   (test (ht '(b . 1)) 'd)
+   (set! (ht '(a . 2)) 32)
+   (test (ht '(a . 2)) 32))
 
 
 
@@ -6282,9 +6336,6 @@
 
 (test (format #f "~f" (/ 1 3)) "1/3") ; hmmm -- should it call exact->inexact?
 (test (format #f "~f" 1) "1")
-
-
-
 
 (if with-bignums
     (begin
@@ -7584,6 +7635,11 @@
 (test (let ((H (hash-table '(a . 3) '(b . 4)))) (map (lambda (x) (set! (H 'c) 32) (cdr x)) H)) '(3 4))
 (test (let ((H (hash-table '(a . 3) '(b . 4)))) (map (lambda (x) (set! (H 'b) 32) (cdr x)) H)) '(3 32))
 
+;; in that 1st example, the set-cdr! is not the problem (map supposedly can treat its args in any order),
+;;   any set! will do:
+(test (let ((x 0)) (map (lambda (y) (set! x (+ x y)) x) '(1 2 3 4))) '(1 3 6 10))
+
+
 
 
 
@@ -7950,6 +8006,8 @@
 	(set! sym0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789 2)
 	sym0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789)
       2)
+
+(test (let ((x '(1)) (y '(2))) (set! ((if #t x y) 0) 32) x) '(32))
 
 
 
@@ -8835,8 +8893,8 @@
 	      (multiple-value-set! (a b) (values 32 64))
 	      (+ a b))
 	    96)
+      (test (let ((add (lambda (a b) (values (+ a 1) (+ b 1))))) (+ 1 (add 2 3))) 8)
       ))
-(test (let ((add (lambda (a b) (values (+ a 1) (+ b 1))))) (+ 1 (add 2 3))) 8)
 
 ;;; in guile: (map (lambda (x) (values x (+ x 1))) (list 1 2 3)) returns (#<values (1 2)> #<values (2 3)> #<values (3 4)>)
 ;;; but s7 thinks it's an error
@@ -10930,9 +10988,12 @@ who says the continuation has to restart the map from the top?
 (let ((d 1))
   (test (quasiquote (a b c ,d)) '(a b c 1)))
 
+(test (quasiquote (list (unquote (+ 1 2)) 4)) '(list 3 4))
 
 
 
+
+;; -------- s7 specific stuff --------
 
 (for-each
  (lambda (arg)
@@ -11695,6 +11756,11 @@ who says the continuation has to restart the map from the top?
 	  (and (call/cc (lambda (x) (set! cont x) (continuation? x)))
 	       (continuation? cont)))
 	#t)
+  (test (let ((cont #f)) 
+	  (or (call-with-exit (lambda (x) (set! cont x) (continuation? x)))
+	       (continuation? cont)))
+	#f)  ; ?? 
+	
   (test (continuation?) 'error)
   (test (continuation? 1 2) 'error)
 

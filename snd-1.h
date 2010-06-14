@@ -522,9 +522,6 @@ typedef struct snd_state {
 #if HAVE_GL && MUS_WITH_GL2PS
   bool gl_printing;
 #endif
-#if HAVE_SCHEME
-  char listener_char;
-#endif
 } snd_state;
 
 extern snd_state *ss;
@@ -990,7 +987,6 @@ void g_xen_initialize(void);
 XEN eval_str_wrapper(void *data);
 XEN eval_form_wrapper(void *data);
 XEN string_to_form(const char *data);
-char *g_print_1(XEN obj);
 XEN g_c_make_sampler(snd_fd *fd);
 char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name, int argn);
 bool procedure_arity_ok(XEN proc, int args);

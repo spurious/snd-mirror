@@ -644,8 +644,6 @@ void listener_return(widget_t w, int last_prompt)
 #endif
 
 #if HAVE_SCHEME
-      /* TODO: need a catch here if user has called read-line of listener-input-port, or perhaps earlier in listener_return_callback (snd-g|xlistener) */
-
       if ((mus_strlen(str) > 1) || (str[0] != '\n'))
 	{
 	  char *errmsg;
@@ -676,7 +674,6 @@ void listener_return(widget_t w, int last_prompt)
 	      got_error = true;
 	    }
 	}
-      /* ss->listener_char = 0; */
 #endif
 
       free(str);

@@ -667,7 +667,7 @@ static XEN eval_file_wrapper(void *data)
 }
 
 
-char *g_print_1(XEN obj) /* free return val */
+static char *g_print_1(XEN obj) /* free return val */
 {
 #if HAVE_SCHEME
   return(XEN_AS_STRING(obj)); 
@@ -2558,99 +2558,6 @@ static char *legalize_path(const char *in_str)
 } 
 
 
-/* -------------------------------------------------------------------------------- */
-
-#if HAVE_SCHEME
-/* an experiment */
-
-/* TODO: needs read-line etc. also minibuffer funcs.
- *          string_to_minbuffer(cp, str)? snd-kbd 1066 snd_minibuffer_activate
- *       looks like both forms need a flag or something: read_line_waiting
- *
- * (read-char (minibuffer-input-port index))
- * (let ((port (minibuffer-input-port index))) (read-char port)).
- */
-
-static s7_pointer listener_read(s7_scheme *sc, s7_read_t read_choice, s7_pointer port)
-{
-  switch (read_choice)
-    {
-    case S7_READ_CHAR:
-    case S7_READ_BYTE:
-      {
-	char c;
-	while (ss->listener_char == 0) check_for_event();
-	c = ss->listener_char;
-	ss->listener_char = 0;
-	if (read_choice == S7_READ_CHAR)
-	  return(s7_make_character(s7, c));
-	return(s7_make_integer(s7, (s7_Int)c));
-      }
-
-    case S7_IS_CHAR_READY:
-      return((ss->listener_char) ? xen_true : xen_false);
-
-    case S7_PEEK_CHAR:
-      return(s7_make_character(s7, ss->listener_char));
-
-    case S7_READ_LINE:
-    case S7_READ:
-      /* wait for activation, if read_line return string else eval it and return value? -- need read-from-string */
-      /*  => (with-input-from-string <line> (lambda () (read))) */
-      fprintf(stderr, "can't handle this read choice yet");
-    }
-  return(xen_false);
-}
-
-static void listener_write(s7_scheme *sc, unsigned char c, s7_pointer port)
-{
-  char str[2];
-  str[0] = c;
-  str[1] = 0;
-  append_listener_text(-1, str); /* -1 means get eot after append and move cursor to it */
-  ss->listener_char = 0;
-  /* (let () (format (listener-output-port) "~%;a prompt: ") (read-char (listener-input-port))) */
-}
-
-
-#if 0
-static void minibuffer_write(s7_scheme *sc, char c, s7_pointer port)
-{
-  int index;
-  index = (int)s7_port_data(port);
-  /* need open at snd pane creation, s7_port_set_data(port, (void *)(snd->index))
-   * need minibuffer_append
-   */
-}
-#endif
-
-
-static s7_pointer listener_input_port, listener_output_port;
-
-static s7_pointer g_listener_input_port(s7_scheme *sc, s7_pointer args)
-{
-  return(listener_input_port);
-}
-
-static s7_pointer g_listener_output_port(s7_scheme *sc, s7_pointer args)
-{
-  return(listener_output_port);
-}
-
-static void init_listener_ports(void)
-{
-  listener_input_port = s7_open_input_function(s7, listener_read);
-  s7_gc_protect(s7, listener_input_port);
-
-  listener_output_port = s7_open_output_function(s7, listener_write);
-  s7_gc_protect(s7, listener_output_port);
-
-  s7_define_function(s7, "listener-input-port", g_listener_input_port, 0, 0, false, "(listener-input-port) returns a port to read from the listener text widget");
-  s7_define_function(s7, "listener-output-port", g_listener_output_port, 0, 0, false, "(listener-output-port) returns a port to write to the listener text widget");
-}
-
-#endif
-
 #if HAVE_GL
 static XEN g_snd_glx_context(void)
 {
@@ -2853,7 +2760,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   } 
 
 #if HAVE_SCHEME
-  init_listener_ports();
   XEN_DEFINE_PROCEDURE("_snd_s7_error_handler_", g_snd_s7_error_handler_w,  0, 0, 1, "internal error redirection for snd/s7");
 
   XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */

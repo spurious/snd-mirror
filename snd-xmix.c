@@ -1124,6 +1124,4 @@ void mix_dialog_set_mix(int id)
 }
 
 
-/* PERHAPS: lock (apply?) mix -- some way to write it and remove the mixer */
-
 

@@ -2646,8 +2646,12 @@ bool s7_is_continuation(s7_pointer p)
 static s7_pointer g_is_continuation(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_continuation "(continuation? obj) returns #t if obj is a continuation"
-  return(make_boolean(sc, (is_continuation(car(args))) || (is_goto(car(args)))));
+  return(make_boolean(sc, is_continuation(car(args))));
 }
+
+/* is this the right thing?  It returns #f for call-with-exit ("goto") because
+ *   that form of continuation can't continue (via a jump back to its context).
+ */
 
 
 static s7_pointer copy_list(s7_scheme *sc, s7_pointer lst)
@@ -7246,7 +7250,7 @@ static s7_pointer g_greater_1(s7_scheme *sc, bool reversed, s7_pointer args)
   s7_pointer x;
   s7_num_t a, b;
 
-  /* TODO: (>= nan.0 inf.0) returns #t, but in Guile it's #f (and others similar) */
+  /* (>= nan.0 inf.0) returns #t, but in Guile it's #f (and others similar) */
   
   if (!s7_is_real(car(args)))
     return(s7_wrong_type_arg_error(sc, (reversed) ? "<=" : ">", 1, car(args), "a real"));
@@ -26045,31 +26049,12 @@ s7_scheme *s7_init(void)
 }
 
 /* TODO: macroexpand and fully-expand are buggy
- * TODO: function IO completed -- tie into scheme for tests?
- *         what is needed? -- scheme "soft-port"?  C-side listener stuff? [snd-g|xlistener, and snd-xen -- 4 altogether]
- *       a guile sort port is a vector: write-char func, write-string, flush, read-char, close which seems completely random (why mix in/out?)
- *       function-port scheme side a port object with a callable function f(val choice)
- *           val = thing to write (or omitted on read side)
- *           choice = symbol of caller: 'read-byte or 'display for example
- *           this is then passed as the "port" arg to everything else
- *       what does this buy that string ports don't?
- *
- * s7 has input/output function ports with
- *   typedef enum {S7_READ, S7_READ_CHAR, S7_READ_LINE, S7_READ_BYTE, S7_PEEK_CHAR, S7_IS_CHAR_READY} s7_read_t;
- *   choosing the input function, but output is just the char-at-a-time case
- *
- *  why not just tie in open-input|output-function on scheme side (distinguish read-char from read-line?)
- *     port_input_function would be a C->scheme wrapper and function held perhaps in port struct?
- *  then also open-input|output-string.
- *
  * SOMEDAY: eval-string (or eval?) with jump outside the eval (call/cc external) -> segfault or odd error
- *             (is this the case in dynamic-wind also?)
  *
  *  envs as debugging aids: how to show file/line tags as well
  *  and perhaps store cur-code?  __form__ ? make a cartoon of entire state? [need only the pointer, not a copy]
  * this would be good in ws too -- a way to show which notes are active at a given point in the graph
  *
- * a way to walk up the stack?  (current-environment 10) [20-Jan-10] 11.2
  * and a way to jump into the error environment, cerror 
  *   an error handling dialog (gui) in snd?
  *
@@ -26109,11 +26094,5 @@ s7_scheme *s7_init(void)
  * A "class" in this case is define-record (for the local fields and type) + a list of methods and a methods accessor.
  * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
  * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
- *
- *
- * (expt -infnani -1) -> 0.0
- * (expt -inf.0 -infnani) -> 0.0
- * (expt -1 inf.0) [nan]
- * (expt 1.0 nan.0) -> 1.000E0
  */
 
