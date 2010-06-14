@@ -1466,7 +1466,9 @@ it is set:
 <dd><p>procedure-with-setters can be viewed as one generalization of set!.  Another
 treats objects as having predefined get and set functions.  In s7
 lists, strings, vectors, hash-tables, and any cooperating C or Scheme-defined objects
-are both applicable and settable.  I think the syntax is pretty (the less noise, the better!):
+are both applicable and settable.  
+I think the syntax is pretty (names like "vector-ref" are just type declarations which are
+unnecessary in Scheme: the less noise, the better!):
 </p>
 <pre>
 ;; an example taken from R Cox's website

@@ -5944,21 +5944,6 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 		}
 	    }
 	  /* occasionally int^rat can be int but it happens so infrequently it's probably not worth checking */
-	  /* but... it's sad that 
-	   *    :(expt -8 1/3)
-	   *    1+1.7320508075689i ; a real always has a real cbrt -- would be nice to stick to that
-	   *                       ; expts x y [x and y rational] -> a list of values?
-	   * or even
-	   *    :(sqrt 1/9)
-	   *    1/3
-	   *    :(expt 1/9 1/2) ; see below -- this is fixed now
-	   *    0.33333333333333
-	   *    :(expt 1/32 1/5)
-	   *    0.5
-	   *    :(expt 4 -1/2)
-	   *    0.5
-	   *   add internal cbrt y=1/3 etc?
-	   */
 	}
     }
 
@@ -5982,15 +5967,12 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 
       if (isnan(x)) return(n);
       if (isnan(y)) return(pw);
-      /* TODO: something is wrong here, (expt nan.0 inf.0) -> 0 (etc) (I think this is big_expt not g_expt) */
       if (y == 0.0) return(real_one);
 
       if ((x > 0.0) ||
 	  ((y - floor(y)) < 1.0e-16))
 	return(s7_make_real(sc, pow(x, y)));
     }
-
-  /* what about inf/nan complex cases? (expt +inf.0 -inf.0) currently return 0.0 ? */
 
   return(s7_from_c_complex(sc, cpow(s7_complex(n), s7_complex(pw))));
 }
@@ -8560,22 +8542,52 @@ static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
 }
 
 
+static int scheme_strcmp(s7_pointer s1, s7_pointer s2)
+{
+  int i, len, len1, len2;
+  char *str1, *str2;
+
+  len1 = string_length(s1);
+  len2 = string_length(s2);
+  if (len1 > len2)
+    len = len2;
+  else len = len1;
+
+  str1 = string_value(s1);
+  str2 = string_value(s2);
+
+  for (i = 0; i < len; i++)
+    if (str1[i] < str2[i])
+      return(-1);
+    else
+      {
+	if (str1[i] > str2[i])
+	  return(1);
+      }
+
+  if (len1 < len2) 
+    return(-1);
+  if (len1 > len2)
+    return(1);
+  return(0);
+}
+
+
 static s7_pointer g_string_cmp(s7_scheme *sc, s7_pointer args, int val, const char *name)
 {
   int i;
-  s7_pointer x;
-  const char *last_str = NULL;
+  s7_pointer x, y;
   
   for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))  
     if (!s7_is_string(car(x)))
       return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
   
-  last_str = string_value(car(args));
+  y = car(args);
   for (x = cdr(args); x != sc->NIL; x = cdr(x))
     {
-      if (safe_strcmp(last_str, string_value(car(x))) != val)
+      if (scheme_strcmp(y, car(x)) != val)
 	return(sc->F);
-      last_str = string_value(car(x));
+      y = car(x);
     }
   return(sc->T);
 }
@@ -8584,19 +8596,18 @@ static s7_pointer g_string_cmp(s7_scheme *sc, s7_pointer args, int val, const ch
 static s7_pointer g_string_cmp_not(s7_scheme *sc, s7_pointer args, int val, const char *name)
 {
   int i;
-  s7_pointer x;
-  const char *last_str = NULL;
+  s7_pointer x, y;
   
   for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))  
     if (!s7_is_string(car(x)))
       return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
   
-  last_str = string_value(car(args));
+  y = car(args);
   for (x = cdr(args); x != sc->NIL; x = cdr(x))
     {
-      if (safe_strcmp(last_str, string_value(car(x))) == val)
+      if (scheme_strcmp(y, car(x)) == val)
 	return(sc->F);
-      last_str = string_value(car(x));
+      y = car(x);
     }
   return(sc->T);
 }
@@ -8605,6 +8616,12 @@ static s7_pointer g_string_cmp_not(s7_scheme *sc, s7_pointer args, int val, cons
 static s7_pointer g_strings_are_equal(s7_scheme *sc, s7_pointer args)
 {
   #define H_strings_are_equal "(string=? str...) returns #t if all the string arguments are equal"
+
+  /* C-based check stops at null, but we can have embedded nulls.  We can't
+   *   just look at string-length because we need to check past the nulls.
+   *   (let ((s1 "1234") (s2 "1245")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string=? s1 s2))
+   * hence scheme_strcmp above.
+   */
   return(g_string_cmp(sc, args, 0, "string=?"));
 }	
 
@@ -8637,32 +8654,26 @@ static s7_pointer g_strings_are_leq(s7_scheme *sc, s7_pointer args)
 }	
 
 
-static int safe_strcasecmp(const char *s1, const char *s2)
+static int scheme_strcasecmp(s7_pointer s1, s7_pointer s2)
 {
-  int len1, len2, len;
-  int i;
-  if (s1 == NULL)
-    {
-      if (s2 == NULL)
-	return(0);
-      return(-1);
-    }
+  int i, len, len1, len2;
+  char *str1, *str2;
 
-  if (s2 == NULL)
-    return(1);
-
-  len1 = safe_strlen(s1);
-  len2 = safe_strlen(s2);
-  len = len1;
+  len1 = string_length(s1);
+  len2 = string_length(s2);
   if (len1 > len2)
     len = len2;
+  else len = len1;
+
+  str1 = string_value(s1);
+  str2 = string_value(s2);
 
   for (i = 0; i < len; i++)
-    if (toupper(s1[i]) < toupper(s2[i]))
+    if (toupper(str1[i]) < toupper(str2[i]))
       return(-1);
     else
       {
-	if (toupper(s1[i]) > toupper(s2[i]))
+	if (toupper(str1[i]) > toupper(str2[i]))
 	  return(1);
       }
 
@@ -8670,7 +8681,6 @@ static int safe_strcasecmp(const char *s1, const char *s2)
     return(-1);
   if (len1 > len2)
     return(1);
-
   return(0);
 }
 
@@ -8678,19 +8688,18 @@ static int safe_strcasecmp(const char *s1, const char *s2)
 static s7_pointer g_string_ci_cmp(s7_scheme *sc, s7_pointer args, int val, const char *name)
 {
   int i;
-  s7_pointer x;
-  const char *last_str = NULL;
+  s7_pointer x, y;
   
   for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))  
     if (!s7_is_string(car(x)))
       return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
   
-  last_str = string_value(car(args));
+  y = car(args);
   for (x = cdr(args); x != sc->NIL; x = cdr(x))
     {
-      if (safe_strcasecmp(last_str, string_value(car(x))) != val)
+      if (scheme_strcasecmp(y, car(x)) != val)
 	return(sc->F);
-      last_str = string_value(car(x));
+      y = car(x);
     }
   return(sc->T);
 }
@@ -8699,19 +8708,18 @@ static s7_pointer g_string_ci_cmp(s7_scheme *sc, s7_pointer args, int val, const
 static s7_pointer g_string_ci_cmp_not(s7_scheme *sc, s7_pointer args, int val, const char *name)
 {
   int i;
-  s7_pointer x;
-  const char *last_str = NULL;
+  s7_pointer x, y;
   
   for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))  
     if (!s7_is_string(car(x)))
       return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
   
-  last_str = string_value(car(args));
+  y = car(args);
   for (x = cdr(args); x != sc->NIL; x = cdr(x))
     {
-      if (safe_strcasecmp(last_str, string_value(car(x))) == val)
+      if (scheme_strcasecmp(y, car(x)) == val)
 	return(sc->F);
-      last_str = string_value(car(x));
+      y = car(x);
     }
   return(sc->T);
 }

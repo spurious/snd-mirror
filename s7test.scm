@@ -1418,13 +1418,14 @@
 \
 \
 " "") #t)
-(test (string=? "" (string #\null)) #t) ; ??
-(test (string=? (string #\null #\null) (string #\null)) #t) ; ?? their lengths are different!
+(test (string=? "" (string #\null)) #f)
+(test (string=? (string #\null #\null) (string #\null)) #f)
 (test (string=? "" "asd") #f)
 (test (string=? "asd" "") #f)
 (test (string=? "xx" (make-string 2 #\x) (string #\x #\x) (list->string (list #\x #\x)) (substring "axxb" 1 3) (string-append "x" "x")) #t)
-
-
+(test (let ((s1 "1234") (s2 "1245")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string=? s1 s2)) #f)
+(test (let ((s1 "1234") (s2 "1234")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string=? s1 s2)) #t)
+(test (let ((s1 "1234") (s2 "124")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string=? s1 s2)) #f)
 
 
 (test (string<? "aaaa" "aaab") #t)
@@ -1459,6 +1460,11 @@
 (test (string<? "foo" "foo" "fOo") #f)
 
 (test (string<? "foo" "fo" 1.0) 'error)
+(test (let ((s1 "1234") (s2 "1245")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string<? s1 s2)) #t)
+(test (let ((s1 "1234") (s2 "123")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string<? s1 s2)) #f)
+(test (let ((s1 "123") (s2 "1234")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string<? s1 s2)) #t)
+
+
 
 
 (test (string>? "aaab" "aaaa") #t)
@@ -1494,6 +1500,9 @@
 (test (string>? "foo" "foo" "fOo") #f)
 
 (test (string>? "foo" "fooo" 1.0) 'error)
+(test (let ((s1 "1234") (s2 "1245")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string>? s1 s2)) #f)
+(test (let ((s1 "1234") (s2 "123")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string>? s1 s2)) #t)
+(test (let ((s1 "123") (s2 "1234")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string>? s1 s2)) #f)
 
 
 
@@ -1529,6 +1538,10 @@
 (test (string<=? "foo" "foo" "fooo") #t)
 
 (test (string<=? "foo" "fo" 1.0) 'error)
+(test (let ((s1 "1234") (s2 "1245")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string<=? s1 s2)) #t)
+(test (let ((s1 "1234") (s2 "123")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string<=? s1 s2)) #f)
+(test (let ((s1 "123") (s2 "1234")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string<=? s1 s2)) #t)
+(test (let ((s1 "1234") (s2 "1234")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string<=? s1 s2)) #t)
 
 
 
@@ -1567,6 +1580,10 @@
 (test (string>=? "foo" "foo" "fo") #t)
 
 (test (string>=? "fo" "foo" 1.0) 'error)
+(test (let ((s1 "1234") (s2 "1245")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string>=? s1 s2)) #f)
+(test (let ((s1 "1234") (s2 "123")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string>=? s1 s2)) #t)
+(test (let ((s1 "123") (s2 "1234")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string>=? s1 s2)) #f)
+(test (let ((s1 "1234") (s2 "1234")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string>=? s1 s2)) #t)
 
 
 
@@ -1589,6 +1606,13 @@
 (test (string-ci=? "foo" "Foo" "fOo") #t)
 
 (test (string-ci=? "foo" "GOO" 1.0) 'error)
+(test (let ((s1 "1234") (s2 "1245")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci=? s1 s2)) #f)
+(test (let ((s1 "1234") (s2 "1234")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci=? s1 s2)) #t)
+(test (let ((s1 "1234") (s2 "124")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci=? s1 s2)) #f)
+(test (let ((s1 "abcd") (s2 "ABCD")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci=? s1 s2)) #t)
+(test (let ((s1 "abcd") (s2 "ABCE")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci=? s1 s2)) #f)
+(test (let ((s1 "abcd") (s2 "ABC")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci=? s1 s2)) #f)
+
 
 
 
@@ -1621,6 +1645,14 @@
 (test (string-ci<? "+\\mZl" "bE7\\e(HaW5CDXbPi@U_" "B_") #t)
 
 (test (string-ci<? "foo" "fo" 1.0) 'error)
+(test (let ((s1 "1234") (s2 "1245")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci<? s1 s2)) #t)
+(test (let ((s1 "1234") (s2 "1234")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci<? s1 s2)) #f)
+(test (let ((s1 "1234") (s2 "124")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci<? s1 s2)) #t)
+(test (let ((s1 "123") (s2 "12")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci<? s1 s2)) #f)
+(test (let ((s1 "abcd") (s2 "ABCD")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci<? s1 s2)) #f)
+(test (let ((s1 "abcd") (s2 "ABCE")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci<? s1 s2)) #t)
+(test (let ((s1 "abcd") (s2 "ABC")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci<? s1 s2)) #f)
+(test (let ((s1 "abc") (s2 "ABCD")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci<? s1 s2)) #t)
 
 
 
@@ -1653,6 +1685,11 @@
 (test (string-ci>? "^" "aN@di;iEO" "7*9q6uPmX9)PaY,6J" "15vH") #t)
 
 (test (string-ci>? "foo" "fooo" 1.0) 'error)
+(test (let ((s1 "abcd") (s2 "ABCD")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci>? s1 s2)) #f)
+(test (let ((s1 "abcd") (s2 "ABCE")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci>? s1 s2)) #f)
+(test (let ((s1 "abcd") (s2 "ABC")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci>? s1 s2)) #t)
+(test (let ((s1 "abc") (s2 "ABCD")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci>? s1 s2)) #f)
+
 
 
 
@@ -1683,6 +1720,10 @@
 (test (string-ci<=? "`5pNuFc3PM<rNs" "e\\Su_raVNk6HD" "vXnuN7?S0?S(w+M?p") #f)
 
 (test (string-ci<=? "fOo" "fo" 1.0) 'error)
+(test (let ((s1 "abcd") (s2 "ABCD")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci<=? s1 s2)) #t)
+(test (let ((s1 "abcd") (s2 "ABCE")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci<=? s1 s2)) #t)
+(test (let ((s1 "abcd") (s2 "ABC")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci<=? s1 s2)) #f)
+(test (let ((s1 "abc") (s2 "ABCD")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci<=? s1 s2)) #t)
 
 
 
@@ -1715,6 +1756,12 @@
 (test (string-ci>=? "Z6a8P" "^/VpmWwt):?o[a9\\_N" "8[^h)<KX?[utsc") #f)
 
 (test (string-ci>=? "fo" "foo" 1.0) 'error)
+(test (let ((s1 "abcd") (s2 "ABCD")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci>=? s1 s2)) #t)
+(test (let ((s1 "abcd") (s2 "ABCE")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci>=? s1 s2)) #f)
+(test (let ((s1 "abcd") (s2 "ABC")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci>=? s1 s2)) #t)
+(test (let ((s1 "abc") (s2 "ABCD")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci>=? s1 s2)) #f)
+
+
 
 (for-each
  (lambda (arg)
@@ -1920,10 +1967,10 @@
 
 (let ((str (make-string 10 #\x)))
   (string-set! str 3 (integer->char 0))
-  (test (string=? str "xxx") #t)
+  (test (string=? str "xxx") #f)
   (test (char=? (string-ref str 4) #\x) #t)
   (string-set! str 4 #\a)
-  (test (string=? str "xxx") #t)
+  (test (string=? str "xxx") #f)
   (test (char=? (string-ref str 4) #\a) #t)
   (string-set! str 3 #\x)
   (test (string=? str "xxxxaxxxxx") #t))
@@ -8102,6 +8149,12 @@
 (test (cond (1 => + abs)) 'error)
 (test (cond (1 =>)) 'error)
 (if with-values (test (cond ((values 1 2) => + abs)) 'error))
+
+(test (let ((x 0))
+	(cond ((let ((y x)) (set! x 1) (= y 1)) 0)
+	      ((let ((y x)) (set! x 1) (= y 1)) 1)
+	      (#t 2)))
+      1)
 
 
 
