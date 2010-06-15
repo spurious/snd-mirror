@@ -23449,6 +23449,10 @@ who says the continuation has to restart the map from the top?
 (num-test (sin 80143857.0000000149) 1.283143758817470627530994988383551176295E-10)
 (num-test (sqrt 3.63861067050296029e-308) 1.907514264822929257351751954551699751189E-154)
 (num-test (tan 10526671570.5) 1.140653720398103887405511659009364634384E12)
+(num-test (tan (modulo 10526671570.5 (* 2 our-pi))) 1.140653720398103899436689297531030608688E12)
+(num-test (modulo 10526671570.5 (* 2 our-pi)) 4.712388980383813167439843967777959731718E0)
+;; this is so sensitive because (cos 4.712388980383813167439843967777959731718E0) = -8.766902541211071412945944658266052999824E-13
+;; unfair!
 
 (let* ((x (* #x1.6000022202b1076a (expt 2 -58))) 
        (a (expt (- 1.01 x) (- 1.01 x))) 
@@ -44289,6 +44293,18 @@ who says the continuation has to restart the map from the top?
 (test (/ 0.0) 'error)
 (test (/ 1.0 0) 'error)
 
+(for-each
+ (lambda (op)
+   (for-each 
+    (lambda (arg1)
+      (test (op arg1) 'error)
+      (for-each
+       (lambda (arg2)
+	 (test (op arg1 arg2) 'error))
+       (list "hi" '() 1 1.5 3/2 1+i (cons 1 2) (list 1 2) #\a 'a-symbol #(1) abs #f (lambda (a) (+ a 1)) #<unspecified> #<eof> #<undefined>)))
+    (list "hi" '() (cons 1 2) (list 1 2) #\a 'a-symbol #(1) abs #f (lambda (a) (+ a 1)) #<unspecified> #<eof> #<undefined>)))
+ (list + - * / > < >= <= ))
+
 
 
 ;; --------------------------------------------------------------------------------
@@ -45375,8 +45391,17 @@ who says the continuation has to restart the map from the top?
   (define (fact n) (if (<= n 1) 1 (* n (fact (- n 1)))))
   (num-test (fact 7) 5040)
   (num-test (fact 20) 2432902008176640000)
-  (if with-bignums (num-test (fact 21) 51090942171709440000))
-  (if with-bignums (num-test (fact 32) 263130836933693530167218012160000000)))
+  (do ((i 2 (+ i 1)))
+      ((= i 21))
+    (num-test (* i (fact (- i 1))) (fact i))
+    (num-test (/ (* i (fact (- i 1)))) (/ (fact i))))
+  (if with-bignums 
+      (begin
+	(num-test (fact 21) 51090942171709440000)
+	(num-test (fact 32) 263130836933693530167218012160000000)
+	(do ((i 20 (+ i 1)))
+	    ((= i 40))
+	  (num-test (* i (fact (- i 1))) (fact i))))))
 
 (num-test (* -2147483648 4294967296) -9223372036854775808)
 (num-test (* -1/2147483648 1/4294967296) -1/9223372036854775808)

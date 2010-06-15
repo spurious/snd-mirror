@@ -1596,8 +1596,9 @@ We can write an FFT procedure that accepts lists or vectors:
 that they accept arguments of many types (leaving aside numbers).  s7 extends that list with map, for-each, reverse,
 and length, and adds a few others such as copy, fill!, sort!, object-&gt;string, and continuation?.
 I may add similar extensions to append (what to do if the argument types are mixed?). 
-newLisp takes a more radical approach than s7: even an operator such as '&gt;' is generic in
-the sense that it can compare strings and lists, as well as numbers.  newLisp also uses negative
+newLisp takes a more radical (and consistent) approach than s7: even an operator such as '&gt;' is generic in
+the sense that it can compare strings and lists, as well as numbers (in "string<?", the "string" part is
+again just a type declaration).  newLisp also uses negative
 numbers to index from the end of a sequence. 
 </p>
 

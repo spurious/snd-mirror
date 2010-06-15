@@ -2945,6 +2945,7 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   static s7_pointer promote_number(s7_scheme *sc, int type, s7_pointer x);
   static s7_pointer big_negate(s7_scheme *sc, s7_pointer args);
   static s7_pointer big_invert(s7_scheme *sc, s7_pointer args);
+  static s7_pointer big_tan(s7_scheme *sc, s7_pointer args);
 #endif
 
 
@@ -5517,7 +5518,16 @@ static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
   if (x == small_int(0)) return(x);                                /* (tan 0) -> 0 */
 
   if (s7_is_real(x))
-    return(s7_make_real(sc, tan(num_to_real(number(x)))));
+    {
+      s7_Double val;
+      val = num_to_real(number(x));
+#if WITH_GMP
+      if ((val > 350.0) ||
+	  (val < -350.0))
+	return(big_tan(sc, s7_cons(sc, s7_number_to_big_real(sc, x), sc->NIL)));
+#endif
+      return(s7_make_real(sc, tan(val)));
+    }
 
   if (s7_imag_part(x) > 350.0)
     return(s7_make_complex(sc, 0.0, 1.0));

@@ -195,7 +195,7 @@
 	((= i 10))
       (set! (buf i) (read-byte)))
     (set! exp (logior (ash (buf 0) 8) (buf 1)))
-    (set! sign (if (/= (logand exp #x8000) 0) 1 0))
+    (set! sign (if (not (= (logand exp #x8000) 0)) 1 0))
     (set! exp (logand exp #x7FFF))
     (set! mant1 (+ (ash (buf 2) 24) (ash (buf 3) 16) (ash (buf 4) 8) (buf 5)))
     (set! mant0 (+ (ash (buf 6) 24) (ash (buf 7) 16) (ash (buf 8) 8) (buf 9)))
@@ -252,6 +252,7 @@
 	      (list magic data-location data-size data-format srate chans comment)))))))
 
 (define (write-au-header file chans srate data-size data-format comment) ; data-size in bytes
+  ;; common data-formats: 1 mulaw, 2 linear_8, 3 linear_16, 4 linear_24, 5 linear_32, 6 float, 5 double, 27 alaw
   (with-output-to-file file
     (lambda ()
       (let* ((comlen (length comment))
@@ -272,4 +273,50 @@
 	  (write-byte 0))))))
 
 
-;;; TODO: wav/aifc + data type info
+;;; TODO: read/write wav, write aifc
+
+(define (read-aif-header file)
+  (let ((data-location 0)
+	(data-size 0)
+	(data-format 0)
+	(srate 0)
+	(chans 0)
+	(current-location 0))
+    (with-input-from-file file
+      (lambda ()
+	(let ((magic (read-chars 4)))
+	  (if (not (string=? magic "FORM"))
+	      (error 'bad-header "~A is not an aif file: ~A" file magic)
+	      (let* ((size (read-bint32))
+		     (magic (read-chars 4)))
+		(set! current-location 12)
+		(if (and (not (string=? magic "AIFF"))
+			 (not (string=? magic "AIFC")))
+		    (error 'bad-header "~A is not an aif file: ~A" file magic)
+		    ;; now look for the "SSND" and "COMM" chunks
+		    (call-with-exit
+		     (lambda (return)
+		       (let loop ()
+			 (let* ((chunk (read-chars 4))
+				(chunk-size (read-bint32)))
+			   (if (odd? chunk-size) (set! chunk-size (+ chunk-size 1)))
+			   (if (string=? chunk "SSND")
+			       (begin
+				 (set! data-location (+ 16 current-location (read-bint32)))
+				 (if (> srate 0)
+				     (return (list magic data-location data-size data-format srate chans))))
+			       (if (string=? chunk "COMM")
+				   (let ((frames 0))
+				     (set! chans (read-bint16))
+				     (set! frames (read-bint32))
+				     (set! data-format (read-bint16))
+				     (set! srate (read-bfloat80->int))
+				     (set! data-size (* frames chans data-format 1/8))
+				     (if (> data-location 0)
+					 (return (list magic data-location data-size data-format srate chans))))
+				   (do ((i 0 (+ i 1)))
+				       ((= i chunk-size))
+				     (if (eof-object? (read-byte))
+					 (return 'bad-header)))))
+			   (set! current-location (+ 8 chunk-size))
+			   (loop)))))))))))))

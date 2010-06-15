@@ -1192,10 +1192,12 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 	      if (data_location != 0) return(mus_error(MUS_HEADER_READ_FAILED, "%s: two SSND chunks found", filename));
 	      update_ssnd_location = offset + 4;
 	      data_location = mus_char_to_bint((unsigned char *)(hdrbuf + 8)) + offset + 16; /* Baroque! */
+
 	      /* offset is where the hdrbuf is positioned in the file, the sound data offset itself is at loc+8 and the */
 	      /* 0-based location of the sound data is at the end of the chunk = 16 (8 = header+4 = offset+4 = blocksize) */
 	      /* the next int can be the block size if the data is block-aligned */
 	      /* only one SSND per AIFF is allowed */
+
 	      if (chunksize == 0) break; /* this may happen while pre-reading an in-progress output file for updating */
 	      ssnd_bytes = offset + chunksize - data_location + 8;
 	    }
