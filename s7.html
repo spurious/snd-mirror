@@ -1523,12 +1523,14 @@ I like this syntax:  the less noise, the better!
 
 <small>
 <blockquote>
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>Well, maybe applicable strings look weird: <code>("hi" 1)</code> is #\i, but worse,
 so is <code>(cond (1 =&gt; "hi"))</code>!
 </p>
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
@@ -1536,15 +1538,18 @@ so is <code>(cond (1 =&gt; "hi"))</code>!
 For example, s7test.scm has implementations of Common Lisp's sequence functions.
 length, copy, reverse, fill!, map and for-each are generic in this sense (map always returns a list).
 </p>
+
 <pre>
 &gt; (map (lambda (a b) (- a b)) (list 1 2) (vector 3 4))
 (5 -3 9)
 &gt; (length "hi")
 2
 </pre>
+
 <p>
 We can write an FFT procedure that accepts lists or vectors:
 </p>
+
 <pre>
         (define* (cfft! data n (dir 1)) ; (complex data)
           (if (not n) (set! n (<em class=red>length</em> data)))
@@ -1597,7 +1602,7 @@ that they accept arguments of many types (leaving aside numbers).  s7 extends th
 and length, and adds a few others such as copy, fill!, sort!, object-&gt;string, and continuation?.
 I may add similar extensions to append (what to do if the argument types are mixed?). 
 newLisp takes a more radical (and consistent) approach than s7: even an operator such as '&gt;' is generic in
-the sense that it can compare strings and lists, as well as numbers (in "string<?", the "string" part is
+the sense that it can compare strings and lists, as well as numbers (in "string&lt;?", the "string" part is
 again just a type declaration).  newLisp also uses negative
 numbers to index from the end of a sequence. 
 </p>
@@ -1628,12 +1633,14 @@ an integer (the one dimensional case):
     (make-vector '(2 3) 1.0)
     (vector-dimensions (make-vector (list 2 3 4))) -&gt; (2 3 4)
 </pre>
+
 <p>The second example includes the optional initial element.
 <code>(vect i ...)</code> or <code>(vector-ref vect i ...)</code> return the given
 element, and <code>(set! (vect i ...) value)</code> and <code>(vector-set! vect i ... value)</code>
 set it.  vector-length (or just length) returns the total number of elements.
 vector-dimensions returns a list of the dimensions.
 </p>
+
 <pre>
     &gt; (define v (make-vector '(2 3) 1.0))
     #2D((1.0 1.0 1.0) (1.0 1.0 1.0))
@@ -1650,6 +1657,7 @@ vector-dimensions returns a list of the dimensions.
 
 <small>
 <blockquote>
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
