@@ -6456,6 +6456,11 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
       switch (ret_type)
 	{
 	case NUM_INT: 
+#if WITH_GMP
+	  if ((integer(b) > LONG_MAX) ||
+	      (integer(b) < LONG_MIN))
+	    return(big_multiply(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(a)), x)));
+#endif
 	  integer(a) *= integer(b);
 	  break;
       

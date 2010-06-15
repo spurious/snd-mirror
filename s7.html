@@ -344,16 +344,7 @@ get them via log:
 (define +inf.0 (- (real-part (log 0.0))))
 (define nan.0 (/ +inf.0 +inf.0))
 </pre>
-<p>There are some situations involving NaNs and infinities that I believe the IEEE doesn't specify.
-I've made what I hope are reasonable choices:
-</p>
-<pre>
-&gt; (expt 1.0 +inf.0)
-1.0
-&gt; (sin nan.0)
-nan.0
-;; etc
-</pre>
+
 <p>But what is <code>(/ 1.0 0.0)</code>?  s7 gives a "division by zero" error here, and also in <code>(/ 1 0)</code>.
 Guile returns +inf.0 in the first case, which seems reasonable, but a "numerical overflow" error in the second.
 Slightly weirder is <code>(expt 0.0 0+i)</code>.  Currently s7 returns 0.0, Guile returns +nan.0+nan.0i,
@@ -1466,9 +1457,15 @@ it is set:
 <dd><p>procedure-with-setters can be viewed as one generalization of set!.  Another
 treats objects as having predefined get and set functions.  In s7
 lists, strings, vectors, hash-tables, and any cooperating C or Scheme-defined objects
-are both applicable and settable.  
-I think the syntax is pretty (names like "vector-ref" are just type declarations which are
-unnecessary in Scheme: the less noise, the better!):
+are both applicable and settable (newLisp calls this "implicit indexing").  
+</p>
+<p>
+In <code>(vector-ref #(1 2) 0)</code>, for example, "vector-ref" is just a type
+declaration.  But in Scheme, type declarations are unnecessary, so we get exactly
+the same result from <code>(#(1 2) 0)</code>.  Similarly, <code>(lst 1)</code> is the
+same as <code>(list-ref lst 1)</code>, and <code>(set! (lst 1) 2)</code> is the same
+as <code>(list-set! lst 1 2)</code>.
+I like this syntax:  the less noise, the better!
 </p>
 <pre>
 ;; an example taken from R Cox's website
@@ -1506,7 +1503,7 @@ unnecessary in Scheme: the less noise, the better!):
 (is-member 12)
 #t
 </pre>
-<p>Lists and hash-tables behave similarly:
+<p>Some more examples:
 </p>
 <pre>
 (let ((lst (list 1 2 3)))
@@ -1518,15 +1515,7 @@ unnecessary in Scheme: the less noise, the better!):
   (set! (hash 'hi) 32)
   (hash 'hi))
 -&gt; 32
-</pre>
-<p>
-set! can also apply to string-ref, list-ref, vector-ref,
-hash-table-ref, car, and cdr.  That is,
-</p>
-<pre>
-&gt; (let ((str "123")) 
-    (set! (string-ref str 1) #\x) str)
-"1x3"
+
 &gt; (let ((str "123")) 
     (set! (str 1) #\x) str)
 "1x3"
@@ -1607,6 +1596,9 @@ We can write an FFT procedure that accepts lists or vectors:
 that they accept arguments of many types (leaving aside numbers).  s7 extends that list with map, for-each, reverse,
 and length, and adds a few others such as copy, fill!, sort!, object-&gt;string, and continuation?.
 I may add similar extensions to append (what to do if the argument types are mixed?). 
+newLisp takes a more radical approach than s7: even an operator such as '&gt;' is generic in
+the sense that it can compare strings and lists, as well as numbers.  newLisp also uses negative
+numbers to index from the end of a sequence. 
 </p>
 
 </blockquote>
@@ -2429,9 +2421,8 @@ more fun than a barrel of monkeys.  Here is a circular function:
 (cfunc) ; displays "func! " until you kill it
 </pre>
 
-<p>Now we can write code that
-is not only unreadable, but unprintable!  
-Here is a self-modifying factorial function:
+<p>
+And a self-modifying factorial function:
 </p>
 
 <pre>
