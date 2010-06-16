@@ -89,15 +89,17 @@
  *
  * would it simplify variable handling to store everything as xen_value?
  *
- * this doesn't get optimized yet: (set! ((mus-data gen) 123) .1)
+ * TODO: this doesn't get optimized yet: (set! ((mus-data gen) 123) .1)
  *   but the ref side does work: (let ((fr (frame .1 .2 .3))) (run (lambda () ((mus-data fr) 0))))
  *   set! needs to look down a level if caar is a list
+ *   an example is sample-pvoc3 in clm23.scm: (vct-set! (phase-vocoder-amps sr) k ...)
  *
  * TODO: run doesn't always warn about a closure (explicit gen basically) -- if it's used directly,
  *         there's no warning, but it doesn't handle the closed-over variables correctly
  * PERHAPS: named let/tail recursion
  * SOMEDAY: generics like length
  * SOMEDAY: if return int and bool
+ * TODO: we miss shadowed funcs: (spectrum k) where spectrum is a vct complains about args to func spectrum
  *
  * perhaps we can access s7 globals directly -- no need to copy each way for ints/dbls/strings
  */

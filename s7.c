@@ -204,10 +204,6 @@
    */
 #endif
 
-#ifndef WITH_MULTIPLE_VALUES
-  #define WITH_MULTIPLE_VALUES 1
-  /* this includes values and all the related macros */
-#endif
 
 
 
@@ -312,6 +308,23 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_ENV2,
 	      OP_FOR_EACH, OP_MAP,
 	      OP_MAX_DEFINED} opcode_t;
+
+#if 0
+static char *op_names[OP_MAX_DEFINED] = 
+  {"op_read_internal", "op_eval", "op_eval_args", "op_eval_args1", "op_apply", "op_eval_macro", "op_lambda", 
+   "op_quote", "op_define", "op_define1", "op_begin", "op_if", "op_if1", "op_set", "op_set1", "op_set2", 
+   "op_let", "op_let1", "op_let2", "op_let_star", "op_let_star1", "op_letrec", "op_letrec1", "op_letrec2", 
+   "op_cond", "op_cond1", "op_and", "op_and1", "op_or", "op_or1", "op_defmacro", "op_defmacro_star", "op_macro1", 
+   "op_define_macro", "op_define_macro_star", "op_define_expansion", "op_expansion", "op_case", "op_case1", 
+   "op_case2", "op_read_list", "op_read_dot", "op_read_quote", "op_read_quasiquote", "op_read_quasiquote_vector", 
+   "op_read_unquote", "op_read_unquote_splicing", "op_read_vector", "op_read_pop_and_return_expression", 
+   "op_load_return_if_eof", "op_load_close_and_pop_if_eof", "op_eval_string", "op_eval_done", "op_catch", 
+   "op_dynamic_wind", "op_define_constant", "op_define_constant1", "op_do", "op_do_end", "op_do_end1", 
+   "op_do_step", "op_do_step1", "op_do_step2", "op_do_init", "op_define_star", "op_lambda_star", 
+   "op_error_quit", "op_unwind_input", "op_unwind_output", "op_trace_return", "op_error_hook_quit", 
+   "op_trace_hook_quit", "op_with_env", "op_with_env1", "op_with_env2", "op_for_each", "op_map"};
+#endif
+
 
 #define NUM_SMALL_INTS 200
 /* this needs to be at least OP_MAX_DEFINED = 77 */
@@ -530,9 +543,7 @@ struct s7_scheme {
   s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET;
   s7_pointer S_IS_TYPE, S_TYPE_MAKE, S_TYPE_REF, S_TYPE_ARG;
   s7_pointer s_function_args;
-#if WITH_MULTIPLE_VALUES
   s7_pointer VALUES;
-#endif
   
   s7_pointer input_port;              /* current-input-port (nil = stdin) */
   s7_pointer input_port_stack;        /*   input port stack (load and read internally) */
@@ -985,14 +996,13 @@ static s7_pointer make_string_uncopied(s7_scheme *sc, char *str);
 static s7_pointer make_protected_string(s7_scheme *sc, const char *str);
 static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value);
 static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj);
+static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
 
 #if HAVE_PTHREADS
   static bool is_thread(s7_pointer obj);
 #endif
 
-#if WITH_MULTIPLE_VALUES
-  static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
-#endif
+
 
 
 
@@ -2824,9 +2834,7 @@ static void call_with_current_continuation(s7_scheme *sc)
     {
       if (cdr(sc->args) == sc->NIL)
 	sc->value = car(sc->args);
-#if WITH_MULTIPLE_VALUES
       else sc->value = splice_in_values(sc, sc->args);
-#endif
     }
 }
 
@@ -9846,11 +9854,9 @@ static s7_pointer eval_string_1(s7_scheme *sc, const char *str)
   pop_input_port(sc);
   s7_close_input_port(sc, port);
 
-#if WITH_MULTIPLE_VALUES
   if ((is_pair(sc->value)) &&                 /* (+ 1 (eval-string "(values 2 3)")) */
       (car(sc->value) == sc->VALUES))
     sc->value = splice_in_values(sc, cdr(sc->value));
-#endif
 
   return(sc->value);
 }
@@ -9939,11 +9945,9 @@ static s7_pointer call_with_input(s7_scheme *sc, s7_pointer port, s7_pointer arg
   eval(sc, OP_APPLY);
   s7_close_input_port(sc, port);
 
-#if WITH_MULTIPLE_VALUES
   if ((is_pair(sc->value)) &&                 /* (+ 100 (call-with-input-string "123" (lambda (p) (values (read p) 1)))) */
       (car(sc->value) == sc->VALUES))
     sc->value = splice_in_values(sc, cdr(sc->value));
-#endif
 
   return(sc->value);
 }
@@ -9996,11 +10000,9 @@ static s7_pointer with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
   s7_close_input_port(sc, sc->input_port);
   sc->input_port = old_input_port;
 
-#if WITH_MULTIPLE_VALUES
   if ((is_pair(sc->value)) &&                 /* (+ 100 (with-input-from-string "123" (lambda () (values (read) 1)))) */
       (car(sc->value) == sc->VALUES))
     sc->value = splice_in_values(sc, cdr(sc->value));
-#endif
 
   return(sc->value);
 }
@@ -11044,11 +11046,9 @@ static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
   eval(sc, OP_APPLY);
   s7_close_output_port(sc, port);
 
-#if WITH_MULTIPLE_VALUES
   if ((is_pair(sc->value)) &&                 /* (+ 100 (with-input-from-string "123" (lambda () (values (read) 1)))) */
       (car(sc->value) == sc->VALUES))
     sc->value = splice_in_values(sc, cdr(sc->value));
-#endif
 
   return(sc->value);
 }
@@ -11096,11 +11096,9 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
   s7_close_output_port(sc, sc->output_port);
   sc->output_port = old_output_port;
 
-#if WITH_MULTIPLE_VALUES
   if ((is_pair(sc->value)) &&            
       (car(sc->value) == sc->VALUES))
     sc->value = splice_in_values(sc, cdr(sc->value));
-#endif
 
   return(sc->value);
 }
@@ -17437,8 +17435,6 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
 /* -------------------------------- multiple-values -------------------------------- */
 
-#if WITH_MULTIPLE_VALUES
-
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 {
   if (sc->stack_end > sc->stack_start)
@@ -17466,7 +17462,7 @@ static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
   #define H_values "(values obj ...) splices its arguments into whatever list holds it (its 'continuation')"
   
   if (args == sc->NIL)
-    return(sc->NIL);
+    return(sc->UNSPECIFIED); /* this was sc->NIL until 16-Jun-10 */
   
   if (cdr(args) == sc->NIL)
     return(car(args));
@@ -17496,14 +17492,6 @@ s7_pointer s7_values(s7_scheme *sc, int num_values, ...)
   return(g_values(sc, safe_reverse_in_place(sc, p)));
 }
 
-#else
-
-s7_pointer s7_values(s7_scheme *sc, int num_values, ...)
-{
-  return(sc->F);
-}
-
-#endif
 
 
 
@@ -18475,13 +18463,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_MAP:
-      caddr(sc->args) = s7_cons(sc, sc->value, caddr(sc->args));
-
-      /* (apply + (map (lambda (n) (values n (+ n 1))) (list 1 2)))
-       *   (map (lambda (n) (values n (+ n 1))) (list 1 2)) -> ((values 1 2) (values 2 3))
-       *   but then upon apply, the values object is not evaluated, so + complains
-       *   ;+ argument 1, (values 1 2), is pair but should be a number
-       */
+      if (sc->value != sc->UNSPECIFIED)         /* (map (lambda (x) (if #f x)) (list 1 2)) -> '() */
+	{
+	  if ((is_pair(sc->value)) &&
+	      (car(sc->value) == sc->VALUES))
+	    {
+	      /* (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4)) */
+	      if (cdr(sc->value) != sc->NIL)
+		caddr(sc->args) = s7_append(sc, safe_reverse_in_place(sc, cdr(sc->value)), caddr(sc->args)); 
+	    }
+	  else caddr(sc->args) = s7_cons(sc, sc->value, caddr(sc->args));
+	}
 
       if (s7_integer(car(sc->args)) < s7_integer(cadr(sc->args)))
 	{
@@ -20166,6 +20158,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (s7_is_eqv(car(sc->y), sc->value)) 
 	    break;
 
+	  /* TODO: what about case-eq or case-equal? */
+
 	  for (sc->y = cdr(sc->y); sc->y != sc->NIL; sc->y = cdr(sc->y)) 
 	    {
 	      if (!is_pair(sc->y))                                        /* (case () ((1 . 2) . hi) . hi) */
@@ -20257,13 +20251,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	  else
 	    {
-#if WITH_MULTIPLE_VALUES
 	      /* (+ 1 (dynamic-wind (lambda () #f) (lambda () (values 2 3 4)) (lambda () #f)) 5) */
 	      if ((is_pair(sc->args)) &&
 		  (car(sc->args) == sc->VALUES))
 		sc->value = splice_in_values(sc, cdr(sc->args));
 	      else 
-#endif
 		sc->value = sc->args;                         /* value saved above */ 
 	      pop_stack(sc); 
 	      goto START;
@@ -25514,10 +25506,8 @@ s7_scheme *s7_init(void)
   sc->VECTOR = s7_make_symbol(sc, "vector");
   typeflag(sc->VECTOR) |= T_DONT_COPY; 
   
-#if WITH_MULTIPLE_VALUES
   sc->VALUES = s7_make_symbol(sc, "values");
   typeflag(sc->VALUES) |= T_DONT_COPY; 
-#endif
 
   sc->ERROR = s7_make_symbol(sc, "error");
   typeflag(sc->ERROR) |= T_DONT_COPY; 
@@ -25874,9 +25864,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "for-each",                g_for_each,                2, 0, true,  H_for_each);
   s7_define_function(sc, "map",                     g_map,                     2, 0, true,  H_map);
 
-#if WITH_MULTIPLE_VALUES
   s7_define_function(sc, "values",                  g_values,                  0, 0, true,  H_values);
-#endif
   s7_define_function(sc, "dynamic-wind",            g_dynamic_wind,            3, 0, false, H_dynamic_wind);
   s7_define_function(sc, "catch",                   g_catch,                   3, 0, false, H_catch);
   s7_define_function(sc, "error",                   g_error,                   0, 0, true,  H_error);
@@ -26020,7 +26008,6 @@ s7_scheme *s7_init(void)
                             ,@body))");
 
 
-#if WITH_MULTIPLE_VALUES
   /* call-with-values is almost a no-op in this context */
   s7_eval_c_string(sc, "(define-macro (call-with-values producer consumer) `(,consumer (,producer)))"); 
   /* (call-with-values (lambda () (values 1 2 3)) +) */
@@ -26032,9 +26019,6 @@ s7_scheme *s7_init(void)
   s7_eval_c_string(sc, "(define-macro (multiple-value-set! vars expr . body)   \n\
                           (let ((local-vars (map (lambda (n) (gensym)) vars))) \n\
                             `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))");
-
-  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "values")));
-#endif
 
 
 #if WITH_FORCE

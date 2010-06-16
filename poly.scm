@@ -533,15 +533,15 @@
 
 (do ((i 3 (+ i 1))) ((= i 20)) 
   (let ((v (make-vct i 0.0)))
-    (vct-set! v 0 (mus-random 1.0))
-    (vct-set! v (- i 1) 1.0)
+    (set! (v 0) (mus-random 1.0))
+    (set! (v (- i 1)) 1.0)
     (poly-roots v)))
 
 (do ((i 3 (+ i 2))) ((= i 21)) 
   (let ((v (make-vct i 0.0)))
-    (vct-set! v 0 (mus-random 1.0))
-    (vct-set! v (- i 1) 1.0)
-    (vct-set! v (/ (- i 1) 2) 1.0)
+    (set! (v 0) (mus-random 1.0))
+    (set! (v (- i 1)) 1.0)
+    (set! (v (/ (- i 1) 2)) 1.0)
     (poly-roots v)))
 
 

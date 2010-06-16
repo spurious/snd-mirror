@@ -28,7 +28,6 @@
 (define with-the-bug-finding-machine #f)                       ; run the machine (this variable can be set to the number of tries)
 					                       ;   the default number of tries is 10000
 (define with-test-at-random #f)
-(define with-values (provided? 'values))
 
 (define our-pi 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930382)
 
@@ -3164,7 +3163,7 @@
 (test (let ((lst (list 1 2))) (set! (list-ref lst 1) 0) lst) (list 1 0))
 (test (((lambda () list)) 'a 'b 'c) '(a b c))
 (test (apply ((lambda () list)) (list 'a 'b 'c) (list 'c 'd 'e)) '((a b c) c d e))
-(if with-values (test (((lambda () (values list))) 1 2 3) '(1 2 3)))
+(test (((lambda () (values list))) 1 2 3) '(1 2 3))
 (test (apply list 'a 'b '(c)) '(a b c))
 
 (for-each
@@ -5726,7 +5725,7 @@
 (test (call-with-input-string "(+ 1 2)" input-port?) #t)
 (test (let ((this-file (open-input-string "(+ 1 2)"))) (let ((res (input-port? this-file))) (close-input-port this-file) res)) #t)
 
-(if with-values (test (+ 100 (call-with-input-string "123" (lambda (p) (values (read p) 1)))) 224))
+(test (+ 100 (call-with-input-string "123" (lambda (p) (values (read p) 1)))) 224)
 
 (test (call-with-input-string
        "1234567890"
@@ -5982,10 +5981,8 @@
 	    (if (char=? EOF (integer->char c))
 		(format #t "#<eof> is char=? to ~C~%" (integer->char c)))))))
 
-(if with-values (begin
 (test (+ 100 (call-with-output-file "tmp.r5rs" (lambda (p) (write "1" p) (values 1 2)))) 103)
 (test (+ 100 (with-output-to-file "tmp.r5rs" (lambda () (write "2") (values 1 2)))) 103)
-))
 
 (let ((str (with-output-to-string
 	     (lambda ()
@@ -6088,7 +6085,7 @@
     (test (s7test-mac 1) 2)
     ))
 
-(if with-values (test (+ 100 (with-input-from-string "123" (lambda () (values (read) 1)))) 224))
+(test (+ 100 (with-input-from-string "123" (lambda () (values (read) 1)))) 224)
 
 (for-each
  (lambda (op)
@@ -8153,7 +8150,7 @@
 (test (cond ((cons 1 2) => car)) 1)
 ;(test (cond ((values 1 2) => +)) 'error)
 ;(cond (1 2 => +))
-(if with-values (test (cond ((values -1) => abs)) 1))
+(test (cond ((values -1) => abs)) 1)
 
 (test (cond (else 1)) 1)
 (test (call/cc (lambda (r) (cond ((r 4) 3) (else 1)))) 4)
@@ -8190,13 +8187,13 @@
 					;(test (cond (else)) 'error)  ; value of else might be #t -- perhaps (equal? (cond (else)) else)
 (test (cond (#t => 'ok)) 'error)
 (test (cond (else =>)) 'error)
-(if with-values (test (cond ((values -1) => => abs)) 'error))
-(if with-values (test (cond ((values -1) =>)) 'error))
+(test (cond ((values -1) => => abs)) 'error)
+(test (cond ((values -1) =>)) 'error)
 (test (cond (cond (#t 1))) 'error)
 (test (cond 1) 'error)
 (test (cond (1 . 2) (else 3)) 'error)
 (test (cond (#f 2) (else . 4)) 'error)
-(if with-values (test (cond ((values 1 2) => (lambda (x y) #t))) 'error))
+(test (cond ((values 1 2) => (lambda (x y) #t))) 'error)
 (test (cond #t) 'error)
 (test (cond 1 2) 'error)
 (test (cond 1 2 3) 'error)
@@ -8206,7 +8203,7 @@
 (test (cond ((1 2)) . 3) 'error)
 (test (cond (1 => + abs)) 'error)
 (test (cond (1 =>)) 'error)
-(if with-values (test (cond ((values 1 2) => + abs)) 'error))
+(test (cond ((values 1 2) => + abs)) 'error)
 
 (test (let ((x 0))
 	(cond ((let ((y x)) (set! x 1) (= y 1)) 0)
@@ -8269,8 +8266,10 @@
 (test (case (list) ((1) 1) ((()) 2)) 2)
 (test (case #<eof> ((#<eof>) 1)) 1)
 (test (case #\newline ((#\newline) 1)) 1)
-(test (case "" (("") 1)) 1)
-(test (case abs ((abs) 1)) 1)
+
+; case use eqv? -- why not case-equal?
+;(test (case "" (("") 1)) 1)
+;(test (case abs ((abs) 1)) 1)
 
 (test (case 1) 'error)
 (test (case 1 . "hi") 'error)
@@ -8497,7 +8496,7 @@
 (test (((lambda (x) (lambda (x) x)) 3) 4) 4)
 (test (let ((x 32)) (((lambda (x) (lambda (y) x)) 3) x)) 3)
 (test ((call/cc (lambda (return) (return +))) 3 2) 5)
-(if with-values (test ((call-with-values (lambda () (values +)) (lambda (x) x)) 3 2) 5))
+(test ((call-with-values (lambda () (values +)) (lambda (x) x)) 3 2) 5)
 (test ((case '+ ((+) +)) 3 2) 5)
 (test ((case '+ ((-) -) (else +)) 3 2) 5)
 (test ((call/cc (lambda (return) (dynamic-wind (lambda () #f) (lambda () (return +)) (lambda () #f)))) 3 2) 5)
@@ -8626,8 +8625,8 @@
 (test (let () (begin (begin (define (a3) 1)) (begin (define (a3) b3) (define b3 3)) (a3))) 3) ; yow
 (test (let () (begin (begin (define (a) 1)) (a))) 1)
 (test (let ((a 1)) (begin (define a 2)) a) 2)
-(if with-values (test (+ 1 (begin (values 2 3)) 4) 10))
-(if with-values (test (+ 1 (begin (values 5 6) (values 2 3)) 4) 10))
+(test (+ 1 (begin (values 2 3)) 4) 10)
+(test (+ 1 (begin (values 5 6) (values 2 3)) 4) 10)
 
 
 
@@ -8781,126 +8780,137 @@
 
 
 ;;; -------- values, call-with-values --------
-(if with-values 
-    (begin
-      (test (call-with-values (lambda () (values 1 2 3)) +) 6)
-      (test (call-with-values (lambda () (values 4 5)) (lambda (a b) b))  5)
-      (test (call-with-values (lambda () (values 4 5)) (lambda (a b) (+ a b))) 9)
-      (test (call-with-values * -) -1) ; right...
-      (test (values 1) 1)
-      (test (call-with-values (lambda () (values 1 2 3 4)) list) (list 1 2 3 4))
-      (test (+ (values 1) (values 2)) 3)
-      (test (+ (values '1) (values '2)) 3)
-      (test (if (values #t) 1 2) 1)
-      (test (if (values '#t) 1 2) 1)
-      (test (call-with-values (lambda () 4) (lambda (x) x)) 4)
-      (test (let () (values 1 2 3) 4) 4)
-      (test (apply + (values '())) 0)
-      (test (+ (values 1 2 3)) 6)
-      (test (let ((f (lambda () (values 1 2 3)))) (+ (f))) 6)
-      (num-test (log (values 8 2)) 3)
-      (test (* (values 2 (values 3 4))) 24)
-      (test (* (values (+ (values 1 2)) (- (values 3 4)))) -3)
-      (test (list (values 1 2) (values 3) 4) '(1 2 3 4))
-      (test (let ((f1 (lambda (x) (values x (+ x 1)))) (f2 (lambda () (values 2)))) (+ (f1 3) (* 2 (f2)))) 11)
-      (test (+ (let () (values 1 2)) 3) 6)
-      (test (let () (values 1 2) 4) 4)
-      (test (let () + (values 1 2) 4) 4)
-      (test (string-ref (values "hiho" 2)) #\h)
-      (test (vector-ref (values (vector 1 2 3)) 1) 2)
-      (test (+ (values (+ 1 (values 2 3)) 4) 5 (values 6) (values 7 8 (+ (values 9 10) 11))) 66)
-      (test (+ (if (values) (values 1 2) (values 3 4)) (if (null? (values)) (values 5 6) (values 7 8))) 14)
-      (test (+ (cond (#f (values 1 2)) (#t (values 3 4))) 5) 12)
-      (test (apply + (list (values 1 2))) 3)
-      (test (apply + (list ((lambda (n) (values n (+ n 1))) 1))) 3)
-      (test (+ (do ((i 0 (+ i 1))) ((= i 3) (values i (+ i 1))))) 7)
-      (test (+ (with-input-from-string "(values 1 2 3)" (lambda () (read))) 2) 8)
-      (test (< (values 1 2 3)) #t)
-      
-      (test (let ((sum 0)) (for-each (lambda (n m p) (set! sum (+ sum n m p))) (values (list 1 2 3) (list 4 5 6) (list 7 8 9))) sum) 45)
-      (test (map (lambda (n m p) (+ n m p)) (values (list 1 2 3) (list 4 5 6) (list 7 8 9))) '(12 15 18))
-      (test (string-append (values "123" "4" "5") "6" (values "78" "90")) "1234567890")
-      (test (+ (dynamic-wind (lambda () #f) (lambda () (values 1 2 3)) (lambda () #f)) 4) 10)
-      
-      (for-each
-       (lambda (arg)
-	 (test (values arg) arg))
-       (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
-      
-      (for-each
-       (lambda (arg)
-	 (test (call-with-values (lambda () (values arg arg)) (lambda (a b) b)) arg))
-       (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
-      
-      (test (call-with-values (lambda () (values "hi" 1 3/2 'a)) (lambda (a b c d) (+ b c))) 5/2)
+
+(test (call-with-values (lambda () (values 1 2 3)) +) 6)
+(test (call-with-values (lambda () (values 4 5)) (lambda (a b) b))  5)
+(test (call-with-values (lambda () (values 4 5)) (lambda (a b) (+ a b))) 9)
+(test (call-with-values * -) -1) ; right...
+(test (values 1) 1)
+(test (call-with-values (lambda () (values 1 2 3 4)) list) (list 1 2 3 4))
+(test (+ (values 1) (values 2)) 3)
+(test (+ (values '1) (values '2)) 3)
+(test (if (values #t) 1 2) 1)
+(test (if (values '#t) 1 2) 1)
+(test (call-with-values (lambda () 4) (lambda (x) x)) 4)
+(test (let () (values 1 2 3) 4) 4)
+(test (apply + (values '())) 0)
+(test (+ (values 1 2 3)) 6)
+(test (let ((f (lambda () (values 1 2 3)))) (+ (f))) 6)
+(num-test (log (values 8 2)) 3)
+(test (* (values 2 (values 3 4))) 24)
+(test (* (values (+ (values 1 2)) (- (values 3 4)))) -3)
+(test (list (values 1 2) (values 3) 4) '(1 2 3 4))
+(test (let ((f1 (lambda (x) (values x (+ x 1)))) (f2 (lambda () (values 2)))) (+ (f1 3) (* 2 (f2)))) 11)
+(test (+ (let () (values 1 2)) 3) 6)
+(test (let () (values 1 2) 4) 4)
+(test (let () + (values 1 2) 4) 4)
+(test (string-ref (values "hiho" 2)) #\h)
+(test (vector-ref (values (vector 1 2 3)) 1) 2)
+(test (+ (values (+ 1 (values 2 3)) 4) 5 (values 6) (values 7 8 (+ (values 9 10) 11))) 66)
+(test (+ (if (values) (values 1 2) (values 3 4)) (if (null? (values)) (values 5 6) (values 7 8))) 18) ; (values) is now #<unspecified> 
+(test (+ (cond (#f (values 1 2)) (#t (values 3 4))) 5) 12)
+(test (apply + (list (values 1 2))) 3)
+(test (apply + (list ((lambda (n) (values n (+ n 1))) 1))) 3)
+(test (+ (do ((i 0 (+ i 1))) ((= i 3) (values i (+ i 1))))) 7)
+(test (+ (with-input-from-string "(values 1 2 3)" (lambda () (read))) 2) 8)
+(test (< (values 1 2 3)) #t)
+
+(test (+ (values 1 2) 3) 6)
+(test (+ (values 1 (values 2))) 3)
+(test (list (values 1 2)) '(1 2))
+(test (+ 6 (values 1 (values 2 3) 4 ) 5) 21)
+(test (+ ((lambda (x) (values (+ 1 x))) 2) 3) 6)
+(test (list ((lambda (x) (values (+ 1 x))) 2)) '(3))
+(test (+ (begin (values 1 2))) 3)
+(test (+ 1 (let () (values 1 2))) 4)
+(test (apply (values + 1 2) (list 3)) 6)
+(test ((lambda* ((a 1) (b 2)) (list a b)) (values :a 3)) '(3 2))
+(test (+ (values (values 1 2) (values 4 5))) 12)
+(test (+ (begin 3 (values 1 2) 4)) 4)
+(test (equal? (values) (if #f #f)) #t)
+(test (map (lambda (x) (if #f x)) (list 1 2)) '())
+(test (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4)) '(1 20 3 60))
+
+(test (let ((sum 0)) (for-each (lambda (n m p) (set! sum (+ sum n m p))) (values (list 1 2 3) (list 4 5 6) (list 7 8 9))) sum) 45)
+(test (map (lambda (n m p) (+ n m p)) (values (list 1 2 3) (list 4 5 6) (list 7 8 9))) '(12 15 18))
+(test (string-append (values "123" "4" "5") "6" (values "78" "90")) "1234567890")
+(test (+ (dynamic-wind (lambda () #f) (lambda () (values 1 2 3)) (lambda () #f)) 4) 10)
+
+(for-each
+ (lambda (arg)
+   (test (values arg) arg))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+
+(for-each
+ (lambda (arg)
+   (test (call-with-values (lambda () (values arg arg)) (lambda (a b) b)) arg))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+
+(test (call-with-values (lambda () (values "hi" 1 3/2 'a)) (lambda (a b c d) (+ b c))) 5/2)
 					;(test (call-with-values values (lambda arg arg)) '())
-      (test (string-ref (values "hi") 1) #\i)
-      (test ((lambda (a b) (+ a b)) ((lambda () (values 1 2)))) 3)
-      
-      (test (list (letrec ((split (lambda (ls)
-				    (if (or (null? ls) (null? (cdr ls)))
-					(values ls '())
-					(call-with-values
-					    (lambda () (split (cddr ls)))
-					  (lambda (odds evens)
-					    (values (cons (car ls) odds)
-						    (cons (cadr ls) evens))))))))
-		    (split '(a b c d e f))))
-	    '((a c e) (b d f)))
-      
-      (test (call-with-values (lambda () (call/cc (lambda (k) (k 2 3)))) (lambda (x y) (list x y))) '(2 3))
-      (test (+ (call/cc (lambda (return) (return (values 1 2 3)))) 4) 10)
-      
-      (test (let ((values 3)) (+ 2 values)) 5)
-      (test (let ((a (values 1))) a) 1)
-      
-      (test (call-with-values (lambda () 2) (lambda (x) x)) 2)
-      (test (call-with-values (lambda () -1) abs) 1)
-      (test (call-with-values (lambda () (values -1)) abs) 1)
-      (test (call-with-values (lambda () (values -1)) (lambda (a) (abs a))) 1)
-      
-      (test (call-with-values 
-		(lambda ()
-		  (values
-		   (call-with-values (lambda () (values 1 2 3)) +)
-		   (call-with-values (lambda () (values 1 2 3 4)) *)))
-	      (lambda (a b)
-		(- a b)))
-	    -18)
-      
-      (test (call-with-values 
-		(lambda ()
-		  (values
-		   (call-with-values (lambda () (values 1 2 3)) +)
-		   (call-with-values (lambda () (values 1 2 3 4)) *)))
-	      (lambda (a b)
-		(+ (* a (call-with-values (lambda () (values 1 2 3)) +))
-		   (* b (call-with-values (lambda () (values 1 2 3 4)) *)))))
-	    612)
+(test (string-ref (values "hi") 1) #\i)
+(test ((lambda (a b) (+ a b)) ((lambda () (values 1 2)))) 3)
 
-      (test (call-with-values (lambda (x) (+ x 1)) (lambda (y) y)) 'error)
-      (test (+ (values . 1)) 'error)
-      (for-each
-       (lambda (arg)
-	 (test (call-with-values arg arg) 'error))
-       (list "hi" -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
-      (test (call-with-values (lambda () (values -1 2)) abs) 'error)
+(test (list (letrec ((split (lambda (ls)
+			      (if (or (null? ls) (null? (cdr ls)))
+				  (values ls '())
+				  (call-with-values
+				      (lambda () (split (cddr ls)))
+				    (lambda (odds evens)
+				      (values (cons (car ls) odds)
+					      (cons (cadr ls) evens))))))))
+	      (split '(a b c d e f))))
+      '((a c e) (b d f)))
 
-      (test (multiple-value-bind (a b) (values 1 2) (+ a b)) 3)
-      (test (multiple-value-bind (a) 1 a) 1)
-      (test (multiple-value-bind (a . rest) (values 1 2 3) (+ a (apply + rest))) 6)
-      (test (multiple-value-bind a (values 1 2 3) a) '(1 2 3))
+(test (call-with-values (lambda () (call/cc (lambda (k) (k 2 3)))) (lambda (x y) (list x y))) '(2 3))
+(test (+ (call/cc (lambda (return) (return (values 1 2 3)))) 4) 10)
 
-      (test (let ((a 1)
-		  (b 2))
-	      (multiple-value-set! (a b) (values 32 64))
-	      (+ a b))
-	    96)
-      (test (let ((add (lambda (a b) (values (+ a 1) (+ b 1))))) (+ 1 (add 2 3))) 8)
-      ))
+(test (let ((values 3)) (+ 2 values)) 5)
+(test (let ((a (values 1))) a) 1)
 
-;;; in guile: (map (lambda (x) (values x (+ x 1))) (list 1 2 3)) returns (#<values (1 2)> #<values (2 3)> #<values (3 4)>)
-;;; but s7 thinks it's an error
+(test (call-with-values (lambda () 2) (lambda (x) x)) 2)
+(test (call-with-values (lambda () -1) abs) 1)
+(test (call-with-values (lambda () (values -1)) abs) 1)
+(test (call-with-values (lambda () (values -1)) (lambda (a) (abs a))) 1)
+
+(test (call-with-values 
+	  (lambda ()
+	    (values
+	     (call-with-values (lambda () (values 1 2 3)) +)
+	     (call-with-values (lambda () (values 1 2 3 4)) *)))
+	(lambda (a b)
+	  (- a b)))
+      -18)
+
+(test (call-with-values 
+	  (lambda ()
+	    (values
+	     (call-with-values (lambda () (values 1 2 3)) +)
+	     (call-with-values (lambda () (values 1 2 3 4)) *)))
+	(lambda (a b)
+	  (+ (* a (call-with-values (lambda () (values 1 2 3)) +))
+	     (* b (call-with-values (lambda () (values 1 2 3 4)) *)))))
+      612)
+
+(test (call-with-values (lambda (x) (+ x 1)) (lambda (y) y)) 'error)
+(test (+ (values . 1)) 'error)
+(for-each
+ (lambda (arg)
+   (test (call-with-values arg arg) 'error))
+ (list "hi" -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+(test (call-with-values (lambda () (values -1 2)) abs) 'error)
+
+(test (multiple-value-bind (a b) (values 1 2) (+ a b)) 3)
+(test (multiple-value-bind (a) 1 a) 1)
+(test (multiple-value-bind (a . rest) (values 1 2 3) (+ a (apply + rest))) 6)
+(test (multiple-value-bind a (values 1 2 3) a) '(1 2 3))
+
+(test (let ((a 1)
+	    (b 2))
+	(multiple-value-set! (a b) (values 32 64))
+	(+ a b))
+      96)
+(test (let ((add (lambda (a b) (values (+ a 1) (+ b 1))))) (+ 1 (add 2 3))) 8)
 
 
 
@@ -10339,7 +10349,7 @@ who says the continuation has to restart the map from the top?
  (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 
 (test (dynamic-wind (lambda () #f) (lambda () #f) (lambda () #f)) #f)
-(if with-values (test (+ 1 (dynamic-wind (lambda () #f) (lambda () (values 2 3 4)) (lambda () #f)) 5) 15))
+(test (+ 1 (dynamic-wind (lambda () #f) (lambda () (values 2 3 4)) (lambda () #f)) 5) 15)
 
 (test (let ((identity (lambda (a) a)))
         (let ((x '())
@@ -10363,13 +10373,12 @@ who says the continuation has to restart the map from the top?
           (reverse x)))
       '(a b c d e f g b c d e f g h))
 
-(if with-values 
-    (test (list (dynamic-wind 
-		    (lambda () #f)
-		    (lambda () (values 'a 'b 'c))
-		    (lambda () #f)))
-	  (list 'a 'b 'c))
-    )
+
+(test (list (dynamic-wind 
+		(lambda () #f)
+		(lambda () (values 'a 'b 'c))
+		(lambda () #f)))
+      (list 'a 'b 'c))
 
 (test (let ((dynamic-wind 1)) (+ dynamic-wind 2)) 3)
 
@@ -11800,8 +11809,8 @@ who says the continuation has to restart the map from the top?
   (eval-string (string-append "(set! evalstr_1 3)" "(set! evalstr_2 12)"))
   (test (eval-string "(+ evalstr_1 evalstr_2)") 15)
   
-  (if with-values (test (+ (eval `(values 1 2 3)) 4) 10))
-  (if with-values (test (+ (eval-string "(values 1 2 3)") 4) 10))
+  (test (+ (eval `(values 1 2 3)) 4) 10)
+  (test (+ (eval-string "(values 1 2 3)") 4) 10)
   (test (+ 1 (eval-string "(+ 2 3)") 4) 10)
   (test ((eval-string "(lambda (a) (+ a 1))") 2) 3)
   (test (eval ((eval-string "(lambda (a) (list '+ a 1))") 2)) 3)
@@ -21260,13 +21269,10 @@ who says the continuation has to restart the map from the top?
 	(test (let ((val (list 1 2 3 4 5 6 7 8 9 10))) (nth 7 val)) 8)
 	(test (let ((val (list 1 2 3 4 5 6 7 8 9 10))) (nth 17 val)) '())
 	
-        (if with-values 
-          (begin
-	    (test (let*-values (((x) (values 1))) x) 1)
-	    (test (let*-values ((x (values 1))) x) '(1))
-	    (test (let*-values (((x) (values 1)) ((y) (values 2))) (list x y)) '(1 2))
-	    (test (let*-values (((x) (values 1)) ((y) (values (+ x 1)))) (list x y)) '(1 2))
-	    ))
+        (test (let*-values (((x) (values 1))) x) 1)
+        (test (let*-values ((x (values 1))) x) '(1))
+	(test (let*-values (((x) (values 1)) ((y) (values 2))) (list x y)) '(1 2))
+	(test (let*-values (((x) (values 1)) ((y) (values (+ x 1)))) (list x y)) '(1 2))
 	
 	(test (let () (enum one two three) (list one two three)) '(0 1 2))
 	
@@ -36168,7 +36174,7 @@ who says the continuation has to restart the map from the top?
   (test (= (max inf- inf+) inf+) #t)
   (test (= (min inf- inf+) inf-) #t)
 
-  (if with-values (test (nan? (+ (values inf+ inf-) inf+)) #t))
+  (test (nan? (+ (values inf+ inf-) inf+)) #t)
   (test (/ nan 0) 'error)
 
   (test (rationalize inf+) 'error)

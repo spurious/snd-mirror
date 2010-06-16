@@ -1872,18 +1872,19 @@ of pthread_getspecific, just call it: (var).
 </dt>
 
 <dd><p>
-The r5rs section about values makes no sense to me;  why have
-multiple values at all if you're just going to throw away all
-but the first value?
-In s7 (+ (values 1 2 3) 4) is 10.  Similarly,
+In s7, multiple values are spliced directly into the caller's argument list.
 </p>
 <pre>
-  (string-ref ((lambda () (values "abcd" 2))))
-  -&gt; #\c
-
-  ((lambda (a b) (+ a b)) 
-   ((lambda () (values 1 2))))
-  -&gt; 3
+  &gt; (+ (values 1 2 3) 4)
+  10
+  &gt; (string-ref ((lambda () (values "abcd" 2))))
+  #\c
+  &gt; ((lambda (a b) (+ a b)) ((lambda () (values 1 2))))
+  3
+  &gt; (+ (call/cc (lambda (ret) (ret 1 2 3))) 4)
+  10
+  &gt; ((lambda* ((a 1) (b 2)) (list a b)) (values :a 3))
+  (3 2)
 
   ;; call-with-values: 
   (define-macro (call-with-values producer consumer) 
@@ -1898,10 +1899,6 @@ In s7 (+ (values 1 2 3) 4) is 10.  Similarly,
     (let ((local-vars (map (lambda (n) (gensym)) vars)))
       `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))
 
-  ;; call/cc returns multiple values:
-  (+ (call/cc (lambda (ret) (ret 1 2 3))) 4)
-  -&gt; 10
-
   ;; let*-values is defined as a macro at the end of s7.c (commented out)
 </pre>
 
@@ -1910,24 +1907,28 @@ In s7 (+ (values 1 2 3) 4) is 10.  Similarly,
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<p>Is there any real need for multiple-values (even in its CL form)? 
-Daniel Weinreb says the original intention was to avoid consing,
-which it does in s7, but that's a gnat's eyelash of an optimization.
-And what is: 
+<p>You can use "values" to return any number of values (including 0)
+from map's function application:
+</p>
+
+<pre>
+&gt; (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3))
+(1 20 3 60)
+</pre>
+
+<p><code>(values)</code> is equivalent to #&lt;unspecified&gt;, and if map's
+function returns #&lt;unspecified&gt;, nothing is added to the map output list.
 </p>
 <pre>
-(+ (values (values 1 2) (values 4 5)))
+&gt; (map (lambda (x) (if #f x)) (list 1 2))
+()
 </pre>
-<p>In Guile, the + operator returns multiple-values (1 and 4) in this case, 
-whereas s7 returns 12.  But
-</p>
-<pre>(+ (values (values 1 2) (values 4 5)) 0)
-</pre>
-<p>
-in Guile just returns 1!  In Clisp, both cases return 1.  This causes total confusion:
+
+<p>At the top-level, there's nothing to splice into, so you just get your values back:
 </p>
 <pre>
-(apply + (map (lambda (n) (values n (+ n 1))) (list 1 2)))
+&gt; (values 1 (list 1 2) (+ 3 4 5))
+(values 1 (1 2) 12)
 </pre>
 
 </blockquote>
@@ -2999,7 +3000,7 @@ bind it to something else, which is asking for confusion).
 <li>syntactic names can be values: <code>(define progn begin) (progn (display "progn!") (+ 3 4))</code> or <code>(define function lambda)</code>, etc
 <li>begin returns the value of the last form (like progn); it can contain both definitions and other statements.
 <li>#&lt;unspecified&gt;, #&lt;eof&gt;, and #&lt;undefined&gt; are defined.
-<li>for-each and map accept different length arguments (operation stops when any argument reaches its end).
+<li>for-each and map accept different length arguments (the operation stops when any argument reaches its end).
 </ul>
 
 <small>
@@ -3260,7 +3261,6 @@ compile-time flags:
     HAVE_COMPLEX_TRIG              1 if your math library has complex versions of the trig functions
     WITH_PROFILING                 1 if you want profiling support (default is 0)
     WITH_FORCE                     1 if you want force and delay (default is 0)
-    WITH_MULTIPLE_VALUES           1 if you want multiple-values and its friends (default is 1)
     S7_DISABLE_DEPRECATED          1 if you want to make sure you're not using any deprecated s7 stuff (default is 0)
 </pre>
 <p>See the comment at the start of s7.c for more information about these switches.

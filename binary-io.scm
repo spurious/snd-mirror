@@ -314,7 +314,7 @@
 				     (set! data-size (* frames chans data-format 1/8))
 				     (if (> data-location 0)
 					 (return (list magic data-location data-size data-format srate chans))))
-				   (do ((i 0 (+ i 1)))
+				   (do ((i 0 (+ i 1))) ; here we really need built-in file IO stuff!
 				       ((= i chunk-size))
 				     (if (eof-object? (read-byte))
 					 (return 'bad-header)))))

@@ -125,7 +125,7 @@
 	 (freq-inc (floor (/ fsize 2)))
 	 (bin (floor (/ (mus-srate) fsize)))
 	 (radius (- 1.0 (/ r fsize)))
-	 (spectrum (make-vct freq-inc 1.0))
+	 (spectr (make-vct freq-inc 1.0))
 	 (ramp-inc (/ 1.0 1024.0))
 	 (trigger (floor (/ (* dur (mus-srate)) freq-inc)))
 	 (fs (make-vector freq-inc))
@@ -148,30 +148,30 @@
 	     (begin
 	       ;; find next randomly chosen resonator to flip
 	       (let ((next (floor (random freq-inc))))
-		 (if (not (= (vct-ref spectrum next) 1.0))
+		 (if (not (= (spectr next) 1.0))
 		     (call-with-exit
 		      (lambda (break)
 			(do ((j next (+ 1 j))
 			     (k next (- k 1)))
 			    (#t)
 			  (if (and (< j freq-inc) 
-				   (= (vct-ref spectrum j) 1.0))
+				   (= (spectr j) 1.0))
 			      (begin 
 				(set! next j)
 				(break)))
 			  (if (and (>= k 0) 
-				   (= (vct-ref spectrum k) 1.0))
+				   (= (spectr k) 1.0))
 			      (begin 
 				(set! next k)
 				(break)))))))
-		 (vct-set! spectrum next (- (vct-ref spectrum next) ramp-inc))
+		 (set! (spectr next) (- (spectr next) ramp-inc))
 		 (set! ctr 0))))
 	 (do ((k lo (+ 1 k)))
 	     ((= k hi))
-	   (let ((sp (vct-ref spectrum k)))
+	   (let ((sp (spectr k)))
 	     (set! outval (+ outval (formant (fs k) (+ (* sp inval1) (* (- 1.0 sp) inval2)))))
 	     (if (> 1.0 sp 0.0)
-		 (vct-set! spectrum k (- (vct-ref spectrum k) ramp-inc)))))
+		 (set! (spectr k) (- (spectr k) ramp-inc)))))
 	 (outa i (* amp outval)))))))
 
 
