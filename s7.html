@@ -939,21 +939,9 @@ the properties onto the end of the accessor list, as in trace above).
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<p>We can use symbol-access to fix fluid-let.  The usual form of
-that macro claims that it implements dynamic scope, but it doesn't:
+<p>We can use symbol-access to improve fluid-let:
 </p>
-<pre>
-(let ((x 32)
-      (y 0))
-  (define (gx) x)
-  (let ((x 100))
-    (fluid-let ((x 12))
-      (set! y (gx))))
-  (list x y))
-</pre>
-<p>which returns '(32 32) whereas the correct value is '(32 12).  To fix it,
-we block let-binding and add let-global:
-</p>
+
 <pre>
 (define-macro (define-global variable value)
   `(begin
@@ -995,6 +983,7 @@ we block let-binding and add let-global:
 	(set! y (gx))))
     (list x y)))
 </pre>
+
 <p>which returns '(32 12).
 </p>
 
@@ -1601,9 +1590,9 @@ We can write an FFT procedure that accepts lists or vectors:
 that they accept arguments of many types (leaving aside numbers).  s7 extends that list with map, for-each, reverse,
 and length, and adds a few others such as copy, fill!, sort!, object-&gt;string, and continuation?.
 I may add similar extensions to append (what to do if the argument types are mixed?). 
-newLisp takes a more radical (and consistent) approach than s7: even an operator such as '&gt;' is generic in
-the sense that it can compare strings and lists, as well as numbers (in "string&lt;?", the "string" part is
-again just a type declaration).  newLisp also uses negative
+newLisp takes a more radical (and consistent) approach than s7 in that it treats even an operator such as '&gt;' as generic in
+the sense that it can compare strings and lists, as well as numbers.
+newLisp also uses negative
 numbers to index from the end of a sequence. 
 </p>
 

@@ -8267,7 +8267,10 @@
 (test (case (list) ((1) 1) ('() 2)) 2)
 (test (case '() ((1) 1) ((()) 2)) 2)
 (test (case (list) ((1) 1) ((()) 2)) 2)
-
+(test (case #<eof> ((#<eof>) 1)) 1)
+(test (case #\newline ((#\newline) 1)) 1)
+(test (case "" (("") 1)) 1)
+(test (case abs ((abs) 1)) 1)
 
 (test (case 1) 'error)
 (test (case 1 . "hi") 'error)
@@ -11788,6 +11791,8 @@ who says the continuation has to restart the map from the top?
   (test (apply (lambda () #f)) #f)
   (test (eval '(if #f #f)) (if #f #f))
   (test (let ((ho 32)) (symbol? (eval (eval (eval (eval '''''ho)))))) #t)
+  (test (eval '(case 0 ((1) 2) ((0) 1))) 1)
+  (test (eval '(cond ((= 1 2) 3) (#t 4))) 4)
 
   (test (eval-string (string-append "(list 1 2 3)" (string #\newline) (string #\newline))) (list 1 2 3))
   (eval-string (string-append "(define evalstr_1 32)" (string #\newline) "(define evalstr_2 2)"))
