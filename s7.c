@@ -309,7 +309,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_FOR_EACH, OP_MAP,
 	      OP_MAX_DEFINED} opcode_t;
 
-#if 0
+#if 1
 static char *op_names[OP_MAX_DEFINED] = 
   {"op_read_internal", "op_eval", "op_eval_args", "op_eval_args1", "op_apply", "op_eval_macro", "op_lambda", 
    "op_quote", "op_define", "op_define1", "op_begin", "op_if", "op_if1", "op_set", "op_set1", "op_set2", 
@@ -530,6 +530,9 @@ struct s7_scheme {
   struct s7_cell _UNSPECIFIED;
   s7_pointer UNSPECIFIED;             /* the unspecified value */
   
+  struct s7_cell _NO_VALUE;
+  s7_pointer NO_VALUE;                /* the (values) value (an experiment) */
+  
   s7_pointer symbol_table;            /* symbol table */
   s7_pointer global_env;              /* global environment */
   
@@ -543,7 +546,6 @@ struct s7_scheme {
   s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET;
   s7_pointer S_IS_TYPE, S_TYPE_MAKE, S_TYPE_REF, S_TYPE_ARG;
   s7_pointer s_function_args;
-  s7_pointer VALUES;
   
   s7_pointer input_port;              /* current-input-port (nil = stdin) */
   s7_pointer input_port_stack;        /*   input port stack (load and read internally) */
@@ -726,7 +728,13 @@ struct s7_scheme {
  *   This flag does not buy us much, so if a bit is ever needed, flush this first.
  */
 
-#define UNUSED_BITS                   0xf0000000
+#define T_MULTIPLE_VALUE              (1 << (TYPE_BITS + 20))
+#define is_multiple_value(p)          ((typeflag(p) & T_MULTIPLE_VALUE) != 0)
+#define set_multiple_value(p)         typeflag(p) |= T_MULTIPLE_VALUE
+#define multiple_value(p)             p
+
+
+#define UNUSED_BITS                   0xe0000000
 
 #if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f))
@@ -872,6 +880,7 @@ struct s7_scheme {
 #define is_c_object(p)                (type(p) == T_C_OBJECT)
 #define c_object_type(p)              (p)->object.fobj.type
 #define c_object_value(p)             (p)->object.fobj.value
+
 
 #define NUM_INT      0
 #define NUM_RATIO    1
@@ -1042,7 +1051,7 @@ s7_pointer s7_unspecified(s7_scheme *sc)
 
 bool s7_is_unspecified(s7_scheme *sc, s7_pointer val)
 {
-  return(val == sc->UNSPECIFIED);
+  return((val == sc->UNSPECIFIED) || (val == sc->NO_VALUE));
 }
 
 
@@ -2828,6 +2837,7 @@ static void call_with_current_continuation(s7_scheme *sc)
   sc->stack_start = vector_elements(sc->stack);
   sc->stack_end = (s7_pointer *)(sc->stack_start + continuation_stack_top(sc->code));
   sc->stack_resize_trigger = (s7_pointer *)(sc->stack_start + sc->stack_size / 2);
+
   if (sc->args == sc->NIL)
     sc->value = sc->NIL;
   else
@@ -2871,7 +2881,16 @@ static void call_with_exit(s7_scheme *sc)
     }
 	    
   sc->stack_end = (s7_pointer *)(sc->stack_start + new_stack_top);
-  sc->value = (sc->args != sc->NIL) ? car(sc->args) : sc->NIL;
+
+  /* the return value should have an implicit values call, just as in call/cc */
+  if (sc->args == sc->NIL)
+    sc->value = sc->NIL;
+  else
+    {
+      if (cdr(sc->args) == sc->NIL)
+	sc->value = car(sc->args);
+      else sc->value = splice_in_values(sc, sc->args);
+    }
 }
 
 
@@ -9854,9 +9873,8 @@ static s7_pointer eval_string_1(s7_scheme *sc, const char *str)
   pop_input_port(sc);
   s7_close_input_port(sc, port);
 
-  if ((is_pair(sc->value)) &&                 /* (+ 1 (eval-string "(values 2 3)")) */
-      (car(sc->value) == sc->VALUES))
-    sc->value = splice_in_values(sc, cdr(sc->value));
+  if (is_multiple_value(sc->value))                 /* (+ 1 (eval-string "(values 2 3)")) */
+    sc->value = splice_in_values(sc, multiple_value(sc->value));
 
   return(sc->value);
 }
@@ -9945,9 +9963,8 @@ static s7_pointer call_with_input(s7_scheme *sc, s7_pointer port, s7_pointer arg
   eval(sc, OP_APPLY);
   s7_close_input_port(sc, port);
 
-  if ((is_pair(sc->value)) &&                 /* (+ 100 (call-with-input-string "123" (lambda (p) (values (read p) 1)))) */
-      (car(sc->value) == sc->VALUES))
-    sc->value = splice_in_values(sc, cdr(sc->value));
+  if (is_multiple_value(sc->value))                 /* (+ 100 (call-with-input-string "123" (lambda (p) (values (read p) 1)))) */
+    sc->value = splice_in_values(sc, multiple_value(sc->value));
 
   return(sc->value);
 }
@@ -10000,9 +10017,8 @@ static s7_pointer with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
   s7_close_input_port(sc, sc->input_port);
   sc->input_port = old_input_port;
 
-  if ((is_pair(sc->value)) &&                 /* (+ 100 (with-input-from-string "123" (lambda () (values (read) 1)))) */
-      (car(sc->value) == sc->VALUES))
-    sc->value = splice_in_values(sc, cdr(sc->value));
+  if (is_multiple_value(sc->value))                 /* (+ 100 (with-input-from-string "123" (lambda () (values (read) 1)))) */
+    sc->value = splice_in_values(sc, multiple_value(sc->value));
 
   return(sc->value);
 }
@@ -10201,7 +10217,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       if (obj == sc->UNDEFINED) 
 	return(copy_string("#<undefined>"));
   
-      if (obj == sc->UNSPECIFIED) 
+      if ((obj == sc->UNSPECIFIED) || (obj == sc->NO_VALUE))
 	return(copy_string("#<unspecified>"));
       break;
 
@@ -10311,7 +10327,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   {
     char *buf;
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     type_name(obj),
 	     typeflag(obj),
@@ -10331,6 +10347,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     symbol_accessed(obj) ? " (accessed)" : "",
 	     symbol_has_accessor(obj) ? " (accessor)" : "",
 	     has_structure(obj) ? " (structure)" : "",
+	     is_multiple_value(obj) ? " (values)" : "",
 	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
     return(buf);
   }
@@ -10763,6 +10780,9 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci)
   buf = (char *)malloc(bufsize * sizeof(char));
   
   sprintf(buf, "(");
+  if (is_multiple_value(lst))
+    strcat(buf, "values ");
+
   for (i = 0; i < len - 1; i++)
     {
       if (elements[i])
@@ -11046,9 +11066,8 @@ static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
   eval(sc, OP_APPLY);
   s7_close_output_port(sc, port);
 
-  if ((is_pair(sc->value)) &&                 /* (+ 100 (with-input-from-string "123" (lambda () (values (read) 1)))) */
-      (car(sc->value) == sc->VALUES))
-    sc->value = splice_in_values(sc, cdr(sc->value));
+  if (is_multiple_value(sc->value))                 /* (+ 100 (with-input-from-string "123" (lambda () (values (read) 1)))) */
+    sc->value = splice_in_values(sc, multiple_value(sc->value));
 
   return(sc->value);
 }
@@ -11096,9 +11115,8 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
   s7_close_output_port(sc, sc->output_port);
   sc->output_port = old_output_port;
 
-  if ((is_pair(sc->value)) &&            
-      (car(sc->value) == sc->VALUES))
-    sc->value = splice_in_values(sc, cdr(sc->value));
+  if (is_multiple_value(sc->value))    
+    sc->value = splice_in_values(sc, multiple_value(sc->value));
 
   return(sc->value);
 }
@@ -12406,7 +12424,7 @@ static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
   tp = (s7_pointer *)(vector_elements(vec));
   len = vector_length(vec);
 
-  if ((obj == sc->NIL) || (obj == sc->UNSPECIFIED))
+  if ((obj == sc->NIL) || (obj == sc->UNSPECIFIED) || (obj == sc->NO_VALUE))
     {
       s7_Int i;
       s7_pointer *v_els, *from_els;
@@ -17450,19 +17468,48 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	    stack_args(sc->stack, top) = s7_cons(sc, car(x), stack_args(sc->stack, top));
 	  return(car(x));
 	}
+
+      /* look for errors here rather than glomming up the set! and let code */
+      if ((opcode_t)stack_op(sc->stack, top) == OP_SET1)          /* (set! var (values 1 2 3)) */
+	{
+	  set_multiple_value(args);
+	  return(eval_error(sc, "can't set! some variable to ~A", args));
+	}
+      if (((opcode_t)stack_op(sc->stack, top) == OP_LET1) ||      /* (let ((var (values 1 2 3))) ...) */
+	  ((opcode_t)stack_op(sc->stack, top) == OP_LET_STAR1) || /* (let* ((var (values 1 2 3))) ...) */
+	  ((opcode_t)stack_op(sc->stack, top) == OP_LETREC1))     /* (letrec ((var (values 1 2 3))) ...) */
+	{
+	  set_multiple_value(args);
+	  return(eval_error(sc, "can't bind some variable to ~A", args));
+	}
+
+      /* for 'or' and 'and' return the equivalent -- but here we have subverted the short-circuit boolean business */
+      /* run through vals, return #t or #f */
+      /* or perhaps -- what to do?  Guile passes the multiple-values on through if it is the last, treating it as non-#f */
+
+      /*
+      fprintf(stderr, "stack: %s\n", op_names[stack_op(sc->stack, top)]);
+      */
+      /* Guile: (and (values #f #f) #t) -> #f?? it's looking at the 1st!
+       */
     }
 
   /* let it meander back up the call chain until someone knows where to splice it */
-  return(s7_cons(sc, sc->VALUES, args));
+  set_multiple_value(args);
+  return(args);
 }
 
 
 static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
 {
   #define H_values "(values obj ...) splices its arguments into whatever list holds it (its 'continuation')"
-  
+
   if (args == sc->NIL)
-    return(sc->UNSPECIFIED); 
+    {
+      if ((opcode_t)stack_op(sc->stack, s7_stack_top(sc) - 1) == OP_SET1)  /* (set! var (values)) */
+	return(eval_error(sc, "set!: can't assign (values) to something", args));
+      return(sc->NO_VALUE); 
+    }
 
   /* this was sc->NIL until 16-Jun-10, 
    *   nil is consistent with the implied values call in call/cc (if no args, the continuation function returns '())
@@ -18471,21 +18518,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_MAP:
-      /* I'm not sure about this way of doing map -- maybe it should not treat #<unspecified> as special.
-       *   The main reasons not to have (values) return #<no-value> (equal to, and printing as #<unspecified>
-       *   externally), and then treated as a no-op everywhere (even argument lists), are that no-one
-       *   currently expects that, and it would almost certainly slow down the op_eval_args loops where
-       *   a large percentage of s7's time is already spent. 
-       */
-      if (sc->value != sc->UNSPECIFIED)         /* (map (lambda (x) (if #f x)) (list 1 2)) -> '() */
+      if (sc->value != sc->NO_VALUE)                   /* (map (lambda (x) (values)) (list 1)) */
 	{
-	  if ((is_pair(sc->value)) &&
-	      (car(sc->value) == sc->VALUES))
-	    {
-	      /* (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4)) */
-	      if (cdr(sc->value) != sc->NIL)
-		caddr(sc->args) = s7_append(sc, safe_reverse_in_place(sc, cdr(sc->value)), caddr(sc->args)); 
-	    }
+	  if (is_multiple_value(sc->value))            /* (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4)) */
+	    caddr(sc->args) = s7_append(sc, safe_reverse_in_place(sc, multiple_value(sc->value)), caddr(sc->args)); 
 	  else caddr(sc->args) = s7_cons(sc, sc->value, caddr(sc->args));
 	}
 
@@ -19432,6 +19468,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       if (cddr(sc->code) != sc->NIL)                                         /* (set! var 1 2) */
 	return(eval_error(sc, "~A: too many arguments to set!", sc->code));
+      
+      /* cadr (the value) has not yet been evaluated */
 
       if (is_immutable(car(sc->code)))                                       /* (set! pi 3) */
 	return(eval_error(sc, "set!: can't alter immutable object: ~S", car(sc->code)));
@@ -19529,7 +19567,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
 	    }
 	}
-      else 
+      else  /* thing to be set is not a pair */
 	{
 	  if (!s7_is_symbol(car(sc->code)))                  /* (set! 12345 1) */
 	    return(eval_error(sc, "set! can't change ~S", car(sc->code)));
@@ -20266,9 +20304,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  else
 	    {
 	      /* (+ 1 (dynamic-wind (lambda () #f) (lambda () (values 2 3 4)) (lambda () #f)) 5) */
-	      if ((is_pair(sc->args)) &&
-		  (car(sc->args) == sc->VALUES))
-		sc->value = splice_in_values(sc, cdr(sc->args));
+	      if (is_multiple_value(sc->args))
+		sc->value = splice_in_values(sc, multiple_value(sc->args));
 	      else 
 		sc->value = sc->args;                         /* value saved above */ 
 	      pop_stack(sc); 
@@ -25287,6 +25324,7 @@ s7_scheme *s7_init(void)
   sc->EOF_OBJECT = &sc->_EOF_OBJECT;
   sc->UNSPECIFIED = &sc->_UNSPECIFIED;  
   sc->UNDEFINED = &sc->_UNDEFINED;
+  sc->NO_VALUE = &sc->_NO_VALUE;  
 
   set_type(sc->NIL, T_NIL | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->NIL) = cdr(sc->NIL) = sc->UNSPECIFIED;
@@ -25305,6 +25343,10 @@ s7_scheme *s7_init(void)
   
   set_type(sc->UNDEFINED, T_UNTYPED | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->UNDEFINED) = cdr(sc->UNDEFINED) = sc->UNSPECIFIED;
+  
+  set_type(sc->NO_VALUE, T_UNTYPED | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  car(sc->NO_VALUE) = cdr(sc->NO_VALUE) = sc->UNSPECIFIED;
+
   
   sc->nil_vector = (s7_pointer *)malloc(BLOCK_VECTOR_SIZE * sizeof(s7_pointer));
   sc->unspecified_vector = (s7_pointer *)malloc(BLOCK_VECTOR_SIZE * sizeof(s7_pointer));
@@ -25520,9 +25562,6 @@ s7_scheme *s7_init(void)
   sc->VECTOR = s7_make_symbol(sc, "vector");
   typeflag(sc->VECTOR) |= T_DONT_COPY; 
   
-  sc->VALUES = s7_make_symbol(sc, "values");
-  typeflag(sc->VALUES) |= T_DONT_COPY; 
-
   sc->ERROR = s7_make_symbol(sc, "error");
   typeflag(sc->ERROR) |= T_DONT_COPY; 
 

@@ -2002,6 +2002,9 @@
 (test (string-set! (string) 0 #\a) 'error)
 (test (string-set! (symbol->string 'lambda) 0 #\a) #\a)
 (test (let ((ho (make-string 0 #\x))) (string-set! ho 0 #\a) ho) 'error)
+(test (let ((str "hi")) (string-set! (let () str) 1 #\a) str) "ha") ; (also in Guile)
+(test (let ((x 2) (str "hi")) (string-set! (let () (set! x 3) str) 1 #\a) (list x str)) '(3 "ha"))
+(test (let ((str "hi")) (set! ((let () str) 1) #\a) str) "ha")
 
 (for-each
  (lambda (arg)
@@ -3291,6 +3294,7 @@
 (test (let ((x ''foo)) (list-set! x 0 "hi") x ) '("hi" foo))
 (test (let ((x (list 1 2))) (list-set! x 0 x) (list? x)) #t)
 (test (let ((x (list 1 2))) (list-set! x 1 x) (list? x)) #t)
+(test (let ((x 2) (lst '(1 2))) (list-set! (let () (set! x 3) lst) 1 23) (list x lst)) '(3 (1 23)))
 
 (test (list-set! '(1 2 3) 1 4) 4)
 (test (set-car! '(1 2) 4) 4)
@@ -4120,6 +4124,7 @@
 (test (vector-set! #(1) 0 0 1 2 3) 'error)
 (test (vector-set! #(1) #(0) 1) 'error)
 (test (vector-set! '#(1 2) 0 2) 2)
+(test (let ((x 2) (v (vector 1 2))) (vector-set! (let () (set! x 3) v) 1 23) (list x v)) '(3 #(1 23)))
 
 (for-each
  (lambda (arg)
@@ -8823,7 +8828,7 @@
 (test (apply + (list (values 1 2))) 3)
 (test (apply + (list ((lambda (n) (values n (+ n 1))) 1))) 3)
 (test (+ (do ((i 0 (+ i 1))) ((= i 3) (values i (+ i 1))))) 7)
-(test (+ (with-input-from-string "(values 1 2 3)" (lambda () (read))) 2) 8)
+(test (+ (with-input-from-string "(values 1 2 3)" (lambda () (eval (read)))) 2) 8)
 (test (< (values 1 2 3)) #t)
 (test (apply (values + 1 2) '(3)) 6)
 (test (let () (define-macro (hi a) `(+ 1 ,a)) (hi (values 1 2 3))) 7)
@@ -8842,39 +8847,36 @@
 (test (vector 1 (values 2 3) 4) #(1 2 3 4))
 (test(+ 1 (values (values (values 2) 3) (values (values (values 4)) 5) 6) 7) 28)
 
+(test (let ((x 1)) (set! x (values)) x) 'error)
+(test (let ((x 1)) (set! x (values 1 2 3)) x) 'error)
+(test (let ((x 1)) (set! x (values 2)) x) 2)
+(test (let ((x 1)) (set! (values x) 2) x) 'error) ; (no generalized set for values, so (values x) is not the same as x
+(test (let ((x #(0 1))) (set! (values x 0 32)) x) 'error)
+(test (let ((var (values 1 2 3))) var) 'error)
+(test (let* ((var (values 1 2 3))) var) 'error)
+(test (letrec ((var (values 1 2 3))) var) 'error)
+(test (let ((x ((lambda () (values 1 2))))) x) 'error)
 
-;;; rather than check for (sc->VALUES ...) when no arg list is found,
-;;; perhaps we should have an internal values object that's easier to identify 
+(test (let ((str "hi")) (string-set! (values str 0 #\x)) str) "xi")
 
+(test ((values '(1 (2 3)) 1 1)) 'error) ; ??
+(test (let ((x #(32 33))) ((values x 0))) 'error) ; ??
 
-;;; TODO: move some of these to set! tests
-;;; TODO: (let ((x 1)) (set! x (values 1 2)) x) -> (values 1 2) -- does this make sense? No! -- this should be an error about too many arguments
-;;; (let ((x (values 1 2))) (+ 3 x)) -- should also be an error at the let level, not '+
-;;;    values should not be settable or bindable -- it is simply an ephemeral carrier
-;;; (let ((x 1)) (set! (values x) 2) x) -> error (no generalized set for values, so (values x) is not the same as x
-;;; but ((values '(1 (2 3)) 1 1)) -> error
-;;; but (let ((x #(32 33))) ((values x 0))) complains about list-ref arg 2?
 ;;; but (or (values #t #f) #f) -> (values #t #f)! (#t in guile)
 ;;; (and (values #t #f) #t) -> #t
-;;; either doc or fix: 
-;;; TODO: (let ((x #(0 1))) (set! (values x 0 32)) x) -> ;set!: not enough arguments: ((values x 0 32)) -- I think this should be an error
-;;; but (string-set! (values "hi" 0 #\x)) for example
-;;;    why does this work?!? 
-
-;;; (let ((str "hi")) (string-set! (let () str) 1 #\a) str) -> "ha" (also in Guile)
-;;; (let ((x 2) (str "hi")) (string-set! (let () (set! x 3) str) 1 #\a) (list x str)) -> (3 "ha")!
-;;; (let ((x 2) (lst '(1 2))) (list-set! (let () (set! x 3) lst) 1 23) (list x lst)) -> (3 (1 23))
-;;; (let ((x 2) (v (vector 1 2))) (vector-set! (let () (set! x 3) v) 1 23) (list x v))
-;;; but in these cases the *-set! is not replaceable with set! (and hash-table-set! presumably)
-;;; (let ((str "hi")) (set! ((let () str) 1) #\a) str)
-
 ;;; (list (and (values 1 2))) -> ((values 1 2)), but (list (values 1 2)) -> (1 2)
-;;; surely 'and and 'or should return multiple values!
 ;;; (+ (or (values 1 2))) -> error but (+ (begin (values 1 2))) -> 3!
-;;; TODO: (let () (+ 5 (call-with-exit (lambda (return) (return 1 2 3) 4)))) -> 6? (no values!)
-;;;   (+ 5 (call-with-exit (lambda (return) (return 1)))) -> 6 also and (+ 5 (call-with-exit (lambda (return) (return 2)))) is 7
-;;; (+ (let ((x 1)) (set! x (values 32 33)) x)) -> error from '+ (so "values" object is not real?)
-;;; DOC: values is not an object
+
+#|
+(let ((x 1)) 
+  (and (let () (set! x 2) #f) 
+       (let () (set! x 3) #f)) 
+  x) 2
+(let ((x 1)) 
+  (and (values (let () (set! x 2) #f) 
+               (let () (set! x 3) #f)))
+  x) 3
+|#
 
 
 (test (+ (values 1 2) 3) 6)
@@ -8889,8 +8891,8 @@
 (test ((lambda* ((a 1) (b 2)) (list a b)) (values :a 3)) '(3 2))
 (test (+ (values (values 1 2) (values 4 5))) 12)
 (test (+ (begin 3 (values 1 2) 4)) 4)
-(test (equal? (values) (if #f #f)) #t)
-(test (map (lambda (x) (if #f x)) (list 1 2)) '())
+;;; (test (equal? (values) (if #f #f)) #f)
+(test (map (lambda (x) (if #f x (values))) (list 1 2)) '())
 (test (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4)) '(1 20 3 60))
 (test (* 2 (case 1 ((2) (values 3 4)) ((1) (values 5 6)))) 60)
 (test (+ (values (* 3 2) (abs (values -1)))) 7)
@@ -10668,6 +10670,10 @@ who says the continuation has to restart the map from the top?
 (test (apply call-with-exit (list (lambda (exit) 1))) 1)
 (test (apply call-with-exit (list (lambda (exit) (exit 1) 32))) 1)
 (test (apply catch (list #t (lambda () 1) (lambda args 'error))) 1)
+
+(test (let () (+ 5 (call-with-exit (lambda (return) (return 1 2 3) 4)))) 11)
+(test (+ 5 (call-with-exit (lambda (return) (return 1)))) 6)
+(test (+ 5 (call-with-exit (lambda (return) (return)))) 'error)
 
 (test (let ((cur '()))
 	(define (step pos)

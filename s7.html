@@ -1947,7 +1947,9 @@ In s7, multiple values are spliced directly into the caller's argument list.
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<p>You can use "values" to return any number of values (including 0)
+<p>There aren't that many real uses for multiple-values in Scheme.  Nearly all can be replaced by
+a normal list.  There are two cases, however, that can't be handled (easily anyway) with a list.
+First, you can use "values" to return any number of values (including 0)
 from map's function application:
 </p>
 
@@ -1956,31 +1958,46 @@ from map's function application:
 (1 20 3 60)
 </pre>
 
-<p><code>(values)</code> is equivalent to #&lt;unspecified&gt;, and if map's
-function returns #&lt;unspecified&gt;, nothing is added to the map output list.
+<p>As this example shows, if the map function returns <code>(values)</code>,
+nothing is added to the map output list.
 </p>
 <pre>
-&gt; (map (lambda (x) (if #f x)) (list 1 2))
+&gt; (map (lambda (x) (if #f x (values))) (list 1 2))
 ()
 </pre>
 
-<p>Actually I don't know about this... It seems "natural" that (values) should return
-no value, not even #&lt;unspecified&gt;.  Otherwise there's no difference between
-<code>(values)</code> and <code>(values (if #f #f))</code>.
-But it also seems "natural" that you'd want <code>(equal? (list (if #f #f)) (map (lambda (x) (if #f x)) (list 1)))</code>
-to return #t.  I prefer the self-effacing unvalue to consistency, I guess.
-Perhaps <code>(values)</code> could return a special value (say, #&lt;no-value&gt;), that
-would never be spliced into any context (even argument lists).  
-<code>(list 1 (values) 2)</code> would be <code>'(1 2)</code>.
-Would this change just cause confusion?
+<p>Second, you can use multiple-values to turn off the "short-circuit' evaluation
+of 'or' and 'and'.  Normally these operators 
+stop evaluating their arguments as soon as they hit #t ('or') or #f ('and').
+By wrapping the arguments in 'values', you can force all of them to be evaluated:
 </p>
 
-<p>At the top-level, there's nothing to splice into, so you just get your values back:
+<pre>
+&gt; (let ((x 1)) 
+    (and (let () (set! x 2) #f)  ; this returns #f so
+         (let () (set! x 3) #f)) ;   this is never evaluated
+    x)
+2
+
+&gt; (let ((x 1)) 
+    (and (<em class=red>values</em> (let () (set! x 2) #f) 
+                 (let () (set! x 3) #f)))
+  x) 
+3
+</pre>
+
+<p>At the top-level, since there's nothing to splice into, so you simply get your values back:
 </p>
 <pre>
 &gt; (values 1 (list 1 2) (+ 3 4 5))
 (values 1 (1 2) 12)
 </pre>
+
+<p>But this printout is just trying to be informative.  There is no "multiple-values object"
+in s7.  You can't <code>(set! x (values 1 2))</code>, for example.  The "values" function
+tells s7 that its arguments should be handled in a special way, and the multiple-value indication goes away
+as soon as they are spliced into its caller.
+</p>
 
 </blockquote>
 </small>
