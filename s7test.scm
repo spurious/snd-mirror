@@ -8862,22 +8862,33 @@
 (test ((values '(1 (2 3)) 1 1)) 'error) ; ??
 (test (let ((x #(32 33))) ((values x 0))) 'error) ; ??
 
-;;; but (or (values #t #f) #f) -> (values #t #f)! (#t in guile)
-;;; (and (values #t #f) #t) -> #t
-;;; (list (and (values 1 2))) -> ((values 1 2)), but (list (values 1 2)) -> (1 2)
-;;; (+ (or (values 1 2))) -> error but (+ (begin (values 1 2))) -> 3!
+(test (or (values #t #f) #f) #t)
+(test (or (values #f #f) #f) #f)
+(test (or (values #f #t) #f) #t)
+(test (or (values #f #f) #t) #t)
+(test (or #f (values 1 2)) 1)
+(test (+ 1 (or (values 2 3) 4)) 3)
+(test (or (values #f 2 3)) 2)
+(test (or (values #f 2)) 2)
+(test (and (values 1 2 3)) 3)
+(test (and (values 1 #f 3)) #f)
+(test (+ 1 (and 2 (values 3 4)) 5) 10)
 
-#|
-(let ((x 1)) 
-  (and (let () (set! x 2) #f) 
-       (let () (set! x 3) #f)) 
-  x) 2
-(let ((x 1)) 
-  (and (values (let () (set! x 2) #f) 
-               (let () (set! x 3) #f)))
-  x) 3
-|#
+(test (and #t (values 1 2)) 2)
+(test (and #t (values #f 3)) #f)
+(test (or #f (values 1 2)) 1)
+(test (or #f (values #f 2)) 2)
 
+(test (and (values) 1) 1)
+
+(test (let ((x 1)) 
+	(and (let () (set! x 2) #f) 
+	     (let () (set! x 3) #f)) 
+	x) 2)
+(test (let ((x 1)) 
+	(and (values (let () (set! x 2) #f) 
+		     (let () (set! x 3) #f)))
+	x) 3)
 
 (test (+ (values 1 2) 3) 6)
 (test (+ (values 1 (values 2))) 3)
@@ -8979,7 +8990,7 @@
       96)
 (test (let ((add (lambda (a b) (values (+ a 1) (+ b 1))))) (+ 1 (add 2 3))) 8)
 (test (min (values 1 2) (values 3 0)) 0)
-
+(test ((lambda* ((a 1) (b 2)) (list a b)) (values :b 231)) '(1 231))
 
 
 

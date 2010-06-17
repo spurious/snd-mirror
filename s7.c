@@ -306,7 +306,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_ENV2,
-	      OP_FOR_EACH, OP_MAP,
+	      OP_FOR_EACH, OP_MAP, OP_AND2, OP_OR2,
 	      OP_MAX_DEFINED} opcode_t;
 
 #if 1
@@ -322,7 +322,7 @@ static char *op_names[OP_MAX_DEFINED] =
    "op_dynamic_wind", "op_define_constant", "op_define_constant1", "op_do", "op_do_end", "op_do_end1", 
    "op_do_step", "op_do_step1", "op_do_step2", "op_do_init", "op_define_star", "op_lambda_star", 
    "op_error_quit", "op_unwind_input", "op_unwind_output", "op_trace_return", "op_error_hook_quit", 
-   "op_trace_hook_quit", "op_with_env", "op_with_env1", "op_with_env2", "op_for_each", "op_map"};
+   "op_trace_hook_quit", "op_with_env", "op_with_env1", "op_with_env2", "op_for_each", "op_map", "op_and2", "op_or2"};
 #endif
 
 
@@ -17459,39 +17459,45 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
     {
       /* code = args yet to eval in order, args = evalled args reversed */
       int top;
+      s7_pointer x;
       top = s7_stack_top(sc) - 1;
-      if ((opcode_t)stack_op(sc->stack, top) == OP_EVAL_ARGS1)
+      switch ((opcode_t)stack_op(sc->stack, top))
 	{
-	  s7_pointer x;
-	  /* splice into the caller's arg list, leaving the last for the eval args loop to handle */
+	  /* the normal case -- splice values into caller's args */
+	case OP_EVAL_ARGS1:
 	  for (x = args; cdr(x) != sc->NIL; x = cdr(x))
 	    stack_args(sc->stack, top) = s7_cons(sc, car(x), stack_args(sc->stack, top));
 	  return(car(x));
-	}
 
-      /* look for errors here rather than glomming up the set! and let code */
-      if ((opcode_t)stack_op(sc->stack, top) == OP_SET1)          /* (set! var (values 1 2 3)) */
-	{
+	  /* look for errors here rather than glomming up the set! and let code */
+	case OP_SET1:                                             /* (set! var (values 1 2 3)) */
 	  set_multiple_value(args);
 	  return(eval_error(sc, "can't set! some variable to ~A", args));
-	}
-      if (((opcode_t)stack_op(sc->stack, top) == OP_LET1) ||      /* (let ((var (values 1 2 3))) ...) */
-	  ((opcode_t)stack_op(sc->stack, top) == OP_LET_STAR1) || /* (let* ((var (values 1 2 3))) ...) */
-	  ((opcode_t)stack_op(sc->stack, top) == OP_LETREC1))     /* (letrec ((var (values 1 2 3))) ...) */
-	{
+
+	case OP_LET1:                                             /* (let ((var (values 1 2 3))) ...) */
+	case OP_LET_STAR1:
+	case OP_LETREC1:
 	  set_multiple_value(args);
 	  return(eval_error(sc, "can't bind some variable to ~A", args));
+
+	  /* handle 'and' and 'or' specially */
+	case OP_AND1:
+	  for (x = args; cdr(x) != sc->NIL; x = cdr(x))
+	    if (car(x) == sc->F)
+	      return(sc->F);
+	  return(car(x));
+
+	case OP_OR1:
+	  for (x = args; cdr(x) != sc->NIL; x = cdr(x))
+	    if (car(x) != sc->F)
+	      return(car(x));
+	  return(car(x));
+
+	default:
+	  break;
 	}
-
-      /* for 'or' and 'and' return the equivalent -- but here we have subverted the short-circuit boolean business */
-      /* run through vals, return #t or #f */
-      /* or perhaps -- what to do?  Guile passes the multiple-values on through if it is the last, treating it as non-#f */
-
-      /*
-      fprintf(stderr, "stack: %s\n", op_names[stack_op(sc->stack, top)]);
-      */
-      /* Guile: (and (values #f #f) #t) -> #f?? it's looking at the 1st!
-       */
+       
+      /* fprintf(stderr, "stack: %s\n", op_names[stack_op(sc->stack, top)]); */
     }
 
   /* let it meander back up the call chain until someone knows where to splice it */
@@ -19965,8 +19971,27 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (cdr(sc->code) != sc->NIL)
 	push_stack(sc, opcode(OP_AND1), sc->NIL, cdr(sc->code));
+      else push_stack(sc, opcode(OP_AND2), sc->NIL, sc->code);
+
       sc->code = car(sc->code);
       goto EVAL;
+
+
+    case OP_AND2:
+      if (is_multiple_value(sc->value))  /* (and #t (values 1 2)) */
+	{
+	  s7_pointer x;
+	  for (x = sc->value; cdr(x) != sc->NIL; x = cdr(x))
+	    if (car(x) == sc->F)
+	      {
+		sc->value = sc->F;
+		pop_stack(sc);
+		goto START;
+	      }
+	  sc->value = car(x);
+	}
+      pop_stack(sc);
+      goto START;
       
       
     case OP_OR:
@@ -19995,8 +20020,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (cdr(sc->code) != sc->NIL)
 	push_stack(sc, opcode(OP_OR1), sc->NIL, cdr(sc->code));
+      else push_stack(sc, opcode(OP_OR2), sc->NIL, sc->code);
       sc->code = car(sc->code);
       goto EVAL;
+
+
+    case OP_OR2:
+      if (is_multiple_value(sc->value)) /* (or #f (values 1 2)) */
+	{
+	  s7_pointer x;
+	  for (x = sc->value; cdr(x) != sc->NIL; x = cdr(x))
+	    if (car(x) != sc->F)
+	      {
+		sc->value = car(x);
+		pop_stack(sc);
+		goto START;
+	      }
+	  sc->value = car(x);
+	}
+      pop_stack(sc);
+      goto START;
       
 
     case OP_MACRO1:
