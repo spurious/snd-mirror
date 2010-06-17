@@ -56,10 +56,10 @@
  *   various sndlib, clm, snd, and s7 functions
  *
  * limitations: 
- *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
+ *      variables can have only one type, the type has to be ascertainable somehow at run time (similarly for vector elements)
  *      some variables (imported from outside our context) cannot be set
  *      no recursion (could be added with some pain)
- *      no macro expansion
+ *      no macro expansion [why not? TODO: expand macros in run!]
  *      no complex, ratio, bignum (but we use 64-bit ints)
  *      no pointer aliasing (i.e. vct var set to alias another vct var etc -- GC confusion otherwise)
  *      no apply or eval (we need to know at parse time what we are trying to do -- actually these might be doable)

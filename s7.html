@@ -289,7 +289,7 @@ In standard scheme:
 </p>
 <pre>
 (not-s7-scheme)&gt; (vector-ref #(0) (floor 0.1))
-ERROR: Wrong type (expecting exact integer): 0.0
+ERROR: Wrong type (expecting exact integer): 0.0   ; [why?]
 </pre>
 <p>Not to worry, I'll use inexact-&gt;exact:
 </p>
@@ -539,6 +539,7 @@ argument:
 <pre>
 &gt; ((lambda* ((b 3) :rest x (c 1)) (list b c x)) 32)
 (32 1 ())
+
 &gt; ((lambda* ((b 3) :rest x (c 1)) (list b c x)) 1 2 3 4 5)
 (1 3 (2 3 4 5))
 </pre>
@@ -680,6 +681,7 @@ fmac
     (define-macro (hi a) `(+ ,a 1))
     hi)
 make-mac
+
 &gt; (let ((x (make-mac)))
     (x 2))
 3
@@ -1304,12 +1306,16 @@ Maybe it rates a macro:
 
 &gt; (define v (make-adjustable-vector 3 #f))
 v
+
 &gt; v
 #(#f #f #f)
+
 &gt; (set! (v 1) 32.0)
 32.0
+
 &gt; v
 #(#f 32.0 #f)
+
 &gt; (adjust-vector v 10 #f)
 #(#f 32.0 #f #f #f #f #f #f #f #f)
 </pre>
@@ -1531,6 +1537,7 @@ length, copy, reverse, fill!, map and for-each are generic in this sense (map al
 <pre>
 &gt; (map (lambda (a b) (- a b)) (list 1 2) (vector 3 4))
 (5 -3 9)
+
 &gt; (length "hi")
 2
 </pre>
@@ -1582,6 +1589,33 @@ We can write an FFT procedure that accepts lists or vectors:
         &gt; (cfft! (vector 0.0 1+i 0.0 0.0))
         #(1+1i -1+1i -1-1i 1-1i)
 </pre>
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>There is one place where list-set! and friends are not the same as set!: the former
+evaluate their first argument, but set! does not (with a quibble; see below):
+</p>
+<pre>
+&gt; (let ((str "hi")) (string-set! (let () str) 1 #\a) str)
+"ha"
+
+&gt; (let ((str "hi")) (set! (let () str) 1 #\a) str)
+;((let () str) 1 #\a): too many arguments to set!
+
+&gt; (let ((str "hi")) (set! ((let () str) 1) #\a) str)
+"ha"
+
+&gt; (let ((str "hi")) (set! (str 1) #\a) str)
+"ha"
+</pre>
+
+<p>set! looks at its first argument to decide what to set.
+If it's a symbol, no problem.  If it's a list, set! looks at its car to see if it is
+some object that has a setter.  If the car is itself a list, set! evaluates the internal
+expression, and tries again.  So the second case above is the only one that won't work.
+</p>
+
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
@@ -1677,6 +1711,7 @@ signals that the lists specify the elements of an 'n' dimensional vector: <code>
 <pre>
     &gt; (vector-ref #2D((1 2 3) (4 5 6)) 1 2)
     6
+
     &gt; (matrix-multiply #2d((-1 0) (0 -1)) #2d((2 0) (-2 2)))
     #2D((-2 0) (2 -2))
 </pre>
@@ -1687,6 +1722,7 @@ equal to a 1-dimensional empty vector.
 <pre>
     &gt; (make-vector '(10 0 3))
     #3D()
+
     &gt; (equal? #() #3D())
     #f
 </pre>
@@ -1702,6 +1738,7 @@ you can use this same syntax with lists.
 &gt; (let ((L '((1 2 3) (4 5 6))))
     (L 1 0))              ; same as (list-ref (list-ref L 1) 0) or ((L 1) 0)
 4
+
 &gt; (let ((L '(((1 2 3) (4 5 6)) ((7 8 9) (10 11 12))))) 
     (set! (L 1 0 2) 32)   ; same as (list-set! (list-ref (list-ref L 1) 0) 2 32) which is unreadable!
     L)
@@ -1715,6 +1752,7 @@ you can use this same syntax with lists.
 &gt; (let ((V '#(#(1 2 3) #(4 5 6)))) 
     (V 1 2))              ; same as (vector-ref (vector-ref V 1) 2) or ((V 1) 2)
 6
+
 &gt; (let ((V #2d((1 2 3) (4 5 6))))
     (V 0))
 #(1 2 3)
@@ -1727,6 +1765,7 @@ in the latter case, you can't clobber one of the inner vectors.
 <pre>
 &gt; (let ((V '#(#(1 2 3) #(4 5 6)))) (set! (V 1) 32) V)
 #(#(1 2 3) 32)
+
 &gt; (let ((V #2d((1 2 3) (4 5 6)))) (set! (V 1) 32) V)
 ;not enough args for vector-set!: (#2D((1 2 3) (4 5 6)) 1 32)
 </pre>
@@ -1782,6 +1821,7 @@ treat a hash-table as, for example, a sparse array:
 <pre>
 &gt; (define make-sparse-array make-hash-table)
 make-sparse-array
+
 &gt; (let ((arr (make-sparse-array)))
    (set! (arr 1032) "1032")
    (set! (arr -23) "-23")
@@ -1881,7 +1921,7 @@ In s7, multiple values are spliced directly into the caller's argument list.
   #\c
   &gt; ((lambda (a b) (+ a b)) ((lambda () (values 1 2))))
   3
-  &gt; (+ (call/cc (lambda (ret) (ret 1 2 3))) 4)
+  &gt; (+ (call/cc (lambda (ret) (ret 1 2 3))) 4) ; call/cc has an implicit "values"
   10
   &gt; ((lambda* ((a 1) (b 2)) (list a b)) (values :a 3))
   (3 2)
@@ -1923,6 +1963,17 @@ function returns #&lt;unspecified&gt;, nothing is added to the map output list.
 &gt; (map (lambda (x) (if #f x)) (list 1 2))
 ()
 </pre>
+
+<p>Actually I don't know about this... It seems "natural" that (values) should return
+no value, not even #&lt;unspecified&gt;.  Otherwise there's no difference between
+<code>(values)</code> and <code>(values (if #f #f))</code>.
+But it also seems "natural" that you'd want <code>(equal? (list (if #f #f)) (map (lambda (x) (if #f x)) (list 1)))</code>
+to return #t.  I prefer the self-effacing unvalue to consistency, I guess.
+Perhaps <code>(values)</code> could return a special value (say, #&lt;no-value&gt;), that
+would never be spliced into any context (even argument lists).  
+<code>(list 1 (values) 2)</code> would be <code>'(1 2)</code>.
+Would this change just cause confusion?
+</p>
 
 <p>At the top-level, there's nothing to splice into, so you just get your values back:
 </p>
@@ -2068,10 +2119,13 @@ floats in the "~X" case.  So in s7,
 <pre>
 &gt; (format #f "~X" 21)
 "15"
+
 &gt; (format #f "~X" 1.25)
 "1.4"
+
 &gt; (format #f "~X" 1.25+i)
 "1.4+1.0i"
+
 &gt; (format #f "~X" 21/4)
 "15/4"
 </pre>
@@ -2223,8 +2277,10 @@ the unbound symbol.  In Snd, this is used to implement autoloading:
           (sin (random 1.0))
           (symbol-&gt;value sym))))
 &lt;closure&gt;
+
 &gt; hiho
 0.46727567824396
+
 &gt; hiho
 0.64985453979392
 </pre>
@@ -2459,10 +2515,13 @@ And a self-modifying factorial function:
 <!--
 :(define q (list 1 2 3))
 q
+
 :(set! (cdr (cddr q)) q)
 #1#(1 2 3 #1#)
+
 :(set! (car q) 4)
 4
+
 :(set! q (cdr q))
 #1#(2 3 4 #1#)
 -->
@@ -2783,8 +2842,10 @@ Start up a REPL, and:
 
 (a-function "ex.scm" 26) &gt; x    ; here we're in the debugger
 32
+
 (a-function "ex.scm" 26) &gt; (+ b i)
 126
+
 (a-function "ex.scm" 26) &gt; :go
 done!
 </pre>
@@ -3052,6 +3113,7 @@ closed-over thing is a constant:
 
 &gt; (let ((xx (let ((x '(1 2 3))) (lambda () x)))) (list-set! (xx) 1 32) (xx))
 (1 32 3)
+
 &gt; (let ((xx (let ((x (list 1 2 3))) (lambda () x)))) (list-set! (xx) 1 32) (xx))
 (1 32 3)
 </pre>
@@ -3065,6 +3127,12 @@ closed-over thing is a constant:
 It would be a programmer's nightmare to have to keep track of which piece of a list is
 constant, and an implementor's nightmare to copy every list.  set! in all its forms is
 used for its side-effects, so why should we try to put a fence around them?
+<!--
+(The argument for immutability goes: most programmers are not very bright and they're writing air-traffic
+controllers.  Well, geez, can anything pass the dumb-but-deadly-programmer test?
+Consider if-then: make one small mistake and people start falling out of the sky.
+But dumb arguments aren't interesting...)
+-->
 If we flush "immutable constant" because it is a ham-fisted, whack-it-with-a-shovel approach,
 the only real problem I can see is symbol-&gt;string.  In CL, this is explicitly an error:
 </p>
@@ -3103,6 +3171,11 @@ The print syntax is borrowed from CL:
     (set! (cdr (cdr (cdr lst))) lst) 
     lst)
 #1=(1 2 3 . #1#)
+
+&gt; (let* ((x (cons 1 2)) 
+            (y (cons 3 x))) 
+       (list x y))
+(#1=(1 . 2) (3 . #1#)) ; shared lists use the same syntax: '((1 . 2) (3 1 . 2)) spelled out
 </pre>
 <p>But should this syntax be readable as well?  I'm inclined to say no because
 then it is part of the language, and it doesn't look like the rest of the language.
@@ -3130,12 +3203,14 @@ doesn't accidentally step on it.
 <p>Other odd corners:
 </p>
 <pre>
-(length (string #\null)) but (string=? "" (string #\null))
 (eq? (char-ci<? #\_ #\e) (char<? #\_ #\e))
 (case 1 ((1) #t) ((1) #f))
 (string->symbol "")
 (let ('1) quote)
 </pre>
+
+<p>We have memq, memv, and member, but just case (using eqv?) -- what about caseq, caseqv, casequal etc? or eval-case (s7test)
+</p>
 -->
 
 </blockquote>

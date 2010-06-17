@@ -17462,7 +17462,15 @@ static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
   #define H_values "(values obj ...) splices its arguments into whatever list holds it (its 'continuation')"
   
   if (args == sc->NIL)
-    return(sc->UNSPECIFIED); /* this was sc->NIL until 16-Jun-10 */
+    return(sc->UNSPECIFIED); 
+
+  /* this was sc->NIL until 16-Jun-10, 
+   *   nil is consistent with the implied values call in call/cc (if no args, the continuation function returns '())
+   *   hmmm... 
+   *   Guile complains ("too few values returned to continuation") in the call/cc case, and
+   *   (equal? (if #f #f) (* (values))) complains "Zero values returned to single-valued continuation"
+   *   so perhaps call/cc should also return #<unspecified> -- I don't know what is best.
+   */
   
   if (cdr(args) == sc->NIL)
     return(car(args));
@@ -18463,6 +18471,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_MAP:
+      /* I'm not sure about this way of doing map -- maybe it should not treat #<unspecified> as special.
+       *   The main reasons not to have (values) return #<no-value> (equal to, and printing as #<unspecified>
+       *   externally), and then treated as a no-op everywhere (even argument lists), are that no-one
+       *   currently expects that, and it would almost certainly slow down the op_eval_args loops where
+       *   a large percentage of s7's time is already spent. 
+       */
       if (sc->value != sc->UNSPECIFIED)         /* (map (lambda (x) (if #f x)) (list 1 2)) -> '() */
 	{
 	  if ((is_pair(sc->value)) &&

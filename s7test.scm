@@ -5412,6 +5412,17 @@
   (test (fact 5) 120)
   (test (fact 2) 2))
 
+(let* ((x (list 1 2 3)) ; from Lambda the Ultimate I think -- I lost the reference
+       (y (list 4 5))	
+       (z (cons (car x) (cdr y)))
+       (w (append y z))
+       (v (cons (cdr x) (cdr y))))
+  (set-car! x 6)
+  (set-car! y 7)
+  (set-cdr! (cdr x) (list 8))
+  (test (object->string (list x y z w v)) "((6 . #3=(2 8)) (7 . #1=(5)) #2=(1 . #1#) (4 5 . #2#) (#3# . #1#))"))
+;; guile gets this result, but prints it as: ((6 2 8) (7 5) (1 5) (4 5 1 5) ((2 8) 5))
+
 
 
 
@@ -8784,7 +8795,7 @@
 (test (call-with-values (lambda () (values 1 2 3)) +) 6)
 (test (call-with-values (lambda () (values 4 5)) (lambda (a b) b))  5)
 (test (call-with-values (lambda () (values 4 5)) (lambda (a b) (+ a b))) 9)
-(test (call-with-values * -) -1) ; right...
+(test (call-with-values * -) -1) ; yeah, right... (- (*))
 (test (values 1) 1)
 (test (call-with-values (lambda () (values 1 2 3 4)) list) (list 1 2 3 4))
 (test (+ (values 1) (values 2)) 3)
@@ -8814,6 +8825,57 @@
 (test (+ (do ((i 0 (+ i 1))) ((= i 3) (values i (+ i 1))))) 7)
 (test (+ (with-input-from-string "(values 1 2 3)" (lambda () (read))) 2) 8)
 (test (< (values 1 2 3)) #t)
+(test (apply (values + 1 2) '(3)) 6)
+(test (let () (define-macro (hi a) `(+ 1 ,a)) (hi (values 1 2 3))) 7)
+(test (+ 1 (eval-string "(values 2 3 4)")) 10)
+(test (+ 1 (eval '(values 2 3 4))) 10)
+(test (or (values #t) #f) #t)
+(test (and (values #t) #f) #f)
+(test (let ((x 1)) (set! x (values 32)) x) 32)
+(test (let ((x #(32 33))) ((values x) 0)) 32)
+(test (let ((x #(32 33))) (set! ((values x) 0) 123) x) #(123 33))
+(test (list-ref '(1 (2 3)) (values 1 1)) 3)
+(test (list-ref (values '(1 (2 3)) 1 1)) 3)
+(test (list-ref ((lambda () (values '(1 (2 3)) 1 1)))) 3)
+(test (set! (values) 1) 'error)
+(test (+ (values (begin (values 1 2)) (let ((x 1)) (values x (+ x 1))))) 6)
+(test (vector 1 (values 2 3) 4) #(1 2 3 4))
+(test(+ 1 (values (values (values 2) 3) (values (values (values 4)) 5) 6) 7) 28)
+
+
+;;; rather than check for (sc->VALUES ...) when no arg list is found,
+;;; perhaps we should have an internal values object that's easier to identify 
+
+
+;;; TODO: move some of these to set! tests
+;;; TODO: (let ((x 1)) (set! x (values 1 2)) x) -> (values 1 2) -- does this make sense? No! -- this should be an error about too many arguments
+;;; (let ((x (values 1 2))) (+ 3 x)) -- should also be an error at the let level, not '+
+;;;    values should not be settable or bindable -- it is simply an ephemeral carrier
+;;; (let ((x 1)) (set! (values x) 2) x) -> error (no generalized set for values, so (values x) is not the same as x
+;;; but ((values '(1 (2 3)) 1 1)) -> error
+;;; but (let ((x #(32 33))) ((values x 0))) complains about list-ref arg 2?
+;;; but (or (values #t #f) #f) -> (values #t #f)! (#t in guile)
+;;; (and (values #t #f) #t) -> #t
+;;; either doc or fix: 
+;;; TODO: (let ((x #(0 1))) (set! (values x 0 32)) x) -> ;set!: not enough arguments: ((values x 0 32)) -- I think this should be an error
+;;; but (string-set! (values "hi" 0 #\x)) for example
+;;;    why does this work?!? 
+
+;;; (let ((str "hi")) (string-set! (let () str) 1 #\a) str) -> "ha" (also in Guile)
+;;; (let ((x 2) (str "hi")) (string-set! (let () (set! x 3) str) 1 #\a) (list x str)) -> (3 "ha")!
+;;; (let ((x 2) (lst '(1 2))) (list-set! (let () (set! x 3) lst) 1 23) (list x lst)) -> (3 (1 23))
+;;; (let ((x 2) (v (vector 1 2))) (vector-set! (let () (set! x 3) v) 1 23) (list x v))
+;;; but in these cases the *-set! is not replaceable with set! (and hash-table-set! presumably)
+;;; (let ((str "hi")) (set! ((let () str) 1) #\a) str)
+
+;;; (list (and (values 1 2))) -> ((values 1 2)), but (list (values 1 2)) -> (1 2)
+;;; surely 'and and 'or should return multiple values!
+;;; (+ (or (values 1 2))) -> error but (+ (begin (values 1 2))) -> 3!
+;;; TODO: (let () (+ 5 (call-with-exit (lambda (return) (return 1 2 3) 4)))) -> 6? (no values!)
+;;;   (+ 5 (call-with-exit (lambda (return) (return 1)))) -> 6 also and (+ 5 (call-with-exit (lambda (return) (return 2)))) is 7
+;;; (+ (let ((x 1)) (set! x (values 32 33)) x)) -> error from '+ (so "values" object is not real?)
+;;; DOC: values is not an object
+
 
 (test (+ (values 1 2) 3) 6)
 (test (+ (values 1 (values 2))) 3)
@@ -8830,6 +8892,9 @@
 (test (equal? (values) (if #f #f)) #t)
 (test (map (lambda (x) (if #f x)) (list 1 2)) '())
 (test (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4)) '(1 20 3 60))
+(test (* 2 (case 1 ((2) (values 3 4)) ((1) (values 5 6)))) 60)
+(test (+ (values (* 3 2) (abs (values -1)))) 7)
+(test (+ (let ((x 1)) (values x (+ x 1))) (if #f #f (values 2 3))) 8)
 
 (test (let ((sum 0)) (for-each (lambda (n m p) (set! sum (+ sum n m p))) (values (list 1 2 3) (list 4 5 6) (list 7 8 9))) sum) 45)
 (test (map (lambda (n m p) (+ n m p)) (values (list 1 2 3) (list 4 5 6) (list 7 8 9))) '(12 15 18))
@@ -8911,6 +8976,8 @@
 	(+ a b))
       96)
 (test (let ((add (lambda (a b) (values (+ a 1) (+ b 1))))) (+ 1 (add 2 3))) 8)
+(test (min (values 1 2) (values 3 0)) 0)
+
 
 
 
@@ -10276,6 +10343,17 @@ and then s7 is not following r6rs because it stops at
 saying cadr is not a number. I don't think this example is correct in any case --
 who says the continuation has to restart the map from the top?
 |#
+
+(let ((cont #f))
+  (let ((x (* (call/cc
+	       (lambda (return)
+		 (set! cont return)
+		 (return 3 4))))))
+    (if (= x 12)
+	(cont 5 6 7))
+    (test x 210)))
+
+;; Guile handles this very differently
 
 
 
