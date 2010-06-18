@@ -712,7 +712,7 @@ unreadable in all but the simplest cases, and besides, gensymification is
 something a macro can do for us:
 </p>
 <pre>
-(define-macro (define-clean-macro name-and-args . body)
+(define-macro (define-clean-macro name-and-args . body) ; "define-immaculo"?
   (let ((syms ()))
 
     (define (walk func lst)
@@ -1966,7 +1966,7 @@ nothing is added to the map output list.
 ()
 </pre>
 
-<p>Second, you can use multiple-values to turn off the "short-circuit' evaluation
+<p>Second, you can use multiple-values to turn off the "short-circuit" evaluation
 of 'or' and 'and'.  Normally these operators 
 stop evaluating their arguments as soon as they hit #t ('or') or #f ('and').
 By wrapping the arguments in 'values', you can force all of them to be evaluated:
@@ -1974,13 +1974,13 @@ By wrapping the arguments in 'values', you can force all of them to be evaluated
 
 <pre>
 &gt; (let ((x 1)) 
-    (and (let () (set! x 2) #f)  ; this returns #f so
+    (and (let () #f)             ; this returns #f so
          (let () (set! x 3) #f)) ;   this is never evaluated
     x)
-2
+1
 
 &gt; (let ((x 1)) 
-    (and (<em class=red>values</em> (let () (set! x 2) #f) 
+    (and (<em class=red>values</em> (let () #f) 
                  (let () (set! x 3) #f)))
   x) 
 3
@@ -1996,12 +1996,12 @@ By wrapping the arguments in 'values', you can force all of them to be evaluated
 <p>But this printout is just trying to be informative.  There is no "multiple-values object"
 in s7.  You can't <code>(set! x (values 1 2))</code>, for example.  The "values" function
 tells s7 that its arguments should be handled in a special way, and the multiple-value indication goes away
-as soon as they are spliced into its caller.  This affects 'or' and "and'.  The values are considered
+as soon as they are spliced into its caller.  This affects 'or' and 'and'.  The values are considered
 a part of the argument list of the operator, not some object returned to the caller of the operator:
 </p>
 
 <pre>
-&gt; (+ (or (values 1 2)) 3) ; same as (+ (or 1 2) 3) 
+&gt; (+ (or (values 1 2)) 3) ; same as (+ (or 1 2) 3)
 4
 </pre>
 
@@ -3081,7 +3081,6 @@ bind it to something else, which is asking for confusion).
 <li>no scheme-report-environment, null-environment, or interaction-environment (= current-environment?).
 <li>no transcript-on or transcript-off.
 <li>__func__ is the name (or name and location) of the function currently being defined or called (as in C).
-<li>syntactic names can be values: <code>(define progn begin) (progn (display "progn!") (+ 3 4))</code> or <code>(define function lambda)</code>, etc
 <li>begin returns the value of the last form (like progn); it can contain both definitions and other statements.
 <li>#&lt;unspecified&gt;, #&lt;eof&gt;, and #&lt;undefined&gt; are defined.
 <li>for-each and map accept different length arguments (the operation stops when any argument reaches its end).
@@ -3196,8 +3195,8 @@ The print syntax is borrowed from CL:
 #1=(1 2 3 . #1#)
 
 &gt; (let* ((x (cons 1 2)) 
-            (y (cons 3 x))) 
-       (list x y))
+         (y (cons 3 x))) 
+    (list x y))
 (#1=(1 . 2) (3 . #1#)) ; shared lists use the same syntax: '((1 . 2) (3 1 . 2)) spelled out
 </pre>
 <p>But should this syntax be readable as well?  I'm inclined to say no because
@@ -3219,7 +3218,31 @@ but some clear marker is needed for a global variable so that the programmer
 doesn't accidentally step on it.  
 </p>
 
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
+<p>The built-in syntactic names, such as "begin", are (almost) first-class citizens (I'm trying to avoid
+any distinctions of this sort).
+</p>
+<pre>
+&gt; (let ((progn begin)) 
+    (progn 
+      (define x 1) 
+      (set! x 3) 
+      (+ x 4)))
+7
+
+&gt; (let ((function lambda)) 
+    ((function (a b) (list a b)) 3 4))
+(3 4)
+</pre>
+
+<p>There is currently one blemish.
+You can't reverse that process, and give the syntactic name some new value:
+<code>(set! if 3)</code>.
+I hope this kind of thing is not actually very useful, but let me
+know if you need it.  The issue is purely one of speed.
+</p>
 
 
 <!--

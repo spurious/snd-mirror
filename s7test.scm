@@ -2005,6 +2005,8 @@
 (test (let ((str "hi")) (string-set! (let () str) 1 #\a) str) "ha") ; (also in Guile)
 (test (let ((x 2) (str "hi")) (string-set! (let () (set! x 3) str) 1 #\a) (list x str)) '(3 "ha"))
 (test (let ((str "hi")) (set! ((let () str) 1) #\a) str) "ha")
+(test (let ((str "hi")) (string-set! (let () (string-set! (let () str) 0 #\x) str) 1 #\x) str) "xx")
+(test (let ((str "hi")) (string-set! (let () (set! str "hiho") str) 3 #\x) str) "hihx") ; ! (this works in Guile also)
 
 (for-each
  (lambda (arg)
@@ -2021,8 +2023,8 @@
    (test (string-set! "hiho" 0 arg) 'error))
  (list 1 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
-(test (let ((str "hiho")) (string-set! str 2 #\null) str) "hi")
-;;; this is not how Guile handles this case
+(test (equal? (let ((str "hiho")) (string-set! str 2 #\null) str) "hi") #f)
+(test (string=? (let ((str "hiho")) (string-set! str 2 #\null) str) "hi") #f)
 
 
 
@@ -2097,6 +2099,11 @@
 (test (substring "1234" 1 0) 'error)
 (test (substring "" most-positive-fixnum 1) 'error)
 
+(test (let ((str "0123456789"))
+	(string-set! str 5 #\null)
+	(substring str 6))
+      "6789")
+
 (for-each
  (lambda (arg)
    (test (substring "hiho" arg 0) 'error))
@@ -2127,6 +2134,12 @@
 (test (let ((hi "hi")) (let ((ho (string-append hi))) (string-set! ho 0 #\a) hi)) "hi")
 (test (let ((hi "hi")) (set! hi (string-append hi hi hi hi)) hi) "hihihihi")
 (test (string-append '()) 'error)
+(test (string=? (string-append "012" (string #\null) "456") 
+		(let ((str "0123456")) (string-set! str 3 #\null) str))
+      #t)
+(test (string=? (string-append "012" (string #\null) "356") 
+		(let ((str "0123456")) (string-set! str 3 #\null) str))
+      #f)
 
 (num-test (letrec ((hi (lambda (str n)
 			 (if (= n 0)
@@ -2303,7 +2316,6 @@
 
 
 (test (symbol->string 'hi) "hi")
-(test (symbol->string (string->symbol "()")) "()")
 (test (string->symbol (symbol->string 'hi)) 'hi)
 (test (eq? (string->symbol "hi") 'hi) #t)
 (test (eq? (string->symbol "hi") (string->symbol "hi")) #t)
@@ -2323,11 +2335,13 @@
 	(+ sym0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789 1))
       33)
 
-(test (symbol->string (string->symbol "hi there")) "hi there")
-(test (symbol->string (string->symbol "Hi There")) "Hi There")
-(test (symbol->string (string->symbol "HI THERE")) "HI THERE")
-(test (symbol->string (string->symbol "")) "")
-(test (symbol? (string->symbol "(weird name for a symbol!)")) #t)      
+; all of these are errors now
+(test (symbol->string (string->symbol "hi there")) 'error)
+;(test (symbol->string (string->symbol "Hi There")) "Hi There")
+;(test (symbol->string (string->symbol "HI THERE")) "HI THERE")
+;(test (symbol->string (string->symbol "")) "")
+;(test (symbol? (string->symbol "(weird name for a symbol!)")) #t)      
+;(test (symbol->string (string->symbol "()")) "()")
 
 (test (string->symbol "0") 'error) ; s7 specific
 (test (string->symbol "0e") '0e)
@@ -2370,6 +2384,17 @@
   
 (test (symbol->value) 'error)
 (test (symbol->value 'hi 'ho) 'error)
+
+#|
+(let ((name "hiho"))
+  (string-set! name 2 #\null)
+  (let ((sym (string->symbol name)))
+    (test (equal? (symbol->string sym) name) #t)
+    (eval-string (string-append "(define " name " #f)"))
+    (eval-string (string-append "(set! " name " 32)"))
+    (symbol->value sym)))
+-> ;define: more than 1 value? (hi o (error read-error "#ÿf: undefined sharp expression: ... "))
+|#
 
 
 
@@ -3100,7 +3125,7 @@
  (lambda (arg)
    (if (null? arg)
        (format #t "(null? ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) #<eof> #<undefined> (values) (lambda (a) (+ a 1))))
 
 
 (test (let ((x (cons 1 2))) (set-car! x 3) x) (cons 3 2))
@@ -5767,6 +5792,10 @@
 (test (call-with-input-file "empty-file" (lambda (p) (eof-object? (read-byte p)))) #t)
 (test (call-with-input-file "empty-file" (lambda (p) (eof-object? (read-line p)))) #t)
 
+(let ()
+  (define (io-func) (lambda (p) (eof-object? (read-line p))))
+  (test (call-with-input-file (let () "empty-file") (io-func)) #t))
+
 (call-with-output-file "empty-file" (lambda (p) (write-char #\a p)))
 (test (call-with-input-file "empty-file" (lambda (p) (and (char=? (read-char p) #\a) (eof-object? (read-char p))))) #t)
 (test (call-with-input-file "empty-file" (lambda (p) (and (string=? (symbol->string (read p)) "a") (eof-object? (read p))))) #t) ; Guile also returns a symbol here
@@ -7622,6 +7651,20 @@
 (test (map map (list map) (list (list abs)) (list (list (list -1)))) '(((1))))
 (test (map map (list map) (list (list map)) (list (list (list abs))) (list (list (list (list -1 -3))))) '((((1 3)))))
 (test (let () (define (mrec a b) (if (<= b 0) (list a) (map mrec (list a) (list (- b 1))))) (mrec (list 1 2) 5)) '(((((((1 2))))))))
+(test (map append '(3/4)) '(3/4))
+(test (map list '(1.5)) '((1.5)))
+(test (map vector '("hi")) '(#("hi")))
+(test (map object->string '(:hi (1 2) (()))) '(":hi" "(1 2)" "(())"))
+(test (map map (list for-each) (list (list abs)) (list (list (list 1 2 3)))) '((#<unspecified>)))
+(test (map map (list vector) '((#(1 #\a (3))))) '((#(#(1 #\a (3))))))
+(test (apply map map (list cdr) '((((1 2) (3 4 5))))) '(((2) (4 5))))
+(test (apply map map (list char-upcase) '(("hi"))) '((#\H #\I)))
+(test (apply map map (list *) '(((1 2)) ((3 4 5)))) '((3 8))) ; (* 1 3) (* 2 4)
+(test (map apply (list map) (list map) (list (list *)) '((((1 2)) ((3 4 5))))) '(((3 8))))
+(test (map map (list magnitude) '((1 . 2))) '((1))) ; magnitude is called once with arg 1
+(test (map magnitude '(1 . 2)) '(1))
+(test (map call/cc (list (lambda (r1) 1) (lambda (r2) (r2 2 3)) (lambda (r3) (values 4 5)))) '(1 2 3 4 5))
+(test (map call/cc (list number? continuation?)) '(#f #t))
 
 ;; from scheme working group 
 (test (let ((L (list 1 2 3 4 5))) (map (lambda (x) (set-cdr! (cddr L) 5) x) L)) '(1 2 3))
@@ -7773,11 +7816,11 @@
   (set! sum (+ sum i_0 i_1 i_2 i_3 i_4 i_5 i_6 i_7 i_8 i_9 i_10 i_11 i_12 i_13 i_14 i_15 i_16 i_17 i_18 i_19 i_20 i_21 i_22 i_23 i_24 i_25 i_26 i_27 i_28 i_29 i_30 i_31 i_32 i_33 i_34 i_35 i_36 i_37 i_38 i_39))))
       35100)
 
-(test (call/cc (lambda (return) (do () () (if #t (return 123))))) 123)
-(test (call/cc (lambda (return) (do () (#f) (if #t (return 123))))) 123)
-(test (call/cc (lambda (return) (do ((i 0 (+ i 1))) () (if (= i 100) (return 123))))) 123)
-(test (call/cc (lambda (return) (do () ((return 123))))) 123)
-(test (call/cc (lambda (return) (do () (#t (return 123))))) 123)
+(test (call-with-exit (lambda (return) (do () () (if #t (return 123))))) 123)
+(test (call-with-exit (lambda (return) (do () (#f) (if #t (return 123))))) 123)
+(test (call-with-exit (lambda (return) (do ((i 0 (+ i 1))) () (if (= i 100) (return 123))))) 123)
+(test (call-with-exit (lambda (return) (do () ((return 123))))) 123)
+(test (call-with-exit (lambda (return) (do () (#t (return 123))))) 123)
 
 (test (do () (/ 0)) 0)
 (test (do () (+)) '())
@@ -7826,10 +7869,10 @@
 	  (set! x (+ x i))))
       4)
 
-(test (call/cc (lambda (exit) (do ((i 0 (+ i 1))) ((= i 100) i) (if (= i 2) (exit 321))))) 321)
-(test (call/cc (lambda (exit) (do ((i 0 (if (= i 3) (exit 321) (+ i 1)))) ((= i 100) i)))) 321)
-(test (call/cc (lambda (exit) (do ((i 0 (+ i 1))) ((= i 10) (exit 321))))) 321)
-(test (call/cc (lambda (exit) (do ((i 0 (+ i 1))) ((= i 10) i) (if (= i -2) (exit 321))))) 10)
+(test (call-with-exit (lambda (exit) (do ((i 0 (+ i 1))) ((= i 100) i) (if (= i 2) (exit 321))))) 321)
+(test (call-with-exit (lambda (exit) (do ((i 0 (if (= i 3) (exit 321) (+ i 1)))) ((= i 100) i)))) 321)
+(test (call-with-exit (lambda (exit) (do ((i 0 (+ i 1))) ((= i 10) (exit 321))))) 321)
+(test (call-with-exit (lambda (exit) (do ((i 0 (+ i 1))) ((= i 10) i) (if (= i -2) (exit 321))))) 10)
 (test (do ((x 0 (+ x 1)) (y 0 (call/cc (lambda (c) c)))) ((> x 5) x) #f) 6)
 (test (let ((happy #f)) (do ((i 0 (+ i 1))) (happy happy) (if (> i 3) (set! happy i)))) 4)
 
@@ -8991,6 +9034,7 @@
 (test (let ((add (lambda (a b) (values (+ a 1) (+ b 1))))) (+ 1 (add 2 3))) 8)
 (test (min (values 1 2) (values 3 0)) 0)
 (test ((lambda* ((a 1) (b 2)) (list a b)) (values :b 231)) '(1 231))
+(test (cons (values 1 2) (values 3 4)) 'error)
 
 
 
@@ -9180,15 +9224,14 @@
 	  (set! k (+ k i))))
       3)
 
-#|
+
 (test (let ((j (lambda () 0))
 	    (k 0))
 	(do ((i (j) (j))
 	     (j (lambda () 1) (lambda () (+ i 1))))
 	    ((= i 3) k)
 	  (set! k (+ k i))))
-      6) ; or is it 3?
-|#
+      3) ; 6 in Guile which follows the spec
 
 (test (let ((k 0)) (do ((i 0 (+ i 1)) (j 0 (+ j i))) ((= i 3) k) (set! k (+ k j)))) 1)
 
@@ -9599,6 +9642,81 @@
   (set! (travels 4) (+ (travels 4) 1))
   (test travels #(1 2 3 4 1)))
 
+(let ((c1 #f)
+      (c2 #f)
+      (c3 #f)
+      (x0 0)
+      (x1 0)
+      (x2 0)
+      (x3 0))
+  (let ((x (+ 1 
+	      (call/cc
+	       (lambda (r1)
+		 (set! c1 r1)
+		 (r1 2)))
+	      (call/cc
+	       (lambda (r2)
+		 (set! c2 r2)
+		 (r2 3)))
+	      (call/cc
+	       (lambda (r3)
+		 (set! c3 r3)
+		 (r3 4)))
+	      5)))
+    (if (= x0 0) 
+	(set! x0 x)
+	(if (= x1 0)
+	    (set! x1 x)
+	    (if (= x2 0)
+		(set! x2 x)
+		(if (= x3 0)
+		    (set! x3 x)))))
+    (if (= x 15)
+	(c1 6))
+    (if (= x 19)
+	(c2 7))
+    (if (= x 23)
+	(c3 8))
+    (test (list x x0 x1 x2 x3) '(27 15 19 23 27))))
+
+(let ((c1 #f)
+      (c2 #f)
+      (c3 #f)
+      (x0 0)
+      (x1 0)
+      (x2 0)
+      (x3 0))
+  (let ((x (+ 1 
+	      (call/cc
+	       (lambda (r1)
+		 (set! c1 r1)
+		 (r1 2)))
+	      (call/cc
+	       (lambda (r2)
+		 (set! c2 r2)
+		 (r2 3)))
+	      (call/cc
+	       (lambda (r3)
+		 (set! c3 r3)
+		 (r3 4)))
+	      5)))
+    (if (= x0 0) 
+	(set! x0 x)
+	(if (= x1 0)
+	    (set! x1 x)
+	    (if (= x2 0)
+		(set! x2 x)
+		(if (= x3 0)
+		    (set! x3 x)))))
+    (if (= x 15)
+	(c1 6 1))
+    (if (= x 20)
+	(c2 7 2 3))
+    (if (= x 29)
+	(c3 8 3 4 5))
+    (test (list x x0 x1 x2 x3) '(45 15 20 29 45))))
+;; 45 = (+ 1 6 1 7 2 3 8 3 4 5 5)
+
 (let* ((next-leaf-generator (lambda (obj eot)
 			      (letrec ((return #f)
 				       (cont (lambda (x)
@@ -9825,6 +9943,23 @@
       '(#f (b c)))
 
 (test (+ 2 (call/cc (lambda (k) (* 5 (k 4))))) 6)
+(test (+ 2 (call/cc (lambda (k) (* 5 (k 4 5 6))))) 17)
+(test (+ 2 (call/cc (lambda (k) (* 5 (k (values 4 5 6)))))) 17)
+(test (+ 2 (call/cc (lambda (k) (* 5 (k 1 (values 4 5 6)))))) 18)
+(test (+ 2 (call/cc (lambda (k) (* 5 (k 1 (values 4 5 6) 1))))) 19)
+(test (+ 2 (call-with-exit (lambda (k) (* 5 (k 4))))) 6)
+(test (+ 2 (call-with-exit (lambda (k) (* 5 (k 4 5 6))))) 17)
+(test (+ 2 (call-with-exit (lambda (k) (* 5 (k (values 4 5 6)))))) 17)
+(test (+ 2 (call-with-exit (lambda (k) (* 5 (k 1 (values 4 5 6)))))) 18)
+(test (+ 2 (call-with-exit (lambda (k) (* 5 (k 1 (values 4 5 6) 1))))) 19)
+
+(test (+ 2 (values 3 (call-with-exit (lambda (k1) (k1 4))) 5)) 14)
+(test (+ 2 (call-with-exit (lambda (k1) (values 3 (k1 4) 5))) 8) 14)
+(test (+ 2 (call-with-exit (lambda (k1) (values 3 (k1 4 -3) 5))) 8) 11)
+
+(test (call-with-exit (let () (lambda (k1) (k1 2)))) 2)
+(test (+ 2 (call/cc (let () (call/cc (lambda (k1) (k1 (lambda (k2) (k2 3)))))))) 5)
+(test (+ 2 (call/cc (call/cc (lambda (k1) (k1 (lambda (k2) (k2 3))))))) 5)
 
 (test (let ((x (call/cc (lambda (k) k))))
 	(x (lambda (y) "hi")))
@@ -10238,7 +10373,8 @@
 
 (test (call/cc . 1) 'error)
 (test (call/cc abs) 'error)
-
+(test (+ 1 (call/cc (lambda (r1) (call/cc (lambda (r2) (r1 2 3))))) 4) 10)
+(test (+ 1 (call/cc (lambda (r1) (+ 5 (call/cc (lambda (r2) (r2 2 3)))))) 4) 15)
 
 
 ;;; from scheme wiki
@@ -11381,7 +11517,22 @@ who says the continuation has to restart the map from the top?
 (test (catch-test-1 'a3) '(a1 a2 a3))
 (test (catch-test-1 'a4) '(a1 a2 a3 a4))
 
-
+(test (let ((x 0))
+	(catch 'a
+	     (lambda ()
+	       (catch 'b
+		      (lambda ()
+			(catch 'a
+			       (lambda ()
+				 (error 'a))
+			       (lambda args
+				 (set! x 1))))
+		      (lambda args
+			(set! x 2))))
+	     (lambda args
+	       (set! x 3)))
+	x)
+      1)
 
 
 (define (last-pair l) ; needed also by loop below

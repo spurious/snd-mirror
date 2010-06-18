@@ -954,7 +954,13 @@ static char *copy_string(const char *str)
 
 
 #define strings_are_equal(Str1, Str2) (strcmp(Str1, Str2) == 0)
-/* newlib code here was slower */
+/* newlib code here was slower -- this should only be used for internal strings -- scheme
+ *   strings can have embedded nulls.
+ */
+
+#define scheme_strings_are_equal(Str1, Str2) (scheme_strcmp(Str1, Str2) == 0)
+/* here Str1 and Str2 are s7_pointers
+ */
 
 
 static int safe_strcmp(const char *s1, const char *s2)
@@ -2028,20 +2034,26 @@ static s7_pointer g_symbol_to_string(s7_scheme *sc, s7_pointer args)
   #define H_symbol_to_string "(symbol->string sym) returns the symbol sym converted to a string"
   if (!s7_is_symbol(car(args)))
     return(s7_wrong_type_arg_error(sc, "symbol->string", 0, car(args), "a symbol"));
+  
   return(s7_make_string(sc, s7_symbol_name(car(args)))); /* return a copy */
 }
 
 
+static bool has_delimiter(const char *str, int len);
+
 static s7_pointer g_string_to_symbol(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_to_symbol "(string->symbol str) returns the string str converted to a symbol"
-  if (!s7_is_string(car(args)))
-    return(s7_wrong_type_arg_error(sc, "string->symbol", 0, car(args), "a string"));
+  s7_pointer str;
+  str = car(args);
 
-  /* what about (string->symbol "")?  Guile accepts it, as does s7:
-   *   (symbol->string (string->symbol "")) -> ""
-   */
-  return(s7_make_symbol(sc, string_value(car(args))));
+  if (!s7_is_string(str))
+    return(s7_wrong_type_arg_error(sc, "string->symbol", 0, str, "a string"));
+
+  if (has_delimiter(string_value(str), string_length(str)))
+    return(s7_error(sc, sc->OUT_OF_RANGE, 
+		    make_list_2(sc, make_protected_string(sc, "(string->symbol ~S) encountered illegal character"), str)));
+  return(s7_make_symbol(sc, string_value(str)));
 }
 
 
@@ -4401,6 +4413,16 @@ static bool is_radix_prefix(char prefix)
 	 (prefix == 'd') ||
 	 (prefix == 'x') ||
 	 (prefix == 'o'));
+}
+
+
+static bool has_delimiter(const char *str, int len)
+{
+  int i;
+  for (i = 0; i < len; i++)
+    if (!string_delimiter_table[str[i]])
+      return(true);
+  return(false);
 }
 
 
@@ -15072,7 +15094,7 @@ bool s7_is_equal_ci(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
   switch (type(x))
     {
     case T_STRING:
-      return(strings_are_equal(string_value(x), string_value(y)));
+      return(scheme_strings_are_equal(x, y));
 
     case T_C_OBJECT:
       if (is_s_object(x))
@@ -15168,7 +15190,7 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
   switch (type(x))
     {
     case T_STRING:
-      return(strings_are_equal(string_value(x), string_value(y)));
+      return(scheme_strings_are_equal(x, y));
 
     case T_C_OBJECT:
       if (is_s_object(x))
