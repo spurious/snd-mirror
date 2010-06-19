@@ -10423,6 +10423,11 @@ static int display_multivector(s7_scheme *sc, s7_pointer vec, int out_len, int f
 	{
 	  if (flat_ref < out_len)
 	    flat_ref = display_multivector(sc, vec, out_len, flat_ref, dimension + 1, dimensions, out_str, elements, last);
+	  else 
+	    {
+	      strcat(out_str, "...)");
+	      return(flat_ref);
+	    }
 	}
     }
   strcat(out_str, ")");
@@ -10698,7 +10703,7 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, sh
       bufsize += safe_strlen(elements[i]);
     }
 
-  bufsize += (len * 2 + 256);
+  bufsize += (len * 8 + 256);                   /* might be 2 parens per element + space, so at least len*4 here */
   buf = (char *)malloc(bufsize * sizeof(char));
 
   if ((s7_is_vector(vect)) &&
@@ -26257,17 +26262,5 @@ s7_scheme *s7_init(void)
  * A "class" in this case is define-record (for the local fields and type) + a list of methods and a methods accessor.
  * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
  * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
-
- * TODO if vector is too large to print, dims are lost:
-
- :(make-vector '(2 2 2 2 2 2 2 2 2 2) 1)
- #(1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 ...)
-
-  and it seems to ignore *vector-print-length* in Snd
-  (set! (print-length) 1024)
-  then segfault...
-  in listener append -- looks like Motif got upset (12 D but not 10 D)
-  this is almost certainly a motif bug (memory corruption in RefigureLines Text.c 1050) /home/bil/test/openMotif-2.2.3/lib/Xm/Text.c
-  run it in valgrind...
  */
 

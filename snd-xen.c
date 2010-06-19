@@ -688,6 +688,10 @@ static char *gl_print(XEN result)
   char *newbuf = NULL, *str = NULL;
   int i, ilen, savelen;
 
+#if HAVE_SCHEME
+  return(g_print_1(result));
+#endif
+
   /* specialize vectors which can be enormous in this context */
   if ((!(XEN_VECTOR_P(result))) || 
       ((int)(XEN_VECTOR_LENGTH(result)) <= print_length(ss)))
@@ -697,7 +701,7 @@ static char *gl_print(XEN result)
   newbuf = (char *)calloc(128, sizeof(char));
   savelen = 128;
 
-#if HAVE_SCHEME || HAVE_FORTH
+#if HAVE_FORTH
   sprintf(newbuf, "#("); 
 #endif
 
@@ -722,7 +726,7 @@ static char *gl_print(XEN result)
 	}
     }
 
-#if HAVE_SCHEME || HAVE_FORTH
+#if HAVE_FORTH
   newbuf = mus_strcat(newbuf, " ...)", &savelen);
 #endif
 
