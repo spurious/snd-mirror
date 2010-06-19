@@ -787,7 +787,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       add_drag_and_drop(cw[W_graph], channel_drop_watcher, channel_drag_watcher, NULL);
       set_user_int_data(G_OBJECT(cw[W_graph]), PACK_SOUND_AND_CHANNEL(sp->index, cp->chan));
       gtk_widget_set_events(cw[W_graph], GDK_ALL_EVENTS_MASK);
-      GTK_WIDGET_SET_FLAGS(cw[W_graph], GTK_CAN_FOCUS);
+      SET_CAN_FOCUS(cw[W_graph]);
       gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_graph], 2, 3, 0, 2, 
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND), 
 		       (GtkAttachOptions)(GTK_FILL | GTK_EXPAND | GTK_SHRINK), 

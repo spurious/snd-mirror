@@ -1167,7 +1167,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       
       ccd_scale_adj = gtk_adjustment_new(50.0, 0.0, 101.0, 0.1, 1.0, 1.0);
       ccd_scale = gtk_hscale_new(GTK_ADJUSTMENT(ccd_scale_adj));
-      GTK_WIDGET_UNSET_FLAGS(ccd_scale, GTK_CAN_FOCUS);
+      UNSET_CAN_FOCUS(ccd_scale);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(ccd_scale)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(ccd_scale), 0);
       gtk_scale_set_value_pos(GTK_SCALE(ccd_scale), GTK_POS_TOP);
@@ -1226,7 +1226,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
 
       ccd_cutoff_adj = gtk_adjustment_new(color_cutoff(ss), 0.0, 1.01, 0.001, 0.01, .01);
       ccd_cutoff = gtk_hscale_new(GTK_ADJUSTMENT(ccd_cutoff_adj));
-      GTK_WIDGET_UNSET_FLAGS(ccd_cutoff, GTK_CAN_FOCUS);
+      UNSET_CAN_FOCUS(ccd_cutoff);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(ccd_cutoff)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(ccd_cutoff), 3);
       gtk_scale_set_value_pos(GTK_SCALE(ccd_cutoff), GTK_POS_LEFT);
@@ -1283,7 +1283,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
 
       oid_ax_adj = gtk_adjustment_new(spectro_x_angle(ss), 0.0, 361.0, 1.0, 10.0, 1.0);
       oid_ax = gtk_hscale_new(GTK_ADJUSTMENT(oid_ax_adj));
-      GTK_WIDGET_UNSET_FLAGS(oid_ax, GTK_CAN_FOCUS);
+      UNSET_CAN_FOCUS(oid_ax);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid_ax)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid_ax), 0);
       gtk_scale_set_value_pos(GTK_SCALE(oid_ax), GTK_POS_LEFT);
@@ -1304,7 +1304,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
 
       oid_ay_adj = gtk_adjustment_new(spectro_y_angle(ss), 0.0, 361.0, 1.0, 10.0, 1.0);
       oid_ay = gtk_hscale_new(GTK_ADJUSTMENT(oid_ay_adj));
-      GTK_WIDGET_UNSET_FLAGS(oid_ay, GTK_CAN_FOCUS);
+      UNSET_CAN_FOCUS(oid_ay);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid_ay)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid_ay), 0);
       gtk_scale_set_value_pos(GTK_SCALE(oid_ay), GTK_POS_LEFT);
@@ -1325,7 +1325,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
 
       oid_az_adj = gtk_adjustment_new(spectro_z_angle(ss), 0.0, 361.0, 1.0, 10.0, 1.0);
       oid_az = gtk_hscale_new(GTK_ADJUSTMENT(oid_az_adj));
-      GTK_WIDGET_UNSET_FLAGS(oid_az, GTK_CAN_FOCUS);
+      UNSET_CAN_FOCUS(oid_az);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid_az)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid_az), 0);
       gtk_scale_set_value_pos(GTK_SCALE(oid_az), GTK_POS_LEFT);
@@ -1352,7 +1352,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
 
       oid_sx_adj = gtk_adjustment_new(spectro_x_scale(ss), 0.0, 2.01, .01, .1, .01);
       oid_sx = gtk_hscale_new(GTK_ADJUSTMENT(oid_sx_adj));
-      GTK_WIDGET_UNSET_FLAGS(oid_sx, GTK_CAN_FOCUS);
+      UNSET_CAN_FOCUS(oid_sx);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid_sx)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid_sx), 2);
       gtk_scale_set_value_pos(GTK_SCALE(oid_sx), GTK_POS_LEFT);
@@ -1373,7 +1373,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
 
       oid_sy_adj = gtk_adjustment_new(spectro_y_scale(ss), 0.0, 2.01, .01, .1, .01);
       oid_sy = gtk_hscale_new(GTK_ADJUSTMENT(oid_sy_adj));
-      GTK_WIDGET_UNSET_FLAGS(oid_sy, GTK_CAN_FOCUS);
+      UNSET_CAN_FOCUS(oid_sy);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid_sy)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid_sy), 2);
       gtk_scale_set_value_pos(GTK_SCALE(oid_sy), GTK_POS_LEFT);
@@ -1395,7 +1395,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
 
       oid_sz_adj = gtk_adjustment_new(spectro_z_scale(ss), 0.0, 2.01, .01, .1, .01);
       oid_sz = gtk_hscale_new(GTK_ADJUSTMENT(oid_sz_adj));
-      GTK_WIDGET_UNSET_FLAGS(oid_sz, GTK_CAN_FOCUS);
+      UNSET_CAN_FOCUS(oid_sz);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid_sz)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid_sz), 2);
       gtk_scale_set_value_pos(GTK_SCALE(oid_sz), GTK_POS_LEFT);
@@ -1422,7 +1422,7 @@ GtkWidget *start_color_orientation_dialog(bool managed)
 
       oid_hop_adj = gtk_adjustment_new((spectro_hop(ss) > 20) ? 20 : (spectro_hop(ss)), 0.0, 21.0, 0.1, 1.0, 1.0);
       oid_hop = gtk_hscale_new(GTK_ADJUSTMENT(oid_hop_adj));
-      GTK_WIDGET_UNSET_FLAGS(oid_hop, GTK_CAN_FOCUS);
+      UNSET_CAN_FOCUS(oid_hop);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(oid_hop)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(oid_hop), 0);
       gtk_scale_set_value_pos(GTK_SCALE(oid_hop), GTK_POS_LEFT);

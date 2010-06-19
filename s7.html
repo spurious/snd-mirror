@@ -1996,8 +1996,8 @@ By wrapping the arguments in 'values', you can force all of them to be evaluated
 <p>But this printout is just trying to be informative.  There is no "multiple-values object"
 in s7.  You can't <code>(set! x (values 1 2))</code>, for example.  The "values" function
 tells s7 that its arguments should be handled in a special way, and the multiple-value indication goes away
-as soon as they are spliced into its caller.  This affects 'or' and 'and'.  The values are considered
-a part of the argument list of the operator, not some object returned to the caller of the operator:
+as soon as the arguments are spliced into some caller's arguments.  This affects 'or' and 'and'.  The values are considered
+a part of the argument list of the operator:
 </p>
 
 <pre>

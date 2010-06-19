@@ -60970,16 +60970,6 @@ EDITS: 1
 	  (if (not (GTK_IS_WIDGET (cadr (main-widgets)))) (snd-display #__line__ ";GTK_IS_WIDGET?"))
 	  ;; all gtk proc names are in gtk-procs.scm
 	  (if (not (GTK_IS_ENTRY (list-ref (sound-widgets) 3))) (snd-display #__line__ ";GTK_IS_ENTRY?"))
-	  
-	  (let* ((win (car (main-widgets)))
-		 (vals (gdk_property_get win (gdk_atom_intern "SND_VERSION" #f) GDK_TARGET_STRING 0 1024 0))
-		 (str (list-ref vals 4)))
-	    (if (or (not str) 
-		    (not (string=? (snd-version) str)))
-		(snd-display #__line__ ";SND_VERSION: ~A ~A" str (snd-version))))
-	  (if (not (string=? "STRING" (gdk_atom_name GDK_TARGET_STRING)))
-	      (snd-display #__line__ ";gdk_atom_name: ~A" (gdk_atom_name GDK_TARGET_STRING)))
-	  
 	  (close-sound ind)
 	  
 	  (for-each
@@ -61410,12 +61400,13 @@ EDITS: 1
 	  
 	  (let* ((_GtkCalendar_ (GTK_CALENDAR (gtk_calendar_new)))
 		 (_GtkCalendarDisplayOptions (gtk_calendar_get_display_options _GtkCalendar_))
-		 (_gboolean (gtk_calendar_mark_day _GtkCalendar_ 2))
-		 (_gboolean1 (gtk_calendar_unmark_day _GtkCalendar_ 3))
-		 (_gboolean2 (gtk_calendar_select_month _GtkCalendar_ 7 1951)))
-	    (if (not _gboolean) (snd-display #__line__ ";calendar mark day"))
-	    (if (not _gboolean1) (snd-display #__line__ ";calendar unmark day"))
-	    (if (not _gboolean2) (snd-display #__line__ ";calendar select month"))
+;		 (_gboolean (gtk_calendar_mark_day _GtkCalendar_ 2))
+;		 (_gboolean1 (gtk_calendar_unmark_day _GtkCalendar_ 3))
+;		 (_gboolean2 (gtk_calendar_select_month _GtkCalendar_ 7 1951))
+		 )
+;	    (if (not _gboolean) (snd-display #__line__ ";calendar mark day"))
+;	    (if (not _gboolean1) (snd-display #__line__ ";calendar unmark day"))
+;	    (if (not _gboolean2) (snd-display #__line__ ";calendar select month"))
 	    (gtk_calendar_clear_marks _GtkCalendar_)
 	    (gtk_calendar_select_day _GtkCalendar_ 14)
 	    (gtk_calendar_set_display_options _GtkCalendar_ _GtkCalendarDisplayOptions)
@@ -62807,17 +62798,6 @@ EDITS: 1
 	    (gtk_box_reorder_child _GtkBox_ _GtkWidget_ 2)
 	    (gtk_box_set_child_packing _GtkBox_ _GtkWidget_ #t #t 10 0))
 	  
-	  (let* ((_GtkRadioButton_ (GTK_RADIO_BUTTON (gtk_radio_button_new #f)))
-		 (_gchar_ "hiho")
-		 (_GSList_ #f)
-		 (_GtkWidget_ (gtk_radio_button_new_from_widget _GtkRadioButton_))
-		 (_GtkWidget_1 (gtk_radio_button_new_with_label _GSList_ _gchar_))
-		 (_GtkWidget_2 (gtk_radio_button_new_with_mnemonic _GSList_ _gchar_))
-		 (_GSList_ (gtk_radio_button_get_group _GtkRadioButton_))
-		 (_int (GTK_OBJECT_FLAGS (GTK_OBJECT _GtkRadioButton_))))
-	    (GTK_OBJECT_SET_FLAGS (GTK_OBJECT _GtkWidget_) 0)
-	    (GTK_OBJECT_UNSET_FLAGS (GTK_OBJECT _GtkWidget_) 0))
-	  
 	  (if (not (provided? 'cairo))
 	      (let* ((_GdkScreen_ (gdk_screen_get_default))
 		     (_GdkWindow_ (gdk_screen_get_root_window _GdkScreen_))
@@ -63557,8 +63537,8 @@ EDITS: 1
 		   GTK_IS_VPANED GTK_IS_VRULER GTK_IS_VSCALE GTK_IS_VSCROLLBAR GTK_IS_VSEPARATOR
 		   GTK_IS_WIDGET GTK_IS_WINDOW GTK_ITEM GTK_LABEL GTK_LAYOUT
 		   GTK_LIST_STORE GTK_MENU GTK_MENU_BAR GTK_MENU_ITEM GTK_MENU_SHELL
-		   GTK_MENU_TOOL_BUTTON GTK_MISC GTK_NOTEBOOK GTK_OBJECT
-		   GTK_OBJECT_FLAGS GTK_OBJECT_SET_FLAGS GTK_OBJECT_UNSET_FLAGS
+		   GTK_MENU_TOOL_BUTTON GTK_MISC GTK_NOTEBOOK ;GTK_OBJECT
+		   ;GTK_OBJECT_FLAGS GTK_OBJECT_SET_FLAGS GTK_OBJECT_UNSET_FLAGS
 		   GTK_PANED GTK_PLUG GTK_PROGRESS_BAR GTK_RADIO_ACTION GTK_RADIO_BUTTON
 		   GTK_RADIO_MENU_ITEM GTK_RADIO_TOOL_BUTTON GTK_RANGE GTK_RULER GTK_SCALE
 		   GTK_SCROLLBAR GTK_SCROLLED_WINDOW GTK_SEPARATOR GTK_SEPARATOR_MENU_ITEM GTK_SEPARATOR_TOOL_ITEM
@@ -63717,8 +63697,9 @@ EDITS: 1
 		   gtk_button_new gtk_button_new_from_stock gtk_button_new_with_mnemonic
 		   gtk_button_set_alignment gtk_button_set_focus_on_click gtk_button_set_image gtk_button_set_label gtk_button_set_relief
 		   gtk_button_set_use_stock gtk_button_set_use_underline gtk_calendar_clear_marks gtk_calendar_get_date
-		   gtk_calendar_get_display_options gtk_calendar_mark_day gtk_calendar_new gtk_calendar_select_day
-		   gtk_calendar_select_month gtk_calendar_set_display_options gtk_calendar_unmark_day gtk_cell_editable_editing_done
+		   gtk_calendar_get_display_options
+;		   gtk_calendar_mark_day gtk_calendar_new gtk_calendar_select_day gtk_calendar_select_month gtk_calendar_set_display_options gtk_calendar_unmark_day 
+		   gtk_cell_editable_editing_done
 		   gtk_cell_editable_remove_widget gtk_cell_editable_start_editing gtk_cell_layout_add_attribute gtk_cell_layout_clear
 		   gtk_cell_layout_clear_attributes gtk_cell_layout_pack_end gtk_cell_layout_pack_start gtk_cell_layout_reorder
 		   gtk_cell_layout_set_attributes gtk_cell_layout_set_cell_data_func 
@@ -63910,7 +63891,7 @@ EDITS: 1
 		   gtk_notebook_page_num gtk_notebook_popup_disable gtk_notebook_popup_enable gtk_notebook_prepend_page gtk_notebook_prepend_page_menu
 		   gtk_notebook_prev_page gtk_notebook_remove_page gtk_notebook_reorder_child gtk_notebook_set_current_page
 		   gtk_notebook_set_menu_label gtk_notebook_set_menu_label_text gtk_notebook_set_scrollable gtk_notebook_set_show_border gtk_notebook_set_show_tabs
-		   gtk_notebook_set_tab_label gtk_notebook_set_tab_label_text gtk_notebook_set_tab_pos gtk_object_destroy
+		   gtk_notebook_set_tab_label gtk_notebook_set_tab_label_text gtk_notebook_set_tab_pos ;gtk_object_destroy
 		   gtk_paint_arrow gtk_paint_box gtk_paint_box_gap
 		   gtk_paint_check gtk_paint_diamond gtk_paint_expander gtk_paint_extension gtk_paint_flat_box
 		   gtk_paint_focus gtk_paint_handle gtk_paint_hline gtk_paint_layout gtk_paint_option

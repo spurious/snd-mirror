@@ -849,7 +849,7 @@ GtkWidget *snd_gtk_entry_label_new(const char *label, color_info *color)
   gtk_entry_set_has_frame(GTK_ENTRY(rlw), false);
   if (label) gtk_entry_set_text(GTK_ENTRY(rlw), label);
   gtk_editable_set_editable(GTK_EDITABLE(rlw), false);
-  GTK_WIDGET_UNSET_FLAGS(GTK_WIDGET(rlw), GTK_CAN_FOCUS); /* turn off the $%#@$! blinking cursor */
+  UNSET_CAN_FOCUS(GTK_WIDGET(rlw)); /* turn off the $%#@$! blinking cursor */
   widget_modify_base(rlw, GTK_STATE_NORMAL, color);
   widget_modify_base(rlw, GTK_STATE_ACTIVE, color);
   return(rlw);

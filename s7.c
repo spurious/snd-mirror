@@ -306,7 +306,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_ENV2,
-	      OP_FOR_EACH, OP_MAP, OP_AND2, OP_OR2,
+	      OP_FOR_EACH, OP_MAP, OP_AND2, OP_OR2, OP_BARRIER,
 	      OP_MAX_DEFINED} opcode_t;
 
 #if 1
@@ -322,12 +322,13 @@ static char *op_names[OP_MAX_DEFINED] =
    "op_dynamic_wind", "op_define_constant", "op_define_constant1", "op_do", "op_do_end", "op_do_end1", 
    "op_do_step", "op_do_step1", "op_do_step2", "op_do_init", "op_define_star", "op_lambda_star", 
    "op_error_quit", "op_unwind_input", "op_unwind_output", "op_trace_return", "op_error_hook_quit", 
-   "op_trace_hook_quit", "op_with_env", "op_with_env1", "op_with_env2", "op_for_each", "op_map", "op_and2", "op_or2"};
+   "op_trace_hook_quit", "op_with_env", "op_with_env1", "op_with_env2", "op_for_each", "op_map", 
+   "op_and2", "op_or2", "op_barrier"};
 #endif
 
 
 #define NUM_SMALL_INTS 200
-/* this needs to be at least OP_MAX_DEFINED = 77 */
+/* this needs to be at least OP_MAX_DEFINED = 80 */
 /* going up to 1024 gives very little improvement, down to 128 costs about .2% run time */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -2784,7 +2785,7 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
 }
 
 
-static void check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
+static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 {
   int i, s_base = 0, c_base = -1;
   
@@ -2792,6 +2793,7 @@ static void check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
     {
       s7_pointer x;
       opcode_t op;
+
       op = (opcode_t)stack_op(sc->stack, i);
       if (op == OP_DYNAMIC_WIND)
 	{
@@ -2819,6 +2821,9 @@ static void check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 	}
       else
 	{
+	  if (op == OP_BARRIER)
+	    return(false);
+
 	  if (op == OP_TRACE_RETURN)
 	    {
 	      sc->trace_depth--;
@@ -2838,12 +2843,15 @@ static void check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 	eval(sc, OP_APPLY);
 	dynamic_wind_set_state(x, T_DWIND_BODY);
       }
+  return(true);
 }
 
 
 static void call_with_current_continuation(s7_scheme *sc)
 {
-  check_for_dynamic_winds(sc, sc->code);
+  if (!check_for_dynamic_winds(sc, sc->code))
+    return;
+
   sc->stack = copy_stack(sc, continuation_stack(sc->code), continuation_stack_top(sc->code));
   sc->stack_size = continuation_stack_size(sc->code);
   sc->stack_start = vector_elements(sc->stack);
@@ -2870,6 +2878,7 @@ static void call_with_exit(s7_scheme *sc)
   for (i = s7_stack_top(sc) - 1; i > new_stack_top; i -= 4)
     {
       opcode_t op;
+
       op = (opcode_t)stack_op(sc->stack, i);
       if (op == OP_DYNAMIC_WIND)
 	{
@@ -2884,6 +2893,9 @@ static void call_with_exit(s7_scheme *sc)
 	}
       else
 	{
+	  if (op == OP_BARRIER)           /* oops -- we almost certainly went too far */
+	    return;                       /* (call-with-exit (lambda (return) (eval-string "(return 3)")))) */
+
 	  if (op == OP_TRACE_RETURN)
 	    {
 	      sc->trace_depth--;
@@ -9889,6 +9901,7 @@ static s7_pointer eval_string_1(s7_scheme *sc, const char *str)
   port = s7_open_input_string(sc, str);
   push_input_port(sc, port);
 
+  push_stack(sc, opcode(OP_BARRIER), sc->NIL, sc->NIL);
   push_stack(sc, opcode(OP_EVAL_STRING), sc->args, sc->code);
   eval(sc, OP_READ_INTERNAL);
 
@@ -16533,8 +16546,8 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
     {
       opcode_t op;
       s7_pointer x;
+
       op = (opcode_t)stack_op(sc->stack, i);
-      
       switch (op)
 	{
 	case OP_DYNAMIC_WIND:
@@ -16570,6 +16583,9 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	case OP_UNWIND_INPUT:
 	  s7_close_input_port(sc, stack_code(sc->stack, i)); /* "code" = port that we opened */
 	  sc->input_port = stack_args(sc->stack, i);         /* "args" = port that we shadowed */
+	  break;
+
+	case OP_BARRIER:
 	  break;
 
 	case OP_TRACE_RETURN:
@@ -17123,6 +17139,7 @@ pass (global-environment):\n\
       sc->envir = cadr(args);
     }
   sc->code = car(args);
+  push_stack(sc, opcode(OP_BARRIER), sc->NIL, sc->NIL);
   push_stack(sc, opcode(OP_EVAL), sc->args, sc->code);
   return(sc->NIL);
 }
@@ -17483,6 +17500,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
       int top;
       s7_pointer x;
       top = s7_stack_top(sc) - 1;
+
       switch ((opcode_t)stack_op(sc->stack, top))
 	{
 	  /* the normal case -- splice values into caller's args */
@@ -17514,6 +17532,10 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	    if (car(x) != sc->F)
 	      return(car(x));
 	  return(car(x));
+
+	case OP_BARRIER:                                         /* (+ 1 (eval-string "(values 2 3)")) */
+	  pop_stack(sc);
+	  return(splice_in_values(sc, args));
 
 	default:
 	  break;
@@ -20380,6 +20402,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       break;
       
 
+    case OP_BARRIER:
     case OP_CATCH:
       pop_stack(sc);
       goto START;
@@ -26166,7 +26189,6 @@ s7_scheme *s7_init(void)
 }
 
 /* TODO: macroexpand and fully-expand are buggy
- * SOMEDAY: eval-string (or eval?) with jump outside the eval (call/cc external) -> segfault or odd error
  *
  *  envs as debugging aids: how to show file/line tags as well
  *  and perhaps store cur-code?  __form__ ? make a cartoon of entire state? [need only the pointer, not a copy]
@@ -26174,6 +26196,30 @@ s7_scheme *s7_init(void)
  *
  * and a way to jump into the error environment, cerror 
  *   an error handling dialog (gui) in snd?
+ *
+ * error handling is still not very clean, and perhaps we need "throw" to insure error handling doesn't get involved.
+ *   should throw args be like call/cc? (throw tag result) or perhaps (throw tag . body)
+ *   if no tag found, error -- but in CL we'd start all over at the point of the throw to
+ *   see if that error was caught!  throw -> check stack for tag, if not found, error
+ *   else unwind, catch returns result (can be mv).  I assume the catch error handler is
+ *   not invoked -- catch simply returns result? (CL has no error handler -- it's just (catch tag . body))
+ *   In Guile the error handler is invoked!
+ * (catch 'hi (lambda () (display "1") (throw 'hi 2) (display "2")) (lambda args (display "3")))
+ * perhaps the error-handler in catch could be optional, and the thunk optionally a body (as in the run macro)
+ * Gauche uses "raise" but its continuation handling seems backwards.
+ * currently throw is defined in xen.c (define (throw . args) (apply error args))
+ * so throw . args unwinds stack like error but without any error sidelights, passes args to "error handler" 
+ *   -- call it the "throw handler" -- it can return the results if it wants [apply values args?]
+ *
+ * (error type ...) where type can be a string, or the arg after type can be a string
+ *   if string, format is applied to it and rest args -> value of the error
+ *   if type is a symbol, we look for its catch and unwind to that point calling the catch error handler
+ * (throw type ...) [do we eval ... first?] looks for type catch, if found, [or eval now?] unwinds and catch simply returns throw result
+ *   else error.
+ * call-with-exit sort of replaces throw
+ *
+ * (define (continuation func . vals) (call/cc (lambda (r1) (set! func r1) (apply r1 vals))))
+ * for catch/throw at user-level, need a way to place a tag and then unwind to it later (similar to OP_BARRIER)
  *
  * TODO: loading s7test simultaneously in several threads hangs after awhile in join_thread (call/cc?) 
  *         why are list-ref tests getting 'wrong-type-arg?
@@ -26211,5 +26257,17 @@ s7_scheme *s7_init(void)
  * A "class" in this case is define-record (for the local fields and type) + a list of methods and a methods accessor.
  * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
  * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
+
+ * TODO if vector is too large to print, dims are lost:
+
+ :(make-vector '(2 2 2 2 2 2 2 2 2 2) 1)
+ #(1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 ...)
+
+  and it seems to ignore *vector-print-length* in Snd
+  (set! (print-length) 1024)
+  then segfault...
+  in listener append -- looks like Motif got upset (12 D but not 10 D)
+  this is almost certainly a motif bug (memory corruption in RefigureLines Text.c 1050) /home/bil/test/openMotif-2.2.3/lib/Xm/Text.c
+  run it in valgrind...
  */
 

@@ -4411,6 +4411,13 @@
 (test (#4d((((1) (2)) ((3) (4)) ((5) (6)))) 0 0 0 0) 1)
 (test (vector? #2d((1 2) (3 4))) #t)
 (test ((#2d((1 #2d((2 3) (4 5))) (6 7)) 0 1) 1 0) 4)
+(test ((((((((((#10D((((((((((1) (1))) (((1) (1))))) (((((1) (1))) (((1) (1))))))) (((((((1) (1))) (((1) (1))))) (((((1) (1))) (((1) (1))))))))) (((((((((1) (1))) (((1) (1))))) (((((1) (1))) (((1) (1))))))) (((((((1) (1))) (((1) (1))))) (((((1) (1))) (((1) (1)))))))))) 0) 0) 0) 0) 0) 0) 0) 0) 0) 0) 1)
+(test (#10D((((((((((1) (1))) (((1) (1))))) (((((1) (1))) (((1) (1))))))) (((((((1) (1))) (((1) (1))))) (((((1) (1))) (((1) (1))))))))) (((((((((1) (1))) (((1) (1))))) (((((1) (1))) (((1) (1))))))) (((((((1) (1))) (((1) (1))))) (((((1) (1))) (((1) (1)))))))))) 0 0 0 0 0 0 0 0 0 0) 1)
+(let ((v (make-vector (make-list 100 1) 0)))
+  (test (equal? v #100D((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((0))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))) #t)
+  (test (apply v (make-list 100 0)) 0)
+  (test (v 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0) 0))
+
 
 ;; these are read-time errors 
 					;(test #3D(((1 2) (3 4)) ((5 6) (7))) 'error)
@@ -8620,7 +8627,17 @@
 (test ((lambda "x" x)) 'error)
 (test ((lambda (x . "hi") x)) 'error)
 (test (let ((hi (lambda (a 0.0) (b 0.0) (+ a b)))) (hi)) 'error)
-
+(test (object->string
+       ((lambda (arg)
+	  (list arg
+		(list (quote quote)
+		      arg)))
+	(quote (lambda (arg)
+		 (list arg
+		       (list (quote quote)
+			     arg))))))
+      "(#1=(lambda (arg) (list arg (list (quote quote) arg))) (quote #1#))")
+      
 
 
 
@@ -8899,11 +8916,14 @@
 (test (let* ((var (values 1 2 3))) var) 'error)
 (test (letrec ((var (values 1 2 3))) var) 'error)
 (test (let ((x ((lambda () (values 1 2))))) x) 'error)
+(test (+ 1 ((lambda () ((lambda () (values 2 3)))))) 6)
 
 (test (let ((str "hi")) (string-set! (values str 0 #\x)) str) "xi")
 
 (test ((values '(1 (2 3)) 1 1)) 'error) ; ??
 (test (let ((x #(32 33))) ((values x 0))) 'error) ; ??
+(test (+ 1 (apply values '(2 3 4))) 10)
+(test (+ 1 ((lambda args (apply values args)) 2 3 4)) 10)
 
 (test (or (values #t #f) #f) #t)
 (test (or (values #f #f) #f) #f)
@@ -8916,12 +8936,10 @@
 (test (and (values 1 2 3)) 3)
 (test (and (values 1 #f 3)) #f)
 (test (+ 1 (and 2 (values 3 4)) 5) 10)
-
 (test (and #t (values 1 2)) 2)
 (test (and #t (values #f 3)) #f)
 (test (or #f (values 1 2)) 1)
 (test (or #f (values #f 2)) 2)
-
 (test (and (values) 1) 1)
 
 (test (let ((x 1)) 
@@ -9877,6 +9895,8 @@
 (test (call/cc (lambda (return) (let ((hi return)) (hi 2) 3))) 2)
 (test (let () (define (hi) (call/cc func)) (define (func a) (a 1)) (hi)) 1)
 (test (((call/cc (call/cc call/cc)) call/cc) (lambda (a) 1)) 1)
+(test (+ 1 (eval-string "(+ 2 (call-with-exit (lambda (return) (return 3))) 4)") 5) 15)
+(test (+ 1 (eval '(+ 2 (call-with-exit (lambda (return) (return 3))) 4)) 5) 15)
 
 (test (let ((listindex (lambda (e l)
 			 (call/cc (lambda (not_found)
@@ -10879,6 +10899,32 @@ who says the continuation has to restart the map from the top?
 	      (reverse cur)))
       '((0 1 10 11 20 21 30 31 40 41) (0 1 10 11 20 21 30 31 40 41 43 33 23 13 3)))
 
+#|
+;; these test jump out of current context (OP_BARRIER)
+;; but they end up exiting the load as well 
+(test (let ()
+	(catch #t
+	       (lambda ()
+		 (eval-string "(error 'hi \"hi\")"))
+	       (lambda args
+		 'error)))
+      'error)
+(test (let ()
+	(call-with-exit
+	 (lambda (return)
+	   (eval-string "(return 3)"))))
+      3)
+(test (let ()
+	(call/cc
+	 (lambda (return)
+	   (eval-string "(return 3)"))))
+      3)
+(test (let ()
+	(call-with-exit
+	 (lambda (return)
+	   (eval-string "(abs (+ 1 (if #t (return 3))))"))))
+      4)
+|#
 
 
 

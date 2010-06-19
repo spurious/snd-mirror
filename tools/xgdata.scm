@@ -1351,10 +1351,11 @@
 (CINT "GTK_CALENDAR_WEEK_START_MONDAY" "GtkCalendarDisplayOptions")
 ;;;;(CFNC "GType gtk_calendar_get_type void")
 (CFNC "GtkWidget* gtk_calendar_new void")
-(CFNC "gboolean gtk_calendar_select_month GtkCalendar* calendar guint month guint year")
+;(CFNC "gboolean gtk_calendar_select_month GtkCalendar* calendar guint month guint year")
 (CFNC "void gtk_calendar_select_day GtkCalendar* calendar guint day")
-(CFNC "gboolean gtk_calendar_mark_day GtkCalendar* calendar guint day")
-(CFNC "gboolean gtk_calendar_unmark_day GtkCalendar* calendar guint day")
+;(CFNC "gboolean gtk_calendar_mark_day GtkCalendar* calendar guint day")
+;(CFNC "gboolean gtk_calendar_unmark_day GtkCalendar* calendar guint day")
+;;; these now are void funcs (2.90.3)
 (CFNC "void gtk_calendar_clear_marks GtkCalendar* calendar")
 ;;; out 2.3 (CFNC "void gtk_calendar_display_options GtkCalendar* calendar GtkCalendarDisplayOptions flags")
 (CFNC "void gtk_calendar_get_date GtkCalendar* calendar guint* [year] guint* [month] guint* [day]")
@@ -2244,14 +2245,14 @@
 (CCHK "GTK_IS_OBJECT(object)" "GtkObject*")
 ;(CCAST2 "GTK_OBJECT_TYPE(object)")
 ;;; 2.19.3 (CFNC "char* GTK_OBJECT_TYPE_NAME GtkObject* object")
-(CINT "GTK_IN_DESTRUCTION")
+;;;(CINT "GTK_IN_DESTRUCTION") ; out 2.90.3
 ;(CINT "GTK_FLOATING") ; out 2.9.0
 ;(CINT "GTK_RESERVED_1")
 ;(CINT "GTK_RESERVED_2")
-(CFNC "int GTK_OBJECT_FLAGS GtkObject* obj")
+;;;(CFNC "int GTK_OBJECT_FLAGS GtkObject* obj") ; 2.90.3
 ;(CFNC "gboolean GTK_OBJECT_FLOATING GtkObject* obj") ; out 2.9.0
-(CFNC "void GTK_OBJECT_SET_FLAGS GtkObject* obj int flag")
-(CFNC "void GTK_OBJECT_UNSET_FLAGS GtkObject* obj int flag")
+;;;(CFNC "void GTK_OBJECT_SET_FLAGS GtkObject* obj int flag")
+;;;(CFNC "void GTK_OBJECT_UNSET_FLAGS GtkObject* obj int flag")
 ;;;;(CFNC "GType gtk_object_get_type void")
 ;;; out 2.3 (CFNC "GtkObject* gtk_object_new GType type gchar* first_property_name etc")
 ;;; out 2.9.0 (CFNC "void gtk_object_sink GtkObject* object")
@@ -3355,6 +3356,9 @@
 (CCHK "GTK_IS_VSEPARATOR(obj)" "GtkVSeparator*")
 ;;;;(CFNC "GType gtk_vseparator_get_type void")
 (CFNC "GtkWidget* gtk_vseparator_new void")
+
+
+;;; all out 2.90.3 ?
 (CINT "GTK_TOPLEVEL" "GtkWidgetFlags")
 (CINT "GTK_NO_WINDOW" "GtkWidgetFlags")
 (CINT "GTK_REALIZED" "GtkWidgetFlags")
@@ -3374,6 +3378,8 @@
 (CINT "GTK_APP_PAINTABLE" "GtkWidgetFlags")
 (CINT "GTK_RECEIVES_DEFAULT" "GtkWidgetFlags")
 (CINT "GTK_DOUBLE_BUFFERED" "GtkWidgetFlags")
+
+
 (CINT "GTK_WIDGET_HELP_TOOLTIP" "GtkWidgetHelpType")
 (CINT "GTK_WIDGET_HELP_WHATS_THIS" "GtkWidgetHelpType")
 (CCAST "GTK_WIDGET(widget)" "GtkWidget*")
@@ -7166,4 +7172,12 @@
 (CFNC-2902 "gint gtk_icon_view_get_item_column GtkIconView* icon_view GtkTreePath* path")
 (CFNC-2902 "void gtk_statusbar_remove_all GtkStatusbar* statusbar guint	context_id")
 (CFNC-2902 "gboolean gtk_window_has_group GtkWindow* window")
+
+;;; 2.90.3
+(CFNC-2902 "void gtk_calendar_select_month GtkCalendar* calendar guint month guint year")
+(CFNC-2902 "void gtk_calendar_mark_day GtkCalendar* calendar guint day")
+(CFNC-2902 "void gtk_calendar_unmark_day GtkCalendar* calendar guint day")
+(CFNC-2902 "GdkWindow* gdk_drag_context_get_source_window GdkDragContext* context")
+(CFNC-2902 "GdkWindow* gtk_viewport_get_view_window GtkViewport* viewport")
+
 |#

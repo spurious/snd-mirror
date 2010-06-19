@@ -6049,16 +6049,6 @@ static XEN gxg_gtk_calendar_new(void)
   return(C_TO_XEN_GtkWidget_(gtk_calendar_new()));
 }
 
-static XEN gxg_gtk_calendar_select_month(XEN calendar, XEN month, XEN year)
-{
-  #define H_gtk_calendar_select_month "gboolean gtk_calendar_select_month(GtkCalendar* calendar, guint month, \
-guint year)"
-  XEN_ASSERT_TYPE(XEN_GtkCalendar__P(calendar), calendar, 1, "gtk_calendar_select_month", "GtkCalendar*");
-  XEN_ASSERT_TYPE(XEN_guint_P(month), month, 2, "gtk_calendar_select_month", "guint");
-  XEN_ASSERT_TYPE(XEN_guint_P(year), year, 3, "gtk_calendar_select_month", "guint");
-  return(C_TO_XEN_gboolean(gtk_calendar_select_month(XEN_TO_C_GtkCalendar_(calendar), XEN_TO_C_guint(month), XEN_TO_C_guint(year))));
-}
-
 static XEN gxg_gtk_calendar_select_day(XEN calendar, XEN day)
 {
   #define H_gtk_calendar_select_day "void gtk_calendar_select_day(GtkCalendar* calendar, guint day)"
@@ -6066,22 +6056,6 @@ static XEN gxg_gtk_calendar_select_day(XEN calendar, XEN day)
   XEN_ASSERT_TYPE(XEN_guint_P(day), day, 2, "gtk_calendar_select_day", "guint");
   gtk_calendar_select_day(XEN_TO_C_GtkCalendar_(calendar), XEN_TO_C_guint(day));
   return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_calendar_mark_day(XEN calendar, XEN day)
-{
-  #define H_gtk_calendar_mark_day "gboolean gtk_calendar_mark_day(GtkCalendar* calendar, guint day)"
-  XEN_ASSERT_TYPE(XEN_GtkCalendar__P(calendar), calendar, 1, "gtk_calendar_mark_day", "GtkCalendar*");
-  XEN_ASSERT_TYPE(XEN_guint_P(day), day, 2, "gtk_calendar_mark_day", "guint");
-  return(C_TO_XEN_gboolean(gtk_calendar_mark_day(XEN_TO_C_GtkCalendar_(calendar), XEN_TO_C_guint(day))));
-}
-
-static XEN gxg_gtk_calendar_unmark_day(XEN calendar, XEN day)
-{
-  #define H_gtk_calendar_unmark_day "gboolean gtk_calendar_unmark_day(GtkCalendar* calendar, guint day)"
-  XEN_ASSERT_TYPE(XEN_GtkCalendar__P(calendar), calendar, 1, "gtk_calendar_unmark_day", "GtkCalendar*");
-  XEN_ASSERT_TYPE(XEN_guint_P(day), day, 2, "gtk_calendar_unmark_day", "guint");
-  return(C_TO_XEN_gboolean(gtk_calendar_unmark_day(XEN_TO_C_GtkCalendar_(calendar), XEN_TO_C_guint(day))));
 }
 
 static XEN gxg_gtk_calendar_clear_marks(XEN calendar)
@@ -9791,31 +9765,6 @@ gint position)"
   XEN_ASSERT_TYPE(XEN_GtkWidget__P(child), child, 2, "gtk_notebook_reorder_child", "GtkWidget*");
   XEN_ASSERT_TYPE(XEN_gint_P(position), position, 3, "gtk_notebook_reorder_child", "gint");
   gtk_notebook_reorder_child(XEN_TO_C_GtkNotebook_(notebook), XEN_TO_C_GtkWidget_(child), XEN_TO_C_gint(position));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_GTK_OBJECT_FLAGS(XEN obj)
-{
-  #define H_GTK_OBJECT_FLAGS "int GTK_OBJECT_FLAGS(GtkObject* obj)"
-  XEN_ASSERT_TYPE(XEN_GtkObject__P(obj), obj, 1, "GTK_OBJECT_FLAGS", "GtkObject*");
-  return(C_TO_XEN_int(GTK_OBJECT_FLAGS(XEN_TO_C_GtkObject_(obj))));
-}
-
-static XEN gxg_GTK_OBJECT_SET_FLAGS(XEN obj, XEN flag)
-{
-  #define H_GTK_OBJECT_SET_FLAGS "void GTK_OBJECT_SET_FLAGS(GtkObject* obj, int flag)"
-  XEN_ASSERT_TYPE(XEN_GtkObject__P(obj), obj, 1, "GTK_OBJECT_SET_FLAGS", "GtkObject*");
-  XEN_ASSERT_TYPE(XEN_int_P(flag), flag, 2, "GTK_OBJECT_SET_FLAGS", "int");
-  GTK_OBJECT_SET_FLAGS(XEN_TO_C_GtkObject_(obj), XEN_TO_C_int(flag));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_GTK_OBJECT_UNSET_FLAGS(XEN obj, XEN flag)
-{
-  #define H_GTK_OBJECT_UNSET_FLAGS "void GTK_OBJECT_UNSET_FLAGS(GtkObject* obj, int flag)"
-  XEN_ASSERT_TYPE(XEN_GtkObject__P(obj), obj, 1, "GTK_OBJECT_UNSET_FLAGS", "GtkObject*");
-  XEN_ASSERT_TYPE(XEN_int_P(flag), flag, 2, "GTK_OBJECT_UNSET_FLAGS", "int");
-  GTK_OBJECT_UNSET_FLAGS(XEN_TO_C_GtkObject_(obj), XEN_TO_C_int(flag));
   return(XEN_FALSE);
 }
 
@@ -36235,10 +36184,7 @@ XEN_NARGIFY_1(gxg_gtk_button_get_use_underline_w, gxg_gtk_button_get_use_underli
 XEN_NARGIFY_2(gxg_gtk_button_set_use_stock_w, gxg_gtk_button_set_use_stock)
 XEN_NARGIFY_1(gxg_gtk_button_get_use_stock_w, gxg_gtk_button_get_use_stock)
 XEN_NARGIFY_0(gxg_gtk_calendar_new_w, gxg_gtk_calendar_new)
-XEN_NARGIFY_3(gxg_gtk_calendar_select_month_w, gxg_gtk_calendar_select_month)
 XEN_NARGIFY_2(gxg_gtk_calendar_select_day_w, gxg_gtk_calendar_select_day)
-XEN_NARGIFY_2(gxg_gtk_calendar_mark_day_w, gxg_gtk_calendar_mark_day)
-XEN_NARGIFY_2(gxg_gtk_calendar_unmark_day_w, gxg_gtk_calendar_unmark_day)
 XEN_NARGIFY_1(gxg_gtk_calendar_clear_marks_w, gxg_gtk_calendar_clear_marks)
 XEN_ARGIFY_4(gxg_gtk_calendar_get_date_w, gxg_gtk_calendar_get_date)
 XEN_NARGIFY_2(gxg_gtk_cell_editable_start_editing_w, gxg_gtk_cell_editable_start_editing)
@@ -36642,9 +36588,6 @@ XEN_NARGIFY_3(gxg_gtk_notebook_set_menu_label_w, gxg_gtk_notebook_set_menu_label
 XEN_NARGIFY_3(gxg_gtk_notebook_set_menu_label_text_w, gxg_gtk_notebook_set_menu_label_text)
 XEN_NARGIFY_2(gxg_gtk_notebook_get_menu_label_text_w, gxg_gtk_notebook_get_menu_label_text)
 XEN_NARGIFY_3(gxg_gtk_notebook_reorder_child_w, gxg_gtk_notebook_reorder_child)
-XEN_NARGIFY_1(gxg_GTK_OBJECT_FLAGS_w, gxg_GTK_OBJECT_FLAGS)
-XEN_NARGIFY_2(gxg_GTK_OBJECT_SET_FLAGS_w, gxg_GTK_OBJECT_SET_FLAGS)
-XEN_NARGIFY_2(gxg_GTK_OBJECT_UNSET_FLAGS_w, gxg_GTK_OBJECT_UNSET_FLAGS)
 XEN_NARGIFY_1(gxg_gtk_object_destroy_w, gxg_gtk_object_destroy)
 XEN_NARGIFY_2(gxg_gtk_paned_add1_w, gxg_gtk_paned_add1)
 XEN_NARGIFY_2(gxg_gtk_paned_add2_w, gxg_gtk_paned_add2)
@@ -40280,10 +40223,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_button_set_use_stock_w gxg_gtk_button_set_use_stock
 #define gxg_gtk_button_get_use_stock_w gxg_gtk_button_get_use_stock
 #define gxg_gtk_calendar_new_w gxg_gtk_calendar_new
-#define gxg_gtk_calendar_select_month_w gxg_gtk_calendar_select_month
 #define gxg_gtk_calendar_select_day_w gxg_gtk_calendar_select_day
-#define gxg_gtk_calendar_mark_day_w gxg_gtk_calendar_mark_day
-#define gxg_gtk_calendar_unmark_day_w gxg_gtk_calendar_unmark_day
 #define gxg_gtk_calendar_clear_marks_w gxg_gtk_calendar_clear_marks
 #define gxg_gtk_calendar_get_date_w gxg_gtk_calendar_get_date
 #define gxg_gtk_cell_editable_start_editing_w gxg_gtk_cell_editable_start_editing
@@ -40687,9 +40627,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_notebook_set_menu_label_text_w gxg_gtk_notebook_set_menu_label_text
 #define gxg_gtk_notebook_get_menu_label_text_w gxg_gtk_notebook_get_menu_label_text
 #define gxg_gtk_notebook_reorder_child_w gxg_gtk_notebook_reorder_child
-#define gxg_GTK_OBJECT_FLAGS_w gxg_GTK_OBJECT_FLAGS
-#define gxg_GTK_OBJECT_SET_FLAGS_w gxg_GTK_OBJECT_SET_FLAGS
-#define gxg_GTK_OBJECT_UNSET_FLAGS_w gxg_GTK_OBJECT_UNSET_FLAGS
 #define gxg_gtk_object_destroy_w gxg_gtk_object_destroy
 #define gxg_gtk_paned_add1_w gxg_gtk_paned_add1
 #define gxg_gtk_paned_add2_w gxg_gtk_paned_add2
@@ -44332,10 +44269,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_button_set_use_stock, gxg_gtk_button_set_use_stock_w, 2, 0, 0, H_gtk_button_set_use_stock);
   XG_DEFINE_PROCEDURE(gtk_button_get_use_stock, gxg_gtk_button_get_use_stock_w, 1, 0, 0, H_gtk_button_get_use_stock);
   XG_DEFINE_PROCEDURE(gtk_calendar_new, gxg_gtk_calendar_new_w, 0, 0, 0, H_gtk_calendar_new);
-  XG_DEFINE_PROCEDURE(gtk_calendar_select_month, gxg_gtk_calendar_select_month_w, 3, 0, 0, H_gtk_calendar_select_month);
   XG_DEFINE_PROCEDURE(gtk_calendar_select_day, gxg_gtk_calendar_select_day_w, 2, 0, 0, H_gtk_calendar_select_day);
-  XG_DEFINE_PROCEDURE(gtk_calendar_mark_day, gxg_gtk_calendar_mark_day_w, 2, 0, 0, H_gtk_calendar_mark_day);
-  XG_DEFINE_PROCEDURE(gtk_calendar_unmark_day, gxg_gtk_calendar_unmark_day_w, 2, 0, 0, H_gtk_calendar_unmark_day);
   XG_DEFINE_PROCEDURE(gtk_calendar_clear_marks, gxg_gtk_calendar_clear_marks_w, 1, 0, 0, H_gtk_calendar_clear_marks);
   XG_DEFINE_PROCEDURE(gtk_calendar_get_date, gxg_gtk_calendar_get_date_w, 1, 3, 0, H_gtk_calendar_get_date);
   XG_DEFINE_PROCEDURE(gtk_cell_editable_start_editing, gxg_gtk_cell_editable_start_editing_w, 2, 0, 0, H_gtk_cell_editable_start_editing);
@@ -44739,9 +44673,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_notebook_set_menu_label_text, gxg_gtk_notebook_set_menu_label_text_w, 3, 0, 0, H_gtk_notebook_set_menu_label_text);
   XG_DEFINE_PROCEDURE(gtk_notebook_get_menu_label_text, gxg_gtk_notebook_get_menu_label_text_w, 2, 0, 0, H_gtk_notebook_get_menu_label_text);
   XG_DEFINE_PROCEDURE(gtk_notebook_reorder_child, gxg_gtk_notebook_reorder_child_w, 3, 0, 0, H_gtk_notebook_reorder_child);
-  XG_DEFINE_PROCEDURE(GTK_OBJECT_FLAGS, gxg_GTK_OBJECT_FLAGS_w, 1, 0, 0, H_GTK_OBJECT_FLAGS);
-  XG_DEFINE_PROCEDURE(GTK_OBJECT_SET_FLAGS, gxg_GTK_OBJECT_SET_FLAGS_w, 2, 0, 0, H_GTK_OBJECT_SET_FLAGS);
-  XG_DEFINE_PROCEDURE(GTK_OBJECT_UNSET_FLAGS, gxg_GTK_OBJECT_UNSET_FLAGS_w, 2, 0, 0, H_GTK_OBJECT_UNSET_FLAGS);
   XG_DEFINE_PROCEDURE(gtk_object_destroy, gxg_gtk_object_destroy_w, 1, 0, 0, H_gtk_object_destroy);
   XG_DEFINE_PROCEDURE(gtk_paned_add1, gxg_gtk_paned_add1_w, 2, 0, 0, H_gtk_paned_add1);
   XG_DEFINE_PROCEDURE(gtk_paned_add2, gxg_gtk_paned_add2_w, 2, 0, 0, H_gtk_paned_add2);
@@ -48750,7 +48681,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_BUTTONS_OK_CANCEL);
   DEFINE_INTEGER(GTK_NOTEBOOK_TAB_FIRST);
   DEFINE_INTEGER(GTK_NOTEBOOK_TAB_LAST);
-  DEFINE_INTEGER(GTK_IN_DESTRUCTION);
   DEFINE_INTEGER(GTK_PROGRESS_LEFT_TO_RIGHT);
   DEFINE_INTEGER(GTK_PROGRESS_RIGHT_TO_LEFT);
   DEFINE_INTEGER(GTK_PROGRESS_BOTTOM_TO_TOP);
@@ -49774,7 +49704,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("16-Jun-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("18-Jun-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

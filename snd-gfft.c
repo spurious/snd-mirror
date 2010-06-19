@@ -1067,7 +1067,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
       alpha_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
       window_alpha_scale = gtk_hscale_new(GTK_ADJUSTMENT(alpha_adj));
-      GTK_WIDGET_UNSET_FLAGS(window_alpha_scale, GTK_CAN_FOCUS);
+      UNSET_CAN_FOCUS(window_alpha_scale);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(window_alpha_scale)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(window_alpha_scale), 2);
       gtk_scale_set_value_pos(GTK_SCALE(window_alpha_scale), GTK_POS_LEFT);
@@ -1087,7 +1087,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
       beta_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
       window_beta_scale = gtk_hscale_new(GTK_ADJUSTMENT(beta_adj));
-      GTK_WIDGET_UNSET_FLAGS(window_beta_scale, GTK_CAN_FOCUS);
+      UNSET_CAN_FOCUS(window_beta_scale);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(window_beta_scale)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(window_beta_scale), 2);
       gtk_scale_set_value_pos(GTK_SCALE(window_beta_scale), GTK_POS_LEFT);
@@ -1127,7 +1127,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
       spectrum_start_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
       spectrum_start_scale = gtk_hscale_new(GTK_ADJUSTMENT(spectrum_start_adj));
-      GTK_WIDGET_UNSET_FLAGS(spectrum_start_scale, GTK_CAN_FOCUS);
+      UNSET_CAN_FOCUS(spectrum_start_scale);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(spectrum_start_scale)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(spectrum_start_scale), 2);
       gtk_scale_set_value_pos(GTK_SCALE(spectrum_start_scale), GTK_POS_LEFT);
@@ -1147,7 +1147,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
       spectrum_end_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
       spectrum_end_scale = gtk_hscale_new(GTK_ADJUSTMENT(spectrum_end_adj));
-      GTK_WIDGET_UNSET_FLAGS(spectrum_end_scale, GTK_CAN_FOCUS);
+      UNSET_CAN_FOCUS(spectrum_end_scale);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(spectrum_end_scale)), GTK_UPDATE_CONTINUOUS);
       gtk_scale_set_digits(GTK_SCALE(spectrum_end_scale), 2);
       gtk_scale_set_value_pos(GTK_SCALE(spectrum_end_scale), GTK_POS_LEFT);
