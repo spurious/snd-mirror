@@ -10703,23 +10703,29 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, sh
       bufsize += safe_strlen(elements[i]);
     }
 
-  bufsize += (len * 8 + 256);                   /* might be 2 parens per element + space, so at least len*4 here */
-  buf = (char *)malloc(bufsize * sizeof(char));
-
   if ((s7_is_vector(vect)) &&
       (vector_is_multidimensional(vect)))
     {
       char c;
+
+      bufsize += (len * 4 * vector_ndims(vect) + 256);
+      buf = (char *)malloc(bufsize * sizeof(char));
+
       c = '#';
       if (vector_ndims(vect) > 1)
 	snprintf(buf, bufsize, "#%dD", vector_ndims(vect));
       else snprintf(buf, bufsize, "#");
+
       display_multivector(sc, vect, len, 0, 0, vector_ndims(vect), buf, elements, &c);
+
       for (i = 0; i < len; i++)
 	free(elements[i]);
       free(elements);
       return(buf);
     }
+
+  bufsize += (len * 4 + 256);                   /* might be 2 parens per element + space, so at least len*4 here */
+  buf = (char *)malloc(bufsize * sizeof(char));
 
   sprintf(buf, "#(");
   for (i = 0; i < len - 1; i++)
@@ -11001,6 +11007,14 @@ static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
   return(sc->UNSPECIFIED);
 }
 
+
+/* TODO: read-byte is way too slow -- we should read blocks at a time 
+ *         vector-read vector n :optional port [read-bytes->vector?]
+ *           [read-bytes? and take whatever container is passed? -- (read-bytes n obj :optional port)]
+ *           returns number of bytes actually read
+ *         vector-write vector n :optional port
+ * Clisp has read|write-[char|byte-]sequence
+ */
 
 static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
 {
@@ -20302,8 +20316,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (s7_is_eqv(car(sc->y), sc->value)) 
 	    break;
 
-	  /* TODO: what about case-eq or case-equal? */
-
 	  for (sc->y = cdr(sc->y); sc->y != sc->NIL; sc->y = cdr(sc->y)) 
 	    {
 	      if (!is_pair(sc->y))                                        /* (case () ((1 . 2) . hi) . hi) */
@@ -26201,30 +26213,9 @@ s7_scheme *s7_init(void)
  *
  * and a way to jump into the error environment, cerror 
  *   an error handling dialog (gui) in snd?
- *
- * error handling is still not very clean, and perhaps we need "throw" to insure error handling doesn't get involved.
- *   should throw args be like call/cc? (throw tag result) or perhaps (throw tag . body)
- *   if no tag found, error -- but in CL we'd start all over at the point of the throw to
- *   see if that error was caught!  throw -> check stack for tag, if not found, error
- *   else unwind, catch returns result (can be mv).  I assume the catch error handler is
- *   not invoked -- catch simply returns result? (CL has no error handler -- it's just (catch tag . body))
- *   In Guile the error handler is invoked!
- * (catch 'hi (lambda () (display "1") (throw 'hi 2) (display "2")) (lambda args (display "3")))
- * perhaps the error-handler in catch could be optional, and the thunk optionally a body (as in the run macro)
- * Gauche uses "raise" but its continuation handling seems backwards.
- * currently throw is defined in xen.c (define (throw . args) (apply error args))
- * so throw . args unwinds stack like error but without any error sidelights, passes args to "error handler" 
- *   -- call it the "throw handler" -- it can return the results if it wants [apply values args?]
- *
- * (error type ...) where type can be a string, or the arg after type can be a string
- *   if string, format is applied to it and rest args -> value of the error
- *   if type is a symbol, we look for its catch and unwind to that point calling the catch error handler
- * (throw type ...) [do we eval ... first?] looks for type catch, if found, [or eval now?] unwinds and catch simply returns throw result
- *   else error.
- * call-with-exit sort of replaces throw
+ * error handling is still not very clean
  *
  * (define (continuation func . vals) (call/cc (lambda (r1) (set! func r1) (apply r1 vals))))
- * for catch/throw at user-level, need a way to place a tag and then unwind to it later (similar to OP_BARRIER)
  *
  * TODO: loading s7test simultaneously in several threads hangs after awhile in join_thread (call/cc?) 
  *         why are list-ref tests getting 'wrong-type-arg?
@@ -26238,7 +26229,6 @@ s7_scheme *s7_init(void)
  * generic append?
  *   (append "hi" "ho") (append #(1) #(2))    [(append table1 table] = new table with both? what about collisions?]
  *   what about mixed cases -- what is the result type?
- *
  *
  * PERHAPS: method lists for c_objects
  *   a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)

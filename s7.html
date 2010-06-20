@@ -18,6 +18,8 @@
 	A.quiet {color:black; text-decoration:none}
 	A.quiet:hover {text-decoration:underline}
 	A.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black}
+
+	EM.green {color:green; font-style:normal}
 -->
 
 </style>
@@ -1770,6 +1772,25 @@ in the latter case, you can't clobber one of the inner vectors.
 ;not enough args for vector-set!: (#2D((1 2 3) (4 5 6)) 1 32)
 </pre>
 
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>Using lists to display the inner vectors may not be optimal, especially when the elements are also lists:
+</p>
+<pre>
+#2D(((0) (0) ((0))) ((0) 0 ((0))))
+</pre>
+<p>The "#()" notation is no better (the elements can be vectors), and I'm not a fan of "[]" parentheses.
+Perhaps we could use different colors?  Or different size parentheses?
+</p>
+
+<pre>
+#2D<em class=green>(</em><em class=red>(</em>(0) (0) ((0))<em class=red>)</em> <em class=red>(</em>(0) 0 ((0))<em class=red>)</em><em class=green>)</em>
+#2D<big><big>(</big>(</big>(0) (0) ((0))<big>)</big> <big>(</big>(0) 0 ((0))<big>)<big>)</big></big>
+</pre>
+
+
 </blockquote>
 </small>
 </dd>
@@ -2021,7 +2042,7 @@ a part of the argument list of the operator:
 </dt>
 
 <dd><p><b>call-with-exit</b> is call/cc without the ability to jump back into the original context,
-similar to "return" in C.
+similar to "return" in C.  This takes the place of CL's catch/throw (I'm using "catch" for error handling).
 </p>
 <pre>
 (define (find-first-even-number arg)
