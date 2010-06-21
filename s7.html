@@ -1525,7 +1525,9 @@ I like this syntax:  the less noise, the better!
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>Well, maybe applicable strings look weird: <code>("hi" 1)</code> is #\i, but worse,
-so is <code>(cond (1 =&gt; "hi"))</code>!
+so is <code>(cond (1 =&gt; "hi"))</code>!  Even though a string, list, or vector is "applicable", it is
+not currently considered to be a procedure, so <code>(procedure? "hi")</code> is #f, and
+<code>(map #(0 1) '(1 0))</code> is an error.  
 </p>
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
@@ -1629,7 +1631,7 @@ I may add similar extensions to append (what to do if the argument types are mix
 newLisp takes a more radical (and consistent) approach than s7 in that it treats even an operator such as '&gt;' as generic in
 the sense that it can compare strings and lists, as well as numbers.
 newLisp also uses negative
-numbers to index from the end of a sequence. 
+numbers to index from the end of a sequence.
 </p>
 
 </blockquote>
@@ -2100,7 +2102,7 @@ it is continuing from the point of the error, but then fails to do so.
 
 <p>The call-with-exit function's argument (the "continuation") is only valid
 within the call-with-exit function.  In call/cc, you can save it, then call it later
-to jump back, but if you try that with call-with-exit, you'll get an error.
+to jump back, but if you try that with call-with-exit (from outside the call-with-exit function's body), you'll get an error.
 This is similar to trying to read from a closed input port. 
 </p>
 

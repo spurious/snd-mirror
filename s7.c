@@ -459,7 +459,10 @@ typedef struct s7_cell {
       s7_pointer *stack_start, *stack_end;
     } continuation;
     
-    int goto_loc;
+    struct {
+      int goto_loc;
+      bool active;
+    } rexit;
     
     struct {
       int goto_loc;
@@ -674,6 +677,7 @@ struct s7_scheme {
 
 #define T_PROCEDURE                   (1 << (TYPE_BITS + 10))
 #define is_procedure(p)               ((typeflag(p) & T_PROCEDURE) != 0)
+/* closure, macro, c_function, procedure-with-setter, settable object, goto or continuation */
 
 #define T_ETERNAL                     (1 << (TYPE_BITS + 11))
 #define is_eternal(p)                 ((typeflag(p) & T_ETERNAL) != 0)
@@ -852,6 +856,9 @@ struct s7_scheme {
 #define continuation_stack_start(p)   (p)->object.continuation.stack_start
 #define continuation_stack_size(p)    (p)->object.continuation.stack_size
 #define continuation_stack_top(p)     (continuation_stack_end(p) - continuation_stack_start(p))
+
+#define call_exit_goto_loc(p)         (p)->object.rexit.goto_loc
+#define call_exit_active(p)           (p)->object.rexit.active
 
 #define s7_stack_top(Sc)              ((Sc)->stack_end - (Sc)->stack_start)
 
@@ -2017,10 +2024,16 @@ bool s7_is_symbol(s7_pointer p)
 }
 
 
+static bool is_pure_symbol(s7_pointer p)
+{
+  return((typeflag(p) & (T_MASKTYPE | T_SYNTAX)) == T_SYMBOL);
+}
+
+
 static s7_pointer g_is_symbol(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_symbol "(symbol? obj) returns #t if obj is a symbol"
-  return(make_boolean(sc, s7_is_symbol(car(args))));
+  return(make_boolean(sc, is_pure_symbol(car(args))));
 }
 
 
@@ -2466,9 +2479,6 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
   if (!s7_is_symbol(car(args)))
     return(s7_wrong_type_arg_error(sc, "defined?", 0, car(args), "a symbol"));
   
-  if (is_syntax(car(args)))
-    return(sc->T);
-  
   if (cdr(args) != sc->NIL)
     {
       if (!is_environment(sc, cadr(args)))
@@ -2476,6 +2486,9 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
       x = cadr(args);
     }
   else x = sc->envir;
+  
+  if (is_syntax(car(args)))        /* put env check first, else (defined? 'lambda car) -> #t */
+    return(sc->T);
   
   x = find_symbol(sc, x, car(args));
   return(make_boolean(sc, (x != sc->NIL) && (x != sc->UNDEFINED)));
@@ -2756,7 +2769,8 @@ static s7_pointer make_goto(s7_scheme *sc)
   s7_pointer x;
   NEW_CELL(sc, x);
   set_type(x, T_ATOM | T_GOTO | T_SIMPLE | T_DONT_COPY | T_PROCEDURE);
-  x->object.goto_loc = s7_stack_top(sc);
+  call_exit_goto_loc(x) = s7_stack_top(sc);
+  call_exit_active(x) = true;
   return(x);
 }
 
@@ -2788,61 +2802,76 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
 static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 {
   int i, s_base = 0, c_base = -1;
+  opcode_t op;
   
   for (i = s7_stack_top(sc) - 1; i > 0; i -= 4)
     {
       s7_pointer x;
-      opcode_t op;
 
       op = (opcode_t)stack_op(sc->stack, i);
-      if (op == OP_DYNAMIC_WIND)
-	{
-	  int j;
-	  x = stack_code(sc->stack, i);
-	  for (j = 3; j < continuation_stack_top(c); j += 4)
-	    if (((opcode_t)stack_op(continuation_stack(c), j) == OP_DYNAMIC_WIND) &&
-		(x == stack_code(continuation_stack(c), j)))
-	      {
-		s_base = i;
-		c_base = j;
-		break;
-	      }
-	  
-	  if (s_base != 0)
-	    break;	  
-	  
-	  if (dynamic_wind_state(x) == T_DWIND_BODY)
-	    {
-	      push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
-	      sc->args = sc->NIL;
-	      sc->code = dynamic_wind_out(x);
-	      eval(sc, OP_APPLY);
-	    }
-	}
-      else
-	{
-	  if (op == OP_BARRIER)
-	    return(false);
 
-	  if (op == OP_TRACE_RETURN)
-	    {
-	      sc->trace_depth--;
-	      if (sc->trace_depth < 0) sc->trace_depth = 0;
-	    }
+      switch (op)
+	{
+	case OP_DYNAMIC_WIND:
+	  {
+	    int j;
+	    x = stack_code(sc->stack, i);
+	    for (j = 3; j < continuation_stack_top(c); j += 4)
+	      if (((opcode_t)stack_op(continuation_stack(c), j) == OP_DYNAMIC_WIND) &&
+		  (x == stack_code(continuation_stack(c), j)))
+		{
+		  s_base = i;
+		  c_base = j;
+		  break;
+		}
+	  
+	    if (s_base != 0)
+	      break;	  
+	  
+	    if (dynamic_wind_state(x) == T_DWIND_BODY)
+	      {
+		push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
+		sc->args = sc->NIL;
+		sc->code = dynamic_wind_out(x);
+		eval(sc, OP_APPLY);
+	      }
+	  }
+	  break;
+
+	case OP_BARRIER:
+	  return(false);
+
+	case OP_DEACTIVATE_GOTO:              /* here we're jumping out of an unrelated call-with-exit block */
+	  call_exit_active(stack_args(sc->stack, i)) = false;
+	  break;
+
+	case OP_TRACE_RETURN:
+	  sc->trace_depth--;
+	  if (sc->trace_depth < 0) sc->trace_depth = 0;
+	  break;
 	}
     }
   
   for (i = c_base + 4; i < continuation_stack_top(c); i += 4)
-    if ((opcode_t)stack_op(continuation_stack(c), i) == OP_DYNAMIC_WIND)
-      {
-	s7_pointer x;
-	x = stack_code(continuation_stack(c), i);
-	push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
-	sc->args = sc->NIL;
-	sc->code = dynamic_wind_in(x);
-	eval(sc, OP_APPLY);
-	dynamic_wind_set_state(x, T_DWIND_BODY);
-      }
+    {
+      op = ((opcode_t)stack_op(continuation_stack(c), i));
+
+      if (op == OP_DYNAMIC_WIND)
+	{
+	  s7_pointer x;
+	  x = stack_code(continuation_stack(c), i);
+	  push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
+	  sc->args = sc->NIL;
+	  sc->code = dynamic_wind_in(x);
+	  eval(sc, OP_APPLY);
+	  dynamic_wind_set_state(x, T_DWIND_BODY);
+	}
+      else
+	{
+	  if (op == OP_DEACTIVATE_GOTO)
+	    call_exit_active(stack_args(continuation_stack(c), i)) = true;
+	}
+    }
   return(true);
 }
 
@@ -2869,45 +2898,48 @@ static void call_with_current_continuation(s7_scheme *sc)
 }
 
 
-#define INVALID_GOTO -1
-
 static void call_with_exit(s7_scheme *sc)
 {
   int i, new_stack_top;
   
-  new_stack_top = (sc->code)->object.goto_loc;
-  if (new_stack_top == INVALID_GOTO)
+  if (!call_exit_active(sc->code))
     s7_error(sc, s7_make_symbol(sc, "invalid-escape-function"),
 	     make_list_1(sc, make_protected_string(sc, "call-with-exit escape procedure called outside its block")));
-  (sc->code)->object.goto_loc = INVALID_GOTO;
+  call_exit_active(sc->code) = false;
 
+  new_stack_top = call_exit_goto_loc(sc->code);
   /* look for dynamic-wind in the stack section that we are jumping out of */
   for (i = s7_stack_top(sc) - 1; i > new_stack_top; i -= 4)
     {
       opcode_t op;
 
       op = (opcode_t)stack_op(sc->stack, i);
-      if (op == OP_DYNAMIC_WIND)
+      switch (op)
 	{
-	  sc->z = stack_code(sc->stack, i);
-	  if (dynamic_wind_state(sc->z) == T_DWIND_BODY)
-	    {
-	      push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
-	      sc->args = sc->NIL;
-	      sc->code = dynamic_wind_out(sc->z);
-	      eval(sc, OP_APPLY);
-	    }
-	}
-      else
-	{
-	  if (op == OP_BARRIER)           /* oops -- we almost certainly went too far */
-	    return;                       /* (call-with-exit (lambda (return) (eval-string "(return 3)")))) */
+	case OP_DYNAMIC_WIND:
+	  {
+	    sc->z = stack_code(sc->stack, i);
+	    if (dynamic_wind_state(sc->z) == T_DWIND_BODY)
+	      {
+		push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
+		sc->args = sc->NIL;
+		sc->code = dynamic_wind_out(sc->z);
+		eval(sc, OP_APPLY);
+	      }
+	  }
+	  break;
 
-	  if (op == OP_TRACE_RETURN)
-	    {
-	      sc->trace_depth--;
-	      if (sc->trace_depth < 0) sc->trace_depth = 0;
-	    }
+	case OP_BARRIER:                /* oops -- we almost certainly went too far */
+	  return;                       /* (call-with-exit (lambda (return) (eval-string "(return 3)")))) */
+
+	case OP_DEACTIVATE_GOTO:        /* here we're jumping into an unrelated call-with-exit block */
+	  call_exit_active(stack_args(sc->stack, i)) = false;
+	  break;
+
+	case OP_TRACE_RETURN:
+	  sc->trace_depth--;
+	  if (sc->trace_depth < 0) sc->trace_depth = 0;
+	  break;
 	}
     }
 	    
@@ -2969,7 +3001,7 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   /* if the lambda body calls the argument as a function, 
    *   it is applied to its arguments, apply notices that it is a goto, and...
    *   
-   *      (conceptually...) sc->stack_top = (sc->code)->object.goto_loc;           
+   *      (conceptually...) sc->stack_top = call_exit_goto_loc(sc->code);      
    *      s_pop(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
    * 
    *   which jumps to the point of the goto returning car(args).
@@ -2979,6 +3011,17 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
    *   make sure it triggers an error.  So, if the escape is called, it then
    *   deactivates itself.  Otherwise the block returns, we pop to OP_DEACTIVATE_GOTO,
    *   and it finds the goto in sc->args.
+   * Even worse:
+   *
+       (let ((cc #f))
+         (call-with-exit
+           (lambda (c3)
+             (call/cc (lambda (ret) (set! cc ret)))
+             (c3)))
+         (cc))
+   *
+   * where we jump back into a call-with-exit body via call/cc, the goto has to be
+   * re-established.
    */
   
   return(sc->NIL);
@@ -5510,11 +5553,11 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 	  if ((y == small_int(0)) &&
 	      (x == small_int(1)))
 	    return(y);
-	  return(s7_out_of_range_error(sc, "log base,", 2, y, "can't be 0.0 or 1.0"));
+	  return(s7_out_of_range_error(sc, "log base,", 2, y, "can't be 0"));
 	}
 
       if (s7_is_one(y))
-	return(s7_out_of_range_error(sc, "log base,", 2, y, "can't be 0.0 or 1.0"));
+	return(s7_out_of_range_error(sc, "log base,", 2, y, "can't be 1"));
       
       if ((s7_is_real(x)) &&
 	  (s7_is_real(y)) &&
@@ -10840,6 +10883,7 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci)
 	    {
 	      elements[i] = object_to_c_string_with_circle_check(sc, x, true, false, ci);
 	      len = i + 1;
+	      bufsize += safe_strlen(elements[i]);
 	      break;
 	    }
 	  else elements[i] = object_to_c_string_with_circle_check(sc, car(x), true, false, ci);
@@ -10848,6 +10892,7 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci)
 	{
 	  elements[i] = object_to_c_string_with_circle_check(sc, x, true, false, ci);
 	  len = i + 1;
+	  bufsize += safe_strlen(elements[i]);
 	  break;
 	}
       bufsize += safe_strlen(elements[i]);
@@ -12379,7 +12424,7 @@ static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
   #define H_provide "(provide sym) adds sym to the *features* list"
   s7_pointer features;
 
-  if (!s7_is_symbol(car(args)))
+  if (!is_pure_symbol(car(args)))
     return(s7_wrong_type_arg_error(sc, "provide", 1, car(args), "a symbol"));
 
   features = s7_make_symbol(sc, "*features*");
@@ -13165,7 +13210,7 @@ If its first argument is a list, the list is copied (despite the '!')."
     return(s7_wrong_type_arg_error(sc, "sort!", 1, vect, "a vector or a list"));
 
   compare_proc = cadr(args);
-  if (!s7_is_procedure(compare_proc))
+  if (!is_procedure(compare_proc))
     return(s7_wrong_type_arg_error(sc, "sort!", 2, compare_proc, "a procedure"));
 
   if ((is_continuation(compare_proc)) || is_goto(compare_proc))
@@ -13728,14 +13773,14 @@ s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
 
 bool s7_is_procedure(s7_pointer x)
 {
-  return(is_procedure(x) || is_closure(x) || is_closure_star(x));
+  return(is_procedure(x)); /* this used to check is_closure also, but it always includes T_PROCEDURE */
 }
 
 
 static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_procedure "(procedure? obj) returns #t if obj is a procedure"
-  return(make_boolean(sc, s7_is_procedure(car(args))));
+  return(make_boolean(sc, is_procedure(car(args))));
 }
 
 
@@ -14591,7 +14636,7 @@ In each case, the argument is the value of the object, not the object itself."
 	    {
 	      if (i != 5)
 		{
-		  if (!s7_is_procedure(func))
+		  if (!is_procedure(func))
 		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 				    make_list_2(sc, 
 						make_protected_string(sc, "make-type arg, ~A, should be a function"),
@@ -16640,6 +16685,10 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	case OP_BARRIER:
 	  break;
 
+	case OP_DEACTIVATE_GOTO:
+	  call_exit_active(stack_args(sc->stack, i)) = false;
+	  break;
+
 	case OP_TRACE_RETURN:
 	  sc->trace_depth--;
 	  if (sc->trace_depth < 0) sc->trace_depth = 0;
@@ -17494,7 +17543,7 @@ static bool next_map(s7_scheme *sc)
 
 static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
 {
-  #define H_map "(map proc object . objectss) applies proc to a list made up of the next element of each of its arguments, returning \
+  #define H_map "(map proc object . objects) applies proc to a list made up of the next element of each of its arguments, returning \
 a list of the results.  Its arguments can be lists, vectors, strings, hash-tables, or any applicable objects."
 
   long int i, len;
@@ -17503,6 +17552,8 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
   sc->code = car(args);
   if (!is_procedure(sc->code))
     return(s7_wrong_type_arg_error(sc, "map", 1, sc->code, "a procedure"));
+
+  /* an object with a setter is a procedure, but (map "hi" '(1 0)) because (procedure? "hi") is #f */
 
   sc->y = args;            /* gc protect */
   obj = cadr(args); 
@@ -17666,7 +17717,7 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
     {
       if ((s7_is_number(form)) ||
 	  (s7_is_string(form)) ||
-	  (s7_is_procedure(form)))
+	  (is_procedure(form)))
 	return(form);
       return(make_list_2(sc, sc->QUOTE, form));
     }
@@ -20394,7 +20445,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_DEACTIVATE_GOTO:
-      (sc->args)->object.goto_loc = INVALID_GOTO;
+      call_exit_active(sc->args) = false;
       pop_stack(sc);
       goto START;
 

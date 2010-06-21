@@ -571,7 +571,8 @@
 (test (boolean?) 'error)
 (test (boolean? #f #t) 'error)
 (test (boolean? (lambda (x) #f)) #f)
-
+(test (boolean? and) #f)
+(test (boolean? if) #f)
 
 
 
@@ -597,6 +598,9 @@
 
 (test (not) 'error)
 (test (not #f #t) 'error)
+(test (not and) #f)
+(test (not case) #f)
+
 
 
 
@@ -609,6 +613,7 @@
 (test (symbol? (car '(a b))) #t)
 (test (symbol? 'nil) #t)
 (test (symbol? '()) #f)
+(test (symbol? #()) #f)
 (test (symbol? #f) #f)
 (test (symbol? 'car) #t)
 (test (symbol? car) #f)
@@ -630,7 +635,14 @@
 
 (test (symbol?) 'error)
 (test (symbol? 'hi 'ho) 'error)
-(test (symbol? begin) #t) ; ?? this is an error in Guile
+
+;;; "Returns #t if obj is a symbol, otherwise returns #f" (r5|6rs.html)
+(test (symbol? begin) #f) ; ?? this is an error in Guile, it was #t in s7
+(test (symbol? expt) #f)
+(test (symbol? if) #f)
+(test (symbol? and) #f)
+(test (symbol? lambda) #f)
+(test (symbol? call/cc) #f)
 
 
 
@@ -647,6 +659,7 @@
 (test (let () (define-macro (hi a) `(+ ,a 1)) (procedure? hi)) #f)
 (test (procedure? begin) #f)
 (test (procedure? (lambda* ((a 1)) a)) #t)
+(test (procedure? and) #f)
 
 (for-each
  (lambda (arg)
@@ -656,6 +669,12 @@
 
 (test (procedure?) 'error)
 (test (procedure? abs car) 'error)
+
+;; these are questionable -- an applicable object is a procedure
+(test (procedure? "hi") #f)
+(test (procedure? '(1 2)) #f)
+(test (procedure? #(1 2)) #f)
+
 
 
 
@@ -9006,7 +9025,7 @@
 
 (test (let ((str "hi")) (string-set! (values str 0 #\x)) str) "xi")
 
-(test ((values '(1 (2 3)) 1 1)) 'error) ; ??
+(test ((values '(1 (2 3)) 1 1)) 'error) ; ?? is this a bug?
 (test (let ((x #(32 33))) ((values x 0))) 'error) ; ??
 (test (+ 1 (apply values '(2 3 4))) 10)
 (test (+ 1 ((lambda args (apply values args)) 2 3 4)) 10)
@@ -10623,6 +10642,24 @@ who says the continuation has to restart the map from the top?
 (test (call-with-exit (call-with-exit append)) 'error)
 (test (continuation? (call/cc (call/cc append))) #t)
 
+(test (let ((c1 #f)) (call-with-exit (lambda (c2) (call-with-exit (lambda (c3) (set! c1 c3) (c2))))) (c1)) 'error)
+(test (let ((c1 #f)) (call/cc (lambda (c2) (call-with-exit (lambda (c3) (set! c1 c3) (c2))))) (c1)) 'error)
+(test (let ((cont #f)) (catch #t (lambda () (call-with-exit (lambda (return) (set! cont return) (error 'testing " a test")))) (lambda args 'error)) (apply cont)) 'error)
+(test (let ((cont #f)) (catch #t (lambda () (call-with-exit (lambda (return) (set! cont return) (error 'testing " a test")))) (lambda args 'error)) (cont 1)) 'error)
+
+(test (let ((cc #f)
+	    (doit #t)
+	    (ctr 0))
+	(let ((ok (call-with-exit
+		   (lambda (c3)
+		     (call/cc (lambda (ret) (set! cc ret)))
+		     (c3 (let ((res doit)) (set! ctr (+ ctr 1)) (set! doit #f) res))))))
+	  (if ok (cc)))
+	ctr)
+      2)
+;;; TODO: more call/exit active checks
+
+(test (let ((val (call-with-exit (lambda (ret) (let ((ret1 ret)) (ret1 2) 3))))) val) 2)
 
 
 
@@ -11481,6 +11518,7 @@ who says the continuation has to restart the map from the top?
 (provide 's7test)
 (test (provided? 's7test) #t)
 (test (provided? 'not-provided!) #f)
+(test (provide lambda) 'error)
 
 (for-each
  (lambda (arg)
@@ -13258,6 +13296,12 @@ who says the continuation has to restart the map from the top?
  (lambda (arg)
    (test (defined? arg) 'error))
  (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() '#(()) (list 1 2 3) '(1 . 2) "hi"))
+(test (defined? 'lambda car) 'error)
+(test (defined? lambda gensym) 'error)
+(test (defined? 'lambda defined?) 'error)
+(test (defined? 'define car) 'error)
+(test (defined? 'abs '(())) #f)
+
 
 
 (test (current-environment 1) 'error)
@@ -13595,6 +13639,8 @@ who says the continuation has to restart the map from the top?
 (test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda* (a (b 1)) a)))) (procedure-with-setter-setter-arity pws)) '(0 2 #f))
 (test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda* (a :rest b) a)))) (procedure-with-setter-setter-arity pws)) '(0 1 #t))
 (test (procedure-with-setter-setter-arity symbol-access) '(2 0 #f))
+(test (let ((pws (make-procedure-with-setter (lambda args (apply + args)) (lambda args (apply * args))))) (pws 2 3 4)) 9)
+(test (let ((pws (make-procedure-with-setter (lambda args (apply + args)) (lambda args (apply * args))))) (set! (pws 2 3 4) 5)) 120)
 
 
 
@@ -13743,6 +13789,69 @@ who says the continuation has to restart the map from the top?
 	(format #t ";*error-info* stacktrace: ~A" str))))
 |#
 (test (stacktrace #(23)) 'error)
+
+
+;;; -------- miscellaneous
+
+(test ((number->string -1) 0) #\-)
+(test ((reverse '(1 2)) 0) 2)
+(test ((append begin) list) list)
+(test ((begin object->string) car) "car")
+(test ((and abs) -1) 1)
+(test (((values begin) object->string) car) "car")
+(test (((values (begin begin)) object->string) car) "car")
+(test ((((values append) begin) object->string) car) "car")
+(test ((((((values and) or) append) begin) object->string) car) "car")
+(test (((((((values values) and) or) append) begin) object->string) car) "car")
+
+(test (+ (+) (*)) 1)
+(test (modulo (lcm) (gcd)) 1)
+(test (max (+) (*)) 1)
+(test (min (gcd) (lcm)) 0)
+(test (symbol->value (gensym) (global-environment)) #<undefined>)
+(test (string-ref (s7-version) (*)) #\7)
+(test (string>=? (string-append) (string)) #t)
+(test (substring (string-append) (+)) "")
+(test (ash (*) (+)) 1)
+(test (> (*) (+)) #t)
+(test ((or #f list)) ())
+(test ((or #f lcm)) 1)
+(test ((or begin symbol?)) ())
+(test ((or begin make-polar)) ())
+(test ((and #t begin)) ())
+(test (begin) ())
+(test ((or #f lcm) 2 3) 6)
+(test ((or and) #f #t) #f)
+(test ((and or) #f #t) #t)
+(test (or (or) (and)) #t)
+(test ((car ((1 2) (3 4))) 0) 1)
+(test ((or apply) lcm) 1)
+
+(test ((call-with-exit object->string) 0) #\#) ; #<goto>
+(test ((begin begin) 1) 1)
+(test ((values begin) 1) 1)
+(test ((provide or) 3/4) 'error)
+(test (string? cond) #f)
+(test (list? or) #f)
+(test (pair? define) #f)
+(test (number? lambda*) #f)
+
+(test (let () (define (hi cond) (+ cond 1)) (hi 2)) 3)
+(test (let () (define* (hi (cond 1)) (+ cond 1)) (hi 2)) 3)
+(test (let () (define* (hi (cond 1)) (+ cond 1)) (hi)) 2)
+(test (let () ((lambda (cond) (+ cond 1)) 2)) 3)
+(test (let () ((lambda* (cond) (+ cond 1)) 2)) 3)
+(test (let () (define-macro (hi cond) `(+ 1 ,cond)) (hi 2)) 3)
+(test (let () (define-macro* (hi (cond 1)) `(+ 1 ,cond)) (hi)) 2)
+(test (let () (define (hi abs) (+ abs 1)) (hi 2)) 3)
+(test (let () (define (hi if) (+ if 1)) (hi 2)) 3)
+(test (let () (define* (hi (lambda 1)) (+ lambda 1)) (hi)) 2)
+
+
+
+
+
+;;; ------ CLisms ------------------------------------------------------------------------
 
 
 (let ()
