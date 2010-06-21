@@ -306,7 +306,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_ENV2,
-	      OP_FOR_EACH, OP_MAP, OP_AND2, OP_OR2, OP_BARRIER,
+	      OP_FOR_EACH, OP_MAP, OP_AND2, OP_OR2, OP_BARRIER, OP_DEACTIVATE_GOTO,
 	      OP_MAX_DEFINED} opcode_t;
 
 #if 1
@@ -323,12 +323,12 @@ static char *op_names[OP_MAX_DEFINED] =
    "op_do_step", "op_do_step1", "op_do_step2", "op_do_init", "op_define_star", "op_lambda_star", 
    "op_error_quit", "op_unwind_input", "op_unwind_output", "op_trace_return", "op_error_hook_quit", 
    "op_trace_hook_quit", "op_with_env", "op_with_env1", "op_with_env2", "op_for_each", "op_map", 
-   "op_and2", "op_or2", "op_barrier"};
+   "op_and2", "op_or2", "op_barrier", "op_deactivate_goto"};
 #endif
 
 
 #define NUM_SMALL_INTS 200
-/* this needs to be at least OP_MAX_DEFINED = 80 */
+/* this needs to be at least OP_MAX_DEFINED = 81 */
 /* going up to 1024 gives very little improvement, down to 128 costs about .2% run time */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -2869,10 +2869,17 @@ static void call_with_current_continuation(s7_scheme *sc)
 }
 
 
+#define INVALID_GOTO -1
+
 static void call_with_exit(s7_scheme *sc)
 {
   int i, new_stack_top;
+  
   new_stack_top = (sc->code)->object.goto_loc;
+  if (new_stack_top == INVALID_GOTO)
+    s7_error(sc, s7_make_symbol(sc, "invalid-escape-function"),
+	     make_list_1(sc, make_protected_string(sc, "call-with-exit escape procedure called outside its block")));
+  (sc->code)->object.goto_loc = INVALID_GOTO;
 
   /* look for dynamic-wind in the stack section that we are jumping out of */
   for (i = s7_stack_top(sc) - 1; i > new_stack_top; i -= 4)
@@ -2955,6 +2962,8 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 
   sc->code = car(args);                                      /* the lambda form */
   sc->args = make_list_1(sc, make_goto(sc));                 /*   the argument to the lambda (the goto = "return" above) */
+
+  push_stack(sc, opcode(OP_DEACTIVATE_GOTO), car(sc->args), sc->NIL);
   push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);      /* apply looks at sc->code to decide what to do (it will see the lambda) */
   
   /* if the lambda body calls the argument as a function, 
@@ -2963,7 +2972,13 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
    *      (conceptually...) sc->stack_top = (sc->code)->object.goto_loc;           
    *      s_pop(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
    * 
-   *   which jumps to the point of the goto returning car(args)
+   *   which jumps to the point of the goto returning car(args).
+   *
+   * There is one gotcha: we can't jump back, so if the caller saves the goto
+   *   and tries to invoke it outside the call-with-exit block, we have to
+   *   make sure it triggers an error.  So, if the escape is called, it then
+   *   deactivates itself.  Otherwise the block returns, we pop to OP_DEACTIVATE_GOTO,
+   *   and it finds the goto in sc->args.
    */
   
   return(sc->NIL);
@@ -5489,7 +5504,16 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
       y = cadr(args);
       if ((x == small_int(1)) && (y == small_int(1))) return(small_int(0));
 
-      if ((s7_is_zero(y)) || (s7_is_one(y)))
+      /* (log 1 0) must be 0 since everyone says (expt 0 0) is 1 */
+      if (s7_is_zero(y))
+	{
+	  if ((y == small_int(0)) &&
+	      (x == small_int(1)))
+	    return(y);
+	  return(s7_out_of_range_error(sc, "log base,", 2, y, "can't be 0.0 or 1.0"));
+	}
+
+      if (s7_is_one(y))
 	return(s7_out_of_range_error(sc, "log base,", 2, y, "can't be 0.0 or 1.0"));
       
       if ((s7_is_real(x)) &&
@@ -9841,6 +9865,14 @@ defaults to the global environment.  To load into the current environment instea
   name = car(args);
   if (!s7_is_string(name))
     return(s7_wrong_type_arg_error(sc, "load filename,", 1, name, "a string"));
+
+  if (cdr(args) != sc->NIL) 
+    {
+      if (!is_environment(sc, cadr(args)))
+	return(s7_wrong_type_arg_error(sc, "load", 2, cadr(args), "an environment"));
+      sc->envir = cadr(args);
+    }
+  else sc->envir = s7_global_environment(sc);
   
   fname = s7_string(name);
   
@@ -9855,14 +9887,6 @@ defaults to the global environment.  To load into the current environment instea
   port = load_file(sc, fp, fname);
   port_file_number(port) = remember_file_name(fname);
   push_input_port(sc, port);
-
-  if (cdr(args) != sc->NIL) 
-    {
-      if (!is_environment(sc, cadr(args)))
-	return(s7_wrong_type_arg_error(sc, "load", 2, cadr(args), "an environment"));
-      sc->envir = cadr(args);
-    }
-  else sc->envir = s7_global_environment(sc);
 
   push_stack(sc, opcode(OP_LOAD_CLOSE_AND_POP_IF_EOF), sc->NIL, sc->NIL);  /* was pushing args and code, but I don't think they're used later */
   push_stack(sc, opcode(OP_READ_INTERNAL), sc->NIL, sc->NIL);
@@ -10156,14 +10180,15 @@ static void write_string(s7_scheme *sc, const char *s, s7_pointer pt)
 }
 
 
-static char *slashify_string(const char *p)
+static char *slashify_string(const char *p, int len)
 {
-  int i, j = 0, len;
+  int i, j = 0;
   char *s;
-  len = safe_strlen(p);
+
   s = (char *)calloc(len + 256, sizeof(char));
-  
+  /* this can be non-null even if there's not enough memory, but I think I'll check in the caller */
   s[j++] = '"';
+
   for (i = 0; i < len; i++) 
     {
       if (slashify_table[(int)p[i]])
@@ -10266,9 +10291,16 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     case T_STRING:
       if (string_length(obj) > 0)
 	{
+	  /* if string_length is enormous, this can cause an eventual segfault.
+	   * for now, print enough chars to make anyone happy
+	   */
+	  int len;
+	  len = string_length(obj);
+	  if (len > (1 << 24))
+	    len = (1 << 24);
 	  if (!use_write) 
-	    return(copy_string_with_len(string_value(obj), string_length(obj)));
-	  return(slashify_string(string_value(obj)));
+	    return(copy_string_with_len(string_value(obj), len));
+	  return(slashify_string(string_value(obj), len));
 	}
       if (!use_write)
 	return(NULL);
@@ -12728,6 +12760,7 @@ is a multidimensional vector, you can also use (vector-ref v ...) where the trai
 are the indices, or omit 'vector-ref': (v ...)."
 
   s7_pointer vec;
+
   vec = car(args);
   if (!s7_is_vector(vec))
     return(s7_wrong_type_arg_error(sc, "vector-ref", 1, vec, "a vector"));
@@ -16612,6 +16645,10 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  if (sc->trace_depth < 0) sc->trace_depth = 0;
 	  break;
 
+	  /* perhaps also OP_LOAD_CLOSE_AND_POP_IF_EOF 
+	   *  currently an error during a nested load stops all loads
+	   */
+
 	case OP_ERROR_HOOK_QUIT:
 	  s7_symbol_set_value(sc, sc->ERROR_HOOK, stack_code(sc->stack, i));
 	  /* apparently there was an error during *error-hook* evaluation, but Rick wants the hook re-established anyway */
@@ -19246,6 +19283,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	case T_VECTOR:                            /* -------- vector as applicable object -------- */
 	  /* sc->code is the vector, sc->args is the list of dimensions */
+	  if (sc->args == sc->NIL)                            /* (#2d((1 2) (3 4))) */
+	    return(s7_wrong_number_of_args_error(sc, "not enough args for vector-ref: ~A", sc->args));
+
 	  sc->value = vector_ref_1(sc, sc->code, sc->args);
 	  pop_stack(sc);
 	  goto START;
@@ -20352,6 +20392,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       pop_stack(sc);
       goto START;
       
+
+    case OP_DEACTIVATE_GOTO:
+      (sc->args)->object.goto_loc = INVALID_GOTO;
+      pop_stack(sc);
+      goto START;
+
 
     case OP_TRACE_HOOK_QUIT:
       goto APPLY_WITHOUT_TRACE;
