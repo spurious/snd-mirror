@@ -2212,7 +2212,7 @@ floats in the "~X" case.  So in s7,
 </pre>
 
 <p>I added object-&gt;string before deciding to include format; it's no longer very useful.  Similarly,
-string-&gt;list can be replaced by map, and list-&gt;string by string (using apply).
+string-&gt;list is <code>(map values string)</code>, and list-&gt;string <code>(apply string list)</code>.
 </p>
 
 </dd>

@@ -8566,15 +8566,14 @@ static void mus_locsig_fill(mus_float_t *arr, int chans, mus_float_t degree, mus
     {
       mus_float_t deg, pos, frac, degs_per_chan, ldeg, c, s;
       int left, right;
-      if (degree < 0.0)
-	{
-	  /* sigh -- hope for the best... */
-	  int m;
-	  m = (int)ceil(degree / -360.0);
-	  degree += (360 * m);
-	}
+      /* this used to check for degree < 0.0 first, but as Michael Klingbeil noticed, that
+       *   means that in the stereo case, the location can jump to 90 => click.  It was also
+       *   possible for a negative degree to leak through, causing a segfault in the Scheme
+       *   version if "run" was in use.
+       */
       if (chans == 2)
 	{
+	  /* there's no notion of a circle of speakers here, so we don't have to equate, for example, -90 and 270 */
 	  if (degree > 90.0)
 	    deg = 90.0;
 	  else
@@ -8588,6 +8587,7 @@ static void mus_locsig_fill(mus_float_t *arr, int chans, mus_float_t degree, mus
       else 
 	{
 	  deg = fmod(degree, 360.0);
+	  if (deg < 0.0) deg += 360.0;              /* C's fmod can return negative results when modulus is positive */
 	  degs_per_chan = 360.0 / chans;
 	}
       pos = deg / degs_per_chan;

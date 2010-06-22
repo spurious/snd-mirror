@@ -13803,6 +13803,10 @@ who says the continuation has to restart the map from the top?
 (test ((((values append) begin) object->string) car) "car")
 (test ((((((values and) or) append) begin) object->string) car) "car")
 (test (((((((values values) and) or) append) begin) object->string) car) "car")
+(test (((lambda case lcm))) 1)
+(test (((lambda let* *))) 1)
+(test ((((eval lambda) lcm gcd))) 0)
+(test (((append s7-version)) 0) #\s)
 
 (test (+ (+) (*)) 1)
 (test (modulo (lcm) (gcd)) 1)
@@ -13824,8 +13828,11 @@ who says the continuation has to restart the map from the top?
 (test ((or and) #f #t) #f)
 (test ((and or) #f #t) #t)
 (test (or (or) (and)) #t)
-(test ((car ((1 2) (3 4))) 0) 1)
+(test ((car '((1 2) (3 4))) 0) 1)
 (test ((or apply) lcm) 1)
+(test (- ((or *))) -1)
+(test ((car (list lcm))) 1)
+(test ((or (cond (lcm)))) 1)
 
 (test ((call-with-exit object->string) 0) #\#) ; #<goto>
 (test ((begin begin) 1) 1)
@@ -13835,6 +13842,7 @@ who says the continuation has to restart the map from the top?
 (test (list? or) #f)
 (test (pair? define) #f)
 (test (number? lambda*) #f)
+(test ((s7-version) (rationalize 0)) #\s)
 
 (test (let () (define (hi cond) (+ cond 1)) (hi 2)) 3)
 (test (let () (define* (hi (cond 1)) (+ cond 1)) (hi 2)) 3)
@@ -13846,7 +13854,7 @@ who says the continuation has to restart the map from the top?
 (test (let () (define (hi abs) (+ abs 1)) (hi 2)) 3)
 (test (let () (define (hi if) (+ if 1)) (hi 2)) 3)
 (test (let () (define* (hi (lambda 1)) (+ lambda 1)) (hi)) 2)
-
+(test (((lambda #\newline gcd))) 'error)
 
 
 
