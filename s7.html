@@ -799,8 +799,7 @@ something a macro can do for us:
     (mac a))
 </pre>
 <p>which returns 13 as expected.
-If you just want to make sure your macro arguments don't get captured
-(how often does anyone actually redefine "+"?),
+If you just want to make sure your macro arguments don't get captured,
 use lambda:
 </p>
 <pre>
@@ -810,7 +809,55 @@ use lambda:
 	(+ a b)))
     ,a))
 </pre>
+<p>We can make such a macro "clean" by hand with procedure-environment (discussed below):
+</p>
 
+<pre>
+(define-macro (mac a)
+  `((with-environment (procedure-environment mac)
+      (lambda (b) 
+	(let ((a 12))
+	  (+ a b)))) ; '+ here is the definition-time '+
+    ,a))
+
+&gt; (let ((a 21) (+ *)) (mac a))
+33
+</pre>
+
+<p>The procedure-environment of a macro is the environment at its definition time (just like a function).
+By wrapping the macro body in with-environment, we make sure anything in that body reflects 
+the definition environment, not the calling environment.
+It's possible to make a clean macro using augment-environment and current-environment:
+</p>
+
+<pre>
+(define-macro (mac b)
+  (let ((callenv (gensym)))
+    `(with-environment 
+      (augment-environment (procedure-environment mac) 
+	(cons ',callenv (current-environment)))
+      ;; we wrap the body in the definition-time env, but add a name ("callenv")
+      ;;   so we can get at the current-environment within that wrapper.
+      (let ((a 12))
+	(+ (with-environment ,callenv ,b) ; b now refers to the call-time b
+	   a)))))
+
+&gt; (let ((a 21) (+ *)) (mac a))
+33
+
+;; here the expanded code is 
+
+(let ((a 21) (+ *))
+  (with-environment 
+    (augment-environment (procedure-environment mac) 
+    (cons 'gensym-51 (current-environment))) 
+  (let ((a 12)) 
+    (+ (with-environment gensym-51 a) ; the outer 'a, definition-time '+
+       a)))                           ; the local 'a
+</pre>
+
+<p>I got bogged down trying to automate this.  Maybe tomorrow!
+</p>
 </blockquote>
 </small>
 
@@ -3137,7 +3184,23 @@ bind it to something else, which is asking for confusion).
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>Schemes vary in their treatment of ().  s7 considers it a constant that evaluates to itself,
-so you rarely (never?) need to quote it.  <code>(eq? () '())</code> is #t.
+so you rarely need to quote it.  <code>(eq? () '())</code> is #t.
+This is consistent with, for example,
+<code>(eq? #f '#f)</code> which is also #t.
+The standard says "the empty list is a special object of its own type", so surely either choice is
+acceptable in that regard.  One place where the quote matters is in a case statement (the selector is
+evaluated but the key is not):
+<pre>
+&gt; (case '() ((()) 2) (else 1))
+2
+&gt; (case '() (('()) 2) (else 1)) ; (eqv? '() ''()) is #f
+1
+;;; which parallels #f (or a number such as 2 etc):
+&gt; (case '#f ((#f) 2) (else 1))
+2
+&gt; (case '#f (('#f) 2) (else 1)) ; (eqv? '#f ''#f) is #f
+1
+</pre>
 </p>
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>

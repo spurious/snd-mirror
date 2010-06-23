@@ -318,6 +318,18 @@
 (test (eq? '()(list)) #t)
 (test (eq? '() (list)) #t)
 
+(test (eq? ''2 '2) #f)
+(test (eq? '2 '2) #t)
+(test (eq? '2 2) #t)
+(test (eq? ''2 ''2) #f)
+(test (eq? ''#\a '#\a) #f)
+(test (eq? '#\a #\a) #f) ; the only difference with eqv?
+(test (eq? 'car car) #f)
+(test (eq? '() ()) #t)
+(test (eq? ''() '()) #f)
+(test (eq? '#f #f) #t)
+(test (eq? '#f '#f) #t)
+
 (display ";this should display #t: ")
 (begin #| ; |# (display #t))
 (newline)
@@ -428,6 +440,20 @@
 (test (eqv?) 'error)
 (test (eqv? #t) 'error)
 (test (eqv? #t #t #t) 'error)
+
+(test (eqv? ''2 '2) #f)
+(test (eqv? '2 '2) #t)
+(test (eqv? '2 2) #t)
+(test (eqv? ''2 ''2) #f)
+(test (eqv? ''#\a '#\a) #f)
+(test (eqv? '#\a #\a) #t)
+(test (eqv? 'car car) #f)
+(test (eqv? '() ()) #t)
+(test (eqv? ''() '()) #f)
+(test (eqv? '#f #f) #t)
+(test (eqv? '#f '#f) #t)
+
+
 
 
 (test (equal? 'a 3) #f)
@@ -8399,7 +8425,21 @@
 (test (let ((x 1)) (case x (('x) "hi") (else "ho"))) "ho")
 (test (let ((x 1)) (case 'x ((x) "hi") (else "ho"))) "hi")
 (test (case '() ((()) 1)) 1)
-;;; but not (case #() ((#()) 1)) ?
+;;; but not (case #() ((#()) 1)) because (eqv? #() #()) is #f
+
+(test (case '() ((()) 2) (else 1)) 2)    ; car: (), value: (), eqv: 1, null: 1 1
+(test (case '() (('()) 2) (else 1)) 1)   ; car: (quote ()), value: (), eqv: 0, null: 0 1
+(test (case () (('()) 2) (else 1)) 1)    ; car: (quote ()), value: (), eqv: 0, null: 0 1
+(test (case () ((()) 2) (else 1)) 2)     ; car: (), value: (), eqv: 1, null: 1 1
+
+;;; this is a difference between '() and () ?
+;;; (eqv? '() '()) -> #t and (eqv? '() ()) is #t so it's the lack of evaluation in the search case whereas the index is evaluated
+;;; equivalent to:
+ 
+(test (case 2 (('2) 3) (else 1)) 1)      ; car: (quote 2), value: 2, eqv: 0, null: 0 0
+(test (case '2 (('2) 3) (else 1)) 1)     ; car: (quote 2), value: 2, eqv: 0, null: 0 0
+(test (case '2 ((2) 3) (else 1)) 3)      ; car: 2, value: 2, eqv: 1, null: 0 0
+(test (case 2 ((2) 3) (else 1)) 3)       ; car: 2, value: 2, eqv: 1, null: 0 0
 
 (test (let ((x 1)) (case (+ 1 x) ((0 "hi" #f) 3/4) ((#\a 1+3i '(1 . 2)) "3") ((-1 'hi 2 2.0) #\f))) #\f)
 (test (case (case 1 ((0 2) 3) (else 2)) ((0 1) 2) ((4 2) 3) (else 45)) 3)
@@ -9193,7 +9233,8 @@
 
 (test (let ((x 1)) (let ((x 32) (y x)) y)) 1)
 (test (let ((x 1)) (letrec ((y (if #f x 1)) (x 32)) 1)) 1)
-(test (let ((x 1)) (letrec ((y (lambda () (+ 1 x))) (x 32)) (y))) 33) ; good grief! -- (let ((x 1)) (letrec ((y (* 0 x)) (x 32)) y))
+(test (let ((x 1)) (letrec ((y (lambda () (+ 1 x))) (x 32)) (y))) 33) 
+(test (let ((x 1)) (letrec ((y (* 0 x)) (x 32)) y)) 'error)
 (test (let* ((x 1) (f (letrec ((y (lambda () (+ 1 x))) (x 32)) y))) (f)) 33)
 (test (letrec ((x 1) (y (let ((x 2)) x))) (+ x y)) 3)
 (test (letrec ((f (lambda () (+ x 3))) (x 2)) (f)) 5)
@@ -9580,17 +9621,39 @@
 		(y x))
 	       y)
       5)
+(test (letrec ((p (lambda (x)
+		     (+ 1 (q (- x 1)))))
+		(q (lambda (y)
+		     (if (zero? y)
+			 0
+			 (+ 1 (p (- y 1))))))
+		(x (p 5))
+		(y x))
+	       y)
+      'error)
+(test (let* ((p (lambda (x)
+		     (+ 1 (q (- x 1)))))
+		(q (lambda (y)
+		     (if (zero? y)
+			 0
+			 (+ 1 (p (- y 1))))))
+		(x (p 5))
+		(y x))
+	       y)
+      'error)
 
 (test (let ((x 1) ((y 2))) x) 'error)
 (test (let ((x 1 2 3)) x) 'error)
 (test (let ((+ 1 2)) 2) 'error)
 (test (let* ((x 1 2)) x) 'error)
 (test (letrec ((x 1 2)) x) 'error)
+(test (letrec* ((x 1 2)) x) 'error)
 (test (let ((x 1 . 2)) x) 'error)
 (test (let ((x 1 , 2)) x) 'error)
 (test (let ((x . 1)) x) 'error)
 (test (let* ((x . 1)) x) 'error)
 (test (letrec ((x . 1)) x) 'error)
+(test (letrec* ((x . 1)) x) 'error)
 (test (let hi ()) 'error)
 
 (test (let . 1) 'error)
@@ -9605,12 +9668,15 @@
 (test (let* ((x 1))) 'error)
 (test (let ((x 1)) (letrec ((x 32) (y x)) (+ 1 y))) 'error) ; #<unspecified> seems reasonable if not the 1+ 
 (test (let ((x 1)) (letrec ((y x) (x 32)) (+ 1 y))) 'error)
-					;(test (let ((x 1)) (letrec ((y x) (x 32)) 1)) 'error)       ; Guile is perverse... s7 returns 1 here
+					;(test (let ((x 1)) (letrec ((y x) (x 32)) 1)) 'error)
 (test (let ((x 1)) (letrec ((y (let () (+ x 1))) (x 32)) (+ 1 y))) 'error)
 (test (let ((x 1)) (letrec ((y (let ((xx (+ x 1))) xx)) (x 32)) (+ 1 y))) 'error)
 					;(test (let ((x 32)) (letrec ((y (apply list `(* ,x 2))) (x 1)) y)) 'error)
 (test (letrec) 'error)
+(test (letrec*) 'error)
 (test (let ((x . 1)) x) 'error)
+(test (letrec* ((and #2D((1 2) (3 4)) 3/4))) 'error)
+(test (letrec* ((hi "" #\a))) 'error)
 
 (test (let (((x 1)) 2) 3) 'error)
 (test (let ((#f 1)) #f) 'error)
@@ -9628,6 +9694,7 @@
 ;; what about: (let ('1 ) quote) -> 1
 (test (let* func ((a 1)) a) 'error)
 (test (letrec func ((a 1)) a) 'error)
+(test (letrec* func ((a 1)) a) 'error)
 
 (test (let ((1 3)) 3) 'error)
 (test (let ((#t 3)) 3) 'error)
@@ -9665,6 +9732,7 @@
 (test (let __hi__ #t) 'error)
 (test (let* hi () 1) 'error)
 (test (letrec (1 2) #t) 'error)
+(test (letrec* (1 2) #t) 'error)
 
 ;;; these ought to work, but see s7.c under EVAL: (it's a speed issue)
 ;(test (let let ((i 0)) (if (< i 3) (let (+ i 1)) i)) 3)
@@ -9724,6 +9792,7 @@
 	      (set-cdr! (cdr lst) lst)
 	      (loop (cdr lst) (+ i 1) (+ sum (car lst))))))
       16)
+
 
 
 
@@ -12790,6 +12859,8 @@ who says the continuation has to restart the map from the top?
       (test (+ hi 1) 33))
     (letrec ((hi (lambda (a) (if (= a 0) 0 (+ 2 (hi (- a 1)))))))
       (test (hi 3) 6))
+    (letrec* ((hi (lambda (a) (if (= a 0) 0 (+ 2 (hi (- a 1)))))))
+      (test (hi 3) 6))
     (test (equal? '(hi 1) (quote (hi 1))) #t)
     (test (list? '(hi 1)) #t)
     (test (list? '(((hi 1)))) #t)
@@ -13837,6 +13908,7 @@ who says the continuation has to restart the map from the top?
 (test ((car (list lcm))) 1)
 (test ((or (cond (lcm)))) 1)
 (test ((cond (asin floor *))) 1)
+(test (logior (#(1 #\a (3)) 0) (truncate 1.5)) 1)
 
 (test ((call-with-exit object->string) 0) #\#) ; #<goto>
 (test ((begin begin) 1) 1)

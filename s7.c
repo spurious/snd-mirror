@@ -13876,10 +13876,10 @@ static s7_pointer g_procedure_environment(s7_scheme *sc, s7_pointer args)
   if (s7_is_symbol(car(args)))
     p = s7_symbol_value(sc, car(args));
   else p = car(args);
-  if (!is_procedure(p))
-    return(s7_wrong_type_arg_error(sc, "procedure-environment", 0, p, "a procedure"));
+  if ((!is_procedure(p)) && (!is_macro(p)))
+    return(s7_wrong_type_arg_error(sc, "procedure-environment", 0, p, "a procedure or a macro"));
 
-  if (is_closure(p) || is_closure_star(p))
+  if (is_closure(p) || is_closure_star(p) || (is_macro(p)))
     return(closure_environment(p));
   return(sc->global_env);
 }
@@ -20198,7 +20198,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_MACRO1:
       /* symbol? macro name has already been checked */
       set_type(sc->value, T_MACRO | T_ANY_MACRO | T_DONT_COPY_CDR | T_DONT_COPY);
-      
+
       /* find name in environment, and define it */
       sc->x = find_local_symbol(sc, sc->envir, sc->code); 
       if (sc->x != sc->NIL) 
@@ -20401,6 +20401,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *              (case 1 ((1)) 1 . 2)
 	   *              (case () ((())))
 	   *              (case 1 ((2 2 2) 1)): guile says #<unspecified>
+	   */
+
+	  /* the selector (sc->value) is evaluated, but the search key is not, so we get weird
+	   *    results:
+	   *    (case '2 ((2) 3) (else 1)) -> 3
+	   *    (case '2 (('2) 3) (else 1)) -> 1
+	   * this affects '() in the same way, so it's one place in s7 where '() is not the same as () even though
+	   *    (eqv? () '()) -> #t
+	   *    (eqv? ''2 '2) -> #f and (eqv? '2 2) -> #t whereas (eqv? ''hi 'hi) -> #f
+	   *    (eqv? 'car car) -> #f and (eqv? '#\a #\a) -> #t and (eqv? ''#\a '#\a) -> #f
 	   */
 
 	  if (s7_is_eqv(car(sc->y), sc->value)) 
@@ -26252,14 +26262,18 @@ s7_scheme *s7_init(void)
   s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, "quasiquote");
 
 
-  s7_eval_c_string(sc, "(define-macro (letrec* bindings . body)                   \n\
-                          `(let (,@(map (lambda (var&init)                        \n\
-                                          (list (car var&init) #f))               \n\
-                                        bindings))                                \n\
-                            ,@(map (lambda (var&init)                             \n\
-                                     (list 'set! (car var&init) (cadr var&init))) \n\
-                                    bindings)                                     \n\
-                            ,@body))");
+  s7_eval_c_string(sc, "(define-macro (letrec* bindings . body)                        \n\
+                          (if (null? body)                                             \n\
+                              (error 'syntax-error \"letrec* has no body\")            \n\
+                               `(let (,@(map (lambda (var&init)                        \n\
+                                               (list (car var&init) #<undefined>))     \n\
+                                             bindings))                                \n\
+                                 ,@(map (lambda (var&init)                             \n\
+                                          (if (not (null? (cddr var&init)))            \n\
+                                              (error 'syntax-error \"letrec* variable has more than one value\")) \n\
+                                          (list 'set! (car var&init) (cadr var&init))) \n\
+                                         bindings)                                     \n\
+                                 ,@body)))");
 
 
   /* call-with-values is almost a no-op in this context */
