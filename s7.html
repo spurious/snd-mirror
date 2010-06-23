@@ -261,6 +261,9 @@ radix is greater than 10.
 <p>Perhaps s7 should use "@"!
 </p>
 
+
+<!-- --------------------------------------------------------------------------------
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
@@ -274,9 +277,13 @@ otherwise "rational?" is the same as "real?":
 #t
 </pre>
 
-<p>Did "inexact" originally mean "floating point"?  So 0.0 becomes an "inexact" integer (although it can be represented exactly in floating
+<p>"Inexact" originally meant "floating point", and "exact" meant integer or ratio of integers
+(W Clinger and MIT Scheme have articles about this).  That's the way it is in s7; uncontroversial and pointless.
+As you can see in later Scheme standards, 
+words have a life of their own.
+0.0 somehow became an "inexact" integer (although it can be represented exactly in floating
 point).  
-+inf.0 is an integer &mdash;
++inf.0 must be an integer &mdash;
 its fractional part is explicitly zero!  But +nan.0... 
 And then there's:
 </p>
@@ -287,19 +294,19 @@ And then there's:
 <p>
 When does this matter?  I often need to index into a vector, but the index is a float (a "real" in Scheme-speak: its
 fractional part can be non-zero).
-In standard scheme:
+In one scheme:
 </p>
 <pre>
 (not-s7-scheme)&gt; (vector-ref #(0) (floor 0.1))
-ERROR: Wrong type (expecting exact integer): 0.0   ; [why?]
+ERROR: Wrong type (expecting exact integer): 0.0   ; [why?  "it's probably a programmer mistake"!]
 </pre>
 <p>Not to worry, I'll use inexact-&gt;exact:
 </p>
 <pre>
-(not-s7-scheme)&gt; (inexact-&gt;exact 0.1)
+(not-s7-scheme)&gt; (inexact-&gt;exact 0.1)              ; [why? "floats are ratios"!]
 3602879701896397/36028797018963968
 </pre>
-<p>So I end up using the verbose <code>(inexact-&gt;exact (floor ...))</code> everywhere, and even
+<p>So I end up using the verbose <code>(floor (inexact-&gt;exact ...))</code> everywhere, and even
 then I have no guarantee that I'll get a legal vector index.
 When I started work on s7, I thought perhaps
 "exact" could mean "is represented exactly in the computer".  We'd have integers and ratios exact; 
@@ -311,10 +318,9 @@ That is, if the programmer uses 1 or if the thing prints as 1, it is the integer
 means floating point (not integer!).
 And to keep exactness in view, we'd have
 to monitor which operations introduce inexactness &mdash; a kind of interval arithmetic.
-But then what would inexact-&gt;exact do? 
-I may remove the exact/inexact distinction from s7.  The only useful part is
-exact-&gt;inexact, but perhaps a better name would be "float".  Then if 
-you have to run code that uses those guys:
+But then what would inexact-&gt;exact do?  
+My conclusion: get rid of the exact/inexact distinction altogether (I haven't actually done this yet).
+Then, if you needed to run code from some other Scheme, you could use:
 </p>
 <pre>
     (define exact? rational?)
@@ -322,7 +328,7 @@ you have to run code that uses those guys:
     (define inexact-&gt;exact rationalize) ; or floor
     (define (exact-&gt;inexact x) (* x 1.0))
 </pre>
-<p>I'd also remove #i and #e &mdash; they're already useless because you can
+<p>#i and #e are also useless because you can
 have any number after, for example, #b:
 </p>
 <pre>
@@ -333,7 +339,7 @@ have any number after, for example, #b:
     &gt; #o17.5+i
     15.625+1i
 </pre>
-
+-------------------------------------------------------------------------------- -->
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>

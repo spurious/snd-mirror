@@ -1894,6 +1894,8 @@ static s7_pointer g_symbol_table(s7_scheme *sc, s7_pointer args)
   return(sc->symbol_table);
 }
 
+/* (vector-fill! (symbol-table) #()) leads to a segfault, but should we write-protect it? */
+
 
 void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, void *data), void *data)
 {
@@ -8072,7 +8074,6 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
   #define H_random "(random num :optional state) returns a random number between 0 and num (0 if num=0)."
   s7_pointer num, state;
   s7_rng_t *r;
-  double dnum;
   
   num = car(args);
   if (!s7_is_number(num))
@@ -8097,26 +8098,24 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
     }
   else r = s7_default_rng(sc);
 
-  dnum = s7_number_to_real(num);
-
   switch (number_type(num))
     {
     case NUM_INT:
-      return(s7_make_integer(sc, (s7_Int)(dnum * next_random(r))));
+      return(s7_make_integer(sc, (s7_Int)(s7_integer(num) * next_random(r))));
 
     case NUM_RATIO:
       {
 	s7_Int numer = 0, denom = 1;
-	c_rationalize(dnum * next_random(r), 1e-6, &numer, &denom);
+	c_rationalize(s7_number_to_real(num) * next_random(r), 1e-6, &numer, &denom);
 	return(s7_make_ratio(sc, numer, denom));
       }
 
     case NUM_REAL:
     case NUM_REAL2:
-      return(s7_make_real(sc, dnum * next_random(r)));
+      return(s7_make_real(sc, s7_real(num) * next_random(r)));
 
     default: 
-      return(s7_make_complex(sc, dnum * next_random(r), dnum * next_random(r)));
+      return(s7_make_complex(sc, s7_real_part(num) * next_random(r), s7_imag_part(num) * next_random(r)));
     }
 
   return(sc->F);

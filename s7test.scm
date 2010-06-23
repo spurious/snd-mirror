@@ -10641,6 +10641,8 @@ who says the continuation has to restart the map from the top?
 (test (procedure? (car (call-with-exit list))) #t)
 (test (call-with-exit (call-with-exit append)) 'error)
 (test (continuation? (call/cc (call/cc append))) #t)
+(test (procedure? (call-with-exit call-with-exit)) #t)
+(test (call-with-exit ((lambda args procedure?))) #t)
 
 (test (let ((c1 #f)) (call-with-exit (lambda (c2) (call-with-exit (lambda (c3) (set! c1 c3) (c2))))) (c1)) 'error)
 (test (let ((c1 #f)) (call/cc (lambda (c2) (call-with-exit (lambda (c3) (set! c1 c3) (c2))))) (c1)) 'error)
@@ -13044,6 +13046,7 @@ who says the continuation has to restart the map from the top?
 	(test (copy (float-vector 1.0 2.0 3.0)) (float-vector 1.0 2.0 3.0))
 	(test (let () (fill! v 1.0) v) (float-vector 1.0 1.0 1.0))
 	(test (object->string v) "#<float-vector #(1.0 1.0 1.0)>")
+	(test (let ((v (float-vector 1.0 2.0 3.0))) (map v (list 2 1 0))) '(3.0 2.0 1.0))
 	(test (let ((sum 0.0))
 		(for-each
 		 (lambda (x)
@@ -13791,7 +13794,7 @@ who says the continuation has to restart the map from the top?
 (test (stacktrace #(23)) 'error)
 
 
-;;; -------- miscellaneous
+;;; -------- miscellaneous (i.e. amusements)
 
 (test ((number->string -1) 0) #\-)
 (test ((reverse '(1 2)) 0) 2)
@@ -13833,6 +13836,7 @@ who says the continuation has to restart the map from the top?
 (test (- ((or *))) -1)
 (test ((car (list lcm))) 1)
 (test ((or (cond (lcm)))) 1)
+(test ((cond (asin floor *))) 1)
 
 (test ((call-with-exit object->string) 0) #\#) ; #<goto>
 (test ((begin begin) 1) 1)
@@ -13843,6 +13847,11 @@ who says the continuation has to restart the map from the top?
 (test (pair? define) #f)
 (test (number? lambda*) #f)
 (test ((s7-version) (rationalize 0)) #\s)
+(test (cond (((values '(1 2) '(3 4)) 0 0))) 1)
+(test (cond ((apply < '(1 2)))) #t)
+(test (dynamic-wind lcm gcd *) 'error)
+(test ((lambda (let) (+)) 0) 0)
+(test (case 0 ((< 0 1) 32)) 32)
 
 (test (let () (define (hi cond) (+ cond 1)) (hi 2)) 3)
 (test (let () (define* (hi (cond 1)) (+ cond 1)) (hi 2)) 3)
@@ -46247,7 +46256,6 @@ who says the continuation has to restart the map from the top?
 	    (> vr 400))
 	(format #t "(random 100) not so random? ~A~%" vr)))
   
-  ;; this assumes random can take a fraction
   (let ((vr (v 1000 
 	       1/2
 	       (lambda (val)
@@ -46268,7 +46276,63 @@ who says the continuation has to restart the map from the top?
 	    (> vr 400))
 	(format #t "(random -10.0) not so random? ~A~%" vr)))
   
-  ;; this assumes random can take a complex arg
+  (let ((imax 0.0)
+	(rmax 0.0)
+	(imin 100.0)
+	(rmin 100.0))
+    (do ((i 0 (+ i 1)))
+	((= i 100))
+      (let ((val (random 1+i)))
+	(set! imax (max imax (imag-part val)))
+	(set! imin (min imin (imag-part val)))
+	(set! rmax (max rmax (real-part val)))
+	(set! rmin (min rmin (real-part val)))))
+    (if (or (> imax 1.0)
+	    (< imin 0.0)
+	    (> rmax 1.0)
+	    (< rmin 0.0)
+	    (< rmax 0.001)
+	    (< imax 0.001))
+	(format #t "(random 1+i): ~A ~A ~A ~A~%" rmin rmax imin imax)))
+	
+  (let ((imax 0.0)
+	(rmax 0.0)
+	(imin 100.0)
+	(rmin 100.0))
+    (do ((i 0 (+ i 1)))
+	((= i 100))
+      (let ((val (random 0+i)))
+	(set! imax (max imax (imag-part val)))
+	(set! imin (min imin (imag-part val)))
+	(set! rmax (max rmax (real-part val)))
+	(set! rmin (min rmin (real-part val)))))
+    (if (or (> imax 1.0)
+	    (< imin 0.0)
+	    (> rmax 0.0)
+	    (< rmin 0.0)
+	    (< imax 0.001))
+	(format #t "(random 0+i): ~A ~A ~A ~A~%" rmin rmax imin imax)))
+	
+  (let ((imax 0.0)
+	(rmax 0.0)
+	(imin 100.0)
+	(rmin 100.0))
+    (do ((i 0 (+ i 1)))
+	((= i 100))
+      (let ((val (random 10.0+100.0i)))
+	(set! imax (max imax (imag-part val)))
+	(set! imin (min imin (imag-part val)))
+	(set! rmax (max rmax (real-part val)))
+	(set! rmin (min rmin (real-part val)))))
+    (if (or (> imax 100.0)
+	    (< imin 0.0)
+	    (> rmax 10.0)
+	    (< rmin 0.0)
+	    (< imax 0.1)
+	    (< rmax 0.01))
+	(format #t "(random 100+10i): ~A ~A ~A ~A~%" rmin rmax imin imax)))
+	
+  
   (do ((i 0 (+ i 1)))
       ((= i 100))
     (let ((val (random 1.0+1.0i)))
