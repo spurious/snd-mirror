@@ -2397,7 +2397,9 @@
 (test (string->symbol "1+") '1+)
 (test (string->symbol "1+i") 'error)
 (test (string->symbol ":0") ':0)
-(test (symbol->string (string->symbol "")) "")
+;(test (symbol->string (string->symbol "")) "")
+(test (string->symbol (string)) 'error)
+(test (string->symbol "") 'error)
 
 (test (reinvert 12 string->symbol symbol->string "hiho") "hiho")
 
@@ -4409,8 +4411,21 @@
 (test (call/cc (lambda (return) (map (lambda (n) (return "oops")) (vector 1 2 3)))) "oops")
 (test (call/cc (lambda (return) (map (lambda (n) (if (even? n) (return n))) (vector 1 3 8 7 9 10)))) 8)
 
+
 (test (vector? (symbol-table)) #t)
 (test (symbol? (((symbol-table) 0) 0)) #t)
+(let ((old-table (symbol-table))
+      (old-list ((symbol-table) 0)))
+  ;; try to clobber it...
+  (vector-fill! (symbol-table) #())
+  (set! ((symbol-table) 0) 1)
+  (test (list? ((symbol-table) 0)) #t)
+  (test (symbol? (((symbol-table) 0) 0)) #t)
+  (test (sort! (symbol-table) <) 'error)
+  (test (equal? old-list ((symbol-table) 0)) #t)
+  (test (vector? (sort! (symbol-table) (lambda (a b) (< (length a) (length b))))) #t)
+  (test (equal? old-list ((symbol-table) 0)) #t))
+
 
 (let ((v (make-vector 3 (vector 1 2))))
   (test (equal? (v 0) (v 1)) #t)
@@ -8492,6 +8507,12 @@
 (test (case 1 (2 1) (1 1)) 'error)
 (test (case 1 (else)) 'error)
 (test (case () ((1 . 2) . 1) . 1) 'error)
+(test (case 1 ((1))) 'error)
+(test (case 1 ((else))) 'error)
+(test (case 1 ((2) 3) ((1))) 'error)
+(test (case 1 ((1)) 1 . 2) 'error)
+(test (case () ((()))) 'error)
+
 (test (case case ((case) 1) ((cond) 3)) 1)
 (test (case 101 ((0 1 2) 200) ((3 4 5 6) 600) ((7) 700) ((8) 800) ((9 10 11 12 13) 1300) ((14 15 16) 1600) ((17 18 19 20) 2000) ((21 22 23 24 25) 2500) ((26 27 28 29) 2900) ((30 31 32) 3200) ((33 34 35) 3500) ((36 37 38 39) 3900) ((40) 4000) ((41 42) 4200) ((43) 4300) ((44 45 46) 4600) ((47 48 49 50 51) 5100) ((52 53 54) 5400) ((55) 5500) ((56 57) 5700) ((58 59 60) 6000) ((61 62) 6200) ((63 64 65) 6500) ((66 67 68 69) 6900) ((70 71 72 73) 7300) ((74 75 76 77) 7700) ((78 79 80) 8000) ((81) 8100) ((82 83) 8300) ((84 85 86 87) 8700) ((88 89 90 91 92) 9200) ((93 94 95) 9500) ((96 97 98) 9800) ((99) 9900) ((100 101 102) 10200) ((103 104 105 106 107) 10700) ((108 109) 10900) ((110 111) 11100) ((112 113 114 115) 11500) ((116) 11600) ((117) 11700) ((118) 11800) ((119 120) 12000) ((121 122 123 124 125) 12500) ((126 127) 12700) ((128) 12800) ((129 130) 13000) ((131 132) 13200) ((133 134 135 136) 13600) ((137 138) 13800)) 10200)
 (test (case most-positive-fixnum ((-1231234) 0) ((9223372036854775807) 1) (else 2)) 1)
@@ -9872,6 +9893,48 @@
     (if (= x 23)
 	(c3 8))
     (test (list x x0 x1 x2 x3) '(27 15 19 23 27))))
+
+(let ((c1 #f) (c2 #f) (c3 #f) (x0 0) (x1 0) (x2 0) (x3 0) (y1 0) (z0 0) (z1 0) (z2 0) (z3 0))
+  (let* ((y 101)
+	 (x (+ y 
+	      (call/cc
+	       (lambda (r1)
+		 (set! c1 r1)
+		 (r1 2)))
+	      (call/cc
+	       (lambda (r2)
+		 (set! c2 r2)
+		 (r2 3)))
+	      (call/cc
+	       (lambda (r3)
+		 (set! c3 r3)
+		 (r3 4)))
+	      5))
+	 (z (+ x y)))
+    (set! y1 y)
+    (if (= x0 0) 
+	(begin
+	  (set! x0 x)
+	  (set! z0 z))
+	(if (= x1 0)
+	    (begin
+	      (set! x1 x)
+	      (set! z1 z))
+	    (if (= x2 0)
+		(begin
+		  (set! x2 x)
+		  (set! z2 z))
+		(if (= x3 0)
+		    (begin
+		      (set! x3 x)
+		      (set! z3 z))))))
+    (if (= x 115)
+	(c1 6))
+    (if (= x 119)
+	(c2 7))
+    (if (= x 123)
+	(c3 8))
+    (test (list x x0 x1 x2 x3 y1 z0 z1 z2 z3) '(127 115 119 123 127 101 216 220 224 228))))
 
 (let ((c1 #f)
       (c2 #f)
@@ -13909,6 +13972,13 @@ who says the continuation has to restart the map from the top?
 (test ((or (cond (lcm)))) 1)
 (test ((cond (asin floor *))) 1)
 (test (logior (#(1 #\a (3)) 0) (truncate 1.5)) 1)
+(test (real? (*)) #t)
+(test (- (lcm)) -1)
+(test (* (*)) 1)
+(test (+ (+) (+ (+)) (+ (+ (+)))) 0)
+(test (nan? (asinh (cos (real-part (log 0.0))))) #t)
+;(test (asinh (- 9223372036854775807)) -44.361419555836)
+;(test (imag-part (asin -9223372036854775808)) 44.361419555836)
 
 (test ((call-with-exit object->string) 0) #\#) ; #<goto>
 (test ((begin begin) 1) 1)

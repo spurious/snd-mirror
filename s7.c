@@ -453,24 +453,24 @@ typedef struct s7_cell {
       void *value;
     } fobj;
     
-    struct {
+    struct {               /* call/cc */
       int stack_size;
       s7_pointer stack;
       s7_pointer *stack_start, *stack_end;
     } continuation;
     
-    struct {
+    struct {               /* call-with-exit */
       int goto_loc;
       bool active;
     } rexit;
     
-    struct {
+    struct {               /* catch */
       int goto_loc;
       s7_pointer tag;
       s7_pointer handler;
     } rcatch; /* C++ reserves "catch" I guess */
     
-    struct {
+    struct {               /* dynamic-wind */
       s7_pointer in, out, body;
     } winder;
 
@@ -1020,6 +1020,7 @@ static s7_pointer make_protected_string(s7_scheme *sc, const char *str);
 static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value);
 static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj);
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
+static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect);
 
 #if HAVE_PTHREADS
   static bool is_thread(s7_pointer obj);
@@ -1891,10 +1892,14 @@ static s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, int
 static s7_pointer g_symbol_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_table "(symbol-table) returns the s7 symbol table (a vector)"
-  return(sc->symbol_table);
+  return(vector_copy(sc, sc->symbol_table));
+
+  /* (vector-fill! (symbol-table) #()) leads to a segfault -- this is similar to symbol->string
+   *    in that we have to protect against inadvertently clobbering the symbol table.
+   *    The table is normally not too big (default size 2207), and vector_copy is very fast.
+   */
 }
 
-/* (vector-fill! (symbol-table) #()) leads to a segfault, but should we write-protect it? */
 
 
 void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, void *data), void *data)
@@ -2065,7 +2070,8 @@ static s7_pointer g_string_to_symbol(s7_scheme *sc, s7_pointer args)
 
   if (!s7_is_string(str))
     return(s7_wrong_type_arg_error(sc, "string->symbol", 0, str, "a string"));
-
+  if (string_length(str) == 0)                 /* (string->symbol (port-filename)) */
+    return(s7_wrong_type_arg_error(sc, "string->symbol", 0, str, "a non-null string"));
   if (has_delimiter(string_value(str), string_length(str)))
     return(s7_error(sc, sc->OUT_OF_RANGE, 
 		    make_list_2(sc, make_protected_string(sc, "(string->symbol ~S) encountered illegal character"), str)));
@@ -20382,7 +20388,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if ((!is_pair(sc->x)) ||                                        /* (case 1 ((2) 1) . 1) */
 	      (!is_pair(car(sc->x))))
 	    return(eval_error(sc, "case clause ~A messed up", sc->x));	 
-   
+	  if (!is_pair(cdar(sc->x)))                                      /* (case 1 ((1))) */
+	    return(eval_error(sc, "case clause result missing: ~A", car(sc->x)));
+
 	  sc->y = caar(sc->x);
 	  if (!is_pair(sc->y))
 	    {
@@ -20390,17 +20398,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		return(eval_error(sc, "case clause key list ~A is not a list or 'else'", sc->y));
 	      if (cdr(sc->x) != sc->NIL)                                  /* (case 1 (else 1) ((2) 1)) */
 		return(eval_error(sc, "case 'else' clause, ~A, is not the last clause", sc->x));
-	      if (!is_pair(cdar(sc->x)))                                  /* (case 1 (else)) */
-		return(eval_error(sc, "case 'else' clause result missing: ~A", car(sc->x)));
 	      break;
 	    }
 
-	  /* we don't currently flag (case 1 ((1))) as an error -- is it one? [guile says yes, but has a confused error message]
-	   *   what about (case 1 ((1) #t) ((1) #f)) [this is ok by guile]
-	   *              (case 1 ((1) #t) ())
-	   *              (case 1 ((1)) 1 . 2)
-	   *              (case () ((())))
-	   *              (case 1 ((2 2 2) 1)): guile says #<unspecified>
+	  /* what about (case 1 ((1) #t) ((1) #f)) [this is ok by guile]
+	   *            (case 1 ((1) #t) ())
+	   *            (case 1 ((2 2 2) 1)): guile says #<unspecified>
 	   */
 
 	  /* the selector (sc->value) is evaluated, but the search key is not, so we get weird
@@ -20428,13 +20431,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    break;
 	}
 
+      /* now sc->x is the entire matching clause (or nil if nothing matched) 
+       *    (case 2 ((2) 3)), sc->x: (((2) 3))
+       */
+
       if (sc->x != sc->NIL) 
 	{
-	  if (is_pair(caar(sc->x))) 
+	  if (is_pair(caar(sc->x)))  /* the normal case (list of keys = caar, rest of clause = cdar) */
 	    {
 	      sc->code = cdar(sc->x);
 	      goto BEGIN;
-	    } 
+	    }                        /* else it's the "else" clause presumably -- evaluate caar to make sure? */
 	  push_stack(sc, opcode(OP_CASE2), sc->NIL, cdar(sc->x));
 	  sc->code = caar(sc->x);
 	  goto EVAL;
@@ -26316,6 +26323,7 @@ s7_scheme *s7_init(void)
 }
 
 /* TODO: macroexpand and fully-expand are buggy
+ * SOMEDAY: finish the clean macro example in s7.html (and add to s7test.scm)
  *
  *  envs as debugging aids: how to show file/line tags as well
  *  and perhaps store cur-code?  __form__ ? make a cartoon of entire state? [need only the pointer, not a copy]

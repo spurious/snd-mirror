@@ -809,7 +809,7 @@ use lambda:
 	(+ a b)))
     ,a))
 </pre>
-<p>We can make such a macro "clean" by hand with procedure-environment (discussed below):
+<p>We can make such a macro "clean" by hand with procedure-environment (discussed <a href="#environments">below</a>):
 </p>
 
 <pre>
@@ -852,7 +852,7 @@ It's possible to make a clean macro using augment-environment and current-enviro
     (augment-environment (procedure-environment mac) 
     (cons 'gensym-51 (current-environment))) 
   (let ((a 12)) 
-    (+ (with-environment gensym-51 a) ; the outer 'a, definition-time '+
+    (+ (with-environment gensym-51 a) ; the outer 'a (mac arg 'b), definition-time '+
        a)))                           ; the local 'a
 </pre>
 
