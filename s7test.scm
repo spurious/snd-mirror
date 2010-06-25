@@ -7428,12 +7428,14 @@
 (test (quote a) 'a)
 (test 'a (quote a))
 (test '1 1)
+(test '1/4 1/4)
 (test '(+ 2 3) '(+ 2 3))
 (test '"hi" "hi")
 (test '#\a #\a)
 (test '#f #f)
 (test '#t #t)
 (test '#b1 1)
+(test (= 1/2 '#e#b1e-1) #t)
 (test '() '())
 (test (+ '1 '2) 3)
 (test (+ '1 '2) '3)
@@ -7462,8 +7464,9 @@
 (test (symbol? '#f) #f)
 (test ''quote (quote (quote quote)))
 (test (+ (cadr ''3) (cadadr '''4) (cadr (cadr (cadr ''''5)))) 12)
+(test (eq? lambda 'lambda) #t)
 
-					;(test (eq? '() ()) #t) ; not sure about this -- Gauche, SCM, stklos say #t; Guile says error; clisp, cmucl, and sbcl say T
+(test (eq? '() ()) #t) ; not sure about this -- Gauche, SCM, stklos say #t; Guile says error; clisp, cmucl, and sbcl say T
 
 (test (let ((quote 1)) (+ quote 1)) 2)
 (test ((lambda (quote) (+ quote 1)) 2) 3)
@@ -7474,7 +7477,7 @@
 (test (quote . 1) 'error)
 (test (quote . (1 2)) 'error)
 (test (quote 1 . 2) 'error)
-
+(test (symbol? '1'1) #t) 
 
 
 
@@ -8558,6 +8561,7 @@
 (test ((lambda () (+ 2 3))) 5)
 (test (let ((x (let () (lambda () (+ 1 2))))) (x)) 3)
 (test (cond (0 => (lambda (x) x))) 0)
+(test ((lambda () "hiho")) "hiho")
 
 (test (letrec ((f (lambda (x) (g x)))
 	       (g (lambda (x) x)))
@@ -9032,6 +9036,7 @@
 (test (+ (values '1) (values '2)) 3)
 (test (if (values #t) 1 2) 1)
 (test (if (values '#t) 1 2) 1)
+(test (equal? (values #t #t)) #t)
 (test (call-with-values (lambda () 4) (lambda (x) x)) 4)
 (test (let () (values 1 2 3) 4) 4)
 (test (apply + (values '())) 0)
@@ -9814,6 +9819,12 @@
 	      (loop (cdr lst) (+ i 1) (+ sum (car lst))))))
       16)
 
+;;; these are confusing:
+;(letrec ((if 0.0)) ((lambda () (if #t "hi")))) -> "hi"
+;(let ((let 0)) let) -> 0
+;(let* ((lambda 0)) ((lambda () 1.5))) -> 1.5
+;(let* ((lambda 0)) lambda) -> 0
+
 
 
 
@@ -9973,6 +9984,30 @@
 	(c3 8 3 4 5))
     (test (list x x0 x1 x2 x3) '(45 15 20 29 45))))
 ;; 45 = (+ 1 6 1 7 2 3 8 3 4 5 5)
+
+(let ((x 0)
+      (c1 #f)
+      (results '()))
+  (set! x (call/cc
+	   (lambda (r1)
+	     (set! c1 r1)
+	     (r1 2))))
+  (set! results (cons x results))
+  (if (= x 2) (c1 32))
+  (test results '(32 2)))
+
+(let ((x #(0))
+      (y #(0))
+      (c1 #f))
+  (set! ((call/cc
+	   (lambda (r1)
+	     (set! c1 r1)
+	     (r1 x)))
+	 0) 32)
+  (if (= (y 0) 0) (c1 y))
+  (test (and (equal? x #(32)) (equal? y #(32))) #t))
+
+
 
 (let* ((next-leaf-generator (lambda (obj eot)
 			      (letrec ((return #f)
@@ -10219,6 +10254,9 @@
 (test (call-with-exit (let () (lambda (k1) (k1 2)))) 2)
 (test (+ 2 (call/cc (let () (call/cc (lambda (k1) (k1 (lambda (k2) (k2 3)))))))) 5)
 (test (+ 2 (call/cc (call/cc (lambda (k1) (k1 (lambda (k2) (k2 3))))))) 5)
+(test (call-with-exit (lambda arg ((car arg) 32))) 32)
+(test (call-with-exit (lambda arg ((car arg) 32)) (display "oops!")) 'error)
+(test (call-with-exit (lambda (a b) a)) 'error)
 
 (test (let ((x (call/cc (lambda (k) k))))
 	(x (lambda (y) "hi")))
@@ -10791,7 +10829,6 @@ who says the continuation has to restart the map from the top?
 	  (if ok (cc)))
 	ctr)
       2)
-;;; TODO: more call/exit active checks
 
 (test (let ((val (call-with-exit (lambda (ret) (let ((ret1 ret)) (ret1 2) 3))))) val) 2)
 
@@ -13417,6 +13454,12 @@ who says the continuation has to restart the map from the top?
 ;; #\a
 ;; at least they finally agree that pi is a constant!
 
+(let ()
+  (define-constant __hi__ (vector 3 0))
+  (set! (__hi__ 1) 231)
+  (test __hi__ #(3 231)))
+;; that is, hi is the constant as a vector, not the vector elements
+
 
 (test (defined? 'pi) #t)
 (test (defined? 'pi (global-environment)) #t)
@@ -13928,7 +13971,7 @@ who says the continuation has to restart the map from the top?
 (test (stacktrace #(23)) 'error)
 
 
-;;; -------- miscellaneous (i.e. amusements)
+;;; -------- miscellaneous (amusements)
 
 (test ((number->string -1) 0) #\-)
 (test ((reverse '(1 2)) 0) 2)
@@ -13944,6 +13987,8 @@ who says the continuation has to restart the map from the top?
 (test (((lambda let* *))) 1)
 (test ((((eval lambda) lcm gcd))) 0)
 (test (((append s7-version)) 0) #\s)
+(test ((values (lambda hi #()))) #())
+(test (((((lambda () (lambda () (lambda () (lambda () 1)))))))) 1)
 
 (test (+ (+) (*)) 1)
 (test (modulo (lcm) (gcd)) 1)
@@ -13977,8 +14022,8 @@ who says the continuation has to restart the map from the top?
 (test (* (*)) 1)
 (test (+ (+) (+ (+)) (+ (+ (+)))) 0)
 (test (nan? (asinh (cos (real-part (log 0.0))))) #t)
-;(test (asinh (- 9223372036854775807)) -44.361419555836)
-;(test (imag-part (asin -9223372036854775808)) 44.361419555836)
+(num-test (asinh (- 9223372036854775807)) -44.361419555836)
+(num-test (imag-part (asin -9223372036854775808)) 44.361419555836)
 
 (test ((call-with-exit object->string) 0) #\#) ; #<goto>
 (test ((begin begin) 1) 1)
@@ -13994,6 +14039,7 @@ who says the continuation has to restart the map from the top?
 (test (dynamic-wind lcm gcd *) 'error)
 (test ((lambda (let) (+)) 0) 0)
 (test (case 0 ((< 0 1) 32)) 32)
+(test (char-downcase (char-downcase #\newline)) #\newline)
 
 (test (let () (define (hi cond) (+ cond 1)) (hi 2)) 3)
 (test (let () (define* (hi (cond 1)) (+ cond 1)) (hi 2)) 3)
@@ -14006,6 +14052,15 @@ who says the continuation has to restart the map from the top?
 (test (let () (define (hi if) (+ if 1)) (hi 2)) 3)
 (test (let () (define* (hi (lambda 1)) (+ lambda 1)) (hi)) 2)
 (test (((lambda #\newline gcd))) 'error)
+
+(test (let ((1,1 3) (1'1 4) (1|1 5) (1#1 6) (1\1 7) (1?1 8)) (+ 1,1 1'1 1|1 1#1 1\1 1?1)) 33)
+(test (let ((,a 3)) ,a) 'error)
+(test (let ((@a 3)) @a) 3)
+(test (let (("a" 3)) "a") 'error)
+(test (let ((`a 3)) `a) 'error)
+(test (let (('a 3)) 'a) 'error)
+(test (let ((a`!@#$%^&*~.,<>?/'{}[]\|+=_-a 3)) a`!@#$%^&*~.,<>?/'{}[]\|+=_-a) 3)
+
 
 
 
@@ -46586,6 +46641,17 @@ who says the continuation has to restart the map from the top?
    (test (random 1.0 arg) 'error))
  (list "hi" (integer->char 65) 'a-symbol (make-vector 3) abs #\f (lambda (a) (+ a 1)) (if #f #f) #<eof> #<undefined>))
 
+(do ((i 0 (+ i 1)))
+    ((+ i 100))
+  (let ((val (random -1.0)))
+    (test (and (real? val) (<= val 0.0) (>= val -1.0)) #t))
+  (let ((val (random -100)))
+    (test (and (integer? val) (<= val 0) (>= val -100)) #t))
+  (let ((val (random most-negative-fixnum)))
+    (test (and (integer? val) (<= val 0)) #t))
+  (let ((val (random most-positive-fixnum)))
+    (test (and (integer? val) (>= val 0)) #t)))
+  
 
 
 

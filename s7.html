@@ -3357,10 +3357,8 @@ know if you need it.  The issue is purely one of speed.
 <p>Other odd corners:
 </p>
 <pre>
-(eq? (char-ci<? #\_ #\e) (char<? #\_ #\e))
-(case 1 ((1) #t) ((1) #f))
-(string->symbol "")
-(let ('1) quote)
+(map apply (list map) (list map) (list (list *)) '((((1 2)) ((3 4)))))
+(define (<=0? x) (negative? (logior x (- x 1)))) ; from Hacker's Delight
 </pre>
 
 <p>We have memq, memv, and member, but just case (using eqv?) -- what about caseq, caseqv, casequal etc? or eval-case (s7test)

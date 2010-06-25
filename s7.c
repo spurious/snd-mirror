@@ -64,7 +64,7 @@
  *        logior, logxor, logand, lognot, ash, integer-length, integer-decode-float, nan?, infinite?
  *        procedure-source, procedure-arity, procedure-documentation, help
  *          if the initial expression in a function body is a string constant, it is assumed to be a documentation string
- *        symbol-table, symbol->value, global-environment, current-environment, stack
+ *        symbol-table, symbol->value, global-environment, current-environment, procedure-environment
  *        provide, provided?, defined?
  *        port-line-number, port-filename
  *        object->string, eval-string
@@ -72,10 +72,8 @@
  *        gc, quit, *load-hook*, *error-hook*, *error-info*, *unbound-variable-hook*
  *        *features*, *load-path*, *vector-print-length*, *#readers*
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum, constant?
- *            a constant is really constant -- it can't be bound or set.
  *        symbol-calls if profiling is enabled
  *        stacktrace, trace and untrace, *trace-hook*, __func__, macroexpand
- *            as in C, __func__ is the name of the function currently being defined.
  *        length, copy, fill!, map, for-each are generic
  *        make-type creates a new scheme type
  *        symbol-access modifies symbol value lookup
@@ -1897,9 +1895,9 @@ static s7_pointer g_symbol_table(s7_scheme *sc, s7_pointer args)
   /* (vector-fill! (symbol-table) #()) leads to a segfault -- this is similar to symbol->string
    *    in that we have to protect against inadvertently clobbering the symbol table.
    *    The table is normally not too big (default size 2207), and vector_copy is very fast.
+   *  but it's still possible to screw up -- get one of the symbol lists, and clobber it or a member of it.
    */
 }
-
 
 
 void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, void *data), void *data)
@@ -2418,6 +2416,11 @@ static s7_pointer g_global_environment(s7_scheme *sc, s7_pointer ignore)
 It is a list ending with a hash-table."
   return(sc->global_env);
 }
+
+/* as with the symbol-table, this function can lead to disaster -- user could
+ *   clobber the environment etc.  But we want it to be editable and augmentable,
+ *   so I guess I'll leave it alone.  (See current|procedure-environment as well).
+ */
 
 
 #if HAVE_PTHREADS
