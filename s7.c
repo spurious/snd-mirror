@@ -19357,6 +19357,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	case T_PAIR:                              /* -------- list as applicable object -------- */
+	  if (is_multiple_value(sc->code))                                  /* ((values 1 2 3) 0) */
+	    {
+	      /* car of values can be anything, so conjure up a new expression, and apply again */
+	      sc->x = multiple_value(sc->code);                             /* ((values + 1 2) 3) */
+	      sc->code = car(sc->x);
+	      sc->args = s7_append(sc, cdr(sc->x), sc->args);
+	      goto APPLY;
+	    }
+
 	  if (cdr(sc->args) == sc->NIL)
 	    sc->value = list_ref_1(sc, sc->code, car(sc->args));            /* (L 1) */
 	  else sc->value = g_list_ref(sc, s7_cons(sc, sc->code, sc->args)); /* (L 1 2) */
@@ -19587,12 +19596,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_SET2:
-      /*
-      fprintf(stderr, "set2: %s %s %s\n", 
-	      s7_object_to_c_string(sc, sc->value),
-	      s7_object_to_c_string(sc, sc->args),
-	      s7_object_to_c_string(sc, sc->code));
-      */
       if (is_pair(sc->value))
 	{
 	  /* (let ((L '((1 2 3)))) (set! ((L 0) 1) 32) L)
@@ -19607,6 +19610,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   * the other args need to be evaluated (but not the list as if it were code):
 	   *   (let ((L '((1 2 3))) (index 1)) (set! ((L 0) index) 32) L)
 	   */
+	  if (is_multiple_value(sc->value))
+	    {
+	      sc->code = s7_cons(sc, s7_make_symbol(sc, "set!"), s7_append(sc, multiple_value(sc->value), s7_append(sc, sc->args, sc->code)));
+	      /* fprintf(stderr, "now: %s\n", s7_object_to_c_string(sc, sc->code)); */
+	      goto SET;
+	    }
 	  sc->code = s7_cons(sc, sc->LIST_SET, s7_cons(sc, make_list_2(sc, sc->QUOTE, sc->value), s7_append(sc, sc->args, sc->code)));
 	  goto EVAL;
 	}
@@ -19620,7 +19629,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       sc->code = s7_cons(sc, s7_cons(sc, sc->value, sc->args), sc->code);
 
-      
+
+    SET:
     case OP_SET:                                                   /* entry for set! */
       if (!is_pair(sc->code))
 	{
@@ -20068,6 +20078,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = cdar(sc->code);
 	  if (sc->code == sc->NIL)
 	    {
+	      if (is_multiple_value(sc->value))                             /* (+ 1 (cond ((values 2 3)))) */
+		sc->value = splice_in_values(sc, multiple_value(sc->value));
+
 	      pop_stack(sc);      /* no result clause, so return test, (cond (#t)) -> #t, (cond ((+ 1 2))) -> 3 */
 	      goto START;
 	    }
@@ -20086,8 +20099,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       * amusing (correct) case: (cond (1 => "hi")) -> #\i
 	       */
 
-	      sc->x = make_list_2(sc, sc->QUOTE, sc->value); 
-	      sc->code = make_list_2(sc, cadr(sc->code), sc->x);
+	      if (is_multiple_value(sc->value))                             /* (cond ((values 1 2) => +)) */
+		sc->code = s7_cons(sc, cadr(sc->code), multiple_value(sc->value));
+	      else
+		{
+		  sc->x = make_list_2(sc, sc->QUOTE, sc->value); 
+		  sc->code = make_list_2(sc, cadr(sc->code), sc->x);
+		}
 	      goto EVAL;
 	    }
 	  

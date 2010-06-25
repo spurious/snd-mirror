@@ -8355,8 +8355,9 @@
 
 (test (cond ((+ 1 2) => (lambda (x) (+ 1 x)))) 4)
 (test (cond ((cons 1 2) => car)) 1)
-;(test (cond ((values 1 2) => +)) 'error)
-;(cond (1 2 => +))
+(test (cond ((values 1 2) => +)) 3)
+(test (cond (1 2 => +)) 'error)
+(test (cond ((begin 1 2) => +)) 2)
 (test (cond ((values -1) => abs)) 1)
 
 (test (cond (else 1)) 1)
@@ -8383,8 +8384,15 @@
    (test (cond (arg => (lambda (x) x))) arg))
  (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 
+(test (cond ((let () 1) => (let ((x 2)) (lambda (n) (+ n x))))) 3)
+(test (cond ((let () 1) => (let ((x 2)) (cond (3 => (let ((y 4)) (lambda (n) (lambda (m) (+ n m x y))))))))) 10)
+
 (test (let ((=> 3) (cond 4)) (+ => cond)) 7)
 (test (cond (cond 'cond)) 'cond)
+(test (cond (3 => (lambda args (car args)))) 3)
+(test (cond (3 => (lambda (a . b) a))) 3)
+(test (cond ((list 3 4) => (lambda (a . b) b))) '())
+
 
 ;(test (and (defined? 'else) (boolean? else)) #f)
 
@@ -8400,7 +8408,7 @@
 (test (cond 1) 'error)
 (test (cond (1 . 2) (else 3)) 'error)
 (test (cond (#f 2) (else . 4)) 'error)
-(test (cond ((values 1 2) => (lambda (x y) #t))) 'error)
+(test (cond ((values 1 2) => (lambda (x y) #t))) #t)
 (test (cond #t) 'error)
 (test (cond 1 2) 'error)
 (test (cond 1 2 3) 'error)
@@ -8417,6 +8425,30 @@
 	      ((let ((y x)) (set! x 1) (= y 1)) 1)
 	      (#t 2)))
       1)
+
+(let ((c1 #f)
+      (x 1))
+  (let ((y (cond ((let ()
+		    (call/cc
+		     (lambda (r)
+		       (set! c1 r)
+		       (r x))))
+		  => (lambda (n) (+ n 3)))
+		 (#t 123))))
+    (if (= y 4) (begin (set! x 2) (c1 321)))
+    (test (list x y) '(2 324))))
+
+(let ((c1 #f)
+      (x 1))
+  (let ((y (cond (x => (lambda (n) 
+			 (call/cc
+			  (lambda (r)
+			    (set! c1 r)
+			    (r (+ 3 x))))))
+		 (#t 123))))
+    (if (= y 4) (begin (set! x 2) (c1 321)))
+    (test (list x y) '(2 321))))
+
 
 
 
@@ -8926,6 +8958,7 @@
 (test (apply . 1) 'error)
 (test (apply car ''foo) 'error)
 (test (apply + '(1 . 2)) 'error)
+(test (apply + '(1 2 . 3)) 'error)
 (test (apply '() '()) 'error)
 
 (for-each
@@ -8937,6 +8970,10 @@
 (test (apply + '(1 2 . 3)) 'error)
 (test (apply + '(1 2) (list 3 4)) 'error)
 (test (let () (define (mrec a b) (if (<= b 0) (list a) (apply mrec (list a) (list (- b 1))))) (mrec (list 1 2) 5)) '(((((((1 2))))))))
+
+(let ((lst (list 1 2 3)))
+   (set! (cdr (cddr lst)) lst)
+   (test (apply + lst) 'error))
 
 
 
@@ -9036,6 +9073,8 @@
 (test (+ (values '1) (values '2)) 3)
 (test (if (values #t) 1 2) 1)
 (test (if (values '#t) 1 2) 1)
+(test (if (values #f) 1 2) 2)
+(test (if (values #f #f) 1 2) 1)
 (test (equal? (values #t #t)) #t)
 (test (call-with-values (lambda () 4) (lambda (x) x)) 4)
 (test (let () (values 1 2 3) 4) 4)
@@ -9091,8 +9130,8 @@
 
 (test (let ((str "hi")) (string-set! (values str 0 #\x)) str) "xi")
 
-(test ((values '(1 (2 3)) 1 1)) 'error) ; ?? is this a bug?
-(test (let ((x #(32 33))) ((values x 0))) 'error) ; ??
+(test ((values '(1 (2 3)) 1 1)) 3)
+(test (let ((x #(32 33))) ((values x 0))) 32)
 (test (+ 1 (apply values '(2 3 4))) 10)
 (test (+ 1 ((lambda args (apply values args)) 2 3 4)) 10)
 
@@ -9226,6 +9265,38 @@
 (test (min (values 1 2) (values 3 0)) 0)
 (test ((lambda* ((a 1) (b 2)) (list a b)) (values :b 231)) '(1 231))
 (test (cons (values 1 2) (values 3 4)) 'error)
+
+(test (cond ((values) 3) (#t 4)) 3)          ; an error in Guile "zero values returned"
+(test (cond ((values (values)) 3) (#t 4)) 3) ; same
+(test (+ (cond (#t (values 1 2)))) 3)        ; 1 in guile
+(test (+ (cond ((values 3 4) => (lambda (a) a)))) 'error)
+(test (+ 1 (cond ((values 2 3))) 4) 10)
+
+(test (case (values 1) ((1) 2) (else 3)) 2)
+(test (case (values 1 2) ((1) 2) (else 3)) 3)
+(test (case (values 1) (((values 1)) 2) (else 3)) 3)
+(test (case (values 1 2) (((values 1 2)) 2) (else 3)) 3)
+
+(test ((values) 0) 'error)
+(test ((values "hi") 1) #\i)
+(test (string-ref (values "hi") 0) #\h)
+(test (string-ref (values "hi" "ho") 0) 'error)
+(test (let ((str "hi")) (set! ((values str) 0) #\x) str) "xi")
+(test (let ((str "hi")) (string-set! (values str) 0 #\x) str) "xi")
+(test (let ((str "hi")) (set! (values str 0) #\x) str) 'error)
+(test (let ((str "hi")) (string-set! (values str 0) #\x) str) "xi")
+
+(test ((values 1 2 3) 0) 'error)
+(test ((values "hi" "ho") 1) 'error)
+(test ((values + 1 2 3)) 6)
+(test ((values + 1 2) 3) 6)
+(test ((values +) 1 2 3) 6)
+(test ((values "hi" 0)) #\h)
+(test ((values + 1) (values 2 3) 4) 10)
+
+(test (let ((str "hi")) (set! ((values str 0) 0) #\x) str) 'error)
+(test (let ((str "hi")) (set! ((values str) 0) #\x) str) "xi")
+(test (+ (let ((x 0)) (do ((i (values 0) (+ i 1))) (((values = i 10)) (values x 2 3)) (set! x (+ x i)))) 4) 54)
 
 
 
@@ -10106,6 +10177,12 @@
 	(map check '((1 2 3) (1 3 2) (2 1 3) (2 3 1) (3 1 2) (3 2 1))))
       '((-1 4 5 3) (4 -1 5 3) (-1 5 4 3) (5 -1 4 3) (4 5 -1 3) (5 4 -1 3)))
 
+(let ((c1 #f))
+  (let ((x ((call/cc (lambda (r1) (set! c1 r1) (r1 "hiho"))) 0)))
+    (if (char=? x #\h)
+	(c1 "asdf"))
+    (test x #\a)))
+
 (test (let ((x '())
 	    (y 0))
 	(call/cc 
@@ -10255,7 +10332,7 @@
 (test (+ 2 (call/cc (let () (call/cc (lambda (k1) (k1 (lambda (k2) (k2 3)))))))) 5)
 (test (+ 2 (call/cc (call/cc (lambda (k1) (k1 (lambda (k2) (k2 3))))))) 5)
 (test (call-with-exit (lambda arg ((car arg) 32))) 32)
-(test (call-with-exit (lambda arg ((car arg) 32)) (display "oops!")) 'error)
+(test (call-with-exit (lambda arg ((car arg) 32)) "oops!") 'error)
 (test (call-with-exit (lambda (a b) a)) 'error)
 
 (test (let ((x (call/cc (lambda (k) k))))
@@ -14034,7 +14111,7 @@ who says the continuation has to restart the map from the top?
 (test (pair? define) #f)
 (test (number? lambda*) #f)
 (test ((s7-version) (rationalize 0)) #\s)
-(test (cond (((values '(1 2) '(3 4)) 0 0))) 1)
+(test (cond (((values '(1 2) '(3 4)) 0 0))) 'error)
 (test (cond ((apply < '(1 2)))) #t)
 (test (dynamic-wind lcm gcd *) 'error)
 (test ((lambda (let) (+)) 0) 0)

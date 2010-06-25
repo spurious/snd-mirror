@@ -791,9 +791,9 @@
 							  (if (not (member closer commands :test #'string-equal))
 							      (warn "~A without start? ~A from ~A[~D][~D:~D] (commands: ~A)" closer line file linectr (+ start 2) i commands)
 							    (if (member closer
-									(list "ul" "tr" "td" "table" "small" "sub" "blockquote" "center" "p"
+									(list "ul" "tr" "td" "table" "small" "big" "sub" "blockquote" "center" "p"
 									      "a" "i" "b" "title" "pre" "span" "h1" "h2" "h3" "code" "body" "html"
-									      "em" "head" "h4" "sup" "font" "map" "smaller" "th")
+									      "em" "head" "h4" "sup" "font" "map" "smaller" "bigger" "th")
 									:test #'string-equal)
 								(progn
 								  (if (not (string-equal (car commands) closer))
@@ -846,7 +846,7 @@
 							(if (not (member opener (list "br" "spacer" "li" "img" "hr" "area") :test #'string-equal))
 							    (if (and (member opener commands :test #'string-equal)
 								     (= p-quotes 0)
-								     (not (member opener (list "ul" "tr" "td" "table" "small" "sub" "blockquote") :test #'string-equal)))
+								     (not (member opener (list "ul" "tr" "td" "table" "small" "big" "sub" "blockquote") :test #'string-equal)))
 								(warn "nested ~A? ~A from ~A[~D]: ~A" opener line file linectr commands)
 							      (progn
 								(if (and (string-equal opener "td")
