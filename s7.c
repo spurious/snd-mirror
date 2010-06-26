@@ -735,9 +735,20 @@ struct s7_scheme {
 #define is_multiple_value(p)          ((typeflag(p) & T_MULTIPLE_VALUE) != 0)
 #define set_multiple_value(p)         typeflag(p) |= T_MULTIPLE_VALUE
 #define multiple_value(p)             p
+/* this bit marks a list (from "values") that is waiting for a
+ *    chance to be spliced into its caller's argument list.  It is normally
+ *    on only for a very short time.
+ */
 
+#define T_PENDING_REMOVAL             (1 << (TYPE_BITS + 21))
+#define is_pending_removal(p)         ((typeflag(p) & T_PENDING_REMOVAL) != 0)
+#define set_pending_removal(p)        typeflag(p) |= T_PENDING_REMOVAL
+#define clear_pending_removal(p)      typeflag(p) &= ~(T_PENDING_REMOVAL)
+/* this bit is for circle checks during removal of a global function from the heap
+ */
 
-#define UNUSED_BITS                   0xe0000000
+#define UNUSED_BITS                   0xc0000000
+
 
 #if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f))
@@ -1654,6 +1665,19 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
    *   in blocks, not by the pointer, I think, but s7_define is the point to try).
    */
 
+  if (is_pending_removal(x)) return;
+  set_pending_removal(x);
+
+  /* the procedure body being removed can be circular, so we need this bit to warn us
+   *   that we've already seen this node.  We have to go out to the leaves and remove
+   *   nodes in reverse order because the GC might be called while we're at it.  The
+   *   top node is globally accessible, so the GC will not move anything if we work
+   *   backwards.  But working backwards means we have to watch out for circles explicitly.
+   *   The bit is unset later since the caller might change a removed procedure's body
+   *   directly, and we want the subsequent redefinition to see anything new in the
+   *   otherwise removed nodes. 
+   */
+
   switch (type(x))
     {
     case T_PAIR:
@@ -1718,6 +1742,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
       break;
     }
 
+  clear_pending_removal(x);
   loc = x->hloc;
   if (loc != NOT_IN_HEAP)
     {
@@ -2467,6 +2492,21 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e)
    *   make_closure ((a b) (+ a b)) e
    */
   return(make_closure(sc, c, e, T_CLOSURE));
+}
+
+
+/* an experiment */
+static s7_pointer g_make_lambda(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_lambda "(make-lambda arg-list body) returns a function with the given argument list and body"
+  return(make_closure(sc, args, sc->envir, T_CLOSURE));
+}
+
+
+static s7_pointer g_make_lambda_star(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_lambda_star "(make-lambda* arg-list body) returns a function with the given argument list and body"
+  return(make_closure(sc, args, sc->envir, T_CLOSURE_STAR));
 }
 
 
@@ -19654,22 +19694,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
       if (is_pair(car(sc->code)))                                 /* has accessor */
 	{
-	  /*
-	  fprintf(stderr, "car(code): %s\n", s7_object_to_c_string(sc, car(sc->code)));
-	  */
 	  if (is_pair(caar(sc->code)))
 	    {
-	      /*
-	      fprintf(stderr, "push %s %s\n", 
-		      s7_object_to_c_string(sc, cdar(sc->code)),
-		      s7_object_to_c_string(sc, cdr(sc->code)));
-	      */
 	      push_stack(sc, opcode(OP_SET2), cdar(sc->code), cdr(sc->code));
 	      sc->code = caar(sc->code);
-
-	      /*
-	      fprintf(stderr, "eval %s\n", s7_object_to_c_string(sc, sc->code));
-	      */
 	      goto EVAL;
 	    }
 	  
@@ -26193,6 +26221,10 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, s_type_make_name,          s_type_make,               2, 0, false, "internal object creation");
   s7_define_function(sc, s_type_ref_name,           s_type_ref,                2, 0, false, "internal object value");
   s7_define_function_star(sc, "make-type", g_make_type, "print equal getter setter length name copy fill", H_make_type);
+
+  s7_define_function(sc, "make-lambda",             g_make_lambda,             2, 0, false, H_make_lambda);
+  s7_define_function(sc, "make-lambda*",            g_make_lambda_star,        2, 0, false, H_make_lambda_star);
+  /* TODO: doc/test (use...) make-lambda */
 
   s7_define_variable(sc, "*features*", sc->NIL);
   s7_define_variable(sc, "*load-path*", sc->NIL);

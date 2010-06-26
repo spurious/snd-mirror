@@ -1489,6 +1489,68 @@ it is set:
 &gt; (procedure-source (c?r (((((a (b (c (d (e X)))))))))))
 (lambda (lst) (car (cdr (car (cdr (car (cdr (car (cdr (car (cdr (car (car (car (car lst)))))))))))))))
 </pre>	
+<br>
+
+<p>We can extend c?r into something incredibly useful!  A goto implementation using circular lists:
+</p>
+<pre>
+(define-macro (define-with-goto name-and-args . body)
+  ;; run through the body collecting label accessors, (label name)
+  ;; run through getting goto positions, (goto name)
+  ;; tie all the goto's to their respective labels (via set-cdr! essentially)
+  
+  (define (find-accessor type)
+    (let ((labels '()))
+      (define (gather-labels accessor tree)
+	(if (pair? tree)
+	    (if (equal? (car tree) type)
+		(begin
+		  (set! labels (cons (cons (cadr tree) 
+					   (let ((body 'lst))
+					     (for-each
+					      (lambda (f)
+						(set! body (list f body)))
+					      (reverse (cdr accessor)))
+					     (make-procedure-with-setter
+					      (make-lambda '(lst) body)
+					      (make-lambda '(lst val) `(set! ,body val)))))
+				     labels))
+		  (gather-labels (cons 'cdr accessor) (cdr tree)))
+		(begin
+		  (gather-labels (cons 'car accessor) (car tree))
+		  (gather-labels (cons 'cdr accessor) (cdr tree))))))
+      (gather-labels '() body)
+      labels))
+	
+  (let ((labels (find-accessor 'label))
+	(gotos (find-accessor 'goto)))
+    (if (not (null? gotos))
+	(for-each
+	 (lambda (goto)
+	   (let* ((name (car goto))
+		  (goto-accessor (cdr goto))
+		  (label (assoc name labels))
+		  (label-accessor (and label (cdr label))))
+	     (if label-accessor
+		 (set! (goto-accessor body) (label-accessor body))
+		 (error 'bad-goto "can't find label: ~S" name))))
+	   gotos))
+
+    `(define ,name-and-args
+       (let ((label (lambda (name) #f))
+	     (goto (lambda (name) #f)))
+	 ,@body))))
+
+(define-with-goto (hi)
+  (display "start ")
+  (<em class=red>goto</em> 'the-end)
+  (display "oops")
+  (<em class=red>label</em> 'the-end)
+  (display "all done"))
+
+(hi) -&gt; "start all done"
+</pre>
+
 
 </blockquote>
 </small>
@@ -2679,22 +2741,7 @@ write a function that tells us where the source is for a function:
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>procedure-source returns the actual function source &mdash;
-more fun than a barrel of monkeys.  Here is a circular function:
-</p>
-<pre>
-(define (cfunc)
-  (begin
-    (display "func! ")
-    #f))
-
-(let ((clst (<em class=red>procedure-source</em> cfunc)))
-  (set! (cdr (cdr (car (cdr (cdr clst))))) (cdr (car (cdr (cdr clst))))))
-
-(cfunc) ; displays "func! " until you kill it
-</pre>
-
-<p>
-And a self-modifying factorial function:
+more fun than a barrel of monkeys. Here is a self-modifying factorial function:
 </p>
 
 <pre>
@@ -2718,32 +2765,19 @@ And a self-modifying factorial function:
       (cond ((zero? n) 1)
 	    (#t 
 	     (set! old (<em class=red>procedure-source</em> fact))
-	     (set! fact (eval `(lambda (n) 
-				 (cond 
-				  ,@(butlast (cdr (car (cdr (cdr old)))))
-				  ((= n ,n) ,(let ()
-					       (set! result (* n (fact (- n 1))))
-					       result))
-				  ,@(last (cdr (car (cdr (cdr old)))))))))
+	     (set! fact (make-lambda '(n)
+			  `(cond 
+			    ,@(butlast (cdr (car (cdr (cdr old)))))
+			    ((= n ,n) ,(let ()
+					 (set! result (* n (fact (- n 1))))
+					 result))
+			    ,@(last (cdr (car (cdr (cdr old))))))))
 	     result)))))
 </pre>
 
-
-<!--
-:(define q (list 1 2 3))
-q
-
-:(set! (cdr (cddr q)) q)
-#1#(1 2 3 #1#)
-
-:(set! (car q) 4)
-4
-
-:(set! q (cdr q))
-#1#(2 3 4 #1#)
--->
-
-
+<p>If you modify the procedure source directly, it is safest to redefine the procedure (as above)
+so that everything in s7 knows about the change.  (augment-environment treats a similar situation involving environments).
+</p>
 
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
@@ -3265,7 +3299,6 @@ bind it to something else, which is asking for confusion).
 <p>Some other differences from r5rs:
 </p>
 <ul>
-<li>letrec*.
 <li>do sets its step variables, rather than rebinding them.
 <li>no syntax-rules or any of its friends.
 <li>force and delay are implemented as in slib and depend on the WITH_FORCE switch, normally 0.
@@ -3274,8 +3307,9 @@ bind it to something else, which is asking for confusion).
 <li>no transcript-on or transcript-off.
 <li>__func__ is the name (or name and location) of the function currently being defined or called (as in C).
 <li>begin returns the value of the last form (like progn); it can contain both definitions and other statements.
-<li>#&lt;unspecified&gt;, #&lt;eof&gt;, and #&lt;undefined&gt; are defined.
+<li>#&lt;unspecified&gt;, #&lt;eof&gt;, and #&lt;undefined&gt; are defined ("first-class objects").
 <li>for-each and map accept different length arguments (the operation stops when any argument reaches its end).
+<li>letrec*, but without conviction.
 </ul>
 
 <small>

@@ -5342,6 +5342,14 @@
     (test (member 'asdf l1) #f)
     (test (pair? (member 'd l1)) #t) ; #1=(d e c . #1#)
     )
+
+  (let ((ctr 0)
+	(x 0))
+    (let ((lst `(call-with-exit (lambda (return) (set! x (+ x 1)) (if (> x 10) (return x) 0)))))
+      (let ((acc1 (c?r (call-with-exit (lambda (return) . X))))
+	    (acc2 (c?r (call-with-exit (lambda (return) (set! x (+ x 1)) (if (> x 10) (return x) 0) . X)))))
+	(set! (acc2 lst) (acc1 lst))
+	(test (eval lst) 11))))
   )
   
 (let ((v #2d((1 2) (3 4))))
@@ -5534,7 +5542,7 @@
   (test (eval lst) 6))
   
 (let ()
-  (define fact
+  (define fact         ; Reini Urban, http://autocad.xarch.at/lisp/self-mod.lsp.txt
     (let ((old '())
 	  (result '()))
       
@@ -5543,24 +5551,24 @@
       
       (define (butlast lis)
 	(let ((len (length lis)))
-	     (if (<= len 1) '()
-		 (let ((result '()))
-		   (do ((i 0 (+ i 1))
-			(lst lis (cdr lst)))
-		       ((= i (- len 1)) (reverse result))
-		     (set! result (cons (car lst) result)))))))
+	  (if (<= len 1) '()
+	      (let ((result '()))
+		(do ((i 0 (+ i 1))
+		     (lst lis (cdr lst)))
+		    ((= i (- len 1)) (reverse result))
+		  (set! result (cons (car lst) result)))))))
       
       (lambda (n)
 	(cond ((zero? n) 1)
 	      (#t 
 	       (set! old (procedure-source fact))
-	       (set! fact (eval `(lambda (n) 
-				   (cond 
-				    ,@(butlast (cdr (car (cdr (cdr old)))))
-				    ((= n ,n) ,(let ()
-						 (set! result (* n (fact (- n 1))))
-						 result))
-				    ,@(last (cdr (car (cdr (cdr old)))))))))
+	       (set! fact (make-lambda '(n)
+				       `(cond 
+					 ,@(butlast (cdr (car (cdr (cdr old)))))
+					 ((= n ,n) ,(let ()
+						      (set! result (* n (fact (- n 1))))
+						      result))
+					 ,@(last (cdr (car (cdr (cdr old))))))))
 	       result)))))
 
   (test (fact 3) 6)
@@ -7843,6 +7851,10 @@
 ;;   any set! will do:
 (test (let ((x 0)) (map (lambda (y) (set! x (+ x y)) x) '(1 2 3 4))) '(1 3 6 10))
 
+(test (map begin '(1 2 3)) 'error)
+(let ((funcs (map (lambda (lst) (eval `(lambda ,@lst))) '((() #f) ((arg) (+ arg 1))))))
+  (test ((car funcs)) #f)
+  (test ((cadr funcs) 2) 3))
 
 
 
@@ -9134,6 +9146,8 @@
 (test (let ((x #(32 33))) ((values x 0))) 32)
 (test (+ 1 (apply values '(2 3 4))) 10)
 (test (+ 1 ((lambda args (apply values args)) 2 3 4)) 10)
+(test (apply begin '(1 2 3)) 'error)
+(test (apply lambda '(() #f)) 'error)
 
 (test (or (values #t #f) #f) #t)
 (test (or (values #f #f) #f) #f)
@@ -10912,6 +10926,7 @@ who says the continuation has to restart the map from the top?
 
 
 
+
 ;;; -------- dynamic-wind --------
 
 (test (let ((ctr1 0)
@@ -12466,6 +12481,7 @@ who says the continuation has to restart the map from the top?
   (test (eval `(+ 1 (eval `(* 2 3)))) 7)
   (test (eval `(+ 1 (eval-string "(* 2 3)"))) 7)
   (test (eval-string "(+ 1 (eval-string \"(* 2 3)\"))") 7)
+  (test (eval `(+ 1 2 . 3)) 'error)
 
   (test (apply "hi" 1 ()) #\i)
   (test (eval ("hi" 1)) #\i)
@@ -13044,6 +13060,78 @@ who says the continuation has to restart the map from the top?
     (test (equal? (vector (hi 1)) '#(2)) #t)
     (test (symbol? (vector-ref '#(hi) 0)) #t))
 
+  (define-macro (define-with-goto name-and-args . body)
+    ;; run through the body collecting label accessors, (label name)
+    ;; run through getting goto positions, (goto name)
+    ;; tie all the goto's to their respective labels (via set-cdr! essentially)
+    
+    (define (find-accessor type)
+      (let ((labels '()))
+	(define (gather-labels accessor tree)
+	  (if (pair? tree)
+	      (if (equal? (car tree) type)
+		  (begin
+		    (set! labels (cons (cons (cadr tree) 
+					     (let ((body 'lst))
+					       (for-each
+						(lambda (f)
+						  (set! body (list f body)))
+						(reverse (cdr accessor)))
+					       (make-procedure-with-setter
+						(make-lambda '(lst) body)
+						(make-lambda '(lst val) `(set! ,body val)))))
+				       labels))
+		    (gather-labels (cons 'cdr accessor) (cdr tree)))
+		  (begin
+		    (gather-labels (cons 'car accessor) (car tree))
+		    (gather-labels (cons 'cdr accessor) (cdr tree))))))
+	(gather-labels '() body)
+	labels))
+    (let ((labels (find-accessor 'label))
+	  (gotos (find-accessor 'goto)))
+      (if (not (null? gotos))
+	  (for-each
+	   (lambda (goto)
+	     (let* ((name (car goto))
+		    (goto-accessor (cdr goto))
+		    (label (assoc name labels))
+		    (label-accessor (and label (cdr label))))
+	       (if label-accessor
+		   (set! (goto-accessor body) (label-accessor body))
+		   (error 'bad-goto "can't find label: ~S" name))))
+	   gotos))
+      `(define ,name-and-args
+	 (let ((label (lambda (name) #f))
+	       (goto (lambda (name) #f)))
+	   ,@body))))
+  
+  (let ()
+    (define-with-goto (g1 a)
+      (let ((x 1))
+	(if a
+	    (begin
+	      (set! x 2)
+	      (goto 'the-end)
+	      (set! x 3))
+	    (set! x 4))
+	(label 'the-end)
+	x))
+
+    (define-with-goto (g2 a)
+      (let ((x a))
+	(label 'start)
+	(if (< x 4)
+	    (begin
+	      (set! x (+ x 1))
+	      (goto 'start)))
+	x))
+    
+    (test (g1 #f) 4)
+    (test (g1 #t) 2)
+    (test (g2 1) 4)
+    (test (g2 32) 32))
+
+  
   (let ()
     (define special-value
       (let ((type (make-type)))
