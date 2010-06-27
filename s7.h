@@ -1,7 +1,7 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.60"
+#define S7_VERSION "1.61"
 #define S7_DATE "28-June-10"
 
 
@@ -758,7 +758,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
- * 28-June:   make-lambda and make-lambda*.
+ * 28-June:   syntactic keywords (e.g. lambda) are applicable.
  * 7-June:    changed key arg in s7_hash_table_ref|set to be s7_pointer, not const char*.
  *            hash-tables can now handle any s7 object as the key.
  *            map and for-each now pass a hash-table entry to the function, rather than an internal alist.

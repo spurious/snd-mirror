@@ -329,6 +329,7 @@
 (test (eq? ''() '()) #f)
 (test (eq? '#f #f) #t)
 (test (eq? '#f '#f) #t)
+(test (eq? '()'()) #t) ; no space
 
 (display ";this should display #t: ")
 (begin #| ; |# (display #t))
@@ -429,6 +430,7 @@
 (test (eqv? '() '()) #t)
 (test (eqv? '() (list)) #t)
 
+
 (let ((things (vector #t #f #\space '() "" 0 1 3/4 1+i 1.5 '(1 .2) '#() (vector) (vector 1) (list 1) 'f 't #\t)))
   (do ((i 0 (+ i 1)))
       ((= i (- (vector-length things) 1)))
@@ -479,6 +481,7 @@
 (test (let ((x '(a . b))) (equal? x x)) #t)
 (test (let ((x (cons 'a 'b))) (equal? x x)) #t)
 (test (equal? (cons 'a 'b) (cons 'a 'b)) #t)
+(test (equal?(cons 'a 'b)(cons 'a 'b)) #t) ; no space
 (test (equal? "abc" "cba") #f)
 (test (equal? "abc" "abc") #t)
 (test (let ((x "hi")) (equal? x x)) #t)
@@ -5562,13 +5565,13 @@
 	(cond ((zero? n) 1)
 	      (#t 
 	       (set! old (procedure-source fact))
-	       (set! fact (make-lambda '(n)
-				       `(cond 
+	       (set! fact (apply lambda '(n)
+				       `((cond 
 					 ,@(butlast (cdr (car (cdr (cdr old)))))
 					 ((= n ,n) ,(let ()
 						      (set! result (* n (fact (- n 1))))
 						      result))
-					 ,@(last (cdr (car (cdr (cdr old))))))))
+					 ,@(last (cdr (car (cdr (cdr old)))))))))
 	       result)))))
 
   (test (fact 3) 6)
@@ -8851,6 +8854,13 @@
 			     arg))))))
       "(#1=(lambda (arg) (list arg (list (quote quote) arg))) (quote #1#))")
       
+(test ((apply lambda '((a) (+ a 1))) 2) 3)
+(test ((apply lambda '(() #f))) #f)
+(test ((apply lambda '(arg arg)) 3) '(3))
+(test ((apply lambda* '((a (b 1)) (+ a b))) 3 4) 7)
+(test ((apply lambda* '((a (b 1)) (+ a b))) 3) 4)
+
+
 
 
 
@@ -8862,6 +8872,11 @@
 (test (let () (begin (define x 0)) (begin (set! x 5) (+ x 1)))  6)
 (test (let () (begin (define first car)) (first '(1 2))) 1)
 (test (let () (begin (define x 3)) (begin (set! x 4) (+ x x))) 8)
+(test (let () (begin (define x 0) (define y x) (set! x 3) y)) 0)         ; the let's block confusing global defines
+(test (let () (begin (define x 0) (define y x) (begin (define x 3) y))) 0)
+(test (let () (begin (define y x) (define x 3) y)) 'error)               ; guile says 3
+(test (let ((x 12)) (begin (define y x) (define x 3) y)) 12)             ; guile says 3 which is letrec-style?
+;; (let ((x 12)) (begin (define y x) y)) is 12
 (test (let ((x 3)) (begin x)) 3)
 (test (begin 3) 3)
 (test (begin . (1 2)) 2)
@@ -9146,8 +9161,8 @@
 (test (let ((x #(32 33))) ((values x 0))) 32)
 (test (+ 1 (apply values '(2 3 4))) 10)
 (test (+ 1 ((lambda args (apply values args)) 2 3 4)) 10)
-(test (apply begin '(1 2 3)) 'error)
-(test (apply lambda '(() #f)) 'error)
+(test (apply begin '(1 2 3)) 3)
+;;; TODO: test apply syntax...
 
 (test (or (values #t #f) #f) #t)
 (test (or (values #f #f) #f) #f)
@@ -9165,6 +9180,12 @@
 (test (or #f (values 1 2)) 1)
 (test (or #f (values #f 2)) 2)
 (test (and (values) 1) 1)
+(test (length (values '())) 0)
+(test (length (values #(1 2 3 4))) 4)
+(test (vector? (values #())) #t)
+(test (map + (values '(1 2 3) #(1 2 3))) '(2 4 6))
+(test (map + (values '(1 2 3)) (values #(1 2 3))) '(2 4 6))
+(test (map + (values '(1 2 3) #(4 5 6)) (values '(7 8 9))) '(12 15 18))
 
 (test (let ((x 1)) 
 	(and (let () (set! x 2) #f) 
@@ -9333,6 +9354,7 @@
 	      ((< (car numbers) 0)  
 	       (loop (cdr numbers) nonneg (cons (car numbers) neg))))) 
       '((6 1 3) (-5 -2)))
+(test(let((i 1)(j 2))(+ i j))3)
 
 (test (let ((x 3)) (define x 5) x) 5)
 (test (let* () (define x 8) x) 8)
@@ -13037,6 +13059,17 @@ who says the continuation has to restart the map from the top?
   (test (_mac14_ :a 4) 6)
 
   (let ()
+    (define-macro (hi a) `````(+ ,,,,,a 1))
+    (test (eval (eval (eval (eval (hi 2))))) 3)
+
+    (define-macro (hi a) `(+ ,@@a))
+    (test (hi (1 2 3)) 'error)
+
+    (define-macro (hi @a) `(+ ,@@a))
+    (test (hi (1 2 3)) 6))
+
+
+  (let ()
     (set! *#readers* (list (cons #\s (lambda (str) 123))))
     (let ((val (eval-string "(+ 1 #s1)"))) ; force this into the current reader
       (test val 124))
@@ -13078,8 +13111,8 @@ who says the continuation has to restart the map from the top?
 						  (set! body (list f body)))
 						(reverse (cdr accessor)))
 					       (make-procedure-with-setter
-						(make-lambda '(lst) body)
-						(make-lambda '(lst val) `(set! ,body val)))))
+						(apply lambda '(lst) (list body))
+						(apply lambda '(lst val) `((set! ,body val))))))
 				       labels))
 		    (gather-labels (cons 'cdr accessor) (cdr tree)))
 		  (begin
@@ -14186,7 +14219,9 @@ who says the continuation has to restart the map from the top?
 (test (- (lcm)) -1)
 (test (* (*)) 1)
 (test (+ (+) (+ (+)) (+ (+ (+)))) 0)
+(test (+(*(+))(*)(+(+)(+)(*))) 2)
 (test (nan? (asinh (cos (real-part (log 0.0))))) #t)
+(num-test(cos(sin(log(tan(*))))) 0.90951841537482)
 (num-test (asinh (- 9223372036854775807)) -44.361419555836)
 (num-test (imag-part (asin -9223372036854775808)) 44.361419555836)
 

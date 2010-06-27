@@ -702,7 +702,7 @@ it could be removed.
 
 
 
-<p>s7 macros are not "hygenic".  For example,
+<p>s7 macros are not "hygienic".  For example,
 </p>
 <pre>
   (define-macro (mac b) 
@@ -787,7 +787,7 @@ something a macro can do for us:
 	   ,@new-globals
 	   `(begin ,,@new-body))))))
 </pre>
-<p>Now we can automatically generate hygenic macros:
+<p>Now we can automatically generate hygienic macros:
 </p>
 <pre>
   (define-clean-macro (mac b) 
@@ -798,36 +798,11 @@ something a macro can do for us:
         (+ *))
     (mac a))
 </pre>
-<p>which returns 13 as expected.
-If you just want to make sure your macro arguments don't get captured,
-use lambda:
-</p>
-<pre>
-(define-macro (mac a)
-  `((lambda (b) 
-      (let ((a 12))
-	(+ a b)))
-    ,a))
-</pre>
-<p>We can make such a macro "clean" by hand with procedure-environment (discussed <a href="#environments">below</a>):
-</p>
-
-<pre>
-(define-macro (mac a)
-  `((with-environment (procedure-environment mac)
-      (lambda (b) 
-	(let ((a 12))
-	  (+ a b)))) ; '+ here is the definition-time '+
-    ,a))
-
-&gt; (let ((a 21) (+ *)) (mac a))
-33
-</pre>
-
-<p>The procedure-environment of a macro is the environment at its definition time (just like a function).
+<p>which returns 13 as expected.  It is possible to make hygienic macros by hand.
+The procedure-environment of a macro is the environment at its definition time (just like a function).
 By wrapping the macro body in with-environment, we make sure anything in that body reflects 
-the definition environment, not the calling environment.
-It's possible to make a clean macro using augment-environment and current-environment:
+the definition environment, not the calling environment.  Next we wrap each use of a
+macro argument in with-environment so that it is taken from the call-time environment.
 </p>
 
 <pre>
@@ -850,14 +825,20 @@ It's possible to make a clean macro using augment-environment and current-enviro
 (let ((a 21) (+ *))
   (with-environment 
     (augment-environment (procedure-environment mac) 
-    (cons 'gensym-51 (current-environment))) 
-  (let ((a 12)) 
-    (+ (with-environment gensym-51 a) ; the outer 'a (mac arg 'b), definition-time '+
-       a))))                          ; the local 'a
+      (cons 'gensym-51 (current-environment))) 
+    (let ((a 12)) 
+      (+ (with-environment gensym-51 a) ; the outer 'a (mac arg 'b), definition-time '+
+         a))))                          ; the local 'a
 </pre>
 
-<p>I got bogged down trying to automate this.  Maybe tomorrow!
+<p>A bit tedious, but we could abbreviate the names, and partially automate the process.
 </p>
+<!--
+Leaving aside "hygiene",
+there are serious problems with macros, but they are
+hard to display and grapple with &mdash; I need to gather some examples...
+-->
+
 </blockquote>
 </small>
 
@@ -1512,8 +1493,8 @@ it is set:
 						(set! body (list f body)))
 					      (reverse (cdr accessor)))
 					     (make-procedure-with-setter
-					      (make-lambda '(lst) body)
-					      (make-lambda '(lst val) `(set! ,body val)))))
+					      (apply lambda '(lst) (list body))
+					      (apply lambda '(lst val) `((set! ,body val))))))
 				     labels))
 		  (gather-labels (cons 'cdr accessor) (cdr tree)))
 		(begin
@@ -1551,9 +1532,9 @@ it is set:
 (hi) -&gt; "start all done"
 </pre>
 
-
 </blockquote>
 </small>
+<br>
 
 </dd>
 <br><br>
@@ -2765,13 +2746,13 @@ more fun than a barrel of monkeys. Here is a self-modifying factorial function:
       (cond ((zero? n) 1)
 	    (#t 
 	     (set! old (<em class=red>procedure-source</em> fact))
-	     (set! fact (make-lambda '(n)
-			  `(cond 
+	     (set! fact (apply lambda '(n)
+			  `((cond 
 			    ,@(butlast (cdr (car (cdr (cdr old)))))
 			    ((= n ,n) ,(let ()
 					 (set! result (* n (fact (- n 1))))
 					 result))
-			    ,@(last (cdr (car (cdr (cdr old))))))))
+			    ,@(last (cdr (car (cdr (cdr old)))))))))
 	     result)))))
 </pre>
 
@@ -3468,8 +3449,7 @@ doesn't accidentally step on it.
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<p>The built-in syntactic names, such as "begin", are (almost) first-class citizens (I'm trying to avoid
-any distinctions of this sort).
+<p>The built-in syntactic names, such as "begin", are almost first-class citizens.
 </p>
 <pre>
 &gt; (let ((progn begin)) 
@@ -3482,10 +3462,13 @@ any distinctions of this sort).
 &gt; (let ((function lambda)) 
     ((function (a b) (list a b)) 3 4))
 (3 4)
+
+&gt; (apply begin '((define x 3) (+ x 2)))
+5
 </pre>
 
 <p>There is currently one blemish.
-You can't reverse that process, and give the syntactic name some new value:
+You can't set the syntactic object some new value:
 <code>(set! if 3)</code>.
 I hope this kind of thing is not actually very useful, but let me
 know if you need it.  The issue is purely one of speed.

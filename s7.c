@@ -2495,7 +2495,8 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e)
 }
 
 
-/* an experiment */
+#if 0
+/* an experiment -- now I think I'll make lambda applicable */
 static s7_pointer g_make_lambda(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_lambda "(make-lambda arg-list body) returns a function with the given argument list and body"
@@ -2508,6 +2509,7 @@ static s7_pointer g_make_lambda_star(s7_scheme *sc, s7_pointer args)
   #define H_make_lambda_star "(make-lambda* arg-list body) returns a function with the given argument list and body"
   return(make_closure(sc, args, sc->envir, T_CLOSURE_STAR));
 }
+#endif
 
 
 s7_pointer s7_global_environment(s7_scheme *sc) 
@@ -19419,6 +19421,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc);
 	  goto START;
 
+	case T_SYMBOL:
+	  if (is_syntax(sc->code))
+	    {
+	      sc->code = s7_cons(sc, sc->code, sc->args);
+	      sc->args = sc->NIL;
+	      goto EVAL;
+	    }
+	  /* else fall through */
+
 	default:
 	  return(apply_error(sc, sc->code, sc->args));
 	}
@@ -19426,7 +19437,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     case OP_EVAL_MACRO:    /* after (scheme-side) macroexpansion, evaluate the resulting expression */
-      /* if the macro is more than a quasiquoted expression, then we come through here twice */
+      /* 
+       * (define-macro (hi a) `(+ ,a 1))
+       * (hi 2)
+       * here with value: (+ 2 1)
+       */
       sc->code = sc->value;
       goto EVAL;
       
@@ -26222,9 +26237,10 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, s_type_ref_name,           s_type_ref,                2, 0, false, "internal object value");
   s7_define_function_star(sc, "make-type", g_make_type, "print equal getter setter length name copy fill", H_make_type);
 
+#if 0
   s7_define_function(sc, "make-lambda",             g_make_lambda,             2, 0, false, H_make_lambda);
   s7_define_function(sc, "make-lambda*",            g_make_lambda_star,        2, 0, false, H_make_lambda_star);
-  /* TODO: doc/test (use...) make-lambda */
+#endif
 
   s7_define_variable(sc, "*features*", sc->NIL);
   s7_define_variable(sc, "*load-path*", sc->NIL);
