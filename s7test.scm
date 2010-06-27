@@ -9002,6 +9002,35 @@
    (set! (cdr (cddr lst)) lst)
    (test (apply + lst) 'error))
 
+(test (apply dynamic-wind (list (lambda () #f) (lambda () 1) (lambda () #f))) 1)
+(test (apply call-with-exit (list (lambda (exit) 1))) 1)
+(test (apply call-with-exit (list (lambda (exit) (exit 1) 32))) 1)
+(test (apply catch (list #t (lambda () 1) (lambda args 'error))) 1)
+(test (apply eval '((+ 1 2))) 3)
+(test (apply eval-string '("(+ 1 2)")) 3)
+(test (let () (apply begin '((define x 1) (define y x) (+ x y)))) 2)
+(test (apply if '(#f 1 2)) 2)
+(test (let ((x 1)) (apply set! '(x 3)) x) 3)
+(test (let ((x 1)) (apply cond '(((= x 2) 3) ((= x 1) 32)))) 32)
+(test (apply and '((= 1 1) (> 2 3))) #f)
+(test (apply or '((= 1 1) (> 2 3))) #t)
+(test (let () (apply define '(x 32)) x) 32)
+(test (let () (apply define* '((hi (a 1) (b 2)) (+ a b))) (hi 32)) 34)
+(test ((apply lambda '((n) (+ n 1))) 2) 3)
+(test ((apply lambda* '(((n 1)) (+ n 1)))) 2)
+(test (apply let '(((x 1)) (+ x 2))) 3)
+(test (apply let* '(((x 1) (y (* 2 x))) (+ x y))) 3)
+(test (let () (apply define-macro `((hiho a) `(+ ,a 1))) (hiho 2)) 3)
+(test (let () (apply defmacro `(hiho (a) `(+ ,a 1))) (hiho 2)) 3)
+(test (let () (apply defmacro* `(hiho ((a 2)) `(+ ,a 1))) (hiho)) 3)
+(test (let () (apply define-macro* `((hiho (a 2)) `(+ ,a 1))) (hiho)) 3)
+(test (apply do '(((i 0 (+ i 1))) ((= i 3) i))) 3)
+(test (apply case '(1 ((2 3) 4) ((1 5) 32))) 32)
+(test (+ (apply values '(1 2 3))) 6)
+(test (apply quote '(1)) 1)
+(test (let () (apply letrec '(() (define x 9) x))) 9)
+(test ((lambda (n) (apply n '(((x 1)) (+ x 2)))) let) 3)
+
 
 
 
@@ -9162,7 +9191,6 @@
 (test (+ 1 (apply values '(2 3 4))) 10)
 (test (+ 1 ((lambda args (apply values args)) 2 3 4)) 10)
 (test (apply begin '(1 2 3)) 3)
-;;; TODO: test apply syntax...
 
 (test (or (values #t #f) #f) #t)
 (test (or (values #f #f) #f) #f)
@@ -11254,10 +11282,6 @@ who says the continuation has to restart the map from the top?
   (test (map pws '(1 2 3)) '(2 3 4))
   (test (apply pws '(1)) 2))
 (test (let ((ctr 0)) (call-with-exit (lambda (top-exit) (set! ctr (+ ctr 1)) (call-with-exit top-exit) (set! ctr (+ ctr 16)))) ctr) 1)
-(test (apply dynamic-wind (list (lambda () #f) (lambda () 1) (lambda () #f))) 1)
-(test (apply call-with-exit (list (lambda (exit) 1))) 1)
-(test (apply call-with-exit (list (lambda (exit) (exit 1) 32))) 1)
-(test (apply catch (list #t (lambda () 1) (lambda args 'error))) 1)
 
 (test (let () (+ 5 (call-with-exit (lambda (return) (return 1 2 3) 4)))) 11)
 (test (+ 5 (call-with-exit (lambda (return) (return 1)))) 6)
@@ -12655,6 +12679,21 @@ who says the continuation has to restart the map from the top?
   (test (define-macro (a #()) 1) 'error)
   (test (define-macro (i 1) => (j 2)) 'error)
   (test (define hi 1 . 2) 'error)
+
+  (test (let ()
+	  (define-macro (hanger name-and-args)
+	    `(define ,(car name-and-args)
+	       (+ ,@(map (lambda (arg) arg) (cdr name-and-args)))))
+	  (hanger (hi 1 2 3))
+	  hi)
+	6)
+  (test (let ()
+	  (define-macro (hanger name-and-args)
+	    `(define-macro (,(car name-and-args))
+	       `(+ ,@(map (lambda (arg) arg) (cdr ',name-and-args)))))
+	  (hanger (hi 1 2 3))
+	  (hi))
+	6)
 
   (let ()
     ;; inspired by Doug Hoyte, "Let Over Lambda"

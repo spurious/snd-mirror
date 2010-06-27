@@ -2495,23 +2495,6 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e)
 }
 
 
-#if 0
-/* an experiment -- now I think I'll make lambda applicable */
-static s7_pointer g_make_lambda(s7_scheme *sc, s7_pointer args)
-{
-  #define H_make_lambda "(make-lambda arg-list body) returns a function with the given argument list and body"
-  return(make_closure(sc, args, sc->envir, T_CLOSURE));
-}
-
-
-static s7_pointer g_make_lambda_star(s7_scheme *sc, s7_pointer args)
-{
-  #define H_make_lambda_star "(make-lambda* arg-list body) returns a function with the given argument list and body"
-  return(make_closure(sc, args, sc->envir, T_CLOSURE_STAR));
-}
-#endif
-
-
 s7_pointer s7_global_environment(s7_scheme *sc) 
 {
   return(sc->global_env);
@@ -19421,8 +19404,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc);
 	  goto START;
 
-	case T_SYMBOL:
-	  if (is_syntax(sc->code))
+	case T_SYMBOL:                            /* -------- syntactic keyword as applicable object -------- */
+	  if (is_syntax(sc->code))                                           /* (apply begin '((define x 3) (+ x 2))) */
 	    {
 	      sc->code = s7_cons(sc, sc->code, sc->args);
 	      sc->args = sc->NIL;
@@ -26237,11 +26220,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, s_type_ref_name,           s_type_ref,                2, 0, false, "internal object value");
   s7_define_function_star(sc, "make-type", g_make_type, "print equal getter setter length name copy fill", H_make_type);
 
-#if 0
-  s7_define_function(sc, "make-lambda",             g_make_lambda,             2, 0, false, H_make_lambda);
-  s7_define_function(sc, "make-lambda*",            g_make_lambda_star,        2, 0, false, H_make_lambda_star);
-#endif
-
   s7_define_variable(sc, "*features*", sc->NIL);
   s7_define_variable(sc, "*load-path*", sc->NIL);
   s7_define_variable(sc, "*load-hook*", sc->NIL);
@@ -26392,7 +26370,6 @@ s7_scheme *s7_init(void)
 }
 
 /* TODO: macroexpand and fully-expand are buggy
- * SOMEDAY: finish the clean macro example in s7.html (and add to s7test.scm)
  *
  *  envs as debugging aids: how to show file/line tags as well
  *  and perhaps store cur-code?  __form__ ? make a cartoon of entire state? [need only the pointer, not a copy]
@@ -26411,6 +26388,7 @@ s7_scheme *s7_init(void)
  *       perhaps use procedure-source?
  *
  * :allow-other-keys in lambda* ("lambda!")
+ * (int n) -> bit n of int?
  *
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
  * generic append?
