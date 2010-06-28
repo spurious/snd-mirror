@@ -668,7 +668,7 @@ expanded into:
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<p>I hesitate to mention this, but macros are "first-class" entities in s7.  You can
+<p>I hesitate to mention this, but macros are first-class entities in s7.  You can
 pass one as a function argument, apply it to a list, return it from a function,
 and assign it to a variable:
 </p>
@@ -697,12 +697,12 @@ make-mac
 <p>The presence of the dummy name in the applied macro's arguments is an historical accident;
 it could be removed.
 </p>
+
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-
-
-<p>s7 macros are not "hygienic".  For example,
+<p>s7 macros are not hygienic.  For example,
 </p>
 <pre>
   (define-macro (mac b) 
@@ -720,7 +720,7 @@ unreadable in all but the simplest cases, and besides, gensymification is
 something a macro can do for us:
 </p>
 <pre>
-(define-macro (define-clean-macro name-and-args . body) ; "define-immaculo"?
+(define-macro (define-clean-macro name-and-args . body)
   (let ((syms ()))
 
     (define (walk func lst)
@@ -798,11 +798,11 @@ something a macro can do for us:
         (+ *))
     (mac a))
 </pre>
-<p>which returns 13 as expected.  It is possible to make hygienic macros by hand.
+<p>which returns 13 as expected.  It is also possible to make hygienic macros using the environment functions.
 The procedure-environment of a macro is the environment at its definition time, just like a function.
 By wrapping the macro body in with-environment, we make sure anything in that body reflects 
-the definition environment, not the calling environment.  Next we wrap each use of a
-macro argument in with-environment so that it is taken from the call-time environment.
+the definition environment, not the calling environment.  If doing this by hand, we then wrap each
+use of a macro argument in with-environment so that its value is taken from the call-time environment:
 </p>
 
 <pre>
@@ -831,13 +831,88 @@ macro argument in with-environment so that it is taken from the call-time enviro
          a))))                          ; the local 'a
 </pre>
 
-<p>A bit tedious, but we could abbreviate the names, and partially automate the process.
+<p>But the augment-environment trick can be extended to the macro arguments as well:
 </p>
-<!--
-Leaving aside "hygiene",
-there are serious problems with macros, but they are
-hard to display and grapple with &mdash; I need to gather some examples...
--->
+<pre>
+(define-macro (define-immaculo name-and-args . body)
+  (let* ((gensyms (map (lambda (g) (gensym)) (cdr name-and-args)))
+	 (args (cdr (copy name-and-args)))
+	 (name (car name-and-args))
+	 (set-args (map (lambda (a g) `(list ',g ,a)) args gensyms))
+	 (get-args (map (lambda (a g) `(quote (cons ',a ,g))) args gensyms)))
+
+    `(define-macro ,name-and-args
+       `(let ,(list ,@set-args)                 ; get the current macro arg values
+	  ,(list 'with-environment 
+		 (append (list 'augment-environment) 
+			 (list (list 'procedure-environment ,name)) 
+			 (list ,@get-args))     ; import the current arg values into the definition environment
+		 ,@body)))))
+
+;; in this version of define-immaculo, don't unquote the macro arguments in the body:
+
+&gt; (define-immaculo (mac b) `(let ((a 12)) (+ a b)))
+mac
+&gt; (let ((a 21) (+ *)) (mac a))
+33
+</pre>
+
+<p>If the slight difference in syntax is a problem
+</p>
+<pre>
+(define-macro (define-immaculo name-and-args . body)
+  (let* ((gensyms (map (lambda (g) (gensym)) (cdr name-and-args)))
+	 (args (cdr (copy name-and-args)))
+	 (name (car name-and-args))
+	 (set-args (map (lambda (a g) `(list ',g ,a)) args gensyms))
+	 (get-args (map (lambda (a g) `(quote (cons ',a ,g))) args gensyms))
+	 (blocked-args (map (lambda (a) `(,a ',a)) args))        
+	 (new-body (list (eval `(let (,@blocked-args) ,@body)))))
+
+    `(define-macro ,name-and-args
+       `(let ,(list ,@set-args)
+	  ,(list 'with-environment 
+		 (append (list 'augment-environment) 
+			 (list (list 'procedure-environment ,name)) 
+			 (list ,@get-args))
+		 ',@new-body)))))
+
+&gt; (define-immaculo (mac c d) `(let ((a 12) (b 3)) (+ a b ,c ,d)))
+mac
+&gt; (let ((a 21) (b 10) (+ *)) (mac a b))
+46
+&gt; (let ((a 21) (b 10) (+ *)) (mac a (+ b 10))) ; here '+' is '*'
+136
+
+&gt; (macroexpand (define-immaculo (mac c d) `(let ((a 12) (b 3)) (+ a b ,c ,d))))
+
+(define-macro (mac c d) 
+  (cons (quote let)
+	(cons (list (list (quote {gensym}-17) c)   ; here we get the call-time macro argument values
+		    (list (quote {gensym}-18) d)) 
+	      (cons (list (quote with-environment) 
+			  (append (list (quote augment-environment)) 
+                                  ;; now wrap the body in the augmented definition-time environment
+				  (list (list (quote procedure-environment) mac))
+				  ;; add the macro args to the current env
+				  (list (quote (cons (quote c) {gensym}-17)) 
+					(quote (cons (quote d) {gensym}-18)))) 
+			  (quote (let ((a 12) 
+                                       (b 3)) 
+                                    (+ a b c d)))) 
+		    (quote ())))))
+
+&gt; (let ((a 21) (b 10) (+ *)) (macroexpand (mac a b)))
+
+(let (({gensym}-22 a)    ; pick up mac args, this is arg 'c' with the value 'a'
+      ({gensym}-23 b)) 
+  (with-environment (augment-environment (procedure-environment #&lt;macro&gt;)
+                      (cons (quote c) {gensym}-22) ; add them to definition-time env
+		      (cons (quote d) {gensym}-23)) 
+    (let ((a 12) 
+	  (b 3)) 
+      (+ a b c d)))) ; 'a' and 'b' are local, 'c' and 'd' are from the augmented env
+</pre>
 
 </blockquote>
 </small>
@@ -1135,7 +1210,7 @@ So, remembering that (cadr type) is the make function:
                  :getter (lambda (a b) 
                            (vector-ref a b))))   ; make a new type with its own getter function
          (object ((cadr type) (vector 1 2 3))))  ; create an object of the new type, its value is a vector
-       (object 1))                               ; "apply" the object to 1 =&gt; (vector-ref object 1) via the getter
+       (object 1))                               ; apply the object to 1 =&gt; (vector-ref object 1) via the getter
 2
 </pre>
 
@@ -1553,7 +1628,7 @@ lists, strings, vectors, hash-tables, and any cooperating C or Scheme-defined ob
 are both applicable and settable.  newLisp calls this "implicit indexing".  
 </p>
 <p>
-In <code>(vector-ref #(1 2) 0)</code>, for example, "vector-ref" is just a type
+In <code>(vector-ref #(1 2) 0)</code>, for example, vector-ref is just a type
 declaration.  But in Scheme, type declarations are unnecessary, so we get exactly
 the same result from <code>(#(1 2) 0)</code>.  Similarly, <code>(lst 1)</code> is the
 same as <code>(list-ref lst 1)</code>, and <code>(set! (lst 1) 2)</code> is the same
@@ -1956,7 +2031,7 @@ an entry, <code>'(key . value)</code>, in whatever order the entries are encount
 </p>
 <pre>
 (define (hash-table-&gt;alist table)
-  (map (lambda (x) x) table)) ; clearer perhaps than (map values table), "append" would also work here
+  (map (lambda (x) x) table)) ; clearer perhaps than (map values table), append would also work here
 </pre>
 
 <p>reverse of a hash-table returns a new table with the keys and values reversed.
@@ -2085,7 +2160,7 @@ nothing is added to the map output list.
 ()
 </pre>
 
-<p>Second, you can use multiple-values to turn off the "short-circuit" evaluation
+<p>Second, you can use multiple-values to turn off the short-circuit evaluation
 of 'or' and 'and'.  Normally these operators 
 stop evaluating their arguments as soon as they hit #t ('or') or #f ('and').
 By wrapping the arguments in 'values', you can force all of them to be evaluated:
@@ -2112,8 +2187,8 @@ By wrapping the arguments in 'values', you can force all of them to be evaluated
 (values 1 (1 2) 12)
 </pre>
 
-<p>But this printout is just trying to be informative.  There is no "multiple-values object"
-in s7.  You can't <code>(set! x (values 1 2))</code>, for example.  The "values" function
+<p>But this printout is just trying to be informative.  There is no multiple-values object
+in s7.  You can't <code>(set! x (values 1 2))</code>, for example.  The values function
 tells s7 that its arguments should be handled in a special way, and the multiple-value indication goes away
 as soon as the arguments are spliced into some caller's arguments.  This affects 'or' and 'and'.  The values are considered
 a part of the argument list of the operator:
@@ -2127,7 +2202,7 @@ a part of the argument list of the operator:
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<p>In some Schemes, "values" behaves like CL's prog1:
+<p>In some Schemes, values behaves like CL's prog1:
 </p>
 <pre>
 (not s7)&gt; (let ((x 1)) (cond ((values #f (set! x 2) #t) 3) (#t x)))
@@ -2136,11 +2211,11 @@ a part of the argument list of the operator:
 2
 </pre>
 
-<p>But in s7 we're trying to implement "real" multiple values (else why have them at all?).
+<p>But in s7 we're trying to implement real multiple values (else why have them at all?).
 There are many ways we could interpret <code>(cond ((values ...))...)</code> and
 <code>(cond ((values...) => func))</code>, but surely
 equivalent uses of "cond" and "if" should give the same result.
-Currently in s7, where a "test" is in progress, only <code>(values #f)</code> is the same as #f.
+Currently in s7, where a test is in progress, only <code>(values #f)</code> is the same as #f.
 </p>
 <pre>
 &gt; (if (values #f #f) 1 2)            ; (values #f #f) is not #f
@@ -2648,7 +2723,7 @@ are:
 the upper limit on how many vector elements are printed by object-&gt;string and format.
 </p>
 <p>When running s7 behind a GUI, you often want input to come from and output to go to
-arbitrary widgets. The "function ports" provide a way to redirect IO.  See <a href="#functionportexample">below</a>
+arbitrary widgets. The function ports provide a way to redirect IO.  See <a href="#functionportexample">below</a>
 for an example.
 </p>
 <p>s7 also includes current-error-port and set-current-error-port.
@@ -2840,13 +2915,13 @@ Here we scan the symbol table for any function that doesn't have documentation:
 </td></tr></table>
 </dt>
 
-<dd><p>environments are "first class objects" in s7.  An environment is
+<dd><p>environments are first class objects in s7.  An environment is
 a list of alists ending with a hash-table, the global environment.
 <code>(current-environment :optional thread)</code>
 returns the current environment.  <code>(global-environment)</code>
 returns the top-level environment.  <code>(procedure-environment proc)</code> returns
 the procedure proc's environment.
-Here is an example of "apropos" that accesses both environments:
+Here is an example of apropos that accesses both environments:
 </p>
 <pre>
         (define (apropos name)
@@ -2923,10 +2998,10 @@ code in a let, or group of lets:
 </pre>
 <p>
 Load returns the last thing it evaluates, so loading this file returns the list.
-For explicitness, we could put the list of names at the top of the file in an "export" statement,
+For explicitness, we could put the list of names at the top of the file in an export statement,
 and fill in the values as we define them as in the make-type <a href="#recordexample">record</a> example above.
 The file that wants to use this library uses with-environment and augment-environment
-to "import" the exported values:
+to import the exported values:
 </p>
 <pre>
 (define (import file)
@@ -3237,8 +3312,8 @@ Keywords exist mainly for define*'s benefit.  The keyword functions are:
 <b>keyword?</b>, <b>make-keyword</b>, <b>symbol-&gt;keyword</b>, and <b>keyword-&gt;symbol</b>.
 A keyword is a symbol that starts or ends with a colon. The colon
 is considered to be a part of the symbol name.
-s7's keyword support is somewhat lackadaisical; I can't decide if it's worth complaining
-about stuff like <code>(let ((:hi 1)) :hi)</code>.
+s7's keyword support is somewhat lackadaisical; should it complain
+about stuff like <code>(let ((:hi 1)) :hi)</code>?
 </p>
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
@@ -3293,7 +3368,7 @@ bind it to something else, which is asking for confusion).
 <li>no transcript-on or transcript-off.
 <li><A NAME="__func__">__func__</a> is the name (or name and location) of the function currently being defined or called, as in C.
 <li>begin returns the value of the last form; it can contain both definitions and other statements.
-<li>#&lt;unspecified&gt;, #&lt;eof&gt;, and #&lt;undefined&gt; are "first-class" objects.
+<li>#&lt;unspecified&gt;, #&lt;eof&gt;, and #&lt;undefined&gt; are first-class objects.
 <li>for-each and map accept different length arguments; the operation stops when any argument reaches its end.
 <li>letrec*, but without conviction.
 </ul>
@@ -3446,7 +3521,7 @@ the final cdr.  <code>(define (circular? lst) (infinite? (length lst)))</code>.
 
 <p>s7 and Snd use "*" in a variable name, *features* for example, to indicate
 that the variable is predefined.  It may occur unprotected in a macro, for
-example.  The "*" doesn't mean that the variable is "special" in the CL sense of dynamic scope,
+example.  The "*" doesn't mean that the variable is special in the CL sense of dynamic scope,
 but some clear marker is needed for a global variable so that the programmer
 doesn't accidentally step on it.  
 </p>
@@ -3484,18 +3559,31 @@ know if you need it.  The issue is purely one of speed.
 
 
 <!--
-<p>Other odd corners:
-</p>
-<pre>
-(map apply (list map) (list map) (list (list *)) '((((1 2)) ((3 4)))))
-(define (<=0? x) (negative? (logior x (- x 1)))) ; from Hacker's Delight
-</pre>
-
-<p>We have memq, memv, and member, but just case (using eqv?) -- what about caseq, caseqv, casequal etc? or eval-case (s7test)
-</p>
+PERHAPS: cond else?
+:(cond ((= 1 2) 3) (else 4))
+4  ; same in Guile
+:(cond ((= 1 2) 3) (else => not))
+#f ; error in Guile
 
 
 PERHAPS: the begin letrec business
+:(let ((x 1)) (let () (define x 32)) x)
+1
+:(let ((x 1)) (begin (define x 32)) x)
+32
+:(let ((y 2)) (let ((x 1)) (begin (define x y)) x))
+2
+:(let ((y 2)) (let ((x 1)) (begin (define x y) (define y 123)) x))
+2 ; in guile 123
+:(let ((y 2)) (let ((x 1)) (begin (define x y) (set! x (* x 2)) (define y 123)) x))
+4
+;; this is illegal in guile
+:(let ((y 2)) (let ((x 1)) (begin (define x y) (define y x)) x))
+2
+;; this is #<unspecified> in guile
+:(let ((x 1)) (begin (if (= x 1) (begin (define x 32)) (begin (define x 64)))) x)
+32
+;; an error in Guille
 -->
 
 </blockquote>
@@ -3517,7 +3605,7 @@ PERHAPS: the begin letrec business
 </dt>
 
 <dd><p>s7 is primarily aimed at computer music, CLM-based sound synthesis in particular.
-A CLM "instrument" is usually a do-loop running things like oscillators and envelopes
+A CLM instrument is usually a do-loop running things like oscillators and envelopes
 for zillions of sound samples.  These calculations do not involve recursion, or
 complex numbers, or fancy list processing, so it is not too hard to write an
 optimizer for them.  In sndlib, that optimizer is called "run".  It is a macro (in modern jargon, a JIT byte compiler)
@@ -3525,7 +3613,7 @@ that can be wrapped around any piece of Scheme code that you want to speed up.
 If it can't optimize the code, it passes it to the s7 interpreter.  If run is successful,
 you will normally get a speed up by a factor of 10 to 30.  For CLM instruments,
 the result runs close to the speed of the equivalent compiled and optimized
-C code.  Here are my timings for two instruments, "bird" and "fm-violin", each running for 100 seconds.
+C code.  Here are my timings for two instruments, bird and fm-violin, each running for 100 seconds.
 I've included sbcl times for comparison.
 </p>
 <pre>

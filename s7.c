@@ -17788,7 +17788,7 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
       (car(cdr(l)) == car(form)))
     return(make_list_2(sc, sc->QUOTE, form));
 
-  return(make_list_3(sc, sc->CONS, l, r));
+  return(make_list_3(sc, sc->CONS, l, r)); 
 }
 
 
@@ -19425,6 +19425,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * (hi 2)
        * here with value: (+ 2 1)
        */
+
+      /* fprintf(stderr, "eval: %s\n", s7_object_to_c_string(sc, sc->value)); */
+
       sc->code = sc->value;
       goto EVAL;
       
@@ -26312,7 +26315,7 @@ s7_scheme *s7_init(void)
   /* s7_define_function(sc, "dump-heap", g_dump_heap, 0, 0, false, "hiho"); */
 
   /* macroexpand */
-  s7_eval_c_string(sc, "(define-macro (macroexpand mac) `(,(procedure-source (car mac)) ',mac))");
+  s7_eval_c_string(sc, "(define-macro (macroexpand __mac__) `(,(procedure-source (car __mac__)) ',__mac__))");
   s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, "quasiquote");
 
 
@@ -26369,13 +26372,11 @@ s7_scheme *s7_init(void)
   return(sc);
 }
 
-/* TODO: macroexpand and fully-expand are buggy
- *
- *  envs as debugging aids: how to show file/line tags as well
+/* envs as debugging aids: how to show file/line tags as well
  *  and perhaps store cur-code?  __form__ ? make a cartoon of entire state? [need only the pointer, not a copy]
  * this would be good in ws too -- a way to show which notes are active at a given point in the graph
  *
- * and a way to jump into the error environment, cerror 
+ * and a way to jump into the error environment, cerror, history (backup)
  *   an error handling dialog (gui) in snd?
  * error handling is still not very clean
  *
@@ -26388,7 +26389,6 @@ s7_scheme *s7_init(void)
  *       perhaps use procedure-source?
  *
  * :allow-other-keys in lambda* ("lambda!")
- * (int n) -> bit n of int?
  *
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
  * generic append?
