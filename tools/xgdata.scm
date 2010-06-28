@@ -925,9 +925,10 @@
 (CINT "GDK_BUTTON5_MASK" "GdkModifierType")
 (CINT "GDK_RELEASE_MASK" "GdkModifierType")
 (CINT "GDK_MODIFIER_MASK" "GdkModifierType")
-(CINT "GDK_INPUT_READ" "GdkInputCondition")
-(CINT "GDK_INPUT_WRITE" "GdkInputCondition")
-(CINT "GDK_INPUT_EXCEPTION" "GdkInputCondition")
+;;; 2.90.4
+;;; (CINT "GDK_INPUT_READ" "GdkInputCondition")
+;;; (CINT "GDK_INPUT_WRITE" "GdkInputCondition")
+;;; (CINT "GDK_INPUT_EXCEPTION" "GdkInputCondition")
 (CINT "GDK_OK" "GdkStatus")
 (CINT "GDK_ERROR" "GdkStatus")
 (CINT "GDK_ERROR_PARAM" "GdkStatus")
@@ -1466,7 +1467,7 @@
 ;;; out 2.3 (CFNC "void gtk_combo_disable_activate GtkCombo* combo")
 (CCAST "GTK_CONTAINER(obj)" "GtkContainer*")
 (CCHK "GTK_IS_CONTAINER(obj)" "GtkContainer*")
-(CFNC "gboolean GTK_IS_RESIZE_CONTAINER GtkWidget* widget")
+;;; (CFNC "gboolean GTK_IS_RESIZE_CONTAINER GtkWidget* widget")
 ;;;;(CFNC "GType gtk_container_get_type void")
 (CFNC "void gtk_container_set_border_width GtkContainer* container guint border_width")
 (CFNC "guint gtk_container_get_border_width GtkContainer* container")
@@ -3911,6 +3912,7 @@
 (CFNC "gboolean pango_language_matches PangoLanguage* language char* range_list")
 
 
+;;; are these of any use?? 
 (CLNG "GTK_TYPE_ACCEL_GROUP")
 (CLNG "GTK_TYPE_ACCEL_LABEL")
 (CLNG "GTK_TYPE_ACCESSIBLE")
@@ -4063,7 +4065,7 @@
 (CLNG "GDK_TYPE_RGB_DITHER")
 (CLNG "GDK_TYPE_BYTE_ORDER")
 (CLNG "GDK_TYPE_MODIFIER_TYPE")
-(CLNG "GDK_TYPE_INPUT_CONDITION")
+;;; (CLNG "GDK_TYPE_INPUT_CONDITION")
 (CLNG "GDK_TYPE_STATUS")
 (CLNG "GDK_TYPE_GRAB_STATUS")
 (CLNG "GDK_TYPE_VISUAL_TYPE")
@@ -6723,7 +6725,7 @@
 
 
 (STRUCT-make "GdkColor guint32 &pixel guint16 &red guint16 &green guint16 &blue")
-(STRUCT-make "GdkCursor GdkCursorType type guint ref_count")
+;;; out 2.90.4 (STRUCT-make "GdkCursor GdkCursorType type guint ref_count")
 (STRUCT-make "GdkPoint gint x gint y")
 (STRUCT-make "GdkRectangle gint x gint y gint width gint height")
 (STRUCT-make "GtkRequisition gint width gint height")
@@ -7179,5 +7181,19 @@
 (CFNC-2902 "void gtk_calendar_unmark_day GtkCalendar* calendar guint day")
 (CFNC-2902 "GdkWindow* gdk_drag_context_get_source_window GdkDragContext* context")
 (CFNC-2902 "GdkWindow* gtk_viewport_get_view_window GtkViewport* viewport")
+
+;;; 2.90.4
+(CFNC-2902 "gpointer gdk_image_get_pixels GdkImage* image")
+(CFNC-2902 "GdkDevice* gdk_device_manager_get_client_pointer GdkDeviceManager* device_manager")
+(CFNC-2902 "void gtk_accessible_set_widget GtkAccessible* accessible GtkWidget* widget")
+(CFNC-2902 "GdkWindow* gtk_button_get_event_window GtkButton* button")
+(CFNC-2902 "GtkWidget* gtk_font_selection_dialog_get_font_selection GtkFontSelectionDialog* fsd")
+(CFNC-2902 "GtkWidget* gtk_message_dialog_get_message_area GtkMessageDialog* message_dialog")
+(CFNC-2902 "void gtk_table_get_size GtkTable* table guint* rows guint* columns")
+
+(CINT-2902 "GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH" "GtkSizeRequestMode")
+(CINT-2902 "GTK_SIZE_REQUEST_WIDTH_FOR_HEIGHT" "GtkSizeRequestMode")
+
+gint          gtk_selection_data_get_length    (GtkSelectionData *selection_data);
 
 |#

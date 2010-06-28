@@ -62939,7 +62939,7 @@ EDITS: 1
 	    (gtk_accel_group_disconnect _GtkAccelGroup_ #f))
 	  
 	  (let* ((label (gtk_label_new "hi"))
-		 (_gboolean (GTK_IS_RESIZE_CONTAINER (GTK_WIDGET label)))
+;		 (_gboolean (GTK_IS_RESIZE_CONTAINER (GTK_WIDGET label)))
 		 (_gboolean1 #f)
 		 (_GtkExpander_ (GTK_EXPANDER (gtk_expander_new "hi")))
 		 (_GtkExpander_1 (GTK_EXPANDER (gtk_expander_new_with_mnemonic "_ehi")))
@@ -62952,7 +62952,7 @@ EDITS: 1
 		 (_gint (gtk_expander_get_spacing _GtkExpander_))
 		 (_gint1 (gtk_editable_get_position _GtkEditable_))
 		 (_GtkContainer_ (GTK_CONTAINER (gtk_vbox_new #t 0))))
-	    (if _gboolean (snd-display #__line__ ";label is resize container"))
+;	    (if _gboolean (snd-display #__line__ ";label is resize container"))
 	    (if (not _gboolean2) (snd-display #__line__ ";editable not editable"))
 	    (if _gboolean3 (snd-display #__line__ ";expander expanded"))
 	    (if _gboolean4 (snd-display #__line__ ";expander use markup"))
@@ -63548,7 +63548,7 @@ EDITS: 1
 		   GTK_IS_MENU GTK_IS_MENU_BAR GTK_IS_MENU_ITEM GTK_IS_MENU_SHELL GTK_IS_MENU_TOOL_BUTTON
 		   GTK_IS_MISC GTK_IS_NOTEBOOK GTK_IS_OBJECT GTK_IS_PANED
 		   GTK_IS_PLUG GTK_IS_PROGRESS_BAR GTK_IS_RADIO_ACTION GTK_IS_RADIO_BUTTON GTK_IS_RADIO_MENU_ITEM
-		   GTK_IS_RADIO_TOOL_BUTTON GTK_IS_RANGE GTK_IS_RC_STYLE GTK_IS_RESIZE_CONTAINER GTK_IS_RULER
+		   GTK_IS_RADIO_TOOL_BUTTON GTK_IS_RANGE GTK_IS_RC_STYLE GTK_IS_RULER
 		   GTK_IS_SCALE GTK_IS_SCROLLBAR GTK_IS_SCROLLED_WINDOW GTK_IS_SEPARATOR GTK_IS_SEPARATOR_MENU_ITEM
 		   GTK_IS_SEPARATOR_TOOL_ITEM GTK_IS_SIZE_GROUP GTK_IS_SOCKET GTK_IS_SPIN_BUTTON GTK_IS_STATUSBAR
 		   GTK_IS_STYLE GTK_IS_TABLE GTK_IS_TEAROFF_MENU_ITEM GTK_IS_TEXT_BUFFER GTK_IS_TEXT_CHILD_ANCHOR

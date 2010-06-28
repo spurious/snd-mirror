@@ -85,20 +85,30 @@ static GtkTargetEntry target_table[] = {
 static XEN drop_hook;
 
 
+#if HAVE_GTK_ADJUSTMENT_GET_UPPER
+  #define SELECTION_DATA(Data)   (gtk_selection_data_get_data(Data))
+  #define SELECTION_LENGTH(Data) (gtk_selection_data_get_length(Data))
+  #define SELECTION_FORMAT(Data) (gtk_selection_data_get_format(Data))
+#else
+  #define SELECTION_DATA(Data)   (Data->data)
+  #define SELECTION_LENGTH(Data) (Data->length)
+  #define SELECTION_FORMAT(Data) (Data->format)
+#endif
+
 static void drag_data_received(GtkWidget *caller, GdkDragContext *context, gint mx, gint my, 
 			       GtkSelectionData *data, guint info, guint time)
 {
   /* data->target */
-  if ((data->length >= 0) && 
-      (data->format == 8))
+  if ((SELECTION_LENGTH(data) >= 0) && 
+      (SELECTION_FORMAT(data) == 8))
     {
       gsize bread, bwritten;
       GError *error;
       char *str;
 
       if (info == TARGET_STRING)
-	str = (char *)(data->data);
-      else str = (char *)g_filename_from_utf8((gchar *)(data->data), data->length, &bread, &bwritten, &error);
+	str = (char *)(SELECTION_DATA(data));
+      else str = (char *)g_filename_from_utf8((gchar *)(SELECTION_DATA(data)), SELECTION_LENGTH(data), &bread, &bwritten, &error);
 
       if ((!(XEN_HOOKED(drop_hook))) || 
 	  (!(XEN_TRUE_P(run_or_hook(drop_hook,

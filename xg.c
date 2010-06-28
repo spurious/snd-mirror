@@ -38,7 +38,6 @@
  *    (list->c-array lst ctype) packages each member of list as c-type "type" returning (wrapped) c array
  *    (make-target-entry lst) returns a GtkTargetEntry table, each member of 'lst' should be (list target flags info)
  *    (GdkColor pixel red green blue): GdkColor struct
- *    (GdkCursor type ref_count): GdkCursor struct
  *    (GdkPoint x y): GdkPoint struct
  *    (GdkRectangle x y width height): GdkRectangle struct
  *    (GtkRequisition width height): GtkRequisition struct
@@ -6619,13 +6618,6 @@ gint n_colors)"
    g_free(result);
    return(rtn);
   }
-}
-
-static XEN gxg_GTK_IS_RESIZE_CONTAINER(XEN widget)
-{
-  #define H_GTK_IS_RESIZE_CONTAINER "gboolean GTK_IS_RESIZE_CONTAINER(GtkWidget* widget)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "GTK_IS_RESIZE_CONTAINER", "GtkWidget*");
-  return(C_TO_XEN_gboolean(GTK_IS_RESIZE_CONTAINER(XEN_TO_C_GtkWidget_(widget))));
 }
 
 static XEN gxg_gtk_container_set_border_width(XEN container, XEN border_width)
@@ -35527,18 +35519,6 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
 }
 
 
-static XEN gxg_type(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_GdkCursor__P(ptr), ptr, XEN_ONLY_ARG, "type", "GdkCursor");
-  return(C_TO_XEN_GdkCursorType((GdkCursorType)((XEN_TO_C_GdkCursor_(ptr))->type)));
-}
-
-static XEN gxg_ref_count(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_GdkCursor__P(ptr), ptr, XEN_ONLY_ARG, "ref_count", "GdkCursor");
-  return(C_TO_XEN_guint((guint)((XEN_TO_C_GdkCursor_(ptr))->ref_count)));
-}
-
 static XEN gxg_x(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_GdkPoint__P(ptr) || XEN_GdkRectangle__P(ptr), ptr, XEN_ONLY_ARG, "x", "GdkPoint" " or " "GdkRectangle");
@@ -35633,21 +35613,6 @@ static XEN gxg_make_GdkColor(XEN arglist)
       case 3: result->blue = XEN_TO_C_guint16(XEN_LIST_REF(arglist, 3));
       }
   return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkColor_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
-}
-
-static XEN gxg_make_GdkCursor(XEN arglist)
-{
-  GdkCursor* result;
-  int i, len;
-  result = (GdkCursor*)calloc(1, sizeof(GdkCursor));
-  len = XEN_LIST_LENGTH(arglist);
-  for (i = 0; i < len; i++)
-    switch (i)
-      {
-      case 0: result->type = XEN_TO_C_GdkCursorType(XEN_LIST_REF(arglist, 0));
-      case 1: result->ref_count = XEN_TO_C_guint(XEN_LIST_REF(arglist, 1));
-      }
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkCursor_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
 }
 
 static XEN gxg_make_GdkPoint(XEN arglist)
@@ -36242,7 +36207,6 @@ XEN_NARGIFY_1(gxg_gtk_color_selection_get_previous_alpha_w, gxg_gtk_color_select
 XEN_NARGIFY_1(gxg_gtk_color_selection_is_adjusting_w, gxg_gtk_color_selection_is_adjusting)
 XEN_ARGIFY_3(gxg_gtk_color_selection_palette_from_string_w, gxg_gtk_color_selection_palette_from_string)
 XEN_NARGIFY_2(gxg_gtk_color_selection_palette_to_string_w, gxg_gtk_color_selection_palette_to_string)
-XEN_NARGIFY_1(gxg_GTK_IS_RESIZE_CONTAINER_w, gxg_GTK_IS_RESIZE_CONTAINER)
 XEN_NARGIFY_2(gxg_gtk_container_set_border_width_w, gxg_gtk_container_set_border_width)
 XEN_NARGIFY_1(gxg_gtk_container_get_border_width_w, gxg_gtk_container_get_border_width)
 XEN_NARGIFY_2(gxg_gtk_container_add_w, gxg_gtk_container_add)
@@ -39760,8 +39724,6 @@ XEN_NARGIFY_1(gxg_height_w, gxg_height)
 XEN_NARGIFY_1(gxg_width_w, gxg_width)
 XEN_NARGIFY_1(gxg_y_w, gxg_y)
 XEN_NARGIFY_1(gxg_x_w, gxg_x)
-XEN_NARGIFY_1(gxg_ref_count_w, gxg_ref_count)
-XEN_NARGIFY_1(gxg_type_w, gxg_type)
 XEN_NARGIFY_1(gxg_blue_w, gxg_blue)
 XEN_NARGIFY_1(gxg_green_w, gxg_green)
 XEN_NARGIFY_1(gxg_red_w, gxg_red)
@@ -39771,7 +39733,6 @@ XEN_NARGIFY_2(gxg_set_green_w, gxg_set_green)
 XEN_NARGIFY_2(gxg_set_red_w, gxg_set_red)
 XEN_NARGIFY_2(gxg_set_pixel_w, gxg_set_pixel)
 XEN_VARGIFY(gxg_make_GdkColor_w, gxg_make_GdkColor)
-XEN_VARGIFY(gxg_make_GdkCursor_w, gxg_make_GdkCursor)
 XEN_VARGIFY(gxg_make_GdkPoint_w, gxg_make_GdkPoint)
 XEN_VARGIFY(gxg_make_GdkRectangle_w, gxg_make_GdkRectangle)
 XEN_VARGIFY(gxg_make_GtkRequisition_w, gxg_make_GtkRequisition)
@@ -40281,7 +40242,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_color_selection_is_adjusting_w gxg_gtk_color_selection_is_adjusting
 #define gxg_gtk_color_selection_palette_from_string_w gxg_gtk_color_selection_palette_from_string
 #define gxg_gtk_color_selection_palette_to_string_w gxg_gtk_color_selection_palette_to_string
-#define gxg_GTK_IS_RESIZE_CONTAINER_w gxg_GTK_IS_RESIZE_CONTAINER
 #define gxg_gtk_container_set_border_width_w gxg_gtk_container_set_border_width
 #define gxg_gtk_container_get_border_width_w gxg_gtk_container_get_border_width
 #define gxg_gtk_container_add_w gxg_gtk_container_add
@@ -43799,8 +43759,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_width_w gxg_width
 #define gxg_y_w gxg_y
 #define gxg_x_w gxg_x
-#define gxg_ref_count_w gxg_ref_count
-#define gxg_type_w gxg_type
 #define gxg_blue_w gxg_blue
 #define gxg_green_w gxg_green
 #define gxg_red_w gxg_red
@@ -43810,7 +43768,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_set_red_w gxg_set_red
 #define gxg_set_pixel_w gxg_set_pixel
 #define gxg_make_GdkColor_w gxg_make_GdkColor
-#define gxg_make_GdkCursor_w gxg_make_GdkCursor
 #define gxg_make_GdkPoint_w gxg_make_GdkPoint
 #define gxg_make_GdkRectangle_w gxg_make_GdkRectangle
 #define gxg_make_GtkRequisition_w gxg_make_GtkRequisition
@@ -44327,7 +44284,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_color_selection_is_adjusting, gxg_gtk_color_selection_is_adjusting_w, 1, 0, 0, H_gtk_color_selection_is_adjusting);
   XG_DEFINE_PROCEDURE(gtk_color_selection_palette_from_string, gxg_gtk_color_selection_palette_from_string_w, 1, 2, 0, H_gtk_color_selection_palette_from_string);
   XG_DEFINE_PROCEDURE(gtk_color_selection_palette_to_string, gxg_gtk_color_selection_palette_to_string_w, 2, 0, 0, H_gtk_color_selection_palette_to_string);
-  XG_DEFINE_PROCEDURE(GTK_IS_RESIZE_CONTAINER, gxg_GTK_IS_RESIZE_CONTAINER_w, 1, 0, 0, H_GTK_IS_RESIZE_CONTAINER);
   XG_DEFINE_PROCEDURE(gtk_container_set_border_width, gxg_gtk_container_set_border_width_w, 2, 0, 0, H_gtk_container_set_border_width);
   XG_DEFINE_PROCEDURE(gtk_container_get_border_width, gxg_gtk_container_get_border_width_w, 1, 0, 0, H_gtk_container_get_border_width);
   XG_DEFINE_PROCEDURE(gtk_container_add, gxg_gtk_container_add_w, 2, 0, 0, H_gtk_container_add);
@@ -47849,14 +47805,11 @@ static void define_structs(void)
   XG_DEFINE_READER(width, gxg_width_w, 1, 0, 0);
   XG_DEFINE_READER(y, gxg_y_w, 1, 0, 0);
   XG_DEFINE_READER(x, gxg_x_w, 1, 0, 0);
-  XG_DEFINE_READER(ref_count, gxg_ref_count_w, 1, 0, 0);
-  XG_DEFINE_READER(type, gxg_type_w, 1, 0, 0);
   XG_DEFINE_ACCESSOR(blue, gxg_blue_w, gxg_set_blue_w, 1, 0, 2, 0);
   XG_DEFINE_ACCESSOR(green, gxg_green_w, gxg_set_green_w, 1, 0, 2, 0);
   XG_DEFINE_ACCESSOR(red, gxg_red_w, gxg_set_red_w, 1, 0, 2, 0);
   XG_DEFINE_ACCESSOR(pixel, gxg_pixel_w, gxg_set_pixel_w, 1, 0, 2, 0);
   XG_DEFINE_PROCEDURE(GdkColor, gxg_make_GdkColor_w, 0, 0, 1, "(GdkColor ...): a new GdkColor struct");
-  XG_DEFINE_PROCEDURE(GdkCursor, gxg_make_GdkCursor_w, 0, 0, 1, "(GdkCursor ...): a new GdkCursor struct");
   XG_DEFINE_PROCEDURE(GdkPoint, gxg_make_GdkPoint_w, 0, 0, 1, "(GdkPoint ...): a new GdkPoint struct");
   XG_DEFINE_PROCEDURE(GdkRectangle, gxg_make_GdkRectangle_w, 0, 0, 1, "(GdkRectangle ...): a new GdkRectangle struct");
   XG_DEFINE_PROCEDURE(GtkRequisition, gxg_make_GtkRequisition_w, 0, 0, 1, "(GtkRequisition ...): a new GtkRequisition struct");
@@ -48396,9 +48349,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_BUTTON5_MASK);
   DEFINE_INTEGER(GDK_RELEASE_MASK);
   DEFINE_INTEGER(GDK_MODIFIER_MASK);
-  DEFINE_INTEGER(GDK_INPUT_READ);
-  DEFINE_INTEGER(GDK_INPUT_WRITE);
-  DEFINE_INTEGER(GDK_INPUT_EXCEPTION);
   DEFINE_INTEGER(GDK_OK);
   DEFINE_INTEGER(GDK_ERROR);
   DEFINE_INTEGER(GDK_ERROR_PARAM);
@@ -49367,7 +49317,6 @@ static void define_integers(void)
   DEFINE_ULONG(GDK_TYPE_RGB_DITHER);
   DEFINE_ULONG(GDK_TYPE_BYTE_ORDER);
   DEFINE_ULONG(GDK_TYPE_MODIFIER_TYPE);
-  DEFINE_ULONG(GDK_TYPE_INPUT_CONDITION);
   DEFINE_ULONG(GDK_TYPE_STATUS);
   DEFINE_ULONG(GDK_TYPE_GRAB_STATUS);
   DEFINE_ULONG(GDK_TYPE_VISUAL_TYPE);
@@ -49704,7 +49653,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("18-Jun-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("28-Jun-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

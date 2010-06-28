@@ -3484,7 +3484,7 @@ void view_files_unplay(void)
 	    (XmToggleButtonGetState(vdat->current_play_button) != XmUNSET)
 #else
   #if USE_GTK
-	    ((bool)(GTK_TOGGLE_BUTTON(vdat->current_play_button))->active)
+	    ((bool)gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(vdat->current_play_button)))
   #else
             (0)
   #endif
