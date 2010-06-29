@@ -534,12 +534,15 @@ struct s7_scheme {
   
   struct s7_cell _NO_VALUE;
   s7_pointer NO_VALUE;                /* the (values) value (an experiment) */
+
+  struct s7_cell _ELSE;
+  s7_pointer ELSE;                    /* else */  
   
   s7_pointer symbol_table;            /* symbol table */
   s7_pointer global_env;              /* global environment */
   
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, UNQUOTE_SPLICING, MACROEXPAND;
-  s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, ELSE, SET;
+  s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, SET;
   s7_pointer ERROR, WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO;
   s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, SYNTAX_ERROR;
   s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, __FUNC__, ERROR_HOOK, TRACE_HOOK, UNBOUND_VARIABLE_HOOK;
@@ -10355,6 +10358,9 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   
       if ((obj == sc->UNSPECIFIED) || (obj == sc->NO_VALUE))
 	return(copy_string("#<unspecified>"));
+
+      if (obj == sc->ELSE)
+	return(copy_string("else"));
       break;
 
     case T_INPUT_PORT:
@@ -20102,7 +20108,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_COND1:
-      if (is_true(sc, sc->value))     /* got a hit */
+      if (is_true(sc, sc->value))     /* got a hit (is_true -> not false, so else is true even though it has no value) */
 	{
 	  sc->code = cdar(sc->code);
 	  if (sc->code == sc->NIL)
@@ -20120,6 +20126,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		return(eval_error(sc, "cond: '=>' target missing?  ~A", cdr(sc->code)));
 	      if (is_pair(cddr(sc->code)))                                  /* (cond (1 => + abs)) */
 		return(eval_error(sc, "cond: '=>' has too many targets: ~A", sc->code));
+	      if (sc->value == sc->ELSE)   	                            /* (cond ((= 1 2) 3) (else => not)) */
+		return(eval_error(sc, "cond: 'else =>' is considered bad form: ~A", sc->code));
 
 	      /* currently we accept:
 	       *     (cond (1 2) (=> . =>)) and all variants thereof, e.g. (cond (1 2) (=> 1 . 2) (1 2)) or 
@@ -20444,7 +20452,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->y = caar(sc->x);
 	  if (!is_pair(sc->y))
 	    {
-	      if (sc->y != sc->ELSE)                                      /* (case 1 (2 1)) */
+	      if ((sc->y != sc->ELSE) &&                                  /* (case 1 (2 1)) */
+		  ((!s7_is_symbol(sc->y)) ||
+		   (s7_symbol_value(sc, sc->y) != sc->ELSE)))
 		return(eval_error(sc, "case clause key list ~A is not a list or 'else'", sc->y));
 	      if (cdr(sc->x) != sc->NIL)                                  /* (case 1 (else 1) ((2) 1)) */
 		return(eval_error(sc, "case 'else' clause, ~A, is not the last clause", sc->x));
@@ -25593,6 +25603,7 @@ s7_scheme *s7_init(void)
   sc->UNSPECIFIED = &sc->_UNSPECIFIED;  
   sc->UNDEFINED = &sc->_UNDEFINED;
   sc->NO_VALUE = &sc->_NO_VALUE;  
+  sc->ELSE = &sc->_ELSE;
 
   set_type(sc->NIL, T_NIL | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->NIL) = cdr(sc->NIL) = sc->UNSPECIFIED;
@@ -25614,6 +25625,9 @@ s7_scheme *s7_init(void)
   
   set_type(sc->NO_VALUE, T_UNTYPED | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->NO_VALUE) = cdr(sc->NO_VALUE) = sc->UNSPECIFIED;
+
+  set_type(sc->ELSE, T_UNTYPED | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  car(sc->ELSE) = cdr(sc->ELSE) = sc->UNSPECIFIED;
 
   
   sc->nil_vector = (s7_pointer *)malloc(BLOCK_VECTOR_SIZE * sizeof(s7_pointer));
@@ -25788,6 +25802,12 @@ s7_scheme *s7_init(void)
   
   sc->FEED_TO = s7_make_symbol(sc, "=>");
   typeflag(sc->FEED_TO) |= T_DONT_COPY; 
+
+  /* perhaps we should give this a value and put it in the global environment, like 'else'.
+   *   Currently (let ((=> 3)) (cond (1 => abs))) returns 1 (ignoring the binding), but
+   *   in Guile it is 'abs' (last in sequence), (let ((=> 3)) (cond (1 =>))) is 3 in Guile,
+   *   but an error in s7.
+   */
   
   #define object_set_name "(generalized set!)"
   sc->OBJECT_SET = s7_make_symbol(sc, object_set_name);   /* will call g_object_set */
@@ -25823,9 +25843,7 @@ s7_scheme *s7_init(void)
   sc->CDR = s7_make_symbol(sc, "cdr");
   typeflag(sc->CDR) |= T_DONT_COPY; 
   
-  sc->ELSE = s7_make_symbol(sc, "else");
-  typeflag(sc->ELSE) |= T_DONT_COPY; 
-  add_to_current_environment(sc, sc->ELSE, sc->T); 
+  add_to_current_environment(sc, s7_make_symbol(sc, "else"), sc->ELSE);
 
   sc->VECTOR = s7_make_symbol(sc, "vector");
   typeflag(sc->VECTOR) |= T_DONT_COPY; 

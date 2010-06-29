@@ -3605,33 +3605,27 @@ know if you need it.  The issue is purely one of speed.
 </p>
 
 
-<!--
-PERHAPS: cond else?
-:(cond ((= 1 2) 3) (else 4))
-4  ; same in Guile
-:(cond ((= 1 2) 3) (else => not))
-#f ; error in Guile
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
+<p>
+In s7, there is only one kind of begin statement,
+and it can contain both definitions and expressions.  These are evaluated in the order
+in which they occur, and in the environment at the point of the evaluation.  I think
+of it as being a little REPL.  begin does not introduce a new frame in
+the current environment, so defines happen at the enclosing level.
+</p>
+<pre>
+&gt; (let ((y 2)) 
+      (let ((x 1)) 
+        (begin 
+          (define x y)         ; x is 2 (this x is the same as the x in the let above it)
+          (set! x (* x 2))     ; now it is 4
+          (define y 123))      ; this is great, but it doesn't affect x 
+         x))                   ; defines in begin are in the enclosing environment so
+   4                           ;   we get 4
+</pre>
 
-PERHAPS: the begin letrec business
-:(let ((x 1)) (let () (define x 32)) x)
-1
-:(let ((x 1)) (begin (define x 32)) x)
-32
-:(let ((y 2)) (let ((x 1)) (begin (define x y)) x))
-2
-:(let ((y 2)) (let ((x 1)) (begin (define x y) (define y 123)) x))
-2 ; in guile 123
-:(let ((y 2)) (let ((x 1)) (begin (define x y) (set! x (* x 2)) (define y 123)) x))
-4
-;; this is illegal in guile
-:(let ((y 2)) (let ((x 1)) (begin (define x y) (define y x)) x))
-2
-;; this is #<unspecified> in guile
-:(let ((x 1)) (begin (if (= x 1) (begin (define x 32)) (begin (define x 64)))) x)
-32
-;; an error in Guille
--->
 
 </blockquote>
 </small>

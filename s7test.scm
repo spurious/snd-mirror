@@ -347,8 +347,8 @@
 (test (+ #| this is a comment |# 2 #! and this is another !# 3) 5)
 (test (eq? (if #f #t) (if #f 3)) #t)
 
-(test (eq?) 'error)
-(test (eq? #t) 'error)
+(test (eq?) 'error) ; "this comment is missing a double-quote
+(test (eq? #t) 'error)        #| "this comment is missing a double-quote |#
 (test (eq? #t #t #t) 'error)
 (test (eq? #f . 1) 'error)
 
@@ -513,6 +513,11 @@
 (test (equal? (lambda () 1) (lambda () 1)) #f)
 (test (equal? 9/2 9/2) #t)
 (test (equal? #((())) #((()))) #t)
+(test (equal? "123""123") #t);no space
+(test (equal? """") #t)#|no space|#
+(test (equal? #()#()) #t)
+(test (equal? #()()) #f)
+(test (equal? ()"") #f)
 
 (test (equal? most-positive-fixnum most-positive-fixnum) #t)
 (test (equal? most-positive-fixnum most-negative-fixnum) #f)
@@ -8412,14 +8417,10 @@
 (test (cond (3 => (lambda args (car args)))) 3)
 (test (cond (3 => (lambda (a . b) a))) 3)
 (test (cond ((list 3 4) => (lambda (a . b) b))) '())
-
-
-;(test (and (defined? 'else) (boolean? else)) #f)
-
 (test (cond) 'error)
 					;(test (cond ((= 1 2) 3) (else 4) (4 5)) 'error)
 (test (cond ((+ 1 2) => (lambda (a b) (+ a b)))) 'error)
-					;(test (cond (else)) 'error)  ; value of else might be #t -- perhaps (equal? (cond (else)) else)
+(test (equal? (cond (else)) else) #t)
 (test (cond (#t => 'ok)) 'error)
 (test (cond (else =>)) 'error)
 (test (cond ((values -1) => => abs)) 'error)
@@ -8439,6 +8440,15 @@
 (test (cond (1 => + abs)) 'error)
 (test (cond (1 =>)) 'error)
 (test (cond ((values 1 2) => + abs)) 'error)
+(test (cond (else => not)) 'error)
+(test (let ((else 3)) (cond ((= else 3) 32) (#t 1))) 32)
+(test (let ((else #f)) (cond (else 32) (#t 1))) 1)
+
+; these are incorrect in s7
+;(test (let ((=> 3)) (cond (1 =>))) 3)
+;(test (let ((=> 3)) (cond (1 => abs))) abs)
+;(let ((=> 3) (else 4)) (cond (else => abs)))
+;etc
 
 (test (let ((x 0))
 	(cond ((let ((y x)) (set! x 1) (= y 1)) 0)
@@ -8496,6 +8506,9 @@
 (test (let ((x 1)) (case 'x ((x) "hi") (else "ho"))) "hi")
 (test (case '() ((()) 1)) 1)
 ;;; but not (case #() ((#()) 1)) because (eqv? #() #()) is #f
+
+(test (case else ((#f) 2) ((#t) 3) ((else) 4) (else 5)) 5)          ; (eqv? 'else else) is #f (Guile says "unbound variable: else")
+(test (case #t ((#f) 2) ((else) 4) (else 5)) 5)                     ; else is a symbol here         
 
 (test (let ((x 1)) (case x ((2) 3) (else (* x 2) (+ x 3)))) 4)
 (test (let ((x 1)) (case x ((1) (* x 2) (+ x 3)) (else 32))) 4)
@@ -53674,5 +53687,7 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 #x7ff0000000000000 +inf
 #xfff0000000000000 -inf
 #xfff8000000000000 nan
+
+;;; TODO: add define-immaculo tests
 
 |#

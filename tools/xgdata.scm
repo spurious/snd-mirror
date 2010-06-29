@@ -7194,6 +7194,6 @@
 (CINT-2902 "GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH" "GtkSizeRequestMode")
 (CINT-2902 "GTK_SIZE_REQUEST_WIDTH_FOR_HEIGHT" "GtkSizeRequestMode")
 
-gint          gtk_selection_data_get_length    (GtkSelectionData *selection_data);
+(CFNC-2902 "gint gtk_selection_data_get_length GtkSelectionData* selection_data")
 
 |#
