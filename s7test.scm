@@ -8377,13 +8377,16 @@
    (test (cond ((or arg) => (lambda (x) x))) arg))
  (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 
-
 (test (cond ((+ 1 2) => (lambda (x) (+ 1 x)))) 4)
 (test (cond ((cons 1 2) => car)) 1)
 (test (cond ((values 1 2) => +)) 3)
 (test (cond (1 2 => +)) 'error)
 (test (cond ((begin 1 2) => +)) 2)
 (test (cond ((values -1) => abs)) 1)
+(test (cond ((= 1 2) => +) (#t => not)) #f)
+(test (cond ((* 2 3) => (let () -))) -6)
+(test (cond ((* 2 3) => (cond ((+ 3 4) => (lambda (a) (lambda (b) (+ b a))))))) 13)
+(test (let ((x 1)) ((cond ((let () (set! x 2) #f) => boolean?) (lambda => (lambda (a) (apply a '((b) (+ b 123)))))) x)) 125)
 
 (test (cond (else 1)) 1)
 (test (call/cc (lambda (r) (cond ((r 4) 3) (else 1)))) 4)
@@ -8444,11 +8447,9 @@
 (test (let ((else 3)) (cond ((= else 3) 32) (#t 1))) 32)
 (test (let ((else #f)) (cond (else 32) (#t 1))) 1)
 
-; these are incorrect in s7
-;(test (let ((=> 3)) (cond (1 =>))) 3)
-;(test (let ((=> 3)) (cond (1 => abs))) abs)
-;(let ((=> 3) (else 4)) (cond (else => abs)))
-;etc
+(test (let ((=> 3)) (cond (1 =>))) 3)
+(test (let ((=> 3)) (cond (1 => abs))) abs)
+(test (let ((=> 3) (else 4)) (cond (else => abs))) abs)
 
 (test (let ((x 0))
 	(cond ((let ((y x)) (set! x 1) (= y 1)) 0)
@@ -14253,6 +14254,7 @@ who says the continuation has to restart the map from the top?
 (test (((append s7-version)) 0) #\s)
 (test ((values (lambda hi #()))) #())
 (test (((((lambda () (lambda () (lambda () (lambda () 1)))))))) 1)
+(test (((cond (cond => cond)) (cond)) ((cond (#t #t)))) #t)
 
 (test (+ (+) (*)) 1)
 (test (modulo (lcm) (gcd)) 1)

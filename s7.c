@@ -20120,7 +20120,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto START;
 	    }
 	  
-	  if (car(sc->code) == sc->FEED_TO) 
+	  if ((car(sc->code) == sc->FEED_TO) &&
+	      (s7_symbol_value(sc, sc->FEED_TO) == sc->UNDEFINED))
 	    {
 	      if (!is_pair(cdr(sc->code)))                                  /* (cond (#t =>)) or (cond (#t => . 1)) */
 		return(eval_error(sc, "cond: '=>' target missing?  ~A", cdr(sc->code)));
@@ -25628,7 +25629,9 @@ s7_scheme *s7_init(void)
 
   set_type(sc->ELSE, T_UNTYPED | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->ELSE) = cdr(sc->ELSE) = sc->UNSPECIFIED;
-
+  /* "else" is added to the global environment below -- can't do it here
+   *    because the symbol table and environment don't exist yet.
+   */
   
   sc->nil_vector = (s7_pointer *)malloc(BLOCK_VECTOR_SIZE * sizeof(s7_pointer));
   sc->unspecified_vector = (s7_pointer *)malloc(BLOCK_VECTOR_SIZE * sizeof(s7_pointer));
@@ -25803,11 +25806,6 @@ s7_scheme *s7_init(void)
   sc->FEED_TO = s7_make_symbol(sc, "=>");
   typeflag(sc->FEED_TO) |= T_DONT_COPY; 
 
-  /* perhaps we should give this a value and put it in the global environment, like 'else'.
-   *   Currently (let ((=> 3)) (cond (1 => abs))) returns 1 (ignoring the binding), but
-   *   in Guile it is 'abs' (last in sequence), (let ((=> 3)) (cond (1 =>))) is 3 in Guile,
-   *   but an error in s7.
-   */
   
   #define object_set_name "(generalized set!)"
   sc->OBJECT_SET = s7_make_symbol(sc, object_set_name);   /* will call g_object_set */
