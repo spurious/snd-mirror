@@ -12710,6 +12710,9 @@ who says the continuation has to restart the map from the top?
   (test (define-macro (i 1) => (j 2)) 'error)
   (test (define hi 1 . 2) 'error)
 
+  (test (let () (define-macro (hi a b) `(list ,@a . ,@b)) (hi (1 2) ((2 3)))) '(1 2 2 3))
+  (test (let () (define-macro (hi a b) `(list ,@a . ,b)) (hi (1 2) (2 3))) '(1 2 2 3))
+
   (test (let ()
 	  (define-macro (hanger name-and-args)
 	    `(define ,(car name-and-args)

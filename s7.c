@@ -17751,13 +17751,12 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 {
   s7_pointer l, r;
 
+  /* fprintf(stderr, "form: %s\n", s7_object_to_c_string(sc, form)); */
+
   if (!is_pair(form))
     {
-      if ((s7_is_number(form))  ||
-	  (s7_is_string(form))  ||
-	  (is_procedure(form))  ||
-	  (s7_is_boolean(form)) || 
-	  (s7_is_character(form)))
+      if ((form != sc->NIL) &&
+	  (!s7_is_symbol(form)))
 	{
 	  /* things that evaluate to themselves don't need to be quoted.
 	   *   nil is special (define-clean-macro needs (quote ()) in one case)
@@ -17782,12 +17781,19 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
   if (car(form) == sc->UNQUOTE_SPLICING)
     {
       /* (define-macro (hi . a) `,@a): quasiquote_1 (unquote-splicing a)
-       *
-       * but (define-macro (hi . a) `,@a 1) produces  (apply (lambda a (unquote-splicing a) 1)!
-       *
        */
       if (cdr(form) != sc->NIL)
-	fprintf(stderr, ",@... followed by %s?\n", s7_object_to_c_string(sc, cdr(form)));
+	{
+	  /* (define-macro (hi a b) `(list ,@a . ,@b)): (append a (car b))
+	   * (hi (1 2) ((2 3))) -> '(1 2 2 3)
+	   *
+	   * whereas 
+	   *   (define-macro (hi a b) `(list ,@a . ,b)): (append a b)
+	   *   (hi (1 2) (2 3)) -> '(1 2 2 3)
+	   * but this case does not go through this block (unquote, not unquote_splicing)
+	   */
+	  return(make_list_2(sc, s7_make_symbol(sc, "car"), cadr(form)));
+	}
 
       return(form);
     }
@@ -17807,17 +17813,14 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
       r = g_quasiquote_1(sc, cdr(form));
 
       if ((is_pair(r)) &&
-	  (car(r) == sc->QUOTE) &&
-	  (car(cdr(r)) == sc->NIL))       /* i.e. " . ,'()" as end of list(!) */
+	  (car(r) == sc->QUOTE))
 	{
-	  /* (define-macro (hi a) `(+ ,@a . ,'())): ((unquote-splicing a) unquote (quote ()))
-	   *    ->  (apply (lambda (a) (cons (quote +) a))
+	  /* (define-macro (hi a) `(+ ,@a . ,'())): (append a (quote ()))
+	   * (define-macro (hi a) `(let ((b '(2 3))) (list ,@a b))):   (append a (quote (b)))
 	   */
-	  return(l);
+	  make_list_3(sc, sc->APPEND, l, cadr(r));
 	}
-
-      /* (define-macro (hi . a) `(+ #(1) ,@a 1)): quasiquote_1 ((unquote-splicing a) 1) -- append "a" and "(1)"
-       */
+	  
       return(make_list_3(sc, sc->APPEND, l, r));
     }
       
