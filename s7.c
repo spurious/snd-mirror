@@ -17745,7 +17745,6 @@ s7_pointer s7_values(s7_scheme *sc, int num_values, ...)
 
 
 
-
 /* -------------------------------- quasiquote -------------------------------- */
 
 static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
@@ -17754,32 +17753,71 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 
   if (!is_pair(form))
     {
-      if ((s7_is_number(form)) ||
-	  (s7_is_string(form)) ||
-	  (is_procedure(form)))
-	return(form);
+      if ((s7_is_number(form))  ||
+	  (s7_is_string(form))  ||
+	  (is_procedure(form))  ||
+	  (s7_is_boolean(form)) || 
+	  (s7_is_character(form)))
+	{
+	  /* things that evaluate to themselves don't need to be quoted.
+	   *   nil is special (define-clean-macro needs (quote ()) in one case)
+	   *
+	   * (define-macro (hi a) `(+ 1)): quasiquote_1 1, return the 1
+	   */
+	  return(form);
+	}
+
+      /* (define-macro (hi a) `(+ x 1)): quasiquote_1 x, quote the "x"
+       */
       return(make_list_2(sc, sc->QUOTE, form));
     }
 
   if (car(form) == sc->UNQUOTE)
-    return(car(cdr(form)));
+    {
+      /* macro arg etc: (define-macro (hi a) `(+ #f ,a)): quasiquote_1 (unquote a) -- use cadr ("a")
+       */
+      return(cadr(form));
+    }
 	      
   if (car(form) == sc->UNQUOTE_SPLICING)
-    return(form);
+    {
+      /* (define-macro (hi . a) `,@a): quasiquote_1 (unquote-splicing a)
+       *
+       * but (define-macro (hi . a) `,@a 1) produces  (apply (lambda a (unquote-splicing a) 1)!
+       *
+       */
+      if (cdr(form) != sc->NIL)
+	fprintf(stderr, ",@... followed by %s?\n", s7_object_to_c_string(sc, cdr(form)));
+
+      return(form);
+    }
 	      
   if ((is_pair(car(form))) &&
       (caar(form) == sc->UNQUOTE_SPLICING))
     {
       l = car(cdr(car(form)));
       if (cdr(form) == sc->NIL)
-	return(l);
-
+	{
+	  /* (define-macro (hi . a) `(+ x ,@a)): quasiquote_1 ((unquote-splicing a)), "l" here is "a" 
+	   */
+	  return(l);
+	}
+      
+      /* (define-macro (hi . a) `(+ ,@a 1)) we handle the "1" first */
       r = g_quasiquote_1(sc, cdr(form));
 
       if ((is_pair(r)) &&
 	  (car(r) == sc->QUOTE) &&
-	  (car(cdr(r)) == sc->NIL))
-	return(l);
+	  (car(cdr(r)) == sc->NIL))       /* i.e. " . ,'()" as end of list(!) */
+	{
+	  /* (define-macro (hi a) `(+ ,@a . ,'())): ((unquote-splicing a) unquote (quote ()))
+	   *    ->  (apply (lambda (a) (cons (quote +) a))
+	   */
+	  return(l);
+	}
+
+      /* (define-macro (hi . a) `(+ #(1) ,@a 1)): quasiquote_1 ((unquote-splicing a) 1) -- append "a" and "(1)"
+       */
       return(make_list_3(sc, sc->APPEND, l, r));
     }
       
@@ -17792,7 +17830,11 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
       (car(l) == car(r)) &&
       (car(cdr(r)) == cdr(form)) &&
       (car(cdr(l)) == car(form)))
-    return(make_list_2(sc, sc->QUOTE, form));
+    {
+      /* (define-macro (hi . a) `(+ #(1) ,@a x)): quote the "x"
+       */
+      return(make_list_2(sc, sc->QUOTE, form));
+    }
 
   return(make_list_3(sc, sc->CONS, l, r)); 
 }
@@ -17804,16 +17846,20 @@ static s7_pointer g_quasiquote_2(s7_scheme *sc, s7_pointer form)
    *   then later unprotect every cons, so we turn off the GC until we're done.
    */
   s7_pointer x;
+  /* this is the entry point for backquote and explicit quasiquote */
   if ((sc->free_heap_top - sc->free_heap) < 4096) gc(sc);
+
   s7_gc_on(sc, false);
   x = g_quasiquote_1(sc, form);
   s7_gc_on(sc, true);
+
   return(x);
 }
 
 
 static s7_pointer g_quasiquote(s7_scheme *sc, s7_pointer args)
 {
+  /* this is for explicit quasiquote support, not the backquote stuff in macros */
   return(g_quasiquote_2(sc, car(args)));
 }
 

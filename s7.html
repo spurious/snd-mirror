@@ -871,11 +871,11 @@ mac
 
     `(define-macro ,name-and-args
        `(let ,(list ,@set-args)
-	  ,(list 'with-environment 
-		 (append (list 'augment-environment) 
-			 (list (list 'procedure-environment ,name)) 
-			 (list ,@get-args))
-		 ',@new-body)))))
+          ,(list 'with-environment 
+                 (append (list 'augment-environment) 
+                         (list (list 'procedure-environment ,name)) 
+                         (list ,@get-args))
+                 ',@new-body)))))
 
 &gt; (define-immaculo (mac c d) `(let ((a 12) (b 3)) (+ a b ,c ,d)))
 mac
@@ -888,19 +888,19 @@ mac
 
 (define-macro (mac c d) 
   (cons (quote let)
-	(cons (list (list (quote {gensym}-17) c)   ; here we get the call-time macro argument values
-		    (list (quote {gensym}-18) d)) 
-	      (cons (list (quote with-environment) 
-			  (append (list (quote augment-environment)) 
+        (cons (list (list (quote {gensym}-17) c)   ; here we get the call-time macro argument values
+                    (list (quote {gensym}-18) d)) 
+              (cons (list (quote with-environment) 
+                          (append (list (quote augment-environment)) 
                                   ;; now wrap the body in the augmented definition-time environment
-				  (list (list (quote procedure-environment) mac))
+                                  (list (list (quote procedure-environment) mac))
 				  ;; add the macro args to the current env
-				  (list (quote (cons (quote c) {gensym}-17)) 
-					(quote (cons (quote d) {gensym}-18)))) 
-			  (quote (let ((a 12) 
+                                  (list (quote (cons (quote c) {gensym}-17)) 
+                                        (quote (cons (quote d) {gensym}-18)))) 
+                          (quote (let ((a 12) 
                                        (b 3)) 
-                                    (+ a b c d)))) 
-		    (quote ())))))
+                                   (+ a b c d)))) 
+                    (quote ())))))
 
 &gt; (let ((a 21) (b 10) (+ *)) (macroexpand (mac a b)))
 
@@ -1515,9 +1515,9 @@ it is set:
   (let ((vect (vector 1 2 3)))
     (make-procedure-with-setter
       (lambda (index) 
-        (vect index))
+        (vector-ref vect index))     ; using explicit indexing -- (vect index) is the same (see "generalized set!" below)
       (lambda (index value) 
-        (set! (vect index) value)))))
+        (vector-set! vect index value)))))
 
 &gt; (v123 2)
 3
@@ -1846,10 +1846,9 @@ expression, and tries again.  So the second case above is the only one that won'
 that they accept arguments of many types (leaving aside the numeric functions).  s7 extends that list with map, for-each, reverse,
 and length, and adds a few others such as copy, fill!, sort!, object-&gt;string, and continuation?.
 I may add similar extensions to append (what to do if the argument types are mixed?). 
-newLisp takes a more radical (and consistent) approach than s7 in that it treats even an operator such as '&gt;' as generic in
-the sense that it can compare strings and lists, as well as numbers.
-newLisp also uses negative
-numbers to index from the end of a sequence.
+newLisp takes a more radical approach than s7 in that it treats even an operator such as '&gt;' as generic in
+the sense that it can compare strings and lists, as well as numbers.  In map and for-each, however, you can mix the argument
+types, so I'm not as attracted to making '&gt;' generic; you can't, for example, <code>(&gt; "hi" 32.1 '(1 2))</code>.
 </p>
 
 </blockquote>
