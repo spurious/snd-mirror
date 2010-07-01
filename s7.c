@@ -542,7 +542,7 @@ struct s7_scheme {
   s7_pointer global_env;              /* global environment */
   
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, UNQUOTE_SPLICING, MACROEXPAND;
-  s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, SET;
+  s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, SET, QQ_VALUES, QQ_LIST;
   s7_pointer ERROR, WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO;
   s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, SYNTAX_ERROR;
   s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, __FUNC__, ERROR_HOOK, TRACE_HOOK, UNBOUND_VARIABLE_HOOK;
@@ -10895,7 +10895,7 @@ static int circular_list_entries(s7_scheme *sc, s7_pointer lst)
 static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci)
 {
   s7_pointer x;
-  int i, len, bufsize = 0;
+  int i, len, bufsize = 0, start = 0;
   char **elements = NULL;
   char *buf;
 
@@ -10941,11 +10941,16 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci)
   if (ci) bufsize += (ci->top * 16);
   buf = (char *)malloc(bufsize * sizeof(char));
   
-  sprintf(buf, "(");
+  if (car(lst) == sc->QUOTE)
+    {
+      sprintf(buf, "'");
+      start = 1;
+    }
+  else sprintf(buf, "(");
   if (is_multiple_value(lst))
     strcat(buf, "values ");
 
-  for (i = 0; i < len - 1; i++)
+  for (i = start; i < len - 1; i++)
     {
       if (elements[i])
 	{
@@ -10960,7 +10965,8 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci)
   if (elements[len - 1])
     {
       strcat(buf, elements[len - 1]);
-      strcat(buf, ")");
+      if (car(lst) != sc->QUOTE)
+	strcat(buf, ")");
     }
 
   for (i = 0; i < len; i++)
@@ -17747,6 +17753,163 @@ s7_pointer s7_values(s7_scheme *sc, int num_values, ...)
 
 /* -------------------------------- quasiquote -------------------------------- */
 
+static s7_pointer g_qq_list(s7_scheme *sc, s7_pointer args)
+{
+  #define H_qq_list "({list} ...) returns its arguments in a list (internal to quasiquote)"
+
+  s7_pointer x, px, y;
+
+  px = sc->NIL;
+  for (x = args, y = args; is_pair(y); y = cdr(y))
+    if (car(y) != sc->NO_VALUE)
+      {
+	car(x) = car(y);
+	px = x;
+	x = cdr(x);
+      }
+
+  if ((y != sc->NIL) &&
+      (y != sc->NO_VALUE))
+    cdr(x) = cdr(y);
+  else 
+    {
+      if (px == sc->NIL)
+	return(sc->NIL);
+      cdr(px) = sc->NIL;
+    }
+
+  return(args);
+}
+
+
+static s7_pointer g_qq_values(s7_scheme *sc, s7_pointer args)
+{
+#define H_qq_values "(apply {values} arg) is the quasiquote internal form for \",@arg\""
+  /* for quasiquote handling: (apply values car(args)) if args not nil, else nil
+   *    (values) -> #<unspecified> which is not wanted in this context.
+   */
+  /* fprintf(stderr, "{values}: %s %d\n", s7_object_to_c_string(sc, args), args == sc->NIL); */
+  if (args == sc->NIL)
+    return(sc->NO_VALUE);
+  return(g_values(sc, args));
+}
+
+
+/* new version uses apply values for unquote_splicing
+ *
+ * (define-macro (hi a) `(+ 1 ,a) == (list '+ 1 a)
+ * (define-macro (hi a) ``(+ 1 ,,a) == (list list '+ 1 (list quote a)))
+ *
+ * (define-macro (hi a) `(+ 1 ,@a) == (list* + 1 a) == `(+ 1 (apply values ',a)) == (list + 1 (list apply values (list quote a))))
+ *                                 == (list '+ 1 (apply values a))
+ * (define-macro (hi a) ``(+ 1 ,,@a) == (list list* + 1 (list quote a))) but if &body?
+ *                                      (list list '+ 1 (eval (list list apply values (list list quote (list quote a)))))
+ *                                      (list list '+ 1 (apply values a))
+ *
+ * (define-macro (hi a) `(+ ',a)): (list '+ (list 'quote a)))
+ * (define-macro (hi a) `(list ',@a)): (list 'list (list 'quote (apply values a))))
+ */
+
+#define NEW_VERSION 1
+#define PRINTING 0
+
+#if NEW_VERSION
+
+static int indent = 0;
+
+static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
+{
+#if PRINTING
+  int k;
+  for (k = 0; k < indent; k++) fprintf(stderr, " ");
+  fprintf(stderr, "(qq %s)\n", s7_object_to_c_string(sc, form));
+#endif
+
+  if (!is_pair(form))
+    {
+      if (!s7_is_symbol(form))
+	{
+	  /* things that evaluate to themselves don't need to be quoted.
+	   */
+	  return(form);
+	}
+      return(make_list_2(sc, sc->QUOTE, form));
+    }
+
+  if (car(form) == sc->UNQUOTE)
+    return(cadr(form));
+
+  if (car(form) == sc->UNQUOTE_SPLICING)
+    return(make_list_3(sc, s7_make_symbol(sc, "apply"), sc->QQ_VALUES, cadr(form)));
+
+  /* it's a list, so return the list with each element handled as above.
+   *   to use "llist" rather than "cons", I think I'll handle it iteratively (not recursively)
+   */
+  {
+    int len, i, loc;
+    s7_pointer orig, bq, old_scw;
+    bool dotted = false;
+    
+#if PRINTING
+    indent += 2;
+#endif
+
+    len = s7_list_length(sc, form);
+    if (len < 0)
+      {
+	len = -len;
+	dotted = true;
+      }
+    old_scw = sc->w;
+    loc = s7_gc_protect(sc, old_scw);
+
+    sc->w = sc->NIL;
+    for (i = 0; i <= len; i++)
+      sc->w = s7_cons(sc, sc->NIL, sc->w);
+
+    car(sc->w) = sc->QQ_LIST;
+    
+    if (!dotted)
+      {
+	for (orig = form, bq = cdr(sc->w), i = 0; i < len; i++, orig = cdr(orig), bq = cdr(bq))
+	  {
+	    if (car(orig) == sc->UNQUOTE)
+	      {
+		/* `(1 2 . ,(list 3 4)) -> (qq (1 2 unquote (list 3 4))) -> '(1 2 3 4)) */
+		car(bq) = make_list_3(sc, s7_make_symbol(sc, "apply"), sc->QQ_VALUES, cadr(orig));
+		cadr(bq) = sc->NO_VALUE;
+		cdr(bq) = sc->NIL;
+		break;
+	      }
+	    else car(bq) = g_quasiquote_1(sc, car(orig));
+	  }
+      }
+    else
+      {
+	/* `(1 2 . 3) etc */
+	len --;
+	for (orig = form, bq = cdr(sc->w), i = 0; i < len; i++, orig = cdr(orig), bq = cdr(bq))
+	  car(bq) = g_quasiquote_1(sc, car(orig));
+	car(bq) = g_quasiquote_1(sc, car(orig));
+	sc->w = make_list_3(sc, s7_make_symbol(sc, "append"), sc->w, g_quasiquote_1(sc, cdr(orig)));
+      }
+
+    bq = sc->w;
+    sc->w = old_scw;
+    s7_gc_unprotect_at(sc, loc);
+
+#if PRINTING
+    indent -= 2;
+#endif
+    return(bq);
+  }
+}
+
+#define g_quasiquote_2(Sc, Form) g_quasiquote_1(Sc, Form)
+
+#else
+
+/* old version */
 static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 {
   s7_pointer l, r;
@@ -17760,8 +17923,6 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 	{
 	  /* things that evaluate to themselves don't need to be quoted.
 	   *   nil is special (define-clean-macro needs (quote ()) in one case)
-	   *
-	   * (define-macro (hi a) `(+ 1)): quasiquote_1 1, return the 1
 	   */
 	  return(form);
 	}
@@ -17858,6 +18019,7 @@ static s7_pointer g_quasiquote_2(s7_scheme *sc, s7_pointer form)
 
   return(x);
 }
+#endif
 
 
 static s7_pointer g_quasiquote(s7_scheme *sc, s7_pointer args)
@@ -20435,7 +20597,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* (define-macro (hi a) `(+ ,a 1))
        *   in this case we want cadr, not caddr of defmacro
        */
-
+#if PRINTING
+      fprintf(stderr, "define %s\n", s7_object_to_c_string(sc, sc->code));
+#endif
       sc->z = cdr(sc->code);
       if (!is_pair(sc->z))                /* (define-macro (...)) */
 	return(eval_error(sc, "define-macro ~A, but no body?", sc->x));
@@ -25887,6 +26051,12 @@ s7_scheme *s7_init(void)
   sc->APPEND = s7_make_symbol(sc, "append");
   typeflag(sc->APPEND) |= T_DONT_COPY; 
   
+  sc->QQ_VALUES = s7_make_symbol(sc, "{values}");
+  typeflag(sc->QQ_VALUES) |= T_DONT_COPY; 
+  
+  sc->QQ_LIST = s7_make_symbol(sc, "{list}");
+  typeflag(sc->QQ_LIST) |= T_DONT_COPY; 
+  
   sc->CDR = s7_make_symbol(sc, "cdr");
   typeflag(sc->CDR) |= T_DONT_COPY; 
   
@@ -26216,7 +26386,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "reverse",                 g_reverse,                 1, 0, false, H_reverse);
   s7_define_function(sc, "reverse!",                g_reverse_in_place,        1, 0, false, H_reverse_in_place); /* used by Snd code */
   
-  
   s7_define_function(sc, "vector?",                 g_is_vector,               1, 0, false, H_is_vector);
   s7_define_function(sc, "vector->list",            g_vector_to_list,          1, 0, false, H_vector_to_list);
   s7_define_function(sc, "list->vector",            g_list_to_vector,          1, 0, false, H_list_to_vector);
@@ -26254,7 +26423,9 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "dynamic-wind",            g_dynamic_wind,            3, 0, false, H_dynamic_wind);
   s7_define_function(sc, "catch",                   g_catch,                   3, 0, false, H_catch);
   s7_define_function(sc, "error",                   g_error,                   0, 0, true,  H_error);
-  
+  s7_define_function(sc, "{values}",                g_qq_values,               0, 0, true,  H_qq_values);
+  s7_define_function(sc, "{list}",                  g_qq_list,                 0, 0, true,  H_qq_values);
+    
   s7_define_function(sc, "trace",                   g_trace,                   0, 0, true,  H_trace);
   s7_define_function(sc, "untrace",                 g_untrace,                 0, 0, true,  H_untrace);
   s7_define_variable(sc, "*trace-hook*", sc->NIL);

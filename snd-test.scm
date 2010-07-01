@@ -40647,7 +40647,7 @@ EDITS: 1
 	  (if (not (procedure? func)) 
 	      (snd-display #__line__ ";edit-list->function 6: ~A" func))
 	  (if (not (string=? (object->string (procedure-source func))
-			     "(lambda (snd chn) (env-channel (quote (0.0 0.0 1.0 1.0)) 0 #f snd chn))"))
+			     "(lambda (snd chn) (env-channel '(0.0 0.0 1.0 1.0) 0 #f snd chn))"))
 	      (snd-display #__line__ ";edit-list->function 6: ~A" (object->string (procedure-source func))))
 	  (func ind 0)
 	  (let ((mx (maxamp)))
@@ -40661,7 +40661,7 @@ EDITS: 1
 	  (if (not (procedure? func)) 
 	      (snd-display #__line__ ";edit-list->function 7: ~A" func))
 	  (if (not (string=? (object->string (procedure-source func)) 
-			     "(lambda (snd chn) (env-channel (quote (0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0)) 0 #f snd chn))"))
+			     "(lambda (snd chn) (env-channel '(0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0) 0 #f snd chn))"))
 	      (snd-display #__line__ ";edit-list->function 7: ~A" (object->string (procedure-source func))))
 	  (func ind 0)
 	  (let ((mx (maxamp)))
@@ -40673,7 +40673,7 @@ EDITS: 1
 	  (if (not (procedure? func)) 
 	      (snd-display #__line__ ";edit-list->function 7a: ~A" func))
 	  (if (not (string=? (object->string (procedure-source func)) 
-			     "(lambda (snd chn) (env-channel (quote (0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0)) 0 #f snd chn))"))
+			     "(lambda (snd chn) (env-channel '(0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0) 0 #f snd chn))"))
 	      (snd-display #__line__ ";edit-list->function 7a: ~A" (object->string (procedure-source func)))))
 	(revert-sound ind)
 	
@@ -40682,9 +40682,9 @@ EDITS: 1
 	  (if (not (procedure? func)) 
 	      (snd-display #__line__ ";edit-list->function 7b: ~A" func))
 	  (if (and (not (string=? (object->string (procedure-source func)) 
-				  "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0)) :base 1.0 :end 1999) 1000 2000 snd chn))"))
+				  "(lambda (snd chn) (env-channel (make-env '(0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0) :base 1.0 :end 1999) 1000 2000 snd chn))"))
 		   (not (string=? (object->string (procedure-source func)) 
-				  "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0)) #:base 1.0 #:end 1999) 1000 2000 snd chn))")))
+				  "(lambda (snd chn) (env-channel (make-env '(0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0) #:base 1.0 #:end 1999) 1000 2000 snd chn))")))
 	      (snd-display #__line__ ";edit-list->function 7b: ~A" (object->string (procedure-source func)))))
 	(revert-sound ind)
 	
@@ -40694,9 +40694,9 @@ EDITS: 1
 	  (if (not (procedure? func)) 
 	      (snd-display #__line__ ";edit-list->function 7c: ~A" func))
 	  (if (and (not (string=? (object->string (procedure-source func)) 
-				  "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0)) :base 32.0 :end 1999) 1000 2000 snd chn))"))
+				  "(lambda (snd chn) (env-channel (make-env '(0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0) :base 32.0 :end 1999) 1000 2000 snd chn))"))
 		   (not (string=? (object->string (procedure-source func)) 
-				  "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0)) #:base 32.0 #:end 1999) 1000 2000 snd chn))")))
+				  "(lambda (snd chn) (env-channel (make-env '(0.0 0.0 1.0 0.3 2.0 0.8 3.0 0.0) #:base 32.0 #:end 1999) 1000 2000 snd chn))")))
 	      (snd-display #__line__ ";edit-list->function 7c: ~A" (object->string (procedure-source func))))
 	  (revert-sound ind)
 	  
@@ -40706,9 +40706,9 @@ EDITS: 1
 	    (if (not (procedure? func)) 
 		(snd-display #__line__ ";edit-list->function 7d: ~A" func))
 	    (if (and (not (string=? (object->string (procedure-source func)) 
-				    "(lambda (snd chn) (env-channel (make-env (quote (0.0 2.0 1.0 2.9 2.0 4.4 3.0 2.0)) :base 1.0 :end 1999) 1000 2000 snd chn))"))
+				    "(lambda (snd chn) (env-channel (make-env '(0.0 2.0 1.0 2.9 2.0 4.4 3.0 2.0) :base 1.0 :end 1999) 1000 2000 snd chn))"))
 		     (not (string=? (object->string (procedure-source func)) 
-				    "(lambda (snd chn) (env-channel (make-env (quote (0.0 2.0 1.0 2.9 2.0 4.4 3.0 2.0)) #:base 1.0 #:end 1999) 1000 2000 snd chn))")))
+				    "(lambda (snd chn) (env-channel (make-env '(0.0 2.0 1.0 2.9 2.0 4.4 3.0 2.0) #:base 1.0 #:end 1999) 1000 2000 snd chn))")))
 		(snd-display #__line__ ";edit-list->function 7d: ~A" (object->string (procedure-source func))))
 	    (revert-sound ind)
 	    (func ind 0)
@@ -40723,7 +40723,7 @@ EDITS: 1
 	  (if (not (procedure? func)) 
 	      (snd-display #__line__ ";edit-list->function 7e: ~A" func))
 	  (if (not (string=? (object->string (procedure-source func)) 
-			     "(lambda (snd chn) (env-channel (quote (0.0 0.0 1.0 1.0 2.0 0.0)) 0 #f snd chn) (env-channel (quote (0.0 0.0 1.0 1.0 2.0 0.0)) 0 #f snd chn) (env-channel (quote (0.0 0.0 1.0 1.0 2.0 0.0)) 0 #f snd chn) (env-channel (quote (0.0 0.0 1.0 1.0 2.0 0.0)) 0 #f snd chn) (env-channel (quote (0.0 0.0 1.0 1.0 2.0 0.0)) 0 #f snd chn))"))
+			     "(lambda (snd chn) (env-channel '(0.0 0.0 1.0 1.0 2.0 0.0) 0 #f snd chn) (env-channel '(0.0 0.0 1.0 1.0 2.0 0.0) 0 #f snd chn) (env-channel '(0.0 0.0 1.0 1.0 2.0 0.0) 0 #f snd chn) (env-channel '(0.0 0.0 1.0 1.0 2.0 0.0) 0 #f snd chn) (env-channel '(0.0 0.0 1.0 1.0 2.0 0.0) 0 #f snd chn))"))
 	      (snd-display #__line__ ";edit-list->function 7e: ~A" (object->string (procedure-source func))))
 	  (revert-sound ind)
 	  (func ind 0)
@@ -40737,7 +40737,7 @@ EDITS: 1
 	  (if (not (procedure? func)) 
 	      (snd-display #__line__ ";edit-list->function 7f: ~A" func))
 	  (if (not (string=? (object->string (procedure-source func)) 
-			     "(lambda (snd chn) (env-channel-with-base (quote (0.0 0.0 1.0 1.0 2.0 0.0)) 32.0 0 #f snd chn))"))
+			     "(lambda (snd chn) (env-channel-with-base '(0.0 0.0 1.0 1.0 2.0 0.0) 32.0 0 #f snd chn))"))
 	      (snd-display #__line__ ";edit-list->function 7f: ~A" (object->string (procedure-source func))))
 	  (revert-sound ind)
 	  (func ind 0)
@@ -40751,7 +40751,7 @@ EDITS: 1
 	  (if (not (procedure? func)) 
 	      (snd-display #__line__ ";edit-list->function 7g: ~A" func))
 	  (if (not (string=? (object->string (procedure-source func)) 
-			     "(lambda (snd chn) (env-channel-with-base (quote (0.0 0.0 1.0 1.0 2.0 1.0 3.0 0.0)) 0.0 0 #f snd chn))"))
+			     "(lambda (snd chn) (env-channel-with-base '(0.0 0.0 1.0 1.0 2.0 1.0 3.0 0.0) 0.0 0 #f snd chn))"))
 	      (snd-display #__line__ ";edit-list->function 7g: ~A" (object->string (procedure-source func))))
 	  (revert-sound ind)
 	  (func ind 0)
@@ -40913,9 +40913,9 @@ EDITS: 1
 	  (if (not (procedure? func)) 
 	      (snd-display #__line__ ";edit-list->function 14: ~A" func))
 	  (if (and (not (string=? (object->string (procedure-source func)) 
-				  "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 1.0 2.0 0.0)) :base 1.0 :end 10000) 1000 10001 snd chn))"))
+				  "(lambda (snd chn) (env-channel (make-env '(0.0 0.0 1.0 1.0 2.0 0.0) :base 1.0 :end 10000) 1000 10001 snd chn))"))
 		   (not (string=? (object->string (procedure-source func)) 
-				  "(lambda (snd chn) (env-channel (make-env (quote (0.0 0.0 1.0 1.0 2.0 0.0)) #:base 1.0 #:end 10000) 1000 10001 snd chn))")))
+				  "(lambda (snd chn) (env-channel (make-env '(0.0 0.0 1.0 1.0 2.0 0.0) #:base 1.0 #:end 10000) 1000 10001 snd chn))")))
 	      (snd-display #__line__ ";edit-list->function 14: ~A" (object->string (procedure-source func))))
 	  (revert-sound ind)
 	  (func ind 0)
@@ -41047,7 +41047,7 @@ EDITS: 1
 	  (if (not (procedure? func)) 
 	      (snd-display #__line__ ";edit-list->function 18b: ~A" func))
 	  (if (not (string=? (object->string (procedure-source func)) 
-			     "(lambda (snd chn) (src-channel (quote (0.0 1.0 1.0 2.0 2.0 1.0)) 0 #f snd chn))"))
+			     "(lambda (snd chn) (src-channel '(0.0 1.0 1.0 2.0 2.0 1.0) 0 #f snd chn))"))
 	      (snd-display #__line__ ";edit-list->function 18b: ~A" (object->string (procedure-source func))))
 	  (revert-sound ind)
 	  (func ind 0)
@@ -41060,7 +41060,7 @@ EDITS: 1
 	  (if (not (procedure? func)) 
 	      (snd-display #__line__ ";edit-list->function 18c: ~A" func))
 	  (if (not (string=? (object->string (procedure-source func)) 
-			     "(lambda (snd chn) (src-channel (quote (0.0 1.0 1.0 2.0)) 1000 500 snd chn))"))
+			     "(lambda (snd chn) (src-channel '(0.0 1.0 1.0 2.0) 1000 500 snd chn))"))
 	      (snd-display #__line__ ";edit-list->function 18c: ~A" (object->string (procedure-source func))))
 	  (revert-sound ind)
 	  (func ind 0)
@@ -41074,7 +41074,7 @@ EDITS: 1
 	  (if (not (procedure? func)) 
 	      (snd-display #__line__ ";edit-list->function 19: ~A" func))
 	  (if (not (string=? (object->string (procedure-source func)) 
-			     "(lambda (snd chn) (filter-channel (quote (0.0 1.0 1.0 0.0)) 10 0 #f snd chn))"))
+			     "(lambda (snd chn) (filter-channel '(0.0 1.0 1.0 0.0) 10 0 #f snd chn))"))
 	      (snd-display #__line__ ";edit-list->function 19: ~A" (object->string (procedure-source func))))
 	  (revert-sound ind)
 	  (func ind 0)
@@ -41390,37 +41390,37 @@ EDITS: 1
 		      "(lambda (snd chn) (fft-squelch 0.01 snd chn))"
 		      "(lambda (snd chn) (fft-cancel 1000 3000 snd chn))"
 		      "(lambda (snd chn) (squelch-vowels snd chn))"
-		      "(lambda (snd chn) (fft-env-edit (quote (0 0 1 1 2 0)) snd chn))"
-		      "(lambda (snd chn) (fft-env-interp (quote (0 0 1 1 2 0)) (quote (0 1 1 0 2 0)) (quote (0 0 1 1)) snd chn))"
+		      "(lambda (snd chn) (fft-env-edit '(0 0 1 1 2 0) snd chn))"
+		      "(lambda (snd chn) (fft-env-interp '(0 0 1 1 2 0) '(0 1 1 0 2 0) '(0 0 1 1) snd chn))"
 		      "(lambda (snd chn) (hello-dentist 10.0 0.1 snd chn))"
 		      "(lambda (snd chn) (fp 1.0 0.3 20.0 snd chn))"
-		      "(lambda (snd chn) (expsnd (quote (0 1 1 2)) snd chn))"
+		      "(lambda (snd chn) (expsnd '(0 1 1 2) snd chn))"
 		      "(lambda (snd chn) (voiced->unvoiced 1.0 256 2.0 2.0 snd chn))"
-		      "(lambda (snd chn) (env-sound-interp (quote (0 0 1 1 2 0)) 2.0 snd chn))"
-		      "(lambda (snd chn) (add-notes (quote ((\"1a.snd\") (\"pistol.snd\" 1.0 2.0))) snd chn))"
+		      "(lambda (snd chn) (env-sound-interp '(0 0 1 1 2 0) 2.0 snd chn))"
+		      "(lambda (snd chn) (add-notes '((\"1a.snd\" (\"pistol.snd\" 1.0 2.0))) snd chn))"
 		      "(lambda (snd chn) (compand-channel 0 #f snd chn))"
 		      "(lambda (snd chn) (smooth-channel-via-ptree 0 #f snd chn))"
 		      "(lambda (snd chn) (ring-modulate-channel 300 0 #f snd chn))"
-		      "(lambda (snd chn) (filtered-env (quote (0 0 1 1 2 0)) snd chn))"
+		      "(lambda (snd chn) (filtered-env '(0 0 1 1 2 0) snd chn))"
 		      "(lambda (snd chn) (reverse-by-blocks 0.1 snd chn))"
 		      "(lambda (snd chn) (reverse-within-blocks 0.1 snd chn))"
 		      
 		      "(lambda (snd chn) (mix-channel \"1a.snd\" 1200 #f snd chn))"
 		      "(lambda (snd chn) (insert-channel \"1a.snd\" 1200 #f snd chn))"
 		      "(lambda (snd chn) (sine-ramp 0.5 0.9 0 #f snd chn))"
-		      "(lambda (snd chn) (sine-env-channel (quote (0 0 1 1 2 -0.5 3 1)) 0 #f snd chn))"
+		      "(lambda (snd chn) (sine-env-channel '(0 0 1 1 2 -0.5 3 1) 0 #f snd chn))"
 		      "(lambda (snd chn) (blackman4-ramp 0.0 1.0 0 #f snd chn))"
-		      "(lambda (snd chn) (blackman4-env-channel (quote (0 0 1 1 2 -0.5 3 1)) 0 #f snd chn))"
+		      "(lambda (snd chn) (blackman4-env-channel '(0 0 1 1 2 -0.5 3 1) 0 #f snd chn))"
 		      "(lambda (snd chn) (ramp-squared 0.2 0.8 #t 0 #f snd chn))"
-		      "(lambda (snd chn) (env-squared-channel (quote (0.0 0.0 1.0 1.0)) #t 0 #f snd chn))"
+		      "(lambda (snd chn) (env-squared-channel '(0.0 0.0 1.0 1.0) #t 0 #f snd chn))"
 		      "(lambda (snd chn) (ramp-expt 0.2 0.8 32.0 #t 0 #f snd chn))"
-		      "(lambda (snd chn) (env-expt-channel (quote (0.0 0.0 1.0 1.0)) 32.0 #t 0 #f snd chn))"
+		      "(lambda (snd chn) (env-expt-channel '(0.0 0.0 1.0 1.0) 32.0 #t 0 #f snd chn))"
 		      "(lambda (snd chn) (offset-channel 0.1 0 #f snd chn))"
 		      "(lambda (snd chn) (dither-channel 0.1 0 #f snd chn))"
 		      "(lambda (snd chn) (contrast-channel 0.1 0 #f snd chn))"
 		      
 		      "(lambda (snd chn) (ssb-bank 550 600 10 40 50.0 0 #f snd chn))"
-		      "(lambda (snd chn) (ssb-bank-env 550 600 (quote (0 1 1 2)) 10 40 50.0 0 #f snd chn))"
+		      "(lambda (snd chn) (ssb-bank-env 550 600 '(0 1 1 2) 10 40 50.0 0 #f snd chn))"
 		      "(lambda (snd chn) (down-oct 1 snd chn))"
 		      "(lambda (snd chn) (freqdiv 8 snd chn))"
 		      "(lambda (snd chn) (adsat 8 #f #f snd chn))"
@@ -41431,7 +41431,7 @@ EDITS: 1
 		      "(lambda (snd chn) (shift-channel-pitch 100 40 0 #f snd chn))"
 		      "(lambda (snd chn) (channel-polynomial (vct 0.0 0.5) snd chn))"
 		      "(lambda (snd chn) (spectral-polynomial (vct 0.0 1.0) snd chn))"
-		      "(lambda (snd chn) (notch-channel (quote (60.0 120.0 240.0)) #f #f #f snd chn))"
+		      "(lambda (snd chn) (notch-channel '(60.0 120.0 240.0) #f #f #f snd chn))"
 		      
 		      "(lambda (snd chn) (effects-squelch-channel 0.1 128 snd chn))"
 		      "(lambda (snd chn) (effects-echo #f 0.5 0.1 0 #f snd chn))"
@@ -41475,7 +41475,7 @@ EDITS: 1
       (let ((pk (vct-peak (channel->vct 22000 22100))))
 	(if (fneq pk 0.0479) (snd-display #__line__ ";dp->end screwed up again!?!: ~A" pk)))
       (let ((func (edit-list->function)))
-	(if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (controls->channel (quote (#f 2.0)) 0 #f snd chn))"))
+	(if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (controls->channel '(#f 2.0) 0 #f snd chn))"))
 	    (snd-display #__line__ ";edit-list->function controls->channel 2: ~A" (object->string (procedure-source func))))
 	(revert-sound ind)
 	(func ind 0)
@@ -41484,7 +41484,7 @@ EDITS: 1
       
       (controls->channel (list #f #f (list 0.5)))
       (let ((func (edit-list->function)))
-	(if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (controls->channel (quote (#f #f (0.5))) 0 #f snd chn))"))
+	(if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (controls->channel '(#f #f (0.5)) 0 #f snd chn))"))
 	    (snd-display #__line__ ";edit-list->function controls->channel 3: ~A" (object->string (procedure-source func))))
 	(revert-sound ind)
 	(func ind 0)
@@ -41493,7 +41493,7 @@ EDITS: 1
       
       (controls->channel (list #f #f (list 0.5 2.0)))
       (let ((func (edit-list->function)))
-	(if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (controls->channel (quote (#f #f (0.5 2.0))) 0 #f snd chn))"))
+	(if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (controls->channel '(#f #f (0.5 2.0)) 0 #f snd chn))"))
 	    (snd-display #__line__ ";edit-list->function controls->channel 3a: ~A" (object->string (procedure-source func))))
 	(revert-sound ind)
 	(func ind 0)
@@ -41502,7 +41502,7 @@ EDITS: 1
       
       (controls->channel (list #f #f #f (list 0.5)))
       (let ((func (edit-list->function)))
-	(if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (controls->channel (quote (#f #f #f (0.5))) 0 #f snd chn))"))
+	(if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (controls->channel '(#f #f #f (0.5)) 0 #f snd chn))"))
 	    (snd-display #__line__ ";edit-list->function controls->channel 4: ~A" (object->string (procedure-source func))))
 	(revert-sound ind)
 	(func ind 0)
@@ -41512,7 +41512,7 @@ EDITS: 1
       (controls->channel (list #f #f #f (list 0.5 .1 .2 .06 0.0)))
       (let ((func (edit-list->function)))
 	(if (not (string=? (object->string (procedure-source func)) 
-			   "(lambda (snd chn) (controls->channel (quote (#f #f #f (0.5 0.1 0.2 0.06 0.0))) 0 #f snd chn))"))
+			   "(lambda (snd chn) (controls->channel '(#f #f #f (0.5 0.1 0.2 0.06 0.0)) 0 #f snd chn))"))
 	    (snd-display #__line__ ";edit-list->function controls->channel 4a: ~A" (object->string (procedure-source func))))
 	(revert-sound ind)
 	(func ind 0)
@@ -41521,7 +41521,7 @@ EDITS: 1
       
       (controls->channel (list #f #f #f #f (list 0.1)))
       (let ((func (edit-list->function)))
-	(if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (controls->channel (quote (#f #f #f #f (0.1))) 0 #f snd chn))"))
+	(if (not (string=? (object->string (procedure-source func)) "(lambda (snd chn) (controls->channel '(#f #f #f #f (0.1)) 0 #f snd chn))"))
 	    (snd-display #__line__ ";edit-list->function controls->channel 5: ~A" (object->string (procedure-source func))))
 	(revert-sound ind)
 	(func ind 0)
@@ -41531,7 +41531,7 @@ EDITS: 1
       (controls->channel (list #f #f #f #f (list 0.1 1.2 0.9 0.9 2.0)))
       (let ((func (edit-list->function)))
 	(if (not (string=? (object->string (procedure-source func)) 
-			   "(lambda (snd chn) (controls->channel (quote (#f #f #f #f (0.1 1.2 0.9 0.9 2.0))) 0 #f snd chn))"))
+			   "(lambda (snd chn) (controls->channel '(#f #f #f #f (0.1 1.2 0.9 0.9 2.0)) 0 #f snd chn))"))
 	    (snd-display #__line__ ";edit-list->function controls->channel 5a: ~A" (object->string (procedure-source func))))
 	(revert-sound ind)
 	(func ind 0)
@@ -41542,7 +41542,7 @@ EDITS: 1
 	(controls->channel (list #f #f #f #f #f (list 10 '(0 0 1 1))))
 	(let ((func (edit-list->function)))
 	  (if (not (string=? (object->string (procedure-source func)) 
-			     "(lambda (snd chn) (controls->channel (quote (#f #f #f #f #f (10 (0 0 1 1)))) 0 #f snd chn))"))
+			     "(lambda (snd chn) (controls->channel '(#f #f #f #f #f (10 (0 0 1 1))) 0 #f snd chn))"))
 	      (snd-display #__line__ ";edit-list->function controls->channel 6: ~A" (object->string (procedure-source func))))
 	  (revert-sound ind)
 	  (func ind 0)

@@ -1672,7 +1672,8 @@ it is set:
 <dd><p>procedure-with-setters can be viewed as one generalization of set!.  Another
 treats objects as having predefined get and set functions.  In s7
 lists, strings, vectors, hash-tables, and any cooperating C or Scheme-defined objects
-are both applicable and settable.  newLisp calls this "implicit indexing".  
+are both applicable and settable.  newLisp calls this implicit indexing, Gauche implements it
+via object-apply, Guile via procedure-with-setter; CL's funcallable instance might be the same idea.
 </p>
 <p>
 In <code>(vector-ref #(1 2) 0)</code>, for example, vector-ref is just a type
