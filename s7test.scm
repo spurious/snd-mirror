@@ -12617,6 +12617,15 @@ who says the continuation has to restart the map from the top?
   (test (let () (define-macro (tst a) ```(+ 1 ,,,a)) (eval (tst 2))) '(+ 1 2))
   (test (let () (define-macro (tst a) ``(+ 1 ,,a)) (tst (+ 2 3))) '(+ 1 5))
   (test (let () (define-macro (tst a) ``(+ 1 ,@,a)) (tst '(2 3))) '(+ 1 2 3))
+  (test (let () (define-macro (tst a) ``(+ 1 ,,@a)) (tst (2 3))) '(+ 1 2 3))
+  (test (let () (define-macro (tst a) ```(+ 1 ,,,@a)) (eval (tst (2 3)))) '(+ 1 2 3))
+  (test (let () (define-macro (tst a) ```(+ 1 ,,@,@a)) (eval (tst ('(2 3))))) '(+ 1 2 3))
+  (test (let () (define-macro (tst a) ````(+ 1 ,,,,@a)) (eval (eval (eval (tst (2 3)))))) 6)
+  (test (let () (define-macro (tst a) ``(+ 1 ,@,@a)) (tst ('(2 3)))) '(+ 1 2 3))
+  (test (let () (define-macro (tst a b) `(+ 1 ,a (apply * `(2 ,,@b)))) (tst 3 (4 5))) 44)
+  (test (let () (define-macro (tst . a) `(+ 1 ,@a)) (tst 2 3)) 6)
+  (test (let () (define-macro (tst . a) `(+ 1 ,@a (apply * `(2 ,,@a)))) (tst 2 3)) 18)
+  (test (let () (define-macro (tst a) ```(+ 1 ,@,@,@a)) (eval (tst ('('(2 3)))))) '(+ 1 2 3))
 
   (test (let () (define-macro (tst a) `(+ 1 (if (> ,a 0) (tst (- ,a 1)) 0))) (tst 3)) 4)
 
@@ -13093,6 +13102,7 @@ who says the continuation has to restart the map from the top?
 	  (define-clean-macro (hi a) `(list 'a ,a))
 	  (hi 1))
 	(list 'a 1))
+;; also check rest arg in clean/immac choices ("body")
 |#
   
   (test (let ()
@@ -13105,6 +13115,9 @@ who says the continuation has to restart the map from the top?
 	  (let ((a 21) (b 10) (+ *)) (mac a b)))
 	46)
 
+  (test (let ((values 32)) (define-macro (hi a) `(+ 1 ,@a)) (hi (2 3))) 6)
+  (test (let ((list 32)) (define-macro (hi a) `(+ 1 ,@a)) (hi (2 3))) 6)
+;  (test (let () (define-macro (hi a) `(let ((apply 32)) (+ apply ,@a))) (hi (2 3))))
   
   (define-macro* (_mac1_) `(+ 1 2))
   (test (_mac1_) 3)

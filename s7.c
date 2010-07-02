@@ -542,7 +542,7 @@ struct s7_scheme {
   s7_pointer global_env;              /* global environment */
   
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, UNQUOTE_SPLICING, MACROEXPAND;
-  s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, SET, QQ_VALUES, QQ_LIST;
+  s7_pointer APPLY, VECTOR, CDR, SET, QQ_VALUES, QQ_LIST, QQ_APPLY, QQ_APPEND;
   s7_pointer ERROR, WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO;
   s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, SYNTAX_ERROR;
   s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, __FUNC__, ERROR_HOOK, TRACE_HOOK, UNBOUND_VARIABLE_HOOK;
@@ -17800,22 +17800,14 @@ static s7_pointer g_qq_values(s7_scheme *sc, s7_pointer args)
  * (define-macro (hi a) `(+ 1 ,a) == (list '+ 1 a)
  * (define-macro (hi a) ``(+ 1 ,,a) == (list list '+ 1 (list quote a)))
  *
- * (define-macro (hi a) `(+ 1 ,@a) == (list* + 1 a) == `(+ 1 (apply values ',a)) == (list + 1 (list apply values (list quote a))))
- *                                 == (list '+ 1 (apply values a))
- * (define-macro (hi a) ``(+ 1 ,,@a) == (list list* + 1 (list quote a))) but if &body?
- *                                      (list list '+ 1 (eval (list list apply values (list list quote (list quote a)))))
- *                                      (list list '+ 1 (apply values a))
- *
- * (define-macro (hi a) `(+ ',a)): (list '+ (list 'quote a)))
- * (define-macro (hi a) `(list ',@a)): (list 'list (list 'quote (apply values a))))
+ * (define-macro (hi a) `(+ 1 ,@a) == (list '+ 1 (apply values a))
+ * (define-macro (hi a) ``(+ 1 ,,@a) == (list list '+ 1 (apply values a))
  */
 
-#define NEW_VERSION 1
 #define PRINTING 0
-
-#if NEW_VERSION
-
+#if PRINTING
 static int indent = 0;
+#endif
 
 static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 {
@@ -17840,10 +17832,10 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
     return(cadr(form));
 
   if (car(form) == sc->UNQUOTE_SPLICING)
-    return(make_list_3(sc, s7_make_symbol(sc, "apply"), sc->QQ_VALUES, cadr(form)));
+    return(make_list_3(sc, sc->QQ_APPLY, sc->QQ_VALUES, cadr(form)));
 
   /* it's a list, so return the list with each element handled as above.
-   *   to use "llist" rather than "cons", I think I'll handle it iteratively (not recursively)
+   *    we try to support dotted lists which makes the code much messier.
    */
   {
     int len, i, loc;
@@ -17873,13 +17865,13 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
       {
 	for (orig = form, bq = cdr(sc->w), i = 0; i < len; i++, orig = cdr(orig), bq = cdr(bq))
 	  {
-	    if (car(orig) == sc->UNQUOTE)
+	    if (car(orig) == sc->UNQUOTE) /* SOMEDAY: unquote_splicing is also possible here */
 	      {
 		/* `(1 2 . ,(list 3 4)) -> (qq (1 2 unquote (list 3 4))) -> '(1 2 3 4)) */
-		car(bq) = make_list_3(sc, s7_make_symbol(sc, "apply"), sc->QQ_VALUES, cadr(orig));
+		car(bq) = make_list_3(sc, sc->QQ_APPLY, sc->QQ_VALUES, cadr(orig));
 		cadr(bq) = sc->NO_VALUE;
 		cdr(bq) = sc->NIL;
-		break;
+		break;              /* we just hit the (swallowed) dot, so we must be done */
 	      }
 	    else car(bq) = g_quasiquote_1(sc, car(orig));
 	  }
@@ -17891,7 +17883,7 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 	for (orig = form, bq = cdr(sc->w), i = 0; i < len; i++, orig = cdr(orig), bq = cdr(bq))
 	  car(bq) = g_quasiquote_1(sc, car(orig));
 	car(bq) = g_quasiquote_1(sc, car(orig));
-	sc->w = make_list_3(sc, s7_make_symbol(sc, "append"), sc->w, g_quasiquote_1(sc, cdr(orig)));
+	sc->w = make_list_3(sc, sc->QQ_APPEND, sc->w, g_quasiquote_1(sc, cdr(orig)));
       }
 
     bq = sc->w;
@@ -17905,127 +17897,11 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
   }
 }
 
-#define g_quasiquote_2(Sc, Form) g_quasiquote_1(Sc, Form)
-
-#else
-
-/* old version */
-static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
-{
-  s7_pointer l, r;
-
-  /* fprintf(stderr, "form: %s\n", s7_object_to_c_string(sc, form)); */
-
-  if (!is_pair(form))
-    {
-      if ((form != sc->NIL) &&
-	  (!s7_is_symbol(form)))
-	{
-	  /* things that evaluate to themselves don't need to be quoted.
-	   *   nil is special (define-clean-macro needs (quote ()) in one case)
-	   */
-	  return(form);
-	}
-
-      /* (define-macro (hi a) `(+ x 1)): quasiquote_1 x, quote the "x"
-       */
-      return(make_list_2(sc, sc->QUOTE, form));
-    }
-
-  if (car(form) == sc->UNQUOTE)
-    {
-      /* macro arg etc: (define-macro (hi a) `(+ #f ,a)): quasiquote_1 (unquote a) -- use cadr ("a")
-       */
-      return(cadr(form));
-    }
-	      
-  if (car(form) == sc->UNQUOTE_SPLICING)
-    {
-      /* (define-macro (hi . a) `,@a): quasiquote_1 (unquote-splicing a)
-       */
-      if (cdr(form) != sc->NIL)
-	{
-	  /* (define-macro (hi a b) `(list ,@a . ,@b)): (append a (car b))
-	   * (hi (1 2) ((2 3))) -> '(1 2 2 3)
-	   *
-	   * whereas 
-	   *   (define-macro (hi a b) `(list ,@a . ,b)): (append a b)
-	   *   (hi (1 2) (2 3)) -> '(1 2 2 3)
-	   * but this case does not go through this block (unquote, not unquote_splicing)
-	   */
-	  return(make_list_2(sc, s7_make_symbol(sc, "car"), cadr(form)));
-	}
-
-      return(form);
-    }
-	      
-  if ((is_pair(car(form))) &&
-      (caar(form) == sc->UNQUOTE_SPLICING))
-    {
-      l = car(cdr(car(form)));
-      if (cdr(form) == sc->NIL)
-	{
-	  /* (define-macro (hi . a) `(+ x ,@a)): quasiquote_1 ((unquote-splicing a)), "l" here is "a" 
-	   */
-	  return(l);
-	}
-      
-      /* (define-macro (hi . a) `(+ ,@a 1)) we handle the "1" first */
-      r = g_quasiquote_1(sc, cdr(form));
-
-      if ((is_pair(r)) &&
-	  (car(r) == sc->QUOTE))
-	{
-	  /* (define-macro (hi a) `(+ ,@a . ,'())): (append a (quote ()))
-	   * (define-macro (hi a) `(let ((b '(2 3))) (list ,@a b))):   (append a (quote (b)))
-	   */
-	  make_list_3(sc, sc->APPEND, l, cadr(r));
-	}
-	  
-      return(make_list_3(sc, sc->APPEND, l, r));
-    }
-      
-  l = g_quasiquote_1(sc, car(form));
-  r = g_quasiquote_1(sc, cdr(form));
-
-  if ((is_pair(r)) &&
-      (is_pair(l)) &&
-      (car(r) == sc->QUOTE) &&
-      (car(l) == car(r)) &&
-      (car(cdr(r)) == cdr(form)) &&
-      (car(cdr(l)) == car(form)))
-    {
-      /* (define-macro (hi . a) `(+ #(1) ,@a x)): quote the "x"
-       */
-      return(make_list_2(sc, sc->QUOTE, form));
-    }
-
-  return(make_list_3(sc, sc->CONS, l, r)); 
-}
-
-
-static s7_pointer g_quasiquote_2(s7_scheme *sc, s7_pointer form)
-{
-  /* the lists built up by quasiquote can be arbitrarily large, and it would be a nightmare to locally GC-protect,
-   *   then later unprotect every cons, so we turn off the GC until we're done.
-   */
-  s7_pointer x;
-  /* this is the entry point for backquote and explicit quasiquote */
-  if ((sc->free_heap_top - sc->free_heap) < 4096) gc(sc);
-
-  s7_gc_on(sc, false);
-  x = g_quasiquote_1(sc, form);
-  s7_gc_on(sc, true);
-
-  return(x);
-}
-#endif
-
 
 static s7_pointer g_quasiquote(s7_scheme *sc, s7_pointer args)
 {
   /* this is for explicit quasiquote support, not the backquote stuff in macros */
-  return(g_quasiquote_2(sc, car(args)));
+  return(g_quasiquote_1(sc, car(args)));
 }
 
 
@@ -20979,7 +20855,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_READ_QUASIQUOTE:
       /* this was pushed when the backquote was seen, then eventually we popped back to it */
-      sc->value = g_quasiquote_2(sc, sc->value);
+      sc->value = g_quasiquote_1(sc, sc->value);
       pop_stack(sc);
       goto START;
       
@@ -20990,7 +20866,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *    very useful to me.  To get a vector in a macro, use "vector", not "#()".
        * It's also limited to 1-dimensional cases, since I think it's a bad idea to begin with.
        */
-      sc->value = make_list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_2(sc, sc->value));
+      sc->value = make_list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_1(sc, sc->value));
       pop_stack(sc);
       goto START;
 
@@ -26045,17 +25921,17 @@ s7_scheme *s7_init(void)
   sc->APPLY = s7_make_symbol(sc, "apply");
   typeflag(sc->APPLY) |= T_DONT_COPY; 
   
-  sc->CONS = s7_make_symbol(sc, "cons");
-  typeflag(sc->CONS) |= T_DONT_COPY; 
-  
-  sc->APPEND = s7_make_symbol(sc, "append");
-  typeflag(sc->APPEND) |= T_DONT_COPY; 
-  
   sc->QQ_VALUES = s7_make_symbol(sc, "{values}");
   typeflag(sc->QQ_VALUES) |= T_DONT_COPY; 
   
   sc->QQ_LIST = s7_make_symbol(sc, "{list}");
   typeflag(sc->QQ_LIST) |= T_DONT_COPY; 
+  
+  sc->QQ_APPLY = s7_make_symbol(sc, "{apply}");
+  typeflag(sc->QQ_APPLY) |= T_DONT_COPY; 
+  
+  sc->QQ_APPEND = s7_make_symbol(sc, "{append}");
+  typeflag(sc->QQ_APPEND) |= T_DONT_COPY; 
   
   sc->CDR = s7_make_symbol(sc, "cdr");
   typeflag(sc->CDR) |= T_DONT_COPY; 
@@ -26423,8 +26299,12 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "dynamic-wind",            g_dynamic_wind,            3, 0, false, H_dynamic_wind);
   s7_define_function(sc, "catch",                   g_catch,                   3, 0, false, H_catch);
   s7_define_function(sc, "error",                   g_error,                   0, 0, true,  H_error);
+
+  /* these are internal for quasiquote's use */
   s7_define_function(sc, "{values}",                g_qq_values,               0, 0, true,  H_qq_values);
   s7_define_function(sc, "{list}",                  g_qq_list,                 0, 0, true,  H_qq_values);
+  s7_define_function(sc, "{apply}",                 g_apply,                   1, 0, true,  H_apply);
+  s7_define_function(sc, "{append}",                g_append,                  0, 0, true,  H_append);
     
   s7_define_function(sc, "trace",                   g_trace,                   0, 0, true,  H_trace);
   s7_define_function(sc, "untrace",                 g_untrace,                 0, 0, true,  H_untrace);
