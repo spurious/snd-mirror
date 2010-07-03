@@ -308,7 +308,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_MAX_DEFINED} opcode_t;
 
 #if 1
-static char *op_names[OP_MAX_DEFINED] = 
+static const char *op_names[OP_MAX_DEFINED] = 
   {"op_read_internal", "op_eval", "op_eval_args", "op_eval_args1", "op_apply", "op_eval_macro", "op_lambda", 
    "op_quote", "op_define", "op_define1", "op_begin", "op_if", "op_if1", "op_set", "op_set1", "op_set2", 
    "op_let", "op_let1", "op_let2", "op_let_star", "op_let_star1", "op_letrec", "op_letrec1", "op_letrec2", 
@@ -1379,7 +1379,10 @@ static void s7_mark_object_1(s7_pointer p)
       if ((vector_is_multidimensional(p)) &&
 	  (s7_is_vector(shared_vector(p))))
 	S7_MARK(shared_vector(p));
-      else mark_vector(p, vector_length(p));
+      mark_vector(p, vector_length(p));
+      /* TODO: why is this (the mark_vector) needed in the shared_vector case?
+       *   it's ok in linux (gcc 4.3.2), but confuses the GC in OSX??
+       */
       return;
 
     case T_HASH_TABLE:

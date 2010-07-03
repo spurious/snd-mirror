@@ -41397,7 +41397,7 @@ EDITS: 1
 		      "(lambda (snd chn) (expsnd '(0 1 1 2) snd chn))"
 		      "(lambda (snd chn) (voiced->unvoiced 1.0 256 2.0 2.0 snd chn))"
 		      "(lambda (snd chn) (env-sound-interp '(0 0 1 1 2 0) 2.0 snd chn))"
-		      "(lambda (snd chn) (add-notes '((\"1a.snd\" (\"pistol.snd\" 1.0 2.0))) snd chn))"
+		      "(lambda (snd chn) (add-notes '((\"1a.snd\") (\"pistol.snd\" 1.0 2.0)) snd chn))"
 		      "(lambda (snd chn) (compand-channel 0 #f snd chn))"
 		      "(lambda (snd chn) (smooth-channel-via-ptree 0 #f snd chn))"
 		      "(lambda (snd chn) (ring-modulate-channel 300 0 #f snd chn))"

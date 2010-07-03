@@ -2444,16 +2444,10 @@
 (test (symbol->value) 'error)
 (test (symbol->value 'hi 'ho) 'error)
 
-#|
-(let ((name "hiho"))
-  (string-set! name 2 #\null)
-  (let ((sym (string->symbol name)))
-    (test (equal? (symbol->string sym) name) #t)
-    (eval-string (string-append "(define " name " #f)"))
-    (eval-string (string-append "(set! " name " 32)"))
-    (symbol->value sym)))
--> ;define: more than 1 value? (hi o (error read-error "#ÿf: undefined sharp expression: ... "))
-|#
+(test (let ((name "hiho"))
+	(string-set! name 2 #\null)
+	(string->symbol name))
+      'error)
 
 
 
@@ -15528,6 +15522,126 @@ who says the continuation has to restart the map from the top?
 			      ',name ,required-args (if (> ,required-args 1) "s" "") func-args)
 		       (apply (lambda* ,args ,@forms) func-args)))
 		`(define* ,declarations ,@forms)))))
+
+      ;; Rick's with-optkeys
+
+      (define-macro (with-optkeys spec . body)
+	(
+	 (lambda (user rawspec body)
+	   
+	   (define (string->keyword str) (symbol->keyword (string->symbol str)))
+	   
+	   (define (key-parse-clause info mode args argn user)
+	     ;; return a cond clause that parses one keyword. info for each
+	     ;; var is: (<got> <var> <val>)
+	     (let* ((got (car info))
+		    (var (cadr info))
+		    (key (string->keyword (symbol->string var))))
+	       `((eq? (car ,args) ,key )
+		 (if ,got (error "duplicate keyword: ~S" , key))
+		 (set! ,var (if (null? (cdr ,args))
+				(error "missing value for keyword: ~S" 
+				       , user)
+				(cadr ,args)))
+		 (set! ,got #t) ; mark that we have a value for this param
+		 (set! ,mode #t) ; mark that we are now parsing keywords
+		 (set! ,argn (+ ,argn 1))
+		 (set! ,args (cddr ,args)))))
+	   
+	   (define (pos-parse-clause info mode args argn I)
+	     ;; return a cond clause that parses one positional. info for
+	     ;; each var is: (<got> <var> <val>)
+	     (let ((got (car info))
+		   (var (cadr info)))
+	       `((= ,argn ,I)
+		 (set! ,var (car ,args))
+		 (set! ,got #t) ; mark that we have a value for this param
+		 (set! ,argn (+ ,argn 1))
+		 (set! ,args (cdr ,args)))))
+	   
+	   (let* ((otherkeys? (member '&allow-other-keys rawspec))
+		  ;; remove &allow-other-keys from spec
+		  (spec (if otherkeys? (reverse (cdr (reverse rawspec))) rawspec))
+		  (data (map (lambda (v)
+			       ;; for each optkey variable v return a list
+			       ;; (<got> <var> <val>) where the <got>
+			       ;; variable indicates that <var> has been
+			       ;; set, <var> is the optkey variable itself
+			       ;; and <val> is its default value
+			       (if (pair? v)
+				   (cons (gensym (symbol->string (car v))) v)
+				   (list (gensym (symbol->string v)) v #f)))
+			     spec))
+		  (args (gensym "args")) ; holds arg data as its parsed
+		  (argn (gensym "argn"))
+		  (SIZE (length data))
+		  (mode (gensym "keyp")) ; true if parsing keywords
+		  ;; keyc are cond clauses that parse valid keyword
+		  (keyc (map (lambda (d) (key-parse-clause d mode args argn user))
+			     data))
+		  (posc (let lup ((tail data) (I 0))
+			  (if (null? tail) (list)
+			      (cons (pos-parse-clause (car tail) mode args argn I)
+				    (lup (cdr tail) (+ I 1))))))
+		  (bindings (map cdr data)) ; optkey variable bindings
+		  )
+	     
+	     (if otherkeys?
+		 (set! bindings (cons '(&allow-other-keys (list)) bindings)))
+	     
+	     `(let* ,bindings ; bind all the optkey variables with default values
+		;; bind status and parsing vars
+		(let ,(append (map (lambda (i) (list (car i) #f)) data)
+			      `((,args ,user)
+				(,argn 0)
+				(,mode #f)))
+		  ;; iterate arglist and set opt/key values
+		  (do ()
+		      ((null? ,args) #f)
+		    (cond 
+		     ;; add valid keyword clauses first
+		     ,@ keyc
+			;; a keyword in (car args) is now either added to
+			;; &allow-other-keys or an error
+			, (if otherkeys?
+			      `((keyword? (car ,args))
+				(if (not (pair? (cdr ,args)))
+				    (error "missing value for keyword ~S" (car ,args)))
+				(set! &allow-other-keys (append &allow-other-keys
+								(list (car ,args)
+								      (cadr ,args))))
+				(set! ,mode #t) ; parsing keys now...
+				(set! ,args (cddr ,args)) )
+			      `((keyword? (car ,args)) ;(and ,mode (keyword? (car ,args)))
+				(error "invalid keyword: ~S" (car ,args)) )
+			      )
+			  ;; positional clauses illegal if keywords have happened
+			  (,mode (error "positional after keywords: ~S" (car ,args)))
+			  ;; too many value specified
+			  ((not (< ,argn ,SIZE)) (error "too many args: ~S" , args))
+			  ;; add the valid positional clauses
+			  ,@ posc
+			     ))
+		  ,@ body))
+	     ))
+	 (car spec)
+	 (cdr spec)
+	 body
+	 ))
+      
+      (test (let ((args '(1 2 3)))  (with-optkeys (args a b c) (list a b c))) '(1 2 3))
+      (test (let ((args '(1 2 3 4)))  (with-optkeys (args a b c) (list a b c))) 'error)
+      (test (let ((args '(1 2))) (with-optkeys (args a b (c 33)) (list a b c))) '(1 2 33))
+      (test (let ((args '())) (with-optkeys (args a b (c 33)) (list a b c))) '(#f #f 33))
+      (test (let ((args '(:b 22))) (with-optkeys (args a b (c 33)) (list a b c))) '(#f 22 33))
+      (test (let ((args '(-1 :z 22))) (with-optkeys (args a b (c 33)) (list a b c))) 'error)
+      (test (let ((args '(:b 99 :z 22))) (with-optkeys (args a b (c 33)) (list a b c))) 'error)
+      (test (let ((args '(:z 22))) (with-optkeys (args a b (c 33) &allow-other-keys) (list a b c &allow-other-keys))) '(#f #f 33 (:z 22)))
+      (test (let ((args '(:id "0" :inst "flute" :name "Flute"))) (with-optkeys (args id inst &allow-other-keys) (list id inst &allow-other-keys))) '("0" "flute" (:name "Flute")))
+      (test (let ((args '(:inst "flute" :id "0" :name "Flute"))) (with-optkeys (args id inst &allow-other-keys) (list id inst &allow-other-keys))) '("0" "flute" (:name "Flute")))
+      (test (let ((args '(:id "0" :name "Flute" :inst "flute"))) (with-optkeys (args id inst &allow-other-keys) (list id inst &allow-other-keys))) '("0" "flute" (:name "Flute")))
+      (test (let ((args '(:name "Flute" :inst "flute" :id "0"))) (with-optkeys (args id inst &allow-other-keys) (list id inst &allow-other-keys))) '("0" "flute" (:name "Flute")))
+      
       
       (let ()
 	
