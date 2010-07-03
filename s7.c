@@ -1365,7 +1365,19 @@ static void s7_mark_object_1(s7_pointer p)
       break;
 
     case T_VECTOR:
-      if (vector_is_multidimensional(p))
+      /* mark_vector(p, vector_length(p)); */
+
+      /* If a subvector (an inner dimension) of a vector is the only remaining reference
+       *    to the main vector, we want to make sure the main vector is not GC'd until
+       *    the subvector is also GC-able.  The shared_vector field either points to the
+       *    parent vector, or it is sc->F, so we need to check for a vector parent if
+       *    the current is multidimensional (this will include 1-dim slices).  We need
+       *    to keep the parent case separate (i.e. sc->F means the current is the original)
+       *    so that we only free once (or remove_from_heap once).
+       */
+
+      if ((vector_is_multidimensional(p)) &&
+	  (s7_is_vector(shared_vector(p))))
 	S7_MARK(shared_vector(p));
       else mark_vector(p, vector_length(p));
       return;

@@ -637,123 +637,15 @@ it could be removed.
 <p>returns 144 because "+" has turned into "*", and "a" is the internal "a",
 not the argument "a".  We get <code>(* 12 12)</code> where we probably expected <code>(+ 12 1)</code>.
 It is possible to use gensym to clean this up, but that makes the macro 
-unreadable in all but the simplest cases, and besides, gensymification is
-something a macro can do for us:
-</p>
-<pre>
-(define-macro (define-clean-macro name-and-args . body)
-  (let ((syms ()))
-
-    (define (walk func lst)
-      (if (and (func lst)
-	       (pair? lst))
-	  (begin
-	    (walk func (car lst))
-	    (walk func (cdr lst)))))
-
-    (define (car-member sym lst)
-      (if (null? lst)
-	  #f
-	  (if (eq? sym (caar lst))
-	      (cdar lst)
-	      (car-member sym (cdr lst)))))
-
-    (define (walker val)
-      (if (pair? val)
-	  (if (eq? (car val) 'quote)
-	      (or (car-member (cadr val) syms)
-		  (and (pair? (cadr val))
-		       (or (and (eq? (caadr val) 'quote) ; 'sym -&gt; (quote (quote sym))
-				val)
-			   (append (list 'list) 
-				   (walker (cadr val)))))
-		  (cadr val))
-	      (cons (walker (car val))
-		    (walker (cdr val))))
-	  (or (car-member val syms)
-	      val)))
-
-    (walk (lambda (val)
-	    (if (and (pair? val)
-		     (eq? (car val) 'quote)
-		     (symbol? (cadr val))
-		     (not (car-member (cadr val) syms)))
-		(set! syms (cons 
-			    (cons (cadr val) 
-				  (gensym (symbol-&gt;string (cadr val))))
-			    syms)))
-	    (or (not (pair? val))
-		(not (eq? (car val) 'quote))
-		(not (pair? (cadr val)))
-		(not (eq? (caadr val) 'quote))))
-	  body)
-
-    (let* ((new-body (walker body))
-	   (new-syms (map (lambda (slot)
-			    (list (cdr slot) `(gensym)))
-			  syms))
-	   (new-globals 
-	    (let ((result '()))
-	      (for-each
-	       (lambda (slot)
-		 (if (defined? (car slot))
-		     (set! result (cons
-				   (list 'set! (cdr slot) (car slot))
-				   result))))
-	       syms)
-	      result)))
-
-      `(define-macro ,name-and-args 
-	 (let ,new-syms
-	   ,@new-globals
-	   `(begin ,,@new-body))))))
-</pre>
-<p>Now we can automatically generate hygienic macros:
-</p>
-<pre>
-  (define-clean-macro (mac b) 
-    `(let ((a 12)) 
-       (+ a ,b)))
-
-  (let ((a 1) 
-        (+ *))
-    (mac a))
-</pre>
-<p>which returns 13 as expected.  It is also possible to make hygienic macros using the environment functions.
+unreadable in all but the simplest cases.  It is also possible, but not very easy, to
+write a macro to do the gensymification for us, but in s7 it is much more straightforward
+to use the environment functions.
 The procedure-environment of a macro is the environment at its definition time, just like a function.
 By wrapping the macro body in with-environment, we make sure anything in that body reflects 
-the definition environment, not the calling environment.  If doing this by hand, we then wrap each
-use of a macro argument in with-environment so that its value is taken from the call-time environment:
+the definition environment, not the calling environment.  We then augment that environment
+with the macro arguments getting their values from the call-time environment:
 </p>
 
-<pre>
-(define-macro (mac b)
-  (let ((callenv (gensym)))
-    `(with-environment 
-      (augment-environment (procedure-environment mac) 
-	(cons ',callenv (current-environment)))
-      ;; we wrap the body in the definition-time env, but add a name ("callenv")
-      ;;   so we can get at the current-environment within that wrapper.
-      (let ((a 12))
-	(+ (with-environment ,callenv ,b) ; b now refers to the call-time b
-	   a)))))
-
-&gt; (let ((a 21) (+ *)) (mac a))
-33
-
-;; here the expanded code is 
-
-(let ((a 21) (+ *))
-  (with-environment 
-    (augment-environment (procedure-environment mac) 
-      (cons 'gensym-51 (current-environment))) 
-    (let ((a 12)) 
-      (+ (with-environment gensym-51 a) ; the outer 'a (mac arg 'b), definition-time '+
-         a))))                          ; the local 'a
-</pre>
-
-<p>But the augment-environment trick can be extended to the macro arguments as well:
-</p>
 <pre>
 (define-macro (define-immaculo name-and-args . body)
   (let* ((gensyms (map (lambda (g) (gensym)) (cdr name-and-args)))
@@ -769,16 +661,21 @@ use of a macro argument in with-environment so that its value is taken from the 
 			 (list (list 'procedure-environment ,name)) 
 			 (list ,@get-args))     ; import the current arg values into the definition environment
 		 ,@body)))))
+</pre>
 
-;; in this version of define-immaculo, don't unquote the macro arguments in the body:
+<p>In this version of define-immaculo, don't unquote the macro arguments in the body, and
+use <code>(apply values body)</code> in place of ",@body".
+</p>
 
+<pre>
 &gt; (define-immaculo (mac b) `(let ((a 12)) (+ a b)))
 mac
 &gt; (let ((a 21) (+ *)) (mac a))
 33
 </pre>
 
-<p>If the slight difference in syntax is a problem
+<p>
+If the slight difference in syntax is a problem
 </p>
 <pre>
 (define-macro (define-immaculo name-and-args . body)
@@ -883,7 +780,8 @@ the loop!
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>Backquote (quasiquote) in s7 is almost trivial.  Constants are unchanged, symbols are quoted,
-",arg" becomes "arg", and ",@arg" becomes "(apply values arg)" &mdash; hooray for real multiple values!.
+",arg" becomes "arg", and ",@arg" becomes "(apply values arg)" &mdash; hooray for real multiple values!
+It's almost as easy to write the actual macro body as the backquoted version of it.
 </p>
 
 <pre>
@@ -892,10 +790,14 @@ hi
 &gt; (procedure-source hi)
 (lambda ({defmac}-16) (apply (lambda (a) <em class=red>({list} '+ 1 a))</em> (cdr {defmac}-16)))
 
+;; so (define-macro (hi a) ({list} + 1 a)) is the same
+
 &gt; (define-macro (hi a) `(+ 1 ,@a))
 hi
 &gt; (procedure-source hi)
 (lambda ({defmac}-17) (apply (lambda (a) <em class=red>({list} '+ 1 ({apply} {values} a)))</em> (cdr {defmac}-17)))
+
+;; same: (define-macro (hi a) ({list} + 1 ({apply} {values} a)))
 
 &gt; (define-macro (hi a) ``(+ 1 ,,a))
 hi
@@ -904,7 +806,7 @@ hi
 </pre>
 
 <p>and so on.  "{list}" is a special version of "list" to avoid name collisions
-and handle a few tricky details.  
+and handle a few tricky details (similarly for "{values}" and "{apply}").
 </p>
 
 </blockquote>

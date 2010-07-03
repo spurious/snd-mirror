@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.61"
-#define S7_DATE "28-June-10"
+#define S7_VERSION "1.62"
+#define S7_DATE "3-July-10"
 
 
 typedef long long int s7_Int;
@@ -758,6 +758,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 3-July:    new backquote implementation.
  * 28-June:   syntactic keywords (e.g. lambda) are applicable.
  * 7-June:    changed key arg in s7_hash_table_ref|set to be s7_pointer, not const char*.
  *            hash-tables can now handle any s7 object as the key.

@@ -3973,6 +3973,16 @@
 (test (vector?) 'error)
 (test (vector? #() #(1)) 'error)
 
+;;; make a shared ref -- we'll check it later after enough has happened that an intervening GC is likely
+
+(define check-shared-vector-after-gc #f)
+(let ((avect (make-vector '(6 6) 32)))
+  (do ((i 0 (+ i 1)))
+      ((= i 6))
+    (do ((j 0 (+ j 1)))
+	((= j 6))
+      (set! (avect i j) (cons i j))))
+  (set! check-shared-vector-after-gc (avect 3)))
 
 
 (test (let ((v (make-vector 3 #f))) (and (vector? v) (= (vector-length v) 3) (eq? (vector-ref v 1) #f))) #t)
@@ -4797,6 +4807,18 @@
   (test (object->string (make-vector '(2 1 2 1 2 1 2 1 2 1 2 1 2 1) 0)) "#14D((((((((((((((0) (0))) (((0) (0))))) (((((0) (0))) (((0) (0))))))) (((((((0) (0))) (((0) (0))))) (((((0) (0))) (((0) (0))))))))) (((((((((0) (0))) (((0) (0))))) (((((0) (0))) (((0) (0))))))) (((((((0) (0))) (((0) (0))))) (((((0) (0))) (((0) (0))))))))))) (((((((((((0) (0))) (((0) (0))))) (((((0) (0))) (((0) (0))))))) (((((((0) (0))) (((0) (0))))) (((((0) (0))) (((0) (0))))))))) (((((((((0) (0))) (((0) (0))))) (((((0) (0))) (((0) (0))))))) (((((((0) (0))) (((0) (0))))) (((((0) (0))) (((0) (0))))))))))))) (((((((((((((0) (0))) (((0) (0))))) (((((0) (0))) (((0) (0))))))) (((((((0) (0))) (((0) (0))))) (((((0) (0))) (((0) (0))))))))) (((((((((0) (0))) (((0) (0))))) (((((0) (0))) (((0) (0))))))) (((((((0) (0))) (((0) (0))))) (((((0) (0))) (((0) (0))))))))))) (((((((((((0) (0))) (((0) (0))))) (((((0) (0))) (((0) (0))))))) (((((((0) (0))) (((0) (0))))) (((((0) (0))) (((0) (0))))))))) (((((((((0) (0))) (((0) (0))))) (((((0) (0))) (((0) (0))))))) (((((((0) (0))) (((0) (0))))) (((((0) (0))) (((0) (0))))))))))))))")
 
   (test (object->string (make-vector '(16 1 1 1 1 1 1 1 1 1 1 1 1 1) 0)) "#14D((((((((((((((0))))))))))))) (((((((((((((0))))))))))))) (((((((((((((0))))))))))))) (((((((((((((0))))))))))))) (((((((((((((0))))))))))))) (((((((((((((0))))))))))))) (((((((((((((0))))))))))))) (((((((((((((0))))))))))))) (((((((((((((0))))))))))))) (((((((((((((0))))))))))))) (((((((((((((0))))))))))))) (((((((((((((0))))))))))))) (((((((((((((0))))))))))))) (((((((((((((0))))))))))))) (((((((((((((0))))))))))))) (((((((((((((0))))))))))))))")
+
+;;; now see if our shared vector has survived...
+  (test (and (vector? check-shared-vector-after-gc)
+	     (= (length check-shared-vector-after-gc) 6)
+	     (do ((i 0 (+ i 1))
+		  (happy #t))
+		 ((= i 6) happy)
+	       (if (or (not (pair? (check-shared-vector-after-gc i)))
+		       (not (equal? (check-shared-vector-after-gc i) (cons 3 i))))
+		   (set! haappy #f))))
+	#t)
+  (set! check-shared-vector-after-gc #f)
 
   (set! *vector-print-length* old-vlen))  
 
@@ -12227,7 +12249,6 @@ who says the continuation has to restart the map from the top?
   (test (let () (define* (f a (b :c)) b) (f :b 1 :d)) 'error)
   
   (test (let () (define* (hi b) b) (procedure? hi)) #t)
-  (test (let () (define-macro (hi a) `(+ ,a 1)) (procedure? hi)) #f)
   
   (test (let ()
 	  (define (hi a) a)
@@ -12627,7 +12648,11 @@ who says the continuation has to restart the map from the top?
   (test (let () (define-macro (tst . a) `(+ 1 ,@a (apply * `(2 ,,@a)))) (tst 2 3)) 18)
   (test (let () (define-macro (tst a) ```(+ 1 ,@,@,@a)) (eval (tst ('('(2 3)))))) '(+ 1 2 3))
 
+  (test (let () (define-macro (hi a) `(+ ,a 1)) (procedure? hi)) #f)
+  (test (let () (define-macro (hi a) `(let ((@ 32)) (+ @ ,a))) (hi @)) 64)
+  (test (let () (define-macro (hi @) `(+ 1 ,@@)) (hi (2 3))) 6) ; ,@ is ambiguous
   (test (let () (define-macro (tst a) `(+ 1 (if (> ,a 0) (tst (- ,a 1)) 0))) (tst 3)) 4)
+  (test (let () (define-macro (hi a) (if (list? a) `(+ 1 ,@a) `(+ 1 ,a))) (* (hi 1) (hi (2 3)))) 12)
 
   (test (defmacro) 'error)
   (test (define-macro) 'error)
@@ -13076,8 +13101,6 @@ who says the continuation has to restart the map from the top?
 	  (mac 2 3 4))
 	9)
 
-  ;; define-immaculo doesn't handle a ". body" argument in the to-be-defined-macro yet
-  
   (test (let ()
 	  (define-clean-macro (mac a . body)
 	    `(+ ,a ,@body))
@@ -13096,15 +13119,6 @@ who says the continuation has to restart the map from the top?
 	  (mac))
 	2)
 
-#|
-;;; TODO: fix this!
-  (test (let ()
-	  (define-clean-macro (hi a) `(list 'a ,a))
-	  (hi 1))
-	(list 'a 1))
-;; also check rest arg in clean/immac choices ("body")
-|#
-  
   (test (let ()
 	  (define-immaculo (hi a) `(list 'a ,a))
 	  (hi 1))
