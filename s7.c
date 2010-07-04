@@ -161,7 +161,7 @@
  *   (valgrind timings are from 23-Feb-10 running s7test.scm), it was 9601 for a long time.
  */
 
-#define INITIAL_STACK_SIZE 4000            
+#define INITIAL_STACK_SIZE 3000            
 /* the stack grows as needed, each frame takes 4 entries, this is its initial size.
  *
  *   max stack size needed in s7test.scm: 1448, snd-test: 288.
@@ -307,7 +307,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_FOR_EACH, OP_MAP, OP_AND2, OP_OR2, OP_BARRIER, OP_DEACTIVATE_GOTO,
 	      OP_MAX_DEFINED} opcode_t;
 
-#if 1
+#if 0
 static const char *op_names[OP_MAX_DEFINED] = 
   {"op_read_internal", "op_eval", "op_eval_args", "op_eval_args1", "op_apply", "op_eval_macro", "op_lambda", 
    "op_quote", "op_define", "op_define1", "op_begin", "op_if", "op_if1", "op_set", "op_set1", "op_set2", 
@@ -593,6 +593,7 @@ struct s7_scheme {
 
   s7_pointer *trace_list;
   int trace_list_size, trace_top, trace_depth;
+  int no_values;
 
   #define BLOCK_VECTOR_SIZE 100
   s7_pointer *nil_vector, *unspecified_vector;
@@ -1324,7 +1325,7 @@ static void s7_mark_object_1(s7_pointer p);
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
   #define S7_MARK(Obj) ({ s7_pointer _p_; _p_ = Obj; if (!is_marked(_p_)) s7_mark_object_1(_p_); })
 #else
-  #define S7_MARK(Obj) if (!is_marked(Obj)) s7_mark_object_1(Obj)  
+#define S7_MARK(Obj) do {if (!is_marked(Obj)) s7_mark_object_1(Obj);} while (0)
 #endif
 /* this is slightly faster than if we first call s7_mark_object, then check the mark bit */
 
@@ -1378,11 +1379,10 @@ static void s7_mark_object_1(s7_pointer p)
 
       if ((vector_is_multidimensional(p)) &&
 	  (s7_is_vector(shared_vector(p))))
-	S7_MARK(shared_vector(p));
+	{
+	  S7_MARK(shared_vector(p));
+	}
       mark_vector(p, vector_length(p));
-      /* TODO: why is this (the mark_vector) needed in the shared_vector case?
-       *   it's ok in linux (gcc 4.3.2), but confuses the GC in OSX??
-       */
       return;
 
     case T_HASH_TABLE:
@@ -2198,7 +2198,6 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
       s7_pointer x;
       NEW_CELL(sc, x); 
       car(x) = slot;
-      csr(x) = variable;
       cdr(x) = e;
       set_type(x, T_PAIR | T_STRUCTURE);
       car(env) = x;
@@ -2214,7 +2213,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
        */
     }
 
-  return(slot);
+  return(slot); /* csr(slot) might be used at some point by symbol_access */
 } 
 
 
@@ -2303,25 +2302,36 @@ s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer env, s7_pointer bind
 static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
 { 
   s7_pointer x;
-  /* this is a list (of alists, each representing a frame) ending with a vector (the global environment) */
+  /* this is a list (of alists, each representing a frame) ending with a vector (the global environment).
+   *   max linear search in s7test: 361! average search len in s7test: 9.
+   */
 
   for (x = env; is_pair(x); x = cdr(x)) 
-    { 
-      s7_pointer y;
-      /* using csr to hold the last found entity in each frame was much slower! */
-      /* using csr for caar was faster for awhile, then not -- these timings are becoming a pain */
-      y = car(x);
+    if (car(x) != sc->NIL)
+      { 
+	s7_pointer y;
+	/* using csr to hold the last found entity in each frame was much slower!
+	 * using csr for caar makes no difference.
+	 * I also tried using csr as the logand of all the lognots of the hdls (car slot) in the env alist
+	 *   logand(hdl, csr(car(env))) != 0 then means hdl is not in the current env, so we can skip the search.
+	 *   the timings reported by callgrind indicate that this saves almost exactly as much time as it costs!
+	 */
 
-      if (s7_is_vector(y))
-	return(symbol_global_slot(hdl));
+	y = car(x);
 
-      if (caar(y) == hdl)
-	return(car(y));
-      
-      for (y = cdr(y); is_pair(y); y = cdr(y))
+	if (s7_is_vector(y))
+	  return(symbol_global_slot(hdl));
+	/* I think it is not safe to unset the local-variable flag in this case, even in the single-thread case.
+	 *   There might be a continuation activatable that jumps into the environment where it was local.
+	 */
+
 	if (caar(y) == hdl)
 	  return(car(y));
-    }
+      
+	for (y = cdr(y); is_pair(y); y = cdr(y))
+	  if (caar(y) == hdl)
+	    return(car(y));
+      }
   return(sc->NIL); 
 } 
 
@@ -2331,6 +2341,8 @@ static s7_pointer find_local_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hd
   s7_pointer y;
 
   y = car(env);
+  if (y == sc->NIL) return(sc->NIL);
+
   if (s7_is_vector(y))
     return(symbol_global_slot(hdl));
 
@@ -16660,6 +16672,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
    *   call its error-handler, else if *error-hook* is bound, call it,
    *   else send out the error info ourselves.
    */
+  sc->no_values = 0;
   catcher = sc->F;
 
   vector_element(sc->error_info, ERROR_TYPE) = type;
@@ -17707,8 +17720,6 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	default:
 	  break;
 	}
-       
-      /* fprintf(stderr, "stack: %s\n", op_names[stack_op(sc->stack, top)]); */
     }
 
   /* let it meander back up the call chain until someone knows where to splice it */
@@ -17772,8 +17783,22 @@ static s7_pointer g_qq_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_qq_list "({list} ...) returns its arguments in a list (internal to quasiquote)"
 
-  s7_pointer x, px, y;
+  s7_pointer x, y, px;
 
+  if (sc->no_values == 0) 
+    return(args);
+
+  for (x = args; is_pair(x); x = cdr(x))
+    if (car(x) == sc->NO_VALUE) 
+      break;
+  
+  if (x == sc->NIL)
+    return(args);
+
+  /* this is not maximally efficient, but it's not important:
+   *   we've hit the rare special case where ({apply} {values} '())) needs to be ignored
+   *   in the splicing process (i.e. the arglist acts as if the thing never happened)
+   */
   px = sc->NIL;
   for (x = args, y = args; is_pair(y); y = cdr(y))
     if (car(y) != sc->NO_VALUE)
@@ -17788,6 +17813,7 @@ static s7_pointer g_qq_list(s7_scheme *sc, s7_pointer args)
     cdr(x) = cdr(y);
   else 
     {
+      sc->no_values--;
       if (px == sc->NIL)
 	return(sc->NIL);
       cdr(px) = sc->NIL;
@@ -17805,7 +17831,10 @@ static s7_pointer g_qq_values(s7_scheme *sc, s7_pointer args)
    */
   /* fprintf(stderr, "{values}: %s %d\n", s7_object_to_c_string(sc, args), args == sc->NIL); */
   if (args == sc->NIL)
-    return(sc->NO_VALUE);
+    {
+      sc->no_values++;
+      return(sc->NO_VALUE);
+    }
   return(g_values(sc, args));
 }
 
@@ -20961,6 +20990,8 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   new_sc->temps = (s7_pointer *)malloc(new_sc->temps_size * sizeof(s7_pointer));
   for (i = 0; i < new_sc->temps_size; i++)
     new_sc->temps[i] = new_sc->NIL;
+
+  new_sc->no_values = 0;
 
 #if HAVE_PTHREADS
   new_sc->key_values = sc->NIL;
@@ -25818,6 +25849,7 @@ s7_scheme *s7_init(void)
   sc->trace_list_size = INITIAL_TRACE_LIST_SIZE;
   sc->trace_top = 0;
   sc->trace_depth = 0;
+  sc->no_values = 0;
 
 #if HAVE_PTHREADS
   sc->thread_ids = (int *)calloc(1, sizeof(int));

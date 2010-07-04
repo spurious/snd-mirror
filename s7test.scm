@@ -49010,7 +49010,7 @@ who says the continuation has to restart the map from the top?
     (lambda (str)
       (let ((val (catch #t (lambda () (string->number str)) (lambda args 'error))))
 	(if (or (not (number? val))
-		(> (abs (- val 1.0)) 1.0e-16))
+		(> (abs (- val 1.0)) 1.0e-15))
 	    (begin
 	      (display "(string->number \"") (display str) (display "\") = ") (display val) (display "?") (newline)))))
     lst))
