@@ -2419,7 +2419,7 @@ static lstar_err_t lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym,
   s7_pointer x;
 
   for (x = car(sc->envir) /* presumably the arglist */; is_pair(x); x = cdr(x))
-    if (caar(x) == sym)
+    if (caar(x) == sym)   /* car(x) won't be sc->NIL here even if no args and no locals because we at least have __func__ */
       {
 	/* car(x) is our binding (symbol . value) */
 	if (is_not_local(car(x)))
@@ -15903,6 +15903,9 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		    s7_pointer curly_arg;
 		    char *curly_str = NULL;
 		    int k, curly_len = -1, curly_nesting = 1;
+
+ 		    if (fdat->args == sc->NIL)
+ 		      return(format_error(sc, "'{' directive argument is null?", str, args, fdat));
 		    if (!s7_is_list(sc, car(fdat->args)))
 		      return(format_error(sc, "'{' directive argument should be a list", str, args, fdat));
 
@@ -18603,6 +18606,8 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 		      name[symbol_name_length(car(sc->y)) - 1] = ':';
 		    }
 
+ 		  if (cdr(sc->y) == sc->NIL)
+ 		    err = LSTAR_NO_SUCH_KEY;
 		  err = lambda_star_argument_set_value(sc, sym, car(cdr(sc->y))); /* cdr(sc->y) is the next arg */
 
 		  if (err == LSTAR_NO_SUCH_KEY)
@@ -19512,8 +19517,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	case T_STRING:                            /* -------- string as applicable object -------- */
+ 	  if (sc->args == sc->NIL)
+ 	    return(s7_wrong_number_of_args_error(sc, "not enough args for string ref (via string as applicable object): ~A", sc->args));
 	  if (cdr(sc->args) != sc->NIL)
 	    return(s7_wrong_number_of_args_error(sc, "too many args for string ref (via string as applicable object): ~A", sc->args));
+
 	  sc->value = string_ref_1(sc, sc->code, car(sc->args));
 	  pop_stack(sc);
 	  goto START;
@@ -19527,6 +19535,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->args = s7_append(sc, cdr(sc->x), sc->args);
 	      goto APPLY;
 	    }
+ 	  if (sc->args == sc->NIL)
+ 	    return(s7_wrong_number_of_args_error(sc, "not enough args for list ref (via list as applicable object): ~A", sc->args));
 
 	  if (cdr(sc->args) == sc->NIL)
 	    sc->value = list_ref_1(sc, sc->code, car(sc->args));            /* (L 1) */
@@ -19535,6 +19545,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	case T_HASH_TABLE:                        /* -------- hash-table as applicable object -------- */
+ 	  if (sc->args == sc->NIL)
+ 	    return(s7_wrong_number_of_args_error(sc, "not enough args for hash-table ref (via hash table as applicable object): ~A", sc->args));
+
 	  if (cdr(sc->args) == sc->NIL)
 	    sc->value = s7_hash_table_ref(sc, sc->code, car(sc->args));
 	  else sc->value = g_hash_table_ref(sc, s7_cons(sc, sc->code, sc->args));
@@ -20251,7 +20264,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto START;
 	    }
 	  
-	  if ((car(sc->code) == sc->FEED_TO) &&
+	  if ((is_pair(sc->code)) &&
+	      (car(sc->code) == sc->FEED_TO) &&
 	      (s7_symbol_value(sc, sc->FEED_TO) == sc->UNDEFINED))
 	    {
 	      if (!is_pair(cdr(sc->code)))                                  /* (cond (#t =>)) or (cond (#t => . 1)) */

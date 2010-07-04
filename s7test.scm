@@ -12205,6 +12205,7 @@ who says the continuation has to restart the map from the top?
   (test (let ((hi (lambda* ((a)) a))) (hi)) 'error)
   (test (let ((hi (lambda* (a 0.0) (b 0.0) (+ a b)))) (hi)) 'error)
   
+  (test (let () (define* (hi) 0) (hi)) 0)
   (test (let () (define* (hi a . b) b) (hi 1 2 3)) '(2 3))
   (test (let () (define* (hi a . b) b) (hi :a 1 2 3)) '(2 3))
   (test (let () (define* (hi a . b) b) (hi 1)) '())
