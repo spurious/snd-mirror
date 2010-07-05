@@ -33,7 +33,7 @@
  *        no invidious distinction between built-in and "foreign"
  *          (this makes it easy to extend built-in operators like "+" -- see s7.html for a simple example)
  *        lists, strings, vectors, and hash-tables are (set-)applicable objects
- *        true multiple-values (optional)
+ *        true multiple-values
  *        threads (optional)
  *        multidimensional vectors
  *
@@ -17851,25 +17851,13 @@ static s7_pointer g_qq_values(s7_scheme *sc, s7_pointer args)
  * (define-macro (hi a) ``(+ 1 ,,@a) == (list list '+ 1 (apply values a))
  */
 
-#define PRINTING 0
-#if PRINTING
-static int indent = 0;
-#endif
-
 static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 {
-#if PRINTING
-  int k;
-  for (k = 0; k < indent; k++) fprintf(stderr, " ");
-  fprintf(stderr, "(qq %s)\n", s7_object_to_c_string(sc, form));
-#endif
-
   if (!is_pair(form))
     {
       if (!s7_is_symbol(form))
 	{
-	  /* things that evaluate to themselves don't need to be quoted.
-	   */
+	  /* things that evaluate to themselves don't need to be quoted. */
 	  return(form);
 	}
       return(make_list_2(sc, sc->QUOTE, form));
@@ -17889,10 +17877,6 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
     s7_pointer orig, bq, old_scw;
     bool dotted = false;
     
-#if PRINTING
-    indent += 2;
-#endif
-
     len = s7_list_length(sc, form);
     if (len < 0)
       {
@@ -17937,9 +17921,6 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
     sc->w = old_scw;
     s7_gc_unprotect_at(sc, loc);
 
-#if PRINTING
-    indent -= 2;
-#endif
     return(bq);
   }
 }
@@ -20531,9 +20512,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* (define-macro (hi a) `(+ ,a 1))
        *   in this case we want cadr, not caddr of defmacro
        */
-#if PRINTING
-      fprintf(stderr, "define %s\n", s7_object_to_c_string(sc, sc->code));
-#endif
       sc->z = cdr(sc->code);
       if (!is_pair(sc->z))                /* (define-macro (...)) */
 	return(eval_error(sc, "define-macro ~A, but no body?", sc->x));

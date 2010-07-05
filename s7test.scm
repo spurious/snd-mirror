@@ -7664,6 +7664,10 @@
    (test (for-each (lambda (a) a) arg) 'error))
  (list -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #f #t))
 
+(test (for-each) 'error)
+(test (for-each #t) 'error)
+(test (for-each map #t) 'error)
+
 (test (for-each abs '() abs) #<unspecified>)
 (test (for-each abs '(1) '#(1)) 'error)
 (test (let ((vals '())) (for-each for-each (list (lambda (a) (set! vals (cons (abs a) vals)))) (list (list -1 -2))) vals) '(2 1))
@@ -7799,6 +7803,12 @@
 (test (map (lambda (a) (+ a 1)) (cons 1 2)) '(2))
 (test (map (lambda (a b . args) (+ a b (apply + args))) '(0 1 2)) 'error)
 (test (map (lambda (a) a) '(1 2 . 3)) '(1 2))
+(test (map) 'error)
+(test (map #t) 'error)
+(test (map set-cdr! '(1 2 3)) 'error)
+(test (map (lambda (a b) (set-cdr! a b) b) '((1) (2) (3)) '(4 5 6)) '(4 5 6))
+(test (let ((str "0123")) (set! (str 2) #\null) (map append str)) '(#\0 #\1 #\null #\3))
+
 (for-each
  (lambda (arg)
    (test (map arg (list 1)) 'error))
@@ -8266,7 +8276,7 @@
 (for-each
  (lambda (arg)
    (test (or arg) arg))
- (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) #<eof> #<unspecified> '(1 . 2)))
 
 (test (call-with-input-file "s7test.scm"
 	(lambda (p)
@@ -8296,6 +8306,7 @@
 (test (or . 1) 'error)
 (test (or #f . 1) 'error)
 (test (or . (1 2)) 1)
+(test (or . ()) (or))
 
 
 
@@ -8305,6 +8316,7 @@
 (test (and (= 2 2) (< 2 1)) #f)
 (test (and 1 2 'c '(f g)) '(f g))
 (test (and) #t)
+(test (and . ()) (and))
 (test (and 3) 3)
 (test (and (memq 'b '(a b c)) (+ 3 0)) 3)
 (test (and 3 9) 9)
@@ -8924,6 +8936,9 @@
 (test (let ((x 3)) (begin x)) 3)
 (test (begin 3) 3)
 (test (begin . (1 2)) 2)
+(test (begin . ()) (begin))
+(test (begin . 1) 'error)
+(test (begin 1 . 2) 'error)
 
 (if (equal? (begin 1) 1)
     (begin
@@ -9051,13 +9066,17 @@
 (test (apply call-with-exit (list (lambda (exit) (exit 1) 32))) 1)
 (test (apply catch (list #t (lambda () 1) (lambda args 'error))) 1)
 (test (apply eval '((+ 1 2))) 3)
+(test (apply eval '()) 'error) ; (eval) is an error -- should it be?
 (test (apply eval-string '("(+ 1 2)")) 3)
 (test (let () (apply begin '((define x 1) (define y x) (+ x y)))) 2)
+(test (apply begin '()) (begin))
 (test (apply if '(#f 1 2)) 2)
 (test (let ((x 1)) (apply set! '(x 3)) x) 3)
 (test (let ((x 1)) (apply cond '(((= x 2) 3) ((= x 1) 32)))) 32)
 (test (apply and '((= 1 1) (> 2 3))) #f)
+(test (apply and '()) (and))
 (test (apply or '((= 1 1) (> 2 3))) #t)
+(test (apply or '()) (or))
 (test (let () (apply define '(x 32)) x) 32)
 (test (let () (apply define* '((hi (a 1) (b 2)) (+ a b))) (hi 32)) 34)
 (test ((apply lambda '((n) (+ n 1))) 2) 3)
@@ -9072,6 +9091,7 @@
 (test (apply case '(1 ((2 3) 4) ((1 5) 32))) 32)
 (test (+ (apply values '(1 2 3))) 6)
 (test (apply quote '(1)) 1)
+(test (apply quote '()) 'error) ; (quote) is an error
 (test (let () (apply letrec '(() (define x 9) x))) 9)
 (test ((lambda (n) (apply n '(((x 1)) (+ x 2)))) let) 3)
 
@@ -9143,6 +9163,7 @@
 (test (procedure? (let () (define (a) a) (a))) #t)
 
 (test (define) 'error)
+(test (define*) 'error)
 (test (define x) 'error)
 (test (define . x) 'error)
 (test (define x 1 2) 'error)
@@ -9862,6 +9883,9 @@
 (test (letrec* ((x . 1)) x) 'error)
 (test (let hi ()) 'error)
 
+(test (let) 'error)
+(test (let*) 'error)
+(test (letrec) 'error)
 (test (let . 1) 'error)
 (test (let* (x)) 'error)
 (test (let (x) 1) 'error)
@@ -10357,6 +10381,11 @@
 (test (((call/cc (call/cc call/cc)) call/cc) (lambda (a) 1)) 1)
 (test (+ 1 (eval-string "(+ 2 (call-with-exit (lambda (return) (return 3))) 4)") 5) 15)
 (test (+ 1 (eval '(+ 2 (call-with-exit (lambda (return) (return 3))) 4)) 5) 15)
+(test (call-with-exit) 'error)
+(test (call-with-exit s7-version s7-version) 'error)
+(test (call/cc) 'error)
+(test (call/cc s7-version s7-version) 'error)
+
 
 (test (let ((listindex (lambda (e l)
 			 (call/cc (lambda (not_found)
@@ -11737,6 +11766,8 @@ who says the continuation has to restart the map from the top?
   (test (keyword? ':3) #t)
   (test (keyword? '3) #f)
   (test (keyword? ':) #f)
+  (test (keyword? '::) #t)
+  (test (keyword? :optional) #t)
   (test (symbol->string (keyword->symbol hi:)) "hi")
   (test (symbol->string (keyword->symbol :hi)) "hi")
   (test (make-keyword ":") ::))
@@ -12005,6 +12036,12 @@ who says the continuation has to restart the map from the top?
 	       (set! x 3)))
 	x)
       1)
+
+(test (catch) 'error)
+(test (catch s7version) 'error)
+(test (catch #t s7version) 'error)
+(test (catch #t s7version + +) 'error)
+
 
 
 (define (last-pair l) ; needed also by loop below
