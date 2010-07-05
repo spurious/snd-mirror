@@ -10029,6 +10029,88 @@
 ;(let* ((lambda 0)) ((lambda () 1.5))) -> 1.5
 ;(let* ((lambda 0)) lambda) -> 0
 
+;; from test-submodel.scm, from MIT I think
+(test (letrec ((factorial
+		(lambda (n)
+		  (if (<= n 0) 1 (* n (factorial (- n 1)))))))
+	(factorial 3))
+      6)
+
+(test (letrec ((iter-fact
+		(lambda (n)
+		  (letrec
+		      ((helper (lambda (n p)
+				 (if (<= n 0) p (helper (- n 1) (* n p))))))
+		    (helper n 1)))))
+	(iter-fact 3))
+      6)
+
+(test (letrec ((y-factorial
+		(lambda (n)
+		  (letrec ((y
+			    (lambda (f)
+			      ((lambda (x)
+				 (f (lambda (z) ((x x) z))))
+			       (lambda (x)
+				 (f (lambda (z) ((x x) z)))))))
+			   (fact-def
+			    (lambda (fact)
+			      (lambda (n)
+				(if (<= n 0)
+				    1
+				    (* n (fact (- n 1))))))))
+		    ((y fact-def) n)))))
+	(y-factorial 3))
+      6)
+
+(test (letrec ((x 1) (y x)) (list x y)) '(1 #<undefined>)) ; guile says '(1 1)
+(test (letrec ((y x) (x 1)) (list x y)) '(1 #<undefined>)) ; guile says '(1 1)
+(test (letrec ((x 1) (y (let () (set! x 2) x))) (list x y)) '(1 2))
+(test (letrec ((history (list 9))) ((lambda (n) (begin (set! history (cons history n)) history)) 8)) '((9) . 8))
+(test (((call/cc (lambda (k) k)) (lambda (x) x)) 'HEY!) 'HEY!)
+
+(let ((sequence '()))
+  ((call-with-current-continuation
+    (lambda (goto)
+      (letrec ((start
+		(lambda ()
+		  (begin (set! sequence (cons 'start sequence))
+			 (goto next))))
+	       (froz
+		(lambda ()
+		  (begin (set! sequence (cons 'froz sequence))
+			 (goto last))))
+	       (next
+		(lambda ()
+		  (begin (set! sequence (cons 'next sequence))
+			 (goto froz))))
+	       (last
+		(lambda ()
+		  (begin (set! sequence (cons 'last sequence))
+			 #f))))
+	start))))
+  (test (reverse sequence) '(start next froz last)))
+
+(let ()
+  (define thunk 'dummy-thunk)
+
+  (define (make-fringe-thunk tree)
+    (call-with-exit
+     (lambda (return-to-repl)
+       (cond ((pair? tree) (begin (make-fringe-thunk (car tree))
+				  (make-fringe-thunk (cdr tree))))
+	     ((null? tree) (begin (set! thunk (lambda () 'done)) 'null))
+	     (else (call/cc
+		    (lambda (cc)
+		      (begin
+			(set! thunk
+			      (lambda ()
+				(begin (display tree) (cc 'leaf))))
+			(return-to-repl 'thunk-set!)))))))))
+
+  (define tr '(() () (((1 (( (() 2 (3 4)) (((5))) )) ))) ))
+  (test (make-fringe-thunk tr) 'null)
+  (test (thunk) 'done))
 
 
 
@@ -12972,6 +13054,7 @@ who says the continuation has to restart the map from the top?
   (test (let ((x 1)) (destructuring-bind (a b) (list x 2) (+ a b))) 3)
 
   (define-macro (define-clean-macro name-and-args . body)
+    ;; the new backquote implementation breaks this slightly -- it's currently confused about unquoted nil in the original
     (let ((syms ()))
       
       (define (walk func lst)
@@ -13164,7 +13247,22 @@ who says the continuation has to restart the map from the top?
   (test (let ((values 32)) (define-macro (hi a) `(+ 1 ,@a)) (hi (2 3))) 6)
   (test (let ((list 32)) (define-macro (hi a) `(+ 1 ,@a)) (hi (2 3))) 6)
 ;  (test (let () (define-macro (hi a) `(let ((apply 32)) (+ apply ,@a))) (hi (2 3))))
-  
+  (test (let () (define-macro (hi a) `(+ 1 (if ,(= a 0) 0 (hi ,(- a 1))))) (hi 3)) 4)
+  (test (let () (define-macro (hi a) `(+ 1 ,a)) ((if #t hi abs) -3)) -2)
+  (test (let () (apply define-macro '((m a) `(+ 1 ,a))) (m 2)) 3)
+  (test (let () (apply (eval (apply define-macro '((m a) `(+ 1 ,a)))) '(3))) 4)
+  (test (let () (apply (eval (apply define '((hi a) (+ a 1)))) '(2))) 3)
+  (test (let () ((eval (apply define '((hi a) (+ a 1)))) 3)) 4)
+  (test (let () ((eval (apply define-macro '((m a) `(+ 1 ,a)))) 3)) 4)
+  (test (let () ((symbol->value (apply define '((hi a) (+ a 1)))) 3)) 4)
+  (test (let () ((symbol->value (apply define-macro '((m a) `(+ 1 ,a)))) 3)) 4)
+  (test (let () 
+	  (define-macro (mu args . body)
+	    (let ((m (gensym)))
+	      `(symbol->value (apply define-macro '((,m ,@args) ,@body)))))
+	  ((mu (a) `(+ 1 ,a)) 3))
+	4)
+
   (define-macro* (_mac1_) `(+ 1 2))
   (test (_mac1_) 3)
   (define-macro* (_mac2_ a) `(+ ,a 2))

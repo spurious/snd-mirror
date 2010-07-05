@@ -595,7 +595,8 @@ struct s7_scheme {
   int trace_list_size, trace_top, trace_depth;
   int no_values;
 
-  #define BLOCK_VECTOR_SIZE 100
+#define BLOCK_VECTOR_SIZE (INITIAL_STACK_SIZE / 10)
+  /* this matters more on 64-bit machines than 32 */
   s7_pointer *nil_vector, *unspecified_vector;
   
   void *default_rng;
@@ -17091,16 +17092,15 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
 
 static void improper_arglist_error(s7_scheme *sc)
 {
-  s7_pointer x, y;
+  s7_pointer y;
 
-  x = safe_reverse_in_place(sc, sc->args);
-  for (y = x; cdr(y) != sc->NIL; y = cdr(y)) {};
+  for (y = sc->args; cdr(y) != sc->NIL; y = cdr(y)) {};
   cdr(y) = sc->code;
   
   s7_error(sc, sc->SYNTAX_ERROR, 
 	   make_list_2(sc,
 		       make_protected_string(sc, "improper list of arguments: ~A"),
-		       x));
+		       sc->args));
 }
 
 
@@ -17295,6 +17295,11 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 			make_list_2(sc, 
 				    make_protected_string(sc, "apply's last argument should be a proper list: ~A"),
 				    args)));
+    }
+  if (is_macro(sc->code))  /* (apply mac '(3)) -> (apply mac '((mac 3))) */
+    {
+      push_stack(sc, opcode(OP_EVAL_MACRO), sc->NIL, sc->NIL);
+      sc->args = s7_cons(sc, s7_cons(sc, sc->code, sc->args), sc->NIL);
     }
   push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
   return(sc->NIL);
@@ -18337,6 +18342,9 @@ static s7_pointer read_expression(s7_scheme *sc)
 	    return(missing_close_paren_error(sc));
 
 	  push_stack(sc, opcode(OP_READ_LIST), sc->NIL, sc->NIL);
+	  /* all these push_stacks that don't care about code/args look wasteful, but if a read error
+	   *   occurs, we need clean info in the error handler, so it's tricky to optimize this.
+	   */
 	  break;
 	  
 	case TOKEN_QUOTE:
@@ -18713,8 +18721,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
    *   callbacks that are implicit in our stack.
    */
   
- START:
+  goto START_WITHOUT_POP_STACK;
+  /* this ugly two-step is actually noticeably faster than other ways of writing this code
+   */
 
+ START:
+  pop_stack(sc);
+
+ START_WITHOUT_POP_STACK:
   switch (sc->op) 
     {
     case OP_READ_INTERNAL:
@@ -18741,7 +18755,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       switch (sc->tok)
 	{
 	case TOKEN_EOF:
-	  pop_stack(sc);
 	  goto START;
 
 	case TOKEN_RIGHT_PAREN:
@@ -18752,7 +18765,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	default:
 	  sc->value = read_expression(sc);
-	  pop_stack(sc);
 	  goto START;
 	}
 
@@ -18765,8 +18777,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (sc->tok == TOKEN_EOF)
 	sc->value = sc->EOF_OBJECT;
-
-      pop_stack(sc);
       goto START;
       
       
@@ -18797,7 +18807,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       s7_close_input_port(sc, sc->input_port);
       pop_input_port(sc);
-      pop_stack(sc);
       goto START;
       
       
@@ -18845,7 +18854,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       
       sc->value = safe_reverse_in_place(sc, caddr(sc->args));
-      pop_stack(sc);
       goto START;
 
       
@@ -18857,7 +18865,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto APPLY;
 	}
       sc->value = sc->UNSPECIFIED;
-      pop_stack(sc);
       goto START;
       
 
@@ -19052,7 +19059,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    return(eval_error(sc, "unexpected dot or '() at end of body? ~A", sc->code));
 
 	  sc->value = sc->code;
-	  pop_stack(sc);
 	  goto START;
 	}
       
@@ -19075,8 +19081,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	case T_PAIR:
 	  /* using a local s7_pointer for sc->x here drastically slows things down?!? */
-	  sc->x = car(sc->code);
-	  if (is_syntax(sc->x))
+	  if (is_syntax(car(sc->code)))
 	    {     
 #if 0
 	      /* (let () (define (if a) a) (if 1)) or (let let ((i 0)) (if (< i 3) (let (+ i 1)) i))
@@ -19090,13 +19095,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto EVAL;
 		}
 #endif		  
+	      sc->op = (opcode_t)syntax_opcode(car(sc->code));
 	      sc->code = cdr(sc->code);
-	      sc->op = (opcode_t)syntax_opcode(sc->x);
-	      goto START;
+	      goto START_WITHOUT_POP_STACK;
 	    } 
 
 	  push_stack(sc, opcode(OP_EVAL_ARGS), sc->NIL, sc->code);
-	  sc->code = sc->x;
+	  sc->code = car(sc->code);
 	  goto EVAL;
 
 	case T_SYMBOL:
@@ -19110,14 +19115,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (x != sc->NIL) 
 	      sc->value = symbol_value(x);
 	    else sc->value = eval_symbol_1(sc, sc->code);
-
-	    pop_stack(sc);
 	    goto START;
 	  }
 
 	default:
 	  sc->value = sc->code;
-	  pop_stack(sc);
 	  goto START;
 	}
 
@@ -19145,7 +19147,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   */
 	  sc->code = cdr(sc->code);
 	  sc->op = (opcode_t)syntax_opcode(sc->value);
-	  goto START;
+	  goto START_WITHOUT_POP_STACK;
 	}
 
       else 
@@ -19155,9 +19157,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *     (let ((func +)) (func (let () (set! func -) 3)	2))
 	   *   can return 5.
 	   *
-	   * for a no-arg func, error if cdr(sc->code) is not nil, else simply call it now? 
-	   *   [sc->code = sc->value; sc->args = cdr(sc->code); goto APPLY]
-	   *   but this really slows us down?!? (and we seem to be doing lots more find_symbol calls??)
+	   * check for thunk and jump to apply here costs more than it saves 
 	   */
 
 	  sc->code = cdr(sc->code);
@@ -19239,16 +19239,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       else                       /* got all args -- go to apply */
 	{
+	  sc->args = safe_reverse_in_place(sc, sc->args); 
+	  /* we could omit this reversal in many cases: all built in ops could
+	   *   assume reversed args, things like eq? and + don't care about order, etc.
+	   *   But, I think the reversal is not taking any noticeable percentage of
+	   *   the overall compute time (ca 1% according to callgrind).
+	   */
 	  if (sc->code != sc->NIL)
 	    improper_arglist_error(sc);
 	  else
 	    {
-	      sc->args = safe_reverse_in_place(sc, sc->args); 
-	      /* we could omit this reversal in many cases: all built in ops could
-	       *   assume reversed args, things like eq? and + don't care about order, etc.
-	       *   But, I think the reversal is not taking any noticeable percentage of
-	       *   the overall compute time (ca 1% according to callgrind).
-	       */
 	      sc->code = car(sc->args);
 	      sc->args = cdr(sc->args);
 	      /* goto APPLY;  */
@@ -19299,8 +19299,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	case T_C_ANY_ARGS_FUNCTION:              /* -------- C-based function that can take any number of arguments -------- */
 	  sc->value = c_function_call(sc->code)(sc, sc->args);
-
-	  pop_stack(sc);
 	  goto START;
 
 
@@ -19346,24 +19344,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* although not the normal entry path, it is possible to apply a macro:
 	   *
 	   * (define-macro (hi a) `(+ ,a 1))
-	   * (apply hi '((hi 4)))
-	   * (+ 4 1)
-	   *
-	   * that is, you apply it to an expression that includes the macro name (or any name) --
-	   *   it's expecting an expression and ignores the function position, assuming it is
-	   *   its own name sitting there.  The result of the macro expansion, in this weird case,
-	   *   is returned without evaluation -- does this make it a "fexpr"?  Or is this more
-	   *   explicit:
-	   *
-	   * (define-macro (define-fexpr name-and-args . body)
-	   *   (let ((name (car name-and-args))
-	   *         (args (cdr name-and-args)))
-	   *     `(define-macro (,name ,@args)
-	   *        (list 'quote ((lambda ,args ,@body) ,@args)))))
-	   *
-	   * (define-fexpr (hi a) `(+ ,a 1))
-	   * (hi (+ 3 2))
-	   * (+ (+ 3 2) 1)
+	   * (apply hi '(4))
+	   * 5
 	   */
 
 	  for (sc->x = closure_args(sc->code), sc->y = sc->args; is_pair(sc->x); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
@@ -19474,19 +19456,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 	case T_CONTINUATION:	                  /* -------- continuation ("call-with-current-continuation") -------- */
 	  call_with_current_continuation(sc);
-	  pop_stack(sc);
 	  goto START;
 
 	case T_GOTO:	                          /* -------- goto ("call-with-exit") -------- */
 	  call_with_exit(sc);
-	  pop_stack(sc);
 	  goto START;
 
 	case T_C_OBJECT:	                  /* -------- applicable object -------- */
 	  sc ->value = apply_object(sc, sc->code, sc->args);
 	  if (sc->stack_end > sc->stack_start)
 	    pop_stack(sc);
-	  goto START;
+	  goto START_WITHOUT_POP_STACK;
 
 	case T_VECTOR:                            /* -------- vector as applicable object -------- */
 	  /* sc->code is the vector, sc->args is the list of dimensions */
@@ -19494,7 +19474,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    return(s7_wrong_number_of_args_error(sc, "not enough args for vector-ref: ~A", sc->args));
 
 	  sc->value = vector_ref_1(sc, sc->code, sc->args);
-	  pop_stack(sc);
 	  goto START;
 
 	case T_STRING:                            /* -------- string as applicable object -------- */
@@ -19504,7 +19483,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    return(s7_wrong_number_of_args_error(sc, "too many args for string ref (via string as applicable object): ~A", sc->args));
 
 	  sc->value = string_ref_1(sc, sc->code, car(sc->args));
-	  pop_stack(sc);
 	  goto START;
 
 	case T_PAIR:                              /* -------- list as applicable object -------- */
@@ -19522,7 +19500,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (cdr(sc->args) == sc->NIL)
 	    sc->value = list_ref_1(sc, sc->code, car(sc->args));            /* (L 1) */
 	  else sc->value = g_list_ref(sc, s7_cons(sc, sc->code, sc->args)); /* (L 1 2) */
-	  pop_stack(sc);
 	  goto START;
 
 	case T_HASH_TABLE:                        /* -------- hash-table as applicable object -------- */
@@ -19532,7 +19509,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (cdr(sc->args) == sc->NIL)
 	    sc->value = s7_hash_table_ref(sc, sc->code, car(sc->args));
 	  else sc->value = g_hash_table_ref(sc, s7_cons(sc, sc->code, sc->args));
-	  pop_stack(sc);
 	  goto START;
 
 	case T_SYMBOL:                            /* -------- syntactic keyword as applicable object -------- */
@@ -19592,7 +19568,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    return(eval_error(sc, "lambda :rest parameter '~A is a constant", sc->x));
 	}
       sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE);
-      pop_stack(sc);
       goto START;
 
 
@@ -19640,7 +19615,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
       sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE_STAR);
-      pop_stack(sc);
       goto START;
       
       
@@ -19655,7 +19629,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "quote: too many arguments ~A", sc->code));
 
       sc->value = car(sc->code);
-      pop_stack(sc);
       goto START;
 
       
@@ -19665,8 +19638,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       sc->x = find_local_symbol(sc, sc->envir, sc->value);
       set_immutable(car(sc->x));
-
-      pop_stack(sc);
       goto START;
 
 
@@ -19763,7 +19734,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	set_symbol_value(sc->x, sc->value); 
       else add_to_current_environment(sc, sc->code, sc->value); 
       sc->value = sc->code;
-      pop_stack(sc);
       goto START;
       
       
@@ -19923,7 +19893,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (symbol_accessed(sc->code))
 	    sc->value = call_symbol_set(sc, sc->code, sc->value);
 	  set_symbol_value(sc->y, sc->value); 
-	  pop_stack(sc);
 	  goto START;
 	}
       /* if unbound variable hook here, we need the binding, not the current value */
@@ -20240,8 +20209,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      if (is_multiple_value(sc->value))                             /* (+ 1 (cond ((values 2 3)))) */
 		sc->value = splice_in_values(sc, multiple_value(sc->value));
-
-	      pop_stack(sc);      /* no result clause, so return test, (cond (#t)) -> #t, (cond ((+ 1 2))) -> 3 */
+	      /* no result clause, so return test, (cond (#t)) -> #t, (cond ((+ 1 2))) -> 3 */
 	      goto START;
 	    }
 	  
@@ -20280,7 +20248,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->code == sc->NIL)
 	{
 	  sc->value = sc->NIL;
-	  pop_stack(sc);
 	  goto START;
 	} 
 	  
@@ -20293,7 +20260,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->code == sc->NIL) 
 	{
 	  sc->value = sc->T;
-	  pop_stack(sc);
 	  goto START;
 	}
       if (!is_pair(sc->code))                                        /* (and . 1) */
@@ -20306,10 +20272,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_AND1:
       if ((is_false(sc, sc->value)) ||
 	  (sc->code == sc->NIL))
-	{
-	  pop_stack(sc);
-	  goto START;
-	}
+	goto START;
+
       if (!is_pair(sc->code))                                       /* (and #t . 1) but (and #f . 1) returns #f */
 	return(eval_error(sc, "and: stray dot?: ~A", sc->code));
 
@@ -20329,12 +20293,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (car(x) == sc->F)
 	      {
 		sc->value = sc->F;
-		pop_stack(sc);
 		goto START;
 	      }
 	  sc->value = car(x);
 	}
-      pop_stack(sc);
       goto START;
       
       
@@ -20342,7 +20304,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->code == sc->NIL) 
 	{
 	  sc->value = sc->F;
-	  pop_stack(sc);
 	  goto START;
 	}
       if (!is_pair(sc->code))                                       /* (or . 1) */
@@ -20355,10 +20316,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_OR1:
       if ((is_true(sc, sc->value)) ||
 	  (sc->code == sc->NIL))
-	{
-	  pop_stack(sc);
-	  goto START;
-	}
+	goto START;
+
       if (!is_pair(sc->code))                                       /* (or #f . 1) but (or #t . 1) returns #t */
 	return(eval_error(sc, "or: stray dot?: ~A", sc->code));
 
@@ -20377,12 +20336,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (car(x) != sc->F)
 	      {
 		sc->value = car(x);
-		pop_stack(sc);
 		goto START;
 	      }
 	  sc->value = car(x);
 	}
-      pop_stack(sc);
       goto START;
       
 
@@ -20399,7 +20356,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* pop back to wherever the macro call was */
       sc->x = sc->value;
       sc->value = sc->code;
-      pop_stack(sc);
       goto START;
       
       
@@ -20478,7 +20434,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* sc->x is the value (sc->value right now is sc->code, the macro name symbol) */
       set_type(sc->x, T_MACRO | T_ANY_MACRO | T_EXPANSION | T_DONT_COPY_CDR | T_DONT_COPY);
       set_type(sc->value, type(sc->value) | T_EXPANSION | T_DONT_COPY);
-      pop_stack(sc);
       goto START;
 
 
@@ -20634,7 +20589,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	} 
 
       sc->value = sc->UNSPECIFIED; /* this was sc->NIL but the spec says case value is unspecified if no clauses match */
-      pop_stack(sc);
       goto START;
       
       
@@ -20642,13 +20596,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_true(sc, sc->value)) 
 	goto BEGIN;
       sc->value = sc->NIL;
-      pop_stack(sc);
       goto START;
       
 
     case OP_DEACTIVATE_GOTO:
       call_exit_active(sc->args) = false;
-      pop_stack(sc);
       goto START;
 
 
@@ -20709,9 +20661,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* (+ 1 (dynamic-wind (lambda () #f) (lambda () (values 2 3 4)) (lambda () #f)) 5) */
 	      if (is_multiple_value(sc->args))
 		sc->value = splice_in_values(sc, multiple_value(sc->args));
-	      else 
-		sc->value = sc->args;                         /* value saved above */ 
-	      pop_stack(sc); 
+	      else sc->value = sc->args;                         /* value saved above */ 
 	      goto START;
 	    }
 	}
@@ -20720,13 +20670,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_BARRIER:
     case OP_CATCH:
-      pop_stack(sc);
       goto START;
 
 
     case OP_WITH_ENV1:
       sc->envir = sc->args;                              /* restore previous environment */
-      pop_stack(sc);
       goto START;
 
 
@@ -20755,7 +20703,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_TRACE_RETURN:
       trace_return(sc);
-      pop_stack(sc);
       goto START;
       
       
@@ -20853,7 +20800,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = read_expression(sc);
 	  break;
 	}
-      pop_stack(sc);
       goto START;
 
       
@@ -20862,7 +20808,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  back_up_stack(sc);
 	  sc->value = read_error(sc, "stray dot?");            /* (+ 1 . 2 3) or (list . ) */
-	  goto START;
+	  goto START_WITHOUT_POP_STACK;
 	}
       /* args = previously read stuff, value = thing just after the dot and before the ')':
        *   (list 1 2 . 3)
@@ -20879,20 +20825,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *      something is fishy
        */
       sc->value = reverse_in_place(sc, sc->value, sc->args);
-      pop_stack(sc);
       goto START;
       
       
     case OP_READ_QUOTE:
       sc->value = make_list_2(sc, sc->QUOTE, sc->value);
-      pop_stack(sc);
       goto START;      
       
       
     case OP_READ_QUASIQUOTE:
       /* this was pushed when the backquote was seen, then eventually we popped back to it */
       sc->value = g_quasiquote_1(sc, sc->value);
-      pop_stack(sc);
       goto START;
       
       
@@ -20903,19 +20846,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * It's also limited to 1-dimensional cases, since I think it's a bad idea to begin with.
        */
       sc->value = make_list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_1(sc, sc->value));
-      pop_stack(sc);
       goto START;
 
       
     case OP_READ_UNQUOTE:
       sc->value = make_list_2(sc, sc->UNQUOTE, sc->value);
-      pop_stack(sc);
       goto START;
       
       
     case OP_READ_UNQUOTE_SPLICING:
       sc->value = make_list_2(sc, sc->UNQUOTE_SPLICING, sc->value);
-      pop_stack(sc);
       goto START;
       
       
@@ -20923,13 +20863,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->args == small_int(1))
 	sc->value = g_vector(sc, sc->value);
       else sc->value = g_multivector(sc, (int)s7_integer(sc->args), sc->value);
-      pop_stack(sc);
       goto START;
 
       
     default:
       return(eval_error(sc, "~A: unknown operator!", s7_make_integer(sc, sc->op)));
     }
+
   return(sc->F);
 }
 
