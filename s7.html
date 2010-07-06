@@ -620,6 +620,40 @@ make-mac
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
+<p>Backquote (quasiquote) in s7 is almost trivial.  Constants are unchanged, symbols are quoted,
+",arg" becomes "arg", and ",@arg" becomes "(apply values arg)" &mdash; hooray for real multiple values!
+It's almost as easy to write the actual macro body as the backquoted version of it.
+</p>
+
+<pre>
+&gt; (define-macro (hi a) `(+ 1 ,a))
+hi
+&gt; (procedure-source hi)
+(lambda ({defmac}-16) (apply (lambda (a) <em class=red>({list} '+ 1 a))</em> (cdr {defmac}-16)))
+
+;; so (define-macro (hi a) ({list} + 1 a)) is the same
+
+&gt; (define-macro (hi a) `(+ 1 ,@a))
+hi
+&gt; (procedure-source hi)
+(lambda ({defmac}-17) (apply (lambda (a) <em class=red>({list} '+ 1 ({apply} {values} a)))</em> (cdr {defmac}-17)))
+
+;; same: (define-macro (hi a) ({list} + 1 ({apply} {values} a)))
+
+&gt; (define-macro (hi a) ``(+ 1 ,,a))
+hi
+&gt; (procedure-source hi)
+(lambda ({defmac}-18) (apply (lambda (a) <em class=red>({list} '{list} ({list} 'quote '+) 1 a))</em> (cdr {defmac}-18)))
+</pre>
+
+<p>and so on.  "{list}" is a special version of "list" to avoid name collisions
+and handle a few tricky details (similarly for "{values}" and "{apply}").
+</p>
+
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>s7 macros are not hygienic.  For example,
 </p>
 <pre>
@@ -728,6 +762,82 @@ mac
 </pre>
 
 
+<p>This is not the end of the story.
+Macro expansion happens
+in two different environments.  Leaving aside quasiquote which happens at read-time,
+and in a sense has no environment, a macro first evaluates its body to form a piece
+of code, a list with the macro's arguments plugged in.  Then
+it evaluates that code.  So the expansion into a piece of code takes place in one
+environment (the definition-time environment), and the code evaluation takes place
+in another (the call-time environment).  This can be very frustrating!  Say we
+decide to write a "symbol-set!" macro (borrowed in an oblique way from CL's set).
+<code>(symbol-set! var val)</code> should evaluate "var", getting a symbol as its
+value, then plug that symbol into <code>(set! var-value val)</code>.  For example,
+after expansion we want something like:
+</p>
+
+<pre>
+&gt; (let ((x 32) (y 'x)) 
+    (eval (list 'set! y 123)) ; (symbol-set! y 123) ideally
+    (list x y))
+(123 x)
+</pre>
+
+<p>If we define our macro in the local context, then the initial expansion
+into (set! x 123) takes place in a context where "y" is defined:
+</p>
+
+<pre>
+&gt; (let ((x 32) (y 'x))
+    (define-macro (symbol-set! var val)
+      `(set! ,(eval var) ,val))
+    (symbol-set! y 123)
+    (list x y))
+(123 x)
+</pre>
+
+<p>But if we try to define that at the top level so we can use it anywhere, 
+"var" may not be defined in the environment where the initial list is created:
+</p>
+
+<pre>
+&gt; (define-macro (symbol-set! var val)
+    `(set! ,(eval var) ,val))
+symbol-set!
+&gt; (let ((x 32) (y 'x))
+    (symbol-set! y 123)
+    (list x y))
+;y: unbound variable, line 3
+;    ({list} 'set! (eval var) val)
+</pre>
+
+<p>Exactly the same thing happens in CL:
+</p>
+
+<pre>
+&gt; (defmacro symbol-set (var val) `(setf ,(eval var) ,val)
+SYMBOL-SET
+&gt; (let ((x 32) (y 'x)) (symbol-set y 123))
+*** - EVAL: variable Y has no value
+</pre>
+
+<p>Our "unhygienic" macros are too clean!  We want both the expansion into
+code and the evaluation of the code to happen in the call-time environment.
+Since this is a huge step backward for computer science, I've called these
+throughly dirty macros, "bacros":
+</p>
+
+<pre>
+&gt; (define-bacro (symbol-set! var val) 
+   `(set! ,(eval var) ,val))
+symbol-set!
+&gt; (let ((x 32) (y 'x)) 
+   (symbol-set! y 123) 
+   (list x y))
+(123 x)
+</pre>
+
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
@@ -773,38 +883,7 @@ the loop!
 </p>
 
 
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<p>Backquote (quasiquote) in s7 is almost trivial.  Constants are unchanged, symbols are quoted,
-",arg" becomes "arg", and ",@arg" becomes "(apply values arg)" &mdash; hooray for real multiple values!
-It's almost as easy to write the actual macro body as the backquoted version of it.
-</p>
-
-<pre>
-&gt; (define-macro (hi a) `(+ 1 ,a))
-hi
-&gt; (procedure-source hi)
-(lambda ({defmac}-16) (apply (lambda (a) <em class=red>({list} '+ 1 a))</em> (cdr {defmac}-16)))
-
-;; so (define-macro (hi a) ({list} + 1 a)) is the same
-
-&gt; (define-macro (hi a) `(+ 1 ,@a))
-hi
-&gt; (procedure-source hi)
-(lambda ({defmac}-17) (apply (lambda (a) <em class=red>({list} '+ 1 ({apply} {values} a)))</em> (cdr {defmac}-17)))
-
-;; same: (define-macro (hi a) ({list} + 1 ({apply} {values} a)))
-
-&gt; (define-macro (hi a) ``(+ 1 ,,a))
-hi
-&gt; (procedure-source hi)
-(lambda ({defmac}-18) (apply (lambda (a) <em class=red>({list} '{list} ({list} 'quote '+) 1 a))</em> (cdr {defmac}-18)))
-</pre>
-
-<p>and so on.  "{list}" is a special version of "list" to avoid name collisions
-and handle a few tricky details (similarly for "{values}" and "{apply}").
-</p>
 
 </blockquote>
 </small>
@@ -2732,7 +2811,64 @@ more fun than a barrel of monkeys. Here is a self-modifying factorial function:
 <p>If you modify the procedure source directly, it is safest to redefine the procedure (as above)
 so that everything in s7 knows about the change.  
 <a href="#augmentenv">augment-environment</a> serves a similar purpose when editing environments.
+Here's a more useful example; it adds trace and local variable info for debugging:
 </p>
+
+<pre>
+(define-macro (procedure-annotate proc)
+  (let ((orig (<em class=red>procedure-source</em> proc)))
+
+    (define (proc-walk source)
+      (if (pair? source)
+	  (if (or (eq? (car source) 'let)     ; if let or let*, show local variables
+		  (eq? (car source) 'let*))
+	      (if (symbol? (cadr source))
+		  ;; (let name vars . body) -&gt; (let name vars print-vars . body)
+		  (append 
+		   (list (car source)
+			 (cadr source)
+			 (caddr source)
+			 `(format #t "    (let ~A (~{~A~^ ~}) ...)~%" ,(cadr source) (car (current-environment))))
+		   (cdddr source))
+		  ;; (let(*) vars . body) -&gt; (let vars print-vars . body)
+		  (append 
+		   (list (car source)
+			 (cadr source)
+			 `(format #t "    (~A (~{~A~^ ~}) ...)~%" ,(car source) (car (current-environment))))
+		   (cddr source)))
+	      (cons (proc-walk (car source))
+		    (proc-walk (cdr source))))
+	  source))
+
+    (let* ((new-body (proc-walk orig))
+	   (result (gensym))
+	   (new-source 
+	    `(lambda ,(cadr orig)
+	       (let ((,result #&lt;undefined&gt;))
+		 (dynamic-wind
+		     (lambda ()       ; upon entry, show procedure name and args
+		       (format #t "(~A~{ ~A~})~%" ',proc (caddr (current-environment))))
+		     (lambda ()
+		       (set! ,result (,new-body ,@(cadr orig)))
+		       ,result)
+		     (lambda ()       ; at exit, show result
+		       (if (eq? ,result #&lt;undefined&gt;)
+			   (format #t "  ~A returns early~%")
+			   (format #t "  ~A returns ~A~%" ',proc ,result))))))))
+
+      `(set! ,proc (eval ,new-source)))))
+			 
+&gt; (define (hi a) (let ((b 12)) (+ b a)))
+hi
+&gt; (procedure-annotate hi)
+#&lt;closure&gt;
+&gt; (let ((x 32)) (+ 1 (hi x)))
+45
+;; printing: 
+(hi (a . 32))
+    (let ((b . 12)) ...)
+  hi returns 44
+</pre>
 
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">

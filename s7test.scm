@@ -13834,6 +13834,8 @@ who says the continuation has to restart the map from the top?
     
     ))
 
+;;; TODO: bacro tests
+
 (define-expansion (_expansion_ a) `(+ ,a 1))
 (test (_expansion_ 3) 4)
 (test (macroexpand (_expansion_ 3)) `(+ 3 1))

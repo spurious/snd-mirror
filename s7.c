@@ -294,8 +294,8 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_IF, OP_IF1, OP_SET, OP_SET1, OP_SET2, 
 	      OP_LET, OP_LET1, OP_LET2, OP_LET_STAR, OP_LET_STAR1, 
 	      OP_LETREC, OP_LETREC1, OP_LETREC2, OP_COND, OP_COND1, 
-	      OP_AND, OP_AND1, OP_OR, OP_OR1, OP_DEFMACRO, OP_DEFMACRO_STAR, 
-	      OP_MACRO1, OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION, OP_EXPANSION,
+	      OP_AND, OP_AND1, OP_OR, OP_OR1, OP_DEFMACRO, OP_DEFMACRO_STAR,
+	      OP_MACRO, OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION, OP_EXPANSION,
 	      OP_CASE, OP_CASE1, OP_CASE2, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, 
 	      OP_READ_VECTOR, OP_READ_POP_AND_RETURN_EXPRESSION, 
@@ -305,6 +305,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_ENV2,
 	      OP_FOR_EACH, OP_MAP, OP_AND2, OP_OR2, OP_BARRIER, OP_DEACTIVATE_GOTO,
+	      OP_DEFINE_BACRO, OP_BACRO,
 	      OP_MAX_DEFINED} opcode_t;
 
 #if 0
@@ -312,7 +313,7 @@ static const char *op_names[OP_MAX_DEFINED] =
   {"op_read_internal", "op_eval", "op_eval_args", "op_eval_args1", "op_apply", "op_eval_macro", "op_lambda", 
    "op_quote", "op_define", "op_define1", "op_begin", "op_if", "op_if1", "op_set", "op_set1", "op_set2", 
    "op_let", "op_let1", "op_let2", "op_let_star", "op_let_star1", "op_letrec", "op_letrec1", "op_letrec2", 
-   "op_cond", "op_cond1", "op_and", "op_and1", "op_or", "op_or1", "op_defmacro", "op_defmacro_star", "op_macro1", 
+   "op_cond", "op_cond1", "op_and", "op_and1", "op_or", "op_or1", "op_defmacro", "op_defmacro_star", "op_macro", 
    "op_define_macro", "op_define_macro_star", "op_define_expansion", "op_expansion", "op_case", "op_case1", 
    "op_case2", "op_read_list", "op_read_dot", "op_read_quote", "op_read_quasiquote", "op_read_quasiquote_vector", 
    "op_read_unquote", "op_read_unquote_splicing", "op_read_vector", "op_read_pop_and_return_expression", 
@@ -321,12 +322,12 @@ static const char *op_names[OP_MAX_DEFINED] =
    "op_do_step", "op_do_step1", "op_do_step2", "op_do_init", "op_define_star", "op_lambda_star", 
    "op_error_quit", "op_unwind_input", "op_unwind_output", "op_trace_return", "op_error_hook_quit", 
    "op_trace_hook_quit", "op_with_env", "op_with_env1", "op_with_env2", "op_for_each", "op_map", 
-   "op_and2", "op_or2", "op_barrier", "op_deactivate_goto"};
+   "op_and2", "op_or2", "op_barrier", "op_deactivate_goto", "op_define_bacro", "op_bacro"};
 #endif
 
 
 #define NUM_SMALL_INTS 200
-/* this needs to be at least OP_MAX_DEFINED = 81 */
+/* this needs to be at least OP_MAX_DEFINED = 83 */
 /* going up to 1024 gives very little improvement, down to 128 costs about .2% run time */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -630,7 +631,8 @@ struct s7_scheme {
 #define T_C_MACRO             21
 #define T_C_POINTER           22
 #define T_C_ANY_ARGS_FUNCTION 23
-#define BUILT_IN_TYPES        24
+#define T_BACRO               24
+#define BUILT_IN_TYPES        25
 
 #define TYPE_BITS                     8
 #define T_MASKTYPE                    0xff
@@ -879,6 +881,7 @@ struct s7_scheme {
 #define is_continuation(p)            (type(p) == T_CONTINUATION)
 #define is_goto(p)                    (type(p) == T_GOTO)
 #define is_macro(p)                   (type(p) == T_MACRO)
+#define is_bacro(p)                   (type(p) == T_BACRO)
 
 #define is_closure(p)                 (type(p) == T_CLOSURE)
 #define is_closure_star(p)            (type(p) == T_CLOSURE_STAR)
@@ -1727,6 +1730,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_CLOSURE:
     case T_CLOSURE_STAR:
     case T_MACRO:
+    case T_BACRO:
       s7_remove_from_heap(sc, closure_source(x));
       break;
 
@@ -10467,6 +10471,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       return(copy_string(symbol_name(obj)));
   
     case T_MACRO:
+    case T_BACRO:
       return(copy_string("#<macro>"));
   
     case T_CLOSURE:
@@ -16400,6 +16405,7 @@ static const char *type_name(s7_pointer arg)
     case T_C_POINTER:    return("c-pointer");
     case T_CHARACTER:    return("character");
     case T_VECTOR:       return("vector");
+    case T_BACRO:
     case T_MACRO:        return("macro");
     case T_CATCH:        return("catch");
     case T_DYNAMIC_WIND: return("dynamic-wind");
@@ -19331,11 +19337,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 
 	  
+	case T_BACRO:
+	  NEW_FRAME(sc, sc->envir, sc->envir);       /* like let* -- we'll be adding macro args, so might as well sequester things here */
+	  goto BACRO;
+
 	case T_CLOSURE:                              /* -------- normal function (lambda), or macro -------- */
 	case T_MACRO:
 	  /* sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); */
 	  NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
 
+	BACRO:
 	  /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
 
 	  /* (defmacro hi (a b) `(+ ,a ,b)) */
@@ -19739,6 +19750,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_SET2:
+      /* fprintf(stderr, "set2 value: %s, code: %s, args: %s\n", s7_object_to_c_string(sc, sc->value), s7_object_to_c_string(sc, sc->code), s7_object_to_c_string(sc, sc->args)); */
+
       if (is_pair(sc->value))
 	{
 	  /* (let ((L '((1 2 3)))) (set! ((L 0) 1) 32) L)
@@ -19775,6 +19788,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     SET:
     case OP_SET:                                                   /* entry for set! */
+      /* fprintf(stderr, "set! %s\n", s7_object_to_c_string(sc, sc->code)); */
+
       if (!is_pair(sc->code))
 	{
 	  if (sc->code == sc->NIL)                                           /* (set!) */
@@ -19888,6 +19903,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_SET1:     
+      /* fprintf(stderr, "set1 code: %s\n", s7_object_to_c_string(sc, sc->code)); */
+
       sc->y = find_symbol(sc, sc->envir, sc->code);
       if (sc->y != sc->NIL) 
 	{
@@ -20344,7 +20361,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
 
-    case OP_MACRO1:
+    case OP_BACRO:
+      /* sc->value is the symbol, sc->x is the binding (the bacro) */
+      set_type(sc->x, T_BACRO | T_ANY_MACRO | T_DONT_COPY_CDR | T_DONT_COPY);
+      goto START;
+
+
+    case OP_MACRO:
       /* symbol? macro name has already been checked */
       set_type(sc->value, T_MACRO | T_ANY_MACRO | T_DONT_COPY_CDR | T_DONT_COPY);
 
@@ -20427,7 +20450,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *                        (cons (quote +) (cons a (cons b (quote ()))))) 
        *                      (cdr defmac-21)))
        */
-      push_stack(sc, opcode(OP_MACRO1), sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
+      push_stack(sc, opcode(OP_MACRO), sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO */
       goto EVAL;
 
 
@@ -20438,12 +20461,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
 
 
+    case OP_DEFINE_BACRO:
+      push_stack(sc, opcode(OP_BACRO), sc->NIL, sc->NIL);
+      goto DEFINE_MAC;
+
+
     case OP_DEFINE_EXPANSION:
       /* read-time macros, suggested by Rick */
       push_stack(sc, opcode(OP_EXPANSION), sc->NIL, sc->NIL);
       /* drop into define-macro */
 
 
+    DEFINE_MAC:
     case OP_DEFINE_MACRO:
     case OP_DEFINE_MACRO_STAR:
 
@@ -20505,7 +20534,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   sc->x: hi
        *   sc->code: (lambda (defmac-22) (apply (lambda (a b) (cons (quote +) (cons a (cons b (quote ()))))) (cdr defmac-22)))
        */
-      push_stack(sc, opcode(OP_MACRO1), sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
+      push_stack(sc, opcode(OP_MACRO), sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO */
       goto EVAL;
       
       
@@ -25853,6 +25882,8 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "define-macro*",     OP_DEFINE_MACRO_STAR); 
   assign_syntax(sc, "define-expansion",  OP_DEFINE_EXPANSION); /* read-time (immediate) macro expansion */
   assign_syntax(sc, "with-environment",  OP_WITH_ENV);
+
+  assign_syntax(sc, "define-bacro",      OP_DEFINE_BACRO);
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");
   typeflag(sc->LAMBDA) |= T_DONT_COPY; 
@@ -26478,6 +26509,7 @@ s7_scheme *s7_init(void)
  *
  * (define (continuation func . vals) (call/cc (lambda (r1) (set! func r1) (apply r1 vals))))
  * member of vector? string? any object?
+ *
  * TODO: loading s7test simultaneously in several threads hangs after awhile in join_thread (call/cc?) 
  *         why are list-ref tests getting 'wrong-type-arg?
  *         (qsort is not thread safe -- should we use guile's quicksort rewrite? libguile/quicksort.i.c)
