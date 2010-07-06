@@ -9050,7 +9050,12 @@
 (for-each
  (lambda (arg)
    (test (apply arg '(1)) 'error))
- (list -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #t)) ; "hi" and (list 1 2 3) work here because they are applicable in s7
+ (list -1 #\a 1 'a-symbol 3.14 3/4 1.0+1.0i #t)) 
+
+(test (apply "hi" '(1)) #\i)
+(test (apply '(1 2 3) '(1)) 2)
+(test (apply #(1 2 3) '(2)) 3)
+(test (let ((ht (make-hash-table))) (set! (ht "hi") 32) (apply ht '("hi"))) 32)
 
 (test (let ((x (list 1 2))) (set-cdr! x x) (apply + x)) 'error)
 (test (apply + '(1 2 . 3)) 'error)
@@ -9426,6 +9431,9 @@
 (test (let ((str "hi")) (set! ((values str 0) 0) #\x) str) 'error)
 (test (let ((str "hi")) (set! ((values str) 0) #\x) str) "xi")
 (test (+ (let ((x 0)) (do ((i (values 0) (+ i 1))) (((values = i 10)) (values x 2 3)) (set! x (+ x i)))) 4) 54)
+
+(test (map values (list (values 1 2) (values 3 4))) '(1 2 3 4))
+(test (let () (define-macro (hi a) `(+ 1 ,a)) (hi (values 2 3 4))) 10)
 
 
 
@@ -10467,7 +10475,11 @@
 (test (call-with-exit s7-version s7-version) 'error)
 (test (call/cc) 'error)
 (test (call/cc s7-version s7-version) 'error)
+(test (call/cc (lambda () 1)) 'error)
+(test (call/cc (lambda (a b) (a 1))) 'error)
 
+;;; guile/s7 accept: (call/cc (lambda (a . b) (a 1))) -> 1
+;;; same:            (call/cc (lambda arg ((car arg) 1))) -> 1
 
 (test (let ((listindex (lambda (e l)
 			 (call/cc (lambda (not_found)
@@ -13244,8 +13256,8 @@ who says the continuation has to restart the map from the top?
 	  (let ((a 21) (b 10) (+ *)) (mac a b)))
 	46)
 
-  (test (let ((values 32)) (define-macro (hi a) `(+ 1 ,@a)) (hi (2 3))) 6)
-  (test (let ((list 32)) (define-macro (hi a) `(+ 1 ,@a)) (hi (2 3))) 6)
+;  (test (let ((values 32)) (define-macro (hi a) `(+ 1 ,@a)) (hi (2 3))) 6)
+;  (test (let ((list 32)) (define-macro (hi a) `(+ 1 ,@a)) (hi (2 3))) 6)
 ;  (test (let () (define-macro (hi a) `(let ((apply 32)) (+ apply ,@a))) (hi (2 3))))
   (test (let () (define-macro (hi a) `(+ 1 (if ,(= a 0) 0 (hi ,(- a 1))))) (hi 3)) 4)
   (test (let () (define-macro (hi a) `(+ 1 ,a)) ((if #t hi abs) -3)) -2)
@@ -13262,6 +13274,7 @@ who says the continuation has to restart the map from the top?
 	      `(symbol->value (apply define-macro '((,m ,@args) ,@body)))))
 	  ((mu (a) `(+ 1 ,a)) 3))
 	4)
+  (test (let () (define-macro (hi a) `(+ 1 ,a)) (map hi '(1 2 3))) 'error)
 
   (define-macro* (_mac1_) `(+ 1 2))
   (test (_mac1_) 3)
@@ -53935,13 +53948,6 @@ who says the continuation has to restart the map from the top?
 
 
 #|
-
-;;; guile/s7 accept: (call/cc (lambda (a . b) (a 1))) -> 1
-;;; same:            (call/cc (lambda (a b c) (a 1))) -> too many args
-;;; same:            (call/cc (lambda (a b) (a 1))) -> same
-;;; same:            (call/cc (lambda arg ((car arg) 1))) -> 1
-;;; (call/cc (lambda () 1)) -> error?
-
 
 :(+ 11111111111111113.0 (+ -11111111111111111.0 7.5111111111111))
 8.0

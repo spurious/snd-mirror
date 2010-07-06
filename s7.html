@@ -3295,6 +3295,12 @@ evaluated but the key is not:
 1
 </pre>
 
+<p>Similarly, vector constants do not have to be quoted.  A list constant is quoted
+to keep it from being evaluated, but
+#(1 2 3) is as unproblematic as "123" or 123.
+</p>
+
+
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
@@ -3469,8 +3475,9 @@ new function or macro, you need to use either eval or symbol-&gt;value:
 4
 </pre>
 
-<p>There is currently one blemish.
-You can't set the syntactic object some new value:
+<p>You can't currently map a macro over a list because map wants its first
+argument to be a procedure.  Perhaps this is unreasonable.
+You also can't set the syntactic object some new value:
 <code>(set! if 3)</code>.
 I hope this kind of thing is not actually very useful, but let me
 know if you need it.  The issue is purely one of speed.

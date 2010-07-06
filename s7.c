@@ -2304,7 +2304,8 @@ static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl)
 { 
   s7_pointer x;
   /* this is a list (of alists, each representing a frame) ending with a vector (the global environment).
-   *   max linear search in s7test: 361! average search len in s7test: 9.
+   *   max linear search in s7test: 361! average search len in s7test: 9.  Although this takes about 12%
+   *   the total compute time in s7test.scm, in snd-test it is around 1% -- s7test is a special case.
    */
 
   for (x = env; is_pair(x); x = cdr(x)) 
@@ -9023,7 +9024,7 @@ static s7_pointer g_string(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_list_to_string(s7_scheme *sc, s7_pointer args)
 {
-  #define H_list_to_string "(list->string lst) appends all the list's characters into one string"
+  #define H_list_to_string "(list->string lst) appends all the list's characters into one string; (apply string lst)"
   if (car(args) == sc->NIL)
     return(s7_make_string_with_length(sc, "", 0));
   
@@ -9036,7 +9037,7 @@ static s7_pointer g_list_to_string(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
 {
-  #define H_string_to_list "(string->list str) returns the elements of the string str in a list"
+  #define H_string_to_list "(string->list str) returns the elements of the string str in a list; (map values str)"
   
   int i, len = 0;
   char *str;
@@ -12726,7 +12727,7 @@ s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect)
 
 static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
 {
-  #define H_vector_to_list "(vector->list v) returns the elements of the vector v as a list"
+  #define H_vector_to_list "(vector->list v) returns the elements of the vector v as a list; (map values v)"
   if (!s7_is_vector(car(args)))
     return(s7_wrong_type_arg_error(sc, "vector->list", 0, car(args), "a vector"));
   return(s7_vector_to_list(sc, car(args)));
@@ -12766,7 +12767,7 @@ static s7_pointer g_vector(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_list_to_vector(s7_scheme *sc, s7_pointer args)
 {
-  #define H_list_to_vector "(list->vector lst) returns a vector containing the elements of lst"
+  #define H_list_to_vector "(list->vector lst) returns a vector containing the elements of lst; (apply vector lst)"
   
   if (car(args) == sc->NIL)
     return(s7_make_vector(sc, 0));
@@ -26476,7 +26477,7 @@ s7_scheme *s7_init(void)
  * error handling is still not very clean
  *
  * (define (continuation func . vals) (call/cc (lambda (r1) (set! func r1) (apply r1 vals))))
- *
+ * member of vector? string? any object?
  * TODO: loading s7test simultaneously in several threads hangs after awhile in join_thread (call/cc?) 
  *         why are list-ref tests getting 'wrong-type-arg?
  *         (qsort is not thread safe -- should we use guile's quicksort rewrite? libguile/quicksort.i.c)
