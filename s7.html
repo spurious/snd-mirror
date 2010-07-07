@@ -2028,17 +2028,19 @@ an entry, <code>'(key . value)</code>, in whatever order the entries are encount
 
 <dd><p>If s7 is built with HAVE_PTHREADS set, you get multithreading functions.
 </p>
-<ul>
-<li>(make-thread thunk)
-<li>(join-thread thread)
-<li>(thread? obj)
-<li>(make-lock)
-<li>(grab-lock lock)
-<li>(release-lock lock)
-<li>(lock? obj)
-<li>(make-thread-variable)
-<li>(thread-variable? obj)
-</ul>
+
+<pre>
+    (make-thread thunk (stack-size 300)) ; create a thread running thunk, return id: pthread_create
+    (join-thread thread)                 ; wait for thread to finish, return value returned by thunk: pthread_join
+    (thread? obj)                        ; #t if obj is a thread 
+    (make-lock)                          ; mutex allocation and pthread_mutext_init
+    (grab-lock lock)                     ; pthread_mutex_lock
+    (release-lock lock)                  ; pthread_mutex_unlock
+    (lock? obj)                          ; #t if obj is a lock
+    (make-thread-variable)               ; pthread_key_create
+    (thread-variable? obj)               ; #t if obj is a thread-variable (pthread_key)
+</pre>
+
 <p>
 Threads in s7 share the heap and symbol table, but have their own local environment, stack,
 and evaluator locals.  I use the term "lock" in place of "mutex", and "thread-variable"
@@ -2066,6 +2068,66 @@ of pthread_getspecific, just call it: <code>(var)</code>.
      (join-thread thread))
    threads))
 </pre>
+
+<p>join-thread returns the value returned by the function passed to make-thread:
+</p>
+
+<pre>
+&gt; (let ((ctr1 1) 
+        (ctr2 2))
+    (let ((t1 (make-thread (lambda () (* ctr1 2))))
+          (t2 (make-thread (lambda () (* ctr2 3)))))
+      (+ (join-thread t1) 
+         (join-thread t2))))
+8
+</pre>
+
+
+<small>
+<blockquote>
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<pre>
+(define-macro (thread-let bindings . body)
+  ;; just like "let", but each variable is set by running a separate thread
+  `(let (,@(map (lambda (variable&value)
+		  `(,(car variable&value) (make-thread (lambda () ,(cadr variable&value)))))
+		bindings))
+     ,@(map (lambda (variable&value)
+	      `(set! ,(car variable&value) (join-thread ,(car variable&value))))
+	    bindings)
+     ,@body))
+
+&gt; (thread-let ((x (abs -1)) 
+               (y (* 3 2))) 
+   (+ x y))
+7
+&gt; (macroexpand (thread-let ((x (abs -1)) (y (* 3 2))) (+ x y)))
+(let ((x (make-thread (lambda () (abs -1)))) 
+      (y (make-thread (lambda () (* 3 2))))) 
+  (set! x (join-thread x)) 
+  (set! y (join-thread y)) 
+  (+ x y))
+</pre>
+
+<pre>
+(define-macro (thread-values . vals)
+  ;; just like "values", but each value is evaluated by a separate thread
+  (let ((gs (map (lambda (var) (gensym)) vals)))
+    `(thread-let (,@(map (lambda (g v) `(,g ,v)) gs vals))
+       (values ,@gs))))
+
+&gt; (+ 1 (thread-values (* 3 2) (abs -1)) 2)
+10
+
+</blockquote>
+</small>
+
+<p>There is some overhead in handling threads, so these examples are not realistic.
+You'd want to restrict this kind of thread use to long computations.
+</p>
 
 </dd>
 <br><br>
