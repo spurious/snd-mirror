@@ -41,7 +41,7 @@
  *
  *   deliberate omission from r5rs: 
  *        no syntax-rules or any of its friends
- *        no force and delay unless WITH_FORCE is 1 (default is 0)
+ *        no force or delay
  *        no inexact integer or ratio (so, for example, truncate returns an exact integer), no exact complex or exact real
  *           (exact? has no obvious meaning in regard to complex numbers anyway -- are we referring to the polar or
  *            the rectangular form, and are both real and imaginary parts included? -- why can't they be separate?)
@@ -195,13 +195,6 @@
    */
 #endif
 
-#ifndef WITH_FORCE
-  #define WITH_FORCE 0
-  /* this includes the slib versions of force and delay.  The name "delay" collides with CLM,
-   *    so this is not compatible with sndlib.
-   */
-#endif
-
 
 
 
@@ -310,18 +303,18 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 
 static const char *op_names[OP_MAX_DEFINED] = 
   {"read-internal", "eval", "eval-args", "eval-args1", "apply", "eval-macro", "lambda", 
-   "quote", "define", "define1", "begin", "if", "if1", "set", "set1", "set2", 
-   "let", "let1", "let2", "let*", "let-star1", "letrec", "letrec1", "letrec2", 
-   "cond", "cond1", "and", "and1", "or", "or1", "defmacro", "defmacro*", "macro", 
-   "define-macro", "define-macro*", "define-expansion", "expansion", "case", "case1", 
-   "case2", "read-list", "read-dot", "read-quote", "read-quasiquote", "read-quasiquote-vector", 
+   "quote", "define", "define", "begin", "if", "if", "set!", "set!", "set!", 
+   "let", "let", "let", "let*", "let*", "letrec", "letrec", "letrec", 
+   "cond", "cond", "and", "and", "or", "or", "defmacro", "defmacro*", "macro", 
+   "define-macro", "define-macro*", "define-expansion", "expansion", "case", "case", 
+   "case", "read-list", "read-dot", "read-quote", "read-quasiquote", "read-quasiquote-vector", 
    "read-unquote", "read-unquote-splicing", "read-vector", "read-and-return-expression", 
    "load-return-if-eof", "load-close-and-stop-if-eof", "eval-string", "eval-done", "catch", 
-   "dynamic-wind", "define-constant", "define-constant1", "do", "do-end", "do-end1", 
-   "do-step", "do-step1", "do-step2", "do-init", "define*", "lambda*", 
+   "dynamic-wind", "define-constant", "define-constant", "do", "do", "do", 
+   "do", "do", "do", "do", "define*", "lambda*", 
    "error-quit", "unwind-input", "unwind-output", "trace-return", "error-hook-quit", 
-   "trace-hook-quit", "with-env", "with-env1", "with-env2", "for-each", "map", 
-   "and2", "or2", "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro",
+   "trace-hook-quit", "with-environment", "with-environment", "with-environment", "for-each", "map", 
+   "and", "or", "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro",
    "apply-without-trace"
 };
 
@@ -2322,6 +2315,7 @@ static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl)
 	 * I also tried using csr as the logand of all the lognots of the hdls (car slot) in the env alist
 	 *   logand(hdl, csr(car(env))) != 0 then means hdl is not in the current env, so we can skip the search.
 	 *   the timings reported by callgrind indicate that this saves almost exactly as much time as it costs!
+	 *   Similarly for max (nil==0 etc).
 	 */
 
 	y = car(x);
@@ -17927,7 +17921,7 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
       {
 	for (orig = form, bq = cdr(sc->w), i = 0; i < len; i++, orig = cdr(orig), bq = cdr(bq))
 	  {
-	    if (car(orig) == sc->UNQUOTE) /* SOMEDAY: unquote_splicing is also possible here */
+	    if (car(orig) == sc->UNQUOTE) /* unquote_splicing is also possible here, I suppose, but does it make any sense? */
 	      {
 		/* `(1 2 . ,(list 3 4)) -> (qq (1 2 unquote (list 3 4))) -> '(1 2 3 4)) */
 		car(bq) = make_list_3(sc, sc->QQ_APPLY, sc->QQ_VALUES, cadr(orig));
@@ -18904,15 +18898,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* increment all vars, return to endtest 
        *   these are also updated in parallel at the end, so we gather all the incremented values first
        */
-      if (car(sc->args) == sc->NIL)
-	goto DO_END;
-      
       push_stack(sc, opcode(OP_DO_END), sc->args, sc->code);
+      if (car(sc->args) == sc->NIL)
+	goto START;
       sc->args = car(sc->args);                /* the var data lists */
       sc->code = sc->args;                     /* save the top of the list */
 
       
-    DO_STEP1:
     case OP_DO_STEP1:
 
       /* on each iteration, we first get here with args as the list of var bindings, exprs, and init vals
@@ -18958,7 +18950,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  sc->value = sc->NIL;
 	  pop_stack(sc); 
-	  goto DO_END;
+	  sc->op = OP_DO_END;
+	  goto START_WITHOUT_POP_STACK;
 	}
 
       push_stack(sc, opcode(OP_DO_STEP2), sc->args, sc->code);
@@ -18974,7 +18967,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_DO_STEP2:
       caddar(sc->args) = sc->value;                           /* save current value */
       sc->args = cdr(sc->args);                               /* go to next step var */
-      goto DO_STEP1;
+      sc->op = OP_DO_STEP1;
+      goto START_WITHOUT_POP_STACK;
       
 
     case OP_DO: 
@@ -18998,7 +18992,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->envir = new_frame_in_env(sc, sc->envir); 
 	  sc->args = s7_cons(sc, sc->NIL, cadr(sc->code));
 	  sc->code = cddr(sc->code);
-	  goto DO_END;
+	  sc->op = OP_DO_END;
+	  goto START_WITHOUT_POP_STACK;
 	}
       
       /* eval each init value, then set up the new frame (like let, not let*) */
@@ -19048,7 +19043,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       prepare_do_step_variables(sc);
 
       
-    DO_END:
     case OP_DO_END:
       /* here vars have been init'd or incr'd
        *    args = (cons var-data end-data)
@@ -19080,15 +19074,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* sc->code is ready to go */
 	}
       sc->args = sc->NIL;
-      /* goto BEGIN; */
+      /* fall through */
 
-      
+
     BEGIN:
     case OP_BEGIN:
       if (!is_pair(sc->code)) 
 	{
 	  if (sc->code != sc->NIL)            /* (begin . 1) */
-	    return(eval_error(sc, "unexpected dot or '() at end of body? ~A", sc->code));
+	    return(eval_error_with_name(sc, "~A: unexpected dot or '() at end of body? ~A", sc->code));
 
 	  sc->value = sc->code;
 	  goto START;
@@ -19099,9 +19093,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       sc->code = car(sc->code);
       sc->cur_code = sc->code;               /* in case error occurs, this helps tell us where we are */
-      /* goto EVAL; */
+      /* fall through */
       
 
+      /* replacing this label with the equivalent sc->op = OP_EVAL and so on is much slower */
     EVAL:
     case OP_EVAL:                           /* main part of evaluation */
       /* timing info from valgrind makes no sense to me.  Why does a one-level if statement drastically
@@ -19795,7 +19790,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      sc->code = s7_cons(sc, s7_make_symbol(sc, "set!"), s7_append(sc, multiple_value(sc->value), s7_append(sc, sc->args, sc->code)));
 	      /* fprintf(stderr, "now: %s\n", s7_object_to_c_string(sc, sc->code)); */
-	      goto SET;
+	      sc->op = OP_SET;
+	      goto START_WITHOUT_POP_STACK;
 	    }
 	  sc->code = s7_cons(sc, sc->LIST_SET, s7_cons(sc, make_list_2(sc, sc->QUOTE, sc->value), s7_append(sc, sc->args, sc->code)));
 	  goto EVAL;
@@ -19811,7 +19807,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = s7_cons(sc, s7_cons(sc, sc->value, sc->args), sc->code);
 
 
-    SET:
     case OP_SET:                                                   /* entry for set! */
       /* fprintf(stderr, "set! %s\n", s7_object_to_c_string(sc, sc->code)); */
 
@@ -20089,7 +20084,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->args = sc->NIL;
 	}
       goto BEGIN;
-      
+
       
     case OP_LET_STAR:
       if ((!is_pair(sc->code)) ||                /* (let* . 1) */
@@ -20283,7 +20278,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		}
 	      goto EVAL;
 	    }
-	  
 	  goto BEGIN;
 	}
 
@@ -25885,12 +25879,7 @@ s7_scheme *s7_init(void)
   real(number(real_one)) = (s7_Double)1.0;
 
   /* initialization of global pointers to special symbols */
-  assign_syntax(sc, "lambda",            OP_LAMBDA);
-  assign_syntax(sc, "lambda*",           OP_LAMBDA_STAR);      /* for define* and define-macro* */
   assign_syntax(sc, "quote",             OP_QUOTE);
-  assign_syntax(sc, "define",            OP_DEFINE);
-  assign_syntax(sc, "define*",           OP_DEFINE_STAR);
-  assign_syntax(sc, "define-constant",   OP_DEFINE_CONSTANT);
   assign_syntax(sc, "if",                OP_IF);
   assign_syntax(sc, "begin",             OP_BEGIN);
   assign_syntax(sc, "set!",              OP_SET);
@@ -25902,13 +25891,18 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "or",                OP_OR);
   assign_syntax(sc, "case",              OP_CASE);
   assign_syntax(sc, "do",                OP_DO);
+  assign_syntax(sc, "with-environment",  OP_WITH_ENV);
+
+  assign_syntax(sc, "lambda",            OP_LAMBDA);
+  assign_syntax(sc, "lambda*",           OP_LAMBDA_STAR);
+  assign_syntax(sc, "define",            OP_DEFINE);
+  assign_syntax(sc, "define*",           OP_DEFINE_STAR);
+  assign_syntax(sc, "define-constant",   OP_DEFINE_CONSTANT);
   assign_syntax(sc, "defmacro",          OP_DEFMACRO);         /* CL-style macro syntax */
   assign_syntax(sc, "defmacro*",         OP_DEFMACRO_STAR);
   assign_syntax(sc, "define-macro",      OP_DEFINE_MACRO);     /* Scheme-style macro syntax */
   assign_syntax(sc, "define-macro*",     OP_DEFINE_MACRO_STAR); 
   assign_syntax(sc, "define-expansion",  OP_DEFINE_EXPANSION); /* read-time (immediate) macro expansion */
-  assign_syntax(sc, "with-environment",  OP_WITH_ENV);
-
   assign_syntax(sc, "define-bacro",      OP_DEFINE_BACRO);
   assign_syntax(sc, "define-bacro*",     OP_DEFINE_BACRO_STAR);
   
@@ -26498,28 +26492,6 @@ s7_scheme *s7_init(void)
   s7_eval_c_string(sc, "(define-macro (multiple-value-set! vars expr . body)   \n\
                           (let ((local-vars (map (lambda (n) (gensym)) vars))) \n\
                             `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))");
-
-
-#if WITH_FORCE
-  s7_eval_c_string("(define (force object) (object))");
-
-  s7_eval_c_string("(define-macro (delay expression)         \n\
-                      `(let ((result-ready? #f)              \n\
-  	                     (result #f))                    \n\
-                         (lambda ()                          \n\
-                           (if result-ready?                 \n\
-	                       result                        \n\
-	                       (let ((x (let ()              \n\
-		                          ,expression)))     \n\
-	                         (if result-ready?           \n\
-		                     result                  \n\
-                                    (begin                   \n\
-		                      (set! result-ready? #t)\n\
-		                      (set! result x)        \n\
-		                      result)))))))");
-
-  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "force")));
-#endif
 
   /* fprintf(stderr, "size: %d %d\n", sizeof(s7_cell), sizeof(s7_num_t)); */
 	  

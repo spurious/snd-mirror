@@ -758,6 +758,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 7-July:    removed force and delay: use slib.
  * 3-July:    new backquote implementation.
  * 28-June:   syntactic keywords (e.g. lambda) are applicable.
  * 7-June:    changed key arg in s7_hash_table_ref|set to be s7_pointer, not const char*.

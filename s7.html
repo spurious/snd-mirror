@@ -790,7 +790,7 @@ into (set! x 123) takes place in a context where "y" is defined:
 <pre>
 &gt; (let ((x 32) (y 'x))
     (define-macro (symbol-set! var val)
-      `(set! ,(eval var) ,val))
+      `(set! ,(symbol-&gt;value var) ,val))
     (symbol-set! y 123)
     (list x y))
 (123 x)
@@ -802,13 +802,13 @@ into (set! x 123) takes place in a context where "y" is defined:
 
 <pre>
 &gt; (define-macro (symbol-set! var val)
-    `(set! ,(eval var) ,val))
+    `(set! ,(symbol-&gt;value var) ,val))
 symbol-set!
 &gt; (let ((x 32) (y 'x))
     (symbol-set! y 123)
     (list x y))
 ;y: unbound variable, line 3
-;    ({list} 'set! (eval var) val)
+;    ({list} 'set! (symbol-&gt;value var) val)
 </pre>
 
 <p>Exactly the same thing happens in CL:
@@ -824,18 +824,21 @@ SYMBOL-SET
 <p>Our "unhygienic" macros are too clean!  We want both the expansion into
 code and the evaluation of the code to happen in the call-time environment.
 Since this is a huge step backward for computer science, I've called these
-throughly dirty macros, "bacros":
+dirty macros, "bacros":
 </p>
 
 <pre>
 &gt; (define-bacro (symbol-set! var val) 
-   `(set! ,(eval var) ,val))
+   `(set! ,(symbol-&gt;value var) ,val))
 symbol-set!
 &gt; (let ((x 32) (y 'x)) 
    (symbol-set! y 123) 
    (list x y))
 (123 x)
 </pre>
+
+<p>Or maybe "hacro"?
+</p>
 
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
@@ -3394,7 +3397,7 @@ bind it to something else, which is asking for confusion).
 <ul>
 <li>do sets its step variables, rather than rebinding them.
 <li>no syntax-rules or any of its friends.
-<li>force and delay are implemented as in slib and depend on the WITH_FORCE switch, normally 0.
+<li>no force or delay.
 <li>s7-version returns the current s7 version.
 <li>no scheme-report-environment, null-environment, or interaction-environment (= current-environment?).
 <li>no transcript-on or transcript-off.
@@ -3593,9 +3596,9 @@ new function or macro, you need to use either eval or symbol-&gt;value:
 </p>
 
 <pre>
-&gt; ((symbol->value (apply define-macro '((m a) `(+ 1 ,a)))) 3)
+&gt; ((symbol-&gt;value (apply define-macro '((m a) `(+ 1 ,a)))) 3)
 4
-&gt; ((symbol->value (apply define '((hi a) (+ a 1)))) 3)
+&gt; ((symbol-&gt;value (apply define '((hi a) (+ a 1)))) 3)
 4
 </pre>
 
@@ -3852,7 +3855,6 @@ compile-time flags:
     WITH_COMPLEX                   1 if your compiler supports complex numbers
     HAVE_COMPLEX_TRIG              1 if your math library has complex versions of the trig functions
     WITH_PROFILING                 1 if you want profiling support (default is 0)
-    WITH_FORCE                     1 if you want force and delay (default is 0)
     S7_DISABLE_DEPRECATED          1 if you want to make sure you're not using any deprecated s7 stuff (default is 0)
 </pre>
 <p>See the comment at the start of s7.c for more information about these switches.
