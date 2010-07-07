@@ -12780,6 +12780,31 @@ who says the continuation has to restart the map from the top?
   (test (let () (define-macro (tst a) `(+ 1 (if (> ,a 0) (tst (- ,a 1)) 0))) (tst 3)) 4)
   (test (let () (define-macro (hi a) (if (list? a) `(+ 1 ,@a) `(+ 1 ,a))) (* (hi 1) (hi (2 3)))) 12)
 
+  (test (let () (define-bacro (hiho a) `(+ ,a 1)) (hiho 3)) 4)
+  (test (let () (define-bacro (hiho) `(+ 3 1)) (hiho)) 4)
+  (test (let () (define-bacro (hiho) `(+ 3 1)) (hiho 1)) 'error)
+  (test (let () (define-bacro (hi a) `(+ ,@a)) (hi (1 2 3))) 6)
+  (test (let () (define-bacro (hi a) `(+ ,a 1) #f) (hi 2)) #f)
+  (test (let () (define-bacro (mac1 a) `',a) (equal? (mac1 (+ 1 2)) '(+ 1 2))) #t)
+  (test (let () (define-bacro (tst a) ``(+ 1 ,,a)) (tst 2)) '(+ 1 2))
+  (test (let () (define-bacro (tst a) ```(+ 1 ,,,a)) (eval (tst 2))) '(+ 1 2))
+  (test (let () (define-bacro (tst a) ``(+ 1 ,,a)) (tst (+ 2 3))) '(+ 1 5))
+  (test (let () (define-bacro (tst a) ``(+ 1 ,@,a)) (tst '(2 3))) '(+ 1 2 3))
+  (test (let () (define-bacro (tst a) ``(+ 1 ,,@a)) (tst (2 3))) '(+ 1 2 3))
+  (test (let () (define-bacro (tst a) ```(+ 1 ,,,@a)) (eval (tst (2 3)))) '(+ 1 2 3))
+  (test (let () (define-bacro (tst a) ```(+ 1 ,,@,@a)) (eval (tst ('(2 3))))) '(+ 1 2 3))
+  (test (let () (define-bacro (tst a) ````(+ 1 ,,,,@a)) (eval (eval (eval (tst (2 3)))))) 6)
+  (test (let () (define-bacro (tst a) ``(+ 1 ,@,@a)) (tst ('(2 3)))) '(+ 1 2 3))
+  (test (let () (define-bacro (tst a b) `(+ 1 ,a (apply * `(2 ,,@b)))) (tst 3 (4 5))) 44)
+  (test (let () (define-bacro (tst . a) `(+ 1 ,@a)) (tst 2 3)) 6)
+  (test (let () (define-bacro (tst . a) `(+ 1 ,@a (apply * `(2 ,,@a)))) (tst 2 3)) 18)
+  (test (let () (define-bacro (tst a) ```(+ 1 ,@,@,@a)) (eval (tst ('('(2 3)))))) '(+ 1 2 3))
+  (test (let () (define-bacro (hi a) `(+ ,a 1)) (procedure? hi)) #f)
+  (test (let () (define-bacro (hi a) `(let ((@ 32)) (+ @ ,a))) (hi @)) 64)
+  (test (let () (define-bacro (hi @) `(+ 1 ,@@)) (hi (2 3))) 6) ; ,@ is ambiguous
+  (test (let () (define-bacro (tst a) `(+ 1 (if (> ,a 0) (tst (- ,a 1)) 0))) (tst 3)) 4)
+  (test (let () (define-bacro (hi a) (if (list? a) `(+ 1 ,@a) `(+ 1 ,a))) (* (hi 1) (hi (2 3)))) 12)
+
   (test (defmacro) 'error)
   (test (define-macro) 'error)
   (test (defmacro 1 2 3) 'error)
@@ -13291,7 +13316,22 @@ who says the continuation has to restart the map from the top?
   (test (_mac4_ 2 :b 3) 5)
   (test (_mac4_ :b 10 :a 12) 22)
   (test (_mac4_ :a 4) 6)
-  
+
+  (define-bacro* (_mac21_) `(+ 1 2))
+  (test (_mac21_) 3)
+  (define-bacro* (_mac22_ a) `(+ ,a 2))
+  (test (_mac22_ 1) 3)
+  (test (_mac22_ :a 2) 4)
+  (define-bacro* (_mac23_ (a 1)) `(+ ,a 2))
+  (test (_mac23_) 3)
+  (test (_mac23_ 3) 5)
+  (test (_mac23_ :a 0) 2)
+  (define-bacro* (_mac24_ (a 1) (b 2)) `(+ ,a ,b))
+  (test (_mac24_) 3)
+  (test (_mac24_ :b 3) 4)
+  (test (_mac24_ 2 :b 3) 5)
+  (test (_mac24_ :b 10 :a 12) 22)
+  (test (_mac24_ :a 4) 6)  
   
   (defmacro* _mac11_ () `(+ 1 2))
   (test (_mac11_) 3)
@@ -13308,6 +13348,10 @@ who says the continuation has to restart the map from the top?
   (test (_mac14_ 2 :b 3) 5)
   (test (_mac14_ :b 10 :a 12) 22)
   (test (_mac14_ :a 4) 6)
+
+  (define-bacro (symbol-set! var val) `(set! ,(eval var) ,val))
+  (test (let ((x 32) (y 'x)) (symbol-set! y 123) (list x y)) '(123 x))
+
 
   (let ()
     (define-macro (hi a) `````(+ ,,,,,a 1))
@@ -13834,7 +13878,6 @@ who says the continuation has to restart the map from the top?
     
     ))
 
-;;; TODO: bacro tests
 
 (define-expansion (_expansion_ a) `(+ ,a 1))
 (test (_expansion_ 3) 4)

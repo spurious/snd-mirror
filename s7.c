@@ -305,29 +305,29 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_ENV2,
 	      OP_FOR_EACH, OP_MAP, OP_AND2, OP_OR2, OP_BARRIER, OP_DEACTIVATE_GOTO,
-	      OP_DEFINE_BACRO, OP_BACRO,
+	      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, OP_BACRO, OP_APPLY_WITHOUT_TRACE,
 	      OP_MAX_DEFINED} opcode_t;
 
-#if 0
 static const char *op_names[OP_MAX_DEFINED] = 
-  {"op_read_internal", "op_eval", "op_eval_args", "op_eval_args1", "op_apply", "op_eval_macro", "op_lambda", 
-   "op_quote", "op_define", "op_define1", "op_begin", "op_if", "op_if1", "op_set", "op_set1", "op_set2", 
-   "op_let", "op_let1", "op_let2", "op_let_star", "op_let_star1", "op_letrec", "op_letrec1", "op_letrec2", 
-   "op_cond", "op_cond1", "op_and", "op_and1", "op_or", "op_or1", "op_defmacro", "op_defmacro_star", "op_macro", 
-   "op_define_macro", "op_define_macro_star", "op_define_expansion", "op_expansion", "op_case", "op_case1", 
-   "op_case2", "op_read_list", "op_read_dot", "op_read_quote", "op_read_quasiquote", "op_read_quasiquote_vector", 
-   "op_read_unquote", "op_read_unquote_splicing", "op_read_vector", "op_read_pop_and_return_expression", 
-   "op_load_return_if_eof", "op_load_close_and_pop_if_eof", "op_eval_string", "op_eval_done", "op_catch", 
-   "op_dynamic_wind", "op_define_constant", "op_define_constant1", "op_do", "op_do_end", "op_do_end1", 
-   "op_do_step", "op_do_step1", "op_do_step2", "op_do_init", "op_define_star", "op_lambda_star", 
-   "op_error_quit", "op_unwind_input", "op_unwind_output", "op_trace_return", "op_error_hook_quit", 
-   "op_trace_hook_quit", "op_with_env", "op_with_env1", "op_with_env2", "op_for_each", "op_map", 
-   "op_and2", "op_or2", "op_barrier", "op_deactivate_goto", "op_define_bacro", "op_bacro"};
-#endif
+  {"read-internal", "eval", "eval-args", "eval-args1", "apply", "eval-macro", "lambda", 
+   "quote", "define", "define1", "begin", "if", "if1", "set", "set1", "set2", 
+   "let", "let1", "let2", "let*", "let-star1", "letrec", "letrec1", "letrec2", 
+   "cond", "cond1", "and", "and1", "or", "or1", "defmacro", "defmacro*", "macro", 
+   "define-macro", "define-macro*", "define-expansion", "expansion", "case", "case1", 
+   "case2", "read-list", "read-dot", "read-quote", "read-quasiquote", "read-quasiquote-vector", 
+   "read-unquote", "read-unquote-splicing", "read-vector", "read-and-return-expression", 
+   "load-return-if-eof", "load-close-and-stop-if-eof", "eval-string", "eval-done", "catch", 
+   "dynamic-wind", "define-constant", "define-constant1", "do", "do-end", "do-end1", 
+   "do-step", "do-step1", "do-step2", "do-init", "define*", "lambda*", 
+   "error-quit", "unwind-input", "unwind-output", "trace-return", "error-hook-quit", 
+   "trace-hook-quit", "with-env", "with-env1", "with-env2", "for-each", "map", 
+   "and2", "or2", "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro",
+   "apply-without-trace"
+};
 
 
 #define NUM_SMALL_INTS 200
-/* this needs to be at least OP_MAX_DEFINED = 83 */
+/* this needs to be at least OP_MAX_DEFINED = 85 */
 /* going up to 1024 gives very little improvement, down to 128 costs about .2% run time */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -2187,7 +2187,8 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
 
       if ((is_closure(value)) ||
 	  (is_closure_star(value)) ||
-	  (is_macro(value)))
+	  (is_macro(value)) ||
+	  (is_bacro(value)))
 	s7_remove_from_heap(sc, closure_source(value));
 
       loc = symbol_location(variable);
@@ -13887,7 +13888,7 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
    * ((a) (+ a b)) (((b . 1)) #(() () () () () ((make-filtered-comb . make-filtered-comb)) () () ...))
    */
   
-  if (is_closure(p) || is_closure_star(p) || is_macro(p))
+  if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p))
     {
       return(s7_cons(sc, 
 		     s7_append(sc, 
@@ -13925,10 +13926,11 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
 #endif
 
   if ((!is_procedure(p)) &&
-      (!is_macro(p)))
+      (!is_macro(p)) &&
+      (!is_bacro(p)))
     return(s7_wrong_type_arg_error(sc, "procedure-source", 0, p, "a procedure or a macro"));
 
-  if (is_closure(p) || is_closure_star(p) || is_macro(p))
+  if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p))
     return(s7_append(sc, 
 		     make_list_2(sc, 
 				 (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, 
@@ -13956,10 +13958,12 @@ static s7_pointer g_procedure_environment(s7_scheme *sc, s7_pointer args)
   if (s7_is_symbol(car(args)))
     p = s7_symbol_value(sc, car(args));
   else p = car(args);
-  if ((!is_procedure(p)) && (!is_macro(p)))
+  if ((!is_procedure(p)) && 
+      (!is_macro(p)) &&
+      (!is_bacro(p)))
     return(s7_wrong_type_arg_error(sc, "procedure-environment", 0, p, "a procedure or a macro"));
 
-  if (is_closure(p) || is_closure_star(p) || (is_macro(p)))
+  if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p))
     return(closure_environment(p));
   return(sc->global_env);
 }
@@ -13985,13 +13989,17 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
 static s7_pointer g_is_macro(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_macro "(macro? arg) returns #t is its argument is a macro"
+  s7_pointer x;
 
-  if (is_macro(car(args))) 
+  x = car(args);
+  if ((is_macro(x)) || (is_bacro(x)))
     return(sc->T);
 
-  if (s7_is_symbol(car(args)))
-    return(make_boolean(sc, is_macro(s7_symbol_local_value(sc, car(args), sc->envir))));
-
+  if (s7_is_symbol(x))
+    {
+      x = s7_symbol_local_value(sc, x, sc->envir);
+      return(make_boolean(sc, is_macro(x) || is_bacro(x)));
+    }
   return(sc->F);
 }
 
@@ -16976,6 +16984,16 @@ static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj)
 }
 
 
+static s7_pointer eval_error_with_name(s7_scheme *sc, const char *errmsg, s7_pointer obj)
+{
+  return(s7_error(sc, sc->SYNTAX_ERROR, 
+		  make_list_3(sc, 
+			      make_protected_string(sc, errmsg), 
+			      make_protected_string(sc, op_names[(int)(sc->op)]),
+			      obj)));
+}
+
+
 static s7_pointer eval_error_no_arg(s7_scheme *sc, const char *errmsg)
 {
   return(s7_error(sc, sc->SYNTAX_ERROR, s7_cons(sc, make_protected_string(sc, errmsg), sc->NIL)));
@@ -17303,7 +17321,8 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 				    make_protected_string(sc, "apply's last argument should be a proper list: ~A"),
 				    args)));
     }
-  if (is_macro(sc->code))  /* (apply mac '(3)) -> (apply mac '((mac 3))) */
+  if ((is_macro(sc->code)) ||  /* (apply mac '(3)) -> (apply mac '((mac 3))) */
+      (is_bacro(sc->code)))
     {
       push_stack(sc, opcode(OP_EVAL_MACRO), sc->NIL, sc->NIL);
       sc->args = s7_cons(sc, s7_cons(sc, sc->code, sc->args), sc->NIL);
@@ -18857,7 +18876,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (s7_integer(car(sc->args)) < s7_integer(cadr(sc->args)))
 	{
 	  if (next_map(sc))
-	    goto APPLY;
+	    {
+	      sc->op = OP_APPLY;
+	      goto START_WITHOUT_POP_STACK;
+	    }
 	}
       
       sc->value = safe_reverse_in_place(sc, caddr(sc->args));
@@ -18869,7 +18891,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (s7_integer(car(sc->args)) < s7_integer(cadr(sc->args)))
 	{
 	  if (next_for_each(sc))
-	    goto APPLY;
+	    {
+	      sc->op = OP_APPLY;
+	      goto START_WITHOUT_POP_STACK;
+	    }
 	}
       sc->value = sc->UNSPECIFIED;
       goto START;
@@ -19145,8 +19170,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		}
 	      else sc->args = sc->code; 
 	      sc->code = sc->value;
-	      goto APPLY;
-	    } 
+	      sc->op = OP_APPLY;
+	      goto START_WITHOUT_POP_STACK;
+	    }
 
 	  /* (define progn begin)
 	   * (progn (display "hi") (+ 1 23))
@@ -19264,7 +19290,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
       /* ---------------- OP_APPLY ---------------- */
-    APPLY:
     case OP_APPLY:      /* apply 'code' to 'args' */
 
 #if WITH_PROFILING
@@ -19274,7 +19299,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (*(sc->tracing)) 
 	trace_apply(sc);
 
-    APPLY_WITHOUT_TRACE:
       if (sc->stack_end >= sc->stack_resize_trigger)
 	increase_stack_size(sc);
 
@@ -19419,7 +19443,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		add_to_local_environment(sc, sc->x, sc->y); 
 	      else 
 		{
-		  if (is_macro(sc->code))
+		  if ((is_macro(sc->code)) || (is_bacro(sc->code)))
 		    return(eval_error(sc, "~A: undefined argument to macro", sc->x));
 		  else return(eval_error(sc, "~A: undefined argument to function", sc->x));
 		}
@@ -19504,7 +19528,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->x = multiple_value(sc->code);                             /* ((values + 1 2) 3) */
 	      sc->code = car(sc->x);
 	      sc->args = s7_append(sc, cdr(sc->x), sc->args);
-	      goto APPLY;
+	      sc->op = OP_APPLY;
+	      goto START_WITHOUT_POP_STACK;
 	    }
  	  if (sc->args == sc->NIL)
  	    return(s7_wrong_number_of_args_error(sc, "not enough args for list ref (via list as applicable object): ~A", sc->args));
@@ -19660,14 +19685,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_DEFINE_STAR:
     case OP_DEFINE:
       if (!is_pair(sc->code))
-	return(eval_error(sc, "define: nothing to define? ~A", sc->code));   /* (define) */
+	return(eval_error_with_name(sc, "~A: nothing to define? ~A", sc->code));   /* (define) */
 
       if (!is_pair(cdr(sc->code)))
-	return(eval_error(sc, "define: no value? ~A", sc->code));            /* (define var) */
+	return(eval_error_with_name(sc, "~A: no value? ~A", sc->code));            /* (define var) */
 
       if ((!is_pair(car(sc->code))) &&
 	  (cddr(sc->code) != sc->NIL))                                       /* (define var 1 . 2) */
-	return(eval_error(sc, "define: more than 1 value? ~A", sc->code));   /* (define var 1 2) */
+	return(eval_error_with_name(sc, "~A: more than 1 value? ~A", sc->code));   /* (define var 1 2) */
 
       /* parameter error checks are handled by lambda/lambda* (see OP_LAMBDA above) */
       if (is_pair(car(sc->code))) 
@@ -19684,16 +19709,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
 
       if (!s7_is_symbol(sc->x))                                             /* (define (3 a) a) */
-	return(eval_error(sc, "define a non-symbol? ~S", sc->x));
+	return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", sc->x));
       if (s7_is_keyword(sc->x))                                             /* (define :hi 1) */
-	return(eval_error(sc, "define ~A: keywords are constants", sc->x));
+	return(eval_error_with_name(sc, "~A ~A: keywords are constants", sc->x));
 
       /* (define ((f a) b) (* a b)) -> (define f (lambda (a) (lambda (b) (* a b)))) */
 
       if (is_immutable_or_accessed(sc->x))
 	{
 	  if (is_immutable(sc->x))                                           /* (define pi 3) or (define (pi a) a) */
-	    return(eval_error(sc, "define: ~S is immutable", sc->x));
+	    return(eval_error_with_name(sc, "~A: ~S is immutable", sc->x));
 	  sc->code = call_symbol_bind(sc, sc->x, sc->code);
 	}
       
@@ -20388,24 +20413,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* defmacro(*) could be defined in terms of define-macro(*), but I guess this gives us better error messages */
 
       if (!is_pair(sc->code))                                               /* (defmacro . 1) */
-	return(eval_error(sc, "defmacro name missing (stray dot?): ~A", sc->code));
+	return(eval_error_with_name(sc, "~A name missing (stray dot?): ~A", sc->code));
 
       sc->x = car(sc->code);
       if (!s7_is_symbol(sc->x))                                             /* (defmacro) or (defmacro 1 ...) */
-	return(eval_error(sc, "defmacro name: ~S is not a symbol?", sc->x));     
+	return(eval_error_with_name(sc, "~A name: ~S is not a symbol?", sc->x));     
       if (s7_is_keyword(sc->x))                                             /* (defmacro :hi ...) */
-	return(eval_error(sc, "defmacro ~A: keywords are constants", sc->x));
+	return(eval_error_with_name(sc, "~A ~A: keywords are constants", sc->x));
 
       if (is_immutable_or_accessed(sc->x))
 	{
 	  if (is_immutable(sc->x))
-	    return(eval_error(sc, "defmacro: ~S is immutable", sc->x));     /* (defmacro pi (a) `(+ ,a 1)) */
+	    return(eval_error_with_name(sc, "~A: ~S is immutable", sc->x));     /* (defmacro pi (a) `(+ ,a 1)) */
 	  sc->code = call_symbol_bind(sc, sc->x, sc->code);
 	}
 
       sc->z = cdr(sc->code);
       if (!is_pair(sc->z))                                                  /* (defmacro a) */
-	return(eval_error(sc, "defmacro ~A, but no args or body?", sc->x));
+	return(eval_error_with_name(sc, "~A ~A, but no args or body?", sc->x));
 
       sc->y = car(sc->z);            /* the arglist */
       if ((!is_pair(sc->y)) &&
@@ -20423,7 +20448,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* other parameter error checks are handled by lambda/lambda* (see OP_LAMBDA above) at macro expansion time */
 
       if (cdr(sc->z) == sc->NIL)                                            /* (defmacro hi ()) */
-	return(eval_error(sc, "defmacro ~A has no body?", sc->x));
+	return(eval_error_with_name(sc, "~A ~A has no body?", sc->x));
 
       /* accepted:
        *    (defmacro hi hi . hi)
@@ -20462,35 +20487,32 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_DEFINE_BACRO:
-      push_stack(sc, opcode(OP_BACRO), sc->NIL, sc->NIL);
-      goto DEFINE_MAC;
-
-
+    case OP_DEFINE_BACRO_STAR:
     case OP_DEFINE_EXPANSION:
-      /* read-time macros, suggested by Rick */
-      push_stack(sc, opcode(OP_EXPANSION), sc->NIL, sc->NIL);
+      if (sc->op == OP_DEFINE_EXPANSION)
+	push_stack(sc, opcode(OP_EXPANSION), sc->NIL, sc->NIL);
+      else push_stack(sc, opcode(OP_BACRO), sc->NIL, sc->NIL);
       /* drop into define-macro */
 
 
-    DEFINE_MAC:
     case OP_DEFINE_MACRO:
     case OP_DEFINE_MACRO_STAR:
 
       if (!is_pair(sc->code))                                               /* (define-macro . 1) */
-	return(eval_error(sc, "define-macro name missing (stray dot?): ~A", sc->code));
+	return(eval_error_with_name(sc, "~A name missing (stray dot?): ~A", sc->code));
       if (!is_pair(car(sc->code)))                                          /* (define-macro a ...) */
 	return(s7_wrong_type_arg_error(sc, "define-macro", 1, car(sc->code), "a list (name ...)"));
 
       sc->x = caar(sc->code);
       if (!s7_is_symbol(sc->x))
-	return(eval_error(sc, "define-macro: ~S is not a symbol?", sc->x));
+	return(eval_error_with_name(sc, "~A: ~S is not a symbol?", sc->x));
       if (s7_is_keyword(sc->x))                                             /* (define-macro (:hi ...)) */
-	return(eval_error(sc, "define-macro ~A: keywords are constants", sc->x));
+	return(eval_error_with_name(sc, "~A ~A: keywords are constants", sc->x));
 
       if (is_immutable_or_accessed(sc->x))
 	{
 	  if (is_immutable(sc->x))
-	    return(eval_error(sc, "define-macro: ~S is immutable", sc->x));
+	    return(eval_error_with_name(sc, "~A: ~S is immutable", sc->x));
 	  sc->code = call_symbol_bind(sc, sc->x, sc->code);
 	}
 
@@ -20499,7 +20521,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
       sc->z = cdr(sc->code);
       if (!is_pair(sc->z))                /* (define-macro (...)) */
-	return(eval_error(sc, "define-macro ~A, but no body?", sc->x));
+	return(eval_error_with_name(sc, "~A ~A, but no body?", sc->x));
 
       sc->y = cdar(sc->code);            /* the arglist */
       if ((!is_pair(sc->y)) &&
@@ -20510,7 +20532,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       for ( ; is_pair(sc->y); sc->y = cdr(sc->y))
 	if ((!s7_is_symbol(car(sc->y))) &&
-	    (sc->op == OP_DEFINE_MACRO))
+	    ((sc->op == OP_DEFINE_MACRO) || (sc->op == OP_DEFINE_BACRO)))
 	  return(s7_error(sc, sc->SYNTAX_ERROR,                                    /* (define-macro (mac 1) ...) */
 			  make_list_3(sc, make_protected_string(sc, "define-macro ~A argument name is not a symbol: ~S"), sc->x, sc->y)));
 
@@ -20524,7 +20546,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 						     sc->APPLY,
 						     s7_cons(sc, 
 							     s7_cons(sc, 
-								     (sc->op == OP_DEFINE_MACRO_STAR) ? sc->LAMBDA_STAR : sc->LAMBDA,
+								     ((sc->op == OP_DEFINE_MACRO_STAR) || (sc->op == OP_DEFINE_BACRO_STAR)) ? sc->LAMBDA_STAR : sc->LAMBDA,
 								     s7_cons(sc, 
 									     cdar(sc->code), /* arg list */
 									     sc->z)),
@@ -20635,7 +20657,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_TRACE_HOOK_QUIT:
-      goto APPLY_WITHOUT_TRACE;
+      sc->op = OP_APPLY_WITHOUT_TRACE;
+      goto START_WITHOUT_POP_STACK;
 
       
     case OP_ERROR_HOOK_QUIT:
@@ -20674,7 +20697,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  push_stack(sc, opcode(OP_DYNAMIC_WIND), sc->NIL, sc->code);
 	  sc->args = sc->NIL;
 	  sc->code = dynamic_wind_body(sc->code);
-	  goto APPLY;
+	  sc->op = OP_APPLY;
+	  goto START_WITHOUT_POP_STACK;
 	}
       else
 	{
@@ -20684,7 +20708,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      push_stack(sc, opcode(OP_DYNAMIC_WIND), sc->value, sc->code);
 	      sc->args = sc->NIL;
 	      sc->code = dynamic_wind_out(sc->code);
-	      goto APPLY;
+	      sc->op = OP_APPLY;
+	      goto START_WITHOUT_POP_STACK;
 	    }
 	  else
 	    {
@@ -20808,7 +20833,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  x = symbol_value(find_symbol(sc, sc->envir, car(sc->value)));
 		  sc->args = make_list_1(sc, sc->value); 
 		  sc->code = x;
-		  goto APPLY;
+		  sc->op = OP_APPLY;
+		  goto START_WITHOUT_POP_STACK;
 		}
 	    }
 	  break;
@@ -25884,6 +25910,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "with-environment",  OP_WITH_ENV);
 
   assign_syntax(sc, "define-bacro",      OP_DEFINE_BACRO);
+  assign_syntax(sc, "define-bacro*",     OP_DEFINE_BACRO_STAR);
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");
   typeflag(sc->LAMBDA) |= T_DONT_COPY; 
