@@ -175,7 +175,7 @@ void snd_warning(const char *format, ...)
   bytes_needed = vsprintf(snd_error_buffer, format, ap);
 #endif
   va_end(ap);
-  if (bytes_needed > snd_error_buffer_size)
+  if (bytes_needed >= snd_error_buffer_size)
     {
       snd_error_buffer_size = bytes_needed * 2;
       free(snd_error_buffer);

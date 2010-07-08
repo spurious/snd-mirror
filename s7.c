@@ -2916,6 +2916,9 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 	  sc->trace_depth--;
 	  if (sc->trace_depth < 0) sc->trace_depth = 0;
 	  break;
+	  
+	default:
+	  break;
 	}
     }
   
@@ -3006,6 +3009,9 @@ static void call_with_exit(s7_scheme *sc)
 	case OP_TRACE_RETURN:
 	  sc->trace_depth--;
 	  if (sc->trace_depth < 0) sc->trace_depth = 0;
+	  break;
+
+	default:
 	  break;
 	}
     }
@@ -4557,7 +4563,7 @@ static bool has_delimiter(const char *str, int len)
 {
   int i;
   for (i = 0; i < len; i++)
-    if (!string_delimiter_table[str[i]])
+    if (!string_delimiter_table[(int)(str[i])])
       return(true);
   return(false);
 }
@@ -18493,6 +18499,9 @@ static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
   if (x != sc->UNDEFINED)
     return(x);
 
+  if (sym == sc->READ_ERROR)
+    return(sym);
+
   return(eval_error(sc, "~A: unbound variable", sym));
 }
 
@@ -20924,6 +20933,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 }
 
 
+/* -------------------------------------------------------------------------------- */
+
 #if HAVE_PTHREADS
 
 static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
@@ -21097,10 +21108,10 @@ static void *run_thread_func(void *obj)
 
 static s7_pointer g_make_thread(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_thread "(make-thread thunk (initial-stack-size 4000)) creates a new thread running thunk"
+  #define H_make_thread "(make-thread thunk (initial-stack-size 300)) creates a new thread running thunk"
   thred *f;
   s7_pointer obj, vect, frame;
-  int floc, vloc, oloc, stack_size = INITIAL_STACK_SIZE;
+  int floc, vloc, oloc, stack_size = (INITIAL_STACK_SIZE / 10);
 
   if (!is_procedure(car(args)))
     return(s7_wrong_type_arg_error(sc, "make-thread", 1, car(args), "a thunk"));
@@ -21157,14 +21168,15 @@ static s7_pointer g_is_thread(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_join_thread(s7_scheme *sc, s7_pointer args)
 {
-  #define H_join_thread "(join-thread thread) causes the current thread to wait for the thread to finish"
+  #define H_join_thread "(join-thread thread) causes the current thread to wait for the thread to finish. It \
+returns the value returned by the thread function."
   thred *f;
   if (!is_thread(car(args)))
     return(s7_wrong_type_arg_error(sc, "join-thread", 0, car(args), "a thread"));
   
   f = (thred *)s7_object_value(car(args));
   pthread_join(*(f->thread), NULL);
-  return(car(args));
+  return(f->sc->value);
 }
 
 

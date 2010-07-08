@@ -88,13 +88,16 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
   #define EVENT_X(Ev) ({ gdouble x, y; gdk_event_get_coords((GdkEvent *)Ev, &x, &y); x; })
   #define EVENT_Y(Ev) ({ gdouble x, y; gdk_event_get_coords((GdkEvent *)Ev, &x, &y); y; })
   /* there's also gtk_get_event_widget */
-  #define SET_CAN_FOCUS(Wid) gtk_widget_set_can_focus(Wid, true)
-  #define UNSET_CAN_FOCUS(Wid) gtk_widget_set_can_focus(Wid, false)
 #else
   #define EVENT_STATE(Ev) (Ev)->state
   #define EVENT_TIME(Ev) (Ev)->time
   #define EVENT_X(Ev) (Ev)->x
   #define EVENT_Y(Ev) (Ev)->y
+#endif
+#if HAVE_GTK_SCALE_NEW
+  #define SET_CAN_FOCUS(Wid) gtk_widget_set_can_focus(Wid, true)
+  #define UNSET_CAN_FOCUS(Wid) gtk_widget_set_can_focus(Wid, false)
+#else
   #define SET_CAN_FOCUS(Wid) GTK_WIDGET_SET_FLAGS(Wid, GTK_CAN_FOCUS)
   #define UNSET_CAN_FOCUS(Wid) GTK_WIDGET_UNSET_FLAGS(Wid, GTK_CAN_FOCUS)
 #endif

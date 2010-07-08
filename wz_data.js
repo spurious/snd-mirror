@@ -844,8 +844,6 @@ var extsnd_widgetsize_tip = "<code>(widget-size wid)</code>: widget's size, (lis
 
 var extsnd_windowheight_tip = "<code>(window-height)</code>: current Snd window height in pixels";
 
-var extsnd_windowproperty_tip = "<code>(window-property win-name name)</code>: get or set the window property.";
-
 var extsnd_windowwidth_tip = "<code>(window-width)</code>: current Snd window width in pixels";
 
 var extsnd_withmixtags_tip = "<code>(with-mix-tags)</code>: #t if Snd should try to use virtual (tagged) mixing";

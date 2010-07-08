@@ -102,7 +102,7 @@ int mus_error(int error, const char *format, ...)
 #endif
   va_end(ap);
 
-  if (bytes_needed > mus_error_buffer_size)
+  if (bytes_needed >= mus_error_buffer_size)
     {
       mus_error_buffer_size = bytes_needed * 2;
       free(mus_error_buffer);
@@ -180,7 +180,7 @@ void mus_print(const char *format, ...)
       bytes_needed = vsprintf(mus_error_buffer, format, ap);
 #endif
       va_end(ap);
-      if (bytes_needed > mus_error_buffer_size)
+      if (bytes_needed >= mus_error_buffer_size)
 	{
 	  mus_error_buffer_size = bytes_needed * 2;
 	  free(mus_error_buffer);

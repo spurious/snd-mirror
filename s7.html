@@ -1773,7 +1773,7 @@ expression, and tries again.  So the second case above is the only one that won'
 <p>By my count, around 20 of the scheme built-in functions are already generic in the sense
 that they accept arguments of many types (leaving aside the numeric functions).  s7 extends that list with map, for-each, reverse,
 and length, and adds a few others such as copy, fill!, sort!, object-&gt;string, and continuation?.
-I may add similar extensions to append (what to do if the argument types are mixed?). 
+I may add similar extensions to member (memq, memv) and perhaps append (what to do if the argument types are mixed?).
 newLisp takes a more radical approach than s7 in that it treats even an operator such as '&gt;' as generic in
 the sense that it can compare strings and lists, as well as numbers.  In map and for-each, however, you can mix the argument
 types, so I'm not as attracted to making '&gt;' generic; you can't, for example, <code>(&gt; "hi" 32.1)</code>.
@@ -2093,26 +2093,26 @@ of pthread_getspecific, just call it: <code>(var)</code>.
 (define-macro (thread-let bindings . body)
   ;; just like "let", but each variable is set by running a separate thread
   `(let (,@(map (lambda (variable&value)
-		  `(,(car variable&value) (make-thread (lambda () ,(cadr variable&value)))))
-		bindings))
+                  `(,(car variable&value) (make-thread (lambda () ,(cadr variable&value)))))
+                bindings))
      ,@(map (lambda (variable&value)
-	      `(set! ,(car variable&value) (join-thread ,(car variable&value))))
-	    bindings)
+              `(set! ,(car variable&value) (join-thread ,(car variable&value))))
+            bindings)
      ,@body))
 
 &gt; (thread-let ((x (abs -1)) 
                (y (* 3 2))) 
-   (+ x y))
+    (+ x y))
 7
+
 &gt; (macroexpand (thread-let ((x (abs -1)) (y (* 3 2))) (+ x y)))
 (let ((x (make-thread (lambda () (abs -1)))) 
       (y (make-thread (lambda () (* 3 2))))) 
   (set! x (join-thread x)) 
   (set! y (join-thread y)) 
   (+ x y))
-</pre>
 
-<pre>
+
 (define-macro (thread-values . vals)
   ;; just like "values", but each value is evaluated by a separate thread
   (let ((gs (map (lambda (var) (gensym)) vals)))
@@ -2125,8 +2125,8 @@ of pthread_getspecific, just call it: <code>(var)</code>.
 </blockquote>
 </small>
 
-<p>There is some overhead in handling threads, so these examples are not realistic.
-You'd want to restrict this kind of thread use to long computations.
+<p>There is some overhead in handling threads, so I usually
+restrict thread use to long computations.
 </p>
 
 </dd>

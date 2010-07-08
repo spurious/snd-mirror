@@ -249,6 +249,7 @@
 	"GtkSettings*" ;"GdkDevice*" 
 	"GtkScaleButton*"
 	"GtkPrintOperationResult" "GtkPrintStatus"
+	"GdkEventAny*" "GdkDeviceManager*"
 	"cairo_font_type_t" "cairo_pattern_type_t" "cairo_surface_type_t"
 	))
 
@@ -268,6 +269,7 @@
 	"time_t" "GtkSettings*" ;"GdkDevice*" 
 	"GtkScaleButton*"
 	"GtkPrintOperationResult" "GtkPrintStatus"
+	"GdkEventAny*" "GdkDeviceManager*"
 
 	"cairo_surface_type_t" "cairo_pattern_type_t" "cairo_font_type_t"
 	))

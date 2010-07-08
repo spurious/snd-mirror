@@ -374,7 +374,7 @@ static XEN C_TO_XEN_GError_(GError *err)
 /* ---------------------------------------- types ---------------------------------------- */
 
 XM_TYPE_PTR(GdkEvent_, GdkEvent*)
-XM_TYPE_PTR(GdkEventAny_, GdkEventAny*)
+XM_TYPE_PTR_2(GdkEventAny_, GdkEventAny*)
 XM_TYPE_PTR_1(gdouble_, gdouble*)
 XM_TYPE_PTR_1(GtkColorSelectionDialog_, GtkColorSelectionDialog*)
 XM_TYPE_PTR_1(GdkEventMotion_, GdkEventMotion*)
@@ -1010,7 +1010,7 @@ XM_TYPE_1(GtkToolPaletteDragTargets, GtkToolPaletteDragTargets)
 #if HAVE_GTK_SCALE_NEW
 XM_TYPE_PTR_1(GdkModifierType_, GdkModifierType*)
 XM_TYPE_PTR(GdkDevice_, GdkDevice*)
-XM_TYPE_PTR(GdkDeviceManager_, GdkDeviceManager*)
+XM_TYPE_PTR_2(GdkDeviceManager_, GdkDeviceManager*)
 #define C_TO_XEN_GdkByteOrder(Arg) C_TO_XEN_INT(Arg)
 #endif
 
@@ -49653,7 +49653,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("28-Jun-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("07-Jul-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

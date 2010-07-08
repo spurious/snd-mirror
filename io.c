@@ -1880,7 +1880,7 @@ int mus_snprintf(char *buffer, int buffer_len, const char *format, ...)
   bytes_needed = vsprintf(buffer, format, ap);
 #endif
   va_end(ap);
-  return(bytes_needed);
+  return(bytes_needed + 1); /* +1 for trailing 0 */
 }
 
 
@@ -1899,7 +1899,8 @@ char *mus_format(const char *format, ...)
   needed_bytes = vsprintf(buf, format, ap);
 #endif
   va_end(ap);
-  if (needed_bytes > MUS_FORMAT_BUFFER_SIZE)
+
+  if (needed_bytes >= MUS_FORMAT_BUFFER_SIZE) /* "=" here because we need room for the trailing 0 */
     {
       free(buf);
       buf = (char *)calloc(needed_bytes + 1, sizeof(char));
