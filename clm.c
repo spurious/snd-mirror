@@ -8587,13 +8587,19 @@ static void mus_locsig_fill(mus_float_t *arr, int chans, mus_float_t degree, mus
       else 
 	{
 	  deg = fmod(degree, 360.0);
-	  if (deg < 0.0) deg += 360.0;              /* C's fmod can return negative results when modulus is positive */
+	  if (deg < 0.0) 
+	    {
+	      /* -0.0 is causing trouble when mus_float_t == float */
+	      if (deg < -0.0000001)
+		deg += 360.0;              /* C's fmod can return negative results when modulus is positive */
+	      else deg = 0.0;
+	    }
 	  degs_per_chan = 360.0 / chans;
 	}
       pos = deg / degs_per_chan;
       left = (int)floor(pos);
       right = left + 1;
-      if (right == chans) right = 0;
+      if (right >= chans) right = 0;
       frac = pos - left;
       if (type == MUS_INTERP_LINEAR)
 	{

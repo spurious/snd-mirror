@@ -1,5 +1,6 @@
 Snd change log
 
+ 10-July:   snd 11.7.
  12-Jun:    removed window-property, window-property-changed-hook, send-mozilla.
             removed snd-gxutils.c.
  7-June:    Snd 11.6.

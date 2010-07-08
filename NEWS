@@ -1,23 +1,16 @@
-Snd 11.6
+Snd 11.7.
 
-in s7: *#readers* for your own #... readers
-       nan? and infinite?
-       #nD(...) multidimensional vector constant syntax
-       support for circular and shared structures
-       integer-decode-float and binary file IO (binary-io.scm).
+Michael Klingbeil found and fixed several bugs in locsig, and
+	made several changes for ClozureCL in OSX.
 
-play-skipping-silence in extsnd.html
+s7: hash-table for-each and map are now entry-oriented.
+    reverse of a hash-table swaps keys and values.
 
-removed snd6.scm.
+removed title-with-date (examp.scm), snd-gxutils.c,
+    window-property, window-property-changed-hook, send-mozilla
 
-if --with-gtk, the configure script looks first for gtk 3.0 now 
-  (actually 2.90.n, but the libraries and headers use the name 3.0), then 
-  falls back on 2.0.
+checked: gtk 2.90.2|3|4, FC 13, mpfr-3.0.0, sbcl 1.0.40, autoconf 2.66
+    clisp 2.49
 
-added --without-audio configure switch.
-
-checked: sbcl 1.0.38|39, gtk 2.20.1|21.0|90.0|1, mpc 0.8.2
-
-Thanks!: Fernando Lopez-Lezcano, Kjetil Matheussen
-
-
+Thanks!: Mike Scholz, Fernando Lopez-Lezcano, Michael Klingbeil,
+         Rick Taube

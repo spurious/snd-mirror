@@ -85,13 +85,11 @@ and want a quick tour of where s7 is different.  (Well, it was quick once upon a
   <li><a href="#multiplevalues">multiple-values</a>
   <li><a href="#callwithexit">call-with-exit</a>
   <li><a href="#format">format</a>
-  <li><a href="#errors">errors, stacktrace</a>
-  <li><a href="#trace">trace</a>
-  <li><a href="#IO">string IO</a>
+  <li><a href="#errors">errors, stacktrace, trace</a>
   <li><a href="#procedureinfo">procedure info</a>
-  <li><a href="#symbolinfo">symbol table info</a>
   <li><a href="#environments">environments</a>
   <li><a href="#evalstring">eval</a>
+  <li><a href="#IO">string IO</a>
   <li><a href="#miscellanea">miscellanea</a>
   <li><a href="#s7rundoc">the run macro</a>
   <li><a href="#FFIexamples">FFI examples</a>
@@ -2669,19 +2667,8 @@ the unbound symbol.  In Snd, this is used to implement autoloading:
 <p>The s7-built-in catch tags are 'wrong-type-arg, 'syntax-error, 'read-error, 'thread-error,
 'out-of-memory, 'wrong-number-of-args, 'format-error, 'out-of-range, 'division-by-zero, 'io-error, and 'bignum-error.  
 </p>
-</dd>
-<br><br>
 
-
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
-<A NAME="trace"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>trace, untrace</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd><p>These functions provide tracing:
+<p>trace and untrace provide tracing:
 </p>
 <pre>
     (define (hiho arg) 
@@ -2720,70 +2707,6 @@ function call (that is, global to the function, not the function's local environ
     sum of args: 9
      24
 </pre>
-</dd>
-<br><br>
-
-
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
-<A NAME="IO"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>IO functions</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd>
-<p>Besides files, ports can also represent strings and functions.  The string port functions
-are:
-</p>
-<ul>
-<li>with-output-to-string
-<li>with-input-from-string
-<li>call-with-output-string
-<li>call-with-input-string,
-<li>open-output-string
-<li>open-input-string
-<li>get-output-string
-</ul>
-<pre>
-(let ((result #f) 
-      (p (<em class=red>open-output-string</em>)))
-  (format p "this ~A ~C test ~D" "is" #\a 3)
-  (set! result (<em class=red>get-output-string</em> p))
-  (close-output-port p)
-  result)
--&gt; "this is a test 3"
-</pre>
-<p>Other functions:</p>
-<ul>
-<li>read-byte and write-byte: binary IO, named "read-u8" and "write-u8" in r6rs, I think
-<li>read-line: line-at-a-time reads
-</ul>
-<p>The variable <a name="vectorprintlength">*vector-print-length*</a> sets
-the upper limit on how many vector elements are printed by object-&gt;string and format.
-</p>
-<p>When running s7 behind a GUI, you often want input to come from and output to go to
-arbitrary widgets. The function ports provide a way to redirect IO.  See <a href="#functionportexample">below</a>
-for an example.
-</p>
-<p>s7 also includes current-error-port and set-current-error-port.
-</p>
-
-
-<small>
-<blockquote>
-
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
-
-<p>binary-io.scm in the Snd package has functions that read and write integers and floats in
-both endian choices in a variety of sizes.  Besides read-byte and write-byte, it uses
-integer-decode-float, and the various bitwise operators.
-</p>
-
-</blockquote>
-</small>
-
 </dd>
 <br><br>
 
@@ -2970,39 +2893,6 @@ Even better: "dilambda":
 <br><br>
 
 
-<!-- -------------------------------------------------------------------------------- -->
-<dt>
-<A NAME="symbolinfo"></a>
-<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>symbol table info</h4></td></tr></table>
-</td></tr></table>
-</dt>
-
-<dd><p><code>(symbol-table)</code> returns the symbol table, a vector of lists of symbols.
-<code>(symbol-&gt;value sym :optional env)</code> returns the binding of 'sym'
-in the given environment which defaults to the current environment.
-<code>(defined? obj :optional env)</code> returns #t if 'obj' has a binding (a value) in the environment 'env'.
-If profiling is enabled (set WITH_PROFILING in s7.c), <code>(symbol-calls sym)</code> returns
-the number of times that symbol's binding has been applied.
-Here we scan the symbol table for any function that doesn't have documentation:
-</p>
-<pre>
-       (let ((st (<em class=red>symbol-table</em>)))
-         (do ((i 0 (+ i 1))) 
-             ((= i (vector-length st)))
-           (let ((lst (vector-ref st i)))
-             (for-each 
-               (lambda (sym)
-       	         (if (<em class=red>defined?</em> sym)
-	             (let ((val (<em class=red>symbol-&gt;value</em> sym)))
-	               (if (and (procedure? val)
-			        (string=? "" (procedure-documentation val)))
-		           (format #t "~A " sym)))))
-               lst))))
-</pre>
-</dd>
-<br><br>
-
 
 <!-- -------------------------------------------------------------------------------- -->
 <dt>
@@ -3132,6 +3022,31 @@ To use namespaces from C, see the FFI <a href="#namespace">example</a>
 below.
 </p>
 
+<p><code>(symbol-table)</code> returns the symbol table, a vector of lists of symbols.
+<code>(symbol-&gt;value sym :optional env)</code> returns the binding of 'sym'
+in the given environment which defaults to the current environment.
+<code>(defined? obj :optional env)</code> returns #t if 'obj' has a binding (a value) in the environment 'env'.
+If profiling is enabled (set WITH_PROFILING in s7.c), <code>(symbol-calls sym)</code> returns
+the number of times that symbol's binding has been applied.
+Here we scan the symbol table for any function that doesn't have documentation:
+</p>
+<pre>
+       (let ((st (<em class=red>symbol-table</em>)))
+         (do ((i 0 (+ i 1))) 
+             ((= i (vector-length st)))
+           (let ((lst (vector-ref st i)))
+             (for-each 
+               (lambda (sym)
+       	         (if (<em class=red>defined?</em> sym)
+	             (let ((val (<em class=red>symbol-&gt;value</em> sym)))
+	               (if (and (procedure? val)
+			        (string=? "" (procedure-documentation val)))
+		           (format #t "~A " sym)))))
+               lst))))
+</pre>
+
+
+
 <small>
 <blockquote>
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
@@ -3259,6 +3174,70 @@ done!
 
 </blockquote>
 </small>
+</dd>
+<br><br>
+
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<A NAME="IO"></a>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>IO functions</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
+<dd>
+<p>Besides files, ports can also represent strings and functions.  The string port functions
+are:
+</p>
+<ul>
+<li>with-output-to-string
+<li>with-input-from-string
+<li>call-with-output-string
+<li>call-with-input-string,
+<li>open-output-string
+<li>open-input-string
+<li>get-output-string
+</ul>
+<pre>
+(let ((result #f) 
+      (p (<em class=red>open-output-string</em>)))
+  (format p "this ~A ~C test ~D" "is" #\a 3)
+  (set! result (<em class=red>get-output-string</em> p))
+  (close-output-port p)
+  result)
+-&gt; "this is a test 3"
+</pre>
+<p>Other functions:</p>
+<ul>
+<li>read-byte and write-byte: binary IO, named "read-u8" and "write-u8" in r6rs, I think
+<li>read-line: line-at-a-time reads
+</ul>
+<p>The variable <a name="vectorprintlength">*vector-print-length*</a> sets
+the upper limit on how many vector elements are printed by object-&gt;string and format.
+</p>
+<p>When running s7 behind a GUI, you often want input to come from and output to go to
+arbitrary widgets. The function ports provide a way to redirect IO.  See <a href="#functionportexample">below</a>
+for an example.
+</p>
+<p>s7 also includes current-error-port and set-current-error-port.
+</p>
+
+
+<small>
+<blockquote>
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>binary-io.scm in the Snd package has functions that read and write integers and floats in
+both endian choices in a variety of sizes.  Besides read-byte and write-byte, it uses
+integer-decode-float, and the various bitwise operators.
+</p>
+
+</blockquote>
+</small>
+
 </dd>
 <br><br>
 

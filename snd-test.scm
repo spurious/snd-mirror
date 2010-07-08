@@ -58517,18 +58517,6 @@ EDITS: 1
 			    (list #f #t #t #t #t #t #t #f))
 		  (if (not (string=? "Fixed" (cadr (list-ref data 1)))) (snd-display #__line__ ";XmRenderTableGetRendition: ~A" data)))))
 	  
-	  (let ((dpy (XtDisplay (cadr (main-widgets))))
-		(win (XtWindow (cadr (main-widgets)))))
-	    (let ((version (list-ref (XGetWindowProperty dpy win
-							 (XInternAtom (XtDisplay (cadr (main-widgets)))
-								      "SND_VERSION"
-								      #f)
-							 0 32 #f XA_STRING)
-				     5)))
-	      (XDeleteProperty dpy win (XInternAtom dpy "AN_ATOM" #f))
-	      (if (not (string=? version (snd-version)))
-		  (snd-display #__line__ ";SND_VERSION: ~A, ~A?" version (snd-version)))))
-	  
 	  (let* ((tabs (let ((ctr 0))
 			 (map
 			  (lambda (n)
