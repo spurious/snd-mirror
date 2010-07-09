@@ -1,6 +1,6 @@
 # Configuration script for Snd
 
-AC_INIT(snd, 11.7, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-11.tar.gz)
+AC_INIT(snd, 11.8, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-11.tar.gz)
 
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
@@ -19,7 +19,7 @@ LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
 PACKAGE=Snd
-VERSION=11.7
+VERSION=11.8
 AC_DEFINE_UNQUOTED(SND_PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(SND_VERSION, "$VERSION")
 AC_SUBST(SND_PACKAGE)
@@ -38,7 +38,7 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-static-alsa    use ALSA statically loaded (for RPM generation)
 #   --without-audio       stub out all audio
 #   --with-snd-as-widget  make Snd a loadable widget, not a standalone program
-#   --with-doubles        use doubles throughout (default is floats)
+#   --with-doubles        use doubles throughout (default=yes)
 #   --with-float-samples  represent samples internally as floats or doubles (default=yes)
 #   --with-gmp            include multiprecision arithmetic via gmp, mpfr, and mpc
 #   --enable-snd-debug    include Snd internal debugging stuff
@@ -132,7 +132,7 @@ AC_ARG_WITH(sample-width,
 
 if test "$with_float_samples" != no ; then
   AC_DEFINE(SNDLIB_USE_FLOATS, 1)
-  if test "$with_doubles" = yes ; then
+  if test "$with_doubles" != no ; then
     LOCAL_SNDLIB_BITS="8"
   else
     LOCAL_SNDLIB_BITS="4"
@@ -141,7 +141,7 @@ else
   AC_DEFINE(SNDLIB_USE_FLOATS, 0)
 fi
 
-if test "$with_doubles" = yes ; then
+if test "$with_doubles" != no ; then
   AC_DEFINE(mus_float_t, double)
   AC_DEFINE(WITH_DOUBLES)
 else

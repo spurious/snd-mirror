@@ -493,7 +493,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
-10-Jul:  snd 11.7.\n\
+8-Jul:   Snd 11.7.\n\
 12-Jun:  removed window-property, window-property-changed-hook, send-mozilla.\n\
 7-June:  Snd 11.6.\n\
 27-May:  removed snd6.scm. added binary-io.scm.\n\

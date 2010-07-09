@@ -9,8 +9,8 @@ s7: hash-table for-each and map are now entry-oriented.
 removed title-with-date (examp.scm), snd-gxutils.c,
     window-property, window-property-changed-hook, send-mozilla
 
-checked: gtk 2.90.2|3|4, FC 13, mpfr-3.0.0, sbcl 1.0.40, autoconf 2.66
-    clisp 2.49
+checked: gtk 2.90.2|3|4, Fedora Core 13, mpfr-3.0.0, sbcl 1.0.40,
+    autoconf 2.66, clisp 2.49
 
 Thanks!: Mike Scholz, Fernando Lopez-Lezcano, Michael Klingbeil,
          Rick Taube

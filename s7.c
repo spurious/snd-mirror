@@ -11171,6 +11171,8 @@ static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
  *           returns number of bytes actually read
  *         vector-write vector n :optional port
  * Clisp has read|write-[char|byte-]sequence
+ *
+ * it might make sense to have only byte-wise input ports -- no file port for example on input
  */
 
 static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
@@ -18292,45 +18294,64 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 
 static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 {
-  /* sc->F => error */
+  /* sc->F => error 
+   *   no check needed here for bad input port and so on
+   */
   int i, c;
+
   for (i = 0; ; ) 
     {
-      c = inchar(sc, pt);
-      if (c == EOF)
-	return(sc->F);
 
-      if (c == '"')
+      if (is_file_port(pt))
+	c = fgetc(port_file(pt)); /* not unsigned char! -- could be EOF */
+      else 
 	{
+	  if (port_string_length(pt) <= port_string_point(pt))
+	    return(sc->F);
+	  c = (unsigned char)port_string(pt)[port_string_point(pt)++];
+	}
+
+      switch (c)
+	{
+	case '\n': 
+	  port_line_number(pt)++; 
+	  sc->strbuf[i++] = c;
+	  break;
+
+	case EOF:
+	  return(sc->F);
+
+	case '"':
 	  sc->strbuf[i] = '\0';
 	  return(s7_make_string_with_length(sc, sc->strbuf, i));
-	}
-      else
-	{
+
+	case '\\':
+	  c = inchar(sc, pt);
 	  if (c == '\\')
+	    sc->strbuf[i++] = '\\';
+	  else
 	    {
-	      c = inchar(sc, pt);
-	      if (c == '\\')
-		sc->strbuf[i++] = '\\';
+	      if (c == '"')
+		sc->strbuf[i++] = '"';
 	      else
 		{
-		  if (c == '"')
-		    sc->strbuf[i++] = '"';
-		  else
+		  if (c == 'n')
+		    sc->strbuf[i++] = '\n';
+		  else 
 		    {
-		      if (c == 'n')
-			sc->strbuf[i++] = '\n';
-		      else 
-			{
-			  if (!isspace(c))
-			    return(sc->T); /* #f here would give confusing error message "end of input", so return #t=bad backslash */
-			  /* this in my opinion is not optimal. It's easy to forget that backslash needs to be backslashed. */
-			}
+		      if (!isspace(c))
+			return(sc->T); /* #f here would give confusing error message "end of input", so return #t=bad backslash */
+		      /* this in my opinion is not optimal. It's easy to forget that backslash needs to be backslashed. */
 		    }
 		}
 	    }
-	  else sc->strbuf[i++] = c;
+	  break;
+
+	default:
+	  sc->strbuf[i++] = c;
+	  break;
 	}
+
       if (i >= sc->strbuf_size)
 	resize_strbuf(sc);
     }
@@ -19608,7 +19629,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      (s7_is_constant(sc->x)))                             /* (lambda (a . 0.0) a) or (lambda (a . :b) a) */
 	    return(eval_error(sc, "lambda :rest parameter '~A is a constant", sc->x));
 	}
-      sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE);
+
+      /* sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE); */
+      /* optimize that since it happens a bazillion times */
+
+      NEW_CELL(sc, sc->value);
+      car(sc->value) = sc->code;
+      cdr(sc->value) = sc->envir;
+      set_type(sc->value, T_CLOSURE | T_PROCEDURE | T_DONT_COPY_CDR | T_DONT_COPY);
+
       goto START;
 
 
@@ -20452,10 +20481,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (cdr(sc->z) == sc->NIL)                                            /* (defmacro hi ()) */
 	return(eval_error_with_name(sc, "~A ~A has no body?", sc->x));
-
-      /* accepted:
-       *    (defmacro hi hi . hi)
-       */
+      if (!is_pair(cdr(sc->z)))
+	return(eval_error_with_name(sc, "~A ~A has stray dot?", sc->x));
 
       sc->y = s7_gensym(sc, "defmac");
       sc->code = s7_cons(sc, 
@@ -20900,11 +20927,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_READ_QUASIQUOTE_VECTOR:
       /* this works only if the backquote is right next to the #( of the read-time vector,
-       *    and then only if the vector can be dealt with at read time.  It doesn't seem
-       *    very useful to me.  To get a vector in a macro, use "vector", not "#()".
-       * It's also limited to 1-dimensional cases, since I think it's a bad idea to begin with.
+       *    and then only if the resultant list (make_list_3 below) can be dealt with in the
+       *    calling context. It only works for 1D vectors.
+       *
+       *    `#(1 ,@(list 1 2) 4) -> (apply vector ({list} 1 ({apply} {values} (list 1 2)) 4)) -> #(1 1 2 4)
        */
       sc->value = make_list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_1(sc, sc->value));
+      /* fprintf(stderr, "qv: %s\n", s7_object_to_c_string(sc, sc->value)); */
       goto START;
 
       
@@ -26533,6 +26562,8 @@ s7_scheme *s7_init(void)
  * generic append?
  *   (append "hi" "ho") (append #(1) #(2))    [(append table1 table] = new table with both? what about collisions?]
  *   what about mixed cases -- what is the result type?
+ *
+ * perhaps remove the `#(...) support -- is there any actual use for this?
  *
  * PERHAPS: method lists for c_objects
  *   a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)

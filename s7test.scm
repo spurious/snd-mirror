@@ -344,6 +344,12 @@
 	       )#t)
 
 (test (+ #| this is a comment |# 2 #! and this is another !# 3) 5)
+(test (eq? #| a comment |# #f #f) #t)
+(test (eq? #| a comment |##f #f) #t)  ; ??
+(test (eq? #| a comment | ##f|##f #f) #t) ; ??
+(test (eq? #||##||##|a comment| ##f|##f #f) #t)
+;;; Snd's listener is confused by (eq? #||##||##|a;comment|" ##f|##f #f) etc
+
 (test (eq? (if #f #t) (if #f 3)) #t)
 
 (test (eq?) 'error) ; "this comment is missing a double-quote
@@ -1891,6 +1897,8 @@
 (test (string-length "\\\\\\\"") 4)
 (test (string-length "A ; comment") 11)
 (test (string-length "#| comment |#") 13)
+(test (string-length "'123") 4)
+(test (string-length '"'123") 4)
 (test (let ((str (string #\# #\\ #\t))) (string-length str)) 3)
 
 (test (string-length "#\\(") 3)
@@ -3939,7 +3947,7 @@
 (test-w "'#( .)")
 (test-w "(car '( .))")
 (test-w "'#(1 . 2)")
-(test-w "(let ((. 3)) .)")
+;(test-w "(let ((. 3)) .)")
 
 
 
@@ -7495,6 +7503,10 @@
 (test (symbol? '#f) #f)
 (test ''quote (quote (quote quote)))
 (test (+ (cadr ''3) (cadadr '''4) (cadr (cadr (cadr ''''5)))) 12)
+(test (+ (cadr ' '   3) (cadadr '  
+  '    ' 4)) 7)
+(test (+ '#| a comment |#2 3) 5)
+(test (+ ' #| a comment |# 2 3) 5)
 (test (eq? lambda 'lambda) #t)
 
 (test (eq? '() ()) #t) ; not sure about this -- Gauche, SCM, stklos say #t; Guile says error; clisp, cmucl, and sbcl say T
@@ -12323,6 +12335,9 @@ who says the continuation has to restart the map from the top?
    (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '() '#(()) ':hi "hi"))
   
   (test (string=? (let () (define (hi) "this is a string" 1) (procedure-documentation hi)) "this is a string") #t)
+  (test (string=? (let () (define (hi) "this is a string") (procedure-documentation hi)) "this is a string") #t)
+  (test (string=? (let () (define (hi) "this is a string") (hi)) "this is a string") #t)
+  (test (string=? (let () (define* (hi (a "a string")) a) (procedure-documentation hi)) "") #t)
   
   (for-each
    (lambda (arg)
@@ -12624,6 +12639,8 @@ who says the continuation has to restart the map from the top?
   (test (define-macro (a #()) 1) 'error)
   (test (define-macro (i 1) => (j 2)) 'error)
   (test (define hi 1 . 2) 'error)
+  (test (defmacro hi hi . hi) 'error)
+  (test (define-macro (hi hi) . hi) 'error)
 
   ;(test (let () (define-macro (hi a b) `(list ,@a . ,@b)) (hi (1 2) ((2 3)))) '(1 2 2 3))
   (test (let () (define-macro (hi a b) `(list ,@a . ,b)) (hi (1 2) (2 3))) '(1 2 2 3))
@@ -13894,6 +13911,13 @@ who says the continuation has to restart the map from the top?
 		(join-thread t2))
 	      ctr)
 	    2)
+
+      (test (let ((ctr1 0) (ctr2 0))
+	      (let ((t1 (make-thread (lambda () (set! ctr1 (+ ctr1 1)) (* ctr1 2))))
+		    (t2 (make-thread (lambda () (set! ctr2 (+ ctr2 1)) (* ctr2 3)))))
+		(+ (join-thread t1) 
+		   (join-thread t2))))
+	    5)
       
       (test (let ((ctr 0)
 		  (lock (make-lock)))
