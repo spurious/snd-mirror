@@ -2048,6 +2048,7 @@
 (test (set! ("hi" 1 2) #\i) 'error)
 (test (set! ("hi" 1) "ho") 'error)
 (test (set! ("hi") #\i) 'error)
+(test (let ((x "hi") (y 'x)) (string-set! y 0 #\x) x) 'error)
 
 (test (let ((hi (make-string 3 #\a)))
 	(string-set! hi 1 (let ((ho (make-string 4 #\x)))
@@ -9815,7 +9816,8 @@
 (test (let ((k 0)) (let ((x (let xyz ((i 0)) (set! k (+ k 1)) xyz))) (x 0)) k) 2)
 (test (let ((hi' 3) (a'b 2)) (+ hi' a'b)) 5)
 (test (let ((hi''' 3) (a'''b 2)) (+ hi''' a'''b)) 5)
-
+(test (let ((f (let func ((i 0)) (if (= i 0) func (if (> i 1) (+ i (func (- i 1))) 1))))) (map f '(1 2 3))) '(1 3 6))
+(test (let ((x 0)) (let ((f (lambda (a) (+ a x)))) (map (let () (set! x (+ x 1)) f) '(1 2 3)))) '(2 3 4))
 
 (let ((enter 0)
       (exit 0)
@@ -13164,6 +13166,9 @@ who says the continuation has to restart the map from the top?
   (define-bacro (symbol-set! var val) `(set! ,(symbol->value var) ,val))
   (test (let ((x 32) (y 'x)) (symbol-set! y 123) (list x y)) '(123 x))
 
+  (define-bacro (symbol-eset! var val) `(set! ,(eval var) ,val))
+  (test (let ((x '(1 2 3)) (y `(x 1))) (symbol-eset! y 123) (list x y)) '((1 123 3) (x 1)))
+  (test (let ((x #(1 2 3)) (y `(x 1))) (symbol-eset! y 123) (list x y)) '(#(1 123 3) (x 1)))
 
   (let ()
     (define-macro (hi a) `````(+ ,,,,,a 1))
@@ -13792,6 +13797,21 @@ who says the continuation has to restart the map from the top?
 
 (test (current-environment 1) 'error)
 (test (global-environment 1) 'error)
+(test (let ((caar 123)) (+ caar (with-environment (initial-environment) (caar '((2) 3))))) 125)
+(test (let ()
+	(+ (let ((caar 123)) 
+	     (+ caar (with-environment (initial-environment) 
+                       (let ((val (caar '((2) 3)))) 
+			 (set! caar -1) 
+			 (+ val caar))))) ; 124
+	   (let ((caar -123)) 
+	     (+ caar (with-environment (initial-environment) 
+                       (let ((val (caar '((20) 3)))) 
+			 (set! caar -2) 
+			 (+ val caar))))) ; -105
+	   (caar '((30) 3)))) ; 30 + 19
+      49)
+      
 
 
 (test (let ((a 1)) (eval '(+ a b) (augment-environment (current-environment) (cons 'b 32)))) 33)

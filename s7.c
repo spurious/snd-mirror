@@ -534,6 +534,7 @@ struct s7_scheme {
   
   s7_pointer symbol_table;            /* symbol table */
   s7_pointer global_env;              /* global environment */
+  s7_pointer initial_env;             /* original bindings of predefined functions */
   
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, UNQUOTE_SPLICING, MACROEXPAND;
   s7_pointer APPLY, VECTOR, CDR, SET, QQ_VALUES, QQ_LIST, QQ_APPLY, QQ_APPEND;
@@ -692,6 +693,7 @@ struct s7_scheme {
 
 #define T_LOCAL                       (1 << (TYPE_BITS + 14))
 #define is_not_local(p)               ((typeflag(p) & T_LOCAL) == 0)
+#define is_local(p)                   ((typeflag(p) & T_LOCAL) != 0)
 #define set_local(p)                  typeflag(p) |= T_LOCAL
 /* this marks a symbol that has been used at some time as a local variable */
 
@@ -2268,6 +2270,60 @@ static bool is_environment(s7_scheme *sc, s7_pointer x)
 }
 
 
+static void save_initial_environment(s7_scheme *sc)
+{
+  /* there are ca 270 predefined functions (and another 30 or so other things)
+   */
+  #define INITIAL_ENV_ENTRIES 300
+  int i, k = 0, len;
+  s7_pointer ge;
+  s7_pointer *lsts, *inits;
+
+  sc->initial_env = (s7_pointer)calloc(1, sizeof(s7_cell));
+  set_type(sc->initial_env, T_VECTOR | T_FINALIZABLE | T_DONT_COPY | T_STRUCTURE);
+  vector_length(sc->initial_env) = INITIAL_ENV_ENTRIES;
+  vector_elements(sc->initial_env) = (s7_pointer *)malloc(INITIAL_ENV_ENTRIES * sizeof(s7_pointer));
+  inits = vector_elements(sc->initial_env);
+  s7_vector_fill(sc, sc->initial_env, sc->NIL);
+  sc->initial_env->hloc = NOT_IN_HEAP;
+
+  ge = car (sc->global_env);
+  if (!s7_is_vector(ge)) fprintf(stderr, "no global env?");
+  len = vector_length(ge);
+  lsts = vector_elements(ge);
+   
+  for (i = 0; i < len; i++)
+    if (lsts[i] != sc->NIL)
+      {
+	s7_pointer slot;
+	for (slot = car(lsts[i]); is_pair(slot); slot = cdr(slot))
+	  if (is_procedure(symbol_value(slot)))
+	    inits[k++] = permanent_cons(car(slot), cdr(slot), T_PAIR | T_ATOM | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY | T_STRUCTURE);
+      }
+}
+
+
+static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
+{
+  /* add sc->initial_env bindings to the current environment */
+  #define H_initial_environment "(initial-environment) establishes the original bindings of all the predefined functions"
+  int i;
+  s7_pointer *inits;
+  s7_pointer x;
+
+  sc->w = new_frame_in_env(sc, sc->envir);
+  inits = vector_elements(sc->initial_env);
+
+  for (i = 0; (i < INITIAL_ENV_ENTRIES) && (inits[i] != sc->NIL); i++)
+    if (is_local(car(inits[i])))
+      add_to_environment(sc, sc->w, car(inits[i]), cdr(inits[i]));
+
+  x = sc->w;
+  sc->w = sc->NIL;
+  return(x);
+}
+
+
 static s7_pointer g_augment_environment(s7_scheme *sc, s7_pointer args)
 {
   #define H_augment_environment "(augment-environment env ...) adds its \
@@ -2322,9 +2378,6 @@ static s7_pointer find_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl)
 
 	if (s7_is_vector(y))
 	  return(symbol_global_slot(hdl));
-	/* I think it is not safe to unset the local-variable flag in this case, even in the single-thread case.
-	 *   There might be a continuation activatable that jumps into the environment where it was local.
-	 */
 
 	if (caar(y) == hdl)
 	  return(car(y));
@@ -11173,6 +11226,7 @@ static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
  * Clisp has read|write-[char|byte-]sequence
  *
  * it might make sense to have only byte-wise input ports -- no file port for example on input
+ *   (this saves very little time (6/2384) according to callgrind)
  */
 
 static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
@@ -18341,7 +18395,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 		    {
 		      if (!isspace(c))
 			return(sc->T); /* #f here would give confusing error message "end of input", so return #t=bad backslash */
-		      /* this in my opinion is not optimal. It's easy to forget that backslash needs to be backslashed. */
+		      /* this is not optimal. It's easy to forget that backslash needs to be backslashed. */
 		    }
 		}
 	    }
@@ -18664,7 +18718,7 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 			  x = find_symbol(sc, sc->envir, caar(sc->x));
 			  if (x != sc->NIL)
 			    {
-			      if (is_not_local(x))
+			      if (is_not_local(x)) /* what is this for? */
 				{
 				  err = LSTAR_OK;
 				  set_local(x);
@@ -20869,17 +20923,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	  break;
 
-	case TOKEN_DOT:
-	  push_stack(sc, opcode(OP_READ_DOT), sc->args, sc->NIL);
-	  sc->tok = token(sc);
-	  sc->value = read_expression(sc);
-	  break;
-
 	case TOKEN_EOF:
 	  /* we should be able to scan the stack for the earlist OP_READ_LIST,
 	   *  and find where the current list started
 	   */
 	  return(missing_close_paren_error(sc));
+
+	case TOKEN_DOT:
+	  push_stack(sc, opcode(OP_READ_DOT), sc->args, sc->NIL);
+	  sc->tok = token(sc);
+	  sc->value = read_expression(sc);
+	  break;
 
 	default:
 	  push_stack(sc, opcode(OP_READ_LIST), sc->args, sc->NIL);
@@ -26093,6 +26147,7 @@ s7_scheme *s7_init(void)
   
   s7_define_function(sc, "global-environment",      g_global_environment,      0, 0, false, H_global_environment);
   s7_define_function(sc, "current-environment",     g_current_environment,     0, CURRENT_ENVIRONMENT_OPTARGS, false, H_current_environment);
+  s7_define_function(sc, "initial-environment",     g_initial_environment,     0, 0, false, H_initial_environment);
   s7_define_function(sc, "augment-environment",     g_augment_environment,     1, 0, true,  H_augment_environment);
   s7_define_function(sc, "provided?",               g_is_provided,             1, 0, false, H_is_provided);
   s7_define_function(sc, "provide",                 g_provide,                 1, 0, false, H_provide);
@@ -26535,7 +26590,8 @@ s7_scheme *s7_init(void)
                             `((lambda ,local-vars ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars) ,@body) ,expr)))");
 
   /* fprintf(stderr, "size: %d %d\n", sizeof(s7_cell), sizeof(s7_num_t)); */
-	  
+
+  save_initial_environment(sc);
   return(sc);
 }
 

@@ -835,9 +835,16 @@ symbol-set!
 (123 x)
 </pre>
 
-<p>Or maybe "hacro"?
+<p>Or maybe "hacro"?  Use eval in place of symbol-&gt;value, and...
 </p>
 
+<pre>
+&gt; (let ((x #(1 2 3)) 
+        (y `(x 1))) 
+    (symbol-set! y 123) 
+    (list x y))
+(#(1 123 3) (x 1))
+</pre>
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
@@ -2907,8 +2914,8 @@ a list of alists ending with a hash-table, the global environment.
 <code>(current-environment :optional thread)</code>
 returns the current environment.  <code>(global-environment)</code>
 returns the top-level environment.  <code>(procedure-environment proc)</code> returns
-the procedure proc's environment.
-Here is an example of apropos that accesses both environments:
+the procedure proc's environment. <code>initial-environment</code> returns an extension of the current environment
+in which the built-in functions have their original values.
 </p>
 <pre>
         (define (apropos name)
@@ -3017,6 +3024,16 @@ If we actually want to affect the top-level, we can forego the with-environment 
     (lambda (a)
       (func1 a))))
 </pre>
+<p>To ensure that some code sees the original built-in function definitions,
+wrap it in <code>(with-environment (initial-environment) ...)</code>:
+</p>
+<pre>
+&gt; (let ((caar 123)) 
+    (+ caar (with-environment (initial-environment) 
+              (caar '((2) 3)))))
+125
+</pre>
+
 <p>
 To use namespaces from C, see the FFI <a href="#namespace">example</a>
 below.

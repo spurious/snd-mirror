@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.62"
-#define S7_DATE "3-July-10"
+#define S7_VERSION "1.63"
+#define S7_DATE "12-July-10"
 
 
 typedef long long int s7_Int;
@@ -758,6 +758,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 12-July:   initial-environment.
  * 7-July:    removed force and delay: use slib.
  * 3-July:    new backquote implementation.
  * 28-June:   syntactic keywords (e.g. lambda) are applicable.
