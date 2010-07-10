@@ -2298,7 +2298,11 @@ static void save_initial_environment(s7_scheme *sc)
 	s7_pointer slot;
 	for (slot = car(lsts[i]); is_pair(slot); slot = cdr(slot))
 	  if (is_procedure(symbol_value(slot)))
-	    inits[k++] = permanent_cons(car(slot), cdr(slot), T_PAIR | T_ATOM | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY | T_STRUCTURE);
+	    {
+	      inits[k++] = permanent_cons(car(slot), cdr(slot), T_PAIR | T_ATOM | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY | T_STRUCTURE);
+	      if (k >= INITIAL_ENV_ENTRIES)
+		break;
+	    }
       }
 }
 
@@ -18718,7 +18722,7 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 			  x = find_symbol(sc, sc->envir, caar(sc->x));
 			  if (x != sc->NIL)
 			    {
-			      if (is_not_local(x)) /* what is this for? */
+			      if (is_not_local(x))
 				{
 				  err = LSTAR_OK;
 				  set_local(x);
@@ -26613,12 +26617,7 @@ s7_scheme *s7_init(void)
  *       perhaps use procedure-source?
  *
  * :allow-other-keys in lambda* ("lambda!")
- *
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
- * generic append?
- *   (append "hi" "ho") (append #(1) #(2))    [(append table1 table] = new table with both? what about collisions?]
- *   what about mixed cases -- what is the result type?
- *
  * perhaps remove the `#(...) support -- is there any actual use for this?
  *
  * PERHAPS: method lists for c_objects

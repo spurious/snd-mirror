@@ -830,8 +830,8 @@ dirty macros, "bacros":
    `(set! ,(symbol-&gt;value var) ,val))
 symbol-set!
 &gt; (let ((x 32) (y 'x)) 
-   (symbol-set! y 123) 
-   (list x y))
+    (symbol-set! y 123) 
+    (list x y))
 (123 x)
 </pre>
 
@@ -1769,7 +1769,15 @@ evaluate their first argument, but set! does not (with a quibble; see below):
 If it's a symbol, no problem.  If it's a list, set! looks at its car to see if it is
 some object that has a setter.  If the car is itself a list, set! evaluates the internal
 expression, and tries again.  So the second case above is the only one that won't work.
+And of course:
 </p>
+
+<pre>
+&gt; (let ((x (list 1 2))) 
+    (set! ((((lambda () (list x))) 0) 0) 3) 
+    x) 
+(3 2))
+</pre>
 
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
@@ -3789,7 +3797,16 @@ have any number after, for example, #b:
 </pre>
 
 
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
+<pre>
+(+(*(+))(*)(+(+)(+)(*)))
+(((((lambda () (lambda () (lambda () (lambda () 1))))))))
+(+ (((lambda () values)) 1 2 3))
+(map apply (list map) (list map) (list (list *)) '((((1 2)) ((3 4 5)))))
+(do ((do do do)) (do do do))
+</pre>
 
 </blockquote>
 </small>

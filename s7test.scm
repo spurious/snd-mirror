@@ -14402,6 +14402,17 @@ who says the continuation has to restart the map from the top?
 (test (let (('a 3)) 'a) 'error)
 (test (let ((a`!@#$%^&*~.,<>?/'{}[]\|+=_-a 3)) a`!@#$%^&*~.,<>?/'{}[]\|+=_-a) 3)
 
+(test (set! ((quote (1 2)) 0) #t) #t)
+(test (set! (((lambda () (list 1 2))) 0) 2) 2)
+(test (let ((x (list 1 2))) (set! (((lambda () x)) 0) 3) x) '(3 2))
+(test (let ((x (list 1 2))) (set! (((vector x) 0) 1) 32) x) '(1 32))
+(test (let ((x (list 1 2))) (set! ((((lambda () (vector x))) 0) 0) 3) x) '(3 2))
+(test (let ((x (list 1 2))) (set! ((((lambda () (list x))) 0) 0) 3) x) '(3 2))
+(test (let ((x (list 1 2))) (set! ((set! x (list 4 3)) 0) 32) x) '(32 3))
+(test (let ((x (list 1 2))) (list-set! (set! x (list 4 3)) 0 32) x) '(32 3))
+(test (let ((x (list 1 2))) (set! ((list-set! x 0 (list 4 3)) 0) 32) x) '((32 3) 2))
+(test (let ((x (list 1 2))) (list-set! (list-set! x 0 (list 4 3)) 0 32) x) '((32 3) 2))
+
 
 
 
