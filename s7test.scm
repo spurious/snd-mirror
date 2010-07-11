@@ -499,6 +499,7 @@
 (test (equal? '#(1.0 2/3) (vector 1.0 2/3)) #t)
 (test (equal? '#(1 2) (vector 1 2.0)) #f) ; 2 not equal 2.0!
 (test (equal? '(1 . 2) (cons 1 2)) #t)
+(test (equal? '(1 #||# . #||# 2) (cons 1 2)) #t)
 (test (equal? '#(1 "hi" #\a) (vector 1 "hi" #\a)) #t)
 (test (equal? '#((1 . 2)) (vector (cons 1 2))) #t)
 (test (equal? '#(1 "hi" #\a (1 . 2)) (vector 1 "hi" #\a (cons 1 2))) #t)
@@ -612,6 +613,7 @@
 (test (boolean? (lambda (x) #f)) #f)
 (test (boolean? and) #f)
 (test (boolean? if) #f)
+;(test (boolean? else) #f) ; this could also be an error -> unbound variable, like (symbol? else)
 
 
 
@@ -2512,6 +2514,7 @@
 (test (car ''foo) 'quote)
 (test (car '(1 2 . 3)) 1)
 (test (car (cons 1 '())) 1)
+(test (car (if #f #f)) 'error)
 
 (for-each
  (lambda (arg)
@@ -2542,6 +2545,7 @@
 (test (cdr ''foo) '(foo))
 (test (cdr (cons (cons 1 2) (cons 3 4))) '(3 . 4))
 (test (cdr '(1 2 . 3)) '(2 . 3))
+(test (cdr (if #f #f)) 'error)
 
 (for-each
  (lambda (arg)
@@ -8084,6 +8088,8 @@
 
 (test (+ (do ((i 0 (+ i 1))) ((= i 3) i)) (do ((j 0 (+ j 1))) ((= j 4) j))) 7)
 (test (let ((do 1) (map 2) (for-each 3) (quote 4)) (+ do map for-each quote)) 10)
+(test (do ((i (if #f #f))) (i i)) (if #f #f))
+(test (do ((i (if #f #f)) (j #f i)) (j j)) (if #f #f))
 
 (test (let ((cont #f)
 	    (j 0)
@@ -8173,6 +8179,7 @@
 (test (do (("hi" "hi")) ("hi")) 'error)
 (test (do ((:hi 1 2)) (#t :hi)) 'error)
 (test (do ((i 0 (abs ()))) ((not (= i 0)) i)) 'error)
+(test (do ((i j) (j i)) (i i)) 'error)
 
 (define-constant __do_step_var_check__ 1)
 (test (do ((__do_step_var_check__ 2 3)) (#t #t)) 'error)
@@ -8189,6 +8196,8 @@
 (test (do ((hi #3d(((1 2) (3 4)) ((5 6) (7 8))) (hi 1))) ((equal? hi 8) hi)) 8)
 (test (do ((i 0 ('((1 2) (3 4)) 0 1))) ((not (= i 0)) i)) 2)
 (test (do () (#t (+ 1 2 3))) 6)
+(test (do ((f + *) (j 1 (+ j 1))) ((= j 2) (apply f (list j j)))) 4)
+(test (do ((f lambda) (j 1 (+ j 1))) ((= j 2) ((f (a) (+ a j)) 3))) 5)
 
 
 (test (let ((j #f))
@@ -11539,6 +11548,18 @@ who says the continuation has to restart the map from the top?
 (test `(,(+ 1 2)) '(3))
 ;(test `(,'a . ,'b) (cons 'a 'b))
 (test `(,@'() . foo) 'foo)
+(test `(1 , 2) '(1 2))
+(test `(1 , @(list 2 3)) 'error) ; ?? this is an error in Guile and Clisp
+(test `(1 ,@ (list 2 3)) '(1 2 3)) ; seems a bit arbitrary
+(test `(1 , #|a comment|# 2) '(1 2))
+(test `(1 ,@ #|a comment|# (list 2 3)) '(1 2 3))
+(test `(1 , ;a comment
+                       2) '(1 2))
+(test `(1 #||#,2) '(1 2))
+(test `(1 #||#,@(list #||# 2 3 #||#)) '(1 2 3))
+(test (eval ``(+ 1 ,@,@'('(2 3)))) '(+ 1 2 3))
+(test (eval ``(+ 1   ,@ #||#  ,@   '('(2 3)))) '(+ 1 2 3))
+
 
 ;; from gauche
 (let ((quasi0 99)

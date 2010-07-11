@@ -2332,7 +2332,7 @@ static s7_pointer g_augment_environment(s7_scheme *sc, s7_pointer args)
 {
   #define H_augment_environment "(augment-environment env ...) adds its \
 arguments (each a cons: symbol . value) to the environment env, and returns the \
-new environment. "
+new environment."
 
   s7_pointer x, e, new_e;
   int gc_loc;
@@ -2349,6 +2349,24 @@ new environment. "
 
   s7_gc_unprotect_at(sc, gc_loc);
   return(new_e);
+}
+
+
+static s7_pointer g_augment_environment_direct(s7_scheme *sc, s7_pointer args)
+{
+  #define H_augment_environment_direct "(augment-environment! env ...) adds its \
+arguments (each a cons: symbol . value) directly to the environment env, and returns the \
+environment."
+
+  s7_pointer x, e;
+  e = car(args);
+  if (!is_environment(sc, e))
+    return(s7_wrong_type_arg_error(sc, "augment-environment!", 1, e, "an environment"));
+
+  for (x = cdr(args); x != sc->NIL; x = cdr(x))
+    if (is_pair(car(x)))
+      add_to_environment(sc, e, caar(x), cdar(x));
+  return(e);
 }
 
 
@@ -26165,6 +26183,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "current-environment",     g_current_environment,     0, CURRENT_ENVIRONMENT_OPTARGS, false, H_current_environment);
   s7_define_function(sc, "initial-environment",     g_initial_environment,     0, 0, false, H_initial_environment);
   s7_define_function(sc, "augment-environment",     g_augment_environment,     1, 0, true,  H_augment_environment);
+  s7_define_function(sc, "augment-environment!",    g_augment_environment_direct, 1, 0, true,  H_augment_environment_direct);
   s7_define_function(sc, "provided?",               g_is_provided,             1, 0, false, H_is_provided);
   s7_define_function(sc, "provide",                 g_provide,                 1, 0, false, H_provide);
   s7_define_function(sc, "defined?",                g_is_defined,              1, 1, false, H_is_defined);
