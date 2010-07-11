@@ -8146,6 +8146,7 @@
 	  (vector-set! vec j n))
 	'#(9 8 7 6 5 4 3 2 1 0)))
 
+(test (do ((i 0 (+ i 1))) (#t i) (error "do evaluated its body?")) 0)
 (test (do '() (#t 1)) 'error)
 (test (do . 1) 'error)
 (test (do ((i i i)) (i i)) 'error)
@@ -8164,6 +8165,31 @@
 (test (do (((i))) (1 2)) 'error)
 (test (do ((i 1) ((j))) (1 2)) 'error)
 (test (do (((1))) (1 2)) 'error)
+(test (do ((pi 1 2)) (#t pi)) 'error)
+(test (do ((1+i 2 3)) (#t #t)) 'error)
+(test (do ((1.2 2 3)) (#t #t)) 'error)
+(test (do (((1 . 2) "hi" (1 2))) (#t 1)) 'error)
+(test (do ((() () ())) (#t #t)) 'error)
+(test (do (("hi" "hi")) ("hi")) 'error)
+(test (do ((:hi 1 2)) (#t :hi)) 'error)
+(test (do ((i 0 (abs ()))) ((not (= i 0)) i)) 'error)
+
+(define-constant __do_step_var_check__ 1)
+(test (do ((__do_step_var_check__ 2 3)) (#t #t)) 'error)
+(test (let ((__do_step_var_access_1__ #f))
+	(set! (symbol-access '__do_step_var_access_1__) (list #f #f #f))
+	(do ((__do_step_var_access_1__ 1 2)) (#t __do_step_var_access_1__)))
+      1)
+
+(test (let ((__do_step_var_access_1__ #f))
+	(set! (symbol-access '__do_step_var_access_1__) (list #f (lambda (x y) (error "do step var is being set!"))
+							      (lambda (x y) (+ y 1))))
+	(do ((__do_step_var_access_1__ 1 32)) (#t __do_step_var_access_1__)))
+      2) 
+(test (do ((hi #3d(((1 2) (3 4)) ((5 6) (7 8))) (hi 1))) ((equal? hi 8) hi)) 8)
+(test (do ((i 0 ('((1 2) (3 4)) 0 1))) ((not (= i 0)) i)) 2)
+(test (do () (#t (+ 1 2 3))) 6)
+
 
 (test (let ((j #f))
 	(do ((i 0 (let ((x 0))
@@ -8270,6 +8296,8 @@
       2)
 
 (test (let ((x '(1)) (y '(2))) (set! ((if #t x y) 0) 32) x) '(32))
+(test (let ((hi 0)) (set! hi 32)) 32)
+(test (let ((hi 0)) ((set! hi ('((1 2) (3 4)) 0)) 0)) 1)
 
 
 
@@ -9067,6 +9095,8 @@
 (test (apply "hi" '(1)) #\i)
 (test (apply '(1 2 3) '(1)) 2)
 (test (apply #(1 2 3) '(2)) 3)
+(test (apply #2D((1 2) (3 4)) 0 0 ()) 1)
+(test (apply '((1 2) (3 4)) 1 0 ()) 3)
 (test (let ((ht (make-hash-table))) (set! (ht "hi") 32) (apply ht '("hi"))) 32)
 
 (test (let ((x (list 1 2))) (set-cdr! x x) (apply + x)) 'error)
@@ -10568,6 +10598,8 @@
 (test (+ 2 (call-with-exit (lambda (k) (* 5 (k (values 4 5 6)))))) 17)
 (test (+ 2 (call-with-exit (lambda (k) (* 5 (k 1 (values 4 5 6)))))) 18)
 (test (+ 2 (call-with-exit (lambda (k) (* 5 (k 1 (values 4 5 6) 1))))) 19)
+(test (+ 2 (call-with-exit (lambda* ((hi 1)) (hi 1)))) 3)
+(test (call-with-exit (lambda (hi) (((hi 1)) #t))) 1) ; !!
 
 (test (+ 2 (values 3 (call-with-exit (lambda (k1) (k1 4))) 5)) 14)
 (test (+ 2 (call-with-exit (lambda (k1) (values 3 (k1 4) 5))) 8) 14)
@@ -14371,6 +14403,7 @@ who says the continuation has to restart the map from the top?
 (test (number? lambda*) #f)
 (test ((s7-version) (rationalize 0)) #\s)
 (test (cond (((values '(1 2) '(3 4)) 0 0))) 'error)
+(test (cond (((#2d((1 2) (3 4)) 0) 0) 32)) 32)
 (test (cond ((apply < '(1 2)))) #t)
 (test (dynamic-wind lcm gcd *) 'error)
 (test ((lambda (let) (+)) 0) 0)
@@ -14412,7 +14445,10 @@ who says the continuation has to restart the map from the top?
 (test (let ((x (list 1 2))) (list-set! (set! x (list 4 3)) 0 32) x) '(32 3))
 (test (let ((x (list 1 2))) (set! ((list-set! x 0 (list 4 3)) 0) 32) x) '((32 3) 2))
 (test (let ((x (list 1 2))) (list-set! (list-set! x 0 (list 4 3)) 0 32) x) '((32 3) 2))
-
+(test (set! (('((0 2) (3 4)) 0) 0) 0) 0)
+(test (set! ((map abs '(1 2)) 1) 0) 0)
+(test (let ((x (list 1 2))) (set! ((call-with-exit (lambda (k) (k x))) 0) 12) x) '(12 2))
+(test (let ((x #2d((1 2) (3 4)))) (set! (((values x) 0) 1) 12) x) #2D((1 12) (3 4)))
 
 
 

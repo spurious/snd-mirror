@@ -18772,7 +18772,7 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 }
 
 
-static void prepare_do_step_variables(s7_scheme *sc)
+static s7_pointer prepare_do_step_variables(s7_scheme *sc)
 {
   sc->args = safe_reverse_in_place(sc, sc->args);
   sc->code = car(sc->args);                       /* saved at the start */
@@ -18781,7 +18781,18 @@ static void prepare_do_step_variables(s7_scheme *sc)
   
   sc->value = sc->NIL;
   for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
-    sc->value = s7_cons(sc, add_to_local_environment(sc, caar(sc->x), car(sc->y)), sc->value);
+    {
+      s7_pointer tmp;
+      tmp = caar(sc->x);
+      if (!s7_is_symbol(tmp))
+	return(eval_error(sc, "do step variable: ~S is not a symbol?", tmp));
+      if (s7_is_keyword(tmp))
+	return(eval_error(sc, "do step variable ~S: keywords are constants", tmp));
+      if (is_immutable(tmp))
+	return(eval_error(sc, "do step variable: ~S is immutable", tmp));
+      /* symbol-access is dealt with elsewhere */
+      sc->value = s7_cons(sc, add_to_local_environment(sc, tmp, car(sc->y)), sc->value);
+    }
   
   /* now we've set up the environment, next set up for the loop */
   sc->y = safe_reverse_in_place(sc, sc->value);
@@ -18809,6 +18820,7 @@ static void prepare_do_step_variables(s7_scheme *sc)
   /* here args is a list of 2 or 3 lists, 1st is (list (list (var . binding) incr-expr init-value) ...), 2nd is end-expr, 3rd can be result expr
    *   so for (do ((i 0 (+ i 1))) ((= i 3) (+ i 1)) ...) args is ((((i . 0) (+ i 1) 0)) (= i 3) (+ i 1) 0)
    */
+  return(sc->F);
 }
 
 
