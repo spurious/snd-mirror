@@ -2328,6 +2328,24 @@ static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer g_augment_environment_direct(s7_scheme *sc, s7_pointer args)
+{
+  #define H_augment_environment_direct "(augment-environment! env ...) adds its \
+arguments (each a cons: symbol . value) directly to the environment env, and returns the \
+environment."
+
+  s7_pointer x, e;
+  e = car(args);
+  if (!is_environment(sc, e))
+    return(s7_wrong_type_arg_error(sc, "augment-environment!", 1, e, "an environment"));
+
+  for (x = cdr(args); x != sc->NIL; x = cdr(x))
+    if (is_pair(car(x)))
+      add_to_environment(sc, e, caar(x), cdar(x));
+  return(e);
+}
+
+
 static s7_pointer g_augment_environment(s7_scheme *sc, s7_pointer args)
 {
   #define H_augment_environment "(augment-environment env ...) adds its \
@@ -2349,24 +2367,6 @@ new environment."
 
   s7_gc_unprotect_at(sc, gc_loc);
   return(new_e);
-}
-
-
-static s7_pointer g_augment_environment_direct(s7_scheme *sc, s7_pointer args)
-{
-  #define H_augment_environment_direct "(augment-environment! env ...) adds its \
-arguments (each a cons: symbol . value) directly to the environment env, and returns the \
-environment."
-
-  s7_pointer x, e;
-  e = car(args);
-  if (!is_environment(sc, e))
-    return(s7_wrong_type_arg_error(sc, "augment-environment!", 1, e, "an environment"));
-
-  for (x = cdr(args); x != sc->NIL; x = cdr(x))
-    if (is_pair(car(x)))
-      add_to_environment(sc, e, caar(x), cdar(x));
-  return(e);
 }
 
 
@@ -10370,16 +10370,17 @@ static void write_string(s7_scheme *sc, const char *s, s7_pointer pt)
 
 static char *slashify_string(const char *p, int len)
 {
-  int i, j = 0;
+  int i, j = 0, cur_size;
   char *s;
 
-  s = (char *)calloc(len + 256, sizeof(char));
+  cur_size = len + 256;
+  s = (char *)calloc(cur_size + 2, sizeof(char));
   /* this can be non-null even if there's not enough memory, but I think I'll check in the caller */
   s[j++] = '"';
 
   for (i = 0; i < len; i++) 
     {
-      if (slashify_table[(int)p[i]])
+      if (slashify_table[(int)(p[i])])
 	{
 	  s[j++] = '\\';
 	  switch (p[i]) 
@@ -10387,12 +10388,6 @@ static char *slashify_string(const char *p, int len)
 	    case '"':
 	      s[j++] = '"';
 	      break;
-	      
-#if 0
-	    case '\n':
-	      s[j++] = 'n';
-	      break;
-#endif
 	      
 	    case '\t':
 	      s[j++] = 't';
@@ -10422,6 +10417,13 @@ static char *slashify_string(const char *p, int len)
 	    }
 	}
       else s[j++] = p[i];
+      if (j >= cur_size) /* even with 256 extra, we can overflow (for example, inordinately many tabs in ALSA output) */
+	{
+	  int k;
+	  cur_size *= 2;
+	  s = (char *)realloc(s, (cur_size + 2) * sizeof(char));
+	  for (k = j; k < cur_size + 2; k++) s[k] = 0;
+	}
     }
   s[j++] = '"';
   return(s);

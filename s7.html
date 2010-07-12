@@ -813,7 +813,7 @@ symbol-set!
 </p>
 
 <pre>
-&gt; (defmacro symbol-set (var val) `(setf ,(eval var) ,val)
+&gt; (defmacro symbol-set (var val) `(setf ,(eval var) ,val))
 SYMBOL-SET
 &gt; (let ((x 32) (y 'x)) (symbol-set y 123))
 *** - EVAL: variable Y has no value
@@ -1776,7 +1776,7 @@ And of course:
 &gt; (let ((x (list 1 2))) 
     (set! ((((lambda () (list x))) 0) 0) 3) 
     x) 
-(3 2))
+(3 2)
 </pre>
 
 
@@ -2105,11 +2105,11 @@ of pthread_getspecific, just call it: <code>(var)</code>.
 <pre>
 (define-macro (thread-let bindings . body)
   ;; just like "let", but each variable is set by running a separate thread
-  `(let (,@(map (lambda (variable&value)
-                  `(,(car variable&value) (make-thread (lambda () ,(cadr variable&value)))))
+  `(let (,@(map (lambda (variable&amp;value)
+                  `(,(car variable&amp;value) (make-thread (lambda () ,(cadr variable&amp;value)))))
                 bindings))
-     ,@(map (lambda (variable&value)
-              `(set! ,(car variable&value) (join-thread ,(car variable&value))))
+     ,@(map (lambda (variable&amp;value)
+              `(set! ,(car variable&amp;value) (join-thread ,(car variable&amp;value))))
             bindings)
      ,@body))
 
@@ -2134,6 +2134,7 @@ of pthread_getspecific, just call it: <code>(var)</code>.
 
 &gt; (+ 1 (thread-values (* 3 2) (abs -1)) 2)
 10
+</pre>
 
 </blockquote>
 </small>
@@ -2917,61 +2918,32 @@ Even better: "dilambda":
 </td></tr></table>
 </dt>
 
-<dd><p>environments are first class objects in s7.  An environment is
-a list of alists ending with a hash-table, the global environment.
-<code>(current-environment :optional thread)</code>
-returns the current environment.  <code>(global-environment)</code>
-returns the top-level environment.  <code>(procedure-environment proc)</code> returns
-the procedure proc's environment. <code>initial-environment</code> returns an extension of the current environment
-in which the built-in functions have their original values.
+<dd><p>An environment holds symbols and their values.  The global environment, for example,
+holds all the variables that are defined at the top level.
+Environments are first class objects in s7.  
 </p>
+
 <pre>
-        (define (apropos name)
-          ;; (apropos "name") prints out a list of all symbols whose name includes "name" as a substring
+  (global-environment)          the top-level environment
+  (current-environment)         the currently visible variables and their values
+  (procedure-environment proc)  the environment at the time when proc was defined
+  (initial-environment)         the current environment, but all built-in functions have their original values
 
-          (define (substring? subs s) ; from Larceny
-            (let* ((start 0)
-	           (ls (string-length s))
-	           (lu (string-length subs))
-	           (limit (- ls lu)))
-              (let loop ((i start))
-	        (cond ((&gt; i limit) #f)
-	              ((do ((j i (+ j 1))
-	        	    (k 0 (+ k 1)))
-	        	   ((or (= k lu)
-	        		(not (char=? (string-ref subs k) (string-ref s j))))
-	        	    (= k lu))) i)
-	              (else (loop (+ i 1)))))))
+  (with-environment env . body) evaluate body in the environment env 
 
-          (define (apropos-1 alist)
-            (for-each
-             (lambda (binding)
-               (if (substring? name (symbol-&gt;string (car binding)))
-	           (format (current-output-port) "~A: ~A~%" 
-	        	   (car binding) 
-	        	   (if (procedure? (cdr binding))
-	        	       (procedure-documentation (cdr binding))
-	        	       (cdr binding)))))
-             alist))
-
-          (for-each
-           (lambda (frame)
-             (if (vector? frame) ; the global environment
-	         (let ((len (vector-length frame)))
-	           (do ((i 0 (+ i 1)))
-	               ((= i len))
-	             (apropos-1 (vector-ref frame i))))
-	         (apropos-1 frame)))
-           (<em class=red>current-environment</em>)))
+  (augment-environment env . bindings)   add bindings to env
+  (augment-environment! env . bindings)
+  (symbol-&gt;value sym (env (current-environment)))
+  (defined? sym (env (current-environment)))
+  (symbol-table)
 </pre>
 
 <A NAME="augmentenv"></A>
 <p><code>(with-environment env . body)</code> evaluates its body in the environment env.
-Although the environment is just a list of alists of <code>(symbol . value)</code> pairs, you can't simply
-add new pairs to it or use set-cdr! to change the value in an existing binding 
-because symbol lookup is optimized to reduce the time
-spent pawing through the environment.  So, to add a new value to an environment,
-use <b>augment-environment</b>:
+There are several examples of its use in the <a href="#macros">macro</a> section.
+defined? returns #t if the symbol is defined in the environment, and
+symbol-&gt;value returns the value associated with it.
+To add or change a symbol's value, use augment-environment:
 </p>
 <pre>
 (let ((a 1)) 
@@ -2986,6 +2958,9 @@ use <b>augment-environment</b>:
 just prepends the new bindings, shadowing any old ones,
 as if you had called "let".  To add the bindings directly to the environment,
 use augment-environment!.
+</p>
+
+<p>It is possible in Scheme to redefine built-in functions such as car.
 To ensure that some code sees the original built-in function definitions,
 wrap it in <code>(with-environment (initial-environment) ...)</code>:
 </p>
@@ -2996,10 +2971,7 @@ wrap it in <code>(with-environment (initial-environment) ...)</code>:
 125
 </pre>
 
-<p>To see what's in an environment, you can either use assoc, for example,
-or symbol-&gt;value.
-<code>(symbol-&gt;value sym (env (current-environment)))</code> returns the binding of 'sym'
-in the given environment.
+<p>
 I think these functions can implement the notions of libraries,
 separate namespaces, or modules.  
 Here's one way: first the library writer just writes his library.
@@ -3054,13 +3026,26 @@ its bindings are exported into the current environment:
     (car (current-environment)))) ; these are the bindings introduced by loading the library
 </pre>
 
+<p>To do the same thing, but prepend "library:" to each name:
+</p>
+
+<pre>
+(apply augment-environment! (current-environment)
+  (with-environment (initial-environment)
+    (load "any-library.scm" (current-environment))
+    (map (lambda (binding)
+	   (cons (string-&gt;symbol 
+		  (string-append "library:" (symbol-&gt;string (car binding))))
+		 (cdr binding)))
+	 (car (current-environment)))))
+</pre>
+
 <p>That's all there is to it!
-There are a few other related functions:
+</p>
+
+<p>
 <code>(symbol-table)</code> returns the symbol table, a vector of lists of symbols.
-<code>(defined? obj :optional env)</code> returns #t if 'obj' has a binding (a value) in the environment 'env'.
-If profiling is enabled (set WITH_PROFILING in s7.c), <code>(symbol-calls sym)</code> returns
-the number of times that symbol's binding has been applied.
-Here we scan the symbol table for any function that doesn't have documentation:
+Here we scan the symbol table looking for any function that doesn't have documentation:
 </p>
 <pre>
        (let ((st (<em class=red>symbol-table</em>)))
@@ -3081,7 +3066,6 @@ Here we scan the symbol table for any function that doesn't have documentation:
 To use namespaces from C, see the FFI <a href="#namespace">example</a>
 below.
 </p>
-
 
 
 <small>
