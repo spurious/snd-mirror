@@ -1122,8 +1122,11 @@ static s7_pointer g_is_boolean(s7_scheme *sc, s7_pointer args)
 
 bool s7_is_constant(s7_pointer p) 
 { 
-  /* this means "always evaluates to the same thing" */
-  
+  /* this means "always evaluates to the same thing", sort of
+   *   not "evaluates to itself":
+   *   (let ((x 'x)) (and (not (constant? x)) (equal? x (eval x))))
+   *   (and (constant? (list + 1)) (not (equal? (list + 1) (eval (list + 1)))))
+   */
   return((type(p) != T_SYMBOL) ||
 	 (is_immutable(p)) ||
 	 (s7_is_keyword(p)));

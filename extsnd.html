@@ -779,7 +779,7 @@ There are also "unscaled" versions of the floating point types, and "normalized"
 This is the default header type when a new file is created, 
 or a save dialog is opened. (The default, <code>mus-next</code>, stands for the NeXT/Sun sound file header).
 The available output header-types are:
-<pre onmouseout="UnTip()" onmouseover="Tip('mus-riff is our name for Microsoft wav,<br>mus-rf64 is the EBU 64-bit RIFF-replacement header,<br>mus-nist refers to NIST-SPHERE files,<br>mus-next and mus-sun are the same,<br>mus-aiff is the obsolete predecessor to mus-aifc,<br>mus-bicsf and mus-ircam are extensions of mus-next headers,<br>mus-raw means &quot;headerless&quot;,<br>mus-soundfont refers to Emu\'s extension of mus-riff files,<br>mus-voc refers to Creative Voice File,<br>mus-svx refers to 8SVX headers.<br>Many other headers are supported read-only.')">
+<pre onmouseout="UnTip()" onmouseover="Tip('mus-riff is our name for Microsoft wave,<br>mus-rf64 is the EBU 64-bit RIFF-replacement header,<br>mus-nist refers to NIST-SPHERE files,<br>mus-next and mus-sun are the same,<br>mus-aiff is the obsolete predecessor to mus-aifc,<br>mus-bicsf and mus-ircam are extensions of mus-next headers,<br>mus-raw means &quot;headerless&quot;,<br>mus-soundfont refers to Emu\'s extension of mus-riff files,<br>mus-voc refers to Creative Voice File,<br>mus-svx refers to 8SVX headers.<br>Many other headers are supported read-only.')">
     mus-next mus-aifc mus-riff mus-rf64 mus-nist mus-raw mus-ircam mus-aiff 
     mus-soundfont mus-bicsf mus-voc mus-svx mus-caff
 </pre>
@@ -790,7 +790,8 @@ The available output header-types are:
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="defaultoutputsrate">default-output-srate</a></code></td>
 <td bgcolor="#f2f4ff"><code>44100</code></td></tr><tr><td></td><td colspan=2>
 This is the default sampling rate when a new or temporary file is created, 
-or a save dialog is opened.
+or a save dialog is opened.  It also sets the default CLM srate (*clm-srate* in ws.scm),
+so all CLM generators use it outside with-sound.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 

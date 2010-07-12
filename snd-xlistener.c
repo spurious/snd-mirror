@@ -538,7 +538,6 @@ static void Word_upper(Widget w, XEvent *event, char **str, Cardinal *num)
 
 void append_listener_text(int end, const char *msg)
 {
-  /* SOMEDAY: if scheme string is slashified, it has \t's that need to be tabs here */
   if (listener_text)
     {
       if (end == -1) end = XmTextGetLastPosition(listener_text);

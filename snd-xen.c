@@ -689,7 +689,40 @@ static char *gl_print(XEN result)
   int i, ilen, savelen;
 
 #if HAVE_SCHEME
-  return(g_print_1(result));
+  /* expand \t first (neither gtk nor motif handles this automatically)
+   */
+  #define TAB_SPACES 4
+  int tabs = 0, len, j = 0;
+
+  newbuf = g_print_1(result);
+  len = mus_strlen(newbuf);
+
+  for (i = 0; i < len - 1; i++)
+    if ((newbuf[i] == '\\') && (newbuf[i + 1] == 't'))
+      tabs++;
+
+  if (tabs == 0)
+    return(newbuf);
+
+  ilen = len + tabs * TAB_SPACES;
+  str = (char *)calloc(ilen, sizeof(char));
+
+  for (i = 0; i < len - 1; i++)
+    {
+      if ((newbuf[i] == '\\') && (newbuf[i + 1] == 't'))
+	{
+	  int k;
+	  for (k = 0; k < TAB_SPACES; k++)
+	    str[j + k] = ' ';
+	  j += TAB_SPACES;
+	  i++;
+	}
+      else str[j++] = newbuf[i];
+    }
+  str[j] = newbuf[len - 1];
+
+  free(newbuf);
+  return(str);
 #endif
 
   /* specialize vectors which can be enormous in this context */

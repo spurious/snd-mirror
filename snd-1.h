@@ -519,7 +519,7 @@ typedef struct snd_state {
   ss_watcher **watchers;
   int watchers_size;
   channel_style_t update_sound_channel_style;
-#if HAVE_GL && MUS_WITH_GL2PS
+#if HAVE_GL && WITH_GL2PS
   bool gl_printing;
 #endif
 } snd_state;

@@ -1344,10 +1344,15 @@ selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
 	 (ctr freq-inc)
 	 (radius (- 1.0 (/ r fftsize)))
 	 (bin (/ (srate) fftsize))
-	 (formants (make-vector freq-inc)))
+	 (formants (make-vector freq-inc))
+	 (old-srate (mus-srate)))
+    (set! (mus-srate) (srate))
+    ;; if mus-srate is 44.1k and srate is 48k, make-formant thinks we're trying to go past srate/2
+    ;;    and in any case it's setting its formants incorrectly for the actual output srate
     (do ((i 0 (+ i 1)))
 	((= i freq-inc))
       (set! (formants i) (make-formant (* i bin) radius)))
+    (set! (mus-srate) old-srate)
     (lambda (inval)
       (if (= ctr freq-inc)
 	  (begin
@@ -1361,6 +1366,8 @@ selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
       (vct-add! spectr fdr)
       (* amp (formant-bank spectr formants inval)))))
 
+
+;;; TODO: all the make-formants probably need mus-srate fixups
 
 ;;; similar ideas can be used for spectral cross-fades, etc -- for example:
 

@@ -1188,7 +1188,7 @@ if test "$have_gl" = yes ; then
   AC_DEFINE(HAVE_GL)
   OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES openGL"
   if test "$with_gl2ps" = yes ; then
-    AC_DEFINE(MUS_WITH_GL2PS)
+    AC_DEFINE(WITH_GL2PS)
     RANDOM_FEATURES="$RANDOM_FEATURES gl2ps"
     GL_FILES="gl2ps.o"
   fi

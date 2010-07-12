@@ -136,7 +136,7 @@
 #undef HAVE_GL
 #undef JUST_GL
 #undef HAVE_GLU
-#undef MUS_WITH_GL2PS
+#undef WITH_GL2PS
 
 #undef MUS_DEFAULT_TEMP_DIR
 #undef MUS_DEFAULT_SAVE_DIR

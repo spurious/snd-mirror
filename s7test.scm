@@ -329,6 +329,7 @@
 (test (eq? '#f #f) #t)
 (test (eq? '#f '#f) #t)
 (test (eq? '()'()) #t) ; no space
+(test (#||# eq? #||# #f #||# #f #||#) #t)
 
 (display ";this should display #t: ")
 (begin #| ; |# (display #t))
@@ -524,6 +525,7 @@
 (test (equal? #()#()) #t)
 (test (equal? #()()) #f)
 (test (equal? ()"") #f)
+(test (equal? "hi""hi") #t)
 
 (test (equal? most-positive-fixnum most-positive-fixnum) #t)
 (test (equal? most-positive-fixnum most-negative-fixnum) #f)
@@ -2207,6 +2209,7 @@
 (test (string=? (string-append "012" (string #\null) "356") 
 		(let ((str "0123456")) (string-set! str 3 #\null) str))
       #f)
+(test (string-append """hi""ho""") "hiho")
 
 (num-test (letrec ((hi (lambda (str n)
 			 (if (= n 0)
@@ -8002,6 +8005,7 @@
 (test (let ((expr `(+ i 1))) (do ((j 0) (i 0 (eval expr))) ((= i -3) j) (set! j (+ j 1)) (if (= j 3) (set! expr `(- i 1))))) 7)
 (test (do ((i 0 (+ i 1))) ((or (= i 12) (not (number? i)) (> (expt 2 i) 32)) (expt 2 i))) 64)
 (test (let ((k 0)) (do ((i 0 (+ i 1))) ((let () (set! k (+ k 1)) (set! i (+ i 1)) (> k 3)) i))) 7)
+(num-test (do ((i 0 (+ i 1))) ((> i 3) i) (set! i (* .9 i))) 3.439)
 
 (test (let ((lst '(1 2 3))
 	    (v (vector 0 0 0)))
@@ -13804,6 +13808,14 @@ who says the continuation has to restart the map from the top?
 ;; (it's seeing the value of v, not v):
 (test (let ((v (vector 1 2))) (constant? 'v)) #f)
 
+(test (constant? lambda) #f) ; I guess it can be rebound?
+(test (constant? (lambda () 1)) #t)
+(test (constant? ''3) #t)
+(test (constant? (if #f #f)) #t)
+(test (constant? 'x) #f)
+(test (let ((x 'x)) (and (not (constant? x)) (equal? x (eval x)))) #t)
+(test (and (constant? (list + 1)) (not (equal? (list + 1) (eval (list + 1))))) #t)
+
 ;; not sure this is the right thing...
 ;; but CL makes no sense: 
 ;; [3]> (constantp (vector 1))
@@ -13839,12 +13851,14 @@ who says the continuation has to restart the map from the top?
 (for-each
  (lambda (arg)
    (test (defined? arg) 'error))
- (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() '#(()) (list 1 2 3) '(1 . 2) "hi"))
+ (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() #f '#(()) (list 1 2 3) '(1 . 2) "hi"))
 (test (defined? 'lambda car) 'error)
 (test (defined? lambda gensym) 'error)
 (test (defined? 'lambda defined?) 'error)
 (test (defined? 'define car) 'error)
 (test (defined? 'abs '(())) #f)
+(test (defined? lambda) #t)
+(test (defined? 'lambda) #t)
 
 
 
@@ -13906,6 +13920,17 @@ who says the continuation has to restart the map from the top?
 	    a)
 	   a))
       11)
+
+(test (let ((x 3))
+	(augment-environment! (current-environment)
+          (cons 'y 123))
+	(+ x y))
+      126)
+
+(test (augment-environment) 'error)
+(test (augment-environment!) 'error)
+(test (augment-environment 3) 'error)
+(test (augment-environment! 3) 'error)
 
 
 

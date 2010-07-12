@@ -654,7 +654,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit --features "'clm 'snd-gtk 'gsl 'gl 'snd-debug 'snd-s7 'gl2ps"
+./snd -noinit --features "'clm 'snd-gtk 'gsl 'gl 'snd-debug 'snd-s7"
 
 
 make allclean

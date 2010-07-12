@@ -654,7 +654,7 @@ static XEN g_graph_to_ps(XEN filename)
 
 /* ---------------- gl -> ps ---------------- */
 
-#if HAVE_GL && MUS_WITH_GL2PS
+#if HAVE_GL && WITH_GL2PS
 
 #include "gl2ps.h"
 
@@ -850,7 +850,7 @@ void g_init_print(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_eps_size, g_eps_size_w, H_eps_size,
 				   S_setB S_eps_size, g_set_eps_size_w,  0, 0, 1, 0);
 
-#if HAVE_GL && MUS_WITH_GL2PS
+#if HAVE_GL && WITH_GL2PS
   XEN_YES_WE_HAVE("gl2ps");
 #endif
 }

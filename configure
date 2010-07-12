@@ -9561,7 +9561,7 @@ if test "$have_gl" = yes ; then
 
   OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES openGL"
   if test "$with_gl2ps" = yes ; then
-    $as_echo "#define MUS_WITH_GL2PS 1" >>confdefs.h
+    $as_echo "#define WITH_GL2PS 1" >>confdefs.h
 
     RANDOM_FEATURES="$RANDOM_FEATURES gl2ps"
     GL_FILES="gl2ps.o"

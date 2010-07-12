@@ -267,7 +267,7 @@ static char *gl_version(void)
 }
 
 
-#if MUS_WITH_GL2PS
+#if WITH_GL2PS
   char *gl2ps_version(void); /* snd-print.c */
 #endif
 
@@ -326,7 +326,7 @@ static char *glx_version(void)
 char *version_info(void)
 {
   char *result, *xversion = NULL, *consistent = NULL;
-#if HAVE_GL && MUS_WITH_GL2PS
+#if HAVE_GL && WITH_GL2PS
   char *gl2ps_name = NULL;
 #endif
   snd_itoa_ctr = 0;
@@ -394,7 +394,7 @@ char *version_info(void)
 #if HAVE_GL
 	  "\n    OpenGL", glx_version(),
 	  gl_version(),
-  #if MUS_WITH_GL2PS
+  #if WITH_GL2PS
           ", ", gl2ps_name = gl2ps_version(),
   #endif
 #endif
@@ -456,7 +456,7 @@ char *version_info(void)
   free_snd_itoa();
   if (xversion) free(xversion); /* calloc in xen.c */
   if (consistent) free(consistent);
-#if HAVE_GL && MUS_WITH_GL2PS
+#if HAVE_GL && WITH_GL2PS
   if (gl2ps_name) free(gl2ps_name);
 #endif
   return(result);

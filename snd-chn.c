@@ -2905,7 +2905,7 @@ static bool make_gl_spectrogram(chan_info *cp)
       (!gl_warned_already))
     {
       gl_warned_already = true;
-#if MUS_WITH_GL2PS
+#if WITH_GL2PS
       snd_warning("use " S_gl_graph_to_ps " to print openGL graphs");
 #else
       snd_warning("we need openGL and gl2ps to print openGL graphs");
