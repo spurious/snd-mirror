@@ -4584,15 +4584,18 @@ static void init_ctables(void)
   string_delimiter_table = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
   number_inits = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
   
+  /* these decide what character following a dot means the dot was not attached to the character */
   dot_table['\n'] = true;
   dot_table['\t'] = true;
   dot_table[' '] = true;
-  dot_table[')'] = true; /* see note under TOKEN_DOT in the token function */
-  dot_table['('] = true;
-  dot_table['#'] = true;
-  dot_table['\\'] = true;
-  dot_table['\''] = true;
-  
+  dot_table[')'] = true;  /* an error */
+  dot_table['('] = true;  /* '(1 .(2 3)) -> '(1 2 3) */
+  dot_table['"'] = true;  /* '(1 ."a") -> '(1 . "a") */
+  /* dot_table used to include '#', '\\', and '\'',
+   *   but these can be symbol names:
+   *   (let ((.#2 1)) .#2) -> 1, same for (let ((.\2 1)) .\2) and (let ((.'2 1)) .'2)
+   */
+
   exponent_table['e'] = true; exponent_table['E'] = true;
   exponent_table['s'] = true; exponent_table['S'] = true; 
   exponent_table['f'] = true; exponent_table['F'] = true;
@@ -10163,7 +10166,6 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
      (join-thread t1)
 
    * so we'd need (with-evaluator ...)?
-   * and some way to set initial stack sizes -- the current 4000 seems excessive
    */
 
   return(eval_string_1(sc, s7_string(car(args))));
@@ -18118,20 +18120,14 @@ static token_t token(s7_scheme *sc)
       
     case '.':
       c = inchar(sc, pt);
+      backchar(sc, c, pt);
+
       if (dot_table[c])
 	return(TOKEN_DOT);
 
-      backchar(sc, c, pt);
       sc->strbuf[0] = '.'; /* see below */
-      return(TOKEN_ATOM); /* assuming a number eventually? or can symbol names start with "."?
-			   * in either case, we'd want alphanumeric here -- " .(" for example
-			   * is probably an error in this scheme since we don't support the
-			   * quasiquote dot business.  I think I'll flag (){}[]#'\.  I can't
-			   * leave this for make_atom to detect because by then the delimiter
-			   * has been lost (i.e. ".)" gets to make_atom as "." which is still
-			   * a bad symbol name, but make_atom is also called by number->string
-			   * which wants to return #f silently in such a case.
-			   */
+      return(TOKEN_ATOM);  /* i.e. something that can start with a dot like a number */
+
     case '\'':
       return(TOKEN_QUOTE);
       
@@ -18176,6 +18172,10 @@ static token_t token(s7_scheme *sc)
 
       if ((c = inchar(sc, pt)) == '@') 
 	return(TOKEN_AT_MARK);
+
+      if (c == EOF)
+	s7_error(sc, sc->SYNTAX_ERROR,
+		 make_list_1(sc, make_protected_string(sc, "unexpected comma at end of input")));
       
       backchar(sc, c, pt);
       return(TOKEN_COMMA);
@@ -18315,6 +18315,7 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 
 	  str = (char *)(port_string(pt) + port_string_point(pt));
 	  orig_str = str;
+
 	  do {c = (int)(*str++);} while (string_delimiter_table[c]);
 	  /* this is a bad name -- string_delimiter_table elements are false if c is a string delimiter */
 

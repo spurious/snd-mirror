@@ -7127,6 +7127,56 @@
 (test (eval-string "(eval (with-input-from-string \"(+ 1 2)\" (lambda () (read))))") 3)
 (test (eval-string (object->string (eval-string (format #f "(+ 1 2)")))) 3)
 
+(test (cdr '(1 ."a")) "a")
+(test (cadr '(1 .#d2)) '.#d2)
+(test '(1 .(2 3)) '(1 2 3))
+(test '(1 .(2 3)) '(1 . (2 3)))
+(test (cadr '(1 '0,)) ''0,)
+
+#|
+(do ((i 0 (+ i 1)))
+    ((= i 128))
+  (if (not (= i (char->integer #\))))
+      (let ((str (string #\' #\( #\1 #\space #\. (integer->char i) #\2 #\))))
+	(catch #t
+	       (lambda ()
+		 (let ((val (eval-string str)))
+		   (format #t "[~D] ~A -> ~S (~S ~S)~%" i str val (car val) (cdr val))))
+	       (lambda args
+		 (format #t "[~D] ~A -> ~A~%" i str args))))))
+
+(let ((chars (vector (integer->char 0) #\newline #\space #\tab #\. #\, #\@ #\= #\x #\b #\' #\` #\# #\] #\[ #\} #\{ #\( #\) #\1 #\i #\+ #\- #\e #\_ #\\ #\" #\: #\; #\> #\<)))
+  (let ((nchars (vector-length chars)))
+    (do ((len 2 (+ len 1)))
+	((= len 3))
+      (let ((str (make-string len))
+	    (ctrs (make-vector len 0)))
+
+	(do ((i 0 (+ i 1)))
+	    ((= i (expt nchars len)))
+
+	  (let ((carry #t))
+	    (do ((k 0 (+ k 1)))
+		((or (= k len)
+		     (not carry)))
+	      (vector-set! ctrs k (+ 1 (vector-ref ctrs k)))
+	      (if (= (vector-ref ctrs k) nchars)
+		  (vector-set! ctrs k 0)
+		  (set! carry #f)))
+	    (do ((k 0 (+ k 1)))
+		((= k len))
+	      (string-set! str k (vector-ref chars (vector-ref ctrs k)))))
+
+	  (format #t "~A -> " str)
+	  (catch #t
+		 (lambda ()
+		   (let ((val (eval-string str)))
+		     (format #t " ~S (~S ~S)~%" val (car val) (cdr val))))
+		 (lambda args
+		   (format #t " ~A~%" args))))))))
+|#
+
+
 ;; (eval-string "(eval-string ...)") is not what it appears to be -- the outer call
 ;;    still sees the full string when it evaluates, not the string that results from
 ;;    the inner call.
@@ -14460,6 +14510,7 @@ who says the continuation has to restart the map from the top?
 (test ((values and 1 3)) 3)
 (test ((((lambda () begin)) (values begin 1))) 1)
 (test (+ (((lambda* () values)) 1 2 3)) 6)
+(test ((values ('((1 2) (3 4)) 1) (abs -1))) 4)
 
 (test (let () (define (hi cond) (+ cond 1)) (hi 2)) 3)
 (test (let () (define* (hi (cond 1)) (+ cond 1)) (hi 2)) 3)

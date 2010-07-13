@@ -5910,7 +5910,7 @@ example that puts formant on the edge of disaster (the glitch is about to explod
    <a class=def name="iir-filter">iir-filter</a> fl inp 
    <a class=def name="iir-filter?">iir-filter?</a> fl
 
-   <em class=emdef>envelope-&gt;coeffs</em> order envelope dc
+   <a class=def name="make-fir-coeffs">make-fir-coeffs</a> order v
 </pre>
 
 
@@ -6030,7 +6030,7 @@ The Hilbert transform can be implemented with an fir-filter:
 </pre>
 </td></tr></table>
 
-<p>envelope-&gt;coeffs translates a frequency response envelope into the corresponding FIR filter coefficients.
+<p>make-fir-coeffs translates a frequency response envelope (actually, evenly spaced points in a vct) into the corresponding FIR filter coefficients.
 The order of the filter determines how close you
 get to the envelope. 
 </p>
