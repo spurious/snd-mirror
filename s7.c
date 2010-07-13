@@ -1839,8 +1839,16 @@ static void increase_stack_size(s7_scheme *sc)
   new_size = sc->stack_size * 2;
 
   vector_elements(sc->stack) = (s7_pointer *)realloc(vector_elements(sc->stack), new_size * sizeof(s7_pointer));
-  for (i = sc->stack_size; i < new_size; i++)
-    vector_element(sc->stack, i) = sc->NIL;
+  if (vector_element(sc->stack, sc->stack_size + 1))
+    {
+      for (i = sc->stack_size; i < new_size; i++)
+	vector_element(sc->stack, i) = sc->NIL;
+    }
+  else 
+    {
+      /* we've run out of memory */
+      s7_error(sc, sc->ERROR, make_list_1(sc, make_protected_string(sc, "can't increase stack size any further")));
+    }
 
   vector_length(sc->stack) = new_size;
   sc->stack_size = new_size;
