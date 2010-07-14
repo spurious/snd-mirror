@@ -61312,36 +61312,6 @@ EDITS: 1
 		   (snd-display #__line__ ";~A c-array->list not invertible?: ~A ~A" type arr lst))))
 	   (list "char**" "gchar**"))
 	  
-	  (let* ((_GdkRegion_ (gdk_region_new))
-		 (_GdkRegion1_ (gdk_region_copy _GdkRegion_))
-		 (_GdkRectangle_ (GdkRectangle 0 0 10 10))
-		 (_GdkRegion2_ (gdk_region_rectangle _GdkRectangle_))
-		 (_gboolean (gdk_region_empty _GdkRegion_))
-		 (_gboolean1 (gdk_region_equal _GdkRegion_ _GdkRegion1_))
-		 (_GdkRectangle1_ (GdkRectangle))
-		 (_gboolean2 (gdk_region_point_in _GdkRegion2_ 2 3))
-		 (_gboolean3 (gdk_rectangle_intersect _GdkRectangle_ (GdkRectangle 3 3 10 10) (GdkRectangle 0 0 4 4)))
-		 (pts (vector->GdkPoints (vct->vector (vct 0.0 0.0 1.0 1.0))))
-		 (_GdkRegion3_ (gdk_region_polygon (list 'GdkPoint_ pts) 2 GDK_WINDING_RULE)))
-	    (if (equal? _GdkRegion_ _GdkRegion1_) (snd-display #__line__ ";regions equal?"))
-	    (if (not _gboolean) (snd-display #__line__ ";region not empty"))
-	    (if (not _gboolean1) (snd-display #__line__ ";region not copied equal"))
-	    (if (not _gboolean2) (snd-display #__line__ ";region no point"))
-	    (if (not _gboolean3) (snd-display #__line__ ";region no intersect"))
-	    (gdk_region_get_clipbox _GdkRegion_ _GdkRectangle1_)
-	    (gdk_region_union_with_rect _GdkRegion_ _GdkRectangle_)
-	    (gdk_region_intersect _GdkRegion2_ _GdkRegion1_)
-	    (gdk_region_union _GdkRegion_ _GdkRegion_)
-	    (gdk_region_subtract _GdkRegion_ _GdkRegion_)
-	    (gdk_region_xor _GdkRegion_ _GdkRegion_)
-	    (let ((val (gdk_region_get_rectangles _GdkRegion_)))
-	      (if (not (equal? val (list #f 0))) (snd-display #__line__ ";region rects: ~A" val)))
-	    (gdk_region_offset _GdkRegion_ 10 10)
-	    (gdk_region_shrink _GdkRegion_ 2 2)
-	    (gdk_rectangle_union _GdkRectangle_ _GdkRectangle1_ _GdkRectangle_)
-	    (gdk_region_destroy _GdkRegion_)
-	    (freeGdkPoints pts))
-	  
 	  (let* ((_gchar_ (gdk_keyval_name 60))
 		 (_guint (gdk_keyval_from_name "less"))
 		 (_guint1 (gdk_keyval_to_upper 120)) ;88
@@ -61510,7 +61480,6 @@ EDITS: 1
 		 (_GList1_ (gdk_window_get_children _GdkWindow_))
 		 (_GList2_ (gdk_window_peek_children _GdkWindow_))
 		 (_GdkEventMask (gdk_window_get_events _GdkWindow_))
-		 (_GdkRegion_ (gdk_window_get_update_area _GdkWindow_))
 		 (_GdkWindow5_ (gdk_window_get_group _GdkWindow_))
 		 (_list1 (gdk_window_get_origin _GdkWindow_))
 		 (_list2 (gdk_window_get_pointer _GdkWindow_))
@@ -61908,7 +61877,6 @@ EDITS: 1
 		 (_GdkDisplay_ (gtk_widget_get_display _GtkWidget_))
 		 (_gboolean5 (gtk_widget_get_no_show_all _GtkWidget_))
 		 (_GList_ (gtk_widget_list_mnemonic_labels _GtkWidget_))
-		 (_GdkRegion_ (gtk_widget_region_intersect _GtkWidget_ (gdk_region_new)))
 		 (_gboolean8 (gtk_widget_child_focus _GtkWidget_ GTK_DIR_TAB_FORWARD))
 		 (_gboolean9 (gtk_widget_is_ancestor shell _GtkWidget_))
 		 (_PangoLayout_ (gtk_widget_create_pango_layout _GtkWidget_ "hi"))
@@ -63164,8 +63132,6 @@ EDITS: 1
 		     (_gboolean (gdk_color_equal _GdkColor_ red-pixel))
 		     (_gboolean1 (gdk_colormap_alloc_color _GdkColormap_ _GdkColor_ #f #f))
 		     (_PangoLayout_ (gtk_widget_create_pango_layout scan-pane "hi"))
-		     (_GdkRegion_ (gdk_drawable_get_clip_region wn))
-		     (_GdkRegion_1 (gdk_drawable_get_visible_region wn))
 		     (_GdkVisual_ (gdk_drawable_get_visual wn))
 		     (_GdkAtom (gdk_atom_intern "MY_MESSAGE" #t))
 		     (_GtkIMContext_ (gtk_im_context_simple_new))
@@ -63285,14 +63251,12 @@ EDITS: 1
 		(gtk_window_set_accept_focus _GtkWindow_ #t)
 		(gtk_window_set_decorated _GtkWindow_ #t)
 		(gtk_window_set_destroy_with_parent _GtkWindow_ #t)
-		(gdk_window_begin_paint_region _GdkWindow_ _GdkRegion_)
 		(gdk_window_deiconify _GdkWindow_)
 		(gdk_window_end_paint _GdkWindow_)
 		(gdk_window_freeze_updates _GdkWindow_)
 		(gdk_window_thaw_updates _GdkWindow_)
 		(gdk_window_get_frame_extents _GdkWindow_ (GdkRectangle))
 		(gdk_window_invalidate_rect _GdkWindow_ (GdkRectangle 0 0 10 10) #f)
-		(gdk_window_invalidate_region _GdkWindow_ _GdkRegion_ #f)
 		(gdk_window_move _GdkWindow_ 0 0)
 		(gdk_window_move_resize _GdkWindow_ 0 0 500 800)
 		(gdk_window_resize _GdkWindow_ 500 800)
@@ -63594,8 +63558,8 @@ EDITS: 1
 		   gdk_draw_layout gdk_draw_layout_line gdk_draw_layout_line_with_colors gdk_draw_layout_with_colors gdk_draw_line
 		   gdk_draw_lines gdk_draw_pixbuf gdk_draw_point gdk_draw_points gdk_draw_polygon
 		   gdk_draw_rectangle gdk_draw_rgb_32_image gdk_draw_rgb_32_image_dithalign gdk_draw_rgb_image gdk_draw_rgb_image_dithalign
-		   gdk_draw_segments gdk_draw_trapezoids gdk_drawable_copy_to_image gdk_drawable_get_clip_region gdk_drawable_get_colormap
-		   gdk_drawable_get_depth gdk_drawable_get_image gdk_drawable_get_size gdk_drawable_get_visible_region
+		   gdk_draw_segments gdk_draw_trapezoids gdk_drawable_copy_to_image gdk_drawable_get_colormap
+		   gdk_drawable_get_depth gdk_drawable_get_image gdk_drawable_get_size 
 		   gdk_drawable_get_visual gdk_drawable_set_colormap gdk_drop_finish gdk_drop_reply gdk_error_trap_pop
 		   gdk_error_trap_push gdk_event_copy gdk_event_free gdk_event_get ;gdk_event_get_axis
 		   gdk_event_get_coords ;gdk_event_get_graphics_expose 
@@ -63603,7 +63567,7 @@ EDITS: 1
 		   gdk_event_handler_set gdk_event_peek gdk_event_put
 		   gdk_event_send_client_message gdk_event_send_clientmessage_toall gdk_events_pending   gdk_flush   gdk_gc_copy gdk_gc_get_colormap gdk_gc_get_values
 		   gdk_gc_new gdk_gc_new_with_values gdk_gc_offset gdk_gc_set_background gdk_gc_set_clip_mask
-		   gdk_gc_set_clip_origin gdk_gc_set_clip_rectangle gdk_gc_set_clip_region gdk_gc_set_colormap ;gdk_gc_set_dashes
+		   gdk_gc_set_clip_origin gdk_gc_set_clip_rectangle gdk_gc_set_colormap ;gdk_gc_set_dashes
 		   gdk_gc_set_exposures gdk_gc_set_fill gdk_gc_set_foreground gdk_gc_set_function gdk_gc_set_line_attributes
 		   gdk_gc_set_rgb_bg_color gdk_gc_set_rgb_fg_color gdk_gc_set_stipple gdk_gc_set_subwindow gdk_gc_set_tile
 		   gdk_gc_set_ts_origin gdk_gc_set_values gdk_get_default_root_window gdk_get_display
@@ -63612,8 +63576,8 @@ EDITS: 1
 		   gdk_keyboard_ungrab gdk_keymap_get_default gdk_keymap_get_direction gdk_keymap_get_entries_for_keycode gdk_keymap_get_entries_for_keyval
 		   gdk_keymap_lookup_key gdk_keyval_convert_case gdk_keyval_from_name gdk_keyval_is_lower
 		   gdk_keyval_is_upper gdk_keyval_name gdk_keyval_to_lower gdk_keyval_to_unicode gdk_keyval_to_upper
-		   gdk_list_visuals gdk_notify_startup_complete   gdk_pango_attr_embossed_new gdk_pango_attr_stipple_new gdk_pango_context_get gdk_pango_layout_get_clip_region
-		   gdk_pango_layout_line_get_clip_region gdk_pango_renderer_get_default 
+		   gdk_list_visuals gdk_notify_startup_complete   gdk_pango_attr_embossed_new gdk_pango_attr_stipple_new gdk_pango_context_get 
+		   gdk_pango_renderer_get_default 
 		   gdk_pango_renderer_new gdk_pango_renderer_set_drawable
 		   gdk_pango_renderer_set_gc gdk_pango_renderer_set_override_color 
 		   gdk_pango_renderer_set_stipple gdk_pixbuf_add_alpha   gdk_pixbuf_animation_get_height gdk_pixbuf_animation_get_iter gdk_pixbuf_animation_get_static_image 
@@ -63632,11 +63596,7 @@ EDITS: 1
 		   gdk_pixmap_create_from_xpm gdk_pixmap_create_from_xpm_d gdk_pixmap_foreign_new gdk_pixmap_lookup
 		   gdk_pointer_grab gdk_pointer_is_grabbed gdk_pointer_ungrab gdk_property_change
 		   gdk_property_delete gdk_property_get gdk_query_depths gdk_query_visual_types
-		   gdk_rectangle_intersect gdk_rectangle_union gdk_region_copy gdk_region_destroy
-		   gdk_region_empty gdk_region_equal gdk_region_get_clipbox gdk_region_get_rectangles gdk_region_intersect
-		   gdk_region_new gdk_region_offset gdk_region_point_in gdk_region_polygon ;gdk_region_rect_in
-		   gdk_region_rectangle gdk_region_shrink gdk_region_subtract gdk_region_union gdk_region_union_with_rect
-		   gdk_region_xor gdk_rgb_cmap_free gdk_rgb_cmap_new gdk_rgb_colormap_ditherable
+		   gdk_rectangle_intersect gdk_rectangle_union 
 		   gdk_rgb_ditherable gdk_rgb_find_color gdk_rgb_get_colormap gdk_rgb_get_visual gdk_rgb_set_install
 		   gdk_rgb_set_min_colors gdk_rgb_set_verbose gdk_screen_broadcast_client_message gdk_screen_get_default gdk_screen_get_default_colormap
 		   gdk_screen_get_display gdk_screen_get_height gdk_screen_get_height_mm gdk_screen_get_monitor_at_point gdk_screen_get_monitor_at_window
@@ -63649,15 +63609,15 @@ EDITS: 1
 		   gdk_visual_get_best_depth gdk_visual_get_best_type gdk_visual_get_best_with_both gdk_visual_get_best_with_depth gdk_visual_get_best_with_type
 		   gdk_visual_get_system gdk_window_add_filter gdk_window_at_pointer
 		   gdk_window_begin_move_drag 
-		   gdk_window_begin_paint_rect gdk_window_begin_paint_region gdk_window_begin_resize_drag
+		   gdk_window_begin_paint_rect gdk_window_begin_resize_drag
 		   gdk_window_clear gdk_window_clear_area gdk_window_clear_area_e gdk_window_configure_finished
 		   gdk_window_constrain_size gdk_window_deiconify gdk_window_destroy gdk_window_enable_synchronized_configure
 		   gdk_window_end_paint gdk_window_focus gdk_window_foreign_new gdk_window_freeze_updates gdk_window_get_children
 		   gdk_window_get_decorations gdk_window_get_events gdk_window_get_frame_extents gdk_window_get_geometry gdk_window_get_group
 		   gdk_window_get_internal_paint_info gdk_window_get_origin gdk_window_get_parent gdk_window_get_pointer gdk_window_get_position
-		   gdk_window_get_root_origin gdk_window_get_state gdk_window_get_toplevel gdk_window_get_update_area
+		   gdk_window_get_root_origin gdk_window_get_state gdk_window_get_toplevel 
 		   gdk_window_get_user_data gdk_window_get_window_type gdk_window_hide gdk_window_iconify
-		   gdk_window_invalidate_maybe_recurse gdk_window_invalidate_rect gdk_window_invalidate_region gdk_window_is_viewable gdk_window_is_visible
+		   gdk_window_invalidate_rect gdk_window_is_viewable gdk_window_is_visible
 		   gdk_window_lookup gdk_window_lower gdk_window_maximize gdk_window_merge_child_shapes gdk_window_move
 		   gdk_window_move_resize gdk_window_new gdk_window_peek_children gdk_window_process_all_updates gdk_window_process_updates
 		   gdk_window_raise gdk_window_register_dnd gdk_window_remove_filter gdk_window_reparent gdk_window_resize
@@ -63666,7 +63626,7 @@ EDITS: 1
 		   gdk_window_set_functions gdk_window_set_geometry_hints gdk_window_set_group gdk_window_set_icon gdk_window_set_icon_list
 		   gdk_window_set_icon_name gdk_window_set_keep_above gdk_window_set_keep_below gdk_window_set_modal_hint gdk_window_set_override_redirect
 		   gdk_window_set_role gdk_window_set_static_gravities gdk_window_set_title gdk_window_set_transient_for gdk_window_set_type_hint
-		   gdk_window_set_user_data gdk_window_shape_combine_mask gdk_window_shape_combine_region gdk_window_show gdk_window_show_unraised
+		   gdk_window_set_user_data gdk_window_shape_combine_mask gdk_window_show gdk_window_show_unraised
 		   gdk_window_stick gdk_window_thaw_updates   gdk_window_unmaximize gdk_window_unstick gdk_window_withdraw
 		   gtk_about_dialog_get_artists gtk_about_dialog_get_authors 
 		   gtk_about_dialog_get_comments gtk_about_dialog_get_copyright gtk_about_dialog_get_documenters
@@ -63771,7 +63731,7 @@ EDITS: 1
 		   gtk_drag_source_set_icon gtk_drag_source_set_icon_pixbuf gtk_drag_source_set_icon_stock gtk_drag_source_set_target_list gtk_drag_source_unset
 		   gtk_drag_unhighlight gtk_drawing_area_new gtk_editable_copy_clipboard gtk_editable_cut_clipboard
 		   gtk_editable_delete_selection gtk_editable_delete_text gtk_editable_get_chars gtk_editable_get_editable gtk_editable_get_position
-		   gtk_editable_get_selection_bounds gtk_editable_insert_text gtk_editable_paste_clipboard gtk_editable_select_region
+		   gtk_editable_get_selection_bounds gtk_editable_insert_text gtk_editable_paste_clipboard 
 		   gtk_editable_set_editable gtk_editable_set_position gtk_entry_completion_complete 
 		   gtk_entry_completion_delete_action gtk_entry_completion_get_entry
 		   gtk_entry_completion_get_inline_completion gtk_entry_completion_get_minimum_key_length 
@@ -63873,7 +63833,7 @@ EDITS: 1
 		   gtk_label_get_attributes gtk_label_get_ellipsize gtk_label_get_justify gtk_label_get_label gtk_label_get_layout
 		   gtk_label_get_layout_offsets gtk_label_get_line_wrap gtk_label_get_mnemonic_keyval gtk_label_get_mnemonic_widget gtk_label_get_selectable
 		   gtk_label_get_selection_bounds gtk_label_get_single_line_mode gtk_label_get_text gtk_label_get_use_markup
-		   gtk_label_get_use_underline gtk_label_get_width_chars gtk_label_new gtk_label_new_with_mnemonic gtk_label_select_region
+		   gtk_label_get_use_underline gtk_label_get_width_chars gtk_label_new gtk_label_new_with_mnemonic 
 		   gtk_label_set_angle gtk_label_set_attributes gtk_label_set_ellipsize gtk_label_set_justify gtk_label_set_label
 		   gtk_label_set_line_wrap gtk_label_set_markup gtk_label_set_markup_with_mnemonic gtk_label_set_mnemonic_widget gtk_label_set_pattern
 		   gtk_label_set_selectable gtk_label_set_single_line_mode gtk_label_set_text gtk_label_set_text_with_mnemonic gtk_label_set_use_markup
@@ -64164,7 +64124,7 @@ EDITS: 1
 		   gtk_widget_map gtk_widget_mnemonic_activate gtk_widget_modify_base gtk_widget_modify_bg gtk_widget_modify_fg
 		   gtk_widget_modify_font gtk_widget_modify_style gtk_widget_modify_text gtk_widget_path gtk_widget_pop_colormap
 		   gtk_widget_pop_composite_child gtk_widget_push_colormap gtk_widget_push_composite_child gtk_widget_queue_draw gtk_widget_queue_draw_area
-		   gtk_widget_queue_resize gtk_widget_queue_resize_no_redraw gtk_widget_realize gtk_widget_region_intersect
+		   gtk_widget_queue_resize gtk_widget_queue_resize_no_redraw gtk_widget_realize 
 		   gtk_widget_remove_accelerator gtk_widget_remove_mnemonic_label gtk_widget_render_icon gtk_widget_reparent gtk_widget_reset_rc_styles
 		   gtk_widget_reset_shapes gtk_widget_send_expose gtk_widget_set_accel_path gtk_widget_set_app_paintable gtk_widget_set_child_visible
 		   gtk_widget_set_colormap gtk_widget_set_composite_name gtk_widget_set_default_colormap gtk_widget_set_default_direction gtk_widget_set_direction

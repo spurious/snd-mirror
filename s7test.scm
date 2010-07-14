@@ -6682,7 +6682,7 @@
 
 (test (format #f "asb~{~A asd" '(1 2 3)) 'error)
 (test (format #f "~{~A~}" 1 2 3) 'error)
-(test (format #f "asb~{~}asd" '(1 2 3)) 'error) ; this apparently makes the format.scm in Guile hang? [fixed]
+(test (format #f "asb~{~}asd" '(1 2 3)) 'error)
 (test (format #f "asb~{ ~}asd" '(1 2 3)) 'error)
 (test (format #f "asb~{ hiho~~~}asd" '(1 2 3)) 'error)
 
@@ -9108,11 +9108,8 @@
 (test ((lambda (x) (begin (define x 3)) x) 32) 3)
 (test (let* ((x 32) (y x)) (define x 3) y) 32)
 
-(test (let ((z 0)) (begin (define x 32)) (begin (define y x)) (set! z y) z) 32) ; so begin is like let*? -- guile uses letrec here = error
-(test (let ((z 0)) (begin (define x 32) (define y x)) (set! z y) z) 32)         ; similarly here
-;;; I can't find anything in r5rs.html that mandates letrec here, or that says it's in error
-;;; Guile is now (1.9.5) happy with these
-
+(test (let ((z 0)) (begin (define x 32)) (begin (define y x)) (set! z y) z) 32)
+(test (let ((z 0)) (begin (define x 32) (define y x)) (set! z y) z) 32)        
 (test (let () (begin (define b 1) (begin (define a b) (define b 3)) a)) 1)
 (test (let () (begin (begin (define a1 1) (begin (define a1 b1) (define b1 3))) a1)) 'error)
 (test (let () (begin (begin (define (a3) 1)) (begin (define (a3) b3) (define b3 3)) (a3))) 3) ; yow

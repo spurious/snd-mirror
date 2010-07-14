@@ -475,7 +475,6 @@ XM_TYPE_PTR(PangoFont_, PangoFont*)
 XM_TYPE_PTR(PangoGlyphString_, PangoGlyphString*)
 XM_TYPE_PTR(PangoLayoutLine_, PangoLayoutLine*)
 XM_TYPE_PTR(PangoLayout_, PangoLayout*)
-XM_TYPE_PTR(GdkRegion_, GdkRegion*)
 #define C_TO_XEN_gdouble(Arg) C_TO_XEN_DOUBLE(Arg)
 #define XEN_TO_C_gdouble(Arg) (gdouble)(XEN_TO_C_DOUBLE(Arg))
 #define XEN_gdouble_P(Arg) XEN_NUMBER_P(Arg)
@@ -524,8 +523,6 @@ XM_TYPE_PTR(PangoAttribute_, PangoAttribute*)
 #define XEN_guchar__P(Arg) XEN_String_P(Arg)
 #define XEN_TO_C_GdkPropMode(Arg) (GdkPropMode)(XEN_TO_C_INT(Arg))
 #define XEN_GdkPropMode_P(Arg) XEN_INTEGER_P(Arg)
-#define XEN_TO_C_GdkFillRule(Arg) (GdkFillRule)(XEN_TO_C_INT(Arg))
-#define XEN_GdkFillRule_P(Arg) XEN_INTEGER_P(Arg)
 #define XEN_TO_C_GdkRgbDither(Arg) (GdkRgbDither)(XEN_TO_C_INT(Arg))
 #define XEN_GdkRgbDither_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GdkRgbCmap_, GdkRgbCmap*)
@@ -2492,20 +2489,6 @@ gint width, gint height)"
                                                    XEN_TO_C_gint(height))));
 }
 
-static XEN gxg_gdk_drawable_get_clip_region(XEN drawable)
-{
-  #define H_gdk_drawable_get_clip_region "GdkRegion* gdk_drawable_get_clip_region(GdkDrawable* drawable)"
-  XEN_ASSERT_TYPE(XEN_GdkDrawable__P(drawable), drawable, 1, "gdk_drawable_get_clip_region", "GdkDrawable*");
-  return(C_TO_XEN_GdkRegion_(gdk_drawable_get_clip_region(XEN_TO_C_GdkDrawable_(drawable))));
-}
-
-static XEN gxg_gdk_drawable_get_visible_region(XEN drawable)
-{
-  #define H_gdk_drawable_get_visible_region "GdkRegion* gdk_drawable_get_visible_region(GdkDrawable* drawable)"
-  XEN_ASSERT_TYPE(XEN_GdkDrawable__P(drawable), drawable, 1, "gdk_drawable_get_visible_region", "GdkDrawable*");
-  return(C_TO_XEN_GdkRegion_(gdk_drawable_get_visible_region(XEN_TO_C_GdkDrawable_(drawable))));
-}
-
 static XEN gxg_gdk_events_pending(void)
 {
   #define H_gdk_events_pending "gboolean gdk_events_pending( void)"
@@ -2764,15 +2747,6 @@ static XEN gxg_gdk_gc_set_clip_rectangle(XEN gc, XEN rectangle)
   XEN_ASSERT_TYPE(XEN_GdkGC__P(gc), gc, 1, "gdk_gc_set_clip_rectangle", "GdkGC*");
   XEN_ASSERT_TYPE(XEN_GdkRectangle__P(rectangle), rectangle, 2, "gdk_gc_set_clip_rectangle", "GdkRectangle*");
   gdk_gc_set_clip_rectangle(XEN_TO_C_GdkGC_(gc), XEN_TO_C_GdkRectangle_(rectangle));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_gc_set_clip_region(XEN gc, XEN region)
-{
-  #define H_gdk_gc_set_clip_region "void gdk_gc_set_clip_region(GdkGC* gc, GdkRegion* region)"
-  XEN_ASSERT_TYPE(XEN_GdkGC__P(gc), gc, 1, "gdk_gc_set_clip_region", "GdkGC*");
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 2, "gdk_gc_set_clip_region", "GdkRegion*");
-  gdk_gc_set_clip_region(XEN_TO_C_GdkGC_(gc), XEN_TO_C_GdkRegion_(region));
   return(XEN_FALSE);
 }
 
@@ -3231,33 +3205,6 @@ static XEN gxg_gdk_pango_context_get(void)
   return(C_TO_XEN_PangoContext_(gdk_pango_context_get()));
 }
 
-static XEN gxg_gdk_pango_layout_line_get_clip_region(XEN line, XEN x_origin, XEN y_origin, XEN index_ranges, XEN n_ranges)
-{
-  #define H_gdk_pango_layout_line_get_clip_region "GdkRegion* gdk_pango_layout_line_get_clip_region(PangoLayoutLine* line, \
-gint x_origin, gint y_origin, gint* index_ranges, gint n_ranges)"
-  XEN_ASSERT_TYPE(XEN_PangoLayoutLine__P(line), line, 1, "gdk_pango_layout_line_get_clip_region", "PangoLayoutLine*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x_origin), x_origin, 2, "gdk_pango_layout_line_get_clip_region", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y_origin), y_origin, 3, "gdk_pango_layout_line_get_clip_region", "gint");
-  XEN_ASSERT_TYPE(XEN_gint__P(index_ranges), index_ranges, 4, "gdk_pango_layout_line_get_clip_region", "gint*");
-  XEN_ASSERT_TYPE(XEN_gint_P(n_ranges), n_ranges, 5, "gdk_pango_layout_line_get_clip_region", "gint");
-  return(C_TO_XEN_GdkRegion_(gdk_pango_layout_line_get_clip_region(XEN_TO_C_PangoLayoutLine_(line), XEN_TO_C_gint(x_origin), 
-                                                                   XEN_TO_C_gint(y_origin), XEN_TO_C_gint_(index_ranges), 
-                                                                   XEN_TO_C_gint(n_ranges))));
-}
-
-static XEN gxg_gdk_pango_layout_get_clip_region(XEN layout, XEN x_origin, XEN y_origin, XEN index_ranges, XEN n_ranges)
-{
-  #define H_gdk_pango_layout_get_clip_region "GdkRegion* gdk_pango_layout_get_clip_region(PangoLayout* layout, \
-gint x_origin, gint y_origin, gint* index_ranges, gint n_ranges)"
-  XEN_ASSERT_TYPE(XEN_PangoLayout__P(layout), layout, 1, "gdk_pango_layout_get_clip_region", "PangoLayout*");
-  XEN_ASSERT_TYPE(XEN_gint_P(x_origin), x_origin, 2, "gdk_pango_layout_get_clip_region", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(y_origin), y_origin, 3, "gdk_pango_layout_get_clip_region", "gint");
-  XEN_ASSERT_TYPE(XEN_gint__P(index_ranges), index_ranges, 4, "gdk_pango_layout_get_clip_region", "gint*");
-  XEN_ASSERT_TYPE(XEN_gint_P(n_ranges), n_ranges, 5, "gdk_pango_layout_get_clip_region", "gint");
-  return(C_TO_XEN_GdkRegion_(gdk_pango_layout_get_clip_region(XEN_TO_C_PangoLayout_(layout), XEN_TO_C_gint(x_origin), XEN_TO_C_gint(y_origin), 
-                                                              XEN_TO_C_gint_(index_ranges), XEN_TO_C_gint(n_ranges))));
-}
-
 static XEN gxg_gdk_pango_attr_stipple_new(XEN stipple)
 {
   #define H_gdk_pango_attr_stipple_new "PangoAttribute* gdk_pango_attr_stipple_new(GdkBitmap* stipple)"
@@ -3464,152 +3411,6 @@ static XEN gxg_gdk_utf8_to_string_target(XEN str)
    g_free(result);
    return(rtn);
   }
-}
-
-static XEN gxg_gdk_region_new(void)
-{
-  #define H_gdk_region_new "GdkRegion* gdk_region_new( void)"
-  return(C_TO_XEN_GdkRegion_(gdk_region_new()));
-}
-
-static XEN gxg_gdk_region_polygon(XEN points, XEN npoints, XEN fill_rule)
-{
-  #define H_gdk_region_polygon "GdkRegion* gdk_region_polygon(GdkPoint* points, gint npoints, GdkFillRule fill_rule)"
-  XEN_ASSERT_TYPE(XEN_GdkPoint__P(points), points, 1, "gdk_region_polygon", "GdkPoint*");
-  XEN_ASSERT_TYPE(XEN_gint_P(npoints), npoints, 2, "gdk_region_polygon", "gint");
-  XEN_ASSERT_TYPE(XEN_GdkFillRule_P(fill_rule), fill_rule, 3, "gdk_region_polygon", "GdkFillRule");
-  return(C_TO_XEN_GdkRegion_(gdk_region_polygon(XEN_TO_C_GdkPoint_(points), XEN_TO_C_gint(npoints), XEN_TO_C_GdkFillRule(fill_rule))));
-}
-
-static XEN gxg_gdk_region_copy(XEN region)
-{
-  #define H_gdk_region_copy "GdkRegion* gdk_region_copy(GdkRegion* region)"
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 1, "gdk_region_copy", "GdkRegion*");
-  return(C_TO_XEN_GdkRegion_(gdk_region_copy(XEN_TO_C_GdkRegion_(region))));
-}
-
-static XEN gxg_gdk_region_rectangle(XEN rectangle)
-{
-  #define H_gdk_region_rectangle "GdkRegion* gdk_region_rectangle(GdkRectangle* rectangle)"
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(rectangle), rectangle, 1, "gdk_region_rectangle", "GdkRectangle*");
-  return(C_TO_XEN_GdkRegion_(gdk_region_rectangle(XEN_TO_C_GdkRectangle_(rectangle))));
-}
-
-static XEN gxg_gdk_region_destroy(XEN region)
-{
-  #define H_gdk_region_destroy "void gdk_region_destroy(GdkRegion* region)"
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 1, "gdk_region_destroy", "GdkRegion*");
-  gdk_region_destroy(XEN_TO_C_GdkRegion_(region));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_region_get_clipbox(XEN region, XEN rectangle)
-{
-  #define H_gdk_region_get_clipbox "void gdk_region_get_clipbox(GdkRegion* region, GdkRectangle* rectangle)"
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 1, "gdk_region_get_clipbox", "GdkRegion*");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(rectangle), rectangle, 2, "gdk_region_get_clipbox", "GdkRectangle*");
-  gdk_region_get_clipbox(XEN_TO_C_GdkRegion_(region), XEN_TO_C_GdkRectangle_(rectangle));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_region_get_rectangles(XEN region, XEN ignore_rectangles, XEN ignore_n_rectangles)
-{
-  #define H_gdk_region_get_rectangles "void gdk_region_get_rectangles(GdkRegion* region, GdkRectangle** [rectangles], \
-gint* [n_rectangles])"
-  GdkRectangle* ref_rectangles = NULL;
-  gint ref_n_rectangles;
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 1, "gdk_region_get_rectangles", "GdkRegion*");
-  gdk_region_get_rectangles(XEN_TO_C_GdkRegion_(region), &ref_rectangles, &ref_n_rectangles);
-  return(XEN_LIST_2(C_TO_XEN_GdkRectangle_(ref_rectangles), C_TO_XEN_gint(ref_n_rectangles)));
-}
-
-static XEN gxg_gdk_region_empty(XEN region)
-{
-  #define H_gdk_region_empty "gboolean gdk_region_empty(GdkRegion* region)"
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 1, "gdk_region_empty", "GdkRegion*");
-  return(C_TO_XEN_gboolean(gdk_region_empty(XEN_TO_C_GdkRegion_(region))));
-}
-
-static XEN gxg_gdk_region_equal(XEN region1, XEN region2)
-{
-  #define H_gdk_region_equal "gboolean gdk_region_equal(GdkRegion* region1, GdkRegion* region2)"
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region1), region1, 1, "gdk_region_equal", "GdkRegion*");
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region2), region2, 2, "gdk_region_equal", "GdkRegion*");
-  return(C_TO_XEN_gboolean(gdk_region_equal(XEN_TO_C_GdkRegion_(region1), XEN_TO_C_GdkRegion_(region2))));
-}
-
-static XEN gxg_gdk_region_point_in(XEN region, XEN x, XEN y)
-{
-  #define H_gdk_region_point_in "gboolean gdk_region_point_in(GdkRegion* region, int x, int y)"
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 1, "gdk_region_point_in", "GdkRegion*");
-  XEN_ASSERT_TYPE(XEN_int_P(x), x, 2, "gdk_region_point_in", "int");
-  XEN_ASSERT_TYPE(XEN_int_P(y), y, 3, "gdk_region_point_in", "int");
-  return(C_TO_XEN_gboolean(gdk_region_point_in(XEN_TO_C_GdkRegion_(region), XEN_TO_C_int(x), XEN_TO_C_int(y))));
-}
-
-static XEN gxg_gdk_region_offset(XEN region, XEN dx, XEN dy)
-{
-  #define H_gdk_region_offset "void gdk_region_offset(GdkRegion* region, gint dx, gint dy)"
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 1, "gdk_region_offset", "GdkRegion*");
-  XEN_ASSERT_TYPE(XEN_gint_P(dx), dx, 2, "gdk_region_offset", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(dy), dy, 3, "gdk_region_offset", "gint");
-  gdk_region_offset(XEN_TO_C_GdkRegion_(region), XEN_TO_C_gint(dx), XEN_TO_C_gint(dy));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_region_shrink(XEN region, XEN dx, XEN dy)
-{
-  #define H_gdk_region_shrink "void gdk_region_shrink(GdkRegion* region, gint dx, gint dy)"
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 1, "gdk_region_shrink", "GdkRegion*");
-  XEN_ASSERT_TYPE(XEN_gint_P(dx), dx, 2, "gdk_region_shrink", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(dy), dy, 3, "gdk_region_shrink", "gint");
-  gdk_region_shrink(XEN_TO_C_GdkRegion_(region), XEN_TO_C_gint(dx), XEN_TO_C_gint(dy));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_region_union_with_rect(XEN region, XEN rect)
-{
-  #define H_gdk_region_union_with_rect "void gdk_region_union_with_rect(GdkRegion* region, GdkRectangle* rect)"
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 1, "gdk_region_union_with_rect", "GdkRegion*");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(rect), rect, 2, "gdk_region_union_with_rect", "GdkRectangle*");
-  gdk_region_union_with_rect(XEN_TO_C_GdkRegion_(region), XEN_TO_C_GdkRectangle_(rect));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_region_intersect(XEN source1, XEN source2)
-{
-  #define H_gdk_region_intersect "void gdk_region_intersect(GdkRegion* source1, GdkRegion* source2)"
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(source1), source1, 1, "gdk_region_intersect", "GdkRegion*");
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(source2), source2, 2, "gdk_region_intersect", "GdkRegion*");
-  gdk_region_intersect(XEN_TO_C_GdkRegion_(source1), XEN_TO_C_GdkRegion_(source2));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_region_union(XEN source1, XEN source2)
-{
-  #define H_gdk_region_union "void gdk_region_union(GdkRegion* source1, GdkRegion* source2)"
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(source1), source1, 1, "gdk_region_union", "GdkRegion*");
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(source2), source2, 2, "gdk_region_union", "GdkRegion*");
-  gdk_region_union(XEN_TO_C_GdkRegion_(source1), XEN_TO_C_GdkRegion_(source2));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_region_subtract(XEN source1, XEN source2)
-{
-  #define H_gdk_region_subtract "void gdk_region_subtract(GdkRegion* source1, GdkRegion* source2)"
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(source1), source1, 1, "gdk_region_subtract", "GdkRegion*");
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(source2), source2, 2, "gdk_region_subtract", "GdkRegion*");
-  gdk_region_subtract(XEN_TO_C_GdkRegion_(source1), XEN_TO_C_GdkRegion_(source2));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_region_xor(XEN source1, XEN source2)
-{
-  #define H_gdk_region_xor "void gdk_region_xor(GdkRegion* source1, GdkRegion* source2)"
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(source1), source1, 1, "gdk_region_xor", "GdkRegion*");
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(source2), source2, 2, "gdk_region_xor", "GdkRegion*");
-  gdk_region_xor(XEN_TO_C_GdkRegion_(source1), XEN_TO_C_GdkRegion_(source2));
-  return(XEN_FALSE);
 }
 
 static XEN gxg_gdk_rgb_find_color(XEN colormap, XEN color)
@@ -4207,19 +4008,6 @@ gint x, gint y)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_gdk_window_shape_combine_region(XEN window, XEN shape_region, XEN offset_x, XEN offset_y)
-{
-  #define H_gdk_window_shape_combine_region "void gdk_window_shape_combine_region(GdkWindow* window, \
-GdkRegion* shape_region, gint offset_x, gint offset_y)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_shape_combine_region", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(shape_region), shape_region, 2, "gdk_window_shape_combine_region", "GdkRegion*");
-  XEN_ASSERT_TYPE(XEN_gint_P(offset_x), offset_x, 3, "gdk_window_shape_combine_region", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(offset_y), offset_y, 4, "gdk_window_shape_combine_region", "gint");
-  gdk_window_shape_combine_region(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkRegion_(shape_region), XEN_TO_C_gint(offset_x), 
-                                  XEN_TO_C_gint(offset_y));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gdk_window_set_child_shapes(XEN window)
 {
   #define H_gdk_window_set_child_shapes "void gdk_window_set_child_shapes(GdkWindow* window)"
@@ -4524,44 +4312,6 @@ gboolean invalidate_children)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_gdk_window_invalidate_region(XEN window, XEN region, XEN invalidate_children)
-{
-  #define H_gdk_window_invalidate_region "void gdk_window_invalidate_region(GdkWindow* window, GdkRegion* region, \
-gboolean invalidate_children)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_invalidate_region", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 2, "gdk_window_invalidate_region", "GdkRegion*");
-  XEN_ASSERT_TYPE(XEN_gboolean_P(invalidate_children), invalidate_children, 3, "gdk_window_invalidate_region", "gboolean");
-  gdk_window_invalidate_region(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkRegion_(region), XEN_TO_C_gboolean(invalidate_children));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_window_invalidate_maybe_recurse(XEN window, XEN region, XEN func, XEN func_info)
-{
-  #define H_gdk_window_invalidate_maybe_recurse "void gdk_window_invalidate_maybe_recurse(GdkWindow* window, \
-GdkRegion* region, lambda2 func, lambda_data func_info)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_invalidate_maybe_recurse", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 2, "gdk_window_invalidate_maybe_recurse", "GdkRegion*");
-  XEN_ASSERT_TYPE(XEN_lambda2_P(func), func, 3, "gdk_window_invalidate_maybe_recurse", "lambda2");
-  if (XEN_NOT_BOUND_P(func_info)) func_info = XEN_FALSE; 
-  else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_info), func_info, 4, "gdk_window_invalidate_maybe_recurse", "lambda_data");
-  {
-    int loc;
-    XEN gxg_ptr = XEN_LIST_5(func, func_info, XEN_FALSE, XEN_FALSE, XEN_FALSE);
-    loc = xm_protect(gxg_ptr);
-    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
-    gdk_window_invalidate_maybe_recurse(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkRegion_(region), XEN_TO_C_lambda2(func), XEN_TO_C_lambda_data(func_info));
-    xm_unprotect_at(loc);
-    return(XEN_FALSE);
-   }
-}
-
-static XEN gxg_gdk_window_get_update_area(XEN window)
-{
-  #define H_gdk_window_get_update_area "GdkRegion* gdk_window_get_update_area(GdkWindow* window)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_update_area", "GdkWindow*");
-  return(C_TO_XEN_GdkRegion_(gdk_window_get_update_area(XEN_TO_C_GdkWindow_(window))));
-}
-
 static XEN gxg_gdk_window_freeze_updates(XEN window)
 {
   #define H_gdk_window_freeze_updates "void gdk_window_freeze_updates(GdkWindow* window)"
@@ -4690,15 +4440,6 @@ static XEN gxg_gdk_window_begin_paint_rect(XEN window, XEN rectangle)
   XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_begin_paint_rect", "GdkWindow*");
   XEN_ASSERT_TYPE(XEN_GdkRectangle__P(rectangle), rectangle, 2, "gdk_window_begin_paint_rect", "GdkRectangle*");
   gdk_window_begin_paint_rect(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkRectangle_(rectangle));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gdk_window_begin_paint_region(XEN window, XEN region)
-{
-  #define H_gdk_window_begin_paint_region "void gdk_window_begin_paint_region(GdkWindow* window, GdkRegion* region)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_begin_paint_region", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 2, "gdk_window_begin_paint_region", "GdkRegion*");
-  gdk_window_begin_paint_region(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkRegion_(region));
   return(XEN_FALSE);
 }
 
@@ -16519,14 +16260,6 @@ GdkRectangle* intersection)"
   return(C_TO_XEN_gboolean(gtk_widget_intersect(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GdkRectangle_(area), XEN_TO_C_GdkRectangle_(intersection))));
 }
 
-static XEN gxg_gtk_widget_region_intersect(XEN widget, XEN region)
-{
-  #define H_gtk_widget_region_intersect "GdkRegion* gtk_widget_region_intersect(GtkWidget* widget, GdkRegion* region)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_region_intersect", "GtkWidget*");
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 2, "gtk_widget_region_intersect", "GdkRegion*");
-  return(C_TO_XEN_GdkRegion_(gtk_widget_region_intersect(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_GdkRegion_(region))));
-}
-
 static XEN gxg_gtk_widget_freeze_child_notify(XEN widget)
 {
   #define H_gtk_widget_freeze_child_notify "void gtk_widget_freeze_child_notify(GtkWidget* widget)"
@@ -25865,18 +25598,6 @@ static XEN gxg_gtk_window_present_with_time(XEN window, XEN timestamp)
 #endif
 
 #if HAVE_GTK_ABOUT_DIALOG_GET_WRAP_LICENSE
-static XEN gxg_gdk_window_move_region(XEN window, XEN region, XEN dx, XEN dy)
-{
-  #define H_gdk_window_move_region "void gdk_window_move_region(GdkWindow* window, GdkRegion* region, \
-gint dx, gint dy)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_move_region", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 2, "gdk_window_move_region", "GdkRegion*");
-  XEN_ASSERT_TYPE(XEN_gint_P(dx), dx, 3, "gdk_window_move_region", "gint");
-  XEN_ASSERT_TYPE(XEN_gint_P(dy), dy, 4, "gdk_window_move_region", "gint");
-  gdk_window_move_region(XEN_TO_C_GdkWindow_(window), XEN_TO_C_GdkRegion_(region), XEN_TO_C_gint(dx), XEN_TO_C_gint(dy));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_about_dialog_get_wrap_license(XEN about)
 {
   #define H_gtk_about_dialog_get_wrap_license "gboolean gtk_about_dialog_get_wrap_license(GtkAboutDialog* about)"
@@ -28915,15 +28636,6 @@ static XEN gxg_gdk_cairo_rectangle(XEN cr, XEN rectangle)
   return(XEN_FALSE);
 }
 
-static XEN gxg_gdk_cairo_region(XEN cr, XEN region)
-{
-  #define H_gdk_cairo_region "void gdk_cairo_region(cairo_t* cr, GdkRegion* region)"
-  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "gdk_cairo_region", "cairo_t*");
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 2, "gdk_cairo_region", "GdkRegion*");
-  gdk_cairo_region(XEN_TO_C_cairo_t_(cr), XEN_TO_C_GdkRegion_(region));
-  return(XEN_FALSE);
-}
-
 #endif
 
 #if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
@@ -30953,14 +30665,6 @@ static XEN gxg_gtk_info_bar_get_message_type(XEN info_bar)
 #endif
 
 #if HAVE_GTK_STATUS_ICON_GET_TITLE
-static XEN gxg_gdk_region_rect_equal(XEN region, XEN rectangle)
-{
-  #define H_gdk_region_rect_equal "gboolean gdk_region_rect_equal(GdkRegion* region, GdkRectangle* rectangle)"
-  XEN_ASSERT_TYPE(XEN_GdkRegion__P(region), region, 1, "gdk_region_rect_equal", "GdkRegion*");
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(rectangle), rectangle, 2, "gdk_region_rect_equal", "GdkRectangle*");
-  return(C_TO_XEN_gboolean(gdk_region_rect_equal(XEN_TO_C_GdkRegion_(region), XEN_TO_C_GdkRectangle_(rectangle))));
-}
-
 static XEN gxg_gdk_window_ensure_native(XEN window)
 {
   #define H_gdk_window_ensure_native "gboolean gdk_window_ensure_native(GdkWindow* window)"
@@ -35795,8 +35499,6 @@ XEN_NARGIFY_5(gxg_gdk_draw_layout_w, gxg_gdk_draw_layout)
 XEN_NARGIFY_7(gxg_gdk_draw_layout_line_with_colors_w, gxg_gdk_draw_layout_line_with_colors)
 XEN_NARGIFY_7(gxg_gdk_draw_layout_with_colors_w, gxg_gdk_draw_layout_with_colors)
 XEN_NARGIFY_5(gxg_gdk_drawable_get_image_w, gxg_gdk_drawable_get_image)
-XEN_NARGIFY_1(gxg_gdk_drawable_get_clip_region_w, gxg_gdk_drawable_get_clip_region)
-XEN_NARGIFY_1(gxg_gdk_drawable_get_visible_region_w, gxg_gdk_drawable_get_visible_region)
 XEN_NARGIFY_0(gxg_gdk_events_pending_w, gxg_gdk_events_pending)
 XEN_NARGIFY_0(gxg_gdk_event_get_w, gxg_gdk_event_get)
 XEN_NARGIFY_0(gxg_gdk_event_peek_w, gxg_gdk_event_peek)
@@ -35825,7 +35527,6 @@ XEN_NARGIFY_3(gxg_gdk_gc_set_ts_origin_w, gxg_gdk_gc_set_ts_origin)
 XEN_NARGIFY_3(gxg_gdk_gc_set_clip_origin_w, gxg_gdk_gc_set_clip_origin)
 XEN_NARGIFY_2(gxg_gdk_gc_set_clip_mask_w, gxg_gdk_gc_set_clip_mask)
 XEN_NARGIFY_2(gxg_gdk_gc_set_clip_rectangle_w, gxg_gdk_gc_set_clip_rectangle)
-XEN_NARGIFY_2(gxg_gdk_gc_set_clip_region_w, gxg_gdk_gc_set_clip_region)
 XEN_NARGIFY_2(gxg_gdk_gc_set_subwindow_w, gxg_gdk_gc_set_subwindow)
 XEN_NARGIFY_2(gxg_gdk_gc_set_exposures_w, gxg_gdk_gc_set_exposures)
 XEN_NARGIFY_5(gxg_gdk_gc_set_line_attributes_w, gxg_gdk_gc_set_line_attributes)
@@ -35878,8 +35579,6 @@ XEN_NARGIFY_1(gxg_gdk_keyval_is_lower_w, gxg_gdk_keyval_is_lower)
 XEN_NARGIFY_1(gxg_gdk_keyval_to_unicode_w, gxg_gdk_keyval_to_unicode)
 XEN_NARGIFY_1(gxg_gdk_unicode_to_keyval_w, gxg_gdk_unicode_to_keyval)
 XEN_NARGIFY_0(gxg_gdk_pango_context_get_w, gxg_gdk_pango_context_get)
-XEN_NARGIFY_5(gxg_gdk_pango_layout_line_get_clip_region_w, gxg_gdk_pango_layout_line_get_clip_region)
-XEN_NARGIFY_5(gxg_gdk_pango_layout_get_clip_region_w, gxg_gdk_pango_layout_get_clip_region)
 XEN_NARGIFY_1(gxg_gdk_pango_attr_stipple_new_w, gxg_gdk_pango_attr_stipple_new)
 XEN_NARGIFY_1(gxg_gdk_pango_attr_embossed_new_w, gxg_gdk_pango_attr_embossed_new)
 XEN_NARGIFY_9(gxg_gdk_pixbuf_render_threshold_alpha_w, gxg_gdk_pixbuf_render_threshold_alpha)
@@ -35895,23 +35594,6 @@ XEN_VARGIFY(gxg_gdk_property_get_w, gxg_gdk_property_get)
 XEN_NARGIFY_7(gxg_gdk_property_change_w, gxg_gdk_property_change)
 XEN_NARGIFY_2(gxg_gdk_property_delete_w, gxg_gdk_property_delete)
 XEN_NARGIFY_1(gxg_gdk_utf8_to_string_target_w, gxg_gdk_utf8_to_string_target)
-XEN_NARGIFY_0(gxg_gdk_region_new_w, gxg_gdk_region_new)
-XEN_NARGIFY_3(gxg_gdk_region_polygon_w, gxg_gdk_region_polygon)
-XEN_NARGIFY_1(gxg_gdk_region_copy_w, gxg_gdk_region_copy)
-XEN_NARGIFY_1(gxg_gdk_region_rectangle_w, gxg_gdk_region_rectangle)
-XEN_NARGIFY_1(gxg_gdk_region_destroy_w, gxg_gdk_region_destroy)
-XEN_NARGIFY_2(gxg_gdk_region_get_clipbox_w, gxg_gdk_region_get_clipbox)
-XEN_ARGIFY_3(gxg_gdk_region_get_rectangles_w, gxg_gdk_region_get_rectangles)
-XEN_NARGIFY_1(gxg_gdk_region_empty_w, gxg_gdk_region_empty)
-XEN_NARGIFY_2(gxg_gdk_region_equal_w, gxg_gdk_region_equal)
-XEN_NARGIFY_3(gxg_gdk_region_point_in_w, gxg_gdk_region_point_in)
-XEN_NARGIFY_3(gxg_gdk_region_offset_w, gxg_gdk_region_offset)
-XEN_NARGIFY_3(gxg_gdk_region_shrink_w, gxg_gdk_region_shrink)
-XEN_NARGIFY_2(gxg_gdk_region_union_with_rect_w, gxg_gdk_region_union_with_rect)
-XEN_NARGIFY_2(gxg_gdk_region_intersect_w, gxg_gdk_region_intersect)
-XEN_NARGIFY_2(gxg_gdk_region_union_w, gxg_gdk_region_union)
-XEN_NARGIFY_2(gxg_gdk_region_subtract_w, gxg_gdk_region_subtract)
-XEN_NARGIFY_2(gxg_gdk_region_xor_w, gxg_gdk_region_xor)
 XEN_NARGIFY_2(gxg_gdk_rgb_find_color_w, gxg_gdk_rgb_find_color)
 XEN_NARGIFY_9(gxg_gdk_draw_rgb_image_w, gxg_gdk_draw_rgb_image)
 XEN_VARGIFY(gxg_gdk_draw_rgb_image_dithalign_w, gxg_gdk_draw_rgb_image_dithalign)
@@ -35966,7 +35648,6 @@ XEN_ARGIFY_3(gxg_gdk_window_add_filter_w, gxg_gdk_window_add_filter)
 XEN_ARGIFY_3(gxg_gdk_window_remove_filter_w, gxg_gdk_window_remove_filter)
 XEN_NARGIFY_3(gxg_gdk_window_scroll_w, gxg_gdk_window_scroll)
 XEN_NARGIFY_4(gxg_gdk_window_shape_combine_mask_w, gxg_gdk_window_shape_combine_mask)
-XEN_NARGIFY_4(gxg_gdk_window_shape_combine_region_w, gxg_gdk_window_shape_combine_region)
 XEN_NARGIFY_1(gxg_gdk_window_set_child_shapes_w, gxg_gdk_window_set_child_shapes)
 XEN_NARGIFY_1(gxg_gdk_window_merge_child_shapes_w, gxg_gdk_window_merge_child_shapes)
 XEN_NARGIFY_1(gxg_gdk_window_is_visible_w, gxg_gdk_window_is_visible)
@@ -36001,9 +35682,6 @@ XEN_NARGIFY_1(gxg_gdk_window_register_dnd_w, gxg_gdk_window_register_dnd)
 XEN_NARGIFY_6(gxg_gdk_window_begin_resize_drag_w, gxg_gdk_window_begin_resize_drag)
 XEN_NARGIFY_5(gxg_gdk_window_begin_move_drag_w, gxg_gdk_window_begin_move_drag)
 XEN_NARGIFY_3(gxg_gdk_window_invalidate_rect_w, gxg_gdk_window_invalidate_rect)
-XEN_NARGIFY_3(gxg_gdk_window_invalidate_region_w, gxg_gdk_window_invalidate_region)
-XEN_ARGIFY_4(gxg_gdk_window_invalidate_maybe_recurse_w, gxg_gdk_window_invalidate_maybe_recurse)
-XEN_NARGIFY_1(gxg_gdk_window_get_update_area_w, gxg_gdk_window_get_update_area)
 XEN_NARGIFY_1(gxg_gdk_window_freeze_updates_w, gxg_gdk_window_freeze_updates)
 XEN_NARGIFY_1(gxg_gdk_window_thaw_updates_w, gxg_gdk_window_thaw_updates)
 XEN_NARGIFY_0(gxg_gdk_window_process_all_updates_w, gxg_gdk_window_process_all_updates)
@@ -36018,7 +35696,6 @@ XEN_NARGIFY_2(gxg_gdk_window_set_modal_hint_w, gxg_gdk_window_set_modal_hint)
 XEN_NARGIFY_3(gxg_gdk_window_set_geometry_hints_w, gxg_gdk_window_set_geometry_hints)
 XEN_NARGIFY_1(gxg_gdk_set_sm_client_id_w, gxg_gdk_set_sm_client_id)
 XEN_NARGIFY_2(gxg_gdk_window_begin_paint_rect_w, gxg_gdk_window_begin_paint_rect)
-XEN_NARGIFY_2(gxg_gdk_window_begin_paint_region_w, gxg_gdk_window_begin_paint_region)
 XEN_NARGIFY_1(gxg_gdk_window_end_paint_w, gxg_gdk_window_end_paint)
 XEN_NARGIFY_2(gxg_gdk_window_set_title_w, gxg_gdk_window_set_title)
 XEN_NARGIFY_2(gxg_gdk_window_set_role_w, gxg_gdk_window_set_role)
@@ -37208,7 +36885,6 @@ XEN_NARGIFY_1(gxg_gtk_widget_activate_w, gxg_gtk_widget_activate)
 XEN_NARGIFY_3(gxg_gtk_widget_set_scroll_adjustments_w, gxg_gtk_widget_set_scroll_adjustments)
 XEN_NARGIFY_2(gxg_gtk_widget_reparent_w, gxg_gtk_widget_reparent)
 XEN_NARGIFY_3(gxg_gtk_widget_intersect_w, gxg_gtk_widget_intersect)
-XEN_NARGIFY_2(gxg_gtk_widget_region_intersect_w, gxg_gtk_widget_region_intersect)
 XEN_NARGIFY_1(gxg_gtk_widget_freeze_child_notify_w, gxg_gtk_widget_freeze_child_notify)
 XEN_NARGIFY_2(gxg_gtk_widget_child_notify_w, gxg_gtk_widget_child_notify)
 XEN_NARGIFY_1(gxg_gtk_widget_thaw_child_notify_w, gxg_gtk_widget_thaw_child_notify)
@@ -38254,7 +37930,6 @@ XEN_NARGIFY_2(gxg_gtk_window_present_with_time_w, gxg_gtk_window_present_with_ti
 #endif
 
 #if HAVE_GTK_ABOUT_DIALOG_GET_WRAP_LICENSE
-XEN_NARGIFY_4(gxg_gdk_window_move_region_w, gxg_gdk_window_move_region)
 XEN_NARGIFY_1(gxg_gtk_about_dialog_get_wrap_license_w, gxg_gtk_about_dialog_get_wrap_license)
 XEN_NARGIFY_2(gxg_gtk_about_dialog_set_wrap_license_w, gxg_gtk_about_dialog_set_wrap_license)
 XEN_NARGIFY_2(gxg_gtk_file_chooser_set_do_overwrite_confirmation_w, gxg_gtk_file_chooser_set_do_overwrite_confirmation)
@@ -38595,7 +38270,6 @@ XEN_NARGIFY_2(gxg_gdk_cairo_set_source_color_w, gxg_gdk_cairo_set_source_color)
 XEN_NARGIFY_4(gxg_gdk_cairo_set_source_pixbuf_w, gxg_gdk_cairo_set_source_pixbuf)
 XEN_NARGIFY_4(gxg_gdk_cairo_set_source_pixmap_w, gxg_gdk_cairo_set_source_pixmap)
 XEN_NARGIFY_2(gxg_gdk_cairo_rectangle_w, gxg_gdk_cairo_rectangle)
-XEN_NARGIFY_2(gxg_gdk_cairo_region_w, gxg_gdk_cairo_region)
 #endif
 
 #if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
@@ -38833,7 +38507,6 @@ XEN_NARGIFY_1(gxg_gtk_info_bar_get_message_type_w, gxg_gtk_info_bar_get_message_
 #endif
 
 #if HAVE_GTK_STATUS_ICON_GET_TITLE
-XEN_NARGIFY_2(gxg_gdk_region_rect_equal_w, gxg_gdk_region_rect_equal)
 XEN_NARGIFY_1(gxg_gdk_window_ensure_native_w, gxg_gdk_window_ensure_native)
 XEN_ARGIFY_5(gxg_gdk_window_get_root_coords_w, gxg_gdk_window_get_root_coords)
 XEN_NARGIFY_1(gxg_gdk_offscreen_window_get_pixmap_w, gxg_gdk_offscreen_window_get_pixmap)
@@ -39830,8 +39503,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gdk_draw_layout_line_with_colors_w gxg_gdk_draw_layout_line_with_colors
 #define gxg_gdk_draw_layout_with_colors_w gxg_gdk_draw_layout_with_colors
 #define gxg_gdk_drawable_get_image_w gxg_gdk_drawable_get_image
-#define gxg_gdk_drawable_get_clip_region_w gxg_gdk_drawable_get_clip_region
-#define gxg_gdk_drawable_get_visible_region_w gxg_gdk_drawable_get_visible_region
 #define gxg_gdk_events_pending_w gxg_gdk_events_pending
 #define gxg_gdk_event_get_w gxg_gdk_event_get
 #define gxg_gdk_event_peek_w gxg_gdk_event_peek
@@ -39860,7 +39531,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gdk_gc_set_clip_origin_w gxg_gdk_gc_set_clip_origin
 #define gxg_gdk_gc_set_clip_mask_w gxg_gdk_gc_set_clip_mask
 #define gxg_gdk_gc_set_clip_rectangle_w gxg_gdk_gc_set_clip_rectangle
-#define gxg_gdk_gc_set_clip_region_w gxg_gdk_gc_set_clip_region
 #define gxg_gdk_gc_set_subwindow_w gxg_gdk_gc_set_subwindow
 #define gxg_gdk_gc_set_exposures_w gxg_gdk_gc_set_exposures
 #define gxg_gdk_gc_set_line_attributes_w gxg_gdk_gc_set_line_attributes
@@ -39913,8 +39583,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gdk_keyval_to_unicode_w gxg_gdk_keyval_to_unicode
 #define gxg_gdk_unicode_to_keyval_w gxg_gdk_unicode_to_keyval
 #define gxg_gdk_pango_context_get_w gxg_gdk_pango_context_get
-#define gxg_gdk_pango_layout_line_get_clip_region_w gxg_gdk_pango_layout_line_get_clip_region
-#define gxg_gdk_pango_layout_get_clip_region_w gxg_gdk_pango_layout_get_clip_region
 #define gxg_gdk_pango_attr_stipple_new_w gxg_gdk_pango_attr_stipple_new
 #define gxg_gdk_pango_attr_embossed_new_w gxg_gdk_pango_attr_embossed_new
 #define gxg_gdk_pixbuf_render_threshold_alpha_w gxg_gdk_pixbuf_render_threshold_alpha
@@ -39930,23 +39598,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gdk_property_change_w gxg_gdk_property_change
 #define gxg_gdk_property_delete_w gxg_gdk_property_delete
 #define gxg_gdk_utf8_to_string_target_w gxg_gdk_utf8_to_string_target
-#define gxg_gdk_region_new_w gxg_gdk_region_new
-#define gxg_gdk_region_polygon_w gxg_gdk_region_polygon
-#define gxg_gdk_region_copy_w gxg_gdk_region_copy
-#define gxg_gdk_region_rectangle_w gxg_gdk_region_rectangle
-#define gxg_gdk_region_destroy_w gxg_gdk_region_destroy
-#define gxg_gdk_region_get_clipbox_w gxg_gdk_region_get_clipbox
-#define gxg_gdk_region_get_rectangles_w gxg_gdk_region_get_rectangles
-#define gxg_gdk_region_empty_w gxg_gdk_region_empty
-#define gxg_gdk_region_equal_w gxg_gdk_region_equal
-#define gxg_gdk_region_point_in_w gxg_gdk_region_point_in
-#define gxg_gdk_region_offset_w gxg_gdk_region_offset
-#define gxg_gdk_region_shrink_w gxg_gdk_region_shrink
-#define gxg_gdk_region_union_with_rect_w gxg_gdk_region_union_with_rect
-#define gxg_gdk_region_intersect_w gxg_gdk_region_intersect
-#define gxg_gdk_region_union_w gxg_gdk_region_union
-#define gxg_gdk_region_subtract_w gxg_gdk_region_subtract
-#define gxg_gdk_region_xor_w gxg_gdk_region_xor
 #define gxg_gdk_rgb_find_color_w gxg_gdk_rgb_find_color
 #define gxg_gdk_draw_rgb_image_w gxg_gdk_draw_rgb_image
 #define gxg_gdk_draw_rgb_image_dithalign_w gxg_gdk_draw_rgb_image_dithalign
@@ -40001,7 +39652,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gdk_window_remove_filter_w gxg_gdk_window_remove_filter
 #define gxg_gdk_window_scroll_w gxg_gdk_window_scroll
 #define gxg_gdk_window_shape_combine_mask_w gxg_gdk_window_shape_combine_mask
-#define gxg_gdk_window_shape_combine_region_w gxg_gdk_window_shape_combine_region
 #define gxg_gdk_window_set_child_shapes_w gxg_gdk_window_set_child_shapes
 #define gxg_gdk_window_merge_child_shapes_w gxg_gdk_window_merge_child_shapes
 #define gxg_gdk_window_is_visible_w gxg_gdk_window_is_visible
@@ -40036,9 +39686,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gdk_window_begin_resize_drag_w gxg_gdk_window_begin_resize_drag
 #define gxg_gdk_window_begin_move_drag_w gxg_gdk_window_begin_move_drag
 #define gxg_gdk_window_invalidate_rect_w gxg_gdk_window_invalidate_rect
-#define gxg_gdk_window_invalidate_region_w gxg_gdk_window_invalidate_region
-#define gxg_gdk_window_invalidate_maybe_recurse_w gxg_gdk_window_invalidate_maybe_recurse
-#define gxg_gdk_window_get_update_area_w gxg_gdk_window_get_update_area
 #define gxg_gdk_window_freeze_updates_w gxg_gdk_window_freeze_updates
 #define gxg_gdk_window_thaw_updates_w gxg_gdk_window_thaw_updates
 #define gxg_gdk_window_process_all_updates_w gxg_gdk_window_process_all_updates
@@ -40053,7 +39700,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gdk_window_set_geometry_hints_w gxg_gdk_window_set_geometry_hints
 #define gxg_gdk_set_sm_client_id_w gxg_gdk_set_sm_client_id
 #define gxg_gdk_window_begin_paint_rect_w gxg_gdk_window_begin_paint_rect
-#define gxg_gdk_window_begin_paint_region_w gxg_gdk_window_begin_paint_region
 #define gxg_gdk_window_end_paint_w gxg_gdk_window_end_paint
 #define gxg_gdk_window_set_title_w gxg_gdk_window_set_title
 #define gxg_gdk_window_set_role_w gxg_gdk_window_set_role
@@ -41243,7 +40889,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_widget_set_scroll_adjustments_w gxg_gtk_widget_set_scroll_adjustments
 #define gxg_gtk_widget_reparent_w gxg_gtk_widget_reparent
 #define gxg_gtk_widget_intersect_w gxg_gtk_widget_intersect
-#define gxg_gtk_widget_region_intersect_w gxg_gtk_widget_region_intersect
 #define gxg_gtk_widget_freeze_child_notify_w gxg_gtk_widget_freeze_child_notify
 #define gxg_gtk_widget_child_notify_w gxg_gtk_widget_child_notify
 #define gxg_gtk_widget_thaw_child_notify_w gxg_gtk_widget_thaw_child_notify
@@ -42289,7 +41934,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #endif
 
 #if HAVE_GTK_ABOUT_DIALOG_GET_WRAP_LICENSE
-#define gxg_gdk_window_move_region_w gxg_gdk_window_move_region
 #define gxg_gtk_about_dialog_get_wrap_license_w gxg_gtk_about_dialog_get_wrap_license
 #define gxg_gtk_about_dialog_set_wrap_license_w gxg_gtk_about_dialog_set_wrap_license
 #define gxg_gtk_file_chooser_set_do_overwrite_confirmation_w gxg_gtk_file_chooser_set_do_overwrite_confirmation
@@ -42630,7 +42274,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gdk_cairo_set_source_pixbuf_w gxg_gdk_cairo_set_source_pixbuf
 #define gxg_gdk_cairo_set_source_pixmap_w gxg_gdk_cairo_set_source_pixmap
 #define gxg_gdk_cairo_rectangle_w gxg_gdk_cairo_rectangle
-#define gxg_gdk_cairo_region_w gxg_gdk_cairo_region
 #endif
 
 #if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
@@ -42868,7 +42511,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #endif
 
 #if HAVE_GTK_STATUS_ICON_GET_TITLE
-#define gxg_gdk_region_rect_equal_w gxg_gdk_region_rect_equal
 #define gxg_gdk_window_ensure_native_w gxg_gdk_window_ensure_native
 #define gxg_gdk_window_get_root_coords_w gxg_gdk_window_get_root_coords
 #define gxg_gdk_offscreen_window_get_pixmap_w gxg_gdk_offscreen_window_get_pixmap
@@ -43872,8 +43514,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_draw_layout_line_with_colors, gxg_gdk_draw_layout_line_with_colors_w, 7, 0, 0, H_gdk_draw_layout_line_with_colors);
   XG_DEFINE_PROCEDURE(gdk_draw_layout_with_colors, gxg_gdk_draw_layout_with_colors_w, 7, 0, 0, H_gdk_draw_layout_with_colors);
   XG_DEFINE_PROCEDURE(gdk_drawable_get_image, gxg_gdk_drawable_get_image_w, 5, 0, 0, H_gdk_drawable_get_image);
-  XG_DEFINE_PROCEDURE(gdk_drawable_get_clip_region, gxg_gdk_drawable_get_clip_region_w, 1, 0, 0, H_gdk_drawable_get_clip_region);
-  XG_DEFINE_PROCEDURE(gdk_drawable_get_visible_region, gxg_gdk_drawable_get_visible_region_w, 1, 0, 0, H_gdk_drawable_get_visible_region);
   XG_DEFINE_PROCEDURE(gdk_events_pending, gxg_gdk_events_pending_w, 0, 0, 0, H_gdk_events_pending);
   XG_DEFINE_PROCEDURE(gdk_event_get, gxg_gdk_event_get_w, 0, 0, 0, H_gdk_event_get);
   XG_DEFINE_PROCEDURE(gdk_event_peek, gxg_gdk_event_peek_w, 0, 0, 0, H_gdk_event_peek);
@@ -43902,7 +43542,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_gc_set_clip_origin, gxg_gdk_gc_set_clip_origin_w, 3, 0, 0, H_gdk_gc_set_clip_origin);
   XG_DEFINE_PROCEDURE(gdk_gc_set_clip_mask, gxg_gdk_gc_set_clip_mask_w, 2, 0, 0, H_gdk_gc_set_clip_mask);
   XG_DEFINE_PROCEDURE(gdk_gc_set_clip_rectangle, gxg_gdk_gc_set_clip_rectangle_w, 2, 0, 0, H_gdk_gc_set_clip_rectangle);
-  XG_DEFINE_PROCEDURE(gdk_gc_set_clip_region, gxg_gdk_gc_set_clip_region_w, 2, 0, 0, H_gdk_gc_set_clip_region);
   XG_DEFINE_PROCEDURE(gdk_gc_set_subwindow, gxg_gdk_gc_set_subwindow_w, 2, 0, 0, H_gdk_gc_set_subwindow);
   XG_DEFINE_PROCEDURE(gdk_gc_set_exposures, gxg_gdk_gc_set_exposures_w, 2, 0, 0, H_gdk_gc_set_exposures);
   XG_DEFINE_PROCEDURE(gdk_gc_set_line_attributes, gxg_gdk_gc_set_line_attributes_w, 5, 0, 0, H_gdk_gc_set_line_attributes);
@@ -43955,8 +43594,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_keyval_to_unicode, gxg_gdk_keyval_to_unicode_w, 1, 0, 0, H_gdk_keyval_to_unicode);
   XG_DEFINE_PROCEDURE(gdk_unicode_to_keyval, gxg_gdk_unicode_to_keyval_w, 1, 0, 0, H_gdk_unicode_to_keyval);
   XG_DEFINE_PROCEDURE(gdk_pango_context_get, gxg_gdk_pango_context_get_w, 0, 0, 0, H_gdk_pango_context_get);
-  XG_DEFINE_PROCEDURE(gdk_pango_layout_line_get_clip_region, gxg_gdk_pango_layout_line_get_clip_region_w, 5, 0, 0, H_gdk_pango_layout_line_get_clip_region);
-  XG_DEFINE_PROCEDURE(gdk_pango_layout_get_clip_region, gxg_gdk_pango_layout_get_clip_region_w, 5, 0, 0, H_gdk_pango_layout_get_clip_region);
   XG_DEFINE_PROCEDURE(gdk_pango_attr_stipple_new, gxg_gdk_pango_attr_stipple_new_w, 1, 0, 0, H_gdk_pango_attr_stipple_new);
   XG_DEFINE_PROCEDURE(gdk_pango_attr_embossed_new, gxg_gdk_pango_attr_embossed_new_w, 1, 0, 0, H_gdk_pango_attr_embossed_new);
   XG_DEFINE_PROCEDURE(gdk_pixbuf_render_threshold_alpha, gxg_gdk_pixbuf_render_threshold_alpha_w, 9, 0, 0, H_gdk_pixbuf_render_threshold_alpha);
@@ -43972,23 +43609,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_property_change, gxg_gdk_property_change_w, 7, 0, 0, H_gdk_property_change);
   XG_DEFINE_PROCEDURE(gdk_property_delete, gxg_gdk_property_delete_w, 2, 0, 0, H_gdk_property_delete);
   XG_DEFINE_PROCEDURE(gdk_utf8_to_string_target, gxg_gdk_utf8_to_string_target_w, 1, 0, 0, H_gdk_utf8_to_string_target);
-  XG_DEFINE_PROCEDURE(gdk_region_new, gxg_gdk_region_new_w, 0, 0, 0, H_gdk_region_new);
-  XG_DEFINE_PROCEDURE(gdk_region_polygon, gxg_gdk_region_polygon_w, 3, 0, 0, H_gdk_region_polygon);
-  XG_DEFINE_PROCEDURE(gdk_region_copy, gxg_gdk_region_copy_w, 1, 0, 0, H_gdk_region_copy);
-  XG_DEFINE_PROCEDURE(gdk_region_rectangle, gxg_gdk_region_rectangle_w, 1, 0, 0, H_gdk_region_rectangle);
-  XG_DEFINE_PROCEDURE(gdk_region_destroy, gxg_gdk_region_destroy_w, 1, 0, 0, H_gdk_region_destroy);
-  XG_DEFINE_PROCEDURE(gdk_region_get_clipbox, gxg_gdk_region_get_clipbox_w, 2, 0, 0, H_gdk_region_get_clipbox);
-  XG_DEFINE_PROCEDURE(gdk_region_get_rectangles, gxg_gdk_region_get_rectangles_w, 1, 2, 0, H_gdk_region_get_rectangles);
-  XG_DEFINE_PROCEDURE(gdk_region_empty, gxg_gdk_region_empty_w, 1, 0, 0, H_gdk_region_empty);
-  XG_DEFINE_PROCEDURE(gdk_region_equal, gxg_gdk_region_equal_w, 2, 0, 0, H_gdk_region_equal);
-  XG_DEFINE_PROCEDURE(gdk_region_point_in, gxg_gdk_region_point_in_w, 3, 0, 0, H_gdk_region_point_in);
-  XG_DEFINE_PROCEDURE(gdk_region_offset, gxg_gdk_region_offset_w, 3, 0, 0, H_gdk_region_offset);
-  XG_DEFINE_PROCEDURE(gdk_region_shrink, gxg_gdk_region_shrink_w, 3, 0, 0, H_gdk_region_shrink);
-  XG_DEFINE_PROCEDURE(gdk_region_union_with_rect, gxg_gdk_region_union_with_rect_w, 2, 0, 0, H_gdk_region_union_with_rect);
-  XG_DEFINE_PROCEDURE(gdk_region_intersect, gxg_gdk_region_intersect_w, 2, 0, 0, H_gdk_region_intersect);
-  XG_DEFINE_PROCEDURE(gdk_region_union, gxg_gdk_region_union_w, 2, 0, 0, H_gdk_region_union);
-  XG_DEFINE_PROCEDURE(gdk_region_subtract, gxg_gdk_region_subtract_w, 2, 0, 0, H_gdk_region_subtract);
-  XG_DEFINE_PROCEDURE(gdk_region_xor, gxg_gdk_region_xor_w, 2, 0, 0, H_gdk_region_xor);
   XG_DEFINE_PROCEDURE(gdk_rgb_find_color, gxg_gdk_rgb_find_color_w, 2, 0, 0, H_gdk_rgb_find_color);
   XG_DEFINE_PROCEDURE(gdk_draw_rgb_image, gxg_gdk_draw_rgb_image_w, 9, 0, 0, H_gdk_draw_rgb_image);
   XG_DEFINE_PROCEDURE(gdk_draw_rgb_image_dithalign, gxg_gdk_draw_rgb_image_dithalign_w, 0, 0, 1, H_gdk_draw_rgb_image_dithalign);
@@ -44043,7 +43663,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_window_remove_filter, gxg_gdk_window_remove_filter_w, 2, 1, 0, H_gdk_window_remove_filter);
   XG_DEFINE_PROCEDURE(gdk_window_scroll, gxg_gdk_window_scroll_w, 3, 0, 0, H_gdk_window_scroll);
   XG_DEFINE_PROCEDURE(gdk_window_shape_combine_mask, gxg_gdk_window_shape_combine_mask_w, 4, 0, 0, H_gdk_window_shape_combine_mask);
-  XG_DEFINE_PROCEDURE(gdk_window_shape_combine_region, gxg_gdk_window_shape_combine_region_w, 4, 0, 0, H_gdk_window_shape_combine_region);
   XG_DEFINE_PROCEDURE(gdk_window_set_child_shapes, gxg_gdk_window_set_child_shapes_w, 1, 0, 0, H_gdk_window_set_child_shapes);
   XG_DEFINE_PROCEDURE(gdk_window_merge_child_shapes, gxg_gdk_window_merge_child_shapes_w, 1, 0, 0, H_gdk_window_merge_child_shapes);
   XG_DEFINE_PROCEDURE(gdk_window_is_visible, gxg_gdk_window_is_visible_w, 1, 0, 0, H_gdk_window_is_visible);
@@ -44078,9 +43697,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_window_begin_resize_drag, gxg_gdk_window_begin_resize_drag_w, 6, 0, 0, H_gdk_window_begin_resize_drag);
   XG_DEFINE_PROCEDURE(gdk_window_begin_move_drag, gxg_gdk_window_begin_move_drag_w, 5, 0, 0, H_gdk_window_begin_move_drag);
   XG_DEFINE_PROCEDURE(gdk_window_invalidate_rect, gxg_gdk_window_invalidate_rect_w, 3, 0, 0, H_gdk_window_invalidate_rect);
-  XG_DEFINE_PROCEDURE(gdk_window_invalidate_region, gxg_gdk_window_invalidate_region_w, 3, 0, 0, H_gdk_window_invalidate_region);
-  XG_DEFINE_PROCEDURE(gdk_window_invalidate_maybe_recurse, gxg_gdk_window_invalidate_maybe_recurse_w, 3, 1, 0, H_gdk_window_invalidate_maybe_recurse);
-  XG_DEFINE_PROCEDURE(gdk_window_get_update_area, gxg_gdk_window_get_update_area_w, 1, 0, 0, H_gdk_window_get_update_area);
   XG_DEFINE_PROCEDURE(gdk_window_freeze_updates, gxg_gdk_window_freeze_updates_w, 1, 0, 0, H_gdk_window_freeze_updates);
   XG_DEFINE_PROCEDURE(gdk_window_thaw_updates, gxg_gdk_window_thaw_updates_w, 1, 0, 0, H_gdk_window_thaw_updates);
   XG_DEFINE_PROCEDURE(gdk_window_process_all_updates, gxg_gdk_window_process_all_updates_w, 0, 0, 0, H_gdk_window_process_all_updates);
@@ -44095,7 +43711,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_window_set_geometry_hints, gxg_gdk_window_set_geometry_hints_w, 3, 0, 0, H_gdk_window_set_geometry_hints);
   XG_DEFINE_PROCEDURE(gdk_set_sm_client_id, gxg_gdk_set_sm_client_id_w, 1, 0, 0, H_gdk_set_sm_client_id);
   XG_DEFINE_PROCEDURE(gdk_window_begin_paint_rect, gxg_gdk_window_begin_paint_rect_w, 2, 0, 0, H_gdk_window_begin_paint_rect);
-  XG_DEFINE_PROCEDURE(gdk_window_begin_paint_region, gxg_gdk_window_begin_paint_region_w, 2, 0, 0, H_gdk_window_begin_paint_region);
   XG_DEFINE_PROCEDURE(gdk_window_end_paint, gxg_gdk_window_end_paint_w, 1, 0, 0, H_gdk_window_end_paint);
   XG_DEFINE_PROCEDURE(gdk_window_set_title, gxg_gdk_window_set_title_w, 2, 0, 0, H_gdk_window_set_title);
   XG_DEFINE_PROCEDURE(gdk_window_set_role, gxg_gdk_window_set_role_w, 2, 0, 0, H_gdk_window_set_role);
@@ -45285,7 +44900,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_set_scroll_adjustments, gxg_gtk_widget_set_scroll_adjustments_w, 3, 0, 0, H_gtk_widget_set_scroll_adjustments);
   XG_DEFINE_PROCEDURE(gtk_widget_reparent, gxg_gtk_widget_reparent_w, 2, 0, 0, H_gtk_widget_reparent);
   XG_DEFINE_PROCEDURE(gtk_widget_intersect, gxg_gtk_widget_intersect_w, 3, 0, 0, H_gtk_widget_intersect);
-  XG_DEFINE_PROCEDURE(gtk_widget_region_intersect, gxg_gtk_widget_region_intersect_w, 2, 0, 0, H_gtk_widget_region_intersect);
   XG_DEFINE_PROCEDURE(gtk_widget_freeze_child_notify, gxg_gtk_widget_freeze_child_notify_w, 1, 0, 0, H_gtk_widget_freeze_child_notify);
   XG_DEFINE_PROCEDURE(gtk_widget_child_notify, gxg_gtk_widget_child_notify_w, 2, 0, 0, H_gtk_widget_child_notify);
   XG_DEFINE_PROCEDURE(gtk_widget_thaw_child_notify, gxg_gtk_widget_thaw_child_notify_w, 1, 0, 0, H_gtk_widget_thaw_child_notify);
@@ -46331,7 +45945,6 @@ static void define_functions(void)
 #endif
 
 #if HAVE_GTK_ABOUT_DIALOG_GET_WRAP_LICENSE
-  XG_DEFINE_PROCEDURE(gdk_window_move_region, gxg_gdk_window_move_region_w, 4, 0, 0, H_gdk_window_move_region);
   XG_DEFINE_PROCEDURE(gtk_about_dialog_get_wrap_license, gxg_gtk_about_dialog_get_wrap_license_w, 1, 0, 0, H_gtk_about_dialog_get_wrap_license);
   XG_DEFINE_PROCEDURE(gtk_about_dialog_set_wrap_license, gxg_gtk_about_dialog_set_wrap_license_w, 2, 0, 0, H_gtk_about_dialog_set_wrap_license);
   XG_DEFINE_PROCEDURE(gtk_file_chooser_set_do_overwrite_confirmation, gxg_gtk_file_chooser_set_do_overwrite_confirmation_w, 2, 0, 0, H_gtk_file_chooser_set_do_overwrite_confirmation);
@@ -46672,7 +46285,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_cairo_set_source_pixbuf, gxg_gdk_cairo_set_source_pixbuf_w, 4, 0, 0, H_gdk_cairo_set_source_pixbuf);
   XG_DEFINE_PROCEDURE(gdk_cairo_set_source_pixmap, gxg_gdk_cairo_set_source_pixmap_w, 4, 0, 0, H_gdk_cairo_set_source_pixmap);
   XG_DEFINE_PROCEDURE(gdk_cairo_rectangle, gxg_gdk_cairo_rectangle_w, 2, 0, 0, H_gdk_cairo_rectangle);
-  XG_DEFINE_PROCEDURE(gdk_cairo_region, gxg_gdk_cairo_region_w, 2, 0, 0, H_gdk_cairo_region);
 #endif
 
 #if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
@@ -46910,7 +46522,6 @@ static void define_functions(void)
 #endif
 
 #if HAVE_GTK_STATUS_ICON_GET_TITLE
-  XG_DEFINE_PROCEDURE(gdk_region_rect_equal, gxg_gdk_region_rect_equal_w, 2, 0, 0, H_gdk_region_rect_equal);
   XG_DEFINE_PROCEDURE(gdk_window_ensure_native, gxg_gdk_window_ensure_native_w, 1, 0, 0, H_gdk_window_ensure_native);
   XG_DEFINE_PROCEDURE(gdk_window_get_root_coords, gxg_gdk_window_get_root_coords_w, 3, 2, 0, H_gdk_window_get_root_coords);
   XG_DEFINE_PROCEDURE(gdk_offscreen_window_get_pixmap, gxg_gdk_offscreen_window_get_pixmap_w, 1, 0, 0, H_gdk_offscreen_window_get_pixmap);
@@ -48063,7 +47674,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_INCLUDE_INFERIORS);
   DEFINE_INTEGER(GDK_GC_FOREGROUND);
   DEFINE_INTEGER(GDK_GC_BACKGROUND);
-  DEFINE_INTEGER(GDK_GC_FONT);
   DEFINE_INTEGER(GDK_GC_FUNCTION);
   DEFINE_INTEGER(GDK_GC_FILL);
   DEFINE_INTEGER(GDK_GC_TILE);
@@ -48082,8 +47692,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_IMAGE_NORMAL);
   DEFINE_INTEGER(GDK_IMAGE_SHARED);
   DEFINE_INTEGER(GDK_IMAGE_FASTEST);
-  DEFINE_INTEGER(GDK_EVEN_ODD_RULE);
-  DEFINE_INTEGER(GDK_WINDING_RULE);
   DEFINE_INTEGER(GDK_VoidSymbol);
   DEFINE_INTEGER(GDK_BackSpace);
   DEFINE_INTEGER(GDK_Tab);
@@ -49298,7 +48906,6 @@ static void define_integers(void)
   DEFINE_ULONG(GDK_TYPE_PROPERTY_STATE);
   DEFINE_ULONG(GDK_TYPE_WINDOW_STATE);
   DEFINE_ULONG(GDK_TYPE_SETTING_ACTION);
-  DEFINE_ULONG(GDK_TYPE_FONT_TYPE);
   DEFINE_ULONG(GDK_TYPE_CAP_STYLE);
   DEFINE_ULONG(GDK_TYPE_FILL);
   DEFINE_ULONG(GDK_TYPE_FUNCTION);
@@ -49312,8 +48919,6 @@ static void define_integers(void)
   DEFINE_ULONG(GDK_TYPE_INPUT_MODE);
   DEFINE_ULONG(GDK_TYPE_AXIS_USE);
   DEFINE_ULONG(GDK_TYPE_PROP_MODE);
-  DEFINE_ULONG(GDK_TYPE_FILL_RULE);
-  DEFINE_ULONG(GDK_TYPE_OVERLAP_TYPE);
   DEFINE_ULONG(GDK_TYPE_RGB_DITHER);
   DEFINE_ULONG(GDK_TYPE_BYTE_ORDER);
   DEFINE_ULONG(GDK_TYPE_MODIFIER_TYPE);
@@ -49653,7 +49258,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("07-Jul-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("14-Jul-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

@@ -26661,7 +26661,6 @@ s7_scheme *s7_init(void)
  * error handling is still not very clean
  *
  * (define (continuation func . vals) (call/cc (lambda (r1) (set! func r1) (apply r1 vals))))
- * member of vector? string? any object?
  *
  * TODO: loading s7test simultaneously in several threads hangs after awhile in join_thread (call/cc?) 
  *         why are list-ref tests getting 'wrong-type-arg?
