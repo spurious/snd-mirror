@@ -7132,6 +7132,9 @@
 (test '(1 .(2 3)) '(1 2 3))
 (test '(1 .(2 3)) '(1 . (2 3)))
 (test (cadr '(1 '0,)) ''0,)
+(test (let ((nam()e 1)) 1) 'error)
+(test (let ((nam""e 1)) nam""e) 'error) ; this was 1 originally
+(test (cadr '(1 ']x)) '']x)
 
 #|
 (do ((i 0 (+ i 1)))
@@ -7322,6 +7325,11 @@
 
 
 ;;; (string-set! (with-input-from-string "\"1234\"" (lambda () (read))) 1 #\a)
+
+(test (>= (length (with-output-to-string (lambda () (write (make-string 512 #\tab))))) 512) #t)
+(test (>= (length (with-output-to-string (lambda () (write (make-string 512 #\newline))))) 512) #t)
+(test (>= (length (with-output-to-string (lambda () (write (make-string 512 #\"))))) 512) #t)
+(test (>= (length (with-output-to-string (lambda () (write (make-string 512 #\x65))))) 512) #t)
 
 
 

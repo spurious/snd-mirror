@@ -4571,31 +4571,34 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 
 
 #define CTABLE_SIZE 128
-static bool *dot_table, *exponent_table, *slashify_table, *string_delimiter_table;
+static bool *exponent_table, *slashify_table, *char_ok_in_a_name;
 static int *digits;
 
 static void init_ctables(void)
 {
   int i;
 
-  dot_table = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
   exponent_table = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
   slashify_table = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
-  string_delimiter_table = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
+  char_ok_in_a_name = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
   number_inits = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
   
-  /* these decide what character following a dot means the dot was not attached to the character */
-  dot_table['\n'] = true;
-  dot_table['\t'] = true;
-  dot_table[' '] = true;
-  dot_table[')'] = true;  /* an error */
-  dot_table['('] = true;  /* '(1 .(2 3)) -> '(1 2 3) */
-  dot_table['"'] = true;  /* '(1 ."a") -> '(1 . "a") */
-  /* dot_table used to include '#', '\\', and '\'',
-   *   but these can be symbol names:
-   *   (let ((.#2 1)) .#2) -> 1, same for (let ((.\2 1)) .\2) and (let ((.'2 1)) .'2)
+  for (i = 1; i < CTABLE_SIZE; i++)
+    char_ok_in_a_name[i] = true;
+  char_ok_in_a_name[0] = false;
+  char_ok_in_a_name['('] = false;
+  char_ok_in_a_name[')'] = false;
+  char_ok_in_a_name[';'] = false;
+  char_ok_in_a_name['\t'] = false;
+  char_ok_in_a_name['\n'] = false;
+  char_ok_in_a_name['\r'] = false;
+  char_ok_in_a_name[' '] = false;
+  char_ok_in_a_name['"'] = false;
+  /* double-quote is recent, but I want '(1 ."hi") to be parsed as '(1 . "hi") 
+   * what about stuff like vertical tab?
    */
 
+  /* surely only 'e' is needed... */
   exponent_table['e'] = true; exponent_table['E'] = true;
   exponent_table['s'] = true; exponent_table['S'] = true; 
   exponent_table['f'] = true; exponent_table['F'] = true;
@@ -4607,17 +4610,6 @@ static void init_ctables(void)
   slashify_table['\n'] = false;
   slashify_table['\\'] = true;
   slashify_table['"'] = true;
-
-  for (i = 1; i < CTABLE_SIZE; i++)
-    string_delimiter_table[i] = true;
-  string_delimiter_table[0] = false;
-  string_delimiter_table['('] = false;
-  string_delimiter_table[')'] = false;
-  string_delimiter_table[';'] = false;
-  string_delimiter_table['\t'] = false;
-  string_delimiter_table['\n'] = false;
-  string_delimiter_table['\r'] = false;
-  string_delimiter_table[' '] = false;
 
   digits = (int *)permanent_calloc(CTABLE_SIZE * sizeof(int));
   for (i = 0; i < CTABLE_SIZE; i++)
@@ -4652,7 +4644,7 @@ static bool has_delimiter(const char *str, int len)
 {
   int i;
   for (i = 0; i < len; i++)
-    if (!string_delimiter_table[(int)(str[i])])
+    if (!char_ok_in_a_name[(int)(str[i])])
       return(true);
   return(false);
 }
@@ -18122,7 +18114,7 @@ static token_t token(s7_scheme *sc)
       c = inchar(sc, pt);
       backchar(sc, c, pt);
 
-      if (dot_table[c])
+      if ((!char_ok_in_a_name[c]) && (c != 0))
 	return(TOKEN_DOT);
 
       sc->strbuf[0] = '.'; /* see below */
@@ -18290,7 +18282,7 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 	  if (i >= sc->strbuf_size)
 	    resize_strbuf(sc);
 	}
-      while ((c != EOF) && (string_delimiter_table[c]));
+      while ((c != EOF) && (char_ok_in_a_name[c]));
 
       if ((i == 2) && 
 	  (sc->strbuf[0] == '\\'))
@@ -18316,8 +18308,11 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 	  str = (char *)(port_string(pt) + port_string_point(pt));
 	  orig_str = str;
 
-	  do {c = (int)(*str++);} while (string_delimiter_table[c]);
-	  /* this is a bad name -- string_delimiter_table elements are false if c is a string delimiter */
+	  do {c = (int)(*str++);} while (char_ok_in_a_name[c]);
+
+	  /* TODO: if c is 0, we may have wandered off the end of str
+	   *       #1 typed to the repl for example
+	   */
 
 	  k = str - orig_str;
 	  port_string_point(pt) += k;

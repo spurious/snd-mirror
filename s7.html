@@ -3630,6 +3630,17 @@ but some clear marker is needed for a global variable so that the programmer
 doesn't accidentally step on it.  
 </p>
 
+<p>Although a name's first character is more restricted, currently
+only #\null, #\newline, #\tab, #\space, #\), #\(, #\", and #\; can't
+occur within the name.  I did not originally include double-quote in this set, so wild stuff like
+<code>(let ((nam""e 1)) nam""e)</code>
+would work, but that means that <code>'(1 ."hi")</code> is parsed as a 1 and the
+symbol <code>."hi"</code>, and <code>(string-set! x"hi")</code> is an error.
+Guile also does not allow double-quotes in names.
+</p>
+
+
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
