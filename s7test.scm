@@ -7127,6 +7127,8 @@
 (test (eval-string "(eval (with-input-from-string \"(+ 1 2)\" (lambda () (read))))") 3)
 (test (eval-string (object->string (eval-string (format #f "(+ 1 2)")))) 3)
 
+
+;; poke at the reader 
 (test (cdr '(1 ."a")) "a")
 (test (cadr '(1 .#d2)) '.#d2)
 (test '(1 .(2 3)) '(1 2 3))
@@ -7135,6 +7137,23 @@
 (test (let ((nam()e 1)) 1) 'error)
 (test (let ((nam""e 1)) nam""e) 'error) ; this was 1 originally
 (test (cadr '(1 ']x)) '']x)
+(test `1 1)
+;; currently \ -> (), ` -> #<eof> etc -- not sure these matter
+(test (keyword? '#:#) #t) ; probably not for long... (Guile compatibility)
+(test (char? #\#) #t)
+(num-test (car `(,.1d0)) .1)
+(num-test (car `(,.1S0)) .1)
+(test (let ((x "hi")) (set! x"asdf") x) "asdf")
+(test (let ((x 1)) (set! x(list 1 2)) x) '(1 2))
+(num-test (let ((x 1)) (set!;"
+			x;)
+			12.;(
+			);#|
+	       x) 12.0)
+(test (let ((\x00}< 1) (@:\t{ 2)) (+ \x00}< @:\t{)) 3)
+(test (let ((?#||#\ 1) (\n\r\t 2) (.1e+2+ie 3)) (+ ?#||#\ \n\r\t .1e+2+ie)) 6)
+(test (let ((@,@'[1] 1) (\,| 2)) (+ @,@'[1] \,|)) 3)
+
 
 #|
 (do ((i 0 (+ i 1)))

@@ -1566,6 +1566,7 @@ static s7_pointer new_cell(s7_scheme *sc)
 	{
 	  /* alloc more heap */
 	  old_size = sc->heap_size;
+
 	  if (sc->heap_size < 512000)
 	    sc->heap_size *= 2;
 	  else sc->heap_size += 512000;
@@ -2299,7 +2300,6 @@ static void save_initial_environment(s7_scheme *sc)
   sc->initial_env->hloc = NOT_IN_HEAP;
 
   ge = car (sc->global_env);
-  if (!s7_is_vector(ge)) fprintf(stderr, "no global env?");
   len = vector_length(ge);
   lsts = vector_elements(ge);
    
@@ -10119,13 +10119,12 @@ static s7_pointer eval_string_1(s7_scheme *sc, const char *str)
   port = s7_open_input_string(sc, str);
   push_input_port(sc, port);
 
-  push_stack(sc, opcode(OP_BARRIER), sc->NIL, sc->NIL);
+  push_stack(sc, opcode(OP_BARRIER), port, sc->NIL);
   push_stack(sc, opcode(OP_EVAL_STRING), sc->args, sc->code);
   eval(sc, OP_READ_INTERNAL);
 
   pop_input_port(sc);
   s7_close_input_port(sc, port);
-
   if (is_multiple_value(sc->value))                 /* (+ 1 (eval-string "(values 2 3)")) */
     sc->value = splice_in_values(sc, multiple_value(sc->value));
 
@@ -16860,6 +16859,11 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  break;
 
 	case OP_BARRIER:
+	  if (is_input_port(stack_args(sc->stack, i)))      /* (eval-string "'(1 .)") */
+	    {
+	      pop_input_port(sc);
+	      s7_close_input_port(sc, stack_args(sc->stack, i));
+	    }
 	  break;
 
 	case OP_DEACTIVATE_GOTO:
@@ -17103,15 +17107,17 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
       #define QUOTE_SIZE 40
       int i, j, start = -1, end, slen;
       char *recent_input = NULL;
-      
+
       for (i = port_string_point(pt), j = 0; (i >= 0) && (j < QUOTE_SIZE); i--, j++)
-	if ((port_string(pt)[start + i] == '\n') ||
+	if ((port_string(pt)[start + i] == '\0') ||
+	    (port_string(pt)[start + i] == '\n') ||
 	    (port_string(pt)[start + i] == '\r'))
 	  break;
       start = i;
 
       for (i = port_string_point(pt), j = 0; (i < port_string_length(pt)) && (j < QUOTE_SIZE); i++, j++)
-	if ((port_string(pt)[start + i] == '\n') ||
+	if ((port_string(pt)[start + i] == '\0') ||
+	    (port_string(pt)[start + i] == '\n') ||
 	    (port_string(pt)[start + i] == '\r'))
 	  break;
       end = i;
@@ -17948,7 +17954,6 @@ static s7_pointer g_qq_values(s7_scheme *sc, s7_pointer args)
   /* for quasiquote handling: (apply values car(args)) if args not nil, else nil
    *    (values) -> #<unspecified> which is not wanted in this context.
    */
-  /* fprintf(stderr, "{values}: %s %d\n", s7_object_to_c_string(sc, args), args == sc->NIL); */
   if (args == sc->NIL)
     {
       sc->no_values++;
@@ -18068,10 +18073,6 @@ static void back_up_stack(s7_scheme *sc)
     }
   if (top_op == OP_READ_QUOTE)
     pop_stack(sc);
-
-  /* we used to backup past OP_EVAL_STRING here, but that leads to segfaults if
-   *   the input is (+ 1 . . ) or (list . ).  Why were we backing past it?
-   */
 }
 
 
@@ -18112,11 +18113,13 @@ static token_t token(s7_scheme *sc)
       
     case '.':
       c = inchar(sc, pt);
-      backchar(sc, c, pt);
+      if (c != EOF)
+	{
+	  backchar(sc, c, pt);
 
-      if ((!char_ok_in_a_name[c]) && (c != 0))
-	return(TOKEN_DOT);
-
+	  if ((!char_ok_in_a_name[c]) && (c != 0))
+	    return(TOKEN_DOT);
+	}
       sc->strbuf[0] = '.'; /* see below */
       return(TOKEN_ATOM);  /* i.e. something that can start with a dot like a number */
 
@@ -18166,14 +18169,20 @@ static token_t token(s7_scheme *sc)
 	return(TOKEN_AT_MARK);
 
       if (c == EOF)
-	s7_error(sc, sc->SYNTAX_ERROR,
-		 make_list_1(sc, make_protected_string(sc, "unexpected comma at end of input")));
-      
+	{
+	  sc->strbuf[0] = '@'; 
+	  return(TOKEN_ATOM);  
+	}
       backchar(sc, c, pt);
       return(TOKEN_COMMA);
       
     case '#':
+      /* inchar can return EOF, so it can't be used directly as an index into the digits array */
       c = inchar(sc, pt);
+      if (c == EOF)
+	s7_error(sc, sc->SYNTAX_ERROR,
+		 make_list_1(sc, make_protected_string(sc, "unexpected '#' at end of input")));
+
       sc->w = small_int(1);
       if (c == '(') 
 	return(TOKEN_VECTOR);
@@ -18183,8 +18192,16 @@ static token_t token(s7_scheme *sc)
 	  int dims, dig, d, loc = 0;
 	  sc->strbuf[loc++] = c;
 	  dims = digits[c];
-	  while ((dig = digits[d = inchar(sc, pt)]) < 10)
+
+	  while (true)
 	    {
+	      d = inchar(sc, pt);
+	      if (d == EOF)
+		s7_error(sc, sc->SYNTAX_ERROR,
+			 make_list_1(sc, make_protected_string(sc, "unexpected end of input while reading #n...")));
+
+	      dig = digits[d];
+	      if (dig >= 10) break;
 	      dims = dig + (dims * 10);
 	      sc->strbuf[loc++] = d;
 	    }
@@ -18192,6 +18209,9 @@ static token_t token(s7_scheme *sc)
 	  if ((d == 'D') || (d == 'd'))
 	    {
 	      d = inchar(sc, pt);
+	      if (d == EOF)
+		s7_error(sc, sc->SYNTAX_ERROR,
+			 make_list_1(sc, make_protected_string(sc, "unexpected end of input while reading #nD...")));
 	      sc->strbuf[loc++] = d;
 	      if (d == '(')
 		{
@@ -18307,20 +18327,14 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 
 	  str = (char *)(port_string(pt) + port_string_point(pt));
 	  orig_str = str;
-
+	  
 	  do {c = (int)(*str++);} while (char_ok_in_a_name[c]);
-
-	  /* TODO: if c is 0, we may have wandered off the end of str
-	   *       #1 typed to the repl for example
-	   */
-
 	  k = str - orig_str;
 	  port_string_point(pt) += k;
 
 	  if ((k == 1) && 
 	      (sc->strbuf[0] == '\\'))         
-	    /* must be from #\( and friends -- a character name that happens to be a string delimiter
-	     *   so the "delimiter" in this case is a 1 char portion of a scheme character name, and
+	    /* must be from #\( and friends -- a character that happens to be not ok-in-a-name,
 	     *   we ended up pointing to the actual delimiter, whereas below, if c != 0 (end of file)
 	     *   we ended up 1 past the delimiter, so we have to back up the port point.
 	     */
@@ -18339,7 +18353,7 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 
 		  endc = orig_str[k - 1];
 		  orig_str[k - 1] = '\0';
-	      
+
 		  if (atom_case)
 		    result = make_atom(sc, (char *)(orig_str - 1), 10, true);
 		  else result = make_sharp_constant(sc, (char *)(orig_str - 1), true);
@@ -18412,6 +18426,9 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 
 	case '\\':
 	  c = inchar(sc, pt);
+	  if (c == EOF) 
+	    return(sc->F);
+
 	  if (c == '\\')
 	    sc->strbuf[i++] = '\\';
 	  else
@@ -18523,12 +18540,18 @@ static s7_pointer read_expression(s7_scheme *sc)
 	    sc->value = read_delimited_string(sc, false);
 	    if (sc->value == sc->NIL)
 	      {
-		int len;
+		s7_pointer result;
+		int len, gc_loc;
 		char *buf;
 		len = 32 + safe_strlen(sc->strbuf);
-		buf = (char *)calloc(len, sizeof(char)); /* memleak here... */
+		buf = (char *)calloc(len, sizeof(char));
 		snprintf(buf, len, "#%s: undefined sharp expression", sc->strbuf);
-		return(read_error(sc, buf));             /* (list #b) */
+		result = read_error(sc, buf);             /* (list #b) */
+		gc_loc = s7_gc_protect(sc, result);
+		/* read error just makes a list for eventual s7_error */
+		free(buf);
+		s7_gc_unprotect_at(sc, gc_loc);
+		return(result);
 	      }
 	    return(sc->value);
 	  }
@@ -19692,8 +19715,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * here with value: (+ 2 1)
        */
 
-      /* fprintf(stderr, "eval: %s\n", s7_object_to_c_string(sc, sc->value)); */
-
       sc->code = sc->value;
       goto EVAL;
       
@@ -19905,8 +19926,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_SET2:
-      /* fprintf(stderr, "set2 value: %s, code: %s, args: %s\n", s7_object_to_c_string(sc, sc->value), s7_object_to_c_string(sc, sc->code), s7_object_to_c_string(sc, sc->args)); */
-
       if (is_pair(sc->value))
 	{
 	  /* (let ((L '((1 2 3)))) (set! ((L 0) 1) 32) L)
@@ -19924,7 +19943,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_multiple_value(sc->value))
 	    {
 	      sc->code = s7_cons(sc, s7_make_symbol(sc, "set!"), s7_append(sc, multiple_value(sc->value), s7_append(sc, sc->args, sc->code)));
-	      /* fprintf(stderr, "now: %s\n", s7_object_to_c_string(sc, sc->code)); */
 	      sc->op = OP_SET;
 	      goto START_WITHOUT_POP_STACK;
 	    }
@@ -19943,8 +19961,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_SET:                                                   /* entry for set! */
-      /* fprintf(stderr, "set! %s\n", s7_object_to_c_string(sc, sc->code)); */
-
       if (!is_pair(sc->code))
 	{
 	  if (sc->code == sc->NIL)                                           /* (set!) */
@@ -20058,8 +20074,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_SET1:     
-      /* fprintf(stderr, "set1 code: %s\n", s7_object_to_c_string(sc, sc->code)); */
-
       sc->y = find_symbol(sc, sc->envir, sc->code);
       if (sc->y != sc->NIL) 
 	{
@@ -21030,7 +21044,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *    `#(1 ,@(list 1 2) 4) -> (apply vector ({list} 1 ({apply} {values} (list 1 2)) 4)) -> #(1 1 2 4)
        */
       sc->value = make_list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_1(sc, sc->value));
-      /* fprintf(stderr, "qv: %s\n", s7_object_to_c_string(sc, sc->value)); */
       goto START;
 
       
@@ -26600,7 +26613,7 @@ s7_scheme *s7_init(void)
   s7_gmp_init(sc);
 #endif
 
-  /* s7_define_function(sc, "dump-heap", g_dump_heap, 0, 0, false, "hiho"); */
+  /* s7_define_function(sc, "dump-heap", g_dump_heap, 0, 0, false, "write heap contents to heap.data"); */
 
   /* macroexpand */
   s7_eval_c_string(sc, "(define-macro (macroexpand __mac__) `(,(procedure-source (car __mac__)) ',__mac__))");
@@ -26683,4 +26696,3 @@ s7_scheme *s7_init(void)
  * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
  * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
  */
-
