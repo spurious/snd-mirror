@@ -4376,6 +4376,10 @@
 (test (vector-fill! '#(1 2) 2) 2)
 (test (vector-fill! #() 0) 0)
 (test (vector-fill! (vector) 0) 0)
+(test (let ((v (vector 1))) (vector-fill! v 32) (v 0)) 32)
+(test (let ((v (make-vector 11 0))) (vector-fill! v 32) (v 10)) 32)
+(test (let ((v (make-vector 16 0))) (vector-fill! v 32) (v 15)) 32)
+(test (let ((v (make-vector 3 0))) (vector-fill! v 32) (v 1)) 32)
 
 (for-each
  (lambda (arg)
@@ -9402,17 +9406,9 @@
 (test (or (values #f #f) #f) #f)
 (test (or (values #f #t) #f) #t)
 (test (or (values #f #f) #t) #t)
-(test (or #f (values 1 2)) 1)
+(test (or (values 1 2) #f) 1)
 (test (+ 1 (or (values 2 3) 4)) 3)
-(test (or (values #f 2 3)) 2)
-(test (or (values #f 2)) 2)
-(test (and (values 1 2 3)) 3)
-(test (and (values 1 #f 3)) #f)
-(test (+ 1 (and 2 (values 3 4)) 5) 10)
-(test (and #t (values 1 2)) 2)
-(test (and #t (values #f 3)) #f)
-(test (or #f (values 1 2)) 1)
-(test (or #f (values #f 2)) 2)
+(test (+ 1 (and 2 (values 3 4)) 5) 13)
 (test (and (values) 1) 1)
 (test (length (values '())) 0)
 (test (length (values #(1 2 3 4))) 4)
@@ -12729,6 +12725,11 @@ who says the continuation has to restart the map from the top?
   (test (let () (define-macro (hi @) `(+ 1 ,@@)) (hi (2 3))) 6) ; ,@ is ambiguous
   (test (let () (define-macro (tst a) `(+ 1 (if (> ,a 0) (tst (- ,a 1)) 0))) (tst 3)) 4)
   (test (let () (define-macro (hi a) (if (list? a) `(+ 1 ,@a) `(+ 1 ,a))) (* (hi 1) (hi (2 3)))) 12)
+
+  (test (let ((x 1)) (eval `(+ 3 ,x))) 4)
+  (test (let ((x 1)) (eval (eval `(let ((x 2)) `(+ 3 ,x ,,x))))) 6)
+  (test (let ((x 1)) (eval (eval (eval `(let ((x 2)) `(let ((x 3)) `(+ 10 ,x ,,x ,,,x))))))) 16)
+  (test (let ((x 1)) (eval (eval (eval (eval `(let ((x 2)) `(let ((x 3)) `(let ((x 30)) `(+ 100 ,x ,,x ,,,x ,,,,x))))))))) 136)
 
   (test (let () (define-bacro (hiho a) `(+ ,a 1)) (hiho 3)) 4)
   (test (let () (define-bacro (hiho) `(+ 3 1)) (hiho)) 4)

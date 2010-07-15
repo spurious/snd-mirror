@@ -2239,14 +2239,8 @@ By wrapping the arguments in 'values', you can force all of them to be evaluated
 <p>But this printout is just trying to be informative.  There is no multiple-values object
 in s7.  You can't <code>(set! x (values 1 2))</code>, for example.  The values function
 tells s7 that its arguments should be handled in a special way, and the multiple-value indication goes away
-as soon as the arguments are spliced into some caller's arguments.  This affects 'or' and 'and'.  The values are considered
-a part of the argument list of the operator:
+as soon as the arguments are spliced into some caller's arguments.  
 </p>
-
-<pre>
-&gt; (+ (or (values 1 2)) 3) ; same as (+ (or 1 2) 3)
-4
-</pre>
 
 <p>Internally, s7 uses <code>(apply values ...)</code> to implement unquote splicing (",@") in quasiquote.
 </p>

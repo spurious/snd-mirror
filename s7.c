@@ -161,10 +161,8 @@
  *   (valgrind timings are from 23-Feb-10 running s7test.scm), it was 9601 for a long time.
  */
 
-#define INITIAL_STACK_SIZE 3000            
+#define INITIAL_STACK_SIZE 2048         
 /* the stack grows as needed, each frame takes 4 entries, this is its initial size.
- *
- *   max stack size needed in s7test.scm: 1448, snd-test: 288.
  *   this needs to be big enough to handle the eval_c_string's at startup (ca 100) 
  */
 
@@ -297,7 +295,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_ENV2,
-	      OP_FOR_EACH, OP_MAP, OP_AND2, OP_OR2, OP_BARRIER, OP_DEACTIVATE_GOTO,
+	      OP_FOR_EACH, OP_MAP, OP_BARRIER, OP_DEACTIVATE_GOTO,
 	      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, OP_BACRO, OP_APPLY_WITHOUT_TRACE,
 	      OP_MAX_DEFINED} opcode_t;
 
@@ -314,13 +312,13 @@ static const char *op_names[OP_MAX_DEFINED] =
    "do", "do", "do", "do", "define*", "lambda*", 
    "error-quit", "unwind-input", "unwind-output", "trace-return", "error-hook-quit", 
    "trace-hook-quit", "with-environment", "with-environment", "with-environment", "for-each", "map", 
-   "and", "or", "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro",
+   "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro",
    "apply-without-trace"
 };
 
 
 #define NUM_SMALL_INTS 200
-/* this needs to be at least OP_MAX_DEFINED = 85 */
+/* this needs to be at least OP_MAX_DEFINED = 83 */
 /* going up to 1024 gives very little improvement, down to 128 costs about .2% run time */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -590,10 +588,6 @@ struct s7_scheme {
   int trace_list_size, trace_top, trace_depth;
   int no_values;
 
-#define BLOCK_VECTOR_SIZE (INITIAL_STACK_SIZE / 10)
-  /* this matters more on 64-bit machines than 32 */
-  s7_pointer *nil_vector, *unspecified_vector;
-  
   void *default_rng;
 #if WITH_GMP
   void *default_big_rng;
@@ -1183,6 +1177,14 @@ int s7_gc_protect(s7_scheme *sc, s7_pointer x)
       }
   
   new_size = 2 * loc;
+
+#if 0
+  fprintf(stderr, "new_size: %d\n", new_size);
+  for (i = 0; i < loc; i++)
+    fprintf(stderr, "%d: %s\n", i, s7_object_to_c_string(sc, (vector_element(sc->protected_objects, i))));
+  fprintf(stderr, "\n");
+#endif
+
   vector_elements(sc->protected_objects) = (s7_pointer *)realloc(vector_elements(sc->protected_objects), new_size * sizeof(s7_pointer));
   for (i = loc; i < new_size; i++)
     vector_element(sc->protected_objects, i) = sc->NIL;
@@ -1840,17 +1842,8 @@ static void increase_stack_size(s7_scheme *sc)
   new_size = sc->stack_size * 2;
 
   vector_elements(sc->stack) = (s7_pointer *)realloc(vector_elements(sc->stack), new_size * sizeof(s7_pointer));
-  if (vector_element(sc->stack, sc->stack_size + 1))
-    {
-      for (i = sc->stack_size; i < new_size; i++)
-	vector_element(sc->stack, i) = sc->NIL;
-    }
-  else 
-    {
-      /* we've run out of memory */
-      s7_error(sc, sc->ERROR, make_list_1(sc, make_protected_string(sc, "can't increase stack size any further")));
-    }
-
+  for (i = sc->stack_size; i < new_size; i++)
+    vector_element(sc->stack, i) = sc->NIL;
   vector_length(sc->stack) = new_size;
   sc->stack_size = new_size;
 
@@ -12713,30 +12706,24 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 static void vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 #endif
 {
-  s7_Int len;
-  s7_pointer *tp, *tend;
+  s7_Int len, i = 1, left;
+  s7_pointer *orig, *cur;
 
-  tp = (s7_pointer *)(vector_elements(vec));
   len = vector_length(vec);
+  if (len == 0) return;
 
-  if ((obj == sc->NIL) || (obj == sc->UNSPECIFIED) || (obj == sc->NO_VALUE))
+  orig = vector_elements(vec);
+  orig[0] = obj;
+
+  while (i < len)
     {
-      s7_Int i;
-      s7_pointer *v_els, *from_els;
-      v_els = vector_elements(vec);
-      if (obj == sc->NIL)
-	from_els = sc->nil_vector;
-      else from_els = sc->unspecified_vector;
-
-      for (i = 0; i < len; i += BLOCK_VECTOR_SIZE)
-	memcpy((void *)(v_els + i),
-	       (void *)from_els,
-	       (((i + BLOCK_VECTOR_SIZE) > len) ? (len - i) : BLOCK_VECTOR_SIZE) * sizeof(s7_pointer));
-      return;
+      cur = (s7_pointer *)(orig + i);
+      left = len - i;
+      if (left < i)
+	memcpy((void *)cur, (void *)orig, sizeof(s7_pointer) * left);
+      else memcpy((void *)cur, (void *)orig, sizeof(s7_pointer) * i);
+      i *= 2;
     }
-
-  tend = (s7_pointer *)(tp + len);
-  while (tp != tend) {(*tp++) = obj;}
 }
 
 
@@ -19446,6 +19433,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (sc->stack_end >= sc->stack_resize_trigger)
 	increase_stack_size(sc);
+      /* it saves a bit to move this to the push of eval_args1 but I feel safer with it here */
 
       switch (type(sc->code))
 	{
@@ -20450,7 +20438,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       if (!is_pair(sc->code))                                        /* (and . 1) */
 	return(eval_error(sc, "and: stray dot?: ~A", sc->code));
-      push_stack(sc, opcode(OP_AND1), sc->NIL, cdr(sc->code));
+      if (cdr(sc->code) != sc->NIL)
+	push_stack(sc, opcode(OP_AND1), sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
       
@@ -20465,26 +20454,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (cdr(sc->code) != sc->NIL)
 	push_stack(sc, opcode(OP_AND1), sc->NIL, cdr(sc->code));
-      else push_stack(sc, opcode(OP_AND2), sc->NIL, sc->code);
-
       sc->code = car(sc->code);
       goto EVAL;
 
-
-    case OP_AND2:
-      if (is_multiple_value(sc->value))  /* (and #t (values 1 2)) */
-	{
-	  s7_pointer x;
-	  for (x = sc->value; cdr(x) != sc->NIL; x = cdr(x))
-	    if (car(x) == sc->F)
-	      {
-		sc->value = sc->F;
-		goto START;
-	      }
-	  sc->value = car(x);
-	}
-      goto START;
-      
       
     case OP_OR:
       if (sc->code == sc->NIL) 
@@ -20494,7 +20466,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       if (!is_pair(sc->code))                                       /* (or . 1) */
 	return(eval_error(sc, "or: stray dot?: ~A", sc->code));
-      push_stack(sc, opcode(OP_OR1), sc->NIL, cdr(sc->code));
+      if (cdr(sc->code) != sc->NIL)
+	push_stack(sc, opcode(OP_OR1), sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
       
@@ -20509,25 +20482,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (cdr(sc->code) != sc->NIL)
 	push_stack(sc, opcode(OP_OR1), sc->NIL, cdr(sc->code));
-      else push_stack(sc, opcode(OP_OR2), sc->NIL, sc->code);
       sc->code = car(sc->code);
       goto EVAL;
+      /* by going direct without a push_stack on the last one we get "tail recursion",
+       *   but if the last arg (also in "and" above) is "values", there is a slight
+       *   inconsistency: the values are returned and spliced into the caller if trailing, but
+       *   are spliced into the "or" if not trailing, so
+       *   (+ 10 (or (values 1 2) #f))
+       *   11
+       *   (+ 10 (or #f (values 1 2)))
+       *   13
+       * The tail recursion is more important.
+       */
 
-
-    case OP_OR2:
-      if (is_multiple_value(sc->value)) /* (or #f (values 1 2)) */
-	{
-	  s7_pointer x;
-	  for (x = sc->value; cdr(x) != sc->NIL; x = cdr(x))
-	    if (car(x) != sc->F)
-	      {
-		sc->value = car(x);
-		goto START;
-	      }
-	  sc->value = car(x);
-	}
-      goto START;
-      
 
     case OP_BACRO:
       /* sc->value is the symbol, sc->x is the binding (the bacro) */
@@ -25901,14 +25868,6 @@ s7_scheme *s7_init(void)
    *    because the symbol table and environment don't exist yet.
    */
   
-  sc->nil_vector = (s7_pointer *)malloc(BLOCK_VECTOR_SIZE * sizeof(s7_pointer));
-  sc->unspecified_vector = (s7_pointer *)malloc(BLOCK_VECTOR_SIZE * sizeof(s7_pointer));
-  for (i = 0; i < BLOCK_VECTOR_SIZE; i++) 
-    {
-      sc->nil_vector[i] = sc->NIL;
-      sc->unspecified_vector[i] = sc->UNSPECIFIED;
-    }
-
   sc->input_port = sc->NIL;
   sc->input_port_stack = sc->NIL;
   sc->output_port = sc->NIL;
