@@ -2094,6 +2094,8 @@
 
 (test (equal? (let ((str "hiho")) (string-set! str 2 #\null) str) "hi") #f)
 (test (string=? (let ((str "hiho")) (string-set! str 2 #\null) str) "hi") #f)
+(test (let* ((s1 "hi") (s2 s1)) (string-set! s2 1 #\x) s1) "hx")
+(test (let* ((s1 "hi") (s2 (copy s1))) (string-set! s2 1 #\x) s1) "hi")
 
 
 
@@ -2150,7 +2152,7 @@
 (test (substring (substring "hi\"ho" 1 4) 2) "h")
 (test (substring (substring "hi\"ho" 3 5) 1 2) "o")
 (test (substring "01\ \ 34" 2) "34")
-
+(test (let* ((s1 "0123456789") (s2 (substring s1 1 3))) (string-set! s2 1 #\x) s1) "0123456789")
 
 (test (recompose 12 (lambda (a) (substring a 0 3)) "12345") "123")
 (test (reinvert 12 (lambda (a) (substring a 0 3)) (lambda (a) (string-append a "45")) "12345") "12345")
@@ -2210,6 +2212,9 @@
 		(let ((str "0123456")) (string-set! str 3 #\null) str))
       #f)
 (test (string-append """hi""ho""") "hiho")
+(test (let* ((s1 "hi") (s2 (string-append s1 s1))) (string-set! s2 1 #\x) s1) "hi")
+(test (let* ((s1 "hi") (s2 (string-append s1))) (string-set! s2 1 #\x) s1) "hi")
+
 
 (num-test (letrec ((hi (lambda (str n)
 			 (if (= n 0)
@@ -3403,6 +3408,7 @@
 
 (test (let ((x (list 1))) (list-set! x 0 2) x) (list 2))
 (test (let ((x (cons 1 2))) (list-set! x 0 3) x) '(3 . 2))
+(test (let ((x (cons 1 2))) (list-set! x 1 3) x) 'error)
 (test (let ((x '((1) 2))) (list-set! x 0 1) x) '(1 2))
 (test (let ((x '(1 2))) (list-set! x 1 (list 3 4)) x) '(1 (3 4)))
 (test (let ((x ''foo)) (list-set! x 0 "hi") x ) '("hi" foo))
@@ -3498,7 +3504,6 @@
 (test (list-set! '(1) 1.5 2) 'error)
 (test (list-set! '(1) 3/2 2) 'error)
 (test (list-set! '(1) 1+3i 2) 'error)
-(test (let ((x (cons 1 2))) (list-set! x 1 3) x) 'error)
 (test (list-set! '(1 2 3) 1 2 3) 'error)
 (test (list-set! (list 1 2 3) (expt 2 32)  0) 'error)
 
@@ -7153,6 +7158,8 @@
 (test (let ((\x00}< 1) (@:\t{ 2)) (+ \x00}< @:\t{)) 3)
 (test (let ((?#||#\ 1) (\n\r\t 2) (.1e+2+ie 3)) (+ ?#||#\ \n\r\t .1e+2+ie)) 6)
 (test (let ((@,@'[1] 1) (\,| 2)) (+ @,@'[1] \,|)) 3)
+(test (list"0"0()#()#\a"""1"'x(list)+(cons"""")#f) (list "0" 0 () #() #\a "" "1" 'x (list) + '("" . "") #f))
+
 
 
 #|
