@@ -300,7 +300,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_MAX_DEFINED} opcode_t;
 
 static const char *op_names[OP_MAX_DEFINED] = 
-  {"read-internal", "eval", "eval-args", "eval-args1", "apply", "eval-macro", "lambda", 
+  {"read-internal", "eval", "eval-args", "eval-args", "apply", "eval-macro", "lambda", 
    "quote", "define", "define", "begin", "if", "if", "set!", "set!", "set!", 
    "let", "let", "let", "let*", "let*", "letrec", "letrec", "letrec", 
    "cond", "cond", "and", "and", "or", "or", "defmacro", "defmacro*", "macro", 
@@ -1178,13 +1178,6 @@ int s7_gc_protect(s7_scheme *sc, s7_pointer x)
   
   new_size = 2 * loc;
 
-#if 0
-  fprintf(stderr, "new_size: %d\n", new_size);
-  for (i = 0; i < loc; i++)
-    fprintf(stderr, "%d: %s\n", i, s7_object_to_c_string(sc, (vector_element(sc->protected_objects, i))));
-  fprintf(stderr, "\n");
-#endif
-
   vector_elements(sc->protected_objects) = (s7_pointer *)realloc(vector_elements(sc->protected_objects), new_size * sizeof(s7_pointer));
   for (i = loc; i < new_size; i++)
     vector_element(sc->protected_objects, i) = sc->NIL;
@@ -1498,7 +1491,8 @@ static int gc(s7_scheme *sc)
 }
 
 
-#if 0
+#define WITH_DUMP_HEAP 0
+#if WITH_DUMP_HEAP
 static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
 {
   FILE *fd;
@@ -2323,8 +2317,14 @@ static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
   inits = vector_elements(sc->initial_env);
 
   for (i = 0; (i < INITIAL_ENV_ENTRIES) && (inits[i] != sc->NIL); i++)
-    if (is_local(car(inits[i])))
+    if ((is_local(car(inits[i]))) ||                                        /* it's shadowed locally */
+	(cdr(inits[i]) != symbol_value(symbol_global_slot(car(inits[i]))))) /* it's not shadowed, but has been changed globally */
       add_to_environment(sc, sc->w, car(inits[i]), cdr(inits[i]));
+                         
+  /* if (set! + -) then + needs to be overridden, but the local bit isn't set,
+   *   so we have to check the actual values in the non-local case.
+   *   (define (f x) (with-environment (initial-environment) (+ x 1))) 
+   */
 
   x = sc->w;
   sc->w = sc->NIL;
@@ -16848,7 +16848,8 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	case OP_BARRIER:
 	  if (is_input_port(stack_args(sc->stack, i)))      /* (eval-string "'(1 .)") */
 	    {
-	      pop_input_port(sc);
+	      if (sc->input_port == stack_args(sc->stack, i))
+		pop_input_port(sc);
 	      s7_close_input_port(sc, stack_args(sc->stack, i));
 	    }
 	  break;
@@ -19322,7 +19323,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *     (let ((func +)) (func (let () (set! func -) 3)	2))
 	   *   can return 5.
 	   *
-	   * check for thunk and jump to apply here costs more than it saves 
+	   * check for args=nil and jump to apply here costs slightly more than it saves 
 	   */
 
 	  sc->code = cdr(sc->code);
@@ -19416,7 +19417,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      sc->code = car(sc->args);
 	      sc->args = cdr(sc->args);
-	      /* goto APPLY;  */
+	      /* fall through  */
 	    }
 	}
       
@@ -20073,7 +20074,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* if unbound variable hook here, we need the binding, not the current value */
 
       if (is_syntax(sc->code))
-	return(eval_error(sc, "set! ~A: this is not allowed for some reason", sc->code));
+	return(eval_error(sc, "can't set! ~A", sc->code));
       return(eval_error(sc, "set! ~A: unbound variable", sc->code));
       
       
@@ -20148,7 +20149,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->args = sc->NIL;
       sc->value = sc->code;
       sc->code = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code);
-      
+      if (sc->code == sc->NIL)                  /* (let () ...):  no bindings, so skip that step */
+	{
+	  sc->code = sc->value;
+	  goto LET2;
+	}
+
       
     case OP_LET1:       /* let -- calculate parameters */
       sc->args = s7_cons(sc, sc->value, sc->args);
@@ -20184,8 +20190,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->args = safe_reverse_in_place(sc, sc->args);
       sc->code = car(sc->args);
       sc->args = cdr(sc->args);
+
       
-      
+    LET2:
     case OP_LET2:
       NEW_FRAME(sc, sc->envir, sc->envir); 
       for (sc->x = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
@@ -20492,6 +20499,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   11
        *   (+ 10 (or #f (values 1 2)))
        *   13
+       *   (+ 10 (or (or #f (values 1 2)) #f))
+       *   11
        * The tail recursion is more important.
        */
 
@@ -26572,7 +26581,9 @@ s7_scheme *s7_init(void)
   s7_gmp_init(sc);
 #endif
 
-  /* s7_define_function(sc, "dump-heap", g_dump_heap, 0, 0, false, "write heap contents to heap.data"); */
+#if WITH_DUMP_HEAP  
+  s7_define_function(sc, "dump-heap", g_dump_heap, 0, 0, false, "write heap contents to heap.data"); 
+#endif
 
   /* macroexpand */
   s7_eval_c_string(sc, "(define-macro (macroexpand __mac__) `(,(procedure-source (car __mac__)) ',__mac__))");

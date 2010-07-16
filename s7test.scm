@@ -13961,7 +13961,45 @@ who says the continuation has to restart the map from the top?
 	   (caar '((30) 3)))) ; 30 + 19
       49)
       
+(let ((old+ +))
+  (let ((vals 
+	 (list (let ()
+		 (define a 32)
+		 (define p +)
+		 (define (f b) (+ a b))
+		 (set! a 1)
+		 (let ((t1 (f 2)))
+		   (set! + -)
+		   (let ((t2 (f 2)))
+		     (let ((t3 (equal? p +)))
+		       (list t1 t2 t3)))))
+	       
+	       ;; s7: (3 -1 #f)
+	       ;; guile: (3 3 #f)
+	       
+	       (let ()
+		 (define a 32)
+		 (define p old+)
+		 (define (f b) (p a b))
+		 (set! a 1)
+		 (let ((t1 (f 2)))
+		   (set! p -)
+		   (let ((t2 (f 2)))
+		     (let ((t3 (equal? p old+)))
+		       (list t1 t2 t3)))))
+	       
+	       ;; s7 (3 -1 #t)
+	       ;; guile (3 -1 #t)
+	       )))
+    (set! + old+)
+    (test (car vals) (cadr vals))))
 
+(let ((old+ +))
+  (define (f x) (with-environment (initial-environment) (+ x 1)))
+  (set! + -)
+  (test (+ 1 1) 0)
+  (test (f 1) 2)
+  (set! + old+))
 
 (test (let ((a 1)) (eval '(+ a b) (augment-environment (current-environment) (cons 'b 32)))) 33)
 (test (let ((a 1)) (+ (eval '(+ a b) (augment-environment (current-environment) (cons 'b 32))) a)) 34)
@@ -54048,3 +54086,6 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 #xfff8000000000000 nan
 
 |#
+
+
+
