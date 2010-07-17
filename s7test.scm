@@ -3795,6 +3795,7 @@
 (test (memv 'a 'b) 'error)
 (test (memv 'c '(a b c)) '(c))
 (test (memv 'c '(a b . c)) #f)
+(test (memv ''a '('a b c)) #f)
 
 
 
@@ -3821,6 +3822,7 @@
 (test (member #() '(1 () 2 #() 3)) '(#() 3))
 (test (member #2d((1 2) (3 4)) '(1 #() #2d((1 2) (1 2)))) #f)
 (test (member #2d((1 2) (3 4)) '(1 #() #2d((1 2) (3 4)))) '(#2d((1 2) (3 4))))
+(test (member ''a '('a b c)) '('a b c))
 
 (for-each
  (lambda (arg)
@@ -5760,12 +5762,14 @@
   (for-each
    (lambda (arg)
      (test (hash-table-ref ht arg) 3.14))
-   (list #\a '#(1 2 3) 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2))))
+   (list #\a '#(1 2 3) 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+  (test (hash-table-size ht 123) 'error))
 
 (for-each
  (lambda (arg)
    (test (hash-table-size arg) 'error))
  (list "hi" -1 0 #\a 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+(test (hash-table-size) 'error)
 
 (for-each
  (lambda (arg)
@@ -7163,7 +7167,7 @@
 (test (let ((?#||#\ 1) (\n\r\t 2) (.1e+2+ie 3)) (+ ?#||#\ \n\r\t .1e+2+ie)) 6)
 (test (let ((@,@'[1] 1) (\,| 2)) (+ @,@'[1] \,|)) 3)
 (test (list"0"0()#()#\a"""1"'x(list)+(cons"""")#f) (list "0" 0 () #() #\a "" "1" 'x (list) + '("" . "") #f))
-
+(test (let ((x, 1)) x,) 1)
 
 
 #|
@@ -11433,6 +11437,14 @@ who says the continuation has to restart the map from the top?
 (test (dynamic-wind (lambda () 1) #f (lambda () 2)) 'error)
 (test (dynamic-wind . 1) 'error)
 
+(test (dynamic-wind (let ((x 1)) (lambda () x)) ((lambda () (lambda () 2))) s7-version) 2)
+(test (let ((x 0)) (dynamic-wind (lambda () (set! x 1)) ((lambda () (set! x 32) (lambda () x))) (let () (set! x 44) (lambda () x)))) 1)
+(test (let ((x 0)) (dynamic-wind (lambda () (set! x (+ x 1))) ((lambda () (set! x 32) (lambda () x))) (let () (set! x 44) (lambda () x)))) 45)
+(test (let ((x 0)) (dynamic-wind (lambda () (set! x (+ x 1))) ((lambda () (set! x 32) (lambda () x))) (let () (lambda () x)))) 33)
+(test (let ((x 0)) (dynamic-wind (lambda () (set! x (+ x 1))) ((lambda () (set! x (+ x 32)) (lambda () x))) (let () (lambda () (set! x (+ x 100)) x)))) 33)
+
+
+
 ;;; from scheme wiki
 ;;; http://community.schemewiki.org/?hose-the-repl
 ;;; jorgen-schafer
@@ -11758,7 +11770,7 @@ who says the continuation has to restart the map from the top?
 (test (let ((x '(1 2 3))) `(0 . ,x)) '(0 1 2 3))
 (test (let ((x '(1 2 3))) `(0 ,x)) '(0 (1 2 3)))
 (test (let ((x '(1 2 3))) `#(0 ,x)) '#(0 (1 2 3)))
-					;(test (let ((x '(1 2 3))) `#(0 . ,x)) '#(0 1 2 3))
+(test (let ((x '(1 2 3))) `#(0 . ,x)) '#(0 1 2 3))
 
 (test (let () (define-macro (tryqv . lst) `(map abs ',lst)) (tryqv 1 2 3 -4 5)) '(1 2 3 4 5))
 (test (let () (define-macro (tryqv . lst) `(map abs '(,@lst))) (tryqv 1 2 3 -4 5)) '(1 2 3 4 5))
@@ -12079,6 +12091,11 @@ who says the continuation has to restart the map from the top?
 (test (catch #t s7version) 'error)
 (test (catch #t s7version + +) 'error)
 
+(test (catch #t (lambda () (error 'oops 1)) (let () (lambda args (caadr args)))) 1)
+(test (catch #t (lambda () (error 'oops 1)) (let ((x 3)) (lambda args (+ x (caadr args))))) 4)
+(test (catch #t (let () (lambda () (error 'oops 1))) (let ((x 3)) (lambda args (+ x (caadr args))))) 4)
+(test (catch #t (let ((x 2)) (lambda () (error 'oops x))) (let ((x 3)) (lambda args (+ x (caadr args))))) 5)
+(test (catch #t (let ((x 2)) ((lambda () (lambda () (error 'oops x))))) (let ((x 3)) (lambda args (+ x (caadr args))))) 5)
 
 
 (define (last-pair l) ; needed also by loop below
@@ -14001,6 +14018,15 @@ who says the continuation has to restart the map from the top?
   (test (f 1) 2)
   (set! + old+))
 
+(let ((old+ +))
+  (let ((f #f))
+    (let ((+ -))
+      (set! f (lambda (a) (+ 1 a))))
+    (test (f 2) -1)
+    (set! + *)
+    (test (f 2) -1)
+    (set! + old+)))
+
 (test (let ((a 1)) (eval '(+ a b) (augment-environment (current-environment) (cons 'b 32)))) 33)
 (test (let ((a 1)) (+ (eval '(+ a b) (augment-environment (current-environment) (cons 'b 32))) a)) 34)
 (test (let ((a 1)) (+ (eval '(+ a b) (augment-environment (current-environment) (cons 'b 32) (cons 'a 12))) a)) 45)
@@ -14352,8 +14378,13 @@ who says the continuation has to restart the map from the top?
 (test (procedure-with-setter-setter-arity symbol-access) '(2 0 #f))
 (test (let ((pws (make-procedure-with-setter (lambda args (apply + args)) (lambda args (apply * args))))) (pws 2 3 4)) 9)
 (test (let ((pws (make-procedure-with-setter (lambda args (apply + args)) (lambda args (apply * args))))) (set! (pws 2 3 4) 5)) 120)
-
-
+(let ((x 0)) 
+  (let ((pws (make-procedure-with-setter
+	      (let ((y 1)) ((lambda () (set! x (+ x y)) (lambda () x))))
+	      (let ((y 2)) ((lambda () (set! x (* x y)) (lambda (z) (set! x (+ x z)))))))))
+    (test x 2)
+    (set! (pws) 3)
+    (test x 5)))
 
 ;; generic length/reverse/copy/fill!
 (test (length (list 1 2)) 2)
@@ -14616,6 +14647,7 @@ who says the continuation has to restart the map from the top?
 (test (set! ((map abs '(1 2)) 1) 0) 0)
 (test (let ((x (list 1 2))) (set! ((call-with-exit (lambda (k) (k x))) 0) 12) x) '(12 2))
 (test (let ((x #2d((1 2) (3 4)))) (set! (((values x) 0) 1) 12) x) #2D((1 12) (3 4)))
+(test (let ((x 0)) (set! ((make-procedure-with-setter (lambda () x) (lambda (y) (set! x y)))) 12) x) 12)
 
 
 
@@ -47309,12 +47341,33 @@ who says the continuation has to restart the map from the top?
 
 (test (random 0 #t) 'error)
 (test (random 0.0 #(1 2)) 'error)
+(test (make-random-state 123 432) 'error)
 
 (for-each
  (lambda (arg)
    (test (random arg) 'error)
-   (test (random 1.0 arg) 'error))
+   (test (random 1.0 arg) 'error)
+   (test (make-random-state arg) 'error))
  (list "hi" (integer->char 65) 'a-symbol (make-vector 3) abs #\f (lambda (a) (+ a 1)) (if #f #f) #<eof> #<undefined>))
+
+(let ((r1 (make-random-state 1234))
+      (r2 (make-random-state 1234)))
+  (let ((val1 (random 10000000 r1))
+	(val2 (random 10000000 r2)))
+    (test val1 val2)))
+
+(let ((r1 (make-random-state 1234))
+      (r2 (make-random-state 1234567)))
+  (let ((val1 (random 10000000 r1))
+	(val2 (random 10000000 r2)))
+    (let ((val3 (random 10000000 r1))
+	  (val4 (random 10000000 r2)))
+      (let ((val5 (random 10000000 r1))
+	    (val6 (random 10000000 r2)))
+	(test (or (not (= val1 val2))
+		  (not (= val3 val4))
+		  (not (= val5 val6)))
+	      #t)))))
 
 (do ((i 0 (+ i 1)))
     ((+ i 100))
@@ -54086,6 +54139,3 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 #xfff8000000000000 nan
 
 |#
-
-
-

@@ -6589,7 +6589,7 @@ Scheme delete funcs: remove-if assoc-remove! hash-remove! delete-if! delete! str
 <code><a class=def name="deletesamples">delete-samples</a> samp samps <em class=narg>snd chn edpos</em></code>
 </td></tr><tr><td></td><td>
 This deletes a block of samples.  The deleted portion starts at sample 'samp' and runs for 'samps' samples.
-See <a href="#deletetozero">delete-to-zero</a> or delete-selection-and-smooth in extensions.scm.
+See delete-selection-and-smooth in extensions.scm.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -6930,7 +6930,6 @@ Search via continuation: <a href="#scanagain">scan-again</a><br>
 Explicit access to search procedures: <a href="#searchprocedure">search-procedure</a><br>
 The Find dialog: <a href="snd.html#editoperations">Find</a> or <a href="#finddialog">find-dialog</a><br>
 find silence: <a href="#mapsilence">map-silence</a>, scramble-channel in examp.scm<br>
-find zero crossing: <a href="#newcp">find-zero</a><br>
 find any difference between two chans: <a href="sndscm.html#channelsequal">channels-equal</a><br>
 see also <a href="#countmatches">count-matches</a> and <a href="#scanchannel">scan-channel</a><br>
 search a multichannel sound: <a href="sndscm.html#scansound">scan-sound</a><br>
@@ -12170,65 +12169,11 @@ A similar set rebinds the arrow keys to give much more precise window position a
   (lambda () 
     "zoom out one pixel"
     (zoom-one-pixel (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>) (<a class=quiet href="#selectedchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedchannel_tip)">selected-channel</a>) #f)))
+
 (<em class=red>bind-key</em> "Down" 0   ;down arrow
   (lambda () 
     "zoom in one pixel" 
     (zoom-one-pixel (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>) (<a class=quiet href="#selectedchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedchannel_tip)">selected-channel</a>) #t)))
-</pre></td></tr></table>
-
-The emacs-style line-oriented commands C-p, C-n, and C-k aren't very useful in Snd,
-since there's no reason for 128 samples to consititute the audio analog of a line of text.
-In the next example, we rebind them to treat same-sense zero-crossings as line markers:
-
-<table border=0 cellpadding=5 vspace=10><tr><td><pre>
-(define (<A NAME="newcp">find-zero</a> forwards)
-  (let* ((loc (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>))
-	 (twice #f)
-	 (dir (if forwards 1 -1))
-	 (reader (<a class=quiet href="#makesampler" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesampler_tip)">make-sampler</a> loc #f #f dir))
-	 (val (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a>)))
-    (while (not (or (<a class=quiet href="#cgp" onmouseout="UnTip()" onmouseover="Tip(extsnd_cgp_tip)">c-g?</a>)
-		    (and forwards (<a class=quiet href="#sampleratendQ" onmouseout="UnTip()" onmouseover="Tip(extsnd_sampleratendQ_tip)">sampler-at-end?</a> reader))
-		    (and (not forwards) (= loc 0))))
-      (let ((newval (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> reader)))
-	(set! loc (+ loc dir))
-	(if (or (and (&gt;= val 0.0) (&lt; newval 0.0))
-		(and (&lt; val 0.0) (&gt;= newval 0.0)))
-	    (if twice
-		(break loc)
-		(begin
-		  (set! val newval)
-		  (set! twice #t))))))
-    loc))
-
-(define (<A NAME="deletetozero">delete-to-zero</a> forwards)
-  (let ((loc (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>))
-	(zero-loc (find-zero forwards)))
-    (if (not (= loc zero-loc))
-	(if forwards
-	    (<a class=quiet href="#deletesamples" onmouseout="UnTip()" onmouseover="Tip(extsnd_deletesamples_tip)">delete-samples</a> (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (- zero-loc loc))
-	    (begin
-	      (<a class=quiet href="#deletesamples" onmouseout="UnTip()" onmouseover="Tip(extsnd_deletesamples_tip)">delete-samples</a> zero-loc (- loc zero-loc))
-	      (set! (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) zero-loc))))))
-
-(define (go-to-zero forwards)
-  (set! (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (find-zero forwards)))
-
-(<em class=red>bind-key</em> #\k 4 (lambda (arg) 
-  "delete to next zero crossing"
-  (do ((i 0 (+ 1 i))) 
-      ((= i (abs arg)))
-    (delete-to-zero (&gt; arg 0)))))
-(<em class=red>bind-key</em> #\n 4 (lambda (arg) 
-  "go to next zero crossing"
-  (do ((i 0 (+ 1 i))) 
-      ((= i (abs arg)))
-    (go-to-zero (&gt; arg 0)))))
-(<em class=red>bind-key</em> #\p 4 (lambda (arg) 
-  "go to previous zero crossing"
-  (do ((i 0 (+ 1 i))) 
-      ((= i (abs arg)))
-    (go-to-zero (&lt; arg 0)))))
 </pre></td></tr></table>
 
 Most of the predefined key definitions are given in <a href="snd.html#builtinkeys">Keyboard Commands</a>.
@@ -12295,7 +12240,7 @@ in either Motif or Gtk:
 		   #f #f)
    #f))
 </pre></td></tr></table>
-See edit123.scm, snd_conffile.scm, and snd_frg.scm for many more examples of bind-key.
+
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -13016,10 +12961,10 @@ are:</p>
     <td><code>black</code></td><td></td>
     <td>color of data in unselected graph.</td></tr>
 <tr><td bgcolor="#f2f4ff"><code><a class=def name="doitbuttoncolor">doit-button-color</a></code></td><td bgcolor="#f2f4ff"></td>
-    <td bgcolor="#f2f4ff"><code>palegreen2</code></td><td bgcolor="#f2f4ff"></td>
+    <td bgcolor="#f2f4ff"><code>ivory1</code></td><td bgcolor="#f2f4ff"></td>
     <td bgcolor="#f2f4ff">color of Ok and Apply buttons.</td></tr>
 <tr><td><code><a class=def name="doitagainbuttoncolor">doit-again-button-color</a></code></td><td></td>
-    <td><code>darkolivegreen1</code></td><td></td>
+    <td><code>ivory1</code></td><td></td>
     <td>color of Undo&amp;Apply buttons.</td></tr>
 <tr><td bgcolor="#f2f4ff"><code><em class=emdef>enved-waveform-color</em></code></td><td bgcolor="#f2f4ff"></td>
     <td bgcolor="#f2f4ff"><code>blue</code></td><td bgcolor="#f2f4ff"></td>
@@ -13031,7 +12976,7 @@ are:</p>
     <td bgcolor="#f2f4ff"><code>white</code></td><td bgcolor="#f2f4ff"></td>
     <td bgcolor="#f2f4ff">background color of unselected graph.</td></tr>
 <tr><td><code><a class=def name="helpbuttoncolor">help-button-color</a></code></td><td></td>
-    <td><code>lightsteelblue2</code></td><td></td>
+    <td><code>ivory1</code></td><td></td>
     <td>color of Help buttons.</td></tr>
 <tr><td bgcolor="#f2f4ff"><code><a class=def name="highlightcolor">highlight-color</a></code></td><td bgcolor="#f2f4ff"></td>
     <td bgcolor="#f2f4ff"><code>ivory1</code></td><td bgcolor="#f2f4ff"></td>
@@ -13055,10 +13000,10 @@ are:</p>
     <td bgcolor="#f2f4ff"><code>lightsteelblue1</code></td><td bgcolor="#f2f4ff"></td>
     <td bgcolor="#f2f4ff">color of pushed button.</td></tr>
 <tr><td><code><a class=def name="quitbuttoncolor">quit-button-color</a></code></td><td></td>
-    <td><code>indianred</code></td><td></td>
+    <td><code>ivory1</code></td><td></td>
     <td>color of Dismiss and Cancel buttons.</td></tr>
 <tr><td bgcolor="#f2f4ff"><code><a class=def name="resetbuttoncolor">reset-button-color</a></code></td><td bgcolor="#f2f4ff"></td>
-    <td bgcolor="#f2f4ff"><code>goldenrod1</code></td><td bgcolor="#f2f4ff"></td>
+    <td bgcolor="#f2f4ff"><code>ivory1</code></td><td bgcolor="#f2f4ff"></td>
     <td bgcolor="#f2f4ff">color of Reset buttons.</td></tr>
 <tr><td><code><a class=def name="sashcolor">sash-color</a></code></td><td></td>
     <td><code>lightgreen</code></td><td></td>

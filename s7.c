@@ -2145,14 +2145,14 @@ static s7_pointer g_symbol_calls(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- environments -------------------------------- */
 
-#define NEW_FRAME(Sc, Old_Env, New_Env) \
-  do { \
-      s7_pointer x; \
-      NEW_CELL(Sc, x); \
-      car(x) = Sc->NIL; \
-      cdr(x) = Old_Env; \
+#define NEW_FRAME(Sc, Old_Env, New_Env)  \
+  do {                                   \
+      s7_pointer x;                      \
+      NEW_CELL(Sc, x);                   \
+      car(x) = Sc->NIL;                  \
+      cdr(x) = Old_Env;                  \
       set_type(x, T_PAIR | T_STRUCTURE); \
-      New_Env = x; \
+      New_Env = x;                       \
      } while (0)
 
 
@@ -4588,7 +4588,7 @@ static void init_ctables(void)
   char_ok_in_a_name[' '] = false;
   char_ok_in_a_name['"'] = false;
   /* double-quote is recent, but I want '(1 ."hi") to be parsed as '(1 . "hi") 
-   * what about stuff like vertical tab?
+   * what about stuff like vertical tab?  or comma?
    */
 
   /* surely only 'e' is needed... */
@@ -26626,12 +26626,49 @@ s7_scheme *s7_init(void)
  *  and perhaps store cur-code?  __form__ ? make a cartoon of entire state? [need only the pointer, not a copy]
  * this would be good in ws too -- a way to show which notes are active at a given point in the graph
  *
- * and a way to jump into the error environment, cerror, history (backup)
- *   an error handling dialog (gui) in snd?
+ * an error handling dialog (gui) in snd?
  * error handling is still not very clean
- *
- * (define (continuation func . vals) (call/cc (lambda (r1) (set! func r1) (apply r1 vals))))
- *
+ * here is a first stab at cerror:
+
+(define-macro (with-cerror . body)
+  `(catch 'cerror
+      (lambda ()
+	(define-macro (cerror . args) ; this could be built-in
+	  `(call/cc 
+	    (lambda (r1) 
+	      (error 'cerror r1 (current-environment) ,@args))))
+	,@body)
+      (lambda args                    ; s7_error could look for this ('cerror continuation...)
+	(let ((continuation (car (cadr args)))
+	      (error-environment (cadr (cadr args)))
+	      (error-info (cddr (cadr args))))
+	  (call-with-exit
+	   (lambda (return)
+	     (do () () ; here we need a tie into Snd's gui or function IO -- 
+	               ;   why couldn't current-input-port (in the Snd listener) be a function port?
+	       (format #t "~%cerror> ")
+	       (let ((str (read-line '())))
+		 (if (> (length str) 0)
+		     (catch #t
+			    (lambda ()
+			      (let ((val (eval-string str error-environment)))
+				(if (eq? val :go)
+				    (return))
+				(if (eq? val :continue)
+				    (continuation))
+				(write val)))
+			    (lambda args
+			      (format #t "error: ~A" args))))))))))))
+
+(begin
+  (with-cerror
+   (let ((x 32))
+     (display "start")
+     (cerror "got an error")
+     (display "continue...")
+     x))
+  (display "done"))
+
  * TODO: loading s7test simultaneously in several threads hangs after awhile in join_thread (call/cc?) 
  *         why are list-ref tests getting 'wrong-type-arg?
  *         (qsort is not thread safe -- should we use guile's quicksort rewrite? libguile/quicksort.i.c)
@@ -26641,6 +26678,7 @@ s7_scheme *s7_init(void)
  * :allow-other-keys in lambda* ("lambda!")
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
  * perhaps remove the `#(...) support -- is there any actual use for this?
+ * PERHAPS: multidimensional hash tables
  *
  * PERHAPS: method lists for c_objects
  *   a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)
