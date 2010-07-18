@@ -5129,10 +5129,11 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 
 #if (!WITH_GMP)
   bool overflow = false;
-  /* strtod follows LANG which is not what we want ("." is decimal point in Scheme).
+  /* strtod follows LANG which is not what we want (only "." is decimal point in Scheme).
    *   To overcome LANG in strtod would require screwing around with setlocale which never works
    *   and isn't thread safe.  So use our own code -- according to valgrind, 
    *   our function is much faster than strtod.
+   * comma as decimal point causes ambiguities: `(+ ,1 2) etc
    */
 #endif
 
@@ -5175,6 +5176,9 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
   
   for ( ; (c = *p) != 0; ++p)
     {
+      /* what about embedded null? (string->number (string #\1 (integer->char 0) #\0)) 
+       *   currently we stop and return 1, but Guile returns #f
+       */
       if (!ISDIGIT(c, current_radix)) 
 	{
 	  current_radix = radix;
@@ -8839,6 +8843,9 @@ static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
 
 static int scheme_strcmp(s7_pointer s1, s7_pointer s2)
 {
+  /* tricky here because str[i] must be treated as unsigned
+   *   (string<? (string (integer->char #xf0)) (string (integer->char #x70)))
+   */
   int i, len, len1, len2;
   char *str1, *str2;
 
@@ -8852,11 +8859,11 @@ static int scheme_strcmp(s7_pointer s1, s7_pointer s2)
   str2 = string_value(s2);
 
   for (i = 0; i < len; i++)
-    if (str1[i] < str2[i])
+    if ((unsigned char)(str1[i]) < (unsigned char )(str2[i]))
       return(-1);
     else
       {
-	if (str1[i] > str2[i])
+	if ((unsigned char)(str1[i]) > (unsigned char)(str2[i]))
 	  return(1);
       }
 
@@ -8951,6 +8958,7 @@ static s7_pointer g_strings_are_leq(s7_scheme *sc, s7_pointer args)
 
 static int scheme_strcasecmp(s7_pointer s1, s7_pointer s2)
 {
+  /* same as scheme_strcmp -- watch out for unwanted sign! */
   int i, len, len1, len2;
   char *str1, *str2;
 
@@ -8964,11 +8972,11 @@ static int scheme_strcasecmp(s7_pointer s1, s7_pointer s2)
   str2 = string_value(s2);
 
   for (i = 0; i < len; i++)
-    if (toupper(str1[i]) < toupper(str2[i]))
+    if (toupper((unsigned char)(str1[i])) < toupper((unsigned char)(str2[i])))
       return(-1);
     else
       {
-	if (toupper(str1[i]) > toupper(str2[i]))
+	if (toupper((unsigned char)(str1[i])) > toupper((unsigned char)(str2[i])))
 	  return(1);
       }
 
@@ -18320,7 +18328,7 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 	  str = (char *)(port_string(pt) + port_string_point(pt));
 	  orig_str = str;
 	  
-	  do {c = (int)(*str++);} while (char_ok_in_a_name[c]);
+	  do {c = (int)(*str++);} while (char_ok_in_a_name[(unsigned char)c]);
 	  k = str - orig_str;
 	  port_string_point(pt) += k;
 
@@ -18345,7 +18353,7 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 
 		  endc = orig_str[k - 1];
 		  orig_str[k - 1] = '\0';
-
+		  
 		  if (atom_case)
 		    result = make_atom(sc, (char *)(orig_str - 1), 10, true);
 		  else result = make_sharp_constant(sc, (char *)(orig_str - 1), true);

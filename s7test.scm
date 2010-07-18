@@ -437,7 +437,7 @@
 (test (eqv? '(1) '(1)) #f)
 (test (eqv? '() '()) #t)
 (test (eqv? '() (list)) #t)
-
+(test (eqv? '(()) '(())) #f)
 
 (let ((things (vector #t #f #\space '() "" 0 1 3/4 1+i 1.5 '(1 .2) '#() (vector) (vector 1) (list 1) 'f 't #\t)))
   (do ((i 0 (+ i 1)))
@@ -888,7 +888,7 @@
    cap-a-to-z)
   
   (do ((i 1 (+ i 1)))
-      ((= i 128))
+      ((= i 256))
     (if (and (not (char=? (integer->char i) (char-upcase (integer->char i))))
 	     (not (char-alphabetic? (integer->char i))))
 	(format #t "(char-upcase ~A) -> ~A but not alphabetic?~%" (integer->char i) (char-upcase (integer->char i)))))
@@ -939,8 +939,10 @@
   (test (char-numeric? #\;) #f)
   (test (char-numeric? #\.) #f)
   (test (char-numeric? #\-) #f)
-  (test(char-numeric? (integer->char 200)) #f)
-  (test(char-numeric? (integer->char 128)) #f)
+  (test (char-numeric? (integer->char 200)) #f)
+  (test (char-numeric? (integer->char 128)) #f)
+  (test (char-numeric? (integer->char 216)) #f) ; 0 slash
+  (test (char-numeric? (integer->char 189)) #f) ; 1/2
   
   (for-each
    (lambda (arg)
@@ -1000,6 +1002,7 @@
   (test (char-alphabetic? #\[) #f)
 
   ;(test (char-alphabetic? (integer->char 200)) #t) ; ??
+  (test (char-alphabetic? (integer->char 127)) #f)  ; backspace
   
   (for-each
    (lambda (arg)
@@ -1132,6 +1135,7 @@
   (test (char<? #\b #\c #\a) #f)
   (test (char<? #\B #\B #\A) #f)
   (test (char<? #\b #\c #\e) #t)
+  (test (char<? (integer->char #xf0) (integer->char #x70)) #f)
 
   (test (char<?) 'error)
   (test (char<? #\b #\a "hi") 'error)
@@ -1194,6 +1198,7 @@
   (test (char>? #\d #\c #\c) #f)
   (test (char>? #\B #\B #\C) #f)
   (test (char>? #\b #\c #\e) #f)
+  (test (char>? (integer->char #xf0) (integer->char #x70)) #t)
 
   (test (char>? #\a #\b "hi") 'error)
   (test (char>? #\a #\b 0) 'error)
@@ -1269,21 +1274,23 @@
   
   (test (char-ci<? #\b #\a "hi") 'error)
   (test (char-ci<? #\b #\a 0) 'error)
-  
+  (test (char-ci>? (integer->char #xf0) (integer->char #x70)) #t)
+
+#|
 ;;; this tries them all:
-					;(do ((i 0 (+ i 1)))
-					;    ((= i 128))
-					;  (do ((k 0 (+ k 1)))
-					;      ((= k 128))
-					;    (let ((c1 (integer->char i))
-					;	  (c2 (integer->char k)))
-					;      (for-each
-					;       (lambda (op1 op2)
-					;	 (if (not (eq? (op1 c1 c2) (op2 (string c1) (string c2))))
-					;	     (format #t "(~A|~A ~A ~A) -> ~A|~A~%" op1 op2 c1 c2 (op1 c1 c2) (op2 (string c1) (string c2)))))
-					;       (list char=? char<? char<=? char>? char>=? char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?)
-					;       (list string=? string<? string<=? string>? string>=? string-ci=? string-ci<? string-ci<=? string-ci>? string-ci>=?)))))
-  
+  (do ((i 0 (+ i 1)))
+      ((= i 256))
+    (do ((k 0 (+ k 1)))
+	((= k 256))
+      (let ((c1 (integer->char i))
+	    (c2 (integer->char k)))
+	(for-each
+	 (lambda (op1 op2)
+	   (if (not (eq? (op1 c1 c2) (op2 (string c1) (string c2))))
+	       (format #t "(~A|~A ~A ~A) -> ~A|~A~%" op1 op2 c1 c2 (op1 c1 c2) (op2 (string c1) (string c2)))))
+	 (list char=? char<? char<=? char>? char>=? char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?)
+	 (list string=? string<? string<=? string>? string>=? string-ci=? string-ci<? string-ci<=? string-ci>? string-ci>=?)))))
+|#
   
   (test (char-ci<? #\d #\D #\d #\d) #f)
   (test (char-ci<? #\d #\d #\X #\d) #f)
@@ -1398,6 +1405,14 @@
 (test (integer->char (char->integer #\A)) #\A)
 (test (integer->char (char->integer #\a)) #\a)
 (test (integer->char (char->integer #\space)) #\space)
+(test (char->integer (integer->char #xf0)) #xf0)
+
+#|
+(do ((i 0 (+ i 1)))
+    ((= i 256)) 
+  (if (not (= (char->integer (integer->char i)) i)) 
+      (format #t ";char->integer ~D ~A != ~A~%" i (integer->char i) (char->integer (integer->char i)))))
+|#
 
 (test (reinvert 12 integer->char char->integer 60) 60)
 
@@ -1540,7 +1555,7 @@
 (test (let ((s1 "1234") (s2 "123")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string<? s1 s2)) #f)
 (test (let ((s1 "123") (s2 "1234")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string<? s1 s2)) #t)
 
-
+(test (string<? (string (integer->char #xf0)) (string (integer->char #x70))) #f) 
 
 
 (test (string>? "aaab" "aaaa") #t)
@@ -1580,6 +1595,7 @@
 (test (let ((s1 "1234") (s2 "123")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string>? s1 s2)) #t)
 (test (let ((s1 "123") (s2 "1234")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string>? s1 s2)) #f)
 
+(test (string>? (string (integer->char #xf0)) (string (integer->char #x70))) #t) ; ??
 
 
 (test (string<=? "aaa" "aaaa") #t)
@@ -1719,6 +1735,8 @@
 (test (string-ci<? "34ZsfQD<obff33FBPFl" "7o" "9l7OM" "FC?M63=" "rLM5*J") #t)
 (test (string-ci<? "NX7" "-;h>P" "DMhk3Bg") #f)
 (test (string-ci<? "+\\mZl" "bE7\\e(HaW5CDXbPi@U_" "B_") #t)
+
+(test (string-ci<? (string (integer->char #xf0)) (string (integer->char #x70))) #f) 
 
 (test (string-ci<? "foo" "fo" 1.0) 'error)
 (test (let ((s1 "1234") (s2 "1245")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string-ci<? s1 s2)) #t)
@@ -2222,7 +2240,7 @@
 (test (string-append """hi""ho""") "hiho")
 (test (let* ((s1 "hi") (s2 (string-append s1 s1))) (string-set! s2 1 #\x) s1) "hi")
 (test (let* ((s1 "hi") (s2 (string-append s1))) (string-set! s2 1 #\x) s1) "hi")
-
+(test (length (string-append (string #\x #\y (integer->char 127) #\z) (string #\a (integer->char 0) #\b #\c))) 8)
 
 (num-test (letrec ((hi (lambda (str n)
 			 (if (= n 0)
@@ -2316,6 +2334,8 @@
 (test (list->string) 'error)
 (test (string->list "hi" "ho") 'error)
 (test (list->string '() '(1 2)) 'error)
+(test (string->list " hi ") '(#\space #\h #\i #\space))
+(test (string->list (string (integer->char #xf0) (integer->char #x70))) (list (integer->char #xf0) (integer->char #x70)))
 
 (for-each
  (lambda (arg)
@@ -2434,6 +2454,8 @@
 ;(test (symbol->string (string->symbol "")) "")
 (test (string->symbol (string)) 'error)
 (test (string->symbol "") 'error)
+(test (string->symbol " hi") 'error)
+(test (string->symbol "hi ") 'error)
 
 (test (reinvert 12 string->symbol symbol->string "hiho") "hiho")
 
@@ -2451,6 +2473,8 @@
 (test (symbol? (string->symbol (string #\x (integer->char 7) #\x))) #t)
 (test (symbol? (string->symbol (string #\x (integer->char 17) #\x))) #t)
 (test (symbol? (string->symbol (string #\x (integer->char 170) #\x))) #t)
+(test (string->symbol (string #\x (integer->char 0) #\x)) 'error)
+(test (symbol? (string->symbol (string #\x #\y (integer->char 127) #\z))) #t) ; xy(backspace)z
 
 (for-each
  (lambda (arg)
@@ -6860,6 +6884,25 @@
 (test (string=? (format #f "~X" 123.25) "7b.4") #t)
 (test (string=? (format #f "~X" 123+i) "7b.0+1.0i") #t)
 
+(test (string=? (format #f "~A" "hi") (format #f "~S" "hi")) #f)
+(test (string=? (format #f "~A" #\a) (format #f "~S" #\a)) #f)
+(for-each
+ (lambda (arg)
+   (test (string=? (format #f "~A" arg) (format #f "~S" arg)) #t))
+ (list 1 1.0 #(1 2 3) '(1 2 3) '(1 . 2) '() #f #t abs #<eof> #<unspecified> 'hi '\a))
+(test (length (format #f "~S" (string #\\))) 4)                  ; "\"\\\\\""
+(test (length (format #f "~S" (string #\a))) 3)                  ; "\"a\""
+(test (length (format #f "~S" (string #\null))) 6)               ; "\"\\x00\""
+(test (length (format #f "~S" (string (integer->char #xf0)))) 3) ; "\"ð\""
+(test (length (format #f "~S" (string #\"))) 4)                  ; "\""
+
+#|
+(do ((i 0 (+ i 1))) ((= i 256)) 
+  (let ((chr (integer->char i)))
+    (format #t "~D: ~A ~A ~D~%" i (format #f "~S" (string chr)) (string chr) (length (format #f "~S" (string chr))))))
+|#
+
+
 (for-each
  (lambda (arg)
    (test (format #f "~F" arg) 'error))
@@ -7186,12 +7229,13 @@
 (test (let ((@,@'[1] 1) (\,| 2)) (+ @,@'[1] \,|)) 3)
 (test (list"0"0()#()#\a"""1"'x(list)+(cons"""")#f) (list "0" 0 () #() #\a "" "1" 'x (list) + '("" . "") #f))
 (test (let ((x, 1)) x,) 1)
-
+(test (length (eval-string (string #\' #\( #\1 #\space #\. (integer->char 200) #\2 #\)))) 2) ; will be -1 if dot is for improper list, 3 if dot is a symbol
 
 #|
 (do ((i 0 (+ i 1)))
-    ((= i 128))
-  (if (not (= i (char->integer #\))))
+    ((= i 256))
+  (if (and (not (= i (char->integer #\))))
+	   (not (= i (char->integer #\"))))
       (let ((str (string #\' #\( #\1 #\space #\. (integer->char i) #\2 #\))))
 	(catch #t
 	       (lambda ()
@@ -8723,6 +8767,8 @@
 (test (case '2 (('2) 3) (else 1)) 1)     ; car: (quote 2), value: 2, eqv: 0, null: 0 0
 (test (case '2 ((2) 3) (else 1)) 3)      ; car: 2, value: 2, eqv: 1, null: 0 0
 (test (case 2 ((2) 3) (else 1)) 3)       ; car: 2, value: 2, eqv: 1, null: 0 0
+
+(test (case '(()) ((()) 1) (((())) 2) (('()) 3) (('(())) 4) ((((()))) 5) (('((()))) 6) (else 7)) 7) ; (eqv? '(()) '(())) is #f
 
 (test (let ((x 1)) (case (+ 1 x) ((0 "hi" #f) 3/4) ((#\a 1+3i '(1 . 2)) "3") ((-1 'hi 2 2.0) #\f))) #\f)
 (test (case (case 1 ((0 2) 3) (else 2)) ((0 1) 2) ((4 2) 3) (else 45)) 3)
@@ -11244,9 +11290,79 @@ who says the continuation has to restart the map from the top?
 	    (ctr3 0))
 	(let ((ctr4 (dynamic-wind
 			(lambda () (set! ctr1 (+ ctr1 1)))
-			(lambda () (set! ctr2 (+ ctr2 1)) ctr2)
+			(lambda () (set! ctr2 (+ ctr2 1)) (+ 1 ctr2))
 			(lambda () (set! ctr3 (+ ctr3 1))))))
-	  (= ctr1 ctr2 ctr3 ctr4 1)))
+	  (= ctr1 ctr2 ctr3 (- ctr4 1) 1)))
+      #t)
+
+(test (let ((ctr1 0)
+	    (ctr2 0)
+	    (ctr3 0))
+	(let ((ctr4 (catch 'dw
+			   (lambda ()
+			     (dynamic-wind
+				 (lambda () (set! ctr1 (+ ctr1 1)))
+				 (lambda () (set! ctr2 (+ ctr2 1)) (error 'dw "dw-error") ctr2)
+				 (lambda () (set! ctr3 (+ ctr3 1)))))
+			   (lambda args (car args)))))
+	  (and (eq? ctr4 'dw)
+	       (= ctr1 1) (= ctr2 1) (= ctr3 1))))
+      #t)
+
+(test (let ((ctr1 0)
+	    (ctr2 0)
+	    (ctr3 0))
+	(let ((ctr4 (catch 'dw
+			   (lambda ()
+			     (dynamic-wind
+				 (lambda () (set! ctr1 (+ ctr1 1)))
+				 (lambda () (error 'dw "dw-error") (set! ctr2 (+ ctr2 1)) ctr2)
+				 (lambda () (set! ctr3 (+ ctr3 1)))))
+			   (lambda args (car args)))))
+	  (and (eq? ctr4 'dw)
+	       (= ctr1 1) (= ctr2 0) (= ctr3 1))))
+      #t)
+
+(test (let ((ctr1 0)
+	    (ctr2 0)
+	    (ctr3 0))
+	(let ((ctr4 (catch #t
+			   (lambda ()
+			     (dynamic-wind
+				 (lambda () (set! ctr1 (+ ctr1 1)) (error 'dw-init "dw-error"))
+				 (lambda () (set! ctr2 (+ ctr2 1)) (error 'dw "dw-error") ctr2)
+				 (lambda () (set! ctr3 (+ ctr3 1)))))
+			   (lambda args (car args)))))
+	  (and (eq? ctr4 'dw-init)
+	       (= ctr1 1) (= ctr2 0) (= ctr3 0))))
+      #t)
+
+(test (let ((ctr1 0)
+	    (ctr2 0)
+	    (ctr3 0))
+	(let ((ctr4 (catch #t
+			   (lambda ()
+			     (dynamic-wind
+				 (lambda () (set! ctr1 (+ ctr1 1)))
+				 (lambda () (set! ctr2 (+ ctr2 1)) ctr2)
+				 (lambda () (set! ctr3 (+ ctr3 1)) (error 'dw-final "dw-error"))))
+			   (lambda args (car args)))))
+	  (and (eq? ctr4 'dw-final)
+	       (= ctr1 1) (= ctr2 1) (= ctr3 1))))
+      #t)
+
+(test (let ((ctr1 0)
+	    (ctr2 0)
+	    (ctr3 0))
+	(let ((ctr4 (catch #t
+			   (lambda ()
+			     (dynamic-wind
+				 (lambda () (set! ctr1 (+ ctr1 1)))
+				 (lambda () (set! ctr2 (+ ctr2 1)) ctr2)
+				 (lambda () (error 'dw-final "dw-error") (set! ctr3 (+ ctr3 1)))))
+			   (lambda args (car args)))))
+	  (and (eq? ctr4 'dw-final)
+	       (= ctr1 1) (= ctr2 1) (= ctr3 0))))
       #t)
 
 (test (let ((ctr1 0)
@@ -11670,7 +11786,17 @@ who says the continuation has to restart the map from the top?
 (test `(1 #||#,@(list #||# 2 3 #||#)) '(1 2 3))
 (test (eval ``(+ 1 ,@,@'('(2 3)))) '(+ 1 2 3))
 (test (eval ``(+ 1   ,@ #||#  ,@   '('(2 3)))) '(+ 1 2 3))
-
+(test `(,1 ,1) '(1 1))
+(test `(,1 ,`,1) '(1 1))
+(test `(,1 ,`,@(list 1)) '(1 1))
+(test `(,1 ,`,`,1) '(1 1))
+(test `(,1 ,`,@'(1)) '(1 1))
+(test `(,1 ,`,@`(1)) '(1 1))
+(test `(,1 ,`,@`(,1)) '(1 1))
+(test `(,1 ,@`,@(list (list 1))) '(1 1))
+(test (eval ``(,,1 ,@,@(list (quote (list 1))))) '(1 1))
+(test (eval ``(,,1 ,@,@(list `(list 1)))) '(1 1))
+(test (eval (eval ```(,,,1 ,@,@,@(list '(list '(list 1)))))) '(1 1))
 
 ;; from gauche
 (let ((quasi0 99)
@@ -12117,6 +12243,34 @@ who says the continuation has to restart the map from the top?
 (test (catch #t (let () (lambda () (error 'oops 1))) (let ((x 3)) (lambda args (+ x (caadr args))))) 4)
 (test (catch #t (let ((x 2)) (lambda () (error 'oops x))) (let ((x 3)) (lambda args (+ x (caadr args))))) 5)
 (test (catch #t (let ((x 2)) ((lambda () (lambda () (error 'oops x))))) (let ((x 3)) (lambda args (+ x (caadr args))))) 5)
+
+(for-each
+ (lambda (tag)
+   (let ((val (catch tag (lambda () (error tag "an error") 123) (lambda args (car args)))))
+     (if (not (equal? tag val))
+	 (format #t ";catch ~A -> ~A~%" tag val))))
+ (list :hi '() #<eof> #f #t #<unspecified> car #\a 32 9/2))
+
+(for-each
+ (lambda (tag)
+   (let ((val (catch #t (lambda () (error tag "an error") 123) (lambda args (car args)))))
+     (if (not (equal? tag val))
+	 (format #t ";catch #t (~A) -> ~A~%" tag val))))
+ (list :hi '() #<eof> #f #t #<unspecified> car #\a 32 9/2 '(1 2 3) '(1 . 2) #(1 2 3) #()))
+
+;; (error <string>...) throws 'no-catch which makes it harder to check
+(let ((val (catch #t (lambda () (error "hi") 123) (lambda args (car args)))))
+  (if (not (eq? val 'no-catch))
+      (format #t ";catch #t, tag is string -> ~A~%" val)))
+
+(for-each
+ (lambda (tag)
+   (let ((val (catch tag (lambda () (error #t "an error") 123) (lambda args (car args)))))
+     (if (not (equal? #t val))
+	 (format #t ";catch ~A -> ~A (#t)~%" tag val))))
+ (list :hi '() #<eof> #f #t #<unspecified> car #\a 32 9/2))
+
+(let ((tag 'tag)) (test (catch (let () tag) (lambda () (set! tag 123) (error 'tag "tag") tag) (lambda args (car args))) 'tag))
 
 
 (define (last-pair l) ; needed also by loop below
@@ -14610,6 +14764,10 @@ who says the continuation has to restart the map from the top?
 (num-test(cos(sin(log(tan(*))))) 0.90951841537482)
 (num-test (asinh (- 9223372036854775807)) -44.361419555836)
 (num-test (imag-part (asin -9223372036854775808)) 44.361419555836)
+(num-test (string->number "1l1") 10.0)
+(num-test (string->number "1l1+1l1i") 10+10i)
+(num-test (string->number "1l11+11l1i") 100000000000+110i)
+(num-test (string->number "#d1d1") 10.0)
 
 (test ((call-with-exit object->string) 0) #\#) ; #<goto>
 (test ((begin begin) 1) 1)
@@ -43669,6 +43827,49 @@ who says the continuation has to restart the map from the top?
 (num-test (/ 123.4 0.0+1.0i 0.0+1.0i) -123.4)
 (num-test (= 123.4 0.0+1.0i 0.0+1.0i) #f)
 
+(test (> 1 0+i) 'error)
+(test (>= 1 0+i) 'error)
+(test (< 1 0+i) 'error)
+(test (<= 1 0+i) 'error)
+(test (> 1+i 0+i) 'error)
+(test (>= 1+i 0+i) 'error)
+(test (< 1+i 0+i) 'error)
+(test (<= 1+i 0+i) 'error)
+(test (= 1+i 0+i) #f)
+(test (> 2 1+0i) #t)
+(test (>= 2 1+0i) #t)
+(test (< 2 1+0i) #f)
+(test (<= 2 1+0i) #f)
+(test (> 1 0-i) 'error)
+(test (>= 1 0-i) 'error)
+(test (< 1 0-i) 'error)
+(test (<= 1 0-i) 'error)
+(test (> 1+i 0-i) 'error)
+(test (>= 1+i 0-i) 'error)
+(test (< 1+i 0-i) 'error)
+(test (<= 1+i 0-i) 'error)
+(test (= 1+i 0-i) #f)
+(test (> 2 1-0i) #t)
+(test (>= 2 1-0i) #t)
+(test (< 2 1-0i) #f)
+(test (<= 2 1-0i) #f)
+(test (> 2 1+0/2i) #t)
+(test (>= 2 1+0/2i) #t)
+(test (< 2 1+0/2i) #f)
+(test (<= 2 1+0/2i) #f)
+
+(for-each
+ (lambda (op)
+   (let ((val1 (catch #t (lambda () (op 1.0)) (lambda args 'error)))
+	 (val2 (catch #t (lambda () (op 1.0+0i)) (lambda args 'error))))
+     (if (not (equal? val1 val2))
+	 (format #t "(~A 1) != (~A 1+0i)? (~A ~A)~%" op op val1 val2))))
+ (list magnitude angle rationalize abs exp log sin cos tan asin acos atan
+       sinh cosh tanh asinh acosh atanh sqrt floor ceiling truncate round + - * /
+       max min number? integer? real? complex? rational?
+       even? odd? zero? positive? negative? real-part imag-part numerator denominator))
+      
+
 (num-test (+ 1073741824 1073741824 1073741824 1073741824) (* 4 1073741824))
 
 (test (< 1237940039285380274899124223 1.2379400392853803e+27 1237940039285380274899124225) #f)
@@ -44349,6 +44550,7 @@ who says the continuation has to restart the map from the top?
 	    (test (> (string->number "1.0D100") 1.0e98) #t)
 	    (test (> (string->number "1.0f100") 1.0e98) #t)
 	    (test (> (string->number "1.0F100") 1.0e98) #t)
+	    (test (> (string->number "1.0E100") 1.0e98) #t)
 	    
 	    (test (> 1.0L100 1.0e98) #t)
 	    (test (> 1.0l100 1.0e98) #t)
@@ -48476,6 +48678,32 @@ who says the continuation has to restart the map from the top?
 (test (number->string -23/34 8) "-27/42")
 (test (number->string -23/34 16) "-17/22")
 
+(test (string->number " 1.0") #f)
+(test (string->number "1.0 ") #f)
+(test (string->number "1.0 1.0") #f)
+;(test (string->number (string #\1 (integer->char 0) #\0)) 1) ; ?? Guile returns #f
+(test (string->number "1+1 i") #f)
+(test (string->number "1+ei") #f)
+(test (string->number " #b1") #f)
+(test (string->number "#b1 ") #f)
+(test (string->number "#b1 1") #f)
+(test (string->number "#b 1") #f)
+(test (string->number "# b1") #f)
+(test (string->number (string (integer->char 216))) #f) ; slashed 0
+(test (string->number (string (integer->char 189))) #f) ; 1/2 as single char
+(test (string->number (string #\1 (integer->char 127) #\0)) #f) ; backspace
+
+(test (string->number "1E1") 10.0)
+(test (string->number "1D1") 10.0)
+(test (string->number "1S1") 10.0)
+(test (string->number "1F1") 10.0)
+(test (string->number "1L1") 10.0)
+(test (string->number "1e1") 10.0)
+(test (string->number "1d1") 10.0)
+(test (string->number "1s1") 10.0)
+(test (string->number "1f1") 10.0)
+(test (string->number "1l1") 10.0)
+
 (num-test (string->number "11/100" 2) 3/4)
 (num-test (string->number "10111/100010" 2) 23/34)
 (num-test (string->number "27/42" 8) 23/34)
@@ -49764,7 +49992,12 @@ who says the continuation has to restart the map from the top?
    ("#d#i100" 100.0) ("#d#e100" 100) ("#i#d100" 100.0) ("#e#d100" 100)
    ("#x#i100" 256.0) ("#x#e100" 256) ("#i#x100" 256.0) ("#e#x100" 256)
    ("#e#xee" 238) ("#e#x1e1" 481)
-   
+
+   ("#xA" 10) ("#xB" 11) ("#x-1" -1) ("#x-A" -10)
+   ("#xC" 12) ("#xD" 13) 
+   ("#xE" 14) ("#xF" 15) ("#x-ABC" -2748)
+   ("#xaBC" 2748) ("#xAbC" 2748) ("#xabC" 2748) ("#xABc" 2748)
+
    ;; Fractions:
    ("1/1" 1) ("1/2" 1/2) ("-1/2" -1/2) ;("1#/1" 10.0)
 					;("10/1#" 1.0) ("1#/1#" 1.0) ("#e9/10" 9/10) ("#e10/1#" 1)
