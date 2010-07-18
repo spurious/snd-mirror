@@ -468,7 +468,7 @@ typedef struct s7_cell {
 } s7_cell;
 
 /* on 32 bit machines, s7_cell is 28 bytes because s7_num_t is 20 (2 doubles + type char) + 8 overhead (flag + hloc)
- * on 64 bit machines, it is 40 (28 for continuation + 8 overhead + 4 pad bytes) -- is there some use for the 4 unused bytes?
+ * on 64 bit machines, it is 40 (28 for continuation + 8 overhead + 4 pad bytes in the continuation struct)
  */
 
 
@@ -648,7 +648,7 @@ struct s7_scheme {
 #define set_mark(p)                   typeflag(p)  |= T_GC_MARK
 #define clear_mark(p)                 typeflag(p)  &= (~T_GC_MARK)
 /* making this a separate bool field in the cell struct slightly speeds up the mark function,
- *   but at the cost of 4 (or 8!) bytes per object. Since the speedup was about .5% overall (2253 to 2262), I think
+ *   but at the cost of 4 (or 8!) bytes per object. Since the speedup was about .5% overall (2074 to 2084), I think
  *   the size increase is more important.
  */
 
@@ -4563,7 +4563,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 }
 
 
-#define CTABLE_SIZE 128
+#define CTABLE_SIZE 256
 static bool *exponent_table, *slashify_table, *char_ok_in_a_name;
 static int *digits;
 
@@ -4637,7 +4637,7 @@ static bool has_delimiter(const char *str, int len)
 {
   int i;
   for (i = 0; i < len; i++)
-    if (!char_ok_in_a_name[(int)(str[i])])
+    if (!char_ok_in_a_name[(unsigned int)((unsigned char)str[i])]) /* char might be >= 128 */
       return(true);
   return(false);
 }
@@ -4926,7 +4926,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
   while (digits[(int)(*str)] < radix) str++;
   frac_len = str - fpart;
 
-  if ((*str) && (exponent_table[(int)(*str)]))
+  if ((*str) && (exponent_table[(unsigned int)((unsigned char)(*str))]))
     {
       int exp_negative = false;
       str++;
@@ -5121,7 +5121,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol) 
 {
-  #define ISDIGIT(Chr, Rad) (digits[(int)Chr] < Rad)
+  #define ISDIGIT(Chr, Rad) (digits[(unsigned int)((unsigned char)Chr)] < Rad)
 
   char c, *p, *slash1 = NULL, *slash2 = NULL, *plus = NULL, *ex1 = NULL, *ex2 = NULL;
   bool has_dec_point1 = false, has_i = false, has_dec_point2 = false;
@@ -5202,7 +5202,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	    }
 	  else 
 	    {
-	      if (exponent_table[(int)c])
+	      if (exponent_table[(unsigned int)((unsigned char)c)])
 		{
 		  if (current_radix > 10)
 		    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
@@ -7751,25 +7751,23 @@ static s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
 
   x = car(args);
-#if WITH_GMP
-  return(make_boolean(sc, (isnan(s7_real_part(x))) || (isnan(s7_imag_part(x)))));
-#else
   if (s7_is_number(x))
-    {
-      switch (number_type(x))
-	{
-	case NUM_INT:
-	case NUM_RATIO:
-	  return(sc->F);
-
-	case NUM_REAL:
-	case NUM_REAL2:
-	  return(make_boolean(sc, isnan(real(number(x)))));
+#if WITH_GMP
+    return(make_boolean(sc, (isnan(s7_real_part(x))) || (isnan(s7_imag_part(x)))));
+#else
+    switch (number_type(x))
+      {
+      case NUM_INT:
+      case NUM_RATIO:
+	return(sc->F);
+	
+      case NUM_REAL:
+      case NUM_REAL2:
+	return(make_boolean(sc, isnan(real(number(x)))));
 	  
-	default:
-	  return(make_boolean(sc, (isnan(s7_real_part(x))) || (isnan(s7_imag_part(x)))));
-	}
-    }
+      default:
+	return(make_boolean(sc, (isnan(s7_real_part(x))) || (isnan(s7_imag_part(x)))));
+      }
 #endif
   return(sc->F);
 }
@@ -7780,6 +7778,8 @@ static s7_pointer g_is_infinite(s7_scheme *sc, s7_pointer args)
   #define H_is_infinite "(infinite? obj) returns #t if obj is an infinite real"
   s7_pointer x;
   x = car(args);
+  if (!s7_is_number(x))
+    return(sc->F);
   return(make_boolean(sc, (isinf(s7_real_part(x))) || (isinf(s7_imag_part(x)))));
 }
 
@@ -8132,6 +8132,10 @@ static s7_pointer g_make_random_state(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_random_state "(make-random-state seed) returns a new random number state initialized with 'seed'"
   s7_rng_t *r;
+
+  if (!s7_is_integer(car(args)))
+    return(s7_wrong_type_arg_error(sc, "make-random-state,", 1, car(args), "an integer"));
+
   r = (s7_rng_t *)calloc(1, sizeof(s7_rng_t));
   r->ran_seed = s7_integer(car(args));
   r->ran_carry = 1675393560;  /* should this be dependent on the seed? */
@@ -10135,7 +10139,7 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
   if (cdr(args) != sc->NIL)
     {
       if (!is_environment(sc, cadr(args)))
-	return(s7_wrong_type_arg_error(sc, "eval", 2, cadr(args), "an environment"));
+	return(s7_wrong_type_arg_error(sc, "eval-string", 2, cadr(args), "an environment"));
       sc->envir = cadr(args);
     }
 
@@ -10377,7 +10381,7 @@ static char *slashify_string(const char *p, int len)
 
   for (i = 0; i < len; i++) 
     {
-      if (slashify_table[(int)(p[i])])
+      if (slashify_table[(unsigned int)((unsigned char)(p[i]))])
 	{
 	  s[j++] = '\\';
 	  switch (p[i]) 
@@ -20618,7 +20622,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!is_pair(sc->code))                                               /* (define-macro . 1) */
 	return(eval_error_with_name(sc, "~A name missing (stray dot?): ~A", sc->code));
       if (!is_pair(car(sc->code)))                                          /* (define-macro a ...) */
-	return(s7_wrong_type_arg_error(sc, "define-macro", 1, car(sc->code), "a list (name ...)"));
+	return(s7_wrong_type_arg_error(sc, op_names[(int)(sc->op)], 1, car(sc->code), "a list (name ...)"));
 
       sc->x = caar(sc->code);
       if (!s7_is_symbol(sc->x))
@@ -25538,7 +25542,7 @@ static s7_pointer make_big_random_state(s7_scheme *sc, s7_pointer args)
 
   seed = car(args);
   if (!s7_is_integer(seed))
-    return(s7_wrong_type_arg_error(sc, "random", 1, seed, "an integer"));
+    return(s7_wrong_type_arg_error(sc, "make-random-state,", 1, seed, "an integer"));
 
   if (is_c_object(seed))
     {
@@ -26702,4 +26706,15 @@ s7_scheme *s7_init(void)
  * A "class" in this case is define-record (for the local fields and type) + a list of methods and a methods accessor.
  * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
  * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
+ *
+ * s7test valgrind 17-Jul-10: 
+ *    intel core duo (1.83G):    3162 (2M)
+ *    intel e8400  (3.0G):       2372 (800 DDR2, 6M) (running in 32-bit mode)
+ *    intel Q9550 (2.83G):       2184 (6M)
+ *    amd opteron 8356 (2.3G):   2181 (.5M)
+ *    amd phenom 945 (3.0G):     2085 (800 DDR2, .5M)
+ *    intel i7 930 (2.8G):       2084 (1600 DDR3, 8M)
+ *    amd phenom 965 (3.6G):     2083 (800 DDR2, .5M)
+ *    intel Q9650 (3.0G)         2081 (800 DDR2, 6M)
+ *    intel Xeon 5530 (2.4G)          (1333 DDR3)
  */
