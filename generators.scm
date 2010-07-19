@@ -19,14 +19,6 @@
 	((pred (car l)) (car l))
 	(else (find-if pred (cdr l)))))
 
-(if (not (defined? 'snd-display))
-    (define (snd-display . args)
-      (let ((str (if (null? (cdr args))
-		     (car args)
-		     (apply format #f args))))
-	(newline) 
-	(display str))))
-
 
 
 (defmacro defgenerator (struct-name . fields)
@@ -978,7 +970,7 @@
 			 ((= i 20000))
 		       (outa i (nsin5 gen)))))))
 	   (snd (find-sound res)))
-      (snd-display ";~D: ~A" i (maxamp snd 0))
+      (format #t ";~D: ~A" i (maxamp snd 0))
       (set! norms (cons (maxamp snd 0) norms))))
   (reverse norms))
 
@@ -3253,7 +3245,7 @@
 			 (do ((i 0 (+ i 1)))
 			     ((= i 10000))
 			   (outa i (krksin gen)))))))))
-    (snd-display ";~A: ~A" (* 0.1 i) mx)))
+    (format #t ";~A: ~A" (* 0.1 i) mx)))
 
 ;;; relation between 1/(1-x)^2 and peak amp:
 (with-sound (:clipped #f)
@@ -3574,7 +3566,7 @@
 				   ((= i 1000))
 				 (outa i (asymmetric-fm gen index)))))))))
 	(if (> (abs (- peak 1.0)) .1)
-	    (snd-display ";asymmetric-fm peak: ~A, index: ~A, r: ~A" peak index r))))
+	    (format #t ";asymmetric-fm peak: ~A, index: ~A, r: ~A" peak index r))))
     (list -10.0 -1.5 -0.5 0.5 1.0 1.5 10.0)))
  (list 1.0 3.0 10.0))
 |#
@@ -3654,7 +3646,7 @@
       (let ((val (bes-jn i k)))
 	(if (> (abs val) mx)
 	    (set! mx (abs val)))))
-    (snd-display ";~A" (+ mx .001))))
+    (format #t ";~A" (+ mx .001))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen1 (make-bess 400.0 :n 1))
@@ -3851,7 +3843,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (let ((base (* (bes-jn 4 5.0) (bes-jn 4 5.0)))) ; max (fft norms -> 1.0)
   (do ((i 1 (+ i 1)))
       ((= i 11))
-    (snd-display ";~A: ~A ~A" i (* (bes-jn i 5.0) (bes-jn i 5.0)) (/ (* (bes-jn i 5.0) (bes-jn i 5.0)) base))))
+    (format #t ";~A: ~A ~A" i (* (bes-jn i 5.0) (bes-jn i 5.0)) (/ (* (bes-jn i 5.0) (bes-jn i 5.0)) base))))
 ;1: 0.107308091385168 0.701072497819036
 ;2: 0.00216831005396058 0.0141661502497507
 ;3: 0.133101826831083 0.86958987897572
@@ -4168,7 +4160,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		  (do ((i 0 (+ i 1)))
 		      ((= i 10000))
 		    (outa i (j0j1cos gen)))))))))
-    (snd-display ";~A: ~A" i pk)))
+    (format #t ";~A: ~A" i pk)))
 ;0: 0.0
 ;1: 0.555559098720551
 ;2: 0.938335597515106
@@ -5129,7 +5121,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	   (val1 (oscil gen1 0.0 pm))
 	   (val2 (run-with-fm-and-pm gen2 0.0 pm)))
       (if (fneq val1 val2)
-	  (snd-display ";run-with-fm-and-pm: ~A ~A" val1 val2)))))
+	  (format #t ";run-with-fm-and-pm: ~A ~A" val1 val2)))))
 |#
 
 

@@ -69,7 +69,6 @@ an envelope (normally a ramp from 0 to 1) which sets where we are in the zipping
 		    (vct-fill! (zdata-frame0 zp) 0.0)
 		    (let ((start-ctr 0.0)
 			  (samp2 (floor (/ frame-samples chunk-len))))
-		      ;; (snd-display ";samp2: ~A, len: ~A ~A -> ~A ~A" samp2 chunk-len frame-samples (+ 1 (* chunk-len samp2)) (vct-length frame2))
 		      (do ((k 0 (+ 1 k)))
 			  ((= k chunk-len))
 			(let* ((ictr (floor start-ctr))

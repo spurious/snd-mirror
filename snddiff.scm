@@ -70,8 +70,6 @@
 	   (vct-move! v1 0 pos)            ; align new copy with original (todo: move doesn't clear trailing entries)
 	   (vct-scale! (vct-copy v0) scl)) ; subtract original scaled to fit first none zero point
 
-	  ; (snd-display ";pos: ~A, scl: ~A, sizes: ~A ~A" pos scl size (vct-size v1))
-	  
 	  (if (< (vct-size v1) size)
 	      (unconvolve-1 v0 v1 (cons (list scl pos) impulse-response))
 	      impulse-response))

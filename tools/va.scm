@@ -91,24 +91,6 @@
 	       (loop (read-line file 'concat))))))))
  (list "CALLOC" "MALLOC" "REALLOC" "calloc" "malloc" "realloc"))
 
-(let ((flen (string-length "snd-display  "))
-      (line-ctr 0))
-  (call-with-input-file "snd-test.scm"
-    (lambda (file)
-      (let loop ((line (read-line file 'concat)))
-	(or (eof-object? line)
-	    (let ((len (string-length line)))
-	      (set! line-ctr (+ 1 line-ctr))
-	      (if (> len (+ flen 3))
-		  (do ((i 0 (+ 1 i)))
-		      ((= i (- len flen 3)))
-		    (let ((ch (string-ref line i)))
-		      (if (char=? ch #\s)
-			  (if (string=? (substring line i (+ i flen)) "snd-display \"")
-			      (if (not (char=? (string-ref line (+ i flen)) #\;))
-				  (display (format #f "~A (snd-display but no initial semicolon): ~A~%" line-ctr line))))))))
-	      (loop (read-line file 'concat))))))))
-
 
 ;;; look for missing or unused tips
 

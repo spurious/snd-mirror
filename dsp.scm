@@ -13,22 +13,27 @@
 (define (src-duration e)
   "(src-duration envelope) returns the new duration of a sound after using 'envelope' for time-varying sampling-rate conversion"
   (let* ((len (length e))
-	 (ex0 (car e))
-	 (ex1 (list-ref e (- len 2)))
+	 (ex0 (e 0))
+	 (ex1 (e (- len 2)))
 	 (all-x (- ex1 ex0))
 	 (dur 0.0))
     (do ((i 0 (+ i 2)))
 	((>= i (- len 2)) dur)
-      (let* ((x0 (list-ref e i))
-	     (x1 (list-ref e (+ i 2)))
-	     (y0 (list-ref e (+ i 1))) ; 1/x x points
-	     (y1 (list-ref e (+ i 3)))
+      (let* ((x0 (e i))
+	     (x1 (e (+ i 2)))
+	     (y0 (e (+ i 1))) ; 1/x x points
+	     (y1 (e (+ i 3)))
 	     (area (if (< (abs (- y0 y1)) .0001)
 		       (/ (- x1 x0) (* y0 all-x))
 		       (* (/ (- (log y1) (log y0)) 
 			     (- y1 y0)) 
 			  (/ (- x1 x0) all-x)))))
 	(set! dur (+ dur (abs area)))))))
+
+;;; :(src-duration '(0 1 1 2))
+;;; 0.69314718055995
+;;; :(src-duration #(0 1 1 2))
+;;; 0.69314718055995
 
 (define (src-fit-envelope e target-dur)
   (scale-envelope e (/ (src-duration e) target-dur))) ; scale-envelope is in env.scm
@@ -2188,12 +2193,12 @@ is assumed to be outside -1.0 to 1.0."
 		     
 		     (if (< (- clip-beg data-len) previous-end)  ; current beg - data collides with previous
 			 (begin
-			   ;; (snd-display ";[~A] collision at ~A -> [~A : ~A]" clip previous-end clip-beg clip-end)
+			   ;; (format #t ";[~A] collision at ~A -> [~A : ~A]" clip previous-end clip-beg clip-end)
 			   (set! forward-data-len (max 4 (- clip-beg previous-end)))))
 		     
 		     (if (> (+ clip-end data-len) next-beg)    ; current end + data collides with next
 			 (begin
-			   ;; (snd-display ";[~A] collision at [~A : ~A] -> ~A" clip clip-beg clip-end next-beg)
+			   ;; (format #t ";[~A] collision at [~A : ~A] -> ~A" clip clip-beg clip-end next-beg)
 			   (set! backward-data-len (max 4 (- next-beg clip-end)))))
 		     
 		     (let ((forward-predict-len (min (max clip-len (floor (/ forward-data-len 2))) forward-data-len))
@@ -2386,7 +2391,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 	       (set! bmult (* bmult (bes-jn n index))))
 	     ns bs)
 	    (if (and using-sine (< wc 0.0)) (set! bmult (- bmult)))
-	    ;(snd-display ";add ~A from ~A ~A" bmult ns bs)
+	    ;(format #t ";add ~A from ~A ~A" bmult ns bs)
 	    bmult)
 	  0.0)))
 
@@ -2407,7 +2412,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 			    (expt 0.0+1.0i j))))
 	      (set! sum (+ sum curJI))
 	      (if (> (magnitude curJI) 0.001)
-		  (snd-display ";add ~A from J~D(~A) = ~A and I~D(~A) = ~A"
+		  (format #t ";fm-complex-component add ~A from J~D(~A) = ~A and I~D(~A) = ~A"
 			       curJI 
 			       k a (bes-jn k a)
 			       j b (bes-in (abs j) b)))))))
@@ -2431,7 +2436,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 			    (bes-jn j (* k b)))))
 	      (set! sum (+ sum curJJ))
 	      (if (> (magnitude curJJ) 0.001)
-		  (snd-display ";add ~A from J~D(~A) = ~A and I~D(~A) = ~A"
+		  (format #t ";fm-cascade-component add ~A from J~D(~A) = ~A and I~D(~A) = ~A"
 			       curJJ 
 			       k a (bes-jn k a)
 			       j b (bes-jn j (* k b))))))))

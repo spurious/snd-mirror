@@ -325,7 +325,7 @@
 ;(define w1 (make-polyshape :frequency 100.0 
 ;			   :partials (let ((frqs '()))
 ;				       (do ((i 1 (+ i 1)))
-;					   ((= i 10) (begin (snd-display frqs) (reverse frqs)))
+;					   ((= i 10) (begin (format #t frqs) (reverse frqs)))
 ;					 (set! frqs (cons (/ 1.0 (* i i)) (cons i frqs)))))))
 
 (define (simple-poly beg dur freq amp)
@@ -1567,7 +1567,7 @@
 (let* ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-b 0 2.3 -1 256 "oboe.snd")))
        (mx (mus-sound-maxamp outfile)))
   (if (fneq (cadr mx) 0.0)
-      (snd-display ";pvoc a-b: ~A" mx)))
+      (format #t ";pvoc a-b: ~A" mx)))
 |#
 
 (define (pvoc-c beg dur amp size file)
@@ -1602,7 +1602,7 @@
 (let* ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-c 0 2.3 -1 256 "oboe.snd")))
        (mx (mus-sound-maxamp outfile)))
   (if (fneq (cadr mx) 0.0)
-      (snd-display ";pvoc a-c: ~A" mx)))
+      (format #t ";pvoc a-c: ~A" mx)))
 |#
 
 
@@ -1653,7 +1653,7 @@
 (let* ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-d 0 2.3 -1 256 "oboe.snd")))
        (mx (mus-sound-maxamp outfile)))
   (if (fneq (cadr mx) 0.0)
-      (snd-display ";pvoc a-d: ~A" mx)))
+      (format #t ";pvoc a-d: ~A" mx)))
 |#
 
 (define (pvoc-e beg dur amp size file)
@@ -1733,7 +1733,7 @@
 (let* ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-e 0 2.3 -1 256 "oboe.snd")))
        (mx (mus-sound-maxamp outfile)))
   (if (fneq (cadr mx) 0.0)
-      (snd-display ";pvoc a-e: ~A" mx)))
+      (format #t ";pvoc a-e: ~A" mx)))
 |#
 
 (define (or1)
@@ -2800,7 +2800,7 @@
 	 (modulator (make-sndscm-osc2 (* mc-ratio freq)))
 	 (index (hz->radians (* freq mc-ratio fm-index))))
     (if (fneq (mus-frequency carrier) freq)
-	(snd-display ";mus-frequency ~A: ~A ~A" (mus-describe carrier) (mus-frequency carrier) freq))
+	(format #t ";sndscm-osc2 (sclm23.scm) mus-frequency ~A: ~A ~A" (mus-describe carrier) (mus-frequency carrier) freq))
     (run
      (do ((i start (+ i 1)))
 	 ((= i end))

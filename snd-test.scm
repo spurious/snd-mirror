@@ -52719,7 +52719,7 @@ EDITS: 1
 	   ((= i size) sum)
 	 (set! sum (+ sum (* (v1 i) (v2 i))))))
       (if (= sum 0.0)
-	  (snd-display ";run -> sum vectors: ~A" sum)))
+	  (snd-display #__line__ ";run -> sum vectors: ~A" sum)))
     
     ))
 

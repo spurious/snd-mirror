@@ -7275,6 +7275,37 @@
 		   (format #t " ~A~%" args))))))))
 |#
 
+(let ((δεζιξε define)
+      (μεξητθ length)
+      (δο do)
+      (μετ* let*)
+      (ιζ if)
+      (αβσ abs)
+      (μοη log)
+      (σετ! set!))
+
+  (δεζιξε (σςγ-δυςατιοξ ε)
+    (μετ* ((μεξ (μεξητθ ε))
+           (εψ0 (ε 0))
+           (εψ1 (ε (- μεξ 2)))
+           (αμμ-ψ (- εψ1 εψ0))
+           (δυς 0.0))
+      (δο ((ι 0 (+ ι 2)))
+          ((>= ι (- μεξ 2)) δυς)
+        (μετ* ((ψ0 (ε ι))
+               (ψ1 (ε (+ ι 2)))
+               (ω0 (ε (+ ι 1))) ; 1/ψ ψ ποιξτσ
+               (ω1 (ε (+ ι 3)))
+               (αςεα (ιζ (< (αβσ (- ω0 ω1)) .0001)
+                         (/ (- ψ1 ψ0) (* ω0 αμμ-ψ))
+                         (* (/ (- (μοη ω1) (μοη ω0)) 
+                               (- ω1 ω0)) 
+                            (/ (- ψ1 ψ0) αμμ-ψ)))))
+         (σετ! δυς (+ δυς (αβσ αςεα)))))))
+
+  (num-test (σςγ-δυςατιοξ (list 0 1 1 2)) 0.69314718055995)
+  (num-test (σςγ-δυςατιοξ (vector 0 1 1 2)) 0.69314718055995))
+
 
 ;; (eval-string "(eval-string ...)") is not what it appears to be -- the outer call
 ;;    still sees the full string when it evaluates, not the string that results from
@@ -10220,6 +10251,16 @@
 (test (let ((gvar 0)) (define-macro (hi2 b) `(+ gvar ,b)) ((let ((gvar 1)) (define (hi1 a) (let ((gvar 2)) (a 2))) hi1) hi2)) 4)
 (test (let ((gvar 0)) (define-macro (hi2 b) `(+ gvar ,b)) ((let ((gvar 1)) (define (hi1 a) (a 2)) hi1) hi2)) 3)
 (test (let () (define-macro (hi2 b) `(+ gvar ,b)) ((let ((gvar 1)) (define (hi1 a) (a 2)) hi1) hi2)) 3)
+(test (let ((y 1) (x (let ((y 2) (x (let ((y 3) (x 4)) (+ x y)))) (+ x y)))) (+ x y)) 10)
+(test (let ((x 0)) 
+	(+ (let ((x 1) (y (+ x 1))) 
+	  (+ (let ((x 2) (y (+ x 1))) 
+	    (+ (let ((x 3) (y (+ x 1))) 
+	      (+ (let ((x 4) (y (+ x 1))) 
+		(+ (let ((x 5) (y (+ x 1)))
+		  (+ (let ((x 6) (y (+ x 1))) 
+		    (+ (let ((x 7) (y (+ x 1)))
+			 (+ x y)) x)) x)) x)) x)) x)) x)) x)) 35)
 
 (test (let loop ((lst (list 1 2)) 
 		 (i 0) 
@@ -12772,6 +12813,7 @@ who says the continuation has to restart the map from the top?
 
   
   (test (string? (s7-version)) #t)
+  (test (s7-version 1) 'error)
   (test (eval-string "(+ 1 2)") 3)
   (test (eval '(+ 1 2)) 3)
   (test (eval `(+ 1 (eval `(* 2 3)))) 7)
@@ -13234,6 +13276,28 @@ who says the continuation has to restart the map from the top?
   (test (destructuring-bind ((a) b) (list (list 1) 2) (+ a b)) 3)
   (test (destructuring-bind (a (b c)) (list 1 (list 2 3)) (+ a b c)) 6)
   (test (let ((x 1)) (destructuring-bind (a b) (list x 2) (+ a b))) 3)
+
+  (defmacro once-only (names . body)
+    (let ((gensyms (map (lambda (n) (gensym)) names)))
+      `(let (,@(map (lambda (g) `(,g (gensym))) gensyms))
+	 `(let (,,@(map (lambda (g n) ``(,,g ,,n)) gensyms names))
+	    ,(let (,@(map (lambda (n g) `(,n ,g)) names gensyms))
+	       ,@body)))))
+
+  (let ()
+    (defmacro hiho (start end) 
+      (once-only (start end) 
+	`(list ,start ,end)))
+
+    (test (let ((ctr 0)) 
+	    (hiho (let () (set! ctr (+ ctr 1)) ctr) 
+		  (let () (set! ctr (+ ctr 1)) ctr)) 
+	    ctr)
+	  2))
+
+  (defmacro with-gensyms (names . body)
+    `(let ,(map (lambda (n) `(,n (gensym))) names)
+       ,@body))
 
   (define-macro (define-clean-macro name-and-args . body)
     ;; the new backquote implementation breaks this slightly -- it's currently confused about unquoted nil in the original
