@@ -846,8 +846,22 @@ symbol-set!
 (#(1 123 3) (x 1))
 </pre>
 
+<p>By the way, bacros solve part of our original problem:
+</p>
 
-<!-- TODO: unhygienic functions -->
+<pre>
+  (define-bacro (mac b) 
+    `(let ((a 12)) 
+       (+ a ,(symbol-&gt;value b))))
+
+  (let ((a 1))
+    (mac a))
+</pre>
+
+<p>returns 13! No variable capture! Perhaps ,@@arg could evaluate arg in the bacro-expansion
+environment (the call-time environment): <code>(+ a ,@@b)</code>.
+</p>
+
 
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
@@ -894,6 +908,21 @@ f
 the loop! 
 </p>
 
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>Here is Peter Seibel's once-only macro:
+</p>
+
+<pre>
+  (defmacro once-only (names . body)
+    (let ((gensyms (map (lambda (n) (gensym)) names)))
+      `(let (,@(map (lambda (g) `(,g (gensym))) gensyms))
+	 `(let (,,@(map (lambda (g n) ``(,,g ,,n)) gensyms names))
+	    ,(let (,@(map (lambda (n g) `(,n ,g)) names gensyms))
+	       ,@body)))))
+</pre>
 
 
 
@@ -3634,7 +3663,7 @@ occur within the name.  I did not originally include double-quote in this set, s
 <code>(let ((nam""e 1)) nam""e)</code>
 would work, but that means that <code>'(1 ."hi")</code> is parsed as a 1 and the
 symbol <code>."hi"</code>, and <code>(string-set! x"hi")</code> is an error.
-Guile also does not allow double-quotes in names.
+(The first character should not be #\#, #\', #\`, #\,, #\:, or any of those mentioned above).
 </p>
 
 

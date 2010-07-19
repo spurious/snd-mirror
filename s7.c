@@ -18093,7 +18093,7 @@ static token_t token(s7_scheme *sc)
       char *orig_str, *str;
       str = (char *)(port_string(pt) + port_string_point(pt));
       orig_str = str;
-      while (isspace(c = (*str++)))
+      while (isspace(c = (unsigned int)(unsigned char)(*str++))) /* (let ((ÿa 1)) ÿa) -- 255 is not -1 = EOF */
 	if (c == '\n')
 	  port_line_number(pt)++;
       port_string_point(pt) += (str - orig_str);
@@ -18101,8 +18101,8 @@ static token_t token(s7_scheme *sc)
 
   switch (c) 
     {
-    case EOF:
-    case 0:
+    case EOF: /* fgetc might return EOF */
+    case 0:   /* port_string ends in null */
       return(TOKEN_EOF);
       
     case '(':
@@ -20513,7 +20513,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   13
        *   (+ 10 (or (or #f (values 1 2)) #f))
        *   11
-       * The tail recursion is more important.
+       * The tail recursion is more important.  This behavior matches that of "begin" -- if the
+       * values statement is last, it splices into the next outer arglist.
        */
 
 

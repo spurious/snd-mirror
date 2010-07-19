@@ -5085,11 +5085,11 @@
 			     (lambda (a b)
 			       (< (a 1) (b 1))))))
 	  (format #t "~,8F~%    ~A~%    ~A~%    ~A~%    ~A~%"
-		  (car data)
-		  (list-ref phases 0)
-		  (list-ref phases 1)
-		  (list-ref phases 2)
-		  (list-ref phases 3)
+		  (data 0)
+		  (phases 0)
+		  (phases 1)
+		  (phases 2)
+		  (phases 3)
 		  ))))))
 
 ;; (09)
@@ -5144,7 +5144,7 @@
 ;prime 256: peak-phases value: 25.419292, current: 25.416395401039, diff: -0.0028965989614846
 ;all done! Mon 31-May-2010 07:51
 
-;; same on 15-Jun
+;; same on 15-Jun, 19-Jul
 
 ;;; gad161: clean-up-evens
 ;;; t139.scm: show-circles

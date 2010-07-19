@@ -7306,6 +7306,11 @@
   (num-test (óòã-äõòáôéïî (list 0 1 1 2)) 0.69314718055995)
   (num-test (óòã-äõòáôéïî (vector 0 1 1 2)) 0.69314718055995))
 
+(test (let ((ÿa 1)) ÿa) 1)
+(test (+ (let ((!a 1)) !a) (let (($a 1)) $a) (let ((%a 1)) %a) (let ((&a 1)) &a) (let ((*a 1)) *a) (let ((+a 1)) +a) (let ((-a 1)) -a) (let ((.a 1)) .a) (let ((/a 1)) /a) (let ((0a 1)) 0a) (let ((1a 1)) 1a) (let ((2a 1)) 2a) (let ((3a 1)) 3a) (let ((4a 1)) 4a) (let ((5a 1)) 5a) (let ((6a 1)) 6a) (let ((7a 1)) 7a) (let ((8a 1)) 8a) (let ((9a 1)) 9a) (let ((<a 1)) <a) (let ((=a 1)) =a) (let ((>a 1)) >a) (let ((?a 1)) ?a) (let ((@a 1)) @a) (let ((Aa 1)) Aa) (let ((Ba 1)) Ba) (let ((Ca 1)) Ca) (let ((Da 1)) Da) (let ((Ea 1)) Ea) (let ((Fa 1)) Fa) (let ((Ga 1)) Ga) (let ((Ha 1)) Ha) (let ((Ia 1)) Ia) (let ((Ja 1)) Ja) (let ((Ka 1)) Ka) (let ((La 1)) La) (let ((Ma 1)) Ma) (let ((Na 1)) Na) (let ((Oa 1)) Oa) (let ((Pa 1)) Pa) (let ((Qa 1)) Qa) (let ((Ra 1)) Ra) (let ((Sa 1)) Sa) (let ((Ta 1)) Ta) (let ((Ua 1)) Ua) (let ((Va 1)) Va) (let ((Wa 1)) Wa) (let ((Xa 1)) Xa) (let ((Ya 1)) Ya) (let ((Za 1)) Za) (let (([a 1)) [a) (let ((\a 1)) \a) (let ((]a 1)) ]a) (let ((^a 1)) ^a) (let ((_a 1)) _a) (let ((aa 1)) aa) (let ((ba 1)) ba) (let ((ca 1)) ca) (let ((da 1)) da) (let ((ea 1)) ea) (let ((fa 1)) fa) (let ((ga 1)) ga) (let ((ha 1)) ha) (let ((ia 1)) ia) (let ((ja 1)) ja) (let ((ka 1)) ka) (let ((la 1)) la) (let ((ma 1)) ma) (let ((na 1)) na) (let ((oa 1)) oa) (let ((pa 1)) pa) (let ((qa 1)) qa) (let ((ra 1)) ra) (let ((sa 1)) sa) (let ((ta 1)) ta) (let ((ua 1)) ua) (let ((va 1)) va) (let ((wa 1)) wa) (let ((xa 1)) xa) (let ((ya 1)) ya) (let ((za 1)) za) (let (({a 1)) {a) (let ((|a 1)) |a) (let ((}a 1)) }a) (let ((~a 1)) ~a) (let (( a 1))  a) (let ((¡a 1)) ¡a) (let ((¢a 1)) ¢a) (let ((£a 1)) £a) (let ((¤a 1)) ¤a) (let ((¥a 1)) ¥a) (let ((¦a 1)) ¦a) (let ((§a 1)) §a) (let ((¨a 1)) ¨a) (let ((©a 1)) ©a) (let ((ªa 1)) ªa) (let ((«a 1)) «a) (let ((¬a 1)) ¬a) (let ((­a 1)) ­a) (let ((®a 1)) ®a) (let ((¯a 1)) ¯a) (let ((°a 1)) °a) (let ((±a 1)) ±a) (let ((²a 1)) ²a) (let ((³a 1)) ³a) (let ((´a 1)) ´a) (let ((µa 1)) µa) (let ((¶a 1)) ¶a) (let ((·a 1)) ·a) (let ((¸a 1)) ¸a) (let ((¹a 1)) ¹a) (let ((ºa 1)) ºa) (let ((»a 1)) »a) (let ((¼a 1)) ¼a) (let ((½a 1)) ½a) (let ((¾a 1)) ¾a) (let ((¿a 1)) ¿a) (let ((Àa 1)) Àa) (let ((Áa 1)) Áa) (let ((Âa 1)) Âa) (let ((Ãa 1)) Ãa) (let ((Äa 1)) Äa) (let ((Åa 1)) Åa) (let ((Æa 1)) Æa) (let ((Ça 1)) Ça) (let ((Èa 1)) Èa) (let ((Éa 1)) Éa) (let ((Êa 1)) Êa) (let ((Ëa 1)) Ëa) (let ((Ìa 1)) Ìa) (let ((Ía 1)) Ía) (let ((Îa 1)) Îa) (let ((Ïa 1)) Ïa) (let ((Ğa 1)) Ğa) (let ((Ña 1)) Ña) (let ((Òa 1)) Òa) (let ((Óa 1)) Óa) (let ((Ôa 1)) Ôa) (let ((Õa 1)) Õa) (let ((Öa 1)) Öa) (let ((×a 1)) ×a) (let ((Øa 1)) Øa) (let ((Ùa 1)) Ùa) (let ((Úa 1)) Úa) (let ((Ûa 1)) Ûa) (let ((Üa 1)) Üa) (let ((İa 1)) İa) (let ((Şa 1)) Şa) (let ((ßa 1)) ßa) (let ((àa 1)) àa) (let ((áa 1)) áa) (let ((âa 1)) âa) (let ((ãa 1)) ãa) (let ((äa 1)) äa) (let ((åa 1)) åa) (let ((æa 1)) æa) (let ((ça 1)) ça) (let ((èa 1)) èa) (let ((éa 1)) éa) (let ((êa 1)) êa) (let ((ëa 1)) ëa) (let ((ìa 1)) ìa) (let ((ía 1)) ía) (let ((îa 1)) îa) (let ((ïa 1)) ïa) (let ((ğa 1)) ğa) (let ((ña 1)) ña) (let ((òa 1)) òa) (let ((óa 1)) óa) (let ((ôa 1)) ôa) (let ((õa 1)) õa) (let ((öa 1)) öa) (let ((÷a 1)) ÷a) (let ((øa 1)) øa) (let ((ùa 1)) ùa) (let ((úa 1)) úa) (let ((ûa 1)) ûa) (let ((üa 1)) üa) (let ((ıa 1)) ıa) (let ((şa 1)) şa) (let ((ÿa 1)) ÿa)) 181)
+
+;;; there are about 50 non-printing chars, some of which would probably work as well
+
 
 ;; (eval-string "(eval-string ...)") is not what it appears to be -- the outer call
 ;;    still sees the full string when it evaluates, not the string that results from
@@ -9423,6 +9428,40 @@
 (test (let () (define . 1) 1) 'error)
 (test (let () (define func (do () (#t (lambda (y) 2)))) (func 1)) 2)
 
+;; y combinator example from some CS website
+(let ()
+  (define Y
+    (lambda (X)
+      ((lambda (procedure)
+         (X (lambda (arg) ((procedure procedure) arg))))
+       (lambda (procedure)
+         (X (lambda (arg) ((procedure procedure) arg)))))))
+
+  (define M
+    (lambda (func-arg)
+      (lambda (l)
+        (if (null? l)
+            'no-list
+            (if (null? (cdr l))
+                (car l)
+                (max (car l) (func-arg (cdr l))))))))
+
+  (test ((Y M) '(4 5 6 3 4 8 6 2)) 8))
+
+(test (((lambda (X)
+	  ((lambda (procedure)
+	     (X (lambda (arg) ((procedure procedure) arg))))
+	   (lambda (procedure)
+	     (X (lambda (arg) ((procedure procedure) arg))))))
+	(lambda (func-arg)
+	  (lambda (n)
+	    (if (zero? n)
+		1
+		(* n (func-arg (- n 1)))))))
+       5)
+      120)
+
+
 
 
 
@@ -9665,6 +9704,10 @@
 
 (test (map values (list (values 1 2) (values 3 4))) '(1 2 3 4))
 (test (let () (define-macro (hi a) `(+ 1 ,a)) (hi (values 2 3 4))) 10)
+(test (let () (+ 4 (let () (values 1 2 3)) 5)) 15)
+(test (let* () (+ 4 (let () (values 1 2 3)) 5)) 15)
+(test (letrec () (+ 4 (let () (values 1 2 3)) 5)) 15)
+(test (letrec* () (+ 4 (let () (values 1 2 3)) 5)) 15)
 
 
 
@@ -10362,6 +10405,13 @@
   (test (make-fringe-thunk tr) 'null)
   (test (thunk) 'done))
 
+;;; evaluation order matters, bit in s7 it's always left -> right
+(test (let ((x 1)) (+ x (let () (define x 2) x))) 3)
+(test (let ((x 1)) (+ (begin (define x 2) x) x)) 4)
+(test (let ((x 1)) (+ x (begin (define x 2) x))) 3) 
+(test (let ((x 1)) (+ x (begin (set! x 2) x))) 3)
+(test (let ((x 1)) (+ (begin (set! x 2) x) x)) 4)
+(test (let ((x 1)) ((if (= x 1) + -) x (begin (set! x 2) x))) 3) ; or 0 if left->right, else random
 
 
 
@@ -12313,6 +12363,35 @@ who says the continuation has to restart the map from the top?
 
 (let ((tag 'tag)) (test (catch (let () tag) (lambda () (set! tag 123) (error 'tag "tag") tag) (lambda args (car args))) 'tag))
 
+(let ()
+  (define (check-reerror x)
+    (catch #t
+      (lambda ()
+	(define (our-func x)
+	  (case x
+	    ((0) (error 'zero))
+	    ((1) (error 'one))
+	    (else (error 'else))))
+	(catch #t 
+  	  (lambda () 
+	    (our-func x))
+	  (lambda args
+	    (if (eq? (car args) 'one)
+		(our-func (+ x 1))
+		(apply error args)))))
+      (lambda args
+	(let ((type (car args)))
+	  (case type
+	    ((zero) 0)
+	    ((one) 1)
+	    (else 2))))))
+  (test (check-reerror 0) 0)
+  (test (check-reerror 1) 2)
+  (test (check-reerror 2) 2))
+
+
+
+;;; --------------------------------------------------------------------------------
 
 (define (last-pair l) ; needed also by loop below
   (if (pair? (cdr l)) 
@@ -12990,6 +13069,21 @@ who says the continuation has to restart the map from the top?
   (test (let () (define-bacro (tst a) `(+ 1 (if (> ,a 0) (tst (- ,a 1)) 0))) (tst 3)) 4)
   (test (let () (define-bacro (hi a) (if (list? a) `(+ 1 ,@a) `(+ 1 ,a))) (* (hi 1) (hi (2 3)))) 12)
 
+#|
+  (define-macro (when test . body)
+    `((apply lambda (list '(test) '(if test (let () ,@body)))) ,test))
+
+  (define-macro (when test . body)
+    `(if ,test (let () ,@body)))
+
+  (define-macro (when test . body)
+    `((lambda (test) (if test (let () ,@body))) ,test))
+
+  (define-macro (when test . body)
+    `(let ((func (apply lambda `(() ,,@body))))
+       (if ,test (func))))
+|#
+
   (test (defmacro) 'error)
   (test (define-macro) 'error)
   (test (defmacro 1 2 3) 'error)
@@ -13287,13 +13381,13 @@ who says the continuation has to restart the map from the top?
   (let ()
     (defmacro hiho (start end) 
       (once-only (start end) 
-	`(list ,start ,end)))
+	`(list ,start ,end (+ 2 ,start) (+ ,end 2))))
 
     (test (let ((ctr 0)) 
-	    (hiho (let () (set! ctr (+ ctr 1)) ctr) 
-		  (let () (set! ctr (+ ctr 1)) ctr)) 
-	    ctr)
-	  2))
+	    (let ((lst (hiho (let () (set! ctr (+ ctr 1)) ctr) 
+			     (let () (set! ctr (+ ctr 1)) ctr))))
+	      (list ctr lst)))
+	  '(2 (1 2 3 4))))
 
   (defmacro with-gensyms (names . body)
     `(let ,(map (lambda (n) `(,n (gensym))) names)
