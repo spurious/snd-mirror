@@ -858,8 +858,18 @@ symbol-set!
     (mac a))
 </pre>
 
-<p>returns 13! No variable capture! Perhaps ,@@arg could evaluate arg in the bacro-expansion
-environment (the call-time environment): <code>(+ a ,@@b)</code>.
+<p>returns 13! No variable capture! Perhaps call-environment could provide the
+call-time environment.  Then with suitable reader macros, #_arg for arg in the
+initial-environment, #&arg for the call-environment:
+</p>
+
+<pre>
+  (define-macro (mac b) 
+    `(#_let ((a 12)) 
+       (#_+ a #&b)))
+</pre>
+
+<p>would be completely hygienic.  No need for bacros or immaculos?
 </p>
 
 

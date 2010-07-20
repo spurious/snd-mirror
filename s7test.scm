@@ -10405,7 +10405,7 @@
   (test (make-fringe-thunk tr) 'null)
   (test (thunk) 'done))
 
-;;; evaluation order matters, bit in s7 it's always left -> right
+;;; evaluation order matters, but in s7 it's always left -> right
 (test (let ((x 1)) (+ x (let () (define x 2) x))) 3)
 (test (let ((x 1)) (+ (begin (define x 2) x) x)) 4)
 (test (let ((x 1)) (+ x (begin (define x 2) x))) 3) 
