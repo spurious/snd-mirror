@@ -858,20 +858,59 @@ symbol-set!
     (mac a))
 </pre>
 
-<p>returns 13! No variable capture! Perhaps call-environment could provide the
-call-time environment.  Then with suitable reader macros, #_arg for arg in the
-initial-environment, #&arg for the call-environment:
+<p>returns 13! No variable capture! Perhaps we can massage this idea a bit:
 </p>
 
 <pre>
-  (define-macro (mac b) 
-    `(#_let ((a 12)) 
-       (#_+ a #&b)))
+(define-macro (i_ arg)
+  `(with-environment (initial-environment) ,arg))
+
+(define-bacro* (mac b (env (current-environment)))
+  `((i_ let) ((a 12)) 
+     ((i_ +) a (with-environment ',env ,b))))
+
+(let ((a 32) 
+      (+ -)) 
+  (mac a))
+44
 </pre>
 
-<p>would be completely hygienic.  No need for bacros or immaculos?
+<p>We need the bacro so that env's default value is evaluated in the call time environment.
+Ideally, that environment would be easily accessible, but I can't think of a way to implement
+it that doesn't slow down normal cases.  Maybe a reader macro would look better:
 </p>
 
+<pre>
+(set! *#readers*
+  (cons (cons #\_ (lambda (str)
+		    `(with-environment 
+                       (initial-environment) 
+                       ,(string-&gt;symbol (substring str 1)))))
+	*#readers*))
+
+(define-macro (&_ arg env)
+  `(with-environment ',env ,arg))
+
+(define-bacro* (mac b (env (current-environment)))
+  `(#_let ((a 12)) 
+     (#_+ a (&_ ,b ,env))))
+</pre>
+
+<p>Guaranteed hygienic!  
+I'm not sure it's a big improvement over immaculos or gensyms, but it works.
+</p>
+
+<!--
+;;; -------- this also works:
+(define-macro (i_ arg)
+  `(with-environment (initial-environment) ,arg))
+
+(define-macro* (mac b (env (current-environment)))
+  `((i_ let) ((a 12)) 
+     ((i_ +) a (with-environment ,env ,b))))
+
+(let ((a 32) (+ -)) (let ((e (current-environment))) (mac a e)))
+-->
 
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
@@ -915,14 +954,36 @@ f
 </pre>
 
 <p>The moral of this story is: if you see a circular list in macroexpand, break
-the loop! 
+the loop! Unfortunately, there are insidious hidden loops:
 </p>
+
+<pre>
+(define-macro* (mac (env (current-environment))) 
+  `(display ,env))
+</pre>
+
+<p>looks innocuous, and its expanded source shows no loops, but we should have quoted the
+env reference!  This code is structurally equivalent to
+</p>
+
+<pre>
+(let ((lst (list (cons 1 2)))) 
+  (set! (cdr (car lst)) lst) 
+  (eval lst))
+</pre>
+
+<p>because the 'env' argument is in the current environment and points to it at the same time.
+This (or its CL equivalent) will cause stack overflow in sbcl and clisp, and
+will segfault s7 due to a stack overflow internally.
+I need to figure out how to make the call-time environment accessible...
+</p>
+
 
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<p>Here is Peter Seibel's once-only macro:
+<p>But we should end on a happy note.  Here is Peter Seibel's once-only macro:
 </p>
 
 <pre>
@@ -3008,6 +3069,8 @@ wrap it in <code>(with-environment (initial-environment) ...)</code>:
 </pre>
 
 <p>
+with-environment and initial-environment are constants, so you can
+use them in any context without worrying about whether they've been redefined.
 I think these functions can implement the notions of libraries,
 separate namespaces, or modules.  
 Here's one way: first the library writer just writes his library.
@@ -3368,7 +3431,7 @@ one argument, the string that follows the #-sign up to the next delimiter.  "fun
 when #&lt;char&gt; is encountered.  If it returns something other than #f, the #-expression
 is replaced with that value.  Scheme has several predefined #-readers for cases such
 as #b1, #\a, #i123, and so on, but you can override these if you like.  If the string
-passed in is not the complete #-expression, the function can use read-char to get the
+passed in is not the complete #-expression, the function can use read-char or read to get the
 rest.  Say we'd like #t&lt;number&gt; to interpret the number in base 12:
 </p>
 
@@ -3399,6 +3462,20 @@ I need to know where something unexpected happened.  So:
 			        #f))))
             *#readers*))
 </pre>
+
+<p>Here's a reader macro for read-time evaluation:
+</p>
+<pre>
+(set! *#readers*
+  (cons (cons #\. (lambda (str)
+		    (if (string=? str ".") (eval (read)) #f)))
+	*#readers*))
+
+&gt; '(1 2 #.(* 3 4) 5)
+(1 2 12 5)
+</pre>
+
+
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>

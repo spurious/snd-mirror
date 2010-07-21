@@ -371,6 +371,14 @@
 (test (eq? (if #f #f) #<unspecified>) #t)
 (test (eof-object? #<eof>) #t)
 (test (eq? (symbol->value '_?__undefined__?_) #<undefined>) #t)
+(test (eq? #<eof> #<eof>) #t)
+(test (eq? #<undefined> #<undefined>) #t)
+(test (eq? #<unspecified> #<unspecified>) #t)
+(test (eq? #<eof> #<undefined>) #f)
+(test (eq? #<eof> '()) #f)
+(test (let () (define-macro (hi a) `(+ 1 ,a)) (eq? hi hi)) #t)
+(test (let () (define (hi a) (+ 1 a)) (eq? hi hi)) #t)
+(test (let ((x (lambda* (hi (a 1)) (+ 1 a)))) (eq? x x)) #t)
 
 
 
@@ -462,6 +470,15 @@
 (test (eqv? ''() '()) #f)
 (test (eqv? '#f #f) #t)
 (test (eqv? '#f '#f) #t)
+(test (eqv? #<eof> #<eof>) #t)
+(test (eqv? #<undefined> #<undefined>) #t)
+(test (eqv? #<unspecified> #<unspecified>) #t)
+(test (eqv? (if #f #f) #<unspecified>) #t)
+(test (eqv? #<eof> #<undefined>) #f)
+(test (eqv? #<eof> '()) #f)
+(test (let () (define-macro (hi a) `(+ 1 ,a)) (eqv? hi hi)) #t)
+(test (let () (define (hi a) (+ 1 a)) (eqv? hi hi)) #t)
+(test (let ((x (lambda* (hi (a 1)) (+ 1 a)))) (eqv? x x)) #t)
 
 
 
@@ -528,6 +545,15 @@
 (test (equal? #()()) #f)
 (test (equal? ()"") #f)
 (test (equal? "hi""hi") #t)
+(test (equal? #<eof> #<eof>) #t)
+(test (equal? #<undefined> #<undefined>) #t)
+(test (equal? #<unspecified> #<unspecified>) #t)
+(test (equal? (if #f #f) #<unspecified>) #t)
+(test (equal? #<eof> #<undefined>) #f)
+(test (equal? #<eof> '()) #f)
+(test (let () (define-macro (hi a) `(+ 1 ,a)) (equal? hi hi)) #t)
+(test (let () (define (hi a) (+ 1 a)) (equal? hi hi)) #t)
+(test (let ((x (lambda* (hi (a 1)) (+ 1 a)))) (equal? x x)) #t)
 
 (test (equal? most-positive-fixnum most-positive-fixnum) #t)
 (test (equal? most-positive-fixnum most-negative-fixnum) #f)
@@ -637,7 +663,7 @@
  (lambda (arg)
    (if (not arg)
        (format #t "(not ~A) -> #t?~%" arg)))
- (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) (if #f #f)))
+ (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) #<eof> #<undefined> (if #f #f)))
 
 (test (recompose 12 not #f) #f)
 
@@ -14926,6 +14952,7 @@ who says the continuation has to restart the map from the top?
 (num-test (string->number "1l1+1l1i") 10+10i)
 (num-test (string->number "1l11+11l1i") 100000000000+110i)
 (num-test (string->number "#d1d1") 10.0)
+(num-test (string->number "#d0001d0001") 10.0)
 
 (test ((call-with-exit object->string) 0) #\#) ; #<goto>
 (test ((begin begin) 1) 1)
@@ -37473,6 +37500,9 @@ who says the continuation has to restart the map from the top?
 (test (zero?) 'error)
 (test (zero? "hi") 'error)
 (test (zero? 1.0+23.0i 1.0+23.0i) 'error)
+(test (zero? 0+i) #f)
+(test (zero? 0-0i) #t)
+(test (zero? +0.0) #t)
 
 (for-each
  (lambda (n)
@@ -37497,6 +37527,7 @@ who says the continuation has to restart the map from the top?
 (test (positive?) 'error)
 (test (positive? 1.23+1.0i) 'error)
 (test (positive? 1.23 1.23) 'error)
+(test (positive? 1.0) #t)
 
 (for-each
  (lambda (n)
@@ -45899,6 +45930,8 @@ who says the continuation has to restart the map from the top?
 (test (= 0.0 0.0+0.0i) #t)
 (test (= 1+1i 1+1i) #t)
 (test (= 0 0) #t)
+(test (= +0 -0) #t)
+(test (= +1/2 1/2) #t)
 (num-test (= 3 3) #t)
 (num-test (= 3 5) #f)
 (num-test (= 3 3 3 3) #t)
@@ -49049,6 +49082,11 @@ who says the continuation has to restart the map from the top?
       ;; (positive? (/ most-positive-fixnum most-negative-fixnum)) -> #t!
       ))
 
+(num-test #b+01 1)
+(num-test #b-01 -1)
+(num-test #d-1/2 -1/2)
+(num-test #d+1/2 1/2)
+
 (num-test #b1.0e-8 0.00390625)
 (num-test #o1.0e-8 5.9604644775391e-08)
 (num-test #d1.0e-8 1.0e-8)
@@ -49488,7 +49526,7 @@ who says the continuation has to restart the map from the top?
   (num-test (string->number-2 "100" 10) 100)
   (num-test (string->number-2 "11" 16) 17)
   (num-test (string->number-2 "-11" 16) -17)
-  (num-test (string->number-2 "aa" 16) 170)
+  (num-test (string->number-2 "+aa" 16) 170)
   (num-test (string->number-2 "-aa" 16) -170)
   
   (for-each
@@ -49816,6 +49854,8 @@ who says the continuation has to restart the map from the top?
  (lambda (str)
    (test (string->number str) 'error)) ; an error because there is no exact complex
  (list "#e1+i" "#e1-i" "#e01+i" "#e+1+i" "#e1.+i" "#e01-i" "#e+1-i" "#e1.-i" "#e1+1i" "#e1-1i"))
+
+(num-test (let ((0- 1) (1+ 2) (-0+ 3) (1e 4) (1/+2 5) (--1 6)) (+ 0- 1+ -0+ 1e 1/+2 --1)) 21)
 
 (for-each
  (lambda (str)

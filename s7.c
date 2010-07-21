@@ -9797,6 +9797,7 @@ static s7_pointer g_read_char_1(s7_scheme *sc, s7_pointer args, bool peek)
   if (args != sc->NIL)
     port = car(args);
   else port = sc->input_port;
+
   if (!s7_is_input_port(sc, port))
     return(s7_wrong_type_arg_error(sc, (peek) ? "peek-char" : "read-char", 0, port, "an input port"));
   if (port_is_closed(port))
@@ -14060,6 +14061,16 @@ void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int re
 }
 
 
+static void s7_define_constant_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
+{
+  s7_pointer func, sym;
+  sym = s7_make_symbol(sc, name);
+  func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
+  s7_define(sc, s7_global_environment(sc), sym, func);
+  set_immutable(car(symbol_global_slot(sym)));
+}
+
+
 void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_pointer func;
@@ -17441,6 +17452,20 @@ pass (global-environment):\n\
 	return(s7_wrong_type_arg_error(sc, "eval", 2, cadr(args), "an environment"));
       sc->envir = cadr(args);
     }
+
+  /* this causes stack-overflow -> segfault:
+   *    (define-macro* (mac (env (current-environment))) `(display ,env)) (mac)
+   * which is the same as
+   *    (let ((lst (list (list (cons 1  2))))) (set! (cdr (caar lst)) lst) (eval lst))
+   *    (let ((lst (list (cons + 2)))) (set! (cdr (car lst)) lst) (eval lst))
+   * but I can't think of a good way to catch such stuff (or what to do if I do catch it)
+   *
+   *    guile hangs: (let ((lst (list (cons + 2)))) (set-cdr! (car lst) lst) (eval lst (interaction-environment)))
+   *    sbcl and clisp stack overflow: (let ((lst (list (cons 1 2)))) (setf (cdr (car lst)) lst) (eval lst))
+   *
+   * so, I'm not alone...
+   */
+
   sc->code = car(args);
   push_stack(sc, opcode(OP_BARRIER), sc->NIL, sc->NIL);
   push_stack(sc, opcode(OP_EVAL), sc->args, sc->code);
@@ -18538,6 +18563,11 @@ static s7_pointer read_expression(s7_scheme *sc)
 	case TOKEN_SHARP_CONST:
 	  {
 	    sc->value = read_delimited_string(sc, false);
+
+	    /* here we need the following character and form 
+	     *   strbuf[0] == '#', false above = # case, not an atom
+	     */
+
 	    if (sc->value == sc->NIL)
 	      {
 		s7_pointer result;
@@ -18647,12 +18677,13 @@ static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
 }
 
 
-static void assign_syntax(s7_scheme *sc, const char *name, opcode_t op) 
+static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op) 
 {
   s7_pointer x;
   x = symbol_table_add_by_name_at_location(sc, name, symbol_table_hash(name, vector_length(sc->symbol_table))); 
   typeflag(x) |= (T_SYNTAX | T_DONT_COPY); 
   syntax_opcode(x) = (int)op;
+  return(x);
 }
 
 
@@ -19373,6 +19404,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   get a slight speed-up this way, with a few more days of work, but the code would be
        *   much more complicated.  I prefer simpler code in this case.
        */
+
       {
         s7_pointer x;
 	NEW_CELL(sc, x); 
@@ -19510,6 +19542,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_BACRO:
 	  NEW_FRAME(sc, sc->envir, sc->envir);       /* like let* -- we'll be adding macro args, so might as well sequester things here */
 	  goto BACRO;
+	  /* the other choice is to do expansion and evaluation in the definition env,
+	   *   so only the args come (unevaluated) from the current env.
+	   *   I can't immediately see any need for this.
+	   */
 
 	case T_CLOSURE:                              /* -------- normal function (lambda), or macro -------- */
 	case T_MACRO:
@@ -19528,6 +19564,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   * (define-macro (hi a) `(+ ,a 1))
 	   * (apply hi '(4))
 	   * 5
+	   *
+	   * (let ((x 32)) (define-macro* (mac (a (let () (display x) 3))) `(+ 1 ,a)) (let ((x 4)) (mac x)))
+	   * displays 32, returns 5, so the evaluation of the default value happens in the definition environment
+	   * (let ((x 32)) (define* (mac (a (let () (display x) 3))) (+ 1 a)) (let ((x 4)) (mac x)))
+	   * is the same
+	   * (let ((x 32)) (define-bacro* (mac (a (let () (display x) 3))) `(+ 1 ,a)) (let ((x 4)) (mac x)))
+	   * displays 4 and returns 5
+	   *
+	   * so... we need a way to get the call environment from within either a macro or a function
 	   */
 
 	  for (sc->x = closure_args(sc->code), sc->y = sc->args; is_pair(sc->x); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
@@ -26023,7 +26068,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "or",                OP_OR);
   assign_syntax(sc, "case",              OP_CASE);
   assign_syntax(sc, "do",                OP_DO);
-  assign_syntax(sc, "with-environment",  OP_WITH_ENV);
+  set_immutable(assign_syntax(sc, "with-environment",  OP_WITH_ENV));
 
   assign_syntax(sc, "lambda",            OP_LAMBDA);
   assign_syntax(sc, "lambda*",           OP_LAMBDA_STAR);
@@ -26184,7 +26229,7 @@ s7_scheme *s7_init(void)
   
   s7_define_function(sc, "global-environment",      g_global_environment,      0, 0, false, H_global_environment);
   s7_define_function(sc, "current-environment",     g_current_environment,     0, CURRENT_ENVIRONMENT_OPTARGS, false, H_current_environment);
-  s7_define_function(sc, "initial-environment",     g_initial_environment,     0, 0, false, H_initial_environment);
+  s7_define_constant_function(sc, "initial-environment", g_initial_environment, 0, 0, false, H_initial_environment);
   s7_define_function(sc, "augment-environment",     g_augment_environment,     1, 0, true,  H_augment_environment);
   s7_define_function(sc, "augment-environment!",    g_augment_environment_direct, 1, 0, true,  H_augment_environment_direct);
   s7_define_function(sc, "provided?",               g_is_provided,             1, 0, false, H_is_provided);
