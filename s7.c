@@ -317,8 +317,8 @@ static const char *op_names[OP_MAX_DEFINED] =
 };
 
 
-#define NUM_SMALL_INTS 200
-/* this needs to be at least OP_MAX_DEFINED = 83 */
+#define NUM_SMALL_INTS 256
+/* this needs to be at least OP_MAX_DEFINED = 83 max num chars (256) */
 /* going up to 1024 gives very little improvement, down to 128 costs about .2% run time */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -481,7 +481,7 @@ typedef struct {
 #endif
 
 
-static s7_pointer *small_ints, *small_negative_ints;
+static s7_pointer *small_ints, *small_negative_ints, *chars;
 static s7_pointer real_zero, real_one; /* -1.0 as constant gains us almost nothing in run time */
 
 struct s7_scheme {  
@@ -1992,8 +1992,6 @@ void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
 }
 
 
-static bool *number_inits; /* bad symbol name error check */
-
 s7_pointer s7_make_symbol(s7_scheme *sc, const char *name) 
 { 
   s7_pointer x; 
@@ -2003,13 +2001,6 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
   x = symbol_table_find_by_name(sc, name, location); 
   if (x != sc->NIL) 
     return(x); 
-
-  if ((number_inits[(int)name[0]]) &&
-      (make_atom(sc, (char *)name, 10, false) != sc->F))
-    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-		    make_list_2(sc, 
-				make_protected_string(sc, "identifier (symbol) name, ~A, can't be a number"), 
-				s7_make_string(sc, name))));
 
   return(symbol_table_add_by_name_at_location(sc, name, location)); 
 } 
@@ -2071,16 +2062,10 @@ bool s7_is_symbol(s7_pointer p)
 }
 
 
-static bool is_pure_symbol(s7_pointer p)
-{
-  return((typeflag(p) & (T_MASKTYPE | T_SYNTAX)) == T_SYMBOL);
-}
-
-
 static s7_pointer g_is_symbol(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_symbol "(symbol? obj) returns #t if obj is a symbol"
-  return(make_boolean(sc, is_pure_symbol(car(args))));
+  return(make_boolean(sc, (typeflag(car(args)) & (T_MASKTYPE | T_SYNTAX)) == T_SYMBOL)); /* i.e. (symbol? begin) is #f */
 }
 
 
@@ -2100,8 +2085,6 @@ static s7_pointer g_symbol_to_string(s7_scheme *sc, s7_pointer args)
 }
 
 
-static bool has_delimiter(const char *str, int len);
-
 static s7_pointer g_string_to_symbol(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_to_symbol "(string->symbol str) returns the string str converted to a symbol"
@@ -2110,12 +2093,12 @@ static s7_pointer g_string_to_symbol(s7_scheme *sc, s7_pointer args)
 
   if (!s7_is_string(str))
     return(s7_wrong_type_arg_error(sc, "string->symbol", 0, str, "a string"));
-  if (string_length(str) == 0)                 /* (string->symbol (port-filename)) */
-    return(s7_wrong_type_arg_error(sc, "string->symbol", 0, str, "a non-null string"));
-  if (has_delimiter(string_value(str), string_length(str)))
-    return(s7_error(sc, sc->OUT_OF_RANGE, 
-		    make_list_2(sc, make_protected_string(sc, "(string->symbol ~S) encountered illegal character"), str)));
   return(s7_make_symbol(sc, string_value(str)));
+
+  /* This can return symbols that can't be used as, for example, variable names.
+   *   apparently the idea is to allow any string to be converted to a symbol for fast comparisons 
+   *   (i.e. it's an ugly optimization hack).
+   */
 }
 
 
@@ -4574,7 +4557,6 @@ static void init_ctables(void)
   exponent_table = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
   slashify_table = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
   char_ok_in_a_name = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
-  number_inits = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
   
   for (i = 1; i < CTABLE_SIZE; i++)
     char_ok_in_a_name[i] = true;
@@ -4618,11 +4600,6 @@ static void init_ctables(void)
   digits['d'] = 13; digits['D'] = 13;
   digits['e'] = 14; digits['E'] = 14;
   digits['f'] = 15; digits['F'] = 15;
-
-  number_inits['0'] = true; number_inits['1'] = true; number_inits['2'] = true; number_inits['3'] = true;
-  number_inits['4'] = true; number_inits['5'] = true; number_inits['6'] = true; number_inits['7'] = true;
-  number_inits['8'] = true; number_inits['9'] = true; number_inits['+'] = true; number_inits['-'] = true;
-  number_inits['.'] = true;
 }
 
 
@@ -4632,16 +4609,6 @@ static bool is_radix_prefix(char prefix)
 	 (prefix == 'd') ||
 	 (prefix == 'x') ||
 	 (prefix == 'o'));
-}
-
-
-static bool has_delimiter(const char *str, int len)
-{
-  int i;
-  for (i = 0; i < len; i++)
-    if (!char_ok_in_a_name[(unsigned int)((unsigned char)str[i])]) /* char might be >= 128 */
-      return(true);
-  return(false);
 }
 
 
@@ -4838,7 +4805,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 				  c = name[1];
 				else return(sc->NIL);
 			      }}}}}}
-	return(s7_make_character(sc, c));
+	return(s7_make_character(sc, (unsigned int)c));
       }
     }
   return(sc->NIL);
@@ -8286,7 +8253,7 @@ static s7_pointer g_char_to_integer(s7_scheme *sc, s7_pointer args)
   #define H_char_to_integer "(char->integer c) converts the character c to an integer"
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char->integer", 0, car(args), "a character"));
-  return(s7_make_integer(sc, character(car(args))));
+  return(small_int(character(car(args))));
 }
 
 
@@ -8303,7 +8270,7 @@ static s7_pointer g_integer_to_char(s7_scheme *sc, s7_pointer args)
   if ((ind < 0) || (ind > 255))
     return(s7_wrong_type_arg_error(sc, "integer->char", 0, x, "an integer between 0 and 255"));
 
-  return(s7_make_character(sc, (char)ind));
+  return(s7_make_character(sc, (unsigned int)ind));
 }
 
 
@@ -8312,7 +8279,7 @@ static s7_pointer g_char_upcase(s7_scheme *sc, s7_pointer args)
   #define H_char_upcase "(char-upcase c) converts the character c to upper case"
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char-upcase", 0, car(args), "a character"));
-  return(s7_make_character(sc, (char)toupper(character(car(args)))));
+  return(s7_make_character(sc, (unsigned int)toupper(character(car(args)))));
 }
 
 
@@ -8321,7 +8288,7 @@ static s7_pointer g_char_downcase(s7_scheme *sc, s7_pointer args)
   #define H_char_downcase "(char-downcase c) converts the character c to lower case"
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char-downcase", 0, car(args), "a character"));
-  return(s7_make_character(sc, (char)tolower(character(car(args)))));
+  return(s7_make_character(sc, (unsigned int)tolower(character(car(args)))));
 }
 
 
@@ -8332,9 +8299,7 @@ static s7_pointer g_is_char_alphabetic(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "char-alphabetic?", 0, car(args), "a character"));
   return(make_boolean(sc, isalpha(character(car(args)))));
 
-  /* isalpha will return #t for (integer->char 226) and others in that range -- should
-   *   we insist on ASCII here? (i.e. less than 128)
-   */
+  /* isalpha returns #t for (integer->char 226) and others in that range */
 }
 
 
@@ -8381,13 +8346,9 @@ static s7_pointer g_is_char(s7_scheme *sc, s7_pointer args)
 }
 
 
-s7_pointer s7_make_character(s7_scheme *sc, int c) 
+s7_pointer s7_make_character(s7_scheme *sc, unsigned int c) 
 {
-  s7_pointer x;
-  NEW_CELL(sc, x);
-  set_type(x, T_CHARACTER | T_ATOM | T_SIMPLE | T_DONT_COPY);
-  character(x) = c;
-  return(x);
+  return(chars[c]);
 }
 
 
@@ -8700,7 +8661,7 @@ static s7_pointer string_ref_1(s7_scheme *sc, s7_pointer strng, s7_pointer index
     return(s7_out_of_range_error(sc, "string-ref index,", 2, index, "should be less than string length"));
   
   str = string_value(strng);
-  return(s7_make_character(sc, ((unsigned char *)str)[ind]));
+  return(s7_make_character(sc, (unsigned int)((unsigned char *)str)[ind]));
 }
 
 
@@ -9146,7 +9107,7 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
 
   sc->w = sc->NIL;
   for (i = 0; i < len; i++)
-    sc->w = s7_cons(sc, s7_make_character(sc, str[i]), sc->w);
+    sc->w = s7_cons(sc, s7_make_character(sc, (unsigned int)((unsigned char)str[i])), sc->w);
   p = sc->w;
   sc->w = sc->NIL;
 
@@ -9809,7 +9770,7 @@ static s7_pointer g_read_char_1(s7_scheme *sc, s7_pointer args, bool peek)
   if (c == EOF)
     return(sc->EOF_OBJECT); 
 
-  return(s7_make_character(sc, c));
+  return(s7_make_character(sc, (unsigned int)c));
 }
 
 
@@ -10484,6 +10445,10 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     case T_NUMBER:
       return(number_to_string_base_10(obj, 0, 14, 'g')); /* 20 digits is excessive in this context */
   
+    case T_SYMBOL:
+      return(copy_string_with_len(symbol_name(obj), symbol_name_length(obj)));
+      /* return(slashify_string(symbol_name(obj), symbol_name_length(obj))); */
+  
     case T_STRING:
       if (string_length(obj) > 0)
 	{
@@ -10539,7 +10504,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 		break;
 
 	      default:
-		if (c < 32) 
+		if ((c < 32) || (c >= 127))
 		  snprintf(p, P_SIZE, "#\\x%x", c);
 		else snprintf(p, P_SIZE, "#\\%c", c); 
 		break;
@@ -10547,10 +10512,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	  }
 	return(p);
       }
-  
-    case T_SYMBOL:
-      return(copy_string(symbol_name(obj)));
-  
+
     case T_MACRO:
     case T_BACRO:
       return(copy_string("#<macro>"));
@@ -11275,7 +11237,7 @@ static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
       if ((!(port_string(port))) ||
 	  (port_string_length(port) <= port_string_point(port)))
 	return(sc->EOF_OBJECT);
-      return(s7_make_integer(sc, (int)((unsigned char)(port_string(port)[port_string_point(port)++]))));
+      return(small_int((int)((unsigned char)(port_string(port)[port_string_point(port)++]))));
     }
 
   if (is_file_port(port))
@@ -11284,7 +11246,7 @@ static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
       c = fgetc(port_file(port));
       if (c == EOF)
 	return(sc->EOF_OBJECT);
-      return(s7_make_integer(sc, c)); 
+      return(small_int((unsigned int)c)); 
     }
 
   return((*(port_input_function(port)))(sc, S7_READ_BYTE, port));
@@ -12587,7 +12549,7 @@ static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
   #define H_provide "(provide sym) adds sym to the *features* list"
   s7_pointer features;
 
-  if (!is_pure_symbol(car(args)))
+  if ((typeflag(car(args)) & (T_MASKTYPE | T_SYNTAX)) != T_SYMBOL)
     return(s7_wrong_type_arg_error(sc, "provide", 1, car(args), "a symbol"));
 
   features = s7_make_symbol(sc, "*features*");
@@ -16547,7 +16509,7 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
   if (arg_n <= 0) arg_n = 1;
 
   s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 1, make_protected_string(sc, caller));
-  s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 2, s7_make_integer(sc, arg_n));
+  s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 2, (arg_n < NUM_SMALL_INTS) ? small_int(arg_n) : s7_make_integer(sc, arg_n));
   s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 3, arg);
   s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 4, make_protected_string(sc, type_name(arg)));
   s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 5, make_protected_string(sc, descr));
@@ -16561,7 +16523,7 @@ s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s
   if (arg_n <= 0) arg_n = 1;
 
   s7_list_set(sc, sc->OUT_OF_RANGE_INFO, 1, make_protected_string(sc, caller));
-  s7_list_set(sc, sc->OUT_OF_RANGE_INFO, 2, s7_make_integer(sc, arg_n));
+  s7_list_set(sc, sc->OUT_OF_RANGE_INFO, 2, (arg_n < NUM_SMALL_INTS) ? small_int(arg_n) : s7_make_integer(sc, arg_n));
   s7_list_set(sc, sc->OUT_OF_RANGE_INFO, 3, arg);
   s7_list_set(sc, sc->OUT_OF_RANGE_INFO, 4, make_protected_string(sc, descr));
   return(s7_error(sc, sc->OUT_OF_RANGE, sc->OUT_OF_RANGE_INFO));
@@ -17607,7 +17569,7 @@ static bool next_for_each(s7_scheme *sc)
 	break;
 
       case T_STRING:
-	car(x) = s7_make_character(sc, string_value(car(y))[loc]);
+	car(x) = s7_make_character(sc, (unsigned int)((unsigned char)(string_value(car(y))[loc])));
 	break;
 
       default:           /* see comment in next_map: (let ((L (list 1 2 3 4 5))) (for-each (lambda (x) (set-cdr! (cddr L) 5) (display x)) L)) */
@@ -17728,7 +17690,7 @@ static bool next_map(s7_scheme *sc)
 	  break;
 
 	case T_STRING:
-	  x = s7_make_character(sc, string_value(car(y))[loc]);
+	  x = s7_make_character(sc, (unsigned int)((unsigned char)(string_value(car(y))[loc])));
 	  break;
 
 	default: 
@@ -21120,7 +21082,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     default:
-      return(eval_error(sc, "~A: unknown operator!", s7_make_integer(sc, sc->op)));
+      return(eval_error(sc, "~A: unknown operator!", s7_make_integer(sc, sc->op))); /* not small_int because it's bogus */
     }
 
   return(sc->F);
@@ -26042,20 +26004,18 @@ s7_scheme *s7_init(void)
   
   /* keep the small_ints out of the heap */
   small_ints = (s7_pointer *)malloc((NUM_SMALL_INTS + 1) * sizeof(s7_pointer));
+  small_negative_ints = (s7_pointer *)malloc((NUM_SMALL_INTS + 1) * sizeof(s7_pointer));
   for (i = 0; i <= NUM_SMALL_INTS; i++) 
     {
       s7_pointer p;
+
       p = (s7_pointer)calloc(1, sizeof(s7_cell));
       p->flag = T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
       p->hloc = NOT_IN_HEAP;
       number_type(p) = NUM_INT;
       integer(number(p)) = (s7_Int)i;
       small_ints[i] = p;
-    }
-  small_negative_ints = (s7_pointer *)malloc((NUM_SMALL_INTS + 1) * sizeof(s7_pointer));
-  for (i = 0; i <= NUM_SMALL_INTS; i++) 
-    {
-      s7_pointer p;
+
       p = (s7_pointer)calloc(1, sizeof(s7_cell));
       p->flag = T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
       p->hloc = NOT_IN_HEAP;
@@ -26063,7 +26023,7 @@ s7_scheme *s7_init(void)
       integer(number(p)) = (s7_Int)(-i);
       small_negative_ints[i] = p;
     }
-  
+
   real_zero = (s7_pointer)calloc(1, sizeof(s7_cell));
   real_zero->flag = T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
   real_zero->hloc = NOT_IN_HEAP;
@@ -26075,6 +26035,19 @@ s7_scheme *s7_init(void)
   real_one->hloc = NOT_IN_HEAP;
   number_type(real_one) = NUM_REAL;
   real(number(real_one)) = (s7_Double)1.0;
+
+  /* keep the characters out of the heap */
+  chars = (s7_pointer *)malloc(NUM_SMALL_INTS * sizeof(s7_pointer));
+  for (i = 0; i < NUM_SMALL_INTS; i++) 
+    {
+      s7_pointer p;
+      p = (s7_pointer)calloc(1, sizeof(s7_cell));
+      p->flag = T_IMMUTABLE | T_ATOM | T_CHARACTER | T_SIMPLE | T_DONT_COPY;
+      p->hloc = NOT_IN_HEAP;
+      character(p) = (unsigned int)i;
+      chars[i] = p;
+    }
+
 
   /* initialization of global pointers to special symbols */
   assign_syntax(sc, "quote",             OP_QUOTE);

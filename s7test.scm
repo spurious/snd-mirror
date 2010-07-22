@@ -322,7 +322,7 @@
 (test (eq? '2 2) #t)
 (test (eq? ''2 ''2) #f)
 (test (eq? ''#\a '#\a) #f)
-(test (eq? '#\a #\a) #f) ; the only difference with eqv?
+(test (eq? '#\a #\a) #t) ; was #f 
 (test (eq? 'car car) #f)
 (test (eq? '() ()) #t)
 (test (eq? ''() '()) #f)
@@ -2465,24 +2465,21 @@
 	(+ sym0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789 1))
       33)
 
-; all of these are errors now
-(test (symbol->string (string->symbol "hi there")) 'error)
-;(test (symbol->string (string->symbol "Hi There")) "Hi There")
-;(test (symbol->string (string->symbol "HI THERE")) "HI THERE")
-;(test (symbol->string (string->symbol "")) "")
-;(test (symbol? (string->symbol "(weird name for a symbol!)")) #t)      
-;(test (symbol->string (string->symbol "()")) "()")
+(test (symbol->string (string->symbol "hi there")) "hi there")
+(test (symbol->string (string->symbol "Hi There")) "Hi There")
+(test (symbol->string (string->symbol "HI THERE")) "HI THERE")
+(test (symbol->string (string->symbol "")) "")
+(test (symbol? (string->symbol "(weird name for a symbol!)")) #t)
+(test (symbol->string (string->symbol "()")) "()")
 
-(test (string->symbol "0") 'error) ; s7 specific
+(test (symbol? (string->symbol "0")) #t)
 (test (string->symbol "0e") '0e)
 (test (string->symbol "1+") '1+)
-(test (string->symbol "1+i") 'error)
+(test (symbol? (string->symbol "1+i")) #t)
 (test (string->symbol ":0") ':0)
-;(test (symbol->string (string->symbol "")) "")
-(test (string->symbol (string)) 'error)
-(test (string->symbol "") 'error)
-(test (string->symbol " hi") 'error)
-(test (string->symbol "hi ") 'error)
+(test (symbol? (string->symbol " hi") ) #t)
+(test (symbol? (string->symbol "hi ")) #t)
+(test (symbol? (string->symbol "")) #t)
 
 (test (reinvert 12 string->symbol symbol->string "hiho") "hiho")
 
@@ -2500,7 +2497,7 @@
 (test (symbol? (string->symbol (string #\x (integer->char 7) #\x))) #t)
 (test (symbol? (string->symbol (string #\x (integer->char 17) #\x))) #t)
 (test (symbol? (string->symbol (string #\x (integer->char 170) #\x))) #t)
-(test (string->symbol (string #\x (integer->char 0) #\x)) 'error)
+(test (symbol? (string->symbol (string #\x (integer->char 0) #\x))) #t)
 (test (symbol? (string->symbol (string #\x #\y (integer->char 127) #\z))) #t) ; xy(backspace)z
 
 (for-each
@@ -2512,6 +2509,11 @@
  (lambda (arg)
    (test (string->symbol arg) 'error))
  (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
+
+(for-each
+ (lambda (arg)
+   (test (symbol? (string->symbol (string arg))) #t))
+ (list #\; #\, #\. #\) #\( #\" #\' #\` #\x33 #\xff #\x7f #\# #\]))
 
 
 
@@ -2533,9 +2535,49 @@
 
 (test (let ((name "hiho"))
 	(string-set! name 2 #\null)
-	(string->symbol name))
-      'error)
+	(symbol? (string->symbol name)))
+      #t)
 
+
+#|
+(let ((str "(let ((X 3)) X)"))
+  (do ((i 0 (+ i 1)))
+      ((= i 256))
+    (catch #t
+	   (lambda ()
+	     (if (symbol? (string->symbol (string (integer->char i))))
+		 (catch #t
+			(lambda ()
+			  (set! (str 7) (integer->char i))
+			  (set! (str 13) (integer->char i))
+			  (let ((val (eval-string str)))
+			    (format #t "ok: ~S -> ~S~%" str val)))
+			(lambda args
+			  (format #t "bad but symbol: ~S~%" str))))) ; 11 12 # ' , . 
+	   (lambda args
+	     (format #t "bad: ~C~%" (integer->char i))))))  ; # ( ) ' " . ` nul 9 10 13 space 0..9 ;
+
+(let ((str "(let ((XY 3)) XY)"))
+  (do ((i 0 (+ i 1)))
+      ((= i 256))
+    (do ((k 0 (+ k 1)))
+	((= k 256))
+      (catch #t
+	     (lambda ()
+	       (if (symbol? (string->symbol (string (integer->char i))))
+		   (catch #t
+			  (lambda ()
+			    (set! (str 7) (integer->char i))
+			    (set! (str 8) (integer->char k))
+			    (set! (str 14) (integer->char i))
+			    (set! (str 15) (integer->char k))
+			    (let ((val (eval-string str)))
+			      (format #t "ok: ~S -> ~S~%" str val)))
+			  (lambda args
+			    (format #t "bad but symbol: ~S~%" str))))) ; 11 12 # ' , . 
+	     (lambda args
+	       (format #t "bad: ~C~%" (integer->char i)))))))  ; # ( ) ' " . ` nul 9 10 13 space 0..9 ;
+|#
 
 
 
@@ -7494,6 +7536,7 @@
 (test (string=? (object->string 32) "32") #t)
 (test (string=? (object->string 32.5) "32.5") #t)
 (test (string=? (object->string 32/5) "32/5") #t)
+(test (object->string 1+i) "1+1i")
 (test (string=? (object->string "hiho") "\"hiho\"") #t)
 (test (string=? (object->string 'symb) "symb") #t)
 (test (string=? (object->string (list 1 2 3)) "(1 2 3)") #t)
@@ -7503,15 +7546,39 @@
 (test (object->string (object->string (object->string "123"))) "\"\\\"\\\\\\\"123\\\\\\\"\\\"\"")
 (test (object->string #<eof>) "#<eof>")
 (test (object->string (if #f #f)) "#<unspecified>")
+(test (object->string #<undefined>) "#<undefined>")
 (test (object->string #f) "#f")
 (test (object->string #t) "#t")
 (test (object->string '()) "()")
 (test (object->string #()) "#()")
 (test (object->string "") "\"\"")
+(test (object->string abs) "abs")
+(test (object->string +) "+")
+(test (object->string '''2) "''2")
+(test (object->string (lambda () #f)) "#<closure>")
+(test (call-with-exit (lambda (return) (object->string return))) "#<goto>")
+(test (call/cc (lambda (return) (object->string return))) "#<continuation>")
+(test (let () (define-macro (hi a) `(+ 1 ,a)) (object->string hi)) "#<macro>")
+(test (let () (define (hi a) (+ 1 a)) (object->string hi)) "hi")
+(test (let () (define* (hi a) (+ 1 a)) (object->string hi)) "hi")
+
+(test (object->string #\x30) "#\\0")
+(test (object->string #\x91) "#\\x91")
+(test (object->string #\x10) "#\\x10")
+(test (object->string #\xff) "#\\xff")
+(test (object->string #\x55) "#\\U")
+(test (object->string #\x7e) "#\\~")
+(test (object->string #\newline) "#\\newline")
+(test (object->string #\return) "#\\return")
+(test (object->string #\tab) "#\\tab")
+(test (object->string #\null) "#\\null")
+(test (object->string #\space) "#\\space")
+(test (object->string ''#\a) "'#\\a")
 
 (test (object->string) 'error)
 (test (object->string 1 2) 'error)
 (test (object->string abs) "abs")
+
 
 
 ;;; (string-set! (with-input-from-string "\"1234\"" (lambda () (read))) 1 #\a)
@@ -54705,5 +54772,15 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 #xfff0000000000000 -inf
 #xfff8000000000000 nan
 
+:(let ((str (string #\. #\; #\")))
+   (let ((sym (string->symbol str)))
+      (list 1 sym 2)))
+(1 .;" 2)
+:(let ((str (string #\. #\; #\")))
+   (let ((sym (string->symbol str)))
+      (object->string (list 1 sym 2))))
+"(1 .;\" 2)"
+guile: "(1 #{.\\;\\\"}# 2)"
+so write mode applies to symbols as well
 |#
 

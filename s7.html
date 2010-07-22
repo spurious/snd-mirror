@@ -3744,14 +3744,35 @@ but some clear marker is needed for a global variable so that the programmer
 doesn't accidentally step on it.  
 </p>
 
-<p>Although a name's first character is more restricted, currently
+<p>Although a variable name's first character is more restricted, currently
 only #\null, #\newline, #\tab, #\space, #\), #\(, #\", and #\; can't
 occur within the name.  I did not originally include double-quote in this set, so wild stuff like
 <code>(let ((nam""e 1)) nam""e)</code>
 would work, but that means that <code>'(1 ."hi")</code> is parsed as a 1 and the
 symbol <code>."hi"</code>, and <code>(string-set! x"hi")</code> is an error.
-(The first character should not be #\#, #\', #\`, #\,, #\:, or any of those mentioned above).
+The first character should not be #\#, #\', #\`, #\,, #\:, or any of those mentioned above,
+and some characters can't occur by themselves.  For example, "." is not a legal variable
+name or we'd be trying to parse <code>(let ((. 3)) .)</code>.  Even worse, a digit like "0" is not
+a variable name.  These weird symbols have to be printed sometimes:
 </p>
+
+<pre>
+&gt; (list 1 (string-&gt;symbol (string #\; #\" #\))) 2)
+(1 ;") 2)
+</pre>
+
+<p>which is a mess.  Guile prints it as <code>(1 #{\;\"\)}# 2)</code>.
+CL indulges in an equally baroque flourish:
+</p>
+
+<pre>
+[1]> (list 1 (make-symbol (coerce (list #\; #\" #\)) 'string)) 2)
+(1 #:|;")| 2)
+</pre>
+
+<p>I can't decide what to do.
+</p>
+
 
 
 

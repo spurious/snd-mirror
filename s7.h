@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.63"
-#define S7_DATE "12-July-10"
+#define S7_VERSION "1.64"
+#define S7_DATE "22-July-10"
 
 
 typedef long long int s7_Int;
@@ -269,7 +269,7 @@ s7_pointer s7_make_permanent_string(const char *str);                        /* 
 
 bool s7_is_character(s7_pointer p);                                          /* (character? p) */
 char s7_character(s7_pointer p);                                             /* scheme character -> C char */
-s7_pointer s7_make_character(s7_scheme *sc, int c);                          /* C char (as int) -> scheme character */
+s7_pointer s7_make_character(s7_scheme *sc, unsigned int c);                 /* C char (as unsigned int) -> scheme character */
 
 
 bool s7_is_number(s7_pointer p);                                             /* (number? p) */
@@ -758,6 +758,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 22-July:   s7_make_character takes unsigned int, rather than int.
  * 12-July:   initial-environment.
  * 7-July:    removed force and delay: use slib.
  * 3-July:    new backquote implementation.

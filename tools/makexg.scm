@@ -230,7 +230,7 @@
 
 	"gdouble*" "GdkFill" "GdkSubwindowMode" "GdkLineStyle" "GdkCapStyle" "GdkJoinStyle"
 	"GtkInfoBar*" "GtkSpinner*" "GtkToolShell*" "GtkToolPalette*" "GtkToolPaletteDragTargets"
-	"GdkFunction"
+	"GdkFunction" "GdkCursorType"
 	))
 
 (define no-xen-p 
