@@ -4598,11 +4598,13 @@ static void init_ctables(void)
   exponent_table['d'] = true; exponent_table['D'] = true;
   exponent_table['l'] = true; exponent_table['L'] = true;
 
-  for (i = 0; i < ' '; i++)
+  for (i = 0; i < 32; i++)
     slashify_table[i] = true;
-  slashify_table['\n'] = false;
+  for (i = 127; i < 160; i++)
+    slashify_table[i] = true;
   slashify_table['\\'] = true;
   slashify_table['"'] = true;
+  slashify_table['\n'] = false;
 
   digits = (int *)permanent_calloc(CTABLE_SIZE * sizeof(int));
   for (i = 0; i < CTABLE_SIZE; i++)
@@ -9577,7 +9579,7 @@ static s7_pointer g_open_output_file(s7_scheme *sc, s7_pointer args)
   if (is_pair(cdr(args)))
     {
       if (!s7_is_string(cadr(args)))
-	return(s7_wrong_type_arg_error(sc, "open-output-file mode,", 2, cadr(args), "a string (a mode such as \"r\")"));
+	return(s7_wrong_type_arg_error(sc, "open-output-file mode,", 2, cadr(args), "a string (a mode such as \"w\")"));
       return(s7_open_output_file(sc, s7_string(name), s7_string(cadr(args))));
     }
   return(s7_open_output_file(sc, s7_string(name), "w"));
@@ -10399,31 +10401,22 @@ static char *slashify_string(const char *p, int len)
 	      s[j++] = '"';
 	      break;
 	      
-	    case '\t':
-	      s[j++] = 't';
-	      break;
-	      
-	    case '\r':
-	      s[j++] = 'r';
-	      break;
-	      
 	    case '\\':
 	      s[j++] = '\\';
 	      break;
 	      
-	    default: 
+	    default:               /* this is the "\x01" stuff */
 	      { 
-		int d = p[i] / 16;
+		unsigned int n;
+		static char dignum[] = "0123456789abcdef";
 		s[j++] = 'x';
-		if (d < 10) 
-		  s[j++] = d + '0';
-		else s[j++] = d - 10 + 'A';
-		
-		d = p[i] % 16;
-		if (d < 10) 
-		  s[j++] = d + '0';
-		else s[j++] = d - 10 + 'A';
+		n = (unsigned int)(p[i]);
+		if (n < 16)
+		  s[j++] = '0';
+		else s[j++] = dignum[(n / 16) % 16];
+		s[j++] = dignum[n % 16];
 	      }
+	      break;
 	    }
 	}
       else s[j++] = p[i];
@@ -18451,6 +18444,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 
 	case '\\':
 	  c = inchar(sc, pt);
+
 	  if (c == EOF) 
 	    return(sc->F);
 
@@ -18466,6 +18460,33 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 		    sc->strbuf[i++] = '\n';
 		  else 
 		    {
+		      if (c == 'x')
+			{
+			  /* possible "\xnn" char (write creates these things, so we have to read them) */
+			  int d1, d2;
+			  c = inchar(sc, pt);
+			  d1 = digits[(unsigned int)c];
+			  if (d1 < 16)
+			    {
+			      c = inchar(sc, pt);
+			      d2 = digits[(unsigned int)c];
+			      if (d2 < 16)
+				{
+				  sc->strbuf[i++] = (unsigned char)(16 * d1 + d2);
+				  /* following char can be anything, including a number -- we ignore it */
+				  break;
+				}
+			      else
+				{
+				  /* apparently one digit is also ok */
+				  backchar(sc, c, pt);
+				  sc->strbuf[i++] = d1;
+				  break;
+				}
+			      return(sc->T);
+			    }
+			  return(sc->T);
+			}
 		      if (!isspace(c))
 			return(sc->T); /* #f here would give confusing error message "end of input", so return #t=bad backslash */
 		      /* this is not optimal. It's easy to forget that backslash needs to be backslashed. */
@@ -26737,6 +26758,8 @@ s7_scheme *s7_init(void)
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
  * perhaps remove the `#(...) support -- is there any actual use for this?
  * PERHAPS: multidimensional hash tables
+ * remove #: keyword (from guile)
+ * add a type for environments so they don't evaluate themselves as lists
  *
  * PERHAPS: method lists for c_objects
  *   a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)

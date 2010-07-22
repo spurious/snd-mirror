@@ -1166,6 +1166,7 @@
   (test (char<?) 'error)
   (test (char<? #\b #\a "hi") 'error)
   (test (char<? #\b #\a 0) 'error)
+  (test (char<? (integer->char 0) (integer->char 255)) #t)
   
   
 
@@ -1433,12 +1434,10 @@
 (test (integer->char (char->integer #\space)) #\space)
 (test (char->integer (integer->char #xf0)) #xf0)
 
-#|
 (do ((i 0 (+ i 1)))
     ((= i 256)) 
   (if (not (= (char->integer (integer->char i)) i)) 
       (format #t ";char->integer ~D ~A != ~A~%" i (integer->char i) (char->integer (integer->char i)))))
-|#
 
 (test (reinvert 12 integer->char char->integer 60) 60)
 
@@ -1580,6 +1579,8 @@
 (test (let ((s1 "1234") (s2 "1245")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string<? s1 s2)) #t)
 (test (let ((s1 "1234") (s2 "123")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string<? s1 s2)) #f)
 (test (let ((s1 "123") (s2 "1234")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string<? s1 s2)) #t)
+(test (not (string<? "foo\x0a" "foo\x0a")) #t)
+(test (string<? "foo\x0a" "foo\x0b") #t)
 
 (test (string<? (string (integer->char #xf0)) (string (integer->char #x70))) #f) 
 
@@ -6495,6 +6496,18 @@
       (if (not (eof-object? val))
 	  (format #t "read again: ~A~%" val)))))
 
+(test (with-output-to-string (lambda () (write (string (integer->char 4) (integer->char 8) (integer->char 20) (integer->char 30))))) "\"\\x04\\x08\\x14\\x1e\"")
+(test (string-length "\x04\x08\x14\x1e") 4)
+(test (char->integer (string-ref "\x0" 0)) 0)
+(test (char->integer (string-ref "\x0e" 0)) 14)
+(test (char->integer (string-ref "\x1e" 0)) 30)
+(test (char->integer (string-ref "\xff" 0)) 255)
+(test (string=?
+        "\"\\x01\\x02\\x03\\x04\\x05\\x06\\x07\\x08\\x09x\\x0b\\x0c\\x0d\\x0e\\x0f\\x10\\x11\\x12\\x13\\x14\\x15\\x16\\x17\\x18\\x19\\x1a\\x1b\\x1c\\x1d\\x1e\\x1f !\\\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\\x7f\\x80\\x81\\x82\\x83\\x84\\x85\\x86\\x87\\x88\\x89\\x8a\\x8b\\x8c\\x8d\\x8e\\x8f\\x90\\x91\\x92\\x93\\x94\\x95\\x96\\x97\\x98\\x99\\x9a\\x9b\\x9c\\x9d\\x9e\\x9f\\xa0Â¡Â¢Â£Â¤Â¥Â¦Â§Â¨Â©ÂªÂ«Â¬\\xadÂ®Â¯Â°Â±Â²Â³Â´ÂµÂ¶Â·Â¸Â¹ÂºÂ»Â¼Â½Â¾Â¿Ã€ÃÃ‚ÃƒÃ„Ã…Ã†Ã‡ÃˆÃ‰ÃŠÃ‹ÃŒÃÃÃÃÃ‘Ã’Ã“Ã”Ã•Ã–Ã—Ã˜Ã™ÃšÃ›ÃœÃÃÃŸÃ Ã¡Ã¢Ã£Ã¤Ã¥Ã¦Ã§Ã¨Ã©ÃªÃ«Ã¬Ã­Ã®Ã¯Ã°Ã±Ã²Ã³Ã´ÃµÃ¶Ã·Ã¸Ã¹ÃºÃ»Ã¼Ã½Ã¾Ã¿\""             "\"\\x01\\x02\\x03\\x04\\x05\\x06\\x07\\x08\\x09x\\x0b\\x0c\\x0d\\x0e\\x0f\\x10\\x11\\x12\\x13\\x14\\x15\\x16\\x17\\x18\\x19\\x1a\\x1b\\x1c\\x1d\\x1e\\x1f !\\\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\\x7f\\x80\\x81\\x82\\x83\\x84\\x85\\x86\\x87\\x88\\x89\\x8a\\x8b\\x8c\\x8d\\x8e\\x8f\\x90\\x91\\x92\\x93\\x94\\x95\\x96\\x97\\x98\\x99\\x9a\\x9b\\x9c\\x9d\\x9e\\x9f\\xa0Â¡Â¢Â£Â¤Â¥Â¦Â§Â¨Â©ÂªÂ«Â¬\\xadÂ®Â¯Â°Â±Â²Â³Â´ÂµÂ¶Â·Â¸Â¹ÂºÂ»Â¼Â½Â¾Â¿Ã€ÃÃ‚ÃƒÃ„Ã…Ã†Ã‡ÃˆÃ‰ÃŠÃ‹ÃŒÃÃÃÃÃ‘Ã’Ã“Ã”Ã•Ã–Ã—Ã˜Ã™ÃšÃ›ÃœÃÃÃŸÃ Ã¡Ã¢Ã£Ã¤Ã¥Ã¦Ã§Ã¨Ã©ÃªÃ«Ã¬Ã­Ã®Ã¯Ã°Ã±Ã²Ã³Ã´ÃµÃ¶Ã·Ã¸Ã¹ÃºÃ»Ã¼Ã½Ã¾Ã¿\"") 
+      #t)
+(test (string=? "\x61\x42\x63" "aBc") #t)
+
+
 
 (for-each
  (lambda (arg)
@@ -6919,7 +6932,7 @@
 (test (length (format #f "~S" (string #\\))) 4)                  ; "\"\\\\\""
 (test (length (format #f "~S" (string #\a))) 3)                  ; "\"a\""
 (test (length (format #f "~S" (string #\null))) 6)               ; "\"\\x00\""
-(test (length (format #f "~S" (string (integer->char #xf0)))) 3) ; "\"ğ\""
+(test (length (format #f "~S" (string (integer->char #xf0)))) 3) ; "\"Ã°\""
 (test (length (format #f "~S" (string #\"))) 4)                  ; "\""
 
 #|
@@ -7301,39 +7314,39 @@
 		   (format #t " ~A~%" args))))))))
 |#
 
-(let ((äåæéîå define)
-      (ìåîçôè length)
-      (äï do)
-      (ìåô* let*)
-      (éæ if)
-      (áâó abs)
-      (ìïç log)
-      (óåô! set!))
+(let ((Ã¤Ã¥Ã¦Ã©Ã®Ã¥ define)
+      (Ã¬Ã¥Ã®Ã§Ã´Ã¨ length)
+      (Ã¤Ã¯ do)
+      (Ã¬Ã¥Ã´* let*)
+      (Ã©Ã¦ if)
+      (Ã¡Ã¢Ã³ abs)
+      (Ã¬Ã¯Ã§ log)
+      (Ã³Ã¥Ã´! set!))
 
-  (äåæéîå (óòã-äõòáôéïî å)
-    (ìåô* ((ìåî (ìåîçôè å))
-           (åø0 (å 0))
-           (åø1 (å (- ìåî 2)))
-           (áìì-ø (- åø1 åø0))
-           (äõò 0.0))
-      (äï ((é 0 (+ é 2)))
-          ((>= é (- ìåî 2)) äõò)
-        (ìåô* ((ø0 (å é))
-               (ø1 (å (+ é 2)))
-               (ù0 (å (+ é 1))) ; 1/ø ø ğïéîôó
-               (ù1 (å (+ é 3)))
-               (áòåá (éæ (< (áâó (- ù0 ù1)) .0001)
-                         (/ (- ø1 ø0) (* ù0 áìì-ø))
-                         (* (/ (- (ìïç ù1) (ìïç ù0)) 
-                               (- ù1 ù0)) 
-                            (/ (- ø1 ø0) áìì-ø)))))
-         (óåô! äõò (+ äõò (áâó áòåá)))))))
+  (Ã¤Ã¥Ã¦Ã©Ã®Ã¥ (Ã³Ã²Ã£-Ã¤ÃµÃ²Ã¡Ã´Ã©Ã¯Ã® Ã¥)
+    (Ã¬Ã¥Ã´* ((Ã¬Ã¥Ã® (Ã¬Ã¥Ã®Ã§Ã´Ã¨ Ã¥))
+           (Ã¥Ã¸0 (Ã¥ 0))
+           (Ã¥Ã¸1 (Ã¥ (- Ã¬Ã¥Ã® 2)))
+           (Ã¡Ã¬Ã¬-Ã¸ (- Ã¥Ã¸1 Ã¥Ã¸0))
+           (Ã¤ÃµÃ² 0.0))
+      (Ã¤Ã¯ ((Ã© 0 (+ Ã© 2)))
+          ((>= Ã© (- Ã¬Ã¥Ã® 2)) Ã¤ÃµÃ²)
+        (Ã¬Ã¥Ã´* ((Ã¸0 (Ã¥ Ã©))
+               (Ã¸1 (Ã¥ (+ Ã© 2)))
+               (Ã¹0 (Ã¥ (+ Ã© 1))) ; 1/Ã¸ Ã¸ Ã°Ã¯Ã©Ã®Ã´Ã³
+               (Ã¹1 (Ã¥ (+ Ã© 3)))
+               (Ã¡Ã²Ã¥Ã¡ (Ã©Ã¦ (< (Ã¡Ã¢Ã³ (- Ã¹0 Ã¹1)) .0001)
+                         (/ (- Ã¸1 Ã¸0) (* Ã¹0 Ã¡Ã¬Ã¬-Ã¸))
+                         (* (/ (- (Ã¬Ã¯Ã§ Ã¹1) (Ã¬Ã¯Ã§ Ã¹0)) 
+                               (- Ã¹1 Ã¹0)) 
+                            (/ (- Ã¸1 Ã¸0) Ã¡Ã¬Ã¬-Ã¸)))))
+         (Ã³Ã¥Ã´! Ã¤ÃµÃ² (+ Ã¤ÃµÃ² (Ã¡Ã¢Ã³ Ã¡Ã²Ã¥Ã¡)))))))
 
-  (num-test (óòã-äõòáôéïî (list 0 1 1 2)) 0.69314718055995)
-  (num-test (óòã-äõòáôéïî (vector 0 1 1 2)) 0.69314718055995))
+  (num-test (Ã³Ã²Ã£-Ã¤ÃµÃ²Ã¡Ã´Ã©Ã¯Ã® (list 0 1 1 2)) 0.69314718055995)
+  (num-test (Ã³Ã²Ã£-Ã¤ÃµÃ²Ã¡Ã´Ã©Ã¯Ã® (vector 0 1 1 2)) 0.69314718055995))
 
-(test (let ((ÿa 1)) ÿa) 1)
-(test (+ (let ((!a 1)) !a) (let (($a 1)) $a) (let ((%a 1)) %a) (let ((&a 1)) &a) (let ((*a 1)) *a) (let ((+a 1)) +a) (let ((-a 1)) -a) (let ((.a 1)) .a) (let ((/a 1)) /a) (let ((0a 1)) 0a) (let ((1a 1)) 1a) (let ((2a 1)) 2a) (let ((3a 1)) 3a) (let ((4a 1)) 4a) (let ((5a 1)) 5a) (let ((6a 1)) 6a) (let ((7a 1)) 7a) (let ((8a 1)) 8a) (let ((9a 1)) 9a) (let ((<a 1)) <a) (let ((=a 1)) =a) (let ((>a 1)) >a) (let ((?a 1)) ?a) (let ((@a 1)) @a) (let ((Aa 1)) Aa) (let ((Ba 1)) Ba) (let ((Ca 1)) Ca) (let ((Da 1)) Da) (let ((Ea 1)) Ea) (let ((Fa 1)) Fa) (let ((Ga 1)) Ga) (let ((Ha 1)) Ha) (let ((Ia 1)) Ia) (let ((Ja 1)) Ja) (let ((Ka 1)) Ka) (let ((La 1)) La) (let ((Ma 1)) Ma) (let ((Na 1)) Na) (let ((Oa 1)) Oa) (let ((Pa 1)) Pa) (let ((Qa 1)) Qa) (let ((Ra 1)) Ra) (let ((Sa 1)) Sa) (let ((Ta 1)) Ta) (let ((Ua 1)) Ua) (let ((Va 1)) Va) (let ((Wa 1)) Wa) (let ((Xa 1)) Xa) (let ((Ya 1)) Ya) (let ((Za 1)) Za) (let (([a 1)) [a) (let ((\a 1)) \a) (let ((]a 1)) ]a) (let ((^a 1)) ^a) (let ((_a 1)) _a) (let ((aa 1)) aa) (let ((ba 1)) ba) (let ((ca 1)) ca) (let ((da 1)) da) (let ((ea 1)) ea) (let ((fa 1)) fa) (let ((ga 1)) ga) (let ((ha 1)) ha) (let ((ia 1)) ia) (let ((ja 1)) ja) (let ((ka 1)) ka) (let ((la 1)) la) (let ((ma 1)) ma) (let ((na 1)) na) (let ((oa 1)) oa) (let ((pa 1)) pa) (let ((qa 1)) qa) (let ((ra 1)) ra) (let ((sa 1)) sa) (let ((ta 1)) ta) (let ((ua 1)) ua) (let ((va 1)) va) (let ((wa 1)) wa) (let ((xa 1)) xa) (let ((ya 1)) ya) (let ((za 1)) za) (let (({a 1)) {a) (let ((|a 1)) |a) (let ((}a 1)) }a) (let ((~a 1)) ~a) (let (( a 1))  a) (let ((¡a 1)) ¡a) (let ((¢a 1)) ¢a) (let ((£a 1)) £a) (let ((¤a 1)) ¤a) (let ((¥a 1)) ¥a) (let ((¦a 1)) ¦a) (let ((§a 1)) §a) (let ((¨a 1)) ¨a) (let ((©a 1)) ©a) (let ((ªa 1)) ªa) (let ((«a 1)) «a) (let ((¬a 1)) ¬a) (let ((­a 1)) ­a) (let ((®a 1)) ®a) (let ((¯a 1)) ¯a) (let ((°a 1)) °a) (let ((±a 1)) ±a) (let ((²a 1)) ²a) (let ((³a 1)) ³a) (let ((´a 1)) ´a) (let ((µa 1)) µa) (let ((¶a 1)) ¶a) (let ((·a 1)) ·a) (let ((¸a 1)) ¸a) (let ((¹a 1)) ¹a) (let ((ºa 1)) ºa) (let ((»a 1)) »a) (let ((¼a 1)) ¼a) (let ((½a 1)) ½a) (let ((¾a 1)) ¾a) (let ((¿a 1)) ¿a) (let ((Àa 1)) Àa) (let ((Áa 1)) Áa) (let ((Âa 1)) Âa) (let ((Ãa 1)) Ãa) (let ((Äa 1)) Äa) (let ((Åa 1)) Åa) (let ((Æa 1)) Æa) (let ((Ça 1)) Ça) (let ((Èa 1)) Èa) (let ((Éa 1)) Éa) (let ((Êa 1)) Êa) (let ((Ëa 1)) Ëa) (let ((Ìa 1)) Ìa) (let ((Ía 1)) Ía) (let ((Îa 1)) Îa) (let ((Ïa 1)) Ïa) (let ((Ğa 1)) Ğa) (let ((Ña 1)) Ña) (let ((Òa 1)) Òa) (let ((Óa 1)) Óa) (let ((Ôa 1)) Ôa) (let ((Õa 1)) Õa) (let ((Öa 1)) Öa) (let ((×a 1)) ×a) (let ((Øa 1)) Øa) (let ((Ùa 1)) Ùa) (let ((Úa 1)) Úa) (let ((Ûa 1)) Ûa) (let ((Üa 1)) Üa) (let ((İa 1)) İa) (let ((Şa 1)) Şa) (let ((ßa 1)) ßa) (let ((àa 1)) àa) (let ((áa 1)) áa) (let ((âa 1)) âa) (let ((ãa 1)) ãa) (let ((äa 1)) äa) (let ((åa 1)) åa) (let ((æa 1)) æa) (let ((ça 1)) ça) (let ((èa 1)) èa) (let ((éa 1)) éa) (let ((êa 1)) êa) (let ((ëa 1)) ëa) (let ((ìa 1)) ìa) (let ((ía 1)) ía) (let ((îa 1)) îa) (let ((ïa 1)) ïa) (let ((ğa 1)) ğa) (let ((ña 1)) ña) (let ((òa 1)) òa) (let ((óa 1)) óa) (let ((ôa 1)) ôa) (let ((õa 1)) õa) (let ((öa 1)) öa) (let ((÷a 1)) ÷a) (let ((øa 1)) øa) (let ((ùa 1)) ùa) (let ((úa 1)) úa) (let ((ûa 1)) ûa) (let ((üa 1)) üa) (let ((ıa 1)) ıa) (let ((şa 1)) şa) (let ((ÿa 1)) ÿa)) 181)
+(test (let ((Ã¿a 1)) Ã¿a) 1)
+(test (+ (let ((!a 1)) !a) (let (($a 1)) $a) (let ((%a 1)) %a) (let ((&a 1)) &a) (let ((*a 1)) *a) (let ((+a 1)) +a) (let ((-a 1)) -a) (let ((.a 1)) .a) (let ((/a 1)) /a) (let ((0a 1)) 0a) (let ((1a 1)) 1a) (let ((2a 1)) 2a) (let ((3a 1)) 3a) (let ((4a 1)) 4a) (let ((5a 1)) 5a) (let ((6a 1)) 6a) (let ((7a 1)) 7a) (let ((8a 1)) 8a) (let ((9a 1)) 9a) (let ((<a 1)) <a) (let ((=a 1)) =a) (let ((>a 1)) >a) (let ((?a 1)) ?a) (let ((@a 1)) @a) (let ((Aa 1)) Aa) (let ((Ba 1)) Ba) (let ((Ca 1)) Ca) (let ((Da 1)) Da) (let ((Ea 1)) Ea) (let ((Fa 1)) Fa) (let ((Ga 1)) Ga) (let ((Ha 1)) Ha) (let ((Ia 1)) Ia) (let ((Ja 1)) Ja) (let ((Ka 1)) Ka) (let ((La 1)) La) (let ((Ma 1)) Ma) (let ((Na 1)) Na) (let ((Oa 1)) Oa) (let ((Pa 1)) Pa) (let ((Qa 1)) Qa) (let ((Ra 1)) Ra) (let ((Sa 1)) Sa) (let ((Ta 1)) Ta) (let ((Ua 1)) Ua) (let ((Va 1)) Va) (let ((Wa 1)) Wa) (let ((Xa 1)) Xa) (let ((Ya 1)) Ya) (let ((Za 1)) Za) (let (([a 1)) [a) (let ((\a 1)) \a) (let ((]a 1)) ]a) (let ((^a 1)) ^a) (let ((_a 1)) _a) (let ((aa 1)) aa) (let ((ba 1)) ba) (let ((ca 1)) ca) (let ((da 1)) da) (let ((ea 1)) ea) (let ((fa 1)) fa) (let ((ga 1)) ga) (let ((ha 1)) ha) (let ((ia 1)) ia) (let ((ja 1)) ja) (let ((ka 1)) ka) (let ((la 1)) la) (let ((ma 1)) ma) (let ((na 1)) na) (let ((oa 1)) oa) (let ((pa 1)) pa) (let ((qa 1)) qa) (let ((ra 1)) ra) (let ((sa 1)) sa) (let ((ta 1)) ta) (let ((ua 1)) ua) (let ((va 1)) va) (let ((wa 1)) wa) (let ((xa 1)) xa) (let ((ya 1)) ya) (let ((za 1)) za) (let (({a 1)) {a) (let ((|a 1)) |a) (let ((}a 1)) }a) (let ((~a 1)) ~a) (let ((Â a 1)) Â a) (let ((Â¡a 1)) Â¡a) (let ((Â¢a 1)) Â¢a) (let ((Â£a 1)) Â£a) (let ((Â¤a 1)) Â¤a) (let ((Â¥a 1)) Â¥a) (let ((Â¦a 1)) Â¦a) (let ((Â§a 1)) Â§a) (let ((Â¨a 1)) Â¨a) (let ((Â©a 1)) Â©a) (let ((Âªa 1)) Âªa) (let ((Â«a 1)) Â«a) (let ((Â¬a 1)) Â¬a) (let ((Â­a 1)) Â­a) (let ((Â®a 1)) Â®a) (let ((Â¯a 1)) Â¯a) (let ((Â°a 1)) Â°a) (let ((Â±a 1)) Â±a) (let ((Â²a 1)) Â²a) (let ((Â³a 1)) Â³a) (let ((Â´a 1)) Â´a) (let ((Âµa 1)) Âµa) (let ((Â¶a 1)) Â¶a) (let ((Â·a 1)) Â·a) (let ((Â¸a 1)) Â¸a) (let ((Â¹a 1)) Â¹a) (let ((Âºa 1)) Âºa) (let ((Â»a 1)) Â»a) (let ((Â¼a 1)) Â¼a) (let ((Â½a 1)) Â½a) (let ((Â¾a 1)) Â¾a) (let ((Â¿a 1)) Â¿a) (let ((Ã€a 1)) Ã€a) (let ((Ãa 1)) Ãa) (let ((Ã‚a 1)) Ã‚a) (let ((Ãƒa 1)) Ãƒa) (let ((Ã„a 1)) Ã„a) (let ((Ã…a 1)) Ã…a) (let ((Ã†a 1)) Ã†a) (let ((Ã‡a 1)) Ã‡a) (let ((Ãˆa 1)) Ãˆa) (let ((Ã‰a 1)) Ã‰a) (let ((ÃŠa 1)) ÃŠa) (let ((Ã‹a 1)) Ã‹a) (let ((ÃŒa 1)) ÃŒa) (let ((Ãa 1)) Ãa) (let ((Ãa 1)) Ãa) (let ((Ãa 1)) Ãa) (let ((Ãa 1)) Ãa) (let ((Ã‘a 1)) Ã‘a) (let ((Ã’a 1)) Ã’a) (let ((Ã“a 1)) Ã“a) (let ((Ã”a 1)) Ã”a) (let ((Ã•a 1)) Ã•a) (let ((Ã–a 1)) Ã–a) (let ((Ã—a 1)) Ã—a) (let ((Ã˜a 1)) Ã˜a) (let ((Ã™a 1)) Ã™a) (let ((Ãša 1)) Ãša) (let ((Ã›a 1)) Ã›a) (let ((Ãœa 1)) Ãœa) (let ((Ãa 1)) Ãa) (let ((Ãa 1)) Ãa) (let ((ÃŸa 1)) ÃŸa) (let ((Ã a 1)) Ã a) (let ((Ã¡a 1)) Ã¡a) (let ((Ã¢a 1)) Ã¢a) (let ((Ã£a 1)) Ã£a) (let ((Ã¤a 1)) Ã¤a) (let ((Ã¥a 1)) Ã¥a) (let ((Ã¦a 1)) Ã¦a) (let ((Ã§a 1)) Ã§a) (let ((Ã¨a 1)) Ã¨a) (let ((Ã©a 1)) Ã©a) (let ((Ãªa 1)) Ãªa) (let ((Ã«a 1)) Ã«a) (let ((Ã¬a 1)) Ã¬a) (let ((Ã­a 1)) Ã­a) (let ((Ã®a 1)) Ã®a) (let ((Ã¯a 1)) Ã¯a) (let ((Ã°a 1)) Ã°a) (let ((Ã±a 1)) Ã±a) (let ((Ã²a 1)) Ã²a) (let ((Ã³a 1)) Ã³a) (let ((Ã´a 1)) Ã´a) (let ((Ãµa 1)) Ãµa) (let ((Ã¶a 1)) Ã¶a) (let ((Ã·a 1)) Ã·a) (let ((Ã¸a 1)) Ã¸a) (let ((Ã¹a 1)) Ã¹a) (let ((Ãºa 1)) Ãºa) (let ((Ã»a 1)) Ã»a) (let ((Ã¼a 1)) Ã¼a) (let ((Ã½a 1)) Ã½a) (let ((Ã¾a 1)) Ã¾a) (let ((Ã¿a 1)) Ã¿a)) 181)
 
 ;;; there are about 50 non-printing chars, some of which would probably work as well
 
@@ -7416,6 +7429,19 @@
     (test (read-line p) "2345")
     (test (eof-object? (read-line p)) #t)))
 
+(let ((p (open-output-file "tmp1.r5rs" "a")))
+  (display "678" p)
+  (newline p)
+  (close-output-port p))
+
+(call-with-input-file "tmp1.r5rs"
+  (lambda (p)
+    (test (read-line p) "1")
+    (test (read-line p) "")
+    (test (read-line p) "2345")
+    (test (read-line p) "678")
+    (test (eof-object? (read-line p)) #t)))
+
 (for-each
  (lambda (arg)
    (test (port-filename arg) 'error))
@@ -7423,8 +7449,14 @@
 
 (for-each
  (lambda (arg)
-   (test (port-line-number arg) 'error))
+   (test (port-filename arg) 'error))
  (list "hi" -1 #\a 1 0 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t '() (list 1 2 3) '(1 . 2)))
+
+(for-each
+ (lambda (arg)
+   (test (open-input-file "s7test.scm" arg) 'error)
+   (test (open-output-file "test.data" arg) 'error))
+ (list -1 #\a 1 0 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t '() (list 1 2 3) '(1 . 2)))
 
 (for-each
  (lambda (op)
@@ -7489,6 +7521,18 @@
 (test (>= (length (with-output-to-string (lambda () (write (make-string 512 #\"))))) 512) #t)
 (test (>= (length (with-output-to-string (lambda () (write (make-string 512 #\x65))))) 512) #t)
 
+(let ((old-path *load-path*))
+  (set! *load-path* (cons "/home/bil/test" *load-path*))
+
+  (with-output-to-file "/home/bil/test/load-path-test.scm"
+    (lambda ()
+      (format #t "(define (load-path-test) *load-path*)~%")))
+
+  (load "load-path-test.scm")
+  (if (or (not (defined? 'load-path-test))
+	  (not (equal? *load-path* (load-path-test))))
+      (format #t ";*load-path*: ~S, but ~S~%" *load-path* (load-path-test)))
+  (set! *load-path* old-path))
 
 
 
@@ -9701,6 +9745,7 @@
 (test (+ (cond ((values 3 4) => (lambda (a) a)))) 'error)
 (test (+ (cond ((values 3 4) => (lambda (a b) (values a b))))) 7)
 (test (+ 1 (cond ((values 2 3))) 4) 10)
+(test (+ 1 (values)) 'error)
 
 (test (case (values 1) ((1) 2) (else 3)) 2)
 (test (case (values 1 2) ((1) 2) (else 3)) 3)
@@ -13296,7 +13341,12 @@ who says the continuation has to restart the map from the top?
     (define-curried (((((f a) b) c) d) e) (* a b c d e))
     (test (((((f 1) 2) 3) 4) 5) 120)
     (define-curried (((((f a b) c) d e) f) g) (* a b c d e f g))
-    (test (((((f 1 2) 3) 4 5) 6) 7) 5040))
+    (test (((((f 1 2) 3) 4 5) 6) 7) 5040)
+    (define-curried (((foo)) x) (+ x 34))
+    (test (((foo)) 300) 334)
+    (define-curried ((foo-1) x) (+ x 34))
+    (test ((foo-1) 200) 234)
+    )
 
 
   
@@ -14317,6 +14367,7 @@ who says the continuation has to restart the map from the top?
 (test (defined? 'abs '(())) #f)
 (test (defined? lambda) #t)
 (test (defined? 'lambda) #t)
+(test (defined? 'dynamic-wind) #t)
 
 
 
@@ -38264,6 +38315,7 @@ who says the continuation has to restart the map from the top?
 (test (inexact->exact "hi") 'error)
 (test (inexact->exact 1.0+23.0i 1.0+23.0i) 'error)
 (test (inexact->exact 1+i) 'error)
+(test (inexact->exact most-negative-fixnum) most-negative-fixnum)
 
 
 
@@ -46924,6 +46976,7 @@ who says the continuation has to restart the map from the top?
 (test (inexact? -9223372036854775808) #f)
 (num-test (integer-length -9223372036854775808) 63)
 (num-test (lognot -9223372036854775808) 9223372036854775807)
+(num-test (lognot most-positive-fixnum) most-negative-fixnum)
 
 (num-test (- -9223372036854775808) 9223372036854775808)
 (num-test (+ -9223372036854775808) -9223372036854775808)
@@ -50134,7 +50187,7 @@ who says the continuation has to restart the map from the top?
        (format #t "~A is positive?~%" z))
    (if (and (real? z) (negative? z))
        (format #t "~A is negative?~%" z)))
- '(0 -0 +0 0.0 -0.0 +0.0 0/1 -0/1 +0/24 0+0i 0-0i -0-0i +0-0i 0.0-0.0i -0.0+0i #b0 #o-0 #x000 #e0 #e0.0 #e#b0 #b#e0 #e0/1 #b+0))
+ '(0 -0 +0 0.0 -0.0 +0.0 0/1 -0/1 +0/24 0+0i 0-0i -0-0i +0-0i 0.0-0.0i -0.0+0i #b0 #o-0 #x000 #e0 #e0.0 #e#b0 #b#e0 #e0/1 #b+0 #d000/1111 000/111))
 
 
 (for-each 
@@ -50149,7 +50202,7 @@ who says the continuation has to restart the map from the top?
    "#o8" "#o9" "1/#e1" "#o#" "#e#i1" "#d--2" "#b#x1" "#i#x#b1" "#e#e#b1" "#e#b#b1" 
    "-#b1" "+#b1" "#b1/#b2" "#b1+#b1i" "1+#bi" "1+#b1i" "1#be1" "#b" "#o" "#" "#ea" "#e1a" "1+ie1" "1+i1" "1e+1i"
    "#e#b" "#b#b" "#b#b1" "1e3e4" "1.0e-3e+4" "1e3s" "1e3s3" "#o#x1" "#i#i1" "1e-i" "#be1" "1/i" "1/e1" "1+e1"
-   "1e+" "1e1+" "1e1e1" "1e-+1" "1e0x1" "1e-"
+   "1e+" "1e1+" "1e1e1" "1e-+1" "1e0x1" "1e-" "1/#o2"
    "#i#i1" "12@12+0i"))
 
 (for-each 
@@ -50259,6 +50312,7 @@ who says the continuation has to restart the map from the top?
 (test (string->number (string #\null)) #f)
 (test (string->number (string)) #f)
 (test (string->number (substring "hi" 0 0)) #f)
+(test (string->number (string (integer->char 30))) #f)
 
 
 
@@ -50321,6 +50375,16 @@ who says the continuation has to restart the map from the top?
 (test (lognot #b-101) 4)
 (test (lognot (+ 1 (lognot 1000))) 999)
 (test (lognot) 'error)
+
+(if with-bignums
+    (begin
+      (test (lognot 9223372036854775808) -9223372036854775809)
+      (test (logand 9223372036854775808 -9223372036854775809) 0)
+      (test (lognot 618970019642690137449562111) (- (expt 2 89)))
+      (test (logand 618970019642690137449562111 (expt 2 88)) (expt 2 88))
+      (test (logior (expt 2 63) (expt 2 75)) (+ (expt 2 63) (expt 2 75)))
+      (test (logxor 37788155234994016485376 (+ (expt 2 63) 1)) (+ 1 (expt 2 75)))
+      (test (ash 1 89) (expt 2 89))))
 
 
 ;; from CL spec
@@ -54642,3 +54706,4 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 #xfff8000000000000 nan
 
 |#
+
