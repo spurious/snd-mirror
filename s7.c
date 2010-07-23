@@ -248,6 +248,7 @@
 #include <ctype.h>
 #ifndef _MSC_VER
   #include <strings.h>
+  #include <errno.h>
 #endif
 #include <string.h>
 #include <stdlib.h>
@@ -319,7 +320,7 @@ static const char *op_names[OP_MAX_DEFINED] =
 
 #define NUM_SMALL_INTS 256
 /* this needs to be at least OP_MAX_DEFINED = 83 max num chars (256) */
-/* going up to 1024 gives very little improvement, down to 128 costs about .2% run time */
+/* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
 	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, TOKEN_VECTOR} token_t;
@@ -2667,30 +2668,6 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
  *        ;can't bind an immutable object: cvar
  */
 
-#if 0
-static s7_pointer find_value_in_environment(s7_scheme *sc, s7_pointer val)
-{ 
-  s7_pointer x, y, vec; 
-
-  for (x = sc->envir; (x != sc->NIL) && (!s7_is_vector(car(x))); x = cdr(x)) 
-    for (y = car(x); y != sc->NIL; y = cdr(y)) 
-      if (cdr(car(y)) == val)
-	return(car(y));
-  
-  if (s7_is_vector(car(x)))
-    {
-      int i, len;
-      vec = car(x);
-      len = vector_length(vec);
-      for (i = 0; i < len; i++)
-	if (vector_element(vec, i) != sc->NIL)
-	  for (y = vector_element(vec, i); y != sc->NIL; y = cdr(y)) 
-	    if (cdr(car(y)) == val)
-	      return(car(y));
-    }
-  return(sc->F); 
-} 
-#endif
 
 
 
@@ -9480,11 +9457,16 @@ s7_pointer s7_open_input_file(s7_scheme *sc, const char *name, const char *mode)
 {
   FILE *fp;
   /* see if we can open this file before allocating a port */
-  
+
+  errno = 0;
   fp = fopen(name, mode);
   if (!fp)
-    return(file_error(sc, "open-input-file", "can't open", name));
-  
+    {
+      if (errno == EINVAL)
+	return(file_error(sc, "open-input-file", "invalid mode", mode));
+      return(file_error(sc, "open-input-file", strerror(errno), name));
+    }
+
   return(make_input_file(sc, name, fp));
 }
 
@@ -9512,10 +9494,15 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   s7_pointer x;
   /* see if we can open this file before allocating a port */
   
+  errno = 0;
   fp = fopen(name, mode);
   if (!fp)
-    return(file_error(sc, "open-output-file", "can't open", name));
-  
+    {
+      if (errno == EINVAL)
+	return(file_error(sc, "open-output-file", "invalid mode", mode));
+      return(file_error(sc, "open-output-file", strerror(errno), name));
+    }
+
   NEW_CELL(sc, x);
   set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
@@ -10537,7 +10524,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     case T_GOTO:
       return(copy_string("#<goto>"));
   
-    case T_CATCH:
+    case T_CATCH: /* this can't happen? */
       return(copy_string("#<catch>"));
   
     case T_DYNAMIC_WIND:
@@ -16553,7 +16540,7 @@ static s7_pointer file_error(s7_scheme *sc, const char *caller, const char *desc
 {
   return(s7_error(sc, s7_make_symbol(sc, "io-error"), 
 		  s7_cons(sc, 
-			  make_protected_string(sc, "~A: ~A ~A"),
+			  make_protected_string(sc, "~A: ~A ~S"),
 			  make_list_3(sc, 
 				      make_protected_string(sc, caller),
 				      make_protected_string(sc, descr),

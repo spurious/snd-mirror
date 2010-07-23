@@ -6625,7 +6625,7 @@
 (test (format #f "~A ~* ~A" 1 2 3) "1  3")
 (test (format #f "~*" 1) "")
 (test (format #f "~{~* ~}" '(1 2 3)) "   ")
-
+(test (format #f "~A" catch) "catch")
 (test (format #f "this is a ~
              sentence") "this is a sentence")
 
@@ -7476,6 +7476,9 @@
   (newline p)
   (close-output-port p))
 
+(test (let ((p (open-output-file "tmp1.r5rs" "xyzzy"))) (close-output-port p)) 'error)
+(test (let ((p (open-input-file "tmp1.r5rs" "xyzzy"))) (close-input-port p)) 'error)
+
 (call-with-input-file "tmp1.r5rs"
   (lambda (p)
     (test (read-line p) "1")
@@ -7561,6 +7564,7 @@
 (test (let () (define-macro (hi a) `(+ 1 ,a)) (object->string hi)) "#<macro>")
 (test (let () (define (hi a) (+ 1 a)) (object->string hi)) "hi")
 (test (let () (define* (hi a) (+ 1 a)) (object->string hi)) "hi")
+(test (object->string dynamic-wind) "dynamic-wind")
 
 (test (object->string #\x30) "#\\0")
 (test (object->string #\x91) "#\\x91")
@@ -12149,11 +12153,33 @@ who says the continuation has to restart the map from the top?
 (test (let () (define-macro (tryqv . lst) `(map abs '(,@lst))) (tryqv 1 2 3 -4 5)) '(1 2 3 4 5))
 (test (let () (define-macro (tryqv . lst) `(map abs (vector ,@lst))) (tryqv 1 2 3 -4 5)) '(1 2 3 4 5))
 
+
+
 (test (quasiquote) 'error)
+(test (quasiquote 1 2 3) 'error)
 (let ((d 1))
   (test (quasiquote (a b c ,d)) '(a b c 1)))
+(test (quasiquote 4) 4)
 
 (test (quasiquote (list (unquote (+ 1 2)) 4)) '(list 3 4))
+(test (quasiquote (1 2 3)) '(1 2 3))
+(test (quasiquote ()) '())
+(test (quasiquote (list ,(+ 1 2) 4))  '(list 3 4))
+(test (quasiquote (1 ,@(list 1 2) 4)) '(1 1 2 4))
+(test (quasiquote (a ,(+ 1 2) ,@(map abs '(4 -5 6)) b)) '(a 3 4 5 6 b))
+(test (quasiquote (1 2 ,(* 9 9) 3 4)) '(1 2 81 3 4))
+(test (quasiquote (1 ,(+ 1 1) 3)) '(1 2 3))                     
+(test (quasiquote (,(+ 1 2))) '(3))
+(test (quasiquote (,@'() . foo)) 'foo)
+(test (quasiquote (1 , 2)) '(1 2))
+(test (quasiquote (,1 ,1)) '(1 1))
+(test (quasiquote (,1 ,(quasiquote ,1))) '(1 1))
+(test (quasiquote (,1 ,(quasiquote ,@(list 1)))) '(1 1))
+(test (quasiquote (,1 ,(quasiquote ,(quasiquote ,1)))) '(1 1))
+(test (quasiquote (,1 ,(quasiquote ,@'(1)))) '(1 1))
+(test (quasiquote (,1 ,(quasiquote ,@(quasiquote (1))))) '(1 1))
+(test (quasiquote (,1 ,(quasiquote ,@(quasiquote (,1))))) '(1 1))
+(test (quasiquote (,1 ,@(quasiquote ,@(list (list 1))))) '(1 1))
 
 
 
@@ -54782,5 +54808,7 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 "(1 .;\" 2)"
 guile: "(1 #{.\\;\\\"}# 2)"
 so write mode applies to symbols as well
+
+what about format ~C for all the chars and ~A for funny symbols?
 |#
 

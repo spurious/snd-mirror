@@ -888,12 +888,12 @@ it that doesn't slow down normal cases.  Maybe a reader macro would look better:
                        ,(string-&gt;symbol (substring str 1)))))
 	*#readers*))
 
-(define-macro (&_ arg env)
+(define-macro (&amp;_ arg env)
   `(with-environment ',env ,arg))
 
 (define-bacro* (mac b (env (current-environment)))
   `(#_let ((a 12)) 
-     (#_+ a (&_ ,b ,env))))
+     (#_+ a (&amp;_ ,b ,env))))
 </pre>
 
 <p>Guaranteed hygienic!  
@@ -3757,22 +3757,26 @@ a variable name.  These weird symbols have to be printed sometimes:
 </p>
 
 <pre>
-&gt; (list 1 (string-&gt;symbol (string #\; #\" #\))) 2)
-(1 ;") 2)
+&gt; (list 1 (string-&gt;symbol (string #\; #\" #\\) 2)
+(1 ;"\ 2)
 </pre>
 
-<p>which is a mess.  Guile prints it as <code>(1 #{\;\"\)}# 2)</code>.
+<p>which is a mess.  Guile prints it as <code>(1 #{\;\"\\}# 2)</code>.
 CL indulges in an equally baroque flourish:
 </p>
 
 <pre>
-[1]> (list 1 (make-symbol (coerce (list #\; #\" #\)) 'string)) 2)
-(1 #:|;")| 2)
+[1]&gt; (list 1 (make-symbol (coerce (list #\; #\" #\\) 'string)) 2)
+(1 #:|;"\\| 2)
 </pre>
 
-<p>I can't decide what to do.
+<p>I can't decide what to do.  We want to avoid
 </p>
 
+<pre>
+&gt; (list 1 (string-&gt;symbol (string #\.)) 2)
+(1 . 2)
+</pre>
 
 
 
