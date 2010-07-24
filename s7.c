@@ -402,9 +402,6 @@ typedef struct s7_cell {
       int  length;
       char *svalue;
       s7_pointer global_slot; /* for strings that represent symbol names, this is the global environment (symbol value) cons */
-      /* there's room here for a pointer -- property lists for symbols? or current env cons?
-       */
-      /* s7_pointer local_slot; */
       int location;
     } string;
     
@@ -421,7 +418,10 @@ typedef struct s7_cell {
       s7_pointer *elements;
       union {
 	s7_vdims_t *dim_info;
-	s7_Int entries;
+	int entries;          
+	/* was s7_Int but that costs us 4 bytes per object everywhere in the 32-bit case
+	 *   on 64-bit machines, it could be s7_Int without problem.
+	 */
       } vextra;
       int hash_func;
     } vector;
@@ -468,7 +468,7 @@ typedef struct s7_cell {
   } object;
 } s7_cell;
 
-/* on 32 bit machines, s7_cell is 28 bytes because s7_num_t is 20 (2 doubles + type char) + 8 overhead (flag + hloc)
+/* on 32 bit machines, s7_cell is 28 bytes because vector and s7_num_t are 20 + 8 overhead (flag + hloc)
  * on 64 bit machines, it is 40 (28 for continuation + 8 overhead + 4 pad bytes in the continuation struct)
  */
 
@@ -2040,7 +2040,7 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
 
 static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args) 
 {
-  #define H_gensym "(gensym :optional prefix) returns a new (currently unused) symbol"
+  #define H_gensym "(gensym :optional prefix) returns a new, unused symbol"
   if (args != sc->NIL)
     {
       if (!s7_is_string(car(args)))
@@ -2089,6 +2089,7 @@ static s7_pointer g_symbol_to_string(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_string_to_symbol(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_to_symbol "(string->symbol str) returns the string str converted to a symbol"
+  #define H_symbol "(symbol str) returns the string str converted to a symbol"
   s7_pointer str;
   str = car(args);
 
@@ -10328,7 +10329,7 @@ static void write_string(s7_scheme *sc, const char *s, s7_pointer pt)
 }
 
 
-static char *slashify_string(const char *p, int len)
+static char *slashify_string(const char *p, int len, bool quoted, bool *slashified)
 {
   int i, j = 0, cur_size;
   char *s;
@@ -10336,13 +10337,14 @@ static char *slashify_string(const char *p, int len)
   cur_size = len + 256;
   s = (char *)calloc(cur_size + 2, sizeof(char));
   /* this can be non-null even if there's not enough memory, but I think I'll check in the caller */
-  s[j++] = '"';
+  if (quoted) s[j++] = '"';
 
   for (i = 0; i < len; i++) 
     {
       if (slashify_table[(unsigned int)((unsigned char)(p[i]))])
 	{
 	  s[j++] = '\\';
+	  (*slashified) = true;
 	  switch (p[i]) 
 	    {
 	    case '"':
@@ -10376,7 +10378,7 @@ static char *slashify_string(const char *p, int len)
 	  for (k = j; k < cur_size + 2; k++) s[k] = 0;
 	}
     }
-  s[j++] = '"';
+  if (quoted) s[j++] = '"';
   return(s);
 }
 
@@ -10433,9 +10435,26 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       return(number_to_string_base_10(obj, 0, 14, 'g')); /* 20 digits is excessive in this context */
   
     case T_SYMBOL:
-      return(copy_string_with_len(symbol_name(obj), symbol_name_length(obj)));
-      /* return(slashify_string(symbol_name(obj), symbol_name_length(obj))); */
-  
+      {
+	bool slashified = false;
+	char *str;
+	/* I think this is the only place we print a symbol's name */
+	/* return(copy_string_with_len(symbol_name(obj), symbol_name_length(obj))); */
+
+	str = slashify_string(symbol_name(obj), symbol_name_length(obj), false, &slashified);
+	if (slashified)
+	  {
+	    char *symstr;
+	    int len;
+	    len = safe_strlen(str) + 16;
+	    symstr = (char *)calloc(len, sizeof(char));
+	    snprintf(symstr, len, "(symbol \"%s\")", str);
+	    free(str);
+	    return(symstr);
+	  }
+	return(str);
+      }
+
     case T_STRING:
       if (string_length(obj) > 0)
 	{
@@ -10443,12 +10462,13 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	   * for now, print enough chars to make anyone happy
 	   */
 	  int len;
+	  bool slashified = false;
 	  len = string_length(obj);
 	  if (len > (1 << 24))
 	    len = (1 << 24);
 	  if (!use_write) 
 	    return(copy_string_with_len(string_value(obj), len));
-	  return(slashify_string(string_value(obj), len));
+	  return(slashify_string(string_value(obj), len, true, &slashified));
 	}
       if (!use_write)
 	return(NULL);
@@ -11645,6 +11665,21 @@ s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b)
 	  p = a;
 	  a = q;
 	}
+    }
+  return(p);
+}
+
+
+static s7_pointer rev_append(s7_scheme *sc, s7_pointer a, s7_pointer b) 
+{
+  s7_pointer p = b, q;
+  
+  while (a != sc->NIL) 
+    {
+      q = cdr(a);
+      cdr(a) = p;
+      p = a;
+      a = q;
     }
   return(p);
 }
@@ -19014,7 +19049,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->value != sc->NO_VALUE)                   /* (map (lambda (x) (values)) (list 1)) */
 	{
 	  if (is_multiple_value(sc->value))            /* (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4)) */
-	    caddr(sc->args) = s7_append(sc, safe_reverse_in_place(sc, multiple_value(sc->value)), caddr(sc->args)); 
+	    /* caddr(sc->args) = s7_append(sc, safe_reverse_in_place(sc, multiple_value(sc->value)), caddr(sc->args)); */
+	    caddr(sc->args) = rev_append(sc, multiple_value(sc->value), caddr(sc->args));
 	  else caddr(sc->args) = s7_cons(sc, sc->value, caddr(sc->args));
 	}
 
@@ -23207,20 +23243,6 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
 
   result = copy_and_promote_number(sc, result_type, car(args));
 
-
-#if 0
-/* someday we need to catch gmp exceptions somehow: SIGFPE (exception=deliberate /0 -- see gmp/errno.c) */
-#include <signal.h>
-
-static void s7_sigfpe(int ignored)
-{
-  /* can we recover? */
-}
-
-then in init: signal(SIGFPE, s7_sigfpe);
-#endif
-
-
   switch (result_type)
     {
     case T_BIG_INTEGER:
@@ -26202,6 +26224,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "symbol?",                 g_is_symbol,               1, 0, false, H_is_symbol);
   s7_define_function(sc, "symbol->string",          g_symbol_to_string,        1, 0, false, H_symbol_to_string);
   s7_define_function(sc, "string->symbol",          g_string_to_symbol,        1, 0, false, H_string_to_symbol);
+  s7_define_function(sc, "symbol",                  g_string_to_symbol,        1, 0, false, H_symbol);
   s7_define_function(sc, "symbol->value",           g_symbol_to_value,         1, 1, false, H_symbol_to_value);
 #if WITH_PROFILING
   s7_define_function(sc, "symbol-calls",            g_symbol_calls,            1, 0, false, H_symbol_calls);
@@ -26721,6 +26744,11 @@ s7_scheme *s7_init(void)
  * remove #: keyword (from guile)
  * add a type for environments so they don't evaluate themselves as lists
  *
+ * someday we need to catch gmp exceptions: SIGFPE (exception=deliberate /0 -- see gmp/errno.c)
+ *   #include <signal.h>
+ *   static void s7_sigfpe(int ignored) {}
+ * then in init: signal(SIGFPE, s7_sigfpe);
+ *
  * PERHAPS: method lists for c_objects
  *   a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)
  *   catch 'wrong-type-arg-error in the evaluator,
@@ -26752,6 +26780,6 @@ s7_scheme *s7_init(void)
  *    intel xeon 5530 (2.4G)     2093 (1333 DDR3, 8M)
  *    amd phenom 945 (3.0G):     2085 (800 DDR2, .5M)
  *    intel i7 930 (2.8G):       2084 (1600 DDR3, 8M)
- *    amd phenom 965 (3.6G):     2083 (800 DDR2, .5M)
+ *    amd phenom 965 (3.4G):     2083 (800 DDR2, .5M)
  *    intel Q9650 (3.0G)         2081 (800 DDR2, 6M)
  */

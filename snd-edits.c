@@ -8585,12 +8585,51 @@ scale samples in the given sound/channel between beg and beg + num to norm."
 }			  
 
 
+static mus_float_t channel_maxamp_and_position(chan_info *cp, int edpos, mus_long_t *maxpos)
+{
+  /* maxamp position is not tracked in peak env because it gloms up the code, and cannot easily be saved/restored in the peak env files */
+  mus_float_t val;
+  int pos;
+
+  if (edpos == AT_CURRENT_EDIT_POSITION) pos = cp->edit_ctr; else pos = edpos;
+
+  if ((peak_env_maxamp_ok(cp, pos)) && (!maxpos))
+    return(peak_env_maxamp(cp, pos));
+
+  val = ed_maxamp(cp, pos);
+  if (maxpos) (*maxpos) = ed_maxamp_position(cp, pos);
+  if ((val >= 0.0) &&                          /* defaults to -1.0! */
+      ((!maxpos) || ((*maxpos) >= 0)))
+    return(val);
+
+  val = channel_local_maxamp(cp, 0, cp->edits[pos]->samples, pos, maxpos);
+  set_ed_maxamp(cp, pos, val);
+  if (maxpos) set_ed_maxamp_position(cp, pos, (*maxpos));
+
+  return(val);
+}
+
+
+mus_float_t channel_maxamp(chan_info *cp, int edpos)
+{
+  return(channel_maxamp_and_position(cp, edpos, NULL));
+}
+
+
+mus_long_t channel_maxamp_position(chan_info *cp, int edpos)
+{
+  mus_long_t maxpos = 0;
+  channel_maxamp_and_position(cp, edpos, &maxpos);
+  return(maxpos);
+}
+
+
 mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, int edpos, mus_long_t *maxpos)
 {
   snd_fd *sf;
   mus_float_t ymax = 0.0, mval;
-  mus_long_t i, mpos = -1;
-  int j = 0;
+  mus_long_t mpos = -1;
+  int j = 0, jpos = -1;
 
   if (edpos == 0)
     {
@@ -8602,7 +8641,7 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 	  (io_end(sd->io) >= (beg + num)))
 	{
 	  /* use the in-core data directly */
-	  int start, end, jpos;
+	  int start, end;
 
 	  start = beg - io_beg(sd->io);
 	  jpos = start;
@@ -8628,6 +8667,7 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
 
   if (num > (1 << 30))
     {
+      mus_long_t i;
       ss->stopped_explicitly = false;
       for (i = 0; i < num; i++)
 	{
@@ -8653,15 +8693,39 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
     }
   else
     {
-      for (i = 0; i < num; i++)
+      int jnum;
+      jnum = (int)num;
+
+      if ((sf->runf == next_sample_value_unscaled) && /* not also next_sample_value because next_sound embeds the scaler multiply */
+	  (ED_LOCAL_POSITION(sf->cb) == 0) &&
+	  (ED_LOCAL_END(sf->cb) >= (num - 1)))
 	{
-	  mval = fabs(read_sample(sf));
-	  if (mval > ymax) 
+	  for (j = 0; j < jnum; j++)
 	    {
-	      ymax = mval;
-	      mpos = i;
+	      if (sf->loc > sf->last) 
+		mval = fabs(next_sound(sf)); 
+	      else mval = fabs(sf->data[sf->loc++]);
+	      if (mval > ymax) 
+		{
+		  ymax = mval;
+		  jpos = j;
+		}
 	    }
 	}
+      else
+	{
+	  for (j = 0; j < jnum; j++)
+	    {
+	      mval = fabs(read_sample(sf));
+	      if (mval > ymax) 
+		{
+		  ymax = mval;
+		  jpos = j;
+		}
+	    }
+	}
+      mpos = (mus_long_t)jpos;
+
     }
   if (maxpos) (*maxpos) = mpos;
   free_snd_fd(sf);
@@ -9053,8 +9117,32 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd, XEN chn_n, XEN edpos
   sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, pos, num_to_read);
   if (sf)
     {
-      for (i = 0; i < len; i++) 
-	fvals[i] = read_sample(sf);
+      if (len < (1 << 30))
+	{
+	  int j, jnum;
+	  jnum = (int)len;
+	  if ((sf->runf == next_sample_value_unscaled) && /* not also next_sample_value because next_sound embeds the scaler multiply */
+	      (ED_LOCAL_POSITION(sf->cb) == 0) &&
+	      (ED_LOCAL_END(sf->cb) >= (len - 1)))
+	    {
+	      for (j = 0; j < jnum; j++)
+		{
+		  if (sf->loc > sf->last)
+		    fvals[j] = next_sound(sf); 
+		  else fvals[j] = sf->data[sf->loc++];
+		}
+	    }
+	  else
+	    {
+	      for (j = 0; j < jnum; j++)
+		fvals[j] = read_sample(sf);
+	    }
+	}
+      else
+	{
+	  for (i = 0; i < len; i++) 
+	    fvals[i] = read_sample(sf);
+	}
       free_snd_fd(sf);
     }
   return(xen_make_vct(len, fvals));

@@ -715,6 +715,11 @@
 (test (symbol? lambda) #f)
 (test (symbol? call/cc) #f)
 
+(test (let ((sym000000000000000000000 3))
+	(let ((sym000000000000000000001 4))
+	  (+ sym000000000000000000000 sym000000000000000000001)))
+      7)
+
 
 
 (test (procedure? car) #t)
@@ -2471,8 +2476,10 @@
 (test (symbol->string (string->symbol "")) "")
 (test (symbol? (string->symbol "(weird name for a symbol!)")) #t)
 (test (symbol->string (string->symbol "()")) "()")
+(test (symbol->string (string->symbol (string #\"))) "\"")
 
 (test (symbol? (string->symbol "0")) #t)
+(test (symbol? (symbol "0")) #t)
 (test (string->symbol "0e") '0e)
 (test (string->symbol "1+") '1+)
 (test (symbol? (string->symbol "1+i")) #t)
@@ -2500,6 +2507,10 @@
 (test (symbol? (string->symbol (string #\x (integer->char 0) #\x))) #t)
 (test (symbol? (string->symbol (string #\x #\y (integer->char 127) #\z))) #t) ; xy(backspace)z
 
+(test (symbol? (string->symbol (string #\; #\" #\)))) #t)
+(test (let (((symbol ";")) 3) (symbol ";")) 'error)
+
+
 (for-each
  (lambda (arg)
    (test (symbol->string arg) 'error))
@@ -2507,13 +2518,18 @@
 
 (for-each
  (lambda (arg)
-   (test (string->symbol arg) 'error))
+   (test (string->symbol arg) 'error)
+   (test (symbol arg) 'error))
  (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
-   (test (symbol? (string->symbol (string arg))) #t))
+   (test (symbol? (string->symbol (string arg))) #t)
+   (test (symbol? (symbol (string arg))) #t))
  (list #\; #\, #\. #\) #\( #\" #\' #\` #\x33 #\xff #\x7f #\# #\]))
+
+(test (symbol) 'error)
+(test (symbol "hi" "ho") 'error)
 
 
 
@@ -6925,6 +6941,18 @@
 (test (string=? (format #f "~10d" 100) "       100") #t)
 (test (string=? (format #f "~10,'*d" 100) "*******100") #t)
 (test (string=? (format #f "~c" #\a) "a") #t)
+(test (string=? (format #f "~c" #\space) " ") #t)
+(test (string=? (format #f "~C" #\x91) "\x91") #t)
+(test (string=? (format #f "~C" #\x9) "\x09") #t)
+(test (string=? (format #f "~C" #\~) "~") #t)
+(test (string=? (format #f "~A" #\x91) "\x91") #t)
+(test (string=? (format #f "~S" #\x91) "#\\x91") #t)
+(test (string=? (format #f "~A" (string->symbol "hi")) "hi") #t)
+(test (string=? (format #f "~S" (string->symbol "hi")) "hi") #t)
+(test (string=? (format #f "~A" (string->symbol ";\\\";")) "(symbol \";\\\\\\\";\")") #t)
+(test (string=? (format #f "~S" (string->symbol ";\\\";")) "(symbol \";\\\\\\\";\")") #t)
+(test (string=? (format #f "~A" (string->symbol (string #\, #\. #\# #\; #\" #\\ #\' #\`))) "(symbol \",.#;\\\"\\\\'`\")") #t)
+
 (test (string=? (format #f "~~~~") "~~") #t)
 (test (string=? (format #f "~s" "abc") "\"abc\"") #t)
 (test (string=? (format #f "~s" "abc \\ abc") "\"abc \\\\ abc\"") #t)
@@ -7583,6 +7611,7 @@
 (test (object->string 1 2) 'error)
 (test (object->string abs) "abs")
 
+(test (object->string (string->symbol (string #\; #\" #\)))) "(symbol \";\\\")\")")
 
 
 ;;; (string-set! (with-input-from-string "\"1234\"" (lambda () (read))) 1 #\a)
@@ -8752,6 +8781,7 @@
 (test (cond (#f 'a) ('b)) 'b)
 (test (cond (#t 'a) (#t 'b)) 'a)
 (test (cond ((> 3 2) 'greater) ((< 3 2) 'less)) 'greater)
+(test (cond((> 3 2)'greater)((< 3 2)'less)) 'greater)
 (test (cond ((> 3 3) 'greater) ((< 3 3) 'less)  (else 'equal)) 'equal)
 (test (cond ((assv 'b '((a 1) (b 2))) => cadr)  (else #f)) 2)
 (test (cond (#f 2) (else 5)) 5)
@@ -8761,6 +8791,7 @@
 (test (cond ((zero? 1) 123) ((= 1 1) 321)) 321)
 (test (cond ('() 1)) 1)
 (test (let ((x 1)) (cond ((= 1 2) 3) (else (* x 2) (+ x 3)))) 4)
+(test (let((x 1))(cond((= 1 2)3)(else(* x 2)(+ x 3)))) 4)
 (test (let ((x 1)) (cond ((= x 1) (* x 2) (+ x 3)) (else 32))) 4)
 (test (let ((x 1)) (cond ((= x 1) (let () (set! x (* x 2))) (+ x 3)) (else 32))) 5)
 (test (let ((x 1)) (cond ((= x 2) (let () (set! x (* x 2))) (+ x 3)) (else 32))) 32)
@@ -8929,6 +8960,7 @@
 (test (let ((x 1)) (case x ((1) (let () (set! x (* x 2))) (+ x 3)) (else 32))) 5)
 (test (let ((x 1)) (case x ((2) (let () (set! x (* x 2))) (+ x 3)) (else 32))) 32)
 (test (let ((x 1)) (case x ((2) 3) (else (let () (set! x (* x 2))) (+ x 3)))) 5)
+(test (let((x 1))(case x((2)3)(else(let()(set! x(* x 2)))(+ x 3)))) 5)
 (test (let ((x 1)) (case x ((2) 3) (else 4) (else 5))) 'error)
 
 (test (case '() ((()) 2) (else 1)) 2)    ; car: (), value: (), eqv: 1, null: 1 1
@@ -9041,6 +9073,7 @@
 (num-test (let () (define compose (lambda (f g) (lambda args (f (apply g args))))) ((compose sqrt *) 12 75))  30.0)
 (test (let ((f (lambda () (lambda (x y) (+ x y))))) ((f) 1 2)) 3)
 (test ((lambda (x) (define y 4) (+ x y)) 1) 5)
+(test ((lambda(x)(define y 4)(+ x y))1) 5)
 (test ((lambda () (define (y x) (+ x 1)) (y 1))) 2)
 (test ((lambda (x) 123 (let ((a (+ x 1))) a)) 2) 3)
 (test ((lambda (x) "documentation" (let ((a (+ x 1))) a)) 2) 3)
@@ -9365,6 +9398,7 @@
 (test (let* ((x 32) (y x)) (define x 3) y) 32)
 
 (test (let ((z 0)) (begin (define x 32)) (begin (define y x)) (set! z y) z) 32)
+(test (let((z 0))(begin(define x 32))(begin(define y x))(set! z y)z) 32)
 (test (let ((z 0)) (begin (define x 32) (define y x)) (set! z y) z) 32)        
 (test (let () (begin (define b 1) (begin (define a b) (define b 3)) a)) 1)
 (test (let () (begin (begin (define a1 1) (begin (define a1 b1) (define b1 3))) a1)) 'error)
@@ -12221,7 +12255,11 @@ who says the continuation has to restart the map from the top?
   (test (keyword? (make-keyword (string #\x (integer->char 128) #\x))) #t)
   (test (keyword? (make-keyword (string #\x (integer->char 200) #\x))) #t)
   (test (keyword? (make-keyword (string #\x (integer->char 255) #\x))) #t)
-  (test (make-keyword ":") ::))
+  (test (make-keyword ":") ::)
+  (test (make-keyword (string #\")) (symbol ":\""))
+  (test (keyword? (make-keyword (string #\"))) #t)
+  (test (keyword->symbol (make-keyword (string #\"))) (symbol "\""))
+  )
 
 (let ()
   (define* (hi a b) (+ a b))
@@ -12279,6 +12317,10 @@ who says the continuation has to restart the map from the top?
   (test (eval `(let ((,sym1 32) (,sym2 1)) (+ ,sym1 ,sym2))) 33))
 
 (test (let ((hi (gensym))) (eq? hi (string->symbol (symbol->string hi)))) #t)
+(test (let () (define-macro (hi a) (let ((var (gensym ";"))) `(let ((,var ,a)) (+ 1 ,var)))) (hi 1)) 2)
+(test (let () (define-macro (hi a) (let ((funny-name (string->symbol (string #\;)))) `(let ((,funny-name ,a)) (+ 1 ,funny-name)))) (hi 1)) 2)
+(test (let () (define-macro (hi a) (let ((funny-name (string->symbol "| e t c |"))) `(let ((,funny-name ,a)) (+ 1 ,funny-name)))) (hi 2)) 3)
+
 
 
 (test (provided?) 'error)
@@ -14466,6 +14508,9 @@ who says the continuation has to restart the map from the top?
 
 (test (current-environment 1) 'error)
 (test (global-environment 1) 'error)
+(test (initial-environment 1) 'error)
+
+(test (let () (augment-environment! (initial-environment) (cons 'a 32)) (symbol->value 'a (initial-environment))) #<undefined>)
 (test (let ((caar 123)) (+ caar (with-environment (initial-environment) (caar '((2) 3))))) 125)
 (test (let ()
 	(+ (let ((caar 123)) 
@@ -15156,6 +15201,7 @@ who says the continuation has to restart the map from the top?
 (test (let ((x (list 1 2))) (set! ((call-with-exit (lambda (k) (k x))) 0) 12) x) '(12 2))
 (test (let ((x #2d((1 2) (3 4)))) (set! (((values x) 0) 1) 12) x) #2D((1 12) (3 4)))
 (test (let ((x 0)) (set! ((make-procedure-with-setter (lambda () x) (lambda (y) (set! x y)))) 12) x) 12)
+(test (let ((x 0) (str "hiho")) (string-set! (let () (set! x 32) str) 0 #\x) (list x str)) '(32 "xiho"))
 
 
 
@@ -44203,6 +44249,55 @@ who says the continuation has to restart the map from the top?
        max min number? integer? real? complex? rational?
        even? odd? zero? positive? negative? real-part imag-part numerator denominator))
       
+(test (> 0 most-negative-fixnum) #t)
+(test (> most-negative-fixnum 0) #f)
+(test (> most-positive-fixnum 0) #t)
+(test (> 0 most-positive-fixnum) #f)
+(test (> most-positive-fixnum most-negative-fixnum) #t)
+(test (> most-negative-fixnum most-positive-fixnum) #f)
+(test (< 0 most-negative-fixnum) #f)
+(test (< most-negative-fixnum 0) #t)
+(test (< most-positive-fixnum 0) #f)
+(test (< 0 most-positive-fixnum) #t)
+(test (< most-positive-fixnum most-negative-fixnum) #f)
+(test (< most-negative-fixnum most-positive-fixnum) #t)
+(test (negative? most-negative-fixnum) #t)
+(test (positive? most-negative-fixnum) #f)
+(test (zero? most-negative-fixnum) #f)
+(test (zero? most-positive-fixnum) #f)
+(test (negative? most-positive-fixnum) #f)
+(test (positive? most-positive-fixnum) #t)
+(test (= (+ most-negative-fixnum 1) (- most-positive-fixnum)) #t)
+(test (= (abs (+ most-negative-fixnum 1)) most-positive-fixnum) #t)
+(test (= (+ most-negative-fixnum most-positive-fixnum) -1) #t)
+(test (= (- most-negative-fixnum (- most-positive-fixnum)) -1) #t)
+(test (even? most-positive-fixnum) #f)
+(test (odd? most-positive-fixnum) #t)
+(test (even? most-negative-fixnum) #t)
+(test (odd? most-negative-fixnum) #f)
+(test (integer? most-negative-fixnum) #t)
+(test (= (* most-positive-fixnum -1) (+ most-negative-fixnum 1)) #t)
+(test (= (* most-negative-fixnum 1) (- (* -1 most-positive-fixnum) 1)) #t)
+(if with-bignums
+    (test (= most-positive-fixnum (- (/ most-negative-fixnum -1) 1)) #t))
+(test (/ most-positive-fixnum most-positive-fixnum) 1)
+(test (/ -9223372036854775808 -9223372036854775808) 1)
+(test (+ -9223372036854775808 9223372036854775807) -1)
+(test (/ -9223372036854775808 9223372036854775807) -9223372036854775808/9223372036854775807)
+(test (abs most-positive-fixnum) most-positive-fixnum)
+(test (floor most-positive-fixnum) most-positive-fixnum)
+(test (floor most-negative-fixnum) most-negative-fixnum)
+(num-test (/ 2 -9223372036854775808) -1/4611686018427387904)
+(num-test (/ -9223372036854775808 2) -4611686018427387904)
+(num-test (/ 2 most-negative-fixnum) -1/4611686018427387904)
+(num-test (/ most-negative-fixnum 2) -4611686018427387904)
+(if with-bignums (num-test (/ most-negative-fixnum) -1/9223372036854775808))
+(if with-bignums (num-test (- most-negative-fixnum) 9223372036854775808))
+(if with-bignums (num-test (* 1/256 1/256 1/256 1/256 1/256 1/256 1/256 -1/128) (/ most-negative-fixnum)))
+(num-test (/ most-negative-fixnum most-negative-fixnum) 1)
+(num-test (/ most-negative-fixnum most-negative-fixnum 2) 1/2)
+(num-test (/ -9223372036854775808 -9223372036854775808 4) 1/4)
+
 
 (num-test (+ 1073741824 1073741824 1073741824 1073741824) (* 4 1073741824))
 
@@ -48982,6 +49077,13 @@ who says the continuation has to restart the map from the top?
 	 1234000000.000000+0.000000i 1234000000.000000+1.000000i 1234000000.000000+3.141593i 1234000000.000000+2.718282i 1234000000.000000+1234.000000i 
 	 1234000000.000000+1234000000.000000i)))
 
+(test (string->number "1+1+i") #f)
+(test (string->number "1+i+i") #f)
+(test (string->number "1+.i") #f)
+(test (string->number ".") #f)
+(test (string->number "8.41470984807896506652502321630298999622563060798371065672751709991910404391239668948639743543052695.") #f)
+(test (string->number "8.41470184807816506652502321630218111622563060718371065672751701111110404311231668148631743543052695" 9) #f)
+
 (test (number->string 123 8) "173")
 (test (number->string 123 16) "7b")
 (test (number->string 123 2) "1111011")
@@ -49201,6 +49303,8 @@ who says the continuation has to restart the map from the top?
     ((= i 256))
   (test (string->number (string (integer->char i))) #f)
   (test (string->number (string (integer->char i) #\. #\0)) #f))
+(test (string->number "1,000") #f)
+(test (string->number "1 000") #f)
 
 (num-test #b1.0e8 256.0)
 (num-test #o1.0e8 16777216.0)
@@ -50580,6 +50684,36 @@ who says the continuation has to restart the map from the top?
    (test (ash arg 1) 'error))
  (list #\a '#(1 2 3) 3.14 2/3 1.5+0.3i 1+i '() 'hi abs "hi" '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
 
+(let ()
+  (define (2^n? x) (zero? (logand x (- x 1))))
+  (define (2^n-1? x) (zero? (logand x (+ x 1))))
+  (define (x+y x y) (- x (lognot y) 1))
+  (define (0? x) (negative? (logand (lognot x) (- x 1))))
+  (define (<=0? x) (negative? (logior x (- x 1))))
+  (define (>=0? x) (negative? (lognot x)))
+  (define (>0? x) (negative? (logand (- x) (lognot x))))
+  (define-macro (<=> x y) `(begin (set! ,x (logxor ,x ,y)) (set! ,y (logxor ,y ,x)) (set! ,x (logxor ,x ,y))))
+  
+  (test (2^n? 32) #t)
+  (test (2^n? 2305843009213693952) #t)
+  (test (2^n? 2305843009213693950) #f)
+  (test (2^n? 17) #f)
+  (test (2^n? 1) #t)
+  (test (2^n-1? 31) #t)
+  (test (2^n-1? 32) #f)
+  (test (2^n-1? 18014398509481985) #f)
+  (test (2^n-1? 18014398509481983) #t)
+  (test (x+y 41 3) 44)
+  (test (0? 0) #t)
+  (test (0? 123) #f)
+  (test (<=0? 0) #t)
+  (test (<=0? -2) #t)
+  (test (<=0? 2) #f)
+  (test (>=0? -1) #f)
+  (test (>0? 1) #t)
+  (test (let ((x 1) (y 321)) (<=> x y) (list x y)) (list 321 1))
+  )
+
 
 (num-test (integer-length 0) 0)
 (num-test (integer-length 1) 1)
@@ -50695,8 +50829,6 @@ who says the continuation has to restart the map from the top?
       (num-test (* sign signif (expt 2.0 expon)) val))))
 
 
-
-
 (if with-bignums
     (begin
       (num-test (logand (+ (expt 2 48) (expt 2 46)) (expt 2 48)) 281474976710656)
@@ -50718,85 +50850,6 @@ who says the continuation has to restart the map from the top?
       (num-test (ash 18446744073709551616 -63) 2)
       (num-test (ash 1267650600228229401496703205376 -100) 1)
       ))
-
-(test (> 0 most-negative-fixnum) #t)
-(test (> most-negative-fixnum 0) #f)
-(test (> most-positive-fixnum 0) #t)
-(test (> 0 most-positive-fixnum) #f)
-(test (> most-positive-fixnum most-negative-fixnum) #t)
-(test (> most-negative-fixnum most-positive-fixnum) #f)
-(test (< 0 most-negative-fixnum) #f)
-(test (< most-negative-fixnum 0) #t)
-(test (< most-positive-fixnum 0) #f)
-(test (< 0 most-positive-fixnum) #t)
-(test (< most-positive-fixnum most-negative-fixnum) #f)
-(test (< most-negative-fixnum most-positive-fixnum) #t)
-(test (negative? most-negative-fixnum) #t)
-(test (positive? most-negative-fixnum) #f)
-(test (zero? most-negative-fixnum) #f)
-(test (zero? most-positive-fixnum) #f)
-(test (negative? most-positive-fixnum) #f)
-(test (positive? most-positive-fixnum) #t)
-(test (= (+ most-negative-fixnum 1) (- most-positive-fixnum)) #t)
-(test (= (abs (+ most-negative-fixnum 1)) most-positive-fixnum) #t)
-(test (= (+ most-negative-fixnum most-positive-fixnum) -1) #t)
-(test (= (- most-negative-fixnum (- most-positive-fixnum)) -1) #t)
-(test (even? most-positive-fixnum) #f)
-(test (odd? most-positive-fixnum) #t)
-(test (even? most-negative-fixnum) #t)
-(test (odd? most-negative-fixnum) #f)
-(test (integer? most-negative-fixnum) #t)
-(test (= (* most-positive-fixnum -1) (+ most-negative-fixnum 1)) #t)
-(test (= (* most-negative-fixnum 1) (- (* -1 most-positive-fixnum) 1)) #t)
-(if with-bignums
-    (test (= most-positive-fixnum (- (/ most-negative-fixnum -1) 1)) #t))
-(test (/ most-positive-fixnum most-positive-fixnum) 1)
-(test (/ -9223372036854775808 -9223372036854775808) 1)
-(test (+ -9223372036854775808 9223372036854775807) -1)
-(test (/ -9223372036854775808 9223372036854775807) -9223372036854775808/9223372036854775807)
-(test (abs most-positive-fixnum) most-positive-fixnum)
-(test (floor most-positive-fixnum) most-positive-fixnum)
-(test (floor most-negative-fixnum) most-negative-fixnum)
-(num-test (/ 2 -9223372036854775808) -1/4611686018427387904)
-(num-test (/ -9223372036854775808 2) -4611686018427387904)
-(num-test (/ 2 most-negative-fixnum) -1/4611686018427387904)
-(num-test (/ most-negative-fixnum 2) -4611686018427387904)
-(if with-bignums (num-test (/ most-negative-fixnum) -1/9223372036854775808))
-(if with-bignums (num-test (- most-negative-fixnum) 9223372036854775808))
-(if with-bignums (num-test (* 1/256 1/256 1/256 1/256 1/256 1/256 1/256 -1/128) (/ most-negative-fixnum)))
-(num-test (/ most-negative-fixnum most-negative-fixnum) 1)
-(num-test (/ most-negative-fixnum most-negative-fixnum 2) 1/2)
-(num-test (/ -9223372036854775808 -9223372036854775808 4) 1/4)
-
-(let ()
-  (define (2^n? x) (zero? (logand x (- x 1))))
-  (define (2^n-1? x) (zero? (logand x (+ x 1))))
-  (define (x+y x y) (- x (lognot y) 1))
-  (define (0? x) (negative? (logand (lognot x) (- x 1))))
-  (define (<=0? x) (negative? (logior x (- x 1))))
-  (define (>=0? x) (negative? (lognot x)))
-  (define (>0? x) (negative? (logand (- x) (lognot x))))
-  (define-macro (<=> x y) `(begin (set! ,x (logxor ,x ,y)) (set! ,y (logxor ,y ,x)) (set! ,x (logxor ,x ,y))))
-  
-  (test (2^n? 32) #t)
-  (test (2^n? 2305843009213693952) #t)
-  (test (2^n? 2305843009213693950) #f)
-  (test (2^n? 17) #f)
-  (test (2^n? 1) #t)
-  (test (2^n-1? 31) #t)
-  (test (2^n-1? 32) #f)
-  (test (2^n-1? 18014398509481985) #f)
-  (test (2^n-1? 18014398509481983) #t)
-  (test (x+y 41 3) 44)
-  (test (0? 0) #t)
-  (test (0? 123) #f)
-  (test (<=0? 0) #t)
-  (test (<=0? -2) #t)
-  (test (<=0? 2) #f)
-  (test (>=0? -1) #f)
-  (test (>0? 1) #t)
-  (test (let ((x 1) (y 321)) (<=> x y) (list x y)) (list 321 1))
-  )
 
 
 (for-each
@@ -54797,18 +54850,5 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 #x7ff0000000000000 +inf
 #xfff0000000000000 -inf
 #xfff8000000000000 nan
-
-:(let ((str (string #\. #\; #\")))
-   (let ((sym (string->symbol str)))
-      (list 1 sym 2)))
-(1 .;" 2)
-:(let ((str (string #\. #\; #\")))
-   (let ((sym (string->symbol str)))
-      (object->string (list 1 sym 2))))
-"(1 .;\" 2)"
-guile: "(1 #{.\\;\\\"}# 2)"
-so write mode applies to symbols as well
-
-what about format ~C for all the chars and ~A for funny symbols?
 |#
 

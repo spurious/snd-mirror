@@ -762,8 +762,8 @@ mac
 
 <p>This is not the end of the story.
 Macro expansion happens
-in two different environments.  Leaving aside quasiquote which happens at read-time,
-and in a sense has no environment, a macro first evaluates its body to form a piece
+in two different environments.  Leaving aside quasiquote which operates at read-time without reference to any environment,
+a macro first evaluates its body to form a piece
 of code, a list with the macro's arguments plugged in.  Then
 it evaluates that code.  So the expansion into a piece of code takes place in one
 environment (the definition-time environment), and the code evaluation takes place
@@ -3752,31 +3752,76 @@ would work, but that means that <code>'(1 ."hi")</code> is parsed as a 1 and the
 symbol <code>."hi"</code>, and <code>(string-set! x"hi")</code> is an error.
 The first character should not be #\#, #\', #\`, #\,, #\:, or any of those mentioned above,
 and some characters can't occur by themselves.  For example, "." is not a legal variable
-name or we'd be trying to parse <code>(let ((. 3)) .)</code>.  Even worse, a digit like "0" is not
-a variable name.  These weird symbols have to be printed sometimes:
+name, but ".." is. 
+These weird symbols have to be printed sometimes:
 </p>
 
 <pre>
-&gt; (list 1 (string-&gt;symbol (string #\; #\" #\\) 2)
-(1 ;"\ 2)
+&gt; (list 1 (string-&gt;symbol (string #\; #\" #\\)) 2)
+(1 ;"\ 2)            <!-- " -->
+&gt; (list 1 (string-&gt;symbol (string #\.)) 2)
+(1 . 2)
 </pre>
 
-<p>which is a mess.  Guile prints it as <code>(1 #{\;\"\\}# 2)</code>.
+<p>which is a mess.  Guile prints the first as <code>(1 #{\;\"\\}# 2)</code>.
 CL indulges in an equally baroque flourish:
 </p>
 
 <pre>
 [1]&gt; (list 1 (make-symbol (coerce (list #\; #\" #\\) 'string)) 2)
-(1 #:|;"\\| 2)
+(1 #:|;"\\| 2)        <!-- " -->
 </pre>
 
-<p>I can't decide what to do.  We want to avoid
+<p>Even worse, in CL:
 </p>
 
 <pre>
-&gt; (list 1 (string-&gt;symbol (string #\.)) 2)
-(1 . 2)
+[1]&gt; (equalp 'a '|a|)
+NIL
+[3]&gt; (let ((a 3)) |a|)
+*** - LET: variable |a| has no value
 </pre>
+
+<p>So the vertical bar is not just an alternative way to write a symbol's name;
+the name has to be a funny one: humph!
+I think I'll use "symbol", sort of like quote:
+</p>
+
+<pre>
+&gt; (list 1 (string-&gt;symbol (string #\; #\" #\\)) 2)
+(1 (symbol ";\"\\") 2)       <!-- " -->
+</pre>
+
+<p>
+This output is readable, and does not eat up perfectly good
+characters like vertical bar, but it means we can't use
+variable names like "| e t c |".  We could allow a name to
+contain any characters if it starts and ends with "|".
+But then one vertical bar is trouble.  
+These symbols are not just a silly optimization of string comparison:
+</p>
+
+<pre>
+(define-macro (hi a) 
+  (let ((funny-name (string-&gt;symbol (string #\;))))
+    `(let ((,funny-name ,a)) (+ 1 ,funny-name))))
+
+&gt; (hi 2)
+3
+&gt; (macroexpand (hi 2))
+(let ((; 2)) (+ 1 ;))    ; for a good time, try (string #\") <!-- " -->
+
+(define-macro (hi a) 
+  (let ((funny-name (string-&gt;symbol "| e t c |")))
+    `(let ((,funny-name ,a)) (+ 1 ,funny-name))))
+&gt; (hi 2)
+3
+&gt; (macroexpand (hi 2))
+(let ((| e t c | 2)) (+ 1 | e t c |))
+</pre>
+
+<p>I hope that makes you as happy as it makes me!
+</p>
 
 
 
