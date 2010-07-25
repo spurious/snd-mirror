@@ -10587,7 +10587,7 @@
 (test (let ((x 1)) (+ x (begin (define x 2) x))) 3) 
 (test (let ((x 1)) (+ x (begin (set! x 2) x))) 3)
 (test (let ((x 1)) (+ (begin (set! x 2) x) x)) 4)
-(test (let ((x 1)) ((if (= x 1) + -) x (begin (set! x 2) x))) 3) ; or 0 if left->right, else random
+(test (let ((x 1)) ((if (= x 1) + -) x (begin (set! x 2) x))) 3) 
 
 
 
@@ -12064,6 +12064,9 @@ who says the continuation has to restart the map from the top?
 (test (eval ``(,,1 ,@,@(list (quote (list 1))))) '(1 1))
 (test (eval ``(,,1 ,@,@(list `(list 1)))) '(1 1))
 (test (eval (eval ```(,,,1 ,@,@,@(list '(list '(list 1)))))) '(1 1))
+(test (+ 1 (eval (eval ```,@,,@(list ''(list 2 3))))) 6)
+(test (+ 1 (eval (eval (eval ````,@,,,@(list '''(list 2 3)))))) 6)
+(test (apply + `(1 ,@`(2 ,@(list 3)))) 6)
 
 ;; from gauche
 (let ((quasi0 99)
@@ -12321,6 +12324,19 @@ who says the continuation has to restart the map from the top?
 (test (let () (define-macro (hi a) (let ((funny-name (string->symbol (string #\;)))) `(let ((,funny-name ,a)) (+ 1 ,funny-name)))) (hi 1)) 2)
 (test (let () (define-macro (hi a) (let ((funny-name (string->symbol "| e t c |"))) `(let ((,funny-name ,a)) (+ 1 ,funny-name)))) (hi 2)) 3)
 
+(let ((funny-name (string->symbol "| e t c |")))
+  (define-macro (hi a) 
+    `(define* (,a (,funny-name 32)) (+ ,funny-name 1)))
+  (hi func)
+  (test (func) 33)
+  (test (func 1) 2)
+  ;(procedure-source func) '(lambda* ((| e t c | 32)) (+ | e t c | 1))
+  (test (apply func (list (symbol->keyword funny-name) 2)) 3)
+  )
+
+(let ((funny-name (string->symbol "| e t c |")))
+  (apply define* `((func (,funny-name 32)) (+ ,funny-name 1)))
+  (test (apply func (list (symbol->keyword funny-name) 2)) 3))
 
 
 (test (provided?) 'error)

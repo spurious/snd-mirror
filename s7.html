@@ -2239,12 +2239,36 @@ of pthread_getspecific, just call it: <code>(var)</code>.
 10
 </pre>
 
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>There is some overhead in handling threads, so I usually
+restrict thread use to long computations.  Since the heap is currently
+shared, code like this is problematic:
+</p>
+
+<pre>
+(define (fib n) 
+  (define (fib-1 n)
+    (if (&gt; n 2) 
+	n 
+	(+ (fib-1 (- n 1)) 
+	   (fib-1 (- n 2)))))
+  (apply + 
+    (map join-thread 
+         (list (make-thread (lambda () (fib-1 (- n 1))))
+	       (make-thread (lambda () (fib-1 (- n 2))))))))
+</pre>
+
+<p>Lots of temporaries are being allocated here, causing the s7 internal new-cell lock to be set
+and unset so often that almost 20% of the compute time is wasted.
+If possible, use the run macro in the thread function.
+</p>
+
 </blockquote>
 </small>
 
-<p>There is some overhead in handling threads, so I usually
-restrict thread use to long computations.
-</p>
 
 </dd>
 <br><br>
@@ -3572,8 +3596,8 @@ bind it to something else, which is asking for confusion).
 </p>
 <ul>
 <li>after the initial binding, do sets its step variables, rather than rebinding them.
-<li>no syntax-rules or any of its friends.
 <li>no force or delay (use slib).
+<li>no syntax-rules or any of its friends.
 <li>s7-version returns the current s7 version.
 <li>no scheme-report-environment (use initial-environment), null-environment, or interaction-environment (use current-environment).
 <li>no transcript-on or transcript-off.
@@ -3794,10 +3818,10 @@ I think I'll use "symbol", sort of like quote:
 
 <p>
 This output is readable, and does not eat up perfectly good
-characters like vertical bar, but it means we can't use
+characters like vertical bar, but it means we can't easily use
 variable names like "| e t c |".  We could allow a name to
-contain any characters if it starts and ends with "|".
-But then one vertical bar is trouble.  
+contain any characters if it starts and ends with "|",
+but then one vertical bar is trouble.  
 These symbols are not just a silly optimization of string comparison:
 </p>
 
@@ -3809,7 +3833,7 @@ These symbols are not just a silly optimization of string comparison:
 &gt; (hi 2)
 3
 &gt; (macroexpand (hi 2))
-(let ((; 2)) (+ 1 ;))    ; for a good time, try (string #\") <!-- " -->
+(let ((; 2)) (+ 1 ;))    ; for a good time, try (string #\") 
 
 (define-macro (hi a) 
   (let ((funny-name (string-&gt;symbol "| e t c |")))
@@ -3818,6 +3842,12 @@ These symbols are not just a silly optimization of string comparison:
 3
 &gt; (macroexpand (hi 2))
 (let ((| e t c | 2)) (+ 1 | e t c |))
+
+&gt; (let ((funny-name (string-&gt;symbol "| e t c |"))) ; now use it as a keyword arg to a function
+    (apply define* `((func (,funny-name 32)) (+ ,funny-name 1)))
+    ;; (procedure-source func) is (lambda* ((| e t c | 32)) (+ | e t c | 1))
+    (apply func (list (symbol-&gt;keyword funny-name) 2)))
+3
 </pre>
 
 <p>I hope that makes you as happy as it makes me!

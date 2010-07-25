@@ -1547,6 +1547,8 @@ static s7_pointer new_cell(s7_scheme *sc)
 #if HAVE_PTHREADS
   s7_scheme *sc;
   pthread_mutex_lock(&alloc_lock);
+  /* this is not good.  A lot of time can be spent setting this dumb lock.
+   */
   sc = nsc->orig_sc;
 #endif
 
@@ -6657,13 +6659,17 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
   if (args == sc->NIL)
     return(small_int(1));
 
-    if (!s7_is_number(car(args)))
-      return(s7_wrong_type_arg_error(sc, "*", 1, car(args), "a number"));
+  if (!s7_is_number(car(args)))
+    return(s7_wrong_type_arg_error(sc, "*", 1, car(args), "a number"));
 #endif
+
+  x = cdr(args);
+  if (x == sc->NIL)
+    return(car(args));
 
   a = number(car(args));
 
-  for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x)) 
+  for (i = 2; x != sc->NIL; i++, x = cdr(x)) 
     {
 #if WITH_GMP
       switch (a.type)
