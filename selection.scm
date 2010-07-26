@@ -43,7 +43,7 @@
   (define find-selection-sound 
     (lambda (not-this)
       (let ((scs (all-chans)))
-	(call/cc
+	(call-with-exit
 	 (lambda (return)
 	   (map 
 	    (lambda (snd chn)

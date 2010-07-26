@@ -9754,6 +9754,8 @@
 ;;; (test (equal? (values) (if #f #f)) #f)
 (test (map (lambda (x) (if #f x (values))) (list 1 2)) '())
 (test (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4)) '(1 20 3 60))
+(test (object->string (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4))) "(1 20 3 60)") ; make sure no "values" floats through
+(test (map (lambda (x) (if (odd? x) (values x (* x 20) (cons x (+ x 1))) (values))) (list 1 2 3 4 5 6)) '(1 20 (1 . 2) 3 60 (3 . 4) 5 100 (5 . 6)))
 (test (* 2 (case 1 ((2) (values 3 4)) ((1) (values 5 6)))) 60)
 (test (* 2 (case 1 ((2) (values 3 4)) (else (values 5 6)))) 60)
 (test (* 2 (case 1 ((1) (values 3 4)) (else (values 5 6)))) 24)
@@ -11036,6 +11038,9 @@
 (test (call-with-exit (lambda arg ((car arg) 32))) 32)
 (test (call-with-exit (lambda arg ((car arg) 32)) "oops!") 'error)
 (test (call-with-exit (lambda (a b) a)) 'error)
+(test (call-with-exit (lambda (return) (apply return '(3)))) 3)
+(test (call-with-exit (lambda (return) (apply return (list  (cons 1 2))) (format #t "; call-with-exit: we shouldn't be here!"))) (cons 1 2))
+(test (call/cc (lambda (return) (apply return (list  (cons 1 2))) (format #t "; call/cc: we shouldn't be here!"))) (cons 1 2))
 
 (test (let ((x (call/cc (lambda (k) k))))
 	(x (lambda (y) "hi")))
@@ -15193,6 +15198,10 @@ who says the continuation has to restart the map from the top?
 (test (let () (define (hi if) (+ if 1)) (hi 2)) 3)
 (test (let () (define* (hi (lambda 1)) (+ lambda 1)) (hi)) 2)
 (test (((lambda #\newline gcd))) 'error)
+(test (symbol? (let () (define (hi) (+ 1 2)))) #t)
+(test (symbol? (begin (define (x y) y) (x (define (x y) y)))) #t)
+(test (symbol? (do () ((define (x) 1) (define (y) 2)))) #t)
+(test (cond (0 (define (x) 3) (x))) 3)
 
 (test (let ((1,1 3) (1'1 4) (1|1 5) (1#1 6) (1\1 7) (1?1 8)) (+ 1,1 1'1 1|1 1#1 1\1 1?1)) 33)
 (test (let ((,a 3)) ,a) 'error)
@@ -15218,6 +15227,8 @@ who says the continuation has to restart the map from the top?
 (test (let ((x #2d((1 2) (3 4)))) (set! (((values x) 0) 1) 12) x) #2D((1 12) (3 4)))
 (test (let ((x 0)) (set! ((make-procedure-with-setter (lambda () x) (lambda (y) (set! x y)))) 12) x) 12)
 (test (let ((x 0) (str "hiho")) (string-set! (let () (set! x 32) str) 0 #\x) (list x str)) '(32 "xiho"))
+(test (let ((x "hi") (y "ho")) (set! ((set! x y) 0) #\x) (list x y)) '("xo" "xo"))
+(test (let ((x "hi") (y "ho")) (set! x y) (set! (y 0) #\x) (list x y)) '("xo" "xo")) ; Guile gets the same result
 
 
 

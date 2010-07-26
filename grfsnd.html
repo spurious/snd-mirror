@@ -584,12 +584,6 @@ output-comment-hook lambda: &lt;{ str -- s }&gt;
   ; add-hook!
 
   require rgb
-  lightsteelblue2 	 set-help-button-color       drop
-  lightsalmon2    	 set-reset-button-color      drop
-  light-salmon    	 set-quit-button-color       drop
-  wheat           	 set-doit-button-color       drop
-  burlywood       	 set-doit-again-button-color drop
-  lightsteelblue1 	 set-pushed-button-color     drop
   beige                  set-selected-graph-color    drop
   blue                   set-selected-data-color     drop
 
@@ -779,19 +773,17 @@ I may remove all this stuff eventually (it was always a bad idea).
 
 <tr><td>positioncolor</td><td></td><td>ivory3</td><td></td>       <td>color of position sliders</td><td></td>             <td><code><a href="extsnd.html#positioncolor">position-color</a></code></td></tr>
 
-<tr><td bgcolor="#f2f4ff">pushedbuttoncolor</td><td></td><td bgcolor="#f2f4ff">ivory1</td><td></td>   <td bgcolor="#f2f4ff">color of pushed button</td><td></td>                <td bgcolor="#f2f4ff"><code><a href="extsnd.html#pushedbuttoncolor">pushed-button-color</a></code></td></tr>
+<tr><td bgcolor="#f2f4ff">sashcolor</td><td></td><td bgcolor="#f2f4ff">lightgreen</td><td></td>           <td bgcolor="#f2f4ff">color of paned window sash handles</td><td></td>    <td bgcolor="#f2f4ff"><code><a href="extsnd.html#sashcolor">sash-color</a></code></td></tr>
 
-<tr><td>sashcolor</td><td></td><td>lightgreen</td><td></td>           <td>color of paned window sash handles</td><td></td>    <td><code><a href="extsnd.html#sashcolor">sash-color</a></code></td></tr>
+<tr><td>selecteddatacolor</td><td></td><td>black</td><td></td>   <td>color of the data in selected channel</td><td></td> <td><code><a href="extsnd.html#selecteddatacolor">selected-data-color</a></code></td></tr>
 
-<tr><td bgcolor="#f2f4ff">selecteddatacolor</td><td></td><td bgcolor="#f2f4ff">black</td><td></td>   <td bgcolor="#f2f4ff">color of the data in selected channel</td><td></td> <td bgcolor="#f2f4ff"><code><a href="extsnd.html#selecteddatacolor">selected-data-color</a></code></td></tr>
+<tr><td bgcolor="#f2f4ff">selectedgraphcolor</td><td></td><td bgcolor="#f2f4ff">white</td><td></td>  <td bgcolor="#f2f4ff">background of selected channel's graph</td><td></td><td bgcolor="#f2f4ff"><code><a href="extsnd.html#selectedgraphcolor">selected-graph-color</a></code></td></tr>
 
-<tr><td>selectedgraphcolor</td><td></td><td>white</td><td></td>  <td>background of selected channel's graph</td><td></td><td><code><a href="extsnd.html#selectedgraphcolor">selected-graph-color</a></code></td></tr>
+<tr><td>selectioncolor</td><td></td><td>lightsteelblue1</td><td></td>      <td>color of an active selection</td><td></td>          <td><code><a href="extsnd.html#selectioncolor">selection-color</a></code></td></tr>
 
-<tr><td bgcolor="#f2f4ff">selectioncolor</td><td></td><td bgcolor="#f2f4ff">lightsteelblue1</td><td></td>      <td bgcolor="#f2f4ff">color of an active selection</td><td></td>          <td bgcolor="#f2f4ff"><code><a href="extsnd.html#selectioncolor">selection-color</a></code></td></tr>
+<tr><td bgcolor="#f2f4ff">textfocuscolor</td><td></td><td bgcolor="#f2f4ff">white</td><td></td>      <td bgcolor="#f2f4ff">color of text field with focus</td><td></td>        <td bgcolor="#f2f4ff"><code><a href="extsnd.html#textfocuscolor">text-focus-color</a></code></td></tr>
 
-<tr><td>textfocuscolor</td><td></td><td>white</td><td></td>      <td>color of text field with focus</td><td></td>        <td><code><a href="extsnd.html#textfocuscolor">text-focus-color</a></code></td></tr>
-
-<tr><td bgcolor="#f2f4ff">zoomcolor</td><td></td><td bgcolor="#f2f4ff">ivory4</td><td></td>           <td bgcolor="#f2f4ff">color of zoom sliders</td><td></td>                 <td bgcolor="#f2f4ff"><code><a href="extsnd.html#zoomcolor">zoom-color</a></code></td></tr>
+<tr><td>zoomcolor</td><td></td><td>ivory4</td><td></td>           <td>color of zoom sliders</td><td></td>                 <td><code><a href="extsnd.html#zoomcolor">zoom-color</a></code></td></tr>
 
 </table>
 </td></tr></table>
@@ -808,10 +800,6 @@ each a float between 0.0 and 1.0.
 </pre>
 <p>sets
 the overall background color of Snd to red.  <a href="sndscm.html#rgbdoc">rgb.scm</a> defines all the standard X11 color names.
-</p>
-
-<p>help-button-color and friends only work in a few cases (Motif, 2.n where n &lt; 3), so I may
-deprecate them someday.
 </p>
 
 <p>There are several other resources that set widget sizes: zoomSliderWidth,

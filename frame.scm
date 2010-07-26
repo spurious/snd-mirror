@@ -507,7 +507,7 @@
 
   
 (define* (scan-sound func (beg 0) dur snd with-sync)
-  "(scan-sound func beg dur snd with-sync) is a version of scan-channel that passes func a frame on each call, rather than a sample"
+  "(scan-sound func beg dur snd with-sync) is like scan-channel; it passes func a frame on each call, and stops when func returns true"
   (let ((index (or snd (selected-sound) (car (sounds)))))
     (if (sound? index)
 	(let* ((reader (if with-sync

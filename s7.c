@@ -11676,21 +11676,6 @@ s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b)
 }
 
 
-static s7_pointer rev_append(s7_scheme *sc, s7_pointer a, s7_pointer b) 
-{
-  s7_pointer p = b, q;
-  
-  while (a != sc->NIL) 
-    {
-      q = cdr(a);
-      cdr(a) = p;
-      p = a;
-      a = q;
-    }
-  return(p);
-}
-
-
 static int safe_list_length(s7_scheme *sc, s7_pointer a)
 {
   /* assume that "a" is a proper list */
@@ -19055,8 +19040,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->value != sc->NO_VALUE)                   /* (map (lambda (x) (values)) (list 1)) */
 	{
 	  if (is_multiple_value(sc->value))            /* (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4)) */
-	    /* caddr(sc->args) = s7_append(sc, safe_reverse_in_place(sc, multiple_value(sc->value)), caddr(sc->args)); */
-	    caddr(sc->args) = rev_append(sc, multiple_value(sc->value), caddr(sc->args));
+	    caddr(sc->args) = s7_append(sc, safe_reverse_in_place(sc, multiple_value(sc->value)), caddr(sc->args));
 	  else caddr(sc->args) = s7_cons(sc, sc->value, caddr(sc->args));
 	}
 

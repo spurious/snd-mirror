@@ -2092,7 +2092,7 @@
 		       'delay-tick 'delay? 'delete-colormap 'delete-file-filter 'delete-file-sorter
 		       'delete-mark 'delete-marks 'delete-sample 'delete-samples
 		       'delete-selection 'delete-transform 'delete-watcher 'dialog-widgets 'disk-kspace
-		       'display-edits 'doit-again-button-color 'doit-button-color 'dolph-chebyshev-window 'dont-normalize
+		       'display-edits 'dolph-chebyshev-window 'dont-normalize
 		       'dot-product 'dot-size 'draw-axes 'draw-dot 'draw-dots
 		       'draw-line 'draw-lines 'draw-mark-hook 'draw-mix-hook 'draw-string 'drop-hook
 		       'during-open-hook 'edit-fragment 'edit-header-dialog 'edit-hook 'edit-list->function
@@ -2125,7 +2125,7 @@
 		       'graph-color 'graph-cursor 'graph-data 'graph-dots 'graph-dots-and-lines
 		       'graph-filled 'graph-hook 'graph-lines 'graph-lollipops 'graph-once
 		       'graph-style 'graphs-horizontal 'grid-density 'haar-transform 'hamming-window
-		       'hann-poisson-window 'hann-window 'header-type 'help-button-color 'help-dialog
+		       'hann-poisson-window 'hann-window 'header-type 'help-dialog
 		       'help-hook 'hide-widget 'highlight-color 'html-dir 'html-program
 		       'hz->radians 'iir-filter 'iir-filter? 'in 'in-any
 		       'ina 'inb 'info-dialog 'init-ladspa 'initial-graph-hook
@@ -2212,14 +2212,14 @@
 		       'polyshape? 'polywave? 'position->x 'position->y 'position-color 'preferences-dialog
 		       'previous-sample 'print-dialog 'print-hook 'print-length 'progress-report
 		       'prompt-in-minibuffer 'ptree-channel 'pulse-train
-		       'pulse-train? 'pushed-button-color 'quit-button-color 'radians->degrees 'radians->hz
+		       'pulse-train? 'radians->degrees 'radians->hz
 		       'ramp-channel 'rand 'rand-interp 'rand-interp? 'rand?
 		       'read-hook 'read-mix-sample 'read-only 'read-region-sample
 		       'read-sample 'readin 'readin? 
 		       'rectangular->magnitudes 'rectangular->polar 'rectangular-window 'redo 'redo-edit
 		       'region->vct 'region-chans 'region-home 'region-frames 'region-graph-style 'region-maxamp
 		       'region-maxamp-position 'region-position 'region-sample 'region-sampler? 'region-srate
-		       'region? 'regions 'remove-from-menu 'report-in-minibuffer 'reset-button-color
+		       'region? 'regions 'remove-from-menu 'report-in-minibuffer
 		       'reset-controls 'reset-listener-cursor 'restore-controls 'restore-region
 		       'reverb-control-decay 'reverb-control-feedback 'reverb-control-length 'reverb-control-length-bounds 'reverb-control-lowpass
 		       'reverb-control-scale 'reverb-control-scale-bounds 'reverb-control? 'reverse-channel 'reverse-selection
@@ -3620,7 +3620,7 @@
 	      (save-sound-as "test.snd" ind mus-next mus-bshort)
 	      (let* ((ind1 (open-sound "test.snd"))
 		     (baddy (scan-channel (lambda (y) (< y 0.0)))))
-		(if (not (list-p baddy))
+		(if (not baddy)
 		    (snd-display #__line__ ";clipping 2: ~A" baddy))
 		(close-sound ind1))
 	      (delete-file "test.snd")
@@ -3628,7 +3628,7 @@
 	      (save-sound-as "test.snd" ind mus-next mus-bshort)
 	      (let* ((ind1 (open-sound "test.snd"))
 		     (baddy (scan-channel (lambda (y) (< y 0.0)))))
-		(if (list-p baddy)
+		(if baddy
 		    (snd-display #__line__ ";clipping 3: ~A" baddy))
 		(close-sound ind1))
 	      (delete-file "test.snd")
@@ -5153,9 +5153,9 @@
 	  (maxpos (maxamp-position ind 0)))
       (if (not pos) 
 	  (snd-display #__line__ ";actual maxamp ~A vals not right" name)
-	  (if (not (= maxpos (cadr pos)))
+	  (if (not (= maxpos pos))
 	      (snd-display #__line__ ";~A: find and maxamp-position disagree: ~A (~A) ~A (~A)" 
-			   name pos (sample (cadr pos) ind 0) maxpos (sample maxpos ind 0))))
+			   name pos (sample pos ind 0) maxpos (sample maxpos ind 0))))
       (let ((mx 0.0)
 	    (ctr 0)
 	    (mpos 0))
@@ -9387,7 +9387,7 @@ EDITS: 5
 	(let ((matches (count-matches (lambda (y) (let ((a (list .1 .2))) (> y (car a))))))) ; force xen not ptree
 	  (if (not (= matches 2851)) (snd-display #__line__ ";unopt count-matches: ~A?" matches)))
 	(let ((spot (find-channel (lambda (a) (> a .13)))))
-	  (if (or (null? spot) (not (= (cadr spot) 8862))) (snd-display #__line__ ";find: ~A?" spot)))
+	  (if (or (not spot) (not (= spot 8862))) (snd-display #__line__ ";find: ~A?" spot)))
 	(set! (right-sample) 3000) 
 	(let ((samp (right-sample)))
 	  (if (> (abs (- samp 3000)) 1) (snd-display #__line__ ";right-sample: ~A?" samp)))
@@ -10673,7 +10673,7 @@ EDITS: 5
 	   (lambda () (scale-by 2.0 ind1 0)) 
 	   ind1)
 	  (test-edpos 
-	   (lambda* ((snd 0) (chn 0) (edpos current-edit-position)) (cadr (find-channel (lambda (n2) (> n2 .1)) 0 snd chn edpos)))
+	   (lambda* ((snd 0) (chn 0) (edpos current-edit-position)) (find-channel (lambda (n2) (> n2 .1)) 0 snd chn edpos))
 	   'find
 	   (lambda () (delete-samples 0 100 ind1 0))
 	   ind1)
@@ -11789,15 +11789,6 @@ EDITS: 5
 	    (set! val (scan-again))
 	    (if (not (equal? val (list #t 4463)))
 		(snd-display #__line__ ";scan-again: ~A" val))
-	    (let ((val (find-channel (lambda (y)
-				       (let ((val (find-channel (lambda (y) (> y .1)))))
-					 val)))))
-	      (if (not (equal? val (list (list #t 4423) 0)))
-		  (snd-display #__line__ ";find twice: ~A" val)))
-	    (let ((val (find-channel (lambda (y)
-				       (count-matches (lambda (y) (> y .1)))))))
-	      (if (not (equal? val (list 2851 0)))
-		  (snd-display #__line__ ";find+count: ~A" val)))
 	    (set! (cursor) 1000)
 	    (set! (sample) .5)
 	    (if (fneq (sample 1000) .5)
@@ -13788,7 +13779,7 @@ EDITS: 2
 	(if clip (snd-display #__line__ ";channel-clipped? oboe.snd -> ~A" clip)))
       (scale-to 1.5 ind0 0)
       (let ((clip (channel-clipped? ind0 0)))
-	(if (not (equal? clip (list #t 4503))) (snd-display #__line__ ";channel-clipped after scale: ~A" clip)))
+	(if (not (= clip 4503)) (snd-display #__line__ ";channel-clipped after scale: ~A" clip)))
       (revert-sound ind0)
       
       (ramp-channel 0.0 1.0 0 #f ind1 0)
@@ -14522,19 +14513,12 @@ EDITS: 2
 		   (list 'mark-color mark-color red)
 		   (list 'mix-color mix-color dark-gray)
 		   (list 'position-color position-color ivory3)
-		   (list 'pushed-button-color pushed-button-color lightsteelblue1)
 		   (list 'sash-color sash-color light-green)
 		   (list 'selected-data-color selected-data-color black)
 		   (list 'selected-graph-color selected-graph-color white)
 		   (list 'selection-color selection-color lightsteelblue1)
 		   (list 'text-focus-color text-focus-color white)
 		   (list 'zoom-color zoom-color ivory4)
-		   
-		   (list 'quit-button-color quit-button-color indian-red)
-		   (list 'help-button-color help-button-color lightsteelblue2)
-		   (list 'reset-button-color reset-button-color goldenrod1)
-		   (list 'doit-button-color doit-button-color palegreen2)
-		   (list 'doit-again-button-color doit-again-button-color darkolivegreen1)
 		   ))
 		 
 		 (let ((ind (open-sound "oboe.snd")))
@@ -33455,7 +33439,7 @@ EDITS: 2
 		(if (fneq (sample 10) 0.0) (snd-display #__line__ ";remove-clicks: ~A" (channel->vct)))
 		(undo)
 		(let ((vals (scan-channel (search-for-click))))
-		  (if (not (equal? vals (list #t 11)))
+		  (if (not (= vals 11))
 		      (snd-display #__line__ ";search-for-click: ~A" vals)))
 		(close-sound ind))
 	      (set! (mus-srate) old-srate))
@@ -33476,16 +33460,16 @@ EDITS: 2
 	      (let ((val -.5)) (map-channel (lambda (y) (set! val (+ val .05)) val)))
 	      (let ((val (scan-channel (zero+))))
 		(if (or (not val)
-			(not (equal? val (list #t 10)))) 
+			(not (= val 10)))
 		    (snd-display #__line__ ";zero+: ~A" val)))
 	      (set! (sample 8) .8)
 	      (let ((val (scan-channel (next-peak))))
 		(if (or (not val)
-			(not (equal? val (list #t 9)))) 
+			(not (= val 9))) 
 		    (snd-display #__line__ ";next-peak: ~A" val)))
 	      (let ((val (scan-channel (search-for-click))))
 		(if (or (not val)
-			(not (equal? val (list #t 9))))
+			(not (= val 9)))
 		    (snd-display #__line__ ";search-for-click: ~A" val)))
 	      (if (not (= (find-click 0) 8)) (snd-display #__line__ ";find-click: ~A" (find-click 0)))
 	      (let ((new-file-name (file-name ind1)))
@@ -38386,7 +38370,7 @@ EDITS: 3
 					(let ((bigger (scan-channel (lambda (n5) 
 								      (> n5 .1)))))
 					  bigger)))))
-	       (if (not (equal? val (list (list #t 4423) 0))) 
+	       (if (not (equal? val 0))
 		   (snd-display #__line__ ";scan-channel in scan-channel (~A): ~A" n val)))
 	     (let ((hi (make-vct 3))
 		   (ho (make-vct 3)))
@@ -38402,12 +38386,12 @@ EDITS: 3
 			      (vct-ref ho 0)))
 	       (if (not (vequal hi (vct .2 .3 .4))) (snd-display #__line__ ";vct-map! with vct-map! (~A): ~A ~A" n hi ho)))
 	     (let ((val (find-channel (lambda (y) (if (find-channel (lambda (n6) (> n6 .1))) #t #f)))))
-	       (if (not (equal? val (list #t 0))) (snd-display #__line__ ";find with find: ~A" val)))
+	       (if (not (= val 0)) (snd-display #__line__ ";find with find: ~A" val)))
 	     (let ((val (find-channel (lambda (y) (if (scan-channel (lambda (n7) (> n7 .1))) #t #f)))))
-	       (if (not (equal? val (list #t 0))) (snd-display #__line__ ";find with scan-channel: ~A" val)))
+	       (if (not (= val 0)) (snd-display #__line__ ";find with scan-channel: ~A" val)))
 	     (let ((mx (maxamp ind 0))
 		   (val (scan-channel (lambda (y) (map-channel (lambda (n) (* n 2))) #t))))
-	       (if (not (equal? val (list #t 0))) (snd-display #__line__ ";scan-channel with map-channel: ~A" val))
+	       (if (not (equal? val 0)) (snd-display #__line__ ";scan-channel with map-channel: ~A" val))
 	       (if (fneq mx (/ (maxamp ind 0) 2)) (snd-display #__line__ ";scan+map max: ~A ~A" mx (maxamp ind 0)))
 	       (if (not (= (edit-position ind 0) 1)) (snd-display #__line__ ";scan+map edit-pos: ~A" (edit-position ind 0)))
 	       (revert-sound ind)
@@ -59874,14 +59858,6 @@ EDITS: 1
 					     XmNnoResize            #f
 					     XmNbackground          (basic-color)
 					     XmNtransient           #f))))
-		     (for-each
-		      (lambda (button color)
-			(XtVaSetValues
-			 (XmMessageBoxGetChild new-dialog button)
-			 (list XmNarmColor   (pushed-button-color)
-			       XmNbackground color)))
-		      (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
-		      (list (help-button-color) (quit-button-color) (doit-button-color)))
 		     (XtAddCallback new-dialog XmNcancelCallback (lambda (w c i) (XtUnmanageChild w)))
 		     (XtAddCallback new-dialog XmNhelpCallback (lambda (w c i) (help-dialog "Fonts" "no help yet")))
 		     (XtAddCallback new-dialog XmNokCallback (lambda (w c i) (XtUnmanageChild w)))
@@ -64490,7 +64466,7 @@ EDITS: 1
      (- (get-internal-real-time) start)))
 
 
-(define (snd_test_28)
+(define (snd_test_28_1)
   
   (define (traced a) (+ 2 a))
   
@@ -64578,8 +64554,6 @@ EDITS: 1
 		       expected-tag (procedure-source thunk) tag))))
   
   (set! (with-background-processes) #t)
-  
-  (load "s7test.scm")
   
   (if (and (provided? 'gsl)
 	   (provided? 'gmp))
@@ -64836,7 +64810,7 @@ EDITS: 1
 		     peaks player? players
 		     position-color position->x position->y add-directory-to-view-files-list add-file-to-view-files-list view-files-sort 
 		     view-files-amp view-files-speed view-files-files view-files-selected-files view-files-speed-style view-files-amp-env
-		     print-length progress-report prompt-in-minibuffer pushed-button-color read-only
+		     print-length progress-report prompt-in-minibuffer read-only
 		     redo region-chans view-regions-dialog region-home 
 		     region-graph-style region-frames region-position region-maxamp region-maxamp-position 
 		     selection-maxamp selection-maxamp-position region-sample region->vct clear-minibuffer
@@ -64929,7 +64903,6 @@ EDITS: 1
 		     read-sample reset-listener-cursor goto-listener-end sampler-home selection-chans selection-srate snd-gcs snd-font snd-color
 		     snd-warning channel-data x-axis-label variable-graph? y-axis-label
 		     snd-url snd-urls free-player
-		     quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 		     
 		     delay-tick playing pausing draw-axes copy-sampler html-dir html-program
 		     make-fir-coeffs mus-interp-type mus-run phase-vocoder
@@ -64959,7 +64932,7 @@ EDITS: 1
 			 mix-amp-env mix-color mix-name mix-position mix-sync mix-properties mix-property max-virtual-ptrees
 			 mix-speed mix-tag-height mix-tag-width mix-tag-y mark-tag-width mark-tag-height 
 			 mix-waveform-height transform-normalization open-file-dialog-directory
-			 position-color view-files-sort print-length pushed-button-color
+			 position-color view-files-sort print-length
 			 view-files-amp view-files-speed view-files-speed-style view-files-amp-env
 			 view-files-files view-files-selected-files 
 			 region-graph-style reverb-control-decay reverb-control-feedback
@@ -64985,7 +64958,6 @@ EDITS: 1
 			 mus-rand-seed mus-width clm-table-size clm-default-frequency mus-offset mus-reset
 			 phase-vocoder-amp-increments phase-vocoder-amps 
 			 phase-vocoder-freqs phase-vocoder-phase-increments phase-vocoder-phases 
-			 quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 			 html-dir html-program mus-interp-type widget-position widget-size 
 			 mixer-ref frame-ref locsig-ref locsig-reverb-ref
 			 mus-file-prescaler mus-prescaler mus-clipping mus-file-clipping mus-header-raw-defaults
@@ -65780,14 +65752,13 @@ EDITS: 1
 			    listener-color listener-font listener-prompt listener-text-color max-regions
 			    minibuffer-history-length mix-waveform-height region-graph-style position-color
 			    time-graph-style lisp-graph-style transform-graph-style peaks-font bold-peaks-font
-			    view-files-sort print-length pushed-button-color sash-color ladspa-dir peak-env-dir save-dir save-state-file
+			    view-files-sort print-length sash-color ladspa-dir peak-env-dir save-dir save-state-file
 			    selected-channel selected-data-color selected-graph-color 
 			    selected-sound selection-creates-region show-controls show-indices show-listener
 			    show-selection-transform sinc-width temp-dir text-focus-color tiny-font
 			    trap-segfault with-file-monitor optimization unbind-key with-verbose-cursor with-inset-graph with-pointer-focus window-height beats-per-measure
 			    window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
 			    mix-tag-width with-relative-panes clm-table-size clm-default-frequency mark-tag-width mark-tag-height
-			    quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 			    ))
 	    )
 	  
@@ -66880,6 +66851,11 @@ EDITS: 1
 	
 	)))
 
+(define (snd_test_28)   
+  (load "s7test.scm")
+  (snd_test_28_1))
+
+
 					;(tracing #t)
 
 (define test-funcs (make-vector (+ 1 total-tests)))
@@ -67147,24 +67123,6 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 14,661,979,458  io.c:mus_write_1 [/home/bil/snd-11/snd]
 14,486,041,393  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 10,836,543,187  run.c:eval_ptree [/home/bil/snd-11/snd]
-6,663,065,404  /home/bil/test/gsl-1.13/linalg/householder.c:gsl_linalg_householder_mh [/usr/local/lib/libgsl.so.0.14.0]
-4,848,628,373  ???:memset [/lib/ld-2.9.so]
-4,354,124,652  clm.c:mus_out_any_to_file [/home/bil/snd-11/snd]
-4,081,657,874  clm.c:mus_fir_filter [/home/bil/snd-11/snd]
-3,881,809,674  snd-edits.c:next_sample_value [/home/bil/snd-11/snd]
-3,676,951,173  clm.c:mus_src [/home/bil/snd-11/snd]
-3,588,422,788  /home/bil/test/gsl-1.13/linalg/householder.c:gsl_linalg_householder_hm [/usr/local/lib/libgsl.so.0.14.0]
-3,166,989,992  run.c:jump_if_not_equal [/home/bil/snd-11/snd]
-2,997,117,922  s7.c:g_add [/home/bil/snd-11/snd]
-2,761,768,633  s7.c:s7_mark_object_1'2 [/home/bil/snd-11/snd]
-2,568,586,593  s7.c:s7_make_real [/home/bil/snd-11/snd]
-2,533,319,957  xen.c:xen_s7_type_p [/home/bil/snd-11/snd]
-2,450,756,818  /home/bil/test/gsl-1.13/linalg/../gsl/gsl_matrix_double.h:gsl_linalg_householder_mh
-2,389,660,542  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-11/snd]
-2,383,913,072  s7.c:copy_object'2 [/home/bil/snd-11/snd]
-2,119,836,764  s7.c:s7_cons [/home/bil/snd-11/snd]
-2,118,663,239  s7.c:new_cell [/home/bil/snd-11/snd]
-1,815,226,062  s7.c:s7_object_value [/home/bil/snd-11/snd]
 
 7-Mar-10
 318,148,021,968  PROGRAM TOTALS
@@ -67177,18 +67135,16 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 10,973,188,812  io.c:mus_write_1 [/home/bil/snd-s7/snd]
 10,939,541,547  run.c:eval_ptree [/home/bil/snd-s7/snd]
 8,918,483,945  snd-sig.c:direct_filter [/home/bil/snd-s7/snd]
-7,030,924,951  s7.c:s7_mark_object_1'2 [/home/bil/snd-s7/snd]
-6,663,065,404  /home/bil/test/gsl-1.13/linalg/householder.c:gsl_linalg_householder_mh [/usr/local/lib/libgsl.so.0.14.0]
-3,946,755,027  clm.c:mus_out_any_to_file [/home/bil/snd-s7/snd]
-3,702,560,061  snd-edits.c:next_sample_value [/home/bil/snd-s7/snd]
-3,675,942,470  clm.c:mus_src [/home/bil/snd-s7/snd]
-3,588,422,788  /home/bil/test/gsl-1.13/linalg/householder.c:gsl_linalg_householder_hm [/usr/local/lib/libgsl.so.0.14.0]
-3,173,655,679  run.c:jump_if_not_equal [/home/bil/snd-s7/snd]
-2,997,971,312  clm.c:mus_fir_filter [/home/bil/snd-s7/snd]
-2,572,480,120  s7.c:g_add [/home/bil/snd-s7/snd]
-2,450,756,818  /home/bil/test/gsl-1.13/linalg/../gsl/gsl_matrix_double.h:gsl_linalg_householder_mh
-2,389,660,564  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-s7/snd]
-2,383,162,838  s7.c:s7_make_real [/home/bil/snd-s7/snd]
-2,256,089,964  clm.c:mus_formant [/home/bil/snd-s7/snd]
+
+24-Jul-10
+290,992,535,136  PROGRAM TOTALS
+41,408,289,112  s7.c:eval [/home/bil/snd-11/snd]
+32,616,883,526  s7.c:eval'2 [/home/bil/snd-11/snd]
+25,031,312,834  snd-edits.c:channel_local_maxamp [/home/bil/snd-11/snd]
+20,823,611,841  io.c:mus_read_any_1 [/home/bil/snd-11/snd]
+15,322,708,021  s7.c:gc [/home/bil/snd-11/snd]
+10,968,070,604  io.c:mus_write_1 [/home/bil/snd-11/snd]
+10,030,190,974  run.c:eval_ptree [/home/bil/snd-11/snd]
+ 8,918,483,905  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 |#
 

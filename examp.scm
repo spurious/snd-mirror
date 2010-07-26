@@ -674,7 +674,7 @@ otherwise it moves the cursor to the first offending sample"
   (let ((baddy (scan-channel 
 		(lambda (y) 
 		  (not (proc y))))))
-    (if baddy (set! (cursor) (cadr baddy)))
+    (if baddy (set! (cursor) baddy))
     (not baddy)))
 
 (define (sort-samples nbins)
@@ -2541,7 +2541,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
 ;;; -------- channel-clipped?
 
 (define* (channel-clipped? snd chn)
-  "(channel-clipped? snd chn) returns #t and a sample number if it finds clipping"
+  "(channel-clipped? snd chn) returns the sample number if it finds clipping"
   (let ((last-y 0.0))
     (scan-channel 
      (lambda (y)

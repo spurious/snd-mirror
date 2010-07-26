@@ -6886,18 +6886,13 @@ Scheme srfi-1 filter function: %filter.<br>
 </td></tr><tr><td></td><td>
 This function finds the sample that satisfies the function 'proc'. 'sample'
 determines where to start the search. 
-If 'proc' returns some non-#f value, find-channel returns a list with that value (if optimization is off) and the sample number.
-In the find dialog and in C-s or C-r searches, if the value returned is an integer, the cursor is offset by that number of samples.
 
 <pre>
 &gt;<em class=typing>(find-channel (lambda (y) (&gt; y .1)))</em>
-<em class=listener>(#t 4423)</em>
-
-&gt;<em class=typing>(find-channel (lambda (y) (and (&gt; y .1) 'a-big-sample)))</em>
-<em class=listener>(a-big-sample 4423)</em> ; if optimization is on, this will be (#t 4423)
+<em class=listener>4423</em>
 
 &gt;<em class=typing>lambda: &lt;{ y }&gt; 0.1 y f&lt; ; find-channel</em>
-<em class=listener>'( #t 4423 )</em>
+<em class=listener>4423</em>
 </pre>
 
 I didn't bring out the search direction (find-channel is built on scan-channel which assumes it is
@@ -8760,14 +8755,13 @@ It is the old ("irregular") version of <a href="#scanchannel">scan-channel</a>.
 scan-channel "scans" the data in the specified channel between the given sample numbers (the default
 is the entire sound) by applying 'func' to each sample.
 If 'func' returns something other than #f, the scan is halted, 
-and a list is returned
-containing that value and the current sample position of the
-scan. The following call scans the
+and the current sample number is returned.
+The following call scans the
 current channel from sample 0 to the end looking for any sample greater than
 .1:<br>
 <pre>
 &gt;<em class=typing>(scan-channel (lambda (y) (&gt; y .1)))</em>
-<em class=listener>(#t 4423)</em>
+<em class=listener>4423</em>
 </pre>
 In this case, we found such a sample at position 4423.<br>
 <pre>
@@ -8775,7 +8769,7 @@ In this case, we found such a sample at position 4423.<br>
   (lambda (proc)
     (let ((baddy (<em class=red>scan-channel</em> (lambda (y) 
 			         (not (proc y))))))
-      (if baddy (set! (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (cadr baddy)))
+      (if baddy (set! (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) baddy))
       (not baddy))))
 
 &gt;<em class=typing>(every-sample? (lambda (y) (&lt; y .5)))</em>
@@ -8784,7 +8778,7 @@ In this case, we found such a sample at position 4423.<br>
 To scan all the channels of a multichannel sound in parallel, see
 <a href="sndscm.html#scansound">scan-sound</a>.
 <br><br>
-In scan-chan, scan-channel, find, and count-matches (all the same underlying procedure), an attempt to jump back
+In scan-channel, find, and count-matches (all the same underlying procedure), an attempt to jump back
 into a previous call will not work.  That is,
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
@@ -12960,12 +12954,6 @@ are:</p>
 <tr><td><code><a class=def name="datacolor">data-color</a></code></td><td></td>
     <td><code>black</code></td><td></td>
     <td>color of data in unselected graph.</td></tr>
-<tr><td bgcolor="#f2f4ff"><code><a class=def name="doitbuttoncolor">doit-button-color</a></code></td><td bgcolor="#f2f4ff"></td>
-    <td bgcolor="#f2f4ff"><code>ivory1</code></td><td bgcolor="#f2f4ff"></td>
-    <td bgcolor="#f2f4ff">color of Ok and Apply buttons.</td></tr>
-<tr><td><code><a class=def name="doitagainbuttoncolor">doit-again-button-color</a></code></td><td></td>
-    <td><code>ivory1</code></td><td></td>
-    <td>color of Undo&amp;Apply buttons.</td></tr>
 <tr><td bgcolor="#f2f4ff"><code><em class=emdef>enved-waveform-color</em></code></td><td bgcolor="#f2f4ff"></td>
     <td bgcolor="#f2f4ff"><code>blue</code></td><td bgcolor="#f2f4ff"></td>
     <td bgcolor="#f2f4ff">color of waveform displayed in envelope editor.</td></tr>
@@ -12975,9 +12963,6 @@ are:</p>
 <tr><td bgcolor="#f2f4ff"><code><a class=def name="graphcolor">graph-color</a></code></td><td bgcolor="#f2f4ff"></td>
     <td bgcolor="#f2f4ff"><code>white</code></td><td bgcolor="#f2f4ff"></td>
     <td bgcolor="#f2f4ff">background color of unselected graph.</td></tr>
-<tr><td><code><a class=def name="helpbuttoncolor">help-button-color</a></code></td><td></td>
-    <td><code>ivory1</code></td><td></td>
-    <td>color of Help buttons.</td></tr>
 <tr><td bgcolor="#f2f4ff"><code><a class=def name="highlightcolor">highlight-color</a></code></td><td bgcolor="#f2f4ff"></td>
     <td bgcolor="#f2f4ff"><code>ivory1</code></td><td bgcolor="#f2f4ff"></td>
     <td bgcolor="#f2f4ff">highlighting color.</td></tr>
@@ -12996,15 +12981,6 @@ are:</p>
 <tr><td><code><a class=def name="positioncolor">position-color</a></code></td><td></td>
     <td><code>ivory3</code></td><td></td>
     <td>position slider color</td></tr>
-<tr><td bgcolor="#f2f4ff"><code><a class=def name="pushedbuttoncolor">pushed-button-color</a></code></td><td bgcolor="#f2f4ff"></td>
-    <td bgcolor="#f2f4ff"><code>lightsteelblue1</code></td><td bgcolor="#f2f4ff"></td>
-    <td bgcolor="#f2f4ff">color of pushed button.</td></tr>
-<tr><td><code><a class=def name="quitbuttoncolor">quit-button-color</a></code></td><td></td>
-    <td><code>ivory1</code></td><td></td>
-    <td>color of Dismiss and Cancel buttons.</td></tr>
-<tr><td bgcolor="#f2f4ff"><code><a class=def name="resetbuttoncolor">reset-button-color</a></code></td><td bgcolor="#f2f4ff"></td>
-    <td bgcolor="#f2f4ff"><code>ivory1</code></td><td bgcolor="#f2f4ff"></td>
-    <td bgcolor="#f2f4ff">color of Reset buttons.</td></tr>
 <tr><td><code><a class=def name="sashcolor">sash-color</a></code></td><td></td>
     <td><code>lightgreen</code></td><td></td>
     <td>color of paned window sashes.</td></tr>
@@ -13654,13 +13630,13 @@ This is the graphics context for XOR drawing in the selection color.  (An intege
 snd-color returns a Snd built-in color (as a Pixel/GdkPixel); it simplifies 
 code that wants to follow whatever the current Snd color choices are.  The choices are:
 <pre>
-    0: white                   12: listener-color                 24: pushed-button-color
+    0: white                   12: listener-color                 
     1: black                   13: listener-text-color            25: sash-color
-    2: red                     14: basic-color                    26: help-button-color
-    3: yellow                  15: selection-color                27: doit-button-color
-    4: green                   16: zoom-color                     28: doit-again-button-color
-    5: light-blue              17: position-color                 29: quit-button-color
-    6: lighter-blue            18: highlight-color                30: reset-button-color
+    2: red                     14: basic-color                    
+    3: yellow                  15: selection-color                
+    4: green                   16: zoom-color                     
+    5: light-blue              17: position-color                 
+    6: lighter-blue            18: highlight-color                
     7: data-color              19: enved-waveform-color           31: grid-color
     8: selected-data-color     20: cursor-color                   32: selected-grid-color
     9: mark-color              21: text-focus-color               33: axis-color
