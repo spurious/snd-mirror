@@ -1129,14 +1129,16 @@ static XEN g_snd_color(XEN choice)
     case 21: col = ss->sgx->text_focus_color;              break;
     case 22: col = ss->sgx->filter_control_waveform_color; break;
     case 23: col = ss->sgx->mix_color;                     break;
-    case 24: col = ss->sgx->pushed_button_color;           break;
     case 25: col = ss->sgx->sash_color;                    break;
 
+#ifndef SND_DISABLE_DEPRECATED
+    case 24: col = ss->sgx->pushed_button_color;           break;
     case 26: col = ss->sgx->help_button_color;             break;
     case 27: col = ss->sgx->doit_button_color;             break;
     case 28: col = ss->sgx->doit_again_button_color;       break;
     case 29: col = ss->sgx->quit_button_color;             break;
     case 30: col = ss->sgx->reset_button_color;            break;
+#endif
 
     case 31: col = ss->sgx->grid_color;                    break;
     case 32: col = ss->sgx->selected_grid_color;           break;
@@ -1470,6 +1472,7 @@ static XEN g_sash_color(void)
 }
 
 
+#ifndef SND_DISABLE_DEPRECATED
 static XEN g_set_help_button_color(XEN color) 
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_help_button_color, "a color"); 
@@ -1543,6 +1546,7 @@ static XEN g_reset_button_color(void)
   #define H_reset_button_color "(" S_reset_button_color "): color used to draw reset buttons"
   return(XEN_WRAP_PIXEL(ss->sgx->reset_button_color));
 }
+#endif
 
 
 static XEN g_data_color(void) 
@@ -1665,6 +1669,7 @@ static XEN g_axis_color(void)
 }
 
 
+#ifndef SND_DISABLE_DEPRECATED
 #if USE_MOTIF
 static void recolor_button(widget_t w)
 {
@@ -1698,6 +1703,7 @@ static XEN g_pushed_button_color(void)
   #define H_pushed_button_color "(" S_pushed_button_color "): color of a pushed button"
   return(XEN_WRAP_PIXEL(ss->sgx->pushed_button_color));
 }
+#endif
 
 
 static XEN g_basic_color(void) 
@@ -1957,6 +1963,7 @@ XEN_NARGIFY_0(g_text_focus_color_w, g_text_focus_color)
 XEN_NARGIFY_1(g_set_text_focus_color_w, g_set_text_focus_color)
 XEN_NARGIFY_0(g_sash_color_w, g_sash_color)
 XEN_NARGIFY_1(g_set_sash_color_w, g_set_sash_color)
+#ifndef SND_DISABLE_DEPRECATED
 XEN_NARGIFY_0(g_help_button_color_w, g_help_button_color)
 XEN_NARGIFY_1(g_set_help_button_color_w, g_set_help_button_color)
 XEN_NARGIFY_0(g_reset_button_color_w, g_reset_button_color)
@@ -1967,6 +1974,9 @@ XEN_NARGIFY_0(g_doit_button_color_w, g_doit_button_color)
 XEN_NARGIFY_1(g_set_doit_button_color_w, g_set_doit_button_color)
 XEN_NARGIFY_0(g_doit_again_button_color_w, g_doit_again_button_color)
 XEN_NARGIFY_1(g_set_doit_again_button_color_w, g_set_doit_again_button_color)
+XEN_NARGIFY_0(g_pushed_button_color_w, g_pushed_button_color)
+XEN_NARGIFY_1(g_set_pushed_button_color_w, g_set_pushed_button_color)
+#endif
 XEN_NARGIFY_0(g_data_color_w, g_data_color)
 XEN_NARGIFY_1(g_set_data_color_w, g_set_data_color)
 XEN_NARGIFY_0(g_graph_color_w, g_graph_color)
@@ -1979,8 +1989,6 @@ XEN_NARGIFY_0(g_axis_color_w, g_axis_color)
 XEN_NARGIFY_1(g_set_axis_color_w, g_set_axis_color)
 XEN_NARGIFY_0(g_basic_color_w, g_basic_color)
 XEN_NARGIFY_1(g_set_basic_color_w, g_set_basic_color)
-XEN_NARGIFY_0(g_pushed_button_color_w, g_pushed_button_color)
-XEN_NARGIFY_1(g_set_pushed_button_color_w, g_set_pushed_button_color)
 XEN_NARGIFY_1(g_color_p_w, g_color_p)
 XEN_NARGIFY_3(g_make_color_w, g_make_color)
 XEN_NARGIFY_1(g_color_to_list_w, g_color_to_list)
@@ -2042,6 +2050,7 @@ XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
 #define g_set_text_focus_color_w g_set_text_focus_color
 #define g_sash_color_w g_sash_color
 #define g_set_sash_color_w g_set_sash_color
+#ifndef SND_DISABLE_DEPRECATED
 #define g_help_button_color_w g_help_button_color
 #define g_set_help_button_color_w g_set_help_button_color
 #define g_doit_again_button_color_w g_doit_again_button_color
@@ -2052,6 +2061,9 @@ XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
 #define g_set_quit_button_color_w g_set_quit_button_color
 #define g_reset_button_color_w g_reset_button_color
 #define g_set_reset_button_color_w g_set_reset_button_color
+#define g_pushed_button_color_w g_pushed_button_color
+#define g_set_pushed_button_color_w g_set_pushed_button_color
+#endif
 #define g_data_color_w g_data_color
 #define g_set_data_color_w g_set_data_color
 #define g_graph_color_w g_graph_color
@@ -2064,8 +2076,6 @@ XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
 #define g_set_axis_color_w g_set_axis_color
 #define g_basic_color_w g_basic_color
 #define g_set_basic_color_w g_set_basic_color
-#define g_pushed_button_color_w g_pushed_button_color
-#define g_set_pushed_button_color_w g_set_pushed_button_color
 #define g_color_p_w g_color_p
 #define g_make_color_w g_make_color
 #define g_color_to_list_w g_color_to_list
@@ -2151,6 +2161,7 @@ void g_init_draw(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sash_color, g_sash_color_w, H_sash_color,
 				   S_setB S_sash_color, g_set_sash_color_w,  0, 0, 1, 0);
 
+#ifndef SND_DISABLE_DEPRECATED
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_help_button_color, g_help_button_color_w, H_help_button_color,
 				   S_setB S_help_button_color, g_set_help_button_color_w,  0, 0, 1, 0);
 
@@ -2166,6 +2177,9 @@ void g_init_draw(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_doit_again_button_color, g_doit_again_button_color_w, H_doit_again_button_color,
 				   S_setB S_doit_again_button_color, g_set_doit_again_button_color_w,  0, 0, 1, 0);
 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_pushed_button_color, g_pushed_button_color_w, H_pushed_button_color,
+				   S_setB S_pushed_button_color, g_set_pushed_button_color_w,  0, 0, 1, 0);
+#endif
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_data_color, g_data_color_w, H_data_color,
 				   S_setB S_data_color, g_set_data_color_w,  0, 0, 1, 0);
 
@@ -2183,9 +2197,6 @@ void g_init_draw(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_basic_color, g_basic_color_w, H_basic_color,
 				   S_setB S_basic_color, g_set_basic_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_pushed_button_color, g_pushed_button_color_w, H_pushed_button_color,
-				   S_setB S_pushed_button_color, g_set_pushed_button_color_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_mix_color, g_mix_color_w, H_mix_color,
 					    S_setB S_mix_color, g_set_mix_color_w, g_set_mix_color_reversed, 0, 1, 1, 1);

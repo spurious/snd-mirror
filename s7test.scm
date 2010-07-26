@@ -609,7 +609,12 @@
 (test (equal?) 'error)
 (test (equal? #t) 'error)
 (test (equal? #t #t #t) 'error)
-
+(test (call-with-exit (lambda (return) (return (equal? return return)))) #t)
+(test (call-with-exit (lambda (return) (call-with-exit (lambda (quit) (return (equal? return quit)))))) #f)
+(test (call/cc (lambda (return) (return (equal? return return)))) #t)
+(test (let hiho ((i 0)) (equal? hiho hiho)) #t)
+(test (let hiho ((i 0)) (let hoho ((i 0)) (equal? hiho hoho))) #f)
+(test (equal? + *) #f)
 
 
 (test (boolean? #f) #t)
@@ -8831,6 +8836,7 @@
 (test (cond ((* 2 3) => (cond ((+ 3 4) => (lambda (a) (lambda (b) (+ b a))))))) 13)
 (test (let ((x 1)) ((cond ((let () (set! x 2) #f) => boolean?) (lambda => (lambda (a) (apply a '((b) (+ b 123)))))) x)) 125)
 (test (cond ((values 1 2 3) => '(1 (2 3 (4 5 6 7 8))))) 7)
+(test (cond ((values #f #f) => equal?)) #t) ; (values #f #f) is not #f
 
 (test (cond (else 1)) 1)
 (test (call/cc (lambda (r) (cond ((r 4) 3) (else 1)))) 4)
@@ -8951,6 +8957,9 @@
 (test (let ((x 1)) (case 'x ((x) "hi") (else "ho"))) "hi")
 (test (case '() ((()) 1)) 1)
 ;;; but not (case #() ((#()) 1)) because (eqv? #() #()) is #f
+(test (let ((x '(1))) (eval `(case ',x ((,x) 1) (else 0)))) 1)    ; but we can overcome that!
+(test (let ((x #())) (eval `(case ',x ((,x) 1) (else 0)))) 1)
+(test (case ''2 (('2) 1) (else 0)) 0)
 
 (test (case else ((#f) 2) ((#t) 3) ((else) 4) (else 5)) 5)          ; (eqv? 'else else) is #f (Guile says "unbound variable: else")
 (test (case #t ((#f) 2) ((else) 4) (else 5)) 5)                     ; else is a symbol here         
@@ -9046,7 +9055,7 @@
 (test (case 'hi ((3/4 "hi" #t) 0) ((#f #() hi) 2) ((#\a 0 #t) 3) (else 4)) 2)
 (test (case #f ((3/4 "hi" #t) 0) ((#f #() hi) 2) ((#\a 0 #t) 3) (else 4)) 2)
 (test (case 3 ((3/4 "hi" #t) 0) ((#f #() hi) 2) ((#\a 0 #t) 3) (else 4)) 4)
-
+(test (case 0 ((values 0 1) 2) (else 3)) 2)
 
 
 

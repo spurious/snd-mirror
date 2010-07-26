@@ -63,9 +63,9 @@
 		 (snd-chn1 (find-selection-sound snd-chn0)))
 	    (if snd-chn1
 		(swap-channels (car snd-chn0) (cadr snd-chn0) (car snd-chn1) (cadr snd-chn1) beg len)
-		(throw 'wrong-number-of-channels (list "swap-selection-channels" "needs two channels to swap"))))
-	  (throw 'wrong-number-of-channels (list "swap-selection-channels" "needs a stereo selection")))
-      (throw 'no-active-selection (list "swap-selection-channels"))))
+		(error 'wrong-number-of-channels "swap-selection-channels needs two channels to swap")))
+	  (error 'wrong-number-of-channels "swap-selection-channels needs a stereo selection"))
+      (error 'no-active-selection "swap-selection-channels needs a selection")))
 
 
 
@@ -149,7 +149,7 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
       (set! (selection-frames s c) (- (or (and (number? s1) (+ 1 s1)) (frames s c)) (or s0 0))))
 
     (if (not (sound? current-sound))
-	(throw 'no-such-sound (list "make-selection" beg end snd chn)))
+	(error 'no-such-sound "make-selection can't find sound"))
 
     (let ((current-sync (sync current-sound)))
       (clear-selection)

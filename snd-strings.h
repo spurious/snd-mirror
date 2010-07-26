@@ -137,8 +137,6 @@
 #define S_delete_watcher                "delete-watcher"
 #define S_dialog_widgets                "dialog-widgets"
 #define S_display_edits                 "display-edits"
-#define S_doit_again_button_color       "doit-again-button-color"
-#define S_doit_button_color             "doit-button-color"
 #define S_dont_normalize                "dont-normalize"
 #define S_dot_size                      "dot-size"
 #define S_draw_axes                     "draw-axes"
@@ -252,7 +250,6 @@
 #define S_grid_density                  "grid-density"
 #define S_haar_transform                "haar-transform"
 #define S_header_type                   "header-type"
-#define S_help_button_color             "help-button-color"
 #define S_help_dialog                   "help-dialog"
 #define S_help_hook                     "help-hook"
 #define S_hide_widget                   "hide-widget"
@@ -420,8 +417,6 @@
 #define S_progress_report               "progress-report"
 #define S_prompt_in_minibuffer          "prompt-in-minibuffer"
 #define S_ptree_channel                 "ptree-channel"
-#define S_pushed_button_color           "pushed-button-color"
-#define S_quit_button_color             "quit-button-color"
 #define S_ramp_channel                  "ramp-channel"
 #define S_read_hook                     "read-hook"
 #define S_read_mix_sample               "read-mix-sample"
@@ -450,7 +445,6 @@
 #define S_regions                       "regions"
 #define S_remove_from_menu              "remove-from-menu"
 #define S_report_in_minibuffer          "report-in-minibuffer"
-#define S_reset_button_color            "reset-button-color"
 #define S_reset_controls                "reset-controls"
 #define S_reset_listener_cursor         "reset-listener-cursor"
 #define S_restore_controls              "restore-controls"
@@ -709,4 +703,12 @@
 #define S_zoom_focus_right              "zoom-focus-right"
 #define S_zoom_focus_style              "zoom-focus-style"
 
+#ifndef SND_DISABLE_DEPRECATED
+#define S_doit_again_button_color       "doit-again-button-color"
+#define S_doit_button_color             "doit-button-color"
+#define S_help_button_color             "help-button-color"
+#define S_pushed_button_color           "pushed-button-color"
+#define S_quit_button_color             "quit-button-color"
+#define S_reset_button_color            "reset-button-color"
+#endif
 #endif

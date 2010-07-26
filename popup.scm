@@ -911,7 +911,7 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
     (XtCreateManagedWidget "sep" xmSeparatorWidgetClass listener-popup every-menu)
 
     (let ((listener-popup-menu
-	   (list (make-popdown-entry "Play" listener-popup (lambda (snd) (play snd 0)) every-menu identity #t)
+	   (list (make-popdown-entry "Play" listener-popup (lambda (snd) (play snd 0)) every-menu values #t)
 
 		 (let ((help-widget (XtCreateManagedWidget "Help" xmPushButtonWidgetClass listener-popup every-menu)))
 		   (XtAddCallback help-widget XmNactivateCallback

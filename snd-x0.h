@@ -134,8 +134,10 @@ typedef struct {
   Pixel white, black, red, yellow, green, light_blue, lighter_blue;
   Pixel data_color, selected_data_color, mark_color, graph_color, selected_graph_color, listener_color, listener_text_color;
   Pixel basic_color, selection_color, zoom_color, position_color, highlight_color, enved_waveform_color, cursor_color;
-  Pixel text_focus_color, filter_control_waveform_color, mix_color, pushed_button_color, sash_color;
-  Pixel help_button_color, doit_again_button_color, doit_button_color, quit_button_color, reset_button_color;
+  Pixel text_focus_color, filter_control_waveform_color, mix_color, sash_color;
+#ifndef SND_DISABLE_DEPRECATED
+  Pixel help_button_color, doit_again_button_color, doit_button_color, quit_button_color, reset_button_color, pushed_button_color;
+#endif
   Pixel selected_grid_color, grid_color, axis_color;
   Pixel orig_data_color, orig_selected_data_color, orig_mark_color, orig_mix_color;
   Pixel orig_graph_color, orig_selected_graph_color, orig_listener_color, orig_listener_text_color, orig_cursor_color;
@@ -160,6 +162,15 @@ typedef struct {
   Widget *mw, *pw;
   bool axis_color_set;
 } state_context;
+
+#ifdef SND_DISABLE_DEPRECATED
+#define help_button_color highlight_color
+#define doit_again_button_color highlight_color
+#define doit_button_color highlight_color
+#define quit_button_color highlight_color
+#define reset_button_color highlight_color
+#define pushed_button_color selection_color
+#endif
 
 typedef enum {WITHOUT_CHANNELS_FIELD, WITH_CHANNELS_FIELD, WITH_EXTRACT_CHANNELS_FIELD} dialog_channels_t;
 typedef enum {WITHOUT_SAMPLES_FIELD, WITH_SAMPLES_FIELD} dialog_samples_t;

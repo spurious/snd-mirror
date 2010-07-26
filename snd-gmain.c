@@ -27,7 +27,9 @@
   #define YELLOW_COLOR         rgb_to_color(1.00, 1.00, 0.00) /* "yellow" */
   #define TEXT_FOCUS_COLOR     rgb_to_color(1.0, 1.0, 1.0)    /* "white" */
   #define FILTER_CONTROL_WAVEFORM_COLOR rgb_to_color(0.0, 0.0, 1.0) /* "blue" */
+#ifndef SND_DISABLE_DEPRECATED
   #define PUSHED_BUTTON_COLOR  rgb_to_color(0.79, 0.88, 1.00) /* "lightsteelblue1" */
+#endif
   #define SASH_COLOR           rgb_to_color(0.56, 0.93, 0.56) /* "lightgreen" */
 #else
   #define HIGHLIGHT_COLOR      "ivory1"
@@ -54,7 +56,9 @@
   #define YELLOW_COLOR         "yellow"
   #define TEXT_FOCUS_COLOR     "white"
   #define FILTER_CONTROL_WAVEFORM_COLOR "blue"
+#ifndef SND_DISABLE_DEPRECATED
   #define PUSHED_BUTTON_COLOR  "lightsteelblue1"
+#endif
   #define SASH_COLOR           "lightgreen"
 #endif
 
@@ -352,7 +356,9 @@ void save_colors(FILE *Fp)
   save_a_color(Fp, SELECTED_GRAPH_COLOR, ss->sgx->selected_graph_color, S_selected_graph_color);
   save_a_color(Fp, MARK_COLOR, ss->sgx->mark_color, S_mark_color);
   save_a_color(Fp, SASH_COLOR, ss->sgx->sash_color, S_sash_color);
+#ifndef SND_DISABLE_DEPRECATED
   save_a_color(Fp, PUSHED_BUTTON_COLOR, ss->sgx->pushed_button_color, S_pushed_button_color);
+#endif
   save_a_color(Fp, TEXT_FOCUS_COLOR, ss->sgx->text_focus_color, S_text_focus_color);
 }
 
@@ -640,7 +646,9 @@ void snd_doit(int argc, char **argv)
   sx->selected_data_color =   get_color(SELECTED_DATA_COLOR,   NULL, NULL, false);
   sx->mark_color =            get_color(MARK_COLOR,            NULL, NULL, false);
   sx->sash_color =            get_color(SASH_COLOR,            NULL, NULL, false);
+#ifndef SND_DISABLE_DEPRECATED
   sx->pushed_button_color =   get_color(PUSHED_BUTTON_COLOR,   NULL, NULL, false);
+#endif
   sx->text_focus_color =      get_color(TEXT_FOCUS_COLOR,      NULL, NULL, false);
 
   sx->grid_color = get_in_between_color(sx->data_color, sx->graph_color);
@@ -984,7 +992,11 @@ class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n			\
   gtk_widget_show(MAIN_SHELL(ss));
   
 #ifndef SND_AS_WIDGET
+#if HAVE_GTK_ADJUSTMENT_GET_UPPER
+  MAIN_WINDOW(ss) = gtk_widget_get_window(MAIN_SHELL(ss));
+#else
   MAIN_WINDOW(ss) = MAIN_SHELL(ss)->window;
+#endif
 #else
   MAIN_WINDOW(ss) = gtk_widget_get_parent_window(MAIN_SHELL(ss));
 #endif

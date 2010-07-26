@@ -407,12 +407,14 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("(define " S_axis_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_mark_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_position_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
+#ifndef SND_DISABLE_DEPRECATED
   XEN_EVAL_C_STRING("(define " S_pushed_button_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_reset_button_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_quit_button_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_doit_button_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_doit_again_button_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_help_button_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
+#endif
   XEN_EVAL_C_STRING("(define " S_foreground_color " (make-procedure-with-setter (lambda args #f) (lambda args (car args))))");
   XEN_EVAL_C_STRING("(define " S_sash_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_selected_data_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
@@ -519,6 +521,7 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("def set_mark_color (a) false end");
   XEN_EVAL_C_STRING("def position_color () false end");
   XEN_EVAL_C_STRING("def set_position_color (a) false end");
+#ifndef SND_DISABLE_DEPRECATED
   XEN_EVAL_C_STRING("def pushed_button_color () false end");
   XEN_EVAL_C_STRING("def set_pushed_button_color (a) false end");
   XEN_EVAL_C_STRING("def reset_button_color () false end");
@@ -531,6 +534,7 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("def set_doit_again_button_color (a) false end");
   XEN_EVAL_C_STRING("def quit_button_color () false end");
   XEN_EVAL_C_STRING("def set_quit_button_color (a) false end");
+#endif
   XEN_EVAL_C_STRING("def foreground_color () false end");
   XEN_EVAL_C_STRING("def set_foreground_color (a) false end");
   XEN_EVAL_C_STRING("def sash_color () false end");
@@ -630,6 +634,13 @@ void snd_doit(int argc, char **argv)
 0 constant " S_time_graph "\n\
 1 constant " S_transform_graph "\n");
 
+#ifndef SND_DISABLE_DEPRECATED
+  XEN_EVAL_C_STRING("\
+: " S_pushed_button_color " #f ;\n\
+: set-" S_pushed_button_color " { a } #f ;\n\
+");
+#endif
+
   XEN_EVAL_C_STRING("\
 : " S_basic_color " #f ;\n\
 : set-" S_basic_color " { a } #f ;\n\
@@ -663,8 +674,6 @@ void snd_doit(int argc, char **argv)
 : set-" S_mark_color " { a } #f ;\n\
 : " S_position_color " #f ;\n\
 : set-" S_position_color " { a } #f ;\n\
-: " S_pushed_button_color " #f ;\n\
-: set-" S_pushed_button_color " { a } #f ;\n\
 : " S_sash_color " #f ;\n\
 : set-" S_sash_color " { a } #f ;\n\
 : " S_selected_data_color " #f ;\n\

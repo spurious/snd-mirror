@@ -652,7 +652,7 @@ static void set_sync_color(snd_info *sp)
   switch (sp->sync)
     {
     case 0:  set_button_base(syb, ss->sgx->white);               break;
-    case 1:  set_button_base(syb, ss->sgx->pushed_button_color); break;
+    case 1:  set_button_base(syb, ss->sgx->selection_color);     break;
     case 2:  set_button_base(syb, ss->sgx->green);               break;
     case 3:  set_button_base(syb, ss->sgx->yellow);              break;
     case 4:  set_button_base(syb, ss->sgx->red);                 break;

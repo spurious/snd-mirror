@@ -20161,7 +20161,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_LET:
       /* sc->code is everything after the let: (let ((a 1)) a) so sc->code is (((a 1)) a) */
-      /*   car it can be either a list or a symbol ("named let") */
+      /*   car can be either a list or a symbol ("named let") */
 
       if (!is_pair(sc->code))               /* (let . 1) */
 	return(eval_error(sc, "let form is an improper list? ~A", sc->code));

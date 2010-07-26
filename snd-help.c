@@ -2250,21 +2250,15 @@ The color variables are:\n\
 " S_basic_color ":  main Snd color.\n\
 " S_cursor_color ":  cursor color.\n\
 " S_data_color ":  color of data in unselected graph.\n\
-" S_doit_button_color ":  color of Ok and Apply buttons.\n\
-" S_doit_again_button_color ":  color of Undo&Apply buttons.\n\
 " S_enved_waveform_color ":  color of waveform displayed in envelope editor.\n\
 " S_filter_control_waveform_color ":  color of control panel filter waveform.\n\
 " S_graph_color ":  background color of unselected graph.\n\
-" S_help_button_color ":  color of Help buttons.\n\
 " S_highlight_color ":  highlighting color.\n\
 " S_listener_color ":  background color of lisp listener.\n\
 " S_listener_text_color ":  text color in lisp listener.\n\
 " S_mark_color ":  color of mark indicator.\n\
 " S_mix_color ":  color of mix waveforms.\n\
 " S_position_color ":  position slider color\n\
-" S_pushed_button_color ":  color of pushed button.\n\
-" S_quit_button_color ":  color of Dismiss and Cancel buttons.\n\
-" S_reset_button_color ":  color of Reset buttons.\n\
 " S_sash_color ":  color of paned window sashes.\n\
 " S_selected_data_color ":  color of data in currently selected graph.\n\
 " S_selected_graph_color ":  background color of currently selected graph.\n\
