@@ -399,7 +399,7 @@ typedef struct s7_cell {
   union {
     
     struct {
-      int  length;
+      int length;
       char *svalue;
       s7_pointer global_slot; /* for strings that represent symbol names, this is the global environment (symbol value) cons */
       int location;
@@ -15929,6 +15929,8 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		  i += 2;
 		  if ((str[i] != 'P') && (str[i] != 'p'))
 		    return(format_error(sc, "unknown '@' directive", str, args, fdat));
+		  if (!s7_is_number(car(fdat->args)))   /* CL accepts non numbers here */
+		    return(format_error(sc, "'@P' directive argument is not an integer", str, args, fdat));
 
 		  if (!s7_is_one(car(fdat->args)))
 		    format_append_string(fdat, "ies");
@@ -15938,6 +15940,8 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		  break;
 
 		case 'P': case 'p':                 /* -------- plural in 's' -------- */
+		  if (!s7_is_number(car(fdat->args)))
+		    return(format_error(sc, "'P' directive argument is not a number", str, args, fdat));
 		  if (!s7_is_one(car(fdat->args)))
 		    format_append_char(fdat, 's');
 		  i++;
@@ -15977,14 +15981,10 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		  
 		case '{':                           /* -------- iteration -------- */
 		  {
-		    s7_pointer curly_arg;
-		    char *curly_str = NULL;
 		    int k, curly_len = -1, curly_nesting = 1;
 
- 		    if (fdat->args == sc->NIL)
- 		      return(format_error(sc, "'{' directive argument is null?", str, args, fdat));
-		    if (!s7_is_list(sc, car(fdat->args)))
-		      return(format_error(sc, "'{' directive argument should be a list", str, args, fdat));
+		    if (fdat->args == sc->NIL)
+		      return(format_error(sc, "missing argument", str, args, fdat));
 
 		    for (k = i + 2; k < str_len - 1; k++)
 		      if (str[k] == '~')
@@ -16010,29 +16010,40 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		    if (curly_len <= 1)
 		      return(format_error(sc, "'{...}' doesn't consume any arguments!", str, args, fdat));
 
-		    curly_str = (char *)malloc(curly_len * sizeof(char));
-		    for (k = 0; k < curly_len - 1; k++)
-		      curly_str[k] = str[i + 2 + k];
-		    curly_str[curly_len - 1] = '\0';
-
-		    curly_arg = car(fdat->args); 
-		    while (curly_arg != sc->NIL)
+ 		    if (car(fdat->args) != sc->NIL)      /* clisp accepts nil here */
 		      {
-			s7_pointer new_arg = sc->NIL;
-			tmp = format_to_c_string(sc, curly_str, curly_arg, &new_arg);
-			format_append_string(fdat, tmp);
-			if (tmp) free(tmp);
-			if (curly_arg == new_arg)
+			char *curly_str = NULL;
+			s7_pointer curly_arg;
+
+			if (!is_pair(car(fdat->args)))
+			  return(format_error(sc, "'{' directive argument should be a list", str, args, fdat));
+			if (!is_proper_list(sc, car(fdat->args)))
+			  return(format_error(sc, "'{' directive argument should be a proper list", str, args, fdat));
+
+			curly_str = (char *)malloc(curly_len * sizeof(char));
+			for (k = 0; k < curly_len - 1; k++)
+			  curly_str[k] = str[i + 2 + k];
+			curly_str[curly_len - 1] = '\0';
+
+			curly_arg = car(fdat->args); 
+			while (curly_arg != sc->NIL)
 			  {
-			    if (curly_str) free(curly_str);
-			    return(format_error(sc, "'{...}' doesn't consume any arguments!", str, args, fdat));
+			    s7_pointer new_arg = sc->NIL;
+			    tmp = format_to_c_string(sc, curly_str, curly_arg, &new_arg);
+			    format_append_string(fdat, tmp);
+			    if (tmp) free(tmp);
+			    if (curly_arg == new_arg)
+			      {
+				if (curly_str) free(curly_str);
+				return(format_error(sc, "'{...}' doesn't consume any arguments!", str, args, fdat));
+			      }
+			    curly_arg = new_arg;
 			  }
-			curly_arg = new_arg;
+			free(curly_str);
 		      }
 
 		    i += (curly_len + 2); /* jump past the ending '}' too */
 		    fdat->args = cdr(fdat->args);
-		    free(curly_str);
 		  }
 		  break;
 		  
@@ -26738,6 +26749,16 @@ s7_scheme *s7_init(void)
  *   #include <signal.h>
  *   static void s7_sigfpe(int ignored) {}
  * then in init: signal(SIGFPE, s7_sigfpe);
+ *
+ * for a special variable, the global value includes a stack,
+ *   bind it: push current on stack, set to new val, add op to stack to pop (don't add to current env)
+ *   would need declaration (defvar, define-dynamic?), the unwind stack checks in catch/call/cc, the op itself, and a type bit
+ *   where would the stack be? this also requires a type check in let
+ *   ^ there's room for a pointer in the string field, I think, and we're already doing symbol checks
+ *   so this shouldn't be too bad except I'm running out of type bits
+ *   can our defvar be local? if so, how is the unwind to the possible shadowed non-special handled?
+ *   and call/cc back into local context with special bindings -- how to establish etc?
+ *   hooks should be special, and clm defaults
  *
  * PERHAPS: method lists for c_objects
  *   a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)

@@ -3197,35 +3197,22 @@ below.
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>
-We have atoms, lists, namespaces (alists),
-environments (lists of alists), procedures (source code and its environment),
-and threads
-(a procedure with a private stack).
-So it
-seems reasonable to define an object (in the "object-oriented" sense)
-as a cons of two alists, the object's private
-fields and its methods.  In the class-inheritance case, we'd have
-an environment of methods.
-Then a generic function is:
+I think we could build an object system where each object is an environment (a list of alists),
+and each method looks for itself in that environment.
 </p>
 <pre>
-(define-macro (define-generic f)
-  `(define (,f obj . args)
-     (apply (cdr (or (assoc ',f (cdr obj))
-		     (error "can't find the ~A method for ~A" ',f obj)))
-	    obj args)))
+(define object (list (list (cons 'afield 1) 
+                           (cons 'amethod (lambda args 
+                                            (+ 1 (apply + args)))))))
+
+(define (amethod obj . args) 
+  (apply (symbol-&gt;value 'amethod obj) args)) ; perhaps pass obj too
+
+&gt; (amethod object 3 4)
+8
 </pre>
-<p>and all the rest of the object machinery is equally straightforward,
-at least conceptually.  We can even conjure up objects without any
-explicit class:
+<p>A class would be an environment with the various fields and methods predefined.
 </p>
-<pre>
-(define hi (cons (list (cons 'a 1) (cons 'b 2))                    ; its local data
-                 (list (cons 'splice (lambda (obj) "splicing"))))) ; its "splice" method
-(define-generic splice)
-(splice hi)
-"splicing"
-</pre>
 
 </blockquote>
 </small>
