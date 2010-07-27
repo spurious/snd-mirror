@@ -1214,8 +1214,9 @@ XEN_NARGIFY_1(g_colormap_to_integer_w, g_colormap_to_integer)
 #define g_colormap_to_integer_w g_colormap_to_integer
 #endif
 
-
+#if (!HAVE_SCHEME)
 static XEN colormap_temp[16]; /* static for Ruby's sake */
+#endif
 
 void g_init_gxcolormaps(void)
 {
@@ -1241,6 +1242,24 @@ void g_init_gxcolormaps(void)
   cmaps[RAINBOW_COLORMAP] = make_builtin_cmap(1, _("rainbow"), make_rainbow_colormap, rainbow_rgb); 
   cmaps[PHASES_COLORMAP] =  make_builtin_cmap(1, _("phases"),  make_phases_colormap,  phases_rgb); 
 
+#if HAVE_SCHEME
+  s7_define_constant(s7, "black-and-white-colormap", C_INT_TO_XEN_COLORMAP(0));
+  s7_define_constant(s7, "gray-colormap",            C_INT_TO_XEN_COLORMAP(1));
+  s7_define_constant(s7, "hot-colormap",             C_INT_TO_XEN_COLORMAP(2));
+  s7_define_constant(s7, "cool-colormap",            C_INT_TO_XEN_COLORMAP(3));
+  s7_define_constant(s7, "bone-colormap",            C_INT_TO_XEN_COLORMAP(4));
+  s7_define_constant(s7, "copper-colormap",          C_INT_TO_XEN_COLORMAP(5));
+  s7_define_constant(s7, "pink-colormap",            C_INT_TO_XEN_COLORMAP(6));
+  s7_define_constant(s7, "jet-colormap",             C_INT_TO_XEN_COLORMAP(7));
+  s7_define_constant(s7, "prism-colormap",           C_INT_TO_XEN_COLORMAP(8));
+  s7_define_constant(s7, "autumn-colormap",          C_INT_TO_XEN_COLORMAP(9));
+  s7_define_constant(s7, "winter-colormap",          C_INT_TO_XEN_COLORMAP(10));
+  s7_define_constant(s7, "spring-colormap",          C_INT_TO_XEN_COLORMAP(11));
+  s7_define_constant(s7, "summer-colormap",          C_INT_TO_XEN_COLORMAP(12));
+  s7_define_constant(s7, "rainbow-colormap",         C_INT_TO_XEN_COLORMAP(13));
+  s7_define_constant(s7, "flag-colormap",            C_INT_TO_XEN_COLORMAP(14));
+  s7_define_constant(s7, "phases-colormap",          C_INT_TO_XEN_COLORMAP(15));
+#else
   XEN_DEFINE_VARIABLE("black-and-white-colormap", colormap_temp[0], C_INT_TO_XEN_COLORMAP(0));
   XEN_DEFINE_VARIABLE("gray-colormap",            colormap_temp[1], C_INT_TO_XEN_COLORMAP(1));
   XEN_DEFINE_VARIABLE("hot-colormap",             colormap_temp[2], C_INT_TO_XEN_COLORMAP(2));
@@ -1257,6 +1276,7 @@ void g_init_gxcolormaps(void)
   XEN_DEFINE_VARIABLE("rainbow-colormap",         colormap_temp[13], C_INT_TO_XEN_COLORMAP(13));
   XEN_DEFINE_VARIABLE("flag-colormap",            colormap_temp[14], C_INT_TO_XEN_COLORMAP(14));
   XEN_DEFINE_VARIABLE("phases-colormap",          colormap_temp[15], C_INT_TO_XEN_COLORMAP(15));
+#endif
 
   XEN_DEFINE_PROCEDURE(S_colormap_p, g_colormap_p_w,           1, 0, 0, H_colormap_p);
   XEN_DEFINE_PROCEDURE(S_colormap_ref, g_colormap_ref_w,       2, 0, 0, H_colormap_ref);

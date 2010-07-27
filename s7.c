@@ -1994,6 +1994,17 @@ void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
 #endif
 }
 
+/* (for-each
+   (lambda (lst)
+      (for-each
+         (lambda (sym)
+            (format #t "~A ~S~%" sym (symbol->value sym)))
+         lst))
+   (symbol-table))
+   
+   at normal motif-snd startup there are 5699 globals (2583 of them constant), and 411 other undefined symbols
+*/
+
 
 s7_pointer s7_make_symbol(s7_scheme *sc, const char *name) 
 { 
@@ -4647,10 +4658,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
     }
   
   len = safe_strlen(name);
-  if (len == 0)
-    return(sc->NIL);
-
-  if (len < 2)          /* #<any other char> (except ':', sigh -- #: is the same as : for compatibility with Guile) is an error in this scheme */
+  if (len < 2)
     return(sc->NIL);
       
   switch (name[0])
@@ -9073,18 +9081,11 @@ static s7_pointer g_list_to_string(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
+static s7_pointer s7_string_to_list(s7_scheme *sc, const char *str)
 {
-  #define H_string_to_list "(string->list str) returns the elements of the string str in a list; (map values str)"
-  
   int i, len = 0;
-  char *str;
   s7_pointer p;
   
-  if (!s7_is_string(car(args)))
-    return(s7_wrong_type_arg_error(sc, "string->list", 0, car(args), "a string"));
-  
-  str = string_value(car(args));
   if (str) len = safe_strlen(str);
   if (len == 0)                     /* (string->list (string #\null)) will return '() -- not sure that's correct */
     return(sc->NIL);
@@ -9096,6 +9097,17 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
   sc->w = sc->NIL;
 
   return(safe_reverse_in_place(sc, p));
+}
+
+
+static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
+{
+  #define H_string_to_list "(string->list str) returns the elements of the string str in a list; (map values str)"
+  
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "string->list", 0, car(args), "a string"));
+
+  return(s7_string_to_list(sc, string_value(car(args))));
 }
 
 
@@ -15940,8 +15952,8 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		  break;
 
 		case 'P': case 'p':                 /* -------- plural in 's' -------- */
-		  if (!s7_is_number(car(fdat->args)))
-		    return(format_error(sc, "'P' directive argument is not a number", str, args, fdat));
+		  if (!s7_is_real(car(fdat->args)))
+		    return(format_error(sc, "'P' directive argument is not a real number", str, args, fdat));
 		  if (!s7_is_one(car(fdat->args)))
 		    format_append_char(fdat, 's');
 		  i++;
@@ -15981,7 +15993,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		  
 		case '{':                           /* -------- iteration -------- */
 		  {
-		    int k, curly_len = -1, curly_nesting = 1;
+		    int k, curly_len = -1, curly_nesting = 1, curly_gc = -1;
 
 		    if (fdat->args == sc->NIL)
 		      return(format_error(sc, "missing argument", str, args, fdat));
@@ -16006,18 +16018,34 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			}
 		    if (curly_len == -1)
 		      return(format_error(sc, "'{' directive, but no matching '}'", str, args, fdat));
-
 		    if (curly_len <= 1)
 		      return(format_error(sc, "'{...}' doesn't consume any arguments!", str, args, fdat));
 
- 		    if (car(fdat->args) != sc->NIL)      /* clisp accepts nil here */
+ 		    if (car(fdat->args) != sc->NIL)
 		      {
 			char *curly_str = NULL;
 			s7_pointer curly_arg;
 
-			if (!is_pair(car(fdat->args)))
+			curly_arg = car(fdat->args); 
+
+			if (s7_is_vector(curly_arg))
+			  {
+			    curly_arg = s7_vector_to_list(sc, curly_arg);
+			    curly_gc = s7_gc_protect(sc, curly_arg);
+			  }
+			else
+			  {
+			    if (s7_is_string(curly_arg))
+			      {
+				curly_arg = s7_string_to_list(sc, string_value(curly_arg));
+				curly_gc = s7_gc_protect(sc, curly_arg);
+			      }
+			    /* perhaps extend format {} to any c object that is applicable? */
+			  }
+
+			if (!is_pair(curly_arg))
 			  return(format_error(sc, "'{' directive argument should be a list", str, args, fdat));
-			if (!is_proper_list(sc, car(fdat->args)))
+			if (!is_proper_list(sc, curly_arg))
 			  return(format_error(sc, "'{' directive argument should be a proper list", str, args, fdat));
 
 			curly_str = (char *)malloc(curly_len * sizeof(char));
@@ -16025,7 +16053,6 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			  curly_str[k] = str[i + 2 + k];
 			curly_str[curly_len - 1] = '\0';
 
-			curly_arg = car(fdat->args); 
 			while (curly_arg != sc->NIL)
 			  {
 			    s7_pointer new_arg = sc->NIL;
@@ -16035,11 +16062,13 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			    if (curly_arg == new_arg)
 			      {
 				if (curly_str) free(curly_str);
+				if (curly_gc != -1) s7_gc_unprotect_at(sc, curly_gc);
 				return(format_error(sc, "'{...}' doesn't consume any arguments!", str, args, fdat));
 			      }
 			    curly_arg = new_arg;
 			  }
 			free(curly_str);
+			if (curly_gc != -1) s7_gc_unprotect_at(sc, curly_gc);
 		      }
 
 		    i += (curly_len + 2); /* jump past the ending '}' too */
@@ -18229,7 +18258,7 @@ static token_t token(s7_scheme *sc)
 	    backchar(sc, sc->strbuf[d], pt);
 	}
 
-      if (c == ':')  /* turn #: into : */
+      if (c == ':')  /* turn #: into : -- this is for compatiblity with Guile, #:optional in particular */
 	{
 	  sc->strbuf[0] = ':';
 	  return(TOKEN_ATOM);
@@ -26758,6 +26787,14 @@ s7_scheme *s7_init(void)
  *   so this shouldn't be too bad except I'm running out of type bits
  *   can our defvar be local? if so, how is the unwind to the possible shadowed non-special handled?
  *   and call/cc back into local context with special bindings -- how to establish etc?
+ *   also multithread cases are problematic -- per-thread values would be best, but how to implement?
+ *   we'd need a vector of specials (easy to copy (with nil stacks) when a thread is created)
+ *        symbol_global_slot would have to point into the thread-local copy somehow (a two level pointer via current sc which is always available)
+ *        #define symbol_global_slot(p)         (car(p))->object.string.global_slot
+ *        but for special vars in multithread case, sc->globals[(car(p))->object.string.global_slot] where the slot is an integer
+ *        this macro needs to work with normal globals
+ *   perhaps symbol-macro with a different name in thread?
+ *   symbol-access use would require implementing the getter
  *   hooks should be special, and clm defaults
  *
  * PERHAPS: method lists for c_objects

@@ -2416,8 +2416,9 @@ XEN_NARGIFY_1(g_transform_to_integer_w, g_transform_to_integer)
 #define g_transform_to_integer_w g_transform_to_integer
 #endif
 
-
+#if (!HAVE_SCHEME)
 static XEN transform_temp[6]; /* static for Ruby's sake */
+#endif
 
 void g_init_fft(void)
 {
@@ -2457,12 +2458,21 @@ of a moving mark:\n\
 
   before_transform_hook = XEN_DEFINE_HOOK(S_before_transform_hook, 2, H_before_transform_hook);  /* args = snd chn */
 
+#if HAVE_SCHEME
+  s7_define_constant(s7, S_fourier_transform, C_INT_TO_XEN_TRANSFORM(FOURIER));
+  s7_define_constant(s7, S_wavelet_transform, C_INT_TO_XEN_TRANSFORM(WAVELET));
+  s7_define_constant(s7, S_haar_transform,    C_INT_TO_XEN_TRANSFORM(HAAR));
+  s7_define_constant(s7, S_cepstrum,          C_INT_TO_XEN_TRANSFORM(CEPSTRUM));
+  s7_define_constant(s7, S_walsh_transform,   C_INT_TO_XEN_TRANSFORM(WALSH));
+  s7_define_constant(s7, S_autocorrelation,   C_INT_TO_XEN_TRANSFORM(AUTOCORRELATION));
+#else
   XEN_DEFINE_VARIABLE(S_fourier_transform, transform_temp[0], C_INT_TO_XEN_TRANSFORM(FOURIER));
   XEN_DEFINE_VARIABLE(S_wavelet_transform, transform_temp[1], C_INT_TO_XEN_TRANSFORM(WAVELET));
   XEN_DEFINE_VARIABLE(S_haar_transform,    transform_temp[2], C_INT_TO_XEN_TRANSFORM(HAAR));
   XEN_DEFINE_VARIABLE(S_cepstrum,          transform_temp[3], C_INT_TO_XEN_TRANSFORM(CEPSTRUM));
   XEN_DEFINE_VARIABLE(S_walsh_transform,   transform_temp[4], C_INT_TO_XEN_TRANSFORM(WALSH));
   XEN_DEFINE_VARIABLE(S_autocorrelation,   transform_temp[5], C_INT_TO_XEN_TRANSFORM(AUTOCORRELATION));
+#endif
 
   #define H_dont_normalize "The value for " S_transform_normalization " that causes the transform to display raw data"
   #define H_normalize_by_channel "The value for " S_transform_normalization " that causes the transform to be normalized in each channel independently"

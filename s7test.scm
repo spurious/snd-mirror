@@ -330,6 +330,7 @@
 (test (eq? '#f '#f) #t)
 (test (eq? '()'()) #t) ; no space
 (test (#||# eq? #||# #f #||# #f #||#) #t)
+(test (eq? (current-input-port) (current-input-port)) #t)
 
 (display ";this should display #t: ")
 (begin #| ; |# (display #t))
@@ -3881,6 +3882,7 @@
 (test (assoc 'c '(() (a . 1) (b . 2) () (c . 3) (c . 4) . 4)) '(c . 3))
 (test (assoc 'asdf '(() (a . 1) (b . 2) () (c . 3) (c . 4) . 4)) #f)
 (test (assoc "" (list '("a" . 1) '("" . 2) '(#() . 3))) '("" . 2))
+(test (assoc assoc (list (cons abs 1) (cons assoc 2) (cons + 3))) (cons assoc 2))
 
 
 
@@ -3909,6 +3911,9 @@
 (test (memq 'a '()) #f)
 (test (memq 'a '(c d a b . c)) '(a b . c))
 (test (memq 'a '(c d f b . c)) #f)
+(test (let ((x (cons 1 2))) (memq x (list x (cons 3 4)))) '((1 . 2) (3 . 4)))
+(test (pair? (let ((x (lambda () 1))) (memq x (list 1 2 x 3)))) #t)
+(test (memq memq (list abs + memq car)) (list memq car))
 
 
 
@@ -3928,6 +3933,8 @@
 (test (memv 'c '(a b c)) '(c))
 (test (memv 'c '(a b . c)) #f)
 (test (memv ''a '('a b c)) #f)
+(test (let ((x (cons 1 2))) (memv x (list (cons 1 2) (cons 3 4)))) #f)
+(test (let ((x (cons 1 2))) (memv x (list x (cons 3 4)))) '((1 . 2) (3 . 4)))
 
 
 
@@ -3954,6 +3961,8 @@
 (test (member #() '(1 () 2 #() 3)) '(#() 3))
 (test (member #2d((1 2) (3 4)) '(1 #() #2d((1 2) (1 2)))) #f)
 (test (member #2d((1 2) (3 4)) '(1 #() #2d((1 2) (3 4)))) '(#2d((1 2) (3 4))))
+(test (let ((x (cons 1 2))) (member x (list (cons 1 2) (cons 3 4)))) '((1 . 2) (3 . 4)))
+(test (let ((x (list 1 2))) (member x (list (cons 1 2) (list 1 2)))) '((1 2)))
 (test (member ''a '('a b c)) '('a b c))
 
 (for-each
@@ -6833,6 +6842,7 @@
 (test (format #f "hi ~Z ho") 'error)
 (test (format #f "hi ~+ ho") 'error)
 (test (format #f "hi ~# ho") 'error)
+(test (format #f "hi ~, ho") 'error)
 
 (test (format #f "hi ~} ho") 'error)
 (test (format #f "hi {ho~}") 'error)
@@ -7117,10 +7127,15 @@
 (test (format #f "~19,'xf" 3.14) "xxxxxxxxxxx3.140000")
 (test (format #f "~,f" 1.0) "1.000000")
 (test (format #f "~,,f" 1.0) 'error)
-(test (format #f "~p" '(1 2 3)) 'error)
+(test (format #f "~p" '(1 2 3)) 'error) ; these are not errors in CL
 (test (format #f "~p" #(())) 'error)
 (test (format #f "~p" 'hi) 'error)
 (test (format #f "~p" abs) 'error)
+(test (format #f "~p" 1+i) 'error)
+(test (format #f "~@p" '(1 2 3)) 'error)
+(test (format #f "~@p" #(())) 'error)
+(test (format #f "~@p" 'hi) 'error)
+(test (format #f "~@p" abs) 'error)
 (test (format #f "~{~{~A~^~} ~}" '((hi 1))) "hi1 ")
 (test (format #f "~{~{~A~^~} ~}" '((1 2) (3 4))) "12 34 ")
 (test (format #f "~{~{~A~} ~}" '((1 2) (3 4))) "12 34 ")
@@ -7134,16 +7149,29 @@
 (test (format #f "~^~^~A" #f) "#f")
 (test (format #f "~*~*~A~*" 1 2 3 4) "3")
 (test (format #f "~{~*~A~}" '(1 2 3 4)) "24")
-(test (let ((lst (list 1 2 3))) (set! (cdr (cddr lst)) lst) (format #f "~A" (list lst))) "(#1=(1 2 3 . #1#))")
+(test (let ((lst (list 1 2 3))) (set! (cdr (cddr lst)) lst) (format #f "~A" lst)) "#1=(1 2 3 . #1#)")
+(test (let ((lst (list 1 2 3))) (set! (cdr (cddr lst)) lst) (format #f "~{~A~}" lst)) 'error)
 (test (format #f "~{~A~}" (cons 1 2)) 'error)
+(test (format #f "~{~A~}" '(1 2 3 . 4)) 'error)
 (test (format #f "~20,vF" 3.14) 'error)
+(test (format #f "~{~C~^ ~}" "hiho") "h i h o")
+(test (format #f "~{~A ~}" #(1 2 3 4)) "1 2 3 4 ")
+(test (format #f "~{~A ~}" #2d((1 2) (3 4))) "1 2 3 4 ")
+(test (let ((v (vector 1))) (set! (v 0) v) (format #f "~A" v)) "#1=#(#1#)")
+(test (let ((v (vector 1))) (set! (v 0) v) (format #f "~{~A~}" v)) "#1=#(#1#)")
+(test (format #f "~{~{~{~A~^ ~}~^ ~}~}" '(((1 2) (3 4)))) "1 2 3 4")
+(test (format #f "~{~{~{~A~^ ~}~^ ~}~}" '((#(1 2) #(3 4)))) "1 2 3 4")
+(test (format #f "~{~{~{~A~^ ~}~^ ~}~}" #(((1 2) (3 4)))) "1 2 3 4")
+(test (format #f "~{~{~{~A~^ ~}~^ ~}~}" #(#((1 2) (3 4)))) "1 2 3 4")
+(test (format #f "~{~{~{~A~^ ~}~^ ~}~}" #(#(#(1 2) (3 4)))) "1 2 3 4")
+(test (format #f "~{~{~{~A~^ ~}~^ ~}~}" #(#(#(1 2) #(3 4)))) "1 2 3 4")
+(test (format #f "~{~{~C~^ ~}~^ ~}" (list "hiho" "xxx")) "h i h o x x x")
 
 #|
 (do ((i 0 (+ i 1))) ((= i 256)) 
   (let ((chr (integer->char i)))
     (format #t "~D: ~A ~A ~D~%" i (format #f "~S" (string chr)) (string chr) (length (format #f "~S" (string chr))))))
 |#
-
 
 (for-each
  (lambda (arg)
