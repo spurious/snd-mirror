@@ -7166,6 +7166,8 @@
 (test (format #f "~{~{~{~A~^ ~}~^ ~}~}" #(#(#(1 2) (3 4)))) "1 2 3 4")
 (test (format #f "~{~{~{~A~^ ~}~^ ~}~}" #(#(#(1 2) #(3 4)))) "1 2 3 4")
 (test (format #f "~{~{~C~^ ~}~^ ~}" (list "hiho" "xxx")) "h i h o x x x")
+(test (format #f "~{~{~A~}~}" '((1 . 2) (3 . 4))) 'error)
+(test (format #f "~{~A~^ ~}" '((1 . 2) (3 . 4))) "(1 . 2) (3 . 4)") 
 
 #|
 (do ((i 0 (+ i 1))) ((= i 256)) 

@@ -26781,21 +26781,18 @@ s7_scheme *s7_init(void)
  *
  * for a special variable, the global value includes a stack,
  *   bind it: push current on stack, set to new val, add op to stack to pop (don't add to current env)
- *   would need declaration (defvar, define-dynamic?), the unwind stack checks in catch/call/cc, the op itself, and a type bit
+ *   would need declaration (defvar, define-dynamic?), the unwind stack checks in catch/call/cc, the op itself
  *   where would the stack be? this also requires a type check in let
  *   ^ there's room for a pointer in the string field, I think, and we're already doing symbol checks
- *   so this shouldn't be too bad except I'm running out of type bits
- *   can our defvar be local? if so, how is the unwind to the possible shadowed non-special handled?
- *   and call/cc back into local context with special bindings -- how to establish etc?
- *   also multithread cases are problematic -- per-thread values would be best, but how to implement?
- *   we'd need a vector of specials (easy to copy (with nil stacks) when a thread is created)
- *        symbol_global_slot would have to point into the thread-local copy somehow (a two level pointer via current sc which is always available)
- *        #define symbol_global_slot(p)         (car(p))->object.string.global_slot
- *        but for special vars in multithread case, sc->globals[(car(p))->object.string.global_slot] where the slot is an integer
- *        this macro needs to work with normal globals
- *   perhaps symbol-macro with a different name in thread?
- *   symbol-access use would require implementing the getter
- *   hooks should be special, and clm defaults
+ *   and call/cc back into local context with special bindings -- should these be re-set?  (they're globals)
+ *      perhaps the unwind op during call/cc exit could save info for the later return
+     (set! (symbol-access special-sym) 
+       (list #f #f
+             (lambda (sym val)
+               (push (symbol-value sym) (symbol-stack sym))
+	       (set! (symbol-value sym) val)
+               (push (unwind-special sym) (sc->stack))
+	       val)))
  *
  * PERHAPS: method lists for c_objects
  *   a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)

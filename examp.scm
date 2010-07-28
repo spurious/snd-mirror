@@ -1332,6 +1332,7 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 ;;; -------- cross-synthesis
 ;;;
 ;;; CLM version is in clm.html
+;;; TODO: rewrite cross-synthesis, voiced->unvoiced, and pulse-voice to use the run macro
 
 (define (cross-synthesis cross-snd amp fftsize r)
   "(cross-synthesis cross-snd amp fftsize r) does cross-synthesis between 'cross-snd' (a sound object) and the currently 
