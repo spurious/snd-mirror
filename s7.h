@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.64"
-#define S7_DATE "22-July-10"
+#define S7_VERSION "1.65"
+#define S7_DATE "30-July-10"
 
 
 typedef long long int s7_Int;
@@ -758,6 +758,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 30-July:   special macro for access to dynamic binding.
  * 22-July:   s7_make_character takes unsigned int, rather than int.
  *            added symbol function for funny symbol names.
  * 12-July:   initial-environment.

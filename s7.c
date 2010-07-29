@@ -36,6 +36,7 @@
  *        true multiple-values
  *        threads (optional)
  *        multidimensional vectors
+ *        special (dynamically bound) variables
  *
  *   many minor changes!
  *
@@ -298,6 +299,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_ENV2,
 	      OP_FOR_EACH, OP_MAP, OP_BARRIER, OP_DEACTIVATE_GOTO,
 	      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, OP_BACRO, OP_APPLY_WITHOUT_TRACE,
+	      OP_LET_UNWIND,
 	      OP_MAX_DEFINED} opcode_t;
 
 static const char *op_names[OP_MAX_DEFINED] = 
@@ -313,13 +315,13 @@ static const char *op_names[OP_MAX_DEFINED] =
    "do", "do", "do", "do", "define*", "lambda*", 
    "error-quit", "unwind-input", "unwind-output", "trace-return", "error-hook-quit", 
    "trace-hook-quit", "with-environment", "with-environment", "with-environment", "for-each", "map", 
-   "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro",
-   "apply-without-trace"
+   "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro", "apply-without-trace", 
+   "let_unwind"
 };
 
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 83 max num chars (256) */
+/* this needs to be at least OP_MAX_DEFINED = 84 max num chars (256) */
 /* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -17871,6 +17873,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	      return(car(x));
 	  return(car(x));
 
+	case OP_LET_UNWIND:
 	case OP_BARRIER:                                         /* (+ 1 (eval-string "(values 2 3)")) */
 	  pop_stack(sc);
 	  return(splice_in_values(sc, args));
@@ -18713,6 +18716,78 @@ static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
 
   return(eval_symbol_1(sc, sym));
 }
+
+
+/* ---------------- special variables ---------------- */
+
+static s7_pointer find_purely_local_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
+{ 
+  s7_pointer y;
+
+  y = car(env);
+  if ((y == sc->NIL) || (s7_is_vector(y)))
+    return(sc->NIL);
+
+  if (caar(y) == hdl)
+    return(car(y));
+      
+  for (y = cdr(y); is_pair(y); y = cdr(y))
+    if (caar(y) == hdl)
+      return(car(y));
+
+  return(sc->NIL); 
+} 
+
+
+static s7_pointer find_dynamic_symbol(s7_scheme *sc, s7_pointer symbol)
+{
+  s7_pointer x;
+  int i;
+
+  x = find_local_symbol(sc, sc->envir, symbol);  
+  if (x != sc->NIL)
+    return(x);
+
+  for (i = s7_stack_top(sc) - 1; i >= 3; i -= 4)
+    {
+      x = find_purely_local_symbol(sc, stack_environment(sc->stack, i), symbol);
+      if (x != sc->NIL)
+	return(x);
+    }
+  return(find_symbol(sc, sc->envir, symbol));
+}
+
+
+static s7_pointer g_special(s7_scheme *sc, s7_pointer args)
+{
+  #define H_special "(special symbol) returns the dynamic (thread-local) binding of the symbol"
+  /* car(args) is a symbol, we return its dynamic binding */
+
+  /* the usual value lookup runs through the current environment checking every frame,
+   *   the dynamic environment however is implicit in the stack, so we run through
+   *   every stack entry checking car(envir), then the global env.  If symbol is not local,
+   *   we can go straight to the global value without searching. This depends on the
+   *   OP_LET_UNWIND stack entries, which cost about .5% total compute time in s7test (which has
+   *   an inordinate number of lets), but it's simple and works in call/cc and error cases,
+   *   and is automatically locally bound in a thread.
+   */
+  
+  s7_pointer symbol, slot;
+  symbol = car(args);  /* "special" is a macro, so this is unevaluated */
+
+  if (!s7_is_symbol(symbol))
+    return(s7_wrong_type_arg_error(sc, "special", 0, symbol, "a symbol"));
+
+  if (is_not_local(symbol))
+    slot = symbol_global_slot(symbol);
+  else slot = find_dynamic_symbol(sc, symbol);
+  if (slot != sc->NIL) 
+    return(symbol_value(slot));
+  return(eval_symbol_1(sc, symbol)); /* give unbound variable hook a chance, and so on */
+}
+
+/* TODO: test that special variables are local to threads if bound */
+
 
 
 static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op) 
@@ -20273,7 +20348,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = cadar(sc->code);
 	  sc->args = sc->NIL;
 	  goto EVAL;
-	} 
+	}
 
       /* we accept (let ((:hi 1)) :hi)
        *           (let ('1) quote) [guile accepts this]
@@ -20322,7 +20397,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = cdr(sc->code);
 	  sc->args = sc->NIL;
 	}
+      
+      if (car(sc->envir) != sc->NIL)
+	push_stack(sc, opcode(OP_LET_UNWIND), sc->NIL, sc->NIL);
       goto BEGIN;
+
+
+    case OP_LET_UNWIND:
+      goto START;
 
       
     case OP_LET_STAR:
@@ -20398,6 +20480,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       sc->code = sc->args;
       sc->args = sc->NIL;
+      if (car(sc->envir) != sc->NIL)
+	push_stack(sc, opcode(OP_LET_UNWIND), sc->NIL, sc->NIL);
       goto BEGIN;
       
       
@@ -20461,6 +20545,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	s7_symbol_set_value(sc, caar(sc->x), car(sc->y));
       sc->code = cdr(sc->code);
       sc->args = sc->NIL;
+      if (car(sc->envir) != sc->NIL)
+	push_stack(sc, opcode(OP_LET_UNWIND), sc->NIL, sc->NIL);
       goto BEGIN;
       
       
@@ -26682,7 +26768,7 @@ s7_scheme *s7_init(void)
   /* macroexpand */
   s7_eval_c_string(sc, "(define-macro (macroexpand __mac__) `(,(procedure-source (car __mac__)) ',__mac__))");
   s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, "quasiquote");
-
+  s7_define_macro(sc, "special", g_special, 1, 0, false, H_special);
 
   s7_eval_c_string(sc, "(define-macro (letrec* bindings . body)                        \n\
                           (if (null? body)                                             \n\
@@ -26779,21 +26865,6 @@ s7_scheme *s7_init(void)
  *   #include <signal.h>
  *   static void s7_sigfpe(int ignored) {}
  * then in init: signal(SIGFPE, s7_sigfpe);
- *
- * for a special variable, the global value includes a stack,
- *   bind it: push current on stack, set to new val, add op to stack to pop (don't add to current env)
- *   would need declaration (defvar, define-dynamic?), the unwind stack checks in catch/call/cc, the op itself
- *   where would the stack be? this also requires a type check in let
- *   ^ there's room for a pointer in the string field, I think, and we're already doing symbol checks
- *   and call/cc back into local context with special bindings -- should these be re-set?  (they're globals)
- *      perhaps the unwind op during call/cc exit could save info for the later return (but this is only a partial solution)
-     (set! (symbol-access special-sym) 
-       (list #f #f
-             (lambda (sym val)
-               (push (symbol-value sym) (symbol-stack sym))
-	       (set! (symbol-value sym) val)
-               (push (unwind-special sym) (sc->stack))
-	       val)))
  *
  * PERHAPS: method lists for c_objects
  *   a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)

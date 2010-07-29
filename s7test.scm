@@ -616,6 +616,12 @@
 (test (let hiho ((i 0)) (equal? hiho hiho)) #t)
 (test (let hiho ((i 0)) (let hoho ((i 0)) (equal? hiho hoho))) #f)
 (test (equal? + *) #f)
+(test (equal? lambda lambda) #t)
+(test (equal? lambda lambda*) #f)
+(test (equal? let let) #t)
+(test (equal? let letrec) #f)
+(test (equal? define define) #t)
+
 
 
 (test (boolean? #f) #t)
@@ -6923,15 +6929,52 @@
 	(display "open-output-string + format ... expected \"this is a test 3\", but got \"")
 	(display res) (display "\"?") (newline))))
 
-(test (call/cc (lambda (return) (let ((val (format #f "line 1~%line 2~%line 3")))
-				  (call-with-input-string val
-							  (lambda (p) (return "oops"))))))
+(let ((res1 #f)
+      (res2 #f)
+      (res3 #f))
+  (let ((p1 (open-output-string)))
+    (format p1 "~D" 0)
+    (let ((p2 (open-output-string)))
+      (format p2 "~D" 1)
+      (let ((p3 (open-output-string)))
+	(if (not (string=? (get-output-string p1) "0"))
+	    (format #t ";format to nested ports, p1: ~S~%" (get-output-string p1)))	
+	(if (not (string=? (get-output-string p2) "1"))
+	    (format #t ";format to nested ports, p2: ~S~%" (get-output-string p2)))	
+	(format p3 "~D" 2)
+	(format p2 "~D" 3)
+	(format p1 "~D" 4)
+	(format p3 "~D" 5)
+	(set! res3 (get-output-string p3))
+	(close-output-port p3)
+	(if (not (string=? (get-output-string p1) "04"))
+	    (format #t ";format to nested ports after close, p1: ~S~%" (get-output-string p1)))	
+	(if (not (string=? (get-output-string p2) "13"))
+	    (format #t ";format to nested ports after close, p2: ~S~%" (get-output-string p2))))
+      (format (or p1 p3) "~D" 6)
+      (format (and p1 p2) "~D" 7)
+      (set! res1 (get-output-string p1))
+      (close-output-port p1)
+      (if (not (string=? (get-output-string p2) "137"))
+	  (format #t ";format to nested ports after 2nd close, p2: ~S~%" (get-output-string p2)))
+      (format p2 "~D" 8)
+      (set! res2 (get-output-string p2))
+      (close-output-port p2)))
+  (if (not (string=? res1 "046"))
+      (format #t ";format to nested ports, res1: ~S~%" res1))
+  (if (not (string=? res2 "1378"))
+      (format #t ";format to nested ports, res2: ~S~%" res2))
+  (if (not (string=? res3 "25"))
+      (format #t ";format to nested ports, res3: ~S~%" res3)))
+
+(test (call/cc (lambda (return) 
+		 (let ((val (format #f "line 1~%line 2~%line 3")))
+		   (call-with-input-string val
+					   (lambda (p) (return "oops"))))))
       "oops")
 
 (format #t "format #t: ~D" 1)
 (format (current-output-port) " output-port: ~D! (this is testing output ports)~%" 2)
-;; for float formats, assume s7 for now -- use our-pi and most-positive-fixnum
-;; (format with 18 digits is enough to tell what s7_Double is via built-in pi)
 
 ;; from slib/formatst.scm
 (test (string=? (format #f "abc") "abc") #t)
@@ -9698,7 +9741,7 @@
 (test (apply quote '()) 'error) ; (quote) is an error
 (test (let () (apply letrec '(() (define x 9) x))) 9)
 (test ((lambda (n) (apply n '(((x 1)) (+ x 2)))) let) 3)
-
+(test ((apply lambda (list (apply let (list (list) (quote (list (apply case '(0 ((0 1) 'n))))))) (quasiquote (+ n 1)))) 2) 3)
 
 
 
@@ -14015,6 +14058,19 @@ who says the continuation has to restart the map from the top?
 	  ((mu (a) `(+ 1 ,a)) 3))
 	4)
   (test (let () (define-macro (hi a) `(+ 1 ,a)) (map hi '(1 2 3))) 'error)
+  (test (let () (define-macro (hi a) `(+ ,a 1)) (apply hi '(4))) 5)
+  (test (let () 
+	  (define-macro (hi a) `(+ ,a 1))
+	  (define (fmac mac) (apply mac '(4)))
+	  (fmac hi))
+	5)
+  (test (let () 
+	  (define (make-mac)
+	    (define-macro (hi a) `(+ ,a 1))
+	    hi)
+	  (let ((x (make-mac)))
+	    (x 2)))
+	3)
 
   (define-macro* (_mac1_) `(+ 1 2))
   (test (_mac1_) 3)
@@ -15282,6 +15338,23 @@ who says the continuation has to restart the map from the top?
 (test (stacktrace #(23)) 'error)
 
 
+(define special-global-x 32)
+(let ()
+  (define (fx) (special special-global-x))
+  (test (fx) 32)
+  (test (let ((special-global-x 3)) (fx)) 3)
+  (test (+ (special special-global-x) (let ((special-global-x 3)) (fx))) 35)
+  (define (fy) (+ (special special-global-x) (let ((special-global-x 3)) (special special-global-x))))
+  (test (fy) 35)
+  (test (let ((special-global-x 123)) (fy)) 126)
+  (test special-global-x 32))
+(define special-global-y 123)
+(let ()
+  (define (fy) special-global-y)
+  (test (fy) 123))
+
+
+
 ;;; -------- miscellaneous (amusements)
 
 (test ((number->string -1) 0) #\-)
@@ -15409,6 +15482,11 @@ who says the continuation has to restart the map from the top?
 (test (let ((x 0) (str "hiho")) (string-set! (let () (set! x 32) str) 0 #\x) (list x str)) '(32 "xiho"))
 (test (let ((x "hi") (y "ho")) (set! ((set! x y) 0) #\x) (list x y)) '("xo" "xo"))
 (test (let ((x "hi") (y "ho")) (set! x y) (set! (y 0) #\x) (list x y)) '("xo" "xo")) ; Guile gets the same result
+(test (let ((x (lambda (a) (a z 1) z))) (x define)) 1) ; !
+(test (let ((x (lambda (a) (a z (lambda (b) (+ b 1))) (z 2)))) (x define)) 3)
+(test (let ((x (lambda (a b c) (apply a (list b c))))) (x let '() 3)) 3)
+(test (let ((x (lambda (a b c) (apply a (list b c))))) (x let '((y 2)) '(+ y 1))) 3)
+
 
 
 

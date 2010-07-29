@@ -519,7 +519,7 @@ add-1
 &gt; (macroexpand (add-1 32))
 (+ 1 32)
 </pre>
-<p>gensym returns a symbol that is guaranteed to be currently unused.  It takes an optional string argument
+<p>gensym returns a symbol that is guaranteed to be unused.  It takes an optional string argument
 giving the new symbol name's prefix.
 </p>
 <pre>
@@ -1183,6 +1183,26 @@ with this mechanism, including property lists.
 <p>which returns '(32 12).
 </p>
 
+
+<!--
+(define-macro (define-with-setter sym val . accessors)
+  (if (null? accessors)
+      `(define ,sym ,val)
+      (let ((setter (eval (car accessors)))
+	    (binder (if (not (null? (cdr accessors))) (eval (cadr accessors)) #f)))
+	(if (procedure? val)
+	    `(define ,sym (make-procedure-with-setter ,val ,setter))
+	    `(begin
+	       (define ,sym ,val)
+	       (set! (symbol-access ',sym) (list #f ,setter ,binder))
+	       ',sym)))))
+
+problems: symbol-access affects all other uses of symbol (it should be local)
+          symbol-access needs the symbol -- there should be a way to have anonymous setters
+	  (let ((x (with-setter 32 (lambda (val) (display "new value...") val)))) ...)
+
+TODO: write up the special macro
+-->
 </blockquote>
 </small>
 </dd>
