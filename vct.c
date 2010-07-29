@@ -347,6 +347,12 @@ XEN xen_make_vct_wrapper(mus_long_t len, mus_float_t *data)
 }
 
 
+XEN vct_to_xen(vct *v)
+{
+  XEN_MAKE_AND_RETURN_OBJECT(vct_tag, v, 0, free_vct);
+}
+
+
 static XEN g_make_vct(XEN len, XEN filler)
 {
   #if HAVE_SCHEME

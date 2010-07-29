@@ -100,7 +100,6 @@
  * SOMEDAY: generics like length
  * SOMEDAY: if return int and bool
  * TODO: we miss shadowed funcs: (spectrum k) where spectrum is a vct complains about args to func spectrum
- * TODO: add channel->vct
  * perhaps we can access s7 globals directly -- no need to copy each way for ints/dbls/strings
  */
 
@@ -8999,6 +8998,7 @@ static snd_info *run_get_sp(int offset, int *args, Int *ints)
     if ((spint < ss->max_sounds) && 
 	(snd_ok(ss->sounds[spint])))
       return(ss->sounds[spint]);
+  fprintf(stderr, "no such sound: %d\n", spint);
   return(NULL);
 }
 
@@ -9016,6 +9016,7 @@ static chan_info *run_get_cp(int offset, int *args, Int *ints)
       else
 	if (cpint < sp->nchans)
 	  return(sp->chans[cpint]);
+      fprintf(stderr, "no such channel: %d\n", cpint);
     }
   return(NULL);
 }
@@ -9147,6 +9148,43 @@ static xen_value *sample_1(ptree *pt, xen_value **args, int num_args)
   true_args[1] = args[1];
   rtn = package(pt, R_FLOAT, sample_f, "sample_f", true_args, 4);
   for (k = num_args + 1; k <= 4; k++) free(true_args[k]);
+  return(rtn);
+}
+
+
+/* ---------------- samples ---------------- */
+
+static void samples_f(int *args, ptree *pt) 
+{
+  chan_info *cp; 
+  cp = run_get_cp(3, args, pt->ints);
+  if (cp) 
+    {
+      if (VCT_RESULT) mus_vct_free(VCT_RESULT);
+      VCT_RESULT = run_samples_to_vct(INT_ARG_1, INT_ARG_2, cp, (INT_ARG_5 == AT_CURRENT_EDIT_POSITION) ? cp->edit_ctr : INT_ARG_5);
+    }
+}
+
+
+static xen_value *samples_1(ptree *pt, xen_value **args, int num_args) 
+{
+  xen_value *true_args[6];
+  xen_value *rtn;
+  int k;
+
+  args[0] = make_xen_value(R_VCT, add_vct_to_ptree(pt, NULL), R_VARIABLE);
+  add_obj_to_gcs(pt, R_VCT, args[0]->addr);
+
+  run_opt_arg(pt, args, num_args, 3, true_args);
+  run_opt_arg(pt, args, num_args, 4, true_args);
+  run_opt_arg(pt, args, num_args, 5, true_args);
+  true_args[0] = args[0];
+  true_args[1] = args[1];
+  true_args[2] = args[2];
+
+  rtn = package(pt, R_VCT, samples_f, "samples_f", true_args, 5);
+  for (k = num_args + 1; k <= 5; k++) free(true_args[k]);
+
   return(rtn);
 }
 
@@ -16953,6 +16991,8 @@ static void init_walkers(void)
   INIT_WALKER(S_cursor,                 make_walker(cursor_1, NULL, NULL, 0, 2, R_INT, false, 0));
   INIT_WALKER(S_maxamp,                 make_walker(maxamp_1, NULL, NULL, 0, 3, R_FLOAT, false, 0));
   INIT_WALKER(S_sample,                 make_walker(sample_1, NULL, NULL, 1, 4, R_FLOAT, false, 1, R_INT));
+  INIT_WALKER(S_samples,                make_walker(samples_1, NULL, NULL, 2, 5, R_VCT, false, 2, R_INT, R_INT));
+  INIT_WALKER(S_channel_to_vct,         make_walker(samples_1, NULL, NULL, 2, 5, R_VCT, false, 2, R_INT, R_INT));
   INIT_WALKER(S_srate,                  make_walker(srate_1, NULL, NULL, 0, 1, R_INT, false, 0));
   INIT_WALKER(S_channels,               make_walker(channels_1, NULL, NULL, 0, 1, R_INT, false, 0));
   INIT_WALKER(S_file_name,              make_walker(file_name_1, NULL, NULL, 0, 1, R_STRING, false, 0));

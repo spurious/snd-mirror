@@ -9090,33 +9090,21 @@ set snd's channel chn's samples starting at beg for dur samps from vct data"
 }
 
 
-static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd, XEN chn_n, XEN edpos, const char *caller)
+vct *run_samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int pos)
 {
-  chan_info *cp;
   snd_fd *sf;
-  mus_float_t *fvals;
-  mus_long_t i, len, beg;
-  int pos, num_to_read = MIX_FILE_BUFFER_SIZE;
-
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0) || XEN_FALSE_P(samp_0), samp_0, XEN_ARG_1, caller, "a number");
-  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps) || XEN_FALSE_P(samps), samps, XEN_ARG_2, caller, "a number");
-  ASSERT_CHANNEL(caller, snd, chn_n, 3);
-
-  cp = get_cp(snd, chn_n, caller);
-  if (!cp) return(XEN_FALSE);
-
-  pos = to_c_edit_position(cp, edpos, caller, 6);
-  beg = beg_to_sample(samp_0, caller);
-  len = XEN_TO_C_INT64_T_OR_ELSE(samps, cp->edits[pos]->samples - beg);
-  if ((beg == 0) && (len == 0)) return(XEN_FALSE); /* empty file (channel) possibility */
-  if (len <= 0) XEN_OUT_OF_RANGE_ERROR(caller, 2, samps, "samples ~A <= 0?");
-  fvals = (mus_float_t *)malloc(len * sizeof(mus_float_t));
+  int num_to_read = MIX_FILE_BUFFER_SIZE;
   if (len < num_to_read) num_to_read = (int)len; /* we often want fewer than 2048 samps (MIX_FILE_BUFFER_SIZE) */
                                                  /* but this has less effect than I thought -- affects only copy case */
+  vct *v = NULL;
 
   sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, pos, num_to_read);
   if (sf)
     {
+      mus_float_t *fvals;
+      v = mus_vct_make(len);
+      fvals = v->data;
+
       if (len < (1 << 30))
 	{
 	  int j, jnum;
@@ -9140,12 +9128,37 @@ static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd, XEN chn_n, XEN edpos
 	}
       else
 	{
+	  mus_long_t i;
 	  for (i = 0; i < len; i++) 
 	    fvals[i] = read_sample(sf);
 	}
       free_snd_fd(sf);
     }
-  return(xen_make_vct(len, fvals));
+  
+  return(v);
+}
+
+
+static XEN samples_to_vct_1(XEN samp_0, XEN samps, XEN snd, XEN chn_n, XEN edpos, const char *caller)
+{
+  chan_info *cp;
+  mus_long_t len, beg;
+  int pos;
+
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_0) || XEN_FALSE_P(samp_0), samp_0, XEN_ARG_1, caller, "a number");
+  XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samps) || XEN_FALSE_P(samps), samps, XEN_ARG_2, caller, "a number");
+  ASSERT_CHANNEL(caller, snd, chn_n, 3);
+
+  cp = get_cp(snd, chn_n, caller);
+  if (!cp) return(XEN_FALSE);
+
+  pos = to_c_edit_position(cp, edpos, caller, 6);
+  beg = beg_to_sample(samp_0, caller);
+  len = XEN_TO_C_INT64_T_OR_ELSE(samps, cp->edits[pos]->samples - beg);
+  if ((beg == 0) && (len == 0)) return(XEN_FALSE); /* empty file (channel) possibility */
+  if (len <= 0) XEN_OUT_OF_RANGE_ERROR(caller, 2, samps, "samples ~A <= 0?");
+
+  return(vct_to_xen(run_samples_to_vct(beg, len, cp, pos)));
 }
 
 

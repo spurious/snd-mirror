@@ -7168,6 +7168,11 @@
 (test (format #f "~{~{~C~^ ~}~^ ~}" (list "hiho" "xxx")) "h i h o x x x")
 (test (format #f "~{~{~A~}~}" '((1 . 2) (3 . 4))) 'error)
 (test (format #f "~{~A~^ ~}" '((1 . 2) (3 . 4))) "(1 . 2) (3 . 4)") 
+(test (format #f "~10,'-T") "---------")
+(test (format #f "~10,'\\T") "\\\\\\\\\\\\\\\\\\")
+(test (format #f "~10,'\"T") "\"\"\"\"\"\"\"\"\"")
+(test (format #f "~10,'-T12345~20,'-T") "---------12345------")
+(test (format #f "~10,')T") ")))))))))")
 
 #|
 (do ((i 0 (+ i 1))) ((= i 256)) 
@@ -7485,7 +7490,7 @@
 (test (cadr '(1 ']x)) '']x)
 (test `1 1)
 ;; currently \ -> (), ` -> #<eof> etc -- not sure these matter
-(test (keyword? '#:#) #t) ; probably not for long... (Guile compatibility)
+;(test (keyword? '#:#) #t) ; probably not for long... (Guile compatibility)
 (test (char? #\#) #t)
 (num-test (car `(,.1d0)) .1)
 (num-test (car `(,.1S0)) .1)
@@ -13135,13 +13140,13 @@ who says the continuation has to restart the map from the top?
 
     
   (test (let ((c 1)) 
-	  (define* (a #:optional (b c)) b) 
+	  (define* (a :optional (b c)) b) 
 	  (set! c 2) 
 	  (a))
 	2)
   
   (test (let ((c 1)) 
-	  (define* (a #:optional (b c)) b) 
+	  (define* (a :optional (b c)) b) 
 	  (let ((c 32)) 
 	    (a)))
 	1)

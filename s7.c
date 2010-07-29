@@ -18258,11 +18258,13 @@ static token_t token(s7_scheme *sc)
 	    backchar(sc, sc->strbuf[d], pt);
 	}
 
+#if (!S7_DISABLE_DEPRECATED)
       if (c == ':')  /* turn #: into : -- this is for compatiblity with Guile, #:optional in particular */
 	{
 	  sc->strbuf[0] = ':';
 	  return(TOKEN_ATOM);
 	}
+#endif
 
       /* block comments in either #! ... !# */
       if (c == '!') 
@@ -26771,7 +26773,6 @@ s7_scheme *s7_init(void)
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
  * perhaps remove the `#(...) support -- is there any actual use for this?
  * PERHAPS: multidimensional hash tables
- * remove #: keyword (from guile)
  * add a type for environments so they don't evaluate themselves as lists
  *
  * someday we need to catch gmp exceptions: SIGFPE (exception=deliberate /0 -- see gmp/errno.c)
@@ -26785,7 +26786,7 @@ s7_scheme *s7_init(void)
  *   where would the stack be? this also requires a type check in let
  *   ^ there's room for a pointer in the string field, I think, and we're already doing symbol checks
  *   and call/cc back into local context with special bindings -- should these be re-set?  (they're globals)
- *      perhaps the unwind op during call/cc exit could save info for the later return
+ *      perhaps the unwind op during call/cc exit could save info for the later return (but this is only a partial solution)
      (set! (symbol-access special-sym) 
        (list #f #f
              (lambda (sym val)

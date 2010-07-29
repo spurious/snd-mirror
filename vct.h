@@ -55,6 +55,7 @@ MUS_EXPORT vct *mus_vct_free(vct *v);
 MUS_EXPORT vct *mus_vct_copy(vct *vc);
 MUS_EXPORT double mus_vct_peak(vct *v);
 
+MUS_EXPORT XEN vct_to_xen(vct *v);
 MUS_EXPORT XEN xen_list_to_vct(XEN lst);
 MUS_EXPORT vct *xen_to_vct(XEN arg);
 MUS_EXPORT XEN xen_make_vct(mus_long_t len, mus_float_t *data);

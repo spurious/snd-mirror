@@ -1332,11 +1332,10 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 ;;; -------- cross-synthesis
 ;;;
 ;;; CLM version is in clm.html
-;;; TODO: rewrite cross-synthesis, voiced->unvoiced, and pulse-voice to use the run macro
 
 (define (cross-synthesis cross-snd amp fftsize r)
   "(cross-synthesis cross-snd amp fftsize r) does cross-synthesis between 'cross-snd' (a sound object) and the currently 
-selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
+selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"
   (let* ((freq-inc (/ fftsize 2))
 	 (fdr (make-vct fftsize))
 	 (fdi (make-vct fftsize))
@@ -1356,12 +1355,13 @@ selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
     (set! (mus-srate) old-srate)
     (lambda (inval)
       (if (= ctr freq-inc)
-	  (begin
-	    (set! fdr (channel->vct inctr fftsize cross-snd 0))
+	  (let ((fdtmp (channel->vct inctr fftsize cross-snd 0)))
 	    (set! inctr (+ inctr freq-inc))
-	    (spectrum fdr fdi #f 2)
-	    (vct-subtract! fdr spectr)
-	    (vct-scale! fdr (/ 1.0 freq-inc))
+	    (spectrum fdtmp fdi #f 2)
+	    (vct-subtract! fdtmp spectr)
+	    (vct-scale! fdtmp (/ 1.0 freq-inc))
+	    (vct-scale! fdr 0.0)
+	    (vct-add! fdr fdtmp)
 	    (set! ctr 0)))
       (set! ctr (+ ctr 1))
       (vct-add! spectr fdr)
@@ -1393,22 +1393,20 @@ selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
     (do ((i 0 (+ i 1)))
 	((= i freq-inc))
       (set! (formants i) (make-formant (* i bin) radius)))
-    (call-with-exit                 ; setup non-local exit (for C-g interrupt)
-     (lambda (break)                ;   now (break value) will exit the call-with-exit returning value
+    (run
        (do ((k 0 (+ 1 k)))
 	   ((= k outlen))
 	 (let ((outval 0.0))
 	   (if (= ctr freq-inc)
-	       (begin
-		 (if (c-g?)               ; let interface run
-		     (break "interrupted")) ;   if C-g exit the loop returning the string "interrupted"
-		 (set! fdr (channel->vct inctr fftsize snd chn))
-		 (let ((pk (vct-peak fdr)))
+	       (let ((fdtmp (channel->vct inctr fftsize snd chn)))
+		 (let ((pk (vct-peak fdtmp)))
 		   (if (> pk old-peak-amp) (set! old-peak-amp pk)))
-		 (spectrum fdr fdi #f 2)
+		 (spectrum fdtmp fdi #f 2)
 		 (set! inctr (+ hop inctr))
-		 (vct-subtract! fdr spectr)
-		 (vct-scale! fdr (/ 1.0 freq-inc))
+		 (vct-subtract! fdtmp spectr)
+		 (vct-scale! fdtmp (/ 1.0 freq-inc))
+		 (vct-scale! fdr 0.0)
+		 (vct-add! fdr fdtmp)
 		 (set! ctr 0)))
 	   (set! ctr (+ ctr 1))
 	   (vct-add! spectr fdr)
@@ -1416,8 +1414,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
 	   (if (> (abs outval) new-peak-amp) (set! new-peak-amp (abs outval)))
 	   (set! (out-data k) outval)))
        (vct-scale! out-data (* amp (/ old-peak-amp new-peak-amp)))
-       (vct->channel out-data 0 (max len outlen) snd chn #f 
-		     (format #f "voiced->unvoiced ~A ~A ~A ~A" amp fftsize r tempo))))))
+       (vct->channel out-data 0 (max len outlen) snd chn))))
 
 
 ;;; very similar but use ncos (glottal pulse train?) instead of white noise
@@ -1441,21 +1438,20 @@ selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
     (do ((i 0 (+ i 1)))
 	((= i freq-inc))
       (set! (formants i) (make-formant (* i bin) radius)))
-    (call-with-exit                 ; setup non-local exit (for C-g interrupt)
-     (lambda (break)
+    (run
        (do ((k 0 (+ 1 k)))
 	   ((= k len))
 	 (let ((outval 0.0))
 	   (if (= ctr freq-inc)
-	       (begin
-		 (if (c-g?) (break "interrupted"))
-		 (set! fdr (channel->vct inctr fftsize snd chn))
-		 (let ((pk (vct-peak fdr)))
+	       (let ((fdtmp (channel->vct inctr fftsize snd chn)))
+		 (let ((pk (vct-peak fdtmp)))
 		   (if (> pk old-peak-amp) (set! old-peak-amp pk)))
-		 (spectrum fdr fdi #f 2)
+		 (spectrum fdtmp fdi #f 2)
 		 (set! inctr (+ freq-inc inctr))
-		 (vct-subtract! fdr spectr)
-		 (vct-scale! fdr (/ 1.0 freq-inc))
+		 (vct-subtract! fdtmp spectr)
+		 (vct-scale! fdtmp (/ 1.0 freq-inc))
+		 (vct-scale! fdr 0.0)
+		 (vct-add! fdr fdtmp)
 		 (set! ctr 0)))
 	   (set! ctr (+ ctr 1))
 	   (vct-add! spectr fdr)
@@ -1463,7 +1459,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 1) .5 128 6.0))"
 	   (if (> (abs outval) new-peak-amp) (set! new-peak-amp (abs outval)))
 	   (set! (out-data k) outval)))
        (vct-scale! out-data (* amp (/ old-peak-amp new-peak-amp)))
-       (vct->channel out-data 0 (max len len) snd chn)))))
+       (vct->channel out-data 0 (max len len) snd chn))))
 
 ;;; (pulse-voice 80 20.0 1.0 1024 0.01)
 ;;; (pulse-voice 80 120.0 1.0 1024 0.2)
