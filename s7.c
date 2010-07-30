@@ -221,7 +221,7 @@
  *    format
  *    error handlers, stacktrace, trace
  *    sundry leftovers
- *    multiple-values, quasiquote
+ *    multiple-values, quasiquote, special variables
  *    eval
  *    threads
  *    multiprecision arithmetic
@@ -18029,17 +18029,19 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
   /* it's a list, so return the list with each element handled as above.
    *    we try to support dotted lists which makes the code much messier.
    */
+
   {
     int len, i, loc;
     s7_pointer orig, bq, old_scw;
     bool dotted = false;
-    
+
     len = s7_list_length(sc, form);
     if (len < 0)
       {
 	len = -len;
 	dotted = true;
       }
+
     old_scw = sc->w;
     loc = s7_gc_protect(sc, old_scw);
 
@@ -18053,13 +18055,28 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
       {
 	for (orig = form, bq = cdr(sc->w), i = 0; i < len; i++, orig = cdr(orig), bq = cdr(bq))
 	  {
-	    if (car(orig) == sc->UNQUOTE) /* unquote_splicing is also possible here, I suppose, but does it make any sense? */
+	    if ((is_pair(orig)) && 
+		((cadr(orig) == sc->UNQUOTE) ||
+		 (cadr(orig) == sc->UNQUOTE_SPLICING)))
 	      {
-		/* `(1 2 . ,(list 3 4)) -> (qq (1 2 unquote (list 3 4))) -> '(1 2 3 4)) */
-		car(bq) = make_list_3(sc, sc->QQ_APPLY, sc->QQ_VALUES, cadr(orig));
-		cadr(bq) = sc->NO_VALUE;
+		/* `(1 . ,2) -> '(1 unquote 2) -> '(1 . 2) 
+		 */
+		car(bq) = g_quasiquote_1(sc, car(orig));
 		cdr(bq) = sc->NIL;
-		break;              /* we just hit the (swallowed) dot, so we must be done */
+		if (cadr(orig) == sc->UNQUOTE)
+		  sc->w = make_list_3(sc, sc->QQ_APPEND, sc->w, caddr(orig));
+		else
+		  { 
+		    /* CL doesn't accept this case at all, but we accept `(1 . ,@('(2 3))) -> '(1 2 3)
+		     */
+		    if ((!is_pair(caddr(orig))) ||
+			(cdddr(orig) != sc->NIL) ||
+			(!is_pair(caaddr(orig))))
+		      return(read_error(sc, "stray dot?"));
+
+		    sc->w = make_list_3(sc, sc->QQ_APPEND, sc->w, caaddr(orig));
+		  }
+		break;
 	      }
 	    else car(bq) = g_quasiquote_1(sc, car(orig));
 	  }
@@ -26860,6 +26877,8 @@ s7_scheme *s7_init(void)
  * perhaps remove the `#(...) support -- is there any actual use for this?
  * PERHAPS: multidimensional hash tables
  * add a type for environments so they don't evaluate themselves as lists
+ * figure out how to make symbol-access local to the current binding
+ * TODO: special in C and fix ws etc
  *
  * someday we need to catch gmp exceptions: SIGFPE (exception=deliberate /0 -- see gmp/errno.c)
  *   #include <signal.h>

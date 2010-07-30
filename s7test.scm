@@ -11265,6 +11265,16 @@
 (test (call-with-exit (lambda (return) (apply return (list  (cons 1 2))) (format #t "; call-with-exit: we shouldn't be here!"))) (cons 1 2))
 (test (call/cc (lambda (return) (apply return (list  (cons 1 2))) (format #t "; call/cc: we shouldn't be here!"))) (cons 1 2))
 
+(test (let ((x 0))
+	(define (quit z1) (z1 1) (set! x 1))
+	(call-with-exit
+	 (lambda (z)
+	   (set! x 2)
+	   (quit z)
+	   (set! x 3)))
+	x)
+      2)
+
 (test (let ((x (call/cc (lambda (k) k))))
 	(x (lambda (y) "hi")))
       "hi")
@@ -12356,6 +12366,28 @@ who says the continuation has to restart the map from the top?
   (test `#(1 `(1 ,@,quasi2 ,@,quasi3)) '#(1 `(1 ,@(a b) ,@(c d))))
   (test `#(1 `(1 ,(,@quasi2 x) ,(y ,@quasi3))) '#(1 `(1 ,(a b x) ,(y c d))))
   (test `(1 `#(1 ,(,@quasi2 x) ,(y ,@quasi3))) '(1 `#(1 ,(a b x) ,(y c d)))))
+
+(let ((x 3)
+      (y '(a b c)))
+  (test `(1 . ,2) '(1 . 2))
+  (test `(1 2 . ,3) '(1 2 . 3))
+  (test `(1 . ,(list 2 3)) '(1 2 3))
+  (test `(1 ,@(list 2 3)) '(1 2 3))
+  (test `(1 . ,@('(2 3))) '(1 2 3))
+  (test `(1 ,(list 2 3)) '(1 (2 3)))
+  (test `(1 . (list 2 3)) '(1 list 2 3))
+  (test `(x . ,x) '(x . 3))
+  (test `(y . ,y) '(y a b c))
+  (test `(,x ,@y ,x) '(3 a b c 3))
+  (test `(,x ,@y . ,x) '(3 a b c . 3))
+  (test `(,y ,@y) '((a b c) a b c))
+  (test `(,@y . ,y) '(a b c a b c))
+  (test (object->string `(,y . ,y)) "(#1=(a b c) . #1#)")
+  (test (object->string `(y ,y ,@y ,y . y)) "(y #1=(a b c) a b c #1# . y)")
+  )
+
+;;; in clisp `(,y . ,@(y)) -> *** - READ: the syntax `( ... . ,@form) is invalid
+
 
 (test (let ((hi (lambda (a) `(+ 1 ,a))))
 	(hi 2))
