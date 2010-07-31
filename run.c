@@ -15626,6 +15626,8 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
       num_args = s7_list_length(s7, all_args);
       if (s7_is_symbol(function))
 	{
+	  /* fprintf(stderr, "walk: check for %s %d\n", s7_object_to_c_string(s7, function), s7_is_macro(s7, function)); */
+	  
 	  walker = scheme_walker(function);
 	  if (s7_is_c_pointer(walker))
 	    {

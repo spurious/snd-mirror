@@ -14062,21 +14062,24 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
 }
 
 
-static s7_pointer g_is_macro(s7_scheme *sc, s7_pointer args)
+bool s7_is_macro(s7_scheme *sc, s7_pointer x)
 {
-  #define H_is_macro "(macro? arg) returns #t is its argument is a macro"
-  s7_pointer x;
-
-  x = car(args);
   if ((is_macro(x)) || (is_bacro(x)))
-    return(sc->T);
+    return(true);
 
   if (s7_is_symbol(x))
     {
       x = s7_symbol_local_value(sc, x, sc->envir);
-      return(make_boolean(sc, is_macro(x) || is_bacro(x)));
+      return(is_macro(x) || is_bacro(x));
     }
-  return(sc->F);
+  return(false);
+}
+
+
+static s7_pointer g_is_macro(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_macro "(macro? arg) returns #t is its argument is a macro"
+  return(make_boolean(sc, s7_is_macro(sc, car(args))));
 }
 
 
@@ -18818,8 +18821,6 @@ static s7_pointer g_special(s7_scheme *sc, s7_pointer args)
     return(symbol_value(slot));
   return(eval_symbol_1(sc, symbol)); /* give unbound variable hook a chance, and so on */
 }
-
-/* TODO: test that special variables are local to threads if bound */
 
 
 
@@ -26800,11 +26801,22 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "dump-heap", g_dump_heap, 0, 0, false, "write heap contents to heap.data"); 
 #endif
 
-  /* macroexpand */
-  s7_eval_c_string(sc, "(define-macro (macroexpand __mac__) `(,(procedure-source (car __mac__)) ',__mac__))");
+  /* macroexpand 
+   *   needs to be a bacro so locally defined macros are expanded:
+   *   (let () (define-macro (hi a) `(+ ,a 1)) (macroexpand (hi 2)))
+   */
+  s7_eval_c_string(sc, "(define-bacro (macroexpand __mac__) `(,(procedure-source (car __mac__)) ',__mac__))");
+
+  /* explicit quasiquote (not the backquote business)
+   */
   s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, "quasiquote");
+
+  /* dynamic binding access
+   */
   s7_define_macro(sc, "special", g_special, 1, 0, false, H_special);
 
+  /* letrec* -- the less said the better...
+   */
   s7_eval_c_string(sc, "(define-macro (letrec* bindings . body)                        \n\
                           (if (null? body)                                             \n\
                               (error 'syntax-error \"letrec* has no body\")            \n\
@@ -26890,13 +26902,11 @@ s7_scheme *s7_init(void)
  *         (ideally it would be wrapped inside the evaluator)
  *       perhaps use procedure-source?
  *
- * :allow-other-keys in lambda* ("lambda!")
+ * TODO: :allow-other-keys in lambda* ("lambda!")
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
  * perhaps remove the `#(...) support -- is there any actual use for this?
  * PERHAPS: multidimensional hash tables
- * add a type for environments so they don't evaluate themselves as lists
- * figure out how to make symbol-access local to the current binding
- * TODO: special in C and fix ws etc
+ * TODO: how to call a scheme macro from C?
  *
  * someday we need to catch gmp exceptions: SIGFPE (exception=deliberate /0 -- see gmp/errno.c)
  *   #include <signal.h>

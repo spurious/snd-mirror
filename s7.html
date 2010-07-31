@@ -846,7 +846,8 @@ symbol-set!
 (#(1 123 3) (x 1))
 </pre>
 
-<p>By the way, bacros solve part of our original problem:
+<p>s7 uses a bacro to implement macroexpand so that it can handle locally defined macros.
+By the way, bacros solve part of our original problem:
 </p>
 
 <pre>
@@ -865,9 +866,9 @@ symbol-set!
 (define-macro (i_ arg)
   `(with-environment (initial-environment) ,arg))
 
-(define-bacro* (mac b (env (current-environment)))
+(define-bacro* (mac b)
   `((i_ let) ((a 12)) 
-     ((i_ +) a (with-environment ',env ,b))))
+     ((i_ +) a ,(special b)))) ; see next section, "special" returns the dynamic binding
 
 (let ((a 32) 
       (+ -)) 
@@ -875,9 +876,9 @@ symbol-set!
 44
 </pre>
 
-<p>We need the bacro so that env's default value is evaluated in the call time environment.
-Ideally, that environment would be easily accessible, but I can't think of a way to implement
-it that doesn't slow down normal cases.  Maybe a reader macro would look better:
+<p>We need the bacro so that we can use "special" to get the
+macro argument's value in its environment.
+Perhaps a reader macro would make this look better:
 </p>
 
 <pre>
@@ -888,29 +889,15 @@ it that doesn't slow down normal cases.  Maybe a reader macro would look better:
                        ,(string-&gt;symbol (substring str 1)))))
 	*#readers*))
 
-(define-macro (&amp;_ arg env)
-  `(with-environment ',env ,arg))
-
-(define-bacro* (mac b (env (current-environment)))
+(define-bacro* (mac b)
   `(#_let ((a 12)) 
-     (#_+ a (&amp;_ ,b ,env))))
+     (#_+ a ,(special b))))
 </pre>
 
 <p>Guaranteed hygienic!  
 I'm not sure it's a big improvement over immaculos or gensyms, but it works.
 </p>
 
-<!--
-;;; -------- this also works:
-(define-macro (i_ arg)
-  `(with-environment (initial-environment) ,arg))
-
-(define-macro* (mac b (env (current-environment)))
-  `((i_ let) ((a 12)) 
-     ((i_ +) a (with-environment ,env ,b))))
-
-(let ((a 32) (+ -)) (let ((e (current-environment))) (mac a e)))
--->
 
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
@@ -975,7 +962,6 @@ env reference!  This code is structurally equivalent to
 <p>because the 'env' argument is in the current environment and points to it at the same time.
 This (or its CL equivalent) will cause stack overflow in sbcl and clisp, and
 will segfault s7 due to a stack overflow internally.
-I need to figure out how to make the call-time environment accessible...
 </p>
 
 
@@ -2351,8 +2337,16 @@ shared, code like this is problematic:
 
 <p>Lots of temporaries are being allocated here, causing the s7 internal new-cell lock to be set
 and unset so often that almost 20% of the compute time is wasted.
-If possible, use the run macro in the thread function.
+Of course in real life you'd get the nth Fibonacci number from the formula for it:
 </p>
+
+<pre>
+(define (fib n)
+  (let ((phi (/ (+ 1 (sqrt 5)) 2)))
+     (floor (/ (- (expt phi n)        ; "floor" to return an integer
+                  (expt (- 1 phi) n)) 
+               (sqrt 5)))))
+</pre>
 
 </blockquote>
 </small>
@@ -4094,6 +4088,35 @@ have any number after, for example, #b:
     &gt; #o17.5+i
     15.625+1i
 </pre>
+
+
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>Here are some additional changes I'd make to s7 if I didn't care about compatibility with other Schemes:
+</p>
+
+<pre>
+   remove the exact/inexact distinction including #i and #e
+   remove `#(...) support (quasiquoted vector constants)
+   remove *-ci functions
+   remove string&lt;-&gt;list and vector&lt;-&gt;list 
+   remove call-with-values and its friends
+   remove char-ready?
+</pre>
+
+<p>and perhaps:
+</p>
+
+<pre>
+   remove even? and odd?
+   remove the 4-way cxxxxr functions
+   change eof-object? to eof? or better end-of-input?
+   add a way to tell that a port is closed
+   add file-exists?, directory?, and delete-file
+</pre>
+
 
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">

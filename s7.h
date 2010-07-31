@@ -388,6 +388,7 @@ const char *s7_format(s7_scheme *sc, s7_pointer args);                      /* (
 
 
 bool s7_is_procedure(s7_pointer x);                                         /* (procedure? x) */
+bool s7_is_macro(s7_scheme *sc, s7_pointer x);                              /* (macro? x) */
 s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);                /* (procedure-source x) if it can be found */
 s7_pointer s7_procedure_environment(s7_pointer p);
 const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p);        /* (procedure-documentation x) if any (don't free the string) */
@@ -762,6 +763,7 @@ void s7_mark_object(s7_pointer p);
  *
  * 30-July:   special macro for access to dynamic binding.
  *            s7_symbol_special_value for C-side access to dynamic bindings.
+ *            s7_is_macro.
  * 22-July:   s7_make_character takes unsigned int, rather than int.
  *            added symbol function for funny symbol names.
  * 12-July:   initial-environment.
