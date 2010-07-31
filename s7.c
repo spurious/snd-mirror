@@ -18775,6 +18775,22 @@ static s7_pointer find_dynamic_symbol(s7_scheme *sc, s7_pointer symbol)
 }
 
 
+s7_pointer s7_symbol_special_value(s7_scheme *sc, s7_pointer symbol)
+{
+  s7_pointer slot;
+
+  if (is_not_local(symbol))
+    slot = symbol_global_slot(symbol);
+  else slot = find_dynamic_symbol(sc, symbol);
+  if (slot == sc->NIL)
+    slot = eval_symbol_1(sc, symbol); /* give unbound variable hook a chance, and so on */
+
+  if (slot != sc->NIL) 
+    return(symbol_value(slot));
+  return(sc->UNDEFINED);
+}
+
+
 static s7_pointer g_special(s7_scheme *sc, s7_pointer args)
 {
   #define H_special "(special symbol) returns the dynamic (thread-local) binding of the symbol"
@@ -21068,6 +21084,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "with-environment takes an environment argument: ~A", sc->value));
 
       sc->envir = sc->value;                             /* in new env... */
+      push_stack(sc, opcode(OP_LET_UNWIND), sc->NIL, sc->NIL);
+
       sc->code = cdr(sc->code);                          /*   handle body */
       goto BEGIN;
 

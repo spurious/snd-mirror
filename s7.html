@@ -1198,15 +1198,6 @@ with this mechanism, including property lists.
 	       (define ,sym ,val)
 	       (set! (symbol-access ',sym) (list #f ,setter ,binder))
 	       ',sym)))))
-
-A drawback of symbol-access is that there is only one symbol for each name; it's tricky
-to apply these accessors to just the local binding of a symbol.  
-
-problems: symbol-access affects all other uses of symbol (it should be local)
-          symbol-access needs the symbol -- there should be a way to have anonymous setters
-	  (let ((x (with-setter 32 (lambda (val) (display "new value...") val)))) ...)
-          use make-type!  but this assumes val as applicable object
-
 -->
 
 <br>
@@ -1214,7 +1205,7 @@ problems: symbol-access affects all other uses of symbol (it should be local)
 </small>
 
 
-<p>But fluid-ref is a kludge.
+<p>But fluid-let is not needed;
 s7 provides access to the dynamic binding of any variable at any time through the
 <b>special</b> macro: <code>(special x)</code>.
 </p>
@@ -1231,6 +1222,21 @@ s7 provides access to the dynamic binding of any variable at any time through th
 &gt; x
 32
 </pre>
+
+<p>The fluid-let code above becomes:
+</p>
+
+<pre>
+(let ()
+  (define x 32)
+  (let ((y 0))
+    (define (gx) (<em class=red>special</em> x))
+    (let ((x 100))
+      (let ((x 12))
+        (set! y (gx))))
+    (list x y)))
+</pre>
+
 
 <p>I think this is an improvement over CL's special variables because "special"
 makes the use of the dynamic binding explicit, rather than depending on forgetful
