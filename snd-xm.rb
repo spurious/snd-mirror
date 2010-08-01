@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Changed: Thu Apr 15 13:23:22 CEST 2010
+# Changed: Sat Jul 31 22:43:34 CEST 2010
 
 # Commentary:
 #
@@ -966,14 +966,6 @@ module Snd_Gtk
       if @clear_cb
         @clear_button = Rgtk_button_new_with_label(@clear)
         Rgtk_widget_set_name(@clear_button, "clear_button")
-        # doit_again_button_color
-        Rgtk_rc_parse_string(%Q{
-style "clear" = "default_button"
-{
-  bg[NORMAL] = "darkolivegreen1"
-  bg[PRELIGHT] = "darkolivegreen1"
-}
-widget "*.clear_button" style "clear"})
       end
       Rgtk_window_set_title(RGTK_WINDOW(@dialog), @label)
       Rgtk_container_set_border_width(RGTK_CONTAINER(@dialog), 10)
@@ -1684,9 +1676,6 @@ adds a label to the minibuffer area showing the current free space (for use with
                                            RXmNheight, 400,
                                            RXmNwidth, 400,
                                            RXmNbackground, basic_color])
-      RXtVaSetValues(RXmMessageBoxGetChild(@@dialog, RXmDIALOG_OK_BUTTON),
-                     [RXmNarmColor, pushed_button_color,
-                       RXmNbackground, quit_button_color])
       RXtAddCallback(@@dialog, RXmNokCallback, lambda do |w, c, i| RXtUnmanageChild(@@dialog) end)
       RXmStringFree(xdismiss)
       RXmStringFree(titlestr)
@@ -2052,14 +2041,6 @@ adds a label to the minibuffer area showing the current free space (for use with
       RXmStringFree(xdoit)
       RXmStringFree(xdismiss)
       RXmStringFree(xhelp)
-      [RXmDIALOG_OK_BUTTON,
-       RXmDIALOG_CANCEL_BUTTON,
-       RXmDIALOG_HELP_BUTTON].zip([doit_button_color,
-                                   quit_button_color,
-                                   help_button_color]) do |button, color|
-        RXtVaSetValues(RXmMessageBoxGetChild(@dialog, button),
-                       [RXmNarmColor, pushed_button_color, RXmNbackground, color])
-      end
       if defined?(R_XEditResCheckMessages())
         RXtAddEventHandler(RXtParent(@dialog), 0, true,
                            lambda do |w, c, i, f|
@@ -2074,19 +2055,15 @@ adds a label to the minibuffer area showing the current free space (for use with
                      lambda do |w, c, i| @help_cb.call(w, c, i) end)
       if @clear_cb
         @clear_button = RXtCreateManagedWidget(@clear, RxmPushButtonWidgetClass, @dialog,
-                                               [RXmNbackground, doit_again_button_color,
-                                                RXmNforeground, black_pixel,
-                                                RXmNhighlightColor, black_pixel,
-                                                RXmNarmColor, pushed_button_color])
+                                               [RXmNforeground, black_pixel,
+                                                RXmNhighlightColor, black_pixel])
         RXtAddCallback(@clear_button, RXmNactivateCallback,
                        lambda do |w, c, i| @clear_cb.call(w, c, i) end)
       end
       if @reset_cb
         @reset_button = RXtCreateManagedWidget(@reset, RxmPushButtonWidgetClass, @dialog,
-                                               [RXmNbackground, reset_button_color,
-                                                RXmNforeground, black_pixel,
-                                                RXmNhighlightColor, black_pixel,
-                                                RXmNarmColor, pushed_button_color])
+                                               [RXmNforeground, black_pixel,
+                                                RXmNhighlightColor, black_pixel])
         RXtAddCallback(@reset_button, RXmNactivateCallback,
                        lambda do |w, c, i| @reset_cb.call(w, c, i) end)
       end

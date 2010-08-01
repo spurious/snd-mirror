@@ -868,7 +868,7 @@ By the way, bacros solve part of our original problem:
 
 (define-bacro* (mac b)
   `((i_ let) ((a 12)) 
-     ((i_ +) a ,(special b)))) ; see next section, "special" returns the dynamic binding
+     ((i_ +) a ,(symbol-&gt;value b))))
 
 (let ((a 32) 
       (+ -)) 
@@ -876,7 +876,7 @@ By the way, bacros solve part of our original problem:
 44
 </pre>
 
-<p>We need the bacro so that we can use "special" to get the
+<p>We need the bacro so that we can use "symbol-&gt;value" to get the
 macro argument's value in its environment.
 Perhaps a reader macro would make this look better:
 </p>
@@ -891,7 +891,7 @@ Perhaps a reader macro would make this look better:
 
 (define-bacro* (mac b)
   `(#_let ((a 12)) 
-     (#_+ a ,(special b))))
+     (#_+ a ,(symbol-&gt;value b))))
 </pre>
 
 <p>Guaranteed hygienic!  
@@ -1205,6 +1205,8 @@ s7 provides access to the dynamic binding of any variable at any time through th
 35
 &gt; (let ((x 3)) (set! x 1) (fx))
 33
+&gt; (let ((x 1)) (set! (special x) 12) x)
+12
 &gt; x
 32
 </pre>
@@ -1228,7 +1230,7 @@ s7 provides access to the dynamic binding of any variable at any time through th
 makes the use of the dynamic binding explicit, rather than depending on forgetful
 programmers and "*"'s in variable names.  It also makes it easy to use either
 binding at any time.  Each thread has its own stack, so any global variable
-that is bound locally in a thread is specific to that thread.
+that is bound locally in a thread is specific to that thread.  
 </p>
 
 
@@ -3684,6 +3686,7 @@ bind it to something else, which is asking for confusion).
 <li>for-each and map accept different length arguments; the operation stops when any argument reaches its end.
 <li>letrec*, but without conviction.
 <li>set! and *-set! return the new value, not #&lt;unspecified&gt;.
+<li>port-closed?
 </ul>
 
 <small>
@@ -4113,7 +4116,6 @@ have any number after, for example, #b:
    remove even? and odd?
    remove the 4-way cxxxxr functions
    change eof-object? to eof? or better end-of-input?
-   add a way to tell that a port is closed
    add file-exists?, directory?, and delete-file
 </pre>
 

@@ -299,7 +299,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_ENV2,
 	      OP_FOR_EACH, OP_MAP, OP_BARRIER, OP_DEACTIVATE_GOTO,
 	      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, OP_BACRO, OP_APPLY_WITHOUT_TRACE,
-	      OP_LET_UNWIND,
+	      OP_LET_UNWIND, OP_SPECIAL, OP_SET_SPECIAL,
 	      OP_MAX_DEFINED} opcode_t;
 
 static const char *op_names[OP_MAX_DEFINED] = 
@@ -316,12 +316,12 @@ static const char *op_names[OP_MAX_DEFINED] =
    "error-quit", "unwind-input", "unwind-output", "trace-return", "error-hook-quit", 
    "trace-hook-quit", "with-environment", "with-environment", "with-environment", "for-each", "map", 
    "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro", "apply-without-trace", 
-   "let_unwind"
+   "let_unwind", "special", "set-special"
 };
 
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 84 max num chars (256) */
+/* this needs to be at least OP_MAX_DEFINED = 86 max num chars (256) */
 /* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -537,7 +537,7 @@ struct s7_scheme {
   s7_pointer global_env;              /* global environment */
   s7_pointer initial_env;             /* original bindings of predefined functions */
   
-  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, UNQUOTE_SPLICING, MACROEXPAND;
+  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, UNQUOTE_SPLICING, MACROEXPAND, SPECIAL;
   s7_pointer APPLY, VECTOR, CDR, SET, QQ_VALUES, QQ_LIST, QQ_APPLY, QQ_APPEND;
   s7_pointer ERROR, WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO;
   s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, SYNTAX_ERROR;
@@ -9129,6 +9129,17 @@ static char *describe_port(s7_scheme *sc, s7_pointer p)
 }
 
 
+static s7_pointer g_is_port_closed(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_port_closed "(port-closed? p) returns #t if the port p is closed."
+  s7_pointer x;
+  x = car(args);
+  if ((is_input_port(x)) || (is_output_port(x)))
+    return(make_boolean(sc, port_is_closed(x)));
+  return(s7_wrong_type_arg_error(sc, "port-closed?", 1, x, "a port"));      
+}
+
+
 static s7_pointer g_port_line_number(s7_scheme *sc, s7_pointer args)
 {
   #define H_port_line_number "(port-line-number input-file-port) returns the current read line number of port"
@@ -9183,7 +9194,7 @@ bool s7_is_input_port(s7_scheme *sc, s7_pointer p)
 
 static s7_pointer g_is_input_port(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_input_port "(input-port? p) returns #t is p is an input port"
+  #define H_is_input_port "(input-port? p) returns #t if p is an input port"
   return(make_boolean(sc, s7_is_input_port(sc, car(args))));
 }
 
@@ -9197,7 +9208,7 @@ bool s7_is_output_port(s7_scheme *sc, s7_pointer p)
 
 static s7_pointer g_is_output_port(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_output_port "(output-port? p) returns #t is p is an output port"
+  #define H_is_output_port "(output-port? p) returns #t if p is an output port"
   return(make_boolean(sc, s7_is_output_port(sc, car(args))));
 }
 
@@ -9331,7 +9342,7 @@ static s7_pointer g_is_char_ready(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_is_eof_object(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_eof_object "(eof-object? val) returns #t is val is the end-of-file object"
+  #define H_is_eof_object "(eof-object? val) returns #t if val is the end-of-file object"
   return(make_boolean(sc, car(args) == sc->EOF_OBJECT));
 }
 
@@ -14089,7 +14100,7 @@ bool s7_is_macro(s7_scheme *sc, s7_pointer x)
 
 static s7_pointer g_is_macro(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_macro "(macro? arg) returns #t is its argument is a macro"
+  #define H_is_macro "(macro? arg) returns #t if 'arg' is a macro"
   return(make_boolean(sc, s7_is_macro(sc, car(args))));
 }
 
@@ -18805,12 +18816,15 @@ s7_pointer s7_symbol_special_value(s7_scheme *sc, s7_pointer symbol)
 }
 
 
-static s7_pointer g_special(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_special(s7_scheme *sc, s7_pointer symbol)
 {
   #define H_special "(special symbol) returns the dynamic (thread-local) binding of the symbol"
-  /* car(args) is a symbol, we return its dynamic binding */
-
-  /* the usual value lookup runs through the current environment checking every frame,
+  /* arg is a symbol, we return its dynamic binding 
+   *
+   * this can't be a function because that would evaluate its argument, and
+   *   it can't be a macro because that would evaluate the value!
+   *
+   * the usual value lookup runs through the current environment checking every frame,
    *   the dynamic environment however is implicit in the stack, so we run through
    *   every stack entry checking car(envir), then the global env.  If symbol is not local,
    *   we can go straight to the global value without searching. This depends on the
@@ -18818,10 +18832,7 @@ static s7_pointer g_special(s7_scheme *sc, s7_pointer args)
    *   an inordinate number of lets), but it's simple and works in call/cc and error cases,
    *   and is automatically locally bound in a thread.
    */
-  
-  s7_pointer symbol, slot;
-  symbol = car(args);  /* "special" is a macro, so this is unevaluated */
-
+  s7_pointer slot;
   if (!s7_is_symbol(symbol))
     return(s7_wrong_type_arg_error(sc, "special", 0, symbol, "a symbol"));
 
@@ -18833,6 +18844,22 @@ static s7_pointer g_special(s7_scheme *sc, s7_pointer args)
   return(eval_symbol_1(sc, symbol)); /* give unbound variable hook a chance, and so on */
 }
 
+
+static s7_pointer g_set_special(s7_scheme *sc, s7_pointer symbol, s7_pointer value)
+{
+  s7_pointer slot;
+  if (!s7_is_symbol(symbol))
+    return(s7_wrong_type_arg_error(sc, "set! (special...) ...)", 0, symbol, "a symbol"));
+
+  if (is_not_local(symbol))
+    slot = symbol_global_slot(symbol);
+  else slot = find_dynamic_symbol(sc, symbol);
+  if (slot != sc->NIL) 
+    set_symbol_value(slot, value);
+  else return(eval_error(sc, "can't find dynamic binding for ~S", symbol));
+  
+  return(value);
+}
 
 
 static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op) 
@@ -19923,8 +19950,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       sc->code = sc->value;
       goto EVAL;
-      
-      
+
+
     case OP_LAMBDA: 
       /* this includes unevaluated symbols (direct symbol table refs) in macro arg list */
       if ((!is_pair(sc->code)) ||
@@ -20025,6 +20052,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = car(sc->code);
       goto START;
 
+      
+    case OP_SPECIAL:
+      if (!is_pair(sc->code))
+	return(eval_error(sc, "special: no argument? ~A", sc->code));
+      if (cdr(sc->code) != sc->NIL)
+	return(eval_error(sc, "special: too many arguments? ~A", sc->code));
+      sc->value = g_special(sc, car(sc->code));
+      goto START;
+      
       
     case OP_DEFINE_CONSTANT1:
       /* define-constant -> OP_DEFINE_CONSTANT -> OP_DEFINE..1, then back to here */
@@ -20264,7 +20300,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	    default:                                         /* (set! (1 2) 3) */
 	      if (s7_is_symbol(caar(sc->code)))              /* (set! (asdf) 1) */
-		return(eval_error(sc, "set unbound variable? ~A", caar(sc->code)));
+		{
+		  if (caar(sc->code) == sc->SPECIAL)         /* (set! (special x) ...) */
+		    {
+		      push_stack(sc, opcode(OP_SET_SPECIAL), sc->NIL, car(sc->code));
+		      sc->code = cadr(sc->code);             /* save the (special...) for now and */
+		      goto EVAL;                             /* get the value */
+		    }
+		  return(eval_error(sc, "set unbound variable? ~A", caar(sc->code)));
+		}
 	      return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
 	    }
 	}
@@ -20294,6 +20338,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "can't set! ~A", sc->code));
       return(eval_error(sc, "set! ~A: unbound variable", sc->code));
       
+
+    case OP_SET_SPECIAL:
+      g_set_special(sc, cadr(sc->code), sc->value);
+      goto START;
+
       
     case OP_IF:
       if (!is_pair(sc->code))                               /* (if) or (if . 1) */
@@ -23020,7 +23069,7 @@ bool s7_is_bignum(s7_pointer obj)
 
 static s7_pointer g_is_bignum(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_bignum "(bignum? obj) returns #t is obj is a multiprecision number."
+  #define H_is_bignum "(bignum? obj) returns #t if obj is a multiprecision number."
   return(s7_make_boolean(sc, IS_BIG(car(args))));
 }
 
@@ -26236,6 +26285,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "or",                OP_OR);
   assign_syntax(sc, "case",              OP_CASE);
   assign_syntax(sc, "do",                OP_DO);
+  assign_syntax(sc, "special",           OP_SPECIAL);
   set_immutable(assign_syntax(sc, "with-environment",  OP_WITH_ENV));
 
   assign_syntax(sc, "lambda",            OP_LAMBDA);
@@ -26256,6 +26306,9 @@ s7_scheme *s7_init(void)
   
   sc->LAMBDA_STAR = s7_make_symbol(sc, "lambda*");
   typeflag(sc->LAMBDA_STAR) |= T_DONT_COPY; 
+
+  sc->SPECIAL = s7_make_symbol(sc, "special");
+  typeflag(sc->SPECIAL) |= T_DONT_COPY;
   
   sc->QUOTE = s7_make_symbol(sc, "quote");
   typeflag(sc->QUOTE) |= T_DONT_COPY; 
@@ -26417,6 +26470,7 @@ s7_scheme *s7_init(void)
   
   s7_define_function(sc, "input-port?",             g_is_input_port,           1, 0, false, H_is_input_port);
   s7_define_function(sc, "output-port?",            g_is_output_port,          1, 0, false, H_is_output_port);
+  s7_define_function(sc, "port-closed?",            g_is_port_closed,          1, 0, false, H_is_port_closed);
   s7_define_function(sc, "char-ready?",             g_is_char_ready,           0, 1, false, H_is_char_ready);
   s7_define_function(sc, "eof-object?",             g_is_eof_object,           1, 0, false, H_is_eof_object);
   /* this should be named eof? (what isn't an object?) */
@@ -26818,13 +26872,9 @@ s7_scheme *s7_init(void)
    */
   s7_eval_c_string(sc, "(define-bacro (macroexpand __mac__) `(,(procedure-source (car __mac__)) ',__mac__))");
 
-  /* explicit quasiquote (not the backquote business)
+  /* quasiquote
    */
   s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, "quasiquote");
-
-  /* dynamic binding access
-   */
-  s7_define_macro(sc, "special", g_special, 1, 0, false, H_special);
 
   /* letrec* -- the less said the better...
    */
@@ -26914,6 +26964,7 @@ s7_scheme *s7_init(void)
  *       perhaps use procedure-source?
  *
  * TODO: :allow-other-keys in lambda* ("lambda!")
+ *       :rest is not ignored, so this is not inconsistent, but do we just ignore these in the arg count?
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
  * perhaps remove the `#(...) support -- is there any actual use for this?
  * PERHAPS: multidimensional hash tables

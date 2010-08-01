@@ -2806,6 +2806,10 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   /* needed in snd-test.scm and hooks.scm */
 
 #ifdef SND_DISABLE_DEPRECATED
+#ifdef USE_NO_GUI
+  XEN_EVAL_C_STRING("(define " S_highlight_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
+  XEN_EVAL_C_STRING("(define " S_selection_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
+#endif
   /* add pws for all the button colors -- highlight color except for pushed button = selection */
   XEN_EVAL_C_STRING("(define pushed-button-color selection-color)\n\
                      (define help-button-color highlight-color)\n\
@@ -2897,20 +2901,26 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING(": clm-print ( fmt :optional args -- ) fth-format snd-print drop ;"); 
 
 #ifdef SND_DISABLE_DEPRECATED
+#ifdef USE_NO_GUI
+  XEN_EVAL_C_STRING(": " S_highlight_color " #f ;");
+  XEN_EVAL_C_STRING(": set-" S_highlight_color " { a } #f ;");
+  XEN_EVAL_C_STRING(": " S_selection_color " #f ;");
+  XEN_EVAL_C_STRING(": set-" S_selection_color " { a } #f ;");
+#endif
   /* the S_* button color macros aren't defined in this case */
   XEN_EVAL_C_STRING("\
-		    : pushed-button-color selection-color ;\n\
-		    : set-pushed-button-color { a } a set-selection-color drop ;\n \
-		    : help-button-color highlight-color ;\n\
-		    : set-help-button-color { a } a set-highlight-color drop ;\n \
-		    : doit-again-button-color highlight-color ;\n\
-		    : set-doit-again-button-color { a } a set-highlight-color drop ;\n \
-		    : doit-button-color highlight-color ;\n\
-		    : set-doit-button-color { a } a set-highlight-color drop ;\n \
-		    : quit-button-color highlight-color ;\n\
-		    : set-quit-button-color { a } a set-highlight-color drop ;\n \
-		    : reset-button-color highlight-color ;\n\
-		    : set-reset-button-color { a } a set-highlight-color drop ;\n");
+		    <'> selection-color     alias pushed-button-color\n\
+		    <'> set-selection-color alias set-pushed-button-color\n\
+		    <'> highlight-color     alias help-button-color\n\
+		    <'> set-highlight-color alias set-help-button-color\n\
+		    <'> highlight-color     alias doit-again-button-color\n\
+		    <'> set-highlight-color alias set-doit-again-button-color\n\
+		    <'> highlight-color     alias doit-button-color\n\
+		    <'> set-highlight-color alias set-doit-button-color\n\
+		    <'> highlight-color     alias quit-button-color\n\
+		    <'> set-highlight-color alias set-quit-button-color\n\
+		    <'> highlight-color     alias reset-button-color\n\
+		    <'> set-highlight-color alias set-reset-button-color\n");
 #endif
 #endif
 
@@ -2919,6 +2929,12 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
                       snd_print format(str, *args)\n\
                       end");
 #ifdef SND_DISABLE_DEPRECATED
+#ifdef USE_NO_GUI
+  XEN_EVAL_C_STRING("def highlight_color () false end");
+  XEN_EVAL_C_STRING("def set_highlight_color (a) false end");
+  XEN_EVAL_C_STRING("def selection_color () false end");
+  XEN_EVAL_C_STRING("def set_selection_color (a) false end");
+#endif
   XEN_EVAL_C_STRING("def pushed_button_color ()          selection_color end\n\
 		     def set_pushed_button_color (a)     set_selection_color(a) end\n\
                      def help_button_color ()            highlight_color end\n\

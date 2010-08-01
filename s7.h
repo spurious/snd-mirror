@@ -764,6 +764,7 @@ void s7_mark_object(s7_pointer p);
  * 30-July:   special macro for access to dynamic binding.
  *            s7_symbol_special_value for C-side access to dynamic bindings.
  *            s7_is_macro.
+ *            port-closed? returns #t if its argument (a port) is closed.
  * 22-July:   s7_make_character takes unsigned int, rather than int.
  *            added symbol function for funny symbol names.
  * 12-July:   initial-environment.

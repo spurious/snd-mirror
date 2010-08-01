@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Wed Jun 09 23:58:15 CEST 2010
+\ Changed: Sun Aug 01 12:10:30 CEST 2010
 
 \ Commentary:
 \
@@ -1531,21 +1531,24 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
 \ ====== test 23: with-sound
 : test23-notehook { ins start dur -- } $" %14s: %5.2f  %5.2f" #( ins start dur ) snd-test-message ;
 : test23-balance ( -- )
-  make-rmsgain { rg }
+  make-rmsgain    { rg }
   40 make-rmsgain { rg1 }
   2  make-rmsgain { rg2 }
   #( 0 0 1 1 2 0 )      :length 10000 make-env { e }
   #( 0 0 1 1 )          :length 10000 make-env { e1 }
   #( 0 0 1 1 2 0 10 0 ) :length 10000 make-env { e2 }
   440.0 make-oscil { o }
+  nil { sig }
   10000 0 do
-    e env { sig }
+    e env to sig
     i  rg  sig                    e2 env rmsgain-balance  *output*  outa drop
     i  rg1 sig                    e1 env rmsgain-balance  *output*  outb drop
     i  rg2 o 0.0 0.0 oscil 0.1 f* e2 env rmsgain-balance  *output*  outc drop
   loop
-  rg rmsgain-gain-avg 0.98402 fneq if
-    $" rmsgain gain-avg: %f (0.98402)?" #( rg rmsgain-gain-avg ) snd-display
+  \ INFO: original 0.98402 [ms]
+  \ but s7 says 1.12136477001985472977245889469814486275E0
+  rg rmsgain-gain-avg 1.121365 fneq if
+    $" rmsgain gain-avg: %f (1.121365, original 0.98402)?" #( rg rmsgain-gain-avg ) snd-display
   then
   rg2 :rmsg-avgc array-assoc-ref 10000 <> if
     $" rmsgain count: %d (10000)?" #( rg2 :rmsg-avgc array-assoc-ref ) snd-display
@@ -1814,7 +1817,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
 include bird.fsm
 
 : ws-close-sound ( ws -- )
-   ( ws ) :output array-assoc-ref 0 find-sound { ind }
+  ( ws ) :output array-assoc-ref 0 find-sound { ind }
   ind sound? if ind close-sound drop then
 ;
 : 23-with-sound ( -- )
@@ -1831,10 +1834,15 @@ include bird.fsm
   :statistics *clm-verbose*
   :verbose    *clm-verbose*
   :channels 2 with-sound ( ws ) ws-close-sound
-  <'> test23-balance :channels 3 with-sound ( ws ) ws-close-sound
+  <'> test23-balance :channels 3 with-sound ( ws ) :output array-assoc-ref 0 find-sound { ind }
+  ind sound? if
+    ind close-sound drop
+  else
+    $" with-sound balance?" snd-display
+  then
   100.0 make-oscil { mg }
   1000 make-ssb-fm { gen }
-  "tmp.snd" mus-next mus-bfloat 22050 1 new-sound { ind }
+  "tmp.snd" mus-next mus-bfloat 22050 1 new-sound to ind
   0 1000 ind 0 pad-channel drop
   gen mg test23-ssb-fm <'> map-channel #t nil fth-catch stack-reset
   ind close-sound drop
@@ -1905,20 +1913,11 @@ include bird.fsm
 : pt-test-2 <{ a b -- f }>   #f ;
 : pt-test-3 <{ a b c -- f }> #f ;
 
-3 :initial-element 1 make-array constant color-95
-0 make-array        constant vector-0
-3 0.0 make-vct      constant vct-3
-5 0.0 make-vct      constant vct-5
-2 3 make-sound-data constant sound-data-23
-2 make-hook         constant a-hook
-#( 0 0 1 1 ) value env3
-'snd-nogui provided? [if]
-  '( 'XtAppContext 0x54acad81 ) constant car-main
-  '( 'Widget 0x554ab501 )       constant cadr-main
-[else]
-  main-widgets 0 array-ref constant car-main
-  main-widgets 1 array-ref constant cadr-main
-[then]
+#( 1 2 3 )     constant color-95
+440 make-oscil constant delay-32
+0 make-array   constant vector-0
+3 0.0 make-vct constant vct-3
+5 0.0 make-vct constant vct-5
 
 : make-identity-mixer <{ chans -- mx }>
   #f { mx }
@@ -2028,7 +2027,7 @@ include bird.fsm
    <'> show-indices <'> show-marks <'> show-mix-waveforms
    <'> show-selection-transform <'> show-y-zero <'> sinc-width <'> show-grid
    <'> show-sonogram-cursor <'> grid-density <'> smooth-sound <'> smooth-selection
-   <'> snd-print <'> snd-spectrum <'> snd-tempnam <'> snd-version
+   <'> snd-spectrum <'> snd-tempnam <'> snd-version
    <'> sound-files-in-directory <'> sound-loop-info
    <'> sound? <'> sounds <'> spectrum-end <'> spectro-hop
    <'> spectrum-start <'> spectro-x-angle <'> spectro-x-scale <'> spectro-y-angle
@@ -2402,8 +2401,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     #( <'> make-vct <'> vct-copy <'> vct-length <'> vct->list <'> vct-peak ) each to prc
       arg prc #t nil fth-catch to tag
       stack-reset
-      tag car 'wrong-type-arg = unless
-	$" vct 0 wrong-type-arg %s [%s]: %s" #( prc arg tag ) snd-display
+      tag if
+	tag car 'wrong-type-arg = unless
+	  $" vct 0 wrong-type-arg %s [%s]: %s" #( prc arg tag ) snd-display
+	then
       then
     end-each
   end-each
@@ -2415,10 +2416,12 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       vct-prcs-2 each to prc
 	arg1 arg2 prc #t nil fth-catch to tag
 	stack-reset
-	tag car 'wrong-type-arg       =
-	tag car 'wrong-number-of-args = ||
-	tag car 'mus-error            = || unless
-	  $" vct 1 wrong-whatever %s [%s %s]: %s" #( prc arg1 arg2 tag ) snd-display
+	tag if
+	  tag car 'wrong-type-arg       =
+	  tag car 'wrong-number-of-args = ||
+	  tag car 'mus-error            = || unless
+	    $" vct 1 wrong-whatever %s [%s %s]: %s" #( prc arg1 arg2 tag ) snd-display
+	  then
 	then
       end-each
     end-each
@@ -2427,8 +2430,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     vct-prcs-2 each to prc
       arg vct-3 prc #t nil fth-catch to tag
       stack-reset
-      tag car 'wrong-type-arg = unless
-	$" vct 1 wrong-whatever %s [%s]: %s" #( prc arg tag ) snd-display
+      tag if
+	tag car 'wrong-type-arg = unless
+	  $" vct 1 wrong-whatever %s [%s]: %s" #( prc arg tag ) snd-display
+	then
       then
     end-each
   end-each
@@ -2474,15 +2479,19 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> mix-selection ) each to prc
     prc #t nil fth-catch to tag
     stack-reset
-    tag car 'no-active-selection = unless
-      $" [0] selection %s: %s" #( prc tag ) snd-display
+    tag if
+      tag car 'no-active-selection = unless
+	$" [0] selection %s: %s" #( prc tag ) snd-display
+      then
     then
   end-each
   #( <'> src-selection <'> filter-selection <'> env-selection ) each to prc
     0.0 prc #t nil fth-catch to tag
     stack-reset
-    tag car 'no-active-selection = unless
-      $" [1] selection %s: %s" #( prc tag ) snd-display
+    tag if
+      tag car 'no-active-selection = unless
+	$" [1] selection %s: %s" #( prc tag ) snd-display
+      then
     then
   end-each
 
@@ -2570,15 +2579,19 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   mus-snd-prcs-1 each to prc
     vct-5 prc #t nil fth-catch to tag
     stack-reset
-    tag car 'wrong-type-arg = unless
-      $" mus-sound %s: %s" #( prc tag ) snd-display
+    tag if
+      tag car 'wrong-type-arg = unless
+	$" mus-sound %s: %s" #( prc tag ) snd-display
+      then
     then
   end-each
   mus-snd-prcs-1 each to prc
     prc #t nil fth-catch to tag
     stack-reset
-    tag car 'wrong-number-of-args = unless
-      $" no arg mus-sound %s: %s" #( prc tag ) snd-display
+    tag if
+      tag car 'wrong-number-of-args = unless
+	$" no arg mus-sound %s: %s" #( prc tag ) snd-display
+      then
     then
   end-each
   #( <'> mus-sound-samples <'> mus-sound-frames <'> mus-sound-duration <'> mus-sound-datum-size
@@ -2588,8 +2601,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> mus-sound-write-date <'> mus-sound-maxamp <'> mus-sound-maxamp-exists? ) each to prc
     "/bad/baddy" prc #t nil fth-catch to tag
     stack-reset
-    tag car 'mus-error = unless
-      $" bad file mus-sound %s: %s" #( prc tag ) snd-display
+    tag if
+      tag car 'mus-error = unless
+	$" bad file mus-sound %s: %s" #( prc tag ) snd-display
+      then
     then
   end-each
   #( <'> count-matches <'> cursor <'> channel-properties <'> channel-property
@@ -2628,8 +2643,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   chn-prcs each to prc
     0 vct-5 prc #t nil fth-catch to tag
     stack-reset
-    tag car 'wrong-type-arg = unless
-      $" chn (no chn) procs %s: %s" #( prc tag ) snd-display
+    tag if
+      tag car 'wrong-type-arg = unless
+	$" chn (no chn) procs %s: %s" #( prc tag ) snd-display
+      then
     then
   end-each
   #( <'> cursor <'> with-tracking-cursor <'> channel-properties <'> channel-property
@@ -2658,8 +2675,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> zero-pad <'> scale-channel ) each to prc
     1234 prc #t nil fth-catch to tag
     stack-reset
-    tag car 'no-such-sound = unless
-      $" chn procs %s: %s" #( prc tag ) snd-display
+    tag if
+      tag car 'no-such-sound = unless
+	$" chn procs %s: %s" #( prc tag ) snd-display
+      then
     then
   end-each
   #( <'> delete-sample <'> edit-fragment <'> graph-style
@@ -2668,8 +2687,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   prcs-3 each to prc
     0 1234 prc #t nil fth-catch to tag
     stack-reset
-    tag car 'no-such-sound = unless
-      $" snd(1) chn procs %s: %s" #( prc tag ) snd-display
+    tag if
+      tag car 'no-such-sound = unless
+	$" snd(1) chn procs %s: %s" #( prc tag ) snd-display
+      then
     then
   end-each
   "oboe.snd" open-sound to ind
@@ -2677,8 +2698,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     prc proc-name "x-axis-label" string= unless
       0 ind 1234 prc #t nil fth-catch to tag
       stack-reset
-      tag car 'no-such-channel = unless
-	$" snd(1 1234) chn procs %s: %s" #( prc tag ) snd-display
+      tag if
+	tag car 'no-such-channel = unless
+	  $" snd(1 1234) chn procs %s: %s" #( prc tag ) snd-display
+	then
       then
     then
   end-each
@@ -2730,15 +2753,19 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   mix-prcs each to prc
     vct-5 prc #t nil fth-catch to tag
     stack-reset
-    tag car 'wrong-type-arg = unless
-      $" [0] mix procs %s: %s" #( prc tag ) snd-display
+    tag if
+      tag car 'wrong-type-arg = unless
+	$" [0] mix procs %s: %s" #( prc tag ) snd-display
+      then
     then
   end-each
   mix-prcs each to prc
     1234 integer->mix prc #t nil fth-catch to tag
     stack-reset
-    tag car 'no-such-mix = unless
-      $" [1] mix procs %s: %s" #( prc tag ) snd-display
+    tag if
+      tag car 'no-such-mix = unless
+	$" [1] mix procs %s: %s" #( prc tag ) snd-display
+      then
     then
   end-each
   #( <'> mix-name <'> mix-position <'> mix-home <'> mix-speed <'> mix-tag-y ) { mix-set-prcs }
@@ -2769,15 +2796,19 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> mark-home <'> delete-mark <'> delete-marks <'> find-mark ) each to prc
     vct-5 prc #t nil fth-catch to tag
     stack-reset
-    tag car 'wrong-type-arg = unless
-      $" mark procs %s: %s" #( prc tag ) snd-display
+    tag if
+      tag car 'wrong-type-arg = unless
+	$" mark procs %s: %s" #( prc tag ) snd-display
+      then
     then
   end-each
   #( <'> mark-name <'> mark-sample <'> mark-sync <'> mark-home <'> delete-mark ) each to prc
     1234 integer->mark prc #t nil fth-catch to tag
     stack-reset
-    tag car 'no-such-mark = unless
-      $" no mark procs %s: %s" #( prc tag ) snd-display
+    tag if
+      tag car 'no-such-mark = unless
+	$" no mark procs %s: %s" #( prc tag ) snd-display
+      then
     then
   end-each
   "oboe.snd" open-sound to ind
@@ -2785,8 +2816,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   #( <'> mark-name <'> mark-sample <'> mark-sync ) each to prc
     id vct-5 prc set-xt #t nil fth-catch to tag
     stack-reset
-    tag car 'wrong-type-arg = unless
-      $" set mark procs %s: %s" #( prc tag ) snd-display
+    tag if
+      tag car 'wrong-type-arg = unless
+	$" set mark procs %s: %s" #( prc tag ) snd-display
+      then
     then
   end-each
   ind close-sound drop
@@ -2798,16 +2831,20 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     reg-prcs-1 each to prc
       arg prc #t nil fth-catch to tag
       stack-reset
-      tag car 'wrong-type-arg = unless
-	$" region procs %s [%s]: %s" #( prc arg tag ) snd-display
+      tag if
+	tag car 'wrong-type-arg = unless
+	  $" region procs %s [%s]: %s" #( prc arg tag ) snd-display
+	then
       then
     end-each
   end-each
   reg-prcs-1 each to prc
     1234 integer->region prc #t nil fth-catch to tag
     stack-reset
-    tag car 'no-such-region = unless
-      $" (no) region procs %s: %s" #( prc tag ) snd-display
+    tag if
+      tag car 'no-such-region = unless
+	$" (no) region procs %s: %s" #( prc tag ) snd-display
+      then
     then
   end-each
   #( <'> enved-filter-order <'> enved-filter
@@ -2857,9 +2894,11 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> orientation-hook <'> start-playing-selection-hook ) each to hook
     hook <'> noop 3 make-proc <'> add-hook! #t nil fth-catch to tag
     stack-reset
-    tag car 'bad-arity      =	\ FTH special 'bad-arity (add-hook!) [ms]
-    tag car 'wrong-type-arg = || unless
-      $" [1] hooks %s: %s" #( hook hook-name tag ) snd-display
+    tag if
+      tag car 'bad-arity      =	\ FTH special 'bad-arity (add-hook!) [ms]
+      tag car 'wrong-type-arg = || unless
+	$" [1] hooks %s: %s" #( hook hook-name tag ) snd-display
+      then
     then
   end-each
   "not-an-env" 	       	     <'> set-enved-envelope  	'no-such-envelope check-error-tag
@@ -2929,9 +2968,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   1.5 0.0 0.0                <'> make-color             'out-of-range     check-error-tag
   -0.5 0.0 0.0               <'> make-color             'out-of-range     check-error-tag
   #f                         <'> make-variable-graph    'wrong-type-arg   check-error-tag
-  'snd-nogui unless
-    cadr-main                <'> make-variable-graph    'arg-error        check-error-tag
-  then
   <'> graph->ps              'cannot-print     check-error-tag
   "oboe.snd" open-sound to ind
   #t set-selection-creates-region drop
@@ -3155,8 +3191,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   "test.snd" file-delete
   ind <'> update-sound #t nil fth-catch to tag
   stack-reset
-  tag car 'cant-update-file = unless
-    $" update-sound after deletion: %s" #( tag ) snd-display
+  tag if
+    tag car 'cant-update-file = unless
+      $" update-sound after deletion: %s" #( tag ) snd-display
+    then
   then
   ind <'> save-sound #t nil fth-catch to tag
   stack-reset
@@ -3181,8 +3219,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   10 delete-sample drop
   ind <'> save-sound #t nil fth-catch to tag
   stack-reset
-  tag car 'cannot-save = unless
-    $" save protected sound msg: %s" #( tag ) snd-display
+  tag if
+    tag car 'cannot-save = unless
+      $" save protected sound msg: %s" #( tag ) snd-display
+    then
   then
   ind close-sound drop
   \ 
@@ -3208,8 +3248,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   10 delete-sample drop
   "test.snd" <'> save-sound-as #t nil fth-catch to tag
   stack-reset
-  tag car 'cannot-save = unless
-    $" save-as write-protected sound msg: %s" #( tag ) snd-display
+  tag if
+    tag car 'cannot-save = unless
+      $" save-as write-protected sound msg: %s" #( tag ) snd-display
+    then
   then
   ind close-sound drop
   "test.snd" 0o644 file-chmod
@@ -3217,8 +3259,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   \ 
   close-sound-mc-cb <'> map-channel #t nil fth-catch to tag
   stack-reset
-  tag car 'no-such-channel = unless
-    $" map-channel closing own chan: %s" #( tag ) snd-display
+  tag if
+    tag car 'no-such-channel = unless
+      $" map-channel closing own chan: %s" #( tag ) snd-display
+    then
   then
   \ 
   close-sound-aoe-1-cb  "snd-test"   as-one-edit drop
@@ -3316,23 +3360,29 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   \
   ind <'> revert-sound #t nil fth-catch to tag
   stack-reset
-  tag car 'no-such-sound = unless
-    $" revert-sound of closed sound: %s" #( tag ) snd-display
+  tag if
+    tag car 'no-such-sound = unless
+      $" revert-sound of closed sound: %s" #( tag ) snd-display
+    then
   then
   \
   "oboe.snd" open-sound to ind
   100 0.5 ind 0 set-sample drop
   0.5 0 100 ind 0 ind edpos-1-cb <'> scale-channel #t nil fth-catch to tag
   stack-reset
-  tag car 'bad-arity = unless
-    $" edpos proc bad args: %s" #( tag ) snd-display
+  tag if
+    tag car 'bad-arity = unless
+      $" edpos proc bad args: %s" #( tag ) snd-display
+    then
   then
   ind sound? unless $" edpos bad arity proc clobbers chan??: %s" #( ind ) snd-display then
   \ 
   0.5 0 100 ind 0 <'> edpos-2-cb <'> scale-channel #t nil fth-catch to tag
   stack-reset
-  tag car 'no-such-channel = unless
-    $" edpos clobbers channel: %s" #( tag ) snd-display
+  tag if
+    tag car 'no-such-channel = unless
+      $" edpos clobbers channel: %s" #( tag ) snd-display
+    then
   then
   ind sound? if $" edpos proc clobbers chan??: %s" #( ind ) snd-display then
   *snd-test-verbose* if
@@ -3349,32 +3399,38 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     $" procs08: %3d"     #( procs08 length )                    snd-test-message
     $" procs10: %3d"     #( procs10 length )                    snd-test-message
   then
-  #( 1.5 "/hiho" #( 0 1 ) 1234 vct-3 :wave -1 0 1 #f #t '() vector-0 12345678901234567890 ) { vals }
+  #( 1.5 #( 0 1 ) 1234 #t )                     { random-args }
+  #( 1.5 #( 0 1 ) 1234 vct-3 color-95 -1.0 csqrt delay-32 :feedback #f ) { main-args }
+  #( 1.5 #( 0 1 ) 1234 -1.0 csqrt delay-32 #t ) { few-args }
+  #( 1.5 vct-3 -1.0 csqrt )                     { fewer-args }
+  all-args if main-args else few-args then      { less-args }
   nil nil nil nil nil nil nil { arg1 arg2 arg3 arg4 tm prc tag }
   "keyargs-2-args" #f snd-test-message
   keyargs each to arg1
-    vals each to arg2
+    random-args each to arg2
       make-procs each to prc
-  	arg1 arg2 prc #t nil fth-catch stack-reset
+	arg1 arg2 prc #t nil fth-catch stack-reset
       end-each
     end-each
   end-each
+  dismiss-all-dialogs
   all-args if
     "keyargs-3-args" #f snd-test-message
-    vals each to arg1
+    random-args each to arg1
       keyargs each to arg2
-	vals each to arg3
+	random-args each to arg3
 	  make-procs each to prc
 	    arg1 arg2 arg3 prc #t nil fth-catch stack-reset
 	  end-each
 	end-each
       end-each
     end-each
+    dismiss-all-dialogs
     "keyargs-4-args" #f snd-test-message
     keyargs each to arg1
-      vals each to arg2
+      random-args each to arg2
 	keyargs each to arg3
-	  vals each to arg4
+	  random-args each to arg4
 	    make-procs each to prc
 	      arg1 arg2 arg3 arg4 prc #t nil fth-catch stack-reset
 	    end-each
@@ -3382,9 +3438,10 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
 	end-each
       end-each
     end-each
+    dismiss-all-dialogs
   then
   \ 0 args
-  "0-args" #f snd-test-message
+  "no-args" #f snd-test-message
   procs00 each to prc
     prc #t nil fth-catch to tag
     stack-reset
@@ -3393,15 +3450,18 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     then
   end-each
   dismiss-all-dialogs
-  #( 1.5 "/hiho" #( 0 1 ) 1234 vct-3 color-95  #( 0 1 ) 3/4 'mus-error -1.0 csqrt
-     <'> noop 0 make-proc vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t <char> c 0.0 1.0 -1.0 
-     '() '3 2 8 64 -64 vector-0 2.0 21.5 f** 2.0 -18.0 f** car-main cadr-main 
-     12345678901234567890 <'> noop 1 make-proc ) { main-args }
-  #( 1.5 "/hiho" #( 0 1 ) 1234 vct-3 color-95 #( 0 1 ) 3/4 -1.0
-     -1.0 csqrt :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890 ) { few-args }
-  #( "/hiho" 1234 vct-3 -1.0 -1.0 csqrt
-     -1 0 1 #f #t #() 12345678901234567890 ) { fewer-args }
-  all-args if main-args else few-args then { less-args }
+  \ set! no args
+  "set-no-args" #f snd-test-message
+  main-args each to arg
+    set-procs00 each to prc
+      arg prc set-xt #t nil fth-catch to tag
+      stack-reset
+      tag car 'wrong-number-of-args = if
+	$" set-procs00: (%s) %s %s" #( arg prc tag ) snd-display
+      then
+    end-each
+  end-each
+  dismiss-all-dialogs
   \ 1 arg
   "1-arg" #f snd-test-message
   nil { arg }
@@ -3411,32 +3471,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       stack-reset
       tag car 'wrong-number-of-args = if
 	$" procs01 wna: (%s) %s %s" #( arg prc tag ) snd-display
-      then
-    end-each
-  end-each
-  cr					\ CR here because string "/hiho" appears on stdout
-					\ (or all args with snd-nogui)
-  \ 2 args
-  "2-args" #f snd-test-message
-  main-args each to arg1
-    main-args each to arg2
-      procs02 each to prc
-	arg1 arg2 prc #t nil fth-catch to tag
-	stack-reset
-	tag car 'wrong-number-of-args = if
-	  $" procs02: (%s %s) %s %s" #( arg1 arg2 prc tag ) snd-display
-	then
-      end-each
-    end-each
-  end-each
-  \ set! no args
-  "set-no-args" #f snd-test-message
-  main-args each to arg
-    set-procs00 each to prc
-      arg prc set-xt #t nil fth-catch to tag
-      stack-reset
-      tag car 'wrong-number-of-args = if
-	$" set-procs00: (%s) %s %s" #( arg prc tag ) snd-display
       then
     end-each
   end-each
@@ -3456,95 +3490,149 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       end-each
     end-each
   end-each
-  all-args if
-    \ set! 2 args
-    "set-2-args" #f snd-test-message
-    less-args each to arg1
-      less-args each to arg2
-	less-args each to arg3
-	  set-procs02 each to prc
-	    arg1 arg2 arg3 prc set-xt #t nil fth-catch to tag
+  dismiss-all-dialogs
+  \ 2 args
+  "2-args" #f snd-test-message
+  main-args each to arg1
+    main-args each to arg2
+      procs02 each to prc
+	arg1 arg2 prc #t nil fth-catch to tag
+	stack-reset
+	tag car 'wrong-number-of-args = if
+	  $" procs02: (%s %s) %s %s" #( arg1 arg2 prc tag ) snd-display
+	then
+      end-each
+    end-each
+  end-each
+  dismiss-all-dialogs
+  \ set! 2 args
+  "set-2-args" #f snd-test-message
+  less-args each to arg1
+    less-args each to arg2
+      less-args each to arg3
+	set-procs02 each to prc
+	  arg1 arg2 arg3 prc set-xt #t nil fth-catch to tag
+	  stack-reset
+	  tag car 'wrong-number-of-args = if
+	    $" set-procs02: (%s %s %s) %s %s" #( arg1 arg2 arg3 prc tag ) snd-display
+	  then
+	end-each
+      end-each
+    end-each
+  end-each
+  dismiss-all-dialogs
+  nil nil nil nil nil nil { arg5 arg6 arg7 arg8 arg9 arg0 }
+  \ 3 args
+  "3-args" #f snd-test-message
+  less-args each to arg1
+    less-args each to arg2
+      less-args each to arg3
+	procs03 each to prc
+	  arg1 arg2 arg3 prc #t nil fth-catch to tag
+	  stack-reset
+	  tag car 'wrong-number-of-args = if
+	    $" procs03: (%s %s %s) %s %s" #( arg1 arg2 arg3 prc tag ) snd-display
+	  then
+	end-each
+      end-each
+    end-each
+  end-each
+  dismiss-all-dialogs
+  \ set! 3 args
+  "set-3-args" #f snd-test-message
+  less-args each to arg1
+    less-args each to arg2
+      less-args each to arg3
+	less-args each to arg4
+	  set-procs03 each to prc
+	    arg1 arg2 arg3 arg4 prc #t nil fth-catch to tag
 	    stack-reset
 	    tag car 'wrong-number-of-args = if
-	      $" set-procs02: (%s %s %s) %s %s" #( arg1 arg2 arg3 prc tag ) snd-display
+	      $" set-procs03: (%s %s %s %s) %s %s" #( arg1 arg2 arg3 arg4 prc tag ) snd-display
 	    then
 	  end-each
 	end-each
       end-each
     end-each
-    nil nil nil nil nil nil { arg5 arg6 arg7 arg8 arg9 arg0 }
-    \ 3 args
-    "3-args" #f snd-test-message
-    make-timer to tm
-    less-args each to arg1
-      less-args each to arg2
-	less-args each to arg3
-	  procs03 each to prc
-	    arg1 arg2 arg3 prc #t nil fth-catch to tag
+  end-each
+  dismiss-all-dialogs
+  \ 4 args
+  "4-args" #f snd-test-message
+  few-args each to arg1
+    few-args each to arg2
+      few-args each to arg3
+	few-args each to arg4
+	  procs04 each to prc
+	    arg1 arg2 arg3 arg4 prc #t nil fth-catch to tag
 	    stack-reset
 	    tag car 'wrong-number-of-args = if
-	      $" procs03: (%s %s %s) %s %s" #( arg1 arg2 arg3 prc tag ) snd-display
+	      $" procs04: (%s %s %s %s) %s %s" #( arg1 arg2 arg3 arg4 prc tag ) snd-display
 	    then
 	  end-each
 	end-each
       end-each
     end-each
-    tm stop-timer
-    "%s" #( tm ) snd-test-message
-    \ set! 3 args
-    "set!-3-args" #f snd-test-message
-    tm start-timer
-    less-args each to arg1
-      less-args each to arg2
-	less-args each to arg3
-	  less-args each to arg4
-	    set-procs03 each to prc
-	      arg1 arg2 arg3 arg4 prc #t nil fth-catch to tag
+  end-each
+  dismiss-all-dialogs
+  \ set! 4 args
+  "set-4-args" #f snd-test-message
+  few-args each to arg1
+    few-args each to arg2
+      few-args each to arg3
+	few-args each to arg4
+	  few-args each to arg5
+	    set-procs04 each to prc
+	      arg1 arg2 arg3 arg4 arg5 prc #t nil fth-catch to tag
 	      stack-reset
 	      tag car 'wrong-number-of-args = if
-		$" set-procs03: (%s %s %s %s) %s %s" #( arg1 arg2 arg3 arg4 prc tag ) snd-display
+		$" set-procs04: (%s %s %s %s %s) %s %s"
+		#( arg1 arg2 arg3 arg4 arg5 prc tag ) snd-display
 	      then
 	    end-each
 	  end-each
 	end-each
       end-each
     end-each
-    tm stop-timer
-    "%s" #( tm ) snd-test-message
-    \ 4 args
-    "4-args" #f snd-test-message
-    tm start-timer
-    few-args each to arg1
-      few-args each to arg2
-	few-args each to arg3
-	  few-args each to arg4
-	    procs04 each to prc
-	      arg1 arg2 arg3 arg4 prc #t nil fth-catch to tag
+  end-each
+  clear-sincs drop
+  stop-playing drop
+  dismiss-all-dialogs
+  \ 5 args
+  "5-args" #f snd-test-message
+  fewer-args each to arg1
+    fewer-args each to arg2
+      fewer-args each to arg3
+	fewer-args each to arg4
+	  fewer-args each to arg5
+	    procs05 each to prc
+	      arg1 arg2 arg3 arg4 arg5 prc #t nil fth-catch to tag
 	      stack-reset
 	      tag car 'wrong-number-of-args = if
-		$" procs04: (%s %s %s %s) %s %s" #( arg1 arg2 arg3 arg4 prc tag ) snd-display
+		$" procs05: (%s %s %s %s %s) %s %s"
+		#( arg1 arg2 arg3 arg4 arg5 prc tag ) snd-display
 	      then
 	    end-each
 	  end-each
 	end-each
       end-each
     end-each
-    tm stop-timer
-    "%s" #( tm ) snd-test-message
-    \ set! 4 args
-    "set!-4-args" #f snd-test-message
-    tm start-timer
-    few-args each to arg1
-      few-args each to arg2
-	few-args each to arg3
-	  few-args each to arg4
-	    few-args each to arg5
-	      set-procs04 each to prc
-		arg1 arg2 arg3 arg4 arg5 prc #t nil fth-catch to tag
+  end-each
+  clear-sincs drop
+  dismiss-all-dialogs
+  \ 6 args
+  "6-args" #f snd-test-message
+  fewer-args each to arg1
+    fewer-args each to arg2
+      fewer-args each to arg3
+	fewer-args each to arg4
+	  fewer-args each to arg5
+	    fewer-args each to arg6
+	      procs06 each to prc
+		arg1 arg2 arg3 arg4 arg5 arg6 prc #t nil fth-catch to tag
 		stack-reset
 		tag car 'wrong-number-of-args = if
-		  $" set-procs04: (%s %s %s %s %s) %s %s"
-		  #( arg1 arg2 arg3 arg4 arg5 prc tag ) snd-display
+		  $" procs06: (%s %s %s %s %s %s) %s %s"
+		  #( arg1 arg2 arg3 arg4 arg5 arg6 prc tag ) snd-display
 		then
 	      end-each
 	    end-each
@@ -3552,78 +3640,25 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
 	end-each
       end-each
     end-each
-    clear-sincs drop
-    stop-playing drop
-    tm stop-timer
-    "%s" #( tm ) snd-test-message
-    \ 5 args
-    "5-args" #f snd-test-message
-    tm start-timer
-    fewer-args each to arg1
-      fewer-args each to arg2
-	fewer-args each to arg3
-	  fewer-args each to arg4
-	    fewer-args each to arg5
-	      procs05 each to prc
-		arg1 arg2 arg3 arg4 arg5 prc #t nil fth-catch to tag
-		stack-reset
-		tag car 'wrong-number-of-args = if
-		  $" procs05: (%s %s %s %s %s) %s %s"
-		  #( arg1 arg2 arg3 arg4 arg5 prc tag ) snd-display
-		then
-	      end-each
-	    end-each
-	  end-each
-	end-each
-      end-each
-    end-each
-    clear-sincs drop
-    tm stop-timer
-    "%s" #( tm ) snd-test-message
-    \ 6 args
-    "6-args" #f snd-test-message
-    tm start-timer
-    #( 1.5 "/hiho" -1234 #f #t vct-5 ) each to arg1
-      #( 1.5 -1234 vct-3 vct-5 -1 0 #f #t ) each to arg2
-	#( 1.5 "/hiho" -1234 0 vct-3 -1 #f #t ) each to arg3
-	  #( 1.5 "/hiho" -1234 0 vct-3 #f #t ) each to arg4
-	    #( 1.5 "/hiho" -1234 0 vct-5 #f #t ) each to arg5
-	      #( 1.5 "/hiho" -1234 -1 0 #f #t #() vct-3 ) each to arg6
-		procs06 each to prc
-		  arg1 arg2 arg3 arg4 arg5 arg6 prc #t nil fth-catch to tag
-		  stack-reset
-		  tag car 'wrong-number-of-args = if
-		    $" procs06: (%s %s %s %s %s %s) %s %s"
-		    #( arg1 arg2 arg3 arg4 arg5 arg6 prc tag ) snd-display
-		  then
-		end-each
-	      end-each
-	    end-each
-	  end-each
-	end-each
-      end-each
-    end-each
-    tm stop-timer
-    "%s" #( tm ) snd-test-message
-    \ 8 args
-    "8-args" #f snd-test-message
-    tm start-timer
-    #( 1.5 -1 1234 #f #() ) each to arg1
-      #( "/hiho" -1 1234 #() vct-5 ) each to arg2
-	#( #t #f -1 1234 #() vct-3 ) each to arg3
-	  #( -1.0 csqrt  1234 0 -1 #() ) each to arg4
-	    #( 1.5 -1 #f 1 234 vct-3 #() ) each to arg5
-	      #( 2 #f #t 1234 vct-5 -1 ) each to arg6
-		#( #f #t -1 1234 vct-3 ) each to arg7
-		  #( 1.5 -1 #() 1234 "/hiho" ) each to arg8
-		    procs08 each to prc
-		      arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 prc #t nil fth-catch to tag
-		      stack-reset
-		      tag car 'wrong-number-of-args = if
-			$" procs08: (%s %s %s %s %s %s %s %s) %s %s"
-			#( arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 prc tag ) snd-display
-		      then
-		    end-each
+  end-each
+  dismiss-all-dialogs
+  \ 8 args
+  "8-args" #f snd-test-message
+  fewer-args each to arg1
+    fewer-args each to arg2
+      fewer-args each to arg3
+	fewer-args each to arg4
+	  fewer-args each to arg5
+	    fewer-args each to arg6
+	      fewer-args each to arg7
+		fewer-args each to arg8
+		  procs08 each to prc
+		    arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 prc #t nil fth-catch to tag
+		    stack-reset
+		    tag car 'wrong-number-of-args = if
+		      $" procs08: (%s %s %s %s %s %s %s %s) %s %s"
+		      #( arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 prc tag ) snd-display
+		    then
 		  end-each
 		end-each
 	      end-each
@@ -3632,31 +3667,29 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
 	end-each
       end-each
     end-each
-    tm stop-timer
-    "%s" #( tm ) snd-test-message
-    \ 10 args
-    "10-args" #f snd-test-message
-    tm start-timer
-    #( 1.5 -1 #f 1234 ) each to arg1
-      #( "/hiho" -1 1234 ) each to arg2
-	#( #t #f vct-3 1234 ) each to arg3
-	  #( -1.0 csqrt #f -1 vct-5 ) each to arg4
-	    #( 1.5 #f -1 1234 #() ) each to arg5
-	      #( -2 #f 1234 vct-3 ) each to arg6
-		#( #f #t #() 1234 vct-5 ) each to arg7
-		  #( 1.5 -1 "/hiho" #() ) each to arg8
-		    #( 1.5 -1 #() ) each to arg9
-		      #( #f -1 1234 ) each to arg0
-			procs10 each to prc
-			  arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg0 prc #t nil fth-catch
-			  to tag
-			  stack-reset
-			  tag car 'wrong-number-of-args = if
-			    $" procs10: (%s %s %s %s %s %s %s %s %s %s) %s %s"
-			    #( arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg0 prc tag )
-			    snd-display
-			  then
-			end-each
+  end-each
+  dismiss-all-dialogs
+  \ 10 args
+  "10-args" #f snd-test-message
+  fewer-args each to arg1
+    fewer-args each to arg2
+      fewer-args each to arg3
+	fewer-args each to arg4
+	  fewer-args each to arg5
+	    fewer-args each to arg6
+	      fewer-args each to arg7
+		fewer-args each to arg8
+		  fewer-args each to arg9
+		    fewer-args each to arg0
+		      procs10 each to prc
+			arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg0 prc #t nil fth-catch
+			to tag
+			stack-reset
+			tag car 'wrong-number-of-args = if
+			  $" procs10: (%s %s %s %s %s %s %s %s %s %s) %s %s"
+			  #( arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg0 prc tag )
+			  snd-display
+			then
 		      end-each
 		    end-each
 		  end-each
@@ -3667,26 +3700,18 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
 	end-each
       end-each
     end-each
-    clear-sincs drop
-    tm stop-timer
-    "%s" #( tm ) snd-test-message
-  then
+  end-each
+  clear-sincs drop
+  dismiss-all-dialogs
 ;
 
 : 30-test
-  32 make-delay { delay-32 }
-  #( 1.5 "/hiho" #( 0 1 ) 1234 vct-3 :wave -1 0 1 #f #t
-     '() vector-0 1234567890 ) { vals }
-  #( 1.5 "/hiho" #( 0 1 ) 1234 vct-3 color-95  #( 0 1 ) 3/4 'mus-error -1.0 csqrt ( delay-32 )
-     <'> noop 0 make-proc vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t <char> c 0.0 1.0 -1.0 
-     '() '3 2 8 64 -64 vector-0 2.0 21.5 f** 2.0 -18.0 f** car-main cadr-main 
-     1234567890 <'> noop 1 make-proc ) { main-args }
-  #( 1.5 "/hiho" #( 0 1 ) 1234 vct-3 color-95 #( 0 1 ) 3/4 -1.0
-     -1.0 csqrt ( delay-32 ) :feedback -1 0 1 3 64 -64 #f #t '() vector-0 1234567890 ) { few-args }
-  #( "/hiho" 1234 vct-3 -1.0 -1.0 csqrt ( delay-32 )
-     -1 0 1 #f #t #() 1234567890 ) { fewer-args }
+  #( 1.5 #( 0 1 ) 1234 #t )                     { random-args }
+  #( 1.5 #( 0 1 ) 1234 vct-3 color-95 -1.0 csqrt delay-32 :feedback #f ) { main-args }
+  #( 1.5 #( 0 1 ) 1234 -1.0 csqrt delay-32 #t ) { few-args }
+  #( 1.5 vct-3 -1.0 csqrt )                     { fewer-args }
   fewer-args { less-args }
-  fewer-args to vals
+  fewer-args to random-args
   fewer-args to few-args
   nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil
   { ind prc tag arg arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg0 tm }

@@ -226,12 +226,6 @@ output-comment-hook lambda: <{ str -- s }>
   ; add-hook!
 
   require rgb
-  lightsteelblue2 	 set-help-button-color       drop
-  lightsalmon2    	 set-reset-button-color      drop
-  light-salmon    	 set-quit-button-color       drop
-  wheat           	 set-doit-button-color       drop
-  burlywood       	 set-doit-again-button-color drop
-  lightsteelblue1 	 set-pushed-button-color     drop
   beige                  set-selected-graph-color    drop
   blue                   set-selected-data-color     drop
 

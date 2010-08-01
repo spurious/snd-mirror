@@ -1376,7 +1376,7 @@ static XEN g_selection_to_mix(void)
 static XEN g_selection_p(XEN sel)
 {
   #define H_selection_p "(" S_selection_p " :optional obj): " PROC_TRUE " if selection is currently active, visible, etc. \
-If 'obj' is passed, " S_selection_p " returns #t is obj is a selection object and there is a current selection."
+If 'obj' is passed, " S_selection_p " returns #t if obj is a selection object and there is a current selection."
 
   if ((XEN_BOUND_P(sel)) &&
       (!(xen_selection_p(sel))))

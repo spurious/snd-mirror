@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Tue Nov 17 16:31:38 CET 2009
+\ Changed: Sun Aug 01 00:36:49 CEST 2010
 
 \ Commentary:
 \
@@ -162,20 +162,12 @@ hide
      FXmNnoResize          #f
      FXmNbackground        basic-color
      FXmNtransient         #f ) undef FXmCreateTemplateDialog { new-dialog }
-  #( #( FXmDIALOG_HELP_BUTTON   help-button-color )
-     #( FXmDIALOG_CANCEL_BUTTON quit-button-color )
-     #( FXmDIALOG_OK_BUTTON     doit-button-color ) ) each { lst }
-    new-dialog lst 0 array-ref ( button ) FXmMessageBoxGetChild ( widget )
-    #( FXmNarmColor pushed-button-color FXmNbackground lst 1 array-ref ) FXtVaSetValues drop
-  end-each
   new-dialog FXmNcancelCallback <'> unmanage-cb new-dialog FXtAddCallback drop
   new-dialog FXmNhelpCallback   help-prc        undef      FXtAddCallback drop
   new-dialog FXmNokCallback     ok-prc          undef      FXtAddCallback drop
   reset-prc if
     "Reset" FxmPushButtonWidgetClass new-dialog
-    #( FXmNbackground      reset-button-color
-       FXmNforeground      black-pixel
-       FXmNarmColor        pushed-button-color ) undef FXtCreateManagedWidget ( reset-button )
+    #( FXmNforeground black-pixel ) undef FXtCreateManagedWidget ( reset-button )
     FXmNactivateCallback reset-prc undef FXtAddCallback drop
   then
   xhelp    FXmStringFree drop
@@ -876,8 +868,7 @@ end-struct gate%
     add-sliders gen sliders!
     $" Omit silence" FXmStringCreateLocalized { s1 }
     $" Omit silence" FxmToggleButtonWidgetClass gen sliders@ 0 array-ref FXtParent
-    #( FXmNselectColor pushed-button-color
-       FXmNbackground  basic-color
+    #( FXmNbackground  basic-color
        FXmNvalue       gen omit-silence@ if 1 else 0 then
        FXmNlabelString s1 ) undef FXtCreateManagedWidget ( toggle )
     FXmNvalueChangedCallback <'> gate-omit-cb gen FXtAddCallback drop

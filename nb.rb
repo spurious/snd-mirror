@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Dec 10 22:08:15 CET 2002
-# Changed: Thu Oct 15 00:27:46 CEST 2009
+# Changed: Sat Jul 31 22:40:21 CEST 2010
 
 # Commentary:
 #
@@ -348,7 +348,7 @@ the $nb_database entries of SND will be returned.")
                             end) do |w, c, i|
         self.notes = RXmTextGetString(@text_widget)
       end
-      @file_name = @dialog.add_label(@name, [RXmNbackground, help_button_color])
+      @file_name = @dialog.add_label(@name)
       @text_widget = @dialog.add_text(:rows, 16, :columns, 60, :wordwrap, true, :value, @notes)
       @dialog.doit_string("Submit")
     end

@@ -14,20 +14,21 @@
 # 
 =begin
 % cat ./.sndtest.rb
-$VERBOSE        = true
-$DEBUG          = false
-$ERROR_AND_EXIT = false
+# $VERBOSE           = true
+# $DEBUG             = true
+# $ERROR_AND_EXIT    = true
 
-ENV["TMPDIR"]      = "/usr/opt/tmp"
-$original_save_dir = set_save_dir("/usr/opt/tmp")
-$original_temp_dir = set_temp_dir("/usr/opt/tmp")
+$original_save_dir = set_save_dir(ENV["TMPDIR"])
+$original_temp_dir = set_temp_dir(ENV["TMPDIR"])
+$original_output_data_format = default_output_data_format
 set_with_gl(false)
 
-# $with_exit = false
-# $with_backtrace = true
-$sf_dir = "/usr/opt/sound/sf1/"
-$bigger_snd = "/usr/opt/sound/SFiles/bigger.snd"
-# $with_big_file = true
+# $with_exit         = false
+# $with_backtrace    = true
+# $all_args          = true
+$with_big_file     = true
+$bigger_snd        = "/usr/opt/sound/SFiles/bigger.snd"
+$sf_dir            = "/usr/opt/sound/sf1/"
 =end
 
 #
@@ -68,7 +69,7 @@ $ERROR_AND_EXIT = false
 
 require "clm"
 
-if provided?(:snd_nogui)
+if provided? :snd_nogui
   # snd-nogui.c provides them with fixed args
   undef x_bounds
   undef y_bounds
@@ -163,13 +164,13 @@ end
 if provided? :snd_nogui then set_with_mix_tags(true) end
 
 $with_backtrace = false
-$sf_dir = "/home/bil/sf1/"
-$with_exit = true
+$sf_dir         = "/home/bil/sf1/"
+$with_exit      = true
 
-$with_big_file = false
-$bigger_snd = "/home/bil/zap/sounds/bigger.snd"
+$with_big_file  = false
+$bigger_snd     = "/home/bil/zap/sounds/bigger.snd"
 
-$all_args = false
+$all_args       = false
 
 $test00 = true
 $test01 = true
@@ -554,18 +555,22 @@ end
 
 class Snd_test_time
   def initialize
-    @real_time = Time.now
-    @process_time = process_times
+    @real_time     = Time.now
+    @process_time  = process_times
     @real = @utime = @stime = 0.0
   end
   attr_reader :real, :utime, :stime
+
+  def to_s
+    to_string(1)
+  end
   
   def inspect
-    format("#<%s: real: %8.3f, utime: %8.3f, stime: %8.3f>", self.class, @real, @utime, @stime)
+    format("#<%s: %s>", self.class, to_string(8))
   end
   
   def start
-    @real_time = Time.now
+    @real_time    = Time.now
     @process_time = process_times
   end
   
@@ -575,27 +580,22 @@ class Snd_test_time
     @utime = cur_time.utime - @process_time.utime
     @stime = cur_time.stime - @process_time.stime
   end
-  
-  def display(msg)
-    str = if msg
-            " (" + msg + ")"
-          else
-            ""
-          end
-    snd_info("real: %1.3f, utime: %1.3f, stime: %1.3f%s", @real, @utime, @stime, str) 
-  end
-  
-  def run(msg, &body)
-    start
-    body.call
-    stop
-    if msg then display(msg) end
-    [self.real, self.utime, self.stime]
+
+  private
+  def to_string(n)
+    format("real: %*.3f, user: %*.3f, system: %*.3f", n, @real, n, @utime, n, @stime)
   end
 end
 
 def with_time(msg = nil, &body)
-  Snd_test_time.new.run(msg, &body)
+  stt = Snd_test_time.new
+  stt.start
+  body.call
+  stt.stop
+  if msg
+    snd_info("%s (%s)", stt.to_s, msg)
+  end
+  [stt.real, stt.utime, stt.stime]
 end
 
 def finish_snd_test
@@ -688,8 +688,8 @@ def finish_snd_test
 end
 
 # map_chan* procedure
-$init_channel = lambda do |y| 1.0 end
-$timings = Array.new(0)
+$init_channel  = lambda do |y| 1.0 end
+$timings       = Array.new(0)
 $default_srate = 22050.0
 
 make_hook("$before_test_hook", 1, "snd-test") do |n|
@@ -708,7 +708,12 @@ make_hook("$after_test_hook", 1, "snd-test") do |n|
   end
   Snd.regions.apply(:forget_region)
   dismiss_all_dialogs
-  snd_info("test %s done\n#", n)
+  str = if $VERBOSE
+          " (" + $timings.last.last.to_s + ")"
+        else
+          ""
+        end
+  snd_info("test %s done%s\n#", n, str)
 end
 
 unless hook? $before_test_hook
@@ -724,11 +729,11 @@ def snd_test_exit(test = 0)
   exit(0)
 end
 
-kind = if provided?(:snd_motif)
+kind = if provided? :snd_motif
          "motif"
-       elsif provided?(:snd_gtk)
+       elsif provided? :snd_gtk
          "gtk"
-       elsif provided?(:snd_nogui)
+       elsif provided? :snd_nogui
          "nogui"
        else
          "unknown"
@@ -1382,10 +1387,10 @@ def test00
     end
     if provided? :snd_motif
       [:axis_label_font,
-        :axis_numbers_font,
-        :tiny_font,
-        :peaks_font,
-        :bold_peaks_font].each do |sym|
+       :axis_numbers_font,
+       :tiny_font,
+       :peaks_font,
+       :bold_peaks_font].each do |sym|
         val = snd_func(sym)
         if (res = set_snd_func(sym, "8x123")) != val
           snd_display("set_%s to bogus value: %s %s?", sym, val, res)
@@ -3655,7 +3660,7 @@ def test114
     if (res = mark_sample(m1)) != 44100 * 66000
       snd_display("bigger mark to: %s?", res)
     end
-    if mix?(mx = mix_sound("oboe.snd", 44100 * 60000))
+    if mix?(mx = mix_sound("oboe.snd", 44100 * 60000).car)
       if (res = mix_position(mx)) != 44100 * 60000
         snd_display("bigger mix at: %s?", res)
       end
@@ -3696,12 +3701,12 @@ def test114
       snd_display("bigger mark at: %s", res)
     end
     mid = find_mark(44123 * 51234)
-    if (not number?(mid)) or mid != m1
+    unless mid.eql?(m1)
       snd_display("bigger find_mark: %s %s", mid, m1)
     end
-    mx = mix_sound("oboe.snd", 44123 * 51234)
+    mx = mix_sound("oboe.snd", 44123 * 51234).car
     mxd = find_mix(44123 * 51234)
-    unless number?(mxd) or mix?(mx) or mxd == mx
+    unless mxd.eql?(mx)
       snd_display("bigger find_mix: %s %s", mxd, mx)
     end
     set_cursor(44123 * 51234, ind)
@@ -9756,7 +9761,7 @@ end
 def test05
   if $test05
     $before_test_hook.call(5)
-    test005 unless provided?(:snd_nogui) # no set_x_axis_label [ms]
+    test005 unless provided? :snd_nogui # no set_x_axis_label [ms]
     test015
     test025
     test035
@@ -9766,11 +9771,11 @@ def test05
     test075
     test085
     test095
-    test105 unless provided?(:snd_nogui)
+    test105 unless provided? :snd_nogui
     test115
-    test125 unless provided?(:snd_nogui)
+    test125 unless provided? :snd_nogui
     test135
-    test145 unless provided?(:snd_nogui)
+    test145 unless provided? :snd_nogui
     test155
     test165
     test175
@@ -18687,7 +18692,7 @@ def test198
   key(key_to_int(?c), 0)        # trigger mark_define_region
   reverse_sound(nind)
   revert_sound(nind)
-  mid = mix_sound("pistol.snd", 0)
+  mid = mix_sound("pistol.snd", 0).car
   if mix?(mid) and mix_home(mid) != [selected_sound, 0, false, 0]
     snd_display("mix_sound mix_home: %s (%s or %s 0)?", mix_home(mid), selected_sound, nind)
   end
@@ -21275,28 +21280,43 @@ def string_equal_ignore_white_space(s1, s2)
   s1 == s2 or s1.delete(":()-_, \n") == s2.delete(":()-_, \n")
 end
 
+define_envelope("env4", [0, 1, 1, 0]) # defines $env4
+
 def test11
   if (not provided?(:snd_nogui)) and $test11
     $before_test_hook.call(11)
-    Snd.catch do peaks end
-    cold = color_orientation_dialog
-    trd  = transform_dialog
-    regd = view_regions_dialog
+    Snd.catch do peaks() end
+    enved_dialog
+    color_orientation_dialog
+    # FIXME: calling TRANSFORM_DIALOG with managed=true here kills test28 (snd-motif) [ms]
+    # X Error of failed request:  ... with different messages.
+    if provided?(:snd_motif) and $test28
+      transform_dialog(false)
+    else
+      # transform_dialog(managed=true)
+      transform_dialog
+    end
+    view_files_dialog
+    view_regions_dialog
+    Snd.catch do edit_header_dialog() end
     open_file_dialog(false)
     mix_file_dialog(false)
     insert_file_dialog(false)
     help_dialog("Test", "snd-test here")
-    define_envelope("env4", [0, 1, 1, 0])
     save_envelopes("hiho.env")
     load("hiho.env")
-    snd_display("save_envelopes: %s?", $env4) if $env4 != [0.0, 1.0, 1.0, 0.0]
+    if $env4 != [0.0, 1.0, 1.0, 0.0]
+      snd_display("save_envelopes: %s?", $env4)
+    end
     delete_file("hiho.env")
     help_dialog("test2", "this is the next test",
                 ["string 1{open-sound}", "{env-sound}string2", "string{close-sound}3"],
                 ["extsnd.html#sndopen", "extsnd.html#sndenv", "extsnd.html#sndclose"])
+    # 
     ind = open_sound("oboe.snd")
     edit_header_dialog(ind)
     close_sound(ind)
+    # 
     if (res = snd_url(:open_sound)) != "extsnd.html#opensound"
       snd_display("snd_url :open_sound: %s?", res.inspect)
     end
@@ -21311,12 +21331,14 @@ def test11
     unless string_equal_ignore_white_space(str2, str3)
       snd_display("snd_help open_sound: %s %s?", str2, str3)
     end
-    str = snd_help(:enved_base)
-    unless string_equal_ignore_white_space(res = snd_help(:enved_base), str)
-      snd_display("snd_help :enved_base: %s (%s)", res, str)
+    str1 = "(enved-base): envelope editor exponential base value (1.0)"
+    str2 = snd_help(:enved_base)
+    str3 = snd_help("enved_base")
+    unless string_equal_ignore_white_space(str1, str2)
+      snd_display("snd_help :enved_base: expected %s, got %s", str1, str2)
     end
-    unless string_equal_ignore_white_space(res = snd_help("enved_base"), str)
-      snd_display("snd_help \"enved_base\": %s (%s)", res, str)
+    unless string_equal_ignore_white_space(str1, str3)
+      snd_display("snd_help \"enved_base\": expected %s, got %s", str1, str3)
     end
     old_val = Hamming_window
     str1 = snd_help(:Hamming_window)
@@ -21333,13 +21355,10 @@ def test11
     urls.each do |fnc, url|
       if function?(fnc) then snd_help(fnc, false) end
     end
-    unless provided? :snd_nogui
-      urls.each do |fnc, url|
-        if function?(fnc)
-          help_dialog(fnc, snd_help(fnc, false))
-        end
+    urls.each do |fnc, url|
+      if function?(fnc)
+        help_dialog(fnc, snd_help(fnc, false))
       end
-      hide_widget(help_dialog("hi", "ho"))
     end
     # 
     set_show_indices(true)
@@ -21351,8 +21370,7 @@ def test11
     if (res = widget_text(sound_widgets(ind)[3])) != "hi there"
       snd_display("report_in_minibuffer: %s?", res)
     end
-    append_to_minibuffer("away!", ind)
-    if (res = widget_text(sound_widgets(ind)[3])) != "hi thereaway!"
+    if (res = widget_text(sound_widgets(ind)[3])) != "hi there"
       snd_display("report_in_minibuffer 1: %s?", res)
     end
     if (res = widget_text(main_widgets[1]))
@@ -21375,20 +21393,26 @@ def test11
       snd_display("re-define-envelope $test_ramp: %s?", $test_ramp)
     end
     #
-    dialog = view_files_dialog(false)
-    vfamp = view_files_amp(dialog)
-    vfs = view_files_speed(dialog)
-    vfsort = view_files_sort
+    dialog  = view_files_dialog(false)
+    vfamp   = view_files_amp(dialog)
+    vfs     = view_files_speed(dialog)
+    vfsort  = view_files_sort
     vfsort1 = view_files_sort(dialog)
-    vfe = view_files_amp_env(dialog)
-    vfsel = view_files_selected_files(dialog)
+    vfe     = view_files_amp_env(dialog)
+    vffiles = view_files_files(dialog)
+    vfsel   = view_files_selected_files(dialog)
     selected_file = false
     if fneq(vfamp, 1.0) then snd_display("vf amp: %s", vfamp) end
-    if fneq(vfs, 1.0) then snd_display("vf speed: %s", vfs) end
-    if vfsort != 0 then snd_display("vf sort: %s?", vfsort) end
-    if vfsort1 != 0 then snd_display("vf sort(d): %s?", vfsort1) end
+    if fneq(vfs, 1.0)   then snd_display("vf speed: %s", vfs) end
+    if vfsort != 0      then snd_display("vf sort: %s?", vfsort) end
+    if vfsort1 != 0     then snd_display("vf sort(d): %s?", vfsort1) end
     if vfe != [0.0, 1.0, 1.0, 1.0] then snd_display("vf amp env: %s", vfe) end
-    unless array?(vfsel) or vfsel.nil? then snd_display("vf selected files: %s", vfsel.inspect) end
+    unless array?(vffiles) or vffiles.nil?
+      snd_display("vf selected files: %s", vffiles.inspect)
+    end
+    unless array?(vfsel) or vfsel.nil?
+      snd_display("vf selected files: %s", vfsel.inspect)
+    end
     if (res1 = view_files_speed_style(dialog)) != (res2 = speed_control_style)
       snd_display("vf speed_style def: %s %s", res1, res2)
     end
@@ -21436,7 +21460,6 @@ def test11
         view_files_selected_files(dialog) != [cwd + "1a.snd"]
       snd_display("vf selected_files set: %s", view_files_selected_files(dialog))
     end
-    hide_widget(dialog)
     $after_test_hook.call(11)
   end
 end
@@ -24449,7 +24472,7 @@ def test0115
   select_channel(1)
   key(key_to_int(?x), 4, id)
   key(key_to_int(?v), 0, id)
-  unless provided?(:snd_nogui)
+  unless provided? :snd_nogui
     x0 = x_bounds(id, 0)
     x1 = x_bounds(id, 1)
     if fneq(x0[0], x1[0]) or fneq(x0[1], x1[1])
@@ -33459,7 +33482,7 @@ def test0223
   set_amp_control(0.5, ind)
   set_x_bounds([1.0, 2.0], ind, 0)
   file = with_sound(:clm, false) do fm_violin(0, 4, 440, 0.1) end.output
-  # INFO: with_sound resets anyhow x_bounds [ms]
+  # INFO: with_sound resets x_bounds anyhow [ms]
   set_x_bounds([1.0, 2.0], ind, 0)
   ind = find_sound(file)
   if fneq(res = amp_control(ind), 0.5) then snd_display("update ws amp: %s?", res) end
@@ -33574,267 +33597,256 @@ def check_error_tag(expected_tag, &thunk)
   end
 end
 
-Procs =
-  [:add_mark, :add_sound_file_extension, :add_source_file_extension, :sound_file_extensions,
-   :sound_file?, :add_to_main_menu, :add_to_menu,
-   :add_transform, :amp_control, :as_one_edit, :ask_before_overwrite, :audio_input_device,
-   :audio_output_device, :auto_resize, :auto_update, :autocorrelate, :axis_color, :axis_info,
-   :axis_label_font, :axis_numbers_font, :basic_color, :bind_key, :bomb, :c_g?, :apply_controls,
-   :change_samples_with_origin, :channel_style, :channel_widgets, :channels, :chans, :peaks_font,
-   :bold_peaks_font, :close_sound, :color_cutoff, :color_orientation_dialog, :colormap_ref,
-   :add_colormap, :delete_colormap, :colormap_size, :colormap_name, :color_inverted, :color_scale,
-   :color2list, :colormap, :color?, :comment, :contrast_control, :contrast_control_amp,
-   :channel_properties, :channel_property, :controls_channel,
-   :amp_control_bounds, :speed_control_bounds, :expand_control_bounds, :contrast_control_bounds,
-   :sound_file_extensions, :reverb_control_length_bounds, :reverb_control_scale_bounds,
-   :cursor_update_interval, :cursor_location_offset, :auto_update_interval, :count_matches,
-   :current_font, :cursor, :cursor_color, :with_tracking_cursor, :cursor_size, :cursor_style,
-   :tracking_cursor_style, :dac_combines_channels, :dac_size, :clipping, :data_color, :data_format,
-   :data_location, :data_size, :default_output_chans, :default_output_data_format,
-   :default_output_srate, :default_output_header_type, :insert_file_dialog, :file_write_date,
-   :define_envelope, :delete_mark, :delete_marks, :forget_region, :delete_sample,
-   :delete_samples, :delete_selection, :dialog_widgets, :display_edits, :dot_size,
-   :draw_dot, :draw_dots, :draw_line, :draw_lines, :draw_string, :edit_header_dialog,
-   :edit_fragment, :edit_list2function, :edit_position, :edit_tree, :edits, :env_selection,
-   :env_sound,
-   :enved_envelope, :enved_base, :enved_clip?, :enved_in_dB, :enved_dialog, :enved_style,
-   :enved_power, :enved_target, :enved_waveform_color, :enved_wave?, :eps_file, :eps_left_margin,
-   :eps_bottom_margin, :eps_size, :expand_control, :expand_control_hop, :expand_control_jitter,
-   :expand_control_length, :expand_control_ramp, :expand_control?, :fft, :fft_window_beta,
-   :fft_window_alpha, :fft_with_phases,
-   :fft_log_frequency, :fft_log_magnitude, :transform_size, :disk_kspace, :transform_graph_type,
-   :fft_window, :transform_graph?, :view_files_dialog, :mix_file_dialog, :file_name,
-   :fill_polygon, :fill_rectangle, :filter_sound, :filter_control_in_dB, :filter_control_envelope,
-   :enved_filter_order, :enved_filter, :filter_control_in_hz, :filter_control_order,
-   :filter_selection, :filter_channel, :filter_control_waveform_color, :filter_control?,
-   :find_channel, :find_mark, :find_sound, :finish_progress_report, :foreground_color, :frames,
-   :free_sampler, :graph, :transform?, :delete_transform,
-   :add_watcher, :delete_watcher, :graph_color, :graph_cursor,
-   :graph_data, :graph2ps, :gl_graph2ps, :graph_style, :lisp_graph?, :graphs_horizontal,
-   :header_type,
-   :help_dialog, :info_dialog, :highlight_color, :call_in, :insert_region, :insert_sample,
-   :insert_samples, :insert_samples_with_origin, :insert_selection, :insert_silence,
-   :insert_sound, :just_sounds, :key, :key_binding, :left_sample, :listener_color,
-   :listener_font, :listener_prompt, :listener_selection, :listener_text_color, :main_widgets,
-   :make_color, :make_graph_data, :make_mix_sampler, :make_player, :make_region,
-   :make_region_sampler, :make_sampler, :map_chan,
-   :mark_color, :mark_name, :mark_properties, :mark_property,
-   :mark_sample, :mark_sync, :mark_sync_max, :mark_home, :marks,
-   :mark?, :max_transform_peaks, :max_regions, :max_virtual_ptrees,
-   :maxamp, :maxamp_position, :menu_widgets,
-   :minibuffer_history_length, :min_dB, :log_freq_start, :mix, :mixes, :mix_amp, :mix_amp_env,
-   :mix_color, :mix_length, :mix?,
-   :view_mixes_dialog, :mix_position, :mix_dialog_mix,
-   :mix_name, :mix_sync_max, :mix_sync, :mix_properties, :mix_property,
-   :mix_region, :mix_sampler?, :mix_selection, :mix_sound,
-   :mix_home, :mix_speed, :mix_tag_height, :mix_tag_width, :mark_tag_height, :mark_tag_width,
-   :mix_tag_y, :mix_vct, :mix_waveform_height, :time_graph_style, :lisp_graph_style,
-   :transform_graph_style, :read_mix_sample, :next_sample, :read_region_sample,
-   :transform_normalization, :open_file_dialog_directory,
-   :open_raw_sound, :open_sound, :color_orientation_dialog, :previous_sample,
-   :peaks, :position_color, :position2x, :position2y,
-   :add_directory_to_view_files_list, :add_file_to_view_files_list,
-   :view_files_amp, :view_files_speed, :view_files_files, :view_files_selected_files,
-   :view_files_speed_style, :view_files_amp_env,
-   :view_files_sort, :print_length, :progress_report, :prompt_in_minibuffer, :read_only,
-   :redo_edit, :region_chans, :view_regions_dialog, :region_home, :region_graph_style,
-   :region_frames, :region_position, :region_maxamp, :region_maxamp_position, :selection_maxamp,
-   :selection_maxamp_position, :region_sample, :region2vct, :region_srate, :regions, :region?,
-   :remove_from_menu, :report_in_minibuffer, :reset_controls, :restore_controls,
-   :restore_region, :reverb_control_decay, :reverb_control_feedback,
-   :reverb_control_length, :reverb_control_lowpass, :reverb_control_scale, :reverb_control?,
-   :reverse_sound, :reverse_selection, :revert_sound, :right_sample, :sample,
-   :sampler_at_end?, :sampler?, :samples, :sampler_position, :sash_color,
-   :save_controls, :ladspa_dir, :peak_env_dir,
-   :save_dir, :save_edit_history, :save_envelopes, :save_listener,
-   :save_marks, :save_region, :save_selection, :save_sound, :save_sound_as, :save_state,
-   :save_state_file, :scale_by, :scale_selection_by, :scale_selection_to, :scale_to,
-   :scan_chan, :search_procedure, :select_all, :select_channel, :select_sound, :selected_channel,
-   :selected_data_color, :selected_graph_color, :selected_sound, :selection_position,
-   :selection_color, :selection_creates_region, :selection_frames, :selection_member?,
-   :selection?, :short_file_name, :show_axes, :show_controls,
-   :show_transform_peaks, :show_indices, :show_listener, :show_marks, :show_mix_waveforms,
-   :show_selection_transform, :show_y_zero, :sinc_width, :show_grid, :show_sonogram_cursor,
-   :grid_density, :smooth_sound, :smooth_selection, :snd_print, :snd_spectrum,
-   :snd_tempnam, :snd_version, :sound_files_in_directory, :sound_loop_info, :sound_widgets,
-   :soundfont_info, :sound?, :sounds, :spectrum_end, :spectro_hop, :spectrum_start,
-   :spectro_x_angle, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale, :spectro_z_angle,
-   :spectro_z_scale, :speed_control, :speed_control_style, :speed_control_tones, :squelch_update,
-   :srate, :src_sound, :src_selection, :start_progress_report, :stop_player, :stop_playing,
-   :swap_channels, :syncd_marks, :sync, :sync_max, :sound_properties, :sound_property,
-   :temp_dir, :text_focus_color, :tiny_font, :region_sampler?, :transform_dialog,
-   :transform_sample, :transform2vct, :transform_frames, :transform_type, :trap_segfault,
-   :with_file_monitor, :unbind_key, :update_transform_graph, :update_time_graph,
-   :update_lisp_graph, :update_sound, :clm_table_size,
-   :with_verbose_cursor, :view_sound, :wavelet_type, :with_inset_graph, :with_pointer_focus,
-   :time_graph?, :time_graph_type, :wavo_hop, :wavo_trace, :window_height, :window_width,
-   :window_x, :window_y, :with_mix_tags, :with_relative_panes, :with_gl,
-   :x_axis_style, :beats_per_measure, :beats_per_minute, :x_bounds, :x_position_slider,
-   :x2position, :x_zoom_slider, :mus_header_type2string, :mus_data_format2string, :y_bounds,
-   :y_position_slider, :y2position, :y_zoom_slider, :zero_pad, :zoom_color, :zoom_focus_style,
-   :mus_set_format_radius_and_frequency,
-   :mus_sound_samples, :mus_sound_frames, :mus_sound_duration, :mus_sound_datum_size,
-   :mus_sound_data_location, :data_size, :mus_sound_chans, :mus_sound_srate,
-   :mus_sound_header_type, :mus_sound_data_format, :mus_sound_length, :mus_sound_type_specifier,
-   :mus_header_type_name, :mus_data_format_name, :mus_sound_comment, :mus_sound_write_date,
-   :mus_bytes_per_sample, :mus_sound_loop_info, :mus_sound_mark_info, :mus_audio_describe,
-   :mus_sound_maxamp, :mus_sound_maxamp_exists?, :mus_file_prescaler, :mus_prescaler,
-   :mus_clipping, :mus_file_clipping, :mus_header_raw_defaults,
-   :moving_average, :moving_average?, :make_moving_average, :mus_expand_filename,
-   :make_sound_data, :sound_data_ref, :sound_data_set!, :sound_data_cale!, :sound_data_fill!,
-   :sound_data?, :sound_data_length, :sound_data_multiply!, :sound_data_add!, :sound_data_offset!,
-   :sound_data_copy, :sound_data_reverse!, :sound_data_maxamp, :sound_data_chans,
-   :sound_data2vct, :vct2sound_data, :sound_data_peak, :all_pass, :all_pass?, :amplitude_modulate,
-   :array2file,
-   :array_interp, :mus_interpolate, :asymmetric_fm, :asymmetric_fm?, :sound_data2sound_data,
-   :clear_array, :comb, :comb?, :filtered_comb, :filtered_comb?, :contrast_enhancement,
-   :convolution, :convolve, :convolve?,
-   :db2linear, :degrees2radians, :delay, :delay?, :dot_product, :env, :env_interp, :env?,
-   :file2array, :file2frame, :file2frame?, :file2sample, :file2sample?, :filter, :filter?,
-   :fir_filter, :fir_filter?, :formant, :formant_bank, :formant?, :frame_multiply, :frame_add,
-   :frame2file, :clear_minibuffer,
-   :frame2file?, :frame2frame, :frame2list, :frame2sample, :frame_ref, :frame_set!, :frame?,
-   :granulate, :granulate?, :hz2radians, :iir_filter, :iir_filter?, :in_any, :ina, :inb,
-   :linear2db, :locsig, :locsig_ref, :locsig_reverb_ref, :locsig_reverb_set!, :locsig_set!,
-   :locsig?, :make_all_pass, :make_asymmetric_fm, :make_comb, :make_convolve, :make_delay,
-   :make_env, :make_fft_window, :make_file2frame, :make_file2sample, :make_filter,
-   :make_fir_filter, :make_formant, :make_frame, :make_frame2file, :make_granulate,
-   :make_iir_filter, :make_locsig, :move_locsig, :make_mixer, :make_notch, :make_one_pole,
-   :make_one_zero, :make_oscil, :make_pulse_train, :make_rand, :make_rand_interp,
-   :make_readin, :make_sample2file, :make_sawtooth_wave, :make_square_wave,
-   :make_src, :make_ssb_am, :make_table_lookup,
-   :make_triangle_wave, :make_two_pole, :make_two_zero, :make_wave_train,
-   :mixer_multiply, :mixer_ref, :mixer_set!, :mixer?, :mixer_add,
-   :move_sound, :make_move_sound, :move_sound?, :mus_float_equal_fudge_factor, :multiply_arrays,
-   :mus_array_print_length, :mus_channel, :mus_channels, :make_polyshape, :polyshape, :polyshape?,
-   :mus_close,
-   :mus_data, :mus_feedback, :mus_feedforward, :mus_fft,
-   :mus_frequency, :mus_hop, :mus_increment, :mus_input?, :mus_file_name, :mus_length,
-   :mus_location, :mus_mix, :mus_order, :mus_output?, :mus_phase, :mus_ramp, :mus_random,
-   :mus_scaler, :mus_srate, :mus_xcoeffs, :mus_ycoeffs, :notch, :notch?, :one_pole, :one_pole?,
-   :one_zero, :one_zero?, :oscil, :oscil?, :out_any, :outa, :outb, :outc, :outd,
-   :partials2polynomial, :partials2wave, :phase_partials2wave, :polynomial, :pulse_train,
-   :pulse_train?, :radians2degrees, :radians2hz, :rand, :rand_interp, :rand_interp?, :rand?,
-   :readin, :readin?, :rectangular2polar, :rectangular2magnitudes,
-   :ring_modulate, :sample2file, :sample2file?, :sample2frame, :sawtooth_wave, :sawtooth_wave?,
-   :spectrum, :square_wave, :square_wave?, :src, :src?, :ssb_am, :ssb_am?, :table_lookup,
-   :table_lookup?, :tap, :triangle_wave, :triangle_wave?, :two_pole, :two_pole?, :two_zero,
-   :two_zero?, :wave_train, :wave_train?, :make_vct, :vct_add!,
-   :vct_subtract!, :vct_copy, :vct_length, :vct_multiply!, :vct_offset!, :vct_ref, :vct_scale!,
-   :vct_fill!, :vct_set!, :vct_peak, :vct?, :list2vct, :vct2list,
-   :vector2vct, :vct2vector, :vct_move!, :vct_reverse!, :vct_subseq, :vct, :little_endian?,
-   :vct2string, :clm_channel, :env_channel, :map_channel_with_base, :map_channel,
-   :scan_channel, :reverse_channel, :seconds2samples, :samples2seconds, :vct2channel,
-   :smooth_channel, :channel2vct,
-   :src_channel, :scale_channel, :ramp_channel, :pad_channel, :normalize_channel,
-   :cursor_position, :mus_sound_prune, :mus_sound_forget, :xramp_channel,
-   :ptree_channel, :snd2sample, :snd2sample?, :make_snd2sample, :make_scalar_mixer,
-   :beats_per_minute, :beats_per_measure, :channel_amp_envs, :convolve_files,
-   :filter_control_coeffs, :locsig_type, :make_phase_vocoder,
-   :mus_describe, :mus_error_type2string, :mus_file_buffer_size, :mus_name, :mus_offset,
-   :mus_reset, :mus_rand_seed, :mus_width, :phase_vocoder?,
-   :polar2rectangular, :phase_vocoder_amp_increments,
-   :phase_vocoder_amps, :phase_vocoder_freqs,
-   :phase_vocoder_phase_increments, :phase_vocoder_phases, :mus_generator?, :read_sample,
-   :reset_listener_cursor, :goto_listener_end, :sampler_home, :selection_chans,
-   :selection_srate, :snd_gcs, :snd_font, :snd_color, :snd_warning,
-   :channel_data, :x_axis_label, :variable_graph?, :y_axis_label, :snd_url, :snd_urls,
-   :free_player, :delay_tick, :playing, :draw_axes,
-   :copy_sampler, :html_dir, :html_program, :make_fir_coeffs,
-   :mus_interp_type, :mus_run, :phase_vocoder,
-   :player_home, :redo_edit, :undo_edit, :widget_position, :widget_size, :focus_widget]
+Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension,
+         :sound_file_extensions, :sound_file?, :add_to_main_menu, :add_to_menu,
+         :add_transform, :amp_control, :as_one_edit, :ask_before_overwrite,
+         :audio_input_device, :audio_output_device, :auto_resize, :auto_update,
+         :autocorrelate, :axis_color, :axis_info, :axis_label_font, :axis_numbers_font,
+         :basic_color, :bind_key, :bomb, :c_g?, :apply_controls, :change_samples_with_origin,
+         :channel_style, :channel_widgets, :channels, :chans, :peaks_font, :bold_peaks_font,
+         :close_sound, :color_cutoff, :color_orientation_dialog, :colormap_ref, :add_colormap,
+         :delete_colormap, :colormap_size, :colormap_name, :color_inverted, :color_scale,
+         :color2list, :colormap, :color?, :comment, :contrast_control, :contrast_control_amp,
+         :channel_properties, :channel_property, :controls2channel, :amp_control_bounds,
+         :speed_control_bounds, :expand_control_bounds, :contrast_control_bounds,
+         :sound_file_extensions, :reverb_control_length_bounds, :reverb_control_scale_bounds,
+         :cursor_update_interval, :cursor_location_offset, :auto_update_interval,
+         :count_matches, :current_font, :cursor, :cursor_color, :with_tracking_cursor,
+         :cursor_size, :cursor_style, :tracking_cursor_style, :dac_combines_channels,
+         :dac_size, :clipping, :data_color, :data_format, :data_location, :data_size,
+         :default_output_chans, :default_output_data_format, :default_output_srate,
+         :default_output_header_type, :insert_file_dialog, :file_write_date, :define_envelope,
+         :delete_mark, :delete_marks, :forget_region, :delete_sample, :delete_samples,
+         :delete_selection, :dialog_widgets, :display_edits, :dot_size, :draw_dot,
+         :draw_dots, :draw_line, :draw_lines, :draw_string, :edit_header_dialog,
+         :edit_fragment, :edit_list2function, :edit_position, :edit_tree, :edits,
+         :env_selection, :env_sound, :enved_envelope, :enved_base, :enved_clip?,
+         :enved_in_dB, :enved_dialog, :enved_style, :enved_power, :enved_target,
+         :enved_waveform_color, :enved_wave?, :eps_file, :eps_left_margin, :eps_bottom_margin,
+         :eps_size, :expand_control, :expand_control_hop, :expand_control_jitter,
+         :expand_control_length, :expand_control_ramp, :expand_control?, :fft,
+         :fft_window_beta, :fft_window_alpha, :fft_with_phases, :fft_log_frequency,
+         :fft_log_magnitude, :transform_size, :disk_kspace, :transform_graph_type,
+         :fft_window, :transform_graph?, :view_files_dialog, :mix_file_dialog, :file_name,
+         :fill_polygon, :fill_rectangle, :filter_sound, :filter_control_in_dB,
+         :filter_control_envelope, :enved_filter_order, :enved_filter, :filter_control_in_hz,
+         :filter_control_order, :filter_selection, :filter_channel,
+         :filter_control_waveform_color, :filter_control?, :find_channel, :find_mark,
+         :find_sound, :finish_progress_report, :foreground_color, :frames, :free_sampler,
+         :graph, :transform?, :delete_transform, :add_watcher, :delete_watcher,
+         :graph_color, :graph_cursor, :graph_data, :graph2ps, :gl_graph2ps, :graph_style,
+         :lisp_graph?, :graphs_horizontal, :header_type, :help_dialog, :info_dialog,
+         :highlight_color, :call_in, :insert_region, :insert_sample, :insert_samples,
+         :insert_samples_with_origin, :insert_selection, :insert_silence, :insert_sound,
+         :just_sounds, :key, :key_binding, :left_sample, :listener_color, :listener_font,
+         :listener_prompt, :listener_selection, :listener_text_color, :main_widgets,
+         :make_color, :make_graph_data, :make_mix_sampler, :make_player, :make_region,
+         :make_region_sampler, :make_sampler, :map_chan, :mark_color, :mark_name,
+         :mark_properties, :mark_property, :mark_sample, :mark_sync, :mark_sync_max,
+         :mark_home, :marks, :mark?, :max_transform_peaks, :max_regions,
+         :max_virtual_ptrees, :maxamp, :maxamp_position, :menu_widgets,
+         :minibuffer_history_length, :min_dB, :log_freq_start, :mix, :mixes, :mix_amp,
+         :mix_amp_env, :mix_color, :mix_length, :mix?, :view_mixes_dialog, :mix_position,
+         :mix_dialog_mix, :mix_name, :mix_sync_max, :mix_sync, :mix_properties, :mix_property,
+         :mix_region, :mix_sampler?, :mix_selection, :mix_home, :mix_speed, :mix_tag_height,
+         :mix_tag_width, :mark_tag_height, :mark_tag_width, :mix_tag_y, :mix_vct,
+         :mix_waveform_height, :time_graph_style, :lisp_graph_style, :transform_graph_style,
+         :read_mix_sample, :next_sample, :read_region_sample, :transform_normalization,
+         :open_file_dialog_directory, :open_raw_sound, :open_sound, :color_orientation_dialog,
+         :previous_sample, :peaks, :position_color, :position2x, :position2y,
+         :add_directory_to_view_files_list, :add_file_to_view_files_list, :view_files_amp,
+         :view_files_speed, :view_files_files, :view_files_selected_files,
+         :view_files_speed_style, :view_files_amp_env, :view_files_sort,
+         :print_length, :progress_report, :prompt_in_minibuffer, :read_only,
+         :redo_edit, :region_chans, :view_regions_dialog, :region_home,
+         :region_graph_style, :region_frames, :region_position, :region_maxamp,
+         :region_maxamp_position, :selection_maxamp, :selection_maxamp_position,
+         :region_sample, :region2vct, :region_srate, :regions, :region?,
+         :remove_from_menu, :report_in_minibuffer, :reset_controls, :restore_controls,
+         :restore_region, :reverb_control_decay, :reverb_control_feedback,
+         :reverb_control_length, :reverb_control_lowpass, :reverb_control_scale,
+         :reverb_control?, :reverse_sound, :reverse_selection, :revert_sound,
+         :right_sample, :sample, :sampler_at_end?, :sampler?, :samples, :sampler_position,
+         :sash_color, :save_controls, :ladspa_dir, :peak_env_dir, :save_dir,
+         :save_edit_history, :save_envelopes, :save_listener, :save_marks, :save_region,
+         :save_selection, :save_sound, :save_sound_as, :save_state, :save_state_file,
+         :scale_by, :scale_selection_by, :scale_selection_to, :scale_to, :scan_chan,
+         :search_procedure, :select_all, :select_channel, :select_sound, :selected_channel,
+         :selected_data_color, :selected_graph_color, :selected_sound, :selection_position,
+         :selection_color, :selection_creates_region, :selection_frames, :selection_member?,
+         :selection?, :short_file_name, :show_axes, :show_controls, :show_transform_peaks,
+         :show_indices, :show_listener, :show_marks, :show_mix_waveforms,
+         :show_selection_transform, :show_y_zero, :sinc_width, :show_grid,
+         :show_sonogram_cursor, :grid_density, :smooth_sound, :smooth_selection,
+         :snd_spectrum, :snd_tempnam, :snd_version, :sound_files_in_directory,
+         :sound_loop_info, :sound_widgets, :soundfont_info, :sound?, :sounds,
+         :spectrum_end, :spectro_hop, :spectrum_start, :spectro_x_angle,
+         :spectro_x_scale, :spectro_y_angle, :spectro_y_scale, :spectro_z_angle,
+         :spectro_z_scale, :speed_control, :speed_control_style, :speed_control_tones,
+         :squelch_update, :srate, :src_sound, :src_selection, :start_progress_report,
+         :stop_player, :stop_playing, :swap_channels, :syncd_marks, :sync, :sync_max,
+         :sound_properties, :sound_property, :temp_dir, :text_focus_color, :tiny_font,
+         :region_sampler?, :transform_dialog, :transform_sample, :transform2vct,
+         :transform_frames, :transform_type, :trap_segfault, :with_file_monitor,
+         :unbind_key, :update_transform_graph, :update_time_graph, :update_lisp_graph,
+         :update_sound, :clm_table_size, :with_verbose_cursor, :view_sound, :wavelet_type,
+         :with_inset_graph, :with_pointer_focus, :time_graph?, :time_graph_type, :wavo_hop,
+         :wavo_trace, :window_height, :window_width, :window_x, :window_y, :with_mix_tags,
+         :with_relative_panes, :with_gl, :x_axis_style, :beats_per_measure, :beats_per_minute,
+         :x_bounds, :x_position_slider, :x2position, :x_zoom_slider, :mus_header_type2string,
+         :mus_data_format2string, :y_bounds, :y_position_slider, :y2position, :y_zoom_slider,
+         :zero_pad, :zoom_color, :zoom_focus_style, :mus_set_formant_radius_and_frequency,
+         :mus_sound_samples, :mus_sound_frames, :mus_sound_duration, :mus_sound_datum_size,
+         :mus_sound_data_location, :data_size, :mus_sound_chans, :mus_sound_srate,
+         :mus_sound_header_type, :mus_sound_data_format, :mus_sound_length,
+         :mus_sound_type_specifier, :mus_header_type_name, :mus_data_format_name,
+         :mus_sound_comment, :mus_sound_write_date, :mus_bytes_per_sample,
+         :mus_sound_loop_info, :mus_sound_mark_info, :mus_audio_describe,
+         :mus_sound_maxamp, :mus_sound_maxamp_exists?, :mus_file_prescaler,
+         :mus_prescaler, :mus_clipping, :mus_file_clipping, :mus_header_raw_defaults,
+         :moving_average, :moving_average?, :make_moving_average, :mus_expand_filename,
+         :make_sound_data, :sound_data_ref, :sound_data_set!, :sound_data_scale!,
+         :sound_data_fill!, :sound_data?, :sound_data_length, :sound_data_multiply!,
+         :sound_data_add!, :sound_data_offset!, :sound_data_copy, :sound_data_reverse!,
+         :sound_data_maxamp, :sound_data_chans, :sound_data2vct, :vct2sound_data,
+         :sound_data_peak, :all_pass, :all_pass?, :amplitude_modulate, :array2file,
+         :array_interp, :mus_interpolate, :asymmetric_fm, :asymmetric_fm?,
+         :sound_data2sound_data, :clear_array, :comb, :comb?, :filtered_comb,
+         :filtered_comb?, :contrast_enhancement, :convolution, :convolve, :convolve?,
+         :db2linear, :degrees2radians, :delay, :delay?, :dot_product, :env, :env_interp,
+         :env?, :file2array, :file2frame, :file2frame?, :file2sample, :file2sample?,
+         :filter, :filter?, :fir_filter, :fir_filter?, :formant, :formant_bank, :formant?,
+         :frame_multiply, :frame_add, :frame2file, :clear_minibuffer, :frame2file?,
+         :frame2frame, :frame2list, :frame2sample, :frame_ref, :frame_set!, :frame?,
+         :granulate, :granulate?, :hz2radians, :iir_filter, :iir_filter?, :in_any, :ina, :inb,
+         :linear2db, :locsig, :locsig_ref, :locsig_reverb_ref, :locsig_reverb_set!, :locsig_set!,
+         :locsig?, :make_all_pass, :make_asymmetric_fm, :make_comb, :make_convolve, :make_delay,
+         :make_env, :make_fft_window, :make_file2frame, :make_file2sample, :make_filter,
+         :make_fir_filter, :make_formant, :make_frame, :make_frame2file, :make_granulate,
+         :make_iir_filter, :make_locsig, :move_locsig, :make_mixer, :make_notch,
+         :make_one_pole, :make_one_zero, :make_oscil, :make_pulse_train, :make_rand,
+         :make_rand_interp, :make_readin, :make_sample2file, :make_sawtooth_wave,
+         :make_square_wave, :make_src, :make_ssb_am, :make_table_lookup, :make_triangle_wave,
+         :make_two_pole, :make_two_zero, :make_wave_train, :mixer_multiply, :mixer_ref,
+         :mixer_set!, :mixer?, :mixer_add, :move_sound, :make_move_sound, :move_sound?,
+         :mus_float_equal_fudge_factor, :multiply_arrays, :mus_array_print_length, :mus_channel,
+         :mus_channels, :make_polyshape, :polyshape, :polyshape?, :mus_close, :mus_data,
+         :mus_feedback, :mus_feedforward, :mus_fft, :mus_frequency, :mus_hop, :mus_increment,
+         :mus_input?, :mus_file_name, :mus_length, :mus_location, :mus_mix, :mus_order,
+         :mus_output?, :mus_phase, :mus_ramp, :mus_random, :mus_scaler, :mus_srate,
+         :mus_xcoeffs, :mus_ycoeffs, :notch, :notch?, :one_pole, :one_pole?, :one_zero,
+         :one_zero?, :oscil, :oscil?, :out_any, :outa, :outb, :outc, :outd, :partials2polynomial,
+         :partials2wave, :phase_partials2wave, :polynomial, :pulse_train, :pulse_train?,
+         :radians2degrees, :radians2hz, :rand, :rand_interp, :rand_interp?, :rand?, :readin,
+         :readin?, :rectangular2polar, :rectangular2magnitudes, :ring_modulate, :sample2file,
+         :sample2file?, :sample2frame, :sawtooth_wave, :sawtooth_wave?, :spectrum, :square_wave,
+         :square_wave?, :src, :src?, :ssb_am, :ssb_am?, :table_lookup, :table_lookup?, :tap,
+         :triangle_wave, :triangle_wave?, :two_pole, :two_pole?, :two_zero, :two_zero?,
+         :wave_train, :wave_train?, :make_vct, :vct_add!, :vct_subtract!, :vct_copy,
+         :vct_length, :vct_multiply!, :vct_offset!, :vct_ref, :vct_scale!, :vct_fill!,
+         :vct_set!, :vct_peak, :vct?, :list2vct, :vct2list, :vector2vct, :vct2vector,
+         :vct_move!, :vct_reverse!, :vct_subseq, :vct, :little_endian?, :vct2string,
+         :clm_channel, :env_channel, :map_channel, :scan_channel, :reverse_channel,
+         :seconds2samples, :samples2seconds, :vct2channel, :smooth_channel, :channel2vct,
+         :src_channel, :scale_channel, :ramp_channel, :pad_channel, :normalize_channel,
+         :cursor_position, :mus_sound_prune, :mus_sound_forget, :xramp_channel, :ptree_channel,
+         :snd2sample, :snd2sample?, :make_snd2sample, :make_scalar_mixer, :beats_per_minute,
+         :beats_per_measure, :channel_amp_envs, :convolve_files, :filter_control_coeffs,
+         :locsig_type, :make_phase_vocoder, :mus_describe, :mus_error_type2string,
+         :mus_file_buffer_size, :mus_name, :mus_offset, :mus_reset, :mus_rand_seed,
+         :mus_width, :phase_vocoder?, :polar2rectangular, :phase_vocoder_amp_increments,
+         :phase_vocoder_amps, :phase_vocoder_freqs, :phase_vocoder_phase_increments,
+         :phase_vocoder_phases, :mus_generator?, :read_sample, :reset_listener_cursor,
+         :goto_listener_end, :sampler_home, :selection_chans, :selection_srate, :snd_gcs,
+         :snd_font, :snd_color, :snd_warning, :channel_data, :x_axis_label, :variable_graph?,
+         :y_axis_label, :snd_url, :snd_urls, :free_player, :delay_tick, :playing, :draw_axes,
+         :copy_sampler, :html_dir, :html_program, :make_fir_coeffs, :mus_interp_type, :mus_run,
+         :phase_vocoder, :player_home, :redo_edit, :undo_edit, :widget_position, :widget_size,
+         :focus_widget]
 
-Set_procs =
-  [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_output_device,
-   :auto_resize, :sound_file_extensions,
-   :auto_update, :axis_color, :axis_label_font, :axis_numbers_font, :channel_style, :peaks_font,
-   :bold_peaks_font, :color_cutoff, :color_inverted, :color_scale, :contrast_control,
-   :contrast_control_amp, :amp_control_bounds, :speed_control_bounds, :expand_control_bounds,
-   :contrast_control_bounds, :reverb_control_length_bounds, :reverb_control_scale_bounds,
-   :cursor_update_interval, :cursor_location_offset, :contrast_control?, :auto_update_interval,
-   :current_font, :cursor, :cursor_color, :channel_properties, :channel_property,
-   :with_tracking_cursor, :cursor_size,
-   :cursor_style, :tracking_cursor_style, :dac_combines_channels, :dac_size, :clipping, :data_color,
-   :default_output_chans, :default_output_data_format, :default_output_srate,
-   :default_output_header_type,
-   :dot_size, :enved_envelope, :enved_base, :enved_clip?, :enved_in_dB, :enved_style, :enved_power,
-   :enved_target, :enved_waveform_color, :enved_wave?, :eps_file, :eps_left_margin,
-   :eps_bottom_margin, :eps_size, :expand_control, :expand_control_hop, :expand_control_jitter,
-   :expand_control_length, :expand_control_ramp, :expand_control?, :fft_window_beta,
-   :fft_window_alpha, :fft_with_phases,
-   :fft_log_frequency, :fft_log_magnitude, :transform_size, :transform_graph_type, :fft_window,
-   :transform_graph?, :filter_control_in_dB, :filter_control_envelope, :axis_color,
-   :enved_filter_order, :enved_filter, :filter_control_in_hz, :filter_control_order,
-   :filter_control_waveform_color,
-   :filter_control?, :foreground_color, :graph_color, :graph_cursor, :graph_style, :lisp_graph?,
-   :graphs_horizontal, :highlight_color, :just_sounds, :left_sample, :listener_color,
-   :listener_font, :listener_prompt, :listener_text_color, :mark_color, :mark_name,
-   :mark_properties, :mark_property, :mark_sample,
-   :mark_sync, :max_transform_peaks, :max_regions, :min_dB, :log_freq_start, :mix_amp,
-   :mix_amp_env, :mix_color, :mix_name, :mix_position, :mix_sync, :mix_properties, :mix_property,
-   :max_virtual_ptrees, :mix_speed, :mix_tag_height, :mix_tag_width, :mix_tag_y,
-   :mark_tag_width, :mark_tag_height, :mix_waveform_height, :transform_normalization,
-   :open_file_dialog_directory, :position_color, :view_files_sort, :print_length,
-   :region_graph_style, :reverb_control_decay,
-   :reverb_control_feedback, :reverb_control_length, :reverb_control_lowpass,
-   :reverb_control_scale, :time_graph_style, :lisp_graph_style, :transform_graph_style,
-   :reverb_control?, :sash_color, :ladspa_dir, :peak_env_dir,
-   :save_dir, :save_state_file, :selected_data_color,
-   :selected_graph_color, :selection_color, :selection_creates_region, :show_axes,
-   :show_controls, :show_transform_peaks, :show_indices, :show_marks,
-   :show_mix_waveforms, :show_selection_transform, :show_listener, :show_y_zero, :show_grid,
-   :show_sonogram_cursor, :sinc_width, :spectrum_end, :spectro_hop, :spectrum_start,
-   :spectro_x_angle, :grid_density, :spectro_x_scale, :spectro_y_angle, :spectro_y_scale,
-   :spectro_z_angle, :spectro_z_scale, :speed_control, :speed_control_style, :speed_control_tones,
-   :squelch_update, :sync, :sound_properties, :sound_property,
-   :temp_dir, :text_focus_color, :tiny_font, :y_bounds,
-   :transform_type, :trap_segfault, :with_file_monitor, :with_verbose_cursor,
-   :wavelet_type, :with_inset_graph, :with_pointer_focus, :x_bounds, :time_graph?, :wavo_hop,
-   :wavo_trace, :with_gl,
-   :with_mix_tags, :x_axis_style, :beats_per_minute, :zero_pad, :zoom_color, :zoom_focus_style,
-   :with_relative_panes, :window_x, :window_y, :window_width, :window_height, :mix_dialog_mix,
-   :beats_per_measure, :channels, :chans, :colormap, :comment, :data_format,
-   :data_location, :data_size, :edit_position, :frames, :header_type, :maxamp,
-   :minibuffer_history_length, :read_only, :right_sample, :sample, :samples, :selected_channel,
-   :colormap_size, :selected_sound, :selection_position, :selection_frames,
-   :selection_member?, :sound_loop_info, :srate, :time_graph_type, :x_position_slider,
-   :x_zoom_slider, :y_position_slider, :y_zoom_slider, :sound_data_ref,
-   :mus_array_print_length, :mus_float_equal_fudge_factor, :mus_data,
-   :mus_feedback, :mus_feedforward,
-   :mus_frequency, :mus_hop, :mus_increment, :mus_length, :mus_location,
-   :mus_phase, :mus_ramp, :mus_scaler, :x_axis_label,
-   :locsig_type, :mus_file_buffer_size, :mus_rand_seed, :mus_width, :clm_table_size, :mus_offset,
-   :phase_vocoder_amp_increments, :phase_vocoder_amps, :phase_vocoder_freqs,
-   :phase_vocoder_phase_increments, :phase_vocoder_phases, :mus_generator?, :read_sample,
-   :html_dir, :html_program, :widget_position, :widget_size,
-   :vct_ref, :frame_ref, :mixer_ref, :locsig_ref, :locsig_reverb_ref,
-   :mus_reset, :mus_interp_type,
-   :filter_control_coeffs, :mus_file_prescaler,
-   :mus_clipping, :mus_prescaler, :mus_header_raw_defaults,
-   :view_files_amp, :view_files_speed, :view_files_files, :view_files_selected_files,
-   :view_files_speed_style, :view_files_amp_env]
+Set_procs = [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_output_device,
+             :auto_resize, :sound_file_extensions, :auto_update, :axis_color, :axis_label_font,
+             :axis_numbers_font, :channel_style, :peaks_font, :bold_peaks_font, :color_cutoff,
+             :color_inverted, :color_scale, :contrast_control, :contrast_control_amp,
+             :amp_control_bounds, :speed_control_bounds, :expand_control_bounds,
+             :contrast_control_bounds, :reverb_control_length_bounds,
+             :reverb_control_scale_bounds, :cursor_update_interval, :cursor_location_offset,
+             :contrast_control?, :auto_update_interval, :current_font, :cursor, :cursor_color,
+             :channel_properties, :channel_property, :with_tracking_cursor, :cursor_size,
+             :cursor_style, :tracking_cursor_style, :dac_combines_channels, :dac_size,
+             :clipping, :data_color, :default_output_chans, :default_output_data_format,
+             :default_output_srate, :default_output_header_type, :dot_size, :enved_envelope,
+             :enved_base, :enved_clip?, :enved_in_dB, :enved_style, :enved_power,
+             :enved_target, :enved_waveform_color, :enved_wave?, :eps_file, :eps_left_margin,
+             :eps_bottom_margin, :eps_size, :expand_control, :expand_control_hop,
+             :expand_control_jitter, :expand_control_length, :expand_control_ramp,
+             :expand_control?, :fft_window_beta, :fft_window_alpha, :fft_with_phases,
+             :fft_log_frequency, :fft_log_magnitude, :transform_size, :transform_graph_type,
+             :fft_window, :transform_graph?, :filter_control_in_dB, :filter_control_envelope,
+             :axis_color, :enved_filter_order, :enved_filter, :filter_control_in_hz,
+             :filter_control_order, :filter_control_waveform_color, :filter_control?,
+             :foreground_color, :graph_color, :graph_cursor, :graph_style, :lisp_graph?,
+             :graphs_horizontal, :highlight_color, :just_sounds, :left_sample, :listener_color,
+             :listener_font, :listener_prompt, :listener_text_color, :mark_color, :mark_name,
+             :mark_properties, :mark_property, :mark_sample, :mark_sync, :max_transform_peaks,
+             :max_regions, :min_dB, :log_freq_start, :mix_amp, :mix_amp_env, :mix_color,
+             :mix_name, :mix_position, :mix_sync, :mix_properties, :mix_property,
+             :max_virtual_ptrees, :mix_speed, :mix_tag_height, :mix_tag_width, :mix_tag_y,
+             :mark_tag_width, :mark_tag_height, :mix_waveform_height, :transform_normalization,
+             :open_file_dialog_directory, :position_color, :view_files_sort, :print_length,
+             :region_graph_style, :reverb_control_decay, :reverb_control_feedback,
+             :reverb_control_length, :reverb_control_lowpass, :reverb_control_scale,
+             :time_graph_style, :lisp_graph_style, :transform_graph_style, :reverb_control?,
+             :sash_color, :ladspa_dir, :peak_env_dir, :save_dir, :save_state_file,
+             :selected_data_color, :selected_graph_color, :selection_color,
+             :selection_creates_region, :show_axes, :show_controls, :show_transform_peaks,
+             :show_indices, :show_marks, :show_mix_waveforms, :show_selection_transform,
+             :show_listener, :show_y_zero, :show_grid, :show_sonogram_cursor, :sinc_width,
+             :spectrum_end, :spectro_hop, :spectrum_start, :spectro_x_angle, :grid_density,
+             :spectro_x_scale, :spectro_y_angle, :spectro_y_scale, :spectro_z_angle,
+             :spectro_z_scale, :speed_control, :speed_control_style, :speed_control_tones,
+             :squelch_update, :sync, :sound_properties, :sound_property, :temp_dir,
+             :text_focus_color, :tiny_font, :y_bounds, :transform_type, :trap_segfault,
+             :with_file_monitor, :with_verbose_cursor, :wavelet_type, :with_inset_graph,
+             :with_pointer_focus, :x_bounds, :time_graph?, :wavo_hop, :wavo_trace,
+             :with_gl, :with_mix_tags, :x_axis_style, :beats_per_minute, :zero_pad,
+             :zoom_color, :zoom_focus_style, :with_relative_panes, :window_x, :window_y,
+             :window_width, :window_height, :mix_dialog_mix, :beats_per_measure,
+             :channels, :chans, :colormap, :comment, :data_format, :data_location,
+             :data_size, :edit_position, :frames, :header_type, :maxamp,
+             :minibuffer_history_length, :read_only, :right_sample, :sample, :samples,
+             :selected_channel, :colormap_size, :selected_sound, :selection_position,
+             :selection_frames, :selection_member?, :sound_loop_info, :srate, :time_graph_type,
+             :x_position_slider, :x_zoom_slider, :y_position_slider, :y_zoom_slider,
+             :sound_data_ref, :mus_array_print_length, :mus_float_equal_fudge_factor,
+             :mus_data, :mus_feedback, :mus_feedforward, :mus_frequency, :mus_hop,
+             :mus_increment, :mus_length, :mus_location, :mus_phase, :mus_ramp,
+             :mus_scaler, :x_axis_label, :locsig_type, :mus_file_buffer_size,
+             :mus_rand_seed, :mus_width, :clm_table_size, :mus_offset, :html_dir,
+             :html_program, :widget_position, :widget_size, :mus_file_prescaler,
+             :mus_clipping, :mus_prescaler, :mus_header_raw_defaults, :view_files_amp,
+             :view_files_speed, :view_files_files, :view_files_selected_files,
+             :view_files_speed_style, :view_files_amp_env]
 
-Make_procs =
-  [:make_all_pass, :make_asymmetric_fm, :make_snd2sample, :make_moving_average,
-   :make_comb, :make_filtered_comb, :make_convolve, :make_delay, :make_env, :make_fft_window,
-   :make_file2frame, :make_file2sample, :make_filter, :make_fir_filter, :make_formant, :make_frame,
-   :make_frame2file, :make_granulate, :make_iir_filter, :make_locsig, :make_mixer,
-   :make_notch, :make_one_pole, :make_one_zero, :make_oscil, :make_pulse_train,
-   :make_rand, :make_rand_interp, :make_readin, :make_sample2file, :make_sawtooth_wave,
-   :make_square_wave, :make_src,
-   :make_table_lookup, :make_triangle_wave, :make_two_pole, :make_two_zero, :make_wave_train,
-   :make_phase_vocoder, :make_ssb_am, :make_polyshape,
-   :make_color, :make_player, :make_region, :make_scalar_mixer]
+Make_procs = [:make_all_pass, :make_asymmetric_fm, :make_snd2sample, :make_moving_average,
+              :make_comb, :make_filtered_comb, :make_convolve, :make_delay, :make_env,
+              :make_fft_window, :make_file2frame, :make_file2sample, :make_filter,
+              :make_fir_filter, :make_formant, :make_frame, :make_frame2file, :make_granulate,
+              :make_iir_filter, :make_locsig, :make_mixer, :make_notch, :make_one_pole,
+              :make_one_zero, :make_oscil, :make_pulse_train, :make_rand, :make_rand_interp,
+              :make_readin, :make_sample2file, :make_sawtooth_wave, :make_square_wave,
+              :make_src, :make_table_lookup, :make_triangle_wave, :make_two_pole,
+              :make_two_zero, :make_wave_train, :make_phase_vocoder, :make_ssb_am,
+              :make_polyshape, :make_color, :make_player, :make_region, :make_scalar_mixer]
 
-Keyargs =
-  [:frequency, :initial_phase, :wave, :cosines, :amplitude, :ratio, :size,
-   :a0, :a1, :a2, :b1, :b2, :input, :srate, :file, :channel, :start, :initial_contents,
-   :initial_element, :scaler, :feedforward, :feedback, :max_size, :radius, :gain,
-   :partials, :r, :a, :n, :fill_time, :order, :xcoeffs, :ycoeffs, :envelope, :base,
-   :duration, :offset, :end, :direction, :degree, :distance, :reverb, :output, :fft_size,
-   :expansion, :length, :hop, :ramp, :jitter, :type, :format, :comment, :channels, :filter,
-   :revout, :width, :edit, :synthesize, :analyze, :interp, :overlap, :pitch, :distribution,
-   :sines, :dur]
+Keyargs = [:frequency, :initial_phase, :wave, :cosines, :amplitude, :ratio, :size,
+           :a0, :a1, :a2, :b1, :b2, :input, :srate, :file, :channel, :start, :initial_contents,
+           :initial_element, :scaler, :feedforward, :feedback, :max_size, :radius, :gain,
+           :partials, :r, :a, :n, :fill_time, :order, :xcoeffs, :ycoeffs, :envelope, :base,
+           :duration, :offset, :end, :direction, :degree, :distance, :reverb, :output, :fft_size,
+           :expansion, :length, :hop, :ramp, :jitter, :type, :format, :comment, :channels, :filter,
+           :revout, :width, :edit, :synthesize, :analyze, :interp, :overlap, :pitch, :distribution,
+           :sines, :dur]
 
 class Array
   # If body results in true, returns the rejected elements in a new
@@ -33854,30 +33866,26 @@ class Array
   end
 end
 
-Procs0  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 0) end
-Set_procs0 = Set_procs.remove_if! do |n| function?(n) and set_arity_ok(n, 1) end
-Procs1  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 1) end
-Set_procs1 = Set_procs.remove_if! do |n| function?(n) and set_arity_ok(n, 2) end
-Procs2  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 2) end
-Set_procs2 = Set_procs.remove_if! do |n| function?(n) and set_arity_ok(n, 3) end
-Procs3  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 3) end
-Set_procs3 = Set_procs.remove_if! do |n| function?(n) and set_arity_ok(n, 4) end
-Procs4  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 4) end
-Set_procs4 = Set_procs.remove_if! do |n| function?(n) and set_arity_ok(n, 5) end
-Procs5  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 5) end
-Procs6  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 6) end
-Procs7  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 7) end # not used
-Procs8  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 8) end
+Procs00  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 0) end
+Set_procs00 = Set_procs.remove_if! do |n| function?(n) and set_arity_ok(n, 1) end
+Procs01  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 1) end
+Set_procs01 = Set_procs.remove_if! do |n| function?(n) and set_arity_ok(n, 2) end
+Procs02  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 2) end
+Set_procs02 = Set_procs.remove_if! do |n| function?(n) and set_arity_ok(n, 3) end
+Procs03  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 3) end
+Set_procs03 = Set_procs.remove_if! do |n| function?(n) and set_arity_ok(n, 4) end
+Procs04  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 4) end
+Set_procs04 = Set_procs.remove_if! do |n| function?(n) and set_arity_ok(n, 5) end
+Procs05  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 5) end
+Procs06  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 6) end
+Procs07  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 7) end # not used
+Procs08  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 8) end
 Procs10 = Procs.remove_if! do |n| function?(n) and arity_ok(n, 10) end
 
 $delay_32 = make_oscil(440)
 $color_95 = [1, 2, 3]
 $vector_0 = make_comb(0.1, 3)
-$vct_3 = make_vct(3)
-$car_main = make_all_pass(0.4, 0.5, 2)
-$cadr_main = make_table_lookup(101)
-$sound_data_23 = make_square_wave(440)
-$a_hook = make_triangle_wave(220)
+$vct_3    = make_vct(3)
 
 def test0028
   procs1 =
@@ -34287,7 +34295,7 @@ def test0128
     end
   end
   index = open_sound("oboe.snd")
-  id = mix_sound("oboe.snd", 10)
+  id = mix_sound("oboe.snd", 10).car
   [:mix_name, :mix_position, :mix_speed, :mix_tag_y].each_with_index do |n, i|
     if (tag = Snd.catch do set_snd_func(n, id, $vct_3) end).first != :wrong_type_arg
       snd_display("%s: set mix (4) procs %s: %s", i, n, tag)
@@ -34795,16 +34803,11 @@ def test0328
   set_mus_srate(old_srate)
   $clm_srate = old_clm_srate
   # now try everything! (all we care about here is that Snd keeps running)
-  random_args = [1.5, [0, 1], 1234, $vct_3, :wave,
-                 -1, 0, 1, false, true, [], $vector_0, 12345678901234567890]
-  main_args = [1.5, [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-               lambda do | | true end, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
-               ?c, 0.0, 1.0, -1.0, [], 4, 2, 8, 16, 32, 64, -64, $vector_0, 2.0 ** 21.5,
-               2.0 ** -18.0, $car_main, $cadr_main, 12345678901234567890]
-  few_args = [1.5, [0, 1], 1234, $vct_3, $color_95, sqrt(-1.0), $delay_32, :feedback,
-              0, 1, 64, -64, false, true, [], $vector_0, 12345678901234567890]
-  fewer_args = [1.5, 1234, $vct_3, sqrt(-1.0), 1, -1, 64, -64, false, true, 12345678901234567890]
-  less_args = $all_args ? main_args : few_args
+  random_args = [1.5, [0, 1], 1234, true]
+  main_args   = [1.5, [0, 1], 1234, $vct_3, $color_95, sqrt(-1.0), $delay_32, :feedback, false]
+  few_args    = [1.5, [0, 1], 1234, sqrt(-1.0), $delay_32, true]
+  fewer_args  = [1.5, $vct_3, sqrt(-1.0)]
+  less_args   = $all_args ? main_args : few_args
   #
   # key args
   #
@@ -34816,6 +34819,7 @@ def test0328
       end
     end
   end
+  dismiss_all_dialogs
   if $all_args
     snd_info("keyargs-3-args")
     random_args.each do |arg1|
@@ -34827,6 +34831,7 @@ def test0328
         end
       end
     end
+    dismiss_all_dialogs
     snd_info("keyargs-4-args")
     random_args.each do |arg1|
       Keyargs.each do |arg2|
@@ -34839,156 +34844,194 @@ def test0328
         end
       end
     end
+    dismiss_all_dialogs
   end
   #
   # 0 Args
   #
-  snd_info("0-args")
-  Procs0.each do |n|
-    if (tag = Snd.catch do snd_func(n) end).first == :wrong_number_of_args
-      snd_display("procs0: %s %s\n# %s", tag, n, snd_help(n))
-    end
-  end
-  dismiss_all_dialogs
-  #
-  # 1 Arg
-  #
-  snd_info("1-arg")
-  main_args.each do |arg|
-    Procs1.each do |n|
-      if (tag = Snd.catch do snd_func(n, arg) end).first == :wrong_number_of_args
-        snd_display("procs1: %s %s\n# %s", tag, n, snd_help(n))
+  unless Procs00.empty?
+    snd_info("no-args")
+    Procs00.each do |n|
+      if (tag = Snd.catch do
+            snd_func(n)
+          end).first == :wrong_number_of_args
+        snd_display("procs00: %s %s\n# %s", tag, n, snd_help(n))
       end
     end
-  end
-  #
-  # 2 Args
-  #
-  snd_info("2-args")
-  main_args.each do |arg1|
-    main_args.each do |arg2|
-      Procs2.each do |n|
-        if (tag = Snd.catch do snd_func(n, arg1, arg2) end).first == :wrong_number_of_args
-          snd_display("procs2: %s %s\n# %s", tag, n, snd_help(n))
-        end
-      end
-    end
+    dismiss_all_dialogs
   end
   #
   # set no Args
   #
-  snd_info("set-no-args")
-  main_args.each do |val|
-    Set_procs0.each do |n|
-      # INFO: undefined local variable or method for mus_error|order [ms]
-      if n == :enved_envelope and symbol?(val)
-        next
-      end
-      if (tag = Snd.catch do set_snd_func(n, val) end).first == :wrong_number_of_args
-        snd_display("set_procs0: %s set_%s\n# %s", tag, n, snd_help(n))
+  unless Set_procs00.empty?
+    snd_info("set-no-args")
+    unless provided? :snd_nogui
+      # INFO: [ms] (eval):587:in `set_enved_envelope'
+      # [:name_error] undefined local variable or method `feedback' for main: Object (NameError)
+      Set_procs00.delete(:enved_envelope)
+    end
+    main_args.each do |val|
+      Set_procs00.each do |n|
+        if (tag = Snd.catch do
+              set_snd_func(n, val)
+            end).first == :wrong_number_of_args
+          snd_display("set_procs00: %s set_%s\n# %s", tag, n, snd_help(n))
+        end
       end
     end
+    dismiss_all_dialogs
+  end
+  #
+  # 1 Arg
+  #
+  unless Procs01.empty?
+    snd_info("1-arg")
+    main_args.each do |arg|
+      Procs01.each do |n|
+        if (tag = Snd.catch do
+              snd_func(n, arg)
+            end).first == :wrong_number_of_args
+          snd_display("procs01: %s %s\n# %s", tag, n, snd_help(n))
+        end
+      end
+    end
+    dismiss_all_dialogs
   end
   #
   # set 1 Arg
   #
-  snd_info("set-1-arg")
-  main_args.each do |arg1|
-    main_args.each do |arg2|
-      Set_procs1.each do |n|
-        if (tag = Snd.catch do set_snd_func(n, arg1, arg2) end).first == :wrong_number_of_args
-          snd_display("set_procs1: %s set_%s\n# %s", tag, n, snd_help(n))
+  unless Set_procs01.empty?
+    snd_info("set-1-arg")
+    main_args.each do |arg1|
+      main_args.each do |arg2|
+        Set_procs01.each do |n|
+          if (tag = Snd.catch do
+                set_snd_func(n, arg1, arg2)
+              end).first == :wrong_number_of_args
+            snd_display("set_procs01: %s set_%s\n# %s", tag, n, snd_help(n))
+          end
         end
       end
     end
+    dismiss_all_dialogs
   end
-  if $all_args
-    #
-    # set 2 Args
-    #
+  #
+  # 2 Args
+  #
+  unless Procs02.empty?
+    snd_info("2-args")
+    main_args.each do |arg1|
+      main_args.each do |arg2|
+        Procs02.each do |n|
+          if (tag = Snd.catch do
+                snd_func(n, arg1, arg2)
+              end).first == :wrong_number_of_args
+            snd_display("procs02: %s %s\n# %s", tag, n, snd_help(n))
+          end
+        end
+      end
+    end
+    dismiss_all_dialogs
+  end
+  #
+  # set 2 Args
+  #
+  unless Set_procs02.empty?
     snd_info("set-2-args")
     less_args.each do |arg1|
       less_args.each do |arg2|
         less_args.each do |arg3|
-          Set_procs2.each do |n|
+          Set_procs02.each do |n|
             if (tag = Snd.catch do
                   set_snd_func(n, arg1, arg2, arg3)
                 end).first == :wrong_number_of_args
-              snd_display("set_procs2: %s set_%s\n# %s", tag, n, snd_help(n))
+              snd_display("set_procs02: %s set_%s\n# %s", tag, n, snd_help(n))
             end
           end
         end
       end
     end
-    #
-    # 3 Args
-    #
+    dismiss_all_dialogs
+  end
+  #
+  # 3 Args
+  #
+  unless Procs03.empty?
     snd_info("3-args")
     less_args.each do |arg1|
       less_args.each do |arg2|
         less_args.each do |arg3|
-          Set_procs3.each do |n|
+          Procs03.each do |n|
             if (tag = Snd.catch do
                   snd_func(n, arg1, arg2, arg3)
                 end).first == :wrong_number_of_args
-              snd_display("procs3: %s %s\n# %s", tag, n, snd_help(n))
+              snd_display("procs03: %s %s\n# %s", tag, n, snd_help(n))
             end
           end
         end
       end
     end
-    #
-    # set 3 Args
-    #
+    dismiss_all_dialogs
+  end
+  #
+  # set 3 Args
+  #
+  unless Set_procs03.empty?
     snd_info("set-3-args")
     less_args.each do |arg1|
       less_args.each do |arg2|
         less_args.each do |arg3|
           less_args.each do |arg4|
-            Set_procs3.each do |n|
+            Set_procs03.each do |n|
               if (tag = Snd.catch do
-                    snd_func(n, arg1, arg2, arg3, arg4)
+                    set_snd_func(n, arg1, arg2, arg3, arg4)
                   end).first == :wrong_number_of_args
-                snd_display("set_procs3: %s set_%s\n# %s", tag, n, snd_help(n))
+                snd_display("set_procs03: %s set_%s\n# %s", tag, n, snd_help(n))
               end
             end
           end
         end
       end
     end
-    #
-    # 4 Args
-    #
+    dismiss_all_dialogs
+  end
+  #
+  # 4 Args
+  #
+  unless Procs04.empty?
     snd_info("4-args")
     few_args.each do |arg1|
       few_args.each do |arg2|
         few_args.each do |arg3|
           few_args.each do |arg4|
-            Set_procs4.each do |n|
+            Procs04.each do |n|
               if (tag = Snd.catch do
                     snd_func(n, arg1, arg2, arg3, arg4)
                   end).first == :wrong_number_of_args
-                snd_display("procs4: %s %s\n# %s", tag, n, snd_help(n))
+                snd_display("procs04: %s %s\n# %s", tag, n, snd_help(n))
               end
             end
           end
         end
       end
     end
-    #
-    # set 4 Args
-    #
+    dismiss_all_dialogs
+  end
+  #
+  # set 4 Args
+  #
+  unless Set_procs04.empty?
     snd_info("set-4-args")
     few_args.each do |arg1|
       few_args.each do |arg2|
         few_args.each do |arg3|
           few_args.each do |arg4|
             few_args.each do |arg5|
-              Set_procs4.each do |n|
+              Set_procs04.each do |n|
                 if (tag = Snd.catch do
-                      snd_func(n, arg1, arg2, arg3, arg4, arg5)
+                      set_snd_func(n, arg1, arg2, arg3, arg4, arg5)
                     end).first == :wrong_number_of_args
-                  snd_display("set_procs4: %s set_%s\n# %s", tag, n, snd_help(n))
+                  snd_display("set_procs04: %s set_%s\n# %s", tag, n, snd_help(n))
                 end
               end
             end
@@ -34998,20 +35041,23 @@ def test0328
     end
     clear_sincs
     stop_playing
-    #
-    # 5 Args
-    #
+    dismiss_all_dialogs
+  end
+  #
+  # 5 Args
+  #
+  unless Procs05.empty?
     snd_info("5-args")
     fewer_args.each do |arg1|
       fewer_args.each do |arg2|
         fewer_args.each do |arg3|
           fewer_args.each do |arg4|
             fewer_args.each do |arg5|
-              Procs5.each do |n|
+              Procs05.each do |n|
                 if (tag = Snd.catch do
                       snd_func(n, arg1, arg2, arg3, arg4, arg5)
                     end).first == :wrong_number_of_args
-                  snd_display("procs5: %s %s\n# %s", tag, n, snd_help(n))
+                  snd_display("procs05: %s %s\n# %s", tag, n, snd_help(n))
                 end
               end
             end
@@ -35020,22 +35066,24 @@ def test0328
       end
     end
     clear_sincs
-    #
-    # 6 Args
-    #
-    args = [1.5, [0, 1], -1234, $vct_3, false, true]
+    dismiss_all_dialogs
+  end
+  #
+  # 6 Args
+  #
+  unless Procs06.empty?
     snd_info("6-args")
-    args.each do |arg1|
-      args.each do |arg2|
-        args.each do |arg3|
-          args.each do |arg4|
-            args.each do |arg5|
-              args.each do |arg6|
-                Procs6.each do |n|
+    fewer_args.each do |arg1|
+      fewer_args.each do |arg2|
+        fewer_args.each do |arg3|
+          fewer_args.each do |arg4|
+            fewer_args.each do |arg5|
+              fewer_args.each do |arg6|
+                Procs06.each do |n|
                   if (tag = Snd.catch do
                         snd_func(n, arg1, arg2, arg3, arg4, arg5, arg6)
                       end).first == :wrong_number_of_args
-                    snd_display("procs6: %s %s\n# %s", tag, n, snd_help(n))
+                    snd_display("procs06: %s %s\n# %s", tag, n, snd_help(n))
                   end
                 end
               end
@@ -35044,24 +35092,26 @@ def test0328
         end
       end
     end
-    #
-    # 8 Args
-    #
-    args = [1.5, -1, 1234]
+    dismiss_all_dialogs
+  end
+  #
+  # 8 Args
+  #
+  unless Procs08.empty?
     snd_info("8-args")
-    args.each do |arg1|
-      args.each do |arg2|
-        args.each do |arg3|
-          args.each do |arg4|
-            args.each do |arg5|
-              args.each do |arg6|
-                args.each do |arg7|
-                  args.each do |arg8|
-                    Procs8.each do |n|
+    fewer_args.each do |arg1|
+      fewer_args.each do |arg2|
+        fewer_args.each do |arg3|
+          fewer_args.each do |arg4|
+            fewer_args.each do |arg5|
+              fewer_args.each do |arg6|
+                fewer_args.each do |arg7|
+                  fewer_args.each do |arg8|
+                    Procs08.each do |n|
                       if (tag = Snd.catch do
                             snd_func(n, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
                           end).first == :wrong_number_of_args
-                        snd_display("procs8: %s %s\n# %s", tag, n, snd_help(n))
+                        snd_display("procs08: %s %s\n# %s", tag, n, snd_help(n))
                       end
                     end
                   end
@@ -35072,21 +35122,23 @@ def test0328
         end
       end
     end
-    #
-    # 10 Args
-    #
-    args = [1.5, -1, 1234]
+    dismiss_all_dialogs
+  end
+  #
+  # 10 Args
+  #
+  unless Procs10.empty?
     snd_info("10-args")
-    args.each do |arg1|
-      args.each do |arg2|
-        args.each do |arg3|
-          args.each do |arg4|
-            args.each do |arg5|
-              args.each do |arg6|
-                args.each do |arg7|
-                  args.each do |arg8|
-                    args.each do |arg9|
-                      args.each do |arg10|
+    fewer_args.each do |arg1|
+      fewer_args.each do |arg2|
+        fewer_args.each do |arg3|
+          fewer_args.each do |arg4|
+            fewer_args.each do |arg5|
+              fewer_args.each do |arg6|
+                fewer_args.each do |arg7|
+                  fewer_args.each do |arg8|
+                    fewer_args.each do |arg9|
+                      fewer_args.each do |arg10|
                         Procs10.each do |n|
                           if (tag = Snd.catch do
                                 snd_func(n, arg1, arg2, arg3, arg4, arg5,
@@ -35106,6 +35158,7 @@ def test0328
       end
     end
     clear_sincs
+    dismiss_all_dialogs
   end
 end
 
@@ -35166,23 +35219,34 @@ def test28
     set_with_background_processes(true)
     snd_info("procs  prcs/set-prcs")
     snd_info("====================")
-    snd_info("proc00: %3d/%3d", Procs0.length, Set_procs0.length)
-    snd_info("proc01: %3d/%3d", Procs1.length, Set_procs1.length)
-    snd_info("proc02: %3d/%3d", Procs2.length, Set_procs2.length)
-    snd_info("proc03: %3d/%3d", Procs3.length, Set_procs3.length)
-    snd_info("proc04: %3d/%3d", Procs4.length, Set_procs4.length)
-    snd_info("proc05: %3d", Procs5.length)
-    snd_info("proc06: %3d", Procs6.length)
-    snd_info("proc07: %3d", Procs7.length)
-    snd_info("proc08: %3d", Procs8.length)
+    snd_info("proc00: %3d/%3d", Procs00.length, Set_procs00.length)
+    snd_info("proc01: %3d/%3d", Procs01.length, Set_procs01.length)
+    snd_info("proc02: %3d/%3d", Procs02.length, Set_procs02.length)
+    snd_info("proc03: %3d/%3d", Procs03.length, Set_procs03.length)
+    snd_info("proc04: %3d/%3d", Procs04.length, Set_procs04.length)
+    snd_info("proc05: %3d", Procs05.length)
+    snd_info("proc06: %3d", Procs06.length)
+    snd_info("proc07: %3d", Procs07.length)
+    snd_info("proc08: %3d", Procs08.length)
     snd_info("proc10: %3d", Procs10.length)
+    unless provided? :snd_nogui
+      unless Procs.empty?
+        snd_display("procs: %s?", Procs)
+      end
+      unless Set_procs.empty?
+        snd_display("set_procs: %s?", Set_procs)
+      end
+    end
     reset_almost_all_hooks
     test0028
     test0128 unless provided? :snd_nogui
     test0228 unless provided? :snd_nogui
+    # INFO: with snd-gtk [ms]
+    # test0428 should come before test0328 because of:
+    # (snd-ruby-xg:2371): Gdk-WARNING **: GdkWindow 0x160015b unexpectedly destroyed
+    # ...
     test0428
     test0328
-    puts
     $after_test_hook.call(28)
   end
 end

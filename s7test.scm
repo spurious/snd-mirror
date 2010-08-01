@@ -6081,6 +6081,7 @@
 ;;; PORTS
 ;;; --------------------------------------------------------------------------------
 
+
 (define start-input-port (current-input-port))
 (define start-output-port (current-output-port))
 
@@ -6129,12 +6130,15 @@
 (test (call-with-input-file "empty-file" (lambda (p) (eof-object? (read-byte p)))) #t)
 (test (call-with-input-file "empty-file" (lambda (p) (eof-object? (read-line p)))) #t)
 (test (load "empty-file") #<unspecified>)
+(test (call-with-input-file "empty-file" (lambda (p) (port-closed? p))) #f)
 
 (let ()
   (define (io-func) (lambda (p) (eof-object? (read-line p))))
   (test (call-with-input-file (let () "empty-file") (io-func)) #t))
 
-(call-with-output-file "empty-file" (lambda (p) (write-char #\a p)))
+(let ((p1 #f))
+  (call-with-output-file "empty-file" (lambda (p) (set! p1 p) (write-char #\a p)))
+  (test (port-closed? p1) #t))
 (test (call-with-input-file "empty-file" (lambda (p) (and (char=? (read-char p) #\a) (eof-object? (read-char p))))) #t)
 (test (call-with-input-file "empty-file" (lambda (p) (and (string=? (symbol->string (read p)) "a") (eof-object? (read p))))) #t) ; Guile also returns a symbol here
 (test (call-with-input-file "empty-file" (lambda (p) (and (char=? (integer->char (read-byte p)) #\a) (eof-object? (read-byte p))))) #t)
@@ -6202,13 +6206,23 @@
 (test (let ((val #f)) (call-with-output-string (lambda (p) (set! val (output-port? p)))) val) #t)
 (test (let ((res #f)) (let ((this-file (open-output-string))) (set! res (output-port? this-file)) (close-output-port this-file) res)) #t)
 
-
-
 (for-each
  (lambda (arg)
    (if (eof-object? arg)
        (format #t "(eof-object? ~A) -> #t?~%" arg)))
  (list "hi" -1 #\a 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (if #f #f) #<undefined> (lambda (a) (+ a 1))))
+
+(for-each
+ (lambda (arg)
+   (let ((val (catch #t
+		     (lambda () (port-closed? arg))
+		     (lambda args 'error))))
+     (if (not (eq? val 'error))
+	 (format #t "(port-closed? ~A) -> ~S?~%" arg val))))
+ (list "hi" -1 #\a 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (if #f #f) #<undefined> #<eof> (lambda (a) (+ a 1))))
+
+(test (port-closed?) 'error)
+(test (port-closed? (current-input-port) (current-output-port)) 'error)
 
 (call-with-output-file "tmp1.r5rs" (lambda (p) (display "3.14" p)))
 (test (call-with-input-file "tmp1.r5rs" (lambda (p) (read p) (let ((val (read p))) (eof-object? val)))) #t)
@@ -6254,6 +6268,7 @@
   (check-test-file "tmp1.r5rs")
   
   (let ((test-file (open-output-file "tmp2.r5rs")))
+    (test (port-closed? test-file) #f)
     (write-char #\; test-file)
     (display #\; test-file)
     (display ";" test-file)
@@ -8886,6 +8901,10 @@
 (test (let ((hi 0)) (set! hi 32)) 32)
 (test (let ((hi 0)) ((set! hi ('((1 2) (3 4)) 0)) 0)) 1)
 
+(test (set! #<undefined> 1) 'error)
+(test (set! #<eof> 1) 'error)
+(test (set! #<unspecified> 1) 'error)
+
 
 
 
@@ -9077,6 +9096,7 @@
 (test (cond ((let () 1) => (let ((x 2)) (lambda (n) (+ n x))))) 3)
 (test (cond ((let () 1) => (let ((x 2)) (cond (3 => (let ((y 4)) (lambda (n) (lambda (m) (+ n m x y))))))))) 10)
 
+(test (let ((=> 3)) (cond (=> =>))) 3)
 (test (let ((=> 3) (cond 4)) (+ => cond)) 7)
 (test (cond (cond 'cond)) 'cond)
 (test (cond (3 => (lambda args (car args)))) 3)
@@ -9112,6 +9132,7 @@
 (test (let ((=> 3)) (cond (1 =>))) 3)
 (test (let ((=> 3)) (cond (1 => abs))) abs)
 (test (let ((=> 3) (else 4)) (cond (else => abs))) abs)
+(test (let ((=> 3)) (cond (1 => "hi"))) "hi")
 
 (test (let ((x 0))
 	(cond ((let ((y x)) (set! x 1) (= y 1)) 0)
@@ -9270,6 +9291,9 @@
 (test (case #f ((3/4 "hi" #t) 0) ((#f #() hi) 2) ((#\a 0 #t) 3) (else 4)) 2)
 (test (case 3 ((3/4 "hi" #t) 0) ((#f #() hi) 2) ((#\a 0 #t) 3) (else 4)) 4)
 (test (case 0 ((values 0 1) 2) (else 3)) 2)
+
+(test (let ((else 3)) (case 0 ((1) 2) (else 3))) 'error) ; also if else is set!
+(test (let ((else 3)) (case else ((3) else))) 3)
 
 
 
@@ -9558,6 +9582,8 @@
 (test ((apply lambda* '((a (b 1)) (+ a b))) 3 4) 7)
 (test ((apply lambda* '((a (b 1)) (+ a b))) 3) 4)
 
+(test ((lambda (a) a) #<eof>) #<eof>)
+(test ((lambda () (let ((a #<undefined>)) a))) #<undefined>)
 
 
 
@@ -9719,6 +9745,7 @@
 (test (apply begin '()) (begin))
 (test (apply if '(#f 1 2)) 2)
 (test (let ((x 1)) (apply set! '(x 3)) x) 3)
+(test (let ((x 3)) (apply set! (list (values 'x 32))) x) 32)
 (test (let ((x 1)) (apply cond '(((= x 2) 3) ((= x 1) 32)))) 32)
 (test (apply and '((= 1 1) (> 2 3))) #f)
 (test (apply and '()) (and))
@@ -9822,6 +9849,8 @@
 (test (define x 1 . 2) 'error)
 (test (define x . 1) 'error)
 (test (define x (lambda ())) 'error)
+(test (define #<eof> 3) 'error)
+(test (define (#<undefined>) 4) 'error)
 					;(test (define 'hi 1) 'error) ; this redefines quote, which maybe isn't an error
 (test (let () (define . 1) 1) 'error)
 (test (let () (define func (do () (#t (lambda (y) 2)))) (func 1)) 2)
@@ -13568,7 +13597,7 @@ who says the continuation has to restart the map from the top?
 
     (define-bacro* (mac b)
       `((i_ let) ((a 12)) 
-	((i_ +) a ,(special b))))
+	((i_ +) a ,(symbol->value b))))
 
     (test (let ((a 32) 
 		(+ -)) 
@@ -15428,6 +15457,55 @@ who says the continuation has to restart the map from the top?
 (let ()
   (define (fy) special-global-y)
   (test (fy) 123))
+
+(test (let () (special)) 'error)
+(test (let ((x 1)) (special x x)) 'error)
+(test (let ((x (list 1 2 3))) (special x)) '(1 2 3))
+(test (let ((x (list 1 2 3))) (apply special (list 'x))) '(1 2 3))
+(test (let ((x "hi")) (string-set! (special x) 0 #\a) x) "ai")
+(test (let ((x #(0 1 2))) (vector-set! (special x) 0 32) x) #(32 1 2))
+(test (let ((x (list 1 2 3))) (list-set! (special x) 0 32) x) '(32 2 3))
+
+(for-each
+ (lambda (arg)
+   (let ((str arg))
+     (let ((val (catch #t
+		       (lambda ()
+			 (special str))
+		       (lambda args 'error))))
+       (if (not (equal? val arg))
+	   (format #t "(special ~S) -> ~S~%" arg val)))))
+ (list "hi" 1 '() #() '(1 2 3) #(1 2) '(1 . 2) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #t #<eof> (lambda (a) (+ a 1))))
+
+(for-each
+ (lambda (arg)
+   (let ((str 0))
+     (define (get-str) (special str))
+     (let ((str arg))
+       (let ((val (catch #t
+			 (lambda ()
+			   (get-str))
+			 (lambda args 'error))))
+	 (if (not (equal? val arg))
+	     (format #t "((special ~S)) -> ~S~%" arg val))))))
+ (list "hi" 1 '() #() '(1 2 3) #(1 2) '(1 . 2) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #t #<eof> (lambda (a) (+ a 1))))
+
+(let ((str 0))
+  (define (set-str) (string-set! (special str) 0 #\a))
+  (let ((str "hi"))                
+    (set-str)
+    (test str "ai"))
+  (test str 0))
+(let ((str 0))
+  (define (set-str) (list-set! (special str) 0 32))
+  (let ((str (list 1 2 3)))              
+    (set-str)
+    (test str '(32 2 3)))
+  (test str 0))
+
+(test (let ((x 0)) (set! (special x) 1) x) 1)
+(test (let ((x (list 1 2 3))) (set! (special x) '(123)) x) '(123))
+
 (test (let ()
 	(define x 32)
 	(let ((y 0))

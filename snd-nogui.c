@@ -401,7 +401,6 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("(define " S_filter_control_waveform_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_graph_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_graph_cursor " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_highlight_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_listener_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_listener_text_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_axis_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
@@ -419,7 +418,6 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("(define " S_sash_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_selected_data_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_selected_graph_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_selection_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_text_focus_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_x_axis_label " (make-procedure-with-setter (lambda args \"\") (lambda args \"\")))");
   XEN_EVAL_C_STRING("(define " S_y_axis_label " (make-procedure-with-setter (lambda args \"\") (lambda args \"\")))");
@@ -511,8 +509,6 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("def set_graph_color (a) false end");
   XEN_EVAL_C_STRING("def graph_cursor () false end");
   XEN_EVAL_C_STRING("def set_graph_cursor (a) false end");
-  XEN_EVAL_C_STRING("def highlight_color () false end");
-  XEN_EVAL_C_STRING("def set_highlight_color (a) false end");
   XEN_EVAL_C_STRING("def listener_color () false end");
   XEN_EVAL_C_STRING("def set_listener_color (a) false end");
   XEN_EVAL_C_STRING("def listener_text_color () false end");
@@ -543,8 +539,6 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("def set_selected_data_color (a) false end");
   XEN_EVAL_C_STRING("def selected_graph_color () false end");
   XEN_EVAL_C_STRING("def set_selected_graph_color (a) false end");
-  XEN_EVAL_C_STRING("def selection_color () false end");
-  XEN_EVAL_C_STRING("def set_selection_color (a) false end");
   XEN_EVAL_C_STRING("def text_focus_color () false end");
   XEN_EVAL_C_STRING("def set_text_focus_color (a) false end");
   XEN_EVAL_C_STRING("def zoom_color () false end");
@@ -664,8 +658,6 @@ void snd_doit(int argc, char **argv)
 : set-" S_graph_color " { a } #f ;\n\
 : " S_graph_cursor " #f ;\n\
 : set-" S_graph_cursor " { a } #f ;\n\
-: " S_highlight_color " #f ;\n\
-: set-" S_highlight_color " { a } #f ;\n\
 : " S_listener_color " #f ;\n\
 : set-" S_listener_color " { a } #f ;\n\
 : " S_listener_text_color " #f ;\n\
@@ -680,8 +672,6 @@ void snd_doit(int argc, char **argv)
 : set-" S_selected_data_color " { a } #f ;\n\
 : " S_selected_graph_color " #f ;\n\
 : set-" S_selected_graph_color " { a } #f ;\n\
-: " S_selection_color " #f ;\n\
-: set-" S_selection_color " { a } #f ;\n\
 : " S_text_focus_color " #f ;\n\
 : set-" S_text_focus_color " { a } #f ;\n\
 : " S_x_axis_label " #f ;\n\
