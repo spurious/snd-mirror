@@ -59,7 +59,6 @@
  *      variables can have only one type, the type has to be ascertainable somehow at run time (similarly for vector elements)
  *      some variables (imported from outside our context) cannot be set
  *      no recursion (could be added with some pain)
- *      no macro expansion [why not? TODO: expand macros in run!]
  *      no complex, ratio, bignum (but we use 64-bit ints)
  *      no pointer aliasing (i.e. vct var set to alias another vct var etc -- GC confusion otherwise)
  *      no apply or eval (we need to know at parse time what we are trying to do -- actually these might be doable)
@@ -15626,7 +15625,15 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
       num_args = s7_list_length(s7, all_args);
       if (s7_is_symbol(function))
 	{
-	  /* fprintf(stderr, "walk: check for %s %d\n", s7_object_to_c_string(s7, function), s7_is_macro(s7, function)); */
+	  if (s7_is_macro(s7, function))
+	    {
+	      /* if it's a macro we want to apply its procedure-source to the form, then walk the result
+	       */
+	      s7_pointer new_form;
+	      new_form = s7_apply_function(s7, function, form);
+	      /* fprintf(stderr, "macro-> %s\n", s7_object_to_c_string(s7, new_form)); */
+	      return(walk(prog, new_form, walk_result));
+	    }
 	  
 	  walker = scheme_walker(function);
 	  if (s7_is_c_pointer(walker))

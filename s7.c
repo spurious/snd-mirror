@@ -13913,7 +13913,18 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
 {
-  return(c_function_call(fnc)(sc, args));
+  if (is_procedure(fnc))
+    return(c_function_call(fnc)(sc, args));
+
+  if (s7_is_symbol(fnc))
+    fnc = s7_symbol_value(sc, fnc);
+
+  /* this assumes it's a macro -- TODO: s7_apply_function to a scheme function */
+  push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
+  sc->args = make_list_1(sc, args);
+  sc->code = fnc;
+  eval(sc, OP_APPLY);
+  return(sc->value);
 }
 
 
@@ -19696,6 +19707,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	case T_CLOSURE:                              /* -------- normal function (lambda), or macro -------- */
 	case T_MACRO:
+	  /* fprintf(stderr, "apply %s %s\n", s7_object_to_c_string(sc, sc->code), s7_object_to_c_string(sc, sc->args)); */
+
 	  /* sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); */
 	  NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
 
@@ -26211,8 +26224,6 @@ s7_scheme *s7_init(void)
       chars[i] = p;
     }
 
-
-  /* initialization of global pointers to special symbols */
   assign_syntax(sc, "quote",             OP_QUOTE);
   assign_syntax(sc, "if",                OP_IF);
   assign_syntax(sc, "begin",             OP_BEGIN);
@@ -26906,7 +26917,6 @@ s7_scheme *s7_init(void)
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
  * perhaps remove the `#(...) support -- is there any actual use for this?
  * PERHAPS: multidimensional hash tables
- * TODO: how to call a scheme macro from C?
  *
  * someday we need to catch gmp exceptions: SIGFPE (exception=deliberate /0 -- see gmp/errno.c)
  *   #include <signal.h>

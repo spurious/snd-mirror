@@ -13562,6 +13562,19 @@ who says the continuation has to restart the map from the top?
   (test (let () (define-bacro (tst a) `(+ 1 (if (> ,a 0) (tst (- ,a 1)) 0))) (tst 3)) 4)
   (test (let () (define-bacro (hi a) (if (list? a) `(+ 1 ,@a) `(+ 1 ,a))) (* (hi 1) (hi (2 3)))) 12)
 
+  (let ()
+    (define-macro (i_ arg)
+      `(with-environment (initial-environment) ,arg))
+
+    (define-bacro* (mac b)
+      `((i_ let) ((a 12)) 
+	((i_ +) a ,(special b))))
+
+    (test (let ((a 32) 
+		(+ -)) 
+	    (mac a))
+	  44))
+
 #|
   (define-macro (when test . body)
     `((apply lambda (list '(test) '(if test (let () ,@body)))) ,test))
