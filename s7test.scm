@@ -328,6 +328,7 @@
 (test (eq? ''() '()) #f)
 (test (eq? '#f #f) #t)
 (test (eq? '#f '#f) #t)
+(test (eq? #f '  #f) #t)
 (test (eq? '()'()) #t) ; no space
 (test (#||# eq? #||# #f #||# #f #||#) #t)
 (test (eq? (current-input-port) (current-input-port)) #t)
@@ -8076,6 +8077,8 @@
 (test '#b1 1)
 (test (= 1/2 '#e#b1e-1) #t)
 (test '() '())
+(test '(1 . 2) (cons 1 2))
+(test #(1 2) '#(1 2))
 (test (+ '1 '2) 3)
 (test (+ '1 '2) '3)
 (test (+ ' 1 '   2) '    3)
@@ -8136,6 +8139,10 @@
 (test (equal? '('('4)) (list (list 'quote (list (list 'quote 4))))) #t) 
 (test (equal? '('('4)) '((quote ((quote 4))))) #t)
 (test (equal? '1 ''1) #f)
+(test (equal? '(1 '(1 . 2)) (list 1 (cons 1 2))) #f)
+(test (equal? #(1 #(2 3)) '#(1 '#(2 3))) #f)
+(test (equal? #(1) #('1)) #f)
+(test (equal? #(()) #('())) #f)
 
 (test (eqv? #\a (quote #\a)) #t)
 (test (eqv? 1 (quote 1)) #t)
@@ -12529,21 +12536,90 @@ who says the continuation has to restart the map from the top?
 		     (lambda args 'error))))
      (if (not (equal? val -1))
 	 (format #t "~S = ~S?~%" str val))))
- (list "(- ``1 )" "(- ' 1 )" "(- ` 1 )" "(`,- 1 )" "(- ``,1)" "(`,- '1)" "(- `,`1)" "(-  '`1)" "(- '``1)" "(- ```1)" "(- ` `1)" "(`,- `1)"
-       "(- `, 1)" "(- '` 1)" "(- '  1)" "(`,- `,1)" "(- ```,1)" "(- `,`,1)" "(- ``,,1)" "(- ` ,'1)" "(- '`,`1)" "(- `,1)" "(- ' 1)" "(`,- 1)"))
+ (list "(- ``1 )" "(- ' 1 )" "(- ` 1 )" "(`,- 1 )" "(- ``,1)" "(`,- '1)" "(- `,`1)" "(-  '`1)" "(- '``1)" "(- ```1)" "(- ` `1)" "(`,- `1)" "(` ,- 1)"
+       "(- `, 1)" "(- '` 1)" "(- '  1)" "(`,- `,1)" "(- ```,1)" "(- `,`,1)" "(- ``,,1)" "(- ` ,'1)" "(- '`,`1)" "(- `,1)" "(- ' 1)" "(`,- 1)"
+       "(- .(`1))" "(-(- -1))" "(- .(1))" "(`,- .(1))" "(- '1 .())" "(- .(`,1))" "(`,- .(1))" "(- .('`,1))" "(-(`,@''1))" "(-(`'1 '1))" "(- .(`,`1))"
+       "(- .('``1))" "(- (''1 1))" "(''-1 .(1))"
+       ))
 
+(test (''- 1) '-)
+(test (`'- 1) '-)
+(test (``- 1) '-)
+(test ('`- 1) '-)
+(test (''1 '1) 1)
+(test ((quote (quote 1)) 1) 1) ; (quote (quote 1)) -> ''1 = (list 'quote 1), so ((list 'quote 1) 1) is 1!
+(test (list 'quote 1) ''1) ; guile says #t
+(test (list-ref ''1 1) 1)  ; same
+(test (''1 ```1) 1)
+(test (cond `'1) 1)
+(test ```1 1)
+(test ('''1 1 1) 1)
+(test (`',1 1) 1)
+(test (- `,-1) 1)
+;;; some weirder cases...
+(test (begin . `''1) ''1)
+(test (`,@''1) 1) ; ((unquote-splicing (quote (quote 1)))) -> ((unquote-splicing (list quote 1))) ->(quote 1) -> 1!  hmmm
+(test (if . `''1) 'quote)
+(test (`,@ `'1) 1)
+(test (`,@''.'.) '.'.)
+(test #(`,1) #(1))
+(test `#(,@'(1)) #(1))
+(test `#(,`,@''1) #(quote 1))
+(test `#(,@'(1 2 3)) #(1 2 3))
+(test `#(,`,@'(1 2 3)) #(1 2 3)) ; but #(`,@'(1 2 3)) -> #(({apply} {values} '(1 2 3)))
+(test (apply . `''1) '(quote quote 1)) ; (apply {list} 'quote ({list} 'quote 1))
+(test (apply - 1( )) -1)               ; (apply - 1 ())
+(num-test (apply - 1.()) -1.0)
+(num-test (apply - .1()) -0.1)
+(test (apply - -1()) 1)                ; (apply - -1 ())
+(test (apply . `(())) '())             ; (apply {list} ())
+(test (apply . ''(1)) 1)               ; (apply quote '(1))
+(test (apply . '`(1)) 1)               ; (apply quote ({list} 1))
+(test (apply . `(,())) '())            ; (apply {list} ())
+(test (apply . `('())) ''())           ; (apply {list} ({list} 'quote ()))
+(test (apply . `(`())) '())            ; (apply {list} ())
+(test (apply - `,1()) -1)              ; (apply - 1 ())
+(test (apply - ``1()) -1)              ; (apply - 1 ())
+(test (apply ''1 1()) 1)               ; (apply ''1 1 ())
+(test (apply .(- 1())) -1)             ; (apply - 1 ())
+(test (apply - .(1())) -1)             ; (apply - 1 ())
+(test (apply . `(1())) '(1))           ; (apply {list} 1 ())
+(test (apply . ''(())) '())
+(test (apply . `((()))) '(()))
+
+(test (object->string (list 'quote 1 2)) "(quote 1 2)")
+(test (object->string (list 'quote 'quote 1)) "(quote quote 1)")
+(test (object->string (list 'quote 1 2 3)) "(quote 1 2 3)")
+;;; but (object->string (list 'quote 1)) -> "'1" -- is this correct?
+;;; (equal? (quote 1) '1) -> #t and (equal? (list 'quote 1) ''1) -> #t
+;;; see comment s7.c in list_to_c_string -- we're following Clisp here
+(test (object->string (list 'quote 1)) "'1")
+(test (object->string (cons 'quote 1)) "(quote . 1)")
+(test (object->string (list 'quote)) "(quote)")
+(let ((lst (list 'quote 1)))
+  (set! (cdr (cdr lst)) lst)
+  (test (object->string lst) "#1=(quote 1 . #1#)"))
+(let ((lst (list 'quote)))
+  (set! (cdr lst) lst)
+  (test (object->string lst) "#1=(quote . #1#)"))
 
 #|
-;;; TODO: :- 1
-1
-:(string->number "- 1")
-#f
-:
-"(` ,- 1)"
--1
-:(- - 1)
-;- argument 1, -, is function but should be a number
+unquote outside qq:
+"(',- 1)"
+(',1 1 )
+"(',,= 1)" -> (unquote =)
+(',@1 1) -> 1 ; ('(unquote-splicing 1) 1) -> 1 ; ((quote (unquote-splicing 1)) 1) -> 1
+#(,1) -> #((unquote 1)) i.e. vector has 1 element the list '(unquote 1)
+#(,@1) -> #((unquote-splicing 1))
+#(,,,1) -> #((unquote (unquote (unquote 1))))
+is this a bug?
+#(`'`1) -> #(({list} 'quote 1))
 |#
+
+(test (`,@''()) '())
+(test (`,@'''()) ''())
+(test (`,@''(())) '(()))
+
 
 
 (test (quasiquote) 'error)
@@ -12571,6 +12647,13 @@ who says the continuation has to restart the map from the top?
 (test (quasiquote (,1 ,(quasiquote ,@(quasiquote (1))))) '(1 1))
 (test (quasiquote (,1 ,(quasiquote ,@(quasiquote (,1))))) '(1 1))
 (test (quasiquote (,1 ,@(quasiquote ,@(list (list 1))))) '(1 1))
+
+(test (apply quasiquote ''1) 1) ; ! `'1 -> '1 -> 1?
+
+(let ((a (',,+ 1))       ; (unquote +)
+      (b ('',@(1 2) 1))) ; (unquote-splicing (1 2))
+  (test (apply (eval (apply quasiquote a)) (apply quasiquote b)) 3))
+
 
 
 
@@ -13582,6 +13665,7 @@ who says the continuation has to restart the map from the top?
   (test (let () (define-macro (hi a) `(+ ,@a)) (hi (1 2 3))) 6)
   (test (let () (define-macro (hi a) `(+ ,a 1) #f) (hi 2)) #f)
   (test (let () (define-macro (mac1 a) `',a) (equal? (mac1 (+ 1 2)) '(+ 1 2))) #t)
+  (test (let () (define-macro (hi . a) `,@a) (hi 1)) 1)
   
   (test (let () (defmacro hi (a) `(+ , a 1)) (hi 1)) 2)
   (test (let () (defmacro hi (a) `(eval `(+ ,,a 1))) (hi 1)) 2)
@@ -39907,6 +39991,7 @@ who says the continuation has to restart the map from the top?
 (test (<= 2 2 1) #f)
 (test (= 1/2 1/2+0i) #t)
 
+(test (- - 1) 'error)
 (num-test (+ 0) 0)
 (num-test (- 0) 0)
 (num-test (* 0) 0)
@@ -44826,6 +44911,12 @@ who says the continuation has to restart the map from the top?
 (test (< 2 1+0/2i) #f)
 (test (<= 2 1+0/2i) #f)
 
+(num-test (- .(1.1)) -1.1)
+(num-test (- 1. .()) -1.0)
+(num-test (+ 0.(+)) 0.0)
+(num-test (+ 0.(*)) 1.0)
+(num-test (/(*(/(*)))) 1)
+
 (for-each
  (lambda (op)
    (let ((val1 (catch #t (lambda () (op 1.0)) (lambda args 'error)))
@@ -49688,6 +49779,7 @@ who says the continuation has to restart the map from the top?
 (test (number->string -1 8) "-1")
 (test (number->string -1 2) "-1")
 (test (number->string -1 16) "-1")
+(test (string->number "- 1") #f)
 
 ;;  (do ((i 0 (+ i 1)) (n 1 (* n 2))) ((= i 63)) (display n) (display " ") (display (number->string n 16)) (newline))
 

@@ -11010,21 +11010,22 @@ static int circular_list_entries(s7_scheme *sc, s7_pointer lst)
 static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci)
 {
   s7_pointer x;
-  int i, len, bufsize = 0, start = 0;
+  int i, len, true_len, bufsize = 0, start = 0;
   char **elements = NULL;
   char *buf;
 
-  len = s7_list_length(sc, lst);
-  if (len < 0)                    /* a dotted list -- handle cars, then final cdr */
-    len = (-len + 1);
+  true_len = s7_list_length(sc, lst);
+  if (true_len < 0)                    /* a dotted list -- handle cars, then final cdr */
+    len = (-true_len + 1);
   else
     {
-      if (len == 0)               /* either '() or a circular list */
+      if (true_len == 0)               /* either '() or a circular list */
 	{
 	  if (lst != sc->NIL)
 	    len = circular_list_entries(sc, lst);
 	  else return(copy_string("()"));
 	}
+      else len = true_len;
     }
 
   elements = (char **)calloc(len, sizeof(char *));
@@ -11056,8 +11057,29 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci)
   if (ci) bufsize += (ci->top * 16);
   buf = (char *)malloc(bufsize * sizeof(char));
   
-  if (car(lst) == sc->QUOTE)
+  if ((car(lst) == sc->QUOTE) &&
+      (true_len == 2))                    
     {
+      /* len == 1 is important, otherwise (list 'quote 1 2) -> '1 2 which looks weird 
+       *   or (object->string (apply . `''1)) -> "'quote 1"
+       * so (quote x) = 'x but (quote x y z) should be left alone (if evaluated, it's an error)
+       *
+       * in CL:
+       *    [2]> (list 'quote 1 2)
+       *    (QUOTE 1 2)
+       *    [3]> (list 'quote 1)
+       *    '1
+       *    [4]> (cons 'quote 1)
+       *    (QUOTE . 1)
+       *
+       * in s7:
+       *    :(list 'quote 1 2)
+       *    (quote 1 2)
+       *    :(list 'quote 1)
+       *    '1
+       *    :(cons 'quote 1)
+       *    (quote . 1)
+       */
       sprintf(buf, "'");
       start = 1;
     }
@@ -11080,7 +11102,8 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci)
   if (elements[len - 1])
     {
       strcat(buf, elements[len - 1]);
-      if (car(lst) != sc->QUOTE)
+      if ((car(lst) != sc->QUOTE) ||
+	  (true_len != 2))
 	strcat(buf, ")");
     }
 
@@ -18747,8 +18770,17 @@ static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
   if (sym == sc->UNQUOTE)
     return(eval_error_no_arg(sc, "unquote (',') occurred outside quasiquote"));
   if (sym == sc->UNQUOTE_SPLICING)
-    return(eval_error_no_arg(sc, "unquote-splicing (',@') occurred without quasiquote or outside of a list"));
-  /* for example: (define-macro (hi . a) `,@a) */
+    return(eval_error_no_arg(sc, "unquote-splicing (',@') occurred without quasiquote"));
+
+  /* actually we'll normally get an error from apply. (,@ 1) triggers this error.
+   *   but it's not an error if these appear in code outside quasiquote:
+   *
+   *   (let ((a (',,+ 1))       ; (unquote +)
+   *         (b ('',@(1 2) 1))) ; (unquote-splicing (1 2))
+   *     (apply (eval (apply quasiquote a)) (apply quasiquote b)))
+   *
+   * which is 3!  The error happens when they're evaluated outside qq.
+   */
 
   x = unbound_variable(sc, sym);
   if (x != sc->UNDEFINED)
