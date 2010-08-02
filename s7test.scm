@@ -3252,6 +3252,7 @@
 (test (pair? '(())) #t)
 (test (pair? (cons 1 (cons 2 3))) #t)
 (test (pair?) 'error)
+(test (pair? `'1) #t)
 
 (for-each
  (lambda (arg)
@@ -3728,6 +3729,7 @@
  (lambda (arg)
    (test (list-tail (list 1 2) arg) 'error))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
+
 
 
 
@@ -7834,6 +7836,7 @@
 (test (object->string #\null) "#\\null")
 (test (object->string #\space) "#\\space")
 (test (object->string ''#\a) "'#\\a")
+(test (object->string (list 1 '.' 2)) "(1 .' 2)")
 
 (test (object->string) 'error)
 (test (object->string 1 2) 'error)
@@ -8098,6 +8101,7 @@
 (test ''1 (quote (quote 1)))
 (test ''a (quote (quote a)))
 (test (symbol? '#f) #f)
+(test (symbol? '.') #t)
 (test ''quote (quote (quote quote)))
 (test (+ (cadr ''3) (cadadr '''4) (cadr (cadr (cadr ''''5)))) 12)
 (test (+ (cadr ' '   3) (cadadr '  
@@ -8105,8 +8109,8 @@
 (test (+ '#| a comment |#2 3) 5)
 (test (+ ' #| a comment |# 2 3) 5)
 (test (eq? lambda 'lambda) #t)
-
-(test (eq? '() ()) #t) ; not sure about this -- Gauche, SCM, stklos say #t; Guile says error; clisp, cmucl, and sbcl say T
+(test (equal? + '+) #f)
+(test (eq? '() ()) #t) ; s7 specific
 
 (test (let ((quote 1)) (+ quote 1)) 2)
 (test ((lambda (quote) (+ quote 1)) 2) 3)
@@ -8118,6 +8122,36 @@
 (test (quote . (1 2)) 'error)
 (test (quote 1 . 2) 'error)
 (test (symbol? '1'1) #t) 
+(test (apply '+ (list 1 2)) 'error)
+
+(test (equal? '(1 2 '(3 4)) '(1 2 (3 4))) #f)
+(test (equal? '(1 2 '(3 4)) (quote (list 1 2 (quote (list 3 4))))) #f)
+(test (equal? (list-ref '(1 2 '(3 4)) 2) '(3 4)) #f)
+(test (equal? '(1 2 '(3 4)) (list 1 2 (list 'quote (list 3 4)))) #t)
+(test (equal? '(1 2 ''(3 4)) (list 1 2 (list 'quote (list 'quote (list 3 4))))) #t)
+(test (equal? '('3 4) (list (list 'quote 3) 4)) #t)
+(test (equal? '('3 4) (list 3 4)) #f)
+(test (equal? '('() 4) (list (list 'quote '()) 4)) #t)
+(test (equal? '('('4)) (list (list quote (list (list quote 4))))) #t) ; weird... (guile wants quoted quotes)
+(test (equal? '('('4)) (list (list 'quote (list (list 'quote 4))))) #t) 
+(test (equal? '('('4)) '((quote ((quote 4))))) #t)
+(test (equal? '1 ''1) #f)
+
+(test (eqv? #\a (quote #\a)) #t)
+(test (eqv? 1 (quote 1)) #t)
+(test (eqv? 0 (quote 0)) #t)
+(test (equal? #(1 2 3) (quote #(1 2 3))) #t)
+(test (eqv? 3.14 (quote 3.14)) #t)
+(test (eqv? 3/4 (quote 3/4)) #t)
+(test (eqv? 1+1i (quote 1+1i)) #t)
+(test (eq? #f (quote #f)) #t)
+(test (eq? #t (quote #t)) #t)
+(test (eq? '() (quote ())) #t)
+(test (equal? '(1 2 3) (quote (1 2 3))) #t)
+(test (equal? '(1 . 2) (quote (1 . 2))) #t)
+
+;; see also quasiquote
+
 
 
 
@@ -12423,11 +12457,9 @@ who says the continuation has to restart the map from the top?
   (test (eval ``(,@y . x)) '(a b c . x))
   (test (eval ``(,x . ,y)) '(3 a b c))
   (test (eval ``(,,x . y)) '(3 . y))
-  (test (eval ``(,,x ,@y)) '(3 a b c))
+  (test (eval ``(,,x ,@y)) '(3 a b c))  ;; in clisp `(,y . ,@(y)) -> *** - READ: the syntax `( ... . ,@form) is invalid
   )
-
-;;; in clisp `(,y . ,@(y)) -> *** - READ: the syntax `( ... . ,@form) is invalid
-
+(test (let ((.' '(1 2))) `(,@.')) '(1 2))
 
 (test (let ((hi (lambda (a) `(+ 1 ,a))))
 	(hi 2))
@@ -12490,6 +12522,28 @@ who says the continuation has to restart the map from the top?
 (test (let () (define-macro (tryqv . lst) `(map abs '(,@lst))) (tryqv 1 2 3 -4 5)) '(1 2 3 4 5))
 (test (let () (define-macro (tryqv . lst) `(map abs (vector ,@lst))) (tryqv 1 2 3 -4 5)) '(1 2 3 4 5))
 
+(for-each
+ (lambda (str)
+   (let ((val (catch #t
+		     (lambda () (eval-string str))
+		     (lambda args 'error))))
+     (if (not (equal? val -1))
+	 (format #t "~S = ~S?~%" str val))))
+ (list "(- ``1 )" "(- ' 1 )" "(- ` 1 )" "(`,- 1 )" "(- ``,1)" "(`,- '1)" "(- `,`1)" "(-  '`1)" "(- '``1)" "(- ```1)" "(- ` `1)" "(`,- `1)"
+       "(- `, 1)" "(- '` 1)" "(- '  1)" "(`,- `,1)" "(- ```,1)" "(- `,`,1)" "(- ``,,1)" "(- ` ,'1)" "(- '`,`1)" "(- `,1)" "(- ' 1)" "(`,- 1)"))
+
+
+#|
+;;; TODO: :- 1
+1
+:(string->number "- 1")
+#f
+:
+"(` ,- 1)"
+-1
+:(- - 1)
+;- argument 1, -, is function but should be a number
+|#
 
 
 (test (quasiquote) 'error)
@@ -15138,6 +15192,27 @@ who says the continuation has to restart the map from the top?
 	    (set! xsum (+ xsum (* (v1 i) (v2 i)))))
 
 	  (test (< (abs (- xsum dsum)) .001) #t)))
+
+      (let ()
+	(define (fib n) 
+	  (define (fib-1 n)
+	    (if (> n 2) 
+		n 
+		(+ (fib-1 (- n 1)) 
+		   (fib-1 (- n 2)))))
+	  (apply + 
+		 (map join-thread 
+		      (list (make-thread (lambda () (fib-1 (- n 1))))
+			    (make-thread (lambda () (fib-1 (- n 2))))))))
+
+	(define (fib-2 n)
+	  (let ((phi (/ (+ 1 (sqrt 5)) 2)))
+	    (floor (/ (- (expt phi n)        ; "floor" to return an integer
+			 (expt (- 1 phi) n)) 
+		      (sqrt 5)))))
+
+	(test (= (fib-2 10) 55 (fib 10)) #t)
+	(test (fib 40) 102334155))
       
       (for-each
        (lambda (arg)

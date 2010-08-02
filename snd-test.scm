@@ -48309,6 +48309,12 @@ EDITS: 1
     
     (let ((val (run-eval '(lambda (y) (let ((ge (make-env l0111 :length 11))) (env ge))) 0.0)))
       (if (fneq val 1.0) (snd-display #__line__ ";make-env in run with var list: ~A" val)))
+
+    (let ()
+      (define-macro (run-hi a) `(+ 1 ,a))
+      (let ((val (run (+ 1 (run-hi 2)))))
+	(if (not (= val 4))
+	    (snd-display #__line__ ";run + macro: ~A" val))))
     
     (let ((x 0.0))
       (run

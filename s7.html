@@ -863,25 +863,6 @@ By the way, bacros solve part of our original problem:
 </p>
 
 <pre>
-(define-macro (i_ arg)
-  `(with-environment (initial-environment) ,arg))
-
-(define-bacro* (mac b)
-  `((i_ let) ((a 12)) 
-     ((i_ +) a ,(symbol-&gt;value b))))
-
-(let ((a 32) 
-      (+ -)) 
-  (mac a))
-44
-</pre>
-
-<p>We need the bacro so that we can use "symbol-&gt;value" to get the
-macro argument's value in its environment.
-Perhaps a reader macro would make this look better:
-</p>
-
-<pre>
 (set! *#readers*
   (cons (cons #\_ (lambda (str)
 		    `(with-environment 
@@ -1226,7 +1207,7 @@ s7 provides access to the dynamic binding of any variable at any time through th
 </pre>
 
 
-<p>I think this is an improvement over CL's special variables because "special"
+<p>I think this is an improvement over CL's special variables because 'special'
 makes the use of the dynamic binding explicit, rather than depending on forgetful
 programmers and "*"'s in variable names.  It also makes it easy to use either
 binding at any time.  Each thread has its own stack, so any global variable

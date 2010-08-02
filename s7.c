@@ -17109,7 +17109,18 @@ s7_pointer s7_error_and_exit(s7_scheme *sc, s7_pointer type, s7_pointer info)
 
 static s7_pointer apply_error(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
-  return(s7_error(sc, sc->SYNTAX_ERROR, make_list_3(sc, make_protected_string(sc, "attempt to apply ~S to ~S?"), obj, args)));
+  /* the operator type is needed here else the error message is confusing:
+   *    (apply '+ (list 1 2))) -> ;attempt to apply + to (1 2)?
+   */
+  if (obj == sc->NIL)
+    return(s7_error(sc, sc->SYNTAX_ERROR, make_list_2(sc, make_protected_string(sc, "attempt to apply nil to ~S?"), args)));
+  return(s7_error(sc, sc->SYNTAX_ERROR, 
+		  s7_cons(sc, 
+			  make_protected_string(sc, "attempt to apply the ~A ~S to ~S?"), 
+			  make_list_3(sc, 
+				      make_protected_string(sc, type_name(obj)),
+				      obj, 
+				      args))));
 }
 
 
@@ -17151,13 +17162,17 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
   if (is_string_port(sc->input_port))
     {
       #define QUOTE_SIZE 40
-      int i, j, start = -1, end, slen;
+      int i, j, start = 0, end, slen;
       char *recent_input = NULL;
 
-      for (i = port_string_point(pt), j = 0; (i >= 0) && (j < QUOTE_SIZE); i--, j++)
-	if ((port_string(pt)[start + i] == '\0') ||
-	    (port_string(pt)[start + i] == '\n') ||
-	    (port_string(pt)[start + i] == '\r'))
+      /* we can run off the end in cases like (eval-string "(. . ,.)") or (eval-string " (@ . ,.)") */
+      if (port_string_point(pt) >= port_string_length(pt))        
+	port_string_point(pt) = port_string_length(pt) - 1;
+
+      for (i = port_string_point(pt), j = 0; (i > 0) && (j < QUOTE_SIZE); i--, j++)
+	if ((port_string(pt)[i] == '\0') ||
+	    (port_string(pt)[i] == '\n') ||
+	    (port_string(pt)[i] == '\r'))
 	  break;
       start = i;
 
@@ -17171,13 +17186,11 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
 
       if (slen > 0)
 	{
-	  recent_input = (char *)malloc((slen + 8) * sizeof(char));
-	  for (i = 0; i < 3; i++) recent_input[i] = '.';
+	  recent_input = (char *)calloc((slen + 9), sizeof(char));
+	  for (i = 0; i < (slen + 8); i++) recent_input[i] = '.';
 	  recent_input[3] = ' ';
+	  recent_input[slen + 4] = ' ';
 	  for (i = 0; i < slen; i++) recent_input[i + 4] = port_string(pt)[start + i];
-	  recent_input[i + 4] = ' ';
-	  for (i = 0; i < 3; i++) recent_input[i + slen + 5] = '.';
-	  recent_input[7 + slen] = '\0';
 	}
 
       if (port_line_number(pt) > 0)
