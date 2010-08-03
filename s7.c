@@ -575,6 +575,8 @@ struct s7_scheme {
 
   s7_pointer *temps;             /* short-term gc protection */
   int temps_ctr, temps_size;
+  struct s7_cell _TEMP_CELL;
+  s7_pointer TEMP_CELL;
 
   jmp_buf goto_start, goto_qsort_end;
   bool longjmp_ok;
@@ -7089,6 +7091,12 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "quotient", 2, y, "a normal real"));
 
   return(s7_make_integer(sc, quotient(number(car(args)), number(cadr(args)))));
+
+  /* this should probably check for infs in and out (1/1e-320 ?)
+   * (quotient inf.0 1e-309) -> -9223372036854775808 -> inf? (+/-) (inverse -> 0?)
+   * (quotient inf.0 inf.0) -> -9223372036854775808 -> nan?
+   * etc...
+   */
 }
 
 
@@ -18067,6 +18075,11 @@ static s7_pointer g_qq_values(s7_scheme *sc, s7_pointer args)
  *
  * (define-macro (hi a) `(+ 1 ,@a) == (list '+ 1 (apply values a))
  * (define-macro (hi a) ``(+ 1 ,,@a) == (list list '+ 1 (apply values a))
+ *
+ * this is not the same as CL's quasiquote; for example:
+ *   [1]> (let ((a 1) (b 2)) `(,a ,@b))
+ *   (1 . 2)
+ *   in s7 this is an error.  
  */
 
 static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
@@ -19280,11 +19293,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (s7_integer(car(sc->args)) < s7_integer(cadr(sc->args)))
 	{
-	  if (next_map(sc))
-	    {
-	      sc->op = OP_APPLY;
-	      goto START_WITHOUT_POP_STACK;
-	    }
+	  if (next_map(sc)) goto APPLY;
 	}
       
       sc->value = safe_reverse_in_place(sc, caddr(sc->args));
@@ -19295,11 +19304,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* func = sc->code, func-args = caddr(sc->args), counter = car(sc->args), len = cadr(sc->args), object(s) = cdddr(sc->args) */
       if (s7_integer(car(sc->args)) < s7_integer(cadr(sc->args)))
 	{
-	  if (next_for_each(sc))
-	    {
-	      sc->op = OP_APPLY;
-	      goto START_WITHOUT_POP_STACK;
-	    }
+	  if (next_for_each(sc)) goto APPLY;
 	}
       sc->value = sc->UNSPECIFIED;
       goto START;
@@ -19572,12 +19577,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		{
 		  push_stack(sc, opcode(OP_EVAL_MACRO), sc->NIL, sc->NIL);
 		  /* code is the macro invocation: (mac-name ...), args is nil, value is the macro code bound to mac-name */
-		  sc->args = make_list_1(sc, sc->code);
+		  /* sc->args = make_list_1(sc, sc->code); */
+		  /* this is a purely temporary cons that handles the macro 1st pass -- it will not be touched during or after
+		   *    transporting the args to the macro expansion, and there is no recursion or evaluation in the path.
+		   */
+		  sc->x = sc->TEMP_CELL; /* gc protect? */
+		  sc->args = sc->TEMP_CELL;
+		  car(sc->args) = sc->code;
 		}
 	      else sc->args = sc->code; 
 	      sc->code = sc->value;
-	      sc->op = OP_APPLY;
-	      goto START_WITHOUT_POP_STACK;
+	      goto APPLY;
 	    }
 
 	  /* (define progn begin)
@@ -19697,6 +19707,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
       /* ---------------- OP_APPLY ---------------- */
+    APPLY:
     case OP_APPLY:      /* apply 'code' to 'args' */
 
 #if WITH_PROFILING
@@ -19744,24 +19755,29 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_C_MACRO: 	                    /* -------- C-based macro -------- */
 	  {
 	    int len;
-
-	    sc->w = car(sc->args);
-	    sc->args = cdr(sc->args);
-	    len = safe_list_length(sc, sc->args);
+	    /* if no args, sc->code is the macro name, sc->args is nil!
+	     *   normally, sc->args is '(macro args)
+	     */
+	    if (sc->args != sc->NIL)
+	      {
+		sc->args = cdr(sc->args);
+		len = safe_list_length(sc, sc->args);
+	      }
+	    else len = 0;
 
 	    if (len < c_macro_required_args(sc->code))
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
 			      make_list_3(sc, 
 					  make_protected_string(sc, "~A: not enough arguments: ~A"), 
-					  sc->w, sc->args)));
+					  sc->code, sc->args)));
 	    
 	    if (c_macro_all_args(sc->code) < len)
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
 			      make_list_3(sc, 
 					  make_protected_string(sc, "~A: too many arguments: ~A"),
-					  sc->w, sc->args)));
+					  sc->code, sc->args)));
 
 	    sc->code = c_macro_call(sc->code)(sc, sc->args);
 	    sc->args = sc->NIL;
@@ -19790,6 +19806,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* (defmacro hi (a b) `(+ ,a ,b)) */
 	  /*   -> code: #<macro>, args: ((hi 2 3)), closure args: (defmac-9) */
 	  /*   then back again: code: #<closure>, args: (2 3), closure args: (a b) */
+
+	  /* (define (hi a b) (+ a b))
+	   * (hi 1 2)
+	   * sc->args: (1 2)
+	   */
 
 	  /* although not the normal entry path, it is possible to apply a macro:
 	   *
@@ -19951,8 +19972,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->x = multiple_value(sc->code);                             /* ((values + 1 2) 3) */
 	      sc->code = car(sc->x);
 	      sc->args = s7_append(sc, cdr(sc->x), sc->args);
-	      sc->op = OP_APPLY;
-	      goto START_WITHOUT_POP_STACK;
+	      goto APPLY;
 	    }
  	  if (sc->args == sc->NIL)
  	    return(s7_wrong_number_of_args_error(sc, "not enough args for list ref (via list as applicable object): ~A", sc->args));
@@ -21137,8 +21157,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  push_stack(sc, opcode(OP_DYNAMIC_WIND), sc->NIL, sc->code);
 	  sc->args = sc->NIL;
 	  sc->code = dynamic_wind_body(sc->code);
-	  sc->op = OP_APPLY;
-	  goto START_WITHOUT_POP_STACK;
+	  goto APPLY;
 	}
       else
 	{
@@ -21148,8 +21167,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      push_stack(sc, opcode(OP_DYNAMIC_WIND), sc->value, sc->code);
 	      sc->args = sc->NIL;
 	      sc->code = dynamic_wind_out(sc->code);
-	      sc->op = OP_APPLY;
-	      goto START_WITHOUT_POP_STACK;
+	      goto APPLY;
 	    }
 	  else
 	    {
@@ -21275,8 +21293,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  x = symbol_value(find_symbol(sc, sc->envir, car(sc->value)));
 		  sc->args = make_list_1(sc, sc->value); 
 		  sc->code = x;
-		  sc->op = OP_APPLY;
-		  goto START_WITHOUT_POP_STACK;
+		  goto APPLY;
 		}
 	    }
 	  break;
@@ -26160,6 +26177,7 @@ s7_scheme *s7_init(void)
   sc->UNDEFINED = &sc->_UNDEFINED;
   sc->NO_VALUE = &sc->_NO_VALUE;  
   sc->ELSE = &sc->_ELSE;
+  sc->TEMP_CELL = &sc->_TEMP_CELL;
 
   set_type(sc->NIL, T_NIL | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->NIL) = cdr(sc->NIL) = sc->UNSPECIFIED;
@@ -26187,6 +26205,9 @@ s7_scheme *s7_init(void)
   /* "else" is added to the global environment below -- can't do it here
    *    because the symbol table and environment don't exist yet.
    */
+
+  set_type(sc->TEMP_CELL, T_PAIR | T_STRUCTURE | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  car(sc->TEMP_CELL) = cdr(sc->TEMP_CELL) = sc->NIL;
   
   sc->input_port = sc->NIL;
   sc->input_port_stack = sc->NIL;

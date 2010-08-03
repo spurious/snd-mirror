@@ -355,9 +355,9 @@
 
 (test (eq? (if #f #t) (if #f 3)) #t)
 
-(test (eq?) 'error) ; "this comment is missing a double-quote
+(test (eq?) 'error)           ; "this comment is missing a double-quote
 (test (eq? #t) 'error)        #| "this comment is missing a double-quote |#
-(test (eq? #t #t #t) 'error)
+(test (eq? #t #t #t) 'error)  #| and this has redundant starts #| #| |#
 (test (eq? #f . 1) 'error)
 
 (let ((things (vector #t #f #\space '() "" 0 1 3/4 1+i 1.5 '(1 .2) '#() (vector) (vector 1) (list 1) 'f 't #\t)))
@@ -3692,8 +3692,11 @@
 (test (list-tail (list 1 2) 2) '())
 (test (list-tail (cons 1 2) 0) '(1 . 2))
 (test (list-tail (cons 1 2) 1) 2)
+(test (list-tail (cons 1 2) 2) 'error)
+(test (list-tail (cons 1 2) -1) 'error)
 (test (list-tail ''foo 1) '(foo))
 (test (list-tail '((1 2) (3 4)) 1) '((3 4)))
+(test (list-tail (list-tail '(1 2 3) 1) 1) '(3))
 (test (list-tail (list-tail (list-tail '(1 2 3 4) 1) 1) 1) '(4))
 
 (let ((x '(1 . 2))) (set-cdr! x x) (test (list-tail x 0) x))
@@ -3718,18 +3721,19 @@
 (test (list-tail (list 1 2) 1.3) 'error)
 (test (list-tail (list 1 2) 1/3) 'error)
 (test (list-tail (list 1 2) 1+2.0i) 'error)
-(test (list-tail (cons 1 2) 2) 'error)
 (test (list-tail '(1 2 . 3)) 'error)
 (test (list-tail '(1 2 . 3) 1) '(2 . 3))
 (test (list-tail '(1 2 . 3) 0) '(1 2 . 3))
 (test (list-tail (list 1 2 3) (+ 1 (expt 2 32))) 'error)
 (test (list-tail) 'error)
 (test (list-tail '(1)) 'error)
+(test (list-tail '(1) 1 2) 'error)
 
 (for-each
  (lambda (arg)
-   (test (list-tail (list 1 2) arg) 'error))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
+   (test (list-tail (list 1 2) arg) 'error)
+   (test (list-tail arg 0) 'error))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) #<eof> #() #(1 2 3) (lambda (a) (+ a 1))))
 
 
 
@@ -12653,6 +12657,37 @@ is this a bug?
 (let ((a (',,+ 1))       ; (unquote +)
       (b ('',@(1 2) 1))) ; (unquote-splicing (1 2))
   (test (apply (eval (apply quasiquote a)) (apply quasiquote b)) 3))
+
+(test (apply quasiquote ('',1 1)) 1)
+(test (apply quasiquote (`,@'',())) '())
+(test (apply quasiquote (`,@'',1)) 1)
+(test (apply quasiquote (',,,1 1)) 1)
+(test (apply quasiquote (',@,1 1)) 1)
+(test (apply quasiquote (''',1 1)) 1)
+(test (apply quasiquote (',,@1 1)) 1)
+(test (apply quasiquote (`,@''(1()))) '())
+(test (apply quasiquote (',,- 1)) '-)
+(test (apply quasiquote (',@,- 1)) '-)
+(test (apply quasiquote (',,@- 1)) '-)
+(test (apply quasiquote (`,@'',-)) '-)
+(test (apply quasiquote ('``'@ 1)) '{list})
+(test (apply quasiquote (````- 1)) '{list})
+(test (apply quasiquote (`''1 `,1)) 1)
+(test (apply quasiquote ('`'.. '1)) 'quote)
+(test (apply quasiquote (',,@1 '1)) 1)
+(test (apply quasiquote ('',1 .(1))) 1)
+(test (apply quasiquote (`,@'',(1))) '(1))
+(test (apply quasiquote (```,@@ 1)) '{apply})
+(test (apply quasiquote (','``@ 1)) '({list} 'quote '@))
+(test (apply quasiquote (`'`- ' 1)) '-)
+(test (apply quasiquote (',,@,1 1)) 1)
+(test (apply quasiquote (',@,@1 1)) 1)
+(test (apply quasiquote (```,@1 1)) '{apply})
+(test (apply quasiquote (',@,@- 1)) '-)
+(test (apply quasiquote (`''``- 1)) '({list} 'quote '-))
+(test (apply quasiquote (`,@'',@-)) '-)
+(test (apply quasiquote (`,@`''(-))) '(-))
+
 
 
 
@@ -51365,7 +51400,8 @@ is this a bug?
  (list #\a '#(1 2 3) 3.14 2/3 1.5+0.3i 1+i '() 'hi abs "hi" '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
 
 (let ()
-  (define (2^n? x) (zero? (logand x (- x 1))))
+  ;; fails if x=0: (define (2^n? x) (zero? (logand x (- x 1))))
+  (define (2^n? x) (and (not (zero? x)) (zero? (logand x (- x 1)))))
   (define (2^n-1? x) (zero? (logand x (+ x 1))))
   (define (x+y x y) (- x (lognot y) 1))
   (define (0? x) (negative? (logand (lognot x) (- x 1))))
@@ -51375,6 +51411,7 @@ is this a bug?
   (define-macro (<=> x y) `(begin (set! ,x (logxor ,x ,y)) (set! ,y (logxor ,y ,x)) (set! ,x (logxor ,x ,y))))
   
   (test (2^n? 32) #t)
+  (test (2^n? 0) #f)
   (test (2^n? 2305843009213693952) #t)
   (test (2^n? 2305843009213693950) #f)
   (test (2^n? 17) #f)
@@ -55530,5 +55567,7 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 #x7ff0000000000000 +inf
 #xfff0000000000000 -inf
 #xfff8000000000000 nan
+
+but how to build these in scheme?
 |#
 
