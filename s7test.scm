@@ -3673,7 +3673,7 @@
 (test (let ((a (list 1 2))) (list 3 4 'a (car (cons 'b 'c)) (+ 6 -2))) '(3 4 a b 4))
 (test (list) '())
 (test (length (list quote do map call/cc lambda define if begin set! let let* cond and or for-each)) 15)
-
+(test (list 1(list 2)) '(1(2)))
 (test (list 1 2 . 3) 'error)
 (test (list 1 2 , 3) 'error)
 (test (list 1 2 ,@ 3) 'error)
@@ -12652,43 +12652,7 @@ is this a bug?
 (test (quasiquote (,1 ,(quasiquote ,@(quasiquote (,1))))) '(1 1))
 (test (quasiquote (,1 ,@(quasiquote ,@(list (list 1))))) '(1 1))
 
-(test (apply quasiquote ''1) 1) ; ! `'1 -> '1 -> 1?
-
-(let ((a (',,+ 1))       ; (unquote +)
-      (b ('',@(1 2) 1))) ; (unquote-splicing (1 2))
-  (test (apply (eval (apply quasiquote a)) (apply quasiquote b)) 3))
-
-(test (apply quasiquote ('',1 1)) 1)
-(test (apply quasiquote (`,@'',())) '())
-(test (apply quasiquote (`,@'',1)) 1)
-(test (apply quasiquote (',,,1 1)) 1)
-(test (apply quasiquote (',@,1 1)) 1)
-(test (apply quasiquote (''',1 1)) 1)
-(test (apply quasiquote (',,@1 1)) 1)
-(test (apply quasiquote (`,@''(1()))) '())
-(test (apply quasiquote (',,- 1)) '-)
-(test (apply quasiquote (',@,- 1)) '-)
-(test (apply quasiquote (',,@- 1)) '-)
-(test (apply quasiquote (`,@'',-)) '-)
-(test (apply quasiquote ('``'@ 1)) '{list})
-(test (apply quasiquote (````- 1)) '{list})
-(test (apply quasiquote (`''1 `,1)) 1)
-(test (apply quasiquote ('`'.. '1)) 'quote)
-(test (apply quasiquote (',,@1 '1)) 1)
-(test (apply quasiquote ('',1 .(1))) 1)
-(test (apply quasiquote (`,@'',(1))) '(1))
-(test (apply quasiquote (```,@@ 1)) '{apply})
-(test (apply quasiquote (','``@ 1)) '({list} 'quote '@))
-(test (apply quasiquote (`'`- ' 1)) '-)
-(test (apply quasiquote (',,@,1 1)) 1)
-(test (apply quasiquote (',@,@1 1)) 1)
-(test (apply quasiquote (```,@1 1)) '{apply})
-(test (apply quasiquote (',@,@- 1)) '-)
-(test (apply quasiquote (`''``- 1)) '({list} 'quote '-))
-(test (apply quasiquote (`,@'',@-)) '-)
-(test (apply quasiquote (`,@`''(-))) '(-))
-
-
+(test (apply quasiquote '((1 2 3))) '(1 2 3))
 
 
 
@@ -15609,8 +15573,7 @@ is this a bug?
 	#t))
 
 
-#|
-;; these 2 tests don't work in this context because the file/line are included
+
 (let ()
   (define (a1 a) (stacktrace) (+ a 1))
   (define (a2 b) (+ b (a1 b)))
@@ -15618,22 +15581,24 @@ is this a bug?
   (let ((str (with-output-to-string
 	       (lambda ()
 		 (a3 1)))))
-    (if (not (string=? str "(a1 (a . 1))\n(a2 (b . 1))\n(a3 (c . 1))\n"))
-	(format #t ";stacktrace: ~A~%" str))))
+    (let ((str1 "")
+	  (len (- (length str) 1))
+	  (happy #t)
+	  (last-char #\x))
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
+	(if happy
+	    (set! str1 (string-append str1 (string (string-ref str i)))))
+	(let ((c (string-ref str (+ i 1))))
+	  (if (char=? c #\()
+	      (set! happy #t)
+	      (if (and (char=? last-char #\))
+		       (char-whitespace? c))
+		  (set! happy #f)))
+	  (set! last-char c)))
+      (if (not (string=? str1 "(a1 (a . 1))(a2 (b . 1))(a3 (c . 1))"))
+	  (format #t ";stacktrace: ~A from ~A~%" str1 str)))))
 
-(let ()
-  (define (a1 a) (+ a #\c))
-  (define (a2 b) (+ b (a1 b)))
-  (define (a3 c) (+ c (a2 c)))
-  (let ((str (catch #t
-		    (lambda () (a3 1))
-		    (lambda args 
-		      (with-output-to-string 
-			(lambda ()
-			  (stacktrace *error-info*)))))))
-    (if (not (string=? str "(a1 (a . 1))\n(a2 (b . 1))\n(a3 (c . 1))\n"))
-	(format #t ";*error-info* stacktrace: ~A" str))))
-|#
 (test (stacktrace #(23)) 'error)
 
 

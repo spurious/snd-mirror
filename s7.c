@@ -1471,7 +1471,7 @@ static int gc(s7_scheme *sc)
     tp = sc->heap;
     heap_top = (s7_pointer *)(sc->heap + sc->heap_size);
 
-    while (tp < heap_top)
+    while (tp < heap_top)          /* != here or ^ makes no difference */
       {
 	s7_pointer p;
 	p = (*tp++);
@@ -2678,6 +2678,24 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
   s7_define(sc, s7_global_environment(sc), sym, value);
   x = symbol_global_slot(sym);
   set_immutable(car(x));
+
+  /* We could move constants (x here) and function slots to a separate "heap" or the gc_protected table.
+   *   They need to be marked (pi for example can change its value in the gmp case),
+   *   but will never be freed, and in the Xm case there are several thousand
+   *   constants sitting in the heap.  In the simple (non Xm) case, this reduces
+   *   the initial heap from 800 to ca 400 objects, and saves ca 9/2400 in overall
+   *   compute time (all the savings are in s7_mark_object which strikes me as weird).
+   *   In the Xm case we go from 12000 to 6000 initial objects.  I decided not to
+   *   do this since it makes me feel uneasy.  The basic idea is:
+   *     s7_remove_from_heap(sc, x);
+   *     s7_gc_protect(sc, x);
+   *   and in the function case, save the symbol table pointer as sym and
+   *     x = symbol_global_slot(sym);
+   *     etc
+   *   big_pi must be handled specially:
+   *     s7_symbol_set_value(sc, s7_make_symbol(sc, "pi"), tmp = big_pi(sc));
+   *     s7_gc_protect(sc, tmp);
+   */
 }
 
 /*        (define (func a) (let ((cvar (+ a 1))) cvar))
@@ -4097,7 +4115,7 @@ static s7_pointer s7_negate(s7_scheme *sc, s7_pointer p)     /* can't use "negat
     case NUM_INT: 
 #if WITH_GMP
       if (integer(a) == LLONG_MIN)
-	return(big_negate(sc, s7_cons(sc, promote_number(sc, T_BIG_INTEGER, p), sc->NIL)));
+	return(big_negate(sc, make_list_1(sc, promote_number(sc, T_BIG_INTEGER, p))));
 #endif	
       return(s7_make_integer(sc, -integer(a)));
       
@@ -4124,7 +4142,7 @@ static s7_pointer s7_invert(s7_scheme *sc, s7_pointer p)      /* s7_ to be consi
     case NUM_INT:
 #if WITH_GMP
       if (integer(a) == LLONG_MIN)
-	return(big_invert(sc, s7_cons(sc, promote_number(sc, T_BIG_INTEGER, p), sc->NIL)));
+	return(big_invert(sc, make_list_1(sc, promote_number(sc, T_BIG_INTEGER, p))));
 #endif
       return(s7_make_ratio(sc, 1, integer(a)));      /* a already checked, not 0 */
       
@@ -4626,7 +4644,7 @@ static s7_pointer check_sharp_readers(s7_scheme *sc, const char *name)
 	{
 	  if (args_loc == -1)
 	    {
-	      args = s7_cons(sc, s7_make_string(sc, name), sc->NIL);
+	      args = make_list_1(sc, s7_make_string(sc, name));
 	      args_loc = s7_gc_protect(sc, args);
 	    }
 	  value = s7_call(sc, cdar(reader), args);
@@ -5523,7 +5541,7 @@ static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
       /* as in exact->inexact, (abs most-negative-fixnum) is a bother */
 #if WITH_GMP
       if ((integer(n)) == LLONG_MIN)
-	return(big_abs(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(n)), sc->NIL)));
+	return(big_abs(sc, make_list_1(sc, s7_Int_to_big_integer(sc, integer(n)))));
 #endif
       return(s7_make_integer(sc, s7_Int_abs(integer(n))));
 
@@ -5764,7 +5782,7 @@ static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
 #if WITH_GMP
       if ((val > 350.0) ||
 	  (val < -350.0))
-	return(big_tan(sc, s7_cons(sc, s7_number_to_big_real(sc, x), sc->NIL)));
+	return(big_tan(sc, make_list_1(sc, s7_number_to_big_real(sc, x))));
 #endif
       return(s7_make_real(sc, tan(val)));
     }
@@ -11649,7 +11667,7 @@ s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a)
       return(s7_cons(sc, car(a), sc->NIL)); /* don't return a itself */
     }
 
-  sc->w = s7_cons(sc, car(a), sc->NIL);
+  sc->w = make_list_1(sc, car(a));
 
   for (x = cdr(a), p = a; is_pair(x); x = cdr(x), p = cdr(p))
     {
@@ -13252,7 +13270,7 @@ static s7_pointer g_multivector(s7_scheme *sc, int dims, s7_pointer data)
   if (data == sc->NIL)
     {
       /* dims are already 0 (calloc above) */
-      return(g_make_vector(sc, s7_cons(sc, g_make_list(sc, make_list_2(sc, s7_make_integer(sc, dims), small_int(0))), sc->NIL)));
+      return(g_make_vector(sc, make_list_1(sc, g_make_list(sc, make_list_2(sc, s7_make_integer(sc, dims), small_int(0))))));
     }
 
   for (x = data, i = 0; i < dims; i++)
@@ -13266,7 +13284,7 @@ static s7_pointer g_multivector(s7_scheme *sc, int dims, s7_pointer data)
 	return(s7_multivector_error(sc, "a list that fully specifies the vector's elements", data));
     }
 
-  vec = g_make_vector(sc, s7_cons(sc, safe_reverse_in_place(sc, sc->w), sc->NIL));
+  vec = g_make_vector(sc, make_list_1(sc, safe_reverse_in_place(sc, sc->w)));
   vec_loc = s7_gc_protect(sc, vec);
   sc->w = sc->NIL;
 
@@ -13290,7 +13308,7 @@ static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect)
   len = vector_length(old_vect);
 
   if (vector_is_multidimensional(old_vect))
-    new_vect = g_make_vector(sc, s7_cons(sc, g_vector_dimensions(sc, s7_cons(sc, old_vect, sc->NIL)), sc->NIL));
+    new_vect = g_make_vector(sc, make_list_1(sc, g_vector_dimensions(sc, make_list_1(sc, old_vect))));
   else new_vect = make_vector_1(sc, len, false);
 
   /* here and in vector-fill! we have a problem with bignums -- should new bignums be allocated? (copy_list also) */
@@ -14607,9 +14625,9 @@ static s7_pointer object_reverse(s7_scheme *sc, s7_pointer obj)
       new_obj_gc_loc = s7_gc_protect(sc, new_obj);
       len = s7_integer(object_length(sc, obj));
 
-      i_args = s7_cons(sc, make_mutable_integer(sc, 0), sc->NIL);
+      i_args = make_list_1(sc, make_mutable_integer(sc, 0));
       i_gc_loc = s7_gc_protect(sc, i_args);
-      j_args = s7_cons(sc, make_mutable_integer(sc, len - 1), sc->NIL);
+      j_args = make_list_1(sc, make_mutable_integer(sc, len - 1));
       j_gc_loc = s7_gc_protect(sc, j_args);
       i_set_args = make_list_2(sc, car(i_args), sc->NIL);
       i_set_gc_loc = s7_gc_protect(sc, i_set_args);
@@ -15699,7 +15717,7 @@ also accepts a string or vector argument."
 	s7_Int i, j, len;
 	len = vector_length(p);
 	if (vector_is_multidimensional(p))
-	  np = g_make_vector(sc, s7_cons(sc, g_vector_dimensions(sc, s7_cons(sc, p, sc->NIL)), sc->NIL));
+	  np = g_make_vector(sc, make_list_1(sc, g_vector_dimensions(sc, make_list_1(sc, p))));
 	else np = make_vector_1(sc, len, false);
 	if (len > 0)
 	  for (i = 0, j = len - 1; i < len; i++, j--)
@@ -17173,7 +17191,7 @@ static s7_pointer eval_error_with_name(s7_scheme *sc, const char *errmsg, s7_poi
 
 static s7_pointer eval_error_no_arg(s7_scheme *sc, const char *errmsg)
 {
-  return(s7_error(sc, sc->SYNTAX_ERROR, s7_cons(sc, make_protected_string(sc, errmsg), sc->NIL)));
+  return(s7_error(sc, sc->SYNTAX_ERROR, make_list_1(sc, make_protected_string(sc, errmsg))));
 }
 
 
@@ -17489,6 +17507,7 @@ static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d)
 static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 {
   #define H_apply "(apply func ...) applies func to the rest of the arguments"
+
   sc->code = car(args);
   if (cdr(args) == sc->NIL)
     sc->args = sc->NIL;
@@ -17502,11 +17521,11 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 				    make_protected_string(sc, "apply's last argument should be a proper list: ~A"),
 				    args)));
     }
-  if ((is_macro(sc->code)) ||  /* (apply mac '(3)) -> (apply mac '((mac 3))) */
-      (is_bacro(sc->code)))
+
+  if (is_any_macro(sc->code))                   /* (apply mac '(3)) -> (apply mac '((mac 3))) */
     {
       push_stack(sc, opcode(OP_EVAL_MACRO), sc->NIL, sc->NIL);
-      sc->args = s7_cons(sc, s7_cons(sc, sc->code, sc->args), sc->NIL);
+      sc->args = make_list_1(sc, s7_cons(sc, sc->code, sc->args));
     }
   push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
   return(sc->NIL);
@@ -17664,7 +17683,7 @@ static bool next_for_each(s7_scheme *sc)
       case T_C_OBJECT: 
 	if (z == sc->NIL) 
 	  {
-	    z = s7_cons(sc, car(sc->args), sc->NIL);
+	    z = make_list_1(sc, car(sc->args));
 	    zloc = s7_gc_protect(sc, z);
 	  }
 	if (is_s_object(car(y)))
@@ -17734,8 +17753,8 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
     return(s7_wrong_type_arg_error(sc, "for-each", 2, obj, "a vector, list, string, or applicable object"));
   if (len == 0) return(sc->UNSPECIFIED);
 
-  sc->x = s7_cons(sc, sc->NIL, sc->NIL);
-  sc->z = s7_cons(sc, obj, sc->NIL);
+  sc->x = make_list_1(sc, sc->NIL);
+  sc->z = make_list_1(sc, obj);
   /* we have to copy the args if any of them is a list:
    * (let* ((x (list (list 1 2 3))) (y (apply for-each abs x))) (list x y))
    */
@@ -17792,7 +17811,7 @@ static bool next_map(s7_scheme *sc)
 	case T_C_OBJECT: 
 	  if (z == sc->NIL) 
 	    {
-	      z = s7_cons(sc, car(sc->args), sc->NIL);
+	      z = make_list_1(sc, car(sc->args));
 	      zloc = s7_gc_protect(sc, z);
 	    }
 	  if (is_s_object(car(y)))
@@ -17865,7 +17884,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
     return(s7_wrong_type_arg_error(sc, "map", 2, obj, "a vector, list, string, or applicable object"));
   if (len == 0) return(sc->NIL);
 
-  sc->z = s7_cons(sc, obj, sc->NIL);
+  sc->z = make_list_1(sc, obj);
   /* we have to copy the args if any of them is a list:
    * (let* ((x (list (list 1 2 3))) (y (apply map abs x))) (list x y))
    */
@@ -18650,6 +18669,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  push_stack(sc, opcode(OP_READ_LIST), sc->NIL, sc->NIL);
 	  /* all these push_stacks that don't care about code/args look wasteful, but if a read error
 	   *   occurs, we need clean info in the error handler, so it's tricky to optimize this.
+	   *   (and if we do optimize it, it saves maybe %1 of the total stack time).
 	   */
 	  break;
 	  
@@ -18786,13 +18806,6 @@ static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
     return(eval_error_no_arg(sc, "unquote-splicing (',@') occurred without quasiquote"));
 
   /* actually we'll normally get an error from apply. (,@ 1) triggers this error.
-   *   but it's not an error if these appear in code outside quasiquote:
-   *
-   *   (let ((a (',,+ 1))       ; (unquote +)
-   *         (b ('',@(1 2) 1))) ; (unquote-splicing (1 2))
-   *     (apply (eval (apply quasiquote a)) (apply quasiquote b)))
-   *
-   * which is 3!  The error happens when they're evaluated outside qq.
    */
 
   x = unbound_variable(sc, sym);
@@ -19192,7 +19205,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
 
       if (port_is_closed(sc->input_port))
-	return(s7_error(sc, sc->READ_ERROR, s7_cons(sc, make_protected_string(sc, "our input port got clobbered!"), sc->NIL)));
+	return(s7_error(sc, sc->READ_ERROR, make_list_1(sc, make_protected_string(sc, "our input port got clobbered!"))));
 
       sc->tok = token(sc);
 
@@ -19573,19 +19586,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_any_macro(sc->value))
 	    {    
 	      /* macro expansion */
-	      if (!(is_c_macro(sc->value)))
-		{
-		  push_stack(sc, opcode(OP_EVAL_MACRO), sc->NIL, sc->NIL);
-		  /* code is the macro invocation: (mac-name ...), args is nil, value is the macro code bound to mac-name */
-		  /* sc->args = make_list_1(sc, sc->code); */
-		  /* this is a purely temporary cons that handles the macro 1st pass -- it will not be touched during or after
-		   *    transporting the args to the macro expansion, and there is no recursion or evaluation in the path.
-		   */
-		  sc->x = sc->TEMP_CELL; /* gc protect? */
-		  sc->args = sc->TEMP_CELL;
-		  car(sc->args) = sc->code;
-		}
-	      else sc->args = sc->code; 
+	      push_stack(sc, opcode(OP_EVAL_MACRO), sc->NIL, sc->NIL);
+	      /* code is the macro invocation: (mac-name ...), args is nil, value is the macro code bound to mac-name */
+	      sc->x = sc->TEMP_CELL; 
+	      sc->args = sc->TEMP_CELL;
+	      car(sc->args) = sc->code;
 	      sc->code = sc->value;
 	      goto APPLY;
 	    }
@@ -19655,7 +19660,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       }
 
       /* 1st time, value = op, args = nil (only e0 entry is from op_eval above), code is full list (at e0) */
-      if (is_pair(sc->code))  /* evaluate current arg */
+      if (is_pair(sc->code))  /* evaluate current arg -- must check for pair here, not sc->NIL (improper list as args) */
 	{ 
 	  int typ;
 	  s7_pointer car_code;
@@ -19689,16 +19694,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       else                       /* got all args -- go to apply */
 	{
-	  sc->args = safe_reverse_in_place(sc, sc->args); 
-	  /* we could omit this reversal in many cases: all built in ops could
-	   *   assume reversed args, things like eq? and + don't care about order, etc.
-	   *   But, I think the reversal is not taking any noticeable percentage of
-	   *   the overall compute time (ca 1% according to callgrind).
-	   */
 	  if (sc->code != sc->NIL)
 	    improper_arglist_error(sc);
 	  else
 	    {
+	      sc->args = safe_reverse_in_place(sc, sc->args); 
+	      /* we could omit this reversal in many cases: all built in ops could
+	       *   assume reversed args, things like eq? and + don't care about order, etc.
+	       *   But, I think the reversal is not taking any noticeable percentage of
+	       *   the overall compute time (ca 1% according to callgrind).
+	       */
 	      sc->code = car(sc->args);
 	      sc->args = cdr(sc->args);
 	      /* fall through  */
@@ -19751,19 +19756,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = c_function_call(sc->code)(sc, sc->args);
 	  goto START;
 
-
 	case T_C_MACRO: 	                    /* -------- C-based macro -------- */
 	  {
 	    int len;
-	    /* if no args, sc->code is the macro name, sc->args is nil!
-	     *   normally, sc->args is '(macro args)
-	     */
-	    if (sc->args != sc->NIL)
-	      {
-		sc->args = cdr(sc->args);
-		len = safe_list_length(sc, sc->args);
-	      }
-	    else len = 0;
+	    sc->args = cdar(sc->args);
+	    len = safe_list_length(sc, sc->args);
 
 	    if (len < c_macro_required_args(sc->code))
 	      return(s7_error(sc, 
@@ -19779,11 +19776,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 					  make_protected_string(sc, "~A: too many arguments: ~A"),
 					  sc->code, sc->args)));
 
-	    sc->code = c_macro_call(sc->code)(sc, sc->args);
+	    sc->value = c_macro_call(sc->code)(sc, sc->args);
 	    sc->args = sc->NIL;
-	    goto EVAL;
+	    goto START;
 	  }
-
 	  
 	case T_BACRO:
 	  NEW_FRAME(sc, sc->envir, sc->envir);       /* like let* -- we'll be adding macro args, so might as well sequester things here */
@@ -19795,8 +19791,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	case T_CLOSURE:                              /* -------- normal function (lambda), or macro -------- */
 	case T_MACRO:
-	  /* fprintf(stderr, "apply %s %s\n", s7_object_to_c_string(sc, sc->code), s7_object_to_c_string(sc, sc->args)); */
-
 	  /* sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); */
 	  NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
 
@@ -20012,7 +20006,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * (hi 2)
        * here with value: (+ 2 1)
        */
-
       sc->code = sc->value;
       goto EVAL;
 
@@ -20211,8 +20204,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 					       make_protected_string(sc, port_filename(sc->input_port)),
 					       s7_make_integer(sc, port_line_number(sc->input_port))));
 	  else sc->x = immutable_cons(sc, sc->__FUNC__, sc->code);
-	  sc->x = s7_cons(sc, sc->x, sc->NIL);
-	  closure_environment(sc->value) = s7_cons(sc, sc->x, closure_environment(sc->value));
+	  closure_environment(sc->value) = s7_cons(sc, 
+						   make_list_1(sc, sc->x),
+						   closure_environment(sc->value));
 	}
       else
 	{
@@ -25271,7 +25265,7 @@ static s7_pointer big_quotient(s7_scheme *sc, s7_pointer args)
 	  mpz_tdiv_q(*n, *n, S7_BIG_INTEGER(divisor));
 	  return(s7_make_object(sc, big_integer_tag, (void *)n));
 	}
-      return(big_truncate(sc, s7_cons(sc, big_divide(sc, args), sc->NIL)));
+      return(big_truncate(sc, make_list_1(sc, big_divide(sc, args))));
     }
   return(g_quotient(sc, args));
 }
@@ -26290,7 +26284,7 @@ s7_scheme *s7_init(void)
   sc->key_values = sc->NIL;
 #endif
   
-  sc->global_env = s7_cons(sc, s7_make_vector(sc, SYMBOL_TABLE_SIZE), sc->NIL);
+  sc->global_env = make_list_1(sc, s7_make_vector(sc, SYMBOL_TABLE_SIZE));
   sc->envir = sc->global_env;
   
   /* keep the small_ints out of the heap */
