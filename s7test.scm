@@ -6234,7 +6234,6 @@
 (call-with-output-file "tmp1.r5rs" (lambda (p) (display "3.14" p)))
 (test (call-with-input-file "tmp1.r5rs" (lambda (p) (read p) (let ((val (read p))) (eof-object? val)))) #t)
 
-
 (test (call-with-input-file "tmp1.r5rs" (lambda (p) (read-char p))) #\3)
 (test (call-with-input-file "tmp1.r5rs" (lambda (p) (peek-char p))) #\3)
 (test (call-with-input-file "tmp1.r5rs" (lambda (p) (peek-char p) (read-char p))) #\3)
@@ -7554,6 +7553,24 @@
 (test (let ((nam""e 1)) nam""e) 'error) ; this was 1 originally
 (test (cadr '(1 ']x)) '']x)
 (test `1 1)
+(test (equal? '(1 .(1 .())) '(1 1)) #t)
+(test (equal? '("hi"."ho") ' ("hi" . "ho")) #t)
+(test (equal? '("hi""ho") '("hi" "ho")) #t)
+(test '("""""") '("" "" ""))
+(test '(#|;"();|#) '())
+(test '(#||##\# #!!##b1) '(#\# 1))
+(test '((). '()) '(() quote ()))
+(test '(1. . .2) '(1.0 . 0.2))
+(test (equal? '(().()) '(())) #t)
+(test (equal? '(()()) '(() ())) #t)
+(test (equal? '(()..()) '(() .. ())) #t)
+(test '((().()).()) '((())))
+(test '(((().()).()).()) '(((()))))
+(test '((().(().())).()) '((() ())))
+(test '((()().(().()))) '((() () ())))
+(test '(1 .;
+	  2) '(1 . 2))
+
 ;; currently \ -> (), ` -> #<eof> etc -- not sure these matter
 ;(test (keyword? '#:#) #t) ; probably not for long... (Guile compatibility)
 (test (char? #\#) #t)
@@ -33216,6 +33233,7 @@ is this a bug?
 (num-test (expt (expt 2 50) 1/50) 2)
 (num-test (expt (expt 2 1/10) 10) 2)
 (num-test (expt (expt 2 1/30) 30) 2)
+(num-test (expt 64/81 1/2) 8/9)
 (num-test (expt 64 1/6) 2)
 (num-test (expt 64 1/3) 4)
 (num-test (expt 64 2/3) 16)
@@ -55534,5 +55552,79 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 #xfff8000000000000 nan
 
 but how to build these in scheme?
+
+TODO: incorporate these tests:
+(make-polar 1e-309 1e-309) -> 1e-309
+(make-rectangular 1e-309 1e-309) -> 1e-309+1e-309i
+(magnitude 1e-309) -> 1e-309
+(angle 1e-309) -> 0.0
+(rationalize 1e-309) -> 0
+(rationalize 1e-309 1e-309) -> 0
+(rationalize 1e-309 inf.0) -> 0
+(rationalize 1e-309 -inf.0) -> 0
+(abs 1e-309) -> 1e-309
+(exp 1e-309) -> 1.0
+(exp -inf.0) -> 0.0
+(log 1e-309) -> -711.49879373516
+(log 1e-309 1e-309) -> 1.0
+(log 1e-309 inf.0) -> 0.0
+(sin 1e-309) -> 1e-309
+(cos 1e-309) -> 1.0
+(tan 1e-309) -> 1e-309
+(asin 1e-309) -> 1e-309
+(acos 1e-309) -> 1.5707963267949
+(atan 1e-309) -> 1e-309
+(atan 1e-309 1e-309) -> 0.78539816339745
+(atan 1e-309 inf.0) -> 0.0
+(atan 1e-309 -inf.0) -> 3.1415926535898
+(sinh 1e-309) -> 1e-309
+(cosh 1e-309) -> 1.0
+(tanh 1e-309) -> 1e-309
+(asinh 1e-309) -> 1e-309
+(acosh 1e-309) -> 0+1.5707963267949i
+(atanh 1e-309) -> 1e-309
+(sqrt 1e-309) -> 3.1622776601684e-155
+(expt 1e-309 1e-309) -> 1.0
+(floor 1e-309) -> 0
+(ceiling 1e-309) -> 1
+(truncate 1e-309) -> 0
+(round 1e-309) -> 0
+(+ 1e-309) -> 1e-309
+(+ 1e-309 1e-309) -> 2e-309
+(- 1e-309) -> -1e-309
+(- 1e-309 1e-309) -> 0.0
+(* 1e-309) -> 1e-309
+(* 1e-309 1e-309) -> 0.0
+(/ 1e-309 inf.0) -> 0.0
+(/ 1e-309 -inf.0) -> 0.0
+(max 1e-309) -> 1e-309
+(max 1e-309 1e-309) -> 1e-309
+(max 1e-309 -inf.0) -> 1e-309
+(max -inf.0 1e-309) -> 1e-309
+(min 1e-309) -> 1e-309
+(min 1e-309 1e-309) -> 1e-309
+(min 1e-309 inf.0) -> 1e-309
+(min inf.0 1e-309) -> 1e-309
+(quotient 1e-309 1e-309) -> 1
+(quotient 1e-309 inf.0) -> 0
+(quotient 1e-309 -inf.0) -> 0
+(quotient inf.0 1e-309) -> -9223372036854775808
+(quotient inf.0 inf.0) -> -9223372036854775808
+(quotient inf.0 -inf.0) -> -9223372036854775808
+(quotient -inf.0 1e-309) -> -9223372036854775808
+(quotient -inf.0 inf.0) -> -9223372036854775808
+(quotient -inf.0 -inf.0) -> -9223372036854775808
+(remainder 1e-309 1e-309) -> 0.0
+(modulo 1e-309 1e-309) -> 0.0
+
+
+;;; are these bugs?
+(expt 1e-309 inf.0) -> 0.0
+(expt inf.0 -inf.0) -> 0.0
+(expt inf.0 -inf-infi) -> 0.0
+(expt -inf.0 -inf.0) -> 0.0
+(expt 0-infi -inf.0) -> 0.0
+(expt 0-infi -inf-infi) -> 0.0
+
 |#
 

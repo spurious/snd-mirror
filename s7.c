@@ -300,6 +300,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_FOR_EACH, OP_MAP, OP_BARRIER, OP_DEACTIVATE_GOTO,
 	      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, OP_BACRO, OP_APPLY_WITHOUT_TRACE,
 	      OP_LET_UNWIND, OP_SPECIAL, OP_SET_SPECIAL,
+	      OP_GET_OUTPUT_STRING,
 	      OP_MAX_DEFINED} opcode_t;
 
 static const char *op_names[OP_MAX_DEFINED] = 
@@ -316,12 +317,13 @@ static const char *op_names[OP_MAX_DEFINED] =
    "error-quit", "unwind-input", "unwind-output", "trace-return", "error-hook-quit", 
    "trace-hook-quit", "with-environment", "with-environment", "with-environment", "for-each", "map", 
    "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro", "apply-without-trace", 
-   "let_unwind", "special", "set-special"
+   "let_unwind", "special", "set-special",
+   "get-output-string",
 };
 
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 86 max num chars (256) */
+/* this needs to be at least OP_MAX_DEFINED = 87 max num chars (256) */
 /* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -6231,6 +6233,9 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	    return(g_sqrt(sc, args));
 	  if (denominator(number(pw)) == 3)
 	    return(s7_make_real(sc, cbrt(num_to_real(number(n))))); /* (expt 27 1/3) should be 3, not 3.0... */
+ 
+	  /* but: (expt 512/729 1/3) -> 0.88888888888889
+	   */
 	  /* and 4 -> sqrt(sqrt...) etc? */
 	}
 
@@ -7111,8 +7116,12 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
   return(s7_make_integer(sc, quotient(number(car(args)), number(cadr(args)))));
 
   /* this should probably check for infs in and out (1/1e-320 ?)
-   * (quotient inf.0 1e-309) -> -9223372036854775808 -> inf? (+/-) (inverse -> 0?)
-   * (quotient inf.0 inf.0) -> -9223372036854775808 -> nan?
+   *    (quotient inf.0 1e-309) -> -9223372036854775808
+   *    (quotient inf.0 inf.0) -> -9223372036854775808
+   *    (quotient inf.0 -inf.0) -> -9223372036854775808
+   *    (quotient -inf.0 1e-309) -> -9223372036854775808
+   *    (quotient -inf.0 inf.0) -> -9223372036854775808
+   *    (quotient -inf.0 -inf.0) -> -9223372036854775808
    * etc...
    */
 }
@@ -10220,6 +10229,9 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 }
 
 
+/* TODO: all the input functions are using eval directly
+ */
+
 static s7_pointer call_with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
 {
   push_stack(sc, opcode(OP_UNWIND_INPUT), sc->input_port, port);
@@ -11368,7 +11380,7 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_with_output_string "(call-with-output-string proc) opens a string port applies proc to it, then returns the collected output"
-  s7_pointer port, result;
+  s7_pointer port;
 
   if (!is_procedure(car(args)))
     return(s7_wrong_type_arg_error(sc, "call-with-output-string", 1, car(args), "a procedure"));
@@ -11379,12 +11391,12 @@ static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
   
   port = s7_open_output_string(sc);
   push_stack(sc, opcode(OP_UNWIND_OUTPUT), sc->F, port);
+  push_stack(sc, opcode(OP_GET_OUTPUT_STRING), sc->F, port);
+
   sc->code = car(args);
   sc->args = make_list_1(sc, port);
-  eval(sc, OP_APPLY);
-  result = s7_make_string(sc, s7_get_output_string(sc, port));
-  s7_close_output_port(sc, port);
-  return(result);
+  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+  return(sc->F);
 }
 
 
@@ -11404,22 +11416,18 @@ static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
   
   port = s7_open_output_file(sc, s7_string(car(args)), "w");
   push_stack(sc, opcode(OP_UNWIND_OUTPUT), sc->F, port);
+
   sc->code = cadr(args);
   sc->args = make_list_1(sc, port);
-  eval(sc, OP_APPLY);
-  s7_close_output_port(sc, port);
-
-  if (is_multiple_value(sc->value))                 /* (+ 100 (with-input-from-string "123" (lambda () (values (read) 1)))) */
-    sc->value = splice_in_values(sc, multiple_value(sc->value));
-
-  return(sc->value);
+  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+  return(sc->F);
 }
 
 
 static s7_pointer g_with_output_to_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_with_output_to_string "(with-output-to-string thunk) opens a string as a temporary current-output-port, calls thunk, then returns the collected output"
-  s7_pointer old_output_port, result;
+  s7_pointer old_output_port;
 
   if (!is_thunk(sc, car(args)))
     return(s7_wrong_type_arg_error(sc, "with-output-to-string", 1, car(args), "a thunk"));
@@ -11427,13 +11435,12 @@ static s7_pointer g_with_output_to_string(s7_scheme *sc, s7_pointer args)
   old_output_port = sc->output_port;
   sc->output_port = s7_open_output_string(sc);
   push_stack(sc, opcode(OP_UNWIND_OUTPUT), old_output_port, sc->output_port);
+  push_stack(sc, opcode(OP_GET_OUTPUT_STRING), sc->F, sc->output_port);
+
   sc->code = car(args);
   sc->args = sc->NIL;
-  eval(sc, OP_APPLY);
-  result = s7_make_string(sc, s7_get_output_string(sc, sc->output_port));
-  s7_close_output_port(sc, sc->output_port);
-  sc->output_port = old_output_port;
-  return(result);
+  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+  return(sc->F);
 }
 
 /* (string-ref (with-output-to-string (lambda () (write "1234") (values (get-output-string) 1)))) */
@@ -11452,16 +11459,11 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
   old_output_port = sc->output_port;
   sc->output_port = s7_open_output_file(sc, s7_string(car(args)), "w");
   push_stack(sc, opcode(OP_UNWIND_OUTPUT), old_output_port, sc->output_port);
+
   sc->code = cadr(args);
   sc->args = sc->NIL;
-  eval(sc, OP_APPLY);
-  s7_close_output_port(sc, sc->output_port);
-  sc->output_port = old_output_port;
-
-  if (is_multiple_value(sc->value))    
-    sc->value = splice_in_values(sc, multiple_value(sc->value));
-
-  return(sc->value);
+  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+  return(sc->F);
 }
 
 
@@ -19556,6 +19558,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      goto START_WITHOUT_POP_STACK;
 	    } 
 
+	  /* if we check here for a thunk (or argless macro call), and jump to apply,
+	   *   it's actually slower by about 30/2400 than just plowing ahead as if
+	   *   there were args.  (The check costs 27 and we only hit it a few hundred times).
+	   */
 	  push_stack(sc, opcode(OP_EVAL_ARGS), sc->NIL, sc->code);
 	  sc->code = car(sc->code);
 	  goto EVAL;
@@ -21133,11 +21139,41 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       return(sc->value); /* not executed I hope */
 
+      
+    case OP_GET_OUTPUT_STRING:
+      sc->value = s7_make_string(sc, s7_get_output_string(sc, sc->code));
+      goto START;
+
+
+    case OP_UNWIND_OUTPUT:
+      {
+	bool is_file;
+	is_file = is_file_port(sc->code);
+	if ((s7_is_output_port(sc, sc->code)) &&
+	    (is_file_port(sc->code)) &&
+	    (!port_is_closed(sc->code)))
+	  s7_close_output_port(sc, sc->code); /* may call fflush */
+
+	if ((sc->args != sc->F) &&
+	    (s7_is_output_port(sc, sc->args)) &&
+	    (!port_is_closed(sc->args)))
+	  sc->output_port = sc->args;
+       
+       if (is_file)
+	 {
+	   if (is_multiple_value(sc->value)) 
+	     sc->value = splice_in_values(sc, multiple_value(sc->value));
+	 }
+       goto START;
+      }
+
+
+    case OP_UNWIND_INPUT:
+
 
     case OP_ERROR_QUIT: 
-    case OP_UNWIND_OUTPUT:
-    case OP_UNWIND_INPUT:
       /* these 3 are used for unwinding the stack in dynamic-wind and error handling */
+
     case OP_EVAL_DONE:
       /* this is the "time to quit" operator */
       return(sc->F);
