@@ -10182,6 +10182,8 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
    * so we'd need (with-evaluator ...)?
    */
 
+  /* TODO: the problem with eval-string is almost certainy the direct eval call */
+
   return(eval_string_1(sc, s7_string(car(args))));
 }
 
@@ -10229,21 +10231,14 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 }
 
 
-/* TODO: all the input functions are using eval directly
- */
-
 static s7_pointer call_with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
 {
   push_stack(sc, opcode(OP_UNWIND_INPUT), sc->input_port, port);
   sc->code = cadr(args);
   sc->args = make_list_1(sc, port);
-  eval(sc, OP_APPLY);
-  s7_close_input_port(sc, port);
 
-  if (is_multiple_value(sc->value))                 /* (+ 100 (call-with-input-string "123" (lambda (p) (values (read p) 1)))) */
-    sc->value = splice_in_values(sc, multiple_value(sc->value));
-
-  return(sc->value);
+  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+  return(sc->F);
 }
 
 
@@ -10289,15 +10284,9 @@ static s7_pointer with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
   push_stack(sc, opcode(OP_UNWIND_INPUT), old_input_port, port);
   sc->code = cadr(args);
   sc->args = sc->NIL;
-  eval(sc, OP_APPLY);
-  
-  s7_close_input_port(sc, sc->input_port);
-  sc->input_port = old_input_port;
 
-  if (is_multiple_value(sc->value))                 /* (+ 100 (with-input-from-string "123" (lambda () (values (read) 1)))) */
-    sc->value = splice_in_values(sc, multiple_value(sc->value));
-
-  return(sc->value);
+  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+  return(sc->F);
 }
 
 
@@ -21149,8 +21138,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       {
 	bool is_file;
 	is_file = is_file_port(sc->code);
+
 	if ((s7_is_output_port(sc, sc->code)) &&
-	    (is_file_port(sc->code)) &&
 	    (!port_is_closed(sc->code)))
 	  s7_close_output_port(sc, sc->code); /* may call fflush */
 
@@ -21169,6 +21158,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_UNWIND_INPUT:
+      if ((s7_is_input_port(sc, sc->code)) &&
+	  (!port_is_closed(sc->code)))
+	s7_close_input_port(sc, sc->code);
+
+      if ((sc->args != sc->F) &&
+	  (s7_is_input_port(sc, sc->args)) &&
+	  (!port_is_closed(sc->args)))
+	sc->input_port = sc->args;
+       
+      if (is_multiple_value(sc->value)) 
+	sc->value = splice_in_values(sc, multiple_value(sc->value));
+      goto START;
 
 
     case OP_ERROR_QUIT: 
