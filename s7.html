@@ -872,7 +872,7 @@ By the way, bacros solve part of our original problem:
 
 (define-bacro* (mac b)
   `(#_let ((a 12)) 
-     (#_+ a ,(symbol-&gt;value b))))
+     (#_+ a ,(eval b)))) ; eval rather than symbol-&gt;value so that 'b' can be any expression
 </pre>
 
 <p>Guaranteed hygienic!  
@@ -3934,6 +3934,16 @@ These symbols are not just a silly optimization of string comparison:
 3
 </pre>
 
+<p>We can snap together program fragments ("look Ma, no macros!"):
+</p>
+
+<pre>
+(let* ((x 3) 
+       (arg '(x)) 
+       (body `((+ ,x x 1)))) 
+  ((apply lambda arg body) 12)) ; "legolambda"?
+</pre>
+
 <p>If you apply define or define-macro, the returned value is a symbol, so to apply the
 new function or macro, you need to use either eval or symbol-&gt;value:
 </p>
@@ -4098,7 +4108,7 @@ have any number after, for example, #b:
    remove the 4-way cxxxxr functions
    change eof-object? to eof? or better end-of-input?
    add file-exists?, directory?, and delete-file
-   use @ for the exponent marker if base > 10
+   use @ for the exponent marker if base &gt; 10
 </pre>
 
 

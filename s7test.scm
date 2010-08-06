@@ -7544,7 +7544,8 @@
 
 ;;; -------- test that we can plow past errors --------
 
-(if (file-exists? "tests.data")
+(if (and (defined? 'file-exists?) ; (ifdef name ...)?
+	 (file-exists? "tests.data"))
     (delete-file "tests.data"))
 
 (call-with-output-file "tests.data"
@@ -7577,7 +7578,8 @@
       (format #t ";call-with-input-file + error -> ~S~%" str)))
 
 
-(if (file-exists? "tests.data")
+(if (and (defined? 'file-exists?)
+	 (file-exists? "tests.data"))
     (delete-file "tests.data"))
 
 (with-output-to-file "tests.data"
@@ -12941,6 +12943,21 @@ is this a bug?
 (test (or (null? *unbound-variable-hook*) (procedure? *unbound-variable-hook*)) #t)
 (test (vector? *error-info*) #t)
 
+(let ((old-load-hook *load-hook*)
+      (val #f))
+  (with-output-to-file "load-hook-test.scm"
+    (lambda ()
+      (format #t "(define (load-hook-test val) (+ val 1))")))
+  (set! *load-hook* (lambda (file) (set! val file)))
+  (load "load-hook-test.scm")
+  (if (or (not (string? val))
+	  (not (string=? val "load-hook-test.scm")))
+      (format #t ";*load-hook-test* file: ~S~%" val))
+  (if (not (defined? 'load-hook-test))
+      (format #t ";load-hook-test function not defined?~%")
+      (if (not (= (load-hook-test 1) 2))
+	  (format #t ";load-hook-test: ~A~%" (load-hook-test 1))))
+  (set! *load-hook* old-load-hook))
 
 
 (test (equal? (sort! (list 3 4 8 2 0 1 5 9 7 6) <) (list 0 1 2 3 4 5 6 7 8 9)) #t)
@@ -13870,7 +13887,10 @@ is this a bug?
 
     (define-bacro* (mac b)
       `((i_ let) ((a 12)) 
-	((i_ +) a ,(symbol->value b))))
+	((i_ +) a ,(symbol->value b)))) 
+    ;; this assumes the 'b' value is a symbol
+    ;; (let ((a 1)) (mac (* a 2))) is an error
+    ;; use eval, not symbol->value to generalize it
 
     (test (let ((a 32) 
 		(+ -)) 
@@ -15732,7 +15752,8 @@ is this a bug?
 		       (char-whitespace? c))
 		  (set! happy #f)))
 	  (set! last-char c)))
-      (if (not (string=? str1 "(a1 (a . 1))(a2 (b . 1))(a3 (c . 1))"))
+      (if (and (not (string=? str1 "(a1 (a . 1))(a2 (b . 1))(a3 (c . 1))"))
+	       (not (string=? str1 "(a1 (a . 1))(a2 (b . 1))(a3 (c . 1))(snd_test_28)")))
 	  (format #t ";stacktrace: ~A from ~A~%" str1 str)))))
 
 (test (stacktrace #(23)) 'error)
@@ -16012,6 +16033,14 @@ is this a bug?
 (test (let ((x (lambda (a b c) (apply a (list b c))))) (x let '() 3)) 3)
 (test (let ((x (lambda (a b c) (apply a (list b c))))) (x let '((y 2)) '(+ y 1))) 3)
 
+(let () (test ((values let '((x 1))) '(+ x 1)) 2)) ; !
+(let () (test ((values begin '(define x 32)) '(+ x 1)) 33))
+(let () (test (((values lambda '(x) '(+ x 1))) 32) 33))
+(let () (test (let ((arg '(x)) (body '(+ x 1))) (((values lambda arg body)) 32)) 33))
+(let () (test (let ((arg '(x)) (body '(+ x 1))) ((apply lambda arg (list body)) 32)) 33))
+(let () (test (let ((x 12)) ((apply lambda '(x) (list (list '+ 1 x 'x))) 3)) 16)
+;;; (let ((x 12)) ((apply lambda '(x) `((+ 1 ,x x))) 3))
+;;; legolambda??
 
 
 
@@ -17908,7 +17937,8 @@ is this a bug?
 	(define (software-version) (s7-version))
 
 	(define (machine-version)
-	  (if (file-exists? "/proc/cpuinfo")
+	  (if (and (defined? 'file-exists?)
+                   (file-exists? "/proc/cpuinfo"))
 	      (call-with-input-file "/proc/cpuinfo"
 		(lambda (cpufile)
 		  (do ((line (read-line cpufile) (read-line cpufile)))
@@ -25834,7 +25864,7 @@ is this a bug?
 ; this fails because "pi" is inaccurate?
 (num-test (sin 31415926.0) -0.5106132968486)
 (num-test (sin (+ (* 200 our-pi) 0.001)) 9.999998333333416874831395573527051109993E-4)
-(test (< (abs (- (sin (+ (* 200 our-pi) 0.001)) (- (sin (- (* 200 our-pi) 0.001))))) 1e-14) #t)
+(test (< (abs (- (sin (+ (* 200 our-pi) 0.001)) (- (sin (- (* 200 our-pi) 0.001))))) 5e-13) #t)
 
 (num-test (sin 32767.) 1.8750655394138942394239E-1)
 (num-test (sin 8388607.) 9.9234509376961249835628E-1)
@@ -48094,12 +48124,12 @@ is this a bug?
 (test (exact? -2.225073858507201399999999999999999999996E-308) #f)
 (test (inexact? -2.225073858507201399999999999999999999996E-308) #t)
 
+(if with-bignums (begin
 (num-test (magnitude -1.797693134862315699999999999999999999998E308) 1.797693134862315699999999999999999999998E308)
 (num-test (angle -1.797693134862315699999999999999999999998E308) 3.141592653589793238462643383279502884195E0)
 (num-test (abs -1.797693134862315699999999999999999999998E308) 1.797693134862315699999999999999999999998E308)
 (num-test (log -1.797693134862315699999999999999999999998E308) 7.097827128933839967276924307167005609752E2+3.141592653589793238462643383279502884195E0i)
 (num-test (sqrt -1.797693134862315699999999999999999999998E308) 0.0+1.34078079299425963249160560140156653105E154i)
-(if with-bignums (begin
 (num-test (floor -1.797693134862315699999999999999999999998E308) -179769313486231569999999999999999999999823600395032472416907716830641478165090844494284720822504944801260464546490525996157051654497526578294758071917598825308412381248829261811837839883995285726386392464318941660663837379761981461968297128841052541267398805553761268316858222372427864476231065482182369738752)
 (num-test (ceiling -1.797693134862315699999999999999999999998E308) -179769313486231569999999999999999999999823600395032472416907716830641478165090844494284720822504944801260464546490525996157051654497526578294758071917598825308412381248829261811837839883995285726386392464318941660663837379761981461968297128841052541267398805553761268316858222372427864476231065482182369738752)
 (num-test (truncate -1.797693134862315699999999999999999999998E308) -179769313486231569999999999999999999999823600395032472416907716830641478165090844494284720822504944801260464546490525996157051654497526578294758071917598825308412381248829261811837839883995285726386392464318941660663837379761981461968297128841052541267398805553761268316858222372427864476231065482182369738752)

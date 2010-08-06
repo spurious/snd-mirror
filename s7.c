@@ -2541,6 +2541,13 @@ static s7_pointer lambda_star_argument_default_value(s7_scheme *sc, s7_pointer v
       sc->args = sc->NIL;
       sc->code = val;
       eval(sc, OP_EVAL);
+
+      /* ideally we'd drop into the evaluator here, not call it as a procedure.  This way
+       *   of getting the value is only safe for a C-side call like s7_read; for s7-internal
+       *   calls, error handling assumes we're using the s7 stack, not the C stack.  So,
+       *   we better not get an error while evaluating the argument default value!
+       */
+
       sc->z = x;
       return(sc->value);
     }
@@ -6250,7 +6257,8 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	  ((y - floor(y)) < 1.0e-16))
 	return(s7_make_real(sc, pow(x, y)));
     }
-
+  
+  /* (expt 0+i 1e+16) = 0.98156860153485-0.19111012657867i ?? */
   return(s7_from_c_complex(sc, cpow(s7_complex(n), s7_complex(pw))));
 }
 
@@ -10009,10 +10017,9 @@ static void run_load_hook(s7_scheme *sc, const char *filename)
   load_hook = s7_symbol_value(sc, s7_make_symbol(sc, "*load-hook*"));
   if (is_procedure(load_hook))
     {
-      push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
       sc->args = make_list_1(sc, s7_make_string(sc, filename));
       sc->code = load_hook;
-      eval(sc, OP_APPLY);
+      push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
     }
 }
 
@@ -15102,11 +15109,10 @@ static s7_pointer pws_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
       return((*(f->getter))(sc, args));
     }
 
-  push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
   sc->args = args;
   sc->code = f->scheme_getter;
-  eval(sc, OP_APPLY);
-  return(sc->value);
+  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+  return(sc->F);
 }
 
 
@@ -15132,11 +15138,10 @@ static s7_pointer pws_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
       return((*(f->setter))(sc, args));
     }
 
-  push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
   sc->args = args;
   sc->code = f->scheme_setter;
-  eval(sc, OP_APPLY);
-  return(sc->value);
+  push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+  return(sc->F);
 }
 
 
