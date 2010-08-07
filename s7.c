@@ -7114,24 +7114,28 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
   if (s7_is_zero(y))
     return(division_by_zero_error(sc, "quotient", args));
 
-  if ((number_type(x) > NUM_RATIO) &&
-      (isnan(real(number(x)))))
-    return(s7_wrong_type_arg_error(sc, "quotient", 1, x, "a normal real"));
-  if ((number_type(y) > NUM_RATIO) &&
-      (isnan(real(number(y)))))
-    return(s7_wrong_type_arg_error(sc, "quotient", 2, y, "a normal real"));
+  if (number_type(x) > NUM_RATIO)
+    {
+      double rx;
+      rx = real(number(x));
+      if ((isinf(rx)) || (isnan(rx)))
+	return(s7_wrong_type_arg_error(sc, "quotient", 1, x, "a normal real"));
+    }
+
+  if (number_type(y) > NUM_RATIO)
+    {
+      double ry;
+      ry = real(number(y));
+      if ((isinf(ry)) || (isnan(ry)))
+	return(s7_wrong_type_arg_error(sc, "quotient", 2, y, "a normal real"));
+
+      /* if infs allowed we need to return infs/nans, else:
+       *    (quotient inf.0 1e-309) -> -9223372036854775808
+       *    (quotient inf.0 inf.0) -> -9223372036854775808
+       */
+    }
 
   return(s7_make_integer(sc, quotient(number(car(args)), number(cadr(args)))));
-
-  /* this should probably check for infs in and out (1/1e-320 ?)
-   *    (quotient inf.0 1e-309) -> -9223372036854775808
-   *    (quotient inf.0 inf.0) -> -9223372036854775808
-   *    (quotient inf.0 -inf.0) -> -9223372036854775808
-   *    (quotient -inf.0 1e-309) -> -9223372036854775808
-   *    (quotient -inf.0 inf.0) -> -9223372036854775808
-   *    (quotient -inf.0 -inf.0) -> -9223372036854775808
-   * etc...
-   */
 }
 
 
@@ -10017,9 +10021,10 @@ static void run_load_hook(s7_scheme *sc, const char *filename)
   load_hook = s7_symbol_value(sc, s7_make_symbol(sc, "*load-hook*"));
   if (is_procedure(load_hook))
     {
+      push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
       sc->args = make_list_1(sc, s7_make_string(sc, filename));
       sc->code = load_hook;
-      push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
+      eval(sc, OP_APPLY);
     }
 }
 
@@ -10188,8 +10193,6 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 
    * so we'd need (with-evaluator ...)?
    */
-
-  /* TODO: the problem with eval-string is almost certainy the direct eval call */
 
   return(eval_string_1(sc, s7_string(car(args))));
 }
@@ -15865,10 +15868,17 @@ static void format_append_char(format_data *dat, char c)
 
 static void format_append_string(format_data *dat, const char *str)
 {
-  int i, len;
-  len = safe_strlen(str);
-  for (i = 0; i < len; i++)
-    format_append_char(dat, str[i]);
+  const char *s;
+  if (!str) return;
+  for (s = str; (*s) != 0; s++)
+    {
+      if (dat->len <= dat->loc + 2)
+	{
+	  dat->len *= 2;
+	  dat->str = (char *)realloc(dat->str, dat->len * sizeof(char));
+	}
+      dat->str[dat->loc++] = (*s);
+    }
 }
 
 
@@ -16267,7 +16277,16 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		  return(format_error(sc, "unimplemented format directive", str, args, fdat));
 		}
 	    }
-	  else format_append_char(fdat, str[i]);
+	  else 
+	    {
+	      /* format_append_char(fdat, str[i]); */
+	      if (fdat->len <= fdat->loc + 2)
+		{
+		  fdat->len *= 2;
+		  fdat->str = (char *)realloc(fdat->str, fdat->len * sizeof(char));
+		}
+	      fdat->str[fdat->loc++] = str[i];
+	    }
 	}
     }
 

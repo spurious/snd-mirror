@@ -2169,7 +2169,7 @@ static XEN g_set_with_file_monitor(XEN val)
 static XEN g_snd_version(void) 
 {
   #define H_snd_version "(" S_snd_version "): current Snd version (a string)"
-  return(C_TO_XEN_STRING(SND_DATE));
+  return(C_TO_XEN_STRING("Snd " SND_VERSION ", " SND_DATE)); /* make it look like s7-version's output */
 }
 
 

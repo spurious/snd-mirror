@@ -6624,6 +6624,11 @@
 (test (format #f "~~~~") "~~")
 (test (format #f "a~~") "a~")
 (test (format #f "~~a") "~a")
+(test (format #f "~A" "") "")
+(test (format #f "~{~^~A~}" '()) "")
+(test (format #f "~P" 1) "")
+(test (format #f "~0T") "")
+(test (format #f "") "")
 
 (test (format #f "hiho~%ha") (string-append "hiho" (string #\newline) "ha"))
 (test (format #f "~%") (string #\newline))
@@ -16038,9 +16043,10 @@ is this a bug?
 (let () (test (((values lambda '(x) '(+ x 1))) 32) 33))
 (let () (test (let ((arg '(x)) (body '(+ x 1))) (((values lambda arg body)) 32)) 33))
 (let () (test (let ((arg '(x)) (body '(+ x 1))) ((apply lambda arg (list body)) 32)) 33))
-(let () (test (let ((x 12)) ((apply lambda '(x) (list (list '+ 1 x 'x))) 3)) 16)
-;;; (let ((x 12)) ((apply lambda '(x) `((+ 1 ,x x))) 3))
-;;; legolambda??
+(let () (test (let ((x 12)) ((apply lambda '(x) (list (list '+ 1 x 'x))) 3)) 16))
+(let () (test (let* ((x 3) (arg '(x)) (body `((+ ,x x 1)))) ((apply lambda arg body) 12)) 16))
+
+
 
 
 
