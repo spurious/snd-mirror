@@ -2488,7 +2488,7 @@ symbol sym in the given environment: (let ((x 32)) (symbol->value 'x)) -> 32"
 s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
 {
   s7_pointer x;
-  /* if immutable should this return an error?? */
+  /* if immutable should this return an error? */
   x = find_symbol(sc, sc->envir, sym);
   if (x != sc->NIL)
     set_symbol_value(x, val);
@@ -6258,7 +6258,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	return(s7_make_real(sc, pow(x, y)));
     }
   
-  /* (expt 0+i 1e+16) = 0.98156860153485-0.19111012657867i ?? */
+  /* (expt 0+i 1e+16) = 0.98156860153485-0.19111012657867i ? */
   return(s7_from_c_complex(sc, cpow(s7_complex(n), s7_complex(pw))));
 }
 
@@ -16905,6 +16905,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
     {
       int line, j, top;
       line = pair_line_number(sc->cur_code);
+
       if ((line > 0) &&
 	  (remembered_line_number(line) != 0) &&
 	  (remembered_file_name(line)))
@@ -17050,13 +17051,15 @@ GOT_CATCH:
 	{
 	  /* if info is not a list, send object->string to current error port,
 	   *   else assume car(info) is a format control string, and cdr(info) are its args
+	   *
+	   * if at all possible, get some indication of where we are!
 	   */
+	  s7_pointer error_port;
+	  error_port = s7_current_error_port(sc);
+
 	  if ((!s7_is_list(sc, info)) ||
 	      (!s7_is_string(car(info))))
-	    format_to_output(sc, 
-			     s7_current_error_port(sc), 
-			     "\n;~A ~A",
-			     make_list_2(sc, type, info));
+	    format_to_output(sc, error_port, "\n;~A ~A", make_list_2(sc, type, info));
 	  else
 	    {
 	      const char *carstr;
@@ -17079,16 +17082,10 @@ GOT_CATCH:
 		  len += 8;
 		  errstr = (char *)malloc(len * sizeof(char));
 		  snprintf(errstr, len, "\n;%s", s7_string(car(info)));
-		  format_to_output(sc,
-				   s7_current_error_port(sc), 
-				   errstr,
-				   cdr(info));
+		  format_to_output(sc, error_port, errstr, cdr(info));
 		  free(errstr);
 		}
-	      else format_to_output(sc, 
-				    s7_current_error_port(sc), 
-				    "\n;~A ~A",
-				    make_list_2(sc, type, info));
+	      else format_to_output(sc, error_port, "\n;~A ~A", make_list_2(sc, type, info));
 	    }
 	  
 	  /* now display location and \n at end */
@@ -17102,40 +17099,47 @@ GOT_CATCH:
 	      line = port_line_number(sc->input_port);
 	      
 	      if (filename)
-		format_to_output(sc,
-				 s7_current_error_port(sc), 
-				 ", ~A[~D]",
+		format_to_output(sc, error_port, ", ~A[~D]",
 				 make_list_2(sc, make_protected_string(sc, filename), s7_make_integer(sc, line)));
 	      else 
 		{
 		  if (line > 0)
-		    format_to_output(sc,
-				     s7_current_error_port(sc), 
-				     ", line ~D", 
+		    format_to_output(sc, error_port, ", line ~D", 
 				     make_list_1(sc, s7_make_integer(sc, line)));
 		}
 	    }
-	  s7_newline(sc, s7_current_error_port(sc));
+	  s7_newline(sc, error_port);
 
 	  if (is_pair(vector_element(sc->error_info, ERROR_CODE)))
 	    {
-	      format_to_output(sc, 
-			       s7_current_error_port(sc), 
-			       ";    ~A", 
+	      format_to_output(sc, error_port, ";    ~A", 
 			       make_list_1(sc, vector_element(sc->error_info, ERROR_CODE)));
-	      s7_newline(sc, s7_current_error_port(sc));
+	      s7_newline(sc, error_port);
 
 	      if (s7_is_string(vector_element(sc->error_info, ERROR_CODE_FILE)))
 		{
-		  format_to_output(sc,
-				   s7_current_error_port(sc), 
-				   ";    [~S, line ~D]",
+		  format_to_output(sc, error_port, ";    [~S, line ~D]",
 				   make_list_2(sc, 
 					       vector_element(sc->error_info, ERROR_CODE_FILE), 
 					       vector_element(sc->error_info, ERROR_CODE_LINE)));
-		  s7_newline(sc, s7_current_error_port(sc));
+		  s7_newline(sc, error_port);
 		}
 	    }
+
+	  /* look for __func__ in the error environment etc
+	   */
+	  {
+	    s7_pointer x;
+	    x = find_symbol(sc, vector_element(sc->error_info, ERROR_ENVIRONMENT), sc->__FUNC__);  /* returns nil if no __func__ */
+
+	    if ((is_pair(x)) &&
+		(error_port != sc->F))
+	      {
+		s7_display(sc, make_protected_string(sc, ";    "), error_port);
+		s7_display(sc, cdr(x), error_port);
+		s7_newline(sc, error_port);
+	      }
+	  }
 	  
 	  if ((exit_eval) &&
 	      (sc->error_exiter))
@@ -17951,6 +17955,11 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	  for (x = args; cdr(x) != sc->NIL; x = cdr(x))
 	    stack_args(sc->stack, top) = s7_cons(sc, car(x), stack_args(sc->stack, top));
 	  return(car(x));
+
+	  /* what about values-assoc which would splice in the value in the alist based on the head of the spliced-into list?
+	   *   this is aimed at objects-as-alists
+	   *   '((+ . ((obj+ self))) ...)? so (+ ... obj ...) becomes (+ (obj+ obj ...) ...)?
+	   */
 
 	  /* look for errors here rather than glomming up the set! and let code */
 	case OP_SET1:                                             /* (set! var (values 1 2 3)) */
@@ -20185,13 +20194,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       /* (define ((f a) b) (* a b)) -> (define f (lambda (a) (lambda (b) (* a b)))) */
 
-      if (is_immutable_or_accessed(sc->x))
-	{
-	  if (is_immutable(sc->x))                                           /* (define pi 3) or (define (pi a) a) */
-	    return(eval_error_with_name(sc, "~A: ~S is immutable", sc->x));
-	  sc->code = call_symbol_bind(sc, sc->x, sc->code);
-	}
-      
       push_stack(sc, opcode(OP_DEFINE1), sc->NIL, sc->x);
       goto EVAL;
       
@@ -20212,6 +20214,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
 
       /* if we're defining a function, add its symbol to the new function's environment under the name __func__ */
+
+      /* the immutable constant check needs to wait until we have the actual new value because
+       *   we want to ignore the rebinding (not raise an error) if it is the existing value.
+       *   This happens when we reload a file that has a define-constant call.
+       */
+      if (is_immutable_or_accessed(sc->code))
+	{
+	  if (is_immutable(sc->code))                                        /* (define pi 3) or (define (pi a) a) */
+	    {
+	      s7_pointer x;
+	      x = find_symbol(sc, sc->envir, sc->code);
+	      if (!(s7_is_equal(sc, sc->value, cdr(x))))                     /* if value is unchanged, just ignore this definition */
+		return(eval_error_with_name(sc, "~A: ~S is immutable", sc->code));
+	    }
+	  sc->value = call_symbol_bind(sc, sc->code, sc->value);
+	}
+
       if ((is_closure(sc->value)) || 
 	  (is_closure_star(sc->value)))
 	{
@@ -20611,7 +20630,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_LET_STAR1:    /* let* -- calculate parameters */
-
       if (!(s7_is_symbol(caar(sc->code))))
 	return(eval_error(sc, "bad variable ~S in let* bindings", car(sc->code)));
 
@@ -20640,6 +20658,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = cdr(sc->code);
       if (is_pair(sc->code)) 
 	{ 
+	  if (!is_pair(car(sc->code)))             /* (let* ((x -1) 2) 3) */
+	    return(eval_error(sc, "let* variable/binding is ~S?", car(sc->code)));
+
 	  if (!is_pair(cdar(sc->code)))            /* (let* ((a 1) (b . 2)) ...) */
 	    return(eval_error(sc, "let* variable list is messed up? ~A", sc->code));
 
@@ -27117,6 +27138,9 @@ s7_scheme *s7_init(void)
  * A "class" in this case is define-record (for the local fields and type) + a list of methods and a methods accessor.
  * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
  * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
+ *
+ * (func ... obj ...) -> (eval (func ... obj ...) (aug-env obj cur-env))
+ * (func ... obj1 ... obj2 ...) -> (eval (func ... obj1 ... obj2 ...) (aug-env obj1...)) 
  *
  * s7test valgrind 17-Jul-10: 
  *    intel core duo (1.83G):    3162 (2M)

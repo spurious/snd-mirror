@@ -1,5 +1,6 @@
 Snd change log
 
+ 9-Aug:     make-index.scm (replaces index.cl).
  30-Jul:    removed *-button-color.
  8-July:    Snd 11.7.
  12-Jun:    removed window-property, window-property-changed-hook, send-mozilla.

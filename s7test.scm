@@ -2224,6 +2224,8 @@
 (test (substring (substring "hi\"ho" 3 5) 1 2) "o")
 (test (substring "01\ \ 34" 2) "34")
 (test (let* ((s1 "0123456789") (s2 (substring s1 1 3))) (string-set! s2 1 #\x) s1) "0123456789")
+(test (substring (substring "" 0 0) 0 0) "")
+(test (substring (format #f "") 0 0) "")
 
 (test (recompose 12 (lambda (a) (substring a 0 3)) "12345") "123")
 (test (reinvert 12 (lambda (a) (substring a 0 3)) (lambda (a) (string-append a "45")) "12345") "12345")
@@ -2241,10 +2243,14 @@
 (test (substring "1234" 1 0) 'error)
 (test (substring "" most-positive-fixnum 1) 'error)
 
-(test (let ((str "0123456789"))
-	(string-set! str 5 #\null)
-	(substring str 6))
-      "6789")
+(let ((str "0123456789"))
+  (string-set! str 5 #\null)
+  (test (substring str 6) "6789")
+  (test (substring str 5 5) "")
+  (test (substring str 4 5) "4")
+  (test (substring str 5 6) "\x00")
+  (test (substring str 5 7) "\x006")
+  (test (substring str 4 7) "4\x006"))
 
 (for-each
  (lambda (arg)
@@ -6626,9 +6632,11 @@
 (test (format #f "~~a") "~a")
 (test (format #f "~A" "") "")
 (test (format #f "~{~^~A~}" '()) "")
+(test (format #f "~{~^~{~^~A~}~}" '(())) "")
 (test (format #f "~P" 1) "")
 (test (format #f "~0T") "")
 (test (format #f "") "")
+(test (format #f "~*~*" 1 2) "")
 
 (test (format #f "hiho~%ha") (string-append "hiho" (string #\newline) "ha"))
 (test (format #f "~%") (string #\newline))
@@ -6741,6 +6749,9 @@
 (test (format #f "~0" 1) 'error)
 (test (format #f "~1") 'error)
 (test (format #f "~^" 1) 'error)
+(test (format #f "~.0F" 1.0) 'error)
+(test (format #f "~1.0F" 1.0) 'error)
+(test (format #f "~-1F" 1.0) 'error)
 (test (format #f "~^") "")
 (test (format #f "~D~" 9) "9~")
 (test (format #f "~&" 9) 'error)
@@ -6907,6 +6918,18 @@
 (test (format #f "~F" (/ (real-part (log 0.0)) (real-part (log 0.0)))) "nan.0")
 (test (format #f "~1/4T~A" 1) 'error)
 (test (format #f "~T") "")
+(test (format #f "~@P~S" 1 '(1)) "y(1)")
+(test (format #f ".~A~*" 1 '(1)) ".1")
+(test (format #f "~*~*~T" 1 '(1)) "")
+
+(test (format) 'error)
+(for-each
+ (lambda (arg)
+   (test (format arg) 'error))
+ (list 1 1.0 1+i 2/3 'a-symbol (make-vector 3) '(1 2) (cons 1 2) abs #f #t (if #f #f) (lambda (a) (+ a 1))))
+(test (format "hi") "hi") ; !?
+(test (format "~A ~D" 1/3 2) "1/3 2")
+(test (format "") "")
 
 
 (call-with-output-file "tmp1.r5rs" (lambda (p) (format p "this ~A ~C test ~D" "is" #\a 3)))
@@ -7985,6 +8008,9 @@
 (test (object->string #\space) "#\\space")
 (test (object->string ''#\a) "'#\\a")
 (test (object->string (list 1 '.' 2)) "(1 .' 2)")
+(test (object->string (quote (quote))) "(quote)")
+(test (object->string (quote quote)) "quote")
+(test (object->string (quote (quote (quote)))) "'(quote)")
 
 (test (object->string) 'error)
 (test (object->string 1 2) 'error)
@@ -9957,6 +9983,8 @@
 (test (let () (apply letrec '(() (define x 9) x))) 9)
 (test ((lambda (n) (apply n '(((x 1)) (+ x 2)))) let) 3)
 (test ((apply lambda (list (apply let (list (list) (quote (list (apply case '(0 ((0 1) 'n))))))) (quasiquote (+ n 1)))) 2) 3)
+(test (apply let '((x 1)) '((+ x 1))) 2)
+
 
 
 
@@ -10326,6 +10354,15 @@
 (test (let* () (+ 4 (let () (values 1 2 3)) 5)) 15)
 (test (letrec () (+ 4 (let () (values 1 2 3)) 5)) 15)
 (test (letrec* () (+ 4 (let () (values 1 2 3)) 5)) 15)
+
+(test (cons (values 1 2)) '(1 . 2))
+(test (number->string (values 1 2)) "1")
+(test (object->string (values)) "#<unspecified>")
+(test (substring (values "hi") (values 1 2)) "i")
+(test (cond (call-with-exit (values "hi"))) "hi")
+(test (procedure-arity (cond (values))) '(0 0 #t)) ; values as a procedure here
+(test (values (begin (values "hi"))) "hi")
+(test (< (values (values 1 2))) #t)
 
 
 
@@ -10783,6 +10820,9 @@
 (test (letrec ((x . 1)) x) 'error)
 (test (letrec* ((x . 1)) x) 'error)
 (test (let hi ()) 'error)
+(test (let* ((x -1) 2) 3) 'error)
+(test (let ((x -1) 2) 3) 'error)
+(test (letrec ((x -1) 2) 3) 'error)
 
 (test (let) 'error)
 (test (let*) 'error)
@@ -12953,7 +12993,12 @@ is this a bug?
   (with-output-to-file "load-hook-test.scm"
     (lambda ()
       (format #t "(define (load-hook-test val) (+ val 1))")))
-  (set! *load-hook* (lambda (file) (set! val file)))
+  (set! *load-hook* 
+	(lambda (file) 
+	  (if (or val
+		  (defined? 'load-hook-test))
+	      (format #t ";*load-hook*: ~A ~A?~%" val load-hook-test))
+	  (set! val file)))
   (load "load-hook-test.scm")
   (if (or (not (string? val))
 	  (not (string=? val "load-hook-test.scm")))
@@ -12963,6 +13008,20 @@ is this a bug?
       (if (not (= (load-hook-test 1) 2))
 	  (format #t ";load-hook-test: ~A~%" (load-hook-test 1))))
   (set! *load-hook* old-load-hook))
+
+(let ((old-vlen *vector-print-length*))
+  (set! *vector-print-length* 0)
+  (test (format #f "~A" #()) "#()")
+  (test (format #f "~A" #(1 2 3 4)) "#(...)")
+  (set! *vector-print-length* -64)
+  (test (format #f "~A" #(1 2 3 4)) "#(...)")
+  (set! *vector-print-length* 1)
+  (test (format #f "~A" #()) "#()")
+  (test (format #f "~A" #(1)) "#(1)")
+  (test (format #f "~A" #(1 2 3 4)) "#(1 ...)")
+  (set! *vector-print-length* 2)
+  (test (format #f "~A" #(1 2 3 4)) "#(1 2 ...)")
+  (set! *vector-print-length* old-vlen))
 
 
 (test (equal? (sort! (list 3 4 8 2 0 1 5 9 7 6) <) (list 0 1 2 3 4 5 6 7 8 9)) #t)
@@ -15990,6 +16049,7 @@ is this a bug?
 (test ((((lambda () begin)) (values begin 1))) 1)
 (test (+ (((lambda* () values)) 1 2 3)) 6)
 (test ((values ('((1 2) (3 4)) 1) (abs -1))) 4)
+(test ((apply lambda '() '(() ()))) '())
 
 (test (let () (define (hi cond) (+ cond 1)) (hi 2)) 3)
 (test (let () (define* (hi (cond 1)) (+ cond 1)) (hi 2)) 3)
@@ -39193,7 +39253,7 @@ is this a bug?
    (for-each
     (lambda (arg)
       (if (op arg)
-	  (format "(~A ~A) -> #t?~%" op arg)))
+	  (format #t "(~A ~A) -> #t?~%" op arg)))
     (list "hi" (integer->char 65) #f #t '(1 2) 'a-symbol (cons 1 2) (make-vector 3) abs)))
  (list number? complex? real? rational? integer?)
  (list 'number? 'complex? 'real? 'rational? 'integer?))
