@@ -15830,7 +15830,7 @@ static char *format_error(s7_scheme *sc, const char *msg, const char *str, s7_po
     {
       len = safe_strlen(msg) + 32;
       errmsg = (char *)malloc(len * sizeof(char));
-      snprintf(errmsg, len, "format ~S ~{~A~^ ~}: %s", msg);
+      snprintf(errmsg, len, "format ~S ~{~S~^ ~}: %s", msg);
     }
   else 
     {
@@ -15841,7 +15841,7 @@ static char *format_error(s7_scheme *sc, const char *msg, const char *str, s7_po
 	filler[i] = ' ';
       len = safe_strlen(msg) + 32 + dat->loc + 12;
       errmsg = (char *)malloc(len * sizeof(char));
-      snprintf(errmsg, len, "\nformat: ~S ~{~A~^ ~}\n%s^: %s", filler, msg);
+      snprintf(errmsg, len, "\nformat: ~S ~{~S~^ ~}\n%s^: %s", filler, msg);
       free(filler);
     }
 
@@ -27110,6 +27110,7 @@ s7_scheme *s7_init(void)
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
  * perhaps remove the `#(...) support -- is there any actual use for this?
  * PERHAPS: multidimensional hash tables
+ * PERHAPS: write-line
  *
  * someday we need to catch gmp exceptions: SIGFPE (exception=deliberate /0 -- see gmp/errno.c)
  *   #include <signal.h>

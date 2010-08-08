@@ -1,9 +1,8 @@
 ;;;  Spectra courtesy J.A. Moorer
 ;;;
-;;;  I removed phase information, since the psychoacousticians tell us that these
-;;;  normally don't matter.  Also, I omitted any partials with amplitude below
+;;;  I removed phase information and omitted any partials with amplitude below
 ;;;  0.0001, although this may have thrown away good data, because the original
-;;;  data was not normalized in any way.
+;;;  data was not normalized.
 
 (provide 'snd-spectr.scm)
 
