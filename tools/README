@@ -16,11 +16,8 @@ nor.scm				change \r\n to \n
 crossref.c			simple-minded cross referencer
 makexg.scm + xgdata.scm      	Build xg.c, xg-ruby.c, xg-x11.h
 makegl.scm + gldata.scm        	Build gl.c
-index.cl              		Build index.html, snd-xref.c, elaborate html error checking
+make-index.scm         		Build index.html, snd-xref.c, elaborate html error checking
 snd.supp			Valgrind suppressions
 make-snd-diffs
 exs7.c                          some s7 examples (extracted from s7.h)
 check-help.scm                  bug checks for help strings
-
-ecl.txt, gauche.txt, librep.txt 
-                                saved stuff about other extension language choices

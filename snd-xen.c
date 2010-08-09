@@ -2432,6 +2432,103 @@ static char *find_source_file(const char *orig)
 }
 
 
+#if HAVE_SCHEME
+
+static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
+{
+  #define H_char_position "(char-position char str (start 0)) returns the position of the first occurrence of char in str, or #f"
+  const char *porig, *p;
+  char c;
+  int start = 0;
+
+  if (!s7_is_character(s7_car(args)))
+    return(s7_wrong_type_arg_error(sc, "char-position", 1, s7_car(args), "a character"));
+  if (!s7_is_string(s7_car(s7_cdr(args))))
+    return(s7_wrong_type_arg_error(sc, "char-position", 2, s7_car(s7_cdr(args)), "a string"));
+
+  if ((s7_is_pair(s7_cdr(s7_cdr(args)))) &&
+      (s7_is_integer(s7_car(s7_cdr(s7_cdr(args))))))
+    start = s7_integer(s7_car(s7_cdr(s7_cdr(args))));
+
+  c = s7_character(s7_car(args));
+  porig = s7_string(s7_car(s7_cdr(args)));
+
+  if ((!porig) || (start >= mus_strlen(porig)))
+    return(s7_f(sc));
+
+  for (p = (const char *)(porig + start); (*p); p++)
+    if ((*p) == c)
+      return(s7_make_integer(sc, p - porig));
+  return(s7_f(sc));
+}
+
+
+static s7_pointer g_string_position(s7_scheme *sc, s7_pointer args)
+{
+  #define H_string_position "(string-position str1 str2 (start 0)) returns the starting position of str1 in str2 or #f"
+  const char *s1, *s2, *p1, *p2;
+  int start = 0;
+
+  if (!s7_is_string(s7_car(args)))
+    return(s7_wrong_type_arg_error(sc, "string-position", 1, s7_car(args), "a string"));
+  if (!s7_is_string(s7_car(s7_cdr(args))))
+    return(s7_wrong_type_arg_error(sc, "string-position", 2, s7_car(s7_cdr(args)), "a string"));
+
+  if ((s7_is_pair(s7_cdr(s7_cdr(args)))) &&
+      (s7_is_integer(s7_car(s7_cdr(s7_cdr(args))))))
+    start = s7_integer(s7_car(s7_cdr(s7_cdr(args))));
+  
+  s1 = s7_string(s7_car(args));
+  s2 = s7_string(s7_car(s7_cdr(args)));
+  if (start >= mus_strlen(s2))
+    return(s7_f(sc));
+
+  for (p2 = (const char *)(s2 + start); (*p2); p2++)
+    {
+      const char *ptemp;
+      for (p1 = s1, ptemp = p2; (*p1) && (*ptemp) && ((*p1) == (*ptemp)); p1++, ptemp++);
+      if (!(*p1))
+	return(s7_make_integer(sc, p2 - s2));
+    }
+  /* (string-position "123" "321123") */
+
+  return(s7_f(s7));
+}
+
+static s7_pointer g_string_ci_position(s7_scheme *sc, s7_pointer args)
+{
+  #define H_string_ci_position "(string-ci-position str1 str2 (start 0)) returns the starting position of str1 in str2 ignoring case, or #f"
+  const char *s1, *s2, *p1, *p2;
+  int start = 0;
+
+  if (!s7_is_string(s7_car(args)))
+    return(s7_wrong_type_arg_error(sc, "string-position", 1, s7_car(args), "a string"));
+  if (!s7_is_string(s7_car(s7_cdr(args))))
+    return(s7_wrong_type_arg_error(sc, "string-position", 2, s7_car(s7_cdr(args)), "a string"));
+
+  if ((s7_is_pair(s7_cdr(s7_cdr(args)))) &&
+      (s7_is_integer(s7_car(s7_cdr(s7_cdr(args))))))
+    start = s7_integer(s7_car(s7_cdr(s7_cdr(args))));
+  
+  s1 = s7_string(s7_car(args));
+  s2 = s7_string(s7_car(s7_cdr(args)));
+  if (start >= mus_strlen(s2))
+    return(s7_f(sc));
+
+  for (p2 = (const char *)(s2 + start); (*p2); p2++)
+    {
+      const char *ptemp;
+      for (p1 = s1, ptemp = p2; (*p1) && (*ptemp) && (toupper((int)(*p1)) == toupper((int)(*ptemp))); p1++, ptemp++);
+      if (!(*p1))
+	return(s7_make_integer(sc, p2 - s2));
+    }
+
+  return(s7_f(s7));
+}
+
+#endif
+
+
 #if MUS_DEBUGGING && HAVE_SCHEME
 static XEN g_test_load(XEN name)
 {
@@ -2682,6 +2779,12 @@ void g_xen_initialize(void)
 
 #if MUS_DEBUGGING && HAVE_SCHEME
   XEN_DEFINE_PROCEDURE("gsl-gegenbauer",  g_gsl_gegenbauer_w,  3, 0, 0, "internal test func");
+#endif
+
+#if HAVE_SCHEME
+  s7_define_function(s7, "char-position", g_char_position, 2, 1, false, H_char_position);
+  s7_define_function(s7, "string-position", g_string_position, 2, 1, false, H_string_position);
+  s7_define_function(s7, "string-ci-position", g_string_ci_position, 2, 1, false, H_string_ci_position);
 #endif
 
 #if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS
