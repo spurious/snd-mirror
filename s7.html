@@ -4095,9 +4095,12 @@ have any number after, for example, #b:
    remove the exact/inexact distinction including #i and #e
    remove `#(...) support (quasiquoted vector constants)
    remove *-ci functions
-   remove string&lt;-&gt;list and vector&lt;-&gt;list 
+   remove string&lt;-&gt;list and vector&lt;-&gt;list
+   change string-&gt;symbol to symbol
    remove call-with-values and its friends
    remove char-ready?
+   change eof-object? to eof? or better end-of-input?
+   use @ as the exponent marker if base &gt; 10
 </pre>
 
 <p>and perhaps:
@@ -4106,12 +4109,12 @@ have any number after, for example, #b:
 <pre>
    remove even? and odd?
    remove the 4-way cxxxxr functions
-   change eof-object? to eof? or better end-of-input?
    add file-exists?, directory?, and delete-file
-   use @ for the exponent marker if base &gt; 10
    add a generic position function
 </pre>
 
+<p>Scheme needs a more elegant way to define functions that share a closure.
+</p>
 
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">

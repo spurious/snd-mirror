@@ -9799,11 +9799,21 @@ static int s7_read_char_1(s7_scheme *sc, s7_pointer port, s7_read_t read_choice)
   if (is_function_port(port))
     return(character((*(port_input_function(port)))(sc, read_choice, port)));
 
-  c = inchar(sc, port);
+  if (is_file_port(port))
+    c = fgetc(port_file(port)); /* not unsigned char! -- could be EOF */
+  else 
+    {
+      if ((!(port_string(port))) ||
+	  (port_string_length(port) <= port_string_point(port)))
+	return(EOF);
+      c = (unsigned char)port_string(port)[port_string_point(port)++];
+    }
+
   if ((read_choice == S7_PEEK_CHAR) && (c != EOF))
     backchar(sc, c, port);
   return(c);
 }
+
 
 
 int s7_read_char(s7_scheme *sc, s7_pointer port)
@@ -18913,7 +18923,6 @@ s7_pointer s7_symbol_special_value(s7_scheme *sc, s7_pointer symbol)
 
 static s7_pointer g_special(s7_scheme *sc, s7_pointer symbol)
 {
-  #define H_special "(special symbol) returns the dynamic (thread-local) binding of the symbol"
   /* arg is a symbol, we return its dynamic binding 
    *
    * this can't be a function because that would evaluate its argument, and
@@ -26878,7 +26887,7 @@ s7_scheme *s7_init(void)
 
   /* these are internal for quasiquote's use */
   s7_define_function(sc, "{values}",                g_qq_values,               0, 0, true,  H_qq_values);
-  s7_define_function(sc, "{list}",                  g_qq_list,                 0, 0, true,  H_qq_values);
+  s7_define_function(sc, "{list}",                  g_qq_list,                 0, 0, true,  H_qq_list);
   s7_define_function(sc, "{apply}",                 g_apply,                   1, 0, true,  H_apply);
   s7_define_function(sc, "{append}",                g_append,                  0, 0, true,  H_append);
     
@@ -27110,7 +27119,7 @@ s7_scheme *s7_init(void)
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
  * perhaps remove the `#(...) support -- is there any actual use for this?
  * PERHAPS: multidimensional hash tables
- * PERHAPS: write-line
+ * PERHAPS: write-line (easily simulated via write-line)
  *
  * someday we need to catch gmp exceptions: SIGFPE (exception=deliberate /0 -- see gmp/errno.c)
  *   #include <signal.h>

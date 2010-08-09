@@ -3,66 +3,10 @@
 
 /* Snd defines its own exit and delay
  *
- *   In Scheme, delay is protected in clm2xen.c as make-promise
- *              filter is defined in srfi-1 so we need protection against that
- *
  *   In Ruby, rand is kernel_rand.
  *
  *   In Forth, Snd's exit is named snd-exit.
  */
-
-
-/* Other extension language possibilities:
- *
- * ch:          (C)      not open source?
- * chicken:     (Scheme) looks clean, but no vararg functions, no bignums, gc protection looks iffy, not clear
- *                         how to call C function from Scheme.
- * Cint:        (C++)    c++, uses a separate program to handle linkages? -- not an extension language as far as I can tell
- * ecl:         (CL)     See tools/ecl.txt.
- * eel:         (C)      a commercial product
- * EiC:         (C)      only void func(void) through EiC_parsestring, but otherwise? Lua-like stack handling.
- *                       Someone should combine this with libffi.
- * elastic:     (C)      looks dead (no change since 2001), like Lua in calling sequences
- * elk:         (Scheme) looks ok except for GC stuff (is it still maintained? -- last change 2006)
- * Gambit:      (Scheme) not an extension language, complicated connection to C
- * GameMonkey:  ()       c++, windows oriented (no linux I think)
- * Gauche:      (Scheme) this was usable (and supported in Snd) until Gauche 0.8.14 -- see tools/gauche.txt.
- * haskell               This looks do-able -- it has an FFI to C and can be embedded -- see GHC.
- * Larceny      (Scheme) appears to be call-out only
- * librep:      (CL)     see tools/librep.txt.
- * lua:         (C)      do-able, very primitive -- push-pop-stack etc. (I'm told it is freeware, just a funny license)
- * lush:        (CL)     compilation problem, serious name-space problems (not really an extension language)
- * maxima       (CL)     This would be cool...  but there is no embeddable common lisp.
- * mzscheme:    (Scheme) support semi-exists (I have the xen.h macros for it), but I refuse to touch it
- * ocaml:       (ML)     not an extension language, as far as I can tell
- * octave:      (Matlab) c++, probably do-able; standard linkage is through octave_value_list arg list.
- *                       Sigh... I'll have to learn C++ to go very far with this.
- * pike:        (C)      not an extension language
- * python:      ()       looks like ruby to me -- why duplicate? (I have about 1/4 of xen.h for this)
- *                         as with scheme48, this requires explicit local var ref incrs! ruby-style func defs
- * rscheme:     (Scheme) not an extension language.
- * scheme48:    (Scheme) need to get the initialization straight, and find eval-c-string (missing I think),
- *                         how do you exit this damned thing?, and no smobs? -- how to know when to GC a vct?
- *                         also import-lambda-definition needs to be callable in C.  Too many troubles.
- * SCM:         (Scheme) looks tricky -- name space troubles, no bignums; if we include scm.h, we collide
- *                         with /usr/local/include/gtk-2.0/gdk/gdkrgb.h use of "verbose" as an argument name,
- *                         since scm.h defines it as (scm_verbose+0) -- this looks bizarre (checked 5e5)
- * s-lang:      (C)      probably doable -- would need to wrap everything in my own struct, and 7 args max is too few.
- * squirrel:    ()       c++, like lua in call sequence
- * stklos:      (Scheme) doesn't build libstklos yet, and has many non-unique names in its headers (checked 0.98):
- *                         stklos.h includes the stklos config file, so we collide with PACKAGE, VERSION (easy to hack around).
- *                         As with others, it looks like the boot process assumes stklos is the main program.
- *                         Other than that, this looks complete and not too hard (but is apparently dead).
- * tinyscheme   (Scheme) now this is very interesting... (this has become s7, Snd's default extension language).
- *
- * there are a number of "extension languages" which are "call-out only"; that is, they allow you to extend
- *   their current set of names with calls on foreign functions, but this is not what I mean by an extension language.
- *   Here we want C to be in control, calling into the extension language whenever we feel like it.
- *   I'd call it an "embedded language", but even that phrase seems to be used in confused ways
- *   (for example, newLisp can be "embedded", but it stays completely separate from the caller,
- *   as if I were calling "calc" via execlp). 
- */
-
 
 
 /* -------- protect XEN vars from GC -------- */
@@ -2463,16 +2407,15 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_string_position(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_string_position_1(s7_scheme *sc, s7_pointer args, bool ci, const char *name)
 {
-  #define H_string_position "(string-position str1 str2 (start 0)) returns the starting position of str1 in str2 or #f"
   const char *s1, *s2, *p1, *p2;
   int start = 0;
 
   if (!s7_is_string(s7_car(args)))
-    return(s7_wrong_type_arg_error(sc, "string-position", 1, s7_car(args), "a string"));
+    return(s7_wrong_type_arg_error(sc, name, 1, s7_car(args), "a string"));
   if (!s7_is_string(s7_car(s7_cdr(args))))
-    return(s7_wrong_type_arg_error(sc, "string-position", 2, s7_car(s7_cdr(args)), "a string"));
+    return(s7_wrong_type_arg_error(sc, name, 2, s7_car(s7_cdr(args)), "a string"));
 
   if ((s7_is_pair(s7_cdr(s7_cdr(args)))) &&
       (s7_is_integer(s7_car(s7_cdr(s7_cdr(args))))))
@@ -2483,47 +2426,126 @@ static s7_pointer g_string_position(s7_scheme *sc, s7_pointer args)
   if (start >= mus_strlen(s2))
     return(s7_f(sc));
 
-  for (p2 = (const char *)(s2 + start); (*p2); p2++)
+  if (!ci)
     {
-      const char *ptemp;
-      for (p1 = s1, ptemp = p2; (*p1) && (*ptemp) && ((*p1) == (*ptemp)); p1++, ptemp++);
-      if (!(*p1))
-	return(s7_make_integer(sc, p2 - s2));
+      for (p2 = (const char *)(s2 + start); (*p2); p2++)
+	{
+	  const char *ptemp;
+	  for (p1 = s1, ptemp = p2; (*p1) && (*ptemp) && ((*p1) == (*ptemp)); p1++, ptemp++);
+	  if (!(*p1))
+	    return(s7_make_integer(sc, p2 - s2));
+	}
     }
-  /* (string-position "123" "321123") */
+  else
+    {
+      for (p2 = (const char *)(s2 + start); (*p2); p2++)
+	{
+	  const char *ptemp;
+	  for (p1 = s1, ptemp = p2; (*p1) && (*ptemp) && (toupper((int)(*p1)) == toupper((int)(*ptemp))); p1++, ptemp++);
+	  if (!(*p1))
+	    return(s7_make_integer(sc, p2 - s2));
+	}
+    }
 
-  return(s7_f(s7));
+  return(s7_f(sc));
 }
+
+
+static s7_pointer g_string_position(s7_scheme *sc, s7_pointer args)
+{
+  #define H_string_position "(string-position str1 str2 (start 0)) returns the starting position of str1 in str2 or #f"
+  return(g_string_position_1(sc, args, false, "string-position"));
+}
+
 
 static s7_pointer g_string_ci_position(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_ci_position "(string-ci-position str1 str2 (start 0)) returns the starting position of str1 in str2 ignoring case, or #f"
-  const char *s1, *s2, *p1, *p2;
-  int start = 0;
+  return(g_string_position_1(sc, args, true, "string-ci-position"));
+}
+
+
+static s7_pointer g_string_vector_position(s7_scheme *sc, s7_pointer args)
+{
+  #define H_string_vector_position "(string-vector-position str vect (start 0)) returns the position of the first occurrence of str in vect starting from start, or #f"
+  const char *s1;
+  s7_pointer *strs;
+  int i, len, start = 0;
 
   if (!s7_is_string(s7_car(args)))
-    return(s7_wrong_type_arg_error(sc, "string-position", 1, s7_car(args), "a string"));
-  if (!s7_is_string(s7_car(s7_cdr(args))))
-    return(s7_wrong_type_arg_error(sc, "string-position", 2, s7_car(s7_cdr(args)), "a string"));
+    return(s7_wrong_type_arg_error(sc, "string-vector-position", 1, s7_car(args), "a string"));
+  if (!s7_is_vector(s7_car(s7_cdr(args))))
+    return(s7_wrong_type_arg_error(sc, "string-vector-position", 2, s7_car(s7_cdr(args)), "a vector"));
 
   if ((s7_is_pair(s7_cdr(s7_cdr(args)))) &&
       (s7_is_integer(s7_car(s7_cdr(s7_cdr(args))))))
     start = s7_integer(s7_car(s7_cdr(s7_cdr(args))));
   
   s1 = s7_string(s7_car(args));
-  s2 = s7_string(s7_car(s7_cdr(args)));
-  if (start >= mus_strlen(s2))
+  strs = s7_vector_elements(s7_car(s7_cdr(args)));
+  len = s7_vector_length(s7_car(s7_cdr(args)));
+
+  for (i = start; i < len; i++)
+    if ((s7_is_string(strs[i])) &&
+	(mus_strcmp(s1, s7_string(strs[i]))))
+      return(s7_make_integer(sc, i));
+  
+  return(s7_f(sc));
+}
+
+
+static s7_pointer g_string_list_position_1(s7_scheme *sc, s7_pointer args, bool ci, const char *name)
+{
+  const char *s1;
+  s7_pointer p;
+  int i, start = 0;
+
+  if (!s7_is_string(s7_car(args)))
+    return(s7_wrong_type_arg_error(sc, name, 1, s7_car(args), "a string"));
+
+  p = s7_car(s7_cdr(args));
+  if (p == s7_nil(sc))
     return(s7_f(sc));
+  if (!s7_is_pair(p))
+    return(s7_wrong_type_arg_error(sc, name, 2, p, "a list"));
 
-  for (p2 = (const char *)(s2 + start); (*p2); p2++)
+  if ((s7_is_pair(s7_cdr(s7_cdr(args)))) &&
+      (s7_is_integer(s7_car(s7_cdr(s7_cdr(args))))))
+    start = s7_integer(s7_car(s7_cdr(s7_cdr(args))));
+  
+  s1 = s7_string(s7_car(args));
+
+  if (!ci)
     {
-      const char *ptemp;
-      for (p1 = s1, ptemp = p2; (*p1) && (*ptemp) && (toupper((int)(*p1)) == toupper((int)(*ptemp))); p1++, ptemp++);
-      if (!(*p1))
-	return(s7_make_integer(sc, p2 - s2));
+      for (i = 0; s7_is_pair(p); p = s7_cdr(p), i++)
+	if ((i >= start) &&
+	    (s7_is_string(s7_car(p))) &&
+	    (mus_strcmp(s1, s7_string(s7_car(p)))))
+	  return(s7_make_integer(sc, i));
     }
+  else
+    {
+      for (i = 0; s7_is_pair(p); p = s7_cdr(p), i++)
+	if ((i >= start) &&
+	    (s7_is_string(s7_car(p))) &&
+	    (strcasecmp(s1, s7_string(s7_car(p))) == 0))
+	  return(s7_make_integer(sc, i));
+    }
+  return(s7_f(sc));
+}
 
-  return(s7_f(s7));
+
+static s7_pointer g_string_list_position(s7_scheme *sc, s7_pointer args)
+{
+  #define H_string_list_position "(string-list-position str lst (start 0)) returns the position of the first occurrence of str in lst starting from start, or #f"
+  return(g_string_list_position_1(sc, args, false, "string-list-position"));
+}
+
+
+static s7_pointer g_string_ci_list_position(s7_scheme *sc, s7_pointer args)
+{
+  #define H_string_ci_list_position "(string-ci-list-position str lst (start 0)) returns the position of the first occurrence of str in lst starting from start, or #f"
+  return(g_string_list_position_1(sc, args, true, "string-ci-list-position"));
 }
 
 #endif
@@ -2785,6 +2807,9 @@ void g_xen_initialize(void)
   s7_define_function(s7, "char-position", g_char_position, 2, 1, false, H_char_position);
   s7_define_function(s7, "string-position", g_string_position, 2, 1, false, H_string_position);
   s7_define_function(s7, "string-ci-position", g_string_ci_position, 2, 1, false, H_string_ci_position);
+  s7_define_function(s7, "string-vector-position", g_string_vector_position, 2, 1, false, H_string_vector_position);
+  s7_define_function(s7, "string-list-position", g_string_list_position, 2, 1, false, H_string_list_position);
+  s7_define_function(s7, "string-ci-list-position", g_string_ci_list_position, 2, 1, false, H_string_ci_list_position);
 #endif
 
 #if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS

@@ -322,29 +322,6 @@
   (format file "~A~%" line))
 
 
-(define (string-find-if func str)
-  (call-with-exit
-   (lambda (return)
-     (for-each
-      (lambda (c)
-	(if (func c)
-	    (return #t)))
-      str)
-     #f)))
-
-
-(define (string-find str strs)
-  (call-with-exit
-   (lambda (return)
-     (for-each
-      (lambda (s)
-	(if (and (string? s)
-		 (string=? str s))
-	    (return #t)))
-      strs)
-     #f)))
-
-
 (define (html-length str)
   (if (char-position #\& str)
       (- (length str) 3)
@@ -358,6 +335,7 @@
 	(if end
 	    (substring str start (min end len))
 	    (substring str start)))))
+
 
 (define* (remove item sequence count)
   (let* ((len (length sequence))
@@ -374,27 +352,19 @@
 		(set! changed (+ changed 1))))
 	  (reverse result)))))
 
-(define (count str strs)
-  (let ((count 0))
-    (for-each
-     (lambda (s)
-       (if (string-ci=? s str)
-	   (set! count (+ count 1))))
-     strs)
-    count))
 
-	
-(define (string-lessp-but-no-star a b)	; ignore the *clm* asterisks in the alphabetization
+(define (count str strs)
+  (do ((pos (string-ci-list-position str strs 0) (string-ci-list-position str strs (+ pos 1)))
+       (count 0 (+ count 1)))
+      ((not pos) count)))
+
+
+(define (string</* a b)
   (and (not (= (length b) 0))
        (or (= (length a) 0)
 	   (string=? a b)
-	   (if (char=? (a 0) #\*) 
-	       (string-lessp-but-no-star (substring a 1) b)
-	       (if (char=? (b 0) #\*)
-		   (string-lessp-but-no-star a (substring b 1))
-		   (if (char=? (a 0) (b 0))
-		       (string-lessp-but-no-star (substring a 1) (substring b 1))
-		       (char<? (a 0) (b 0))))))))
+	   (string<? (if (char=? (a 0) #\*) (substring a 1) a)
+		     (if (char=? (b 0) #\*) (substring b 1) b)))))
 
 
 (define (clean-and-downcase-first-char str caps topic file)
@@ -531,30 +501,6 @@
 	"mus-interp-linear" "mus-interp-none" "mus-interp-sinusoidal"))	
 
 
-(define (string-member str strs)
-  (and strs (pair? strs)
-       (call-with-exit
-	(lambda (return)
-	  (for-each
-	   (lambda (s)
-	     (if (string=? str s)
-		 (return #t)))
-	   strs)
-	  #f))))
-
-
-(define (string-ci-member str strs)
-  (and strs (pair? strs)
-       (call-with-exit
-	(lambda (return)
-	  (for-each
-	   (lambda (s)
-	     (if (string-ci=? str s)
-		 (return #t)))
-	   strs)
-	  #f))))
-
-
 (define (scm->rb scm-name)
   (if (string=? scm-name "frame*")
       "frame_multiply"
@@ -573,7 +519,7 @@
 			      (if (string=? scm-name "in")
 				  "call_in"
 				  (let* ((len (length scm-name))
-					 (var-case (string-member scm-name scm-variable-names))
+					 (var-case (string-list-position scm-name scm-variable-names))
 					 (strlen (if var-case (+ 1 len) len))
 					 (rb-name (make-string strlen #\space))
 					 (i 0)
@@ -582,7 +528,7 @@
 					(begin
 					 (set! (rb-name 0) #\$)
 					 (set! j 1))
-					(if (string-member scm-name scm-constant-names)
+					(if (string-list-position scm-name scm-constant-names)
 					    (begin
 					     (set! (rb-name 0) (char-upcase (scm-name 0)))
 					     (set! i 1)
@@ -728,11 +674,6 @@
      url-str)))
 
 
-(define (run-in-shell prog args)
-  (let ((str (format #f "~A ~A" prog args)))
-    (system str)))
-
-
 (define (without-dollar-sign str)
   (if (char=? (str 0) #\$)
       (substring str 1)
@@ -862,11 +803,8 @@
       (do ((i 0 (+ i 1)))
 	  ((= i n))
         (set! (tnames ctr)
-	      (clean-and-downcase-first-char (names i) capitalized (topics i) (files i)))	
-	(if (or (> (length (ind-sortby (tnames ctr))) 0)
-		(string-find-if (lambda (n) 
-				  (not (char=? n #\space)))
-				(ind-sortby (tnames ctr))))
+	      (clean-and-downcase-first-char (names i) capitalized (topics i) (files i)))
+	(if (> (length (ind-sortby (tnames ctr))) 0)
 	    (incf ctr)))
 
       (when (not (= ctr n))
@@ -891,8 +829,8 @@
 	(set! n (+ n g)))
 
       (set! tnames (sort! tnames (lambda (a b)
-				   (string-lessp-but-no-star (ind-sortby a) 
-							     (ind-sortby b)))))
+				   (string</* (ind-sortby a) 
+					      (ind-sortby b)))))
 
       (let ((len (length tnames)))
 	(let ((new-names (make-vector (+ len 80)))
@@ -1274,9 +1212,9 @@
 							       (if (string-ci=? closer "script")
 								   (set! scripting #f)
 								   (if (not scripting)
-								       (if (not (string-ci-member closer commands))
+								       (if (not (string-ci-list-position closer commands))
 									   (format #t "~A without start? ~A from ~A[~D][~D:~D] (commands: ~A)" closer line file linectr (+ start 2) i commands)
-									   (if (string-ci-member closer
+									   (if (string-ci-list-position closer
 											  (list "ul" "tr" "td" "table" "small" "big" "sub" "blockquote" "center" "p"
 												"a" "i" "b" "title" "pre" "span" "h1" "h2" "h3" "code" "body" "html"
 												"em" "head" "h4" "sup" "font" "map" "smaller" "bigger" "th"))
@@ -1310,14 +1248,14 @@
 										     (begin
 										       
 										       (if (and (string-ci=? closer "table")
-												(not (string-ci-member "table" commands)))
+												(not (string-ci-list-position "table" commands)))
 											   (begin
-											     (if (string-ci-member "tr" commands)
+											     (if (string-ci-list-position "tr" commands)
 												 (begin
 												   (set! warned #t)
 												   (set! commands (remove "tr" commands))
 												   (format #t "unclosed tr at table ~A ~A~%" file linectr)))
-											     (if (string-ci-member "td" commands)
+											     (if (string-ci-list-position "td" commands)
 												 (begin
 												   (set! warned #t)
 												   (set! commands (remove "td" commands))
@@ -1330,14 +1268,14 @@
 								 (let ((opener (checked-substring line (+ start 1) i)))
 								   (if (string-ci=? opener "script")
 								       (set! scripting #t)
-								       (if (not (string-ci-member opener (list "br" "spacer" "li" "img" "hr" "area")))
-									   (if (and (string-ci-member opener commands)
+								       (if (not (string-ci-list-position opener (list "br" "spacer" "li" "img" "hr" "area")))
+									   (if (and (string-ci-list-position opener commands)
 										    (= p-quotes 0)
-										    (not (string-ci-member opener (list "ul" "tr" "td" "table" "small" "big" "sub" "blockquote"))))
+										    (not (string-ci-list-position opener (list "ul" "tr" "td" "table" "small" "big" "sub" "blockquote"))))
 									       (format #t "nested ~A? ~A from ~A[~D]: ~A" opener line file linectr commands)
 									       (begin
 										 (if (and (string-ci=? opener "td")
-											  (not (string-ci-member "tr" commands)))
+											  (not (string-ci-list-position "tr" commands)))
 										     (format #t "td without tr ~A ~A~%" file linectr))
 												    
 										 (if (and (string-ci=? opener "td")
@@ -1351,13 +1289,13 @@
 										     (format #t "unclosed table ~A ~A?~%" file linectr))
 												    
 										 (if (and (string-ci=? opener "tr")
-											  (not (string-ci-member "table" commands)))
+											  (not (string-ci-list-position "table" commands)))
 										     (format #t "tr without table ~A ~A~%" file linectr))
-										 (if (and (string-ci-member opener (list "pre" "br" "table" "hr" "img" "ul"))
-											  (string-ci-member "p" commands))
+										 (if (and (string-ci-list-position opener (list "pre" "br" "table" "hr" "img" "ul"))
+											  (string-ci-list-position "p" commands))
 										     (format #t "~A within <p>? ~A ~A~%" opener file linectr))
 										 (if (and (string-ci=? opener "li")
-											  (not (string-ci-member "ul" commands)))
+											  (not (string-ci-list-position "ul" commands)))
 										     (format #t "li without ul ~A ~A~%" file linectr))
 										 
 										 (if (and (string-ci=? opener "small")
@@ -1368,14 +1306,14 @@
 										 (if (not warned)
 										     (begin
 										       (if (and (string-ci=? opener "tr")
-												(string-ci-member "tr" commands)
+												(string-ci-list-position "tr" commands)
 												(< (count "table" commands) 2))
 											   (begin
 											     (set! warned #t)
 											     (set! commands (remove "tr" commands :count 1))
 											     (format #t "unclosed tr at table ~A ~A~%" file linectr)))
 										       (if (and (string-ci=? opener "td")
-												(string-ci-member "td" commands)
+												(string-ci-list-position "td" commands)
 												(< (count "table" commands) 2))
 											   (begin
 											     (set! warned #t)
@@ -1468,7 +1406,7 @@
     (do ((h 0 (+ h 1)))
 	((= h href))
       (if (and (string? (hrefs h))
-	       (not (string-find (hrefs h) names))
+	       (not (string-vector-position (hrefs h) names))
 	       (char-position #\# (hrefs h)))
 	  (format #t "undef'd: ~A (~A: ~A)~%" (hrefs h) (refs h) (lines h))))))
 

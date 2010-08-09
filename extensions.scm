@@ -1032,7 +1032,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	(let ((new-calls (make-vector call)))
 	  (do ((i 0 (+ i 1)))
 	      ((= i call))
-	    (set! (new-calls) i (calls i)))
+	    (set! (new-calls i) (calls i)))
 	  (let ((sorted-calls (sort! new-calls 
 				     (lambda (a b) 
 				       (or (> (cadr a) (cadr b))
