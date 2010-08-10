@@ -1834,6 +1834,7 @@ length, copy, reverse, fill!, map and for-each are generic in this sense (map al
 </pre>
 
 <p>
+string-&gt;list is <code>(map values string)</code>.
 We can write an FFT procedure that accepts lists or vectors:
 </p>
 
@@ -2722,7 +2723,7 @@ floats in the "~X" case.  So in s7,
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<p>object-&gt;string returns the string representation of its argument, like format with ~S:
+<p>object-&gt;string returns the string representation of its argument:
 </p>
 <pre>
 &gt; (object-&gt;string "hiho")
@@ -2732,9 +2733,56 @@ floats in the "~X" case.  So in s7,
 "\"hiho\""
 </pre>
 
-<p>I added object-&gt;string before deciding to include format; it's no longer very useful.  Similarly,
-string-&gt;list is <code>(map values string)</code>, and list-&gt;string <code>(apply string list)</code>.
-</p>
+
+<!-- TODO: objects->string? string->objects?
+
+(define (objects->string . objects)
+  (apply string-append (map (lambda (obj) (object->string obj #f)) objects)))
+
+:(objects->string "int: " 32 ", string: " "hi")
+"int: 32, string: hi"
+
+but how to do list processing cleanly?
+
+(define (cycle->string . objs)
+  (call-with-exit
+   (lambda (return)
+     (for-each
+      (lambda (obj)
+	(if (pair? obj)
+	    (return
+	     (string-append 
+	      (apply objects->string 
+		     (map (lambda (obj)
+			    (if (pair? obj)
+				(car obj)
+				obj))
+			  objs))
+	      (apply cycle->string 
+		     (map (lambda (obj)
+			    (if (pair? obj)
+				(cdr obj)
+				obj))
+			  objs))))))
+      objs)
+     "")))
+
+;;; (cycle->string ": " (list 1 2 3) " |")
+:(objects->string "int: " 32 ", list with spaces: (" (cycle->string (list 1 2 3) " ") "), string: " "hi")
+"int: 32, list with spaces: (1 2 3 ), string: hi"
+
+
+(define-macro (string->objects str . objs)
+  `(with-input-from-string ,str
+     (lambda ()
+       ,@(map (lambda (obj)
+		`(set! ,obj (eval (read))))
+	      objs))))
+
+:(let ((x 0) (y 0)) (string->objects "1 2" x y) (list x y))
+(1 2)
+
+-->
 
 </dd>
 <br><br>
@@ -3287,6 +3335,11 @@ and each method looks for itself in that environment.
 </pre>
 <p>A class would be an environment with the various fields and methods predefined.
 </p>
+
+
+<!--
+could we use expansions here? (so set! arg would be "evaluated" at read time etc)
+-->
 
 </blockquote>
 </small>

@@ -3884,6 +3884,10 @@
 (test (assoc ''foo quote) 'error)
 (test (assoc 1 '(1 2 . 3)) #f)
 (test (assoc 1 '((1 2) . 3)) '(1 2))
+(test (assoc 1 '((1) (1 3) (1 . 2))) '(1))
+(test (assoc 1 '((1 2 . 3) (1 . 2))) '(1 2 . 3))
+(test (assoc '(((1 2))) '((1 2) ((1 2) 3) (((1 2) 3) 4) ((((1 2) 3) 4) 5))) #f)
+(test (assoc '(((1 2))) '((1 2) ((1 2)) (((1 2))) ((((1 2)))))) '((((1 2)))))
 
 (test (assoc '() '((() 1) (#f 2))) '(() 1))
 (test (assoc '() '((1) (#f 2))) #f)
@@ -3971,6 +3975,8 @@
 (test (member 1 (cons 1 2)) '(1 . 2))
 (test (member 'a (list a b . c)) 'error)
 (test (member 1 '(1 2 . 3)) '(1 2 . 3))
+(test (member 2 '(1 2 . 3)) '(2 . 3))
+(test (member 3 '(1 2 . 3)) #f)
 (test (member 4 '(1 2 . 3)) #f)
 (test (member) 'error)
 (test (member 'a) 'error)
@@ -3989,6 +3995,16 @@
    (test (member arg (list 1 2 arg 3)) (list arg 3)))
  (list "hi" (integer->char 65) #f 'a-symbol abs 3/4 #\f #t (if #f #f) '(1 2 (3 (4))) most-positive-fixnum))
 
+(test (member 3 . (1 '(2 3))) 'error)
+(test (member 3 . ('(1 2 3))) '(3))
+(test (member 3 . ('(1 2 3 . 4))) '(3 . 4))
+(test (member . (3 '(1 2 3))) '(3))
+(test (member '(1 2) '(1 2)) #f)
+(test (member '(1 2) '((1 2))) '((1 2)))
+(test (member . '(quote . ((quote)))) '(quote))
+(test (member . '(quote . ((quote) .()))) '(quote))
+(test (member '(((1))) '((((1).()).()).())) '((((1)))))
+(test (member '((1)) '(1 (1) ((1)) (((1))))) '(((1)) (((1)))))
 
 (for-each
  (lambda (op)
@@ -7962,6 +7978,29 @@
        open-output-file open-input-file 
        open-input-string))
 
+;;; (string-set! (with-input-from-string "\"1234\"" (lambda () (read))) 1 #\a)
+
+(test (>= (length (with-output-to-string (lambda () (write (make-string 512 #\tab))))) 512) #t)
+(test (>= (length (with-output-to-string (lambda () (write (make-string 512 #\newline))))) 512) #t)
+(test (>= (length (with-output-to-string (lambda () (write (make-string 512 #\"))))) 512) #t)
+(test (>= (length (with-output-to-string (lambda () (write (make-string 512 #\x65))))) 512) #t)
+
+(let ((old-path *load-path*))
+  (set! *load-path* (cons "/home/bil/test" *load-path*))
+
+  (with-output-to-file "/home/bil/test/load-path-test.scm"
+    (lambda ()
+      (format #t "(define (load-path-test) *load-path*)~%")))
+
+  (load "load-path-test.scm")
+  (if (or (not (defined? 'load-path-test))
+	  (not (equal? *load-path* (load-path-test))))
+      (format #t ";*load-path*: ~S, but ~S~%" *load-path* (load-path-test)))
+  (set! *load-path* old-path))
+
+
+
+;;; -------- object->string
 
 (test (string=? (object->string 32) "32") #t)
 (test (string=? (object->string 32.5) "32.5") #t)
@@ -8019,26 +8058,8 @@
 (test (cond (else (object->string else))) "else")
 (test (object->string (string->symbol (string #\; #\" #\)))) "(symbol \";\\\")\")")
 
+;;; TODO: object->string bool arg
 
-;;; (string-set! (with-input-from-string "\"1234\"" (lambda () (read))) 1 #\a)
-
-(test (>= (length (with-output-to-string (lambda () (write (make-string 512 #\tab))))) 512) #t)
-(test (>= (length (with-output-to-string (lambda () (write (make-string 512 #\newline))))) 512) #t)
-(test (>= (length (with-output-to-string (lambda () (write (make-string 512 #\"))))) 512) #t)
-(test (>= (length (with-output-to-string (lambda () (write (make-string 512 #\x65))))) 512) #t)
-
-(let ((old-path *load-path*))
-  (set! *load-path* (cons "/home/bil/test" *load-path*))
-
-  (with-output-to-file "/home/bil/test/load-path-test.scm"
-    (lambda ()
-      (format #t "(define (load-path-test) *load-path*)~%")))
-
-  (load "load-path-test.scm")
-  (if (or (not (defined? 'load-path-test))
-	  (not (equal? *load-path* (load-path-test))))
-      (format #t ";*load-path*: ~S, but ~S~%" *load-path* (load-path-test)))
-  (set! *load-path* old-path))
 
 
 
@@ -9118,6 +9139,7 @@
 (test (set! #<undefined> 1) 'error)
 (test (set! #<eof> 1) 'error)
 (test (set! #<unspecified> 1) 'error)
+(test (let ((x 0)) (define-macro (hi) 'x) (set! (hi) 3) x) 'error)
 
 
 
@@ -9494,6 +9516,23 @@
 (test (case 1 ((1)) 1 . 2) 'error)
 (test (case () ((()))) 'error)
 (test (case 1 (else 3) . 1) 'error)
+(test (case 1 ((1 2)) (else 3)) 'error)
+(test (case 1 ('(1 2) 3) (else 4)) 4)
+(test (case 1 (('1 2) 3) (else 4)) 4)
+;;; (test (case 1 ((1 . 2) 3) (else 4)) 'error) ; ?? in guile it's an error
+;;; (test (case 1 ((1 2 . 3) 3) (else 4)) 'error)
+(test (case 1 (('1 . 2) 3) (else 4)) 'error)
+(test (case 1 ((1 . (2)) 3) (else 4)) 3)
+(test (case 1 ((1 2) . (3)) (else 4)) 3)
+(test (case 1 ((2) 3) (else)) 'error)
+(test (case 1 ((2) 3) ()) 'error)
+(test (case 1 ((2) 3) (() 2)) 'error) ; ?? in Guile this is #<unspecified>; our error is confusing: ;case clause key list () is not a list or 'else'
+(test (case '() ('() 2)) 2)            ; ?? error??
+(test (case '() ((()) 2)) 2) 
+(test (case 1 else) 'error)
+(test (case 1 (((1) 1) 2) (else 3)) 2) ; the (1) can't be matched -- should it be an error?
+(test (case 1 ((1) . (else 3))) 3)     ; ?? guile says "unbound variable: else"
+(test (case . (1 ((2) 3) ((1) 2))) 2)
 
 (test (case case ((case) 1) ((cond) 3)) 1)
 (test (case 101 ((0 1 2) 200) ((3 4 5 6) 600) ((7) 700) ((8) 800) ((9 10 11 12 13) 1300) ((14 15 16) 1600) ((17 18 19 20) 2000) ((21 22 23 24 25) 2500) ((26 27 28 29) 2900) ((30 31 32) 3200) ((33 34 35) 3500) ((36 37 38 39) 3900) ((40) 4000) ((41 42) 4200) ((43) 4300) ((44 45 46) 4600) ((47 48 49 50 51) 5100) ((52 53 54) 5400) ((55) 5500) ((56 57) 5700) ((58 59 60) 6000) ((61 62) 6200) ((63 64 65) 6500) ((66 67 68 69) 6900) ((70 71 72 73) 7300) ((74 75 76 77) 7700) ((78 79 80) 8000) ((81) 8100) ((82 83) 8300) ((84 85 86 87) 8700) ((88 89 90 91 92) 9200) ((93 94 95) 9500) ((96 97 98) 9800) ((99) 9900) ((100 101 102) 10200) ((103 104 105 106 107) 10700) ((108 109) 10900) ((110 111) 11100) ((112 113 114 115) 11500) ((116) 11600) ((117) 11700) ((118) 11800) ((119 120) 12000) ((121 122 123 124 125) 12500) ((126 127) 12700) ((128) 12800) ((129 130) 13000) ((131 132) 13200) ((133 134 135 136) 13600) ((137 138) 13800)) 10200)
@@ -9508,6 +9547,10 @@
 
 (test (let ((else 3)) (case 0 ((1) 2) (else 3))) 'error) ; also if else is set!
 (test (let ((else 3)) (case else ((3) else))) 3)
+
+(test (let ((x 0)) (let ((y (case 1 ((2) (set! x (+ x 3))) ((1) (set! x (+ x 4)) (+ x 2))))) (list x y))) '(4 6))
+
+;;; one thing that will hang case I think: circular key list
 
 
 

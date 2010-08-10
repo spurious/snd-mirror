@@ -8840,8 +8840,15 @@ static s7_pointer g_substring(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
 {
-  #define H_object_to_string "(object->string obj) returns a string representation of obj"
-  return(s7_object_to_string(sc, car(args)));
+  #define H_object_to_string "(object->string obj (write true)) returns a string representation of obj"
+  
+  if (cdr(args) != sc->NIL)
+    {
+      if (s7_is_boolean(cadr(args)))
+	return(s7_object_to_string(sc, car(args), s7_boolean(sc, cadr(args))));
+      return(s7_wrong_type_arg_error(sc, "object->string", 2, cadr(args), "a boolean"));
+    }
+  return(s7_object_to_string(sc, car(args), true));
 }
 
 
@@ -11185,7 +11192,7 @@ char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj)
 }
 
 
-s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj)
+s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 {
   if ((s7_is_vector(obj)) ||
       (s7_is_hash_table(obj)))
@@ -11194,7 +11201,7 @@ s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj)
   if (is_pair(obj))
     return(list_as_string(sc, obj));
 
-  return(make_string_uncopied(sc, atom_to_c_string(sc, obj, true)));
+  return(make_string_uncopied(sc, atom_to_c_string(sc, obj, use_write)));
 }
 
 
@@ -20413,7 +20420,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      sc->code = cadr(sc->code);             /* save the (special...) for now and */
 		      goto EVAL;                             /* get the value */
 		    }
-		  return(eval_error(sc, "set unbound variable? ~A", caar(sc->code)));
 		}
 	      return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
 	    }
@@ -26788,7 +26794,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "string",                  g_string,                  0, 0, true,  H_string);
   s7_define_function(sc, "list->string",            g_list_to_string,          1, 0, false, H_list_to_string);
   s7_define_function(sc, "string->list",            g_string_to_list,          1, 0, false, H_string_to_list);
-  s7_define_function(sc, "object->string",          g_object_to_string,        1, 0, false, H_object_to_string);
+  s7_define_function(sc, "object->string",          g_object_to_string,        1, 1, false, H_object_to_string);
   s7_define_function(sc, "format",                  g_format,                  1, 0, true,  H_format);
 
 

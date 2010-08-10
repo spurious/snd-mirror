@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.66"
-#define S7_DATE "31-July-10"
+#define S7_VERSION "1.67"
+#define S7_DATE "10-Aug-10"
 
 
 typedef long long int s7_Int;
@@ -134,7 +134,8 @@ void *s7_c_pointer(s7_pointer p);
 s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr);
 
 s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str);         /* (eval-string str) */
-s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer arg);       /* (object->string obj) */
+s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer arg, bool use_write);       
+                                                                     /* (object->string obj) */
 char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj);          /* same as object->string but returns a C char* directly */
                                                                      /*   the returned value should be freed by the caller */
 
@@ -761,6 +762,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 10-Aug:    added boolean argument use_write to s7_object_to_string (true=write, false=display).
  * 30-July:   special macro for access to dynamic binding.
  *            s7_symbol_special_value for C-side access to dynamic bindings.
  *            s7_is_macro.

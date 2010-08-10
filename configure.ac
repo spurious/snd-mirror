@@ -273,10 +273,10 @@ AC_CHECK_SIZEOF(long long)
 AC_CHECK_SIZEOF(unsigned long long)
 AC_CHECK_SIZEOF(unsigned long)
 
-# AC_CHECK_SIZEOF(void *)
-# this won't work in version 2.66
-AC_CHECK_SIZEOF(intptr_t)
-AC_DEFINE_UNQUOTED(SIZEOF_VOID_P, $ac_cv_sizeof_intptr_t)
+AC_CHECK_SIZEOF(void *)
+# this won't work in version 2.66 (fixed in 2.67)
+# AC_CHECK_SIZEOF(intptr_t)
+# AC_DEFINE_UNQUOTED(SIZEOF_VOID_P, $ac_cv_sizeof_intptr_t)
 
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(int64_t)
