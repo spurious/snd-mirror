@@ -1834,8 +1834,9 @@ length, copy, reverse, fill!, map and for-each are generic in this sense (map al
 </pre>
 
 <p>
-string-&gt;list is <code>(map values string)</code>.
-We can write an FFT procedure that accepts lists or vectors:
+string-&gt;list and vector-&gt;list are <code>(map values object)</code>.
+Their inverses are (and always have been) equally trivial.
+Here's an FFT procedure that accepts lists or vectors, or any similar object:
 </p>
 
 <pre>
@@ -1925,7 +1926,8 @@ that they accept arguments of many types (leaving aside the numeric functions). 
 and length, and adds a few others such as copy, fill!, sort!, object-&gt;string, and continuation?.
 newLisp takes a more radical approach than s7: it extends operators such as '&gt;' 
 to compare strings and lists, as well as numbers.  In map and for-each, however, you can mix the argument
-types, so I'm not as attracted to making '&gt;' generic; you can't, for example, <code>(&gt; "hi" 32.1)</code>.
+types, so I'm not as attracted to making '&gt;' generic; you can't, for example, <code>(&gt; "hi" 32.1)</code>,
+or even <code>(&gt; 1 0+i)</code>.
 </p>
 
 </blockquote>
@@ -2734,15 +2736,41 @@ floats in the "~X" case.  So in s7,
 </pre>
 
 
-<!-- TODO: objects->string? string->objects?
+<small>
+<blockquote>
 
-(define (objects->string . objects)
-  (apply string-append (map (lambda (obj) (object->string obj #f)) objects)))
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>I added object-&gt;string to s7 before deciding to include format.  format excites a
+vague disquiet &mdash; why do we need this ancient unlispy thing?
+We can almost replace it with:
+</p>
+
+<pre>
+(define (objects-&gt;string . objects)
+  (apply string-append (map (lambda (obj) (object-&gt;string obj #f)) objects)))
+</pre>
+
+<p>But how to handle lists (~{...~} in format), or columnized output (~T)?
+I wonder whether formatted string output still matters outside a REPL.  Even in that context,
+a modern GUI will leave formatting decisions to a text widget.
+</p>
+
+<pre>
+(define-macro (string-&gt;objects str . objs)
+  `(with-input-from-string ,str
+     (lambda ()
+       ,@(map (lambda (obj)
+		`(set! ,obj (eval (read))))
+	      objs))))
+</pre>
+
+
+<!--
 
 :(objects->string "int: " 32 ", string: " "hi")
 "int: 32, string: hi"
-
-but how to do list processing cleanly?
 
 (define (cycle->string . objs)
   (call-with-exit
@@ -2771,18 +2799,15 @@ but how to do list processing cleanly?
 :(objects->string "int: " 32 ", list with spaces: (" (cycle->string (list 1 2 3) " ") "), string: " "hi")
 "int: 32, list with spaces: (1 2 3 ), string: hi"
 
-
-(define-macro (string->objects str . objs)
-  `(with-input-from-string ,str
-     (lambda ()
-       ,@(map (lambda (obj)
-		`(set! ,obj (eval (read))))
-	      objs))))
-
 :(let ((x 0) (y 0)) (string->objects "1 2" x y) (list x y))
 (1 2)
 
 -->
+
+
+</blockquote>
+</small>
+
 
 </dd>
 <br><br>

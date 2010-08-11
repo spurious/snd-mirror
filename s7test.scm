@@ -7418,8 +7418,16 @@
  (list set-current-input-port set-current-error-port set-current-output-port close-input-port close-output-port))
 
 (let ((hi (open-output-string)))
+  (test (get-output-string hi) "")
   (close-output-port hi)
   (test (get-output-string hi) 'error))
+
+(test (get-output-string 1 2) 'error)
+(test (get-output-string) 'error)
+(for-each 
+ (lambda (arg)
+   (test (get-output-string arg) 'error))
+ (list "hi" 1 1.0 1+i 2/3 'a-symbol (make-vector 3) '(1 2) (cons 1 2) abs (if #f #f) (lambda (a) (+ a 1))))
 
 ;; since read of closed port will generate garbage, it needs to be an error,
 ;;   so I guess write of closed port should also be an error
@@ -7440,6 +7448,7 @@
 	 newline)))
 
 (let ((hi (open-input-string "hiho")))
+  (test (get-output-string hi) 'error)
   (close-input-port hi)
   (for-each
    (lambda (op)
@@ -7490,12 +7499,14 @@
 
 (call-with-output-file "tmp1.r5rs"
   (lambda (p)
+    (test (get-output-string p) 'error)
     (do ((i 0 (+ i 1)))
 	((= i 256))
       (write-byte i p))))
 
 (call-with-input-file "tmp1.r5rs"
   (lambda (p)
+    (test (get-output-string p) 'error)
     (do ((i 0 (+ i 1)))
 	((= i 256))
       (let ((b (read-byte p)))
@@ -8053,12 +8064,19 @@
 
 (test (object->string) 'error)
 (test (object->string 1 2) 'error)
+(test (object->string 1 #f #t) 'error)
 (test (object->string abs) "abs")
 (test(let ((val 0)) (cond (else (set! val (object->string else)) 1)) val) "else")
 (test (cond (else (object->string else))) "else")
 (test (object->string (string->symbol (string #\; #\" #\)))) "(symbol \";\\\")\")")
 
-;;; TODO: object->string bool arg
+(test (object->string "hi" #f) "hi")
+(test (object->string "h\\i" #f) "h\\i")
+
+(for-each
+ (lambda (arg)
+   (test (object->string 1 arg) 'error))
+ (list "hi" -1 #\a 1 0 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i '() (list 1 2 3) '(1 . 2)))
 
 
 
@@ -9009,6 +9027,10 @@
 (test (do ((i 0 (abs ()))) ((not (= i 0)) i)) 'error)
 (test (do ((i j) (j i)) (i i)) 'error)
 
+(test (define-constant) 'error)
+(test (define-constant _asdf_ 2 3) 'error)
+(test (define-constant pi 3) 'error) ; except in Utah
+(test (define-constant pi . 3) 'error)
 (define-constant __do_step_var_check__ 1)
 (test (do ((__do_step_var_check__ 2 3)) (#t #t)) 'error)
 (test (let ((__do_step_var_access_1__ #f))
@@ -11549,7 +11571,8 @@
 (test (+ 2 (call-with-exit (lambda (k) (* 5 (k 1 (values 4 5 6)))))) 18)
 (test (+ 2 (call-with-exit (lambda (k) (* 5 (k 1 (values 4 5 6) 1))))) 19)
 (test (+ 2 (call-with-exit (lambda* ((hi 1)) (hi 1)))) 3)
-(test (call-with-exit (lambda (hi) (((hi 1)) #t))) 1) ; !!
+(test (call-with-exit (lambda (hi) (((hi 1)) #t))) 1) ; !! (jumps out of list evaluation)
+(test (call-with-exit (lambda* args ((car args) 1))) 1)
 
 (test (+ 2 (values 3 (call-with-exit (lambda (k1) (k1 4))) 5)) 14)
 (test (+ 2 (call-with-exit (lambda (k1) (values 3 (k1 4) 5))) 8) 14)
@@ -11564,6 +11587,8 @@
 (test (call-with-exit (lambda (return) (apply return '(3)))) 3)
 (test (call-with-exit (lambda (return) (apply return (list  (cons 1 2))) (format #t "; call-with-exit: we shouldn't be here!"))) (cons 1 2))
 (test (call/cc (lambda (return) (apply return (list  (cons 1 2))) (format #t "; call/cc: we shouldn't be here!"))) (cons 1 2))
+(test (procedure? (call-with-exit (lambda (return) (call-with-exit return)))) #t)
+(test (call-with-exit (lambda (return) #f) 1) 'error)
 
 (test (let ((x 0))
 	(define (quit z1) (z1 1) (set! x 1))
@@ -12065,6 +12090,7 @@ who says the continuation has to restart the map from the top?
 (test (continuation? (call/cc (call/cc append))) #t)
 (test (procedure? (call-with-exit call-with-exit)) #t)
 (test (call-with-exit ((lambda args procedure?))) #t)
+(test (call-with-exit (let ((x 3)) (define (return y) (y x)) return)) 3)
 
 (test (let ((c1 #f)) (call-with-exit (lambda (c2) (call-with-exit (lambda (c3) (set! c1 c3) (c2))))) (c1)) 'error)
 (test (let ((c1 #f)) (call/cc (lambda (c2) (call-with-exit (lambda (c3) (set! c1 c3) (c2))))) (c1)) 'error)
@@ -15350,6 +15376,17 @@ is this a bug?
 (test (with-environment) 'error)
 (test (with-environment 1) 'error)
 (test (with-environment () 1) 'error)
+(test (with-environment (current-environment)) 'error) ; ?? perhaps this should be #<unspecified> 
+(for-each
+ (lambda (arg)
+   (test (with-environment arg #f) 'error))
+ (list -1 #\a #(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+
+;;; but:
+(test (with-environment '((a . 1)) 1) 1)
+(test (with-environment '((a . 1)) (+ 1 2)) 'error)
+(test (with-environment '((a . 1)) a) 'error)
+
 (test (with-environment (current-environment) 1) 1)
 (test (let ((a 1))
 	(+ (with-environment
@@ -15883,6 +15920,7 @@ is this a bug?
 
 (test (let () (special)) 'error)
 (test (let ((x 1)) (special x x)) 'error)
+(test (let ((x 1)) (special (+ x 2))) 'error)
 (test (let ((x (list 1 2 3))) (special x)) '(1 2 3))
 (test (let ((x (list 1 2 3))) (apply special (list 'x))) '(1 2 3))
 (test (let ((x "hi")) (string-set! (special x) 0 #\a) x) "ai")

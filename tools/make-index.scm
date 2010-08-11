@@ -371,7 +371,7 @@
   (if (char=? (str 0) #\|)
       ;; this is a main-index entry
       (let* ((colonpos (or (char-position #\: str) 
-			   (format #t "no : in ~A" str)))
+			   (format #t "no : in ~A~%" str)))
 	     (line (string-append "<a href=\"" 
 				  (or file "") 
 				  "#"
@@ -401,7 +401,7 @@
 				       (checked-substring line (+ ipos 14) ispos) 
 				       (checked-substring line (+ ispos 5))))
 	     (if (not line) 
-		 (format #t "<em...> but no </em> for ~A" str))))
+		 (format #t "<em...> but no </em> for ~A~%" str))))
 	 
 	 (let ((hpos (let ((start (string-position "<h" line)))
 		       (and start
@@ -420,7 +420,7 @@
 					 (checked-substring line (+ hpos 4) hspos) 
 					 (checked-substring line (+ hspos 5))))
 	       (if (not line) 
-		   (format #t "<hn> but no </hn> for ~A" str)))))
+		   (format #t "<hn> but no </hn> for ~A~%" str)))))
 	 
 	 (letrec ((search-caps ; caps is the list of names with upper case chars from the make-index-1 invocation ("AIFF" for example) 
 		   (lambda (ln)
@@ -738,12 +738,12 @@
 		      (if tpos
 			  (let ((epos (string-position " -->" dline)))
 			    (if (not epos) 
-				(format #t "<!-- TOPIC but no --> for ~A" dline)
+				(format #t "<!-- TOPIC but no --> for ~A~%" dline)
 				(set! topic (checked-substring dline (+ tpos 11) epos))))
 			  (if compos
 			      (let ((epos (string-position " -->" dline)))
 				(if (not epos) 
-				    (format #t "<!-- INDEX but no --> for ~A" dline)
+				    (format #t "<!-- INDEX but no --> for ~A~%" dline)
 				    (when (or (not no-bold)
 					      with-scm)
 				      (set! current-general g)
@@ -754,7 +754,7 @@
 			      (if indpos
 				  (let ((epos (string-position " -->" dline)))
 				    (if (not epos) 
-					(format #t "<!-- main-index but no --> for ~A" dline)
+					(format #t "<!-- main-index but no --> for ~A~%" dline)
 					(when (or (not no-bold)
 						  with-scm)
 					  (set! (names n) (checked-substring dline (+ indpos 16) epos))
@@ -768,7 +768,7 @@
 					(let ((epos (or (string-position "</a>" dline) 
 							(string-position "</A>" dline))))
 					  (if (not epos) 
-					      (format #t "<a> but no </a> for ~A" dline)
+					      (format #t "<a> but no </a> for ~A~%" dline)
 					      (begin
 						(set! (names n) (checked-substring dline 0 (+ epos 4)))
 						(set! (files n) (car file))
@@ -967,7 +967,7 @@
 			    (ind-sortby (tnames i)))
 		       (let* ((line (checked-substring (ind-name (tnames i)) 8))
 			      (dpos (char-position #\> line))
-			      (url (checked-substring line 1 (1- dpos)))
+			      (url (checked-substring line 1 (- dpos 1)))
 			      (epos (char-position #\< line))
 			      (ind (checked-substring line (+ 1 dpos) epos))
 			      (gpos (string-position "&gt;" ind)))
@@ -1103,7 +1103,7 @@
 				   (if (and (not (= openctr 0))
 					    (not (> p-quotes 0)))
 				       (if (not in-comment) 
-					   (format #t "~A[~D]: ~A has unclosed <?" file linectr line)))
+					   (format #t "~A[~D]: ~A has unclosed <?~%" file linectr line)))
 				   (incf openctr)
 				   (if (and (< i (- len 3))
 					    (char=? (line (+ i 1)) #\!)
@@ -1113,13 +1113,13 @@
 					 (incf comments)
 					 (if (> comments 1)
 					     (begin 
-					       (format #t "~A[~D]: nested <!--?" file linectr)
+					       (format #t "~A[~D]: nested <!--?~%" file linectr)
 					       (decf comments)))
 					 (set! in-comment #t)))
 				   (if (and (not in-comment)
 					    (< i (- len 1))
 					    (char=? (line (+ i 1)) #\space))
-				       (format #t "~A[~D]: '< ' in ~A?" file linectr line)))
+				       (format #t "~A[~D]: '< ' in ~A?~%" file linectr line)))
 
 				 ;; else c != <
 				 
@@ -1134,12 +1134,12 @@
 					     (decf comments)
 					     (if (< comments 0)
 						 (begin
-						   (format #t "~A[~D]: extra -->?" file linectr)
+						   (format #t "~A[~D]: extra -->?~%" file linectr)
 						   (set! comments 0))))
 					   (if (and (not (= openctr 0))
 						    (not (> p-quotes 0)))
 					       (if (not in-comment) 
-						   (format #t "~A[~D]: ~A has unmatched >?" file linectr line))))
+						   (format #t "~A[~D]: ~A has unmatched >?~%" file linectr line))))
 				       (set! openctr 0)
 				       (if (and (not in-comment)
 						(>= i 2)
@@ -1147,7 +1147,7 @@
 						(not (char=? (line (- i 2)) #\-))
 						(< i (- len 1))
 						(alphanumeric? (line (+ i 1))))
-					   (format #t "~A[~D]: untranslated '>': ~A" file linectr line)))
+					   (format #t "~A[~D]: untranslated '>': ~A~%" file linectr line)))
 
 				     ;; else c != < or >
 
@@ -1162,7 +1162,7 @@
 						  (not (string-ci=? "&mdash;" (checked-substring line i (+ i 7))))
 						  (not (string-ci=? "&&" (checked-substring line i (+ i 2))))
 						  (not (string-ci=? "& " (checked-substring line i (+ i 2))))) ; following char -- should skip this
-					     (format #t "~A[~D]: unknown escape sequence: ~A" file linectr line))
+					     (format #t "~A[~D]: unknown escape sequence: ~A~%" file linectr line))
 
 					 (if (char=? c #\() 
 					     (incf p-parens)
@@ -1192,15 +1192,15 @@
 				       (if start
 					   (if (and (not scripting)
 						    (not (> p-quotes 0)))
-					       (format #t "nested < ~A from ~A[~D]" line file linectr))
+					       (format #t "nested < ~A from ~A[~D]~%" line file linectr))
 					   (set! start i))
 
 				       (if (char=? c #\/)
-					   (if (and start (= start (1- i)))
+					   (if (and start (= start (- i 1)))
 					       (set! closing #t))
 
 					   (if (char=? c #\!)
-					       (if (and start (= start (1- i)))
+					       (if (and start (= start (- i 1)))
 						   (set! start #f))
 
 					       (if (or (char=? c #\space)
@@ -1213,7 +1213,7 @@
 								   (set! scripting #f)
 								   (if (not scripting)
 								       (if (not (string-ci-list-position closer commands))
-									   (format #t "~A without start? ~A from ~A[~D][~D:~D] (commands: ~A)" closer line file linectr (+ start 2) i commands)
+									   (format #t "~A without start? ~A from ~A[~D][~D:~D] (commands: ~A)~%" closer line file linectr (+ start 2) i commands)
 									   (if (string-ci-list-position closer
 											  (list "ul" "tr" "td" "table" "small" "big" "sub" "blockquote" "center" "p"
 												"a" "i" "b" "title" "pre" "span" "h1" "h2" "h3" "code" "body" "html"
@@ -1272,7 +1272,7 @@
 									   (if (and (string-ci-list-position opener commands)
 										    (= p-quotes 0)
 										    (not (string-ci-list-position opener (list "ul" "tr" "td" "table" "small" "big" "sub" "blockquote"))))
-									       (format #t "nested ~A? ~A from ~A[~D]: ~A" opener line file linectr commands)
+									       (format #t "nested ~A? ~A from ~A[~D]: ~A~%" opener line file linectr commands)
 									       (begin
 										 (if (and (string-ci=? opener "td")
 											  (not (string-ci-list-position "tr" commands)))
@@ -1339,7 +1339,7 @@
 					     (string-position "</A>" dline))))
 			       ;;actually should look for close double quote
 			       (if (not epos) 
-				   (format #t "<a name but no </a> for ~A in ~A[~D]" dline file linectr)
+				   (format #t "<a name but no </a> for ~A in ~A[~D]~%" dline file linectr)
 				   (let ((min-epos (char-position #\space dline)))
 				     (set! epos (char-position #\> dline))
 				     (if (and (number? min-epos)
@@ -1370,7 +1370,7 @@
 			     (let ((epos (or (string-position "</a>" dline) 
 					     (string-position "</A>" dline))))
 			       (if (not epos) 
-				   (format #t "<a href but no </a> for ~A in ~A[~D]" dline file linectr)
+				   (format #t "<a href but no </a> for ~A in ~A[~D]~%" dline file linectr)
 				   (begin
 				     (set! epos (char-position #\" dline 1))
 				     (if (char=? (dline 0) #\#)

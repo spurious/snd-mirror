@@ -19550,7 +19550,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_BEGIN:
       if (!is_pair(sc->code)) 
 	{
-	  if (sc->code != sc->NIL)            /* (begin . 1) */
+	  if (sc->code != sc->NIL)            /* (begin . 1), (cond (#t . 1)) */
 	    return(eval_error_with_name(sc, "~A: unexpected dot or '() at end of body? ~A", sc->code));
 
 	  sc->value = sc->code;
@@ -21096,8 +21096,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      if ((sc->y != sc->ELSE) &&                                  /* (case 1 (2 1)) */
 		  ((!s7_is_symbol(sc->y)) ||
-		   (s7_symbol_value(sc, sc->y) != sc->ELSE)))
-		return(eval_error(sc, "case clause key list ~A is not a list or 'else'", sc->y));
+		   (s7_symbol_value(sc, sc->y) != sc->ELSE)))             /* "proper list" below because: (case 1 (() 2) ... */
+		return(eval_error(sc, "case clause key list ~A is not a proper list or 'else'", sc->y));
 	      if (cdr(sc->x) != sc->NIL)                                  /* (case 1 (else 1) ((2) 1)) */
 		return(eval_error(sc, "case 'else' clause, ~A, is not the last clause", sc->x));
 	      break;
@@ -27113,7 +27113,15 @@ s7_scheme *s7_init(void)
      (display "continue...")
      x))
   (display "done"))
-
+  
+ *
+ * non-error conditions in CL would be better handled with hooks or watchers
+ *   need a way to see what hooks are available, local-hook-function, how to invoke the list.
+ * *load-hook* currently is a function, but we could wrap it via
+ *    (let ((lh *load-hook*)) (set! *load-hook* (lambda (file) ... (lh file) ...)))
+ *    but removal becomes a problem -- should it be dynamic?
+ *    what about *trace-hook* *error-hook* *unbound-variable-hook*?
+ *
  * TODO: loading s7test simultaneously in several threads hangs after awhile in join_thread (call/cc?) 
  *         why are list-ref tests getting 'wrong-type-arg?
  *         (qsort is not thread safe -- should we use guile's quicksort rewrite? libguile/quicksort.i.c)
@@ -27125,7 +27133,7 @@ s7_scheme *s7_init(void)
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
  * perhaps remove the `#(...) support -- is there any actual use for this?
  * PERHAPS: multidimensional hash tables
- * PERHAPS: write-line (easily simulated via write-line)
+ * PERHAPS: write-line (easily simulated via write-char or format)
  *
  * someday we need to catch gmp exceptions: SIGFPE (exception=deliberate /0 -- see gmp/errno.c)
  *   #include <signal.h>
