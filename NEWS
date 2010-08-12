@@ -1,16 +1,16 @@
-Snd 11.7.
+Snd 11.8
 
-Michael Klingbeil found and fixed several bugs in locsig, and
-	made several changes for ClozureCL in OSX.
+--with-doubles is now the default in the configure script
 
-s7: hash-table for-each and map are now entry-oriented.
-    reverse of a hash-table swaps keys and values.
+scan-channel and find-channel have changed slightly: they now 
+  return just the sample number where the match was found, or #f.
 
-removed title-with-date (examp.scm), snd-gxutils.c,
-    window-property, window-property-changed-hook, send-mozilla
+*-button-color deprecated.
 
-checked: gtk 2.90.2|3|4, Fedora Core 13, mpfr-3.0.0, sbcl 1.0.40,
-    autoconf 2.66, clisp 2.49
+index.cl and indexer.scm replaced by make-index.scm.
 
-Thanks!: Mike Scholz, Fernando Lopez-Lezcano, Michael Klingbeil,
-         Rick Taube
+s7: access to any symbol's dynamic binding via the special macro.
+
+Checked: gtk 2.90.5, sbcl 1.0.41, Ruby 1.9.1-p429, autoconf 2.67, cmucl 20b
+
+Thanks!: Dylan_, Mike Scholz, Rick Taube

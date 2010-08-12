@@ -2879,7 +2879,7 @@ It is a function of 2 arguments, the values passed by the error function:
 the error type and whatever other info accompanies it.
 </p>
 <pre>
-(set! *error-hook* (lambda (tag args) (apply format (cons #t args))))
+(set! *error-hook* (lambda (tag args) (apply format #t args)))
 </pre>
 
 <p>stacktrace can be called anytime to see the chain of function calls.  Its optional argument
@@ -3494,7 +3494,7 @@ are:
 <p>Other functions:</p>
 <ul>
 <li>read-byte and write-byte: binary IO, named "read-u8" and "write-u8" in r6rs, I think
-<li>read-line: line-at-a-time reads
+<li>read-line: line-at-a-time reads (for write-line, use format or for-each with write-char).
 </ul>
 <p>The variable <a name="vectorprintlength">*vector-print-length*</a> sets
 the upper limit on how many vector elements are printed by object-&gt;string and format.
@@ -3560,6 +3560,9 @@ the directory:
 	    (if (not (member directory-name <em class=red>*load-path*</em>))
 		(set! <em class=red>*load-path*</em> (cons directory-name *load-path*))))))))
 </pre>
+
+<p>*load-hook* is a special variable; s7 uses its dynamic binding.  
+</p>
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>

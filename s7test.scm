@@ -6104,6 +6104,52 @@
 
 
 
+#|
+(test (error) 'error)
+(test (let ((x 1))
+	(let ((val (catch #\a
+			  (lambda ()
+			    (set! x 0)
+			    (error #\a "an error")
+			    (set! x 2))
+			  (lambda args
+			    (if (equal? (car args) #\a)
+				(set! x (+ x 3)))
+			    x))))
+	  (= x val 3)))
+      #t)
+(test (let ((x 1))
+	(let ((val (catch 32
+			   (lambda ()
+			     (catch #\a
+				    (lambda ()
+				      (set! x 0)
+				      (error #\a "an error: ~A" (error 32 "another error!"))
+				      (set! x 2))
+				    (lambda args
+				      (if (equal? (car args) #\a)
+					  (set! x (+ x 3)))
+				      x)))
+			   (lambda args 
+			     (if (equal? (car args) 32)
+				 (set! x (+ x 30)))))))
+	  (= x val 30)))
+      #t)
+
+(let ((old-error-hook *error-hook*)
+      (tag #f)
+      (args #f))
+  (set! *error-hook* (lambda (etag eargs)
+		       (set! tag etag)
+		       (set! args eargs)))
+  (error 'tag 1 2 3)
+  (test (and (equal? tag 'tag)
+	     (equal? args '(1 2 3))))
+  (set! *error-hook* old-error-hook))
+
+;;; TODO: more error/error-hook tests (and error-info) -- does error-hook take precedence over catch?
+|#
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -6208,8 +6254,6 @@
 (test (load) 'error)
 (test (load "empty-file" (current-environment) 1) 'error)
 (test (load "not a file") 'error)
-
-(test (error) 'error)
 
 
 (test (output-port? (current-output-port)) #t)
@@ -7996,18 +8040,20 @@
 (test (>= (length (with-output-to-string (lambda () (write (make-string 512 #\"))))) 512) #t)
 (test (>= (length (with-output-to-string (lambda () (write (make-string 512 #\x65))))) 512) #t)
 
-(let ((old-path *load-path*))
-  (set! *load-path* (cons "/home/bil/test" *load-path*))
+(if (and (defined? 'file-exists?)
+	 (file-exists? "/home/bil/test"))
+    (let ((old-path *load-path*))
+      (set! *load-path* (cons "/home/bil/test" *load-path*))
 
-  (with-output-to-file "/home/bil/test/load-path-test.scm"
-    (lambda ()
-      (format #t "(define (load-path-test) *load-path*)~%")))
+      (with-output-to-file "/home/bil/test/load-path-test.scm"
+	(lambda ()
+	  (format #t "(define (load-path-test) *load-path*)~%")))
 
-  (load "load-path-test.scm")
-  (if (or (not (defined? 'load-path-test))
-	  (not (equal? *load-path* (load-path-test))))
-      (format #t ";*load-path*: ~S, but ~S~%" *load-path* (load-path-test)))
-  (set! *load-path* old-path))
+      (load "load-path-test.scm")
+      (if (or (not (defined? 'load-path-test))
+	      (not (equal? *load-path* (load-path-test))))
+	  (format #t ";*load-path*: ~S, but ~S~%" *load-path* (load-path-test)))
+      (set! *load-path* old-path)))
 
 
 
@@ -12876,14 +12922,10 @@ is this a bug?
 (test (`,@'''()) ''())
 (test (`,@''(())) '(()))
 
-
-
 (test (quasiquote) 'error)
 (test (quasiquote 1 2 3) 'error)
-(let ((d 1))
-  (test (quasiquote (a b c ,d)) '(a b c 1)))
+(let ((d 1)) (test (quasiquote (a b c ,d)) '(a b c 1)))
 (test (quasiquote 4) 4)
-
 (test (quasiquote (list (unquote (+ 1 2)) 4)) '(list 3 4))
 (test (quasiquote (1 2 3)) '(1 2 3))
 (test (quasiquote ()) '())

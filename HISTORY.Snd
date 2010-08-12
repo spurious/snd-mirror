@@ -1,5 +1,6 @@
 Snd change log
 
+ 12-Aug:    Snd 11.8.
  9-Aug:     make-index.scm (replaces index.cl and indexer.scm).
  30-Jul:    removed *-button-color.
  8-July:    Snd 11.7.

@@ -10035,7 +10035,7 @@ static void run_load_hook(s7_scheme *sc, const char *filename)
 {
   /* (set! *load-hook* (lambda (name) (format #t "loading ~A~%" name))) */
   s7_pointer load_hook;
-  load_hook = s7_symbol_value(sc, s7_make_symbol(sc, "*load-hook*"));
+  load_hook = s7_symbol_special_value(sc, s7_make_symbol(sc, "*load-hook*"));
   if (is_procedure(load_hook))
     {
       push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
@@ -13991,13 +13991,12 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
 {
-  if (is_procedure(fnc))
-    return(c_function_call(fnc)(sc, args));
-
   if (s7_is_symbol(fnc))
     fnc = s7_symbol_value(sc, fnc);
 
-  /* this assumes it's a macro -- TODO: s7_apply_function to a scheme function */
+  if (is_c_function(fnc))
+    return(c_function_call(fnc)(sc, args));
+
   push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
   sc->args = make_list_1(sc, args);
   sc->code = fnc;
@@ -18799,7 +18798,6 @@ static s7_pointer read_expression(s7_scheme *sc)
 /* ---------------- */
 
 /* (set! *unbound-variable-hook* (lambda (sym) (load "dsp.scm") (symbol->value sym))) */
-/* (set! *load-hook* (lambda (f) (format #t "loading ~S~%" f))) */
 
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 {
@@ -27117,10 +27115,6 @@ s7_scheme *s7_init(void)
  *
  * non-error conditions in CL would be better handled with hooks or watchers
  *   need a way to see what hooks are available, local-hook-function, how to invoke the list.
- * *load-hook* currently is a function, but we could wrap it via
- *    (let ((lh *load-hook*)) (set! *load-hook* (lambda (file) ... (lh file) ...)))
- *    but removal becomes a problem -- should it be dynamic?
- *    what about *trace-hook* *error-hook* *unbound-variable-hook*?
  *
  * TODO: loading s7test simultaneously in several threads hangs after awhile in join_thread (call/cc?) 
  *         why are list-ref tests getting 'wrong-type-arg?
@@ -27131,9 +27125,7 @@ s7_scheme *s7_init(void)
  * TODO: :allow-other-keys in lambda* ("lambda!")
  *       :rest is not ignored, so this is not inconsistent, but do we just ignore these in the arg count?
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
- * perhaps remove the `#(...) support -- is there any actual use for this?
  * PERHAPS: multidimensional hash tables
- * PERHAPS: write-line (easily simulated via write-char or format)
  *
  * someday we need to catch gmp exceptions: SIGFPE (exception=deliberate /0 -- see gmp/errno.c)
  *   #include <signal.h>

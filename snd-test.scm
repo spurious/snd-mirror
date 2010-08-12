@@ -66958,6 +66958,8 @@ EDITS: 1
 (display (format #f "~%;times: ~A~%;total: ~A~%" timings (round (- (real-time) overall-start-time))))
 
 (let ((best-times (vector 59 58 114 95 2244 5373 613 134 11680 2892 609 743 868 976 815 1288 3020 197 168 2952 758 1925 4997 6567 846  183 0 242 6696))) ; 571
+;; this runs 4x faster on the i7 930 nogui/no-audio 
+
   (do ((i 0 (+ 1 i)))
       ((= i (vector-length timings)))
     (if (and (> (vector-ref timings i) 0)

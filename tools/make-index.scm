@@ -317,8 +317,6 @@
 
 
 (define (write-line line file)
-  (if (not (string? line))
-      (format #t "line: ~S~%" line))
   (format file "~A~%" line))
 
 
