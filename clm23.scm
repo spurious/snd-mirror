@@ -2103,17 +2103,19 @@
 
 (define (sndclmdoc-simp start end freq amp)
   (let ((os (make-oscil freq)))
-    (do ((i start (+ i 1))) 
-        ((= i end))
-      (outa i (* amp (oscil os))))))
+    (run
+     (do ((i start (+ i 1))) 
+	 ((= i end))
+       (outa i (* amp (oscil os)))))))
 
 (define (sndclmdoc-simp-1 beg dur freq amp)
   (let* ((os (make-oscil freq))
 	 (start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur))))
-    (do ((i start (+ i 1))) 
-        ((= i end))
-      (outa i (* amp (oscil os))))))
+    (run
+     (do ((i start (+ i 1))) 
+	 ((= i end))
+       (outa i (* amp (oscil os)))))))
 
 (define (sndclmdoc-simp-2 beg dur freq amp)
   (let* ((os (make-oscil freq))
@@ -2167,9 +2169,10 @@
 (define (sndclmdoc-simp-5 start end freq amp frq-env)
   (let ((os (make-oscil freq)) 
         (frqe (make-env frq-env :length (- end start) :scaler (hz->radians freq))))
-    (do ((i start (+ i 1))) 
-        ((= i end))
-      (outa i (* amp (oscil os (env frqe)))))))
+    (run
+     (do ((i start (+ i 1))) 
+	 ((= i end))
+       (outa i (* amp (oscil os (env frqe))))))))
 
 (definstrument (sndclmdoc-simple-fm beg dur freq amp mc-ratio index amp-env index-env)
   (let* ((start (seconds->samples beg))
@@ -2216,8 +2219,9 @@
 
 (definstrument (sndclmdoc-simple-table dur)
   (let ((tab (make-table-lookup :wave (partials->wave '(1 .5  2 .5)))))
-    (do ((i 0 (+ i 1))) ((= i dur))
-      (outa i (* .3 (table-lookup tab))))))
+    (run
+     (do ((i 0 (+ i 1))) ((= i dur))
+       (outa i (* .3 (table-lookup tab)))))))
 
 (define (sndclmdoc-looper start dur sound freq amp)
   (let* ((beg (seconds->samples start))
@@ -2527,9 +2531,10 @@
   (let* ((st (seconds->samples beg))
          (nd (+ st (seconds->samples dur)))
          (asyf (make-asymmetric-fm :r r :ratio ratio :frequency freq)))
-    (do ((i st (+ i 1))) 
-        ((= i nd))
-      (outa i (* amp (asymmetric-fm asyf index 0.0))))))
+    (run
+     (do ((i st (+ i 1))) 
+	 ((= i nd))
+       (outa i (* amp (asymmetric-fm asyf index 0.0)))))))
 
 (define (sndclmdoc-simple-f2s beg dur amp file)
   (let* ((start (seconds->samples beg))
@@ -2961,6 +2966,21 @@
   (with-sound () (sndclmdoc-env-sound "oboe.snd" 0 1.0 '(0 0 1 1 2 1 3 0)))
   (with-sound (:reverb jc-reverb :channels 2) 
 	      (sndclmdoc-space "pistol.snd" 0 3 :distance-env '(0 1 1 2) :degree-env '(0 0 1 90)))
+
+  (with-sound ()
+    (let ((gen (sndclmdoc-make-sum-of-odd-sines 440.0 10)))
+      (sndclmdoc-sum-of-odd-sines gen 0.0))
+    (let ((gen (sndclmdoc-make-sinc-train 440.0)))
+      (sndclmdoc-sinc-train gen))
+    (let ((gen (sndclmdoc-make-moving-max)))
+      (sndclmdoc-moving-max gen 0.1))
+    (sndclmdoc-asy 0 .1 440 .1 1.0)
+    (sndclmdoc-simple-table 1000)
+    (sndclmdoc-simple-f2s .1 .1 .1 "oboe.snd")
+    (sndclmdoc-simp-2 .2 .1 440 .1)
+    (sndclmdoc-fm-table "oboe.snd" .3 .1 .1 1.0 10.0 10)
+    (sndclmdoc-bl-saw .5 .1 440 10))
+
   (with-sound (:channels 4)
 	      (let ((loc (make-locsig))
 		    (osc (make-oscil 440.0))

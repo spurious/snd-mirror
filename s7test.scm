@@ -622,6 +622,7 @@
 (test (equal? let let) #t)
 (test (equal? let letrec) #f)
 (test (equal? define define) #t)
+(test (equal? + ((lambda (a) a) +)) #t)
 
 
 
@@ -3336,6 +3337,7 @@
 (test (null? (list (list))) #f)
 (test (null? '(())) #f)
 (test (null? '#()) #f)
+(test (null? (make-vector '(2 0 3))) #f)
 (test (null? "") #f)
 
 (test (null? () '()) 'error)
@@ -6104,7 +6106,6 @@
 
 
 
-#|
 (test (error) 'error)
 (test (let ((x 1))
 	(let ((val (catch #\a
@@ -6136,6 +6137,7 @@
 	  (= x val 30)))
       #t)
 
+#|
 (let ((old-error-hook *error-hook*)
       (tag #f)
       (args #f))
@@ -6147,7 +6149,7 @@
 	     (equal? args '(1 2 3))))
   (set! *error-hook* old-error-hook))
 
-;;; TODO: more error/error-hook tests (and error-info) -- does error-hook take precedence over catch?
+;;; can't include these because they interrupt the load
 |#
 
 
@@ -9072,6 +9074,14 @@
 (test (do ((:hi 1 2)) (#t :hi)) 'error)
 (test (do ((i 0 (abs ()))) ((not (= i 0)) i)) 'error)
 (test (do ((i j) (j i)) (i i)) 'error)
+(test (do ((i 0 0) . ((j 0 j))) (#t j)) 0)
+(test (do ((i 0 0) '(+ 0 1)) ((= i 0) i)) 0) ; guile also! (do ((i 0 0) (quote list (+ 0 1))) ((= i 0) i))?
+(test (do ((i 0 1) '(list)) (#t quote)) '())
+(test (do ((i 0 1 . 2)) (#t i)) 'error)
+(test (do ((i 0 "hi")) ((string? i) . i)) 'error)
+(test (do ((i 0 j)) (#t i)) 0) ; guile also -- (do ((i 0 (abs "hi"))) (#t i)) etc (do ((i 0 1)) (#t i) (abs "hi"))
+(test (do ((i 0 1) . (j 0 0)) ((= i 1) i) i) 'error)
+(test (do ((i 0 1) ((j 0 0)) ((= i 1) i)) i) 'error)
 
 (test (define-constant) 'error)
 (test (define-constant _asdf_ 2 3) 'error)
@@ -9164,6 +9174,7 @@
 (test (let ((a 1)) (set! a 2 3)) 'error)
 (test (let ((a 1)) (set! a . 2)) 'error)
 (test (let ((a 1)) (set! a 1 . 2)) 'error)
+(test (let ((a 1)) (set! a a) a) 1)
 (test (set! "hi" 1) 'error)
 (test (set! 'a 1) 'error)
 (test (set! 1 1) 'error)
@@ -12655,6 +12666,10 @@ who says the continuation has to restart the map from the top?
 (test `(1 , 2) '(1 2))
 (test `(1 , @(list 2 3)) 'error) ; ?? this is an error in Guile and Clisp
 (test `(1 ,@ (list 2 3)) '(1 2 3)) ; seems a bit arbitrary
+(test `(1 ,@(list)) '(1))
+(test `(1 ,@()) '(1))
+(test `(1 ,@'()) '(1))
+(test `(1 . ,()) '(1))
 (test `(1 , #|a comment|# 2) '(1 2))
 (test `(1 ,@ #|a comment|# (list 2 3)) '(1 2 3))
 (test `(1 , ;a comment
@@ -12907,15 +12922,21 @@ who says the continuation has to restart the map from the top?
 
 #|
 unquote outside qq:
-"(',- 1)"
+(',- 1)
 (',1 1 )
-"(',,= 1)" -> (unquote =)
+(',,= 1) -> (unquote =)
 (',@1 1) -> 1 ; ('(unquote-splicing 1) 1) -> 1 ; ((quote (unquote-splicing 1)) 1) -> 1
 #(,1) -> #((unquote 1)) i.e. vector has 1 element the list '(unquote 1)
 #(,@1) -> #((unquote-splicing 1))
 #(,,,1) -> #((unquote (unquote (unquote 1))))
 is this a bug?
 #(`'`1) -> #(({list} 'quote 1))
+
+why are these different (read-time `#() ? )
+:`#(,@(list 1 2 3))
+#(1 2 3)
+:(quasiquote #(,@(list 1 2 3)))
+#((unquote-splicing (list 1 2 3)))
 |#
 
 (test (`,@''()) '())
@@ -12925,6 +12946,7 @@ is this a bug?
 (test (quasiquote) 'error)
 (test (quasiquote 1 2 3) 'error)
 (let ((d 1)) (test (quasiquote (a b c ,d)) '(a b c 1)))
+(test (let ((a 2)) (quasiquote (a ,a))) (let ((a 2)) `(a ,a)))
 (test (quasiquote 4) 4)
 (test (quasiquote (list (unquote (+ 1 2)) 4)) '(list 3 4))
 (test (quasiquote (1 2 3)) '(1 2 3))
@@ -12947,6 +12969,12 @@ is this a bug?
 (test (quasiquote (,1 ,@(quasiquote ,@(list (list 1))))) '(1 1))
 
 (test (apply quasiquote '((1 2 3))) '(1 2 3))
+(test (quasiquote (',,= 1)) 'error)
+(test (quasiquote (',,@(1 2) 1)) 'error)
+(test `(1 ,@2) 'error)
+(test `(1 ,@(2 . 3)) 'error)
+(test `(1 ,@(2 3)) 'error)
+(test `(1 , @ (list 2 3)) 'error) ; unbound @ ! (guile also)
 
 
 
@@ -16063,6 +16091,21 @@ is this a bug?
 	  (define (fx x) (+ (gx) x))
 	  (fx 1)))
       2)
+
+(let ((x 1))
+  (define (get-dx) (special x))
+  (define (set-dx y) (set! (special x) y))
+  (define (get-x) x)
+  (define (set-x y) (set! x y))
+  (let ((x 32))
+    (test (list (get-x) (get-dx) x) '(1 32 32))
+    (set-dx 0)
+    (test (list (get-x) (get-dx) x) '(1 0 0))
+    (set-x 12)
+    (test (list (get-x) (get-dx) x) '(12 0 0))
+    (set! x 123)
+    (test (list (get-x) (get-dx) x) '(12 123 123)))
+  (test (list (get-x) (get-dx) x) '(12 12 12)))
 
 (test (let ()
 	(define (gx) (special x))

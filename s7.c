@@ -17351,15 +17351,13 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
 
 static void improper_arglist_error(s7_scheme *sc)
 {
-  s7_pointer y;
-
-  for (y = sc->args; cdr(y) != sc->NIL; y = cdr(y)) {};
-  cdr(y) = sc->code;
-  
+  /* sc->code is the last (dotted) arg, sc->args is the arglist reversed not including sc->code
+   *   the original was `(,@(reverse args) . ,code) essentially
+   */
   s7_error(sc, sc->SYNTAX_ERROR, 
 	   make_list_2(sc,
 		       make_protected_string(sc, "improper list of arguments: ~A"),
-		       sc->args));
+		       s7_append(sc, safe_reverse_in_place(sc, sc->args), sc->code)));
 }
 
 
@@ -17968,6 +17966,12 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	{
 	  /* the normal case -- splice values into caller's args */
 	case OP_EVAL_ARGS1:
+
+	  /* it's not safe to simply reverse args and tack the current stacked args onto its (new) end,
+	   *   setting stacked args to cdr of reversed-args and returning car because the list (args)
+	   *   can be some variable's value in a macro expansion via ,@ and reversing it in place
+	   *   (all this to avoid consing), clobbers the variable's value.
+	   */
 	  for (x = args; cdr(x) != sc->NIL; x = cdr(x))
 	    stack_args(sc->stack, top) = s7_cons(sc, car(x), stack_args(sc->stack, top));
 	  return(car(x));
@@ -19659,13 +19663,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = cdr(sc->code);
 
 	  /* here [after the cdr] sc->args is nil, sc->value is the operator (car of list), sc->code is the rest -- the args.
-	   *   EVAL_ARGS0 can be called within the EVAL_ARGS1 loop if it's a nested expression:
+	   *   EVAL_ARGS can be called within the EVAL_ARGS1 loop if it's a nested expression:
 	   * (+ 1 2 (* 2 3)):
-	   *   e0args: (), value: +, code: (1 2 (* 2 3))
+	   *   e_args: (), value: +, code: (1 2 (* 2 3))
 	   *   e1args: (+), value: +, code: (1 2 (* 2 3))
 	   *   e1args: (1 +), value: +, code: (2 (* 2 3))
 	   *   e1args: (2 1 +), value: +, code: ((* 2 3))
-	   *   e0args: (), value: *, code: (2 3)
+	   *   e_args: (), value: *, code: (2 3)
 	   *   e1args: (*), value: *, code: (2 3)
 	   *   e1args: (2 *), value: *, code: (3)
 	   *   e1args: (3 2 *), value: *, code: ()
@@ -19952,6 +19956,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 					    closure_name(sc, sc->code), sc->args)));
 
 	      case LSTAR_NO_SUCH_KEY:
+		/* this is a problem.  If we're using keywords to pass choices (:all etc),
+		 *   this error check mistakes a datum for an incorrect parameter name.
+		 *   If we add :allow-other-keys, then we can't tell when it is actually
+		 *   an "other key" (hence skip the next arg), and when it is a key passed
+		 *   as the actual argument.  I guess since keywords exist only to name
+		 *   function parameters, we should not use them as symbols -- this way
+		 *   of doing things goes back to CL where the package names were a real
+		 *   annoyance.
+		 */
 		return(s7_error(sc, sc->WRONG_TYPE_ARG,
 				s7_cons(sc,
 					make_protected_string(sc, "~A: unknown key: ~A in ~A"),

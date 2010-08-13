@@ -11474,10 +11474,12 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
   pv_info *pv;
   int N2, D, i;
   mus_float_t scl;
+
   N2 = (int)(fftsize / 2);
   if (N2 == 0) return(NULL);
   D = fftsize / overlap;
   if (D == 0) return(NULL);
+
   pv = (pv_info *)clm_calloc(1, sizeof(pv_info), S_make_phase_vocoder);
   pv->core = &PHASE_VOCODER_CLASS;
   pv->N = fftsize;
@@ -11498,6 +11500,7 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
   pv->analyze = analyze;
   pv->edit = edit;
   pv->synthesize = synthesize;
+
   pv->win = mus_make_fft_window(MUS_HAMMING_WINDOW, fftsize, 0.0);
   scl = 2.0 / (0.54 * (mus_float_t)fftsize);
   if (pv->win) /* clm2xen traps errors for later reporting (to clean up local allocation),
@@ -11505,6 +11508,7 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
 		*/
     for (i = 0; i < fftsize; i++) 
       pv->win[i] *= scl;
+
   return((mus_any *)pv);
 }
 
@@ -11833,15 +11837,18 @@ mus_any *mus_make_ssb_am(mus_float_t freq, int order)
 {
   ssbam *gen;
   int i, k, len;
+
   if ((order & 1) == 0) order++; /* if order is even, the first Hilbert coeff is 0.0 */
   gen = (ssbam *)clm_calloc(1, sizeof(ssbam), S_make_ssb_am);
   gen->core = &SSB_AM_CLASS;
+
   if (freq > 0)
     gen->shift_up = true;
   else gen->shift_up = false;
   gen->sin_osc = mus_make_oscil(fabs(freq), (gen->shift_up) ? M_PI : 0.0);
   gen->cos_osc = mus_make_oscil(fabs(freq), M_PI * 0.5);
   gen->dly = mus_make_delay(order, NULL, order, MUS_INTERP_NONE);
+
   len = order * 2 + 1;
   gen->coeffs = (mus_float_t *)clm_calloc(len, sizeof(mus_float_t), "make-ssb-am");
   for (i = -order, k = 0; i <= order; i++, k++)
@@ -11854,6 +11861,7 @@ mus_any *mus_make_ssb_am(mus_float_t freq, int order)
       else gen->coeffs[k] = (num / denom) * (0.54 + (0.46 * cos(denom / order)));
     }
   gen->hilbert = mus_make_fir_filter(len, gen->coeffs, NULL);
+
   return((mus_any *)gen);
 }
 

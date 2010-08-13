@@ -962,6 +962,88 @@ will segfault s7 due to a stack overflow internally.
 	       ,@body)))))
 </pre>
 
+<p>From the land of sparkling bacros:
+</p>
+
+<pre>
+(define-bacro (once-only names . body)
+  `(let (,@(map (lambda (name) `(,name ,(eval name))) names))
+     ,@body))
+</pre>
+
+<!--
+A bacro is expanded in the call-time environment, so it can't be optimized in the same
+way that CL macros sometimes are.  Since a CL macro does not evaluate its arguments, and
+its expansion depends only on its definition environment, some lisps conclude that it can be expanded once and
+for all the first time it is encountered, and replaced by its result (some piece of code) --
+self-modifying code in effect.  This optimization is available in s7 under the name
+define-expansion, with some caveats.  The thing defined by define-expansion is fully
+expanded at read-time, so it must have a globally unique name, and it must depend
+only on the global read-time environment.  But the CL way of doing macros is problematic.
+Normally in lisp, if you redefine a function in its definition environment, then evaluate some code that calls
+that function, you get the new version.  If a macro has already been expanded out of existence, 
+it effectively ignores redefinition.  Similar gotchas apply to macros defined after they appear.
+
+example:
+(define (hi a) (+ 1 a))
+(define (use-hi b) (hi b))
+(let ((x (use-hi 1)))
+  (format #t "x: ~A~%" x))
+(define (hi a) (+ 2 a))
+(let ((x (use-hi 1)))
+  (format #t "x: ~A~%" x))
+
+prints:
+x: 2
+x: 3
+in s7, Guile, clisp, sbcl (using CL syntax of course),
+
+but
+
+(defmacro hi (a) `(+ 1 ,a))
+(define (use-hi b) (hi b))
+(let ((x (use-hi 1)))
+  (format #t "x: ~A~%" x))
+(defmacro hi (a) `(+ 2 ,a))
+(let ((x (use-hi 1)))
+  (format #t "x: ~A~%" x))
+
+prints:
+x: 2
+x: 2
+
+in every case but s7 which still says the 2nd x is 3.  
+
+If we use the macro before defining it (as is perfectly legal for functions):
+
+(define (use-hi b) (hi b))
+(defmacro hi (a) `(+ 1 ,a))
+(let ((x (use-hi 1)))
+  (format #t "x: ~A~%" x))
+(defmacro hi (a) `(+ 2 ,a))
+(let ((x (use-hi 1)))
+  (format #t "x: ~A~%" x))
+
+s7 still says x is 2 then 3, Guile throws an error: "Wrong type to apply: #<syntax-transformer hi>";
+clisp says 2 then 3! and sbcl gives the error: "HI is being redefined as a macro when it was previously assumed to be a function."
+Incredible.
+
+
+A bacro can be viewed as a function that does not
+evaluate its arguments, but to avoid the extra evaluation after expansion we need
+to quote the result (if the result does not already evaluate to itself):
+
+(define-bacro (when test . body)
+  (if (eval test)
+      `',(eval `(let () ,@body))))
+
+(let ((x 1)) (when (> x 0) '(list '+ x 3)))
+-> '(list + x 3)
+
+
+-->
+
+
 
 
 </blockquote>
