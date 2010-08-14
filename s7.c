@@ -19830,9 +19830,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_BACRO:
 	  NEW_FRAME(sc, sc->envir, sc->envir);       /* like let* -- we'll be adding macro args, so might as well sequester things here */
 	  goto BACRO;
-	  /* the other choice is to do expansion and evaluation in the definition env,
+	  /* another choice is to do expansion and evaluation in the definition env,
 	   *   so only the args come (unevaluated) from the current env.
 	   *   I can't immediately see any need for this.
+	   *
+	   * but probably useful would be bacro without the following evaluation, sort of like a function with unevaluated args
+	   *  (but expanded in the call-time env): "lacro"?
 	   */
 
 	case T_CLOSURE:                              /* -------- normal function (lambda), or macro -------- */
@@ -27137,6 +27140,8 @@ s7_scheme *s7_init(void)
  *
  * TODO: :allow-other-keys in lambda* ("lambda!")
  *       :rest is not ignored, so this is not inconsistent, but do we just ignore these in the arg count?
+ *       does the allowed key gobble up the following arg?
+ *
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
  * PERHAPS: multidimensional hash tables
  *
@@ -27170,6 +27175,7 @@ s7_scheme *s7_init(void)
  *
  * (func ... obj ...) -> (eval (func ... obj ...) (aug-env obj cur-env))
  * (func ... obj1 ... obj2 ...) -> (eval (func ... obj1 ... obj2 ...) (aug-env obj1...)) 
+ * this almost works, but how to find the op quickly, how to tell without overhead that we have an obj?
  *
  * s7test valgrind 17-Jul-10: 
  *    intel core duo (1.83G):    3162 (2M)

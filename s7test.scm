@@ -10284,6 +10284,7 @@
 (test (set! (values) 1) 'error)
 (test (+ (values (begin (values 1 2)) (let ((x 1)) (values x (+ x 1))))) 6)
 (test (vector 1 (values 2 3) 4) #(1 2 3 4))
+(test (vector (values 1 (values 2 3) (values (values 4)))) #(1 2 3 4))
 (test(+ 1 (values (values (values 2) 3) (values (values (values 4)) 5) 6) 7) 28)
 
 (test (let ((x 1)) (set! x (values)) x) 'error)
@@ -10485,6 +10486,11 @@
 (test (procedure-arity (cond (values))) '(0 0 #t)) ; values as a procedure here
 (test (values (begin (values "hi"))) "hi")
 (test (< (values (values 1 2))) #t)
+
+(test (let ((lst (list 0)))
+	(set-cdr! lst lst)
+	(format (values #f "~A" lst)))
+      "#1=(0 . #1#)")
 
 
 
@@ -14145,6 +14151,29 @@ why are these different (read-time `#() ? )
   ;(test (let () (define-macro (hi a b) `(list ,@a . ,@b)) (hi (1 2) ((2 3)))) '(1 2 2 3))
   (test (let () (define-macro (hi a b) `(list ,@a . ,b)) (hi (1 2) (2 3))) '(1 2 2 3))
 
+  (let ((vals #(0 0)))
+    (let ()
+      (define (hi a) (+ 1 a))
+      (define (use-hi b) (hi b))
+      (set! (vals 0) (use-hi 1))
+      (define (hi a) (+ 2 a))
+      (set! (vals 1) (use-hi 1))
+      (test vals #(2 3)))
+    (let ()
+      (defmacro hi (a) `(+ 1 ,a))
+      (define (use-hi b) (hi b))
+      (set! (vals 0) (use-hi 1))
+      (defmacro hi (a) `(+ 2 ,a))
+      (set! (vals 1) (use-hi 1))
+      (test vals #(2 3)))
+    (let ()
+      (define (use-hi b) (hhi b))
+      (defmacro hhi (a) `(+ 1 ,a))
+      (set! (vals 0) (use-hi 1))
+      (defmacro hhi (a) `(+ 2 ,a))
+      (set! (vals 1) (use-hi 1))
+      (test vals #(2 3))))
+
   (test (let ()
 	  (define-macro (hanger name-and-args)
 	    `(define ,(car name-and-args)
@@ -14417,6 +14446,21 @@ why are these different (read-time `#() ? )
   (let ()
     (defmacro hiho (start end) 
       (once-only (start end) 
+	`(list ,start ,end (+ 2 ,start) (+ ,end 2))))
+
+    (test (let ((ctr 0)) 
+	    (let ((lst (hiho (let () (set! ctr (+ ctr 1)) ctr) 
+			     (let () (set! ctr (+ ctr 1)) ctr))))
+	      (list ctr lst)))
+	  '(2 (1 2 3 4))))
+
+  (define-bacro (once-only-1 names . body)
+    `(let (,@(map (lambda (name) `(,name ,(eval name))) names))
+       ,@body))
+
+  (let ()
+    (define-bacro (hiho start end) 
+      (once-only-1 (start end) 
 	`(list ,start ,end (+ 2 ,start) (+ ,end 2))))
 
     (test (let ((ctr 0)) 

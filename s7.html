@@ -45,6 +45,7 @@ It can be built as a stand-alone
 interpreter (see <a href="#repl">below</a>).  s7test.scm is a regression test for s7.
 A tarball is available: ftp://ccrma-ftp.stanford.edu/pub/Lisp/s7.tar.gz.  
 </p>
+
 <p>
 s7 is the default extension language of Snd and sndlib (http://ccrma.stanford.edu/software/snd/),
 and Rick Taube's Common Music (commonmusic at sourceforge).  There are X, Motif, Gtk, and openGL bindings
@@ -106,7 +107,8 @@ and want a quick tour of where s7 is different.  (Well, it was quick once upon a
 </td></tr></table>
 </dt>
 
-<dd><p>All numeric types, integers, ratios, reals, and complex numbers are supported.
+<dd>
+<p>All numeric types, integers, ratios, reals, and complex numbers are supported.
 The basic integer and real
 types are defined in s7.h, defaulting to long long int and double.  
 pi is predefined, as are
@@ -118,6 +120,7 @@ enabled, the following functions are included: bignum, bignum?, and bignum-preci
 bignum-precision, which defaults to 128, sets the number of bits each float takes.
 pi automatically reflects the current bignum-precision:
 </p>
+
 <pre>
 &gt; pi
 3.141592653589793238462643383279502884195E0
@@ -131,12 +134,14 @@ pi automatically reflects the current bignum-precision:
 &gt; pi
 3.141592653589793238462643383279502884197169399375105820974944592307816406286198E0
 </pre>
+
 <p>
 bignum? returns #t if its argument is a big number of some type; I use "bignum" 
 for any big number, not just integers.  To create a big number,
 either include enough digits to overflow the default types, or use the bignum function.
 Its argument is a string representing the desired number:
 </p>
+
 <pre>
 &gt; (bignum "123456789123456789")
 123456789123456789
@@ -155,14 +160,17 @@ Its argument is a string representing the desired number:
 around (expt 2 -53), or about 1e-16.  In the gmp case, it is around (expt 2 (- (bignum-precision))).
 So in the default case (precision = 128), using gmp:
 </p>
+
 <pre>
 &gt; (= 1.0 (+ 1.0 (expt 2.0 -128)))
 #t
 &gt; (= 1.0 (+ 1.0 (expt 2.0 -127)))
 #f
 </pre>
+
 <p>and in the non-gmp case:
 </p>
+
 <pre>
 &gt; (= 1.0 (+ 1.0 (expt 2 -53)))
 #t
@@ -189,17 +197,20 @@ So in the default case (precision = 128), using gmp:
 <dd><p>
 s7 includes:
 </p>
+
 <ul>
 <li>sinh, cosh, tanh, asinh, acosh, atanh
 <li>logior, logxor, logand, lognot, ash, integer-length, integer-decode-float
 <li>random
 <li>nan?, infinite?
 </ul>
+
 <p>
 The random function can take any numeric argument, including 0.
 The following constants are predefined: pi, most-positive-fixnum, most-negative-fixnum.
 Other math-related differences between s7 and r5rs:
 </p>
+
 <ul>
 <li>rational? and exact mean integer or ratio (i.e. not floating point), inexact means not exact.
 <li>floor, ceiling, truncate, and round return (exact) integer results.
@@ -212,6 +223,7 @@ Other math-related differences between s7 and r5rs:
 <li>'.' and an exponent can occur in a number in any base.
 <li>rationalize returns a ratio! 
 </ul>
+
 <pre>
 &gt; (exact? 1.0)
 #f
@@ -241,11 +253,13 @@ Other math-related differences between s7 and r5rs:
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-The exponent itself is always in base 10; this follows gmp usage.
+<p>The exponent itself is always in base 10; this follows gmp usage.
 Since Scheme uses "@" for its useless polar notation, s7 doesn't use it for the exponent marker, but that
 means <code>(string-&gt;number "1e1" 16)</code> is ambiguous &mdash; is the "e" a digit or an exponent marker?
 s7 could perhaps substitute "s" in this case, but instead it just prohibits exponents if the
 radix is greater than 10.
+</p>
+
 <pre>
 &gt; (string-&gt;number "1e9" 2)  ; (expt 2 9)
 512.0
@@ -256,6 +270,7 @@ radix is greater than 10.
 &gt; (string-&gt;number "1.2e1" 3); (* 3 (+ 1 2/3))
 5.0
 </pre>
+
 <p>Perhaps s7 should use "@"!
 </p>
 
@@ -266,6 +281,7 @@ radix is greater than 10.
 <p>Should s7 predefine the numbers +inf.0, -inf.0, and nan.0?  It doesn't currently, but you can
 get them via log:
 </p>
+
 <pre>
 (define -inf.0 (real-part (log 0.0)))
 (define +inf.0 (- (real-part (log 0.0))))
@@ -281,6 +297,7 @@ results in Guile (1 and 1.0), both are 0.0 in s7, the first is an error in Clisp
 and so on &mdash; what a mess!  This mess was made a lot worse than it needs to be when the IEEE decreed that
 0.0 equals -0.0, so we can't tell them apart, but that they produce different results in nearly every use!  
 </p>
+
 <pre>
 scheme@(guile-user)&gt; (= -0.0 0.0)
 #t
@@ -291,6 +308,7 @@ scheme@(guile-user)&gt; (= (/ 1.0 0.0) (/ 1.0 -0.0))
 scheme@(guile-user)&gt;  (&lt; (/ 1.0 -0.0) -1e100 1e100 (/ 1.0 0.0))
 #t
 </pre>
+
 <p>
 How can they be equal? In s7, the sign
 of -0.0 is ignored, and they really are equal.
@@ -323,9 +341,11 @@ argument's default value is '().
 You can use
 :optional and :key, but they are ignored.  
 </p>
+
 <pre>
 (<em class=red>define*</em> (hi a (b 32) (c "hi")) (list a b c))
 </pre>
+
 <p>Here the argument "a" defaults to #f, "b" to 32, etc.
 When the function is called, 
 the argument names are bound to their default values, then the function's
@@ -335,13 +355,16 @@ are plugged into the actual argument list based on their position, counting a ke
 This is called an optional-key list in CLM.  So, taking the function
 above as an example:
 </p>
+
 <pre>
 (hi 1) -&gt; '(1 32 "hi")
 (hi :b 2 :a 3) -&gt; '(3 2 "hi")
 (hi 3 2 1) -&gt; '(3 2 1)
 </pre>
+
 <p>See s7test.scm for many examples.
 </p>
+
 <pre>
 (<em class=red>define*</em> (make-parameter initial-value converter)
   (let* ((unspecified (if #f #f))   ; #&lt;unspecified&gt;
@@ -399,12 +422,14 @@ hi
 &gt; (hi)
 ;hi requires 1 argument: ()
 </pre>
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>If a define* argument's default value is an expression, it is evaluated in the definition environment at
 the time of the procedure call:
 </p>
+
 <pre>
 (let ((c 1))
   (define* (a (b (+ c 1))) b)
@@ -412,9 +437,11 @@ the time of the procedure call:
   (let ((c 123))
     (a))) ; (+ c 1) here is (+ 2 1) so this returns 3
 </pre>
+
 <p>Since the expression is not evaluated until the procedure is called, it is ok
 to use variables that are undefined at the definition point:
 </p>
+
 <pre>
 &gt; (define* (a (b c)) b)
 a
@@ -434,16 +461,20 @@ error checks.  One is triggered if you set the same parameter twice
 in the same call, and the other if an unknown keyword is encountered
 in the key position.  These problems arise in a case such as
 </p>
+
 <pre>
 (define* (f (a 1) (b 2)) (list a b))
 </pre>
+
 <p>You could do any of the following by accident:
 </p>
+
 <pre>
 (f 1 :a 2)  ; what is a?
 (f :b 1 2)  ; what is b?
 (f :c 3)    ; did you really want a to be :c and b to be 3?
 </pre>
+
 <p>In the last case, to pass a keyword deliberately, either include the
 argument keyword: <code>(f :a :c)</code>, or make the default value a keyword:
 <code>(define* (f (a :c) ...))</code>.
@@ -456,13 +487,16 @@ argument keyword: <code>(f :a :c)</code>, or make the default value a keyword:
 <p>s7's lambda* arglist handling is not the same as CL's lambda-list.  First,
 you can have more than one :rest parameter:
 </p>
+
 <pre>
 &gt; ((lambda* ((a 1) :rest b :rest c) (list a b c)) 1 2 3 4 5)
 (1 (2 3 4 5) (3 4 5))
 </pre>
+
 <p>and second, the rest parameter, if any, takes up an argument slot just like any other
 argument:
 </p>
+
 <pre>
 &gt; ((lambda* ((b 3) :rest x (c 1)) (list b c x)) 32)
 (32 1 ())
@@ -470,17 +504,21 @@ argument:
 &gt; ((lambda* ((b 3) :rest x (c 1)) (list b c x)) 1 2 3 4 5)
 (1 3 (2 3 4 5))
 </pre>
+
 <p>CL would agree with the first case if we used &amp;key for 'c', but would give an error in the second.
 Of course, the major difference is that s7 keyword arguments don't insist that the key be present.
 The :rest argument is needed in cases like these because we can't use expression
 such as:
 </p>
+
 <pre>
 &gt; ((lambda* ((a 3) . b c) (list a b c)) 1 2 3 4 5)
 stray dot?
 </pre>
+
 <p>Yet another nit: the :rest argument is not considered a keyword argument, so
 </p>
+
 <pre>
 &gt; (define* (f :rest a) a)
 f
@@ -511,17 +549,21 @@ implement the standard (CL-style) macro definers.
 (define-macro (add-1 arg) `(+ 1 ,arg))
 (defmacro add-1 (arg) `(+ 1 ,arg))
 </pre>
+
 <p>macroexpand can help debug a macro:
 </p>
+
 <pre>
 &gt; (define-macro (add-1 arg) `(+ 1 ,arg))
 add-1
 &gt; (macroexpand (add-1 32))
 (+ 1 32)
 </pre>
+
 <p>gensym returns a symbol that is guaranteed to be unused.  It takes an optional string argument
 giving the new symbol name's prefix.
 </p>
+
 <pre>
 (defmacro pop! (sym)
   (let ((v (<em class=red>gensym</em>)))
@@ -529,8 +571,10 @@ giving the new symbol name's prefix.
        (set! ,sym (cdr ,sym))
        ,v)))
 </pre>
+
 <p>As in define*, the starred forms give optional and keyword arguments:
 </p>
+
 <pre>
 &gt; (define-macro* (add-2 a (b 2)) `(+ ,a ,b))
 add-2
@@ -549,6 +593,7 @@ when, loop, dotimes, do*, enum, pushnew, and defstruct.
 <p>macro? returns #t if its argument is a macro or a symbol whose value is a macro.
 We can use it, and other macro-related stuff to make a version of macroexpand-all:
 </p>
+
 <pre>
 (define-macro (fully-expand form)
   (define (expand form)
@@ -559,7 +604,6 @@ We can use it, and other macro-related stuff to make a version of macroexpand-al
 		  (expand (cdr form))))
 	form))
   (expand form))
-
 
 &gt; (define-macro (hi a) `(+ 1 ,a))
 hi
@@ -575,6 +619,7 @@ ho
 procedure-source of that macro, that is, the function that the macro definition
 expanded into:
 </p>
+
 <pre>
 (define-macro (hi a) `(+ ,a 1))
 
@@ -591,6 +636,7 @@ expanded into:
 pass one as a function argument, apply it to a list, return it from a function,
 and assign it to a variable:
 </p>
+
 <pre>
 &gt; (define-macro (hi a) `(+ ,a 1))
 hi
@@ -654,6 +700,7 @@ and handle a few tricky details (similarly for "{values}" and "{apply}").
 
 <p>s7 macros are not hygienic.  For example,
 </p>
+
 <pre>
   (define-macro (mac b) 
     `(let ((a 12)) 
@@ -663,6 +710,7 @@ and handle a few tricky details (similarly for "{values}" and "{apply}").
         (+ *))
     (mac a))
 </pre>
+
 <p>returns 144 because "+" has turned into "*", and "a" is the internal "a",
 not the argument "a".  We get <code>(* 12 12)</code> where we probably expected <code>(+ 12 1)</code>.
 It is possible to use gensym to clean this up, but that makes the macro 
@@ -706,6 +754,7 @@ mac
 <p>
 If the slight difference in syntax is a problem
 </p>
+
 <pre>
 (define-macro (define-immaculo name-and-args . body)
   (let* ((gensyms (map (lambda (g) (gensym)) (cdr name-and-args)))
@@ -1064,6 +1113,7 @@ to quote the result (if the result does not already evaluate to itself):
 <dd><p>define-constant defines a constant and constant? returns #t if its argument
 is a constant.  A constant in s7 is really constant: it can't be set or rebound.
 </p>
+
 <pre>
 &gt; (define-constant var 32)
 var
@@ -1074,15 +1124,18 @@ var
 &gt; (let ((var 1)) var)
 ;can't bind or set an immutable object: var, line 1
 </pre>
+
 <p>This has the possibly surprising side effect that previous uses of the constant name
 become constants:
 </p>
+
 <pre>
  (define (func a) (let ((cvar (+ a 1))) cvar))
  (define-constant cvar 23)
  (func 1)
  ;can't bind or set an immutable object: cvar
 </pre>
+
 <p>So, obviously, choose unique names for your constants, or don't use define-constant.
 A function can also be a constant. 
 </p>
@@ -1102,6 +1155,7 @@ and the value that it is about to be set or bound to.  The variable is set or bo
 We could replace define-constant, and add
 local constants with:
 </p>
+
 <pre>
 (define constant-access 
   (list #f
@@ -1153,6 +1207,7 @@ int
 <p>Here are trace and untrace.  We save the previous accessors in trace, restore them upon untrace,
 and in between, call the previous set accessor, if any, after reporting the set:
 </p>
+
 <pre>
 (define (trace var)
   (let* ((cur-access (<em class=red>symbol-access</em> var))
@@ -1387,6 +1442,7 @@ The 'fill' function takes two arguments, the object and what to
 fill its value with.
 So, remembering that (cadr type) is the make function:
 </p>
+
 <pre>
 &gt; ((cadr (make-type)) 3.14)
 #&lt;anonymous-type 3.14&gt;
@@ -1400,8 +1456,10 @@ So, remembering that (cadr type) is the make function:
 &gt; (((cadr (make-type :getter (lambda (a b) (vector-ref a b)))) (vector 1 2 3)) 1)
 2
 </pre>
+
 <p>The last is easier to read if we separate out the steps:
 </p>
+
 <pre>
 &gt; (let* ((type (make-type 
                  :getter (lambda (a b) 
@@ -1417,11 +1475,14 @@ if you supply the length and getter functions to make-type.
 
 <small>
 <blockquote>
+
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>Here is define-record using make-type.  It has a few Common Lisp extensions:
 </p>
+
 <pre>
 (define-macro (define-record struct-name . fields)
   (let* ((name (if (list? struct-name) (car struct-name) struct-name))
@@ -1516,11 +1577,14 @@ point
     (list (point? pt) (point-x pt) (point-y pt)))
 (#t 1.0 3.0)
 </pre>	
+
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>In the next example, we define a float-vector type:
 </p>
+
 <pre>
 (begin
   (define make-float-vector #f)
@@ -1569,6 +1633,7 @@ point
 (2.0 4.0 6.0)
 </pre>
 
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
@@ -1577,6 +1642,7 @@ environment, a let to hold internal stuff, and set!s to give the names values.  
 simple way for multiple functions to share a closure.
 Maybe it rates a macro:
 </p>
+
 <pre>
 (define-macro (blet* names bindings . body)
   `(begin
@@ -1648,6 +1714,7 @@ v
 The getter is called when the object is encountered as a function, and the setter when
 it is set:
 </p>
+
 <pre>
 (define xx (let ((x 32))
              (<em class=red>make-procedure-with-setter</em>
@@ -1660,6 +1727,7 @@ it is set:
 
 <p>The setter's last argument is the value passed to set!.  That is, 
 </p>
+
 <pre>
 (define v123 
   (let ((vect (vector 1 2 3)))
@@ -1679,11 +1747,14 @@ it is set:
 
 <small>
 <blockquote>
+
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>Here is a pretty example of make-procedure-with-setter:
 </p>
+
 <pre>
 (define-macro (c?r path)
   ;; "path" is a list and "X" marks the spot in it that we are trying to access
@@ -1741,10 +1812,12 @@ it is set:
 &gt; (procedure-source (c?r (((((a (b (c (d (e X)))))))))))
 (lambda (lst) (car (cdr (car (cdr (car (cdr (car (cdr (car (cdr (car (car (car (car lst)))))))))))))))
 </pre>	
+
 <br>
 
 <p>We can extend c?r into something incredibly useful!  A goto implementation using circular lists:
 </p>
+
 <pre>
 (define-macro (define-with-goto name-and-args . body)
   ;; run through the body collecting label accessors, (label name)
@@ -1825,6 +1898,7 @@ lists, strings, vectors, hash-tables, and any cooperating C or Scheme-defined ob
 are both applicable and settable.  newLisp calls this implicit indexing, Gauche implements it
 via object-apply, Guile via procedure-with-setter; CL's funcallable instance might be the same idea.
 </p>
+
 <p>
 In <code>(vector-ref #(1 2) 0)</code>, for example, vector-ref is just a type
 declaration.  But in Scheme, type declarations are unnecessary, so we get exactly
@@ -1833,6 +1907,7 @@ same as <code>(list-ref lst 1)</code>, and <code>(set! (lst 1) 2)</code> is the 
 as <code>(list-set! lst 1 2)</code>.
 I like this syntax:  the less noise, the better!
 </p>
+
 <pre>
 ;; an example taken from R Cox's website
 
@@ -1869,8 +1944,10 @@ I like this syntax:  the less noise, the better!
 (is-member 12)
 #t
 </pre>
+
 <p>Some more examples:
 </p>
+
 <pre>
 (let ((lst (list 1 2 3)))
   (set! (lst 1) 32)
@@ -1890,6 +1967,7 @@ I like this syntax:  the less noise, the better!
 <small>
 <blockquote>
 
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
@@ -1898,6 +1976,7 @@ so is <code>(cond (1 =&gt; "hi"))</code>!  Even though a string, list, or vector
 not currently considered to be a procedure, so <code>(procedure? "hi")</code> is #f, and
 <code>(map #(0 1) '(1 0))</code> is an error.  
 </p>
+
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
@@ -1971,6 +2050,7 @@ Here's an FFT procedure that accepts lists or vectors, or any similar object:
 <p>There is one place where list-set! and friends are not the same as set!: the former
 evaluate their first argument, but set! does not (with a quibble; see below):
 </p>
+
 <pre>
 &gt; (let ((str "hi")) (string-set! (let () str) 1 #\a) str)
 "ha"
@@ -2033,6 +2113,7 @@ vectors with any number of dimensions.  It is here, in particular, that the gene
 set! stuff shines.  make-vector's second argument can be a list of dimensions, rather than
 an integer as in the one dimensional case:
 </p>
+
 <pre>
     (make-vector (list 2 3 4))
     (make-vector '(2 3) 1.0)
@@ -2068,6 +2149,7 @@ vector-dimensions returns a list of the dimensions.
 
 <p>matrix multiplication:
 </p>
+
 <pre>
 (define (matrix-multiply A B)
   ;; assume square matrices and so on here for simplicity
@@ -2084,12 +2166,14 @@ vector-dimensions returns a list of the dimensions.
 	  (set! (C i j) sum))))))
 </pre>
 
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>Multidimensional vector constant syntax is modelled after CL: #nd(...) or #nD(...) 
 signals that the lists specify the elements of an 'n' dimensional vector: <code>#2D((1 2 3) (4 5 6))</code>
 </p>
+
 <pre>
     &gt; (vector-ref #2D((1 2 3) (4 5 6)) 1 2)
     6
@@ -2101,6 +2185,7 @@ signals that the lists specify the elements of an 'n' dimensional vector: <code>
 <p>If any dimension has 0 length, you get an n-dimensional empty vector.  It is not
 equal to a 1-dimensional empty vector.
 </p>
+
 <pre>
     &gt; (make-vector '(10 0 3))
     #3D()
@@ -2108,6 +2193,7 @@ equal to a 1-dimensional empty vector.
     &gt; (equal? #() #3D())
     #f
 </pre>
+
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
@@ -2158,9 +2244,11 @@ in the latter case, you can't clobber one of the inner vectors.
 
 <p>Using lists to display the inner vectors may not be optimal, especially when the elements are also lists:
 </p>
+
 <pre>
 #2D(((0) (0) ((0))) ((0) 0 ((0))))
 </pre>
+
 <p>The "#()" notation is no better (the elements can be vectors), and I'm not a fan of "[]" parentheses.
 Perhaps we could use different colors?  Or different size parentheses?
 </p>
@@ -2219,11 +2307,13 @@ This also affects format:
 <li>(hash-table? obj)
 <li>(hash-table-size ht)
 </ul>
+
 <p>
 Any s7 object can be the key or the key's value.
 Each hash-table keeps track of the keys it contains, optimizing the search wherever possible.
 If you pass a table size that is not a power of 2, make-hash-table rounds it up to the next power of 2.
 </p>
+
 <pre>
 (let ((ht (make-hash-table)))
   (set! (ht "hi") 123)
@@ -2244,6 +2334,7 @@ The result is a new hash-table with those values preinstalled: <code>(hash-table
 <p>Since hash-tables accept the same applicable-object syntax that vectors use, we can 
 treat a hash-table as, for example, a sparse array:
 </p>
+
 <pre>
 &gt; (define make-sparse-array make-hash-table)
 make-sparse-array
@@ -2255,12 +2346,14 @@ make-sparse-array
 ("1032" "-23")
 </pre>
 
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>for-each and map accept hash-table arguments. On each iteration, the map or for-each function is passed
 an entry, <code>'(key . value)</code>, in whatever order the entries are encountered in the table.
 </p>
+
 <pre>
 (define (hash-table-&gt;alist table)
   (map (lambda (x) x) table)) ; clearer perhaps than (map values table), append would also work here
@@ -2435,6 +2528,7 @@ Of course in real life you'd get the nth Fibonacci number from the formula for i
 <dd><p>
 In s7, multiple values are spliced directly into the caller's argument list.
 </p>
+
 <pre>
   &gt; (+ (values 1 2 3) 4)
   10
@@ -2465,6 +2559,8 @@ In s7, multiple values are spliced directly into the caller's argument list.
 
 <small>
 <blockquote>
+
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
@@ -2482,6 +2578,7 @@ from map's function application:
 <p>As this example shows, if the map function returns <code>(values)</code>,
 nothing is added to the map output list.
 </p>
+
 <pre>
 &gt; (map (lambda (x) (if #f x (values))) (list 1 2))
 ()
@@ -2509,6 +2606,7 @@ By wrapping the arguments in 'values', you can force all of them to be evaluated
 
 <p>At the top-level, since there's nothing to splice into, so you simply get your values back:
 </p>
+
 <pre>
 &gt; (values 1 (list 1 2) (+ 3 4 5))
 (values 1 (1 2) 12)
@@ -2529,6 +2627,7 @@ as soon as the arguments are spliced into some caller's arguments.
 
 <p>In some Schemes, values behaves like CL's prog1:
 </p>
+
 <pre>
 (not s7)&gt; (let ((x 1)) (cond ((values #f (set! x 2) #t) 3) (#t x)))
 2
@@ -2542,6 +2641,7 @@ There are many ways we could interpret <code>(cond ((values ...))...)</code> and
 equivalent uses of "cond" and "if" should give the same result.
 Currently in s7, where a test is in progress, only <code>(values #f)</code> is the same as #f.
 </p>
+
 <pre>
 &gt; (if (values #f #f) 1 2)            ; (values #f #f) is not #f
 1
@@ -2562,6 +2662,7 @@ Currently in s7, where a test is in progress, only <code>(values #f)</code> is t
 1
 ;;; this is consistent with (cond (1) (#t 2))
 </pre>
+
 <p>
 So "if" and "cond" agree, but it requires that in one case the "values"
 behavior is slightly weird.  <code>(or (values #f #f))</code> is #f, but that isn't inconsistent because
@@ -2570,12 +2671,15 @@ We might choose to say that <code>(if (values #f #f)...)</code>
 is an error, but that would be hasty &mdash;
 our troubles have only begun.  First, "cond" can omit the expressions that follow the test, unlike "if":
 </p>
+
 <pre>
 &gt; (cond (3))
 3
 </pre>
+
 <p>and even trickier, "cond" can pass the test value to a function:
 </p>
+
 <pre>
 &gt; (cond (3 =&gt; +))
 3
@@ -2584,6 +2688,7 @@ our troubles have only begun.  First, "cond" can omit the expressions that follo
 <p>The various standards agree that in the "=&gt;" case, the "fed to" function
 receives one argument, so
 </p>
+
 <pre>
 (not s7)&gt; (cond ((values 1 2) =&gt; +))
 1
@@ -2606,6 +2711,7 @@ s7 handles it this way:
 
 <p>Of course, it is unproblematic that the expression can itself involve multiple values:
 </p>
+
 <pre>
 &gt; (+ (cond (#t (values 1 2))))
 3
@@ -2643,6 +2749,7 @@ is 15, as anyone would expect.
 <dd><p><b>call-with-exit</b> is call/cc without the ability to jump back into the original context,
 similar to "return" in C.  This takes the place of CL's catch/throw (s7 uses "catch" for error handling).
 </p>
+
 <pre>
 (define (find-first-even-number arg)
   (<em class=red>call-with-exit</em>
@@ -2662,11 +2769,13 @@ similar to "return" in C.  This takes the place of CL's catch/throw (s7 uses "ca
 
 (block (display "hi") (return 32) (display "oops")) -&gt; 32
 </pre>
+
 <p><b>continuation?</b> returns #t if its argument is a continuation,
 as opposed to a normal procedure.  I don't know why Scheme hasn't had this function from
 the very beginning, but it's needed if you want to write a continuable error
 handler.  Here is a sketch of the situation:
 </p>
+
 <pre>
 (let ()
   (catch #t
@@ -2685,6 +2794,7 @@ handler.  Here is a sketch of the situation:
 
   -&gt; continuing...2
 </pre>
+
 <p>In a more general case, the error handler is separate from the
 catch body, and needs a way to distinguish a real continuation
 from a simple procedure.  Otherwise, it blithely announces that
@@ -2719,7 +2829,9 @@ This is similar to trying to read from a closed input port.
 </td></tr></table>
 </dt>
 
-<dd><p>s7's built-in format function is very close to that in srfi-48.</p>
+<dd><p>s7's built-in format function is very close to that in srfi-48.
+</p>
+
 <pre>
 (format #f "~A ~D ~F" 'hi 123 3.14)
 -&gt; "hi 123 3.140000"
@@ -2756,25 +2868,31 @@ This is similar to trying to read from a closed input port.
 <small>
 <blockquote>
 
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 <p>Floats can occur in any base, so:
 </p>
+
 <pre>
 &gt; #xf.c
 15.75
 </pre>
+
 <p>This also affects format.  In most schemes, <code>(format #f "~X" 1.25)</code> is
 an error.  In CL, it is equivalent to using ~A which is perverse.  But 
 </p>
+
 <pre>
 &gt; (number-&gt;string 1.25 16)
 "1.4"
 </pre>
+
 <p>and there's no obvious way to get the same effect from format unless we accept
 floats in the "~X" case.  So in s7, 
 </p>
+
 <pre>
 &gt; (format #f "~X" 21)
 "15"
@@ -2788,6 +2906,7 @@ floats in the "~X" case.  So in s7,
 &gt; (format #f "~X" 21/4)
 "15/4"
 </pre>
+
 <p>That is, the output choice matches the argument.  A case that came up in the Guile mailing lists is:
 <code>(format #f "~F" 1/3)</code>.  s7 currently returns "1/3", but Clisp returns "0.33333334".
 </p>
@@ -2809,6 +2928,7 @@ floats in the "~X" case.  So in s7,
 
 <p>object-&gt;string returns the string representation of its argument:
 </p>
+
 <pre>
 &gt; (object-&gt;string "hiho")
 "\"hiho\""
@@ -2906,6 +3026,7 @@ a modern GUI will leave formatting decisions to a text widget.
 <dd><p>s7's error handling mimics that of Guile.  An error is signalled
 via the error function, and can be trapped and dealt with via catch.
 </p>
+
 <pre>
 (<em class=red>catch</em> 'wrong-number-of-args
   (lambda ()     ; code protected by the catch
@@ -2933,9 +3054,11 @@ The default action, in the absence of any catch, is to treat the message as
 a format control string, apply format to it and the other arguments, and
 send that info to the current-error-port.
 </p>
+
 <p>When an error is encountered, the variable <a name="errorinfo">*error-info*</a>, a vector, contains
 additional info about that error:
 </p>
+
 <ul>
 <li>0: the error type or tag, e.g. 'division-by-zero
 <li>1: the message or information passed by the error function
@@ -2945,21 +3068,58 @@ additional info about that error:
 <li>5: the environment at the point of the error
 <li>6...: stack environment pointers, ending in #f
 </ul>
+
+
+<small>
+<blockquote>
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
 <p>To find a variable's value at the point of the error:
 </p>
+
 <pre>
 (symbol-&gt;value var (vector-ref *error-info* 5))
 </pre>
+
 <p>To print the stack at the point of the error:
 </p>
+
 <pre>
 (stacktrace *error-info*)
 </pre>
+
+<p>To evaluate the error handler in the environment of the error:
+</p>
+
+<pre>
+(let ((x 1))
+  (catch #t
+	 (lambda ()
+	   (let ((y 2))
+	     (error 'oops)))
+	 (lambda args
+	   (with-environment
+	    (augment-environment 
+	     (*error-info* 5)      ; the error env
+	     (cons 'args args))    ; add the error handler args
+	    (list args x y)))))    ; we have access to 'y'
+</pre>
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+</blockquote>
+</small>
+
+
 
 <p>The variable <a name="errorhook">*error-hook*</a> provides a way to specialize error reporting.
 It is a function of 2 arguments, the values passed by the error function:
 the error type and whatever other info accompanies it.
 </p>
+
 <pre>
 (set! *error-hook* (lambda (tag args) (apply format #t args)))
 </pre>
@@ -2996,6 +3156,7 @@ is encountered.
 Its value is a function of one argument,
 the unbound symbol.  In Snd, this is used to implement autoloading:
 </p>
+
 <pre>
 (set! <em class=red>*unbound-variable-hook*</em>
   (lambda (sym)
@@ -3055,14 +3216,17 @@ the unbound symbol.  In Snd, this is used to implement autoloading:
       2
      3
 </pre>
+
 <p>trace adds a function to the list of functions being traced, and untrace removes it.
 trace with no arguments causes everything to be traced, and untrace with no arguments
 turns this off.
 </p>
+
 <p>There is also a hook, <a name="tracehook">*trace-hook*</a>, a function of 2 arguments the currently traced
 function and the list of current arguments.  It is evaluated in the environment of the
 function call (that is, global to the function, not the function's local environment).
 </p>
+
 <pre>
     (define (hiho a b c) (* a b c))
     (set! *trace-hook* (lambda (f args) (format #t "sum of args: ~A~%" (apply + args))))
@@ -3073,6 +3237,7 @@ function call (that is, global to the function, not the function's local environ
     sum of args: 9
      24
 </pre>
+
 </dd>
 <br><br>
 
@@ -3092,6 +3257,7 @@ function's body. procedure-arity returns a list describing the argument list of 
 procedure-source returns the source, as a list, of a procedure. procedure-environment returns
 a procedure's environment.
 </p>
+
 <pre>
 &gt; (define* (add-2 a (b 32)) "add-2 adds its 2 args" (+ a b))
 add-2
@@ -3109,6 +3275,7 @@ add-2
 <p>We can use procedure-environment and <a href="#__func__">__func__</a> to 
 write a function that tells us where the source is for a function:
 </p>
+
 <pre>
 (define (where-is func)
   (let ((addr (cdr (assoc <em class=red>'__func__</em> (car (<em class=red>procedure-environment</em> func))))))
@@ -3237,6 +3404,7 @@ Its syntax is closer to
 vector than make-vector, for example.  
 Even better: "dilambda":
 </p>
+
 <pre>
 (define-macro (dilambda getter setter)
   `(make-procedure-with-setter
@@ -3295,6 +3463,7 @@ defined? returns #t if the symbol is defined in the environment, and
 symbol-&gt;value returns the value associated with it.
 To add or change a symbol's value, use augment-environment:
 </p>
+
 <pre>
 (let ((a 1)) 
   (eval '(+ a b) 
@@ -3304,6 +3473,7 @@ To add or change a symbol's value, use augment-environment:
 
 -&gt; 33
 </pre>
+
 <p>augment-environment does not change the environment passed to it.  It
 just prepends the new bindings, shadowing any old ones,
 as if you had called "let".  To add the bindings directly to the environment,
@@ -3399,6 +3569,7 @@ its bindings are exported into the current environment:
 <code>(symbol-table)</code> returns the symbol table, a vector of lists of symbols.
 Here we scan the symbol table looking for any function that doesn't have documentation:
 </p>
+
 <pre>
        (let ((st (<em class=red>symbol-table</em>)))
          (do ((i 0 (+ i 1))) 
@@ -3422,6 +3593,8 @@ below.
 
 <small>
 <blockquote>
+
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
@@ -3429,6 +3602,7 @@ below.
 I think we could build an object system where each object is an environment (a list of alists),
 and each method looks for itself in that environment.
 </p>
+
 <pre>
 (define object (list (list (cons 'afield 1) 
                            (cons 'amethod (lambda args 
@@ -3440,6 +3614,7 @@ and each method looks for itself in that environment.
 &gt; (amethod object 3 4)
 8
 </pre>
+
 <p>A class would be an environment with the various fields and methods predefined.
 </p>
 
@@ -3472,6 +3647,7 @@ could we use expansions here? (so set! arg would be "evaluated" at read time etc
 second argument, the environment in which the evaluation should take place.  <b>eval-string</b>
 is similar, but its argument is a string.
 </p>
+
 <pre>
 &gt; (eval '(+ 1 2))
 3
@@ -3482,6 +3658,8 @@ is similar, but its argument is a string.
 
 <small>
 <blockquote>
+
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
@@ -3489,6 +3667,7 @@ is similar, but its argument is a string.
 example, then any input is evaluated in the environment of the break.  Say we have the
 following code in ex.scm:
 </p>
+
 <pre>
 (define-macro (break)
   `(let ((break-env (<em class=red>current-environment</em>))
@@ -3555,6 +3734,7 @@ done!
 <p>Besides files, ports can also represent strings and functions.  The string port functions
 are:
 </p>
+
 <ul>
 <li>with-output-to-string
 <li>with-input-from-string
@@ -3564,6 +3744,7 @@ are:
 <li>open-input-string
 <li>get-output-string
 </ul>
+
 <pre>
 (let ((result #f) 
       (p (<em class=red>open-output-string</em>)))
@@ -3573,18 +3754,24 @@ are:
   result)
 -&gt; "this is a test 3"
 </pre>
-<p>Other functions:</p>
+
+<p>Other functions:
+</p>
+
 <ul>
 <li>read-byte and write-byte: binary IO, named "read-u8" and "write-u8" in r6rs, I think
 <li>read-line: line-at-a-time reads (for write-line, use format or for-each with write-char).
 </ul>
+
 <p>The variable <a name="vectorprintlength">*vector-print-length*</a> sets
 the upper limit on how many vector elements are printed by object-&gt;string and format.
 </p>
+
 <p>When running s7 behind a GUI, you often want input to come from and output to go to
 arbitrary widgets. The function ports provide a way to redirect IO.  See <a href="#functionportexample">below</a>
 for an example.
 </p>
+
 <p>s7 also includes current-error-port and set-current-error-port.
 </p>
 
@@ -3620,6 +3807,7 @@ integer-decode-float, and the various bitwise operators.
 While loading, the port-filename and port-line-number of the current-input-port can tell you
 where you are in the file.
 </p>
+
 <pre>
 (set! *load-hook* (lambda (name) (format #t "loading ~S...~%" name)))
 </pre>
@@ -3628,6 +3816,7 @@ where you are in the file.
 to the *load-path* variable so that subsequent loads don't need to specify
 the directory:
 </p>
+
 <pre>
 (set! <em class=red>*load-hook*</em>
   (lambda (filename)
@@ -3654,6 +3843,7 @@ the directory:
 check it with the <b>provided?</b> function, or add something to it with <b>provide</b>.  In my version of Snd,
 at startup *features* is:
 </p>
+
 <pre>
 &gt; *features*
 (snd10 snd snd-s7 snd-motif gsl alsa xm snd-ladspa run clm4 clm sndlib gmp s7)
@@ -3694,12 +3884,14 @@ rest.  Say we'd like #t&lt;number&gt; to interpret the number in base 12:
 &gt; #t11.3
 13.25
 </pre>
+
 <p>I use *#readers* primarily to implement a way to get the current line number and file name, along
 the lines of C's __LINE__ and __FILE__.  port-line-number works if we're reading a file (during load
 for example), and *error-info* has the same information if an error happens.  But during Snd's auto-test
 sequence, there are many cases that aren't errors, and the file is no longer being loaded, but
 I need to know where something unexpected happened.  So:
 </p>
+
 <pre>
 (set! *#readers* 
       (cons (cons #\_ (lambda (str)
@@ -3713,6 +3905,7 @@ I need to know where something unexpected happened.  So:
 
 <p>Here's a reader macro for read-time evaluation:
 </p>
+
 <pre>
 (set! *#readers*
   (cons (cons #\. (lambda (str)
@@ -3737,6 +3930,7 @@ it modifies the list passed to it in the process of reversing its contents.
 <b>list-set!</b> sets a member of a list.  <b>sort!</b> sorts a list or a vector using the
 function passed as its second argument to choose the new ordering.
 </p>
+
 <pre>
 &gt; (sort! (list 3 4 8 2 0 1 5 9 7 6) &lt;)
 (0 1 2 3 4 5 6 7 8 9)
@@ -3757,6 +3951,7 @@ function passed as its second argument to choose the new ordering.
 
  -&gt; ((bird 0 0.1) (fm-violin 0 1 440 0.1) (bird 0.2 0.1) (bird 0.5 0.5) (fm-violin 1 1 550 0.1) (bird 1.2 0.3))
 </pre>
+
 <p>Despite the "!" in its name, sort! actually copies any list argument passed to it,
 but vectors are sorted in place.
 </p>
@@ -3778,13 +3973,17 @@ about stuff like <code>(let ((:hi 1)) :hi)</code>?
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
 
-<p><b>help</b> tries to find information about its argument.</p>
+<p><b>help</b> tries to find information about its argument.
+</p>
+
 <pre>
 &gt; (help 'caadar)
 "(caadar lst) returns (car (car (cdr (car lst)))): (caadar '((1 (2 3)))) -&gt; 2"
 </pre>
+
 <p>If the initial expression in a function body is a string constant, it is assumed to be a documentation string (accessible via help or procedure-documentation):
 </p>
+
 <pre>
 (define (add1 a)
   "(add1 a) adds 1 to its argument"
@@ -3793,10 +3992,14 @@ about stuff like <code>(let ((:hi 1)) :hi)</code>?
 &gt; (help add1)
 "(add1 a) adds 1 to its argument"
 </pre>
+
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<p><b>quit</b> exits s7.</p>
+<p><b>quit</b> exits s7.
+</p>
+
 <p><b>gc</b> calls the garbage collector.  <code>(gc #f)</code> turns off the GC, and <code>(gc #t)</code> turns it on.
 In the multithread case, don't call gc yourself except from the top-level.
 </p>
@@ -3817,6 +4020,7 @@ bind it to something else, which is asking for confusion).
 
 <p>Some other differences from r5rs:
 </p>
+
 <ul>
 <li>after the initial binding, do sets its step variables, rather than rebinding them.
 <li>no force or delay (use slib).
@@ -3835,6 +4039,8 @@ bind it to something else, which is asking for confusion).
 
 <small>
 <blockquote>
+
+
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
@@ -3889,6 +4095,7 @@ Originally, in s7, the first two were errors, and the third was allowed, which d
 Guile and Common Lisp accept all three, but that leads to weird cases where we can reach
 into a function's body:
 </p>
+
 <pre>
 &gt; (let ((x (lambda () '(1 2 3)))) (list-set! (x) 1 32) (x))
 (1 32 3) ; s7, Guile
@@ -3899,10 +4106,12 @@ into a function's body:
 &gt; (let ((x (lambda () (list 1 2 3)))) (list-set! (x) 1 32) (x))
 (1 2 3)
 </pre>
+
 <p>
 But it's possible to reach into a function's closure, even when the
 closed-over thing is a constant:
 </p>
+
 <pre>
 &gt; (flet ((x () '(1 2 3))) (setf (nth 1 (x)) 32) (x))
 (1 32 3)
@@ -3913,12 +4122,15 @@ closed-over thing is a constant:
 &gt; (let ((xx (let ((x (list 1 2 3))) (lambda () x)))) (list-set! (xx) 1 32) (xx))
 (1 32 3)
 </pre>
+
 <p>And it's possible to reach into a constant list via list-set! (or set-car! of course):
 </p>
+
 <pre>
 &gt; (let* ((x '(1 2)) (y (list x)) (z (car y))) (list-set! z 1 32) (list x y z))
 ((1 32) ((1 32)) (1 32))
 </pre>
+
 <p>
 It would be a programmer's nightmare to have to keep track of which piece of a list is
 constant, and an implementor's nightmare to copy every list.  set! in all its forms is
@@ -3932,16 +4144,20 @@ But dumb arguments aren't interesting...)
 If we flush "immutable constant" because it is a ham-fisted, whack-it-with-a-shovel approach,
 the only real problem I can see is symbol-&gt;string.  In CL, this is explicitly an error:
 </p>
+
 <pre>
 &gt; (setf (elt (symbol-name 'xyz) 1) #\X)
 *** - Attempt to modify a read-only string: "XYZ"
 </pre>
+
 <p>And in Guile:
 </p>
+
 <pre>
 &gt; (string-set! (symbol-&gt;string 'symbol-&gt;string) 1 #\X)
 ERROR: string is read-only: "symbol-&gt;string"
 </pre>
+
 <p>So both have a notion of immutable strings.  
 I wonder what other Scheme programmers (not implementors!) want in this situation.
 Currently, there are no immutable list, string, or vector constants, and
@@ -3949,6 +4165,7 @@ symbol-&gt;string
 returns a copy of the string.
 One simple way to ensure immutability is to use copy:
 </p>
+
 <pre>
 &gt; (let ((x (lambda () (copy "hiho")))) (string-set! (x) 1 #\x) (x))
 "hiho"
@@ -3962,6 +4179,7 @@ One simple way to ensure immutability is to use copy:
 You can pass them to memq, or print them, for example; you can even evaluate them.  
 The print syntax is borrowed from CL:
 </p>
+
 <pre>
 &gt; (let ((lst (list 1 2 3))) 
     (set! (cdr (cdr (cdr lst))) lst) 
@@ -3973,14 +4191,17 @@ The print syntax is borrowed from CL:
     (list x y))
 (#1=(1 . 2) (3 . #1#)) ; shared lists use the same syntax: '((1 . 2) (3 1 . 2)) spelled out
 </pre>
+
 <p>But should this syntax be readable as well?  I'm inclined to say no because
 then it is part of the language, and it doesn't look like the rest of the language.
 (I think it's kind of ugly).  Perhaps we could implement it via *#readers*.
 </p>
+
 <p>Length returns +inf.0 if passed a circular list, and returns a negative
 number if passed a dotted list.  In the dotted case, the absolute value of the length is the list length not counting
 the final cdr.  <code>(define (circular? lst) (infinite? (length lst)))</code>.
 </p>
+
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
@@ -4078,6 +4299,7 @@ These symbols are not just a silly optimization of string comparison:
 
 <p>The built-in syntactic names, such as "begin", are almost first-class citizens.
 </p>
+
 <pre>
 &gt; (let ((progn begin)) 
     (progn 
@@ -4149,6 +4371,7 @@ in which they occur, and in the environment at the point of the evaluation.  I t
 of it as being a little REPL.  begin does not introduce a new frame in
 the current environment, so defines happen at the enclosing level.
 </p>
+
 <pre>
 &gt; (let ((y 2)) 
       (let ((x 1)) 
@@ -4228,15 +4451,18 @@ But then what would inexact-&gt;exact do?
 If we discard the exact/inexact distinction,
 we can maintain backwards compatibility via:
 </p>
+
 <pre>
     (define exact? rational?)
     (define (inexact? x) (not (rational? x)))
     (define inexact-&gt;exact rationalize) ; or floor
     (define (exact-&gt;inexact x) (* x 1.0))
 </pre>
+
 <p>#i and #e are also useless because you can
 have any number after, for example, #b:
 </p>
+
 <pre>
     &gt; #b1.1
     1.5
@@ -4325,6 +4551,7 @@ the result runs close to the speed of the equivalent compiled and optimized
 C code.  Here are my timings for two instruments, bird and fm-violin, each running for 100 seconds.
 I've included sbcl times for comparison.
 </p>
+
 <pre>
           s7 interpreted  s7+run  C (-O2)      sbcl
 bird          9.6          .7       .65         .65
@@ -4371,8 +4598,10 @@ guile 1.9.5 after compilation: 10.5
 
 <small>
 <blockquote>
+
 <p>I can't resist giving another example.  Here's some vector arithmetic:
 </p>
+
 <pre>
 (let* ((size (* 128 1024))
        (v1 (make-vector size 0.0))
@@ -4387,8 +4616,10 @@ guile 1.9.5 after compilation: 10.5
        ((= i size) sum)
      (set! sum (+ sum (* (v1 i) (v2 i)))))))
 </pre>
+
 <p>With run, this takes .092 seconds on my old machine; without run, it takes 1.94 seconds.
 </p>
+
 </blockquote>
 </small>
 
@@ -4409,6 +4640,7 @@ it is primarily a foreign function interface.  s7.h has lots of comments about t
 functions.  Here I'll collect some complete examples.  s7.c depends on the following
 compile-time flags:
 </p>
+
 <pre>
     HAVE_STDBOOL_H                 1 if you have stdbool.h
     HAVE_PTHREADS                  1 if you want multithreading support (requires pthreads, default is 0)
@@ -4419,6 +4651,7 @@ compile-time flags:
     WITH_PROFILING                 1 if you want profiling support (default is 0)
     S7_DISABLE_DEPRECATED          1 if you want to make sure you're not using any deprecated s7 stuff (default is 0)
 </pre>
+
 <p>See the comment at the start of s7.c for more information about these switches.
 s7.h defines the two main number types: s7_Int and s7_Double.
 The examples that follow show:
@@ -4443,6 +4676,7 @@ The examples that follow show:
 </ul>
 
 <br><br>
+
 <p>
 <A NAME="repl"></a>
 First, a bare REPL:
