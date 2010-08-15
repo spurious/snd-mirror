@@ -7635,7 +7635,8 @@ static mus_any_class FILE_TO_FRAME_CLASS = {
   &file_to_sample_length, 0,
   0, 0, 0, 0,
   &fallback_scaler, 0,
-  0, 0,
+  &file_to_sample_increment,     /* support increment to allow backward reads */ 
+  &file_to_sample_set_increment, 
   &run_file_to_frame,
   MUS_INPUT,
   NULL,

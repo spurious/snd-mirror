@@ -577,8 +577,8 @@ struct s7_scheme {
 
   s7_pointer *temps;             /* short-term gc protection */
   int temps_ctr, temps_size;
-  struct s7_cell _TEMP_CELL;
-  s7_pointer TEMP_CELL;
+  struct s7_cell _TEMP_CELL, _TEMP_CELL_1;
+  s7_pointer TEMP_CELL, TEMP_CELL_1;
 
   jmp_buf goto_start, goto_qsort_end;
   bool longjmp_ok;
@@ -2016,6 +2016,8 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
 { 
   s7_pointer x; 
   int location;
+
+  if (!name) return(sc->F);
 
   location = symbol_table_hash(name, vector_length(sc->symbol_table)); 
   x = symbol_table_find_by_name(sc, name, location); 
@@ -11194,6 +11196,7 @@ char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj)
 
 s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 {
+  char *str;
   if ((s7_is_vector(obj)) ||
       (s7_is_hash_table(obj)))
     return(vector_to_string(sc, obj));
@@ -11201,7 +11204,13 @@ s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   if (is_pair(obj))
     return(list_as_string(sc, obj));
 
-  return(make_string_uncopied(sc, atom_to_c_string(sc, obj, use_write)));
+  str = atom_to_c_string(sc, obj, use_write);
+  if (str)
+    return(make_string_uncopied(sc, str));
+  return(s7_make_string_with_length(sc, "", 0)); 
+  /* else segfault in (string->symbol (object->string "" #f))
+   *   this can't be optimized to make_string_uncopied -- gc trouble (attempt to free unallocated pointer)
+   */
 }
 
 
@@ -19588,7 +19597,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if ((!(is_not_local(sc->x))) &&
 		  (find_symbol(sc, sc->envir, sc->x) != sc->NIL))
 		{
-		  push_stack(sc, opcode(OP_EVAL_ARGS), sc->NIL, sc->code);
+		  push_stack(sc, opcode(OP_EVAL_ARGS), sc->NIL, cdr(sc->code));
 		  sc->code = sc->x;
 		  goto EVAL;
 		}
@@ -19602,7 +19611,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   it's actually slower by about 30/2400 than just plowing ahead as if
 	   *   there were args.  (The check costs 27 and we only hit it a few hundred times).
 	   */
-	  push_stack(sc, opcode(OP_EVAL_ARGS), sc->NIL, sc->code);
+	  push_stack(sc, opcode(OP_EVAL_ARGS), sc->NIL, cdr(sc->code));
 	  sc->code = car(sc->code);
 	  goto EVAL;
 
@@ -19633,10 +19642,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {    
 	      /* macro expansion */
 	      push_stack(sc, opcode(OP_EVAL_MACRO), sc->NIL, sc->NIL);
-	      /* code is the macro invocation: (mac-name ...), args is nil, value is the macro code bound to mac-name */
-	      sc->x = sc->TEMP_CELL; 
+	      /* args is nil, value is the macro code bound to mac-name, code is the unevaluated arglist
+	       *   we want to pass a list of (mac . args) to the macro expander
+	       */
+	      car(sc->TEMP_CELL_1) = sc->value; /* macro */
+	      cdr(sc->TEMP_CELL_1) = sc->code;  /* args */
 	      sc->args = sc->TEMP_CELL;
-	      car(sc->args) = sc->code;
 	      sc->code = sc->value;
 	      goto APPLY;
 	    }
@@ -19645,38 +19656,36 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   * (progn (display "hi") (+ 1 23))
 	   * we can't catch this above under T_SYMBOL because we might be using "syntax" symbols as symbols (case labels etc)
 	   */
-	  sc->code = cdr(sc->code);
+
 	  sc->op = (opcode_t)syntax_opcode(sc->value);
 	  goto START_WITHOUT_POP_STACK;
 	}
 
-      else 
-	{
-	  /* here sc->value is the func, sc->code is the entire expression */
-	  /*   we don't have to delay lookup of the func because arg evaluation order is not specified, so
-	   *     (let ((func +)) (func (let () (set! func -) 3)	2))
-	   *   can return 5.
-	   *
-	   * check for args=nil and jump to apply here costs slightly more than it saves 
-	   */
+      /* sc->value is the func, sc->code is the entire expression 
+       *
+       *   we don't have to delay lookup of the func because arg evaluation order is not specified, so
+       *     (let ((func +)) (func (let () (set! func -) 3)	2))
+       *   can return 5.
+       *
+       * check for args=nil and jump to apply here costs slightly more than it saves 
+       *
+       * here sc->args is nil, sc->value is the operator (car of list), sc->code is the rest -- the args.
+       *   EVAL_ARGS can be called within the EVAL_ARGS1 loop if it's a nested expression:
+       * (+ 1 2 (* 2 3)):
+       *   e_args: (), value: +, code: (1 2 (* 2 3))
+       *   e1args: (+), value: +, code: (1 2 (* 2 3))
+       *   e1args: (1 +), value: +, code: (2 (* 2 3))
+       *   e1args: (2 1 +), value: +, code: ((* 2 3))
+       *   e_args: (), value: *, code: (2 3)
+       *   e1args: (*), value: *, code: (2 3)
+       *   e1args: (2 *), value: *, code: (3)
+       *   e1args: (3 2 *), value: *, code: ()
+       *   <end -> apply the * op>
+       *   e1args: (6 2 1 +), value: +, code: ()
+       *
+       * allocating sc->args here rather than below (trading 2 sets for a jump) was much slower
+       */
 
-	  sc->code = cdr(sc->code);
-
-	  /* here [after the cdr] sc->args is nil, sc->value is the operator (car of list), sc->code is the rest -- the args.
-	   *   EVAL_ARGS can be called within the EVAL_ARGS1 loop if it's a nested expression:
-	   * (+ 1 2 (* 2 3)):
-	   *   e_args: (), value: +, code: (1 2 (* 2 3))
-	   *   e1args: (+), value: +, code: (1 2 (* 2 3))
-	   *   e1args: (1 +), value: +, code: (2 (* 2 3))
-	   *   e1args: (2 1 +), value: +, code: ((* 2 3))
-	   *   e_args: (), value: *, code: (2 3)
-	   *   e1args: (*), value: *, code: (2 3)
-	   *   e1args: (2 *), value: *, code: (3)
-	   *   e1args: (3 2 *), value: *, code: ()
-	   *   <end -> apply the * op>
-	   *   e1args: (6 2 1 +), value: +, code: ()
-	   */
-	}
       
     EVAL_ARGS:
     case OP_EVAL_ARGS1:
@@ -26283,6 +26292,7 @@ s7_scheme *s7_init(void)
   sc->NO_VALUE = &sc->_NO_VALUE;  
   sc->ELSE = &sc->_ELSE;
   sc->TEMP_CELL = &sc->_TEMP_CELL;
+  sc->TEMP_CELL_1 = &sc->_TEMP_CELL_1;
 
   set_type(sc->NIL, T_NIL | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->NIL) = cdr(sc->NIL) = sc->UNSPECIFIED;
@@ -26312,7 +26322,11 @@ s7_scheme *s7_init(void)
    */
 
   set_type(sc->TEMP_CELL, T_PAIR | T_STRUCTURE | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
-  car(sc->TEMP_CELL) = cdr(sc->TEMP_CELL) = sc->NIL;
+  cdr(sc->TEMP_CELL) = sc->NIL;
+
+  set_type(sc->TEMP_CELL_1, T_PAIR | T_STRUCTURE | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  car(sc->TEMP_CELL_1) = cdr(sc->TEMP_CELL_1) = sc->NIL;
+  car(sc->TEMP_CELL) = sc->TEMP_CELL_1;
   
   sc->input_port = sc->NIL;
   sc->input_port_stack = sc->NIL;
@@ -27142,7 +27156,7 @@ s7_scheme *s7_init(void)
  *       :rest is not ignored, so this is not inconsistent, but do we just ignore these in the arg count?
  *       does the allowed key gobble up the following arg?
  *
- * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html)
+ * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html) [also list-ref/set, frame|mixer etc]
  * PERHAPS: multidimensional hash tables
  *
  * someday we need to catch gmp exceptions: SIGFPE (exception=deliberate /0 -- see gmp/errno.c)
@@ -27176,6 +27190,12 @@ s7_scheme *s7_init(void)
  * (func ... obj ...) -> (eval (func ... obj ...) (aug-env obj cur-env))
  * (func ... obj1 ... obj2 ...) -> (eval (func ... obj1 ... obj2 ...) (aug-env obj1...)) 
  * this almost works, but how to find the op quickly, how to tell without overhead that we have an obj?
+ * add a bit, share it with syntax/macro, in that portion of the evaluator it can't be slower
+ *   to have one more bit on in the test, when T_OBJECT(?), do the list rearrangements?
+ *   T_OBJECT as flag (make-object => make-type for the type)
+ *   if T_OBJECT encountered reorder args from (func ...) to (obj func ...)
+ *   when obj applied, use obj as its own environment
+ *
  *
  * s7test valgrind 17-Jul-10: 
  *    intel core duo (1.83G):    3162 (2M)

@@ -36,11 +36,11 @@
 
 	 (wrapper (or (and (list? struct-name)
 			   (or (and (> (length struct-name) 2)
-				    (equal? (list-ref struct-name 1) :make-wrapper)
-				    (list-ref struct-name 2))
+				    (equal? (struct-name 1) :make-wrapper)
+				    (struct-name 2))
 			       (and (= (length struct-name) 5)
-				    (equal? (list-ref struct-name 3) :make-wrapper)
-				    (list-ref struct-name 4))))
+				    (equal? (struct-name 3) :make-wrapper)
+				    (struct-name 4))))
 		      (lambda (gen) gen)))
 
 	 (sname (if (string? name) name (symbol->string name)))
@@ -54,8 +54,8 @@
 				 (snd-error (format #f ":type indication for defgenerator (~A) field (~A) should be after the default value" name n)))
 			     (if (and (list? n)
 				      (= (length n) 4)
-				      (eq? (list-ref n 2) :type))
-				 (list-ref n 3)
+				      (eq? (n 2) :type))
+				 (n 3)
 				 (if (and (list? n)
 					  (= (length n) 2))
 				     (if (number? (cadr n))
@@ -75,11 +75,11 @@
 
 	 (original-methods (or (and (list? struct-name)
 				    (or (and (> (length struct-name) 2)
-					     (equal? (list-ref struct-name 1) :methods)
-					     (list-ref struct-name 2))
+					     (equal? (struct-name 1) :methods)
+					     (struct-name 2))
 					(and (= (length struct-name) 5)
-					     (equal? (list-ref struct-name 3) :methods)
-					     (list-ref struct-name 4))))
+					     (equal? (struct-name 3) :methods)
+					     (struct-name 4))))
 			       (list)))
 
 	 (method-exists? (lambda (method)
@@ -224,7 +224,7 @@
 				      (lambda (g) 
 					,sname)
 				      (lambda (g new-name)
-					(set-car! (cdr (assoc 'mus-name (list-ref g (- (length g) 1))))
+					(set-car! (cdr (assoc 'mus-name (g (- (length g) 1))))
 						  (lambda (g) 
 						    new-name))))) ; depend on closures?
 			       (list)))))
@@ -259,7 +259,7 @@
 				(make-procedure-with-setter
 				 (lambda (arg)
 				   "generator field accessor"
-				   (list-ref arg ,ctr))
+				   (arg ,ctr))
 				 (lambda (arg val)
 				   (list-set! arg ,ctr val))))))
 		    (add-clm-field sname (string-append sname "-" n) ctr type)
