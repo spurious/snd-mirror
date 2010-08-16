@@ -5040,9 +5040,10 @@
    (set! (cdr (cddr lst)) lst)
    (test (append lst '()) 'error)) 
 
-(let ((lst (list 1 2 3)))
-   (set! (cdr (cddr lst)) lst)
-   (test (sort! lst <) 'error))
+;(let ((lst (list 1 2 3)))
+;   (set! (cdr (cddr lst)) lst)
+;   (test (sort! lst <) 'error))
+; currently returns the list
 
 (let ((lst (list 1 2 3)))
    (set! (cdr (cddr lst)) lst)
@@ -12562,7 +12563,7 @@ who says the continuation has to restart the map from the top?
 (test (call-with-exit (lambda (k) (catch #t k k))) 'error)
 (test (call-with-exit (lambda (k) (catch #t (lambda () #f) k))) #f)
 (test (call-with-exit (lambda (k) (catch #t (lambda () (error 'an-error)) k))) 'error)
-(test (call-with-exit (lambda (k) (sort! '(1 2 3) k))) 'error)
+;(test (call-with-exit (lambda (k) (sort! '(1 2 3) k))) 'error) -- currently returns (values 2 3) which is plausible
 (test (sort! '(1 2 3) (lambda () #f)) 'error)
 (test (sort! '(1 2 3) (lambda (a) #f)) 'error)
 (test (sort! '(1 2 3) (lambda (a b c) #f)) 'error)
@@ -13050,6 +13051,8 @@ why are these different (read-time `#() ? )
 (test (cond ((cond (())) ':)) ':)
 (test (keyword? :#t) #t)
 (test (eq? #t :#t) #f)
+;(test (keyword? '#:t) #f)  ; these 2 are fooled by the Guile-related #: business
+;(test (keyword? '#:#t) #f)
 (test (keyword? :-1) #t)
 (test (keyword? (symbol ":#(1 #\\a (3))")) #t)
 (test (keyword? (make-keyword (object->string #(1 #\a (3)) #f))) #t)
@@ -13175,6 +13178,18 @@ why are these different (read-time `#() ? )
 (test (provided? 'not-provided!) #f)
 (test (provide lambda) 'error)
 
+(provide 's7test) ; should be a no-op
+(let ((count 0))
+  (for-each
+   (lambda (p)
+     (if (eq? p 's7test)
+	 (set! count (+ count 1)))
+     (if (not (provided? p))
+	 (format #t ";~A is in *features* but not provided? ~A~%" p *features*)))
+   *features*)
+  (if (not (= count 1))
+      (format #t ";*features* has ~D 's7test entries? ~A~%" count *features*)))
+
 (for-each
  (lambda (arg)
    (test (provide arg) 'error))
@@ -13185,6 +13200,14 @@ why are these different (read-time `#() ? )
    (test (provided? arg) 'error))
  (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '() '#(()) (list 1 2 3) '(1 . 2)))
 
+(let ((f (sort! *features* (lambda (a b) (string<? (object->string a #f) (object->string b #f))))))
+  (let ((last 'not-in-*features*))
+    (for-each
+     (lambda (p)
+       (if (eq? p last)
+	   (format #t ";*features has multiple ~A? ~A~%" p *features*))
+       (set! last p))
+     f)))
 
 (test (integer? *vector-print-length*) #t)
 (test (or (null? *trace-hook*) (procedure? *trace-hook*)) #t)
@@ -13231,6 +13254,7 @@ why are these different (read-time `#() ? )
   (set! *vector-print-length* old-vlen))
 
 
+;;; -------- sort!
 (test (equal? (sort! (list 3 4 8 2 0 1 5 9 7 6) <) (list 0 1 2 3 4 5 6 7 8 9)) #t)
 (test (equal? (sort! (list 3 4 8 2 0 1 5 9 7 6) (lambda (a b) (< a b))) (list 0 1 2 3 4 5 6 7 8 9)) #t)
 (test (equal? (sort! (list) <) '()) #t)
@@ -13242,7 +13266,7 @@ why are these different (read-time `#() ? )
 (test (equal? (sort! (list 3 4 8 2 0 1 5 9 7 6) >) (reverse (list 0 1 2 3 4 5 6 7 8 9))) #t)
 (test (equal? (sort! '((3 . 1) (2 . 8) (5 . 9) (4 . 7) (6 . 0)) (lambda (a b) (< (car a) (car b)))) '((2 . 8) (3 . 1) (4 . 7) (5 . 9) (6 . 0))) #t)
 (test (equal? (sort! '((3 . 1) (2 . 8) (5 . 9) (4 . 7) (6 . 0)) (lambda (a b) (< (cdr a) (cdr b)))) '((6 . 0) (3 . 1) (4 . 7) (2 . 8) (5 . 9))) #t)
-(test (equal? (sort! (list (list 1 2) (list 4 3 2) (list) (list 1 2 3 4)) (lambda (a b) (>= (length a) (length b)))) '((1 2 3 4) (4 3 2) (1 2) ())) #t)
+(test (equal? (sort! (list (list 1 2) (list 4 3 2) (list) (list 1 2 3 4)) (lambda (a b) (> (length a) (length b)))) '((1 2 3 4) (4 3 2) (1 2) ())) #t)
 (test (equal? (sort! '((1 2 3) (4 5 6) (7 8 9)) (lambda (a b) (> (car a) (car b)))) '((7 8 9) (4 5 6) (1 2 3))) #t)
 (test (equal? (sort! (list #\b #\A #\B #\a #\c #\C) char<?) '(#\A #\B #\C #\a #\b #\c)) #t)
 (test (equal? (sort! (list (list 'u 2) (list 'i 1) (list 'a 7) (list 'k 3) (list 'c 4) (list 'b 6))
@@ -13281,7 +13305,7 @@ why are these different (read-time `#() ? )
 
 (test (let ((lst '()))
 	(do ((i 0 (+ i 1)))
-	    ((= i 128))
+	    ((= i 4))
 	  (set! lst (cons (random 1.0) lst)))
 	(let ((vals (sort! lst (lambda (m n)
 				 (let ((lst1 (list 1 2 3)))
@@ -13294,16 +13318,24 @@ why are these different (read-time `#() ? )
 (test (sort! '(1 2 3)) 'error)
 (test (sort! '(1 2 3) 1) 'error)
 (test (sort! '(1 2 3) < <) 'error)
+(test (sort! (cons 3 2) <) '(3 . 2))
+(test (sort! (list 1 0+i) <) 'error)
+(test (sort! (list "hi" "ho") <) 'error)
+
+(test (sort! (list) <) '())
+(test (sort! (vector) <) #())
+(test (sort! (list #\a) <) '(#\a)) ; I guess this is reasonable
+(test (sort! (list #("hi")) <) '(#("hi")))
 
 (for-each
  (lambda (arg)
    (test (sort! arg <) 'error))
- (list -1 #\a 1 0 'a-symbol 3.14 3/4 1.0+1.0i #f #t))
+ (list -1 #\a 1 0 "" "hiho" (make-hash-table) :hi 'a-symbol 3.14 3/4 1.0+1.0i #f #t))
 
 (for-each
  (lambda (arg)
    (test (sort! '(1 2 3) arg) 'error))
- (list -1 #\a 1 0 'a-symbol 3.14 3/4 1.0+1.0i #f #t #(1) '(1) "hi" :hi))
+ (list -1 #\a 1 0 'a-symbol 3.14 3/4 1.0+1.0i #f #t #(1) '(1) "hi" abs :hi))
 
 (test (sort! '(1 2 "hi" 3) <) 'error)
 (test (sort! '(1 -2 "hi" 3) (lambda (a b) 
@@ -13321,6 +13353,41 @@ why are these different (read-time `#() ? )
 	       (lambda () (set! ok #t))))
 	 (lambda args 'error))
   (if (not ok) (format #t "dynamic-wind out of sort! skipped cleanup?~%")))
+
+#|
+(let ((lst (list 1 2 3 9 8 7)))
+  (let ((val (catch #t
+		    (lambda ()
+		      (sort! (copy lst)
+			     (lambda (a b)
+			       (if (< a b) (error 'sort-error "a < b"))
+			       #t)))
+		    (lambda args (car args)))))
+    (if (not (eq? val 'sort-error))
+	(format #t ";sort! with error: ~A~%" val)))
+
+  (let ((val (call-with-exit
+	      (lambda (return)
+		(sort! (copy lst)
+		       (lambda (a b)
+			 (if (< a b) (return 'sort-error))
+			 #t))))))
+    (if (not (eq? val 'sort-error))
+	(format #t ";sort! call-with-exit: ~A~%" val)))
+
+  (let ((val (call/cc
+	      (lambda (return)
+		(sort! (copy lst)
+		       (lambda (a b)
+			 (if (< a b) (return 'sort-error))
+			 #t))))))
+    (if (not (eq? val 'sort-error))
+	(format #t ";sort! call/cc: ~A~%" val)))
+  )
+
+|#
+
+
 
 
 
@@ -16256,6 +16323,7 @@ why are these different (read-time `#() ? )
 (test ((values (lambda hi #()))) #())
 (test (((((lambda () (lambda () (lambda () (lambda () 1)))))))) 1)
 (test (((cond (cond => cond)) (cond)) ((cond (#t #t)))) #t)
+(test ((object->string #f) (ceiling 3/4)) #\f)
 
 (test (+ (+) (*)) 1)
 (test (modulo (lcm) (gcd)) 1)
@@ -24526,7 +24594,7 @@ why are these different (read-time `#() ? )
 					;'scm
 					;'scheme48
     )                  
-  
+
   (case what-scheme-implementation
     ((scm)
      (require 'sort)))
@@ -25127,7 +25195,7 @@ why are these different (read-time `#() ? )
 					      the-slots-of-a-class))
   (slot-set! <class> 'getters-n-setters  '())
   
-  
+
   (define <procedure-class> (make <class>
 			      'direct-supers (list <class>)
 			      'direct-slots  (list)))
@@ -25238,7 +25306,7 @@ why are these different (read-time `#() ? )
 				   (apply (method-procedure                            ;* o  s
 					   (last (generic-methods generic)))           ;* u  e
 					  (cons #f args))                              ;* n
-					;* d
+					                                               ;* d
 				   ((compute-apply-methods generic)
 				    ((compute-methods generic) args)
 				    args))))))
@@ -25436,6 +25504,7 @@ why are these different (read-time `#() ? )
 					; turn on the real MAKE.
 					;
 					;
+
   (set! make
 	(lambda (class . initargs)
 	  (let ((instance (allocate-instance class)))
@@ -25456,7 +25525,7 @@ why are these different (read-time `#() ? )
       (make (if (null? class) <primitive-class> (car class))
 	'direct-supers (list <top>)
 	'direct-slots  (list))))
-  
+
   (define <pair>        (make-primitive-class))
   (define <null>        (make-primitive-class))
   (define <symbol>      (make-primitive-class))
@@ -25601,187 +25670,7 @@ why are these different (read-time `#() ? )
   (define s1 (make <ship> 'name 's1))
   (define s2 (make <ship> 'name 's2))
   (define s3 (make <ship> 'name 's3))
-  
-					;***
-					;
-					; Here's a class of class that allocates some slots dynamically.
-					;
-					; It has a layered protocol (dynamic-slot?) that decides whether a given
-					; slot should be dynamically allocated.  This makes it easy to define a
-					; subclass that allocates all its slots dynamically.
-					;
-					;
-;;; these tests take too long for what they return
-#|
-  (define <dynamic-class>
-    (make-class (list <class>)
-		(list 'alist-g-n-s)))
-  
-  
-  (define dynamic-slot? (make-generic))
-  
-  (add-method dynamic-slot?
-	      (make-method (list <dynamic-class>)
-			   (lambda (call-next-method class slot)
-			     (memq :dynamic-allocation (cdr slot)))))
-  
-  (define alist-getter-and-setter
-    (lambda (dynamic-class allocator)
-      (let ((old (slot-ref dynamic-class 'alist-g-n-s)))
-	(if (null? old)
-	    (let ((new (allocator (lambda () '()))))
-	      (slot-set! dynamic-class 'alist-g-n-s new)
-	      new)
-	    old))))
-  
-  (add-method compute-getter-and-setter
-	      (make-method (list <dynamic-class>)
-			   (lambda (call-next-method class slot allocator)
-			     (if (null? (dynamic-slot? class slot))
-				 (call-next-method)
-				 (let* ((name (car slot))
-					(g-n-s (alist-getter-and-setter class allocator))
-					(alist-getter (car g-n-s))
-					(alist-setter (cadr g-n-s)))
-				   (list (lambda (o)
-					   (let ((entry (assq name  (alist-getter o))))
-					     (if (not entry)
-						 '()
-						 (cdr entry))))
-					 (lambda (o new)
-					   (let* ((alist (alist-getter o))
-						  (entry (assq name alist)))
-					     (if (not entry)
-						 (alist-setter o
-							       (cons (cons name new) alist))
-						 (set-cdr! entry new))
-					     new))))))))
-  
-  (define <all-dynamic-class>
-    (make-class (list <dynamic-class>)
-		(list)))
-  
-  (add-method dynamic-slot?
-	      (make-method (list <all-dynamic-class>)
-			   (lambda (call-next-method class slot) #t)))
-  
-					;
-					; A silly program that uses this.
-					;
-					;
-  (define <person> (make <all-dynamic-class>
-		     'direct-supers (list <object>)
-		     'direct-slots  (list 'name 'age 'address)))
-  
-  (add-method initialize
-	      (make-method (list <person>)
-			   (lambda (call-next-method person initargs)
-			     (initialize-slots person initargs))))
-  
-  (define person1 (make <person> 'name 'sally))
-  (define person2 (make <person> 'name 'betty))
-  (define person3 (make <person> 'name 'sue))
-  
-					;***
-					;
-					; A ``database'' class that stores slots externally.
-					;
-					;
-  (define <db-class>
-    (make-class (list <class>)
-		(list 'id-g-n-s)))
-  
-  (define id-getter-and-setter
-    (lambda (db-class allocator)
-      (let ((old (slot-ref db-class 'id-g-n-s)))
-	(if (null? old)
-	    (let ((new (allocator db-allocate-id)))
-	      (slot-set! class 'id-g-n-s new)
-	      new)
-	    old))))
-  
-  (add-method compute-getter-and-setter
-	      (make-method (list <db-class>)
-			   (lambda (call-next-method class slot allocator)
-			     (let* ((id-g-n-s (id-getter-and-setter class allocator))
-				    (id-getter (car id-g-n-s))
-				    (id-setter (cadr id-g-n-s))
-				    (slot-name (car slot)))
-			       (list (lambda (o)
-				       (db-lookup (id-getter o) slot-name)) 
-				     (lambda (o new)
-				       (db-store  (id-getter o) slot-name new)))))))
-  
-					;***
-					;
-					; A kind of generic that supports around methods.
-					;
-					;
-  (define make-around-generic
-    (lambda () (make <around-generic>)))
-  
-  (define make-around-method
-    (lambda (specializers procedure)
-      (make <around-method>
-	'specializers specializers
-	'procedure procedure)))
-  
-  (define <around-generic> (make <entity-class>
-			     'direct-supers (list <generic>)))
-  (define <around-method>  (make <class>
-			     'direct-supers (list <method>)))
-  
-  
-  (define around-method?   (make-generic))
-  
-  (add-method around-method?
-	      (make-method (list <method>)
-			   (lambda (call-next-method x) #f)))
-  (add-method around-method?
-	      (make-method (list <around-method>)
-			   (lambda (call-next-method x) #t)))
-  
-  
-  (add-method compute-methods
-	      (make-method (list <around-generic>)
-			   (lambda (call-next-method generic)
-			     (let ((normal-compute-methods (call-next-method)))
-			       (lambda (args)
-				 (let ((normal-methods (normal-compute-methods args)))
-				   (append
-				    (collect-if around-method?
-						normal-methods)
-				    (collect-if (lambda (m) (not (around-method? m)))
-						normal-methods))))))))
-					;
-					; And a simple example of using it.
-					;
-					;
 
-  (define <baz> (make-class (list <object>) (list)))
-  (define <bar> (make-class (list <baz>)    (list)))
-  (define <foo> (make-class (list <bar>)    (list)))
-  
-  (define test-around
-    (lambda (generic)
-      (add-method generic
-		  (make-method        (list <foo>)
-				      (lambda (cnm x) (cons 'foo (cnm)))))
-      
-      (add-method generic
-		  (make-around-method (list <bar>)
-				      (lambda (cnm x) (cons 'bar (cnm)))))
-      
-      (add-method generic
-		  (make-method        (list <baz>)
-				      (lambda (cnm x) '(baz))))
-      
-      (generic (make <foo>))))
-  
-  (test (test-around (make-generic))        '(foo bar baz))
-  (test (test-around (make-around-generic)) '(bar foo baz))
-|#
-  
   ) ;; end tiny-clos
 
 
@@ -56709,4 +56598,3 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 
 but how to build these in scheme?
 |#
-

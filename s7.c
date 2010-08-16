@@ -195,6 +195,8 @@
 #endif
 
 
+#define DEBUGGING 0
+
 
 
 /* -------------------------------------------------------------------------------- */
@@ -300,7 +302,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_FOR_EACH, OP_MAP, OP_BARRIER, OP_DEACTIVATE_GOTO,
 	      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, OP_BACRO, OP_APPLY_WITHOUT_TRACE,
 	      OP_LET_UNWIND, OP_SPECIAL, OP_SET_SPECIAL,
-	      OP_GET_OUTPUT_STRING,
+	      OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT4, OP_SORT_TWO,
 	      OP_MAX_DEFINED} opcode_t;
 
 static const char *op_names[OP_MAX_DEFINED] = 
@@ -318,12 +320,12 @@ static const char *op_names[OP_MAX_DEFINED] =
    "trace-hook-quit", "with-environment", "with-environment", "with-environment", "for-each", "map", 
    "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro", "apply-without-trace", 
    "let_unwind", "special", "set-special",
-   "get-output-string",
+   "get-output-string", "sort", "sort", "sort", "sort", "sort", "sort"
 };
 
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 87 max num chars (256) */
+/* this needs to be at least OP_MAX_DEFINED = 93 max num chars (256) */
 /* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -396,6 +398,9 @@ typedef struct s7_vdims_t {
 /* cell structure */
 typedef struct s7_cell {
   unsigned int flag;
+#if DEBUGGING
+  unsigned int saved_flag;
+#endif
   int hloc;
 #if WITH_PROFILING
   long long int calls;
@@ -635,6 +640,10 @@ struct s7_scheme {
 #define typeflag(p)                   ((p)->flag)
 #define type(p)                       (typeflag(p) & T_MASKTYPE)
 /* set_type below -- needs to maintain mark setting */
+#if DEBUGGING
+#define saved_typeflag(p)             ((p)->saved_flag)
+#define saved_type(p)                 (saved_typeflag(p) & T_MASKTYPE)
+#endif
 
 #define T_SYNTAX                      (1 << (TYPE_BITS + 1))
 #define is_syntax(p)                  ((typeflag(p) & T_SYNTAX) != 0) /* the != 0 business is for MS C++'s benefit */
@@ -1020,6 +1029,7 @@ static bool object_is_applicable(s7_pointer x);
 static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a);
 static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static s7_pointer make_list_3(s7_scheme *sc, s7_pointer a, s7_pointer b, s7_pointer c);
+static s7_pointer make_list_4(s7_scheme *sc, s7_pointer a, s7_pointer b, s7_pointer c, s7_pointer d);
 static s7_pointer permanent_cons(s7_pointer a, s7_pointer b, int type);
 static void write_string(s7_scheme *sc, const char *s, s7_pointer pt);
 static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
@@ -1486,6 +1496,9 @@ static int gc(s7_scheme *sc)
 	      {
 		if (is_finalizable(p))
 		  finalize_s7_cell(sc, p); 
+#if DEBUGGING
+		saved_typeflag(p) = typeflag(p);
+#endif		
 		typeflag(p) = 0;  /* (this is needed -- otherwise we try to free some objects twice) */
 		(*fp++) = p;
 	      }
@@ -4646,7 +4659,7 @@ static s7_pointer check_sharp_readers(s7_scheme *sc, const char *name)
    *    where each proc takes one argument, the string from the "#" to the next delimiter.
    *    The procedure can call read-char to read ahead in the current-input-port.
    *    If it returns anything other than #f, that is the value of the sharp expression.
-   * This search happens after #:, #|, #!, #t, and #f.
+   * This search happens after #|, #!, #t, and #f.
    */
 
   for (reader = symbol_value(sc->sharp_readers); reader != sc->NIL; reader = cdr(reader))
@@ -10640,6 +10653,14 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     case T_C_OBJECT:
       return(describe_object(sc, obj)); /* this allocates already */
 
+#if DEBUGGING
+    case T_VECTOR: 
+      return(copy_string("#<vector>"));
+
+    case T_PAIR: 
+      return(copy_string("#<pair>"));
+#endif
+
     default:
       break;
     }
@@ -10669,6 +10690,29 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     has_structure(obj) ? " (structure)" : "",
 	     is_multiple_value(obj) ? " (values)" : "",
 	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
+#if DEBUGGING
+    if ((saved_typeflag(obj) != typeflag(obj)) &&
+	(saved_typeflag(obj) > 0) &&
+	(saved_type(obj) < BUILT_IN_TYPES))
+      {
+	char *descr, *new_buf;
+	int old_flag;
+	old_flag = typeflag(obj);
+	typeflag(obj) = saved_typeflag(obj);
+	descr = atom_to_c_string(sc, obj, false);
+	typeflag(obj) = old_flag;
+	if (descr)
+	  {
+	    int len;
+	    len = strlen(descr) + strlen(buf) + 32;
+	    new_buf = (char *)calloc(len, sizeof(char));
+	    snprintf(new_buf, len, "%s (possibly: %s)", buf, descr);
+	    free(descr);
+	    free(buf);
+	    return(new_buf);
+	  }
+      }
+#endif
     return(buf);
   }
 }
@@ -11594,6 +11638,29 @@ static s7_pointer make_list_3(s7_scheme *sc, s7_pointer a, s7_pointer b, s7_poin
   NEW_CELL(sc, z);
   car(z) = c;
   cdr(z) = sc->NIL;
+  set_type(z, T_PAIR | T_STRUCTURE);
+  NEW_CELL(sc, y);
+  car(y) = b;
+  cdr(y) = z;
+  set_type(y, T_PAIR | T_STRUCTURE);
+  NEW_CELL(sc, x);
+  car(x) = a;
+  cdr(x) = y;
+  set_type(x, T_PAIR | T_STRUCTURE);
+  return(x);
+}
+
+
+static s7_pointer make_list_4(s7_scheme *sc, s7_pointer a, s7_pointer b, s7_pointer c, s7_pointer d) 
+{
+  s7_pointer x, y, z, zz;
+  NEW_CELL(sc, zz);
+  car(zz) = d;
+  cdr(zz) = sc->NIL;
+  set_type(zz, T_PAIR | T_STRUCTURE);
+  NEW_CELL(sc, z);
+  car(z) = c;
+  cdr(z) = zz;
   set_type(z, T_PAIR | T_STRUCTURE);
   NEW_CELL(sc, y);
   car(y) = b;
@@ -13350,139 +13417,63 @@ static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect)
 
 /* -------- sort! -------- */
 
-#if (!HAVE_NESTED_FUNCTIONS)
-  static s7_pointer compare_proc, compare_proc_args;
-  static s7_scheme *compare_sc; /* ugh */
-
-  static int vector_compare(const void *v1, const void *v2)
-  {
-    int start;
-    car(compare_proc_args) = (*(s7_pointer *)v1);
-    cadr(compare_proc_args) = (*(s7_pointer *)v2);
-
-    start = s7_stack_top(compare_sc); /* see note below */
-    push_stack(compare_sc, opcode(OP_EVAL_DONE), compare_sc->args, compare_sc->code); 
-    compare_sc->args = compare_proc_args;
-    compare_sc->code = compare_proc;
-    eval(compare_sc, OP_APPLY);
-
-    if (s7_stack_top(compare_sc) < start)
-      {
-	s7_gc_on(compare_sc, true);
-	longjmp(compare_sc->goto_qsort_end, 1);
-      }
-    if (is_true(compare_sc, compare_sc->value))
-      return(-1);
-    return(1);
-  }
-#endif
-
-
-static s7_pointer g_sort_in_place(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 {
-  #define H_sort_in_place "(sort! list-or-vector func) sorts a list or vector using func to compare elements.\
+  #define H_sort "(sort! list-or-vector less?) sorts a list or vector using the function 'less?' to compare elements.\
 If its first argument is a list, the list is copied (despite the '!')."
 
-  int gc_loc;
-  s7_pointer vect;
+  s7_pointer data, lessp;
+  s7_Int len, n, k;
 
-#if HAVE_NESTED_FUNCTIONS
-  s7_pointer compare_proc, compare_proc_args;
-  auto int vector_compare(const void *v1, const void *v2);
+  data = car(args);
+  if (data == sc->NIL)
+    return(sc->NIL);
+  lessp = cadr(args);
 
-  int vector_compare(const void *v1, const void *v2)
-  {
-    int start;
-    car(compare_proc_args) = (*(s7_pointer *)v1);
-    cadr(compare_proc_args) = (*(s7_pointer *)v2);
+  if ((!is_pair(data)) && (!s7_is_vector(data)))
+    return(s7_wrong_type_arg_error(sc, "sort! data,", 1, data, "a vector or a list"));
+  if (!is_procedure(lessp))
+    return(s7_wrong_type_arg_error(sc, "sort! function,", 2, lessp, "a function"));
+  if ((is_continuation(lessp)) || is_goto(lessp))
+    return(s7_wrong_type_arg_error(sc, "sort!", 2, lessp, "a normal procedure (not a continuation)"));
 
-    start = s7_stack_top(sc);
-    /* qsort is a large and complex function (250 lines in libc), so we can't easily
-     *   expand it in our eval loop, but we may want to jump out of the sort via call/cc,
-     *   so we look for the stack being unwound past the start point -- this is a kludge!
-     */
-
-    push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
-    sc->args = compare_proc_args;
-    sc->code = compare_proc;
-    eval(sc, OP_APPLY);
-
-    if (s7_stack_top(sc) < start)
-      {
-	longjmp(sc->goto_qsort_end, 1);
-      }
-    if (is_true(sc, sc->value))
-      return(-1);
-    return(1);
-  }
-#endif
-
-  vect = car(args);
-
-  if (s7_is_list(sc, vect))
+  if (is_pair(data))
+    len = s7_list_length(sc, data); /* nil disposed of above, so 0 here == infinite */
+  else 
     {
-      s7_pointer val, lst;
-      int gc_loc_1;
+      if (is_immutable(data))
+	return(s7_wrong_type_arg_error(sc, "sort!", 1, data, "a mutable vector"));
+      len = vector_length(data);
+    }
+  if (len < 2)
+    return(data);
 
-      /* if (sc->free_heap_top < 4096) gc(sc); */
-      /* sort! can be called recursively, so this gc-on/off stuff can get confused. */
-
-      lst = make_list_2(sc, g_list_to_vector(sc, make_list_1(sc, vect)), cadr(args));
-      gc_loc_1 = s7_gc_protect(sc, lst);
-
-      val = g_sort_in_place(sc, lst);
-
-      if (s7_is_vector(val))
-	val = s7_vector_to_list(sc, val);
-      s7_gc_unprotect_at(sc, gc_loc_1);
-
-      return(val);
+  if (is_pair(data))
+    {
+      if (len == 2)
+	{
+	  push_stack(sc, opcode(OP_SORT_TWO), data, sc->args);
+	  push_stack(sc, opcode(OP_APPLY), data, lessp);
+	  return(sc->F);
+	}
+      push_stack(sc, opcode(OP_SORT4), sc->args, sc->code); /* gc protect the original list */
+      car(args) = g_list_to_vector(sc, sc->x = make_list_1(sc, data));
     }
 
-  if (!s7_is_vector(vect))
-    return(s7_wrong_type_arg_error(sc, "sort!", 1, vect, "a vector or a list"));
+  n = len - 1;
+  k = ((int)(n / 2)) + 1;
 
-  compare_proc = cadr(args);
-  if (!is_procedure(compare_proc))
-    return(s7_wrong_type_arg_error(sc, "sort!", 2, compare_proc, "a procedure"));
+  sc->x = s7_make_vector(sc, 5);
+  vector_element(sc->x, 0) = make_mutable_integer(sc, n);
+  vector_element(sc->x, 1) = make_mutable_integer(sc, k);
+  vector_element(sc->x, 2) = make_mutable_integer(sc, 0);
+  vector_element(sc->x, 3) = make_mutable_integer(sc, 0);
+  vector_element(sc->x, 4) = make_list_2(sc, sc->F, sc->F);
 
-  if ((is_continuation(compare_proc)) || is_goto(compare_proc))
-    return(s7_wrong_type_arg_error(sc, "sort!", 2, compare_proc, "a normal procedure (not a continuation)"));
-
-#if (!HAVE_NESTED_FUNCTIONS)
-  compare_sc = sc;
-#endif
-
-  /* I originally had a pthread lock around this code, but if call/cc jumps out,
-   *   we'd need to unlock, which seems to make the original lock pointless.
-   */
-  compare_proc_args = make_list_2(sc, sc->F, sc->F);
-  gc_loc = s7_gc_protect(sc, compare_proc_args);
-
-  /* we could see simple sort cases like < and split them out, avoiding the eval call 
-   *   to tell that we're looking at a simple < for example (not redefined etc).
-   *      other simple comparisions: > >= <=, string cases, char cases
-   *
-   * static int compare_less(const void *v1, const void *v2) 
-   * {
-   *   if (num_lt(number(*((s7_pointer *)v1)), number(*((s7_pointer *)v2)))) return(-1); else return(1);
-   *  }
-   *
-   * if ((type(compare_proc) == T_C_FUNCTION) &&
-   *     (c_function_call(compare_proc) == g_less))
-   *   qsort((void *)s7_vector_elements(vect), vector_length(vect), sizeof(s7_pointer), compare_less);
-   *
-   * but the speed up is not very great.  For a million element vector, we go from 5.7 to 4.6
-   */
-
-   qsort((void *)s7_vector_elements(vect), vector_length(vect), sizeof(s7_pointer), vector_compare); /* qsort sizes are type size_t */
-
-  if (setjmp(sc->goto_qsort_end) != 0)
-    vect = sc->value;
-  s7_gc_unprotect_at(sc, gc_loc);
-
-  return(vect);
+  push_stack(sc, opcode(OP_SORT), args, sc->x);
+  return(sc->F);
 }
+
 
 
 
@@ -14855,12 +14846,11 @@ static s7_pointer s_type_ref(s7_scheme *sc, s7_pointer args)
 	return(obj->value);
     }
   return(s7_error(sc, sc->WRONG_TYPE_ARG, 
-		  s7_cons(sc, 
-			  make_protected_string(sc, "~A type's 'ref' function argument, ~S, is ~A?"),
-			  make_list_3(sc, 
-				      make_protected_string(sc, object_types[tag].name),
-				      x,
-				      make_protected_string(sc, type_name(x))))));
+		  make_list_4(sc, 
+			      make_protected_string(sc, "~A type's 'ref' function argument, ~S, is ~A?"),
+			      make_protected_string(sc, object_types[tag].name),
+			      x,
+			      make_protected_string(sc, type_name(x)))));
 }
 
 
@@ -16721,12 +16711,11 @@ static s7_pointer division_by_zero_error(s7_scheme *sc, const char *caller, s7_p
 static s7_pointer file_error(s7_scheme *sc, const char *caller, const char *descr, const char *name)
 {
   return(s7_error(sc, s7_make_symbol(sc, "io-error"), 
-		  s7_cons(sc, 
-			  make_protected_string(sc, "~A: ~A ~S"),
-			  make_list_3(sc, 
-				      make_protected_string(sc, caller),
-				      make_protected_string(sc, descr),
-				      make_protected_string(sc, name)))));
+		  make_list_4(sc, 
+			      make_protected_string(sc, "~A: ~A ~S"),
+			      make_protected_string(sc, caller),
+			      make_protected_string(sc, descr),
+			      make_protected_string(sc, name))));
 }
 
 
@@ -17208,12 +17197,11 @@ static s7_pointer apply_error(s7_scheme *sc, s7_pointer obj, s7_pointer args)
   if (obj == sc->NIL)
     return(s7_error(sc, sc->SYNTAX_ERROR, make_list_2(sc, make_protected_string(sc, "attempt to apply nil to ~S?"), args)));
   return(s7_error(sc, sc->SYNTAX_ERROR, 
-		  s7_cons(sc, 
-			  make_protected_string(sc, "attempt to apply the ~A ~S to ~S?"), 
-			  make_list_3(sc, 
-				      make_protected_string(sc, type_name(obj)),
-				      obj, 
-				      args))));
+		  make_list_4(sc, 
+			      make_protected_string(sc, "attempt to apply the ~A ~S to ~S?"), 
+			      make_protected_string(sc, type_name(obj)),
+			      obj, 
+			      args)));
 }
 
 
@@ -19345,8 +19333,150 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       else push_stack(sc, opcode(OP_EVAL_DONE), sc->NIL, sc->value);
       sc->code = sc->value;
       goto EVAL;
-      
-      
+
+
+
+      /* -------------------- sort! -------------------- */
+    #define SORT_N vector_element(sc->code, 0)
+    #define SORT_K vector_element(sc->code, 1)
+    #define SORT_J vector_element(sc->code, 2)
+    #define SORT_K1 vector_element(sc->code, 3)
+    #define SORT_ARGS vector_element(sc->code, 4)
+    #define SORT_ARG_1 car(SORT_ARGS)
+    #define SORT_ARG_2 cadr(SORT_ARGS)
+    #define SORT_DATA(K) vector_element(car(sc->args), K)
+    #define SORT_LESSP cadr(sc->args)
+
+    HEAPSORT:
+      {
+	s7_Int n, j, k;
+	n = s7_integer(SORT_N);
+	k = s7_integer(SORT_K1);
+
+	if ((n == k) || (k > ((s7_Int)(n / 2)))) /* k == n == 0 is the first case */
+	  goto START;
+
+	j = 2 * k;
+	integer(number(SORT_J)) = j;
+	if (j < n)
+	  {
+	    push_stack(sc, opcode(OP_SORT1), sc->args, sc->code);
+	    SORT_ARG_1 = SORT_DATA(j);
+	    SORT_ARG_2 = SORT_DATA(j + 1);
+
+	    sc->x = SORT_LESSP;
+	    sc->args = SORT_ARGS;
+	    sc->code = sc->x;
+	    goto APPLY;
+	  }
+	else sc->value = sc->F;
+      }
+
+    case OP_SORT1:
+      {
+	s7_Int j, k;
+	k = s7_integer(SORT_K1);
+	j = s7_integer(SORT_J);
+	if (is_true(sc, sc->value))
+	  {
+	    j = j + 1;
+	    integer(number(SORT_J)) = j;
+	  }
+	push_stack(sc, opcode(OP_SORT2), sc->args, sc->code);
+	SORT_ARG_1 = SORT_DATA(k);
+	SORT_ARG_2 =  SORT_DATA(j);
+
+	sc->x = SORT_LESSP;
+	sc->args = SORT_ARGS;
+	sc->code = sc->x;
+	goto APPLY;
+      }
+
+    case OP_SORT2:
+      {
+	s7_Int j, k;
+	k = s7_integer(SORT_K1);
+	j = s7_integer(SORT_J);
+	if (is_true(sc, sc->value))
+	  {
+	    sc->x = SORT_DATA(j);
+	    SORT_DATA(j) = SORT_DATA(k);
+	    SORT_DATA(k) = sc->x;
+	  }
+	else goto START;
+	integer(number(SORT_K1)) = integer(number(SORT_J));
+	goto HEAPSORT;
+      }
+
+      SORT:
+    case OP_SORT:
+      /* coming in sc->args is sort args (data less?), sc->code = '(n k 0)
+       *
+       * here we call the inner loop until k <= 0 [the local k! -- this is tricky because scheme passes args by value]
+       */
+      {
+	s7_Int n, k;
+	k = s7_integer(SORT_K);
+	n = s7_integer(SORT_N);
+	if (k <= 0)
+	  goto SORT3;
+
+	integer(number(SORT_K)) = k - 1;
+	integer(number(SORT_K1)) = k - 1;
+
+	push_stack(sc, opcode(OP_SORT), sc->args, sc->code);
+	goto HEAPSORT;
+      }
+
+      SORT3:
+      case OP_SORT3:
+	{
+	  s7_Int n;
+	  n = s7_integer(SORT_N);
+	  if (n <= 0)
+	    {
+	      sc->value = car(sc->args);
+	      goto START;
+	    }
+	  sc->x = SORT_DATA(0);
+	  SORT_DATA(0) = SORT_DATA(n);
+	  SORT_DATA(n) = sc->x;
+	  integer(number(SORT_N)) = n - 1;
+	  integer(number(SORT_K1)) = 0;
+	  push_stack(sc, opcode(OP_SORT3), sc->args, sc->code);
+	  goto HEAPSORT;
+	}
+
+    case OP_SORT4:
+      /* sc->value is the sort vector which needs to be turned into a list */
+      sc->value = s7_vector_to_list(sc, sc->value);
+      goto START;
+
+    case OP_SORT_TWO:
+      /* here we're sorting a list of 2 items */
+      if (is_true(sc, sc->value))
+	sc->value = sc->args;
+      else sc->value = make_list_2(sc, cadr(sc->args), car(sc->args));
+      goto START;
+
+      /* batcher networks:
+       *    [2]> (bb 3)
+       *    ((0 2) (0 1) (1 2))
+       *    [3]> (bb 4)
+       *    ((0 2) (1 3) (0 1) (2 3) (1 2))
+       *    [4]> (bb 5)
+       *    ((0 4) (0 2) (1 3) (2 4) (0 1) (2 3) (1 4) (1 2) (3 4))
+       *    [5]> (bb 6)
+       *    ((0 4) (1 5) (0 2) (1 3) (2 4) (3 5) (0 1) (2 3) (4 5) (1 4) (1 2) (3 4))
+       *    [6]> (bb 7) 
+       *    ((0 4) (1 5) (2 6) (0 2) (1 3) (4 6) (2 4) (3 5) (0 1) (2 3) (4 5) (1 4) (3 6) (1 2) (3 4) (5 6))
+       *    [7]> (bb 8)
+       *    ((0 4) (1 5) (2 6) (3 7) (0 2) (1 3) (4 6) (5 7) (2 4) (3 5) (0 1) (2 3) (4 5) (6 7) (1 4) (3 6) (1 2) (3 4) (5 6))
+       *
+       * but since it has to be done here by hand, it turns into too much code.
+       */
+
+
     case OP_MAP:
       if (sc->value != sc->NO_VALUE)                   /* (map (lambda (x) (values)) (list 1)) */
 	{
@@ -19978,15 +20108,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		 *   annoyance.
 		 */
 		return(s7_error(sc, sc->WRONG_TYPE_ARG,
-				s7_cons(sc,
-					make_protected_string(sc, "~A: unknown key: ~A in ~A"),
-					make_list_3(sc, closure_name(sc, sc->code), sc->y, sc->args))));
+				make_list_4(sc,
+					    make_protected_string(sc, "~A: unknown key: ~A in ~A"),
+					    closure_name(sc, sc->code), sc->y, sc->args)));
 
 	      case LSTAR_ALREADY_SET:
 		return(s7_error(sc, sc->WRONG_TYPE_ARG,
-				s7_cons(sc,
-					make_protected_string(sc, "~A: parameter set twice, ~A in ~A"),
-					make_list_3(sc, closure_name(sc, sc->code), sc->y, sc->args))));
+				make_list_4(sc,
+					    make_protected_string(sc, "~A: parameter set twice, ~A in ~A"),
+					    closure_name(sc, sc->code), sc->y, sc->args)));
 	      }
 
 	    /* evaluate the function body */
@@ -26881,6 +27011,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "reverse",                 g_reverse,                 1, 0, false, H_reverse);
   s7_define_function(sc, "reverse!",                g_reverse_in_place,        1, 0, false, H_reverse_in_place); /* used by Snd code */
   
+
   s7_define_function(sc, "vector?",                 g_is_vector,               1, 0, false, H_is_vector);
   s7_define_function(sc, "vector->list",            g_vector_to_list,          1, 0, false, H_vector_to_list);
   s7_define_function(sc, "list->vector",            g_list_to_vector,          1, 0, false, H_list_to_vector);
@@ -26891,8 +27022,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "vector-set!",             g_vector_set,              3, 0, true,  H_vector_set);
   s7_define_function(sc, "make-vector",             g_make_vector,             1, 1, false, H_make_vector);
   s7_define_function(sc, "vector-dimensions",       g_vector_dimensions,       1, 0, false, H_vector_dimensions);
-  s7_define_function(sc, "sort!",                   g_sort_in_place,           2, 0, false, H_sort_in_place);
-  
+  s7_define_function(sc, "sort!",                   g_sort,                    2, 0, false, H_sort);
+
 
   s7_define_function(sc, "hash-table",              g_hash_table,              0, 0, true,  H_hash_table);
   s7_define_function(sc, "hash-table?",             g_is_hash_table,           1, 0, false, H_is_hash_table);
@@ -27196,6 +27327,10 @@ s7_scheme *s7_init(void)
  *   if T_OBJECT encountered reorder args from (func ...) to (obj func ...)
  *   when obj applied, use obj as its own environment
  *
+ * position and position-if generics [member-if? assoc-if?]
+ *   these would have many tie-ins in Snd (snd-snd 2347)
+ *   both would benefit from an optional start point
+ *   char/any str/any any/list|vector|c-obj 
  *
  * s7test valgrind 17-Jul-10: 
  *    intel core duo (1.83G):    3162 (2M)
