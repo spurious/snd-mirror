@@ -2275,14 +2275,16 @@ one dimensional vector, so the two are not inverses.
 </pre>
 
 <p>Perhaps I should add an optional number-of-dimensions argument?
-This also affects format:
+This also affects format and sort!:
 </p>
 
 <pre>
 &gt; (format #f "~{~A~^ ~}" #2d((1 2) (3 4)))
 "1 2 3 4"
-</pre>
 
+&gt; (sort! #2d((1 4) (3 2)) &gt;) 
+#2D((4 3) (2 1))
+</pre>
 
 </blockquote>
 </small>
@@ -4645,7 +4647,6 @@ compile-time flags:
 <pre>
     HAVE_STDBOOL_H                 1 if you have stdbool.h
     HAVE_PTHREADS                  1 if you want multithreading support (requires pthreads, default is 0)
-    HAVE_NESTED_FUNCTIONS          1 if your compiler supports nested functions
     WITH_GMP                       1 if you want multiprecision arithmetic (requires gmp, mpfr, and mpc, default is 0)
     WITH_COMPLEX                   1 if your compiler supports complex numbers
     HAVE_COMPLEX_TRIG              1 if your math library has complex versions of the trig functions

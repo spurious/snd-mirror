@@ -137,8 +137,6 @@
  *
  * To get multiprecision arithmetic, set WITH_GMP to 1.
  *   You'll also need libgmp, libmpfr, and libmpc (version 0.8.0 or later)
- *
- * If your C compiler supports nested functions, define HAVE_NESTED_FUNCTIONS.
  */
 
 
@@ -585,7 +583,7 @@ struct s7_scheme {
   struct s7_cell _TEMP_CELL, _TEMP_CELL_1;
   s7_pointer TEMP_CELL, TEMP_CELL_1;
 
-  jmp_buf goto_start, goto_qsort_end;
+  jmp_buf goto_start;
   bool longjmp_ok;
   void (*error_exiter)(void);
   
@@ -13822,21 +13820,22 @@ static s7_pointer g_hash_table(s7_scheme *sc, s7_pointer args)
   #define H_hash_table "(hash-table ...) returns a hash-table containing the cons's passed as its arguments. \
 That is, (hash-table '(\"hi\" . 3) (\"ho\" . 32)) returns a new hash-table with the two key/value pairs preinstalled."
 
-  s7_Int i, len;
-  s7_pointer ht;
-  
-  len = s7_list_length(sc, args);
-  if ((len < 0) ||
-      ((len == 0) && (args != sc->NIL)))
-    return(s7_wrong_type_arg_error(sc, "hash-table", 1, car(args), "a proper list"));
+  int i;
+  s7_pointer x, ht;
   
   ht = s7_make_hash_table(sc, 511);
-  if (len > 0)
+  if (args != sc->NIL)
     {
-      s7_pointer x;
-      for (x = args, i = 0; is_pair(x); x = cdr(x), i++) 
-	if (is_pair(car(x)))
-	  s7_hash_table_set(sc, ht, caar(x), cdar(x));
+      for (x = args, i = 1; is_pair(x); x = cdr(x), i++) 
+	{
+	  if (is_pair(car(x)))
+	    s7_hash_table_set(sc, ht, caar(x), cdar(x));
+	  else
+	    {
+	      if (car(x) != sc->NIL)
+		return(s7_wrong_type_arg_error(sc, "hash-table", i, car(x), "a pair: (key value)"));
+	    }
+	}
     }
   return(ht);
 }
@@ -19460,17 +19459,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
 
       /* batcher networks:
-       *    [2]> (bb 3)
        *    ((0 2) (0 1) (1 2))
-       *    [3]> (bb 4)
        *    ((0 2) (1 3) (0 1) (2 3) (1 2))
-       *    [4]> (bb 5)
        *    ((0 4) (0 2) (1 3) (2 4) (0 1) (2 3) (1 4) (1 2) (3 4))
-       *    [5]> (bb 6)
        *    ((0 4) (1 5) (0 2) (1 3) (2 4) (3 5) (0 1) (2 3) (4 5) (1 4) (1 2) (3 4))
-       *    [6]> (bb 7) 
        *    ((0 4) (1 5) (2 6) (0 2) (1 3) (4 6) (2 4) (3 5) (0 1) (2 3) (4 5) (1 4) (3 6) (1 2) (3 4) (5 6))
-       *    [7]> (bb 8)
        *    ((0 4) (1 5) (2 6) (3 7) (0 2) (1 3) (4 6) (5 7) (2 4) (3 5) (0 1) (2 3) (4 5) (6 7) (1 4) (3 6) (1 2) (3 4) (5 6))
        *
        * but since it has to be done here by hand, it turns into too much code.
@@ -27279,9 +27272,6 @@ s7_scheme *s7_init(void)
  *
  * TODO: loading s7test simultaneously in several threads hangs after awhile in join_thread (call/cc?) 
  *         why are list-ref tests getting 'wrong-type-arg?
- *         (qsort is not thread safe -- should we use guile's quicksort rewrite? libguile/quicksort.i.c)
- *         (ideally it would be wrapped inside the evaluator)
- *       perhaps use procedure-source?
  *
  * TODO: :allow-other-keys in lambda* ("lambda!")
  *       :rest is not ignored, so this is not inconsistent, but do we just ignore these in the arg count?

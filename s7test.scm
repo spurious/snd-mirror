@@ -4695,6 +4695,13 @@
   (num-test (v1 0 0 0) 32)
   (set! (v1 0 1 1) 3)
   (num-test (v1 0 1 1) 3))
+
+(for-each
+ (lambda (arg)
+   (test (vector-dimensions arg) 'error))
+ (list "hi" -1 0 #\a 'a-symbol '(1 . 2) '(1 2 3) 3.14 3/4 1.0+1.0i #t abs #<eof> #<unspecified> (lambda () 1)))
+(test (vector-dimensions) 'error)
+(test (vector-dimensions #() #()) 'error)
   
 (let ((v (make-vector '(2 2))))
   (set! (v 0 0) 1)
@@ -4915,6 +4922,8 @@
 (test (equal? (make-vector '(1 2 3) 0) (make-vector '(1 3 2) 0)) #f)
 (test (make-vector '1 2 3) 'error)
 
+(test (set! (vector) 1) 'error)
+(test (set! (make-vector 1) 1) 'error)
 (test (equal? (make-vector 10 '()) (make-hash-table 10)) #f)
 
 (test (equal? #2d((1 2) (3 4)) (copy #2d((1 2) (3 4)))) #t)
@@ -5978,6 +5987,14 @@
   (test (hash-table? ht) #t)
   (test (>= (length ht) 461) #t)
   (test (ht 1) #f))
+
+(for-each
+ (lambda (arg)
+   (test (hash-table arg) 'error))
+ (list "hi" -1 0 #\a 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t abs #<eof> #<unspecified> (lambda () 1)))
+
+(test (set! (hash-table) 1) 'error)
+(test (set! (make-hash-table) 1) 'error)
 
 ;; no null hash-tables?
 
@@ -7813,6 +7830,14 @@
   (if (or (not (string? str))
 	  (not (string=? str "s")))
       (format #t ";with-input-from-string + error -> ~S~%" str)))
+
+(for-each
+ (lambda (arg)
+   (test (port-line-number arg) 'error)
+   (test (port-filename arg) 'error))
+ (list "hi" -1 0 #\a 'a-symbol '#(1 2 3) '(1 . 2) '(1 2 3) 3.14 3/4 1.0+1.0i #t abs #<eof> #<unspecified> (lambda () 1)))
+
+
 
 
 ;;; -------- poke at the reader --------
@@ -13255,6 +13280,43 @@ why are these different (read-time `#() ? )
 
 
 ;;; -------- sort!
+
+(test (sort! '(2 3) <) '(2 3))
+(test (sort! '(12 3) <) '(3 12))
+(test (sort! '(1 2 3) <) '(1 2 3))
+(test (sort! '(1 3 2) <) '(1 2 3))
+(test (sort! '(2 1 3) <) '(1 2 3))
+(test (sort! '(2 3 1) <) '(1 2 3))
+(test (sort! '(3 1 2) <) '(1 2 3))
+(test (sort! '(3 2 1) <) '(1 2 3))
+(test (sort! '(1 2 3) (lambda (a b) (> a b))) '(3 2 1))
+(test (sort! #(2 3) <) #(2 3))
+(test (sort! #(12 3) <) #(3 12))
+(test (sort! #(1 2 3) <) #(1 2 3))
+(test (sort! #(1 3 2) <) #(1 2 3))
+(test (sort! #(2 1 3) <) #(1 2 3))
+(test (sort! #(2 3 1) <) #(1 2 3))
+(test (sort! #(3 1 2) <) #(1 2 3))
+(test (sort! #(3 2 1) <) #(1 2 3))
+(test (sort! #(1 2 3 4) <) #(1 2 3 4))
+(test (sort! #(1 3 2 4) <) #(1 2 3 4))
+(test (sort! #(2 1 3 4) <) #(1 2 3 4))
+(test (sort! #(2 3 1 4) <) #(1 2 3 4))
+(test (sort! #(3 1 2 4) <) #(1 2 3 4))
+(test (sort! #(3 2 1 4) <) #(1 2 3 4))
+(test (sort! #(4 1 2 3) <) #(1 2 3 4))
+(test (sort! #(4 1 3 2) <) #(1 2 3 4))
+(test (sort! #(4 2 1 3) <) #(1 2 3 4))
+(test (sort! #(4 2 3 1) <) #(1 2 3 4))
+(test (sort! #(4 3 1 2) <) #(1 2 3 4))
+(test (sort! #(4 3 2 1) <) #(1 2 3 4))
+(test (sort! #(1 4 2 3) <) #(1 2 3 4))
+(test (sort! #(1 4 3 2) <) #(1 2 3 4))
+(test (sort! #(2 4 1 3) <) #(1 2 3 4))
+(test (sort! #(2 4 3 1) <) #(1 2 3 4))
+(test (sort! #(3 4 1 2) <) #(1 2 3 4))
+(test (sort! #(3 2 4 1) <) #(1 2 3 4))
+(test (sort! #(1 2 3) (lambda (a b) (> a b))) #(3 2 1))
 (test (equal? (sort! (list 3 4 8 2 0 1 5 9 7 6) <) (list 0 1 2 3 4 5 6 7 8 9)) #t)
 (test (equal? (sort! (list 3 4 8 2 0 1 5 9 7 6) (lambda (a b) (< a b))) (list 0 1 2 3 4 5 6 7 8 9)) #t)
 (test (equal? (sort! (list) <) '()) #t)
@@ -13274,6 +13336,8 @@ why are these different (read-time `#() ? )
 	      '((i 1) (u 2) (k 3) (c 4) (b 6) (a 7)))
       #t)
 (test (equal? (sort! (sort! '(1 2 3) >) <) '(1 2 3)) #t)
+(test (sort! #2d((1 2) (3 4)) >) #2D((4 3) (2 1))) ; ?!?
+(test (sort! #2d((1 4) (3 2)) >) #2D((4 3) (2 1))) ; ??!!?? this is not what anyone would expect
 
 (test (equal? (sort! (vector 3 4 8 2 0 1 5 9 7 6) <) (vector 0 1 2 3 4 5 6 7 8 9)) #t)
 (test (equal? (sort! '#() <) '#()) #t)
@@ -13315,6 +13379,7 @@ why are these different (read-time `#() ? )
       #t)
 
 (test (sort!) 'error)
+(test (sort! '(1 2 3) < '(3 2 1)) 'error)
 (test (sort! '(1 2 3)) 'error)
 (test (sort! '(1 2 3) 1) 'error)
 (test (sort! '(1 2 3) < <) 'error)
@@ -13354,7 +13419,7 @@ why are these different (read-time `#() ? )
 	 (lambda args 'error))
   (if (not ok) (format #t "dynamic-wind out of sort! skipped cleanup?~%")))
 
-#|
+
 (let ((lst (list 1 2 3 9 8 7)))
   (let ((val (catch #t
 		    (lambda ()
@@ -13384,8 +13449,6 @@ why are these different (read-time `#() ? )
     (if (not (eq? val 'sort-error))
 	(format #t ";sort! call/cc: ~A~%" val)))
   )
-
-|#
 
 
 
@@ -34048,8 +34111,13 @@ why are these different (read-time `#() ? )
 	(set! (bignum-precision) 4096)
 	(test (check-rationalize pi 100) #t)
 	(test (check-rationalize (/ pi) 100) #t)
-	(set! (bignum-precision) old-prec)))
-  )
+
+	(for-each
+	 (lambda (arg)
+	   (test (set! (bignum-precision) arg) 'error))
+	 (list "hi" #\a 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t abs #<eof> #<unspecified> (lambda () 1)))
+
+	(set! (bignum-precision) old-prec))))
 
 (test (rationalize) 'error)
 (test (rationalize 1.23+1.0i 1.23+1.0i) 'error)
