@@ -332,6 +332,8 @@
 (test (eq? '()'()) #t) ; no space
 (test (#||# eq? #||# #f #||# #f #||#) #t)
 (test (eq? (current-input-port) (current-input-port)) #t)
+(test (let ((f (lambda () (quote (1 . "H"))))) (eq? (f) (f))) #t)
+(test (let ((f (lambda () (cons 1 (string #\H))))) (eq? (f) (f))) #f)
 
 (display ";this should display #t: ")
 (begin #| ; |# (display #t))
@@ -4471,6 +4473,9 @@
   (test (vector-set! v -1 0) 'error))
 (test (vector-set! #() 0 123) 'error)
 (test (vector-set! #(1 2 3) 0 123) 123)
+(test (let ((v #(1 2 3))) (set! (v 0) '(+ 1 2)) v) #((+ 1 2) 2 3))
+(test (let ((v #(1 2 3))) (set! (v '(+ 1 1)) 2) v) 'error)
+(test (let ((v #(1 2 3))) (set! (v (+ 1 1)) 2) v) #(1 2 2))
 
 (test (let ((g (lambda () '#(1 2 3)))) (vector-set! (g) 0 #\?) (g)) #(#\? 2 3))
 (test (let ((g (lambda () '(1 . 2)))) (set-car! (g) 123) (g)) '(123 . 2))
@@ -8520,6 +8525,10 @@
 (test (let () (for-each + '(0 1 2) '(2 1 0)) 0) 0)
 (test (let () () ()) '())
 (test (for-each + ()) #<unspecified>)
+(test (let ((sum 0)) (for-each (lambda a (set! sum (+ sum (apply + a)))) '(1 2 3)) sum) 6)
+(test (let ((sum 0)) (for-each (lambda* ((a 1)) (set! sum (+ sum a))) '(1 2 3)) sum) 6)
+(test (let ((sum 0)) (for-each (lambda (a . b) (set! sum (+ sum a))) '(1 2 3)) sum) 6)
+
 (test (let ((d 0))
 	(for-each (let ((a 0))
 		    (for-each (lambda (b) (set! a (+ a b))) (list 1 2))
@@ -8762,6 +8771,23 @@
 
 (test (map (lambda (a) a) (map (lambda (b) b) (list 1 2 3))) (list 1 2 3))
 (test (map cons '(a b c) '(() () ())) '((a) (b) (c)))
+(test (map (lambda a (list a)) '(1 2 3)) '(((1)) ((2)) ((3))))
+(test (map (lambda* a (list a)) '(1 2 3)) '(((1)) ((2)) ((3))))
+(test (map (lambda* (a) (list a)) '(1 2 3)) '((1) (2) (3)))
+(test (map (lambda* ((a 0)) (list a)) '(1 2 3)) '((1) (2) (3)))
+(test (map (lambda* ((a 0) (b 1)) (list a)) '(1 2 3)) '((1) (2) (3)))
+(test (map (lambda (a . b) (list a)) '(1 2 3)) '((1) (2) (3)))
+(test (map list '(1 2 3)) '((1) (2) (3)))
+(test (map (lambda a (apply list a)) '(1 2 3)) '((1) (2) (3)))
+(test (map (lambda a (apply values a)) '(1 2 3)) '(1 2 3))
+(test (map (lambda a (values a)) '(1 2 3)) '((1) (2) (3)))
+(test (map (lambda a (append a)) '(1 2 3)) '((1) (2) (3)))
+(test (map values '(1 2 3)) '(1 2 3))
+
+#|
+(let ((val '())) (list (map (lambda a (set! val (cons a val)) a) '(1 2 3)) val))
+((#3=(1) #2=(2) #1=(3)) (#1# #2# #3#))
+|#
 
 (test (map list "hi") '((#\h) (#\i)))
 (test (map string "hi") '("h" "i"))
@@ -11223,6 +11249,18 @@
 	(y-factorial 3))
       6)
 
+;;; (letrec ((x 1.5) (y x)) (or x y)) -> 1.5, but (let ((x 1.5) (y x)) (or x y)) -> error!
+;;; (letrec ((x x) (y #t)) (and x y)) -> #t,  but (let ((x x) (y #t)) (and x y)) -> error! (let*/letrec* same)
+;;; in Guile (letrec ((x x)) x) is #<unspecified>, is s7 it's #<undefined>
+;;; (letrec ((x y)) x) -> 'error) but (letrec ((x y) (y x)) x) is #<undefined>!
+;;; (let ((x 0) (y x)) (cons x y)) -> error, let*->'(0 . 0) letrec->(0 . #<undefined>) letrec*->(0 . 0)
+;;; (let ((x 0)) (let ((x 1) (y x)) (>= x y))) but the letrec(inner) case is error!  These things are a mess.
+
+(test (procedure? (letrec ((x (lambda () x))) x)) #t)
+(test (procedure? (letrec ((x (lambda () x))) (x))) #t)
+(test (letrec ((x (lambda () x))) (equal? x (x))) #t)  ; !
+(test (letrec ((x (lambda () x))) (equal? x ((x)))) #t)  ; !
+
 (test (letrec ((x 1) (y x)) (list x y)) '(1 #<undefined>)) ; guile says '(1 1)
 (test (letrec ((y x) (x 1)) (list x y)) '(1 #<undefined>)) ; guile says '(1 1)
 (test (letrec ((x 1) (y (let () (set! x 2) x))) (list x y)) '(1 2))
@@ -12990,6 +13028,9 @@ who says the continuation has to restart the map from the top?
 (test (apply . `(1())) '(1))           ; (apply {list} 1 ())
 (test (apply . ''(())) '())
 (test (apply . `((()))) '(()))
+
+(test (+ 1 ((`#(,(lambda () 0) ,(lambda () 2) ,(lambda () 4)) 1))) 3) ; this calls vector each time, just like using vector directly
+(test (+ 1 ((`(,(lambda () 0)  ,(lambda () 2) ,(lambda () 4)) 1))) 3)
 
 (test (object->string (list 'quote 1 2)) "(quote 1 2)")
 (test (object->string (list 'quote 'quote 1)) "(quote quote 1)")

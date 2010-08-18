@@ -398,6 +398,7 @@ typedef struct s7_cell {
   unsigned int flag;
 #if DEBUGGING
   unsigned int saved_flag;
+  int alloc_line;
 #endif
   int hloc;
 #if WITH_PROFILING
@@ -543,7 +544,7 @@ struct s7_scheme {
   s7_pointer initial_env;             /* original bindings of predefined functions */
   
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, UNQUOTE_SPLICING, MACROEXPAND, SPECIAL;
-  s7_pointer APPLY, VECTOR, CDR, SET, QQ_VALUES, QQ_LIST, QQ_APPLY, QQ_APPEND;
+  s7_pointer APPLY, VECTOR, CDR, SET, QQ_VALUES, QQ_LIST, QQ_APPLY, QQ_APPEND, MULTIVECTOR;
   s7_pointer ERROR, WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO;
   s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, SYNTAX_ERROR;
   s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, __FUNC__, ERROR_HOOK, TRACE_HOOK, UNBOUND_VARIABLE_HOOK;
@@ -641,6 +642,7 @@ struct s7_scheme {
 #if DEBUGGING
 #define saved_typeflag(p)             ((p)->saved_flag)
 #define saved_type(p)                 (saved_typeflag(p) & T_MASKTYPE)
+#define new_cell_line(p)              ((p)->alloc_line)
 #endif
 
 #define T_SYNTAX                      (1 << (TYPE_BITS + 1))
@@ -1438,12 +1440,11 @@ void s7_mark_object(s7_pointer p)
   S7_MARK(p);
 }
 
-
-static int gc(s7_scheme *sc)
+#define gc(Sc) gc_1(Sc, __LINE__)
+static int gc_1(s7_scheme *sc, int line)
 {
   int i;
   s7_cell **old_free_heap_top;
-
   /* mark all live objects (the symbol table is in permanent memory, not the heap) */
   S7_MARK(sc->global_env);
   S7_MARK(sc->args);
@@ -1543,20 +1544,34 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
 #if HAVE_PTHREADS
   #define NEW_CELL(Sc, Obj) Obj = new_cell(Sc)
 #else
+#if DEBUGGING
+  #define NEW_CELL(Sc, Obj) \
+    do { \
+      if (Sc->free_heap_top > Sc->free_heap_trigger) \
+        {Obj = (*(--(Sc->free_heap_top))); new_cell_line(Obj) = __LINE__;} \
+      else Obj = new_cell(Sc);                       \
+    } while (0)
+#else
   #define NEW_CELL(Sc, Obj) \
     do { \
       if (Sc->free_heap_top > Sc->free_heap_trigger) \
         Obj = (*(--(Sc->free_heap_top)));	     \
-      else Obj = new_cell(Sc); \
+      else Obj = new_cell(Sc);                       \
     } while (0)
+
+/* not faster:
+  #define NEW_CELL(Sc, Obj) do {Obj = ((Sc->free_heap_top > Sc->free_heap_trigger) ? (*(--(Sc->free_heap_top))) : new_cell_1(Sc, __LINE__));} while (0)
+*/
+#endif
 #endif
 
+#define new_cell(Sc) new_cell_1(Sc, __LINE__)
 #if HAVE_PTHREADS
 static pthread_mutex_t alloc_lock = PTHREAD_MUTEX_INITIALIZER;
 
-static s7_pointer new_cell(s7_scheme *nsc)
+static s7_pointer new_cell_1(s7_scheme *nsc, int line)
 #else
-static s7_pointer new_cell(s7_scheme *sc)
+static s7_pointer new_cell_1(s7_scheme *sc, int line)
 #endif
 {
   s7_pointer p;
@@ -1575,7 +1590,7 @@ static s7_pointer new_cell(s7_scheme *sc)
       unsigned int k, old_size, freed_heap = 0;
       
       if (!(*(sc->gc_off)))
-        freed_heap = gc(sc);
+        freed_heap = gc_1(sc, line);
       /* when threads, the gc function can be interrupted at any point and resumed later -- mark bits need to be preserved during this interruption */
       
       if (freed_heap < sc->heap_size / 4) /* was 1000, setting it to 2 made no difference in run time */
@@ -1650,7 +1665,9 @@ static s7_pointer new_cell(s7_scheme *sc)
    *   than using a type bit to say "newly allocated" because that protects so many cells
    *   betweeen gc calls that we end up calling the gc twice as often overall.
    */
-
+#if DEBUGGING
+  new_cell_line(p) = line;
+#endif
   
   return(p);
 }
@@ -10044,25 +10061,10 @@ static s7_pointer load_file(s7_scheme *sc, FILE *fp, const char *name)
 }
 
 
-static void run_load_hook(s7_scheme *sc, const char *filename)
-{
-  /* (set! *load-hook* (lambda (name) (format #t "loading ~A~%" name))) */
-  s7_pointer load_hook;
-  load_hook = s7_symbol_special_value(sc, s7_make_symbol(sc, "*load-hook*"));
-  if (is_procedure(load_hook))
-    {
-      push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
-      sc->args = make_list_1(sc, s7_make_string(sc, filename));
-      sc->code = load_hook;
-      eval(sc, OP_APPLY);
-    }
-}
-
-
 s7_pointer s7_load(s7_scheme *sc, const char *filename)
 {
   bool old_longjmp;
-  s7_pointer port;
+  s7_pointer port, load_hook;
   FILE *fp;
   
   fp = fopen(filename, "r");
@@ -10071,7 +10073,14 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
   if (!fp)
     return(file_error(sc, "load", "can't open", filename));
 
-  run_load_hook(sc, filename);
+  load_hook = s7_symbol_special_value(sc, s7_make_symbol(sc, "*load-hook*"));
+  if (is_procedure(load_hook))
+    {
+      push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
+      sc->args = make_list_1(sc, s7_make_string(sc, filename));
+      sc->code = load_hook;
+      eval(sc, OP_APPLY); /* not ideal, but this is called from C */
+    }
 
   port = load_file(sc, fp, filename);
   port_file_number(port) = remember_file_name(filename);
@@ -10141,7 +10150,7 @@ defaults to the global environment.  To load into the current environment instea
   if (!fp)
     return(file_error(sc, "load", "can't open", fname));
   
-  run_load_hook(sc, fname);
+  /* run_load_hook(sc, fname); */
 
   port = load_file(sc, fp, fname);
   port_file_number(port) = remember_file_name(fname);
@@ -10151,8 +10160,20 @@ defaults to the global environment.  To load into the current environment instea
   push_stack(sc, opcode(OP_READ_INTERNAL), sc->NIL, sc->NIL);
   
   /* now we've opened and moved to the file to be loaded, and set up the stack to return
-   *   to where we were when it is read.  This #<unspecified> is just a dummy value.
+   *   to where we were when it is read.  Call *load-hook* if it is a procedure.
    */
+  {
+    /* (set! *load-hook* (lambda (name) (format #t "loading ~A~%" name))) */
+    s7_pointer load_hook;
+    load_hook = s7_symbol_special_value(sc, s7_make_symbol(sc, "*load-hook*"));
+    if (is_procedure(load_hook))
+      {
+	sc->args = make_list_1(sc, s7_make_string(sc, fname));
+	sc->code = load_hook;
+	push_stack(sc, opcode(OP_APPLY), sc->args, sc->code); 
+      }
+  }
+
   return(sc->UNSPECIFIED);
 }
 
@@ -10666,7 +10687,11 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   {
     char *buf;
     buf = (char *)calloc(512, sizeof(char));
+#if DEBUGGING
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s, allocated at line %d>", 
+#else
     snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+#endif
 	     type(obj), 
 	     type_name(obj),
 	     typeflag(obj),
@@ -10687,7 +10712,12 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     symbol_has_accessor(obj) ? " (accessor)" : "",
 	     has_structure(obj) ? " (structure)" : "",
 	     is_multiple_value(obj) ? " (values)" : "",
-	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
+	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : ""
+#if DEBUGGING
+	     , new_cell_line(obj));
+#else
+	     );
+#endif
 #if DEBUGGING
     if ((saved_typeflag(obj) != typeflag(obj)) &&
 	(saved_typeflag(obj) > 0) &&
@@ -13332,11 +13362,10 @@ static int traverse_vector_data(s7_scheme *sc, s7_pointer vec, int flat_ref, int
 static s7_pointer s7_multivector_error(s7_scheme *sc, const char *message, s7_pointer data)
 {
   return(s7_error(sc, s7_make_symbol(sc, "read-error"), 
-		  s7_cons(sc, 
-			  make_protected_string(sc, "reading constant vector, ~A: ~A"),
-			  make_list_2(sc, 
-				      make_protected_string(sc, message),
-				      data))));
+		  make_list_3(sc, 
+			      make_protected_string(sc, "reading constant vector, ~A: ~A"),
+			      make_protected_string(sc, message),
+			      data)));
 }
 
 
@@ -13389,6 +13418,14 @@ static s7_pointer g_multivector(s7_scheme *sc, int dims, s7_pointer data)
     return(s7_multivector_error(sc, (err == MV_TOO_MANY_ELEMENTS) ? "too many elements" : "not enough elements", data));
 
   return(vec);
+}
+
+
+static s7_pointer g_qq_multivector(s7_scheme *sc, s7_pointer args)
+{
+  /* `#2d((1 2) ,(list 3 4)) */
+  #define H_qq_multivector "quasiquote internal support for multidimensional vector constants"
+  return(g_multivector(sc, s7_integer(car(args)), cdr(args)));
 }
 
 
@@ -14870,10 +14907,11 @@ In each case, the argument is the value of the object, not the object itself."
 
   if (args != sc->NIL)
     {
-      int i;
+      int i, args_loc;
       s7_pointer x;
 
-      s7_gc_protect(sc, args);
+      args_loc = s7_gc_protect(sc, args);
+      /* TODO: shouldn't args be unprotected? */
 
       /* if any of the special functions are specified, store them in the type object so we can find them later */
       for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x))
@@ -14988,7 +15026,7 @@ In each case, the argument is the value of the object, not the object itself."
 				   make_list_3(sc, sc->S_IS_TYPE, s7_make_integer(sc, tag), sc->S_TYPE_ARG)),
 		   sc->envir,
 		   T_CLOSURE);
-				   
+
   /* make method: (lambda (arg) (s_type_make tag arg))
    *   returns an object of the new type with its value specified by arg
    */
@@ -19335,7 +19373,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 
-      /* -------------------- sort! -------------------- */
+      /* -------------------- sort! (heapsort, done directly so that call/cc in the sort function will work correctly) -------------------- */
     #define SORT_N vector_element(sc->code, 0)
     #define SORT_K vector_element(sc->code, 1)
     #define SORT_J vector_element(sc->code, 2)
@@ -19466,7 +19504,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *    ((0 4) (1 5) (2 6) (0 2) (1 3) (4 6) (2 4) (3 5) (0 1) (2 3) (4 5) (1 4) (3 6) (1 2) (3 4) (5 6))
        *    ((0 4) (1 5) (2 6) (3 7) (0 2) (1 3) (4 6) (5 7) (2 4) (3 5) (0 1) (2 3) (4 5) (6 7) (1 4) (3 6) (1 2) (3 4) (5 6))
        *
-       * but since it has to be done here by hand, it turns into too much code.
+       * but since it has to be done here by hand, it turns into too much code, 3 is:
+       *    < l0 l2 ?
+       *    no goto L1
+       *    < l0 l1 ?
+       *    no return 1 0 2
+       *    < l1 l2?
+       *    yes return original (0 1 2)
+       *    no return 0 2 1
+       *    L1:
+       *    < l0 l1 ?
+       *    yes return 2 0 1
+       *    < l1 l2 ?
+       *    yes return 1 2 0
+       *    no return 2 1 0
+       * since each "<" op above goes to OP_APPLY, we have ca 5 labels, and ca 25-50 lines
        */
 
 
@@ -19734,6 +19786,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   it's actually slower by about 30/2400 than just plowing ahead as if
 	   *   there were args.  (The check costs 27 and we only hit it a few hundred times).
 	   */
+	  /* push_stack(sc, opcode(OP_LET_UNWIND), sc->args, sc->code); */
+	  
 	  push_stack(sc, opcode(OP_EVAL_ARGS), sc->NIL, cdr(sc->code));
 	  sc->code = car(sc->code);
 	  goto EVAL;
@@ -19764,7 +19818,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_any_macro(sc->value))
 	    {    
 	      /* macro expansion */
-	      push_stack(sc, opcode(OP_EVAL_MACRO), sc->NIL, sc->NIL);
+	      push_stack(sc, opcode(OP_EVAL_MACRO), sc->NIL, sc->code); /* sc->code is here for (vital) GC protection */
 	      /* args is nil, value is the macro code bound to mac-name, code is the unevaluated arglist
 	       *   we want to pass a list of (mac . args) to the macro expander
 	       */
@@ -20853,6 +20907,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * eval each member of values list with env still full of #undefined's
        * assign each value to its variable
        * eval body
+       *
+       * which means that (letrec ((x x)) x) is not an error!
        */
       sc->envir = new_frame_in_env(sc, sc->envir); 
       sc->args = sc->NIL;
@@ -21591,15 +21647,41 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+    case OP_READ_VECTOR:
+      if (sc->args == small_int(1))
+	sc->value = g_vector(sc, sc->value);
+      else sc->value = g_multivector(sc, (int)s7_integer(sc->args), sc->value);
+      goto START;
+
+      
     case OP_READ_QUASIQUOTE_VECTOR:
-      /* this works only if the backquote is right next to the #( of the read-time vector,
-       *    and then only if the resultant list (make_list_3 below) can be dealt with in the
-       *    calling context. It only works for 1D vectors.
+      /* this works only if the quasiquoted list elements can be evaluated in the read-time environment.
        *
        *    `#(1 ,@(list 1 2) 4) -> (apply vector ({list} 1 ({apply} {values} (list 1 2)) 4)) -> #(1 1 2 4)
+       *
+       * Originally, I used:
+       *
+       *   sc->value = make_list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_1(sc, sc->value));
+       *   goto START;
+       *
+       * which means that #(...) makes a vector at read time, but `#(...) is just like (vector ...).
+       * In Guile (let ((x 32)) `#(,x 0)) -> #(32 0) 
+       *      but (let ((x 32))  #(x 0))  -> #(x 0)
+       * which strikes me as inconsistent. TODO: check as func return eq? (example is bad)
+       * 
+       * The tricky part in s7 is that we might have quasiquoted multidimensional vectors:
+       *
        */
+#if 0
+      if (sc->args == small_int(1))
+	sc->code = make_list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_1(sc, sc->value));
+      else sc->code = make_list_4(sc, sc->APPLY, sc->MULTIVECTOR, sc->args, g_quasiquote_1(sc, sc->value));
+      sc->args = sc->NIL;
+      goto EVAL;
+#else
       sc->value = make_list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_1(sc, sc->value));
       goto START;
+#endif
 
       
     case OP_READ_UNQUOTE:
@@ -21611,13 +21693,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = make_list_2(sc, sc->UNQUOTE_SPLICING, sc->value);
       goto START;
       
-      
-    case OP_READ_VECTOR:
-      if (sc->args == small_int(1))
-	sc->value = g_vector(sc, sc->value);
-      else sc->value = g_multivector(sc, (int)s7_integer(sc->args), sc->value);
-      goto START;
-
       
     default:
       return(eval_error(sc, "~A: unknown operator!", s7_make_integer(sc, sc->op))); /* not small_int because it's bogus */
@@ -26679,6 +26754,9 @@ s7_scheme *s7_init(void)
   sc->VECTOR = s7_make_symbol(sc, "vector");
   typeflag(sc->VECTOR) |= T_DONT_COPY; 
   
+  sc->MULTIVECTOR = s7_make_symbol(sc, "{multivector}");
+  typeflag(sc->MULTIVECTOR) |= T_DONT_COPY; 
+  
   sc->ERROR = s7_make_symbol(sc, "error");
   typeflag(sc->ERROR) |= T_DONT_COPY; 
 
@@ -27048,6 +27126,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "{list}",                  g_qq_list,                 0, 0, true,  H_qq_list);
   s7_define_function(sc, "{apply}",                 g_apply,                   1, 0, true,  H_apply);
   s7_define_function(sc, "{append}",                g_append,                  0, 0, true,  H_append);
+  s7_define_function(sc, "{multivector}",           g_qq_multivector,          1, 0, true,  H_qq_multivector);
     
   s7_define_function(sc, "trace",                   g_trace,                   0, 0, true,  H_trace);
   s7_define_function(sc, "untrace",                 g_untrace,                 0, 0, true,  H_untrace);
@@ -27190,9 +27269,9 @@ s7_scheme *s7_init(void)
   s7_eval_c_string(sc, "(define-macro (letrec* bindings . body)                        \n\
                           (if (null? body)                                             \n\
                               (error 'syntax-error \"letrec* has no body\")            \n\
-                               `(let (,@(map (lambda (var&init)                        \n\
-                                               (list (car var&init) #<undefined>))     \n\
-                                             bindings))                                \n\
+                              `(let (,@(map (lambda (var&init)                         \n\
+                                              (list (car var&init) #<undefined>))      \n\
+                                            bindings))                                 \n\
                                  ,@(map (lambda (var&init)                             \n\
                                           (if (not (null? (cddr var&init)))            \n\
                                               (error 'syntax-error \"letrec* variable has more than one value\")) \n\
@@ -27271,7 +27350,6 @@ s7_scheme *s7_init(void)
  *   need a way to see what hooks are available, local-hook-function, how to invoke the list.
  *
  * TODO: loading s7test simultaneously in several threads hangs after awhile in join_thread (call/cc?) 
- *         why are list-ref tests getting 'wrong-type-arg?
  *
  * TODO: :allow-other-keys in lambda* ("lambda!")
  *       :rest is not ignored, so this is not inconsistent, but do we just ignore these in the arg count?
@@ -27321,6 +27399,7 @@ s7_scheme *s7_init(void)
  *   these would have many tie-ins in Snd (snd-snd 2347)
  *   both would benefit from an optional start point
  *   char/any str/any any/list|vector|c-obj 
+ *   would we use eq? or equal? (leave that to position-if?  isn't sort backwards now?
  *
  * s7test valgrind 17-Jul-10: 
  *    intel core duo (1.83G):    3162 (2M)
