@@ -4,6 +4,8 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
+#define USE_CAIRO 1
+
 #if USE_CAIRO
   #include <cairo/cairo.h>
 #endif

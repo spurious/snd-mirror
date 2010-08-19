@@ -25,53 +25,6 @@
 (define struct-fields '())
 (define settable-struct-fields '())
 
-(define ints-236 '())
-(define funcs-236 '())
-(define casts-236 '())
-(define checks-236 '())
-(define types-236 '())
-(define ulongs-236 '())
-(define strings-236 '())
-(define names-236 '())
-
-(define names-250 '())
-(define funcs-250 '())
-(define types-250 '())
-(define casts-250 '())
-(define checks-250 '())
-(define ulongs-250 '())
-(define ints-250 '())
-(define strings-250 '())
-
-(define ints-256 '())
-(define funcs-256 '())
-(define types-256 '())
-(define casts-256 '())
-(define checks-256 '())
-(define ulongs-256 '())
-
-(define funcs-260 '())
-(define ints-260 '())
-(define types-260 '())
-
-(define funcs-270 '())
-(define ints-270 '())
-(define types-270 '())
-
-(define funcs-273 '())
-(define ints-273 '())
-(define names-273 '())
-(define strings-273 '())
-
-(define funcs-290 '())
-(define ints-290 '())
-(define ulongs-290 '())
-(define types-290 '())
-(define casts-290 '())
-(define checks-290 '())
-(define names-290 '())
-(define strings-290 '())
-
 (define funcs-210 '())
 (define strings-210 '())
 (define ints-210 '())
@@ -153,14 +106,6 @@
 (define cairo-png-funcs '())
 (define cairo-ints '())
 (define cairo-types '())
-
-(define cairo-funcs-140 '())
-(define cairo-ints-140 '())
-(define cairo-types-140 '())
-
-(define cairo-funcs-164 '())
-(define cairo-ints-164 '())
-(define cairo-types-164 '())
 
 (define all-types '())
 
@@ -459,12 +404,6 @@
 			    (begin
 			      (set! all-types (cons type all-types))
 			      (case extra
-				((236)                (set! types-236 (cons type types-236)))
-				((250 callback-250)   (set! types-250 (cons type types-250)))
-				((256 callback-256)   (set! types-256 (cons type types-256)))
-				((260)                (set! types-260 (cons type types-260)))
-				((270)                (set! types-270 (cons type types-270)))
-				((290 callback-290)   (set! types-290 (cons type types-290)))
 				((210 callback-210)   (set! types-210 (cons type types-210)))
 				((211 callback-211)   (set! types-211 (cons type types-211)))
 				((213 callback-213)   (set! types-213 (cons type types-213)))
@@ -626,85 +565,77 @@
 			      'permanent)
 
 			; GCallback 'lambda can be whatever is indicated by caller (2 or more args)
-			))
 
-(define callbacks-236 (list
 			(list 'GtkFileFilterFunc
 			      "gboolean"
 			      "file_filter"
-			      (parse-args "GtkFileFilterInfo* info lambda_data func_info" 'callback-236)
+			      (parse-args "GtkFileFilterInfo* info lambda_data func_info" 'callback)
 			      'permanent)
 			(list 'GtkEntryCompletionMatchFunc
 			      "gboolean"
 			      "entry_completion_match"
-			      (parse-args "GtkEntryCompletion* completion gchar* key GtkTreeIter* iter lambda_data func_info" 'callback-236)
+			      (parse-args "GtkEntryCompletion* completion gchar* key GtkTreeIter* iter lambda_data func_info" 'callback)
 			      'permanent)
-			))
 
-(define callbacks-250 (list
 		       (list 'GtkTreeViewRowSeparatorFunc
 			     "gboolean"
 			     "row_separator"
-			     (parse-args "GtkTreeModel* model GtkTreeIter* iter lambda_data func_info" 'callback-250)
+			     (parse-args "GtkTreeModel* model GtkTreeIter* iter lambda_data func_info" 'callback)
 			     'permanent)
 		       (list 'GtkIconViewForeachFunc
 			     "void"
 			     "icon_view_foreach"
-			     (parse-args "GtkIconView* icon_view GtkTreePath* path lambda_data func_info" 'callback-250)
+			     (parse-args "GtkIconView* icon_view GtkTreePath* path lambda_data func_info" 'callback)
 			     'permanent)
-		       ))
 
-(define callbacks-256 (list
 			(list 'GtkClipboardImageReceivedFunc
 			      "void"
 			      "clip_image_received"
-			      (parse-args "GtkClipboard* clipboard GdkPixbuf* pixbuf lambda_data func_info" 'callback) ; 'callback-256)
-			      ;; these arg types are not new in 256, but this parse-args precedes the basic ones, so comment out the callback-256
-			      ;; the problem here (and below callback-290) is that parse-args sees a new type (new to it so far),
+			      (parse-args "GtkClipboard* clipboard GdkPixbuf* pixbuf lambda_data func_info" 'callback) ; 'callback)
+			      ;; these arg types are not new in 256, but this parse-args precedes the basic ones, so comment out the callback
+			      ;; the problem here (and below callback) is that parse-args sees a new type (new to it so far),
 			      ;;   and chooses which type list to put it on based on the "extra" arg -- since these types
-			      ;;   are not new in version 2.5.6, we don't want the callback-256 flag to sequester them
+			      ;;   are not new in version 2.5.6, we don't want the callback flag to sequester them
 			      ;;   on the 256-type list.
 			      'permanent)
 			(list 'GLogFunc
 			      "void"
 			      "g_message_log_func"
-			      (parse-args "gchar* domain GLogLevelFlags log_level gchar* message lambda_data func_info" 'callback-256)
+			      (parse-args "gchar* domain GLogLevelFlags log_level gchar* message lambda_data func_info" 'callback)
 			      'permanent)
-			))
 
-(define callbacks-290 (list
 		       (list 'GtkClipboardRichTextReceivedFunc
 			     "void"
 			     "clip_rich_text_received"
-			     (parse-args "GtkClipboard* clipboard GdkAtom format guint8* text gsize length lambda_data func_info" 'callback); 'callback-290)
+			     (parse-args "GtkClipboard* clipboard GdkAtom format guint8* text gsize length lambda_data func_info" 'callback); 'callback)
 			     ;; guint8* is const
 			     'permanent-gcc)
 		       (list 'GtkRecentFilterFunc
 			     "gboolean"
 			     "recent_filter"
-			     (parse-args "GtkRecentFilterInfo* filter_info lambda_data func_info" 'callback-290)
+			     (parse-args "GtkRecentFilterInfo* filter_info lambda_data func_info" 'callback)
 			     ;; const filter info
 			     'permanent-gcc)
 		       (list 'GtkTreeViewSearchPositionFunc
 			     "void"
 			     "search_position"
-			     (parse-args "GtkTreeView* tree_view GtkWidget* search_dialog lambda_data func_info" 'callback-290)
+			     (parse-args "GtkTreeView* tree_view GtkWidget* search_dialog lambda_data func_info" 'callback)
 			     'permanent)
 		       (list 'GtkAssistantPageFunc
 			     "gint"
 			     "page_func"
-			     (parse-args "gint current_page lambda_data func_info" 'callback-290)
+			     (parse-args "gint current_page lambda_data func_info" 'callback)
 			     'permanent)
 		       (list 'GtkLinkButtonUriFunc
 			     "void"
 			     "link_button_uri"
-			     (parse-args "GtkLinkButton* button gchar* link lambda_data func_info" 'callback-290)
+			     (parse-args "GtkLinkButton* button gchar* link lambda_data func_info" 'callback)
 			     ;; const gchar *link
 			     'permanent)
 		       (list 'GtkRecentSortFunc
 			     "gint"
 			     "recent_sort"
-			     (parse-args "GtkRecentInfo* a GtkRecentInfo* b lambda_data func_info" 'callback-290)
+			     (parse-args "GtkRecentInfo* a GtkRecentInfo* b lambda_data func_info" 'callback)
 			     'permanent)
 		       ))
 
@@ -720,12 +651,7 @@
     (and (not (null? funcs))
 	 (or (test (car funcs))
 	     (find-callback-1 test (cdr funcs)))))
-  (or (find-callback-1 test callbacks)
-      (find-callback-1 test callbacks-236)
-      (find-callback-1 test callbacks-250)
-      (find-callback-1 test callbacks-256)
-      (find-callback-1 test callbacks-290)
-      ))
+  (find-callback-1 test callbacks))
 
 (define direct-types 
   (list (cons "void" #f)
@@ -817,7 +743,6 @@
 	(cons "GtkTextDirection" "INT")
 	(cons "GtkStateType" "INT")
 	(cons "GtkImageType" "INT")
-; deprecated 2.13.4	(cons "GtkType" "ULONG")
 	(cons "GtkIconSize" "INT")
 	(cons "GtkJustification" "INT")
 	(cons "GtkMessageType" "INT")
@@ -1050,101 +975,7 @@
 
 (define (CFNC-23-PA data min-len max-len types)
   (let ((step (length types)))
-    (CFNC-236 data 'etc (list min-len max-len types))))
-
-(define* (CFNC-236 data spec spec-data) ; 'const -> const for arg cast, 'etc for ... args, 'free -> must free C val before return
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "~A CFNC-236~%" name)
-	(let ((type (car-str data)))
-	  (if (not (member type all-types)) 
-	      (begin
-		(set! all-types (cons type all-types))
-		(set! types-236 (cons type types-236))))
-	  (let ((strs (parse-args args '236)))
-	    (if spec
-		(set! funcs-236 (cons (list name type strs args spec spec-data) funcs-236))
-		(set! funcs-236 (cons (list name type strs args) funcs-236)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
-
-(define* (CFNC-250 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "CFNC-250: ~A~%" (list name data))
-	(let ((type (car-str data)))
-	  (if (not (member type all-types)) 
-	      (begin
-		(set! all-types (cons type all-types))
-		(set! types-250 (cons type types-250))))
-	  (let ((strs (parse-args args '250)))
-	    (if spec
-		(set! funcs-250 (cons (list name type strs args spec) funcs-250))	    
-		(set! funcs-250 (cons (list name type strs args) funcs-250)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
-
-(define* (CFNC-256 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "CFNC-256: ~A~%" (list name data))
-	(let ((type (car-str data)))
-	  (if (not (member type all-types)) 
-	      (begin
-		(set! all-types (cons type all-types))
-		(set! types-256 (cons type types-256))))
-	  (let ((strs (parse-args args '256)))
-	    (if spec
-		(set! funcs-256 (cons (list name type strs args spec) funcs-256))
-		(set! funcs-256 (cons (list name type strs args) funcs-256)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
-
-(define* (CFNC-260 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "CFNC-260: ~A~%" (list name data))
-	(let ((type (car-str data)))
-	  (if (not (member type all-types)) 
-	      (begin
-		(set! all-types (cons type all-types))
-		(set! types-260 (cons type types-260))))
-	  (let ((strs (parse-args args '260)))
-	    (if spec
-		(set! funcs-260 (cons (list name type strs args spec) funcs-260))
-		(set! funcs-260 (cons (list name type strs args) funcs-260)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
-
-(define* (CFNC-270 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "CFNC-270: ~A~%" (list name data))
-	(let ((type (car-str data)))
-	  (if (not (member type all-types)) 
-	      (begin
-		(set! all-types (cons type all-types))
-		(set! types-270 (cons type types-270))))
-	  (let ((strs (parse-args args '270)))
-	    (if spec
-		(set! funcs-270 (cons (list name type strs args spec) funcs-270))
-		(set! funcs-270 (cons (list name type strs args) funcs-270)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
-
-(define* (CFNC-273 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "CFNC-273: ~A~%" (list name data))
-	(let ((type (car-str data)))
-	  (if (not (member type all-types)) 
-	      (set! all-types (cons type all-types)))
-	  (let ((strs (parse-args args '273)))
-	    (if spec
-		(set! funcs-273 (cons (list name type strs args spec) funcs-273))
-		(set! funcs-273 (cons (list name type strs args) funcs-273)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
+    (CFNC data 'etc (list min-len max-len types))))
 
 (define* (CFNC-22 data)
   (let ((name (cadr-str data))
@@ -1158,22 +989,6 @@
 		(set! types-22 (cons type types-22))))
 	  (let ((strs (parse-args args '22)))
 	    (set! funcs-22 (cons (list name type strs args) funcs-22))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
-
-(define* (CFNC-290 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "CFNC-290: ~A~%" (list name data))
-	(let ((type (car-str data)))
-	  (if (not (member type all-types))
-	      (begin
-		(set! all-types (cons type all-types))
-		(set! types-290 (cons type types-290))))
-	  (let ((strs (parse-args args '290)))
-	    (if spec
-		(set! funcs-290 (cons (list name type strs args spec) funcs-290))
-		(set! funcs-290 (cons (list name type strs args) funcs-290)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
 (define* (CFNC-210 data spec)
@@ -1368,39 +1183,6 @@
 		(set! cairo-png-funcs (cons (list name type strs args) cairo-png-funcs)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
-(define* (CAIRO-FUNC-140 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "CAIRO-FUNC-140: ~A~%" (list name data))
-	(let ((type (car-str data)))
-	  (if (not (member type all-types))
-	      (begin
-		(set! all-types (cons type all-types))
-		(set! cairo-types-140 (cons type cairo-types-140))))
-	  (let ((strs (parse-args args '210)))
-	    (if spec
-		(set! cairo-funcs-140 (cons (list name type strs args spec) cairo-funcs-140))
-		(set! cairo-funcs-140 (cons (list name type strs args) cairo-funcs-140)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
-
-
-(define* (CAIRO-FUNC-164 data spec)
-  (let ((name (cadr-str data))
-	(args (caddr-str data)))
-    (if (assoc name names)
-	(no-way "CAIRO-FUNC-164: ~A~%" (list name data))
-	(let ((type (car-str data)))
-	  (if (not (member type all-types))
-	      (begin
-		(set! all-types (cons type all-types))
-		(set! cairo-types-164 (cons type cairo-types-164))))
-	  (let ((strs (parse-args args '210)))
-	    (if spec
-		(set! cairo-funcs-164 (cons (list name type strs args spec) cairo-funcs-164))
-		(set! cairo-funcs-164 (cons (list name type strs args) cairo-funcs-164)))
-	    (set! names (cons (cons name (func-type strs)) names)))))))
-
 
 (define (helpify name type args)
   (let* ((initial (format #f "  #define H_~A \"~A ~A(" name type name))
@@ -1447,34 +1229,6 @@
 	(set! strings (cons name strings))
 	(set! names (cons (cons name 'string) names)))))
 
-(define (CSTR-236 name)
-  (if (assoc name names-236)
-      (no-way "~A CSTR-236~%" name)
-      (begin
-	(set! strings-236 (cons name strings-236))
-	(set! names-236 (cons (cons name 'string) names-236)))))
-
-(define (CSTR-250 name)
-  (if (assoc name names-250)
-      (no-way "~A CSTR-250~%" name)
-      (begin
-	(set! strings-250 (cons name strings-250))
-	(set! names-250 (cons (cons name 'string) names-250)))))
-
-(define (CSTR-273 name)
-  (if (assoc name names-273)
-      (no-way "~A CSTR-273~%" name)
-      (begin
-	(set! strings-273 (cons name strings-273))
-	(set! names-273 (cons (cons name 'string) names-273)))))
-
-(define (CSTR-290 name)
-  (if (assoc name names-290)
-      (no-way "~A CSTR-290~%" name)
-      (begin
-	(set! strings-290 (cons name strings-290))
-	(set! names-290 (cons (cons name 'string) names-290)))))
-
 (define (CSTR-210 name)
   (if (assoc name names-210)
       (no-way "~A CSTR-210~%" name)
@@ -1517,38 +1271,6 @@
 	(set! ulongs (cons (list name type spec-name) ulongs))
 	(set! names (cons (cons name 'ulong) names)))))
 
-(define* (CLNG-236 name type spec-name)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CLNG-236~%" name)
-      (begin
-	(set! ulongs-236 (cons (list name type spec-name) ulongs-236))
-	(set! names (cons (cons name 'ulong) names)))))
-
-(define* (CLNG-250 name type spec-name)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CLNG-250~%" name)
-      (begin
-	(set! ulongs-250 (cons (list name type spec-name) ulongs-250))
-	(set! names (cons (cons name 'ulong) names)))))
-
-(define* (CLNG-256 name type spec-name)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CLNG-256~%" name)
-      (begin
-	(set! ulongs-256 (cons (list name type spec-name) ulongs-256))
-	(set! names (cons (cons name 'ulong) names)))))
-
-(define* (CLNG-290 name type spec-name)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CLNG-290~%" name)
-      (begin
-	(set! ulongs-290 (cons (list name type spec-name) ulongs-290))
-	(set! names (cons (cons name 'ulong) names)))))
-
 (define* (CLNG-211 name type spec-name)
   (save-declared-type type)
   (if (assoc name names)
@@ -1571,62 +1293,6 @@
       (no-way "~A CINT~%" name)
       (begin
 	(set! ints (cons name ints))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-236 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-236~%" name)
-      (begin
-	(set! ints-236 (cons name ints-236))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-250 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-250~%" name)
-      (begin
-	(set! ints-250 (cons name ints-250))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-256 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-256~%" name)
-      (begin
-	(set! ints-256 (cons name ints-256))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-260 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-260~%" name)
-      (begin
-	(set! ints-260 (cons name ints-260))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-270 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-270~%" name)
-      (begin
-	(set! ints-270 (cons name ints-270))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-273 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-273~%" name)
-      (begin
-	(set! ints-273 (cons name ints-273))
-	(set! names (cons (cons name 'int) names)))))
-
-(define* (CINT-290 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CINT-290~%" name)
-      (begin
-	(set! ints-290 (cons name ints-290))
 	(set! names (cons (cons name 'int) names)))))
 
 (define* (CINT-210 name type)
@@ -1709,22 +1375,6 @@
 	(set! cairo-ints (cons name cairo-ints))
 	(set! names (cons (cons name 'int) names)))))
 
-(define* (CAIRO-INT-140 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CAIRO-INT-140~%" name)
-      (begin
-	(set! cairo-ints-140 (cons name cairo-ints-140))
-	(set! names (cons (cons name 'int) names)))))
-  
-(define* (CAIRO-INT-164 name type)
-  (save-declared-type type)
-  (if (assoc name names)
-      (no-way "~A CAIRO-INT-164~%" name)
-      (begin
-	(set! cairo-ints-164 (cons name cairo-ints-164))
-	(set! names (cons (cons name 'int) names)))))
-  
 
 (define (CCAST name type) ; this is the cast (type *)obj essentially but here it's (list type* (cadr obj))
   (if (assoc name names)
@@ -1733,34 +1383,6 @@
 	;;(if (not (member type types))
 	;;    (set! types (cons type types)))
 	(set! casts (cons (list name type) casts))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCAST-236 name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-236~%" name)
-      (begin
-	(set! casts-236 (cons (list name type) casts-236))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCAST-250 name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-250~%" name)
-      (begin
-	(set! casts-250 (cons (list name type) casts-250))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCAST-256 name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-256~%" name)
-      (begin
-	(set! casts-256 (cons (list name type) casts-256))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCAST-290 name type)
-  (if (assoc name names)
-      (no-way "~A CCAST-290~%" name)
-      (begin
-	(set! casts-290 (cons (list name type) casts-290))
 	(set! names (cons (cons name 'def) names)))))
 
 (define (CCAST-210 name type)
@@ -1810,34 +1432,6 @@
       (no-way "~A CCHK~%" name)
       (begin
 	(set! checks (cons (list name type) checks))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCHK-236 name type)
-  (if (assoc name names)
-      (no-way "~A CCHK-236~%" name)
-      (begin
-	(set! checks-236 (cons (list name type) checks-236))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCHK-250 name type)
-  (if (assoc name names)
-      (no-way "~A CCHK-250~%" name)
-      (begin
-	(set! checks-250 (cons (list name type) checks-250))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCHK-256 name type)
-  (if (assoc name names)
-      (no-way "~A CCHK-256~%" name)
-      (begin
-	(set! checks-256 (cons (list name type) checks-256))
-	(set! names (cons (cons name 'def) names)))))
-
-(define (CCHK-290 name type)
-  (if (assoc name names)
-      (no-way "~A CCHK-290~%" name)
-      (begin
-	(set! checks-290 (cons (list name type) checks-290))
 	(set! names (cons (cons name 'def) names)))))
 
 (define (CCHK-210 name type)
@@ -1951,41 +1545,6 @@
  types)
 
 
-(define (with-236 dpy thunk)
-  (dpy "#if HAVE_GTK_ABOUT_DIALOG_NEW~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-250 dpy thunk)
-  (dpy "#if HAVE_GTK_ABOUT_DIALOG_NEW~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-256 dpy thunk)
-  (dpy "#if HAVE_GDK_PANGO_RENDERER_NEW~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-260 dpy thunk)
-  (dpy "#if HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-270 dpy thunk)
-  (dpy "#if HAVE_GTK_MENU_BAR_GET_CHILD_PACK_DIRECTION~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-273 dpy thunk)
-  (dpy "#if HAVE_GTK_ABOUT_DIALOG_GET_WRAP_LICENSE~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-290 dpy thunk)
-  (dpy "#if HAVE_GTK_LINK_BUTTON_NEW~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
 (define (with-210 dpy thunk)
   (dpy "#if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE~%")
   (thunk)
@@ -2038,56 +1597,19 @@
 
 
 (define (with-cairo dpy thunk)
-  (dpy "#if HAVE_CAIRO_CREATE~%")
   (thunk)
-  (dpy "#endif~%~%"))
+  )
 
 (define (with-cairo-png dpy thunk)
-  (dpy "#if HAVE_CAIRO_CREATE && CAIRO_HAS_PNG_FUNCTIONS~%")
   (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-cairo-140 dpy thunk)
-  (dpy "#if HAVE_CAIRO_GET_USER_DATA~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
-(define (with-cairo-164 dpy thunk)
-  (dpy "#if HAVE_CAIRO_FORMAT_STRIDE_FOR_WIDTH~%")
-  (thunk)
-  (dpy "#endif~%~%"))
-
+  )
 
 
 
 ;;; ---------------------------------------- write output files ----------------------------------------
-(hey "/* xg.c: s7, Ruby, and Forth bindings for gdk/gtk/pango/cairo, some of glib~%")
+(hey "/* xg.c: s7, Ruby, and Forth bindings for gtk/pango/cairo, some of glib~%")
 (hey " *   this file generated automatically from makexg.scm and xgdata.scm~%")
 (hey " *   needs xen.h~%")
-(hey " *~%")
-(hey " *   compile-time flags:~%")
-(hey " *     HAVE_GDK_DRAW_PIXBUF for 2.1~%")
-(hey " *     HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION for 2.2~%")
-(hey " *     HAVE_GTK_FILE_CHOOSER_DIALOG_NEW for 2.3~%")
-(hey " *     HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME for 2.3.6~%")
-(hey " *     HAVE_GTK_ABOUT_DIALOG_NEW for 2.5.0~%")
-(hey " *     HAVE_GDK_PANGO_RENDERER_NEW for 2.5.6~%")
-(hey " *     HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION for 2.6.0~%")
-(hey " *     HAVE_GTK_MENU_BAR_GET_CHILD_PACK_DIRECTION for 2.7.0~%")
-(hey " *     HAVE_GTK_TREE_VIEW_GET_VISIBLE_RANGE for 2.7.3~%")
-(hey " *     HAVE_GTK_LINK_BUTTON_NEW for 2.9.0~%")
-(hey " *     HAVE_GTK_LABEL_GET_LINE_WRAP_MODE for 2.10.0~%")
-(hey " *     HAVE_GTK_WIDGET_GET_HAS_TOOLTIP for 2.11.n~%")
-(hey " *     HAVE_GTK_TEST_WIDGET_CLICK for 2.13.0~%")
-(hey " *     HAVE_GTK_ADJUSTMENT_GET_UPPER for 2.13.4..6~%")
-(hey " *     HAVE_GTK_SCALE_ADD_MARK for 2.15.0~%")
-(hey " *     HAVE_GTK_INFO_BAR_NEW for 2.17.2~%")
-(hey " *     HAVE_GTK_STATUS_ICON_GET_TITLE for 2.17.3~%")
-(hey " *     HAVE_GTK_WIDGET_GET_VISIBLE for 2.17.7~%")
-(hey " *     HAVE_GTK_WIDGET_GET_MAPPED for 2.19.3~%")
-(hey " *     HAVE_CAIRO_CREATE for cairo~%")
-(hey " *     HAVE_CAIRO_GET_USER_DATA for cairo 1.4.0~%")
-(hey " *     HAVE_CAIRO_FORMAT_STRIDE_FOR_WIDTH for cairo 1.6.4~%")
 (hey " *~%")
 (hey " * reference args initial values are usually ignored, resultant values are returned in a list.~%")
 (hey " * null ptrs are passed and returned as #f, trailing \"user_data\" callback function arguments are optional (default: #f).~%")
@@ -2136,6 +1658,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     19-Aug-10: removed lots of Gdk stuff -- we assume Gtk 2.8 and cairo now.~%")
 (hey " *     28-Jan-10: removed the rest of the struct accessors.~%")
 (hey " *     --------~%")
 (hey " *     16-Dec-09: removed Guile support.~%")
@@ -2340,10 +1863,6 @@
        (length (callback-args func))))
 
 (for-each callback-p callbacks)
-(with-236 hey (lambda () (for-each callback-p callbacks-236)))
-(with-250 hey (lambda () (for-each callback-p callbacks-250)))
-(with-256 hey (lambda () (for-each callback-p callbacks-256)))
-(with-290 hey (lambda () (for-each callback-p callbacks-290)))
 
 ;(hey "#define XEN_lambda_P(Arg) XEN_PROCEDURE_P(Arg)~%")
 (hey "#define XEN_GCallback_P(Arg) (XEN_PROCEDURE_P(Arg) && ((XEN_REQUIRED_ARGS_OK(Arg, 2)) || (XEN_REQUIRED_ARGS_OK(Arg, 3)) || (XEN_REQUIRED_ARGS_OK(Arg, 4))))~%")
@@ -2354,10 +1873,6 @@
        (callback-func func)))
 
 (for-each xen-callback callbacks)
-(with-236 hey (lambda () (for-each xen-callback callbacks-236)))
-(with-250 hey (lambda () (for-each xen-callback callbacks-250)))
-(with-256 hey (lambda () (for-each xen-callback callbacks-256)))
-(with-290 hey (lambda () (for-each xen-callback callbacks-290)))
 
 (hey "#define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS_OK(Arg, 4)) ? (GCallback)gxg_func4 : ((XEN_REQUIRED_ARGS_OK(Arg, 3)) ? (GCallback)gxg_func3 : (GCallback)gxg_func2))~%")
 ;; (hey "#define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS_OK(Arg, 3)) ? (GCallback)gxg_func3 : (GCallback)gxg_func2)~%")
@@ -2400,12 +1915,10 @@
    (if (not (null? type-list)) 
        (with-func hey (lambda () 
 			(for-each type-it (reverse type-list))))))
- (list types-236 types-250 types-256 types-260 types-270 types-290 
-       types-210 types-211 types-213 types-2134 types-2150 types-2172 types-2173 types-2177 types-2190 types-2901
-       cairo-types cairo-types-140 cairo-types-164)
- (list with-236 with-250 with-256 with-260 with-270 with-290 
-       with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901
-       with-cairo with-cairo-140 with-cairo-164))
+ (list types-210 types-211 types-213 types-2134 types-2150 types-2172 types-2173 types-2177 types-2190 types-2901
+       cairo-types)
+ (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901
+       with-cairo))
 
 
 (hey "#define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))~%")
@@ -2581,10 +2094,6 @@
 		   (hey "  #endif~%")))
 	     (hey "}~%~%")))))))
     (for-each xc callbacks)
-    (with-236 hey (lambda () (for-each xc callbacks-236)))
-    (with-250 hey (lambda () (for-each xc callbacks-250)))
-    (with-256 hey (lambda () (for-each xc callbacks-256)))
-    (with-290 hey (lambda () (for-each xc callbacks-290)))
     ))
 
 (hey "~%static gboolean gxg_func3(GtkWidget *w, GdkEventAny *ev, gpointer data)~%")
@@ -3024,12 +2533,10 @@
    (if (not (null? func-list)) 
        (with-func hey (lambda () 
 			(for-each handle-func (reverse func-list))))))
- (list funcs-236 funcs-250 funcs-256 funcs-260 funcs-270 funcs-273 funcs-290
-       funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-2901
-       cairo-funcs cairo-png-funcs cairo-funcs-140 cairo-funcs-164)
- (list with-236 with-250 with-256 with-260 with-270 with-273 with-290
-       with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901
-       with-cairo with-cairo-png with-cairo-140 with-cairo-164))
+ (list funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-2901
+       cairo-funcs cairo-png-funcs)
+ (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901
+       with-cairo with-cairo-png))
 
 
 (hey "#define WRAPPED_OBJECT_P(Obj) (XEN_LIST_P(Obj) && (XEN_LIST_LENGTH(Obj) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Obj))))~%~%")
@@ -3050,8 +2557,8 @@
    (if (not (null? cast-list)) 
        (cast-func hey (lambda () 
 			(for-each cast-it (reverse cast-list))))))
- (list casts-236 casts-250 casts-256 casts-290 casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901)
- (list with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
+ (list casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901)
+ (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 ;;; checks have to use the built-in macros, not local symbol-based type checks
 
@@ -3065,8 +2572,8 @@
    (if (not (null? check-list)) 
        (check-func hey (lambda () 
 			(for-each make-check (reverse check-list))))))
- (list checks-236 checks-250 checks-256 checks-290 checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-2901)
- (list with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
+ (list checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-2901)
+ (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 (hey "~%~%/* ---------------------------------------- special functions ---------------------------------------- */~%~%")
 
@@ -3380,12 +2887,10 @@
    (if (not (null? func-list)) 
        (with-func hey (lambda () 
 			(for-each argify-func (reverse func-list))))))
- (list funcs-236 funcs-250 funcs-256 funcs-260 funcs-270 funcs-273 funcs-290
-       funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-2901
-       cairo-funcs cairo-png-funcs cairo-funcs-140 cairo-funcs-164)
- (list with-236 with-250 with-256 with-260 with-270 with-273 with-290
-       with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901
-       with-cairo with-cairo-png with-cairo-140 with-cairo-164))
+ (list funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-2901
+       cairo-funcs cairo-png-funcs)
+ (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901
+       with-cairo with-cairo-png))
 
 
 (define (ruby-cast func) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
@@ -3406,8 +2911,8 @@
    (if (not (null? cast-list)) 
        (cast-func hey (lambda () 
 			(for-each ruby-cast (reverse cast-list))))))
- (list casts-236 casts-250 casts-256 casts-290 casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901)
- (list with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
+ (list casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901)
+ (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 (define (ruby-check func) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func))))
 (for-each ruby-check (reverse checks))
@@ -3416,8 +2921,8 @@
    (if (not (null? check-list)) 
        (check-func hey (lambda () 
 			(for-each ruby-check (reverse check-list))))))
- (list checks-236 checks-250 checks-256 checks-290 checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-2901)
- (list with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
+ (list checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-2901)
+ (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 
 (for-each (lambda (field) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" field field)) struct-fields)
@@ -3453,12 +2958,10 @@
    (if (not (null? func-list)) 
        (with-func hey (lambda () 
 			(for-each unargify-func (reverse func-list))))))
- (list funcs-236 funcs-250 funcs-256 funcs-260 funcs-270 funcs-273 funcs-290
-       funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-2901
-       cairo-funcs cairo-png-funcs cairo-funcs-140 cairo-funcs-164)
- (list with-236 with-250 with-256 with-260 with-270 with-273 with-290
-       with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901
-       with-cairo with-cairo-png with-cairo-140 with-cairo-164))
+ (list funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-2901
+       cairo-funcs cairo-png-funcs)
+ (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901
+       with-cairo with-cairo-png))
 
 
 (hey "#define gxg_GPOINTER_w gxg_GPOINTER~%")
@@ -3477,8 +2980,8 @@
    (if (not (null? cast-list)) 
        (cast-func hey (lambda () 
 			(for-each ruby-uncast (reverse cast-list))))))
- (list casts-236 casts-250 casts-256 casts-290 casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901)
- (list with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
+ (list casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901)
+ (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 
 (define (ruby-uncheck func) (hey "#define gxg_~A_w gxg_~A~%" (no-arg (car func)) (no-arg (car func))))
@@ -3488,8 +2991,8 @@
    (if (not (null? check-list)) 
        (check-func hey (lambda () 
 			(for-each ruby-uncheck (reverse check-list))))))
- (list checks-236 checks-250 checks-256 checks-290 checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-2901)
- (list with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
+ (list checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-2901)
+ (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 (for-each (lambda (field) (hey "#define gxg_~A_w gxg_~A~%" field field)) struct-fields)
 (for-each (lambda (field) (hey "#define gxg_~A_w gxg_~A~%" field field)) settable-struct-fields)
@@ -3548,12 +3051,10 @@
    (if (not (null? func-list)) 
        (with-func hey (lambda () 
 			(for-each defun (reverse func-list))))))
- (list funcs-236 funcs-250 funcs-256 funcs-260 funcs-270 funcs-273 funcs-290
-       funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-2901
-       cairo-funcs cairo-png-funcs cairo-funcs-140 cairo-funcs-164)
- (list with-236 with-250 with-256 with-260 with-270 with-273 with-290
-       with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901
-       with-cairo with-cairo-png with-cairo-140 with-cairo-164))
+ (list funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-2901
+       cairo-funcs cairo-png-funcs)
+ (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901
+       with-cairo with-cairo-png))
 
 (define (cast-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, \"(~A obj) casts obj to ~A\");~%" 
@@ -3570,8 +3071,8 @@
    (if (not (null? cast-list)) 
        (cast-func hey (lambda () 
 			(for-each cast-out (reverse cast-list))))))
- (list casts-236 casts-250 casts-256 casts-290 casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901)
- (list with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
+ (list casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901)
+ (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 
 (hey "  XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);~%")
@@ -3595,8 +3096,8 @@
    (if (not (null? check-list)) 
        (check-func hey (lambda () 
 			(for-each check-out (reverse check-list))))))
- (list checks-236 checks-250 checks-256 checks-290 checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-2901)
- (list with-236 with-250 with-256 with-290 with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
+ (list checks-210 checks-211 checks-213 checks-2134 checks-2150 checks-2172 checks-2173 checks-2190 checks-2901)
+ (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2190 with-2901))
 
 (hey "}~%~%")
 
@@ -3662,12 +3163,10 @@
 			(for-each (lambda (val) 
 				    (hey "  DEFINE_INTEGER(~A);~%" val)) 
 				  (reverse ints-list))))))
- (list ints-236 ints-250 ints-256 ints-260 ints-270 ints-273 ints-290
-       ints-210 ints-211 ints-213 ints-2134 ints-2150 ints-2172 ints-2173 ints-2177 ints-2901
-       cairo-ints cairo-ints-140 cairo-ints-164)
- (list with-236 with-250 with-256 with-260 with-270 with-273 with-290
-       with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2901
-       with-cairo with-cairo-140 with-cairo-164))
+ (list ints-210 ints-211 ints-213 ints-2134 ints-2150 ints-2172 ints-2173 ints-2177 ints-2901
+       cairo-ints)
+ (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2901
+       with-cairo))
 
 
 (for-each 
@@ -3684,8 +3183,8 @@
 				   (let ((val (car vals))) 
 				     (hey "  DEFINE_ULONG(~A);~%" val))) 
 				 (reverse ulongs-list))))))
- (list ulongs-236 ulongs-250 ulongs-256 ulongs-290 ulongs-211 ulongs-213 ulongs-2134 ulongs-2150 ulongs-2173)
- (list with-236 with-250 with-256 with-290 with-211 with-213 with-2134 with-2150 with-2173))
+ (list ulongs-211 ulongs-213 ulongs-2134 ulongs-2150 ulongs-2173)
+ (list with-211 with-213 with-2134 with-2150 with-2173))
 
 (hey "}~%~%")
 
@@ -3742,8 +3241,8 @@
 			   (for-each (lambda (str) 
 				       (hey "  DEFINE_STRING(~A);~%" str)) 
 				     (reverse strings-list))))))
- (list strings-236 strings-250 strings-273 strings-290 strings-210 strings-211 strings-213 strings-2134 strings-2150)
- (list with-236 with-250 with-273 with-290 with-210 with-211 with-213 with-2134 with-2150))
+ (list strings-210 strings-211 strings-213 strings-2134 strings-2150)
+ (list with-210 with-211 with-213 with-2134 with-2150))
 
 (hey "}~%~%")
 

@@ -524,14 +524,14 @@
 			   (if (and (= (channel-style snd) channels-combined)
 				    (> (channels snd) 1))
 			       (call-with-exit
-				(lambda (break)
+				(lambda (return)
 				  (do ((i 0 (+ 1 i)))
 				      ((= i (channels snd)))
 				    (let ((off (list-ref (axis-info snd i) 14)))
 				      (if (< y off)
 					  (begin
 					    (set! graph-popup-chn (- i 1))
-					    (break)))))
+					    (return)))))
 				  (set! graph-popup-chn (- (channels snd) 1)))))
 			   (let ((fax (if (transform-graph? snd chn) (axis-info snd chn transform-graph) #f))
 				 (lax (if (lisp-graph? snd chn) (axis-info snd chn lisp-graph) #f)))

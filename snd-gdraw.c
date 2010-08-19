@@ -174,18 +174,6 @@ void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
     pango_cairo_show_layout(ax->cr, layout);
     g_object_unref(G_OBJECT(layout));
   }
-#else
-  {
-    PangoLayout *layout = NULL;
-    PangoContext *ctx;
-    ctx = gdk_pango_context_get();
-    layout = pango_layout_new(ctx);
-    pango_layout_set_font_description(layout, ax->current_font);
-    pango_layout_set_text(layout, str, -1);
-    gdk_draw_layout(ax->wn, ax->gc, (gint)x0, (gint)y0, layout);
-    g_object_unref(G_OBJECT(layout));
-    g_object_unref(ctx);
-  }
 #endif
 }
 
@@ -208,21 +196,6 @@ static void rotate_text(axis_context *ax, PangoFontDescription *font, const char
   pango_cairo_show_layout(cr, layout);
   cairo_destroy(cr);
   g_object_unref(layout);
-#else
-#if HAVE_PANGO_MATRIX_ROTATE
-  PangoLayout *layout;
-  PangoContext *context;
-  PangoMatrix matrix = PANGO_MATRIX_INIT;
-  pango_matrix_rotate(&matrix, angle);
-  context = gdk_pango_context_get();
-  layout = pango_layout_new(context);
-  pango_context_set_matrix(context, &matrix);
-  pango_layout_set_font_description(layout, font);
-  pango_layout_set_text(layout, text, -1);
-  gdk_draw_layout(ax->wn, ax->gc, x0, y0, layout);
-  g_object_unref(layout);
-  g_object_unref(context);
-#endif
 #endif
 }
 

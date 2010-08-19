@@ -1026,7 +1026,7 @@ bool restore_fft_pix(chan_info *cp, axis_context *ax)
   cairo_destroy(cr);
   return(true);
 #else
-#if HAVE_GTK_ABOUT_DIALOG_NEW
+
   gdk_draw_pixbuf(ax->wn,
 		  copy_GC(cp),
 		  cp->cgx->fft_pix,
@@ -1035,16 +1035,13 @@ bool restore_fft_pix(chan_info *cp, axis_context *ax)
 		  cp->cgx->fft_pix_width, cp->cgx->fft_pix_height,
 		  GDK_RGB_DITHER_NONE, 0, 0); /* dithering */
   return(true);
-#else
-  return(false);
-#endif
 #endif
 }
 
 void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y0)
 {
   if ((fwidth <= 0) || (fheight <= 0)) return;
-#if HAVE_GTK_ABOUT_DIALOG_NEW
+
   cp->cgx->fft_pix_width = fwidth;
   cp->cgx->fft_pix_height = fheight;
   cp->cgx->fft_pix_x0 = x0;
@@ -1054,7 +1051,7 @@ void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int 
 						  cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0, 0, 0,
 						  cp->cgx->fft_pix_width, cp->cgx->fft_pix_height);
   cp->cgx->fft_pix_ready = true;
-#endif
+
 }
 
 

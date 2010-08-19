@@ -63,7 +63,7 @@
 		   (flen (string-length func)))
 	       ;; look for * miscounts
 	       (call-with-exit
-		(lambda (break)
+		(lambda (return)
 		  (do ((i 0 (+ 1 i)))
 		      ((= i len))
 		    (let ((ch (string-ref line i)))
@@ -73,7 +73,7 @@
 			      (set! count 0)
 			      (if (and (< i (- len 2))
 				       (string=? (substring line i (+ i 2)) "/*"))
-				  (break #f)
+				  (return #f)
 				  (if (and (< i (- len flen))
 					   (string=? (substring line i (+ i flen)) func))
 				      (begin

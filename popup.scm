@@ -748,14 +748,14 @@ all saved edit lists."
 				     (> (channels snd) 1))
 				(let ((ye (.y e))) ; y axis location of mouse-down
 				  (call-with-exit
-				   (lambda (break)
+				   (lambda (return)
 				     (do ((i 0 (+ 1 i)))
 					 ((= i (channels snd)))
 				       (let ((off (list-ref (axis-info snd i) 14)))
 					 (if (< ye off)
 					     (begin
 					       (set! graph-popup-chn (- i 1))
-					       (break)))))
+					       (return)))))
 				     (set! graph-popup-chn (- (channels snd) 1))))))
 			    
 			    (let ((fax (if (transform-graph? snd chn) (axis-info snd chn transform-graph) #f))

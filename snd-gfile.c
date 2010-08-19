@@ -5419,9 +5419,9 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 
 	vdat->left_title = snd_gtk_entry_label_new(_("(no files selected)"), ss->sgx->highlight_color);
 	gtk_box_pack_start(GTK_BOX(leftform), vdat->left_title, false, false, 0);
-#if HAVE_GTK_ENTRY_SET_ALIGNMENT
+
 	gtk_entry_set_alignment(GTK_ENTRY(vdat->left_title), 0.5);
-#endif
+
 	gtk_widget_show(vdat->left_title);
 
 	ltop_sep = gtk_hseparator_new();

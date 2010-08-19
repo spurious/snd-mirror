@@ -69,7 +69,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --without-fftw        omit FFTW even if it exists
 #   --without-xpm         omit XPM even if it exists (for testing)
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
-#   --with-cairo          use cairo for Gtk graphics, if possible
 #   --with-pulseaudio     use PulseAudio
 #   --with-portaudio      use portaudio
 #   --with-profiling      add code to keep profiling stats (s7)
@@ -97,7 +96,6 @@ AC_ARG_WITH(ladspa,	 [  --with-ladspa  	  include support for LADSPA plugins, Li
 AC_ARG_WITH(builtin-gtkrc,[  --with-builtin-gtkrc	  include built-in gtkrc fallbacks, default=yes])
 AC_ARG_WITH(doubles,     [  --with-doubles	  use doubles throughout])
 AC_ARG_WITH(float-samples, [  --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes])
-AC_ARG_WITH(cairo,	 [  --with-cairo		  use cairo for graphics in Gtk -- not currently very usable])
 AC_ARG_WITH(pulseaudio,  [  --with-pulseaudio 		  use PulseAudio, default=no])
 AC_ARG_WITH(portaudio,   [  --with-portaudio 		  use portaudio, default=no])
 AC_ARG_WITH(profiling,   [  --with-profiling		  add code to keep profiling stats (s7 only)])
@@ -987,7 +985,7 @@ else
           ])
       else
 
-        AM_PATH_GTK_2_0(2.0.0,
+        AM_PATH_GTK_2_0(2.9.0,
           [
 	    with_gtk=yes
           ],
@@ -999,7 +997,7 @@ else
 
     else
 
-        AM_PATH_GTK_2_0(2.0.0,
+        AM_PATH_GTK_2_0(2.9.0,
           [
 	    with_gtk=yes
           ],
@@ -1046,36 +1044,14 @@ else
 
       	AC_SUBST(GTK_LD_LIBS)
 
-	AC_CHECK_LIB(m, gtk_about_dialog_new, [AC_DEFINE(HAVE_GTK_ABOUT_DIALOG_NEW)], ,$GTK_LIBS)
-	# gtk 2.5.0
-	AC_CHECK_LIB(m, gdk_pango_renderer_new, [AC_DEFINE(HAVE_GDK_PANGO_RENDERER_NEW)],  ,$GTK_LIBS)
-	# gtk 2.5.6
-	AC_CHECK_LIB(m, gtk_text_layout_get_iter_at_position, [AC_DEFINE(HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION)],  ,$GTK_LIBS)
-	# gtk 2.6.0|1|2|3|4|5|6|7|8: no API changes
-	AC_CHECK_LIB(m, pango_matrix_rotate, [AC_DEFINE(HAVE_PANGO_MATRIX_ROTATE)],  ,$GTK_LIBS)
-        AC_CHECK_LIB(m, gtk_menu_bar_get_child_pack_direction, 
-	    [
-	      AC_DEFINE(HAVE_GTK_MENU_BAR_GET_CHILD_PACK_DIRECTION)
-	      if test x$PKG_CONFIG != xno ; then
-                  CAIRO_CFLAGS="`$PKG_CONFIG cairo --cflags-only-I`"
-      	          AC_SUBST(CAIRO_CFLAGS)
-	          cairo_version="`$PKG_CONFIG cairo --modversion`"
-                  AC_DEFINE_UNQUOTED(MUS_CAIRO_VERSION,"${cairo_version}")
-              fi
-	    ],  ,$GTK_LIBS)
-	# gtk 2.7.0
-	# cairo needs xfixes xextensions fixesext libXfixes fontconfig libXrender libpixman libXft2 glitz 
-	#   and innumerable *.pc files scattered all over the world-wide-web
-	AC_CHECK_LIB(m, gtk_tree_view_get_visible_range, [AC_DEFINE(HAVE_GTK_TREE_VIEW_GET_VISIBLE_RANGE)],  ,$GTK_LIBS)
-	# gtk 2.7.3
-	AC_CHECK_LIB(m, gtk_dialog_get_response_for_widget, [AC_DEFINE(HAVE_GTK_DIALOG_GET_RESPONSE_FOR_WIDGET)],  ,$GTK_LIBS)
-	# for snd-gfile (2.7.0)
-	AC_CHECK_LIB(m, gtk_entry_set_alignment, [AC_DEFINE(HAVE_GTK_ENTRY_SET_ALIGNMENT)], ,$GTK_LIBS)
-	# for snd-prefs/gfile (2.3.6)
-	AC_CHECK_LIB(m, gtk_combo_box_entry_new_text, [AC_DEFINE(HAVE_GTK_COMBO_BOX_ENTRY_NEW_TEXT)], ,$GTK_LIBS)
-	# for snd-prefs/gfile (2.3.6)
-	AC_CHECK_LIB(m, gtk_link_button_new, [AC_DEFINE(HAVE_GTK_LINK_BUTTON_NEW)], ,$GTK_LIBS)
-	# for 2.9.0
+	# assume 2.9 or later
+	if test x$PKG_CONFIG != xno ; then
+          CAIRO_CFLAGS="`$PKG_CONFIG cairo --cflags-only-I`"
+      	  AC_SUBST(CAIRO_CFLAGS)
+	  cairo_version="`$PKG_CONFIG cairo --modversion`"
+          AC_DEFINE_UNQUOTED(MUS_CAIRO_VERSION,"${cairo_version}")
+          fi
+
 	AC_CHECK_LIB(m, gtk_label_get_line_wrap_mode, [AC_DEFINE(HAVE_GTK_LABEL_GET_LINE_WRAP_MODE)], ,$GTK_LIBS)
 	# for 2.10.0
 	AC_CHECK_LIB(m, gtk_print_operation_new, [AC_DEFINE(HAVE_GTK_PRINT_OPERATION_NEW)], ,$GTK_LIBS)
@@ -1097,23 +1073,6 @@ else
 	AC_CHECK_LIB(m, gtk_entry_get_text_window, [AC_DEFINE(HAVE_GTK_ENTRY_GET_TEXT_WINDOW)], ,$GTK_LIBS)
 	# for 2.90
 	AC_CHECK_LIB(m, gtk_scale_new, [AC_DEFINE(HAVE_GTK_SCALE_NEW)], ,$GTK_LIBS)
-
-	# for gdk|pango_cairo 
-	AC_CHECK_LIB(m, gdk_cairo_create, 
-		[
-		 AC_DEFINE(HAVE_GDK_CAIRO_CREATE)
-                 if test "$with_cairo" = yes; then
-                   AC_DEFINE(USE_CAIRO)
-	           GRAPHICS_TOOLKIT="Gtk (with Cairo graphics)"
-                 fi
-		], ,$GTK_LIBS)
-
-	# for cairo
-	AC_CHECK_LIB(cairo, cairo_create, [AC_DEFINE(HAVE_CAIRO_CREATE)], ,$GTK_LIBS)
-	# for cairo 1.4.0
-	AC_CHECK_LIB(cairo, cairo_get_user_data, [AC_DEFINE(HAVE_CAIRO_GET_USER_DATA)], ,$GTK_LIBS)
-	# for cairo 1.6.4
-	AC_CHECK_LIB(cairo, cairo_format_stride_for_width, [AC_DEFINE(HAVE_CAIRO_FORMAT_STRIDE_FOR_WIDTH)], ,$GTK_LIBS)
 
 	XLIBS=""
       	XFLAGS=""

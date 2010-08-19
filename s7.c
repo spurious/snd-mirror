@@ -398,7 +398,6 @@ typedef struct s7_cell {
   unsigned int flag;
 #if DEBUGGING
   unsigned int saved_flag;
-  int alloc_line;
 #endif
   int hloc;
 #if WITH_PROFILING
@@ -642,7 +641,6 @@ struct s7_scheme {
 #if DEBUGGING
 #define saved_typeflag(p)             ((p)->saved_flag)
 #define saved_type(p)                 (saved_typeflag(p) & T_MASKTYPE)
-#define new_cell_line(p)              ((p)->alloc_line)
 #endif
 
 #define T_SYNTAX                      (1 << (TYPE_BITS + 1))
@@ -1440,8 +1438,8 @@ void s7_mark_object(s7_pointer p)
   S7_MARK(p);
 }
 
-#define gc(Sc) gc_1(Sc, __LINE__)
-static int gc_1(s7_scheme *sc, int line)
+
+static int gc(s7_scheme *sc)
 {
   int i;
   s7_cell **old_free_heap_top;
@@ -1544,14 +1542,6 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
 #if HAVE_PTHREADS
   #define NEW_CELL(Sc, Obj) Obj = new_cell(Sc)
 #else
-#if DEBUGGING
-  #define NEW_CELL(Sc, Obj) \
-    do { \
-      if (Sc->free_heap_top > Sc->free_heap_trigger) \
-        {Obj = (*(--(Sc->free_heap_top))); new_cell_line(Obj) = __LINE__;} \
-      else Obj = new_cell(Sc);                       \
-    } while (0)
-#else
   #define NEW_CELL(Sc, Obj) \
     do { \
       if (Sc->free_heap_top > Sc->free_heap_trigger) \
@@ -1560,18 +1550,16 @@ static s7_pointer g_dump_heap(s7_scheme *sc, s7_pointer args)
     } while (0)
 
 /* not faster:
-  #define NEW_CELL(Sc, Obj) do {Obj = ((Sc->free_heap_top > Sc->free_heap_trigger) ? (*(--(Sc->free_heap_top))) : new_cell_1(Sc, __LINE__));} while (0)
+  #define NEW_CELL(Sc, Obj) do {Obj = ((Sc->free_heap_top > Sc->free_heap_trigger) ? (*(--(Sc->free_heap_top))) : new_cell(Sc);} while (0)
 */
 #endif
-#endif
 
-#define new_cell(Sc) new_cell_1(Sc, __LINE__)
 #if HAVE_PTHREADS
 static pthread_mutex_t alloc_lock = PTHREAD_MUTEX_INITIALIZER;
 
-static s7_pointer new_cell_1(s7_scheme *nsc, int line)
+static s7_pointer new_cell(s7_scheme *nsc)
 #else
-static s7_pointer new_cell_1(s7_scheme *sc, int line)
+static s7_pointer new_cell(s7_scheme *sc)
 #endif
 {
   s7_pointer p;
@@ -1590,7 +1578,7 @@ static s7_pointer new_cell_1(s7_scheme *sc, int line)
       unsigned int k, old_size, freed_heap = 0;
       
       if (!(*(sc->gc_off)))
-        freed_heap = gc_1(sc, line);
+        freed_heap = gc(sc);
       /* when threads, the gc function can be interrupted at any point and resumed later -- mark bits need to be preserved during this interruption */
       
       if (freed_heap < sc->heap_size / 4) /* was 1000, setting it to 2 made no difference in run time */
@@ -1665,10 +1653,7 @@ static s7_pointer new_cell_1(s7_scheme *sc, int line)
    *   than using a type bit to say "newly allocated" because that protects so many cells
    *   betweeen gc calls that we end up calling the gc twice as often overall.
    */
-#if DEBUGGING
-  new_cell_line(p) = line;
-#endif
-  
+
   return(p);
 }
 
@@ -10687,11 +10672,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   {
     char *buf;
     buf = (char *)calloc(512, sizeof(char));
-#if DEBUGGING
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s, allocated at line %d>", 
-#else
     snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
-#endif
 	     type(obj), 
 	     type_name(obj),
 	     typeflag(obj),
@@ -10712,12 +10693,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     symbol_has_accessor(obj) ? " (accessor)" : "",
 	     has_structure(obj) ? " (structure)" : "",
 	     is_multiple_value(obj) ? " (values)" : "",
-	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : ""
-#if DEBUGGING
-	     , new_cell_line(obj));
-#else
-	     );
-#endif
+	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
 #if DEBUGGING
     if ((saved_typeflag(obj) != typeflag(obj)) &&
 	(saved_typeflag(obj) > 0) &&
@@ -21665,23 +21641,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   goto START;
        *
        * which means that #(...) makes a vector at read time, but `#(...) is just like (vector ...).
-       * In Guile (let ((x 32)) `#(,x 0)) -> #(32 0) 
-       *      but (let ((x 32))  #(x 0))  -> #(x 0)
-       * which strikes me as inconsistent. TODO: check as func return eq? (example is bad)
-       * 
-       * The tricky part in s7 is that we might have quasiquoted multidimensional vectors:
        *
+       *   :(let ((f1 (lambda () (let ((x 32)) #(x 0))))
+       *          (f2 (lambda () (let ((x 32)) `#(,x 0)))))
+       *      (eq? (f1) (f1)))
+       *   #t
+       *   :(let ((f1 (lambda () (let ((x 32)) #(x 0))))
+       *          (f2 (lambda () (let ((x 32)) `#(,x 0)))))
+       *      (eq? (f2) (f2)))
+       *   #f
+       *
+       * The tricky part in s7 is that we might have quasiquoted multidimensional vectors:
        */
-#if 0
       if (sc->args == small_int(1))
 	sc->code = make_list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_1(sc, sc->value));
       else sc->code = make_list_4(sc, sc->APPLY, sc->MULTIVECTOR, sc->args, g_quasiquote_1(sc, sc->value));
       sc->args = sc->NIL;
       goto EVAL;
-#else
-      sc->value = make_list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_1(sc, sc->value));
-      goto START;
-#endif
 
       
     case OP_READ_UNQUOTE:

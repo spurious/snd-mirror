@@ -1,5 +1,6 @@
 Snd change log
 
+ 19-Aug:    removed the Gdk backend option; cairo is now the only choice.
  12-Aug:    Snd 11.8.
  9-Aug:     make-index.scm (replaces index.cl and indexer.scm).
  30-Jul:    removed *-button-color.

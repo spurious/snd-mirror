@@ -150,7 +150,7 @@
 	       (let ((next (floor (random freq-inc))))
 		 (if (not (= (spectr next) 1.0))
 		     (call-with-exit
-		      (lambda (break)
+		      (lambda (bbreak)
 			(do ((j next (+ 1 j))
 			     (k next (- k 1)))
 			    (#t)
@@ -158,12 +158,12 @@
 				   (= (spectr j) 1.0))
 			      (begin 
 				(set! next j)
-				(break)))
+				(bbreak)))
 			  (if (and (>= k 0) 
 				   (= (spectr k) 1.0))
 			      (begin 
 				(set! next k)
-				(break)))))))
+				(bbreak)))))))
 		 (set! (spectr next) (- (spectr next) ramp-inc))
 		 (set! ctr 0))))
 	 (do ((k lo (+ 1 k)))
