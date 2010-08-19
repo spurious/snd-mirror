@@ -3,12 +3,7 @@
 
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
-
-#define USE_CAIRO 1
-
-#if USE_CAIRO
-  #include <cairo/cairo.h>
-#endif
+#include <cairo/cairo.h>
 
 #define LOTSA_PIXELS 10000
 
@@ -126,7 +121,7 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define oclock_t guint32
 #define point_t GdkPoint
 
-#if USE_CAIRO
+
   #define rgb_t double
   #define RGB_MAX 1.0
   #define FLOAT_TO_RGB(Val) (rgb_t)(Val)
@@ -144,27 +139,15 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 
   #define picture_t GdkPixmap
 
-#else
-
-  #define rgb_t unsigned short
-  #define RGB_MAX 65535
-  #define FLOAT_TO_RGB(Val) (rgb_t)(RGB_MAX * (Val))
-  #define RGB_TO_FLOAT(Val) (float)((float)(Val) / (float)RGB_MAX)
-
-  #define gc_t GdkGC
-  #define picture_t GdkPixmap
-  typedef GdkColor* color_t;
-  #define color_info GdkColor
-#endif
 
 typedef struct {
   gc_t *gc;
   GdkDrawable *wn;
   PangoFontDescription *current_font;
   GtkWidget *w;
-#if USE_CAIRO
+
   cairo_t *cr;
-#endif
+
 } axis_context;
 
 typedef struct slist {
@@ -195,7 +178,7 @@ typedef struct {
   bool fft_pix_ready;
   mus_float_t fft_pix_cutoff;
   int current_hourglass;
-#if USE_CAIRO
+
   GdkPixbuf *cursor_pix;
   unsigned int cursor_pix_width, cursor_pix_height;
   int cursor_pix_x0, cursor_pix_y0;
@@ -205,7 +188,7 @@ typedef struct {
   int sono_cursor_pix_x0, sono_cursor_pix_y0;
   bool sono_cursor_pix_ready;
   mus_float_t progress_pct;
-#endif
+
   GdkCursor *current_cursor;
 } chan_context;
 

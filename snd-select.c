@@ -616,7 +616,7 @@ static void cp_redraw_selection(chan_info *cp)
   if (ap->hisamp > end)
     x1 = grf_x((double)end / sp_srate, ap);
   else x1 = ap->x_axis_x1;
-#if USE_CAIRO
+#if USE_GTK
   if (cp->selection_visible)
     {
       axis_context *ax;
@@ -641,7 +641,7 @@ static void cp_redraw_selection(chan_info *cp)
   cp->old_x0 = x0;
   cp->old_x1 = x1;
   cp->selection_visible = true;
-#if USE_CAIRO
+#if USE_GTK
   make_graph(cp);
 #endif
 

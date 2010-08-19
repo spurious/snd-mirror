@@ -10,17 +10,10 @@
 #define XEN_PIXEL_P(Value)           (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
                                       (strcmp("Pixel", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 #else
-#if USE_CAIRO
   #define XEN_WRAP_PIXEL(Value)    XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("color_t"), XEN_WRAP_C_POINTER((unsigned long)Value))
   #define XEN_UNWRAP_PIXEL(Value)  (color_t)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value)))
   #define XEN_PIXEL_P(Value)       (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
                                     (strcmp("color_t", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
-#else
-  #define XEN_WRAP_PIXEL(Value)    XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkColor_"), XEN_WRAP_C_POINTER((unsigned long)Value))
-  #define XEN_UNWRAP_PIXEL(Value)  (GdkColor*)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value)))
-  #define XEN_PIXEL_P(Value)       (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Value))) && \
-                                    (strcmp("GdkColor_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
-#endif
 #endif
 
 /* unfortunately, we can't just make PIXEL into a C type here -- it is called
@@ -153,7 +146,7 @@ void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, mus_f
 void draw_cursor(chan_info *cp)
 {
   cursor_style_t cur;
-#if USE_CAIRO
+#if USE_GTK
   color_t old_color;
   int cy0 = 0, cx0 = 0, csize;
 #endif
@@ -163,7 +156,7 @@ void draw_cursor(chan_info *cp)
   if (!(cp->graph_time_p)) return;
   ap = cp->axis;
 
-#if USE_CAIRO
+#if USE_GTK
   ax = ap->ax;
   if (!ax)
     {
@@ -192,7 +185,7 @@ void draw_cursor(chan_info *cp)
   switch (cur)
     {
     case CURSOR_CROSS:
-#if USE_CAIRO
+#if USE_GTK
       save_cursor_pix(cp, ax, csize, csize, cx0, cy0);
 #endif
       draw_line(ax, cp->cx, cp->cy - cp->cursor_size, cp->cx, cp->cy + cp->cursor_size);
@@ -205,7 +198,7 @@ void draw_cursor(chan_info *cp)
 	draw_inset_line_cursor(cp, ax);
       else
 	{
-#if USE_CAIRO
+#if USE_GTK
 	  save_cursor_pix(cp, ax, 2, ap->y_axis_y0 - ap->y_axis_y1, cp->cx, ap->y_axis_y1);
 #endif
 	  draw_line(ax, cp->cx, ap->y_axis_y0 - 1, cp->cx, ap->y_axis_y1);
@@ -213,7 +206,7 @@ void draw_cursor(chan_info *cp)
       break;
 
     case CURSOR_PROC:
-#if USE_CAIRO
+#if USE_GTK
       /* in the cairo case, we need some info about the cursor shape, but I'll assume cursor_size is meaningful */
       save_cursor_pix(cp, ax, csize, csize, cx0, cy0);
 #endif
@@ -227,7 +220,7 @@ void draw_cursor(chan_info *cp)
       break;
     }
 
-#if USE_CAIRO
+#if USE_GTK
   set_foreground_color(ax, old_color);
 #endif
 }
@@ -235,7 +228,7 @@ void draw_cursor(chan_info *cp)
 
 void erase_cursor(chan_info *cp)
 {
-#if USE_CAIRO
+#if USE_GTK
   if (cp->cgx->cursor_pix)
     restore_cursor_pix(cp, cp->axis->ax); /* returns true if old cursor was erased */
 #else
@@ -304,7 +297,7 @@ static XEN g_draw_line(XEN x0, XEN y0, XEN x1, XEN y1, XEN snd, XEN chn, XEN ax)
   XEN_ASSERT_TYPE(XEN_NUMBER_P(y1), y1, XEN_ARG_4, S_draw_line, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax), ax, XEN_ARG_7, S_draw_line, "an integer such as " S_time_graph);
 
-#if USE_CAIRO
+#if USE_GTK
   {
     axis_context *axc;
     axc = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_line);
@@ -1062,11 +1055,7 @@ fltenv_basic) (13 fltenv_data))."
       #define XEN_WRAP_SND_GC(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GC"), XEN_WRAP_C_POINTER(Value))
 #else
   #if USE_GTK
-    #if USE_CAIRO
       #define XEN_WRAP_SND_GC(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("gc_t_"), XEN_WRAP_C_POINTER(Value))
-    #else
-      #define XEN_WRAP_SND_GC(Value) XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkGC_"), XEN_WRAP_C_POINTER(Value))
-    #endif
   #else
       #define XEN_WRAP_SND_GC(Value) XEN_FALSE
   #endif
@@ -1728,7 +1717,7 @@ static void recolor_everything_1(widget_t w, gpointer color)
 
 static void recolor_everything(widget_t w, gpointer color)
 {
-#if USE_CAIRO
+#if USE_GTK
   GdkColor *nc;
   nc = rgb_to_gdk_color((color_t)color);
   recolor_everything_1(w, (gpointer)nc);
@@ -1764,7 +1753,7 @@ static XEN g_make_color(XEN r, XEN g, XEN b)
   rf = check_color_range(S_make_color, r);
   gf = check_color_range(S_make_color, g);
   bf = check_color_range(S_make_color, b);
-#if USE_CAIRO
+#if USE_GTK
   ccolor = (color_info *)calloc(1, sizeof(color_info)); /* memleak here -- need color smob + free to deal with this */
   ccolor->red = rf;
   ccolor->green = gf;

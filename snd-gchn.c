@@ -966,13 +966,7 @@ void set_bold_peak_numbers_font(chan_info *cp) {set_graph_font(cp, BOLD_PEAKS_FO
 
 color_t get_foreground_color(axis_context *ax)
 {
-#if USE_CAIRO
   return(ax->gc->fg_color);
-#else
-  static GdkGCValues gv;
-  gdk_gc_get_values(ax->gc, &gv);
-  return(&(gv.foreground));
-#endif
 }
 
 
@@ -1018,24 +1012,12 @@ void free_fft_pix(chan_info *cp)
 
 bool restore_fft_pix(chan_info *cp, axis_context *ax)
 {
-#if USE_CAIRO
   cairo_t *cr;
   cr = gdk_cairo_create(ax->wn);
   gdk_cairo_set_source_pixbuf(cr, cp->cgx->fft_pix, cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0);
   cairo_paint(cr);
   cairo_destroy(cr);
   return(true);
-#else
-
-  gdk_draw_pixbuf(ax->wn,
-		  copy_GC(cp),
-		  cp->cgx->fft_pix,
-		  0, 0,
-		  cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0,
-		  cp->cgx->fft_pix_width, cp->cgx->fft_pix_height,
-		  GDK_RGB_DITHER_NONE, 0, 0); /* dithering */
-  return(true);
-#endif
 }
 
 void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y0)
@@ -1055,7 +1037,6 @@ void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int 
 }
 
 
-#if USE_CAIRO
 /* -------- time graph cursor erasure -------- */
 
 void free_cursor_pix(chan_info *cp)
@@ -1136,7 +1117,6 @@ void save_sono_cursor_pix(chan_info *cp, axis_context *ax, int fwidth, int fheig
 							  cp->cgx->sono_cursor_pix_width, cp->cgx->sono_cursor_pix_height);
   cp->cgx->sono_cursor_pix_ready = (cp->cgx->sono_cursor_pix != NULL);
 }
-#endif
 
 
 void cleanup_cw(chan_info *cp)
@@ -1148,11 +1128,9 @@ void cleanup_cw(chan_info *cp)
 
       free_fft_pix(cp);
       cx = cp->cgx;
-#if USE_CAIRO
       free_cursor_pix(cp);
       free_sono_cursor_pix(cp);
       cx->progress_pct = -1.0;
-#endif
 
       if (EDIT_HISTORY_LIST(cp)) 
 	{

@@ -30052,7 +30052,7 @@ EDITS: 2
 		(trd (transform-dialog))
 		(fild (view-files-dialog))
 		(regd (view-regions-dialog))
-		(pd (and (not (provided? 'cairo)) (print-dialog)))
+		(pd (and (not (provided? 'gtk)) (print-dialog)))
 		(ehd (without-errors (edit-header-dialog))))
 	    (open-file-dialog #f)
 	    (mix-file-dialog #f)
@@ -60921,10 +60921,9 @@ EDITS: 1
 
 ;;; ---------------- test 26: Gtk --------------------
 
-#|
+
 ;;; until cairo connection, this is useless
 (if (and (provided? 'snd-gtk)
-	 (provided? 'cairo)
 	 (provided? 'xg))
     (define (gtk-print-test)
       (let* ((operation (gtk_print_operation_new)))
@@ -60950,7 +60949,7 @@ EDITS: 1
 	
 	(g_object_unref (GPOINTER operation))))
     )
-|#
+
 
 (define (snd_test_26)
   (begin
@@ -60999,7 +60998,6 @@ EDITS: 1
 	    (list gtk_hruler_new GTK_IS_HRULER 'GTK_IS_HRULER)
 	    (list gtk_hseparator_new GTK_IS_HSEPARATOR 'GTK_IS_HSEPARATOR)
 	    (list gtk_icon_factory_new GTK_IS_ICON_FACTORY 'GTK_IS_ICON_FACTORY)
-	    (list gtk_image_new GTK_IS_IMAGE 'GTK_IS_IMAGE)
 	    (list gtk_image_menu_item_new GTK_IS_IMAGE_MENU_ITEM 'GTK_IS_IMAGE_MENU_ITEM)
 	    (list gtk_im_context_simple_new GTK_IS_IM_CONTEXT_SIMPLE 'GTK_IS_IM_CONTEXT_SIMPLE)
 	    (list gtk_im_multicontext_new GTK_IS_IM_MULTICONTEXT 'GTK_IS_IM_MULTICONTEXT)
@@ -61052,7 +61050,7 @@ EDITS: 1
 	  (if (not (gdk_list_visuals)) (snd-display #__line__ ";gdk_list_visuals?"))
 	  (if (not (gtk_window_list_toplevels)) (snd-display #__line__ ";gtk_window_list_toplevels?"))
 	  (gtk_window_set_default_icon_list (gtk_window_get_default_icon_list))
-	  (if (gdk_rgb_ditherable) (snd-display #__line__ ";rgb ditherable?"))
+
 	  (if (not (= (gdk_visual_get_best_depth) 32)) (snd-display #__line__ ";best depth: ~A" (gdk_visual_get_best_depth)))
 	  (if (not (string=? (gtk_rc_get_theme_dir) "/usr/local/share/themes")) (snd-display #__line__ ";theme dir: ~A" (gtk_rc_get_theme_dir)))
 	  (if (and (not (string=? (gtk_rc_get_module_dir) "/usr/local/lib/gtk-2.0/2.4.0/engines")) 
@@ -61070,9 +61068,6 @@ EDITS: 1
 	  
 	  (let* ((_GdkColormap_ (gdk_colormap_get_system))
 		 (_GdkVisual_ (gdk_colormap_get_visual _GdkColormap_))
-		 (_GdkColormap1_ (gdk_rgb_get_colormap))
-		 (_GdkColormap2_ (gtk_widget_get_default_colormap))
-		 (_GdkVisual9_ (gdk_rgb_get_visual))
 		 (_GdkVisual1_ (gdk_visual_get_system))
 		 (_GdkVisual2_ (gdk_visual_get_best))
 		 (_GdkVisual3_ (gtk_widget_get_default_visual))
@@ -61084,13 +61079,11 @@ EDITS: 1
 		 (_GdkVisual4_ (gdk_visual_get_best_with_type _GdkVisualType))
 		 (_GdkColormap3_ (gdk_screen_get_default_colormap _GdkScreen_))
 		 (_GdkColormap4_ (gdk_screen_get_system_colormap _GdkScreen_))
-		 (_GdkColormap5_ (gdk_screen_get_rgb_colormap _GdkScreen_))
 		 (_gint 24)
 		 (_GdkVisual5_ (gdk_visual_get_best_with_depth _gint))
 		 (_gboolean #f)
 		 (_GdkColormap6_ (gdk_colormap_new _GdkVisual_ _gboolean))
 		 (_GdkVisual6_ (gdk_screen_get_system_visual _GdkScreen_))
-		 (_GdkVisual7_ (gdk_screen_get_rgb_visual _GdkScreen_))
 		 (_GdkScreen1_ (gdk_display_get_default_screen _GdkDisplay_))
 		 (_GdkVisual8_ (gdk_visual_get_best_with_both _gint _GdkVisualType))
 		 (_gchar_ (gdk_display_get_name _GdkDisplay_))
@@ -61105,25 +61098,14 @@ EDITS: 1
 		 (_GList1_ (gdk_screen_get_toplevel_windows _GdkScreen_))
 		 (_gchar1_ (gdk_screen_make_display_name _GdkScreen_))
 		 (_int6 (gdk_screen_get_n_monitors _GdkScreen_))
-;		 (_GList2_ (gdk_display_list_devices _GdkDisplay_))
 		 (_guint (gdk_display_get_default_cursor_size _GdkDisplay_))
 		 (_GtkWidget_ (gtk_check_button_new))
 		 (_GdkColormap7_ (gtk_widget_get_colormap _GtkWidget_))
 		 (_GdkWindow1_ (gdk_get_default_root_window))
 		 (_GdkWindow2_ (gtk_widget_get_root_window _GtkWidget_))
 		 (_GdkDrawable_ (GDK_DRAWABLE _GdkWindow_))
-		 (_GdkGC_ (gdk_gc_new _GdkDrawable_))
 		 (_GdkColormap8_ (gdk_drawable_get_colormap _GdkDrawable_))
-		 (_GdkColormap9_ (gdk_gc_get_colormap _GdkGC_))
-		 
 		 )
-	    (if (or (not (equal? _GdkColormap_ _GdkColormap1_)) (not (equal? _GdkColormap_ _GdkColormap2_)) (not (equal? _GdkColormap_ _GdkColormap3_)) 
-		    (not (equal? _GdkColormap_ _GdkColormap4_)) (not (equal? _GdkColormap_ _GdkColormap5_)) (not (equal? _GdkColormap_ _GdkColormap7_)) 
-		    (not (equal? _GdkColormap_ _GdkColormap8_)) (not (equal? _GdkColormap_ _GdkColormap9_)))
-		(snd-display #__line__ ";colormaps not equal"))
-	    (if (or (not (equal? _GdkVisual_ _GdkVisual1_)) (not (equal? _GdkVisual_ _GdkVisual3_)) (not (equal? _GdkVisual_ _GdkVisual9_)) 
-		    (not (equal? _GdkVisual_ _GdkVisual6_)) (not (equal? _GdkVisual_ _GdkVisual7_)))
-		(snd-display #__line__ ";visuals not equal"))
 	    (if (not (= _GdkVisualType 5)) (snd-display #__line__ ";visual type: ~A" _GdkVisualType))
 	    (if (not (equal? _GdkScreen_ _GdkScreen1_)) (snd-display #__line__ ";screens not equal"))
 	    (if (not (equal? _GdkDisplay_ _GdkDisplay1_)) (snd-display #__line__ ";displays not equal"))
@@ -61143,7 +61125,6 @@ EDITS: 1
 	    (if (not (GDK_IS_COLORMAP _GdkColormap6_)) (snd-display #__line__ ";not colormap6: ~A" _GdkColormap6_))
 	    (if (not (GTK_IS_WIDGET _GtkWidget_)) (snd-display #__line__ ";not widget: ~A" _GtkWidget_))
 	    (if (not (GDK_IS_DRAWABLE _GdkDrawable_)) (snd-display #__line__ ";not drawable: ~A" _GdkDrawable_))
-	    (if (not (GDK_IS_GC _GdkGC_)) (snd-display #__line__ ";not gc: ~A" _GdkGC_))
 	    (if (not (GDK_IS_VISUAL _GdkVisual_)) (snd-display #__line__ ";not visual: ~A" _GdkVisual_))
 	    (if (not (GDK_IS_SCREEN _GdkScreen_)) (snd-display #__line__ ";not screen: ~A" _GdkScreen_))
 	    (if (not (GDK_IS_DISPLAY _GdkDisplay_)) (snd-display #__line__ ";not display: ~A" _GdkDisplay_))
@@ -61373,23 +61354,6 @@ EDITS: 1
 	    (gtk_calendar_set_display_options _GtkCalendar_ _GtkCalendarDisplayOptions)
 	    (let ((vals (gtk_calendar_get_date _GtkCalendar_))) ;(1951 7 14)
 	      (if (not (equal? vals (list 1951 7 14))) (snd-display #__line__ ";calendar sez birthday: ~A" vals))))
-	  
-	  (let* ((_gboolean (gtk_rc_reparse_all))
-		 (_GtkRcStyle_ (gtk_rc_style_new))
-		 (_GtkWidget_ (gtk_label_new "hiho"))
-		 (_GtkStyle_ (gtk_rc_get_style _GtkWidget_))
-		 (_GtkRcStyle1_ (gtk_rc_style_copy _GtkRcStyle_))
-		 (_GdkColor_ (let ((tmp (GdkColor)))
-			       (gdk_color_parse "red" tmp)
-			       (let ((col (gdk_color_copy tmp)))
-				 (gdk_rgb_find_color (gdk_colormap_get_system) col)
-				 col)))
-		 (_gchar_ (gtk_rc_find_module_in_path "hiho"))
-		 )
-	    (gtk_rc_add_default_file "Snd.gtkrc")
-	    (gtk_rc_parse "Snd.gtkrc")
-	    (gtk_rc_parse_string "widget \"*.preset_button\" style \"reset\"")
-	    )
 	  
 	  (let* ((_GtkPaned_ (GTK_PANED (gtk_hpaned_new)))
 		 (_GtkPaned1_ (GTK_PANED (gtk_vpaned_new)))
@@ -61823,11 +61787,6 @@ EDITS: 1
 	  (let* ((_GSList_ (gtk_stock_list_ids))
 		 (_GtkWidget_ (cadr (main-widgets)))
 		 (shell _GtkWidget_)
-		 (_GdkColor_ (let ((tmp (GdkColor)))
-			       (gdk_color_parse "red" tmp)
-			       (let ((col (gdk_color_copy tmp)))
-				 (gdk_rgb_find_color (gdk_colormap_get_system) col)
-				 col)))
 		 (_GtkWidget5_ (gtk_label_new "hi"))
 		 (_GdkDisplay_ (gdk_display_get_default))
 		 (_GdkWindow_ (gtk_widget_get_parent_window (list-ref (main-widgets) 2)))
@@ -61878,10 +61837,6 @@ EDITS: 1
 	    (if _gboolean9 (snd-display #__line__ ";gtk widget ancestor shell"))
 	    (if (not _gboolean11) (snd-display #__line__ ";gtk widget no intersect"))
 	    (if (not (equal? vals (list -1 -1))) (snd-display #__line__ ";gtk widget size request: ~A" vals))
-	    (gtk_widget_modify_fg _GtkWidget5_ GTK_STATE_NORMAL _GdkColor_)
-	    (gtk_widget_modify_bg _GtkWidget5_ GTK_STATE_NORMAL _GdkColor_)
-	    (gtk_widget_modify_text _GtkWidget5_ GTK_STATE_NORMAL _GdkColor_)
-	    (gtk_widget_modify_base _GtkWidget5_ GTK_STATE_NORMAL _GdkColor_)
 	    (gtk_widget_set_events _GtkWidget5_ 0)
 	    (gtk_widget_add_events _GtkWidget5_ 0)
 	    (gtk_widget_set_direction _GtkWidget5_ GTK_TEXT_DIR_RTL)
@@ -61941,11 +61896,6 @@ EDITS: 1
 					;		 (_GtkFileSelection_ (GTK_FILE_SELECTION (gtk_file_selection_new "delete")))
 					;		 (_GtkWidget_ (gtk_file_chooser_widget_new_with_backend 0 "linux"))
 		 (_GtkFileFilter_ (gtk_file_filter_new))
-		 (_GdkColor_ (let ((tmp (GdkColor)))
-			       (gdk_color_parse "red" tmp)
-			       (let ((col (gdk_color_copy tmp)))
-				 (gdk_rgb_find_color (gdk_colormap_get_system) col)
-				 col)))
 		 
 		 (_gboolean (gtk_color_selection_get_has_opacity_control _GtkColorSelection_))
 		 (_gboolean1 (gtk_color_selection_get_has_palette _GtkColorSelection_))
@@ -61971,11 +61921,6 @@ EDITS: 1
 	    (gtk_color_selection_set_previous_alpha _GtkColorSelection_ 54321)
 	    (gtk_dialog_set_default_response _GtkDialog_ 0)
 	    (gtk_color_selection_set_has_palette _GtkColorSelection_ #t)
-	    (gtk_color_selection_set_current_color _GtkColorSelection_ _GdkColor_)
-	    (gtk_color_selection_get_current_color _GtkColorSelection_ _GdkColor_)
-	    (gtk_color_selection_set_previous_color _GtkColorSelection_ _GdkColor_)
-	    (gtk_color_selection_get_previous_color _GtkColorSelection_ _GdkColor_)
-	    (gtk_color_selection_palette_to_string _GdkColor_ 0)
 	    (gtk_dialog_set_response_sensitive _GtkDialog_ 0 #f)
 	    (gtk_color_selection_palette_from_string "hiho")
 	    (gtk_dialog_response _GtkDialog_ 0)
@@ -62310,22 +62255,14 @@ EDITS: 1
 	  
 	  (let* ((_GtkFontButton_ (GTK_FONT_BUTTON (gtk_font_button_new)))
 		 (_GtkColorButton_ (GTK_COLOR_BUTTON (gtk_color_button_new)))
-		 (_GtkFontButton_1 (GTK_FONT_BUTTON (gtk_font_button_new_with_font "Monospace 10")))
-		 (_GdkColor_ (let ((tmp (GdkColor)))
-			       (gdk_color_parse "red" tmp)
-			       (let ((col (gdk_color_copy tmp)))
-				 (gdk_rgb_find_color (gdk_colormap_get_system) col)
-				 col)))
-		 (_GtkColorButton_1 (gtk_color_button_new_with_color _GdkColor_)))
+		 (_GtkFontButton_1 (GTK_FONT_BUTTON (gtk_font_button_new_with_font "Monospace 10"))))
 	    (gtk_font_button_set_title _GtkFontButton_ "hi")
 	    (gtk_font_button_set_use_font _GtkFontButton_ #t)
 	    (gtk_font_button_set_use_size _GtkFontButton_ #f)
 	    (gtk_font_button_set_font_name _GtkFontButton_ "Monospace 10")
 	    (gtk_font_button_set_show_style _GtkFontButton_ #f)
 	    (gtk_font_button_set_show_size _GtkFontButton_ #f)
-	    (gtk_color_button_set_color _GtkColorButton_ _GdkColor_)
 	    (gtk_color_button_set_alpha _GtkColorButton_ 12345)
-	    (gtk_color_button_get_color _GtkColorButton_ _GdkColor_)
 	    (gtk_color_button_set_use_alpha _GtkColorButton_ #f)
 	    (gtk_color_button_set_title _GtkColorButton_ "hi")
 	    (let* ((_gchar_ (gtk_font_button_get_title _GtkFontButton_))
@@ -62630,7 +62567,6 @@ EDITS: 1
 		  (if (not (= _int 0)) (snd-display #__line__ ";tree selection selected rows: ~A" _int)))
 		(gtk_list_store_clear _GtkListStore_2)
 		(let* ((_GtkTreePath_ (gtk_tree_model_filter_convert_child_path_to_path _GtkTreeModelFilter_ _GtkTreePath_3))
-		       (_GdkPixmap_ (gtk_tree_view_create_row_drag_icon _GtkTreeView_ _GtkTreePath_3))
 		       (_GtkTreePath_ (gtk_tree_model_filter_convert_path_to_child_path _GtkTreeModelFilter_ _GtkTreePath_3))
 		       (_GtkListStore_a (gtk_list_store_new 1 (list G_TYPE_STRING)))
 		       (_GtkTreeIter_a (GtkTreeIter))
@@ -62756,28 +62692,6 @@ EDITS: 1
 	    (gtk_box_set_spacing _GtkBox_ 4)
 	    (gtk_box_reorder_child _GtkBox_ _GtkWidget_ 2)
 	    (gtk_box_set_child_packing _GtkBox_ _GtkWidget_ #t #t 10 0))
-	  
-	  (if (not (provided? 'cairo))
-	      (let* ((_GdkScreen_ (gdk_screen_get_default))
-		     (_GdkWindow_ (gdk_screen_get_root_window _GdkScreen_))
-		     (_GdkDrawable_ (GDK_DRAWABLE _GdkWindow_))
-		     (_GdkGC_ (gdk_gc_new _GdkDrawable_))
-		     (_GdkGC_1 (gdk_gc_new _GdkDrawable_)))
-		(gdk_gc_copy _GdkGC_ _GdkGC_1)
-		(gdk_gc_set_clip_origin _GdkGC_ 0 0)
-		(gdk_gc_set_fill _GdkGC_ GDK_SOLID)
-		(gdk_gc_set_exposures _GdkGC_ #f)
-		(gdk_gc_set_function _GdkGC_ GDK_OR)
-		(gdk_gc_offset _GdkGC_ 0 0)
-		(gdk_gc_set_background _GdkGC_ (basic-color))
-		(gdk_gc_set_colormap _GdkGC_ (gdk_colormap_get_system))
-		(gdk_gc_set_foreground _GdkGC_ (highlight-color))
-		(gdk_gc_set_clip_rectangle _GdkGC_ (GdkRectangle 0 0 100 100))
-		(gdk_gc_set_rgb_bg_color _GdkGC_ (basic-color))
-		(gdk_gc_set_rgb_fg_color _GdkGC_ (highlight-color))
-		(gdk_gc_set_ts_origin _GdkGC_ 0 0)
-		(gdk_gc_set_line_attributes _GdkGC_ 1 GDK_LINE_SOLID GDK_CAP_ROUND GDK_JOIN_MITER)
-		(gdk_rgb_set_verbose #f)))
 	  
 	  (let* ((_GtkCheckMenuItem_ (GTK_CHECK_MENU_ITEM (gtk_check_menu_item_new)))
 		 (_GtkWidget_ (gtk_check_menu_item_new_with_label "hi"))
@@ -62923,7 +62837,7 @@ EDITS: 1
 	      (gtk_stock_lookup _gchar_ _GtkStockItem_)
 	      (gtk_stock_item_free _GtkStockItem_1)))
 	  
-	  (let* ((_PangoAttribute_ (gdk_pango_attr_embossed_new #f))
+	  (let* (
 		 (_PangoAttribute_1 (pango_attr_rise_new 2))
 		 (_PangoAttribute_2 (pango_attr_scale_new 2.0))
 		 (_PangoAttribute_3 (pango_attr_size_new 32))
@@ -63040,7 +62954,6 @@ EDITS: 1
 		(pango_layout_iter_get_layout_extents _PangoLayoutIter_ _PangoRectangle_1 _PangoRectangle_2)
 		(pango_layout_iter_get_line_extents _PangoLayoutIter_ _PangoRectangle_1 _PangoRectangle_2)
 		(pango_layout_iter_get_run_extents _PangoLayoutIter_ _PangoRectangle_1 _PangoRectangle_2)
-		(pango_attr_list_change _PangoAttrList_ _PangoAttribute_)
 		(pango_attr_list_insert _PangoAttrList_ _PangoAttribute_2)
 		(pango_attr_list_insert_before _PangoAttrList_ _PangoAttribute_1)
 		(pango_attr_list_insert _PangoAttrList_3 _PangoAttribute_4)
@@ -63081,192 +62994,6 @@ EDITS: 1
 		  (pango_attr_iterator_destroy _PangoAttrIterator_)
 		  (pango_glyph_string_free _PangoGlyphString_)
 		  (pango_font_metrics_unref _PangoFontMetrics_1)))))
-	  
-	  (if (not (provided? 'cairo))
-	      (let* ((_GdkScreen_ (gdk_screen_get_default))
-		     (_GtkWidget_ (cadr (main-widgets)))
-		     (scan-outer (let ((pane (gtk_hbox_new #f 0)))
-				   (gtk_box_pack_start (GTK_BOX (list-ref (main-widgets) 5)) pane #f #f 4)
-				   (gtk_widget_show pane)
-				   pane))
-		     (scan-pane (let ((grf (gtk_drawing_area_new)))
-				  (gtk_widget_set_events grf GDK_ALL_EVENTS_MASK)
-				  (gtk_box_pack_start (GTK_BOX scan-outer) grf #t #t 0)
-				  (gtk_widget_show grf)
-				  (gdk_window_set_background (gtk_widget_get_window grf) (graph-color))
-				  grf))
-		     (red-pixel
-		      (let ((tmp (GdkColor)))
-			(gdk_color_parse "red" tmp)
-			(let ((col (gdk_color_copy tmp)))
-			  (gdk_rgb_find_color (gdk_colormap_get_system) col)
-			  col)))
-		     (wnd (gtk_widget_get_window scan-pane))
-		     (_GdkWindow_ wnd)
-		     (wn (GDK_DRAWABLE wnd))
-		     (vect (make-vector 4 0))
-		     (pts1 #f)
-		     (vals (gdk_drawable_get_size wn))
-		     (_GdkColormap_ (gdk_colormap_get_system))
-		     (_GdkColor_ (gdk_color_copy red-pixel))
-		     (_gboolean (gdk_color_equal _GdkColor_ red-pixel))
-		     (_gboolean1 (gdk_colormap_alloc_color _GdkColormap_ _GdkColor_ #f #f))
-		     (_PangoLayout_ (gtk_widget_create_pango_layout scan-pane "hi"))
-		     (_GdkVisual_ (gdk_drawable_get_visual wn))
-		     (_GdkAtom (gdk_atom_intern "MY_MESSAGE" #t))
-		     (_GtkIMContext_ (gtk_im_context_simple_new))
-		     (_GtkIMContext_1 (gtk_im_multicontext_new))
-		     (_GtkWindow_ (GTK_WINDOW (cadr (main-widgets))))
-		     (_GdkWindow_1 (gdk_selection_owner_get GDK_SELECTION_PRIMARY))
-		     (_gchar_ (gdk_atom_name GDK_SELECTION_SECONDARY))
-		     (_gchar_1 (gdk_utf8_to_string_target "hiho"))
-		     (_gchar_2 (gtk_check_version 2 3 1))
-		     (_guint (gtk_container_get_border_width (GTK_CONTAINER scan-outer)))
-		     (_GtkResizeMode (gtk_container_get_resize_mode (GTK_CONTAINER scan-outer)))
-		     (zero (g_signal_lookup "activate" G_TYPE_OBJECT))
-		     (_int (gdk_screen_get_monitor_at_point _GdkScreen_ 0 0))
-		     (_int1 (gdk_screen_get_monitor_at_window _GdkScreen_ _GdkWindow_))
-		     (_gint (gdk_drawable_get_depth wn))
-		     (hi (g_quark_from_string "hiho")))
-		(if (not (string=? (g_quark_to_string hi) "hiho")) (snd-display #__line__ ";g quark/string: ~A ~A" hi (g_quark_to_string hi)))
-		(if (not _gboolean) (snd-display #__line__ ";gdk colors copy not equal"))
-		(if (not (string=? _gchar_ "SECONDARY")) (snd-display #__line__ ";atom name: ~A" _gchar_))
-		(gdk_colormap_query_color _GdkColormap_ 0 _GdkColor_)
-		(gdk_color_hash _GdkColor_)
-		(gdk_set_double_click_time 200)
-		(gdk_screen_get_monitor_geometry _GdkScreen_ 0 (GdkRectangle))
-		(gdk_screen_set_default_colormap _GdkScreen_ _GdkColormap_)
-		(vector-set! vect 1 10)
-		(vector-set! vect 2 20)
-		(vector-set! vect 3 30)
-		(let ((sgc (car (snd-gcs))))
-		  (gdk_draw_rectangle wn sgc #t 0 0 100 100)
-		  (gdk_draw_line wn sgc 0 0 100 100)
-		  (gdk_draw_point wn sgc 10 10)
-		  (gdk_draw_arc wn sgc #f 10 10 20 20 0 (* 45 64))
-		  (gdk_add_client_message_filter (gdk_atom_intern "SND_MESSAGE" #f) (lambda (xe e d) #f) #f)
-		  (set! pts1 (vector->GdkPoints vect))
-		  (gdk_draw_lines wn sgc (list 'GdkPoint_ pts1) 2)
-		  (gdk_draw_segments wn sgc (list 'GdkSegment_ pts1) 1)
-		  (gdk_draw_points wn sgc (list 'GdkPoint_ pts1) 2)
-		  (gdk_draw_polygon wn sgc #f (list 'GdkPoint_ pts1) 2)
-		  (freeGdkPoints pts1)
-		  (gdk_drawable_set_colormap wn (gdk_colormap_get_system))
-		  (gdk_draw_layout wn sgc 0 0 _PangoLayout_))
-		(gdk_window_clear wnd)
-		(gdk_window_clear_area wnd 0 0 10 10)
-		(gdk_window_clear_area_e wnd 0 0 10 10)
-		(gdk_window_begin_paint_rect wnd (GdkRectangle 0 0 10 10))
-		(let* ((_GdkImage_ (gdk_drawable_get_image wn 0 0 20 20)) ; -> #f
-		       (_GtkImage_ (GTK_IMAGE (gtk_image_new)))
-		       (_GtkImageType (gtk_image_get_storage_type _GtkImage_)))
-		  (gtk_image_set_from_stock _GtkImage_ GTK_STOCK_CANCEL 32)
-		  (let* ((_GdkPixbuf_ (gtk_image_get_pixbuf (GTK_IMAGE (gtk_image_new)))) ; -> #f
-			 (_GdkImage_1 (gdk_image_new GDK_IMAGE_NORMAL _GdkVisual_ 32 32))
-			 (_GdkImage_2 (gdk_drawable_copy_to_image wn _GdkImage_1 0 0 0 0 32 32))
-			 (_GdkPixbuf_1 (gdk_pixbuf_get_from_image _GdkPixbuf_ _GdkImage_1 _GdkColormap_ 0 0 0 0 32 32))
-			 (_GdkPixbuf_2 (gdk_pixbuf_copy _GdkPixbuf_1))
-			 (_GdkPixmap_ (gdk_pixmap_new (GDK_DRAWABLE (car (main-widgets))) 16 16 -1))
-			 (arrow-strs (list
-				      "16 12 6 1"
-				      " 	c None s None"
-				      ".	c gray50"
-				      "X	c black"
-				      "o	c white"
-				      "O	c yellow"
-				      "-      c ivory2 s basiccolor"
-				      "--------X---------"
-				      "---------X--------"
-				      "----------X-------"
-				      "-----------X------"
-				      "------------X-----"
-				      "XXXXXXXXXXXXXX----"
-				      "------------X-----"
-				      "-----------X------"
-				      "----------X-------"
-				      "---------X--------"
-				      "--------X---------"
-				      "-------X----------"))
-			 (_GdkPixmap_1 (gdk_pixmap_create_from_xpm_d (GDK_DRAWABLE (car (main-widgets))) #f (basic-color) (list->c-array arrow-strs "gchar**")))
-			 (_GdkColorspace (gdk_pixbuf_get_colorspace _GdkPixbuf_1))
-			 (_GtkWidget_2 (gtk_image_new_from_pixbuf _GdkPixbuf_1))
-			 (_GdkPixbuf_3 (gdk_pixbuf_get_from_drawable _GdkPixbuf_1 (GDK_DRAWABLE _GdkPixmap_1) _GdkColormap_ 0 0 0 0 10 10))
-			 (_PangoContext_ (gdk_pango_context_get))
-			 (_PangoLayout_ (pango_layout_new _PangoContext_))
-			 (_GdkPixbuf_5 (gdk_pixbuf_new_from_xpm_data (list->c-array arrow-strs "char**")))
-			 (_GdkPixbuf_4 (gdk_pixbuf_new _GdkColorspace #f 8 10 10))
-			 (_gboolean (gdk_pixbuf_get_has_alpha _GdkPixbuf_5))
-			 (_guchar_ (gdk_pixbuf_get_pixels _GdkPixbuf_5))
-			 (_int (gdk_pixbuf_get_bits_per_sample _GdkPixbuf_5))
-			 (_int1 (gdk_pixbuf_get_height _GdkPixbuf_5))
-			 (_int2 (gdk_pixbuf_get_n_channels _GdkPixbuf_5))
-			 (_int3 (gdk_pixbuf_get_rowstride _GdkPixbuf_5))
-			 (_int4 (gdk_pixbuf_get_width _GdkPixbuf_5))
-			 (_gchar_ (gdk_pixbuf_get_option _GdkPixbuf_5 "hi")))
-		    (let ((sgc (car (snd-gcs))))
-		      (gdk_draw_image wn sgc _GdkImage_1 0 0 0 0 32 32)
-		      (gdk_draw_drawable wn sgc (GDK_DRAWABLE _GdkPixmap_1) 0 0 0 0 32 32)
-		      (gdk_draw_gray_image wn sgc 0 0 10 10 GDK_RGB_DITHER_NONE "hihohohio" 0)
-		      (gdk_draw_rgb_image wn sgc 0 0 10 10 GDK_RGB_DITHER_NONE "hihohohio" 0)
-		      (gdk_draw_rgb_32_image wn sgc 0 0 10 10 GDK_RGB_DITHER_NONE "hihohohio" 0)
-		      (pango_layout_set_text _PangoLayout_ "hiho" -1)
-		      (let ((_PangoLayoutLine_ (pango_layout_get_line _PangoLayout_ 0)))
-			(gdk_draw_layout_line wn sgc 0 0 _PangoLayoutLine_))
-		      (gdk_pixbuf_fill _GdkPixbuf_3 0))))
-		
-		
-		(gdk_color_free _GdkColor_)
-		(gdk_rgb_set_min_colors 8)
-		(let ((_GdkRgbCmap_ (gdk_rgb_cmap_new (list->c-array '(0 0 0 0 0 0 0 0) "guint32*") 8)))
-		  (gdk_rgb_cmap_free _GdkRgbCmap_))
-		(gdk_property_change wnd _GdkAtom GDK_TARGET_STRING 8 GDK_PROP_MODE_REPLACE "hiho" 4)
-		(gdk_property_delete wnd _GdkAtom)
-		(gdk_window_show wnd)
-		(gtk_window_stick _GtkWindow_)
-		(gtk_window_unstick _GtkWindow_)
-		(gdk_window_stick wnd)
-		(gdk_window_unstick wnd)
-		(gtk_window_add_embedded_xid _GtkWindow_ 12345)
-		(gtk_window_remove_embedded_xid _GtkWindow_ 12345)
-		(gtk_window_set_accept_focus _GtkWindow_ #t)
-		(gtk_window_set_decorated _GtkWindow_ #t)
-		(gtk_window_set_destroy_with_parent _GtkWindow_ #t)
-		(gdk_window_deiconify _GdkWindow_)
-		(gdk_window_end_paint _GdkWindow_)
-		(gdk_window_freeze_updates _GdkWindow_)
-		(gdk_window_thaw_updates _GdkWindow_)
-		(gdk_window_get_frame_extents _GdkWindow_ (GdkRectangle))
-		(gdk_window_invalidate_rect _GdkWindow_ (GdkRectangle 0 0 10 10) #f)
-		(gdk_window_move _GdkWindow_ 0 0)
-		(gdk_window_move_resize _GdkWindow_ 0 0 500 800)
-		(gdk_window_resize _GdkWindow_ 500 800)
-;		(gdk_window_set_accept_focus _GdkWindow_ #t)
-		(gdk_window_set_background _GdkWindow_ red-pixel)
-		(gdk_window_set_cursor _GdkWindow_ (gdk_cursor_new GDK_BOTTOM_TEE))
-		(gdk_window_set_icon_name _GdkWindow_ "hiho")
-		(gtk_window_move _GtkWindow_ 200 20)
-		(gdk_window_resize (gtk_widget_get_window _GtkWidget_) 800 500)
-		(let ((_guint (g_idle_add_full G_PRIORITY_DEFAULT_IDLE (lambda (n) #f) 1234 #f)))
-		  (g_source_remove _guint))
-		
-		#|
-		(let ((_GtkTargetList_ (gtk_target_list_new #f 0)))
-		(gtk_target_list_add _GtkTargetList_ GDK_TARGET_STRING 0 0)
-					;		(gtk_target_list_ref _GtkTargetList_)
-		(gtk_target_list_unref _GtkTargetList_)
-		(gtk_target_list_remove _GtkTargetList_ GDK_TARGET_STRING)
-		(gtk_drag_dest_set (cadr (main-widgets)) GTK_DEST_DEFAULT_ALL 
-		(make-target-entry (list (list "STRING" 0 0) (list "FILENAME" 0 0))) 2 
-		(logior GDK_ACTION_COPY GDK_ACTION_MOVE))
-		(let ((trg (gtk_drag_dest_get_target_list (cadr (main-widgets)))))
-		(gtk_drag_dest_set_target_list (cadr (main-widgets)) trg))
-		
-		)
-		|#
-		(let* ((_GtkRadioAction_ (gtk_radio_action_new "hi" "label" "tool" GTK_STOCK_CANCEL 0))
-		       (_gint (gtk_radio_action_get_current_value _GtkRadioAction_))
-		       (_GSList_ (gtk_radio_action_get_group _GtkRadioAction_)))
-		  (if (not (= 0 _gint)) (snd-display #__line__ ";radio action value: ~A" _gint)))))
 	  
 	  (let ((dialog (gtk_about_dialog_new)))
 	    ;; sort of half-implemented, apparently
@@ -63385,8 +63112,6 @@ EDITS: 1
 		  (cell1 (gtk_cell_view_new_with_text "hiho")))
 	      (if (not (GTK_IS_CELL_VIEW cell1)) (snd-display #__line__ ";not cell view? ~A" cell1))
 	      (gtk_cell_view_set_model (GTK_CELL_VIEW cell1) (GTK_TREE_MODEL store))
-	      (if (not (provided? 'cairo))
-		  (gtk_cell_view_set_background_color (GTK_CELL_VIEW cell1) (basic-color)))
 	      ))
 	  
 	  (let* ((_PangoLanguage_ (pango_language_from_string "de"))
@@ -63419,7 +63144,7 @@ EDITS: 1
 		  (list ; these are problematic, but make sure they are defined
 		   g_free g_signal_lookup g_source_remove g_type_from_name g_type_is_a
 		   g_type_name g_type_parent g_type_qname gdk_atom_intern gdk_init
-		   gdk_init_check gdk_pixmap_new gdk_set_show_events gdk_threads_enter gdk_threads_init
+		   gdk_init_check gdk_set_show_events gdk_threads_enter gdk_threads_init
 		   gdk_threads_leave gdk_utf8_to_string_target gtk_accel_map_load gtk_accel_map_load_fd ;gtk_accel_map_load_scanner
 		   gtk_accel_map_lookup_entry gtk_accel_map_save gtk_accel_map_save_fd gtk_button_new_with_label gtk_check_button_new_with_label
 		   gtk_check_menu_item_new_with_label gtk_color_selection_palette_from_string gtk_disable_setlocale gtk_icon_size_from_name 
@@ -63438,14 +63163,14 @@ EDITS: 1
 		   GDK_EVENT_ANY GDK_EVENT_BUTTON GDK_EVENT_CONFIGURE GDK_EVENT_CROSSING GDK_EVENT_DND
 		   GDK_EVENT_EXPOSE GDK_EVENT_FOCUS GDK_EVENT_KEY GDK_EVENT_MOTION GDK_EVENT_NOEXPOSE
 		   GDK_EVENT_PROPERTY GDK_EVENT_PROXIMITY GDK_EVENT_SCROLL GDK_EVENT_SELECTION GDK_EVENT_SETTING
-		   GDK_EVENT_VISIBILITY GDK_EVENT_WINDOWSTATE GDK_GC GDK_IMAGE GDK_IS_COLORMAP
-		   GDK_IS_DEVICE GDK_IS_DISPLAY GDK_IS_DRAG_CONTEXT GDK_IS_DRAWABLE GDK_IS_GC
-		   GDK_IS_IMAGE GDK_IS_KEYMAP GDK_IS_PANGO_RENDERER GDK_IS_PIXBUF GDK_IS_PIXBUF_ANIMATION
+		   GDK_EVENT_VISIBILITY GDK_EVENT_WINDOWSTATE GDK_IS_COLORMAP
+		   GDK_IS_DEVICE GDK_IS_DISPLAY GDK_IS_DRAG_CONTEXT GDK_IS_DRAWABLE
+		   GDK_IS_KEYMAP GDK_IS_PANGO_RENDERER GDK_IS_PIXBUF GDK_IS_PIXBUF_ANIMATION
 		   GDK_IS_PIXBUF_ANIMATION_ITER ;GDK_IS_PIXBUF_LOADER 
-		   GDK_IS_PIXMAP GDK_IS_SCREEN GDK_IS_VISUAL
+		   GDK_IS_SCREEN GDK_IS_VISUAL
 		   GDK_IS_WINDOW GDK_KEYMAP GDK_PANGO_RENDERER GDK_PIXBUF GDK_PIXBUF_ANIMATION
 		   GDK_PIXBUF_ANIMATION_ITER ;GDK_PIXBUF_LOADER 
-		   GDK_PIXMAP GDK_SCREEN GDK_VISUAL
+		   GDK_SCREEN GDK_VISUAL
 		   GDK_WINDOW GPOINTER GTK_ABOUT_DIALOG GTK_ACCEL_GROUP GTK_ACCEL_LABEL
 		   GTK_ACCEL_MAP GTK_ACCESSIBLE GTK_ACTION GTK_ACTION_GROUP GTK_ADJUSTMENT
 		   GTK_ALIGNMENT GTK_ARROW GTK_ASPECT_FRAME GTK_BIN GTK_BOX
@@ -63518,12 +63243,11 @@ EDITS: 1
 		   g_signal_handlers_unblock_matched g_signal_has_handler_pending
 		   g_signal_list_ids g_signal_name g_signal_newv g_signal_parse_name g_signal_query
 		   g_signal_remove_emission_hook g_signal_stop_emission g_signal_stop_emission_by_name g_timeout_add g_timeout_add_full
-		   gdk_add_client_message_filter gdk_atom_name gdk_beep gdk_bitmap_create_from_data
+		   gdk_add_client_message_filter gdk_atom_name gdk_beep
 		   gdk_color_copy gdk_color_equal gdk_color_free
 		   gdk_color_hash gdk_color_parse gdk_colormap_alloc_color gdk_colormap_alloc_colors
 		   gdk_colormap_get_system gdk_colormap_get_visual gdk_colormap_new gdk_colormap_query_color
-					;gdk_cursor_new gdk_cursor_new_from_pixbuf
-					;gdk_cursor_new_from_pixmap gdk_cursor_ref gdk_cursor_unref ;gdk_device_free_history
+
 		   gdk_display_add_client_message_filter gdk_display_beep gdk_display_close gdk_display_flush ;gdk_display_get_core_pointer
 		   gdk_display_get_default gdk_display_get_default_cursor_size gdk_display_get_default_group gdk_display_get_default_screen gdk_display_get_event
 		   gdk_display_get_maximal_cursor_size gdk_display_get_n_screens gdk_display_get_name gdk_display_get_pointer gdk_display_get_screen
@@ -63533,54 +63257,42 @@ EDITS: 1
 		   gdk_display_supports_cursor_color gdk_display_sync
 		   gdk_drag_abort gdk_drag_begin gdk_drag_context_new
 		   gdk_drag_drop gdk_drag_drop_succeeded gdk_drag_find_window gdk_drag_get_protocol gdk_drag_get_selection
-		   gdk_drag_motion gdk_drag_status gdk_draw_arc gdk_draw_drawable
-		   gdk_draw_glyphs gdk_draw_glyphs_transformed gdk_draw_gray_image gdk_draw_image gdk_draw_indexed_image
-		   gdk_draw_layout gdk_draw_layout_line gdk_draw_layout_line_with_colors gdk_draw_layout_with_colors gdk_draw_line
-		   gdk_draw_lines gdk_draw_pixbuf gdk_draw_point gdk_draw_points gdk_draw_polygon
-		   gdk_draw_rectangle gdk_draw_rgb_32_image gdk_draw_rgb_32_image_dithalign gdk_draw_rgb_image gdk_draw_rgb_image_dithalign
-		   gdk_draw_segments gdk_draw_trapezoids gdk_drawable_copy_to_image gdk_drawable_get_colormap
-		   gdk_drawable_get_depth gdk_drawable_get_image gdk_drawable_get_size 
+		   gdk_drag_motion gdk_drag_status 
+		   gdk_drawable_get_depth gdk_drawable_get_size 
 		   gdk_drawable_get_visual gdk_drawable_set_colormap gdk_drop_finish gdk_drop_reply gdk_error_trap_pop
 		   gdk_error_trap_push gdk_event_copy gdk_event_free gdk_event_get ;gdk_event_get_axis
 		   gdk_event_get_coords ;gdk_event_get_graphics_expose 
 		   gdk_event_get_root_coords gdk_event_get_state gdk_event_get_time
 		   gdk_event_handler_set gdk_event_peek gdk_event_put
-		   gdk_event_send_client_message gdk_event_send_clientmessage_toall gdk_events_pending   gdk_flush   gdk_gc_copy gdk_gc_get_colormap gdk_gc_get_values
-		   gdk_gc_new gdk_gc_new_with_values gdk_gc_offset gdk_gc_set_background gdk_gc_set_clip_mask
-		   gdk_gc_set_clip_origin gdk_gc_set_clip_rectangle gdk_gc_set_colormap ;gdk_gc_set_dashes
-		   gdk_gc_set_exposures gdk_gc_set_fill gdk_gc_set_foreground gdk_gc_set_function gdk_gc_set_line_attributes
-		   gdk_gc_set_rgb_bg_color gdk_gc_set_rgb_fg_color gdk_gc_set_stipple gdk_gc_set_subwindow gdk_gc_set_tile
-		   gdk_gc_set_ts_origin gdk_gc_set_values gdk_get_default_root_window gdk_get_display
-		   gdk_get_display_arg_name gdk_get_program_class gdk_get_show_events   gdk_image_new   ;gdk_input_set_extension_events 
+		   gdk_event_send_client_message gdk_event_send_clientmessage_toall gdk_events_pending   gdk_flush 
+		   gdk_get_default_root_window gdk_get_display
+		   gdk_get_display_arg_name gdk_get_program_class gdk_get_show_events 
 		   gdk_keyboard_grab
 		   gdk_keyboard_ungrab gdk_keymap_get_default gdk_keymap_get_direction gdk_keymap_get_entries_for_keycode gdk_keymap_get_entries_for_keyval
 		   gdk_keymap_lookup_key gdk_keyval_convert_case gdk_keyval_from_name gdk_keyval_is_lower
-		   gdk_keyval_is_upper gdk_keyval_name gdk_keyval_to_lower gdk_keyval_to_unicode gdk_keyval_to_upper
-		   gdk_list_visuals gdk_notify_startup_complete   gdk_pango_attr_embossed_new gdk_pango_attr_stipple_new gdk_pango_context_get 
+		   gdk_keyval_is_upper gdk_keyval_name gdk_keyval_to_lower gdk_keyval_to_unicode gdk_keyval_to_upper gdk_pango_context_get 
+		   gdk_list_visuals gdk_notify_startup_complete
 		   gdk_pango_renderer_get_default 
 		   gdk_pango_renderer_new gdk_pango_renderer_set_drawable
-		   gdk_pango_renderer_set_gc gdk_pango_renderer_set_override_color 
-		   gdk_pango_renderer_set_stipple gdk_pixbuf_add_alpha   gdk_pixbuf_animation_get_height gdk_pixbuf_animation_get_iter gdk_pixbuf_animation_get_static_image 
+		   gdk_pixbuf_add_alpha   gdk_pixbuf_animation_get_height gdk_pixbuf_animation_get_iter gdk_pixbuf_animation_get_static_image 
 		   gdk_pixbuf_animation_get_width
 		   gdk_pixbuf_animation_is_static_image gdk_pixbuf_animation_iter_advance gdk_pixbuf_animation_iter_get_delay_time 
 		   gdk_pixbuf_animation_iter_get_pixbuf   gdk_pixbuf_animation_iter_on_currently_loading_frame gdk_pixbuf_animation_new_from_file gdk_pixbuf_composite 
 		   gdk_pixbuf_composite_color gdk_pixbuf_composite_color_simple
 		   gdk_pixbuf_copy gdk_pixbuf_copy_area gdk_pixbuf_error_quark gdk_pixbuf_fill
-		   gdk_pixbuf_get_bits_per_sample gdk_pixbuf_get_colorspace gdk_pixbuf_get_from_drawable gdk_pixbuf_get_from_image gdk_pixbuf_get_has_alpha
+		   gdk_pixbuf_get_bits_per_sample gdk_pixbuf_get_colorspace gdk_pixbuf_get_from_drawable gdk_pixbuf_get_has_alpha
 		   gdk_pixbuf_get_height gdk_pixbuf_get_n_channels gdk_pixbuf_get_option gdk_pixbuf_get_pixels gdk_pixbuf_get_rowstride
 		   gdk_pixbuf_get_width 
 		   gdk_pixbuf_new_from_data gdk_pixbuf_new_from_file gdk_pixbuf_new_from_inline gdk_pixbuf_new_from_xpm_data gdk_pixbuf_new_subpixbuf
 		   gdk_pixbuf_render_pixmap_and_mask gdk_pixbuf_render_pixmap_and_mask_for_colormap gdk_pixbuf_render_threshold_alpha 
 		   gdk_pixbuf_saturate_and_pixelate gdk_pixbuf_savev
-		   gdk_pixbuf_scale gdk_pixbuf_scale_simple gdk_pixmap_colormap_create_from_xpm gdk_pixmap_colormap_create_from_xpm_d gdk_pixmap_create_from_data
-		   gdk_pixmap_create_from_xpm gdk_pixmap_create_from_xpm_d gdk_pixmap_foreign_new gdk_pixmap_lookup
+		   gdk_pixbuf_scale gdk_pixbuf_scale_simple 
 		   gdk_pointer_grab gdk_pointer_is_grabbed gdk_pointer_ungrab gdk_property_change
 		   gdk_property_delete gdk_property_get gdk_query_depths gdk_query_visual_types
 		   gdk_rectangle_intersect gdk_rectangle_union 
-		   gdk_rgb_ditherable gdk_rgb_find_color gdk_rgb_get_colormap gdk_rgb_get_visual gdk_rgb_set_install
-		   gdk_rgb_set_min_colors gdk_rgb_set_verbose gdk_screen_broadcast_client_message gdk_screen_get_default gdk_screen_get_default_colormap
+		   gdk_screen_broadcast_client_message gdk_screen_get_default gdk_screen_get_default_colormap
 		   gdk_screen_get_display gdk_screen_get_height gdk_screen_get_height_mm gdk_screen_get_monitor_at_point gdk_screen_get_monitor_at_window
-		   gdk_screen_get_monitor_geometry gdk_screen_get_n_monitors gdk_screen_get_number gdk_screen_get_rgb_colormap gdk_screen_get_rgb_visual
+		   gdk_screen_get_monitor_geometry gdk_screen_get_n_monitors gdk_screen_get_number
 		   gdk_screen_get_root_window gdk_screen_get_system_colormap gdk_screen_get_system_visual gdk_screen_get_toplevel_windows
 		   gdk_screen_get_width gdk_screen_get_width_mm gdk_screen_height gdk_screen_height_mm gdk_screen_list_visuals
 		   gdk_screen_make_display_name gdk_screen_set_default_colormap gdk_screen_width gdk_screen_width_mm
@@ -63763,7 +63475,7 @@ EDITS: 1
 		   gtk_font_selection_new ;gtk_font_selection_set_font_name
 		   gtk_font_selection_set_preview_text gtk_frame_get_label gtk_frame_get_label_align gtk_frame_get_label_widget gtk_frame_get_shadow_type
 		   gtk_frame_new gtk_frame_set_label gtk_frame_set_label_align gtk_frame_set_label_widget
-		   gtk_frame_set_shadow_type gtk_gc_get gtk_gc_release
+		   gtk_frame_set_shadow_type
 		   gtk_get_current_event gtk_get_current_event_state gtk_get_current_event_time gtk_get_default_language gtk_get_event_widget
 		   gtk_grab_add gtk_grab_get_current gtk_grab_remove gtk_handle_box_get_handle_position gtk_handle_box_get_shadow_type
 		   gtk_handle_box_get_snap_edge gtk_handle_box_new gtk_handle_box_set_handle_position gtk_handle_box_set_shadow_type
@@ -63801,14 +63513,7 @@ EDITS: 1
 		   gtk_im_context_get_surrounding gtk_im_context_reset gtk_im_context_set_client_window gtk_im_context_set_cursor_location
 		   gtk_im_context_set_surrounding gtk_im_context_set_use_preedit 
 		   gtk_im_context_simple_add_table gtk_im_context_simple_new
-		   gtk_im_multicontext_append_menuitems gtk_im_multicontext_new gtk_image_get_animation gtk_image_get_icon_set
-		   gtk_image_get_image gtk_image_get_pixbuf gtk_image_get_pixel_size gtk_image_get_pixmap gtk_image_get_stock
-		   gtk_image_get_storage_type gtk_image_menu_item_get_image gtk_image_menu_item_new
-		   gtk_image_menu_item_new_from_stock gtk_image_menu_item_new_with_mnemonic gtk_image_menu_item_set_image gtk_image_new gtk_image_new_from_animation
-		   gtk_image_new_from_file gtk_image_new_from_icon_name gtk_image_new_from_icon_set gtk_image_new_from_image gtk_image_new_from_pixbuf
-		   gtk_image_new_from_pixmap gtk_image_new_from_stock gtk_image_set_from_animation gtk_image_set_from_file gtk_image_set_from_icon_name
-		   gtk_image_set_from_icon_set gtk_image_set_from_image gtk_image_set_from_pixbuf gtk_image_set_from_pixmap gtk_image_set_from_stock
-		   gtk_image_set_pixel_size gtk_invisible_new
+		   gtk_im_multicontext_append_menuitems gtk_im_multicontext_new
 		   gtk_item_deselect gtk_item_select gtk_item_toggle gtk_label_get_angle
 		   gtk_label_get_attributes gtk_label_get_ellipsize gtk_label_get_justify gtk_label_get_label gtk_label_get_layout
 		   gtk_label_get_layout_offsets gtk_label_get_line_wrap gtk_label_get_mnemonic_keyval gtk_label_get_mnemonic_widget gtk_label_get_selectable

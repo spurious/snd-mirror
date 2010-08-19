@@ -963,11 +963,7 @@ void color_listener_text(color_info *pix)
 {
   ss->sgx->listener_text_color = pix;
   if (listener_text) 
-#if USE_CAIRO
     gtk_widget_modify_text(listener_text, GTK_STATE_NORMAL, rgb_to_gdk_color(ss->sgx->listener_text_color));
-#else
-    gtk_widget_modify_text(listener_text, GTK_STATE_NORMAL, ss->sgx->listener_text_color);
-#endif
 }
 
 

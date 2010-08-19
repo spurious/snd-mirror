@@ -236,10 +236,6 @@
 	(gtk_widget_set_events drawer GDK_ALL_EVENTS_MASK)
 	(gtk_box_pack_start (GTK_BOX parent) drawer #t #t 10)
 	(gtk_widget_show drawer)
-	(if (not (provided? 'cairo))
-	    (gdk_window_set_background (gtk_widget_get_window drawer) (graph-color))
-	    (gdk_window_set_background (gtk_widget_get_window drawer) white-pixel))
-
 	(gtk_widget_set_size_request drawer -1 200)
 
 	(g_signal_connect_closure_by_id (GPOINTER drawer)
@@ -376,37 +372,23 @@
 			  (set! ly cy))))
 		    (let* ((lx #f)
 			   (ly #f)
-			   (got-cairo (provided? 'cairo))
-			   (cr (and got-cairo (gdk_cairo_create (GDK_DRAWABLE wn)))))
-		      (if got-cairo
-			  (begin
-			    (cairo_set_line_width cr 1.0)
-			    (cairo_set_source_rgb cr 0.0 0.0 0.0)))
+			   (cr (gdk_cairo_create (GDK_DRAWABLE wn))))
+		      (cairo_set_line_width cr 1.0)
+		      (cairo_set_source_rgb cr 0.0 0.0 0.0)
 		      (do ((i 0 (+ i 2)))
 			  ((= i len))
 			(let ((cx (xe-grfx drawer (list-ref cur-env i)))
 			      (cy (xe-grfy drawer (list-ref cur-env (+ i 1)))))
-			  (if got-cairo
+			  (cairo_arc cr cx cy mouse-r 0.0 (* 2 pi))
+			  (cairo_fill cr)
+			  (if lx
 			      (begin
-				(cairo_arc cr cx cy mouse-r 0.0 (* 2 pi))
-				(cairo_fill cr)
-				(if lx
-				    (begin
-				      (cairo_move_to cr lx ly)
-				      (cairo_line_to cr cx cy)
-				      (cairo_stroke cr))))
-			      (begin
-				(gdk_draw_arc (GDK_DRAWABLE wn) gc #t
-					      (- cx mouse-r)
-					      (- cy mouse-r)
-					      mouse-d mouse-d
-					      0 (* 360 64))
-				(if lx
-				    (gdk_draw_line (GDK_DRAWABLE wn) gc lx ly cx cy))))
+				(cairo_move_to cr lx ly)
+				(cairo_line_to cr cx cy)
+				(cairo_stroke cr)))
 			  (set! lx cx)
 			  (set! ly cy)))
-		      (if got-cairo
-			  (cairo_destroy cr))))))))))
+		      (cairo_destroy cr)))))))))
   
 #|
 (define outer (add-main-pane "hiho" xmFormWidgetClass '()))

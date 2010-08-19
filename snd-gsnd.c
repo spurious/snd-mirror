@@ -158,9 +158,6 @@ void display_minibuffer_error(snd_info *sp, const char *str)
 static bool mini_lock_allocated = false;
 static picture_t *mini_lock = NULL, *speed_r = NULL, *speed_l = NULL, *blank = NULL, *stop_sign = NULL;
 static picture_t *bombs[NUM_BOMBS];
-#if (!USE_CAIRO)
-  static picture_t *hourglasses[NUM_HOURGLASSES];
-#endif
 
 void show_lock(snd_info *sp)
 {
@@ -279,33 +276,6 @@ void stop_bomb(snd_info *sp)
 }
 
 
-#if (!USE_CAIRO)
-static void show_hourglass(snd_info *sp, int chan, int glass)
-{
-  if ((sp->sgx) &&
-      (chan < sp->sgx->num_clock_widgets) &&
-      (CLOCK_PIX(sp, chan)) &&
-      (sp->sgx->clock_pix_ax[chan]))
-    {
-      draw_picture(sp->sgx->clock_pix_ax[chan], hourglasses[glass], 0, 0, 0, 4, 18, 16);
-      sp->chans[chan]->cgx->current_hourglass = glass; /* for possible expose event */
-    }
-}
-
-
-static void hide_hourglass(snd_info *sp, int chan)
-{
-  if ((sp->sgx) &&
-      (chan < sp->sgx->num_clock_widgets) &&
-      (CLOCK_PIX(sp, chan)) &&
-      (blank))
-    {
-      draw_picture(sp->sgx->clock_pix_ax[chan], blank, 0, 0, 0, 4, 18, 16);
-      sp->chans[chan]->cgx->current_hourglass = -1; /* for possible expose event */
-    }
-}
-
-#else
 
 static GdkDrawable *sound_pix_wn(chan_info *cp)
 {
@@ -378,7 +348,6 @@ static void hide_happy_face(GdkDrawable *wn)
   cairo_fill(cr);
   cairo_destroy(cr);
 }
-#endif
 
 
 static void make_pixmaps(void)
@@ -396,10 +365,6 @@ static void make_pixmaps(void)
       speed_l = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, (gchar **)speed_l_bits());
       for (k = 0; k < NUM_BOMBS; k++) 
 	bombs[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, (gchar **)mini_bomb_bits(k));
-#if (!USE_CAIRO)
-      for (k = 0; k < NUM_HOURGLASSES; k++) 
-	hourglasses[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, (gchar **)mini_glass_bits(k));
-#endif
       mini_lock_allocated = true;
     }
 }
@@ -434,15 +399,9 @@ static gboolean clock_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data
       (CLOCK_PIX(sp, cp->chan)) &&
       (sp->sgx->clock_pix_ax[cp->chan]))
     {
-#if (!USE_CAIRO)
-      if (cp->cgx->current_hourglass >= 0)
-	draw_picture(sp->sgx->clock_pix_ax[cp->chan], hourglasses[cp->cgx->current_hourglass], 0, 0, 0, 4, 16, 16);
-      else draw_picture(sp->sgx->clock_pix_ax[cp->chan], blank, 0, 0, 0, 4, 16, 16);
-#else
       if (cp->cgx->progress_pct >= 0.0)
 	show_happy_face(sound_pix_wn(cp), cp->cgx->progress_pct);
       else hide_happy_face(sound_pix_wn(cp));
-#endif
     }
   return(false);
 }
@@ -1302,9 +1261,7 @@ void display_filter_env(snd_info *sp)
   ax->gc = ss->sgx->fltenv_basic_gc;
   ax->wn = WIDGET_TO_WINDOW(drawer);
   ax->w = drawer;
-#if USE_CAIRO
   ax->cr = gdk_cairo_create(ax->wn);
-#endif
 
   gdk_window_clear(ax->wn);
   edp->in_dB = sp->filter_control_in_dB;
@@ -1321,9 +1278,7 @@ void display_filter_env(snd_info *sp)
 				 sp->filter_control_order, 
 				 sp->filter_control_in_dB);
     }
-#if USE_CAIRO
   cairo_destroy(ax->cr);
-#endif
   free(ax);
 }
 
@@ -2269,9 +2224,7 @@ int control_panel_height(snd_info *sp)
 
 /* -------- PROGRESS REPORT -------- */
 
-#if USE_CAIRO
 GdkDrawable *enved_pix_wn(void);
-#endif
 
 void progress_report(chan_info *cp, mus_float_t pct)
 {
@@ -2284,20 +2237,10 @@ void progress_report(chan_info *cp, mus_float_t pct)
       (sp->channel_style == CHANNELS_SUPERIMPOSED))
     return;
 
-#if (!USE_CAIRO)
-  {
-    int which;
-    which = (int)(pct * NUM_HOURGLASSES);
-    if (which >= NUM_HOURGLASSES) which = NUM_HOURGLASSES - 1;
-    if (which < 0) which = 0;
-    show_hourglass(sp, cp->chan, which);
-  }
-#else
   {
     cp->cgx->progress_pct = pct;
     show_happy_face(sound_pix_wn(cp), pct);
   }
-#endif
 
   check_for_event();
 }
@@ -2314,14 +2257,10 @@ void finish_progress_report(chan_info *cp)
       (sp->channel_style == CHANNELS_SUPERIMPOSED))
     return;
 
-#if (!USE_CAIRO)
-  hide_hourglass(sp, cp->chan);
-#else
   {
     cp->cgx->progress_pct = -1.0;
     hide_happy_face(sound_pix_wn(cp));
   }
-#endif
   hide_stop_sign(sp);
 }
 
@@ -2337,14 +2276,10 @@ void start_progress_report(chan_info *cp)
       (sp->channel_style == CHANNELS_SUPERIMPOSED))
     return;
 
-#if (!USE_CAIRO)
-  show_hourglass(sp, cp->chan, 0);
-#else
   {
     cp->cgx->progress_pct = 0.0;
     show_happy_face(sound_pix_wn(cp), 0.0);
   }
-#endif
 
   show_stop_sign(sp);
 }

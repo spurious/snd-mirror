@@ -2,7 +2,6 @@
 
 #define FALLBACK_FONT "Sans 14"
 
-#if USE_CAIRO
   #define HIGHLIGHT_COLOR      rgb_to_color(1.00, 1.00, 0.94) /* "ivory1" */
   #define BASIC_COLOR          rgb_to_color(0.93, 0.93, 0.87) /* "ivory2" */
   #define POSITION_COLOR       rgb_to_color(0.80, 0.80, 0.75) /* "ivory3" */
@@ -31,36 +30,6 @@
   #define PUSHED_BUTTON_COLOR  rgb_to_color(0.79, 0.88, 1.00) /* "lightsteelblue1" */
 #endif
   #define SASH_COLOR           rgb_to_color(0.56, 0.93, 0.56) /* "lightgreen" */
-#else
-  #define HIGHLIGHT_COLOR      "ivory1"
-  #define BASIC_COLOR          "ivory2"
-  #define POSITION_COLOR       "ivory3"
-  #define ZOOM_COLOR           "ivory4"
-  #define CURSOR_COLOR         "red"
-  #define SELECTION_COLOR      "lightsteelblue1"
-  #define MIX_COLOR            "darkgray"
-  #define ENVED_WAVEFORM_COLOR "blue"
-  #define GRAPH_COLOR          "white"
-  #define SELECTED_GRAPH_COLOR "white"
-  #define DATA_COLOR           "black"
-  #define SELECTED_DATA_COLOR  "black"
-  #define MARK_COLOR           "red"
-  #define LISTENER_COLOR       "AliceBlue"
-  #define LISTENER_TEXT_COLOR  "black"
-  #define LIGHT_BLUE_COLOR     "lightsteelblue1"
-  #define LIGHTER_BLUE_COLOR   "AliceBlue"
-  #define WHITE_COLOR          "white"
-  #define BLACK_COLOR          "black"
-  #define GREEN_COLOR          "green2"
-  #define RED_COLOR            "red"
-  #define YELLOW_COLOR         "yellow"
-  #define TEXT_FOCUS_COLOR     "white"
-  #define FILTER_CONTROL_WAVEFORM_COLOR "blue"
-#ifndef SND_DISABLE_DEPRECATED
-  #define PUSHED_BUTTON_COLOR  "lightsteelblue1"
-#endif
-  #define SASH_COLOR           "lightgreen"
-#endif
 
 #define CHANNEL_SASH_INDENT -10
 #define CHANNEL_SASH_SIZE 10
@@ -230,27 +199,22 @@ static void setup_gcs(void)
   sx->mix_gc = gc_new(wn);
   gc_set_background(sx->mix_gc, sx->graph_color);
   gc_set_foreground(sx->mix_gc, sx->mix_color);
-  gc_set_function(sx->mix_gc, GDK_COPY);
 
   sx->cursor_gc = gc_new(wn);
   gc_set_background(sx->cursor_gc, sx->graph_color);
   gc_set_foreground_xor(sx->cursor_gc, sx->cursor_color, sx->graph_color);
-  gc_set_function(sx->cursor_gc, GDK_XOR);
 
   sx->selection_gc = gc_new(wn);
   gc_set_background(sx->selection_gc, sx->graph_color);
   gc_set_foreground_xor(sx->selection_gc, sx->selection_color, sx->graph_color);
-  gc_set_function(sx->selection_gc, GDK_XOR);
 
   sx->mark_gc = gc_new(wn);
   gc_set_background(sx->mark_gc, sx->graph_color);
   gc_set_foreground_xor(sx->mark_gc, sx->mark_color, sx->graph_color);
-  gc_set_function(sx->mark_gc, GDK_XOR);
 
   sx->erase_gc = gc_new(wn);
   gc_set_background(sx->erase_gc, sx->data_color);
   gc_set_foreground(sx->erase_gc, sx->graph_color);
-  gc_set_function(sx->erase_gc, GDK_COPY);
 
   sx->selected_basic_gc = gc_new(wn);
   gc_set_background(sx->selected_basic_gc, sx->selected_graph_color);
@@ -259,55 +223,37 @@ static void setup_gcs(void)
   sx->selected_cursor_gc = gc_new(wn);
   gc_set_background(sx->selected_cursor_gc, sx->graph_color);
   gc_set_foreground_xor(sx->selected_cursor_gc, sx->cursor_color, sx->graph_color);
-  gc_set_function(sx->selected_cursor_gc, GDK_XOR);
 
   sx->selected_selection_gc = gc_new(wn);
   gc_set_background(sx->selected_selection_gc, sx->graph_color);
   gc_set_foreground_xor(sx->selected_selection_gc, sx->selection_color, sx->graph_color);
-  gc_set_function(sx->selected_selection_gc, GDK_XOR);
 
   sx->selected_mark_gc = gc_new(wn);
   gc_set_background(sx->selected_mark_gc, sx->selected_graph_color);
   gc_set_foreground_xor(sx->selected_mark_gc, sx->mark_color, sx->selected_graph_color);
-  gc_set_function(sx->selected_mark_gc, GDK_XOR);
 
   sx->selected_erase_gc = gc_new(wn);
   gc_set_background(sx->selected_erase_gc, sx->selected_data_color);
   gc_set_foreground(sx->selected_erase_gc, sx->selected_graph_color);
-  gc_set_function(sx->selected_erase_gc, GDK_COPY);
 
   sx->fltenv_basic_gc = gc_new(wn);
   gc_set_background(sx->fltenv_basic_gc, sx->basic_color);
   gc_set_foreground(sx->fltenv_basic_gc, sx->black);
-  gc_set_function(sx->fltenv_basic_gc, GDK_COPY);
 
   sx->fltenv_data_gc = gc_new(wn);
   gc_set_background(sx->fltenv_data_gc, sx->basic_color);
   gc_set_foreground(sx->fltenv_data_gc, sx->filter_control_waveform_color);
-  gc_set_function(sx->fltenv_data_gc, GDK_COPY);
 
   initialize_colormap();
 }
 
 
-#if USE_CAIRO
 static void save_a_color(FILE *Fp, color_info *default_color, color_info *current_color, const char *ext_name)
-#else
-static void save_a_color(FILE *Fp, const char *def_name, color_info *current_color, const char *ext_name)
-#endif
 {
 #if HAVE_EXTENSION_LANGUAGE
-#if USE_CAIRO
   if ((current_color->red != default_color->red) ||
       (current_color->green != default_color->green) ||
       (current_color->blue != default_color->blue))
-#else
-  GdkColor default_color; /* color name here */
-  if ((gdk_color_parse(def_name, &default_color)) &&
-      ((current_color->red != default_color.red) ||
-       (current_color->green != default_color.green) ||
-       (current_color->blue != default_color.blue)))
-#endif
 
 #if HAVE_FORTH
     fprintf(Fp, "%.3f %.3f %.3f %s set-%s drop\n", 
@@ -331,9 +277,7 @@ static void save_a_color(FILE *Fp, const char *def_name, color_info *current_col
 #endif /* not forth */
 #endif /* ext lang */
 
-#if USE_CAIRO
   free(default_color); /* macro has rgb_to_color which allocates */
-#endif
 }
 
 
@@ -456,61 +400,19 @@ static void set_up_icon(void)
 
 color_t get_in_between_color(color_t fg, color_t bg)
 {
-#if USE_CAIRO
   color_info *new_color;
   new_color = (color_info *)calloc(1, sizeof(color_info)); /* memleak here */
   new_color->red = (rgb_t)((fg->red + (2 * bg->red)) / 3);
   new_color->green = (rgb_t)((fg->green + (2 * bg->green)) / 3);
   new_color->blue = (rgb_t)((fg->blue + (2 * bg->blue)) / 3);
-#else
-  color_info gcolor;
-  color_info *new_color;
-  gcolor.red = (rgb_t)((fg->red + (2 * bg->red)) / 3);
-  gcolor.green = (rgb_t)((fg->green + (2 * bg->green)) / 3);
-  gcolor.blue = (rgb_t)((fg->blue + (2 * bg->blue)) / 3);
-  new_color = gdk_color_copy(&gcolor);
-  gdk_rgb_find_color(gdk_colormap_get_system(), new_color);
-#endif
   return(new_color);
 }
 
 
-#if USE_CAIRO
   #define get_color(Color, Ignore1, Ignore2, Ignore3) Color
-#else
-static color_info *get_color(const char *defined_color, const char *fallback_color, const char *second_fallback_color, bool use_white)
-{
-  GdkColor tmp_color; /* using Gdk color name handlers here */
-  color_info *new_color;
-  /* gdk_color_parse (gdk/gdkcolor.c) just calls pango_color_parse (pango/pango-color.c) which looks up the name in pango-color-table.h */
-  if ((!(gdk_color_parse(defined_color, &tmp_color))) &&
-      ((!fallback_color) || (!(gdk_color_parse(fallback_color, &tmp_color)))) &&
-      ((!second_fallback_color) || (!(gdk_color_parse(second_fallback_color, &tmp_color)))))
-    {
-      if (use_white)
-	{
-	  /* snd_error here can cause trouble (no error dialog or something) */
-	  fprintf(stderr, _("can't get %s -- will use white\n"), defined_color);
-	  gdk_color_parse("white", &tmp_color);
-	}
-      else
-	{
-	  fprintf(stderr, _("can't get %s -- will use black\n"), defined_color);
-	  gdk_color_parse("black", &tmp_color);
-	}
-    }
-  new_color = gdk_color_copy(&tmp_color);
-  gdk_rgb_find_color(gdk_colormap_get_system(), new_color);
-  return(new_color);
-}
-#endif
 
-
-static void notebook_switch_page(GtkNotebook *w, GtkNotebookPage *page_widget, gint page_num)
+static void notebook_switch_page(GtkNotebook *w, GtkWidget *page_widget, gint page_num)
 {
-  /* as far as I can tell there's nothing that a user can do with the idiotic page_widget argument --
-   *   the GtkNotebookPage structure is hidden, and not one public function gives any access to it.
-   */
   GtkWidget *pw;
   pw = gtk_notebook_get_nth_page(w, page_num);
   if (pw)
@@ -1002,11 +904,8 @@ class \"GtkTextView\" binding \"gtk-emacs-text-view\"\n			\
 #endif
   
   setup_gcs();
-#if USE_CAIRO
   make_icons_transparent("ivory2");
-#else
-  make_icons_transparent(BASIC_COLOR);
-#endif
+
   if (batch) gtk_widget_hide(MAIN_SHELL(ss));
   startup_funcs();
   

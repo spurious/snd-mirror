@@ -10,7 +10,6 @@
 #undef int64_t
 
 #undef HAVE_GETCWD
-#undef HAVE_GETWD
 #undef HAVE_STRFTIME
 #undef HAVE_STRERROR
 #undef HAVE_READLINK

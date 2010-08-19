@@ -1614,7 +1614,7 @@
 (hey " * reference args initial values are usually ignored, resultant values are returned in a list.~%")
 (hey " * null ptrs are passed and returned as #f, trailing \"user_data\" callback function arguments are optional (default: #f).~%")
 (hey " * where supported, \"...\" args are passed as a list, trailing NULL or -1 should be omitted.~%")
-(hey " * 'xg and possibly 'cairo are added to *features*~%")
+(hey " * 'xg is added to *features*~%")
 (hey " *~%")
 (hey " * added funcs:~%")
 (hey " *    (xg-version): date string.~%")

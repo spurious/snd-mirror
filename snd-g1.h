@@ -226,14 +226,14 @@ gc_t *erase_GC(chan_info *cp);
 void free_fft_pix(chan_info *cp);
 bool restore_fft_pix(chan_info *cp, axis_context *ax);
 void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y0);
-#if USE_CAIRO
+
   void free_cursor_pix(chan_info *cp);
   bool restore_cursor_pix(chan_info *cp, axis_context *ax);
   void save_cursor_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y0);
   void free_sono_cursor_pix(chan_info *cp);
   bool restore_sono_cursor_pix(chan_info *cp, axis_context *ax);
   void save_sono_cursor_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y0);
-#endif
+
 void cleanup_cw(chan_info *cp);
 void change_channel_style(snd_info *sp, channel_style_t new_style);
 void color_chan_components(color_t color, slider_choice_t which_component);
@@ -280,7 +280,6 @@ void goto_window(GtkWidget *text);
 void gc_set_foreground(gc_t *gp, color_info *color);
 void gc_set_background(gc_t *gp, color_info *color);
 void gc_set_foreground_xor(gc_t *gp, color_info *col1, color_info *col2);
-void gc_set_function(gc_t *gp, GdkFunction op);
 gc_t *gc_new(GdkDrawable *wn);
 
 void color_cursor(color_info *color);
@@ -295,9 +294,9 @@ void widget_modify_bg(GtkWidget *w, GtkStateType type, color_t color);
 void widget_modify_fg(GtkWidget *w, GtkStateType type, color_t color);
 void widget_modify_base(GtkWidget *w, GtkStateType type, color_t color);
 color_t rgb_to_color(mus_float_t r, mus_float_t g, mus_float_t b);
-#if USE_CAIRO
-  GdkColor *rgb_to_gdk_color(color_t col);
-#endif
+
+GdkColor *rgb_to_gdk_color(color_t col);
+
 
 void recolor_graph(chan_info *cp, bool selected);
 void set_sensitive(GtkWidget *wid, bool val);

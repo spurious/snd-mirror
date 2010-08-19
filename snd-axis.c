@@ -1579,17 +1579,10 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale ysca
 			  (strcmp("GC", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 #else
   #if USE_GTK
-    #if USE_CAIRO
       #define XEN_UNWRAP_SND_GC(Value) (gc_t *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value)))
       #define XEN_SND_GC_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && \
                               (XEN_SYMBOL_P(XEN_CAR(Value))) && \
 			      (strcmp("gc_t_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
-    #else
-      #define XEN_UNWRAP_SND_GC(Value) (gc_t *)(XEN_UNWRAP_C_POINTER(XEN_CADR(Value)))
-      #define XEN_SND_GC_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && \
-                              (XEN_SYMBOL_P(XEN_CAR(Value))) && \
-			      (strcmp("GdkGC_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
-    #endif
   #else
     #define XEN_UNWRAP_SND_GC(Value) 0
     #define XEN_SND_GC_P(Value) 0
@@ -1693,7 +1686,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   ax->w = w;
 #endif
 
-#if USE_CAIRO
+#if USE_GTK
   ax->cr = gdk_cairo_create(ax->wn);
 #endif
 
@@ -1725,7 +1718,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 	   XEN_CONS(C_TO_XEN_INT(ap->y_axis_y1),
 	    XEN_EMPTY_LIST))));
 
-#if USE_CAIRO
+#if USE_GTK
   cairo_destroy(ax->cr);
 #endif
   free_axis_info(ap);

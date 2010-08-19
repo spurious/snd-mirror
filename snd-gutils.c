@@ -365,56 +365,27 @@ void goto_window(GtkWidget *text)
 /* try to keep track of colors */
 void gc_set_foreground(gc_t *gp, color_info *color)
 {
-#if USE_CAIRO
   gp->fg_color = color;
-#else
-  gdk_gc_set_foreground(gp, color);
-#endif
 }
 
 
 void gc_set_background(gc_t *gp, color_info *color)
 {
-#if USE_CAIRO
   gp->bg_color = color;
-#else
-  gdk_gc_set_background(gp, color);
-#endif
 }
 
 
 void gc_set_foreground_xor(gc_t *gp, color_info *col1, color_info *col2)
 { 
-#if USE_CAIRO
   gp->fg_color = col1;
   gp->bg_color = col2;
-#else
-  color_info newcol;
-  newcol.pixel = XOR(col1->pixel, col2->pixel);
-  newcol.red = XOR(col1->red, col2->red);
-  newcol.green = XOR(col1->green, col2->green);
-  newcol.blue = XOR(col1->blue, col2->blue);
-  gdk_gc_set_foreground(gp, &newcol);
-#endif
-}
-
-
-void gc_set_function(gc_t *gp, GdkFunction op)
-{
-#if (!USE_CAIRO)
-  gdk_gc_set_function(gp, op);
-#endif
 }
 
 
 gc_t *gc_new(GdkDrawable *wn)
 {
   gc_t *gp;
-#if USE_CAIRO
   gp = (gc_t *)calloc(1, sizeof(gc_t));
-#else
-  gp = gdk_gc_new(wn);
-#endif
   return(gp);
 }
 
@@ -507,24 +478,14 @@ void set_mix_color(color_info *color)
 color_t rgb_to_color(mus_float_t r, mus_float_t g, mus_float_t b)
 {
   color_info *ccolor;
-#if USE_CAIRO
   ccolor = (color_info *)malloc(sizeof(color_info));
   ccolor->red = r;
   ccolor->green = g;
   ccolor->blue = b;
-#else
-  color_info gcolor;
-  gcolor.red = FLOAT_TO_RGB(r);
-  gcolor.green = FLOAT_TO_RGB(g);
-  gcolor.blue = FLOAT_TO_RGB(b);
-  ccolor = gdk_color_copy(&gcolor);
-  gdk_rgb_find_color(gdk_colormap_get_system(), ccolor);
-#endif
   return(ccolor);
 }
 
 
-#if USE_CAIRO
 GdkColor *rgb_to_gdk_color(color_t col)
 {
   GdkColor gcolor;
@@ -536,38 +497,25 @@ GdkColor *rgb_to_gdk_color(color_t col)
   gdk_rgb_find_color(gdk_colormap_get_system(), ccolor);
   return(ccolor);
 }
-#endif
 
 
 void widget_modify_bg(GtkWidget *w, GtkStateType type, color_t color)
 {
-#if USE_CAIRO
   /* the color has to stick around??? */
   /* another stop-gap: allocate a color each time... */
   gtk_widget_modify_bg(w, type, rgb_to_gdk_color(color));
-#else
-  gtk_widget_modify_bg(w, type, color);
-#endif
 }
 
 
 void widget_modify_fg(GtkWidget *w, GtkStateType type, color_t color)
 {
-#if USE_CAIRO
   gtk_widget_modify_fg(w, type, rgb_to_gdk_color(color));
-#else
-  gtk_widget_modify_fg(w, type, color);
-#endif
 }
 
 
 void widget_modify_base(GtkWidget *w, GtkStateType type, color_t color)
 {
-#if USE_CAIRO
   gtk_widget_modify_base(w, type, rgb_to_gdk_color(color));
-#else
-  gtk_widget_modify_base(w, type, color);
-#endif
 }
 
 

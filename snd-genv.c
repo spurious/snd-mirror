@@ -62,13 +62,9 @@ axis_info *enved_make_axis(const char *name, axis_context *ax,
       gray_ap->graph_active = true;
       fixup_axis_context(gray_ap->ax, drawer, ggc);
     }
-#if USE_CAIRO
   axis->ax->cr = gdk_cairo_create(WIDGET_TO_WINDOW(drawer));
-#endif
   init_env_axes(axis, name, ex0, ey0, width, height, xmin, xmax, ymin, ymax, printing);
-#if USE_CAIRO
   cairo_destroy(axis->ax->cr);
-#endif
   return(axis);
 }
 
@@ -80,14 +76,10 @@ static void display_env(env *e, const char *name, gc_t *cur_gc, int x0, int y0, 
   ax->wn = WIDGET_TO_WINDOW(drawer);
   ax->w = drawer;
   ax->gc = cur_gc;
-#if USE_CAIRO
   ax->cr = gdk_cairo_create(WIDGET_TO_WINDOW(drawer));
-#endif
   ss->enved->with_dots = dots;
   env_editor_display_env(ss->enved, e, ax, name, x0, y0, width, height, printing);
-#if USE_CAIRO
   cairo_destroy(ax->cr);
-#endif
   free(ax);
 }
 
@@ -284,15 +276,11 @@ static void env_redisplay_1(printing_t printing)
 	      (active_channel) &&
 	      (!(active_channel->squelch_update)))
 	    {
-#if USE_CAIRO
 	      gray_ap->ax->cr = gdk_cairo_create(WIDGET_TO_WINDOW(drawer));
-#endif
 	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env) && (FIR_p) && (printing == NOT_PRINTING))
 		display_frequency_response(active_env, axis, gray_ap->ax, enved_filter_order(ss), enved_in_dB(ss));
 	      enved_show_background_waveform(axis, gray_ap, apply_to_selection, (enved_target(ss) == ENVED_SPECTRUM), printing);
-#if USE_CAIRO
 	      cairo_destroy(gray_ap->ax->cr);
-#endif
 	    }
 	  display_env(active_env, name, gc, 0, 0, env_window_width, env_window_height, true, printing);
 	  name = NULL;
@@ -1182,9 +1170,7 @@ GtkWidget *create_envelope_editor(void)
       pix_ax = (axis_context *)calloc(1, sizeof(axis_context));
       pix_ax->wn = GDK_DRAWABLE(WIDGET_TO_WINDOW(brkpixL));
       pix_ax->gc = hgc;
-#if USE_CAIRO
       pix_ax->cr = gdk_cairo_create(WIDGET_TO_WINDOW(brkpixL));
-#endif
 
       SG_SIGNAL_CONNECT(drawer, "expose_event", drawer_expose, NULL);
       SG_SIGNAL_CONNECT(drawer, "configure_event", drawer_resize, NULL);
@@ -1221,13 +1207,11 @@ GtkWidget *create_envelope_editor(void)
 }
 
 
-#if USE_CAIRO
 GdkDrawable *enved_pix_wn(void);
 GdkDrawable *enved_pix_wn(void)
 {
   return(GDK_DRAWABLE(WIDGET_TO_WINDOW(brkpixL)));
 }
-#endif
 
 
 void set_enved_clip_p(bool val) 

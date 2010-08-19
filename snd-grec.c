@@ -98,7 +98,6 @@ static void display_meters(mus_float_t *maxes)
   int i, x0 = 0;
   /* if maxes is NULL, assume all 0's */
   if (recorder_chans == 0) return;
-#if USE_CAIRO
   {
     cairo_t *cr;
     cr = gdk_cairo_create(recorder_ax->wn);
@@ -142,40 +141,6 @@ static void display_meters(mus_float_t *maxes)
       }
     cairo_destroy(cr);
   }
-#else
-  gdk_gc_set_background(recorder_ax->gc, ss->sgx->white);
-  gdk_gc_set_foreground(recorder_ax->gc, ss->sgx->white);
-  gdk_draw_rectangle(recorder_ax->wn, recorder_ax->gc, true, 0, 0, meters_width, meter_height);
-
-  gdk_gc_set_line_attributes(recorder_ax->gc, 2, GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_ROUND);
-  gdk_gc_set_foreground(recorder_ax->gc, ss->sgx->black);
-
-  for (i = 0; i < recorder_chans; i++, x0 += meter_width)
-    {
-      mus_float_t cur_max = 0.0, rads;
-      int xc, yc;
-      if (maxes) 
-	{
-	  if (!meters_in_db)
-	    cur_max = maxes[i];
-	  else
-	    {
-	      mus_float_t dv;
-	      dv = in_dB(min_dB(ss), ss->lin_dB, maxes[i]);
-	      cur_max = 1.0 +  ((dv < -30.0) ? -30.0 : dv) / 30.0;
-	    }
-	}
-
-      rads = (M_PI * 0.5 * cur_max) - (M_PI / 4);
-      xc = (int)(x0 + 0.5 * meter_width);
-      yc = (int)(0.5 * meter_width + 0.2 * meter_height);
-
-      gdk_draw_arc(recorder_ax->wn, recorder_ax->gc, false, x0, 20, meter_width, meter_width, 45 * 64, 90 * 64);
-      gdk_draw_line(recorder_ax->wn, recorder_ax->gc, xc, yc, 
-		    (int)(xc + 0.55 * meter_width * sin(rads)),
-		    (int)(yc - 0.55 * meter_width * cos(rads)));
-    }
-#endif
 }
 
 
@@ -402,12 +367,6 @@ widget_t record_file(void)
 
       recorder_ax = (axis_context *)calloc(1, sizeof(axis_context));
       recorder_ax->wn = WIDGET_TO_WINDOW(meters);
-#if (!USE_CAIRO)
-      recorder_ax->gc = gc_new(GDK_DRAWABLE(WIDGET_TO_WINDOW(meters)));
-      gc_set_background(recorder_ax->gc, ss->sgx->white);
-      gc_set_foreground(recorder_ax->gc, ss->sgx->black);
-      gc_set_function(recorder_ax->gc, GDK_COPY);
-#endif      
 
       SG_SIGNAL_CONNECT(meters, "expose_event", meters_resize, NULL);
       SG_SIGNAL_CONNECT(meters, "configure_event", meters_resize, NULL);

@@ -1903,7 +1903,6 @@ void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
 #else
   /* gtk / cairo */
 
-#if USE_CAIRO
   {
     color_t bg_color, old_color;
     int slop = 0;
@@ -1949,40 +1948,6 @@ void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
     set_foreground_color(ax, old_color);
     make_graph(cp);
   }
-
-
-#else
-
-  /* gtk without cairo */
-  if (mp->name)
-    {
-      len = mark_name_width(mp->name);
-      if (!show) /* erase mark */
-	{
-	  ax = erase_context(cp);
-	  /* gtk and cairo cases need to be separate because we're using XOR (red) in the non-cairo case (so the tag needs to be left unerased) */
-	  fill_rectangle(ax, (int)(cx - 0.5 * len), top - 15, len + 1, 13); /* this should depend on TINY_FONT height */
-	}
-      else 
-	{
-	  ax = copy_context(cp);
-	  ax->current_font = PEAKS_FONT(ss);
-	  draw_string(ax, (int)(cx - 0.5 * len), y1 + STRING_Y_OFFSET, mp->name, strlen(mp->name));
-	}
-    }
-  ax = mark_tag_context(cp);
-  fill_rectangle(ax,
-		 cx - mark_tag_width(ss), top,
-		 2 * mark_tag_width(ss), mark_tag_height(ss));
-  draw_line(ax, cx, top + 4, cx, y0);
-  fill_polygon(ax, 4,
-	       cx, y0,
-	       cx + MARK_PLAY_ARROW_SIZE, y0 + MARK_PLAY_ARROW_SIZE,
-	       cx, y0 + 2 * MARK_PLAY_ARROW_SIZE,
-	       cx, y0);
-  mp->visible = show;
-
-#endif
 #endif
 }
 

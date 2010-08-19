@@ -3161,10 +3161,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_YES_WE_HAVE("snd-s7");
 #endif
 
-#if USE_CAIRO
-  XEN_YES_WE_HAVE("cairo");
-#endif
-
 #if HAVE_RUBY
   XEN_YES_WE_HAVE("snd-ruby");
   /* we need to set up the search path so that load and require will work as in the program irb */

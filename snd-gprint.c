@@ -3,7 +3,7 @@
 
 /* or perhaps use both -- GtkPrint and Print as menu options? */
 
-#if HAVE_GTK_PRINT_OPERATION_NEW && USE_CAIRO
+#if HAVE_GTK_PRINT_OPERATION_NEW
 
 static GtkPrintSettings *settings = NULL;
 

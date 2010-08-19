@@ -307,23 +307,18 @@ static void mix_amp_env_resize(GtkWidget *w)
       cur_gc = gc_new(wn);
       gc_set_background(cur_gc, ss->sgx->graph_color);
       gc_set_foreground(cur_gc, ss->sgx->data_color);
-      gc_set_function(cur_gc, GDK_COPY);
       ax = (axis_context *)calloc(1, sizeof(axis_context));
       ax->wn = WIDGET_TO_WINDOW(w_env);
       ax->w = w_env;
       ax->gc = cur_gc;
     }
   else clear_window(ax);
-#if USE_CAIRO
   ax->cr = gdk_cairo_create(ax->wn);
-#endif
   spf->with_dots = true;
   env_editor_display_env(spf, dialog_env, ax, _("mix env"), 0, 0, widget_width(w), widget_height(w), NOT_PRINTING);
   if (with_mix_background_wave)
     show_mix_background_wave(mix_dialog_id);
-#if USE_CAIRO
   cairo_destroy(ax->cr);
-#endif
 }
 
 

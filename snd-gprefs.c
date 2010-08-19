@@ -1230,12 +1230,6 @@ static void reflect_color(prefs_info *prf)
   current_color = rgb_to_color(r, g, b);
   widget_modify_bg(prf->color, GTK_STATE_NORMAL, current_color);
 
-#if (!USE_CAIRO)
-  r = RGB_TO_FLOAT(current_color->red);
-  g = RGB_TO_FLOAT(current_color->green);
-  b = RGB_TO_FLOAT(current_color->blue);
-#endif
-
   float_to_textfield(prf->rtxt, r);
   float_to_textfield(prf->gtxt, g);
   float_to_textfield(prf->btxt, b);

@@ -49,10 +49,6 @@ echo ' '
 ./snd tools/check-help.scm
 # ./snd generators.scm peak-phases.scm -e "(begin (test-peak-phases) (exit))"
 
-# echo '(let ((hxm (dlopen (string-append (getcwd) "/xm.so")))) (dlinit hxm "Init_libxm") (display XmARROWS_END) (exit))' > tmp.scm
-# ./snd tmp.scm
-# rm tmp.scm
-
 echo ' -------------------------------- s7 r5rs and other defaults changed -------------------------------- '
 make allclean
 sed mus-config.h -e 's/#define WITH_MULTIDIMENSIONAL_VECTORS 1/#define WITH_MULTIDIMENSIONAL_VECTORS 0/' > tmp
@@ -74,12 +70,6 @@ make
 echo ' -------------------------------- no readlink -------------------------------- '
 
 sed mus-config.h -e 's/#define HAVE_READLINK 1/#define HAVE_READLINK 0/' > tmp
-mv tmp mus-config.h
-make
-
-echo ' -------------------------------- no getcwd -------------------------------- '
-
-sed mus-config.h -e 's/#define HAVE_GETCWD 1/#define HAVE_GETCWD 0/' > tmp
 mv tmp mus-config.h
 make
 
@@ -218,21 +208,6 @@ echo ' '
 ./snd --version
 ./snd -noinit --features "'clm 'snd-gtk 'snd-s7"
 
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --with-gtk --with-cairo                               ----  '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-gtk --with-cairo
-make
-echo ' '
-echo ' '
-./snd --version
-./snd -noinit --features "'clm 'snd-gtk"
-make xg
-echo '(let ((hxm (dlopen (string-append (getcwd) "/xg.so")))) (dlinit hxm "Init_libxg") (display GTK_ARROW_UP) (exit))' > tmp.scm
-./snd tmp.scm
-rm tmp.scm
-rm xg.o
-
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
@@ -352,16 +327,6 @@ make sndinfo
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --without-extension-language --with-gtk --with-cairo ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --without-extension-language --with-gtk --with-cairo
-make
-echo ' '
-echo ' '
-./snd --version
-make allclean
-
-echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 --without-extension-language --with-gtk ------  '
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet --without-extension-language --with-gtk
@@ -388,28 +353,6 @@ make
 echo ' '
 echo ' '
 ./snd --version
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-gtk --with-cairo --with-static-xg                --- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-gtk --with-static-xg --with-cairo LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-gtk 'xg 'gl"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-gtk --with-cairo --with-static-xg g++ doubles/threads --- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-gtk --with-static-xg CC=g++ --with-cairo --with-doubles --enable-threads LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-gtk 'xg 'gl"
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '

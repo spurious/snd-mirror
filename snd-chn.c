@@ -1735,7 +1735,7 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
 
   sf = free_snd_fd(sf);
 
-#if (!USE_CAIRO)
+#if (!USE_GTK)
   display_selection(cp);
 #endif
   display_channel_marks(cp);
@@ -3829,7 +3829,7 @@ static void display_channel_data_with_size(chan_info *cp,
 	}
     }
 
-#if USE_CAIRO
+#if USE_GTK
   if ((!save_cr) && (cp->cgx) && (cp->cgx->ax))
     {
       if (cp->cgx->ax->cr)
@@ -3909,7 +3909,7 @@ static void display_channel_data_with_size(chan_info *cp,
 	      cp->cursor_visible = false;
 	      cp->selection_visible = false;
 
-#if USE_CAIRO
+#if USE_GTK
 	      if ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) 
 		display_selection(cp);
 #endif
@@ -4035,7 +4035,7 @@ static void display_channel_data_with_size(chan_info *cp,
 	  if ((cp->chan == 0) || 
 	      (sp->channel_style != CHANNELS_SUPERIMPOSED)) 
 	    {
-#if (!USE_CAIRO)
+#if (!USE_GTK)
 	      display_selection(cp);
 #endif
 	      display_channel_marks(cp);
@@ -4204,7 +4204,7 @@ static void draw_sonogram_cursor_1(chan_info *cp)
   fax = cursor_context(cp);
 
   if ((fap) && (fax)) 
-#if (!USE_CAIRO)
+#if (!USE_GTK)
     draw_line(fax, cp->fft_cx, fap->y_axis_y0, cp->fft_cx, fap->y_axis_y1);
 #else
   {
@@ -5886,7 +5886,7 @@ static void show_inset_graph(chan_info *cp)
 void draw_inset_line_cursor(chan_info *cp, axis_context *ax)
 {
   /* we've checked that with_inset_graph is #t and cp has the pointer */
-#if USE_CAIRO
+#if USE_GTK
   save_cursor_pix(cp, ax, 2, cp->axis->y_axis_y0 - cp->axis->y_axis_y1, cp->cx, cp->axis->y_axis_y1);
 #endif
 
@@ -6212,7 +6212,7 @@ static XEN channel_set(XEN snd, XEN chn_n, XEN on, cp_field_t fld, const char *c
       break;
 
     case CP_CURSOR:
-#if USE_CAIRO
+#if USE_GTK
       if (cp->cgx->ax->cr == NULL)
 	{
 	  if (cp->cgx->ax->wn)

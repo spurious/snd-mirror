@@ -147,8 +147,6 @@
 		      (gtk_widget_set_events grf GDK_ALL_EVENTS_MASK)
 		      (gtk_box_pack_start (GTK_BOX scan-outer) grf #t #t 0)
 		      (gtk_widget_show grf)
-		      (if (not (provided? 'cairo))
-			  (gdk_window_set_background (gtk_widget_get_window grf) (graph-color)))
 		      grf))
 	 ;; the controllers
 	 (scan-start (let ((label (gtk_button_new_with_label "Start")))
@@ -192,59 +190,40 @@
     (define (draw-graph)
       (if (and (> ax1 ax0)
 	       (> ay1 ay0))
-	  (if (provided? 'cairo)
-	      (let* ((diff (* 0.05 (- ay1 ay0))) ; assuming -10 to 10 
-		     (wn (GDK_DRAWABLE (gtk_widget_get_window scan-pane)))
-		     (cr (gdk_cairo_create wn))
-		     (xincr (/ (- ax1 ax0) size))
-		     (bg-color (color->list (basic-color))))
-		(cairo_set_source_rgb cr (car bg-color) (cadr bg-color) (caddr bg-color))
-		(if pts1
-		    (cairo-draw-lines cr pts1 size)
-		    (begin
-		      (cairo_rectangle cr (+ ax0 2) ay0 (- ax1 ax0 2) (- ay1 ay0))
-		      (cairo_fill cr)))
-		(cairo_set_source_rgb cr 0.0 0.0 0.0)
-		(cairo_set_line_width cr 1.0)
-		(let ((x (floor ax0))
-		      (y (y->grfy (gx0 0) diff)))
-		  (cairo_move_to cr x y)
-		  (set! (vect 0) x)
-		  (set! (vect 1) y))
-		(do ((i 1 (+ 1 i))
-		     (j 2 (+ j 2))
-		     (xi (+ ax0 xincr) (+ xi xincr)))
-		    ((= i size))
-		  (let ((x (floor xi))
-			(y (y->grfy (gx0 i) diff)))
-		    (set! (vect j) x)
-		    (set! (vect (+ j 1)) y)
-		    (cairo_line_to cr x y)))
-		(cairo_stroke cr)
-		(set! pts1 vect)
-		(cairo_destroy cr))
-
-	      ;; gdk version
-	      (let ((diff (* 0.05 (- ay1 ay0))) ; assuming -10 to 10 
-		    (wn (GDK_DRAWABLE (gtk_widget_get_window scan-pane)))
-		    (xincr (/ (- ax1 ax0) size)))
-		(if pts1
-		    (gdk_draw_lines wn egc (list 'GdkPoint_ pts1) size)
-		    (gdk_draw_rectangle wn egc #t (+ ax0 2) ay0	(- ax1 ax0 2) (- ay1 ay0)))
-		(do ((i 0 (+ 1 i))
-		     (j 0 (+ j 2))
-		     (xi ax0 (+ xi xincr)))
-		    ((= i size))
-		  (set! (vect j) (floor xi))
-		  (set! (vect (+ j 1)) (y->grfy (gx0 i) diff)))
-		(if pts1 (freeGdkPoints pts1))
-		(set! pts0 (vector->GdkPoints vect))
-		(set! pts1 pts0)
-		(gdk_draw_lines wn gc (list 'GdkPoint_ pts0) size)))))
+	  (let* ((diff (* 0.05 (- ay1 ay0))) ; assuming -10 to 10 
+		 (wn (GDK_DRAWABLE (gtk_widget_get_window scan-pane)))
+		 (cr (gdk_cairo_create wn))
+		 (xincr (/ (- ax1 ax0) size))
+		 (bg-color (color->list (basic-color))))
+	    (cairo_set_source_rgb cr (car bg-color) (cadr bg-color) (caddr bg-color))
+	    (if pts1
+		(cairo-draw-lines cr pts1 size)
+		(begin
+		  (cairo_rectangle cr (+ ax0 2) ay0 (- ax1 ax0 2) (- ay1 ay0))
+		  (cairo_fill cr)))
+	    (cairo_set_source_rgb cr 0.0 0.0 0.0)
+	    (cairo_set_line_width cr 1.0)
+	    (let ((x (floor ax0))
+		  (y (y->grfy (gx0 0) diff)))
+	      (cairo_move_to cr x y)
+	      (set! (vect 0) x)
+	      (set! (vect 1) y))
+	    (do ((i 1 (+ 1 i))
+		 (j 2 (+ j 2))
+		 (xi (+ ax0 xincr) (+ xi xincr)))
+		((= i size))
+	      (let ((x (floor xi))
+		    (y (y->grfy (gx0 i) diff)))
+		(set! (vect j) x)
+		(set! (vect (+ j 1)) y)
+		(cairo_line_to cr x y)))
+	    (cairo_stroke cr)
+	    (set! pts1 vect)
+	    (cairo_destroy cr))))
     
     (define (redraw-graph)
       (set! bounds (draw-axes scan-pane gc "scanned synthesis" 0.0 1.0 -10.0 10.0))
-      (set! ax0 (+ (car bounds) (if (provided? 'cairo) 4 2)))
+      (set! ax0 (+ (car bounds) 4))
       (set! ax1 (caddr bounds))
       (set! ay1 (cadr bounds))
       (set! ay0 (cadddr bounds))
@@ -527,18 +506,7 @@
 			osgm-color)))
 	
 	(if (not (hook-empty? draw-mark-hook)) 
-	    (reset-hook! draw-mark-hook))
-	(if (not (provided? 'cairo))
-	    (add-hook! draw-mark-hook
-		       (lambda (id)
-			 (if (> (sync id) 0)
-			     (begin
-			       (gdk_gc_set_foreground mark-gc gmc)
-			       (gdk_gc_set_foreground selected-mark-gc sgmc))
-			     (begin
-			       (gdk_gc_set_foreground mark-gc ogmc)
-			       (gdk_gc_set_foreground selected-mark-gc osgmc)))
-			 #f)))))))
+	    (reset-hook! draw-mark-hook))))))
   
   
 
@@ -769,48 +737,23 @@ Reverb-feedback sets the scaler on the feedback.
 
 (define snd-clock-icon
   (if (defined? 'gdk_pixmap_new)
-      (if (provided? 'cairo)
-	  (lambda (snd hour)
-	    (let* ((window (GDK_DRAWABLE (gtk_widget_get_window (list-ref (sound-widgets snd) 8))))
-		   (cr (gdk_cairo_create window))
-		   (bg (color->list (basic-color))))
-	      (cairo_set_source_rgb cr (car bg) (cadr bg) (caddr bg))
-	      (cairo_rectangle cr 0 0 16 16) ; icon bg
-	      (cairo_fill cr)
-	      (cairo_set_source_rgb cr 1.0 1.0 1.0)
-	      (cairo_arc cr 8 8 7 0 (* 2 pi))  ; clock face
-	      (cairo_fill cr)
-	      (cairo_set_line_width cr 2.0)
-	      (cairo_set_source_rgb cr 0.0 0.0 0.0)
-	      (cairo_move_to cr 8 8)         ; clock hour hand
-	      (cairo_line_to cr (+ 8 (* 7 (sin (* hour (/ 3.1416 6.0)))))
-			     (- 8 (* 7 (cos (* hour (/ 3.1416 6.0))))))
-	      (cairo_stroke cr)
-	      (cairo_destroy cr)))
-	  ;; gdk case
-	  (let* ((shell (cadr (main-widgets)))
-		 (win (car (main-widgets)))
-		 (clock-pixmaps (make-vector 12))
-		 (dgc (car (snd-gcs))))
-	    (do ((i 0 (+ 1 i)))
-		((= i 12))
-	      (let* ((pix (gdk_pixmap_new (GDK_DRAWABLE win) 16 16 -1))
-		     (pixwin (GDK_DRAWABLE pix)))
-		(set! (clock-pixmaps i) pix)
-		(gdk_gc_set_foreground dgc (basic-color))
-		(gdk_draw_rectangle pixwin dgc #t 0 0 16 16)
-		(gdk_gc_set_foreground dgc white-pixel)
-		(gdk_draw_arc pixwin dgc #t 1 1 14 14 0 (* 64 360))
-		(gdk_gc_set_foreground dgc black-pixel)
-		(gdk_draw_arc pixwin dgc #f 1 1 14 14 0 (* 64 360))
-		(gdk_draw_line pixwin dgc 8 8 
-			       (+ 8 (round (* 7 (sin (* i (/ 3.1416 6.0))))))
-			       (- 8 (round (* 7 (cos (* i (/ 3.1416 6.0)))))))))
-	    (gdk_gc_set_foreground dgc (data-color))
-	    (lambda (snd hour)
-	      (gdk_draw_drawable (GDK_DRAWABLE (gtk_widget_get_window (list-ref (sound-widgets snd) 8))) dgc 
-				 (GDK_DRAWABLE (clock-pixmaps hour)) 0 0 0 4 16 16)
-	      #f)))))
+      (lambda (snd hour)
+	(let* ((window (GDK_DRAWABLE (gtk_widget_get_window (list-ref (sound-widgets snd) 8))))
+	       (cr (gdk_cairo_create window))
+	       (bg (color->list (basic-color))))
+	  (cairo_set_source_rgb cr (car bg) (cadr bg) (caddr bg))
+	  (cairo_rectangle cr 0 0 16 16) ; icon bg
+	  (cairo_fill cr)
+	  (cairo_set_source_rgb cr 1.0 1.0 1.0)
+	  (cairo_arc cr 8 8 7 0 (* 2 pi))  ; clock face
+	  (cairo_fill cr)
+	  (cairo_set_line_width cr 2.0)
+	  (cairo_set_source_rgb cr 0.0 0.0 0.0)
+	  (cairo_move_to cr 8 8)         ; clock hour hand
+	  (cairo_line_to cr (+ 8 (* 7 (sin (* hour (/ 3.1416 6.0)))))
+			 (- 8 (* 7 (cos (* hour (/ 3.1416 6.0))))))
+	  (cairo_stroke cr)
+	  (cairo_destroy cr)))))
 
 
 #|
@@ -956,149 +899,92 @@ Reverb-feedback sets the scaler on the feedback.
 	 (gc (car (snd-gcs)))
 	 (top (round (/ height 3.2)))) ; distance of label from top of meter
 
-    (if (provided? 'cairo)
-	;; this is too slow -- can we save the plate? (also if just 1 meter, put pivot higher?)
-	(let ((cr (gdk_cairo_create win)))
+    ;; this is too slow -- can we save the plate? (also if just 1 meter, put pivot higher?)
+    (let ((cr (gdk_cairo_create win)))
+      
+      ;; put our origin at the meter pivot point scaled (as a square so the dial remains circular) to 0..1
+      (cairo_translate cr (* 0.5 width) (+ (* 0.5 width) (* 0.2 height)))
+      (cairo_scale cr width width)
+      
+      ;; background
+      (let ((pat (cairo_pattern_create_radial 0 0 .1 0 0 0.75)))
+	(cairo_pattern_add_color_stop_rgb pat 0.0 1.0 0.9 0.0) 
+	(cairo_pattern_add_color_stop_rgb pat 1.0 1.0 1.0 1.0)
+	(cairo_rectangle cr -1 -1 2 2)
+	(cairo_set_source cr pat)
+	(cairo_fill cr)
+	(cairo_pattern_destroy pat))
+      
+      ;; dial markings
+      (cairo_set_source_rgb cr 0.0 0.0 0.0)
+      
+      ;; outer arc
+      (cairo_set_line_width cr (/ 2.0 width))
+      (cairo_arc cr 0 0 0.5 (* -0.75 pi) (* -0.25 pi))
+      (cairo_stroke cr)
+      
+      ;; inner arc
+      (cairo_set_line_width cr (/ 0.5 width))
+      (cairo_arc cr 0 0 (- 0.5 (/ 6.0 width)) (* -0.75 pi) (* -0.25 pi))
+      (cairo_stroke cr)
+      
+      ;; save unrotated coords
+      (cairo_save cr)
+      
+      ;; ticks
+      (cairo_rotate cr (* 5 (/ pi 4)))
+      (do ((i 0 (+ 1 i)))
+	  ((= i 5))
+	(cairo_set_line_width cr (/ 1.5 width))
+	(if (or (= i 0) (= i 4))
+	    (begin
+	      (cairo_move_to cr (- 0.5 (/ 6.0 width)) 0.0)
+	      (cairo_rel_line_to cr (/ 15.0 width) 0))
+	    (begin
+	      (cairo_move_to cr 0.5 0.0)
+	      (cairo_rel_line_to cr (/ 9.0 width) 0)))
+	(cairo_stroke cr)
+	(if (< i 4)
+	    (begin
+	      (cairo_set_line_width cr (/ 0.5 width))
+	      (do ((j 0 (+ 1 j)))
+		  ((= j 5))
+		(cairo_move_to cr 0.5 0.0)
+		(cairo_rel_line_to cr (/ 6.0 width) 0)
+		(cairo_rotate cr (/ pi (* 8 5)))
+		(cairo_stroke cr)))))
+      (cairo_restore cr)
+      
+      ;; needle and bubble
+      (let* ((needle-speed 0.25)
+	     (bubble-speed 0.025)
+	     (bubble-size (/ pi 12))
+	     (val (+ (* level needle-speed) (* last-level (- 1.0 needle-speed)))))
+	(cairo_save cr)
+	(cairo_set_line_width cr (/ 2.0 width))
+	(cairo_rotate cr (+ (* 5 (/ pi 4)) (* val pi 0.5)))
+	(cairo_move_to cr 0 0)
+	(cairo_rel_line_to cr 0.55 0.0)
+	(cairo_stroke cr)
+	(cairo_restore cr)
+	
+	(list-set! meter-data 3 val)
+	(if (<= val red-deg)
+	    (set! val (+ (* val bubble-speed) (* red-deg (- 1.0 bubble-speed)))))
+	(list-set! meter-data 4 val)
+	
+	;; now the red bubble...
+	(if (> val .01)
+	    (begin
+	      (cairo_set_source_rgb cr 1.0 0.0 0.0)
+	      (cairo_set_line_width cr (/ 5.0 width))
+	      (let* ((redx (* val 0.5 pi))
+		     (redy (min redx bubble-size)))
+		(cairo_arc cr 0 0 (- 0.5 (/ 3.0 width))  (+ (* 5 (/ pi 4)) (max 0.0 (- redx bubble-size))) (+ (* 5 (/ pi 4)) redx))
+		(cairo_stroke cr)))))
+      
+      (cairo_destroy cr))))
 
-	  ;; put our origin at the meter pivot point scaled (as a square so the dial remains circular) to 0..1
-	  (cairo_translate cr (* 0.5 width) (+ (* 0.5 width) (* 0.2 height)))
-	  (cairo_scale cr width width)
-
-	  ;; background
-	  (let ((pat (cairo_pattern_create_radial 0 0 .1 0 0 0.75)))
-	    (cairo_pattern_add_color_stop_rgb pat 0.0 1.0 0.9 0.0) 
-	    (cairo_pattern_add_color_stop_rgb pat 1.0 1.0 1.0 1.0)
-	    (cairo_rectangle cr -1 -1 2 2)
-	    (cairo_set_source cr pat)
-	    (cairo_fill cr)
-	    (cairo_pattern_destroy pat))
-
-	  ;; dial markings
-	  (cairo_set_source_rgb cr 0.0 0.0 0.0)
-
-	  ;; outer arc
-	  (cairo_set_line_width cr (/ 2.0 width))
-	  (cairo_arc cr 0 0 0.5 (* -0.75 pi) (* -0.25 pi))
-	  (cairo_stroke cr)
-
-	  ;; inner arc
-	  (cairo_set_line_width cr (/ 0.5 width))
-	  (cairo_arc cr 0 0 (- 0.5 (/ 6.0 width)) (* -0.75 pi) (* -0.25 pi))
-	  (cairo_stroke cr)
-	  
-	  ;; save unrotated coords
-	  (cairo_save cr)
-
-	  ;; ticks
-	  (cairo_rotate cr (* 5 (/ pi 4)))
-	  (do ((i 0 (+ 1 i)))
-	      ((= i 5))
-	    (cairo_set_line_width cr (/ 1.5 width))
-	    (if (or (= i 0) (= i 4))
-		(begin
-		  (cairo_move_to cr (- 0.5 (/ 6.0 width)) 0.0)
-		  (cairo_rel_line_to cr (/ 15.0 width) 0))
-		(begin
-		  (cairo_move_to cr 0.5 0.0)
-		  (cairo_rel_line_to cr (/ 9.0 width) 0)))
-	    (cairo_stroke cr)
-	    (if (< i 4)
-		(begin
-		  (cairo_set_line_width cr (/ 0.5 width))
-		  (do ((j 0 (+ 1 j)))
-		      ((= j 5))
-		    (cairo_move_to cr 0.5 0.0)
-		    (cairo_rel_line_to cr (/ 6.0 width) 0)
-		    (cairo_rotate cr (/ pi (* 8 5)))
-		    (cairo_stroke cr)))))
-	  (cairo_restore cr)
-
-	  ;; needle and bubble
-	  (let* ((needle-speed 0.25)
-		 (bubble-speed 0.025)
-		 (bubble-size (/ pi 12))
-		 (val (+ (* level needle-speed) (* last-level (- 1.0 needle-speed)))))
-	    (cairo_save cr)
-	    (cairo_set_line_width cr (/ 2.0 width))
-	    (cairo_rotate cr (+ (* 5 (/ pi 4)) (* val pi 0.5)))
-	    (cairo_move_to cr 0 0)
-	    (cairo_rel_line_to cr 0.55 0.0)
-	    (cairo_stroke cr)
-	    (cairo_restore cr)
-	    
-	    (list-set! meter-data 3 val)
-	    (if (<= val red-deg)
-		(set! val (+ (* val bubble-speed) (* red-deg (- 1.0 bubble-speed)))))
-	    (list-set! meter-data 4 val)
-
-	    ;; now the red bubble...
-	    (if (> val .01)
-		(begin
-		  (cairo_set_source_rgb cr 1.0 0.0 0.0)
-		  (cairo_set_line_width cr (/ 5.0 width))
-		  (let* ((redx (* val 0.5 pi))
-			 (redy (min redx bubble-size)))
-		    (cairo_arc cr 0 0 (- 0.5 (/ 3.0 width))  (+ (* 5 (/ pi 4)) (max 0.0 (- redx bubble-size))) (+ (* 5 (/ pi 4)) redx))
-		    (cairo_stroke cr)))))
-
-	  (cairo_destroy cr))
-
-	;; gdk case
-	(let ((ang0 (* 45 64))
-	      (ang1 (* 90 64)))
-	  (gdk_gc_set_foreground gc white-pixel)
-	  (gdk_draw_rectangle win gc #t 0 0 width height)
-	  (gdk_gc_set_foreground gc black-pixel)
-	  (gdk_draw_arc win gc #f 0 top width width ang0 ang1)
-	  (gdk_draw_arc win gc #f 0 (- top 1) width width ang0 ang1)
-	  (if (> width 100)
-	      (gdk_draw_arc win gc #f 0 (- top 2) width width ang0 ang1))
-	  (gdk_draw_arc win gc #f 4 (+ top 4) (- width 8) (- width 8) ang0 ang1)
-	  (do ((i 0 (+ 1 i)))
-	      ((= i 5))
-	    (let* ((rdeg (degrees->radians (- 45 (* i 22.5))))
-		   (sinr (sin rdeg))
-		   (cosr (cos rdeg))
-		   (x0 (round (+ wid2 (* wid2 sinr))))
-		   (y0 (round (- (+ wid2 top) (* wid2 cosr))))
-		   (x1 (round (+ wid2 (* (+ wid2 major-tick) sinr))))
-		   (y1 (round (- (+ wid2 top) (* (+ wid2 major-tick) cosr)))))
-	      (gdk_draw_line win gc x0 y0 x1 y1)
-	      (gdk_draw_line win gc (+ x0 1) y0 (+ x1 1) y1)
-	      (if (< i 4)
-		  (do ((j 1 (+ 1 j)))
-		      ((= j 6))
-		    (let* ((rdeg (degrees->radians (- 45 (* i 22.5) (* j (/ 90.0 20.0)))))
-			   (sinr (sin rdeg))
-			   (cosr (cos rdeg))
-			   (x0 (round (* wid2 (+ 1.0 sinr))))
-			   (y0 (round (- (+ wid2 top) (* wid2 cosr))))
-			   (x1 (round (+ wid2 (* (+ wid2 minor-tick) sinr))))
-			   (y1 (round (- (+ wid2 top) (* (+ wid2 minor-tick) cosr)))))
-		      (gdk_draw_line win gc x0 y0 x1 y1))))))
-	  (let* ((needle-speed 0.25)
-		 (bubble-speed 0.025)
-		 (bubble-size (* 15 64))
-		 (val (+ (* level needle-speed) (* last-level (- 1.0 needle-speed))))
-		 (deg (- (* val 90.0) 45.0))
-		 (rdeg (degrees->radians deg))
-		 (nx1 (round (+ wid2 (* (+ wid2 major-tick) (sin rdeg)))))
-		 (ny1 (round (- (+ wid2 top) (* (+ wid2 major-tick) (cos rdeg))))))
-	    (gdk_draw_line win gc wid2 (+ top wid2) nx1 ny1)
-	    (list-set! meter-data 3 val)
-	    (if (> val red-deg)
-		(list-set! meter-data 4 val)
-		(list-set! meter-data 4 (+ (* val bubble-speed) (* red-deg (- 1.0 bubble-speed)))))
-	    (if (> (list-ref meter-data 4) .01)
-		(begin
-		  (gdk_gc_set_foreground gc red-pixel)
-		  (let* ((redx (floor (* (list-ref meter-data 4) 90 64)))
-			 (redy (min redx bubble-size)))
-		    (do ((i 0 (+ 1 i)))
-			((= i 4))
-		      (gdk_draw_arc win gc #f i (+ top i) (- width (* i 2)) (- width (* i 2)) (- (* 135 64) redx) redy)))
-		  (gdk_gc_set_foreground gc black-pixel)))
-	    )))))
 
 (define (with-level-meters n)
   ;; add n level meters to a pane at the top of the Snd window

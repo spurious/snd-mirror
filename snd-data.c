@@ -9,7 +9,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
       cp = (chan_info *)calloc(1, sizeof(chan_info)); 
       cp->cgx = (chan_context *)calloc(1, sizeof(chan_context));
       cp->cgx->ax = (axis_context *)calloc(1, sizeof(axis_context));
-#if USE_GTK && USE_CAIRO
+#if USE_GTK
       cp->cgx->progress_pct = -1.0;
 #endif
       cp->last_sonogram = NULL;

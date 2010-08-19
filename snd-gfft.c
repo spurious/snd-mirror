@@ -64,9 +64,7 @@ static void graph_redisplay(void)
   ax->w = graph_drawer;
   ax->gc = gc;
   ax->current_font = AXIS_NUMBERS_FONT(ss);
-#if USE_CAIRO
   ax->cr = gdk_cairo_create(ax->wn);
-#endif
   axis_ap->xmin = 0.0;
   axis_ap->xmax = 1.0;
   axis_ap->x_ambit = 1.0;
@@ -131,10 +129,8 @@ static void graph_redisplay(void)
       else iy1 = grf_y(graph_fftr[i], axis_ap);
       draw_line(ax, ix0, iy0, ix1, iy1);
     }
-#if USE_CAIRO
   cairo_destroy(ax->cr);
   ax->cr = NULL;
-#endif
 }
 
 

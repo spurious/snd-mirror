@@ -10,7 +10,6 @@
 
 void draw_line(axis_context *ax, int x0, int y0, int x1, int y1) 
 {
-#if USE_CAIRO
   cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
   cairo_set_line_width(ax->cr, 1.0); 
   /* to get a thin line in cairo -- hooboy! you have to offset everything -- this is not pretty
@@ -19,17 +18,12 @@ void draw_line(axis_context *ax, int x0, int y0, int x1, int y1)
   cairo_move_to(ax->cr, x0 + 0.5, y0 + 0.5);
   cairo_line_to(ax->cr, x1 + 0.5, y1 + 0.5);
   cairo_stroke(ax->cr);
-#else
-  if (ax->wn == NULL) return;
-  gdk_draw_line(ax->wn, ax->gc, (gint)x0, (gint)y0, (gint)x1, (gint)y1);
-#endif
 }
 
 
 void draw_lines(axis_context *ax, point_t *points, int num)
 {
   if (num == 0) return;
-#if USE_CAIRO
   {
     int i;
     cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
@@ -39,34 +33,23 @@ void draw_lines(axis_context *ax, point_t *points, int num)
       cairo_line_to(ax->cr, points[i].x + 0.5, points[i].y + 0.5);
     cairo_stroke(ax->cr);
   }
-#else
-  gdk_draw_lines(ax->wn, ax->gc, points, num);
-#endif
 }
 
 
 void draw_dot(axis_context *ax, int x, int y, int size)
 {
-#if USE_CAIRO
   cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
   cairo_arc(ax->cr, x, y, size / 2, 0.0, 2 * M_PI);
   cairo_fill(ax->cr);
-#else
-  gdk_draw_arc(ax->wn, ax->gc, true, x - size / 2, y - size / 2, size, size, 0, 360 * 64);
-#endif
 }
 
 
 #if 0
 void draw_arc(axis_context *ax, int x, int y, int size, int angle0, int angle1)
 {
-#if USE_CAIRO
   cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
   cairo_arc(ax->cr, x, y, size / 2, mus_degrees_to_radians(angle0), mus_degrees_to_radians(angle1));
   cairo_stroke(ax->cr);
-#else
-  gdk_draw_arc(ax->wn, ax->gc, false, x - size / 2, y - size / 2, size, size, angle0 * 64, angle1 * 64);
-#endif
 }
 #endif
 
@@ -74,13 +57,7 @@ void draw_arc(axis_context *ax, int x, int y, int size, int angle0, int angle1)
 #if 0
 void draw_point(axis_context *ax, GdkPoint point, int size)
 {
-#if USE_CAIRO
   draw_dot(ax, point.x, point.y, size);
-#else
-  if (size == 1)
-    gdk_draw_point(ax->wn, ax->gc, point.x, point.y);
-  else draw_dot(ax, point.x, point.y, size);
-#endif
 }
 #endif
 
@@ -88,11 +65,6 @@ void draw_point(axis_context *ax, GdkPoint point, int size)
 void draw_points(axis_context *ax, point_t *points, int num, int size)
 {
   if (num == 0) return;
-#if (!USE_CAIRO)
-  if (size == 1)
-    gdk_draw_points(ax->wn, ax->gc, points, num);
-  else
-#endif
     {
       int i;
       for (i = 0; i < num; i++) 
@@ -103,21 +75,15 @@ void draw_points(axis_context *ax, point_t *points, int num, int size)
 
 void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height)
 {
-#if USE_CAIRO
   cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
   cairo_rectangle(ax->cr, x0, y0, width, height);
   cairo_fill(ax->cr);
-#else
-  if (ax->wn == NULL) return;
-  gdk_draw_rectangle(ax->wn, ax->gc, true, (gint)x0, (gint)y0, (gint)width, (gint)height);
-#endif
 }
 
 
 void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width, int height)
 {
   /* used only to clear the overall graph window in snd-chn.c */
-#if USE_CAIRO
   if (ss->sgx->bg_gradient < .01)
     {
       cairo_set_source_rgb(ax->cr, ax->gc->bg_color->red, ax->gc->bg_color->green, ax->gc->bg_color->blue);
@@ -149,10 +115,6 @@ void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width,
       cairo_fill(ax->cr);
       cairo_pattern_destroy(pat);
     }
-#else
-  if (ax->wn == NULL) return;
-  gdk_draw_rectangle(ax->wn, erase_GC(cp), true, (gint)x0, (gint)y0, (gint)width, (gint)height);
-#endif
 }
 
 
@@ -163,7 +125,6 @@ void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
   if (!(g_utf8_validate(str, -1, NULL)))
     return;
 
-#if USE_CAIRO
   {
     PangoLayout *layout = NULL;
     layout = pango_cairo_create_layout(ax->cr);
@@ -174,13 +135,11 @@ void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
     pango_cairo_show_layout(ax->cr, layout);
     g_object_unref(G_OBJECT(layout));
   }
-#endif
 }
 
 
 static void rotate_text(axis_context *ax, PangoFontDescription *font, const char *text, int angle, gint x0, gint y0)
 {
-#if USE_CAIRO
   cairo_t *cr;
   int width, height;
   PangoLayout *layout = NULL;
@@ -196,7 +155,6 @@ static void rotate_text(axis_context *ax, PangoFontDescription *font, const char
   pango_cairo_show_layout(cr, layout);
   cairo_destroy(cr);
   g_object_unref(layout);
-#endif
 }
 
 
@@ -208,7 +166,6 @@ void draw_rotated_axis_label(chan_info *cp, axis_context *ax, const char *text, 
 
 void draw_picture(axis_context *ax, picture_t *src, gint xsrc, gint ysrc, gint xdest, gint ydest, gint width, gint height)
 {
-#if USE_CAIRO
   cairo_t *cr;
   if ((ax) && (GDK_IS_DRAWABLE(ax->wn)))
     {
@@ -217,16 +174,12 @@ void draw_picture(axis_context *ax, picture_t *src, gint xsrc, gint ysrc, gint x
       cairo_paint(cr);
       cairo_destroy(cr);
     }
-#else
-  gdk_draw_drawable(ax->wn, ax->gc, GDK_DRAWABLE(src), xsrc, ysrc, xdest, ydest, width, height);
-#endif
 }
 
 
 static void draw_polygon_va(axis_context *ax, bool filled, int points, va_list ap)
 {
   int i;
-#if USE_CAIRO
   {
     int x, y;
     x = va_arg(ap, int);
@@ -250,21 +203,6 @@ static void draw_polygon_va(axis_context *ax, bool filled, int points, va_list a
 	cairo_stroke(ax->cr);
       }
   }
-#else
-  {
-    GdkPoint *pts;
-    pts = (GdkPoint *)calloc(points, sizeof(GdkPoint));
-    for (i = 0; i < points; i++)
-      {
-	pts[i].x = va_arg(ap, int);
-	pts[i].y = va_arg(ap, int);
-      }
-    if (filled)
-      gdk_draw_polygon(ax->wn, ax->gc, true, pts, points);
-    else gdk_draw_lines(ax->wn, ax->gc, pts, points);
-    free(pts);
-  }
-#endif
 }
 
 
@@ -290,7 +228,6 @@ void draw_polygon(axis_context *ax, int points, ...)
 
 void fill_polygon_from_array(axis_context *ax, point_t *points, int npoints)
 {
-#if USE_CAIRO
   int i;
   cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
   cairo_set_line_width(ax->cr, 1.0);
@@ -299,9 +236,6 @@ void fill_polygon_from_array(axis_context *ax, point_t *points, int npoints)
     cairo_line_to(ax->cr, points[i].x, points[i].y);
   cairo_close_path(ax->cr);
   cairo_fill(ax->cr);
-#else
-  gdk_draw_polygon(ax->wn, ax->gc, true, points, npoints);
-#endif
 }
 
 
@@ -359,181 +293,6 @@ void setup_axis_context(chan_info *cp, axis_context *ax)
 
 /* colormaps */
 
-
-#if (!USE_CAIRO)
-
-static int sono_bins = 0; /* total_bins */
-static GdkColor **current_colors = NULL;
-static int current_colors_size = 0;
-static int current_colormap = BLACK_AND_WHITE_COLORMAP;
-static GdkRectangle **sono_data = NULL;
-static int sono_colors = 0; /* colormap_size */
-static GdkGC *colormap_GC;
-
-void check_colormap_sizes(int size)
-{
-  int i, old_size;
-  if (current_colors_size > 0)
-    {
-      if ((current_colors) && (current_colors_size < size))
-	{
-	  old_size = current_colors_size;
-	  current_colors_size = size;
-	  if (current_colormap != BLACK_AND_WHITE_COLORMAP) 
-	    {
-	      for (i = 0; i < old_size; i++) 
-		{
-		  gdk_color_free(current_colors[i]);
-		  current_colors[i] = NULL;
-		}
-	      current_colormap = BLACK_AND_WHITE_COLORMAP;
-	    }
-	  free(current_colors);
-	  current_colors = (GdkColor **)calloc(current_colors_size, sizeof(GdkColor *));
-	}
-    }
-  if ((sono_data) && (sono_colors < size) && (sono_bins > 0))
-    {
-      old_size = sono_colors;
-      sono_colors = size;
-      sono_data = (GdkRectangle **)realloc(sono_data, sono_colors * sizeof(GdkRectangle *));
-      for (i = old_size; i < sono_colors; i++) sono_data[i] = (GdkRectangle *)calloc(sono_bins, sizeof(GdkRectangle));
-    }
-}
-
-
-void initialize_colormap(void)
-{
-  state_context *sx;
-  sx = ss->sgx;
-  colormap_GC = gdk_gc_new(MAIN_WINDOW(ss));
-  gc_set_background(sx->basic_gc, sx->graph_color);
-  gc_set_foreground(sx->basic_gc, sx->data_color);
-  sono_colors = color_map_size(ss);
-  sono_data = (GdkRectangle **)calloc(sono_colors, sizeof(GdkRectangle *));
-  current_colors_size = color_map_size(ss);
-  current_colors = (GdkColor **)calloc(current_colors_size, sizeof(GdkColor *));
-}
-
-
-void draw_sono_rectangles(axis_context *ax, int color, int jmax)
-{
-  int i;
-  if (current_colors[color])
-    gdk_gc_set_foreground(colormap_GC, current_colors[color]);
-  for (i = 0; i < jmax; i++)
-    gdk_draw_rectangle(ax->wn, colormap_GC, true, 
-		       sono_data[color][i].x, 
-		       sono_data[color][i].y, 
-		       sono_data[color][i].width, 
-		       sono_data[color][i].height);
-}
-
-
-void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1)
-{
-  gdk_gc_set_foreground(colormap_GC, current_colors[color]);
-  gdk_draw_line(ax->wn, colormap_GC, x0, y0, x1, y1);
-}
-
-
-void set_sono_rectangle(int j, int color, int x, int y, int width, int height)
-{
-  GdkRectangle *r;
-  r = sono_data[color];
-  r[j].x = x;
-  r[j].y = y;
-  r[j].width = width;
-  r[j].height = height;
-}
-
-
-void allocate_sono_rects(int size)
-{
-  if (size != sono_bins)
-    {
-      int i;
-      for (i = 0; i < sono_colors; i++)
-	{
-	  if ((sono_bins > 0) && (sono_data[i])) 
-	    free(sono_data[i]); 
-	  sono_data[i] = (GdkRectangle *)calloc(size, sizeof(GdkRectangle));
-	}
-      sono_bins = size;
-    }
-}
-
-
-void allocate_color_map(int colormap)
-{
-  if (current_colormap != colormap)
-    {
-      int i;
-      GdkColormap *cmap;
-      GdkColor tmp_color;
-      cmap = gdk_colormap_get_system();
-      if (current_colormap != BLACK_AND_WHITE_COLORMAP) 
-	for (i = 0; i < current_colors_size; i++) 
-	  gdk_color_free(current_colors[i]);
-      for (i = 0; i < current_colors_size; i++)
-	{
-	  get_current_color(colormap, i, &(tmp_color.red), &(tmp_color.green), &tmp_color.blue);
-	  current_colors[i] = gdk_color_copy(&tmp_color);
-	  gdk_rgb_find_color(cmap, current_colors[i]);
-	}
-      current_colormap = colormap;
-    }
-}
-
-
-void draw_colored_lines(chan_info *cp, axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color)
-{
-  int i, x0, y0, x1, y1, cur, prev;
-  color_t old_color;
-
-  old_color = get_foreground_color(ax);
-
-  x0 = points[0].x;
-  y0 = points[0].y;
-
-  if (abs(y0 - axis_y0) < 5)
-    prev = -1;
-  else prev = colors[0];
-
-  gdk_gc_set_foreground(ax->gc, (prev == -1) ? default_color : current_colors[prev]);
-
-  for (i = 1; i < num; i++)
-    {
-      x1 = points[i].x;
-      y1 = points[i].y;
-      if ((abs(y0 - axis_y0) < 5) &&
-	  (abs(y1 - axis_y0) < 5))
-	cur = -1;
-      else 
-	{
-	  if (y0 > y1)
-	    cur = colors[i];
-	  else cur = colors[i - 1]; /* coords are upside down */
-	}
-
-      if (cur != prev)
-	{
-	  gdk_gc_set_foreground(ax->gc, (cur == -1) ? default_color : current_colors[cur]);
-	  prev = cur;
-	}
-
-      if (cp->transform_graph_style == GRAPH_DOTS)
-	gdk_draw_arc(ax->wn, ax->gc, true, x0 - cp->dot_size / 2, y0 - cp->dot_size / 2, cp->dot_size, cp->dot_size, 0, 360 * 64);
-      else gdk_draw_line(ax->wn, ax->gc, (gint)x0, (gint)y0, (gint)x1, (gint)y1);
-
-      x0 = x1;
-      y0 = y1;
-    }
-
-  set_foreground_color(ax, old_color);
-}
-
-#else
 
 /* cairo colormaps */
 
@@ -700,8 +459,6 @@ void draw_colored_lines(chan_info *cp, axis_context *ax, point_t *points, int nu
 
   cairo_restore(ax->cr);
 }
-
-#endif
 
 
 

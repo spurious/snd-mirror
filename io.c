@@ -1754,11 +1754,6 @@ char *mus_getcwd(void)
 #endif
       if (res) break;    /* NULL is returned if failure, but what about success? should I check errno=ERANGE? */
     }
-#else
-#if HAVE_GETWD
-  pwd = (char *)calloc(path_max, sizeof(char));
-  getwd(pwd);
-#endif
 #endif
   return(pwd);
 }

@@ -280,7 +280,7 @@ AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(int64_t)
 AC_CHECK_SIZEOF(ssize_t)
 
-AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep signal statvfs statfs getline difftime gettimeofday)
+AC_CHECK_FUNCS(getcwd strerror readlink setlocale access opendir sleep signal statvfs statfs getline difftime gettimeofday)
 AC_CHECK_FUNCS(vsnprintf snprintf strftime memmove lstat strcasecmp pathconf)
 
 AC_LIB_PROG_LD
@@ -2082,3 +2082,5 @@ AC_MSG_RESULT([
   random features........:$RANDOM_FEATURES
   environs...............: $host $CC
 ])
+
+# TODO: libxm configure changes, cairo version check?
