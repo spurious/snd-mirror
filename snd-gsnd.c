@@ -358,13 +358,14 @@ static void make_pixmaps(void)
       int k;
       wn = MAIN_WINDOW(ss);
 
-      mini_lock = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, (gchar **)mini_lock_bits());
-      stop_sign = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, (gchar **)stop_sign_bits());
-      blank = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, (gchar **)blank_bits());
-      speed_r = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, (gchar **)speed_r_bits());
-      speed_l = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, (gchar **)speed_l_bits());
+      gdk_pixbuf_render_pixmap_and_mask(gdk_pixbuf_new_from_xpm_data(mini_lock_bits()), &mini_lock, NULL, 0);
+      gdk_pixbuf_render_pixmap_and_mask(gdk_pixbuf_new_from_xpm_data(stop_sign_bits()), &stop_sign, NULL, 0);
+      gdk_pixbuf_render_pixmap_and_mask(gdk_pixbuf_new_from_xpm_data(blank_bits()), &blank, NULL, 0);
+      gdk_pixbuf_render_pixmap_and_mask(gdk_pixbuf_new_from_xpm_data(speed_r_bits()), &speed_r, NULL, 0);
+      gdk_pixbuf_render_pixmap_and_mask(gdk_pixbuf_new_from_xpm_data(speed_l_bits()), &speed_l, NULL, 0);
       for (k = 0; k < NUM_BOMBS; k++) 
-	bombs[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, (gchar **)mini_bomb_bits(k));
+	gdk_pixbuf_render_pixmap_and_mask(gdk_pixbuf_new_from_xpm_data(mini_bomb_bits(k)), &(bombs[k]), NULL, 0);
+
       mini_lock_allocated = true;
     }
 }

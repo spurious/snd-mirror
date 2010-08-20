@@ -494,7 +494,7 @@ GdkColor *rgb_to_gdk_color(color_t col)
   gcolor.green = (unsigned short)(col->green * 65535);
   gcolor.blue = (unsigned short)(col->blue * 65535);
   ccolor = gdk_color_copy(&gcolor);
-  gdk_rgb_find_color(gdk_colormap_get_system(), ccolor);
+  /* gdk_rgb_find_color(gdk_colormap_get_system(), ccolor); */
   return(ccolor);
 }
 
@@ -1127,12 +1127,14 @@ char *slist_selection(slist *lst)
   return(NULL);
 }
 
-/* TODO: snd-test 11 gprint dialog hangs til cancel
- *       libxm
- *       xpm pixmaps as happy face
- *       gdk_find_color
- *       translate rest of *.scm
+/* TODO: lots of cairo troubles...
  *       cairo in callgrind to find out why it is so slow
- *       cairo direct to GL (see cairo-gl.h)
+ *          ran callgrind -- incredible... 
+ *          Motif/Xlib is at least 10 times faster.
+ *       cairo direct to GL (see cairo-gl.h) -- web examples depend on gtkglext
+ *          cairo_gl_surface_create, but it's not in my version -- not in 1.8.10 configure either
+ *          in 1.9.12, use --enable-gl and maybe --enable-glx
  *       remove the rest of the xgdata structs
+ *       cursor! and all the pix kludges
+ *       check the sono pix in particular -- it may need to be moved as the cursor was
  */

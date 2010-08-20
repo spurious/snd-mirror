@@ -1624,7 +1624,7 @@ int make_background_graph(chan_info *cp, int srate, bool *two_sided) /* (for env
 
 void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
 {
-  /* assume here that everything is already checked and set up */
+  /* assume here that everything is already checked and set up (from snd-mix.c, dragging) */
   snd_info *sp;
   int j = 0;
   mus_long_t samps;
@@ -1659,6 +1659,9 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
   if (end > ap->hisamp) end = ap->hisamp;
   beg_in_seconds = (double)beg / cur_srate;
   end_in_seconds = (double)end / cur_srate;
+#if USE_GTK
+  cairo_push_group(cp->cgx->ax->cr);
+#endif
   erase_rectangle(cp, ap->ax, 
 		  local_grf_x(beg_in_seconds, ap), 
 		  ap->y_axis_y1,
@@ -1699,6 +1702,9 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
 		  if ((ep) && samples_per_pixel >= (mus_float_t)(ep->samps_per_bin))
 		    {                        /* and it will be useful when it finishes */
 		      cp->waiting_to_make_graph = true;
+#if USE_GTK
+		      cairo_pop_group_to_source(cp->cgx->ax->cr);
+#endif
 		      return;               /* so don't run two enormous data readers in parallel */
 		    }
 		}
@@ -1748,6 +1754,10 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
       show_cursor_info(cp); 
       sp->minibuffer_on = MINI_CURSOR;
     }
+#if USE_GTK
+  cairo_pop_group_to_source(cp->cgx->ax->cr);
+  cairo_paint(cp->cgx->ax->cr);
+#endif
 }
 
 
@@ -3882,10 +3892,14 @@ static void display_channel_data_with_size(chan_info *cp,
     }
 
   /* -------- time domain graph -------- */
+#if USE_GTK
+  cairo_push_group(cp->cgx->ax->cr);
+#endif
   if ((!just_fft) && (!just_lisp))
     {
       marks_off(cp);
       channel_set_mix_tags_erased(cp);
+
       if (with_time)
 	{
 	  int points;
@@ -3917,7 +3931,9 @@ static void display_channel_data_with_size(chan_info *cp,
 	      points = make_graph(cp);
 	    }
 	  if (points == 0) return;
+#if (!USE_GTK)
 	  if (cp->cursor_on) draw_graph_cursor(cp);
+#endif
 	}
     }
 
@@ -4052,6 +4068,11 @@ static void display_channel_data_with_size(chan_info *cp,
 
       run_after_graph_hook(cp);
     } 
+#if USE_GTK  
+  cairo_pop_group_to_source(cp->cgx->ax->cr);
+  cairo_paint(cp->cgx->ax->cr);
+  if (cp->cursor_on) draw_graph_cursor(cp);
+#endif
 }
 
 

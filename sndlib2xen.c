@@ -1745,7 +1745,7 @@ static XEN g_sound_data_peak(XEN obj)
 }
 
 
-#if HAVE_APPLICABLE_SMOB || HAVE_FORTH
+#if HAVE_FORTH
 static XEN sound_data_apply(XEN obj, XEN chan, XEN i)
 {
   return(g_sound_data_ref(obj, chan, i));

@@ -2,7 +2,6 @@
 ;;;
 ;;; display-scanned-synthesis
 ;;; show-smpte-label
-;;; mark-sync-color
 ;;; zync and unzync
 ;;; disable control panel
 ;;; hidden controls panel
@@ -14,7 +13,6 @@
 ;;; select-file
 ;;; with-level-meters
 ;;; add delete and rename options to the file menu
-;;; make-pixmap
 ;;; notebook-with-top-tabs
 ;;; make-font-selector-dialog
 ;;; add-main-menu-mnemonics
@@ -63,23 +61,17 @@
 (define red-pixel
   (let ((tmp (GdkColor)))
     (gdk_color_parse "red" tmp)
-    (let ((col (gdk_color_copy tmp)))
-      (gdk_rgb_find_color (gdk_colormap_get_system) col)
-      col)))
+    (gdk_color_copy tmp)))
 
 (define white-pixel
   (let ((tmp (GdkColor)))
     (gdk_color_parse "white" tmp)
-    (let ((col (gdk_color_copy tmp)))
-      (gdk_rgb_find_color (gdk_colormap_get_system) col)
-      col)))
+    (gdk_color_copy tmp)))
 
 (define black-pixel
   (let ((tmp (GdkColor)))
     (gdk_color_parse "black" tmp)
-    (let ((col (gdk_color_copy tmp)))
-      (gdk_rgb_find_color (gdk_colormap_get_system) col)
-      col)))
+    (gdk_color_copy tmp)))
 
 
 ;;; -------- display-scanned-synthesis --------
@@ -446,67 +438,6 @@
 	(remove-hook! after-graph-hook draw-smpte-label)
 	(update-time-graph #t #t)))))
 
-
-;;; -------- mark-sync-color
-;;;
-;;; (mark-sync-color "blue")
-
-(define mark-sync-color
-  (let ((orig-g-color #f)
-	(orig-sg-color #f)
-	(gm-color #f)
-	(sgm-color #f)
-	(ogm-color #f)
-	(osgm-color #f))
-
-    (define get-color
-      (let ((tmp (GdkColor)))
-	(lambda (color-name)
-	  (if (not (gdk_color_parse color-name tmp))
-	      (snd-error "can't find: ~A" color-name)
-	      (let ((col (gdk_color_copy tmp)))
-		(gdk_rgb_find_color (gdk_colormap_get_system) col)
-		col)))))
-    
-    (define (xor-color col1 col2)
-      (GdkColor (logxor (.pixel col1) (.pixel col2))
-		(logxor (.red col1) (.red col2))
-		(logxor (.green col1) (.green col2))
-		(logxor (.blue col1) (.blue col2))))
-    
-    (lambda (new-color)
-      (let* ((mark-gc (list-ref (snd-gcs) 9))
-	     (selected-mark-gc (list-ref (snd-gcs) 10))
-	     (color (get-color new-color))
-	     (gmc (if (or (not gm-color)
-			  (not (eq? orig-g-color (graph-color))))
-		      (let ((new-color (xor-color (graph-color) color)))
-			(set! orig-g-color (graph-color))
-			(set! gm-color new-color)
-			new-color)
-		      gm-color))
-	     (sgmc (if (or (not sgm-color)
-			   (not (eq? orig-sg-color (selected-graph-color))))
-		       (let ((new-color (xor-color (selected-graph-color) color)))
-			 (set! orig-sg-color (selected-graph-color))
-			 (set! sgm-color new-color)
-			 new-color)
-		       sgm-color))
-	     (ogmc (if (or (not ogm-color)
-			   (not (eq? orig-g-color (graph-color))))
-		       (let ((new-color (xor-color (graph-color) (mark-color))))
-			 (set! ogm-color new-color)
-			 new-color)
-		       ogm-color))
-	     (osgmc (if (or (not osgm-color)
-			    (not (eq? orig-sg-color (selected-graph-color))))
-			(let ((new-color (xor-color (selected-graph-color) (mark-color))))
-			  (set! osgm-color new-color)
-			  new-color)
-			osgm-color)))
-	
-	(if (not (hook-empty? draw-mark-hook)) 
-	    (reset-hook! draw-mark-hook))))))
   
   
 
@@ -736,24 +667,23 @@ Reverb-feedback sets the scaler on the feedback.
 ;;;   call from a work proc or whatever with hour going from 0 to 12 then #f
 
 (define snd-clock-icon
-  (if (defined? 'gdk_pixmap_new)
-      (lambda (snd hour)
-	(let* ((window (GDK_DRAWABLE (gtk_widget_get_window (list-ref (sound-widgets snd) 8))))
-	       (cr (gdk_cairo_create window))
-	       (bg (color->list (basic-color))))
-	  (cairo_set_source_rgb cr (car bg) (cadr bg) (caddr bg))
-	  (cairo_rectangle cr 0 0 16 16) ; icon bg
-	  (cairo_fill cr)
-	  (cairo_set_source_rgb cr 1.0 1.0 1.0)
-	  (cairo_arc cr 8 8 7 0 (* 2 pi))  ; clock face
-	  (cairo_fill cr)
-	  (cairo_set_line_width cr 2.0)
-	  (cairo_set_source_rgb cr 0.0 0.0 0.0)
-	  (cairo_move_to cr 8 8)         ; clock hour hand
-	  (cairo_line_to cr (+ 8 (* 7 (sin (* hour (/ 3.1416 6.0)))))
-			 (- 8 (* 7 (cos (* hour (/ 3.1416 6.0))))))
-	  (cairo_stroke cr)
-	  (cairo_destroy cr)))))
+  (lambda (snd hour)
+    (let* ((window (GDK_DRAWABLE (gtk_widget_get_window (list-ref (sound-widgets snd) 8))))
+	   (cr (gdk_cairo_create window))
+	   (bg (color->list (basic-color))))
+      (cairo_set_source_rgb cr (car bg) (cadr bg) (caddr bg))
+      (cairo_rectangle cr 0 0 16 16) ; icon bg
+      (cairo_fill cr)
+      (cairo_set_source_rgb cr 1.0 1.0 1.0)
+      (cairo_arc cr 8 8 7 0 (* 2 pi))  ; clock face
+      (cairo_fill cr)
+      (cairo_set_line_width cr 2.0)
+      (cairo_set_source_rgb cr 0.0 0.0 0.0)
+      (cairo_move_to cr 8 8)         ; clock hour hand
+      (cairo_line_to cr (+ 8 (* 7 (sin (* hour (/ 3.1416 6.0)))))
+		        (- 8 (* 7 (cos (* hour (/ 3.1416 6.0))))))
+      (cairo_stroke cr)
+      (cairo_destroy cr))))
 
 
 #|
@@ -1028,33 +958,6 @@ Reverb-feedback sets the scaler on the feedback.
     meter-list))
 
 
-
-;;; -------- make-pixmap --------
-
-(define arrow-strs (list
-"16 12 6 1"
-" 	c None s None"
-".	c gray50"
-"X	c black"
-"o	c white"
-"O	c yellow"
-"-      c ivory2 s basiccolor"
-"--------X---------"
-"---------X--------"
-"----------X-------"
-"-----------X------"
-"------------X-----"
-"XXXXXXXXXXXXXX----"
-"------------X-----"
-"-----------X------"
-"----------X-------"
-"---------X--------"
-"--------X---------"
-"-------X----------"))
-
-(define (make-pixmap strs) ; strs is list of strings as in arrow-strs above
-  (let ((win (GDK_DRAWABLE (car (main-widgets)))))
-    (gdk_pixmap_create_from_xpm_d win #f (basic-color) (list->c-array strs "gchar**"))))
 
 
 ;;; -------- state display panel --------

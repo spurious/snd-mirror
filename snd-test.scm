@@ -30052,7 +30052,7 @@ EDITS: 2
 		(trd (transform-dialog))
 		(fild (view-files-dialog))
 		(regd (view-regions-dialog))
-		(pd (and (not (provided? 'gtk)) (print-dialog)))
+		(pd (and (not (provided? 'snd-gtk)) (print-dialog)))
 		(ehd (without-errors (edit-header-dialog))))
 	    (open-file-dialog #f)
 	    (mix-file-dialog #f)

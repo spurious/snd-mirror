@@ -392,7 +392,7 @@ static void set_up_icon(void)
 {
   picture_t *pix;
   GdkBitmap *mask;
-  pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), &mask, NULL, (gchar **)snd_icon_bits());
+  gdk_pixbuf_render_pixmap_and_mask(gdk_pixbuf_new_from_xpm_data(snd_icon_bits()), &pix, NULL, 0);
   gdk_window_set_icon(MAIN_WINDOW(ss), NULL, pix, mask);
 }
 #endif

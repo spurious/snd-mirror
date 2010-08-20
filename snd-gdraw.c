@@ -1,13 +1,6 @@
 #include "snd.h"
 
 
-/* there are no references to gdk_draw_* or GdkGC or GdkGCValues outside this file except
- *   snd-gchn: gdk_draw_pixbuf (spectrum redisplay optimization)
- *   xg.c and gl.c -- this affects snd-gtk.scm which has gdk_gc_* stuff using snd-gcs
- *   also GdkColor is pretty well sequestered
- */
-
-
 void draw_line(axis_context *ax, int x0, int y0, int x1, int y1) 
 {
   cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);

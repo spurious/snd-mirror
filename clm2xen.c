@@ -1150,7 +1150,7 @@ static XEN equalp_mus_xen(XEN obj1, XEN obj2)
 #endif
 
 
-#if HAVE_RUBY || HAVE_APPLICABLE_SMOB || HAVE_FORTH
+#if HAVE_RUBY || HAVE_FORTH
 static XEN mus_xen_apply(XEN gen, XEN arg1, XEN arg2)
 {
 #if HAVE_FORTH

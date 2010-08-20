@@ -1703,7 +1703,6 @@ static XEN g_basic_color(void)
 
 
 #if USE_GTK
-
 static void recolor_everything_1(widget_t w, gpointer color)
 {
   if (GTK_IS_WIDGET(w)) 
@@ -1717,13 +1716,9 @@ static void recolor_everything_1(widget_t w, gpointer color)
 
 static void recolor_everything(widget_t w, gpointer color)
 {
-#if USE_GTK
   GdkColor *nc;
   nc = rgb_to_gdk_color((color_t)color);
   recolor_everything_1(w, (gpointer)nc);
-#else
-  recolor_everything_1(w, color);
-#endif
 }
 
 
@@ -1753,22 +1748,12 @@ static XEN g_make_color(XEN r, XEN g, XEN b)
   rf = check_color_range(S_make_color, r);
   gf = check_color_range(S_make_color, g);
   bf = check_color_range(S_make_color, b);
-#if USE_GTK
   ccolor = (color_info *)calloc(1, sizeof(color_info)); /* memleak here -- need color smob + free to deal with this */
   ccolor->red = rf;
   ccolor->green = gf;
   ccolor->blue = bf;
-#else
-  color_info gcolor;
-  gcolor.red = FLOAT_TO_RGB(rf);
-  gcolor.green = FLOAT_TO_RGB(gf);
-  gcolor.blue = FLOAT_TO_RGB(bf);
-  ccolor = gdk_color_copy(&gcolor);
-  gdk_rgb_find_color(gdk_colormap_get_system(), ccolor);
-#endif
   return(XEN_WRAP_PIXEL(ccolor));
 }
-
 #endif
 
 
