@@ -14887,7 +14887,6 @@ In each case, the argument is the value of the object, not the object itself."
       s7_pointer x;
 
       args_loc = s7_gc_protect(sc, args);
-      /* TODO: shouldn't args be unprotected? */
 
       /* if any of the special functions are specified, store them in the type object so we can find them later */
       for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x))
@@ -14992,6 +14991,7 @@ In each case, the argument is the value of the object, not the object itself."
 		}
 	    }
 	}
+      s7_gc_unprotect_at(sc, args_loc);
     }
 
   /* ? method: (lambda (arg) (s_is_type tag arg)) 

@@ -409,6 +409,7 @@ XM_TYPE_PTR(GdkColormap_, GdkColormap*)
 XM_TYPE_PTR(GdkVisual_, GdkVisual*)
 XM_TYPE_PTR(GdkColor_, GdkColor*)
 XM_TYPE_PTR(GdkCursor_, GdkCursor*)
+#define C_TO_XEN_GdkCursorType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkCursorType(Arg) (GdkCursorType)(XEN_TO_C_INT(Arg))
 #define XEN_GdkCursorType_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GdkPixmap_, GdkPixmap*)
@@ -914,6 +915,11 @@ XM_TYPE_PTR(GdkDevice_, GdkDevice*)
 XM_TYPE_PTR_2(GdkDeviceManager_, GdkDeviceManager*)
 #endif
 
+#if HAVE_GTK_EXPANDER_GET_LABEL_FILL
+XM_TYPE_PTR_1(GtkMessageDialog_, GtkMessageDialog*)
+XM_TYPE_PTR(cairo_region_t_, cairo_region_t*)
+#endif
+
 XM_TYPE_PTR(cairo_t_, cairo_t*)
 XM_TYPE_PTR(cairo_surface_t_, cairo_surface_t*)
 #define C_TO_XEN_cairo_content_t(Arg) C_TO_XEN_INT(Arg)
@@ -952,12 +958,14 @@ XM_TYPE_PTR(cairo_font_options_t_, cairo_font_options_t*)
 #define C_TO_XEN_cairo_hint_metrics_t(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_cairo_hint_metrics_t(Arg) (cairo_hint_metrics_t)(XEN_TO_C_INT(Arg))
 #define XEN_cairo_hint_metrics_t_P(Arg) XEN_INTEGER_P(Arg)
+#define C_TO_XEN_cairo_font_slant_t(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_cairo_font_slant_t(Arg) (cairo_font_slant_t)(XEN_TO_C_INT(Arg))
 #define XEN_cairo_font_slant_t_P(Arg) XEN_INTEGER_P(Arg)
+#define C_TO_XEN_cairo_font_weight_t(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_cairo_font_weight_t(Arg) (cairo_font_weight_t)(XEN_TO_C_INT(Arg))
 #define XEN_cairo_font_weight_t_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(cairo_scaled_font_t_, cairo_scaled_font_t*)
-XM_TYPE_PTR_1(cairo_glyph_t_, cairo_glyph_t*)
+XM_TYPE_PTR(cairo_glyph_t_, cairo_glyph_t*)
 XM_TYPE_PTR(cairo_font_face_t_, cairo_font_face_t*)
 XM_TYPE_PTR_1(cairo_font_extents_t_, cairo_font_extents_t*)
 XM_TYPE_PTR_1(cairo_text_extents_t_, cairo_text_extents_t*)
@@ -978,6 +986,26 @@ XM_TYPE_PTR(cairo_path_t_, cairo_path_t*)
 #define XEN_cairo_filter_t_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(void_, void*)
 XM_TYPE_PTR(cairo_rectangle_list_t_, cairo_rectangle_list_t*)
+#if HAVE_CAIRO_GLYPH_ALLOCATE
+XM_TYPE_PTR(cairo_text_cluster_t_, cairo_text_cluster_t*)
+XM_TYPE(cairo_text_cluster_flags_t, cairo_text_cluster_flags_t)
+XM_TYPE_PTR(cairo_glyph_t__, cairo_glyph_t**)
+XM_TYPE_PTR(cairo_text_cluster_t__, cairo_text_cluster_t**)
+XM_TYPE_PTR(cairo_text_cluster_flags_t_, cairo_text_cluster_flags_t*)
+#define C_TO_XEN_cairo_bool_t(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_cairo_bool_t(Arg) (cairo_bool_t)(XEN_TO_C_INT(Arg))
+#define XEN_cairo_bool_t_P(Arg) XEN_INTEGER_P(Arg)
+#endif
+
+#if HAVE_CAIRO_REGION_XOR
+XM_TYPE_PTR(cairo_device_t_, cairo_device_t*)
+XM_TYPE(cairo_device_type_t, cairo_device_type_t)
+XM_TYPE_PTR(cairo_rectangle_t_, cairo_rectangle_t*)
+XM_TYPE_PTR(double_, double*)
+XM_TYPE_PTR(cairo_rectangle_int_t_, cairo_rectangle_int_t*)
+XM_TYPE(cairo_region_overlap_t, cairo_region_overlap_t)
+#endif
+
 #define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))
 #define XLI(a, b) ((int)XEN_TO_C_INT(XEN_LIST_REF(a, b)))
 #define XLG(a, b) XEN_TO_C_GType(XEN_LIST_REF(a, b))
@@ -31213,6 +31241,333 @@ GdkDevice* device)"
 
 #endif
 
+#if HAVE_GTK_EXPANDER_GET_LABEL_FILL
+static XEN gxg_gtk_icon_view_get_item_row(XEN icon_view, XEN path)
+{
+  #define H_gtk_icon_view_get_item_row "gint gtk_icon_view_get_item_row(GtkIconView* icon_view, GtkTreePath* path)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_get_item_row", "GtkIconView*");
+  XEN_ASSERT_TYPE(XEN_GtkTreePath__P(path), path, 2, "gtk_icon_view_get_item_row", "GtkTreePath*");
+  return(C_TO_XEN_gint(gtk_icon_view_get_item_row(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_GtkTreePath_(path))));
+}
+
+static XEN gxg_gtk_icon_view_get_item_column(XEN icon_view, XEN path)
+{
+  #define H_gtk_icon_view_get_item_column "gint gtk_icon_view_get_item_column(GtkIconView* icon_view, \
+GtkTreePath* path)"
+  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_get_item_column", "GtkIconView*");
+  XEN_ASSERT_TYPE(XEN_GtkTreePath__P(path), path, 2, "gtk_icon_view_get_item_column", "GtkTreePath*");
+  return(C_TO_XEN_gint(gtk_icon_view_get_item_column(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_GtkTreePath_(path))));
+}
+
+static XEN gxg_gtk_statusbar_remove_all(XEN statusbar, XEN context_id)
+{
+  #define H_gtk_statusbar_remove_all "void gtk_statusbar_remove_all(GtkStatusbar* statusbar, guint context_id)"
+  XEN_ASSERT_TYPE(XEN_GtkStatusbar__P(statusbar), statusbar, 1, "gtk_statusbar_remove_all", "GtkStatusbar*");
+  XEN_ASSERT_TYPE(XEN_guint_P(context_id), context_id, 2, "gtk_statusbar_remove_all", "guint");
+  gtk_statusbar_remove_all(XEN_TO_C_GtkStatusbar_(statusbar), XEN_TO_C_guint(context_id));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_window_has_group(XEN window)
+{
+  #define H_gtk_window_has_group "gboolean gtk_window_has_group(GtkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 1, "gtk_window_has_group", "GtkWindow*");
+  return(C_TO_XEN_gboolean(gtk_window_has_group(XEN_TO_C_GtkWindow_(window))));
+}
+
+static XEN gxg_gtk_calendar_select_month(XEN calendar, XEN month, XEN year)
+{
+  #define H_gtk_calendar_select_month "void gtk_calendar_select_month(GtkCalendar* calendar, guint month, \
+guint year)"
+  XEN_ASSERT_TYPE(XEN_GtkCalendar__P(calendar), calendar, 1, "gtk_calendar_select_month", "GtkCalendar*");
+  XEN_ASSERT_TYPE(XEN_guint_P(month), month, 2, "gtk_calendar_select_month", "guint");
+  XEN_ASSERT_TYPE(XEN_guint_P(year), year, 3, "gtk_calendar_select_month", "guint");
+  gtk_calendar_select_month(XEN_TO_C_GtkCalendar_(calendar), XEN_TO_C_guint(month), XEN_TO_C_guint(year));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_calendar_mark_day(XEN calendar, XEN day)
+{
+  #define H_gtk_calendar_mark_day "void gtk_calendar_mark_day(GtkCalendar* calendar, guint day)"
+  XEN_ASSERT_TYPE(XEN_GtkCalendar__P(calendar), calendar, 1, "gtk_calendar_mark_day", "GtkCalendar*");
+  XEN_ASSERT_TYPE(XEN_guint_P(day), day, 2, "gtk_calendar_mark_day", "guint");
+  gtk_calendar_mark_day(XEN_TO_C_GtkCalendar_(calendar), XEN_TO_C_guint(day));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_calendar_unmark_day(XEN calendar, XEN day)
+{
+  #define H_gtk_calendar_unmark_day "void gtk_calendar_unmark_day(GtkCalendar* calendar, guint day)"
+  XEN_ASSERT_TYPE(XEN_GtkCalendar__P(calendar), calendar, 1, "gtk_calendar_unmark_day", "GtkCalendar*");
+  XEN_ASSERT_TYPE(XEN_guint_P(day), day, 2, "gtk_calendar_unmark_day", "guint");
+  gtk_calendar_unmark_day(XEN_TO_C_GtkCalendar_(calendar), XEN_TO_C_guint(day));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_drag_context_get_source_window(XEN context)
+{
+  #define H_gdk_drag_context_get_source_window "GdkWindow* gdk_drag_context_get_source_window(GdkDragContext* context)"
+  XEN_ASSERT_TYPE(XEN_GdkDragContext__P(context), context, 1, "gdk_drag_context_get_source_window", "GdkDragContext*");
+  return(C_TO_XEN_GdkWindow_(gdk_drag_context_get_source_window(XEN_TO_C_GdkDragContext_(context))));
+}
+
+static XEN gxg_gtk_viewport_get_view_window(XEN viewport)
+{
+  #define H_gtk_viewport_get_view_window "GdkWindow* gtk_viewport_get_view_window(GtkViewport* viewport)"
+  XEN_ASSERT_TYPE(XEN_GtkViewport__P(viewport), viewport, 1, "gtk_viewport_get_view_window", "GtkViewport*");
+  return(C_TO_XEN_GdkWindow_(gtk_viewport_get_view_window(XEN_TO_C_GtkViewport_(viewport))));
+}
+
+static XEN gxg_gtk_accessible_set_widget(XEN accessible, XEN widget)
+{
+  #define H_gtk_accessible_set_widget "void gtk_accessible_set_widget(GtkAccessible* accessible, GtkWidget* widget)"
+  XEN_ASSERT_TYPE(XEN_GtkAccessible__P(accessible), accessible, 1, "gtk_accessible_set_widget", "GtkAccessible*");
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 2, "gtk_accessible_set_widget", "GtkWidget*");
+  gtk_accessible_set_widget(XEN_TO_C_GtkAccessible_(accessible), XEN_TO_C_GtkWidget_(widget));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_button_get_event_window(XEN button)
+{
+  #define H_gtk_button_get_event_window "GdkWindow* gtk_button_get_event_window(GtkButton* button)"
+  XEN_ASSERT_TYPE(XEN_GtkButton__P(button), button, 1, "gtk_button_get_event_window", "GtkButton*");
+  return(C_TO_XEN_GdkWindow_(gtk_button_get_event_window(XEN_TO_C_GtkButton_(button))));
+}
+
+static XEN gxg_gtk_font_selection_dialog_get_font_selection(XEN fsd)
+{
+  #define H_gtk_font_selection_dialog_get_font_selection "GtkWidget* gtk_font_selection_dialog_get_font_selection(GtkFontSelectionDialog* fsd)"
+  XEN_ASSERT_TYPE(XEN_GtkFontSelectionDialog__P(fsd), fsd, 1, "gtk_font_selection_dialog_get_font_selection", "GtkFontSelectionDialog*");
+  return(C_TO_XEN_GtkWidget_(gtk_font_selection_dialog_get_font_selection(XEN_TO_C_GtkFontSelectionDialog_(fsd))));
+}
+
+static XEN gxg_gtk_message_dialog_get_message_area(XEN message_dialog)
+{
+  #define H_gtk_message_dialog_get_message_area "GtkWidget* gtk_message_dialog_get_message_area(GtkMessageDialog* message_dialog)"
+  XEN_ASSERT_TYPE(XEN_GtkMessageDialog__P(message_dialog), message_dialog, 1, "gtk_message_dialog_get_message_area", "GtkMessageDialog*");
+  return(C_TO_XEN_GtkWidget_(gtk_message_dialog_get_message_area(XEN_TO_C_GtkMessageDialog_(message_dialog))));
+}
+
+static XEN gxg_gtk_table_get_size(XEN table, XEN rows, XEN columns)
+{
+  #define H_gtk_table_get_size "void gtk_table_get_size(GtkTable* table, guint* rows, guint* columns)"
+  XEN_ASSERT_TYPE(XEN_GtkTable__P(table), table, 1, "gtk_table_get_size", "GtkTable*");
+  XEN_ASSERT_TYPE(XEN_guint__P(rows), rows, 2, "gtk_table_get_size", "guint*");
+  XEN_ASSERT_TYPE(XEN_guint__P(columns), columns, 3, "gtk_table_get_size", "guint*");
+  gtk_table_get_size(XEN_TO_C_GtkTable_(table), XEN_TO_C_guint_(rows), XEN_TO_C_guint_(columns));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_selection_data_get_length(XEN selection_data)
+{
+  #define H_gtk_selection_data_get_length "gint gtk_selection_data_get_length(GtkSelectionData* selection_data)"
+  XEN_ASSERT_TYPE(XEN_GtkSelectionData__P(selection_data), selection_data, 1, "gtk_selection_data_get_length", "GtkSelectionData*");
+  return(C_TO_XEN_gint(gtk_selection_data_get_length(XEN_TO_C_GtkSelectionData_(selection_data))));
+}
+
+static XEN gxg_gdk_drawable_get_clip_region(XEN drawable)
+{
+  #define H_gdk_drawable_get_clip_region "cairo_region_t* gdk_drawable_get_clip_region(GdkDrawable* drawable)"
+  XEN_ASSERT_TYPE(XEN_GdkDrawable__P(drawable), drawable, 1, "gdk_drawable_get_clip_region", "GdkDrawable*");
+  return(C_TO_XEN_cairo_region_t_(gdk_drawable_get_clip_region(XEN_TO_C_GdkDrawable_(drawable))));
+}
+
+static XEN gxg_gdk_drawable_get_visible_region(XEN drawable)
+{
+  #define H_gdk_drawable_get_visible_region "cairo_region_t* gdk_drawable_get_visible_region(GdkDrawable* drawable)"
+  XEN_ASSERT_TYPE(XEN_GdkDrawable__P(drawable), drawable, 1, "gdk_drawable_get_visible_region", "GdkDrawable*");
+  return(C_TO_XEN_cairo_region_t_(gdk_drawable_get_visible_region(XEN_TO_C_GdkDrawable_(drawable))));
+}
+
+static XEN gxg_gdk_pango_layout_line_get_clip_region(XEN line, XEN x_origin, XEN y_origin, XEN index_ranges, XEN n_ranges)
+{
+  #define H_gdk_pango_layout_line_get_clip_region "cairo_region_t* gdk_pango_layout_line_get_clip_region(PangoLayoutLine* line, \
+gint x_origin, gint y_origin, gint* index_ranges, gint n_ranges)"
+  XEN_ASSERT_TYPE(XEN_PangoLayoutLine__P(line), line, 1, "gdk_pango_layout_line_get_clip_region", "PangoLayoutLine*");
+  XEN_ASSERT_TYPE(XEN_gint_P(x_origin), x_origin, 2, "gdk_pango_layout_line_get_clip_region", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(y_origin), y_origin, 3, "gdk_pango_layout_line_get_clip_region", "gint");
+  XEN_ASSERT_TYPE(XEN_gint__P(index_ranges), index_ranges, 4, "gdk_pango_layout_line_get_clip_region", "gint*");
+  XEN_ASSERT_TYPE(XEN_gint_P(n_ranges), n_ranges, 5, "gdk_pango_layout_line_get_clip_region", "gint");
+  return(C_TO_XEN_cairo_region_t_(gdk_pango_layout_line_get_clip_region(XEN_TO_C_PangoLayoutLine_(line), XEN_TO_C_gint(x_origin), 
+                                                                        XEN_TO_C_gint(y_origin), XEN_TO_C_gint_(index_ranges), 
+                                                                        XEN_TO_C_gint(n_ranges))));
+}
+
+static XEN gxg_gdk_pango_layout_get_clip_region(XEN layout, XEN x_origin, XEN y_origin, XEN index_ranges, XEN n_ranges)
+{
+  #define H_gdk_pango_layout_get_clip_region "cairo_region_t* gdk_pango_layout_get_clip_region(PangoLayout* layout, \
+gint x_origin, gint y_origin, gint* index_ranges, gint n_ranges)"
+  XEN_ASSERT_TYPE(XEN_PangoLayout__P(layout), layout, 1, "gdk_pango_layout_get_clip_region", "PangoLayout*");
+  XEN_ASSERT_TYPE(XEN_gint_P(x_origin), x_origin, 2, "gdk_pango_layout_get_clip_region", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(y_origin), y_origin, 3, "gdk_pango_layout_get_clip_region", "gint");
+  XEN_ASSERT_TYPE(XEN_gint__P(index_ranges), index_ranges, 4, "gdk_pango_layout_get_clip_region", "gint*");
+  XEN_ASSERT_TYPE(XEN_gint_P(n_ranges), n_ranges, 5, "gdk_pango_layout_get_clip_region", "gint");
+  return(C_TO_XEN_cairo_region_t_(gdk_pango_layout_get_clip_region(XEN_TO_C_PangoLayout_(layout), XEN_TO_C_gint(x_origin), 
+                                                                   XEN_TO_C_gint(y_origin), XEN_TO_C_gint_(index_ranges), 
+                                                                   XEN_TO_C_gint(n_ranges))));
+}
+
+static XEN gxg_gdk_window_shape_combine_region(XEN window, XEN shape_region, XEN offset_x, XEN offset_y)
+{
+  #define H_gdk_window_shape_combine_region "void gdk_window_shape_combine_region(GdkWindow* window, \
+cairo_region_t* shape_region, gint offset_x, gint offset_y)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_shape_combine_region", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(shape_region), shape_region, 2, "gdk_window_shape_combine_region", "cairo_region_t*");
+  XEN_ASSERT_TYPE(XEN_gint_P(offset_x), offset_x, 3, "gdk_window_shape_combine_region", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(offset_y), offset_y, 4, "gdk_window_shape_combine_region", "gint");
+  gdk_window_shape_combine_region(XEN_TO_C_GdkWindow_(window), XEN_TO_C_cairo_region_t_(shape_region), XEN_TO_C_gint(offset_x), 
+                                  XEN_TO_C_gint(offset_y));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_window_invalidate_region(XEN window, XEN region, XEN invalidate_children)
+{
+  #define H_gdk_window_invalidate_region "void gdk_window_invalidate_region(GdkWindow* window, cairo_region_t* region, \
+gboolean invalidate_children)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_invalidate_region", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(region), region, 2, "gdk_window_invalidate_region", "cairo_region_t*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(invalidate_children), invalidate_children, 3, "gdk_window_invalidate_region", "gboolean");
+  gdk_window_invalidate_region(XEN_TO_C_GdkWindow_(window), XEN_TO_C_cairo_region_t_(region), XEN_TO_C_gboolean(invalidate_children));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_window_invalidate_maybe_recurse(XEN window, XEN region, XEN func, XEN func_info)
+{
+  #define H_gdk_window_invalidate_maybe_recurse "void gdk_window_invalidate_maybe_recurse(GdkWindow* window, \
+cairo_region_t* region, lambda2 func, lambda_data func_info)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_invalidate_maybe_recurse", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(region), region, 2, "gdk_window_invalidate_maybe_recurse", "cairo_region_t*");
+  XEN_ASSERT_TYPE(XEN_lambda2_P(func), func, 3, "gdk_window_invalidate_maybe_recurse", "lambda2");
+  if (XEN_NOT_BOUND_P(func_info)) func_info = XEN_FALSE; 
+  else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_info), func_info, 4, "gdk_window_invalidate_maybe_recurse", "lambda_data");
+  {
+    int loc;
+    XEN gxg_ptr = XEN_LIST_5(func, func_info, XEN_FALSE, XEN_FALSE, XEN_FALSE);
+    loc = xm_protect(gxg_ptr);
+    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
+    gdk_window_invalidate_maybe_recurse(XEN_TO_C_GdkWindow_(window), XEN_TO_C_cairo_region_t_(region), XEN_TO_C_lambda2(func), 
+                                    XEN_TO_C_lambda_data(func_info));
+    xm_unprotect_at(loc);
+    return(XEN_FALSE);
+   }
+}
+
+static XEN gxg_gdk_window_get_update_area(XEN window)
+{
+  #define H_gdk_window_get_update_area "cairo_region_t* gdk_window_get_update_area(GdkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_update_area", "GdkWindow*");
+  return(C_TO_XEN_cairo_region_t_(gdk_window_get_update_area(XEN_TO_C_GdkWindow_(window))));
+}
+
+static XEN gxg_gdk_window_begin_paint_region(XEN window, XEN region)
+{
+  #define H_gdk_window_begin_paint_region "void gdk_window_begin_paint_region(GdkWindow* window, cairo_region_t* region)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_begin_paint_region", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(region), region, 2, "gdk_window_begin_paint_region", "cairo_region_t*");
+  gdk_window_begin_paint_region(XEN_TO_C_GdkWindow_(window), XEN_TO_C_cairo_region_t_(region));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_widget_region_intersect(XEN widget, XEN region)
+{
+  #define H_gtk_widget_region_intersect "cairo_region_t* gtk_widget_region_intersect(GtkWidget* widget, \
+cairo_region_t* region)"
+  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_region_intersect", "GtkWidget*");
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(region), region, 2, "gtk_widget_region_intersect", "cairo_region_t*");
+  return(C_TO_XEN_cairo_region_t_(gtk_widget_region_intersect(XEN_TO_C_GtkWidget_(widget), XEN_TO_C_cairo_region_t_(region))));
+}
+
+static XEN gxg_gdk_window_move_region(XEN window, XEN region, XEN dx, XEN dy)
+{
+  #define H_gdk_window_move_region "void gdk_window_move_region(GdkWindow* window, cairo_region_t* region, \
+gint dx, gint dy)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_move_region", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(region), region, 2, "gdk_window_move_region", "cairo_region_t*");
+  XEN_ASSERT_TYPE(XEN_gint_P(dx), dx, 3, "gdk_window_move_region", "gint");
+  XEN_ASSERT_TYPE(XEN_gint_P(dy), dy, 4, "gdk_window_move_region", "gint");
+  gdk_window_move_region(XEN_TO_C_GdkWindow_(window), XEN_TO_C_cairo_region_t_(region), XEN_TO_C_gint(dx), XEN_TO_C_gint(dy));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gdk_keymap_get_num_lock_state(XEN keymap)
+{
+  #define H_gdk_keymap_get_num_lock_state "gboolean gdk_keymap_get_num_lock_state(GdkKeymap* keymap)"
+  XEN_ASSERT_TYPE(XEN_GdkKeymap__P(keymap), keymap, 1, "gdk_keymap_get_num_lock_state", "GdkKeymap*");
+  return(C_TO_XEN_gboolean(gdk_keymap_get_num_lock_state(XEN_TO_C_GdkKeymap_(keymap))));
+}
+
+static XEN gxg_gdk_window_has_native(XEN window)
+{
+  #define H_gdk_window_has_native "gboolean gdk_window_has_native(GdkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_has_native", "GdkWindow*");
+  return(C_TO_XEN_gboolean(gdk_window_has_native(XEN_TO_C_GdkWindow_(window))));
+}
+
+static XEN gxg_gdk_cursor_get_cursor_type(XEN cursor)
+{
+  #define H_gdk_cursor_get_cursor_type "GdkCursorType gdk_cursor_get_cursor_type(GdkCursor* cursor)"
+  XEN_ASSERT_TYPE(XEN_GdkCursor__P(cursor), cursor, 1, "gdk_cursor_get_cursor_type", "GdkCursor*");
+  return(C_TO_XEN_GdkCursorType(gdk_cursor_get_cursor_type(XEN_TO_C_GdkCursor_(cursor))));
+}
+
+static XEN gxg_gdk_display_is_closed(XEN display)
+{
+  #define H_gdk_display_is_closed "gboolean gdk_display_is_closed(GdkDisplay* display)"
+  XEN_ASSERT_TYPE(XEN_GdkDisplay__P(display), display, 1, "gdk_display_is_closed", "GdkDisplay*");
+  return(C_TO_XEN_gboolean(gdk_display_is_closed(XEN_TO_C_GdkDisplay_(display))));
+}
+
+static XEN gxg_gdk_window_get_background_pattern(XEN window)
+{
+  #define H_gdk_window_get_background_pattern "cairo_pattern_t* gdk_window_get_background_pattern(GdkWindow* window)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_get_background_pattern", "GdkWindow*");
+  return(C_TO_XEN_cairo_pattern_t_(gdk_window_get_background_pattern(XEN_TO_C_GdkWindow_(window))));
+}
+
+static XEN gxg_gdk_window_create_similar_surface(XEN window, XEN content, XEN width, XEN height)
+{
+  #define H_gdk_window_create_similar_surface "cairo_surface_t* gdk_window_create_similar_surface(GdkWindow* window, \
+cairo_content_t content, int width, int height)"
+  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_create_similar_surface", "GdkWindow*");
+  XEN_ASSERT_TYPE(XEN_cairo_content_t_P(content), content, 2, "gdk_window_create_similar_surface", "cairo_content_t");
+  XEN_ASSERT_TYPE(XEN_int_P(width), width, 3, "gdk_window_create_similar_surface", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(height), height, 4, "gdk_window_create_similar_surface", "int");
+  return(C_TO_XEN_cairo_surface_t_(gdk_window_create_similar_surface(XEN_TO_C_GdkWindow_(window), XEN_TO_C_cairo_content_t(content), 
+                                                                     XEN_TO_C_int(width), XEN_TO_C_int(height))));
+}
+
+static XEN gxg_gtk_expander_set_label_fill(XEN expander, XEN label_fill)
+{
+  #define H_gtk_expander_set_label_fill "void gtk_expander_set_label_fill(GtkExpander* expander, gboolean label_fill)"
+  XEN_ASSERT_TYPE(XEN_GtkExpander__P(expander), expander, 1, "gtk_expander_set_label_fill", "GtkExpander*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(label_fill), label_fill, 2, "gtk_expander_set_label_fill", "gboolean");
+  gtk_expander_set_label_fill(XEN_TO_C_GtkExpander_(expander), XEN_TO_C_gboolean(label_fill));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_expander_get_label_fill(XEN expander)
+{
+  #define H_gtk_expander_get_label_fill "gboolean gtk_expander_get_label_fill(GtkExpander* expander)"
+  XEN_ASSERT_TYPE(XEN_GtkExpander__P(expander), expander, 1, "gtk_expander_get_label_fill", "GtkExpander*");
+  return(C_TO_XEN_gboolean(gtk_expander_get_label_fill(XEN_TO_C_GtkExpander_(expander))));
+}
+
+static XEN gxg_gtk_notebook_get_tab_hborder(XEN notebook)
+{
+  #define H_gtk_notebook_get_tab_hborder "guint16 gtk_notebook_get_tab_hborder(GtkNotebook* notebook)"
+  XEN_ASSERT_TYPE(XEN_GtkNotebook__P(notebook), notebook, 1, "gtk_notebook_get_tab_hborder", "GtkNotebook*");
+  return(C_TO_XEN_guint16(gtk_notebook_get_tab_hborder(XEN_TO_C_GtkNotebook_(notebook))));
+}
+
+static XEN gxg_gtk_notebook_get_tab_vborder(XEN notebook)
+{
+  #define H_gtk_notebook_get_tab_vborder "guint16 gtk_notebook_get_tab_vborder(GtkNotebook* notebook)"
+  XEN_ASSERT_TYPE(XEN_GtkNotebook__P(notebook), notebook, 1, "gtk_notebook_get_tab_vborder", "GtkNotebook*");
+  return(C_TO_XEN_guint16(gtk_notebook_get_tab_vborder(XEN_TO_C_GtkNotebook_(notebook))));
+}
+
+#endif
+
 static XEN gxg_cairo_create(XEN target)
 {
   #define H_cairo_create "cairo_t* cairo_create(cairo_surface_t* target)"
@@ -33161,6 +33516,549 @@ char* filename)"
   XEN_ASSERT_TYPE(XEN_char__P(filename), filename, 2, "cairo_surface_write_to_png", "char*");
   return(C_TO_XEN_cairo_status_t(cairo_surface_write_to_png(XEN_TO_C_cairo_surface_t_(surface), (const char*)XEN_TO_C_char_(filename))));
 }
+
+#if HAVE_CAIRO_GLYPH_ALLOCATE
+static XEN gxg_cairo_glyph_allocate(XEN num_glyphs)
+{
+  #define H_cairo_glyph_allocate "cairo_glyph_t* cairo_glyph_allocate(int num_glyphs)"
+  XEN_ASSERT_TYPE(XEN_int_P(num_glyphs), num_glyphs, 1, "cairo_glyph_allocate", "int");
+  return(C_TO_XEN_cairo_glyph_t_(cairo_glyph_allocate(XEN_TO_C_int(num_glyphs))));
+}
+
+static XEN gxg_cairo_glyph_free(XEN glyphs)
+{
+  #define H_cairo_glyph_free "void cairo_glyph_free(cairo_glyph_t* glyphs)"
+  XEN_ASSERT_TYPE(XEN_cairo_glyph_t__P(glyphs), glyphs, 1, "cairo_glyph_free", "cairo_glyph_t*");
+  cairo_glyph_free(XEN_TO_C_cairo_glyph_t_(glyphs));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_cairo_text_cluster_allocate(XEN num_clusters)
+{
+  #define H_cairo_text_cluster_allocate "cairo_text_cluster_t* cairo_text_cluster_allocate(int num_clusters)"
+  XEN_ASSERT_TYPE(XEN_int_P(num_clusters), num_clusters, 1, "cairo_text_cluster_allocate", "int");
+  return(C_TO_XEN_cairo_text_cluster_t_(cairo_text_cluster_allocate(XEN_TO_C_int(num_clusters))));
+}
+
+static XEN gxg_cairo_text_cluster_free(XEN clusters)
+{
+  #define H_cairo_text_cluster_free "void cairo_text_cluster_free(cairo_text_cluster_t* clusters)"
+  XEN_ASSERT_TYPE(XEN_cairo_text_cluster_t__P(clusters), clusters, 1, "cairo_text_cluster_free", "cairo_text_cluster_t*");
+  cairo_text_cluster_free(XEN_TO_C_cairo_text_cluster_t_(clusters));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_cairo_show_text_glyphs(XEN cr, XEN utf8, XEN utf8_len, XEN glyphs, XEN num_glyphs, XEN clusters, XEN num_clusters, XEN cluster_flags)
+{
+  #define H_cairo_show_text_glyphs "void cairo_show_text_glyphs(cairo_t* cr, char* utf8, int utf8_len, \
+cairo_glyph_t* glyphs, int num_glyphs, cairo_text_cluster_t* clusters, int num_clusters, cairo_text_cluster_flags_t cluster_flags)"
+  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "cairo_show_text_glyphs", "cairo_t*");
+  XEN_ASSERT_TYPE(XEN_char__P(utf8), utf8, 2, "cairo_show_text_glyphs", "char*");
+  XEN_ASSERT_TYPE(XEN_int_P(utf8_len), utf8_len, 3, "cairo_show_text_glyphs", "int");
+  XEN_ASSERT_TYPE(XEN_cairo_glyph_t__P(glyphs), glyphs, 4, "cairo_show_text_glyphs", "cairo_glyph_t*");
+  XEN_ASSERT_TYPE(XEN_int_P(num_glyphs), num_glyphs, 5, "cairo_show_text_glyphs", "int");
+  XEN_ASSERT_TYPE(XEN_cairo_text_cluster_t__P(clusters), clusters, 6, "cairo_show_text_glyphs", "cairo_text_cluster_t*");
+  XEN_ASSERT_TYPE(XEN_int_P(num_clusters), num_clusters, 7, "cairo_show_text_glyphs", "int");
+  XEN_ASSERT_TYPE(XEN_cairo_text_cluster_flags_t_P(cluster_flags), cluster_flags, 8, "cairo_show_text_glyphs", "cairo_text_cluster_flags_t");
+  cairo_show_text_glyphs(XEN_TO_C_cairo_t_(cr), (const char*)XEN_TO_C_char_(utf8), XEN_TO_C_int(utf8_len), XEN_TO_C_cairo_glyph_t_(glyphs), 
+                         XEN_TO_C_int(num_glyphs), XEN_TO_C_cairo_text_cluster_t_(clusters), XEN_TO_C_int(num_clusters), 
+                         XEN_TO_C_cairo_text_cluster_flags_t(cluster_flags));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_cairo_scaled_font_text_to_glyphs(XEN arglist)
+{
+  #define H_cairo_scaled_font_text_to_glyphs "cairo_status_t cairo_scaled_font_text_to_glyphs(cairo_scaled_font_t* scaled_font, \
+double x, double y, char* utf8, int utf8_len, cairo_glyph_t** glyphs, int* num_glyphs, cairo_text_cluster_t** clusters, \
+int* num_clusters, cairo_text_cluster_flags_t* cluster_flags)"
+  XEN scaled_font, x, y, utf8, utf8_len, glyphs, num_glyphs, clusters, num_clusters, cluster_flags;
+  scaled_font = XEN_LIST_REF(arglist, 0);
+  x = XEN_LIST_REF(arglist, 1);
+  y = XEN_LIST_REF(arglist, 2);
+  utf8 = XEN_LIST_REF(arglist, 3);
+  utf8_len = XEN_LIST_REF(arglist, 4);
+  glyphs = XEN_LIST_REF(arglist, 5);
+  num_glyphs = XEN_LIST_REF(arglist, 6);
+  clusters = XEN_LIST_REF(arglist, 7);
+  num_clusters = XEN_LIST_REF(arglist, 8);
+  cluster_flags = XEN_LIST_REF(arglist, 9);
+  XEN_ASSERT_TYPE(XEN_cairo_scaled_font_t__P(scaled_font), scaled_font, 1, "cairo_scaled_font_text_to_glyphs", "cairo_scaled_font_t*");
+  XEN_ASSERT_TYPE(XEN_double_P(x), x, 2, "cairo_scaled_font_text_to_glyphs", "double");
+  XEN_ASSERT_TYPE(XEN_double_P(y), y, 3, "cairo_scaled_font_text_to_glyphs", "double");
+  XEN_ASSERT_TYPE(XEN_char__P(utf8), utf8, 4, "cairo_scaled_font_text_to_glyphs", "char*");
+  XEN_ASSERT_TYPE(XEN_int_P(utf8_len), utf8_len, 5, "cairo_scaled_font_text_to_glyphs", "int");
+  XEN_ASSERT_TYPE(XEN_cairo_glyph_t___P(glyphs), glyphs, 6, "cairo_scaled_font_text_to_glyphs", "cairo_glyph_t**");
+  XEN_ASSERT_TYPE(XEN_int__P(num_glyphs), num_glyphs, 7, "cairo_scaled_font_text_to_glyphs", "int*");
+  XEN_ASSERT_TYPE(XEN_cairo_text_cluster_t___P(clusters), clusters, 8, "cairo_scaled_font_text_to_glyphs", "cairo_text_cluster_t**");
+  XEN_ASSERT_TYPE(XEN_int__P(num_clusters), num_clusters, 9, "cairo_scaled_font_text_to_glyphs", "int*");
+  XEN_ASSERT_TYPE(XEN_cairo_text_cluster_flags_t__P(cluster_flags), cluster_flags, 10, "cairo_scaled_font_text_to_glyphs", "cairo_text_cluster_flags_t*");
+  return(C_TO_XEN_cairo_status_t(cairo_scaled_font_text_to_glyphs(XEN_TO_C_cairo_scaled_font_t_(scaled_font), XEN_TO_C_double(x), 
+                                                                  XEN_TO_C_double(y), (const char*)XEN_TO_C_char_(utf8), XEN_TO_C_int(utf8_len), 
+                                                                  XEN_TO_C_cairo_glyph_t__(glyphs), XEN_TO_C_int_(num_glyphs), 
+                                                                  XEN_TO_C_cairo_text_cluster_t__(clusters), XEN_TO_C_int_(num_clusters), 
+                                                                  XEN_TO_C_cairo_text_cluster_flags_t_(cluster_flags))));
+}
+
+static XEN gxg_cairo_scaled_font_get_scale_matrix(XEN scaled_font, XEN scale_matrix)
+{
+  #define H_cairo_scaled_font_get_scale_matrix "void cairo_scaled_font_get_scale_matrix(cairo_scaled_font_t* scaled_font, \
+cairo_matrix_t* scale_matrix)"
+  XEN_ASSERT_TYPE(XEN_cairo_scaled_font_t__P(scaled_font), scaled_font, 1, "cairo_scaled_font_get_scale_matrix", "cairo_scaled_font_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_matrix_t__P(scale_matrix), scale_matrix, 2, "cairo_scaled_font_get_scale_matrix", "cairo_matrix_t*");
+  cairo_scaled_font_get_scale_matrix(XEN_TO_C_cairo_scaled_font_t_(scaled_font), XEN_TO_C_cairo_matrix_t_(scale_matrix));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_cairo_toy_font_face_create(XEN family, XEN slant, XEN weight)
+{
+  #define H_cairo_toy_font_face_create "cairo_font_face_t* cairo_toy_font_face_create(char* family, cairo_font_slant_t slant, \
+cairo_font_weight_t weight)"
+  XEN_ASSERT_TYPE(XEN_char__P(family), family, 1, "cairo_toy_font_face_create", "char*");
+  XEN_ASSERT_TYPE(XEN_cairo_font_slant_t_P(slant), slant, 2, "cairo_toy_font_face_create", "cairo_font_slant_t");
+  XEN_ASSERT_TYPE(XEN_cairo_font_weight_t_P(weight), weight, 3, "cairo_toy_font_face_create", "cairo_font_weight_t");
+  return(C_TO_XEN_cairo_font_face_t_(cairo_toy_font_face_create((const char*)XEN_TO_C_char_(family), XEN_TO_C_cairo_font_slant_t(slant), 
+                                                                XEN_TO_C_cairo_font_weight_t(weight))));
+}
+
+static XEN gxg_cairo_toy_font_face_get_family(XEN font_face)
+{
+  #define H_cairo_toy_font_face_get_family "char* cairo_toy_font_face_get_family(cairo_font_face_t* font_face)"
+  XEN_ASSERT_TYPE(XEN_cairo_font_face_t__P(font_face), font_face, 1, "cairo_toy_font_face_get_family", "cairo_font_face_t*");
+  return(C_TO_XEN_char_(cairo_toy_font_face_get_family(XEN_TO_C_cairo_font_face_t_(font_face))));
+}
+
+static XEN gxg_cairo_toy_font_face_get_slant(XEN font_face)
+{
+  #define H_cairo_toy_font_face_get_slant "cairo_font_slant_t cairo_toy_font_face_get_slant(cairo_font_face_t* font_face)"
+  XEN_ASSERT_TYPE(XEN_cairo_font_face_t__P(font_face), font_face, 1, "cairo_toy_font_face_get_slant", "cairo_font_face_t*");
+  return(C_TO_XEN_cairo_font_slant_t(cairo_toy_font_face_get_slant(XEN_TO_C_cairo_font_face_t_(font_face))));
+}
+
+static XEN gxg_cairo_toy_font_face_get_weight(XEN font_face)
+{
+  #define H_cairo_toy_font_face_get_weight "cairo_font_weight_t cairo_toy_font_face_get_weight(cairo_font_face_t* font_face)"
+  XEN_ASSERT_TYPE(XEN_cairo_font_face_t__P(font_face), font_face, 1, "cairo_toy_font_face_get_weight", "cairo_font_face_t*");
+  return(C_TO_XEN_cairo_font_weight_t(cairo_toy_font_face_get_weight(XEN_TO_C_cairo_font_face_t_(font_face))));
+}
+
+static XEN gxg_cairo_user_font_face_create(void)
+{
+  #define H_cairo_user_font_face_create "cairo_font_face_t* cairo_user_font_face_create( void)"
+  return(C_TO_XEN_cairo_font_face_t_(cairo_user_font_face_create()));
+}
+
+static XEN gxg_cairo_surface_get_fallback_resolution(XEN surface, XEN ignore_x_pixels_per_inch, XEN ignore_y_pixels_per_inch)
+{
+  #define H_cairo_surface_get_fallback_resolution "void cairo_surface_get_fallback_resolution(cairo_surface_t* surface, \
+double* [x_pixels_per_inch], double* [y_pixels_per_inch])"
+  double ref_x_pixels_per_inch;
+  double ref_y_pixels_per_inch;
+  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(surface), surface, 1, "cairo_surface_get_fallback_resolution", "cairo_surface_t*");
+  cairo_surface_get_fallback_resolution(XEN_TO_C_cairo_surface_t_(surface), &ref_x_pixels_per_inch, &ref_y_pixels_per_inch);
+  return(XEN_LIST_2(C_TO_XEN_double(ref_x_pixels_per_inch), C_TO_XEN_double(ref_y_pixels_per_inch)));
+}
+
+static XEN gxg_cairo_surface_has_show_text_glyphs(XEN surface)
+{
+  #define H_cairo_surface_has_show_text_glyphs "cairo_bool_t cairo_surface_has_show_text_glyphs(cairo_surface_t* surface)"
+  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(surface), surface, 1, "cairo_surface_has_show_text_glyphs", "cairo_surface_t*");
+  return(C_TO_XEN_cairo_bool_t(cairo_surface_has_show_text_glyphs(XEN_TO_C_cairo_surface_t_(surface))));
+}
+
+#endif
+
+#if HAVE_CAIRO_REGION_XOR
+static XEN gxg_cairo_in_clip(XEN cr, XEN x, XEN y)
+{
+  #define H_cairo_in_clip "cairo_bool_t cairo_in_clip(cairo_t* cr, double x, double y)"
+  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "cairo_in_clip", "cairo_t*");
+  XEN_ASSERT_TYPE(XEN_double_P(x), x, 2, "cairo_in_clip", "double");
+  XEN_ASSERT_TYPE(XEN_double_P(y), y, 3, "cairo_in_clip", "double");
+  return(C_TO_XEN_cairo_bool_t(cairo_in_clip(XEN_TO_C_cairo_t_(cr), XEN_TO_C_double(x), XEN_TO_C_double(y))));
+}
+
+static XEN gxg_cairo_device_reference(XEN device)
+{
+  #define H_cairo_device_reference "cairo_device_t* cairo_device_reference(cairo_device_t* device)"
+  XEN_ASSERT_TYPE(XEN_cairo_device_t__P(device), device, 1, "cairo_device_reference", "cairo_device_t*");
+  return(C_TO_XEN_cairo_device_t_(cairo_device_reference(XEN_TO_C_cairo_device_t_(device))));
+}
+
+static XEN gxg_cairo_device_get_type(XEN device)
+{
+  #define H_cairo_device_get_type "cairo_device_type_t cairo_device_get_type(cairo_device_t* device)"
+  XEN_ASSERT_TYPE(XEN_cairo_device_t__P(device), device, 1, "cairo_device_get_type", "cairo_device_t*");
+  return(C_TO_XEN_cairo_device_type_t(cairo_device_get_type(XEN_TO_C_cairo_device_t_(device))));
+}
+
+static XEN gxg_cairo_device_status(XEN device)
+{
+  #define H_cairo_device_status "cairo_status_t cairo_device_status(cairo_device_t* device)"
+  XEN_ASSERT_TYPE(XEN_cairo_device_t__P(device), device, 1, "cairo_device_status", "cairo_device_t*");
+  return(C_TO_XEN_cairo_status_t(cairo_device_status(XEN_TO_C_cairo_device_t_(device))));
+}
+
+static XEN gxg_cairo_device_acquire(XEN device)
+{
+  #define H_cairo_device_acquire "cairo_status_t cairo_device_acquire(cairo_device_t* device)"
+  XEN_ASSERT_TYPE(XEN_cairo_device_t__P(device), device, 1, "cairo_device_acquire", "cairo_device_t*");
+  return(C_TO_XEN_cairo_status_t(cairo_device_acquire(XEN_TO_C_cairo_device_t_(device))));
+}
+
+static XEN gxg_cairo_device_release(XEN device)
+{
+  #define H_cairo_device_release "void cairo_device_release(cairo_device_t* device)"
+  XEN_ASSERT_TYPE(XEN_cairo_device_t__P(device), device, 1, "cairo_device_release", "cairo_device_t*");
+  cairo_device_release(XEN_TO_C_cairo_device_t_(device));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_cairo_device_flush(XEN device)
+{
+  #define H_cairo_device_flush "void cairo_device_flush(cairo_device_t* device)"
+  XEN_ASSERT_TYPE(XEN_cairo_device_t__P(device), device, 1, "cairo_device_flush", "cairo_device_t*");
+  cairo_device_flush(XEN_TO_C_cairo_device_t_(device));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_cairo_device_finish(XEN device)
+{
+  #define H_cairo_device_finish "void cairo_device_finish(cairo_device_t* device)"
+  XEN_ASSERT_TYPE(XEN_cairo_device_t__P(device), device, 1, "cairo_device_finish", "cairo_device_t*");
+  cairo_device_finish(XEN_TO_C_cairo_device_t_(device));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_cairo_device_destroy(XEN device)
+{
+  #define H_cairo_device_destroy "void cairo_device_destroy(cairo_device_t* device)"
+  XEN_ASSERT_TYPE(XEN_cairo_device_t__P(device), device, 1, "cairo_device_destroy", "cairo_device_t*");
+  cairo_device_destroy(XEN_TO_C_cairo_device_t_(device));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_cairo_device_get_reference_count(XEN device)
+{
+  #define H_cairo_device_get_reference_count "guint cairo_device_get_reference_count(cairo_device_t* device)"
+  XEN_ASSERT_TYPE(XEN_cairo_device_t__P(device), device, 1, "cairo_device_get_reference_count", "cairo_device_t*");
+  return(C_TO_XEN_guint(cairo_device_get_reference_count(XEN_TO_C_cairo_device_t_(device))));
+}
+
+static XEN gxg_cairo_device_get_user_data(XEN device, XEN key)
+{
+  #define H_cairo_device_get_user_data "void* cairo_device_get_user_data(cairo_device_t* device, cairo_user_data_key_t* key)"
+  XEN_ASSERT_TYPE(XEN_cairo_device_t__P(device), device, 1, "cairo_device_get_user_data", "cairo_device_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_user_data_key_t__P(key), key, 2, "cairo_device_get_user_data", "cairo_user_data_key_t*");
+  return(C_TO_XEN_void_(cairo_device_get_user_data(XEN_TO_C_cairo_device_t_(device), XEN_TO_C_cairo_user_data_key_t_(key))));
+}
+
+static XEN gxg_cairo_device_set_user_data(XEN device, XEN key, XEN user_data, XEN destroy)
+{
+  #define H_cairo_device_set_user_data "cairo_status_t cairo_device_set_user_data(cairo_device_t* device, \
+cairo_user_data_key_t* key, void* user_data, cairo_destroy_func_t destroy)"
+  XEN_ASSERT_TYPE(XEN_cairo_device_t__P(device), device, 1, "cairo_device_set_user_data", "cairo_device_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_user_data_key_t__P(key), key, 2, "cairo_device_set_user_data", "cairo_user_data_key_t*");
+  XEN_ASSERT_TYPE(XEN_void__P(user_data), user_data, 3, "cairo_device_set_user_data", "void*");
+  XEN_ASSERT_TYPE(XEN_cairo_destroy_func_t_P(destroy), destroy, 4, "cairo_device_set_user_data", "cairo_destroy_func_t");
+  return(C_TO_XEN_cairo_status_t(cairo_device_set_user_data(XEN_TO_C_cairo_device_t_(device), XEN_TO_C_cairo_user_data_key_t_(key), 
+                                                            XEN_TO_C_void_(user_data), XEN_TO_C_cairo_destroy_func_t(destroy))));
+}
+
+static XEN gxg_cairo_surface_create_for_rectangle(XEN target, XEN x, XEN y, XEN width, XEN height)
+{
+  #define H_cairo_surface_create_for_rectangle "cairo_surface_t* cairo_surface_create_for_rectangle(cairo_surface_t* target, \
+double x, double y, double width, double height)"
+  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(target), target, 1, "cairo_surface_create_for_rectangle", "cairo_surface_t*");
+  XEN_ASSERT_TYPE(XEN_double_P(x), x, 2, "cairo_surface_create_for_rectangle", "double");
+  XEN_ASSERT_TYPE(XEN_double_P(y), y, 3, "cairo_surface_create_for_rectangle", "double");
+  XEN_ASSERT_TYPE(XEN_double_P(width), width, 4, "cairo_surface_create_for_rectangle", "double");
+  XEN_ASSERT_TYPE(XEN_double_P(height), height, 5, "cairo_surface_create_for_rectangle", "double");
+  return(C_TO_XEN_cairo_surface_t_(cairo_surface_create_for_rectangle(XEN_TO_C_cairo_surface_t_(target), XEN_TO_C_double(x), 
+                                                                      XEN_TO_C_double(y), XEN_TO_C_double(width), XEN_TO_C_double(height))));
+}
+
+static XEN gxg_cairo_surface_get_device(XEN surface)
+{
+  #define H_cairo_surface_get_device "cairo_device_t* cairo_surface_get_device(cairo_surface_t* surface)"
+  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(surface), surface, 1, "cairo_surface_get_device", "cairo_surface_t*");
+  return(C_TO_XEN_cairo_device_t_(cairo_surface_get_device(XEN_TO_C_cairo_surface_t_(surface))));
+}
+
+static XEN gxg_cairo_surface_get_mime_data(XEN surface, XEN mime_type, XEN ignore_data, XEN ignore_length)
+{
+  #define H_cairo_surface_get_mime_data "void cairo_surface_get_mime_data(cairo_surface_t* surface, char* mime_type, \
+guchar** [data], gulong* [length])"
+  guchar* ref_data = NULL;
+  gulong ref_length;
+  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(surface), surface, 1, "cairo_surface_get_mime_data", "cairo_surface_t*");
+  XEN_ASSERT_TYPE(XEN_char__P(mime_type), mime_type, 2, "cairo_surface_get_mime_data", "char*");
+  cairo_surface_get_mime_data(XEN_TO_C_cairo_surface_t_(surface), (const char*)XEN_TO_C_char_(mime_type), &ref_data, &ref_length);
+  return(XEN_LIST_2(C_TO_XEN_guchar_(ref_data), C_TO_XEN_gulong(ref_length)));
+}
+
+static XEN gxg_cairo_surface_set_mime_data(XEN surface, XEN mime_type, XEN data, XEN length, XEN destroy, XEN closure)
+{
+  #define H_cairo_surface_set_mime_data "cairo_status_t cairo_surface_set_mime_data(cairo_surface_t* surface, \
+char* mime_type, guchar* data, gulong length, cairo_destroy_func_t destroy, void* closure)"
+  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(surface), surface, 1, "cairo_surface_set_mime_data", "cairo_surface_t*");
+  XEN_ASSERT_TYPE(XEN_char__P(mime_type), mime_type, 2, "cairo_surface_set_mime_data", "char*");
+  XEN_ASSERT_TYPE(XEN_guchar__P(data), data, 3, "cairo_surface_set_mime_data", "guchar*");
+  XEN_ASSERT_TYPE(XEN_gulong_P(length), length, 4, "cairo_surface_set_mime_data", "gulong");
+  XEN_ASSERT_TYPE(XEN_cairo_destroy_func_t_P(destroy), destroy, 5, "cairo_surface_set_mime_data", "cairo_destroy_func_t");
+  XEN_ASSERT_TYPE(XEN_void__P(closure), closure, 6, "cairo_surface_set_mime_data", "void*");
+  return(C_TO_XEN_cairo_status_t(cairo_surface_set_mime_data(XEN_TO_C_cairo_surface_t_(surface), (const char*)XEN_TO_C_char_(mime_type), 
+                                                             XEN_TO_C_guchar_(data), XEN_TO_C_gulong(length), XEN_TO_C_cairo_destroy_func_t(destroy), 
+                                                             XEN_TO_C_void_(closure))));
+}
+
+static XEN gxg_cairo_recording_surface_create(XEN content, XEN extents)
+{
+  #define H_cairo_recording_surface_create "cairo_surface_t* cairo_recording_surface_create(cairo_content_t content, \
+cairo_rectangle_t* extents)"
+  XEN_ASSERT_TYPE(XEN_cairo_content_t_P(content), content, 1, "cairo_recording_surface_create", "cairo_content_t");
+  XEN_ASSERT_TYPE(XEN_cairo_rectangle_t__P(extents), extents, 2, "cairo_recording_surface_create", "cairo_rectangle_t*");
+  return(C_TO_XEN_cairo_surface_t_(cairo_recording_surface_create(XEN_TO_C_cairo_content_t(content), XEN_TO_C_cairo_rectangle_t_(extents))));
+}
+
+static XEN gxg_cairo_recording_surface_ink_extents(XEN surface, XEN x0, XEN y0, XEN width, XEN height)
+{
+  #define H_cairo_recording_surface_ink_extents "void cairo_recording_surface_ink_extents(cairo_surface_t* surface, \
+double* x0, double* y0, double* width, double* height)"
+  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(surface), surface, 1, "cairo_recording_surface_ink_extents", "cairo_surface_t*");
+  XEN_ASSERT_TYPE(XEN_double__P(x0), x0, 2, "cairo_recording_surface_ink_extents", "double*");
+  XEN_ASSERT_TYPE(XEN_double__P(y0), y0, 3, "cairo_recording_surface_ink_extents", "double*");
+  XEN_ASSERT_TYPE(XEN_double__P(width), width, 4, "cairo_recording_surface_ink_extents", "double*");
+  XEN_ASSERT_TYPE(XEN_double__P(height), height, 5, "cairo_recording_surface_ink_extents", "double*");
+  cairo_recording_surface_ink_extents(XEN_TO_C_cairo_surface_t_(surface), XEN_TO_C_double_(x0), XEN_TO_C_double_(y0), XEN_TO_C_double_(width), 
+                                      XEN_TO_C_double_(height));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_cairo_tee_surface_create(XEN master)
+{
+  #define H_cairo_tee_surface_create "cairo_surface_t* cairo_tee_surface_create(cairo_surface_t* master)"
+  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(master), master, 1, "cairo_tee_surface_create", "cairo_surface_t*");
+  return(C_TO_XEN_cairo_surface_t_(cairo_tee_surface_create(XEN_TO_C_cairo_surface_t_(master))));
+}
+
+static XEN gxg_cairo_tee_surface_add(XEN surface, XEN target)
+{
+  #define H_cairo_tee_surface_add "void cairo_tee_surface_add(cairo_surface_t* surface, cairo_surface_t* target)"
+  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(surface), surface, 1, "cairo_tee_surface_add", "cairo_surface_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(target), target, 2, "cairo_tee_surface_add", "cairo_surface_t*");
+  cairo_tee_surface_add(XEN_TO_C_cairo_surface_t_(surface), XEN_TO_C_cairo_surface_t_(target));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_cairo_tee_surface_remove(XEN surface, XEN target)
+{
+  #define H_cairo_tee_surface_remove "void cairo_tee_surface_remove(cairo_surface_t* surface, cairo_surface_t* target)"
+  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(surface), surface, 1, "cairo_tee_surface_remove", "cairo_surface_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(target), target, 2, "cairo_tee_surface_remove", "cairo_surface_t*");
+  cairo_tee_surface_remove(XEN_TO_C_cairo_surface_t_(surface), XEN_TO_C_cairo_surface_t_(target));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_cairo_tee_surface_index(XEN surface, XEN index)
+{
+  #define H_cairo_tee_surface_index "cairo_surface_t* cairo_tee_surface_index(cairo_surface_t* surface, \
+int index)"
+  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(surface), surface, 1, "cairo_tee_surface_index", "cairo_surface_t*");
+  XEN_ASSERT_TYPE(XEN_int_P(index), index, 2, "cairo_tee_surface_index", "int");
+  return(C_TO_XEN_cairo_surface_t_(cairo_tee_surface_index(XEN_TO_C_cairo_surface_t_(surface), XEN_TO_C_int(index))));
+}
+
+static XEN gxg_cairo_region_create(void)
+{
+  #define H_cairo_region_create "cairo_region_t* cairo_region_create( void)"
+  return(C_TO_XEN_cairo_region_t_(cairo_region_create()));
+}
+
+static XEN gxg_cairo_region_create_rectangle(XEN rectangle)
+{
+  #define H_cairo_region_create_rectangle "cairo_region_t* cairo_region_create_rectangle(cairo_rectangle_int_t* rectangle)"
+  XEN_ASSERT_TYPE(XEN_cairo_rectangle_int_t__P(rectangle), rectangle, 1, "cairo_region_create_rectangle", "cairo_rectangle_int_t*");
+  return(C_TO_XEN_cairo_region_t_(cairo_region_create_rectangle(XEN_TO_C_cairo_rectangle_int_t_(rectangle))));
+}
+
+static XEN gxg_cairo_region_create_rectangles(XEN rects, XEN count)
+{
+  #define H_cairo_region_create_rectangles "cairo_region_t* cairo_region_create_rectangles(cairo_rectangle_int_t* rects, \
+int count)"
+  XEN_ASSERT_TYPE(XEN_cairo_rectangle_int_t__P(rects), rects, 1, "cairo_region_create_rectangles", "cairo_rectangle_int_t*");
+  XEN_ASSERT_TYPE(XEN_int_P(count), count, 2, "cairo_region_create_rectangles", "int");
+  return(C_TO_XEN_cairo_region_t_(cairo_region_create_rectangles(XEN_TO_C_cairo_rectangle_int_t_(rects), XEN_TO_C_int(count))));
+}
+
+static XEN gxg_cairo_region_copy(XEN original)
+{
+  #define H_cairo_region_copy "cairo_region_t* cairo_region_copy(cairo_region_t* original)"
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(original), original, 1, "cairo_region_copy", "cairo_region_t*");
+  return(C_TO_XEN_cairo_region_t_(cairo_region_copy(XEN_TO_C_cairo_region_t_(original))));
+}
+
+static XEN gxg_cairo_region_reference(XEN region)
+{
+  #define H_cairo_region_reference "cairo_region_t* cairo_region_reference(cairo_region_t* region)"
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(region), region, 1, "cairo_region_reference", "cairo_region_t*");
+  return(C_TO_XEN_cairo_region_t_(cairo_region_reference(XEN_TO_C_cairo_region_t_(region))));
+}
+
+static XEN gxg_cairo_region_destroy(XEN region)
+{
+  #define H_cairo_region_destroy "void cairo_region_destroy(cairo_region_t* region)"
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(region), region, 1, "cairo_region_destroy", "cairo_region_t*");
+  cairo_region_destroy(XEN_TO_C_cairo_region_t_(region));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_cairo_region_equal(XEN a, XEN b)
+{
+  #define H_cairo_region_equal "cairo_bool_t cairo_region_equal(cairo_region_t* a, cairo_region_t* b)"
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(a), a, 1, "cairo_region_equal", "cairo_region_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(b), b, 2, "cairo_region_equal", "cairo_region_t*");
+  return(C_TO_XEN_cairo_bool_t(cairo_region_equal(XEN_TO_C_cairo_region_t_(a), XEN_TO_C_cairo_region_t_(b))));
+}
+
+static XEN gxg_cairo_region_status(XEN region)
+{
+  #define H_cairo_region_status "cairo_status_t cairo_region_status(cairo_region_t* region)"
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(region), region, 1, "cairo_region_status", "cairo_region_t*");
+  return(C_TO_XEN_cairo_status_t(cairo_region_status(XEN_TO_C_cairo_region_t_(region))));
+}
+
+static XEN gxg_cairo_region_get_extents(XEN region, XEN extents)
+{
+  #define H_cairo_region_get_extents "void cairo_region_get_extents(cairo_region_t* region, cairo_rectangle_int_t* extents)"
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(region), region, 1, "cairo_region_get_extents", "cairo_region_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_rectangle_int_t__P(extents), extents, 2, "cairo_region_get_extents", "cairo_rectangle_int_t*");
+  cairo_region_get_extents(XEN_TO_C_cairo_region_t_(region), XEN_TO_C_cairo_rectangle_int_t_(extents));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_cairo_region_num_rectangles(XEN region)
+{
+  #define H_cairo_region_num_rectangles "int cairo_region_num_rectangles(cairo_region_t* region)"
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(region), region, 1, "cairo_region_num_rectangles", "cairo_region_t*");
+  return(C_TO_XEN_int(cairo_region_num_rectangles(XEN_TO_C_cairo_region_t_(region))));
+}
+
+static XEN gxg_cairo_region_get_rectangle(XEN region, XEN nth, XEN rectangle)
+{
+  #define H_cairo_region_get_rectangle "void cairo_region_get_rectangle(cairo_region_t* region, int nth, \
+cairo_rectangle_int_t* rectangle)"
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(region), region, 1, "cairo_region_get_rectangle", "cairo_region_t*");
+  XEN_ASSERT_TYPE(XEN_int_P(nth), nth, 2, "cairo_region_get_rectangle", "int");
+  XEN_ASSERT_TYPE(XEN_cairo_rectangle_int_t__P(rectangle), rectangle, 3, "cairo_region_get_rectangle", "cairo_rectangle_int_t*");
+  cairo_region_get_rectangle(XEN_TO_C_cairo_region_t_(region), XEN_TO_C_int(nth), XEN_TO_C_cairo_rectangle_int_t_(rectangle));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_cairo_region_is_empty(XEN region)
+{
+  #define H_cairo_region_is_empty "cairo_bool_t cairo_region_is_empty(cairo_region_t* region)"
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(region), region, 1, "cairo_region_is_empty", "cairo_region_t*");
+  return(C_TO_XEN_cairo_bool_t(cairo_region_is_empty(XEN_TO_C_cairo_region_t_(region))));
+}
+
+static XEN gxg_cairo_region_contains_rectangle(XEN region, XEN rectangle)
+{
+  #define H_cairo_region_contains_rectangle "cairo_region_overlap_t cairo_region_contains_rectangle(cairo_region_t* region, \
+cairo_rectangle_int_t* rectangle)"
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(region), region, 1, "cairo_region_contains_rectangle", "cairo_region_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_rectangle_int_t__P(rectangle), rectangle, 2, "cairo_region_contains_rectangle", "cairo_rectangle_int_t*");
+  return(C_TO_XEN_cairo_region_overlap_t(cairo_region_contains_rectangle(XEN_TO_C_cairo_region_t_(region), XEN_TO_C_cairo_rectangle_int_t_(rectangle))));
+}
+
+static XEN gxg_cairo_region_contains_point(XEN region, XEN x, XEN y)
+{
+  #define H_cairo_region_contains_point "cairo_bool_t cairo_region_contains_point(cairo_region_t* region, \
+int x, int y)"
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(region), region, 1, "cairo_region_contains_point", "cairo_region_t*");
+  XEN_ASSERT_TYPE(XEN_int_P(x), x, 2, "cairo_region_contains_point", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(y), y, 3, "cairo_region_contains_point", "int");
+  return(C_TO_XEN_cairo_bool_t(cairo_region_contains_point(XEN_TO_C_cairo_region_t_(region), XEN_TO_C_int(x), XEN_TO_C_int(y))));
+}
+
+static XEN gxg_cairo_region_translate(XEN region, XEN dx, XEN dy)
+{
+  #define H_cairo_region_translate "void cairo_region_translate(cairo_region_t* region, int dx, int dy)"
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(region), region, 1, "cairo_region_translate", "cairo_region_t*");
+  XEN_ASSERT_TYPE(XEN_int_P(dx), dx, 2, "cairo_region_translate", "int");
+  XEN_ASSERT_TYPE(XEN_int_P(dy), dy, 3, "cairo_region_translate", "int");
+  cairo_region_translate(XEN_TO_C_cairo_region_t_(region), XEN_TO_C_int(dx), XEN_TO_C_int(dy));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_cairo_region_subtract(XEN dst, XEN other)
+{
+  #define H_cairo_region_subtract "cairo_status_t cairo_region_subtract(cairo_region_t* dst, cairo_region_t* other)"
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(dst), dst, 1, "cairo_region_subtract", "cairo_region_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(other), other, 2, "cairo_region_subtract", "cairo_region_t*");
+  return(C_TO_XEN_cairo_status_t(cairo_region_subtract(XEN_TO_C_cairo_region_t_(dst), XEN_TO_C_cairo_region_t_(other))));
+}
+
+static XEN gxg_cairo_region_subtract_rectangle(XEN dst, XEN rectangle)
+{
+  #define H_cairo_region_subtract_rectangle "cairo_status_t cairo_region_subtract_rectangle(cairo_region_t* dst, \
+cairo_rectangle_int_t* rectangle)"
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(dst), dst, 1, "cairo_region_subtract_rectangle", "cairo_region_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_rectangle_int_t__P(rectangle), rectangle, 2, "cairo_region_subtract_rectangle", "cairo_rectangle_int_t*");
+  return(C_TO_XEN_cairo_status_t(cairo_region_subtract_rectangle(XEN_TO_C_cairo_region_t_(dst), XEN_TO_C_cairo_rectangle_int_t_(rectangle))));
+}
+
+static XEN gxg_cairo_region_intersect(XEN dst, XEN other)
+{
+  #define H_cairo_region_intersect "cairo_status_t cairo_region_intersect(cairo_region_t* dst, cairo_region_t* other)"
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(dst), dst, 1, "cairo_region_intersect", "cairo_region_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(other), other, 2, "cairo_region_intersect", "cairo_region_t*");
+  return(C_TO_XEN_cairo_status_t(cairo_region_intersect(XEN_TO_C_cairo_region_t_(dst), XEN_TO_C_cairo_region_t_(other))));
+}
+
+static XEN gxg_cairo_region_intersect_rectangle(XEN dst, XEN rectangle)
+{
+  #define H_cairo_region_intersect_rectangle "cairo_status_t cairo_region_intersect_rectangle(cairo_region_t* dst, \
+cairo_rectangle_int_t* rectangle)"
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(dst), dst, 1, "cairo_region_intersect_rectangle", "cairo_region_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_rectangle_int_t__P(rectangle), rectangle, 2, "cairo_region_intersect_rectangle", "cairo_rectangle_int_t*");
+  return(C_TO_XEN_cairo_status_t(cairo_region_intersect_rectangle(XEN_TO_C_cairo_region_t_(dst), XEN_TO_C_cairo_rectangle_int_t_(rectangle))));
+}
+
+static XEN gxg_cairo_region_union(XEN dst, XEN other)
+{
+  #define H_cairo_region_union "cairo_status_t cairo_region_union(cairo_region_t* dst, cairo_region_t* other)"
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(dst), dst, 1, "cairo_region_union", "cairo_region_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(other), other, 2, "cairo_region_union", "cairo_region_t*");
+  return(C_TO_XEN_cairo_status_t(cairo_region_union(XEN_TO_C_cairo_region_t_(dst), XEN_TO_C_cairo_region_t_(other))));
+}
+
+static XEN gxg_cairo_region_union_rectangle(XEN dst, XEN rectangle)
+{
+  #define H_cairo_region_union_rectangle "cairo_status_t cairo_region_union_rectangle(cairo_region_t* dst, \
+cairo_rectangle_int_t* rectangle)"
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(dst), dst, 1, "cairo_region_union_rectangle", "cairo_region_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_rectangle_int_t__P(rectangle), rectangle, 2, "cairo_region_union_rectangle", "cairo_rectangle_int_t*");
+  return(C_TO_XEN_cairo_status_t(cairo_region_union_rectangle(XEN_TO_C_cairo_region_t_(dst), XEN_TO_C_cairo_rectangle_int_t_(rectangle))));
+}
+
+static XEN gxg_cairo_region_xor(XEN dst, XEN other)
+{
+  #define H_cairo_region_xor "cairo_status_t cairo_region_xor(cairo_region_t* dst, cairo_region_t* other)"
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(dst), dst, 1, "cairo_region_xor", "cairo_region_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(other), other, 2, "cairo_region_xor", "cairo_region_t*");
+  return(C_TO_XEN_cairo_status_t(cairo_region_xor(XEN_TO_C_cairo_region_t_(dst), XEN_TO_C_cairo_region_t_(other))));
+}
+
+static XEN gxg_cairo_region_xor_rectangle(XEN dst, XEN rectangle)
+{
+  #define H_cairo_region_xor_rectangle "cairo_status_t cairo_region_xor_rectangle(cairo_region_t* dst, \
+cairo_rectangle_int_t* rectangle)"
+  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(dst), dst, 1, "cairo_region_xor_rectangle", "cairo_region_t*");
+  XEN_ASSERT_TYPE(XEN_cairo_rectangle_int_t__P(rectangle), rectangle, 2, "cairo_region_xor_rectangle", "cairo_rectangle_int_t*");
+  return(C_TO_XEN_cairo_status_t(cairo_region_xor_rectangle(XEN_TO_C_cairo_region_t_(dst), XEN_TO_C_cairo_rectangle_int_t_(rectangle))));
+}
+
+#endif
 
 #define WRAPPED_OBJECT_P(Obj) (XEN_LIST_P(Obj) && (XEN_LIST_LENGTH(Obj) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Obj))))
 
@@ -37275,6 +38173,45 @@ XEN_NARGIFY_2(gxg_gtk_widget_get_device_events_w, gxg_gtk_widget_get_device_even
 XEN_NARGIFY_2(gxg_gtk_window_group_get_current_device_grab_w, gxg_gtk_window_group_get_current_device_grab)
 #endif
 
+#if HAVE_GTK_EXPANDER_GET_LABEL_FILL
+XEN_NARGIFY_2(gxg_gtk_icon_view_get_item_row_w, gxg_gtk_icon_view_get_item_row)
+XEN_NARGIFY_2(gxg_gtk_icon_view_get_item_column_w, gxg_gtk_icon_view_get_item_column)
+XEN_NARGIFY_2(gxg_gtk_statusbar_remove_all_w, gxg_gtk_statusbar_remove_all)
+XEN_NARGIFY_1(gxg_gtk_window_has_group_w, gxg_gtk_window_has_group)
+XEN_NARGIFY_3(gxg_gtk_calendar_select_month_w, gxg_gtk_calendar_select_month)
+XEN_NARGIFY_2(gxg_gtk_calendar_mark_day_w, gxg_gtk_calendar_mark_day)
+XEN_NARGIFY_2(gxg_gtk_calendar_unmark_day_w, gxg_gtk_calendar_unmark_day)
+XEN_NARGIFY_1(gxg_gdk_drag_context_get_source_window_w, gxg_gdk_drag_context_get_source_window)
+XEN_NARGIFY_1(gxg_gtk_viewport_get_view_window_w, gxg_gtk_viewport_get_view_window)
+XEN_NARGIFY_2(gxg_gtk_accessible_set_widget_w, gxg_gtk_accessible_set_widget)
+XEN_NARGIFY_1(gxg_gtk_button_get_event_window_w, gxg_gtk_button_get_event_window)
+XEN_NARGIFY_1(gxg_gtk_font_selection_dialog_get_font_selection_w, gxg_gtk_font_selection_dialog_get_font_selection)
+XEN_NARGIFY_1(gxg_gtk_message_dialog_get_message_area_w, gxg_gtk_message_dialog_get_message_area)
+XEN_NARGIFY_3(gxg_gtk_table_get_size_w, gxg_gtk_table_get_size)
+XEN_NARGIFY_1(gxg_gtk_selection_data_get_length_w, gxg_gtk_selection_data_get_length)
+XEN_NARGIFY_1(gxg_gdk_drawable_get_clip_region_w, gxg_gdk_drawable_get_clip_region)
+XEN_NARGIFY_1(gxg_gdk_drawable_get_visible_region_w, gxg_gdk_drawable_get_visible_region)
+XEN_NARGIFY_5(gxg_gdk_pango_layout_line_get_clip_region_w, gxg_gdk_pango_layout_line_get_clip_region)
+XEN_NARGIFY_5(gxg_gdk_pango_layout_get_clip_region_w, gxg_gdk_pango_layout_get_clip_region)
+XEN_NARGIFY_4(gxg_gdk_window_shape_combine_region_w, gxg_gdk_window_shape_combine_region)
+XEN_NARGIFY_3(gxg_gdk_window_invalidate_region_w, gxg_gdk_window_invalidate_region)
+XEN_ARGIFY_4(gxg_gdk_window_invalidate_maybe_recurse_w, gxg_gdk_window_invalidate_maybe_recurse)
+XEN_NARGIFY_1(gxg_gdk_window_get_update_area_w, gxg_gdk_window_get_update_area)
+XEN_NARGIFY_2(gxg_gdk_window_begin_paint_region_w, gxg_gdk_window_begin_paint_region)
+XEN_NARGIFY_2(gxg_gtk_widget_region_intersect_w, gxg_gtk_widget_region_intersect)
+XEN_NARGIFY_4(gxg_gdk_window_move_region_w, gxg_gdk_window_move_region)
+XEN_NARGIFY_1(gxg_gdk_keymap_get_num_lock_state_w, gxg_gdk_keymap_get_num_lock_state)
+XEN_NARGIFY_1(gxg_gdk_window_has_native_w, gxg_gdk_window_has_native)
+XEN_NARGIFY_1(gxg_gdk_cursor_get_cursor_type_w, gxg_gdk_cursor_get_cursor_type)
+XEN_NARGIFY_1(gxg_gdk_display_is_closed_w, gxg_gdk_display_is_closed)
+XEN_NARGIFY_1(gxg_gdk_window_get_background_pattern_w, gxg_gdk_window_get_background_pattern)
+XEN_NARGIFY_4(gxg_gdk_window_create_similar_surface_w, gxg_gdk_window_create_similar_surface)
+XEN_NARGIFY_2(gxg_gtk_expander_set_label_fill_w, gxg_gtk_expander_set_label_fill)
+XEN_NARGIFY_1(gxg_gtk_expander_get_label_fill_w, gxg_gtk_expander_get_label_fill)
+XEN_NARGIFY_1(gxg_gtk_notebook_get_tab_hborder_w, gxg_gtk_notebook_get_tab_hborder)
+XEN_NARGIFY_1(gxg_gtk_notebook_get_tab_vborder_w, gxg_gtk_notebook_get_tab_vborder)
+#endif
+
 XEN_NARGIFY_1(gxg_cairo_create_w, gxg_cairo_create)
 XEN_NARGIFY_0(gxg_cairo_version_w, gxg_cairo_version)
 XEN_NARGIFY_0(gxg_cairo_version_string_w, gxg_cairo_version_string)
@@ -37486,6 +38423,71 @@ XEN_NARGIFY_1(gxg_cairo_surface_show_page_w, gxg_cairo_surface_show_page)
 XEN_NARGIFY_2(gxg_cairo_format_stride_for_width_w, gxg_cairo_format_stride_for_width)
 XEN_NARGIFY_1(gxg_cairo_image_surface_create_from_png_w, gxg_cairo_image_surface_create_from_png)
 XEN_NARGIFY_2(gxg_cairo_surface_write_to_png_w, gxg_cairo_surface_write_to_png)
+#if HAVE_CAIRO_GLYPH_ALLOCATE
+XEN_NARGIFY_1(gxg_cairo_glyph_allocate_w, gxg_cairo_glyph_allocate)
+XEN_NARGIFY_1(gxg_cairo_glyph_free_w, gxg_cairo_glyph_free)
+XEN_NARGIFY_1(gxg_cairo_text_cluster_allocate_w, gxg_cairo_text_cluster_allocate)
+XEN_NARGIFY_1(gxg_cairo_text_cluster_free_w, gxg_cairo_text_cluster_free)
+XEN_NARGIFY_8(gxg_cairo_show_text_glyphs_w, gxg_cairo_show_text_glyphs)
+XEN_VARGIFY(gxg_cairo_scaled_font_text_to_glyphs_w, gxg_cairo_scaled_font_text_to_glyphs)
+XEN_NARGIFY_2(gxg_cairo_scaled_font_get_scale_matrix_w, gxg_cairo_scaled_font_get_scale_matrix)
+XEN_NARGIFY_3(gxg_cairo_toy_font_face_create_w, gxg_cairo_toy_font_face_create)
+XEN_NARGIFY_1(gxg_cairo_toy_font_face_get_family_w, gxg_cairo_toy_font_face_get_family)
+XEN_NARGIFY_1(gxg_cairo_toy_font_face_get_slant_w, gxg_cairo_toy_font_face_get_slant)
+XEN_NARGIFY_1(gxg_cairo_toy_font_face_get_weight_w, gxg_cairo_toy_font_face_get_weight)
+XEN_NARGIFY_0(gxg_cairo_user_font_face_create_w, gxg_cairo_user_font_face_create)
+XEN_ARGIFY_3(gxg_cairo_surface_get_fallback_resolution_w, gxg_cairo_surface_get_fallback_resolution)
+XEN_NARGIFY_1(gxg_cairo_surface_has_show_text_glyphs_w, gxg_cairo_surface_has_show_text_glyphs)
+#endif
+
+#if HAVE_CAIRO_REGION_XOR
+XEN_NARGIFY_3(gxg_cairo_in_clip_w, gxg_cairo_in_clip)
+XEN_NARGIFY_1(gxg_cairo_device_reference_w, gxg_cairo_device_reference)
+XEN_NARGIFY_1(gxg_cairo_device_get_type_w, gxg_cairo_device_get_type)
+XEN_NARGIFY_1(gxg_cairo_device_status_w, gxg_cairo_device_status)
+XEN_NARGIFY_1(gxg_cairo_device_acquire_w, gxg_cairo_device_acquire)
+XEN_NARGIFY_1(gxg_cairo_device_release_w, gxg_cairo_device_release)
+XEN_NARGIFY_1(gxg_cairo_device_flush_w, gxg_cairo_device_flush)
+XEN_NARGIFY_1(gxg_cairo_device_finish_w, gxg_cairo_device_finish)
+XEN_NARGIFY_1(gxg_cairo_device_destroy_w, gxg_cairo_device_destroy)
+XEN_NARGIFY_1(gxg_cairo_device_get_reference_count_w, gxg_cairo_device_get_reference_count)
+XEN_NARGIFY_2(gxg_cairo_device_get_user_data_w, gxg_cairo_device_get_user_data)
+XEN_NARGIFY_4(gxg_cairo_device_set_user_data_w, gxg_cairo_device_set_user_data)
+XEN_NARGIFY_5(gxg_cairo_surface_create_for_rectangle_w, gxg_cairo_surface_create_for_rectangle)
+XEN_NARGIFY_1(gxg_cairo_surface_get_device_w, gxg_cairo_surface_get_device)
+XEN_ARGIFY_4(gxg_cairo_surface_get_mime_data_w, gxg_cairo_surface_get_mime_data)
+XEN_NARGIFY_6(gxg_cairo_surface_set_mime_data_w, gxg_cairo_surface_set_mime_data)
+XEN_NARGIFY_2(gxg_cairo_recording_surface_create_w, gxg_cairo_recording_surface_create)
+XEN_NARGIFY_5(gxg_cairo_recording_surface_ink_extents_w, gxg_cairo_recording_surface_ink_extents)
+XEN_NARGIFY_1(gxg_cairo_tee_surface_create_w, gxg_cairo_tee_surface_create)
+XEN_NARGIFY_2(gxg_cairo_tee_surface_add_w, gxg_cairo_tee_surface_add)
+XEN_NARGIFY_2(gxg_cairo_tee_surface_remove_w, gxg_cairo_tee_surface_remove)
+XEN_NARGIFY_2(gxg_cairo_tee_surface_index_w, gxg_cairo_tee_surface_index)
+XEN_NARGIFY_0(gxg_cairo_region_create_w, gxg_cairo_region_create)
+XEN_NARGIFY_1(gxg_cairo_region_create_rectangle_w, gxg_cairo_region_create_rectangle)
+XEN_NARGIFY_2(gxg_cairo_region_create_rectangles_w, gxg_cairo_region_create_rectangles)
+XEN_NARGIFY_1(gxg_cairo_region_copy_w, gxg_cairo_region_copy)
+XEN_NARGIFY_1(gxg_cairo_region_reference_w, gxg_cairo_region_reference)
+XEN_NARGIFY_1(gxg_cairo_region_destroy_w, gxg_cairo_region_destroy)
+XEN_NARGIFY_2(gxg_cairo_region_equal_w, gxg_cairo_region_equal)
+XEN_NARGIFY_1(gxg_cairo_region_status_w, gxg_cairo_region_status)
+XEN_NARGIFY_2(gxg_cairo_region_get_extents_w, gxg_cairo_region_get_extents)
+XEN_NARGIFY_1(gxg_cairo_region_num_rectangles_w, gxg_cairo_region_num_rectangles)
+XEN_NARGIFY_3(gxg_cairo_region_get_rectangle_w, gxg_cairo_region_get_rectangle)
+XEN_NARGIFY_1(gxg_cairo_region_is_empty_w, gxg_cairo_region_is_empty)
+XEN_NARGIFY_2(gxg_cairo_region_contains_rectangle_w, gxg_cairo_region_contains_rectangle)
+XEN_NARGIFY_3(gxg_cairo_region_contains_point_w, gxg_cairo_region_contains_point)
+XEN_NARGIFY_3(gxg_cairo_region_translate_w, gxg_cairo_region_translate)
+XEN_NARGIFY_2(gxg_cairo_region_subtract_w, gxg_cairo_region_subtract)
+XEN_NARGIFY_2(gxg_cairo_region_subtract_rectangle_w, gxg_cairo_region_subtract_rectangle)
+XEN_NARGIFY_2(gxg_cairo_region_intersect_w, gxg_cairo_region_intersect)
+XEN_NARGIFY_2(gxg_cairo_region_intersect_rectangle_w, gxg_cairo_region_intersect_rectangle)
+XEN_NARGIFY_2(gxg_cairo_region_union_w, gxg_cairo_region_union)
+XEN_NARGIFY_2(gxg_cairo_region_union_rectangle_w, gxg_cairo_region_union_rectangle)
+XEN_NARGIFY_2(gxg_cairo_region_xor_w, gxg_cairo_region_xor)
+XEN_NARGIFY_2(gxg_cairo_region_xor_rectangle_w, gxg_cairo_region_xor_rectangle)
+#endif
+
 XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)
 XEN_NARGIFY_2(c_array_to_xen_list_w, c_array_to_xen_list)
 XEN_NARGIFY_2(xen_list_to_c_array_w, xen_list_to_c_array)
@@ -41114,6 +42116,45 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_window_group_get_current_device_grab_w gxg_gtk_window_group_get_current_device_grab
 #endif
 
+#if HAVE_GTK_EXPANDER_GET_LABEL_FILL
+#define gxg_gtk_icon_view_get_item_row_w gxg_gtk_icon_view_get_item_row
+#define gxg_gtk_icon_view_get_item_column_w gxg_gtk_icon_view_get_item_column
+#define gxg_gtk_statusbar_remove_all_w gxg_gtk_statusbar_remove_all
+#define gxg_gtk_window_has_group_w gxg_gtk_window_has_group
+#define gxg_gtk_calendar_select_month_w gxg_gtk_calendar_select_month
+#define gxg_gtk_calendar_mark_day_w gxg_gtk_calendar_mark_day
+#define gxg_gtk_calendar_unmark_day_w gxg_gtk_calendar_unmark_day
+#define gxg_gdk_drag_context_get_source_window_w gxg_gdk_drag_context_get_source_window
+#define gxg_gtk_viewport_get_view_window_w gxg_gtk_viewport_get_view_window
+#define gxg_gtk_accessible_set_widget_w gxg_gtk_accessible_set_widget
+#define gxg_gtk_button_get_event_window_w gxg_gtk_button_get_event_window
+#define gxg_gtk_font_selection_dialog_get_font_selection_w gxg_gtk_font_selection_dialog_get_font_selection
+#define gxg_gtk_message_dialog_get_message_area_w gxg_gtk_message_dialog_get_message_area
+#define gxg_gtk_table_get_size_w gxg_gtk_table_get_size
+#define gxg_gtk_selection_data_get_length_w gxg_gtk_selection_data_get_length
+#define gxg_gdk_drawable_get_clip_region_w gxg_gdk_drawable_get_clip_region
+#define gxg_gdk_drawable_get_visible_region_w gxg_gdk_drawable_get_visible_region
+#define gxg_gdk_pango_layout_line_get_clip_region_w gxg_gdk_pango_layout_line_get_clip_region
+#define gxg_gdk_pango_layout_get_clip_region_w gxg_gdk_pango_layout_get_clip_region
+#define gxg_gdk_window_shape_combine_region_w gxg_gdk_window_shape_combine_region
+#define gxg_gdk_window_invalidate_region_w gxg_gdk_window_invalidate_region
+#define gxg_gdk_window_invalidate_maybe_recurse_w gxg_gdk_window_invalidate_maybe_recurse
+#define gxg_gdk_window_get_update_area_w gxg_gdk_window_get_update_area
+#define gxg_gdk_window_begin_paint_region_w gxg_gdk_window_begin_paint_region
+#define gxg_gtk_widget_region_intersect_w gxg_gtk_widget_region_intersect
+#define gxg_gdk_window_move_region_w gxg_gdk_window_move_region
+#define gxg_gdk_keymap_get_num_lock_state_w gxg_gdk_keymap_get_num_lock_state
+#define gxg_gdk_window_has_native_w gxg_gdk_window_has_native
+#define gxg_gdk_cursor_get_cursor_type_w gxg_gdk_cursor_get_cursor_type
+#define gxg_gdk_display_is_closed_w gxg_gdk_display_is_closed
+#define gxg_gdk_window_get_background_pattern_w gxg_gdk_window_get_background_pattern
+#define gxg_gdk_window_create_similar_surface_w gxg_gdk_window_create_similar_surface
+#define gxg_gtk_expander_set_label_fill_w gxg_gtk_expander_set_label_fill
+#define gxg_gtk_expander_get_label_fill_w gxg_gtk_expander_get_label_fill
+#define gxg_gtk_notebook_get_tab_hborder_w gxg_gtk_notebook_get_tab_hborder
+#define gxg_gtk_notebook_get_tab_vborder_w gxg_gtk_notebook_get_tab_vborder
+#endif
+
 #define gxg_cairo_create_w gxg_cairo_create
 #define gxg_cairo_version_w gxg_cairo_version
 #define gxg_cairo_version_string_w gxg_cairo_version_string
@@ -41325,6 +42366,71 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_cairo_format_stride_for_width_w gxg_cairo_format_stride_for_width
 #define gxg_cairo_image_surface_create_from_png_w gxg_cairo_image_surface_create_from_png
 #define gxg_cairo_surface_write_to_png_w gxg_cairo_surface_write_to_png
+#if HAVE_CAIRO_GLYPH_ALLOCATE
+#define gxg_cairo_glyph_allocate_w gxg_cairo_glyph_allocate
+#define gxg_cairo_glyph_free_w gxg_cairo_glyph_free
+#define gxg_cairo_text_cluster_allocate_w gxg_cairo_text_cluster_allocate
+#define gxg_cairo_text_cluster_free_w gxg_cairo_text_cluster_free
+#define gxg_cairo_show_text_glyphs_w gxg_cairo_show_text_glyphs
+#define gxg_cairo_scaled_font_text_to_glyphs_w gxg_cairo_scaled_font_text_to_glyphs
+#define gxg_cairo_scaled_font_get_scale_matrix_w gxg_cairo_scaled_font_get_scale_matrix
+#define gxg_cairo_toy_font_face_create_w gxg_cairo_toy_font_face_create
+#define gxg_cairo_toy_font_face_get_family_w gxg_cairo_toy_font_face_get_family
+#define gxg_cairo_toy_font_face_get_slant_w gxg_cairo_toy_font_face_get_slant
+#define gxg_cairo_toy_font_face_get_weight_w gxg_cairo_toy_font_face_get_weight
+#define gxg_cairo_user_font_face_create_w gxg_cairo_user_font_face_create
+#define gxg_cairo_surface_get_fallback_resolution_w gxg_cairo_surface_get_fallback_resolution
+#define gxg_cairo_surface_has_show_text_glyphs_w gxg_cairo_surface_has_show_text_glyphs
+#endif
+
+#if HAVE_CAIRO_REGION_XOR
+#define gxg_cairo_in_clip_w gxg_cairo_in_clip
+#define gxg_cairo_device_reference_w gxg_cairo_device_reference
+#define gxg_cairo_device_get_type_w gxg_cairo_device_get_type
+#define gxg_cairo_device_status_w gxg_cairo_device_status
+#define gxg_cairo_device_acquire_w gxg_cairo_device_acquire
+#define gxg_cairo_device_release_w gxg_cairo_device_release
+#define gxg_cairo_device_flush_w gxg_cairo_device_flush
+#define gxg_cairo_device_finish_w gxg_cairo_device_finish
+#define gxg_cairo_device_destroy_w gxg_cairo_device_destroy
+#define gxg_cairo_device_get_reference_count_w gxg_cairo_device_get_reference_count
+#define gxg_cairo_device_get_user_data_w gxg_cairo_device_get_user_data
+#define gxg_cairo_device_set_user_data_w gxg_cairo_device_set_user_data
+#define gxg_cairo_surface_create_for_rectangle_w gxg_cairo_surface_create_for_rectangle
+#define gxg_cairo_surface_get_device_w gxg_cairo_surface_get_device
+#define gxg_cairo_surface_get_mime_data_w gxg_cairo_surface_get_mime_data
+#define gxg_cairo_surface_set_mime_data_w gxg_cairo_surface_set_mime_data
+#define gxg_cairo_recording_surface_create_w gxg_cairo_recording_surface_create
+#define gxg_cairo_recording_surface_ink_extents_w gxg_cairo_recording_surface_ink_extents
+#define gxg_cairo_tee_surface_create_w gxg_cairo_tee_surface_create
+#define gxg_cairo_tee_surface_add_w gxg_cairo_tee_surface_add
+#define gxg_cairo_tee_surface_remove_w gxg_cairo_tee_surface_remove
+#define gxg_cairo_tee_surface_index_w gxg_cairo_tee_surface_index
+#define gxg_cairo_region_create_w gxg_cairo_region_create
+#define gxg_cairo_region_create_rectangle_w gxg_cairo_region_create_rectangle
+#define gxg_cairo_region_create_rectangles_w gxg_cairo_region_create_rectangles
+#define gxg_cairo_region_copy_w gxg_cairo_region_copy
+#define gxg_cairo_region_reference_w gxg_cairo_region_reference
+#define gxg_cairo_region_destroy_w gxg_cairo_region_destroy
+#define gxg_cairo_region_equal_w gxg_cairo_region_equal
+#define gxg_cairo_region_status_w gxg_cairo_region_status
+#define gxg_cairo_region_get_extents_w gxg_cairo_region_get_extents
+#define gxg_cairo_region_num_rectangles_w gxg_cairo_region_num_rectangles
+#define gxg_cairo_region_get_rectangle_w gxg_cairo_region_get_rectangle
+#define gxg_cairo_region_is_empty_w gxg_cairo_region_is_empty
+#define gxg_cairo_region_contains_rectangle_w gxg_cairo_region_contains_rectangle
+#define gxg_cairo_region_contains_point_w gxg_cairo_region_contains_point
+#define gxg_cairo_region_translate_w gxg_cairo_region_translate
+#define gxg_cairo_region_subtract_w gxg_cairo_region_subtract
+#define gxg_cairo_region_subtract_rectangle_w gxg_cairo_region_subtract_rectangle
+#define gxg_cairo_region_intersect_w gxg_cairo_region_intersect
+#define gxg_cairo_region_intersect_rectangle_w gxg_cairo_region_intersect_rectangle
+#define gxg_cairo_region_union_w gxg_cairo_region_union
+#define gxg_cairo_region_union_rectangle_w gxg_cairo_region_union_rectangle
+#define gxg_cairo_region_xor_w gxg_cairo_region_xor
+#define gxg_cairo_region_xor_rectangle_w gxg_cairo_region_xor_rectangle
+#endif
+
 #define gxg_GPOINTER_w gxg_GPOINTER
 #define c_array_to_xen_list_w c_array_to_xen_list
 #define xen_list_to_c_array_w xen_list_to_c_array
@@ -44960,6 +46066,45 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_window_group_get_current_device_grab, gxg_gtk_window_group_get_current_device_grab_w, 2, 0, 0, H_gtk_window_group_get_current_device_grab);
 #endif
 
+#if HAVE_GTK_EXPANDER_GET_LABEL_FILL
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_item_row, gxg_gtk_icon_view_get_item_row_w, 2, 0, 0, H_gtk_icon_view_get_item_row);
+  XG_DEFINE_PROCEDURE(gtk_icon_view_get_item_column, gxg_gtk_icon_view_get_item_column_w, 2, 0, 0, H_gtk_icon_view_get_item_column);
+  XG_DEFINE_PROCEDURE(gtk_statusbar_remove_all, gxg_gtk_statusbar_remove_all_w, 2, 0, 0, H_gtk_statusbar_remove_all);
+  XG_DEFINE_PROCEDURE(gtk_window_has_group, gxg_gtk_window_has_group_w, 1, 0, 0, H_gtk_window_has_group);
+  XG_DEFINE_PROCEDURE(gtk_calendar_select_month, gxg_gtk_calendar_select_month_w, 3, 0, 0, H_gtk_calendar_select_month);
+  XG_DEFINE_PROCEDURE(gtk_calendar_mark_day, gxg_gtk_calendar_mark_day_w, 2, 0, 0, H_gtk_calendar_mark_day);
+  XG_DEFINE_PROCEDURE(gtk_calendar_unmark_day, gxg_gtk_calendar_unmark_day_w, 2, 0, 0, H_gtk_calendar_unmark_day);
+  XG_DEFINE_PROCEDURE(gdk_drag_context_get_source_window, gxg_gdk_drag_context_get_source_window_w, 1, 0, 0, H_gdk_drag_context_get_source_window);
+  XG_DEFINE_PROCEDURE(gtk_viewport_get_view_window, gxg_gtk_viewport_get_view_window_w, 1, 0, 0, H_gtk_viewport_get_view_window);
+  XG_DEFINE_PROCEDURE(gtk_accessible_set_widget, gxg_gtk_accessible_set_widget_w, 2, 0, 0, H_gtk_accessible_set_widget);
+  XG_DEFINE_PROCEDURE(gtk_button_get_event_window, gxg_gtk_button_get_event_window_w, 1, 0, 0, H_gtk_button_get_event_window);
+  XG_DEFINE_PROCEDURE(gtk_font_selection_dialog_get_font_selection, gxg_gtk_font_selection_dialog_get_font_selection_w, 1, 0, 0, H_gtk_font_selection_dialog_get_font_selection);
+  XG_DEFINE_PROCEDURE(gtk_message_dialog_get_message_area, gxg_gtk_message_dialog_get_message_area_w, 1, 0, 0, H_gtk_message_dialog_get_message_area);
+  XG_DEFINE_PROCEDURE(gtk_table_get_size, gxg_gtk_table_get_size_w, 3, 0, 0, H_gtk_table_get_size);
+  XG_DEFINE_PROCEDURE(gtk_selection_data_get_length, gxg_gtk_selection_data_get_length_w, 1, 0, 0, H_gtk_selection_data_get_length);
+  XG_DEFINE_PROCEDURE(gdk_drawable_get_clip_region, gxg_gdk_drawable_get_clip_region_w, 1, 0, 0, H_gdk_drawable_get_clip_region);
+  XG_DEFINE_PROCEDURE(gdk_drawable_get_visible_region, gxg_gdk_drawable_get_visible_region_w, 1, 0, 0, H_gdk_drawable_get_visible_region);
+  XG_DEFINE_PROCEDURE(gdk_pango_layout_line_get_clip_region, gxg_gdk_pango_layout_line_get_clip_region_w, 5, 0, 0, H_gdk_pango_layout_line_get_clip_region);
+  XG_DEFINE_PROCEDURE(gdk_pango_layout_get_clip_region, gxg_gdk_pango_layout_get_clip_region_w, 5, 0, 0, H_gdk_pango_layout_get_clip_region);
+  XG_DEFINE_PROCEDURE(gdk_window_shape_combine_region, gxg_gdk_window_shape_combine_region_w, 4, 0, 0, H_gdk_window_shape_combine_region);
+  XG_DEFINE_PROCEDURE(gdk_window_invalidate_region, gxg_gdk_window_invalidate_region_w, 3, 0, 0, H_gdk_window_invalidate_region);
+  XG_DEFINE_PROCEDURE(gdk_window_invalidate_maybe_recurse, gxg_gdk_window_invalidate_maybe_recurse_w, 3, 1, 0, H_gdk_window_invalidate_maybe_recurse);
+  XG_DEFINE_PROCEDURE(gdk_window_get_update_area, gxg_gdk_window_get_update_area_w, 1, 0, 0, H_gdk_window_get_update_area);
+  XG_DEFINE_PROCEDURE(gdk_window_begin_paint_region, gxg_gdk_window_begin_paint_region_w, 2, 0, 0, H_gdk_window_begin_paint_region);
+  XG_DEFINE_PROCEDURE(gtk_widget_region_intersect, gxg_gtk_widget_region_intersect_w, 2, 0, 0, H_gtk_widget_region_intersect);
+  XG_DEFINE_PROCEDURE(gdk_window_move_region, gxg_gdk_window_move_region_w, 4, 0, 0, H_gdk_window_move_region);
+  XG_DEFINE_PROCEDURE(gdk_keymap_get_num_lock_state, gxg_gdk_keymap_get_num_lock_state_w, 1, 0, 0, H_gdk_keymap_get_num_lock_state);
+  XG_DEFINE_PROCEDURE(gdk_window_has_native, gxg_gdk_window_has_native_w, 1, 0, 0, H_gdk_window_has_native);
+  XG_DEFINE_PROCEDURE(gdk_cursor_get_cursor_type, gxg_gdk_cursor_get_cursor_type_w, 1, 0, 0, H_gdk_cursor_get_cursor_type);
+  XG_DEFINE_PROCEDURE(gdk_display_is_closed, gxg_gdk_display_is_closed_w, 1, 0, 0, H_gdk_display_is_closed);
+  XG_DEFINE_PROCEDURE(gdk_window_get_background_pattern, gxg_gdk_window_get_background_pattern_w, 1, 0, 0, H_gdk_window_get_background_pattern);
+  XG_DEFINE_PROCEDURE(gdk_window_create_similar_surface, gxg_gdk_window_create_similar_surface_w, 4, 0, 0, H_gdk_window_create_similar_surface);
+  XG_DEFINE_PROCEDURE(gtk_expander_set_label_fill, gxg_gtk_expander_set_label_fill_w, 2, 0, 0, H_gtk_expander_set_label_fill);
+  XG_DEFINE_PROCEDURE(gtk_expander_get_label_fill, gxg_gtk_expander_get_label_fill_w, 1, 0, 0, H_gtk_expander_get_label_fill);
+  XG_DEFINE_PROCEDURE(gtk_notebook_get_tab_hborder, gxg_gtk_notebook_get_tab_hborder_w, 1, 0, 0, H_gtk_notebook_get_tab_hborder);
+  XG_DEFINE_PROCEDURE(gtk_notebook_get_tab_vborder, gxg_gtk_notebook_get_tab_vborder_w, 1, 0, 0, H_gtk_notebook_get_tab_vborder);
+#endif
+
   XG_DEFINE_PROCEDURE(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
   XG_DEFINE_PROCEDURE(cairo_version, gxg_cairo_version_w, 0, 0, 0, H_cairo_version);
   XG_DEFINE_PROCEDURE(cairo_version_string, gxg_cairo_version_string_w, 0, 0, 0, H_cairo_version_string);
@@ -45171,6 +46316,71 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(cairo_format_stride_for_width, gxg_cairo_format_stride_for_width_w, 2, 0, 0, H_cairo_format_stride_for_width);
   XG_DEFINE_PROCEDURE(cairo_image_surface_create_from_png, gxg_cairo_image_surface_create_from_png_w, 1, 0, 0, H_cairo_image_surface_create_from_png);
   XG_DEFINE_PROCEDURE(cairo_surface_write_to_png, gxg_cairo_surface_write_to_png_w, 2, 0, 0, H_cairo_surface_write_to_png);
+#if HAVE_CAIRO_GLYPH_ALLOCATE
+  XG_DEFINE_PROCEDURE(cairo_glyph_allocate, gxg_cairo_glyph_allocate_w, 1, 0, 0, H_cairo_glyph_allocate);
+  XG_DEFINE_PROCEDURE(cairo_glyph_free, gxg_cairo_glyph_free_w, 1, 0, 0, H_cairo_glyph_free);
+  XG_DEFINE_PROCEDURE(cairo_text_cluster_allocate, gxg_cairo_text_cluster_allocate_w, 1, 0, 0, H_cairo_text_cluster_allocate);
+  XG_DEFINE_PROCEDURE(cairo_text_cluster_free, gxg_cairo_text_cluster_free_w, 1, 0, 0, H_cairo_text_cluster_free);
+  XG_DEFINE_PROCEDURE(cairo_show_text_glyphs, gxg_cairo_show_text_glyphs_w, 8, 0, 0, H_cairo_show_text_glyphs);
+  XG_DEFINE_PROCEDURE(cairo_scaled_font_text_to_glyphs, gxg_cairo_scaled_font_text_to_glyphs_w, 0, 0, 1, H_cairo_scaled_font_text_to_glyphs);
+  XG_DEFINE_PROCEDURE(cairo_scaled_font_get_scale_matrix, gxg_cairo_scaled_font_get_scale_matrix_w, 2, 0, 0, H_cairo_scaled_font_get_scale_matrix);
+  XG_DEFINE_PROCEDURE(cairo_toy_font_face_create, gxg_cairo_toy_font_face_create_w, 3, 0, 0, H_cairo_toy_font_face_create);
+  XG_DEFINE_PROCEDURE(cairo_toy_font_face_get_family, gxg_cairo_toy_font_face_get_family_w, 1, 0, 0, H_cairo_toy_font_face_get_family);
+  XG_DEFINE_PROCEDURE(cairo_toy_font_face_get_slant, gxg_cairo_toy_font_face_get_slant_w, 1, 0, 0, H_cairo_toy_font_face_get_slant);
+  XG_DEFINE_PROCEDURE(cairo_toy_font_face_get_weight, gxg_cairo_toy_font_face_get_weight_w, 1, 0, 0, H_cairo_toy_font_face_get_weight);
+  XG_DEFINE_PROCEDURE(cairo_user_font_face_create, gxg_cairo_user_font_face_create_w, 0, 0, 0, H_cairo_user_font_face_create);
+  XG_DEFINE_PROCEDURE(cairo_surface_get_fallback_resolution, gxg_cairo_surface_get_fallback_resolution_w, 1, 2, 0, H_cairo_surface_get_fallback_resolution);
+  XG_DEFINE_PROCEDURE(cairo_surface_has_show_text_glyphs, gxg_cairo_surface_has_show_text_glyphs_w, 1, 0, 0, H_cairo_surface_has_show_text_glyphs);
+#endif
+
+#if HAVE_CAIRO_REGION_XOR
+  XG_DEFINE_PROCEDURE(cairo_in_clip, gxg_cairo_in_clip_w, 3, 0, 0, H_cairo_in_clip);
+  XG_DEFINE_PROCEDURE(cairo_device_reference, gxg_cairo_device_reference_w, 1, 0, 0, H_cairo_device_reference);
+  XG_DEFINE_PROCEDURE(cairo_device_get_type, gxg_cairo_device_get_type_w, 1, 0, 0, H_cairo_device_get_type);
+  XG_DEFINE_PROCEDURE(cairo_device_status, gxg_cairo_device_status_w, 1, 0, 0, H_cairo_device_status);
+  XG_DEFINE_PROCEDURE(cairo_device_acquire, gxg_cairo_device_acquire_w, 1, 0, 0, H_cairo_device_acquire);
+  XG_DEFINE_PROCEDURE(cairo_device_release, gxg_cairo_device_release_w, 1, 0, 0, H_cairo_device_release);
+  XG_DEFINE_PROCEDURE(cairo_device_flush, gxg_cairo_device_flush_w, 1, 0, 0, H_cairo_device_flush);
+  XG_DEFINE_PROCEDURE(cairo_device_finish, gxg_cairo_device_finish_w, 1, 0, 0, H_cairo_device_finish);
+  XG_DEFINE_PROCEDURE(cairo_device_destroy, gxg_cairo_device_destroy_w, 1, 0, 0, H_cairo_device_destroy);
+  XG_DEFINE_PROCEDURE(cairo_device_get_reference_count, gxg_cairo_device_get_reference_count_w, 1, 0, 0, H_cairo_device_get_reference_count);
+  XG_DEFINE_PROCEDURE(cairo_device_get_user_data, gxg_cairo_device_get_user_data_w, 2, 0, 0, H_cairo_device_get_user_data);
+  XG_DEFINE_PROCEDURE(cairo_device_set_user_data, gxg_cairo_device_set_user_data_w, 4, 0, 0, H_cairo_device_set_user_data);
+  XG_DEFINE_PROCEDURE(cairo_surface_create_for_rectangle, gxg_cairo_surface_create_for_rectangle_w, 5, 0, 0, H_cairo_surface_create_for_rectangle);
+  XG_DEFINE_PROCEDURE(cairo_surface_get_device, gxg_cairo_surface_get_device_w, 1, 0, 0, H_cairo_surface_get_device);
+  XG_DEFINE_PROCEDURE(cairo_surface_get_mime_data, gxg_cairo_surface_get_mime_data_w, 2, 2, 0, H_cairo_surface_get_mime_data);
+  XG_DEFINE_PROCEDURE(cairo_surface_set_mime_data, gxg_cairo_surface_set_mime_data_w, 6, 0, 0, H_cairo_surface_set_mime_data);
+  XG_DEFINE_PROCEDURE(cairo_recording_surface_create, gxg_cairo_recording_surface_create_w, 2, 0, 0, H_cairo_recording_surface_create);
+  XG_DEFINE_PROCEDURE(cairo_recording_surface_ink_extents, gxg_cairo_recording_surface_ink_extents_w, 5, 0, 0, H_cairo_recording_surface_ink_extents);
+  XG_DEFINE_PROCEDURE(cairo_tee_surface_create, gxg_cairo_tee_surface_create_w, 1, 0, 0, H_cairo_tee_surface_create);
+  XG_DEFINE_PROCEDURE(cairo_tee_surface_add, gxg_cairo_tee_surface_add_w, 2, 0, 0, H_cairo_tee_surface_add);
+  XG_DEFINE_PROCEDURE(cairo_tee_surface_remove, gxg_cairo_tee_surface_remove_w, 2, 0, 0, H_cairo_tee_surface_remove);
+  XG_DEFINE_PROCEDURE(cairo_tee_surface_index, gxg_cairo_tee_surface_index_w, 2, 0, 0, H_cairo_tee_surface_index);
+  XG_DEFINE_PROCEDURE(cairo_region_create, gxg_cairo_region_create_w, 0, 0, 0, H_cairo_region_create);
+  XG_DEFINE_PROCEDURE(cairo_region_create_rectangle, gxg_cairo_region_create_rectangle_w, 1, 0, 0, H_cairo_region_create_rectangle);
+  XG_DEFINE_PROCEDURE(cairo_region_create_rectangles, gxg_cairo_region_create_rectangles_w, 2, 0, 0, H_cairo_region_create_rectangles);
+  XG_DEFINE_PROCEDURE(cairo_region_copy, gxg_cairo_region_copy_w, 1, 0, 0, H_cairo_region_copy);
+  XG_DEFINE_PROCEDURE(cairo_region_reference, gxg_cairo_region_reference_w, 1, 0, 0, H_cairo_region_reference);
+  XG_DEFINE_PROCEDURE(cairo_region_destroy, gxg_cairo_region_destroy_w, 1, 0, 0, H_cairo_region_destroy);
+  XG_DEFINE_PROCEDURE(cairo_region_equal, gxg_cairo_region_equal_w, 2, 0, 0, H_cairo_region_equal);
+  XG_DEFINE_PROCEDURE(cairo_region_status, gxg_cairo_region_status_w, 1, 0, 0, H_cairo_region_status);
+  XG_DEFINE_PROCEDURE(cairo_region_get_extents, gxg_cairo_region_get_extents_w, 2, 0, 0, H_cairo_region_get_extents);
+  XG_DEFINE_PROCEDURE(cairo_region_num_rectangles, gxg_cairo_region_num_rectangles_w, 1, 0, 0, H_cairo_region_num_rectangles);
+  XG_DEFINE_PROCEDURE(cairo_region_get_rectangle, gxg_cairo_region_get_rectangle_w, 3, 0, 0, H_cairo_region_get_rectangle);
+  XG_DEFINE_PROCEDURE(cairo_region_is_empty, gxg_cairo_region_is_empty_w, 1, 0, 0, H_cairo_region_is_empty);
+  XG_DEFINE_PROCEDURE(cairo_region_contains_rectangle, gxg_cairo_region_contains_rectangle_w, 2, 0, 0, H_cairo_region_contains_rectangle);
+  XG_DEFINE_PROCEDURE(cairo_region_contains_point, gxg_cairo_region_contains_point_w, 3, 0, 0, H_cairo_region_contains_point);
+  XG_DEFINE_PROCEDURE(cairo_region_translate, gxg_cairo_region_translate_w, 3, 0, 0, H_cairo_region_translate);
+  XG_DEFINE_PROCEDURE(cairo_region_subtract, gxg_cairo_region_subtract_w, 2, 0, 0, H_cairo_region_subtract);
+  XG_DEFINE_PROCEDURE(cairo_region_subtract_rectangle, gxg_cairo_region_subtract_rectangle_w, 2, 0, 0, H_cairo_region_subtract_rectangle);
+  XG_DEFINE_PROCEDURE(cairo_region_intersect, gxg_cairo_region_intersect_w, 2, 0, 0, H_cairo_region_intersect);
+  XG_DEFINE_PROCEDURE(cairo_region_intersect_rectangle, gxg_cairo_region_intersect_rectangle_w, 2, 0, 0, H_cairo_region_intersect_rectangle);
+  XG_DEFINE_PROCEDURE(cairo_region_union, gxg_cairo_region_union_w, 2, 0, 0, H_cairo_region_union);
+  XG_DEFINE_PROCEDURE(cairo_region_union_rectangle, gxg_cairo_region_union_rectangle_w, 2, 0, 0, H_cairo_region_union_rectangle);
+  XG_DEFINE_PROCEDURE(cairo_region_xor, gxg_cairo_region_xor_w, 2, 0, 0, H_cairo_region_xor);
+  XG_DEFINE_PROCEDURE(cairo_region_xor_rectangle, gxg_cairo_region_xor_rectangle_w, 2, 0, 0, H_cairo_region_xor_rectangle);
+#endif
+
   XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, "(GPOINTER obj) casts obj to GPOINTER");
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP_w, 1, 0, 0, "(GDK_COLORMAP obj) casts obj to GDK_COLORMAP");
   XG_DEFINE_PROCEDURE(GDK_DRAG_CONTEXT, gxg_GDK_DRAG_CONTEXT_w, 1, 0, 0, "(GDK_DRAG_CONTEXT obj) casts obj to GDK_DRAG_CONTEXT");
@@ -46727,6 +47937,11 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_MULTIDEVICE);
 #endif
 
+#if HAVE_GTK_EXPANDER_GET_LABEL_FILL
+  DEFINE_INTEGER(GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH);
+  DEFINE_INTEGER(GTK_SIZE_REQUEST_WIDTH_FOR_HEIGHT);
+#endif
+
   DEFINE_INTEGER(CAIRO_STATUS_SUCCESS);
   DEFINE_INTEGER(CAIRO_STATUS_NO_MEMORY);
   DEFINE_INTEGER(CAIRO_STATUS_INVALID_RESTORE);
@@ -46839,6 +48054,47 @@ static void define_integers(void)
   DEFINE_INTEGER(CAIRO_FILTER_NEAREST);
   DEFINE_INTEGER(CAIRO_FILTER_BILINEAR);
   DEFINE_INTEGER(CAIRO_FILTER_GAUSSIAN);
+#if HAVE_CAIRO_GLYPH_ALLOCATE
+  DEFINE_INTEGER(CAIRO_STATUS_FONT_TYPE_MISMATCH);
+  DEFINE_INTEGER(CAIRO_STATUS_USER_FONT_IMMUTABLE);
+  DEFINE_INTEGER(CAIRO_STATUS_USER_FONT_ERROR);
+  DEFINE_INTEGER(CAIRO_STATUS_NEGATIVE_COUNT);
+  DEFINE_INTEGER(CAIRO_STATUS_INVALID_CLUSTERS);
+  DEFINE_INTEGER(CAIRO_STATUS_INVALID_SLANT);
+  DEFINE_INTEGER(CAIRO_STATUS_INVALID_WEIGHT);
+#endif
+
+#if HAVE_CAIRO_REGION_XOR
+  DEFINE_INTEGER(CAIRO_STATUS_INVALID_SIZE);
+  DEFINE_INTEGER(CAIRO_STATUS_USER_FONT_NOT_IMPLEMENTED);
+  DEFINE_INTEGER(CAIRO_STATUS_DEVICE_TYPE_MISMATCH);
+  DEFINE_INTEGER(CAIRO_STATUS_DEVICE_ERROR);
+  DEFINE_INTEGER(CAIRO_OPERATOR_MULTIPLY);
+  DEFINE_INTEGER(CAIRO_OPERATOR_SCREEN);
+  DEFINE_INTEGER(CAIRO_OPERATOR_OVERLAY);
+  DEFINE_INTEGER(CAIRO_OPERATOR_DARKEN);
+  DEFINE_INTEGER(CAIRO_OPERATOR_LIGHTEN);
+  DEFINE_INTEGER(CAIRO_OPERATOR_COLOR_DODGE);
+  DEFINE_INTEGER(CAIRO_OPERATOR_COLOR_BURN);
+  DEFINE_INTEGER(CAIRO_OPERATOR_HARD_LIGHT);
+  DEFINE_INTEGER(CAIRO_OPERATOR_SOFT_LIGHT);
+  DEFINE_INTEGER(CAIRO_OPERATOR_DIFFERENCE);
+  DEFINE_INTEGER(CAIRO_OPERATOR_EXCLUSION);
+  DEFINE_INTEGER(CAIRO_OPERATOR_HSL_HUE);
+  DEFINE_INTEGER(CAIRO_OPERATOR_HSL_SATURATION);
+  DEFINE_INTEGER(CAIRO_OPERATOR_HSL_COLOR);
+  DEFINE_INTEGER(CAIRO_OPERATOR_HSL_LUMINOSITY);
+  DEFINE_INTEGER(CAIRO_SURFACE_TYPE_SCRIPT);
+  DEFINE_INTEGER(CAIRO_SURFACE_TYPE_QT);
+  DEFINE_INTEGER(CAIRO_SURFACE_TYPE_RECORDING);
+  DEFINE_INTEGER(CAIRO_SURFACE_TYPE_VG);
+  DEFINE_INTEGER(CAIRO_SURFACE_TYPE_GL);
+  DEFINE_INTEGER(CAIRO_SURFACE_TYPE_DRM);
+  DEFINE_INTEGER(CAIRO_SURFACE_TYPE_TEE);
+  DEFINE_INTEGER(CAIRO_SURFACE_TYPE_XML);
+  DEFINE_INTEGER(CAIRO_SURFACE_TYPE_SKIA);
+#endif
+
   DEFINE_ULONG(GDK_TYPE_PIXBUF);
   DEFINE_ULONG(GDK_TYPE_PIXBUF_ANIMATION);
   DEFINE_ULONG(GDK_TYPE_PIXBUF_ANIMATION_ITER);
@@ -47273,6 +48529,13 @@ static void define_strings(void)
   DEFINE_STRING(GTK_STOCK_CAPS_LOCK_WARNING);
 #endif
 
+#if HAVE_CAIRO_REGION_XOR
+  DEFINE_STRING(CAIRO_MIME_TYPE_JPEG);
+  DEFINE_STRING(CAIRO_MIME_TYPE_PNG);
+  DEFINE_STRING(CAIRO_MIME_TYPE_JP2);
+  DEFINE_STRING(CAIRO_MIME_TYPE_URI);
+#endif
+
 }
 
 /* -------------------------------- initialization -------------------------------- */
@@ -47292,7 +48555,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("19-Aug-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("20-Aug-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

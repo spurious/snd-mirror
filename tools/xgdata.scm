@@ -7169,11 +7169,11 @@
 
 (CINT-2901 "GTK_MULTIDEVICE" "GtkWidgetFlags")
 
-#|
+
 ;;; 2.90.2
 (CFNC-2906 "gint gtk_icon_view_get_item_row GtkIconView* icon_view GtkTreePath* path")
 (CFNC-2906 "gint gtk_icon_view_get_item_column GtkIconView* icon_view GtkTreePath* path")
-(CFNC-2906 "void gtk_statusbar_remove_all GtkStatusbar* statusbar guint	context_id")
+(CFNC-2906 "void gtk_statusbar_remove_all GtkStatusbar* statusbar guint context_id")
 (CFNC-2906 "gboolean gtk_window_has_group GtkWindow* window")
 
 ;;; 2.90.3
@@ -7185,7 +7185,7 @@
 
 ;;; 2.90.4
 ;;; 2.90.6 (CFNC-2906 "gpointer gdk_image_get_pixels GdkImage* image")
-(CFNC-2906 "GdkDevice* gdk_device_manager_get_client_pointer GdkDeviceManager* device_manager")
+;(CFNC-2906 "GdkDevice* gdk_device_manager_get_client_pointer GdkDeviceManager* device_manager")
 (CFNC-2906 "void gtk_accessible_set_widget GtkAccessible* accessible GtkWidget* widget")
 (CFNC-2906 "GdkWindow* gtk_button_get_event_window GtkButton* button")
 (CFNC-2906 "GtkWidget* gtk_font_selection_dialog_get_font_selection GtkFontSelectionDialog* fsd")
@@ -7198,7 +7198,7 @@
 (CFNC-2906 "gint gtk_selection_data_get_length GtkSelectionData* selection_data")
 
 
-;;; 2.90.5 removed all GdkRegion stuff!
+;;; 2.90.5 removed all GdkRegion stuff
 ;;;   I'm guessing about these names
 
 (CFNC-2906 "cairo_region_t* gdk_drawable_get_clip_region GdkDrawable* drawable")
@@ -7206,25 +7206,7 @@
 ;;; 2.90.6 (CFNC-2906 "void gdk_gc_set_clip_region GdkGC* gc cairo_region_t* region")
 (CFNC-2906 "cairo_region_t* gdk_pango_layout_line_get_clip_region PangoLayoutLine* line gint x_origin gint y_origin gint* index_ranges gint n_ranges")
 (CFNC-2906 "cairo_region_t* gdk_pango_layout_get_clip_region PangoLayout* layout gint x_origin gint y_origin gint* index_ranges gint n_ranges")
-(CFNC-2906 "cairo_region_t* gdk_region_new void")
-(CFNC-2906 "cairo_region_t* gdk_region_polygon GdkPoint* points gint npoints GdkFillRule fill_rule")
-(CFNC-2906 "cairo_region_t* gdk_region_copy cairo_region_t* region")
-(CFNC-2906 "cairo_region_t* gdk_region_rectangle GdkRectangle* rectangle")
-(CFNC-2906 "void gdk_region_destroy cairo_region_t* region")
-(CFNC-2906 "void gdk_region_get_clipbox cairo_region_t* region GdkRectangle* rectangle")
-(CFNC-2906 "void gdk_region_get_rectangles cairo_region_t* region GdkRectangle** [rectangles] gint* [n_rectangles]") ; FREE: returned rect arr
-(CFNC-2906 "gboolean gdk_region_empty cairo_region_t* region")
-(CFNC-2906 "gboolean gdk_region_equal cairo_region_t* region1 cairo_region_t* region2")
-(CFNC-2906 "gboolean gdk_region_point_in cairo_region_t* region int x int y")
-;(CFNC-2906 "GdkOverlapType gdk_region_rect_in cairo_region_t* region GdkRectangle* rect")
-(CFNC-2906 "void gdk_region_offset cairo_region_t* region gint dx gint dy")
-(CFNC-2906 "void gdk_region_shrink cairo_region_t* region gint dx gint dy")
-(CFNC-2906 "void gdk_region_union_with_rect cairo_region_t* region GdkRectangle* rect")
-(CFNC-2906 "void gdk_region_intersect cairo_region_t* source1 cairo_region_t* source2")
-(CFNC-2906 "void gdk_region_union cairo_region_t* source1 cairo_region_t* source2")
-(CFNC-2906 "void gdk_region_subtract cairo_region_t* source1 cairo_region_t* source2")
-(CFNC-2906 "void gdk_region_xor cairo_region_t* source1 cairo_region_t* source2")
-;(CFNC-2906 "void gdk_region_spans_intersect_foreach cairo_region_t* region GdkSpan* spans int n_spans gboolean sorted GdkSpanFunc func lambda_data #func_info")
+
 (CFNC-2906 "void gdk_window_shape_combine_region GdkWindow* window cairo_region_t* shape_region gint offset_x gint offset_y")
 (CFNC-2906 "void gdk_window_invalidate_region GdkWindow* window cairo_region_t* region gboolean invalidate_children")
 (CFNC-2906 "void gdk_window_invalidate_maybe_recurse GdkWindow* window cairo_region_t* region lambda2 func lambda_data #func_info")
@@ -7232,9 +7214,139 @@
 (CFNC-2906 "void gdk_window_begin_paint_region GdkWindow* window cairo_region_t* region")
 (CFNC-2906 "cairo_region_t* gtk_widget_region_intersect GtkWidget* widget cairo_region_t* region") ; FREE
 (CFNC-2906 "void gdk_window_move_region GdkWindow* window cairo_region_t* region gint dx gint dy")
-(CFNC-2906 "gboolean gdk_region_rect_equal cairo_region_t* region GdkRectangle* rectangle" 'const)
-;;; (CFNC-210 "void gdk_cairo_region cairo_t* cr cairo_region_t* region")
-
 (CFNC-2906 "gboolean gdk_keymap_get_num_lock_state GdkKeymap* keymap")
 (CFNC-2906 "gboolean gdk_window_has_native GdkWindow* window")
-|#
+(CFNC-2906 "GdkCursorType gdk_cursor_get_cursor_type GdkCursor* cursor")
+(CFNC-2906 "gboolean gdk_display_is_closed GdkDisplay* display")
+(CFNC-2906 "cairo_pattern_t* gdk_window_get_background_pattern GdkWindow* window")
+(CFNC-2906 "cairo_surface_t* gdk_window_create_similar_surface GdkWindow* window cairo_content_t content int width int height")
+(CFNC-2906 "void gtk_expander_set_label_fill GtkExpander* expander gboolean label_fill")
+(CFNC-2906 "gboolean gtk_expander_get_label_fill GtkExpander* expander")
+(CFNC-2906 "guint16 gtk_notebook_get_tab_hborder GtkNotebook* notebook")
+(CFNC-2906 "guint16 gtk_notebook_get_tab_vborder GtkNotebook* notebook")
+
+
+;;; 2.90.6: HAVE_GTK_EXPANDER_GET_LABEL_FILL
+;;; 1.8.0: HAVE_CAIRO_GLYPH_ALLOCATE
+;;; 1.9.12: HAVE_CAIRO_REGION_XOR
+
+
+(CAIRO-INT-810 "CAIRO_STATUS_FONT_TYPE_MISMATCH" "cairo_status_t")
+(CAIRO-INT-810 "CAIRO_STATUS_USER_FONT_IMMUTABLE" "cairo_status_t")
+(CAIRO-INT-810 "CAIRO_STATUS_USER_FONT_ERROR" "cairo_status_t")
+(CAIRO-INT-810 "CAIRO_STATUS_NEGATIVE_COUNT" "cairo_status_t")
+(CAIRO-INT-810 "CAIRO_STATUS_INVALID_CLUSTERS" "cairo_status_t")
+(CAIRO-INT-810 "CAIRO_STATUS_INVALID_SLANT" "cairo_status_t")
+(CAIRO-INT-810 "CAIRO_STATUS_INVALID_WEIGHT" "cairo_status_t")
+
+;;; CAIRO_TEXT_CLUSTER_FLAG_BACKWARD = 0x00000001
+
+(CAIRO-FUNC-810 "cairo_glyph_t* cairo_glyph_allocate int num_glyphs")
+(CAIRO-FUNC-810 "void cairo_glyph_free cairo_glyph_t* glyphs")
+(CAIRO-FUNC-810 "cairo_text_cluster_t* cairo_text_cluster_allocate int num_clusters")
+(CAIRO-FUNC-810 "void cairo_text_cluster_free cairo_text_cluster_t* clusters")
+(CAIRO-FUNC-810 "void cairo_show_text_glyphs cairo_t* cr char* utf8 int utf8_len cairo_glyph_t* glyphs int num_glyphs cairo_text_cluster_t* clusters int num_clusters cairo_text_cluster_flags_t cluster_flags" 'const)
+(CAIRO-FUNC-810 "cairo_status_t cairo_scaled_font_text_to_glyphs cairo_scaled_font_t* scaled_font double x double y char* utf8 int utf8_len cairo_glyph_t** glyphs int* num_glyphs cairo_text_cluster_t** clusters int* num_clusters cairo_text_cluster_flags_t* cluster_flags" 'const)
+(CAIRO-FUNC-810 "void cairo_scaled_font_get_scale_matrix cairo_scaled_font_t* scaled_font cairo_matrix_t* scale_matrix")
+(CAIRO-FUNC-810 "cairo_font_face_t* cairo_toy_font_face_create char* family cairo_font_slant_t slant cairo_font_weight_t weight" 'const)
+(CAIRO-FUNC-810 "char* cairo_toy_font_face_get_family cairo_font_face_t* font_face" 'const) ; return
+(CAIRO-FUNC-810 "cairo_font_slant_t cairo_toy_font_face_get_slant cairo_font_face_t* font_face")
+(CAIRO-FUNC-810 "cairo_font_weight_t cairo_toy_font_face_get_weight cairo_font_face_t* font_face")
+(CAIRO-FUNC-810 "cairo_font_face_t* cairo_user_font_face_create void")
+;(CAIRO-FUNC-810 "void cairo_user_font_face_set_init_func cairo_font_face_t* font_face cairo_user_scaled_font_init_func_t init_func")
+;(CAIRO-FUNC-810 "void cairo_user_font_face_set_render_glyph_func cairo_font_face_t* font_face cairo_user_scaled_font_render_glyph_func_t render_glyph_func")
+;(CAIRO-FUNC-810 "void cairo_user_font_face_set_text_to_glyphs_func cairo_font_face_t* font_face cairo_user_scaled_font_text_to_glyphs_func_t text_to_glyphs_func")
+;(CAIRO-FUNC-810 "void cairo_user_font_face_set_unicode_to_glyph_func cairo_font_face_t* font_face cairo_user_scaled_font_unicode_to_glyph_func_t unicode_to_glyph_func")
+;(CAIRO-FUNC-810 "cairo_user_scaled_font_init_func_t cairo_user_font_face_get_init_func cairo_font_face_t* font_face")
+;(CAIRO-FUNC-810 "cairo_user_scaled_font_render_glyph_func_t cairo_user_font_face_get_render_glyph_func cairo_font_face_t* font_face")
+;(CAIRO-FUNC-810 "cairo_user_scaled_font_text_to_glyphs_func_t cairo_user_font_face_get_text_to_glyphs_func cairo_font_face_t* font_face")
+;(CAIRO-FUNC-810 "cairo_user_scaled_font_unicode_to_glyph_func_t cairo_user_font_face_get_unicode_to_glyph_func cairo_font_face_t* font_face")
+(CAIRO-FUNC-810 "void cairo_surface_get_fallback_resolution cairo_surface_t* surface double* [x_pixels_per_inch] double* [y_pixels_per_inch]")
+(CAIRO-FUNC-810 "cairo_bool_t cairo_surface_has_show_text_glyphs cairo_surface_t* surface")
+
+;;; 1.9
+
+(CAIRO-INT-912 "CAIRO_STATUS_INVALID_SIZE" "cairo_status_t")
+(CAIRO-INT-912 "CAIRO_STATUS_USER_FONT_NOT_IMPLEMENTED" "cairo_status_t")
+(CAIRO-INT-912 "CAIRO_STATUS_DEVICE_TYPE_MISMATCH" "cairo_status_t")
+(CAIRO-INT-912 "CAIRO_STATUS_DEVICE_ERROR" "cairo_status_t")
+
+(CAIRO-INT-912 "CAIRO_OPERATOR_MULTIPLY" "cairo_operator_t")
+(CAIRO-INT-912 "CAIRO_OPERATOR_SCREEN" "cairo_operator_t")
+(CAIRO-INT-912 "CAIRO_OPERATOR_OVERLAY" "cairo_operator_t")
+(CAIRO-INT-912 "CAIRO_OPERATOR_DARKEN" "cairo_operator_t")
+(CAIRO-INT-912 "CAIRO_OPERATOR_LIGHTEN" "cairo_operator_t")
+(CAIRO-INT-912 "CAIRO_OPERATOR_COLOR_DODGE" "cairo_operator_t")
+(CAIRO-INT-912 "CAIRO_OPERATOR_COLOR_BURN" "cairo_operator_t")
+(CAIRO-INT-912 "CAIRO_OPERATOR_HARD_LIGHT" "cairo_operator_t")
+(CAIRO-INT-912 "CAIRO_OPERATOR_SOFT_LIGHT" "cairo_operator_t")
+(CAIRO-INT-912 "CAIRO_OPERATOR_DIFFERENCE" "cairo_operator_t")
+(CAIRO-INT-912 "CAIRO_OPERATOR_EXCLUSION" "cairo_operator_t")
+(CAIRO-INT-912 "CAIRO_OPERATOR_HSL_HUE" "cairo_operator_t")
+(CAIRO-INT-912 "CAIRO_OPERATOR_HSL_SATURATION" "cairo_operator_t")
+(CAIRO-INT-912 "CAIRO_OPERATOR_HSL_COLOR" "cairo_operator_t")
+(CAIRO-INT-912 "CAIRO_OPERATOR_HSL_LUMINOSITY" "cairo_operator_t")
+
+(CAIRO-INT-912 "CAIRO_SURFACE_TYPE_SCRIPT" "cairo_surface_t")
+(CAIRO-INT-912 "CAIRO_SURFACE_TYPE_QT" "cairo_surface_t")
+(CAIRO-INT-912 "CAIRO_SURFACE_TYPE_RECORDING" "cairo_surface_t")
+(CAIRO-INT-912 "CAIRO_SURFACE_TYPE_VG" "cairo_surface_t")
+(CAIRO-INT-912 "CAIRO_SURFACE_TYPE_GL" "cairo_surface_t")
+(CAIRO-INT-912 "CAIRO_SURFACE_TYPE_DRM" "cairo_surface_t")
+(CAIRO-INT-912 "CAIRO_SURFACE_TYPE_TEE" "cairo_surface_t")
+(CAIRO-INT-912 "CAIRO_SURFACE_TYPE_XML" "cairo_surface_t")
+(CAIRO-INT-912 "CAIRO_SURFACE_TYPE_SKIA" "cairo_surface_t")
+
+(CAIRO-STRING-912 "CAIRO_MIME_TYPE_JPEG") ; "image/jpeg")
+(CAIRO-STRING-912 "CAIRO_MIME_TYPE_PNG") ; "image/png")
+(CAIRO-STRING-912 "CAIRO_MIME_TYPE_JP2") ; "image/jp2")
+(CAIRO-STRING-912 "CAIRO_MIME_TYPE_URI") ; "text/x-uri")
+
+;;;  CAIRO_FORMAT_INVALID = -1 
+
+(CAIRO-FUNC-912 "cairo_bool_t cairo_in_clip cairo_t* cr double x double y")
+(CAIRO-FUNC-912 "cairo_device_t* cairo_device_reference cairo_device_t* device")
+(CAIRO-FUNC-912 "cairo_device_type_t cairo_device_get_type cairo_device_t* device")
+(CAIRO-FUNC-912 "cairo_status_t cairo_device_status cairo_device_t* device")
+(CAIRO-FUNC-912 "cairo_status_t cairo_device_acquire cairo_device_t* device")
+(CAIRO-FUNC-912 "void cairo_device_release cairo_device_t* device")
+(CAIRO-FUNC-912 "void cairo_device_flush cairo_device_t* device")
+(CAIRO-FUNC-912 "void cairo_device_finish cairo_device_t* device")
+(CAIRO-FUNC-912 "void cairo_device_destroy cairo_device_t* device")
+(CAIRO-FUNC-912 "guint cairo_device_get_reference_count cairo_device_t* device")
+(CAIRO-FUNC-912 "void* cairo_device_get_user_data cairo_device_t* device cairo_user_data_key_t* key")
+(CAIRO-FUNC-912 "cairo_status_t cairo_device_set_user_data cairo_device_t* device cairo_user_data_key_t* key void* user_data cairo_destroy_func_t destroy")
+(CAIRO-FUNC-912 "cairo_surface_t* cairo_surface_create_for_rectangle cairo_surface_t* target double x double y double width double height")
+(CAIRO-FUNC-912 "cairo_device_t* cairo_surface_get_device cairo_surface_t* surface")
+(CAIRO-FUNC-912 "void cairo_surface_get_mime_data cairo_surface_t* surface char* mime_type guchar** [data] gulong* [length]" 'const)
+(CAIRO-FUNC-912 "cairo_status_t cairo_surface_set_mime_data cairo_surface_t* surface char* mime_type guchar* data gulong length cairo_destroy_func_t destroy void* closure" 'const)
+(CAIRO-FUNC-912 "cairo_surface_t* cairo_recording_surface_create cairo_content_t content cairo_rectangle_t* extents")
+(CAIRO-FUNC-912 "void cairo_recording_surface_ink_extents cairo_surface_t* surface double* x0 double* y0 double* width double* height")
+(CAIRO-FUNC-912 "cairo_surface_t* cairo_tee_surface_create cairo_surface_t* master")
+(CAIRO-FUNC-912 "void cairo_tee_surface_add cairo_surface_t* surface cairo_surface_t* target")
+(CAIRO-FUNC-912 "void cairo_tee_surface_remove cairo_surface_t* surface cairo_surface_t* target")
+(CAIRO-FUNC-912 "cairo_surface_t* cairo_tee_surface_index cairo_surface_t* surface int index")
+(CAIRO-FUNC-912 "cairo_region_t* cairo_region_create void")
+(CAIRO-FUNC-912 "cairo_region_t* cairo_region_create_rectangle cairo_rectangle_int_t* rectangle")
+(CAIRO-FUNC-912 "cairo_region_t* cairo_region_create_rectangles cairo_rectangle_int_t* rects int count")
+(CAIRO-FUNC-912 "cairo_region_t* cairo_region_copy cairo_region_t* original")
+(CAIRO-FUNC-912 "cairo_region_t* cairo_region_reference cairo_region_t* region")
+(CAIRO-FUNC-912 "void cairo_region_destroy cairo_region_t* region")
+(CAIRO-FUNC-912 "cairo_bool_t cairo_region_equal cairo_region_t* a cairo_region_t* b")
+(CAIRO-FUNC-912 "cairo_status_t cairo_region_status cairo_region_t* region")
+(CAIRO-FUNC-912 "void cairo_region_get_extents cairo_region_t* region cairo_rectangle_int_t* extents")
+(CAIRO-FUNC-912 "int cairo_region_num_rectangles cairo_region_t* region")
+(CAIRO-FUNC-912 "void cairo_region_get_rectangle cairo_region_t* region int nth cairo_rectangle_int_t* rectangle")
+(CAIRO-FUNC-912 "cairo_bool_t cairo_region_is_empty cairo_region_t* region")
+(CAIRO-FUNC-912 "cairo_region_overlap_t cairo_region_contains_rectangle cairo_region_t* region cairo_rectangle_int_t* rectangle")
+(CAIRO-FUNC-912 "cairo_bool_t cairo_region_contains_point cairo_region_t* region int x int y")
+(CAIRO-FUNC-912 "void cairo_region_translate cairo_region_t* region int dx int dy")
+(CAIRO-FUNC-912 "cairo_status_t cairo_region_subtract cairo_region_t* dst cairo_region_t* other")
+(CAIRO-FUNC-912 "cairo_status_t cairo_region_subtract_rectangle cairo_region_t* dst cairo_rectangle_int_t* rectangle")
+(CAIRO-FUNC-912 "cairo_status_t cairo_region_intersect cairo_region_t* dst cairo_region_t* other")
+(CAIRO-FUNC-912 "cairo_status_t cairo_region_intersect_rectangle cairo_region_t* dst cairo_rectangle_int_t* rectangle")
+(CAIRO-FUNC-912 "cairo_status_t cairo_region_union cairo_region_t* dst cairo_region_t* other")
+(CAIRO-FUNC-912 "cairo_status_t cairo_region_union_rectangle cairo_region_t* dst cairo_rectangle_int_t* rectangle")
+(CAIRO-FUNC-912 "cairo_status_t cairo_region_xor cairo_region_t* dst cairo_region_t* other")
+(CAIRO-FUNC-912 "cairo_status_t cairo_region_xor_rectangle cairo_region_t* dst cairo_rectangle_int_t* rectangle")
+

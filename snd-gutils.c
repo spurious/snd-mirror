@@ -1126,3 +1126,13 @@ char *slist_selection(slist *lst)
     return((char *)gtk_button_get_label(GTK_BUTTON(lst->items[lst->selected_item])));
   return(NULL);
 }
+
+/* TODO: snd-test 11 gprint dialog hangs til cancel
+ *       libxm
+ *       xpm pixmaps as happy face
+ *       gdk_find_color
+ *       translate rest of *.scm
+ *       cairo in callgrind to find out why it is so slow
+ *       cairo direct to GL (see cairo-gl.h)
+ *       remove the rest of the xgdata structs
+ */

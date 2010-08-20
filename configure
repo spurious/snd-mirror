@@ -8849,6 +8849,131 @@ if test "x$ac_cv_lib_m_gtk_scale_new" = x""yes; then :
 
 fi
 
+	# 2.90.6
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk_expander_get_label_fill in -lm" >&5
+$as_echo_n "checking for gtk_expander_get_label_fill in -lm... " >&6; }
+if test "${ac_cv_lib_m_gtk_expander_get_label_fill+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lm $GTK_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gtk_expander_get_label_fill ();
+int
+main ()
+{
+return gtk_expander_get_label_fill ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_m_gtk_expander_get_label_fill=yes
+else
+  ac_cv_lib_m_gtk_expander_get_label_fill=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_gtk_expander_get_label_fill" >&5
+$as_echo "$ac_cv_lib_m_gtk_expander_get_label_fill" >&6; }
+if test "x$ac_cv_lib_m_gtk_expander_get_label_fill" = x""yes; then :
+  $as_echo "#define HAVE_GTK_EXPANDER_GET_LABEL_FILL 1" >>confdefs.h
+
+fi
+
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for cairo_glyph_allocate in -lcairo" >&5
+$as_echo_n "checking for cairo_glyph_allocate in -lcairo... " >&6; }
+if test "${ac_cv_lib_cairo_cairo_glyph_allocate+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcairo $GTK_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char cairo_glyph_allocate ();
+int
+main ()
+{
+return cairo_glyph_allocate ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_cairo_cairo_glyph_allocate=yes
+else
+  ac_cv_lib_cairo_cairo_glyph_allocate=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_cairo_cairo_glyph_allocate" >&5
+$as_echo "$ac_cv_lib_cairo_cairo_glyph_allocate" >&6; }
+if test "x$ac_cv_lib_cairo_cairo_glyph_allocate" = x""yes; then :
+  $as_echo "#define HAVE_CAIRO_GLYPH_ALLOCATE 1" >>confdefs.h
+
+fi
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for cairo_region_xor in -lcairo" >&5
+$as_echo_n "checking for cairo_region_xor in -lcairo... " >&6; }
+if test "${ac_cv_lib_cairo_cairo_region_xor+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lcairo $GTK_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char cairo_region_xor ();
+int
+main ()
+{
+return cairo_region_xor ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_cairo_cairo_region_xor=yes
+else
+  ac_cv_lib_cairo_cairo_region_xor=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_cairo_cairo_region_xor" >&5
+$as_echo "$ac_cv_lib_cairo_cairo_region_xor" >&6; }
+if test "x$ac_cv_lib_cairo_cairo_region_xor" = x""yes; then :
+  $as_echo "#define HAVE_CAIRO_REGION_XOR 1" >>confdefs.h
+
+fi
+
 
 	XLIBS=""
       	XFLAGS=""
@@ -12767,3 +12892,5 @@ $as_echo "
   random features........:$RANDOM_FEATURES
   environs...............: $host $CC
 " >&6; }
+
+# TODO: libxm configure changes, cairo version check?
