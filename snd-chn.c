@@ -3892,9 +3892,12 @@ static void display_channel_data_with_size(chan_info *cp,
     }
 
   /* -------- time domain graph -------- */
+
 #if USE_GTK
   cairo_push_group(cp->cgx->ax->cr);
+  /* this eliminates the flashing, but can segfault if we try to draw a cursor before popping the group */
 #endif
+
   if ((!just_fft) && (!just_lisp))
     {
       marks_off(cp);
@@ -3930,7 +3933,13 @@ static void display_channel_data_with_size(chan_info *cp,
 
 	      points = make_graph(cp);
 	    }
-	  if (points == 0) return;
+	  if (points == 0)
+	    {
+#if USE_GTK
+	      cairo_pop_group_to_source(cp->cgx->ax->cr);
+#endif
+	      return;
+	    }
 #if (!USE_GTK)
 	  if (cp->cursor_on) draw_graph_cursor(cp);
 #endif
@@ -3986,11 +3995,13 @@ static void display_channel_data_with_size(chan_info *cp,
 #endif
 	  break;
 	}
+#if (!USE_GTK)
       if (cp->cursor_on) 
 	{
 	  cp->fft_cursor_visible = false; 
 	  draw_sonogram_cursor(cp);
 	}
+#endif
     }
 
   /* -------- "lisp" (extlang) graph -------- */
@@ -4068,10 +4079,20 @@ static void display_channel_data_with_size(chan_info *cp,
 
       run_after_graph_hook(cp);
     } 
+
 #if USE_GTK  
   cairo_pop_group_to_source(cp->cgx->ax->cr);
   cairo_paint(cp->cgx->ax->cr);
-  if (cp->cursor_on) draw_graph_cursor(cp);
+  if (cp->cursor_on) 
+    {
+      if (with_time)
+	draw_graph_cursor(cp);
+      if (with_fft)
+	{
+	  cp->fft_cursor_visible = false; 
+	  draw_sonogram_cursor(cp);
+	}
+    }
 #endif
 }
 
