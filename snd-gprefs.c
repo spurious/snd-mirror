@@ -1352,13 +1352,21 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
 
   sep = make_row_middle_separator(hb);    
 
-  prf->color_texts = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-  prf->color = gtk_drawing_area_new();
-  gtk_widget_set_events(prf->color, GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
-  gtk_box_pack_start(GTK_BOX(hb), prf->color, false, false, 4);
-  gtk_size_group_add_widget(prf->color_texts, prf->color);
-  widget_modify_bg(prf->color, GTK_STATE_NORMAL, current_pixel);
-  gtk_widget_show(prf->color);
+  {
+    GtkWidget *frame;
+    frame = gtk_frame_new(NULL);
+    gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
+    prf->color_texts = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+    gtk_box_pack_start(GTK_BOX(hb), frame, false, false, 4);
+    gtk_size_group_add_widget(prf->color_texts, frame);
+
+    prf->color = gtk_drawing_area_new();
+    gtk_widget_set_events(prf->color, GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
+    gtk_container_add(GTK_CONTAINER(frame), prf->color);
+    widget_modify_bg(prf->color, GTK_STATE_NORMAL, current_pixel);
+    gtk_widget_show(prf->color);
+    gtk_widget_show(frame);
+  }
   
   sep1 = make_row_inner_separator(8, hb);
   
@@ -1385,8 +1393,9 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
 
   prf->radj = gtk_adjustment_new(r, 0.0, 1.01, 0.001, 0.01, .01);
   prf->rscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->radj));
+  gtk_widget_set_name(prf->rscl, "prefs_color_scale");
   gtk_box_pack_start(GTK_BOX(row2), prf->rscl, true, true, 4);
-  widget_modify_bg(prf->rscl, GTK_STATE_NORMAL, rscl_color); /* this is the slider except when clicked */
+  widget_modify_bg(prf->rscl, GTK_STATE_NORMAL, rscl_color);   /* this is the slider except when clicked */
   widget_modify_bg(prf->rscl, GTK_STATE_PRELIGHT, rscl_color); /* this is the slider when clicked */
   gtk_widget_show(prf->rscl);
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->rscl)), GTK_UPDATE_CONTINUOUS);
@@ -1394,6 +1403,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
 
   prf->gadj = gtk_adjustment_new(g, 0.0, 1.01, 0.001, 0.01, .01);
   prf->gscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->gadj));
+  gtk_widget_set_name(prf->gscl, "prefs_color_scale");
   gtk_box_pack_start(GTK_BOX(row2), prf->gscl, true, true, 4);
   widget_modify_bg(prf->gscl, GTK_STATE_NORMAL, gscl_color);
   widget_modify_bg(prf->gscl, GTK_STATE_PRELIGHT, gscl_color);
@@ -1403,6 +1413,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
 
   prf->badj = gtk_adjustment_new(b, 0.0, 1.01, 0.001, 0.01, .01);
   prf->bscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->badj));
+  gtk_widget_set_name(prf->bscl, "prefs_color_scale");
   gtk_box_pack_start(GTK_BOX(row2), prf->bscl, true, true, 4);
   widget_modify_bg(prf->bscl, GTK_STATE_NORMAL, bscl_color);
   widget_modify_bg(prf->bscl, GTK_STATE_PRELIGHT, bscl_color);

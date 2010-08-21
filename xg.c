@@ -14,15 +14,9 @@
  *    (list->c-array lst ctype) packages each member of list as c-type "type" returning (wrapped) c array
  *    (make-target-entry lst) returns a GtkTargetEntry table, each member of 'lst' should be (list target flags info)
  *    (GdkColor pixel red green blue): GdkColor struct
- *    (GdkPoint x y): GdkPoint struct
- *    (GdkRectangle x y width height): GdkRectangle struct
- *    (GtkRequisition width height): GtkRequisition struct
- *    (GtkStockItem): GtkStockItem struct
  *    (GtkTextIter): GtkTextIter struct
  *    (GtkTreeIter): GtkTreeIter struct
- *    (PangoColor): PangoColor struct
  *    (PangoRectangle): PangoRectangle struct
- *    (PangoLogAttr): PangoLogAttr struct
  *    (cairo_matrix_t): cairo_matrix_t struct (if cairo)
  *
  * omitted functions and macros:
@@ -34790,34 +34784,6 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
 }
 
 
-static XEN gxg_x(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_GdkPoint__P(ptr) || XEN_GdkRectangle__P(ptr), ptr, XEN_ONLY_ARG, "x", "GdkPoint" " or " "GdkRectangle");
-  if (XEN_GdkPoint__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkPoint_(ptr))->x)));
-  return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkRectangle_(ptr))->x)));
-}
-
-static XEN gxg_y(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_GdkPoint__P(ptr) || XEN_GdkRectangle__P(ptr), ptr, XEN_ONLY_ARG, "y", "GdkPoint" " or " "GdkRectangle");
-  if (XEN_GdkPoint__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkPoint_(ptr))->y)));
-  return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkRectangle_(ptr))->y)));
-}
-
-static XEN gxg_width(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(ptr) || XEN_GtkRequisition__P(ptr), ptr, XEN_ONLY_ARG, "width", "GdkRectangle" " or " "GtkRequisition");
-  if (XEN_GdkRectangle__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkRectangle_(ptr))->width)));
-  return(C_TO_XEN_gint((gint)((XEN_TO_C_GtkRequisition_(ptr))->width)));
-}
-
-static XEN gxg_height(XEN ptr)
-{
-  XEN_ASSERT_TYPE(XEN_GdkRectangle__P(ptr) || XEN_GtkRequisition__P(ptr), ptr, XEN_ONLY_ARG, "height", "GdkRectangle" " or " "GtkRequisition");
-  if (XEN_GdkRectangle__P(ptr)) return(C_TO_XEN_gint((gint)((XEN_TO_C_GdkRectangle_(ptr))->height)));
-  return(C_TO_XEN_gint((gint)((XEN_TO_C_GtkRequisition_(ptr))->height)));
-}
-
 static XEN gxg_pixel(XEN ptr)
 {
   XEN_ASSERT_TYPE(XEN_GdkColor__P(ptr), ptr, XEN_ONLY_ARG, "pixel", "GdkColor");
@@ -34886,60 +34852,6 @@ static XEN gxg_make_GdkColor(XEN arglist)
   return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkColor_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
 }
 
-static XEN gxg_make_GdkPoint(XEN arglist)
-{
-  GdkPoint* result;
-  int i, len;
-  result = (GdkPoint*)calloc(1, sizeof(GdkPoint));
-  len = XEN_LIST_LENGTH(arglist);
-  for (i = 0; i < len; i++)
-    switch (i)
-      {
-      case 0: result->x = XEN_TO_C_gint(XEN_LIST_REF(arglist, 0));
-      case 1: result->y = XEN_TO_C_gint(XEN_LIST_REF(arglist, 1));
-      }
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkPoint_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
-}
-
-static XEN gxg_make_GdkRectangle(XEN arglist)
-{
-  GdkRectangle* result;
-  int i, len;
-  result = (GdkRectangle*)calloc(1, sizeof(GdkRectangle));
-  len = XEN_LIST_LENGTH(arglist);
-  for (i = 0; i < len; i++)
-    switch (i)
-      {
-      case 0: result->x = XEN_TO_C_gint(XEN_LIST_REF(arglist, 0));
-      case 1: result->y = XEN_TO_C_gint(XEN_LIST_REF(arglist, 1));
-      case 2: result->width = XEN_TO_C_gint(XEN_LIST_REF(arglist, 2));
-      case 3: result->height = XEN_TO_C_gint(XEN_LIST_REF(arglist, 3));
-      }
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkRectangle_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
-}
-
-static XEN gxg_make_GtkRequisition(XEN arglist)
-{
-  GtkRequisition* result;
-  int i, len;
-  result = (GtkRequisition*)calloc(1, sizeof(GtkRequisition));
-  len = XEN_LIST_LENGTH(arglist);
-  for (i = 0; i < len; i++)
-    switch (i)
-      {
-      case 0: result->width = XEN_TO_C_gint(XEN_LIST_REF(arglist, 0));
-      case 1: result->height = XEN_TO_C_gint(XEN_LIST_REF(arglist, 1));
-      }
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkRequisition_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
-}
-
-static XEN gxg_make_GtkStockItem(void)
-{
-  GtkStockItem* result;
-  result = (GtkStockItem*)calloc(1, sizeof(GtkStockItem));
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkStockItem_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
-}
-
 static XEN gxg_make_GtkTextIter(void)
 {
   GtkTextIter* result;
@@ -34954,25 +34866,11 @@ static XEN gxg_make_GtkTreeIter(void)
   return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkTreeIter_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
 }
 
-static XEN gxg_make_PangoColor(void)
-{
-  PangoColor* result;
-  result = (PangoColor*)calloc(1, sizeof(PangoColor));
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoColor_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
-}
-
 static XEN gxg_make_PangoRectangle(void)
 {
   PangoRectangle* result;
   result = (PangoRectangle*)calloc(1, sizeof(PangoRectangle));
   return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoRectangle_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
-}
-
-static XEN gxg_make_PangoLogAttr(void)
-{
-  PangoLogAttr* result;
-  result = (PangoLogAttr*)calloc(1, sizeof(PangoLogAttr));
-  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("PangoLogAttr_"), XEN_WRAP_C_POINTER(result), make_xm_obj(result)));
 }
 
 static XEN gxg_make_cairo_matrix_t(void)
@@ -38899,10 +38797,6 @@ XEN_NARGIFY_1(gxg_GTK_IS_TOOL_PALETTE_w, gxg_GTK_IS_TOOL_PALETTE)
 XEN_NARGIFY_1(gxg_GTK_IS_TOOL_ITEM_GROUP_w, gxg_GTK_IS_TOOL_ITEM_GROUP)
 #endif
 
-XEN_NARGIFY_1(gxg_height_w, gxg_height)
-XEN_NARGIFY_1(gxg_width_w, gxg_width)
-XEN_NARGIFY_1(gxg_y_w, gxg_y)
-XEN_NARGIFY_1(gxg_x_w, gxg_x)
 XEN_NARGIFY_1(gxg_blue_w, gxg_blue)
 XEN_NARGIFY_1(gxg_green_w, gxg_green)
 XEN_NARGIFY_1(gxg_red_w, gxg_red)
@@ -38912,15 +38806,9 @@ XEN_NARGIFY_2(gxg_set_green_w, gxg_set_green)
 XEN_NARGIFY_2(gxg_set_red_w, gxg_set_red)
 XEN_NARGIFY_2(gxg_set_pixel_w, gxg_set_pixel)
 XEN_VARGIFY(gxg_make_GdkColor_w, gxg_make_GdkColor)
-XEN_VARGIFY(gxg_make_GdkPoint_w, gxg_make_GdkPoint)
-XEN_VARGIFY(gxg_make_GdkRectangle_w, gxg_make_GdkRectangle)
-XEN_VARGIFY(gxg_make_GtkRequisition_w, gxg_make_GtkRequisition)
-XEN_NARGIFY_0(gxg_make_GtkStockItem_w, gxg_make_GtkStockItem)
 XEN_NARGIFY_0(gxg_make_GtkTextIter_w, gxg_make_GtkTextIter)
 XEN_NARGIFY_0(gxg_make_GtkTreeIter_w, gxg_make_GtkTreeIter)
-XEN_NARGIFY_0(gxg_make_PangoColor_w, gxg_make_PangoColor)
 XEN_NARGIFY_0(gxg_make_PangoRectangle_w, gxg_make_PangoRectangle)
-XEN_NARGIFY_0(gxg_make_PangoLogAttr_w, gxg_make_PangoLogAttr)
 
 XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 
@@ -42842,10 +42730,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IS_TOOL_ITEM_GROUP_w gxg_GTK_IS_TOOL_ITEM_GROUP
 #endif
 
-#define gxg_height_w gxg_height
-#define gxg_width_w gxg_width
-#define gxg_y_w gxg_y
-#define gxg_x_w gxg_x
 #define gxg_blue_w gxg_blue
 #define gxg_green_w gxg_green
 #define gxg_red_w gxg_red
@@ -42855,15 +42739,9 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_set_red_w gxg_set_red
 #define gxg_set_pixel_w gxg_set_pixel
 #define gxg_make_GdkColor_w gxg_make_GdkColor
-#define gxg_make_GdkPoint_w gxg_make_GdkPoint
-#define gxg_make_GdkRectangle_w gxg_make_GdkRectangle
-#define gxg_make_GtkRequisition_w gxg_make_GtkRequisition
-#define gxg_make_GtkStockItem_w gxg_make_GtkStockItem
 #define gxg_make_GtkTextIter_w gxg_make_GtkTextIter
 #define gxg_make_GtkTreeIter_w gxg_make_GtkTreeIter
-#define gxg_make_PangoColor_w gxg_make_PangoColor
 #define gxg_make_PangoRectangle_w gxg_make_PangoRectangle
-#define gxg_make_PangoLogAttr_w gxg_make_PangoLogAttr
 
 #define gxg_make_cairo_matrix_t_w gxg_make_cairo_matrix_t
 
@@ -46796,24 +46674,14 @@ static void define_functions(void)
 
 static void define_structs(void)
 {
-  XG_DEFINE_READER(height, gxg_height_w, 1, 0, 0);
-  XG_DEFINE_READER(width, gxg_width_w, 1, 0, 0);
-  XG_DEFINE_READER(y, gxg_y_w, 1, 0, 0);
-  XG_DEFINE_READER(x, gxg_x_w, 1, 0, 0);
   XG_DEFINE_ACCESSOR(blue, gxg_blue_w, gxg_set_blue_w, 1, 0, 2, 0);
   XG_DEFINE_ACCESSOR(green, gxg_green_w, gxg_set_green_w, 1, 0, 2, 0);
   XG_DEFINE_ACCESSOR(red, gxg_red_w, gxg_set_red_w, 1, 0, 2, 0);
   XG_DEFINE_ACCESSOR(pixel, gxg_pixel_w, gxg_set_pixel_w, 1, 0, 2, 0);
   XG_DEFINE_PROCEDURE(GdkColor, gxg_make_GdkColor_w, 0, 0, 1, "(GdkColor ...): a new GdkColor struct");
-  XG_DEFINE_PROCEDURE(GdkPoint, gxg_make_GdkPoint_w, 0, 0, 1, "(GdkPoint ...): a new GdkPoint struct");
-  XG_DEFINE_PROCEDURE(GdkRectangle, gxg_make_GdkRectangle_w, 0, 0, 1, "(GdkRectangle ...): a new GdkRectangle struct");
-  XG_DEFINE_PROCEDURE(GtkRequisition, gxg_make_GtkRequisition_w, 0, 0, 1, "(GtkRequisition ...): a new GtkRequisition struct");
-  XG_DEFINE_PROCEDURE(GtkStockItem, gxg_make_GtkStockItem_w, 0, 0, 0, "(GtkStockItem): a new GtkStockItem struct");
   XG_DEFINE_PROCEDURE(GtkTextIter, gxg_make_GtkTextIter_w, 0, 0, 0, "(GtkTextIter): a new GtkTextIter struct");
   XG_DEFINE_PROCEDURE(GtkTreeIter, gxg_make_GtkTreeIter_w, 0, 0, 0, "(GtkTreeIter): a new GtkTreeIter struct");
-  XG_DEFINE_PROCEDURE(PangoColor, gxg_make_PangoColor_w, 0, 0, 0, "(PangoColor): a new PangoColor struct");
   XG_DEFINE_PROCEDURE(PangoRectangle, gxg_make_PangoRectangle_w, 0, 0, 0, "(PangoRectangle): a new PangoRectangle struct");
-  XG_DEFINE_PROCEDURE(PangoLogAttr, gxg_make_PangoLogAttr_w, 0, 0, 0, "(PangoLogAttr): a new PangoLogAttr struct");
   XG_DEFINE_PROCEDURE(cairo_matrix_t, gxg_make_cairo_matrix_t_w, 0, 0, 0, "(cairo_matrix_t): a new cairo_matrix_t struct");
 }
 
@@ -48555,7 +48423,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("20-Aug-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("21-Aug-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

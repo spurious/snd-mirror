@@ -130,9 +130,9 @@ void resize_sx_and_zx(chan_info *cp) {}
 void channel_open_pane(chan_info *cp) {}
 void reflect_edit_history_change(chan_info *cp) {}
 void reflect_edit_counter_change(chan_info *cp) {}
-void set_peak_numbers_font(chan_info *cp) {}
-void set_bold_peak_numbers_font(chan_info *cp) {}
-void set_tiny_numbers_font(chan_info *cp) {}
+void set_peak_numbers_font(chan_info *cp, axis_context *ax) {}
+void set_bold_peak_numbers_font(chan_info *cp, axis_context *ax) {}
+void set_tiny_numbers_font(chan_info *cp, axis_context *ax) {}
 color_t get_foreground_color(axis_context *ax) {return(0);}
 void set_foreground_color(axis_context *ax, int color) {}
 void change_channel_style(snd_info *sp, channel_style_t new_style) {}

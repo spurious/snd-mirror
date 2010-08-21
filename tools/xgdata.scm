@@ -6727,15 +6727,15 @@
 
 (STRUCT-make "GdkColor guint32 &pixel guint16 &red guint16 &green guint16 &blue")
 ;;; out 2.90.4 (STRUCT-make "GdkCursor GdkCursorType type guint ref_count")
-(STRUCT-make "GdkPoint gint x gint y")
-(STRUCT-make "GdkRectangle gint x gint y gint width gint height")
-(STRUCT-make "GtkRequisition gint width gint height")
-(STRUCT-make "GtkStockItem")
+;;; (STRUCT-make "GdkPoint gint x gint y")
+;;; (STRUCT-make "GdkRectangle gint x gint y gint width gint height")
+;;; (STRUCT-make "GtkRequisition gint width gint height")
+;;; (STRUCT-make "GtkStockItem")
 (STRUCT-make "GtkTextIter")
 (STRUCT-make "GtkTreeIter")
-(STRUCT-make "PangoColor")
+;;; (STRUCT-make "PangoColor")
 (STRUCT-make "PangoRectangle")
-(STRUCT-make "PangoLogAttr")
+;;; (STRUCT-make "PangoLogAttr")
 
 
 ;;; gtk 1.13.6

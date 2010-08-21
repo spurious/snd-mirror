@@ -97,6 +97,13 @@ widget "*.zy_slider" style "zoom_slider"
 widget "*.gzy_slider" style "zoom_slider"
 widget "*.panel_button" style "zoom_slider"
 
+style "prefs_scale" = "default_slider"
+{
+  GtkScale::slider-length = 24
+}
+
+widget "*.prefs_color_scale" style "prefs_scale"
+
 style "listener" = "default"
 {
 #  font_name = "Monospace 10"

@@ -991,10 +991,10 @@ slist *slist_new_with_title_and_table_data(const char *title,
       gtk_paned_add2(GTK_PANED(parent), topw);
       break;
     case BOX_PACK: 
-      gtk_box_pack_start(GTK_BOX(parent), topw, true, true, 0); 
+      gtk_box_pack_start(GTK_BOX(parent), topw, true, true, 4); 
       break;
     case BOX_PACK_END: 
-      gtk_box_pack_end(GTK_BOX(parent), topw, false, false, 0); 
+      gtk_box_pack_end(GTK_BOX(parent), topw, false, false, 4); 
       break;
     case TABLE_ATTACH: 
       gtk_table_attach(GTK_TABLE(parent), topw, t1, t2, t3, t4,
@@ -1128,13 +1128,27 @@ char *slist_selection(slist *lst)
 }
 
 /* TODO: lots of cairo troubles...
+ *
  *       cairo in callgrind to find out why it is so slow
  *          ran callgrind -- incredible... 
  *          Motif/Xlib is at least 10 times faster.
+ *
  *       cairo direct to GL (see cairo-gl.h) -- web examples depend on gtkglext
  *          cairo_gl_surface_create, but it's not in my version -- not in 1.8.10 configure either
- *          in 1.9.12, use --enable-gl and maybe --enable-glx
- *       remove the rest of the xgdata structs
+ *          in 1.9.12, use --enable-gl and maybe --enable-glx:
+ *              "The OpenGL surface backend feature is still under active development and
+ *               --- is included in this release only as a preview. It does NOT fully work yet"
+ *
  *       cursor! and all the pix kludges
- *       check the sono pix in particular -- it may need to be moved as the cursor was
+ *       check the sono pix in particular -- it may need to be moved as the cursor was [is it necessary to lock out cursor display?]
+ *       unite button doesn't show ctrl case
+ *          ??in ctr case we get very slow update and lots of flashing
+ *          check enved sono mix etc [enved flickers a lot] [in sono white bg on left slops past axis]
+ *       (gradient?) fft dialog is a mess
+ *       does print dialog actually work? [also rec?]
+ *       when selection, all of graph uses selection color and selection rectangle clobbers the graph
+ *       GdkRectangle is also going away?
+ *       the context->ax business is a huge pain for cairo
+ *
+ * in both gtk/motif thumbnail graph needs axis bounds [5x7|8, Sans 6]
  */

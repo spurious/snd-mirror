@@ -641,14 +641,6 @@ static void cp_redraw_selection(chan_info *cp)
   cp->old_x0 = x0;
   cp->old_x1 = x1;
   cp->selection_visible = true;
-#if USE_GTK
-  make_graph(cp);
-#endif
-
-  if (ap->losamp <= beg)
-    {
-      
-    }
 }
 
 

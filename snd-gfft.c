@@ -1045,20 +1045,20 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_table_attach_defaults(GTK_TABLE(outer_table), ab_frame, 0, 6, 6, 7);
       gtk_frame_set_shadow_type(GTK_FRAME(ab_frame), GTK_SHADOW_ETCHED_IN);
 
-      ab_box = gtk_vbox_new(false, 0);
+      ab_box = gtk_vbox_new(false, 2);
       gtk_container_add(GTK_CONTAINER(ab_frame), ab_box);	
 
       ab_label = snd_gtk_highlight_label_new("window parameter");
-      gtk_box_pack_start(GTK_BOX(ab_box), ab_label, false, false, 0);
+      gtk_box_pack_start(GTK_BOX(ab_box), ab_label, false, false, 1);
       gtk_widget_show(ab_label);
 
       
       alpha_box = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(ab_box), alpha_box, false, false, 0);      
+      gtk_box_pack_start(GTK_BOX(ab_box), alpha_box, false, false, 1);      
       gtk_widget_show(alpha_box);
 
       alpha_label = gtk_label_new("alpha: ");
-      gtk_box_pack_start(GTK_BOX(alpha_box), alpha_label, false, false, 0);
+      gtk_box_pack_start(GTK_BOX(alpha_box), alpha_label, false, false, 1);
       gtk_widget_show(alpha_label);      
 
       alpha_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
@@ -1070,15 +1070,15 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_scale_set_draw_value(GTK_SCALE(window_alpha_scale), true);
       SG_SIGNAL_CONNECT(alpha_adj, "value_changed", alpha_callback, NULL);
 
-      gtk_box_pack_start(GTK_BOX(alpha_box), window_alpha_scale, true, true, 0);      
+      gtk_box_pack_start(GTK_BOX(alpha_box), window_alpha_scale, true, true, 1);      
 
 
       beta_box = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(ab_box), beta_box, false, false, 0);      
+      gtk_box_pack_start(GTK_BOX(ab_box), beta_box, false, false, 1);      
       gtk_widget_show(beta_box);
 
       beta_label = gtk_label_new("beta:  ");
-      gtk_box_pack_start(GTK_BOX(beta_box), beta_label, false, false, 0);
+      gtk_box_pack_start(GTK_BOX(beta_box), beta_label, false, false, 1);
       gtk_widget_show(beta_label);      
 
       beta_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
@@ -1090,7 +1090,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_scale_set_draw_value(GTK_SCALE(window_beta_scale), true);
       SG_SIGNAL_CONNECT(beta_adj, "value_changed", beta_callback, NULL);
 
-      gtk_box_pack_start(GTK_BOX(beta_box), window_beta_scale, true, true, 0);      
+      gtk_box_pack_start(GTK_BOX(beta_box), window_beta_scale, true, true, 1);      
 
 
       gtk_widget_show(window_alpha_scale);
@@ -1106,19 +1106,19 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_table_attach_defaults(GTK_TABLE(outer_table), se_frame, 0, 6, 7, 8);
       gtk_frame_set_shadow_type(GTK_FRAME(se_frame), GTK_SHADOW_ETCHED_IN);
 
-      se_box = gtk_vbox_new(false, 0);
+      se_box = gtk_vbox_new(false, 2);
       gtk_container_add(GTK_CONTAINER(se_frame), se_box);	
 
       se_label = snd_gtk_highlight_label_new("spectrum start/end");
-      gtk_box_pack_start(GTK_BOX(se_box), se_label, false, false, 0);
+      gtk_box_pack_start(GTK_BOX(se_box), se_label, false, false, 1);
       gtk_widget_show(se_label);
 
       start_box = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(se_box), start_box, false, false, 0);      
+      gtk_box_pack_start(GTK_BOX(se_box), start_box, false, false, 1);      
       gtk_widget_show(start_box);
 
       start_label = gtk_label_new("start: ");
-      gtk_box_pack_start(GTK_BOX(start_box), start_label, false, false, 0);
+      gtk_box_pack_start(GTK_BOX(start_box), start_label, false, false, 1);
       gtk_widget_show(start_label);      
 
       spectrum_start_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
@@ -1130,15 +1130,15 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_scale_set_draw_value(GTK_SCALE(spectrum_start_scale), true);
       SG_SIGNAL_CONNECT(spectrum_start_adj, "value_changed", spectrum_start_callback, NULL);
 
-      gtk_box_pack_start(GTK_BOX(start_box), spectrum_start_scale, true, true, 0);      
+      gtk_box_pack_start(GTK_BOX(start_box), spectrum_start_scale, true, true, 1);      
 
 
       end_box = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(se_box), end_box, false, false, 0);      
+      gtk_box_pack_start(GTK_BOX(se_box), end_box, false, false, 1);      
       gtk_widget_show(end_box);
 
       end_label = gtk_label_new("end:  ");
-      gtk_box_pack_start(GTK_BOX(end_box), end_label, false, false, 0);
+      gtk_box_pack_start(GTK_BOX(end_box), end_label, false, false, 1);
       gtk_widget_show(end_label);      
 
       spectrum_end_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
@@ -1150,7 +1150,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_scale_set_draw_value(GTK_SCALE(spectrum_end_scale), true);
       SG_SIGNAL_CONNECT(spectrum_end_adj, "value_changed", spectrum_end_callback, NULL);
 
-      gtk_box_pack_start(GTK_BOX(end_box), spectrum_end_scale, true, true, 0);      
+      gtk_box_pack_start(GTK_BOX(end_box), spectrum_end_scale, true, true, 1);      
 
       gtk_widget_show(spectrum_start_scale);
       gtk_widget_show(spectrum_end_scale);

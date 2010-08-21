@@ -1643,7 +1643,7 @@ static void draw_mix_tag(mix_info *md, int x, int y)
   fill_rectangle(ax, x - width / 2, y - height, width, height);
 
   /* redraw the mix id underneath the tag */
-  set_tiny_numbers_font(cp);
+  set_tiny_numbers_font(cp, ax);
   if (cp->printing) ps_set_tiny_numbers_font();
 
   if (md->name)

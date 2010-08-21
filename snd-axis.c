@@ -650,11 +650,12 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       init_axis_scales(ap);
       return;
     }
+
   left_border_width = 10;
 #if USE_MOTIF
   bottom_border_width = 10;
 #else
-  bottom_border_width = 4;
+  bottom_border_width = 8;
 #endif
   top_border_width = 10;
   right_border_width = 14;

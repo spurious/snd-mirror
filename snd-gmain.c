@@ -521,7 +521,7 @@ void snd_doit(int argc, char **argv)
   ss->sgx = (state_context *)calloc(1, sizeof(state_context));
   sx = ss->sgx;
   sx->graph_is_active = false;
-  sx->bg_gradient = 0.0;
+  sx->bg_gradient = 0.07;
 
   /* the gray shades are an attempt to get around Netscape which hogs all the colors */
   sx->white =                 get_color(WHITE_COLOR,           NULL, NULL, true);
@@ -721,6 +721,13 @@ widget \"*.zy_slider\" style \"zoom_slider\"\n		\
 widget \"*.gzy_slider\" style \"zoom_slider\"\n		\
 widget \"*.panel_button\" style \"zoom_slider\"\n	\
 \n							\
+style \"prefs_scale\" = \"default_slider\"\n            \
+{\n                                                     \
+  GtkScale::slider-length = 24\n                        \
+}\n                                                     \
+\n                                                      \
+widget \"*.prefs_color_scale\" style \"prefs_scale\"\n  \
+\n                                                      \
 style \"listener\" = \"default\"\n			\
 {\n							\
 #  font_name = \"Monospace 10\"\n			\

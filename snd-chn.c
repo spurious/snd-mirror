@@ -1301,14 +1301,14 @@ static void display_y_zero(chan_info *cp)
 static char chn_id_str[LABEL_BUFFER_SIZE];
 
 
-static void display_channel_id(chan_info *cp, int height, int chans)
+static void display_channel_id(chan_info *cp, axis_context *ax, int height, int chans)
 {
   if (cp->show_axes == SHOW_NO_AXES) return;
   if ((chans > 1) || (cp->edit_ctr > 0))
     {
       int x0, y0;
       color_t old_color = 0;
-      set_peak_numbers_font(cp);
+      set_peak_numbers_font(cp, ax);
       if (cp->printing) ps_set_peak_numbers_font();
       x0 = 5;
       y0 = height + CHN_LABEL_OFFSET;
@@ -1337,11 +1337,11 @@ static void display_channel_id(chan_info *cp, int height, int chans)
 #endif
 
 
-static void display_selection_transform_size(chan_info *cp, axis_info *fap)
+static void display_selection_transform_size(chan_info *cp, axis_info *fap, axis_context *ax)
 {
   int x0, y0;
   if (fap->height < 60) return;
-  set_tiny_numbers_font(cp);
+  set_tiny_numbers_font(cp, ax);
   if (cp->printing) ps_set_tiny_numbers_font();
   y0 = fap->height + fap->y_offset + SELECTION_FFT_LABEL_OFFSET;
   x0 = fap->x_axis_x0 + 20;
@@ -1396,7 +1396,7 @@ static axis_context *combined_context(chan_info *cp);
 static int make_wavogram(chan_info *cp);
 
 
-static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_sided)
+static int make_graph_1(chan_info *cp, double cur_srate, bool not_enved_bg_graph, bool *two_sided)
 {
   snd_info *sp;
   int j = 0;
@@ -1446,7 +1446,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
   if (cp->time_graph_type == GRAPH_AS_WAVOGRAM) 
     return(make_wavogram(cp)); 
 
-  if (normal)
+  if (not_enved_bg_graph)
     {
       ap->losamp = snd_round_mus_long_t(ap->x0 * cur_srate); /* was ceil??? */
       if (ap->losamp < 0) ap->losamp = 0;
@@ -1467,11 +1467,17 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 
   if (cp->printing) ps_allocate_grf_points();
 
-  if (normal)
+  if (not_enved_bg_graph)
     {
+#if (!USE_GTK)
       if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
 	ax = combined_context(cp); 
       else ax = copy_context(cp);
+#else
+      if (!(ap->ax))
+	ax = cp->cgx->ax;
+      else ax = ap->ax;
+#endif
       if (cp->printing) ps_fg(cp, ax);
     }
 
@@ -1505,7 +1511,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 	  for (j = 0, x = ((double)(ap->losamp) / cur_srate); j < grfpts; j++, x += incr)
 	    set_grf_point(local_grf_x(x, ap), j, local_grf_y(read_sample(sf), ap));
 	}
-      if (normal)
+      if (not_enved_bg_graph)
 	{
 	  draw_grf_points(cp->dot_size, ax, j, ap, 0.0, cp->time_graph_style);
 	  if (cp->printing) 
@@ -1517,7 +1523,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
     {
       /* take min, max */
       if (peak_env_usable(cp, samples_per_pixel, ap->hisamp, true, cp->edit_ctr, false)) /* true = start new background amp env process if needed */
-	j = peak_env_graph(cp, ap, samples_per_pixel, (normal) ? ((int)SND_SRATE(sp)) : 1);
+	j = peak_env_graph(cp, ap, samples_per_pixel, (not_enved_bg_graph) ? ((int)SND_SRATE(sp)) : 1);
       else
 	{
 	  mus_float_t ymin, ymax;
@@ -1584,7 +1590,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 		}
 	    }
 	}
-      if (normal)
+      if (not_enved_bg_graph)
 	{
 	  draw_both_grf_points(cp->dot_size, ax, j, cp->time_graph_style);
 	  if (cp->printing) 
@@ -1593,13 +1599,13 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
       else (*two_sided) = true;
     }
   sf = free_snd_fd(sf);
-  if ((normal) && (sp->channel_style == CHANNELS_SUPERIMPOSED))
+  if ((not_enved_bg_graph) && (sp->channel_style == CHANNELS_SUPERIMPOSED))
     {
       copy_context(cp); /* reset for axes etc */
       if (cp->printing)
 	ps_reset_color();
     }
-  if ((cp->verbose_cursor) && (cp->cursor_on) && (normal) && 
+  if ((cp->verbose_cursor) && (cp->cursor_on) && (not_enved_bg_graph) && 
       (CURSOR(cp) >= ap->losamp) && (CURSOR(cp) <= ap->hisamp) && 
       ((sp->minibuffer_on == MINI_OFF) || (sp->minibuffer_on == MINI_CURSOR)))
     {
@@ -1659,9 +1665,11 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
   if (end > ap->hisamp) end = ap->hisamp;
   beg_in_seconds = (double)beg / cur_srate;
   end_in_seconds = (double)end / cur_srate;
+
 #if USE_GTK
   cairo_push_group(cp->cgx->ax->cr);
 #endif
+
   erase_rectangle(cp, ap->ax, 
 		  local_grf_x(beg_in_seconds, ap), 
 		  ap->y_axis_y1,
@@ -2036,16 +2044,22 @@ static void display_peaks(chan_info *cp, axis_info *fap, mus_float_t *data,
 	}
     }
 
+#if (!USE_GTK)
   if (cp->sound->channel_style == CHANNELS_SUPERIMPOSED)
     ax = combined_context(cp);
   else ax = copy_context(cp);
+#else
+  if (!(fap->ax))
+    ax = cp->cgx->ax;
+  else ax = fap->ax;
+#endif
 
   if (num_peaks > 6)
     {
       for (i = 0; i < num_peaks; i++) peak_amps[i] = peak_freqs[i];
       qsort((void *)peak_amps, num_peaks, sizeof(fft_peak), compare_peak_amps);
       if (num_peaks < 12) amp0 = peak_amps[2].amp; else amp0 = peak_amps[5].amp;
-      set_bold_peak_numbers_font(cp);
+      set_bold_peak_numbers_font(cp, ax); /* in snd-gchn.c */
       if (cp->printing) ps_set_bold_peak_numbers_font();
 
 #if (!USE_GTK)
@@ -2085,7 +2099,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, mus_float_t *data,
     }
   else amp0 = 100.0;
 
-  set_peak_numbers_font(cp);
+  set_peak_numbers_font(cp, ax);
   if (cp->printing) ps_set_peak_numbers_font();
   /* choose a small font for these numbers */
 #if (!USE_GTK)
@@ -2445,7 +2459,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
     }
 
   if (cp->selection_transform_size != 0) 
-    display_selection_transform_size(cp, fap);
+    display_selection_transform_size(cp, fap, ax);
 
   if (sp->channel_style == CHANNELS_SUPERIMPOSED)
     {
@@ -3575,9 +3589,15 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
   if ((!uap) || (!uap->graph_active) || (up->len == NULL) || (up->len[0] <= 0)) return;
 
   if (cp->printing) ps_allocate_grf_points();
+#if (!USE_GTK)
   if (sp->channel_style == CHANNELS_SUPERIMPOSED) 
     ax = combined_context(cp); 
   else ax = copy_context(cp);
+#else
+  if (!(uap->ax))
+    ax = cp->cgx->ax;
+  else ax = uap->ax;
+#endif
   if (cp->printing) ps_fg(cp, ax);
 
   if (up->env_data)
@@ -3928,7 +3948,9 @@ static void display_channel_data_with_size(chan_info *cp,
 
 #if USE_GTK
 	      if ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) 
-		display_selection(cp);
+		{
+		  display_selection(cp);
+		}
 #endif
 
 	      points = make_graph(cp);
@@ -3975,7 +3997,11 @@ static void display_channel_data_with_size(chan_info *cp,
 	case GRAPH_ONCE:
 	  make_fft_graph(cp,
 			 cp->fft->axis,
+#if (!USE_GTK)
 			 (sp->channel_style == CHANNELS_SUPERIMPOSED) ? combined_context(cp) : copy_context(cp),
+#else
+			 (ap->ax) ? ap->ax : cp->cgx->ax,
+#endif
 			 cp->hookable);
 	  break;
 
@@ -4072,7 +4098,11 @@ static void display_channel_data_with_size(chan_info *cp,
 	}
 
       if ((sp->channel_style != CHANNELS_SUPERIMPOSED) && (height > 10))
-	display_channel_id(cp, height + offset, sp->nchans);
+#if (!USE_GTK)
+	display_channel_id(cp, ap->ax, height + offset, sp->nchans);
+#else
+	display_channel_id(cp, cp->cgx->ax, height + offset, sp->nchans);
+#endif
 
       if (with_inset_graph(ss))
 	show_inset_graph(cp);
@@ -4673,7 +4703,7 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 	return(CLICK_LISP);
     }
 
-  if (cp->graph_transform_p)
+  if ((cp->graph_transform_p) && (cp->fft))
     {
       ap = cp->fft->axis;
       if (!ap) return(CLICK_NOGRAPH); /* apparently can happen if fft is being redrawn when we click */

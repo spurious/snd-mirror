@@ -1,7 +1,5 @@
 #include "snd.h"
 
-/* TODO: it would be nice if the "peaks" display did not flash */
-
 enum {
     W_main_window,
     W_graph_window,
@@ -948,20 +946,17 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 }
 
 
-static void set_graph_font(chan_info *cp, PangoFontDescription *fnt)
+static void set_graph_font(chan_info *cp, axis_context *ax, PangoFontDescription *fnt)
 {
-  chan_context *cx;
-  cx = cp->tcgx;
-  if (!cx) cx = cp->cgx;
-  cx->ax->current_font = fnt;
+  ax->current_font = fnt;
 }
 
 
-void set_peak_numbers_font(chan_info *cp) {set_graph_font(cp, PEAKS_FONT(ss));}
+void set_peak_numbers_font(chan_info *cp, axis_context *ax) {set_graph_font(cp, ax, PEAKS_FONT(ss));}
 
-void set_tiny_numbers_font(chan_info *cp) {set_graph_font(cp, TINY_FONT(ss));}
+void set_tiny_numbers_font(chan_info *cp, axis_context *ax) {set_graph_font(cp, ax, TINY_FONT(ss));}
 
-void set_bold_peak_numbers_font(chan_info *cp) {set_graph_font(cp, BOLD_PEAKS_FONT(ss));}
+void set_bold_peak_numbers_font(chan_info *cp, axis_context *ax) {set_graph_font(cp, ax, BOLD_PEAKS_FONT(ss));}
 
 
 color_t get_foreground_color(axis_context *ax)
