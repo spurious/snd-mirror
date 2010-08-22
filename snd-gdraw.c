@@ -68,9 +68,37 @@ void draw_points(axis_context *ax, point_t *points, int num, int size)
 
 void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height)
 {
-  cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
-  cairo_rectangle(ax->cr, x0, y0, width, height);
-  cairo_fill(ax->cr);
+  if (ss->sgx->bg_gradient < .01)
+    {
+      cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
+      cairo_rectangle(ax->cr, x0, y0, width, height);
+      cairo_fill(ax->cr);
+    }
+  else
+    {
+      mus_float_t grad;
+      grad = ss->sgx->bg_gradient;
+      /* try gradient background: looks ok, but display is slow */
+      cairo_pattern_t *pat;
+      /* this is shaded toward the right
+	 pat = cairo_pattern_create_linear(0, 0, width, height);
+      */
+      /* this is shaded toward the bottom 
+       */
+      pat = cairo_pattern_create_linear(0, 0, 0, height);
+      cairo_pattern_add_color_stop_rgb(pat, 1, 
+				       mus_fclamp(0.0, ax->gc->fg_color->red - grad, 1.0), 
+				       mus_fclamp(0.0, ax->gc->fg_color->green - grad, 1.0), 
+				       mus_fclamp(0.0, ax->gc->fg_color->blue - grad, 1.0));
+      cairo_pattern_add_color_stop_rgb(pat, 0, 
+				       mus_fclamp(0.0, ax->gc->fg_color->red + grad, 1.0), 
+				       mus_fclamp(0.0, ax->gc->fg_color->green + grad, 1.0), 
+				       mus_fclamp(0.0, ax->gc->fg_color->blue + grad, 1.0));
+      cairo_rectangle(ax->cr, x0, y0, width, height);
+      cairo_set_source(ax->cr, pat);
+      cairo_fill(ax->cr);
+      cairo_pattern_destroy(pat);
+    }
 }
 
 
@@ -229,6 +257,7 @@ void fill_polygon_from_array(axis_context *ax, point_t *points, int npoints)
     cairo_line_to(ax->cr, points[i].x, points[i].y);
   cairo_close_path(ax->cr);
   cairo_fill(ax->cr);
+  /* PERHAPS: gradient here also? */
 }
 
 

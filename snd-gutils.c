@@ -191,7 +191,7 @@ static int sg_font_height(PangoFontDescription *font)
 #endif
 
   ctx = gdk_pango_context_get();
-  m = pango_context_get_metrics(ctx, font, gtk_get_default_language()); /* huge memleak here, but what can I do? */
+  m = pango_context_get_metrics(ctx, font, gtk_get_default_language()); 
   hgt = (int)((dpi / 72.0) * PANGO_PIXELS(pango_font_metrics_get_ascent(m)));
   pango_font_metrics_unref(m);
   g_object_unref(ctx);
@@ -1129,20 +1129,20 @@ char *slist_selection(slist *lst)
 
 /* TODO: lots of cairo troubles...
  *
+ * --------
  *       cairo direct to GL (see cairo-gl.h) -- web examples depend on gtkglext
  *          cairo_gl_surface_create, but it's not in my version -- not in 1.8.10 configure either
  *          in 1.9.12, use --enable-gl and maybe --enable-glx:
  *              "The OpenGL surface backend feature is still under active development and
  *               is included in this release only as a preview. It does NOT fully work yet"
- *
- *       check all the pix kludges, sono pix in particular -- it may need to be moved as the cursor was [is it necessary to lock out cursor display?]
+ * --------
+ *       is it necessary to lock out cursor display?
  *       unite button doesn't show ctrl case
- *          ??in ctrl case we get very slow update and lots of flashing
  *          check enved sono mix etc [enved flickers a lot] [in sono white bg on left slops past axis]
- *       fft dialog is a mess
  *       does print dialog actually work? [also rec?]
  *       when fft selection, fft not redrawn?
  *       the context->ax business is a huge pain for cairo
- *
- *       perhaps: in both gtk/motif thumbnail graph needs y axis bounds, and dur string placement needs font size info
+ *       multichan select flashes then erases chan>0 select rect
+ *       maybe try polygon gradient (needs overall height)
+ *       try pixel slice to get gradient bg in widgets
  */

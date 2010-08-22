@@ -854,7 +854,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       SG_SIGNAL_CONNECT(transform_dialog, "delete_event", delete_transform_dialog, NULL);
       gtk_window_set_title(GTK_WINDOW(transform_dialog), _("Transform Options"));
       sg_make_resizable(transform_dialog);
-      gtk_container_set_border_width(GTK_CONTAINER(transform_dialog), 4);
+      gtk_container_set_border_width(GTK_CONTAINER(transform_dialog), 6);
       gtk_widget_realize(transform_dialog);
       /* gtk_window_resize(GTK_WINDOW(transform_dialog), 400, 500); */
 
@@ -882,8 +882,8 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
       outer_table = gtk_table_new(8, 11, false); /* rows cols */
       gtk_container_add(GTK_CONTAINER(DIALOG_CONTENT_AREA(transform_dialog)), outer_table);
-      gtk_table_set_row_spacings(GTK_TABLE(outer_table), 8);
-      gtk_table_set_col_spacings(GTK_TABLE(outer_table), 12);
+      gtk_table_set_row_spacings(GTK_TABLE(outer_table), 16);
+      gtk_table_set_col_spacings(GTK_TABLE(outer_table), 16);
       gtk_table_set_homogeneous(GTK_TABLE(outer_table), true);
 
       /* now 8 boxes within the main box:
@@ -903,7 +903,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       /* DISPLAY */
       display_frame = gtk_frame_new(NULL);
       gtk_table_attach_defaults(GTK_TABLE(outer_table), display_frame, 6, 11, 0, 4);
-      gtk_frame_set_shadow_type(GTK_FRAME(display_frame), GTK_SHADOW_ETCHED_IN);
+      gtk_frame_set_shadow_type(GTK_FRAME(display_frame), GTK_SHADOW_IN);
 
       {
 	GtkWidget *label, *vbb, *hb;
@@ -1043,7 +1043,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
       ab_frame = gtk_frame_new(NULL);
       gtk_table_attach_defaults(GTK_TABLE(outer_table), ab_frame, 0, 6, 6, 7);
-      gtk_frame_set_shadow_type(GTK_FRAME(ab_frame), GTK_SHADOW_ETCHED_IN);
+      gtk_frame_set_shadow_type(GTK_FRAME(ab_frame), GTK_SHADOW_IN);
 
       ab_box = gtk_vbox_new(false, 2);
       gtk_container_add(GTK_CONTAINER(ab_frame), ab_box);	
@@ -1104,7 +1104,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
       se_frame = gtk_frame_new(NULL);
       gtk_table_attach_defaults(GTK_TABLE(outer_table), se_frame, 0, 6, 7, 8);
-      gtk_frame_set_shadow_type(GTK_FRAME(se_frame), GTK_SHADOW_ETCHED_IN);
+      gtk_frame_set_shadow_type(GTK_FRAME(se_frame), GTK_SHADOW_IN);
 
       se_box = gtk_vbox_new(false, 2);
       gtk_container_add(GTK_CONTAINER(se_frame), se_box);	
@@ -1161,20 +1161,25 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
       /* GRAPH */
       {
-	GtkWidget *label;
-	label = snd_gtk_highlight_label_new(mus_fft_window_name(fft_window(ss)));
+	GtkWidget *label, *g_vbox;
 
 	graph_frame = gtk_frame_new(NULL);
 	gtk_table_attach_defaults(GTK_TABLE(outer_table), graph_frame, 6, 11, 4, 8);
 	gtk_frame_set_label_align(GTK_FRAME(graph_frame), 0.5, 0.0);
-	gtk_frame_set_shadow_type(GTK_FRAME(graph_frame), GTK_SHADOW_ETCHED_IN);
-	gtk_frame_set_label_widget(GTK_FRAME(graph_frame), label);
-	gtk_widget_show(label);
-      }
+	gtk_frame_set_shadow_type(GTK_FRAME(graph_frame), GTK_SHADOW_IN);
 
-      graph_drawer = gtk_drawing_area_new();
-      gtk_container_add(GTK_CONTAINER(graph_frame), graph_drawer);
-      widget_modify_bg(graph_drawer, GTK_STATE_NORMAL, ss->sgx->white);
+	g_vbox = gtk_vbox_new(false, 2);
+	gtk_container_add(GTK_CONTAINER(graph_frame), g_vbox);	
+
+	label = snd_gtk_highlight_label_new(mus_fft_window_name(fft_window(ss)));
+	gtk_box_pack_start(GTK_BOX(g_vbox), label, false, false, 1);
+	gtk_widget_show(label);
+
+	graph_drawer = gtk_drawing_area_new();
+	gtk_box_pack_end(GTK_BOX(g_vbox), graph_drawer, true, true, 0);
+	widget_modify_bg(graph_drawer, GTK_STATE_NORMAL, ss->sgx->white);
+	gtk_widget_show(g_vbox);
+      }
 
       fgc = gc_new(MAIN_WINDOW(ss));
       gc_set_background(fgc, ss->sgx->white);

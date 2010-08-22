@@ -3762,7 +3762,7 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 
 static void draw_sonogram_cursor(chan_info *cp);
 static void draw_graph_cursor(chan_info *cp);
-static void show_inset_graph(chan_info *cp);
+static void show_inset_graph(chan_info *cp, axis_context *ax);
 
 
 static void display_channel_data_with_size(chan_info *cp, 
@@ -4101,12 +4101,13 @@ static void display_channel_data_with_size(chan_info *cp,
       if ((sp->channel_style != CHANNELS_SUPERIMPOSED) && (height > 10))
 #if (!USE_GTK)
 	display_channel_id(cp, ap->ax, height + offset, sp->nchans);
+      if (with_inset_graph(ss))
+	show_inset_graph(cp, copy_context(cp));
 #else
 	display_channel_id(cp, cp->cgx->ax, height + offset, sp->nchans);
+	if (with_inset_graph(ss))
+	  show_inset_graph(cp, cp->cgx->ax);
 #endif
-
-      if (with_inset_graph(ss))
-	show_inset_graph(cp);
 
       run_after_graph_hook(cp);
     } 
@@ -4625,6 +4626,7 @@ typedef struct inset_graph_info_t {  /* chan_info field is inset_graph, set to n
   int width, height, edpos, y_offset, data_size, x0, x1, y0, y1;
   point_t *data0, *data1;
   bool graphing;
+  double maxamp;
 } inset_graph_info_t;
 
 
@@ -5736,7 +5738,7 @@ static void make_point_arrays(inset_graph_info_t *info, int size, vct *v1)
 #endif
 
 
-static void show_inset_graph(chan_info *cp)
+static void show_inset_graph(chan_info *cp, axis_context *cur_ax)
 {
 #if (!USE_NO_GUI)
   if ((with_inset_graph(ss)) &&
@@ -5772,11 +5774,9 @@ static void show_inset_graph(chan_info *cp)
 	  ((cp->chan == 0) || (cp->sound->channel_style != CHANNELS_SUPERIMPOSED)))
 	{
 	  /* draw axes around the inset graph */
-	  axis_context *cur_ax;
 	  chan_info *grf_cp;
 	  grf_cp = cp->sound->chans[grf_chn];
 
-	  cur_ax = set_context(grf_cp, CHAN_GC);
 	  fill_rectangle(cur_ax, x_offset, chan_offset + height, width, 2);
 	  fill_rectangle(cur_ax, x_offset, chan_offset, 2, height);
 
@@ -5787,21 +5787,38 @@ static void show_inset_graph(chan_info *cp)
 	  
 	  {
 	    char *str;
-	    int len;
+	    int len, num_hgt = -1;
 	    axis_info *ap;
 	    ap = cp->axis;
 	    str = prettyf(ap->xmax, 2);
 	    if (str)
 	      {
+		num_hgt = number_height(TINY_FONT(ss));
 		len = strlen(str);
 		set_tiny_numbers_font(cp, cur_ax);
 #if (!USE_GTK)
-		draw_string(cur_ax, info->x1 - 6 * len + 10, info->y1 + 12, str, len);
+		draw_string(cur_ax, info->x1 - 6 * len + 10, info->y1 + num_hgt, str, len);
 #else
-		draw_string(cur_ax, info->x1 - 6 * len + 10, info->y1 + 4, str, len);
+		draw_string(cur_ax, info->x1 - 6 * len + 10, info->y1 + (num_hgt / 2) - 2, str, len);
 #endif
-		/* TODO: 4, 6 and 12 here need to reflect tiny font size */
 		free(str);
+	      }
+
+	    if (info->maxamp > 0.0)
+	      {
+		str = prettyf(info->maxamp, (info->maxamp > .1) ? 2 : ((info->maxamp > .01) ? 3 : 4));
+		if (str)
+		  {
+		    if (num_hgt == -1) num_hgt = number_height(TINY_FONT(ss));
+		    len = strlen(str);
+		    set_tiny_numbers_font(cp, cur_ax);
+#if (!USE_GTK)
+		    draw_string(cur_ax, info->x0 - 6 * len - 2, info->y0 + (num_hgt / 2), str, len);
+#else
+		    draw_string(cur_ax, info->x0 - 6 * len - 2, info->y0, str, len);
+#endif
+		    free(str);
+		  }
 	      }
 	  }
 
@@ -5810,10 +5827,24 @@ static void show_inset_graph(chan_info *cp)
 	    int rx, lx, wx;
 	    rx = snd_round(width * (double)(cp->axis->hisamp) / (double)frames);
 	    lx = snd_round(width * (double)(cp->axis->losamp) / (double)frames);
+#if USE_GTK
+	    if (lx < 2) lx = 2; /* don't erase the y axis */
+#endif
 	    wx = rx - lx;
 	    if (wx <= 0) wx = 1;
-	    cur_ax = set_context(grf_cp, CHAN_SELGC);
-	    fill_rectangle(cur_ax, x_offset + lx, chan_offset, wx, height);
+
+	    if (cp->cgx->selected)
+	      {
+		cur_ax->gc = ss->sgx->selected_selection_gc;
+		fill_rectangle(cur_ax, x_offset + lx, chan_offset, wx, height);
+		cur_ax->gc = ss->sgx->selected_basic_gc;
+	      }
+	    else
+	      {
+		cur_ax->gc = ss->sgx->selection_gc;
+		fill_rectangle(cur_ax, x_offset + lx, chan_offset, wx, height);
+		cur_ax->gc = ss->sgx->basic_gc;
+	      }
 	  }
 
 	  if ((!new_peaks) &&
@@ -5857,6 +5888,7 @@ static void show_inset_graph(chan_info *cp)
 	      if (data_max > 0.0)
 		data_scaler = (double)height / (2 * data_max);
 	      else data_scaler = 0.0;
+	      info->maxamp = data_max;
 
 	      data_len = v0->length;
 	      step = (double)data_len / (double)width;
@@ -5966,7 +5998,6 @@ static void show_inset_graph(chan_info *cp)
 #endif
 	    }
 
-	  cur_ax = set_context(grf_cp, CHAN_GC);
 	  draw_lines(cur_ax, info->data0, info->data_size);
 	  if (info->data1) draw_lines(cur_ax, info->data1, info->data_size);
 	  info->graphing = true;

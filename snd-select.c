@@ -617,14 +617,8 @@ static void cp_redraw_selection(chan_info *cp)
     x1 = grf_x((double)end / sp_srate, ap);
   else x1 = ap->x_axis_x1;
 #if USE_GTK
-  if (cp->selection_visible)
-    {
-      axis_context *ax;
-      ax = selection_context(cp);
-      cairo_set_source_rgb(ax->cr, ax->gc->bg_color->red, ax->gc->bg_color->green, ax->gc->bg_color->blue);
-      cairo_rectangle(ax->cr, cp->old_x0, ap->y_axis_y1, cp->old_x1 - cp->old_x0, (int)(ap->y_axis_y0 - ap->y_axis_y1));
-      cairo_fill(ax->cr);
-    }
+  if (x0 <= ap->x_axis_x0) 
+    x0 += 2;                       /* dont' erase the y axis */
 #else
   if (cp->selection_visible)
     fill_rectangle(selection_context(cp),
