@@ -1740,10 +1740,16 @@ widget_t start_preferences_dialog(void)
   widgets_group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
   help_group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 
+#if 0
+  /* these are really garish */
   rscl_color = rgb_to_color(1.0, 0.0, 0.0);
   gscl_color = rgb_to_color(0.0, 1.0, 0.0);
   bscl_color = rgb_to_color(0.0, 0.0, 1.0);
-
+#else
+  rscl_color = rgb_to_color(1.0, 0.4, 0.4);
+  gscl_color = rgb_to_color(0.56, 1.0, 0.56);
+  bscl_color = rgb_to_color(0.68, 0.84, 1.0);
+#endif
 
   /* ---------------- overall behavior ---------------- */
 

@@ -110,44 +110,38 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define EVENT_AREA_HEIGHT(Ev) (Ev)->area.height
 #define EVENT_ATOM(Ev)        (Ev)->atom
 
-/* there's gv.foregound in snd-gchn.c (GdkGCValues)
- *  and lots of refs to GdkColor fields red|green|blue
- */
-
-
 #define idle_t guint
 #define idle_func_t gboolean
 #define any_pointer_t gpointer
 #define oclock_t guint32
-#define point_t GdkPoint
 
+typedef struct {
+  int x, y; /* PERHAPS: double here? */
+} point_t;
 
-  #define rgb_t double
-  #define RGB_MAX 1.0
-  #define FLOAT_TO_RGB(Val) (rgb_t)(Val)
-  #define RGB_TO_FLOAT(Val) Val
+#define rgb_t double
+#define RGB_MAX 1.0
+#define FLOAT_TO_RGB(Val) (rgb_t)(Val)
+#define RGB_TO_FLOAT(Val) Val
 
-  typedef struct {
-    rgb_t red, green, blue;
-  } color_info;
+typedef struct {
+  rgb_t red, green, blue;
+} color_info;
 
-  typedef color_info* color_t;
+typedef color_info* color_t;
 
-  typedef struct {
-    color_t fg_color, bg_color;
-  } gc_t;
+typedef struct {
+  color_t fg_color, bg_color;
+} gc_t;
 
-  #define picture_t GdkPixmap
-
+#define picture_t GdkPixmap
 
 typedef struct {
   gc_t *gc;
   GdkDrawable *wn;
   PangoFontDescription *current_font;
   GtkWidget *w;
-
   cairo_t *cr;
-
 } axis_context;
 
 typedef struct slist {

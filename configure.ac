@@ -64,7 +64,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-gl2ps          include gl2ps (Motif only)
 #   --with-editres 	  include EditRes in xm
 #   --with-shared-sndlib  load sndlib.so if possible
-#   --with-builtin-gtkrc  include built-in gtkrc fallbacks (default=yes)
 #   --without-gsl         omit GSL even if it exists
 #   --without-fftw        omit FFTW even if it exists
 #   --without-xpm         omit XPM even if it exists (for testing)
@@ -93,7 +92,6 @@ AC_ARG_WITH(motif,	 [  --with-motif	  	  use libXm to build Snd])
 AC_ARG_WITH(static-motif,[  --with-static-motif	  use libXm.a to build Snd])
 AC_ARG_WITH(editres,     [  --with-editres	  include editres in xm])
 AC_ARG_WITH(ladspa,	 [  --with-ladspa  	  include support for LADSPA plugins, Linux only])
-AC_ARG_WITH(builtin-gtkrc,[  --with-builtin-gtkrc	  include built-in gtkrc fallbacks, default=yes])
 AC_ARG_WITH(doubles,     [  --with-doubles	  use doubles throughout])
 AC_ARG_WITH(float-samples, [  --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes])
 AC_ARG_WITH(pulseaudio,  [  --with-pulseaudio 		  use PulseAudio, default=no])
@@ -144,10 +142,6 @@ if test "$with_doubles" != no ; then
   AC_DEFINE(WITH_DOUBLES)
 else
   AC_DEFINE(mus_float_t, float)
-fi
-
-if test "$with_builtin_gtkrc" != no; then
-  AC_DEFINE(WITH_BUILTIN_GTKRC)
 fi
 
 if test "$with_static_xg" = yes ; then

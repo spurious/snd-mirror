@@ -3950,6 +3950,7 @@ static void display_channel_data_with_size(chan_info *cp,
 	      if ((cp->chan == 0) || (sp->channel_style != CHANNELS_SUPERIMPOSED)) 
 		{
 		  display_selection(cp);
+		  copy_context(cp);
 		}
 #endif
 
@@ -5778,10 +5779,31 @@ static void show_inset_graph(chan_info *cp)
 	  cur_ax = set_context(grf_cp, CHAN_GC);
 	  fill_rectangle(cur_ax, x_offset, chan_offset + height, width, 2);
 	  fill_rectangle(cur_ax, x_offset, chan_offset, 2, height);
+
 	  info->x0 = x_offset;
 	  info->x1 = x_offset + width;
 	  info->y0 = chan_offset;
 	  info->y1 = chan_offset + height;
+	  
+	  {
+	    char *str;
+	    int len;
+	    axis_info *ap;
+	    ap = cp->axis;
+	    str = prettyf(ap->xmax, 2);
+	    if (str)
+	      {
+		len = strlen(str);
+		set_tiny_numbers_font(cp, cur_ax);
+#if (!USE_GTK)
+		draw_string(cur_ax, info->x1 - 6 * len + 10, info->y1 + 12, str, len);
+#else
+		draw_string(cur_ax, info->x1 - 6 * len + 10, info->y1 + 4, str, len);
+#endif
+		/* TODO: 4, 6 and 12 here need to reflect tiny font size */
+		free(str);
+	      }
+	  }
 
 	  /* show where the current window fits into the overall graph */
 	  {

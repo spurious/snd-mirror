@@ -7113,14 +7113,7 @@
 (CFNC-2901 "void gdk_drag_context_set_device GdkDragContext* context GdkDevice* device")
 (CFNC-2901 "GdkDevice* gdk_drag_context_get_device GdkDragContext* context")
 (CFNC-2901 "GList* gdk_drag_context_list_targets GdkDragContext* context")
-#|
-;;; aren't these public?
-(CFNC-2901 "GdkDragAction gdk_drag_context_get_actions GdkDragContext* context")
-(CFNC-2901 "GdkDragAction gdk_drag_context_get_suggested_action GdkDragContext* context")
-(CFNC-2901 "GdkDragAction gdk_drag_context_get_action GdkDragContext* context")
-;;; 2.90.6 (CFNC-2901 "GdkImageType gdk_image_get_image_type GdkImage* image")
-;;; there's also get_action and get_selected something -- forgot to add it
-|#
+
 (CFNC-2901 "void gdk_event_set_device GdkEvent* event GdkDevice* device")
 (CFNC-2901 "GdkDevice* gdk_event_get_device GdkEvent* event")
 (CFNC-2901 "gboolean gdk_events_get_distance GdkEvent* event1 GdkEvent* event2 gdouble* [distance]")
@@ -7197,9 +7190,7 @@
 
 (CFNC-2906 "gint gtk_selection_data_get_length GtkSelectionData* selection_data")
 
-
 ;;; 2.90.5 removed all GdkRegion stuff
-;;;   I'm guessing about these names
 
 (CFNC-2906 "cairo_region_t* gdk_drawable_get_clip_region GdkDrawable* drawable")
 (CFNC-2906 "cairo_region_t* gdk_drawable_get_visible_region GdkDrawable* drawable")

@@ -1129,26 +1129,20 @@ char *slist_selection(slist *lst)
 
 /* TODO: lots of cairo troubles...
  *
- *       cairo in callgrind to find out why it is so slow
- *          ran callgrind -- incredible... 
- *          Motif/Xlib is at least 10 times faster.
- *
  *       cairo direct to GL (see cairo-gl.h) -- web examples depend on gtkglext
  *          cairo_gl_surface_create, but it's not in my version -- not in 1.8.10 configure either
  *          in 1.9.12, use --enable-gl and maybe --enable-glx:
  *              "The OpenGL surface backend feature is still under active development and
- *               --- is included in this release only as a preview. It does NOT fully work yet"
+ *               is included in this release only as a preview. It does NOT fully work yet"
  *
- *       cursor! and all the pix kludges
- *       check the sono pix in particular -- it may need to be moved as the cursor was [is it necessary to lock out cursor display?]
+ *       check all the pix kludges, sono pix in particular -- it may need to be moved as the cursor was [is it necessary to lock out cursor display?]
  *       unite button doesn't show ctrl case
- *          ??in ctr case we get very slow update and lots of flashing
+ *          ??in ctrl case we get very slow update and lots of flashing
  *          check enved sono mix etc [enved flickers a lot] [in sono white bg on left slops past axis]
- *       (gradient?) fft dialog is a mess
+ *       fft dialog is a mess
  *       does print dialog actually work? [also rec?]
- *       when selection, all of graph uses selection color and selection rectangle clobbers the graph
- *       GdkRectangle is also going away?
+ *       when fft selection, fft not redrawn?
  *       the context->ax business is a huge pain for cairo
  *
- * in both gtk/motif thumbnail graph needs axis bounds [5x7|8, Sans 6]
+ *       perhaps: in both gtk/motif thumbnail graph needs y axis bounds, and dur string placement needs font size info
  */

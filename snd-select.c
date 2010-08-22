@@ -662,11 +662,19 @@ static void redraw_selection(void)
 		  cp = sp->chans[j];
 		  if ((cp) && (selection_is_visible(cp)))
 		    {
+#if (!USE_GTK)
 		      cp_redraw_selection(cp);
 		      if ((cp->graph_transform_p) && 
 			  (!(chan_fft_in_progress(cp))) &&
 			  (show_selection_transform(ss)))
 			calculate_fft(cp);
+#else
+		      if ((cp->graph_transform_p) && 
+			  (!(chan_fft_in_progress(cp))) &&
+			  (show_selection_transform(ss)))
+			display_channel_data(cp);
+		      else display_channel_time_data(cp);
+#endif
 		      if (sp->channel_style == CHANNELS_SUPERIMPOSED)
 			break;
 		    }

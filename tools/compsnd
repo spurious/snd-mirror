@@ -246,20 +246,6 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 g++ --with-gtk --without-builtin-gtkrc                 ---  '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-gtk --without-builtin-gtkrc CFLAGS="-Wall -I/usr/X11R6/include"
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-gtk"
-
-make allclean
-rm -f snd
-rm -f config.cache
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --with-forth                                           ---- '
 echo ' -------------------------------------------------------------------------------- '
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-forth

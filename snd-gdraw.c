@@ -48,7 +48,7 @@ void draw_arc(axis_context *ax, int x, int y, int size, int angle0, int angle1)
 
 
 #if 0
-void draw_point(axis_context *ax, GdkPoint point, int size)
+void draw_point(axis_context *ax, point_t point, int size)
 {
   draw_dot(ax, point.x, point.y, size);
 }
@@ -232,7 +232,7 @@ void fill_polygon_from_array(axis_context *ax, point_t *points, int npoints)
 }
 
 
-static GdkPoint polypts[4];
+static point_t polypts[4];
 
 void fill_polygons(axis_context *ax, point_t *points, int num, int y0)
 {

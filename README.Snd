@@ -37,7 +37,6 @@ The configure script has a bunch of arguments:
                                on my machine: --with-motif-prefix=/usr/X11R6
   
      --with-gtk                use Gtk+
-       --with-builtin-gtkrc    include built-in gtkrc fallbacks (default=yes)
   
      --with-no-gui             make Snd without any graphics support
   

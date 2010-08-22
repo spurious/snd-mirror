@@ -1591,7 +1591,6 @@
 	(set! checks-2906 (cons (list name type) checks-2906))
 	(set! names (cons (cons name 'def) names)))))
 
-
 (define (STRUCT data)
   (let ((name (car-str data)) ; struct name (type)
 	(args (cdr-str data)))
@@ -1765,7 +1764,7 @@
 
 
 
-;;; ---------------------------------------- write output files ----------------------------------------
+;;; ---------------------------------------- write output file ----------------------------------------
 (hey "/* xg.c: s7, Ruby, and Forth bindings for gtk/pango/cairo, some of glib~%")
 (hey " *   this file generated automatically from makexg.scm and xgdata.scm~%")
 (hey " *   needs xen.h~%")

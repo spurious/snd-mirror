@@ -734,7 +734,6 @@ with_motif
 with_static_motif
 with_editres
 with_ladspa
-with_builtin_gtkrc
 with_doubles
 with_float_samples
 with_pulseaudio
@@ -1424,7 +1423,6 @@ Optional Packages:
   --with-static-motif	  use libXm.a to build Snd
   --with-editres	  include editres in xm
   --with-ladspa  	  include support for LADSPA plugins, Linux only
-  --with-builtin-gtkrc	  include built-in gtkrc fallbacks, default=yes
   --with-doubles	  use doubles throughout
   --with-float-samples	  use floats (or doubles) as the internal sample respresentation, default=yes
   --with-pulseaudio 		  use PulseAudio, default=no
@@ -4033,7 +4031,6 @@ _ACEOF
 #   --with-gl2ps          include gl2ps (Motif only)
 #   --with-editres 	  include EditRes in xm
 #   --with-shared-sndlib  load sndlib.so if possible
-#   --with-builtin-gtkrc  include built-in gtkrc fallbacks (default=yes)
 #   --without-gsl         omit GSL even if it exists
 #   --without-fftw        omit FFTW even if it exists
 #   --without-xpm         omit XPM even if it exists (for testing)
@@ -4145,12 +4142,6 @@ fi
 # Check whether --with-ladspa was given.
 if test "${with_ladspa+set}" = set; then :
   withval=$with_ladspa;
-fi
-
-
-# Check whether --with-builtin-gtkrc was given.
-if test "${with_builtin_gtkrc+set}" = set; then :
-  withval=$with_builtin_gtkrc;
 fi
 
 
@@ -4286,11 +4277,6 @@ if test "$with_doubles" != no ; then
 
 else
   $as_echo "#define mus_float_t float" >>confdefs.h
-
-fi
-
-if test "$with_builtin_gtkrc" != no; then
-  $as_echo "#define WITH_BUILTIN_GTKRC 1" >>confdefs.h
 
 fi
 

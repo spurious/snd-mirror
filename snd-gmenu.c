@@ -976,7 +976,7 @@ GtkWidget *add_menu(void)
 
   options_sep_menu = gtk_menu_item_new();
   ml[o_sep_menu] = NULL;
-  gtk_menu_shell_append(GTK_MENU_SHELL(view_cascade_menu), options_sep_menu);
+  gtk_menu_shell_append(GTK_MENU_SHELL(options_cascade_menu), options_sep_menu);
   gtk_widget_show(options_sep_menu);
   widget_modify_bg(options_sep_menu, GTK_STATE_NORMAL, ss->sgx->black);
 
