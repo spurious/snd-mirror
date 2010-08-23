@@ -89,10 +89,10 @@
      (lambda (button color)
        (XtVaSetValues
 	 (XmMessageBoxGetChild new-dialog button)
-	 (list XmNarmColor   (pushed-button-color)
+	 (list XmNarmColor   (selection-color)
 	       XmNbackground color)))
      (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
-     (list (help-button-color) (quit-button-color) (doit-button-color)))
+     (list (highlight-color) (highlight-color) (highlight-color)))
     
     (XtAddCallback new-dialog XmNcancelCallback (lambda (w c i) (XtUnmanageChild new-dialog)))
     (XtAddCallback new-dialog XmNhelpCallback help-callback)  ; "Help"
@@ -101,9 +101,9 @@
     (if reset-callback
 	;; add a Reset button
 	(let ((reset-button (XtCreateManagedWidget "Reset" xmPushButtonWidgetClass new-dialog
-			      (list XmNbackground (reset-button-color)
+			      (list XmNbackground (highlight-color)
 				    XmNforeground (BlackPixelOfScreen (current-screen))
-				    XmNarmColor   (pushed-button-color)))))
+				    XmNarmColor   (selection-color)))))
 	  (XtAddCallback reset-button XmNactivateCallback reset-callback)))
 
     (XmStringFree xhelp)

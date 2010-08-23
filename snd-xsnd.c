@@ -1133,7 +1133,7 @@ static void play_button_callback(Widget w, XtPointer context, XtPointer info)
   goto_graph(cp);
   if (cb->set) 
     {
-      XtVaSetValues(w, XmNselectColor, ((sp->with_tracking_cursor != DONT_TRACK) ? (ss->sgx->green) : (ss->sgx->pushed_button_color)), NULL);
+      XtVaSetValues(w, XmNselectColor, ((sp->with_tracking_cursor != DONT_TRACK) ? (ss->sgx->green) : (ss->sgx->selection_color)), NULL);
       play_sound(sp, 0, NO_END_SPECIFIED);
     }
 }
@@ -1150,7 +1150,7 @@ static void set_play_button_pause(snd_info *sp, void *ptr)
       w = PLAY_BUTTON(sp);
       if (pd->pausing)
 	XtVaSetValues(w, XmNselectColor, ss->sgx->red, NULL);
-      else XtVaSetValues(w, XmNselectColor, ((sp->with_tracking_cursor != DONT_TRACK) ? (ss->sgx->green) : (ss->sgx->pushed_button_color)), NULL);
+      else XtVaSetValues(w, XmNselectColor, ((sp->with_tracking_cursor != DONT_TRACK) ? (ss->sgx->green) : (ss->sgx->selection_color)), NULL);
     }
 }
 
@@ -1170,7 +1170,7 @@ void set_control_panel_play_button(snd_info *sp)
   if ((sp) && (sp->sgx) && (PLAY_BUTTON(sp)))
     {
       set_toggle_button(PLAY_BUTTON(sp), false, false, sp);
-      XtVaSetValues(PLAY_BUTTON(sp), XmNselectColor, ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(PLAY_BUTTON(sp), XmNselectColor, ss->sgx->selection_color, NULL);
     }
 }
 
@@ -1194,7 +1194,7 @@ static void set_sync_color(snd_info *sp)
   syb = SYNC_BUTTON(sp);
   switch (sp->sync)
     {
-    case 1: case 0: XtVaSetValues(syb, XmNselectColor, ss->sgx->pushed_button_color, NULL); break;
+    case 1: case 0: XtVaSetValues(syb, XmNselectColor, ss->sgx->selection_color, NULL); break;
     case 2:         XtVaSetValues(syb, XmNselectColor, ss->sgx->green, NULL);               break;
     case 3:         XtVaSetValues(syb, XmNselectColor, ss->sgx->yellow, NULL);              break;
     case 4:         XtVaSetValues(syb, XmNselectColor, ss->sgx->red, NULL);                 break;
@@ -2139,7 +2139,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       /* in Motif 2.2 this sets up a tooltip:
 	XtSetArg(args[n], XmNtoolTipString, XmStringCreateLocalized("play this sound")); n++;
       */
-      XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
+      XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
       PLAY_BUTTON(sp) = make_togglebutton_widget(_("play"), NAME_BOX(sp), args, n);
       XtAddCallback(PLAY_BUTTON(sp), XmNvalueChangedCallback, play_button_callback, (XtPointer)sp);
 
@@ -2154,7 +2154,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, PLAY_BUTTON(sp)); n++;
-      XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
+      XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
       SYNC_BUTTON(sp) = make_togglebutton_widget(_("sync"), NAME_BOX(sp), args, n);
       XtAddEventHandler(SYNC_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       XtAddCallback(SYNC_BUTTON(sp), XmNvalueChangedCallback, sync_button_callback, (XtPointer)sp);
@@ -2171,7 +2171,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNrightWidget, SYNC_BUTTON(sp)); n++;
-      XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
+      XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
       UNITE_BUTTON(sp) = make_togglebutton_widget(_("unite"), NAME_BOX(sp), args, n);
       XtAddEventHandler(UNITE_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       XtAddCallback(UNITE_BUTTON(sp), XmNvalueChangedCallback, unite_button_callback, (XtPointer)sp);
@@ -2408,7 +2408,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNspacing, 0); n++;
       XtSetArg(args[n], XmNlabelString, s1); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
-      XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
+      XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
       EXPAND_RIGHT_BUTTON(sp) = make_togglebutton_widget("expoff", CONTROLS(sp), args, n);
       XtAddEventHandler(EXPAND_RIGHT_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       XtAddCallback(EXPAND_RIGHT_BUTTON(sp), XmNvalueChangedCallback, expand_button_callback, (XtPointer)sp);
@@ -2487,7 +2487,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNlabelString, s1); n++;
       XtSetArg(args[n], XmNspacing, 0); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
-      XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
+      XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
       CONTRAST_RIGHT_BUTTON(sp) = make_togglebutton_widget("conoff", CONTROLS(sp), args, n);
       XtAddEventHandler(CONTRAST_RIGHT_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       XtAddCallback(CONTRAST_RIGHT_BUTTON(sp), XmNvalueChangedCallback, contrast_button_callback, (XtPointer)sp);
@@ -2587,7 +2587,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNspacing, 0); n++;
       XtSetArg(args[n], XmNlabelString, s1); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
-      XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
+      XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
       REVERB_BUTTON(sp) = make_togglebutton_widget("revoff", CONTROLS(sp), args, n);
       XtAddEventHandler(REVERB_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       XtAddCallback(REVERB_BUTTON(sp), XmNvalueChangedCallback, reverb_button_callback, (XtPointer)sp);
@@ -2704,7 +2704,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNwidth, ARROW_SIZE); n++;
       XtSetArg(args[n], XmNborderWidth, 0); n++;
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
-      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
+      XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
       FILTER_ORDER_DOWN(sp) = make_pushbutton_widget("", CONTROLS(sp), args, n);
       XtAddEventHandler(FILTER_ORDER_DOWN(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       XtAddCallback(FILTER_ORDER_DOWN(sp), XmNactivateCallback, filter_order_down_callback, (XtPointer)sp);
@@ -2721,7 +2721,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNwidth, ARROW_SIZE); n++;
       XtSetArg(args[n], XmNborderWidth, 0); n++;
       XtSetArg(args[n], XmNmarginWidth, 0); n++;
-      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
+      XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
       FILTER_ORDER_UP(sp) = make_pushbutton_widget("", CONTROLS(sp), args, n);
       XtAddEventHandler(FILTER_ORDER_UP(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       XtAddCallback(FILTER_ORDER_UP(sp), XmNactivateCallback, filter_order_up_callback, (XtPointer)sp);
@@ -2740,7 +2740,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNspacing, 0); n++;
       XtSetArg(args[n], XmNlabelString, s1); n++; 
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
-      XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
+      XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
       FILTER_BUTTON(sp) = make_togglebutton_widget("fltoff", CONTROLS(sp), args, n);
       XtAddEventHandler(FILTER_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       XtAddCallback(FILTER_BUTTON(sp), XmNvalueChangedCallback, filter_button_callback, (XtPointer)sp);
@@ -2758,7 +2758,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNlabelString, s1); n++; 
       XtSetArg(args[n], XmNvalue, sp->filter_control_in_hz); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
-      XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
+      XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
       FILTER_HZ_BUTTON(sp) = make_togglebutton_widget("flthz", CONTROLS(sp), args, n);
       XtAddEventHandler(FILTER_HZ_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       XtAddCallback(FILTER_HZ_BUTTON(sp), XmNvalueChangedCallback, filter_hz_callback, (XtPointer)sp);
@@ -2776,7 +2776,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNlabelString, s1); n++; 
       XtSetArg(args[n], XmNvalue, sp->filter_control_in_dB); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
-      XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
+      XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
       FILTER_DB_BUTTON(sp) = make_togglebutton_widget("fltdB", CONTROLS(sp), args, n);
       XtAddEventHandler(FILTER_DB_BUTTON(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
       XtAddCallback(FILTER_DB_BUTTON(sp), XmNvalueChangedCallback, filter_dB_callback, (XtPointer)sp);

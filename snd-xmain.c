@@ -30,15 +30,6 @@
 #define FILTER_CONTROL_WAVEFORM_COLOR "blue"
 #define SASH_COLOR           "lightgreen"
 
-#ifndef SND_DISABLE_DEPRECATED
-#define PUSHED_BUTTON_COLOR  "lightsteelblue1"
-#define HELP_BUTTON_COLOR    "ivory1"
-#define QUIT_BUTTON_COLOR    "ivory1"
-#define RESET_BUTTON_COLOR   "ivory1"
-#define DOIT_BUTTON_COLOR    "ivory1"
-#define DOIT_AGAIN_BUTTON_COLOR "ivory1"
-#endif
-
 #define CHANNEL_SASH_INDENT -10
 #define CHANNEL_SASH_SIZE 0
 /* 0 means: use Motif default size */
@@ -107,14 +98,6 @@ typedef struct {
   int channel_sash_size;
   int sash_size;
   int sash_indent;
-#ifndef SND_DISABLE_DEPRECATED
-  char *pushed_button_color;
-  char *help_button_color;
-  char *quit_button_color;
-  char *reset_button_color;
-  char *doit_button_color;
-  char *doit_again_button_color;
-#endif
 } sndres;
 
 static XtResource resources[] = {
@@ -157,14 +140,6 @@ static XtResource resources[] = {
   {(char *)"channelSashSize", (char *)"ChannelSashSize", XmRInt, sizeof(int), XtOffset(sndres *, channel_sash_size), XmRImmediate, (XtPointer)CHANNEL_SASH_SIZE},
   {(char *)"sashSize", (char *)"SashSize", XmRInt, sizeof(int), XtOffset(sndres *, sash_size), XmRImmediate, (XtPointer)SASH_SIZE},
   {(char *)"sashIndent", (char *)"SashIndent", XmRInt, sizeof(int), XtOffset(sndres *, sash_indent), XmRImmediate, (XtPointer)SASH_INDENT},
-#ifndef SND_DISABLE_DEPRECATED
-  {(char *)"pushedbuttoncolor", (char *)"Pushedbuttoncolor", XmRString, sizeof(char *), XtOffset(sndres *, pushed_button_color), XmRString, (XtPointer)PUSHED_BUTTON_COLOR},
-  {(char *)"helpbuttoncolor", (char *)"Helpbuttoncolor", XmRString, sizeof(char *), XtOffset(sndres *, help_button_color), XmRString, (XtPointer)HELP_BUTTON_COLOR},
-  {(char *)"quitbuttoncolor", (char *)"Quitbuttoncolor", XmRString, sizeof(char *), XtOffset(sndres *, quit_button_color), XmRString, (XtPointer)QUIT_BUTTON_COLOR},
-  {(char *)"resetbuttoncolor", (char *)"Resetbuttoncolor", XmRString, sizeof(char *), XtOffset(sndres *, reset_button_color), XmRString, (XtPointer)RESET_BUTTON_COLOR},
-  {(char *)"doitbuttoncolor", (char *)"Doitbuttoncolor", XmRString, sizeof(char *), XtOffset(sndres *, doit_button_color), XmRString, (XtPointer)DOIT_BUTTON_COLOR},
-  {(char *)"doitagainbuttoncolor", (char *)"Doitagainbuttoncolor", XmRString, sizeof(char *), XtOffset(sndres *, doit_again_button_color), XmRString, (XtPointer)DOIT_AGAIN_BUTTON_COLOR}
-#endif
 };
 
 
@@ -645,14 +620,6 @@ void save_colors(FILE *Fp)
   save_a_color(Fp, dpy, cmap, snd_rs.mark_color,              MARK_COLOR,              ss->sgx->mark_color,              S_mark_color);
   save_a_color(Fp, dpy, cmap, snd_rs.sash_color,              SASH_COLOR,              ss->sgx->sash_color,              S_sash_color);
   save_a_color(Fp, dpy, cmap, snd_rs.text_focus_color,        TEXT_FOCUS_COLOR,        ss->sgx->text_focus_color,        S_text_focus_color);
-#ifndef SND_DISABLE_DEPRECATED
-  save_a_color(Fp, dpy, cmap, snd_rs.pushed_button_color,     PUSHED_BUTTON_COLOR,     ss->sgx->pushed_button_color,     S_pushed_button_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.doit_button_color,       DOIT_BUTTON_COLOR,       ss->sgx->doit_button_color,       S_doit_button_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.doit_again_button_color, DOIT_AGAIN_BUTTON_COLOR, ss->sgx->doit_again_button_color, S_doit_again_button_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.help_button_color,       HELP_BUTTON_COLOR,       ss->sgx->help_button_color,       S_help_button_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.quit_button_color,       QUIT_BUTTON_COLOR,       ss->sgx->quit_button_color,       S_quit_button_color);
-  save_a_color(Fp, dpy, cmap, snd_rs.reset_button_color,      RESET_BUTTON_COLOR,      ss->sgx->reset_button_color,      S_reset_button_color);
-#endif
   save_a_color(Fp, dpy, cmap, snd_rs.filter_control_waveform_color, FILTER_CONTROL_WAVEFORM_COLOR, ss->sgx->filter_control_waveform_color, S_filter_control_waveform_color);
 }
 
@@ -866,14 +833,6 @@ void snd_doit(int argc, char **argv)
   sx->mark_color =              get_color(shell, snd_rs.mark_color,              MARK_COLOR,              "red", NULL, false);
   sx->sash_color =              get_color(shell, snd_rs.sash_color,              SASH_COLOR,              NULL, NULL, false);
   sx->text_focus_color =        get_color(shell, snd_rs.text_focus_color,        TEXT_FOCUS_COLOR,        NULL, NULL, true);
-#ifndef SND_DISABLE_DEPRECATED
-  sx->pushed_button_color =     get_color(shell, snd_rs.pushed_button_color,     PUSHED_BUTTON_COLOR,     "blue", NULL, false);
-  sx->help_button_color =       get_color(shell, snd_rs.help_button_color,       HELP_BUTTON_COLOR,       "green", NULL, true);
-  sx->quit_button_color =       get_color(shell, snd_rs.quit_button_color,       QUIT_BUTTON_COLOR,       "blue", NULL, true);
-  sx->reset_button_color =      get_color(shell, snd_rs.reset_button_color,      RESET_BUTTON_COLOR,      "red", NULL, true);
-  sx->doit_button_color =       get_color(shell, snd_rs.doit_button_color,       DOIT_BUTTON_COLOR,       "red", NULL, true);
-  sx->doit_again_button_color = get_color(shell, snd_rs.doit_again_button_color, DOIT_AGAIN_BUTTON_COLOR, "red", NULL, true);
-#endif
   sx->grid_color = get_in_between_color(sx->data_color, sx->graph_color);
   sx->selected_grid_color = get_in_between_color(sx->selected_data_color, sx->selected_graph_color);
 

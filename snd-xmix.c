@@ -511,7 +511,7 @@ static void mix_dialog_play_callback(Widget w, XtPointer context, XtPointer info
     {
       if (!(mix_exists(mix_dialog_id))) return;
       if (mix_play)
-	XmChangeColor(mix_play, ss->sgx->pushed_button_color); /* this needs to happen before trying to play */
+	XmChangeColor(mix_play, ss->sgx->selection_color); /* this needs to happen before trying to play */
       syncd_mix_play(mix_dialog_id);
       mix_playing = true;                                      /* don't use the return value here */
       play_mix_from_id(mix_dialog_id);
@@ -690,16 +690,16 @@ Widget make_mix_dialog(void)
       XmStringFree(xdismiss);
       XmStringFree(xtitle);
 
-      XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->doit_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(mix_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
 
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->reset_button_color); n++;
-      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
       env_button = XtCreateManagedWidget(_("Apply env"), xmPushButtonGadgetClass, mix_dialog, args, n);
       XtAddCallback(env_button, XmNactivateCallback, apply_mix_dialog_callback, NULL);
 
@@ -759,14 +759,14 @@ Widget make_mix_dialog(void)
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
       XtSetArg(args[n], XmNlabelPixmap, speaker_r); n++;
-      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
+      XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
       mix_play = XtCreateManagedWidget("mix-play", xmPushButtonWidgetClass, mix_row, args, n);
       XtAddCallback(mix_play, XmNactivateCallback, mix_dialog_play_callback, NULL);
 
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
+      XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
       previousb = XtCreateManagedWidget(_("Previous"), xmPushButtonWidgetClass, mix_row, args, n);
       if (previous_mix_id(mix_dialog_id) == INVALID_MIX_ID) 
 	set_sensitive(previousb, false);
@@ -774,7 +774,7 @@ Widget make_mix_dialog(void)
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
+      XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
       nextb = XtCreateManagedWidget(_("Next"), xmPushButtonWidgetClass, mix_row, args, n);
       if (next_mix_id(mix_dialog_id) == INVALID_MIX_ID) 
 	set_sensitive(nextb, false);
@@ -938,7 +938,7 @@ Widget make_mix_dialog(void)
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-      XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
+      XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
       if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
 
       w_clip = make_togglebutton_widget(_("clip"), w_dB_row, args, n);

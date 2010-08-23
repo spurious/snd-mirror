@@ -88,6 +88,7 @@ static bool map_over_chans(bool (*func)(chan_info *ncp))
   /* non-zero = abort map, skips inactive sounds */
   int i, j;
   bool val = false;
+
   for (i = 0; i < ss->max_sounds; i++)
     {
       snd_info *sp;
@@ -606,16 +607,20 @@ static void cp_redraw_selection(chan_info *cp)
   mus_long_t beg, end;
   axis_info *ap;
   double sp_srate;
+
   ap = cp->axis;
   beg = selection_beg(cp);
   end = selection_end(cp);
   sp_srate = (double)SND_SRATE(cp->sound);
+
   if (ap->losamp < beg)
     x0 = grf_x((double)beg / sp_srate, ap);
   else x0 = ap->x_axis_x0;
+
   if (ap->hisamp > end)
     x1 = grf_x((double)end / sp_srate, ap);
   else x1 = ap->x_axis_x1;
+
 #if USE_GTK
   if (x0 <= ap->x_axis_x0) 
     x0 += 2;                       /* dont' erase the y axis */
@@ -627,6 +632,7 @@ static void cp_redraw_selection(chan_info *cp)
 		   cp->old_x1 - cp->old_x0,
 		   (int)(ap->y_axis_y0 - ap->y_axis_y1));
 #endif
+
   fill_rectangle(selection_context(cp),
 		 x0,
 		 ap->y_axis_y1,
@@ -692,6 +698,7 @@ void update_possible_selection_in_progress(mus_long_t samp)
     {
       int i;
       mus_long_t original_beg;
+
       if (samp < 0) samp = 0;
       original_beg = syncd_chans->begs[0];
       for (i = 0; i < syncd_chans->chans; i++)
@@ -699,6 +706,7 @@ void update_possible_selection_in_progress(mus_long_t samp)
 	  chan_info *cp;
 	  ed_list *ed;
 	  mus_long_t new_end;
+
 	  cp = syncd_chans->cps[i];
 	  ed = cp->edits[cp->edit_ctr];
 	  ed->selection_maxamp = -1.0;
@@ -706,6 +714,7 @@ void update_possible_selection_in_progress(mus_long_t samp)
 	  if (samp > CURRENT_SAMPLES(cp))
 	    new_end = CURRENT_SAMPLES(cp);
 	  else new_end = samp;
+
 	  if (new_end < original_beg)
 	    {
 	      ed->selection_beg = new_end;
@@ -728,8 +737,10 @@ int make_region_from_selection(void)
   int i, id = -1;
   bool happy = false;
   sync_info *si;
+
   if (!(selection_is_active())) return(-1);
   if (max_regions(ss) == 0) return(-1);
+
   si = selection_sync();
   ends = (mus_long_t *)calloc(si->chans, sizeof(mus_long_t));
   for (i = 0; i < si->chans; i++) 
@@ -738,6 +749,7 @@ int make_region_from_selection(void)
       if (ends[i] > si->begs[i]) happy = true;
       /* C-space followed by mouse click causes a bogus selection-creation event */
     }
+
   if (happy) id = define_region(si, ends);
   si = free_sync_info(si);
   if (ends) free(ends);

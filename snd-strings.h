@@ -702,13 +702,4 @@
 #define S_zoom_focus_middle             "zoom-focus-middle"
 #define S_zoom_focus_right              "zoom-focus-right"
 #define S_zoom_focus_style              "zoom-focus-style"
-
-#ifndef SND_DISABLE_DEPRECATED
-#define S_doit_again_button_color       "doit-again-button-color"
-#define S_doit_button_color             "doit-button-color"
-#define S_help_button_color             "help-button-color"
-#define S_pushed_button_color           "pushed-button-color"
-#define S_quit_button_color             "quit-button-color"
-#define S_reset_button_color            "reset-button-color"
-#endif
 #endif

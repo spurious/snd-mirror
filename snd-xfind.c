@@ -202,8 +202,8 @@ static void make_edit_find_dialog(bool managed)
       XtAddCallback(edit_find_dialog, XmNokCallback, edit_find_cancel_callback, NULL);
       
       n = 0;
-      XtSetArg(args[n], XmNbackground, ss->sgx->doit_button_color); n++;
-      XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
+      XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+      XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
       findnextB = XtCreateManagedWidget(_("Next"), xmPushButtonGadgetClass, edit_find_dialog, args, n);
       XtAddCallback(findnextB, XmNactivateCallback, edit_find_next_callback, NULL);
       
@@ -249,12 +249,12 @@ static void make_edit_find_dialog(bool managed)
       find_error_label = XtCreateManagedWidget("", xmLabelWidgetClass, find_error_frame, args, n);
       
       map_over_children(edit_find_dialog, set_main_color_of_widget);
-      XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->doit_again_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
 
       cancelB = XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_OK_BUTTON);
       set_dialog_widget(FIND_DIALOG, edit_find_dialog);

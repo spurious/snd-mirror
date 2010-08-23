@@ -2937,20 +2937,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define (procedure-name proc) (format #f \"~A\" proc))");
   /* needed in snd-test.scm and hooks.scm */
 
-#ifdef SND_DISABLE_DEPRECATED
-#ifdef USE_NO_GUI
-  XEN_EVAL_C_STRING("(define " S_highlight_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_selection_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-#endif
-  /* add pws for all the button colors -- highlight color except for pushed button = selection */
-  XEN_EVAL_C_STRING("(define pushed-button-color selection-color)\n\
-                     (define help-button-color highlight-color)\n\
-                     (define doit-again-button-color highlight-color)\n\
-                     (define doit-button-color highlight-color)\n\
-                     (define quit-button-color highlight-color)\n\
-                     (define reset-button-color highlight-color)\n");
-#endif
-
   XEN_EVAL_C_STRING("\
         (define (apropos name)\
           (define (substring? subs s)\
@@ -3031,55 +3017,12 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("<'> redo alias redo-edit");        /* consistency with Ruby */ 
   XEN_EVAL_C_STRING("<'> undo alias undo-edit"); 
   XEN_EVAL_C_STRING(": clm-print ( fmt :optional args -- ) fth-format snd-print drop ;"); 
-
-#ifdef SND_DISABLE_DEPRECATED
-#ifdef USE_NO_GUI
-  XEN_EVAL_C_STRING(": " S_highlight_color " #f ;");
-  XEN_EVAL_C_STRING(": set-" S_highlight_color " { a } #f ;");
-  XEN_EVAL_C_STRING(": " S_selection_color " #f ;");
-  XEN_EVAL_C_STRING(": set-" S_selection_color " { a } #f ;");
-#endif
-  /* the S_* button color macros aren't defined in this case */
-  XEN_EVAL_C_STRING("\
-		    <'> selection-color     alias pushed-button-color\n\
-		    <'> set-selection-color alias set-pushed-button-color\n\
-		    <'> highlight-color     alias help-button-color\n\
-		    <'> set-highlight-color alias set-help-button-color\n\
-		    <'> highlight-color     alias doit-again-button-color\n\
-		    <'> set-highlight-color alias set-doit-again-button-color\n\
-		    <'> highlight-color     alias doit-button-color\n\
-		    <'> set-highlight-color alias set-doit-button-color\n\
-		    <'> highlight-color     alias quit-button-color\n\
-		    <'> set-highlight-color alias set-quit-button-color\n\
-		    <'> highlight-color     alias reset-button-color\n\
-		    <'> set-highlight-color alias set-reset-button-color\n");
-#endif
 #endif
 
 #if HAVE_RUBY
   XEN_EVAL_C_STRING("def clm_print(str, *args)\n\
                       snd_print format(str, *args)\n\
                       end");
-#ifdef SND_DISABLE_DEPRECATED
-#ifdef USE_NO_GUI
-  XEN_EVAL_C_STRING("def highlight_color () false end");
-  XEN_EVAL_C_STRING("def set_highlight_color (a) false end");
-  XEN_EVAL_C_STRING("def selection_color () false end");
-  XEN_EVAL_C_STRING("def set_selection_color (a) false end");
-#endif
-  XEN_EVAL_C_STRING("def pushed_button_color ()          selection_color end\n\
-		     def set_pushed_button_color (a)     set_selection_color(a) end\n\
-                     def help_button_color ()            highlight_color end\n\
-		     def set_help_button_color (a)       set_highlight_color(a) end\n\
-                     def doit_again_button_color ()      highlight_color end\n\
-		     def set_doit_again_button_color (a) set_highlight_color(a) end\n\
-                     def doit_button_color ()            highlight_color end\n\
-		     def set_doit_button_color (a)       set_highlight_color(a) end\n\
-                     def quit_button_color ()            highlight_color end\n\
-		     def set_quit_button_color (a)       set_highlight_color(a) end\n\
-                     def reset_button_color ()           highlight_color end\n\
-		     def set_reset_button_color (a)      set_highlight_color(a) end\n");
-#endif
 #endif
 
 #if HAVE_SCHEME

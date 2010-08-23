@@ -110,8 +110,8 @@
 							  XmNwidth               800
 							  XmNbackground          (basic-color))))
 	(XtVaSetValues (XmMessageBoxGetChild oscope-dialog XmDIALOG_OK_BUTTON)
-		       (list XmNarmColor   (pushed-button-color)
-			     XmNbackground (quit-button-color)))
+		       (list XmNarmColor   (selection-color)
+			     XmNbackground (highlight-color)))
 	(XtAddCallback oscope-dialog 
 		       XmNokCallback (lambda (w context info)
 				       (set! oscope-power #f)

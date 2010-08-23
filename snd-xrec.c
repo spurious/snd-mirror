@@ -330,12 +330,12 @@ widget_t record_file(void)
       XmStringFree(xrecord);
       XmStringFree(xtitle);
 
-      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->doit_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->highlight_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->highlight_color, NULL);
 
       recorder_filename = mus_strdup("test.snd");
 
@@ -387,7 +387,7 @@ widget_t record_file(void)
 	XtSetArg(args[n], XmNbottomWidget, sep1); n++;
 	XtSetArg(args[n], XmNtopAttachment, XmATTACH_NONE); n++;
 	XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-	XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
+	XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
 	XtSetArg(args[n], XmNmarginWidth, 8); n++;
 	db_button = make_togglebutton_widget(_("dB"), form, args, n);
 

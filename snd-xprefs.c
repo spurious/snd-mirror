@@ -1870,13 +1870,13 @@ widget_t start_preferences_dialog(void)
     preferences_dialog = XmCreateTemplateDialog(MAIN_PANE(ss), (char *)"preferences", args, n);
 
     n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->reset_button_color); n++;
-    XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
+    XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+    XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
     revert_button = XtCreateManagedWidget(_("Revert"), xmPushButtonGadgetClass, preferences_dialog, args, n);
 
     n = 0;
-    XtSetArg(args[n], XmNbackground, ss->sgx->reset_button_color); n++;
-    XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
+    XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+    XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
     clear_button = XtCreateManagedWidget(_("Clear"), xmPushButtonGadgetClass, preferences_dialog, args, n);
 
 #if HAVE_EXTENSION_LANGUAGE
@@ -1898,13 +1898,13 @@ widget_t start_preferences_dialog(void)
     
     map_over_children(preferences_dialog, set_main_color_of_widget);
 #if HAVE_EXTENSION_LANGUAGE
-    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->doit_button_color,   NULL);
+    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->selection_color, NULL);
+    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->highlight_color,   NULL);
 #endif
-    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->quit_button_color,   NULL);
-    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color,   NULL);
+    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->selection_color, NULL);
+    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->selection_color, NULL);
+    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->highlight_color,   NULL);
+    XtVaSetValues(XmMessageBoxGetChild(preferences_dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->highlight_color,   NULL);
     
     n = 0;
     XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;

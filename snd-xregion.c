@@ -398,7 +398,7 @@ static regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callb
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
-  XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
+  XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
   XtSetArg(args[n], XmNlabelString, s1); n++;
   XtSetArg(args[n], XmNvalueChangedCallback, n1 = make_callback_list(play_callback, (XtPointer)r)); n++;
   if (ss->toggle_size > 0) {XtSetArg(args[n], XmNindicatorSize, ss->toggle_size); n++;}
@@ -459,13 +459,13 @@ static void make_region_dialog(void)
   region_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), _("Regions"), args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->reset_button_color); n++;
-  XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+  XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
   save_as_button = XtCreateManagedWidget(_("Save as"), xmPushButtonGadgetClass, region_dialog, args, n);
 
   n = 0;
-  XtSetArg(args[n], XmNbackground, ss->sgx->doit_again_button_color); n++;
-  XtSetArg(args[n], XmNarmColor, ss->sgx->pushed_button_color); n++;
+  XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
+  XtSetArg(args[n], XmNarmColor, ss->sgx->selection_color); n++;
   mix_button = XtCreateManagedWidget(_("Mix"), xmPushButtonGadgetClass, region_dialog, args, n);
 
   XtAddCallback(region_dialog,  XmNokCallback,       region_ok_callback,     NULL);
@@ -479,12 +479,12 @@ static void make_region_dialog(void)
   XmStringFree(xinsert);
   XmStringFree(titlestr);
 
-  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
-  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->doit_button_color, NULL);
-  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
+  XtVaSetValues(XmMessageBoxGetChild(region_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
 
   insert_button = XmMessageBoxGetChild(region_dialog, XmDIALOG_CANCEL_BUTTON);
 

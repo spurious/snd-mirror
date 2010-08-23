@@ -1120,15 +1120,6 @@ static XEN g_snd_color(XEN choice)
     case 23: col = ss->sgx->mix_color;                     break;
     case 25: col = ss->sgx->sash_color;                    break;
 
-#ifndef SND_DISABLE_DEPRECATED
-    case 24: col = ss->sgx->pushed_button_color;           break;
-    case 26: col = ss->sgx->help_button_color;             break;
-    case 27: col = ss->sgx->doit_button_color;             break;
-    case 28: col = ss->sgx->doit_again_button_color;       break;
-    case 29: col = ss->sgx->quit_button_color;             break;
-    case 30: col = ss->sgx->reset_button_color;            break;
-#endif
-
     case 31: col = ss->sgx->grid_color;                    break;
     case 32: col = ss->sgx->selected_grid_color;           break;
     case 33: 
@@ -1461,83 +1452,6 @@ static XEN g_sash_color(void)
 }
 
 
-#ifndef SND_DISABLE_DEPRECATED
-static XEN g_set_help_button_color(XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_help_button_color, "a color"); 
-  ss->sgx->help_button_color = XEN_UNWRAP_PIXEL(color);
-  return(color);
-}
-
-
-static XEN g_help_button_color(void) 
-{
-  #define H_help_button_color "(" S_help_button_color "): color used to draw help buttons"
-  return(XEN_WRAP_PIXEL(ss->sgx->help_button_color));
-}
-
-
-static XEN g_set_quit_button_color(XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_quit_button_color, "a color"); 
-  ss->sgx->quit_button_color = XEN_UNWRAP_PIXEL(color);
-  return(color);
-}
-
-
-static XEN g_quit_button_color(void) 
-{
-  #define H_quit_button_color "(" S_quit_button_color "): color used to draw quit (dismiss, cancel) buttons"
-  return(XEN_WRAP_PIXEL(ss->sgx->quit_button_color));
-}
-
-
-static XEN g_set_doit_button_color(XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_doit_button_color, "a color"); 
-  ss->sgx->doit_button_color = XEN_UNWRAP_PIXEL(color);
-  return(color);
-}
-
-
-static XEN g_doit_button_color(void) 
-{
-  #define H_doit_button_color "(" S_doit_button_color "): color used to draw doit (Ok, Apply) buttons"
-  return(XEN_WRAP_PIXEL(ss->sgx->doit_button_color));
-}
-
-
-static XEN g_set_doit_again_button_color(XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_doit_again_button_color, "a color"); 
-  ss->sgx->doit_again_button_color = XEN_UNWRAP_PIXEL(color);
-  return(color);
-}
-
-
-static XEN g_doit_again_button_color(void) 
-{
-  #define H_doit_again_button_color "(" S_doit_again_button_color "): color used to doit again (Undo&Apply) buttons"
-  return(XEN_WRAP_PIXEL(ss->sgx->doit_again_button_color));
-}
-
-
-static XEN g_set_reset_button_color(XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_reset_button_color, "a color"); 
-  ss->sgx->reset_button_color = XEN_UNWRAP_PIXEL(color);
-  return(color);
-}
-
-
-static XEN g_reset_button_color(void) 
-{
-  #define H_reset_button_color "(" S_reset_button_color "): color used to draw reset buttons"
-  return(XEN_WRAP_PIXEL(ss->sgx->reset_button_color));
-}
-#endif
-
-
 static XEN g_data_color(void) 
 {
   #define H_data_color "(" S_data_color "): color used to draw unselected data"
@@ -1656,43 +1570,6 @@ static XEN g_axis_color(void)
   #define H_axis_color "(" S_axis_color "): color of axis (defaults to current data color)"
   return(XEN_WRAP_PIXEL(ss->sgx->axis_color));
 }
-
-
-#ifndef SND_DISABLE_DEPRECATED
-#if USE_MOTIF
-static void recolor_button(widget_t w)
-{
-  if (XtIsWidget(w))
-    {
-      if (XmIsPushButton(w))
-	XtVaSetValues(w, XmNarmColor, ss->sgx->pushed_button_color, NULL);
-      else
-	{
-	  if (XmIsToggleButton(w))
-	    XtVaSetValues(w, XmNselectColor, ss->sgx->pushed_button_color, NULL);
-	}
-    }
-}
-#endif
-
-
-static XEN g_set_pushed_button_color(XEN color) 
-{
-  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_pushed_button_color, "a color"); 
-  ss->sgx->pushed_button_color = XEN_UNWRAP_PIXEL(color);
-#if USE_MOTIF
-  map_over_children(MAIN_SHELL(ss), recolor_button);
-#endif
-  return(color);
-}
-
-
-static XEN g_pushed_button_color(void) 
-{
-  #define H_pushed_button_color "(" S_pushed_button_color "): color of a pushed button"
-  return(XEN_WRAP_PIXEL(ss->sgx->pushed_button_color));
-}
-#endif
 
 
 static XEN g_basic_color(void) 
@@ -1937,20 +1814,6 @@ XEN_NARGIFY_0(g_text_focus_color_w, g_text_focus_color)
 XEN_NARGIFY_1(g_set_text_focus_color_w, g_set_text_focus_color)
 XEN_NARGIFY_0(g_sash_color_w, g_sash_color)
 XEN_NARGIFY_1(g_set_sash_color_w, g_set_sash_color)
-#ifndef SND_DISABLE_DEPRECATED
-XEN_NARGIFY_0(g_help_button_color_w, g_help_button_color)
-XEN_NARGIFY_1(g_set_help_button_color_w, g_set_help_button_color)
-XEN_NARGIFY_0(g_reset_button_color_w, g_reset_button_color)
-XEN_NARGIFY_1(g_set_reset_button_color_w, g_set_reset_button_color)
-XEN_NARGIFY_0(g_quit_button_color_w, g_quit_button_color)
-XEN_NARGIFY_1(g_set_quit_button_color_w, g_set_quit_button_color)
-XEN_NARGIFY_0(g_doit_button_color_w, g_doit_button_color)
-XEN_NARGIFY_1(g_set_doit_button_color_w, g_set_doit_button_color)
-XEN_NARGIFY_0(g_doit_again_button_color_w, g_doit_again_button_color)
-XEN_NARGIFY_1(g_set_doit_again_button_color_w, g_set_doit_again_button_color)
-XEN_NARGIFY_0(g_pushed_button_color_w, g_pushed_button_color)
-XEN_NARGIFY_1(g_set_pushed_button_color_w, g_set_pushed_button_color)
-#endif
 XEN_NARGIFY_0(g_data_color_w, g_data_color)
 XEN_NARGIFY_1(g_set_data_color_w, g_set_data_color)
 XEN_NARGIFY_0(g_graph_color_w, g_graph_color)
@@ -2024,20 +1887,6 @@ XEN_ARGIFY_2(g_set_mix_color_w, g_set_mix_color)
 #define g_set_text_focus_color_w g_set_text_focus_color
 #define g_sash_color_w g_sash_color
 #define g_set_sash_color_w g_set_sash_color
-#ifndef SND_DISABLE_DEPRECATED
-#define g_help_button_color_w g_help_button_color
-#define g_set_help_button_color_w g_set_help_button_color
-#define g_doit_again_button_color_w g_doit_again_button_color
-#define g_set_doit_again_button_color_w g_set_doit_again_button_color
-#define g_doit_button_color_w g_doit_button_color
-#define g_set_doit_button_color_w g_set_doit_button_color
-#define g_quit_button_color_w g_quit_button_color
-#define g_set_quit_button_color_w g_set_quit_button_color
-#define g_reset_button_color_w g_reset_button_color
-#define g_set_reset_button_color_w g_set_reset_button_color
-#define g_pushed_button_color_w g_pushed_button_color
-#define g_set_pushed_button_color_w g_set_pushed_button_color
-#endif
 #define g_data_color_w g_data_color
 #define g_set_data_color_w g_set_data_color
 #define g_graph_color_w g_graph_color
@@ -2135,25 +1984,6 @@ void g_init_draw(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_sash_color, g_sash_color_w, H_sash_color,
 				   S_setB S_sash_color, g_set_sash_color_w,  0, 0, 1, 0);
 
-#ifndef SND_DISABLE_DEPRECATED
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_help_button_color, g_help_button_color_w, H_help_button_color,
-				   S_setB S_help_button_color, g_set_help_button_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_reset_button_color, g_reset_button_color_w, H_reset_button_color,
-				   S_setB S_reset_button_color, g_set_reset_button_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_quit_button_color, g_quit_button_color_w, H_quit_button_color,
-				   S_setB S_quit_button_color, g_set_quit_button_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_doit_button_color, g_doit_button_color_w, H_doit_button_color,
-				   S_setB S_doit_button_color, g_set_doit_button_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_doit_again_button_color, g_doit_again_button_color_w, H_doit_again_button_color,
-				   S_setB S_doit_again_button_color, g_set_doit_again_button_color_w,  0, 0, 1, 0);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_pushed_button_color, g_pushed_button_color_w, H_pushed_button_color,
-				   S_setB S_pushed_button_color, g_set_pushed_button_color_w,  0, 0, 1, 0);
-#endif
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_data_color, g_data_color_w, H_data_color,
 				   S_setB S_data_color, g_set_data_color_w,  0, 0, 1, 0);
 

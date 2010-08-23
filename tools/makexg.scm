@@ -2776,7 +2776,7 @@
 
 (hey "/* ---------------------------------------- structs ---------------------------------------- */~%~%")
 
-(hey "  #define XG_DEFINE_READER(Name, Value, A1, A2, A3) XEN_DEFINE_PROCEDURE(XG_FIELD_PRE #Name XG_POST, Value, A1, A2, A3, #Name \" field reader\")~%")
+;;; (hey "  #define XG_DEFINE_READER(Name, Value, A1, A2, A3) XEN_DEFINE_PROCEDURE(XG_FIELD_PRE #Name XG_POST, Value, A1, A2, A3, #Name \" field reader\")~%")
 (hey "  #if HAVE_RUBY~%")
 (hey "    #define XG_DEFINE_ACCESSOR(Name, Value, SetValue, A1, A2, A3, A4) \\~%")
 (hey "      XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, #Name \" field accessor\", XG_FIELD_PRE \"set_\" #Name XG_POST, SetValue, A1, A2, A3, A4)~%")

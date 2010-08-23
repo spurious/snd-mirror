@@ -1137,12 +1137,10 @@ char *slist_selection(slist *lst)
  *               is included in this release only as a preview. It does NOT fully work yet"
  * --------
  *       is it necessary to lock out cursor display?
- *       unite button doesn't show ctrl case
  *          check enved sono mix etc [enved flickers a lot] [in sono white bg on left slops past axis]
  *       does print dialog actually work? [also rec?]
  *       when fft selection, fft not redrawn?
  *       the context->ax business is a huge pain for cairo
  *       multichan select flashes then erases chan>0 select rect
- *       maybe try polygon gradient (needs overall height)
- *       try pixel slice to get gradient bg in widgets
+ *       maybe add the selection drag arrow at the bottom
  */

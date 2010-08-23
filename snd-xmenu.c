@@ -424,7 +424,7 @@ static void menu_drag_watcher(Widget w, const char *str, Position x, Position y,
     case DRAG_ENTER:
       new_title = mus_format("%s: drop to open file", ss->startup_title);
       XtVaSetValues(MAIN_SHELL(ss), XmNtitle, (char *)new_title, NULL);
-      XmChangeColor(w, ss->sgx->pushed_button_color);
+      XmChangeColor(w, ss->sgx->selection_color);
       free(new_title);
       break;
     case DRAG_LEAVE:

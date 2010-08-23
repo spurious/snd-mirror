@@ -982,12 +982,12 @@ Widget start_color_orientation_dialog(bool managed)
       XmStringFree(titlestr);
       XmStringFree(xreset);
 
-      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->help_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->reset_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->selection_color, NULL);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1163,7 +1163,7 @@ Widget start_color_orientation_dialog(bool managed)
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
+      XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNleftWidget, lsep); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
@@ -1385,7 +1385,7 @@ Widget start_color_orientation_dialog(bool managed)
 #if HAVE_GL
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      XtSetArg(args[n], XmNselectColor, ss->sgx->pushed_button_color); n++;
+      XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
       XtSetArg(args[n], XmNset, with_gl(ss)); n++;
       glstr = XmStringCreateLocalized(_("use OpenGL"));
       XtSetArg(args[n], XmNlabelString, glstr); n++;

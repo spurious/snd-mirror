@@ -206,7 +206,7 @@ static void draw_polygon_va(axis_context *ax, bool filled, int points, va_list a
     x = va_arg(ap, int);
     y = va_arg(ap, int);
     cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
-    cairo_set_line_width(ax->cr, 1.0);
+    /* cairo_set_line_width(ax->cr, 1.0); */
     cairo_move_to(ax->cr, x, y);
     for (i = 1; i < points; i++)
       {
@@ -251,7 +251,7 @@ void fill_polygon_from_array(axis_context *ax, point_t *points, int npoints)
 {
   int i;
   cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
-  cairo_set_line_width(ax->cr, 1.0);
+  /* cairo_set_line_width(ax->cr, 1.0); */
   cairo_move_to(ax->cr, points[0].x, points[0].y);
   for (i = 1; i < npoints; i++)
     cairo_line_to(ax->cr, points[i].x, points[i].y);

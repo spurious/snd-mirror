@@ -1022,7 +1022,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 	  n = 0;
 	  XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
 	  XtSetArg(args[n], XmNspacing, 1); n++;
-	  XtSetArg(args[n], XmNselectColor, sx->pushed_button_color); n++;
+	  XtSetArg(args[n], XmNselectColor, sx->selection_color); n++;
 	  cw[W_f] = make_togglebutton_widget(_("f"), cw[W_wf_buttons], args, n);
 	  XtAddCallback(cw[W_f], XmNvalueChangedCallback, f_toggle_callback, cp);
 	  XtAddEventHandler(cw[W_f], KeyPressMask, false, graph_key_press, (XtPointer)sp);
@@ -1466,7 +1466,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	  if (old_style == CHANNELS_SUPERIMPOSED)
 	    {
 	      syncb(sp, sp->previous_sync);
-	      XtVaSetValues(unite_button(sp), XmNselectColor, ss->sgx->pushed_button_color, NULL);
+	      XtVaSetValues(unite_button(sp), XmNselectColor, ss->sgx->selection_color, NULL);
 	    }
 	  else
 	    {

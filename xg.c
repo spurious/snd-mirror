@@ -34512,7 +34512,6 @@ static XEN gxg_make_target_entry(XEN lst)
 }
 /* ---------------------------------------- structs ---------------------------------------- */
 
-  #define XG_DEFINE_READER(Name, Value, A1, A2, A3) XEN_DEFINE_PROCEDURE(XG_FIELD_PRE #Name XG_POST, Value, A1, A2, A3, #Name " field reader")
   #if HAVE_RUBY
     #define XG_DEFINE_ACCESSOR(Name, Value, SetValue, A1, A2, A3, A4) \
       XEN_DEFINE_PROCEDURE_WITH_SETTER(XG_FIELD_PRE #Name XG_POST, Value, #Name " field accessor", XG_FIELD_PRE "set_" #Name XG_POST, SetValue, A1, A2, A3, A4)
@@ -48423,7 +48422,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("21-Aug-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("22-Aug-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

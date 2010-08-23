@@ -282,13 +282,13 @@ static void start_print_dialog(XmString xmstr4, bool managed)
       if (managed) XtManageChild(print_dialog);
 
       map_over_children(print_dialog, set_main_color_of_widget);
-      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->pushed_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->doit_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->quit_button_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color, NULL);
-      XtVaSetValues(print_eps_or_lpr, XmNselectColor, ss->sgx->pushed_button_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_OK_BUTTON),     XmNarmColor,   ss->sgx->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor,   ss->sgx->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_HELP_BUTTON),   XmNarmColor,   ss->sgx->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->highlight_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->highlight_color, NULL);
+      XtVaSetValues(print_eps_or_lpr, XmNselectColor, ss->sgx->selection_color, NULL);
 
       set_dialog_widget(PRINT_DIALOG, print_dialog);
     }
