@@ -2225,8 +2225,6 @@ int control_panel_height(snd_info *sp)
 
 /* -------- PROGRESS REPORT -------- */
 
-GdkDrawable *enved_pix_wn(void);
-
 void progress_report(chan_info *cp, mus_float_t pct)
 {
   snd_info *sp;

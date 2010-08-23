@@ -867,14 +867,14 @@ GtkWidget *start_color_orientation_dialog(bool managed)
       gtk_window_resize(GTK_WINDOW(ccd_dialog), 400, 200);
 
       help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
-      gtk_widget_set_name(help_button, "help_button");
+      gtk_widget_set_name(help_button, "dialog_button");
 
       dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
-      gtk_widget_set_name(dismiss_button, "quit_button");
+      gtk_widget_set_name(dismiss_button, "dialog_button");
       set_stock_button_label(dismiss_button, _("Go Away"));
 
       reset_button = gtk_button_new_from_stock(GTK_STOCK_REVERT_TO_SAVED);
-      gtk_widget_set_name(reset_button, "reset_button");
+      gtk_widget_set_name(reset_button, "dialog_button");
 
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(ccd_dialog)), dismiss_button, false, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(ccd_dialog)), reset_button, false, true, 10);

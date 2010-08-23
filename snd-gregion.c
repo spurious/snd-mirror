@@ -445,20 +445,20 @@ static void make_region_dialog(void)
   gtk_widget_realize(region_dialog);
 
   help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
-  gtk_widget_set_name(help_button, "help_button");
+  gtk_widget_set_name(help_button, "dialog_button");
 
   dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
-  gtk_widget_set_name(dismiss_button, "quit_button");
+  gtk_widget_set_name(dismiss_button, "dialog_button");
   set_stock_button_label(dismiss_button, _("Go Away"));
 
   insert_button = sg_button_new_from_stock_with_label(_("Insert"), GTK_STOCK_PASTE);
-  gtk_widget_set_name(insert_button, "doit_button");
+  gtk_widget_set_name(insert_button, "dialog_button");
 
   mix_button = sg_button_new_from_stock_with_label(_("Mix"), GTK_STOCK_ADD);
-  gtk_widget_set_name(mix_button, "doit_again_button");
+  gtk_widget_set_name(mix_button, "dialog_button");
 
   save_as_button = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
-  gtk_widget_set_name(save_as_button, "reset_button");
+  gtk_widget_set_name(save_as_button, "dialog_button");
 
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), dismiss_button, true, true, 4);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(region_dialog)), insert_button, true, true, 4);

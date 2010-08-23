@@ -97,6 +97,15 @@ widget "*.zy_slider" style "zoom_slider"
 widget "*.gzy_slider" style "zoom_slider"
 widget "*.panel_button" style "zoom_slider"
 
+style "fft_dialog" = "default"
+{
+#  bg[NORMAL] = { 0.90, 0.90, 0.85 } 
+  bg[NORMAL] = { 0.85, 0.85, 0.80 } 
+}
+
+# class "GtkDialog" style "default_dialog"
+widget "fft_dialog" style "fft_dialog"
+
 style "prefs_scale" = "default_slider"
 {
   GtkScale::slider-length = 24
@@ -114,45 +123,13 @@ style "listener" = "default"
 
 widget "*.listener_text" style "listener"
 
-style "help" = "default_button"
+style "dialog_button" = "default_button"
 {
   bg[NORMAL] = { 1.0, 1.0, 0.94 }
   bg[PRELIGHT] = { 1.0, 1.0, 0.94 }
 }
 
-widget "*.help_button" style "help"
-
-style "quit" = "default_button"
-{
-  bg[NORMAL] = { 1.0, 1.0, 0.94 }
-  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }
-}
-
-widget "*.quit_button" style "quit"
-
-style "doit" = "default_button"
-{
-  bg[NORMAL] = { 1.0, 1.0, 0.94 }
-  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }
-}
-
-widget "*.doit_button" style "doit"
-
-style "doit_again" = "default_button"
-{
-  bg[NORMAL] = { 1.0, 1.0, 0.94 }
-  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }
-}
-
-widget "*.doit_again_button" style "doit_again"
-
-style "reset" = "default_button"
-{
-  bg[NORMAL] = { 1.0, 1.0, 0.94 }
-  bg[PRELIGHT] = { 1.0, 1.0, 0.94 }
-}
-
-widget "*.reset_button" style "reset"
+widget "*.dialog_button" style "dialog_button"
 
 widget "*.the_unpane" style "default"
 

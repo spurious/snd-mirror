@@ -56,10 +56,10 @@ static void start_completion_dialog(int num_items, char **items)
       gtk_window_resize(GTK_WINDOW(completion_dialog), 260, 200);
 
       help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
-      gtk_widget_set_name(help_button, "help_button");
+      gtk_widget_set_name(help_button, "dialog_button");
 
       dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
-      gtk_widget_set_name(dismiss_button, "quit_button");
+      gtk_widget_set_name(dismiss_button, "dialog_button");
       set_stock_button_label(dismiss_button, _("Go Away"));
 
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(completion_dialog)), dismiss_button, false, true, 10);

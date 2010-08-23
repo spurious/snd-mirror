@@ -397,19 +397,19 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
 
   /* -------- buttons -------- */
   fs->help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
-  gtk_widget_set_name(fs->help_button, "help_button");
+  gtk_widget_set_name(fs->help_button, "dialog_button");
 
   fs->cancel_button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-  gtk_widget_set_name(fs->cancel_button, "quit_button");
+  gtk_widget_set_name(fs->cancel_button, "dialog_button");
   set_stock_button_label(fs->cancel_button, _("Go Away"));
 
   fs->mkdir_button = sg_button_new_from_stock_with_label(_("Mkdir"), GTK_STOCK_REFRESH);
-  gtk_widget_set_name(fs->mkdir_button, "reset_button");
+  gtk_widget_set_name(fs->mkdir_button, "dialog_button");
 
   if (with_extract)
     {
       fs->extract_button = sg_button_new_from_stock_with_label(_("Extract"), GTK_STOCK_CUT);
-      gtk_widget_set_name(fs->extract_button, "doit_again_button");
+      gtk_widget_set_name(fs->extract_button, "dialog_button");
     }
 
   if (ok_lab)
@@ -419,7 +419,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
       else fs->ok_button = gtk_button_new_with_label(ok_lab);
     }
   else fs->ok_button = gtk_button_new_from_stock(stock);
-  gtk_widget_set_name(fs->ok_button, "doit_button");
+  gtk_widget_set_name(fs->ok_button, "dialog_button");
 
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->ok_button, true, true, 10);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->cancel_button, true, true, 10);
@@ -3442,17 +3442,17 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
   gtk_widget_realize(rp->dialog);
 
   helpB = gtk_button_new_from_stock(GTK_STOCK_HELP);
-  gtk_widget_set_name(helpB, "help_button");
+  gtk_widget_set_name(helpB, "dialog_button");
 
   cancelB = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-  gtk_widget_set_name(cancelB, "quit_button");
+  gtk_widget_set_name(cancelB, "dialog_button");
   set_stock_button_label(cancelB, _("Go Away"));
 
   resetB = sg_button_new_from_stock_with_label(_("Reset"), GTK_STOCK_REFRESH);
-  gtk_widget_set_name(resetB, "reset_button");
+  gtk_widget_set_name(resetB, "dialog_button");
 
   okB = gtk_button_new_from_stock(GTK_STOCK_OK);
-  gtk_widget_set_name(okB, "doit_button");
+  gtk_widget_set_name(okB, "dialog_button");
 
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), okB, true, true, 10);
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), cancelB, true, true, 10);
@@ -3746,17 +3746,17 @@ widget_t make_new_file_dialog(bool managed)
       gtk_widget_realize(new_file_dialog);
 
       help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
-      gtk_widget_set_name(help_button, "help_button");
+      gtk_widget_set_name(help_button, "dialog_button");
 
       cancel_button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-      gtk_widget_set_name(cancel_button, "quit_button");
+      gtk_widget_set_name(cancel_button, "dialog_button");
       set_stock_button_label(cancel_button, _("Go Away"));
 
       new_file_ok_button = sg_button_new_from_stock_with_label(_("Ok"), GTK_STOCK_NEW);
-      gtk_widget_set_name(new_file_ok_button, "doit_button");
+      gtk_widget_set_name(new_file_ok_button, "dialog_button");
 
       reset_button = sg_button_new_from_stock_with_label(_("Reset"), GTK_STOCK_REFRESH);
-      gtk_widget_set_name(reset_button, "reset_button");
+      gtk_widget_set_name(reset_button, "dialog_button");
 
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), new_file_ok_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), cancel_button, true, true, 10);
@@ -4124,14 +4124,14 @@ GtkWidget *edit_header(snd_info *sp)
       gtk_widget_realize(ep->dialog);
 
       help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
-      gtk_widget_set_name(help_button, "help_button");
+      gtk_widget_set_name(help_button, "dialog_button");
 
       cancel_button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-      gtk_widget_set_name(cancel_button, "quit_button");
+      gtk_widget_set_name(cancel_button, "dialog_button");
       set_stock_button_label(cancel_button, _("Go Away"));
 
       ep->save_button = gtk_button_new_from_stock(GTK_STOCK_SAVE);
-      gtk_widget_set_name(ep->save_button, "doit_button");
+      gtk_widget_set_name(ep->save_button, "dialog_button");
 
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(ep->dialog)), ep->save_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(ep->dialog)), cancel_button, true, true, 10);
@@ -4241,7 +4241,7 @@ static void create_post_it_monolog(void)
   gtk_widget_realize(post_it_dialog);
 
   ok_button = gtk_button_new_from_stock(GTK_STOCK_OK);
-  gtk_widget_set_name(ok_button, "quit_button");
+  gtk_widget_set_name(ok_button, "dialog_button");
 
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(post_it_dialog)), ok_button, false, true, 20);
   SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_post_it, NULL);
@@ -5238,17 +5238,17 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_window_resize(GTK_WINDOW(vdat->dialog), 500, 540);
 
       helpB = gtk_button_new_from_stock(GTK_STOCK_HELP);
-      gtk_widget_set_name(helpB, "help_button");
+      gtk_widget_set_name(helpB, "dialog_button");
 
       newB = sg_button_new_from_stock_with_label(_("New Viewer"), GTK_STOCK_NEW);
-      gtk_widget_set_name(newB, "doit_button");
+      gtk_widget_set_name(newB, "dialog_button");
 
       dismissB = gtk_button_new_from_stock(GTK_STOCK_QUIT);
-      gtk_widget_set_name(dismissB, "quit_button");
+      gtk_widget_set_name(dismissB, "dialog_button");
       set_stock_button_label(dismissB, _("Go Away"));
 
       resetB = sg_button_new_from_stock_with_label(_("Reset"), GTK_STOCK_REFRESH);
-      gtk_widget_set_name(resetB, "reset_button");
+      gtk_widget_set_name(resetB, "dialog_button");
 
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(vdat->dialog)), newB, true, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(vdat->dialog)), dismissB, true, true, 10);
@@ -5380,10 +5380,10 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_widget_show(bbox);
 
       vdat->updateB = gtk_button_new_from_stock(GTK_STOCK_REFRESH);
-      gtk_widget_set_name(vdat->updateB, "doit_button");
+      gtk_widget_set_name(vdat->updateB, "dialog_button");
 
       vdat->clearB = gtk_button_new_from_stock(GTK_STOCK_CLEAR);
-      gtk_widget_set_name(vdat->clearB, "reset_button");
+      gtk_widget_set_name(vdat->clearB, "dialog_button");
 
       gtk_box_pack_start(GTK_BOX(bbox), vdat->updateB, true, true, 1);
       gtk_box_pack_end(GTK_BOX(bbox), vdat->clearB, true, true, 1);

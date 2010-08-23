@@ -284,20 +284,20 @@ static void create_help_monolog(void)
   gtk_widget_realize(help_dialog);
 
   ok_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
-  gtk_widget_set_name(ok_button, "quit_button");
+  gtk_widget_set_name(ok_button, "dialog_button");
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(help_dialog)), ok_button, false, true, 20);
   SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_help_dialog, NULL);
   gtk_widget_show(ok_button);
   set_stock_button_label(ok_button, _("Go Away"));
 
   help_previous_button = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
-  gtk_widget_set_name(help_previous_button, "reset_button");
+  gtk_widget_set_name(help_previous_button, "dialog_button");
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(help_dialog)), help_previous_button, true, true, 10);
   SG_SIGNAL_CONNECT(help_previous_button, "clicked", help_previous_callback, NULL);
   gtk_widget_show(help_previous_button);
 
   help_next_button = gtk_button_new_from_stock(GTK_STOCK_GO_FORWARD);
-  gtk_widget_set_name(help_next_button, "doit_button");
+  gtk_widget_set_name(help_next_button, "dialog_button");
   gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(help_dialog)), help_next_button, true, true, 10);
   SG_SIGNAL_CONNECT(help_next_button, "clicked", help_next_callback, NULL);
   gtk_widget_show(help_next_button);

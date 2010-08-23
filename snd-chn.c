@@ -4634,7 +4634,7 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 {
   int x0, x1, y0, y1;
   axis_info *ap;
-  #define SELECTION_DRAG_HEIGHT 30
+  #define SELECTION_DRAG_HEIGHT 50
 
   x0 = x - SLOPPY_MOUSE;
   x1 = x + SLOPPY_MOUSE;
@@ -4657,7 +4657,8 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 	      (y0 < cp->inset_graph->y1))
 	    return(CLICK_INSET_GRAPH);
 
-	  if ((y < (ap->y_offset + SELECTION_DRAG_HEIGHT)) &&
+	  if (((y < (ap->y_offset + SELECTION_DRAG_HEIGHT)) ||
+	       (y > (ap->y_axis_y0 - SELECTION_DRAG_HEIGHT))) &&
 	      (selection_is_active_in_channel(cp)))
 	    {
 	      /* look for click at selection boundary */

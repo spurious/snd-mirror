@@ -282,14 +282,14 @@ static void start_print_dialog(void)
       gtk_widget_realize(print_dialog);
 
       help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
-      gtk_widget_set_name(help_button, "help_button");
+      gtk_widget_set_name(help_button, "dialog_button");
 
       dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
-      gtk_widget_set_name(dismiss_button, "quit_button");
+      gtk_widget_set_name(dismiss_button, "dialog_button");
       set_stock_button_label(dismiss_button, _("Go Away"));
 
       print_ok_button = sg_button_new_from_stock_with_label(_("Print"), GTK_STOCK_PRINT);
-      gtk_widget_set_name(print_ok_button, "doit_button");
+      gtk_widget_set_name(print_ok_button, "dialog_button");
 
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(print_dialog)), print_ok_button, true, true, 4);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(print_dialog)), dismiss_button, true, true, 4);

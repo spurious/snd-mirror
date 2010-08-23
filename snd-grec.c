@@ -292,10 +292,10 @@ widget_t record_file(void)
       gtk_window_resize(GTK_WINDOW(recorder), RECORDER_WIDTH, RECORDER_HEIGHT);
 
       help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
-      gtk_widget_set_name(help_button, "help_button");
+      gtk_widget_set_name(help_button, "dialog_button");
 
       quit_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
-      gtk_widget_set_name(quit_button, "quit_button");
+      gtk_widget_set_name(quit_button, "dialog_button");
       set_stock_button_label(quit_button, _("Go Away"));
 
 #ifdef GTK_STOCK_MEDIA_RECORD
@@ -303,7 +303,7 @@ widget_t record_file(void)
 #else
       record_button = sg_button_new_from_stock_with_label(_("Record"), GTK_STOCK_EXECUTE);
 #endif
-      gtk_widget_set_name(record_button, "doit_button");
+      gtk_widget_set_name(record_button, "dialog_button");
 
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(recorder)), quit_button, true, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(recorder)), record_button, true, true, 10);

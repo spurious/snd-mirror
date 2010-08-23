@@ -10,7 +10,8 @@
 slist *transform_list = NULL, *size_list = NULL, *window_list = NULL, *wavelet_list = NULL;
 static GtkWidget *transform_dialog = NULL; /* main dialog shell */
 static GtkWidget *outer_table, *db_button, *peaks_button, *logfreq_button, *sono_button, *spectro_button, *normal_fft_button, *phases_button;
-static GtkWidget *normalize_button, *selection_button, *window_beta_scale, *window_alpha_scale, *graph_drawer = NULL, *graph_frame = NULL;
+static GtkWidget *normalize_button, *selection_button;
+static GtkWidget *alpha_label = NULL, *beta_label = NULL, *graph_drawer = NULL, *fft_window_label = NULL;
 static GtkObject *beta_adj, *alpha_adj, *spectrum_start_adj, *spectrum_end_adj;
 static GtkWidget *spectrum_start_scale, *spectrum_end_scale;
 static GtkWidget *db_txt, *peaks_txt, *lf_txt;
@@ -172,9 +173,9 @@ static void size_browse_callback(const char *name, int row, void *data)
   in_set_transform_size(transform_sizes[row]);
   for_each_chan_with_mus_long_t(chans_transform_size, transform_size(ss));
   for_each_chan(calculate_fft);
-  if (graph_frame) 
-    sg_frame_set_label(GTK_FRAME(graph_frame), 
-		       mus_fft_window_name(fft_window(ss)));
+  if (fft_window_label) 
+    gtk_button_set_label(GTK_BUTTON(fft_window_label), 
+			 mus_fft_window_name(fft_window(ss)));
 }
 
 
@@ -236,15 +237,37 @@ void set_wavelet_type(int val)
 
 /* ---------------- window choice ---------------- */
 
+static void set_label_color(GtkWidget *w, color_info *color)
+{
+  widget_modify_bg(w, GTK_STATE_NORMAL, color);
+  widget_modify_bg(w, GTK_STATE_ACTIVE, color);
+  widget_modify_fg(w, GTK_STATE_NORMAL, color);
+  widget_modify_fg(w, GTK_STATE_ACTIVE, color);
+}
+
+
+static void highlight_alpha_beta_scales(mus_fft_window_t val)
+{
+  if (fft_window_beta_in_use(val))
+    set_label_color(beta_label, ss->sgx->black);
+  else set_label_color(beta_label, ss->sgx->basic_color);
+
+  if (fft_window_alpha_in_use(val))
+    set_label_color(alpha_label, ss->sgx->black);
+  else set_label_color(alpha_label, ss->sgx->basic_color);
+}
+
+
 static void window_browse_callback(const char *name, int row, void *data)
 {
   in_set_fft_window((mus_fft_window_t)row);
   for_each_chan(calculate_fft);
-  if (graph_frame) 
-    sg_frame_set_label(GTK_FRAME(graph_frame), 
-		       mus_fft_window_name(fft_window(ss)));
+  if (fft_window_label) 
+    gtk_button_set_label(GTK_BUTTON(fft_window_label), 
+			 mus_fft_window_name(fft_window(ss)));
   get_fft_window_data();
   graph_redisplay();
+  highlight_alpha_beta_scales(fft_window(ss));
 }
 
 
@@ -256,11 +279,12 @@ void set_fft_window(mus_fft_window_t val)
     {
       slist_select(window_list, (int)val);
       slist_moveto(window_list, (int)val);
-      if (graph_frame) 
-	sg_frame_set_label(GTK_FRAME(graph_frame),
-			   mus_fft_window_name(val));
+      if (fft_window_label) 
+	gtk_button_set_label(GTK_BUTTON(fft_window_label),
+			     mus_fft_window_name(val));
       get_fft_window_data();
       graph_redisplay();
+      highlight_alpha_beta_scales(val);
     }
 }
   
@@ -780,7 +804,6 @@ static void spectrum_end_callback(GtkAdjustment *adj, gpointer context)
 
 
 
-
 /* ---------------- dialog buttons ---------------- */
 
 static gboolean graph_configure_callback(GtkWidget *w, GdkEventConfigure *ev, gpointer data)
@@ -835,6 +858,7 @@ gboolean spin_button_unfocus_callback(GtkWidget *w, GdkEventCrossing *ev, gpoint
   return(false);
 }
 
+
 #define RIGHT_SEP_SIZE 10
 
 
@@ -845,12 +869,13 @@ GtkWidget *fire_up_transform_dialog(bool managed)
     {
       GtkWidget *buttons;
       GtkWidget *display_frame, *help_button, *dismiss_button;
-      GtkWidget *ab_box, *ab_frame, *ab_label, *color_button;
+      GtkWidget *color_button;
       GtkWidget *se_box, *se_frame, *se_label;
-      GtkWidget *alpha_box, *alpha_label, *beta_box, *beta_label;
+      GtkWidget *alpha_box, *beta_box;
       GtkWidget *end_box, *end_label, *start_box, *start_label;
 
       transform_dialog = snd_gtk_dialog_new();
+      gtk_widget_set_name(transform_dialog, "fft_dialog");
       SG_SIGNAL_CONNECT(transform_dialog, "delete_event", delete_transform_dialog, NULL);
       gtk_window_set_title(GTK_WINDOW(transform_dialog), _("Transform Options"));
       sg_make_resizable(transform_dialog);
@@ -859,14 +884,14 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       /* gtk_window_resize(GTK_WINDOW(transform_dialog), 400, 500); */
 
       help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
-      gtk_widget_set_name(help_button, "help_button");
+      gtk_widget_set_name(help_button, "dialog_button");
 
       dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
-      gtk_widget_set_name(dismiss_button, "quit_button");
+      gtk_widget_set_name(dismiss_button, "dialog_button");
       set_stock_button_label(dismiss_button, _("Go Away"));
 
       color_button = sg_button_new_from_stock_with_label(_("Color/Orientation"), GTK_STOCK_SELECT_COLOR);
-      gtk_widget_set_name(color_button, "doit_button");
+      gtk_widget_set_name(color_button, "dialog_button");
 
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(transform_dialog)), color_button, false, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(transform_dialog)), dismiss_button, false, true, 10);
@@ -1041,63 +1066,65 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       
       /* ALPHA/BETA */
 
-      ab_frame = gtk_frame_new(NULL);
-      gtk_table_attach_defaults(GTK_TABLE(outer_table), ab_frame, 0, 6, 6, 7);
-      gtk_frame_set_shadow_type(GTK_FRAME(ab_frame), GTK_SHADOW_IN);
+      {
+	GtkWidget *alpha_scale, *beta_scale, *ab_box, *ab_frame, *ab_label;
+	ab_frame = gtk_frame_new(NULL);
+	gtk_table_attach_defaults(GTK_TABLE(outer_table), ab_frame, 0, 6, 6, 7);
+	gtk_frame_set_shadow_type(GTK_FRAME(ab_frame), GTK_SHADOW_IN);
+	
+	ab_box = gtk_vbox_new(false, 2);
+	gtk_container_add(GTK_CONTAINER(ab_frame), ab_box);	
+	
+	ab_label = snd_gtk_highlight_label_new("window parameter");
+	gtk_box_pack_start(GTK_BOX(ab_box), ab_label, false, false, 1);
+	gtk_widget_show(ab_label);
+	
+	
+	alpha_box = gtk_hbox_new(false, 0);
+	gtk_box_pack_start(GTK_BOX(ab_box), alpha_box, false, false, 1);      
+	gtk_widget_show(alpha_box);
+	
+	alpha_label = gtk_label_new("alpha: ");
+	gtk_box_pack_start(GTK_BOX(alpha_box), alpha_label, false, false, 1);
+	gtk_widget_show(alpha_label);      
+	
+	alpha_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
+	alpha_scale = gtk_hscale_new(GTK_ADJUSTMENT(alpha_adj));
+	UNSET_CAN_FOCUS(alpha_scale);
+	gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(alpha_scale)), GTK_UPDATE_CONTINUOUS);
+	gtk_scale_set_digits(GTK_SCALE(alpha_scale), 2);
+	gtk_scale_set_value_pos(GTK_SCALE(alpha_scale), GTK_POS_LEFT);
+	gtk_scale_set_draw_value(GTK_SCALE(alpha_scale), true);
+	SG_SIGNAL_CONNECT(alpha_adj, "value_changed", alpha_callback, NULL);
+	
+	gtk_box_pack_start(GTK_BOX(alpha_box), alpha_scale, true, true, 1);      
+	
+	
+	beta_box = gtk_hbox_new(false, 0);
+	gtk_box_pack_start(GTK_BOX(ab_box), beta_box, false, false, 1);      
+	gtk_widget_show(beta_box);
+	
 
-      ab_box = gtk_vbox_new(false, 2);
-      gtk_container_add(GTK_CONTAINER(ab_frame), ab_box);	
-
-      ab_label = snd_gtk_highlight_label_new("window parameter");
-      gtk_box_pack_start(GTK_BOX(ab_box), ab_label, false, false, 1);
-      gtk_widget_show(ab_label);
-
-      
-      alpha_box = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(ab_box), alpha_box, false, false, 1);      
-      gtk_widget_show(alpha_box);
-
-      alpha_label = gtk_label_new("alpha: ");
-      gtk_box_pack_start(GTK_BOX(alpha_box), alpha_label, false, false, 1);
-      gtk_widget_show(alpha_label);      
-
-      alpha_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
-      window_alpha_scale = gtk_hscale_new(GTK_ADJUSTMENT(alpha_adj));
-      UNSET_CAN_FOCUS(window_alpha_scale);
-      gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(window_alpha_scale)), GTK_UPDATE_CONTINUOUS);
-      gtk_scale_set_digits(GTK_SCALE(window_alpha_scale), 2);
-      gtk_scale_set_value_pos(GTK_SCALE(window_alpha_scale), GTK_POS_LEFT);
-      gtk_scale_set_draw_value(GTK_SCALE(window_alpha_scale), true);
-      SG_SIGNAL_CONNECT(alpha_adj, "value_changed", alpha_callback, NULL);
-
-      gtk_box_pack_start(GTK_BOX(alpha_box), window_alpha_scale, true, true, 1);      
-
-
-      beta_box = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(ab_box), beta_box, false, false, 1);      
-      gtk_widget_show(beta_box);
-
-      beta_label = gtk_label_new("beta:  ");
-      gtk_box_pack_start(GTK_BOX(beta_box), beta_label, false, false, 1);
-      gtk_widget_show(beta_label);      
-
-      beta_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
-      window_beta_scale = gtk_hscale_new(GTK_ADJUSTMENT(beta_adj));
-      UNSET_CAN_FOCUS(window_beta_scale);
-      gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(window_beta_scale)), GTK_UPDATE_CONTINUOUS);
-      gtk_scale_set_digits(GTK_SCALE(window_beta_scale), 2);
-      gtk_scale_set_value_pos(GTK_SCALE(window_beta_scale), GTK_POS_LEFT);
-      gtk_scale_set_draw_value(GTK_SCALE(window_beta_scale), true);
-      SG_SIGNAL_CONNECT(beta_adj, "value_changed", beta_callback, NULL);
-
-      gtk_box_pack_start(GTK_BOX(beta_box), window_beta_scale, true, true, 1);      
-
-
-      gtk_widget_show(window_alpha_scale);
-      gtk_widget_show(window_beta_scale);
-      gtk_widget_show(ab_box);
-      gtk_widget_show(ab_frame);
-
+	beta_label = gtk_label_new("beta:  ");
+	gtk_box_pack_start(GTK_BOX(beta_box), beta_label, false, false, 1);
+	gtk_widget_show(beta_label);      
+	
+	beta_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
+	beta_scale = gtk_hscale_new(GTK_ADJUSTMENT(beta_adj));
+	UNSET_CAN_FOCUS(beta_scale);
+	gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(beta_scale)), GTK_UPDATE_CONTINUOUS);
+	gtk_scale_set_digits(GTK_SCALE(beta_scale), 2);
+	gtk_scale_set_value_pos(GTK_SCALE(beta_scale), GTK_POS_LEFT);
+	gtk_scale_set_draw_value(GTK_SCALE(beta_scale), true);
+	SG_SIGNAL_CONNECT(beta_adj, "value_changed", beta_callback, NULL);
+	
+	gtk_box_pack_start(GTK_BOX(beta_box), beta_scale, true, true, 1);      
+	
+	gtk_widget_show(alpha_scale);
+	gtk_widget_show(beta_scale);
+	gtk_widget_show(ab_box);
+	gtk_widget_show(ab_frame);
+      }
 
 
       /* SPECTRUM_START/END */
@@ -1161,7 +1188,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
       /* GRAPH */
       {
-	GtkWidget *label, *g_vbox;
+	GtkWidget *graph_frame, *g_vbox;
 
 	graph_frame = gtk_frame_new(NULL);
 	gtk_table_attach_defaults(GTK_TABLE(outer_table), graph_frame, 6, 11, 4, 8);
@@ -1171,26 +1198,26 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	g_vbox = gtk_vbox_new(false, 2);
 	gtk_container_add(GTK_CONTAINER(graph_frame), g_vbox);	
 
-	label = snd_gtk_highlight_label_new(mus_fft_window_name(fft_window(ss)));
-	gtk_box_pack_start(GTK_BOX(g_vbox), label, false, false, 1);
-	gtk_widget_show(label);
+	fft_window_label = snd_gtk_highlight_label_new(mus_fft_window_name(fft_window(ss)));
+	gtk_box_pack_start(GTK_BOX(g_vbox), fft_window_label, false, false, 1);
+	gtk_widget_show(fft_window_label);
 
 	graph_drawer = gtk_drawing_area_new();
 	gtk_box_pack_end(GTK_BOX(g_vbox), graph_drawer, true, true, 0);
 	widget_modify_bg(graph_drawer, GTK_STATE_NORMAL, ss->sgx->white);
 	gtk_widget_show(g_vbox);
+
+	fgc = gc_new(MAIN_WINDOW(ss));
+	gc_set_background(fgc, ss->sgx->white);
+	gc_set_foreground(fgc, ss->sgx->enved_waveform_color);
+
+	gc = gc_new(MAIN_WINDOW(ss));
+	gc_set_background(gc, ss->sgx->white);
+	gc_set_foreground(gc, ss->sgx->black);
+
+	gtk_widget_show(graph_drawer);
+	gtk_widget_show(graph_frame);
       }
-
-      fgc = gc_new(MAIN_WINDOW(ss));
-      gc_set_background(fgc, ss->sgx->white);
-      gc_set_foreground(fgc, ss->sgx->enved_waveform_color);
-
-      gc = gc_new(MAIN_WINDOW(ss));
-      gc_set_background(gc, ss->sgx->white);
-      gc_set_foreground(gc, ss->sgx->black);
-
-      gtk_widget_show(graph_drawer);
-      gtk_widget_show(graph_frame);
 
       ignore_callbacks = true;
       if (transform_graph_type(ss) == GRAPH_ONCE) set_toggle_button(normal_fft_button, true, false, NULL);
@@ -1224,6 +1251,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
   if (managed) 
     {
       gtk_widget_show(transform_dialog);
+      highlight_alpha_beta_scales(fft_window(ss));
       if (need_moveto)
 	{
 	  int i;

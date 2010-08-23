@@ -281,12 +281,26 @@ static void wavelet_browse_callback(Widget w, XtPointer context, XtPointer info)
 static void highlight_alpha_beta_scales(mus_fft_window_t val)
 {
   if (fft_window_beta_in_use(val))
-    XtVaSetValues(beta_scale, XmNbackground, ss->sgx->highlight_color, NULL);
-  else XtVaSetValues(beta_scale, XmNbackground, ss->sgx->basic_color, NULL);
+    {
+      XtVaSetValues(beta_scale, XmNbackground, ss->sgx->highlight_color, NULL);
+      XtVaSetValues(beta_number, XmNbackground, ss->sgx->highlight_color, NULL);
+    }
+  else 
+    {
+      XtVaSetValues(beta_scale, XmNbackground, ss->sgx->basic_color, NULL);
+      XtVaSetValues(beta_number, XmNbackground, ss->sgx->basic_color, NULL);
+    }
 
   if (fft_window_alpha_in_use(val))
-    XtVaSetValues(alpha_scale, XmNbackground, ss->sgx->highlight_color, NULL);
-  else XtVaSetValues(alpha_scale, XmNbackground, ss->sgx->basic_color, NULL);
+    {
+      XtVaSetValues(alpha_scale, XmNbackground, ss->sgx->highlight_color, NULL);
+      XtVaSetValues(alpha_number, XmNbackground, ss->sgx->highlight_color, NULL);
+    }
+  else 
+    {
+      XtVaSetValues(alpha_scale, XmNbackground, ss->sgx->basic_color, NULL);
+      XtVaSetValues(alpha_number, XmNbackground, ss->sgx->basic_color, NULL);
+    }
 }
 
 

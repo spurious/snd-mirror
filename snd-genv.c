@@ -5,11 +5,11 @@
 
 static GtkWidget *enved_dialog = NULL;
 static GtkWidget *applyB, *apply2B, *cancelB, *drawer, *showB, *saveB, *resetB, *firB = NULL;
-static GtkWidget *revertB, *undoB, *redoB, *printB, *brktxtL, *brkpixL, *graphB, *fltB, *ampB, *srcB, *rbrow, *clipB, *deleteB;
+static GtkWidget *revertB, *undoB, *redoB, *printB, *brktxtL, *graphB, *fltB, *ampB, *srcB, *rbrow, *clipB, *deleteB;
 static GtkWidget *nameL, *textL, *dBB, *orderL;
 static GtkWidget *expB, *linB, *lerow, *baseScale, *baseLabel, *baseValue, *selectionB, *selrow, *revrow, *unrow, *saverow;
 static GtkObject *baseAdj, *orderAdj;
-static gc_t *gc, *rgc, *ggc, *hgc;
+static gc_t *gc, *rgc, *ggc;
 static slist *env_list = NULL;
 
 static const char *env_names[3] = {N_("amp env:"), N_("flt env:"), N_("src env:")};
@@ -31,7 +31,7 @@ static bool FIR_p = true;
 static bool old_clip_p = false;
 static bool ignore_button_release = false;
 
-static axis_context *pix_ax = NULL;
+static cairo_t *enved_cr = NULL;
 
 
 static void fixup_axis_context(axis_context *ax, GtkWidget *w, gc_t *gc)
@@ -39,6 +39,7 @@ static void fixup_axis_context(axis_context *ax, GtkWidget *w, gc_t *gc)
   ax->wn = WIDGET_TO_WINDOW(w);
   ax->w = w;
   if (gc) ax->gc = gc;
+  ax->cr = enved_cr;
   ax->current_font = AXIS_NUMBERS_FONT(ss);
 }
 
@@ -48,45 +49,28 @@ axis_info *enved_make_axis(const char *name, axis_context *ax,
 			   mus_float_t xmin, mus_float_t xmax, mus_float_t ymin, mus_float_t ymax,
 			   printing_t printing)
 {
-  /* conjure up minimal context for axis drawer in snd-axis.c */
-  if (!axis) 
-    {
-      axis = (axis_info *)calloc(1, sizeof(axis_info));
-      axis->ax = (axis_context *)calloc(1, sizeof(axis_context));
-      fixup_axis_context(axis->ax, drawer, ax->gc);
-    }
-  if (!gray_ap) 
-    {
-      gray_ap = (axis_info *)calloc(1, sizeof(axis_info));
-      gray_ap->ax = (axis_context *)calloc(1, sizeof(axis_context));
-      gray_ap->graph_active = true;
-      fixup_axis_context(gray_ap->ax, drawer, ggc);
-    }
-  axis->ax->cr = gdk_cairo_create(WIDGET_TO_WINDOW(drawer));
   init_env_axes(axis, name, ex0, ey0, width, height, xmin, xmax, ymin, ymax, printing);
-  cairo_destroy(axis->ax->cr);
   return(axis);
 }
 
 
 static void display_env(env *e, const char *name, gc_t *cur_gc, int x0, int y0, int width, int height, bool dots, printing_t printing)
 {
-  axis_context *ax = NULL;  
-  ax = (axis_context *)calloc(1, sizeof(axis_context));
-  ax->wn = WIDGET_TO_WINDOW(drawer);
-  ax->w = drawer;
-  ax->gc = cur_gc;
-  ax->cr = gdk_cairo_create(WIDGET_TO_WINDOW(drawer));
-  ss->enved->with_dots = dots;
-  env_editor_display_env(ss->enved, e, ax, name, x0, y0, width, height, printing);
-  cairo_destroy(ax->cr);
-  free(ax);
+  if ((axis) && (enved_cr))
+    {
+      ss->enved->with_dots = dots;
+      axis->ax->gc = cur_gc;
+      env_editor_display_env(ss->enved, e, axis->ax, name, x0, y0, width, height, printing);
+    }
 }
 
 
 void display_enved_env_with_selection(env *e, const char *name, int x0, int y0, int width, int height, bool dots, printing_t printing)
 {
+  cairo_push_group(enved_cr);  
   display_env(e, name, (selected_env == e) ? rgc : gc, x0, y0, width, height, dots, printing);
+  cairo_pop_group_to_source(enved_cr);
+  cairo_paint(enved_cr);
 }
 
 
@@ -264,7 +248,7 @@ static void env_redisplay_1(printing_t printing)
 {
   if (enved_dialog_is_active())
     {
-      gdk_window_clear(WIDGET_TO_WINDOW(drawer));
+      /* gdk_window_clear(WIDGET_TO_WINDOW(drawer)); */ /* this cause flicker */
       if (showing_all_envs) 
 	view_envs(env_window_width, env_window_height, printing);
       else 
@@ -272,18 +256,36 @@ static void env_redisplay_1(printing_t printing)
 	  char *name = NULL;
 	  name = (char *)gtk_entry_get_text(GTK_ENTRY(textL));
 	  if (!name) name = _("noname");
-	  if ((enved_wave_p(ss)) &&
-	      (active_channel) &&
-	      (!(active_channel->squelch_update)))
+
+	  if ((axis) && (gray_ap) && (enved_cr))
 	    {
-	      gray_ap->ax->cr = gdk_cairo_create(WIDGET_TO_WINDOW(drawer));
-	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env) && (FIR_p) && (printing == NOT_PRINTING))
-		display_frequency_response(active_env, axis, gray_ap->ax, enved_filter_order(ss), enved_in_dB(ss));
-	      enved_show_background_waveform(axis, gray_ap, apply_to_selection, (enved_target(ss) == ENVED_SPECTRUM), printing);
-	      cairo_destroy(gray_ap->ax->cr);
+	      enved_cr = gdk_cairo_create(WIDGET_TO_WINDOW(drawer));	      
+	      axis->ax->cr = enved_cr;
+	      gray_ap->ax->cr = enved_cr;
+	      cairo_push_group(enved_cr);
+
+	      /* erase previous */
+
+	      cairo_set_source_rgb(enved_cr, gc->bg_color->red, gc->bg_color->green, gc->bg_color->blue);
+	      cairo_rectangle(enved_cr, axis->graph_x0, axis->y_offset, axis->width, axis->height);
+	      cairo_fill(enved_cr);
+
+	      if ((enved_wave_p(ss)) &&
+		  (active_channel) &&
+		  (!(active_channel->squelch_update)))
+		{
+		  if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env) && (FIR_p) && (printing == NOT_PRINTING))
+		    display_frequency_response(active_env, axis, gray_ap->ax, enved_filter_order(ss), enved_in_dB(ss));
+		  enved_show_background_waveform(axis, gray_ap, apply_to_selection, (enved_target(ss) == ENVED_SPECTRUM), printing);
+		}
+	      
+	      display_env(active_env, name, gc, 0, 0, env_window_width, env_window_height, true, printing);
+	      name = NULL;
+
+	      cairo_pop_group_to_source(enved_cr);
+	      cairo_paint(enved_cr);
+	      cairo_destroy(enved_cr);
 	    }
-	  display_env(active_env, name, gc, 0, 0, env_window_width, env_window_height, true, printing);
-	  name = NULL;
 	}
     }
 }
@@ -464,8 +466,6 @@ static void select_or_edit_env(int pos)
 
 static void clear_point_label(void)
 {
-  if (pix_ax)
-    fill_rectangle(pix_ax, 0, 4, 24, 24);
   set_button_label(brktxtL, BLANK_LABEL);
 }
 
@@ -478,14 +478,6 @@ static void enved_display_point_label(mus_float_t x, mus_float_t y)
     mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.5f", x, y);
   else mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.3f", x, y);
   set_button_label(brktxtL, brkpt_buf);
-}
-
-
-static gboolean brkpixL_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
-{
-  if (pix_ax)
-    fill_rectangle(pix_ax, 0, 4, 24, 24);
-  return(false);
 }
 
 
@@ -920,24 +912,20 @@ GtkWidget *create_envelope_editor(void)
       gc_set_background(ggc, ss->sgx->white);
       gc_set_foreground(ggc, ss->sgx->enved_waveform_color);
 
-      hgc = gc_new(MAIN_WINDOW(ss)); /* progress pix next to break point label */
-      gc_set_background(hgc, ss->sgx->basic_color);
-      gc_set_foreground(hgc, ss->sgx->basic_color);
-
       helpB = gtk_button_new_from_stock(GTK_STOCK_HELP);
-      gtk_widget_set_name(helpB, "help_button");
+      gtk_widget_set_name(helpB, "dialog_button");
 
       cancelB = sg_button_new_from_stock_with_label("Go Away", GTK_STOCK_QUIT);
-      gtk_widget_set_name(cancelB, "quit_button");
+      gtk_widget_set_name(cancelB, "dialog_button");
 
       applyB = gtk_button_new_from_stock(GTK_STOCK_APPLY);
-      gtk_widget_set_name(applyB, "doit_button");
+      gtk_widget_set_name(applyB, "dialog_button");
 
       apply2B = sg_button_new_from_stock_with_label(_("Undo&Apply"), GTK_STOCK_UNDO);
-      gtk_widget_set_name(apply2B, "doit_again_button");
+      gtk_widget_set_name(apply2B, "dialog_button");
 
       resetB = sg_button_new_from_stock_with_label(_("Reset"), GTK_STOCK_REFRESH);
-      gtk_widget_set_name(resetB, "reset_button");
+      gtk_widget_set_name(resetB, "dialog_button");
 
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), applyB, false, true, 10);
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), apply2B, false, true, 10);
@@ -1102,20 +1090,8 @@ GtkWidget *create_envelope_editor(void)
       textL = snd_entry_new(toprow, WITH_WHITE_BACKGROUND);
       SG_SIGNAL_CONNECT(textL, "activate", text_field_activated, NULL);
 
-      brkpixL = gtk_drawing_area_new();
-      widget_modify_bg(brkpixL, GTK_STATE_NORMAL, ss->sgx->basic_color);
-      gtk_widget_set_events(brkpixL, GDK_EXPOSURE_MASK);
-      gtk_widget_set_size_request(brkpixL, 16, 16);
-      gtk_box_pack_start(GTK_BOX(toprow), brkpixL, false, false, 0);
-      gtk_widget_show(brkpixL);
-      SG_SIGNAL_CONNECT(brkpixL, "expose_event", brkpixL_expose, NULL);
-      
-#if 0
-      brktxtL = snd_gtk_highlight_label_new(BLANK_LABEL); /* not NULL!  gtk only creates the label child if not null */
-#else
       brktxtL = gtk_button_new_with_label(BLANK_LABEL);
       gtk_button_set_relief(GTK_BUTTON(brktxtL), GTK_RELIEF_NONE);
-#endif
       gtk_box_pack_start(GTK_BOX(toprow), brktxtL, false, false, 6);
       gtk_widget_show(brktxtL);
 
@@ -1167,10 +1143,16 @@ GtkWidget *create_envelope_editor(void)
       gtk_widget_show(mainform);
       gtk_widget_show(enved_dialog);
 
-      pix_ax = (axis_context *)calloc(1, sizeof(axis_context));
-      pix_ax->wn = GDK_DRAWABLE(WIDGET_TO_WINDOW(brkpixL));
-      pix_ax->gc = hgc;
-      pix_ax->cr = gdk_cairo_create(WIDGET_TO_WINDOW(brkpixL));
+      enved_cr = gdk_cairo_create(WIDGET_TO_WINDOW(drawer));
+
+      axis = (axis_info *)calloc(1, sizeof(axis_info));
+      axis->ax = (axis_context *)calloc(1, sizeof(axis_context));
+      fixup_axis_context(axis->ax, drawer, gc);
+
+      gray_ap = (axis_info *)calloc(1, sizeof(axis_info));
+      gray_ap->ax = (axis_context *)calloc(1, sizeof(axis_context));
+      gray_ap->graph_active = true;
+      fixup_axis_context(gray_ap->ax, drawer, ggc);
 
       SG_SIGNAL_CONNECT(drawer, "expose_event", drawer_expose, NULL);
       SG_SIGNAL_CONNECT(drawer, "configure_event", drawer_resize, NULL);
@@ -1202,15 +1184,11 @@ GtkWidget *create_envelope_editor(void)
       add_selection_watcher(enved_selection_watcher, NULL);
     }
   else raise_dialog(enved_dialog);
+
   active_channel = current_channel();
+  env_redisplay();
+
   return(enved_dialog);
-}
-
-
-GdkDrawable *enved_pix_wn(void);
-GdkDrawable *enved_pix_wn(void)
-{
-  return(GDK_DRAWABLE(WIDGET_TO_WINDOW(brkpixL)));
 }
 
 

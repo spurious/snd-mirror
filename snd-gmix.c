@@ -714,26 +714,26 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_realize(mix_dialog);
       
       dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
-      gtk_widget_set_name(dismiss_button, "quit_button");
+      gtk_widget_set_name(dismiss_button, "dialog_button");
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), dismiss_button, false, true, 10);
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_mix_dialog, NULL);
       gtk_widget_show(dismiss_button);
       set_stock_button_label(dismiss_button, _("Go Away"));
 
       apply_button = sg_button_new_from_stock_with_label(_("Apply Env"), GTK_STOCK_APPLY);
-      gtk_widget_set_name(apply_button, "doit_again_button");
+      gtk_widget_set_name(apply_button, "dialog_button");
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), apply_button, false, true, 10);
       SG_SIGNAL_CONNECT(apply_button, "clicked", apply_env_callback, NULL);
       gtk_widget_show(apply_button);
 
       copy_button = sg_button_new_from_stock_with_label(_("Copy mix"), GTK_STOCK_COPY);
-      gtk_widget_set_name(copy_button, "reset_button");
+      gtk_widget_set_name(copy_button, "dialog_button");
       gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), copy_button, false, true, 10);
       SG_SIGNAL_CONNECT(copy_button, "clicked", copy_mix_callback, NULL);
       gtk_widget_show(copy_button);
 
       help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
-      gtk_widget_set_name(help_button, "help_button");
+      gtk_widget_set_name(help_button, "dialog_button");
       gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(mix_dialog)), help_button, true, true, 10);
       SG_SIGNAL_CONNECT(help_button, "clicked", mix_dialog_help_callback, NULL);
       gtk_widget_show(help_button);
@@ -797,14 +797,14 @@ GtkWidget *make_mix_dialog(void)
 
 
       nextb = gtk_button_new_from_stock(GTK_STOCK_GO_FORWARD);
-      gtk_widget_set_name(nextb, "doit_button");
+      gtk_widget_set_name(nextb, "dialog_button");
       gtk_box_pack_end(GTK_BOX(rc), nextb, false, true, 6);
       SG_SIGNAL_CONNECT(nextb, "clicked", mix_next_callback, NULL);
       gtk_widget_show(nextb);
       set_stock_button_label(nextb, _("Next"));
 
       previousb = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
-      gtk_widget_set_name(previousb, "reset_button");
+      gtk_widget_set_name(previousb, "dialog_button");
       gtk_box_pack_end(GTK_BOX(rc), previousb, false, true, 6);
       SG_SIGNAL_CONNECT(previousb, "clicked", mix_previous_callback, NULL);
       gtk_widget_show(previousb);
