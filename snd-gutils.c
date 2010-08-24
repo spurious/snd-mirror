@@ -1140,5 +1140,6 @@ char *slist_selection(slist *lst)
  *       when fft selection, fft not redrawn? (not drawn at all)
  *       multichan select flashes then erases chan>0 select rect (and chans>0 fft flash -- probably need full display)
  *       amp-env view in enved? sono + wave + flt in enved?
- *       mix dialog there's no axis in the no-mix case
+ *       syncd marks are undoubtedly messed up (what about play triangle drag?)
+ *       do meters work in rec?  in Motif they're drawn incorrectly
  */

@@ -1263,8 +1263,13 @@ void display_filter_env(snd_info *sp)
   ax->wn = WIDGET_TO_WINDOW(drawer);
   ax->w = drawer;
   ax->cr = gdk_cairo_create(ax->wn);
+  cairo_push_group(ax->cr);
 
-  gdk_window_clear(ax->wn);
+  /* erase previous */
+  cairo_set_source_rgb(ax->cr, ax->gc->bg_color->red, ax->gc->bg_color->green, ax->gc->bg_color->blue);
+  cairo_rectangle(ax->cr, 0, 0, width, height);
+  cairo_fill(ax->cr);
+
   edp->in_dB = sp->filter_control_in_dB;
   edp->with_dots = true;
   if (sp->filter_control_envelope == NULL) sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
@@ -1279,6 +1284,9 @@ void display_filter_env(snd_info *sp)
 				 sp->filter_control_order, 
 				 sp->filter_control_in_dB);
     }
+
+  cairo_pop_group_to_source(ax->cr);
+  cairo_paint(ax->cr);
   cairo_destroy(ax->cr);
   free(ax);
 }

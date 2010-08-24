@@ -261,6 +261,8 @@ void marks_off(chan_info *cp)
 }
 
 
+static void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show);
+
 static XEN draw_mark_hook;
 
 static void draw_mark_1(chan_info *cp, axis_info *ap, mark *mp, bool show)
@@ -475,6 +477,7 @@ static void sort_marks(chan_info *cp)
 }
 
 
+static void show_mark_triangle(chan_info *cp, int x);
 static int prev_cx = -1;
 
 mus_long_t move_play_mark(chan_info *cp, mus_long_t *mc, int cx)
@@ -1562,7 +1565,11 @@ void move_mark(chan_info *cp, mark *mp, int x) /* from mouse drag callback in sn
   else redraw = move_mark_1(cp, mp, x);
   if (mark_control_clicked)
     make_mark_graph(cp, mark_initial_sample, mp->samp, 0);
+#if (!USE_GTK)
   if (redraw) draw_mark(cp, cp->axis, mp);
+#else
+  if (redraw) display_channel_time_data(cp);
+#endif
 }
 
 
@@ -1861,7 +1868,7 @@ static void make_mark_graph(chan_info *cp, mus_long_t initial_sample, mus_long_t
 
 /* -------------------------------- display mark -------------------------------- */
 
-void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
+static void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
 {
   int len, top, cx, y0, y1;
   axis_context *ax;
@@ -1878,7 +1885,7 @@ void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
   if (mp->name) top += 10;
   cx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), ap);
 
-  /* split into 3 cases to try to make it more readable */
+  /* split into 2 cases to try to make it more readable */
 #if USE_MOTIF
 
   ax = mark_tag_context(cp);
@@ -1906,33 +1913,18 @@ void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
   {
     color_t bg_color, old_color;
     int slop = 0;
+
+    cairo_save(ap->ax->cr);
+
     ax = mark_tag_context(cp);
+    ax->cr = ap->ax->cr;
+
     if (mp->name)
       {
 	ax->current_font = PEAKS_FONT(ss);
 	len = mark_name_width(mp->name);
-	if (!show) /* erase mark */
-	  {
-	    ax = erase_context(cp);
-	    fill_rectangle(ax, (int)(cx - 0.5 * len - 1), top - 15, len + 3, 16);
-	    ax = mark_tag_context(cp);
-	  }
-	else  draw_string(ax, (int)(cx - 0.5 * len), y1 + STRING_Y_OFFSET, mp->name, strlen(mp->name));
+	draw_string(ax, (int)(cx - 0.5 * len), y1 + STRING_Y_OFFSET, mp->name, strlen(mp->name));
       }
-    if (ax->cr) cairo_destroy(ax->cr);
-    ax->cr = gdk_cairo_create(ax->wn);
-    
-    old_color = ax->gc->fg_color;
-    if (show) 
-      bg_color = ss->sgx->red;
-    else
-      {
-	if (cp->cgx->selected) 
-	  bg_color = ss->sgx->selected_graph_color;
-	else bg_color = ss->sgx->graph_color;
-	slop = 1;
-      }
-    set_foreground_color(ax, bg_color);
 
     fill_rectangle(ax,
 		   cx - mark_tag_width(ss), top,
@@ -1945,14 +1937,14 @@ void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
 		 cx, y0);
     mp->visible = show;
 
-    set_foreground_color(ax, old_color);
-    make_graph(cp);
+    cairo_restore(ap->ax->cr);
+    copy_context(cp);
   }
 #endif
 }
 
 
-void show_mark_triangle(chan_info *cp, int x)
+static void show_mark_triangle(chan_info *cp, int x)
 {
   int y0;
   y0 = ((axis_info *)(cp->axis))->y_axis_y0;
@@ -1963,6 +1955,10 @@ void show_mark_triangle(chan_info *cp, int x)
 	       x, y0);
 }
 
+#else
+/* no gui */
+static void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show) {}
+static void show_mark_triangle(chan_info *cp, int x) {}
 #endif
 
 

@@ -101,12 +101,13 @@ static void display_meters(mus_float_t *maxes)
   {
     cairo_t *cr;
     cr = gdk_cairo_create(recorder_ax->wn);
+    cairo_push_group(cr);
     
     cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
     cairo_rectangle(cr, 0, 0, meters_width, meter_height);
     cairo_fill(cr);
     
-    cairo_save(cr);
+
     
     for (i = 0; i < recorder_chans; i++, x0 += meter_width)
       {
@@ -122,6 +123,7 @@ static void display_meters(mus_float_t *maxes)
 		cur_max = 1.0 +  ((dv < -30.0) ? -30.0 : dv) / 30.0;
 	      }
 	  }
+	cairo_save(cr);
 
 	/* put our origin at the meter pivot point scaled (as a square so the dial remains circular) to 0..1 */
 	cairo_translate(cr, x0 + (0.5 * meter_width), 0.5 * meter_width + 0.2 * meter_height);
@@ -139,6 +141,9 @@ static void display_meters(mus_float_t *maxes)
 	
 	cairo_restore(cr);
       }
+
+    cairo_pop_group_to_source(cr);
+    cairo_paint(cr);
     cairo_destroy(cr);
   }
 }
@@ -354,7 +359,7 @@ widget_t record_file(void)
 	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_ETCHED_IN);
 	/* gtk_container_set_border_width(GTK_CONTAINER(frame), 1); */
 	/* widget_modify_bg(frame, GTK_STATE_NORMAL, ss->sgx->zoom_color); */
-	gtk_box_pack_start(GTK_BOX(hbox), frame, false, false, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), frame, true, true, 0);
 	gtk_widget_show(frame);
 
 	info = snd_gtk_entry_label_new(NULL, ss->sgx->basic_color);

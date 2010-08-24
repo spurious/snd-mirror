@@ -65,12 +65,19 @@ static void graph_redisplay(void)
   ax->w = graph_drawer;
   ax->gc = gc;
   ax->current_font = AXIS_NUMBERS_FONT(ss);
-  ax->cr = gdk_cairo_create(ax->wn);
   axis_ap->xmin = 0.0;
   axis_ap->xmax = 1.0;
   axis_ap->x_ambit = 1.0;
   axis_ap->x0 = 0.0;
   axis_ap->x1 = 1.0;
+
+  ax->cr = gdk_cairo_create(ax->wn);
+  cairo_push_group(ax->cr);
+
+  /* erase previous */
+  cairo_set_source_rgb(ax->cr, ax->gc->bg_color->red, ax->gc->bg_color->green, ax->gc->bg_color->blue);
+  cairo_rectangle(ax->cr, 0, 0, widget_width(graph_drawer), widget_height(graph_drawer));
+  cairo_fill(ax->cr);
 
   if (axis_ap->xlabel) free(axis_ap->xlabel);
   if (fft_beta_max(fft_window(ss)) != 1.0)
@@ -99,7 +106,7 @@ static void graph_redisplay(void)
   axis_ap->height = widget_height(graph_drawer);
   axis_ap->graph_x0 = 0;
 
-  gdk_window_clear(ax->wn);
+
   make_axes_1(axis_ap, X_AXIS_IN_SECONDS, 1 /* "srate" */, SHOW_ALL_AXES, NOT_PRINTING, WITH_X_AXIS, NO_GRID, WITH_LINEAR_AXES, grid_density(ss));
 
   ax->gc = gc;
@@ -130,6 +137,9 @@ static void graph_redisplay(void)
       else iy1 = grf_y(graph_fftr[i], axis_ap);
       draw_line(ax, ix0, iy0, ix1, iy1);
     }
+
+  cairo_pop_group_to_source(ax->cr);
+  cairo_paint(ax->cr);
   cairo_destroy(ax->cr);
   ax->cr = NULL;
 }

@@ -146,6 +146,7 @@ void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
 
   {
     PangoLayout *layout = NULL;
+    cairo_save(ax->cr);
     layout = pango_cairo_create_layout(ax->cr);
     pango_layout_set_font_description(layout, ax->current_font);
     pango_layout_set_text(layout, str, -1);
@@ -153,27 +154,27 @@ void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
     cairo_move_to(ax->cr, x0, y0);
     pango_cairo_show_layout(ax->cr, layout);
     g_object_unref(G_OBJECT(layout));
+    cairo_restore(ax->cr);
   }
 }
 
 
 static void rotate_text(axis_context *ax, PangoFontDescription *font, const char *text, int angle, gint x0, gint y0)
 {
-  cairo_t *cr;
   int width, height;
   PangoLayout *layout = NULL;
-  cr = gdk_cairo_create(ax->wn);
-  layout = pango_cairo_create_layout(cr);
+  cairo_save(ax->cr);
+  layout = pango_cairo_create_layout(ax->cr);
   pango_layout_set_font_description(layout, font);
   pango_layout_set_text(layout, text, -1);
   pango_layout_get_size(layout, &width, &height);
-  cairo_set_source_rgb(cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
-  cairo_move_to(cr, x0 + (double)height / (2 * PANGO_SCALE), y0 + (double)width / PANGO_SCALE);
-  cairo_rotate(cr, mus_degrees_to_radians(-angle));
-  pango_cairo_update_layout(cr, layout);
-  pango_cairo_show_layout(cr, layout);
-  cairo_destroy(cr);
+  cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
+  cairo_move_to(ax->cr, x0 + (double)height / (2 * PANGO_SCALE), y0 + (double)width / PANGO_SCALE);
+  cairo_rotate(ax->cr, mus_degrees_to_radians(-angle));
+  pango_cairo_update_layout(ax->cr, layout);
+  pango_cairo_show_layout(ax->cr, layout);
   g_object_unref(layout);
+  cairo_restore(ax->cr);
 }
 
 

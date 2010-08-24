@@ -2030,8 +2030,6 @@ void set_grf_point(int xi, int j, int yi) {}
 void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, mus_float_t y0, graph_style_t graph_style) {}
 void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style) {}
 void draw_cursor(chan_info *cp) {}
-void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show) {}
-void show_mark_triangle(chan_info *cp, int x) {}
 void erase_cursor(chan_info *cp) {}
 point_t *get_grf_points(void) {return(NULL);} 
 point_t *get_grf_points1(void) {return(NULL);}
