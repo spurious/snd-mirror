@@ -1127,7 +1127,7 @@ char *slist_selection(slist *lst)
   return(NULL);
 }
 
-/* TODO: lots of cairo troubles...
+/* TODO: cairo troubles:
  *
  * --------
  *       cairo direct to GL (see cairo-gl.h) -- web examples depend on gtkglext
@@ -1137,9 +1137,8 @@ char *slist_selection(slist *lst)
  *               is included in this release only as a preview. It does NOT fully work yet"
  * --------
  *       is it necessary to lock out cursor display?
- *       enved sono mix etc
- *       does print dialog actually work? [also rec?]
- *       when fft selection, fft not redrawn?
- *       multichan select flashes then erases chan>0 select rect
- *       mix dialog env?
+ *       when fft selection, fft not redrawn? (not drawn at all)
+ *       multichan select flashes then erases chan>0 select rect (and chans>0 fft flash -- probably need full display)
+ *       amp-env view in enved? sono + wave + flt in enved?
+ *       mix dialog there's no axis in the no-mix case
  */

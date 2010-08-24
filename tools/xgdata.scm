@@ -7183,7 +7183,7 @@
 (CFNC-2906 "GdkWindow* gtk_button_get_event_window GtkButton* button")
 (CFNC-2906 "GtkWidget* gtk_font_selection_dialog_get_font_selection GtkFontSelectionDialog* fsd")
 (CFNC-2906 "GtkWidget* gtk_message_dialog_get_message_area GtkMessageDialog* message_dialog")
-(CFNC-2906 "void gtk_table_get_size GtkTable* table guint* rows guint* columns")
+(CFNC-2906 "void gtk_table_get_size GtkTable* table guint* [rows] guint* [columns]")
 
 (CINT-2906 "GTK_SIZE_REQUEST_HEIGHT_FOR_WIDTH" "GtkSizeRequestMode")
 (CINT-2906 "GTK_SIZE_REQUEST_WIDTH_FOR_HEIGHT" "GtkSizeRequestMode")

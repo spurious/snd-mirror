@@ -31342,14 +31342,14 @@ static XEN gxg_gtk_message_dialog_get_message_area(XEN message_dialog)
   return(C_TO_XEN_GtkWidget_(gtk_message_dialog_get_message_area(XEN_TO_C_GtkMessageDialog_(message_dialog))));
 }
 
-static XEN gxg_gtk_table_get_size(XEN table, XEN rows, XEN columns)
+static XEN gxg_gtk_table_get_size(XEN table, XEN ignore_rows, XEN ignore_columns)
 {
-  #define H_gtk_table_get_size "void gtk_table_get_size(GtkTable* table, guint* rows, guint* columns)"
+  #define H_gtk_table_get_size "void gtk_table_get_size(GtkTable* table, guint* [rows], guint* [columns])"
+  guint ref_rows;
+  guint ref_columns;
   XEN_ASSERT_TYPE(XEN_GtkTable__P(table), table, 1, "gtk_table_get_size", "GtkTable*");
-  XEN_ASSERT_TYPE(XEN_guint__P(rows), rows, 2, "gtk_table_get_size", "guint*");
-  XEN_ASSERT_TYPE(XEN_guint__P(columns), columns, 3, "gtk_table_get_size", "guint*");
-  gtk_table_get_size(XEN_TO_C_GtkTable_(table), XEN_TO_C_guint_(rows), XEN_TO_C_guint_(columns));
-  return(XEN_FALSE);
+  gtk_table_get_size(XEN_TO_C_GtkTable_(table), &ref_rows, &ref_columns);
+  return(XEN_LIST_2(C_TO_XEN_guint(ref_rows), C_TO_XEN_guint(ref_columns)));
 }
 
 static XEN gxg_gtk_selection_data_get_length(XEN selection_data)
@@ -38084,7 +38084,7 @@ XEN_NARGIFY_2(gxg_gtk_accessible_set_widget_w, gxg_gtk_accessible_set_widget)
 XEN_NARGIFY_1(gxg_gtk_button_get_event_window_w, gxg_gtk_button_get_event_window)
 XEN_NARGIFY_1(gxg_gtk_font_selection_dialog_get_font_selection_w, gxg_gtk_font_selection_dialog_get_font_selection)
 XEN_NARGIFY_1(gxg_gtk_message_dialog_get_message_area_w, gxg_gtk_message_dialog_get_message_area)
-XEN_NARGIFY_3(gxg_gtk_table_get_size_w, gxg_gtk_table_get_size)
+XEN_ARGIFY_3(gxg_gtk_table_get_size_w, gxg_gtk_table_get_size)
 XEN_NARGIFY_1(gxg_gtk_selection_data_get_length_w, gxg_gtk_selection_data_get_length)
 XEN_NARGIFY_1(gxg_gdk_drawable_get_clip_region_w, gxg_gdk_drawable_get_clip_region)
 XEN_NARGIFY_1(gxg_gdk_drawable_get_visible_region_w, gxg_gdk_drawable_get_visible_region)
@@ -45957,7 +45957,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_button_get_event_window, gxg_gtk_button_get_event_window_w, 1, 0, 0, H_gtk_button_get_event_window);
   XG_DEFINE_PROCEDURE(gtk_font_selection_dialog_get_font_selection, gxg_gtk_font_selection_dialog_get_font_selection_w, 1, 0, 0, H_gtk_font_selection_dialog_get_font_selection);
   XG_DEFINE_PROCEDURE(gtk_message_dialog_get_message_area, gxg_gtk_message_dialog_get_message_area_w, 1, 0, 0, H_gtk_message_dialog_get_message_area);
-  XG_DEFINE_PROCEDURE(gtk_table_get_size, gxg_gtk_table_get_size_w, 3, 0, 0, H_gtk_table_get_size);
+  XG_DEFINE_PROCEDURE(gtk_table_get_size, gxg_gtk_table_get_size_w, 1, 2, 0, H_gtk_table_get_size);
   XG_DEFINE_PROCEDURE(gtk_selection_data_get_length, gxg_gtk_selection_data_get_length_w, 1, 0, 0, H_gtk_selection_data_get_length);
   XG_DEFINE_PROCEDURE(gdk_drawable_get_clip_region, gxg_gdk_drawable_get_clip_region_w, 1, 0, 0, H_gdk_drawable_get_clip_region);
   XG_DEFINE_PROCEDURE(gdk_drawable_get_visible_region, gxg_gdk_drawable_get_visible_region_w, 1, 0, 0, H_gdk_drawable_get_visible_region);
@@ -48422,7 +48422,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("22-Aug-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("23-Aug-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

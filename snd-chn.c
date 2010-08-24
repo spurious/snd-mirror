@@ -4215,7 +4215,11 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
 
 void display_channel_fft_data(chan_info *cp)
 {
+#if (!USE_GTK)
   display_channel_data_1(cp, true, false, false, false);
+#else
+  display_channel_data_1(cp, false, false, false, false);
+#endif
 }
 
 
@@ -5760,10 +5764,14 @@ static void show_inset_graph(chan_info *cp, axis_context *cur_ax)
       grf_width = cp->axis->x_axis_x1;
       width = snd_round(INSET_WIDTH * grf_width);
       x_offset = grf_width - width;
+
       grf_height = cp->axis->y_axis_y0 - cp->axis->y_axis_y1;
       height = snd_round(INSET_HEIGHT * grf_height);
       chan_offset = cp->axis->y_axis_y1 - 6;
+      if ((cp->show_axes == SHOW_X_AXIS) || (cp->show_axes == SHOW_X_AXIS_UNLABELLED))
+	chan_offset += 10;
       y_offset = chan_offset + snd_round(height * 0.5);
+
       if (cp->sound->channel_style == CHANNELS_SEPARATE) grf_chn = cp->chan;
       new_peaks = ((cp->axis->cp) && (cp->axis->cp->new_peaks));
       /* new_peaks is set during update_graph if we just finished a new peak-env */

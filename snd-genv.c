@@ -257,7 +257,7 @@ static void env_redisplay_1(printing_t printing)
 	  name = (char *)gtk_entry_get_text(GTK_ENTRY(textL));
 	  if (!name) name = _("noname");
 
-	  if ((axis) && (gray_ap) && (enved_cr))
+	  if ((axis) && (gray_ap))
 	    {
 	      enved_cr = gdk_cairo_create(WIDGET_TO_WINDOW(drawer));	      
 	      axis->ax->cr = enved_cr;
@@ -265,7 +265,6 @@ static void env_redisplay_1(printing_t printing)
 	      cairo_push_group(enved_cr);
 
 	      /* erase previous */
-
 	      cairo_set_source_rgb(enved_cr, gc->bg_color->red, gc->bg_color->green, gc->bg_color->blue);
 	      cairo_rectangle(enved_cr, axis->graph_x0, axis->y_offset, axis->width, axis->height);
 	      cairo_fill(enved_cr);
@@ -344,7 +343,8 @@ static void errors_to_genv_text(const char *msg, void *data)
 
 
 static void text_field_activated(GtkWidget *w, gpointer context)
-{ /* might be breakpoints to load or an envelope name (<cr> in enved text field) */
+{ 
+  /* might be breakpoints to load or an envelope name (<cr> in enved text field) */
   char *str = NULL;
   str = (char *)gtk_entry_get_text(GTK_ENTRY(w));
   if ((str) && (*str))
@@ -487,6 +487,7 @@ static gboolean drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer 
   GdkModifierType state;
   oclock_t motion_time = 0;
   ignore_button_release = false;
+
   if (BUTTON1_PRESSED(EVENT_STATE(ev)))
     {
       if (EVENT_IS_HINT(ev))
@@ -500,6 +501,7 @@ static gboolean drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer 
 	}
     }
   else return(false);
+
   if (!showing_all_envs)
     {
       mus_float_t x, y;
@@ -507,6 +509,7 @@ static gboolean drawer_button_motion(GtkWidget *w, GdkEventMotion *ev, gpointer 
       enved_display_point_label(x, y);
       env_redisplay();
     }
+
   return(false);
 }
 
@@ -515,6 +518,7 @@ static gboolean drawer_button_press(GtkWidget *w, GdkEventButton *ev, gpointer d
 {
   ss->enved->down_time = EVENT_TIME(ev);
   ss->enved->env_dragged = false;
+
   if (showing_all_envs)
     {
       int pos;
@@ -789,17 +793,23 @@ static void make_base_label(mus_float_t bval)
 {
   char *sfs, *buf;
   int i, len, scale_len;
+
   len = (int)(enved_power(ss) * 4);
   if (len < 32) len = 32;
+
   sfs = (char *)calloc(len, sizeof(char));
   mus_snprintf(sfs, len, "%.3f", bval);
+
   scale_len = (int)(enved_power(ss) + 3);
   if (scale_len < 32) scale_len = 32;
   buf = (char *)calloc(scale_len, sizeof(char));
+
   for (i = 0; i < scale_len - 1; i++) buf[i] = sfs[i];
   gtk_label_set_text(GTK_LABEL(baseValue), buf);
+
   free(sfs);
   free(buf);
+
   in_set_enved_base(bval);
   if ((active_env) && (!(showing_all_envs))) 
     {
@@ -1142,8 +1152,6 @@ GtkWidget *create_envelope_editor(void)
 
       gtk_widget_show(mainform);
       gtk_widget_show(enved_dialog);
-
-      enved_cr = gdk_cairo_create(WIDGET_TO_WINDOW(drawer));
 
       axis = (axis_info *)calloc(1, sizeof(axis_info));
       axis->ax = (axis_context *)calloc(1, sizeof(axis_context));

@@ -5123,10 +5123,20 @@ static void vf_amp_env_resize(view_files_info *vdat, GtkWidget *w)
       vdat->env_ax->w = w;
       vdat->env_ax->gc = vdat->env_gc;
     }
-  else clear_window(vdat->env_ax);
+
   vdat->env_ax->cr = gdk_cairo_create(WIDGET_TO_WINDOW(w));
+  cairo_push_group(vdat->env_ax->cr);
+
+  /* erase previous */
+  cairo_set_source_rgb(vdat->env_ax->cr, vdat->env_gc->bg_color->red, vdat->env_gc->bg_color->green, vdat->env_gc->bg_color->blue);
+  cairo_rectangle(vdat->env_ax->cr, 0, 0, widget_width(w), widget_height(w));
+  cairo_fill(vdat->env_ax->cr);
+
   vdat->spf->with_dots = true;
   env_editor_display_env(vdat->spf, vdat->amp_env, vdat->env_ax, NULL, 0, 0, widget_width(w), widget_height(w), NOT_PRINTING);
+
+  cairo_pop_group_to_source(vdat->env_ax->cr);
+  cairo_paint(vdat->env_ax->cr);
   cairo_destroy(vdat->env_ax->cr);
 }
 

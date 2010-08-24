@@ -44,10 +44,8 @@ void draw_arc(axis_context *ax, int x, int y, int size, int angle0, int angle1)
   cairo_arc(ax->cr, x, y, size / 2, mus_degrees_to_radians(angle0), mus_degrees_to_radians(angle1));
   cairo_stroke(ax->cr);
 }
-#endif
 
 
-#if 0
 void draw_point(axis_context *ax, point_t point, int size)
 {
   draw_dot(ax, point.x, point.y, size);
