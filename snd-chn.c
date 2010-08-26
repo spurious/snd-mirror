@@ -2183,6 +2183,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, graphics_context *ax, 
       losamp = fp->current_size * cp->spectrum_start;
       incr = 1.0;
     }
+
   if ((losamp < 0) || (losamp >= hisamp)) return;
 
   /* no scaling etc here!! see snd_display_fft in snd-fft.c */
@@ -2433,7 +2434,10 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, graphics_context *ax, 
       if (free_phases)
 	free(fft_phases);
     }
-  else draw_grf_points(cp->dot_size, ax, lines_to_draw, fap, 0.0, cp->transform_graph_style);
+  else 
+    {
+      draw_grf_points(cp->dot_size, ax, lines_to_draw, fap, 0.0, cp->transform_graph_style);
+    }
   
   if (cp->printing) 
     ps_draw_grf_points(fap, lines_to_draw, 0.0, cp->transform_graph_style, cp->dot_size);

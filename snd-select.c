@@ -672,7 +672,7 @@ static void redraw_selection(void)
 		      if ((cp->graph_transform_p) && 
 			  (!(chan_fft_in_progress(cp))) &&
 			  (show_selection_transform(ss)))
-			display_channel_data(cp);
+			update_graph(cp);
 		      else display_channel_time_data(cp);
 #endif
 		      if (sp->channel_style == CHANNELS_SUPERIMPOSED)

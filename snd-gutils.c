@@ -1137,10 +1137,12 @@ char *slist_selection(slist *lst)
  *               is included in this release only as a preview. It does NOT fully work yet"
  * --------
  *       is it necessary to lock out cursor display?
- *       when fft selection, fft not redrawn? (not drawn at all)
  *       multichan select flashes then erases chan>0 select rect (and chans>0 fft flash -- probably need full display)
- *       sono + wave + flt in enved?
  *       syncd marks are undoubtedly messed up (what about play triangle drag?) (marks in united chans?) -- glib doubly linked list corruption
  *       do meters work in rec?  in Motif they're drawn incorrectly
  *       Mac native? quartz surface like GL?
+ *       combined chans chan>0 marks erased and mixes, if 2 mix is moved it does not erase previous
+ *       superimposed chans flicker a lot
+ *       hide controls + listener doesn't
+ *       in edit-header "srate" and "channels" labels are not highlighted (they're drop down menus)
  */

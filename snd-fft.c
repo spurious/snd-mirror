@@ -1109,7 +1109,7 @@ static fft_state *make_fft_state(chan_info *cp, bool force_recalc)
       dlen = selection_len();
       /* these need to be handled at the same time, and not re-examined until the next call */
       /* if we're sweeping the mouse defining the selection, by the time we get to apply_fft, selection_len() can change */
-      fftsize = snd_mus_long_t_pow2(dlen * (1 + cp->zero_pad));
+      fftsize = snd_mus_long_t_pow2((int)ceil(log(dlen * (1 + cp->zero_pad) + 1) / log(2.0)));
       if (fftsize < 2) fftsize = 2;
       cp->selection_transform_size = fftsize;
     }
@@ -1290,7 +1290,11 @@ void single_fft(chan_info *cp, bool update_display, bool force_recalc)
   if (cp->transform_size < 2) return;
   cp->fft_data = make_fft_state(cp, force_recalc);
   one_fft(cp->fft_data);
+#if (!USE_GTK)
   if (update_display) display_channel_fft_data(cp);
+#else
+  if (update_display) display_channel_data(cp);
+#endif
 }
 
 
