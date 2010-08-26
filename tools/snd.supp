@@ -14,6 +14,7 @@
 #   (remember -g switch)
 #   callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 #                      --inclusive=yes|no
+#                      --threshold=100
 
 
 # first section copied (unnecessarily) from default: /usr/local/lib/valgrind/default.supp

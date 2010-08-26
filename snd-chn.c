@@ -537,8 +537,6 @@ void calculate_fft(chan_info *cp)
 }
 
 
-static bool updating = false;
-
 static void update_graph_1(chan_info *cp, bool warn)
 {
   /* don't put display stuff here!  This is needed so that the fft display does not get caught in a loop */
@@ -546,7 +544,7 @@ static void update_graph_1(chan_info *cp, bool warn)
   snd_info *sp;
   axis_info *ap;
 
-  if ((updating) || 
+  if ((cp->updating) || 
       (cp->active != CHANNEL_HAS_AXES) ||
       (cp->cgx == NULL) || 
       (cp->sounds == NULL) || 
@@ -563,7 +561,7 @@ static void update_graph_1(chan_info *cp, bool warn)
       return;
     }
 
-  updating = true;
+  cp->updating = true;
   /* next two are needed by fft and lisp displays, but if put off until make_graph cause
    * the display to happen twice in some cases 
    */
@@ -580,7 +578,7 @@ static void update_graph_1(chan_info *cp, bool warn)
     if (!(fixup_cp_cgx_ax_wn(cp))) 
       {
 	/* window not active yet (gtk) */
-	updating = false;
+	cp->updating = false;
 	return;
       }
 
@@ -588,7 +586,7 @@ static void update_graph_1(chan_info *cp, bool warn)
       (!(chan_fft_in_progress(cp)))) 
     calculate_fft_1(cp, DONT_FORCE_REDISPLAY);
   display_channel_data(cp);
-  updating = false;
+  cp->updating = false;
 }
 
 
@@ -1301,7 +1299,7 @@ static void display_y_zero(chan_info *cp)
 static char chn_id_str[LABEL_BUFFER_SIZE];
 
 
-static void display_channel_id(chan_info *cp, axis_context *ax, int height, int chans)
+static void display_channel_id(chan_info *cp, graphics_context *ax, int height, int chans)
 {
   if (cp->show_axes == SHOW_NO_AXES) return;
   if ((chans > 1) || (cp->edit_ctr > 0))
@@ -1337,7 +1335,7 @@ static void display_channel_id(chan_info *cp, axis_context *ax, int height, int 
 #endif
 
 
-static void display_selection_transform_size(chan_info *cp, axis_info *fap, axis_context *ax)
+static void display_selection_transform_size(chan_info *cp, axis_info *fap, graphics_context *ax)
 {
   int x0, y0;
   if (fap->height < 60) return;
@@ -1392,7 +1390,7 @@ snd_info *make_simple_channel_display(int srate, int initial_length, fw_button_t
 }
 
 
-static axis_context *combined_context(chan_info *cp);
+static graphics_context *combined_context(chan_info *cp);
 static int make_wavogram(chan_info *cp);
 
 
@@ -1431,7 +1429,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool not_enved_bg_graph
   int pixels;
   snd_fd *sf = NULL;
   int x_start, x_end;
-  axis_context *ax = NULL;
+  graphics_context *ax = NULL;
 
   sp = cp->sound;
   ap = cp->axis;
@@ -1641,7 +1639,7 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
   int pixels;
   snd_fd *sf = NULL;
   int x_start, x_end;
-  axis_context *ax = NULL;
+  graphics_context *ax = NULL;
 
   sp = cp->sound;
   cur_srate = (double)SND_SRATE(sp);
@@ -1903,7 +1901,7 @@ XEN make_graph_data(chan_info *cp, int edit_pos, mus_long_t losamp, mus_long_t h
 }
 
 
-void draw_graph_data(chan_info *cp, mus_long_t losamp, mus_long_t hisamp, int data_size, mus_float_t *data, mus_float_t *data1, axis_context *ax, graph_style_t style)
+void draw_graph_data(chan_info *cp, mus_long_t losamp, mus_long_t hisamp, int data_size, mus_float_t *data, mus_float_t *data1, graphics_context *ax, graph_style_t style)
 {
   mus_long_t i, samps;
   int xi;
@@ -1973,7 +1971,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, mus_float_t *data,
   mus_long_t samps;
   bool with_amps;
   mus_float_t amp0;
-  axis_context *ax;
+  graphics_context *ax;
   fft_peak *peak_freqs = NULL;
   fft_peak *peak_amps = NULL;
 
@@ -2144,7 +2142,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, mus_float_t *data,
 }
 
 
-static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with_hook_t with_hook)
+static void make_fft_graph(chan_info *cp, axis_info *fap, graphics_context *ax, with_hook_t with_hook)
 {
   /* axes are already set, data is in the fft_info struct -- don't reset here! */
   /* since the fft size menu callback can occur while we are calculating the next fft, we have to lock the current size until the graph goes out */
@@ -2508,7 +2506,7 @@ static void make_sonogram(chan_info *cp)
       mus_float_t xf, xfincr, yf, yfincr, frectw, frecth, xscl, scl = 1.0;
       mus_float_t *hfdata;
       int *hidata;
-      axis_context *ax;
+      graphics_context *ax;
       mus_float_t minlx = 0.0, curlx = 0.0, lscale = 1.0;
 
       ax = copy_context(cp);
@@ -3026,7 +3024,7 @@ static bool make_spectrogram(chan_info *cp)
 {
   sono_info *si;
   axis_info *fap;
-  axis_context *ax;
+  graphics_context *ax;
   mus_float_t *fdata;
   mus_float_t matrix[9];
   mus_float_t xyz[3];
@@ -3199,7 +3197,7 @@ static int make_wavogram(chan_info *cp)
   mus_float_t matrix[9];
   mus_float_t xyz[3];
   axis_info *ap;
-  axis_context *ax;
+  graphics_context *ax;
   snd_fd *sf = NULL;
   wavogram_state *lw;
   bool need_new_list = true, need_redraw = true;
@@ -3581,7 +3579,7 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
   /* data can be evenly spaced data or an envelope (up->env_data) */
   axis_info *uap = NULL;
   int i;
-  axis_context *ax;
+  graphics_context *ax;
 
   sp = cp->sound;
   up = cp->lisp_info;
@@ -3728,7 +3726,7 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
   if (!(ap->ax))
     ap->ax = cp->cgx->ax;
   sp = cp->sound;
-  setup_axis_context(cp, ap->ax);
+  setup_graphics_context(cp, ap->ax);
 
   /* here is where the graph is cleared (see also make_partial_graph and make_wavogram) */
   if (erase_first == CLEAR_GRAPH)
@@ -3762,7 +3760,7 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 
 static void draw_sonogram_cursor(chan_info *cp);
 static void draw_graph_cursor(chan_info *cp);
-static void show_inset_graph(chan_info *cp, axis_context *ax);
+static void show_inset_graph(chan_info *cp, graphics_context *ax);
 
 
 static void display_channel_data_with_size(chan_info *cp, 
@@ -4276,7 +4274,7 @@ static void draw_graph_cursor(chan_info *cp)
 static void draw_sonogram_cursor_1(chan_info *cp)
 {
   axis_info *fap;
-  axis_context *fax;
+  graphics_context *fax;
 
   fap = cp->fft->axis;
   fax = cursor_context(cp);
@@ -5618,7 +5616,7 @@ void edit_history_select(chan_info *cp, int row)
 }
 
 
-static bool run_time_graph_hook(chan_info *cp, axis_context *ax)
+static bool run_time_graph_hook(chan_info *cp, graphics_context *ax)
 {
   XEN result = XEN_FALSE;
   if ((cp->hookable == WITH_HOOK) &&
@@ -5636,9 +5634,9 @@ static bool run_time_graph_hook(chan_info *cp, axis_context *ax)
 }
 
 
-axis_context *set_context(chan_info *cp, chan_gc_t gc)
+graphics_context *set_context(chan_info *cp, chan_gc_t gc)
 {
-  axis_context *ax;
+  graphics_context *ax;
   state_context *sx;
   chan_context *cx;
   cx = cp->tcgx;
@@ -5691,13 +5689,13 @@ axis_context *set_context(chan_info *cp, chan_gc_t gc)
 }
 
 
-axis_context *copy_context(chan_info *cp)            {return(set_context(cp, CHAN_GC));}
-axis_context *erase_context(chan_info *cp)           {return(set_context(cp, CHAN_IGC));}
-axis_context *selection_context(chan_info *cp)       {return(set_context(cp, CHAN_SELGC));}
-axis_context *cursor_context(chan_info *cp)          {return(set_context(cp, CHAN_CGC));}
-axis_context *mark_tag_context(chan_info *cp)        {return(set_context(cp, CHAN_MGC));}
-axis_context *mix_waveform_context(chan_info *cp)    {return(set_context(cp, CHAN_MXGC));}
-static axis_context *combined_context(chan_info *cp) {return(set_context(cp, CHAN_TMPGC));}
+graphics_context *copy_context(chan_info *cp)            {return(set_context(cp, CHAN_GC));}
+graphics_context *erase_context(chan_info *cp)           {return(set_context(cp, CHAN_IGC));}
+graphics_context *selection_context(chan_info *cp)       {return(set_context(cp, CHAN_SELGC));}
+graphics_context *cursor_context(chan_info *cp)          {return(set_context(cp, CHAN_CGC));}
+graphics_context *mark_tag_context(chan_info *cp)        {return(set_context(cp, CHAN_MGC));}
+graphics_context *mix_waveform_context(chan_info *cp)    {return(set_context(cp, CHAN_MXGC));}
+static graphics_context *combined_context(chan_info *cp) {return(set_context(cp, CHAN_TMPGC));}
 
 
 /* ---------------------------------------- inset graph ---------------------------------------- */
@@ -5743,7 +5741,7 @@ static void make_point_arrays(inset_graph_info_t *info, int size, vct *v1)
 #endif
 
 
-static void show_inset_graph(chan_info *cp, axis_context *cur_ax)
+static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 {
 #if (!USE_NO_GUI)
   if ((with_inset_graph(ss)) &&
@@ -6017,7 +6015,7 @@ static void show_inset_graph(chan_info *cp, axis_context *cur_ax)
 }
 
 
-void draw_inset_line_cursor(chan_info *cp, axis_context *ax)
+void draw_inset_line_cursor(chan_info *cp, graphics_context *ax)
 {
   /* we've checked that with_inset_graph is #t and cp has the pointer */
 #if USE_GTK

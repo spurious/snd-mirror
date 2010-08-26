@@ -142,7 +142,7 @@ typedef struct {
   PangoFontDescription *current_font;
   GtkWidget *w;
   cairo_t *cr;
-} axis_context;
+} graphics_context;
 
 typedef struct slist {
   GtkWidget *scroller, *topics, *label, *box;
@@ -163,7 +163,7 @@ typedef struct {
   idle_t fft_in_progress;
   idle_t peak_env_in_progress;
   struct env_state *peak_env_state;
-  axis_context *ax;
+  graphics_context *ax;
   bool selected;
   slist *edhist_list;
   GdkPixbuf *fft_pix;
@@ -194,8 +194,8 @@ typedef struct {
   int page;
   bool mini_active;
   gulong minibuffer_watcher;
-  axis_context *name_pix_ax, *stop_pix_ax, *speed_arrow_ax;
-  axis_context **clock_pix_ax;
+  graphics_context *name_pix_ax, *stop_pix_ax, *speed_arrow_ax;
+  graphics_context **clock_pix_ax;
   GtkWidget **clock_widgets;
   int num_clock_widgets;
 } snd_context;

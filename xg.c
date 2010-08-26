@@ -987,8 +987,6 @@ XM_TYPE_PTR(cairo_glyph_t__, cairo_glyph_t**)
 XM_TYPE_PTR(cairo_text_cluster_t__, cairo_text_cluster_t**)
 XM_TYPE_PTR(cairo_text_cluster_flags_t_, cairo_text_cluster_flags_t*)
 #define C_TO_XEN_cairo_bool_t(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_cairo_bool_t(Arg) (cairo_bool_t)(XEN_TO_C_INT(Arg))
-#define XEN_cairo_bool_t_P(Arg) XEN_INTEGER_P(Arg)
 #endif
 
 #if HAVE_CAIRO_REGION_XOR
@@ -48422,7 +48420,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("23-Aug-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("26-Aug-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

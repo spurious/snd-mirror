@@ -315,7 +315,7 @@ static void local_mus_error(int type, char *msg)
 }
 
 
-void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const char *name, 
+void env_editor_display_env(env_editor *edp, env *e, graphics_context *ax, const char *name, 
 			    int x0, int y0, int width, int height, printing_t printing)
 {
   int i, j, k;

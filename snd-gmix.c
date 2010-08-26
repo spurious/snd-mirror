@@ -54,7 +54,7 @@ static bool speed_pressed = false, speed_dragged = false;
 /* can't use value_changed on adjustment and motion event happens even when the mouse merely moves across the slider without dragging */
 
 static speed_style_t gmix_speed_control_style = SPEED_CONTROL_AS_FLOAT;
-static axis_context *mix_play_ax = NULL;
+static graphics_context *mix_play_ax = NULL;
 
 static mus_float_t speed_to_scrollbar(mus_float_t minval, mus_float_t val, mus_float_t maxval)
 {
@@ -273,7 +273,7 @@ static gboolean amp_press_callback(GtkWidget *w, GdkEventButton *ev, gpointer da
 /* -------- amp-env -------- */
 
 static GtkWidget *w_env_frame, *w_env;
-static axis_context *ax = NULL;
+static graphics_context *ax = NULL;
 static gc_t *cur_gc;
 static env_editor *spf = NULL;
 static bool with_mix_background_wave = false;
@@ -307,7 +307,7 @@ static void mix_amp_env_resize(GtkWidget *w)
       cur_gc = gc_new(wn);
       gc_set_background(cur_gc, ss->sgx->graph_color);
       gc_set_foreground(cur_gc, ss->sgx->data_color);
-      ax = (axis_context *)calloc(1, sizeof(axis_context));
+      ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       ax->wn = WIDGET_TO_WINDOW(w_env);
       ax->w = w_env;
       ax->gc = cur_gc;
@@ -946,7 +946,7 @@ GtkWidget *make_mix_dialog(void)
       if (mix_sync_from_id(mix_dialog_id) != 0)
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w_sync), true);
 
-      mix_play_ax = (axis_context *)calloc(1, sizeof(axis_context));
+      mix_play_ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       mix_play_ax->wn = WIDGET_TO_WINDOW(mix_play_pix);
       mix_play_ax->gc = ss->sgx->basic_gc;
 

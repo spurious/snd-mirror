@@ -12,22 +12,22 @@ void snd_help_back_to_top(void);
 
 /* -------- snd-xdraw.c -------- */
 
-void draw_line(axis_context *ax, int x0, int y0, int x1, int y1);
-void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height);
-void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width, int height);
-void fill_polygon(axis_context *ax, int points, ...);
-void fill_polygons(axis_context *ax, point_t *points, int num, int y0);
-void fill_two_sided_polygons(axis_context *ax, point_t *points, point_t *points1, int num);
-void draw_polygon(axis_context *ax, int points, ...);
-void draw_string(axis_context *ax, int x0, int y0, const char *str, int len);
-void draw_dot(axis_context *ax, int x, int y, int size);
-void setup_axis_context(chan_info *cp, axis_context *ax);
-void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1);
+void draw_line(graphics_context *ax, int x0, int y0, int x1, int y1);
+void fill_rectangle(graphics_context *ax, int x0, int y0, int width, int height);
+void erase_rectangle(chan_info *cp, graphics_context *ax, int x0, int y0, int width, int height);
+void fill_polygon(graphics_context *ax, int points, ...);
+void fill_polygons(graphics_context *ax, point_t *points, int num, int y0);
+void fill_two_sided_polygons(graphics_context *ax, point_t *points, point_t *points1, int num);
+void draw_polygon(graphics_context *ax, int points, ...);
+void draw_string(graphics_context *ax, int x0, int y0, const char *str, int len);
+void draw_dot(graphics_context *ax, int x, int y, int size);
+void setup_graphics_context(chan_info *cp, graphics_context *ax);
+void draw_spectro_line(graphics_context *ax, int color, int x0, int y0, int x1, int y1);
 void allocate_color_map(int colormap);
 void allocate_sono_rects(int size);
 void set_sono_rectangle(int j, int color, int x, int y, int width, int height);
-void draw_sono_rectangles(axis_context *ax, int color, int jmax);
-void draw_colored_lines(chan_info *cp, axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color);
+void draw_sono_rectangles(graphics_context *ax, int color, int jmax);
+void draw_colored_lines(chan_info *cp, graphics_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color);
 widget_t start_color_orientation_dialog(bool managed);
 void set_color_scale(mus_float_t val);
 void set_color_inverted(bool val);
@@ -138,7 +138,7 @@ int number_width(const char *num, bool use_tiny_font);
 int number_height(int fnt);
 int label_height(bool use_tiny_font);
 int mark_name_width(const char *txt);
-void clear_window(axis_context *ax);
+void clear_window(graphics_context *ax);
 void set_title(const char *title);
 void check_for_event(void);
 void recolor_graph(chan_info *cp, bool selected);
@@ -173,14 +173,14 @@ void resize_sx_and_zx(chan_info *cp);
 void channel_open_pane(chan_info *cp);
 void reflect_edit_history_change(chan_info *cp);
 void reflect_edit_counter_change(chan_info *cp);
-void set_peak_numbers_font(chan_info *cp, axis_context *ax);
-void set_bold_peak_numbers_font(chan_info *cp, axis_context *ax);
-void set_tiny_numbers_font(chan_info *cp, axis_context *ax);
-color_t get_foreground_color(axis_context *ax);
-void set_foreground_color(axis_context *ax, int color);
+void set_peak_numbers_font(chan_info *cp, graphics_context *ax);
+void set_bold_peak_numbers_font(chan_info *cp, graphics_context *ax);
+void set_tiny_numbers_font(chan_info *cp, graphics_context *ax);
+color_t get_foreground_color(graphics_context *ax);
+void set_foreground_color(graphics_context *ax, int color);
 void free_fft_pix(chan_info *cp);
-bool restore_fft_pix(chan_info *cp, axis_context *ax);
-void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y1);
+bool restore_fft_pix(chan_info *cp, graphics_context *ax);
+void save_fft_pix(chan_info *cp, graphics_context *ax, int fwidth, int fheight, int x0, int y1);
 void cleanup_cw(chan_info *cp);
 bool fixup_cp_cgx_ax_wn(chan_info *cp);
 void get_current_color(int colormap, int j, rgb_t *r, rgb_t *g, rgb_t *b);
@@ -260,7 +260,7 @@ void save_file_dialog_state(FILE *fd);
 
 /* -------- snd-xenv.c -------- */
 
-axis_info *enved_make_axis(const char *name, axis_context *ax, int ex0, int ey0, int width, int height, 
+axis_info *enved_make_axis(const char *name, graphics_context *ax, int ex0, int ey0, int width, int height, 
 			   mus_float_t xmin, mus_float_t xmax, mus_float_t ymin, mus_float_t ymax, printing_t printing);
 void display_enved_env_with_selection(env *e, const char *name, int x0, int y0, int width, int height, bool dots, printing_t printing);
 void set_enved_redo_sensitive(bool val);

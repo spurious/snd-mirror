@@ -184,7 +184,7 @@ int label_height(bool use_tiny_font)
 }
 
 
-void clear_window(axis_context *ax)
+void clear_window(graphics_context *ax)
 {
   if ((ax) && (ax->dp) && (ax->wn))
     XClearWindow(ax->dp, ax->wn);
@@ -704,7 +704,7 @@ static Pixmap rotate_text(Widget w, const char *str, XFontStruct *font, mus_floa
 }
 
 
-void draw_rotated_axis_label(chan_info *cp, axis_context *ax, const char *text, int x0, int y0)
+void draw_rotated_axis_label(chan_info *cp, graphics_context *ax, const char *text, int x0, int y0)
 {
   Pixmap pix;
   int h = 0, w = 0;

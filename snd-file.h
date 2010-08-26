@@ -24,7 +24,7 @@ typedef struct {
   mus_float_t amp;
   vf_location_t location_choice;
   mus_float_t speed;
-  axis_context *env_ax;
+  graphics_context *env_ax;
   env_editor *spf;
   env *amp_env;
   int open_file_watcher_loc;

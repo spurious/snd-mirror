@@ -238,7 +238,7 @@ static void amp_valuechanged_callback(Widget w, XtPointer context, XtPointer inf
 /* -------- amp-env -------- */
 
 static Widget w_env_frame, w_env;
-static axis_context *ax = NULL;
+static graphics_context *ax = NULL;
 static GC cur_gc;
 static env_editor *spf = NULL;
 static bool with_mix_background_wave = false;
@@ -271,7 +271,7 @@ static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info)
       gv.function = GXcopy;
       XtVaGetValues(w_env, XmNbackground, &gv.background, XmNforeground, &gv.foreground, NULL);
       cur_gc = XtGetGC(w_env, GCForeground | GCFunction, &gv);
-      ax = (axis_context *)calloc(1, sizeof(axis_context));
+      ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       ax->wn = XtWindow(w_env);
       ax->dp = XtDisplay(w_env);
       ax->gc = cur_gc;

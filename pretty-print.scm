@@ -264,7 +264,7 @@ port directly after OBJ: (pprint OBJ PORT)"
   (if (pair? opts)
       (if (keyword? (car opts))
 	  (apply pretty-print-with-keys obj opts)
-	  (apply pretty-print-with-keys obj #:port (car opts) (cdr opts)))
+	  (apply pretty-print-with-keys obj :port (car opts) (cdr opts)))
       (pretty-print-with-keys obj)))
 
 (define* (pretty-print-with-keys obj

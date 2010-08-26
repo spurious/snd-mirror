@@ -830,7 +830,7 @@ static void filter_textfield_deactivate(snd_info *sp)
 
 void display_filter_env(snd_info *sp)
 {
-  axis_context *ax;
+  graphics_context *ax;
   int height, width;
   Widget drawer;
   env_editor *edp;
@@ -843,7 +843,7 @@ void display_filter_env(snd_info *sp)
   if (height < MIN_FILTER_GRAPH_HEIGHT) return;
 
   width = widget_width(drawer);
-  ax = (axis_context *)calloc(1, sizeof(axis_context));
+  ax = (graphics_context *)calloc(1, sizeof(graphics_context));
   ax->gc = ss->sgx->fltenv_basic_gc;
   ax->wn = XtWindow(drawer);
   ax->dp = XtDisplay(drawer);

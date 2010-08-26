@@ -34,7 +34,7 @@ static bool ignore_button_release = false;
 static cairo_t *enved_cr = NULL;
 
 
-static void fixup_axis_context(axis_context *ax, GtkWidget *w, gc_t *gc)
+static void fixup_graphics_context(graphics_context *ax, GtkWidget *w, gc_t *gc)
 {
   ax->wn = WIDGET_TO_WINDOW(w);
   ax->w = w;
@@ -44,7 +44,7 @@ static void fixup_axis_context(axis_context *ax, GtkWidget *w, gc_t *gc)
 }
 
 
-axis_info *enved_make_axis(const char *name, axis_context *ax, 
+axis_info *enved_make_axis(const char *name, graphics_context *ax, 
 			   int ex0, int ey0, int width, int height, 
 			   mus_float_t xmin, mus_float_t xmax, mus_float_t ymin, mus_float_t ymax,
 			   printing_t printing)
@@ -260,6 +260,15 @@ static void env_redisplay_1(printing_t printing)
 	  if ((axis) && (gray_ap))
 	    {
 	      enved_cr = gdk_cairo_create(WIDGET_TO_WINDOW(drawer));	      
+ 
+ 	      /* we have to create a new cairo_t each time, or the envelope is messed
+ 	       *   up after an expose event.  I find this note in gdk/gdkcairo.c:
+ 	       *
+ 	       *     "Note that due to double-buffering, Cairo contexts created 
+ 	       *      in a GTK+ expose event handler cannot be cached and reused 
+ 	       *      between different expose events."
+ 	       */
+
 	      axis->ax->cr = enved_cr;
 	      gray_ap->ax->cr = enved_cr;
 	      cairo_push_group(enved_cr);
@@ -1154,13 +1163,13 @@ GtkWidget *create_envelope_editor(void)
       gtk_widget_show(enved_dialog);
 
       axis = (axis_info *)calloc(1, sizeof(axis_info));
-      axis->ax = (axis_context *)calloc(1, sizeof(axis_context));
-      fixup_axis_context(axis->ax, drawer, gc);
+      axis->ax = (graphics_context *)calloc(1, sizeof(graphics_context));
+      fixup_graphics_context(axis->ax, drawer, gc);
 
       gray_ap = (axis_info *)calloc(1, sizeof(axis_info));
-      gray_ap->ax = (axis_context *)calloc(1, sizeof(axis_context));
+      gray_ap->ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       gray_ap->graph_active = true;
-      fixup_axis_context(gray_ap->ax, drawer, ggc);
+      fixup_graphics_context(gray_ap->ax, drawer, ggc);
 
       SG_SIGNAL_CONNECT(drawer, "expose_event", drawer_expose, NULL);
       SG_SIGNAL_CONNECT(drawer, "configure_event", drawer_resize, NULL);

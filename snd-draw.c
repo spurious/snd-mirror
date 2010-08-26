@@ -45,7 +45,7 @@ point_t *get_grf_points(void) {return(points);}
 point_t *get_grf_points1(void) {return(points1);}
 
 
-void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style)
+void draw_both_grf_points(int dot_size, graphics_context *ax, int j, graph_style_t graph_style)
 {
   int i;
   switch (graph_style)
@@ -97,7 +97,7 @@ void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t g
 }
 
 
-void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, mus_float_t y0, graph_style_t graph_style)
+void draw_grf_points(int dot_size, graphics_context *ax, int j, axis_info *ap, mus_float_t y0, graph_style_t graph_style)
 {
   int i, gy0;
   switch (graph_style)
@@ -151,7 +151,7 @@ void draw_cursor(chan_info *cp)
   int cy0 = 0, cx0 = 0, csize;
 #endif
   axis_info *ap;
-  axis_context *ax;
+  graphics_context *ax;
 
   if (!(cp->graph_time_p)) return;
   ap = cp->axis;
@@ -243,7 +243,7 @@ void erase_cursor(chan_info *cp)
 #define AXIS_INFO_ID_OK(Id)    (Id <= (int)LISP_AXIS_INFO)
 #define NO_SUCH_WIDGET         XEN_ERROR_TYPE("no-such-widget")
 
-static axis_context *get_ax(chan_info *cp, int ax_id, const char *caller)
+static graphics_context *get_ax(chan_info *cp, int ax_id, const char *caller)
 {
   if ((cp) && (AXIS_CONTEXT_ID_OK(ax_id)))
     return(set_context(cp, (chan_gc_t)ax_id));
@@ -299,7 +299,7 @@ static XEN g_draw_line(XEN x0, XEN y0, XEN x1, XEN y1, XEN snd, XEN chn, XEN ax)
 
 #if USE_GTK
   {
-    axis_context *axc;
+    graphics_context *axc;
     axc = TO_C_AXIS_CONTEXT(snd, chn, ax, S_draw_line);
     if (!(axc->cr))
       {
@@ -432,7 +432,7 @@ static XEN g_draw_lines(XEN pts, XEN snd, XEN chn, XEN ax)
   #define H_draw_lines "(" S_draw_lines " lines :optional snd chn (ax " S_time_graph ")): draw a vector of lines"
 
   point_t *pack_pts;
-  axis_context *ax1;
+  graphics_context *ax1;
   int vlen = 0;
 
   ASSERT_CHANNEL(S_draw_lines, snd, chn, 2);
@@ -454,7 +454,7 @@ static XEN g_draw_dots(XEN pts, XEN size, XEN snd, XEN chn, XEN ax)
   #define H_draw_dots "(" S_draw_dots " positions :optional dot-size snd chn (ax " S_time_graph ")): draw a vector of dots"
  
   point_t *pack_pts;
-  axis_context *ax1;
+  graphics_context *ax1;
   int vlen = 0;
 
   ASSERT_CHANNEL(S_draw_dots, snd, chn, 3);
@@ -479,7 +479,7 @@ static XEN g_fill_polygon(XEN pts, XEN snd, XEN chn, XEN ax_id)
   #define H_fill_polygon "(" S_fill_polygon " points :optional snd chn (ax " S_time_graph ")): draw a filled polygon"
 
   point_t *pack_pts;
-  axis_context *ax;
+  graphics_context *ax;
   int vlen = 0;
 
   ASSERT_CHANNEL(S_fill_polygon, snd, chn, 2);
@@ -550,7 +550,7 @@ static XEN g_foreground_color(XEN snd, XEN chn, XEN xax)
 {
   #define H_foreground_color "(" S_foreground_color " :optional snd chn (ax " S_time_graph ")): current drawing color"
   chan_info *cp;
-  axis_context *ax;
+  graphics_context *ax;
 
   ASSERT_CHANNEL(S_foreground_color, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(xax), xax, XEN_ARG_3, S_foreground_color, "an integer");
@@ -588,7 +588,7 @@ WITH_FOUR_SETTER_ARGS(g_set_foreground_color_reversed, g_set_foreground_color)
 
 static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 {
-  axis_context *ax;
+  graphics_context *ax;
 
   ASSERT_CHANNEL(S_setB S_current_font, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, S_setB S_current_font, "an integer such as time-graph");
@@ -607,7 +607,7 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 {
   #define H_current_font "(" S_current_font " :optional snd chn (ax " S_time_graph ")): current font id"
-  axis_context *ax;
+  graphics_context *ax;
   chan_info *cp;
 
   ASSERT_CHANNEL(S_current_font, snd, chn, 1);
@@ -634,7 +634,7 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 
 static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 {
-  axis_context *ax;
+  graphics_context *ax;
 
   ASSERT_CHANNEL(S_setB S_current_font, snd, chn, 2);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_4, S_setB S_current_font, "an integer such as time-graph");
@@ -655,7 +655,7 @@ static XEN g_set_current_font(XEN id, XEN snd, XEN chn, XEN ax_id)
 static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
 {
   #define H_current_font "(" S_current_font " :optional snd chn (ax " S_time_graph ")): current font id"
-  axis_context *ax;
+  graphics_context *ax;
   ASSERT_CHANNEL(S_current_font, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ax_id), ax_id, XEN_ARG_3, S_current_font, "an integer such as time-graph");
   ax = TO_C_AXIS_CONTEXT(snd, chn, ax_id, S_current_font);
@@ -1749,7 +1749,7 @@ static XEN g_set_mix_color(XEN color, XEN mix_id)
 WITH_TWO_SETTER_ARGS(g_set_mix_color_reversed, g_set_mix_color)
 
 
-bool foreground_color_ok(XEN color, axis_context *ax)
+bool foreground_color_ok(XEN color, graphics_context *ax)
 {
   if (XEN_PIXEL_P(color))
     {
@@ -2027,12 +2027,12 @@ a new set of channel or sound widgets is created."
 /* no gui */
 void set_grf_points(int xi, int j, int ymin, int ymax) {}
 void set_grf_point(int xi, int j, int yi) {}
-void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, mus_float_t y0, graph_style_t graph_style) {}
-void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style) {}
+void draw_grf_points(int dot_size, graphics_context *ax, int j, axis_info *ap, mus_float_t y0, graph_style_t graph_style) {}
+void draw_both_grf_points(int dot_size, graphics_context *ax, int j, graph_style_t graph_style) {}
 void draw_cursor(chan_info *cp) {}
 void erase_cursor(chan_info *cp) {}
 point_t *get_grf_points(void) {return(NULL);} 
 point_t *get_grf_points1(void) {return(NULL);}
-bool foreground_color_ok(XEN color, axis_context *ax) {return(true);}
+bool foreground_color_ok(XEN color, graphics_context *ax) {return(true);}
 #endif
 

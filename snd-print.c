@@ -376,7 +376,7 @@ static void ps_set_color(color_t color)
 #endif
 
 
-void ps_bg(axis_info *ap, axis_context *ax)
+void ps_bg(axis_info *ap, graphics_context *ax)
 {
   /* get background color, fill graph, then set foreground for axis */
   chan_info *cp;
@@ -405,7 +405,7 @@ void ps_bg(axis_info *ap, axis_context *ax)
 }
 
 
-void ps_fg(chan_info *cp, axis_context *ax)
+void ps_fg(chan_info *cp, graphics_context *ax)
 {
   /* set foreground color for subsequent line drawing */
 #if USE_MOTIF

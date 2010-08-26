@@ -617,7 +617,7 @@ void listener_return(widget_t w, int last_prompt)
       bool got_error = false;
       if (current_position < (last_position - 2))
 	GUI_LISTENER_TEXT_INSERT(w, GUI_TEXT_END(w), str);
-      GUI_SET_CURSOR(w, ss->sgx->wait_cursor);
+      GUI_SET_CURSOR(w, ss->sgx->wait_cursor);                /* this seems to be broken now in Gtk, yet it works if I do it manually? */
       GUI_UPDATE(w); /* not sure about this... */
 
       if ((mus_strlen(str) > 1) || (str[0] != '\n'))

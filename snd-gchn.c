@@ -733,7 +733,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
   GtkObject **adjs;
   chan_info *cp;
   chan_context *cx;
-  axis_context *cax;
+  graphics_context *cax;
   state_context *sx;
   bool make_widgets, need_extra_scrollbars;
 
@@ -946,26 +946,26 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 }
 
 
-static void set_graph_font(chan_info *cp, axis_context *ax, PangoFontDescription *fnt)
+static void set_graph_font(chan_info *cp, graphics_context *ax, PangoFontDescription *fnt)
 {
   ax->current_font = fnt;
 }
 
 
-void set_peak_numbers_font(chan_info *cp, axis_context *ax) {set_graph_font(cp, ax, PEAKS_FONT(ss));}
+void set_peak_numbers_font(chan_info *cp, graphics_context *ax) {set_graph_font(cp, ax, PEAKS_FONT(ss));}
 
-void set_tiny_numbers_font(chan_info *cp, axis_context *ax) {set_graph_font(cp, ax, TINY_FONT(ss));}
+void set_tiny_numbers_font(chan_info *cp, graphics_context *ax) {set_graph_font(cp, ax, TINY_FONT(ss));}
 
-void set_bold_peak_numbers_font(chan_info *cp, axis_context *ax) {set_graph_font(cp, ax, BOLD_PEAKS_FONT(ss));}
+void set_bold_peak_numbers_font(chan_info *cp, graphics_context *ax) {set_graph_font(cp, ax, BOLD_PEAKS_FONT(ss));}
 
 
-color_t get_foreground_color(axis_context *ax)
+color_t get_foreground_color(graphics_context *ax)
 {
   return(ax->gc->fg_color);
 }
 
 
-void set_foreground_color(axis_context *ax, color_info *color)
+void set_foreground_color(graphics_context *ax, color_info *color)
 {
   gc_set_foreground(ax->gc, color);
 }
@@ -1005,7 +1005,7 @@ void free_fft_pix(chan_info *cp)
 }
 
 
-bool restore_fft_pix(chan_info *cp, axis_context *ax)
+bool restore_fft_pix(chan_info *cp, graphics_context *ax)
 {
   cairo_t *cr;
   cr = gdk_cairo_create(ax->wn);
@@ -1015,7 +1015,7 @@ bool restore_fft_pix(chan_info *cp, axis_context *ax)
   return(true);
 }
 
-void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y0)
+void save_fft_pix(chan_info *cp, graphics_context *ax, int fwidth, int fheight, int x0, int y0)
 {
   if ((fwidth <= 0) || (fheight <= 0)) return;
 
@@ -1043,7 +1043,7 @@ void free_cursor_pix(chan_info *cp)
 }
 
 
-bool restore_cursor_pix(chan_info *cp, axis_context *ax)
+bool restore_cursor_pix(chan_info *cp, graphics_context *ax)
 {
   if (cp->cgx->cursor_pix_ready)
     {
@@ -1059,7 +1059,7 @@ bool restore_cursor_pix(chan_info *cp, axis_context *ax)
 }
 
 
-void save_cursor_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y0)
+void save_cursor_pix(chan_info *cp, graphics_context *ax, int fwidth, int fheight, int x0, int y0)
 {
   if ((fwidth <= 0) || (fheight <= 0)) return;
   cp->cgx->cursor_pix_width = fwidth;
@@ -1084,7 +1084,7 @@ void free_sono_cursor_pix(chan_info *cp)
 }
 
 
-bool restore_sono_cursor_pix(chan_info *cp, axis_context *ax)
+bool restore_sono_cursor_pix(chan_info *cp, graphics_context *ax)
 {
   if (cp->cgx->sono_cursor_pix_ready)
     {
@@ -1100,7 +1100,7 @@ bool restore_sono_cursor_pix(chan_info *cp, axis_context *ax)
 }
 
 
-void save_sono_cursor_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y0)
+void save_sono_cursor_pix(chan_info *cp, graphics_context *ax, int fwidth, int fheight, int x0, int y0)
 {
   if ((fwidth <= 0) || (fheight <= 0)) return;
   cp->cgx->sono_cursor_pix_width = fwidth;
@@ -1261,7 +1261,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 bool fixup_cp_cgx_ax_wn(chan_info *cp)
 {
   GtkWidget *w; 
-  axis_context *ax; 
+  graphics_context *ax; 
   ax = cp->cgx->ax;
   if (cp->tcgx) 
     w = channel_graph(cp->sound->chans[0]);

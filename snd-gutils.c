@@ -260,9 +260,9 @@ int label_height(bool use_tiny_font)
 }
 
 
-void clear_window(axis_context *ax)
+void clear_window(graphics_context *ax)
 {
-  if (ax) gdk_window_clear(ax->wn);
+  /* if (ax) gdk_window_clear(ax->wn); */
 }
 
 
@@ -1139,7 +1139,8 @@ char *slist_selection(slist *lst)
  *       is it necessary to lock out cursor display?
  *       when fft selection, fft not redrawn? (not drawn at all)
  *       multichan select flashes then erases chan>0 select rect (and chans>0 fft flash -- probably need full display)
- *       amp-env view in enved? sono + wave + flt in enved?
- *       syncd marks are undoubtedly messed up (what about play triangle drag?)
+ *       sono + wave + flt in enved?
+ *       syncd marks are undoubtedly messed up (what about play triangle drag?) (marks in united chans?) -- glib doubly linked list corruption
  *       do meters work in rec?  in Motif they're drawn incorrectly
+ *       Mac native? quartz surface like GL?
  */

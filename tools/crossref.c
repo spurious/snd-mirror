@@ -536,6 +536,13 @@ int main(int argc, char **argv)
 					}
 				    }
 				}
+
+			      if ((input[j + 1] == ' ') &&
+				  (input[j + 2] == '{') &&
+				  (input[j + 3] == '}'))
+				{
+				  k = 0;
+				}
 			      
 			      if (k > 0)
 				{

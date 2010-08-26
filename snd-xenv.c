@@ -31,7 +31,7 @@ static bool ignore_button_release = false;
 static bool cancelling = true;
 
 
-static void fixup_axis_context(axis_context *ax, Widget w, GC gc)
+static void fixup_graphics_context(graphics_context *ax, Widget w, GC gc)
 {
   ax->dp = XtDisplay(w);
   ax->wn = XtWindow(w);
@@ -39,7 +39,7 @@ static void fixup_axis_context(axis_context *ax, Widget w, GC gc)
 }
 
 
-axis_info *enved_make_axis(const char *name, axis_context *ax, 
+axis_info *enved_make_axis(const char *name, graphics_context *ax, 
 			   int ex0, int ey0, int width, int height, 
 			   mus_float_t xmin, mus_float_t xmax, mus_float_t ymin, mus_float_t ymax,
 			   printing_t printing)
@@ -48,15 +48,15 @@ axis_info *enved_make_axis(const char *name, axis_context *ax,
   if (!axis) 
     {
       axis = (axis_info *)calloc(1, sizeof(axis_info));
-      axis->ax = (axis_context *)calloc(1, sizeof(axis_context));
-      fixup_axis_context(axis->ax, drawer, ax->gc);
+      axis->ax = (graphics_context *)calloc(1, sizeof(graphics_context));
+      fixup_graphics_context(axis->ax, drawer, ax->gc);
     }
   if (!gray_ap) 
     {
       gray_ap = (axis_info *)calloc(1, sizeof(axis_info));
-      gray_ap->ax = (axis_context *)calloc(1, sizeof(axis_context));
+      gray_ap->ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       gray_ap->graph_active = true;
-      fixup_axis_context(gray_ap->ax, drawer, ggc);
+      fixup_graphics_context(gray_ap->ax, drawer, ggc);
     }
   init_env_axes(axis, name, ex0, ey0, width, height, xmin, xmax, ymin, ymax, printing);
   return(axis);
@@ -65,8 +65,8 @@ axis_info *enved_make_axis(const char *name, axis_context *ax,
 
 static void display_env(env *e, const char *name, GC cur_gc, int x0, int y0, int width, int height, bool dots, printing_t printing)
 {
-  axis_context *ax = NULL;  
-  ax = (axis_context *)calloc(1, sizeof(axis_context));
+  graphics_context *ax = NULL;  
+  ax = (graphics_context *)calloc(1, sizeof(graphics_context));
   ax->wn = XtWindow(drawer);
   if (!(ax->wn)) return;
   ax->dp = XtDisplay(drawer);

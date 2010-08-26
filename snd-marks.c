@@ -293,7 +293,9 @@ static void draw_mark(chan_info *cp, axis_info *ap, mark *mp)
 
 static void erase_mark(chan_info *cp, axis_info *ap, mark *mp)
 {
+#if (!USE_GTK)
   if (mp->visible) draw_mark_1(cp, ap, mp, false);
+#endif
 }
 
 
@@ -1423,7 +1425,7 @@ static void mark_save_graph(mark_context *ms, int j)
 static void erase_and_draw_grf_points(mark_context *ms, chan_info *cp, int nj)
 {
   chan_context *cx;
-  axis_context *ax;
+  graphics_context *ax;
   point_t *points;
 #if USE_MOTIF
   GC draw_gc, undraw_gc;
@@ -1458,7 +1460,7 @@ static void erase_and_draw_grf_points(mark_context *ms, chan_info *cp, int nj)
 static void erase_and_draw_both_grf_points(mark_context *ms, chan_info *cp, int nj)
 {
   chan_context *cx;
-  axis_context *ax;
+  graphics_context *ax;
   point_t *points, *points1;
 #if USE_MOTIF
   GC draw_gc, undraw_gc;
@@ -1565,11 +1567,11 @@ void move_mark(chan_info *cp, mark *mp, int x) /* from mouse drag callback in sn
   else redraw = move_mark_1(cp, mp, x);
   if (mark_control_clicked)
     make_mark_graph(cp, mark_initial_sample, mp->samp, 0);
-#if (!USE_GTK)
+ #if (!USE_GTK)
   if (redraw) draw_mark(cp, cp->axis, mp);
-#else
+ #else
   if (redraw) display_channel_time_data(cp);
-#endif
+ #endif
 }
 
 
@@ -1871,7 +1873,7 @@ static void make_mark_graph(chan_info *cp, mus_long_t initial_sample, mus_long_t
 static void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
 {
   int len, top, cx, y0, y1;
-  axis_context *ax;
+  graphics_context *ax;
 
 #if USE_MOTIF
   #define STRING_Y_OFFSET 6
@@ -1885,17 +1887,19 @@ static void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
   if (mp->name) top += 10;
   cx = grf_x((double)(mp->samp) / (double)SND_SRATE(cp->sound), ap);
 
-  /* split into 2 cases to try to make it more readable */
-#if USE_MOTIF
-
   ax = mark_tag_context(cp);
   if (mp->name)
     {
+#if USE_MOTIF
       ax->current_font = ss->sgx->peaks_fontstruct->fid;
       XSetFont(ax->dp, ax->gc, ss->sgx->peaks_fontstruct->fid);
+#else
+      ax->current_font = PEAKS_FONT(ss);
+#endif
       len = mark_name_width(mp->name);
       draw_string(ax, (int)(cx - 0.5 * len), y1 + STRING_Y_OFFSET, mp->name, strlen(mp->name));
     }
+
   fill_rectangle(ax,
 		 cx - mark_tag_width(ss), top,
 		 2 * mark_tag_width(ss), mark_tag_height(ss));
@@ -1906,40 +1910,8 @@ static void show_mark(chan_info *cp, axis_info *ap, mark *mp, bool show)
 	       cx, y0 + 2 * MARK_PLAY_ARROW_SIZE,
 	       cx, y0);
   mp->visible = show;
-
-#else
-  /* gtk / cairo */
-
-  {
-    color_t bg_color, old_color;
-    int slop = 0;
-
-    cairo_save(ap->ax->cr);
-
-    ax = mark_tag_context(cp);
-    ax->cr = ap->ax->cr;
-
-    if (mp->name)
-      {
-	ax->current_font = PEAKS_FONT(ss);
-	len = mark_name_width(mp->name);
-	draw_string(ax, (int)(cx - 0.5 * len), y1 + STRING_Y_OFFSET, mp->name, strlen(mp->name));
-      }
-
-    fill_rectangle(ax,
-		   cx - mark_tag_width(ss), top,
-		   2 * mark_tag_width(ss), mark_tag_height(ss) + slop);
-    draw_line(ax, cx, top + 4, cx, y0);
-    fill_polygon(ax, 4,
-		 cx, y0,
-		 cx + MARK_PLAY_ARROW_SIZE + slop, y0 + MARK_PLAY_ARROW_SIZE,
-		 cx, y0 + 2 * MARK_PLAY_ARROW_SIZE + slop,
-		 cx, y0);
-    mp->visible = show;
-
-    cairo_restore(ap->ax->cr);
-    copy_context(cp);
-  }
+#if USE_GTK
+  copy_context(cp);
 #endif
 }
 

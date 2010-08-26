@@ -59,12 +59,12 @@ static void graph_redisplay(void)
   /* fft_window(ss) is the current choice */
   int ix0, iy0, ix1, iy1, i;
   mus_float_t xincr, x;
-  axis_context *ax;
+  graphics_context *ax;
 
   if (axis_ap == NULL) 
     {
       axis_ap = (axis_info *)calloc(1, sizeof(axis_info));
-      ax = (axis_context *)calloc(1, sizeof(axis_context));
+      ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       axis_ap->ax = ax;
       ax->dp = XtDisplay(graph_drawer);
       ax->wn = XtWindow(graph_drawer);

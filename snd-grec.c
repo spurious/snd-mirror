@@ -5,7 +5,7 @@ static bool reading = false, recording = false;
 static char *recorder_filename = NULL;
 static int recorder_fd = -1, recorder_srate = 44100, recorder_chans = 2, recorder_format = MUS_LFLOAT;
 static mus_long_t recorder_total_bytes = 0;
-static axis_context *recorder_ax = NULL;
+static graphics_context *recorder_ax = NULL;
 static int meter_width = 0, meter_height = 0, meters_width = 0;
 static bool meters_in_db = false;
 
@@ -370,7 +370,7 @@ widget_t record_file(void)
       gtk_widget_show(recorder);
       set_dialog_widget(RECORDER_DIALOG, recorder);
 
-      recorder_ax = (axis_context *)calloc(1, sizeof(axis_context));
+      recorder_ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       recorder_ax->wn = WIDGET_TO_WINDOW(meters);
 
       SG_SIGNAL_CONNECT(meters, "expose_event", meters_resize, NULL);

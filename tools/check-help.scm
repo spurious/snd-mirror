@@ -25,7 +25,7 @@
 		     (let ((chr (string-ref help i)))
 		       (if (char=? chr #\))
 			   (begin
-			     (set! paren-ctr (1- paren-ctr))
+			     (set! paren-ctr (- paren-ctr 1))
 			     (if (and (= paren-ctr 0)
 				      (> cur-start 0))
 				 (begin

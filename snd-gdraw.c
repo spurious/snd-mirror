@@ -1,7 +1,7 @@
 #include "snd.h"
 
 
-void draw_line(axis_context *ax, int x0, int y0, int x1, int y1) 
+void draw_line(graphics_context *ax, int x0, int y0, int x1, int y1) 
 {
   cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
   cairo_set_line_width(ax->cr, 1.0); 
@@ -14,7 +14,7 @@ void draw_line(axis_context *ax, int x0, int y0, int x1, int y1)
 }
 
 
-void draw_lines(axis_context *ax, point_t *points, int num)
+void draw_lines(graphics_context *ax, point_t *points, int num)
 {
   if (num == 0) return;
   {
@@ -29,7 +29,7 @@ void draw_lines(axis_context *ax, point_t *points, int num)
 }
 
 
-void draw_dot(axis_context *ax, int x, int y, int size)
+void draw_dot(graphics_context *ax, int x, int y, int size)
 {
   cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
   cairo_arc(ax->cr, x, y, size / 2, 0.0, 2 * M_PI);
@@ -38,7 +38,7 @@ void draw_dot(axis_context *ax, int x, int y, int size)
 
 
 #if 0
-void draw_arc(axis_context *ax, int x, int y, int size, int angle0, int angle1)
+void draw_arc(graphics_context *ax, int x, int y, int size, int angle0, int angle1)
 {
   cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
   cairo_arc(ax->cr, x, y, size / 2, mus_degrees_to_radians(angle0), mus_degrees_to_radians(angle1));
@@ -46,14 +46,14 @@ void draw_arc(axis_context *ax, int x, int y, int size, int angle0, int angle1)
 }
 
 
-void draw_point(axis_context *ax, point_t point, int size)
+void draw_point(graphics_context *ax, point_t point, int size)
 {
   draw_dot(ax, point.x, point.y, size);
 }
 #endif
 
 
-void draw_points(axis_context *ax, point_t *points, int num, int size)
+void draw_points(graphics_context *ax, point_t *points, int num, int size)
 {
   if (num == 0) return;
     {
@@ -64,7 +64,7 @@ void draw_points(axis_context *ax, point_t *points, int num, int size)
 }
 
 
-void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height)
+void fill_rectangle(graphics_context *ax, int x0, int y0, int width, int height)
 {
   if (ss->sgx->bg_gradient < .01)
     {
@@ -100,7 +100,7 @@ void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height)
 }
 
 
-void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width, int height)
+void erase_rectangle(chan_info *cp, graphics_context *ax, int x0, int y0, int width, int height)
 {
   /* used only to clear the overall graph window in snd-chn.c */
   if (ss->sgx->bg_gradient < .01)
@@ -137,7 +137,7 @@ void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width,
 }
 
 
-void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
+void draw_string(graphics_context *ax, int x0, int y0, const char *str, int len)
 {
   if ((ax->wn == NULL) || (ax->current_font == NULL)) return;
   if ((!str) || (!(*str))) return;
@@ -159,7 +159,7 @@ void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
 }
 
 
-static void rotate_text(axis_context *ax, PangoFontDescription *font, const char *text, int angle, gint x0, gint y0)
+static void rotate_text(graphics_context *ax, PangoFontDescription *font, const char *text, int angle, gint x0, gint y0)
 {
   int width, height;
   PangoLayout *layout = NULL;
@@ -178,13 +178,13 @@ static void rotate_text(axis_context *ax, PangoFontDescription *font, const char
 }
 
 
-void draw_rotated_axis_label(chan_info *cp, axis_context *ax, const char *text, gint x0, gint y0)
+void draw_rotated_axis_label(chan_info *cp, graphics_context *ax, const char *text, gint x0, gint y0)
 {
   rotate_text(ax, AXIS_LABEL_FONT(ss), text, 90, x0, y0);
 }
 
 
-void draw_picture(axis_context *ax, picture_t *src, gint xsrc, gint ysrc, gint xdest, gint ydest, gint width, gint height)
+void draw_picture(graphics_context *ax, picture_t *src, gint xsrc, gint ysrc, gint xdest, gint ydest, gint width, gint height)
 {
   cairo_t *cr;
   if ((ax) && (GDK_IS_DRAWABLE(ax->wn)))
@@ -197,7 +197,7 @@ void draw_picture(axis_context *ax, picture_t *src, gint xsrc, gint ysrc, gint x
 }
 
 
-static void draw_polygon_va(axis_context *ax, bool filled, int points, va_list ap)
+static void draw_polygon_va(graphics_context *ax, bool filled, int points, va_list ap)
 {
   int i;
   {
@@ -226,7 +226,7 @@ static void draw_polygon_va(axis_context *ax, bool filled, int points, va_list a
 }
 
 
-void fill_polygon(axis_context *ax, int points, ...)
+void fill_polygon(graphics_context *ax, int points, ...)
 {
   va_list ap;
   if (points == 0) return;
@@ -236,7 +236,7 @@ void fill_polygon(axis_context *ax, int points, ...)
 }
 
 
-void draw_polygon(axis_context *ax, int points, ...)
+void draw_polygon(graphics_context *ax, int points, ...)
 {
   va_list ap;
   if (points == 0) return;
@@ -246,7 +246,7 @@ void draw_polygon(axis_context *ax, int points, ...)
 }
 
 
-void fill_polygon_from_array(axis_context *ax, point_t *points, int npoints)
+void fill_polygon_from_array(graphics_context *ax, point_t *points, int npoints)
 {
   int i;
   cairo_set_source_rgb(ax->cr, ax->gc->fg_color->red, ax->gc->fg_color->green, ax->gc->fg_color->blue);
@@ -262,7 +262,7 @@ void fill_polygon_from_array(axis_context *ax, point_t *points, int npoints)
 
 static point_t polypts[4];
 
-void fill_polygons(axis_context *ax, point_t *points, int num, int y0)
+void fill_polygons(graphics_context *ax, point_t *points, int num, int y0)
 {
   int i;
   for (i = 1; i < num; i++)
@@ -280,7 +280,7 @@ void fill_polygons(axis_context *ax, point_t *points, int num, int y0)
 }
 
 
-void fill_two_sided_polygons(axis_context *ax, point_t *points, point_t *points1, int num)
+void fill_two_sided_polygons(graphics_context *ax, point_t *points, point_t *points1, int num)
 {
   int i;
   for (i = 1; i < num; i++)
@@ -298,7 +298,7 @@ void fill_two_sided_polygons(axis_context *ax, point_t *points, point_t *points1
 }
 
 
-void setup_axis_context(chan_info *cp, axis_context *ax)
+void setup_graphics_context(chan_info *cp, graphics_context *ax)
 {
   GtkWidget *w;
   snd_info *sp;
@@ -341,7 +341,7 @@ void initialize_colormap(void)
 }
 
 
-void draw_sono_rectangles(axis_context *ax, int color, int jmax)
+void draw_sono_rectangles(graphics_context *ax, int color, int jmax)
 {
   int i;
   rgb_t r, g, b;
@@ -361,7 +361,7 @@ void draw_sono_rectangles(axis_context *ax, int color, int jmax)
 }
 
 
-void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1)
+void draw_spectro_line(graphics_context *ax, int color, int x0, int y0, int x1, int y1)
 {
   rgb_t r, g,b;
   get_current_color(color_map(ss), color, &r, &g, &b);
@@ -407,7 +407,7 @@ void allocate_color_map(int colormap)
 
 void phases_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b);
 
-void draw_colored_lines(chan_info *cp, axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color)
+void draw_colored_lines(chan_info *cp, graphics_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color)
 {
   int i, x0, y0, x1, y1, cur, prev;
   color_t old_color;

@@ -72,3 +72,4 @@
 (define mix-locked?              (make-procedure-with-setter (lambda (id) #f) (lambda (id val) #f)))
 (define mix-inverted?            (make-procedure-with-setter (lambda (id) #f) (lambda (id val) #f)))
 (define (mix-chans id) "obsolete" 1)
+

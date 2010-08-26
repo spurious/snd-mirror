@@ -166,7 +166,7 @@ typedef struct {
   mus_long_t losamp, hisamp;                 /* displayed x-axis bounds in terms of sound sample numbers */
   int graph_x0;                         /* x axis offset relative to window (for double graphs) */
   struct tick_descriptor *x_ticks, *y_ticks; 
-  axis_context *ax;
+  graphics_context *ax;
   int width, height;
   struct chan_info *cp;
   mus_float_t sy, zy;                         /* as set by user, 0.0 - 1.0 */
@@ -309,7 +309,7 @@ typedef struct chan_info {
   int old_x0, old_x1;
   mus_float_t *amp_control; /* local amp controls in snd-dac; should it be extended to other controls? */
   search_result_t last_search_result;
-  bool just_zero, new_peaks, editable, tracking;
+  bool just_zero, new_peaks, editable, tracking, updating;
   struct inset_graph_info_t *inset_graph; /* defined in snd-chn.c */
 #if HAVE_GL
   int gl_fft_list, gl_wavo_list;
@@ -724,8 +724,8 @@ void ps_draw_grf_points(axis_info *ap, int j, mus_float_t y0, graph_style_t grap
 void ps_draw_both_grf_points(axis_info *ap, int j, graph_style_t graph_style, int dot_size);
 void ps_draw_sono_rectangle(axis_info *ap, int color, mus_float_t x, mus_float_t y, mus_float_t width, mus_float_t height);
 void ps_reset_color(void);
-void ps_bg(axis_info *ap, axis_context *ax);
-void ps_fg(chan_info *cp, axis_context *ax);
+void ps_bg(axis_info *ap, graphics_context *ax);
+void ps_fg(chan_info *cp, graphics_context *ax);
 void ps_draw_line(axis_info *ap, int x0, int y0, int x1, int y1);
 void ps_draw_spectro_line(axis_info *ap, int color, mus_float_t x0, mus_float_t y0, mus_float_t x1, mus_float_t y1);
 void ps_fill_rectangle(axis_info *ap, int x0, int y0, int width, int height);
@@ -1138,7 +1138,7 @@ void env_editor_button_release(env_editor *edp, env *e);
 double env_editor_ungrf_y_dB(env_editor *edp, int y);
 void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int width, int height, 
 		   mus_float_t xmin, mus_float_t xmax, mus_float_t ymin, mus_float_t ymax, printing_t printing);
-void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const char *name, 
+void env_editor_display_env(env_editor *edp, env *e, graphics_context *ax, const char *name, 
 			    int x0, int y0, int width, int height, printing_t printing);
 void view_envs(int env_window_width, int env_window_height, printing_t printing);
 int hit_env(int xe, int ye, int env_window_width, int env_window_height);
@@ -1280,23 +1280,23 @@ chan_info *which_channel(snd_info *sp, int y);
 
 void clear_inset_graph(chan_info *cp);
 void free_inset_graph(chan_info *cp);
-void draw_inset_line_cursor(chan_info *cp, axis_context *ax);
+void draw_inset_line_cursor(chan_info *cp, graphics_context *ax);
 
 void g_init_chn(void);
 XEN make_graph_data(chan_info *cp, int edit_pos, mus_long_t losamp, mus_long_t hisamp);
-void draw_graph_data(chan_info *cp, mus_long_t losamp, mus_long_t hisamp, int data_size, mus_float_t *data, mus_float_t *data1, axis_context *ax, graph_style_t style);
+void draw_graph_data(chan_info *cp, mus_long_t losamp, mus_long_t hisamp, int data_size, mus_float_t *data, mus_float_t *data1, graphics_context *ax, graph_style_t style);
 
 void fftb(chan_info *cp, bool on);
 void waveb(chan_info *cp, bool on);
 void f_button_callback(chan_info *cp, bool on, bool with_control);
 void w_button_callback(chan_info *cp, bool on, bool with_control);
-axis_context *set_context(chan_info *cp, chan_gc_t gc);
-axis_context *copy_context(chan_info *cp);
-axis_context *erase_context(chan_info *cp);
-axis_context *selection_context(chan_info *cp);
-axis_context *mark_tag_context(chan_info *cp);
-axis_context *mix_waveform_context(chan_info *cp);
-axis_context *cursor_context(chan_info *cp);
+graphics_context *set_context(chan_info *cp, chan_gc_t gc);
+graphics_context *copy_context(chan_info *cp);
+graphics_context *erase_context(chan_info *cp);
+graphics_context *selection_context(chan_info *cp);
+graphics_context *mark_tag_context(chan_info *cp);
+graphics_context *mix_waveform_context(chan_info *cp);
+graphics_context *cursor_context(chan_info *cp);
 void calculate_fft(chan_info *cp);
 void set_min_db(mus_float_t db);
 void set_x_axis_style(x_axis_style_t val);
@@ -1693,7 +1693,7 @@ void apply_filter(chan_info *ncp, int order, env *e, const char *caller, const c
 void apply_env(chan_info *cp, env *e, mus_long_t beg, mus_long_t dur, bool over_selection, 
 	       const char *origin, mus_any *gen, XEN edpos, int arg_pos);
 void cos_smooth(chan_info *cp, mus_long_t beg, mus_long_t num, bool over_selection);
-void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int order, bool dBing);
+void display_frequency_response(env *e, axis_info *ap, graphics_context *gax, int order, bool dBing);
 void cursor_delete(chan_info *cp, mus_long_t count);
 void cursor_zeros(chan_info *cp, mus_long_t count, bool over_selection);
 void cursor_insert(chan_info *cp, mus_long_t beg, mus_long_t count);
@@ -1715,13 +1715,13 @@ void draw_cursor(chan_info *cp);
 void erase_cursor(chan_info *cp);
 void set_grf_points(int xi, int j, int ymin, int ymax);
 void set_grf_point(int xi, int j, int yi);
-void draw_grf_points(int dot_size, axis_context *ax, int j, axis_info *ap, mus_float_t y0, graph_style_t graph_style);
-void draw_both_grf_points(int dot_size, axis_context *ax, int j, graph_style_t graph_style);
+void draw_grf_points(int dot_size, graphics_context *ax, int j, axis_info *ap, mus_float_t y0, graph_style_t graph_style);
+void draw_both_grf_points(int dot_size, graphics_context *ax, int j, graph_style_t graph_style);
 axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller);
 void g_init_draw(void);
 void set_dialog_widget(snd_dialog_t which, widget_t wid);
 void run_new_widget_hook(widget_t w);
-bool foreground_color_ok(XEN color, axis_context *ax);
+bool foreground_color_ok(XEN color, graphics_context *ax);
 
 #if HAVE_GL
   void sgl_save_currents(void);

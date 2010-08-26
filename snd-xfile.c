@@ -5677,7 +5677,7 @@ static void vf_amp_env_resize(Widget w, XtPointer context, XtPointer info)
       gv.function = GXcopy;
       XtVaGetValues(vdat->env_drawer, XmNbackground, &gv.background, XmNforeground, &gv.foreground, NULL);
       vdat->env_gc = XtGetGC(vdat->env_drawer, GCForeground | GCFunction, &gv);
-      vdat->env_ax = (axis_context *)calloc(1, sizeof(axis_context));
+      vdat->env_ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       vdat->env_ax->wn = XtWindow(vdat->env_drawer);
       vdat->env_ax->dp = XtDisplay(vdat->env_drawer);
       vdat->env_ax->gc = vdat->env_gc;

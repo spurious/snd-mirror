@@ -4,32 +4,32 @@
 /* needed to set the scale title background */
 
 
-void draw_line(axis_context *ax, int x0, int y0, int x1, int y1) 
+void draw_line(graphics_context *ax, int x0, int y0, int x1, int y1) 
 {
   XDrawLine(ax->dp, ax->wn, ax->gc, x0, y0, x1, y1);
 }
 
 
-void fill_rectangle(axis_context *ax, int x0, int y0, int width, int height)
+void fill_rectangle(graphics_context *ax, int x0, int y0, int width, int height)
 {
   XFillRectangle(ax->dp, ax->wn, ax->gc, x0, y0, width, height);
 }
 
 
-void erase_rectangle(chan_info *cp, axis_context *ax, int x0, int y0, int width, int height)
+void erase_rectangle(chan_info *cp, graphics_context *ax, int x0, int y0, int width, int height)
 {
   XFillRectangle(ax->dp, ax->wn, erase_GC(cp), x0, y0, width, height);
 }
 
 
-void draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
+void draw_string(graphics_context *ax, int x0, int y0, const char *str, int len)
 {
   if ((str) && (*str))
     XDrawString(ax->dp, ax->wn, ax->gc, x0, y0, str, len);
 }
 
 
-void gtk_style_draw_string(axis_context *ax, int x0, int y0, const char *str, int len)
+void gtk_style_draw_string(graphics_context *ax, int x0, int y0, const char *str, int len)
 {
   /* for callers of Scheme-level draw-string, the Motif and Gtk versions should agree on where "y0" is */
   XGCValues gv;
@@ -59,7 +59,7 @@ void gtk_style_draw_string(axis_context *ax, int x0, int y0, const char *str, in
 }
 
 
-static void draw_polygon_va(axis_context *ax, bool filled, int points, va_list ap)
+static void draw_polygon_va(graphics_context *ax, bool filled, int points, va_list ap)
 {
   int i;
   XPoint *pts;
@@ -76,7 +76,7 @@ static void draw_polygon_va(axis_context *ax, bool filled, int points, va_list a
 }
 
 
-void fill_polygon(axis_context *ax, int points, ...)
+void fill_polygon(graphics_context *ax, int points, ...)
 { /* currently used only in snd-marks.c */
   va_list ap;
   if (points == 0) return;
@@ -86,7 +86,7 @@ void fill_polygon(axis_context *ax, int points, ...)
 }
 
 
-void draw_polygon(axis_context *ax, int points, ...)
+void draw_polygon(graphics_context *ax, int points, ...)
 { /* currently used only in snd-marks.c */
   va_list ap;
   if (points == 0) return;
@@ -96,14 +96,14 @@ void draw_polygon(axis_context *ax, int points, ...)
 }
 
 
-void draw_lines(axis_context *ax, point_t *points, int num)
+void draw_lines(graphics_context *ax, point_t *points, int num)
 {
   if (num == 0) return;
   XDrawLines(ax->dp, ax->wn, ax->gc, points, num, CoordModeOrigin);
 }
 
 
-void draw_points(axis_context *ax, point_t *points, int num, int size)
+void draw_points(graphics_context *ax, point_t *points, int num, int size)
 {
   if (num == 0) return;
   if (size == 1)
@@ -131,7 +131,7 @@ void draw_points(axis_context *ax, point_t *points, int num, int size)
 
 
 #if 0
-void draw_point(axis_context *ax, point_t point, int size)
+void draw_point(graphics_context *ax, point_t point, int size)
 {
   if (size == 1)
     XDrawPoint(ax->dp, ax->wn, ax->gc, point.x, point.y);
@@ -145,7 +145,7 @@ void draw_point(axis_context *ax, point_t point, int size)
 #endif
 
 
-void draw_dot(axis_context *ax, int x, int y, int size)
+void draw_dot(graphics_context *ax, int x, int y, int size)
 {
   XFillArc(ax->dp, ax->wn, ax->gc, 
 	   x - size / 2, 
@@ -155,7 +155,7 @@ void draw_dot(axis_context *ax, int x, int y, int size)
 }
 
 
-void fill_polygons(axis_context *ax, point_t *points, int num, int y0)
+void fill_polygons(graphics_context *ax, point_t *points, int num, int y0)
 {
   XPoint polypts[4];
   int i;
@@ -174,7 +174,7 @@ void fill_polygons(axis_context *ax, point_t *points, int num, int y0)
 }
 
 
-void fill_two_sided_polygons(axis_context *ax, point_t *points, point_t *points1, int num)
+void fill_two_sided_polygons(graphics_context *ax, point_t *points, point_t *points1, int num)
 {
   XPoint polypts[4];
   int i;
@@ -193,7 +193,7 @@ void fill_two_sided_polygons(axis_context *ax, point_t *points, point_t *points1
 }
 
 
-void setup_axis_context(chan_info *cp, axis_context *ax)
+void setup_graphics_context(chan_info *cp, graphics_context *ax)
 {
   Widget w;
   snd_info *sp;
@@ -267,14 +267,14 @@ void initialize_colormap(void)
 }
 
 
-void draw_spectro_line(axis_context *ax, int color, int x0, int y0, int x1, int y1)
+void draw_spectro_line(graphics_context *ax, int color, int x0, int y0, int x1, int y1)
 {
   XSetForeground(ax->dp, colormap_GC, current_colors[color]);
   XDrawLine(ax->dp, ax->wn, colormap_GC, x0, y0, x1, y1);
 }
 
 
-void draw_sono_rectangles(axis_context *ax, int color, int jmax)
+void draw_sono_rectangles(graphics_context *ax, int color, int jmax)
 {
   XSetForeground(ax->dp, colormap_GC, current_colors[color]);
   XFillRectangles(ax->dp, ax->wn, colormap_GC, sono_data[color], jmax); 
@@ -350,7 +350,7 @@ void allocate_color_map(int colormap)
 }
 
 
-void draw_colored_lines(chan_info *cp, axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color)
+void draw_colored_lines(chan_info *cp, graphics_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color)
 {
   int i, x0, y0, x1, y1, y2 = 0, y00 = -1, cur, prev;
   color_t old_color;

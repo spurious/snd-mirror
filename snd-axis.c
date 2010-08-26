@@ -448,7 +448,7 @@ void reload_number_font(void)
 #endif
 
 
-static void draw_horizontal_grid_line(int y, axis_info *ap, axis_context *ax)
+static void draw_horizontal_grid_line(int y, axis_info *ap, graphics_context *ax)
 {
   color_t old_color;
   old_color = get_foreground_color(ax);
@@ -460,7 +460,7 @@ static void draw_horizontal_grid_line(int y, axis_info *ap, axis_context *ax)
 }
 
 
-static void draw_vertical_grid_line(int x, axis_info *ap, axis_context *ax)
+static void draw_vertical_grid_line(int x, axis_info *ap, graphics_context *ax)
 {
   color_t old_color;
   old_color = get_foreground_color(ax);
@@ -472,7 +472,7 @@ static void draw_vertical_grid_line(int x, axis_info *ap, axis_context *ax)
 }
 
 
-static void draw_x_number(const char *label, int x, int y, int hgt, axis_info *ap, axis_context *ax, printing_t printing)
+static void draw_x_number(const char *label, int x, int y, int hgt, axis_info *ap, graphics_context *ax, printing_t printing)
 {
   /* from motif point of view, gtk is down by font height (ascent) in pixels */
 
@@ -489,7 +489,7 @@ static void draw_x_number(const char *label, int x, int y, int hgt, axis_info *a
 }
 
 
-static void draw_y_number(const char *label, int x, int y, int hgt, axis_info *ap, axis_context *ax, printing_t printing)
+static void draw_y_number(const char *label, int x, int y, int hgt, axis_info *ap, graphics_context *ax, printing_t printing)
 {
   /* from motif point of view, gtk is down by font height (ascent) in pixels */
 #if USE_MOTIF
@@ -503,7 +503,7 @@ static void draw_y_number(const char *label, int x, int y, int hgt, axis_info *a
 }
 
 
-static void draw_label(const char *label, int x, int y, int yoff, axis_info *ap, axis_context *ax, printing_t printing)
+static void draw_label(const char *label, int x, int y, int yoff, axis_info *ap, graphics_context *ax, printing_t printing)
 {
   /* from motif point of view, gtk is down by font height (ascent) in pixels */
 #if USE_GTK
@@ -515,7 +515,7 @@ static void draw_label(const char *label, int x, int y, int yoff, axis_info *ap,
 }
 
 
-static void draw_vertical_tick(int x, int y0, int y1, axis_info *ap, axis_context *ax, printing_t printing, bool include_grid)
+static void draw_vertical_tick(int x, int y0, int y1, axis_info *ap, graphics_context *ax, printing_t printing, bool include_grid)
 {
   draw_line(ax, x, y1, x, y0);
   if (printing) ps_draw_line(ap, x, y1, x, y0);
@@ -523,7 +523,7 @@ static void draw_vertical_tick(int x, int y0, int y1, axis_info *ap, axis_contex
 }
 
 
-static void draw_horizontal_tick(int x0, int x1, int y, axis_info *ap, axis_context *ax, printing_t printing, bool include_grid)
+static void draw_horizontal_tick(int x0, int x1, int y, axis_info *ap, graphics_context *ax, printing_t printing, bool include_grid)
 {
   draw_line(ax, x0, y, x1, y);
   if (printing) ps_draw_line(ap, x0, y, x1, y);
@@ -532,7 +532,7 @@ static void draw_horizontal_tick(int x0, int x1, int y, axis_info *ap, axis_cont
 
 
 static void draw_log_tick_label(const char *label, int logx, int y, int hgt, int x_label_width, int right_border_width, 
-				axis_info *ap, axis_context *ax, printing_t printing, bool use_tiny_font)
+				axis_info *ap, graphics_context *ax, printing_t printing, bool use_tiny_font)
 {
   /* is there room for a label? */
   /* the main label is at ap->x_label_x to that plus x_label_width */
@@ -549,7 +549,7 @@ static void draw_log_tick_label(const char *label, int logx, int y, int hgt, int
 }
 
 
-static void use_tiny(axis_context *ax, printing_t printing)
+static void use_tiny(graphics_context *ax, printing_t printing)
 {
 #if USE_MOTIF
   ax->current_font = ((XFontStruct *)(TINY_FONT(ss)))->fid;
@@ -563,7 +563,7 @@ static void use_tiny(axis_context *ax, printing_t printing)
 }
 
 
-static void set_numbers_font(axis_context *ax, printing_t printing, bool use_tiny_font)
+static void set_numbers_font(graphics_context *ax, printing_t printing, bool use_tiny_font)
 {
   if (use_tiny_font)
     use_tiny(ax, printing);
@@ -582,7 +582,7 @@ static void set_numbers_font(axis_context *ax, printing_t printing, bool use_tin
 }
 
 
-static void set_labels_font(axis_context *ax, printing_t printing, bool use_tiny_font)
+static void set_labels_font(graphics_context *ax, printing_t printing, bool use_tiny_font)
 {
   if (use_tiny_font)
     use_tiny(ax, printing);
@@ -613,7 +613,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   int num_ticks;
   tick_descriptor *tdx = NULL, *tdy = NULL;
   int curx, cury;
-  axis_context *ax;
+  graphics_context *ax;
 #if HAVE_GL
   mus_float_t xthick, ythick, xmajorlen, xminorlen, ymajorlen, yminorlen;
 #endif
@@ -1613,7 +1613,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   mus_float_t y0 = -1.0, y1 = 1.0; 
   x_axis_style_t x_style = X_AXIS_IN_SECONDS;
   show_axes_t axes = SHOW_ALL_AXES;
-  axis_context *ax;
+  graphics_context *ax;
   axis_info *ap;
   int len;
 
@@ -1676,7 +1676,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 			}}}}}}
 
   ap = (axis_info *)calloc(1, sizeof(axis_info));
-  ax = (axis_context *)calloc(1, sizeof(axis_context));
+  ax = (graphics_context *)calloc(1, sizeof(graphics_context));
   ap->ax = ax;
 #if USE_MOTIF
   ax->dp = XtDisplay(w);
@@ -1685,9 +1685,6 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 #if USE_GTK
   ax->wn = WIDGET_TO_WINDOW(w);
   ax->w = w;
-#endif
-
-#if USE_GTK
   ax->cr = gdk_cairo_create(ax->wn);
 #endif
 

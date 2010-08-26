@@ -1264,7 +1264,7 @@ static mus_float_t *get_filter_coeffs(int order, env *e)
 }
 
 
-void display_frequency_response(env *e, axis_info *ap, axis_context *gax, int order, bool dBing)
+void display_frequency_response(env *e, axis_info *ap, graphics_context *gax, int order, bool dBing)
 {
   /* not cp->min_dB here -- this is sound panel related which refers to ss->min_dB */
   mus_float_t *coeffs = NULL;

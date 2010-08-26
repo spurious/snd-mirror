@@ -46,7 +46,7 @@ static void graph_redisplay(void)
   GdkDrawable *wn;
   int ix0, iy0, ix1, iy1, i;
   mus_float_t xincr, x;
-  axis_context *ax;
+  graphics_context *ax;
 
   if (!(transform_dialog_is_active())) return;
   if (graph_drawer == NULL) return;
@@ -57,7 +57,7 @@ static void graph_redisplay(void)
   if (!axis_ap)
     {
       axis_ap = (axis_info *)calloc(1, sizeof(axis_info));
-      ax = (axis_context *)calloc(1, sizeof(axis_context));
+      ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       axis_ap->ax = ax;
     }
   else ax = axis_ap->ax;

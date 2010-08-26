@@ -5118,7 +5118,7 @@ static void vf_amp_env_resize(view_files_info *vdat, GtkWidget *w)
       vdat->env_gc = gc_new(WIDGET_TO_WINDOW(w));
       gc_set_background(vdat->env_gc, ss->sgx->graph_color);
       gc_set_foreground(vdat->env_gc, ss->sgx->data_color);
-      vdat->env_ax = (axis_context *)calloc(1, sizeof(axis_context));
+      vdat->env_ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       vdat->env_ax->wn = WIDGET_TO_WINDOW(w);
       vdat->env_ax->w = w;
       vdat->env_ax->gc = vdat->env_gc;

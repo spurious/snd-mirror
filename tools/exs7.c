@@ -285,7 +285,6 @@ int main(int argc, char **argv)
   xen_initialize();                   /* initialize the xen stuff (hooks and the xen s7 FFI used by sndlib) */
   Init_sndlib();                      /* initialize sndlib with all the functions linked into s7 */  
 
-  /* these next lines are for compatibility with Guile */
   XEN_EVAL_C_STRING("(defmacro use-modules (arg . args) #f)");
   XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
   XEN_EVAL_C_STRING("(define (current-module) (current-environment))");

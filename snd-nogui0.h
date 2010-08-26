@@ -53,12 +53,12 @@
 typedef struct {
   int wn;
   int gc;
-} axis_context;
+} graphics_context;
 
 typedef struct {
   struct env_state *peak_env_state;
   int peak_env_in_progress;
-  axis_context *ax;
+  graphics_context *ax;
   int selected;
   int fft_in_progress;
   int fft_pix;

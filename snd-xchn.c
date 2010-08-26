@@ -923,7 +923,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
   Widget *cw;
   chan_info *cp;
   chan_context *cx;
-  axis_context *cax;
+  graphics_context *cax;
   state_context *sx;
   bool make_widgets;
 
@@ -1293,7 +1293,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 }
 
 
-static void set_graph_font(chan_info *cp, axis_context *ax, XFontStruct *bf)
+static void set_graph_font(chan_info *cp, graphics_context *ax, XFontStruct *bf)
 {
   chan_context *cx;
   cx = cp->tcgx;
@@ -1303,14 +1303,14 @@ static void set_graph_font(chan_info *cp, axis_context *ax, XFontStruct *bf)
 }
 
 
-void set_peak_numbers_font(chan_info *cp, axis_context *ax) {set_graph_font(cp, ax, PEAKS_FONT(ss));}
+void set_peak_numbers_font(chan_info *cp, graphics_context *ax) {set_graph_font(cp, ax, PEAKS_FONT(ss));}
 
-void set_tiny_numbers_font(chan_info *cp, axis_context *ax) {set_graph_font(cp, ax, TINY_FONT(ss));}
+void set_tiny_numbers_font(chan_info *cp, graphics_context *ax) {set_graph_font(cp, ax, TINY_FONT(ss));}
 
-void set_bold_peak_numbers_font(chan_info *cp, axis_context *ax) {set_graph_font(cp, ax, BOLD_PEAKS_FONT(ss));}
+void set_bold_peak_numbers_font(chan_info *cp, graphics_context *ax) {set_graph_font(cp, ax, BOLD_PEAKS_FONT(ss));}
 
 
-color_t get_foreground_color(axis_context *ax)
+color_t get_foreground_color(graphics_context *ax)
 {
   XGCValues gv;
   XGetGCValues(MAIN_DISPLAY(ss), ax->gc, GCForeground, &gv);
@@ -1318,7 +1318,7 @@ color_t get_foreground_color(axis_context *ax)
 }
 
 
-void set_foreground_color(axis_context *ax, Pixel color)
+void set_foreground_color(graphics_context *ax, Pixel color)
 {
   XSetForeground(MAIN_DISPLAY(ss), ax->gc, color);
 }
@@ -1360,7 +1360,7 @@ void free_fft_pix(chan_info *cp)
 }
 
 
-bool restore_fft_pix(chan_info *cp, axis_context *ax)
+bool restore_fft_pix(chan_info *cp, graphics_context *ax)
 {
   XCopyArea(ax->dp,
 	    cp->cgx->fft_pix, 
@@ -1373,7 +1373,7 @@ bool restore_fft_pix(chan_info *cp, axis_context *ax)
 }
 
 
-void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int x0, int y1)
+void save_fft_pix(chan_info *cp, graphics_context *ax, int fwidth, int fheight, int x0, int y1)
 {
   if ((fwidth == 0) || (fheight == 0)) return;
   if (cp->cgx->fft_pix == None)

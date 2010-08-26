@@ -483,7 +483,7 @@
 	(set-flabel index-label cindex)
 	(XmScaleSetValue tempo-scale (floor (* 100 (/ (- ctempo low-tempo) (- high-tempo low-tempo)))))
 	(XmScaleSetValue freq-scale (floor (* 100 (/ (- cfreq low-freq) (- high-freq low-freq)))))
-	(XmScaleSetValue amp-scale (inexact->exact (* 100 camp)))
+	(XmScaleSetValue amp-scale (floor (* 100 camp)))
 	(XmScaleSetValue index-scale (floor (* 100 (/ cindex high-index)))))
 
       (XtManageChild radio)

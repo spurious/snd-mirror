@@ -1587,7 +1587,7 @@ static void draw_mix_tag(mix_info *md, int x, int y)
 {
   chan_info *cp;
   int width, height;
-  axis_context *ax;
+  graphics_context *ax;
   char *lab = NULL;
 
 #if USE_MOTIF
@@ -2033,7 +2033,7 @@ static void draw_mix_tag_and_waveform(mix_info *md, mix_state *ms, int x)
       pts = prepare_mix_waveform(md, ms, ap, mix_waveform_height(ss), y, (double)SND_SRATE(cp->sound), &two_sided);
       if (pts > 0)
 	{
-	  axis_context *ax;
+	  graphics_context *ax;
 	  ax = mix_waveform_context(cp);
 	  if (two_sided)
 	    draw_both_grf_points(cp->dot_size, ax, pts, cp->time_graph_style);

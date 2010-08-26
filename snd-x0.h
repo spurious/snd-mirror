@@ -74,7 +74,7 @@ typedef struct {
   Display *dp;
   Drawable wn;
   Font current_font;
-} axis_context;
+} graphics_context;
 
 typedef struct {
   /* we need two versions of each GC because the selected channel's colors can be different from the unselected channels' */
@@ -82,7 +82,7 @@ typedef struct {
   idle_t fft_in_progress;
   idle_t peak_env_in_progress;
   struct env_state *peak_env_state;
-  axis_context *ax;
+  graphics_context *ax;
   bool selected;
   Pixmap fft_pix;
   unsigned int fft_pix_width, fft_pix_height;
