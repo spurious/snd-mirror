@@ -1007,11 +1007,8 @@ void free_fft_pix(chan_info *cp)
 
 bool restore_fft_pix(chan_info *cp, graphics_context *ax)
 {
-  cairo_t *cr;
-  cr = gdk_cairo_create(ax->wn);
-  gdk_cairo_set_source_pixbuf(cr, cp->cgx->fft_pix, cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0);
-  cairo_paint(cr);
-  cairo_destroy(cr);
+  gdk_cairo_set_source_pixbuf(ax->cr, cp->cgx->fft_pix, cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0);
+  cairo_paint(ax->cr);
   return(true);
 }
 
@@ -1088,11 +1085,8 @@ bool restore_sono_cursor_pix(chan_info *cp, graphics_context *ax)
 {
   if (cp->cgx->sono_cursor_pix_ready)
     {
-      cairo_t *cr;
-      cr = gdk_cairo_create(ax->wn);
-      gdk_cairo_set_source_pixbuf(cr, cp->cgx->sono_cursor_pix, cp->cgx->sono_cursor_pix_x0, cp->cgx->sono_cursor_pix_y0);
-      cairo_paint(cr);
-      cairo_destroy(cr);
+      gdk_cairo_set_source_pixbuf(ax->cr, cp->cgx->sono_cursor_pix, cp->cgx->sono_cursor_pix_x0, cp->cgx->sono_cursor_pix_y0);
+      cairo_paint(ax->cr);
       free_sono_cursor_pix(cp);
       return(true);
     }

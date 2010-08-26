@@ -1053,7 +1053,37 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
       if (enved_max_fft_size < transform_size(ss)) enved_max_fft_size = transform_size(ss);
       if (enved_max_fft_size < active_channel->transform_size) enved_max_fft_size = active_channel->transform_size;
       
-      display_enved_spectrum(active_channel, make_enved_spectrum(active_channel), gray_ap);
+      if ((active_channel->cgx) && 
+	  (active_channel->transform_graph_type == GRAPH_AS_SONOGRAM) &&
+	  (active_channel->graph_transform_p))
+	{
+	  /* if the sonogram isn't ready, try to get it 
+	   *   this is for frequency envelopes as in animals.scm
+	   */
+	  if ((!(active_channel->cgx->fft_pix)) ||
+	      (!(active_channel->cgx->fft_pix_ready)))
+	    display_channel_fft_data(active_channel);
+	}
+
+      if ((active_channel->cgx) && 
+	  (active_channel->cgx->fft_pix) &&
+	  (active_channel->cgx->fft_pix_ready) &&
+	  (active_channel->transform_graph_type == GRAPH_AS_SONOGRAM) &&
+	  (active_channel->graph_transform_p))
+	{
+	  int old_x0, old_y0;
+
+	  old_x0 = active_channel->cgx->fft_pix_x0;
+	  old_y0 = active_channel->cgx->fft_pix_y0; /* this actually aligns with the top of the enved window */
+	  active_channel->cgx->fft_pix_x0 = ap->x_axis_x0;
+	  active_channel->cgx->fft_pix_y0 = ap->y_axis_y1;
+
+	  restore_fft_pix(active_channel, gray_ap->ax);
+
+	  active_channel->cgx->fft_pix_x0 = old_x0;
+	  active_channel->cgx->fft_pix_y0 = old_y0;
+	}
+      else display_enved_spectrum(active_channel, make_enved_spectrum(active_channel), gray_ap);
     }
   else
     {
@@ -1077,8 +1107,16 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 	  srate = SND_SRATE(active_channel->sound);
 	  gray_ap->losamp = 0;
 	  gray_ap->hisamp = samps - 1;
-	  gray_ap->y0 = active_ap->y0;
-	  gray_ap->y1 = active_ap->y1;
+	  if (active_channel->time_graph_type == GRAPH_AS_WAVOGRAM)
+	    {
+	      gray_ap->y0 = -1.0;
+	      gray_ap->y1 = 1.0;
+	    }
+	  else
+	    {
+	      gray_ap->y0 = active_ap->y0;
+	      gray_ap->y1 = active_ap->y1;
+	    }
 	  gray_ap->x0 = 0.0;
 	  gray_ap->x1 = (double)samps / (double)srate;
 	}

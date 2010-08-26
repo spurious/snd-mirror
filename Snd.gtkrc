@@ -27,7 +27,7 @@ style "default_button" = "default"
 
 style "default_menu" = "default"
 {
-#  bg[NORMAL] = { 1.0, 1.0, 0.94 }
+  bg[NORMAL] = { 1.0, 1.0, 0.94 }
 }
 
 style "default_pane" = "default"

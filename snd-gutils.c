@@ -1144,5 +1144,5 @@ char *slist_selection(slist *lst)
  *       combined chans chan>0 marks erased and mixes, if 2 mix is moved it does not erase previous
  *       superimposed chans flicker a lot
  *       hide controls + listener doesn't
- *       in edit-header "srate" and "channels" labels are not highlighted (they're drop down menus)
+ *       check sono env again -- flashes and is erased
  */
