@@ -5134,7 +5134,7 @@
 ;prime 256: peak-phases value: 25.419292, current: 25.416395401039, diff: -0.0028965989614846
 ;all done! Mon 31-May-2010 07:51
 
-;; same on 15-Jun, 19-Jul
+;; same on 15-Jun, 19-Jul, 26-Aug
 
 ;;; gad161: clean-up-evens
 ;;; t139.scm: show-circles

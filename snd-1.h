@@ -751,7 +751,7 @@ int mark_sync(mark *m);
 mus_long_t mark_sample(mark *m);
 void marks_off(chan_info *cp);
 mark *hit_mark(chan_info *cp, int x, int y, int key_state);
-mark *hit_triangle(chan_info *cp, int x, int y);
+mark *hit_mark_triangle(chan_info *cp, int x, int y);
 void move_mark(chan_info *cp, mark *mp, int x);
 void play_syncd_mark(chan_info *cp, mark *mp);
 mus_long_t move_play_mark(chan_info *cp, mus_long_t *mc, int cx);
@@ -1051,6 +1051,7 @@ sync_info *selection_sync(void);
 void start_selection_creation(chan_info *cp, mus_long_t samp);
 void update_possible_selection_in_progress(mus_long_t samp);
 void restart_selection_creation(chan_info *cp, bool right);
+bool hit_selection_triangle(chan_info *cp, int x, int y);
 
 int make_region_from_selection(void);
 void display_selection(chan_info *cp);

@@ -55,11 +55,11 @@ chan_info *get_cp(XEN snd, XEN x_chn_n, const char *caller)
 
 
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_MIX, CLICK_MARK,
-	      CLICK_FFT_MAIN, CLICK_SELECTION_LEFT, CLICK_SELECTION_RIGHT, CLICK_INSET_GRAPH} click_loc_t;
+	      CLICK_FFT_MAIN, CLICK_SELECTION_LEFT, CLICK_SELECTION_RIGHT, CLICK_SELECTION_PLAY, CLICK_INSET_GRAPH} click_loc_t;
 /* for marks, regions, mouse click detection */
 /*
  * static char *click_detection_names[10] = {"no graph", "click wave", "click fft axis", "click lisp", "click mix", "click mark",
- *                                           "click fft graph", "click selection left", "click selection right", "click inset graph"};
+ *                                           "click fft graph", "click selection left", "click selection right", "click selection play", "click inset graph"};
  */
 
 
@@ -3864,8 +3864,10 @@ static void display_channel_data_with_size(chan_info *cp,
 #if USE_GTK
   if ((!save_cr) && (cp->cgx) && (cp->cgx->ax))
     {
+
       if (cp->cgx->ax->cr)
-	cairo_destroy(cp->cgx->ax->cr);
+	cairo_destroy(cp->cgx->ax->cr); /* if this is done below instead, the only problem I see is that marks aren't immediately drawn */
+
       cp->cgx->ax->cr = gdk_cairo_create(cp->cgx->ax->wn);
     }
 #endif
@@ -4127,6 +4129,8 @@ static void display_channel_data_with_size(chan_info *cp,
 	  draw_sonogram_cursor(cp);
 	}
     }
+
+  /* cairo_destroy(cp->cgx->ax->cr); */
 #endif
 }
 
@@ -4671,6 +4675,7 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 	      mus_long_t pos;
 	      double sr;
 	      sr = (double)SND_SRATE(cp->sound);
+
 	      pos = selection_beg(cp);
 	      if ((pos >= ap->losamp) &&
 		  (pos <= ap->hisamp))
@@ -4681,6 +4686,7 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 		  if ((pos > x0_pos) && (pos < x1_pos))
 		    return(CLICK_SELECTION_LEFT); /* "click" is a misnomer -- we have moved to the portion where we can grab the selection and resize it */
 		}
+
 	      pos = selection_end(cp);
 	      if ((pos >= ap->losamp) &&
 		  (pos <= ap->hisamp))
@@ -5098,9 +5104,15 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
 
   if (cp->graph_time_p)
     {
+      if ((selection_is_active_in_channel(cp)) &&
+	  (hit_selection_triangle(cp, x, y)))
+	{
+	  play_selection(IN_BACKGROUND);
+	  return;
+	}
       mouse_mark = hit_mark(cp, x, y, key_state);
       if (mouse_mark == NULL) 
-	play_mark = hit_triangle(cp, x, y);
+	play_mark = hit_mark_triangle(cp, x, y);
     }
 
   click_within_graph = within_graph(cp, x, y);
@@ -5144,6 +5156,10 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
     case CLICK_SELECTION_RIGHT:
       dragged = true;
       restart_selection_creation(cp, click_within_graph == CLICK_SELECTION_RIGHT);
+      break;
+
+    case CLICK_SELECTION_PLAY:
+      play_selection(IN_BACKGROUND); /* snd-dac.c */
       break;
 
     case CLICK_INSET_GRAPH:
@@ -5643,8 +5659,14 @@ graphics_context *set_context(chan_info *cp, chan_gc_t gc)
   graphics_context *ax;
   state_context *sx;
   chan_context *cx;
+
+#if (!USE_GTK)
   cx = cp->tcgx;
   if (!cx) cx = cp->cgx;
+#else
+  cx = cp->cgx;
+#endif
+
   ax = cx->ax;
   sx = ss->sgx;
 

@@ -601,12 +601,15 @@ void finish_selection_creation(void)
 }
 
 
+static void show_selection_triangle(chan_info *cp, graphics_context *ax, int x);
+
 static void cp_redraw_selection(chan_info *cp)
 {
   int x0, x1;
   mus_long_t beg, end;
   axis_info *ap;
   double sp_srate;
+  graphics_context *ax;
 
   ap = cp->axis;
   beg = selection_beg(cp);
@@ -621,23 +624,33 @@ static void cp_redraw_selection(chan_info *cp)
     x1 = grf_x((double)end / sp_srate, ap);
   else x1 = ap->x_axis_x1;
 
+  ax = selection_context(cp);
+
 #if USE_GTK
   if (x0 <= ap->x_axis_x0) 
     x0 += 2;                       /* dont' erase the y axis */
 #else
   if (cp->selection_visible)
-    fill_rectangle(selection_context(cp),
-		   cp->old_x0,
-		   ap->y_axis_y1,
-		   cp->old_x1 - cp->old_x0,
-		   (int)(ap->y_axis_y0 - ap->y_axis_y1));
+    {
+      fill_rectangle(ax,
+		     cp->old_x0,
+		     ap->y_axis_y1,
+		     cp->old_x1 - cp->old_x0,
+		     (int)(ap->y_axis_y0 - ap->y_axis_y1));
+      if (ap->losamp < beg)
+	show_selection_triangle(cp, ax, x0);
+    }
 #endif
 
-  fill_rectangle(selection_context(cp),
+  fill_rectangle(ax,
 		 x0,
 		 ap->y_axis_y1,
 		 x1 - x0,
 		 (int)(ap->y_axis_y0 - ap->y_axis_y1));
+
+  if (ap->losamp < beg)
+    show_selection_triangle(cp, ax, x0);
+
   cp->old_x0 = x0;
   cp->old_x1 = x1;
   cp->selection_visible = true;
@@ -833,6 +846,46 @@ void move_selection(chan_info *cp, int x)
   last_selection_x = x; /* called in snd-xchn -- sets last_selection_x */
   move_selection_1(cp, x);
 }
+
+
+#define SELECTION_PLAY_ARROW_SIZE 10
+
+static void show_selection_triangle(chan_info *cp, graphics_context *ax, int x)
+{
+  int y0;
+  y0 = ((axis_info *)(cp->axis))->y_axis_y0;
+  fill_polygon(ax, 4,
+	       x, y0,
+	       x + SELECTION_PLAY_ARROW_SIZE, y0 + SELECTION_PLAY_ARROW_SIZE,
+	       x, y0 + 2 * SELECTION_PLAY_ARROW_SIZE,
+	       x, y0);
+}
+
+
+bool hit_selection_triangle(chan_info *cp, int x, int y)
+{
+  axis_info *ap;
+  mus_long_t beg;
+  int mx;
+
+  beg = selection_beg(cp);
+  ap = cp->axis;
+  if (beg < ap->losamp) return(false);
+  if (beg > ap->hisamp) return(false);
+
+  mx = grf_x((double)beg / (double)SND_SRATE(cp->sound), ap);
+
+  if (mx > x) return(false);                                /* click point is to the left of the triangle */
+  if ((mx + SELECTION_PLAY_ARROW_SIZE) < x) return(false);  /* click point is to the right of the triangle */
+
+  y = y - ap->y_axis_y0 - SELECTION_PLAY_ARROW_SIZE;
+  if (y < 0) y = -y;
+  if ((mx + SELECTION_PLAY_ARROW_SIZE - y) >= x) return(true);
+  /* the last is assuming the triangle shape for hit detection */
+
+  return(false);
+}
+
 
 
 /* ---------------------------------------- selection object ---------------------------------------- */

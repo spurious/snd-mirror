@@ -256,7 +256,6 @@ void fill_polygon_from_array(graphics_context *ax, point_t *points, int npoints)
     cairo_line_to(ax->cr, points[i].x, points[i].y);
   cairo_close_path(ax->cr);
   cairo_fill(ax->cr);
-  /* PERHAPS: gradient here also? */
 }
 
 

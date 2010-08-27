@@ -1136,13 +1136,16 @@ char *slist_selection(slist *lst)
  *              "The OpenGL surface backend feature is still under active development and
  *               is included in this release only as a preview. It does NOT fully work yet"
  * --------
- *       is it necessary to lock out cursor display?
- *       multichan select flashes then erases chan>0 select rect (and chans>0 fft flash -- probably need full display)
- *       syncd marks are undoubtedly messed up (what about play triangle drag?) (marks in united chans?) -- glib doubly linked list corruption
  *       do meters work in rec?  in Motif they're drawn incorrectly
  *       Mac native? quartz surface like GL?
- *       combined chans chan>0 marks erased and mixes, if 2 mix is moved it does not erase previous
+ *         sep chans, syncd marks don't move together
  *       superimposed chans flicker a lot
  *       hide controls + listener doesn't
- *       check sono env again -- flashes and is erased
+ *       if combined, initial drag of mix does not reflect drag until button release
+ *       perhaps add a way to add/delete the center (y) slider
+ *       perhaps an x=close icon on the far left of the name box? (use the window decorations?) /usr/share/themes/Simple/metacity-1/*.png (gtk_image_new_from_file)
+ *         and save? undo/redo? play as icon (and others?) play-selection et al?
+ *       [unite sync(CONNECT|DISCONNECT?) MEDIA_PLAY|STOP LEAVE_FULLSCREEN(REMOVE?)|FULLSCREEN CLOSE || SAVE REDO UNDO if selection: CUT
+ *         perhaps a wave icon like Snd's and a spectrum?
+ *       mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
  */

@@ -328,7 +328,9 @@ static mark *hit_mark_1(chan_info *cp, mark *mp, void *m)
 }
 
 
-static mark *hit_triangle_1(chan_info *cp, mark *mp, void *m)
+#define MARK_PLAY_ARROW_SIZE 10
+
+static mark *hit_mark_triangle_1(chan_info *cp, mark *mp, void *m)
 {
   /* m->samp = raw x mouse position */
   /* we're going left to right, so after passing x, give up */
@@ -351,7 +353,7 @@ static mark *hit_triangle_1(chan_info *cp, mark *mp, void *m)
 }
 
 
-mark *hit_triangle(chan_info *cp, int x, int y)
+mark *hit_mark_triangle(chan_info *cp, int x, int y)
 {
   if (cp->edits[cp->edit_ctr]->marks)
     {
@@ -367,7 +369,7 @@ mark *hit_triangle(chan_info *cp, int x, int y)
 	  md->x = x;
 	  md->y = y;
 	  md->all_done = (mark *)1;
-	  mp = map_over_marks(cp, hit_triangle_1, (void *)md, READ_FORWARD);
+	  mp = map_over_marks(cp, hit_mark_triangle_1, (void *)md, READ_FORWARD);
 	  if (mp == (mark *)1) mp = NULL;
 	  free(md);
 	  return(mp);
@@ -2133,7 +2135,7 @@ static XEN g_test_control_drag_mark(XEN snd, XEN chn, XEN mid)
   finish_moving_mark(cp, m);
   x = grf_x((double)(m->samp) / (double)SND_SRATE(cp->sound), cp->axis);
   y = cp->axis->y_axis_y0 + 2;
-  hit_triangle(cp, x, y);
+  hit_mark_triangle(cp, x, y);
   cx = m->samp + 50;
   move_play_mark(cp, &cx, x + 50);
   finish_moving_play_mark(cp);

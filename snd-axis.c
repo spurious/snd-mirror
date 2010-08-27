@@ -509,9 +509,9 @@ static void draw_label(const char *label, int x, int y, int yoff, axis_info *ap,
 #if USE_GTK
   y -= yoff;
 #endif
-  draw_string(ax, x, y, label, mus_strlen(label));
+  draw_string(ax, x - 10, y, label, mus_strlen(label));
   if (printing) 
-    ps_draw_string(ap, x, y, label);
+    ps_draw_string(ap, x - 10, y, label);
 }
 
 

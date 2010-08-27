@@ -67,8 +67,6 @@
 #endif
 #define NUM_BOMBS 15
 
-#define MARK_PLAY_ARROW_SIZE 10
-
 #define PEAK_ENV_CUTOFF 50000
 #define MIN_INIT 1000000.0
 #define MAX_INIT -1000000.0
