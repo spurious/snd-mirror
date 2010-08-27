@@ -49,18 +49,6 @@ echo ' '
 ./snd tools/check-help.scm
 # ./snd generators.scm peak-phases.scm -e "(begin (test-peak-phases) (exit))"
 
-echo ' -------------------------------- s7 r5rs and other defaults changed -------------------------------- '
-make allclean
-sed mus-config.h -e 's/#define WITH_MULTIDIMENSIONAL_VECTORS 1/#define WITH_MULTIDIMENSIONAL_VECTORS 0/' > tmp
-mv tmp mus-config.h
-sed mus-config.h -e 's/#define WITH_R5RS_RATIONALIZE 0/#define WITH_R5RS_RATIONALIZE 1/' > tmp
-mv tmp mus-config.h
-
-./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib" 
-make
-echo ' '
-echo ' '
-
 echo ' -------------------------------- no strftime -------------------------------- '
 
 sed mus-config.h -e 's/#define HAVE_STRFTIME 1/#define HAVE_STRFTIME 0/' > tmp

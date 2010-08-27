@@ -5107,7 +5107,16 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
       if ((selection_is_active_in_channel(cp)) &&
 	  (hit_selection_triangle(cp, x, y)))
 	{
-	  play_selection(IN_BACKGROUND);
+	  if (ss->selection_play_stop)
+	    {
+	      stop_playing_all_sounds(PLAY_BUTTON_UNSET);
+	      reflect_play_selection_stop();
+	    }
+	  else 
+	    {
+	      ss->selection_play_stop = true;
+	      play_selection(IN_BACKGROUND);
+	    }
 	  return;
 	}
       mouse_mark = hit_mark(cp, x, y, key_state);

@@ -427,7 +427,7 @@ typedef struct snd_state {
   print_choice_t print_choice;
   snd_apply_t apply_choice;
   bool gl_has_double_buffer;
-  bool stopped_explicitly, checking_explicitly;
+  bool stopped_explicitly, checking_explicitly, selection_play_stop;
   int reloading_updated_file;
   int init_window_width, init_window_height;
   int init_window_x, init_window_y;

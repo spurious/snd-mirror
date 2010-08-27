@@ -1142,10 +1142,6 @@ char *slist_selection(slist *lst)
  *       superimposed chans flicker a lot
  *       hide controls + listener doesn't
  *       if combined, initial drag of mix does not reflect drag until button release
- *       perhaps add a way to add/delete the center (y) slider
- *       perhaps an x=close icon on the far left of the name box? (use the window decorations?) /usr/share/themes/Simple/metacity-1/*.png (gtk_image_new_from_file)
- *         and save? undo/redo? play as icon (and others?) play-selection et al?
- *       [unite sync(CONNECT|DISCONNECT?) MEDIA_PLAY|STOP LEAVE_FULLSCREEN(REMOVE?)|FULLSCREEN CLOSE || SAVE REDO UNDO if selection: CUT
- *         perhaps a wave icon like Snd's and a spectrum?
  *       mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
+ *       perhaps play triangle with name on top, as in mark or use the mark style entirely?
  */

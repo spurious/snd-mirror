@@ -89,13 +89,6 @@ The configure script has a bunch of arguments:
 
      --with-ladspa             include LADSPA plugin support (default: yes in Linux)
   
-     --with-static-gsl         try to load GSL statically
-                                 GSL is loaded in any case, if it is available, and the
-  			         ISO C99 complex trig support is not available.
-                                 This affects only the Dolph-Chebyshev window.  FFT's 
-                                 are currently handled by FFTW, if it is available, otherwise
-                                 by built-in code.
-  
      --with-snd-as-widget      make Snd a loadable widget, not a standalone program
 
      --with-temp-dir           directory to use for temp files (default: ".")
@@ -105,10 +98,6 @@ The configure script has a bunch of arguments:
      --with-shared-sndlib      try to use libsndlib.so (default: no).  The path to
                                  sndlib-config can be specified via SNDLIB_CONFIG_path.
   			         Normally, sndlib is built into Snd at compile time.
-
-     --without-gsl, --without-fftw 
-                               these turn off the default inclusion of FFTW and the
-                                 possible inclusion of GSL.
 
 
 If the configure/make process fails, please send me
@@ -135,7 +124,7 @@ Version info:
   in Linux, if ALSA, then ALSA 1.0 or later (or any version of OSS)
   if Ruby, Ruby 1.8.0 or later.  
   if Forth, any version
-  if S7, any version
+  if s7, any version
   if GSL, version 0.8 or later
   if gamin, version 0.1.0 or later
 
@@ -230,7 +219,7 @@ Plus many other contributions from
 
 
 In terms of number of lines, the languages used in Snd/Sndlib are:
-C, Scheme, Ruby, Forth, m4, Common Lisp, Emacs Lisp, javascript,
+C, Scheme, Ruby, Forth, m4, Emacs Lisp, javascript,
 Fortran, expect, and postscript (altogether about 700,000 lines).
 
 
@@ -497,17 +486,6 @@ you can find where it occurs by:
 In some cases, if you installed gtk from an RPM file, you
 also need to install gtk-devel.
 
-
-
----- GSL: ----
-
-If configure finds GSL, but Snd refuses to load, giving an error
-about missing gsl_complex_cos (or whatever), you need to get the
-GSL sources and build it again; apparently the version of libgsl.a
-that comes with Redhat 7.0 doesn't include any of the complex
-trig package?  If GSL is used at all (it is only needed if your
-C compiler/libraries don't support complex trig), then Snd needs 
-GSL 0.8 or later.
 
 
 ---- Mac OSX: ---- 

@@ -1718,6 +1718,34 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       /* -------- NAME FIELDS -------- */
 
+#if 0
+      /* looks cluttered */
+      {
+	GtkWidget *close_button, *minmax_button;
+
+	close_button = gtk_button_new();
+	gtk_button_set_relief(GTK_BUTTON(close_button), GTK_RELIEF_NONE);
+	gtk_button_set_image(GTK_BUTTON(close_button), gtk_image_new_from_stock(GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU));
+	gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), close_button, false, false, 2);
+	gtk_widget_show(close_button);
+
+	minmax_button = gtk_button_new();
+	gtk_button_set_relief(GTK_BUTTON(minmax_button), GTK_RELIEF_NONE);
+	gtk_button_set_image(GTK_BUTTON(minmax_button), gtk_image_new_from_stock(GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU));
+	gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), minmax_button, false, false, 2);
+	gtk_widget_show(minmax_button);
+      }
+
+      /* how to close all but the name box? */
+      {
+	GtkWidget *expander;
+	expander = gtk_expander_new("");
+	gtk_expander_set_expanded(GTK_EXPANDER(expander), true);
+	gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), expander, false, false, 2);
+	gtk_widget_show(expander);
+      }
+#endif
+
       NAME_EVENT_BOX(sp) = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), NAME_EVENT_BOX(sp), false, false, 5);
       gtk_widget_show(NAME_EVENT_BOX(sp));

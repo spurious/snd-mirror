@@ -49,7 +49,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-esd            use Enlightened Sound Daemon
 #   --with-no-gui         make Snd without any graphics support
 #   --with-motif-prefix   set location of Motif
-#   --with-static-gsl     statically load GSL
 #   --with-forth          use Forth as the extension language
 #   --with-ruby           use Ruby as the extension language
 #   --with-ruby-prefix    set location of Ruby
@@ -528,17 +527,7 @@ if test "$GSL_CONFIG" = "no" ; then
 else
   GSL_CFLAGS=`$GSL_CONFIG --cflags`
   GSL_PREFIX=`$GSL_CONFIG --prefix`
-
-  if test "$with_static_gsl" = yes ; then
-    AC_CHECK_FILE($GSL_PREFIX/lib/libgsl.a,
-	[GSL_LIBS="$GSL_PREFIX/lib/libgsl.a"],
-	[GSL_LIBS=`$GSL_CONFIG --libs`
-	 with_static_gsl=no
-	 AC_MSG_WARN([can't find libgsl.a])])
-  else
-    GSL_LIBS=`$GSL_CONFIG --libs`
-  fi
-
+  GSL_LIBS=`$GSL_CONFIG --libs`
   gsl_version="`$GSL_CONFIG --version`"
   AC_MSG_RESULT($gsl_version)
   OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gsl"
@@ -546,9 +535,6 @@ else
   if test "`$GSL_CONFIG --version`" = "0.6" || test "`$GSL_CONFIG --version`" = "0.7" || test "`$GSL_CONFIG --version`" = "0.5"; then
     AC_MSG_WARN([Snd needs GSL 0.8 or later])
   else
-    if test "`$GSL_CONFIG --version`" = "0.8" && test "$with_static_gsl" = yes ; then
-      GSL_LIBS="$GSL_LIBS $GSL_PREFIX/lib/libgslcblas.a"
-    fi
     AC_DEFINE(HAVE_GSL)
     AC_DEFINE_UNQUOTED(MUS_GSL_VERSION,"${gsl_version}")
 

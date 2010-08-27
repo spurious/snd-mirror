@@ -137,11 +137,9 @@ static void edit_redo_callback(Widget w, XtPointer info, XtPointer context) {red
 static void edit_menu_update_1(Widget w, XtPointer info, XtPointer context) {edit_menu_update();}
 
 
-static bool selection_play_stop = false;
-
 static void edit_play_callback(Widget w, XtPointer info, XtPointer context) 
 {
-  if (selection_play_stop)
+  if (ss->selection_play_stop)
     {
       stop_playing_all_sounds(PLAY_BUTTON_UNSET);
       reflect_play_selection_stop(); /* if there was an error, stop_playing might not remember to clear this */
@@ -149,7 +147,7 @@ static void edit_play_callback(Widget w, XtPointer info, XtPointer context)
   else
     {
       set_menu_label(edit_play_menu, _("Stop"));
-      selection_play_stop = true;
+      ss->selection_play_stop = true;
       play_selection(IN_BACKGROUND);
     }
 }
@@ -158,7 +156,7 @@ static void edit_play_callback(Widget w, XtPointer info, XtPointer context)
 void reflect_play_selection_stop(void)
 {
   set_menu_label(edit_play_menu, _("Play Selection"));
-  selection_play_stop = false;
+  ss->selection_play_stop = false;
 }
 
 

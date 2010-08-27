@@ -120,12 +120,10 @@ static void edit_select_all_callback(GtkWidget *w, gpointer info) {select_all(cu
 static void edit_undo_callback(GtkWidget *w, gpointer info) {undo_edit_with_sync(current_channel(), 1);}
 static void edit_redo_callback(GtkWidget *w, gpointer info) {redo_edit_with_sync(current_channel(), 1);}
 
-static bool selection_play_stop = false;
-
 
 static void edit_play_callback(GtkWidget *w, gpointer info) 
 {
-  if (selection_play_stop)
+  if (ss->selection_play_stop)
     {
       stop_playing_all_sounds(PLAY_BUTTON_UNSET);
       reflect_play_selection_stop();
@@ -133,7 +131,7 @@ static void edit_play_callback(GtkWidget *w, gpointer info)
   else
     {
       set_menu_label(edit_play_menu, _("Stop"));
-      selection_play_stop = true;
+      ss->selection_play_stop = true;
       play_selection(IN_BACKGROUND);
     }
 }
@@ -142,7 +140,7 @@ static void edit_play_callback(GtkWidget *w, gpointer info)
 void reflect_play_selection_stop(void)
 {
   set_menu_label(edit_play_menu, _("Play Selection"));
-  selection_play_stop = false;
+  ss->selection_play_stop = false;
 }
 
 

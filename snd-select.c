@@ -637,8 +637,9 @@ static void cp_redraw_selection(chan_info *cp)
 		     ap->y_axis_y1,
 		     cp->old_x1 - cp->old_x0,
 		     (int)(ap->y_axis_y0 - ap->y_axis_y1));
+
       if (ap->losamp < beg)
-	show_selection_triangle(cp, ax, x0);
+	show_selection_triangle(cp, ax, cp->old_x0);
     }
 #endif
 

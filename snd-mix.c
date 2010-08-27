@@ -2818,7 +2818,10 @@ static XEN g_set_mix_name(XEN n, XEN val)
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ARG_2, S_setB S_mix_name, "a string");
   id = XEN_MIX_TO_C_INT(n);
   if (mix_exists(id))
-    mix_set_name_from_id(id, (XEN_STRING_P(val) ? XEN_TO_C_STRING(val) : NULL));
+    {
+      mix_set_name_from_id(id, (XEN_STRING_P(val) ? XEN_TO_C_STRING(val) : NULL));
+      update_graph(mix_chan_info_from_id(id));
+    }
   else return(snd_no_such_mix_error(S_setB S_mix_name, n));
   return(val);
 }

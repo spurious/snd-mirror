@@ -459,6 +459,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->sound_sync_max = 0;
   ss->stopped_explicitly = false;     /* C-g sets this flag so that we can interrupt various loops */
   ss->checking_explicitly = false;
+  ss->selection_play_stop = false;
   ss->reloading_updated_file = 0;
   ss->selected_sound = NO_SELECTION;
   ss->sounds = (snd_info **)calloc(ss->max_sounds, sizeof(snd_info *));
