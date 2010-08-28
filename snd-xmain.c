@@ -754,11 +754,7 @@ void snd_doit(int argc, char **argv)
   ss->sash_indent = snd_rs.sash_indent;
   ss->toggle_size = snd_rs.toggle_size;
 
-#ifdef MUS_MAC_OS
-  ss->click_time = XtGetMultiClickTime(dpy);
-#else
-  ss->click_time = (oclock_t)(0.5 * XtGetMultiClickTime(dpy));
-#endif
+  ss->click_time = (oclock_t)XtGetMultiClickTime(dpy);
 
   ss->sgx = (state_context *)calloc(1, sizeof(state_context));
   sx = ss->sgx;

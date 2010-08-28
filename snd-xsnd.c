@@ -18,7 +18,7 @@ enum {W_pane,
       W_filter_label, W_filter_order, W_filter_env, W_filter, W_filter_button, W_filter_dB, W_filter_hz, W_filter_frame,
       W_filter_order_down, W_filter_order_up,
       W_name, W_lock_or_bomb, W_stop_icon, W_info_label, W_info,
-      W_play, W_sync, W_unite,
+      W_play, W_sync, W_unite, W_close,
       W_error_info_box, W_error_info_frame, W_error_info_label,
       NUM_SND_WIDGETS
 };
@@ -43,6 +43,7 @@ Widget w_snd_pane(snd_info *sp)   {return(sp->sgx->snd_widgets[W_pane]);}
 #define SYNC_BUTTON(Sp)          Sp->sgx->snd_widgets[W_sync]
 #define PLAY_BUTTON(Sp)          Sp->sgx->snd_widgets[W_play]
 #define UNITE_BUTTON(Sp)         Sp->sgx->snd_widgets[W_unite]
+#define CLOSE_BUTTON(Sp)         Sp->sgx->snd_widgets[W_close]
 
 #define CONTROLS(Sp)             Sp->sgx->snd_widgets[W_amp_form]
 #define AMP_SCROLLBAR(Sp)        Sp->sgx->snd_widgets[W_amp]
@@ -1273,6 +1274,15 @@ static void unite_button_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
+/* ---------------- CLOSE BUTTON ---------------- */
+
+static void close_button_callback(Widget w, XtPointer context, XtPointer info) 
+{
+  snd_close_file((snd_info *)context);
+}
+
+
+
 static void minibuffer_click_callback(Widget w, XtPointer context, XtPointer info)
 {
   /* can be response to various things */
@@ -1553,6 +1563,7 @@ static unsigned char speed_l_bits1[] = {
 #if HAVE_XPM
 
 static Pixmap mini_lock = 0;
+static Pixmap close_icon = 0;
 static Pixmap blank_pixmap = 0;
 static bool mini_lock_allocated = false;
 static Pixmap bombs[NUM_BOMBS];
@@ -1700,7 +1711,7 @@ static void allocate_icons(Widget w)
   Pixmap shape1, shape2, shape3, shape4; 
   XpmAttributes attributes; 
   XpmColorSymbol symbols[1];
-  int scr, pixerr = XpmSuccess;
+  int scr, k, pixerr = XpmSuccess;
   Display *dp;
   Drawable wn;
 
@@ -1717,37 +1728,34 @@ static void allocate_icons(Widget w)
   attributes.valuemask = XpmColorSymbols | XpmDepth | XpmColormap | XpmVisual;
 
   pixerr = XpmCreatePixmapFromData(dp, wn, (char **)mini_lock_bits(), &mini_lock, &shape1, &attributes);
-  if (pixerr != XpmSuccess) 
+  if (pixerr != XpmSuccess)
     snd_error("lock pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(mini_lock_bits()));
-  else
+
+  pixerr = XpmCreatePixmapFromData(dp, wn, (char **)blank_bits(), &blank_pixmap, &shape1, &attributes);
+  if (pixerr != XpmSuccess) 
+    snd_error("blank pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(blank_bits()));
+
+  pixerr = XpmCreatePixmapFromData(dp, wn, (char **)stop_sign_bits(), &stop_sign, &shape4, &attributes);
+  if (pixerr != XpmSuccess) 
+    snd_error("stop sign pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(stop_sign_bits()));
+
+  pixerr = XpmCreatePixmapFromData(dp, wn, (char **)close_icon_bits(), &close_icon, &shape1, &attributes);
+  if (pixerr != XpmSuccess) 
+    snd_error("stop sign pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(close_icon_bits()));
+
+  for (k = 0; k < NUM_BOMBS; k++)
     {
-      pixerr = XpmCreatePixmapFromData(dp, wn, (char **)blank_bits(), &blank_pixmap, &shape1, &attributes);
+      pixerr = XpmCreatePixmapFromData(dp, wn, (char **)mini_bomb_bits(k), &(bombs[k]), &shape2, &attributes);
       if (pixerr != XpmSuccess) 
-	snd_error("blank pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(blank_bits()));
-      else
 	{
-	  pixerr = XpmCreatePixmapFromData(dp, wn, (char **)stop_sign_bits(), &stop_sign, &shape4, &attributes);
-	  if (pixerr != XpmSuccess) 
-	    snd_error("stop sign pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(stop_sign_bits()));
-	  else
-	    {
-	      int k;
-	      for (k = 0; k < NUM_BOMBS; k++)
-		{
-		  pixerr = XpmCreatePixmapFromData(dp, wn, (char **)mini_bomb_bits(k), &(bombs[k]), &shape2, &attributes);
-		  if (pixerr != XpmSuccess) 
-		    {
-		      snd_error("bomb pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(mini_bomb_bits(k)));
-		      break;
-		    }
-		  pixerr = XpmCreatePixmapFromData(dp, wn, (char **)mini_glass_bits(k), &(hourglasses[k]), &shape3, &attributes);
-		  if (pixerr != XpmSuccess) 
-		    {
-		      snd_error("glass pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(mini_glass_bits(k))); 
-		      break;
-		    }
-		}
-	    }
+	  snd_error("bomb pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(mini_bomb_bits(k)));
+	  break;
+	}
+      pixerr = XpmCreatePixmapFromData(dp, wn, (char **)mini_glass_bits(k), &(hourglasses[k]), &shape3, &attributes);
+      if (pixerr != XpmSuccess) 
+	{
+	  snd_error("glass pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(mini_glass_bits(k))); 
+	  break;
 	}
     }
   mini_lock_allocated = true;
@@ -1799,6 +1807,7 @@ void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color)
   if (!mini_lock_allocated) allocate_icons(MAIN_SHELL(ss));
   change_pixmap_background(MAIN_SHELL(ss), mini_lock, old_color, new_color, 16, 14);
   change_pixmap_background(MAIN_SHELL(ss), blank_pixmap, old_color, new_color, 16, 14);
+  change_pixmap_background(MAIN_SHELL(ss), close_icon, old_color, new_color, 16, 14);
   /* change_pixmap_background(MAIN_SHELL(ss), stop_sign, old_color, new_color, 17, 17); */
   /* memory corruption here! */
   for (i = 0; i < NUM_BOMBS; i++)
@@ -1996,6 +2005,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       
 
       /* -------- sound file name, minibuffer, various buttons -------- */
+
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNpaneMinimum, 20); n++;
@@ -2007,13 +2017,37 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       NAME_BOX(sp) = XtCreateManagedWidget("snd-name-form", xmFormWidgetClass, SND_PANE(sp), args, n);
       XtAddEventHandler(NAME_BOX(sp), KeyPressMask, false, graph_key_press, (XtPointer)sp);
 
+#if HAVE_XPM
+      if (!mini_lock_allocated) 
+	allocate_icons(NAME_BOX(sp));
+#endif
+
+      n = 0;
+      XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
+      XtSetArg(args[n], XmNlabelType, XmPIXMAP); n++;
+      XtSetArg(args[n], XmNlabelPixmap, close_icon); n++;
+      XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
+      XtSetArg(args[n], XmNwidth, 32); n++;
+      XtSetArg(args[n], XmNshadowThickness, 0); n++;
+      XtSetArg(args[n], XmNhighlightThickness, 0); n++;
+      XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
+      CLOSE_BUTTON(sp) = XtCreateManagedWidget("close-button", xmPushButtonWidgetClass, NAME_BOX(sp), args, n);
+      XtAddCallback(CLOSE_BUTTON(sp), XmNactivateCallback, close_button_callback, (XtPointer)sp);
+
       n = 0;      
       s1 = XmStringCreateLocalized(shortname_indexed(sp));
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
-      XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+      /* XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++; */
+
+      XtSetArg(args[n], XmNleftAttachment, XmATTACH_WIDGET); n++;
+      XtSetArg(args[n], XmNleftWidget, CLOSE_BUTTON(sp)); n++;
+
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNlabelString, s1); n++;
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
@@ -2024,10 +2058,6 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtAddCallback(NAME_LABEL(sp), XmNactivateCallback, name_click_callback, (XtPointer)sp);
       XmStringFree(s1);
 
-#if HAVE_XPM
-      if (!mini_lock_allocated) 
-	allocate_icons(NAME_LABEL(sp));
-#endif
       n = 0;      
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;

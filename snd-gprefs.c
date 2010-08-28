@@ -12,7 +12,7 @@ static char *include_load_path = NULL;
 #define POWER_INITIAL_WAIT_TIME ((guint32)500)
 #define ERROR_WAIT_TIME ((guint32)5000)
 
-#if defined(GTK_WIDGET_IS_SENSITIVE)
+#if (!HAVE_GTK_WIDGET_GET_VISIBLE)
   #define Widget_Is_Sensitive(Wid) GTK_WIDGET_SENSITIVE(Wid)
 #else
   #define Widget_Is_Sensitive(Wid) gtk_widget_is_sensitive(Wid)

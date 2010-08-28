@@ -14,7 +14,7 @@
 #include <time.h>
 #include <stdarg.h>
 
-#if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
+#if (HAVE_LIBC_H && (!HAVE_UNISTD_H))
   #include <libc.h>
 #else
   #if (!(defined(_MSC_VER)))

@@ -5049,10 +5049,26 @@ void vf_unpost_info(view_files_info *vdat)
 
 static void view_files_select_callback(Widget w, XtPointer context, XtPointer info) 
 {
+  static oclock_t mouse_down_time = 0;
   XmPushButtonCallbackStruct *cb = (XmPushButtonCallbackStruct *)info;
   XButtonEvent *ev;
   ASSERT_WIDGET_TYPE(XmIsPushButton(w), w);
   ev = (XButtonEvent *)(cb->event);
+
+  /* cb->click_count is always 1 so we can't detect a double-click that way
+   *   ss->click_time has the (very short!) multiclick time
+   */
+
+  if (mouse_down_time != 0)
+    {
+      if ((ev->time - mouse_down_time) < ss->click_time)
+	{
+	  mouse_down_time = ev->time;
+	  view_files_open_selected_files((view_files_info *)(((vf_row *)context)->vdat));
+	  return;
+	}
+    }
+  mouse_down_time = ev->time;
   view_files_select((vf_row *)context, ev->state & snd_ShiftMask);
 }
 

@@ -29,6 +29,31 @@ static const char *mini_lock_xpm[] = {
 const char **mini_lock_bits(void) {return(mini_lock_xpm);}
 
 
+static const char * close_icon_xpm[] = {
+"16 14 5 1",
+"-      c None s None",
+".	c gray50",
+"X	c black",
+"o	c white",
+"O	c yellow",
+"----------------",
+"----------------",
+"----------------",
+"--XX.------XX.--",
+"---XX.----XX.---",
+"----XX.--XX.----",
+"-----XX.XX.-----",
+"------XXX.------",
+"------XXX.------",
+"-----XX.XX.-----",
+"----XX.--XX.----",
+"---XX.----XX.---",
+"--XX.------XX.--",
+"----------------"};
+
+const char **close_icon_bits(void) {return(close_icon_xpm);}
+
+
 static const char *blank_xpm[] = {
 "18 18 5 1",
 "-      c None s None",
@@ -420,6 +445,7 @@ void make_icons_transparent(const char *color)
   if (bg_line) free(bg_line);
   bg_line = mus_format("-      c %s s %s", color, color); /* the background color isn't known at compile time */
   mini_lock_xpm[1] = bg_line;
+  close_icon_xpm[1] = bg_line;
   blank_xpm[1] = bg_line;
   speed_l_xpm[1] = bg_line;
   speed_r_xpm[1] = bg_line;

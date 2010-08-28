@@ -173,6 +173,7 @@ void g_init_gxregion(void);
 const char **mini_bomb_bits(int n);
 const char **mini_glass_bits(int n);
 const char **mini_lock_bits(void);
+const char **close_icon_bits(void);
 const char **snd_icon_bits(void);
 unsigned char *snd_plain_icon_bits(void);
 const char **blank_bits(void);

@@ -143,22 +143,22 @@ static void pprint(const char *str);
 /* the system version of the soundcard header file may have no relation to the current OSS actually loaded */
 /* sys/soundcard.h is usually just a pointer to linux/soundcard.h */
 
-#if (MUS_HAVE_USR_LIB_OSS)
+#if MUS_HAVE_USR_LIB_OSS
   #include "/usr/lib/oss/include/sys/soundcard.h"
 #else
-  #if (MUS_HAVE_USR_LOCAL_LIB_OSS)
+  #if MUS_HAVE_USR_LOCAL_LIB_OSS
     #include "/usr/local/lib/oss/include/sys/soundcard.h"
   #else
-    #if (MUS_HAVE_OPT_OSS)
+    #if MUS_HAVE_OPT_OSS
       #include "/opt/oss/include/sys/soundcard.h"
     #else
-      #if (MUS_HAVE_VAR_LIB_OSS)
+      #if MUS_HAVE_VAR_LIB_OSS
         #include "/var/lib/oss/include/sys/soundcard.h"
       #else
-        #if defined(HAVE_SYS_SOUNDCARD_H) || defined(MUS_LINUX)
+        #if (HAVE_SYS_SOUNDCARD_H || MUS_LINUX)
           #include <sys/soundcard.h>
         #else
-          #if defined(HAVE_MACHINE_SOUNDCARD_H)
+          #if HAVE_MACHINE_SOUNDCARD_H
             #include <machine/soundcard.h>
           #else
             #include <soundcard.h>

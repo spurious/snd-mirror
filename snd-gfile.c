@@ -4353,10 +4353,12 @@ static gboolean vf_mouse_leave_label(GtkWidget *w, GdkEventCrossing *ev, gpointe
 
 
 static int vf_last_select_state = 0;
+static oclock_t mouse_down_time = 0, ev_mouse_down_time = 0;
 
 static gboolean select_event_callback(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
   vf_last_select_state = EVENT_STATE(ev);
+  ev_mouse_down_time = EVENT_TIME(ev);
   return(false);
 }
 
@@ -4511,6 +4513,16 @@ void vf_unpost_info(view_files_info *vdat)
 
 static void view_files_select_callback(GtkWidget *w, gpointer context) 
 {
+  if (mouse_down_time != 0)
+    {
+      if ((ev_mouse_down_time - mouse_down_time) < 200)
+	{
+	  mouse_down_time = ev_mouse_down_time;
+	  view_files_open_selected_files((view_files_info *)(((vf_row *)context)->vdat));
+	  return;
+	}
+    }
+  mouse_down_time = ev_mouse_down_time;
   view_files_select((vf_row *)context, vf_last_select_state & snd_ShiftMask);
 }
 

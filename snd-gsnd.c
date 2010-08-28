@@ -6,7 +6,7 @@
 
 enum {W_pane, W_pane_box, W_control_panel,
       W_name_form, W_name, W_name_event, W_name_pix, W_stop_pix, W_info_label, W_info,
-      W_play, W_sync, W_unite,
+      W_play, W_sync, W_unite, W_close,
       W_amp_form, W_amp_event, W_amp, W_amp_label, W_amp_number, W_amp_sep,
       W_speed_form, W_speed, W_speed_event, W_speed_label, W_speed_label_event, W_speed_number, W_speed_pix,
       W_expand_form, W_expand, W_expand_event, W_expand_label, W_expand_number, W_expand_button,
@@ -37,6 +37,8 @@ GtkWidget *w_snd_pane_box(snd_info *sp) {return(sp->sgx->snd_widgets[W_pane_box]
 #define NAME_BUTTON(Sp)          Sp->sgx->snd_widgets[W_name]
 #define NAME_EVENT_BOX(Sp)       Sp->sgx->snd_widgets[W_name_event]
 #define NAME_SEPARATOR(Sp)       Sp->sgx->snd_widgets[W_amp_sep]
+
+#define CLOSE_BUTTON(Sp)         Sp->sgx->snd_widgets[W_close]
 
 #define MINIBUFFER_LABEL(Sp)     Sp->sgx->snd_widgets[W_info_label]
 #define MINIBUFFER_TEXT(Sp)      Sp->sgx->snd_widgets[W_info]
@@ -1583,7 +1585,10 @@ static void reflect_file_close_in_sync(ss_watcher_reason_t reason, void *ignore)
 }
 
 
-
+static void close_button_callback(GtkWidget *w, gpointer context)
+{
+  snd_close_file((snd_info *)context);
+}
 
 
 /* -------- SOUND PANE -------- */
@@ -1718,33 +1723,13 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       /* -------- NAME FIELDS -------- */
 
-#if 0
-      /* looks cluttered */
-      {
-	GtkWidget *close_button, *minmax_button;
+      CLOSE_BUTTON(sp) = gtk_button_new();
+      gtk_button_set_relief(GTK_BUTTON(CLOSE_BUTTON(sp)), GTK_RELIEF_NONE);
+      gtk_button_set_image(GTK_BUTTON(CLOSE_BUTTON(sp)), gtk_image_new_from_stock(GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU));
+      gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), CLOSE_BUTTON(sp), false, false, 8);
+      SG_SIGNAL_CONNECT(CLOSE_BUTTON(sp), "clicked", close_button_callback, sp);
+      gtk_widget_show(CLOSE_BUTTON(sp));
 
-	close_button = gtk_button_new();
-	gtk_button_set_relief(GTK_BUTTON(close_button), GTK_RELIEF_NONE);
-	gtk_button_set_image(GTK_BUTTON(close_button), gtk_image_new_from_stock(GTK_STOCK_CLOSE, GTK_ICON_SIZE_MENU));
-	gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), close_button, false, false, 2);
-	gtk_widget_show(close_button);
-
-	minmax_button = gtk_button_new();
-	gtk_button_set_relief(GTK_BUTTON(minmax_button), GTK_RELIEF_NONE);
-	gtk_button_set_image(GTK_BUTTON(minmax_button), gtk_image_new_from_stock(GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU));
-	gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), minmax_button, false, false, 2);
-	gtk_widget_show(minmax_button);
-      }
-
-      /* how to close all but the name box? */
-      {
-	GtkWidget *expander;
-	expander = gtk_expander_new("");
-	gtk_expander_set_expanded(GTK_EXPANDER(expander), true);
-	gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), expander, false, false, 2);
-	gtk_widget_show(expander);
-      }
-#endif
 
       NAME_EVENT_BOX(sp) = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), NAME_EVENT_BOX(sp), false, false, 5);
@@ -2229,7 +2214,7 @@ void hide_controls(snd_info *sp)
 
 bool showing_controls(snd_info *sp)
 {
-#if defined(GTK_WIDGET_MAPPED)
+#if (!HAVE_GTK_WIDGET_GET_VISIBLE)
   return((GTK_WIDGET_MAPPED(CONTROL_PANEL(sp))) && 
 	 (widget_is_active(CONTROL_PANEL(sp))));
 #else
