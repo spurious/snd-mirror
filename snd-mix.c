@@ -1638,11 +1638,9 @@ static void draw_mix_tag(mix_info *md, int x, int y)
   md->x = x;
   md->y = y;
 
-  ax = mix_waveform_context(cp);
-  set_foreground_color(ax, md->color); 
-  fill_rectangle(ax, x - width / 2, y - height, width, height);
 
-  /* redraw the mix id underneath the tag */
+  /* redraw the mix id */
+  ax = copy_context(cp);
   set_tiny_numbers_font(cp, ax);
   if (cp->printing) ps_set_tiny_numbers_font();
 
@@ -1653,11 +1651,14 @@ static void draw_mix_tag(mix_info *md, int x, int y)
       lab = (char *)calloc(16, sizeof(char));
       mus_snprintf(lab, 16, "%d", md->id);
     }
-  ax = copy_context(cp);
-  draw_string(ax, x - width / 2, y + height / 2 + STRING_Y_OFFSET, lab, strlen(lab));
-  if (cp->printing) ps_draw_string(cp->axis, x - width / 2, y + height / 2 + STRING_Y_OFFSET, lab);
+  draw_string(ax, x - width / 2, y - height / 2 + STRING_Y_OFFSET, lab, strlen(lab));
+  if (cp->printing) ps_draw_string(cp->axis, x - width / 2, y - height / 2 + STRING_Y_OFFSET, lab);
 
   if (lab) {free(lab); lab = NULL;}
+
+  ax = mix_waveform_context(cp);
+  set_foreground_color(ax, md->color); 
+  fill_rectangle(ax, x - width / 2, y - height + STRING_HEIGHT, width, height);
 }
 
 
@@ -2030,7 +2031,7 @@ static void draw_mix_tag_and_waveform(mix_info *md, mix_state *ms, int x)
     {
       bool two_sided = false;
       int pts;
-      pts = prepare_mix_waveform(md, ms, ap, mix_waveform_height(ss), y, (double)SND_SRATE(cp->sound), &two_sided);
+      pts = prepare_mix_waveform(md, ms, ap, mix_waveform_height(ss), y + STRING_HEIGHT / 2, (double)SND_SRATE(cp->sound), &two_sided);
       if (pts > 0)
 	{
 	  graphics_context *ax;

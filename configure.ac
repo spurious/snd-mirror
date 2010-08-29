@@ -2068,4 +2068,3 @@ AC_MSG_RESULT([
   environs...............: $host $CC
 ])
 
-# TODO: libxm configure changes, cairo version check?
