@@ -116,7 +116,7 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define oclock_t guint32
 
 typedef struct {
-  int x, y; /* PERHAPS: double here? */
+  int x, y;
 } point_t;
 
 #define rgb_t double

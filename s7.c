@@ -546,7 +546,8 @@ struct s7_scheme {
   s7_pointer APPLY, VECTOR, CDR, SET, QQ_VALUES, QQ_LIST, QQ_APPLY, QQ_APPEND, MULTIVECTOR;
   s7_pointer ERROR, WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO;
   s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, SYNTAX_ERROR;
-  s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, __FUNC__, ERROR_HOOK, TRACE_HOOK, UNBOUND_VARIABLE_HOOK;
+  s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, KEY_ALLOW_OTHER_KEYS;
+  s7_pointer __FUNC__, ERROR_HOOK, TRACE_HOOK, UNBOUND_VARIABLE_HOOK;
   s7_pointer FEED_TO;                 /* => */
   s7_pointer OBJECT_SET;              /* applicable object set method */
   s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET;
@@ -14287,7 +14288,8 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 	  for (; is_pair(tmp); tmp = cdr(tmp))
 	    {
 	      if ((car(tmp) == sc->KEY_KEY) ||
-		  (car(tmp) == sc->KEY_OPTIONAL))
+		  (car(tmp) == sc->KEY_OPTIONAL) ||
+		  (car(tmp) == sc->KEY_ALLOW_OTHER_KEYS))
 		opts++;
 	      if (car(tmp) == sc->KEY_REST)
 		{
@@ -18995,6 +18997,16 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
 }
 
 
+static bool memq(s7_scheme *sc, s7_pointer symbol, s7_pointer list)
+{
+  s7_pointer x;
+  for (x = list; is_pair(x); x = cdr(x))
+    if (car(x) == symbol)
+      return(true);
+  return(false);
+}
+
+
 static lstar_err_t prepare_closure_star(s7_scheme *sc)
 {
   /* sc->code is a closure: ((args body) envir)
@@ -19020,12 +19032,15 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
    *   an unknown keyword is seen in a keyword position and there is no rest arg.
    */
 
+  bool allow_other_keys = false;
+
   /* set all default values */
   for (sc->z = closure_args(sc->code); is_pair(sc->z); sc->z = cdr(sc->z))
     {
       /* bind all the args to something (default value or #f or maybe #undefined) */
       if (!((car(sc->z) == sc->KEY_KEY) ||
-	    (car(sc->z) == sc->KEY_OPTIONAL)))
+	    (car(sc->z) == sc->KEY_OPTIONAL) ||
+	    (car(sc->z) == sc->KEY_ALLOW_OTHER_KEYS)))
 	{
 	  if (car(sc->z) == sc->KEY_REST)
 	    {
@@ -19059,20 +19074,22 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
       else
 	{
 	  lstar_err_t err = LSTAR_OK;
-
+	  
 	  if (car(sc->x) == sc->KEY_REST)           /* the rest arg */
 	    {
 	      /* next arg is bound to trailing args from this point as a list */
 	      sc->z = sc->KEY_REST;
 	      sc->x = cdr(sc->x);
-
+	      
 	      if (is_pair(car(sc->x)))
 		err = lambda_star_argument_set_value(sc, caar(sc->x), sc->y);
 	      else err = lambda_star_argument_set_value(sc, car(sc->x), sc->y);
 	      if (err != LSTAR_OK) return(err);
-
+	      
 	      sc->y = cdr(sc->y);
 	      sc->x = cdr(sc->x);
+	      if (car(sc->x) == sc->KEY_ALLOW_OTHER_KEYS)
+		break;
 	    }
 	  else
 	    {
@@ -19080,7 +19097,7 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 		{
 		  char *name;                       /* found a keyword, need to remove the ':' before checking the lambda args */
 		  s7_pointer sym;
-
+		  
 		  name = symbol_name(car(sc->y));
 		  if (name[0] == ':')
 		    sym = s7_make_symbol(sc, (const char *)(name + 1));
@@ -19091,39 +19108,52 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 		      sym = s7_make_symbol(sc, name);
 		      name[symbol_name_length(car(sc->y)) - 1] = ':';
 		    }
-
- 		  if (cdr(sc->y) == sc->NIL)
- 		    err = LSTAR_NO_SUCH_KEY;
+		  
+		  if (cdr(sc->y) == sc->NIL)
+		    err = LSTAR_NO_SUCH_KEY;
 		  err = lambda_star_argument_set_value(sc, sym, car(cdr(sc->y))); /* cdr(sc->y) is the next arg */
-
+		  
 		  if (err == LSTAR_NO_SUCH_KEY)
 		    {
 		      /* if default value is a key, go ahead and use this value.
 		       *    (define* (f (a :b)) a) (f :c) 
 		       * this has become much trickier than I anticipated...
 		       */
-		      if ((is_pair(car(sc->x))) &&
-			  (s7_is_keyword(cadar(sc->x))))
+		      if ((allow_other_keys) ||
+			  (memq(sc, sc->KEY_ALLOW_OTHER_KEYS, sc->x)))
 			{
-			  /* sc->x is the closure args list, not the copy of it in the current environment */
-			  s7_pointer x;
-
-			  x = find_symbol(sc, sc->envir, caar(sc->x));
-			  if (x != sc->NIL)
+			  allow_other_keys = true;
+			  /* in CL: (defun hi (&key (a 1) &allow-other-keys) a) (hi :b :a :a 3) -> 3 
+			   * in s7: (define* (hi (a 1) :allow-other-keys) a)    (hi :b :a :a 3) -> 3
+			   */
+			  sc->y = cddr(sc->y);
+			  continue;
+			}
+		      else
+			{
+			  if ((is_pair(car(sc->x))) &&
+			      (s7_is_keyword(cadar(sc->x))))
 			    {
-			      if (is_not_local(x))
+			      /* sc->x is the closure args list, not the copy of it in the current environment */
+			      s7_pointer x;
+			      
+			      x = find_symbol(sc, sc->envir, caar(sc->x));
+			      if (x != sc->NIL)
 				{
-				  err = LSTAR_OK;
-				  set_local(x);
-				  cdr(x) = car(sc->y);
+				  if (is_not_local(x))
+				    {
+				      err = LSTAR_OK;
+				      set_local(x);
+				      cdr(x) = car(sc->y);
+				    }
+				  else err = LSTAR_ALREADY_SET;
 				}
-			      else err = LSTAR_ALREADY_SET;
+			      /* (define* (f a (b :c)) b) (f :b 1 :d) */
 			    }
-			  /* (define* (f a (b :c)) b) (f :b 1 :d) */
 			}
 		    }
 		  else sc->y = cdr(sc->y);
-
+		  
 		  if (err != LSTAR_OK) return(err);
 		  sc->y = cdr(sc->y);
 		}
@@ -19133,22 +19163,25 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 		    err = lambda_star_argument_set_value(sc, caar(sc->x), car(sc->y));
 		  else err = lambda_star_argument_set_value(sc, car(sc->x), car(sc->y));
 		  if (err != LSTAR_OK) return(err);
-
+		  
 		  sc->y = cdr(sc->y);
 		}
 	      sc->x = cdr(sc->x);
 	    }
 	}
     }
-  
+
   /* check for trailing args with no :rest arg */
   if (sc->y != sc->NIL)
     {
       if ((sc->x == sc->NIL) &&
 	  (is_pair(sc->y)))
 	{
-	  if (sc->z != sc->KEY_REST)
-	    return(LSTAR_TOO_MANY_ARGS);
+	  if (sc->z != sc->KEY_REST) 
+	    {
+	      if (!allow_other_keys)
+		return(LSTAR_TOO_MANY_ARGS);
+	    }
 	} 
       else 
 	{
@@ -20301,7 +20334,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    {
 		      if ((s7_is_constant(car(sc->w))) &&
 			  (car(sc->w) != sc->KEY_KEY) &&
-			  (car(sc->w) != sc->KEY_OPTIONAL))                   /* (lambda* (pi) ...) */
+			  (car(sc->w) != sc->KEY_OPTIONAL) &&
+			  (car(sc->w) != sc->KEY_ALLOW_OTHER_KEYS))           /* (lambda* (pi) ...) */
 			return(eval_error(sc, "lambda* parameter '~A is a constant", car(sc->w)));
 		      if (symbol_is_in_list(sc, car(sc->w), cdr(sc->w)))      /* (lambda* (a a) ...) or (lambda* (a . a) ...) */
 			return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", car(sc->w)));
@@ -26770,6 +26804,9 @@ s7_scheme *s7_init(void)
   sc->KEY_OPTIONAL = s7_make_keyword(sc, "optional");
   typeflag(sc->KEY_OPTIONAL) |= T_DONT_COPY; 
   
+  sc->KEY_ALLOW_OTHER_KEYS = s7_make_keyword(sc, "allow-other-keys");
+  typeflag(sc->KEY_ALLOW_OTHER_KEYS) |= T_DONT_COPY; 
+  
   sc->KEY_REST = s7_make_keyword(sc, "rest");
   typeflag(sc->KEY_REST) |= T_DONT_COPY; 
 
@@ -27326,10 +27363,6 @@ s7_scheme *s7_init(void)
  *   need a way to see what hooks are available, local-hook-function, how to invoke the list.
  *
  * TODO: loading s7test simultaneously in several threads hangs after awhile in join_thread (call/cc?) 
- *
- * TODO: :allow-other-keys in lambda* ("lambda!")
- *       :rest is not ignored, so this is not inconsistent, but do we just ignore these in the arg count?
- *       does the allowed key gobble up the following arg?
  *
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html) [also list-ref/set, frame|mixer etc]
  * PERHAPS: multidimensional hash tables

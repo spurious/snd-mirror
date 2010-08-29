@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.67"
-#define S7_DATE "10-Aug-10"
+#define S7_VERSION "1.68"
+#define S7_DATE "30-Aug-10"
 
 
 typedef long long int s7_Int;
@@ -762,6 +762,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 30-Aug:    :allow-other-keys in define*.
  * 10-Aug:    added boolean argument use_write to s7_object_to_string (true=write, false=display).
  * 30-July:   special macro for access to dynamic binding.
  *            s7_symbol_special_value for C-side access to dynamic bindings.

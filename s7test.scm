@@ -13879,6 +13879,28 @@ why are these different (read-time `#() ? )
   (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :c 1 2 3)) '(#f 2 (3)))
   (test (let () (define* (hi a (b 22) . c) (list a b c)) (hi :b 1 :a 2 3)) '(2 1 (3)))
 
+  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :b :a :a 3)) 3)
+  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :b 3)) 1)
+  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :a 3)) 3)
+  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :a 3)) 3)
+  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi 3)) 3)
+  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi 3 :b 2)) 3)
+  (test (let () (define* (hi (a 1) :allow-other-keys) a) (hi :c 1 :a 3 :b 2)) 3)
+  (test (let () (define* (hi (a 1) :optional :key :allow-other-keys) a) (hi :c 1 :a 3 :b 2)) 3)
+  
+  (test (let () (define* (hi :optional (a 1) :optional (b 2)) a)) 'error)
+  (test (let () (define* (hi :key (a 1) :key (b 2)) a)) 'error)
+  (test (let () (define* (hi :optional (a 1) :key :allow-other-keys) a) (hi :c 1 :a 3 :b 2)) 3)
+  (test (let () (define* (hi :key :optional :allow-other-keys) 1) (hi :c 1 :a 3 :b 2)) 1)
+  (test (let () (define* (hi :key :optional :allow-other-keys) 1) (hi)) 1)
+
+  (test (let () (define* (hi (a 1) :rest c :allow-other-keys) (list a c)) (hi :a 3 :b 2)) '(3 (:b 2)))
+  (test (let () (define* (hi (a 1) :rest c) (list a c)) (hi :a 3 :b 2)) '(3 (:b 2)))
+
+  (test (let () (define* (hi (a 1) (b 2) :allow-other-keys) (list a b)) (hi :c 21 :b 2)) '(1 2))
+  (test (let () (define hi (lambda* ((a 1) (b 2) :allow-other-keys) (list a b))) (hi :c 21 :b 2)) '(1 2))
+  (test (let () (define-macro* (hi (a 1) (b 2) :allow-other-keys) `(list ,a ,b)) (hi :c 21 :b 2)) '(1 2))
+
   (test (let () (define* (f (a :b)) a) (list (f) (f 1) (f :c) (f :a :c) (f :a 1) (f))) '(:b 1 :c :c 1 :b))
   (test (let () (define* (f a (b :c)) b) (f :b 1 :d)) 'error)
   
@@ -13942,6 +13964,7 @@ why are these different (read-time `#() ? )
 
   (test ((lambda* ((b 3) :rest x (c 1)) (list b c x)) 32) '(32 1 ()))
   (test ((lambda* ((b 3) :rest x (c 1)) (list b c x)) 1 2 3 4 5) '(1 3 (2 3 4 5)))
+;; these are in s7.html
   (test ((lambda* ((a 1) :rest b :rest c) (list a b c)) 1 2 3 4 5) '(1 (2 3 4 5) (3 4 5)))
 
   (test (let () (define-macro (hi a a) `(+ ,a 1)) (hi 1 2)) 'error)
