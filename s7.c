@@ -2553,6 +2553,7 @@ static s7_pointer lambda_star_argument_default_value(s7_scheme *sc, s7_pointer v
 	return(cadr(val));
 
       x = sc->z;
+      push_stack(sc, opcode(OP_BARRIER), sc->args, sc->code); 
       push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
       sc->args = sc->NIL;
       sc->code = val;
@@ -2563,7 +2564,7 @@ static s7_pointer lambda_star_argument_default_value(s7_scheme *sc, s7_pointer v
        *   calls, error handling assumes we're using the s7 stack, not the C stack.  So,
        *   we better not get an error while evaluating the argument default value!
        * 
-       * and this segfaults: (call-with-exit (lambda (quit) ((lambda* ((a (quit 32))) a))))
+       * the OP_BARRIER protects against: (call-with-exit (lambda (quit) ((lambda* ((a (quit 32))) a))))
        */
 
       sc->z = x;
@@ -19009,6 +19010,31 @@ static bool memq(s7_scheme *sc, s7_pointer symbol, s7_pointer list)
 }
 
 
+static s7_pointer quotify(s7_scheme *sc, s7_pointer pars)
+{
+  /* the default parameter values of define-macro* and define-bacro* should not be evaluated until
+   * the expansion is evaluated.  That is, 
+   *
+   *   (let ((x 0)) (define-macro* (hi (a (let () (set! x (+ x 1)) x))) `(let ((x -1)) (+ x ,a))) (list (hi) x))
+   *
+   * should return the same value as the equivalent explicit form:
+   *
+   *   (let ((x 0)) (define-macro (hi a) `(let ((x -1)) (+ x ,a))) (list (hi (let () (set! x (+ x 1)) x)) x))
+   *
+   * '(-1 0) in both cases.
+   * But at the point in eval where we handle lambda* arguments, we can't easily tell whether we're part of
+   * a function or a macro, so at definition time of a macro* we scan the parameter list for an expression
+   * as a default value, annd replace it with (quote expr).
+   */
+  s7_pointer tmp;
+  for (tmp = pars; is_pair(tmp); tmp = cdr(tmp))
+    if ((is_pair(car(tmp))) &&
+	(is_pair(cadar(tmp))))
+      cadar(tmp) = make_list_2(sc, sc->QUOTE, cadar(tmp));
+  return(pars);
+}
+
+
 static lstar_err_t prepare_closure_star(s7_scheme *sc)
 {
   /* sc->code is a closure: ((args body) envir)
@@ -20326,7 +20352,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (symbol_is_in_list(sc, caar(sc->w), cdr(sc->w)))         /* (lambda* ((a 1) a) ...) */
 		    return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", caar(sc->w)));
 		  if (!is_pair(cdar(sc->w)))                                  /* (lambda* ((a . 0.0)) a) */
-		    return(eval_error(sc, "lambda* parameter is a dotted pair? '~A", car(sc->w)));
+		    {
+		      if (cdar(sc->w) == sc->NIL)                             /* (lambda* ((a)) ...) */
+			return(eval_error(sc, "lambda* parameter default value missing? '~A", car(sc->w)));
+		      return(eval_error(sc, "lambda* parameter is a dotted pair? '~A", car(sc->w)));
+		    }
 		  if (cddar(sc->w) != sc->NIL)                                /* (lambda* ((a 0.0 "hi")) a) */
 		    return(eval_error(sc, "lambda* parameter has multiple default values? '~A", car(sc->w)));
 		}
@@ -20341,6 +20371,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			return(eval_error(sc, "lambda* parameter '~A is a constant", car(sc->w)));
 		      if (symbol_is_in_list(sc, car(sc->w), cdr(sc->w)))      /* (lambda* (a a) ...) or (lambda* (a . a) ...) */
 			return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", car(sc->w)));
+		    }
+		  else
+		    {
+		      if (!is_pair(cdr(sc->w)))                               /* (lambda* (:rest) ...) */
+			return(eval_error(sc, "lambda* :rest parameter missing? ~A", sc->w));
+		      if (!s7_is_symbol(cadr(sc->w)))                         /* (lambda* (:rest (a 1)) ...) */
+			{
+			  if (!is_pair(cadr(sc->w)))                          /* (lambda* (:rest 1) ...) */
+			    return(eval_error(sc, "lambda* :rest parameter is not a symbol? ~A", sc->w));
+			  return(eval_error(sc, "lambda* :rest parameter can't have a default value. ~A", sc->w));
+			}
 		    }
 		}
 	    }
@@ -21269,15 +21310,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 						     sc->APPLY,
 						     s7_cons(sc, 
 							     s7_cons(sc, 
-								     ((sc->op == OP_DEFINE_MACRO_STAR) || (sc->op == OP_DEFINE_BACRO_STAR)) ? sc->LAMBDA_STAR : sc->LAMBDA,
-								     s7_cons(sc, 
-									     cdar(sc->code), /* arg list */
+								     ((sc->op == OP_DEFINE_MACRO_STAR) || 
+								      (sc->op == OP_DEFINE_BACRO_STAR)) ? sc->LAMBDA_STAR : sc->LAMBDA,
+								     s7_cons(sc,                /* cdar(sc->code) is the parameter list */
+									     ((sc->op == OP_DEFINE_MACRO_STAR) || 
+									      (sc->op == OP_DEFINE_BACRO_STAR)) ? quotify(sc, cdar(sc->code)) : cdar(sc->code),
 									     sc->z)),
 							     make_list_1(sc, make_list_2(sc, sc->CDR, sc->y)))))));
 
       /* (define-macro (hi a b) `(+ ,a ,b)) becomes:
        *   sc->x: hi
-       *   sc->code: (lambda (defmac-22) (apply (lambda (a b) (cons (quote +) (cons a (cons b (quote ()))))) (cdr defmac-22)))
+       *   sc->code: (lambda ({defmac}-14) (apply (lambda (a b) ({list} '+ a b)) (cdr {defmac}-14)))
        */
       push_stack(sc, opcode(OP_MACRO), sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO */
       goto EVAL;
@@ -26680,20 +26723,20 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "or",                OP_OR);
   assign_syntax(sc, "case",              OP_CASE);
   assign_syntax(sc, "do",                OP_DO);
-  assign_syntax(sc, "special",           OP_SPECIAL);
+  assign_syntax(sc, "special",           OP_SPECIAL);          /* dynamic bindings */
   set_immutable(assign_syntax(sc, "with-environment",  OP_WITH_ENV));
 
   assign_syntax(sc, "lambda",            OP_LAMBDA);
-  assign_syntax(sc, "lambda*",           OP_LAMBDA_STAR);
+  assign_syntax(sc, "lambda*",           OP_LAMBDA_STAR);      /* optional, key, rest args */
   assign_syntax(sc, "define",            OP_DEFINE);
   assign_syntax(sc, "define*",           OP_DEFINE_STAR);
-  assign_syntax(sc, "define-constant",   OP_DEFINE_CONSTANT);
+  assign_syntax(sc, "define-constant",   OP_DEFINE_CONSTANT);  /* unsetabble and unrebindable bindings */
   assign_syntax(sc, "defmacro",          OP_DEFMACRO);         /* CL-style macro syntax */
   assign_syntax(sc, "defmacro*",         OP_DEFMACRO_STAR);
   assign_syntax(sc, "define-macro",      OP_DEFINE_MACRO);     /* Scheme-style macro syntax */
   assign_syntax(sc, "define-macro*",     OP_DEFINE_MACRO_STAR); 
   assign_syntax(sc, "define-expansion",  OP_DEFINE_EXPANSION); /* read-time (immediate) macro expansion */
-  assign_syntax(sc, "define-bacro",      OP_DEFINE_BACRO);
+  assign_syntax(sc, "define-bacro",      OP_DEFINE_BACRO);     /* macro expansion in calling environment */
   assign_syntax(sc, "define-bacro*",     OP_DEFINE_BACRO_STAR);
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");
@@ -26719,12 +26762,10 @@ s7_scheme *s7_init(void)
   
   sc->FEED_TO = s7_make_symbol(sc, "=>");
   typeflag(sc->FEED_TO) |= T_DONT_COPY; 
-
   
   #define object_set_name "(generalized set!)"
   sc->OBJECT_SET = s7_make_symbol(sc, object_set_name);   /* will call g_object_set */
   typeflag(sc->OBJECT_SET) |= T_DONT_COPY; 
-
 
   #define s_is_type_name "[?]"                            /* these were "(?)" etc, but the procedure-source needs to be usable */
   sc->S_IS_TYPE = s7_make_symbol(sc, s_is_type_name);
@@ -26741,7 +26782,6 @@ s7_scheme *s7_init(void)
   #define s_type_arg_name "[arg]"
   sc->S_TYPE_ARG = s7_make_symbol(sc, s_type_arg_name);
   typeflag(sc->S_TYPE_ARG) |= T_DONT_COPY;
-
 
   sc->APPLY = s7_make_symbol(sc, "apply");
   typeflag(sc->APPLY) |= T_DONT_COPY; 
