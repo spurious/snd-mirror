@@ -1877,6 +1877,33 @@ it is set:
 (hi) -&gt; "start all done"
 </pre>
 
+
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>
+I wonder if it would be more consistent to use the
+name "procedure/setter" in place of "make-procedure-with-setter".
+Its syntax is closer to
+vector than make-vector, for example.  
+Even better: "dilambda":
+</p>
+
+<pre>
+(define-macro (dilambda getter setter)
+  `(make-procedure-with-setter
+     (lambda ,@getter)
+     (lambda ,@setter)))
+
+(let ((a 32)) 
+  (dilambda (() a) 
+            ((b) (set! a b))))
+</pre>
+
+<p>"bilambda" would mix Latin and Greek since the Romans used "el", not "lambda", according to Wikipedia.
+</p>
+
 </blockquote>
 </small>
 <br>
@@ -3398,29 +3425,17 @@ hi
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<p>Since define* accepts multiple rest arguments, perhaps procedure-arity should return that number,
-rather than a boolean.  I haven't run into a case where it matters.  If procedure-arity is passed
+<p>If procedure-arity is passed
 a procedure-with-setter, it returns 6 values, rather than 3.  The first 3 describe the "getter"
-and the following 3 describe the "setter".  I wonder if it would be more consistent to use the
-name "procedure/setter" in place of "make-procedure-with-setter".
-Its syntax is closer to
-vector than make-vector, for example.  
-Even better: "dilambda":
+and the following 3 describe the "setter".  
 </p>
 
-<pre>
-(define-macro (dilambda getter setter)
-  `(make-procedure-with-setter
-     (lambda ,@getter)
-     (lambda ,@setter)))
-
-(let ((a 32)) 
-  (dilambda (() a) 
-            ((b) (set! a b))))
-</pre>
-
-<p>"bilambda" would mix Latin and Greek since the Romans used "el", not "lambda", according to Wikipedia.
+<p>Since define* accepts multiple rest arguments, perhaps procedure-arity should return that number,
+rather than a boolean.  I haven't run into a case where it matters.  Another odd case: 
+<code>(procedure-arity (lambda* (:allow-other-keys) #f))</code>.  How should we indicate
+this in procedure-arity?
 </p>
+
 
 </blockquote>
 </small>

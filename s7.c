@@ -2562,6 +2562,8 @@ static s7_pointer lambda_star_argument_default_value(s7_scheme *sc, s7_pointer v
        *   of getting the value is only safe for a C-side call like s7_read; for s7-internal
        *   calls, error handling assumes we're using the s7 stack, not the C stack.  So,
        *   we better not get an error while evaluating the argument default value!
+       * 
+       * and this segfaults: (call-with-exit (lambda (quit) ((lambda* ((a (quit 32))) a))))
        */
 
       sc->z = x;
