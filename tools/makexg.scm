@@ -212,7 +212,7 @@
 	"GtkScaleButton*"
 	"GtkPrintOperationResult" "GtkPrintStatus"
 	"GdkEventAny*" "GdkDeviceManager*"
-	"cairo_font_type_t" "cairo_pattern_type_t" "cairo_surface_type_t" "cairo_bool_t"
+	"cairo_font_type_t" "cairo_pattern_type_t" "cairo_surface_type_t"
 	))
 
 (define no-xen-to-c 
@@ -233,7 +233,7 @@
 	"GtkPrintOperationResult" "GtkPrintStatus"
 	"GdkEventAny*" "GdkDeviceManager*"
 	
-	"cairo_surface_type_t" "cairo_pattern_type_t" "cairo_font_type_t" "cairo_bool_t"
+	"cairo_surface_type_t" "cairo_pattern_type_t" "cairo_font_type_t"
 	))
 
 (define (cadr-str data)

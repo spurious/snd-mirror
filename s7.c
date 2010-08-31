@@ -14320,6 +14320,8 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
       (s7_is_continuation(x)))
     return(make_list_3(sc, small_int(0), small_int(0), sc->T));
 
+  /* TODO: why not proc-arity of macros */
+
   return(sc->NIL);
 }
 

@@ -10099,7 +10099,7 @@
 (test (let ((a 1)) (begin (define a 2)) a) 2)
 (test (+ 1 (begin (values 2 3)) 4) 10)
 (test (+ 1 (begin (values 5 6) (values 2 3)) 4) 10)
-
+(test (let ((hi 0)) (begin (values (define (hi b) (+ b 1))) (hi 2))) 3)
 
 
 
@@ -13931,7 +13931,8 @@ why are these different (read-time `#() ? )
   (test ((lambda* (x (y x)) (let ((x 32)) y)) 1) #f)
   (test ((lambda* ((x 1) (y x)) y)) 1)
   (test ((lambda* ((x 1) (y (+ x 1))) y)) 2)
-  (test ((lambda* ((x y) (y x)) y)) 'y)
+  (test ((lambda* ((x y) (y x)) y)) 'y)              ; I'd expect unbound variable or something here
+  (test (let ((z 2)) ((lambda* ((x z) (y x)) y))) 2) ; hmmm
   (test (keyword? ((lambda* ((x :-)) x))) #t)
   (test ((lambda* ((- 0)) -) :- 1) 1)
   (test ((apply lambda* (list (list (list (string->symbol "a") 1)) (string->symbol "a"))) (symbol->keyword (string->symbol "a")) 3) 3)
@@ -13957,6 +13958,14 @@ why are these different (read-time `#() ? )
   (test ((lambda* ((a 1)) a) a: 21) 21)
   (test ((lambda* ((a 1)) a) :a: 21) 'error)
 
+  (test (let () (define (x x) x) (x 1)) 1)
+  (test (procedure? (let () (define* (x (x #t)) x) (x x))) #t)
+  (test (procedure? (let () (define* (x (x x)) x) (x (x x)))) #t)
+  (test (procedure? (let () (define* (x (x x)) x) (x))) #t)
+  (test (apply + ((lambda* ((x (values 1 2 3))) x))) 6)
+  (test ((lambda* ((x (lambda* ((y (+ 1 2))) y))) (x))) 3)
+  ;; (let () (define* (x (x (x))) :optional) (x (x x))) -> segfault infinite loop in prepare_closure_star
+
   (test (let ((x 0)) (define-macro* (hi (a (let () (set! x (+ x 1)) x))) `(+ 1 ,a)) (list (let ((x -1)) (list (hi) x)) x)) '((1 0) 0))
   (test (let ((x 0)) (define-bacro* (hi (a (let () (set! x (+ x 1)) x))) `(+ 1 ,a)) (list (let ((x -1)) (list (hi) x)) x)) '((1 0) 0))
   (test (let ((x 0)) (define-macro* (hi (a (let () (set! x (+ x 1)) x))) `(+ x ,a)) (list (let ((x -1)) (list (hi) x)) x)) '((-1 0) 0))
@@ -13967,6 +13976,8 @@ why are these different (read-time `#() ? )
   (test (let ((x 0)) (define-macro (hi a) `(let ((x -1)) (+ x ,a))) (list (hi (let () (set! x (+ x 1)) x)) x)) '(-1 0))
 
   ;; can we implement bacros via define-macro* default args?
+  ;;  I don't think so -- macro arguments can't be evaluated in that environment because 
+  ;;  only the default values have been set (on the previous parameters).
 
   (test (let () (define* (hi b) b) (procedure? hi)) #t)
   
@@ -14126,6 +14137,8 @@ why are these different (read-time `#() ? )
   (test (string=? (let () (define (hi) "this is a string") (procedure-documentation hi)) "this is a string") #t)
   (test (string=? (let () (define (hi) "this is a string") (hi)) "this is a string") #t)
   (test (string=? (let () (define* (hi (a "a string")) a) (procedure-documentation hi)) "") #t)
+  (test (string=? (let () (define* (hi (a "a string")) "another string" a) (procedure-documentation hi)) "another string") #t)
+  (test (string=? (let () (define (hi a) "hi doc" (define (ho b) "ho doc" b) (ho a)) (procedure-documentation hi)) "hi doc") #t)
   
   (for-each
    (lambda (arg)
