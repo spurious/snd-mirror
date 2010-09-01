@@ -14320,8 +14320,9 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
       (s7_is_continuation(x)))
     return(make_list_3(sc, small_int(0), small_int(0), sc->T));
 
-  /* TODO: why not proc-arity of macros */
-
+  /* it's not straightforward to add support for macros here -- the arity from the
+   *   user's point of view refers to the embedded lambda, not the outer lambda.
+   */
   return(sc->NIL);
 }
 
@@ -19024,14 +19025,18 @@ static s7_pointer quotify(s7_scheme *sc, s7_pointer pars)
    *   (let ((x 0)) (define-macro (hi a) `(let ((x -1)) (+ x ,a))) (list (hi (let () (set! x (+ x 1)) x)) x))
    *
    * '(-1 0) in both cases.
+   *
    * But at the point in eval where we handle lambda* arguments, we can't easily tell whether we're part of
    * a function or a macro, so at definition time of a macro* we scan the parameter list for an expression
    * as a default value, annd replace it with (quote expr).
+   *
+   * and... (define-macro* ((a x)) ...) should behave the same as (define-macro* ((a (+ x 0))) ...)
    */
   s7_pointer tmp;
   for (tmp = pars; is_pair(tmp); tmp = cdr(tmp))
     if ((is_pair(car(tmp))) &&
-	(is_pair(cadar(tmp))))
+	((is_pair(cadar(tmp))) ||
+	 (s7_is_symbol(cadar(tmp)))))
       cadar(tmp) = make_list_2(sc, sc->QUOTE, cadar(tmp));
   return(pars);
 }

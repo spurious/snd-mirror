@@ -375,7 +375,7 @@ void gc_set_background(gc_t *gp, color_info *color)
 }
 
 
-void gc_set_foreground_xor(gc_t *gp, color_info *col1, color_info *col2)
+void gc_set_colors(gc_t *gp, color_info *col1, color_info *col2)
 { 
   gp->fg_color = col1;
   gp->bg_color = col2;
@@ -395,8 +395,8 @@ void color_cursor(color_info *color)
   state_context *sx;
   sx = ss->sgx;
   sx->cursor_color = color;
-  gc_set_foreground_xor(sx->cursor_gc, color, sx->graph_color);
-  gc_set_foreground_xor(sx->selected_cursor_gc, color, sx->selected_graph_color);
+  gc_set_colors(sx->cursor_gc, color, sx->graph_color);
+  gc_set_colors(sx->selected_cursor_gc, color, sx->selected_graph_color);
 }
 
 
@@ -405,8 +405,8 @@ void color_marks(color_info *color)
   state_context *sx;
   sx = ss->sgx;
   sx->mark_color = color;
-  gc_set_foreground_xor(sx->mark_gc, color, sx->graph_color);
-  gc_set_foreground_xor(sx->selected_mark_gc, color, sx->selected_graph_color);
+  gc_set_colors(sx->mark_gc, color, sx->graph_color);
+  gc_set_colors(sx->selected_mark_gc, color, sx->selected_graph_color);
 }
 
 
@@ -415,8 +415,8 @@ void color_selection(color_info *color)
   state_context *sx;
   sx = ss->sgx;
   sx->selection_color = color;
-  gc_set_foreground_xor(sx->selection_gc, color, sx->graph_color);
-  gc_set_foreground_xor(sx->selected_selection_gc, color, sx->selected_graph_color);
+  gc_set_colors(sx->selection_gc, color, sx->graph_color);
+  gc_set_colors(sx->selected_selection_gc, color, sx->selected_graph_color);
 }
 
 
@@ -427,9 +427,9 @@ void color_graph(color_info *color)
   sx->graph_color = color;
   gc_set_background(sx->basic_gc, color);
   gc_set_foreground(sx->erase_gc, color);
-  gc_set_foreground_xor(sx->selection_gc, sx->selection_color, color);
-  gc_set_foreground_xor(sx->cursor_gc, sx->cursor_color, color);
-  gc_set_foreground_xor(sx->mark_gc, sx->mark_color, color);
+  gc_set_colors(sx->selection_gc, sx->selection_color, color);
+  gc_set_colors(sx->cursor_gc, sx->cursor_color, color);
+  gc_set_colors(sx->mark_gc, sx->mark_color, color);
 }
 
 
@@ -440,9 +440,9 @@ void color_selected_graph(color_info *color)
   sx->selected_graph_color = color;
   gc_set_background(sx->selected_basic_gc, color);
   gc_set_foreground(sx->selected_erase_gc, color);
-  gc_set_foreground_xor(sx->selected_selection_gc, sx->selection_color, color);
-  gc_set_foreground_xor(sx->selected_cursor_gc, sx->cursor_color, color);
-  gc_set_foreground_xor(sx->selected_mark_gc, sx->mark_color, color);
+  gc_set_colors(sx->selected_selection_gc, sx->selection_color, color);
+  gc_set_colors(sx->selected_cursor_gc, sx->cursor_color, color);
+  gc_set_colors(sx->selected_mark_gc, sx->mark_color, color);
 }
 
 

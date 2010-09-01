@@ -393,7 +393,7 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define just_sounds(ss) ss->Just_Sounds
 #define set_just_sounds(val) ss->Just_Sounds = val
-#define DEFAULT_JUST_SOUNDS false
+#define DEFAULT_JUST_SOUNDS true
 
 #define DEFAULT_SYNC 0
 #define DEFAULT_INIT_WINDOW_X -1
@@ -600,11 +600,7 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 
 #define color_map(ss) ss->Color_Map
 #define in_set_color_map(a) ss->Color_Map = a
-#if HAVE_GL
-  #define DEFAULT_COLOR_MAP 2
-#else
-  #define DEFAULT_COLOR_MAP 0
-#endif
+#define DEFAULT_COLOR_MAP 2
 
 #define color_map_size(ss) ss->Color_Map_Size
 #define set_color_map_size(a) ss->Color_Map_Size = a

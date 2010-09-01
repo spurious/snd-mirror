@@ -941,7 +941,7 @@
     (if (not (equal? (html-program)  "firefox")) 
 	(snd-display #__line__ ";html-program set def: ~A" (html-program)))
     (set! (just-sounds) (just-sounds))
-    (if (not (equal? (just-sounds)  #f)) 
+    (if (not (equal? (just-sounds)  #t)) 
 	(snd-display #__line__ ";just-sounds set def: ~A" (just-sounds)))
     (set! (listener-prompt) (listener-prompt))
     (if (not (equal? (listener-prompt)  ">" )) 
@@ -1164,7 +1164,7 @@
 
 ;;; ---------------- test 1: defaults ----------------
 
-(define good-colormap (if (provided? 'gl) hot-colormap black-and-white-colormap))
+(define good-colormap hot-colormap)
 (define better-colormap black-and-white-colormap)
 (if with-gui
     (if (not (colormap? good-colormap))
@@ -1274,7 +1274,7 @@
       'grid-density (grid-density) 1.0
       'html-dir (html-dir) "."
       'html-program (html-program) "firefox"
-      'just-sounds (just-sounds) #f
+      'just-sounds (just-sounds) #t
       'ladspa-dir (ladspa-dir) #f 
       'peak-env-dir (peak-env-dir) #f 
       'lisp-graph? (without-errors (lisp-graph?)) 'no-such-sound

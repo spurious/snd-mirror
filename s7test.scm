@@ -290,6 +290,18 @@
 (test (eq? 'a 'a) #t)
 (test (eq? 'a 'b) #f)
 (test (eq? 'a (string->symbol "a")) #t)
+(test (eq? (symbol "a") (string->symbol "a")) #t)
+(test (eq? :a :a) #t)
+(test (eq? ':a 'a) #f)
+(test (eq? ':a ':a) #t)
+(test (eq? :a a:) #f)
+(test (eq? ':a 'a:) #f)
+(test (eq? 'a: 'a:) #t)
+(test (eq? ':a: 'a:) #f)
+(test (eq? 'a (symbol "a")) #t)
+(test (eq? :: '::) #t)
+;(test (eq? ': (symbol->keyword (symbol ""))) #t)
+(test (eq? ':a (symbol->keyword (symbol "a"))) #t) ; but not a:
 (test (eq? '(a) '(b)) #f)
 (test (let ((x '(a . b))) (eq? x x)) #t)
 (test (let ((x (cons 'a 'b))) (eq? x x)) #t)
@@ -318,7 +330,7 @@
 (test (eq? '() (list)) #t)
 
 (test (eq? ''2 '2) #f)
-(test (eq? '2 '2) #t)
+(test (eq? '2 '2) #t) ; unspecified??
 (test (eq? '2 2) #t)
 (test (eq? ''2 ''2) #f)
 (test (eq? ''#\a '#\a) #f)
@@ -370,7 +382,6 @@
       (if (eq? (vector-ref things i) (vector-ref things j))
 	  (format #t "(eq? ~A ~A) -> #t?~%" (vector-ref things i) (vector-ref things j))))))
 
-
 ;;; these are defined at user-level in s7 -- why are other schemes so coy about them?
 (test (eq? (if #f #f) #<unspecified>) #t)
 (test (eof-object? #<eof>) #t)
@@ -380,6 +391,7 @@
 (test (eq? #<unspecified> #<unspecified>) #t)
 (test (eq? #<eof> #<undefined>) #f)
 (test (eq? #<eof> '()) #f)
+
 (test (let () (define-macro (hi a) `(+ 1 ,a)) (eq? hi hi)) #t)
 (test (let () (define (hi a) (+ 1 a)) (eq? hi hi)) #t)
 (test (let ((x (lambda* (hi (a 1)) (+ 1 a)))) (eq? x x)) #t)
@@ -561,6 +573,7 @@
 
 (test (equal? most-positive-fixnum most-positive-fixnum) #t)
 (test (equal? most-positive-fixnum most-negative-fixnum) #f)
+(test (equal? pi pi) #t)
 (test (equal? 9223372036854775807 9223372036854775806) #f)
 (test (equal? 9223372036854775807 -9223372036854775808) #f)
 (test (equal? -9223372036854775808 -9223372036854775808) #t)
@@ -625,6 +638,7 @@
 (test (equal? let letrec) #f)
 (test (equal? define define) #t)
 (test (equal? + ((lambda (a) a) +)) #t)
+(test (let ((x "hi")) (define (hi) x) (equal? (hi) (hi))) #t)
 
 
 
@@ -674,6 +688,7 @@
 (test (not (list 3)) #f)
 (test (not 'nil) #f)
 (test (not not) #f)
+(test (not "") #f)
 
 (for-each
  (lambda (arg)
@@ -9733,6 +9748,8 @@
 
 (test (let ((else 3)) (case 0 ((1) 2) (else 3))) 'error) ; also if else is set!
 (test (let ((else 3)) (case else ((3) else))) 3)
+(test (case 0 ((1) #t) ((2 else 3) #f) ((0) 0)) 0) ; should this be an error? (it isn't in Guile)
+(test (case 0 ((1) #t) ((else) #f) ((0) 0)) 0)
 
 (test (let ((x 0)) (let ((y (case 1 ((2) (set! x (+ x 3))) ((1) (set! x (+ x 4)) (+ x 2))))) (list x y))) '(4 6))
 
@@ -10655,7 +10672,9 @@
 
 (test (let () (begin (define x 1)) x) 1)
 (test (let ((y 1)) (begin (define x 1)) (+ x y)) 2)
-(test (let ((: 0)) (- :)) 0)
+(test (let ((: 0)) (- :)) 0) 
+;; this only works if we haven't called (string->symbol "") making : into a keyword (see aso other cases below)
+;; perhaps I should document this weird case -- don't use : as a variable name
 
 (test ((let ((x 2))
 	 (let ((x 3))
@@ -13736,9 +13755,6 @@ why are these different (read-time `#() ? )
     (if (not (equal? val (list 6)))
 	(format #t "first_even (tagbody, gensym, reverse!) (6): '~A~%" val)))
   
-  
-  
-  
   (let ((hi (lambda* (a) a)))
     (test (hi 1) 1)
     (test (hi) #f)          ; all args are optional
@@ -13958,6 +13974,10 @@ why are these different (read-time `#() ? )
   (test ((lambda* ((a 1)) a) a: 21) 21)
   (test ((lambda* ((a 1)) a) :a: 21) 'error)
 
+  (test (let ((x 3)) (define* (f (x (special x))) x) (let ((x 32)) (f))) 32)
+  (test (let ((x 3)) (define* (f (x x)) x) (let ((x 32)) (f))) 3)
+  (test (let ((x 3)) (define-macro* (f (x x)) `,x) (let ((x 32)) (f))) 32)
+
   (test (let () (define (x x) x) (x 1)) 1)
   (test (procedure? (let () (define* (x (x #t)) x) (x x))) #t)
   (test (procedure? (let () (define* (x (x x)) x) (x (x x)))) #t)
@@ -13978,6 +13998,58 @@ why are these different (read-time `#() ? )
   ;; can we implement bacros via define-macro* default args?
   ;;  I don't think so -- macro arguments can't be evaluated in that environment because 
   ;;  only the default values have been set (on the previous parameters).
+
+  ;; bacro ignores closure in expansion but macro does not:
+  (test (let ((x 1)) (define-macro (ho a) `(+ ,x ,a)) (let ((x 32)) (ho 3))) 4)
+  (test (let ((x 1)) (define-macro (ho a) `(+ x ,a)) (let ((x 32)) (ho 3))) 35)
+  (test (let ((x 1)) (define-bacro (ho a) `(+ ,x ,a)) (let ((x 32)) (ho 3))) 35)
+  (test (let ((x 1)) (define-bacro (ho a) `(+ x ,a)) (let ((x 32)) (ho 3))) 35)
+
+  (test (let ((x 1)) (define-macro* (ho (a x)) `(+ ,x ,a)) (let ((x 32)) (ho))) 33)
+  (test (let ((x 1)) (define-macro* (ho (a x)) `(+ x ,a)) (let ((x 32)) (ho))) 64)
+  (test (let ((x 1)) (define-bacro* (ho (a x)) `(+ x ,a)) (let ((x 32)) (ho))) 64)
+  (test (let ((x 1)) (define-bacro* (ho (a x)) `(+ ,x ,a)) (let ((x 32)) (ho))) 64)
+
+  (test (let ((x 1)) (define-macro* (ho (a (+ x 0))) `(+ ,x ,a)) (let ((x 32)) (ho))) 33)  ;; (+ 32 (+ x 0)) !?! macroexpand is confusing?
+  (test (let ((x 1)) (define-macro* (ho (a (+ x 0))) `(+ x ,a)) (let ((x 32)) (ho))) 64)   ;; (+ x (+ x 0))
+  (test (let ((x 1)) (define-bacro* (ho (a (+ x 0))) `(+ x ,a)) (let ((x 32)) (ho))) 64 )
+  (test (let ((x 1)) (define-bacro* (ho (a (+ x 0))) `(+ ,x ,a)) (let ((x 32)) (ho))) 64 )
+
+  (test (let () (define-macro* (hi :rest a) `(list ,@a)) (hi)) '())
+  (test (let () (define-macro* (hi :rest a) `(list ,@a)) (hi 1)) '(1))
+  (test (let () (define-macro* (hi :rest a) `(list ,@a)) (hi 1 2 3)) '(1 2 3))
+  (test (let () (define-macro* (hi a :rest b) `(list ,a ,@b)) (hi 1 2 3)) '(1 2 3))
+  (test (let () (define-macro* (hi (a 1) :rest b) `(list ,a ,@b)) (hi)) '(1))
+  (test (let () (define-macro* (hi (a 1) :rest b) `(list ,a ,@b)) (hi 2)) '(2))
+  (test (let () (define-macro* (hi (a 1) :rest b) `(list ,a ,@b)) (hi :a 2)) '(2))
+  (test (let () (define-macro* (hi (a 1) :rest b :allow-other-keys) `(list ,a ,@b)) (hi :a 2 :b 3)) '(2 :b 3))
+
+  (test ((lambda* ((a 1) :allow-other-keys) a) :b 1 :a 3) 3)
+  (test (let () (define-macro* (hi (a 1) :allow-other-keys) `(list ,a)) (hi :b 2 :a 3)) '(3))
+  (test ((lambda* ((a 1) :rest b :allow-other-keys) b) :c 1 :a 3) '())
+  (test ((lambda* ((a 1) :rest b :allow-other-keys) b) :b 1 :a 3) 'error) 
+  ;; that is the rest arg is not settable via a keyword and it's an error to try to
+  ;;   do so, even if :allow-other-keys -- ??
+
+  (test (let ((x 1)) (define* (hi (a x)) a) (let ((x 32)) (hi))) 1)
+  (test (let ((x 1)) (define* (hi (a (+ x 0))) a) (let ((x 32)) (hi))) 1)
+  (test (let ((x 1)) (define* (hi (a (+ x "hi"))) a) (let ((x 32)) (hi))) 'error)
+  (test (let ((x 1)) (define-macro* (ho (a (+ x "hi"))) `(+ x ,a)) (let ((x 32)) (ho))) 'error)
+
+  (test ((lambda* ((x (let ()
+			(define-macro (hi a)
+			  `(+ ,a 1))
+			(hi 2))))
+		  (+ x 1)))
+	4)
+  (test (let () 
+	  (define-macro* (hi (x (let ()
+				  (define-macro (hi a)
+				    `(+ ,a 1))
+				  (hi 2))))
+	    `(+ ,x 1)) 
+	  (hi))
+	4)
 
   (test (let () (define* (hi b) b) (procedure? hi)) #t)
   
@@ -14039,7 +14111,7 @@ why are these different (read-time `#() ? )
 
   (test ((lambda* ((b 3) :rest x (c 1)) (list b c x)) 32) '(32 1 ()))
   (test ((lambda* ((b 3) :rest x (c 1)) (list b c x)) 1 2 3 4 5) '(1 3 (2 3 4 5)))
-;; these are in s7.html
+  ;; these are in s7.html
   (test ((lambda* ((a 1) :rest b :rest c) (list a b c)) 1 2 3 4 5) '(1 (2 3 4 5) (3 4 5)))
 
   (test (let () (define-macro (hi a a) `(+ ,a 1)) (hi 1 2)) 'error)
@@ -14081,7 +14153,6 @@ why are these different (read-time `#() ? )
   (test (procedure-arity (make-procedure-with-setter (lambda (a) a) (lambda (a b) a))) '(1 0 #f 2 0 #f))
   (test (procedure-arity (make-procedure-with-setter (lambda (a . b) a) (lambda (a b) a))) '(1 0 #t 2 0 #f))
   (test (procedure-arity (make-procedure-with-setter (lambda* (a :optional b) a) (lambda (a b) a))) '(0 2 #f 2 0 #f))
-
     
   (test (let ((c 1)) 
 	  (define* (a :optional (b c)) b) 
@@ -15819,6 +15890,21 @@ why are these different (read-time `#() ? )
 	(let ((e (global-environment)))
 	  (with-environment e (list? *features*))))
       #t)
+
+(test (let ((e #f)) (let ((x 2) (y 3)) (set! e (current-environment))) (let ((x 0) (y 0)) (with-environment e (+ x y)))) 5)
+(test (let ((e #f)) (let () (define (func a b) (set! e (current-environment)) (+ a b)) (func 1 2)) (with-environment e (+ a b))) 3)
+(test (let ((e #f)
+	    (f #f))
+	(let ()
+	  (define (func a b) 
+	    (set! e (current-environment)) 
+	    (+ a b))
+	  (set! f func)
+	  (func 1 2))
+	(let ((val (with-environment e (+ a b))))
+	  (f 3 4)
+	  (list val (with-environment e (+ a b)))))
+      '(3 7))
 
 (test (with-environment) 'error)
 (test (with-environment 1) 'error)

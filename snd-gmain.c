@@ -199,15 +199,15 @@ static void setup_gcs(void)
 
   sx->cursor_gc = gc_new(wn);
   gc_set_background(sx->cursor_gc, sx->graph_color);
-  gc_set_foreground_xor(sx->cursor_gc, sx->cursor_color, sx->graph_color);
+  gc_set_colors(sx->cursor_gc, sx->cursor_color, sx->graph_color);
 
   sx->selection_gc = gc_new(wn);
   gc_set_background(sx->selection_gc, sx->graph_color);
-  gc_set_foreground_xor(sx->selection_gc, sx->selection_color, sx->graph_color);
+  gc_set_colors(sx->selection_gc, sx->selection_color, sx->graph_color);
 
   sx->mark_gc = gc_new(wn);
   gc_set_background(sx->mark_gc, sx->graph_color);
-  gc_set_foreground_xor(sx->mark_gc, sx->mark_color, sx->graph_color);
+  gc_set_colors(sx->mark_gc, sx->mark_color, sx->graph_color);
 
   sx->erase_gc = gc_new(wn);
   gc_set_background(sx->erase_gc, sx->data_color);
@@ -219,15 +219,15 @@ static void setup_gcs(void)
 
   sx->selected_cursor_gc = gc_new(wn);
   gc_set_background(sx->selected_cursor_gc, sx->graph_color);
-  gc_set_foreground_xor(sx->selected_cursor_gc, sx->cursor_color, sx->graph_color);
+  gc_set_colors(sx->selected_cursor_gc, sx->cursor_color, sx->graph_color);
 
   sx->selected_selection_gc = gc_new(wn);
   gc_set_background(sx->selected_selection_gc, sx->graph_color);
-  gc_set_foreground_xor(sx->selected_selection_gc, sx->selection_color, sx->graph_color);
+  gc_set_colors(sx->selected_selection_gc, sx->selection_color, sx->graph_color);
 
   sx->selected_mark_gc = gc_new(wn);
   gc_set_background(sx->selected_mark_gc, sx->selected_graph_color);
-  gc_set_foreground_xor(sx->selected_mark_gc, sx->mark_color, sx->selected_graph_color);
+  gc_set_colors(sx->selected_mark_gc, sx->mark_color, sx->selected_graph_color);
 
   sx->selected_erase_gc = gc_new(wn);
   gc_set_background(sx->selected_erase_gc, sx->selected_data_color);

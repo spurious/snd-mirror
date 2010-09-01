@@ -984,10 +984,10 @@ Widget start_color_orientation_dialog(bool managed)
 
       XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_CANCEL_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_HELP_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->selection_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_CANCEL_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_HELP_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_OK_BUTTON), XmNarmColor, ss->sgx->selection_color, NULL);
-      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->selection_color, NULL);
+      XtVaSetValues(XmMessageBoxGetChild(ccd_dialog, XmDIALOG_OK_BUTTON), XmNbackground, ss->sgx->highlight_color, NULL);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;

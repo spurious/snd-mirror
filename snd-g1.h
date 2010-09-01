@@ -280,7 +280,7 @@ void goto_window(GtkWidget *text);
 
 void gc_set_foreground(gc_t *gp, color_info *color);
 void gc_set_background(gc_t *gp, color_info *color);
-void gc_set_foreground_xor(gc_t *gp, color_info *col1, color_info *col2);
+void gc_set_colors(gc_t *gp, color_info *col1, color_info *col2);
 gc_t *gc_new(GdkDrawable *wn);
 
 void color_cursor(color_info *color);
