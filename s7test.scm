@@ -229,20 +229,7 @@
 
 (defmacro num-test (tst expected) ;(display tst) (newline)
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
-     (number-ok? ',tst result ,expected)
-     (if with-bignum-function
-	 (letrec ((bigify (lambda (lst)
-			    (if (pair? lst)
-				(cons (if (number? (car lst))
-					  (list 'bignum (number->string (car lst)))
-					  (bigify (car lst)))
-				      (bigify (cdr lst)))
-				lst))))
-	   
-	   (let* ((big-test (bigify ',tst)))
-	     (let ((big-result (catch #t (lambda () (eval big-test)) (lambda args 'error))))
-	       (number-ok? big-test big-result ,expected)))
-	   ))))
+     (number-ok? ',tst result ,expected)))
 
 (define-macro (reinvert n op1 op2 arg)
   (let ((body `(,op2 (,op1 ,arg))))
@@ -3703,7 +3690,7 @@
 (test (length (list quote do map call/cc lambda define if begin set! let let* cond and or for-each)) 15)
 (test (list 1(list 2)) '(1(2)))
 (test (list 1 2 . 3) 'error)
-(test (list 1 2 , 3) 'error)
+;(test (list 1 2 , 3) 'error) ; ,3 -> 3 in the reader now
 (test (list 1 2 ,@ 3) 'error)
 
 
@@ -7895,8 +7882,8 @@
 ;; currently \ -> (), ` -> #<eof> etc -- not sure these matter
 ;(test (keyword? '#:#) #t) ; probably not for long... (Guile compatibility)
 (test (char? #\#) #t)
-(num-test (car `(,.1d0)) .1)
-(num-test (car `(,.1S0)) .1)
+(test (car `(,.1d0)) .1)
+(test (car `(,.1S0)) .1)
 (test (let ((x "hi")) (set! x"asdf") x) "asdf")
 (test (let ((x 1)) (set! x(list 1 2)) x) '(1 2))
 (num-test (let ((x 1)) (set!;"
@@ -12889,12 +12876,12 @@ who says the continuation has to restart the map from the top?
   (test `#(a ,@(list 1 2) ,@(list 1 2)) '#(a 1 2 1 2))
   (test `#(,@(list 1 2) ,@(list 1 2) a) '#(1 2 1 2 a))
   (test `#(,@(list 1 2) ,@(list 1 2) a b) '#(1 2 1 2 a b))
-  (test `(1 `(1 ,2 ,,(+ 1 2)) 1) '(1 `(1 ,2 ,3) 1))
-  (test `(1 `(1 ,,quasi0 ,,quasi1) 1) '(1 `(1 ,99 ,101) 1))
+;  (test `(1 `(1 ,2 ,,(+ 1 2)) 1) '(1 `(1 ,2 ,3) 1))
+;  (test `(1 `(1 ,,quasi0 ,,quasi1) 1) '(1 `(1 ,99 ,101) 1))
   (test `(1 `(1 ,@2 ,@,(list 1 2))) '(1 `(1 ,@2 ,@(1 2))))
   (test `(1 `(1 ,@,quasi2 ,@,quasi3)) '(1 `(1 ,@(a b) ,@(c d))))
   (test `(1 `(1 ,(,@quasi2 x) ,(y ,@quasi3))) '(1 `(1 ,(a b x) ,(y c d))))
-  (test `#(1 `(1 ,2 ,,(+ 1 2)) 1) '#(1 `(1 ,2 ,3) 1))
+;  (test `#(1 `(1 ,2 ,,(+ 1 2)) 1) '#(1 `(1 ,2 ,3) 1))
 ;  (test `#(1 `(1 ,,quasi0 ,,quasi1) 1) '#(1 `(1 ,99 ,101) 1))
   (test `#(1 `(1 ,@2 ,@,(list 1 2))) '#(1 `(1 ,@2 ,@(1 2))))
 ;  (test `#(1 `(1 ,@,quasi2 ,@,quasi3)) '#(1 `(1 ,@(a b) ,@(c d))))
@@ -14204,6 +14191,8 @@ why are these different (read-time `#() ? )
     (set! *trace-hook* (lambda (f args) (set! sum (apply + args))))
     (trace hiho)
     (hiho 2 3 4)
+    (untrace hiho)
+    (set! *trace-hook* '())
     (test sum 9))
 
 

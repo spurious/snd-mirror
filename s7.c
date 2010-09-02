@@ -18136,7 +18136,7 @@ static s7_pointer g_qq_list(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_qq_values(s7_scheme *sc, s7_pointer args)
 {
-#define H_qq_values "(apply {values} arg) is the quasiquote internal form for \",@arg\""
+  #define H_qq_values "(apply {values} arg) is the quasiquote internal form for \",@arg\""
   /* for quasiquote handling: (apply values car(args)) if args not nil, else nil
    *    (values) -> #<unspecified> which is not wanted in this context.
    */
@@ -21778,7 +21778,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     case OP_READ_UNQUOTE:
-      sc->value = make_list_2(sc, sc->UNQUOTE, sc->value);
+      /* here if sc->value is a constant, the unquote is pointless */
+      if ((is_pair(sc->value)) ||
+	  (s7_is_symbol(sc->value)))
+	sc->value = make_list_2(sc, sc->UNQUOTE, sc->value);
       goto START;
       
       
@@ -27492,7 +27495,7 @@ s7_scheme *s7_init(void)
  *
  * s7test valgrind 17-Jul-10: 
  *    intel core duo (1.83G):    3162 (2M)
- *    intel e8400  (3.0G):       2372 (800 DDR2, 6M) (running in 32-bit mode)
+ *    intel e8400  (3.0G):       2372 (800 DDR2, 6M)     2082
  *    intel Q9550 (2.83G):       2184 (6M)
  *    amd opteron 8356 (2.3G):   2181 (.5M)
  *    intel xeon 5530 (2.4G)     2093 (1333 DDR3, 8M)
