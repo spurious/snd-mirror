@@ -298,7 +298,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_ENV2,
 	      OP_FOR_EACH, OP_MAP, OP_BARRIER, OP_DEACTIVATE_GOTO,
-	      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, OP_BACRO, OP_APPLY_WITHOUT_TRACE,
+	      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, OP_BACRO,
 	      OP_LET_UNWIND, OP_SPECIAL, OP_SET_SPECIAL,
 	      OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT4, OP_SORT_TWO,
 	      OP_MAX_DEFINED} opcode_t;
@@ -316,14 +316,14 @@ static const char *op_names[OP_MAX_DEFINED] =
    "do", "do", "do", "do", "define*", "lambda*", 
    "error-quit", "unwind-input", "unwind-output", "trace-return", "error-hook-quit", 
    "trace-hook-quit", "with-environment", "with-environment", "with-environment", "for-each", "map", 
-   "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro", "apply-without-trace", 
+   "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro",
    "let_unwind", "special", "set-special",
    "get-output-string", "sort", "sort", "sort", "sort", "sort", "sort"
 };
 
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 93 max num chars (256) */
+/* this needs to be at least OP_MAX_DEFINED = 92 max num chars (256) */
 /* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -18163,6 +18163,31 @@ static s7_pointer g_qq_values(s7_scheme *sc, s7_pointer args)
  *   in s7 this is an error.  
  */
 
+static bool is_simple_code(s7_scheme *sc, s7_pointer form)
+{
+  s7_pointer tmp;
+  for (tmp = form; is_pair(tmp); tmp = cdr(tmp))
+    if (is_pair(car(tmp)))
+      {
+	if (!is_simple_code(sc, car(tmp)))
+	  return(false);
+      }
+    else
+      {
+	if ((car(tmp) == sc->UNQUOTE) ||
+	    (car(tmp) == sc->UNQUOTE_SPLICING) ||
+	    ((car(tmp) == sc->NIL) && (cdr(tmp) == sc->NIL)))
+	  return(false);
+      }
+  return(tmp == sc->NIL);
+}
+
+/* can we make this simpler?
+ *    (define-macro (hi a) `(+ 1 2 3 ,a)) -> ({list} '+ 1 2 3 a)
+ *    but better would be (args... '(+ 1 2 3) (list a) ...)
+ */
+
+
 static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
 {
   if (!is_pair(form))
@@ -18184,6 +18209,10 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
   /* it's a list, so return the list with each element handled as above.
    *    we try to support dotted lists which makes the code much messier.
    */
+  
+  /* if no element of the list is a list or unquote|unquote_splicing, just return the original quoted */
+  if (is_simple_code(sc, form))
+    return(make_list_2(sc, sc->QUOTE, form));
 
   {
     int len, i, loc;
@@ -18247,6 +18276,7 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
       }
 
     bq = sc->w;
+    /* fprintf(stderr, "qq: %s\n", s7_object_to_c_string(sc, bq)); */
     sc->w = old_scw;
     s7_gc_unprotect_at(sc, loc);
 
@@ -19998,6 +20028,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (*(sc->tracing)) 
 	trace_apply(sc);
 
+    APPLY_WITHOUT_TRACE:
+
       if (sc->stack_end >= sc->stack_resize_trigger)
 	increase_stack_size(sc);
       /* it saves a bit to move this to the push of eval_args1 but I feel safer with it here */
@@ -21430,8 +21462,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_TRACE_HOOK_QUIT:
-      sc->op = OP_APPLY_WITHOUT_TRACE;
-      goto START_WITHOUT_POP_STACK;
+      goto APPLY_WITHOUT_TRACE;
 
       
     case OP_ERROR_HOOK_QUIT:
