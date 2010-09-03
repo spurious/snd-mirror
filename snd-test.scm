@@ -66539,7 +66539,9 @@ EDITS: 1
 			    (lambda args (car args)))))
 	    (if (not (eq? tag 'bad-arity)) (snd-display #__line__ ";edpos proc bad args: ~A" tag)))
 	  
-	  (if (not (sound? ind)) (snd-display #__line__ ";edpos bad arity proc clobbers chan?? ~A" ind))
+	  (if (not (sound? ind)) 
+	      (snd-display #__line__ ";edpos bad arity proc clobbers chan?? ~A" ind)
+	      (close-sound ind))
 	  )
 	
 	(set! env3 #f)
@@ -66858,5 +66860,17 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 10,968,070,604  io.c:mus_write_1 [/home/bil/snd-11/snd]
 10,030,190,974  run.c:eval_ptree [/home/bil/snd-11/snd]
  8,918,483,905  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
+
+2-Sep-10
+280,353,287,468  PROGRAM TOTALS
+39,184,869,101  s7.c:eval [/home/bil/snd-11/snd]
+29,102,379,985  s7.c:eval'2 [/home/bil/snd-11/snd]
+25,317,755,964  snd-edits.c:channel_local_maxamp [/home/bil/snd-11/snd]
+21,143,828,909  io.c:mus_read_any_1 [/home/bil/snd-11/snd]
+15,010,331,809  s7.c:gc [/home/bil/snd-11/snd]
+10,986,910,643  io.c:mus_write_1 [/home/bil/snd-11/snd]
+10,047,515,195  run.c:eval_ptree [/home/bil/snd-11/snd]
+ 8,918,483,905  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
+
 |#
 

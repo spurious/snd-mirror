@@ -31,9 +31,6 @@
 (define our-pi 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930382)
 
 
-;;; TODO: trace and *trace-hook* (all these *...* vars need more complete error checks)
-
-
 ;;; --------------------------------------------------------------------------------
 
 (if (and (defined? 'current-time) ; in Snd
@@ -13435,14 +13432,23 @@ why are these different (read-time `#() ? )
 (test (sort! '(1 2 3)) 'error)
 (test (sort! '(1 2 3) 1) 'error)
 (test (sort! '(1 2 3) < <) 'error)
-(test (sort! (cons 3 2) <) '(3 . 2))
+(test (sort! (cons 3 2) <) 'error)
 (test (sort! (list 1 0+i) <) 'error)
 (test (sort! (list "hi" "ho") <) 'error)
+(test (sort! '(1 2 #t) <) 'error)
+(test (sort! '(1 2 . #t) <) 'error)
 
 (test (sort! (list) <) '())
 (test (sort! (vector) <) #())
 (test (sort! (list #\a) <) '(#\a)) ; I guess this is reasonable
 (test (sort! (list #("hi")) <) '(#("hi")))
+(test (sort! (append (sort! (append (sort! () <) ()) <) ()) <) '())
+(test (sort! (append (sort! (append (sort! '(1 2) <) '(1 2)) <) '(1 2)) <) '(1 1 1 2 2 2))
+(test (let ((lst (list 3 1 12 4 1)))
+      (sort! lst (lambda (a b)
+                   (let ((val (map (lambda (n) (+ n 1)) (list a b))))
+                     (apply < val)))))
+      '(1 1 3 4 12))
 
 (for-each
  (lambda (arg)

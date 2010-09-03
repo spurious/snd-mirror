@@ -301,6 +301,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, OP_BACRO,
 	      OP_LET_UNWIND, OP_SPECIAL, OP_SET_SPECIAL,
 	      OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT4, OP_SORT_TWO,
+	      OP_EVAL_STRING_1, OP_EVAL_STRING_2,
 	      OP_MAX_DEFINED} opcode_t;
 
 static const char *op_names[OP_MAX_DEFINED] = 
@@ -318,12 +319,13 @@ static const char *op_names[OP_MAX_DEFINED] =
    "trace-hook-quit", "with-environment", "with-environment", "with-environment", "for-each", "map", 
    "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro",
    "let_unwind", "special", "set-special",
-   "get-output-string", "sort", "sort", "sort", "sort", "sort", "sort"
+   "get-output-string", "sort", "sort", "sort", "sort", "sort", "sort",
+   "eval-string", "eval-string"
 };
 
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 92 max num chars (256) */
+/* this needs to be at least OP_MAX_DEFINED = 94 max num chars (256) */
 /* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -9758,8 +9760,18 @@ void *s7_port_set_data(s7_pointer port, void *stuff)
 }
 
 
+/* static int pushes = 0; */
+
 static bool push_input_port(s7_scheme *sc, s7_pointer new_port)
 {
+#if 0
+  {
+    int i;
+    for (i = 0; i < pushes; i++) fprintf(stderr, "    ");
+    fprintf(stderr, "push %p\n", new_port);
+    pushes++;
+  }
+#endif
   sc->input_port_stack = s7_cons(sc, sc->input_port, sc->input_port_stack);
   sc->input_port = new_port;
   return(sc->input_port != sc->NIL);
@@ -9768,6 +9780,14 @@ static bool push_input_port(s7_scheme *sc, s7_pointer new_port)
 
 static s7_pointer pop_input_port(s7_scheme *sc)
 {
+#if 0
+  {
+    int i;
+    pushes--;
+    for (i = 0; i < pushes; i++) fprintf(stderr, "    ");
+    fprintf(stderr, "pop %p\n", sc->input_port);
+  }
+#endif
   if (is_pair(sc->input_port_stack))
     {
       sc->input_port = car(sc->input_port_stack);
@@ -10207,37 +10227,6 @@ static s7_pointer eval_string_1(s7_scheme *sc, const char *str)
 }
 
 
-static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
-{
-  #define H_eval_string "(eval-string str :optional env) returns the result of evaluating the string str as Scheme code"
-
-  if (!s7_is_string(car(args)))
-    return(s7_wrong_type_arg_error(sc, "eval-string", 0, car(args), "a string"));
-  
-  if (cdr(args) != sc->NIL)
-    {
-      if (!is_environment(sc, cadr(args)))
-	return(s7_wrong_type_arg_error(sc, "eval-string", 2, cadr(args), "an environment"));
-      sc->envir = cadr(args);
-    }
-
-  /* if we had an independent stack+evaluator here, we wouldn't have to worry
-   *    about an error in eval-string screwing up everything else.  But if we
-   *    clone_s7 (with a reasonable stack size!), how do we make sure it is
-   *    gc protected?  Currently this does the right thing:
-
-     (define t1 (make-thread
-	          (lambda ()
-	            (eval-string "#2d((1 2) #2d((3 4) 5 6))"))))
-     (join-thread t1)
-
-   * so we'd need (with-evaluator ...)?
-   */
-
-  return(eval_string_1(sc, s7_string(car(args))));
-}
-
-
 s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 {
   bool old_longjmp;
@@ -10279,6 +10268,33 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
   sc->envir = old_envir;  
   return(sc->value);
 }
+
+
+static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
+{
+  #define H_eval_string "(eval-string str :optional env) returns the result of evaluating the string str as Scheme code"
+  s7_pointer old_port, port;
+  
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "eval-string", 0, car(args), "a string"));
+  
+  if (cdr(args) != sc->NIL)
+    {
+      if (!is_environment(sc, cadr(args)))
+ 	return(s7_wrong_type_arg_error(sc, "eval-string", 2, cadr(args), "an environment"));
+      sc->envir = cadr(args);
+    }
+  
+  old_port = sc->input_port;
+  port = s7_open_input_string(sc, s7_string(car(args)));
+  push_input_port(sc, port);
+  
+  push_stack(sc, opcode(OP_EVAL_STRING_1), sc->args, sc->code);
+  push_stack(sc, opcode(OP_READ_INTERNAL), sc->NIL, sc->NIL);
+  
+  return(sc->F);
+}
+
 
 
 static s7_pointer call_with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
@@ -13453,7 +13469,11 @@ If its first argument is a list, the list is copied (despite the '!')."
     return(s7_wrong_type_arg_error(sc, "sort!", 2, lessp, "a normal procedure (not a continuation)"));
 
   if (is_pair(data))
-    len = s7_list_length(sc, data); /* nil disposed of above, so 0 here == infinite */
+    {
+      len = s7_list_length(sc, data); /* nil disposed of above, so 0 here == infinite */
+       if (len <= 0)
+ 	return(s7_wrong_type_arg_error(sc, "sort! data,", 1, data, "a proper list"));
+    }
   else 
     {
       if (is_immutable(data))
@@ -18024,7 +18044,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	  return(car(x));
 
 	case OP_LET_UNWIND:
-	case OP_BARRIER:                                         /* (+ 1 (eval-string "(values 2 3)")) */
+	case OP_BARRIER: 
 	  pop_stack(sc);
 	  return(splice_in_values(sc, args));
 
@@ -19421,6 +19441,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *    assume caller (C via g_eval_c_string) is dealing with the string port
        */
     case OP_EVAL_STRING:
+      /* this is the C side s7_eval_c_string. 
+       */
+
       /* (eval-string (string-append "(list 1 2 3)" (string #\newline) (string #\newline))) 
        *    needs to be sure to get rid of the trailing white space before checking for EOF
        *    else it tries to eval twice and gets "attempt to apply 1?, line 2"
@@ -19445,6 +19468,37 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = sc->value;
       goto EVAL;
 
+      
+    case OP_EVAL_STRING_2:
+      s7_close_input_port(sc, sc->input_port);
+      pop_input_port(sc);
+
+      if (is_multiple_value(sc->value))
+	sc->value = splice_in_values(sc, multiple_value(sc->value));
+
+      goto START;
+
+      
+    case OP_EVAL_STRING_1:
+      if ((sc->tok != TOKEN_EOF) && 
+	  (port_string_point(sc->input_port) < port_string_length(sc->input_port))) /* ran past end somehow? */
+	{
+	  int c = 0;
+	  while (isspace(c = port_string(sc->input_port)[port_string_point(sc->input_port)++]))
+	    if (c == '\n')
+	      port_line_number(sc->input_port)++;
+
+	  if ((c != EOF) && (c != 0))
+	    {
+	      backchar(sc, c, sc->input_port);
+	      push_stack(sc, opcode(OP_EVAL_STRING_1), sc->NIL, sc->value);
+	      push_stack(sc, opcode(OP_READ_INTERNAL), sc->NIL, sc->NIL);
+	    }
+	  else push_stack(sc, opcode(OP_EVAL_STRING_2), sc->NIL, sc->NIL);
+	}
+      else push_stack(sc, opcode(OP_EVAL_STRING_2), sc->NIL, sc->NIL);
+      sc->code = sc->value;
+      goto EVAL;
 
 
       /* -------------------- sort! (heapsort, done directly so that call/cc in the sort function will work correctly) -------------------- */
@@ -27493,9 +27547,15 @@ s7_scheme *s7_init(void)
  *   char/any str/any any/list|vector|c-obj 
  *   would we use eq? or equal? (leave that to position-if?  isn't sort backwards now?
  *
+ * things to fix: nonce-symbols need to be garbage collected
+ *                read-errors should be handled just like all others
+ *                sort of dotted/circular list errmsg is bad
+ *                :(string->number "1/0") -> ;make-ratio: division by zero, (1 0)
+ * things to test: eval-string error/jump etc
+ *
  * s7test valgrind 17-Jul-10: 
  *    intel core duo (1.83G):    3162 (2M)
- *    intel e8400  (3.0G):       2372 (800 DDR2, 6M)     2082
+ *    intel e8400  (3.0G):       2372 (800 DDR2, 6M) (running in 32-bit mode)
  *    intel Q9550 (2.83G):       2184 (6M)
  *    amd opteron 8356 (2.3G):   2181 (.5M)
  *    intel xeon 5530 (2.4G)     2093 (1333 DDR3, 8M)
@@ -27503,4 +27563,6 @@ s7_scheme *s7_init(void)
  *    intel i7 930 (2.8G):       2084 (1600 DDR3, 8M)
  *    amd phenom 965 (3.4G):     2083 (800 DDR2, .5M)
  *    intel Q9650 (3.0G)         2081 (800 DDR2, 6M)
+ * same 2-Sep-10: 
+ *    intel e8400:               2082
  */
