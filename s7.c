@@ -1045,6 +1045,7 @@ static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer 
 static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj);
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
 static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect);
+static s7_pointer pop_input_port(s7_scheme *sc);
 
 #if HAVE_PTHREADS
   static bool is_thread(s7_pointer obj);
@@ -3102,6 +3103,11 @@ static void call_with_exit(s7_scheme *sc)
 		eval(sc, OP_APPLY);
 	      }
 	  }
+	  break;
+
+	case OP_EVAL_STRING_2:
+	  s7_close_input_port(sc, sc->input_port);
+	  pop_input_port(sc);
 	  break;
 
 	case OP_BARRIER:                /* oops -- we almost certainly went too far */
@@ -5414,8 +5420,14 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
   /* not real */
   if (slash1)
 #if (!WITH_GMP)
-    return(s7_make_ratio(sc, string_to_integer(q, radix, &overflow), 
-			     string_to_integer(slash1, radix, &overflow)));
+    {
+      s7_Int n, d;
+      n = string_to_integer(q, radix, &overflow);
+      d = string_to_integer(slash1, radix, &overflow);
+      if (d == 0)
+	return(sc->F);
+      return(s7_make_ratio(sc, n, d));
+    }
 #else
     return(string_to_either_ratio(sc, q, slash1, radix));
 #endif
@@ -13357,7 +13369,7 @@ static int traverse_vector_data(s7_scheme *sc, s7_pointer vec, int flat_ref, int
 
 static s7_pointer s7_multivector_error(s7_scheme *sc, const char *message, s7_pointer data)
 {
-  return(s7_error(sc, s7_make_symbol(sc, "read-error"), 
+  return(s7_error(sc, sc->READ_ERROR,
 		  make_list_3(sc, 
 			      make_protected_string(sc, "reading constant vector, ~A: ~A"),
 			      make_protected_string(sc, message),
@@ -13472,7 +13484,8 @@ If its first argument is a list, the list is copied (despite the '!')."
     {
       len = s7_list_length(sc, data); /* nil disposed of above, so 0 here == infinite */
        if (len <= 0)
- 	return(s7_wrong_type_arg_error(sc, "sort! data,", 1, data, "a proper list"));
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+			make_list_2(sc, make_protected_string(sc, "sort! argument 1 should be a proper list: ~S"), data)));
     }
   else 
     {
@@ -17023,6 +17036,11 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  sc->input_port = stack_args(sc->stack, i);         /* "args" = port that we shadowed */
 	  break;
 
+	case OP_EVAL_STRING_2:
+	  s7_close_input_port(sc, sc->input_port);
+	  pop_input_port(sc);
+	  break;
+
 	case OP_BARRIER:
 	  if (is_input_port(stack_args(sc->stack, i)))      /* (eval-string "'(1 .)") */
 	    {
@@ -17337,14 +17355,7 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
       len = snprintf(msg, len, "%s %s[%d]", errmsg, port_filename(pt), port_line_number(pt));
     }
   
-  s7_newline(sc, s7_current_error_port(sc));
-  write_string(sc, msg, s7_current_error_port(sc)); /* make sure we complain ... */
-  s7_newline(sc, s7_current_error_port(sc));
-
-  return(make_list_3(sc, 
-		     s7_symbol_value(sc, sc->ERROR), 
-		     sc->READ_ERROR, 
-		     make_string_uncopied_with_length(sc, msg, len)));
+  return(s7_error(sc, sc->READ_ERROR, make_string_uncopied_with_length(sc, msg, len)));
 }
 
 
@@ -18833,20 +18844,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	     */
 
 	    if (sc->value == sc->NIL)
-	      {
-		s7_pointer result;
-		int len, gc_loc;
-		char *buf;
-		len = 32 + safe_strlen(sc->strbuf);
-		buf = (char *)calloc(len, sizeof(char));
-		snprintf(buf, len, "#%s: undefined sharp expression", sc->strbuf);
-		result = read_error(sc, buf);             /* (list #b) */
-		gc_loc = s7_gc_protect(sc, result);
-		/* read error just makes a list for eventual s7_error */
-		free(buf);
-		s7_gc_unprotect_at(sc, gc_loc);
-		return(result);
-	      }
+	      return(read_error(sc, "undefined # expression"));
 	    return(sc->value);
 	  }
 
@@ -18922,9 +18920,6 @@ static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
   x = unbound_variable(sc, sym);
   if (x != sc->UNDEFINED)
     return(x);
-
-  if (sym == sc->READ_ERROR)
-    return(sym);
 
   return(eval_error(sc, "~A: unbound variable", sym));
 }
@@ -19385,10 +19380,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	case TOKEN_RIGHT_PAREN:
-	  return(read_error(sc, "unexpected close paren"));
+	  read_error(sc, "unexpected close paren");
 
 	case TOKEN_COMMA:
-	  return(read_error(sc, "unexpected comma"));
+	  read_error(sc, "unexpected comma");
 
 	default:
 	  sc->value = read_expression(sc);
@@ -21762,8 +21757,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (token(sc) != TOKEN_RIGHT_PAREN)
 	{
 	  back_up_stack(sc);
-	  sc->value = read_error(sc, "stray dot?");            /* (+ 1 . 2 3) or (list . ) */
-	  goto START_WITHOUT_POP_STACK;
+	  read_error(sc, "stray dot?");            /* (+ 1 . 2 3) or (list . ) */
 	}
       /* args = previously read stuff, value = thing just after the dot and before the ')':
        *   (list 1 2 . 3)
@@ -23284,6 +23278,8 @@ static s7_pointer string_to_either_ratio(s7_scheme *sc, const char *nstr, const 
   if (!overflow)
     {
       d = string_to_integer(dstr, radix, &overflow);
+      if (d == 0)
+	return(sc->F);
       if (!overflow)
 	return(s7_make_ratio(sc, n, d));
     }
@@ -26966,7 +26962,6 @@ s7_scheme *s7_init(void)
 
   (*(sc->gc_off)) = false;
 
-
   /* pws first so that make-procedure-with-setter has a type tag */
   s7_define_function(sc, "make-procedure-with-setter",         g_make_procedure_with_setter,         2, 0, false, H_make_procedure_with_setter);
   s7_define_function(sc, "procedure-with-setter?",             g_is_procedure_with_setter,           1, 0, false, H_is_procedure_with_setter);
@@ -27547,15 +27542,22 @@ s7_scheme *s7_init(void)
  *   char/any str/any any/list|vector|c-obj 
  *   would we use eq? or equal? (leave that to position-if?  isn't sort backwards now?
  *
- * things to fix: nonce-symbols need to be garbage collected
- *                read-errors should be handled just like all others
- *                sort of dotted/circular list errmsg is bad
- *                :(string->number "1/0") -> ;make-ratio: division by zero, (1 0)
- * things to test: eval-string error/jump etc
+ * function equality? 
  *
- * s7test valgrind 17-Jul-10: 
+ (or (eq? f g) ; (eq? abs abs)
+     (and (not (null? (procedure-source f)))
+          (equal? (procedure-source f) (procedure-source g)) 
+          (equal? (procedure-environment f) (procedure-environment g))))
+
+ :(functions-equal? (let ((a 1)) (lambda () a)) (let ((a 1)) (lambda () a)))
+  #t
+
+ *
+ * things to fix: nonce-symbols need to be garbage collected
+ *
+ * s7test valgrind              17-Jul-10              10-Sep-10
  *    intel core duo (1.83G):    3162 (2M)
- *    intel e8400  (3.0G):       2372 (800 DDR2, 6M) (running in 32-bit mode)
+ *    intel e8400  (3.0G):       2372 (800 DDR2, 6M)    2082
  *    intel Q9550 (2.83G):       2184 (6M)
  *    amd opteron 8356 (2.3G):   2181 (.5M)
  *    intel xeon 5530 (2.4G)     2093 (1333 DDR3, 8M)
@@ -27563,6 +27565,4 @@ s7_scheme *s7_init(void)
  *    intel i7 930 (2.8G):       2084 (1600 DDR3, 8M)
  *    amd phenom 965 (3.4G):     2083 (800 DDR2, .5M)
  *    intel Q9650 (3.0G)         2081 (800 DDR2, 6M)
- * same 2-Sep-10: 
- *    intel e8400:               2082
  */

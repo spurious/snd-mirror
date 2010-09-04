@@ -1014,6 +1014,19 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 (define* (profile (file "sort.data"))
   ;; find all functions, write out each one's number of calls, sorted first by calls, then alphabetically 
 
+  (define (where-is func)
+    (let* ((env (procedure-environment func))
+	   (cenv (and (pair? env)
+		      (car env)))
+	   (f (and (pair? cenv)
+		   (assoc '__func__ cenv)))
+	   (addr (and (pair? f)
+		      (cdr f))))
+      (if (not (pair? addr))
+	  ""
+	  (format #f "~A[~D]" (cadr addr) (caddr addr)))))
+
+
   (if (provided? 'profiling)
       (let ((st (symbol-table))
 	    (calls (make-vector 50000 #f))
@@ -1044,4 +1057,4 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 		(do ((i 0 (+ i 1)))
 		    ((= i call))
 		  (let ((c (sorted-calls i)))
-		    (format #t "~A:~40T~A~%" (car c) (cadr c)))))))))))
+		    (format #t "~A:~40T~A~60T~A~%" (car c) (cadr c) (where-is (car c))))))))))))
