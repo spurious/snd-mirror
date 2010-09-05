@@ -530,6 +530,11 @@
 (test (equal? '#(#(1) #(1)) (vector (vector 1) (vector 1))) #t)
 (test (equal? '#(()) (vector '())) #t)
 (test (equal? '#("hi" "ho") (vector "hi" '"ho")) #t)
+(test (equal? `#(1) '#(1)) #t)
+(test (equal? ``#(1) #(1)) #t)
+(test (equal? '`#(1) #(1)) #t)
+(test (equal? ''#(1) #(1)) #f)
+(test (equal? ''#(1) '#(1)) #f)
 (test (equal? (list 1 "hi" #\a) '(1 "hi" #\a)) #t)
 (test (equal? (list 1.0 2/3) '(1.0 2/3)) #t)
 (test (equal? (list 1 2) '(1 2.0)) #f)
@@ -557,6 +562,7 @@
 (test (let () (define-macro (hi a) `(+ 1 ,a)) (equal? hi hi)) #t)
 (test (let () (define (hi a) (+ 1 a)) (equal? hi hi)) #t)
 (test (let ((x (lambda* (hi (a 1)) (+ 1 a)))) (equal? x x)) #t)
+(test (equal? ``"" '"") #t)
 
 (test (equal? most-positive-fixnum most-positive-fixnum) #t)
 (test (equal? most-positive-fixnum most-negative-fixnum) #f)
@@ -4709,6 +4715,12 @@
  (list "hi" -1 0 #\a 'a-symbol '(1 . 2) '(1 2 3) 3.14 3/4 1.0+1.0i #t abs #<eof> #<unspecified> (lambda () 1)))
 (test (vector-dimensions) 'error)
 (test (vector-dimensions #() #()) 'error)
+(test (vector-dimensions #()) '(0))
+(test (vector-dimensions (vector)) '(0))
+(test (vector-dimensions (vector 0)) '(1))
+(test (vector-dimensions (vector-ref #2d((1 2 3) (3 4 5)) 0)) '(3))
+(test (vector-dimensions (vector-ref #3D(((1 2 3) (3 4 5)) ((5 6 1) (7 8 2))) 0)) '(2 3))
+(test (vector-dimensions (vector-ref #3D(((1 2 3) (3 4 5)) ((5 6 1) (7 8 2))) 0 1)) '(3))
   
 (let ((v (make-vector '(2 2))))
   (set! (v 0 0) 1)
@@ -8935,6 +8947,7 @@
 (test (do () ('() '())) '())
 (test (do () ('())) '())
 (test (do () (())) '())
+(test (do) 'error)
 
 (test (let ((x 0) (y 0)) (set! y (do () (#t (set! x 32) 123))) (list x y)) (list 32 123))
 (test (let ((i 32)) (do ((i 0 (+ i 1)) (j i (+ j 1))) ((> j 33) i))) 2)
@@ -9191,6 +9204,8 @@
 (test (do ((i 0 j)) (#t i)) 0) ; guile also -- (do ((i 0 (abs "hi"))) (#t i)) etc (do ((i 0 1)) (#t i) (abs "hi"))
 (test (do ((i 0 1) . (j 0 0)) ((= i 1) i) i) 'error)
 (test (do ((i 0 1) ((j 0 0)) ((= i 1) i)) i) 'error)
+(test (do #f) 'error)
+(test (do () #f) 'error)
 
 (test (define-constant) 'error)
 (test (define-constant _asdf_ 2 3) 'error)
@@ -12277,6 +12292,7 @@ who says the continuation has to restart the map from the top?
 (test (call-with-exit (call-with-exit append)) 'error)
 (test (continuation? (call/cc (call/cc append))) #t)
 (test (procedure? (call-with-exit call-with-exit)) #t)
+(test (vector? (call-with-exit vector)) #t)
 (test (call-with-exit ((lambda args procedure?))) #t)
 (test (call-with-exit (let ((x 3)) (define (return y) (y x)) return)) 3)
 
@@ -12297,7 +12313,7 @@ who says the continuation has to restart the map from the top?
       2)
 
 (test (let ((val (call-with-exit (lambda (ret) (let ((ret1 ret)) (ret1 2) 3))))) val) 2)
-
+(test (call-with-exit (lambda (return) (sort! '(3 2 1) return))) 'error)
 
 
 
@@ -12632,6 +12648,7 @@ who says the continuation has to restart the map from the top?
 (test (call-with-exit (lambda (k) (catch #t k k))) 'error)
 (test (call-with-exit (lambda (k) (catch #t (lambda () #f) k))) #f)
 (test (call-with-exit (lambda (k) (catch #t (lambda () (error 'an-error)) k))) 'error)
+(test (procedure? (call-with-exit (lambda (return) (call-with-exit return)))) #t)
 ;(test (call-with-exit (lambda (k) (sort! '(1 2 3) k))) 'error) -- currently returns (values 2 3) which is plausible
 (test (sort! '(1 2 3) (lambda () #f)) 'error)
 (test (sort! '(1 2 3) (lambda (a) #f)) 'error)
@@ -12754,17 +12771,16 @@ who says the continuation has to restart the map from the top?
 	       (lambda args
 		 'error)))
       'error)
+(test (let ()
+	(catch #t
+	       (lambda ()
+		 (eval-string "(+ 1 #\\a)"))
+	       (lambda args
+		 'oops)))
+      'oops)
 
-#|
-;; these test jump out of current context (OP_BARRIER)
-;; but they end up exiting the load as well 
 (test (let ()
 	(call-with-exit
-	 (lambda (return)
-	   (eval-string "(return 3)"))))
-      3)
-(test (let ()
-	(call/cc
 	 (lambda (return)
 	   (eval-string "(return 3)"))))
       3)
@@ -12772,7 +12788,15 @@ who says the continuation has to restart the map from the top?
 	(call-with-exit
 	 (lambda (return)
 	   (eval-string "(abs (+ 1 (if #t (return 3))))"))))
-      4)
+      3)
+
+#|
+;; this exits the s7test load
+(test (let ()
+	(call/cc
+	 (lambda (return)
+	   (eval-string "(return 3)"))))
+      3)
 |#
 
 
@@ -12889,6 +12913,8 @@ who says the continuation has to restart the map from the top?
   )
 
 (test `#2d((1 ,(* 3 2)) (,@(list 2) 3)) #2D((1 6) (2 3)))
+(test `#3d() #3D())
+(test `#3D((,(list 1 2) (,(+ 1 2) 4)) (,@(list (list 5 6)) (7 8))) #3D(((1 2) (3 4)) ((5 6) (7 8))))
 
 (let ((x 3)
       (y '(a b c)))
@@ -13112,6 +13138,12 @@ why are these different (read-time `#() ? )
 (test `(1 ,@(2 . 3)) 'error)
 (test `(1 ,@(2 3)) 'error)
 (test `(1 , @ (list 2 3)) 'error) ; unbound @ ! (guile also)
+
+(test (call-with-exit quasiquote) 'error)
+(test (call-with-output-string quasiquote) 'error)
+(test (map quasiquote '(1 2 3))  'error)
+(test (for-each quasiquote '(1 2 3))  'error)
+(test (sort! '(1 2 3) quasiquote) 'error)
 
 
 
@@ -13972,6 +14004,9 @@ why are these different (read-time `#() ? )
   (test ((lambda* ((: 1)) :) :: 21) 21)
   (test ((lambda* ((a 1)) a) a: 21) 21)
   (test ((lambda* ((a 1)) a) :a: 21) 'error)
+  (test (let ((func (let ((a 3)) (lambda* ((b (+ a 1))) b)))) (let ((a 21)) (func))) 4)
+  (test (let ((a 21)) (let ((func (lambda* ((b (+ a 1))) b))) (let ((a 3)) (func)))) 22)
+  (test (let ((a 21)) (begin (define-macro* (func (b (+ a 1))) b) (let ((a 3)) (func)))) 4)
 
   (test (let ((x 3)) (define* (f (x (special x))) x) (let ((x 32)) (f))) 32)
   (test (let ((x 3)) (define* (f (x x)) x) (let ((x 32)) (f))) 3)
@@ -14034,6 +14069,14 @@ why are these different (read-time `#() ? )
   (test (let ((x 1)) (define* (hi (a (+ x 0))) a) (let ((x 32)) (hi))) 1)
   (test (let ((x 1)) (define* (hi (a (+ x "hi"))) a) (let ((x 32)) (hi))) 'error)
   (test (let ((x 1)) (define-macro* (ho (a (+ x "hi"))) `(+ x ,a)) (let ((x 32)) (ho))) 'error)
+
+  ;; define-macro* default arg expr does not see definition-time closure:
+  (test (let ((mac #f))
+	  (let ((a 32))
+	    (define-macro* (hi (b (+ a 1))) `(+ ,b 2))
+	    (set! mac hi))
+	  (mac))
+	'error) ; ";a: unbound variable, line 4"
 
   (test ((lambda* ((x (let ()
 			(define-macro (hi a)
@@ -14214,6 +14257,7 @@ why are these different (read-time `#() ? )
    (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '() '#(()) ':hi "hi"))
   
   (test (string=? (let () (define (hi) "this is a string" 1) (procedure-documentation hi)) "this is a string") #t)
+  (test (string=? (let () (define (hi) "this is a string" 1) (help hi)) "this is a string") #t)
   (test (string=? (let () (define (hi) "this is a string") (procedure-documentation hi)) "this is a string") #t)
   (test (string=? (let () (define (hi) "this is a string") (hi)) "this is a string") #t)
   (test (string=? (let () (define* (hi (a "a string")) a) (procedure-documentation hi)) "") #t)
@@ -14377,6 +14421,7 @@ why are these different (read-time `#() ? )
 
   
   (test (string=? (procedure-documentation abs) "(abs x) returns the absolute value of the real number x") #t)
+  (test (string=? (help abs) "(abs x) returns the absolute value of the real number x") #t)
   (test (string=? (procedure-documentation 'abs) "(abs x) returns the absolute value of the real number x") #t)
   (test (let ((hi (lambda (x) "this is a test" (+ x 1)))) 
 	  (list (hi 1) (procedure-documentation hi)))
@@ -14385,7 +14430,8 @@ why are these different (read-time `#() ? )
   
   (for-each
    (lambda (arg)
-     (test (procedure-documentation arg) 'error))
+     (test (procedure-documentation arg) 'error)
+     (test (help arg) 'error))
    (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
   
   (test (let ((hi (lambda (x) (+ x 1)))) (procedure-source hi)) '(lambda (x) (+ x 1)))
@@ -14425,6 +14471,7 @@ why are these different (read-time `#() ? )
 
   (test (make-list) 'error)
   (test (make-list 1 2 3) 'error)
+  (test (let ((lst (make-list 2 (make-list 1 0)))) (eq? (lst 0) (lst 1))) #t)
 
   
   (test (let () (defmacro hiho (a) `(+ ,a 1)) (hiho 3)) 4)
@@ -15689,6 +15736,10 @@ why are these different (read-time `#() ? )
        (test (symbol-access arg) 'error))
      (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() '#(()) (list 1 2 3) '(1 . 2) "hi"))
     
+    (test (symbol-access) 'error)
+    (test (symbol-access '_int_ 2) 'error)
+    (test (symbol-access 'abs) #f)
+    (test (symbol-access 'xyzzy) #f)
     ))
 
 
@@ -15879,8 +15930,10 @@ why are these different (read-time `#() ? )
 (test (augment-environment) 'error)
 (for-each
  (lambda (arg)
-   (test (augment-environment arg '(a . 32)) 'error))
-     (list -1 #\a 1 3.14 3/4 1.0+1.0i "hi"))
+   (test (augment-environment arg '(a . 32)) 'error)
+   (test (augment-environment! arg '(a . 32)) 'error))
+ (list -1 #\a 1 3.14 3/4 1.0+1.0i "hi"))
+
 (let ((e (augment-environment (current-environment)
 			      (cons 'a 32)
 			      (cons 'b 12))))
@@ -15944,7 +15997,6 @@ why are these different (read-time `#() ? )
 	(+ x y))
       126)
 
-(test (augment-environment) 'error)
 (test (augment-environment!) 'error)
 (test (augment-environment 3) 'error)
 (test (augment-environment! 3) 'error)
@@ -16480,6 +16532,18 @@ why are these different (read-time `#() ? )
 (test (let ((x #(0 1 2))) (vector-set! (special x) 0 32) x) #(32 1 2))
 (test (let ((x (list 1 2 3))) (list-set! (special x) 0 32) x) '(32 2 3))
 
+(let ()
+   (define (hi a) (+ a (special !special-var!)))
+   (let ((!special-var! 32))
+     (test (hi 1) 33))
+   (test (hi 1) 'error))
+
+(let ()
+   (define (hi a) (+ a !special-var!))
+   (let ((!special-var! 32))
+     (test (hi 1) 'error))
+   (test (hi 1) 'error))
+
 (for-each
  (lambda (arg)
    (let ((str arg))
@@ -16614,7 +16678,7 @@ why are these different (read-time `#() ? )
       100)
 
 
-;;; -------- miscellaneous (amusements)
+;;; -------- miscellaneous amusements
 
 (test ((number->string -1) 0) #\-)
 (test ((reverse '(1 2)) 0) 2)
@@ -57012,23 +57076,4 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 #xfff8000000000000 nan
 
 but how to build these in scheme?
-
-
-uncalled: help
-          quit (?) gc (?)
-called once: {multivector}
-others:
-quasiquote:                             38 
-constant?:                              37 
-infinite?:                              36 
-vector-dimensions:                      34
-...
-with-output-to-string:                  13                  
-current-input-port:                     12                  
-symbol-access:                          12                  
-initial-environment:                    10                  
-global-environment:                     7                   
-s7-version:                             6 
-augment-environment!:                   4 
-stacktrace:                             2 
 |#

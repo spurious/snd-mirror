@@ -18389,7 +18389,12 @@ static token_t token(s7_scheme *sc)
 	  if ((!char_ok_in_a_name[c]) && (c != 0))
 	    return(TOKEN_DOT);
 	}
-      sc->strbuf[0] = '.'; /* see below */
+      else
+	{
+	  sc->strbuf[0] = '.'; 
+	  return(TOKEN_DOT);
+	}
+      sc->strbuf[0] = '.'; 
       return(TOKEN_ATOM);  /* i.e. something that can start with a dot like a number */
 
     case '\'':
@@ -18439,8 +18444,8 @@ static token_t token(s7_scheme *sc)
 
       if (c == EOF)
 	{
-	  sc->strbuf[0] = '@'; 
-	  return(TOKEN_ATOM);  
+	  sc->strbuf[0] = ',';  /* was '@' which doesn't make any sense */
+	  return(TOKEN_COMMA);  /* was TOKEN_ATOM, which also doesn't seem sensible */
 	}
       backchar(sc, c, pt);
       return(TOKEN_COMMA);
@@ -20116,7 +20121,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_C_MACRO: 	                    /* -------- C-based macro -------- */
 	  {
 	    int len;
-	    sc->args = cdar(sc->args);
+
+	    if (is_pair(car(sc->args)))            /* normally args is ((mac-name ...)) */
+	      sc->args = cdar(sc->args);           /*   but in a case like (call-with-exit quasiquote), args is (#<goto>) */
+	    else eval_error(sc, "~A called as a function, but it's a macro!", sc->code);
+
 	    len = safe_list_length(sc, sc->args);
 
 	    if (len < c_macro_required_args(sc->code))
