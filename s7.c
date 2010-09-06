@@ -13520,6 +13520,9 @@ If its first argument is a list, the list is copied (despite the '!')."
 
   push_stack(sc, opcode(OP_SORT), args, sc->x);
   return(sc->F);
+  
+  /* if the comparison function waffles, sort! can hang: (sort! '(1 2 3) =)
+   */
 }
 
 
@@ -19502,6 +19505,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
       /* -------------------- sort! (heapsort, done directly so that call/cc in the sort function will work correctly) -------------------- */
+
     #define SORT_N vector_element(sc->code, 0)
     #define SORT_K vector_element(sc->code, 1)
     #define SORT_J vector_element(sc->code, 2)
@@ -20123,7 +20127,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    int len;
 
 	    if (is_pair(car(sc->args)))            /* normally args is ((mac-name ...)) */
-	      sc->args = cdar(sc->args);           /*   but in a case like (call-with-exit quasiquote), args is (#<goto>) */
+	      {                                    /*   but in a case like (call-with-exit quasiquote), args is (#<goto>) */
+		if ((cdar(sc->args) != sc->NIL) &&
+		    (!is_pair(cdar(sc->args))))    /* (quasiquote . 1) */
+		  eval_error(sc, "improper list of arguments: ~A", car(sc->args));
+		sc->args = cdar(sc->args);         
+	      }
 	    else eval_error(sc, "~A called as a function, but it's a macro!", sc->code);
 
 	    len = safe_list_length(sc, sc->args);
@@ -20665,7 +20674,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = s7_cons(sc, s7_cons(sc, sc->value, sc->args), sc->code);
 
 
-    case OP_SET:                                                   /* entry for set! */
+    case OP_SET:                                                             /* entry for set! */
       if (!is_pair(sc->code))
 	{
 	  if (sc->code == sc->NIL)                                           /* (set!) */
@@ -20686,10 +20695,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_immutable(car(sc->code)))                                       /* (set! pi 3) */
 	return(eval_error(sc, "set!: can't alter immutable object: ~S", car(sc->code)));
 	  
-      if (is_pair(car(sc->code)))                                 /* has accessor */
+      if (is_pair(car(sc->code)))                                            /* has accessor */
 	{
 	  if (is_pair(caar(sc->code)))
 	    {
+	      if ((cdar(sc->code) != sc->NIL) &&
+		  (!is_pair(cdar(sc->code))))                                /* (set! ('(1 2) . 0) 1) */
+		eval_error(sc, "improper list of args to set!: ~A", sc->code);
 	      push_stack(sc, opcode(OP_SET2), cdar(sc->code), cdr(sc->code));
 	      sc->code = caar(sc->code);
 	      goto EVAL;
@@ -20697,7 +20709,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  if (s7_is_symbol(caar(sc->code)))
 	    sc->x = s7_symbol_value(sc, caar(sc->code));
-	  else sc->x = caar(sc->code);                            /* might be the pws function itself */
+	  else sc->x = caar(sc->code);                                       /* might be the pws function itself */
 	  
 	  /* code here is the accessor and the value without the "set!": ((window-width) 800) */
 	  /*    (set! (hi 0) (* 2 3)) -> ((hi 0) (* 2 3)) */
@@ -20722,6 +20734,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   * (string-set! (symbol->string 'symbol->string) 1 #\X) -> error currently also in Guile "string is read-only"
 	   * (setf (elt (symbol-name 'xyz) 1) #\X) -> error in CL "read-only string"
 	   */
+
+	  if (!is_proper_list(sc, car(sc->code)))                           /* (set! ("hi" . 1) #\a) or (set! (#(1 2) . 1) 0) */
+	    eval_error(sc, "set! target is an improper list: (set! ~A ...)", car(sc->code));
 
 	  switch (type(sc->x))
 	    {
@@ -27556,7 +27571,9 @@ s7_scheme *s7_init(void)
  (or (eq? f g) ; (eq? abs abs)
      (and (not (null? (procedure-source f)))
           (equal? (procedure-source f) (procedure-source g)) 
+          ;; modulo respellings?
           (equal? (procedure-environment f) (procedure-environment g))))
+          ;; or check that every variable in f env is the same in g env
 
  :(functions-equal? (let ((a 1)) (lambda () a)) (let ((a 1)) (lambda () a)))
   #t
@@ -27564,14 +27581,16 @@ s7_scheme *s7_init(void)
  *
  * things to fix: nonce-symbols need to be garbage collected
  *
- * s7test valgrind              17-Jul-10              10-Sep-10
- *    intel core duo (1.83G):    3162 (2M)
- *    intel e8400  (3.0G):       2372 (800 DDR2, 6M)    2082
- *    intel Q9550 (2.83G):       2184 (6M)
- *    amd opteron 8356 (2.3G):   2181 (.5M)
- *    intel xeon 5530 (2.4G)     2093 (1333 DDR3, 8M)
- *    amd phenom 945 (3.0G):     2085 (800 DDR2, .5M)
- *    intel i7 930 (2.8G):       2084 (1600 DDR3, 8M)
- *    amd phenom 965 (3.4G):     2083 (800 DDR2, .5M)
- *    intel Q9650 (3.0G)         2081 (800 DDR2, 6M)
+ * s7test valgrind, time       17-Jul-10   7 -Sep-10
+ *    intel core duo (1.83G):    3162     2690, 1.921
+ *    amd operon 2218 (2.5G):             1859, 1.335
+ *    amd opteron 8356 (2.3G):   2181     1949, 1.201
+ *    intel E6850 (3.0G):                 1952, 1.045
+ *    intel Q9550 (2.83G):       2184     1948, 0.895
+ *    intel e8400  (3.0G):       2372     2082, 0.836
+ *    intel xeon 5530 (2.4G)     2093 
+ *    intel i7 930 (2.8G):       2084 
+ *    amd phenom 945 (3.0G):     2085 
+ *    intel Q9650 (3.0G):        2081 
+ *    amd phenom 965 (3.4G):     2083 
  */

@@ -3574,6 +3574,7 @@
 (test (let ((x (list 1 2))) (list-set! x 0 x) (list? x)) #t)
 (test (let ((x (list 1 2))) (list-set! x 1 x) (list? x)) #t)
 (test (let ((x 2) (lst '(1 2))) (list-set! (let () (set! x 3) lst) 1 23) (list x lst)) '(3 (1 23)))
+(test (apply list-set! '((1 2) (3 2)) 1 '(1 2)) 2)
 
 (test (list-set! '(1 2 3) 1 4) 4)
 (test (set-car! '(1 2) 4) 4)
@@ -9344,6 +9345,37 @@
 (test (set! #<unspecified> 1) 'error)
 (test (let ((x 0)) (define-macro (hi) 'x) (set! (hi) 3) x) 'error)
 
+(test (set! ("hi" . 1) #\a) 'error)
+(test (set! (#(1 2) . 1) 0) 'error)
+(test (set! ((1 . 2)) 3) 'error)
+(test (let ((lst (list 1 2))) (set! (lst . 0) 3) lst) 'error)
+(test (let ((lst (list 1 2))) (set! (list-ref lst . 1) 2)) 'error)
+(test (let ((x 3)) (set! (special . x) 1) x) 'error)
+(test (let ((v #2d((1 2) (3 4)))) (set! (v 0 . 0) 2) v) 'error)
+(test (let ((x 3)) (set! (special x) . 1) x) 'error)
+(test (set! ('(1 2) . 0) 1) 'error)
+(test (set! ('(1 2) 0) 3) 3)
+(test (set! (''(1 . 2)) 3) 'error)
+(test (set! (''(1 2)) 3) 'error)
+(test (set! ('(1 . 2)) 3) 'error)
+(test (set! ('(1 2)) 3) 'error)
+(test (set! (''(1 2) 0 0) 3) 'error)
+(test (set! (#(1 2) 0 0) 3) 'error)
+(test (let ((x 1)) (set! (quasiquote . x) 2) x) 'error)
+(test (let ((x 1)) (set! (quasiquote x) 2) x) 'error)
+(test (set! `,(1) 3) 'error)
+(test (set! (1) 3) 'error)
+(test (set! `,@(1) 3) 'error)
+(test (let ((x 0)) (set! x 1 . 2)) 'error)
+(test (let ((x 0)) (apply set! x '(3))) 'error) ; ;set!: can't alter immutable object: 0
+(test (let ((x 0)) (apply set! 'x '(3)) x) 3)
+(test (set! (#(a 0 (3)) 1) 0) 0)
+(test (set! ('(a 0) 1) 0) 0)
+(test (apply set! (apply list (list ''(1 2 3) 1)) '(32)) 32)
+(let ()
+  (define-macro (symbol-set! var val) `(apply set! ,var (list ,val)))
+  (test (let ((x 32) (y 'x)) (symbol-set! y 123) (list x y)) '(123 x)))
+
 
 
 
@@ -12657,6 +12689,7 @@ who says the continuation has to restart the map from the top?
 (test (let () (let asdf () (sort! '(1 2 3) asdf))) 'error)
 (test (let () (let asdf () (map asdf '(1 2 3)))) 'error)
 (test (let () (let asdf () (for-each asdf '(1 2 3)))) 'error)
+(test (dynamic-wind quasiquote s7-version s7-version) 'error)
 
 (test (let ((ctr 0))
 	(call-with-exit
@@ -13144,6 +13177,8 @@ why are these different (read-time `#() ? )
 (test (map quasiquote '(1 2 3))  'error)
 (test (for-each quasiquote '(1 2 3))  'error)
 (test (sort! '(1 2 3) quasiquote) 'error)
+(test (quasiquote . 1) 'error)
+(test (let ((x 3)) (quasiquote . x)) 'error)
 
 
 
@@ -13400,6 +13435,8 @@ why are these different (read-time `#() ? )
 (test (sort! #(2 4 3 1) <) #(1 2 3 4))
 (test (sort! #(3 4 1 2) <) #(1 2 3 4))
 (test (sort! #(3 2 4 1) <) #(1 2 3 4))
+(test (sort! #(3 1 2 1 4 1) <) #(1 1 1 2 3 4))
+(test (sort! #(1 1 1) <) #(1 1 1))
 (test (sort! #(1 2 3) (lambda (a b) (> a b))) #(3 2 1))
 (test (equal? (sort! (list 3 4 8 2 0 1 5 9 7 6) <) (list 0 1 2 3 4 5 6 7 8 9)) #t)
 (test (equal? (sort! (list 3 4 8 2 0 1 5 9 7 6) (lambda (a b) (< a b))) (list 0 1 2 3 4 5 6 7 8 9)) #t)
@@ -39835,6 +39872,7 @@ why are these different (read-time `#() ? )
 (test (integer? 1.0) #f)
 (test (integer? 1+i) #f)
 (test (integer? most-negative-fixnum) #t)
+(test (integer? 250076005727/500083) #t)
 
 (test (real? 1/2) #t)
 (test (real? 2) #t)
@@ -56372,7 +56410,7 @@ why are these different (read-time `#() ? )
 		     make-string string-length string-ref string-set! string=? string<? string>? string<=?
 		     string>=? string-ci=? string-ci<? string-ci>? string-ci<=? string-ci>=? string-append
 		     string-fill! string-copy substring string list->string string->list object->string ;format
-		     null? list? pair? reverse 
+		     null? list? pair? reverse quasiquote
 					;reverse! sort!
 		     cons car cdr caar cadr cdar cddr
 		     caaar caadr cadar cdaar caddr cdddr cdadr cddar caaaar caaadr caadar cadaar caaddr cadddr
@@ -56616,6 +56654,7 @@ why are these different (read-time `#() ? )
 		(lambda (arg2)
 		  (catch #t
 			 (lambda () 
+			   ;(format #t "~A ~A ~%" arg1 arg2)
 			   (eval (list 'set! (cons arg1 arg2) arg1)))
 			 (lambda args
 			   #f)))

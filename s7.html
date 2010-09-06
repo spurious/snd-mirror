@@ -4336,6 +4336,9 @@ These symbols are not just a silly optimization of string comparison:
 
 &gt; ((lambda (n) (apply n '(((x 1)) (+ x 2)))) let)
 3
+
+&gt; (define-macro (symbol-set! var val) ; use apply instead of define-bacro
+    `(apply set! ,var (list ,val)))
 </pre>
 
 <p>We can snap together program fragments ("look Ma, no macros!"):
