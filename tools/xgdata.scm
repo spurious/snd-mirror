@@ -7313,10 +7313,11 @@
 (CAIRO-FUNC-912 "cairo_status_t cairo_surface_set_mime_data cairo_surface_t* surface char* mime_type guchar* data gulong length cairo_destroy_func_t destroy void* closure" 'const)
 (CAIRO-FUNC-912 "cairo_surface_t* cairo_recording_surface_create cairo_content_t content cairo_rectangle_t* extents")
 (CAIRO-FUNC-912 "void cairo_recording_surface_ink_extents cairo_surface_t* surface double* x0 double* y0 double* width double* height")
-(CAIRO-FUNC-912 "cairo_surface_t* cairo_tee_surface_create cairo_surface_t* master")
-(CAIRO-FUNC-912 "void cairo_tee_surface_add cairo_surface_t* surface cairo_surface_t* target")
-(CAIRO-FUNC-912 "void cairo_tee_surface_remove cairo_surface_t* surface cairo_surface_t* target")
-(CAIRO-FUNC-912 "cairo_surface_t* cairo_tee_surface_index cairo_surface_t* surface int index")
+;;; out in 1.10.0?
+;;; (CAIRO-FUNC-912 "cairo_surface_t* cairo_tee_surface_create cairo_surface_t* master")
+;;; (CAIRO-FUNC-912 "void cairo_tee_surface_add cairo_surface_t* surface cairo_surface_t* target")
+;;; (CAIRO-FUNC-912 "void cairo_tee_surface_remove cairo_surface_t* surface cairo_surface_t* target")
+;;; (CAIRO-FUNC-912 "cairo_surface_t* cairo_tee_surface_index cairo_surface_t* surface int index")
 (CAIRO-FUNC-912 "cairo_region_t* cairo_region_create void")
 (CAIRO-FUNC-912 "cairo_region_t* cairo_region_create_rectangle cairo_rectangle_int_t* rectangle")
 (CAIRO-FUNC-912 "cairo_region_t* cairo_region_create_rectangles cairo_rectangle_int_t* rects int count")
@@ -7341,3 +7342,6 @@
 (CAIRO-FUNC-912 "cairo_status_t cairo_region_xor cairo_region_t* dst cairo_region_t* other")
 (CAIRO-FUNC-912 "cairo_status_t cairo_region_xor_rectangle cairo_region_t* dst cairo_rectangle_int_t* rectangle")
 
+#|
+(CAIRO-INT-110 "CAIRO_SURFACE_TYPE_SUBSURFACE" "cairo_surface_t")
+|#

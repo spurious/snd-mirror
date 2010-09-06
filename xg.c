@@ -33826,40 +33826,6 @@ double* x0, double* y0, double* width, double* height)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_cairo_tee_surface_create(XEN master)
-{
-  #define H_cairo_tee_surface_create "cairo_surface_t* cairo_tee_surface_create(cairo_surface_t* master)"
-  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(master), master, 1, "cairo_tee_surface_create", "cairo_surface_t*");
-  return(C_TO_XEN_cairo_surface_t_(cairo_tee_surface_create(XEN_TO_C_cairo_surface_t_(master))));
-}
-
-static XEN gxg_cairo_tee_surface_add(XEN surface, XEN target)
-{
-  #define H_cairo_tee_surface_add "void cairo_tee_surface_add(cairo_surface_t* surface, cairo_surface_t* target)"
-  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(surface), surface, 1, "cairo_tee_surface_add", "cairo_surface_t*");
-  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(target), target, 2, "cairo_tee_surface_add", "cairo_surface_t*");
-  cairo_tee_surface_add(XEN_TO_C_cairo_surface_t_(surface), XEN_TO_C_cairo_surface_t_(target));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_cairo_tee_surface_remove(XEN surface, XEN target)
-{
-  #define H_cairo_tee_surface_remove "void cairo_tee_surface_remove(cairo_surface_t* surface, cairo_surface_t* target)"
-  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(surface), surface, 1, "cairo_tee_surface_remove", "cairo_surface_t*");
-  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(target), target, 2, "cairo_tee_surface_remove", "cairo_surface_t*");
-  cairo_tee_surface_remove(XEN_TO_C_cairo_surface_t_(surface), XEN_TO_C_cairo_surface_t_(target));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_cairo_tee_surface_index(XEN surface, XEN index)
-{
-  #define H_cairo_tee_surface_index "cairo_surface_t* cairo_tee_surface_index(cairo_surface_t* surface, \
-int index)"
-  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(surface), surface, 1, "cairo_tee_surface_index", "cairo_surface_t*");
-  XEN_ASSERT_TYPE(XEN_int_P(index), index, 2, "cairo_tee_surface_index", "int");
-  return(C_TO_XEN_cairo_surface_t_(cairo_tee_surface_index(XEN_TO_C_cairo_surface_t_(surface), XEN_TO_C_int(index))));
-}
-
 static XEN gxg_cairo_region_create(void)
 {
   #define H_cairo_region_create "cairo_region_t* cairo_region_create( void)"
@@ -38354,10 +38320,6 @@ XEN_ARGIFY_4(gxg_cairo_surface_get_mime_data_w, gxg_cairo_surface_get_mime_data)
 XEN_NARGIFY_6(gxg_cairo_surface_set_mime_data_w, gxg_cairo_surface_set_mime_data)
 XEN_NARGIFY_2(gxg_cairo_recording_surface_create_w, gxg_cairo_recording_surface_create)
 XEN_NARGIFY_5(gxg_cairo_recording_surface_ink_extents_w, gxg_cairo_recording_surface_ink_extents)
-XEN_NARGIFY_1(gxg_cairo_tee_surface_create_w, gxg_cairo_tee_surface_create)
-XEN_NARGIFY_2(gxg_cairo_tee_surface_add_w, gxg_cairo_tee_surface_add)
-XEN_NARGIFY_2(gxg_cairo_tee_surface_remove_w, gxg_cairo_tee_surface_remove)
-XEN_NARGIFY_2(gxg_cairo_tee_surface_index_w, gxg_cairo_tee_surface_index)
 XEN_NARGIFY_0(gxg_cairo_region_create_w, gxg_cairo_region_create)
 XEN_NARGIFY_1(gxg_cairo_region_create_rectangle_w, gxg_cairo_region_create_rectangle)
 XEN_NARGIFY_2(gxg_cairo_region_create_rectangles_w, gxg_cairo_region_create_rectangles)
@@ -42287,10 +42249,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_cairo_surface_set_mime_data_w gxg_cairo_surface_set_mime_data
 #define gxg_cairo_recording_surface_create_w gxg_cairo_recording_surface_create
 #define gxg_cairo_recording_surface_ink_extents_w gxg_cairo_recording_surface_ink_extents
-#define gxg_cairo_tee_surface_create_w gxg_cairo_tee_surface_create
-#define gxg_cairo_tee_surface_add_w gxg_cairo_tee_surface_add
-#define gxg_cairo_tee_surface_remove_w gxg_cairo_tee_surface_remove
-#define gxg_cairo_tee_surface_index_w gxg_cairo_tee_surface_index
 #define gxg_cairo_region_create_w gxg_cairo_region_create
 #define gxg_cairo_region_create_rectangle_w gxg_cairo_region_create_rectangle
 #define gxg_cairo_region_create_rectangles_w gxg_cairo_region_create_rectangles
@@ -46227,10 +46185,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(cairo_surface_set_mime_data, gxg_cairo_surface_set_mime_data_w, 6, 0, 0, H_cairo_surface_set_mime_data);
   XG_DEFINE_PROCEDURE(cairo_recording_surface_create, gxg_cairo_recording_surface_create_w, 2, 0, 0, H_cairo_recording_surface_create);
   XG_DEFINE_PROCEDURE(cairo_recording_surface_ink_extents, gxg_cairo_recording_surface_ink_extents_w, 5, 0, 0, H_cairo_recording_surface_ink_extents);
-  XG_DEFINE_PROCEDURE(cairo_tee_surface_create, gxg_cairo_tee_surface_create_w, 1, 0, 0, H_cairo_tee_surface_create);
-  XG_DEFINE_PROCEDURE(cairo_tee_surface_add, gxg_cairo_tee_surface_add_w, 2, 0, 0, H_cairo_tee_surface_add);
-  XG_DEFINE_PROCEDURE(cairo_tee_surface_remove, gxg_cairo_tee_surface_remove_w, 2, 0, 0, H_cairo_tee_surface_remove);
-  XG_DEFINE_PROCEDURE(cairo_tee_surface_index, gxg_cairo_tee_surface_index_w, 2, 0, 0, H_cairo_tee_surface_index);
   XG_DEFINE_PROCEDURE(cairo_region_create, gxg_cairo_region_create_w, 0, 0, 0, H_cairo_region_create);
   XG_DEFINE_PROCEDURE(cairo_region_create_rectangle, gxg_cairo_region_create_rectangle_w, 1, 0, 0, H_cairo_region_create_rectangle);
   XG_DEFINE_PROCEDURE(cairo_region_create_rectangles, gxg_cairo_region_create_rectangles_w, 2, 0, 0, H_cairo_region_create_rectangles);
@@ -48420,7 +48374,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("26-Aug-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("06-Sep-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

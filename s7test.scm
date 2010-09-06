@@ -315,6 +315,7 @@
 (test (eq? '()'()) #t)
 (test (eq? '()(list)) #t)
 (test (eq? '() (list)) #t)
+(test (eq? (begin) (append)) #t)
 
 (test (eq? ''2 '2) #f)
 (test (eq? '2 '2) #t) ; unspecified??
@@ -8517,6 +8518,8 @@
 (test (eq? '() (quote ())) #t)
 (test (equal? '(1 2 3) (quote (1 2 3))) #t)
 (test (equal? '(1 . 2) (quote (1 . 2))) #t)
+(test ('abs -1) 'error)
+(test ('"hi" 0) #\h)
 
 ;; see also quasiquote
 
@@ -8798,6 +8801,7 @@
 (test (map (lambda a (values a)) '(1 2 3)) '((1) (2) (3)))
 (test (map (lambda a (append a)) '(1 2 3)) '((1) (2) (3)))
 (test (map values '(1 2 3)) '(1 2 3))
+;(test ((lambda* ('a) quote) 1) 1)
 
 #|
 (let ((val '())) (list (map (lambda a (set! val (cons a val)) a) '(1 2 3)) val))
@@ -9375,6 +9379,9 @@
 (let ()
   (define-macro (symbol-set! var val) `(apply set! ,var (list ,val)))
   (test (let ((x 32) (y 'x)) (symbol-set! y 123) (list x y)) '(123 x)))
+(test (set! ('(1 2) 1 . 2) 1) 'error)
+(test (set! ('((1 2) 1) () . 1) 1) 'error)
+(test (set! ('(1 1) () . 1) 1) 'error)
 
 
 
@@ -9825,6 +9832,8 @@
 (test (let ((x (let () (lambda () (+ 1 2))))) (x)) 3)
 (test (cond (0 => (lambda (x) x))) 0)
 (test ((lambda () "hiho")) "hiho")
+(test ((lambda()()))())
+(test (procedure-source (apply lambda (list) (list (list)))) '(lambda () ()))
 
 (test (letrec ((f (lambda (x) (g x)))
 	       (g (lambda (x) x)))
@@ -16738,6 +16747,7 @@ why are these different (read-time `#() ? )
 (test (((lambda* ((a :optional) (b :key)) (apply lambda* (list (list a b 'c) 'c)))) 1) 1) ; (lambda* (:optional :key c) c)
 (test (procedure? ((((((lambda* ((x (lambda () x))) x))))))) #t)
 (test (procedure? ((((((letrec ((x (lambda () x))) x))))))) #t)
+(test ((do ((i 0 (+ i 1))) ((= i 1) (lambda () 3)))) 3)
 
 (test (+ (+) (*)) 1)
 (test (modulo (lcm) (gcd)) 1)
@@ -16804,6 +16814,8 @@ why are these different (read-time `#() ? )
 (test (+ (((lambda* () values)) 1 2 3)) 6)
 (test ((values ('((1 2) (3 4)) 1) (abs -1))) 4)
 (test ((apply lambda '() '(() ()))) '())
+(test ((lambda* ((symbol "#(1 #\\a (3))")) #t)) #t)
+(test (apply if ('((1 2) (3 4)) 1)) 4)
 
 (test (let () (define (hi cond) (+ cond 1)) (hi 2)) 3)
 (test (let () (define* (hi (cond 1)) (+ cond 1)) (hi 2)) 3)
@@ -16859,6 +16871,15 @@ why are these different (read-time `#() ? )
 (let () (test (let ((arg '(x)) (body '(+ x 1))) ((apply lambda arg (list body)) 32)) 33))
 (let () (test (let ((x 12)) ((apply lambda '(x) (list (list '+ 1 x 'x))) 3)) 16))
 (let () (test (let* ((x 3) (arg '(x)) (body `((+ ,x x 1)))) ((apply lambda arg body) 12)) 16))
+
+(let ()
+  (define (bcase start end func)
+    (let ((body '()))
+      (do ((i start (+ i 1)))
+	  ((= i end))
+	  (set! body (cons `((,i) ,(func i)) body)))
+      (lambda (i) (apply case i body))))
+  (test ((bcase 0 3 abs) 1) 1))
 
 
 

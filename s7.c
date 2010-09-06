@@ -11949,16 +11949,17 @@ bool s7_is_list(s7_scheme *sc, s7_pointer p)
 static bool is_proper_list(s7_scheme *sc, s7_pointer lst)
 {
   s7_pointer slow, fast;
+
   slow = fast = lst;
   while (true)
     {
       if (!is_pair(fast)) 
 	return(fast == sc->NIL); /* else it's an improper list */
-      
+
       fast = cdr(fast);
       if (!is_pair(fast)) 
 	return(fast == sc->NIL);
-      
+
       fast = cdr(fast);
       slow = cdr(slow);
       if (fast == slow) 
@@ -19643,13 +19644,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *    no return 1 0 2
        *    < l1 l2?
        *    yes return original (0 1 2)
-       *    no return 0 2 1
+       *    return 0 2 1
        *    L1:
        *    < l0 l1 ?
        *    yes return 2 0 1
        *    < l1 l2 ?
        *    yes return 1 2 0
-       *    no return 2 1 0
+       *    return 2 1 0
        * since each "<" op above goes to OP_APPLY, we have ca 5 labels, and ca 25-50 lines
        */
 
@@ -20654,6 +20655,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   * the other args need to be evaluated (but not the list as if it were code):
 	   *   (let ((L '((1 2 3))) (index 1)) (set! ((L 0) index) 32) L)
 	   */
+
+	  if (!is_proper_list(sc, sc->args))                                 /* (set! ('(1 2) 1 . 2) 1) */
+	    eval_error(sc, "set! target arguments are an improper list: ~A", sc->args);
+
 	  if (is_multiple_value(sc->value))
 	    {
 	      sc->code = s7_cons(sc, s7_make_symbol(sc, "set!"), s7_append(sc, multiple_value(sc->value), s7_append(sc, sc->args, sc->code)));
@@ -27551,15 +27556,6 @@ s7_scheme *s7_init(void)
  * An instance is made by make-rec -- it could be nothing more than a cons: (local-data method-alist).
  * When a method is called, the object is passed as the 1st arg, then any other args (like it is handled currently).
  *
- * (func ... obj ...) -> (eval (func ... obj ...) (aug-env obj cur-env))
- * (func ... obj1 ... obj2 ...) -> (eval (func ... obj1 ... obj2 ...) (aug-env obj1...)) 
- * this almost works, but how to find the op quickly, how to tell without overhead that we have an obj?
- * add a bit, share it with syntax/macro, in that portion of the evaluator it can't be slower
- *   to have one more bit on in the test, when T_OBJECT(?), do the list rearrangements?
- *   T_OBJECT as flag (make-object => make-type for the type)
- *   if T_OBJECT encountered reorder args from (func ...) to (obj func ...)
- *   when obj applied, use obj as its own environment
- *
  * position and position-if generics [member-if? assoc-if?]
  *   these would have many tie-ins in Snd (snd-snd 2347)
  *   both would benefit from an optional start point
@@ -27583,11 +27579,13 @@ s7_scheme *s7_init(void)
  *
  * s7test valgrind, time       17-Jul-10   7 -Sep-10
  *    intel core duo (1.83G):    3162     2690, 1.921
+ *    intel E5200 (2.5G):                 1951, 1.450
  *    amd operon 2218 (2.5G):             1859, 1.335
  *    amd opteron 8356 (2.3G):   2181     1949, 1.201
  *    intel E6850 (3.0G):                 1952, 1.045
- *    intel Q9550 (2.83G):       2184     1948, 0.895
- *    intel e8400  (3.0G):       2372     2082, 0.836
+ *    intel Q9450 (2.66G):                1951, 0.857
+ *    intel Q9550 (2.83G):       2184     1948, 0.838
+ *    intel E8400  (3.0G):       2372     2082, 0.836
  *    intel xeon 5530 (2.4G)     2093 
  *    intel i7 930 (2.8G):       2084 
  *    amd phenom 945 (3.0G):     2085 
