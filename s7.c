@@ -20440,12 +20440,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_LAMBDA_STAR:
       if ((!is_pair(sc->code)) ||
-	  (!is_pair(cdr(sc->code))))                                /* (lambda*) or (lambda* #f) */
+	  (!is_pair(cdr(sc->code))))                                          /* (lambda*) or (lambda* #f) */
 	return(eval_error(sc, "lambda*: no args or no body? ~A", sc->code));
 
       if (!s7_is_list(sc, car(sc->code)))
 	{
-	  if (s7_is_constant(car(sc->code)))                       /* (lambda* :a ...) */
+	  if (s7_is_constant(car(sc->code)))                                  /* (lambda* :a ...) */
 	    return(eval_error(sc, "lambda* parameter '~A is a constant", car(sc->code)));
 	}
       else
@@ -20478,6 +20478,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			return(eval_error(sc, "lambda* parameter '~A is a constant", car(sc->w)));
 		      if (symbol_is_in_list(sc, car(sc->w), cdr(sc->w)))      /* (lambda* (a a) ...) or (lambda* (a . a) ...) */
 			return(eval_error(sc, "lambda* parameter '~A is used twice in the argument list", car(sc->w)));
+
+		      if ((car(sc->w) == sc->KEY_ALLOW_OTHER_KEYS) &&         /* (lambda* (:allow-other-keys x) x) */
+			  (cdr(sc->w) != sc->NIL))
+			eval_error(sc, ":allow-other-keys should be the last parameter: ~A", car(sc->code));
 		    }
 		  else
 		    {
@@ -25355,18 +25359,24 @@ static s7_pointer big_bits(s7_scheme *sc, s7_pointer args, const char *name, int
 
 static s7_pointer big_logand(s7_scheme *sc, s7_pointer args)
 {
+  if (args == sc->NIL)
+    return(small_negative_ints[1]);
   return(big_bits(sc, args, "logand", -1, g_logand, mpz_and));
 }
 
 
 static s7_pointer big_logior(s7_scheme *sc, s7_pointer args)
 {
+  if (args == sc->NIL)
+    return(small_int(0));
   return(big_bits(sc, args, "logior", 0, g_logior, mpz_ior));
 }
 
 
 static s7_pointer big_logxor(s7_scheme *sc, s7_pointer args)
 {
+  if (args == sc->NIL)
+    return(small_int(0));
   return(big_bits(sc, args, "logxor", 0, g_logxor, mpz_xor));
 }
 
@@ -26580,9 +26590,9 @@ static void s7_gmp_init(s7_scheme *sc)
   s7_define_function(sc, "magnitude",           big_magnitude,        1, 0, false, H_magnitude);
 
   s7_define_function(sc, "lognot",              big_lognot,           1, 0, false, H_lognot);
-  s7_define_function(sc, "logior",              big_logior,           1, 0, true,  H_logior);
-  s7_define_function(sc, "logxor",              big_logxor,           1, 0, true,  H_logxor);
-  s7_define_function(sc, "logand",              big_logand,           1, 0, true,  H_logand);
+  s7_define_function(sc, "logior",              big_logior,           0, 0, true,  H_logior);
+  s7_define_function(sc, "logxor",              big_logxor,           0, 0, true,  H_logxor);
+  s7_define_function(sc, "logand",              big_logand,           0, 0, true,  H_logand);
   s7_define_function(sc, "ash",                 big_ash,              2, 0, false, H_ash);
   s7_define_function(sc, "integer-length",      big_integer_length,   1, 0, false, H_integer_length);
   
@@ -27139,9 +27149,9 @@ s7_scheme *s7_init(void)
 
   s7_define_function(sc, "integer-length",          g_integer_length,          1, 0, false, H_integer_length);
   s7_define_function(sc, "integer-decode-float",    g_integer_decode_float,    1, 0, false, H_integer_decode_float);
-  s7_define_function(sc, "logior",                  g_logior,                  1, 0, true,  H_logior);
-  s7_define_function(sc, "logxor",                  g_logxor,                  1, 0, true,  H_logxor);
-  s7_define_function(sc, "logand",                  g_logand,                  1, 0, true,  H_logand);
+  s7_define_function(sc, "logior",                  g_logior,                  0, 0, true,  H_logior);
+  s7_define_function(sc, "logxor",                  g_logxor,                  0, 0, true,  H_logxor);
+  s7_define_function(sc, "logand",                  g_logand,                  0, 0, true,  H_logand);
   s7_define_function(sc, "lognot",                  g_lognot,                  1, 0, false, H_lognot);
   s7_define_function(sc, "ash",                     g_ash,                     2, 0, false, H_ash);
   
@@ -27583,12 +27593,12 @@ s7_scheme *s7_init(void)
  *    amd operon 2218 (2.5G):             1859, 1.335
  *    amd opteron 8356 (2.3G):   2181     1949, 1.201
  *    intel E6850 (3.0G):                 1952, 1.045
+ *    intel Q9650 (3.0G):        2081     1856, 0.938
+ *    amd phenom 945 (3.0G):     2085     1864, 0.894
  *    intel Q9450 (2.66G):                1951, 0.857
  *    intel Q9550 (2.83G):       2184     1948, 0.838
  *    intel E8400  (3.0G):       2372     2082, 0.836
- *    intel xeon 5530 (2.4G)     2093 
- *    intel i7 930 (2.8G):       2084 
- *    amd phenom 945 (3.0G):     2085 
- *    intel Q9650 (3.0G):        2081 
- *    amd phenom 965 (3.4G):     2083 
+ *    intel xeon 5530 (2.4G)     2093     1855, 0.811
+ *    amd phenom 965 (3.4G):     2083     1862, 0.808
+ *    intel i7 930 (2.8G):       2084     1864  0.704
  */

@@ -1129,13 +1129,6 @@ char *slist_selection(slist *lst)
 
 /* TODO: cairo troubles:
  *
- * --------
- *       cairo direct to GL (see cairo-gl.h) -- web examples depend on gtkglext
- *          cairo_gl_surface_create, but it's not in my version -- not in 1.8.10 configure either
- *          in 1.9.12, use --enable-gl and maybe --enable-glx:
- *              "The OpenGL surface backend feature is still under active development and
- *               is included in this release only as a preview. It does NOT fully work yet"
- * --------
  *       do meters work in rec?  in Motif they're drawn incorrectly
  *       Mac native? quartz surface like GL?
  *         sep chans, syncd marks don't move together
@@ -1145,6 +1138,5 @@ char *slist_selection(slist *lst)
  *       mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
  *       perhaps play triangle for mix
  *
- * --------
  * TODO: try cairo-trace and the new GL surface (1.10.0)
  */
