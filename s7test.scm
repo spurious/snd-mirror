@@ -52890,6 +52890,56 @@ why are these different (read-time `#() ? )
 (test (lognot 1/1) -2)
 
 
+
+(let ()
+  (define (logxor1 . ints) ; returns bits that are on in just one of ints
+    (let ((len (length ints)))
+      (cond ((= len 0) 
+	     0)
+	    ((= len 1) 
+	     (car ints))
+	    ((= len 2) 
+	     (apply logxor ints))
+	    ((= len 3) 
+	     (logxor (apply logxor ints) (apply logand ints)))
+	    ((= len 4)
+	     (logand (apply logxor ints)
+		     (lognot
+		      (logior (logand (ints 0) (ints 1) (ints 2))
+			      (logand (ints 0) (ints 1) (ints 3))
+			      (logand (ints 0) (ints 2) (ints 3))
+			      (logand (ints 1) (ints 2) (ints 3))
+			      (apply logand ints)))))
+
+	    ; (logand (apply logxor ints) (lognot (apply logior (map logand (apply all-combinations-larger-than-2 ints)))))
+
+	    (#t (let ((all-bits (apply logior ints)))
+		  (if (zero? all-bits)
+		      0
+		      (do ((i 0 (+ i 1)))
+			  ((= i 64) all-bits)
+			(if (not (zero? (logand all-bits (ash 1 i))))
+			    (let ((count 0))
+			      (call-with-exit
+			       (lambda (ok)
+				 (for-each
+				  (lambda (int)
+				    (if (not (zero? (logand (ash 1 i) int)))
+					(begin
+					  (set! count (+ count 1))
+					  (if (> count 1)
+					      (begin
+						(set! all-bits (logand all-bits (lognot (ash 1 i))))
+						(ok))))))
+				  ints))))))))))))
+
+  (test (logxor1 1 2 3 4 8 9) 4)
+  (test (logxor1 -1 1 2 3) -4)
+  (test (logxor1 1 2 3 5) 4)
+  (test (logxor1 -6 -31 -19 -9) 0)
+  (test (logxor1 -45 -15 -7 -3) 6)
+  (test (logxor1 31 11 27 -38) -60))
+
 (if with-bignums
     (begin
       (test (lognot 9223372036854775808) -9223372036854775809)
