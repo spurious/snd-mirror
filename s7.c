@@ -18724,13 +18724,19 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 		    {
 		      if (c == 'x')
 			{
-			  /* possible "\xnn" char (write creates these things, so we have to read them) */
+			  /* possible "\xnn" char (write creates these things, so we have to read them) 
+			   *   but we could have crazy input like "\x -- with no trailing double quote
+			   */
 			  int d1, d2;
 			  c = inchar(sc, pt);
+			  if (c == EOF)
+			    return(sc->T);
 			  d1 = digits[(unsigned int)c];
 			  if (d1 < 16)
 			    {
 			      c = inchar(sc, pt);
+			      if (c == EOF)
+				return(sc->T);
 			      d2 = digits[(unsigned int)c];
 			      if (d2 < 16)
 				{
@@ -27579,7 +27585,6 @@ s7_scheme *s7_init(void)
           (equal? (procedure-source f) (procedure-source g)) 
           ;; modulo respellings?
           (equal? (procedure-environment f) (procedure-environment g))))
-          ;; or check that every variable in f env is the same in g env
 
  :(functions-equal? (let ((a 1)) (lambda () a)) (let ((a 1)) (lambda () a)))
   #t
@@ -27587,7 +27592,7 @@ s7_scheme *s7_init(void)
  *
  * things to fix: nonce-symbols need to be garbage collected
  *
- * s7test valgrind, time       17-Jul-10   7 -Sep-10
+ * s7test valgrind, time       17-Jul-10   7-Sep-10
  *    intel core duo (1.83G):    3162     2690, 1.921
  *    intel E5200 (2.5G):                 1951, 1.450
  *    amd operon 2218 (2.5G):             1859, 1.335

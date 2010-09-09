@@ -14068,6 +14068,11 @@ why are these different (read-time `#() ? )
   (test ((lambda* (:optional . (x 1)) x) 1) 'error)
   (test ((lambda* (:optional . (x)) x)) #f)
   (test ((lambda* (:optional . (x)) x) 1 2) 'error)
+  (test ((lambda* (x :key) x) 1) 1)
+  (test ((lambda* (:key :optional :rest x :allow-other-keys) x) 1) '(1))
+  (test (lambda* (key: x) x) 'error)
+  (test ((lambda* x x) 1) '(1))
+  (test (lambda* (((x) 1)) x) 'error)
 
   ;; not sure the next 4 aren't errors
   (test ((lambda* (:key . x) x) :x 1) '(:x 1))
@@ -51587,6 +51592,26 @@ why are these different (read-time `#() ? )
 (test (number? '00-) #f)
 (test (string->number "00-") #f)
 
+(test (#|#<|# = #|#f#|# #o#e0 #|#>|# #e#o0 #|#t#|#) #t)
+(num-test #i1s0 1.0)
+(num-test #e0.1 1/10)
+(num-test #i1/1 1.0)
+(num-test #o-11 -9)
+(num-test #o-0. 0.0)
+(num-test #o+.0 0.0)
+(num-test #x#if 15.0)
+(num-test #xe/1 14)
+(num-test #xe/a 7/5)
+(num-test #xfad 4013)
+(num-test #xd/1 13)
+(num-test #x0/f 0)
+(num-test #x+00 0)
+(num-test #x.c0 0.75)
+(num-test #x-fc -252)
+(num-test -0d-0 0.0)
+(num-test +1d+1 10.0)
+(num-test +1s00 1.0)
+
 (test (let ((val (catch #t (lambda ()
 			     (= 1 
 
@@ -52900,8 +52925,10 @@ why are these different (read-time `#() ? )
 	     (car ints))
 	    ((= len 2) 
 	     (apply logxor ints))
+
 	    ((= len 3) 
 	     (logxor (apply logxor ints) (apply logand ints)))
+
 	    ((= len 4)
 	     (logand (apply logxor ints)
 		     (lognot
@@ -52911,27 +52938,39 @@ why are these different (read-time `#() ? )
 			      (logand (ints 1) (ints 2) (ints 3))
 			      (apply logand ints)))))
 
-	    ; (logand (apply logxor ints) (lognot (apply logior (map logand (apply all-combinations-larger-than-2 ints)))))
-
 	    (#t (let ((all-bits (apply logior ints)))
-		  (if (zero? all-bits)
-		      0
-		      (do ((i 0 (+ i 1)))
-			  ((= i 64) all-bits)
-			(if (not (zero? (logand all-bits (ash 1 i))))
-			    (let ((count 0))
-			      (call-with-exit
-			       (lambda (ok)
-				 (for-each
-				  (lambda (int)
-				    (if (not (zero? (logand (ash 1 i) int)))
+
+		  ;; in (non-gmp) 64-bit case we can't (ash 1 63) so...
+		  (if (negative? all-bits)
+		      (let ((negatives 0))
+			(call-with-exit
+			 (lambda (ok)
+			   (for-each
+			    (lambda (n)
+			      (if (negative? n)
+				  (begin
+				    (set! negatives (+ negatives 1))
+				    (if (> negatives 1)
 					(begin
-					  (set! count (+ count 1))
-					  (if (> count 1)
-					      (begin
-						(set! all-bits (logand all-bits (lognot (ash 1 i))))
-						(ok))))))
-				  ints))))))))))))
+					  (set! all-bits (abs all-bits))
+					  (ok)))))))))))
+		  (do ((i 0 (+ i 1)))
+		      ((or (= i 63) (zero? all-bits))
+		       all-bits)
+		    (if (not (zero? (logand all-bits (ash 1 i))))
+			(let ((count 0))
+			  (call-with-exit
+			   (lambda (ok)
+			     (for-each
+			      (lambda (int)
+				(if (not (zero? (logand (ash 1 i) int)))
+				    (begin
+				      (set! count (+ count 1))
+				      (if (> count 1)
+					  (begin
+					    (set! all-bits (logand all-bits (lognot (ash 1 i))))
+					    (ok))))))
+			      ints)))))))))))
 
   (test (logxor1 1 2 3 4 8 9) 4)
   (test (logxor1 -1 1 2 3) -4)
@@ -52992,6 +53031,7 @@ why are these different (read-time `#() ? )
 
 (num-test (ash 0 1) 0)
 (num-test (ash 1 10) 1024)
+(num-test (ash 1/1 10) 1024)
 (num-test (ash 1024 -8) 4)
 (num-test (ash -1 8) -256)
 (num-test (ash -1 30) -1073741824)
@@ -53010,6 +53050,9 @@ why are these different (read-time `#() ? )
 (num-test (ash 2 -1) 1)
 (num-test (ash 1 -100) 0)
 (num-test (ash 0 100) 0)
+(num-test (ash -0 -10) 0)
+(num-test (ash 0 -10) 0)
+(num-test (ash 0 0) 0)
 (num-test (ash 0 (expt 2 32)) 0)
 (num-test (ash (ash 1 31) -31) 1)
 (test (> (ash 1 30) 1) #t)
@@ -53112,6 +53155,8 @@ why are these different (read-time `#() ? )
 (num-test (integer-length -127) 7)
 (num-test (integer-length -128) 7)
 (num-test (integer-length -129) 8)
+(num-test (integer-length most-positive-fixnum) 63)
+(num-test (integer-length most-negative-fixnum) 63)
 
 (test (integer-length) 'error)
 (test (integer-length 1 2) 'error)
@@ -57222,4 +57267,5 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 #xfff8000000000000 nan
 
 but how to build these in scheme?
+
 |#

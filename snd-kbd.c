@@ -2302,20 +2302,10 @@ static int key_name_to_key(XEN key, const char *caller)
 #endif
 
 #if USE_MOTIF
-  return((int)XStringToKeysym(XEN_TO_C_STRING(key)));  /* these are the X/Gtk names: not "+" but "plus" etc */
-#else
-  #if USE_GTK
+  return((int)XStringToKeysym(XEN_TO_C_STRING(key)));  /* these are the X names: not "+" but "plus" etc */
+#endif
+#if USE_GTK
   return((int)gdk_keyval_from_name(XEN_TO_C_STRING(key)));
-  #else
-  {
-    static bool already_warned = false;
-    if (!already_warned)
-      {
-	snd_error("%s: can't translate a key name to a key in this version of Snd.", caller);
-	already_warned = true;
-      }
-  }
-  #endif
 #endif
   return(0);
 }
