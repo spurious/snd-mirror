@@ -291,7 +291,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_MACRO, OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION, OP_EXPANSION,
 	      OP_CASE, OP_CASE1, OP_CASE2, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, 
-	      OP_READ_VECTOR, OP_READ_POP_AND_RETURN_EXPRESSION, 
+	      OP_READ_VECTOR, OP_READ_DONE, 
 	      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_DONE,
 	      OP_CATCH, OP_DYNAMIC_WIND, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1, 
 	      OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
@@ -311,7 +311,7 @@ static const char *op_names[OP_MAX_DEFINED] =
    "cond", "cond", "and", "and", "or", "or", "defmacro", "defmacro*", "macro", 
    "define-macro", "define-macro*", "define-expansion", "expansion", "case", "case", 
    "case", "read-list", "read-dot", "read-quote", "read-quasiquote", "read-quasiquote-vector", 
-   "read-unquote", "read-unquote-splicing", "read-vector", "read-and-return-expression", 
+   "read-unquote", "read-unquote-splicing", "read-vector", "read-done", 
    "load-return-if-eof", "load-close-and-stop-if-eof", "eval-string", "eval-done", "catch", 
    "dynamic-wind", "define-constant", "define-constant", "do", "do", "do", 
    "do", "do", "do", "do", "define*", "lambda*", 
@@ -366,7 +366,7 @@ typedef struct s7_port_t {
   FILE *file;
   int line_number;
   int file_number;
-  const char *filename;
+  char *filename;
   char *value;
   int size, point; 
   s7_pointer (*input_function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port);
@@ -1296,7 +1296,13 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
 	    }
 	  port_needs_free(a) = false;
 	}
-      /* don't free port_filename -- it is a permanent string */
+
+      if (port_filename(a))
+	{
+	  free(port_filename(a));
+	  port_filename(a) = NULL;
+	}
+  
       free(a->object.port);
       break;
       
@@ -8057,7 +8063,7 @@ static s7_pointer g_logior(s7_scheme *sc, s7_pointer args)
   int i; 
   s7_pointer x;
 
-  for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x))
+  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))
     if (!s7_is_integer(car(x)))
       return(s7_wrong_type_arg_error(sc, "logior", i, car(x), "an integer"));
     else result |= s7_integer(car(x));
@@ -8073,7 +8079,7 @@ static s7_pointer g_logxor(s7_scheme *sc, s7_pointer args)
   int i;
   s7_pointer x;
 
-  for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x))
+  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))
     if (!s7_is_integer(car(x)))
       return(s7_wrong_type_arg_error(sc, "logxor", i, car(x), "an integer"));
     else result ^= s7_integer(car(x));
@@ -8089,7 +8095,7 @@ static s7_pointer g_logand(s7_scheme *sc, s7_pointer args)
   int i;
   s7_pointer x;
 
-  for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x))
+  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))
     if (!s7_is_integer(car(x)))
       return(s7_wrong_type_arg_error(sc, "logand", i, car(x), "an integer"));
     else result &= s7_integer(car(x));
@@ -9442,6 +9448,12 @@ void s7_close_input_port(s7_scheme *sc, s7_pointer p)
   if ((p == sc->NIL) ||
       ((is_input_port(p)) && (port_is_closed(p))))
     return;
+
+  if (port_filename(p))
+    {
+      free(port_filename(p));
+      port_filename(p) = NULL;
+    }
   
   if ((is_file_port(p)) &&
       (port_file(p)))
@@ -9479,6 +9491,12 @@ void s7_close_output_port(s7_scheme *sc, s7_pointer p)
   if ((p == sc->NIL) ||
       ((is_output_port(p)) && (port_is_closed(p))))
     return;
+  
+  if (port_filename(p))
+    {
+      free(port_filename(p));
+      port_filename(p) = NULL;
+    }
   
   if (is_file_port(p))
     {
@@ -9525,7 +9543,11 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
   port_loc = s7_gc_protect(sc, port);
   port->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_is_closed(port) = false;
-  port_filename(port) = make_permanent_string(name);
+
+  /* if we're constantly opening files, and each open saves the file name in permanent
+   *   memory, we gradually core-up.  
+   */
+  port_filename(port) = copy_string(name);
   port_line_number(port) = 1;  /* 1st line is numbered 1 */
 
   fseek(fp, 0, SEEK_END);
@@ -9631,7 +9653,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
-  port_filename(x) = make_permanent_string(name);
+  port_filename(x) = copy_string(name);
   port_line_number(x) = 1;
   port_file(x) = fp;
   port_needs_free(x) = false;
@@ -10044,7 +10066,7 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
 
   push_input_port(sc, port);
 
-  push_stack(sc, opcode(OP_READ_POP_AND_RETURN_EXPRESSION), sc->NIL, sc->NIL); /* this stops the internal read process so we only get one form */
+  push_stack(sc, opcode(OP_READ_DONE), sc->NIL, sc->NIL); /* this stops the internal read process so we only get one form */
   push_stack(sc, opcode(OP_READ_INTERNAL), sc->NIL, sc->NIL);
   return(port);
 }
@@ -13402,13 +13424,10 @@ static s7_pointer g_multivector(s7_scheme *sc, int dims, s7_pointer data)
    */
 
   sc->w = sc->NIL;
-  sizes = (int *)calloc(dims, sizeof(int));
-  if (data == sc->NIL)
-    {
-      /* dims are already 0 (calloc above) */
-      return(g_make_vector(sc, make_list_1(sc, g_make_list(sc, make_list_2(sc, s7_make_integer(sc, dims), small_int(0))))));
-    }
+  if (data == sc->NIL)  /* dims are already 0 (calloc above) */
+    return(g_make_vector(sc, make_list_1(sc, g_make_list(sc, make_list_2(sc, s7_make_integer(sc, dims), small_int(0))))));
 
+  sizes = (int *)calloc(dims, sizeof(int));
   for (x = data, i = 0; i < dims; i++)
     {
       sizes[i] = safe_list_length(sc, x);
@@ -13417,7 +13436,10 @@ static s7_pointer g_multivector(s7_scheme *sc, int dims, s7_pointer data)
       x = car(x);
       if ((i < (dims - 1)) && 
 	  (!is_pair(x)))
-	return(s7_multivector_error(sc, "a list that fully specifies the vector's elements", data));
+	{
+	  free(sizes);
+	  return(s7_multivector_error(sc, "a list that fully specifies the vector's elements", data));
+	}
     }
 
   vec = g_make_vector(sc, make_list_1(sc, safe_reverse_in_place(sc, sc->w)));
@@ -16485,13 +16507,13 @@ untrace without arguments to turn this off."
       return(sc->F);
     }
   
-  for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x)) 
+  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x)) 
     if ((!s7_is_symbol(car(x))) &&
 	(!is_procedure(car(x))) &&
 	(!is_any_macro(car(x))))
-      return(s7_wrong_type_arg_error(sc, "trace", i + 1, car(x), "a symbol, a function, or some other applicable object"));
+      return(s7_wrong_type_arg_error(sc, "trace", i, car(x), "a symbol, a function, or some other applicable object"));
 
-  for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x)) 
+  for (x = args; x != sc->NIL; x = cdr(x)) 
     {
       if (s7_is_symbol(car(x)))
 	sc->trace_list[sc->trace_top++] = eval_symbol(sc, car(x));
@@ -16529,7 +16551,7 @@ If untrace is called with no arguments, all functions are removed, turning off a
       return(sc->F);
     }
 
-  for (ctr = 0, x = args; x != sc->NIL; ctr++, x = cdr(x)) 
+  for (ctr = 1, x = args; x != sc->NIL; ctr++, x = cdr(x)) 
     {
       s7_pointer value;
       if (s7_is_symbol(car(x)))
@@ -17047,7 +17069,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  sc->input_is_file = (is_file_port(sc->input_port));
 	  break;
 
-	case OP_READ_POP_AND_RETURN_EXPRESSION:        /* perhaps an error during (read) */
+	case OP_READ_DONE:        /* perhaps an error during (read) */
 	  pop_input_port(sc);
 	  break;
 
@@ -19419,7 +19441,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* (read p) from scheme
        *    "p" becomes current input port for eval's duration, then pops back before returning value into calling expr
        */
-    case OP_READ_POP_AND_RETURN_EXPRESSION:
+    case OP_READ_DONE:
       pop_input_port(sc);
 
       if (sc->tok == TOKEN_EOF)
@@ -27601,6 +27623,16 @@ s7_scheme *s7_init(void)
 
  :(functions-equal? (let ((a 1)) (lambda () a)) (let ((a 1)) (lambda () a)))
   #t
+
+ * and copy a function?
+ *
+ * this seems unfortunate (macros are a similar case):
+
+ :(procedure-source (apply lambda '(x) '((+ x 1))))
+ (lambda (x) (+ x 1))
+
+ :(map lambda '((x)) '(((+ x 1))))
+ ;map argument 1, lambda, is symbol but should be a procedure
 
  *
  * things to fix: nonce-symbols need to be garbage collected
