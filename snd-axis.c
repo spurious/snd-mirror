@@ -1490,6 +1490,30 @@ axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, mus_float_t 
 
 #if (!USE_NO_GUI)
 
+static axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller)
+{
+  #define AXIS_INFO_ID_OK(Id)    (Id <= (int)LISP_AXIS_INFO)
+
+  if ((cp) && (AXIS_INFO_ID_OK(ap_id)))
+    switch (ap_id)
+      {
+      case TIME_AXIS_INFO:      return(cp->axis);                              break;
+      case TRANSFORM_AXIS_INFO: if (cp->fft) return(cp->fft->axis);            break;
+      case LISP_AXIS_INFO:      if (cp->lisp_info) return(lisp_info_axis(cp)); break;
+      }
+
+  XEN_ERROR(XEN_ERROR_TYPE("no-such-axis"),
+	    XEN_LIST_6(((!(cp->squelch_update)) || (!(AXIS_INFO_ID_OK(ap_id)))) ?
+		         C_TO_XEN_STRING("~A: no such axis: ~A of sound ~A (~A), chan: ~A (axis should be " S_time_graph ", " S_lisp_graph ", or " S_transform_graph ")") :
+		         C_TO_XEN_STRING("~A: no such axis: ~A of sound ~A (~A), chan: ~A does not exist, probably because output is squelched"),
+		       C_TO_XEN_STRING(caller),
+		       C_TO_XEN_INT((int)(ap_id)),
+		       C_INT_TO_XEN_SOUND(cp->sound->index),
+		       C_TO_XEN_STRING(cp->sound->short_filename),
+		       C_TO_XEN_INT(cp->chan)));
+  return(NULL);
+}
+
 #define TO_C_AXIS_INFO(Snd, Chn, Ap, Caller)	\
   get_ap(get_cp(Snd, Chn, Caller),				     \
          (axis_info_t)XEN_TO_C_INT_OR_ELSE(Ap, (int)TIME_AXIS_INFO), \

@@ -563,6 +563,7 @@ struct s7_scheme {
   s7_pointer error_info;              /* the vector bound to *error-info* */
   s7_pointer sharp_readers;           /* the binding pair for the global *#readers* list */
   s7_pointer vector_print_length;     /* same for *vector-print-length* */
+  bool input_is_file;
   
   /* these 6 are pointers so that all thread refs are to the same thing */
   bool *gc_off;                       /* if true, the GC won't run */
@@ -9323,6 +9324,7 @@ static s7_pointer g_set_current_input_port(s7_scheme *sc, s7_pointer args)
       (!port_is_closed(port)))
     sc->input_port = port;
   else return(s7_wrong_type_arg_error(sc, "set-current-input-port", 0, port, "an open input port or nil"));
+  sc->input_is_file = (is_file_port(sc->input_port));
   return(old_port);
 }
 
@@ -9332,6 +9334,7 @@ s7_pointer s7_set_current_input_port(s7_scheme *sc, s7_pointer port)
   s7_pointer old_port;
   old_port = sc->input_port;
   sc->input_port = port;
+  sc->input_is_file = (is_file_port(sc->input_port));
   return(old_port);
 }
 
@@ -9779,13 +9782,14 @@ static bool push_input_port(s7_scheme *sc, s7_pointer new_port)
 #if 0
   {
     int i;
-    for (i = 0; i < pushes; i++) fprintf(stderr, "    ");
+    for (i = 0; i < pushes; i++) fprintf(stderr, " ");
     fprintf(stderr, "push %p\n", new_port);
     pushes++;
   }
 #endif
   sc->input_port_stack = s7_cons(sc, sc->input_port, sc->input_port_stack);
   sc->input_port = new_port;
+  sc->input_is_file = (is_file_port(sc->input_port));
   return(sc->input_port != sc->NIL);
 }
 
@@ -9796,7 +9800,7 @@ static s7_pointer pop_input_port(s7_scheme *sc)
   {
     int i;
     pushes--;
-    for (i = 0; i < pushes; i++) fprintf(stderr, "    ");
+    for (i = 0; i < pushes; i++) fprintf(stderr, " ");
     fprintf(stderr, "pop %p\n", sc->input_port);
   }
 #endif
@@ -9806,6 +9810,7 @@ static s7_pointer pop_input_port(s7_scheme *sc)
       sc->input_port_stack = cdr(sc->input_port_stack);
     }
   else sc->input_port = sc->NIL;
+  sc->input_is_file = (is_file_port(sc->input_port));
   return(sc->input_port);
 }
 
@@ -10358,6 +10363,7 @@ static s7_pointer with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
   s7_pointer old_input_port;
   old_input_port = sc->input_port;
   sc->input_port = port;
+  sc->input_is_file = (is_file_port(sc->input_port));
   
   push_stack(sc, opcode(OP_UNWIND_INPUT), old_input_port, port);
   sc->code = cadr(args);
@@ -17038,6 +17044,11 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	case OP_UNWIND_INPUT:
 	  s7_close_input_port(sc, stack_code(sc->stack, i)); /* "code" = port that we opened */
 	  sc->input_port = stack_args(sc->stack, i);         /* "args" = port that we shadowed */
+	  sc->input_is_file = (is_file_port(sc->input_port));
+	  break;
+
+	case OP_READ_POP_AND_RETURN_EXPRESSION:        /* perhaps an error during (read) */
+	  pop_input_port(sc);
 	  break;
 
 	case OP_EVAL_STRING_2:
@@ -18353,9 +18364,9 @@ static token_t token(s7_scheme *sc)
 {
   int c = 0;
   s7_pointer pt;
-  pt = sc->input_port;
 
-  if (is_file_port(pt))
+  pt = sc->input_port;
+  if (sc->input_is_file)
     {
       while (isspace(c = fgetc(port_file(pt))))
 	if (c == '\n')
@@ -18406,7 +18417,7 @@ static token_t token(s7_scheme *sc)
       
     case ';':
       {
-	if (is_file_port(pt))
+	if (sc->input_is_file)
 	  do (c = fgetc(port_file(pt))); while ((c != '\n') && (c != EOF));
 	else do (c = port_string(pt)[port_string_point(pt)++]); while ((c != '\n') && (c != 0));
 	port_line_number(pt)++;
@@ -18569,7 +18580,7 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
   pt = sc->input_port;
   /* sc->strbuf[0] has the 1st char of the string we're reading */
 
-  if (is_file_port(pt))
+  if (sc->input_is_file)
     {
       int i = 1;
       do
@@ -18680,8 +18691,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 
   for (i = 0; ; ) 
     {
-
-      if (is_file_port(pt))
+      if (sc->input_is_file)
 	c = fgetc(port_file(pt)); /* not unsigned char! -- could be EOF */
       else 
 	{
@@ -21608,8 +21618,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if ((sc->args != sc->F) &&
 	  (s7_is_input_port(sc, sc->args)) &&
 	  (!port_is_closed(sc->args)))
-	sc->input_port = sc->args;
-       
+	{
+	  sc->input_port = sc->args;
+	  sc->input_is_file = (is_file_port(sc->input_port));
+	}
       if (is_multiple_value(sc->value)) 
 	sc->value = splice_in_values(sc, multiple_value(sc->value));
       goto START;
@@ -26718,6 +26730,7 @@ s7_scheme *s7_init(void)
   car(sc->TEMP_CELL) = sc->TEMP_CELL_1;
   
   sc->input_port = sc->NIL;
+  sc->input_is_file = false;
   sc->input_port_stack = sc->NIL;
   sc->output_port = sc->NIL;
   sc->error_port = sc->NIL;

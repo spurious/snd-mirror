@@ -240,7 +240,6 @@ void erase_cursor(chan_info *cp)
 /* -------------------------------------------------------------------------------- */
 
 #define AXIS_CONTEXT_ID_OK(Id) ((Id >= CHAN_GC) && (Id <= CHAN_TMPGC))
-#define AXIS_INFO_ID_OK(Id)    (Id <= (int)LISP_AXIS_INFO)
 #define NO_SUCH_WIDGET         XEN_ERROR_TYPE("no-such-widget")
 
 static graphics_context *get_ax(chan_info *cp, int ax_id, const char *caller)
@@ -262,29 +261,6 @@ static graphics_context *get_ax(chan_info *cp, int ax_id, const char *caller)
   get_ax(get_cp(Snd, Chn, Caller), \
 	 XEN_TO_C_INT_OR_ELSE(Ax, (int)CHAN_GC),	\
          Caller)
-
-axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller)
-{
-  if ((cp) && (AXIS_INFO_ID_OK(ap_id)))
-    switch (ap_id)
-      {
-      case TIME_AXIS_INFO:      return(cp->axis);                              break;
-      case TRANSFORM_AXIS_INFO: if (cp->fft) return(cp->fft->axis);            break;
-      case LISP_AXIS_INFO:      if (cp->lisp_info) return(lisp_info_axis(cp)); break;
-      }
-
-  XEN_ERROR(XEN_ERROR_TYPE("no-such-axis"),
-	    XEN_LIST_6(((!(cp->squelch_update)) || (!(AXIS_INFO_ID_OK(ap_id)))) ?
-		         C_TO_XEN_STRING("~A: no such axis: ~A of sound ~A (~A), chan: ~A (axis should be " S_time_graph ", " S_lisp_graph ", or " S_transform_graph ")") :
-		         C_TO_XEN_STRING("~A: no such axis: ~A of sound ~A (~A), chan: ~A does not exist, probably because output is squelched"),
-		       C_TO_XEN_STRING(caller),
-		       C_TO_XEN_INT((int)(ap_id)),
-		       C_INT_TO_XEN_SOUND(cp->sound->index),
-		       C_TO_XEN_STRING(cp->sound->short_filename),
-		       C_TO_XEN_INT(cp->chan)));
-  return(NULL);
-}
-
 
 static XEN g_draw_line(XEN x0, XEN y0, XEN x1, XEN y1, XEN snd, XEN chn, XEN ax)
 {

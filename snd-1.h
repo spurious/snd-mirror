@@ -1718,7 +1718,6 @@ void set_grf_points(int xi, int j, int ymin, int ymax);
 void set_grf_point(int xi, int j, int yi);
 void draw_grf_points(int dot_size, graphics_context *ax, int j, axis_info *ap, mus_float_t y0, graph_style_t graph_style);
 void draw_both_grf_points(int dot_size, graphics_context *ax, int j, graph_style_t graph_style);
-axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller);
 void g_init_draw(void);
 void set_dialog_widget(snd_dialog_t which, widget_t wid);
 void run_new_widget_hook(widget_t w);

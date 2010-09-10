@@ -1487,7 +1487,7 @@
 (for-each
  (lambda (arg)
    (test (integer->char arg) 'error))
- (list -1 123456789 -123456789 #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
+ (list -1 257 123456789 -123456789 #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (test (#\a) 'error)
 (test (#\newline 1) 'error)
@@ -2718,6 +2718,13 @@
    (if (not (equal? (cdr (cons '() arg)) arg))
        (format #t "(cdr '(() ~A) -> ~A?~%" arg (cdr (cons '() arg)))))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
+
+(let* ((a (list 1 2 3))
+       (b a))
+  (set! (car a) (cadr a)) 
+  (set! (cdr a) (cddr a))
+  (test a (list 2 3))
+  (test b a))
 
 (define (cons-r a b n) (if (= 0 n) (cons a b) (cons (cons-r (+ a 1) (+ b 1) (- n 1)) (cons-r (- a 1) (- b 1) (- n 1)))))
 (define (list-r a b n) (if (= 0 n) (list a b) (list (list-r (+ a 1) (+ b 1) (- n 1)) (list-r (- a 1) (- b 1) (- n 1)))))
@@ -4354,6 +4361,9 @@
 (test (#(1)) 'error)
 (test (#2d((1 2) (3 4))) 'error)
 (test (apply (make-vector '(1 2))) 'error)
+;; these 2 are read-errors
+;(test #2/3d(1 2) 'error)
+;(test #2.1d(1 2) 'error)
 
 
 (let ((v #(1 2 3)))
@@ -4575,6 +4585,7 @@
 (test (let ((v (make-vector 11 0))) (vector-fill! v 32) (v 10)) 32)
 (test (let ((v (make-vector 16 0))) (vector-fill! v 32) (v 15)) 32)
 (test (let ((v (make-vector 3 0))) (vector-fill! v 32) (v 1)) 32)
+(test (let ((v (make-vector 3 0))) (fill! v 32) (v 1)) 32)
 
 (for-each
  (lambda (arg)
@@ -4946,14 +4957,21 @@
 (test (set! (vector) 1) 'error)
 (test (set! (make-vector 1) 1) 'error)
 (test (equal? (make-vector 10 '()) (make-hash-table 10)) #f)
+(test (equal? #() (copy #())) #t)
+(test (equal? #2d() (copy #2d())) #t)
+(test (fill! #() 1) 1)
+(test (fill! #2d() 1) 1)
 
 (test (equal? #2d((1 2) (3 4)) (copy #2d((1 2) (3 4)))) #t)
 (test (equal? #3d() #3d(((())))) #f)
 (test (equal? #3d() #3d()) #t)
+(test (equal? #1d() #1d()) #t)
 (test (equal? #3d() #2d()) #f)
 (test (equal? #3d() (copy #3d())) #t)
 (test (equal? #2d((1) (2)) #2d((1) (3))) #f)
 (test (equal? #2d((1) (2)) (copy #2d((1) (2)))) #t)
+(test (equal? (make-vector '(3 0 1)) (make-vector '(3 0 2))) #f)
+
 (let ((v1 (make-vector '(3 2 1) #f))
       (v2 (make-vector '(3 2 1) #f)))
   (test (equal? v1 v2) #t)
@@ -6590,6 +6608,12 @@
     (close-output-port p))
   (load badfile))
 
+(for-each
+ (lambda (str)
+   ;;(test (eval-string str) 'error)
+   ;; eval-string is confused somehow
+   (test (with-input-from-string str (lambda () (read))) 'error))
+ (list "\"\\x" "\"\\x0" "`(+ ," "`(+ ,@" "#2d(" "#\\"))
 
 (let ((loadit "tmp1.r5rs"))
   (let ((p (open-output-file loadit)))
@@ -8189,6 +8213,7 @@
 (test (let () (define* (hi a) (+ 1 a)) (object->string hi)) "hi")
 (test (object->string dynamic-wind) "dynamic-wind")
 (test (object->string (make-procedure-with-setter (lambda () 1) (lambda (val) val))) "#<procedure-with-setter>")
+(test (object->string object->string) "object->string")
 
 (test (object->string #\x30) "#\\0")
 (test (object->string #\x91) "#\\x91")
@@ -11314,17 +11339,27 @@
 	(y-factorial 3))
       6)
 
-;;; (letrec ((x 1.5) (y x)) (or x y)) -> 1.5, but (let ((x 1.5) (y x)) (or x y)) -> error!
-;;; (letrec ((x x) (y #t)) (and x y)) -> #t,  but (let ((x x) (y #t)) (and x y)) -> error! (let*/letrec* same)
-;;; in Guile (letrec ((x x)) x) is #<unspecified>, is s7 it's #<undefined>
-;;; (letrec ((x y)) x) -> 'error) but (letrec ((x y) (y x)) x) is #<undefined>!
-;;; (let ((x 0) (y x)) (cons x y)) -> error, let*->'(0 . 0) letrec->(0 . #<undefined>) letrec*->(0 . 0)
-;;; (let ((x 0)) (let ((x 1) (y x)) (>= x y))) but the letrec(inner) case is error!  These things are a mess.
+(test (let ((x 1)) (let ((x 0) (y x)) (cons x y))) '(0 . 1))
+(test (let ((x 1)) (let* ((x 0) (y x)) (cons x y))) '(0 . 0))
+(test (let ((x 1)) (letrec ((x 0) (y x)) (cons x y))) '(0 . #<undefined>))
+(test (let ((x 1)) (letrec* ((x 0) (y x)) (cons x y))) '(0 . 0))
+
+(test (let ((x 1)) (let ((x 0) (y (let () (set! x 2) x))) (cons x y))) '(0 . 2))
+(test (let ((x 1)) (letrec ((x 0) (y (let () (set! x 2) x))) (cons x y))) '(0 . 2))
+(test (let ((x 1)) (let* ((x 0) (y (let () (set! x 2) x))) (cons x y))) '(2 . 2))
+(test (let ((x 1)) (letrec* ((x 0) (y (let () (set! x 2) x))) (cons x y))) '(2 . 2))
+
+(test (letrec ((x x)) x) #<undefined>) ; weird
+(test (letrec ((x y) (y x)) x) #<undefined>)
 
 (test (procedure? (letrec ((x (lambda () x))) x)) #t)
 (test (procedure? (letrec ((x (lambda () x))) (x))) #t)
 (test (letrec ((x (lambda () x))) (equal? x (x))) #t)  ; !
 (test (letrec ((x (lambda () x))) (equal? x ((x)))) #t)  ; !
+
+(test (letrec* ()) 'error)
+(test (letrec* ((x 1 x)) x) 'error)
+(test (letrec ((x (let () (set! y 1) y)) (y (let () (set! y (+ y 1)) y))) (list x y)) '(1 2)) ; !
 
 (test (letrec ((x 1) (y x)) (list x y)) '(1 #<undefined>)) ; guile says '(1 1)
 (test (letrec ((y x) (x 1)) (list x y)) '(1 #<undefined>)) ; guile says '(1 1)
@@ -13191,6 +13226,9 @@ why are these different (read-time `#() ? )
 (test (sort! '(1 2 3) quasiquote) 'error)
 (test (quasiquote . 1) 'error)
 (test (let ((x 3)) (quasiquote . x)) 'error)
+(num-test `,#e.1 1/10)
+(num-test `,,,-1 -1)
+(num-test `,``,1 1)
 
 
 
@@ -14489,7 +14527,6 @@ why are these different (read-time `#() ? )
    (lambda (arg)
      (test (eval-string "(+ 1 2)" arg) 'error))
    (list -1 0 1 512 #\a '#(1 2 3) 3.14 2/3 1.5+0.3i 1+i 'hi abs "hi" '#(()) (lambda () 1)))
-
 
   
   (test (string=? (procedure-documentation abs) "(abs x) returns the absolute value of the real number x") #t)
@@ -16774,6 +16811,7 @@ why are these different (read-time `#() ? )
 (test (procedure? ((((((lambda* ((x (lambda () x))) x))))))) #t)
 (test (procedure? ((((((letrec ((x (lambda () x))) x))))))) #t)
 (test (procedure? ((((((let x () x))))))) #t)
+(test (procedure? ((((((lambda (x) (set! x (lambda () x))) (lambda () x))))))) #t)
 (test ((do ((i 0 (+ i 1))) ((= i 1) (lambda () 3)))) 3)
 
 (test (+ (+) (*)) 1)
@@ -16817,6 +16855,7 @@ why are these different (read-time `#() ? )
 (num-test (string->number "1l11+11l1i") 100000000000+110i)
 (num-test (string->number "#d1d1") 10.0)
 (num-test (string->number "#d0001d0001") 10.0)
+(test (#|#<|# = #|#f#|# #o#e0 #|#>|# #e#o0 #|#t#|#) #t)
 
 (test ((call-with-exit object->string) 0) #\#) ; #<goto>
 (test ((begin begin) 1) 1)
@@ -51592,7 +51631,6 @@ why are these different (read-time `#() ? )
 (test (number? '00-) #f)
 (test (string->number "00-") #f)
 
-(test (#|#<|# = #|#f#|# #o#e0 #|#>|# #e#o0 #|#t#|#) #t)
 (num-test #i1s0 1.0)
 (num-test #e0.1 1/10)
 (num-test #i1/1 1.0)
@@ -51951,6 +51989,8 @@ why are these different (read-time `#() ? )
 (test (< (abs (- #i1.5 1.5)) 1e-12) #t)
 (num-test (= 0e-1 0.0) #t)
 ;;; (/ (/ 0))??
+(num-test #x.a+i 0.625+1i)
+(num-test #b1.+i 1+1i)
 
 ;;; here's code to generate all (im)possible numbers (using just a few digits) of a given length
 					;(define file (open-output-file "ntest.scm"))
@@ -52894,6 +52934,8 @@ why are these different (read-time `#() ? )
 ;; to get the bits that are on in just 1 argument? (logxor (logxor a b c) (logand a b c))
 (test (logxor 1 2 3 4) 4)
 (test (logxor 1 3 5 7) 0)
+(test (logxor -1 most-positive-fixnum) most-negative-fixnum)
+(test (logxor most-negative-fixnum most-positive-fixnum) -1)
 
 (test (logxor) 0)
 (test (logior) 0)
@@ -52977,6 +53019,9 @@ why are these different (read-time `#() ? )
   (test (logxor1 1 2 3 5) 4)
   (test (logxor1 -6 -31 -19 -9) 0)
   (test (logxor1 -45 -15 -7 -3) 6)
+  (test (logxor1 -1 most-positive-fixnum -1) 0)
+  (test (logxor1 -1 most-negative-fixnum -1) 0)
+  (test (logxor1 1 most-negative-fixnum 1) most-negative-fixnum)
   (test (logxor1 31 11 27 -38) -60))
 
 (if with-bignums
@@ -53074,6 +53119,7 @@ why are these different (read-time `#() ? )
 	#t))
 
 (num-test (ash 1 32) 4294967296)
+; (num-test (ash 1 63) 9223372036854775808)
 (num-test (ash 1 (- (expt 2 32))) 0)
 (test (> (ash 1 62) 1) #t)
 (num-test (ash -1 -3) -1)
@@ -57268,4 +57314,14 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 
 but how to build these in scheme?
 
+
+(- (string->number "1188077266484631001." 9) (string->number "1.188077266484631001E18" 9)) -> 1.0
+;; ok if 0 at end or if e17
+
+how does clisp get this right?
+[2]> (expt #C(0.0 -1.0) 1e16)
+#C(1.0 0.0)
+
+(sbcl is way off: (expt #C(0 1) 1e16) -> #C(0.539155 0.84220654))
+   
 |#
