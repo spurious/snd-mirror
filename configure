@@ -8842,6 +8842,48 @@ if test "x$ac_cv_lib_m_gtk_expander_get_label_fill" = x""yes; then :
 
 fi
 
+	# 2.90.7
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk_progress_bar_get_inverted in -lm" >&5
+$as_echo_n "checking for gtk_progress_bar_get_inverted in -lm... " >&6; }
+if test "${ac_cv_lib_m_gtk_progress_bar_get_inverted+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lm $GTK_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gtk_progress_bar_get_inverted ();
+int
+main ()
+{
+return gtk_progress_bar_get_inverted ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_m_gtk_progress_bar_get_inverted=yes
+else
+  ac_cv_lib_m_gtk_progress_bar_get_inverted=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_gtk_progress_bar_get_inverted" >&5
+$as_echo "$ac_cv_lib_m_gtk_progress_bar_get_inverted" >&6; }
+if test "x$ac_cv_lib_m_gtk_progress_bar_get_inverted" = x""yes; then :
+  $as_echo "#define HAVE_GTK_PROGRESS_BAR_GET_INVERTED 1" >>confdefs.h
+
+fi
+
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for cairo_glyph_allocate in -lcairo" >&5
 $as_echo_n "checking for cairo_glyph_allocate in -lcairo... " >&6; }
@@ -12844,4 +12886,3 @@ $as_echo "
   environs...............: $host $CC
 " >&6; }
 
-# TODO: libxm configure changes, cairo version check?

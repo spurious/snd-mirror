@@ -61488,25 +61488,20 @@ EDITS: 1
 	  (let* ((_GtkProgressBar_ (GTK_PROGRESS_BAR (gtk_progress_bar_new)))
 		 (_gchar_ (gtk_progress_bar_get_text _GtkProgressBar_))
 		 (_gdouble (gtk_progress_bar_get_fraction _GtkProgressBar_))
-		 (_gdouble1 (gtk_progress_bar_get_pulse_step _GtkProgressBar_))
-		 (_GtkProgressBarOrientation (gtk_progress_bar_get_orientation _GtkProgressBar_)))
+		 (_gdouble1 (gtk_progress_bar_get_pulse_step _GtkProgressBar_)))
 	    (if _gchar_ (snd-display #__line__ ";progress text: ~A" _gchar_))
 	    (if (fneq _gdouble 0.0) (snd-display #__line__ ";progress fraction: ~A" _gdouble))
 	    (if (fneq _gdouble1 0.1) (snd-display #__line__ ";progress step: ~A" _gdouble1))
-	    (if (not (= _GtkProgressBarOrientation 0)) (snd-display #__line__ ";progress orient: ~A" _GtkProgressBarOrientation))
 	    (gtk_progress_bar_pulse _GtkProgressBar_)
 	    (gtk_progress_bar_set_text _GtkProgressBar_ "hiho")
 	    (gtk_progress_bar_set_fraction _GtkProgressBar_ .25)
 	    (gtk_progress_bar_set_pulse_step _GtkProgressBar_ .2)
-	    (gtk_progress_bar_set_orientation _GtkProgressBar_ GTK_PROGRESS_RIGHT_TO_LEFT)
 	    (set! _gchar_ (gtk_progress_bar_get_text _GtkProgressBar_))
 	    (set! _gdouble (gtk_progress_bar_get_fraction _GtkProgressBar_))
 	    (set! _gdouble1 (gtk_progress_bar_get_pulse_step _GtkProgressBar_))
-	    (set! _GtkProgressBarOrientation (gtk_progress_bar_get_orientation _GtkProgressBar_))
 	    (if (not (string=? _gchar_ "hiho")) (snd-display #__line__ ";set progress text: ~A" _gchar_))
 	    (if (fneq _gdouble 0.25) (snd-display #__line__ ";set progress fraction: ~A" _gdouble))
-	    (if (fneq _gdouble1 0.2) (snd-display #__line__ ";set progress step: ~A" _gdouble1))
-	    (if (not (= _GtkProgressBarOrientation GTK_PROGRESS_RIGHT_TO_LEFT)) (snd-display #__line__ ";set progress orient: ~A" _GtkProgressBarOrientation)))
+	    (if (fneq _gdouble1 0.2) (snd-display #__line__ ";set progress step: ~A" _gdouble1)))
 	  
 	  (let* ((_GdkCursor_ (gdk_cursor_new GDK_BOTTOM_TEE))
 		 (_GdkCursor1_ (gdk_cursor_ref _GdkCursor_)))
@@ -61631,7 +61626,6 @@ EDITS: 1
 		 (_GtkSeparatorToolItem_ (GTK_SEPARATOR_TOOL_ITEM (gtk_separator_tool_item_new)))
 		 (_GtkToggleToolButton_ (GTK_TOGGLE_TOOL_BUTTON (gtk_toggle_tool_button_new)))
 		 (_GtkToolItem8_ (gtk_toggle_tool_button_new_from_stock GTK_STOCK_CANCEL))
-					;		 (_GtkOrientation (gtk_toolbar_get_orientation _GtkToolbar_))
 		 (_GtkToolbarStyle (gtk_toolbar_get_style _GtkToolbar_))
 		 (_GtkIconSize (gtk_toolbar_get_icon_size _GtkToolbar_))
 		 (_gint (gtk_toolbar_get_n_items _GtkToolbar_))
@@ -61650,7 +61644,6 @@ EDITS: 1
 		 (_gboolean7 (gtk_tool_item_get_visible_vertical _GtkToolItem_))
 		 (_gboolean8 (gtk_tool_item_get_is_important _GtkToolItem_))
 		 (_GtkIconSize1 (gtk_tool_item_get_icon_size _GtkToolItem_))
-		 (_GtkOrientation1 (gtk_tool_item_get_orientation _GtkToolItem_))
 		 (_GtkToolbarStyle1 (gtk_tool_item_get_toolbar_style _GtkToolItem_))
 		 (_GtkReliefStyle1 (gtk_tool_item_get_relief_style _GtkToolItem_))
 		 (_GtkWidget3_ (gtk_tool_item_retrieve_proxy_menu_item _GtkToolItem_))
@@ -61677,14 +61670,12 @@ EDITS: 1
 	    (if (not _gboolean7) (snd-display #__line__ ";tool item not visible vertical"))
 	    (if _gboolean8 (snd-display #__line__ ";tool item important"))
 	    (if (not (= _GtkIconSize1 3)) (snd-display #__line__ ";tool item icon size: ~A" _GtkIconSize1))
-	    (if (not (= _GtkOrientation1 0)) (snd-display #__line__ ";tool item orientation: ~A" _GtkOrientation1))
 	    (if (not (= _GtkToolbarStyle1 0)) (snd-display #__line__ ";tool item style: ~A" _GtkToolbarStyle1))
 	    (if (not (= _GtkReliefStyle1 2)) (snd-display #__line__ ";tool item relief: ~A" _GtkReliefStyle))
 	    
 	    (gtk_radio_tool_button_set_group _GtkRadioToolButton_ #f)
 	    (gtk_toggle_tool_button_set_active _GtkToggleToolButton_ #t)
 	    (gtk_toolbar_unset_style _GtkToolbar_)
-					;	    (gtk_toolbar_set_orientation _GtkToolbar_ GTK_ORIENTATION_HORIZONTAL)
 	    (gtk_toolbar_set_style _GtkToolbar_ GTK_TOOLBAR_TEXT)
 	    (gtk_toolbar_set_show_arrow _GtkToolbar_ #f)
 	    (gtk_tool_button_set_label _GtkToolButton_ "hi")
@@ -61819,7 +61810,6 @@ EDITS: 1
 		 (_gboolean8 (gtk_widget_child_focus _GtkWidget_ GTK_DIR_TAB_FORWARD))
 		 (_gboolean9 (gtk_widget_is_ancestor shell _GtkWidget_))
 		 (_PangoLayout_ (gtk_widget_create_pango_layout _GtkWidget_ "hi"))
-;		 (_gboolean11 (gtk_widget_intersect _GtkWidget_ (GdkRectangle 0 0 10 10) (GdkRectangle 10 10 100 100)))
 		 (vals (gtk_widget_get_size_request shell))
 		 (vals1 (gtk_widget_get_pointer shell))
 		 (_GList1_ (gtk_widget_list_accel_closures _GtkWidget_))
@@ -61906,7 +61896,6 @@ EDITS: 1
 		 (_gchar_2 (gtk_font_selection_get_preview_text _GtkFontSelection_))
 		 (_gchar_3 (gtk_font_selection_dialog_get_font_name _GtkFontSelectionDialog_))
 		 (_gchar_4 (gtk_font_selection_dialog_get_preview_text _GtkFontSelectionDialog_))
-		 (_gboolean3 (gtk_dialog_get_has_separator _GtkDialog_))
 		 (_GtkWidget_1 (gtk_dialog_add_button _GtkDialog_ "yow" 1))
 		 )
 	    (if (not _gboolean) (snd-display #__line__ ";dialog opacity"))
@@ -61916,7 +61905,6 @@ EDITS: 1
 	    (if _gboolean2 (snd-display #__line__ ";dialog adjusting"))
 	    (if (not (string=? _gchar_1 "Sans 10")) (snd-display #__line__ ";dialog font: ~A" _gchar_1))
 	    (if (not (string=? _gchar_4 "abcdefghijk ABCDEFGHIJK")) (snd-display #__line__ ";dialog preview text: ~A" _gchar_4))
-	    (if (not _gboolean3) (snd-display #__line__ ";dialog no sep"))
 	    (gtk_color_selection_set_current_alpha _GtkColorSelection_ 12345)
 	    (gtk_color_selection_set_previous_alpha _GtkColorSelection_ 54321)
 	    (gtk_dialog_set_default_response _GtkDialog_ 0)
@@ -62046,7 +62034,7 @@ EDITS: 1
 		(if (not (equal? _GtkTextBuffer_ _GtkTextBuffer_1)) (snd-display #__line__ ";iter text buffer: ~A ~A" _GtkTextBuffer_ _GtkTextBuffer_1))
 		(if (not (equal? _GtkTextBuffer_ _GtkTextBuffer_3)) (snd-display #__line__ ";view text buffer: ~A ~A" _GtkTextBuffer_ _GtkTextBuffer_3))
 		(if (not (equal? _GtkTextBuffer_1 _GtkTextBuffer_2)) (snd-display #__line__ ";mark text buffer: ~A ~A" _GtkTextBuffer_1 _GtkTextBuffer_2))
-		(if (not (equal? _GtkTextTag_1 _GtkTextTag_2)) (snd-display #__line__ ";view text tag: ~A ~A" _GtkTextTag_1 _GtkTextTag_2))
+;		(if (not (equal? _GtkTextTag_1 _GtkTextTag_2)) (snd-display #__line__ ";view text tag: ~A ~A" _GtkTextTag_1 _GtkTextTag_2))
 		(if (not (= _gint 1)) (snd-display #__line__ ";text lines: ~A" _gint))
 		(if (not (= _gint1 5)) (snd-display #__line__ ";text chars: ~A" _gint1))
 		(if (not (= _gint2 5)) (snd-display #__line__ ";text iter offset:~A" _gint2))
@@ -62182,7 +62170,6 @@ EDITS: 1
 			     (_GtkTextMark_6 (gtk_text_buffer_get_selection_bound _GtkTextBuffer_))
 			     (_gboolean57 (gtk_text_buffer_get_selection_bounds _GtkTextBuffer_ _GtkTextIter_7 _GtkTextIter_8))
 			     (_GtkTextAttributes_3 (gtk_text_attributes_new))
-;			     (_GdkRectangle_ (GdkRectangle))		
 			     (_GtkTextTag_3 (gtk_text_buffer_create_tag _GtkTextBuffer_ "a-tag-1")))
 			(gtk_text_buffer_get_iter_at_offset _GtkTextBuffer_ _GtkTextIter_ 0)
 			(gtk_text_buffer_insert _GtkTextBuffer_ _GtkTextIter_ "hiho again" 10)
@@ -62198,7 +62185,6 @@ EDITS: 1
 			(gtk_text_buffer_insert _GtkTextBuffer_ _GtkTextIter_ "hiho" 1)
 			(gtk_text_buffer_get_iter_at_line_offset _GtkTextBuffer_ _GtkTextIter_7 0 3)
 			(gtk_text_buffer_get_iter_at_line_index _GtkTextBuffer_ _GtkTextIter_8 0 0)
-			(gtk_text_view_get_iter_location _GtkTextView_ _GtkTextIter_7 _GdkRectangle_)
 			(let* ((_GdkPixbuf_ (gtk_text_iter_get_pixbuf _GtkTextIter_))
 			       (_GSList_ (gtk_text_iter_get_toggled_tags _GtkTextIter_ _gboolean))
 			       (_gboolean (gtk_text_iter_in_range _GtkTextIter_ _GtkTextIter_ _GtkTextIter_))
@@ -62223,7 +62209,6 @@ EDITS: 1
 			  (gtk_text_buffer_remove_selection_clipboard _GtkTextBuffer_ _GtkClipboard_)
 			  (gtk_text_buffer_copy_clipboard _GtkTextBuffer_ _GtkClipboard_)
 			  (gtk_text_iter_order _GtkTextIter_ _GtkTextIter_)
-			  (gtk_text_view_get_visible_rect _GtkTextView_ _GdkRectangle_)
 			  (gtk_text_buffer_insert_at_cursor _GtkTextBuffer_ "hi" _gint)
 			  (gtk_text_buffer_cut_clipboard _GtkTextBuffer_ _GtkClipboard_ _gboolean)
 			  (gtk_text_tag_table_foreach _GtkTextTagTable_ (lambda (a b) #f) #f)))))))))
@@ -62630,8 +62615,6 @@ EDITS: 1
 		 (_GdkPixbuf_ (gtk_icon_info_get_builtin_pixbuf _GtkIconInfo_))
 		 (_GdkPixbuf_1 (gtk_icon_source_get_pixbuf _GtkIconSource_))
 		 (_GtkIconSet_2 (gtk_icon_set_ref _GtkIconSet_))
-;		 (_GdkRectangle_ (GdkRectangle))
-		 (_gboolean1 (gtk_icon_info_get_embedded_rect _GtkIconInfo_ _GdkRectangle_))
 		 (_gboolean2 (gtk_icon_source_get_direction_wildcarded _GtkIconSource_))
 		 (_gboolean3 (gtk_icon_source_get_size_wildcarded _GtkIconSource_))
 		 (_gboolean4 (gtk_icon_source_get_state_wildcarded _GtkIconSource_))
@@ -62735,7 +62718,7 @@ EDITS: 1
 	    (gtk_menu_item_set_submenu _GtkMenuItem_ (GTK_WIDGET _GtkMenu_))
 	    (gtk_window_add_accel_group _GtkWindow_ _GtkAccelGroup_)
 	    (gtk_menu_set_accel_group _GtkMenu_ _GtkAccelGroup_)
-	    (gtk_widget_add_accelerator (GTK_WIDGET _GtkMenuItem_) "activate" _GtkAccelGroup_ GDK_C GDK_MOD1_MASK GTK_ACCEL_VISIBLE)
+;	    (gtk_widget_add_accelerator (GTK_WIDGET _GtkMenuItem_) "activate" _GtkAccelGroup_ GDK_KEY_C GDK_MOD1_MASK GTK_ACCEL_VISIBLE)
 	    (let* ((_GtkWidget_ (gtk_menu_item_get_submenu _GtkMenuItem_))
 		   (_GtkWidget_1 (gtk_image_menu_item_new_from_stock GTK_STOCK_CANCEL _GtkAccelGroup_))
 		   (_GtkAccelGroup_1 (gtk_menu_get_accel_group _GtkMenu_))
@@ -62745,7 +62728,7 @@ EDITS: 1
 		   (_GtkAccelMap_ (gtk_accel_map_get))
 		   (_GtkAccelKey_ (gtk_accel_group_find _GtkAccelGroup_ (lambda (a b c) #f) #f))
 		   (_GSList_ (gtk_accel_groups_from_object (G_OBJECT _GtkMenu_)))
-		   (_list (gtk_accel_group_query _GtkAccelGroup_ GDK_C GDK_MOD1_MASK))
+;		   (_list (gtk_accel_group_query _GtkAccelGroup_ GDK_KEY_C GDK_MOD1_MASK))
 		   (_gboolean (gtk_accel_label_refetch _GtkAccelLabel_)))
 	      (if (not (= _guint 0)) (snd-display #__line__ ";accel width: ~A" _guint))
 	      (if (not (string=? _gchar_ "title")) (snd-display #__line__ ";menu title: ~A" _gchar_))
@@ -62762,12 +62745,6 @@ EDITS: 1
 	    (gtk_menu_item_set_right_justified _GtkMenuItem_ #f)
 	    (gtk_accel_group_lock _GtkAccelGroup_)
 	    (gtk_accel_group_unlock _GtkAccelGroup_)
-	    (let* ((vals (gtk_accelerator_parse "activate"))
-		   (_gchar_ (gtk_accelerator_name GDK_C GDK_MOD1_MASK))
-		   (_gboolean (gtk_accelerator_valid GDK_C GDK_MOD1_MASK)))
-	      (if (not _gboolean) (snd-display #__line__ ";accelerator not valid"))
-	      (if (not (string=? _gchar_ "<Alt>c")) (snd-display #__line__ ";accelerator name: ~A" _gchar_))
-	      (if (not (equal? vals (list 0 0))) (snd-display #__line__ ";accelerator parse: ~A" vals)))
 	    (gtk_menu_reposition _GtkMenu_)
 	    (gtk_menu_item_activate _GtkMenuItem_)
 	    (gtk_menu_set_active _GtkMenu_ 0)
@@ -63082,10 +63059,7 @@ EDITS: 1
 				(gint1 (gtk_icon_view_get_pixbuf_column (GTK_ICON_VIEW icon_view))))
 			    (if (or (not (= gint0 -1)) (not (= gint1 -1))) (snd-display #__line__ ";icon view cols: ~A ~A" gint0 gint1)))
 			  (let ((ic (gtk_icon_view_new)))
-			    (if (not (GTK_IS_ICON_VIEW ic)) (snd-display #__line__ ";icon view2?"))
-			    (gtk_icon_view_set_orientation (GTK_ICON_VIEW ic) GTK_ORIENTATION_VERTICAL)
-			    (if (not (= (gtk_icon_view_get_orientation (GTK_ICON_VIEW ic)) GTK_ORIENTATION_VERTICAL))
-				(snd-display #__line__ ";icon view orientation")))
+			    (if (not (GTK_IS_ICON_VIEW ic)) (snd-display #__line__ ";icon view2?")))
 			  (let ((model (gtk_icon_view_get_model (GTK_ICON_VIEW icon_view))))
 			    (if (not (GTK_TREE_MODEL model)) (snd-display #__line__ ";icon view model: ~A (~A)" model store))
 			    (gtk_icon_view_set_model (GTK_ICON_VIEW icon_view) (GTK_TREE_MODEL store)))
@@ -63166,11 +63140,9 @@ EDITS: 1
 		   GDK_EVENT_PROPERTY GDK_EVENT_PROXIMITY GDK_EVENT_SCROLL GDK_EVENT_SELECTION GDK_EVENT_SETTING
 		   GDK_EVENT_VISIBILITY GDK_EVENT_WINDOWSTATE GDK_IS_COLORMAP
 		   GDK_IS_DEVICE GDK_IS_DISPLAY GDK_IS_DRAG_CONTEXT GDK_IS_DRAWABLE
-		   GDK_IS_KEYMAP GDK_IS_PANGO_RENDERER GDK_IS_PIXBUF GDK_IS_PIXBUF_ANIMATION
-		   GDK_IS_PIXBUF_ANIMATION_ITER ;GDK_IS_PIXBUF_LOADER 
+		   GDK_IS_KEYMAP 
 		   GDK_IS_SCREEN GDK_IS_VISUAL
-		   GDK_IS_WINDOW GDK_KEYMAP GDK_PANGO_RENDERER GDK_PIXBUF GDK_PIXBUF_ANIMATION
-		   GDK_PIXBUF_ANIMATION_ITER ;GDK_PIXBUF_LOADER 
+		   GDK_IS_WINDOW GDK_KEYMAP 
 		   GDK_SCREEN GDK_VISUAL
 		   GDK_WINDOW GPOINTER GTK_ABOUT_DIALOG GTK_ACCEL_GROUP GTK_ACCEL_LABEL
 		   GTK_ACCEL_MAP GTK_ACCESSIBLE GTK_ACTION GTK_ACTION_GROUP GTK_ADJUSTMENT
@@ -63202,7 +63174,7 @@ EDITS: 1
 		   GTK_IS_HBUTTON_BOX GTK_IS_HPANED GTK_IS_HRULER GTK_IS_HSCALE GTK_IS_HSCROLLBAR
 		   GTK_IS_HSEPARATOR GTK_IS_ICON_FACTORY GTK_IS_ICON_THEME GTK_IS_ICON_VIEW GTK_IS_IMAGE
 		   GTK_IS_IMAGE_MENU_ITEM GTK_IS_IM_CONTEXT GTK_IS_IM_CONTEXT_SIMPLE GTK_IS_IM_MULTICONTEXT
-		   GTK_IS_INVISIBLE GTK_IS_ITEM GTK_IS_LABEL GTK_IS_LAYOUT GTK_IS_LIST_STORE
+		   GTK_IS_INVISIBLE GTK_IS_LABEL GTK_IS_LAYOUT GTK_IS_LIST_STORE
 		   GTK_IS_MENU GTK_IS_MENU_BAR GTK_IS_MENU_ITEM GTK_IS_MENU_SHELL GTK_IS_MENU_TOOL_BUTTON
 		   GTK_IS_MISC GTK_IS_NOTEBOOK GTK_IS_OBJECT GTK_IS_PANED
 		   GTK_IS_PLUG GTK_IS_PROGRESS_BAR GTK_IS_RADIO_ACTION GTK_IS_RADIO_BUTTON GTK_IS_RADIO_MENU_ITEM
@@ -63216,7 +63188,7 @@ EDITS: 1
 		   GTK_IS_TREE_MODEL_SORT GTK_IS_TREE_SELECTION GTK_IS_TREE_SORTABLE GTK_IS_TREE_STORE GTK_IS_TREE_VIEW
 		   GTK_IS_TREE_VIEW_COLUMN GTK_IS_UI_MANAGER GTK_IS_VBOX GTK_IS_VBUTTON_BOX GTK_IS_VIEWPORT
 		   GTK_IS_VPANED GTK_IS_VRULER GTK_IS_VSCALE GTK_IS_VSCROLLBAR GTK_IS_VSEPARATOR
-		   GTK_IS_WIDGET GTK_IS_WINDOW GTK_ITEM GTK_LABEL GTK_LAYOUT
+		   GTK_IS_WIDGET GTK_IS_WINDOW GTK_LABEL GTK_LAYOUT
 		   GTK_LIST_STORE GTK_MENU GTK_MENU_BAR GTK_MENU_ITEM GTK_MENU_SHELL
 		   GTK_MENU_TOOL_BUTTON GTK_MISC GTK_NOTEBOOK ;GTK_OBJECT
 		   ;GTK_OBJECT_FLAGS GTK_OBJECT_SET_FLAGS GTK_OBJECT_UNSET_FLAGS
@@ -63233,8 +63205,8 @@ EDITS: 1
 		   GTK_VRULER GTK_VSCALE GTK_VSCROLLBAR GTK_VSEPARATOR GTK_WIDGET
 		   G_IS_OBJECT G_OBJECT G_OBJECT_TYPE PANGO_CONTEXT PANGO_FONT
 		   PANGO_FONT_FACE PANGO_FONT_FAMILY PANGO_FONT_MAP PANGO_IS_CONTEXT PANGO_IS_FONT
-		   PANGO_IS_FONT_FACE PANGO_IS_FONT_FAMILY PANGO_IS_FONT_MAP PANGO_IS_LAYOUT PANGO_IS_RENDERER
-		   PANGO_LAYOUT PANGO_RENDERER g_cclosure_new g_idle_add g_idle_add_full
+		   PANGO_IS_FONT_FACE PANGO_IS_FONT_FAMILY PANGO_IS_FONT_MAP PANGO_IS_LAYOUT
+		   PANGO_LAYOUT g_cclosure_new g_idle_add g_idle_add_full
 		   g_idle_remove_by_data g_list_copy g_list_first g_list_free g_list_last
 		   g_list_length g_list_nth_data g_list_remove_link g_list_reverse g_object_get_data
 		   g_object_ref g_object_set_data g_object_unref g_quark_from_string g_quark_to_string
@@ -63247,7 +63219,7 @@ EDITS: 1
 		   gdk_add_client_message_filter gdk_atom_name gdk_beep
 		   gdk_color_copy gdk_color_equal gdk_color_free
 		   gdk_color_hash gdk_color_parse gdk_colormap_alloc_color gdk_colormap_alloc_colors
-		   gdk_colormap_get_system gdk_colormap_get_visual gdk_colormap_new gdk_colormap_query_color
+		   gdk_colormap_get_system gdk_colormap_get_visual gdk_colormap_new
 
 		   gdk_display_add_client_message_filter gdk_display_beep gdk_display_close gdk_display_flush ;gdk_display_get_core_pointer
 		   gdk_display_get_default gdk_display_get_default_cursor_size gdk_display_get_default_group gdk_display_get_default_screen gdk_display_get_event
@@ -63273,8 +63245,6 @@ EDITS: 1
 		   gdk_keymap_lookup_key gdk_keyval_convert_case gdk_keyval_from_name gdk_keyval_is_lower
 		   gdk_keyval_is_upper gdk_keyval_name gdk_keyval_to_lower gdk_keyval_to_unicode gdk_keyval_to_upper gdk_pango_context_get 
 		   gdk_list_visuals gdk_notify_startup_complete
-		   gdk_pango_renderer_get_default 
-		   gdk_pango_renderer_new gdk_pango_renderer_set_drawable
 		   gdk_pixbuf_add_alpha   gdk_pixbuf_animation_get_height gdk_pixbuf_animation_get_iter gdk_pixbuf_animation_get_static_image 
 		   gdk_pixbuf_animation_get_width
 		   gdk_pixbuf_animation_is_static_image gdk_pixbuf_animation_iter_advance gdk_pixbuf_animation_iter_get_delay_time 
@@ -63412,9 +63382,9 @@ EDITS: 1
 		   gtk_container_check_resize gtk_container_foreach gtk_container_get_border_width gtk_container_get_children gtk_container_get_resize_mode
 		   gtk_container_remove gtk_container_set_border_width gtk_container_set_resize_mode
 		   gtk_dialog_add_action_widget gtk_dialog_add_button gtk_dialog_add_buttons
-		   gtk_dialog_get_has_separator gtk_dialog_new gtk_dialog_new_with_buttons gtk_dialog_response
+		   gtk_dialog_new gtk_dialog_new_with_buttons gtk_dialog_response
 		   gtk_dialog_run gtk_dialog_set_alternative_button_order_from_array gtk_dialog_set_default_response 
-		   gtk_dialog_set_has_separator gtk_dialog_set_response_sensitive
+		   gtk_dialog_set_response_sensitive
 		   gtk_drag_begin gtk_drag_check_threshold gtk_drag_dest_add_image_targets gtk_drag_dest_add_text_targets gtk_drag_dest_add_uri_targets
 		   gtk_drag_dest_find_target gtk_drag_dest_get_target_list gtk_drag_dest_set gtk_drag_dest_set_proxy gtk_drag_dest_set_target_list
 		   gtk_drag_dest_unset gtk_drag_finish gtk_drag_get_data gtk_drag_get_source_widget gtk_drag_highlight
@@ -63501,13 +63471,13 @@ EDITS: 1
 		   gtk_icon_theme_get_for_screen gtk_icon_theme_get_icon_sizes gtk_icon_theme_get_search_path
 		   gtk_icon_theme_has_icon gtk_icon_theme_list_icons gtk_icon_theme_load_icon gtk_icon_theme_lookup_icon
 		   gtk_icon_theme_new gtk_icon_theme_prepend_search_path gtk_icon_theme_rescan_if_needed gtk_icon_theme_set_custom_theme gtk_icon_theme_set_screen
-		   gtk_icon_view_get_markup_column gtk_icon_view_get_model gtk_icon_view_get_orientation 
+		   gtk_icon_view_get_markup_column gtk_icon_view_get_model 
 		   gtk_icon_view_get_path_at_pos gtk_icon_view_get_pixbuf_column
 		   gtk_icon_view_get_selected_items gtk_icon_view_get_selection_mode 
 		   gtk_icon_view_get_text_column gtk_icon_view_item_activated
 		   gtk_icon_view_new gtk_icon_view_new_with_model gtk_icon_view_path_is_selected gtk_icon_view_select_all gtk_icon_view_select_path
 		   gtk_icon_view_selected_foreach gtk_icon_view_set_markup_column 
-		   gtk_icon_view_set_model gtk_icon_view_set_orientation gtk_icon_view_set_pixbuf_column
+		   gtk_icon_view_set_model gtk_icon_view_set_pixbuf_column
 		   gtk_icon_view_set_selection_mode gtk_icon_view_set_text_column gtk_icon_view_unselect_all gtk_icon_view_unselect_path
 		   gtk_im_context_delete_surrounding gtk_im_context_filter_keypress 
 		   gtk_im_context_focus_in gtk_im_context_focus_out gtk_im_context_get_preedit_string
@@ -63515,7 +63485,6 @@ EDITS: 1
 		   gtk_im_context_set_surrounding gtk_im_context_set_use_preedit 
 		   gtk_im_context_simple_add_table gtk_im_context_simple_new
 		   gtk_im_multicontext_append_menuitems gtk_im_multicontext_new
-		   gtk_item_deselect gtk_item_select gtk_item_toggle gtk_label_get_angle
 		   gtk_label_get_attributes gtk_label_get_ellipsize gtk_label_get_justify gtk_label_get_label gtk_label_get_layout
 		   gtk_label_get_layout_offsets gtk_label_get_line_wrap gtk_label_get_mnemonic_keyval gtk_label_get_mnemonic_widget gtk_label_get_selectable
 		   gtk_label_get_selection_bounds gtk_label_get_single_line_mode gtk_label_get_text gtk_label_get_use_markup
@@ -63552,14 +63521,14 @@ EDITS: 1
 		   gtk_paint_arrow gtk_paint_box gtk_paint_box_gap
 		   gtk_paint_check gtk_paint_diamond gtk_paint_expander gtk_paint_extension gtk_paint_flat_box
 		   gtk_paint_focus gtk_paint_handle gtk_paint_hline gtk_paint_layout gtk_paint_option
-		   gtk_paint_polygon gtk_paint_resize_grip gtk_paint_shadow gtk_paint_shadow_gap gtk_paint_slider
+		   gtk_paint_resize_grip gtk_paint_shadow gtk_paint_shadow_gap gtk_paint_slider
 		   gtk_paint_tab gtk_paint_vline gtk_paned_add1 gtk_paned_add2 gtk_paned_get_child1
 		   gtk_paned_get_child2 gtk_paned_get_position gtk_paned_pack1 gtk_paned_pack2
 		   gtk_paned_set_position gtk_plug_construct gtk_plug_get_id gtk_plug_new
 		   gtk_progress_bar_get_ellipsize gtk_progress_bar_get_fraction 
-		   gtk_progress_bar_get_orientation gtk_progress_bar_get_pulse_step gtk_progress_bar_get_text
+		   gtk_progress_bar_get_pulse_step gtk_progress_bar_get_text
 		   gtk_progress_bar_new gtk_progress_bar_pulse gtk_progress_bar_set_ellipsize gtk_progress_bar_set_fraction
-		   gtk_progress_bar_set_orientation gtk_progress_bar_set_pulse_step gtk_progress_bar_set_text gtk_propagate_event gtk_radio_action_get_current_value
+		   gtk_progress_bar_set_pulse_step gtk_progress_bar_set_text gtk_propagate_event gtk_radio_action_get_current_value
 		   gtk_radio_action_get_group gtk_radio_action_new gtk_radio_action_set_group gtk_radio_button_get_group
 		   gtk_radio_button_new gtk_radio_button_new_from_widget 
 		   gtk_radio_button_new_with_label_from_widget gtk_radio_button_new_with_mnemonic
@@ -63697,7 +63666,7 @@ EDITS: 1
 		   gtk_tool_button_set_label gtk_tool_button_set_label_widget 
 		   gtk_tool_button_set_stock_id gtk_tool_button_set_use_underline gtk_tool_item_get_expand
 		   gtk_tool_item_get_homogeneous gtk_tool_item_get_icon_size gtk_tool_item_get_is_important 
-		   gtk_tool_item_get_orientation gtk_tool_item_get_proxy_menu_item
+		   gtk_tool_item_get_proxy_menu_item
 		   gtk_tool_item_get_relief_style gtk_tool_item_get_toolbar_style 
 		   gtk_tool_item_get_use_drag_window gtk_tool_item_get_visible_horizontal
 		   gtk_tool_item_get_visible_vertical gtk_tool_item_new gtk_tool_item_rebuild_menu gtk_tool_item_retrieve_proxy_menu_item gtk_tool_item_set_expand
@@ -63893,10 +63862,8 @@ EDITS: 1
 		   pango_layout_move_cursor_visually pango_layout_new pango_layout_set_alignment pango_layout_set_attributes pango_layout_set_auto_dir
 		   pango_layout_set_font_description pango_layout_set_indent pango_layout_set_justify pango_layout_set_markup pango_layout_set_markup_with_accel
 		   pango_layout_set_single_paragraph_mode pango_layout_set_spacing pango_layout_set_tabs pango_layout_set_text pango_layout_set_width
-		   pango_layout_set_wrap pango_layout_xy_to_index pango_parse_markup pango_renderer_activate
-		   pango_renderer_deactivate pango_renderer_draw_error_underline pango_renderer_draw_glyph pango_renderer_draw_glyphs pango_renderer_draw_layout
-		   pango_renderer_draw_layout_line pango_renderer_draw_rectangle pango_renderer_draw_trapezoid pango_renderer_get_color
-		   pango_renderer_part_changed pango_renderer_set_color pango_renderer_set_matrix pango_reorder_items pango_script_for_unichar
+		   pango_layout_set_wrap pango_layout_xy_to_index pango_parse_markup
+		   pango_renderer_deactivate pango_renderer_draw_error_underline
 		   pango_script_iter_free pango_script_iter_get_range pango_script_iter_next pango_shape       ))
 		 
 		 (gtk-procs0 (remove-if (lambda (n) (not (arity-ok n 0))) gtk-procs))

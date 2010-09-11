@@ -1153,7 +1153,7 @@ static void watch_info_file(struct fam_info *fp, FAMEvent *fe)
 
 static gboolean filer_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
-  if (EVENT_KEYVAL(event) == GDK_Tab)
+  if (EVENT_KEYVAL(event) == snd_K_Tab)
     {
       gtk_entry_set_text(GTK_ENTRY(w), sound_filename_completer(w, (char *)gtk_entry_get_text(GTK_ENTRY(w)), NULL));
       gtk_editable_set_position(GTK_EDITABLE(w), mus_strlen((char *)gtk_entry_get_text(GTK_ENTRY(w))));
@@ -2010,7 +2010,7 @@ static void set_file_dialog_sound_attributes(file_data *fdat, int type, int form
 
 static gboolean data_panel_srate_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
 {
-  if (EVENT_KEYVAL(event) == GDK_Tab)
+  if (EVENT_KEYVAL(event) == snd_K_Tab)
     {
       gtk_entry_set_text(GTK_ENTRY(w), srate_completer(w, (char *)gtk_entry_get_text(GTK_ENTRY(w)), NULL));
       gtk_editable_set_position(GTK_EDITABLE(w), mus_strlen((char *)gtk_entry_get_text(GTK_ENTRY(w))));

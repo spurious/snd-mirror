@@ -33,7 +33,7 @@
     (let ((child (gtk_bin_get_child (GTK_BIN widget))))
       (if (not child) #f
 	  (let ((symbol (gtk_label_get_mnemonic_keyval (GTK_LABEL child))))
-	    (if (equal? GDK_VoidSymbol symbol) #f
+	    (if (equal? GDK_KEY_VoidSymbol symbol) #f
 		symbol)))))
   
   (define (set-label widget text)
@@ -147,25 +147,25 @@
 	  set-accel))
 
       (if (not (procedure? (key-binding #\o 4)))
-	  (setaccel! (find-menu-rec '("File" "Open"))     GDK_O GDK_CONTROL_MASK))
+	  (setaccel! (find-menu-rec '("File" "Open"))     GDK_KEY_O GDK_CONTROL_MASK))
 
       (if (not (procedure? (key-binding #\w 4)))
-	  (setaccel! (find-menu-rec '("File" "Close"))    GDK_W GDK_CONTROL_MASK))
+	  (setaccel! (find-menu-rec '("File" "Close"))    GDK_KEY_W GDK_CONTROL_MASK))
       (if (not (procedure? (key-binding #\s 4)))
-	  (setaccel! (find-menu-rec '("File" "Save"))     GDK_S GDK_CONTROL_MASK))
+	  (setaccel! (find-menu-rec '("File" "Save"))     GDK_KEY_S GDK_CONTROL_MASK))
       
-      ;;(setaccel! (find-menu-rec '("File" "Save as"))  GDK_S (+ GDK_CONTROL_MASK GDK_SHIFT_MASK))
+      ;;(setaccel! (find-menu-rec '("File" "Save as"))  GDK_KEY_S (+ GDK_CONTROL_MASK GDK_SHIFT_MASK))
       (if (not (procedure? (key-binding #\n 4)))
-	  (setaccel! (find-menu-rec '("File" "New"))      GDK_N GDK_CONTROL_MASK))
+	  (setaccel! (find-menu-rec '("File" "New"))      GDK_KEY_N GDK_CONTROL_MASK))
       
       (if (not (procedure? (key-binding #\z 4)))
-	  (setaccel! (find-menu-rec '("Edit" "Undo"))       GDK_Z GDK_CONTROL_MASK))
+	  (setaccel! (find-menu-rec '("Edit" "Undo"))       GDK_KEY_Z GDK_CONTROL_MASK))
 
       (if (not (procedure? (key-binding #\z 5)))
-	  (setaccel! (find-menu-rec '("Edit" "Redo"))       GDK_Z (+ GDK_CONTROL_MASK GDK_SHIFT_MASK)))
+	  (setaccel! (find-menu-rec '("Edit" "Redo"))       GDK_KEY_Z (+ GDK_CONTROL_MASK GDK_SHIFT_MASK)))
       
       (if (not (procedure? (key-binding #\a 4)))
-	  (setaccel! (find-menu-rec '("Edit" "Select all")) GDK_A GDK_CONTROL_MASK))
+	  (setaccel! (find-menu-rec '("Edit" "Select all")) GDK_KEY_A GDK_CONTROL_MASK))
       )
     )
 )

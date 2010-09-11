@@ -429,7 +429,7 @@ XM_TYPE_PTR(gchar__, gchar**)
 #define C_TO_XEN_GdkEventMask(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkEventMask(Arg) (GdkEventMask)(XEN_TO_C_INT(Arg))
 #define XEN_GdkEventMask_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR(GdkRectangle_, GdkRectangle*)
+XM_TYPE_PTR_1(GdkRectangle_, GdkRectangle*)
 XM_TYPE_PTR(GdkKeymap_, GdkKeymap*)
 XM_TYPE_PTR(GdkKeymapKey_, GdkKeymapKey*)
 #define C_TO_XEN_PangoDirection(Arg) C_TO_XEN_INT(Arg)
@@ -579,7 +579,6 @@ XM_TYPE_PTR_1(GtkIMContextSimple_, GtkIMContextSimple*)
 XM_TYPE_PTR_1(guint16_, guint16*)
 XM_TYPE_PTR_1(GtkIMMulticontext_, GtkIMMulticontext*)
 XM_TYPE_PTR_1(GtkMenuShell_, GtkMenuShell*)
-XM_TYPE_PTR_1(GtkItem_, GtkItem*)
 XM_TYPE_PTR_1(GtkLabel_, GtkLabel*)
 #define C_TO_XEN_GtkJustification(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkJustification(Arg) (GtkJustification)(XEN_TO_C_INT(Arg))
@@ -595,9 +594,6 @@ XM_TYPE_PTR_1(GtkNotebook_, GtkNotebook*)
 XM_TYPE_PTR_1(GtkPaned_, GtkPaned*)
 XM_TYPE_PTR_1(GtkPlug_, GtkPlug*)
 XM_TYPE_PTR_1(GtkProgressBar_, GtkProgressBar*)
-#define C_TO_XEN_GtkProgressBarOrientation(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GtkProgressBarOrientation(Arg) (GtkProgressBarOrientation)(XEN_TO_C_INT(Arg))
-#define XEN_GtkProgressBarOrientation_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR_1(GtkRadioButton_, GtkRadioButton*)
 XM_TYPE_PTR_1(GtkRadioMenuItem_, GtkRadioMenuItem*)
 XM_TYPE_PTR_1(GtkRange_, GtkRange*)
@@ -803,7 +799,7 @@ XM_TYPE_1(PangoAttrFilterFunc, PangoAttrFilterFunc)
 XM_TYPE_PTR(PangoScriptIter_, PangoScriptIter*)
 XM_TYPE_PTR_1(GtkFileChooserButton_, GtkFileChooserButton*)
 XM_TYPE_PTR_1(GtkMenuToolButton_, GtkMenuToolButton*)
-XM_TYPE_PTR(PangoRenderer_, PangoRenderer*)
+XM_TYPE_PTR_1(PangoRenderer_, PangoRenderer*)
 XM_TYPE_1(PangoRenderPart, PangoRenderPart)
 XM_TYPE_PTR_1(PangoMatrix_, PangoMatrix*)
 XM_TYPE_PTR_1(GValue_, GValue*)
@@ -983,8 +979,8 @@ XM_TYPE_PTR(cairo_rectangle_list_t_, cairo_rectangle_list_t*)
 #if HAVE_CAIRO_GLYPH_ALLOCATE
 XM_TYPE_PTR(cairo_text_cluster_t_, cairo_text_cluster_t*)
 XM_TYPE(cairo_text_cluster_flags_t, cairo_text_cluster_flags_t)
-XM_TYPE_PTR(cairo_glyph_t__, cairo_glyph_t**)
-XM_TYPE_PTR(cairo_text_cluster_t__, cairo_text_cluster_t**)
+XM_TYPE_PTR_1(cairo_glyph_t__, cairo_glyph_t**)
+XM_TYPE_PTR_1(cairo_text_cluster_t__, cairo_text_cluster_t**)
 XM_TYPE_PTR(cairo_text_cluster_flags_t_, cairo_text_cluster_flags_t*)
 #define C_TO_XEN_cairo_bool_t(Arg) C_TO_XEN_INT(Arg)
 #endif
@@ -992,7 +988,7 @@ XM_TYPE_PTR(cairo_text_cluster_flags_t_, cairo_text_cluster_flags_t*)
 #if HAVE_CAIRO_REGION_XOR
 XM_TYPE_PTR(cairo_device_t_, cairo_device_t*)
 XM_TYPE(cairo_device_type_t, cairo_device_type_t)
-XM_TYPE_PTR(cairo_rectangle_t_, cairo_rectangle_t*)
+XM_TYPE_PTR_1(cairo_rectangle_t_, cairo_rectangle_t*)
 XM_TYPE_PTR(double_, double*)
 XM_TYPE_PTR(cairo_rectangle_int_t_, cairo_rectangle_int_t*)
 XM_TYPE(cairo_region_overlap_t, cairo_region_overlap_t)
@@ -5767,22 +5763,6 @@ gint response_id)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_gtk_dialog_set_has_separator(XEN dialog, XEN setting)
-{
-  #define H_gtk_dialog_set_has_separator "void gtk_dialog_set_has_separator(GtkDialog* dialog, gboolean setting)"
-  XEN_ASSERT_TYPE(XEN_GtkDialog__P(dialog), dialog, 1, "gtk_dialog_set_has_separator", "GtkDialog*");
-  XEN_ASSERT_TYPE(XEN_gboolean_P(setting), setting, 2, "gtk_dialog_set_has_separator", "gboolean");
-  gtk_dialog_set_has_separator(XEN_TO_C_GtkDialog_(dialog), XEN_TO_C_gboolean(setting));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_dialog_get_has_separator(XEN dialog)
-{
-  #define H_gtk_dialog_get_has_separator "gboolean gtk_dialog_get_has_separator(GtkDialog* dialog)"
-  XEN_ASSERT_TYPE(XEN_GtkDialog__P(dialog), dialog, 1, "gtk_dialog_get_has_separator", "GtkDialog*");
-  return(C_TO_XEN_gboolean(gtk_dialog_get_has_separator(XEN_TO_C_GtkDialog_(dialog))));
-}
-
 static XEN gxg_gtk_dialog_response(XEN dialog, XEN response_id)
 {
   #define H_gtk_dialog_response "void gtk_dialog_response(GtkDialog* dialog, gint response_id)"
@@ -7311,30 +7291,6 @@ static XEN gxg_gtk_invisible_new(void)
 {
   #define H_gtk_invisible_new "GtkWidget* gtk_invisible_new( void)"
   return(C_TO_XEN_GtkWidget_(gtk_invisible_new()));
-}
-
-static XEN gxg_gtk_item_select(XEN item)
-{
-  #define H_gtk_item_select "void gtk_item_select(GtkItem* item)"
-  XEN_ASSERT_TYPE(XEN_GtkItem__P(item), item, 1, "gtk_item_select", "GtkItem*");
-  gtk_item_select(XEN_TO_C_GtkItem_(item));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_item_deselect(XEN item)
-{
-  #define H_gtk_item_deselect "void gtk_item_deselect(GtkItem* item)"
-  XEN_ASSERT_TYPE(XEN_GtkItem__P(item), item, 1, "gtk_item_deselect", "GtkItem*");
-  gtk_item_deselect(XEN_TO_C_GtkItem_(item));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_item_toggle(XEN item)
-{
-  #define H_gtk_item_toggle "void gtk_item_toggle(GtkItem* item)"
-  XEN_ASSERT_TYPE(XEN_GtkItem__P(item), item, 1, "gtk_item_toggle", "GtkItem*");
-  gtk_item_toggle(XEN_TO_C_GtkItem_(item));
-  return(XEN_FALSE);
 }
 
 static XEN gxg_gtk_label_new(XEN str)
@@ -8875,16 +8831,6 @@ gdouble fraction)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_gtk_progress_bar_set_orientation(XEN pbar, XEN orientation)
-{
-  #define H_gtk_progress_bar_set_orientation "void gtk_progress_bar_set_orientation(GtkProgressBar* pbar, \
-GtkProgressBarOrientation orientation)"
-  XEN_ASSERT_TYPE(XEN_GtkProgressBar__P(pbar), pbar, 1, "gtk_progress_bar_set_orientation", "GtkProgressBar*");
-  XEN_ASSERT_TYPE(XEN_GtkProgressBarOrientation_P(orientation), orientation, 2, "gtk_progress_bar_set_orientation", "GtkProgressBarOrientation");
-  gtk_progress_bar_set_orientation(XEN_TO_C_GtkProgressBar_(pbar), XEN_TO_C_GtkProgressBarOrientation(orientation));
-  return(XEN_FALSE);
-}
-
 static XEN gxg_gtk_progress_bar_get_text(XEN pbar)
 {
   #define H_gtk_progress_bar_get_text "gchar* gtk_progress_bar_get_text(GtkProgressBar* pbar)"
@@ -8904,13 +8850,6 @@ static XEN gxg_gtk_progress_bar_get_pulse_step(XEN pbar)
   #define H_gtk_progress_bar_get_pulse_step "gdouble gtk_progress_bar_get_pulse_step(GtkProgressBar* pbar)"
   XEN_ASSERT_TYPE(XEN_GtkProgressBar__P(pbar), pbar, 1, "gtk_progress_bar_get_pulse_step", "GtkProgressBar*");
   return(C_TO_XEN_gdouble(gtk_progress_bar_get_pulse_step(XEN_TO_C_GtkProgressBar_(pbar))));
-}
-
-static XEN gxg_gtk_progress_bar_get_orientation(XEN pbar)
-{
-  #define H_gtk_progress_bar_get_orientation "GtkProgressBarOrientation gtk_progress_bar_get_orientation(GtkProgressBar* pbar)"
-  XEN_ASSERT_TYPE(XEN_GtkProgressBar__P(pbar), pbar, 1, "gtk_progress_bar_get_orientation", "GtkProgressBar*");
-  return(C_TO_XEN_GtkProgressBarOrientation(gtk_progress_bar_get_orientation(XEN_TO_C_GtkProgressBar_(pbar))));
 }
 
 static XEN gxg_gtk_radio_button_new(XEN group)
@@ -22732,23 +22671,6 @@ static XEN gxg_gtk_icon_view_get_pixbuf_column(XEN icon_view)
   return(C_TO_XEN_gint(gtk_icon_view_get_pixbuf_column(XEN_TO_C_GtkIconView_(icon_view))));
 }
 
-static XEN gxg_gtk_icon_view_set_orientation(XEN icon_view, XEN orientation)
-{
-  #define H_gtk_icon_view_set_orientation "void gtk_icon_view_set_orientation(GtkIconView* icon_view, \
-GtkOrientation orientation)"
-  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_set_orientation", "GtkIconView*");
-  XEN_ASSERT_TYPE(XEN_GtkOrientation_P(orientation), orientation, 2, "gtk_icon_view_set_orientation", "GtkOrientation");
-  gtk_icon_view_set_orientation(XEN_TO_C_GtkIconView_(icon_view), XEN_TO_C_GtkOrientation(orientation));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_icon_view_get_orientation(XEN icon_view)
-{
-  #define H_gtk_icon_view_get_orientation "GtkOrientation gtk_icon_view_get_orientation(GtkIconView* icon_view)"
-  XEN_ASSERT_TYPE(XEN_GtkIconView__P(icon_view), icon_view, 1, "gtk_icon_view_get_orientation", "GtkIconView*");
-  return(C_TO_XEN_GtkOrientation(gtk_icon_view_get_orientation(XEN_TO_C_GtkIconView_(icon_view))));
-}
-
 static XEN gxg_gtk_icon_view_get_path_at_pos(XEN icon_view, XEN x, XEN y)
 {
   #define H_gtk_icon_view_get_path_at_pos "GtkTreePath* gtk_icon_view_get_path_at_pos(GtkIconView* icon_view, \
@@ -26113,23 +26035,6 @@ static XEN gxg_gtk_status_icon_get_visible(XEN status_icon)
   #define H_gtk_status_icon_get_visible "gboolean gtk_status_icon_get_visible(GtkStatusIcon* status_icon)"
   XEN_ASSERT_TYPE(XEN_GtkStatusIcon__P(status_icon), status_icon, 1, "gtk_status_icon_get_visible", "GtkStatusIcon*");
   return(C_TO_XEN_gboolean(gtk_status_icon_get_visible(XEN_TO_C_GtkStatusIcon_(status_icon))));
-}
-
-static XEN gxg_gtk_status_icon_set_blinking(XEN status_icon, XEN blinking)
-{
-  #define H_gtk_status_icon_set_blinking "void gtk_status_icon_set_blinking(GtkStatusIcon* status_icon, \
-gboolean blinking)"
-  XEN_ASSERT_TYPE(XEN_GtkStatusIcon__P(status_icon), status_icon, 1, "gtk_status_icon_set_blinking", "GtkStatusIcon*");
-  XEN_ASSERT_TYPE(XEN_gboolean_P(blinking), blinking, 2, "gtk_status_icon_set_blinking", "gboolean");
-  gtk_status_icon_set_blinking(XEN_TO_C_GtkStatusIcon_(status_icon), XEN_TO_C_gboolean(blinking));
-  return(XEN_FALSE);
-}
-
-static XEN gxg_gtk_status_icon_get_blinking(XEN status_icon)
-{
-  #define H_gtk_status_icon_get_blinking "gboolean gtk_status_icon_get_blinking(GtkStatusIcon* status_icon)"
-  XEN_ASSERT_TYPE(XEN_GtkStatusIcon__P(status_icon), status_icon, 1, "gtk_status_icon_get_blinking", "GtkStatusIcon*");
-  return(C_TO_XEN_gboolean(gtk_status_icon_get_blinking(XEN_TO_C_GtkStatusIcon_(status_icon))));
 }
 
 static XEN gxg_gtk_status_icon_is_embedded(XEN status_icon)
@@ -31560,6 +31465,71 @@ static XEN gxg_gtk_notebook_get_tab_vborder(XEN notebook)
 
 #endif
 
+#if HAVE_GTK_PROGRESS_BAR_GET_INVERTED
+static XEN gxg_gtk_calendar_get_day_is_marked(XEN calendar, XEN day)
+{
+  #define H_gtk_calendar_get_day_is_marked "gboolean gtk_calendar_get_day_is_marked(GtkCalendar* calendar, \
+guint day)"
+  XEN_ASSERT_TYPE(XEN_GtkCalendar__P(calendar), calendar, 1, "gtk_calendar_get_day_is_marked", "GtkCalendar*");
+  XEN_ASSERT_TYPE(XEN_guint_P(day), day, 2, "gtk_calendar_get_day_is_marked", "guint");
+  return(C_TO_XEN_gboolean(gtk_calendar_get_day_is_marked(XEN_TO_C_GtkCalendar_(calendar), XEN_TO_C_guint(day))));
+}
+
+static XEN gxg_gtk_cell_view_get_desired_width_of_row(XEN cell_view, XEN path, XEN ignore_minimum_size, XEN ignore_natural_size)
+{
+  #define H_gtk_cell_view_get_desired_width_of_row "void gtk_cell_view_get_desired_width_of_row(GtkCellView* cell_view, \
+GtkTreePath* path, gint* [minimum_size], gint* [natural_size])"
+  gint ref_minimum_size;
+  gint ref_natural_size;
+  XEN_ASSERT_TYPE(XEN_GtkCellView__P(cell_view), cell_view, 1, "gtk_cell_view_get_desired_width_of_row", "GtkCellView*");
+  XEN_ASSERT_TYPE(XEN_GtkTreePath__P(path), path, 2, "gtk_cell_view_get_desired_width_of_row", "GtkTreePath*");
+  gtk_cell_view_get_desired_width_of_row(XEN_TO_C_GtkCellView_(cell_view), XEN_TO_C_GtkTreePath_(path), &ref_minimum_size, 
+                                         &ref_natural_size);
+  return(XEN_LIST_2(C_TO_XEN_gint(ref_minimum_size), C_TO_XEN_gint(ref_natural_size)));
+}
+
+static XEN gxg_gtk_cell_view_get_desired_height_for_width_of_row(XEN cell_view, XEN path, XEN avail_size, XEN ignore_minimum_size, XEN ignore_natural_size)
+{
+  #define H_gtk_cell_view_get_desired_height_for_width_of_row "void gtk_cell_view_get_desired_height_for_width_of_row(GtkCellView* cell_view, \
+GtkTreePath* path, gint avail_size, gint* [minimum_size], gint* [natural_size])"
+  gint ref_minimum_size;
+  gint ref_natural_size;
+  XEN_ASSERT_TYPE(XEN_GtkCellView__P(cell_view), cell_view, 1, "gtk_cell_view_get_desired_height_for_width_of_row", "GtkCellView*");
+  XEN_ASSERT_TYPE(XEN_GtkTreePath__P(path), path, 2, "gtk_cell_view_get_desired_height_for_width_of_row", "GtkTreePath*");
+  XEN_ASSERT_TYPE(XEN_gint_P(avail_size), avail_size, 3, "gtk_cell_view_get_desired_height_for_width_of_row", "gint");
+  gtk_cell_view_get_desired_height_for_width_of_row(XEN_TO_C_GtkCellView_(cell_view), XEN_TO_C_GtkTreePath_(path), XEN_TO_C_gint(avail_size), 
+                                                    &ref_minimum_size, &ref_natural_size);
+  return(XEN_LIST_2(C_TO_XEN_gint(ref_minimum_size), C_TO_XEN_gint(ref_natural_size)));
+}
+
+static XEN gxg_gtk_progress_bar_set_inverted(XEN pbar, XEN inverted)
+{
+  #define H_gtk_progress_bar_set_inverted "void gtk_progress_bar_set_inverted(GtkProgressBar* pbar, gboolean inverted)"
+  XEN_ASSERT_TYPE(XEN_GtkProgressBar__P(pbar), pbar, 1, "gtk_progress_bar_set_inverted", "GtkProgressBar*");
+  XEN_ASSERT_TYPE(XEN_gboolean_P(inverted), inverted, 2, "gtk_progress_bar_set_inverted", "gboolean");
+  gtk_progress_bar_set_inverted(XEN_TO_C_GtkProgressBar_(pbar), XEN_TO_C_gboolean(inverted));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_progress_bar_get_inverted(XEN pbar)
+{
+  #define H_gtk_progress_bar_get_inverted "gboolean gtk_progress_bar_get_inverted(GtkProgressBar* pbar)"
+  XEN_ASSERT_TYPE(XEN_GtkProgressBar__P(pbar), pbar, 1, "gtk_progress_bar_get_inverted", "GtkProgressBar*");
+  return(C_TO_XEN_gboolean(gtk_progress_bar_get_inverted(XEN_TO_C_GtkProgressBar_(pbar))));
+}
+
+static XEN gxg_gtk_radio_button_join_group(XEN radio_button, XEN group_source)
+{
+  #define H_gtk_radio_button_join_group "void gtk_radio_button_join_group(GtkRadioButton* radio_button, \
+GtkRadioButton* group_source)"
+  XEN_ASSERT_TYPE(XEN_GtkRadioButton__P(radio_button), radio_button, 1, "gtk_radio_button_join_group", "GtkRadioButton*");
+  XEN_ASSERT_TYPE(XEN_GtkRadioButton__P(group_source), group_source, 2, "gtk_radio_button_join_group", "GtkRadioButton*");
+  gtk_radio_button_join_group(XEN_TO_C_GtkRadioButton_(radio_button), XEN_TO_C_GtkRadioButton_(group_source));
+  return(XEN_FALSE);
+}
+
+#endif
+
 static XEN gxg_cairo_create(XEN target)
 {
   #define H_cairo_create "cairo_t* cairo_create(cairo_surface_t* target)"
@@ -34079,7 +34049,6 @@ static XEN gxg_GTK_IM_CONTEXT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIS
 static XEN gxg_GTK_IM_CONTEXT_SIMPLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkIMContextSimple_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_IM_MULTICONTEXT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkIMMulticontext_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_INVISIBLE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkInvisible_"), XEN_CADR(obj)) : XEN_FALSE);}
-static XEN gxg_GTK_ITEM(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkItem_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_LABEL(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkLabel_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_LAYOUT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkLayout_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_LIST_STORE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkListStore_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -34289,7 +34258,6 @@ static XEN gxg_GTK_IS_IM_CONTEXT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJEC
 static XEN gxg_GTK_IS_IM_CONTEXT_SIMPLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_IM_CONTEXT_SIMPLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_IM_MULTICONTEXT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_IM_MULTICONTEXT((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_INVISIBLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_INVISIBLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
-static XEN gxg_GTK_IS_ITEM(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_ITEM((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_LABEL(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_LABEL((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_LAYOUT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_LAYOUT((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_LIST_STORE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_LIST_STORE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
@@ -35269,8 +35237,6 @@ XEN_NARGIFY_3(gxg_gtk_dialog_add_button_w, gxg_gtk_dialog_add_button)
 XEN_NARGIFY_2(gxg_gtk_dialog_add_buttons_w, gxg_gtk_dialog_add_buttons)
 XEN_NARGIFY_3(gxg_gtk_dialog_set_response_sensitive_w, gxg_gtk_dialog_set_response_sensitive)
 XEN_NARGIFY_2(gxg_gtk_dialog_set_default_response_w, gxg_gtk_dialog_set_default_response)
-XEN_NARGIFY_2(gxg_gtk_dialog_set_has_separator_w, gxg_gtk_dialog_set_has_separator)
-XEN_NARGIFY_1(gxg_gtk_dialog_get_has_separator_w, gxg_gtk_dialog_get_has_separator)
 XEN_NARGIFY_2(gxg_gtk_dialog_response_w, gxg_gtk_dialog_response)
 XEN_NARGIFY_1(gxg_gtk_dialog_run_w, gxg_gtk_dialog_run)
 XEN_NARGIFY_4(gxg_gtk_drag_get_data_w, gxg_gtk_drag_get_data)
@@ -35444,9 +35410,6 @@ XEN_NARGIFY_4(gxg_gtk_im_context_simple_add_table_w, gxg_gtk_im_context_simple_a
 XEN_NARGIFY_0(gxg_gtk_im_multicontext_new_w, gxg_gtk_im_multicontext_new)
 XEN_NARGIFY_2(gxg_gtk_im_multicontext_append_menuitems_w, gxg_gtk_im_multicontext_append_menuitems)
 XEN_NARGIFY_0(gxg_gtk_invisible_new_w, gxg_gtk_invisible_new)
-XEN_NARGIFY_1(gxg_gtk_item_select_w, gxg_gtk_item_select)
-XEN_NARGIFY_1(gxg_gtk_item_deselect_w, gxg_gtk_item_deselect)
-XEN_NARGIFY_1(gxg_gtk_item_toggle_w, gxg_gtk_item_toggle)
 XEN_NARGIFY_1(gxg_gtk_label_new_w, gxg_gtk_label_new)
 XEN_NARGIFY_1(gxg_gtk_label_new_with_mnemonic_w, gxg_gtk_label_new_with_mnemonic)
 XEN_NARGIFY_2(gxg_gtk_label_set_text_w, gxg_gtk_label_set_text)
@@ -35615,11 +35578,9 @@ XEN_NARGIFY_1(gxg_gtk_progress_bar_pulse_w, gxg_gtk_progress_bar_pulse)
 XEN_NARGIFY_2(gxg_gtk_progress_bar_set_text_w, gxg_gtk_progress_bar_set_text)
 XEN_NARGIFY_2(gxg_gtk_progress_bar_set_fraction_w, gxg_gtk_progress_bar_set_fraction)
 XEN_NARGIFY_2(gxg_gtk_progress_bar_set_pulse_step_w, gxg_gtk_progress_bar_set_pulse_step)
-XEN_NARGIFY_2(gxg_gtk_progress_bar_set_orientation_w, gxg_gtk_progress_bar_set_orientation)
 XEN_NARGIFY_1(gxg_gtk_progress_bar_get_text_w, gxg_gtk_progress_bar_get_text)
 XEN_NARGIFY_1(gxg_gtk_progress_bar_get_fraction_w, gxg_gtk_progress_bar_get_fraction)
 XEN_NARGIFY_1(gxg_gtk_progress_bar_get_pulse_step_w, gxg_gtk_progress_bar_get_pulse_step)
-XEN_NARGIFY_1(gxg_gtk_progress_bar_get_orientation_w, gxg_gtk_progress_bar_get_orientation)
 XEN_NARGIFY_1(gxg_gtk_radio_button_new_w, gxg_gtk_radio_button_new)
 XEN_NARGIFY_1(gxg_gtk_radio_button_new_from_widget_w, gxg_gtk_radio_button_new_from_widget)
 XEN_NARGIFY_2(gxg_gtk_radio_button_new_with_label_w, gxg_gtk_radio_button_new_with_label)
@@ -37068,8 +37029,6 @@ XEN_NARGIFY_2(gxg_gtk_icon_view_set_markup_column_w, gxg_gtk_icon_view_set_marku
 XEN_NARGIFY_1(gxg_gtk_icon_view_get_markup_column_w, gxg_gtk_icon_view_get_markup_column)
 XEN_NARGIFY_2(gxg_gtk_icon_view_set_pixbuf_column_w, gxg_gtk_icon_view_set_pixbuf_column)
 XEN_NARGIFY_1(gxg_gtk_icon_view_get_pixbuf_column_w, gxg_gtk_icon_view_get_pixbuf_column)
-XEN_NARGIFY_2(gxg_gtk_icon_view_set_orientation_w, gxg_gtk_icon_view_set_orientation)
-XEN_NARGIFY_1(gxg_gtk_icon_view_get_orientation_w, gxg_gtk_icon_view_get_orientation)
 XEN_NARGIFY_3(gxg_gtk_icon_view_get_path_at_pos_w, gxg_gtk_icon_view_get_path_at_pos)
 XEN_ARGIFY_3(gxg_gtk_icon_view_selected_foreach_w, gxg_gtk_icon_view_selected_foreach)
 XEN_NARGIFY_2(gxg_gtk_icon_view_set_selection_mode_w, gxg_gtk_icon_view_set_selection_mode)
@@ -37443,8 +37402,6 @@ XEN_NARGIFY_1(gxg_gtk_status_icon_get_icon_name_w, gxg_gtk_status_icon_get_icon_
 XEN_NARGIFY_1(gxg_gtk_status_icon_get_size_w, gxg_gtk_status_icon_get_size)
 XEN_NARGIFY_2(gxg_gtk_status_icon_set_visible_w, gxg_gtk_status_icon_set_visible)
 XEN_NARGIFY_1(gxg_gtk_status_icon_get_visible_w, gxg_gtk_status_icon_get_visible)
-XEN_NARGIFY_2(gxg_gtk_status_icon_set_blinking_w, gxg_gtk_status_icon_set_blinking)
-XEN_NARGIFY_1(gxg_gtk_status_icon_get_blinking_w, gxg_gtk_status_icon_get_blinking)
 XEN_NARGIFY_1(gxg_gtk_status_icon_is_embedded_w, gxg_gtk_status_icon_is_embedded)
 XEN_ARGIFY_5(gxg_gtk_status_icon_position_menu_w, gxg_gtk_status_icon_position_menu)
 XEN_NARGIFY_5(gxg_gtk_text_buffer_register_serialize_format_w, gxg_gtk_text_buffer_register_serialize_format)
@@ -38073,6 +38030,15 @@ XEN_NARGIFY_1(gxg_gtk_notebook_get_tab_hborder_w, gxg_gtk_notebook_get_tab_hbord
 XEN_NARGIFY_1(gxg_gtk_notebook_get_tab_vborder_w, gxg_gtk_notebook_get_tab_vborder)
 #endif
 
+#if HAVE_GTK_PROGRESS_BAR_GET_INVERTED
+XEN_NARGIFY_2(gxg_gtk_calendar_get_day_is_marked_w, gxg_gtk_calendar_get_day_is_marked)
+XEN_ARGIFY_4(gxg_gtk_cell_view_get_desired_width_of_row_w, gxg_gtk_cell_view_get_desired_width_of_row)
+XEN_ARGIFY_5(gxg_gtk_cell_view_get_desired_height_for_width_of_row_w, gxg_gtk_cell_view_get_desired_height_for_width_of_row)
+XEN_NARGIFY_2(gxg_gtk_progress_bar_set_inverted_w, gxg_gtk_progress_bar_set_inverted)
+XEN_NARGIFY_1(gxg_gtk_progress_bar_get_inverted_w, gxg_gtk_progress_bar_get_inverted)
+XEN_NARGIFY_2(gxg_gtk_radio_button_join_group_w, gxg_gtk_radio_button_join_group)
+#endif
+
 XEN_NARGIFY_1(gxg_cairo_create_w, gxg_cairo_create)
 XEN_NARGIFY_0(gxg_cairo_version_w, gxg_cairo_version)
 XEN_NARGIFY_0(gxg_cairo_version_string_w, gxg_cairo_version_string)
@@ -38411,7 +38377,6 @@ XEN_NARGIFY_1(gxg_GTK_IM_CONTEXT_w, gxg_GTK_IM_CONTEXT)
 XEN_NARGIFY_1(gxg_GTK_IM_CONTEXT_SIMPLE_w, gxg_GTK_IM_CONTEXT_SIMPLE)
 XEN_NARGIFY_1(gxg_GTK_IM_MULTICONTEXT_w, gxg_GTK_IM_MULTICONTEXT)
 XEN_NARGIFY_1(gxg_GTK_INVISIBLE_w, gxg_GTK_INVISIBLE)
-XEN_NARGIFY_1(gxg_GTK_ITEM_w, gxg_GTK_ITEM)
 XEN_NARGIFY_1(gxg_GTK_LABEL_w, gxg_GTK_LABEL)
 XEN_NARGIFY_1(gxg_GTK_LAYOUT_w, gxg_GTK_LAYOUT)
 XEN_NARGIFY_1(gxg_GTK_LIST_STORE_w, gxg_GTK_LIST_STORE)
@@ -38621,7 +38586,6 @@ XEN_NARGIFY_1(gxg_GTK_IS_IM_CONTEXT_w, gxg_GTK_IS_IM_CONTEXT)
 XEN_NARGIFY_1(gxg_GTK_IS_IM_CONTEXT_SIMPLE_w, gxg_GTK_IS_IM_CONTEXT_SIMPLE)
 XEN_NARGIFY_1(gxg_GTK_IS_IM_MULTICONTEXT_w, gxg_GTK_IS_IM_MULTICONTEXT)
 XEN_NARGIFY_1(gxg_GTK_IS_INVISIBLE_w, gxg_GTK_IS_INVISIBLE)
-XEN_NARGIFY_1(gxg_GTK_IS_ITEM_w, gxg_GTK_IS_ITEM)
 XEN_NARGIFY_1(gxg_GTK_IS_LABEL_w, gxg_GTK_IS_LABEL)
 XEN_NARGIFY_1(gxg_GTK_IS_LAYOUT_w, gxg_GTK_IS_LAYOUT)
 XEN_NARGIFY_1(gxg_GTK_IS_LIST_STORE_w, gxg_GTK_IS_LIST_STORE)
@@ -39198,8 +39162,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_dialog_add_buttons_w gxg_gtk_dialog_add_buttons
 #define gxg_gtk_dialog_set_response_sensitive_w gxg_gtk_dialog_set_response_sensitive
 #define gxg_gtk_dialog_set_default_response_w gxg_gtk_dialog_set_default_response
-#define gxg_gtk_dialog_set_has_separator_w gxg_gtk_dialog_set_has_separator
-#define gxg_gtk_dialog_get_has_separator_w gxg_gtk_dialog_get_has_separator
 #define gxg_gtk_dialog_response_w gxg_gtk_dialog_response
 #define gxg_gtk_dialog_run_w gxg_gtk_dialog_run
 #define gxg_gtk_drag_get_data_w gxg_gtk_drag_get_data
@@ -39373,9 +39335,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_im_multicontext_new_w gxg_gtk_im_multicontext_new
 #define gxg_gtk_im_multicontext_append_menuitems_w gxg_gtk_im_multicontext_append_menuitems
 #define gxg_gtk_invisible_new_w gxg_gtk_invisible_new
-#define gxg_gtk_item_select_w gxg_gtk_item_select
-#define gxg_gtk_item_deselect_w gxg_gtk_item_deselect
-#define gxg_gtk_item_toggle_w gxg_gtk_item_toggle
 #define gxg_gtk_label_new_w gxg_gtk_label_new
 #define gxg_gtk_label_new_with_mnemonic_w gxg_gtk_label_new_with_mnemonic
 #define gxg_gtk_label_set_text_w gxg_gtk_label_set_text
@@ -39544,11 +39503,9 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_progress_bar_set_text_w gxg_gtk_progress_bar_set_text
 #define gxg_gtk_progress_bar_set_fraction_w gxg_gtk_progress_bar_set_fraction
 #define gxg_gtk_progress_bar_set_pulse_step_w gxg_gtk_progress_bar_set_pulse_step
-#define gxg_gtk_progress_bar_set_orientation_w gxg_gtk_progress_bar_set_orientation
 #define gxg_gtk_progress_bar_get_text_w gxg_gtk_progress_bar_get_text
 #define gxg_gtk_progress_bar_get_fraction_w gxg_gtk_progress_bar_get_fraction
 #define gxg_gtk_progress_bar_get_pulse_step_w gxg_gtk_progress_bar_get_pulse_step
-#define gxg_gtk_progress_bar_get_orientation_w gxg_gtk_progress_bar_get_orientation
 #define gxg_gtk_radio_button_new_w gxg_gtk_radio_button_new
 #define gxg_gtk_radio_button_new_from_widget_w gxg_gtk_radio_button_new_from_widget
 #define gxg_gtk_radio_button_new_with_label_w gxg_gtk_radio_button_new_with_label
@@ -40997,8 +40954,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_icon_view_get_markup_column_w gxg_gtk_icon_view_get_markup_column
 #define gxg_gtk_icon_view_set_pixbuf_column_w gxg_gtk_icon_view_set_pixbuf_column
 #define gxg_gtk_icon_view_get_pixbuf_column_w gxg_gtk_icon_view_get_pixbuf_column
-#define gxg_gtk_icon_view_set_orientation_w gxg_gtk_icon_view_set_orientation
-#define gxg_gtk_icon_view_get_orientation_w gxg_gtk_icon_view_get_orientation
 #define gxg_gtk_icon_view_get_path_at_pos_w gxg_gtk_icon_view_get_path_at_pos
 #define gxg_gtk_icon_view_selected_foreach_w gxg_gtk_icon_view_selected_foreach
 #define gxg_gtk_icon_view_set_selection_mode_w gxg_gtk_icon_view_set_selection_mode
@@ -41372,8 +41327,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_status_icon_get_size_w gxg_gtk_status_icon_get_size
 #define gxg_gtk_status_icon_set_visible_w gxg_gtk_status_icon_set_visible
 #define gxg_gtk_status_icon_get_visible_w gxg_gtk_status_icon_get_visible
-#define gxg_gtk_status_icon_set_blinking_w gxg_gtk_status_icon_set_blinking
-#define gxg_gtk_status_icon_get_blinking_w gxg_gtk_status_icon_get_blinking
 #define gxg_gtk_status_icon_is_embedded_w gxg_gtk_status_icon_is_embedded
 #define gxg_gtk_status_icon_position_menu_w gxg_gtk_status_icon_position_menu
 #define gxg_gtk_text_buffer_register_serialize_format_w gxg_gtk_text_buffer_register_serialize_format
@@ -42002,6 +41955,15 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_notebook_get_tab_vborder_w gxg_gtk_notebook_get_tab_vborder
 #endif
 
+#if HAVE_GTK_PROGRESS_BAR_GET_INVERTED
+#define gxg_gtk_calendar_get_day_is_marked_w gxg_gtk_calendar_get_day_is_marked
+#define gxg_gtk_cell_view_get_desired_width_of_row_w gxg_gtk_cell_view_get_desired_width_of_row
+#define gxg_gtk_cell_view_get_desired_height_for_width_of_row_w gxg_gtk_cell_view_get_desired_height_for_width_of_row
+#define gxg_gtk_progress_bar_set_inverted_w gxg_gtk_progress_bar_set_inverted
+#define gxg_gtk_progress_bar_get_inverted_w gxg_gtk_progress_bar_get_inverted
+#define gxg_gtk_radio_button_join_group_w gxg_gtk_radio_button_join_group
+#endif
+
 #define gxg_cairo_create_w gxg_cairo_create
 #define gxg_cairo_version_w gxg_cairo_version
 #define gxg_cairo_version_string_w gxg_cairo_version_string
@@ -42340,7 +42302,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IM_CONTEXT_SIMPLE_w gxg_GTK_IM_CONTEXT_SIMPLE
 #define gxg_GTK_IM_MULTICONTEXT_w gxg_GTK_IM_MULTICONTEXT
 #define gxg_GTK_INVISIBLE_w gxg_GTK_INVISIBLE
-#define gxg_GTK_ITEM_w gxg_GTK_ITEM
 #define gxg_GTK_LABEL_w gxg_GTK_LABEL
 #define gxg_GTK_LAYOUT_w gxg_GTK_LAYOUT
 #define gxg_GTK_LIST_STORE_w gxg_GTK_LIST_STORE
@@ -42550,7 +42511,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IS_IM_CONTEXT_SIMPLE_w gxg_GTK_IS_IM_CONTEXT_SIMPLE
 #define gxg_GTK_IS_IM_MULTICONTEXT_w gxg_GTK_IS_IM_MULTICONTEXT
 #define gxg_GTK_IS_INVISIBLE_w gxg_GTK_IS_INVISIBLE
-#define gxg_GTK_IS_ITEM_w gxg_GTK_IS_ITEM
 #define gxg_GTK_IS_LABEL_w gxg_GTK_IS_LABEL
 #define gxg_GTK_IS_LAYOUT_w gxg_GTK_IS_LAYOUT
 #define gxg_GTK_IS_LIST_STORE_w gxg_GTK_IS_LIST_STORE
@@ -43134,8 +43094,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_dialog_add_buttons, gxg_gtk_dialog_add_buttons_w, 2, 0, 0, H_gtk_dialog_add_buttons);
   XG_DEFINE_PROCEDURE(gtk_dialog_set_response_sensitive, gxg_gtk_dialog_set_response_sensitive_w, 3, 0, 0, H_gtk_dialog_set_response_sensitive);
   XG_DEFINE_PROCEDURE(gtk_dialog_set_default_response, gxg_gtk_dialog_set_default_response_w, 2, 0, 0, H_gtk_dialog_set_default_response);
-  XG_DEFINE_PROCEDURE(gtk_dialog_set_has_separator, gxg_gtk_dialog_set_has_separator_w, 2, 0, 0, H_gtk_dialog_set_has_separator);
-  XG_DEFINE_PROCEDURE(gtk_dialog_get_has_separator, gxg_gtk_dialog_get_has_separator_w, 1, 0, 0, H_gtk_dialog_get_has_separator);
   XG_DEFINE_PROCEDURE(gtk_dialog_response, gxg_gtk_dialog_response_w, 2, 0, 0, H_gtk_dialog_response);
   XG_DEFINE_PROCEDURE(gtk_dialog_run, gxg_gtk_dialog_run_w, 1, 0, 0, H_gtk_dialog_run);
   XG_DEFINE_PROCEDURE(gtk_drag_get_data, gxg_gtk_drag_get_data_w, 4, 0, 0, H_gtk_drag_get_data);
@@ -43309,9 +43267,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_im_multicontext_new, gxg_gtk_im_multicontext_new_w, 0, 0, 0, H_gtk_im_multicontext_new);
   XG_DEFINE_PROCEDURE(gtk_im_multicontext_append_menuitems, gxg_gtk_im_multicontext_append_menuitems_w, 2, 0, 0, H_gtk_im_multicontext_append_menuitems);
   XG_DEFINE_PROCEDURE(gtk_invisible_new, gxg_gtk_invisible_new_w, 0, 0, 0, H_gtk_invisible_new);
-  XG_DEFINE_PROCEDURE(gtk_item_select, gxg_gtk_item_select_w, 1, 0, 0, H_gtk_item_select);
-  XG_DEFINE_PROCEDURE(gtk_item_deselect, gxg_gtk_item_deselect_w, 1, 0, 0, H_gtk_item_deselect);
-  XG_DEFINE_PROCEDURE(gtk_item_toggle, gxg_gtk_item_toggle_w, 1, 0, 0, H_gtk_item_toggle);
   XG_DEFINE_PROCEDURE(gtk_label_new, gxg_gtk_label_new_w, 1, 0, 0, H_gtk_label_new);
   XG_DEFINE_PROCEDURE(gtk_label_new_with_mnemonic, gxg_gtk_label_new_with_mnemonic_w, 1, 0, 0, H_gtk_label_new_with_mnemonic);
   XG_DEFINE_PROCEDURE(gtk_label_set_text, gxg_gtk_label_set_text_w, 2, 0, 0, H_gtk_label_set_text);
@@ -43480,11 +43435,9 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_progress_bar_set_text, gxg_gtk_progress_bar_set_text_w, 2, 0, 0, H_gtk_progress_bar_set_text);
   XG_DEFINE_PROCEDURE(gtk_progress_bar_set_fraction, gxg_gtk_progress_bar_set_fraction_w, 2, 0, 0, H_gtk_progress_bar_set_fraction);
   XG_DEFINE_PROCEDURE(gtk_progress_bar_set_pulse_step, gxg_gtk_progress_bar_set_pulse_step_w, 2, 0, 0, H_gtk_progress_bar_set_pulse_step);
-  XG_DEFINE_PROCEDURE(gtk_progress_bar_set_orientation, gxg_gtk_progress_bar_set_orientation_w, 2, 0, 0, H_gtk_progress_bar_set_orientation);
   XG_DEFINE_PROCEDURE(gtk_progress_bar_get_text, gxg_gtk_progress_bar_get_text_w, 1, 0, 0, H_gtk_progress_bar_get_text);
   XG_DEFINE_PROCEDURE(gtk_progress_bar_get_fraction, gxg_gtk_progress_bar_get_fraction_w, 1, 0, 0, H_gtk_progress_bar_get_fraction);
   XG_DEFINE_PROCEDURE(gtk_progress_bar_get_pulse_step, gxg_gtk_progress_bar_get_pulse_step_w, 1, 0, 0, H_gtk_progress_bar_get_pulse_step);
-  XG_DEFINE_PROCEDURE(gtk_progress_bar_get_orientation, gxg_gtk_progress_bar_get_orientation_w, 1, 0, 0, H_gtk_progress_bar_get_orientation);
   XG_DEFINE_PROCEDURE(gtk_radio_button_new, gxg_gtk_radio_button_new_w, 1, 0, 0, H_gtk_radio_button_new);
   XG_DEFINE_PROCEDURE(gtk_radio_button_new_from_widget, gxg_gtk_radio_button_new_from_widget_w, 1, 0, 0, H_gtk_radio_button_new_from_widget);
   XG_DEFINE_PROCEDURE(gtk_radio_button_new_with_label, gxg_gtk_radio_button_new_with_label_w, 2, 0, 0, H_gtk_radio_button_new_with_label);
@@ -44933,8 +44886,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_icon_view_get_markup_column, gxg_gtk_icon_view_get_markup_column_w, 1, 0, 0, H_gtk_icon_view_get_markup_column);
   XG_DEFINE_PROCEDURE(gtk_icon_view_set_pixbuf_column, gxg_gtk_icon_view_set_pixbuf_column_w, 2, 0, 0, H_gtk_icon_view_set_pixbuf_column);
   XG_DEFINE_PROCEDURE(gtk_icon_view_get_pixbuf_column, gxg_gtk_icon_view_get_pixbuf_column_w, 1, 0, 0, H_gtk_icon_view_get_pixbuf_column);
-  XG_DEFINE_PROCEDURE(gtk_icon_view_set_orientation, gxg_gtk_icon_view_set_orientation_w, 2, 0, 0, H_gtk_icon_view_set_orientation);
-  XG_DEFINE_PROCEDURE(gtk_icon_view_get_orientation, gxg_gtk_icon_view_get_orientation_w, 1, 0, 0, H_gtk_icon_view_get_orientation);
   XG_DEFINE_PROCEDURE(gtk_icon_view_get_path_at_pos, gxg_gtk_icon_view_get_path_at_pos_w, 3, 0, 0, H_gtk_icon_view_get_path_at_pos);
   XG_DEFINE_PROCEDURE(gtk_icon_view_selected_foreach, gxg_gtk_icon_view_selected_foreach_w, 2, 1, 0, H_gtk_icon_view_selected_foreach);
   XG_DEFINE_PROCEDURE(gtk_icon_view_set_selection_mode, gxg_gtk_icon_view_set_selection_mode_w, 2, 0, 0, H_gtk_icon_view_set_selection_mode);
@@ -45308,8 +45259,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_status_icon_get_size, gxg_gtk_status_icon_get_size_w, 1, 0, 0, H_gtk_status_icon_get_size);
   XG_DEFINE_PROCEDURE(gtk_status_icon_set_visible, gxg_gtk_status_icon_set_visible_w, 2, 0, 0, H_gtk_status_icon_set_visible);
   XG_DEFINE_PROCEDURE(gtk_status_icon_get_visible, gxg_gtk_status_icon_get_visible_w, 1, 0, 0, H_gtk_status_icon_get_visible);
-  XG_DEFINE_PROCEDURE(gtk_status_icon_set_blinking, gxg_gtk_status_icon_set_blinking_w, 2, 0, 0, H_gtk_status_icon_set_blinking);
-  XG_DEFINE_PROCEDURE(gtk_status_icon_get_blinking, gxg_gtk_status_icon_get_blinking_w, 1, 0, 0, H_gtk_status_icon_get_blinking);
   XG_DEFINE_PROCEDURE(gtk_status_icon_is_embedded, gxg_gtk_status_icon_is_embedded_w, 1, 0, 0, H_gtk_status_icon_is_embedded);
   XG_DEFINE_PROCEDURE(gtk_status_icon_position_menu, gxg_gtk_status_icon_position_menu_w, 2, 3, 0, H_gtk_status_icon_position_menu);
   XG_DEFINE_PROCEDURE(gtk_text_buffer_register_serialize_format, gxg_gtk_text_buffer_register_serialize_format_w, 5, 0, 0, H_gtk_text_buffer_register_serialize_format);
@@ -45938,6 +45887,15 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_notebook_get_tab_vborder, gxg_gtk_notebook_get_tab_vborder_w, 1, 0, 0, H_gtk_notebook_get_tab_vborder);
 #endif
 
+#if HAVE_GTK_PROGRESS_BAR_GET_INVERTED
+  XG_DEFINE_PROCEDURE(gtk_calendar_get_day_is_marked, gxg_gtk_calendar_get_day_is_marked_w, 2, 0, 0, H_gtk_calendar_get_day_is_marked);
+  XG_DEFINE_PROCEDURE(gtk_cell_view_get_desired_width_of_row, gxg_gtk_cell_view_get_desired_width_of_row_w, 2, 2, 0, H_gtk_cell_view_get_desired_width_of_row);
+  XG_DEFINE_PROCEDURE(gtk_cell_view_get_desired_height_for_width_of_row, gxg_gtk_cell_view_get_desired_height_for_width_of_row_w, 3, 2, 0, H_gtk_cell_view_get_desired_height_for_width_of_row);
+  XG_DEFINE_PROCEDURE(gtk_progress_bar_set_inverted, gxg_gtk_progress_bar_set_inverted_w, 2, 0, 0, H_gtk_progress_bar_set_inverted);
+  XG_DEFINE_PROCEDURE(gtk_progress_bar_get_inverted, gxg_gtk_progress_bar_get_inverted_w, 1, 0, 0, H_gtk_progress_bar_get_inverted);
+  XG_DEFINE_PROCEDURE(gtk_radio_button_join_group, gxg_gtk_radio_button_join_group_w, 2, 0, 0, H_gtk_radio_button_join_group);
+#endif
+
   XG_DEFINE_PROCEDURE(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
   XG_DEFINE_PROCEDURE(cairo_version, gxg_cairo_version_w, 0, 0, 0, H_cairo_version);
   XG_DEFINE_PROCEDURE(cairo_version_string, gxg_cairo_version_string_w, 0, 0, 0, H_cairo_version_string);
@@ -46269,7 +46227,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IM_CONTEXT_SIMPLE, gxg_GTK_IM_CONTEXT_SIMPLE_w, 1, 0, 0, "(GTK_IM_CONTEXT_SIMPLE obj) casts obj to GTK_IM_CONTEXT_SIMPLE");
   XG_DEFINE_PROCEDURE(GTK_IM_MULTICONTEXT, gxg_GTK_IM_MULTICONTEXT_w, 1, 0, 0, "(GTK_IM_MULTICONTEXT obj) casts obj to GTK_IM_MULTICONTEXT");
   XG_DEFINE_PROCEDURE(GTK_INVISIBLE, gxg_GTK_INVISIBLE_w, 1, 0, 0, "(GTK_INVISIBLE obj) casts obj to GTK_INVISIBLE");
-  XG_DEFINE_PROCEDURE(GTK_ITEM, gxg_GTK_ITEM_w, 1, 0, 0, "(GTK_ITEM obj) casts obj to GTK_ITEM");
   XG_DEFINE_PROCEDURE(GTK_LABEL, gxg_GTK_LABEL_w, 1, 0, 0, "(GTK_LABEL obj) casts obj to GTK_LABEL");
   XG_DEFINE_PROCEDURE(GTK_LAYOUT, gxg_GTK_LAYOUT_w, 1, 0, 0, "(GTK_LAYOUT obj) casts obj to GTK_LAYOUT");
   XG_DEFINE_PROCEDURE(GTK_LIST_STORE, gxg_GTK_LIST_STORE_w, 1, 0, 0, "(GTK_LIST_STORE obj) casts obj to GTK_LIST_STORE");
@@ -46486,7 +46443,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_IM_CONTEXT_SIMPLE, gxg_GTK_IS_IM_CONTEXT_SIMPLE_w, 1, 0, 0, "(GTK_IS_IM_CONTEXT_SIMPLE obj): " PROC_TRUE " if obj is a GTK_IS_IM_CONTEXT_SIMPLE");
   XG_DEFINE_PROCEDURE(GTK_IS_IM_MULTICONTEXT, gxg_GTK_IS_IM_MULTICONTEXT_w, 1, 0, 0, "(GTK_IS_IM_MULTICONTEXT obj): " PROC_TRUE " if obj is a GTK_IS_IM_MULTICONTEXT");
   XG_DEFINE_PROCEDURE(GTK_IS_INVISIBLE, gxg_GTK_IS_INVISIBLE_w, 1, 0, 0, "(GTK_IS_INVISIBLE obj): " PROC_TRUE " if obj is a GTK_IS_INVISIBLE");
-  XG_DEFINE_PROCEDURE(GTK_IS_ITEM, gxg_GTK_IS_ITEM_w, 1, 0, 0, "(GTK_IS_ITEM obj): " PROC_TRUE " if obj is a GTK_IS_ITEM");
   XG_DEFINE_PROCEDURE(GTK_IS_LABEL, gxg_GTK_IS_LABEL_w, 1, 0, 0, "(GTK_IS_LABEL obj): " PROC_TRUE " if obj is a GTK_IS_LABEL");
   XG_DEFINE_PROCEDURE(GTK_IS_LAYOUT, gxg_GTK_IS_LAYOUT_w, 1, 0, 0, "(GTK_IS_LAYOUT obj): " PROC_TRUE " if obj is a GTK_IS_LAYOUT");
   XG_DEFINE_PROCEDURE(GTK_IS_LIST_STORE, gxg_GTK_IS_LIST_STORE_w, 1, 0, 0, "(GTK_IS_LIST_STORE obj): " PROC_TRUE " if obj is a GTK_IS_LIST_STORE");
@@ -46842,246 +46798,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_SETTING_ACTION_NEW);
   DEFINE_INTEGER(GDK_SETTING_ACTION_CHANGED);
   DEFINE_INTEGER(GDK_SETTING_ACTION_DELETED);
-  DEFINE_INTEGER(GDK_VoidSymbol);
-  DEFINE_INTEGER(GDK_BackSpace);
-  DEFINE_INTEGER(GDK_Tab);
-  DEFINE_INTEGER(GDK_Linefeed);
-  DEFINE_INTEGER(GDK_Clear);
-  DEFINE_INTEGER(GDK_Return);
-  DEFINE_INTEGER(GDK_Pause);
-  DEFINE_INTEGER(GDK_Scroll_Lock);
-  DEFINE_INTEGER(GDK_Sys_Req);
-  DEFINE_INTEGER(GDK_Escape);
-  DEFINE_INTEGER(GDK_Delete);
-  DEFINE_INTEGER(GDK_Home);
-  DEFINE_INTEGER(GDK_Left);
-  DEFINE_INTEGER(GDK_Up);
-  DEFINE_INTEGER(GDK_Right);
-  DEFINE_INTEGER(GDK_Down);
-  DEFINE_INTEGER(GDK_Prior);
-  DEFINE_INTEGER(GDK_Page_Up);
-  DEFINE_INTEGER(GDK_Next);
-  DEFINE_INTEGER(GDK_Page_Down);
-  DEFINE_INTEGER(GDK_End);
-  DEFINE_INTEGER(GDK_Begin);
-  DEFINE_INTEGER(GDK_Select);
-  DEFINE_INTEGER(GDK_Print);
-  DEFINE_INTEGER(GDK_Execute);
-  DEFINE_INTEGER(GDK_Insert);
-  DEFINE_INTEGER(GDK_Undo);
-  DEFINE_INTEGER(GDK_Redo);
-  DEFINE_INTEGER(GDK_Menu);
-  DEFINE_INTEGER(GDK_Find);
-  DEFINE_INTEGER(GDK_Cancel);
-  DEFINE_INTEGER(GDK_Help);
-  DEFINE_INTEGER(GDK_Break);
-  DEFINE_INTEGER(GDK_Mode_switch);
-  DEFINE_INTEGER(GDK_script_switch);
-  DEFINE_INTEGER(GDK_Num_Lock);
-  DEFINE_INTEGER(GDK_KP_Space);
-  DEFINE_INTEGER(GDK_KP_Tab);
-  DEFINE_INTEGER(GDK_KP_Enter);
-  DEFINE_INTEGER(GDK_KP_F1);
-  DEFINE_INTEGER(GDK_KP_F2);
-  DEFINE_INTEGER(GDK_KP_F3);
-  DEFINE_INTEGER(GDK_KP_F4);
-  DEFINE_INTEGER(GDK_KP_Home);
-  DEFINE_INTEGER(GDK_KP_Left);
-  DEFINE_INTEGER(GDK_KP_Up);
-  DEFINE_INTEGER(GDK_KP_Right);
-  DEFINE_INTEGER(GDK_KP_Down);
-  DEFINE_INTEGER(GDK_KP_Prior);
-  DEFINE_INTEGER(GDK_KP_Page_Up);
-  DEFINE_INTEGER(GDK_KP_Next);
-  DEFINE_INTEGER(GDK_KP_Page_Down);
-  DEFINE_INTEGER(GDK_KP_End);
-  DEFINE_INTEGER(GDK_KP_Begin);
-  DEFINE_INTEGER(GDK_KP_Insert);
-  DEFINE_INTEGER(GDK_KP_Delete);
-  DEFINE_INTEGER(GDK_KP_Equal);
-  DEFINE_INTEGER(GDK_KP_Multiply);
-  DEFINE_INTEGER(GDK_KP_Add);
-  DEFINE_INTEGER(GDK_KP_Separator);
-  DEFINE_INTEGER(GDK_KP_Subtract);
-  DEFINE_INTEGER(GDK_KP_Decimal);
-  DEFINE_INTEGER(GDK_KP_Divide);
-  DEFINE_INTEGER(GDK_KP_0);
-  DEFINE_INTEGER(GDK_KP_1);
-  DEFINE_INTEGER(GDK_KP_2);
-  DEFINE_INTEGER(GDK_KP_3);
-  DEFINE_INTEGER(GDK_KP_4);
-  DEFINE_INTEGER(GDK_KP_5);
-  DEFINE_INTEGER(GDK_KP_6);
-  DEFINE_INTEGER(GDK_KP_7);
-  DEFINE_INTEGER(GDK_KP_8);
-  DEFINE_INTEGER(GDK_KP_9);
-  DEFINE_INTEGER(GDK_F1);
-  DEFINE_INTEGER(GDK_F2);
-  DEFINE_INTEGER(GDK_F3);
-  DEFINE_INTEGER(GDK_F4);
-  DEFINE_INTEGER(GDK_F5);
-  DEFINE_INTEGER(GDK_F6);
-  DEFINE_INTEGER(GDK_F7);
-  DEFINE_INTEGER(GDK_F8);
-  DEFINE_INTEGER(GDK_F9);
-  DEFINE_INTEGER(GDK_F10);
-  DEFINE_INTEGER(GDK_F11);
-  DEFINE_INTEGER(GDK_L1);
-  DEFINE_INTEGER(GDK_F12);
-  DEFINE_INTEGER(GDK_L2);
-  DEFINE_INTEGER(GDK_F13);
-  DEFINE_INTEGER(GDK_L3);
-  DEFINE_INTEGER(GDK_F14);
-  DEFINE_INTEGER(GDK_L4);
-  DEFINE_INTEGER(GDK_F15);
-  DEFINE_INTEGER(GDK_L5);
-  DEFINE_INTEGER(GDK_F16);
-  DEFINE_INTEGER(GDK_L6);
-  DEFINE_INTEGER(GDK_F17);
-  DEFINE_INTEGER(GDK_L7);
-  DEFINE_INTEGER(GDK_F18);
-  DEFINE_INTEGER(GDK_L8);
-  DEFINE_INTEGER(GDK_F19);
-  DEFINE_INTEGER(GDK_L9);
-  DEFINE_INTEGER(GDK_F20);
-  DEFINE_INTEGER(GDK_L10);
-  DEFINE_INTEGER(GDK_F21);
-  DEFINE_INTEGER(GDK_R1);
-  DEFINE_INTEGER(GDK_F22);
-  DEFINE_INTEGER(GDK_R2);
-  DEFINE_INTEGER(GDK_F23);
-  DEFINE_INTEGER(GDK_R3);
-  DEFINE_INTEGER(GDK_F24);
-  DEFINE_INTEGER(GDK_R4);
-  DEFINE_INTEGER(GDK_F25);
-  DEFINE_INTEGER(GDK_R5);
-  DEFINE_INTEGER(GDK_F26);
-  DEFINE_INTEGER(GDK_R6);
-  DEFINE_INTEGER(GDK_F27);
-  DEFINE_INTEGER(GDK_R7);
-  DEFINE_INTEGER(GDK_F28);
-  DEFINE_INTEGER(GDK_R8);
-  DEFINE_INTEGER(GDK_F29);
-  DEFINE_INTEGER(GDK_R9);
-  DEFINE_INTEGER(GDK_F30);
-  DEFINE_INTEGER(GDK_R10);
-  DEFINE_INTEGER(GDK_F31);
-  DEFINE_INTEGER(GDK_R11);
-  DEFINE_INTEGER(GDK_F32);
-  DEFINE_INTEGER(GDK_R12);
-  DEFINE_INTEGER(GDK_F33);
-  DEFINE_INTEGER(GDK_R13);
-  DEFINE_INTEGER(GDK_F34);
-  DEFINE_INTEGER(GDK_R14);
-  DEFINE_INTEGER(GDK_F35);
-  DEFINE_INTEGER(GDK_R15);
-  DEFINE_INTEGER(GDK_Shift_L);
-  DEFINE_INTEGER(GDK_Shift_R);
-  DEFINE_INTEGER(GDK_Control_L);
-  DEFINE_INTEGER(GDK_Control_R);
-  DEFINE_INTEGER(GDK_Caps_Lock);
-  DEFINE_INTEGER(GDK_Shift_Lock);
-  DEFINE_INTEGER(GDK_Meta_L);
-  DEFINE_INTEGER(GDK_Meta_R);
-  DEFINE_INTEGER(GDK_Alt_L);
-  DEFINE_INTEGER(GDK_Alt_R);
-  DEFINE_INTEGER(GDK_space);
-  DEFINE_INTEGER(GDK_exclam);
-  DEFINE_INTEGER(GDK_quotedbl);
-  DEFINE_INTEGER(GDK_numbersign);
-  DEFINE_INTEGER(GDK_dollar);
-  DEFINE_INTEGER(GDK_percent);
-  DEFINE_INTEGER(GDK_ampersand);
-  DEFINE_INTEGER(GDK_apostrophe);
-  DEFINE_INTEGER(GDK_quoteright);
-  DEFINE_INTEGER(GDK_parenleft);
-  DEFINE_INTEGER(GDK_parenright);
-  DEFINE_INTEGER(GDK_asterisk);
-  DEFINE_INTEGER(GDK_plus);
-  DEFINE_INTEGER(GDK_comma);
-  DEFINE_INTEGER(GDK_minus);
-  DEFINE_INTEGER(GDK_period);
-  DEFINE_INTEGER(GDK_slash);
-  DEFINE_INTEGER(GDK_0);
-  DEFINE_INTEGER(GDK_1);
-  DEFINE_INTEGER(GDK_2);
-  DEFINE_INTEGER(GDK_3);
-  DEFINE_INTEGER(GDK_4);
-  DEFINE_INTEGER(GDK_5);
-  DEFINE_INTEGER(GDK_6);
-  DEFINE_INTEGER(GDK_7);
-  DEFINE_INTEGER(GDK_8);
-  DEFINE_INTEGER(GDK_9);
-  DEFINE_INTEGER(GDK_colon);
-  DEFINE_INTEGER(GDK_semicolon);
-  DEFINE_INTEGER(GDK_less);
-  DEFINE_INTEGER(GDK_equal);
-  DEFINE_INTEGER(GDK_greater);
-  DEFINE_INTEGER(GDK_question);
-  DEFINE_INTEGER(GDK_at);
-  DEFINE_INTEGER(GDK_A);
-  DEFINE_INTEGER(GDK_B);
-  DEFINE_INTEGER(GDK_C);
-  DEFINE_INTEGER(GDK_D);
-  DEFINE_INTEGER(GDK_E);
-  DEFINE_INTEGER(GDK_F);
-  DEFINE_INTEGER(GDK_G);
-  DEFINE_INTEGER(GDK_H);
-  DEFINE_INTEGER(GDK_I);
-  DEFINE_INTEGER(GDK_J);
-  DEFINE_INTEGER(GDK_K);
-  DEFINE_INTEGER(GDK_L);
-  DEFINE_INTEGER(GDK_M);
-  DEFINE_INTEGER(GDK_N);
-  DEFINE_INTEGER(GDK_O);
-  DEFINE_INTEGER(GDK_P);
-  DEFINE_INTEGER(GDK_Q);
-  DEFINE_INTEGER(GDK_R);
-  DEFINE_INTEGER(GDK_S);
-  DEFINE_INTEGER(GDK_T);
-  DEFINE_INTEGER(GDK_U);
-  DEFINE_INTEGER(GDK_V);
-  DEFINE_INTEGER(GDK_W);
-  DEFINE_INTEGER(GDK_X);
-  DEFINE_INTEGER(GDK_Y);
-  DEFINE_INTEGER(GDK_Z);
-  DEFINE_INTEGER(GDK_bracketleft);
-  DEFINE_INTEGER(GDK_backslash);
-  DEFINE_INTEGER(GDK_bracketright);
-  DEFINE_INTEGER(GDK_asciicircum);
-  DEFINE_INTEGER(GDK_underscore);
-  DEFINE_INTEGER(GDK_grave);
-  DEFINE_INTEGER(GDK_quoteleft);
-  DEFINE_INTEGER(GDK_a);
-  DEFINE_INTEGER(GDK_b);
-  DEFINE_INTEGER(GDK_c);
-  DEFINE_INTEGER(GDK_d);
-  DEFINE_INTEGER(GDK_e);
-  DEFINE_INTEGER(GDK_f);
-  DEFINE_INTEGER(GDK_g);
-  DEFINE_INTEGER(GDK_h);
-  DEFINE_INTEGER(GDK_i);
-  DEFINE_INTEGER(GDK_j);
-  DEFINE_INTEGER(GDK_k);
-  DEFINE_INTEGER(GDK_l);
-  DEFINE_INTEGER(GDK_m);
-  DEFINE_INTEGER(GDK_n);
-  DEFINE_INTEGER(GDK_o);
-  DEFINE_INTEGER(GDK_p);
-  DEFINE_INTEGER(GDK_q);
-  DEFINE_INTEGER(GDK_r);
-  DEFINE_INTEGER(GDK_s);
-  DEFINE_INTEGER(GDK_t);
-  DEFINE_INTEGER(GDK_u);
-  DEFINE_INTEGER(GDK_v);
-  DEFINE_INTEGER(GDK_w);
-  DEFINE_INTEGER(GDK_x);
-  DEFINE_INTEGER(GDK_y);
-  DEFINE_INTEGER(GDK_z);
-  DEFINE_INTEGER(GDK_braceleft);
-  DEFINE_INTEGER(GDK_bar);
-  DEFINE_INTEGER(GDK_braceright);
-  DEFINE_INTEGER(GDK_asciitilde);
   DEFINE_INTEGER(GDK_PROP_MODE_REPLACE);
   DEFINE_INTEGER(GDK_PROP_MODE_PREPEND);
   DEFINE_INTEGER(GDK_PROP_MODE_APPEND);
@@ -47125,7 +46841,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GDK_WINDOW_ROOT);
   DEFINE_INTEGER(GDK_WINDOW_TOPLEVEL);
   DEFINE_INTEGER(GDK_WINDOW_CHILD);
-  DEFINE_INTEGER(GDK_WINDOW_DIALOG);
   DEFINE_INTEGER(GDK_WINDOW_TEMP);
   DEFINE_INTEGER(GDK_WINDOW_FOREIGN);
   DEFINE_INTEGER(GDK_WA_TITLE);
@@ -47200,7 +46915,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_CALENDAR_SHOW_DAY_NAMES);
   DEFINE_INTEGER(GTK_CALENDAR_NO_MONTH_CHANGE);
   DEFINE_INTEGER(GTK_CALENDAR_SHOW_WEEK_NUMBERS);
-  DEFINE_INTEGER(GTK_CALENDAR_WEEK_START_MONDAY);
   DEFINE_INTEGER(GTK_CELL_RENDERER_SELECTED);
   DEFINE_INTEGER(GTK_CELL_RENDERER_PRELIT);
   DEFINE_INTEGER(GTK_CELL_RENDERER_INSENSITIVE);
@@ -47208,7 +46922,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_CELL_RENDERER_FOCUSED);
   DEFINE_INTEGER(GTK_DIALOG_MODAL);
   DEFINE_INTEGER(GTK_DIALOG_DESTROY_WITH_PARENT);
-  DEFINE_INTEGER(GTK_DIALOG_NO_SEPARATOR);
   DEFINE_INTEGER(GTK_RESPONSE_NONE);
   DEFINE_INTEGER(GTK_RESPONSE_REJECT);
   DEFINE_INTEGER(GTK_RESPONSE_ACCEPT);
@@ -47334,7 +47047,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_SELECTION_SINGLE);
   DEFINE_INTEGER(GTK_SELECTION_BROWSE);
   DEFINE_INTEGER(GTK_SELECTION_MULTIPLE);
-  DEFINE_INTEGER(GTK_SELECTION_EXTENDED);
   DEFINE_INTEGER(GTK_SHADOW_NONE);
   DEFINE_INTEGER(GTK_SHADOW_IN);
   DEFINE_INTEGER(GTK_SHADOW_OUT);
@@ -47384,10 +47096,6 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_BUTTONS_OK_CANCEL);
   DEFINE_INTEGER(GTK_NOTEBOOK_TAB_FIRST);
   DEFINE_INTEGER(GTK_NOTEBOOK_TAB_LAST);
-  DEFINE_INTEGER(GTK_PROGRESS_LEFT_TO_RIGHT);
-  DEFINE_INTEGER(GTK_PROGRESS_RIGHT_TO_LEFT);
-  DEFINE_INTEGER(GTK_PROGRESS_BOTTOM_TO_TOP);
-  DEFINE_INTEGER(GTK_PROGRESS_TOP_TO_BOTTOM);
   DEFINE_INTEGER(GTK_RC_FG);
   DEFINE_INTEGER(GTK_RC_BG);
   DEFINE_INTEGER(GTK_RC_TEXT);
@@ -47761,6 +47469,260 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_SIZE_REQUEST_WIDTH_FOR_HEIGHT);
 #endif
 
+#if HAVE_GTK_PROGRESS_BAR_GET_INVERTED
+  DEFINE_INTEGER(GDK_KEY_VoidSymbol);
+  DEFINE_INTEGER(GDK_KEY_BackSpace);
+  DEFINE_INTEGER(GDK_KEY_Tab);
+  DEFINE_INTEGER(GDK_KEY_Linefeed);
+  DEFINE_INTEGER(GDK_KEY_Clear);
+  DEFINE_INTEGER(GDK_KEY_Return);
+  DEFINE_INTEGER(GDK_KEY_Pause);
+  DEFINE_INTEGER(GDK_KEY_Scroll_Lock);
+  DEFINE_INTEGER(GDK_KEY_Sys_Req);
+  DEFINE_INTEGER(GDK_KEY_Escape);
+  DEFINE_INTEGER(GDK_KEY_Delete);
+  DEFINE_INTEGER(GDK_KEY_Home);
+  DEFINE_INTEGER(GDK_KEY_Left);
+  DEFINE_INTEGER(GDK_KEY_Up);
+  DEFINE_INTEGER(GDK_KEY_Right);
+  DEFINE_INTEGER(GDK_KEY_Down);
+  DEFINE_INTEGER(GDK_KEY_Prior);
+  DEFINE_INTEGER(GDK_KEY_Page_Up);
+  DEFINE_INTEGER(GDK_KEY_Next);
+  DEFINE_INTEGER(GDK_KEY_Page_Down);
+  DEFINE_INTEGER(GDK_KEY_End);
+  DEFINE_INTEGER(GDK_KEY_Begin);
+  DEFINE_INTEGER(GDK_KEY_Select);
+  DEFINE_INTEGER(GDK_KEY_Print);
+  DEFINE_INTEGER(GDK_KEY_Execute);
+  DEFINE_INTEGER(GDK_KEY_Insert);
+  DEFINE_INTEGER(GDK_KEY_Undo);
+  DEFINE_INTEGER(GDK_KEY_Redo);
+  DEFINE_INTEGER(GDK_KEY_Menu);
+  DEFINE_INTEGER(GDK_KEY_Find);
+  DEFINE_INTEGER(GDK_KEY_Cancel);
+  DEFINE_INTEGER(GDK_KEY_Help);
+  DEFINE_INTEGER(GDK_KEY_Break);
+  DEFINE_INTEGER(GDK_KEY_Mode_switch);
+  DEFINE_INTEGER(GDK_KEY_script_switch);
+  DEFINE_INTEGER(GDK_KEY_Num_Lock);
+  DEFINE_INTEGER(GDK_KEY_KP_Space);
+  DEFINE_INTEGER(GDK_KEY_KP_Tab);
+  DEFINE_INTEGER(GDK_KEY_KP_Enter);
+  DEFINE_INTEGER(GDK_KEY_KP_F1);
+  DEFINE_INTEGER(GDK_KEY_KP_F2);
+  DEFINE_INTEGER(GDK_KEY_KP_F3);
+  DEFINE_INTEGER(GDK_KEY_KP_F4);
+  DEFINE_INTEGER(GDK_KEY_KP_Home);
+  DEFINE_INTEGER(GDK_KEY_KP_Left);
+  DEFINE_INTEGER(GDK_KEY_KP_Up);
+  DEFINE_INTEGER(GDK_KEY_KP_Right);
+  DEFINE_INTEGER(GDK_KEY_KP_Down);
+  DEFINE_INTEGER(GDK_KEY_KP_Prior);
+  DEFINE_INTEGER(GDK_KEY_KP_Page_Up);
+  DEFINE_INTEGER(GDK_KEY_KP_Next);
+  DEFINE_INTEGER(GDK_KEY_KP_Page_Down);
+  DEFINE_INTEGER(GDK_KEY_KP_End);
+  DEFINE_INTEGER(GDK_KEY_KP_Begin);
+  DEFINE_INTEGER(GDK_KEY_KP_Insert);
+  DEFINE_INTEGER(GDK_KEY_KP_Delete);
+  DEFINE_INTEGER(GDK_KEY_KP_Equal);
+  DEFINE_INTEGER(GDK_KEY_KP_Multiply);
+  DEFINE_INTEGER(GDK_KEY_KP_Add);
+  DEFINE_INTEGER(GDK_KEY_KP_Separator);
+  DEFINE_INTEGER(GDK_KEY_KP_Subtract);
+  DEFINE_INTEGER(GDK_KEY_KP_Decimal);
+  DEFINE_INTEGER(GDK_KEY_KP_Divide);
+  DEFINE_INTEGER(GDK_KEY_KP_0);
+  DEFINE_INTEGER(GDK_KEY_KP_1);
+  DEFINE_INTEGER(GDK_KEY_KP_2);
+  DEFINE_INTEGER(GDK_KEY_KP_3);
+  DEFINE_INTEGER(GDK_KEY_KP_4);
+  DEFINE_INTEGER(GDK_KEY_KP_5);
+  DEFINE_INTEGER(GDK_KEY_KP_6);
+  DEFINE_INTEGER(GDK_KEY_KP_7);
+  DEFINE_INTEGER(GDK_KEY_KP_8);
+  DEFINE_INTEGER(GDK_KEY_KP_9);
+  DEFINE_INTEGER(GDK_KEY_F1);
+  DEFINE_INTEGER(GDK_KEY_F2);
+  DEFINE_INTEGER(GDK_KEY_F3);
+  DEFINE_INTEGER(GDK_KEY_F4);
+  DEFINE_INTEGER(GDK_KEY_F5);
+  DEFINE_INTEGER(GDK_KEY_F6);
+  DEFINE_INTEGER(GDK_KEY_F7);
+  DEFINE_INTEGER(GDK_KEY_F8);
+  DEFINE_INTEGER(GDK_KEY_F9);
+  DEFINE_INTEGER(GDK_KEY_F10);
+  DEFINE_INTEGER(GDK_KEY_F11);
+  DEFINE_INTEGER(GDK_KEY_L1);
+  DEFINE_INTEGER(GDK_KEY_F12);
+  DEFINE_INTEGER(GDK_KEY_L2);
+  DEFINE_INTEGER(GDK_KEY_F13);
+  DEFINE_INTEGER(GDK_KEY_L3);
+  DEFINE_INTEGER(GDK_KEY_F14);
+  DEFINE_INTEGER(GDK_KEY_L4);
+  DEFINE_INTEGER(GDK_KEY_F15);
+  DEFINE_INTEGER(GDK_KEY_L5);
+  DEFINE_INTEGER(GDK_KEY_F16);
+  DEFINE_INTEGER(GDK_KEY_L6);
+  DEFINE_INTEGER(GDK_KEY_F17);
+  DEFINE_INTEGER(GDK_KEY_L7);
+  DEFINE_INTEGER(GDK_KEY_F18);
+  DEFINE_INTEGER(GDK_KEY_L8);
+  DEFINE_INTEGER(GDK_KEY_F19);
+  DEFINE_INTEGER(GDK_KEY_L9);
+  DEFINE_INTEGER(GDK_KEY_F20);
+  DEFINE_INTEGER(GDK_KEY_L10);
+  DEFINE_INTEGER(GDK_KEY_F21);
+  DEFINE_INTEGER(GDK_KEY_R1);
+  DEFINE_INTEGER(GDK_KEY_F22);
+  DEFINE_INTEGER(GDK_KEY_R2);
+  DEFINE_INTEGER(GDK_KEY_F23);
+  DEFINE_INTEGER(GDK_KEY_R3);
+  DEFINE_INTEGER(GDK_KEY_F24);
+  DEFINE_INTEGER(GDK_KEY_R4);
+  DEFINE_INTEGER(GDK_KEY_F25);
+  DEFINE_INTEGER(GDK_KEY_R5);
+  DEFINE_INTEGER(GDK_KEY_F26);
+  DEFINE_INTEGER(GDK_KEY_R6);
+  DEFINE_INTEGER(GDK_KEY_F27);
+  DEFINE_INTEGER(GDK_KEY_R7);
+  DEFINE_INTEGER(GDK_KEY_F28);
+  DEFINE_INTEGER(GDK_KEY_R8);
+  DEFINE_INTEGER(GDK_KEY_F29);
+  DEFINE_INTEGER(GDK_KEY_R9);
+  DEFINE_INTEGER(GDK_KEY_F30);
+  DEFINE_INTEGER(GDK_KEY_R10);
+  DEFINE_INTEGER(GDK_KEY_F31);
+  DEFINE_INTEGER(GDK_KEY_R11);
+  DEFINE_INTEGER(GDK_KEY_F32);
+  DEFINE_INTEGER(GDK_KEY_R12);
+  DEFINE_INTEGER(GDK_KEY_F33);
+  DEFINE_INTEGER(GDK_KEY_R13);
+  DEFINE_INTEGER(GDK_KEY_F34);
+  DEFINE_INTEGER(GDK_KEY_R14);
+  DEFINE_INTEGER(GDK_KEY_F35);
+  DEFINE_INTEGER(GDK_KEY_R15);
+  DEFINE_INTEGER(GDK_KEY_Shift_L);
+  DEFINE_INTEGER(GDK_KEY_Shift_R);
+  DEFINE_INTEGER(GDK_KEY_Control_L);
+  DEFINE_INTEGER(GDK_KEY_Control_R);
+  DEFINE_INTEGER(GDK_KEY_Caps_Lock);
+  DEFINE_INTEGER(GDK_KEY_Shift_Lock);
+  DEFINE_INTEGER(GDK_KEY_Meta_L);
+  DEFINE_INTEGER(GDK_KEY_Meta_R);
+  DEFINE_INTEGER(GDK_KEY_Alt_L);
+  DEFINE_INTEGER(GDK_KEY_Alt_R);
+  DEFINE_INTEGER(GDK_KEY_space);
+  DEFINE_INTEGER(GDK_KEY_exclam);
+  DEFINE_INTEGER(GDK_KEY_quotedbl);
+  DEFINE_INTEGER(GDK_KEY_numbersign);
+  DEFINE_INTEGER(GDK_KEY_dollar);
+  DEFINE_INTEGER(GDK_KEY_percent);
+  DEFINE_INTEGER(GDK_KEY_ampersand);
+  DEFINE_INTEGER(GDK_KEY_apostrophe);
+  DEFINE_INTEGER(GDK_KEY_quoteright);
+  DEFINE_INTEGER(GDK_KEY_parenleft);
+  DEFINE_INTEGER(GDK_KEY_parenright);
+  DEFINE_INTEGER(GDK_KEY_asterisk);
+  DEFINE_INTEGER(GDK_KEY_plus);
+  DEFINE_INTEGER(GDK_KEY_comma);
+  DEFINE_INTEGER(GDK_KEY_minus);
+  DEFINE_INTEGER(GDK_KEY_period);
+  DEFINE_INTEGER(GDK_KEY_slash);
+  DEFINE_INTEGER(GDK_KEY_0);
+  DEFINE_INTEGER(GDK_KEY_1);
+  DEFINE_INTEGER(GDK_KEY_2);
+  DEFINE_INTEGER(GDK_KEY_3);
+  DEFINE_INTEGER(GDK_KEY_4);
+  DEFINE_INTEGER(GDK_KEY_5);
+  DEFINE_INTEGER(GDK_KEY_6);
+  DEFINE_INTEGER(GDK_KEY_7);
+  DEFINE_INTEGER(GDK_KEY_8);
+  DEFINE_INTEGER(GDK_KEY_9);
+  DEFINE_INTEGER(GDK_KEY_colon);
+  DEFINE_INTEGER(GDK_KEY_semicolon);
+  DEFINE_INTEGER(GDK_KEY_less);
+  DEFINE_INTEGER(GDK_KEY_equal);
+  DEFINE_INTEGER(GDK_KEY_greater);
+  DEFINE_INTEGER(GDK_KEY_question);
+  DEFINE_INTEGER(GDK_KEY_at);
+  DEFINE_INTEGER(GDK_KEY_A);
+  DEFINE_INTEGER(GDK_KEY_B);
+  DEFINE_INTEGER(GDK_KEY_C);
+  DEFINE_INTEGER(GDK_KEY_D);
+  DEFINE_INTEGER(GDK_KEY_E);
+  DEFINE_INTEGER(GDK_KEY_F);
+  DEFINE_INTEGER(GDK_KEY_G);
+  DEFINE_INTEGER(GDK_KEY_H);
+  DEFINE_INTEGER(GDK_KEY_I);
+  DEFINE_INTEGER(GDK_KEY_J);
+  DEFINE_INTEGER(GDK_KEY_K);
+  DEFINE_INTEGER(GDK_KEY_L);
+  DEFINE_INTEGER(GDK_KEY_M);
+  DEFINE_INTEGER(GDK_KEY_N);
+  DEFINE_INTEGER(GDK_KEY_O);
+  DEFINE_INTEGER(GDK_KEY_P);
+  DEFINE_INTEGER(GDK_KEY_Q);
+  DEFINE_INTEGER(GDK_KEY_R);
+  DEFINE_INTEGER(GDK_KEY_S);
+  DEFINE_INTEGER(GDK_KEY_T);
+  DEFINE_INTEGER(GDK_KEY_U);
+  DEFINE_INTEGER(GDK_KEY_V);
+  DEFINE_INTEGER(GDK_KEY_W);
+  DEFINE_INTEGER(GDK_KEY_X);
+  DEFINE_INTEGER(GDK_KEY_Y);
+  DEFINE_INTEGER(GDK_KEY_Z);
+  DEFINE_INTEGER(GDK_KEY_bracketleft);
+  DEFINE_INTEGER(GDK_KEY_backslash);
+  DEFINE_INTEGER(GDK_KEY_bracketright);
+  DEFINE_INTEGER(GDK_KEY_asciicircum);
+  DEFINE_INTEGER(GDK_KEY_underscore);
+  DEFINE_INTEGER(GDK_KEY_grave);
+  DEFINE_INTEGER(GDK_KEY_quoteleft);
+  DEFINE_INTEGER(GDK_KEY_a);
+  DEFINE_INTEGER(GDK_KEY_b);
+  DEFINE_INTEGER(GDK_KEY_c);
+  DEFINE_INTEGER(GDK_KEY_d);
+  DEFINE_INTEGER(GDK_KEY_e);
+  DEFINE_INTEGER(GDK_KEY_f);
+  DEFINE_INTEGER(GDK_KEY_g);
+  DEFINE_INTEGER(GDK_KEY_h);
+  DEFINE_INTEGER(GDK_KEY_i);
+  DEFINE_INTEGER(GDK_KEY_j);
+  DEFINE_INTEGER(GDK_KEY_k);
+  DEFINE_INTEGER(GDK_KEY_l);
+  DEFINE_INTEGER(GDK_KEY_m);
+  DEFINE_INTEGER(GDK_KEY_n);
+  DEFINE_INTEGER(GDK_KEY_o);
+  DEFINE_INTEGER(GDK_KEY_p);
+  DEFINE_INTEGER(GDK_KEY_q);
+  DEFINE_INTEGER(GDK_KEY_r);
+  DEFINE_INTEGER(GDK_KEY_s);
+  DEFINE_INTEGER(GDK_KEY_t);
+  DEFINE_INTEGER(GDK_KEY_u);
+  DEFINE_INTEGER(GDK_KEY_v);
+  DEFINE_INTEGER(GDK_KEY_w);
+  DEFINE_INTEGER(GDK_KEY_x);
+  DEFINE_INTEGER(GDK_KEY_y);
+  DEFINE_INTEGER(GDK_KEY_z);
+  DEFINE_INTEGER(GDK_KEY_braceleft);
+  DEFINE_INTEGER(GDK_KEY_bar);
+  DEFINE_INTEGER(GDK_KEY_braceright);
+  DEFINE_INTEGER(GDK_KEY_asciitilde);
+  DEFINE_INTEGER(GTK_WRAP_ALLOCATE_FREE);
+  DEFINE_INTEGER(GTK_WRAP_ALLOCATE_ALIGNED);
+  DEFINE_INTEGER(GTK_WRAP_ALLOCATE_HOMOGENEOUS);
+  DEFINE_INTEGER(GTK_WRAP_BOX_SPREAD_START);
+  DEFINE_INTEGER(GTK_WRAP_BOX_SPREAD_END);
+  DEFINE_INTEGER(GTK_WRAP_BOX_SPREAD_EVEN);
+  DEFINE_INTEGER(GTK_WRAP_BOX_SPREAD_EXPAND);
+  DEFINE_INTEGER(GTK_WRAP_BOX_H_EXPAND);
+  DEFINE_INTEGER(GTK_WRAP_BOX_H_FILL);
+  DEFINE_INTEGER(GTK_WRAP_BOX_V_EXPAND);
+  DEFINE_INTEGER(GTK_WRAP_BOX_V_FILL);
+#endif
+
   DEFINE_INTEGER(CAIRO_STATUS_SUCCESS);
   DEFINE_INTEGER(CAIRO_STATUS_NO_MEMORY);
   DEFINE_INTEGER(CAIRO_STATUS_INVALID_RESTORE);
@@ -47975,7 +47937,6 @@ static void define_integers(void)
   DEFINE_ULONG(GTK_TYPE_IM_CONTEXT_SIMPLE);
   DEFINE_ULONG(GTK_TYPE_IM_MULTICONTEXT);
   DEFINE_ULONG(GTK_TYPE_INVISIBLE);
-  DEFINE_ULONG(GTK_TYPE_ITEM);
   DEFINE_ULONG(GTK_TYPE_LABEL);
   DEFINE_ULONG(GTK_TYPE_LAYOUT);
   DEFINE_ULONG(GTK_TYPE_LIST_STORE);
@@ -48374,7 +48335,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("06-Sep-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("11-Sep-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

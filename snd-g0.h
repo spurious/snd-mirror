@@ -271,19 +271,6 @@ typedef enum {WITHOUT_DATA_LOCATION_FIELD, WITH_DATA_LOCATION_FIELD} dialog_data
 typedef enum {WITHOUT_HEADER_TYPE_FIELD, WITH_HEADER_TYPE_FIELD} dialog_header_type_t;
 typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 
-#define snd_ShiftMask GDK_SHIFT_MASK
-#define snd_ControlMask GDK_CONTROL_MASK
-#if (!HAVE_SUN)
-  #define snd_MetaMask GDK_MOD1_MASK
-#else
-  #define snd_MetaMask (GDK_MOD1_MASK | GDK_MOD4_MASK)
-#endif
-
-#define NO_BUCKY_BITS_P(State) (((State) & (GDK_SHIFT_MASK | GDK_CONTROL_MASK | GDK_MOD1_MASK)) == 0)
-/* in some cases, numlock = GDK_MOD2_MASK for example, and we want to completely ignore that setting */
-
-#define BUTTON1_PRESSED(State) ((State) & GDK_BUTTON1_MASK)
-
 #define MAIN_SHELL(a) (a->sgx)->mainshell
 #define MAIN_WINDOW(a) (a->sgx)->mainwindow
 #define MAIN_PANE(a) (a->sgx)->mainpane
@@ -300,7 +287,131 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 #define DEFAULT_GRAPH_CURSOR GDK_CROSSHAIR
 /* #define GUI_CURRENT_TIME(ss) GDK_CURRENT_TIME */
 
-/* now pull in the key names (gdk/gdkkeysyms.h) */
+#define snd_ShiftMask GDK_SHIFT_MASK
+#define snd_ControlMask GDK_CONTROL_MASK
+#if (!HAVE_SUN)
+  #define snd_MetaMask GDK_MOD1_MASK
+#else
+  #define snd_MetaMask (GDK_MOD1_MASK | GDK_MOD4_MASK)
+#endif
+
+#define NO_BUCKY_BITS_P(State) (((State) & (GDK_SHIFT_MASK | GDK_CONTROL_MASK | GDK_MOD1_MASK)) == 0)
+/* in some cases, numlock = GDK_MOD2_MASK for example, and we want to completely ignore that setting */
+
+#define BUTTON1_PRESSED(State) ((State) & GDK_BUTTON1_MASK)
+
+/* now pull in the key names (gdk/gdkkeysyms.h) 
+ * KEY_ added to all these names in gtk 2.90.7
+ */
+#if defined(GDK_KEY_Shift_L)
+#define snd_K_Shift_L GDK_KEY_Shift_L	 
+#define snd_K_space GDK_KEY_space 
+#define snd_K_openparen GDK_KEY_parenleft 
+#define snd_K_closeparen GDK_KEY_parenright 
+#define snd_K_plus GDK_KEY_plus 
+#define snd_K_minus GDK_KEY_minus 
+#define snd_K_period GDK_KEY_period 
+#define snd_K_slash GDK_KEY_slash 
+#define snd_K_0 GDK_KEY_0 
+#define snd_K_1 GDK_KEY_1 
+#define snd_K_2 GDK_KEY_2 
+#define snd_K_3 GDK_KEY_3 
+#define snd_K_4 GDK_KEY_4 
+#define snd_K_5 GDK_KEY_5 
+#define snd_K_6 GDK_KEY_6 
+#define snd_K_7 GDK_KEY_7 
+#define snd_K_8 GDK_KEY_8 
+#define snd_K_9 GDK_KEY_9 
+#define snd_K_less GDK_KEY_less 
+#define snd_K_greater GDK_KEY_greater 
+#define snd_K_A GDK_KEY_A 
+#define snd_K_B GDK_KEY_B 
+#define snd_K_C GDK_KEY_C 
+#define snd_K_D GDK_KEY_D 
+#define snd_K_E GDK_KEY_E 
+#define snd_K_F GDK_KEY_F 
+#define snd_K_G GDK_KEY_G 
+#define snd_K_H GDK_KEY_H 
+#define snd_K_I GDK_KEY_I 
+#define snd_K_J GDK_KEY_J 
+#define snd_K_K GDK_KEY_K 
+#define snd_K_L GDK_KEY_L 
+#define snd_K_M GDK_KEY_M 
+#define snd_K_N GDK_KEY_N 
+#define snd_K_O GDK_KEY_O 
+#define snd_K_P GDK_KEY_P 
+#define snd_K_Q GDK_KEY_Q 
+#define snd_K_R GDK_KEY_R 
+#define snd_K_S GDK_KEY_S 
+#define snd_K_T GDK_KEY_T 
+#define snd_K_U GDK_KEY_U 
+#define snd_K_V GDK_KEY_V 
+#define snd_K_W GDK_KEY_W 
+#define snd_K_X GDK_KEY_X 
+#define snd_K_Y GDK_KEY_Y 
+#define snd_K_Z GDK_KEY_Z 
+#define snd_K_underscore GDK_KEY_underscore 
+#define snd_K_a GDK_KEY_a 
+#define snd_K_b GDK_KEY_b 
+#define snd_K_c GDK_KEY_c 
+#define snd_K_d GDK_KEY_d 
+#define snd_K_e GDK_KEY_e 
+#define snd_K_f GDK_KEY_f 
+#define snd_K_g GDK_KEY_g 
+#define snd_K_h GDK_KEY_h 
+#define snd_K_i GDK_KEY_i 
+#define snd_K_j GDK_KEY_j 
+#define snd_K_k GDK_KEY_k 
+#define snd_K_l GDK_KEY_l 
+#define snd_K_m GDK_KEY_m 
+#define snd_K_n GDK_KEY_n 
+#define snd_K_o GDK_KEY_o 
+#define snd_K_p GDK_KEY_p 
+#define snd_K_q GDK_KEY_q 
+#define snd_K_r GDK_KEY_r 
+#define snd_K_s GDK_KEY_s 
+#define snd_K_t GDK_KEY_t 
+#define snd_K_u GDK_KEY_u 
+#define snd_K_v GDK_KEY_v 
+#define snd_K_w GDK_KEY_w 
+#define snd_K_x GDK_KEY_x 
+#define snd_K_y GDK_KEY_y 
+#define snd_K_z GDK_KEY_z 
+#define snd_K_Home GDK_KEY_Home		 
+#define snd_K_Left GDK_KEY_Left		 
+#define snd_K_Up GDK_KEY_Up		 
+#define snd_K_Right GDK_KEY_Right	 
+#define snd_K_Down GDK_KEY_Down
+
+#define snd_keypad_Insert GDK_KEY_KP_Insert
+#define snd_keypad_Delete GDK_KEY_KP_Delete
+#define snd_keypad_Multiply GDK_KEY_KP_Multiply
+#define snd_keypad_Add GDK_KEY_KP_Add
+#define snd_keypad_Subtract GDK_KEY_KP_Subtract
+#define snd_keypad_Divide GDK_KEY_KP_Divide
+#define snd_keypad_Decimal GDK_KEY_KP_Decimal
+#define snd_keypad_Enter GDK_KEY_KP_Enter
+
+#define snd_keypad_0 GDK_KEY_KP_0
+#define snd_keypad_1 GDK_KEY_KP_1
+#define snd_keypad_2 GDK_KEY_KP_2
+#define snd_keypad_3 GDK_KEY_KP_3
+#define snd_keypad_4 GDK_KEY_KP_4
+#define snd_keypad_5 GDK_KEY_KP_5
+#define snd_keypad_6 GDK_KEY_KP_6
+#define snd_keypad_7 GDK_KEY_KP_7
+#define snd_keypad_8 GDK_KEY_KP_8
+#define snd_keypad_9 GDK_KEY_KP_9
+
+#define snd_K_Return    GDK_KEY_Return
+#define snd_K_Tab       GDK_KEY_Tab
+#define snd_K_BackSpace GDK_KEY_BackSpace
+#define snd_K_Delete    GDK_KEY_Delete
+#define snd_K_question  GDK_KEY_question
+
+#else
+/* ---------------- old version ---------------- */
+
 #define snd_K_Shift_L GDK_Shift_L	 
 #define snd_K_space GDK_space 
 #define snd_K_openparen GDK_parenleft 
@@ -400,5 +511,12 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 #define snd_keypad_8 GDK_KP_8
 #define snd_keypad_9 GDK_KP_9
 
+#define snd_K_Return    GDK_Return
+#define snd_K_Tab       GDK_Tab
+#define snd_K_BackSpace GDK_BackSpace
+#define snd_K_Delete    GDK_Delete
+#define snd_K_question  GDK_question
+
 #endif
-  
+
+#endif

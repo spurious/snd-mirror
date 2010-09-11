@@ -109,6 +109,11 @@
 (define types-2906 '())
 (define ints-2906 '())
 
+(define funcs-2907 '())
+(define names-2907 '())
+(define types-2907 '())
+(define ints-2907 '())
+
 (define cairo-funcs '())
 (define cairo-png-funcs '())
 (define cairo-ints '())
@@ -193,6 +198,11 @@
 	"gdouble*" "GdkFill" "GdkSubwindowMode" "GdkLineStyle" "GdkCapStyle" "GdkJoinStyle"
 	"GtkInfoBar*" "GtkSpinner*" "GtkToolShell*" "GtkToolPalette*" "GtkToolPaletteDragTargets"
 	"GdkFunction"
+
+	"GdkRectangle*" "PangoRenderer*" "cairo_glyph_t**" "cairo_text_cluster_t**"
+;	"cairo_text_cluster_flags_t" 
+;	"cairo_rectangle_int_t" 
+	"cairo_rectangle_t*"
 	))
 
 (define no-xen-p 
@@ -212,7 +222,7 @@
 	"GtkScaleButton*"
 	"GtkPrintOperationResult" "GtkPrintStatus"
 	"GdkEventAny*" "GdkDeviceManager*"
-	"cairo_font_type_t" "cairo_pattern_type_t" "cairo_surface_type_t"
+	"cairo_font_type_t" "cairo_pattern_type_t" "cairo_surface_type_t" "cairo_bool_t" 
 	))
 
 (define no-xen-to-c 
@@ -233,7 +243,7 @@
 	"GtkPrintOperationResult" "GtkPrintStatus"
 	"GdkEventAny*" "GdkDeviceManager*"
 	
-	"cairo_surface_type_t" "cairo_pattern_type_t" "cairo_font_type_t"
+	"cairo_surface_type_t" "cairo_pattern_type_t" "cairo_font_type_t" "cairo_bool_t"
 	))
 
 (define (cadr-str data)
@@ -432,6 +442,7 @@
 				((2190)               (set! types-2190 (cons type types-2190)))
 				((2901)               (set! types-2901 (cons type types-2901)))
 				((2906)               (set! types-2906 (cons type types-2906)))
+				((2907)               (set! types-2907 (cons type types-2907)))
 				((cairo)              (set! cairo-types (cons type cairo-types)))
 				((cairo-810)          (set! cairo-types-810 (cons type cairo-types-810)))
 				((cairo-912)          (set! cairo-types-912 (cons type cairo-types-912)))
@@ -767,7 +778,7 @@
 	(cons "GtkJustification" "INT")
 	(cons "GtkMessageType" "INT")
 	(cons "GtkButtonsType" "INT")
-	(cons "GtkProgressBarOrientation" "INT")
+					;(cons "GtkProgressBarOrientation" "INT")
 	(cons "GtkUpdateType" "INT")
 	(cons "GtkMetricType" "INT")
 	(cons "GtkPolicyType" "INT")
@@ -829,6 +840,10 @@
 	(cons "GtkIconViewDropPosition" "INT")
 	(cons "GtkFileChooserConfirmation" "INT")
 	(cons "GtkFileChooserProp" "INT")
+
+	(cons "GtkWrapAllocationMode" "INT")
+	(cons "GtkWrapBoxSpreading" "INT")
+	(cons "GtkWrapBoxPacking" "INT")
 	
 	(cons "GtkSensitivityType" "INT")
 	(cons "GtkTextBufferTargetInfo" "INT")
@@ -1189,6 +1204,22 @@
 		(set! funcs-2906 (cons (list name type strs args) funcs-2906)))
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
+(define* (CFNC-2907 data spec)
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (if (assoc name names)
+	(no-way "CFNC-2907: ~A~%" (list name data))
+	(let ((type (car-str data)))
+	  (if (not (member type all-types))
+	      (begin
+		(set! all-types (cons type all-types))
+		(set! types-2907 (cons type types-2907))))
+	  (let ((strs (parse-args args '2907)))
+	    (if spec
+		(set! funcs-2907 (cons (list name type strs args spec) funcs-2907))
+		(set! funcs-2907 (cons (list name type strs args) funcs-2907)))
+	    (set! names (cons (cons name (func-type strs)) names)))))))
+
 (define* (CAIRO-FUNC data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
@@ -1443,6 +1474,14 @@
       (no-way "~A CINT-2906~%" name)
       (begin
 	(set! ints-2906 (cons name ints-2906))
+	(set! names (cons (cons name 'int) names)))))
+
+(define* (CINT-2907 name type)
+  (save-declared-type type)
+  (if (assoc name names)
+      (no-way "~A CINT-2907~%" name)
+      (begin
+	(set! ints-2907 (cons name ints-2907))
 	(set! names (cons (cons name 'int) names)))))
 
 (define* (CAIRO-INT name type)
@@ -1714,6 +1753,11 @@
   (thunk)
   (dpy "#endif~%~%"))
 
+(define (with-2907 dpy thunk)
+  (dpy "#if HAVE_GTK_PROGRESS_BAR_GET_INVERTED~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
 
 (define (with-cairo dpy thunk)
   (thunk)
@@ -1735,19 +1779,19 @@
 
 
 
-(define all-types (list types-210 types-211 types-213 types-2134 types-2150 types-2172 types-2173 types-2177 types-2190 types-2901 types-2906
+(define all-types (list types-210 types-211 types-213 types-2134 types-2150 types-2172 types-2173 types-2177 types-2190 types-2901 types-2906 types-2907
 			cairo-types cairo-types-810 cairo-types-912))
-(define all-type-withs (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901 with-2906
+(define all-type-withs (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901 with-2906 with-2907
 			     with-cairo with-cairo-810 with-cairo-912))
 
-(define all-funcs (list funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-2901 funcs-2906
+(define all-funcs (list funcs-210 funcs-211 funcs-213 funcs-2134 funcs-2150 funcs-2172 funcs-2173 funcs-2177 funcs-2190 funcs-2901 funcs-2906 funcs-2907
 			cairo-funcs cairo-png-funcs cairo-funcs-810 cairo-funcs-912))
-(define all-func-withs (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901 with-2906
+(define all-func-withs (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2190 with-2901 with-2906 with-2907
 			     with-cairo with-cairo-png with-cairo-810 with-cairo-912))
 
-(define all-ints (list ints-210 ints-211 ints-213 ints-2134 ints-2150 ints-2172 ints-2173 ints-2177 ints-2901 ints-2906
+(define all-ints (list ints-210 ints-211 ints-213 ints-2134 ints-2150 ints-2172 ints-2173 ints-2177 ints-2901 ints-2906 ints-2907
 		       cairo-ints cairo-ints-810 cairo-ints-912))
-(define all-int-withs (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2901 with-2906
+(define all-int-withs (list with-210 with-211 with-213 with-2134 with-2150 with-2172 with-2173 with-2177 with-2901 with-2906 with-2907
 			    with-cairo with-cairo-810 with-cairo-912))
 
 (define all-casts (list casts-210 casts-211 casts-213 casts-2134 casts-2150 casts-2172 casts-2173 casts-2190 casts-2901 casts-2906))

@@ -544,13 +544,13 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
   key = EVENT_KEYVAL(event);
   state = (GdkModifierType)EVENT_STATE(event);
 
-  if (key == GDK_Tab)
+  if (key == snd_K_Tab)
     {
       listener_completion(gtk_text_buffer_get_char_count(LISTENER_BUFFER));
       return(true);
     }
 
-  if (key == GDK_Return)
+  if (key == snd_K_Return)
     listener_return_callback();
   else
     {
@@ -570,7 +570,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 	    }
 	  else
 	    {
-	      if (key == GDK_BackSpace)
+	      if (key == snd_K_BackSpace)
 		{
 		  int current_position;
 		  char *fstr;
@@ -617,7 +617,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 				}
 			      else 
 				{
-				  if ((key == GDK_question) && (state & snd_ControlMask))
+				  if ((key == snd_K_question) && (state & snd_ControlMask))
 				    {
 				      listener_help();
 				    }
@@ -813,108 +813,108 @@ static void make_listener_widget(int height)
 	set = gtk_binding_set_by_class(GTK_TEXT_VIEW_GET_CLASS(GTK_TEXT_VIEW(listener_text)));
 
 	/* C-b back char */
-	gtk_binding_entry_remove(set, GDK_b, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, GDK_b, GDK_CONTROL_MASK, "move_cursor", 3,
+	gtk_binding_entry_remove(set, snd_K_b, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, snd_K_b, GDK_CONTROL_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_VISUAL_POSITIONS,
 				     G_TYPE_INT, -1,
 				     G_TYPE_BOOLEAN, false);
 	/* M-b back word */
-	gtk_binding_entry_remove(set, GDK_b, GDK_MOD1_MASK);
-	gtk_binding_entry_add_signal(set, GDK_b, GDK_MOD1_MASK, "move_cursor", 3,
+	gtk_binding_entry_remove(set, snd_K_b, GDK_MOD1_MASK);
+	gtk_binding_entry_add_signal(set, snd_K_b, GDK_MOD1_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_WORDS,
 				     G_TYPE_INT, -1,
 				     G_TYPE_BOOLEAN, false);
 	/* C-f forward char */
-	gtk_binding_entry_remove(set, GDK_f, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, GDK_f, GDK_CONTROL_MASK, "move_cursor", 3,
+	gtk_binding_entry_remove(set, snd_K_f, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, snd_K_f, GDK_CONTROL_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_VISUAL_POSITIONS,
 				     G_TYPE_INT, 1,
 				     G_TYPE_BOOLEAN, false);
 	/* OVERRIDDEN: M-f forward word */
-	gtk_binding_entry_remove(set, GDK_f, GDK_MOD1_MASK);
-	gtk_binding_entry_add_signal(set, GDK_f, GDK_MOD1_MASK, "move_cursor", 3,
+	gtk_binding_entry_remove(set, snd_K_f, GDK_MOD1_MASK);
+	gtk_binding_entry_add_signal(set, snd_K_f, GDK_MOD1_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_WORDS,
 				     G_TYPE_INT, 1,
 				     G_TYPE_BOOLEAN, false);
 	/* C-e end of line */
-	gtk_binding_entry_remove(set, GDK_e, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, GDK_e, GDK_CONTROL_MASK, "move_cursor", 3,
+	gtk_binding_entry_remove(set, snd_K_e, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, snd_K_e, GDK_CONTROL_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINE_ENDS,
 				     G_TYPE_INT, 1,
 				     G_TYPE_BOOLEAN, false);
 	/* C-a start of line */
-	gtk_binding_entry_remove(set, GDK_a, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, GDK_a, GDK_CONTROL_MASK, "move_cursor", 3,
+	gtk_binding_entry_remove(set, snd_K_a, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, snd_K_a, GDK_CONTROL_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINE_ENDS,
 				     G_TYPE_INT, -1,
 				     G_TYPE_BOOLEAN, false);
 	/* M-< start of file */
-	gtk_binding_entry_remove(set, GDK_less, GDK_MOD1_MASK);
-	gtk_binding_entry_add_signal(set, GDK_less, GDK_MOD1_MASK, "move_cursor", 3,
+	gtk_binding_entry_remove(set, snd_K_less, GDK_MOD1_MASK);
+	gtk_binding_entry_add_signal(set, snd_K_less, GDK_MOD1_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_BUFFER_ENDS,
 				     G_TYPE_INT, -1,
 				     G_TYPE_BOOLEAN, false);
 	/* M-> end of file */
-	gtk_binding_entry_remove(set, GDK_greater, GDK_MOD1_MASK);
-	gtk_binding_entry_add_signal(set, GDK_greater, GDK_MOD1_MASK, "move_cursor", 3,
+	gtk_binding_entry_remove(set, snd_K_greater, GDK_MOD1_MASK);
+	gtk_binding_entry_add_signal(set, snd_K_greater, GDK_MOD1_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_BUFFER_ENDS,
 				     G_TYPE_INT, 1,
 				     G_TYPE_BOOLEAN, false);
 	/* C-n down line */
-	gtk_binding_entry_remove(set, GDK_n, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, GDK_n, GDK_CONTROL_MASK, "move_cursor", 3,
+	gtk_binding_entry_remove(set, snd_K_n, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, snd_K_n, GDK_CONTROL_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINES,
 				     G_TYPE_INT, 1,
 				     G_TYPE_BOOLEAN, false);
 	/* C-p up line */
-	gtk_binding_entry_remove(set, GDK_p, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, GDK_p, GDK_CONTROL_MASK, "move_cursor", 3,
+	gtk_binding_entry_remove(set, snd_K_p, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, snd_K_p, GDK_CONTROL_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_DISPLAY_LINES,
 				     G_TYPE_INT, -1,
 				     G_TYPE_BOOLEAN, false);
 	/* C-v down window */
-	gtk_binding_entry_remove(set, GDK_v, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, GDK_v, GDK_CONTROL_MASK, "move_cursor", 3,
+	gtk_binding_entry_remove(set, snd_K_v, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, snd_K_v, GDK_CONTROL_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_PAGES,
 				     G_TYPE_INT, 1,
 				     G_TYPE_BOOLEAN, false);
 	/* OVERRIDEN: M-v up window */
-	gtk_binding_entry_remove(set, GDK_v, GDK_MOD1_MASK);
-	gtk_binding_entry_add_signal(set, GDK_v, GDK_MOD1_MASK, "move_cursor", 3,
+	gtk_binding_entry_remove(set, snd_K_v, GDK_MOD1_MASK);
+	gtk_binding_entry_add_signal(set, snd_K_v, GDK_MOD1_MASK, "move_cursor", 3,
 				     G_TYPE_ENUM, GTK_MOVEMENT_PAGES,
 				     G_TYPE_INT, -1,
 				     G_TYPE_BOOLEAN, false);
 	/* C-d delete at cursor */
-	gtk_binding_entry_remove(set, GDK_d, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, GDK_d, GDK_CONTROL_MASK,
+	gtk_binding_entry_remove(set, snd_K_d, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, snd_K_d, GDK_CONTROL_MASK,
 				     "delete_from_cursor", 2,
 				     G_TYPE_ENUM, GTK_DELETE_CHARS,
 				     G_TYPE_INT, -1);
 	/* M-d delete word at cursor */
-	gtk_binding_entry_remove(set, GDK_d, GDK_MOD1_MASK);
-	gtk_binding_entry_add_signal(set, GDK_d, GDK_MOD1_MASK,
+	gtk_binding_entry_remove(set, snd_K_d, GDK_MOD1_MASK);
+	gtk_binding_entry_add_signal(set, snd_K_d, GDK_MOD1_MASK,
 				     "delete_from_cursor", 2,
 				     G_TYPE_ENUM, GTK_DELETE_WORD_ENDS,
 				     G_TYPE_INT, 1);
 
 	/* C-k delete to end of line -- see explicit handling above */
-	gtk_binding_entry_remove(set, GDK_k, GDK_CONTROL_MASK);
+	gtk_binding_entry_remove(set, snd_K_k, GDK_CONTROL_MASK);
 
 	/* M-delete delete to start of line */
-	gtk_binding_entry_remove(set, GDK_Delete, GDK_MOD1_MASK);
-	gtk_binding_entry_add_signal(set, GDK_Delete, GDK_MOD1_MASK,
+	gtk_binding_entry_remove(set, snd_K_Delete, GDK_MOD1_MASK);
+	gtk_binding_entry_add_signal(set, snd_K_Delete, GDK_MOD1_MASK,
 				     "delete_from_cursor", 2,
 				     G_TYPE_ENUM, GTK_DELETE_PARAGRAPH_ENDS,
 				     G_TYPE_INT, -1);
 
 	/* C-w delete region -> clipboard */
-	gtk_binding_entry_remove(set, GDK_w, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, GDK_w, GDK_CONTROL_MASK,
+	gtk_binding_entry_remove(set, snd_K_w, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, snd_K_w, GDK_CONTROL_MASK,
 				     "cut_clipboard", 0);
 
 	/* C-y yank <- clipboard */
-	gtk_binding_entry_remove(set, GDK_y, GDK_CONTROL_MASK);
-	gtk_binding_entry_add_signal(set, GDK_y, GDK_CONTROL_MASK,
+	gtk_binding_entry_remove(set, snd_K_y, GDK_CONTROL_MASK);
+	gtk_binding_entry_add_signal(set, snd_K_y, GDK_CONTROL_MASK,
 				     "paste_clipboard", 0);
       }
 

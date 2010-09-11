@@ -1055,6 +1055,8 @@ else
 	AC_CHECK_LIB(m, gtk_scale_new, [AC_DEFINE(HAVE_GTK_SCALE_NEW)], ,$GTK_LIBS)
 	# 2.90.6
 	AC_CHECK_LIB(m, gtk_expander_get_label_fill, [AC_DEFINE(HAVE_GTK_EXPANDER_GET_LABEL_FILL)], ,$GTK_LIBS)
+	# 2.90.7
+	AC_CHECK_LIB(m, gtk_progress_bar_get_inverted, [AC_DEFINE(HAVE_GTK_PROGRESS_BAR_GET_INVERTED)], ,$GTK_LIBS)
 
 	AC_CHECK_LIB(cairo, cairo_glyph_allocate, [AC_DEFINE(HAVE_CAIRO_GLYPH_ALLOCATE)], ,$GTK_LIBS)
 	AC_CHECK_LIB(cairo, cairo_region_xor, [AC_DEFINE(HAVE_CAIRO_REGION_XOR)], ,$GTK_LIBS)
