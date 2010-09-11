@@ -4969,12 +4969,9 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 
 #if WITH_GMP
   if ((int_len >= max_len) ||
-      (frac_len >= max_len) ||
-      ((int_len + exponent) > max_len) ||
-      ((frac_len - exponent) > max_len))
+      (frac_len >= max_len))
     {
       (*overflow) = true;
-      /* let gmp/mpfr/mpc deal with it */
       return(0.0);
     }
 #endif
@@ -5006,9 +5003,27 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	    int_part = dig + (int_part * radix);
 	  else break;
 	}
+
+      /* if the exponent is huge, check for 0 int_part and frac_part before complaining (0e1000 or 0.0e1000) */
+      if ((int_part == 0) &&
+	  (exponent > max_len))
+	{
+	  /* if frac_part is also 0, return 0.0 */
+	  if (frac_len == 0)
+	    return(0.0);
+
+	  str = fpart;
+	  while ((dig = digits[(int)(*str++)]) < radix)
+	    frac_part = dig + (frac_part * radix);
+	  if (frac_part == 0)
+	    return(0.0);
+
+#if WITH_GMP
+	  (*overflow) = true;
+#endif
+	}
       
 #if WITH_GMP
-      /* this is only noticed in the gmp case */
       (*overflow) = (int_part > 0);
 #endif
       
@@ -5056,6 +5071,8 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 
       return(sign * dval);
     }
+
+  /* int_len + exponent <= max_len */
 
   if (int_len <= max_len)
     {
@@ -5113,7 +5130,6 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	}
       else
 	{
-	  long long int ipart = 0;
 	  /* 1.0123456789876543210e1         10.12345678987654373771  
 	   * 1.0123456789876543210e10        10123456789.87654304504394531250
 	   * 0.000000010000000000000000e10   100.0
@@ -5122,8 +5138,9 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	   * 0.000000012222222222222222222222222222222222222e17 1222222222.222222
 	   */
 	  
+	  int_part = 0;
 	  for (i = 0; i < exponent; i++)
-	    ipart = digits[(int)(*str++)] + (ipart * radix);
+	    int_part = digits[(int)(*str++)] + (int_part * radix);
 
 	  frac_len -= exponent;
 	  if (frac_len > max_len)
@@ -5132,9 +5149,17 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	  for (i = 0; i < frac_len; i++)
 	    frac_part = digits[(int)(*str++)] + (frac_part * radix);
 	  
-	  dval += ipart + frac_part * pow((double)radix, (double)(-frac_len));
+	  dval += int_part + frac_part * pow((double)radix, (double)(-frac_len));
 	}
     }
+
+#if WITH_GMP
+  if ((int_part == 0) &&
+      (frac_part == 0))
+    return(0.0);
+  (*overflow) = ((frac_len - exponent) > max_len);
+#endif
+  
   return(sign * dval);
 }
 

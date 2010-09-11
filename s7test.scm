@@ -39960,6 +39960,7 @@ why are these different (read-time `#() ? )
 (test (integer? 1+i) #f)
 (test (integer? most-negative-fixnum) #t)
 (test (integer? 250076005727/500083) #t)
+(test (integer? 1+0i) #f) ; hmmm
 
 (test (real? 1/2) #t)
 (test (real? 2) #t)
@@ -40859,7 +40860,8 @@ why are these different (read-time `#() ? )
 (num-test (max 1234000000.0+2.71828182845905i) 'error)
 (num-test (min -1234000000.0+2.71828182845905i) 'error)
 (num-test (max -1234000000.0+2.71828182845905i) 'error)
-
+(num-test (max 2 1+0i) 2)
+(num-test (min 2 1+0i) 1.0)
 
 
 
@@ -45813,6 +45815,8 @@ why are these different (read-time `#() ? )
 (test (< 2 1+0/2i) #f)
 (test (<= 2 1+0/2i) #f)
 
+(test (+ 1 . 2) 'error)
+(test (< 1 3 . 2) 'error)
 (num-test (- .(1.1)) -1.1)
 (num-test (- 1. .()) -1.0)
 (num-test (+ 0.(+)) 0.0)
@@ -48002,6 +48006,8 @@ why are these different (read-time `#() ? )
    (for-each 
     (lambda (arg1)
       (test (op arg1) 'error)
+      (test (op 0 arg1) 'error)
+      (test (op 0.0 arg1) 'error)
       (for-each
        (lambda (arg2)
 	 (test (op arg1 arg2) 'error))
@@ -50682,6 +50688,41 @@ why are these different (read-time `#() ? )
 (test (number->string -1 2) "-1")
 (test (number->string -1 16) "-1")
 (test (string->number "- 1") #f)
+(num-test (string->number "1+0i") 1.0)
+(num-test (string->number "0-0i") 0.0)
+(num-test (string->number "0-0e10i") 0.0)
+;; in the gmp case, (string->number "0-0e20i") -> 0.0+0.0i unfortunately, (number->string 0-0e100i) -> "0.0+0.0i"
+(if (not with-bignums) (test (string->number "0-0e40i") 0.0))
+(test (string->number "0e10e100") #f)
+
+(test (equal? 0.0 0e0) #t)
+(test (equal? 0.0 0e-0) #t)
+(test (equal? 0.0 .0e+0) #t)
+(test (equal? 0.0 00000000000000000000000000000000000000000000000000000e100) #t)
+(test (equal? 0.0 .0000000000000000000000000000000000000000000000000000e100) #t)
+(test (equal? 0.0 00000000000000000000000000000000000000000000000000000.0000000000000000000000000000000000000000000000000000000000e100) #t)
+
+(test (equal? 0.0 0.0e10) #t)
+(test (equal? 0.0 0e100) #t)
+(test (equal? 0.0 0.0e1000) #t)
+(test (equal? 0.0 0e+1000) #t)
+(test (equal? 0.0 0.0e-1) #t)
+(test (equal? 0.0 0e-10) #t)
+(test (equal? 0.0 0.0e-100) #t)
+(test (equal? 0.0 0e-1000) #t)
+(test (equal? 0.0 0.0e0123456789) #t)
+
+(test (equal? 0.0 0-0e10i) #t)
+(test (equal? 0.0 0-0.0e100i) #t)
+(test (equal? 0.0 0-0e1000i) #t)
+(test (equal? 0.0 0-0.0e+1000i) #t)
+(test (equal? 0.0 0-0e-1i) #t)
+(test (equal? 0.0 0-0.0e-10i) #t)
+(test (equal? 0.0 0-0e-100i) #t)
+(test (equal? 0.0 0-0.0e-1000i) #t)
+(test (equal? 0.0 0.0+0e0123456789i) #t)
+
+(test (= 0 00 -000 #e-0 0/1 #e#x0 #b0000 #e#d0.0 -0 +0) #t)
 
 ;;  (do ((i 0 (+ i 1)) (n 1 (* n 2))) ((= i 63)) (display n) (display " ") (display (number->string n 16)) (newline))
 
@@ -51438,6 +51479,7 @@ why are these different (read-time `#() ? )
   (test (string->number "1+1e00i") 1+i)
   (test (string->number "1L") #f)
   (test (string->number "1.L") #f)
+  (test (string->number "0+I") #f)
   
   (num-test (string->number-1 "3.4e3") 3400.0)
   (num-test (string->number-1 "0") 0)
