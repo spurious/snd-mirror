@@ -3246,6 +3246,8 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   static s7_pointer big_negate(s7_scheme *sc, s7_pointer args);
   static s7_pointer big_invert(s7_scheme *sc, s7_pointer args);
   static s7_pointer big_tan(s7_scheme *sc, s7_pointer args);
+  static s7_pointer big_inexact_to_exact(s7_scheme *sc, s7_pointer args);
+  static s7_pointer big_exact_to_inexact(s7_scheme *sc, s7_pointer args);
 #endif
 
 
@@ -4704,6 +4706,16 @@ static s7_pointer check_sharp_readers(s7_scheme *sc, const char *name)
 }
 
 
+static bool is_abnormal(s7_scheme *sc, s7_pointer x)
+{
+  return((!s7_is_number(x)) ||
+	 (((number_type(x) == NUM_REAL) ||
+	   (number_type(x) == NUM_REAL2)) &&
+	  ((isnan(real(number(x)))) ||
+	   (isinf(real(number(x)))))));
+}
+
+
 static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top) 
 {
   /* name is the stuff after the '#', return sc->NIL if not a recognized #... entity */
@@ -4738,6 +4750,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
       if (strings_are_equal(name, "<eof>"))
 	return(sc->EOF_OBJECT);
       return(sc->NIL);
+      break;
       
     case 'o':   /* #o (octal) */
     case 'd':   /* #d (decimal) */
@@ -4763,54 +4776,90 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 	  }
 	x = make_atom(sc, (char *)(name + num_at), (name[0] == 'o') ? 8 : ((name[0] == 'x') ? 16 : ((name[0] == 'b') ? 2 : 10)), false);
 
-	/* #x#i1 apparently makes sense, so #x1.0 should also be accepted */
-	if (!s7_is_number(x))
+	/* #x#i1 apparently makes sense, so #x1.0 should also be accepted.
+	 * here we can get #b#e0/0 or #b#e+1/0 etc
+	 */
+	if (is_abnormal(sc, x))
 	  return(sc->NIL);
 
 	if ((s7_imag_part(x) != 0.0) ||
 	    ((!to_exact) && (!to_inexact)))
 	  return(x);
-
+#if WITH_GMP
+	if (s7_is_bignum(x))
+	  {
+	    if (to_exact)
+	      return(big_inexact_to_exact(sc, make_list_1(sc, x)));
+	    return(big_exact_to_inexact(sc, make_list_1(sc, x)));
+	  }
+#endif
 	if (to_exact)
 	  return(inexact_to_exact(sc, x));
 	return(exact_to_inexact(sc, x));
       }
+      break;
 
     case 'i':   /* #i<num> = ->inexact (see token for table of choices here) */
       if (name[1] == '#')
 	{
+	  /* there are special cases here: "#e0/0" or "#e#b0/0" -- all infs are complex: 
+	   *    #i1/0=nan.0 but #i1/0+i=inf+1i so e->i is a no-op but i->e is not
+	   */
 	  if (is_radix_prefix(name[2]))
 	    {
-	      s7_pointer i_arg;
-	      i_arg = make_sharp_constant(sc, (char *)(name + 2), false);
-	      if (!s7_is_number(i_arg))
+	      x = make_sharp_constant(sc, (char *)(name + 2), false);
+	      if (is_abnormal(sc, x))
 		return(sc->NIL);
-	      return(exact_to_inexact(sc, i_arg));
+#if WITH_GMP
+	      if (s7_is_bignum(x))                        /* (string->number "#b#e-11e+111") */
+		return(big_exact_to_inexact(sc, make_list_1(sc, x)));
+#endif
+	      return(exact_to_inexact(sc, x));
 	    }
 	  return(sc->NIL);
 	}
       x = make_atom(sc, (char *)(name + 1), 10, false);
-      if (s7_is_number(x))
-	return(exact_to_inexact(sc, x));
-      return(sc->NIL);
+      if (is_abnormal(sc, x))
+	return(sc->NIL);
+#if WITH_GMP
+      if (s7_is_bignum(x))
+	return(big_exact_to_inexact(sc, make_list_1(sc, x)));
+#endif
+      return(exact_to_inexact(sc, x));
+      break;
   
     case 'e':   /* #e<num> = ->exact */
       if (name[1] == '#')
 	{
 	  if (is_radix_prefix(name[2]))
 	    {
-	      s7_pointer i_arg;
-	      i_arg = make_sharp_constant(sc, (char *)(name + 2), false);
-	      if (!s7_is_number(i_arg))
+	      x = make_sharp_constant(sc, (char *)(name + 2), false);
+	      if (is_abnormal(sc, x))                    /* (string->number "#e#b0/0") */
 		return(sc->NIL);
-	      return(inexact_to_exact(sc, i_arg));
+
+	      if (!s7_is_real(x))                        /* (string->number "#e#b1/0+i") */
+		return(sc->NIL);
+#if WITH_GMP
+	      if (s7_is_bignum(x))                   
+		return(big_inexact_to_exact(sc, make_list_1(sc, x)));
+#endif
+	      return(inexact_to_exact(sc, x));
 	    }
 	  return(sc->NIL);
 	}
+
       x = make_atom(sc, (char *)(name + 1), 10, false);
-      if (s7_is_number(x))
-	return(inexact_to_exact(sc, x));
-      return(sc->NIL);
+
+      if (is_abnormal(sc, x))                            /* (string->number "#e0/0") */
+	return(sc->NIL);
+      if (!s7_is_real(x))                                /* (string->number "#e1/0+i") */
+	return(sc->NIL);
+#if WITH_GMP
+      if (s7_is_bignum(x))
+	return(big_inexact_to_exact(sc, make_list_1(sc, x)));
+#endif
+      return(inexact_to_exact(sc, x));
+      break;
 
     case '\\':
       /* #\space or whatever (named character) */
@@ -5467,7 +5516,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
       n = string_to_integer(q, radix, &overflow);
       d = string_to_integer(slash1, radix, &overflow);
       if (d == 0)
-	return(sc, make_list_2(sc, sc->QUOTE, s7_make_symbol(sc, "division-by-zero")));
+	return(s7_make_real(sc, sqrt(-1))); /* this is supposed to be a NaN */
       return(s7_make_ratio(sc, n, d));
     }
 #else
@@ -8276,7 +8325,10 @@ static double next_random(s7_rng_t *r)
   temp = r->ran_seed * RAN_MULT + r->ran_carry;
   r->ran_seed = (temp & 0xffffffffUL);
   r->ran_carry = (temp >> 32);
-  result = (double)((unsigned int)(r->ran_seed)) / 4294967295.0;
+  result = (double)((unsigned int)(r->ran_seed)) / 4294967295.5;
+  /* divisor was 2^32-1 = 4294967295.0, but somehow this can round up once in a billion tries? 
+   *   do we want the double just less than 2^32?
+   */
 
   /* (let ((mx 0) (mn 1000)) (do ((i 0 (+ i 1))) ((= i 10000)) (let ((val (random 123))) (set! mx (max mx val)) (set! mn (min mn val)))) (list mn mx)) */
 
@@ -17364,8 +17416,6 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
   /* reader errors happen before the evaluator gets involved, so forms such as:
    *   (catch #t (lambda () (car '( . ))) (lambda arg 'error))
    * do not catch the error if we simply signal an error when we encounter it.
-   * We try to encapsulate the bad input in a call on "error" --
-   * some cases are working...
    */
   char *msg;
   int len;
@@ -18384,7 +18434,6 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, s7_pointer form)
       }
 
     bq = sc->w;
-    /* fprintf(stderr, "qq: %s\n", s7_object_to_c_string(sc, bq)); */
     sc->w = old_scw;
     s7_gc_unprotect_at(sc, loc);
 
@@ -23394,7 +23443,7 @@ static s7_pointer string_to_either_ratio(s7_scheme *sc, const char *nstr, const 
       if (!overflow)
 	{
 	  if (d == 0)
-	    return(sc, make_list_2(sc, sc->QUOTE, s7_make_symbol(sc, "division-by-zero")));
+	    return(s7_make_real(sc, sqrt(-1))); /* this is supposed to be a NaN */
 	  return(s7_make_ratio(sc, n, d));
 	}
     }
@@ -25685,12 +25734,14 @@ static s7_pointer big_inexact_to_exact(s7_scheme *sc, s7_pointer args)
   if (is_c_object(p))
     {
       if ((c_object_type(p) == big_integer_tag) ||
-	  (c_object_type(p) == big_ratio_tag) ||
-	  (c_object_type(p) == big_complex_tag))
+	  (c_object_type(p) == big_ratio_tag))
 	return(p);
 
       if (c_object_type(p) == big_real_tag)
 	return(big_rationalize(sc, args));
+
+      /* complex so it's an error */
+      return(s7_wrong_type_arg_error(sc, "inexact->exact", 1, p, "a real"));
     }
   return(g_inexact_to_exact(sc, args));
 }

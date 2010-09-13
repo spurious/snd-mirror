@@ -4809,7 +4809,36 @@
 		    ((11) "#(1 2 3 4 5 6 7 8 9 10 11 ...)")
 		    ((12) "#(1 2 3 4 5 6 7 8 9 10 11 12 ...)")
 		    ((13) "#(1 2 3 4 5 6 7 8 9 10 11 12 13 ...)")
-		    ((14) "#(1 2 3 4 5 6 7 8 9 10 11 12 13 14)"))))))
+		    ((14) "#(1 2 3 4 5 6 7 8 9 10 11 12 13 14)")))))
+
+    (let ((vect5 (make-vector '(2 3))))
+      (set! (vect5 0 0) vect1)
+      (set! (vect5 0 1) vect2)
+      (set! (vect5 0 2) vect3)
+      (set! (vect5 1 0) vect4)
+      (set! (vect5 1 1) (vector 1 2 3))
+      (set! (vect5 1 2) #2d())
+
+      (do ((i 1 (+ i 1)))
+	  ((= i 15))
+	(set! *vector-print-length* i)
+	(let ((str (object->string vect5)))
+	  (test str (case i
+
+		      ((1) "#2D((#3D(((1 ...)...)...) ...)...)")
+		      ((2) "#2D((#3D(((1 2 ...)...)...) #2D((1 2 ...)...) ...)...)")
+		      ((3) "#2D((#3D(((1 2 3)...)...) #2D((1 2 3 ...)...) #(1 2 3 ...))...)")
+		      ((4) "#2D((#3D(((1 2 3) (3 ...))...) #2D((1 2 3 4 ...)...) #(1 2 3 4 ...)) (#3D(((1 2) (3 4)...)...) ...))")
+		      ((5) "#2D((#3D(((1 2 3) (3 4 ...))...) #2D((1 2 3 4 5 ...)...) #(1 2 3 4 5 ...)) (#3D(((1 2) (3 4) (5 ...))...) #(1 2 3) ...))")
+		      ((6) "#2D((#3D(((1 2 3) (3 4 5))...) #2D((1 2 3 4 5 6)...) #(1 2 3 4 5 6 ...)) (#3D(((1 2) (3 4) (5 6))...) #(1 2 3) #2D()))")
+		      ((7) "#2D((#3D(((1 2 3) (3 4 5)) ((5 ...)...)) #2D((1 2 3 4 5 6) (7 ...)) #(1 2 3 4 5 6 7 ...)) (#3D(((1 2) (3 4) (5 6)) ((7 ...)...)) #(1 2 3) #2D()))")
+		      ((8) "#2D((#3D(((1 2 3) (3 4 5)) ((5 6 ...)...)) #2D((1 2 3 4 5 6) (7 8 ...)) #(1 2 3 4 5 6 7 8 ...)) (#3D(((1 2) (3 4) (5 6)) ((7 8)...)) #(1 2 3) #2D()))")
+		      ((9) "#2D((#3D(((1 2 3) (3 4 5)) ((5 6 1)...)) #2D((1 2 3 4 5 6) (7 8 9 ...)) #(1 2 3 4 5 6 7 8 9 ...)) (#3D(((1 2) (3 4) (5 6)) ((7 8) (9 ...)...)) #(1 2 3) #2D()))")
+		      ((10) "#2D((#3D(((1 2 3) (3 4 5)) ((5 6 1) (7 ...))) #2D((1 2 3 4 5 6) (7 8 9 10 ...)) #(1 2 3 4 5 6 7 8 9 10 ...)) (#3D(((1 2) (3 4) (5 6)) ((7 8) (9 10)...)) #(1 2 3) #2D()))")
+		      ((11) "#2D((#3D(((1 2 3) (3 4 5)) ((5 6 1) (7 8 ...))) #2D((1 2 3 4 5 6) (7 8 9 10 11 ...)) #(1 2 3 4 5 6 7 8 9 10 11 ...)) (#3D(((1 2) (3 4) (5 6)) ((7 8) (9 10) (11 ...))) #(1 2 3) #2D()))")
+		      ((12) "#2D((#3D(((1 2 3) (3 4 5)) ((5 6 1) (7 8 2))) #2D((1 2 3 4 5 6) (7 8 9 10 11 12)) #(1 2 3 4 5 6 7 8 9 10 11 12 ...)) (#3D(((1 2) (3 4) (5 6)) ((7 8) (9 10) (11 12))) #(1 2 3) #2D()))")
+		      ((13) "#2D((#3D(((1 2 3) (3 4 5)) ((5 6 1) (7 8 2))) #2D((1 2 3 4 5 6) (7 8 9 10 11 12)) #(1 2 3 4 5 6 7 8 9 10 11 12 13 ...)) (#3D(((1 2) (3 4) (5 6)) ((7 8) (9 10) (11 12))) #(1 2 3) #2D()))")
+		      ((14) "#2D((#3D(((1 2 3) (3 4 5)) ((5 6 1) (7 8 2))) #2D((1 2 3 4 5 6) (7 8 9 10 11 12)) #(1 2 3 4 5 6 7 8 9 10 11 12 13 14)) (#3D(((1 2) (3 4) (5 6)) ((7 8) (9 10) (11 12))) #(1 2 3) #2D()))")))))))
 
   (set! *vector-print-length* old-len))
   
@@ -7468,6 +7497,15 @@
 (test (format #f "~10,'\"T") "\"\"\"\"\"\"\"\"\"")
 (test (format #f "~10,'-T12345~20,'-T") "---------12345------")
 (test (format #f "~10,')T") ")))))))))")
+
+(test (format #f "~,0F" 1.4) "1.0")
+(test (format #f "~,0F" 1.5) "2.0")
+(test (format #f "~,0F" 1.6) "2.0")
+(test (format #f "~,0F" 0.4) "0.0")
+(test (format #f "~,0F" 0.5) "0.0")
+(test (format #f "~,0F" 0.6) "1.0")
+(test (format #f "~,-0F" 1.4) 'error)
+(test (format #f "~, 0F" 1.4) 'error)
 
 (test (reverse (format #f "~{~A~}" '((1 2) (3 4)))) ")4 3()2 1(")
 (test (string->symbol (format #f "~A" '(1 2))) (symbol "(1 2)"))
@@ -13626,6 +13664,18 @@ why are these different (read-time `#() ? )
 				 (< m n)))))
 	  (apply < vals)))
       #t)
+
+
+(let ((v (make-vector 8)))
+  (do ((i 0 (+ i 1)))
+      ((= i 10))
+    (do ((k 0 (+ k 1)))
+	((= k 8))
+      (set! (v k) (- (random 1.0) 0.5)))
+    (let ((v1 (copy v)))
+      (sort! v <)
+      (if (not (apply < (vector->list v)))
+	  (format #t "(sort! ~A <) -> ~A?" v1 v)))))
 
 (test (sort!) 'error)
 (test (sort! '(1 2 3) < '(3 2 1)) 'error)
@@ -40109,6 +40159,14 @@ why are these different (read-time `#() ? )
 (test (inexact->exact 1+i) 'error)
 (test (inexact->exact most-negative-fixnum) most-negative-fixnum)
 
+(if with-bignums 
+    (begin
+      (test (inexact->exact (bignum "0+1.5i")) 'error)
+      (num-test (exact->inexact (bignum "0+1.5i")) 0+1.5i)))
+(test (inexact->exact 0+1.5i) 'error)
+(num-test (exact->inexact 0+1.5i) 0+1.5i)
+
+
 
 
 ;; -------- min, max
@@ -49684,6 +49742,7 @@ why are these different (read-time `#() ? )
 (test (random 0 #t) 'error)
 (test (random 0.0 #(1 2)) 'error)
 (test (make-random-state 123 432) 'error)
+(test ((object->string (make-random-state 1234)) 1) #\<)
 
 (for-each
  (lambda (arg)
@@ -50805,6 +50864,7 @@ why are these different (read-time `#() ? )
 (test (equal? 0.0 0-0e-100i) #t)
 (test (equal? 0.0 0-0.0e-1000i) #t)
 (test (equal? 0.0 0.0+0e0123456789i) #t)
+(num-test 0.0 1e-1000)
 
 (test (= 0 00 -000 #e-0 0/1 #e#x0 #b0000 #e#d0.0 -0 +0) #t)
 
@@ -50818,9 +50878,9 @@ why are these different (read-time `#() ? )
 (test (number->string -3/4 16) "-3/4")
 
 (num-test (string->number "1/2") 1/2)
-(test (string->number "1/0") #f)
-(test (string->number "0/0") #f)
-(test 0/0 'division-by-zero)
+(test (nan? (string->number "1/0")) #t)
+(test (nan? (string->number "0/0")) #t)
+(test (nan? 0/0) #t)
 (test (string->number "1.0/0.0") #f)
 (test (string->number "'1") #f)
 (test (string->number "`1") #f)
@@ -51038,6 +51098,31 @@ why are these different (read-time `#() ? )
 (test (number->string -11/4 8) "-13/4")
 (test (number->string -15/4 16) "-f/4")
 (test (string->number "f/4" 16) 15/4)
+(test (string->number "#b'0") #f)
+(test (string->number "#b0/0") #f)
+(test (string->number "#b-1/0") #f)
+(test (string->number "#b#i0/0") #f)
+(test (string->number "#b#e0/0") #f)
+;(test (string->number "#b#e1/0+i") #f) ; inf+i
+(test (string->number "1e1/2") #f)
+(test (string->number "1e#b0") #f)
+(test (string->number "#B0") #f)
+(test (string->number "#e#b0/0") #f)
+(test (string->number "#i#b0/0") #f)
+(test (string->number "#e0/0") #f)
+(test (string->number "#i0/0") #f)
+(test (string->number "#e#b1/0") #f)
+(test (string->number "#i#b1/0") #f)
+(test (string->number "#e1/0") #f)
+(test (string->number "#i1/0") #f)
+(test (string->number "#e#b1/0+i") #f)
+;(test (string->number "#i#b1/0+i") #f) ; inf+i
+(test (string->number "#e1/0+i") #f)
+;(test (string->number "#i1/0+i") #f)   ; inf+i
+(num-test (string->number "#b#e11e30") 3221225472) ; very confusing!
+(num-test (string->number "#b#i11e30") 3221225472.0)
+(num-test (string->number "#e#b11e30") 3221225472) 
+(num-test (string->number "#i#b11e30") 3221225472.0)
 
 (if with-bignums 
     (begin
@@ -51050,6 +51135,18 @@ why are these different (read-time `#() ? )
       ;; (/ most-positive-fixnum most-negative-fixnum) -> 9223372036854775807/-9223372036854775808 
       ;; so
       ;; (positive? (/ most-positive-fixnum most-negative-fixnum)) -> #t!
+
+      (num-test (string->number "#b#e-11e+111") -7788445287802241442795744493830144)
+      (num-test (string->number "#i#b-11e+111") -7.788445287802241442795744493830144E33)
+      (num-test (string->number "#b#i-11e+111") -7.788445287802241442795744493830144E33)
+      (num-test (string->number "#i3e+111") 3.0e111)
+      (num-test (string->number "#e3e30") 3000000000000000000000000000000)
+      (num-test (string->number "#i3e30") 3.000E30)
+      
+      (num-test (string->number "#b#e11e80") 3626777458843887524118528)
+      (num-test (string->number "#b#i11e80") 3626777458843887524118528.0)
+      (num-test (string->number "#e#b11e80") 3626777458843887524118528)
+      (num-test (string->number "#i#b11e80") 3626777458843887524118528.0)
       ))
 
 (num-test #b+01 1)
@@ -51121,6 +51218,8 @@ why are these different (read-time `#() ? )
 (num-test #x-f/c -5/4)
 (num-test #i#xf/c 1.25)
 (num-test #e#x1.4 5/4)
+(num-test #d1/2 1/2)
+(num-test #e2/3 2/3)
 
 ;; nutty: #e+inf.0 #e+nan.0 
 ;;    these don't arise in s7 because we don't define inf.0 and nan.0 
@@ -51139,6 +51238,78 @@ why are these different (read-time `#() ? )
 (num-test #o777777777777777777777/7 1317624576693539401)
 (num-test #x7fffffffffffffff/7 1317624576693539401)
 
+(test (equal? 0.0 #b0e0) #t)
+(test (equal? 0.0 #b0e-0) #t)
+(test (equal? 0.0 #b.0e+0) #t)
+(test (equal? 0.0 #b00000000000000000000000000000000000000000000000000000e100) #t)
+(test (equal? 0.0 #b.0000000000000000000000000000000000000000000000000000e100) #t)
+(test (equal? 0.0 #b00000000000000000000000000000000000000000000000000000.0000000000000000000000000000000000000000000000000000000000e100) #t)
+(test (equal? 0.0 #b0e100000000000000000000000000000000000000000000000000000000000000000000000) #t)
+(num-test 0 #b0/1000000000)
+(num-test 0 #b0/100000000000000000000000000000000000000)
+(num-test 0 #b0/100000000000000000000000000000000000000000000000000000000000000)
+(num-test 0 #b0/100000000000000000000000000000000000000000000000000000000000000000000)
+(num-test 0 #b-0/100000000000000000000000000000000000000000000000000000000000000000000)
+
+(test (equal? 0.0 #b0.0e10) #t)
+(test (equal? 0.0 #b0e100) #t)
+(test (equal? 0.0 #b0.0e1000) #t)
+(test (equal? 0.0 #b0e+1000) #t)
+(test (equal? 0.0 #b0.0e-1) #t)
+(test (equal? 0.0 #b0e-10) #t)
+(test (equal? 0.0 #b0.0e-100) #t)
+(test (equal? 0.0 #b0e-1000) #t)
+(test (equal? 0.0 #b0.0e0123456789) #t)
+
+(test (equal? 0.0 #b0-0e10i) #t)
+(test (equal? 0.0 #b0-0.0e100i) #t)
+(test (equal? 0.0 #b0-0e1000i) #t)
+(test (equal? 0.0 #b0-0.0e+1000i) #t)
+(test (equal? 0.0 #b0-0e-1i) #t)
+(test (equal? 0.0 #b0-0.0e-10i) #t)
+(test (equal? 0.0 #b0-0e-100i) #t)
+(test (equal? 0.0 #b0-0.0e-1000i) #t)
+(test (equal? 0.0 #b0.0+0e0123456789i) #t)
+(num-test 0.0 #b1e-1000)
+
+(num-test #b+0+i 0+1i)
+(num-test #b0.-i 0-1i)
+(num-test #b0/01 0)
+(num-test #b-0/1 0)
+(num-test #b1.+.1i 1+0.5i)
+(num-test #b#i0-0i 0.0)
+(num-test #b#e1e01 2)
+(num-test #b#e1e-0 1)
+(num-test #b#e11e-1 3/2)
+(num-test #b0100/10 2)
+(num-test #b0e+1-0.i 0.0)
+(num-test #b.1-0/01i 0.5)
+(num-test #b#e-0/1+i 0+1i)
+(num-test #b0e+1-0.i 0.0)
+(num-test #b#e+.1e+1 1)
+(num-test #b1.+01.e+1i 1+2i)
+(num-test #b#e.011-0.i 3/8)
+(num-test #b#i1.1e0-.0i 1.5)
+(num-test #b#e1.1e0-.0i 3/2)
+(num-test #b0+.0e10101i 0.0)
+(num-test #b#e-1.00e+001 -2)
+(num-test #b#e+.01011100 23/64)
+(num-test #b#i-00-0/001i 0.0)
+(num-test #b00e+0-.00e11i 0.0)
+(num-test #b-000e+10110001 0.0)
+(num-test #b#e-1/1+01.1e1i -1+3i)
+
+(let ((str (make-string 3)))
+   (set! (str 0) #\#)
+   (set! (str 1) #\b)
+   (set! (str 2) #\null)
+   (test (string->number str) #f))
+(let ((str (make-string 4)))
+   (set! (str 0) #\#)
+   (set! (str 1) #\b) 
+   (set! (str 2) #\0)
+   (set! (str 3) #\null)          ; #\space here -> #f
+   (test (string->number str) 0)) ; this is consistent with other (non-#) cases
 
 (do ((i 2 (+ i 1)))
     ((= i 17)) 
@@ -51898,14 +52069,12 @@ why are these different (read-time `#() ? )
      (if (or (not (number? val))
 	     (= val 1))
 	 (format #t "(string->number ~S = ~A?~%" str val))))
-
-
  (list "011e0" "11e-00" "00.e01-i" "+10e10+i" "+1.110+i" "10011-0i" "-000.111" "0.100111" "-11.1111" "10.00011" "110e00+i" 
        "1e-011+i" "101001+i" "+11e-0-0i" "11+00e+0i" "-11101.-i" "1110e-0-i"))
 
 (for-each
  (lambda (str)
-   (test (string->number str) 'error)) ; an error because there is no exact complex
+   (test (string->number str) #f)) ; an error but string->number is not supposed to return an error -- just #f or a number
  (list "#e1+i" "#e1-i" "#e01+i" "#e+1+i" "#e1.+i" "#e01-i" "#e+1-i" "#e1.-i" "#e1+1i" "#e1-1i"))
 
 (num-test (let ((0- 1) (1+ 2) (-0+ 3) (1e 4) (1/+2 5) (--1 6)) (+ 0- 1+ -0+ 1e 1/+2 --1)) 21)
@@ -52318,6 +52487,7 @@ why are these different (read-time `#() ? )
 (test (string->number (string (integer->char 30))) #f)
 
 
+;;; --------------------------------------------------------------------------------
 
 (let* ((inf.0 (- (real-part (log 0))))
        (-inf.0 (real-part (log 0)))
@@ -57398,6 +57568,9 @@ why are these different (read-time `#() ? )
 (if with-test-at-random
     (s7-test-at-random))
 
+
+;;; --------------------------------------------------------------------------------
+
 (define* (mem-test (times 1000))
   ;; look for memory leaks and unclosed ports
   (do ((i 0 (+ i 1)))
@@ -57717,6 +57890,10 @@ why are these different (read-time `#() ? )
     ))
 
 
+
+;;; --------------------------------------------------------------------------------
+
+
 (format #t "~%;all done!~%")
 
 
@@ -57772,7 +57949,4 @@ how does clisp get this right?
 #C(1.0 0.0)
 
 (sbcl is way off: (expt #C(0 1) 1e16) -> #C(0.539155 0.84220654))
-   
-
-what about #b0/0?  it's currently a reader error
 |#
