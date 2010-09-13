@@ -3928,6 +3928,8 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
 
   if (b == 0)
     return(division_by_zero_error(sc, "make-ratio", make_list_2(sc, s7_make_integer(sc, a), s7_make_integer(sc, b))));
+  if (a == 0)
+    return(small_ints[0]);
 
 #if (!WITH_GMP)
   if (b == LLONG_MIN)
@@ -4892,7 +4894,14 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
     lval = dig + (lval * radix);
 
 #if WITH_GMP
-  (*overflow) = ((tmp - tmp1) > s7_int_digits_by_radix[radix]);
+  (*overflow) = ((tmp - tmp1) > s7_int_digits_by_radix[radix]); /* possibly an overflow -- we're being conservative here (floor used, not round etc) */
+#else
+  if ((tmp - tmp1 - 2) > s7_int_digits_by_radix[radix])
+    {
+      if (negative)
+	return(s7_int_min);
+      return(s7_int_max);             /* 0/100000000000000000000000000000000000000000000000000000000000000000000 */
+    }
 #endif
 
   if (negative)
@@ -5458,7 +5467,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
       n = string_to_integer(q, radix, &overflow);
       d = string_to_integer(slash1, radix, &overflow);
       if (d == 0)
-	return(sc->F);
+	return(sc, make_list_2(sc, sc->QUOTE, s7_make_symbol(sc, "division-by-zero")));
       return(s7_make_ratio(sc, n, d));
     }
 #else
@@ -10829,10 +10838,11 @@ static int display_multivector(s7_scheme *sc, s7_pointer vec, int out_len, int f
     {
       if (dimension == (dimensions - 1))
 	{
-	  strcat(out_str, elements[flat_ref++]);
-	  if (out_len < flat_ref)
+	  if (flat_ref < out_len)
+	    strcat(out_str, elements[flat_ref++]);
+	  else
 	    {
-	      strcat(out_str, "...");
+	      strcat(out_str, "...)");
 	      return(flat_ref);
 	    }
 	  if (i < (vector_dimension(vec, dimension) - 1))
@@ -17372,6 +17382,7 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
       if (port_string_point(pt) >= port_string_length(pt))        
 	port_string_point(pt) = port_string_length(pt) - 1;
 
+      /* start at current position and look back a few chars */
       for (i = port_string_point(pt), j = 0; (i > 0) && (j < QUOTE_SIZE); i--, j++)
 	if ((port_string(pt)[i] == '\0') ||
 	    (port_string(pt)[i] == '\n') ||
@@ -17379,13 +17390,16 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
 	  break;
       start = i;
 
+      /* start at current position and look ahead a few chars */
       for (i = port_string_point(pt), j = 0; (i < port_string_length(pt)) && (j < QUOTE_SIZE); i++, j++)
-	if ((port_string(pt)[start + i] == '\0') ||
-	    (port_string(pt)[start + i] == '\n') ||
-	    (port_string(pt)[start + i] == '\r'))
+	if ((port_string(pt)[i] == '\0') ||
+	    (port_string(pt)[i] == '\n') ||
+	    (port_string(pt)[i] == '\r'))
 	  break;
+
       end = i;
       slen = end - start;
+      /* hopefully this is more or less the current line where the read error happened */
 
       if (slen > 0)
 	{
@@ -23377,10 +23391,12 @@ static s7_pointer string_to_either_ratio(s7_scheme *sc, const char *nstr, const 
   if (!overflow)
     {
       d = string_to_integer(dstr, radix, &overflow);
-      if (d == 0)
-	return(sc->F);
       if (!overflow)
-	return(s7_make_ratio(sc, n, d));
+	{
+	  if (d == 0)
+	    return(sc, make_list_2(sc, sc->QUOTE, s7_make_symbol(sc, "division-by-zero")));
+	  return(s7_make_ratio(sc, n, d));
+	}
     }
   return(string_to_big_ratio(sc, nstr, radix));
 }
