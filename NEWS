@@ -1,16 +1,29 @@
-Snd 11.8
+Snd 11.9.
 
---with-doubles is now the default in the configure script
+The new gtk (version 3) has discarded most of the gdk functions, replacing them
+  with cairo.  This means the xg module and gtk code have also
+  changed a lot.  --with-cairo is the default (and the only alternative).
+  You'll need gtk 2.9 or later, and cairo 1.6.4 or later.  Eventually
+  there will be a cairo "surface" for openGL, so I'll be able to
+  reimplement that connection.  
 
-scan-channel and find-channel have changed slightly: they now 
-  return just the sample number where the match was found, or #f.
+kmenu.scm uses the new gdk key names, so it only works in gtk 2.90.7 or later.
 
-*-button-color deprecated.
+removed --with-builtin-gtkrc (Gtk themes have improved a lot over the years)
 
-index.cl and indexer.scm replaced by make-index.scm.
+removed --with-static-gsl
 
-s7: access to any symbol's dynamic binding via the special macro.
+removed the button color functions.
+  
+added a play triangle to the selection, and a close button to the sound pane.
 
-Checked: gtk 2.90.5, sbcl 1.0.41, Ruby 1.9.1-p429, autoconf 2.67, cmucl 20b
+changed the default value of just-sounds to #t.
 
-Thanks!: Dylan_, Mike Scholz, Rick Taube
+s7: :allow-other-keys in define* parameter list.
+
+Greg Santucci noticed and fixed a bug in *trace-hook*.
+
+checked: gtk 2.90.6|7, sbcl 1.0.42
+
+Thanks!: Michael Klingbeil, Greg Santucci 
+

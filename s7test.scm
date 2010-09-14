@@ -839,10 +839,13 @@
 (test (char? #\a #\b) 'error)
 (test (char? #\x65) #t)
 (test (char? #\x000000000065) #t)
-(test (char=? #\x+65 #\x0000000000065) #t)
+;(test (char=? #\x+65 #\x0000000000065) #t)
 (test (char? #\x0) #t)
+(test (char=? #\x000 #\null) #t)
 (test (char? #\xff) #t)
 ;; any larger number is a reader error
+
+;(test (char? #\x#b0) #f)
 
 (test-w "(char? #\\100)")
 (test-w "(char? #\\x-65)")
@@ -51123,6 +51126,8 @@ why are these different (read-time `#() ? )
 (num-test (string->number "#b#i11e30") 3221225472.0)
 (num-test (string->number "#e#b11e30") 3221225472) 
 (num-test (string->number "#i#b11e30") 3221225472.0)
+(num-test (string->number "#b#e+1e+1+0e+10i") 2)
+(num-test (string->number "#e+.0e-00-0i") 0)
 
 (if with-bignums 
     (begin

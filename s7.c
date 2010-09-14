@@ -4888,17 +4888,27 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 			    if ((name[1] == 'x') && 
 				(name[2] != 0))        /* #\x is just x, but apparently #\x<num> is int->char? #\x65 -> #\e */
 			      {
-				/* sscanf here misses errors like #\x1.4, but even this check misses #\x6/3!
+				/* sscanf here misses errors like #\x1.4, but make_atom misses #\x6/3,
+				 *   #\x#b0, #\x#e0.0, #\x-0, #\x#e0e100 etc, so we have to do it at
+				 *   an even lower level.
 				 */
-				s7_pointer result;
-				result = make_atom(sc, (char *)(name + 2), 16, false);
-				if (s7_is_integer(result))
+				bool happy = true;
+				char *tmp;
+				int lval = 0;
+
+				tmp = (char *)(name + 2);
+				while ((*tmp) && (happy))
 				  {
-				    int c1 = 0;
-				    c1 = s7_integer(result);
-				    if ((c1 < 256) &&
-					(c1 >= 0))         /* not #\x-65 */
-				      c = c1;
+				    int dig;
+				    dig = digits[(int)(*tmp++)];
+				    if (dig < 16)
+				      lval = dig + (lval * 16);
+				    else happy = false;
+				  }
+				if (happy)
+				  {
+				    if (lval < 256)
+				      c = lval;
 				    else return(sc->NIL);  /* #\xx -> "undefined sharp expression" */
 				  }
 				else return(sc->NIL);
