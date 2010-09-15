@@ -865,10 +865,14 @@
 
 (test (char? #\return) #t)
 (test (char? #\null) #t)
+(test (char? #\nul) #t)
 (test (char? #\linefeed) #t)
 (test (char? #\tab) #t)
 (test (char? #\space) #t)
-
+(test (char=? #\null #\nul) #t)
+(test (char=? #\newline #\linefeed) #t)
+(test (char=? #\return #\xd) #t)
+(test (char=? #\nul #\x0) #t)
 
 (num-test (let ((str (make-string 258 #\space)))
 	    (do ((i 1 (+ i 1)))
@@ -1032,9 +1036,18 @@
   (test (char-whitespace? #\0) #f)
   (test (char-whitespace? #\9) #f)
   (test (char-whitespace? #\space) #t)
+  (test (char-whitespace? #\tab) #t)
   (test (char-whitespace? #\newline) #t)
+  (test (char-whitespace? #\return) #t)
+  (test (char-whitespace? #\linefeed) #t)
+  (test (char-whitespace? #\null) #f)
   (test (char-whitespace? #\;) #f)
-  
+  (test (char-whitespace? #\xb) #t)
+  (test (char-whitespace? #\x0b) #t)
+  (test (char-whitespace? #\xc) #t)
+  (test (char-whitespace? #\xd) #t) ; #\return
+  (test (char-whitespace? #\xe) #f) 
+
   (for-each
    (lambda (arg)
      (if (char-whitespace? arg)
@@ -27156,8 +27169,8 @@ why are these different (read-time `#() ? )
 (num-test (cos -1.79424124483688191e-11) 9.999999999999999999998390349177663098196E-1)
 (num-test (sin 80143857.0000000149) 1.283143758817470627530994988383551176295E-10)
 (num-test (sqrt 3.63861067050296029e-308) 1.907514264822929257351751954551699751189E-154)
-(num-test (tan 10526671570.5) 1.140653720398103887405511659009364634384E12)
-(num-test (tan (modulo 10526671570.5 (* 2 our-pi))) 1.140653720398103899436689297531030608688E12)
+(if with-bignums (num-test (tan 10526671570.5) 1.140653720398103887405511659009364634384E12))
+(if with-bignums (num-test (tan (modulo 10526671570.5 (* 2 our-pi))) 1.140653720398103899436689297531030608688E12))
 (num-test (modulo 10526671570.5 (* 2 our-pi)) 4.712388980383813167439843967777959731718E0)
 ;; this is so sensitive because (cos 4.712388980383813167439843967777959731718E0) = -8.766902541211071412945944658266052999824E-13
 ;; unfair!
@@ -36871,6 +36884,54 @@ why are these different (read-time `#() ? )
 (num-test (remainder 3.0+2.3i 3) 'error)
 (test (quotient 3 0) 'error)
 (test (remainder 3 0) 'error)
+
+(if with-bignums
+    (begin
+      (num-test (modulo 1e19 10) 0.0)
+      (num-test (modulo .1e20 10) 0.0)
+      (num-test (modulo 1e20 10) 0.0)
+      (num-test (modulo 1e21 10) 0.0)
+      (num-test (modulo 1e19 -1) 0.0)
+      (num-test (modulo 1e19 1) 0.0)
+      (num-test (modulo .1e20 1) 0.0)
+      (num-test (modulo 1e20 1) 0.0)
+      (num-test (modulo 10000000000000000000 1) 0)
+      (num-test (modulo 100000000000000000000 1) 0)
+      (num-test (modulo 10000000000000000000 10) 0)
+      (num-test (modulo 100000000000000000000 10) 0)
+      
+      (num-test (remainder 1e19 10) 0.0)
+      (num-test (remainder .1e20 10) 0.0)
+      (num-test (remainder 1e20 10) 0.0)
+      (num-test (remainder 1e21 10) 0.0)
+      (num-test (remainder 1e19 -1) 0.0)
+      (num-test (remainder 1e19 1) 0.0)
+      (num-test (remainder .1e20 1) 0.0)
+      (num-test (remainder 1e20 1) 0.0)
+      (num-test (remainder 10000000000000000000 1) 0)
+      (num-test (remainder 100000000000000000000 1) 0)
+      (num-test (remainder 10000000000000000000 10) 0)
+      (num-test (remainder 100000000000000000000 10) 0)
+
+      (num-test (quotient 1e19 10) 1000000000000000000)
+      (num-test (quotient .1e20 10) 1000000000000000000)
+      (num-test (quotient 1e20 10) 10000000000000000000)
+      (num-test (quotient 1e21 10) 100000000000000000000)
+      (num-test (quotient 1e19 -1) -10000000000000000000)
+      (num-test (quotient 1e19 1) 10000000000000000000)
+      (num-test (quotient .1e20 1) 10000000000000000000)
+      (num-test (quotient 1e20 1) 100000000000000000000)
+      (num-test (quotient 10000000000000000000 1) 10000000000000000000)
+      (num-test (quotient 100000000000000000000 1) 100000000000000000000)
+      (num-test (quotient 10000000000000000000 10) 1000000000000000000)
+      (num-test (quotient 100000000000000000000 10) 10000000000000000000)
+      )
+    (begin
+      ;; not bignum
+      (test (modulo 1e20 10) 'error)
+      (test (remainder 1e20 10) 'error)
+      (test (quotient 1e20 10) 'error)))
+
 
 
 
@@ -49433,7 +49494,7 @@ why are these different (read-time `#() ? )
       (num-test (- 1/98947 2/97499 3/76847 4/61981) -0.00011398112564314)
       (num-test (* 1/98947 2/97499 3/76847 4/61981) 5.2230351951008e-19)
       (num-test (/ 1/98947 2/97499 3/76847 4/61981) 464392992878593/2374728) ;195556288.07955 -- seems to fit
-      (num-test (/ 1/98947 2/97499 3/76847 4/61981) 195556288.07955816413500830)))
+      (test (< (abs (- (/ 1/98947 2/97499 3/76847 4/61981) 195556288.07955816413500830)) 1e-8) #t)))
 
 (if (not with-bignums)
     (begin
@@ -50665,6 +50726,8 @@ why are these different (read-time `#() ? )
 
 ;;; --------------------------------------------------------------------------------
 ;;; string->number and number->string
+;;;
+;;;   this section needs some serious reorganization!
 
 (test (string->number "+#.#") #f)
 (test (string->number "-#.#") #f)
@@ -51179,7 +51242,7 @@ why are these different (read-time `#() ? )
 (test (string->number "#b-1/0") #f)
 (test (string->number "#b#i0/0") #f)
 (test (string->number "#b#e0/0") #f)
-;(test (string->number "#b#e1/0+i") #f) ; inf+i
+(test (string->number "#b#e1/0+i") #f) ; inf+i?
 (test (string->number "1e1/2") #f)
 (test (string->number "1e#b0") #f)
 (test (string->number "#B0") #f)
@@ -51192,9 +51255,9 @@ why are these different (read-time `#() ? )
 (test (string->number "#e1/0") #f)
 (test (string->number "#i1/0") #f)
 (test (string->number "#e#b1/0+i") #f)
-;(test (string->number "#i#b1/0+i") #f) ; inf+i
+(test (string->number "#i#b1/0+i") #f) ; inf+i?
 (test (string->number "#e1/0+i") #f)
-;(test (string->number "#i1/0+i") #f)   ; inf+i
+(test (string->number "#i1/0+i") #f)   ; inf+i?
 
 (num-test (string->number "#b#e11e30") 3221225472) ; very confusing!
 (num-test (string->number "#b#i11e30") 3221225472.0)
@@ -51217,6 +51280,45 @@ why are these different (read-time `#() ? )
 (num-test (string->number "#x#e00/00e") 0)
 (num-test (string->number "#x-e1e/eee") -139/147)
 (num-test (string->number "#x-0101.+00/11i") -257.0)
+(num-test (string->number "#x+ee.-e00e0110i") 238-3759014160i)
+(num-test (string->number "#x-e0/1ee") -112/247)
+(num-test (string->number "#e#x+1e.01e10100") 65366158/2178339)
+(num-test (string->number "#i#x0e10-000i") 3600.0)
+(num-test (string->number "#x0/e010-e/1i") 0-14i)
+(num-test (string->number "#i-1/1-1.0e1i") -1-10i)
+(num-test (string->number "-1.-00.0e+10i") -1.0)
+(num-test (string->number "#e#x001ee11e1") 32379361)
+(num-test (string->number "#x+e/00011ee0") 7/36720)
+(num-test (string->number "#e#x010e10.e1") 17699041/256)
+(num-test (string->number "#d.0d1+i") 0+1i)
+(num-test (string->number "+.0d-1+i") 0+1i)
+(num-test (string->number "#d1d+0-1d-1i") 1-0.1i)
+(num-test (string->number "#i+1+0.d-0i") 1.0)
+(num-test (string->number "#e#d+11.e-0") 11)
+(num-test (string->number "#o#i-101d+0") -65.0)
+(num-test (string->number "+001.110d+1") 11.1)
+(num-test (string->number "#e01+0d000i") 1)
+(num-test (string->number "#d1d0-0.d0i") 1.0)
+(num-test (string->number "#d.0e011110") 0.0)
+(num-test (string->number "+01e01+0/1i") 10.0)
+(num-test (string->number "#i#d1e1+.0i") 10.0)
+(num-test (string->number "1.-0.0e+00i") 1.0)
+(num-test (string->number "0d+01+1e+1i") 0+10i)
+(num-test (string->number "#d#i001d+00") 1.0)
+(num-test (string->number "#o0010111/1") 4169)
+(num-test (string->number "0d00-0.d+0i") 0.0)
+(num-test (string->number "#o1.d0+10.d00i") 1+8i)
+
+(test (string->number "#o#e10.+1.i") #f)
+(test (string->number "#x#e1+i") #f)
+(test (string->number "#x#1+#e1i") #f)
+(test (string->number "#x#e1+#e1i") #f)
+(test (string->number "#b#e1+i") #f)
+(test (string->number "#o#e1-110.i") #f)
+(num-test (string->number "#e1+0i") 1)
+(num-test (string->number "#x#e1+0i") 1)
+(num-test (string->number "#e#x1+0i") 1)
+
 
 ;;; these depend on rationalize's default error I think
 ;;; and they cause valgrind to hang!!
@@ -51227,7 +51329,14 @@ why are these different (read-time `#() ? )
     (begin
       (num-test #e1e19 most-positive-fixnum)        ; or perhaps these should throw an error?
       (num-test #e-1e19 most-negative-fixnum)
-      (num-test #e.1e20 most-positive-fixnum)))
+      (num-test #e.1e20 most-positive-fixnum))
+    (begin
+      (test (= #e1e19 #e.1e20) #t)
+      (test (= #e1e19 (* 10 #e1e18)) #t)
+      (test (= #e1e20 (* 100 #e1e18)) #t)))
+
+(test (= #i1e19 #i.1e20) #t)
+(test (= 1e19 .1e20) #t)
 
 (if with-bignums 
     (begin
@@ -51319,6 +51428,7 @@ why are these different (read-time `#() ? )
 (num-test #i-0 0.0)
 (num-test #e-0.0 0)
 ;;; in guile #e1e-10 is 7737125245533627/77371252455336267181195264
+(num-test #e#b1e-10 1/1024)
 
 (num-test #e#b+1.1 3/2)
 (num-test #e#o+1.1 9/8)
@@ -51338,8 +51448,8 @@ why are these different (read-time `#() ? )
 (num-test #x-aAf -2735)
 
 (num-test #b1+1.1i 1+1.5i)  ; yow...
-(num-test #b#e0+i 0+1i)
-(num-test #b#e0+1.1i 0+1.5i) ; oh well 
+;(num-test #b#e0+i 0+1i)    ; these 2 are now read-errors 
+;(num-test #b#e0+1.1i 0+1.5i) 
 
 (num-test #xf/c 5/4)
 (num-test #x+f/c 5/4)
@@ -51412,7 +51522,7 @@ why are these different (read-time `#() ? )
 (num-test #b0100/10 2)
 (num-test #b0e+1-0.i 0.0)
 (num-test #b.1-0/01i 0.5)
-(num-test #b#e-0/1+i 0+1i)
+;(num-test #b#e-0/1+i 0+1i)
 (num-test #b0e+1-0.i 0.0)
 (num-test #b#e+.1e+1 1)
 (num-test #b1.+01.e+1i 1+2i)
@@ -51425,7 +51535,7 @@ why are these different (read-time `#() ? )
 (num-test #b#i-00-0/001i 0.0)
 (num-test #b00e+0-.00e11i 0.0)
 (num-test #b-000e+10110001 0.0)
-(num-test #b#e-1/1+01.1e1i -1+3i)
+;(num-test #b#e-1/1+01.1e1i -1+3i)
 
 (let ((str (make-string 3)))
    (set! (str 0) #\#)
@@ -52589,7 +52699,7 @@ why are these different (read-time `#() ? )
  (lambda (arg)
    (test (string->number "123" arg) 'error)
    (test (string->number "1" arg) 'error))
- (list -1 0 1 #\a '#(1 2 3) 3.14 3/4 1.5+0.3i 1+i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+ (list -1 0 1 #\a '#(1 2 3) 3.14 3/4 1.5+0.3i 1+i '() "" "12" #() :hi most-positive-fixnum most-negative-fixnum 'hi abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
 
 ;; (string->number "0" 1) ?? why not?
 
@@ -52601,7 +52711,7 @@ why are these different (read-time `#() ? )
 (for-each
  (lambda (arg)
    (test (number->string 123 arg) 'error))
- (list -1 0 1 512 #\a '#(1 2 3) 3.14 2/3 1.5+0.3i 1+i '() 'hi abs "hi" '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+ (list -1 most-positive-fixnum most-negative-fixnum 0 1 512 #\a '#(1 2 3) 3.14 2/3 1.5+0.3i 1+i '() 'hi abs "hi" '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
 
 (test (string->number "34.1" (+ 5 (expt 2 32))) 'error)
 (test (number->string 34.1 (+ 5 (expt 2 32))) 'error)

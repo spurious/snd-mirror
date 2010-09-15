@@ -4225,22 +4225,25 @@ static s7_pointer s7_invert(s7_scheme *sc, s7_pointer p)      /* s7_ to be consi
 }
 
 
-static s7_Int s7_truncate(s7_Double xf)   /* can't use "truncate" -- it's in unistd.h */
+static s7_pointer s7_truncate(s7_scheme *sc, const char *caller, s7_Double xf)   /* can't use "truncate" -- it's in unistd.h */
 {
+  if ((xf > LLONG_MAX) || (xf < LLONG_MIN))
+    return(s7_out_of_range_error(sc, caller, 0, s7_make_real(sc, xf), "intermediate (a/b) is too large"));
+
   if (xf > 0.0)
-    return((s7_Int)floor(xf));
-  return((s7_Int)ceil(xf));
+    return(s7_make_integer(sc, (s7_Int)floor(xf)));
+  return(s7_make_integer(sc, (s7_Int)ceil(xf)));
 }
 
 
-static s7_Int quotient(s7_num_t a, s7_num_t b) 
+static s7_pointer quotient(s7_scheme *sc, const char *caller, s7_num_t a, s7_num_t b) 
 {
   /* (define (quo x1 x2) (truncate (/ x1 x2))) ; slib */
 
   if ((a.type | b.type) == NUM_INT)
-    return(integer(a) / integer(b));
+    return(s7_make_integer(sc, integer(a) / integer(b)));
 
-  return(s7_truncate(num_to_real(a) / num_to_real(b)));
+  return(s7_truncate(sc, caller, num_to_real(a) / num_to_real(b)));
 }
 
 
@@ -4759,13 +4762,17 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
     case '<':
       if (strings_are_equal(name, "<unspecified>"))
 	return(sc->UNSPECIFIED);
+
       if (strings_are_equal(name, "<undefined>"))
 	return(sc->UNDEFINED);
+
       if (strings_are_equal(name, "<eof>"))
 	return(sc->EOF_OBJECT);
+
       return(sc->NIL);
       break;
       
+
       /* -------- #o #d #x #b -------- */
     case 'o':   /* #o (octal) */
     case 'd':   /* #d (decimal) */
@@ -4792,14 +4799,19 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 	x = make_atom(sc, (char *)(name + num_at), (name[0] == 'o') ? 8 : ((name[0] == 'x') ? 16 : ((name[0] == 'b') ? 2 : 10)), false);
 
 	/* #x#i1 apparently makes sense, so #x1.0 should also be accepted.
-	 * here we can get #b#e0/0 or #b#e+1/0 etc
+	 * here we can get #b#e0/0 or #b#e+1/0 etc.
+	 * surely if #e1+i is an error (or #f), and #e#x1+i is an error,
+	 *   #x#e1+i should also be an error, but #e1+0i is not an error I guess since there actually isn't any imaginary part
 	 */
 	if (is_abnormal(sc, x))
 	  return(sc->NIL);
 
-	if ((s7_imag_part(x) != 0.0) ||
-	    ((!to_exact) && (!to_inexact)))
+	if ((!to_exact) && (!to_inexact))
 	  return(x);
+
+	if ((s7_imag_part(x) != 0.0) && (to_exact))  /* #x#e1+i */
+	  return(sc->NIL);
+
 #if WITH_GMP
 	if (s7_is_bignum(x))
 	  {
@@ -4813,6 +4825,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 	return(exact_to_inexact(sc, x));
       }
       break;
+
 
       /* -------- #i -------- */
     case 'i':   /* #i<num> = ->inexact (see token for table of choices here) */
@@ -4844,6 +4857,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
       return(exact_to_inexact(sc, x));
       break;
   
+
       /* -------- #e -------- */
     case 'e':   /* #e<num> = ->exact */
       if (name[1] == '#')
@@ -4881,68 +4895,52 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
       return(inexact_to_exact(sc, x));
       break;
 
+
       /* -------- #\... -------- */
     case '\\':
-      /* #\space or whatever (named character) */
-      { 
-	int c = 0;
+      if (name[2] == 0)                             /* the most common case: #\a */
+	return(chars[(unsigned int)(name[1])]);
 
-	if (name[2] == 0)                             /* the most common case: #\a */
-	  return(s7_make_character(sc, (unsigned int)(name[1])));
+      if (strings_are_equal(name + 1, "space")) 
+	return(chars[' ']);
 
-	if (strings_are_equal(name + 1, "space")) 
-	  c =' ';
-	else 
-	  {
-	    if ((strings_are_equal(name + 1, "newline")) || 
-		(strings_are_equal(name + 1, "linefeed")))
-	      c ='\n';
-	    else 
-	      {
-		if (strings_are_equal(name + 1, "return")) 
-		  c ='\r';
-		else 
-		  {
-		    if (strings_are_equal(name + 1, "tab")) 
-		      c ='\t';
-		    else 
-		      {
-			if ((strings_are_equal(name + 1, "null")) || 
-			    (strings_are_equal(name + 1, "nul")))
-			  c ='\0';
-			else 
-			  {
-			    if (name[1] == 'x')     /* #\x is just x, but apparently #\x<num> is int->char? #\x65 -> #\e */
-			      {
-				/* sscanf here misses errors like #\x1.4, but make_atom misses #\x6/3,
-				 *   #\x#b0, #\x#e0.0, #\x-0, #\x#e0e100 etc, so we have to do it at
-				 *   an even lower level.
-				 */
-				bool happy = true;
-				char *tmp;
-				int lval = 0;
+      if ((strings_are_equal(name + 1, "newline")) || 
+	  (strings_are_equal(name + 1, "linefeed")))
+	return(chars['\n']);
 
-				tmp = (char *)(name + 2);
-				while ((*tmp) && (happy))
-				  {
-				    int dig;
-				    dig = digits[(int)(*tmp++)];
-				    if (dig < 16)
-				      lval = dig + (lval * 16);
-				    else happy = false;
-				  }
-				if (happy)
-				  {
-				    if (lval < 256)
-				      c = lval;
-				    else return(sc->NIL);  /* #\xx -> "undefined # expression" */
-				  }
-				else return(sc->NIL);
-			      }
-			    else return(sc->NIL);
-			  }}}}}
-	return(s7_make_character(sc, (unsigned int)c));
-      }
+      if (strings_are_equal(name + 1, "return")) 
+	return(chars['\r']);
+
+      if (strings_are_equal(name + 1, "tab")) 
+	return(chars['\t']);
+
+      if ((strings_are_equal(name + 1, "null")) || 
+	  (strings_are_equal(name + 1, "nul")))
+	return(chars[0]);
+
+      if (name[1] == 'x')     /* #\x is just x, but apparently #\x<num> is int->char? #\x65 -> #\e */
+	{
+	  /* sscanf here misses errors like #\x1.4, but make_atom misses #\x6/3,
+	   *   #\x#b0, #\x#e0.0, #\x-0, #\x#e0e100 etc, so we have to do it at
+	   *   an even lower level.
+	   */
+	  bool happy = true;
+	  char *tmp;
+	  int lval = 0;
+
+	  tmp = (char *)(name + 2);
+	  while ((*tmp) && (happy))
+	    {
+	      int dig;
+	      dig = digits[(int)(*tmp++)];
+	      if (dig < 16)
+		lval = dig + (lval * 16);
+	      else happy = false;
+	    }
+	  if ((happy) &&
+	      (lval < 256))
+	    return(chars[lval]);
+	}
     }
   return(sc->NIL);
 }
@@ -6503,7 +6501,7 @@ static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
     default: 
       if ((isnan(real(number(x)))) || (isinf(real(number(x)))))
 	return(x);
-      return(s7_make_integer(sc, s7_truncate(real(number(x))))); 
+      return(s7_truncate(sc, "truncate", real(number(x)))); 
     }
 }
 
@@ -7291,7 +7289,7 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
        */
     }
 
-  return(s7_make_integer(sc, quotient(number(car(args)), number(cadr(args)))));
+  return(quotient(sc, "quotient", number(car(args)), number(cadr(args))));
 }
 
 
@@ -7332,12 +7330,12 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
     case NUM_RATIO: 
       return(s7_make_ratio(sc,
 			   num_to_numerator(a) * num_to_denominator(b) - 
-			   num_to_numerator(b) * num_to_denominator(a) * quotient(a, b),
+			   num_to_numerator(b) * num_to_denominator(a) * s7_integer(quotient(sc, "remainder", a, b)),
 			   num_to_denominator(a) * num_to_denominator(b)));
 
     default:
       /* if a < b we can just return a */
-      return(s7_make_real(sc, num_to_real(a) - num_to_real(b) * quotient(a, b)));
+      return(s7_make_real(sc, num_to_real(a) - num_to_real(b) * s7_integer(quotient(sc, "remainder", a, b))));
 
       /* see under sin -- this calculation is completely bogus if "a" is large
        * (quotient 1e22 (* 2 pi)) -> -9223372036854775808 -- should this return arithmetic-overflow?
@@ -7345,6 +7343,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
        * (remainder 1e22 (* 2 pi)) -> 1.0057952155665e+22
        * -- the "remainder" is greater than the original argument!
        * Clisp gives 0.0 here, as does sbcl
+       * currently s7 throws an error (out-of-range).
        */
     }
 }
@@ -7384,7 +7383,7 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 
     default:
       {
-	s7_Double ax, bx;
+	s7_Double ax, bx, cx;
 	ax = num_to_real(a);
 	bx = num_to_real(b);
 
@@ -7393,10 +7392,23 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 	if ((isinf(ax)) || (isinf(bx)))
 	  return(s7_make_real(sc, sqrt(-1))); /* this is supposed to be a NaN */
 
-	return(s7_make_real(sc, ax - bx * (s7_Int)floor(ax / bx)));
+	cx = ax / bx;
+	if ((cx > LLONG_MAX) || (cx < LLONG_MIN))
+	  {
+	    /* if we just use floor as in the normal case below we get:
+	     *    :(modulo 1e20 10)
+	     *    1.9223372036855e+20
+	     *    :(modulo 1e21 10)
+	     *    1.0922337203685e+21
+	     * is there some clever way to do this?
+	     */
+	    return(s7_out_of_range_error(sc, "modulo", 0, args, "intermediate (a/b) is too large"));
+	  }
+	return(s7_make_real(sc, ax - bx * (s7_Int)floor(cx)));
       }
     }
 }
+/* TODO: currently (modulo .1e20 1) is an error even in the gmp case */
 
 
 static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
