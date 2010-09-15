@@ -2747,6 +2747,8 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
 
 /* -------- keywords -------- */
 
+/* PERHAPS: use a T_KEYWORD bit? */
+
 bool s7_is_keyword(s7_pointer obj)
 {
   return((s7_is_symbol(obj)) &&
@@ -3627,8 +3629,19 @@ static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *numer, s7_Int *
   s7_Int old_p1, old_q1;
   s7_Double old_e0, old_e1, old_e0p;
 
-  if (error < 0.0) error = -error;
+  /* #e1e19 is a killer -- it's bigger than most-positive-fixnum, but if we ceil(ux) below
+   *   it turns into most-negative-fixnum.  1e19 is trouble in many places.
+   */
+  if ((ux > LLONG_MAX) || (ux < LLONG_MIN))
+    {
+      /* can't return false here because that confuses some of the callers!
+       */
+      if (ux > LLONG_MIN) (*numer) = LLONG_MAX; else (*numer) = LLONG_MIN;
+      (*denom) = 1;
+      return(true);
+    }
 
+  if (error < 0.0) error = -error;
   x0 = ux - error;
   x1 = ux + error;
   i = (s7_Int)ceil(x0);
@@ -4709,10 +4722,10 @@ static s7_pointer check_sharp_readers(s7_scheme *sc, const char *name)
 static bool is_abnormal(s7_scheme *sc, s7_pointer x)
 {
   return((!s7_is_number(x)) ||
-	 (((number_type(x) == NUM_REAL) ||
-	   (number_type(x) == NUM_REAL2)) &&
-	  ((isnan(real(number(x)))) ||
-	   (isinf(real(number(x)))))));
+	 (isinf(s7_real_part(x))) || 
+	 (isinf(s7_imag_part(x))) ||
+	 (isnan(s7_real_part(x))) || 
+	 (isnan(s7_imag_part(x))));
 }
 
 
@@ -4742,6 +4755,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
       
   switch (name[0])
     {
+      /* -------- #< ... > -------- */
     case '<':
       if (strings_are_equal(name, "<unspecified>"))
 	return(sc->UNSPECIFIED);
@@ -4752,6 +4766,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
       return(sc->NIL);
       break;
       
+      /* -------- #o #d #x #b -------- */
     case 'o':   /* #o (octal) */
     case 'd':   /* #d (decimal) */
     case 'x':   /* #x (hex) */
@@ -4799,6 +4814,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
       }
       break;
 
+      /* -------- #i -------- */
     case 'i':   /* #i<num> = ->inexact (see token for table of choices here) */
       if (name[1] == '#')
 	{
@@ -4828,6 +4844,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
       return(exact_to_inexact(sc, x));
       break;
   
+      /* -------- #e -------- */
     case 'e':   /* #e<num> = ->exact */
       if (name[1] == '#')
 	{
@@ -4836,12 +4853,10 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 	      x = make_sharp_constant(sc, (char *)(name + 2), false);
 	      if (is_abnormal(sc, x))                    /* (string->number "#e#b0/0") */
 		return(sc->NIL);
-
 	      if (!s7_is_real(x))                        /* (string->number "#e#b1/0+i") */
 		return(sc->NIL);
 #if WITH_GMP
-	      if (s7_is_bignum(x))                   
-		return(big_inexact_to_exact(sc, make_list_1(sc, x)));
+	      return(big_inexact_to_exact(sc, make_list_1(sc, x)));
 #endif
 	      return(inexact_to_exact(sc, x));
 	    }
@@ -4854,22 +4869,33 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 	return(sc->NIL);
       if (!s7_is_real(x))                                /* (string->number "#e1/0+i") */
 	return(sc->NIL);
+      
 #if WITH_GMP
-      if (s7_is_bignum(x))
-	return(big_inexact_to_exact(sc, make_list_1(sc, x)));
+      /* there are non-big floats that are greater than most-positive-fixnum:
+       *    :(> .1e20 most-positive-fixnum) -> #t
+       *    :(bignum? .1e20) -> #f
+       * so we have to check that, not just is it a bignum.
+       */
+      return(big_inexact_to_exact(sc, make_list_1(sc, x)));
 #endif
       return(inexact_to_exact(sc, x));
       break;
 
+      /* -------- #\... -------- */
     case '\\':
       /* #\space or whatever (named character) */
       { 
 	int c = 0;
+
+	if (name[2] == 0)                             /* the most common case: #\a */
+	  return(s7_make_character(sc, (unsigned int)(name[1])));
+
 	if (strings_are_equal(name + 1, "space")) 
 	  c =' ';
 	else 
 	  {
-	    if ((strings_are_equal(name + 1, "newline")) || (strings_are_equal(name + 1, "linefeed")))
+	    if ((strings_are_equal(name + 1, "newline")) || 
+		(strings_are_equal(name + 1, "linefeed")))
 	      c ='\n';
 	    else 
 	      {
@@ -4881,12 +4907,12 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 		      c ='\t';
 		    else 
 		      {
-			if ((strings_are_equal(name + 1, "null")) || (strings_are_equal(name + 1, "nul")))
+			if ((strings_are_equal(name + 1, "null")) || 
+			    (strings_are_equal(name + 1, "nul")))
 			  c ='\0';
 			else 
 			  {
-			    if ((name[1] == 'x') && 
-				(name[2] != 0))        /* #\x is just x, but apparently #\x<num> is int->char? #\x65 -> #\e */
+			    if (name[1] == 'x')     /* #\x is just x, but apparently #\x<num> is int->char? #\x65 -> #\e */
 			      {
 				/* sscanf here misses errors like #\x1.4, but make_atom misses #\x6/3,
 				 *   #\x#b0, #\x#e0.0, #\x-0, #\x#e0e100 etc, so we have to do it at
@@ -4909,16 +4935,12 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 				  {
 				    if (lval < 256)
 				      c = lval;
-				    else return(sc->NIL);  /* #\xx -> "undefined sharp expression" */
+				    else return(sc->NIL);  /* #\xx -> "undefined # expression" */
 				  }
 				else return(sc->NIL);
 			      }
-			    else                       /* #\<char> */
-			      {
-				if (name[2] == 0) 
-				  c = name[1];
-				else return(sc->NIL);
-			      }}}}}}
+			    else return(sc->NIL);
+			  }}}}}
 	return(s7_make_character(sc, (unsigned int)c));
       }
     }
@@ -4958,8 +4980,8 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
   if ((tmp - tmp1 - 2) > s7_int_digits_by_radix[radix])
     {
       if (negative)
-	return(s7_int_min);
-      return(s7_int_max);             /* 0/100000000000000000000000000000000000000000000000000000000000000000000 */
+	return(LLONG_MIN);
+      return(LLONG_MAX);             /* 0/100000000000000000000000000000000000000000000000000000000000000000000 */
     }
 #endif
 
@@ -16516,7 +16538,7 @@ static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char
 	return(s7_error(sc, 
 			sc->FORMAT_ERROR, 
 			make_list_2(sc, make_protected_string(sc, "format control string is null, but there are other arguments: ~A"), args)));
-      return(s7_make_string(sc, ""));
+      return(make_protected_string(sc, ""));
     }
 
   result = make_string_uncopied(sc, format_to_c_string(sc, in_str, args, NULL));
@@ -17109,7 +17131,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  (remembered_file_name(line)))
 	{
 	  vector_element(sc->error_info, ERROR_CODE_LINE) = s7_make_integer(sc, remembered_line_number(line));
-	  vector_element(sc->error_info, ERROR_CODE_FILE) = s7_make_string(sc, remembered_file_name(line));	  
+	  vector_element(sc->error_info, ERROR_CODE_FILE) = make_protected_string(sc, remembered_file_name(line));	  
 	}
 
       for (top = s7_stack_top(sc) - 1, j = ERROR_ENVIRONMENT + 1; (top > 0) && (j < ERROR_INFO_SIZE); top -= 4, j++)
@@ -18496,18 +18518,34 @@ static token_t token(s7_scheme *sc)
   else 
     {
       char *orig_str, *str;
+
       str = (char *)(port_string(pt) + port_string_point(pt));
+      if (!(*str)) return(TOKEN_EOF);
+      /* we can't depend on the extra 0 of padding at the end of an input string port --
+       *   eval_string and others take the given string without copying or padding.
+       */
       orig_str = str;
+
       while (isspace(c = (unsigned int)(unsigned char)(*str++))) /* (let ((ÿa 1)) ÿa) -- 255 is not -1 = EOF */
 	if (c == '\n')
 	  port_line_number(pt)++;
       port_string_point(pt) += (str - orig_str);
+      
+      /*
+      if (port_string_length(pt) < port_string_point(pt))
+	fprintf(stderr, "%s ran off end %d %d (%d %s %s)\n", 
+		orig_str, port_string_length(pt), port_string_point(pt), safe_strlen(orig_str),
+		port_string(pt), s7_object_to_c_string(sc, pt));
+      */
     }
 
   switch (c) 
     {
     case EOF: /* fgetc might return EOF */
+      return(TOKEN_EOF);
+
     case 0:   /* port_string ends in null */
+      port_string_point(pt)--;
       return(TOKEN_EOF);
       
     case '(':
@@ -25737,10 +25775,23 @@ static s7_pointer big_exact_to_inexact(s7_scheme *sc, s7_pointer args)
 }
 
 
+static bool real_is_too_big(s7_pointer p)
+{
+  return((s7_is_number(p)) &&                 /* (inexact->exact "hi") */
+	 ((number_type(p) == NUM_REAL) ||
+	  (number_type(p) == NUM_REAL2)) &&
+	 (!(isinf(s7_real(p)))) &&            /* (inexact->exact (real-part (log 0.0))) */
+	 ((s7_real(p) > s7_int_max) ||        /* (inexact->exact .1e20) */
+	  (s7_real(p) < s7_int_max)));        /* these are 32-bit bounds */
+}
+
+
 static s7_pointer big_inexact_to_exact(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer p;
   p = car(args);
+
+  /* here we have to check for floats > most-positive-fixnum etc */
   if (is_c_object(p))
     {
       if ((c_object_type(p) == big_integer_tag) ||
@@ -25752,6 +25803,11 @@ static s7_pointer big_inexact_to_exact(s7_scheme *sc, s7_pointer args)
 
       /* complex so it's an error */
       return(s7_wrong_type_arg_error(sc, "inexact->exact", 1, p, "a real"));
+    }
+  else
+    {
+      if (real_is_too_big(p))
+	return(big_inexact_to_exact(sc, make_list_1(sc, s7_number_to_big_real(sc, p))));
     }
   return(g_inexact_to_exact(sc, args));
 }
@@ -25789,6 +25845,11 @@ static s7_pointer big_convert_to_int(s7_scheme *sc, s7_pointer args,
 	  mpfr_get_z(*n, S7_BIG_REAL(p), mode);
 	  return(s7_make_object(sc, big_integer_tag, (void *)n));
 	}
+    }
+  else
+    {
+      if (real_is_too_big(p))
+	return(big_convert_to_int(sc, make_list_1(sc, s7_number_to_big_real(sc, p)), g_div_func, div_func, mode));
     }
   return(g_div_func(sc, args));
 }
@@ -25883,6 +25944,11 @@ static s7_pointer big_round(s7_scheme *sc, s7_pointer args)
 	  mpfr_clear(dce);
 	  return(s7_make_object(sc, big_integer_tag, (void *)n));
 	}
+    }
+  else
+    {
+      if (real_is_too_big(p))
+	return(big_round(sc, make_list_1(sc, s7_number_to_big_real(sc, p))));
     }
   return(g_round(sc, args));
 }
