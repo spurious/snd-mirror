@@ -7384,11 +7384,13 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
     default:
       {
 	s7_Double ax, bx, cx;
-	ax = num_to_real(a);
-	bx = num_to_real(b);
 
+	ax = num_to_real(a);
 	if (isnan(ax)) return(ap);
+
+	bx = num_to_real(b);
 	if (isnan(bx)) return(bp);
+
 	if ((isinf(ax)) || (isinf(bx)))
 	  return(s7_make_real(sc, sqrt(-1))); /* this is supposed to be a NaN */
 
@@ -7408,7 +7410,8 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
       }
     }
 }
-/* TODO: currently (modulo .1e20 1) is an error even in the gmp case */
+/* TODO: currently (modulo .1e20 1) is an error even in the gmp case [1e19 is a bignum, but .1e20 is not]
+*/
 
 
 static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)

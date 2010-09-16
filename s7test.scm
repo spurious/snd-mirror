@@ -34722,6 +34722,16 @@ why are these different (read-time `#() ? )
 (test (rationalize 1.23+1.0i 1.23+1.0i) 'error)
 (test (rationalize 1.23 1.23 1.23) 'error)
 
+(if with-bignums
+    (begin
+      (num-test (rationalize .1e20) 10000000000000000000)
+      (num-test (rationalize 1e19) 10000000000000000000)
+      (num-test (rationalize 1e20) 100000000000000000000))
+    (begin
+      (num-test (rationalize .1e20) 'error)
+      (num-test (rationalize 1e19) 'error)
+      (num-test (rationalize 1e20) 'error)))
+
 
 
 
@@ -40268,6 +40278,32 @@ why are these different (read-time `#() ? )
       (num-test (exact->inexact (bignum "0+1.5i")) 0+1.5i)))
 (test (inexact->exact 0+1.5i) 'error)
 (num-test (exact->inexact 0+1.5i) 0+1.5i)
+
+(if with-bignums
+    (begin
+      (num-test (inexact->exact .1e20) 10000000000000000000)
+      (num-test (inexact->exact 1e19) 10000000000000000000)
+      (num-test (inexact->exact 1e20) 100000000000000000000))
+    (begin
+      (num-test (inexact->exact .1e20) 'error)
+      (num-test (inexact->exact 1e19) 'error)
+      (num-test (inexact->exact 1e20) 'error)))
+
+
+#|
+;;; TODO: fix this stuff (args were 1e19 and .1e20)
+floor -9223372036854775808 -9223372036854775808
+rationalize 9223372036854775807 9223372036854775807
+round -9223372036854775808 -9223372036854775808
+ceiling -9223372036854775808 -9223372036854775808
+inexact->exact 9223372036854775807 9223372036854775807
+--- big:
+cos -3.749051695507178301532205460096107309737E-1 -0.5175425701595
+rationalize 10000000000000000000 9223372036854775807
+sin -9.270631660486503852341222896649359754661E-1 -0.85565745954366
+atanh 1.000000000000000000000000000000000000003E-19+1.570796326794896619231321691639751442098E0i 1.6237011735143e-15+1.5707963267949i
+(t170.scm)
+|#
 
 
 
@@ -51537,6 +51573,61 @@ why are these different (read-time `#() ? )
 (num-test #b-000e+10110001 0.0)
 ;(num-test #b#e-1/1+01.1e1i -1+3i)
 
+(test (exact? #i1) #f)
+(test (exact? #e1.0) #t)
+(test (exact? #i1.0) #f)
+(test (exact? #e1) #t)
+(test (exact? #i#b1) #f)
+(test (exact? #e#b1) #t)
+(num-test #x#e1.5 21/16)
+(num-test #x#i3 3.0)
+(test (number? ''1) #f)
+(test (symbol? ''1) #f)
+(test (string->number "''1") #f)
+
+(test 00 0)
+(test (string->number "00") 0)
+(test 000 0)
+(test (string->number "000") 0)
+(test 00.00 0.0)
+(test (string->number "00.00") 0.0)
+(test (number? '0-0) #f)
+(test (string->number "0-0") #f)
+(test (number? '00-) #f)
+(test (string->number "00-") #f)
+
+(num-test #i1s0 1.0)
+(num-test #e0.1 1/10)
+(num-test #i1/1 1.0)
+(num-test #o-11 -9)
+(num-test #o-0. 0.0)
+(num-test #o+.0 0.0)
+(num-test #x#if 15.0)
+(num-test #xe/1 14)
+(num-test #xe/a 7/5)
+(num-test #xfad 4013)
+(num-test #xd/1 13)
+(num-test #x0/f 0)
+(num-test #x+00 0)
+(num-test #x.c0 0.75)
+(num-test #x-fc -252)
+(num-test -0d-0 0.0)
+(num-test +1d+1 10.0)
+(num-test +1s00 1.0)
+(test (equal? #e1.5 3/2) #t)
+(test (equal? #e1.0 1) #t)
+(test (equal? #e-.1 -1/10) #t)
+(test (equal? #e1 1) #t)
+(test (equal? #e3/2 3/2) #t)
+(test (< (abs (- #i3/2 1.5)) 1e-12) #t)
+(test (< (abs (- #i1 1.0)) 1e-12) #t)
+(test (< (abs (- #i-1/10 -0.1)) 1e-12) #t)
+(test (< (abs (- #i1.5 1.5)) 1e-12) #t)
+(num-test (= 0e-1 0.0) #t)
+;;; (/ (/ 0))??
+(num-test #x.a+i 0.625+1i)
+(num-test #b1.+i 1+1i)
+
 (let ((str (make-string 3)))
    (set! (str 0) #\#)
    (set! (str 1) #\b)
@@ -51997,15 +52088,6 @@ why are these different (read-time `#() ? )
 	  (begin
 	    (display "(eqv? ") (display (vector-ref things i)) (display " ") (display (vector-ref things j)) (display ") -> #f?") (newline))))))
 
-(test (exact? #i1) #f)
-(test (exact? #e1.0) #t)
-(test (exact? #i1.0) #f)
-(test (exact? #e1) #t)
-(test (exact? #i#b1) #f)
-(test (exact? #e#b1) #t)
-(num-test #x#e1.5 21/16)
-(num-test #x#i3 3.0)
-
 (for-each
  (lambda (n)
    (let ((nb 
@@ -52152,40 +52234,6 @@ why are these different (read-time `#() ? )
        "1a" "1.a" "-a" "+a" "1.." "..1" "-..1" "1ee1" "1ef2" "1+ief2" "1.+" "1.0-" "1/2+/3"
        "'1'2" "1-#i" "1-i." "1-ie" "1..." "1/1/1/1"
        ))
-
-(test (number? ''1) #f)
-(test (symbol? ''1) #f)
-(test (string->number "''1") #f)
-
-(test 00 0)
-(test (string->number "00") 0)
-(test 000 0)
-(test (string->number "000") 0)
-(test 00.00 0.0)
-(test (string->number "00.00") 0.0)
-(test (number? '0-0) #f)
-(test (string->number "0-0") #f)
-(test (number? '00-) #f)
-(test (string->number "00-") #f)
-
-(num-test #i1s0 1.0)
-(num-test #e0.1 1/10)
-(num-test #i1/1 1.0)
-(num-test #o-11 -9)
-(num-test #o-0. 0.0)
-(num-test #o+.0 0.0)
-(num-test #x#if 15.0)
-(num-test #xe/1 14)
-(num-test #xe/a 7/5)
-(num-test #xfad 4013)
-(num-test #xd/1 13)
-(num-test #x0/f 0)
-(num-test #x+00 0)
-(num-test #x.c0 0.75)
-(num-test #x-fc -252)
-(num-test -0d-0 0.0)
-(num-test +1d+1 10.0)
-(num-test +1s00 1.0)
 
 (test (let ((val (catch #t (lambda ()
 			     (= 1 
@@ -52512,20 +52560,6 @@ why are these different (read-time `#() ? )
  '(("#xe/d" . 14/13) ("#xb/d" . 11/13) ("#xf/d" . 15/13) ("#x1/f" . 1/15) ("#xd/f" . 13/15) ("#xe/f" . 14/15) ("#d.1" . .1) ("#d01" . 1)
    ("#d+1" . 1) ("#d+0" . 0) ("#d0+i" . 0+i) ("#xe+i" . 14.0+1.0i) ("#xf+i" . 15.0+1.0i) ("#d1-i" . 1.0-1.0i); ("#e1+i" . 1+i)
    ))
-
-(test (equal? #e1.5 3/2) #t)
-(test (equal? #e1.0 1) #t)
-(test (equal? #e-.1 -1/10) #t)
-(test (equal? #e1 1) #t)
-(test (equal? #e3/2 3/2) #t)
-(test (< (abs (- #i3/2 1.5)) 1e-12) #t)
-(test (< (abs (- #i1 1.0)) 1e-12) #t)
-(test (< (abs (- #i-1/10 -0.1)) 1e-12) #t)
-(test (< (abs (- #i1.5 1.5)) 1e-12) #t)
-(num-test (= 0e-1 0.0) #t)
-;;; (/ (/ 0))??
-(num-test #x.a+i 0.625+1i)
-(num-test #b1.+i 1+1i)
 
 ;;; here's code to generate all (im)possible numbers (using just a few digits) of a given length
 					;(define file (open-output-file "ntest.scm"))
