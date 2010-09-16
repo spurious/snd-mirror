@@ -169,14 +169,6 @@ static void chans_transform_size(chan_info *cp, mus_long_t size)
 }
 
 
-/* gtk_frame_set_label actually creates a new label widget! */
-
-static void sg_frame_set_label(GtkFrame *frame, const char *text)
-{
-  gtk_button_set_label(GTK_BUTTON(gtk_frame_get_label_widget(frame)), text);
-}
-
-
 static void size_browse_callback(const char *name, int row, void *data)
 {
   for_each_chan(force_fft_clear);

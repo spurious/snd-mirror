@@ -1389,8 +1389,9 @@ snd_info *make_simple_channel_display(int srate, int initial_length, fw_button_t
   return(sp);
 }
 
-
-static graphics_context *combined_context(chan_info *cp);
+#if (!USE_GTK)
+  static graphics_context *combined_context(chan_info *cp);
+#endif
 static int make_wavogram(chan_info *cp);
 
 
@@ -5730,7 +5731,9 @@ graphics_context *selection_context(chan_info *cp)       {return(set_context(cp,
 graphics_context *cursor_context(chan_info *cp)          {return(set_context(cp, CHAN_CGC));}
 graphics_context *mark_tag_context(chan_info *cp)        {return(set_context(cp, CHAN_MGC));}
 graphics_context *mix_waveform_context(chan_info *cp)    {return(set_context(cp, CHAN_MXGC));}
-static graphics_context *combined_context(chan_info *cp) {return(set_context(cp, CHAN_TMPGC));}
+#if (!USE_GTK)
+  static graphics_context *combined_context(chan_info *cp) {return(set_context(cp, CHAN_TMPGC));}
+#endif
 
 
 /* ---------------------------------------- inset graph ---------------------------------------- */

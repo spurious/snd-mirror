@@ -24,7 +24,7 @@ fgrep -e "float* " *.h
 fgrep -e "double* " *.h
 fgrep -e "int* " *.h
 fgrep -e "off_t* " *.[ch]
-fgrep -e "long* " *.[ch]
+fgrep -e " long* " *.[ch]
 grep ' \-\-$' *.html
 /home/bil/cl/snd tools/va.scm
 # tools/check-gtk.scm

@@ -948,6 +948,9 @@ struct s7_scheme {
   /* LONG_MAX is either the same or 2147483647 */
 #endif
 
+#define BIGNUM_PLUS   9007199254740992
+#define BIGNUM_MINUS -9007199254740992
+
 #if __cplusplus
   using namespace std;
   typedef complex<s7_Double> s7_Complex;
@@ -19768,7 +19771,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	goto HEAPSORT;
       }
 
-      SORT:
     case OP_SORT:
       /* coming in sc->args is sort args (data less?), sc->code = '(n k 0)
        *
@@ -19831,16 +19833,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *    < l0 l2 ?
        *    no goto L1
        *    < l0 l1 ?
-       *    no return 1 0 2
+       *    no  return 1 0 2
        *    < l1 l2?
-       *    yes return original (0 1 2)
-       *    return 0 2 1
-       *    L1:
+       *    yes return 0 1 2 (direct)
+       *    no  return 0 2 1
+       *  L1:
        *    < l0 l1 ?
        *    yes return 2 0 1
        *    < l1 l2 ?
        *    yes return 1 2 0
-       *    return 2 1 0
+       *    no  return 2 1 0
        * since each "<" op above goes to OP_APPLY, we have ca 5 labels, and ca 25-50 lines
        */
 

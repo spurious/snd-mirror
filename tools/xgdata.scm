@@ -4807,7 +4807,7 @@
 (CFNC "GdkPixbuf* gtk_icon_info_load_icon GtkIconInfo* icon_info GError** [error]") 
 (CFNC "void gtk_icon_info_set_raw_coordinates GtkIconInfo* icon_info gboolean raw_coordinates") 
 (CFNC "gboolean gtk_icon_info_get_embedded_rect GtkIconInfo* icon_info GdkRectangle* rectangle") 
-(CFNC "gboolean gtk_icon_info_get_attach_points GtkIconInfo* icon_info GdkPoint** [points] gint* [n_points]") 
+;;; (CFNC "gboolean gtk_icon_info_get_attach_points GtkIconInfo* icon_info GdkPoint** [points] gint* [n_points]") 
 (CFNC "gchar* gtk_icon_info_get_display_name GtkIconInfo* icon_info") 
 ;;;;(CFNC "GType gtk_tool_button_get_type void") 
 (CFNC "GtkToolItem* gtk_tool_button_new GtkWidget* @icon_widget gchar* label") 

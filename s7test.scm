@@ -40283,11 +40283,26 @@ why are these different (read-time `#() ? )
     (begin
       (num-test (inexact->exact .1e20) 10000000000000000000)
       (num-test (inexact->exact 1e19) 10000000000000000000)
-      (num-test (inexact->exact 1e20) 100000000000000000000))
+      (num-test (inexact->exact 1e20) 100000000000000000000)
+
+      (for-each
+       (lambda (op)
+	 (let ((val (magnitude (- (op 1e19) (op .1e20)))))
+	   (if (> val .1)
+	       (format #t "(~A 1e19) = ~A, but (~A .1e20) = ~A~%" 
+		       (procedure-name op) (op 1e19)
+		       (procedure-name op) (op .1e20)))))
+       (list abs floor cos rationalize sin log round ceiling truncate atan cosh sqrt tanh sinh tan acos asin acosh asinh atanh inexact->exact))
+      )
     (begin
-      (num-test (inexact->exact .1e20) 'error)
-      (num-test (inexact->exact 1e19) 'error)
-      (num-test (inexact->exact 1e20) 'error)))
+      (test (inexact->exact .1e20) 'error)
+      (test (inexact->exact 1e19) 'error)
+      (test (inexact->exact 1e20) 'error)
+      (test (floor 1e19) 'error)
+      (test (round 1e19) 'error)
+      (test (truncate 1e19) 'error)
+      (test (ceiling 1e19) 'error)
+      (test (rationalize 1e19) 'error)))
 
 
 #|
@@ -58210,6 +58225,84 @@ largest denormal  2-1023 (1 - 2-52)	 2-1023 - 2-1075 = 1.113 10-308
 largest fp integer	 2+1024 - 2+971 = 1.798 10+308
 gap from largest fp integer to previous fp integer	2+971 = 1.996 10+292
 largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
+
+so: (floor (+ (expt 2 53.0) 0)) -> 9007199254740992 and (floor (+ (expt 2 53.0) 1)) -> 9007199254740992
+-- we need to switch to gmp much earlier than LLONG_MAX (at (expt 2 53) = 9007199254740992)
+
+(= (floor (expt 2.0 53)) (+ (expt 2.0 53) 1)) also round/truncate/ceiling
+#t
+(= (modulo (expt 2.0 53) 2) (modulo (+ (expt 2 53.0) 1) 2)) ; also quotient/remainder
+#t
+:(= (log (expt 2.0 53) 2) (log (+ (expt 2 53.0) 1) 2))
+#t
+
+(for-each 
+ (lambda (op) 
+   (format #t "~A: ~A ~A ~A~%" 
+	   (procedure-name op) 
+	   (op (expt 2.0 53)) (op (+ (expt 2.0 53) 1)) 
+	   (= (op (expt 2.0 53)) (op (+ (expt 2.0 53) 1))))) 
+ (list abs floor cos rationalize sin log round ceiling truncate atan cosh sqrt tanh sinh tan acos asin acosh asinh atanh inexact->exact))
+
+;;; NON-GMP:
+abs: 9.007199254741e+15 9.007199254741e+15 #t
+floor: 9007199254740992 9007199254740992 #t
+cos: -0.52850194023161 -0.52850194023161 #t
+rationalize: 9007199254740992 9007199254740992 #t
+sin: -0.84893209338051 -0.84893209338051 #t
+log: 36.736800569677 36.736800569677 #t
+round: 9007199254740992 9007199254740992 #t
+ceiling: 9007199254740992 9007199254740992 #t
+truncate: 9007199254740992 9007199254740992 #t
+atan: 1.5707963267949 1.5707963267949 #t
+cosh: inf.0 inf.0 #t
+sqrt: 94906265.624252 94906265.624252 #t
+tanh: 1.0 1.0 #t
+sinh: inf.0 inf.0 #t
+tan: 1.6062989153994 1.6062989153994 #t
+acos: -0+37.429947750237i -0+37.429947750237i #t
+asin: 1.5707963267949-37.429947750237i 1.5707963267949-37.429947750237i #t
+acosh: 37.429947750237 37.429947750237 #t
+asinh: 37.429947750237 37.429947750237 #t
+atanh: -2.8102520310824e-16+1.5707963267949i -2.8102520310824e-16+1.5707963267949i #t
+inexact->exact: 9007199254740992 9007199254740992 #t
+
+;;; GMP:
+abs: 9.007199254740992E15 9.007199254740993E15 #f
+floor: 9007199254740992 9007199254740993 #f
+cos: -5.285117844130886942586601103167001822475E-1 4.28790431844704476640870175668809776456E-1 #f
+rationalize: 9007199254740992 9007199254740993 #f
+sin: -8.489259648146549995612720696920909565471E-1 -9.034039880133537716203659897094872050912E-1 #f
+log: 3.673680056967710139911330243728335810798E1 3.673680056967710151013560489979900598736E1 #f
+round: 9007199254740992 9007199254740993 #f
+ceiling: 9007199254740992 9007199254740993 #f
+truncate: 9007199254740992 9007199254740993 #f
+atan: 1.570796326794896508209019229124097399734E0 1.570796326794896508209019229124109725686E0 #f
+cosh: @.Inf@E262 @.Inf@E262 #t
+sqrt: 9.490626562425155288910589156332213583575E7 9.490626562425155815746195542507596298047E7 #f
+tanh: 1.000E0 1.000E0 #t
+sinh: @.Inf@E0 @.Inf@E0 #t
+tan: 1.606257400215561186925050405633640359646E0 -2.106866014073141986347816539563253746695E0 #f
+acos: 0.0-3.742994775023704670853053455874153159461E1i 0.0-3.7429947750237046819552837021257179474E1i #f
+asin: 1.570796326794896619231321691639751442098E0+3.742994775023704670853053455874153159461E1i 1.570796326794896619231321691639751442098E0+3.7429947750237046819552837021257179474E1i #f
+acosh: 3.742994775023704670853053455874153159461E1 3.7429947750237046819552837021257179474E1 #f
+asinh: 3.742994775023704670853053455874153775759E1 3.742994775023704681955283702125718563698E1 #f
+atanh: 1.110223024625156540423631668090824874021E-16+1.570796326794896619231321691639751442098E0i 1.11022302462515641716411522730774396299E-16+1.570796326794896619231321691639751442098E0i #f
+inexact->exact: 9007199254740992 9007199254740993 #f
+
+
+(let ((val1 (expt 2.0 52.5))
+      (val2 (+ (expt 2.0 52.5) 1.0)))
+(for-each 
+ (lambda (op) 
+   (format #t "(~A ~A and ~A): ~A ~A ~A~%" 
+	   (procedure-name op) val1 val2
+	   (op val1) (op val2)
+	   (= (op val1) (op val2))))
+ (list abs floor cos rationalize sin log round ceiling truncate atan cosh sqrt tanh sinh tan acos asin acosh asinh atanh inexact->exact)))
+
+
+
 
 #x7ff0000000000000 +inf
 #xfff0000000000000 -inf

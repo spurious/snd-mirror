@@ -1025,7 +1025,7 @@ will segfault s7 due to a stack overflow internally.
 A bacro is expanded in the call-time environment, so it can't be optimized in the same
 way that CL macros sometimes are.  Since a CL macro does not evaluate its arguments, and
 its expansion depends only on its definition environment, some lisps conclude that it can be expanded once and
-for all the first time it is encountered, and replaced by its result (some piece of code) --
+for all the first time it is encountered, and replaced by its result (some piece of code) &mdash;
 self-modifying code in effect.  This optimization is available in s7 under the name
 define-expansion, with some caveats.  The thing defined by define-expansion is fully
 expanded at read-time, so it must have a globally unique name, and it must depend

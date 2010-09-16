@@ -786,7 +786,6 @@ XM_TYPE_PTR(GtkIconTheme_, GtkIconTheme*)
 XM_TYPE_PTR(GtkIconInfo_, GtkIconInfo*)
 #define XEN_TO_C_GtkIconLookupFlags(Arg) (GtkIconLookupFlags)(XEN_TO_C_INT(Arg))
 #define XEN_GtkIconLookupFlags_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR(GdkPoint_, GdkPoint*)
 XM_TYPE_PTR_1(GtkToolButton_, GtkToolButton*)
 XM_TYPE_PTR_2(GtkAccelMap_, GtkAccelMap*)
 XM_TYPE_PTR_1(GtkCellView_, GtkCellView*)
@@ -21378,20 +21377,6 @@ GdkRectangle* rectangle)"
   return(C_TO_XEN_gboolean(gtk_icon_info_get_embedded_rect(XEN_TO_C_GtkIconInfo_(icon_info), XEN_TO_C_GdkRectangle_(rectangle))));
 }
 
-static XEN gxg_gtk_icon_info_get_attach_points(XEN icon_info, XEN ignore_points, XEN ignore_n_points)
-{
-  #define H_gtk_icon_info_get_attach_points "gboolean gtk_icon_info_get_attach_points(GtkIconInfo* icon_info, \
-GdkPoint** [points], gint* [n_points])"
-  GdkPoint* ref_points = NULL;
-  gint ref_n_points;
-  XEN_ASSERT_TYPE(XEN_GtkIconInfo__P(icon_info), icon_info, 1, "gtk_icon_info_get_attach_points", "GtkIconInfo*");
-  {
-    XEN result = XEN_FALSE;
-    result = C_TO_XEN_gboolean(gtk_icon_info_get_attach_points(XEN_TO_C_GtkIconInfo_(icon_info), &ref_points, &ref_n_points));
-    return(XEN_LIST_3(result, C_TO_XEN_GdkPoint_(ref_points), C_TO_XEN_gint(ref_n_points)));
-   }
-}
-
 static XEN gxg_gtk_icon_info_get_display_name(XEN icon_info)
 {
   #define H_gtk_icon_info_get_display_name "gchar* gtk_icon_info_get_display_name(GtkIconInfo* icon_info)"
@@ -34396,33 +34381,6 @@ static XEN gxg_GTK_IS_TOOL_ITEM_GROUP(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_
 
 /* ---------------------------------------- special functions ---------------------------------------- */
 
-static XEN gxg_vector2GdkPoints(XEN arg1)
-{
-  #define H_vector2GdkPoints "(vector->GdkPoints vect) packages point data in vect as an (opaque) array of GdkPoints"
-  int i, j, len;
-  GdkPoint *pt;
-  XEN_ASSERT_TYPE(XEN_VECTOR_P(arg1), arg1, XEN_ONLY_ARG, "vector->GdkPoints", "vector of x,y values");
-  len = XEN_VECTOR_LENGTH(arg1) / 2;
-  if (len <= 0) XEN_ASSERT_TYPE(0, arg1, 1, "vector->GdkPoints", "positive integer");
-  pt = (GdkPoint *)calloc(len, sizeof(GdkPoint));
-  for (i = 0, j = 0; i < len; i++, j += 2)
-    {
-      pt[i].x = XEN_TO_C_INT(XEN_VECTOR_REF(arg1, j));
-      pt[i].y = XEN_TO_C_INT(XEN_VECTOR_REF(arg1, j + 1));
-    }
-  return(XEN_WRAP_C_POINTER(pt));
-}
-
-static XEN gxg_freeGdkPoints(XEN arg1)
-{
-  void *pts;
-  #define H_freeGdkPoints "(freeGdkPoints vect) frees an (opaque) GdkPoint array created by vector->Gdkpoints"
-  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(arg1), arg1, XEN_ONLY_ARG, "freeGdkPoints", "opaque GdkPoint array");
-  pts = (void *)(XEN_UNWRAP_C_POINTER(arg1));
-  free(pts);
-  return(XEN_FALSE);
-}
-
 static XEN gxg_make_target_entry(XEN lst)
 {
   GtkTargetEntry* targets;
@@ -36876,7 +36834,6 @@ XEN_NARGIFY_1(gxg_gtk_icon_info_get_builtin_pixbuf_w, gxg_gtk_icon_info_get_buil
 XEN_ARGIFY_2(gxg_gtk_icon_info_load_icon_w, gxg_gtk_icon_info_load_icon)
 XEN_NARGIFY_2(gxg_gtk_icon_info_set_raw_coordinates_w, gxg_gtk_icon_info_set_raw_coordinates)
 XEN_NARGIFY_2(gxg_gtk_icon_info_get_embedded_rect_w, gxg_gtk_icon_info_get_embedded_rect)
-XEN_ARGIFY_3(gxg_gtk_icon_info_get_attach_points_w, gxg_gtk_icon_info_get_attach_points)
 XEN_NARGIFY_1(gxg_gtk_icon_info_get_display_name_w, gxg_gtk_icon_info_get_display_name)
 XEN_NARGIFY_2(gxg_gtk_tool_button_new_w, gxg_gtk_tool_button_new)
 XEN_NARGIFY_1(gxg_gtk_tool_button_new_from_stock_w, gxg_gtk_tool_button_new_from_stock)
@@ -38314,8 +38271,6 @@ XEN_NARGIFY_2(gxg_cairo_region_xor_rectangle_w, gxg_cairo_region_xor_rectangle)
 XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)
 XEN_NARGIFY_2(c_array_to_xen_list_w, c_array_to_xen_list)
 XEN_NARGIFY_2(xen_list_to_c_array_w, xen_list_to_c_array)
-XEN_NARGIFY_1(gxg_freeGdkPoints_w, gxg_freeGdkPoints)
-XEN_NARGIFY_1(gxg_vector2GdkPoints_w, gxg_vector2GdkPoints)
 XEN_NARGIFY_1(gxg_make_target_entry_w, gxg_make_target_entry)
 XEN_NARGIFY_1(c_to_xen_string_w, c_to_xen_string)
 XEN_NARGIFY_3(xg_object_get_w, xg_object_get);
@@ -40801,7 +40756,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_icon_info_load_icon_w gxg_gtk_icon_info_load_icon
 #define gxg_gtk_icon_info_set_raw_coordinates_w gxg_gtk_icon_info_set_raw_coordinates
 #define gxg_gtk_icon_info_get_embedded_rect_w gxg_gtk_icon_info_get_embedded_rect
-#define gxg_gtk_icon_info_get_attach_points_w gxg_gtk_icon_info_get_attach_points
 #define gxg_gtk_icon_info_get_display_name_w gxg_gtk_icon_info_get_display_name
 #define gxg_gtk_tool_button_new_w gxg_gtk_tool_button_new
 #define gxg_gtk_tool_button_new_from_stock_w gxg_gtk_tool_button_new_from_stock
@@ -42239,8 +42193,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GPOINTER_w gxg_GPOINTER
 #define c_array_to_xen_list_w c_array_to_xen_list
 #define xen_list_to_c_array_w xen_list_to_c_array
-#define gxg_freeGdkPoints_w gxg_freeGdkPoints
-#define gxg_vector2GdkPoints_w gxg_vector2GdkPoints
 #define gxg_make_target_entry_w gxg_make_target_entry
 #define c_to_xen_string_w c_to_xen_string
 #define xg_object_get_w xg_object_get
@@ -44733,7 +44685,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_icon_info_load_icon, gxg_gtk_icon_info_load_icon_w, 1, 1, 0, H_gtk_icon_info_load_icon);
   XG_DEFINE_PROCEDURE(gtk_icon_info_set_raw_coordinates, gxg_gtk_icon_info_set_raw_coordinates_w, 2, 0, 0, H_gtk_icon_info_set_raw_coordinates);
   XG_DEFINE_PROCEDURE(gtk_icon_info_get_embedded_rect, gxg_gtk_icon_info_get_embedded_rect_w, 2, 0, 0, H_gtk_icon_info_get_embedded_rect);
-  XG_DEFINE_PROCEDURE(gtk_icon_info_get_attach_points, gxg_gtk_icon_info_get_attach_points_w, 1, 2, 0, H_gtk_icon_info_get_attach_points);
   XG_DEFINE_PROCEDURE(gtk_icon_info_get_display_name, gxg_gtk_icon_info_get_display_name_w, 1, 0, 0, H_gtk_icon_info_get_display_name);
   XG_DEFINE_PROCEDURE(gtk_tool_button_new, gxg_gtk_tool_button_new_w, 2, 0, 0, H_gtk_tool_button_new);
   XG_DEFINE_PROCEDURE(gtk_tool_button_new_from_stock, gxg_gtk_tool_button_new_from_stock_w, 1, 0, 0, H_gtk_tool_button_new_from_stock);
@@ -46380,8 +46331,6 @@ static void define_functions(void)
 
   XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL);
-  XG_DEFINE_PROCEDURE(freeGdkPoints, gxg_freeGdkPoints_w, 1, 0, 0, H_freeGdkPoints);
-  XG_DEFINE_PROCEDURE(vector->GdkPoints, gxg_vector2GdkPoints_w, 1, 0, 0, H_vector2GdkPoints);
   XG_DEFINE_PROCEDURE(->string, c_to_xen_string_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(make-target-entry, gxg_make_target_entry_w, 1, 0, 0, H_make_target_entry);
   XG_DEFINE_PROCEDURE(g_object_get, xg_object_get_w, 3, 0, 0, NULL);
@@ -48335,7 +48284,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("11-Sep-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("16-Sep-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
