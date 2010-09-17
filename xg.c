@@ -890,7 +890,7 @@ XM_TYPE_PTR_1(GtkInfoBar_, GtkInfoBar*)
 XM_TYPE_PTR(GtkEntryBuffer_, GtkEntryBuffer*)
 #endif
 
-#if HAVE_GTK_WIDGET_GET_MAPPED
+#if HAVE_GTK_ENTRY_GET_TEXT_WINDOW
 XM_TYPE_PTR_1(GtkSpinner_, GtkSpinner*)
 XM_TYPE_PTR_1(GtkToolShell_, GtkToolShell*)
 XM_TYPE_PTR_1(GtkToolPalette_, GtkToolPalette*)
@@ -29962,7 +29962,7 @@ static XEN gxg_gdk_window_flush(XEN window)
 
 #endif
 
-#if HAVE_GTK_WIDGET_GET_MAPPED
+#if HAVE_GTK_ENTRY_GET_TEXT_WINDOW
 static XEN gxg_gtk_dialog_get_widget_for_response(XEN dialog, XEN response_id)
 {
   #define H_gtk_dialog_get_widget_for_response "GtkWidget* gtk_dialog_get_widget_for_response(GtkDialog* dialog, \
@@ -34178,7 +34178,7 @@ static XEN gxg_GTK_INFO_BAR(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_
 static XEN gxg_GTK_ENTRY_BUFFER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkEntryBuffer_"), XEN_CADR(obj)) : XEN_FALSE);}
 #endif
 
-#if HAVE_GTK_WIDGET_GET_MAPPED
+#if HAVE_GTK_ENTRY_GET_TEXT_WINDOW
 static XEN gxg_GTK_SPINNER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkSpinner_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_CELL_RENDERER_SPINNER(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkCellRendererSpinner_"), XEN_CADR(obj)) : XEN_FALSE);}
 static XEN gxg_GTK_TOOL_PALETTE(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkToolPalette_"), XEN_CADR(obj)) : XEN_FALSE);}
@@ -34370,7 +34370,7 @@ static XEN gxg_GTK_IS_INFO_BAR(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_
 static XEN gxg_GTK_IS_ENTRY_BUFFER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_ENTRY_BUFFER((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 #endif
 
-#if HAVE_GTK_WIDGET_GET_MAPPED
+#if HAVE_GTK_ENTRY_GET_TEXT_WINDOW
 static XEN gxg_GTK_IS_SPINNER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_SPINNER((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_CELL_RENDERER_SPINNER(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_CELL_RENDERER_SPINNER((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GTK_IS_TOOL_PALETTE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_TOOL_PALETTE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
@@ -37812,7 +37812,7 @@ XEN_NARGIFY_1(gxg_gtk_widget_get_receives_default_w, gxg_gtk_widget_get_receives
 XEN_NARGIFY_1(gxg_gdk_window_flush_w, gxg_gdk_window_flush)
 #endif
 
-#if HAVE_GTK_WIDGET_GET_MAPPED
+#if HAVE_GTK_ENTRY_GET_TEXT_WINDOW
 XEN_NARGIFY_2(gxg_gtk_dialog_get_widget_for_response_w, gxg_gtk_dialog_get_widget_for_response)
 XEN_NARGIFY_3(gxg_gtk_tooltip_set_icon_from_gicon_w, gxg_gtk_tooltip_set_icon_from_gicon)
 XEN_NARGIFY_1(gxg_gtk_viewport_get_bin_window_w, gxg_gtk_viewport_get_bin_window)
@@ -38476,7 +38476,7 @@ XEN_NARGIFY_1(gxg_GTK_INFO_BAR_w, gxg_GTK_INFO_BAR)
 XEN_NARGIFY_1(gxg_GTK_ENTRY_BUFFER_w, gxg_GTK_ENTRY_BUFFER)
 #endif
 
-#if HAVE_GTK_WIDGET_GET_MAPPED
+#if HAVE_GTK_ENTRY_GET_TEXT_WINDOW
 XEN_NARGIFY_1(gxg_GTK_SPINNER_w, gxg_GTK_SPINNER)
 XEN_NARGIFY_1(gxg_GTK_CELL_RENDERER_SPINNER_w, gxg_GTK_CELL_RENDERER_SPINNER)
 XEN_NARGIFY_1(gxg_GTK_TOOL_PALETTE_w, gxg_GTK_TOOL_PALETTE)
@@ -38668,7 +38668,7 @@ XEN_NARGIFY_1(gxg_GTK_IS_INFO_BAR_w, gxg_GTK_IS_INFO_BAR)
 XEN_NARGIFY_1(gxg_GTK_IS_ENTRY_BUFFER_w, gxg_GTK_IS_ENTRY_BUFFER)
 #endif
 
-#if HAVE_GTK_WIDGET_GET_MAPPED
+#if HAVE_GTK_ENTRY_GET_TEXT_WINDOW
 XEN_NARGIFY_1(gxg_GTK_IS_SPINNER_w, gxg_GTK_IS_SPINNER)
 XEN_NARGIFY_1(gxg_GTK_IS_CELL_RENDERER_SPINNER_w, gxg_GTK_IS_CELL_RENDERER_SPINNER)
 XEN_NARGIFY_1(gxg_GTK_IS_TOOL_PALETTE_w, gxg_GTK_IS_TOOL_PALETTE)
@@ -41734,7 +41734,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gdk_window_flush_w gxg_gdk_window_flush
 #endif
 
-#if HAVE_GTK_WIDGET_GET_MAPPED
+#if HAVE_GTK_ENTRY_GET_TEXT_WINDOW
 #define gxg_gtk_dialog_get_widget_for_response_w gxg_gtk_dialog_get_widget_for_response
 #define gxg_gtk_tooltip_set_icon_from_gicon_w gxg_gtk_tooltip_set_icon_from_gicon
 #define gxg_gtk_viewport_get_bin_window_w gxg_gtk_viewport_get_bin_window
@@ -42398,7 +42398,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_ENTRY_BUFFER_w gxg_GTK_ENTRY_BUFFER
 #endif
 
-#if HAVE_GTK_WIDGET_GET_MAPPED
+#if HAVE_GTK_ENTRY_GET_TEXT_WINDOW
 #define gxg_GTK_SPINNER_w gxg_GTK_SPINNER
 #define gxg_GTK_CELL_RENDERER_SPINNER_w gxg_GTK_CELL_RENDERER_SPINNER
 #define gxg_GTK_TOOL_PALETTE_w gxg_GTK_TOOL_PALETTE
@@ -42590,7 +42590,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_IS_ENTRY_BUFFER_w gxg_GTK_IS_ENTRY_BUFFER
 #endif
 
-#if HAVE_GTK_WIDGET_GET_MAPPED
+#if HAVE_GTK_ENTRY_GET_TEXT_WINDOW
 #define gxg_GTK_IS_SPINNER_w gxg_GTK_IS_SPINNER
 #define gxg_GTK_IS_CELL_RENDERER_SPINNER_w gxg_GTK_IS_CELL_RENDERER_SPINNER
 #define gxg_GTK_IS_TOOL_PALETTE_w gxg_GTK_IS_TOOL_PALETTE
@@ -45663,7 +45663,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_window_flush, gxg_gdk_window_flush_w, 1, 0, 0, H_gdk_window_flush);
 #endif
 
-#if HAVE_GTK_WIDGET_GET_MAPPED
+#if HAVE_GTK_ENTRY_GET_TEXT_WINDOW
   XG_DEFINE_PROCEDURE(gtk_dialog_get_widget_for_response, gxg_gtk_dialog_get_widget_for_response_w, 2, 0, 0, H_gtk_dialog_get_widget_for_response);
   XG_DEFINE_PROCEDURE(gtk_tooltip_set_icon_from_gicon, gxg_gtk_tooltip_set_icon_from_gicon_w, 3, 0, 0, H_gtk_tooltip_set_icon_from_gicon);
   XG_DEFINE_PROCEDURE(gtk_viewport_get_bin_window, gxg_gtk_viewport_get_bin_window_w, 1, 0, 0, H_gtk_viewport_get_bin_window);
@@ -46322,7 +46322,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_ENTRY_BUFFER, gxg_GTK_ENTRY_BUFFER_w, 1, 0, 0, "(GTK_ENTRY_BUFFER obj) casts obj to GTK_ENTRY_BUFFER");
 #endif
 
-#if HAVE_GTK_WIDGET_GET_MAPPED
+#if HAVE_GTK_ENTRY_GET_TEXT_WINDOW
   XG_DEFINE_PROCEDURE(GTK_SPINNER, gxg_GTK_SPINNER_w, 1, 0, 0, "(GTK_SPINNER obj) casts obj to GTK_SPINNER");
   XG_DEFINE_PROCEDURE(GTK_CELL_RENDERER_SPINNER, gxg_GTK_CELL_RENDERER_SPINNER_w, 1, 0, 0, "(GTK_CELL_RENDERER_SPINNER obj) casts obj to GTK_CELL_RENDERER_SPINNER");
   XG_DEFINE_PROCEDURE(GTK_TOOL_PALETTE, gxg_GTK_TOOL_PALETTE_w, 1, 0, 0, "(GTK_TOOL_PALETTE obj) casts obj to GTK_TOOL_PALETTE");
@@ -46519,7 +46519,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_IS_ENTRY_BUFFER, gxg_GTK_IS_ENTRY_BUFFER_w, 1, 0, 0, "(GTK_IS_ENTRY_BUFFER obj): " PROC_TRUE " if obj is a GTK_IS_ENTRY_BUFFER");
 #endif
 
-#if HAVE_GTK_WIDGET_GET_MAPPED
+#if HAVE_GTK_ENTRY_GET_TEXT_WINDOW
   XG_DEFINE_PROCEDURE(GTK_IS_SPINNER, gxg_GTK_IS_SPINNER_w, 1, 0, 0, "(GTK_IS_SPINNER obj): " PROC_TRUE " if obj is a GTK_IS_SPINNER");
   XG_DEFINE_PROCEDURE(GTK_IS_CELL_RENDERER_SPINNER, gxg_GTK_IS_CELL_RENDERER_SPINNER_w, 1, 0, 0, "(GTK_IS_CELL_RENDERER_SPINNER obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER_SPINNER");
   XG_DEFINE_PROCEDURE(GTK_IS_TOOL_PALETTE, gxg_GTK_IS_TOOL_PALETTE_w, 1, 0, 0, "(GTK_IS_TOOL_PALETTE obj): " PROC_TRUE " if obj is a GTK_IS_TOOL_PALETTE");
@@ -48284,7 +48284,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("16-Sep-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("17-Sep-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

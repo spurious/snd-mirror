@@ -99,6 +99,7 @@
  * SOMEDAY: generics like length
  * SOMEDAY: if return int and bool
  * TODO: we miss shadowed funcs: (spectrum k) where spectrum is a vct complains about args to func spectrum
+ *   can this be fixed by checking symbol-value before using the built-in walker?
  * perhaps we can access s7 globals directly -- no need to copy each way for ints/dbls/strings
  */
 

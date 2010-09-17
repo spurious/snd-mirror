@@ -2214,7 +2214,7 @@ void hide_controls(snd_info *sp)
 
 bool showing_controls(snd_info *sp)
 {
-#if ((!HAVE_GTK_WIDGET_GET_VISIBLE) || (!HAVE_GTK_WIDGET_GET_MAPPED))
+#if ((!HAVE_GTK_WIDGET_GET_VISIBLE) || (!HAVE_GTK_ENTRY_GET_TEXT_WINDOW))
   return((GTK_WIDGET_MAPPED(CONTROL_PANEL(sp))) && 
 	 (widget_is_active(CONTROL_PANEL(sp))));
 #else

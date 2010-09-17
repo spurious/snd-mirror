@@ -315,6 +315,7 @@
 	   '()) #t)
 (test (eq? 3/4 3) #f)
 (test (eq? '() '()) #t)
+(test (eq? '() '(  )) #t)
 (test (eq? '()'()) #t)
 (test (eq? '()(list)) #t)
 (test (eq? '() (list)) #t)
@@ -552,7 +553,7 @@
 (test (equal? 9/2 9/2) #t)
 (test (equal? #((())) #((()))) #t)
 (test (equal? "123""123") #t);no space
-(test (equal? """") #t)#|no space|#
+(test (equal? """") #t)#|nospace|#
 (test (equal? #()#()) #t)
 (test (equal? #()()) #f)
 (test (equal? ()"") #f)
@@ -8678,6 +8679,7 @@
 (test (equal? '('('4)) (list (list 'quote (list (list 'quote 4))))) #t) 
 (test (equal? '('('4)) '((quote ((quote 4))))) #t)
 (test (equal? '1 ''1) #f)
+(test (equal? ''1 ''1) #t)
 (test (equal? '(1 '(1 . 2)) (list 1 (cons 1 2))) #f)
 (test (equal? #(1 #(2 3)) '#(1 '#(2 3))) #f)
 (test (equal? #(1) #('1)) #f)
@@ -13381,6 +13383,10 @@ why are these different (read-time `#() ? )
 (num-test `,#e.1 1/10)
 (num-test `,,,-1 -1)
 (num-test `,``,1 1)
+(test (equal? ` 1 ' 1) #t)
+(test (+ ` 1 `  2) `   3)
+(test ` ( + ,(- 3 2) 2) '(+ 1 2))
+
 
 
 
@@ -34343,6 +34349,7 @@ why are these different (read-time `#() ? )
 (num-test (expt 0.0 0) 0.0)
 (num-test (expt 0 0.0) 0.0)
 (num-test (expt 0.0 0.0) 0.0)
+(num-test (expt -0.0 -0.0) 0.0)
 
 
 (let ((x-10 (lambda (n) (- (expt n 10) (* n n n n n n n n n n)))))
@@ -39489,6 +39496,8 @@ why are these different (read-time `#() ? )
 (test (zero? 0+i) #f)
 (test (zero? 0-0i) #t)
 (test (zero? +0.0) #t)
+(test (zero? 1e-20) #f)
+(if with-bignums (test (zero? 1e-600) #f))
 
 (for-each
  (lambda (n)
@@ -39543,6 +39552,7 @@ why are these different (read-time `#() ? )
 (test (negative?) 'error)
 (test (negative? 1.23+1.0i) 'error)
 (test (negative? 1.23 1.23) 'error)
+(test (negative? -1-i) 'error)
 
 (for-each
  (lambda (n)

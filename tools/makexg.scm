@@ -1739,7 +1739,7 @@
   (dpy "#endif~%~%"))
 
 (define (with-2190 dpy thunk)
-  (dpy "#if HAVE_GTK_WIDGET_GET_MAPPED~%")
+  (dpy "#if HAVE_GTK_ENTRY_GET_TEXT_WINDOW~%")
   (thunk)
   (dpy "#endif~%~%"))
 
