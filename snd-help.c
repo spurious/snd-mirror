@@ -493,12 +493,11 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+18-Sep:  Snd 11.9.\n\
 19-Aug:  removed the Gdk backend option; cairo is now the only choice.\n\
 12-Aug:  Snd 11.8.\n\
 9-Aug:   make-index.scm (replaces index.cl and indexer.scm).\n\
 30-Jul:  removed *-button-color.\n\
-8-Jul:   Snd 11.7.\n\
-12-Jun:  removed window-property, window-property-changed-hook, send-mozilla.\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",

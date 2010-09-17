@@ -5,7 +5,10 @@ The new gtk (version 3) has discarded most of the gdk functions, replacing them
   changed a lot.  --with-cairo is the default (and the only alternative).
   You'll need gtk 2.9 or later, and cairo 1.6.4 or later.  Eventually
   there will be a cairo "surface" for openGL, so I'll be able to
-  reimplement that connection.  
+  reimplement that connection.  Unfortunately, the gtk/cairo version
+  of Snd is very slow (more than 10 times slower than Motif).  Looking
+  at valgrind output, my first guess is that it's cairo's fault, but
+  I need to spend some time poking at it.
 
 kmenu.scm uses the new gdk key names, so it only works in gtk 2.90.7 or later.
 
