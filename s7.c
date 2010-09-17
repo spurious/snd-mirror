@@ -948,8 +948,29 @@ struct s7_scheme {
   /* LONG_MAX is either the same or 2147483647 */
 #endif
 
-#define BIGNUM_PLUS   9007199254740992
-#define BIGNUM_MINUS -9007199254740992
+#define BIGNUM_PLUS   9007199254740992LL
+#define BIGNUM_MINUS -9007199254740992LL
+
+/* this is where a truncated double starts to skip integers (expt 2 53) = ca 1e16 
+ *   :(ceiling (+ 1e16 1))
+ *   10000000000000000
+ *
+ * but we can't fix this except in the gmp case because:
+ *   :(integer-decode-float (+ (expt 2.0 62) 100))
+ *   (4503599627370496 10 1)
+ *   :(integer-decode-float (+ (expt 2.0 62) 500))
+ *   (4503599627370496 10 1)
+ *
+ * i.e. the bits are identical.  We can't even detect when it has happened, so should
+ * we just give an error for any floor (or whatever) of an arg>1e16?  (sin has a similar problem).
+ * I think in the non-gmp case I'll throw an error in these cases because the results are
+ * bogus:
+ *   :(floor (+ (expt 2.0 62) 512))
+ *   4611686018427387904
+ *   :(floor (+ (expt 2.0 62) 513))
+ *   4611686018427388928
+ */
+
 
 #if __cplusplus
   using namespace std;
@@ -4230,7 +4251,7 @@ static s7_pointer s7_invert(s7_scheme *sc, s7_pointer p)      /* s7_ to be consi
 
 static s7_pointer s7_truncate(s7_scheme *sc, const char *caller, s7_Double xf)   /* can't use "truncate" -- it's in unistd.h */
 {
-  if ((xf > LLONG_MAX) || (xf < LLONG_MIN))
+  if ((xf > BIGNUM_PLUS) || (xf < BIGNUM_MINUS))
     return(s7_out_of_range_error(sc, caller, 0, s7_make_real(sc, xf), "intermediate (a/b) is too large"));
 
   if (xf > 0.0)
@@ -5799,6 +5820,8 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 
   if (s7_Double_abs(rat) < s7_Double_abs(err))
     return(small_int(0));
+  if ((rat > BIGNUM_PLUS) || (rat < BIGNUM_MINUS))
+    return(s7_out_of_range_error(sc, "rationalize", 1, x, "argument is too large"));
 
   if (c_rationalize(rat, err, &numer, &denom))
     return(s7_make_ratio(sc, numer, denom));
@@ -6445,10 +6468,16 @@ static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
 	return(s7_make_integer(sc, val));
       }
 
-    default:        
-      if ((isnan(real(number(x)))) || (isinf(real(number(x))))) 
-	return(x);
-      return(s7_make_integer(sc, (s7_Int)floor(real(number(x))))); 
+    default: 
+      {
+	s7_Double z;
+	z = real(number(x));
+	if (isnan(z))
+	  return(s7_out_of_range_error(sc, "floor", 0, x, "argument is NaN"));
+	if ((z > BIGNUM_PLUS) || (z < BIGNUM_MINUS))
+	  return(s7_out_of_range_error(sc, "floor", 0, x, "argument is too large"));
+	return(s7_make_integer(sc, (s7_Int)floor(real(number(x))))); 
+      }
     }
 }
 
@@ -6477,9 +6506,15 @@ static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
       }
 
     default:        
-      if ((isnan(real(number(x)))) || (isinf(real(number(x))))) 
-	return(x);
-      return(s7_make_integer(sc, (s7_Int)ceil(real(number(x))))); 
+      {
+	s7_Double z;
+	z = real(number(x));
+	if (isnan(z))
+	  return(s7_out_of_range_error(sc, "ceiling", 0, x, "argument is NaN"));
+	if ((z > BIGNUM_PLUS) || (z < BIGNUM_MINUS))
+	  return(s7_out_of_range_error(sc, "ceiling", 0, x, "argument is too large"));
+	return(s7_make_integer(sc, (s7_Int)ceil(real(number(x))))); 
+      }
     }
 }
 
@@ -6502,9 +6537,15 @@ static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
       return(s7_make_integer(sc, (s7_Int)(numerator(number(x)) / denominator(number(x))))); /* C "/" already truncates */
 
     default: 
-      if ((isnan(real(number(x)))) || (isinf(real(number(x)))))
-	return(x);
-      return(s7_truncate(sc, "truncate", real(number(x)))); 
+      {
+	s7_Double z;
+	z = real(number(x));
+	if (isnan(z))
+	  return(s7_out_of_range_error(sc, "truncate", 0, x, "argument is NaN"));
+	if ((z > BIGNUM_PLUS) || (z < BIGNUM_MINUS))
+	  return(s7_out_of_range_error(sc, "truncate", 0, x, "argument is too large"));
+	return(s7_truncate(sc, "truncate", real(number(x)))); 
+      }
     }
 }
 
@@ -6544,9 +6585,15 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
       }
 
     default: 
-      if ((isnan(real(number(x)))) || (isinf(real(number(x))))) 
-	return(x);  /* should this return an error (also in the inf cases)? */
-      return(s7_make_integer(sc, (s7_Int)round_per_R5RS(real(number(x))))); 
+      {
+	s7_Double z;
+	z = real(number(x));
+	if (isnan(z))
+	  return(s7_out_of_range_error(sc, "round", 0, x, "argument is NaN"));
+	if ((z > BIGNUM_PLUS) || (z < BIGNUM_MINUS))
+	  return(s7_out_of_range_error(sc, "round", 0, x, "argument is too large"));
+	return(s7_make_integer(sc, (s7_Int)round_per_R5RS(real(number(x))))); 
+      }
     }
 }
 
@@ -7273,7 +7320,7 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 
   if (number_type(x) > NUM_RATIO)
     {
-      double rx;
+      s7_Double rx;
       rx = real(number(x));
       if ((isinf(rx)) || (isnan(rx)))
 	return(s7_wrong_type_arg_error(sc, "quotient", 1, x, "a normal real"));
@@ -7281,7 +7328,7 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 
   if (number_type(y) > NUM_RATIO)
     {
-      double ry;
+      s7_Double ry;
       ry = real(number(y));
       if ((isinf(ry)) || (isnan(ry)))
 	return(s7_wrong_type_arg_error(sc, "quotient", 2, y, "a normal real"));
@@ -7398,14 +7445,13 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 	  return(s7_make_real(sc, sqrt(-1))); /* this is supposed to be a NaN */
 
 	cx = ax / bx;
-	if ((cx > LLONG_MAX) || (cx < LLONG_MIN))
+	if ((cx > BIGNUM_PLUS) || (cx < BIGNUM_MINUS))
 	  {
 	    /* if we just use floor as in the normal case below we get:
 	     *    :(modulo 1e20 10)
 	     *    1.9223372036855e+20
 	     *    :(modulo 1e21 10)
 	     *    1.0922337203685e+21
-	     * is there some clever way to do this?
 	     */
 	    return(s7_out_of_range_error(sc, "modulo", 0, args, "intermediate (a/b) is too large"));
 	  }
@@ -7413,8 +7459,6 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
       }
     }
 }
-/* TODO: currently (modulo .1e20 1) is an error even in the gmp case [1e19 is a bignum, but .1e20 is not]
-*/
 
 
 static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
@@ -8055,9 +8099,14 @@ static s7_pointer g_is_negative(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
 {
   #define H_inexact_to_exact "(inexact->exact num) converts num to an exact number; (inexact->exact 1.5) = 3/2"
-  
+  s7_Double x;
+
   if (!s7_is_real(car(args)))
     return(s7_wrong_type_arg_error(sc, "inexact->exact", 0, car(args), "a real number"));
+
+  x = s7_real(car(args));
+  if ((x > BIGNUM_PLUS) || (x < BIGNUM_MINUS))
+    return(s7_out_of_range_error(sc, "inexact->exact", 0, car(args), "argument is too large"));
 
   return(inexact_to_exact(sc, car(args)));
 }
@@ -18539,6 +18588,7 @@ static token_t token(s7_scheme *sc)
 
       str = (char *)(port_string(pt) + port_string_point(pt));
       if (!(*str)) return(TOKEN_EOF);
+
       /* we can't depend on the extra 0 of padding at the end of an input string port --
        *   eval_string and others take the given string without copying or padding.
        */
@@ -18548,13 +18598,6 @@ static token_t token(s7_scheme *sc)
 	if (c == '\n')
 	  port_line_number(pt)++;
       port_string_point(pt) += (str - orig_str);
-      
-      /*
-      if (port_string_length(pt) < port_string_point(pt))
-	fprintf(stderr, "%s ran off end %d %d (%d %s %s)\n", 
-		orig_str, port_string_length(pt), port_string_point(pt), safe_strlen(orig_str),
-		port_string(pt), s7_object_to_c_string(sc, pt));
-      */
     }
 
   switch (c) 
@@ -23166,6 +23209,17 @@ static s7_Int big_integer_to_s7_Int(mpz_t n)
 }
 
 
+static bool real_is_too_big(s7_pointer p)
+{
+  return((s7_is_number(p)) &&                 /* (inexact->exact "hi") */
+	 ((number_type(p) == NUM_REAL) ||
+	  (number_type(p) == NUM_REAL2)) &&
+	 (!(isinf(s7_real(p)))) &&            /* (inexact->exact (real-part (log 0.0))) */
+	 ((s7_real(p) > BIGNUM_PLUS) ||
+	  (s7_real(p) < BIGNUM_MINUS)));
+}
+
+
 s7_Double s7_number_to_real(s7_pointer x)
 {
   if (is_c_object(x))
@@ -24817,6 +24871,11 @@ static s7_pointer big_trig(s7_scheme *sc, s7_pointer args, s7_function g_trig,
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }
+  else
+    {
+      if (real_is_too_big(p))
+	return(big_trig(sc, make_list_1(sc, s7_number_to_big_real(sc, p)), g_trig, mpfr_trig, mpc_trig, tan_case));
+    }
   return(g_trig(sc, args));
 }
 
@@ -25303,6 +25362,11 @@ static s7_pointer big_acos(s7_scheme *sc, s7_pointer args)
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }
+  else
+    {
+      if (real_is_too_big(p))
+	return(big_acos(sc, make_list_1(sc, s7_number_to_big_real(sc, p))));
+    }
   return(g_acos(sc, args));
 }
 
@@ -25345,6 +25409,11 @@ static s7_pointer big_asin(s7_scheme *sc, s7_pointer args)
 	  mpc_asin(*n, *n, MPC_RNDNN);
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
+    }
+  else
+    {
+      if (real_is_too_big(p))
+	return(big_asin(sc, make_list_1(sc, s7_number_to_big_real(sc, p))));
     }
   return(g_asin(sc, args));
 }
@@ -25589,7 +25658,7 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
   if (((is_c_object(p0)) || 
        ((p1) && (is_c_object(p1)))) && /* one or other is big, perhaps */
       (s7_is_real(p0)) &&
-      ((!p1) || (s7_is_real(p1))))   /* both are real (or error arg is omitted) */
+      ((!p1) || (s7_is_real(p1))))     /* both are real (or error arg is omitted) */
     {
       mpfr_t error, ux, x0, x1;
       mpz_t i, i0, i1;
@@ -25770,6 +25839,15 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
 	  }
       }
     }
+  else
+    {
+      if (real_is_too_big(p0))
+	{
+	  if (p1)
+	    return(big_rationalize(sc, make_list_2(sc, s7_number_to_big_real(sc, p0), p1)));
+	  return(big_rationalize(sc, make_list_1(sc, s7_number_to_big_real(sc, p0))));
+	}
+    }
   return(g_rationalize(sc, args));
 }
 
@@ -25789,17 +25867,6 @@ static s7_pointer big_exact_to_inexact(s7_scheme *sc, s7_pointer args)
 	return(promote_number(sc, T_BIG_REAL, p));
     }
   return(g_exact_to_inexact(sc, args));
-}
-
-
-static bool real_is_too_big(s7_pointer p)
-{
-  return((s7_is_number(p)) &&                 /* (inexact->exact "hi") */
-	 ((number_type(p) == NUM_REAL) ||
-	  (number_type(p) == NUM_REAL2)) &&
-	 (!(isinf(s7_real(p)))) &&            /* (inexact->exact (real-part (log 0.0))) */
-	 ((s7_real(p) > s7_int_max) ||        /* (inexact->exact .1e20) */
-	  (s7_real(p) < s7_int_max)));        /* these are 32-bit bounds */
 }
 
 
@@ -25996,6 +26063,11 @@ static s7_pointer big_quotient(s7_scheme *sc, s7_pointer args)
 	}
       return(big_truncate(sc, make_list_1(sc, big_divide(sc, args))));
     }
+  else
+    {
+      if (real_is_too_big(x))
+	return(big_quotient(sc, make_list_2(sc, s7_number_to_big_real(sc, x), y)));
+    }
   return(g_quotient(sc, args));
 }
 
@@ -26024,6 +26096,11 @@ static s7_pointer big_remainder(s7_scheme *sc, s7_pointer args)
 	  return(s7_make_object(sc, big_integer_tag, (void *)n));
 	}
       return(big_subtract(sc, make_list_2(sc, x, big_multiply(sc, make_list_2(sc, y, big_quotient(sc, args))))));
+    }
+  else
+    {
+      if (real_is_too_big(x))
+	return(big_remainder(sc, make_list_2(sc, s7_number_to_big_real(sc, x), y)));
     }
   return(g_remainder(sc, args));
 }
@@ -26069,6 +26146,11 @@ static s7_pointer big_modulo(s7_scheme *sc, s7_pointer args)
                   s7_cons(sc, 
                    big_divide(sc, 
                     make_list_2(sc, a, b)), sc->NIL)))))));
+    }
+  else
+    {
+      if (real_is_too_big(a))
+	return(big_modulo(sc, make_list_2(sc, s7_number_to_big_real(sc, a), b)));
     }
   return(g_modulo(sc, args));
 }
@@ -27624,12 +27706,12 @@ s7_scheme *s7_init(void)
   sc->STRING_SET = s7_symbol_value(sc, s7_make_symbol(sc, "string-set!"));
   typeflag(sc->STRING_SET) |= T_DONT_COPY; 
 
-  s7_function_set_setter(sc, "car", "set-car!");
-  s7_function_set_setter(sc, "cdr", "set-cdr!");
+  s7_function_set_setter(sc, "car",            "set-car!");
+  s7_function_set_setter(sc, "cdr",            "set-cdr!");
   s7_function_set_setter(sc, "hash-table-ref", "hash-table-set!");
-  s7_function_set_setter(sc, "vector-ref", "vector-set!");
-  s7_function_set_setter(sc, "list-ref", "list-set!");
-  s7_function_set_setter(sc, "string-ref", "string-set!");
+  s7_function_set_setter(sc, "vector-ref",     "vector-set!");
+  s7_function_set_setter(sc, "list-ref",       "list-set!");
+  s7_function_set_setter(sc, "string-ref",     "string-set!");
 
   {
     int i, top;

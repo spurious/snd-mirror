@@ -28,6 +28,9 @@
 					                       ;   the default number of tries is 10000
 (define with-test-at-random #f)
 
+;;; we assume s7_Double is double, and s7_Int is long long int
+
+
 (define our-pi 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930382)
 
 
@@ -36845,38 +36848,38 @@ why are these different (read-time `#() ? )
 (num-test (modulo 0 86400) 0)
 (num-test (modulo 0 -86400) 0)
 
-(let ((top-exp 60))
-  (let ((happy #t))
-    (do ((i 2 (+ i 1)))
-	((or (not happy) (> i top-exp)))
-      (let* ((val1 (inexact->exact (expt 2 i)))
-	     (val2 (+ val1 1))
-	     (mv (modulo val2 2))
-	     (qv (quotient val2 2))
-	     (rv (remainder val2 2)))
-	(if (not (= mv 1))
-	    (begin (set! happy #f) (display "(modulo ") (display val2) (display " 2) = ") (display mv) (display "?") (newline)))
-	(if (not (= qv (/ val1 2)))
-	    (begin (set! happy #f) (display "(quotient ") (display val2) (display " 2) = ") (display qv) (display "?") (newline)))
-	(if (not (= rv 1))
-	    (begin (set! happy #f) (display "(remainder ") (display val2) (display " 2) = ") (display rv) (display "?") (newline))))))
-  
-  
-  (let ((happy #t))
-    (do ((i 2 (+ i 1)))
-	((or (not happy) (> i top-exp)))
-      (let* ((val1 (inexact->exact (expt 2 i)))
-	     (val2 (/ (+ val1 1) 2))
-	     (mv (modulo val2 2))
-	     (qv (quotient val2 2))
-	     (rv (remainder val2 2)))
-	(if (not (= mv 1/2))
-	    (begin (set! happy #f) (display "(modulo ") (display val2) (display " 2) = ") (display mv) (display "?") (newline)))
-	(if (not (= qv (/ val1 4)))
-	    (begin (set! happy #f) (display "(quotient ") (display val2) (display " 2) = ") (display qv) (display "?") (newline)))
-	(if (not (= rv 1/2))
-	    (begin (set! happy #f) (display "(remainder ") (display val2) (display " 2) = ") (display rv) (display "?") (newline))))))
-  )
+(if with-bignums
+    (let ((top-exp 60))
+      (let ((happy #t))
+	(do ((i 2 (+ i 1)))
+	    ((or (not happy) (> i top-exp)))
+	  (let* ((val1 (inexact->exact (expt 2 i)))
+		 (val2 (+ val1 1))
+		 (mv (modulo val2 2))
+		 (qv (quotient val2 2))
+		 (rv (remainder val2 2)))
+	    (if (not (= mv 1))
+		(begin (set! happy #f) (display "(modulo ") (display val2) (display " 2) = ") (display mv) (display "?") (newline)))
+	    (if (not (= qv (/ val1 2)))
+		(begin (set! happy #f) (display "(quotient ") (display val2) (display " 2) = ") (display qv) (display "?") (newline)))
+	    (if (not (= rv 1))
+		(begin (set! happy #f) (display "(remainder ") (display val2) (display " 2) = ") (display rv) (display "?") (newline))))))
+      
+      
+      (let ((happy #t))
+	(do ((i 2 (+ i 1)))
+	    ((or (not happy) (> i top-exp)))
+	  (let* ((val1 (inexact->exact (expt 2 i)))
+		 (val2 (/ (+ val1 1) 2))
+		 (mv (modulo val2 2))
+		 (qv (quotient val2 2))
+		 (rv (remainder val2 2)))
+	    (if (not (= mv 1/2))
+		(begin (set! happy #f) (display "(modulo ") (display val2) (display " 2) = ") (display mv) (display "?") (newline)))
+	    (if (not (= qv (/ val1 4)))
+		(begin (set! happy #f) (display "(quotient ") (display val2) (display " 2) = ") (display qv) (display "?") (newline)))
+	    (if (not (= rv 1/2))
+		(begin (set! happy #f) (display "(remainder ") (display val2) (display " 2) = ") (display rv) (display "?") (newline))))))))
 
 (test (quotient) 'error)
 (test (quotient 123) 'error)
@@ -39070,8 +39073,10 @@ why are these different (read-time `#() ? )
 (num-test (truncate 3/2) 1)
 (num-test (truncate most-negative-fixnum) most-negative-fixnum)
 (num-test (truncate most-positive-fixnum) most-positive-fixnum)
-(num-test (truncate (exact->inexact most-negative-fixnum)) most-negative-fixnum)
-(if with-bigfloats (test (truncate (exact->inexact most-positive-fixnum)) most-positive-fixnum))
+(if with-bignums
+    (begin
+      (num-test (truncate (exact->inexact most-negative-fixnum)) most-negative-fixnum)
+      (if with-bigfloats (test (truncate (exact->inexact most-positive-fixnum)) most-positive-fixnum))))
 
 (num-test (truncate 0) 0)
 (num-test (truncate -0) 0)
@@ -39119,7 +39124,7 @@ why are these different (read-time `#() ? )
 (num-test (floor 3/2) 1)
 (num-test (floor most-negative-fixnum) most-negative-fixnum)
 (num-test (floor most-positive-fixnum) most-positive-fixnum)
-(num-test (floor (exact->inexact most-negative-fixnum)) most-negative-fixnum)
+(if with-bignums (num-test (floor (exact->inexact most-negative-fixnum)) most-negative-fixnum))
 (if with-bigfloats (test (floor (exact->inexact most-positive-fixnum)) most-positive-fixnum))
 
 (num-test (floor 9007199254740992.95) 9007199254740992)
@@ -39183,7 +39188,7 @@ why are these different (read-time `#() ? )
 (num-test (ceiling 1.01e-123) 1)
 (num-test (ceiling most-negative-fixnum) most-negative-fixnum)
 (num-test (ceiling most-positive-fixnum) most-positive-fixnum)
-(num-test (ceiling (exact->inexact most-negative-fixnum)) most-negative-fixnum)
+(if with-bignums (num-test (ceiling (exact->inexact most-negative-fixnum)) most-negative-fixnum))
 (if with-bigfloats (test (ceiling (exact->inexact most-positive-fixnum)) most-positive-fixnum))
 
 (if with-bigfloats
@@ -39241,7 +39246,7 @@ why are these different (read-time `#() ? )
 (num-test (round 3/2) 2)
 (num-test (round most-negative-fixnum) most-negative-fixnum)
 (num-test (round most-positive-fixnum) most-positive-fixnum)
-(num-test (round (exact->inexact most-negative-fixnum)) most-negative-fixnum)
+(if with-bignums (num-test (round (exact->inexact most-negative-fixnum)) most-negative-fixnum))
 (if with-bigfloats (test (round (exact->inexact most-positive-fixnum)) most-positive-fixnum))
 
 (test (equal? (let ((vals '())) 
@@ -39851,9 +39856,15 @@ why are these different (read-time `#() ? )
      (test (number? (op inf+)) #t)
      (test (number? (op inf-)) #t)
      (test (number? (op nan)) #t))
-   (list floor ceiling truncate round exact->inexact
-	 magnitude abs exp angle sin cos tan sinh cosh tanh atan sqrt log asinh acosh atanh acos asin
-	 real-part imag-part))
+   (list magnitude abs exp angle sin cos tan sinh cosh tanh atan sqrt log asinh acosh atanh acos asin
+	 real-part imag-part exact->inexact))
+
+  (for-each
+   (lambda (op)
+     (test (op inf+) 'error)
+     (test (op inf-) 'error)
+     (test (op nan) 'error))
+   (list floor ceiling truncate round))
 
   (num-test (tanh inf-) -1.0)
   (num-test (tanh inf+) 1.0)
@@ -40051,15 +40062,15 @@ why are these different (read-time `#() ? )
   (test (ash nan.0 nan.0) 'error)
 
   (test (nan? (make-polar -inf.0 inf.0)) #t)
-  (test (nan? (floor nan.0)) #t)
-  (test (nan? (ceiling nan.0)) #t)
-  (test (nan? (truncate nan.0)) #t)
-  (test (nan? (round nan.0)) #t)
+  (test (floor nan.0) 'error)
+  (test (ceiling nan.0) 'error)
+  (test (truncate nan.0) 'error)
+  (test (round nan.0)'error)
 
-  (test (infinite? (floor inf.0)) #t)
-  (test (infinite? (ceiling inf.0)) #t)
-  (test (infinite? (truncate inf.0)) #t)
-  (test (infinite? (round inf.0)) #t)
+  (test (floor inf.0) 'error)
+  (test (ceiling inf.0) 'error)
+  (test (truncate inf.0) 'error)
+  (test (round inf.0) 'error)
   (test (infinite? nan.0) #f)
   (test (infinite? most-positive-fixnum) #f)
   (test (infinite? most-negative-fixnum) #f)
@@ -40104,6 +40115,14 @@ why are these different (read-time `#() ? )
       (test (<= nan.0 nan.0) #f)
       (test (>= nan.0 nan.0) #f)))
 
+(if (not with-bignums)
+    (begin
+      (test (floor inf.0) 'error)
+      (test (ceiling inf.0) 'error)
+      (test (truncate inf.0) 'error)
+      (test (round inf.0) 'error)
+      (test (inexact->exact (make-rectangular 1 inf.0)) 'error)))
+
 #|
 ;; bad?
   (test (>= 0 inf.0 -inf.0) #t)
@@ -40115,16 +40134,7 @@ why are these different (read-time `#() ? )
   (test (nan? (quotient nan.0 inf.0)) #t)
   (test (nan? (quotient -inf.0 inf.0)) #t)
   (test (nan? (atan -inf.0 inf.0)) #t) ; ??
-|#
 
-#|
-  ;; what are these?
-
-  (test (nan? (floor inf.0)) #t)
-  (test (nan? (ceiling inf.0)) #t)
-  (test (nan? (truncate inf.0)) #t)
-  (test (nan? (round inf.0)) #t)
-  (test (inexact->exact (make-rectangular 1 inf.0)) 1+infi) ; error or nan?
   (test (angle (make-rectangular 1 inf.0)) 1.5707963267949)
   (test (tan (make-rectangular 1 inf.0)) 0+1i)
   (test (atanh (make-rectangular 1 inf.0)) -0+1.5707963267949i)
@@ -40303,23 +40313,6 @@ why are these different (read-time `#() ? )
       (test (truncate 1e19) 'error)
       (test (ceiling 1e19) 'error)
       (test (rationalize 1e19) 'error)))
-
-
-#|
-;;; TODO: fix this stuff (args were 1e19 and .1e20)
-floor -9223372036854775808 -9223372036854775808
-rationalize 9223372036854775807 9223372036854775807
-round -9223372036854775808 -9223372036854775808
-ceiling -9223372036854775808 -9223372036854775808
-inexact->exact 9223372036854775807 9223372036854775807
---- big:
-cos -3.749051695507178301532205460096107309737E-1 -0.5175425701595
-rationalize 10000000000000000000 9223372036854775807
-sin -9.270631660486503852341222896649359754661E-1 -0.85565745954366
-atanh 1.000000000000000000000000000000000000003E-19+1.570796326794896619231321691639751442098E0i 1.6237011735143e-15+1.5707963267949i
-(t170.scm)
-|#
-
 
 
 
@@ -49352,7 +49345,7 @@ atanh 1.000000000000000000000000000000000000003E-19+1.57079632679489661923132169
 (if with-bignums (num-test (/ -9223372036854775808 -9223372036854775808 -9223372036854775808) -1/9223372036854775808))
 
 (test (integer? (expt 2.3 54)) #f)
-(test (zero? (- (expt 2.3 54) (floor (expt 2.3 54)))) #f)
+(if with-bignums (test (zero? (- (expt 2.3 54) (floor (expt 2.3 54)))) #f))
 (test (integer? 10000000000000000.5) #f)
 (test (integer? (expt 2 54)) #t)
 
@@ -50787,181 +50780,6 @@ atanh 1.000000000000000000000000000000000000003E-19+1.57079632679489661923132169
 (test (string->number "#e") #f)
 (test (string->number "#") #f)
 
-(let ((number-to-string-top 0))
-  (let* ((last-good 0)
-	 (first-bad 
-	  (call/cc
-	   (lambda (return)
-	     (do ((i 1 (+ i 1))
-		  (k 1 (* k 2)))
-		 ((= i 200) #f)
-	       (if (and (eqv? k (string->number (number->string k)))
-			(eqv? (- k) (string->number (number->string (- k))))
-			(not (negative? k))) ; might hit sign bit
-		   (set! last-good k)
-		   (if (not (positive? k))
-		       (return (- (* 2 last-good) 1))
-		       (letrec ((search 
-				 (lambda (lo hi)
-				   (if (= lo hi)
-				       hi
-				       (let ((mid (floor (/ (+ hi lo) 2))))
-					 (if (or (>= mid hi)
-						 (<= mid lo))
-					     mid
-					     (if (and (eqv? mid (string->number (number->string mid)))
-						      (eqv? (- mid) (string->number (number->string (- mid)))))
-						 (search mid hi)
-						 (search lo mid))))))))
-			 (return (search last-good (- (* 2 last-good) 1)))))))))))
-    (set! number-to-string-top first-bad)
-    (if (and (integer? first-bad)
-	     (< first-bad most-positive-fixnum))
-	(format #t "string->number ints fail around ~A (2^~A)~%" first-bad (log first-bad 2))))
-  
-  (let* ((last-good 0)
-	 (first-bad 
-	  (call/cc
-	   (lambda (return)
-	     (do ((i 1 (+ i 1))
-		  (k 1.0 (* k 2.0)))
-		 ((= i 1200) #f)
-	       (if (and (eqv? k (string->number (number->string k)))
-			(eqv? (- k) (string->number (number->string (- k)))))
-		   (set! last-good k)
-		   (letrec ((search 
-			     (lambda (lo hi)
-			       (if (= (floor lo) (floor hi))
-				   hi
-				   (let ((mid (/ (+ hi lo) 2)))
-				     (if (or (>= mid hi)
-					     (<= mid lo))
-					 mid
-					 (if (and (eqv? mid (string->number (number->string mid)))
-						  (eqv? (- mid) (string->number (number->string (- mid)))))
-					     (search mid hi)
-					     (search lo mid))))))))
-		     (return (search last-good (* 2 last-good))))))))))
-    (if (and (number? first-bad)
-	     (< first-bad (+ 1.0 first-bad))) ; else infinite I guess
-	(format #t "string->number floats fail around ~A (2^~A)~%" first-bad (log first-bad 2))))
-  
-  (let* ((last-good 0)
-	 (first-bad 
-	  (call/cc
-	   (lambda (return)
-	     (do ((i 1 (+ i 1))
-		  (k 1.0 (/ k 2.0)))
-		 ((= i 100) #f)
-	       (if (and (< (abs (- k (string->number (number->string k)))) (/ k 1e14)) ; 1e18 is ok too
-			(< (abs (- (- k) (string->number (number->string (- k))))) (/ k 1e14)))
-		   ;; this gets confused (in eqv?) by .999.... -> 1 
-		   (set! last-good k)
-		   (letrec ((search 
-			     (lambda (lo hi)
-			       (if (= (floor (/ 1.0 lo)) (floor (/ 1.0 hi)))
-				   hi
-				   (let ((mid (/ (+ hi lo) 2)))
-				     (if (or (>= mid hi)
-					     (<= mid lo))
-					 mid
-					 (if (and (eqv? mid (string->number (number->string mid)))
-						  (eqv? (- mid) (string->number (number->string (- mid)))))
-					     (search mid hi)
-					     (search lo mid))))))))
-		     (return (search (/ last-good 2.0) last-good)))))))))
-    (if (number? first-bad)
-	(format #t "string->number floats fail around ~A (2^~A)~%" first-bad (log first-bad 2))))
-  
-  (let* ((last-good 0)
-	 (first-bad 
-	  (call/cc
-	   (lambda (return)
-	     (do ((i 1 (+ i 1))
-		  (k 1/3 (* k 2)))
-		 ((= i 100) #f)
-	       (if (and (eqv? k (string->number (number->string k)))
-			(eqv? (- k) (string->number (number->string (- k)))))
-		   (set! last-good k)
-		   (letrec ((search 
-			     (lambda (lo hi)
-			       (if (= (floor lo) (floor hi))
-				   hi
-				   (let ((mid (/ (+ hi lo) 2)))
-				     (if (or (>= mid hi)
-					     (<= mid lo))
-					 mid
-					 (if (and (eqv? mid (string->number (number->string mid)))
-						  (eqv? (- mid) (string->number (number->string (- mid)))))
-					     (search mid hi)
-					     (search lo mid))))))))
-		     (return (search last-good (* 2 last-good))))))))))
-    (if (number? first-bad)
-	(format #t "string->number ratios fail around ~A (2^~A)~%" first-bad (log first-bad 2))))
-  
-  (let ((happy #t))
-    (do ((i 2 (+ i 1)))
-	((or (not happy)
-	     (= i 17)))
-      (if (not (eqv? 0 (string->number (number->string 0 i) i)))
-	  (begin 
-	    (set! happy #f) 
-	    (display "(string<->number 0 ") (display i) (display " -> ") (display (number->string 0 i)) 
-	    (display " -> ") (display (string->number (number->string 0 i) i)) (newline)))
-      (if (not (eqv? 1234 (string->number (number->string 1234 i) i)))
-	  (begin 
-	    (set! happy #f) 
-	    (display "(string<->number 1234 ") (display i) (display " -> ") (display (number->string 1234 i)) 
-	    (display " -> ") (display (string->number (number->string 1234 i) i)) (newline)))
-      (if (not (eqv? -1234 (string->number (number->string -1234 i) i)))
-	  (begin 
-	    (set! happy #f) 
-	    (display "(string<->number -1234 ") (display i) (display " -> ") (display (number->string -1234 i)) 
-	    (display " -> ") (display (string->number (number->string -1234 i) i)) (newline)))))
-  
-  (for-each
-   (lambda (radix)
-     (let* ((last-good 0)
-	    (first-bad 
-	     (call/cc
-	      (lambda (return)
-		(do ((i 1 (+ i 1))
-		     (k 1 (* k 2)))
-		    ((= i 200) #f)
-		  (if (and (eqv? k (string->number (number->string k radix) radix))
-			   (eqv? (- k) (string->number (number->string (- k) radix) radix))
-			   (not (negative? k))) ; might hit sign bit
-		      (set! last-good k)
-		      (if (negative? k)
-			  (return (- (* 2 last-good) 1))
-			  (letrec ((search 
-				    (lambda (lo hi)
-				      (if (= lo hi)
-					  hi
-					  (let ((mid (floor (/ (+ hi lo) 2))))
-					    (if (and (eqv? mid (string->number (number->string mid radix) radix))
-						     (eqv? (- mid) (string->number (number->string (- mid) radix) radix)))
-						(search mid hi)
-						(search lo mid)))))))
-			    (return (search last-good (- (* 2 last-good) 1)))))))))))
-       (if (or (and (number? number-to-string-top) ; might have bignums
-		    (number? first-bad)
-		    (not (= first-bad number-to-string-top)))
-	       (and (not (number? number-to-string-top))
-		    (number? first-bad)))
-	   (if (integer? first-bad)
-	       (begin 
-		 (display "string->number ints (radix ") (display radix) (display ") fail around ") 
-		 (display first-bad)
-		 (display " (2^")
-		 (display (/ (log first-bad) (log 2.0)))
-		 (display ")")
-		 (newline))
-	       (begin
-		 (display "(string->number ints (radix ") (display radix) (display ") are good out to at least 2^200)")
-		 (newline))))))
-   (list 2 8 16 7 12)))
-
 (for-each
  (lambda (n)
    (if (not (eqv? n (string->number (number->string n))))
@@ -52384,8 +52202,7 @@ atanh 1.000000000000000000000000000000000000003E-19+1.57079632679489661923132169
  (lambda (str)
    (let ((val (catch #t (lambda () (string->number str)) (lambda args 'error))))
      (if (number? val)
-	 (begin
-	   (display "(string->number \"") (display str) (display "\") = ") (display val) (display "?") (newline)))))
+	 (format #t "(string->number ~S) = ~A?~%" str val))))
  (list "#b#e#e1" "#x#e#e1" "#d#e#e1" "#o#e#e1" "#b#i#e1" "#x#i#e1" "#d#i#e1" "#o#i#e1" "#e#b#e1" "#i#b#e1" "#e#x#e1" "#i#x#e1" 
        "#e#d#e1" "#i#d#e1" "#e#o#e1" "#i#o#e1" "#e#b#i1" "#e#x#i1" "#e#d#i1" "#e#o#i1" "#b#e#b1" "#x#e#b1" "#d#e#b1" "#o#e#b1" 
        "#b#i#b1" "#x#i#b1" "#d#i#b1" "#o#i#b1" "#b#e#x1" "#x#e#x1" "#d#e#x1" "#o#e#x1" "#b#i#x1" "#x#i#x1" "#d#i#x1" "#o#i#x1" 
@@ -52554,7 +52371,7 @@ atanh 1.000000000000000000000000000000000000003E-19+1.57079632679489661923132169
 	     (n2s (number->string fnum))
 	     (s2n (string->number n2s))
 	     (mnum (string->number str))
-	     (diff (/ (abs (- mnum s2n)) (abs fnum))))
+	     (diff (/ (abs (- mnum s2n)) (max (expt 2 -31.0) (abs fnum)))))
 	(if (> diff maxdiff)
 	    (begin
 	      (set! maxdiff diff)
@@ -53042,8 +52859,7 @@ atanh 1.000000000000000000000000000000000000003E-19+1.57079632679489661923132169
    (vector (list 0 0) (list 1 1) (list 2 2) (list 3 3) (list -1 -1) (list -2 -2) (list -3 -3) 
 	   (list 9223372036854775807 9223372036854775807) (list -9223372036854775808 -9223372036854775808) 
 	   (list 1/2 1/2) (list 1/3 1/3) (list -1/2 -1/2) (list -1/3 -1/3) (list 1/9223372036854775807 0) 
-	   (list 0.0 0) (list 1.0 1) (list 2.0 2) (list -2.0 -2) (list 1.000000000000000000000000000000000000002E-309 0) 
-	   (list 1e+16 10000000000000000) ))
+	   (list 0.0 0) (list 1.0 1) (list 2.0 2) (list -2.0 -2) (list 1.000000000000000000000000000000000000002E-309 0))) 
   
   (for-each
    (lambda (num-and-val)
@@ -53892,10 +53708,14 @@ atanh 1.000000000000000000000000000000000000003E-19+1.57079632679489661923132169
       (num-test (integer-length (+ (expt 2 48) (expt 2 46))) 49)
       (num-test (integer-length (ash 1 64)) 65)
       (num-test (integer-length 9223372036854775808) 64)
+      (num-test (integer-length (* 4 most-positive-fixnum)) 65)
+      (num-test (integer-length (* most-positive-fixnum most-positive-fixnum)) 126)
       
       (num-test (ash 1 48) 281474976710656)
       (num-test (ash 281474976710656 -48) 1)
       (num-test (ash -100000000000000000000000000000000 -100) -79)
+      ;; (floor (/ -100000000000000000000000000000000 (expt 2 100))) = -79
+      (num-test (ash -100000000000000000000000000000000 -200) -1)
       
       (num-test (ash 1 63) 9223372036854775808)
       (num-test (ash 1 64) 18446744073709551616)
@@ -58225,83 +58045,6 @@ largest denormal  2-1023 (1 - 2-52)	 2-1023 - 2-1075 = 1.113 10-308
 largest fp integer	 2+1024 - 2+971 = 1.798 10+308
 gap from largest fp integer to previous fp integer	2+971 = 1.996 10+292
 largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
-
-so: (floor (+ (expt 2 53.0) 0)) -> 9007199254740992 and (floor (+ (expt 2 53.0) 1)) -> 9007199254740992
--- we need to switch to gmp much earlier than LLONG_MAX (at (expt 2 53) = 9007199254740992)
-
-(= (floor (expt 2.0 53)) (+ (expt 2.0 53) 1)) also round/truncate/ceiling
-#t
-(= (modulo (expt 2.0 53) 2) (modulo (+ (expt 2 53.0) 1) 2)) ; also quotient/remainder
-#t
-:(= (log (expt 2.0 53) 2) (log (+ (expt 2 53.0) 1) 2))
-#t
-
-(for-each 
- (lambda (op) 
-   (format #t "~A: ~A ~A ~A~%" 
-	   (procedure-name op) 
-	   (op (expt 2.0 53)) (op (+ (expt 2.0 53) 1)) 
-	   (= (op (expt 2.0 53)) (op (+ (expt 2.0 53) 1))))) 
- (list abs floor cos rationalize sin log round ceiling truncate atan cosh sqrt tanh sinh tan acos asin acosh asinh atanh inexact->exact))
-
-;;; NON-GMP:
-abs: 9.007199254741e+15 9.007199254741e+15 #t
-floor: 9007199254740992 9007199254740992 #t
-cos: -0.52850194023161 -0.52850194023161 #t
-rationalize: 9007199254740992 9007199254740992 #t
-sin: -0.84893209338051 -0.84893209338051 #t
-log: 36.736800569677 36.736800569677 #t
-round: 9007199254740992 9007199254740992 #t
-ceiling: 9007199254740992 9007199254740992 #t
-truncate: 9007199254740992 9007199254740992 #t
-atan: 1.5707963267949 1.5707963267949 #t
-cosh: inf.0 inf.0 #t
-sqrt: 94906265.624252 94906265.624252 #t
-tanh: 1.0 1.0 #t
-sinh: inf.0 inf.0 #t
-tan: 1.6062989153994 1.6062989153994 #t
-acos: -0+37.429947750237i -0+37.429947750237i #t
-asin: 1.5707963267949-37.429947750237i 1.5707963267949-37.429947750237i #t
-acosh: 37.429947750237 37.429947750237 #t
-asinh: 37.429947750237 37.429947750237 #t
-atanh: -2.8102520310824e-16+1.5707963267949i -2.8102520310824e-16+1.5707963267949i #t
-inexact->exact: 9007199254740992 9007199254740992 #t
-
-;;; GMP:
-abs: 9.007199254740992E15 9.007199254740993E15 #f
-floor: 9007199254740992 9007199254740993 #f
-cos: -5.285117844130886942586601103167001822475E-1 4.28790431844704476640870175668809776456E-1 #f
-rationalize: 9007199254740992 9007199254740993 #f
-sin: -8.489259648146549995612720696920909565471E-1 -9.034039880133537716203659897094872050912E-1 #f
-log: 3.673680056967710139911330243728335810798E1 3.673680056967710151013560489979900598736E1 #f
-round: 9007199254740992 9007199254740993 #f
-ceiling: 9007199254740992 9007199254740993 #f
-truncate: 9007199254740992 9007199254740993 #f
-atan: 1.570796326794896508209019229124097399734E0 1.570796326794896508209019229124109725686E0 #f
-cosh: @.Inf@E262 @.Inf@E262 #t
-sqrt: 9.490626562425155288910589156332213583575E7 9.490626562425155815746195542507596298047E7 #f
-tanh: 1.000E0 1.000E0 #t
-sinh: @.Inf@E0 @.Inf@E0 #t
-tan: 1.606257400215561186925050405633640359646E0 -2.106866014073141986347816539563253746695E0 #f
-acos: 0.0-3.742994775023704670853053455874153159461E1i 0.0-3.7429947750237046819552837021257179474E1i #f
-asin: 1.570796326794896619231321691639751442098E0+3.742994775023704670853053455874153159461E1i 1.570796326794896619231321691639751442098E0+3.7429947750237046819552837021257179474E1i #f
-acosh: 3.742994775023704670853053455874153159461E1 3.7429947750237046819552837021257179474E1 #f
-asinh: 3.742994775023704670853053455874153775759E1 3.742994775023704681955283702125718563698E1 #f
-atanh: 1.110223024625156540423631668090824874021E-16+1.570796326794896619231321691639751442098E0i 1.11022302462515641716411522730774396299E-16+1.570796326794896619231321691639751442098E0i #f
-inexact->exact: 9007199254740992 9007199254740993 #f
-
-
-(let ((val1 (expt 2.0 52.5))
-      (val2 (+ (expt 2.0 52.5) 1.0)))
-(for-each 
- (lambda (op) 
-   (format #t "(~A ~A and ~A): ~A ~A ~A~%" 
-	   (procedure-name op) val1 val2
-	   (op val1) (op val2)
-	   (= (op val1) (op val2))))
- (list abs floor cos rationalize sin log round ceiling truncate atan cosh sqrt tanh sinh tan acos asin acosh asinh atanh inexact->exact)))
-
-
 
 
 #x7ff0000000000000 +inf

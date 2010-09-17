@@ -52664,7 +52664,9 @@ EDITS: 1
     (let ((snd (open-sound "oboe.snd"))
 	  (str "oboe.snd")
 	  (frm (make-file->sample "oboe.snd")))
-      (let ((mxv (car (mix "pistol.snd" 1000)))
+      (let ((mxv (let ((mx (mix "pistol.snd" 1000)))
+		   (and (pair? mx)
+			(car mx))))
 	    (reg (make-region 0 100))
 	    )
 	(if (not (string=? (run (lambda () (file-name snd))) (string-append (getcwd) "/oboe.snd"))) (snd-display #__line__ ";file-name of sound: ~A" (file-name snd)))
@@ -62627,7 +62629,6 @@ EDITS: 1
 		 (_gchar_4 (gtk_icon_source_get_icon_name _GtkIconSource_))
 		 (_char_ (gtk_icon_theme_get_example_icon_name _GtkIconTheme_))
 		 (_gint (gtk_icon_info_get_base_size _GtkIconInfo_))
-		 (_list1 (gtk_icon_info_get_attach_points _GtkIconInfo_))
 		 (_list2 (gtk_icon_size_lookup _GtkIconSize))
 		 (_GtkIconSet_4 (gtk_icon_factory_lookup_default "away"))
 		 (_GtkIconSet_5 (gtk_icon_factory_lookup _GtkIconFactory_ "away"))
@@ -63454,7 +63455,7 @@ EDITS: 1
 		   gtk_hpaned_new gtk_hruler_new   gtk_hscale_new gtk_hscale_new_with_range gtk_hscrollbar_new
 		   gtk_hseparator_new gtk_icon_factory_add gtk_icon_factory_add_default gtk_icon_factory_lookup
 		   gtk_icon_factory_lookup_default gtk_icon_factory_new gtk_icon_factory_remove_default gtk_icon_info_copy gtk_icon_info_free
-		   gtk_icon_info_get_attach_points gtk_icon_info_get_base_size 
+		   gtk_icon_info_get_base_size 
 		   gtk_icon_info_get_builtin_pixbuf gtk_icon_info_get_display_name gtk_icon_info_get_embedded_rect
 		   gtk_icon_info_get_filename gtk_icon_info_load_icon gtk_icon_info_set_raw_coordinates gtk_icon_set_add_source
 		   gtk_icon_set_copy gtk_icon_set_get_sizes gtk_icon_set_new gtk_icon_set_new_from_pixbuf
