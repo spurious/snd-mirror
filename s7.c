@@ -5080,8 +5080,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
     }
 
 #if WITH_GMP
-  if ((int_len >= max_len) ||
-      (frac_len >= max_len))
+  if (int_len + frac_len >= max_len)
     {
       (*overflow) = true;
       return(0.0);
@@ -23855,11 +23854,19 @@ static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
 
   switch (number_type(p))
     {
-    case NUM_INT:   return(promote_number(sc, T_BIG_INTEGER, p));
-    case NUM_RATIO: return(promote_number(sc, T_BIG_RATIO, p));
+    case NUM_INT:   
+      return(string_to_big_integer(sc, s7_string(car(args)), (cdr(args) == sc->NIL) ?  10 : s7_integer(cadr(args))));
+
+    case NUM_RATIO: 
+      return(string_to_big_ratio(sc, s7_string(car(args)), (cdr(args) == sc->NIL) ? 10 : s7_integer(cadr(args))));
+
     case NUM_REAL:
-    case NUM_REAL2: return(promote_number(sc, T_BIG_REAL, p));
-    default:        return(promote_number(sc, T_BIG_COMPLEX, p));
+    case NUM_REAL2: 
+      if (isnan(s7_real(p))) return(p);
+      return(string_to_big_real(sc, s7_string(car(args)), (cdr(args) == sc->NIL) ? 10 : s7_integer(cadr(args))));
+
+    default:        
+      return(promote_number(sc, T_BIG_COMPLEX, p));
     }
 }
 
@@ -26932,7 +26939,7 @@ static void s7_gmp_init(s7_scheme *sc)
   s7_define_function(sc, "random",              big_random,           1, 1, false, H_random);
   s7_define_function(sc, "make-random-state",   make_big_random_state,1, 0, false, H_make_random_state);
 
-  s7_define_function(sc, "bignum",              g_bignum,             1, 0, false, H_bignum);
+  s7_define_function(sc, "bignum",              g_bignum,             1, 1, false, H_bignum);
   s7_define_function(sc, "bignum?",             g_is_bignum,          1, 0, false, H_is_bignum);
   s7_define_function_with_setter(sc, "bignum-precision", g_get_precision, g_set_precision, 0, 0, H_bignum_precision);
 

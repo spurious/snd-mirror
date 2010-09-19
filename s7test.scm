@@ -21,12 +21,9 @@
 ;;;   various mailing lists and websites (see individual cases below)
 
 
-(define with-bignums (provided? 'gmp))                         ; scheme integer has any number of bits
-(define with-bigfloats (provided? 'gmp))                       ; scheme real has any number of bits
-(define with-bignum-function (defined? 'bignum))               ;   this is a function that turns its string arg into a bignum
+(define with-bignums (provided? 'gmp))                         ; scheme number has any number of bits
 (define with-the-bug-finding-machine #f)                       ; run the machine (this variable can be set to the number of tries)
 					                       ;   the default number of tries is 10000
-(define with-test-at-random #f)
 
 ;;; we assume s7_Double is double, and s7_Int is long long int
 
@@ -305,6 +302,7 @@
 (test (eq? car car) #t)
 (test (eq? car cdr) #f)
 (test (let ((x (lambda () 1))) (eq? x x)) #t)
+(test (let ((x (lambda () 1))) (let ((y x)) (eq? x y))) #t)
 (test (eq? 'abc 'abc) #t)
 (test (eq? eq? eq?) #t)
 (test (eq? (if #f 1) 1) #f)
@@ -722,6 +720,12 @@
 (test (symbol? :hi) #t)
 (test (symbol? hi:) #t)
 (test (symbol? :hi:) #t)
+(test (symbol? ::) #t)
+(test (symbol? ':) #t)
+(test (symbol? '|) #t)
+(test (symbol? '|') #t)
+(test (symbol? '@) #t)
+(test (symbol? '#:) #t)
 (test (symbol? #b1) #f)
 (test (symbol? 'sym0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789) #t) ;M Gran
 (test (symbol? (vector-ref '#(1 a 34) 1)) #t)
@@ -26751,7 +26755,7 @@ why are these different (read-time `#() ? )
   (num-test (- val1 val2) 0.0))
 
 (num-test (sin 22) -8.851309290403875921690256815772332463307E-3)
-(if with-bigfloats
+(if with-bignums
     (num-test (sin 1e22) -8.522008497671888017727058937530293682616E-1)) 
 ;; not even close if not bignums: 0.4626130407646
 ;; we start to lose around 1e18 -- running out of bits of fraction?
@@ -33374,7 +33378,7 @@ why are these different (read-time `#() ? )
 (num-test (log (sqrt (- (expt 10 9) 1))) 1.036163291797320557783096154591297226743E1)
 (num-test (log (sqrt (- (expt 10 17) 1))) 1.957197329044938830915292736481709573957E1)
 (num-test (log (sqrt (- (expt 10 20) 1))) 2.302585092994045684017491454684364207599E1)
-(if with-bigfloats (num-test (log (expt 2 16382)) 1.135513711193302405887309661372784853823E4))
+(if with-bignums (num-test (log (expt 2 16382)) 1.135513711193302405887309661372784853823E4))
 (num-test (log (expt 2 1022)) 7.083964185322641062244112281302564525734E2)
 (num-test (log (expt 2 125)) 8.664339756999316367715401518227207100938E1)
 
@@ -34670,7 +34674,7 @@ why are these different (read-time `#() ? )
 
 (test (rationalize (/ pi) 1e-8) 24288/76303)
 (test (rationalize (/ pi) 1e-10) 33102/103993)
-(if with-bigfloats 
+(if with-bignums 
     (begin
       (test (rationalize (/ pi) 1e-17) 78256779/245850922) 
       (test (rationalize (/ pi) 1e-18) 340262731/1068966896)
@@ -34715,7 +34719,7 @@ why are these different (read-time `#() ? )
 	(if (not rat) 
 	    (format #t "rationalize trouble with ~A~%" val)))))
 
-  (if with-bigfloats
+  (if with-bignums
       (let ((old-prec (bignum-precision)))
 	(set! (bignum-precision) 4096)
 	(test (check-rationalize pi 100) #t)
@@ -37643,8 +37647,8 @@ why are these different (read-time `#() ? )
 (num-test (magnitude -1234000000.0+2.71828182845905i) 1234000000.0)
 (num-test (magnitude 0) 0)
 (num-test (magnitude most-positive-fixnum) most-positive-fixnum)
-(if with-bigfloats (num-test (magnitude most-negative-fixnum) 9223372036854775808))
-(if with-bigfloats (num-test (abs most-negative-fixnum) 9223372036854775808))
+(if with-bignums (num-test (magnitude most-negative-fixnum) 9223372036854775808))
+(if with-bignums (num-test (abs most-negative-fixnum) 9223372036854775808))
 
 (test (abs) 'error)
 (test (abs 1.23+1.0i) 'error)
@@ -39083,7 +39087,7 @@ why are these different (read-time `#() ? )
 (if with-bignums
     (begin
       (num-test (truncate (exact->inexact most-negative-fixnum)) most-negative-fixnum)
-      (if with-bigfloats (test (truncate (exact->inexact most-positive-fixnum)) most-positive-fixnum))))
+      (test (truncate (exact->inexact most-positive-fixnum)) most-positive-fixnum)))
 
 (num-test (truncate 0) 0)
 (num-test (truncate -0) 0)
@@ -39132,7 +39136,7 @@ why are these different (read-time `#() ? )
 (num-test (floor most-negative-fixnum) most-negative-fixnum)
 (num-test (floor most-positive-fixnum) most-positive-fixnum)
 (if with-bignums (num-test (floor (exact->inexact most-negative-fixnum)) most-negative-fixnum))
-(if with-bigfloats (test (floor (exact->inexact most-positive-fixnum)) most-positive-fixnum))
+(if with-bignums (test (floor (exact->inexact most-positive-fixnum)) most-positive-fixnum))
 
 (num-test (floor 9007199254740992.95) 9007199254740992)
 ;; but unfortunately (floor 9007199254740993.95) is also 9007199254740992...
@@ -39186,7 +39190,7 @@ why are these different (read-time `#() ? )
 
 (num-test (ceiling 2147483646.8) 2147483647)
 (num-test (ceiling -2147483647.8) -2147483647)
-(if with-bigfloats
+(if with-bignums
     (begin
       (num-test (ceiling  9223372036854775806.7)  9223372036854775807)
       (num-test (ceiling -9223372036854775807.9) -9223372036854775807)))
@@ -39196,9 +39200,9 @@ why are these different (read-time `#() ? )
 (num-test (ceiling most-negative-fixnum) most-negative-fixnum)
 (num-test (ceiling most-positive-fixnum) most-positive-fixnum)
 (if with-bignums (num-test (ceiling (exact->inexact most-negative-fixnum)) most-negative-fixnum))
-(if with-bigfloats (test (ceiling (exact->inexact most-positive-fixnum)) most-positive-fixnum))
+(if with-bignums (test (ceiling (exact->inexact most-positive-fixnum)) most-positive-fixnum))
 
-(if with-bigfloats
+(if with-bignums
     (begin
       (num-test (ceiling 123456789012345678901234567890.1) 123456789012345678901234567891)
       (num-test (ceiling -123456789012345678901234567890.1) -123456789012345678901234567890)
@@ -39254,7 +39258,7 @@ why are these different (read-time `#() ? )
 (num-test (round most-negative-fixnum) most-negative-fixnum)
 (num-test (round most-positive-fixnum) most-positive-fixnum)
 (if with-bignums (num-test (round (exact->inexact most-negative-fixnum)) most-negative-fixnum))
-(if with-bigfloats (test (round (exact->inexact most-positive-fixnum)) most-positive-fixnum))
+(if with-bignums (test (round (exact->inexact most-positive-fixnum)) most-positive-fixnum))
 
 (test (equal? (let ((vals '())) 
 		(do ((k 1/3 (+ k 1/3))) ((> k 2) (reverse vals)) 
@@ -46833,7 +46837,7 @@ why are these different (read-time `#() ? )
       (test (< (abs (- 217307123869033896670383722255101771944951615456222473725950809456844385078286527901170732595082536915607499776643486838126400154358628745576030002134993982282420557293291331398770482226850626076965834765751024210059623687394545134173058036837172944503241193618487196846261991269480351798163386073355597133702428176134419602160051931823812274538708325328119629419660293102211559158897247464223430070715316610068188075169995173607390273159413073729599663002285391560133032803005324145809498542320942319/69171005865679080805116192745197553936743146778127491628445014149228719516632195993428601364184241694325570308897501794466504355763015991674090032275753543906386364041957503000266249940077862458146827521257517440768326138892186263673940157476537922438310169667984623997354774657585797547359740040386280140433453254961653602051204994301868729700341678413408419088335979860854285428030584998257285624659397393914631805389952520897186723117920856639645035858695810847480593484518166856238091362466500961 pi)) 1e-30) #t)
       (test (< (abs (- 86506249226122124054607019515040072569389309675677090446756879032293209564976057920114008345082990143050895371432654098617595803586181179031736344131661104245709204440599410618785461104070923873664766537405043170624321277708803595336768044461421851475181966244993926088957647640608814315524675779027527947452743019231877030652479460288601395608061537360792381908211008391170537372395545350366754911899795085297260398105485029514527793853213999006311528934617756311568188335120606938078206683552323219/31823870623143321794788842272907994994917601540780651644441590671647399038540853367332145707942720183928541015066510539504636213034857780420049324239395126123695561521079512763516656025946557452382852551302156382716241918690232497805575429042492016743374932252325803315778289435501557305339709678335435100310171257145989526559485407857600325792028152511795618358674583299689136950642929744615564346477399823659926550178426308547711386364571735861738189405232059295317994009776897697526162381026548407 (exp 1.0))) 1e-10) #t)
       
-      (if with-bigfloats
+      (if with-bignums
 	  (begin
 	    (test (< (abs (- 394372834342725903069943709807632345074473102456264/125532772013612015195543173729505082616186012726141 pi)) 1e-100) #t)
 
@@ -48047,7 +48051,7 @@ why are these different (read-time `#() ? )
       (num-test (> 1/123400000000 .000000000001) #t)))
 
 (num-test (exp (* our-pi (sqrt 163))) 262537412640768743.999999999999)
-(if with-bigfloats
+(if with-bignums
     (begin
       (num-test (exp (* our-pi (sqrt (bignum "163")))) 2.625374126407687439999999999992500725895E17)
       ;; H Cohen p 383
@@ -48808,7 +48812,7 @@ why are these different (read-time `#() ? )
 	   (begin (display formula) (display " = ") (display (* r sum)) (newline)))))
    formulas)
   
-  (if with-bigfloats
+  (if with-bignums
       (let ((mxerr 0.0))
 	(for-each 
 	 (lambda (formula)
@@ -48827,7 +48831,7 @@ why are these different (read-time `#() ? )
 	    (format #t "big max error: ~A~%" mxerr)))))
 
 
-(if with-bigfloats	
+(if with-bignums	
     (letrec ((sin-m*pi/n 
 	      (lambda (m1 n1)
 		
@@ -49140,7 +49144,7 @@ why are these different (read-time `#() ? )
 (num-test (rationalize -2.225073858507201399999999999999999999996E-308) 0)
 (num-test (abs -2.225073858507201399999999999999999999996E-308) 2.225073858507201399999999999999999999996E-308)
 (num-test (exp -2.225073858507201399999999999999999999996E-308) 1.000E0)
-(if with-bigfloats (num-test (log -2.225073858507201399999999999999999999996E-308) -7.083964185322641062168115849912137186655E2+3.141592653589793238462643383279502884195E0i))
+(if with-bignums (num-test (log -2.225073858507201399999999999999999999996E-308) -7.083964185322641062168115849912137186655E2+3.141592653589793238462643383279502884195E0i))
 (num-test (sin -2.225073858507201399999999999999999999996E-308) -2.225073858507201399999999999999999999996E-308)
 (num-test (cos -2.225073858507201399999999999999999999996E-308) 1.000E0)
 (num-test (tan -2.225073858507201399999999999999999999996E-308) -2.225073858507201399999999999999999999996E-308)
@@ -49264,7 +49268,7 @@ why are these different (read-time `#() ? )
 (test (>= -1.797693134862315699999999999999999999998E308 -9223372036854775808) #f)
 (num-test (+ -1.797693134862315699999999999999999999998E308 -9223372036854775808) -1.797693134862315699999999999999999999998E308)
 (num-test (- -1.797693134862315699999999999999999999998E308 -9223372036854775808) -1.797693134862315699999999999999999999998E308)
-(if with-bigfloats (begin
+(if with-bignums (begin
 (num-test (* -1.797693134862315699999999999999999999998E308 -9223372036854775808) 1.658079259093488393947175407121858559998E327)
 (num-test (/ -1.797693134862315699999999999999999999998E308 -9223372036854775808) 1.949062802279999590850112500817203908808E289)
 ))
@@ -49303,7 +49307,7 @@ why are these different (read-time `#() ? )
 
 (num-test (max -9223372036854775808 5.551115123125783999999999999999999999984E-17) 5.551115123125783999999999999999999999984E-17)
 (num-test (min -9223372036854775808 5.551115123125783999999999999999999999984E-17) -9.223372036854775808E18)
-(if with-bigfloats (begin
+(if with-bignums (begin
 (num-test (quotient -9223372036854775808 5.551115123125783999999999999999999999984E-17) -166153499473114445265356059994784304)
 (num-test (remainder -9223372036854775808 5.551115123125783999999999999999999999984E-17) -2.295798100238055639010781305842101573944E-17)
 (num-test (modulo -9223372036854775808 5.551115123125783999999999999999999999984E-17) 3.258027528318940824192395666614174842834E-17)
@@ -49366,7 +49370,7 @@ why are these different (read-time `#() ? )
 (num-test (sqrt (* 1.2345e-27 1.2345e-27)) 1.2345e-27)
 (num-test (sqrt (* 1.2345e-127 1.2345e-127)) 1.2345e-127)
 
-(if with-bigfloats
+(if with-bignums
     (begin
       
       (num-test (sqrt (expt 2 32)) 65536)
@@ -49827,7 +49831,7 @@ why are these different (read-time `#() ? )
 		(> val 1.0))
 	    (format #t "(random 1.0 rs) -> ~A?~%" val)))))
   
-  (if with-bigfloats
+  (if with-bignums
       (begin
 	(num-test (random (bignum "0")) 0)
 	(num-test (random (bignum "0.0")) 0.0)
@@ -50251,7 +50255,7 @@ why are these different (read-time `#() ? )
       (num-test (lcm 2/132120577 3/33292289 4/260046847) 12)
       (num-test (lcm 132120577/12 33292289/6 260046847/4) 1143841133453061178785791/2)
       
-      (if with-bigfloats 
+      (if with-bignums 
 	  (begin
 	    (num-test (+ 9223372036854775808.0 3.4) 9.2233720368547758114E18)
 	    (num-test (+ 9223372036854775808.0+1.5i 3.4) 9.2233720368547758114E18+1.5i)
@@ -51023,7 +51027,6 @@ why are these different (read-time `#() ? )
 
 (if with-bignums
     (begin
-      (test (number->string (bignum "12345.67890987654321") 2) "1.1000000111001101011011100110100001001101001001011E13")
       (num-test (string->number (number->string (bignum "12345.67890987654321") 2) 2) 12345.67890987654321)
       (test (number->string 1234.5678909876543212345 16) "4d2.91614dc3ab1f80e55a563311b8f308")
       (test (number->string -1234.5678909876543212345 16) "-4d2.91614dc3ab1f80e55a563311b8f308")
@@ -52506,7 +52509,7 @@ why are these different (read-time `#() ? )
 		    (and (rational? y) (not (eqv? xx y)))
 		    (abs (- xx y))))))
     couple))
- '(;; Radix:
+ '(
    ("#b0" 0)  ("#b1" 1) ("#o0" 0) ("#b-1" -1) ("#b+1" 1)
    ("#o1" 1)  ("#o2" 2) ("#o3" 3) ("#o-1" -1)
    ("#o4" 4)  ("#o5" 5) ("#o6" 6)
@@ -52521,10 +52524,8 @@ why are these different (read-time `#() ? )
    ("#o12345670" 2739128)
    ("#d1234567890" 1234567890)
    ("#x1234567890abcdef" 1311768467294899695)
-   ;; Exactness:
    ("#e1" 1) ("#e1.2" 12/10)
    ("#i1.1" 1.1) ("#i1" 1.0)
-   ;; Integers:
    ("1" 1) ("23" 23) ("-1" -1) 
    ("-45" -45)                      ;("2#" 20.0) ("2##" 200.0) ("12##" 1200.0) ; this # = 0 is about the stupidest thing I've ever seen
    ("#b#i100" 4.0) ("#b#e100" 4) ("#i#b100" 4.0) ("#e#b100" 4)
@@ -52533,36 +52534,19 @@ why are these different (read-time `#() ? )
    ("#d#i100" 100.0) ("#d#e100" 100) ("#i#d100" 100.0) ("#e#d100" 100)
    ("#x#i100" 256.0) ("#x#e100" 256) ("#i#x100" 256.0) ("#e#x100" 256)
    ("#e#xee" 238) ("#e#x1e1" 481)
-
    ("#xA" 10) ("#xB" 11) ("#x-1" -1) ("#x-A" -10)
    ("#xC" 12) ("#xD" 13) 
    ("#xE" 14) ("#xF" 15) ("#x-ABC" -2748)
    ("#xaBC" 2748) ("#xAbC" 2748) ("#xabC" 2748) ("#xABc" 2748)
-
-   ;; Fractions:
-   ("1/1" 1) ("1/2" 1/2) ("-1/2" -1/2) ;("1#/1" 10.0)
-					;("10/1#" 1.0) ("1#/1#" 1.0) ("#e9/10" 9/10) ("#e10/1#" 1)
-					;("#i6/8" 0.75) ("#i1/1" 1.0)
-   ;; Decimal numbers:
-   ;; * <uinteger 10> <suffix>
+   ("1/1" 1) ("1/2" 1/2) ("-1/2" -1/2) ("#e9/10" 9/10) ("#i6/8" 0.75) ("#i1/1" 1.0)
    ("1e2" 100.0) ("1s2" 100.0)
    ("1f2" 100.0) ("1d2" 100.0) 
    ("1l2" 100.0) 
    ("1e+2" 100.0) ("1e-2" 0.01)
-   ;; * . <digit 10>+ #* <suffix>
-   (".1" .1) (".0123456789" 123456789e-10) ;(".16#" 0.16)
-   (".0123456789e10" 123456789.0) ;(".16#e3" 160.0) ("#d.3" 0.3)
-   ;; * <digit 10>+ . <digit 10>* #* <suffix>
+   (".1" .1) (".0123456789" 123456789e-10) 
+   (".0123456789e10" 123456789.0)
    ("3." 3.0) ("3.e0" 3.0)
-   ;("3.1" ,(exact->inexact 31/10)) ("3.1e0" 3.1) ;("3.1#" 3.1)
-					;("3.1#e0" 3.1)
-   ;; * <digit 10>+ #+ . #* <suffix>
-					;("3#." 30.0) ("3#.e0" 30.0) ("3#.#" 30.0) ("3#.#e0" 30.0)
-   ;; Complex:
-   ;; ("1@0" 1.0) ("1@+0" 1.0) ("1@-0" 1.0)          ; whose dumb idea was this?
-   ;("2+3i" ,(+ 2 (* 3 0+i))) ("4-5i" ,(- 4 (* 5 0+i)))
    ("1+i" 1+1i) ("1-i" 1-1i) 
-   ;; ("+1i" 0+1i) ("-1i" 0-1i) ("+i" +1i) ("-i" -1i) ; I don't like these
    ("#e1e1" 10) ("#i1e1+i" 10.0+1.0i)
    ))
 
@@ -52604,6 +52588,30 @@ why are these different (read-time `#() ? )
 (test (string->number (string)) #f)
 (test (string->number (substring "hi" 0 0)) #f)
 (test (string->number (string (integer->char 30))) #f)
+
+(num-test (- (string->number "1188077266484631001.") (string->number "1.188077266484631001E18")) 0.0)
+
+(num-test (- (string->number "1188077266484631001." 10) (string->number "1.188077266484631001E18" 10)) 0.0)
+(num-test (- (string->number "118807726648463100.1" 10) (string->number "1.188077266484631001E17" 10)) 0.0)
+(if with-bignums 
+    (num-test (- (string->number "118807726648463.1001" 10) (string->number "1.188077266484631001E14" 10)) 0.0)
+    (test (> (abs (- (string->number "118807726648463.1001" 10) (string->number "1.188077266484631001E14" 10))) 1e-1) #f))
+(num-test (- (string->number "11880772664.84631001" 10) (string->number "1.188077266484631001E10" 10)) 0.0)
+(num-test (- (string->number "11880772.66484631001" 10) (string->number "1.188077266484631001E7" 10)) 0.0)
+
+(num-test (- (string->number "118807726648463100100." 9) (string->number "1.188077266484631001E20" 9)) 0.0)
+(num-test (- (string->number "1188077266484631001." 9) (string->number "1.188077266484631001E18" 9)) 0.0)
+(num-test (- (string->number "118807726648463100.1" 9) (string->number "1.188077266484631001E17" 9)) 0.0)
+(if with-bignums
+    (num-test (- (string->number "118807726648463.1001" 9) (string->number "1.188077266484631001E14" 9)) 0.0)
+    (test (> (abs (- (string->number "118807726648463.1001" 9) (string->number "1.188077266484631001E14" 9))) 1e-1) #f))
+(num-test (- (string->number "11880772664.84631001" 9) (string->number "1.188077266484631001E10" 9)) 0.0)
+(num-test (- (string->number "11880772.66484631001" 9) (string->number "1.188077266484631001E7" 9)) 0.0)
+
+(num-test (- (string->number "1177077266474631001000." 8) (string->number "1.177077266474631001E21" 8)) 0.0)
+;; a fake unfortunately
+
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -53758,10 +53766,10 @@ why are these different (read-time `#() ? )
       (r 2/3)
       (c 1.5+0.3i))
   (let ((check-vals (lambda (name)
-		      (if (or (not (= d 3.14))
+		      (if (or (not (= d 3.14)) ; (> (abs (- d 3.14)) 1e-16) ; (- 3.14 (bignum "3.14")) is around 1e-17!
 			      (not (= i 32))
 			      (not (= r 2/3))
-			      (not (= c 1.5+0.3i)))
+			      (not (= c 1.5+0.3i))) ; (> (magnitude (- c 1.5+0.3i)) 1e-16))
 			  (begin 
 			    (display name) (display " changed ")
 			    (if (not (= i 32))
@@ -53800,7 +53808,7 @@ why are these different (read-time `#() ? )
       expt = max min modulo < > <= >= lcm gcd 
       ))))
 
-(if (and with-bignums with-bignum-function with-bigfloats)
+(if with-bignums
     (begin
       
       (test (bignum "1/3.0") 'error)
@@ -53810,10 +53818,10 @@ why are these different (read-time `#() ? )
 	    (r (bignum "2/3"))
 	    (c (bignum "1.5+0.3i")))
 	(let ((check-vals (lambda (name)
-			    (if (or (not (= d 3.14))
+			    (if (or (not (= d (bignum "3.14"))) ; see above
 				    (not (= i 32))
 				    (not (= r 2/3))
-				    (not (= c 1.5+0.3i)))
+				    (not (= c (bignum "1.5+0.3i"))))
 				(begin 
 				  (display name) (display " changed ")
 				  (if (not (= i 32))
@@ -53859,6 +53867,13 @@ why are these different (read-time `#() ? )
      (if (not nb) (format #t "(number? ~A) -> #f?~%" n))))
  (list '1e311 '1e-311 '0e311 '2.1e40000))
 
+(for-each
+ (lambda (arg)
+   (test (bignum "1.0" arg) 'error))
+ (list -1 0 #\a '#(1 2 3) 2/3 1.5+0.3i 1+i '() 'hi abs "hi" '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+
+
+;;; TODO: string-> big complex (mpc_set_str expects CL syntax, not Scheme)
 
 
 (let ()
@@ -57687,8 +57702,6 @@ why are these different (read-time `#() ? )
     
     ))
 
-(if with-test-at-random
-    (s7-test-at-random))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -58064,12 +58077,9 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 but how to build these in scheme?
 
 
-(- (string->number "1188077266484631001." 9) (string->number "1.188077266484631001E18" 9)) -> 1.0
-;; ok if 0 at end or if e17
+(= 3.14 (bignum "3.14")) -> #f
 
-how does clisp get this right?
-[2]> (expt #C(0.0 -1.0) 1e16)
-#C(1.0 0.0)
+(symbol? :) -> :: unbound variable
+(symbol? #:) same
 
-(sbcl is way off: (expt #C(0 1) 1e16) -> #C(0.539155 0.84220654))
 |#
