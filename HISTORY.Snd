@@ -1,5 +1,6 @@
 Snd change log
 
+ 19-Sep:    removed snd7.scm and snd8.scm.
  18-Sep:    Snd 11.9.
  19-Aug:    removed the Gdk backend option; cairo is now the only choice.
  12-Aug:    Snd 11.8.

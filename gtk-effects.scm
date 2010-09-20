@@ -20,7 +20,7 @@
   ;; find two marks in the current channel (in or nearest to current window)
   (let* ((snd (selected-sound))
 	 (chn (selected-channel))
-	 (ms (sort (map mark-sample (marks snd chn)) <)))
+	 (ms (sort! (map mark-sample (marks snd chn)) <)))
     (if (< (length ms) 2)
 	(throw 'no-such-mark (list "mark-related action requires two marks"))
 	(if (= (length ms) 2)

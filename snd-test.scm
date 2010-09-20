@@ -69,8 +69,6 @@
       (string-set! newstr i (char-downcase (string-ref str i))))
     newstr))
 
-(define (sort lst . opt) (sort! lst (if (null? opt) < (car opt))))
-
 (define* (cfft! data n (dir 1))
   (if (not n) (set! n (length data)))
   (do ((i 0 (+ i 1))
@@ -14311,15 +14309,16 @@ EDITS: 2
 	      (snd-display #__line__ ";vct-add + offset: ~A" v0)))
 	
 	;; test local var gc protection in vct.h vct_to_vector
-	(let ((v1 (vct-map! 
-		   (make-vct 44100 0.0) 
-		   (make-oscil 1)))) 
-	  (vct->vector v1) 
-	  (vct->vector v1)
-	  (let ((vect (vct->vector v1)))
-	    (vector->vct vect)
-	    (vector->vct vect)
-	    (set! v1 (vector->vct vect))))
+	(let ((o (make-oscil 1)))
+	  (let ((v1 (vct-map! 
+		     (make-vct 44100 0.0) 
+		     (lambda () (o)))))
+	    (vct->vector v1) 
+	    (vct->vector v1)
+	    (let ((vect (vct->vector v1)))
+	      (vector->vct vect)
+	      (vector->vct vect)
+	      (set! v1 (vector->vct vect)))))
 	
 #|
 	;; a test of big vcts (needs 16 Gbytes):

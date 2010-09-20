@@ -79,7 +79,7 @@
 
     (define (get-current-files dir)
       (set! current-directory dir)
-      (set! current-sorted-files (sort (sound-files-in-directory dir) string<?)))
+      (set! current-sorted-files (sort! (sound-files-in-directory dir) string<?)))
 
     (define (get-current-directory filename)
       (set! last-file-opened filename)

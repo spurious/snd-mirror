@@ -1969,7 +1969,7 @@ static s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, int
   for (x = vector_element(sc->symbol_table, location); x != sc->NIL; x = cdr(x)) 
     { 
       const char *s; 
-      s = s7_symbol_name(car(x)); 
+      s = symbol_name(car(x)); 
       if ((s) && (strings_are_equal(name, s)))
 	{
 #if HAVE_PTHREADS
@@ -2010,7 +2010,7 @@ void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symb
 
   for (i = 0; i < vector_length(sc->symbol_table); i++) 
     for (x  = vector_element(sc->symbol_table, i); x != sc->NIL; x = cdr(x)) 
-      if (symbol_func(s7_symbol_name(car(x)), data))
+      if (symbol_func(symbol_name(car(x)), data))
 	{
 #if HAVE_PTHREADS
 	  pthread_mutex_unlock(&symtab_lock);
@@ -2035,7 +2035,7 @@ void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
 
   for (i = 0; i < vector_length(sc->symbol_table); i++) 
     for (x  = vector_element(sc->symbol_table, i); x != sc->NIL; x = cdr(x)) 
-      if (symbol_func(s7_symbol_name(car(x)), cdr(x), data))
+      if (symbol_func(symbol_name(car(x)), cdr(x), data))
 	{
 #if HAVE_PTHREADS
 	  pthread_mutex_unlock(&symtab_lock);
@@ -2148,10 +2148,15 @@ const char *s7_symbol_name(s7_pointer p)
 static s7_pointer g_symbol_to_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_to_string "(symbol->string sym) returns the symbol sym converted to a string"
-  if (!s7_is_symbol(car(args)))
-    return(s7_wrong_type_arg_error(sc, "symbol->string", 0, car(args), "a symbol"));
+  s7_pointer sym;
+
+  sym = car(args);
+  if (!s7_is_symbol(sym))
+    return(s7_wrong_type_arg_error(sc, "symbol->string", 0, sym, "a symbol"));
   
-  return(s7_make_string(sc, s7_symbol_name(car(args)))); /* return a copy */
+  /* s7_make_string uses strlen which stops at an embedded null
+   */
+  return(s7_make_string_with_length(sc, symbol_name(sym), symbol_name_length(sym)));    /* return a copy */
 }
 
 
@@ -2164,6 +2169,10 @@ static s7_pointer g_string_to_symbol(s7_scheme *sc, s7_pointer args)
 
   if (!s7_is_string(str))
     return(s7_wrong_type_arg_error(sc, "string->symbol", 0, str, "a string"));
+
+  /* currently if the string has an embedded null, it marks the end of the new symbol name.
+   *   I wonder if this is a bug...
+   */
   return(s7_make_symbol(sc, string_value(str)));
 
   /* This can return symbols that can't be used as, for example, variable names.
@@ -2825,7 +2834,7 @@ static s7_pointer g_keyword_to_symbol(s7_scheme *sc, s7_pointer args)
   if (!s7_is_keyword(car(args)))
     return(s7_wrong_type_arg_error(sc, "keyword->symbol", 0, car(args), "a keyword"));
 
-  name = s7_symbol_name(car(args));
+  name = symbol_name(car(args));
   if (name[0] == ':')
     return(s7_make_symbol(sc, (const char *)(name + 1)));
 
@@ -2847,7 +2856,7 @@ static s7_pointer g_symbol_to_keyword(s7_scheme *sc, s7_pointer args)
   #define H_symbol_to_keyword "(symbol->keyword sym) returns a keyword with the same name as sym, but with a colon prepended"
   if (!s7_is_symbol(car(args)))
     return(s7_wrong_type_arg_error(sc, "symbol->keyword", 0, car(args), "a symbol"));
-  return(s7_make_keyword(sc, s7_symbol_name(car(args))));
+  return(s7_make_keyword(sc, symbol_name(car(args))));
 }
 
 
@@ -9362,13 +9371,12 @@ static s7_pointer g_list_to_string(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer s7_string_to_list(s7_scheme *sc, const char *str)
+static s7_pointer s7_string_to_list(s7_scheme *sc, const char *str, int len)
 {
-  int i, len = 0;
+  int i;
   s7_pointer p;
-  
-  if (str) len = safe_strlen(str);
-  if (len == 0)                     /* (string->list (string #\null)) will return '() -- not sure that's correct */
+
+  if (len == 0)
     return(sc->NIL);
 
   sc->w = sc->NIL;
@@ -9384,11 +9392,13 @@ static s7_pointer s7_string_to_list(s7_scheme *sc, const char *str)
 static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_to_list "(string->list str) returns the elements of the string str in a list; (map values str)"
-  
-  if (!s7_is_string(car(args)))
-    return(s7_wrong_type_arg_error(sc, "string->list", 0, car(args), "a string"));
+  s7_pointer str;
 
-  return(s7_string_to_list(sc, string_value(car(args))));
+  str = car(args);
+  if (!s7_is_string(str))
+    return(s7_wrong_type_arg_error(sc, "string->list", 0, str, "a string"));
+
+  return(s7_string_to_list(sc, string_value(str), string_length(str)));
 }
 
 
@@ -14274,14 +14284,34 @@ s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
 
 bool s7_is_procedure(s7_pointer x)
 {
-  return(is_procedure(x)); /* this used to check is_closure also, but it always includes T_PROCEDURE */
+  return(is_procedure(x)); /* this returns "is applicable" so it is true for applicable objects, macros, etc */
 }
 
 
 static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_procedure "(procedure? obj) returns #t if obj is a procedure"
-  return(make_boolean(sc, is_procedure(car(args))));
+  s7_pointer x;
+  int typ;
+
+  x = car(args);
+  typ = type(x);
+
+  /* make_object sets the T_PROCEDURE bit if the object has an apply function,
+   *   but we currently return (procedure? "hi") -> #f, so we can't use
+   *   is_procedure directly.  s7_define_macro (T_C_MACRO) also sets that bit.
+   * 
+   * Unfortunately much C code depends on s7_is_procedure treating applicable
+   *  objects and macros as procedures.  Ideally we'd have s7_is_applicable.
+   */
+  return(make_boolean(sc,
+		      (typ == T_CLOSURE) || 
+		      (typ == T_CLOSURE_STAR) ||
+		      (typ == T_C_ANY_ARGS_FUNCTION) ||
+		      (typ == T_C_FUNCTION) ||
+		      (typ == T_GOTO) ||
+		      (typ == T_CONTINUATION) ||
+		      (s7_is_procedure_with_setter(x))));
 }
 
 
@@ -16406,7 +16436,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			  {
 			    if (s7_is_string(curly_arg))
 			      {
-				curly_arg = s7_string_to_list(sc, string_value(curly_arg));
+				curly_arg = s7_string_to_list(sc, string_value(curly_arg), string_length(curly_arg));
 				curly_gc = s7_gc_protect(sc, curly_arg);
 			      }
 			    /* perhaps extend format {} to any c object that is applicable? */
@@ -20853,7 +20883,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				   sc->__FUNC__, 									       
 				   make_list_3(sc, 
 					       sc->code,
-					       make_protected_string(sc, port_filename(sc->input_port)),
+					       make_protected_string(sc, copy_string(port_filename(sc->input_port))),
+					       /* copy_string is needed because port_filename is GC'd when the port is closed */
 					       s7_make_integer(sc, port_line_number(sc->input_port))));
 	  else sc->x = immutable_cons(sc, sc->__FUNC__, sc->code);
 	  closure_environment(sc->value) = s7_cons(sc, 
@@ -27899,7 +27930,7 @@ s7_scheme *s7_init(void)
  :(functions-equal? (let ((a 1)) (lambda () a)) (let ((a 1)) (lambda () a)))
   #t
 
- * and copy a function?
+ * and copy a function? -- apply lambda[*] to the procedure source + args + local env
  *
  * this seems unfortunate (macros are a similar case):
 
@@ -27911,6 +27942,8 @@ s7_scheme *s7_init(void)
 
  *
  * things to fix: nonce-symbols need to be garbage collected
+ * things to add: lint? (can we notice unreachable code, unbound variables, bad args)?
+ *                could the profiler give block counts as well?
  *
  * s7test valgrind, time       17-Jul-10   7-Sep-10
  *    intel core duo (1.83G):    3162     2690, 1.921

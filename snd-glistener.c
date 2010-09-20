@@ -678,6 +678,16 @@ static gboolean listener_button_press(GtkWidget *w, GdkEventButton *ev, gpointer
 
 static gboolean listener_button_release(GtkWidget *w, GdkEventButton *ev, gpointer data)
 {
+  if (EVENT_STATE(ev) & GDK_BUTTON2_MASK)
+    {
+      int end;
+      end = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
+      sg_set_cursor(listener_text, end + 1);
+      /* I guess ideally we'd go to the end of the current form.  At least this
+       *   squelches the redundant copy of the text and leaves the cursor in most
+       *   cases at the end of the form.
+       */
+    }
   check_parens();
   return(false);
 }

@@ -769,6 +769,12 @@
 (test (procedure? begin) #f)
 (test (procedure? (lambda* ((a 1)) a)) #t)
 (test (procedure? and) #f)
+(test (procedure? (make-procedure-with-setter (lambda () 1) (lambda (x) x))) #t)
+(if with-bignums (test (procedure? (bignum "1e100")) #f))
+(test (procedure? quasiquote) #f)
+(let () (define-macro (hi a) `(+ ,a 1)) (test (procedure? hi) #f))
+(test (procedure? (make-random-state 1234)) #f)
+(test (procedure? pi) #f)
 
 (for-each
  (lambda (arg)
@@ -940,6 +946,15 @@
   (test (char-lower-case? 1) 'error)
   (test (char-lower-case?) 'error)
   (test (char-lower-case? #\a #\b) 'error)
+  (test (char-lower-case? #\xb5) #t)  ; what is this?
+  (test (char-lower-case? #\xb6) #f)
+
+  (for-each
+   (lambda (c)
+     (test (and (not (char-upper-case? c)) 
+		(not (char-lower-case? c))) #t))
+   (map integer->char (list 0 1 2 3 32 33 34 170 182 247)))
+
 
   
   (test (char-upcase #\A) #\A)
@@ -2398,7 +2413,7 @@
 (test (string->list "abc") (list #\a #\b #\c))
 (test (string->list "") '())
 (test (string->list (make-string 0)) '())
-(test (string->list (string #\null)) '()) ; should this be '(#\null) ? -- this is what Guile returns
+(test (string->list (string #\null)) '(#\null))
 (test (string->list (string)) '())
 (test (string->list (substring "hi" 0 0)) '())
 (test (string->list (list->string (list #\a #\b #\c))) (list #\a #\b #\c))
@@ -2442,7 +2457,29 @@
    (test (list->string arg) 'error))
  (list "hi" #\a 1 ''foo '(1 . 2) (cons #\a #\b) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
+(let ((str (list->string '(#\x #\space #\null #\x))))
+  (test (length str) 4)
+  (test (str 1) #\space)
+  (test (str 2) #\null)
+  (test (str 3) #\x)
+  (test (object->string str) "\"x \\x00x\"")
+  (let ((lst (string->list str)))
+    (test lst '(#\x #\space #\null #\x))))
 
+(let ((strlen 8))
+  (let ((str (make-string strlen)))
+    (do ((i 0 (+ i 1)))
+	((= i 10))
+      (do ((k 0 (+ k 1)))
+	  ((= k strlen))
+	(set! (str k) (integer->char (random 256))))
+      (let ((lst (string->list str)))
+	(let ((newstr (list->string lst)))
+	  (let ((lstlen (length lst))
+		(newstrlen (length newstr)))
+	    (if (or (not (= lstlen strlen newstrlen))
+		    (not (string=? newstr str)))
+		(format #t ";string->list->string: ~S -> ~A -> ~S~%" str lst newstr))))))))
 
 #|
 (define (all-strs len file)
@@ -2565,7 +2602,8 @@
 (test (symbol? (string->symbol (string #\x (integer->char 7) #\x))) #t)
 (test (symbol? (string->symbol (string #\x (integer->char 17) #\x))) #t)
 (test (symbol? (string->symbol (string #\x (integer->char 170) #\x))) #t)
-(test (symbol? (string->symbol (string #\x (integer->char 0) #\x))) #t)
+(test (symbol? (string->symbol (string #\x (integer->char 0) #\x))) #t)       ; but the symbol's name here is "x"
+(test (eq? (string->symbol (string #\x (integer->char 0) #\x)) 'x) #t)        ;   hmmm...
 (test (symbol? (string->symbol (string #\x #\y (integer->char 127) #\z))) #t) ; xy(backspace)z
 
 (test (symbol? (string->symbol (string #\; #\" #\)))) #t)
@@ -13449,6 +13487,18 @@ why are these different (read-time `#() ? )
   (test (keyword->symbol (make-keyword (string #\"))) (symbol "\""))
   )
 
+(let ((strlen 8))
+  (let ((str (make-string strlen)))
+    (do ((i 0 (+ i 1)))
+	((= i 10))
+      (do ((k 0 (+ k 1)))
+	  ((= k strlen))
+	(set! (str k) (integer->char (+ 1 (random 255)))))
+      (let ((key (make-keyword str)))
+	(let ((newstr (symbol->string (keyword->symbol key))))
+	  (if (not (string=? newstr str))
+	      (format #t ";make-keyword -> string: ~S -> ~A -> ~S~%" str key newstr)))))))
+
 (let ()
   (define* (hi a b) (+ a b))
   (test (hi 1 2) 3)
@@ -14577,6 +14627,44 @@ why are these different (read-time `#() ? )
 	  (with-environment (procedure-environment hi) 
             ((eval (procedure-source hi)) 2)))
 	3)
+
+  (let ()
+    (define (where-is func)
+      (let* ((env (procedure-environment func))
+	     (cenv (and (pair? env)
+			(car env)))
+	     (f (and (pair? cenv)
+		     (assoc '__func__ cenv)))
+	     (addr (and (pair? f)
+			(cdr f))))
+	(if (not (pair? addr))
+	    ""
+	    (list (format #f "~A[~D]" (cadr addr) (caddr addr))
+		  addr))))
+    (let ((e (where-is ok?)))
+      (test (and (pair? (cadr e))
+		 (< (abs (- 43 ((cadr e) 2))) 5))
+	    #t)
+      (test (and (pair? (cadr e))
+		 (string=? (symbol->string (car (cadr e))) "ok?"))
+	    #t)
+      (test (and (pair? (cadr e))
+		 (let ((name (cadr (cadr e))))
+		   (and (string? name)
+			(call-with-exit
+			 (lambda (oops)
+			   (let ((len (length name)))
+			     (do ((i 0 (+ i 1)))
+				 ((= i len) #t)
+			       (if (and (not (char-alphabetic? (name i)))
+					(not (char=? (name i) #\/))
+					(not (char=? (name i) #\\))
+					(not (char=? (name i) #\.))
+					(not (char-numeric? (name i))))
+				   (begin
+				     (format #t "ok? file name: ~S~%" name)
+				     (oops #f))))))))))
+	    #t)))
   
   (let ()
     (define-macro (window func beg end . body)
@@ -15686,6 +15774,7 @@ why are these different (read-time `#() ? )
       (let ((a ((cadr typo) 123))
 	    (b ((cadr typo) 321))
 	    (c ((cadr typo) 123)))
+	(test (procedure? a) #f)
 	(test (equal? a b) #f)
 	(test (eq? a a) #t)
 	(test (eq? a b) #f)
@@ -53282,9 +53371,8 @@ why are these different (read-time `#() ? )
     (list 1e-16+1e-16i 0.1+0.1i -2.185846675892145203322615268234771243738E-2+1.000746379588156995072970612624735653063E-2i) 
     (list 1e-16+1e-16i 1e+16+1e+16i 0.0) (list 1e-16+1e-16i 1e-16+1e-16i 9.999999999999962719813938977799891729155E-1-3.570938973422717612919117771011138615376E-15i) 
     ))
-
-
   )
+
 
 ;;; --------------------------------------------------------------------------------
 
@@ -58028,6 +58116,59 @@ why are these different (read-time `#() ? )
 
 ;;; --------------------------------------------------------------------------------
 
+(define* (profile (file "sort.data"))
+  ;; find all functions, write out each one's number of calls, sorted first by calls, then alphabetically 
+
+  (define (where-is func)
+    (let* ((env (procedure-environment func))
+	   (cenv (and (pair? env)
+		      (car env)))
+	   (f (and (pair? cenv)
+		   (assoc '__func__ cenv)))
+	   (addr (and (pair? f)
+		      (cdr f))))
+      (if (not (pair? addr))
+	  ""
+	  (format #f "~A[~D]" (cadr addr) (caddr addr)))))
+
+
+  (if (provided? 'profiling)
+      (let ((st (symbol-table))
+	    (calls (make-vector 50000 #f))
+	    (call 0))
+	(do ((i 0 (+ i 1))) 
+	    ((= i (length st)))
+	  (let ((lst (st i)))
+	    (for-each
+	     (lambda (sym)
+	       (if (and (defined? sym) 
+			(procedure? (symbol->value sym)))
+		   (begin
+		     (set! (calls call) (list sym (symbol-calls sym)))
+		     (set! call (+ call 1)))))
+	     lst)))
+	(let ((new-calls (make-vector call)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i call))
+	    (set! (new-calls i) (calls i)))
+	  (let ((sorted-calls (sort! new-calls 
+				     (lambda (a b) 
+				       (or (> (cadr a) (cadr b))
+					   (and (= (cadr a) (cadr b))
+						(string<? (symbol->string (car a)) 
+							  (symbol->string (car b)))))))))
+	    (with-output-to-file file
+	      (lambda ()
+		(do ((i 0 (+ i 1)))
+		    ((= i call))
+		  (let ((c (sorted-calls i)))
+		    (format #t "~A:~40T~A~60T~A~%" (car c) (cadr c) (where-is (car c))))))))))))
+
+(if (provided? 'profiling)
+    (profile))
+
+
+;;; --------------------------------------------------------------------------------
 
 (format #t "~%;all done!~%")
 

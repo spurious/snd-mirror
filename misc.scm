@@ -16,7 +16,6 @@
 (if (not (provided? 'snd-rubber.scm)) (load "rubber.scm"))
 (if (not (provided? 'snd-zip.scm)) (load "zip.scm"))
 (if (not (provided? 'snd-new-effects.scm)) (load "new-effects.scm"))
-(if (not (provided? 'snd-snd7.scm)) (load "snd7.scm"))
 (if (not (provided? 'snd-special-menu.scm)) (load "special-menu.scm"))
 (if (not (provided? 'snd-new-backgrounds.scm)) (load "new-backgrounds.scm"))
 (if (not (provided? 'snd-marks-menu.scm)) (load "marks-menu.scm"))

@@ -244,11 +244,11 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
 		 (list XmNfileSearchProc
 		       (lambda (widget info)
 			 (let* ((dir (XmString->string (.dir info)))  ; may need filter text here?
-				(files (sort (map 
-					      (lambda (n) 
-						(string-append dir n)) 
-					      (match-sound-files proc dir))
-					     string<?))               ; alphabetical order
+				(files (sort! (map 
+					       (lambda (n) 
+						 (string-append dir n)) 
+					       (match-sound-files proc dir))
+					      string<?))               ; alphabetical order
 				(fileTable (map
 					    (lambda (n)
 					      (XmStringGenerate 

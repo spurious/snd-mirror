@@ -1,7 +1,6 @@
 ;;; versions of the Moore-Klingbeil-Trevisani-Edwards phase-vocoder
 
 (provide 'snd-pvoc.scm)
-(if (not (provided? 'snd-snd7.scm)) (load "snd7.scm"))
 
 (define* (make-pvocoder fftsize overlap interp analyze edit synthesize)
   "(make-pvocoder fftsize overlap interp analyze edit synthesize) makes a new (Scheme-based, not CLM) phase-vocoder generator"
@@ -228,6 +227,19 @@
 
 
 ;;; -------- another version of the phase vocoder --------
+
+(define (oscil-bank amps1 gens fms)
+  "(oscil-bank amps1 gens fms) sums a vector of oscils"
+  (declare (gens clm-vector))
+  (let* ((len (vector-length gens))
+	 (sum 0.0)
+	 (amps (if (vector? amps1) (vector->vct amps1) amps1))
+	 (inp1 (if (vector? fms) (vector->vct fms) (or fms (make-vct len 0.0)))))
+    (do ((i 0 (+ 1 i)))
+	((= i len))
+      (set! sum (+ sum (* (vct-ref amps i) (oscil (vector-ref gens i) (vct-ref inp1 i))))))
+    sum))
+
 
 (define pvoc
   (lambda* (:key

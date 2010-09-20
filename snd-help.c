@@ -493,6 +493,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+19-Sep:  removed snd7.scm and snd8.scm.\n\
 18-Sep:  Snd 11.9.\n\
 19-Aug:  removed the Gdk backend option; cairo is now the only choice.\n\
 12-Aug:  Snd 11.8.\n\

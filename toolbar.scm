@@ -2,10 +2,51 @@
 
 (if (provided? 'snd-motif) 
     (begin
-      (if (not (provided? 'snd-snd7.scm)) (load "snd7.scm"))           ; backward-mix
       (if (not (provided? 'snd-play.scm)) (load "play.scm"))           ; play-until-c-g
       (if (not (provided? 'snd-snd-motif.scm))                                   ; add-main-pane
 	  (load "snd-motif.scm"))))
+
+
+(define (back-or-forth-mix count snd chn)
+  "(back-or-forth-mix count snd chn) moves the cursor 'count' mixes"
+  (if (not (= count 0))
+      (let ((mx (mixes snd chn)))
+	(if (not (null? mx))
+	    (let ((len (length mx)))
+	      (if (= len 1)
+		  (begin
+		    (set! (cursor snd chn) (mix-position (car mx)))
+		    (car mx))
+		  (let ((sorted-mx (sort! mx (lambda (a b) (< (mix-position a) (mix-position b)))))
+			(pos (cursor snd chn))
+			(curpos (if (> count 0) -1 0)))
+		    (if (>= pos (mix-position (car sorted-mx)))
+			(call-with-exit
+			 (lambda (break)
+			   (for-each
+			    (lambda (m)
+			      (if (or (and (> count 0)
+					   (< pos (mix-position m)))
+				      (and (< count 0)
+					   (<= pos (mix-position m))))
+				  (break)
+				  (set! curpos (+ 1 curpos))))
+			    sorted-mx))))
+		    (set! curpos (modulo (+ curpos count) len))
+		    (set! (cursor snd chn) (mix-position (list-ref sorted-mx curpos)))
+		    (list-ref sorted-mx curpos))))
+	    #f))
+      #f))
+		
+(define* (forward-mix (count 1) snd chn)
+  "(forward-mix (count 1) snd chn) moves the cursor forward 'count' mixes in the given channel"
+  (back-or-forth-mix count (or snd (selected-sound) (car (sounds))) (or chn (selected-channel) 0)))
+
+(define* (backward-mix (count 1) snd chn)
+  "(backward-mix (count 1) snd chn) moves the cursor backward 'count' mixes in the given channel"
+  (back-or-forth-mix (- count) (or snd (selected-sound) (car (sounds))) (or chn (selected-channel) 0)))
+
+
 
 (if (provided? 'snd-motif)
     (let* ((toolscroll (add-main-pane "toolscroll" xmScrolledWindowWidgetClass
