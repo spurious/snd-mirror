@@ -1025,7 +1025,7 @@ static XEN g_mus_generator_p(XEN obj)
   if (MUS_XEN_P(obj)) return(XEN_TRUE);
 
 #if HAVE_SCHEME || HAVE_FORTH
-  /* defgenerator defines "mus-name", and I can't see why a non-generator would include it in def-clm-struct, so... */
+  /* defgenerator defines "mus-name" -- we need an actual type here! */
   if ((XEN_LIST_P(obj)) &&
       (XEN_LIST_LENGTH(obj) > 1) &&
       (XEN_SYMBOL_P(XEN_CAR(obj))))
@@ -1323,7 +1323,7 @@ static mus_xen *mus_any_to_mus_xen_with_two_vcts(mus_any *ge, XEN v1, XEN v2)
 
 /* ---------------- generic functions ---------------- */
 
-/* these are for user-defined (list-based def-clm-struct-style) generators 
+/* these are for user-defined (list-based defgenerator-style) generators 
  *   the methods are in an association list (name func) or (name getter setter)
  */
 

@@ -2,6 +2,7 @@
 ;;; a not-very-debonair way to fade out file1 and fade in file2
 ;;; this is also good if the same file is used twice -- sort of like a CD player gone berserk
 ;;;
+;;; changed 21-Sep-10 to use defgenerator
 ;;; changed 19-Apr-05 to use def-clm-struct and envelopes (and fixed duration bug in zip-sound)
 
 
@@ -11,7 +12,7 @@
 (define (safe-srate) (if (not (null? (sounds))) (srate) (mus-srate)))
 
 
-(def-clm-struct zdata
+(defgenerator zdata
   (low-start 20 :type int)
   (frame-loc 0 :type int)
   (cursamples 0 :type int)

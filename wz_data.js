@@ -1151,10 +1151,10 @@ var sndscm_channelproperty_tip = "<code>(channel-property key snd chn)</code>: r
                                  "<code>  (set! (channel-property 'info 0 0) \"this is sound 0, first channel\")</code><br>" +
                                  " now <code>(channel-property 'info 0 0)</code> returns \"this is sound 0, first channel\".";
 
-var sndscm_def_clm_struct_tip = "def-clm-struct sets up a structure, an object with named slots that you can get and set,<br>" +
+var sndclm_defgenerator_tip = "defgenerator sets up a structure, an object with named slots that you can get and set,<br>" +
                                 " and ties it into the optimizer so that you can use the structures without any speed penalty.<br>" +
                                 " It also defines a \"make\" function to create an instance of the structure, and a predicate for it.<br><br>" +
-                                "<code>    (def-clm-struct osc freq phase)</code><br><br>" +
+                                "<code>    (defgenerator osc freq phase)</code><br><br>" +
                                 " defines a struct named \"osc\" with the (float) fields freq and phase.<br>" +
                                 "  it also defines make-osc which creates an osc, and osc? returns #t if passed an osc.<br>" +
                                 " the struct fields are accessed via osc-freq and osc-phase.";
@@ -1399,7 +1399,7 @@ var frame_doc_tip = "various frame, vct, and sound-data functions";
 
 var freeverb_doc_tip = "a reverberator along the lines of nrev, but with more options.";
 
-var generators_doc_tip = "defgenerator and about 80 generators related to sums of sinusoids<br>" +
+var generators_doc_tip = "about 80 generators related to sums of sinusoids<br>" +
                          " bessel functions, adjustable square-waves, special envelopes, etc";
 
 var grani_doc_tip = "this is a very flexible granular synthesis instrument";

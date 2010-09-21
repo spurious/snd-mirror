@@ -200,10 +200,6 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 (defmacro when (test . forms)
   `(if ,test (begin ,@forms)))
 
-(define (copy-list lis)
-  "(copy-list lst) returns a copy of 'lst'"
-  (append lis '()))
-
 (define (third a) 
   "(third lst) returns the 3rd element of 'lst'"
   (if (>= (length a) 3) (list-ref a 2) #f))
@@ -1945,10 +1941,10 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	  (set! (path-tz path) (reverse ztr))))
       (begin
 	;; if there's no transformation just copy the rendered path
-	(set! (path-tt path) (copy-list (path-rt path)))
-	(set! (path-tx path) (copy-list (path-rx path)))
-	(set! (path-ty path) (copy-list (path-ry path)))
-	(set! (path-tz path) (copy-list (path-rz path)))))
+	(set! (path-tt path) (copy (path-rt path)))
+	(set! (path-tx path) (copy (path-rx path)))
+	(set! (path-ty path) (copy (path-ry path)))
+	(set! (path-tz path) (copy (path-rz path)))))
   path)
 
 ;;; Scale a path
@@ -2036,9 +2032,9 @@ type: (envelope-interp .3 '(0 0 .5 1 1 0) -> .6"
 	  (set! now (cons (/ dist velocity) now))))
       (set! now (reverse now))
       (set! (path-rt path) (append (list start-time) now))
-      (set! (path-tx path) (copy-list (path-rx path)))
-      (set! (path-ty path) (copy-list (path-ry path)))
-      (set! (path-tz path) (copy-list (path-rz path)))))
+      (set! (path-tx path) (copy (path-rx path)))
+      (set! (path-ty path) (copy (path-ry path)))
+      (set! (path-tz path) (copy (path-rz path)))))
   path)
 
 

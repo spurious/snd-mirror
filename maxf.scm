@@ -44,7 +44,7 @@
 	(display str)
 	(snd-print str))))
 
-(def-clm-struct mvm
+(defgenerator mvm
   (pp1 0.0 :type float) (pp2 0.0 :type float) (pp3 0.0 :type float)
   (yy1 0.0 :type float) (yy2 0.0 :type float)
   (zz1 0.0 :type float) (zz2 0.0 :type float)

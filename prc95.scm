@@ -54,7 +54,7 @@
 
 
 ;;; these are 0-based versions of the clm delays
-(def-clm-struct dlya (outp 0 :type float) (input #f :type clm))
+(defgenerator dlya (outp 0 :type float) (input #f :type clm))
 
 (define (make-delaya len lag) 
   (make-dlya :input (make-delay len :type mus-interp-all-pass :max-size (ceiling (+ len lag 1)))

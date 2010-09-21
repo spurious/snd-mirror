@@ -8676,10 +8676,9 @@ the default frequency modulation) to any generator:
 <p>
 <a class=def name="musgeneratorp">mus-generator?</a> returns #t if its argument is
 a generator.
-A generator defined via <a href="sndscm.html#def-clm-struct">def-clm-struct</a> can take part in these methods.
-If the last element of the list (returned by def-clm-struct) is an association list, the generic functions
-will search that list for their name, and use the functions that follow to implement their method
-(see defgenerator in generators.scm for an extended example).
+A generator defined via <a href="#defgenerator">defgenerator</a> can take part in these methods.
+If the last element of the list (returned by defgenerator) is an association list, the generic functions
+will search that list for their name, and use the functions that follow to implement their method.
 </p>
 <br>
 <br><br>
@@ -10375,44 +10374,143 @@ hopefully unobtrusively.  Here is an example, including a stereo reverb:
   <a class=def name="defgenerator">defgenerator</a> name fields
 </pre>
 
-<p>defgenerator is an extension of <a href="sndscm.html#def-clm-struct">def-clm-struct</a>
-that sets up all the usual generator methods (discussed under <a href="#genericfunctions">"generic functions"</a> above).
-It is used to define all the generators in generators.scm.  
-We could add a dither generator via defgenerator:
+<p>defgenerator defines a generator.  Its syntax is modelled after Common Lisp's defstruct.
+It sets up
+a structure, an object with named slots that you can get and set, and ties it into the
+optimizer so that you can use the structures without any speed penalty.  It also defines a "make"
+function to create an instance of the structure, and a predicate for it.  The original impetus for
+this came from user-defined generators in CLM.  We want to package together all the disparate
+variables that make up a generator, just as in function groups such as 
+<a href="sndclm.html#make-oscil">make-oscil</a>, <a href="sndclm.html#oscil">oscil</a>, and <a href="sndclm.html#oscil?">oscil?</a>.
+So, as a first example, here is a way to define your own oscil using defgenerator (oscil is so simple that
+you could also use a vct &mdash; see <a href="sndclm.html#make-my-oscil">make-my-oscil</a>).
 </p>
 
-<table border=0 hspace=40><tr><td>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
+(<em class=red>defgenerator</em> osc freq phase)
+
+;;; this defines a struct named "osc" with the (float) fields freq and phase.
+;;;   make-osc creates an osc, and osc? returns #t if passed an osc.
+;;;   the fields are accessed via osc-freq and osc-phase.
+
+(define (osc gen fm)                ; our new generator
+  (<a class=quiet href="extsnd.html#declare" onmouseout="UnTip()" onmouseover="Tip(extsnd_declare_tip)">declare</a> (gen osc) (fm float))
+  (let ((result (sin (<em class=red>osc-phase</em> gen))))
+    (set! (<em class=red>osc-phase</em> gen) (+ (<em class=red>osc-phase</em> gen) (<em class=red>osc-freq</em> gen) fm))
+    result))
+
+;;; now we can use the osc generator in an instrument:
+
+(<a class=quiet href="sndscm.html#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> (osc-fm beg dur freq amp mc-ratio fm-index)
+  (let* ((start (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> beg))
+	 (end (+ start (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur)))
+	 (carrier (<em class=red>make-osc</em> (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> freq)))
+	 (modulator (<em class=red>make-osc</em> (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (* mc-ratio freq))))
+	 (index (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (* freq mc-ratio fm-index))))
+    (run
+     (do ((i start (+ 1 i)))
+	 ((= i end))
+       (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* amp (<em class=red>osc</em> carrier (* index (<em class=red>osc</em> modulator 0.0)))))))))
+
+(with-sound () (osc-fm 0 1 440 .1 1 1))
+</pre></td></tr></table>
+
+<p>
+The first argument to defgenerator is the new struct's name, and the rest are the fields of that struct.
+Each field has a name, a type, and an optional initial value. The type defaults to float, and
+the initial value to 0.0, so our declaration above is the same as any of these:
+</p>
+
 <pre>
-(<em class=red>defgenerator</em> dither
-  (amplitude 0.001))
-
-;; this expands into (define* (make-dither (amplitude 0.001)) ...) 
-;;   and (define (dither? obj)...)
-;;   as well as the field accessors (dither-amplitude gen), (mus-scaler gen), 
-;;   and all the other methods such as mus-name
-;;   it also adds the dither type to the optimizer's list of known types.
-
-(define (dither gen input)
-  ;; this is the dither generator -- we need to tell run that "gen" is a dither generator:
-  (<a class=quiet href="extsnd.html#declare" onmouseout="UnTip()" onmouseover="Tip(extsnd_declare_tip)">declare</a> (gen dither) (input float))
-  (+ input 
-     (random (dither-amplitude gen)) 
-     (random (mus-scaler gen))))     ; these are equivalent ways to access the amplitude field
-
-#|
-  (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
-    (let ((osc (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 440)) 
-          (noise (<em class=red>make-dither</em> .25)))
-      (run
-       (do ((i 0 (+ 1 i))) 
-           ((= i 20000)) 
-         (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* .5 (<em class=red>dither</em> noise (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc))))))))
-|#
+    (defgenerator osc freq (phase 0.0))
+    (defgenerator osc (freq 0.0) (phase 0.0))
+    (defgenerator osc (freq 0.0 :type float) (phase 0.0 :type float))
 </pre>
-</td></tr></table>
 
-<p>In this case, defgenerator defines make-dither, dither?, and the usual methods for us: mus-name ("dither"),
-mus-describe, and mus-reset.  If the generator has a frequency field,
+<p>and so on. The "make" function (make-osc in our example) uses define* with
+the field names and types as the optional keys.  So make-osc above is declared (by the
+defgenerator macro) as:
+</p>
+
+<pre>
+    (define* (make-osc (freq 0.0) (phase 0.0)) ...)
+</pre>
+
+<p>which we can invoke in various ways, e.g.:
+</p>
+
+<pre>
+    (make-osc 440)
+    (make-osc :phase (/ pi 2) :freq 440)
+    (make-osc 440 :phase 0.0)
+</pre>
+
+<p>
+The currently implemented field types are:
+</p>
+
+<pre>
+    int float boolean char string list symbol keyword vct sampler mix-sampler 
+    sound-data clm float-vector int-vector vct-vector list-vector clm-vector 
+</pre>
+
+<p>The struct name can be a list; in this case the first element is the actual struct name.  The
+next elements are optionally <code>:make-wrapper</code> followed by a function of one argument
+(the default struct normally returned by defgenerator), and optionally <code>:methods</code>, followed
+by a list of the methods the generator responds to.  The make wrapper function can 
+make any changes it pleases, then return the fixed-up generator.  For example, in our
+"osc" generator, we had to remember to change frequency in Hz to radians; we can use the
+wrapper to handle that:
+</p>
+
+<pre>
+    (defgenerator 
+      (osc <em class=red>:make-wrapper</em> (lambda (gen)
+			   (set! (osc-freq gen) (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (osc-freq gen)))
+			   gen))
+      (freq 0.0) (phase 0.0))
+</pre>
+
+<p>and now the make process in the instrument can be simplified to:
+</p>
+
+<pre>
+    ...
+    (carrier (make-osc freq))
+    (modulator (make-osc (* mc-ratio freq)))
+    ...
+</pre>
+
+<p>If you want the struct to take part in the <a href="sndclm.html#genericfunctions">generic function</a> facility
+in CLM, add the desired methods as an association list with the name :methods:
+</p>
+
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
+(defgenerator (osc :make-wrapper
+		     (lambda (gen)
+		       (set! (osc-freq gen) (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (osc-freq gen)))
+		       gen)
+		     <em class=red>:methods</em>
+		     (list
+		      (list 'mus-frequency 
+			    (lambda (g) (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">radians-&gt;hz</a> (osc-freq g)))
+			    (lambda (g val) (set! (osc-freq g) (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> val))))
+		      
+		      (list 'mus-phase 
+			    (lambda (g) (osc-phase g))
+			    (lambda (g val) (set! (osc-phase g) val)))
+		      
+		      (list 'mus-describe 
+			    (lambda (g) (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "osc freq: ~A, phase: ~A" 
+					  (mus-frequency g) 
+					  (mus-phase g))))))
+  freq phase)
+</pre></td></tr></table>
+
+<p>The first function is the "getter" and the (optional) second function is the "setter".
+You can also use make-procedure-with-setter.
+The standard methods are actually defined for you.
+If the generator has a frequency field,
 defgenerator adds the method
 mus-frequency (radians-&gt;hz of the frequency field); similarly "angle" or "phase" become mus-phase,
 "n" or "order" becomes mus-order, and "r" or "amplitude" becomes mus-scaler.
@@ -10478,16 +10576,6 @@ Here is an example that produces abs(oscil):
 </pre>
 </td></tr></table>
 
-
-<p>The field type defaults to float.  It can be any of the types that declare accepts (all of
-these type declarations are for the run macro's benefit). Currently these types are:
-int, float, boolean, char, string,
-vct, sampler, sound-data, clm, 
-float-vector, int-vector, vct-vector, list-vector, clm-vector,
-or any type defined in def-clm-struct or defgenerator.
-The "clm" type refers to built-in generators like oscil; "list-vector" refers
-a vector of defgenerator-defined generators.
-</p>
 
 <br>
 <br><br>
@@ -10638,7 +10726,7 @@ Here's a generator that uses polynomial to produce a Blackman4 waveform (see als
 
 <table border=0 hspace=40><tr><td>
 <pre>
-(<a class=quiet href="sndscm.html#def-clm-struct" onmouseout="UnTip()" onmouseover="Tip(sndscm_def_clm_struct_tip)">def-clm-struct</a> (blackman4 :make-wrapper 
+(<a class=quiet href="sndclm.html#defgenerator" onmouseout="UnTip()" onmouseover="Tip(sndclm_defgenerator_tip)">defgenerator</a> (blackman4 :make-wrapper 
 		  (lambda (g)
 	 	    (set! (blackman4-incr g) (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (blackman4-frequency g)))
 		    (set! (blackman4-coeffs g) (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> .084037 -.29145 .375696 -.20762 .041194))

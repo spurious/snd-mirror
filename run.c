@@ -328,7 +328,7 @@ enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST,
       R_SOUND_DATA, R_CLM, 
       R_FLOAT_VECTOR, R_INT_VECTOR, R_VCT_VECTOR, R_LIST_VECTOR, R_CLM_VECTOR,
 
-      /* next 8 are for walker arg checks, generator=built-in or def-clm-struct */
+      /* next 8 are for walker arg checks, generator=built-in or defgenerator */
       R_NUMBER, R_VECTOR, R_XEN, R_NUMBER_CLM, R_NUMBER_VCT, 
       R_NUMBER_SOUND_DATA, R_GENERATOR, 
       R_ANY}; 
@@ -11991,13 +11991,13 @@ SET_GEN0(locsig_reverb_set, locsig)
 
 /* ---------------------------------------- generic funcs ---------------------------------------- */
 
-/* formerly, the local methods for def-clm-struct generators were only in the generator list,
+/* formerly, the local methods for defgenerator generators were only in the generator list,
  *   but if we have a function taking such args, we might need to expand the method
  *   before any such gen has been created.  To call the method in Scheme (via call_get_method
  *   in clm2xen.c) requires that the original gen list be saved alongside the list as read
  *   by xen_to_list_with_type, then if another arg exists, xenify it and pass into Scheme.
  *   But this will surely involve the GC and requires elaborate error checking here.
- *   So, the local methods are now in the def-clm-struct declaration, and are
+ *   So, the local methods are now in the defgenerator declaration, and are
  *   accessible through <name>-methods. We can assume that we have the type;
  *   the method expansion (via lambda_form) uses the passed-in arg types.
  */
@@ -14801,7 +14801,7 @@ static s7_pointer xen_value_to_xen(ptree *pt, xen_value *v)
 	  vct *vtemp;
 	  /* it is necessary to copy the data here to protect it from mus_run_free_ptree:
 	   *
-	   * (def-clm-struct hiho2 (v #f :type vct))
+	   * (defgenerator hiho2 (v #f :type vct))
 	   * (define val (make-hiho2))
 	   * (run (lambda () (set! (hiho2-v val) (make-vct 32 .1))))
 	   */
@@ -15419,7 +15419,7 @@ static xen_value *quote_form(ptree *prog, s7_pointer form, walk_result_t ignore)
 
 
 
-/* def-clm-struct support */
+/* defgenerator support */
 
 static void clm_struct_p(int *args, ptree *pt) 
 {
@@ -15467,7 +15467,7 @@ static int def_clm_structs_size = 0;
 
 static s7_pointer g_add_clm_field(s7_pointer struct_name, s7_pointer name, s7_pointer offset, s7_pointer type)
 {
-  #define H_add_clm_field "def-clm-struct tie-in to run optimizer"
+  #define H_add_clm_field "defgenerator tie-in to run optimizer"
   const char *field_name;
   int field_offset, clm_struct_type, field_type;
   dcs *d;

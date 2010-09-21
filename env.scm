@@ -364,7 +364,7 @@ repetition to be in reverse."
 
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
-(def-clm-struct penv (envs #f :type clm-vector) (total-envs 0 :type int) (current-env 0 :type int) (current-pass 0 :type int))
+(defgenerator penv (envs #f :type clm-vector) (total-envs 0 :type int) (current-env 0 :type int) (current-pass 0 :type int))
 
 (define (power-env pe)
   (let* ((val (env (vector-ref (penv-envs pe) (penv-current-env pe)))))

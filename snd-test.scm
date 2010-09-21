@@ -14956,7 +14956,7 @@ EDITS: 2
 (if (not (provided? 'snd-numerics.scm)) (load "numerics.scm"))
 (if (not (provided? 'snd-generators.scm)) (load "generators.scm"))
 
-(def-clm-struct sa1 (freq 0.0 :type float) (coscar #f :type clm) (sincar #f :type clm) (dly #f :type clm) (hlb #f :type clm))
+(defgenerator sa1 (freq 0.0 :type float) (coscar #f :type clm) (sincar #f :type clm) (dly #f :type clm) (hlb #f :type clm))
 
 (define (snd-test-jc-reverb decay-dur low-pass volume amp-env)
   "(jc-reverb decay-dur low-pass volume amp-env) is the old Chowning reverberator: (jc-reverb 2.0 #f .1 #f)"
@@ -43966,7 +43966,7 @@ EDITS: 1
 
       (let ((pe (make-power-env '(0 0 32.0 1 1 32.0 2 0 0.0) :duration .1)))
 	(if (not (penv? pe)) (snd-display #__line__ ";penv? ~A" pe))
-	(if (penv-methods) (snd-display #__line__ ";(penv-methods) -> ~A" (penv-methods)))
+	(if (not (pair? (penv-methods))) (snd-display #__line__ ";(penv-methods) -> ~A" (penv-methods)))
 	(let ((x (power-env pe))) (if (fneq x 0.0) (snd-display #__line__ ";power-env start: ~A" x)))
 	(if (> (abs (- (penv-current-pass pe) 2203)) 2) (snd-display #__line__ ";power-env pass: ~A" (penv-current-pass pe))) ; 4410/2 - 1 because x1=2
 	(if (not (= (penv-current-env pe) 0)) (snd-display #__line__ ";power-env seg: ~A" (penv-current-env pe)))
@@ -45873,14 +45873,14 @@ EDITS: 1
     (lambda ()
       ho)))
 
-(def-clm-struct st3 one two)
+(defgenerator st3 one two)
 (define svar (make-st3 :one 1.0 :two 2.0))
 (define svar1 #f)
 (define bst3 #f)
-(def-clm-struct st4 (one 1) (two 2.0))
+(defgenerator st4 (one 1) (two 2.0))
 (define bst4 #f)
-(def-clm-struct hiho1 i x (s "hiho") (ii 3 :type int) (xx 1.0 :type float))
-(def-clm-struct hiho2 (i 0 :type int) (x 0.0 :type float) (v #f :type vct) (s "hiho") (ii 3 :type int) (xx 1.0 :type float))
+(defgenerator hiho1 i x (s "hiho") (ii 3 :type int) (xx 1.0 :type float))
+(defgenerator hiho2 (i 0 :type int) (x 0.0 :type float) (v #f :type vct) (s "hiho") (ii 3 :type int) (xx 1.0 :type float))
 (define g-gen (make-oscil 440))
 
 (define clm_vector (make-vector 2))
@@ -45900,7 +45900,7 @@ EDITS: 1
 (define efunc-gen (make-oscil 440.0))
 (define (efunc-7 arg) arg)
 
-(def-clm-struct hi308 freq phase)
+(defgenerator hi308 freq phase)
 
 (define (call-hi308 hi308-gen)
   (declare (hi308-gen hi308))
@@ -45910,14 +45910,14 @@ EDITS: 1
   (declare (hi308-gen hi308))
   (set! (hi308-freq hi308-gen) (* 3.5 (hi308-freq hi308-gen))))
 
-(def-clm-struct hiho309 (i 0 :type int) (x 0.0 :type float) (v #f :type vct))
+(defgenerator hiho309 (i 0 :type int) (x 0.0 :type float) (v #f :type vct))
 
-(def-clm-struct hiho310 (v #f :type string))
+(defgenerator hiho310 (v #f :type string))
 
-(def-clm-struct hiho311 (v #f :type sound-data))
+(defgenerator hiho311 (v #f :type sound-data))
 
-(def-clm-struct abc232 (x 0.0))
-(def-clm-struct abd232 (x 1.0))
+(defgenerator abc232 (x 0.0))
+(defgenerator abd232 (x 1.0))
 
 (define (abc232-func gen)
   (declare (gen abc232))
@@ -48588,7 +48588,7 @@ EDITS: 1
 		      (lambda () (run-eval '(set! (hiho1-ii hi1) "ho")))
 		      (lambda args (car args)))))
       (if (not (eq? tag 'cannot-parse))
-	  (snd-display #__line__ ";set def-clm-struct type check? ~A" tag)))
+	  (snd-display #__line__ ";set defgenerator type check? ~A" tag)))
     (let ((tag (catch 'cannot-parse
 		      (lambda () (run-eval '(let ((r (make-sampler))) (format #f "~A" r))))
 		      (lambda args (car args)))))
@@ -52756,9 +52756,9 @@ EDITS: 1
 
 (define old-opt-23 (optimization))
 
-(def-clm-struct st1 one two)
-(def-clm-struct st2 (one 11) (two 22))
-(def-clm-struct grab-bag 
+(defgenerator st1 one two)
+(defgenerator st2 (one 11) (two 22))
+(defgenerator grab-bag 
   (flt 0.0 :type float)
   (flt1 1.0)
   (i 0 :type int)
@@ -52781,7 +52781,7 @@ EDITS: 1
   (vvect #f :type vct-vector)
   (cvect #f :type clm-vector))
 
-(def-clm-struct (osc329 :make-wrapper (lambda (gen)
+(defgenerator (osc329 :make-wrapper (lambda (gen)
 					(set! (osc329-freq gen) (hz->radians (osc329-freq gen)))
 					gen)
 			:methods (list
@@ -53792,10 +53792,10 @@ EDITS: 1
 	(run
 	 (lambda ()
 	   (set! val (grab-bag-flt gad))))
-	(if (fneq val 123.0) (snd-display #__line__ ";def-clm-struct flt: ~A ~A" val (grab-bag-flt gad))))
-      (if (fneq (grab-bag-flt1 gad) 1.0) (snd-display #__line__ ";def-clm-struct flt1: ~A" (grab-bag-flt1 gad)))
-      (if (not (= (grab-bag-i gad) 0)) (snd-display #__line__ ";def-clm-struct i: ~A" (grab-bag-i gad)))
-      (if (not (= (grab-bag-i1 gad) 123)) (snd-display #__line__ ";def-clm-struct i1: ~A" (grab-bag-i1 gad))))
+	(if (fneq val 123.0) (snd-display #__line__ ";defgenerator flt: ~A ~A" val (grab-bag-flt gad))))
+      (if (fneq (grab-bag-flt1 gad) 1.0) (snd-display #__line__ ";defgenerator flt1: ~A" (grab-bag-flt1 gad)))
+      (if (not (= (grab-bag-i gad) 0)) (snd-display #__line__ ";defgenerator i: ~A" (grab-bag-i gad)))
+      (if (not (= (grab-bag-i1 gad) 123)) (snd-display #__line__ ";defgenerator i1: ~A" (grab-bag-i1 gad))))
     
     (if (file-exists? "test.snd") (delete-file "test.snd"))
     (set! (mus-srate) 22050)

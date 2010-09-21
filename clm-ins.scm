@@ -2247,7 +2247,7 @@ is a physical model of a flute:
 
 
 
-(def-clm-struct grn 
+(defgenerator grn 
   (rampval 0.0 :type float) 
   (rampinc 0.0 :type float)
   (loc 0 :type int) 
@@ -2558,7 +2558,7 @@ mjkoskin@sci.fi
 ;;; ssb-fm
 ;;; this might be better named "quasi-ssb-fm" -- cancellations are not perfect
 
-(def-clm-struct sbfm 
+(defgenerator sbfm 
   (am0 #f :type clm) (am1 #f :type clm) 
   (car0 #f :type clm) (car1 #f :type clm)
   (mod0 #f :type clm) (mod1 #f :type clm))
@@ -2600,7 +2600,7 @@ mjkoskin@sci.fi
 ;;; rms gain balance
 ;;; This is a translation of the rmsgain code provided by Fabio Furlanete.
 
-(def-clm-struct rmsg 
+(defgenerator rmsg 
   (c1 0.0 :type float)
   (c2 0.0 :type float)
   (q 0.0 :type float)

@@ -180,7 +180,7 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
 
 ;;; Mathews/Smith High-Q filter as described in http://ccrma.stanford.edu/~jos/smac03maxjos/
 
-(def-clm-struct mflt
+(defgenerator mflt
   (decay 0.99 :type float)
   (frequency 1000.0 :type float)
   (eps 0.0 :type float)

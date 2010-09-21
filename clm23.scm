@@ -2722,7 +2722,7 @@
 
 ;;; ---------------- sndscm-osc ----------------
 
-(def-clm-struct sndscm-osc freq phase) ;same as (def-clm-struct sndscm-osc (freq 0.0 :type float) (phase 0.0 :type float))
+(defgenerator sndscm-osc freq phase) ;same as (defgenerator sndscm-osc (freq 0.0 :type float) (phase 0.0 :type float))
 
 (define (sndscm-osc gen fm)
   (declare (gen sndscm-osc) (fm float))
@@ -2746,7 +2746,7 @@
 
 ;;; ---------------- sndscm-osc1 ----------------
 
-(def-clm-struct 
+(defgenerator 
   (sndscm-osc1 :make-wrapper (lambda (gen)
 			(set! (sndscm-osc1-freq gen) (hz->radians (sndscm-osc1-freq gen)))
 			gen))
@@ -2774,7 +2774,7 @@
 
 ;;; ---------------- sndscm-osc2 ----------------
 
-(def-clm-struct (sndscm-osc2 :make-wrapper (lambda (gen)
+(defgenerator (sndscm-osc2 :make-wrapper (lambda (gen)
 			       (set! (sndscm-osc2-freq gen) (hz->radians (sndscm-osc2-freq gen)))
 			       gen)
 			     :methods (list
@@ -2814,7 +2814,7 @@
 
 ;;; -------- asymmetric FM (bes-i0 case)
 
-(def-clm-struct (dsp-asyfm :make-wrapper (lambda (gen)
+(defgenerator (dsp-asyfm :make-wrapper (lambda (gen)
 				       (set! (dsp-asyfm-freq gen) (hz->radians (dsp-asyfm-freq gen)))
 				       gen))
   freq (phase 0.0) (ratio 1.0) (r 1.0) (index 1.0))
@@ -2847,7 +2847,7 @@
     result))
 
 
-(def-clm-struct (sndclm-expcs 
+(defgenerator (sndclm-expcs 
 		 :make-wrapper (lambda (g)
 				 (if (<= (sndclm-expcs-et g) 0.0) (set! (sndclm-expcs-et g) 0.00001))
 				 (set! (sndclm-expcs-frequency g) (hz->radians (sndclm-expcs-frequency g)))

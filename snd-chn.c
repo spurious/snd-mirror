@@ -7177,7 +7177,7 @@ static XEN g_maxamp(XEN snd, XEN chn_n, XEN edpos)
       if (XEN_VECTOR_P(snd))
 	return(g_vector_maxamp(snd));
 
-      if (XEN_LIST_P(snd)) /* can this happen given def-clm-struct? */
+      if (XEN_LIST_P(snd)) /* can this happen given defgenerator? */
 	return(g_list_maxamp(snd));
     }
 

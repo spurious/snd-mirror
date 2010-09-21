@@ -8,6 +8,7 @@
 ;;;   http://ccrma.stanford.edu/~nando/clm/moog
 ;;;
 ;;; translated to Snd scheme function by Bill,
+;;;   changed 21-Sep-10 to use defgenerator
 ;;;   changed 17-Apr-05 to use def-clm-struct (for the optimizer's benefit)
 ;;;   changed 11-Jul-06 to use array-interp
 
@@ -69,7 +70,7 @@
 ;;;       I prefered to translate Hz into the internal parameter rather than controlling
 ;;;       the cutoff frequency in terms of a number that goes between -1 and 1. 
 
-(def-clm-struct moog
+(defgenerator moog
   (freq 0.0 :type float)
   (Q 0.0 :type float)
   (s #f :type vct)
