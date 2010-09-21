@@ -26807,6 +26807,9 @@ EDITS: 2
     (let ((v (with-sound (:output (make-sound-data 1 10)) (run (outa -1 .1)))))
       (if (> (sound-data-peak v) 0.0) (snd-display #__line__ ";outa to sound-data at -1: ~A" v)))
     
+    (if (not (= (signum 0) 0)) (snd-display #__line__ ";signum 0: ~A" (signum 0)))
+    (if (not (= (signum 10) 1)) (snd-display #__line__ ";signum 10: ~A" (signum 10)))
+    (if (not (= (signum -32) -1)) (snd-display #__line__ ";signum -32: ~A" (signum -32)))
     ))
 
 
@@ -31256,6 +31259,10 @@ EDITS: 2
       (add-hook! during-open-hook 
 		 (lambda (fd filename reason)
 		   (set! dop #t)
+		   (if (fneq (mus-file-prescaler fd) 1.0)
+		       (snd-display #__line__ ";mus-file-prescaler: ~A" (mus-file-prescaler fd)))
+		   (if (not (mus-file-clipping fd))
+		       (snd-display #__line__ ";mus-file-clipping: ~A" (mus-file-clipping fd)))
 		   (if (not (string=? filename (mus-expand-filename "oboe.snd")))
 		       (snd-display #__line__ ";during-open-hook filename: ~A?" filename))
 		   (if (not (= reason 1))
@@ -43956,6 +43963,14 @@ EDITS: 1
 	  (close-sound ind1)
 	  (remove-hook! graph-hook zoom-spectrum)
 	  (close-sound ind2)))
+
+      (let ((pe (make-power-env '(0 0 32.0 1 1 32.0 2 0 0.0) :duration .1)))
+	(if (not (penv? pe)) (snd-display #__line__ ";penv? ~A" pe))
+	(if (penv-methods) (snd-display #__line__ ";(penv-methods) -> ~A" (penv-methods)))
+	(let ((x (power-env pe))) (if (fneq x 0.0) (snd-display #__line__ ";power-env start: ~A" x)))
+	(if (> (abs (- (penv-current-pass pe) 2203)) 2) (snd-display #__line__ ";power-env pass: ~A" (penv-current-pass pe))) ; 4410/2 - 1 because x1=2
+	(if (not (= (penv-current-env pe) 0)) (snd-display #__line__ ";power-env seg: ~A" (penv-current-env pe)))
+	)
       
       (let ((old-srate (mus-srate)))
 	(set! (print-length) (max (print-length) 48))
@@ -54430,6 +54445,10 @@ EDITS: 1
   
   (with-sound ()
 	      (simple-ssb 0 .2 440 .1)
+	      (simple-nsin .6 .2 .1)
+	      (simple-ncos 0.7 .2 440 .1)
+	      (simple-nrxysin .6 .2 .1)
+	      (simple-nrxycos 0.7 .2 440 .1)
 	      (simple-osc 0.75 .2 440 .1)
 	      (simple-asy 1.25 .2 .1)
 	      (simple-saw 1.5 .2 .1)
@@ -60714,6 +60733,14 @@ EDITS: 1
 		 XmMenuShell? XmLabelGadget? XmPushButtonGadget? XmSeparatorGadget? XmArrowButtonGadget?
 		 XmCascadeButtonGadget? XmToggleButtonGadget? XmDrawnButton? XmPrimitive?
 		 XmTextSource? 
+
+		 XButtonEvent? XCirculateEvent? XCirculateRequestEvent? XClientMessageEvent? XColormapEvent?
+		 XConfigureEvent? XConfigureRequestEvent? XCreateWindowEvent? XCrossingEvent? XDeleteProperty
+		 XDestroyWindowEvent? XErrorEvent? XExposeEvent? XFocusChangeEvent? XGraphicsExposeEvent? XGravityEvent?
+		 XIconSize? XKeyEvent? XKeymapEvent? XMapEvent? XMapRequestEvent? XMappingEvent? XMotionEvent?
+		 XNoExposeEvent? XPropertyEvent? XReparentEvent? XResizeRequestEvent? XSelectionClearEvent?
+		 XSelectionEvent? XSelectionRequestEvent? XSetWindowAttributes? XStandardColormap? XUnmapEvent? XVisibilityEvent?
+
 		 ))
 	       (xm-procs (if (defined? 'XpmImage?)
 			     (append xm-procs-1
@@ -66589,8 +66616,8 @@ EDITS: 1
 	
 	(do ((i 0 (+ 1 i)))                       ; run all tests except the irritating ones
 	    ((> i total-tests))
-	  (if (and (or (< i 24)
-		       (> i 26))
+	  (if (and ;(not (= i 26)) 
+	           (or (< i 24) (> i 26))
 		   (or full-test 
 		       (and keep-going (<= snd-test i))))
 	      (begin

@@ -911,7 +911,7 @@ See the function html in index.scm.
 
 <!-- just-sounds -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="justsounds">just-sounds</a></code></td>
-<td bgcolor="#f2f4ff"><code>#f</code></td></tr><tr><td></td><td colspan=2>
+<td bgcolor="#f2f4ff"><code>#t</code></td></tr><tr><td></td><td colspan=2>
 If just-sounds is #t,
 the file lists displayed by the file selection dialogs are filtered to show just
 sound files (see <a href="#addsoundfileextension">add-sound-file-extension</a>).
@@ -9771,17 +9771,6 @@ This opens 'filename' read-only (you can edit the sound within Snd, but you can'
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
-<!-- verbose-cursor -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="verbosecursor">verbose-cursor</a> <em class=narg>snd chn</em></code>
-</td></tr><tr><td></td><td>
-If verbose-cursor #t (the default is #f), the cursor's position and other information is constantly 
-displayed in the minibuffer.  This is the View:Verbose cursor option .  The new name of this variable 
-is <a href="#withverbosecursor">with-verbose-cursor</a>; 
-eventually "verbose-cursor" will be retired.
-</td></tr><tr><td colspan=2 height=18></td></tr>
-
-
 <!-- wavelet-type -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="wavelettype">wavelet-type</a> <em class=narg>snd chn</em></code>
@@ -9852,7 +9841,7 @@ tracking cursor updating: <a href="#cursorupdateinterval">cursor-update-interval
 </td></tr><tr><td></td><td>
 If with-verbose-cursor is #t, the cursor's position and other information is constantly 
 displayed in the minibuffer.  This is the View:Verbose cursor option 
-(default: #f).  The old name of this variable was <a href="#verbosecursor">verbose-cursor</a>.
+(default: #f). 
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -13040,7 +13029,6 @@ colors in rxvt: red-text et al in examp.scm<br>
 flashing colors: flash-selected-data in examp.scm<br>
 openGL: snd-gl.scm, <a href="grfsnd.html#sndandgl">Snd and OpenGL</a><br>
 fancy widget backgrounds: new-backgrounds.scm in the tutorial<br>
-root window color: set-root-window-color in snd-motif.scm<br>
 color hook: <a href="#colorhook">color-hook</a><br>
 Snd graphics contexts: <a href="#sndgcs">snd-gcs</a><br>
 <br></small></blockquote>

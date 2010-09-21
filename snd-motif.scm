@@ -32,7 +32,6 @@
 ;;; add-text-to-status-area puts a text widget in the notebook status area
 ;;; make-variable-display displays an arbitrary set of expressions/variables in a notebook widget
 ;;; with-minmax-button adds an open/close button to each sound pane
-;;; set-root-window-color
 ;;; notebook-with-top-tabs (for Xemacs-like list of open files across the top of the window)
 ;;; create-audit-dialog
 ;;; equalize-panes
@@ -2866,13 +2865,14 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 
 ;(add-hook! after-open-hook with-minmax-button)
 
-
+#|
 (define (set-root-window-color color)
   "(set-root-window-color color) sets the color of the overall X background"
   (let* ((dpy (XtDisplay (cadr (main-widgets))))
 	 (root-window (DefaultRootWindow dpy)))
     (XSetWindowBackground dpy root-window color)
     (XClearWindow dpy root-window)))
+|#
 
 
 ;;; you can get a different scrollbar style with:

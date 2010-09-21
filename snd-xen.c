@@ -1311,6 +1311,7 @@ static XEN g_dlopen(XEN name)
 static XEN g_dlclose(XEN handle)
 {
   #define H_dlclose "(dlclose handle) may close the library referred to by 'handle'."
+  XEN_ASSERT_TYPE(XEN_WRAPPED_C_POINTER_P(handle), handle, XEN_ONLY_ARG, "dlclose", "a library handle");
   return(C_TO_XEN_INT(dlclose((void *)(XEN_UNWRAP_C_POINTER(handle)))));
 }
 
@@ -2964,15 +2965,18 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 	        	       (procedure-documentation (cdr binding))\
 	        	       (cdr binding)))))\
              alist))\
-          (for-each\
-           (lambda (frame)\
-             (if (vector? frame)\
-	         (let ((len (vector-length frame)))\
-	           (do ((i 0 (+ i 1)))\
-	               ((= i len))\
-	             (apropos-1 (vector-ref frame i))))\
-	         (apropos-1 frame)))\
-           (current-environment)))");
+          (if (or (not (string? name))\
+                  (= (length name) 0))\
+              (error 'wrong-type-arg \"apropos argument should be a non-nil string\")\
+              (for-each\
+               (lambda (frame)\
+                 (if (vector? frame)\
+	             (let ((len (vector-length frame)))\
+	               (do ((i 0 (+ i 1)))\
+	                   ((= i len))\
+	                 (apropos-1 (vector-ref frame i))))\
+	             (apropos-1 frame)))\
+               (current-environment))))");
 
   XEN_EVAL_C_STRING("\
 (define break-ok #f)\

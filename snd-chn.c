@@ -9723,10 +9723,11 @@ void g_init_chn(void)
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_zero_pad, g_zero_pad_w, H_zero_pad,
 					    S_setB S_zero_pad, g_set_zero_pad_w, g_set_zero_pad_reversed, 0, 2, 1, 2);
   
+#if (!SND_DISABLE_DEPRECATED)
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER("verbose-cursor", g_verbose_cursor_w, H_verbose_cursor,
 					    S_setB "verbose-cursor", g_set_verbose_cursor_w, g_set_verbose_cursor_reversed, 0, 2, 1, 2);
-  
-  /* a synonym for now */
+#endif  
+
   XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(S_with_verbose_cursor, g_verbose_cursor_w, H_verbose_cursor,
 					    S_setB S_with_verbose_cursor, g_set_verbose_cursor_w, g_set_verbose_cursor_reversed, 0, 2, 1, 2);
   

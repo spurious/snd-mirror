@@ -946,7 +946,7 @@
   (test (char-lower-case? 1) 'error)
   (test (char-lower-case?) 'error)
   (test (char-lower-case? #\a #\b) 'error)
-  (test (char-lower-case? #\xb5) #t)  ; what is this?
+;;  (test (char-lower-case? #\xb5) #t)  ; what is this?  in Snd it's #t, in ex1 it's #f -- is this a locale choice?
   (test (char-lower-case? #\xb6) #f)
 
   (for-each
@@ -16223,6 +16223,15 @@ why are these different (read-time `#() ? )
 (test (defined? lambda) #t)
 (test (defined? 'lambda) #t)
 (test (defined? 'dynamic-wind) #t)
+(test (defined? 'asdaf) #f)
+(test (defined? ':asdaf) #f)
+(test (defined? :asdaf) #f)
+(test (defined? 'ok?) #t)
+(test (defined? 'test-t) #t)
+(test (defined? 'quasiquote) #t)
+(test (defined? (symbol "123")) #f)
+(test (defined? (symbol "+")) #t)
+(test (defined? ''+) 'error)
 
 
 
@@ -16747,12 +16756,21 @@ why are these different (read-time `#() ? )
 (test (copy #\f) #\f)
 (test (copy (list 1 (list 2 3))) (list 1 (list 2 3)))
 (test (copy (cons 1 2)) (cons 1 2))
+(test (let ((x (list 1 2 3))) (eq? (copy x) x)) #f)
+(test (let ((x #(1 2 3))) (eq? (copy x) x)) #f)
+(test (let ((x "hi")) (eq? (copy x) x)) #f)
 (test (copy '(1 2 . 3)) '(1 2 . 3))
 (test (copy (+)) 0)
 (test (copy +) +)
 (test (copy (#(#() #()) 1)) #())
 (test (copy #f) #f)
 (test (copy '()) '())
+(test (let ((f (lambda () 1))) ((copy f))) 1) ; here copy actually returns f: (let ((f (lambda () 1))) (eq? (copy f) f)) -> #t
+(test (copy 1.0) 1.0)
+(test (copy 1.0+i) 1.0+i)
+(test (copy "") "")
+(test (copy #t) #t)
+
 
 (test (reverse "hi") "ih")
 (test (reverse "") "")
@@ -17076,6 +17094,7 @@ why are these different (read-time `#() ? )
 (test (procedure? ((((((let x () x))))))) #t)
 (test (procedure? ((((((lambda (x) (set! x (lambda () x))) (lambda () x))))))) #t)
 (test ((do ((i 0 (+ i 1))) ((= i 1) (lambda () 3)))) 3)
+(test (dynamic-wind s7-version s7-version s7-version) (s7-version))
 
 (test (+ (+) (*)) 1)
 (test (modulo (lcm) (gcd)) 1)

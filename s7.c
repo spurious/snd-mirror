@@ -1908,13 +1908,13 @@ static void increase_stack_size(s7_scheme *sc)
 
 /* -------------------------------- symbols -------------------------------- */
 
-static int symbol_table_hash(const char *key, int table_size) 
+static int symbol_table_hash(const char *key) 
 { 
   unsigned int hashed = 0;
   const char *c; 
   for (c = key; *c; c++) 
     hashed = *c + hashed * 37;
-  return(hashed % table_size); 
+  return(hashed % SYMBOL_TABLE_SIZE); 
 
   /* using ints here is much faster, and the symbol table will not be enormous, so it's worth splitting out this case */
   /* precomputing the * 37 and so on only saved about 10% compute time -- 1/2260 overall time */
@@ -2067,7 +2067,7 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
 
   if (!name) return(sc->F);
 
-  location = symbol_table_hash(name, vector_length(sc->symbol_table)); 
+  location = symbol_table_hash(name); 
   x = symbol_table_find_by_name(sc, name, location); 
   if (x != sc->NIL) 
     return(x); 
@@ -2088,7 +2088,7 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
   for (; (*(sc->gensym_counter)) < LONG_MAX; ) 
     { 
       snprintf(name, len, "{%s}-%ld", prefix, (*(sc->gensym_counter))++); 
-      location = symbol_table_hash(name, vector_length(sc->symbol_table)); 
+      location = symbol_table_hash(name); 
       x = symbol_table_find_by_name(sc, name, location); 
       if (x != sc->NIL)
 	{
@@ -14295,11 +14295,12 @@ static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
   int typ;
 
   x = car(args);
+  if (!is_procedure(x)) return(sc->F);
   typ = type(x);
 
   /* make_object sets the T_PROCEDURE bit if the object has an apply function,
-   *   but we currently return (procedure? "hi") -> #f, so we can't use
-   *   is_procedure directly.  s7_define_macro (T_C_MACRO) also sets that bit.
+   *   but we currently return (procedure? "hi") -> #f, so we can't simply use
+   *   is_procedure.  s7_define_macro (T_C_MACRO) also sets that bit.
    * 
    * Unfortunately much C code depends on s7_is_procedure treating applicable
    *  objects and macros as procedures.  Ideally we'd have s7_is_applicable.
@@ -19315,7 +19316,7 @@ static s7_pointer g_set_special(s7_scheme *sc, s7_pointer symbol, s7_pointer val
 static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op) 
 {
   s7_pointer x;
-  x = symbol_table_add_by_name_at_location(sc, name, symbol_table_hash(name, vector_length(sc->symbol_table))); 
+  x = symbol_table_add_by_name_at_location(sc, name, symbol_table_hash(name)); 
   typeflag(x) |= (T_SYNTAX | T_DONT_COPY); 
   syntax_opcode(x) = (int)op;
   return(x);
@@ -20884,7 +20885,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				   make_list_3(sc, 
 					       sc->code,
 					       make_protected_string(sc, copy_string(port_filename(sc->input_port))),
-					       /* copy_string is needed because port_filename is GC'd when the port is closed */
+					       /* copy_string is needed because port_filename is GC'd when the port is closed.
+						*   it would be nice if we could use remembered_filename -- perhaps save
+						*   these as s7 strings rather than C strings?
+						*/
 					       s7_make_integer(sc, port_line_number(sc->input_port))));
 	  else sc->x = immutable_cons(sc, sc->__FUNC__, sc->code);
 	  closure_environment(sc->value) = s7_cons(sc, 
