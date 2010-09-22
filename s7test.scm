@@ -566,6 +566,7 @@
 (test (let () (define (hi a) (+ 1 a)) (equal? hi hi)) #t)
 (test (let ((x (lambda* (hi (a 1)) (+ 1 a)))) (equal? x x)) #t)
 (test (equal? ``"" '"") #t)
+(test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda (x) x)))) (equal? pws pws)) #t)
 
 (test (equal? most-positive-fixnum most-positive-fixnum) #t)
 (test (equal? most-positive-fixnum most-negative-fixnum) #f)
@@ -3656,6 +3657,7 @@
 (test (set-car! '(1 2) 4) 4)
 (test (set-cdr! '(1 2) 4) 4)
 (test (fill! (list 1 2) 4) 4)
+(test (fill! '() 1) 1)
 
 (for-each
  (lambda (arg)
@@ -6344,6 +6346,16 @@
    (test (ht '(a . 2)) 32))
 
 (let ((ht (make-hash-table)))
+  (set! (ht 1.0) 'a)
+  (set! (ht 2.0) 'b)
+  (set! (ht 3.0) 'c)
+  (test (ht 2.0) 'b)
+  (set! (ht 2.0) 'd)
+  (test (ht 2.0) 'd)
+  (test (ht 0.0) #f)
+  (test (ht 1.0) 'a))
+
+(let ((ht (make-hash-table)))
   (test (ht) 'error)
   (test (ht 0 1) 'error))
 
@@ -6935,6 +6947,7 @@
 
 (test (format #f "hiho") "hiho")
 (test (format #f "") "")
+(test (format #f "" 1) 'error)
 (test (format #f "a") "a")
 
 (test (format #f "~~") "~")
@@ -10705,6 +10718,8 @@
 (test (+ 1 (or (values 2 3) 4)) 3)
 (test (+ 1 (and 2 (values 3 4)) 5) 13)
 (test (and (values) 1) 1)
+(test (and (values 1 2 #f) 4) #f)
+(test (and (values 1 2 3) 4) 4)
 (test (length (values '())) 0)
 (test (length (values #(1 2 3 4))) 4)
 (test (vector? (values #())) #t)
@@ -13358,6 +13373,8 @@ who says the continuation has to restart the map from the top?
 (let ((lst (list 'quote)))
   (set! (cdr lst) lst)
   (test (object->string lst) "#1=(quote . #1#)"))
+(test (object->string quasiquote) "quasiquote")
+
 
 #|
 unquote outside qq:
@@ -14660,6 +14677,7 @@ why are these different (read-time `#() ? )
 					(not (char=? (name i) #\/))
 					(not (char=? (name i) #\\))
 					(not (char=? (name i) #\.))
+					(not (char=? (name i) #\-))
 					(not (char-numeric? (name i))))
 				   (begin
 				     (format #t "ok? file name: ~S~%" name)
@@ -14806,6 +14824,8 @@ why are these different (read-time `#() ? )
    (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
   
   (test (let ((hi (lambda (x) (+ x 1)))) (procedure-source hi)) '(lambda (x) (+ x 1)))
+  (test (procedure-with-setter? symbol-access) #t)
+  (test (procedure-documentation symbol-access) "(symbol-access sym) is a procedure-with-setter that adds or removes controls on how a symbol access its current binding.")
   
   (for-each
    (lambda (arg)
@@ -18949,7 +18969,7 @@ why are these different (read-time `#() ? )
 	  (if (null? list)
 	      '()
 	      (let ((length (do ((p (cdr list) (cdr p))
-				 (i 1 (1+ i)))
+				 (i 1 (+ i 1)))
 				((not (pair? p)) i))))
 		(if (> length n)
 		    (do ((1st (cdr list) (cdr 1st))
@@ -34702,6 +34722,14 @@ why are these different (read-time `#() ? )
 (num-test (rationalize 1.16 .0022) 22/19)
 (num-test (rationalize 1.16 .002) 29/25)
 (num-test (rationalize 1.16 .0000001) 29/25)
+(num-test (rationalize .1 .1) 0)
+(num-test (rationalize .1 .0999) 1/6)
+(num-test (rationalize .1 .065) 1/7)
+(num-test (rationalize .1 .067) 1/6)
+(num-test (rationalize .1 .04) 1/8)
+(num-test (rationalize .1 .02) 1/9)
+(num-test (rationalize .1 .01) 1/10)
+(num-test (rationalize .1 0) 1/10)
 
 (num-test (rationalize 23.1 22.0) 2)
 (num-test (rationalize 23.1 22) 2)
@@ -34719,6 +34747,16 @@ why are these different (read-time `#() ? )
 (num-test (rationalize 1/3 1/3) 0)
 (num-test (rationalize 1/3 1/4) 1/2)
 (num-test (rationalize 3/10 1/10) 1/3)
+
+(num-test (rationalize 1 .1) 1)
+(num-test (rationalize 1 1) 0)
+(num-test (rationalize 1 1/2) 1)
+(num-test (rationalize 1 0) 1)
+(num-test (rationalize 0 -.1) 0)
+(num-test (rationalize 0 1) 0)
+(num-test (rationalize 0 0) 0)
+(num-test (rationalize -1 .1) -1)
+(num-test (rationalize -1 -1) 0)
 
 (num-test (rationalize (exact->inexact 1/2) 3/4) 0)
 (num-test (rationalize (exact->inexact 1/2) 1/4) 1/2)
@@ -34788,12 +34826,16 @@ why are these different (read-time `#() ? )
       (test (rationalize (/ pi) 1e-18) 340262731/1068966896)
       (test (rationalize (/ pi) 1e-20) 1963319607/6167950454)
       (test (rationalize (/ pi) 1e-30) 136308121570117/428224593349304)
+      (num-test (rationalize 1e-50 1e-60) 1/99999999990000000000999999999900000000288351059969)
+      (num-test (rationalize (/ 1 most-negative-fixnum) 0) (/ 1 most-negative-fixnum))
       )
     (begin
       (test (< (abs (- (rationalize (/ pi) 1e-17) (/ pi))) 1e-10) #t) ; make sure we don't hang!
       (test (< (abs (- (rationalize (/ pi) 1e-18) (/ pi))) 1e-10) #t)
       (test (< (abs (- (rationalize (/ pi) 1e-20) (/ pi))) 1e-10) #t)
       ))
+
+(num-test (rationalize (/ 1 most-positive-fixnum) 0) (/ 1 most-positive-fixnum))
 
 (let ()
   (define (check-rationalize val n)
@@ -34830,14 +34872,18 @@ why are these different (read-time `#() ? )
   (if with-bignums
       (let ((old-prec (bignum-precision)))
 	(set! (bignum-precision) 4096)
+	(test (bignum-precision) 4096)
+
 	(test (check-rationalize pi 100) #t)
 	(test (check-rationalize (/ pi) 100) #t)
 
 	(for-each
 	 (lambda (arg)
 	   (test (set! (bignum-precision) arg) 'error))
-	 (list "hi" #\a 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t abs #<eof> #<unspecified> (lambda () 1)))
+	 (list "hi" #\a 'a-symbol '#(1 2 3) -1 0 1 3.14 3/4 1.0+1.0i #t abs #<eof> #<unspecified> (lambda () 1)))
 
+	(set! (bignum-precision) 2)
+	(test (bignum-precision) 2)
 	(set! (bignum-precision) old-prec))))
 
 (test (rationalize) 'error)
@@ -35668,8 +35714,11 @@ why are these different (read-time `#() ? )
 (num-test (lcm) 1 )
 (num-test (gcd 2 0) 2)
 (num-test (lcm 2 0) 0)
+(num-test (lcm 1741 2063 3137 3797 3251 3 19) 7927658615618708709)
 
 (num-test (lcm 1/2 2) 2)
+(num-test (lcm 1/2 -2) 2)
+(num-test (lcm -1/2 -2) 2)
 (num-test (lcm 1/3 3/4) 3)
 (num-test (lcm 2 3/4) 6)
 (num-test (lcm 3/4 2) 6)
@@ -39928,6 +39977,8 @@ why are these different (read-time `#() ? )
 
   (test (= (make-polar inf+ 0) inf+) #t)
   (test (nan? (real-part (make-polar 0 inf-))) #t)
+  (test (nan? (real-part (make-rectangular inf- 0))) #f)
+  (test (zero? (real-part (make-rectangular 0 inf-))) #t)
   (test (nan? (make-polar nan 0)) #t)
   (test (nan? (real-part (make-polar 0 nan))) #t)
   (test (= (make-rectangular inf+ 0) inf+) #t)
@@ -39964,6 +40015,7 @@ why are these different (read-time `#() ? )
   (test (rationalize nan) 'error)
 
   (test (rationalize 198797.5 inf+) 0)
+  (test (rationalize 0.5 inf+) 0)
   (test (rationalize 178978.5 inf-) 0)
   (test (rationalize 178978.5 complex-inf-) 'error)
   (test (rationalize 178987.5 nan) 'error)
@@ -49464,7 +49516,14 @@ why are these different (read-time `#() ? )
 (num-test (logand 9223372036854775807 -1) 9223372036854775807)
 (num-test (logand 9223372036854775807 1) 1)
 
-(if with-bignums (num-test (/ -9223372036854775808 -9223372036854775808 -9223372036854775808) -1/9223372036854775808))
+(if with-bignums
+    (begin
+      (num-test (/ -9223372036854775808 -9223372036854775808 -9223372036854775808) -1/9223372036854775808)
+      (test (number->string -46116860184273879035/27670116110564327424) "-46116860184273879035/27670116110564327424")
+      (test (equal? (/ (* 5 most-positive-fixnum) (* 3 most-negative-fixnum)) -46116860184273879035/27670116110564327424) #t)
+      (num-test (numerator -46116860184273879035/27670116110564327424) -46116860184273879035)
+      (num-test (denominator -46116860184273879035/27670116110564327424) 27670116110564327424)
+      ))
 
 (test (integer? (expt 2.3 54)) #f)
 (if with-bignums (test (zero? (- (expt 2.3 54) (floor (expt 2.3 54)))) #f))
@@ -58234,7 +58293,7 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 #xfff0000000000000 -inf
 #xfff8000000000000 nan
 
-but how to build these in scheme?
+but how to build these in scheme? (set! flt (integer-encode-float 0 #x7ff 0)) ?
 
 
 (= 3.14 (bignum "3.14")) -> #f

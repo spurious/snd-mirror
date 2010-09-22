@@ -3606,7 +3606,7 @@ static s7_Int c_gcd(s7_Int u, s7_Int v)
 {
   s7_Int a, b, temp;
   
-  a = s7_Int_abs(u);
+  a = s7_Int_abs(u);  /* trouble if either is most-negative-fixnum... */
   b = s7_Int_abs(v);
   while (b != 0)
     {
@@ -5818,6 +5818,10 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
       (err > -1.0))
     return(x);
 
+  if ((err == 0.0) &&                 /* (rationalize (/ 1 most-positive-fixnum) 0) */
+      (s7_is_ratio(x)))
+    return(x);
+
   rat = s7_number_to_real(x);
 
   /* (rationalize (real-part (log 0))) */
@@ -6667,7 +6671,8 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
       for (x = args; x != sc->NIL; x = cdr(x)) 
 	{
 	  n = c_gcd(n, s7_integer(car(x)));
-	  if (n == 1)
+	  if ((n == 1) ||
+	      (n == -1))                  /* on the Mac, (gcd 9223372036854775807 -9223372036854775808) is -1 ?? */
 	    return(small_int(1));
 	}
       return(s7_make_integer(sc, n));
@@ -10903,10 +10908,10 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     case T_GOTO:
       return(copy_string("#<goto>"));
   
-    case T_CATCH: /* this can't happen? */
+    case T_CATCH:                        /* this can't happen */
       return(copy_string("#<catch>"));
   
-    case T_DYNAMIC_WIND:
+    case T_DYNAMIC_WIND:                 /* this can't happen */
       return(copy_string("#<dynamic-wind>"));
   
     case T_C_OBJECT:
@@ -16629,7 +16634,7 @@ static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char
 {
   s7_pointer result;
 
-  if (!in_str)
+  if ((!in_str) || (!(*in_str)))
     {
       if (args != sc->NIL)
 	return(s7_error(sc, 
@@ -20815,7 +20820,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error_with_name(sc, "~A: no value? ~A", sc->code));            /* (define var) */
 
       if ((!is_pair(car(sc->code))) &&
-	  (cddr(sc->code) != sc->NIL))                                       /* (define var 1 . 2) */
+	  (cddr(sc->code) != sc->NIL))                                             /* (define var 1 . 2) */
 	return(eval_error_with_name(sc, "~A: more than 1 value? ~A", sc->code));   /* (define var 1 2) */
 
       /* parameter error checks are handled by lambda/lambda* (see OP_LAMBDA above) */
@@ -26665,10 +26670,16 @@ static s7_pointer g_set_precision(s7_scheme *sc, s7_pointer args)
 {
   #define H_bignum_precision "(bignum-precision) returns the number of bits used for floats and complex numbers. It can be set."
   mp_prec_t bits;
+  s7_Int precision;
+
   if (!s7_is_integer(car(args)))
     return(s7_wrong_type_arg_error(sc, "bignum-precision", 0, car(args), "an integer"));
 
-  bits = (mp_prec_t)s7_integer(car(args));
+  precision = s7_integer(car(args));
+  if (precision <= 1)                   /* (set! (bignum-precision) 1) causes mpfr to segfault! (also 0 and -1) */
+    return(s7_out_of_range_error(sc, "bignum-precision", 1, car(args), "has to be greater than 1"));    
+
+  bits = (mp_prec_t)precision;
   mpfr_set_default_prec(bits);
   mpc_set_default_precision(bits);
   s7_symbol_set_value(sc, s7_make_symbol(sc, "pi"), big_pi(sc));
