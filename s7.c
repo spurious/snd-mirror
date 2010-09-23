@@ -454,9 +454,9 @@ typedef struct s7_cell {
     } fobj;
     
     struct {               /* call/cc */
-      int stack_size;
       s7_pointer stack;
       s7_pointer *stack_start, *stack_end;
+      int stack_size;
     } continuation;
     
     struct {               /* call-with-exit */
@@ -761,7 +761,14 @@ struct s7_scheme {
 /* this bit is for circle checks during removal of a global function from the heap
  */
 
-#define UNUSED_BITS                   0xc0000000
+#define T_KEYWORD                     (1 << (TYPE_BITS + 22))
+#define is_keyword(p)                 ((typeflag(p) & T_KEYWORD) != 0)
+
+#define UNUSED_BITS                   0x80000000
+
+/* TYPE_BITS could be 5, and several of the current type bits could be fields in the s7_cell struct
+ *   2 bits in DWIND_STATE for example, or T_KEYWORD
+ */
 
 
 #if HAVE_PTHREADS
@@ -1166,8 +1173,7 @@ bool s7_is_constant(s7_pointer p)
    *   (and (constant? (list + 1)) (not (equal? (list + 1) (eval (list + 1)))))
    */
   return((type(p) != T_SYMBOL) ||
-	 (is_immutable(p)) ||
-	 (s7_is_keyword(p)));
+	 ((typeflag(p) & (T_KEYWORD | T_IMMUTABLE)) != 0));
 }
 
 
@@ -1944,6 +1950,11 @@ static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char
   symbol_location(x) = location;   /* accesses car(x) */
   symbol_global_slot(x) = sc->NIL; /* accesses car(x) */
 
+  if ((symbol_name_length(x) > 1) &&                           /* not 0, otherwise : is a keyword */
+      ((name[0] == ':') ||
+       (name[symbol_name_length(x) - 1] == ':')))
+    typeflag(x) |= (T_IMMUTABLE | T_KEYWORD); 
+
 #if HAVE_PTHREADS
   pthread_mutex_lock(&symtab_lock);
 #endif
@@ -2506,7 +2517,7 @@ s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just 
   x = find_symbol(sc, sc->envir, sym);
   if (x != sc->NIL)
     return(symbol_value(x));
-  if (s7_is_keyword(sym))
+  if (is_keyword(sym))
     return(sym);
   return(sc->UNDEFINED);
 }
@@ -2780,21 +2791,16 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
 
 /* -------- keywords -------- */
 
-/* PERHAPS: use a T_KEYWORD bit? */
-
 bool s7_is_keyword(s7_pointer obj)
 {
-  return((s7_is_symbol(obj)) &&
-	 (symbol_name_length(obj) > 1) &&                           /* not 0, otherwise : is a keyword */
-	 ((symbol_name(obj)[0] == ':') ||
-	  (symbol_name(obj)[symbol_name_length(obj) - 1] == ':')));
+  return(is_keyword(obj));
 }
 
 
 static s7_pointer g_is_keyword(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_keyword "(keyword? obj) returns #t if obj is a keyword"
-  return(make_boolean(sc, s7_is_keyword(car(args))));
+  return(make_boolean(sc, is_keyword(car(args))));
 }
 
 
@@ -2831,7 +2837,7 @@ static s7_pointer g_keyword_to_symbol(s7_scheme *sc, s7_pointer args)
   #define H_keyword_to_symbol "(keyword->symbol key) returns a symbol with the same name as key but no prepended colon"
   const char *name;
 
-  if (!s7_is_keyword(car(args)))
+  if (!is_keyword(car(args)))
     return(s7_wrong_type_arg_error(sc, "keyword->symbol", 0, car(args), "a keyword"));
 
   name = symbol_name(car(args));
@@ -6661,6 +6667,8 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
   s7_Int n = 0, d = 1;
   s7_pointer x;
 
+  /* TODO: even if gmp, (gcd most-negative-fixnum) -> -9223372036854775808 */
+
   for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x)) 
     if (!s7_is_rational(car(x)))
       return(s7_wrong_type_arg_error(sc, "gcd", i, car(x), "an integer"));
@@ -8896,23 +8904,30 @@ static s7_pointer g_is_string(s7_scheme *sc, s7_pointer args)
 }
 
 
+#define MAX_STRING_LENGTH 1073741824
+
 static s7_pointer g_make_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_string "(make-string len :optional val) makes a string of length len filled with the character val (default: space)"
-  int len;
+  s7_Int len;
   char fill = ' ';
   
-  if ((!s7_is_integer(car(args))) || (s7_integer(car(args)) < 0))
-    return(s7_wrong_type_arg_error(sc, "make-string length,", 1, car(args), "a non-negative integer"));
+  if (!s7_is_integer(car(args)))
+    return(s7_wrong_type_arg_error(sc, "make-string length,", 1, car(args), "an integer"));
   
   len = s7_integer(car(args));
+  if (len < 0)
+    return(s7_out_of_range_error(sc, "make-string length,", 1, car(args), "a non-negative integer"));
+  if (len > MAX_STRING_LENGTH)
+    return(s7_out_of_range_error(sc, "make-string length,", 1, car(args), "a reasonable integer!"));
+
   if (cdr(args) != sc->NIL) 
     {
       if (!s7_is_character(cadr(args)))
 	return(s7_wrong_type_arg_error(sc, "make-string filler,", 2, cadr(args), "a character"));
       fill = s7_character(cadr(args));
     }
-  return(make_empty_string(sc, len, fill));
+  return(make_empty_string(sc, (int)len, fill));
 }
 
 
@@ -10932,7 +10947,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   {
     char *buf;
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     type_name(obj),
 	     typeflag(obj),
@@ -10953,6 +10968,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	     symbol_has_accessor(obj) ? " (accessor)" : "",
 	     has_structure(obj) ? " (structure)" : "",
 	     is_multiple_value(obj) ? " (values)" : "",
+	     is_keyword(obj) ? " keyword" : "",
 	     ((typeflag(obj) & UNUSED_BITS) != 0) ? " bad bits!" : "");
 #if DEBUGGING
     if ((saved_typeflag(obj) != typeflag(obj)) &&
@@ -12205,26 +12221,33 @@ static s7_pointer g_is_list(s7_scheme *sc, s7_pointer args)
 }
 
 
+#define MAX_LIST_LENGTH 1073741824
+
 static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_list "(make-list length (initial-element #f)) returns a list of 'length' elements whose value is 'initial-element'."
 
   s7_pointer init, p;
-  int i, len;
+  int i, ilen;
+  s7_Int len;
 
   if (!s7_is_integer(car(args)))
     return(s7_wrong_type_arg_error(sc, "make-list", 1, car(args), "an integer"));
-  len = s7_integer(car(args));
+
+  len = s7_integer(car(args));            /* needs to be s7_Int here so that (make-list most-negative-fixnum) is handled correctly */
   if (len < 0)
     return(s7_out_of_range_error(sc, "make-list length,", 1, car(args), "should be non-negative"));
   if (len == 0) return(sc->NIL);          /* what about (make-list 0 123)? */
+  if (len > MAX_LIST_LENGTH)
+    return(s7_out_of_range_error(sc, "make-list length,", 1, car(args), "should be a reasonable integer"));
 
   if (is_pair(cdr(args)))
     init = cadr(args);
   else init = sc->F;
 
   sc->w = sc->NIL;
-  for (i = 0; i < len; i++)
+  ilen = (int)len;
+  for (i = 0; i < ilen; i++)
     sc->w = s7_cons(sc, init, sc->w);
   p = sc->w;
   sc->w = sc->NIL;
@@ -13811,6 +13834,8 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_Int size)
     }
 
   table = s7_make_vector(sc, size + 1);   /* nil is the default value */
+  /* size + 1 can be fooled if we don't catch most-positive-fixnum */
+
   set_type(table, T_HASH_TABLE | T_FINALIZABLE | T_DONT_COPY | T_STRUCTURE);
   hash_table_function(table) = HASH_EMPTY;
   hash_table_entries(table) = 0;
@@ -13831,6 +13856,8 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 	  size = s7_integer(car(args));
 	  if (size <= 0)
 	    return(s7_out_of_range_error(sc, "make-hash-table size,", 1, car(args), "should be a positive integer"));
+	  if (size > MAX_LIST_LENGTH)
+	    return(s7_out_of_range_error(sc, "make-hash-table size,", 1, car(args), "should be a reasonable integer"));
 	}
       else return(s7_wrong_type_arg_error(sc, "make-hash-table size,", 1, car(args), "an integer"));
     }
@@ -19182,7 +19209,7 @@ static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
 {
   s7_pointer x;
 
-  if (s7_is_keyword(sym))
+  if (is_keyword(sym))
     return(sym);
 	  
   x = symbol_table_find_by_name(sc, symbol_name(sym), symbol_location(sym));
@@ -19453,7 +19480,7 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 	    }
 	  else
 	    {
-	      if (s7_is_keyword(car(sc->y)))
+	      if (is_keyword(car(sc->y)))
 		{
 		  char *name;                       /* found a keyword, need to remove the ':' before checking the lambda args */
 		  s7_pointer sym;
@@ -19463,7 +19490,7 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 		    sym = s7_make_symbol(sc, (const char *)(name + 1));
 		  else
 		    {
-		      /* must be a trailing ':' here, else not s7_is_keyword */
+		      /* must be a trailing ':' here, else not is_keyword */
 		      name[symbol_name_length(car(sc->y)) - 1] = '\0';
 		      sym = s7_make_symbol(sc, name);
 		      name[symbol_name_length(car(sc->y)) - 1] = ':';
@@ -19492,7 +19519,7 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 		      else
 			{
 			  if ((is_pair(car(sc->x))) &&
-			      (s7_is_keyword(cadar(sc->x))))
+			      (is_keyword(cadar(sc->x))))
 			    {
 			      /* sc->x is the closure args list, not the copy of it in the current environment */
 			      s7_pointer x;
@@ -19568,8 +19595,6 @@ static s7_pointer prepare_do_step_variables(s7_scheme *sc)
       tmp = caar(sc->x);
       if (!s7_is_symbol(tmp))
 	return(eval_error(sc, "do step variable: ~S is not a symbol?", tmp));
-      if (s7_is_keyword(tmp))
-	return(eval_error(sc, "do step variable ~S: keywords are constants", tmp));
       if (is_immutable(tmp))
 	return(eval_error(sc, "do step variable: ~S is immutable", tmp));
       /* symbol-access is dealt with elsewhere */
@@ -20839,7 +20864,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (!s7_is_symbol(sc->x))                                             /* (define (3 a) a) */
 	return(eval_error_with_name(sc, "~A: define a non-symbol? ~S", sc->x));
-      if (s7_is_keyword(sc->x))                                             /* (define :hi 1) */
+      if (is_keyword(sc->x))                                                /* (define :hi 1) */
 	return(eval_error_with_name(sc, "~A ~A: keywords are constants", sc->x));
 
       /* (define ((f a) b) (* a b)) -> (define f (lambda (a) (lambda (b) (* a b)))) */
@@ -21579,8 +21604,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->x = car(sc->code);
       if (!s7_is_symbol(sc->x))                                             /* (defmacro) or (defmacro 1 ...) */
 	return(eval_error_with_name(sc, "~A name: ~S is not a symbol?", sc->x));     
-      if (s7_is_keyword(sc->x))                                             /* (defmacro :hi ...) */
-	return(eval_error_with_name(sc, "~A ~A: keywords are constants", sc->x));
 
       if (is_immutable_or_accessed(sc->x))
 	{
@@ -21665,8 +21688,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->x = caar(sc->code);
       if (!s7_is_symbol(sc->x))
 	return(eval_error_with_name(sc, "~A: ~S is not a symbol?", sc->x));
-      if (s7_is_keyword(sc->x))                                             /* (define-macro (:hi ...)) */
-	return(eval_error_with_name(sc, "~A ~A: keywords are constants", sc->x));
 
       if (is_immutable_or_accessed(sc->x))
 	{

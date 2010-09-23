@@ -3982,9 +3982,7 @@ but vectors are sorted in place.
 Keywords exist mainly for define*'s benefit.  The keyword functions are:
 <b>keyword?</b>, <b>make-keyword</b>, <b>symbol-&gt;keyword</b>, and <b>keyword-&gt;symbol</b>.
 A keyword is a symbol that starts or ends with a colon. The colon
-is considered to be a part of the symbol name.
-s7's keyword support is somewhat lackadaisical; should it complain
-about stuff like <code>(let ((:hi 1)) :hi)</code>?
+is considered to be a part of the symbol name.  A keyword is a constant that evaluates to itself.
 </p>
 
 
