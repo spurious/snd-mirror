@@ -547,7 +547,7 @@ struct s7_scheme {
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, UNQUOTE_SPLICING, MACROEXPAND, SPECIAL;
   s7_pointer APPLY, VECTOR, CDR, SET, QQ_VALUES, QQ_LIST, QQ_APPLY, QQ_APPEND, MULTIVECTOR;
   s7_pointer ERROR, WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO;
-  s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, SYNTAX_ERROR;
+  s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, SYNTAX_ERROR, TOO_MANY_ARGUMENTS, NOT_ENOUGH_ARGUMENTS;
   s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, KEY_ALLOW_OTHER_KEYS;
   s7_pointer __FUNC__, ERROR_HOOK, TRACE_HOOK, UNBOUND_VARIABLE_HOOK;
   s7_pointer FEED_TO;                 /* => */
@@ -1069,7 +1069,7 @@ static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym);
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj);
 static s7_pointer apply_error(s7_scheme *sc, s7_pointer obj, s7_pointer args);
 static bool is_thunk(s7_scheme *sc, s7_pointer x);
-static int remember_file_name(const char *file);
+static int remember_file_name(s7_scheme *sc, const char *file);
 static const char *type_name(s7_pointer arg);
 static s7_pointer make_string_uncopied(s7_scheme *sc, char *str);
 static s7_pointer make_protected_string(s7_scheme *sc, const char *str);
@@ -1706,6 +1706,9 @@ Evaluation produces a surprising amount of garbage, so don't leave the GC off fo
 
   if (args != sc->NIL)
     {
+      if (!s7_is_boolean(car(args)))
+	return(s7_wrong_type_arg_error(sc, "gc", 0, car(args), "#f (turn GC off) or #t (turn it on)"));	
+
       (*(sc->gc_off)) = (car(args) == sc->F);
       if (*(sc->gc_off)) return(sc->F);
     }
@@ -2360,7 +2363,7 @@ static void save_initial_environment(s7_scheme *sc)
   s7_vector_fill(sc, sc->initial_env, sc->NIL);
   sc->initial_env->hloc = NOT_IN_HEAP;
 
-  ge = car (sc->global_env);
+  ge = car(sc->global_env);
   len = vector_length(ge);
   lsts = vector_elements(ge);
    
@@ -6667,8 +6670,6 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
   s7_Int n = 0, d = 1;
   s7_pointer x;
 
-  /* TODO: even if gmp, (gcd most-negative-fixnum) -> -9223372036854775808 */
-
   for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x)) 
     if (!s7_is_rational(car(x)))
       return(s7_wrong_type_arg_error(sc, "gcd", i, car(x), "an integer"));
@@ -10346,7 +10347,7 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
     }
 
   port = load_file(sc, fp, filename);
-  port_file_number(port) = remember_file_name(filename);
+  port_file_number(port) = remember_file_name(sc, filename);
   push_input_port(sc, port);
   
   /* it's possible to call this recursively (s7_load is XEN_LOAD_FILE which can be invoked via s7_call)
@@ -10406,7 +10407,12 @@ defaults to the global environment.  To load into the current environment instea
   else sc->envir = s7_global_environment(sc);
   
   fname = s7_string(name);
-  
+  if ((!fname) || (!(*fname)))                 /* fopen("", "r") returns a file pointer?? */
+    return(s7_error(sc, sc->OUT_OF_RANGE, 
+		    make_list_2(sc, 
+				make_protected_string(sc, "load's first argument, ~S, should be a filename"),
+				name)));
+
   fp = fopen(fname, "r");
   if (!fp)
     fp = search_load_path(sc, fname);
@@ -10416,7 +10422,7 @@ defaults to the global environment.  To load into the current environment instea
   /* run_load_hook(sc, fname); */
 
   port = load_file(sc, fp, fname);
-  port_file_number(port) = remember_file_name(fname);
+  port_file_number(port) = remember_file_name(sc, fname);
   push_input_port(sc, port);
 
   push_stack(sc, opcode(OP_LOAD_CLOSE_AND_POP_IF_EOF), sc->NIL, sc->NIL);  /* was pushing args and code, but I don't think they're used later */
@@ -15453,11 +15459,11 @@ static s7_pointer pws_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
       len = safe_list_length(sc, args);
       if (len < f->get_req_args)
 	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, 
-			make_list_3(sc, make_protected_string(sc, "~A: not enough arguments: ~A"), obj, args)));
+			make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, obj, args)));
 
       if (len > (f->get_req_args + f->get_opt_args))
 	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, 
-			make_list_3(sc, make_protected_string(sc, "~A: too many arguments: ~A"), obj, args)));
+			make_list_3(sc, sc->TOO_MANY_ARGUMENTS, obj, args)));
 
       return((*(f->getter))(sc, args));
     }
@@ -17130,7 +17136,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 /* error reporting info -- save filename and line number */
 
 #define INITIAL_FILE_NAMES_SIZE 8
-static char **file_names = NULL;
+static s7_pointer *file_names = NULL;
 static int file_names_size = 0;
 static int file_names_top = -1;
 
@@ -17139,12 +17145,13 @@ static pthread_mutex_t remember_files_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 #define remembered_line_number(Line) (Line & 0xfffff)
-#define remembered_file_name(Line)   (((Line >> 20) <= file_names_top) ? file_names[Line >> 20] : "?")
+#define remembered_file_name(Line)   (((Line >> 20) <= file_names_top) ? file_names[Line >> 20] : sc->F)
 /* this gives room for 4000 files each of 1000000 lines */
 
 
-static int remember_file_name(const char *file)
+static int remember_file_name(s7_scheme *sc, const char *file)
 {
+  int i, old_size = 0;
 #if HAVE_PTHREADS
   pthread_mutex_lock(&remember_files_lock);
 #endif
@@ -17155,19 +17162,18 @@ static int remember_file_name(const char *file)
       if (file_names_size == 0)
 	{
 	  file_names_size = INITIAL_FILE_NAMES_SIZE;
-	  file_names = (char **)calloc(file_names_size, sizeof(char *));
+	  file_names = (s7_pointer *)calloc(file_names_size, sizeof(s7_pointer));
 	}
       else
 	{
-	  int i, old_size;
 	  old_size = file_names_size;
 	  file_names_size *= 2;
-	  file_names = (char **)realloc(file_names, file_names_size * sizeof(char *));
-	  for (i = old_size; i < file_names_size; i++)
-	    file_names[i] = NULL;
+	  file_names = (s7_pointer *)realloc(file_names, file_names_size * sizeof(s7_pointer));
 	}
+      for (i = old_size; i < file_names_size; i++)
+	file_names[i] = sc->F;
     }
-  file_names[file_names_top] = copy_string(file);
+  file_names[file_names_top] = s7_make_permanent_string(file);
 
 #if HAVE_PTHREADS
   pthread_mutex_unlock(&remember_files_lock);
@@ -17257,10 +17263,10 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 
       if ((line > 0) &&
 	  (remembered_line_number(line) != 0) &&
-	  (remembered_file_name(line)))
+	  (remembered_file_name(line) != sc->F))
 	{
 	  vector_element(sc->error_info, ERROR_CODE_LINE) = s7_make_integer(sc, remembered_line_number(line));
-	  vector_element(sc->error_info, ERROR_CODE_FILE) = make_protected_string(sc, remembered_file_name(line));	  
+	  vector_element(sc->error_info, ERROR_CODE_FILE) = remembered_file_name(line);	  
 	}
 
       for (top = s7_stack_top(sc) - 1, j = ERROR_ENVIRONMENT + 1; (top > 0) && (j < ERROR_INFO_SIZE); top -= 4, j++)
@@ -20401,16 +20407,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (len < c_function_required_args(sc->code))
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
-			      make_list_3(sc, 
-					  make_protected_string(sc, "~A: not enough arguments: ~A"), 
-					  sc->code, sc->args)));
+			      make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
 	    
 	    if (c_function_all_args(sc->code) < len)
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
-			      make_list_3(sc, 
-					  make_protected_string(sc, "~A: too many arguments: ~A"),
-					  sc->code, sc->args)));
+			      make_list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
 	  }
 	  /* drop into ... */
 
@@ -20436,16 +20438,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (len < c_macro_required_args(sc->code))
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
-			      make_list_3(sc, 
-					  make_protected_string(sc, "~A: not enough arguments: ~A"), 
-					  sc->code, sc->args)));
+			      make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
 	    
 	    if (c_macro_all_args(sc->code) < len)
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
-			      make_list_3(sc, 
-					  make_protected_string(sc, "~A: too many arguments: ~A"),
-					  sc->code, sc->args)));
+			      make_list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
 
 	    sc->value = c_macro_call(sc->code)(sc, sc->args);
 	    sc->args = sc->NIL;
@@ -20501,9 +20499,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (sc->y == sc->NIL)
 		return(s7_error(sc, 
 				sc->WRONG_NUMBER_OF_ARGS, 
-				make_list_3(sc, 
-					    make_protected_string(sc, "~A: not enough arguments: ~A"),
-					    closure_name(sc, sc->code), sc->args)));
+				make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, closure_name(sc, sc->code), sc->args)));
 #if HAVE_PTHREADS
 	      add_to_local_environment(sc, car(sc->x), car(sc->y));
 	      /* if the expansion (below) is not thread-safe, neither is this, but at least the trouble stays local to the function */
@@ -20545,9 +20541,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (sc->y != sc->NIL)
 		return(s7_error(sc, 
 				sc->WRONG_NUMBER_OF_ARGS, 
-				make_list_3(sc, 
-					    make_protected_string(sc, "~A: too many arguments: ~A"), 
-					    closure_name(sc, sc->code), sc->args)));
+				make_list_3(sc, sc->TOO_MANY_ARGUMENTS, closure_name(sc, sc->code), sc->args)));
 	    } 
 	  else 
 	    {
@@ -20579,9 +20573,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	      case LSTAR_TOO_MANY_ARGS:
 		return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, 
-				make_list_3(sc, 
-					    make_protected_string(sc, "~A: too many arguments: ~A"),
-					    closure_name(sc, sc->code), sc->args)));
+				make_list_3(sc, sc->TOO_MANY_ARGUMENTS, closure_name(sc, sc->code), sc->args)));
 
 	      case LSTAR_NO_SUCH_KEY:
 		/* this is a problem.  If we're using keywords to pass choices (:all etc),
@@ -20912,13 +20904,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (port_filename(sc->input_port))
 	    sc->x = immutable_cons(sc, 
 				   sc->__FUNC__, 									       
-				   make_list_3(sc, 
-					       sc->code,
-					       make_protected_string(sc, copy_string(port_filename(sc->input_port))),
-					       /* copy_string is needed because port_filename is GC'd when the port is closed.
-						*   it would be nice if we could use remembered_filename -- perhaps save
-						*   these as s7 strings rather than C strings?
-						*/
+				   make_list_3(sc, sc->code,
+					       file_names[port_file_number(sc->input_port)],
 					       s7_make_integer(sc, port_line_number(sc->input_port))));
 	  else sc->x = immutable_cons(sc, sc->__FUNC__, sc->code);
 	  closure_environment(sc->value) = s7_cons(sc, 
@@ -23905,7 +23892,7 @@ static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
   s7_pointer p;
 
   p = g_string_to_number(sc, args);
-  if (is_false(sc, p)) /* (bignum "1/3.0") */
+  if (is_false(sc, p))                                       /* (bignum "1/3.0") */
     s7_error(sc, s7_make_symbol(sc, "bignum-error"),
 	     make_list_2(sc,
 			 make_protected_string(sc, "bignum argument is not a number: ~S"),
@@ -23913,21 +23900,17 @@ static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
 
   if (is_c_object(p)) return(p);
 
+  /* number_type(p) at this point can confuse string_to_big_* because, for example, "6/3" becomes 2 (type=NUM_INT),
+   *   but the string is a ratio, so it should be passed to string_to_big_ratio.
+   */
+
   switch (number_type(p))
     {
-    case NUM_INT:   
-      return(string_to_big_integer(sc, s7_string(car(args)), (cdr(args) == sc->NIL) ?  10 : s7_integer(cadr(args))));
-
-    case NUM_RATIO: 
-      return(string_to_big_ratio(sc, s7_string(car(args)), (cdr(args) == sc->NIL) ? 10 : s7_integer(cadr(args))));
-
+    case NUM_INT:   return(promote_number(sc, T_BIG_INTEGER, p));
+    case NUM_RATIO: return(promote_number(sc, T_BIG_RATIO, p));
     case NUM_REAL:
-    case NUM_REAL2: 
-      if (isnan(s7_real(p))) return(p);
-      return(string_to_big_real(sc, s7_string(car(args)), (cdr(args) == sc->NIL) ? 10 : s7_integer(cadr(args))));
-
-    default:        
-      return(promote_number(sc, T_BIG_COMPLEX, p));
+    case NUM_REAL2: return(promote_number(sc, T_BIG_REAL, p));
+    default:        return(promote_number(sc, T_BIG_COMPLEX, p));
     }
 }
 
@@ -27015,6 +26998,13 @@ static void s7_gmp_init(s7_scheme *sc)
   mpc_set_default_precision((mp_prec_t)128);
 
   s7_symbol_set_value(sc, s7_make_symbol(sc, "pi"), big_pi(sc));
+
+  /* if these fixnum limits were read as strings, they'd be bignums in the gmp case, 
+   *   so for consistency make the symbolic versions bignums as well.
+   */
+  s7_symbol_set_value(sc, s7_make_symbol(sc, "most-positive-fixnum"), s7_Int_to_big_integer(sc, s7_integer(s7_name_to_value(sc, "most-positive-fixnum"))));
+  s7_symbol_set_value(sc, s7_make_symbol(sc, "most-negative-fixnum"), s7_Int_to_big_integer(sc, s7_integer(s7_name_to_value(sc, "most-negative-fixnum"))));
+
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "gmp")));
 }
 
@@ -27381,6 +27371,9 @@ s7_scheme *s7_init(void)
   typeflag(sc->SET) |= T_DONT_COPY; 
 
   sc->s_function_args = permanent_cons(sc->F, sc->NIL, T_PAIR | T_STRUCTURE);
+
+  sc->TOO_MANY_ARGUMENTS = s7_make_permanent_string("~A: too many arguments: ~A");
+  sc->NOT_ENOUGH_ARGUMENTS = s7_make_permanent_string("~A: not enough arguments: ~A");
 
   (*(sc->gc_off)) = false;
 

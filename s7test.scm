@@ -6522,6 +6522,7 @@
 (test (load) 'error)
 (test (load "empty-file" (current-environment) 1) 'error)
 (test (load "not a file") 'error)
+(test (load "") 'error)
 
 
 (test (output-port? (current-output-port)) #t)
@@ -9479,6 +9480,10 @@
 (test (do ((f + *) (j 1 (+ j 1))) ((= j 2) (apply f (list j j)))) 4)
 (test (do ((f lambda) (j 1 (+ j 1))) ((= j 2) ((f (a) (+ a j)) 3))) 5)
 
+(let ()
+  (define-macro (add-1 x) `(+ ,x 1))
+  (test (do ((i 0 (add-1 i))) ((= i 3) i)) 3)
+  (test (do ((i 0 (add-1 i))) ((= i 3) (add-1 i))) 4))
 
 (test (let ((j #f))
 	(do ((i 0 (let ((x 0))
@@ -12916,7 +12921,9 @@ who says the continuation has to restart the map from the top?
 (test (let ((x 0)) (dynamic-wind (lambda () (set! x (+ x 1))) ((lambda () (set! x 32) (lambda () x))) (let () (lambda () x)))) 33)
 (test (let ((x 0)) (dynamic-wind (lambda () (set! x (+ x 1))) ((lambda () (set! x (+ x 32)) (lambda () x))) (let () (lambda () (set! x (+ x 100)) x)))) 33)
 
-
+(let ()
+  (define-macro (make-thunk val) `(lambda () ,val))
+  (test (dynamic-wind (make-thunk 0) (make-thunk 1) (make-thunk 2)) 1))
 
 ;;; from scheme wiki
 ;;; http://community.schemewiki.org/?hose-the-repl
@@ -16932,6 +16939,14 @@ why are these different (read-time `#() ? )
 	  (format #t ";stacktrace: ~A from ~A~%" str1 str)))))
 
 (test (stacktrace #(23)) 'error)
+
+
+(for-each
+ (lambda (arg)
+   (test (gc arg) 'error))
+ (list "hi" '(1 2 3) #() 'a-symbol abs 3.14 3/4 1.0+1.0i 1 '() "" (if #f #f) (lambda (a) (+ a 1))))
+
+(test (gc #f #t) 'error)
 
 
 (define special-global-x 32)
@@ -40445,8 +40460,10 @@ why are these different (read-time `#() ? )
 	     1267650600228229401496703205376.99 -1267650600228229401496703205376.88 0.1231231231231231231231231231))
       (for-each
        (lambda (n)
-	 (test (bignum n) 'error))
-       (list "hi" (integer->char 65) #f #t '(1 2) 'a-symbol (cons 1 2) (make-vector 3) abs))))
+	 (test (bignum n) 'error)
+	 (test (bignum "1.0" n) 'error))
+       (list "hi" (integer->char 65) #f #t '(1 2) 'a-symbol (cons 1 2) (make-vector 3) 1 3/4 1.5 1+i abs))
+      ))
 
 
 
@@ -58338,7 +58355,7 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 #xfff0000000000000 -inf
 #xfff8000000000000 nan
 
-but how to build these in scheme? (set! flt (integer-encode-float 0 #x7ff 0)) ?
+but how to build these in scheme? (set! flt (integer-encode-float 0 #x7ff 0)) ? (would need check for invalid args)
 
 
 (= 3.14 (bignum "3.14")) -> #f
