@@ -2757,11 +2757,13 @@
 (test (car '(1 2 . 3)) 1)
 (test (car (cons 1 '())) 1)
 (test (car (if #f #f)) 'error)
+(test (car '()) 'error)
 
 (for-each
  (lambda (arg)
    (if (not (equal? (car (cons arg '())) arg))
-       (format #t "(car '(~A)) returned ~A?~%" arg (car (cons arg '())))))
+       (format #t "(car '(~A)) returned ~A?~%" arg (car (cons arg '()))))
+   (test (car arg) 'error))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
 
 (test (reinvert 12 car (lambda (a) (cons a '())) '(1)) '(1))
@@ -2788,11 +2790,13 @@
 (test (cdr (cons (cons 1 2) (cons 3 4))) '(3 . 4))
 (test (cdr '(1 2 . 3)) '(2 . 3))
 (test (cdr (if #f #f)) 'error)
+(test (cdr '()) 'error)
 
 (for-each
  (lambda (arg)
    (if (not (equal? (cdr (cons '() arg)) arg))
-       (format #t "(cdr '(() ~A) -> ~A?~%" arg (cdr (cons '() arg)))))
+       (format #t "(cdr '(() ~A) -> ~A?~%" arg (cdr (cons '() arg))))
+   (test (cdr arg) 'error))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
 
 (let* ((a (list 1 2 3))
@@ -4112,8 +4116,9 @@
       (let ((result (catch #t (lambda () (op arg)) (lambda args 'error))))
 	(if (not (eq? result 'error))
 	    (format #t "(~A ~A) returned ~A?~%" op arg result))
-	(test (op arg '() arg) 'error)))
-    (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1)))))
+	(test (op arg '() arg) 'error)
+	(test (op arg) 'error)))
+    (list '() "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1)))))
  (list cons car cdr set-car! set-cdr! caar cadr cdar cddr caaar caadr cadar cdaar caddr cdddr cdadr cddar 
        caaaar caaadr caadar cadaar caaddr cadddr cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar
        assq assv assoc memq memv member list-ref list-tail))
@@ -7258,6 +7263,14 @@
 (test (format #f ".~A~*" 1 '(1)) ".1")
 (test (format #f "~*~*~T" 1 '(1)) "")
 
+(test (format #f "~A" 'AB\c) "(symbol \"AB\\\\c\")")
+(test (format #f "~S" 'AB\c) "(symbol \"AB\\\\c\")")
+(test (format #f "~A" '(AB\c () xyz)) "((symbol \"AB\\\\c\") () xyz)")
+(test (format #f "~,2f" 1234567.1234) "1234567.12")
+(test (format #f "~5D" 3) "    3")
+(test (format #f "~5,'0D" 3) "00003")
+(test (format #f "++~{-=~s=-~}++" (quote (1 2 3))) "++-=1=--=2=--=3=-++")
+
 (test (format) 'error)
 (for-each
  (lambda (arg)
@@ -7503,7 +7516,7 @@
 (test (format #f "~9,7F" 3.14) "3.1400000")
 (test (format #f "~9,8F" 3.14) "3.14000000")
 (test (format #f "~9,9F" 3.14) "3.140000000")
-(test (format #f "~9,9G" 1+1i) "1+1i")
+(test (format #f "~9,9G" 1+1i) "     1+1i")
 (test (format #f "~9,0e" 1+1i) "1e+00+1e+00i")
 (test (format #f "~9,1e" 1+1i) "1.0e+00+1.0e+00i")
 (test (format #f "~9,2e" 1+1i) "1.00e+00+1.00e+00i")
@@ -7514,23 +7527,23 @@
 (test (format #f "~9,7e" 1+1i) "1.0000000e+00+1.0000000e+00i")
 (test (format #f "~9,8e" 1+1i) "1.00000000e+00+1.00000000e+00i")
 (test (format #f "~9,9e" 1+1i) "1.000000000e+00+1.000000000e+00i")
-(test (format #f "~9,0x" 3.14) "3.0")
-(test (format #f "~9,1x" 3.14) "3.2")
-(test (format #f "~9,2x" 3.14) "3.23")
-(test (format #f "~9,3x" 3.14) "3.23d")
-(test (format #f "~9,4x" 3.14) "3.23d7")
-(test (format #f "~9,5x" 3.14) "3.23d7")
-(test (format #f "~9,6x" 3.14) "3.23d70a")
+(test (format #f "~9,0x" 3.14) "      3.0")
+(test (format #f "~9,1x" 3.14) "      3.2")
+(test (format #f "~9,2x" 3.14) "     3.23")
+(test (format #f "~9,3x" 3.14) "    3.23d")
+(test (format #f "~9,4x" 3.14) "   3.23d7")
+(test (format #f "~9,5x" 3.14) "   3.23d7")
+(test (format #f "~9,6x" 3.14) " 3.23d70a")
 (test (format #f "~9,7x" 3.14) "3.23d70a3")
 (test (format #f "~9,8x" 3.14) "3.23d70a3d")
 (test (format #f "~9,9x" 3.14) "3.23d70a3d7")
-(test (format #f "~9,0b" 3.14) "11.0")
-(test (format #f "~9,1b" 3.14) "11.0")
-(test (format #f "~9,2b" 3.14) "11.0")
-(test (format #f "~9,3b" 3.14) "11.001")
-(test (format #f "~9,4b" 3.14) "11.001")
-(test (format #f "~9,5b" 3.14) "11.001")
-(test (format #f "~9,6b" 3.14) "11.001")
+(test (format #f "~9,0b" 3.14) "     11.0")
+(test (format #f "~9,1b" 3.14) "     11.0")
+(test (format #f "~9,2b" 3.14) "     11.0")
+(test (format #f "~9,3b" 3.14) "   11.001")
+(test (format #f "~9,4b" 3.14) "   11.001")
+(test (format #f "~9,5b" 3.14) "   11.001")
+(test (format #f "~9,6b" 3.14) "   11.001")
 (test (format #f "~9,7b" 3.14) "11.0010001")
 (test (format #f "~9,8b" 3.14) "11.00100011")
 (test (format #f "~9,9b" 3.14) "11.001000111")
@@ -7660,6 +7673,29 @@
 (num-test (string->number (format #f "~X" 0+1i)) 0+1i)
 (num-test (string->number (format #f "~O" 0+1i)) 0+1i)
 
+(test (format #f "~P{T}'" 1) "{T}'")
+(test (format #f "~") "~")
+(test (format #f "~B&B~X" 1.5 1.5) "1.1&B1.8")
+(test (format #f ",~~~A~*1" 1 1) ",~11")
+(test (format #f "~D~20B" 0 0) "0                   0")
+(test (format #f "~D~20B" 1 1) "1                   1")
+(test (format #f "~10B" 1) "         1")
+(test (format #f "~10B" 0) "         0")
+(test (format #f "~100B" 1) "                                                                                                   1")
+(test (length (format #f "~1000B" 1)) 1000)
+(test (format #f "~D~20D" 3/4 3/4) "3/4                 3/4")
+(test (length (format #f "~20D" 3/4)) 20)
+(test (format #f "~20B" 3/4) "              11/100")
+(test (length (format #f "~20B" 3/4)) 20)
+(test (format #f "~D~20B" 3/4 3/4) "3/4              11/100")
+(test (format #f "~X~20X" 21/33 21/33) "7/b                 7/b")
+(test (format #f "~D~20,'.B" 3/4 3/4) "3/4..............11/100")
+(test (format #f "~20g" 1+i) "                1+1i")
+(test (length (format #f "~20g" 1+i)) 20)
+(test (format #f "~20f" 1+i) "  1.000000+1.000000i")
+(test (length (format #f "~20f" 1+i)) 20)
+(test (format #f "~20x" 17+23i) "          11.0+17.0i")
+(test (length (format #f "~20x" 17+23i)) 20)
 
 #|
 (do ((i 0 (+ i 1))) ((= i 256)) 
@@ -13524,6 +13560,10 @@ why are these different (read-time `#() ? )
   (test (keyword? (make-keyword (string #\"))) #t)
   (test (keyword->symbol (make-keyword (string #\"))) (symbol "\""))
   )
+
+(test (let ((:hi 3)) :hi) 'error)
+(test (set! :hi 2) 'error)
+(test (define :hi 3) 'error)
 
 (let ((strlen 8))
   (let ((str (make-string strlen)))
@@ -40463,6 +40503,9 @@ why are these different (read-time `#() ? )
 	 (test (bignum n) 'error)
 	 (test (bignum "1.0" n) 'error))
        (list "hi" (integer->char 65) #f #t '(1 2) 'a-symbol (cons 1 2) (make-vector 3) 1 3/4 1.5 1+i abs))
+      (num-test (bignum "6/3") 2)
+      (num-test (bignum "+3/6") 1/2)
+      (num-test (bignum "7447415382/3") 2482471794)
       ))
 
 
@@ -51206,6 +51249,7 @@ why are these different (read-time `#() ? )
 (num-test 0.000000010000000000000000000000000000000000000e10 100.0)
 (num-test 0.000000012222222222222222222222222222222222222e10 122.22222222222222)
 (num-test 0.000000012222222222222222222222222222222222222e17 1222222222.222222)
+(num-test (- (string->number "769056139124082.") (string->number "769056139124080.")) 2.0)
 
 (num-test (string->number "0000000000000000000000000001.0") 1.0)
 (num-test (string->number "1.0000000000000000000000000000") 1.0)
@@ -54100,8 +54144,6 @@ why are these different (read-time `#() ? )
    (test (bignum "1.0" arg) 'error))
  (list -1 0 #\a '#(1 2 3) 2/3 1.5+0.3i 1+i '() 'hi abs "hi" '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
 
-
-;;; TODO: string-> big complex (mpc_set_str expects CL syntax, not Scheme)
 
 
 (let ()
@@ -58359,8 +58401,4 @@ but how to build these in scheme? (set! flt (integer-encode-float 0 #x7ff 0)) ? 
 
 
 (= 3.14 (bignum "3.14")) -> #f
-
-(symbol? :) -> :: unbound variable
-(symbol? #:) same
-
 |#

@@ -4360,8 +4360,18 @@ static void s7_Int_to_string(char *p, s7_Int n, int radix, int width)
     return;
   if (n == 0)
     {
-      p[0] = '0';
-      p[1] = '\0';
+      if (width <= 1)
+	{
+	  p[0] = '0';
+	  p[1] = '\0';
+	}
+      else
+	{
+	  for (i = 0; i < width - 1; i++) 
+	    p[i] = ' ';
+	  p[width - 1] = '0';
+	  p[width] = '\0';
+	}
       return;
     }
 
@@ -4413,12 +4423,15 @@ static void s7_Int_to_string(char *p, s7_Int n, int radix, int width)
 
   if (sign) len++;
 
-  if (width > len) /* (format #f "~10B" 123) */
+  if (width > len)                  /* (format #f "~10B" 123) */
     {
       start = width - len - 1;
       end += start;
+      memset((void *)p, (int)' ', start);
+      /*
       for (i = 0; i < start; i++) 
 	p[i] = ' ';
+      */
     }
 
   if (sign)
@@ -4436,9 +4449,23 @@ static void s7_Int_to_string(char *p, s7_Int n, int radix, int width)
 }
 
 
+static char *pad_number(const char *p, int len, int width)
+{
+  char *p1;
+  int spaces;
+  spaces = width - len;
+  p1 = (char *)malloc((width + 1) * sizeof(char));
+  p1[width] = '\0';
+  memset((void *)p1, (int)' ', spaces);
+  memcpy((void *)(p1 + spaces), (void *)p, len);
+  return(p1);
+}
+
+
 static char *number_to_string_base_10(s7_pointer obj, int width, int precision, char float_choice)
 {
   char *p;
+  int len;
 
 #if WITH_GMP
   if (is_c_object(obj))
@@ -4448,31 +4475,39 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
   switch (number_type(obj))
     {
     case NUM_INT:
-      p = (char *)malloc(64 * sizeof(char));
-      snprintf(p, 64, 
+      len = 64 + width;
+      p = (char *)malloc(len * sizeof(char));
+      snprintf(p, len, 
 	       (sizeof(int) >= sizeof(s7_Int)) ? "%*d" : "%*lld",
 	       width, s7_integer(obj));
       break;
       
     case NUM_RATIO:
       p = (char *)malloc(128 * sizeof(char));
-      snprintf(p, 128,
-	       (sizeof(int) >= sizeof(s7_Int)) ? "%d/%d" : "%lld/%lld", 
-	       s7_numerator(obj), s7_denominator(obj));
+      len = snprintf(p, 128,
+		     (sizeof(int) >= sizeof(s7_Int)) ? "%d/%d" : "%lld/%lld", 
+		     s7_numerator(obj), s7_denominator(obj));
+      if (width > len)
+	{
+	  char *p1;
+	  p1 = pad_number(p, len, width);
+	  free(p);
+	  return(p1);
+	}
       break;
       
     case NUM_REAL2:
     case NUM_REAL:
       {
-	int i, loc = -1, len;
+	int i, loc = -1;
 	const char *frmt;
-	p = (char *)malloc(256 * sizeof(char));
+	p = (char *)malloc((256 + width) * sizeof(char));
 
 	if (sizeof(double) >= sizeof(s7_Double))
 	  frmt = (float_choice == 'g') ? "%*.*g" : ((float_choice == 'f') ? "%*.*f" : "%*.*e");
 	else frmt = (float_choice == 'g') ? "%*.*Lg" : ((float_choice == 'f') ? "%*.*Lf" : "%*.*Le");
 
-	len = snprintf(p, 256, frmt, width, precision, s7_real(obj));
+	len = snprintf(p, 256 + width, frmt, width, precision, s7_real(obj));
 	for (i = 0; i < len; i++) /* does it have an exponent (if so, it's already a float) */
 	  if (p[i] == 'e')
 	    {
@@ -4511,7 +4546,14 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 	    else frmt = (float_choice == 'g') ? "%.*Lg%.*Lgi" : ((float_choice == 'f') ? "%.*Lf-%.*Lfi" : "%.*Le-%.*Lei");
 	  }
 
-	snprintf(p, 256, frmt, precision, s7_real_part(obj), precision, s7_imag_part(obj));
+	len = snprintf(p, 256, frmt, precision, s7_real_part(obj), precision, s7_imag_part(obj));
+	if (width > len)
+	  {                             /* (format #f "~20g" 1+i) */
+	    char *p1;
+	    p1 = pad_number(p, len, width);
+	    free(p);
+	    return(p1);
+	  }
       }
       break;
     }
@@ -4522,6 +4564,7 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radix, int width, int precision, char float_choice)
 {
   char *p, *n, *d;
+  int len;
 
 #if WITH_GMP
   if (is_c_object(obj))
@@ -4534,8 +4577,9 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
   switch (number_type(obj))
     {
     case NUM_INT:
-      p = (char *)malloc(128 * sizeof(char));
+      p = (char *)malloc((128 + width) * sizeof(char));
       s7_Int_to_string(p, s7_integer(obj), radix, width);
+      return(p);
       break;
       
     case NUM_RATIO:
@@ -4544,7 +4588,7 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
 	s7_Int_to_string(n, s7_numerator(obj), radix, 0);
 	s7_Int_to_string(d, s7_denominator(obj), radix, 0);
 	p = (char *)malloc(256 * sizeof(char));
-	snprintf(p, 256, "%s/%s", n, d);
+	len = snprintf(p, 256, "%s/%s", n, d);
       }
       break;
       
@@ -4586,19 +4630,26 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
 	  d[i++] = '0';
 	d[i] = '\0';
 	p = (char *)malloc(256 * sizeof(char));
-	snprintf(p, 256, "%s%s.%s", (sign) ? "-" : "", n, d);
+	len = snprintf(p, 256, "%s%s.%s", (sign) ? "-" : "", n, d);
       }
       break;
 
     default:
       p = (char *)malloc(512 * sizeof(char));
-      n = number_to_string_with_radix(sc, s7_make_real(sc, s7_real_part(obj)), radix, width, precision, float_choice);
-      d = number_to_string_with_radix(sc, s7_make_real(sc, s7_imag_part(obj)), radix, width, precision, float_choice);
-      snprintf(p, 512, "%s%s%si", n, (s7_imag_part(obj) < 0.0) ? "" : "+", d);
+      n = number_to_string_with_radix(sc, s7_make_real(sc, s7_real_part(obj)), radix, 0, precision, float_choice);
+      d = number_to_string_with_radix(sc, s7_make_real(sc, s7_imag_part(obj)), radix, 0, precision, float_choice);
+      len = snprintf(p, 512, "%s%s%si", n, (s7_imag_part(obj) < 0.0) ? "" : "+", d);
       free(n);
       free(d);
       break;
-      
+    }
+
+  if (width > len)
+    {
+      char *p1;
+      p1 = pad_number(p, len, width);
+      free(p);
+      return(p1);
     }
   return(p);
 }
@@ -16382,6 +16433,8 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		  if (!s7_is_number(car(fdat->args)))   /* CL accepts non numbers here */
 		    return(format_error(sc, "'@P' directive argument is not an integer", str, args, fdat));
 
+		  /* TODO: here and below s7_is_one needs to include (bignum "1") (etc) */
+
 		  if (!s7_is_one(car(fdat->args)))
 		    format_append_string(fdat, "ies");
 		  else format_append_char(fdat, 'y');
@@ -17684,7 +17737,7 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
 		    make_list_3(sc, 
 				make_protected_string(sc, "missing close paren, list started around line ~D of ~S"), 
 				s7_make_integer(sc, remembered_line_number(line)),
-				make_protected_string(sc, port_filename(sc->input_port)))));
+				(port_filename(sc->input_port)) ? file_names[port_file_number(sc->input_port)] : make_protected_string(sc, port_filename(sc->input_port)))));
   
   /* we need a legit s7_error here, but we're lost... */
   return(s7_error(sc, sc->READ_ERROR, 
@@ -23900,10 +23953,6 @@ static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
 
   if (is_c_object(p)) return(p);
 
-  /* number_type(p) at this point can confuse string_to_big_* because, for example, "6/3" becomes 2 (type=NUM_INT),
-   *   but the string is a ratio, so it should be passed to string_to_big_ratio.
-   */
-
   switch (number_type(p))
     {
     case NUM_INT:   return(promote_number(sc, T_BIG_INTEGER, p));
@@ -27912,7 +27961,6 @@ s7_scheme *s7_init(void)
  * TODO: loading s7test simultaneously in several threads hangs after awhile in join_thread (call/cc?) 
  *
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html) [also list-ref/set, frame|mixer etc]
- * PERHAPS: multidimensional hash tables
  *
  * someday we need to catch gmp exceptions: SIGFPE (exception=deliberate /0 -- see gmp/errno.c)
  *   #include <signal.h>
