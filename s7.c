@@ -3267,7 +3267,7 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 /* -------------------------------- numbers -------------------------------- */
 
 #if WITH_GMP
-  static char *big_number_to_string_with_radix(s7_pointer p, int radix);
+  static char *big_number_to_string_with_radix(s7_pointer p, int radix, int width);
   static bool big_numbers_are_eqv(s7_pointer a, s7_pointer b);
   static s7_pointer string_to_either_integer(s7_scheme *sc, const char *str, int radix);
   static s7_pointer string_to_either_ratio(s7_scheme *sc, const char *nstr, const char *dstr, int radix);
@@ -4469,7 +4469,7 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 
 #if WITH_GMP
   if (is_c_object(obj))
-    return(big_number_to_string_with_radix(obj, 10));
+    return(big_number_to_string_with_radix(obj, 10, width));
 #endif
 
   switch (number_type(obj))
@@ -4568,7 +4568,7 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
 
 #if WITH_GMP
   if (is_c_object(obj))
-    return(big_number_to_string_with_radix(obj, radix));
+    return(big_number_to_string_with_radix(obj, radix, width));
 #endif
 
   if (radix == 10)
@@ -10219,7 +10219,7 @@ static s7_pointer g_peek_char(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_read_line(s7_scheme *sc, s7_pointer args)
 {
   #define H_read_line "(read-line port (with-eol #f)) returns the next line from port, or #<eof> (use the function eof-object?).\
-If 'with-eol' is not #f, include the trailing end-of-line character."
+If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
 
   s7_pointer port;
   int i;
@@ -10229,13 +10229,17 @@ If 'with-eol' is not #f, include the trailing end-of-line character."
     {
       port = car(args);
       if (!s7_is_input_port(sc, port))
-	return(s7_wrong_type_arg_error(sc, "read-line", 0, port, "an input port"));
+	return(s7_wrong_type_arg_error(sc, "read-line", 1, port, "an input port"));
       if (port_is_closed(port))
-	return(s7_wrong_type_arg_error(sc, "read-line", 0, port, "an open input port"));
+	return(s7_wrong_type_arg_error(sc, "read-line", 1, port, "an open input port"));
 
-      if ((cdr(sc->args) != sc->NIL) &&
-	  (cadr(sc->args) != sc->F))
-	with_eol = true;
+      if (cdr(sc->args) != sc->NIL)
+	{
+	  if (!s7_is_boolean(cadr(sc->args)))
+	    return(s7_wrong_type_arg_error(sc, "read-line", 2, cadr(sc->args), "#f or #t"));
+	  if (cadr(sc->args) == sc->T)
+	    with_eol = true;
+	}
     }
   else port = sc->input_port;
 
@@ -12315,8 +12319,7 @@ static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer list_ref_1(s7_scheme *sc, s7_pointer lst, s7_pointer ind)
 {
-  int i;
-  s7_Int index;
+  s7_Int i, index;
   s7_pointer p;
 
   if ((!s7_is_integer(ind)) ||
@@ -12326,6 +12329,8 @@ static s7_pointer list_ref_1(s7_scheme *sc, s7_pointer lst, s7_pointer ind)
   index = s7_integer(ind);
   if (index < 0)
     return(s7_out_of_range_error(sc, "list-ref index,", 2, ind, "should be non-negative"));
+  if (index > MAX_LIST_LENGTH)
+    return(s7_out_of_range_error(sc, "list-ref index,", 2, ind, "should be a reasonable integer"));
   
   for (i = 0, p = lst; (i < index) && is_pair(p); i++, p = cdr(p)) {}
   
@@ -12379,6 +12384,8 @@ static s7_pointer g_list_set(s7_scheme *sc, s7_pointer args)
   index = s7_integer(cadr(args));
   if (index < 0)
     return(s7_out_of_range_error(sc, "list-set!", 2, cadr(args), "index should be non-negative"));
+  if (index > MAX_LIST_LENGTH)
+    return(s7_out_of_range_error(sc, "list-set! index,", 2, cadr(args), "should be a reasonable integer"));
   
   for (i = 0, p = car(args); (i < index) && is_pair(p); i++, p = cdr(p)) {}
   
@@ -12411,6 +12418,8 @@ static s7_pointer g_list_tail(s7_scheme *sc, s7_pointer args)
   index = s7_integer(cadr(args));
   if (index < 0)
     return(s7_out_of_range_error(sc, "list-tail index,", 2, cadr(args), "should be non-negative"));
+  if (index > MAX_LIST_LENGTH)
+    return(s7_out_of_range_error(sc, "list-tail index,", 2, cadr(args), "should be a reasonable integer"));
   
   for (i = 0, p = car(args); (i < index) && (is_pair(p)); i++, p = cdr(p)) {}
   
@@ -13522,6 +13531,8 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
 }
 
 
+#define MAX_VECTOR_RANK 512
+
 static s7_pointer g_make_vector(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_vector "(make-vector len :optional (value #f)) returns a vector of len elements initialized to value. \
@@ -13554,10 +13565,13 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
       else
 	{
 	  int i;
+	  /* TODO: if circular list -- hangs (also eval) */
 	  for (i = 1, len = 1, y = x; y != sc->NIL; y = cdr(y), i++)
 	    {
 	      if (!is_pair(y))
 		return(s7_wrong_type_arg_error(sc, "make-vector", 1, x, "a proper list of dimensions"));
+	      if (i > MAX_VECTOR_RANK)
+		return(s7_out_of_range_error(sc, "make-vector dimension list,", 1, x, "less than 512 dimensions"));
 	      if (!s7_is_integer(car(y)))
 		return(s7_wrong_type_arg_error(sc, "make-vector", i, car(y), "an integer"));
 	      len *= s7_integer(car(y));
@@ -16356,6 +16370,13 @@ static void format_number(s7_scheme *sc, format_data *fdat, int radix, int width
 }
 
 
+#if WITH_GMP
+static bool s7_is_one_or_big_one(s7_pointer p);
+#else
+#define s7_is_one_or_big_one(Num) s7_is_one(Num)
+#endif
+
+
 static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args, s7_pointer *next_arg)
 {
   #define INITIAL_FORMAT_LENGTH 128
@@ -16433,9 +16454,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		  if (!s7_is_number(car(fdat->args)))   /* CL accepts non numbers here */
 		    return(format_error(sc, "'@P' directive argument is not an integer", str, args, fdat));
 
-		  /* TODO: here and below s7_is_one needs to include (bignum "1") (etc) */
-
-		  if (!s7_is_one(car(fdat->args)))
+		  if (!s7_is_one_or_big_one(car(fdat->args)))
 		    format_append_string(fdat, "ies");
 		  else format_append_char(fdat, 'y');
 
@@ -16445,7 +16464,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 		case 'P': case 'p':                 /* -------- plural in 's' -------- */
 		  if (!s7_is_real(car(fdat->args)))
 		    return(format_error(sc, "'P' directive argument is not a real number", str, args, fdat));
-		  if (!s7_is_one(car(fdat->args)))
+		  if (!s7_is_one_or_big_one(car(fdat->args)))
 		    format_append_char(fdat, 's');
 		  i++;
 		  fdat->args = cdr(fdat->args);
@@ -16535,7 +16554,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 			  }
 
 			if (!is_pair(curly_arg))
-			  return(format_error(sc, "'{' directive argument should be a list", str, args, fdat));
+			  return(format_error(sc, "'{' directive argument should be a list, string, or vector", str, args, fdat));
 			if (!is_proper_list(sc, curly_arg))
 			  return(format_error(sc, "'{' directive argument should be a proper list", str, args, fdat));
 
@@ -20547,6 +20566,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   * so... we need a way to get the call environment from within either a macro or a function
 	   */
 
+	  /* (let* ((mac (let () (define-macro (mac1 a) `(+ ,a 1)) mac1)) (lst (list 1))) (set-cdr! lst lst) (apply mac lst ()))
+	   * hangs -- this is equivalent to (eval <circular-list>) which also hangs.
+	   */
+
 	  for (sc->x = closure_args(sc->code), sc->y = sc->args; is_pair(sc->x); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 	    {
 	      if (sc->y == sc->NIL)
@@ -20760,7 +20783,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (s7_is_constant(car(sc->x)))                      /* (lambda (pi) pi) */
 		return(eval_error(sc, "lambda parameter '~A is a constant", car(sc->x)));
 	      if (symbol_is_in_list(sc, car(sc->x), cdr(sc->x)))   /* (lambda (a a) ...) or (lambda (a . a) ...) */
-		return(eval_error(sc, "lambda parameter '~A is used twice in the lambda argument list", car(sc->x)));
+		return(eval_error(sc, "lambda parameter '~A is used twice in the parameter list", car(sc->x)));
 	    }
 	  if ((sc->x != sc->NIL) &&
 	      (s7_is_constant(sc->x)))                             /* (lambda (a . 0.0) a) or (lambda (a . :b) a) */
@@ -22888,18 +22911,35 @@ static char *print_big_complex(s7_scheme *sc, void *val)
 }
 
 
-static char *big_number_to_string_with_radix(s7_pointer p, int radix)
+static char *big_number_to_string_with_radix(s7_pointer p, int radix, int width)
 {
+  char *str = NULL;
   if (c_object_type(p) == big_integer_tag)
-    return(mpz_get_str(NULL, radix, S7_BIG_INTEGER(p)));
-
-  if (c_object_type(p) == big_ratio_tag)
-    return(mpq_get_str(NULL, radix, S7_BIG_RATIO(p)));
-
-  if (c_object_type(p) == big_real_tag)
-    return(mpfr_to_string(S7_BIG_REAL(p), radix));
-
-  return(mpc_to_string(S7_BIG_COMPLEX(p), radix));
+    str = mpz_get_str(NULL, radix, S7_BIG_INTEGER(p));
+  else
+    {
+      if (c_object_type(p) == big_ratio_tag)
+	str = mpq_get_str(NULL, radix, S7_BIG_RATIO(p));
+      else
+	{
+	  if (c_object_type(p) == big_real_tag)
+	    str = mpfr_to_string(S7_BIG_REAL(p), radix);
+	  else str = mpc_to_string(S7_BIG_COMPLEX(p), radix);
+	}
+    }
+  if (width > 0)
+    {
+      int len;
+      len = safe_strlen(str);
+      if (width > len)
+	{
+	  char *p1;
+	  p1 = pad_number(str, len, width);
+	  free(str);
+	  return(p1);
+	}
+    }
+  return(str);
 }
 
 
@@ -22952,6 +22992,33 @@ static bool equal_big_real(void *val1, void *val2)
 static bool equal_big_complex(void *val1, void *val2)
 {
   return(mpc_cmp(BIG_COMPLEX(val1), BIG_COMPLEX(val2)) == 0);
+}
+
+
+static bool s7_is_one_or_big_one(s7_pointer p)
+{
+  bool result = false;
+  if (!IS_BIG(p))
+    return(s7_is_one(p));
+
+  if (c_object_type(p) == big_integer_tag)
+    {
+      mpz_t n;
+      mpz_init_set_si(n, 1);
+      result = (mpz_cmp(n, BIG_INTEGER(p)) == 0);
+      mpz_clear(n);
+    }
+  else
+    {
+      if (c_object_type(p) == big_real_tag)
+	{
+	  mpfr_t n;
+	  mpfr_init_set_d(n, 1.0, GMP_RNDN);
+	  result = (mpfr_cmp(n, BIG_REAL(p)) == 0);
+	  mpfr_clear(n);
+	}
+    }
+  return(result);
 }
 
 
@@ -25131,6 +25198,10 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	{
 	  mpz_t n, d;
 	  mpq_t *r;
+
+	  if (yval > (LLONG_MAX >> 4)) /* gmp aborts or segfaults if this is too large, but I don't know where the actual boundary is */
+	    return(s7_out_of_range_error(sc, "integer expt exponent,", 1, y, "gmp will segfault"));
+
 	  x = promote_number(sc, T_BIG_RATIO, x);
 	  mpz_init_set(n, mpq_numref(S7_BIG_RATIO(x)));
 	  mpz_init_set(d, mpq_denref(S7_BIG_RATIO(x)));

@@ -3841,7 +3841,8 @@
  (lambda (arg)
    (test (list-tail (list 1 2) arg) 'error)
    (test (list-tail arg 0) 'error))
- (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) #<eof> #() #(1 2 3) (lambda (a) (+ a 1))))
+ (list "hi" -1 3 most-negative-fixnum most-positive-fixnum 
+       (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) #<eof> #() #(1 2 3) (lambda (a) (+ a 1))))
 
 
 
@@ -5366,6 +5367,17 @@
     (test (equal? lst1 lst2) #f)
     (test (infinite? (length lst2)) #t)))
 
+(let ((lst1 (list 1))) 
+  (set-cdr! lst1 lst1)
+  (test (list-tail lst1 0) lst1)
+  (test (list-tail lst1 3) lst1)
+  (test (list-tail lst1 10) lst1))
+
+(let ((lst1 (let ((lst (list 'a))) 
+	      (set-cdr! lst lst)
+	      lst)))
+  (test (apply lambda lst1 (list 1)) 'error)) ; lambda parameter 'a is used twice in the lambda argument list !
+
 (let ((lst1 (list 1))
       (lst2 (list 1)))
   (set-car! lst1 lst2)
@@ -5388,6 +5400,13 @@
   (list-set! lst1 1 lst1)
   (test (object->string lst1) "#1=(1 #1# 3)"))
 
+(let ((lst1 (let ((lst (list 1))) 
+	      (set-cdr! lst lst)
+	      lst)))
+  (test (list-ref lst1 9223372036854775807) 'error)
+  (test (list-set! lst1 9223372036854775807 2) 'error)
+  (test (list-tail lst1 9223372036854775807) 'error)
+  (test (make-vector lst1 9223372036854775807) 'error))
 
 (test (copy (list 1 2 (list 3 4))) '(1 2 (3 4)))
 (test (copy (cons 1 2)) '(1 . 2))
@@ -6542,6 +6561,11 @@
        (format #t "(output-port? ~A) -> #t?~%" arg)))
  (list "hi" #f (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f))
 
+(for-each
+ (lambda (arg)
+   (test (read-line '() arg) 'error))
+ (list "hi" (integer->char 65) 1 (list 1 2) (make-vector 3) 3.14 3/4 1.0+1.0i #\f))
+
 (test (call-with-output-file "tmp1.r5rs" output-port?) #t)
 (if (not (eq? start-output-port (current-output-port)))
     (format #t "call-with-output-file did not restore current-output-port? ~A from ~A~%" start-output-port (current-output-port)))
@@ -6967,7 +6991,7 @@
 (test (format #f "" 1) 'error)
 (test (format #f "a") "a")
 
-(test (format #f "~~") "~")
+(test (format #f "~~") "~") ; guile returns this, but clisp thinks it's an error
 (test (format #f "~~~~") "~~")
 (test (format #f "a~~") "a~")
 (test (format #f "~~a") "~a")
@@ -6975,9 +6999,14 @@
 (test (format #f "~{~^~A~}" '()) "")
 (test (format #f "~{~^~{~^~A~}~}" '(())) "")
 (test (format #f "~P" 1) "")
+(test (format #f "~P" #\a) 'error)
 (test (format #f "~0T") "")
 (test (format #f "") "")
 (test (format #f "~*~*" 1 2) "")
+(test (format #f "~20,'~D" 3) "~~~~~~~~~~~~~~~~~~~3")
+(test (format #f "~0D" 123) "123")
+(test (format #f "~-1D" 123) 'error)
+(test (format #f "~20,'-1D" 123) 'error)
 
 (test (format #f "hiho~%ha") (string-append "hiho" (string #\newline) "ha"))
 (test (format #f "~%") (string #\newline))
@@ -7039,6 +7068,19 @@
 (test (format #f "~A" catch) "catch")
 (test (format #f "this is a ~
              sentence") "this is a sentence")
+(test (format #f "~{~C~}" "hi") "hi")
+(test (format #f "~{~C~}" #(#\h #\i)) "hi")
+
+(test (format #f "~{.~{~C+~}~}" '((#\h #\i) (#\h #\o))) ".h+i+.h+o+")
+(test (format #f "~{.~{~C+~}~}" '("hi" "ho")) ".h+i+.h+o+")
+(test (format #f "~{.~{~C+~}~}" #("hi" "ho")) ".h+i+.h+o+")
+(test (format #f "~{.~{~C+~}~}" #(#(#\h #\i) #(#\h #\o))) ".h+i+.h+o+")
+
+; (format #f "~{.~{~C~+~}~}" #2d((#\h #\i) (#\h #\o))) error?? -- this is documented...
+(test (format #f "~{~A~}" #2D((1 2) (3 4))) "1234") ; this seems inconsistent with:
+(test (format #f "~{~A~}" '((1 2) (3 4))) "(1 2)(3 4)")
+(test (format #f "~{~A ~}" #2d((1 2) (3 4))) "1 2 3 4 ")
+
 
 ;; ~nT handling is a mess -- what are the defaults?  which is column 1? do we space up to or up to and including?
 
@@ -7046,26 +7088,25 @@
 (test (format #f "asdh~2Thiho") "asdhhiho")
 (test (format #f "a~Tb") "ab")
 (test (format #f "0123456~4,8Tb") "0123456     b")
-					;      (test (format #f "XXX~%0123456~4,8Tb") (string-append "XXX" (string #\newline) "0123456    b")) ; clearly wrong...
 (test (format #f "0123456~0,8Tb") "0123456 b")
-					;      (test (format #f "0123456~10,8Tb") "0123456           b")
+(test (format #f "0123456~10,8Tb") "0123456           b")
 (test (format #f "0123456~1,0Tb") "0123456b")
 (test (format #f "0123456~1,Tb") "0123456b")
 (test (format #f "0123456~1,Tb") "0123456b")
 (test (format #f "0123456~,Tb") "0123456b")
-					;      (test (format #f "0123456~7,10Tb") "0123456          b") 
-					;      (test (format #f "0123456~8,10tb") "0123456           b")
+(test (format #f "0123456~7,10Tb") "0123456          b")
+(test (format #f "0123456~8,10tb") "0123456           b")
 (test (format #f "0123456~3,12tb") "0123456        b")
-
-					;      (test (format #f "~40TX") "                                       X")
-					;      (test (format #f "X~,8TX~,8TX") "X       X       X")
+(test (format #f "~40TX") "                                       X")
+(test (format #f "X~,8TX~,8TX") "X       X       X")
 (test (format #f "X~8,TX~8,TX") "X       XX")
-					;      (test (format #f "X~8,10TX~8,10TX") "X                 X         X")
+(test (format #f "X~8,10TX~8,10TX") "X                 X         X")
 (test (format #f "X~8,0TX~8,0TX") "X       XX")
 (test (format #f "X~0,8TX~0,8TX") "X       X       X")
-					;      (test (format #f "X~1,8TX~1,8TX") "X        X       X")
-					;      (test (format #f "X~,8TX~,8TX") "X       X       X")
-(test (format #f "X~TX~TX") "XXX") ; clisp and sbcl say "X X X" here and similar differences elsewhere
+(test (format #f "X~1,8TX~1,8TX") "X        X       X")
+(test (format #f "X~,8TX~,8TX") "X       X       X") ; ??
+(test (format #f "X~TX~TX") "XXX") ; clisp and sbcl say "X X X" here and similar differences elsewhere (s7 nT, n is from the start or something...)
+(test (format #f "X~2TX~4TX") "X X X")
 (test (format #f "X~0,0TX~0,0TX") "XXX")
 (test (format #f "X~0,TX~0,TX") "XXX")
 (test (format #f "X~,0TX~,0TX") "XXX")
@@ -7430,6 +7471,9 @@
 (test (string=? (format #f "~{ ~a,~a ~}" '(a 1 b 2 c 3)) " a,1  b,2  c,3 ") #t)
 (test (string=? (format #f "abc ~^ xyz") "abc ") #t)
 (test (format (values #f "~A ~D" 1 2)) "1 2")
+(test (format #f "~A~^" 1) "1") ; clisp agrees here
+(test (format #f "~A~*~* ~A" (values 1 2 3 4)) "1 4")
+(test (format #f "~^~A~^~*~*~^ ~^~A~^" (values 1 2 3 4)) "1 4")
 
 (test (string=? (format #f "~B" 123) "1111011") #t)
 (test (string=? (format #f "~B" 123/25) "1111011/11001") #t)
@@ -7597,7 +7641,6 @@
 (test (format #f "~20,vF" 3.14) 'error)
 (test (format #f "~{~C~^ ~}" "hiho") "h i h o")
 (test (format #f "~{~A ~}" #(1 2 3 4)) "1 2 3 4 ")
-(test (format #f "~{~A ~}" #2d((1 2) (3 4))) "1 2 3 4 ")
 (test (let ((v (vector 1))) (set! (v 0) v) (format #f "~A" v)) "#1=#(#1#)")
 (test (let ((v (vector 1))) (set! (v 0) v) (format #f "~{~A~}" v)) "#1=#(#1#)")
 (test (format #f "~{~{~{~A~^ ~}~^ ~}~}" '(((1 2) (3 4)))) "1 2 3 4")
@@ -7696,6 +7739,18 @@
 (test (length (format #f "~20f" 1+i)) 20)
 (test (format #f "~20x" 17+23i) "          11.0+17.0i")
 (test (length (format #f "~20x" 17+23i)) 20)
+
+(if with-bignums
+    (begin
+      (test (format #f "~P" (bignum "1")) "s")
+      (test (format #f "~P" (bignum "1.0")) "s")
+      (test (format #f "~10,' D" (bignum "1")) "         1")
+      (test (format #f "~10,' D" (bignum "3/4")) "       3/4")
+      (test (format #f "~10,'.D" (bignum "3/4")) ".......3/4")
+      (test (format #f "~10D" (bignum "3/4")) "       3/4")
+      (test (length (format #f "~100D" (bignum "34"))) 100)
+      (test (format #f "~50F" (bignum "12345678.7654321")) "           1.23456787654321007430553436279296875E7")
+      ))
 
 #|
 (do ((i 0 (+ i 1))) ((= i 256)) 
@@ -33957,6 +34012,7 @@ why are these different (read-time `#() ? )
 (test (expt 0 most-negative-fixnum) 'error)
 (test (expt -0.0 most-positive-fixnum) 0.0)
 (test (expt 0.0 most-negative-fixnum) 'error)
+(if with-bignums (test (expt 1/2 9223372036854775807) 'error)) ; gmp overflow
 
 (num-test (expt 2 1/3) 1.25992104989487316476721060727822835057E0)
 (num-test (expt 4 1/3) 1.587401051968199474751705639272308260393E0)
@@ -40100,6 +40156,8 @@ why are these different (read-time `#() ? )
 
   (test (nan? (+ (values inf+ inf-) inf+)) #t)
   (test (/ nan 0) 'error)
+  (num-test (/ -1 inf- -9223372036854775808) 0.0)
+  (test (nan? (/ -1 nan inf-)) #t)
 
   (test (rationalize inf+) 'error)
   (test (rationalize inf-) 'error)
@@ -41415,6 +41473,7 @@ why are these different (read-time `#() ? )
 (num-test (max -1234000000.0+2.71828182845905i) 'error)
 (num-test (max 2 1+0i) 2)
 (num-test (min 2 1+0i) 1.0)
+(num-test (max 1e+16 9223372036854775807 1e+17) 9223372036854775807)
 
 
 
