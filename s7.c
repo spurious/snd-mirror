@@ -194,7 +194,7 @@
 
 
 #define DEBUGGING 0
-
+#define EXPERIMENTAL 0
 
 
 /* -------------------------------------------------------------------------------- */
@@ -569,6 +569,9 @@ struct s7_scheme {
   bool *gc_off;                       /* if true, the GC won't run */
   bool *tracing, *trace_all;          /* if tracing, each function on the *trace* list prints its args upon application */
   long *gensym_counter;
+#if EXPERIMENTAL
+  bool symbol_table_locked;
+#endif
 
   #define INITIAL_STRBUF_SIZE 1024
   int strbuf_size;
@@ -2074,6 +2077,23 @@ void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
 */
 
 
+#if EXPERIMENTAL
+static s7_pointer g_symbol_table_locked(s7_scheme *sc, s7_pointer args)
+{
+  if (sc->symbol_table_locked)
+    return(sc->T);
+  return(sc->F);
+}
+
+
+static s7_pointer g_set_symbol_table_locked(s7_scheme *sc, s7_pointer args)
+{
+  sc->symbol_table_locked = (car(args) == sc->T);
+  return(car(args));
+}
+#endif
+
+
 s7_pointer s7_make_symbol(s7_scheme *sc, const char *name) 
 { 
   s7_pointer x; 
@@ -2085,6 +2105,11 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
   x = symbol_table_find_by_name(sc, name, location); 
   if (x != sc->NIL) 
     return(x); 
+
+#if EXPERIMENTAL
+  if (sc->symbol_table_locked)
+    return(sc->F);
+#endif
 
   return(symbol_table_add_by_name_at_location(sc, name, location)); 
 } 
@@ -13531,7 +13556,7 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
 }
 
 
-#define MAX_VECTOR_RANK 512
+#define MAX_VECTOR_DIMENSIONS 512
 
 static s7_pointer g_make_vector(s7_scheme *sc, s7_pointer args)
 {
@@ -13564,14 +13589,16 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
 	len = s7_integer(car(x));
       else
 	{
-	  int i;
-	  /* TODO: if circular list -- hangs (also eval) */
+	  int i, dims;
+
+	  dims = s7_list_length(sc, x);
+	  if (dims <= 0)                /* 0 if circular, negative if dotted */
+	    return(s7_wrong_type_arg_error(sc, "make-vector", 1, x, "a proper list of dimensions"));
+	  if (dims > MAX_VECTOR_DIMENSIONS)
+	    return(s7_out_of_range_error(sc, "make-vector dimension list,", 1, x, "less than 512 dimensions"));
+
 	  for (i = 1, len = 1, y = x; y != sc->NIL; y = cdr(y), i++)
 	    {
-	      if (!is_pair(y))
-		return(s7_wrong_type_arg_error(sc, "make-vector", 1, x, "a proper list of dimensions"));
-	      if (i > MAX_VECTOR_RANK)
-		return(s7_out_of_range_error(sc, "make-vector dimension list,", 1, x, "less than 512 dimensions"));
 	      if (!s7_is_integer(car(y)))
 		return(s7_wrong_type_arg_error(sc, "make-vector", i, car(y), "an integer"));
 	      len *= s7_integer(car(y));
@@ -17400,6 +17427,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  pop_input_port(sc);
 	  break;
 
+	case OP_EVAL_STRING_1:    /* perhaps an error happened before we could push the OP_EVAL_STRING_2 */
 	case OP_EVAL_STRING_2:
 	  s7_close_input_port(sc, sc->input_port);
 	  pop_input_port(sc);
@@ -22258,6 +22286,9 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
    */
   
   new_sc->longjmp_ok = false;
+#if EXPERIMENTAL
+  new_sc->symbol_table_locked = false;
+#endif
   new_sc->strbuf_size = INITIAL_STRBUF_SIZE;
   new_sc->strbuf = (char *)calloc(new_sc->strbuf_size, sizeof(char));
 
@@ -27151,7 +27182,10 @@ s7_scheme *s7_init(void)
   sc->gc_off = (bool *)calloc(1, sizeof(bool));
   (*(sc->gc_off)) = true;                         /* sc->args and so on are not set yet, so a gc during init -> segfault */
   sc->longjmp_ok = false;
-  
+#if EXPERIMENTAL
+  sc->symbol_table_locked = false;
+#endif
+
   sc->strbuf_size = INITIAL_STRBUF_SIZE;
   sc->strbuf = (char *)calloc(sc->strbuf_size, sizeof(char));
   
@@ -27847,6 +27881,11 @@ s7_scheme *s7_init(void)
 
   s7_define_variable(sc, "*vector-print-length*", small_ints[8]);
   sc->vector_print_length = symbol_global_slot(s7_make_symbol(sc, "*vector-print-length*"));
+
+#if EXPERIMENTAL
+  s7_define_variable(sc, "symbol-table-locked", 
+		     s7_make_procedure_with_setter(sc, "symbol-table-locked", g_symbol_table_locked, 0, 0, g_set_symbol_table_locked, 1, 0, "an experiment"));
+#endif
 
   s7_define_variable(sc, "*error-hook*", sc->NIL);
   sc->error_info = s7_make_and_fill_vector(sc, ERROR_INFO_SIZE, ERROR_INFO_DEFAULT);

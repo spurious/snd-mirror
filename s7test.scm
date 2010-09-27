@@ -4306,10 +4306,16 @@
 (test (make-vector 1 2 3) 'error)
 (test (make-vector most-positive-fixnum) 'error)
 (test (make-vector most-negative-fixnum) 'error)
+(test (make-vector '(2 -2)) 'error)
+(test (make-vector (list 2 -2 -3)) 'error)
+(test (make-vector (cons 2 3)) 'error)
+(test (make-vector '(2 3 . 4)) 'error)
+(test (make-vector '(2 (3))) 'error)
 
 (for-each
  (lambda (arg)
-   (test (make-vector arg) 'error))
+   (test (make-vector arg) 'error)
+   (test (make-vector (list 2 arg)) 'error))
  (list #\a '() -1 #f "hi" 'a-symbol abs 3.14 3/4 1.0+1.0i #t (vector 1 2 3) (lambda (a) (+ a 1))))
 
 
@@ -13413,13 +13419,63 @@ who says the continuation has to restart the map from the top?
    (let ((val (catch #t
 		     (lambda () (eval-string str))
 		     (lambda args 'error))))
-     (if (not (equal? val -1))
+     (if (not (eqv? val -1))
 	 (format #t "~S = ~S?~%" str val))))
- (list "(- ``1 )" "(- ' 1 )" "(- ` 1 )" "(`,- 1 )" "(- ``,1)" "(`,- '1)" "(- `,`1)" "(-  '`1)" "(- '``1)" "(- ```1)" "(- ` `1)" "(`,- `1)" "(` ,- 1)"
-       "(- `, 1)" "(- '` 1)" "(- '  1)" "(`,- `,1)" "(- ```,1)" "(- `,`,1)" "(- ``,,1)" "(- ` ,'1)" "(- '`,`1)" "(- `,1)" "(- ' 1)" "(`,- 1)"
-       "(- .(`1))" "(-(- -1))" "(- .(1))" "(`,- .(1))" "(- '1 .())" "(- .(`,1))" "(`,- .(1))" "(- .('`,1))" "(-(`,@''1))" "(-(`'1 '1))" "(- .(`,`1))"
-       "(- .('``1))" "(- (''1 1))" "(''-1 .(1))"
-       ))
+ (list "(  `,@` '-1)" "( '(.1 -1)1)" "( - '`-00 1)" "( - .(,`1/1))" "( - .(`1) )" "( -(/ .(1)))" "( / 01 -1 )" "(' '` -1(/ ' 1))" "(' (-01 )0)" 
+       "(' `'`` -1 1 01)" "(''-1 .(1))" "('(, -1 )0)" "('(,-1)'000)" "('(,-1)00)" "('(-1  -.0)0)" "('(-1 '1`)0)" "('(-1 .-/-)0)" "('(-1()),0)"
+       "('(-1) 0)" "('(10. -1 )1)" "(-  '`1)" "(-  `1 1 1)" "(- '  1)" "(- ' 1)" "(- '1 .())" "(- '` ,``1)" "(- '` 1)" "(- '`, `1)" "(- '`,`1)" 
+       "(- '``1)" "(- (''1 1))" "(- (- ' 1 0))" "(- (-(- `1)))" "(- (`  (1)0))" "(- ,`, `1)" "(- ,`1 . ,())" "(- . ( 0 1))" "(- . ( `001))" 
+       "(- .(', 01))" "(- .('`,1))" "(- .('``1))" "(- .(,,1))" "(- .(01))" "(- .(1))" "(- .(`,1))" "(- .(`,`1))" "(- .(`1))" "(- ` ,'1)" 
+       "(- ` -0 '1)" "(- ` 1 )" "(- ` `1)" "(- `, 1)" "(- `,1)" "(- `,`,1)" "(- `,`1)" "(- ``,,1)" "(- ``,1)" "(- ``1 )" "(- ```,1)" 
+       "(- ```1)" "(-(  / 1))" "(-( -  -1 ))" "(-( `,- 1 0))" "(-(' (1)0))" "(-('(,1)00))" "(-(- '`1) 0)" "(-(- -1))" "(-(/(/(/ 1))))" 
+       "(-(`'1 '1))" "(-(`(,1 )'0))" "(-(`,/ ,1))" "(-(`,@''1))" "(/ '-1 '1 )" "(/ ,, `,-1)" "(/ ,11 -11)" "(/ 01 (- '1))" "(/ `1 '`-1)" 
+       "(/(- '1)  )" "(/(- '1)1)" "(/(- 001)1)" "(/(- 1),,1)" "(/(/ -1))" "(/(1- ,` 0))" "(` ,- 1)" "(` ,1- .(0))" "(` `,(-1)0)" "(`' , -1 1)"
+       "(`' -1 '1/1)" "(`','-1 ,1)" "(`(,-1)-00)" "(`(-0 -1)1)" "(`(-1 -.')0)" "(`(-1 1')0)" "(`(` -1)'`0)" "(`, - 1)" "(`,- '1)" "(`,- .(1))" 
+       "(`,- 1 )" "(`,- `,1)" "(`,- `1)" "(`,/ . (-1))" "(``,,- `01)" "('''-1 1 1)"))
+
+#|
+(let ((chars (vector #\/ #\. #\0 #\1 #\- #\, #\( #\) #\' #\@ #\` #\space))
+      (size 14))
+  (let ((str (make-string size))
+	(clen (length chars)))
+    (set! (str 0) #\()
+    (do ((i 0 (+ i 1)))
+	((= i 10000000))
+      (let ((parens 1))
+	(do ((k 1 (+ k 1)))
+	    ((= k size))
+	  (set! (str k) (chars (random clen)))
+	  (if (char=? (str k) #\()
+	      (set! parens (+ parens 1))
+	      (if (char=? (str k) #\))
+		  (begin
+		    (set! parens (- parens 1))
+		    (if (negative? parens)
+			(begin
+			  (set! (str k) #\space)
+			  (set! parens 0)))))))
+	(let ((str1 str)
+	      (happy (char=? (str (- size 1)) #\))))
+	  (if (> parens 0)
+	      (begin
+		(set! str1 (make-string (+ size parens) #\)))
+		(set! happy #t)
+		(do ((k 0 (+ k 1)))
+		    ((= k size))
+		  (set! (str1 k) (str k)))))
+	  (set! (symbol-table-locked) #t)
+	  (if (and happy
+		   (not (char=? (str1 1) #\))))
+	      (catch #t 
+		     (lambda ()
+		       (let ((num (eval-string str1)))
+			 (if (and (number? num)
+				  (eqv? num -1))
+			     (format #t "~S ~%" str1))))
+		     (lambda args
+		       'error)))
+	  (set! (symbol-table-locked) #f))))))
+#|
 
 (test (= 1 '+1 `+1 '`1 `01 ``1) #t)
 (test (''- 1) '-)
@@ -14932,6 +14988,8 @@ why are these different (read-time `#() ? )
 	  (list (hi 1) (procedure-documentation hi)))
 	(list 2 "this is a test"))
   (test (procedure-documentation (lambda* (a b) "docs" a)) "docs")
+  (test (procedure-documentation (lambda* (a b) "" a)) "")
+  (test (procedure-documentation (lambda* (a b) a)) "")
   
   (for-each
    (lambda (arg)
@@ -16752,7 +16810,11 @@ why are these different (read-time `#() ? )
 (test ((list 1 2 3) 1) 2)
 
 (test (let ((pi 3)) pi) 'error)
-;;   or ... (let ((:asdf 3)) :asdf) and worse (let ((:key 1)) :key) or even worse (let ((:3 1)) 1)
+(test (let ((:key 1)) :key) 'error)
+(test (let ((:3 1)) 1) 'error)
+(test (let ((3 1)) 1) 'error)
+(test (let ((3: 1)) 1) 'error)
+(test (let ((optional: 1)) 1) 'error)
 (test (let ((x_x_x 32)) (let () (define-constant x_x_x 3) x_x_x) (set! x_x_x 31) x_x_x) 'error)
 
 
@@ -16903,7 +16965,8 @@ why are these different (read-time `#() ? )
 (test (copy (#(#() #()) 1)) #())
 (test (copy #f) #f)
 (test (copy '()) '())
-(test (let ((f (lambda () 1))) ((copy f))) 1) ; here copy actually returns f: (let ((f (lambda () 1))) (eq? (copy f) f)) -> #t
+(test (let ((f (lambda () 1))) ((copy f))) 1) ; here copy actually returns f: 
+(test (let ((f (lambda () 1))) (eq? (copy f) f)) #t)
 (test (copy 1.0) 1.0)
 (test (copy 1.0+i) 1.0+i)
 (test (copy "") "")
