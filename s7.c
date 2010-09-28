@@ -194,7 +194,6 @@
 
 
 #define DEBUGGING 0
-#define EXPERIMENTAL 0
 
 
 /* -------------------------------------------------------------------------------- */
@@ -535,7 +534,7 @@ struct s7_scheme {
   s7_pointer UNSPECIFIED;             /* the unspecified value */
   
   struct s7_cell _NO_VALUE;
-  s7_pointer NO_VALUE;                /* the (values) value (an experiment) */
+  s7_pointer NO_VALUE;                /* the (values) value */
 
   struct s7_cell _ELSE;
   s7_pointer ELSE;                    /* else */  
@@ -569,9 +568,7 @@ struct s7_scheme {
   bool *gc_off;                       /* if true, the GC won't run */
   bool *tracing, *trace_all;          /* if tracing, each function on the *trace* list prints its args upon application */
   long *gensym_counter;
-#if EXPERIMENTAL
-  bool symbol_table_locked;
-#endif
+  bool symbol_table_is_locked;
 
   #define INITIAL_STRBUF_SIZE 1024
   int strbuf_size;
@@ -2077,21 +2074,18 @@ void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
 */
 
 
-#if EXPERIMENTAL
-static s7_pointer g_symbol_table_locked(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_symbol_table_is_locked(s7_scheme *sc, s7_pointer args)
 {
-  if (sc->symbol_table_locked)
-    return(sc->T);
-  return(sc->F);
+  #define H_symbol_table_is_locked "set (symbol-table-locked?) to #t to prohibit the creation of any new symbols"
+  return(make_boolean(sc, sc->symbol_table_is_locked));
 }
 
 
-static s7_pointer g_set_symbol_table_locked(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_set_symbol_table_is_locked(s7_scheme *sc, s7_pointer args)
 {
-  sc->symbol_table_locked = (car(args) == sc->T);
+  sc->symbol_table_is_locked = (car(args) != sc->F);
   return(car(args));
 }
-#endif
 
 
 s7_pointer s7_make_symbol(s7_scheme *sc, const char *name) 
@@ -2106,10 +2100,8 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
   if (x != sc->NIL) 
     return(x); 
 
-#if EXPERIMENTAL
-  if (sc->symbol_table_locked)
+  if (sc->symbol_table_is_locked)
     return(sc->F);
-#endif
 
   return(symbol_table_add_by_name_at_location(sc, name, location)); 
 } 
@@ -5114,6 +5106,7 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
 /* 1000000000000000000000000000.0e-40 1.0e-12 */
 /* 0.0000000000000000000000000001e40  1.0e12 */
 /* 1.0e00000000000000000001           10.0 */
+/* 0e1000                             0.0 */
 
 static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool *overflow)
 {
@@ -5128,6 +5121,8 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
    *   mpfr says "e" as exponent only in bases <= 10 -- else use '@' which works in any base.  This can only cause confusion
    *   in scheme, unfortunately, due to the idiotic scheme polar notation.  But we accept "s" and "l" as exponent markers
    *   so, perhaps for radix > 10, the exponent, if any, has to use one of S s L l?  Not "l"!  And "s" originally meant "short".
+   *
+   * Another slight ambiguity: 1+1/2i is parsed as 1 + 0.5i, not 1+1/(2i).
    */
 
   max_len = s7_int_digits_by_radix[radix];
@@ -5564,6 +5559,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
       s7_pointer result;
       int len;
       char ql1, pl1;
+
       len = safe_strlen(q);
       
       if (q[len - 1] != 'i')
@@ -14580,13 +14576,13 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
 
 bool s7_is_macro(s7_scheme *sc, s7_pointer x)
 {
-  if ((is_macro(x)) || (is_bacro(x)))
+  if ((is_macro(x)) || (is_bacro(x)) || (is_c_macro(x)))
     return(true);
 
   if (s7_is_symbol(x))
     {
       x = s7_symbol_local_value(sc, x, sc->envir);
-      return(is_macro(x) || is_bacro(x));
+      return(is_macro(x) || is_bacro(x) || is_c_macro(x));
     }
   return(false);
 }
@@ -18227,7 +18223,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
   len = applicable_length(sc, obj);
   if (len < 0)
     return(s7_wrong_type_arg_error(sc, "for-each", 2, obj, "a vector, list, string, or applicable object"));
-  if (len == 0) return(sc->UNSPECIFIED);
+  if (len == 0) return(sc->UNSPECIFIED);    /* circular -> LONG_MAX in this case, so 0 -> nil */
 
   sc->x = make_list_1(sc, sc->NIL);
   sc->z = make_list_1(sc, obj);
@@ -18251,6 +18247,15 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
 	  sc->z = s7_cons(sc, car(x), sc->z);
 	}
     }
+
+  /* if at this point len == LONG_MAX, then all args are circular lists, assuming that
+   *    we're not looking at some enormous vector or string -- perhaps -1 would be a
+   *    better marker.  This actually might not be an error (the for-each function could
+   *    have call-with-exit), but it seems better to complain about it.
+   */
+  if (len == LONG_MAX)
+    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+		    make_list_2(sc, make_protected_string(sc, "for-each's arguments are circular lists! ~A"), cdr(args))));
 
   sc->args = s7_cons(sc, make_mutable_integer(sc, 0),   /* '(counter applicable-len func-args-holder . objects) */
                s7_cons(sc, s7_make_integer(sc, len), 
@@ -18352,13 +18357,13 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
   /* an object with a setter is a procedure, but (map "hi" '(1 0)) because (procedure? "hi") is #f */
 
-  sc->y = args;            /* gc protect */
+  sc->y = args;                     /* gc protect */
   obj = cadr(args); 
 
   len = applicable_length(sc, obj);
   if (len < 0)
     return(s7_wrong_type_arg_error(sc, "map", 2, obj, "a vector, list, string, or applicable object"));
-  if (len == 0) return(sc->NIL);
+  if (len == 0) return(sc->NIL);    /* obj has no elements (the circular list case will return LONG_MAX here) */
 
   sc->z = make_list_1(sc, obj);
   /* we have to copy the args if any of them is a list:
@@ -18380,6 +18385,12 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	  sc->z = s7_cons(sc, car(x), sc->z);
 	}
     }
+
+  /* if at this point len == LONG_MAX, then all args are circular */
+  if (len == LONG_MAX)
+    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+		    make_list_2(sc, make_protected_string(sc, "map's arguments are circular lists! ~A"), cdr(args))));
+
   sc->args = s7_cons(sc, make_mutable_integer(sc, 0), 
                s7_cons(sc, s7_make_integer(sc, len), 
 		 s7_cons(sc, sc->NIL, 
@@ -22286,9 +22297,7 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
    */
   
   new_sc->longjmp_ok = false;
-#if EXPERIMENTAL
-  new_sc->symbol_table_locked = false;
-#endif
+  new_sc->symbol_table_is_locked = false;
   new_sc->strbuf_size = INITIAL_STRBUF_SIZE;
   new_sc->strbuf = (char *)calloc(new_sc->strbuf_size, sizeof(char));
 
@@ -27182,9 +27191,7 @@ s7_scheme *s7_init(void)
   sc->gc_off = (bool *)calloc(1, sizeof(bool));
   (*(sc->gc_off)) = true;                         /* sc->args and so on are not set yet, so a gc during init -> segfault */
   sc->longjmp_ok = false;
-#if EXPERIMENTAL
-  sc->symbol_table_locked = false;
-#endif
+  sc->symbol_table_is_locked = false;
 
   sc->strbuf_size = INITIAL_STRBUF_SIZE;
   sc->strbuf = (char *)calloc(sc->strbuf_size, sizeof(char));
@@ -27882,10 +27889,8 @@ s7_scheme *s7_init(void)
   s7_define_variable(sc, "*vector-print-length*", small_ints[8]);
   sc->vector_print_length = symbol_global_slot(s7_make_symbol(sc, "*vector-print-length*"));
 
-#if EXPERIMENTAL
-  s7_define_variable(sc, "symbol-table-locked", 
-		     s7_make_procedure_with_setter(sc, "symbol-table-locked", g_symbol_table_locked, 0, 0, g_set_symbol_table_locked, 1, 0, "an experiment"));
-#endif
+  s7_define_variable(sc, "symbol-table-locked?", 
+		     s7_make_procedure_with_setter(sc, "symbol-table-locked?", g_symbol_table_is_locked, 0, 0, g_set_symbol_table_is_locked, 1, 0, H_symbol_table_is_locked));
 
   s7_define_variable(sc, "*error-hook*", sc->NIL);
   sc->error_info = s7_make_and_fill_vector(sc, ERROR_INFO_SIZE, ERROR_INFO_DEFAULT);

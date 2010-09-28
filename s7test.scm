@@ -385,6 +385,7 @@
 (test (let () (define-macro (hi a) `(+ 1 ,a)) (eq? hi hi)) #t)
 (test (let () (define (hi a) (+ 1 a)) (eq? hi hi)) #t)
 (test (let ((x (lambda* (hi (a 1)) (+ 1 a)))) (eq? x x)) #t)
+(test (eq? quasiquote quasiquote) #t)
 
 
 
@@ -5412,7 +5413,13 @@
   (test (list-ref lst1 9223372036854775807) 'error)
   (test (list-set! lst1 9223372036854775807 2) 'error)
   (test (list-tail lst1 9223372036854775807) 'error)
-  (test (make-vector lst1 9223372036854775807) 'error))
+  (test (make-vector lst1 9223372036854775807) 'error)
+  (test (map (lambda (x) x) lst1) 'error)
+  (test (map (lambda (x y) x) lst1 lst1) 'error)
+  (test (for-each (lambda (x) x) lst1) 'error)
+  (test (for-each (lambda (x y) x) lst1 lst1) 'error)
+  (test (map (lambda (x y) (+ x y)) lst1 '(1 2 3)) '(2 3 4))
+  )
 
 (test (copy (list 1 2 (list 3 4))) '(1 2 (3 4)))
 (test (copy (cons 1 2)) '(1 . 2))
@@ -5492,7 +5499,7 @@
 	  '("nothing" "can" "go" "wrong" "go" "wrong" "go" "wrong" "go" "wrong" "go" "wrong"))))
 
 #|
-;;; here is a circular function!
+;;; here is a circular function
 (let ()
   (define (cfunc)
     (begin
@@ -5990,17 +5997,6 @@
 		  lst)
 	result)
       '(9 7 5))
-(test (let ((lst (list 1 2 3))
-	    (ctr 0))
-	(set! (cdr (cddr lst)) lst)
-	(call-with-exit
-	 (lambda (return)
-	   (for-each (lambda (a) 
-		       (if (> ctr 12)
-			   (return a))
-		       (set! ctr (+ ctr a)))
-		     lst))))
-      2)
 (let ((lst (list 1 2 3)))
   (set! (cdr (cddr lst)) lst)
   (test (map (lambda (a b)
@@ -13410,6 +13406,8 @@ who says the continuation has to restart the map from the top?
 ;(test (let ((x '(1 2 3))) `#(0 ,x)) '#(0 (1 2 3)))
 ;(test (let ((x '(1 2 3))) `#(0 . ,x)) '#(0 1 2 3))
 
+(test `#(,most-positive-fixnum 2) #(9223372036854775807 2))
+
 (test (let () (define-macro (tryqv . lst) `(map abs ',lst)) (tryqv 1 2 3 -4 5)) '(1 2 3 4 5))
 (test (let () (define-macro (tryqv . lst) `(map abs '(,@lst))) (tryqv 1 2 3 -4 5)) '(1 2 3 4 5))
 (test (let () (define-macro (tryqv . lst) `(map abs (vector ,@lst))) (tryqv 1 2 3 -4 5)) '(1 2 3 4 5))
@@ -13429,9 +13427,10 @@ who says the continuation has to restart the map from the top?
        "(- ` -0 '1)" "(- ` 1 )" "(- ` `1)" "(- `, 1)" "(- `,1)" "(- `,`,1)" "(- `,`1)" "(- ``,,1)" "(- ``,1)" "(- ``1 )" "(- ```,1)" 
        "(- ```1)" "(-(  / 1))" "(-( -  -1 ))" "(-( `,- 1 0))" "(-(' (1)0))" "(-('(,1)00))" "(-(- '`1) 0)" "(-(- -1))" "(-(/(/(/ 1))))" 
        "(-(`'1 '1))" "(-(`(,1 )'0))" "(-(`,/ ,1))" "(-(`,@''1))" "(/ '-1 '1 )" "(/ ,, `,-1)" "(/ ,11 -11)" "(/ 01 (- '1))" "(/ `1 '`-1)" 
-       "(/(- '1)  )" "(/(- '1)1)" "(/(- 001)1)" "(/(- 1),,1)" "(/(/ -1))" "(/(1- ,` 0))" "(` ,- 1)" "(` ,1- .(0))" "(` `,(-1)0)" "(`' , -1 1)"
+       "(/(- '1)  )" "(/(- '1)1)" "(/(- 001)1)" "(/(- 1),,1)" "(/(/ -1))" "(` ,- 1)" "(` `,(-1)0)" "(`' , -1 1)"
        "(`' -1 '1/1)" "(`','-1 ,1)" "(`(,-1)-00)" "(`(-0 -1)1)" "(`(-1 -.')0)" "(`(-1 1')0)" "(`(` -1)'`0)" "(`, - 1)" "(`,- '1)" "(`,- .(1))" 
-       "(`,- 1 )" "(`,- `,1)" "(`,- `1)" "(`,/ . (-1))" "(``,,- `01)" "('''-1 1 1)"))
+       "(`,- 1 )" "(`,- `,1)" "(`,- `1)" "(`,/ . (-1))" "(``,,- `01)" "('''-1 '1 '1)" "('(-1 //.01 / 0,'`)0)"
+       ))
 
 #|
 (let ((chars (vector #\/ #\. #\0 #\1 #\- #\, #\( #\) #\' #\@ #\` #\space))
@@ -13463,7 +13462,7 @@ who says the continuation has to restart the map from the top?
 		(do ((k 0 (+ k 1)))
 		    ((= k size))
 		  (set! (str1 k) (str k)))))
-	  (set! (symbol-table-locked) #t)
+	  (set! (symbol-table-locked?) #t)
 	  (if (and happy
 		   (not (char=? (str1 1) #\))))
 	      (catch #t 
@@ -13474,7 +13473,7 @@ who says the continuation has to restart the map from the top?
 			     (format #t "~S ~%" str1))))
 		     (lambda args
 		       'error)))
-	  (set! (symbol-table-locked) #f))))))
+	  (set! (symbol-table-locked?) #f))))))
 #|
 
 (test (= 1 '+1 `+1 '`1 `01 ``1) #t)
@@ -15117,6 +15116,11 @@ why are these different (read-time `#() ? )
   (test (let () (define-bacro (tst a) `(+ 1 (if (> ,a 0) (tst (- ,a 1)) 0))) (tst 3)) 4)
   (test (let () (define-bacro (hi a) (if (list? a) `(+ 1 ,@a) `(+ 1 ,a))) (* (hi 1) (hi (2 3)))) 12)
 
+  (test (let () (define-bacro (hiho a) `(+ ,a 1)) (macro? hiho)) #t)
+  (test (let () (define-bacro* (hiho (a 1)) `(+ ,a 1)) (macro? hiho)) #t)
+  (test (let () (define-macro (hiho a) `(+ ,a 1)) (macro? hiho)) #t)
+  (test (let () (define-macro* (hiho (a 1)) `(+ ,a 1)) (macro? hiho)) #t)
+
   (let ()
     (define-macro (i_ arg)
       `(with-environment (initial-environment) ,arg))
@@ -15391,10 +15395,13 @@ why are these different (read-time `#() ? )
 
   (test (macro? eval-case) #t)
   (test (macro? pi) #f)
+  (test (macro? quasiquote) #t) ; s7_define_macro in s7.c
+  (test (macro? 'quasiquote) #t)
+  (test (let ((m quasiquote)) (macro? m)) #t)
   (for-each
    (lambda (arg)
      (test (macro? arg) #f))
-   (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+   (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() car abs (lambda () 1) #2d((1 2) (3 4)) 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
   (test (macro?) 'error)
   
   (define-macro (fully-expand form)
@@ -51310,6 +51317,12 @@ why are these different (read-time `#() ? )
 (test (number->string -23/34 2) "-10111/100010")
 (test (number->string -23/34 8) "-27/42")
 (test (number->string -23/34 16) "-17/22")
+
+(num-test (string->number "3/4+1/2i") 0.75+0.5i)
+(num-test (string->number "3/4+i") 0.75+i)
+(num-test (string->number "0+1/2i") 0+0.5i)
+(test (string->number "3+0i/4") #f)
+(test (string->number "3/4+0i") 0.75)
 
 (test (string->number " 1.0") #f)
 (test (string->number "1.0 ") #f)
