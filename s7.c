@@ -2357,7 +2357,11 @@ static s7_pointer add_to_local_environment(s7_scheme *sc, s7_pointer variable, s
 
 static bool is_environment(s7_scheme *sc, s7_pointer x)
 {
-  /* perhaps we need an environment type so this can't be fooled? */
+  /* perhaps we need an environment type so this can't be fooled? 
+   *   then for user-specified envs, we'd use with-environment where '() is the empty env?
+   *   and it means a bit to mark the pairs that head the env (not many bits and this
+   *   needs to be as fast as possible) -- I guess I'll limp along as before.
+   */
   return((is_pair(x)) &&
 	 ((car(x) == sc->NIL) || (is_pair(car(x))) || (s7_is_vector(car(x)))));
 }
@@ -2403,6 +2407,11 @@ static s7_pointer g_initial_environment(s7_scheme *sc, s7_pointer args)
 {
   /* add sc->initial_env bindings to the current environment */
   #define H_initial_environment "(initial-environment) establishes the original bindings of all the predefined functions"
+
+  /* maybe this should be named with-initial-environment or something -- it currently looks
+   *   like it simply returns the initial env
+   */
+
   int i;
   s7_pointer *inits;
   s7_pointer x;
@@ -2819,7 +2828,7 @@ bool s7_is_keyword(s7_pointer obj)
 
 static s7_pointer g_is_keyword(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_keyword "(keyword? obj) returns #t if obj is a keyword"
+  #define H_is_keyword "(keyword? obj) returns #t if obj is a keyword, (keyword? :key) -> #t"
   return(make_boolean(sc, is_keyword(car(args))));
 }
 
@@ -3236,7 +3245,7 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 {
-  #define H_call_with_exit "(call-with-exit ...) is call/cc without the continuation"
+  #define H_call_with_exit "(call-with-exit ...) is call/cc without the ability to jump back into a previous computation."
   
   /* (call-with-exit (lambda (return) ...)) */
   /* perhaps "call/exit"? */
@@ -4681,7 +4690,7 @@ char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
 
 static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 {
-  #define H_number_to_string "(number->string num :optional (radix 10)) converts the number num into a string"
+  #define H_number_to_string "(number->string num :optional (radix 10)) converts the number num into a string."
   s7_Int radix = 0;
   int size = 20;
   char *res;
@@ -5099,17 +5108,25 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
 }
 
 
-/*  9223372036854775807                9223372036854775807 */
-/* -9223372036854775808               -9223372036854775808 */
-/* 0000000000000000000000000001.0     1.0 */
-/* 1.0000000000000000000000000000     1.0 */
-/* 1000000000000000000000000000.0e-40 1.0e-12 */
-/* 0.0000000000000000000000000001e40  1.0e12 */
-/* 1.0e00000000000000000001           10.0 */
-/* 0e1000                             0.0 */
+/*  9223372036854775807                9223372036854775807
+ * -9223372036854775808               -9223372036854775808
+ * 0000000000000000000000000001.0     1.0
+ * 1.0000000000000000000000000000     1.0
+ * 1000000000000000000000000000.0e-40 1.0e-12
+ * 0.0000000000000000000000000001e40  1.0e12
+ * 1.0e00000000000000000001           10.0
+ */
 
 static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool *overflow)
 {
+  /* strtod follows LANG which is not what we want (only "." is decimal point in Scheme).
+   *   To overcome LANG in strtod would require screwing around with setlocale which never works
+   *   and isn't thread safe.  So we use our own code -- according to valgrind, 
+   *   this function is much faster than strtod.
+   *
+   * comma as decimal point causes ambiguities: `(+ ,1 2) etc
+   */
+
   int i, sign = 1, frac_len, int_len, dig, max_len, exponent = 0;
   long long int int_part = 0, frac_part = 0;
   char *str;
@@ -5122,7 +5139,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
    *   in scheme, unfortunately, due to the idiotic scheme polar notation.  But we accept "s" and "l" as exponent markers
    *   so, perhaps for radix > 10, the exponent, if any, has to use one of S s L l?  Not "l"!  And "s" originally meant "short".
    *
-   * Another slight ambiguity: 1+1/2i is parsed as 1 + 0.5i, not 1+1/(2i).
+   * Another slight ambiguity: 1+1/2i is parsed as 1 + 0.5i, not 1+1/(2i), or (1+1)/(2i) or (1+1/2)i etc
    */
 
   max_len = s7_int_digits_by_radix[radix];
@@ -5377,12 +5394,6 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 
 #if (!WITH_GMP)
   bool overflow = false;
-  /* strtod follows LANG which is not what we want (only "." is decimal point in Scheme).
-   *   To overcome LANG in strtod would require screwing around with setlocale which never works
-   *   and isn't thread safe.  So use our own code -- according to valgrind, 
-   *   our function is much faster than strtod.
-   * comma as decimal point causes ambiguities: `(+ ,1 2) etc
-   */
 #endif
 
   current_radix = radix;
@@ -5696,7 +5707,9 @@ static s7_pointer s7_string_to_number(s7_scheme *sc, char *str, int radix)
 
 static s7_pointer g_string_to_number(s7_scheme *sc, s7_pointer args)
 {
-  #define H_string_to_number "(string->number str :optional (radix 10)) converts str into a number"
+  #define H_string_to_number "(string->number str :optional (radix 10)) converts str into a number. \
+If str does not represent a number, string->number returns #f."
+
   s7_Int radix = 0;
   char *str;
 
@@ -6315,7 +6328,7 @@ static s7_pointer g_atanh(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
 {
-  #define H_sqrt "(sqrt z) returns sqrt(z)"
+  #define H_sqrt "(sqrt z) returns the square root of z"
   s7_pointer n;
 
   n = car(args);
@@ -8140,7 +8153,7 @@ static s7_pointer g_is_complex(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_is_rational(s7_scheme *sc, s7_pointer args) 
 {
-  #define H_is_rational "(rational? obj) returns #t if obj is a rational number"
+  #define H_is_rational "(rational? obj) returns #t if obj is a rational number (either an integer or a ratio)"
   return(make_boolean(sc, s7_is_rational(car(args))));
 }
 
@@ -8226,7 +8239,7 @@ static s7_pointer g_is_exact(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_is_inexact(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_inexact "(inexact? num) returns #t if num is inexact (not an integer or a ratio)"
+  #define H_is_inexact "(inexact? num) returns #t if num is inexact (neither an integer nor a ratio)"
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "inexact?", 0, car(args), "a number"));
   return(make_boolean(sc, s7_is_inexact(car(args))));
@@ -8297,7 +8310,8 @@ static s7_pointer g_integer_length(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_integer_decode_float(s7_scheme *sc, s7_pointer args)
 {
-  #define H_integer_decode_float "(integer-decode-float x) returns a list containing the significand, exponent, and sign of 'x'"
+  #define H_integer_decode_float "(integer-decode-float x) returns a list containing the significand, exponent, and \
+sign of 'x' (1 = positive, -1 = negative).  (integer-decode-float 0.0): (0 0 1)"
 
   s7_Int ix;
   s7_pointer arg;
@@ -8335,7 +8349,7 @@ static s7_pointer g_integer_decode_float(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_logior(s7_scheme *sc, s7_pointer args)
 {
-  #define H_logior "(logior i1 ...) returns the bitwise OR of its integer arguments"
+  #define H_logior "(logior i1 ...) returns the bitwise OR of its integer arguments (the bits that are on in any of the arguments)"
   s7_Int result = 0;
   int i; 
   s7_pointer x;
@@ -8351,7 +8365,7 @@ static s7_pointer g_logior(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_logxor(s7_scheme *sc, s7_pointer args)
 {
-  #define H_logxor "(logxor i1 ...) returns the bitwise XOR of its integer arguments"
+  #define H_logxor "(logxor i1 ...) returns the bitwise XOR of its integer arguments (the bits that are on in an odd number of the arguments)"
   s7_Int result = 0;
   int i;
   s7_pointer x;
@@ -8367,7 +8381,7 @@ static s7_pointer g_logxor(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_logand(s7_scheme *sc, s7_pointer args)
 {
-  #define H_logand "(logand i1 ...) returns the bitwise AND of its integer arguments"
+  #define H_logand "(logand i1 ...) returns the bitwise AND of its integer arguments (the bits that are on in every argument)"
   s7_Int result = -1;
   int i;
   s7_pointer x;
@@ -8383,7 +8397,7 @@ static s7_pointer g_logand(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_lognot(s7_scheme *sc, s7_pointer args)
 {
-  #define H_lognot "(lognot i1) returns the bitwise negation (complement) of i1"
+  #define H_lognot "(lognot num) returns the bitwise negation (the complement, the bits that are not on) in num"
   if (!s7_is_integer(car(args)))
     return(s7_wrong_type_arg_error(sc, "lognot", 1, car(args), "an integer"));
   return(s7_make_integer(sc, ~s7_integer(car(args))));
@@ -8392,7 +8406,7 @@ static s7_pointer g_lognot(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
 {
-  #define H_ash "(ash i1 i2) returns i1 shifted right or left i2 times, i1 << i2"
+  #define H_ash "(ash i1 i2) returns i1 shifted right or left i2 times, i1 << i2, (ash 1 3) -> 8, (ash 8 -3) -> 1"
   s7_Int arg1, arg2;
 
   if (!s7_is_integer(car(args)))
@@ -8557,7 +8571,7 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
   #define H_random "(random num :optional state) returns a random number between 0 and num (0 if num=0)."
   s7_pointer num, state;
   s7_rng_t *r;
-  
+
   num = car(args);
   if (!s7_is_number(num))
     return(s7_wrong_type_arg_error(sc, "random bounds,", 1, num, "a number"));
@@ -9125,7 +9139,8 @@ static s7_pointer g_string_copy(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_substring(s7_scheme *sc, s7_pointer args)
 {
-  #define H_substring "(substring str start :optional end) returns the portion of the string str between start and end"
+  #define H_substring "(substring str start :optional end) returns the portion of the string str between start and \
+end: (substring \"01234\" 1 2) -> \"1\""
   
   s7_pointer x, start, end, str;
   s7_Int i0, i1;
@@ -9145,7 +9160,7 @@ static s7_pointer g_substring(s7_scheme *sc, s7_pointer args)
     {
       end = caddr(args);
       if ((!s7_is_integer(end)) || (s7_integer(end) < 0))
-	return(s7_wrong_type_arg_error(sc, "substring end point,", 3, end, "an integer > start"));
+	return(s7_wrong_type_arg_error(sc, "substring end point,", 3, end, "an integer >= start"));
       i1 = s7_integer(end);
     }
   else i1 = string_length(str);
@@ -9167,7 +9182,7 @@ static s7_pointer g_substring(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
 {
-  #define H_object_to_string "(object->string obj (write true)) returns a string representation of obj"
+  #define H_object_to_string "(object->string obj (write true)) returns a string representation of obj."
   
   if (cdr(args) != sc->NIL)
     {
@@ -14592,6 +14607,9 @@ static s7_pointer g_is_macro(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_macro "(macro? arg) returns #t if 'arg' is a macro"
   return(make_boolean(sc, s7_is_macro(sc, car(args))));
+  /* it would be more consistent (with procedure? for example) if this returned #f for a symbol,
+   *   but fully-expand expects this version.
+   */
 }
 
 
@@ -16785,12 +16803,18 @@ static s7_pointer g_format(s7_scheme *sc, s7_pointer args)
   #define H_format "(format out str . args) substitutes args into str sending the result to out. Most of \
 s7's format directives are taken from CL: ~% = newline, ~& = newline if the preceding output character was \
 no a newline, ~~ = ~, ~<newline> trims white space, ~* skips an argument, ~^ exits {} iteration if the arg list is exhausted, \
-~nT inserts n tabs, ~A prints a representation of any object, ~S is the same, but puts strings in double quotes, \
+~nT spaces over to column n, ~A prints a representation of any object, ~S is the same, but puts strings in double quotes, \
 ~C prints a character, numbers are handled by ~F, ~E, ~G, ~B, ~O, ~D, and ~X with preceding numbers giving \
 spacing (and spacing character) and precision.  ~{ starts an embedded format directive which is ended by ~}: \n\
 \n\
   >(format #f \"dashed: ~{~A~^-~}\" '(1 2 3))\n\
-  \"dashed: 1-2-3\""
+  \"dashed: 1-2-3\"\n\
+\n\
+~P inserts \"s\" if the current argument is not 1 or 1.0 (use ~@P for \"ies\" or \"y\").\n\
+~B is number->string in base 2, ~O in base 8, ~D base 10, ~X base 16,\n\
+~E: (format #f \"~E\" 100.1) -&gt; \"1.001000e+02\" (%e in C)\n\
+~F: (format #f \"~F\" 100.1) -&gt; \"100.100000\"   (%f in C)\n\
+~G: (format #f \"~G\" 100.1) -&gt; \"100.1\"        (%g in C)"
 
   s7_pointer pt;
   pt = car(args);
@@ -26917,7 +26941,7 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
       if ((!is_c_object(state)) ||
 	  ((c_object_type(state) != big_rng_tag) &&
 	   (c_object_type(state) != rng_tag)))
-	return(s7_wrong_type_arg_error(sc, "random state,", 2, state, "a random-state object, if anything"));
+	return(s7_wrong_type_arg_error(sc, "random state,", 2, state, "a random-state object"));
     }
 
   if (big_is_zero(sc, args) == sc->T)
@@ -27003,15 +27027,21 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
       if (c_object_type(num) == big_integer_tag)
 	{
 	  mpz_t *n;
+
 	  n = (mpz_t *)malloc(sizeof(mpz_t));
 	  mpz_init(*n);
 #if HAVE_PTHREADS
 	  pthread_mutex_lock(&rng_lock);
 #endif
 	  mpz_urandomm(*n, r->state, S7_BIG_INTEGER(num));
+	  /* this does not work if num is a negative number -- you get positive results.
+	   *   so check num for sign, and negate result if necessary.
+	   */
 #if HAVE_PTHREADS
 	  pthread_mutex_unlock(&rng_lock);
 #endif
+	  if (big_is_negative(sc, make_list_1(sc, num)) == sc->T)          /* (random most-negative-fixnum) */
+	    return(big_negate(sc, make_list_1(sc, s7_make_object(sc, big_integer_tag, (void *)n))));
 	  return(s7_make_object(sc, big_integer_tag, (void *)n));
 	}
       
@@ -27567,11 +27597,13 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "constant?",               g_is_constant,             1, 0, false, H_is_constant);
   s7_define_function(sc, "macro?",                  g_is_macro,                1, 0, false, H_is_macro);
 
+
   s7_define_function(sc, "keyword?",                g_is_keyword,              1, 0, false, H_is_keyword);
   s7_define_function(sc, "make-keyword",            g_make_keyword,            1, 0, false, H_make_keyword);
   s7_define_function(sc, "symbol->keyword",         g_symbol_to_keyword,       1, 0, false, H_symbol_to_keyword);
   s7_define_function(sc, "keyword->symbol",         g_keyword_to_symbol,       1, 0, false, H_keyword_to_symbol);
   
+
   s7_define_function(sc, "port-line-number",        g_port_line_number,        0, 1, false, H_port_line_number);
   s7_define_function(sc, "port-filename",           g_port_filename,           0, 1, false, H_port_filename);
   
@@ -27867,7 +27899,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "procedure-source",        g_procedure_source,        1, 0, false, H_procedure_source);
   s7_define_function(sc, "procedure-environment",   g_procedure_environment,   1, 0, false, H_procedure_environment);
   
-  
   s7_define_function(sc, "not",                     g_not,                     1, 0, false, H_not);
   s7_define_function(sc, "boolean?",                g_is_boolean,              1, 0, false, H_is_boolean);
   s7_define_function(sc, "eq?",                     g_is_eq,                   2, 0, false, H_is_eq);
@@ -27899,6 +27930,11 @@ s7_scheme *s7_init(void)
   
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "s7")));
 
+#if WITH_PROFILING
+  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "profiling")));  
+#endif
+
+
 #if HAVE_PTHREADS
   thread_tag = s7_new_type("<thread>",          thread_print, thread_free, thread_equal, thread_mark, NULL, NULL);
   lock_tag =   s7_new_type("<lock>",            lock_print,   lock_free,   lock_equal,   NULL,        NULL, NULL);
@@ -27919,11 +27955,10 @@ s7_scheme *s7_init(void)
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "threads")));
 #endif
 
+#if (!S7_DISABLE_DEPRECATED)
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "multidimensional-vectors"))); /* backwards compatibility */
-
-#if WITH_PROFILING
-  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "profiling")));  
 #endif
+
 
   sc->VECTOR_SET = s7_symbol_value(sc, s7_make_symbol(sc, "vector-set!"));
   typeflag(sc->VECTOR_SET) |= T_DONT_COPY; 
@@ -27937,12 +27972,15 @@ s7_scheme *s7_init(void)
   sc->STRING_SET = s7_symbol_value(sc, s7_make_symbol(sc, "string-set!"));
   typeflag(sc->STRING_SET) |= T_DONT_COPY; 
 
-  s7_function_set_setter(sc, "car",            "set-car!");
-  s7_function_set_setter(sc, "cdr",            "set-cdr!");
-  s7_function_set_setter(sc, "hash-table-ref", "hash-table-set!");
-  s7_function_set_setter(sc, "vector-ref",     "vector-set!");
-  s7_function_set_setter(sc, "list-ref",       "list-set!");
-  s7_function_set_setter(sc, "string-ref",     "string-set!");
+  s7_function_set_setter(sc, "car",                 "set-car!");
+  s7_function_set_setter(sc, "cdr",                 "set-cdr!");
+  s7_function_set_setter(sc, "hash-table-ref",      "hash-table-set!");
+  s7_function_set_setter(sc, "vector-ref",          "vector-set!");
+  s7_function_set_setter(sc, "list-ref",            "list-set!");
+  s7_function_set_setter(sc, "string-ref",          "string-set!");
+  s7_function_set_setter(sc, "current-input-port",  "set-current-input-port");
+  s7_function_set_setter(sc, "current-output-port", "set-current-output-port");
+  s7_function_set_setter(sc, "current-error-port",  "set-current-error-port");
 
   {
     int i, top;
@@ -27969,6 +28007,7 @@ s7_scheme *s7_init(void)
 
     /* for s7_Double, float gives about 9 digits, double 18, long Double claims 28 but I don't see more than about 22? */
   }
+
 
 #if WITH_GMP
   s7_gmp_init(sc);
@@ -28021,6 +28060,9 @@ s7_scheme *s7_init(void)
   save_initial_environment(sc);
   return(sc);
 }
+
+
+/* -------------------------------------------------------------------------------- */
 
 /* envs as debugging aids: how to show file/line tags as well
  *  and perhaps store cur-code?  __form__ ? make a cartoon of entire state? [need only the pointer, not a copy]
