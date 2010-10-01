@@ -282,6 +282,14 @@
   #define M_PI 3.1415926535897932384626433832795029L
 #endif
 
+#ifndef INFINITY
+  #define INFINITY (-log(0.0))
+#endif
+
+#ifndef NAN
+  #define NAN (INFINITY / INFINITY)
+#endif
+
 typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, OP_EVAL_MACRO, OP_LAMBDA, OP_QUOTE, 
 	      OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_IF, OP_IF1, OP_SET, OP_SET1, OP_SET2, 
 	      OP_LET, OP_LET1, OP_LET2, OP_LET_STAR, OP_LET_STAR1, 
@@ -4852,7 +4860,7 @@ static bool is_abnormal(s7_scheme *sc, s7_pointer x)
 }
 
 
-static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top) 
+static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, int radix) 
 {
   /* name is the stuff after the '#', return sc->NIL if not a recognized #... entity */
   int len;
@@ -4916,6 +4924,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 	      }
 	    else return(sc->NIL);
 	  }
+	/* the #b or whatever overrides any radix passed in earlier */
 	x = make_atom(sc, (char *)(name + num_at), (name[0] == 'o') ? 8 : ((name[0] == 'x') ? 16 : ((name[0] == 'b') ? 2 : 10)), false);
 
 	/* #x#i1 apparently makes sense, so #x1.0 should also be accepted.
@@ -4956,7 +4965,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 	   */
 	  if (is_radix_prefix(name[2]))
 	    {
-	      x = make_sharp_constant(sc, (char *)(name + 2), false);
+	      x = make_sharp_constant(sc, (char *)(name + 2), false, radix);
 	      if (is_abnormal(sc, x))
 		return(sc->NIL);
 #if WITH_GMP
@@ -4967,7 +4976,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 	    }
 	  return(sc->NIL);
 	}
-      x = make_atom(sc, (char *)(name + 1), 10, false);
+      x = make_atom(sc, (char *)(name + 1), radix, false);
       if (is_abnormal(sc, x))
 	return(sc->NIL);
 #if WITH_GMP
@@ -4984,7 +4993,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 	{
 	  if (is_radix_prefix(name[2]))
 	    {
-	      x = make_sharp_constant(sc, (char *)(name + 2), false);
+	      x = make_sharp_constant(sc, (char *)(name + 2), false, radix);
 	      if (is_abnormal(sc, x))                    /* (string->number "#e#b0/0") */
 		return(sc->NIL);
 	      if (!s7_is_real(x))                        /* (string->number "#e#b1/0+i") */
@@ -4997,7 +5006,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 	  return(sc->NIL);
 	}
 
-      x = make_atom(sc, (char *)(name + 1), 10, false);
+      x = make_atom(sc, (char *)(name + 1), radix, false);
 
       if (is_abnormal(sc, x))                            /* (string->number "#e0/0") */
 	return(sc->NIL);
@@ -5066,8 +5075,6 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 }
 
 
-/* perhaps arithmetic-overflow error? */
-
 static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
 {
   bool negative = false;
@@ -5097,6 +5104,8 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
 #else
   if ((tmp - tmp1 - 2) > s7_int_digits_by_radix[radix])
     {
+      /* I can't decide what to do with these non-gmp overflows.  Perhaps NAN in all cases? */
+      (*overflow) = true;
       if (negative)
 	return(LLONG_MIN);
       return(LLONG_MAX);             /* 0/100000000000000000000000000000000000000000000000000000000000000000000 */
@@ -5400,7 +5409,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
   switch (c)
     {
     case '#':
-      return(make_sharp_constant(sc, p, true)); /* make_sharp_constant expects the '#' to be removed */
+      return(make_sharp_constant(sc, p, true, radix)); /* make_sharp_constant expects the '#' to be removed */
 
     case '+':
     case '-':
@@ -5617,6 +5626,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	    if (slash1)
 	      rl = (s7_Double)string_to_integer(q, radix, &overflow) / (s7_Double)string_to_integer(slash1, radix, &overflow);
 	    else rl = (s7_Double)string_to_integer(q, radix, &overflow);
+	    if (overflow) return(s7_make_real(sc, NAN));
 	  }
 	if (rl == -0.0) rl = 0.0;
 	
@@ -5628,6 +5638,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	    if (slash2)
 	      im = (s7_Double)string_to_integer(plus, radix, &overflow) / (s7_Double)string_to_integer(slash2, radix, &overflow);
 	    else im = (s7_Double)string_to_integer(plus, radix, &overflow);
+	    if (overflow) return(s7_make_real(sc, NAN));
 	  }
 	if ((has_plus_or_minus == -1) && 
 	    (im != 0.0))
@@ -5682,8 +5693,8 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	s7_Int n, d;
 	n = string_to_integer(q, radix, &overflow);
 	d = string_to_integer(slash1, radix, &overflow);
-	if (d == 0)
-	  return(s7_make_real(sc, sqrt(-1))); /* this is supposed to be a NaN */
+	if ((d == 0) || (overflow))
+	  return(s7_make_real(sc, NAN));
 	return(s7_make_ratio(sc, n, d));
       }
 #else
@@ -5692,7 +5703,12 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
     
     /* integer */
 #if (!WITH_GMP)
-    return(s7_make_integer(sc, string_to_integer(q, radix, &overflow)));
+    {
+      s7_Int x;
+      x = string_to_integer(q, radix, &overflow);
+      if (overflow) return(s7_make_real(sc, NAN));
+      return(s7_make_integer(sc, x));
+    }
 #else
     return(string_to_either_integer(sc, q, radix));
 #endif
@@ -5708,15 +5724,6 @@ static s7_pointer s7_string_to_number(s7_scheme *sc, char *str, int radix)
     return(x);
   return(sc->F);
 }
-
-
-#ifndef INFINITY
-  #define INFINITY (-log(0.0))
-#endif
-
-#ifndef NAN
-  #define NAN (INFINITY / INFINITY)
-#endif
 
 
 static s7_pointer g_string_to_number(s7_scheme *sc, s7_pointer args)
@@ -7563,7 +7570,7 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 	if (isnan(bx)) return(bp);
 
 	if ((isinf(ax)) || (isinf(bx)))
-	  return(s7_make_real(sc, sqrt(-1))); /* this is supposed to be a NaN */
+	  return(s7_make_real(sc, NAN));
 
 	cx = ax / bx;
 	if ((cx > BIGNUM_PLUS) || (cx < BIGNUM_MINUS))
@@ -19075,7 +19082,7 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 	    {
 	      sc->strbuf[1] = (*orig_str);
 	      sc->strbuf[2] = '\0';
-	      return(make_sharp_constant(sc, sc->strbuf, true));
+	      return(make_sharp_constant(sc, sc->strbuf, true, 10));
 	    }
 	  else 
 	    {
@@ -19099,14 +19106,14 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 			  break;
 
 			case '#':
-			  result = make_sharp_constant(sc, orig_str, true);
+			  result = make_sharp_constant(sc, orig_str, true, 10);
 			  break;
 
 			default:
 			  result = s7_make_symbol(sc, (char *)(orig_str - 1));
 			}
 		    }
-		  else result = make_sharp_constant(sc, (char *)(orig_str - 1), true);
+		  else result = make_sharp_constant(sc, (char *)(orig_str - 1), true, 10);
 	      
 		  orig_str[k - 1] = endc;
 		  if (c != 0) port_string_point(pt)--;
@@ -19137,7 +19144,7 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
   if (atom_case)
     return(make_atom(sc, sc->strbuf, 10, true));
 
-  return(make_sharp_constant(sc, sc->strbuf, true));
+  return(make_sharp_constant(sc, sc->strbuf, true, 10));
 }
 
 
@@ -23835,7 +23842,7 @@ static s7_pointer string_to_either_ratio(s7_scheme *sc, const char *nstr, const 
   if (!overflow)
     {
       if (d == 0)
-	return(s7_make_real(sc, sqrt(-1))); /* this is supposed to be a NaN */
+	return(s7_make_real(sc, NAN));
 
       n = string_to_integer(nstr, radix, &overflow);
       if (!overflow)

@@ -370,7 +370,7 @@
     (do ((j (+ i 1) (+ j 1)))
 	((= j (vector-length things)))
       (if (eq? (vector-ref things i) (vector-ref things j))
-	  (format #t "(eq? ~A ~A) -> #t?~%" (vector-ref things i) (vector-ref things j))))))
+	  (format #t ";(eq? ~A ~A) -> #t?~%" (vector-ref things i) (vector-ref things j))))))
 
 ;;; these are defined at user-level in s7 -- why are other schemes so coy about them?
 (test (eq? (if #f #f) #<unspecified>) #t)
@@ -460,7 +460,7 @@
     (do ((j (+ i 1) (+ j 1)))
 	((= j (vector-length things)))
       (if (eqv? (vector-ref things i) (vector-ref things j))
-	  (format #t "(eqv? ~A ~A) -> #t?~%" (vector-ref things i) (vector-ref things j))))))
+	  (format #t ";(eqv? ~A ~A) -> #t?~%" (vector-ref things i) (vector-ref things j))))))
 
 (test (eqv?) 'error)
 (test (eqv? #t) 'error)
@@ -619,7 +619,7 @@
     (do ((j (+ i 1) (+ j 1)))
 	((= j (vector-length things)))
       (if (equal? (vector-ref things i) (vector-ref things j))
-	  (format #t "(equal? ~A ~A) -> #t?~%" (vector-ref things i) (vector-ref things j))))))
+	  (format #t ";(equal? ~A ~A) -> #t?~%" (vector-ref things i) (vector-ref things j))))))
 
 (test (equal?) 'error)
 (test (equal? #t) 'error)
@@ -661,7 +661,7 @@
 (for-each
  (lambda (arg)
    (if (boolean? arg)
-       (format #t "(boolean? ~A) -> #t?~%" arg)))
+       (format #t ";(boolean? ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) (if #f #f) #<eof> #<undefined>))
 
 (test (recompose 12 boolean? #f) #t)
@@ -691,7 +691,7 @@
 (for-each
  (lambda (arg)
    (if (not arg)
-       (format #t "(not ~A) -> #t?~%" arg)))
+       (format #t ";(not ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) #<eof> #<undefined> (if #f #f)))
 
 (test (recompose 12 not #f) #f)
@@ -736,7 +736,7 @@
 (for-each
  (lambda (arg)
    (if (symbol? arg)
-       (format #t "(symbol? ~A) -> #t?~%" arg)))
+       (format #t ";(symbol? ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)) #<eof> #<undefined>))
 
 (test (symbol?) 'error)
@@ -781,7 +781,7 @@
 (for-each
  (lambda (arg)
    (if (procedure? arg)
-       (format #t "(procedure? ~A) -> #t?~%" arg)))
+       (format #t ";(procedure? ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f #() (if #f #f)))
 
 (test (procedure?) 'error)
@@ -843,13 +843,13 @@
 (for-each
  (lambda (arg)
    (if (char? arg)
-       (format #t "(char? ~A) -> #t?~%" arg)))
+       (format #t ";(char? ~A) -> #t?~%" arg)))
  (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (if #f #f) (lambda (a) (+ a 1))))
 
 (do ((i 0 (+ i 1)))
     ((= i 256))
   (if (not (char? (integer->char i)))
-      (format #t "(char? (integer->char ~A)) -> #f?~%" i)))
+      (format #t ";(char? (integer->char ~A)) -> #f?~%" i)))
 
 (test (char?) 'error)
 (test (char? #\a #\b) 'error)
@@ -910,13 +910,13 @@
   (for-each
    (lambda (arg)
      (if (not (char-upper-case? arg))
-	 (format #t "(char-upper-case? ~A) -> #f?~%" arg)))
+	 (format #t ";(char-upper-case? ~A) -> #f?~%" arg)))
    cap-a-to-z)
   
   (for-each
    (lambda (arg)
      (if (char-upper-case? arg)
-	 (format #t "(char-upper-case? ~A) -> #t?~%" arg)))
+	 (format #t ";(char-upper-case? ~A) -> #t?~%" arg)))
    a-to-z)
   
   ;; non-alpha chars are "unspecified" here
@@ -934,13 +934,13 @@
   (for-each
    (lambda (arg)
      (if (not (char-lower-case? arg))
-	 (format #t "(char-lower-case? ~A) -> #f?~%" arg)))
+	 (format #t ";(char-lower-case? ~A) -> #f?~%" arg)))
    a-to-z)
   
   (for-each
    (lambda (arg)
      (if (char-lower-case? arg)
-	 (format #t "(char-lower-case? ~A) -> #t?~%" arg)))
+	 (format #t ";(char-lower-case? ~A) -> #t?~%" arg)))
    cap-a-to-z)
   
   (test (char-lower-case? 1) 'error)
@@ -977,7 +977,7 @@
   (for-each
    (lambda (arg1 arg2)
      (if (not (char=? (char-upcase arg1) arg2))
-	 (format #t "(char-upcase ~A) != ~A?~%" arg1 arg2)))
+	 (format #t ";(char-upcase ~A) != ~A?~%" arg1 arg2)))
    a-to-z
    cap-a-to-z)
   
@@ -985,7 +985,7 @@
       ((= i 256))
     (if (and (not (char=? (integer->char i) (char-upcase (integer->char i))))
 	     (not (char-alphabetic? (integer->char i))))
-	(format #t "(char-upcase ~A) -> ~A but not alphabetic?~%" (integer->char i) (char-upcase (integer->char i)))))
+	(format #t ";(char-upcase ~A) -> ~A but not alphabetic?~%" (integer->char i) (char-upcase (integer->char i)))))
 
   (test (recompose 12 char-upcase #\a) #\A)
   (test (reinvert 12 char-upcase char-downcase #\a) #\a)
@@ -1012,7 +1012,7 @@
   (for-each
    (lambda (arg1 arg2)
      (if (not (char=? (char-downcase arg1) arg2))
-	 (format #t "(char-downcase ~A) != ~A?~%" arg1 arg2)))
+	 (format #t ";(char-downcase ~A) != ~A?~%" arg1 arg2)))
    cap-a-to-z
    a-to-z)
 
@@ -1041,13 +1041,13 @@
   (for-each
    (lambda (arg)
      (if (char-numeric? arg)
-	 (format #t "(char-numeric? ~A) -> #t?~%" arg)))
+	 (format #t ";(char-numeric? ~A) -> #t?~%" arg)))
    cap-a-to-z)
   
   (for-each
    (lambda (arg)
      (if (char-numeric? arg)
-	 (format #t "(char-numeric? ~A) -> #t?~%" arg)))
+	 (format #t ";(char-numeric? ~A) -> #t?~%" arg)))
    a-to-z)
 
   (test (char-numeric?) 'error)
@@ -1076,13 +1076,13 @@
   (for-each
    (lambda (arg)
      (if (char-whitespace? arg)
-	 (format #t "(char-whitespace? ~A) -> #t?~%" arg)))
+	 (format #t ";(char-whitespace? ~A) -> #t?~%" arg)))
    mixed-a-to-z)
   
   (for-each
    (lambda (arg)
      (if (char-whitespace? arg)
-	 (format #t "(char-whitespace? ~A) -> #t?~%" arg)))
+	 (format #t ";(char-whitespace? ~A) -> #t?~%" arg)))
    digits)
 
   (test (char-whitespace?) 'error)
@@ -1110,13 +1110,13 @@
   (for-each
    (lambda (arg)
      (if (char-alphabetic? arg)
-	 (format #t "(char-alphabetic? ~A) -> #t?~%" arg)))
+	 (format #t ";(char-alphabetic? ~A) -> #t?~%" arg)))
    digits)
   
   (for-each
    (lambda (arg)
      (if (not (char-alphabetic? arg))
-	 (format #t "(char-alphabetic? ~A) -> #f?~%" arg)))
+	 (format #t ";(char-alphabetic? ~A) -> #f?~%" arg)))
    mixed-a-to-z)
 
   (test (char-alphabetic?) 'error)
@@ -1391,7 +1391,7 @@
 	(for-each
 	 (lambda (op1 op2)
 	   (if (not (eq? (op1 c1 c2) (op2 (string c1) (string c2))))
-	       (format #t "(~A|~A ~A ~A) -> ~A|~A~%" op1 op2 c1 c2 (op1 c1 c2) (op2 (string c1) (string c2)))))
+	       (format #t ";(~A|~A ~A ~A) -> ~A|~A~%" op1 op2 c1 c2 (op1 c1 c2) (op2 (string c1) (string c2)))))
 	 (list char=? char<? char<=? char>? char>=? char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?)
 	 (list string=? string<? string<=? string>? string>=? string-ci=? string-ci<? string-ci<=? string-ci>? string-ci>=?)))))
 |#
@@ -2763,7 +2763,7 @@
 (for-each
  (lambda (arg)
    (if (not (equal? (car (cons arg '())) arg))
-       (format #t "(car '(~A)) returned ~A?~%" arg (car (cons arg '()))))
+       (format #t ";(car '(~A)) returned ~A?~%" arg (car (cons arg '()))))
    (test (car arg) 'error))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
 
@@ -2796,7 +2796,7 @@
 (for-each
  (lambda (arg)
    (if (not (equal? (cdr (cons '() arg)) arg))
-       (format #t "(cdr '(() ~A) -> ~A?~%" arg (cdr (cons '() arg))))
+       (format #t ";(cdr '(() ~A) -> ~A?~%" arg (cdr (cons '() arg))))
    (test (cdr arg) 'error))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
 
@@ -2878,7 +2878,7 @@
       (let ((val1 (catch #t (lambda () (op1 lst)) (lambda args 'error)))
 	    (val2 (catch #t (lambda () (op2 lst)) (lambda args 'error))))
 	(if (not (equal? val1 val2))
-	    (format #t "(~A ~A) -> ~A ~A?~%" name lst val1 val2))))
+	    (format #t ";(~A ~A) -> ~A ~A?~%" name lst val1 val2))))
     lists))
  (list 'caar 'cadr 'cdar 'cddr 'caaar 'caadr 'cadar 'cdaar 'caddr 'cdddr 'cdadr 'cddar 
        'caaaar 'caaadr 'caadar 'cadaar 'caaddr 'cadddr 'cadadr 'caddar 'cdaaar 
@@ -3272,14 +3272,14 @@
  (lambda (lst)
    (if (list? lst)
        (if (not (equal? lst (reverse (reverse lst))))
-	   (format #t "(reverse (reverse ~A)) -> ~A?~%" (reverse (reverse lst))))))
+	   (format #t ";(reverse (reverse ~A)) -> ~A?~%" (reverse (reverse lst))))))
  lists)
 
 (for-each
  (lambda (lst)
    (if (list? lst)
        (if (not (equal? lst (reverse (reverse (reverse (reverse lst))))))
-	   (format #t "(reverse...(4x) ~A) -> ~A?~%" lst (reverse (reverse (reverse (reverse lst))))))))
+	   (format #t ";(reverse...(4x) ~A) -> ~A?~%" lst (reverse (reverse (reverse (reverse lst))))))))
  lists)
 
 (test (let ((x (list 1 2 3))) (list (recompose 32 reverse x) x)) '((1 2 3) (1 2 3)))
@@ -3364,7 +3364,7 @@
 (for-each
  (lambda (arg)
    (if (pair? arg)
-       (format #t "(pair? ~A) -> #t?~%" arg)))
+       (format #t ";(pair? ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3404,7 +3404,7 @@
 (for-each
  (lambda (arg)
    (if (list? arg)
-       (format #t "(list? ~A) -> #t?~%" arg)))
+       (format #t ";(list? ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1))))
 
 
@@ -3445,7 +3445,7 @@
 (for-each
  (lambda (arg)
    (if (null? arg)
-       (format #t "(null? ~A) -> #t?~%" arg)))
+       (format #t ";(null? ~A) -> #t?~%" arg)))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) #<eof> #<undefined> (values) (lambda (a) (+ a 1))))
 
 
@@ -3522,7 +3522,7 @@
       (let ((val1 (catch #t (lambda () (op1 lst)) (lambda args 'error)))
 	    (val2 (catch #t (lambda () (op2 lst)) (lambda args 'error))))
 	(if (not (equal? val1 val2))
-	    (format #t "(~A ~A) -> ~A ~A?~%" name lst val1 val2))))
+	    (format #t ";(~A ~A) -> ~A ~A?~%" name lst val1 val2))))
     lists))
  (list 'list-ref:0 'list-ref:1 'list-ref:2 'list-ref:3)
  (list car cadr caddr cadddr)
@@ -3819,7 +3819,7 @@
       (let ((val1 (catch #t (lambda () (op1 lst)) (lambda args 'error)))
 	    (val2 (catch #t (lambda () (op2 lst)) (lambda args 'error))))
 	(if (not (equal? val1 val2))
-	    (format #t "(~A ~A) -> ~A ~A?~%" name lst val1 val2))))
+	    (format #t ";(~A ~A) -> ~A ~A?~%" name lst val1 val2))))
     lists))
  (list 'list-tail:0 'list-tail:1 'list-tail:2 'list-tail:3 'list-tail:4)
  (list (lambda (l) l) cdr cddr cdddr cddddr)
@@ -4117,7 +4117,7 @@
     (lambda (arg)
       (let ((result (catch #t (lambda () (op arg)) (lambda args 'error))))
 	(if (not (eq? result 'error))
-	    (format #t "(~A ~A) returned ~A?~%" op arg result))
+	    (format #t ";(~A ~A) returned ~A?~%" op arg result))
 	(test (op arg '() arg) 'error)
 	(test (op arg) 'error)))
     (list '() "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1)))))
@@ -4138,7 +4138,7 @@
     (lambda (arg)
       (let ((result (catch #t (lambda () (op #f arg)) (lambda args 'error))))
 	(if (not (eq? result 'error))
-	    (format #t "(~A #f ~A) returned ~A?~%" op arg result))))
+	    (format #t ";(~A #f ~A) returned ~A?~%" op arg result))))
     (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1)))))
  (list assq assv assoc memq memv member))
 
@@ -6459,7 +6459,7 @@
 (for-each
  (lambda (arg)
    (if (input-port? arg)
-       (format #t "(input-port? ~A) -> #t?~%" arg)))
+       (format #t ";(input-port? ~A) -> #t?~%" arg)))
  (list "hi" #f (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f #<eof> #<undefined> #<unspecified>))
 
 (test (call-with-input-file "s7test.scm" input-port?) #t)
@@ -6560,7 +6560,7 @@
 (for-each
  (lambda (arg)
    (if (output-port? arg)
-       (format #t "(output-port? ~A) -> #t?~%" arg)))
+       (format #t ";(output-port? ~A) -> #t?~%" arg)))
  (list "hi" #f (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f))
 
 (for-each
@@ -6582,7 +6582,7 @@
 (for-each
  (lambda (arg)
    (if (eof-object? arg)
-       (format #t "(eof-object? ~A) -> #t?~%" arg)))
+       (format #t ";(eof-object? ~A) -> #t?~%" arg)))
  (list "hi" -1 #\a 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (if #f #f) #<undefined> (lambda (a) (+ a 1))))
 
 (for-each
@@ -6591,7 +6591,7 @@
 		     (lambda () (port-closed? arg))
 		     (lambda args 'error))))
      (if (not (eq? val 'error))
-	 (format #t "(port-closed? ~A) -> ~S?~%" arg val))))
+	 (format #t ";(port-closed? ~A) -> ~S?~%" arg val))))
  (list "hi" -1 #\a 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (if #f #f) #<undefined> #<eof> (lambda (a) (+ a 1))))
 
 (test (port-closed?) 'error)
@@ -6880,7 +6880,7 @@
 (for-each
  (lambda (op)
    (for-each
-    (lambda (arg) ;(format #t "(~A ~A)~%" op arg)
+    (lambda (arg) ;(format #t ";(~A ~A)~%" op arg)
       (test (op arg) 'error))
     (list (integer->char 65) 1 0 -1 (list 1) (cons 1 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (if #f #f) (lambda (a) (+ a 1)))))
  (list char-ready? set-current-output-port set-current-input-port set-current-error-port
@@ -8475,7 +8475,7 @@
  (lambda (op)
    (let ((tag (catch #t (lambda () (op)) (lambda args 'error))))
      (if (not (eq? tag 'error))
-	 (format #t "(~A) -> ~A (expected 'error)~%" op tag))))
+	 (format #t ";(~A) -> ~A (expected 'error)~%" op tag))))
  (list set-current-input-port set-current-error-port set-current-output-port 
        close-input-port close-output-port
        write display write-byte write-char format                     ; newline
@@ -8491,7 +8491,7 @@
  (lambda (op)
    (let ((tag (catch #t (lambda () (op 1 2 3 4 5)) (lambda args 'error))))
      (if (not (eq? tag 'error))
-	 (format #t "(~A 1 2 3 4 5) -> ~A (expected 'error)~%" op tag))))
+	 (format #t ";(~A 1 2 3 4 5) -> ~A (expected 'error)~%" op tag))))
  (list set-current-input-port set-current-error-port set-current-output-port 
        close-input-port close-output-port
        write display write-byte write-char format newline
@@ -8637,7 +8637,7 @@
    (for-each
     (lambda (op)
       (if (ques op)
-	  (format #t "(~A ~A) returned #t?~%" ques op)))
+	  (format #t ";(~A ~A) returned #t?~%" ques op)))
     control-ops))
  question-ops)
 
@@ -8645,13 +8645,13 @@
   (for-each
    (lambda (op)
      (if (op unspecified)
-	 (format #t "(~A #<unspecified>) returned #t?~%" op)))
+	 (format #t ";(~A #<unspecified>) returned #t?~%" op)))
    question-ops))
 
 (for-each 
  (lambda (s)
    (if (not (symbol? s))
-       (format #t "(symbol? ~A returned #f?~%" s)))
+       (format #t ";(symbol? ~A returned #f?~%" s)))
  '(+ - ... !.. $.+ %.- &.! *.: /:. <-. =. >. ?. ~. _. ^.))
 
 
@@ -11320,17 +11320,17 @@
 					;(let ((initial-chars "aA!$%&*/:<=>?^_~")
 					;      (subsequent-chars "9aA!$%&*+-./:<=>?@^_~")
 					;      (ctr 0))
-					;  (format #t "(let (")
+					;  (format #t ";(let (")
 					;  (do ((i 0 (+ i 1)))
 					;      ((= i (string-length initial-chars)))
-					;    (format #t "(~A ~D) " (string (string-ref initial-chars i)) ctr)
+					;    (format #t ";(~A ~D) " (string (string-ref initial-chars i)) ctr)
 					;    (set! ctr (+ ctr 1)))
 					;
 					;  (do ((i 0 (+ i 1)))
 					;      ((= i (string-length initial-chars)))
 					;    (do ((k 0 (+ k 1)))
 					;	((= k (string-length subsequent-chars)))
-					;      (format #t "(~A ~D) " (string (string-ref initial-chars i) (string-ref subsequent-chars k)) ctr)
+					;      (format #t ";(~A ~D) " (string (string-ref initial-chars i) (string-ref subsequent-chars k)) ctr)
 					;      (set! ctr (+ ctr 1))))
 					;
 					;  (format #t ")~%  (+ ")
@@ -12409,7 +12409,7 @@
   (for-each
    (lambda (ques)
      (if (ques a)
-	 (format #t "(~A ~A) returned #t?~%" ques a)))
+	 (format #t ";(~A ~A) returned #t?~%" ques a)))
    question-ops))
 
 (test (let ((conts (make-vector 4 #f)))
@@ -14006,7 +14006,7 @@ why are these different (read-time `#() ? )
     (let ((v1 (copy v)))
       (sort! v <)
       (if (not (apply < (vector->list v)))
-	  (format #t "(sort! ~A <) -> ~A?" v1 v)))))
+	  (format #t ";(sort! ~A <) -> ~A?" v1 v)))))
 
 (test (sort!) 'error)
 (test (sort! '(1 2 3) < '(3 2 1)) 'error)
@@ -17231,7 +17231,7 @@ why are these different (read-time `#() ? )
 			 (special str))
 		       (lambda args 'error))))
        (if (not (equal? val arg))
-	   (format #t "(special ~S) -> ~S~%" arg val)))))
+	   (format #t ";(special ~S) -> ~S~%" arg val)))))
  (list "hi" 1 '() #() '(1 2 3) #(1 2) '(1 . 2) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #t #<eof> (lambda (a) (+ a 1))))
 
 (for-each
@@ -17244,7 +17244,7 @@ why are these different (read-time `#() ? )
 			   (get-str))
 			 (lambda args 'error))))
 	 (if (not (equal? val arg))
-	     (format #t "((special ~S)) -> ~S~%" arg val))))))
+	     (format #t ";((special ~S)) -> ~S~%" arg val))))))
  (list "hi" 1 '() #() '(1 2 3) #(1 2) '(1 . 2) #f 'a-symbol abs 3.14 3/4 1.0+1.0i #t #<eof> (lambda (a) (+ a 1))))
 
 (let ((str 0))
@@ -28469,7 +28469,7 @@ why are these different (read-time `#() ? )
     (let ((y (magnitude (- x (sin (asin x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-12)
-      (format #t "(sin (asin ~A)) error: ~A~%" mx err)))
+      (format #t ";(sin (asin ~A)) error: ~A~%" mx err)))
 
 (let ((err 0.0)
       (mx 0.0))
@@ -28479,7 +28479,7 @@ why are these different (read-time `#() ? )
     (let ((y (magnitude (- x (sin (asin x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-9)
-      (format #t "(sin (asin ~A)) error: ~A~%" mx err)))
+      (format #t ";(sin (asin ~A)) error: ~A~%" mx err)))
 
 (test (asin) 'error)
 (test (asin "hi") 'error)
@@ -28961,7 +28961,7 @@ why are these different (read-time `#() ? )
     (let ((y (magnitude (- x (cos (acos x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-12)
-      (format #t "(cos (acos ~A)) error: ~A~%" mx err)))
+      (format #t ";(cos (acos ~A)) error: ~A~%" mx err)))
 
 (let ((err 0.0)
       (mx 0.0))
@@ -28971,7 +28971,7 @@ why are these different (read-time `#() ? )
     (let ((y (magnitude (- x (cos (acos x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-10)
-      (format #t "(cos (acos ~A)) error: ~A~%" mx err)))
+      (format #t ";(cos (acos ~A)) error: ~A~%" mx err)))
 
 (test (acos) 'error)
 (test (acos "hi") 'error)
@@ -32068,7 +32068,7 @@ why are these different (read-time `#() ? )
     (lambda (arg)
       (let ((val (catch #t (lambda () (op arg)) (lambda args 'error))))
 	(if (not (eq? val 'error))
-	    (format #t "(~A ~S) returned ~S but expected 'error~%" op arg val))))
+	    (format #t ";(~A ~S) returned ~S but expected 'error~%" op arg val))))
     (list "hi" '() #\a (list 1) '(1 . 2) '#(0) #f 'a-symbol (make-vector 3) abs #t (if #f #f) (lambda (a) (+ a 1)))))
  (list cosh sinh tanh acosh asinh atanh))
 
@@ -32080,7 +32080,7 @@ why are these different (read-time `#() ? )
     (let ((y (abs (- x (cosh (acosh x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-14)
-      (format #t "(cosh (acosh ~A)) error: ~A~%" mx err)))
+      (format #t ";(cosh (acosh ~A)) error: ~A~%" mx err)))
 
 (let ((err 0.0)
       (mx 0.0))
@@ -32090,7 +32090,7 @@ why are these different (read-time `#() ? )
     (let ((y (magnitude (- x (cosh (acosh x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-14)
-      (format #t "(cosh (acosh ~A)) error: ~A~%" mx err)))
+      (format #t ";(cosh (acosh ~A)) error: ~A~%" mx err)))
 
 (let ((err 0.0)
       (mx 0.0))
@@ -32100,7 +32100,7 @@ why are these different (read-time `#() ? )
     (let ((y (abs (- x (sinh (asinh x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-14)
-      (format #t "(sinh (asinh ~A)) error: ~A~%" mx err)))
+      (format #t ";(sinh (asinh ~A)) error: ~A~%" mx err)))
 
 (let ((err 0.0)
       (mx 0.0))
@@ -32110,7 +32110,7 @@ why are these different (read-time `#() ? )
     (let ((y (magnitude (- x (sinh (asinh x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-9)
-      (format #t "(sinh (asinh ~A)) error: ~A~%" mx err)))
+      (format #t ";(sinh (asinh ~A)) error: ~A~%" mx err)))
 
 (let ((err 0.0)
       (mx 0.0))
@@ -32120,7 +32120,7 @@ why are these different (read-time `#() ? )
     (let ((y (magnitude (- x (tanh (atanh x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-12)
-      (format #t "(tanh (atanh ~A)) error: ~A~%" mx err)))
+      (format #t ";(tanh (atanh ~A)) error: ~A~%" mx err)))
 
 
 
@@ -32642,7 +32642,7 @@ why are these different (read-time `#() ? )
 	     (let ((val (sqrt n)))
 	       (if (or (not (integer? val))
 		       (not (eqv? sqn val)))
-		   (format #t "(sqrt ~A) expected ~A but got ~A~%" n sqn val)))))
+		   (format #t ";(sqrt ~A) expected ~A but got ~A~%" n sqn val)))))
        (list 9 491401 19439281 1248844921 235565593201)
        (list 3 701 4409 35339 485351))
       
@@ -32652,7 +32652,7 @@ why are these different (read-time `#() ? )
 	     (let ((val (sqrt n)))
 	       (if (or (integer? val)
 		       (> (abs (- (* val val) n)) .001))
-		   (format #t "(sqrt ~A) expected ~A but got ~A~%" n (sqrt (* 1.0 n)) val)))))
+		   (format #t ";(sqrt ~A) expected ~A but got ~A~%" n (sqrt (* 1.0 n)) val)))))
        (list 10 491400 19439282 1248844920 235565593200))
       
       (test (eqv? (expt 2 3) 8) #t)
@@ -32671,7 +32671,7 @@ why are these different (read-time `#() ? )
     (let ((y (magnitude (- x (* (sqrt x) (sqrt x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-14)
-      (format #t "(sqr (sqrt ~A)) error: ~A~%" mx err)))
+      (format #t ";(sqr (sqrt ~A)) error: ~A~%" mx err)))
 
 (let ((err 0.0)
       (mx 0.0))
@@ -32681,7 +32681,7 @@ why are these different (read-time `#() ? )
     (let ((y (magnitude (- x (* (sqrt x) (sqrt x))))))
       (if (> y err) (begin (set! mx x) (set! err y)))))
   (if (> err 1e-12)
-      (format #t "(sqr (sqrt ~A)) error: ~A~%" mx err)))
+      (format #t ";(sqr (sqrt ~A)) error: ~A~%" mx err)))
 
 (test (sqrt) 'error)
 (test (sqrt "hi") 'error)
@@ -33747,7 +33747,7 @@ why are these different (read-time `#() ? )
 	(let ((y (magnitude (- x (exp (log x))))))
 	  (if (> y err) (begin (set! mx x) (set! err y))))))
   (if (> err 1e-14)
-      (format #t "(exp (log ~A)) error: ~A~%" mx err)))
+      (format #t ";(exp (log ~A)) error: ~A~%" mx err)))
 
 (let ((err 0.0)
       (mx 0.0))
@@ -33758,7 +33758,7 @@ why are these different (read-time `#() ? )
 	(let ((y (magnitude (- x (exp (log x))))))
 	  (if (> y err) (begin (set! err y) (set! mx x))))))
   (if (> err 1e-14)
-      (format #t "(exp (log ~A)) error: ~A~%" mx err)))
+      (format #t ";(exp (log ~A)) error: ~A~%" mx err)))
 
 (do ((i 0 (+ i 1)))
     ((= i 100))
@@ -34174,7 +34174,7 @@ why are these different (read-time `#() ? )
       (lambda (y)
 	(num-test (expt (expt x y) (/ y)) x)
 	;;	(if (> (magnitude (- (expt (expt x y) (/ y)) x)) 1e-6)
-	;;	    (format #t "(expt (expt ~A ~A) (/ ~A)) -> ~A (~A)~%" x y y (expt (expt x y) (/ y)) (magnitude (- (expt (expt x y) (/ y)) x))))
+	;;	    (format #t ";(expt (expt ~A ~A) (/ ~A)) -> ~A (~A)~%" x y y (expt (expt x y) (/ y)) (magnitude (- (expt (expt x y) (/ y)) x))))
 	)
       ys))
    xs))
@@ -39762,13 +39762,13 @@ why are these different (read-time `#() ? )
 	     (cv (ceiling val1))
 	     (tv (truncate val1)))
 	(if (not (= fv (- val2 1)))
-	    (begin (set! happy #f) (format #t "(floor ~S) = ~S?~%" val1 fv)))
+	    (begin (set! happy #f) (format #t ";(floor ~S) = ~S?~%" val1 fv)))
 	(if (not (= cv val2))
-	    (begin (set! happy #f) (format #t "(ceiling ~S) = ~S?~%" val1 cv)))
+	    (begin (set! happy #f) (format #t ";(ceiling ~S) = ~S?~%" val1 cv)))
 	(if (not (= tv (- val2 1)))
-	    (begin (set! happy #f) (format #t "(truncate ~S) = ~S?~%" val1 tv)))
+	    (begin (set! happy #f) (format #t ";(truncate ~S) = ~S?~%" val1 tv)))
 	(if (not (= rv val2))
-	    (begin (set! happy #f) (format #t "(round ~S) = ~S?~%" val1 rv))))))
+	    (begin (set! happy #f) (format #t ";(round ~S) = ~S?~%" val1 rv))))))
   
   (let ((happy #t))
     (do ((i 2 (+ i 1)))
@@ -39780,13 +39780,13 @@ why are these different (read-time `#() ? )
 	     (cv (ceiling val1))
 	     (tv (truncate val1)))
 	(if (not (= fv val2))
-	    (begin (set! happy #f) (format #t "(floor ~S) = ~S?~%" val1 fv)))
+	    (begin (set! happy #f) (format #t ";(floor ~S) = ~S?~%" val1 fv)))
 	(if (not (= cv (+ val2 1)))
-	    (begin (set! happy #f) (format #t "(ceiling ~S) = ~S?~%" val1 cv)))
+	    (begin (set! happy #f) (format #t ";(ceiling ~S) = ~S?~%" val1 cv)))
 	(if (not (= tv val2))
-	    (begin (set! happy #f) (format #t "(truncate ~S) = ~S?~%" val1 tv)))
+	    (begin (set! happy #f) (format #t ";(truncate ~S) = ~S?~%" val1 tv)))
 	(if (not (= rv val2))
-	    (begin (set! happy #f) (format #t "(round ~S) = ~S?~%" val1 rv))))))
+	    (begin (set! happy #f) (format #t ";(round ~S) = ~S?~%" val1 rv))))))
   
   (let ((happy #t))
     (do ((i 2 (+ i 1)))
@@ -39794,13 +39794,13 @@ why are these different (read-time `#() ? )
       (let* ((val1 (expt 2 i))
 	     (val2 (- val1 1)))
 	(if (= (floor val1) (floor val2))
-	    (begin (set! happy #f) (format #t "(floor ~S) = (floor ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format #t ";(floor ~S) = (floor ~S)?~%" val1 val2)))
 	(if (= (ceiling val1) (ceiling val2))
-	    (begin (set! happy #f) (format #t "(ceiling ~S) = (ceiling ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format #t ";(ceiling ~S) = (ceiling ~S)?~%" val1 val2)))
 	(if (= (truncate val1) (truncate val2))
-	    (begin (set! happy #f) (format #t "(truncate ~S) = (truncate ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format #t ";(truncate ~S) = (truncate ~S)?~%" val1 val2)))
 	(if (= (round val1) (round val2))
-	    (begin (set! happy #f) (format #t "(round ~S) = (round ~S)?~%" val1 val2))))))
+	    (begin (set! happy #f) (format #t ";(round ~S) = (round ~S)?~%" val1 val2))))))
   
   (let ((happy #t))
     (do ((i 2 (+ i 1)))
@@ -39808,13 +39808,13 @@ why are these different (read-time `#() ? )
       (let* ((val1 (/ (- (expt 2 i) 1) 2))
 	     (val2 (/ (- (expt 2 i) 3) 2)))
 	(if (= (floor val1) (floor val2))
-	    (begin (set! happy #f) (format #t "(floor ~S) = (floor ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format #t ";(floor ~S) = (floor ~S)?~%" val1 val2)))
 	(if (= (ceiling val1) (ceiling val2))
-	    (begin (set! happy #f) (format #t "(ceiling ~S) = (ceiling ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format #t ";(ceiling ~S) = (ceiling ~S)?~%" val1 val2)))
 	(if (= (truncate val1) (truncate val2))
-	    (begin (set! happy #f) (format #t "(truncate ~S) = (truncate ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format #t ";(truncate ~S) = (truncate ~S)?~%" val1 val2)))
 	(if (= (round val1) (round val2))
-	    (begin (set! happy #f) (format #t "(round ~S) = (round ~S)?~%" val1 val2))))))
+	    (begin (set! happy #f) (format #t ";(round ~S) = (round ~S)?~%" val1 val2))))))
   
   (let ((happy #t)
 	(off-by 1/3))
@@ -39826,16 +39826,16 @@ why are these different (read-time `#() ? )
 	     (tv (truncate val1))
 	     (rv (round val1)))
 	(if (not (= fv (- val1 off-by)))
-	    (begin (set! happy #f) (format #t "(floor ~S) = ~S?~%" val1 fv)))
+	    (begin (set! happy #f) (format #t ";(floor ~S) = ~S?~%" val1 fv)))
 	(if (not (= cv (+ val1 (- 1 off-by))))
-	    (begin (set! happy #f) (format #t "(ceiling ~S) = ~S?~%" val1 cv)))
+	    (begin (set! happy #f) (format #t ";(ceiling ~S) = ~S?~%" val1 cv)))
 	(if (not (= tv (- val1 off-by)))
-	    (begin (set! happy #f) (format #t "(truncate ~S) = ~S?~%" val1 tv)))
+	    (begin (set! happy #f) (format #t ";(truncate ~S) = ~S?~%" val1 tv)))
 	(if (= off-by 1/3)
 	    (if (not (= rv (- val1 off-by)))
-		(begin (set! happy #f) (format #t "(round ~S) = ~S?~%" val1 rv)))
+		(begin (set! happy #f) (format #t ";(round ~S) = ~S?~%" val1 rv)))
 	    (if (not (= rv (+ val1 (- 1 off-by))))
-		(begin (set! happy #f) (format #t "(round ~S) = ~S?~%" val1 rv))))
+		(begin (set! happy #f) (format #t ";(round ~S) = ~S?~%" val1 rv))))
 	(if (= off-by 1/3)
 	    (set! off-by 2/3)
 	    (set! off-by 1/3)))))
@@ -39850,13 +39850,13 @@ why are these different (read-time `#() ? )
 	     (cv (ceiling val1))
 	     (tv (truncate val1)))
 	(if (not (= fv val2))
-	    (begin (set! happy #f) (format #t "(floor ~S) = ~S?~%" val1 fv)))
+	    (begin (set! happy #f) (format #t ";(floor ~S) = ~S?~%" val1 fv)))
 	(if (not (= cv (+ val2 1)))
-	    (begin (set! happy #f) (format #t "(ceiling ~S) = ~S?~%" val1 cv)))
+	    (begin (set! happy #f) (format #t ";(ceiling ~S) = ~S?~%" val1 cv)))
 	(if (not (= tv (+ val2 1)))
-	    (begin (set! happy #f) (format #t "(truncate ~S) = ~S?~%" val1 tv)))
+	    (begin (set! happy #f) (format #t ";(truncate ~S) = ~S?~%" val1 tv)))
 	(if (not (= rv val2))
-	    (begin (set! happy #f) (format #t "(round ~S) = ~S?~%" val1 rv))))))
+	    (begin (set! happy #f) (format #t ";(round ~S) = ~S?~%" val1 rv))))))
   
   (let ((happy #t))
     (do ((i 2 (+ i 1)))
@@ -39868,13 +39868,13 @@ why are these different (read-time `#() ? )
 	     (cv (ceiling val1))
 	     (tv (truncate val1)))
 	(if (not (= fv (- val2 1)))
-	    (begin (set! happy #f) (format #t "(floor ~S) = ~S?~%" val1 fv)))
+	    (begin (set! happy #f) (format #t ";(floor ~S) = ~S?~%" val1 fv)))
 	(if (not (= cv val2))
-	    (begin (set! happy #f) (format #t "(ceiling ~S) = ~S?~%" val1 cv)))
+	    (begin (set! happy #f) (format #t ";(ceiling ~S) = ~S?~%" val1 cv)))
 	(if (not (= tv val2))
-	    (begin (set! happy #f) (format #t "(truncate ~S) = ~S?~%" val1 tv)))
+	    (begin (set! happy #f) (format #t ";(truncate ~S) = ~S?~%" val1 tv)))
 	(if (not (= rv val2))
-	    (begin (set! happy #f) (format #t "(round ~S) = ~S?~%" val1 rv))))))
+	    (begin (set! happy #f) (format #t ";(round ~S) = ~S?~%" val1 rv))))))
   
   (let ((happy #t))
     (do ((i 2 (+ i 1)))
@@ -39882,13 +39882,13 @@ why are these different (read-time `#() ? )
       (let* ((val1 (- (expt 2 i)))
 	     (val2 (+ val1 1)))
 	(if (= (floor val1) (floor val2))
-	    (begin (set! happy #f) (format #t "(floor ~S) = (floor ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format #t ";(floor ~S) = (floor ~S)?~%" val1 val2)))
 	(if (= (ceiling val1) (ceiling val2))
-	    (begin (set! happy #f) (format #t "(ceiling ~S) = (ceiling ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format #t ";(ceiling ~S) = (ceiling ~S)?~%" val1 val2)))
 	(if (= (truncate val1) (truncate val2))
-	    (begin (set! happy #f) (format #t "(truncate ~S) = (truncate ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format #t ";(truncate ~S) = (truncate ~S)?~%" val1 val2)))
 	(if (= (round val1) (round val2))
-	    (begin (set! happy #f) (format #t "(round ~S) = (round ~S)?~%" val1 val2))))))
+	    (begin (set! happy #f) (format #t ";(round ~S) = (round ~S)?~%" val1 val2))))))
   
   (let ((happy #t))
     (do ((i 2 (+ i 1)))
@@ -39896,13 +39896,13 @@ why are these different (read-time `#() ? )
       (let* ((val1 (- (/ (- (expt 2 i) 1) 2)))
 	     (val2 (- (/ (- (expt 2 i) 3) 2))))
 	(if (= (floor val1) (floor val2))
-	    (begin (set! happy #f) (format #t "(floor ~S) = (floor ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format #t ";(floor ~S) = (floor ~S)?~%" val1 val2)))
 	(if (= (ceiling val1) (ceiling val2))
-	    (begin (set! happy #f) (format #t "(ceiling ~S) = (ceiling ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format #t ";(ceiling ~S) = (ceiling ~S)?~%" val1 val2)))
 	(if (= (truncate val1) (truncate val2))
-	    (begin (set! happy #f) (format #t "(truncate ~S) = (truncate ~S)?~%" val1 val2)))
+	    (begin (set! happy #f) (format #t ";(truncate ~S) = (truncate ~S)?~%" val1 val2)))
 	(if (= (round val1) (round val2))
-	    (begin (set! happy #f) (format #t "(round ~S) = (round ~S)?~%" val1 val2))))))
+	    (begin (set! happy #f) (format #t ";(round ~S) = (round ~S)?~%" val1 val2))))))
   
   (let ((happy #t)
 	(off-by 2/3))
@@ -39914,16 +39914,16 @@ why are these different (read-time `#() ? )
 	     (tv (truncate val1))
 	     (rv (round val1)))
 	(if (not (= fv (- val1 off-by)))
-	    (begin (set! happy #f) (format #t "(floor ~S) = ~S?~%" val1 fv)))
+	    (begin (set! happy #f) (format #t ";(floor ~S) = ~S?~%" val1 fv)))
 	(if (not (= cv (+ val1 (- 1 off-by))))
-	    (begin (set! happy #f) (format #t "(ceiling ~S) = ~S?~%" val1 cv)))
+	    (begin (set! happy #f) (format #t ";(ceiling ~S) = ~S?~%" val1 cv)))
 	(if (not (= tv (+ val1 (- 1 off-by))))
-	    (begin (set! happy #f) (format #t "(truncate ~S) = ~S?~%" val1 tv)))
+	    (begin (set! happy #f) (format #t ";(truncate ~S) = ~S?~%" val1 tv)))
 	(if (= off-by 1/3)
 	    (if (not (= rv (- val1 off-by)))
-		(begin (set! happy #f) (format #t "(round ~S) = ~S?~%" val1 rv)))
+		(begin (set! happy #f) (format #t ";(round ~S) = ~S?~%" val1 rv)))
 	    (if (not (= rv (+ val1 (- 1 off-by))))
-		(begin (set! happy #f) (format #t "(round ~S) = ~S?~%" val1 rv))))
+		(begin (set! happy #f) (format #t ";(round ~S) = ~S?~%" val1 rv))))
 	(if (= off-by 1/3)
 	    (set! off-by 2/3)
 	    (set! off-by 1/3)))))
@@ -39953,13 +39953,13 @@ why are these different (read-time `#() ? )
 (for-each
  (lambda (n)
    (if (not (zero? n))
-       (format #t "(zero? ~A) -> #f?~%" n)))
+       (format #t ";(zero? ~A) -> #f?~%" n)))
  (list 0 0.0 0+0i 0/1 0.0-0.0i))
 
 (for-each
  (lambda (n)
    (if (zero? n)
-       (format #t "(zero? ~A) -> #t?~%" n)))
+       (format #t ";(zero? ~A) -> #t?~%" n)))
  (list 1 1/100 -0.001 0.0+1.0i))
 
 
@@ -39978,13 +39978,13 @@ why are these different (read-time `#() ? )
 (for-each
  (lambda (n)
    (if (not (positive? n))
-       (format #t "(positive? ~A) -> #f?~%") n))
+       (format #t ";(positive? ~A) -> #f?~%") n))
  (list 1 123 123456123 1.4 0.001 1/2 124124124.2))
 
 (for-each
  (lambda (n)
    (if (positive? n)
-       (format #t "(positive? ~A) -> #t?~%" n)))
+       (format #t ";(positive? ~A) -> #t?~%" n)))
  (list -1 -123 -123456123 -3/2 -0.00001 -1.4 -123124124.1))
 
 
@@ -40008,13 +40008,13 @@ why are these different (read-time `#() ? )
 (for-each
  (lambda (n)
    (if (negative? n)
-       (format #t "(negative? ~A) -> #t?~%" n)))
+       (format #t ";(negative? ~A) -> #t?~%" n)))
  (list 1 123 123456123 1.4 0.001 1/2 12341243124.2))
 
 (for-each
  (lambda (n)
    (if (not (negative? n))
-       (format #t "(negative? ~A) -> #f?~%" n)))
+       (format #t ";(negative? ~A) -> #f?~%" n)))
  (list -1 -123 -123456123 -2/3 -0.00001 -1.4 -123124124.1))
 
 
@@ -40033,13 +40033,13 @@ why are these different (read-time `#() ? )
 (for-each
  (lambda (n)
    (if (odd? n)
-       (format #t "(odd? ~A) -> #t?~%" n)))
+       (format #t ";(odd? ~A) -> #t?~%" n)))
  (list 0 2 1234 -4 -10000002 1000000006))
 
 (for-each
  (lambda (n)
    (if (not (odd? n))
-       (format #t "(odd? ~A) -> #f?~%" n)))
+       (format #t ";(odd? ~A) -> #f?~%" n)))
  (list 1 -1 31 50001 543321))
 
 
@@ -40053,13 +40053,13 @@ why are these different (read-time `#() ? )
 (for-each
  (lambda (n)
    (if (not (even? n))
-       (format #t "(even? ~A) -> #f?~%" n)))
+       (format #t ";(even? ~A) -> #f?~%" n)))
  (list 0 2 1234 -4 -10000002 1000000006))
 
 (for-each
  (lambda (n)
    (if (even? n)
-       (format #t "(even? ~A) -> #t?~%" n)))
+       (format #t ";(even? ~A) -> #t?~%" n)))
  (list 1 -1 31 50001 543321))
 
 
@@ -40624,7 +40624,7 @@ why are these different (read-time `#() ? )
    (for-each
     (lambda (arg)
       (if (op arg)
-	  (format #t "(~A ~A) -> #t?~%" op arg)))
+	  (format #t ";(~A ~A) -> #t?~%" op arg)))
     (list "hi" (integer->char 65) #f #t '(1 2) 'a-symbol (cons 1 2) (make-vector 3) abs)))
  (list number? complex? real? rational? integer?)
  (list 'number? 'complex? 'real? 'rational? 'integer?))
@@ -40632,21 +40632,21 @@ why are these different (read-time `#() ? )
 (for-each
  (lambda (arg) 
    (if (not (complex? arg))
-       (format #t "(complex? ~A) -> #f?~%" arg)))
+       (format #t ";(complex? ~A) -> #f?~%" arg)))
  (list 1 1.0 1.0+0.5i 1/2))
 
 (if (not (integer? 1234)) (display ";1234 is not an integer?~%"))
 (for-each
  (lambda (arg) 
    (if (integer? arg)
-       (format #t "(integer? ~A) -> #t?~%" arg)))
+       (format #t ";(integer? ~A) -> #t?~%" arg)))
  (list 1.5 1.0+0.5i 1/2))
 
 (if (real? 1.0+1.0i) (display ";1.0+1.0i is real?~%"))
 (for-each
  (lambda (arg) 
    (if (not (real? arg))
-       (format #t "(real? ~A) -> #f?~%" arg)))
+       (format #t ";(real? ~A) -> #f?~%" arg)))
  (list 1 1.0 1/2))
 
 (test (rational? 1/2) #t)
@@ -40773,7 +40773,7 @@ why are these different (read-time `#() ? )
        (lambda (op)
 	 (let ((val (magnitude (- (op 1e19) (op .1e20)))))
 	   (if (> val .1)
-	       (format #t "(~A 1e19) = ~A, but (~A .1e20) = ~A~%" 
+	       (format #t ";(~A 1e19) = ~A, but (~A .1e20) = ~A~%" 
 		       (procedure-name op) (op 1e19)
 		       (procedure-name op) (op .1e20)))))
        (list abs floor cos rationalize sin log round ceiling truncate atan cosh sqrt tanh sinh tan acos asin acosh asinh atanh inexact->exact))
@@ -46586,7 +46586,7 @@ why are these different (read-time `#() ? )
    (let ((val1 (catch #t (lambda () (op 1.0)) (lambda args 'error)))
 	 (val2 (catch #t (lambda () (op 1.0+0i)) (lambda args 'error))))
      (if (not (equal? val1 val2))
-	 (format #t "(~A 1) != (~A 1+0i)? (~A ~A)~%" op op val1 val2))))
+	 (format #t ";(~A 1) != (~A 1+0i)? (~A ~A)~%" op op val1 val2))))
  (list magnitude angle rationalize abs exp log sin cos tan asin acos atan
        sinh cosh tanh asinh acosh atanh sqrt floor ceiling truncate round + - * /
        max min number? integer? real? complex? rational?
@@ -50177,7 +50177,7 @@ why are these different (read-time `#() ? )
 		 ((= i n))
 	       (let ((y (random range)))
 		 (if (not (chker y))
-		     (format #t "(random ~A) -> ~A?~%" range y))
+		     (format #t ";(random ~A) -> ~A?~%" range y))
 		 (let ((iy (min 99 (floor (* 100 (/ y range))))))
 		   (vector-set! hits iy (+ 1 (vector-ref hits iy))))))
 	     (let ((sum 0.0)
@@ -50198,7 +50198,7 @@ why are these different (read-time `#() ? )
 		      (<= val 1.0))))))
     (if (or (< vr 40)
 	    (> vr 400))
-	(format #t "(random 1.0) not so random? ~A~%" vr)))
+	(format #t ";(random 1.0) not so random? ~A~%" vr)))
   
   (let ((vr (v 1000 
 	       100
@@ -50208,7 +50208,7 @@ why are these different (read-time `#() ? )
 		      (<= val 100))))))
     (if (or (< vr 40)
 	    (> vr 400))
-	(format #t "(random 100) not so random? ~A~%" vr)))
+	(format #t ";(random 100) not so random? ~A~%" vr)))
   
   (let ((vr (v 1000 
 	       1/2
@@ -50218,7 +50218,7 @@ why are these different (read-time `#() ? )
 		      (<= val 1/2))))))
     (if (or (< vr 40)
 	    (> vr 400))
-	(format #t "(random 1/2) not so random? ~A~%" vr)))
+	(format #t ";(random 1/2) not so random? ~A~%" vr)))
   
   (let ((vr (v 1000 
 	       -10.0
@@ -50228,7 +50228,7 @@ why are these different (read-time `#() ? )
 		      (>= val -10.0))))))
     (if (or (< vr 40)
 	    (> vr 400))
-	(format #t "(random -10.0) not so random? ~A~%" vr)))
+	(format #t ";(random -10.0) not so random? ~A~%" vr)))
   
   (let ((imax 0.0)
 	(rmax 0.0)
@@ -50247,7 +50247,7 @@ why are these different (read-time `#() ? )
 	    (< rmin 0.0)
 	    (< rmax 0.001)
 	    (< imax 0.001))
-	(format #t "(random 1+i): ~A ~A ~A ~A~%" rmin rmax imin imax)))
+	(format #t ";(random 1+i): ~A ~A ~A ~A~%" rmin rmax imin imax)))
 	
   (let ((imax 0.0)
 	(rmax 0.0)
@@ -50265,7 +50265,7 @@ why are these different (read-time `#() ? )
 	    (> rmax 0.0)
 	    (< rmin 0.0)
 	    (< imax 0.001))
-	(format #t "(random 0+i): ~A ~A ~A ~A~%" rmin rmax imin imax)))
+	(format #t ";(random 0+i): ~A ~A ~A ~A~%" rmin rmax imin imax)))
 	
   (let ((imax 0.0)
 	(rmax 0.0)
@@ -50284,7 +50284,7 @@ why are these different (read-time `#() ? )
 	    (< rmin 0.0)
 	    (< imax 0.1)
 	    (< rmax 0.01))
-	(format #t "(random 100+10i): ~A ~A ~A ~A~%" rmin rmax imin imax)))
+	(format #t ";(random 100+10i): ~A ~A ~A ~A~%" rmin rmax imin imax)))
 	
   
   (do ((i 0 (+ i 1)))
@@ -50294,7 +50294,7 @@ why are these different (read-time `#() ? )
 	      (> (real-part val) 1.0)
 	      (> (imag-part val) 1.0)
 	      (< (real-part val) 0.0))
-	  (format #t "(random 1.0+1.0i) -> ~A?~%" val))))
+	  (format #t ";(random 1.0+1.0i) -> ~A?~%" val))))
   
   (let ((rs (make-random-state 12345678)))
     (do ((i 0 (+ i 1)))
@@ -50303,7 +50303,7 @@ why are these different (read-time `#() ? )
 	(if (or (not (real? val))
 		(negative? val)
 		(> val 1.0))
-	    (format #t "(random 1.0 rs) -> ~A?~%" val)))))
+	    (format #t ";(random 1.0 rs) -> ~A?~%" val)))))
   
   (if with-bignums
       (begin
@@ -50318,7 +50318,7 @@ why are these different (read-time `#() ? )
 			    (<= val 1.0))))))
 	  (if (or (< vr 40)
 		  (> vr 400))
-	      (format #t "(big-random 1.0) not so random? ~A~%" vr)))
+	      (format #t ";(big-random 1.0) not so random? ~A~%" vr)))
 	
 	(let ((vr (v 1000 
 		     (bignum "100")
@@ -50328,7 +50328,7 @@ why are these different (read-time `#() ? )
 			    (<= val 100))))))
 	  (if (or (< vr 40)
 		  (> vr 400))
-	      (format #t "(big-random 100) not so random? ~A~%" vr)))
+	      (format #t ";(big-random 100) not so random? ~A~%" vr)))
 	
 	(let ((vr (v 1000 
 		     (bignum "1/2")
@@ -50338,7 +50338,7 @@ why are these different (read-time `#() ? )
 			    (<= val 1/2))))))
 	  (if (or (< vr 40)
 		  (> vr 400))
-	      (format #t "(big-random 1/2) not so random? ~A~%" vr)))
+	      (format #t ";(big-random 1/2) not so random? ~A~%" vr)))
 	
 	(let ((vr (v 1000 
 		     (bignum "-10.0")
@@ -50348,7 +50348,7 @@ why are these different (read-time `#() ? )
 			    (>= val -10.0))))))
 	  (if (or (< vr 40)
 		  (> vr 400))
-	      (format #t "(big-random -10.0) not so random? ~A~%" vr)))
+	      (format #t ";(big-random -10.0) not so random? ~A~%" vr)))
 	
 	(do ((i 0 (+ i 1)))
 	    ((= i 100))
@@ -50357,7 +50357,7 @@ why are these different (read-time `#() ? )
 		    (> (real-part val) 1.0)
 		    (> (imag-part val) 1.0)
 		    (< (real-part val) 0.0))
-		(format #t "(big-random 1.0+1.0i) -> ~A?~%" val))))
+		(format #t ";(big-random 1.0+1.0i) -> ~A?~%" val))))
 	
 	(let ((rs (make-random-state (bignum "12345678"))))
 	  (do ((i 0 (+ i 1)))
@@ -50366,12 +50366,12 @@ why are these different (read-time `#() ? )
 	      (if (or (not (real? val))
 		      (negative? val)
 		      (> val 1.0))
-		  (format #t "(big-random 1.0 rs) -> ~A?~%" val)))
+		  (format #t ";(big-random 1.0 rs) -> ~A?~%" val)))
 	    (let ((val (random 1.0 rs)))
 	      (if (or (not (real? val))
 		      (negative? val)
 		      (> val 1.0))
-		  (format #t "(big-random small-1.0 rs) -> ~A?~%" val)))))
+		  (format #t ";(big-random small-1.0 rs) -> ~A?~%" val)))))
 	
 	(let ((rs (make-random-state 1234)))
 	  (do ((i 0 (+ i 1)))
@@ -50380,12 +50380,12 @@ why are these different (read-time `#() ? )
 	      (if (or (not (real? val))
 		      (negative? val)
 		      (> val 1.0))
-		  (format #t "(big-random 1.0 small-rs) -> ~A?~%" val)))
+		  (format #t ";(big-random 1.0 small-rs) -> ~A?~%" val)))
 	    (let ((val (random 1.0 rs)))
 	      (if (or (not (real? val))
 		      (negative? val)
 		      (> val 1.0))
-		  (format #t "(random small-1.0 rs) -> ~A?~%" val)))))
+		  (format #t ";(random small-1.0 rs) -> ~A?~%" val)))))
 	))
   )
 
@@ -50842,7 +50842,7 @@ why are these different (read-time `#() ? )
 		    ((= k 30))
 		  (let ((sin-val-2 (number->string (sin (/ k (bignum "10"))))))
 		    (if (not (string=? (substring (list-ref sin-vals k) 3 60) (substring sin-val-2 2 59)))
-			(format #t "(sin (/ ~A 10)) mp: ~A does not match~%~A~%" k (substring (list-ref sin-vals k) 3 60) (substring sin-val-2 2 59))))))
+			(format #t ";(sin (/ ~A 10)) mp: ~A does not match~%~A~%" k (substring (list-ref sin-vals k) 3 60) (substring sin-val-2 2 59))))))
 	      
 	      (let ((sin-vals (list   ;arprec mathtool table[Sin[k/10], {k, 0, 30}]
 			       0.00000000000000000000000000000000000000000000000000000000000000000000
@@ -50887,7 +50887,7 @@ why are these different (read-time `#() ? )
 			  (if (> err mxerr)
 			      (set! mxerr err)))))))
 		(if (> mxerr 1e-35)
-		    (format #t "(sin big-angle) max error: ~A" mxerr)))
+		    (format #t ";(sin big-angle) max error: ~A" mxerr)))
 	      
 	      (let ((cos-vals (list ; arprec mathtool table[Cos[k/20], {k, 0, 30}]
 			       "1.00000000000000000000000000000000000000000000000000000000000000000000"
@@ -50925,7 +50925,7 @@ why are these different (read-time `#() ? )
 		    ((= k 30))
 		  (let ((cos-val-2 (number->string (cos (/ k (bignum "20"))))))
 		    (if (not (string=? (substring (list-ref cos-vals k) 3 60) (substring cos-val-2 2 59)))
-			(format #t "(cos (/ ~A 20)) mp: ~A does not match~%~A~%" k (substring (list-ref cos-vals k) 3 60) (substring cos-val-2 2 59))))))
+			(format #t ";(cos (/ ~A 20)) mp: ~A does not match~%~A~%" k (substring (list-ref cos-vals k) 3 60) (substring cos-val-2 2 59))))))
 	      
 	      
 	      (let ((exps (list  ; table[Exp[k/10], {k, 0, 30}]
@@ -50964,7 +50964,7 @@ why are these different (read-time `#() ? )
 		    ((= i 30))
 		  (let ((val (exp (/ i (bignum "10")))))
 		    (if (> (magnitude (- val (list-ref exps i))) 1e-36)
-			(format #t "(exp ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref exps i) (magnitude (- val (list-ref exps i))))))))
+			(format #t ";(exp ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref exps i) (magnitude (- val (list-ref exps i))))))))
 	      
 	      
 	      (let ((logs (list ; table[Log[k/10 + 1.0], {k, 0, 30}]
@@ -51004,7 +51004,7 @@ why are these different (read-time `#() ? )
 		    ((= i 30))
 		  (let ((val (log (+ (/ i (bignum "10")) (bignum "1.0")))))
 		    (if (> (magnitude (- val (list-ref logs i))) 1e-36)
-			(format #t "(log ~A) -> ~A ~A~%[~A]~%" (+ 1.0 (/ i 10)) val (list-ref logs i) (magnitude (- val (list-ref logs i))))))))
+			(format #t ";(log ~A) -> ~A ~A~%[~A]~%" (+ 1.0 (/ i 10)) val (list-ref logs i) (magnitude (- val (list-ref logs i))))))))
 	      
 	      (let ((sqrts (list ; table[Sqrt[k/10], {k, 0, 30}]
 			    0.00000000000000000000000000000000000000000000000000000000000000000000e0
@@ -51042,7 +51042,7 @@ why are these different (read-time `#() ? )
 		    ((= i 30))
 		  (let ((val (sqrt (/ i (bignum "10")))))
 		    (if (> (magnitude (- val (list-ref sqrts i))) 1e-36)
-			(format #t "(sqrt ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref sqrts i) (magnitude (- val (list-ref sqrts i))))))))
+			(format #t ";(sqrt ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref sqrts i) (magnitude (- val (list-ref sqrts i))))))))
 	      
 	      (let ((atans (list ; table[Arctan[k/10], {k, 0, 30}]
 			    0.00000000000000000000000000000000000000000000000000000000000000000000e0
@@ -51080,7 +51080,7 @@ why are these different (read-time `#() ? )
 		    ((= i 30))
 		  (let ((val (atan (/ i (bignum "10")))))
 		    (if (> (magnitude (- val (list-ref atans i))) 1e-36)
-			(format #t "(atan ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref atans i) (magnitude (- val (list-ref atans i))))))))
+			(format #t ";(atan ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref atans i) (magnitude (- val (list-ref atans i))))))))
 	      
 	      (let ((asins (list ; table[Arcsin[k/30], {k, 0, 30}]
 			    0.00000000000000000000000000000000000000000000000000000000000000000000e0
@@ -51118,7 +51118,7 @@ why are these different (read-time `#() ? )
 		    ((= i 30))
 		  (let ((val (asin (/ i (bignum "30")))))
 		    (if (> (magnitude (- val (list-ref asins i))) 1e-36)
-			(format #t "(asin ~A) -> ~A ~A~%[~A]~%" (/ i 30) val (list-ref asins i) (magnitude (- val (list-ref asins i))))))))
+			(format #t ";(asin ~A) -> ~A ~A~%[~A]~%" (/ i 30) val (list-ref asins i) (magnitude (- val (list-ref asins i))))))))
 	      
 	      (let ((acoss (list ; table[Arccos[k/30], {k, 0, 30}]
 			    1.57079632679489661923132169163975144209858469968755291048747229615390
@@ -51156,7 +51156,7 @@ why are these different (read-time `#() ? )
 		    ((= i 30))
 		  (let ((val (acos (/ i (bignum "30")))))
 		    (if (> (magnitude (- val (list-ref acoss i))) 1e-36)
-			(format #t "(acos ~A) -> ~A ~A~%[~A]~%" (/ i 30) val (list-ref acoss i) (magnitude (- val (list-ref acoss i))))))))
+			(format #t ";(acos ~A) -> ~A ~A~%[~A]~%" (/ i 30) val (list-ref acoss i) (magnitude (- val (list-ref acoss i))))))))
 	      
 	      (let ((tans (list ; table[Tan[k/10], {k, 0, 30}]
 			   0.00000000000000000000000000000000000000000000000000000000000000000000e0
@@ -51194,7 +51194,7 @@ why are these different (read-time `#() ? )
 		    ((= i 30))
 		  (let ((val (tan (/ i (bignum "10")))))
 		    (if (> (magnitude (- val (list-ref tans i))) 1e-35)
-			(format #t "(tan ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref tans i) (magnitude (- val (list-ref tans i))))))))
+			(format #t ";(tan ~A) -> ~A ~A~%[~A]~%" (/ i 10) val (list-ref tans i) (magnitude (- val (list-ref tans i))))))))
 	      
 	      
 	      (let ((max-s-error 0.0)
@@ -51278,7 +51278,7 @@ why are these different (read-time `#() ? )
 (for-each
  (lambda (n)
    (if (not (eqv? n (string->number (number->string n))))
-       (format #t "(string->number (number->string ~A)) = ~A?~%" n (string->number (number->string n)))))
+       (format #t ";(string->number (number->string ~A)) = ~A?~%" n (string->number (number->string n)))))
  (list 1 2 3 10 1234 1234000000 500029 362880 0/1 0/2 0/3 0/10 0/1234 0/1234000000 0/500029 
        0/362880 1/1 1/2 1/3 1/10 1/1234 1/1234000000 1/500029 1/362880 2/1 2/2 2/3 2/10 2/1234 
        2/1234000000 2/500029 2/362880 3/1 3/2 3/3 3/10 3/1234 3/1234000000 3/500029 3/362880 
@@ -51292,7 +51292,7 @@ why are these different (read-time `#() ? )
   (for-each
    (lambda (x)
      (if (not (fequal? x (string->number (number->string x))))
-	 (format #t "(string->number (number->string ~A)) -> ~A?~%" x (string->number (number->string x)))))
+	 (format #t ";(string->number (number->string ~A)) -> ~A?~%" x (string->number (number->string x)))))
    (list 0.000000 1.000000 3.141593 2.718282 1234.000000 1234000000.000000 0.000000+0.000000i 0.000000+0.000000i 0.000000+1.000000i 
 	 0.000000+3.141593i 0.000000+2.718282i 0.000000+1234.000000i 0.000000+1234000000.000000i 0.000000+0.000000i 0.000000+0.000000i 
 	 0.000000+1.000000i 0.000000+3.141593i 0.000000+2.718282i 0.000000+1234.000000i 0.000000+1234000000.000000i 1.000000+0.000000i 
@@ -51766,8 +51766,8 @@ why are these different (read-time `#() ? )
 
 (test (nan? (string->number "1/0")) #t)
 (test (nan? (string->number "5639d72702b62527/0" 14)) #t)
-(test (nan? (string->number "28133828f9421ef5/0" 16)) #t)
-(test (nan? (string->number "4a11654f7e00d5f2/0" 16)) #t)
+(test (nan? (string->number "-28133828f9421ef5/0" 16)) #t)
+(test (nan? (string->number "+4a11654f7e00d5f2/0" 16)) #t)
 
 (if with-bignums 
     (begin
@@ -51808,6 +51808,7 @@ why are these different (read-time `#() ? )
       (num-test (string->number "f309e9b9ba.7c52ff2" 16) 1.043843365306485641427338123321533203125E12)
       (num-test (string->number "+42f-0106653" 10) 4.199999999999999999999999999999999999999E-106652)
       (test (infinite? (string->number "8f7290491476" 10)) #t)
+      (num-test (string->number "4ff7da4d/ab09e16255c06a55c5cb7193ebb2fbb" 16) 1341643341/14209330580250438592763227155654717371)
 
       (num-test (string->number "#d3000000000000000000000000000000") 3000000000000000000000000000000)
       (num-test (string->number "#x400000000000000000") (expt 2 70))
@@ -51815,7 +51816,7 @@ why are these different (read-time `#() ? )
       (for-each
        (lambda (op)
 	 (if (not (= (op 1e19) (op .1e20)))
-	     (format #t "(~A 1e19) = ~A, but (~A .1e20) = ~A?~%"
+	     (format #t ";(~A 1e19) = ~A, but (~A .1e20) = ~A?~%"
 		     op (op 1e19)
 		     op (op .1e20))))
        (list floor ceiling truncate round inexact->exact exact->inexact))
@@ -51823,7 +51824,7 @@ why are these different (read-time `#() ? )
        (for-each
 	(lambda (op)
 	  (if (not (= (op -1e19) (op -.1e20)))
-	      (format #t "(~A -1e19) = ~A, but (~A -.1e20) = ~A?~%"
+	      (format #t ";(~A -1e19) = ~A, but (~A -.1e20) = ~A?~%"
 		      op (op -1e19)
 		      op (op -.1e20))))
 	(list floor ceiling truncate round inexact->exact exact->inexact))
@@ -51838,7 +51839,7 @@ why are these different (read-time `#() ? )
       ;; so
       ;; (positive? (/ most-positive-fixnum most-negative-fixnum)) -> #t!
 
-      
+      (test (nan? (string->number "775f81b8fee51b723f" 16)) #t) ; and others similarly -- is this a good idea?
 
       ))
 
@@ -51942,8 +51943,15 @@ why are these different (read-time `#() ? )
 (num-test 0 #b0/1000000000)
 (num-test 0 #b0/100000000000000000000000000000000000000)
 (num-test 0 #b0/100000000000000000000000000000000000000000000000000000000000000)
-(num-test 0 #b0/100000000000000000000000000000000000000000000000000000000000000000000)
-(num-test 0 #b-0/100000000000000000000000000000000000000000000000000000000000000000000)
+(if with-bignums
+    (begin
+      (num-test (string->number "#b0/100000000000000000000000000000000000000000000000000000000000000000000") 0)
+      (num-test (string->number "#b-0/100000000000000000000000000000000000000000000000000000000000000000000") 0)))
+;;; there's a problem here -- the reader tries to make sense of every form even if it can't actually
+;;;    be evaluated, so in the block above in the non-bignum case, if the #b... is not in double quotes, it tries to read
+;;;    the value as a number.  make_atom however returns NaN because it can't represent the integer in 64 bits, and
+;;;    the #... code interprets that as #b<not-a-number> and it raises a read error!  Ideally, we'd distinguish
+;;;    between #b... that can't possibly be right and the same that might be ok if the bits are available.
 
 (test (equal? 0.0 #b0.0e10) #t)
 (test (equal? 0.0 #b0e100) #t)
@@ -52136,24 +52144,24 @@ why are these different (read-time `#() ? )
       (let ((rad (+ 2 (random 15))))
 	(let ((str (make-number rad)))
 	  (if (not (number? (string->number str rad)))
-	      (format #t "trouble in string->number ~A ~S: ~A~%"
+	      (format #t ";trouble in string->number ~A ~S: ~A~%"
 		      rad str
 		      (string->number str rad))
 	      (if (not (string? (number->string (string->number str rad) rad)))
-		  (format #t "trouble in number->string ~A ~S: ~A ~S~%"
+		  (format #t ";trouble in number->string ~A ~S: ~A ~S~%"
 			  rad str
 			  (string->number str rad)
 			  (number->string (string->number str rad) rad))
 		  (if (not (number? (string->number (number->string (string->number str rad) rad) rad)))
-		      (format #t "trouble in (3) number->string ~A ~S: ~A ~S ~A~%"
+		      (format #t ";trouble in (3) number->string ~A ~S: ~A ~S ~A~%"
 			      rad str
 			      (string->number str rad)
 			      (number->string (string->number str rad) rad)
 			      (string->number (number->string (string->number str rad) rad) rad))
 		      (let ((diff (abs (- (string->number (number->string (string->number str rad) rad) rad) (string->number str rad)))))
 			(if (> diff 1e-5)
-			    (format #t "~A ~S: ~A ~S, ~A ~A~%"
-				    rad str
+			    (format #t "(string->number ~S ~D): ~A, n->s: ~S, s->n: ~A, diff: ~A~%"
+				    str rad
 				    (string->number str rad)
 				    (number->string (string->number str rad) rad)
 				    (string->number (number->string (string->number str rad) rad) rad)
@@ -52188,196 +52196,224 @@ why are these different (read-time `#() ? )
     (if (not (eqv? 3/4 (string->number (number->string 3/4 i) i)))
 	(begin 
 	  (set! happy #f) 
-	  (format #t "(string<->number 3/4 ~A) -> ~A?~%" i (string->number (number->string 3/4 i) i))))
+	  (format #t ";(string<->number 3/4 ~A) -> ~A?~%" i (string->number (number->string 3/4 i) i))))
     (if (not (eqv? 1234/11 (string->number (number->string 1234/11 i) i)))
 	(begin 
 	  (set! happy #f) 
-	  (format #t "(string<->number 1234/11 ~A) -> ~A?~%" i (string->number (number->string 1234/11 i) i))))
+	  (format #t ";(string<->number 1234/11 ~A) -> ~A?~%" i (string->number (number->string 1234/11 i) i))))
     (if (not (eqv? -1234/11 (string->number (number->string -1234/11 i) i)))
 	(begin 
 	  (set! happy #f) 
-	  (format #t "(string<->number -1234/11 ~A) -> ~A?~%" i (string->number (number->string -1234/11 i) i))))))
+	  (format #t ";(string<->number -1234/11 ~A) -> ~A?~%" i (string->number (number->string -1234/11 i) i))))))
 
 (test (< (abs (- (string->number "3.1415926535897932384626433832795029") 3.1415926535897932384626433832795029)) 1e-7) #t)
 
-(let ((val (catch #t (lambda () (string->number "111.01" 2)) (lambda args 'error))))
-  (if (number? val)
-      (begin
-	(num-test (string->number "111.01" 2) 7.25)
-	(num-test (string->number "-111.01" 2) -7.25)
-	(num-test (string->number "0.001" 2) 0.125)
-	(num-test (string->number "1000000.001" 2) 64.125)
-	
-	(num-test (string->number "111.01" 8) 73.015625)
-	(num-test (string->number "-111.01" 8) -73.015625)
-	(num-test (string->number "0.001" 8) 0.001953125)
-	(num-test (string->number "1000000.001" 8) 262144.001953125)
-	
-	(num-test (string->number "111.01" 16) 273.00390625)
-	(num-test (string->number "-111.01" 16) -273.00390625)
-	(num-test (string->number "0.001" 16) 0.000244140625)
-	(num-test (string->number "1000000.001" 16) 16777216.000244)
-	
-	(num-test (string->number "11.+i" 2) 3+1i)
-	(num-test (string->number "0+.1i" 2) 0+0.5i)
-	(num-test (string->number "1.+0.i" 2) 1.0)
-	(num-test (string->number ".01+.1i" 2) 0.25+0.5i)
-	(num-test (string->number "1+0.i" 2) 1.0)
-	(num-test (string->number "1+0i" 2) 1.0)
-	
-	(test (number->string 0.75 2) "0.11")
-	(test (number->string 0.125 8) "0.1")
-	(test (number->string 12.5 8) "14.4")
-	(test (number->string 12.5 16) "c.8")
-	(test (number->string 12.5 2) "1100.1")
-	(test (number->string -12.5 8) "-14.4")
-	(test (number->string -12.5 16) "-c.8")
-	(test (number->string -12.5 2) "-1100.1")
-	(test (number->string 12.0+0.75i 2) "1100.0+0.11i")
-	(test (number->string -12.5-3.75i 2) "-1100.1-11.11i")
-	(test (number->string 12.0+0.75i 8) "14.0+0.6i")
-	(test (number->string -12.5-3.75i 8) "-14.4-3.6i")
-	(test (number->string 12.0+0.75i 16) "c.0+0.ci")
-	(test (number->string -12.5-3.75i 16) "-c.8-3.ci")
-	
-	(test (string=? (substring (number->string our-pi 16) 0 14) "3.243f6a8885a3") #t)
-					;	(test (string=? (substring (number->string our-pi 2) 0 14) "11.0010010000111111011") #t)
-	
-	(for-each
-	 (lambda (expchar)
-	   (let ((exponent (string expchar)))
-	     (do ((base 2 (+ base 1)))
-		 ((= base 11))
-	       (let ((val (string->number (string-append "1" exponent "1") base)))
-		 (if (and (number? val)
-			  (not (= val base)))
-		     (format #t "(string->number ~S ~A) returned ~A?~%" 
-			     (string-append "1" exponent "1") base (string->number (string-append "1" exponent "1") base)))))
-	     
-	     (do ((base 2 (+ base 1)))
-		 ((= base 11))
-	       (let ((val (string->number (string-append "1.1" exponent "1") base)))
-		 (if (and (number? val)
-			  (not (= val (+ base 1))))
-		     (format #t "(string->number ~S ~A) returned ~A?~%" 
-			     (string-append "1.1" exponent "1") base (string->number (string-append "1.1" exponent "1") base)))))
+(num-test (string->number "111.01" 2) 7.25)
+(num-test (string->number "-111.01" 2) -7.25)
+(num-test (string->number "0.001" 2) 0.125)
+(num-test (string->number "1000000.001" 2) 64.125)
 
-	     (do ((base 2 (+ base 1)))
-		 ((= base 11))
-	       (let ((val (string->number (string-append "1" exponent "+1") base)))
-		 (if (and (number? val)
-			  (not (= val base)))
-		     (format #t "(string->number ~S ~A) returned ~A?~%"
-			     (string-append "1" exponent "+1") base (string->number (string-append "1" exponent "+1") base)))))
+(num-test (string->number "111.01" 8) 73.015625)
+(num-test (string->number "-111.01" 8) -73.015625)
+(num-test (string->number "0.001" 8) 0.001953125)
+(num-test (string->number "1000000.001" 8) 262144.001953125)
+
+(num-test (string->number "111.01" 16) 273.00390625)
+(num-test (string->number "-111.01" 16) -273.00390625)
+(num-test (string->number "0.001" 16) 0.000244140625)
+(num-test (string->number "1000000.001" 16) 16777216.000244)
+
+(num-test (string->number "11.+i" 2) 3+1i)
+(num-test (string->number "0+.1i" 2) 0+0.5i)
+(num-test (string->number "1.+0.i" 2) 1.0)
+(num-test (string->number ".01+.1i" 2) 0.25+0.5i)
+(num-test (string->number "1+0.i" 2) 1.0)
+(num-test (string->number "1+0i" 2) 1.0)
+
+(test (number->string 0.75 2) "0.11")
+(test (number->string 0.125 8) "0.1")
+(test (number->string 12.5 8) "14.4")
+(test (number->string 12.5 16) "c.8")
+(test (number->string 12.5 2) "1100.1")
+(test (number->string -12.5 8) "-14.4")
+(test (number->string -12.5 16) "-c.8")
+(test (number->string -12.5 2) "-1100.1")
+(test (number->string 12.0+0.75i 2) "1100.0+0.11i")
+(test (number->string -12.5-3.75i 2) "-1100.1-11.11i")
+(test (number->string 12.0+0.75i 8) "14.0+0.6i")
+(test (number->string -12.5-3.75i 8) "-14.4-3.6i")
+(test (number->string 12.0+0.75i 16) "c.0+0.ci")
+(test (number->string -12.5-3.75i 16) "-c.8-3.ci")
+
+;; weird cases:
+(num-test (string->number "#b1000" 8) 8)
+(num-test (string->number "#b1000" 2) 8)
+(num-test (string->number "#b1000" 16) 8)
+(num-test (string->number "#xffff" 2) 65535)
+(num-test (string->number "#xffff" 10) 65535)
+(num-test (string->number "#xffff" 6) 65535)
+(num-test (string->number "#xffff" 16) 65535)
+(num-test (string->number "#d9.11" 16) 9.11)
+(num-test (string->number "#d9.11" 10) 9.11)
+(num-test (string->number "#x35/3de" 10) 53/990)
+
+(num-test (string->number "#e87" 16) 135)
+(num-test (string->number "#e87" 10) 87)
+(num-test (string->number "#e#x87" 10) 135)
+(num-test (string->number "#e#x87" 16) 135)
+(num-test (string->number "#x#e87" 10) 135)
+(num-test (string->number "#i87" 16) 135.0)
+(num-test (string->number "#i87" 12) 103.0)
+(num-test (string->number "#ee" 16) 14)
+(num-test (string->number "#if" 16) 15.0)
+
+(num-test (string->number "#e10.01" 2) 9/4)
+(num-test (string->number "#e10.01" 6) 217/36)
+(num-test (string->number "#e10.01" 10) 1001/100)
+(num-test (string->number "#e10.01" 14) 2745/196)
+(num-test (string->number "#i10.01" 2) 2.25)
+(num-test (string->number "#i10.01" 6) 6.0277777777778)
+(num-test (string->number "#i10.01" 10) 10.01)
+(num-test (string->number "#i10.01" 14) 14.005102040816)
+(num-test (string->number "#i-.c2e9" 16) -0.76136779785156)
+
+(test (string=? (substring (number->string our-pi 16) 0 14) "3.243f6a8885a3") #t)
+
+(for-each
+ (lambda (expchar)
+   (let ((exponent (string expchar)))
+     (do ((base 2 (+ base 1)))
+	 ((= base 11))
+       (let ((val (string->number (string-append "1" exponent "1") base)))
+	 (if (and (number? val)
+		  (not (= val base)))
+	     (format #t ";(string->number ~S ~A) returned ~A?~%" 
+		     (string-append "1" exponent "1") base (string->number (string-append "1" exponent "1") base)))))
+     
+     (do ((base 2 (+ base 1)))
+	 ((= base 11))
+       (let ((val (string->number (string-append "1.1" exponent "1") base)))
+	 (if (and (number? val)
+		  (not (= val (+ base 1))))
+	     (format #t ";(string->number ~S ~A) returned ~A?~%" 
+		     (string-append "1.1" exponent "1") base (string->number (string-append "1.1" exponent "1") base)))))
+     
+     (do ((base 2 (+ base 1)))
+	 ((= base 11))
+       (let ((val (string->number (string-append "1" exponent "+1") base)))
+	 (if (and (number? val)
+		  (not (= val base)))
+	     (format #t ";(string->number ~S ~A) returned ~A?~%"
+		     (string-append "1" exponent "+1") base (string->number (string-append "1" exponent "+1") base)))))
 					; in base 16 this is still not a number because of the + (or -)
 					; but "1e+1i" is a number -- gad!
-	     
-	     (do ((base 2 (+ base 1)))
-		 ((= base 11))
-	       (let ((val (string->number (string-append "1" exponent "-1+1i") base)))
-		 (if (and (number? val)
-			  (> (magnitude (- val (make-rectangular (/ base) 1))) 1e-6))
-		     (format #t "(string->number ~S ~A) returned ~A?~%" 
-			     (string-append "1" exponent "-1+1i") base (string->number (string-append "1" exponent "-1+1i") base)))))))
-	 
-	 (list #\e #\d #\f #\s #\l))
-	
-	(test (< (abs (- (string->number "3.1415926535897932384626433832795029" 10) 3.1415926535897932384626433832795029)) 1e-7) #t)
-	(num-test (string->number "2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427" 16) 2.4433976119657)
-	(num-test (string->number "2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427" 11) 2.6508258818757)
-	
-	(let ((happy #t))
-	  (do ((i 2 (+ i 1)))
-	      ((or (not happy)
-		   (= i 17)))
-	    (let ((val (+ 1.0 i)))
-	      (do ((k 1 (+ k 1))
-		   (incr (/ 1.0 i) (/ incr i)))
-		  ((< incr 1e-14))
-		(set! val (+ val incr)))
-	      (if (> (abs (- val (string->number "11.111111111111111111111111111111111111111111111111111111111111111111111111111111111111" i))) 1e-7)
+     
+     (do ((base 2 (+ base 1)))
+	 ((= base 11))
+       (let ((val (string->number (string-append "1" exponent "-1+1i") base)))
+	 (if (and (number? val)
+		  (> (magnitude (- val (make-rectangular (/ base) 1))) 1e-6))
+	     (format #t ";(string->number ~S ~A) returned ~A?~%" 
+		     (string-append "1" exponent "-1+1i") base (string->number (string-append "1" exponent "-1+1i") base)))))))
+ 
+ (list #\e #\d #\f #\s #\l))
+
+(test (< (abs (- (string->number "3.1415926535897932384626433832795029" 10) 3.1415926535897932384626433832795029)) 1e-7) #t)
+(num-test (string->number "2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427" 16) 2.4433976119657)
+(num-test (string->number "2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427" 11) 2.6508258818757)
+
+(let ((happy #t))
+  (do ((i 2 (+ i 1)))
+      ((or (not happy)
+	   (= i 17)))
+    (let ((val (+ 1.0 i)))
+      (do ((k 1 (+ k 1))
+	   (incr (/ 1.0 i) (/ incr i)))
+	  ((< incr 1e-14))
+	(set! val (+ val incr)))
+      (if (> (abs (- val (string->number "11.111111111111111111111111111111111111111111111111111111111111111111111111111111111111" i))) 1e-7)
+	  (begin
+	    (set! happy #f) 
+	    (display "(string->number 11.111... ") (display i) (display ") -> ") 
+	    (display (string->number "11.111111111111111111111111111111111111111111111111111111111111111111111111111111111111" i))
+	    (display " but expected ") (display val) (newline))))
+    
+    (let* ((digits "00123456789abcdef")
+	   (str (make-string 80 (string-ref digits i))))
+      (string-set! str 2 #\.)
+      (let ((val (exact->inexact (* i i))))
+	(if (> (abs (- val (string->number str i))) 1e-7)
+	    (begin
+	      (set! happy #f) 
+	      (format #t ";(string->number ~S ~A) -> ~A (expected ~A)?~%" str i (string->number str i) val)))))
+    
+    (let* ((radlim (list 0 0 62 39 31 26 23 22 20 19 18 17 17 16 16 15 15))
+	   (digits "00123456789abcdef"))
+      (do ((k (- (list-ref radlim i) 3) (+ k 1)))
+	  ((= k (+ (list-ref radlim i) 4)))
+	(let ((str (make-string (+ k 3) (string-ref digits i))))
+	  (string-set! str 2 #\.)
+	  (let ((val (exact->inexact (* i i))))
+	    (if (> (abs (- val (string->number str i))) 1e-7)
+		(begin
+		  (set! happy #f) 
+		  (format #t ";(string->number ~S ~A) -> ~A (expected ~A)?~%" str i (string->number str i) val)))))))))
+
+(let ((happy #t))
+  (do ((i 2 (+ i 1)))
+      ((or (not happy)
+	   (= i 17)))
+    (if (> (abs (- 0.75 (string->number (number->string 0.75 i) i))) 1e-6)
+	(begin 
+	  (set! happy #f) 
+	  (format #t ";(string->number (number->string 0.75 ~A) ~A) -> ~A?~%" i i (string->number (number->string 0.75 i) i))))
+    
+    (if (> (abs (- 1234.75 (string->number (number->string 1234.75 i) i))) 1e-6)
+	(begin 
+	  (set! happy #f) 
+	  (format #t ";(string->number (number->string 1234.75 ~A) ~A) -> ~A?~%" i i (string->number (number->string 1234.75 i) i))))
+    
+    (if (> (abs (- -1234.25 (string->number (number->string -1234.25 i) i))) 1e-6)
+	(begin 
+	  (set! happy #f) 
+	  (format #t ";(string->number (number->string -1234.75 ~A) ~A) -> ~A?~%" i i (string->number (number->string -1234.75 i) i))))
+    
+    (let ((val (string->number (number->string 12.5+3.75i i) i)))
+      (if (or (not (number? val))
+	      (> (abs (- (real-part val) 12.5)) 1e-6)
+	      (> (abs (- (imag-part val) 3.75)) 1e-6))
+	  (begin 
+	    (set! happy #f) 
+	    (format #t ";(string->number (number->string 12.5+3.75i ~A) ~A) -> ~A?~%" i i (string->number (number->string 12.5+3.75i i) i)))))
+    
+    (let ((happy #t))
+      (do ((base 2 (+ base 1)))
+	  ((or (not happy)
+	       (= base 11))) ;;; see s7.c for an explanation of this limit
+	(do ((i 0 (+ i 1)))
+	    ((= i 10))
+	  (let* ((rl (- (random 200.0) 100.0))
+		 (im (- (random 200.0) 100.0))
+		 (rlstr (number->string rl base))
+		 (imstr (number->string im base))
+		 (val (make-rectangular rl im))
+		 (str (string-append rlstr 
+				     (if (or (negative? im)
+					     (char=? (string-ref imstr 0) #\-)) ; sigh -- -0.0 is not negative!
+					 "" "+") 
+				     imstr 
+				     "i")))
+	    (let* ((sn (string->number str base))
+		   (nsn (and (number? sn) (number->string sn base)))
+		   (nval (and (string? nsn) (string->number nsn base))))
+	      (if (or (not nval)
+		      (> (abs (- (real-part nval) (real-part val))) 1e-3)
+		      (> (abs (- (imag-part nval) (imag-part val))) 1e-3))
 		  (begin
-		    (set! happy #f) 
-		    (display "(string->number 11.111... ") (display i) (display ") -> ") 
-		    (display (string->number "11.111111111111111111111111111111111111111111111111111111111111111111111111111111111111" i))
-		    (display " but expected ") (display val) (newline))))
-	    
-	    (let* ((digits "00123456789abcdef")
-		   (str (make-string 80 (string-ref digits i))))
-	      (string-set! str 2 #\.)
-	      (let ((val (exact->inexact (* i i))))
-		(if (> (abs (- val (string->number str i))) 1e-7)
-		    (begin
-		      (set! happy #f) 
-		      (format #t "(string->number ~S ~A) -> ~A (expected ~A)?~%" str i (string->number str i) val)))))
-	    
-	    (let* ((radlim (list 0 0 62 39 31 26 23 22 20 19 18 17 17 16 16 15 15))
-		   (digits "00123456789abcdef"))
-	      (do ((k (- (list-ref radlim i) 3) (+ k 1)))
-		  ((= k (+ (list-ref radlim i) 4)))
-		(let ((str (make-string (+ k 3) (string-ref digits i))))
-		  (string-set! str 2 #\.)
-		  (let ((val (exact->inexact (* i i))))
-		    (if (> (abs (- val (string->number str i))) 1e-7)
-			(begin
-			  (set! happy #f) 
-			  (format #t "(string->number ~S ~A) -> ~A (expected ~A)?~%" str i (string->number str i) val)))))))))
-
-	(let ((happy #t))
-	  (do ((i 2 (+ i 1)))
-	      ((or (not happy)
-		   (= i 17)))
-	    (if (> (abs (- 0.75 (string->number (number->string 0.75 i) i))) 1e-6)
-		(begin 
-		  (set! happy #f) 
-		  (format #t "(string->number (number->string 0.75 ~A) ~A) -> ~A?~%" i i (string->number (number->string 0.75 i) i))))
-
-	    (if (> (abs (- 1234.75 (string->number (number->string 1234.75 i) i))) 1e-6)
-		(begin 
-		  (set! happy #f) 
-		  (format #t "(string->number (number->string 1234.75 ~A) ~A) -> ~A?~%" i i (string->number (number->string 1234.75 i) i))))
-
-	    (if (> (abs (- -1234.25 (string->number (number->string -1234.25 i) i))) 1e-6)
-		(begin 
-		  (set! happy #f) 
-		  (format #t "(string->number (number->string -1234.75 ~A) ~A) -> ~A?~%" i i (string->number (number->string -1234.75 i) i))))
-	    
-	    (let ((val (string->number (number->string 12.5+3.75i i) i)))
-	      (if (or (not (number? val))
-		      (> (abs (- (real-part val) 12.5)) 1e-6)
-		      (> (abs (- (imag-part val) 3.75)) 1e-6))
-		  (begin 
-		    (set! happy #f) 
-		    (format #t "(string->number (number->string 12.5+3.75i ~A) ~A) -> ~A?~%" i i (string->number (number->string 12.5+3.75i i) i)))))
-	    
-	    (let ((happy #t))
-	      (do ((base 2 (+ base 1)))
-		  ((or (not happy)
-		       (= base 11))) ;;; see s7.c for an explanation of this limit
-		(do ((i 0 (+ i 1)))
-		    ((= i 10))
-		  (let* ((rl (- (random 200.0) 100.0))
-			 (im (- (random 200.0) 100.0))
-			 (rlstr (number->string rl base))
-			 (imstr (number->string im base))
-			 (val (make-rectangular rl im))
-			 (str (string-append rlstr 
-					     (if (or (negative? im)
-						     (char=? (string-ref imstr 0) #\-)) ; sigh -- -0.0 is not negative!
-						 "" "+") 
-					     imstr 
-					     "i")))
-		    (let* ((sn (string->number str base))
-			   (nsn (and (number? sn) (number->string sn base)))
-			   (nval (and (string? nsn) (string->number nsn base))))
-		      (if (or (not nval)
-			      (> (abs (- (real-part nval) (real-part val))) 1e-3)
-			      (> (abs (- (imag-part nval) (imag-part val))) 1e-3))
-			  (begin
-			    (set! happy #f)
-			    (format #t "(number<->string ~S ~A) -> ~A? [~A ~S]~%" str base nval sn nsn)
-			    )))))))
-	    )))))
+		    (set! happy #f)
+		    (format #t ";(number<->string ~S ~A) -> ~A? [~A ~S]~%" str base nval sn nsn)
+		    )))))))))
+    
 
 (let ((val (number->string 1.0-1.0i)))
   (if (and (not (string=? val "1-1i"))
@@ -52645,80 +52681,82 @@ why are these different (read-time `#() ? )
        "'1'2" "1-#i" "1-i." "1-ie" "1..." "1/1/1/1"
        ))
 
-(test (let ((val (catch #t (lambda ()
-			     (= 1 
+(let ((val (catch #t 
+		  (lambda ()
+		    (= 1 
+		       
+		       01 +1 1. 
+		       
+		       001 +01 1/1 1.0 1e0 01. +1. #b1 #d1 #e1 #o1 #x1 2/2 3/3 4/4 5/5 6/6 7/7 8/8 9/9
+		       1D0 1E0 1F0 1L0 1S0 1d0 1e0 1f0 1l0 1s0
+		       
+		       0001 +001 1/01 .1e1 01/1 +1/1 1.00 1e00 01.0 +1.0 1e+0 1e-0 01e0 +1e0 1.e0 001. +01. 1+0i 1-0i 
+		       #b+1 #b01 #b1. #d+1 #d01 #d1. #e+1 #e01 #e1. #i+1 #i01 #i1. #o+1 #o01 #o1. #x+1 #x01 #x1.
+		       +1D0 +1E0 +1F0 +1L0 +1S0 +1d0 +1e0 +1f0 +1l0 +1s0 +2/2 +3/3 +4/4 +5/5 +6/6 +7/7 +8/8 +9/9
+		       .1D1 .1E1 .1F1 .1L1 .1S1 .1d1 .1f1 .1l1 .1s1 0001 001. 01.0 01/1 01D0 01E0 01F0 01L0 01S0 
+		       01d0 01f0 01l0 01s0 02/2 03/3 04/4 05/5 06/6 07/7 08/8 09/9  
+		       1.D0 1.E0 1.F0 1.L0 1.S0 1.d0 1.f0 1.l0 1.s0 1/01 1D+0 1D-0 1D00 1E+0 1E-0 1E00 1F+0 1F-0 1F00 
+		       1L+0 1L-0 1L00 1S+0 1S-0 1S00 1d+0 1d-0 1d00 1f+0 1f-0 1f00 1l+0 1l-0 1l00 1s+0 1s-0 
+		       1s00 2/02 3/03 4/04 5/05 6/06 7/07 8/08 9/09 
+		       
+		       11/11 00001 +0001 1/001 .1e01 01/01 +1/01 .1e+1 10e-1 0.1e1 +.1e1 .10e1 001/1 +01/1 10/10 1.000 1e000 
+		       01.00 +1.00 1e+00 1e-00 01e00 +1e00 1.e00 001.0 +01.0 01e+0 +1e+0 1.e+0 01e-0 +1e-0 1.e-0 001e0 +01e0 
+		       1.0e0 01.e0 +1.e0 0001. +001. 1+00i 1-00i 1+.0i 1-.0i 01+0i +1+0i 1.+0i 01-0i +1-0i 1.-0i 1+0.i 1-0.i 
+		       
+		       11/011 011/11 +11/11 000001 +00001 1/0001 .1e001 01/001 +1/001 .1e+01 10e-01 0.1e01 +.1e01 .10e01 001/01 
+		       +01/01 0.1e+1 +.1e+1 .10e+1 010e-1 +10e-1 10.e-1 00.1e1 +0.1e1 0.10e1 +.10e1 .100e1 0001/1 +001/1 10/010 
+		       010/10 +10/10 1.0000 1e0000 01.000 +1.000 1e+000 1e-000 01e000 +1e000 1.e000 001.00 +01.00 01e+00 +1e+00 
+		       1.e+00 01e-00 +1e-00 1.e-00 001e00 +01e00 1.0e00 01.e00 +1.e00 0001.0 +001.0 001e+0 +01e+0 1.0e+0 01.e+0 
+		       +1.e+0 001e-0 +01e-0 1.0e-0 01.e-0 +1.e-0 0001e0 +001e0 1.00e0 01.0e0 +1.0e0 001.e0 +01.e0 00001. +0001. 
+		       1+0e1i 1-0e1i 1+0/1i 1-0/1i 1+000i 1-000i 1+.00i 1-.00i 01+00i +1+00i 1.+00i 01-00i +1-00i 1.-00i 1+0.0i 
+		       1-0.0i 01+.0i +1+.0i 1.+.0i 01-.0i +1-.0i 1.-.0i 001+0i +01+0i 1/1+0i 1.0+0i 1e0+0i 01.+0i +1.+0i 001-0i 
+		       +01-0i 1/1-0i 1.0-0i 1e0-0i 01.-0i +1.-0i 1+0e0i 1-0e0i 1+00.i 1-00.i 01+0.i +1+0.i 1.+0.i 01-0.i +1-0.i 1.-0.i 
+		       
+		       111/111 11/0011 011/011 +11/011 0011/11 +011/11 101/101 0000001 +000001 1/00001 .1e0001 01/0001 +1/0001 
+		       .1e+001 10e-001 0.1e001 +.1e001 .10e001 001/001 +01/001 0.1e+01 +.1e+01 .10e+01 010e-01 +10e-01 10.e-01 
+		       00.1e01 +0.1e01 0.10e01 +.10e01 .100e01 0001/01 +001/01 00.1e+1 +0.1e+1 0.10e+1 +.10e+1 .100e+1 0010e-1 
+		       +010e-1 10.0e-1 010.e-1 +10.e-1 000.1e1 +00.1e1 00.10e1 +0.10e1 0.100e1 +.100e1 .1000e1 00001/1 +0001/1 
+		       110/110 10/0010 010/010 +10/010 0010/10 +010/10 100/100 1.00000 1e00000 01.0000 +1.0000 1e+0000 1e-0000 
+		       01e0000 +1e0000 1.e0000 001.000 +01.000 01e+000 +1e+000 1.e+000 01e-000 +1e-000 1.e-000 001e000 +01e000 
+		       1.0e000 01.e000 +1.e000 0001.00 +001.00 001e+00 +01e+00 1.0e+00 01.e+00 +1.e+00 001e-00 +01e-00 1.0e-00 
+		       01.e-00 +1.e-00 0001e00 +001e00 1.00e00 01.0e00 +1.0e00 001.e00 +01.e00 00001.0 +0001.0 0001e+0 +001e+0 
+		       1.00e+0 01.0e+0 +1.0e+0 001.e+0 +01.e+0 0001e-0 +001e-0 1.00e-0 01.0e-0 +1.0e-0 001.e-0 +01.e-0 00001e0 
+		       +0001e0 1.000e0 01.00e0 +1.00e0 001.0e0 +01.0e0 0001.e0 +001.e0 000001. +00001. 1+0e11i 1-0e11i 1+0/11i 
+		       1-0/11i 1+0e01i 1-0e01i 1+0/01i 1-0/01i 1+0e+1i 1-0e+1i 1+0e-1i 1-0e-1i 1+00e1i 1-00e1i 1+.0e1i 1-.0e1i 
+		       01+0e1i +1+0e1i 1.+0e1i 01-0e1i +1-0e1i 1.-0e1i 1+0.e1i 1-0.e1i 1+00/1i 1-00/1i 01+0/1i +1+0/1i 1.+0/1i 
+		       01-0/1i +1-0/1i 1.-0/1i 1+0e10i 1-0e10i 1+0/10i 1-0/10i 1+0000i 1-0000i 1+.000i 1-.000i 01+000i +1+000i 
+		       1.+000i 01-000i +1-000i 1.-000i 1+0.00i 1-0.00i 01+.00i +1+.00i 1.+.00i 01-.00i +1-.00i 1.-.00i 001+00i 
+		       +01+00i 1/1+00i 1.0+00i 1e0+00i 01.+00i +1.+00i 001-00i +01-00i 1/1-00i 1.0-00i 1e0-00i 01.-00i +1.-00i 
+		       1+0e00i 1-0e00i 1+00.0i 1-00.0i 01+0.0i +1+0.0i 1.+0.0i 01-0.0i +1-0.0i 1.-0.0i 001+.0i +01+.0i 1/1+.0i 
+		       1.0+.0i 1e0+.0i 01.+.0i +1.+.0i 001-.0i +01-.0i 1/1-.0i 1.0-.0i 1e0-.0i 01.-.0i +1.-.0i 0001+0i +001+0i 
+		       1/01+0i .1e1+0i 01/1+0i +1/1+0i 1.00+0i 1e00+0i 01.0+0i +1.0+0i 1e+0+0i 1e-0+0i 01e0+0i +1e0+0i 1.e0+0i 
+		       001.+0i +01.+0i 1+0e+0i 1-0e+0i 0001-0i +001-0i 1/01-0i .1e1-0i 01/1-0i +1/1-0i 1.00-0i 1e00-0i 01.0-0i 
+		       +1.0-0i 1e+0-0i 1e-0-0i 01e0-0i +1e0-0i 1.e0-0i 001.-0i +01.-0i 1+0e-0i 1-0e-0i 1+00e0i 1-00e0i 1+.0e0i 
+		       1-.0e0i 01+0e0i +1+0e0i 1.+0e0i 01-0e0i +1-0e0i 1.-0e0i 1+0.e0i 1-0.e0i 1+000.i 1-000.i 01+00.i +1+00.i 
+		       1.+00.i 01-00.i +1-00.i 1.-00.i 001+0.i +01+0.i 1/1+0.i 1.0+0.i 1e0+0.i 01.+0.i +1.+0.i 001-0.i +01-0.i 
+		       1/1-0.i 1.0-0.i 1e0-0.i 01.-0.i +1.-0.i 
+		       
+		       111/0111 0111/111 +111/111 11/00011 011/0011 +11/0011 0011/011 +011/011 00011/11 +0011/11 101/0101 0101/101 
+		       +101/101 00000001 +0000001 1/000001 .1e00001 01/00001 +1/00001 .1e+0001 10e-0001 0.1e0001 +.1e0001 .10e0001 
+		       001/0001 +01/0001 0.1e+001 +.1e+001 .10e+001 010e-001 +10e-001 10.e-001 00.1e001 +0.1e001 0.10e001 +.10e001 
+		       .100e001 0001/001 +001/001 00.1e+01 +0.1e+01 0.10e+01 +.10e+01 .100e+01 0010e-01 +010e-01 10.0e-01 010.e-01 
+		       +10.e-01 000.1e01 +00.1e01 00.10e01 +0.10e01 0.100e01 +.100e01 .1000e01 00001/01 +0001/01 000.1e+1 +00.1e+1 
+		       00.10e+1 +0.10e+1 0.100e+1 +.100e+1 .1000e+1 00010e-1 +0010e-1 10.00e-1 010.0e-1 +10.0e-1 0010.e-1 +010.e-1 
+		       0000.1e1 +000.1e1 000.10e1 +00.10e1 00.100e1 +0.100e1 0.1000e1 +.1000e1 .10000e1 000001/1 +00001/1 110/0110 
+		       0110/110 +110/110 10/00010 010/0010 +10/0010 0010/010 +010/010 00010/10 +0010/10 100/0100 0100/100 +100/100 
+		       1.000000 1e000000 01.00000 +1.00000 1e+00000 1e-00000 01e00000 +1e00000 1.e00000 001.0000 +01.0000 01e+0000 
+		       +1e+0000 1.e+0000 01e-0000 +1e-0000 1.e-0000 001e0000 +01e0000 1.0e0000 01.e0000 +1.e0000 0001.000 +001.000 
+		       001e+000 +01e+000 1.0e+000 01.e+000 +1.e+000 001e-000 +01e-000 1.0e-000 01.e-000 +1.e-000 0001e000 +001e000 
+		       1.00e000 01.0e000 +1.0e000 001.e000 +01.e000 00001.00 +0001.00 0001e+00 +001e+00 1.00e+00 01.0e+00 +1.0e+00 
+		       001.e+00 +01.e+00 0001e-00 +001e-00 1.00e-00 01.0e-00 +1.0e-00 001.e-00 +01.e-00 00001e00 +0001e00 1.000e00 
+		       01.00e00 +1.00e00 001.0e00 +01.0e00 0001.e00 +001.e00 000001.0 +00001.0 00001e+0 +0001e+0 1.000e+0 01.00e+0 
+		       +1.00e+0 001.0e+0 +01.0e+0 0001.e+0 +001.e+0 00001e-0 +0001e-0 1.000e-0 01.00e-0 +1.00e-0 001.0e-0 +01.0e-0
+		       0001.e-0 +001.e-0 000001e0 +00001e0 1.0000e0 01.000e0 +1.000e0 001.00e0 +01.00e0 0001.0e0 +001.0e0 00001.e0 
+		       +0001.e0 0000001. +000001.))
+		  (lambda args 'error))))
+  (if (not (eq? val #t))
+      (format #t ";funny 1's are all equal to 1?~%")))
 
-				01 +1 1. 
-
-				001 +01 1/1 1.0 1e0 01. +1. #b1 #d1 #e1 #o1 #x1 2/2 3/3 4/4 5/5 6/6 7/7 8/8 9/9
-				1D0 1E0 1F0 1L0 1S0 1d0 1e0 1f0 1l0 1s0
-
-				0001 +001 1/01 .1e1 01/1 +1/1 1.00 1e00 01.0 +1.0 1e+0 1e-0 01e0 +1e0 1.e0 001. +01. 1+0i 1-0i 
-				#b+1 #b01 #b1. #d+1 #d01 #d1. #e+1 #e01 #e1. #i+1 #i01 #i1. #o+1 #o01 #o1. #x+1 #x01 #x1.
-				+1D0 +1E0 +1F0 +1L0 +1S0 +1d0 +1e0 +1f0 +1l0 +1s0 +2/2 +3/3 +4/4 +5/5 +6/6 +7/7 +8/8 +9/9
-				.1D1 .1E1 .1F1 .1L1 .1S1 .1d1 .1f1 .1l1 .1s1 0001 001. 01.0 01/1 01D0 01E0 01F0 01L0 01S0 
-				01d0 01f0 01l0 01s0 02/2 03/3 04/4 05/5 06/6 07/7 08/8 09/9  
-				1.D0 1.E0 1.F0 1.L0 1.S0 1.d0 1.f0 1.l0 1.s0 1/01 1D+0 1D-0 1D00 1E+0 1E-0 1E00 1F+0 1F-0 1F00 
-				1L+0 1L-0 1L00 1S+0 1S-0 1S00 1d+0 1d-0 1d00 1f+0 1f-0 1f00 1l+0 1l-0 1l00 1s+0 1s-0 
-				1s00 2/02 3/03 4/04 5/05 6/06 7/07 8/08 9/09 
-
-				11/11 00001 +0001 1/001 .1e01 01/01 +1/01 .1e+1 10e-1 0.1e1 +.1e1 .10e1 001/1 +01/1 10/10 1.000 1e000 
-				01.00 +1.00 1e+00 1e-00 01e00 +1e00 1.e00 001.0 +01.0 01e+0 +1e+0 1.e+0 01e-0 +1e-0 1.e-0 001e0 +01e0 
-				1.0e0 01.e0 +1.e0 0001. +001. 1+00i 1-00i 1+.0i 1-.0i 01+0i +1+0i 1.+0i 01-0i +1-0i 1.-0i 1+0.i 1-0.i 
-
-				11/011 011/11 +11/11 000001 +00001 1/0001 .1e001 01/001 +1/001 .1e+01 10e-01 0.1e01 +.1e01 .10e01 001/01 
-				+01/01 0.1e+1 +.1e+1 .10e+1 010e-1 +10e-1 10.e-1 00.1e1 +0.1e1 0.10e1 +.10e1 .100e1 0001/1 +001/1 10/010 
-				010/10 +10/10 1.0000 1e0000 01.000 +1.000 1e+000 1e-000 01e000 +1e000 1.e000 001.00 +01.00 01e+00 +1e+00 
-				1.e+00 01e-00 +1e-00 1.e-00 001e00 +01e00 1.0e00 01.e00 +1.e00 0001.0 +001.0 001e+0 +01e+0 1.0e+0 01.e+0 
-				+1.e+0 001e-0 +01e-0 1.0e-0 01.e-0 +1.e-0 0001e0 +001e0 1.00e0 01.0e0 +1.0e0 001.e0 +01.e0 00001. +0001. 
-				1+0e1i 1-0e1i 1+0/1i 1-0/1i 1+000i 1-000i 1+.00i 1-.00i 01+00i +1+00i 1.+00i 01-00i +1-00i 1.-00i 1+0.0i 
-				1-0.0i 01+.0i +1+.0i 1.+.0i 01-.0i +1-.0i 1.-.0i 001+0i +01+0i 1/1+0i 1.0+0i 1e0+0i 01.+0i +1.+0i 001-0i 
-				+01-0i 1/1-0i 1.0-0i 1e0-0i 01.-0i +1.-0i 1+0e0i 1-0e0i 1+00.i 1-00.i 01+0.i +1+0.i 1.+0.i 01-0.i +1-0.i 1.-0.i 
-
-				111/111 11/0011 011/011 +11/011 0011/11 +011/11 101/101 0000001 +000001 1/00001 .1e0001 01/0001 +1/0001 
-				.1e+001 10e-001 0.1e001 +.1e001 .10e001 001/001 +01/001 0.1e+01 +.1e+01 .10e+01 010e-01 +10e-01 10.e-01 
-				00.1e01 +0.1e01 0.10e01 +.10e01 .100e01 0001/01 +001/01 00.1e+1 +0.1e+1 0.10e+1 +.10e+1 .100e+1 0010e-1 
-				+010e-1 10.0e-1 010.e-1 +10.e-1 000.1e1 +00.1e1 00.10e1 +0.10e1 0.100e1 +.100e1 .1000e1 00001/1 +0001/1 
-				110/110 10/0010 010/010 +10/010 0010/10 +010/10 100/100 1.00000 1e00000 01.0000 +1.0000 1e+0000 1e-0000 
-				01e0000 +1e0000 1.e0000 001.000 +01.000 01e+000 +1e+000 1.e+000 01e-000 +1e-000 1.e-000 001e000 +01e000 
-				1.0e000 01.e000 +1.e000 0001.00 +001.00 001e+00 +01e+00 1.0e+00 01.e+00 +1.e+00 001e-00 +01e-00 1.0e-00 
-				01.e-00 +1.e-00 0001e00 +001e00 1.00e00 01.0e00 +1.0e00 001.e00 +01.e00 00001.0 +0001.0 0001e+0 +001e+0 
-				1.00e+0 01.0e+0 +1.0e+0 001.e+0 +01.e+0 0001e-0 +001e-0 1.00e-0 01.0e-0 +1.0e-0 001.e-0 +01.e-0 00001e0 
-				+0001e0 1.000e0 01.00e0 +1.00e0 001.0e0 +01.0e0 0001.e0 +001.e0 000001. +00001. 1+0e11i 1-0e11i 1+0/11i 
-				1-0/11i 1+0e01i 1-0e01i 1+0/01i 1-0/01i 1+0e+1i 1-0e+1i 1+0e-1i 1-0e-1i 1+00e1i 1-00e1i 1+.0e1i 1-.0e1i 
-				01+0e1i +1+0e1i 1.+0e1i 01-0e1i +1-0e1i 1.-0e1i 1+0.e1i 1-0.e1i 1+00/1i 1-00/1i 01+0/1i +1+0/1i 1.+0/1i 
-				01-0/1i +1-0/1i 1.-0/1i 1+0e10i 1-0e10i 1+0/10i 1-0/10i 1+0000i 1-0000i 1+.000i 1-.000i 01+000i +1+000i 
-				1.+000i 01-000i +1-000i 1.-000i 1+0.00i 1-0.00i 01+.00i +1+.00i 1.+.00i 01-.00i +1-.00i 1.-.00i 001+00i 
-				+01+00i 1/1+00i 1.0+00i 1e0+00i 01.+00i +1.+00i 001-00i +01-00i 1/1-00i 1.0-00i 1e0-00i 01.-00i +1.-00i 
-				1+0e00i 1-0e00i 1+00.0i 1-00.0i 01+0.0i +1+0.0i 1.+0.0i 01-0.0i +1-0.0i 1.-0.0i 001+.0i +01+.0i 1/1+.0i 
-				1.0+.0i 1e0+.0i 01.+.0i +1.+.0i 001-.0i +01-.0i 1/1-.0i 1.0-.0i 1e0-.0i 01.-.0i +1.-.0i 0001+0i +001+0i 
-				1/01+0i .1e1+0i 01/1+0i +1/1+0i 1.00+0i 1e00+0i 01.0+0i +1.0+0i 1e+0+0i 1e-0+0i 01e0+0i +1e0+0i 1.e0+0i 
-				001.+0i +01.+0i 1+0e+0i 1-0e+0i 0001-0i +001-0i 1/01-0i .1e1-0i 01/1-0i +1/1-0i 1.00-0i 1e00-0i 01.0-0i 
-				+1.0-0i 1e+0-0i 1e-0-0i 01e0-0i +1e0-0i 1.e0-0i 001.-0i +01.-0i 1+0e-0i 1-0e-0i 1+00e0i 1-00e0i 1+.0e0i 
-				1-.0e0i 01+0e0i +1+0e0i 1.+0e0i 01-0e0i +1-0e0i 1.-0e0i 1+0.e0i 1-0.e0i 1+000.i 1-000.i 01+00.i +1+00.i 
-				1.+00.i 01-00.i +1-00.i 1.-00.i 001+0.i +01+0.i 1/1+0.i 1.0+0.i 1e0+0.i 01.+0.i +1.+0.i 001-0.i +01-0.i 
-				1/1-0.i 1.0-0.i 1e0-0.i 01.-0.i +1.-0.i 
-
-				111/0111 0111/111 +111/111 11/00011 011/0011 +11/0011 0011/011 +011/011 00011/11 +0011/11 101/0101 0101/101 
-				+101/101 00000001 +0000001 1/000001 .1e00001 01/00001 +1/00001 .1e+0001 10e-0001 0.1e0001 +.1e0001 .10e0001 
-				001/0001 +01/0001 0.1e+001 +.1e+001 .10e+001 010e-001 +10e-001 10.e-001 00.1e001 +0.1e001 0.10e001 +.10e001 
-				.100e001 0001/001 +001/001 00.1e+01 +0.1e+01 0.10e+01 +.10e+01 .100e+01 0010e-01 +010e-01 10.0e-01 010.e-01 
-				+10.e-01 000.1e01 +00.1e01 00.10e01 +0.10e01 0.100e01 +.100e01 .1000e01 00001/01 +0001/01 000.1e+1 +00.1e+1 
-				00.10e+1 +0.10e+1 0.100e+1 +.100e+1 .1000e+1 00010e-1 +0010e-1 10.00e-1 010.0e-1 +10.0e-1 0010.e-1 +010.e-1 
-				0000.1e1 +000.1e1 000.10e1 +00.10e1 00.100e1 +0.100e1 0.1000e1 +.1000e1 .10000e1 000001/1 +00001/1 110/0110 
-				0110/110 +110/110 10/00010 010/0010 +10/0010 0010/010 +010/010 00010/10 +0010/10 100/0100 0100/100 +100/100 
-				1.000000 1e000000 01.00000 +1.00000 1e+00000 1e-00000 01e00000 +1e00000 1.e00000 001.0000 +01.0000 01e+0000 
-				+1e+0000 1.e+0000 01e-0000 +1e-0000 1.e-0000 001e0000 +01e0000 1.0e0000 01.e0000 +1.e0000 0001.000 +001.000 
-				001e+000 +01e+000 1.0e+000 01.e+000 +1.e+000 001e-000 +01e-000 1.0e-000 01.e-000 +1.e-000 0001e000 +001e000 
-				1.00e000 01.0e000 +1.0e000 001.e000 +01.e000 00001.00 +0001.00 0001e+00 +001e+00 1.00e+00 01.0e+00 +1.0e+00 
-				001.e+00 +01.e+00 0001e-00 +001e-00 1.00e-00 01.0e-00 +1.0e-00 001.e-00 +01.e-00 00001e00 +0001e00 1.000e00 
-				01.00e00 +1.00e00 001.0e00 +01.0e00 0001.e00 +001.e00 000001.0 +00001.0 00001e+0 +0001e+0 1.000e+0 01.00e+0 
-				+1.00e+0 001.0e+0 +01.0e+0 0001.e+0 +001.e+0 00001e-0 +0001e-0 1.000e-0 01.00e-0 +1.00e-0 001.0e-0 +01.0e-0
-				0001.e-0 +001.e-0 000001e0 +00001e0 1.0000e0 01.000e0 +1.000e0 001.00e0 +01.00e0 0001.0e0 +001.0e0 00001.e0 
-				+0001.e0 0000001. +000001.))
-			(lambda args 'error))))
-	val)
-      #t)
 
 (for-each
  (lambda (lst)
@@ -52764,7 +52802,7 @@ why are these different (read-time `#() ? )
    (let ((val (catch #t (lambda () (string->number str)) (lambda args 'error))))
      (if (or (not (number? val))
 	     (= val 1))
-	 (format #t "(string->number ~S = ~A?~%" str val))))
+	 (format #t ";(string->number ~S = ~A?~%" str val))))
  (list "011e0" "11e-00" "00.e01-i" "+10e10+i" "+1.110+i" "10011-0i" "-000.111" "0.100111" "-11.1111" "10.00011" "110e00+i" 
        "1e-011+i" "101001+i" "+11e-0-0i" "11+00e+0i" "-11101.-i" "1110e-0-i"))
 
@@ -52779,7 +52817,7 @@ why are these different (read-time `#() ? )
  (lambda (str)
    (let ((val (catch #t (lambda () (string->number str)) (lambda args 'error))))
      (if (number? val)
-	 (format #t "(string->number ~S) = ~A?~%" str val))))
+	 (format #t ";(string->number ~S) = ~A?~%" str val))))
  (list "#b#e#e1" "#x#e#e1" "#d#e#e1" "#o#e#e1" "#b#i#e1" "#x#i#e1" "#d#i#e1" "#o#i#e1" "#e#b#e1" "#i#b#e1" "#e#x#e1" "#i#x#e1" 
        "#e#d#e1" "#i#d#e1" "#e#o#e1" "#i#o#e1" "#e#b#i1" "#e#x#i1" "#e#d#i1" "#e#o#i1" "#b#e#b1" "#x#e#b1" "#d#e#b1" "#o#e#b1" 
        "#b#i#b1" "#x#i#b1" "#d#i#b1" "#o#i#b1" "#b#e#x1" "#x#e#x1" "#d#e#x1" "#o#e#x1" "#b#i#x1" "#x#i#x1" "#d#i#x1" "#o#i#x1" 
@@ -52970,52 +53008,55 @@ why are these different (read-time `#() ? )
    ("#d+1" . 1) ("#d+0" . 0) ("#d0+i" . 0+i) ("#xe+i" . 14.0+1.0i) ("#xf+i" . 15.0+1.0i) ("#d1-i" . 1.0-1.0i); ("#e1+i" . 1+i)
    ))
 
+#|
 ;;; here's code to generate all (im)possible numbers (using just a few digits) of a given length
-					;(define file (open-output-file "ntest.scm"))
-					;(define chars (list #\1 #\0 #\9 #\@ #\# #\. #\+ #\- #\e #\i #\/ #\b #\x #\d #\o #\l #\s #\f))
-					;
-					;(define (all-syms f len with-file)
-					;  (let ((sym (make-string len))
-					;	(num-chars (length chars))
-					;	(ctrs (make-vector len 0)))
-					;    (do ((i 0 (+ i 1)))
-					;	((= i (expt num-chars len)))
-					;      (let ((carry #t))
-					;	(do ((k 0 (+ k 1)))
-					;	    ((or (= k len)
-					;		 (not carry)))
-					;	  (vector-set! ctrs k (+ 1 (vector-ref ctrs k)))
-					;	  (if (= (vector-ref ctrs k) num-chars)
-					;	      (vector-set! ctrs k 0)
-					;	      (set! carry #f)))
-					;	(do ((k 0 (+ k 1)))
-					;	    ((= k len))
-					;	  (string-set! sym k (list-ref chars (vector-ref ctrs k)))))
-					;
-					;      ;(format #t "~S " sym)
-					;
-					;      (let ((tag (catch #t (lambda () (string->number sym)) (lambda args (car args)))))
-					;	(if (not with-file)
-					;	    (if (and (number? tag)
-					;		     (= tag 1))
-					;		(format #t "~S " sym))
-					;	    (begin
-					;	      (if (number? tag)
-					;		  (display (format file "(if (not (number? (string->number ~S))) (begin (display ~S) (display #\space)))"))
-					;		  (display (format file "(if (number? (string->number ~S)) (begin (display ~S) (display #\space)))")))
-					;	      (newline file)))))))
-					;
-					;(do ((len 1 (+ len 1)))
-					;    ((= len 12))
-					;  (all-syms file len #f)
-					;  (newline))
-					;
-					;(close-output-port file)
+
+(define file (open-output-file "ntest.scm"))
+(define chars (list #\1 #\0 #\9 #\@ #\# #\. #\+ #\- #\e #\i #\/ #\b #\x #\d #\o #\l #\s #\f))
+
+(define (all-syms f len with-file)
+  (let ((sym (make-string len))
+	(num-chars (length chars))
+	(ctrs (make-vector len 0)))
+    (do ((i 0 (+ i 1)))
+	((= i (expt num-chars len)))
+      (let ((carry #t))
+	(do ((k 0 (+ k 1)))
+	    ((or (= k len)
+		 (not carry)))
+	  (vector-set! ctrs k (+ 1 (vector-ref ctrs k)))
+	  (if (= (vector-ref ctrs k) num-chars)
+	      (vector-set! ctrs k 0)
+	      (set! carry #f)))
+	(do ((k 0 (+ k 1)))
+	    ((= k len))
+	  (string-set! sym k (list-ref chars (vector-ref ctrs k)))))
+      
+					;(format #t "~S " sym)
+      
+      (let ((tag (catch #t (lambda () (string->number sym)) (lambda args (car args)))))
+	(if (not with-file)
+	    (if (and (number? tag)
+		     (= tag 1))
+		(format #t "~S " sym))
+	    (begin
+	      (if (number? tag)
+		  (display (format file "(if (not (number? (string->number ~S))) (begin (display ~S) (display #\space)))"))
+		  (display (format file "(if (number? (string->number ~S)) (begin (display ~S) (display #\space)))")))
+	      (newline file)))))))
+
+(do ((len 1 (+ len 1)))
+    ((= len 12))
+  (all-syms file len #f)
+  (newline))
+
+(close-output-port file)
+|#
 
 (for-each
  (lambda (n name)
    (if (number? n)
-       (format #t "(number? ~A) returned #t?~%" name)))
+       (format #t ";(number? ~A) returned #t?~%" name)))
  (list
   'a9 'aa 'aA 'a! 'a$ 'a% 'a& 'a* 'a+ 'a- 'a. 'a/ 'a: 'a< 'a= 'a> 'a? 'a@ 'a^ 'a_ 'a~ 'A9 'Aa 'AA 'A! 'A$ 'A% 'A& 'A* 'A+ 'A- 'A. 'A/ 'A: 'A< 'A= 'A> 'A? 'A@ 'A^ 'A_ 'A~ '!9 '!a '!A '!! '!$ '!% '!& '!* '!+ '!- '!. '!/ '!: '!< '!= '!> '!? '!@ '!^ '!_ '!~ '$9 '$a '$A '$! '$$ '$% '$& '$* '$+ '$- '$. '$/ '$: '$< '$= '$> '$? '$@ '$^ '$_ '$~ '%9 '%a '%A '%! '%$ '%% '%& '%* '%+ '%- '%. '%/ '%: '%< '%= '%> '%? '%@ '%^ '%_ '%~ '&9 '&a '&A '&! '&$ '&% '&& '&* '&+ '&- '&. '&/ '&: '&< '&= '&> '&? '&@ '&^ '&_ '&~ '*9 '*a '*A '*! '*$ '*% '*& '** '*+ '*- '*. '*/ '*: '*< '*= '*> '*? '*@ '*^ '*_ '*~ '/9 '/a '/A '/! '/$ '/% '/& '/* '/+ '/- '/. '// '/: '/< '/= '/> '/? '/@ '/^ '/_ '/~ ':9 ':a ':A ':! ':$ ':% ':& ':* ':+ ':- ':. ':/ ':: ':< ':= ':> ':? ':@ ':^ ':_ ':~ '<9 '<a '<A '<! '<$ '<% '<& '<* '<+ '<- '<. '</ '<: '<< '<= '<> '<? '<@ '<^ '<_ '<~ '=9 '=a '=A '=! '=$ '=% '=& '=* '=+ '=- '=. '=/ '=: '=< '== '=> '=? '=@ '=^ '=_ '=~ '>9 '>a '>A '>! '>$ '>% '>& '>* '>+ '>- '>. '>/ '>: '>< '>= '>> '>? '>@ '>^ '>_ '>~ '?9 '?a '?A '?! '?$ '?% '?& '?* '?+ '?- '?. '?/ '?: '?< '?= '?> '?? '?@ '?^ '?_ '?~ '^9 '^a '^A '^! '^$ '^% '^& '^* '^+ '^- '^. '^/ '^: '^< '^= '^> '^? '^@ '^^ '^_ '^~ '_9 '_a '_A '_! '_$ '_% '_& '_* '_+ '_- '_. '_/ '_: '_< '_= '_> '_? '_@ '_^ '__ '_~ '~9 '~a '~A '~! '~$ '~% '~& '~* '~+ '~- '~. '~/ '~: '~< '~= '~> '~? '~@ '~^ '~_ '~~)
  
@@ -53045,7 +53086,7 @@ why are these different (read-time `#() ? )
 (for-each 
  (lambda (x) 
    (if (string->number x)
-       (format #t "(string->number ~A) returned ~A~%" x (string->number x))))
+       (format #t ";(string->number ~A) returned ~A~%" x (string->number x))))
  '("" "q" "1q" "6+7iq" "8+9q" "10+11" "13+" "18@19q" "20@q" "23@"
    "+25iq" "26i" "-q" "-iq" "i" "5#.0" "8/" "10#11" ".#" "."
    "3.4q" "15.16e17q" "18.19e+q" ".q" ".17#18" "10q" "#b2" "#b12" "#b-12"
@@ -53067,7 +53108,7 @@ why are these different (read-time `#() ? )
 		(and (rational? y)
 		     (not (eqv? xx y)))
 		(> (abs (- xx y)) 1e-12))
-	    (format #t "(string->number ~A) returned ~A but expected ~A (~A ~A ~A ~A)~%"
+	    (format #t ";(string->number ~A) returned ~A but expected ~A (~A ~A ~A ~A)~%"
 		    x (string->number x) y
 		    xx (eq? xx #f)
 		    (and (rational? y) (not (eqv? xx y)))
@@ -54047,7 +54088,7 @@ why are these different (read-time `#() ? )
     (lambda (arg)
       (let ((val (catch #t (lambda () (op arg)) (lambda args 'error))))
 	(if (not (equal? val 'error))
-	    (format #t "(~A ~A) -> ~A?~%" op arg val))))
+	    (format #t ";(~A ~A) -> ~A?~%" op arg val))))
     (list "hi" (integer->char 65) 'a-symbol (make-vector 3) 3.14 3/4 3.1+i abs #\f (lambda (a) (+ a 1)))))
  (list logior logand lognot logxor ash integer-length))
 
@@ -54057,7 +54098,7 @@ why are these different (read-time `#() ? )
     (lambda (arg)
       (let ((val (catch #t (lambda () (op 1 arg)) (lambda args 'error))))
 	(if (not (equal? val 'error))
-	    (format #t "(~A ~A) -> ~A?~%" op arg val))))
+	    (format #t ";(~A ~A) -> ~A?~%" op arg val))))
     (list "hi" (integer->char 65) 'a-symbol (make-vector 3) 3.14 -1/2 1+i abs #\f (lambda (a) (+ a 1)))))
  (list logior logand logxor lognot))
 
@@ -54248,7 +54289,7 @@ why are these different (read-time `#() ? )
 (let ((val (integer-decode-float 1.0d-307)))
   (if (and (not (equal? val '(5060056332682765 -1072 1)))
 	   (not (equal? val '(5060056332682766 -1072 1))))
-      (format #t "(integer-decode-float 1.0d-307) got ~A?~%" val)))
+      (format #t ";(integer-decode-float 1.0d-307) got ~A?~%" val)))
 
 (test (integer-decode-float (/ 1.0d-307 100.0d0)) '(4706001880677807 -1075 1)) ; denormal
 (test (integer-decode-float (/ (log 0.0))) '(6755399441055744 972 -1)) ; nan
@@ -54427,7 +54468,7 @@ why are these different (read-time `#() ? )
 (for-each
  (lambda (n)
    (let ((nb (catch #t (lambda () (number? n)) (lambda args 'error))))
-     (if (not nb) (format #t "(number? ~A) -> #f?~%" n))))
+     (if (not nb) (format #t ";(number? ~A) -> #f?~%" n))))
  (list '1e311 '1e-311 '0e311 '2.1e40000))
 
 (for-each
@@ -55078,39 +55119,39 @@ why are these different (read-time `#() ? )
 				    (let ((n (car nlst)))
 				      (if (not (real? n))
 					  (if (not (eq? v 'error))
-					      (format #t "(~A ~A) -> ~A~%" op n v))
+					      (format #t ";(~A ~A) -> ~A~%" op n v))
 					  (if (or (and (integer? n)
 						       (not (integer? v)))
 						  (and (rational? n)
 						       (not (rational? v)))
 						  (not (real? v))
 						  (not (tst n v)))
-					      (format #t "(~A ~A) -> ~A~%" op n v))))))
+					      (format #t ";(~A ~A) -> ~A~%" op n v))))))
 	       
 	       (ok-number-to-real (lambda (op nlst v tst)
 				    (let ((n (car nlst)))
 				      (if (not (number? n))
 					  (if (not (eq? v 'error))
-					      (format #t "(~A ~A) -> ~A~%" op n v))
+					      (format #t ";(~A ~A) -> ~A~%" op n v))
 					  (if (or (not (real? v))
 						  (not (tst n v)))
-					      (format #t "(~A ~A) -> ~A~%" op n v))))))
+					      (format #t ";(~A ~A) -> ~A~%" op n v))))))
 	       
 	       (ok-rational (lambda (op nlst v tst)
 			      (let ((n (car nlst)))
 				(if (not (rational? n))
 				    (if (not (eq? v 'error))
-					(format #t "(~A ~A) -> ~A~%" op n v))
+					(format #t ";(~A ~A) -> ~A~%" op n v))
 				    (if (not (tst n v))
-					(format #t "(~A ~A) -> ~A~%" op n v))))))
+					(format #t ";(~A ~A) -> ~A~%" op n v))))))
 	       
 	       (ok-number (lambda (op nlst v tst)
 			    (let ((n (car nlst)))
 			      (if (not (number? n))
 				  (if (not (eq? v 'error))
-				      (format #t "(~A ~A) -> ~A~%" op n v))
+				      (format #t ";(~A ~A) -> ~A~%" op n v))
 				  (if (not (tst n v))
-				      (format #t "(~A ~A) -> ~A~%" op n v))))))
+				      (format #t ";(~A ~A) -> ~A~%" op n v))))))
 	       
 	       (ok-two-numbers (lambda (op nlst v tst)
 				 (let ((n1 (car nlst))
@@ -55118,45 +55159,45 @@ why are these different (read-time `#() ? )
 				   (if (or (not (number? n1))
 					   (not (number? n2)))
 				       (if (not (eq? v 'error))
-					   (format #t "(~A ~A ~A) -> ~A~%" op n1 n2 v))
+					   (format #t ";(~A ~A ~A) -> ~A~%" op n1 n2 v))
 				       (if (not (tst n1 n2 v))
-					   (format #t "(~A ~A ~A) -> ~A~%" op n1 n2 v))))))
+					   (format #t ";(~A ~A ~A) -> ~A~%" op n1 n2 v))))))
 	       
 	       (ok-number-to-bool (lambda (op nlst v tst)
 				    (let ((n (car nlst)))
 				      (if (not (number? n))
 					  (if (not (eq? v 'error))
-					      (format #t "(~A ~A) -> ~A~%" op n v))
+					      (format #t ";(~A ~A) -> ~A~%" op n v))
 					  (if (or (not (boolean? v))
 						  (not (tst n v)))
-					      (format #t "(~A ~A) -> ~A~%" op n v))))))
+					      (format #t ";(~A ~A) -> ~A~%" op n v))))))
 	       
 	       (ok-real-to-bool (lambda (op nlst v tst)
 				  (let ((n (car nlst)))
 				    (if (not (real? n))
 					(if (not (eq? v 'error))
-					    (format #t "(~A ~A) -> ~A~%" op n v))
+					    (format #t ";(~A ~A) -> ~A~%" op n v))
 					(if (or (not (boolean? v))
 						(not (tst n v)))
-					    (format #t "(~A ~A) -> ~A~%" op n v))))))
+					    (format #t ";(~A ~A) -> ~A~%" op n v))))))
 	       
 	       (ok-integer-to-bool (lambda (op nlst v tst)
 				     (let ((n (car nlst)))
 				       (if (not (integer? n))
 					   (if (not (eq? v 'error))
-					       (format #t "(~A ~A) -> ~A~%" op n v))
+					       (format #t ";(~A ~A) -> ~A~%" op n v))
 					   (if (or (not (boolean? v))
 						   (not (tst n v)))
-					       (format #t "(~A ~A) -> ~A~%" op n v))))))
+					       (format #t ";(~A ~A) -> ~A~%" op n v))))))
 	       
 	       (ok-string-to-number (lambda (op nlst v tst)
 				      (let ((n (car nlst)))
 					(if (not (number? n))
 					    (if (not (eq? v 'error))
-						(format #t "(~A ~A) -> ~A~%" op n v))
+						(format #t ";(~A ~A) -> ~A~%" op n v))
 					    (if (or (not (string? v))
 						    (not (tst n v)))
-						(format #t "(~A ~A) -> ~A~%" op n v))))))
+						(format #t ";(~A ~A) -> ~A~%" op n v))))))
 	       
 	       (choose-char (lambda () (list (integer->char (random 128)))))
 	       
@@ -55698,7 +55739,7 @@ why are these different (read-time `#() ? )
 			(ok-two-numbers 'make-polar nlst v 
 					(lambda (n1 n2 v)
 					  (if (>= (/ (distance (* n1 (exp (* 0.0+1.0i n2))) v) (max .001 (magnitude n1))) err-max)
-					      (format #t "(make-polar ~A ~A) -> ~A (~A, ~A)~%"
+					      (format #t ";(make-polar ~A ~A) -> ~A (~A, ~A)~%"
 						      n1 n2 v  
 						      (* n1 (exp (* 0.0+1.0i n2)))
 						      (/ (distance (* n1 (exp (* 0.0+1.0i n2))) v) (max .001 (magnitude n1)))))
@@ -55859,7 +55900,7 @@ why are these different (read-time `#() ? )
 					   (set! mx (max mx (magnitude arg)))))
 				       (< (magnitude (/ v (max 0.001 mx))) err-max)))))
 			  (if (not (tst nlst v))
-			      (format #t "(+ ~{~A~^ ~}) -> ~A~%" nlst v)
+			      (format #t ";(+ ~{~A~^ ~}) -> ~A~%" nlst v)
 			      #t)))
 		      choose-n-numbers)
 		
@@ -55879,7 +55920,7 @@ why are these different (read-time `#() ? )
 						 (set! mx (max mx (magnitude arg)))))
 					     (< (magnitude (/ (- v ans) (max 0.001 mx))) err-max)))))))
 			  (if (not (tst nlst v))
-			      (format #t "(- ~{~A~^ ~}) -> ~A~%" nlst v)
+			      (format #t ";(- ~{~A~^ ~}) -> ~A~%" nlst v)
 			      #t)))
 		      choose-n-numbers)
 		
@@ -55895,7 +55936,7 @@ why are these different (read-time `#() ? )
 					   (set! mx (max mx (magnitude arg)))))
 				       (< (magnitude (/ (- v 1) (max 0.001 mx))) err-max)))))
 			  (if (not (tst nlst v))
-			      (format #t "(* ~{~A~^ ~}) -> ~A~%" nlst v)
+			      (format #t ";(* ~{~A~^ ~}) -> ~A~%" nlst v)
 			      #t)))
 		      (lambda () (map (lambda (n) (if (zero? n) 1 n)) (choose-n-small-numbers))))
 		
@@ -55915,7 +55956,7 @@ why are these different (read-time `#() ? )
 						 (set! mx (max mx (magnitude arg)))))
 					     (< (magnitude (/ (- v ans) (max 0.001 mx))) err-max)))))))
 			  (if (not (tst nlst v))
-			      (format #t "(/ ~{~A~^ ~}) -> ~A~%" nlst v)
+			      (format #t ";(/ ~{~A~^ ~}) -> ~A~%" nlst v)
 			      #t)))
 		      (lambda () (map (lambda (n) (if (zero? n) 1 n)) (choose-n-small-numbers))))
 		
@@ -55931,7 +55972,7 @@ why are these different (read-time `#() ? )
 					 (let ((arg (list-ref nlst i)))
 					   (set! happy (> (- v arg) (- err-max)))))))))
 			  (if (not (tst nlst v))
-			      (format #t "(max ~{~A~^ ~}) -> ~A~%" nlst v)
+			      (format #t ";(max ~{~A~^ ~}) -> ~A~%" nlst v)
 			      #t)))
 		      choose-n-real-numbers)
 		
@@ -55947,7 +55988,7 @@ why are these different (read-time `#() ? )
 					 (let ((arg (list-ref nlst i)))
 					   (set! happy (> (- arg v) (- err-max)))))))))
 			  (if (not (tst nlst v))
-			      (format #t "(min ~{~A~^ ~}) -> ~A~%" nlst v)
+			      (format #t ";(min ~{~A~^ ~}) -> ~A~%" nlst v)
 			      #t)))
 		      choose-n-real-numbers)
 		
@@ -55965,7 +56006,7 @@ why are these different (read-time `#() ? )
 					   (set! happy (> (- arg last-arg) (- err-max-12)))
 					   (set! last-arg arg)))))))
 			  (if (not (tst nlst v))
-			      (format #t "(< ~{~A~^ ~}) -> ~A~%" nlst v)
+			      (format #t ";(< ~{~A~^ ~}) -> ~A~%" nlst v)
 			      #t)))
 		      choose-2-or-more-real-numbers)
 		
@@ -55983,7 +56024,7 @@ why are these different (read-time `#() ? )
 					   (set! happy (> (- arg last-arg) (- err-max-12)))
 					   (set! last-arg arg)))))))
 			  (if (not (tst nlst v))
-			      (format #t "(<= ~{~A~^ ~}) -> ~A~%" nlst v)
+			      (format #t ";(<= ~{~A~^ ~}) -> ~A~%" nlst v)
 			      #t)))
 		      choose-2-or-more-real-numbers)
 		
@@ -56001,7 +56042,7 @@ why are these different (read-time `#() ? )
 					   (set! happy (> (- last-arg arg) (- err-max-12)))
 					   (set! last-arg arg)))))))
 			  (if (not (tst nlst v))
-			      (format #t "(> ~{~A~^ ~}) -> ~A~%" nlst v)
+			      (format #t ";(> ~{~A~^ ~}) -> ~A~%" nlst v)
 			      #t)))
 		      choose-2-or-more-real-numbers)
 		
@@ -56019,7 +56060,7 @@ why are these different (read-time `#() ? )
 					   (set! happy (> (- last-arg arg) (- err-max-12)))
 					   (set! last-arg arg)))))))
 			  (if (not (tst nlst v))
-			      (format #t "(>= ~{~A~^ ~}) -> ~A~%" nlst v)
+			      (format #t ";(>= ~{~A~^ ~}) -> ~A~%" nlst v)
 			      #t)))
 		      choose-2-or-more-real-numbers)
 		
@@ -56037,7 +56078,7 @@ why are these different (read-time `#() ? )
 					   (set! happy (< (abs (- last-arg arg)) err-max-12))
 					   (set! last-arg arg)))))))
 			  (if (not (tst nlst v))
-			      (format #t "(= ~{~A~^ ~}) -> ~A~%" nlst v)
+			      (format #t ";(= ~{~A~^ ~}) -> ~A~%" nlst v)
 			      #t)))
 		      choose-2-or-more-real-numbers)
 		
@@ -56106,10 +56147,10 @@ why are these different (read-time `#() ? )
 			(let ((chr (car nlst)))
 			  (if (not (char-alphabetic? chr))
 			      (if (not (char=? v chr))
-				  (format #t "(char-upcase #\\~A) -> ~A" chr v))
+				  (format #t ";(char-upcase #\\~A) -> ~A" chr v))
 			      (if (and (not (char=? chr v))
 				       (not (char=? chr (char-downcase v))))
-				  (format #t "(char-upcase #\\~A) -> ~A~%" chr v)))))
+				  (format #t ";(char-upcase #\\~A) -> ~A~%" chr v)))))
 		      choose-char)
 		
 		(list char-downcase
@@ -56117,10 +56158,10 @@ why are these different (read-time `#() ? )
 			(let ((chr (car nlst)))
 			  (if (not (char-alphabetic? chr))
 			      (if (not (char=? v chr))
-				  (format #t "(char-downcase @\\~A) -> ~A" chr v))
+				  (format #t ";(char-downcase @\\~A) -> ~A" chr v))
 			      (if (and (not (char=? chr v))
 				       (not (char=? chr (char-upcase v))))
-				  (format #t "(char-downcase #\\~A) -> ~A~%" chr v)))))
+				  (format #t ";(char-downcase #\\~A) -> ~A~%" chr v)))))
 		      choose-char)
 		
 		(list char-alphabetic?
@@ -56128,28 +56169,28 @@ why are these different (read-time `#() ? )
 			(let ((chr (car nlst)))
 			  (if (not (eq? v (or (and (char<=? #\A chr) (char<=? chr #\Z))
 					      (and (char<=? #\a chr) (char<=? chr #\z)))))
-			      (format #t "(char-alphabetic? #\\~A) -> ~A~%" chr v))))
+			      (format #t ";(char-alphabetic? #\\~A) -> ~A~%" chr v))))
 		      choose-char)
 		
 		(list char-numeric?
 		      (lambda (nlst v)
 			(let ((chr (car nlst)))
 			  (if (not (eq? v (if (member chr (list #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9)) #t #f)))
-			      (format #t "(char-numeric? #\\~A) -> ~A~%" chr v))))
+			      (format #t ";(char-numeric? #\\~A) -> ~A~%" chr v))))
 		      choose-char)
 		
 		(list char-upper-case?
 		      (lambda (nlst v)
 			(let ((chr (car nlst)))
 			  (if (not (eq? v (and (char<=? #\A chr) (char<=? chr #\Z))))
-			      (format #t "(char-upper-case? #\\~A) -> ~A~%" chr v))))
+			      (format #t ";(char-upper-case? #\\~A) -> ~A~%" chr v))))
 		      choose-char)
 		
 		(list char-lower-case?
 		      (lambda (nlst v)
 			(let ((chr (car nlst)))
 			  (if (not (eq? v (and (char<=? #\a chr) (char<=? chr #\z))))
-			      (format #t "(char-lower-case? #\\~A) -> ~A~%" chr v))))
+			      (format #t ";(char-lower-case? #\\~A) -> ~A~%" chr v))))
 		      choose-char)
 		
 		(list char-whitespace?
@@ -56158,7 +56199,7 @@ why are these different (read-time `#() ? )
 			  (if (not (eq? v (if (member chr (list #\space (integer->char 9) (integer->char 10) 
 								(integer->char 11) (integer->char 12) (integer->char 13)))
 					      #t #f)))
-			      (format #t "(char-whitespace? #\\~A) -> ~A (~D)~%" chr v (char->integer chr)))))
+			      (format #t ";(char-whitespace? #\\~A) -> ~A (~D)~%" chr v (char->integer chr)))))
 		      choose-char)
 		
 		(list char=?
@@ -56170,7 +56211,7 @@ why are these different (read-time `#() ? )
 			      ((or (not happy) (= i len)))
 			    (set! happy (= (char->integer c1) (char->integer (list-ref nlst i)))))
 			  (if (not (eq? happy v))
-			      (format #t "(char=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(char=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-chars)
 		
 		(list char-ci=?
@@ -56184,7 +56225,7 @@ why are these different (read-time `#() ? )
 					    (= (char->integer c1) (char->integer (char-upcase (list-ref nlst i))))
 					    (= (char->integer c1) (char->integer (char-downcase (list-ref nlst i)))))))
 			  (if (not (eq? happy v))
-			      (format #t "(char-ci=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(char-ci=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-chars)
 		
 		(list char<?
@@ -56197,7 +56238,7 @@ why are these different (read-time `#() ? )
 			    (set! happy (< (char->integer c1) (char->integer (list-ref nlst i))))
 			    (set! c1 (list-ref nlst i)))
 			  (if (not (eq? happy v))
-			      (format #t "(char<? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(char<? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-chars)
 		
 		(list char-ci<?
@@ -56210,7 +56251,7 @@ why are these different (read-time `#() ? )
 			    (set! happy (< (char->integer (char-upcase c1)) (char->integer (char-upcase (list-ref nlst i)))))
 			    (set! c1 (list-ref nlst i)))
 			  (if (not (eq? happy v))
-			      (format #t "(char-ci<? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(char-ci<? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-chars)
 		
 		(list char<=?
@@ -56223,7 +56264,7 @@ why are these different (read-time `#() ? )
 			    (set! happy (<= (char->integer c1) (char->integer (list-ref nlst i))))
 			    (set! c1 (list-ref nlst i)))
 			  (if (not (eq? happy v))
-			      (format #t "(char<=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(char<=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-chars)
 		
 		(list char-ci<=?
@@ -56236,7 +56277,7 @@ why are these different (read-time `#() ? )
 			    (set! happy (<= (char->integer (char-upcase c1)) (char->integer (char-upcase (list-ref nlst i)))))
 			    (set! c1 (list-ref nlst i)))
 			  (if (not (eq? happy v))
-			      (format #t "(char-ci<=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(char-ci<=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-chars)
 		
 		(list char>?
@@ -56249,7 +56290,7 @@ why are these different (read-time `#() ? )
 			    (set! happy (> (char->integer c1) (char->integer (list-ref nlst i))))
 			    (set! c1 (list-ref nlst i)))
 			  (if (not (eq? happy v))
-			      (format #t "(char>? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(char>? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-chars)
 		
 		(list char-ci>?
@@ -56262,7 +56303,7 @@ why are these different (read-time `#() ? )
 			    (set! happy (> (char->integer (char-upcase c1)) (char->integer (char-upcase (list-ref nlst i)))))
 			    (set! c1 (list-ref nlst i)))
 			  (if (not (eq? happy v))
-			      (format #t "(char-ci>? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(char-ci>? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-chars)
 		
 		(list char>=?
@@ -56275,7 +56316,7 @@ why are these different (read-time `#() ? )
 			    (set! happy (>= (char->integer c1) (char->integer (list-ref nlst i))))
 			    (set! c1 (list-ref nlst i)))
 			  (if (not (eq? happy v))
-			      (format #t "(char>=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(char>=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-chars)
 		
 		(list char-ci>=?
@@ -56288,7 +56329,7 @@ why are these different (read-time `#() ? )
 			    (set! happy (>= (char->integer (char-upcase c1)) (char->integer (char-upcase (list-ref nlst i)))))
 			    (set! c1 (list-ref nlst i)))
 			  (if (not (eq? happy v))
-			      (format #t "(char-ci>=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(char-ci>=? ~{#\\~A~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-chars)
 		
 		(list char->integer
@@ -56296,7 +56337,7 @@ why are these different (read-time `#() ? )
 			(let ((chr (car nlst)))
 			  (if (or (not (integer? v))
 				  (not (char=? chr (integer->char v))))
-			      (format #t "(char->integer #\\~A) -> ~A~%" chr v))))
+			      (format #t ";(char->integer #\\~A) -> ~A~%" chr v))))
 		      choose-char)
 		
 		(list integer->char
@@ -56304,7 +56345,7 @@ why are these different (read-time `#() ? )
 			(let ((chr (car nlst)))
 			  (if (or (not (char? v))
 				  (not (= chr (char->integer v))))
-			      (format #t "(integer->char ~A) -> #\\~A" chr v))))
+			      (format #t ";(integer->char ~A) -> #\\~A" chr v))))
 		      (lambda () (list (random 256))))
 		
 		;; -------- strings --------------------------------
@@ -56326,7 +56367,7 @@ why are these different (read-time `#() ? )
 						     (set! happy #f)))))
 					   (lambda args args))
 				    (not (= (+ ilen 1) v))))
-			      (format #t "(string-length ~S) -> ~D (~D)~%" chr v ilen))))
+			      (format #t ";(string-length ~S) -> ~D (~D)~%" chr v ilen))))
 		      choose-string)
 		
 		(list string-ref
@@ -56335,7 +56376,7 @@ why are these different (read-time `#() ? )
 			      (pt (cadr nlst)))
 			  (if (or (not (char? v))
 				  (not (char=? (list-ref (string->list str) pt) v)))
-			      (format #t "(string-ref ~S ~D) -> #\\~A~%" str pt v))))
+			      (format #t ";(string-ref ~S ~D) -> #\\~A~%" str pt v))))
 		      (lambda ()
 			(let ((str (string-append "1" (car (choose-string)))))
 			  (list str (random (string-length str))))))
@@ -56346,7 +56387,7 @@ why are these different (read-time `#() ? )
 			      (pt (cadr nlst))
 			      (chr (caddr nlst)))
 			  (if (not (char=? (list-ref (string->list str) pt) chr))
-			      (format #t "(string-set! ~S ~D #\\~A) -> #\\~A~%" str pt chr (list-ref (string->list str) pt)))))
+			      (format #t ";(string-set! ~S ~D #\\~A) -> #\\~A~%" str pt chr (list-ref (string->list str) pt)))))
 		      (lambda ()
 			(let ((str (string-append "1" (car (choose-string)))))
 			  (list str (random (string-length str)) (car (choose-non-null-char))))))
@@ -56363,8 +56404,8 @@ why are these different (read-time `#() ? )
 					     ((or (not happy) (= i len)) (not happy))
 					   (set! happy (char=? (string-ref v i) c))))))
 			      (if c
-				  (format #t "(make-string ~D #\\~A) -> ~S~%" len c v)
-				  (format #t "(make-string ~D) -> ~S~%" len v)))))
+				  (format #t ";(make-string ~D #\\~A) -> ~S~%" len c v)
+				  (format #t ";(make-string ~D) -> ~S~%" len v)))))
 		      (lambda ()
 			(let ((len (random 20)))
 			  (if (> (random 1.0) 0.5)
@@ -56386,7 +56427,7 @@ why are these different (read-time `#() ? )
 				      ((or (not happy) (= k c1-len)) happy)
 				    (set! happy (char=? (string-ref c1 k) (string-ref c2 k)))))))
 			  (if (not (eq? happy v))
-			      (format #t "(string=? ~{~S~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(string=? ~{~S~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-strings)
 		
 		(list string-ci=?
@@ -56404,7 +56445,7 @@ why are these different (read-time `#() ? )
 				      ((or (not happy) (= k c1-len)) happy)
 				    (set! happy (char-ci=? (string-ref c1 k) (string-ref c2 k)))))))
 			  (if (not (eq? happy v))
-			      (format #t "(string-ci=? ~{~S~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(string-ci=? ~{~S~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-strings)
 		
 		(list string<?
@@ -56433,7 +56474,7 @@ why are these different (read-time `#() ? )
 			      (set! c1 c2)
 			      (set! c1-len c2-len)))
 			  (if (not (eq? happy v))
-			      (format #t "(string<? ~{~S~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(string<? ~{~S~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-strings)
 		
 		(list string-ci<?
@@ -56462,7 +56503,7 @@ why are these different (read-time `#() ? )
 			      (set! c1 c2)
 			      (set! c1-len c2-len)))
 			  (if (not (eq? happy v))
-			      (format #t "(string-ci<? ~{~S~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(string-ci<? ~{~S~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-strings)
 		
 		(list string>?
@@ -56490,7 +56531,7 @@ why are these different (read-time `#() ? )
 			      (set! c1 c2)
 			      (set! c1-len c2-len)))
 			  (if (not (eq? happy v))
-			      (format #t "(string>? ~{~S~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(string>? ~{~S~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-strings)
 		
 		(list string-ci>?
@@ -56518,7 +56559,7 @@ why are these different (read-time `#() ? )
 			      (set! c1 c2)
 			      (set! c1-len c2-len)))
 			  (if (not (eq? happy v))
-			      (format #t "(string-ci>? ~{~S~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(string-ci>? ~{~S~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-strings)
 		
 		(list string<=?
@@ -56546,7 +56587,7 @@ why are these different (read-time `#() ? )
 			      (set! c1 c2)
 			      (set! c1-len c2-len)))
 			  (if (not (eq? happy v))
-			      (format #t "(string<=? ~{~S~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(string<=? ~{~S~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-strings)
 		
 		(list string-ci<=?
@@ -56574,7 +56615,7 @@ why are these different (read-time `#() ? )
 			      (set! c1 c2)
 			      (set! c1-len c2-len)))
 			  (if (not (eq? happy v))
-			      (format #t "(string-ci<=? ~{~S~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(string-ci<=? ~{~S~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-strings)
 		
 		(list string>=?
@@ -56602,7 +56643,7 @@ why are these different (read-time `#() ? )
 			      (set! c1 c2)
 			      (set! c1-len c2-len)))
 			  (if (not (eq? happy v))
-			      (format #t "(string>=? ~{~S~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(string>=? ~{~S~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-strings)
 		
 		(list string-ci>=?
@@ -56630,7 +56671,7 @@ why are these different (read-time `#() ? )
 			      (set! c1 c2)
 			      (set! c1-len c2-len)))
 			  (if (not (eq? happy v))
-			      (format #t "(string-ci>=? ~{~S~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(string-ci>=? ~{~S~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-strings)
 		
 		(list string-append
@@ -56651,7 +56692,7 @@ why are these different (read-time `#() ? )
 				(if (> j vlen)
 				    (set! happy #f)))))
 			  (if (not happy)
-			      (format #t "(string-append ~{~S~^ ~}) -> ~A~%" nlst v))))
+			      (format #t ";(string-append ~{~S~^ ~}) -> ~A~%" nlst v))))
 		      choose-2-or-more-strings)
 		
 		(list string-fill!
@@ -56663,7 +56704,7 @@ why are these different (read-time `#() ? )
 			      ((or (not happy) (= i (string-length str))))
 			    (set! happy (char=? c (string-ref str i))))
 			  (if (not happy)
-			      (format #t "(string-fill! ~S #\\~A) -> ~S~%" str c v))))
+			      (format #t ";(string-fill! ~S #\\~A) -> ~S~%" str c v))))
 		      (lambda ()
 			(let ((str (car (choose-string))))
 			  (list str (car (choose-non-null-char))))))
@@ -56672,7 +56713,7 @@ why are these different (read-time `#() ? )
 		      (lambda (nlst v)
 			(let ((str (car nlst)))
 			  (if (not (string=? str v))
-			      (format #t "(string-copy ~S) -> ~S~%" str v))))
+			      (format #t ";(string-copy ~S) -> ~S~%" str v))))
 		      choose-string)
 		
 		(list string->list
@@ -56685,7 +56726,7 @@ why are these different (read-time `#() ? )
 				    (do ((i 0 (+ i 1)))
 					((or (not happy) (= i strlen)) (not happy))
 				      (set! happy (char=? (string-ref str i) (list-ref v i))))))
-			      (format #t "(string->list ~S) -> ~A~%" str v))))
+			      (format #t ";(string->list ~S) -> ~A~%" str v))))
 		      choose-string)
 		
 		(list list->string
@@ -56698,7 +56739,7 @@ why are these different (read-time `#() ? )
 				    (do ((i 0 (+ i 1)))
 					((or (not happy) (= i len)) (not happy))
 				      (set! happy (char=? (string-ref v i) (list-ref lst i))))))
-			      (format #t "(list->string ~A) -> ~S~%" lst v))))
+			      (format #t ";(list->string ~A) -> ~S~%" lst v))))
 		      (lambda ()
 			(let ((lst '())
 			      (len (random 20)))
@@ -56715,7 +56756,7 @@ why are these different (read-time `#() ? )
 				    (do ((i 0 (+ i 1)))
 					((or (not happy) (= i len)) (not happy))
 				      (set! happy (char=? (string-ref v i) (list-ref nlst i))))))
-			      (format #t "(string~{~^ #\\~A~}) -> ~S~%" nlst v))))
+			      (format #t ";(string~{~^ #\\~A~}) -> ~S~%" nlst v))))
 		      (lambda ()
 			(let ((lst '())
 			      (len (random 20)))
@@ -56736,8 +56777,8 @@ why are these different (read-time `#() ? )
 				      ((or (not happy) (= i end)) (not happy))
 				    (set! happy (char=? (string-ref str i) (string-ref v j)))))
 			      (if (not (null? (cddr nlst)))
-				  (format #t "(substring ~S ~D ~D) -> ~S~%" str start end v)
-				  (format #t "(substring ~S ~D) -> ~S~%" str start v)))))
+				  (format #t ";(substring ~S ~D ~D) -> ~S~%" str start end v)
+				  (format #t ";(substring ~S ~D) -> ~S~%" str start v)))))
 		      (lambda ()
 			(let* ((str (car (choose-non-null-string)))
 			       (strlen (string-length str))
@@ -56753,7 +56794,7 @@ why are these different (read-time `#() ? )
 		(list not
 		      (lambda (nlst v)
 			(if (not (eq? v (if (car nlst) #f #t)))
-			    (format #t "(not ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(not ~A) -> ~A~%" (car nlst) v)))
 		      (lambda () (choose-any 0)))
 		
 		(list boolean?
@@ -56766,14 +56807,14 @@ why are these different (read-time `#() ? )
 				(and (eq? v #f)
 				     (or (eq? (car nlst) #f)
 					 (eq? (car nlst) #t))))
-			    (format #t "(boolean? ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(boolean? ~A) -> ~A~%" (car nlst) v)))
 		      (lambda () (choose-any 0)))
 		
 		(list number?
 		      (lambda (nlst v)
 			(if (or (not (boolean? v))
 				(not (eq? v (complex? (car nlst)))))
-			    (format #t "(number? ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(number? ~A) -> ~A~%" (car nlst) v)))
 		      (lambda () (choose-any 0)))
 		
 		(list string?
@@ -56781,7 +56822,7 @@ why are these different (read-time `#() ? )
 			(let ((strp (catch #t (lambda () (integer? (string-length (car nlst)))) (lambda args #f))))
 			  (if (or (not (boolean? v))
 				  (not (eq? v strp)))
-			      (format #t "(string? ~A) -> ~A~%" (car nlst) v))))
+			      (format #t ";(string? ~A) -> ~A~%" (car nlst) v))))
 		      (lambda () (choose-any 0)))
 		
 		(list char?
@@ -56789,7 +56830,7 @@ why are these different (read-time `#() ? )
 			(let ((chrp (catch #t (lambda () (integer? (char->integer (car nlst)))) (lambda args #f))))
 			  (if (or (not (boolean? v))
 				  (not (eq? v chrp)))
-			      (format #t "(char? ~A) -> ~A~%" (car nlst) v))))
+			      (format #t ";(char? ~A) -> ~A~%" (car nlst) v))))
 		      (lambda () (choose-any 0)))
 		
 		(list vector?
@@ -56797,7 +56838,7 @@ why are these different (read-time `#() ? )
 			(let ((chrp (catch #t (lambda () (integer? (vector-length (car nlst)))) (lambda args #f))))
 			  (if (or (not (boolean? v))
 				  (not (eq? v chrp)))
-			      (format #t "(vector? ~A) -> ~A~%" (car nlst) v))))
+			      (format #t ";(vector? ~A) -> ~A~%" (car nlst) v))))
 		      (lambda () (choose-any 0)))
 		
 		(list list?
@@ -56805,7 +56846,7 @@ why are these different (read-time `#() ? )
 			(let ((chrp (catch #t (lambda () (let ((hi (or (null? (car nlst)) (list-ref (car nlst) 0)))) #t)) (lambda args #f))))
 			  (if (or (not (boolean? v))
 				  (not (eq? v chrp)))
-			      (format #t "(list? ~A) -> ~A~%" (car nlst) v))))
+			      (format #t ";(list? ~A) -> ~A~%" (car nlst) v))))
 		      (lambda () (choose-any 0)))
 		
 		(list pair?
@@ -56813,7 +56854,7 @@ why are these different (read-time `#() ? )
 			(let ((chrp (catch #t (lambda () (car (car nlst)) #t) (lambda args #f))))
 			  (if (or (not (boolean? v))
 				  (not (eq? v chrp)))
-			      (format #t "(pair? ~A) -> ~A~%" (car nlst) v))))
+			      (format #t ";(pair? ~A) -> ~A~%" (car nlst) v))))
 		      (lambda () (choose-any 0)))
 		
 		(list eqv?
@@ -56833,7 +56874,7 @@ why are these different (read-time `#() ? )
 			     (else #f)))
 			  (if (or (not (boolean? v))
 				  (not (eq? v (eqv-1 a1 a2))))
-			      (format #t "(eqv? ~A ~A) -> ~A (~A ~A)~%" a1 a2 v (eqv-1 a1 a2) nlst))))
+			      (format #t ";(eqv? ~A ~A) -> ~A (~A ~A)~%" a1 a2 v (eqv-1 a1 a2) nlst))))
 		      (lambda () (list (car (choose-any 0)) (car (choose-any 0)))))
 		
 		(list equal?
@@ -56859,7 +56900,7 @@ why are these different (read-time `#() ? )
 			     (else #f)))
 			  (if (or (not (boolean? v))
 				  (not (eq? v (equal-1 a1 a2))))
-			      (format #t "(equal? ~A ~A) -> ~A~%" a1 a2 v))))
+			      (format #t ";(equal? ~A ~A) -> ~A~%" a1 a2 v))))
 		      (lambda () (list (car (choose-any 0)) (car (choose-any 0)))))
 		
 		
@@ -56876,7 +56917,7 @@ why are these different (read-time `#() ? )
 			      ((or (not happy) (= i len)))
 			    (set! happy (equal? (vector-ref vect i) val)))
 			  (if (not happy)
-			      (format #t "(vector-fill! ~A ~A)~%" vect val))))
+			      (format #t ";(vector-fill! ~A ~A)~%" vect val))))
 		      (lambda ()
 			(list (car (choose-vector 0)) (car (choose-any 0)))))
 		
@@ -56886,7 +56927,7 @@ why are these different (read-time `#() ? )
 			       (pos (cadr nlst))
 			       (val (list-ref (vector->list vect) pos)))
 			  (if (not (equal? val v))
-			      (format #t "(vector-ref ~A ~A) -> ~A~%" vect pos v))))
+			      (format #t ";(vector-ref ~A ~A) -> ~A~%" vect pos v))))
 		      (lambda ()
 			(let ((vect (car (choose-vector 0))))
 			  (list vect (random (vector-length vect))))))
@@ -56897,7 +56938,7 @@ why are these different (read-time `#() ? )
 			       (pos (cadr nlst))
 			       (val (caddr nlst)))
 			  (if (not (equal? val (list-ref (vector->list vect) pos)))
-			      (format #t "(vector-set! ~A ~A ~A)~%" vect pos val))))
+			      (format #t ";(vector-set! ~A ~A ~A)~%" vect pos val))))
 		      (lambda ()
 			(let ((vect (car (choose-vector 0))))
 			  (list vect (random (vector-length vect)) (car (choose-any 0))))))
@@ -56907,7 +56948,7 @@ why are these different (read-time `#() ? )
 			(let* ((vect (car nlst))
 			       (val (length (vector->list vect))))
 			  (if (not (= val v))
-			      (format #t "(vector-length ~A) -> ~A~%" vect v))))
+			      (format #t ";(vector-length ~A) -> ~A~%" vect v))))
 		      (lambda () (choose-vector 0)))
 		
 		(list vector->list
@@ -56920,7 +56961,7 @@ why are these different (read-time `#() ? )
 				    (do ((i 0 (+ i 1)))
 					((or (not happy) (= i len)) (not happy))
 				      (set! happy (equal? (vector-ref vect i) (list-ref v i))))))
-			      (format #t "(vector->list ~A) -> ~A~%" vect v))))
+			      (format #t ";(vector->list ~A) -> ~A~%" vect v))))
 		      (lambda () (choose-vector 0)))
 		
 		(list list->vector
@@ -56933,7 +56974,7 @@ why are these different (read-time `#() ? )
 				    (do ((i 0 (+ i 1)))
 					((or (not happy) (= i len)) (not happy))
 				      (set! happy (equal? (vector-ref v i) (list-ref lst i))))))
-			      (format #t "(list->vector ~A) -> ~A~%" lst v))))
+			      (format #t ";(list->vector ~A) -> ~A~%" lst v))))
 		      (lambda () (choose-list 0)))
 		
 		(list vector
@@ -56945,7 +56986,7 @@ why are these different (read-time `#() ? )
 				    (do ((i 0 (+ i 1)))
 					((or (not happy) (= i len)) (not happy))
 				      (set! happy (equal? (vector-ref v i) (list-ref lst i))))))
-			      (format #t "(vector ~{~A~^ ~}) -> ~A~%" lst v))))
+			      (format #t ";(vector ~{~A~^ ~}) -> ~A~%" lst v))))
 		      (lambda () (choose-list 0)))
 		
 		(list make-vector
@@ -56960,8 +57001,8 @@ why are these different (read-time `#() ? )
 					     ((or (not happy) (= i len)) (not happy))
 					   (set! happy (equal? (vector-ref v i) val))))))
 			      (if (not (equal? val 12345))
-				  (format #t "(make-vector ~A ~A) -> ~A~%" len val v)
-				  (format #t "(make-vector ~A) -> ~A~%" len v)))))
+				  (format #t ";(make-vector ~A ~A) -> ~A~%" len val v)
+				  (format #t ";(make-vector ~A) -> ~A~%" len v)))))
 		      (lambda ()
 			(if (> (random 1.0) 0.5)
 			    (list (+ 1 (random 20)) (car (choose-any 0)))
@@ -56975,19 +57016,19 @@ why are these different (read-time `#() ? )
 			(if (or (not (boolean? v))
 				(and (eq? v #t) (not (eq? (car nlst) '())))
 				(and (eq? v #f) (eq? (car nlst) '())))
-			    (format #t "(null? ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(null? ~A) -> ~A~%" (car nlst) v)))
 		      (lambda () (choose-list 0)))
 		
 		(list car
 		      (lambda (nlst v)
 			(if (not (eq? v (list-ref (list-ref nlst 0) 0)))
-			    (format #t "(car ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(car ~A) -> ~A~%" (car nlst) v)))
 		      (lambda () (choose-non-null-list 0)))
 		
 		(list cdr
 		      (lambda (nlst v)
 			(if (not (equal? v (list-tail (car nlst) 1)))
-			    (format #t "(cdr ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(cdr ~A) -> ~A~%" (car nlst) v)))
 		      (lambda () (choose-non-null-list 0)))
 		
 		(list length
@@ -56995,7 +57036,7 @@ why are these different (read-time `#() ? )
 			(let* ((lst (car nlst)))
 			  (if (or (not (integer? v))
 				  (not (= v (vector-length (list->vector lst)))))
-			      (format #t "(length ~A) -> ~A~%" lst v))))
+			      (format #t ";(length ~A) -> ~A~%" lst v))))
 		      (lambda () (choose-list 0)))
 		
 		(list null?
@@ -57006,7 +57047,7 @@ why are these different (read-time `#() ? )
 				       (not (= len 0)))
 				  (and (not v)
 				       (= len 0)))
-			      (format #t "(null? ~A) -> ~A~%" lst v))))
+			      (format #t ";(null? ~A) -> ~A~%" lst v))))
 		      (lambda () (choose-list 0)))
 		
 		(list list-ref
@@ -57014,7 +57055,7 @@ why are these different (read-time `#() ? )
 			(let* ((lst (car nlst))
 			       (pos (cadr nlst)))
 			  (if (not (equal? v (vector-ref (list->vector lst) pos)))
-			      (format #t "(list-ref ~A ~D) -> ~A~%" lst pos v))))
+			      (format #t ";(list-ref ~A ~D) -> ~A~%" lst pos v))))
 		      (lambda () 
 			(let ((lst (car (choose-non-null-list 0))))
 			  (list lst (random (length lst))))))
@@ -57030,7 +57071,7 @@ why are these different (read-time `#() ? )
 					 (j (- len 1) (- j 1)))
 					((or (not happy) (= i len)) (not happy))
 				      (set! happy (equal? (list-ref lst i) (list-ref v j))))))
-			      (format #t "(reverse ~A) -> ~A~%" lst v))))
+			      (format #t ";(reverse ~A) -> ~A~%" lst v))))
 		      (lambda () (choose-list 0)))
 		
 		(list cons
@@ -57040,13 +57081,13 @@ why are these different (read-time `#() ? )
 			  (if (or (not (pair? v))
 				  (not (equal? (car v) cr))
 				  (not (equal? (cdr v) cd)))
-			      (format #t "(cons ~A ~A) -> ~A~%" cr cd v))))
+			      (format #t ";(cons ~A ~A) -> ~A~%" cr cd v))))
 		      (lambda () (list (car (choose-any 0)) (car (choose-any 0)))))
 		
 		(list caar
 		      (lambda (nlst v)
 			(if (not (eq? v (list-ref (list-ref (list-ref nlst 0) 0) 0)))
-			    (format #t "(caar ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(caar ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (not (pair? (car lst)))
@@ -57056,7 +57097,7 @@ why are these different (read-time `#() ? )
 		(list cadr
 		      (lambda (nlst v)
 			(if (not (eq? v (list-ref (list-tail (car nlst) 1) 0)))
-			    (format #t "(cadr ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(cadr ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (< (length lst) 2)
@@ -57066,7 +57107,7 @@ why are these different (read-time `#() ? )
 		(list cdar
 		      (lambda (nlst v)
 			(if (not (eq? v (list-tail (list-ref (list-ref nlst 0) 0) 1)))
-			    (format #t "(cdar ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(cdar ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (not (pair? (car lst)))
@@ -57076,7 +57117,7 @@ why are these different (read-time `#() ? )
 		(list cddr
 		      (lambda (nlst v)
 			(if (not (eq? v (list-tail (list-tail (list-ref nlst 0) 1) 1)))
-			    (format #t "(cddr ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(cddr ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (not (pair? (cdr lst)))
@@ -57086,7 +57127,7 @@ why are these different (read-time `#() ? )
 		(list caaar
 		      (lambda (nlst v)
 			(if (not (eq? v (list-ref (list-ref (list-ref (list-ref nlst 0) 0) 0) 0)))
-			    (format #t "(caaar ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(caaar ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (car lst)))
@@ -57097,7 +57138,7 @@ why are these different (read-time `#() ? )
 		(list caadr
 		      (lambda (nlst v)
 			(if (not (eq? v (list-ref (list-ref (list-tail (car nlst) 1) 0) 0)))
-			    (format #t "(caadr ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(caadr ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (cdr lst)))
@@ -57108,7 +57149,7 @@ why are these different (read-time `#() ? )
 		(list cadar
 		      (lambda (nlst v)
 			(if (not (eq? v (list-ref (list-tail (list-ref (list-ref nlst 0) 0) 1) 0)))
-			    (format #t "(cadar ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(cadar ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (car lst)))
@@ -57119,7 +57160,7 @@ why are these different (read-time `#() ? )
 		(list cdaar
 		      (lambda (nlst v)
 			(if (not (eq? v (list-tail (list-ref (list-ref (list-ref nlst 0) 0) 0) 1)))
-			    (format #t "(cdaar ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(cdaar ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (car lst)))
@@ -57130,7 +57171,7 @@ why are these different (read-time `#() ? )
 		(list caddr
 		      (lambda (nlst v)
 			(if (not (eq? v (list-ref (list-tail (list-tail (list-ref nlst 0) 1) 1) 0)))
-			    (format #t "(caddr ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(caddr ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (cdr lst)))
@@ -57141,7 +57182,7 @@ why are these different (read-time `#() ? )
 		(list cdddr
 		      (lambda (nlst v)
 			(if (not (eq? v (list-tail (list-tail (list-tail (list-ref nlst 0) 1) 1) 1)))
-			    (format #t "(cdddr ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(cdddr ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (cdr lst)))
@@ -57152,7 +57193,7 @@ why are these different (read-time `#() ? )
 		(list cdadr
 		      (lambda (nlst v)
 			(if (not (eq? v (list-tail (list-ref (list-tail (car nlst) 1) 0) 1)))
-			    (format #t "(cdadr ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(cdadr ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (cdr lst)))
@@ -57163,7 +57204,7 @@ why are these different (read-time `#() ? )
 		(list cddar
 		      (lambda (nlst v)
 			(if (not (eq? v (list-tail (list-tail (list-ref (list-ref nlst 0) 0) 1) 1)))
-			    (format #t "(cddar ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(cddar ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (car lst)))
@@ -57174,7 +57215,7 @@ why are these different (read-time `#() ? )
 		(list caaaar
 		      (lambda (nlst v)
 			(if (not (eq? v (list-ref (list-ref (list-ref (list-ref (list-ref nlst 0) 0) 0) 0) 0)))
-			    (format #t "(caaaar ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(caaaar ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (car lst)))
@@ -57185,7 +57226,7 @@ why are these different (read-time `#() ? )
 		(list cdaaar
 		      (lambda (nlst v)
 			(if (not (eq? v (list-tail (list-ref (list-ref (list-ref (list-ref nlst 0) 0) 0) 0) 1)))
-			    (format #t "(caaaar ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(caaaar ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (car lst)))
@@ -57196,7 +57237,7 @@ why are these different (read-time `#() ? )
 		(list caaadr
 		      (lambda (nlst v)
 			(if (not (eq? v (list-ref (list-ref (list-ref (list-tail (car nlst) 1) 0) 0) 0)))
-			    (format #t "(caaadr ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(caaadr ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (cdr lst)))
@@ -57208,7 +57249,7 @@ why are these different (read-time `#() ? )
 		(list cdaadr
 		      (lambda (nlst v)
 			(if (not (eq? v (list-tail (list-ref (list-ref (list-tail (car nlst) 1) 0) 0) 1)))
-			    (format #t "(cdaadr ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(cdaadr ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (cdr lst)))
@@ -57220,7 +57261,7 @@ why are these different (read-time `#() ? )
 		(list caadar
 		      (lambda (nlst v)
 			(if (not (eq? v (list-ref (list-ref (list-tail (list-ref (list-ref nlst 0) 0) 1) 0) 0)))
-			    (format #t "(caadar ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(caadar ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (car lst)))
@@ -57232,7 +57273,7 @@ why are these different (read-time `#() ? )
 		(list cdadar
 		      (lambda (nlst v)
 			(if (not (eq? v (list-tail (list-ref (list-tail (list-ref (list-ref nlst 0) 0) 1) 0) 1)))
-			    (format #t "(cdadar ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(cdadar ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (car lst)))
@@ -57244,7 +57285,7 @@ why are these different (read-time `#() ? )
 		(list cadaar
 		      (lambda (nlst v)
 			(if (not (eq? v (list-ref (list-tail (list-ref (list-ref (list-ref nlst 0) 0) 0) 1) 0)))
-			    (format #t "(cadaar ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(cadaar ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (car lst)))
@@ -57256,7 +57297,7 @@ why are these different (read-time `#() ? )
 		(list cddaar
 		      (lambda (nlst v)
 			(if (not (eq? v (list-tail (list-tail (list-ref (list-ref (list-ref nlst 0) 0) 0) 1) 1)))
-			    (format #t "(cddaar ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(cddaar ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (car lst)))
@@ -57268,7 +57309,7 @@ why are these different (read-time `#() ? )
 		(list caaddr
 		      (lambda (nlst v)
 			(if (not (eq? v (list-ref (list-ref (list-tail (list-tail (list-ref nlst 0) 1) 1) 0) 0)))
-			    (format #t "(caaddr ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(caaddr ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (cdr lst)))
@@ -57280,7 +57321,7 @@ why are these different (read-time `#() ? )
 		(list cdaddr
 		      (lambda (nlst v)
 			(if (not (eq? v (list-tail (list-ref (list-tail (list-tail (list-ref nlst 0) 1) 1) 0) 1)))
-			    (format #t "(cdaddr ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(cdaddr ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (cdr lst)))
@@ -57292,7 +57333,7 @@ why are these different (read-time `#() ? )
 		(list cadddr
 		      (lambda (nlst v)
 			(if (not (eq? v (list-ref (list-tail (list-tail (list-tail (list-ref nlst 0) 1) 1) 1) 0)))
-			    (format #t "(cadddr ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(cadddr ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (cdr lst)))
@@ -57304,7 +57345,7 @@ why are these different (read-time `#() ? )
 		(list cddddr
 		      (lambda (nlst v)
 			(if (not (eq? v (list-tail (list-tail (list-tail (list-tail (list-ref nlst 0) 1) 1) 1) 1)))
-			    (format #t "(cddddr ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(cddddr ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (cdr lst)))
@@ -57316,7 +57357,7 @@ why are these different (read-time `#() ? )
 		(list cadadr
 		      (lambda (nlst v)
 			(if (not (eq? v (list-ref (list-tail (list-ref (list-tail (car nlst) 1) 0) 1) 0)))
-			    (format #t "(cadadr ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(cadadr ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (cdr lst)))
@@ -57328,7 +57369,7 @@ why are these different (read-time `#() ? )
 		(list cddadr
 		      (lambda (nlst v)
 			(if (not (eq? v (list-tail (list-tail (list-ref (list-tail (car nlst) 1) 0) 1) 1)))
-			    (format #t "(cddadr ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(cddadr ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (cdr lst)))
@@ -57340,7 +57381,7 @@ why are these different (read-time `#() ? )
 		(list caddar
 		      (lambda (nlst v)
 			(if (not (eq? v (list-ref (list-tail (list-tail (list-ref (list-ref nlst 0) 0) 1) 1) 0)))
-			    (format #t "(caddar ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(caddar ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (car lst)))
@@ -57352,7 +57393,7 @@ why are these different (read-time `#() ? )
 		(list cdddar
 		      (lambda (nlst v)
 			(if (not (eq? v (list-tail (list-tail (list-tail (list-ref (list-ref nlst 0) 0) 1) 1) 1)))
-			    (format #t "(cdddar ~A) -> ~A~%" (car nlst) v)))
+			    (format #t ";(cdddar ~A) -> ~A~%" (car nlst) v)))
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (or (not (pair? (car lst)))
@@ -57366,7 +57407,7 @@ why are these different (read-time `#() ? )
 			(let* ((lst (car nlst))
 			       (val (cadr nlst)))
 			  (if (not (equal? (car lst) val))
-			      (format #t "(set-car! ~A ~A)~%" lst val))))
+			      (format #t ";(set-car! ~A ~A)~%" lst val))))
 		      (lambda () (list (choose-non-null-list 0) (choose-any 0))))
 		
 		(list set-cdr!
@@ -57374,7 +57415,7 @@ why are these different (read-time `#() ? )
 			(let* ((lst (car nlst))
 			       (val (cadr nlst)))
 			  (if (not (equal? (cdr lst) val))
-			      (format #t "(set-cdr! ~A ~A)~%" lst val))))
+			      (format #t ";(set-cdr! ~A ~A)~%" lst val))))
 		      (lambda () (list (choose-non-null-list 0) (choose-any 0))))
 		
 		(list assoc
@@ -57389,7 +57430,7 @@ why are these different (read-time `#() ? )
 				 (set! val kv)))
 			   alst)
 			  (if (not (equal? v val))
-			      (format #t "(assoc ~A ~A) -> ~A~%" obj alst v))))
+			      (format #t ";(assoc ~A ~A) -> ~A~%" obj alst v))))
 		      (lambda () (choose-alist 'equal?)))
 		
 		(list assq
@@ -57404,7 +57445,7 @@ why are these different (read-time `#() ? )
 				 (set! val kv)))
 			   alst)
 			  (if (not (eq? v val))
-			      (format #t "(assq ~A ~A) -> ~A~%" obj alst v))))
+			      (format #t ";(assq ~A ~A) -> ~A~%" obj alst v))))
 		      (lambda () (choose-alist 'eq?)))
 		
 		(list assv
@@ -57419,7 +57460,7 @@ why are these different (read-time `#() ? )
 				 (set! val kv)))
 			   alst)
 			  (if (not (equal? v val))
-			      (format #t "(assv ~A ~A) -> ~A~%" obj alst v))))
+			      (format #t ";(assv ~A ~A) -> ~A~%" obj alst v))))
 		      (lambda () (choose-alist 'eqv?)))
 		
 		(list memq
@@ -57434,7 +57475,7 @@ why are these different (read-time `#() ? )
 			    (if (eq? obj (car mlst))
 				(set! val mlst)))
 			  (if (not (equal? v val))
-			      (format #t "(memq ~A ~A) -> ~A~%" obj lst v))))
+			      (format #t ";(memq ~A ~A) -> ~A~%" obj lst v))))
 		      (lambda () (choose-mlist 'eq?))) 
 		
 		(list memv
@@ -57449,7 +57490,7 @@ why are these different (read-time `#() ? )
 			    (if (eqv? obj (car mlst))
 				(set! val mlst)))
 			  (if (not (equal? v val))
-			      (format #t "(memv ~A ~A) -> ~A~%" obj lst v))))
+			      (format #t ";(memv ~A ~A) -> ~A~%" obj lst v))))
 		      (lambda () (choose-mlist 'eqv?))) 
 		
 		(list member
@@ -57464,7 +57505,7 @@ why are these different (read-time `#() ? )
 			    (if (equal? obj (car mlst))
 				(set! val mlst)))
 			  (if (not (equal? v val))
-			      (format #t "(member ~A ~A) -> ~A~%" obj lst v))))
+			      (format #t ";(member ~A ~A) -> ~A~%" obj lst v))))
 		      (lambda () (choose-mlist 'equal?))) 
 		
 		(list list-tail
@@ -57474,7 +57515,7 @@ why are these different (read-time `#() ? )
 			  (if (not (equal? v (do ((i 0 (+ i 1))
 						  (mlst lst (cdr mlst)))
 						 ((= i pos) mlst))))
-			      (format #t "(list-tail ~A ~A) -> ~A~%" lst pos v))))
+			      (format #t ";(list-tail ~A ~A) -> ~A~%" lst pos v))))
 		      (lambda ()
 			(let ((lst (car (choose-list 0))))
 			  (list lst (random (length lst))))))
@@ -57482,7 +57523,7 @@ why are these different (read-time `#() ? )
 		(list list
 		      (lambda (nlst v)
 			(if (not (equal? nlst v))
-			    (format #t "(list ~{~A~^ ~}) -> ~A~%" nlst v)))
+			    (format #t ";(list ~{~A~^ ~}) -> ~A~%" nlst v)))
 		      (lambda ()
 			(car (choose-list 0))))
 		
@@ -57491,7 +57532,7 @@ why are these different (read-time `#() ? )
 			(let ((symp (catch #t (lambda () (string? (symbol->string (car nlst)))) (lambda args #f))))
 			  (if (or (not (boolean? v))
 				  (not (eq? v symp)))
-			      (format #t "(symbol? ~A) -> ~A~%" (car nlst) v))))
+			      (format #t ";(symbol? ~A) -> ~A~%" (car nlst) v))))
 		      (lambda () (choose-any 0)))
 		
 		(list append
@@ -57507,7 +57548,7 @@ why are these different (read-time `#() ? )
 				    (if happy
 					(if (not (equal? obj (car mv)))
 					    (begin
-					      (format #t "(append ~{~A~^ ~}) -> ~A~%" nslt v)
+					      (format #t ";(append ~{~A~^ ~}) -> ~A~%" nslt v)
 					      (set! happy #f))))
 				    (set! mv (cdr mv)))
 				  lst)))
@@ -57545,7 +57586,7 @@ why are these different (read-time `#() ? )
 		   (args ((caddr data)))
 		   (op (car data))
 		   (checker (cadr data)))
-					;	(format #t "(~A ~A)~%" op args)
+					;	(format #t ";(~A ~A)~%" op args)
 	      (let ((result (catch #t 
 				   (lambda () 
 				     (apply op args)) 
@@ -57670,7 +57711,7 @@ why are these different (read-time `#() ? )
 		  (lambda (a)
 		    (catch #t 
 			   (lambda () 
-					;(format #t "(~A ~A) " f a)
+					;(format #t ";(~A ~A) " f a)
 			     (if (or (and (not (eq? f make-string))
 					  (not (eq? f ash)))
 				     (not (>= a (expt 2 30))))
@@ -57689,7 +57730,7 @@ why are these different (read-time `#() ? )
 		     (lambda (b)
 		       (catch #t 
 			      (lambda () 
-					;(format #t "(~A ~A ~A) " f a b)
+					;(format #t ";(~A ~A ~A) " f a b)
 				(if (or (and (not (eq? f expt))
 					     (not (eq? f ash))
 					     (not (eq? f make-string)))
@@ -57713,7 +57754,7 @@ why are these different (read-time `#() ? )
 			(lambda (c)
 			  (catch #t 
 				 (lambda () 
-					;(format #t "(~A ~A ~A ~A)~%" f a b c)
+					;(format #t ";(~A ~A ~A ~A)~%" f a b c)
 				   (f a b c))
 				 (lambda args #f)))
 			argls))
@@ -57795,7 +57836,7 @@ why are these different (read-time `#() ? )
 	       (for-each
 		(lambda (arg)
 		  (catch #t
-			 (lambda ()                        ;(format #t "(~A . ~A) " op arg)
+			 (lambda ()                        ;(format #t ";(~A . ~A) " op arg)
 			   (eval (cons op arg)))
 			 (lambda args
 			   #f)))
