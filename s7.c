@@ -1378,7 +1378,7 @@ static void s7_mark_object_1(s7_pointer p);
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
   #define S7_MARK(Obj) ({ s7_pointer _p_; _p_ = Obj; if (!is_marked(_p_)) s7_mark_object_1(_p_); })
 #else
-#define S7_MARK(Obj) do {if (!is_marked(Obj)) s7_mark_object_1(Obj);} while (0)
+  #define S7_MARK(Obj) do {if (!is_marked(Obj)) s7_mark_object_1(Obj);} while (0)
 #endif
 /* this is slightly faster than if we first call s7_mark_object, then check the mark bit */
 
@@ -1490,7 +1490,7 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->envir);
   S7_MARK(sc->code);
   S7_MARK(sc->cur_code);
-  mark_vector(sc->stack, s7_stack_top(sc)); 
+  mark_vector(sc->stack, s7_stack_top(sc));
   /* splitting out the stack case saves about 1/2000 total time (we can skip the op etc) */
   S7_MARK(sc->w);
   S7_MARK(sc->x);
@@ -4010,7 +4010,7 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
   s7_pointer x;
 
   if (b == 0)
-    return(division_by_zero_error(sc, "make-ratio", make_list_2(sc, s7_make_integer(sc, a), s7_make_integer(sc, b))));
+    return(division_by_zero_error(sc, "make-ratio", make_list_2(sc, s7_make_integer(sc, a), small_ints[0])));
   if (a == 0)
     return(small_ints[0]);
 
@@ -4062,6 +4062,7 @@ static s7_pointer make_number(s7_scheme *sc, s7_num_t n)
   switch (num_type(n))
     {
     case NUM_INT:     return(s7_make_integer(sc, integer(n)));
+      /* expanding s7_make_integer locally cuts the s7_make_integer overhead by about 1/2 -> ca 1/2000 total savings */
     case NUM_RATIO:   return(s7_make_ratio(sc, numerator(n), denominator(n)));
     case NUM_REAL2:
     case NUM_REAL:    return(s7_make_real(sc, real(n)));
@@ -5388,301 +5389,314 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 {
   #define ISDIGIT(Chr, Rad) (digits[(unsigned int)((unsigned char)Chr)] < Rad)
 
-  char c, *p, *slash1 = NULL, *slash2 = NULL, *plus = NULL, *ex1 = NULL, *ex2 = NULL;
-  bool has_dec_point1 = false, has_i = false, has_dec_point2 = false;
-  int has_plus_or_minus = 0, current_radix;
+  char c, *p;
+  bool has_dec_point1 = false;
 
-#if (!WITH_GMP)
-  bool overflow = false;
-#endif
-
-  current_radix = radix;
   p = q;
   c = *p++; 
   
   /* a number starts with + - . or digit, but so does 1+ for example */
   
-  if (c == '#')
-    return(make_sharp_constant(sc, p, true)); /* make_sharp_constant expects the '#' to be removed */
-  
-  if ((c == '+') || (c == '-')) 
-    { 
+  switch (c)
+    {
+    case '#':
+      return(make_sharp_constant(sc, p, true)); /* make_sharp_constant expects the '#' to be removed */
+
+    case '+':
+    case '-':
       c = *p++; 
       if (c == '.') 
 	{ 
 	  has_dec_point1 = true; 
 	  c = *p++; 
 	} 
-      if ((!c) || (!ISDIGIT(c, current_radix)))
+      if ((!c) || (!ISDIGIT(c, radix)))
 	return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
-    } 
-  else 
-    {
-      if (c == '.')         /* .0 */
-	{ 
-	  has_dec_point1 = true; 
-	  c = *p++; 
+      break;
 
-	  if ((!c) || (!ISDIGIT(c, current_radix)))
-	    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
-	} 
-      else 
-	{
-	  if (!ISDIGIT(c, current_radix))
-	    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
-	}
+    case '.':
+      has_dec_point1 = true; 
+      c = *p++; 
+
+      if ((!c) || (!ISDIGIT(c, radix)))
+	return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
+      break;
+
+    case '0':        /* these two are always digits */
+    case '1':
+      break;
+
+    default:
+      if (!ISDIGIT(c, radix))
+	return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
+      break;
     }
+
+  /* now it's possibly a number -- the 1st character(s) could be part of a number in the current radix */
+
+  {
+    char *slash1 = NULL, *slash2 = NULL, *plus = NULL, *ex1 = NULL, *ex2 = NULL;
+    bool has_i = false, has_dec_point2 = false;
+    int has_plus_or_minus = 0, current_radix;
+
+#if (!WITH_GMP)
+    bool overflow = false;
+#endif
+    current_radix = radix;  /* current_radix is 10 for the exponent portions, but radix for all the rest */
   
-  for ( ; (c = *p) != 0; ++p)
-    {
-      /* what about embedded null? (string->number (string #\1 (integer->char 0) #\0)) 
-       *   currently we stop and return 1, but Guile returns #f
-       */
-      if (!ISDIGIT(c, current_radix)) 
-	{
-	  current_radix = radix;
-
-	  if (c =='.') 
-	    {
-	      if (((has_dec_point1) ||
-		   (slash1)) &&
-		  (has_plus_or_minus == 0)) /* 1.. or 1/2. */
-		return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
-
-	      if (((has_dec_point2) ||
-		   (slash2)) &&
-		  (has_plus_or_minus != 0)) /* 1+1.. or 1+1/2. */
-		return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
-
-	      if ((!ISDIGIT(p[1], current_radix)) &&
-		  (!ISDIGIT(p[-1], current_radix))) 
-		return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
-	      
-	      if (has_plus_or_minus == 0)
-		has_dec_point1 = true;
-	      else has_dec_point2 = true;
-	      continue;
-	    }
-	  else 
-	    {
-	      if (exponent_table[(unsigned int)((unsigned char)c)])
-		{
-		  if (current_radix > 10)
-		    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
-		  /* see note above */
-
-		  current_radix = 10;
-
-		  if (((ex1) ||
-		       (slash1)) &&
-		      (has_plus_or_minus == 0)) /* ee */
-		    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
-
-		  if (((ex2) ||
-		       (slash2)) &&
-		      (has_plus_or_minus != 0)) /* 1+1.0ee */
-		    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
-
-		  if ((!ISDIGIT(p[-1], current_radix)) &&
-		      (p[-1] != '.'))
-		    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
-
-		  if (has_plus_or_minus == 0)
-		    {
-		      ex1 = p;
-		      has_dec_point1 = true; /* decimal point illegal from now on */
-		    }
-		  else 
-		    {
-		      ex2 = p;
-		      has_dec_point2 = true;
-		    }
-		  p++;
-		  if ((*p == '-') || (*p == '+')) p++;
-		  if (ISDIGIT(*p, current_radix))
-		    continue;
-		}
-	      else
-		{
-		  if ((c == '+') || (c == '-'))
-		    {
-		      if (has_plus_or_minus != 0) /* already have the separator */
-			return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
-		      
-		      if (c == '+') has_plus_or_minus = 1; else has_plus_or_minus = -1;
-		      plus = (char *)(p + 1);
-		      continue;
-		    }
-		  else
-		    {
-		      if (c == '/')
-			{
-			  if ((has_plus_or_minus == 0) &&
-			      ((ex1) ||
-			       (slash1) ||
-			       (has_dec_point1)))
-			    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
-
-			  if ((has_plus_or_minus != 0) &&
-			      ((ex2) ||
-			       (slash2) ||
-			       (has_dec_point2)))
-			    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
-			  
-			  if (has_plus_or_minus == 0)
-			    slash1 = (char *)(p + 1);
-			  else slash2 = (char *)(p + 1);
-
-			  if ((!ISDIGIT(p[1], current_radix)) ||
-			      (!ISDIGIT(p[-1], current_radix)))
-			    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
-
-			  continue;
-			}
-		      else
-			{
-			  if ((has_plus_or_minus != 0) && 
-			      (!has_i) && 
-			      (c == 'i'))
-			    {
-			      has_i = true;
-			      continue;
-			    }
-			}
-		    }
-		}
-	    }
-	  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
-	}
-    }
-  
-  if ((has_plus_or_minus != 0) &&
-      (!has_i))
-    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
-
-  if (has_i)
-    {
-#if (!WITH_GMP)
-      s7_Double rl = 0.0, im = 0.0;
-#else
-      char e1 = 0, e2 = 0;
-#endif
-      s7_pointer result;
-      int len;
-      char ql1, pl1;
-
-      len = safe_strlen(q);
-      
-      if (q[len - 1] != 'i')
-	return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
-
-      /* save original string */
-      ql1 = q[len - 1];
-      pl1 = (*(plus - 1));
-#if WITH_GMP
-      if (ex1) {e1 = *ex1; (*ex1) = 'e';} /* for mpfr */
-      if (ex2) {e2 = *ex2; (*ex2) = 'e';}
-#endif
-
-      /* look for cases like 1+i */
-      if ((q[len - 2] == '+') || (q[len - 2] == '-'))
-	q[len - 1] = '1';
-      else q[len - 1] = '\0'; /* remove 'i' */
-      
-      (*((char *)(plus - 1))) = '\0';
-
-#if (!WITH_GMP)
-      if ((has_dec_point1) ||
-	  (ex1))
-	{
-	  /* (string->number "1100.1+0.11i" 2) -- need to split into 2 honest reals before passing to non-base-10 str->dbl */
-	  rl = string_to_double_with_radix(q, radix, &overflow);
-	}
-      else
-	{
-	  if (slash1)
-	    rl = (s7_Double)string_to_integer(q, radix, &overflow) / (s7_Double)string_to_integer(slash1, radix, &overflow);
-	  else rl = (s7_Double)string_to_integer(q, radix, &overflow);
-	}
-      if (rl == -0.0) rl = 0.0;
-
-      if ((has_dec_point2) ||
-	  (ex2))
-	im = string_to_double_with_radix(plus, radix, &overflow);
-      else
-	{
-	  if (slash2)
-	    im = (s7_Double)string_to_integer(plus, radix, &overflow) / (s7_Double)string_to_integer(slash2, radix, &overflow);
-	  else im = (s7_Double)string_to_integer(plus, radix, &overflow);
-	}
-      if ((has_plus_or_minus == -1) && 
-	  (im != 0.0))
-	im = -im;
-      result = s7_make_complex(sc, rl, im);
-#else
-      result = string_to_either_complex(sc, q, slash1, ex1, has_dec_point1, plus, slash2, ex2, has_dec_point2, radix, has_plus_or_minus);
-#endif
-
-      /* restore original string */
-      q[len - 1] = ql1;
-      (*((char *)(plus - 1))) = pl1;
-#if WITH_GMP
-      if (ex1) (*ex1) = e1;
-      if (ex2) (*ex2) = e2;
-#endif
-
-      return(result);
-    }
-
-  /* not complex */
-  if ((has_dec_point1) ||
-      (ex1))
-    {
-      s7_pointer result;
-
-      if (slash1)  /* not complex, so slash and "." is not a number */
-	return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
-
-#if (!WITH_GMP)
-      result = s7_make_real(sc, string_to_double_with_radix(q, radix, &overflow));
-#else
+    for ( ; (c = *p) != 0; ++p)
       {
-	char old_e = 0;
-	if (ex1)
+	/* what about embedded null? (string->number (string #\1 (integer->char 0) #\0)) 
+	 *   currently we stop and return 1, but Guile returns #f
+	 */
+	if (!ISDIGIT(c, current_radix)) 
 	  {
-	    old_e = (*ex1);
-	    (*ex1) = 'e';
-	  }
-	result = string_to_either_real(sc, q, radix);
-	if (ex1)
-	  (*ex1) = old_e;
-      }
-#endif
+	    current_radix = radix;
+	    
+	    switch (c)
+	      {
+		/* decimal point */
+	      case '.':
+		if (((has_dec_point1) ||
+		     (slash1)) &&
+		    (has_plus_or_minus == 0)) /* 1.. or 1/2. */
+		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
+		
+		if (((has_dec_point2) ||
+		     (slash2)) &&
+		    (has_plus_or_minus != 0)) /* 1+1.. or 1+1/2. */
+		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
+		
+		if ((!ISDIGIT(p[1], current_radix)) &&
+		    (!ISDIGIT(p[-1], current_radix))) 
+		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
+		
+		if (has_plus_or_minus == 0)
+		  has_dec_point1 = true;
+		else has_dec_point2 = true;
+		continue;
+		
+		/* exponent marker */
+	      case 'e': case 'E':
+	      case 's': case 'S':
+	      case 'd': case 'D':
+	      case 'f': case 'F':
+	      case 'l': case 'L':
+		if (current_radix > 10)
+		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
+		/* see note above */
+		
+		current_radix = 10;
+		
+		if (((ex1) ||
+		     (slash1)) &&
+		    (has_plus_or_minus == 0)) /* ee */
+		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
+		
+		if (((ex2) ||
+		     (slash2)) &&
+		    (has_plus_or_minus != 0)) /* 1+1.0ee */
+		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
+		
+		if ((!ISDIGIT(p[-1], current_radix)) &&
+		    (p[-1] != '.'))
+		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
+		
+		if (has_plus_or_minus == 0)
+		  {
+		    ex1 = p;
+		    has_dec_point1 = true; /* decimal point illegal from now on */
+		  }
+		else 
+		  {
+		    ex2 = p;
+		    has_dec_point2 = true;
+		  }
+		p++;
+		if ((*p == '-') || (*p == '+')) p++;
+		if (ISDIGIT(*p, current_radix))
+		  continue;
+		break;
 
-      return(result);
-    }
-  
-  /* not real */
-  if (slash1)
+		/* internal + or - */
+	      case '+':
+	      case '-':
+		if (has_plus_or_minus != 0) /* already have the separator */
+		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
+		
+		if (c == '+') has_plus_or_minus = 1; else has_plus_or_minus = -1;
+		plus = (char *)(p + 1);
+		continue;
+		
+		/* ratio marker */
+	      case '/':
+		if ((has_plus_or_minus == 0) &&
+		    ((ex1) ||
+		     (slash1) ||
+		     (has_dec_point1)))
+		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
+		
+		if ((has_plus_or_minus != 0) &&
+		    ((ex2) ||
+		     (slash2) ||
+		     (has_dec_point2)))
+		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
+		
+		if (has_plus_or_minus == 0)
+		  slash1 = (char *)(p + 1);
+		else slash2 = (char *)(p + 1);
+		
+		if ((!ISDIGIT(p[1], current_radix)) ||
+		    (!ISDIGIT(p[-1], current_radix)))
+		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
+		
+		continue;
+
+		/* i for the imaginary part */
+	      case 'i':
+		if ((has_plus_or_minus != 0) && 
+		    (!has_i))
+		  {
+		    has_i = true;
+		    continue;
+		  }
+		break;
+
+	      default:
+		break;
+	      }
+
+	    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
+	  }
+      }
+    
+    if ((has_plus_or_minus != 0) &&        /* that is, we have an internal + or - */
+	(!has_i))                          /*   but no i for the imaginary part */
+      return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
+
+    if (has_i)
+      {
 #if (!WITH_GMP)
-    {
-      s7_Int n, d;
-      n = string_to_integer(q, radix, &overflow);
-      d = string_to_integer(slash1, radix, &overflow);
-      if (d == 0)
-	return(s7_make_real(sc, sqrt(-1))); /* this is supposed to be a NaN */
-      return(s7_make_ratio(sc, n, d));
-    }
+	s7_Double rl = 0.0, im = 0.0;
+#else
+	char e1 = 0, e2 = 0;
+#endif
+	s7_pointer result;
+	int len;
+	char ql1, pl1;
+	
+	len = safe_strlen(q);
+	
+	if (q[len - 1] != 'i')
+	  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
+	
+	/* save original string */
+	ql1 = q[len - 1];
+	pl1 = (*(plus - 1));
+#if WITH_GMP
+	if (ex1) {e1 = *ex1; (*ex1) = 'e';} /* for mpfr */
+	if (ex2) {e2 = *ex2; (*ex2) = 'e';}
+#endif
+	
+	/* look for cases like 1+i */
+	if ((q[len - 2] == '+') || (q[len - 2] == '-'))
+	  q[len - 1] = '1';
+	else q[len - 1] = '\0'; /* remove 'i' */
+	
+	(*((char *)(plus - 1))) = '\0';
+	
+#if (!WITH_GMP)
+	if ((has_dec_point1) ||
+	    (ex1))
+	  {
+	    /* (string->number "1100.1+0.11i" 2) -- need to split into 2 honest reals before passing to non-base-10 str->dbl */
+	    rl = string_to_double_with_radix(q, radix, &overflow);
+	  }
+	else
+	  {
+	    if (slash1)
+	      rl = (s7_Double)string_to_integer(q, radix, &overflow) / (s7_Double)string_to_integer(slash1, radix, &overflow);
+	    else rl = (s7_Double)string_to_integer(q, radix, &overflow);
+	  }
+	if (rl == -0.0) rl = 0.0;
+	
+	if ((has_dec_point2) ||
+	    (ex2))
+	  im = string_to_double_with_radix(plus, radix, &overflow);
+	else
+	  {
+	    if (slash2)
+	      im = (s7_Double)string_to_integer(plus, radix, &overflow) / (s7_Double)string_to_integer(slash2, radix, &overflow);
+	    else im = (s7_Double)string_to_integer(plus, radix, &overflow);
+	  }
+	if ((has_plus_or_minus == -1) && 
+	    (im != 0.0))
+	  im = -im;
+	result = s7_make_complex(sc, rl, im);
+#else
+	result = string_to_either_complex(sc, q, slash1, ex1, has_dec_point1, plus, slash2, ex2, has_dec_point2, radix, has_plus_or_minus);
+#endif
+	
+	/* restore original string */
+	q[len - 1] = ql1;
+	(*((char *)(plus - 1))) = pl1;
+#if WITH_GMP
+	if (ex1) (*ex1) = e1;
+	if (ex2) (*ex2) = e2;
+#endif
+	
+	return(result);
+      }
+    
+    /* not complex */
+    if ((has_dec_point1) ||
+	(ex1))
+      {
+	s7_pointer result;
+	
+	if (slash1)  /* not complex, so slash and "." is not a number */
+	  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
+	
+#if (!WITH_GMP)
+	result = s7_make_real(sc, string_to_double_with_radix(q, radix, &overflow));
+#else
+	{
+	  char old_e = 0;
+	  if (ex1)
+	    {
+	      old_e = (*ex1);
+	      (*ex1) = 'e';
+	    }
+	  result = string_to_either_real(sc, q, radix);
+	  if (ex1)
+	    (*ex1) = old_e;
+	}
+#endif
+	return(result);
+      }
+    
+    /* not real */
+    if (slash1)
+#if (!WITH_GMP)
+      {
+	s7_Int n, d;
+	n = string_to_integer(q, radix, &overflow);
+	d = string_to_integer(slash1, radix, &overflow);
+	if (d == 0)
+	  return(s7_make_real(sc, sqrt(-1))); /* this is supposed to be a NaN */
+	return(s7_make_ratio(sc, n, d));
+      }
 #else
     return(string_to_either_ratio(sc, q, slash1, radix));
 #endif
-  
+    
     /* integer */
 #if (!WITH_GMP)
     return(s7_make_integer(sc, string_to_integer(q, radix, &overflow)));
 #else
-  return(string_to_either_integer(sc, q, radix));
+    return(string_to_either_integer(sc, q, radix));
 #endif
+  }
 }
 
 
@@ -5728,8 +5742,8 @@ If str does not represent a number, string->number returns #f."
       if (s7_is_integer(cadr(args)))
 	radix = s7_integer(cadr(args));
       if ((radix < 2) ||              /* what about negative int as base (Knuth), reals such as phi, and some complex like -1+i */
-	  (radix > 36))               /* the only problem here is printing the number; perhaps put each digit in "()" in base 10: (123)(0)(34) */
-	return(s7_out_of_range_error(sc, "string->number radix, ", 2, cadr(args), "should be between 2 and 36"));
+	  (radix > 16))               /* the only problem here is printing the number; perhaps put each digit in "()" in base 10: (123)(0)(34) */
+	return(s7_out_of_range_error(sc, "string->number radix, ", 2, cadr(args), "should be between 2 and 16"));
     }
   else radix = 10;
 
@@ -13472,7 +13486,7 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
       index = s7_integer(car(indices));
       if ((index < 0) ||
 	  (index >= vector_length(vect)))
-	return(s7_out_of_range_error(sc, "vector ref index,", 2, s7_make_integer(sc, index), "should be between 0 and the vector length"));
+	return(s7_out_of_range_error(sc, "vector ref index,", 2, car(indices), "should be between 0 and the vector length"));
       
       if (cdr(indices) != sc->NIL)                 /* (let ((L '#(#(1 2 3) #(4 5 6)))) (vector-ref L 1 2)) */
 	{
@@ -14667,6 +14681,8 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
   return(""); /* not NULL here so that (string=? "" (procedure-documentation no-doc-func)) -> #t */
 }
 
+
+/* perhaps this should be settable? I think it is in sbcl */
 
 static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
 {
@@ -19042,7 +19058,11 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 	  str = (char *)(port_string(pt) + port_string_point(pt));
 	  orig_str = str;
 	  
-	  do {c = (int)(*str++);} while (char_ok_in_a_name[(unsigned char)c]);
+	  {
+	    unsigned char c1;
+	    do {c1 = (*str++);} while (char_ok_in_a_name[c1]);
+	    c = c1;
+	  }
 	  k = str - orig_str;
 	  port_string_point(pt) += k;
 
@@ -19069,7 +19089,23 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 		  orig_str[k - 1] = '\0';
 		  
 		  if (atom_case)
-		    result = make_atom(sc, (char *)(orig_str - 1), 10, true);
+		    {
+		      switch (orig_str[-1])
+			{
+			case '0': case '1': case '2': case '3': case '4':
+			case '5': case '6': case '7': case '8': case '9':
+			case '.': case '+': case '-':
+			  result = make_atom(sc, (char *)(orig_str - 1), 10, true);
+			  break;
+
+			case '#':
+			  result = make_sharp_constant(sc, orig_str, true);
+			  break;
+
+			default:
+			  result = s7_make_symbol(sc, (char *)(orig_str - 1));
+			}
+		    }
 		  else result = make_sharp_constant(sc, (char *)(orig_str - 1), true);
 	      
 		  orig_str[k - 1] = endc;
@@ -22201,6 +22237,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = read_expression(sc);
 	  break;
 
+	case TOKEN_ATOM:
+	  push_stack(sc, opcode(OP_READ_LIST), sc->args, sc->NIL);
+	  sc->value = read_delimited_string(sc, true);
+	  break;
+
 	default:
 	  push_stack(sc, opcode(OP_READ_LIST), sc->args, sc->NIL);
 	  sc->value = read_expression(sc);
@@ -23786,17 +23827,22 @@ static s7_pointer string_to_either_ratio(s7_scheme *sc, const char *nstr, const 
   s7_Int n, d;
   bool overflow = false;
 
-  n = string_to_integer(nstr, radix, &overflow);
+  /* gmp segfaults if passed a bignum/0 so this needs to check first that
+   *   the denominator is not 0 before letting gmp screw up.  Also, if the
+   *   first character is '+', gmp returns 0!
+   */
+  d = string_to_integer(dstr, radix, &overflow);
   if (!overflow)
     {
-      d = string_to_integer(dstr, radix, &overflow);
+      if (d == 0)
+	return(s7_make_real(sc, sqrt(-1))); /* this is supposed to be a NaN */
+
+      n = string_to_integer(nstr, radix, &overflow);
       if (!overflow)
-	{
-	  if (d == 0)
-	    return(s7_make_real(sc, sqrt(-1))); /* this is supposed to be a NaN */
-	  return(s7_make_ratio(sc, n, d));
-	}
+	return(s7_make_ratio(sc, n, d));
     }
+  if (nstr[0] == '+')
+    return(string_to_big_ratio(sc, (const char *)(nstr + 1), radix));
   return(string_to_big_ratio(sc, nstr, radix));
 }
 
@@ -28193,4 +28239,6 @@ s7_scheme *s7_init(void)
  *    intel xeon 5530 (2.4G)     2093     1855, 0.811
  *    amd phenom 965 (3.4G):     2083     1862, 0.808
  *    intel i7 930 (2.8G):       2084     1864  0.704
+ *
+ * 10.8: 0.684, same in 11.10: 0.397
  */

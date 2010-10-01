@@ -5680,7 +5680,7 @@
 (let* ((vals (list "hi" #\A 1 'a #(1) abs 3.14 3/4 1.0+1.0i #\f '(1 . 2)))
        (vlen (length vals)))
   (do ((i 0 (+ i 1)))
-      ((= i 100))
+      ((= i 20))
     (let* ((size (max 1 (random 20)))
 	   (vect (make-vector size '())))
       (do ((n 0 (+ n 1)))
@@ -7436,6 +7436,11 @@
 (test (format #f "~20,20G" 3.0) "                   3.0")
 (test (format #f "~20,20F" 3.0) "3.00000000000000000000")
 (test (format #f "~20,20E" 3.0) "3.00000000000000000000e+00")
+
+(test (format #f "~,3B" 0.99999) "0.111")
+(test (format #f "~,3O" 0.99999) "0.777")
+(test (format #f "~,3F" 0.99999) "1.000")
+(test (format #f "~,3X" 0.99999) "0.fff")
 
 (test (format #f "~-2F" 0.0) 'error)
 (test (format #f "~,-2F" 0.0) 'error)
@@ -17177,8 +17182,8 @@ why are these different (read-time `#() ? )
  (list "hi" '(1 2 3) #() 'a-symbol abs 3.14 3/4 1.0+1.0i 1 '() "" (if #f #f) (lambda (a) (+ a 1))))
 
 (test (gc #f #t) 'error)
-(test (catch #t (lambda () (gc) #f) (lambda args 'error)) #f)
-(test (dynamic-wind (lambda () (gc)) (lambda () (gc) #f) (lambda () (gc))) #f)
+;(test (catch #t (lambda () (gc) #f) (lambda args 'error)) #f)
+;(test (dynamic-wind (lambda () (gc)) (lambda () (gc) #f) (lambda () (gc))) #f)
 
 
 
@@ -47367,15 +47372,6 @@ why are these different (read-time `#() ? )
 	    ))
       ))
 
-(test (> (string->number "1.0L10") 1.0e9) #t)
-(test (> (string->number "1.0l10") 1.0e9) #t)
-(test (> (string->number "1.0s10") 1.0e9) #t)
-(test (> (string->number "1.0S10") 1.0e9) #t)
-(test (> (string->number "1.0d10") 1.0e9) #t)
-(test (> (string->number "1.0D10") 1.0e9) #t)
-(test (> (string->number "1.0f10") 1.0e9) #t)
-(test (> (string->number "1.0F10") 1.0e9) #t)
-
 (test (> 1.0L10 1.0e9) #t)
 (test (> 1.0l10 1.0e9) #t)
 (test (> 1.0s10 1.0e9) #t)
@@ -47384,15 +47380,6 @@ why are these different (read-time `#() ? )
 (test (> 1.0D10 1.0e9) #t)
 (test (> 1.0f10 1.0e9) #t)
 (test (> 1.0F10 1.0e9) #t)
-
-(test (> (real-part (string->number "1.0L10+i")) 1.0e9) #t)
-(test (> (real-part (string->number "1.0l10+i")) 1.0e9) #t)
-(test (> (real-part (string->number "1.0s10+i")) 1.0e9) #t)
-(test (> (real-part (string->number "1.0S10+i")) 1.0e9) #t)
-(test (> (real-part (string->number "1.0d10+i")) 1.0e9) #t)
-(test (> (real-part (string->number "1.0D10+i")) 1.0e9) #t)
-(test (> (real-part (string->number "1.0f10+i")) 1.0e9) #t)
-(test (> (real-part (string->number "1.0F10+i")) 1.0e9) #t)
 
 (test (> (real-part 1.0L10+i) 1.0e9) #t)
 (test (> (real-part 1.0l10+i) 1.0e9) #t)
@@ -47403,6 +47390,33 @@ why are these different (read-time `#() ? )
 (test (> (real-part 1.0f10+i) 1.0e9) #t)
 (test (> (real-part 1.0F10+i) 1.0e9) #t)
 
+(test (> (imag-part 1.0+1.0L10i) 1.0e9) #t)
+(test (> (imag-part 1.0+1.0l10i) 1.0e9) #t)
+(test (> (imag-part 1.0+1.0s10i) 1.0e9) #t)
+(test (> (imag-part 1.0+1.0S10i) 1.0e9) #t)
+(test (> (imag-part 1.0+1.0d10i) 1.0e9) #t)
+(test (> (imag-part 1.0+1.0D10i) 1.0e9) #t)
+(test (> (imag-part 1.0+1.0f10i) 1.0e9) #t)
+(test (> (imag-part 1.0+1.0F10i) 1.0e9) #t)
+
+(test (> (string->number "1.0L10") 1.0e9) #t)
+(test (> (string->number "1.0l10") 1.0e9) #t)
+(test (> (string->number "1.0s10") 1.0e9) #t)
+(test (> (string->number "1.0S10") 1.0e9) #t)
+(test (> (string->number "1.0d10") 1.0e9) #t)
+(test (> (string->number "1.0D10") 1.0e9) #t)
+(test (> (string->number "1.0f10") 1.0e9) #t)
+(test (> (string->number "1.0F10") 1.0e9) #t)
+
+(test (> (real-part (string->number "1.0L10+i")) 1.0e9) #t)
+(test (> (real-part (string->number "1.0l10+i")) 1.0e9) #t)
+(test (> (real-part (string->number "1.0s10+i")) 1.0e9) #t)
+(test (> (real-part (string->number "1.0S10+i")) 1.0e9) #t)
+(test (> (real-part (string->number "1.0d10+i")) 1.0e9) #t)
+(test (> (real-part (string->number "1.0D10+i")) 1.0e9) #t)
+(test (> (real-part (string->number "1.0f10+i")) 1.0e9) #t)
+(test (> (real-part (string->number "1.0F10+i")) 1.0e9) #t)
+
 (test (> (imag-part (string->number "1.0+1.0L10i")) 1.0e9) #t)
 (test (> (imag-part (string->number "1.0+1.0l10i")) 1.0e9) #t)
 (test (> (imag-part (string->number "1.0+1.0s10i")) 1.0e9) #t)
@@ -47412,14 +47426,6 @@ why are these different (read-time `#() ? )
 (test (> (imag-part (string->number "1.0+1.0f10i")) 1.0e9) #t)
 (test (> (imag-part (string->number "1.0+1.0F10i")) 1.0e9) #t)
 
-(test (> (imag-part 1.0+1.0L10i) 1.0e9) #t)
-(test (> (imag-part 1.0+1.0l10i) 1.0e9) #t)
-(test (> (imag-part 1.0+1.0s10i) 1.0e9) #t)
-(test (> (imag-part 1.0+1.0S10i) 1.0e9) #t)
-(test (> (imag-part 1.0+1.0d10i) 1.0e9) #t)
-(test (> (imag-part 1.0+1.0D10i) 1.0e9) #t)
-(test (> (imag-part 1.0+1.0f10i) 1.0e9) #t)
-(test (> (imag-part 1.0+1.0F10i) 1.0e9) #t)
 
 (if with-bignums 
     (begin
@@ -50423,7 +50429,7 @@ why are these different (read-time `#() ? )
 	      #t)))))
 
 (do ((i 0 (+ i 1)))
-    ((= i 100))              ; this was ((+ i 100)) !! -- surely a warning would be in order?
+    ((= i 20))              ; this was ((+ i 100)) !! -- surely a warning would be in order?
   (let ((val (random -1.0)))
     (test (and (real? val) (<= val 0.0) (>= val -1.0)) #t))
   (let ((val (random -100)))
@@ -51400,7 +51406,7 @@ why are these different (read-time `#() ? )
 (num-test (string->number "3/4+i") 0.75+i)
 (num-test (string->number "0+1/2i") 0+0.5i)
 (test (string->number "3+0i/4") #f)
-(test (string->number "3/4+0i") 0.75)
+(num-test (string->number "3/4+0i") 0.75)
 
 (test (string->number " 1.0") #f)
 (test (string->number "1.0 ") #f)
@@ -51541,6 +51547,14 @@ why are these different (read-time `#() ? )
 (test (string->number "1.0" most-negative-fixnum) 'error)
 (test (string->number "1.0" most-positive-fixnum) 'error)
 (test (number->string 16 17) 'error)
+
+;; duplicate various non-digit chars
+(for-each
+ (lambda (str)
+   (test (string->number str) #f))
+ (list "..1" "1.." "1..2" "++1" "+-1" "-+1" "--1" "-..1" "+..1" "1+i+" "1+i."
+       "1++i" "1--i" "1.ee1" "1+1..i" "1+ii" "1+1ee1i" "1e1e1"
+       "1//2" "1+.1/2i" "1+1//2i" "1+1/2" "1i" "1ii" "1+.i" "1+..i"))
 
 (test (number->string most-positive-fixnum 2) "111111111111111111111111111111111111111111111111111111111111111")
 (test (number->string most-positive-fixnum 8) "777777777777777777777")
@@ -51740,6 +51754,21 @@ why are these different (read-time `#() ? )
 (test (= #i1e19 #i.1e20) #t)
 (test (= 1e19 .1e20) #t)
 
+(test (string->number "15+b7a9+8bbi-95+4e" 16) #f)
+(num-test (string->number "776.0a9b863471095a93" 12) 1098.0752175102)
+(num-test (string->number "a72972b301/398371448" 12) 54708015601/1637213240)
+(num-test (string->number "+ac946/b72ddf4847ce6" 16) 353443/1611261179739763)
+(num-test (string->number "b85.361c23cec099e742" 15) 2600.2272029731)
+(num-test (string->number "ade2411.a1422432dea8" 15) 1.24494541672338806082296187159063753079E8)
+(num-test (string->number "da99007963b182/8a66b" 15) 26681038227104972/440201)
+(num-test (string->number "74cc.d+b44.02a11ee5i" 15) 24717.866666667+2539.0118742348i)
+(num-test (string->number "d+7a5d40di" 14) 13+58313541i)
+
+(test (nan? (string->number "1/0")) #t)
+(test (nan? (string->number "5639d72702b62527/0" 14)) #t)
+(test (nan? (string->number "28133828f9421ef5/0" 16)) #t)
+(test (nan? (string->number "4a11654f7e00d5f2/0" 16)) #t)
+
 (if with-bignums 
     (begin
       (test (number->string (/ most-positive-fixnum most-negative-fixnum) 2) "-111111111111111111111111111111111111111111111111111111111111111/1000000000000000000000000000000000000000000000000000000000000000")
@@ -51756,6 +51785,29 @@ why are these different (read-time `#() ? )
       (num-test (string->number "#b#i11e80") 3626777458843887524118528.0)
       (num-test (string->number "#e#b11e80") 3626777458843887524118528)
       (num-test (string->number "#i#b11e80") 3626777458843887524118528.0)
+
+      (num-test (string->number "b2706b3d3e8e46ad5aae" 15) 247500582888444441302414)
+      (num-test (string->number "ceec932122d7c22289da9144.4b7836de0a2f5ef" 16) 6.403991331575236168367699181229480307503E28)
+      (num-test (string->number "c23177c20fb1296/fcf15a82c8544613721236e2" 16) 437284287268358475/39141000511500755277510679409)
+
+      (num-test (string->number "775f81b8fee51b723f" 16) 2202044529881940455999)
+      (num-test (string->number "5d9eb6d6496f5c9b6e" 16) 1726983762769631550318)
+      (num-test (string->number "+775f81b8fee51b723f" 16) 2202044529881940455999)
+      (num-test (string->number "+5d9eb6d6496f5c9b6e" 16) 1726983762769631550318)
+      (num-test (string->number "-775f81b8fee51b723f" 16) -2202044529881940455999)
+      (num-test (string->number "-5d9eb6d6496f5c9b6e" 16) -1726983762769631550318)
+      (num-test (string->number "+d053d635e581a5c4/d7" 16) 15011577509928084932/215)
+      (num-test (string->number "+a053a635a581a5a4/a7" 16) 11552760218475668900/167)
+      (num-test (string->number "-d053d635e581a5c4/d7" 16) -15011577509928084932/215)
+      (num-test (string->number "-a053a635a581a5a4/a7" 16) -11552760218475668900/167)
+      (num-test (string->number "+6/a47367025481df6c8" 16) 1/31599808811326133196)
+      (num-test (string->number "d053d635e581a5c4/d7" 16) 15011577509928084932/215)
+      (num-test (string->number "+074563336d48564b774" 16) 2146033681147780970356)
+      (num-test (string->number "e/4246061597ec79345a" 15) 7/204584420774687563055)
+      (num-test (string->number "c57252467ff.cfd94d" 16) 1.3568424830975811909496784210205078125E13)
+      (num-test (string->number "f309e9b9ba.7c52ff2" 16) 1.043843365306485641427338123321533203125E12)
+      (num-test (string->number "+42f-0106653" 10) 4.199999999999999999999999999999999999999E-106652)
+      (test (infinite? (string->number "8f7290491476" 10)) #t)
 
       (num-test (string->number "#d3000000000000000000000000000000") 3000000000000000000000000000000)
       (num-test (string->number "#x400000000000000000") (expt 2 70))
@@ -51785,6 +51837,8 @@ why are these different (read-time `#() ? )
       ;; (/ most-positive-fixnum most-negative-fixnum) -> 9223372036854775807/-9223372036854775808 
       ;; so
       ;; (positive? (/ most-positive-fixnum most-negative-fixnum)) -> #t!
+
+      
 
       ))
 
@@ -52105,8 +52159,27 @@ why are these different (read-time `#() ? )
 				    (string->number (number->string (string->number str rad) rad) rad)
 				    diff)))))))))))
 
-;;; (number->string (string->number "-5L-4" 9) 9) -> "-0.00049" 
-;;; (number->string (string->number "5.e-8" 6) 6) -> "0.000000046"
+(let ()
+  (define (no-char str radix)
+    (let ((len (length str)))
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
+	(if (and (not (char=? (str i) #\.))
+		 (>= (string->number (string (str i)) 16) radix))
+	    (format #t ";~S in base ~D has ~C?" str radix (str i))))))
+
+  (no-char (number->string (* 1.0 2/3) 9) 9)
+  (no-char (number->string (string->number "0.05" 9) 9) 9)
+  ;; (number->string (string->number "-5L-4" 9) 9) -> "-0.00049" if rounding is stupid
+  ;; (number->string (string->number "5.e-8" 6) 6) -> "0.000000046"
+  (no-char (number->string (* 1.0 6/7) 7) 7)
+  
+  (do ((i 2 (+ i 1)))
+      ((= i 17))
+    (no-char (number->string (* 1.0 (/ 1 i)) i) i)
+    (no-char (number->string (* 1.0 (/ 1 (* i i))) i) i)
+    (no-char (number->string (* 0.999999999999999 (/ 1 i)) i) i)
+    (no-char (number->string (* 0.999999 (/ 1 i)) i) i)))
 
 (let ((happy #t))
   (do ((i 2 (+ i 1)))
@@ -52115,18 +52188,15 @@ why are these different (read-time `#() ? )
     (if (not (eqv? 3/4 (string->number (number->string 3/4 i) i)))
 	(begin 
 	  (set! happy #f) 
-	  (display "(string<->number 3/4 ") (display i) (display ") -> ") (display (number->string 3/4 i)) 
-	  (display " -> ") (display (string->number (number->string 3/4 i) i)) (newline)))
+	  (format #t "(string<->number 3/4 ~A) -> ~A?~%" i (string->number (number->string 3/4 i) i))))
     (if (not (eqv? 1234/11 (string->number (number->string 1234/11 i) i)))
 	(begin 
 	  (set! happy #f) 
-	  (display "(string<->number 1234/11 ") (display i) (display ") -> ") (display (number->string 1234/11 i)) 
-	  (display " -> ") (display (string->number (number->string 1234/11 i) i)) (newline)))
+	  (format #t "(string<->number 1234/11 ~A) -> ~A?~%" i (string->number (number->string 1234/11 i) i))))
     (if (not (eqv? -1234/11 (string->number (number->string -1234/11 i) i)))
 	(begin 
 	  (set! happy #f) 
-	  (display "(string<->number -1234/11 ") (display i) (display ") -> ") (display (number->string -1234/11 i)) 
-	  (display " -> ") (display (string->number (number->string -1234/11 i) i)) (newline)))))
+	  (format #t "(string<->number -1234/11 ~A) -> ~A?~%" i (string->number (number->string -1234/11 i) i))))))
 
 (test (< (abs (- (string->number "3.1415926535897932384626433832795029") 3.1415926535897932384626433832795029)) 1e-7) #t)
 
@@ -52181,30 +52251,24 @@ why are these different (read-time `#() ? )
 	       (let ((val (string->number (string-append "1" exponent "1") base)))
 		 (if (and (number? val)
 			  (not (= val base)))
-		     (begin
-		       (display "(string->number ") (display (string-append "1" exponent "1")) (display " ") (display base)
-		       (display ") returned ") (display (string->number (string-append "1" exponent "1") base)) 
-		       (display "?") (newline)))))
+		     (format #t "(string->number ~S ~A) returned ~A?~%" 
+			     (string-append "1" exponent "1") base (string->number (string-append "1" exponent "1") base)))))
 	     
 	     (do ((base 2 (+ base 1)))
 		 ((= base 11))
 	       (let ((val (string->number (string-append "1.1" exponent "1") base)))
 		 (if (and (number? val)
 			  (not (= val (+ base 1))))
-		     (begin
-		       (display "(string->number ") (display (string-append "1.1" exponent "1")) (display " ") (display base)
-		       (display ") returned ") (display (string->number (string-append "1.1" exponent "1") base)) 
-		       (display "?") (newline)))))
-	     
+		     (format #t "(string->number ~S ~A) returned ~A?~%" 
+			     (string-append "1.1" exponent "1") base (string->number (string-append "1.1" exponent "1") base)))))
+
 	     (do ((base 2 (+ base 1)))
 		 ((= base 11))
 	       (let ((val (string->number (string-append "1" exponent "+1") base)))
 		 (if (and (number? val)
 			  (not (= val base)))
-		     (begin
-		       (display "(string->number ") (display (string-append "1" exponent "+1")) (display " ") (display base)
-		       (display ") returned ") (display (string->number (string-append "1" exponent "+1") base)) 
-		       (display "?") (newline)))))
+		     (format #t "(string->number ~S ~A) returned ~A?~%"
+			     (string-append "1" exponent "+1") base (string->number (string-append "1" exponent "+1") base)))))
 					; in base 16 this is still not a number because of the + (or -)
 					; but "1e+1i" is a number -- gad!
 	     
@@ -52213,10 +52277,8 @@ why are these different (read-time `#() ? )
 	       (let ((val (string->number (string-append "1" exponent "-1+1i") base)))
 		 (if (and (number? val)
 			  (> (magnitude (- val (make-rectangular (/ base) 1))) 1e-6))
-		     (begin
-		       (display "(string->number ") (display (string-append "1" exponent "-1+1i")) (display " ") (display base)
-		       (display ") returned ") (display (string->number (string-append "1" exponent "-1+1i") base)) 
-		       (display "?") (newline)))))))
+		     (format #t "(string->number ~S ~A) returned ~A?~%" 
+			     (string-append "1" exponent "-1+1i") base (string->number (string-append "1" exponent "-1+1i") base)))))))
 	 
 	 (list #\e #\d #\f #\s #\l))
 	
@@ -52247,12 +52309,7 @@ why are these different (read-time `#() ? )
 		(if (> (abs (- val (string->number str i))) 1e-7)
 		    (begin
 		      (set! happy #f) 
-		      (display "(string->number ")
-		      (display (string-ref digits i)) (display (string-ref digits i)) (display ".")
-		      (display (string-ref digits i)) (display (string-ref digits i)) (display (string-ref digits i)) (display "... ")
-		      (display i) (display ") -> ")
-		      (display (string->number str i))
-		      (display " but expected ") (display val) (newline)))))
+		      (format #t "(string->number ~S ~A) -> ~A (expected ~A)?~%" str i (string->number str i) val)))))
 	    
 	    (let* ((radlim (list 0 0 62 39 31 26 23 22 20 19 18 17 17 16 16 15 15))
 		   (digits "00123456789abcdef"))
@@ -52264,12 +52321,8 @@ why are these different (read-time `#() ? )
 		    (if (> (abs (- val (string->number str i))) 1e-7)
 			(begin
 			  (set! happy #f) 
-			  (display "(string->number ")
-			  (display str) (display " ")
-			  (display i) (display ") -> ")
-			  (display (string->number str i))
-			  (display " but expected ") (display val) (newline)))))))))
-	
+			  (format #t "(string->number ~S ~A) -> ~A (expected ~A)?~%" str i (string->number str i) val)))))))))
+
 	(let ((happy #t))
 	  (do ((i 2 (+ i 1)))
 	      ((or (not happy)
@@ -52277,18 +52330,17 @@ why are these different (read-time `#() ? )
 	    (if (> (abs (- 0.75 (string->number (number->string 0.75 i) i))) 1e-6)
 		(begin 
 		  (set! happy #f) 
-		  (display "(string<->number 0.75 ") (display i) (display ") -> ") (display (number->string 0.75 i)) 
-		  (display " -> ") (display (string->number (number->string 0.75 i) i)) (newline)))
+		  (format #t "(string->number (number->string 0.75 ~A) ~A) -> ~A?~%" i i (string->number (number->string 0.75 i) i))))
+
 	    (if (> (abs (- 1234.75 (string->number (number->string 1234.75 i) i))) 1e-6)
 		(begin 
 		  (set! happy #f) 
-		  (display "(string<->number 1234.75 ") (display i) (display ") -> ") (display (number->string 1234.75 i)) 
-		  (display " -> ") (display (string->number (number->string 1234.75 i) i)) (newline)))
+		  (format #t "(string->number (number->string 1234.75 ~A) ~A) -> ~A?~%" i i (string->number (number->string 1234.75 i) i))))
+
 	    (if (> (abs (- -1234.25 (string->number (number->string -1234.25 i) i))) 1e-6)
 		(begin 
 		  (set! happy #f) 
-		  (display "(string<->number -1234.25 ") (display i) (display ") -> ") (display (number->string -1234.25 i)) 
-		  (display " -> ") (display (string->number (number->string -1234.25 i) i)) (newline)))
+		  (format #t "(string->number (number->string -1234.75 ~A) ~A) -> ~A?~%" i i (string->number (number->string -1234.75 i) i))))
 	    
 	    (let ((val (string->number (number->string 12.5+3.75i i) i)))
 	      (if (or (not (number? val))
@@ -52296,8 +52348,7 @@ why are these different (read-time `#() ? )
 		      (> (abs (- (imag-part val) 3.75)) 1e-6))
 		  (begin 
 		    (set! happy #f) 
-		    (display "(string<->number 12.5+3.75i ") (display i) (display ") -> ") (display (number->string 12.5+3.75i i)) 
-		    (display " -> ") (display (string->number (number->string 12.5+3.75i i) i)) (newline))))
+		    (format #t "(string->number (number->string 12.5+3.75i ~A) ~A) -> ~A?~%" i i (string->number (number->string 12.5+3.75i i) i)))))
 	    
 	    (let ((happy #t))
 	      (do ((base 2 (+ base 1)))
@@ -52324,15 +52375,8 @@ why are these different (read-time `#() ? )
 			      (> (abs (- (imag-part nval) (imag-part val))) 1e-3))
 			  (begin
 			    (set! happy #f)
-			    (display "number<->string \"")
-			    (display str)
-			    (display "\" ")
-			    (display base)
-			    (display ") -> ")
-			    (display nval)
-			    (display "?")
-			    (display " [") (display sn) (display " ") (display nsn) (display "]")
-			    (newline))))))))
+			    (format #t "(number<->string ~S ~A) -> ~A? [~A ~S]~%" str base nval sn nsn)
+			    )))))))
 	    )))))
 
 (let ((val (number->string 1.0-1.0i)))
