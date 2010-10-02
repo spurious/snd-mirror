@@ -19795,6 +19795,7 @@ static s7_pointer prepare_do_step_variables(s7_scheme *sc)
    *    so car(sc->x) is a step variable's info,
    *       caar is the variable name, cadar is its initial value (possibly an expression), caddar is the step expression, if any
    */
+
   for (sc->x = car(sc->code); sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y))       
     if (cddar(sc->x) != sc->NIL)                /* else no incr expr, so ignore it henceforth */
       sc->args = s7_cons(sc, 

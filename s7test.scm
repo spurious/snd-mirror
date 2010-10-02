@@ -52245,6 +52245,15 @@ why are these different (read-time `#() ? )
 (test (number->string 12.0+0.75i 16) "c.0+0.ci")
 (test (number->string -12.5-3.75i 16) "-c.8-3.ci")
 
+(num-test (string->number "#i+9/9" 10) 1.0)
+(num-test (string->number "#e9e-999" 10) 0)
+(num-test (string->number "#e-9.e-9" 10) -1/111098767)
+(num-test (string->number "#e-.9e+9" 10) -900000000)
+(num-test (string->number "9-9.e+9i" 10) 9-9000000000i)
+(num-test (string->number "-9+9e-9i" 10) -9+9e-09i)  ; why the 09?
+(num-test (string->number "#e-.9e+9" 10) -900000000)
+(num-test (string->number "9-9.e+9i" 10) 9-9000000000i)
+
 ;; weird cases:
 (num-test (string->number "#b1000" 8) 8)
 (num-test (string->number "#b1000" 2) 8)
