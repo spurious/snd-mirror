@@ -52764,7 +52764,7 @@ why are these different (read-time `#() ? )
 		       +0001.e0 0000001. +000001.))
 		  (lambda args 'error))))
   (if (not (eq? val #t))
-      (format #t ";funny 1's are all equal to 1?~%")))
+      (format #t ";funny 1's are not all equal to 1? ~A~%" val)))
 
 
 (for-each

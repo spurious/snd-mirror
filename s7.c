@@ -301,7 +301,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_READ_VECTOR, OP_READ_DONE, 
 	      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_DONE,
 	      OP_CATCH, OP_DYNAMIC_WIND, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1, 
-	      OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
+	      OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP2, OP_DO_INIT,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_ENV2,
 	      OP_FOR_EACH, OP_MAP, OP_BARRIER, OP_DEACTIVATE_GOTO,
@@ -321,7 +321,7 @@ static const char *op_names[OP_MAX_DEFINED] =
    "read-unquote", "read-unquote-splicing", "read-vector", "read-done", 
    "load-return-if-eof", "load-close-and-stop-if-eof", "eval-string", "eval-done", "catch", 
    "dynamic-wind", "define-constant", "define-constant", "do", "do", "do", 
-   "do", "do", "do", "do", "define*", "lambda*", 
+   "do", "do", "do", "define*", "lambda*", 
    "error-quit", "unwind-input", "unwind-output", "trace-return", "error-hook-quit", 
    "trace-hook-quit", "with-environment", "with-environment", "with-environment", "for-each", "map", 
    "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro",
@@ -332,7 +332,7 @@ static const char *op_names[OP_MAX_DEFINED] =
 
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 94 max num chars (256) */
+/* this needs to be at least OP_MAX_DEFINED = 93 max num chars (256) */
 /* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -19765,6 +19765,17 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 }
 
 
+static s7_pointer initial_add;
+
+static bool is_steppable_integer(s7_pointer p)
+{
+  return((type(p) == T_NUMBER) &&               /* not bignum, or any other weird case */
+	 (number_type(p) == NUM_INT) &&         /* not float etc */
+	 (integer(number(p)) < LONG_MAX) &&     /* not a huge int (bignum overflow etc) */
+	 (integer(number(p)) > LONG_MIN));
+}
+
+
 static s7_pointer prepare_do_step_variables(s7_scheme *sc)
 {
   sc->args = safe_reverse_in_place(sc, sc->args);
@@ -19795,16 +19806,65 @@ static s7_pointer prepare_do_step_variables(s7_scheme *sc)
    *    so car(sc->x) is a step variable's info,
    *       caar is the variable name, cadar is its initial value (possibly an expression), caddar is the step expression, if any
    */
-
   for (sc->x = car(sc->code); sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y))       
     if (cddar(sc->x) != sc->NIL)                /* else no incr expr, so ignore it henceforth */
-      sc->args = s7_cons(sc, 
-			 make_list_3(sc, 
-				     car(sc->y),      /* the binding pair in the local environment */
-				     caddar(sc->x),   /* the step expression */    
-				     cdar(sc->y)),    /* the initial value */
-			 sc->args);
+      {
+	s7_pointer step_expr, binding, new_expr = sc->F;
+
+	binding = car(sc->y);
+	step_expr = caddar(sc->x);
+
+	/* if step_expr is a constant, I don't think we save much by predigesting it 
+	 *
+	 * we're looking for a simple expression like (+ i 1) or (+ 1 i) 
+	 */
+
+	if ((is_steppable_integer(cdr(binding))) &&               /* not (do ((i 1.0 (+ i 1))) ((> i 3)))         */
+	    (is_pair(step_expr)) &&                               /* not (do ((i 1 4)) ((> i 3)))                 */
+	    (s7_is_symbol(car(step_expr))) &&                     /* not (do ((i 1 ((if #t + -) i 1))) ((> i 3))) */
+	    (is_pair(cdr(step_expr))) &&                          /* not (do ((i 1 (+))) ((> i 0)))               */
+	    (is_pair(cddr(step_expr))) &&                         /* not (do ((i 1 (+ 1))) ((> i 0)))             */
+	    (cdddr(step_expr) == sc->NIL) &&                      /* not (do ((i 1 (+ 1 i 2))) ((> i 0)))         */
+	    (((is_steppable_integer(cadr(step_expr))) &&          /* not (do ((i 1 (+ 1.0 i))) ((> i 0)))         */
+	      (caddr(step_expr) == car(binding))) ||              /* not (do ((i 1 (+ 1 pi))) ((> i 0)))          */
+	     ((is_steppable_integer(caddr(step_expr))) &&         /* these also check for crazy cases like        */
+	      (cadr(step_expr) == car(binding)))))                /*   (do ((i 0 (+ i 8796093022208))) ((> i 0))) */
+	  {
+	    s7_pointer op;
+	    op = find_symbol(sc, sc->envir, car(step_expr));      /* not (do ((i 1 (* i 2))) ((> i 0)))           */
+	    if (symbol_value(op) == initial_add)
+	      {
+		int gc_loc;
+		/* can't change step_expr here because value of '+' might change,
+		 *   so instead we append a vector: #(+ initial value, + binding, var binding, increment)
+		 */
+		new_expr = s7_make_vector(sc, 4);
+		gc_loc = s7_gc_protect(sc, new_expr);
+
+		vector_element(new_expr, 0) = initial_add;     /* 1st 2 so we can be sure the operator is still the initial '+' function */
+		vector_element(new_expr, 1) = op;
+		vector_element(new_expr, 2) = binding;         /* next to to check that it's safe to mess with the step var (same type, safe values) */
+		if (s7_is_integer(cadr(step_expr)))
+		  vector_element(new_expr, 3) = cadr(step_expr);
+		else vector_element(new_expr, 3) = caddr(step_expr);
+
+		/* if the operator changes or the step variable is set to something weird in the do body,
+		 *   we fall back on the original step expression.
+		 *   (do ((i 0 (+ i 1))) ((> i 2)) (set! i (+ i 3.0)))
+		 *   (let ((add +)) (do ((i 0 (add i 1))) ((< i 0)) (set! add -)))
+		 * etc.
+		 */
+		s7_gc_unprotect_at(sc, gc_loc);
+	      }
+	  }
+	sc->args = s7_cons(sc, 
+			   make_list_4(sc, binding, step_expr, cdar(sc->y), new_expr),
+			   sc->args);
+      }
   
+  /* TODO: subtract, simple floats, then (= var n) and its friends
+   */
+
   sc->args = safe_reverse_in_place(sc, sc->args);
   sc->args = s7_cons(sc, sc->args, cadr(sc->code));
   sc->code = cddr(sc->code);
@@ -20172,9 +20232,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->args = car(sc->args);                /* the var data lists */
       sc->code = sc->args;                     /* save the top of the list */
 
-      
-    case OP_DO_STEP1:
 
+    DO_STEP1:
       /* on each iteration, we first get here with args as the list of var bindings, exprs, and init vals
        *   e.g. (((i . 0) (+ i 1) 0))
        * each arg incr expr is evaluated and the value placed in caddr while we cdr down args
@@ -20222,9 +20281,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START_WITHOUT_POP_STACK;
 	}
 
+      /* check for (very common) optimized case */
+      {
+	s7_pointer sv;
+	sv = car(cdddr(car(sc->args)));
+	if ((sv != sc->F) &&                                                  /* optimization is possible */
+	    (symbol_value(vector_element(sv, 1)) == vector_element(sv, 0)) && /* '+' has not changed */
+	    (is_steppable_integer(cdr(vector_element(sv, 2)))))               /* step var is still ok */
+	  {
+	    caddar(sc->args) = s7_make_integer(sc, s7_integer(cdr(vector_element(sv, 2))) + s7_integer(vector_element(sv, 3)));
+	    sc->args = cdr(sc->args);                               /* go to next step var */
+	    goto DO_STEP1;
+	  }
+      }
+
       push_stack(sc, opcode(OP_DO_STEP2), sc->args, sc->code);
       
-      /* here sc->args is a list like (((i . 0) (+ i 1) 0) ...)
+      /* here sc->args is a list like (((i . 0) (+ i 1) 0 #f) ...)
        *   so sc->code becomes (+ i 1) in this case 
        */
       sc->code = cadar(sc->args);
@@ -20235,8 +20308,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_DO_STEP2:
       caddar(sc->args) = sc->value;                           /* save current value */
       sc->args = cdr(sc->args);                               /* go to next step var */
-      sc->op = OP_DO_STEP1;
-      goto START_WITHOUT_POP_STACK;
+      goto DO_STEP1;
       
 
     case OP_DO: 
@@ -28112,6 +28184,9 @@ s7_scheme *s7_init(void)
   /* fprintf(stderr, "size: %d %d\n", sizeof(s7_cell), sizeof(s7_num_t)); */
 
   save_initial_environment(sc);
+
+  initial_add = s7_symbol_value(sc, s7_make_symbol(sc, "+"));
+
   return(sc);
 }
 
