@@ -19765,7 +19765,7 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 }
 
 
-static s7_pointer initial_add;
+static s7_pointer initial_add, initial_subtract, initial_equal;
 
 static bool is_steppable_integer(s7_pointer p)
 {
@@ -19866,15 +19866,102 @@ static s7_pointer prepare_do_step_variables(s7_scheme *sc)
    */
 
   sc->args = safe_reverse_in_place(sc, sc->args);
-  sc->args = s7_cons(sc, sc->args, cadr(sc->code));
+  {
+    s7_pointer end_stuff;
+    end_stuff = cadr(sc->code);
+    if (end_stuff == sc->NIL)
+      sc->args = s7_cons(sc, sc->args, sc->NIL);
+    else sc->args = s7_cons(sc, sc->args, s7_cons(sc, s7_cons(sc, car(end_stuff), sc->F), cdr(end_stuff)));
+    /* fprintf(stderr, "args: %s\n", s7_object_to_c_string(sc, sc->args)); */
+  }
   sc->code = cddr(sc->code);
   
   /* here args is a list of 2 or 3 lists, 1st is (list (list (var . binding) incr-expr init-value) ...), 2nd is end-expr, 3rd can be result expr
-   *   so for (do ((i 0 (+ i 1))) ((= i 3) (+ i 1)) ...) args is ((((i . 0) (+ i 1) 0)) (= i 3) (+ i 1) 0)
+   *   so for (do ((i 0 (+ i 1))) ((= i 3) (+ i 1)) ...) args is ((((i . 0) (+ i 1) 0 <opt-vector>)) (= i 3) (+ i 1))
    */
   return(sc->F);
 }
 
+
+static void prepare_do_end_test(s7_scheme *sc)
+{
+  /* sc->args = (list var-data [(end-test #f) [rtn-expr]]) 
+   *   if the end-test is optimizable, its info vector is placed where the #f is
+   *
+  /* fprintf(stderr, "args: %s\n", s7_object_to_c_string(sc, sc->args)); */
+  
+  if (cdr(sc->args) != sc->NIL) /* nil case: (call-with-exit (lambda (r) (do ((i 0 (+ i 1))) () (if (= i 100) (r 1))))) */
+    {
+      s7_pointer end_expr;
+      end_expr = car(cadr(sc->args));
+
+      /* cadr(sc->args) can't be nil -- it is always a cons with cdr = #f
+       *   end_expr now holds the end-test expression
+       *
+       * we're looking for an end-test of the form (= var int) or (= var1 var2) or (= int var)
+       *    all the step vars have been initialized by now, so we can check for int vars
+       */
+
+      if ((is_pair(end_expr)) &&                                  /* nil if: (do ((i 0 (+ i 1))) (() 1) */
+	  (s7_is_symbol(car(end_expr))) &&
+	  (is_pair(cdr(end_expr))) &&
+	  (is_pair(cddr(end_expr))) &&
+	  (cdddr(end_expr) == sc->NIL) &&
+	  (((s7_is_symbol(cadr(end_expr))) || 
+	    (is_steppable_integer(cadr(end_expr)))) &&
+	   ((s7_is_symbol(caddr(end_expr))) || 
+	    (is_steppable_integer(caddr(end_expr))))))
+	{
+	  s7_pointer op, arg1 = sc->F, val1 = sc->F, arg2 = sc->F, val2 = sc->F;
+	  op = find_symbol(sc, sc->envir, car(end_expr));
+	  if (symbol_value(op) == initial_equal)
+	    {
+	      if (s7_is_symbol(cadr(end_expr)))
+		{
+		  arg1 = find_symbol(sc, sc->envir, cadr(end_expr));
+		  val1 = symbol_value(arg1);
+		  if (!is_steppable_integer(val1))
+		    val1 = sc->F;
+		}
+	      else val1 = cadr(end_expr);
+	      if (val1 != sc->F)
+		{
+		  if (s7_is_symbol(caddr(end_expr)))
+		    {
+		      arg2 = find_symbol(sc, sc->envir, caddr(end_expr));
+		      val2 = symbol_value(arg2);
+		      if (!is_steppable_integer(val2))
+			val2 = sc->F;
+		    }
+		  else val2 = caddr(end_expr);
+		  if (val2 != sc->F)
+		    {
+		      /* everything looks ok -- make a vector of binding info */
+		      int gc_loc;
+		      s7_pointer new_expr;
+
+		      new_expr = s7_make_vector(sc, 6);
+		      gc_loc = s7_gc_protect(sc, new_expr);
+
+		      vector_element(new_expr, 0) = initial_equal;     /* 1st 2 so we can be sure the operator is still the initial '=' function */
+		      vector_element(new_expr, 1) = op;
+		      vector_element(new_expr, 2) = arg1;
+		      vector_element(new_expr, 3) = val1;
+		      vector_element(new_expr, 4) = arg2;
+		      vector_element(new_expr, 5) = val2;
+		      
+		      cdr(cadr(sc->args)) = new_expr;
+		      s7_gc_unprotect_at(sc, gc_loc);
+
+		      /* if (do ((i 0 (+ i 1))) ((= i 3)))
+		       *   args is (<var info> ((= i 3) . #(= <= binding> <i binding> 0 #f 3)))
+		       */
+		    }
+		}
+	    }
+	}
+    }
+}
 
 
 
@@ -20327,13 +20414,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  (cadr(sc->code) != sc->NIL))                        /* no end-test? */
 	return(eval_error(sc, "do: end-test and end-value list is not a list: ~A", sc->code));
 
-      if (car(sc->code) == sc->NIL)                           /* (do () ...) */
+      if (car(sc->code) == sc->NIL)                           /* (do () ...) -- (let ((i 0)) (do () ((= i 1)) (set! i 1))) */
 	{
+	  s7_pointer end_stuff;
+	  end_stuff = cadr(sc->code);
 	  sc->envir = new_frame_in_env(sc, sc->envir); 
-	  sc->args = s7_cons(sc, sc->NIL, cadr(sc->code));
+	  if (end_stuff == sc->NIL)
+	    sc->args = make_list_1(sc, sc->NIL);
+	  else sc->args = s7_cons(sc, sc->NIL, s7_cons(sc, s7_cons(sc, car(end_stuff), sc->F), cdr(end_stuff)));
 	  sc->code = cddr(sc->code);
-	  sc->op = OP_DO_END;
-	  goto START_WITHOUT_POP_STACK;
+	  goto DO_END1;
 	}
       
       /* eval each init value, then set up the new frame (like let, not let*) */
@@ -20382,30 +20472,73 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       prepare_do_step_variables(sc);
 
+    DO_END1:
+      prepare_do_end_test(sc);
       
+
     case OP_DO_END:
       /* here vars have been init'd or incr'd
-       *    args = (cons var-data end-data)
+       *    args = (list var-data end-expr return-expr-if-any)
+       *      if (do ((i 0 (+ i 1))) ((= i 3) 10)),            args: (vars ((= i 3) <opt-info>) 10)
+       *      if (do ((i 0 (+ i 1))) ((= i 3))),               args: (vars ((= i 3) <opt-info>)) and result expr is () == (begin)
+       *      if (do ((i 0 (+ i 1))) (#t 10 12)),              args: (vars #t 10 12), result: ([begin] 10 12) -> 12 
+       *      if (call-with-exit (lambda (r) (do () () (r)))), args: '(())
        *    code = body
        */
-      
+
       if (cdr(sc->args) != sc->NIL)
 	{
+	  /* check for optimizable case */
+	  {
+	    s7_pointer sv;
+	    sv = cdr(cadr(sc->args));
+	    if ((sv != sc->F) &&                                                    /* optimization is possible */
+		(symbol_value(vector_element(sv, 1)) == vector_element(sv, 0)) &&   /* '=' has not changed */
+		((vector_element(sv, 2) == sc->F) ||                                /* arg1 is either a prechecked int constant */
+		 (is_steppable_integer(cdr(vector_element(sv, 2))))) &&             /*   or a variable whose value is an acceptable integer */
+		((vector_element(sv, 4) == sc->F) ||                                /* same for arg2 */
+		 (is_steppable_integer(cdr(vector_element(sv, 4))))))             
+	      {
+		/* get the current arg values (we've checked above that they're ints), check for equality
+		 */
+		s7_Int arg1, arg2;
+		if (vector_element(sv, 2) == sc->F)
+		  arg1 = s7_integer(vector_element(sv, 3));
+		else arg1 = s7_integer(cdr(vector_element(sv, 2)));
+		if (vector_element(sv, 4) == sc->F)
+		  arg2 = s7_integer(vector_element(sv, 5));
+		else arg2 = s7_integer(cdr(vector_element(sv, 4)));
+		if (arg1 == arg2)
+		  {
+		    /* end test is #t, go to result */
+		    sc->code = cddr(sc->args);                /* result expr (a list -- implicit begin) */
+		    sc->args = sc->NIL;
+		    goto BEGIN;
+		  }
+
+		/* end test is #f, evaluate body (sc->code is ready to go) */
+		push_stack(sc, opcode(OP_DO_STEP), sc->args, sc->code);
+		sc->args = sc->NIL;
+		goto BEGIN;
+	      }
+	  }
+
 	  push_stack(sc, opcode(OP_DO_END1), sc->args, sc->code);
-	  /* evaluate the endtest */
-	  sc->code = cadr(sc->args);                /* end expr */
+	  sc->code = caadr(sc->args);               /* evaluate the end expr */
 	  sc->args = sc->NIL;
 	  goto EVAL;
 	}
       else sc->value = sc->F;                       /* (do ((...)) () ...) -- no endtest */
 
-      
+
     case OP_DO_END1:
-      /* sc->value should be result of endtest evaluation */
+      /* sc->value is the result of end-test evaluation */
       if (is_true(sc, sc->value))
 	{
-	  /* we're done -- deal with result exprs */
-	  sc->code = cddr(sc->args);                /* result expr */
+	  /* we're done -- deal with result exprs 
+	   *   if there isn't an end test, there also isn't a result (they're in the same list)
+	   */
+	  sc->code = cddr(sc->args);                /* result expr (a list -- implicit begin) */
 	}
       else
 	{
@@ -28186,6 +28319,8 @@ s7_scheme *s7_init(void)
   save_initial_environment(sc);
 
   initial_add = s7_symbol_value(sc, s7_make_symbol(sc, "+"));
+  initial_subtract = s7_symbol_value(sc, s7_make_symbol(sc, "-"));
+  initial_equal = s7_symbol_value(sc, s7_make_symbol(sc, "="));
 
   return(sc);
 }
