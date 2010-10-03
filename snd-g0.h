@@ -134,7 +134,11 @@ typedef struct {
   color_t fg_color, bg_color;
 } gc_t;
 
+#if HAVE_GTK_SCALE_NEW
+#define picture_t cairo_surface_t
+#else
 #define picture_t GdkPixmap
+#endif
 
 typedef struct {
   gc_t *gc;
@@ -159,7 +163,7 @@ typedef struct slist {
 typedef struct {
   /* we need two versions of each GC because the selected channel's colors can be different from the unselected channels' */
   GtkWidget **chan_widgets;
-  GtkObject **chan_adjs;
+  GtkAdjustment **chan_adjs;
   idle_t fft_in_progress;
   idle_t peak_env_in_progress;
   struct env_state *peak_env_state;
@@ -188,7 +192,7 @@ typedef struct {
 
 typedef struct {
   GtkWidget **snd_widgets;
-  GtkObject **snd_adjs;
+  GtkAdjustment **snd_adjs;
   struct env_editor *flt;
   GtkWidget *dialog;
   int page;

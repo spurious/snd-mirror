@@ -35019,7 +35019,6 @@ why are these different (read-time `#() ? )
 (num-test (rationalize .1 .04) 1/8)
 (num-test (rationalize .1 .02) 1/9)
 (num-test (rationalize .1 .01) 1/10)
-(num-test (rationalize .1 0) 1/10)
 
 (num-test (rationalize 23.1 22.0) 2)
 (num-test (rationalize 23.1 22) 2)

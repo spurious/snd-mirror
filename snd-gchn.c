@@ -34,12 +34,12 @@ GtkWidget *channel_down_arrow(chan_info *cp) {return(cp->cgx->chan_widgets[W_dow
 
 
 static GtkWidget *channel_main_pane(chan_info *cp) {return(cp->cgx->chan_widgets[W_main_window]);}
-static GtkObject *gsy_adj(chan_info *cp)           {return(cp->cgx->chan_adjs[W_gsy_adj]);}
-static GtkObject *gzy_adj(chan_info *cp)           {return(cp->cgx->chan_adjs[W_gzy_adj]);}
-static GtkObject *sy_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_sy_adj]);}
-static GtkObject *sx_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_sx_adj]);}
-static GtkObject *zy_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_zy_adj]);}
-static GtkObject *zx_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_zx_adj]);}
+static GtkAdjustment *gsy_adj(chan_info *cp)           {return(cp->cgx->chan_adjs[W_gsy_adj]);}
+static GtkAdjustment *gzy_adj(chan_info *cp)           {return(cp->cgx->chan_adjs[W_gzy_adj]);}
+static GtkAdjustment *sy_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_sy_adj]);}
+static GtkAdjustment *sx_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_sx_adj]);}
+static GtkAdjustment *zy_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_zy_adj]);}
+static GtkAdjustment *zx_adj(chan_info *cp)            {return(cp->cgx->chan_adjs[W_zx_adj]);}
 
 
 static mus_float_t sqr(mus_float_t a) {return(a * a);}
@@ -131,7 +131,7 @@ static void zx_changed(float value, chan_info *cp)
 }
 
 
-static void set_scrollbar(GtkObject *adj, mus_float_t position, mus_float_t range) /* position and range 0 to 1.0 */
+static void set_scrollbar(GtkAdjustment *adj, mus_float_t position, mus_float_t range) /* position and range 0 to 1.0 */
 {
   ADJUSTMENT_SET_PAGE_SIZE(adj, range);
   ADJUSTMENT_SET_VALUE(adj, position);
@@ -601,7 +601,7 @@ static gboolean real_graph_key_press(GtkWidget *w, GdkEventKey *ev, gpointer dat
   keysym = EVENT_KEYVAL(ev);
   theirs = key_press_callback(cp, x, y, EVENT_STATE(ev), keysym);
   if (theirs) ss->sgx->graph_is_active = false;
-  g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
+  g_signal_stop_emission((gpointer)w, g_signal_lookup("key_press_event", G_OBJECT_TYPE((gpointer)w)), 0);
 
   return(true);
 }
@@ -730,7 +730,7 @@ static void channel_drag_watcher(GtkWidget *w, const char *filename, int x, int 
 int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, GtkWidget *main, fw_button_t button_style, bool with_events)
 {
   GtkWidget **cw;
-  GtkObject **adjs;
+  GtkAdjustment **adjs;
   chan_info *cp;
   chan_context *cx;
   graphics_context *cax;
@@ -746,7 +746,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
   if (cx->chan_widgets == NULL) 
     {
       cw = (GtkWidget **)calloc(NUM_CHAN_WIDGETS, sizeof(GtkWidget *));
-      adjs = (GtkObject **)calloc(NUM_CHAN_ADJS, sizeof(GtkObject *));
+      adjs = (GtkAdjustment **)calloc(NUM_CHAN_ADJS, sizeof(GtkAdjustment *));
       cp->cgx->chan_widgets = cw;
       cp->cgx->chan_adjs = adjs;
     }
@@ -815,7 +815,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 		       0, 0);
       gtk_widget_show(cw[W_bottom_scrollers]);
 
-      adjs[W_sx_adj] = gtk_adjustment_new(0.0, 0.0, 1.00, 0.001, 0.01, .01);
+      adjs[W_sx_adj] = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 1.00, 0.001, 0.01, .01);
       cw[W_sx] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_sx_adj]));
       gtk_box_pack_start(GTK_BOX(cw[W_bottom_scrollers]), cw[W_sx], true, true, 0);
       set_user_data(G_OBJECT(adjs[W_sx_adj]), (gpointer)cp);
@@ -823,7 +823,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       gtk_widget_show(cw[W_sx]);
       gtk_widget_set_name(cw[W_sx], "sx_slider");
 
-      adjs[W_zx_adj] = gtk_adjustment_new(0.0, 0.0, 1.1, 0.001, 0.01, .1);
+      adjs[W_zx_adj] = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 1.1, 0.001, 0.01, .1);
       cw[W_zx] = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjs[W_zx_adj]));
       gtk_box_pack_start(GTK_BOX(cw[W_bottom_scrollers]), cw[W_zx], true, true, 0);
       set_user_data(G_OBJECT(adjs[W_zx_adj]), (gpointer)cp);
@@ -871,7 +871,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 	  gtk_widget_show(cw[W_w]);
 	}
 
-      adjs[W_zy_adj] = gtk_adjustment_new(0.0, 0.0, 1.1, 0.001, 0.01, .1);   /* 0 -> 1 (upside down) */
+      adjs[W_zy_adj] = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 1.1, 0.001, 0.01, .1);   /* 0 -> 1 (upside down) */
       cw[W_zy] = gtk_vscrollbar_new(GTK_ADJUSTMENT(adjs[W_zy_adj]));
       gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_zy], 0, 1, 0, 1, 
 		       (GtkAttachOptions)(GTK_FILL), 
@@ -882,7 +882,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       gtk_widget_show(cw[W_zy]);
       gtk_widget_set_name(cw[W_zy], "zy_slider");
 
-      adjs[W_sy_adj] = gtk_adjustment_new(0.5, 0.0, 1.01, 0.001, 0.01, .01);
+      adjs[W_sy_adj] = (GtkAdjustment *)gtk_adjustment_new(0.5, 0.0, 1.01, 0.001, 0.01, .01);
       cw[W_sy] = gtk_vscrollbar_new(GTK_ADJUSTMENT(adjs[W_sy_adj]));
       gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_sy], 1, 2, 0, 1, 
 		       (GtkAttachOptions)(GTK_FILL), 
@@ -895,7 +895,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 
       if (need_extra_scrollbars)
 	{
-	  adjs[W_gsy_adj] = gtk_adjustment_new(0.0, 0.0, 1.0, 0.001, 0.01, .01);
+	  adjs[W_gsy_adj] = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 1.0, 0.001, 0.01, .01);
 	  cw[W_gsy] = gtk_vscrollbar_new(GTK_ADJUSTMENT(adjs[W_gsy_adj]));
 	  gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_gsy], 3, 4, 0, 2, 
 			   (GtkAttachOptions)(GTK_FILL), 
@@ -906,7 +906,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 	  gtk_widget_show(cw[W_gsy]);
 	  gtk_widget_set_name(cw[W_gsy], "gsy_slider");
 
-	  adjs[W_gzy_adj] = gtk_adjustment_new(1.0, 0.0, 1.00, 0.001, 0.01, .01);
+	  adjs[W_gzy_adj] = (GtkAdjustment *)gtk_adjustment_new(1.0, 0.0, 1.00, 0.001, 0.01, .01);
 	  cw[W_gzy] = gtk_vscrollbar_new(GTK_ADJUSTMENT(adjs[W_gzy_adj]));
 	  gtk_table_attach(GTK_TABLE(cw[W_graph_window]), cw[W_gzy], 4, 5, 0, 2, 
 			   (GtkAttachOptions)(GTK_FILL), 

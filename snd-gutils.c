@@ -536,9 +536,9 @@ void set_sensitive(GtkWidget *wid, bool val)
 
 void set_toggle_button(GtkWidget *wid, bool val, bool passed, void *data) 
 {
-  if (!passed) g_signal_handlers_block_matched(GTK_OBJECT(wid), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)data);
+  if (!passed) g_signal_handlers_block_matched((gpointer)wid, G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)data);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(wid), val);
-  if (!passed) g_signal_handlers_unblock_matched(GTK_OBJECT(wid), G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)data);
+  if (!passed) g_signal_handlers_unblock_matched((gpointer)wid, G_SIGNAL_MATCH_DATA, 0, 0, NULL, 0, (gpointer)data);
 }
 
 

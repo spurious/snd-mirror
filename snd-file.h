@@ -80,8 +80,8 @@ typedef struct {
 
 #if USE_GTK
   gc_t *env_gc;
-  GtkObject *amp_adj; /* not GtkAdjustment* because gtk_adjustment_new returns a GtkObject* */
-  GtkObject *speed_adj;
+  GtkAdjustment *amp_adj; 
+  GtkAdjustment *speed_adj;
 
   gulong at_sample_text_handler_id, at_mark_text_handler_id;
   gulong at_sample_button_handler_id, at_mark_button_handler_id;

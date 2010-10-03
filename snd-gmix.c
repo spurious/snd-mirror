@@ -49,7 +49,7 @@ static void stop_dragging(int mix_id)
 /* -------- speed -------- */
 
 static GtkWidget *w_speed, *w_speed_label, *w_speed_number, *w_speed_form, *w_speed_event, *w_speed_label_event;
-static GtkObject *w_speed_adj;
+static GtkAdjustment *w_speed_adj;
 static bool speed_pressed = false, speed_dragged = false;
 /* can't use value_changed on adjustment and motion event happens even when the mouse merely moves across the slider without dragging */
 
@@ -182,7 +182,7 @@ static gboolean speed_press_callback(GtkWidget *w, GdkEventButton *ev, gpointer 
 /* -------- amp -------- */
 
 static GtkWidget *w_amp, *w_amp_label, *w_amp_number, *w_amp_event, *w_amp_form;
-static GtkObject *w_amp_adj;
+static GtkAdjustment *w_amp_adj;
 
 static mus_float_t scrollbar_to_amp(mus_float_t val)
 {
@@ -848,7 +848,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_container_add(GTK_CONTAINER(w_speed_label_event), w_speed_number);
       gtk_widget_show(w_speed_number);
       
-      w_speed_adj = gtk_adjustment_new(0.45, 0.0, 1.0, 0.001, 0.01, .1);
+      w_speed_adj = (GtkAdjustment *)gtk_adjustment_new(0.45, 0.0, 1.0, 0.001, 0.01, .1);
       w_speed = gtk_hscrollbar_new(GTK_ADJUSTMENT(w_speed_adj));
       gtk_box_pack_start(GTK_BOX(w_speed_form), w_speed, true, true, 4);
       SG_SIGNAL_CONNECT(w_speed, "button_release_event", speed_release_callback, NULL);
@@ -878,7 +878,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_box_pack_start(GTK_BOX(w_amp_form), w_amp_number, false, false, 0);
       gtk_widget_show(w_amp_number);
 	  
-      w_amp_adj = gtk_adjustment_new(0.5, 0.0, 1.0, 0.001, 0.01, .1);
+      w_amp_adj = (GtkAdjustment *)gtk_adjustment_new(0.5, 0.0, 1.0, 0.001, 0.01, .1);
       w_amp = gtk_hscrollbar_new(GTK_ADJUSTMENT(w_amp_adj));
       gtk_box_pack_start(GTK_BOX(w_amp_form), w_amp, true, true, 4);
 

@@ -8,7 +8,7 @@ static GtkWidget *applyB, *apply2B, *cancelB, *drawer, *showB, *saveB, *resetB, 
 static GtkWidget *revertB, *undoB, *redoB, *printB, *brktxtL, *graphB, *fltB, *ampB, *srcB, *rbrow, *clipB, *deleteB;
 static GtkWidget *nameL, *textL, *dBB, *orderL;
 static GtkWidget *expB, *linB, *lerow, *baseScale, *baseLabel, *baseValue, *selectionB, *selrow, *revrow, *unrow, *saverow;
-static GtkObject *baseAdj, *orderAdj;
+static GtkAdjustment *baseAdj, *orderAdj;
 static gc_t *gc, *rgc, *ggc;
 static slist *env_list = NULL;
 
@@ -1138,14 +1138,14 @@ GtkWidget *create_envelope_editor(void)
       gtk_widget_show(baseValue);
 
 
-      baseAdj = gtk_adjustment_new(0.5, 0.0, 1.0, 0.001, 0.01, .1);
+      baseAdj = (GtkAdjustment *)gtk_adjustment_new(0.5, 0.0, 1.0, 0.001, 0.01, .1);
       baseScale = gtk_hscrollbar_new(GTK_ADJUSTMENT(baseAdj));
       widget_modify_bg(baseScale, GTK_STATE_NORMAL, ss->sgx->position_color);
       SG_SIGNAL_CONNECT(baseAdj, "value_changed", base_changed_callback, NULL);
       gtk_box_pack_start(GTK_BOX(bottomrow), baseScale, true, true, 4);
       gtk_widget_show(baseScale);
 
-      orderAdj = gtk_adjustment_new(20, 2, 100000, 2, 10, 0);
+      orderAdj = (GtkAdjustment *)gtk_adjustment_new(20, 2, 100000, 2, 10, 0);
       orderL = gtk_spin_button_new(GTK_ADJUSTMENT(orderAdj), 0.0, 0);
       gtk_box_pack_end(GTK_BOX(bottomrow), orderL, false, false, 4);
       gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(orderL), true);

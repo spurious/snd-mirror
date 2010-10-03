@@ -19862,7 +19862,7 @@ static s7_pointer prepare_do_step_variables(s7_scheme *sc)
 			   sc->args);
       }
   
-  /* TODO: subtract, simple floats, then (= var n) and its friends
+  /* TODO: subtract, simple floats, (> var n) and its friends
    */
 
   sc->args = safe_reverse_in_place(sc, sc->args);

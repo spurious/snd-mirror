@@ -25,7 +25,7 @@ static char *include_load_path = NULL;
 typedef struct prefs_info {
   GtkWidget *label, *text, *arrow_up, *arrow_down, *arrow_right, *error, *toggle, *scale, *toggle2, *toggle3;
   GtkWidget *color, *rscl, *gscl, *bscl, *rtxt, *gtxt, *btxt, *list_menu, *radio_button, *helper;
-  GtkObject *adj, *radj, *gadj, *badj;
+  GtkAdjustment *adj, *radj, *gadj, *badj;
   GtkWidget **radio_buttons;
   bool got_error;
   timeout_result_t help_id, power_id, erase_id;
@@ -1009,7 +1009,7 @@ static prefs_info *prefs_row_with_scale(const char *label, const char *varname,
   prf->text = make_row_text(prf, str, 6, hb);
   free(str);
 
-  prf->adj = gtk_adjustment_new(current_value /max_val, 0.0, 1.01, 0.001, 0.01, .01);
+  prf->adj = (GtkAdjustment *)gtk_adjustment_new(current_value /max_val, 0.0, 1.01, 0.001, 0.01, .01);
   prf->scale = gtk_hscale_new(GTK_ADJUSTMENT(prf->adj));
   gtk_box_pack_start(GTK_BOX(hb), prf->scale, true, true, 4);
   gtk_widget_show(prf->scale);
@@ -1391,7 +1391,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
 
   sep2 = make_row_inner_separator(20, row2);
 
-  prf->radj = gtk_adjustment_new(r, 0.0, 1.01, 0.001, 0.01, .01);
+  prf->radj = (GtkAdjustment *)gtk_adjustment_new(r, 0.0, 1.01, 0.001, 0.01, .01);
   prf->rscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->radj));
   gtk_widget_set_name(prf->rscl, "prefs_color_scale");
   gtk_box_pack_start(GTK_BOX(row2), prf->rscl, true, true, 4);
@@ -1401,7 +1401,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->rscl)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->rscl), false);
 
-  prf->gadj = gtk_adjustment_new(g, 0.0, 1.01, 0.001, 0.01, .01);
+  prf->gadj = (GtkAdjustment *)gtk_adjustment_new(g, 0.0, 1.01, 0.001, 0.01, .01);
   prf->gscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->gadj));
   gtk_widget_set_name(prf->gscl, "prefs_color_scale");
   gtk_box_pack_start(GTK_BOX(row2), prf->gscl, true, true, 4);
@@ -1411,7 +1411,7 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
   gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(prf->gscl)), GTK_UPDATE_CONTINUOUS);
   gtk_scale_set_draw_value(GTK_SCALE(prf->gscl), false);
 
-  prf->badj = gtk_adjustment_new(b, 0.0, 1.01, 0.001, 0.01, .01);
+  prf->badj = (GtkAdjustment *)gtk_adjustment_new(b, 0.0, 1.01, 0.001, 0.01, .01);
   prf->bscl = gtk_hscale_new(GTK_ADJUSTMENT(prf->badj));
   gtk_widget_set_name(prf->bscl, "prefs_color_scale");
   gtk_box_pack_start(GTK_BOX(row2), prf->bscl, true, true, 4);

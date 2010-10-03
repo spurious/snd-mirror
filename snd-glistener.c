@@ -662,7 +662,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 							  else
 							    return(false);
 							}}}}}}}}}}}}}}
-  g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
+  g_signal_stop_emission((gpointer)w, g_signal_lookup("key_press_event", G_OBJECT_TYPE((gpointer)w)), 0);
   return(false);
 }
 

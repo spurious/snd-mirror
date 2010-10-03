@@ -348,7 +348,7 @@ static void region_edit_callback(GtkWidget *w, gpointer context)
 
 static gboolean region_labels_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
-  g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("enter_notify_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
+  g_signal_stop_emission((gpointer)w, g_signal_lookup("enter_notify_event", G_OBJECT_TYPE((gpointer)w)), 0);
   return(false);
 }
 

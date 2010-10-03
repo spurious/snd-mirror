@@ -489,7 +489,7 @@ static gboolean minibuffer_key_callback(GtkWidget *w, GdkEventKey *event, gpoint
       chan_info *cp;
       cp = current_channel();
       if (cp) graph_key_press(channel_graph(cp), event, (gpointer)cp); 
-      g_signal_stop_emission(GTK_OBJECT(w), g_signal_lookup("key_press_event", G_OBJECT_TYPE(GTK_OBJECT(w))), 0);
+      g_signal_stop_emission((gpointer)w, g_signal_lookup("key_press_event", G_OBJECT_TYPE((gpointer)w)), 0);
       return(true);
     }
   if (((EVENT_KEYVAL(event) == snd_K_g) || (EVENT_KEYVAL(event) == snd_K_G)) && 
@@ -767,7 +767,7 @@ void set_amp(snd_info *sp, mus_float_t amp)
   else 
     {
       mus_float_t scrollval;
-      GtkObject *adj;
+      GtkAdjustment *adj;
       scroll_to_amp(sp, scrollval = amp_to_scroll(sp->amp_control_min, amp, sp->amp_control_max));
       adj = AMP_ADJUSTMENT(sp);
       ADJUSTMENT_SET_VALUE(adj, scrollval);
@@ -834,7 +834,7 @@ void set_speed(snd_info *sp, mus_float_t val)
     sp->speed_control = val;
   else
     {
-      GtkObject *adj;
+      GtkAdjustment *adj;
       adj = SPEED_ADJUSTMENT(sp);
       ignore_callback = true;
       ADJUSTMENT_SET_VALUE(adj, scroll_to_speed(sp, speed_to_scroll(sp->speed_control_min, val, sp->speed_control_max)));
@@ -968,7 +968,7 @@ void set_expand(snd_info *sp, mus_float_t val)
     sp->expand_control = val;
   else
     {
-      GtkObject *adj;
+      GtkAdjustment *adj;
       adj = EXPAND_ADJUSTMENT(sp);
       ignore_callback = true;
       ADJUSTMENT_SET_VALUE(adj, scroll_to_expand(sp, expand_to_scroll(sp->expand_control_min, val, sp->expand_control_max)));
@@ -1049,7 +1049,7 @@ void set_contrast(snd_info *sp, mus_float_t val)
     sp->contrast_control = val;
   else
     {
-      GtkObject *adj;
+      GtkAdjustment *adj;
       adj = CONTRAST_ADJUSTMENT(sp);
       ignore_callback = true;
       ADJUSTMENT_SET_VALUE(adj, scroll_to_contrast(sp, contrast_to_scroll(sp->contrast_control_min, val, sp->contrast_control_max)));
@@ -1140,7 +1140,7 @@ void set_revscl(snd_info *sp, mus_float_t val)
     sp->reverb_control_scale = val;
   else
     {
-      GtkObject *adj;
+      GtkAdjustment *adj;
       adj = REVSCL_ADJUSTMENT(sp);
       ignore_callback = true;
       ADJUSTMENT_SET_VALUE(adj, scroll_to_revscl(sp, revscl_to_scroll(sp->reverb_control_scale_min, val, sp->reverb_control_scale_max)));
@@ -1203,7 +1203,7 @@ void set_revlen(snd_info *sp, mus_float_t val)
     sp->reverb_control_length = val;
   else
     {
-      GtkObject *adj;
+      GtkAdjustment *adj;
       adj = REVLEN_ADJUSTMENT(sp);
       ignore_callback = true;
       ADJUSTMENT_SET_VALUE(adj, scroll_to_revlen(sp, revlen_to_scroll(sp->reverb_control_length_min, val, sp->reverb_control_length_max)));
@@ -1601,7 +1601,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 {
   snd_info *sp, *osp;
   GtkWidget **sw;
-  GtkObject **adjs;
+  GtkAdjustment **adjs;
   int snd_slot, nchans, i, k, old_chans;
   bool free_filename = false, make_widgets;
   char *old_name = NULL, *title;
@@ -1657,7 +1657,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   if (sx->snd_widgets == NULL)
     {
       sw = (GtkWidget **)calloc(NUM_SND_WIDGETS, sizeof(GtkWidget *));
-      adjs = (GtkObject **)calloc(NUM_SND_ADJS, sizeof(GtkObject *));
+      adjs = (GtkAdjustment **)calloc(NUM_SND_ADJS, sizeof(GtkAdjustment *));
       sx->snd_widgets = sw; 
       sx->snd_adjs = adjs;
     }
@@ -1842,7 +1842,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_box_pack_start(GTK_BOX(AMP_HBOX(sp)), AMP_LABEL(sp), false, false, 0);
       gtk_widget_show(AMP_LABEL(sp));
       
-      AMP_ADJUSTMENT(sp) = gtk_adjustment_new(amp_to_scroll(sp->amp_control_min, 1.0, sp->amp_control_max), 0.0, 1.0, 0.001, 0.01, .1);
+      AMP_ADJUSTMENT(sp) = (GtkAdjustment *)gtk_adjustment_new(amp_to_scroll(sp->amp_control_min, 1.0, sp->amp_control_max), 0.0, 1.0, 0.001, 0.01, .1);
       AMP_SCROLLBAR(sp) = gtk_hscrollbar_new(GTK_ADJUSTMENT(AMP_ADJUSTMENT(sp)));
       gtk_box_pack_start(GTK_BOX(AMP_HBOX(sp)), AMP_SCROLLBAR(sp), true, true, 4);
       SG_SIGNAL_CONNECT(AMP_ADJUSTMENT(sp), "value_changed", amp_changed_callback, sp);
@@ -1880,7 +1880,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_container_add(GTK_CONTAINER(SPEED_LABEL_EVENT_BOX(sp)), SPEED_LABEL(sp));
       gtk_widget_show(SPEED_LABEL(sp));
       
-      SPEED_ADJUSTMENT(sp) = gtk_adjustment_new(speed_to_scroll(sp->speed_control_min, 1.0, sp->speed_control_max), 0.0, 1.0, 0.001, 0.01, .1);
+      SPEED_ADJUSTMENT(sp) = (GtkAdjustment *)gtk_adjustment_new(speed_to_scroll(sp->speed_control_min, 1.0, sp->speed_control_max), 0.0, 1.0, 0.001, 0.01, .1);
       SPEED_SCROLLBAR(sp) = gtk_hscrollbar_new(GTK_ADJUSTMENT(SPEED_ADJUSTMENT(sp)));
       gtk_box_pack_start(GTK_BOX(SPEED_HBOX(sp)), SPEED_SCROLLBAR(sp), true, true, 4);
       SG_SIGNAL_CONNECT(SPEED_ADJUSTMENT(sp), "value_changed", speed_changed_callback, sp);
@@ -1919,7 +1919,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_box_pack_start(GTK_BOX(EXPAND_HBOX(sp)), EXPAND_LABEL(sp), false, false, 0);
       gtk_widget_show(EXPAND_LABEL(sp));
       
-      EXPAND_ADJUSTMENT(sp) = gtk_adjustment_new(expand_to_scroll(sp->expand_control_min, 1.0, sp->expand_control_max), 0.0, 1.0, 0.001, 0.01, .1);
+      EXPAND_ADJUSTMENT(sp) = (GtkAdjustment *)gtk_adjustment_new(expand_to_scroll(sp->expand_control_min, 1.0, sp->expand_control_max), 0.0, 1.0, 0.001, 0.01, .1);
       EXPAND_SCROLLBAR(sp) = gtk_hscrollbar_new(GTK_ADJUSTMENT(EXPAND_ADJUSTMENT(sp)));
       gtk_box_pack_start(GTK_BOX(EXPAND_HBOX(sp)), EXPAND_SCROLLBAR(sp), true, true, 4);
       SG_SIGNAL_CONNECT(EXPAND_ADJUSTMENT(sp), "value_changed", expand_changed_callback, sp);
@@ -1952,7 +1952,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_box_pack_start(GTK_BOX(CONTRAST_HBOX(sp)), CONTRAST_LABEL(sp), false, false, 0);
       gtk_widget_show(CONTRAST_LABEL(sp));
       
-      CONTRAST_ADJUSTMENT(sp) = gtk_adjustment_new(0.0, 0.0, 1.0, 0.001, 0.01, .1);
+      CONTRAST_ADJUSTMENT(sp) = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 1.0, 0.001, 0.01, .1);
       CONTRAST_SCROLLBAR(sp) = gtk_hscrollbar_new(GTK_ADJUSTMENT(CONTRAST_ADJUSTMENT(sp)));
       gtk_box_pack_start(GTK_BOX(CONTRAST_HBOX(sp)), CONTRAST_SCROLLBAR(sp), true, true, 4);
       SG_SIGNAL_CONNECT(CONTRAST_ADJUSTMENT(sp), "value_changed", contrast_changed_callback, sp);
@@ -1985,7 +1985,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_box_pack_start(GTK_BOX(REVERB_HBOX(sp)), REVSCL_LABEL(sp), false, false, 0);
       gtk_widget_show(REVSCL_LABEL(sp));
       
-      REVSCL_ADJUSTMENT(sp) = gtk_adjustment_new(0.0, 0.0, 1.0, 0.001, 0.01, .1);
+      REVSCL_ADJUSTMENT(sp) = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 1.0, 0.001, 0.01, .1);
       REVSCL_SCROLLBAR(sp) = gtk_hscrollbar_new(GTK_ADJUSTMENT(REVSCL_ADJUSTMENT(sp)));
       gtk_box_pack_start(GTK_BOX(REVERB_HBOX(sp)), REVSCL_SCROLLBAR(sp), true, true, 4);
       SG_SIGNAL_CONNECT(REVSCL_ADJUSTMENT(sp), "value_changed", revscl_changed_callback, sp);
@@ -2005,7 +2005,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_box_pack_start(GTK_BOX(REVERB_HBOX(sp)), REVLEN_LABEL(sp), false, false, 0);
       gtk_widget_show(REVLEN_LABEL(sp));
       
-      REVLEN_ADJUSTMENT(sp) = gtk_adjustment_new(revlen_to_scroll(sp->reverb_control_length_min, 
+      REVLEN_ADJUSTMENT(sp) = (GtkAdjustment *)gtk_adjustment_new(revlen_to_scroll(sp->reverb_control_length_min, 
 							       sp->reverb_control_length, 
 							       sp->reverb_control_length_max), 
 						 0.0, 1.0, 0.001, 0.01, .1);
@@ -2032,7 +2032,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_box_pack_start(GTK_BOX(FILTER_HBOX(sp)), FILTER_LEFT_BUTTON(sp), false, false, 4);
       gtk_widget_show(FILTER_LEFT_BUTTON(sp));
       
-      FILTER_ADJUSTMENT(sp) = gtk_adjustment_new(20, 2, 100000, 2, 10, 0);
+      FILTER_ADJUSTMENT(sp) = (GtkAdjustment *)gtk_adjustment_new(20, 2, 100000, 2, 10, 0);
       FILTER_ORDER_TEXT(sp) = gtk_spin_button_new(GTK_ADJUSTMENT(FILTER_ADJUSTMENT(sp)), 0.0, 0);
       gtk_box_pack_start(GTK_BOX(FILTER_HBOX(sp)), FILTER_ORDER_TEXT(sp), false, false, 2);
       gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(FILTER_ORDER_TEXT(sp)), true);

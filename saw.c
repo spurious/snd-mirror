@@ -105,8 +105,8 @@ static void gsnd_main (int argc, char **argv )
   gtk_widget_show(label);
   gtk_widget_show(shell);
 
-  gtk_signal_connect(GTK_OBJECT(label), "clicked", GTK_SIGNAL_FUNC(snd_callback), (gpointer)form);
-  gtk_signal_connect(GTK_OBJECT(shell), "delete_event", GTK_SIGNAL_FUNC(window_close), NULL);
+  gtk_signal_connect((gpointer)label, "clicked", GTK_SIGNAL_FUNC(snd_callback), (gpointer)form);
+  gtk_signal_connect((gpointer)shell, "delete_event", GTK_SIGNAL_FUNC(window_close), NULL);
   gtk_main();
 }
 

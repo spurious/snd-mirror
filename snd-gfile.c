@@ -5588,7 +5588,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	  gtk_box_pack_start(GTK_BOX(ampH), vdat->amp_number, false, false, 0);
 	  gtk_widget_show(vdat->amp_number);
 	  
-	  vdat->amp_adj = gtk_adjustment_new(0.5, 0.0, 1.0, 0.001, 0.01, .1);
+	  vdat->amp_adj = (GtkAdjustment *)gtk_adjustment_new(0.5, 0.0, 1.0, 0.001, 0.01, .1);
 	  vdat->amp_scrollbar = gtk_hscrollbar_new(GTK_ADJUSTMENT(vdat->amp_adj));
 	  gtk_box_pack_start(GTK_BOX(ampH), vdat->amp_scrollbar, true, true, 4);
 
@@ -5626,7 +5626,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	  gtk_container_add(GTK_CONTAINER(vdat->speed_label_event), vdat->speed_number);
 	  gtk_widget_show(vdat->speed_number);
       
-	  vdat->speed_adj = gtk_adjustment_new(0.45, 0.0, 1.0, 0.001, 0.01, .1);
+	  vdat->speed_adj = (GtkAdjustment *)gtk_adjustment_new(0.45, 0.0, 1.0, 0.001, 0.01, .1);
 	  vdat->speed_scrollbar = gtk_hscrollbar_new(GTK_ADJUSTMENT(vdat->speed_adj));
 	  gtk_box_pack_start(GTK_BOX(speedH), vdat->speed_scrollbar, true, true, 4);
 	  SG_SIGNAL_CONNECT(vdat->speed_scrollbar, "button_release_event", vf_speed_release_callback, (gpointer)vdat);

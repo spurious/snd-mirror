@@ -12,7 +12,7 @@ static GtkWidget *transform_dialog = NULL; /* main dialog shell */
 static GtkWidget *outer_table, *db_button, *peaks_button, *logfreq_button, *sono_button, *spectro_button, *normal_fft_button, *phases_button;
 static GtkWidget *normalize_button, *selection_button;
 static GtkWidget *alpha_label = NULL, *beta_label = NULL, *graph_drawer = NULL, *fft_window_label = NULL;
-static GtkObject *beta_adj, *alpha_adj, *spectrum_start_adj, *spectrum_end_adj;
+static GtkAdjustment *beta_adj, *alpha_adj, *spectrum_start_adj, *spectrum_end_adj;
 static GtkWidget *spectrum_start_scale, *spectrum_end_scale;
 static GtkWidget *db_txt, *peaks_txt, *lf_txt;
 static gc_t *gc = NULL, *fgc = NULL;
@@ -935,7 +935,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       {
 	GtkWidget *label, *vbb, *hb;
 	GtkWidget *pk_lab, *db_lab, *lf_lab;
-	GtkObject *pk_vals, *db_vals, *lf_vals;
+	GtkAdjustment *pk_vals, *db_vals, *lf_vals;
 	GtkWidget *vb, *sep1, *sep2;
 
 	vbb = gtk_vbox_new(false, 6);
@@ -1006,7 +1006,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	gtk_box_pack_start(GTK_BOX(vb), pk_lab, false, false, 0);
 	gtk_widget_show(pk_lab);
 	
-	pk_vals = gtk_adjustment_new(max_transform_peaks(ss), 2, 1000, 2, 10, 0);
+	pk_vals = (GtkAdjustment *)gtk_adjustment_new(max_transform_peaks(ss), 2, 1000, 2, 10, 0);
 	peaks_txt = gtk_spin_button_new(GTK_ADJUSTMENT(pk_vals), 0.0, 0);
 	gtk_box_pack_start(GTK_BOX(vb), peaks_txt, false, false, 0);
 	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(peaks_txt), true);
@@ -1023,7 +1023,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	gtk_box_pack_start(GTK_BOX(vb), db_lab, false, false, 0);
 	gtk_widget_show(db_lab);
       
-	db_vals = gtk_adjustment_new((int)(-(min_dB(ss))), 2, 1000, 2, 10, 0); /* can't be negative!! */
+	db_vals = (GtkAdjustment *)gtk_adjustment_new((int)(-(min_dB(ss))), 2, 1000, 2, 10, 0); /* can't be negative!! */
 	db_txt = gtk_spin_button_new(GTK_ADJUSTMENT(db_vals), 0.0, 0);
 	gtk_box_pack_start(GTK_BOX(vb), db_txt, false, false, 0);
 	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(db_txt), true);
@@ -1040,7 +1040,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	gtk_box_pack_start(GTK_BOX(vb), lf_lab, false, false, 0);
 	gtk_widget_show(lf_lab);
       
-	lf_vals = gtk_adjustment_new((int)(log_freq_start(ss)), 1, 1000, 1, 10, 0);
+	lf_vals = (GtkAdjustment *)gtk_adjustment_new((int)(log_freq_start(ss)), 1, 1000, 1, 10, 0);
 	lf_txt = gtk_spin_button_new(GTK_ADJUSTMENT(lf_vals), 0.0, 0);
 	gtk_box_pack_start(GTK_BOX(vb), lf_txt, false, false, 0);
 	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(lf_txt), true);
@@ -1090,7 +1090,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	gtk_box_pack_start(GTK_BOX(alpha_box), alpha_label, false, false, 1);
 	gtk_widget_show(alpha_label);      
 	
-	alpha_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
+	alpha_adj = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
 	alpha_scale = gtk_hscale_new(GTK_ADJUSTMENT(alpha_adj));
 	UNSET_CAN_FOCUS(alpha_scale);
 	gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(alpha_scale)), GTK_UPDATE_CONTINUOUS);
@@ -1111,7 +1111,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 	gtk_box_pack_start(GTK_BOX(beta_box), beta_label, false, false, 1);
 	gtk_widget_show(beta_label);      
 	
-	beta_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
+	beta_adj = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
 	beta_scale = gtk_hscale_new(GTK_ADJUSTMENT(beta_adj));
 	UNSET_CAN_FOCUS(beta_scale);
 	gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(beta_scale)), GTK_UPDATE_CONTINUOUS);
@@ -1150,7 +1150,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_box_pack_start(GTK_BOX(start_box), start_label, false, false, 1);
       gtk_widget_show(start_label);      
 
-      spectrum_start_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
+      spectrum_start_adj = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
       spectrum_start_scale = gtk_hscale_new(GTK_ADJUSTMENT(spectrum_start_adj));
       UNSET_CAN_FOCUS(spectrum_start_scale);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(spectrum_start_scale)), GTK_UPDATE_CONTINUOUS);
@@ -1170,7 +1170,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_box_pack_start(GTK_BOX(end_box), end_label, false, false, 1);
       gtk_widget_show(end_label);      
 
-      spectrum_end_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
+      spectrum_end_adj = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
       spectrum_end_scale = gtk_hscale_new(GTK_ADJUSTMENT(spectrum_end_adj));
       UNSET_CAN_FOCUS(spectrum_end_scale);
       gtk_range_set_update_policy(GTK_RANGE(GTK_SCALE(spectrum_end_scale)), GTK_UPDATE_CONTINUOUS);
