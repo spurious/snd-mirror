@@ -9,12 +9,12 @@
 	(call-with-input-file 
 	    (car files)
 	  (lambda (file)
-	    (let loop ((line (read-line file 'concat)))
+	    (let loop ((line (read-line file #t)))
 	      (or (eof-object? line)
 		  (begin
 		    (func line (car files) count)
 		    (set! count (+ 1 count))
-		    (loop (read-line file 'concat)))))))
+		    (loop (read-line file #t)))))))
 	(for-each-file func (cdr files)))))
 
 (for-each-file 
@@ -54,7 +54,7 @@
    (system (format #f "fgrep ~A *.c > vahi" func))
    (call-with-input-file "vahi"
      (lambda (file)
-       (let loop ((line (read-line file 'concat)))
+       (let loop ((line (read-line file #t)))
 	 (or (eof-object? line)
 	     (let ((len (string-length line))
 		   (precount 0)
@@ -88,7 +88,7 @@
 			(not (= precount count 0))
 			(not (= count (- precount 1))))
 		   (display (format #f "calloc ~D->~D: ~A~%" precount count line)))
-	       (loop (read-line file 'concat))))))))
+	       (loop (read-line file #t))))))))
  (list "CALLOC" "MALLOC" "REALLOC" "calloc" "malloc" "realloc"))
 
 
@@ -107,7 +107,7 @@
 
   (call-with-input-file "wz_data.js"
     (lambda (file)
-      (let loop ((line (read-line file 'concat))) ; concat means leave the final crlf in place
+      (let loop ((line (read-line file #t))) ; concat means leave the final crlf in place
 	(or (eof-object? line)
 	    (let ((len (string-length line)))
 	      (if (and (> len 8)
@@ -118,13 +118,13 @@
 				  i))))
 		    (if (< end len)
 			(set! tip-list (cons (substring line 4 end) tip-list)))))
-	      (loop (read-line file 'concat)))))))
+	      (loop (read-line file #t)))))))
   
   (for-each
    (lambda (filename)
      (call-with-input-file filename
        (lambda (file)
-	 (let loop ((line (read-line file 'concat)))
+	 (let loop ((line (read-line file #t)))
 	   (or (eof-object? line)
 	       (let ((len (string-length line)))
 		 (if (> len 8)
@@ -155,7 +155,7 @@
 					(not (char-alphabetic? chr))
 					(not (char-numeric? chr)))
 				   (set! start i)))))))
-		 (loop (read-line file 'concat))))))))
+		 (loop (read-line file #t))))))))
    (list "snd.html" "extsnd.html" "sndlib.html" "grfsnd.html" "sndclm.html" "sndscm.html"))
 
   (for-each

@@ -793,7 +793,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       gtk_widget_show(cw[W_graph]);
       if (with_events)
 	{
-	  SG_SIGNAL_CONNECT(cw[W_graph], GTK_DRAW_SIGNAL, channel_expose_callback, cp);
+	  SG_SIGNAL_CONNECT(cw[W_graph], DRAW_SIGNAL, channel_expose_callback, cp);
 	  SG_SIGNAL_CONNECT(cw[W_graph], "configure_event", channel_resize_callback, cp);
 	}
       SG_SIGNAL_CONNECT(cw[W_graph], "button_press_event", graph_button_press, cp);

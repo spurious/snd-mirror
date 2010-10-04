@@ -17,7 +17,7 @@
   (call-with-input-file 
       "snd-test.scm"
     (lambda (file)
-      (let loop ((line (read-line file 'concat)))
+      (let loop ((line (read-line file #t)))
 	(set! ctr (1+ ctr))
 	(or (eof-object? line)
 	    (let ((len (string-length line)))
@@ -25,6 +25,6 @@
 		       (string=? ";;; ---------------- test "
 				 (substring line 0 26)))
 		  (display (format #f "~A ~48,1T[~D]~%" (no-dashes-or-cr line) ctr)))
-	      (loop (read-line file 'concat))))))))
+	      (loop (read-line file #t))))))))
 
 (exit)

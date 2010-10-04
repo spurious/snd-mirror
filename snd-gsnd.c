@@ -1751,7 +1751,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       sp->sgx->name_pix_ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       sp->sgx->name_pix_ax->wn = WIDGET_TO_WINDOW(NAME_PIX(sp));
       sp->sgx->name_pix_ax->gc = ss->sgx->basic_gc;
-      SG_SIGNAL_CONNECT(NAME_PIX(sp), GTK_DRAW_SIGNAL, name_pix_expose, sp);
+      SG_SIGNAL_CONNECT(NAME_PIX(sp), DRAW_SIGNAL, name_pix_expose, sp);
 
       STOP_PIX(sp) = gtk_drawing_area_new();
       gtk_widget_set_events(STOP_PIX(sp), GDK_BUTTON_PRESS_MASK);
@@ -1779,7 +1779,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	    sp->sgx->clock_pix_ax[i] = (graphics_context *)calloc(1, sizeof(graphics_context));
 	    sp->sgx->clock_pix_ax[i]->wn = WIDGET_TO_WINDOW(CLOCK_PIX(sp, i));
 	    sp->sgx->clock_pix_ax[i]->gc = ss->sgx->basic_gc;
-	    SG_SIGNAL_CONNECT(CLOCK_PIX(sp, i), GTK_DRAW_SIGNAL, clock_pix_expose, sp->chans[i]);
+	    SG_SIGNAL_CONNECT(CLOCK_PIX(sp, i), DRAW_SIGNAL, clock_pix_expose, sp->chans[i]);
 	  }
       }
 
@@ -1898,7 +1898,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       sp->sgx->speed_arrow_ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       sp->sgx->speed_arrow_ax->wn = WIDGET_TO_WINDOW(SPEED_ARROW(sp));
       sp->sgx->speed_arrow_ax->gc = ss->sgx->basic_gc;
-      SG_SIGNAL_CONNECT(SPEED_ARROW(sp), GTK_DRAW_SIGNAL, speed_arrow_expose, sp);
+      SG_SIGNAL_CONNECT(SPEED_ARROW(sp), DRAW_SIGNAL, speed_arrow_expose, sp);
       SG_SIGNAL_CONNECT(SPEED_ARROW(sp), "button_press_event", speed_arrow_press, sp);
 
       gtk_widget_show(SPEED_HBOX(sp));
@@ -2080,7 +2080,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	widget_modify_bg(FILTER_ENV(sp), GTK_STATE_NORMAL, ss->sgx->highlight_color);
 	gtk_container_add(GTK_CONTAINER(FILTER_FRAME(sp)), FILTER_ENV(sp));
 	gtk_widget_show(FILTER_ENV(sp));
-	SG_SIGNAL_CONNECT(FILTER_ENV(sp), GTK_DRAW_SIGNAL, filter_drawer_expose, sp);
+	SG_SIGNAL_CONNECT(FILTER_ENV(sp), DRAW_SIGNAL, filter_drawer_expose, sp);
 	SG_SIGNAL_CONNECT(FILTER_ENV(sp), "configure_event", filter_drawer_resize, sp);
 	SG_SIGNAL_CONNECT(FILTER_ENV(sp), "button_press_event", filter_drawer_button_press, sp);
 	SG_SIGNAL_CONNECT(FILTER_ENV(sp), "button_release_event", filter_drawer_button_release, sp);

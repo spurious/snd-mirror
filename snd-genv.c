@@ -1171,7 +1171,7 @@ GtkWidget *create_envelope_editor(void)
       gray_ap->graph_active = true;
       fixup_graphics_context(gray_ap->ax, drawer, ggc);
 
-      SG_SIGNAL_CONNECT(drawer, GTK_DRAW_SIGNAL, drawer_expose, NULL);
+      SG_SIGNAL_CONNECT(drawer, DRAW_SIGNAL, drawer_expose, NULL);
       SG_SIGNAL_CONNECT(drawer, "configure_event", drawer_resize, NULL);
       SG_SIGNAL_CONNECT(drawer, "button_press_event", drawer_button_press, NULL);
       SG_SIGNAL_CONNECT(drawer, "button_release_event", drawer_button_release, NULL);

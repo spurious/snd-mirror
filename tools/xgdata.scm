@@ -7471,5 +7471,5 @@
 
 #|
 gtk3:
-(snd:6491): Gtk-CRITICAL **: gtk_paint_slider: assertion `width >= 0' failed [scrolled_window draw] -- edit history window I think
+TODO: (snd:6491): Gtk-CRITICAL **: gtk_paint_slider: assertion `width >= 0' failed [scrolled_window draw] -- edit history window I think
 |#

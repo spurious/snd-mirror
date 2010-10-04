@@ -25,7 +25,7 @@
 		(call-with-input-file 
 		    (list-ref (script-args) 1) ; invocation arg = text file of data ("snd heart.scm data.txt")
 		  (lambda (file)
-		    (let loop ((line (read-line file 'concat)))
+		    (let loop ((line (read-line file #t)))
 		      (or (eof-object? line)
 			  (let ((len (string-length line)))
 			    (do ((i 0 (+ 1 i)))
@@ -45,7 +45,7 @@
 				    (out-any samp (max 90 (moving-average average (* 0.5 (+ lp hp)))) 4)
 				    (out-any samp (max 90 (moving-average average1 (* 0.5 (+ lp hp)))) 5)
 				    (set! samp (+ 1 samp)))))
-			    (loop (read-line file 'concat))))))))))))
+			    (loop (read-line file #t))))))))))))
 
   ;; now display the data with y-axis bounds between 50 and 150, both traces in the same graph, x-axis in "samples" (readings)
   (set! (channel-style ind) channels-superimposed)

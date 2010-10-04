@@ -10292,9 +10292,11 @@ If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
 
       if (cdr(sc->args) != sc->NIL)
 	{
-	  if (!s7_is_boolean(cadr(sc->args)))
+	  /* support (read-line fp 'concat) for compatibility with guile */
+	  if ((!s7_is_boolean(cadr(sc->args))) &&
+	      (!s7_is_symbol(cadr(sc->args))))
 	    return(s7_wrong_type_arg_error(sc, "read-line", 2, cadr(sc->args), "#f or #t"));
-	  if (cadr(sc->args) == sc->T)
+	  if (cadr(sc->args) != sc->F)
 	    with_eol = true;
 	}
     }
@@ -28458,5 +28460,5 @@ s7_scheme *s7_init(void)
  *    amd phenom 965 (3.4G):     2083     1862, 0.808
  *    intel i7 930 (2.8G):       2084     1864  0.704
  *
- * 10.8: 0.684, same in 11.10: 0.397
+ * 10.8: 0.684, same in 11.10: 0.380, using no-gui snd (overhead: 0.04)
  */
