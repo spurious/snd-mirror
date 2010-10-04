@@ -603,7 +603,7 @@ static void make_region_dialog(void)
   cp = rsp->chans[0];
 
   gtk_paned_set_position(GTK_PANED(region_grf), 220);
-  SG_SIGNAL_CONNECT(channel_graph(cp), "expose_event", region_resize_callback, cp);
+  SG_SIGNAL_CONNECT(channel_graph(cp), GTK_DRAW_SIGNAL, region_resize_callback, cp);
   SG_SIGNAL_CONNECT(channel_graph(cp), "configure_event", region_expose_callback, cp);
 
   SG_SIGNAL_CONNECT(channel_up_arrow(cp), "button_press_event", region_up_arrow_callback, NULL);

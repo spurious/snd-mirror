@@ -5648,7 +5648,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
 	  widget_modify_bg(vdat->env_drawer, GTK_STATE_NORMAL, ss->sgx->white);
 	  gtk_widget_show(vdat->env_drawer);
 
-	  SG_SIGNAL_CONNECT(vdat->env_drawer, "expose_event", vf_amp_env_expose_callback, (gpointer)vdat);
+	  SG_SIGNAL_CONNECT(vdat->env_drawer, GTK_DRAW_SIGNAL, vf_amp_env_expose_callback, (gpointer)vdat);
 	  SG_SIGNAL_CONNECT(vdat->env_drawer, "configure_event", vf_amp_env_resize_callback, (gpointer)vdat);
 	  SG_SIGNAL_CONNECT(vdat->env_drawer, "button_press_event", vf_drawer_button_press, (gpointer)vdat);
 	  SG_SIGNAL_CONNECT(vdat->env_drawer, "button_release_event", vf_drawer_button_release, (gpointer)vdat);

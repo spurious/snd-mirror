@@ -792,8 +792,12 @@ GtkWidget *make_mix_dialog(void)
       
       if (!speaker_off_pix)
 	{
+#if HAVE_GTK_3
+	  /* TODO: gtk3 pix */
+#else
 	  gdk_pixbuf_render_pixmap_and_mask(gdk_pixbuf_new_from_xpm_data(speaker_xpm), &speaker_off_pix, NULL, 0);
 	  gdk_pixbuf_render_pixmap_and_mask(gdk_pixbuf_new_from_xpm_data(blue_speaker_xpm), &speaker_on_pix, NULL, 0);
+#endif
 	}
 
       mix_speaker_pix = speaker_off_pix;
@@ -803,7 +807,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_set_size_request(mix_play_pix, 16, 16);
       gtk_container_add(GTK_CONTAINER(mix_play), mix_play_pix);
       gtk_widget_show(mix_play_pix);
-      SG_SIGNAL_CONNECT(mix_play_pix, "expose_event", mix_play_pix_expose, NULL);
+      SG_SIGNAL_CONNECT(mix_play_pix, GTK_DRAW_SIGNAL, mix_play_pix_expose, NULL);
 
 
       nextb = gtk_button_new_from_stock(GTK_STOCK_GO_FORWARD);
@@ -932,7 +936,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_container_add(GTK_CONTAINER(w_env_frame), w_env);
       widget_modify_bg(w_env, GTK_STATE_NORMAL, ss->sgx->highlight_color);
       gtk_widget_show(w_env);
-      SG_SIGNAL_CONNECT(w_env, "expose_event", mix_amp_env_expose_callback, NULL);
+      SG_SIGNAL_CONNECT(w_env, GTK_DRAW_SIGNAL, mix_amp_env_expose_callback, NULL);
       SG_SIGNAL_CONNECT(w_env, "configure_event", mix_amp_env_resize_callback, NULL);
       SG_SIGNAL_CONNECT(w_env, "button_press_event", mix_drawer_button_press, NULL);
       SG_SIGNAL_CONNECT(w_env, "button_release_event", mix_drawer_button_release, NULL);

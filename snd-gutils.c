@@ -542,6 +542,21 @@ void set_toggle_button(GtkWidget *wid, bool val, bool passed, void *data)
 }
 
 
+#if HAVE_GTK_3
+
+int widget_height(GtkWidget *w)
+{
+  return(gtk_widget_get_allocated_height(w));
+}
+
+
+int widget_width(GtkWidget *w)
+{
+  return(gtk_widget_get_allocated_width(w));
+}
+
+#else
+
 guint16 widget_height(GtkWidget *w)
 {
   gint x, y;
@@ -556,6 +571,7 @@ guint16 widget_width(GtkWidget *w)
   gdk_drawable_get_size(WIDGET_TO_WINDOW(w), &x, &y);
   return(x);
 }
+#endif
 
 
 void set_widget_height(GtkWidget *w, guint16 height)

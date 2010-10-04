@@ -793,7 +793,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       gtk_widget_show(cw[W_graph]);
       if (with_events)
 	{
-	  SG_SIGNAL_CONNECT(cw[W_graph], "expose_event", channel_expose_callback, cp);
+	  SG_SIGNAL_CONNECT(cw[W_graph], GTK_DRAW_SIGNAL, channel_expose_callback, cp);
 	  SG_SIGNAL_CONNECT(cw[W_graph], "configure_event", channel_resize_callback, cp);
 	}
       SG_SIGNAL_CONNECT(cw[W_graph], "button_press_event", graph_button_press, cp);
@@ -1021,9 +1021,13 @@ void save_fft_pix(chan_info *cp, graphics_context *ax, int fwidth, int fheight, 
   cp->cgx->fft_pix_x0 = x0;
   cp->cgx->fft_pix_y0 = y0;
   cp->cgx->fft_pix_cutoff = cp->spectrum_end;
+#if HAVE_GTK_3
+  /* TODO: gtk 3 fft pix? */
+#else
   cp->cgx->fft_pix = gdk_pixbuf_get_from_drawable(cp->cgx->fft_pix, ax->wn, gtk_widget_get_colormap(ax->w),
 						  cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0, 0, 0,
 						  cp->cgx->fft_pix_width, cp->cgx->fft_pix_height);
+#endif
   cp->cgx->fft_pix_ready = true;
 
 }
@@ -1063,9 +1067,13 @@ void save_cursor_pix(chan_info *cp, graphics_context *ax, int fwidth, int fheigh
   cp->cgx->cursor_pix_height = fheight;
   cp->cgx->cursor_pix_x0 = x0;
   cp->cgx->cursor_pix_y0 = y0;
+#if HAVE_GTK_3
+  /* TODO: gtk3 cursor? */
+#else
   cp->cgx->cursor_pix = gdk_pixbuf_get_from_drawable(cp->cgx->cursor_pix, ax->wn, gtk_widget_get_colormap(ax->w),
 						     cp->cgx->cursor_pix_x0, cp->cgx->cursor_pix_y0, 0, 0,
 						     cp->cgx->cursor_pix_width, cp->cgx->cursor_pix_height);
+#endif
   cp->cgx->cursor_pix_ready = (cp->cgx->cursor_pix != NULL);
 }
 
@@ -1101,9 +1109,13 @@ void save_sono_cursor_pix(chan_info *cp, graphics_context *ax, int fwidth, int f
   cp->cgx->sono_cursor_pix_height = fheight;
   cp->cgx->sono_cursor_pix_x0 = x0;
   cp->cgx->sono_cursor_pix_y0 = y0;
+#if HAVE_GTK_3
+  /* gtk3 pix? */
+#else
   cp->cgx->sono_cursor_pix = gdk_pixbuf_get_from_drawable(cp->cgx->sono_cursor_pix, ax->wn, gtk_widget_get_colormap(ax->w),
 							  cp->cgx->sono_cursor_pix_x0, cp->cgx->sono_cursor_pix_y0, 0, 0,
 							  cp->cgx->sono_cursor_pix_width, cp->cgx->sono_cursor_pix_height);
+#endif
   cp->cgx->sono_cursor_pix_ready = (cp->cgx->sono_cursor_pix != NULL);
 }
 

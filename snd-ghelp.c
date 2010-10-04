@@ -325,7 +325,7 @@ static void create_help_monolog(void)
   search = snd_entry_new(hbox, WITH_WHITE_BACKGROUND);
   SG_SIGNAL_CONNECT(search, "activate", search_activated, NULL);
   gtk_widget_show(help_dialog);
-  SG_SIGNAL_CONNECT((gpointer)help_dialog, "expose_event", help_expose_callback, NULL);
+  SG_SIGNAL_CONNECT((gpointer)help_dialog, GTK_DRAW_SIGNAL, help_expose_callback, NULL);
   set_dialog_widget(HELP_DIALOG, help_dialog);
 }
 

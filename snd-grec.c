@@ -373,7 +373,7 @@ widget_t record_file(void)
       recorder_ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       recorder_ax->wn = WIDGET_TO_WINDOW(meters);
 
-      SG_SIGNAL_CONNECT(meters, "expose_event", meters_resize, NULL);
+      SG_SIGNAL_CONNECT(meters, GTK_DRAW_SIGNAL, meters_resize, NULL);
       SG_SIGNAL_CONNECT(meters, "configure_event", meters_resize, NULL);
     }
   else gtk_widget_show(recorder);

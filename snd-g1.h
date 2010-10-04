@@ -302,8 +302,13 @@ GdkColor *rgb_to_gdk_color(color_t col);
 void recolor_graph(chan_info *cp, bool selected);
 void set_sensitive(GtkWidget *wid, bool val);
 void set_toggle_button(GtkWidget *wid, bool val, bool passed, void *data);
+#if HAVE_GTK_3
+int widget_height(GtkWidget *w);
+int widget_width(GtkWidget *w);
+#else
 guint16 widget_height(GtkWidget *w);
 guint16 widget_width(GtkWidget *w);
+#endif
 void set_widget_height(GtkWidget *w, guint16 height);
 void set_widget_width(GtkWidget *w, guint16 width);
 gint16 widget_x(GtkWidget *w);

@@ -79,19 +79,21 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define TOGGLE_BUTTON_ACTIVE(Button) gtk_toggle_button_get_active((GTK_TOGGLE_BUTTON(Button)))
 #define BIN_CHILD(Bin) gtk_bin_get_child(GTK_BIN(Bin))
 
-#if (HAVE_GTK_SCALE_NEW) && defined(__GNUC__) && (!(defined(__cplusplus)))
+#if (HAVE_GTK_3) && defined(__GNUC__) && (!(defined(__cplusplus)))
   #define EVENT_STATE(Ev) ({ GdkModifierType Type;  gdk_event_get_state((GdkEvent *)Ev, &Type); Type; })
   #define EVENT_TIME(Ev) gdk_event_get_time((GdkEvent *)Ev)
   #define EVENT_X(Ev) ({ gdouble x, y; gdk_event_get_coords((GdkEvent *)Ev, &x, &y); x; })
   #define EVENT_Y(Ev) ({ gdouble x, y; gdk_event_get_coords((GdkEvent *)Ev, &x, &y); y; })
   /* there's also gtk_get_event_widget */
+  #define GTK_DRAW_SIGNAL "draw"
 #else
   #define EVENT_STATE(Ev) (Ev)->state
   #define EVENT_TIME(Ev) (Ev)->time
   #define EVENT_X(Ev) (Ev)->x
   #define EVENT_Y(Ev) (Ev)->y
+  #define GTK_DRAW_SIGNAL "expose_event"
 #endif
-#if HAVE_GTK_SCALE_NEW
+#if HAVE_GTK_3
   #define SET_CAN_FOCUS(Wid) gtk_widget_set_can_focus(Wid, true)
   #define UNSET_CAN_FOCUS(Wid) gtk_widget_set_can_focus(Wid, false)
 #else
@@ -134,7 +136,7 @@ typedef struct {
   color_t fg_color, bg_color;
 } gc_t;
 
-#if HAVE_GTK_SCALE_NEW
+#if HAVE_GTK_3
 #define picture_t cairo_surface_t
 #else
 #define picture_t GdkPixmap
