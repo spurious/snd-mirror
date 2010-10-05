@@ -792,12 +792,8 @@ GtkWidget *make_mix_dialog(void)
       
       if (!speaker_off_pix)
 	{
-#if HAVE_GTK_3
-	  /* TODO: gtk3 pix */
-#else
-	  gdk_pixbuf_render_pixmap_and_mask(gdk_pixbuf_new_from_xpm_data(speaker_xpm), &speaker_off_pix, NULL, 0);
-	  gdk_pixbuf_render_pixmap_and_mask(gdk_pixbuf_new_from_xpm_data(blue_speaker_xpm), &speaker_on_pix, NULL, 0);
-#endif
+	  speaker_off_pix = gdk_pixbuf_new_from_xpm_data(speaker_xpm);
+	  speaker_on_pix = gdk_pixbuf_new_from_xpm_data(blue_speaker_xpm);
 	}
 
       mix_speaker_pix = speaker_off_pix;

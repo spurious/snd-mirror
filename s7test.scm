@@ -9649,6 +9649,39 @@
 	  (set-cdr! (cdr L) L))) 
       16)
 
+;;; optimizer checks
+(num-test (let ((x 0)) (do ((i 1.0 (+ i 1))) ((> i 3)) (set! x (+ x i))) x) 6.0)
+(num-test (let ((x 0)) (do ((i 1 4)) ((> i 3)) (set! x (+ x i))) x) 1)
+(num-test (let ((x 0)) (do ((i 1 ((if #t + -) i 1))) ((> i 3)) (set! x (+ x i))) x) 6)
+(num-test (let ((x 0)) (do ((i 1 (+))) ((> i 0)) (set! x (+ x i))) x) 0)
+(num-test (let ((x 0)) (do ((i 1 (+ 1))) ((> i 0)) (set! x (+ x i))) x) 0)
+(num-test (let ((x 0)) (do ((i 1 (+ 1 i 2))) ((> i 10)) (set! x (+ x i))) x) 22)
+(num-test (let ((x 0)) (do ((i 1 (+ 1.0 i))) ((> i 3)) (set! x (+ x i))) x) 6.0)
+(num-test (let ((x 0)) (do ((i 1 (+ 1 pi))) ((> i 2)) (set! x (+ x i))) x) 1)
+(num-test (do ((i 0 (+ 1 pi))) ((> i 2) i)) (+ pi 1.0))
+(num-test (let ((x 0)) (do ((i 0 (+ i 8796093022208))) ((> i 0)) (set! x (+ x i))) x) 0)
+(num-test (let ((x 0)) (do ((i 0 (+ i 8796093022208))) ((> i 17592186044416)) (set! x (+ x i))) x) (+ (expt 2 44) (expt 2 43)))
+(num-test (let ((x 0)) (do ((i 1 (* i 2))) ((> i 10)) (set! x (+ x i))) x) 15)
+(num-test (do ((i 0 (+ i 1))) ((> i 2) i) (set! i (+ i 3.0))) 4.0)
+(num-test (let ((x 0)) (let ((add +)) (do ((i 0 (add i 1))) ((< i -2)) (set! add -) (set! x (+ x i)))) x) -3)
+(num-test (let ((equals =) (x 0)) (do ((i 0 (+ i 1))) ((equals i 3) x) (set! x (+ x i)))) 3)
+(num-test (let ((equals =) (x 0)) (do ((i 0 (+ i 1))) ((equals i 3) x) (set! x (+ x i)) (set! i (* i 1.0)))) 3.0)
+(num-test (let ((equals =) (x 0)) (do ((i 0 (+ i 1))) ((equals i 3) x) (set! x (+ x i)) (set! equals >))) 6)
+(num-test (let ((equals =) (x 0)) (do ((i 0 (+ i 1))) ((equals i 3) x) (set! x (+ x i)) (set! equals =))) 3)
+(num-test (let ((equals =) (x 0)) (do ((i 0 (+ i 1))) ((equals i 3) (set! x (+ x 1)) x) (set! x (+ x i)) (set! equals =))) 4)
+(num-test (do ((i 0 (+ i 1))) ((> i 3) i) (set! i (expt 2 60)))(do ((i 0 (+ i 1))) ((> i 3) i) (set! i (expt 2 60))) (+ 1 (expt 2 60)))
+(num-test (let ((x 0) (n 3)) (do ((i 0 (+ i 1))) ((= i n) x) (set! x (+ x i)))) 3)
+(num-test (let ((x 0) (n 3)) (do ((i 0 (+ i 1))) ((= 1 1) x) (set! x (+ x i)))) 0)
+(num-test (let ((x 0) (n (expt 2 50))) (do ((i 0 (+ i n))) ((= i (expt 2 51)) x) (set! x (+ x i)))) (expt 2 50))
+(num-test (let ((x 0) (n 31.0)) (do ((i 0 (+ i 1))) ((= i n) x) (set! x (+ x i)) (set! n 3))) 3)
+(num-test (let ((x 0)) (do ((i 0 (+ i 1/2))) ((= i 3) x) (set! x (+ x i)))) 15/2)
+(num-test (let ((x 0)) (do ((i 0 (+ i 1+i))) ((> (magnitude i) 3) x) (set! x (+ x i)))) 3+3i)
+(num-test (call-with-exit (lambda (r) (do () () (r 1)))) 1)
+(num-test (call-with-exit (lambda (r) (do () (#t 10 14) (r 1)))) 14)
+(num-test (do ((i 0 (+ i 1))) (#t 10 12)) 12)
+(num-test (do ((i 0 (+ i 1))) ((= i 3) i)) 3)
+
+
 
 
 ;;; -------- set! --------

@@ -2,13 +2,13 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Changed: Sat Jul 31 22:43:34 CEST 2010
+# Changed: Tue Oct 05 01:01:12 CEST 2010
 
 # Commentary:
 #
 # Requires --with-motif|gtk and module libxm.so|libxg.so or --with-static-xm|xg!
 #
-# Tested with Snd 11, Motif 2.2.3, Gtk+ 2.18.6, Ruby 1.8.7.
+# Tested with Snd 11.10, Motif 2.3.0, Gtk+ 2.20.1, Ruby 1.8.7
 #
 # module Snd_XM
 #  make_snd_menu(name, args) do ... end
@@ -553,7 +553,45 @@ end
 #
 # --- GTK ---
 #
+# From xg.c
+# (define (g_signal_connect obj name func . data)
+#   (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f 0))
+# (define (g_signal_connect_after obj name func . data)
+#   (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_AFTER))
+# (define (g_signal_connect_swapped obj name func . data)
+#   (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_SWAPPED))
+
 module Snd_Gtk
+  def Rg_signal_connect(obj, name, func, data = false)
+    Rg_signal_connect_data(RGPOINTER(obj),
+                           name,
+                           func,
+                           #lambda do |w, d| func.call(w, d) end,
+                           data,
+                           false,
+                           0)
+  end
+
+  def Rg_signal_connect_after(obj, name, func, data = false)
+    Rg_signal_connect_data(RGPOINTER(obj),
+                           name,
+                           func,
+                           #lambda do |w, d| func.call(w, d) end,
+                           data,
+                           false,
+                           RG_CONNECT_AFTER)
+  end
+
+  def Rg_signal_connect_swapped(obj, name, func, data = false)
+    Rg_signal_connect_data(RGPOINTER(obj),
+                           name,
+                           func,
+                           #lambda do |w, d| func.call(w, d) end,
+                           data,
+                           false,
+                           RG_CONNECT_SWAPPED)
+  end
+  
   def make_snd_menu(name, args = [], &body)
     Snd_main_menu.new(name, nil, args, &body)
   end
@@ -587,13 +625,20 @@ module Snd_Gtk
   def each_child(widget, &body)
     if widget?(widget)
       body.call(widget)
-      Rgtk_container_foreach(RGTK_CONTAINER(widget), lambda do |w, d| body.call(RGTK_WIDGET(w)) end)
+      Rgtk_container_foreach(RGTK_CONTAINER(widget),
+                             lambda do |w, d| body.call(RGTK_WIDGET(w)) end)
     end
   end
   alias for_each_child each_child
 
   def widget?(obj)
     obj.kind_of?(Array) and obj.length == 2 and obj.first == :GtkWidget_
+  end
+
+  def is_managed(widget)
+    # FIXME: RGTK_WIDGET_REALIZED doesn't exist any longer
+    #RGTK_WIDGET_REALIZED(widget)
+    widget?(widget)
   end
 
   # you should have set the name before:
@@ -608,7 +653,7 @@ module Snd_Gtk
   end
 
   def get_scale_value(widget, info, scaler = 1.0)
-    Rvalue(RGTK_ADJUSTMENT(widget))
+    Rgtk_adjustment_get_value(RGTK_ADJUSTMENT(widget))
   end
 
   def raise_dialog(widget)
@@ -831,12 +876,7 @@ module Snd_Gtk
   # body.arity == 2
   # lambda do |w, d| ... end
   def add_callback(parent, event, cb_data = false, &body)
-    Rg_signal_connect_closure_by_id(RGPOINTER(parent),
-                                    Rg_signal_lookup(event, RG_OBJECT_TYPE(RGTK_OBJECT(parent))),
-                                    0,
-                                    Rg_cclosure_new(lambda do |w, d|
-                                                      body.call(w, d)
-                                                    end, cb_data, false), false)
+    Rg_signal_connect(parent, event, body, cb_data)
   end
   
   def g_list_each(glist)
@@ -882,7 +922,7 @@ module Snd_Gtk
         Rgtk_table_attach(RGTK_TABLE(rc), log_lab, 0, 1, 0, 1, expand_fill, expand_fill, 0, 0)
         Rgtk_widget_show(log_lab)
         add_callback(@scale, "value_changed") do |w, d|
-          change_label(log_lab, scale_log_label(low, Rvalue(RGTK_ADJUSTMENT(@scale)), high))
+          change_label(log_lab, scale_log_label(low, Rgtk_adjustment_get_value(RGTK_ADJUSTMENT(@scale)), high))
         end
       else
         Rgtk_scale_set_digits(RGTK_SCALE(scl), case scale

@@ -2,13 +2,11 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Mar 18 00:18:35 CET 2003
-# Changed: Thu Apr 15 13:15:07 CEST 2010
+# Changed: Tue Oct 05 01:00:15 CEST 2010
 
 # Commentary:
 #
-# Requires --with-motif and module libxm.so or --with-static-xm!
-#
-# Tested with Snd 11, Motif 2.2.3, Ruby 1.8.7.
+# Tested with Snd 11.10, Motif 2.3.0, Gtk+ 2.20.1, Ruby 1.8.7
 #
 # module Snd_enved
 #  channel_enved(snd, chn)
@@ -98,7 +96,7 @@ require "env"
 require "hooks"
 require "extensions"
 
-if provided? :snd_motif
+if provided?(:snd_motif) or provided?(:snd_gtk)
   require "snd-xm"
   include Snd_XM
 end
@@ -292,7 +290,8 @@ pans a mono sound following its enved envelope into a stereo sound")
     obj.instance_of?(Graph_enved)
   end
 
-  if provided? :xm
+  # FIXME: xg doesn't work
+  if provided?(:xm) #or provided?(:xg)
     def make_xenved(name, parent, *rest)
       envelope, bounds, args, label = optkey(rest,
                                              [:envelope, [0, 0, 1, 1]],
@@ -314,11 +313,19 @@ pans a mono sound following its enved envelope into a stereo sound")
     end
 
     def xenved_test(name = "xenved")
-      widget = add_main_pane(name, RxmFormWidgetClass, [RXmNheight, 200])
-      args = [RXmNleftAttachment, RXmATTACH_WIDGET,
-              RXmNtopAttachment, RXmATTACH_WIDGET,
-              RXmNbottomAttachment, RXmATTACH_WIDGET,
-              RXmNrightAttachment, RXmATTACH_WIDGET]
+      widget = if provided? :xm
+                 add_main_pane(name, RxmFormWidgetClass, [RXmNheight, 200])
+               else
+                 add_main_pane(name)
+               end
+      args = if provided? :xm
+               [RXmNleftAttachment, RXmATTACH_WIDGET,
+                RXmNtopAttachment, RXmATTACH_WIDGET,
+                RXmNbottomAttachment, RXmATTACH_WIDGET,
+                RXmNrightAttachment, RXmATTACH_WIDGET]
+             else
+               []
+             end
       make_xenved(name, widget, :envelope, [0, 0, 1, 1], :axis_bounds, [0, 1, 0, 1], :args, args)
     end
   end
@@ -757,8 +764,10 @@ class Xenved < Graph_enved
     @parent = parent
     @x0, @x1, @y0, @y1 = bounds.map do |x| x.to_f end
     @args = args
-    @args += [RXmNforeground, data_color] unless @args.member?(RXmNforeground)
-    @args += [RXmNbackground, graph_color] unless @args.member?(RXmNbackground)
+    if provided? :xm
+      @args += [RXmNforeground, data_color] unless @args.member?(RXmNforeground)
+      @args += [RXmNbackground, graph_color] unless @args.member?(RXmNbackground)
+    end
     @lx0, @lx1, @ly0, @ly1 = if envelope?(axis_label)
                                axis_label.map do |x| x.to_f end
                              else
@@ -826,10 +835,11 @@ class Xenved < Graph_enved
       @envelope.each_pair do |x, y|
         cx = grfx(x)
         cy = grfy(y)
-        fill_arc(cx - Mouse_r, cy - Mouse_r, Mouse_d, Mouse_d, 0, 360 * 64)
+        fill_arc(cx, cy, Mouse_d, Mouse_d, 0, 360 * 64)
         draw_line(lx, ly, cx, cy) if lx
         lx, ly = cx, cy
       end
+      finish_draw
     end
   end
   
@@ -904,22 +914,100 @@ xe.help                             # this help
     end
     
     def fill_arc(x, y, width, height, angle1, angle2)
-      RXFillArc(@dpy, @window, @gc, x, y, width, height, angle1, angle2)
+      RXFillArc(@dpy, @window, @gc, x - Mouse_r, y - Mouse_r, width, height, angle1, angle2)
     end
 
     def draw_line(x1, y1, x2, y2)
       RXDrawLine(@dpy, @window, @gc, x1, y1, x2, y2)
     end
+
+    def finish_draw
+    end
+  elsif provided? :xg
+    def create_enved
+      @drawer = Rgtk_drawing_area_new()
+      Rgtk_widget_set_events(@drawer, RGDK_ALL_EVENTS_MASK)
+      Rgtk_widget_show(@parent)
+      Rgtk_box_pack_start(RGTK_BOX(@parent), @drawer, true, true, 10)
+      Rgtk_widget_show(@drawer)
+      Rgtk_widget_set_name(@drawer, @name)
+      @window = Rgtk_widget_get_window(@drawer)
+      #Rgdk_window_set_background(@window, graph_color)
+      Rgtk_widget_set_size_request(@drawer, -1, 200)
+      add_event_handler(@drawer, "expose_event") do |w, e, d|
+        draw_axes_cb
+        false
+      end
+      add_event_handler(@drawer, "configure_event") do |w, e, d|
+        draw_axes_cb
+        false
+      end
+      add_event_handler(@drawer, "button_press_event") do |w, e, d|
+        ev = RGDK_EVENT_BUTTON(e)
+        xy = Rgdk_event_get_coords(ev)
+        mouse_press_cb(xy[1], xy[2])
+        false
+      end
+      add_event_handler(@drawer, "button_release_event") do |w, e, d|
+        mouse_release_cb
+        false
+      end
+      add_event_handler(@drawer, "motion_notify_event") do |w, e, d|
+        ev = RGDK_EVENT_MOTION(e)
+        xy = Rgdk_event_get_coords(ev)
+        mouse_drag_cb(xy[1], xy[2])
+        false
+      end
+      new_cursor = Rgdk_cursor_new(RGDK_CROSSHAIR)
+      old_cursor = Rgdk_cursor_new(RGDK_LEFT_PTR)
+      add_event_handler(@drawer, "enter_notify_event") do |w, e, d|
+        Rgdk_window_set_cursor(Rgtk_widget_get_window(w), new_cursor)
+        false
+      end
+      add_event_handler(@drawer, "leave_notify_event") do |w, e, d|
+        Rgdk_window_set_cursor(Rgtk_widget_get_window(w), old_cursor)
+        false
+      end
+    end
+
+    def clear_window
+      Rgdk_window_clear(@window)
+      @cairo = Rgdk_cairo_create(RGDK_DRAWABLE(@window))
+    end
+
+    def fill_arc(x, y, width, height, angle1, angle2)
+      Rcairo_arc(@cairo, x, y, Mouse_r, 0.0, TWO_PI)
+      Rcairo_fill(@cairo)
+    end
+
+    def draw_line(x1, y1, x2, y2)
+      Rcairo_move_to(@cairo, x1, y1)
+      Rcairo_line_to(@cairo, x2, y2)
+      Rcairo_stroke(@cairo)
+    end
+
+    def finish_draw
+      Rcairo_destroy(@cairo)
+      @cairo = nil
+    end
   else
-    Snd.raise(:runtime_error, "no Motif?")
+    Snd.raise(:runtime_error, "neither Motif nor Gtk?")
   end
 
-  def mouse_press_cb(e)
-    super(ungrfx(Rx(e)), ungrfy(Ry(e)))
+  def mouse_press_cb(e, gtk = false)
+    if gtk
+      super(ungrfx(e), ungrfy(gtk))
+    else
+      super(ungrfx(Rx(e)), ungrfy(Ry(e)))
+    end
   end
   
-  def mouse_drag_cb(e)
-    super(ungrfx(Rx(e)), ungrfy(Ry(e)))
+  def mouse_drag_cb(e, gtk = false)
+    if gtk
+      super(ungrfx(e), ungrfy(gtk))
+    else
+      super(ungrfx(Rx(e)), ungrfy(Ry(e)))
+    end
   end
 
   def draw_axes_cb
@@ -958,6 +1046,7 @@ xe.help                             # this help
       [@py0, [@py1, (@py1 + ((@py0 - @py1) * ((y - @y1) / (@y0.to_f - @y1)))).round].max].min
     end
   end
-end if provided? :xm
+  # FIXME: xg doesn't work
+end if provided?(:xm) #or provided?(:xg)
 
 # xm-enved.rb ends here

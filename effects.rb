@@ -2,13 +2,13 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Feb 07 23:56:21 CET 2003
-# Changed: Thu Apr 15 13:21:42 CEST 2010
+# Changed: Tue Oct 05 01:02:28 CEST 2010
 
 # Commentary:
 #
-# Requires --with-motif and module libxm.so or --with-static-xm!
+# Requires --with-moitf or --with-gtk and module libxm.so or --with-static-xm!
 #
-# Tested with Snd 11, Motif 2.2.3, Ruby 1.8.7.
+# Tested with Snd 11.10, Motif 2.3.0, Gtk+ 2.20.1, Ruby 1.8.7
 #
 # module Effects (see new-effects.scm)
 #  plausible_mark_samples
@@ -534,12 +534,19 @@ module Effects
         sliders[0] = @dlg.add_slider("gain", 0.0, init_amount, 5.0, 100) do |w, c, i|
           @amount = get_scale_value(w, i, 100.0)
         end
-        frame = @dlg.add_frame([RXmNheight, 200])
-        @dlg.add_target() do |t| @target = t end
+        if provided? :xm
+          frame = @dlg.add_frame([RXmNheight, 200])
+          @dlg.add_target() do |t| @target = t end
+        else
+          frame = @dlg.parent
+        end
         activate_dialog(@dlg.dialog)
         @envelope = make_xenved("gain", frame,
                                 :envelope, [0.0, 1.0, 1.0, 1.0],
                                 :axis_bounds, [0.0, 1.0, 0.0, 1.0])
+        if provided? :xg
+          @dlg.add_target() do |t| @target = t end
+        end
       else
         activate_dialog(@dlg.dialog)
       end
@@ -866,7 +873,9 @@ Move the slider to change the center frequency and bandwidth.",
                            :reset_cb, lambda do |w, c, i|
                              @freq = init_freq
                              set_scale_value(sliders[0].scale, scale_log2linear(20, @freq, 22050))
-                             change_label(sliders[0].label, "%1.2f" % @freq)
+                             if provided? :xm
+                               change_label(sliders[0].label, "%1.2f" % @freq)
+                             end
                              set_scale_value(sliders[1].scale, @bw = init_bw)
                            end) do |w, c, i|
           flt = make_butter_band_pass(@freq, @bw)
@@ -886,7 +895,11 @@ Move the slider to change the center frequency and bandwidth.",
         end
         sliders[0] = @dlg.add_slider("center frequency",
                                      20, init_freq, 22050, 1, :log) do |w, c, i|
-          @freq = scale_linear2log(20, Rvalue(i), 22050)
+          @freq = if provided? :xm
+                    scale_linear2log(20, Rvalue(i), 22050)
+                  else
+                    scale_linear2log(20, Rvalue(RGTK_ADJUSTMENT(w)), 22050)
+                  end
         end
         sliders[1] = @dlg.add_slider("bandwidth", 0, init_bw, 1000) do |w, c, i|
           @bw = get_scale_value(w, i)
@@ -922,7 +935,9 @@ Move the slider to change the center frequency and bandwidth.",
                            :reset_cb, lambda do |w, c, i|
                              @freq = init_freq
                              set_scale_value(sliders[0].scale, scale_log2linear(20, @freq, 22050))
-                             change_label(sliders[0].label, "%1.2f" % @freq)
+                             if provided? :xm
+                               change_label(sliders[0].label, "%1.2f" % @freq)
+                             end
                              set_scale_value(sliders[1].scale, @bw = init_bw)
                            end) do |w, c, i|
           flt = make_butter_band_reject(@freq, @bw)
@@ -942,7 +957,11 @@ Move the slider to change the center frequency and bandwidth.",
         end
         sliders[0] = @dlg.add_slider("center frequency",
                                      20, init_freq, 22050, 1, :log) do |w, c, i|
-          @freq = scale_linear2log(20, Rvalue(i), 22050)
+          @freq = if provided? :xm
+                    scale_linear2log(20, Rvalue(i), 22050)
+                  else
+                    scale_linear2log(20, Rvalue(RGTK_ADJUSTMENT(w)), 22050)
+                  end
         end
         sliders[1] = @dlg.add_slider("bandwidth", 0, init_bw, 1000) do |w, c, i|
           @bw = get_scale_value(w, i)
@@ -976,7 +995,9 @@ Move the slider to change the high-pass cutoff frequency.",
                            :reset_cb, lambda do |w, c, i|
                              @freq = init_freq
                              set_scale_value(sliders[0].scale, scale_log2linear(20, @freq, 22050))
-                             change_label(sliders[0].label, "%1.2f" % @freq)
+                             if provided? :xm
+                               change_label(sliders[0].label, "%1.2f" % @freq)
+                             end
                            end) do |w, c, i|
           flt = make_butter_high_pass(@freq)
           case @target
@@ -995,7 +1016,11 @@ Move the slider to change the high-pass cutoff frequency.",
         end
         sliders[0] = @dlg.add_slider("high-pass cutoff frequency",
                                      20, init_freq, 22050, 1, :log) do |w, c, i|
-          @freq = scale_linear2log(20, Rvalue(i), 22050)
+          @freq = if provided? :xm
+                    scale_linear2log(20, Rvalue(i), 22050)
+                  else
+                    scale_linear2log(20, Rvalue(RGTK_ADJUSTMENT(w)), 22050)
+                  end
         end
         @dlg.add_target([["entire sound", :sound, true],
                          ["selection", :selection, false]]) do |t| @target = t end
@@ -1026,7 +1051,9 @@ Move the slider to change the low-pass cutoff frequency.",
                            :reset_cb, lambda do |w, c, i|
                              @freq = init_freq
                              set_scale_value(sliders[0].scale, scale_log2linear(20, @freq, 22050))
-                             change_label(sliders[0].label, "%1.2f" % @freq)
+                             if provided? :xm
+                               change_label(sliders[0].label, "%1.2f" % @freq)
+                             end
                            end) do |w, c, i|
           flt = make_butter_low_pass(@freq)
           case @target
@@ -1045,7 +1072,11 @@ Move the slider to change the low-pass cutoff frequency.",
         end
         sliders[0] = @dlg.add_slider("low-pass cutoff frequency",
                                      20, init_freq, 22050, 1, :log) do |w, c, i|
-          @freq = scale_linear2log(20, Rvalue(i), 22050)
+          @freq = if provided? :xm
+                    scale_linear2log(20, Rvalue(i), 22050)
+                  else
+                    scale_linear2log(20, Rvalue(RGTK_ADJUSTMENT(w)), 22050)
+                  end
         end
         @dlg.add_target([["entire sound", :sound, true],
                          ["selection", :selection, false]]) do |t| @target = t end
@@ -1189,7 +1220,9 @@ Move the sliders to set the filter cutoff frequency and resonance.",
                              @cutoff_freq = init_freq
                              set_scale_value(sliders[0].scale,
                                              scale_log2linear(20, @cutoff_freq, 22050))
-                             change_label(sliders[0].label, "%1.2f" % @cutoff_freq)
+                             if provided? :xm
+                               change_label(sliders[0].label, "%1.2f" % @cutoff_freq)
+                             end
                              set_scale_value(sliders[1].scale, @resonance = init_resonance, 100.0)
                            end) do |w, c, i|
           map_chan_over_target_with_sync(@target, false,
@@ -1202,7 +1235,11 @@ Move the sliders to set the filter cutoff frequency and resonance.",
         end
         sliders[0] = @dlg.add_slider("cutoff frequency",
                                      20, init_freq, 22050, 1, :log) do |w, c, i|
-          @cutoff_freq = scale_linear2log(20, Rvalue(i), 22050)
+          @cutoff_freq = if provided? :xm
+                           scale_linear2log(20, Rvalue(i), 22050)
+                         else
+                           scale_linear2log(20, Rvalue(RGTK_ADJUSTMENT(w)), 22050)
+                         end
         end
         sliders[1] = @dlg.add_slider("resonance", 0.0, init_resonance, 1.0, 100) do |w, c, i|
           @resonance = get_scale_value(w, i, 100.0)
@@ -1436,14 +1473,21 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
         sliders[0] = @dlg.add_slider("resample factor", 0.0, init_scale, 10.0, 100) do |w, c, i|
           @scale = get_scale_value(w, i, 100.0)
         end
-        frame = @dlg.add_frame([RXmNheight, 200])
-        @dlg.add_target() do |t| @target = t end
+        if provided? :xm
+          frame = @dlg.add_frame([RXmNheight, 200])
+          @dlg.add_target() do |t| @target = t end
+        else
+          frame = @dlg.parent
+        end
         activate_dialog(@dlg.dialog)
         # out-of-range error if envelope hits 0.0
         # therefore y0 = 0.0001
         @envelope = make_xenved("src-timevar", frame,
                                 :envelope, [0.0, 1.0, 1.0, 1.0],
                                 :axis_bounds, [0.0, 1.0, 0.0001, 1.0])
+        if provided? :xg
+          @dlg.add_target() do |t| @target = t end
+        end
       end
       activate_dialog(@dlg.dialog)
     end
@@ -1500,12 +1544,19 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
         sliders[0] = @dlg.add_slider("amplitude modulation", 0.0, init_amount, 1000.0) do |w, c, i|
           @amount = get_scale_value(w, i)
         end
-        frame = @dlg.add_frame([RXmNheight, 200])
-        @dlg.add_target() do |t| @target = t end
+        if provided? :xm
+          frame = @dlg.add_frame([RXmNheight, 200])
+          @dlg.add_target() do |t| @target = t end
+        else
+          frame = @dlg.parent
+        end
         activate_dialog(@dlg.dialog)
         @envelope = make_xenved("amplitude modulation", frame,
                                 :envelope, [0.0, 1.0, 1.0, 1.0],
                                 :axis_bounds, [0.0, 1.0, 0.0, 1.0])
+        if provided? :xg
+          @dlg.add_target() do |t| @target = t end
+        end
       else
         activate_dialog(@dlg.dialog)
       end
@@ -1564,12 +1615,19 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
         sliders[1] = @dlg.add_slider("modulation radians", 0, init_radians, 360) do |w, c, i|
           @radians = get_scale_value(w, i)
         end
-        frame = @dlg.add_frame([RXmNheight, 200])
-        @dlg.add_target() do |t| @target = t end
+        if provided? :xm
+          frame = @dlg.add_frame([RXmNheight, 200])
+          @dlg.add_target() do |t| @target = t end
+        else
+          frame = @dlg.parent
+        end
         activate_dialog(@dlg.dialog)
         @envelope = make_xenved("ring modulation", frame,
                                 :envelope, [0.0, 1.0, 1.0, 1.0],
                                 :axis_bounds, [0.0, 1.0, 0.0, 1.0])
+        if provided? :xg
+          @dlg.add_target() do |t| @target = t end
+        end
       else
         activate_dialog(@dlg.dialog)
       end
@@ -1800,12 +1858,19 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data.",
         sliders[2] = @dlg.add_slider("pan position", 0, init_pan_pos, 90) do |w, c, i|
         @pan_pos = get_scale_value(w, i)
         end
-        frame = @dlg.add_frame([RXmNheight, 200])
-        @dlg.add_target() do |t| @target = t end
+        if provided? :xm
+          frame = @dlg.add_frame([RXmNheight, 200])
+          @dlg.add_target() do |t| @target = t end
+        else
+          frame = @dlg.parent
+        end
         activate_dialog(@dlg.dialog)
         @envelope = make_xenved("panning", frame,
                                 :envelope, [0.0, 1.0, 1.0, 1.0],
                                 :axis_bounds, [0.0, 1.0, 0.0, 1.0])
+        if provided? :xg
+          @dlg.add_target() do |t| @target = t end
+        end
       end
       activate_dialog(@dlg.dialog)
     end
@@ -1944,7 +2009,9 @@ to be cross_synthesized, the synthesis amplitude, the FFT size, and the radius v
                              set_scale_value(sliders[0].scale, @sound = init_sound)
                              set_scale_value(sliders[1].scale, @amp = init_amp, 100.0)
                              @fft_size = init_fft_size
-                             RXmToggleButtonSetState(@default_fft_widget, true, true)
+                             if provided? :xm
+                               RXmToggleButtonSetState(@default_fft_widget, true, true)
+                             end
                              set_scale_value(sliders[2].scale, @radius = init_radius, 100.0)
                            end) do |w, c, i|
           if sound?(@sound)
@@ -1968,37 +2035,39 @@ to be cross_synthesized, the synthesis amplitude, the FFT size, and the radius v
         sliders[2] = @dlg.add_slider("radius", 0.0, init_radius, 360.0, 100) do |w, c, i|
           @radius = get_scale_value(w, i, 100.0)
         end
-        frame = @dlg.add_frame([RXmNpositionIndex, 2])
-        frm = RXtCreateManagedWidget("frm", RxmFormWidgetClass, frame,
-                                     [RXmNleftAttachment, RXmATTACH_FORM,
-                                      RXmNrightAttachment, RXmATTACH_FORM,
-                                      RXmNtopAttachment, RXmATTACH_FORM,
-                                      RXmNbottomAttachment, RXmATTACH_FORM,
-                                      RXmNbackground, basic_color])
-        rc = RXtCreateManagedWidget("rc", RxmRowColumnWidgetClass, frm,
-                                    [RXmNorientation, RXmHORIZONTAL,
-                                     RXmNradioBehavior, true,
-                                     RXmNradioAlwaysOne, true,
-                                     RXmNentryClass, RxmToggleButtonWidgetClass,
-                                     RXmNisHomogeneous, true,
-                                     RXmNleftAttachment, RXmATTACH_FORM,
-                                     RXmNrightAttachment, RXmATTACH_FORM,
-                                     RXmNtopAttachment, RXmATTACH_FORM,
-                                     RXmNbottomAttachment, RXmATTACH_NONE,
-                                     RXmNbackground, basic_color])
-        RXtCreateManagedWidget("FFT size", RxmLabelWidgetClass, frm,
-                               [RXmNalignment, RXmALIGNMENT_BEGINNING,
-                                RXmNtopAttachment, RXmATTACH_WIDGET,
-                                RXmNtopWidget, rc,
-                                RXmNbackground, basic_color])
-        [64, 128, 256, 512, 1024, 4096].each do |s|
-          button = RXtCreateManagedWidget(s.to_s, RxmToggleButtonWidgetClass, rc,
-                                          [RXmNbackground, basic_color,
-                                           RXmNvalueChangedCallback,
-                                           [lambda do |w, c, i| @fft_size = c if Rset(i) end, s],
-                                           RXmNset, (s == @fft_size)])
-          if s == @fft_size
-            @default_fft_widget = button
+        if provided? :xm
+          frame = @dlg.add_frame([RXmNpositionIndex, 2])
+          frm = RXtCreateManagedWidget("frm", RxmFormWidgetClass, frame,
+                                       [RXmNleftAttachment, RXmATTACH_FORM,
+                                        RXmNrightAttachment, RXmATTACH_FORM,
+                                        RXmNtopAttachment, RXmATTACH_FORM,
+                                        RXmNbottomAttachment, RXmATTACH_FORM,
+                                        RXmNbackground, basic_color])
+          rc = RXtCreateManagedWidget("rc", RxmRowColumnWidgetClass, frm,
+                                      [RXmNorientation, RXmHORIZONTAL,
+                                       RXmNradioBehavior, true,
+                                       RXmNradioAlwaysOne, true,
+                                       RXmNentryClass, RxmToggleButtonWidgetClass,
+                                       RXmNisHomogeneous, true,
+                                       RXmNleftAttachment, RXmATTACH_FORM,
+                                       RXmNrightAttachment, RXmATTACH_FORM,
+                                       RXmNtopAttachment, RXmATTACH_FORM,
+                                       RXmNbottomAttachment, RXmATTACH_NONE,
+                                       RXmNbackground, basic_color])
+          RXtCreateManagedWidget("FFT size", RxmLabelWidgetClass, frm,
+                                 [RXmNalignment, RXmALIGNMENT_BEGINNING,
+                                  RXmNtopAttachment, RXmATTACH_WIDGET,
+                                  RXmNtopWidget, rc,
+                                  RXmNbackground, basic_color])
+          [64, 128, 256, 512, 1024, 4096].each do |s|
+            button = RXtCreateManagedWidget(s.to_s, RxmToggleButtonWidgetClass, rc,
+                                            [RXmNbackground, basic_color,
+                                             RXmNvalueChangedCallback,
+                                             [lambda do |w, c, i| @fft_size = c if Rset(i) end, s],
+                                             RXmNset, (s == @fft_size)])
+            if s == @fft_size
+              @default_fft_widget = button
+            end
           end
         end
         @dlg.add_target() do |t| @target = t end
@@ -2244,118 +2313,133 @@ end
 #
 # example menu
 #
-if provided? :xm
-  unless defined? $__private_snd_menu__ and $__private_snd_menu__
-    include Effects
+unless defined? $__private_snd_menu__ and $__private_snd_menu__
+  include Effects
 
-    snd_main = make_snd_menu("Effects") do
-      cascade("Amplitude Effects") do
-        entry(Gain, "Gain")
-        entry(Normalize, "Normalize")
-        entry(Gate, "Gate")
-      end
-      cascade("Delay Effects") do
-        entry(Echo, "Echo")
-        entry(Filtered_echo, "Filtered echo")
-        entry(Modulated_echo, "Modulated echo")
-      end
-      cascade("Filter Effects") do
-        entry(Band_pass, "Band-pass filter")
-        entry(Band_reject, "Band-reject filter")
-        entry(High_pass, "High-pass filter")
-        entry(Low_pass, "Low-pass filter")
-        entry(Comb, "Comb filter")
-        entry(Comb_chord, "Comb chord filter")
-        entry(Moog_filter, "Moog filter")
-      end
-      cascade("Frequency Effects") do
-        entry(Adaptive, "Adaptive saturation")
-        entry(Sample_rate, "Sample rate conversion")
-        entry(Time_pitch, "Time/pitch scaling")
-        entry(Src_timevar, "Src-Timevar")
-      end
-      cascade("Modulation Effects") do
-        entry(Amplitude_modulation, "Amplitude modulation")
-        entry(Ring_modulation, "Ring modulation")
-      end
-      cascade("Reverbs") do
-        entry(Nrev, "McNabb reverb")
-        entry(Chowning, "Chowning reverb")
-        entry(Convolution, "Convolution")
-      end
-      cascade("Various") do
-        entry(Placed, "Place sound")
-        entry(Add_silence, "Add silence")
-        entry(Contrast, "Contrast enhancement")
-        entry(Cross_synthesis, "Cross synthesis")
-        entry(Flange, "Flange")
-        entry(Randomize_phase, "Randomize phase")
-        entry(Robotize, "Robotize")
-        entry(Rubber_sound, "Rubber sound")
-        entry(Wobble, "Wobble")
-      end
-      separator
-      entry("Octave-down") do down_oct(2) end
-      entry("Remove clicks") do
-        find_click = lambda do |loc|
-          reader = make_sampler(loc)
-          samp0 = samp1 = samp2 = 0.0
-          samps = make_vct(10)
-          len = frames()
-          samps_ctr = 0
-          ret = false
-          ctr = loc
-          until c_g? or ctr == len
-            samp0, samp1 = samp1, samp2
-            samp2 = next_sample(reader)
-            samps[samps_ctr] = samp0
-            if samps_ctr < 9
-              samps_ctr += 1
-            else
-              samps_ctr = 0
-            end
-            local_max = [0.1, vct_peak(samps)].max
-            if ((samp0 - samp1).abs > local_max) and
-                ((samp1 - samp2).abs > local_max) and
-                ((samp0 - samp2).abs < (local_max / 2))
-              ret = ctr - 1
-              break
-            end
-            ctr += 1
-          end
-          ret
-        end
-        remove_click = lambda do |loc|
-          if click = find_click.call(loc) and (not c_g?)
-            smooth_sound(click - 2, 4)
-            remove_click.call(click + 2)
-          end
-        end
-        remove_click.call(2)
-      end
-      entry("Remove DC") do effects_remove_dc end
-      entry("Spiker") do spike end
-      entry("Compand") do effects_compand end
-      entry("Invert") do scale_by(-1) end
-      entry("Reverse") do reverse_sound end
-      entry("Null phase") do zero_phase end
+  snd_main = make_snd_menu("Effects") do
+    cascade("Amplitude Effects") do
+      # FIXME: make_xenved with xg doesn't work
+      entry(Gain, "Gain") unless provided? :xg
+      entry(Normalize, "Normalize")
+      entry(Gate, "Gate")
     end
-
-    set_label_sensitive(menu_widgets[Top_menu_bar], "Effects", ((sounds() or []).length > 1))
-    
-    unless $open_hook.member?("effects-menu-hook")
-      $open_hook.add_hook!("effects-menu-hook") do |snd| 
-        set_label_sensitive(menu_widgets[Top_menu_bar], "Effects", true)
-        false
-      end
-      
-      $close_hook.add_hook!("effects-menu-hook") do |snd|
-        set_label_sensitive(menu_widgets[Top_menu_bar], "Effects", ((sounds() or []).length > 1))
-        false
-      end
+    cascade("Delay Effects") do
+      entry(Echo, "Echo")
+      entry(Filtered_echo, "Filtered echo")
+      entry(Modulated_echo, "Modulated echo")
     end
-    $effects_menu = true
+    cascade("Filter Effects") do
+      entry(Band_pass, "Band-pass filter")
+      entry(Band_reject, "Band-reject filter")
+      entry(High_pass, "High-pass filter")
+      entry(Low_pass, "Low-pass filter")
+      entry(Comb, "Comb filter")
+      entry(Comb_chord, "Comb chord filter")
+      entry(Moog_filter, "Moog filter")
+    end
+    cascade("Frequency Effects") do
+      entry(Adaptive, "Adaptive saturation")
+      entry(Sample_rate, "Sample rate conversion")
+      entry(Time_pitch, "Time/pitch scaling")
+      # FIXME: make_xenved with xg doesn't work
+      entry(Src_timevar, "Src-Timevar") unless provided? :xg
+    end
+    cascade("Modulation Effects") do
+      # FIXME: make_xenved with xg doesn't work
+      entry(Amplitude_modulation, "Amplitude modulation") unless provided? :xg
+      # FIXME: make_xenved with xg doesn't work
+      entry(Ring_modulation, "Ring modulation") unless provided? :xg
+    end
+    cascade("Reverbs") do
+      entry(Nrev, "McNabb reverb")
+      entry(Chowning, "Chowning reverb")
+      entry(Convolution, "Convolution")
+    end
+    cascade("Various") do
+      # FIXME: make_xenved with xg doesn't work
+      entry(Placed, "Place sound") unless provided? :xg
+      entry(Add_silence, "Add silence")
+      entry(Contrast, "Contrast enhancement")
+      entry(Cross_synthesis, "Cross synthesis")
+      entry(Flange, "Flange")
+      entry(Randomize_phase, "Randomize phase")
+      entry(Robotize, "Robotize")
+      entry(Rubber_sound, "Rubber sound")
+      entry(Wobble, "Wobble")
+    end
+    separator
+    entry("Octave-down") do down_oct(2) end
+    entry("Remove clicks") do
+      find_click = lambda do |loc|
+        reader = make_sampler(loc)
+        samp0 = samp1 = samp2 = 0.0
+        samps = make_vct(10)
+        len = frames()
+        samps_ctr = 0
+        ret = false
+        ctr = loc
+        until c_g? or ctr == len
+          samp0, samp1 = samp1, samp2
+          samp2 = next_sample(reader)
+          samps[samps_ctr] = samp0
+          if samps_ctr < 9
+            samps_ctr += 1
+          else
+            samps_ctr = 0
+          end
+          local_max = [0.1, vct_peak(samps)].max
+          if ((samp0 - samp1).abs > local_max) and
+              ((samp1 - samp2).abs > local_max) and
+              ((samp0 - samp2).abs < (local_max / 2))
+            ret = ctr - 1
+            break
+          end
+          ctr += 1
+        end
+        ret
+      end
+      remove_click = lambda do |loc|
+        if click = find_click.call(loc) and (not c_g?)
+          smooth_sound(click - 2, 4)
+          remove_click.call(click + 2)
+        end
+      end
+      remove_click.call(2)
+    end
+    entry("Remove DC") do effects_remove_dc end
+    entry("Spiker") do spike end
+    entry("Compand") do effects_compand end
+    entry("Invert") do scale_by(-1) end
+    entry("Reverse") do reverse_sound end
+    entry("Null phase") do zero_phase end
   end
+
+  if provided? :xm
+    set_label_sensitive(menu_widgets[Top_menu_bar], "Effects", ((sounds() or []).length > 1))
+  else
+    set_sensitive(snd_main.menu, ((sounds() or []).length > 1))
+  end
+  
+  unless $open_hook.member?("effects-menu-hook")
+    $open_hook.add_hook!("effects-menu-hook") do |snd| 
+      if provided? :xm
+        set_label_sensitive(menu_widgets[Top_menu_bar], "Effects", true)
+      else
+        set_sensitive(snd_main.menu, true)
+      end
+      false
+    end
+    
+    $close_hook.add_hook!("effects-menu-hook") do |snd|
+      if provided? :xm
+        set_label_sensitive(menu_widgets[Top_menu_bar], "Effects", ((sounds() or []).length > 1))
+      else
+        set_sensitive(snd_main.menu, ((sounds() or []).length > 1))
+      end
+      false
+    end
+  end
+  $effects_menu = true
 end
 
 # effects.rb ends here

@@ -371,22 +371,16 @@ static void make_pixmaps(void)
 {
   if (!mini_lock_allocated)
     { 
-      GdkWindow *wn;
       int k;
-      wn = MAIN_WINDOW(ss);
-#if HAVE_GTK_3
-      /* TODO: gtk3 pix? */
-#else
-      gdk_pixbuf_render_pixmap_and_mask(gdk_pixbuf_new_from_xpm_data(mini_lock_bits()), &mini_lock, NULL, 0);
-      gdk_pixbuf_render_pixmap_and_mask(gdk_pixbuf_new_from_xpm_data(stop_sign_bits()), &stop_sign, NULL, 0);
-      gdk_pixbuf_render_pixmap_and_mask(gdk_pixbuf_new_from_xpm_data(blank_bits()), &blank, NULL, 0);
-      gdk_pixbuf_render_pixmap_and_mask(gdk_pixbuf_new_from_xpm_data(speed_r_bits()), &speed_r, NULL, 0);
-      gdk_pixbuf_render_pixmap_and_mask(gdk_pixbuf_new_from_xpm_data(speed_l_bits()), &speed_l, NULL, 0);
+      mini_lock = gdk_pixbuf_new_from_xpm_data(mini_lock_bits());
+      stop_sign = gdk_pixbuf_new_from_xpm_data(stop_sign_bits());
+      blank = gdk_pixbuf_new_from_xpm_data(blank_bits());
+      speed_r = gdk_pixbuf_new_from_xpm_data(speed_r_bits());
+      speed_l = gdk_pixbuf_new_from_xpm_data(speed_l_bits());
       for (k = 0; k < NUM_BOMBS; k++) 
-	gdk_pixbuf_render_pixmap_and_mask(gdk_pixbuf_new_from_xpm_data(mini_bomb_bits(k)), &(bombs[k]), NULL, 0);
+	bombs[k] = gdk_pixbuf_new_from_xpm_data(mini_bomb_bits(k));
 
       mini_lock_allocated = true;
-#endif
     }
 }
 

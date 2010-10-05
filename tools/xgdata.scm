@@ -7467,9 +7467,3 @@
 #|
 (CAIRO-INT-110 "CAIRO_SURFACE_TYPE_SUBSURFACE" "cairo_surface_t")
 |#
-
-
-#|
-gtk3:
-TODO: (snd:6491): Gtk-CRITICAL **: gtk_paint_slider: assertion `width >= 0' failed [scrolled_window draw] -- edit history window I think
-|#

@@ -926,7 +926,11 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 	  cw[W_gzy] = NULL;
 	}
       if ((GTK_IS_VPANED(cw[W_main_window])) || (GTK_IS_HPANED(cw[W_main_window])))
-	gtk_paned_set_position(GTK_PANED(cw[W_main_window]), 1);  /* 0 is a no-op here, leaving the edit history pane open */
+	gtk_paned_set_position(GTK_PANED(cw[W_main_window]), 2);  
+      /* 0 is a no-op here, leaving the edit history pane open, but in gtk 3, 1 gives
+       *      "gtk_paint_slider: assertion `width >= 0' failed"
+       * 2 seems to be ok.
+       */
       gtk_widget_show(cw[W_graph_window]);
 
     }
@@ -1022,7 +1026,9 @@ void save_fft_pix(chan_info *cp, graphics_context *ax, int fwidth, int fheight, 
   cp->cgx->fft_pix_y0 = y0;
   cp->cgx->fft_pix_cutoff = cp->spectrum_end;
 #if HAVE_GTK_3
-  /* TODO: gtk 3 fft pix? */
+  /* TODO: gtk 3 fft pix? -- should this use cairo regions? 
+   *          we need a way to copy/save/later redraw a small portion of a drawing area widget's display
+   */
 #else
   cp->cgx->fft_pix = gdk_pixbuf_get_from_drawable(cp->cgx->fft_pix, ax->wn, gtk_widget_get_colormap(ax->w),
 						  cp->cgx->fft_pix_x0, cp->cgx->fft_pix_y0, 0, 0,

@@ -136,11 +136,7 @@ typedef struct {
   color_t fg_color, bg_color;
 } gc_t;
 
-#if HAVE_GTK_3
-#define picture_t cairo_surface_t
-#else
-#define picture_t GdkPixmap
-#endif
+#define picture_t GdkPixbuf
 
 typedef struct {
   gc_t *gc;

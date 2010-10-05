@@ -384,13 +384,7 @@ static void startup_funcs(void)
 #ifndef SND_AS_WIDGET
 static void set_up_icon(void)
 {
-#if HAVE_GTK_3
-  /* TODO: snd window icon for gtk3? */
-#else
-  picture_t *pix = NULL;
-  gdk_pixbuf_render_pixmap_and_mask(gdk_pixbuf_new_from_xpm_data(snd_icon_bits()), &pix, NULL, 0);
-  gdk_window_set_icon(MAIN_WINDOW(ss), NULL, pix, NULL);
-#endif
+  gtk_window_set_icon(GTK_WINDOW(MAIN_SHELL(ss)), gdk_pixbuf_new_from_xpm_data(snd_icon_bits()));
 }
 #endif
 
@@ -405,8 +399,6 @@ color_t get_in_between_color(color_t fg, color_t bg)
   return(new_color);
 }
 
-
-  #define get_color(Color, Ignore1, Ignore2, Ignore3) Color
 
 static void notebook_switch_page(GtkNotebook *w, GtkWidget *page_widget, gint page_num)
 {
@@ -520,32 +512,31 @@ void snd_doit(int argc, char **argv)
   sx->graph_is_active = false;
   sx->bg_gradient = 0.07;
 
-  /* the gray shades are an attempt to get around Netscape which hogs all the colors */
-  sx->white =                 get_color(WHITE_COLOR,           NULL, NULL, true);
-  sx->black =                 get_color(BLACK_COLOR,           NULL, NULL, false);
-  sx->light_blue =            get_color(LIGHT_BLUE_COLOR,      NULL, NULL, true);
-  sx->lighter_blue =          get_color(LIGHTER_BLUE_COLOR,    NULL, NULL, true);
-  sx->red =                   get_color(RED_COLOR,             NULL, NULL, false);
-  sx->green =                 get_color(GREEN_COLOR,           NULL, NULL, false);
-  sx->yellow =                get_color(YELLOW_COLOR,          NULL, NULL, true);
-  sx->highlight_color =       get_color(HIGHLIGHT_COLOR,       "gray90", NULL, true);
-  sx->basic_color =           get_color(BASIC_COLOR,           "gray80", "gray", true);
-  sx->position_color =        get_color(POSITION_COLOR,        "gray60", "gray", false);
-  sx->zoom_color =            get_color(ZOOM_COLOR,            "gray20", "gray", false);
-  sx->cursor_color =          get_color(CURSOR_COLOR,          NULL, NULL, false);
-  sx->selection_color =       get_color(SELECTION_COLOR,       "gray80", NULL, false);
-  sx->mix_color =             get_color(MIX_COLOR,             NULL, NULL, false);
-  sx->enved_waveform_color =  get_color(ENVED_WAVEFORM_COLOR,  NULL, NULL, false);
-  sx->filter_control_waveform_color = get_color(FILTER_CONTROL_WAVEFORM_COLOR, NULL, NULL, false);
-  sx->listener_color =        get_color(LISTENER_COLOR,        NULL, NULL, true);
-  sx->listener_text_color =   get_color(LISTENER_TEXT_COLOR,   NULL, NULL, true);
-  sx->graph_color =           get_color(GRAPH_COLOR,           NULL, NULL, true);
-  sx->selected_graph_color =  get_color(SELECTED_GRAPH_COLOR,  NULL, NULL, true);
-  sx->data_color =            get_color(DATA_COLOR,            NULL, NULL, false);
-  sx->selected_data_color =   get_color(SELECTED_DATA_COLOR,   NULL, NULL, false);
-  sx->mark_color =            get_color(MARK_COLOR,            NULL, NULL, false);
-  sx->sash_color =            get_color(SASH_COLOR,            NULL, NULL, false);
-  sx->text_focus_color =      get_color(TEXT_FOCUS_COLOR,      NULL, NULL, false);
+  sx->white =                         WHITE_COLOR;
+  sx->black =                         BLACK_COLOR;
+  sx->light_blue =                    LIGHT_BLUE_COLOR;
+  sx->lighter_blue =                  LIGHTER_BLUE_COLOR;
+  sx->red =                           RED_COLOR;
+  sx->green =                         GREEN_COLOR;
+  sx->yellow =                        YELLOW_COLOR;
+  sx->highlight_color =               HIGHLIGHT_COLOR;
+  sx->basic_color =                   BASIC_COLOR;
+  sx->position_color =                POSITION_COLOR;
+  sx->zoom_color =                    ZOOM_COLOR;
+  sx->cursor_color =                  CURSOR_COLOR;
+  sx->selection_color =               SELECTION_COLOR;
+  sx->mix_color =                     MIX_COLOR;
+  sx->enved_waveform_color =          ENVED_WAVEFORM_COLOR;
+  sx->filter_control_waveform_color = FILTER_CONTROL_WAVEFORM_COLOR;
+  sx->listener_color =                LISTENER_COLOR;
+  sx->listener_text_color =           LISTENER_TEXT_COLOR;
+  sx->graph_color =                   GRAPH_COLOR;
+  sx->selected_graph_color =          SELECTED_GRAPH_COLOR;
+  sx->data_color =                    DATA_COLOR;
+  sx->selected_data_color =           SELECTED_DATA_COLOR;
+  sx->mark_color =                    MARK_COLOR;
+  sx->sash_color =                    SASH_COLOR;
+  sx->text_focus_color =              TEXT_FOCUS_COLOR;
 
   sx->grid_color = get_in_between_color(sx->data_color, sx->graph_color);
   sx->selected_grid_color = get_in_between_color(sx->selected_data_color, sx->selected_graph_color);
