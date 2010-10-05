@@ -1269,7 +1269,10 @@
 (CCAST "GTK_ADJUSTMENT(obj)" "GtkAdjustment*")
 (CCHK "GTK_IS_ADJUSTMENT(obj)" "GtkAdjustment*")
 ;;;;(CFNC "GType gtk_adjustment_get_type void")
+
 ;;; 2.91.0 (CFNC "GtkObject* gtk_adjustment_new gdouble value gdouble lower gdouble upper gdouble step_increment gdouble page_increment gdouble page_size")
+(CFNC-gtk2 "GtkObject* gtk_adjustment_new gdouble value gdouble lower gdouble upper gdouble step_increment gdouble page_increment gdouble page_size")
+
 (CFNC "void gtk_adjustment_changed GtkAdjustment* adjustment")
 (CFNC "void gtk_adjustment_value_changed GtkAdjustment* adjustment")
 (CFNC "void gtk_adjustment_clamp_page GtkAdjustment* adjustment gdouble lower gdouble upper")
@@ -2251,6 +2254,10 @@
 
 ;;; 2.91.0 (CCAST "GTK_OBJECT(object)" "GtkObject*")
 ;;; 2.91.0 (CCHK "GTK_IS_OBJECT(object)" "GtkObject*")
+
+(CCAST-gtk2 "GTK_OBJECT(object)" "GtkObject*")
+(CCHK-gtk2 "GTK_IS_OBJECT(object)" "GtkObject*")
+
 ;;; 2.91.0 ;(CCAST2 "GTK_OBJECT_TYPE(object)")
 ;;; 2.19.3 (CFNC "char* GTK_OBJECT_TYPE_NAME GtkObject* object")
 ;;;(CINT "GTK_IN_DESTRUCTION") ; out 2.90.3

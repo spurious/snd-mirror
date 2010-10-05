@@ -410,17 +410,20 @@ static XEN mouse_leave_graph_hook;
 static gboolean graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
   /* how many args does this thing take?  does it return an int?  what does the return value mean? */
-  int pdata;
 
   if (with_pointer_focus(ss))
     goto_window(w);
 
-  pdata = get_user_int_data(G_OBJECT(w));
   if (XEN_HOOKED(mouse_enter_graph_hook))
-    run_hook(mouse_enter_graph_hook,
-	     XEN_LIST_2(C_INT_TO_XEN_SOUND(UNPACK_SOUND(pdata)),
-			C_TO_XEN_INT(UNPACK_CHANNEL(pdata))),
-	     S_mouse_enter_graph_hook);
+    {
+      int pdata;
+      pdata = get_user_int_data(G_OBJECT(w));
+      run_hook(mouse_enter_graph_hook,
+	       XEN_LIST_2(C_INT_TO_XEN_SOUND(UNPACK_SOUND(pdata)),
+			  C_TO_XEN_INT(UNPACK_CHANNEL(pdata))),
+	       S_mouse_enter_graph_hook);
+    }
+
   gdk_window_set_cursor(WIDGET_TO_WINDOW(w), ss->sgx->graph_cursor);
   return(false);
 }
@@ -428,13 +431,16 @@ static gboolean graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer d
 
 static gboolean graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer data)
 {
-  int pdata;
-  pdata = get_user_int_data(G_OBJECT(w));
   if (XEN_HOOKED(mouse_leave_graph_hook))
-    run_hook(mouse_leave_graph_hook,
-	     XEN_LIST_2(C_INT_TO_XEN_SOUND(UNPACK_SOUND(pdata)),
-			C_TO_XEN_INT(UNPACK_CHANNEL(pdata))),
-	     S_mouse_leave_graph_hook);
+    {
+      int pdata;
+      pdata = get_user_int_data(G_OBJECT(w));
+      run_hook(mouse_leave_graph_hook,
+	       XEN_LIST_2(C_INT_TO_XEN_SOUND(UNPACK_SOUND(pdata)),
+			  C_TO_XEN_INT(UNPACK_CHANNEL(pdata))),
+	       S_mouse_leave_graph_hook);
+    }
+
   gdk_window_set_cursor(WIDGET_TO_WINDOW(w), ss->sgx->arrow_cursor);
   return(false);
 }
@@ -1028,6 +1034,12 @@ void save_fft_pix(chan_info *cp, graphics_context *ax, int fwidth, int fheight, 
 #if HAVE_GTK_3
   /* TODO: gtk 3 fft pix? -- should this use cairo regions? 
    *          we need a way to copy/save/later redraw a small portion of a drawing area widget's display
+   *
+   *  cairo_rectangle_t to hold bounds: typedef struct {double x, y, width, height;} cairo_rectangle_t;
+   *  cairo_rectangle_int_t: typedef struct {int x, y; int width, height;} cairo_rectangle_int_t;
+   *  cairo_region_t* cairo_region_create_rectangle cairo_rectangle_int_t* rectangle
+   *  then perhaps cairo_region_copy (will need cairo_region_destroy on original and copy I think)
+   *  but then how to overwrite?  I see subtract, xor, union
    */
 #else
   cp->cgx->fft_pix = gdk_pixbuf_get_from_drawable(cp->cgx->fft_pix, ax->wn, gtk_widget_get_colormap(ax->w),

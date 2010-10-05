@@ -32,7 +32,7 @@
 ;;;  test the end                                [63732]
 
 (define tests 1)
-(define keep-going #f)
+(define keep-going #t)
 (define all-args #f)
 (define test-at-random 0)
 					;(show-ptree 1)
@@ -60950,7 +60950,7 @@ EDITS: 1
 ;;; ---------------- test 26: --------------------
 ;;;   was Gtk (xg) but it became a nightmare to run/maintain
 
-(define (snd_test_27) #f)
+(define (snd_test_26) #f)
 
 
 ;;; ---------------- test 27: GL --------------------

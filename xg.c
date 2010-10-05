@@ -913,6 +913,10 @@ XM_TYPE_PTR(GtkWrapBox_, GtkWrapBox*)
 #define XEN_GtkWrapBoxPacking_P(Arg) XEN_INTEGER_P(Arg)
 #endif
 
+#if (!HAVE_GTK_3)
+XM_TYPE_PTR(GtkObject_, GtkObject*)
+#endif
+
 XM_TYPE_PTR(cairo_t_, cairo_t*)
 XM_TYPE_PTR(cairo_surface_t_, cairo_surface_t*)
 #define C_TO_XEN_cairo_content_t(Arg) C_TO_XEN_INT(Arg)
@@ -31353,6 +31357,23 @@ guint index)"
 
 #endif
 
+#if (!HAVE_GTK_3)
+static XEN gxg_gtk_adjustment_new(XEN value, XEN lower, XEN upper, XEN step_increment, XEN page_increment, XEN page_size)
+{
+  #define H_gtk_adjustment_new "GtkObject* gtk_adjustment_new(gdouble value, gdouble lower, gdouble upper, \
+gdouble step_increment, gdouble page_increment, gdouble page_size)"
+  XEN_ASSERT_TYPE(XEN_gdouble_P(value), value, 1, "gtk_adjustment_new", "gdouble");
+  XEN_ASSERT_TYPE(XEN_gdouble_P(lower), lower, 2, "gtk_adjustment_new", "gdouble");
+  XEN_ASSERT_TYPE(XEN_gdouble_P(upper), upper, 3, "gtk_adjustment_new", "gdouble");
+  XEN_ASSERT_TYPE(XEN_gdouble_P(step_increment), step_increment, 4, "gtk_adjustment_new", "gdouble");
+  XEN_ASSERT_TYPE(XEN_gdouble_P(page_increment), page_increment, 5, "gtk_adjustment_new", "gdouble");
+  XEN_ASSERT_TYPE(XEN_gdouble_P(page_size), page_size, 6, "gtk_adjustment_new", "gdouble");
+  return(C_TO_XEN_GtkObject_(gtk_adjustment_new(XEN_TO_C_gdouble(value), XEN_TO_C_gdouble(lower), XEN_TO_C_gdouble(upper), 
+                                                XEN_TO_C_gdouble(step_increment), XEN_TO_C_gdouble(page_increment), XEN_TO_C_gdouble(page_size))));
+}
+
+#endif
+
 static XEN gxg_cairo_create(XEN target)
 {
   #define H_cairo_create "cairo_t* cairo_create(cairo_surface_t* target)"
@@ -34012,6 +34033,10 @@ static XEN gxg_GTK_TOOL_ITEM_GROUP(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XE
 static XEN gxg_GTK_WRAP_BOX(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkWrapBox_"), XEN_CADR(obj)) : XEN_FALSE);}
 #endif
 
+#if (!HAVE_GTK_3)
+static XEN gxg_GTK_OBJECT(XEN obj) {return((WRAPPED_OBJECT_P(obj)) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GtkObject_"), XEN_CADR(obj)) : XEN_FALSE);}
+#endif
+
 static XEN gxg_GDK_IS_DRAG_CONTEXT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_DRAG_CONTEXT((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GDK_IS_DRAWABLE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_DRAWABLE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 static XEN gxg_GDK_IS_DEVICE(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GDK_IS_DEVICE((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
@@ -34203,6 +34228,10 @@ static XEN gxg_GTK_IS_TOOL_ITEM_GROUP(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_
 
 #if HAVE_GTK_WRAP_BOX_NEW
 static XEN gxg_GTK_IS_WRAP_BOX(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_WRAP_BOX((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
+#endif
+
+#if (!HAVE_GTK_3)
+static XEN gxg_GTK_IS_OBJECT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(obj) && GTK_IS_OBJECT((GTypeInstance *)XEN_UNWRAP_C_POINTER(XEN_CADR(obj)))));}
 #endif
 
 
@@ -37816,6 +37845,10 @@ XEN_NARGIFY_4(gxg_gtk_wrap_box_insert_child_w, gxg_gtk_wrap_box_insert_child)
 XEN_NARGIFY_3(gxg_gtk_wrap_box_reorder_child_w, gxg_gtk_wrap_box_reorder_child)
 #endif
 
+#if (!HAVE_GTK_3)
+XEN_NARGIFY_6(gxg_gtk_adjustment_new_w, gxg_gtk_adjustment_new)
+#endif
+
 XEN_NARGIFY_1(gxg_cairo_create_w, gxg_cairo_create)
 XEN_NARGIFY_0(gxg_cairo_version_w, gxg_cairo_version)
 XEN_NARGIFY_0(gxg_cairo_version_string_w, gxg_cairo_version_string)
@@ -38303,6 +38336,10 @@ XEN_NARGIFY_1(gxg_GTK_TOOL_ITEM_GROUP_w, gxg_GTK_TOOL_ITEM_GROUP)
 XEN_NARGIFY_1(gxg_GTK_WRAP_BOX_w, gxg_GTK_WRAP_BOX)
 #endif
 
+#if (!HAVE_GTK_3)
+XEN_NARGIFY_1(gxg_GTK_OBJECT_w, gxg_GTK_OBJECT)
+#endif
+
 XEN_NARGIFY_1(gxg_GDK_IS_DRAG_CONTEXT_w, gxg_GDK_IS_DRAG_CONTEXT)
 XEN_NARGIFY_1(gxg_GDK_IS_DRAWABLE_w, gxg_GDK_IS_DRAWABLE)
 XEN_NARGIFY_1(gxg_GDK_IS_DEVICE_w, gxg_GDK_IS_DEVICE)
@@ -38494,6 +38531,10 @@ XEN_NARGIFY_1(gxg_GTK_IS_TOOL_ITEM_GROUP_w, gxg_GTK_IS_TOOL_ITEM_GROUP)
 
 #if HAVE_GTK_WRAP_BOX_NEW
 XEN_NARGIFY_1(gxg_GTK_IS_WRAP_BOX_w, gxg_GTK_IS_WRAP_BOX)
+#endif
+
+#if (!HAVE_GTK_3)
+XEN_NARGIFY_1(gxg_GTK_IS_OBJECT_w, gxg_GTK_IS_OBJECT)
 #endif
 
 XEN_NARGIFY_1(gxg_blue_w, gxg_blue)
@@ -41731,6 +41772,10 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_wrap_box_reorder_child_w gxg_gtk_wrap_box_reorder_child
 #endif
 
+#if (!HAVE_GTK_3)
+#define gxg_gtk_adjustment_new_w gxg_gtk_adjustment_new
+#endif
+
 #define gxg_cairo_create_w gxg_cairo_create
 #define gxg_cairo_version_w gxg_cairo_version
 #define gxg_cairo_version_string_w gxg_cairo_version_string
@@ -42218,6 +42263,10 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_GTK_WRAP_BOX_w gxg_GTK_WRAP_BOX
 #endif
 
+#if (!HAVE_GTK_3)
+#define gxg_GTK_OBJECT_w gxg_GTK_OBJECT
+#endif
+
 #define gxg_GDK_IS_DRAG_CONTEXT_w gxg_GDK_IS_DRAG_CONTEXT
 #define gxg_GDK_IS_DRAWABLE_w gxg_GDK_IS_DRAWABLE
 #define gxg_GDK_IS_DEVICE_w gxg_GDK_IS_DEVICE
@@ -42409,6 +42458,10 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 
 #if HAVE_GTK_WRAP_BOX_NEW
 #define gxg_GTK_IS_WRAP_BOX_w gxg_GTK_IS_WRAP_BOX
+#endif
+
+#if (!HAVE_GTK_3)
+#define gxg_GTK_IS_OBJECT_w gxg_GTK_IS_OBJECT
 #endif
 
 #define gxg_blue_w gxg_blue
@@ -45653,6 +45706,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_wrap_box_reorder_child, gxg_gtk_wrap_box_reorder_child_w, 3, 0, 0, H_gtk_wrap_box_reorder_child);
 #endif
 
+#if (!HAVE_GTK_3)
+  XG_DEFINE_PROCEDURE(gtk_adjustment_new, gxg_gtk_adjustment_new_w, 6, 0, 0, H_gtk_adjustment_new);
+#endif
+
   XG_DEFINE_PROCEDURE(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
   XG_DEFINE_PROCEDURE(cairo_version, gxg_cairo_version_w, 0, 0, 0, H_cairo_version);
   XG_DEFINE_PROCEDURE(cairo_version_string, gxg_cairo_version_string_w, 0, 0, 0, H_cairo_version_string);
@@ -46135,6 +46192,10 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(GTK_WRAP_BOX, gxg_GTK_WRAP_BOX_w, 1, 0, 0, "(GTK_WRAP_BOX obj) casts obj to GTK_WRAP_BOX");
 #endif
 
+#if (!HAVE_GTK_3)
+  XG_DEFINE_PROCEDURE(GTK_OBJECT, gxg_GTK_OBJECT_w, 1, 0, 0, "(GTK_OBJECT obj) casts obj to GTK_OBJECT");
+#endif
+
   XG_DEFINE_PROCEDURE(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(->string, c_to_xen_string_w, 1, 0, 0, NULL);
@@ -46331,6 +46392,10 @@ static void define_functions(void)
 
 #if HAVE_GTK_WRAP_BOX_NEW
   XG_DEFINE_PROCEDURE(GTK_IS_WRAP_BOX, gxg_GTK_IS_WRAP_BOX_w, 1, 0, 0, "(GTK_IS_WRAP_BOX obj): " PROC_TRUE " if obj is a GTK_IS_WRAP_BOX");
+#endif
+
+#if (!HAVE_GTK_3)
+  XG_DEFINE_PROCEDURE(GTK_IS_OBJECT, gxg_GTK_IS_OBJECT_w, 1, 0, 0, "(GTK_IS_OBJECT obj): " PROC_TRUE " if obj is a GTK_IS_OBJECT");
 #endif
 
 }
@@ -48052,7 +48117,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("04-Oct-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("05-Oct-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

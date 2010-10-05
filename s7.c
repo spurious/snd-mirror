@@ -19767,7 +19767,7 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 }
 
 
-static s7_pointer initial_add, initial_subtract, initial_equal;
+static s7_pointer initial_add, initial_equal, initial_lt, initial_gt;
 
 static bool is_steppable_integer(s7_pointer p)
 {
@@ -19864,9 +19864,6 @@ static s7_pointer prepare_do_step_variables(s7_scheme *sc)
 			   sc->args);
       }
   
-  /* TODO: subtract, simple floats, (> var n) and its friends
-   */
-
   sc->args = safe_reverse_in_place(sc, sc->args);
   {
     s7_pointer end_stuff;
@@ -19889,9 +19886,8 @@ static void prepare_do_end_test(s7_scheme *sc)
 {
   /* sc->args = (list var-data [(end-test #f) [rtn-expr]]) 
    *   if the end-test is optimizable, its info vector is placed where the #f is
-   *
-  /* fprintf(stderr, "args: %s\n", s7_object_to_c_string(sc, sc->args)); */
-  
+   */
+   
   if (cdr(sc->args) != sc->NIL) /* nil case: (call-with-exit (lambda (r) (do ((i 0 (+ i 1))) () (if (= i 100) (r 1))))) */
     {
       s7_pointer end_expr;
@@ -19916,7 +19912,9 @@ static void prepare_do_end_test(s7_scheme *sc)
 	{
 	  s7_pointer op, arg1 = sc->F, val1 = sc->F, arg2 = sc->F, val2 = sc->F;
 	  op = find_symbol(sc, sc->envir, car(end_expr));
-	  if (symbol_value(op) == initial_equal)
+	  if ((symbol_value(op) == initial_equal) ||
+	      (symbol_value(op) == initial_lt) ||
+	      (symbol_value(op) == initial_gt))
 	    {
 	      if (s7_is_symbol(cadr(end_expr)))
 		{
@@ -19945,7 +19943,7 @@ static void prepare_do_end_test(s7_scheme *sc)
 		      new_expr = s7_make_vector(sc, 6);
 		      gc_loc = s7_gc_protect(sc, new_expr);
 
-		      vector_element(new_expr, 0) = initial_equal;     /* 1st 2 so we can be sure the operator is still the initial '=' function */
+		      vector_element(new_expr, 0) = symbol_value(op);     /* 1st 2 so we can be sure the operator is still the initial '=' function */
 		      vector_element(new_expr, 1) = op;
 		      vector_element(new_expr, 2) = arg1;
 		      vector_element(new_expr, 3) = val1;
@@ -20495,7 +20493,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    s7_pointer sv;
 	    sv = cdr(cadr(sc->args));
 	    if ((sv != sc->F) &&                                                    /* optimization is possible */
-		(symbol_value(vector_element(sv, 1)) == vector_element(sv, 0)) &&   /* '=' has not changed */
+		(symbol_value(vector_element(sv, 1)) == vector_element(sv, 0)) &&   /* '=' or whatever has not changed */
 		((vector_element(sv, 2) == sc->F) ||                                /* arg1 is either a prechecked int constant */
 		 (is_steppable_integer(cdr(vector_element(sv, 2))))) &&             /*   or a variable whose value is an acceptable integer */
 		((vector_element(sv, 4) == sc->F) ||                                /* same for arg2 */
@@ -20510,7 +20508,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (vector_element(sv, 4) == sc->F)
 		  arg2 = s7_integer(vector_element(sv, 5));
 		else arg2 = s7_integer(cdr(vector_element(sv, 4)));
-		if (arg1 == arg2)
+		
+		/* it seems innocuous to extend this to other ops like '>', but somehow
+		 *   that greatly slows down eval_args below!
+		 */
+		if (((vector_element(sv, 0) == initial_equal) && (arg1 == arg2)) ||
+		    ((vector_element(sv, 0) == initial_lt) && (arg1 < arg2)) ||
+		    ((vector_element(sv, 0) == initial_gt) && (arg1 > arg2)))
 		  {
 		    /* end test is #t, go to result */
 		    sc->code = cddr(sc->args);                /* result expr (a list -- implicit begin) */
@@ -28321,8 +28325,9 @@ s7_scheme *s7_init(void)
   save_initial_environment(sc);
 
   initial_add = s7_symbol_value(sc, s7_make_symbol(sc, "+"));
-  initial_subtract = s7_symbol_value(sc, s7_make_symbol(sc, "-"));
   initial_equal = s7_symbol_value(sc, s7_make_symbol(sc, "="));
+  initial_lt = s7_symbol_value(sc, s7_make_symbol(sc, "<"));
+  initial_gt = s7_symbol_value(sc, s7_make_symbol(sc, ">"));
 
   return(sc);
 }
