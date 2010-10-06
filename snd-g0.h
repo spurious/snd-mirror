@@ -2,7 +2,13 @@
 #define SND_G0_H
 
 #include <gtk/gtk.h>
-#include <gdk/gdkkeysyms.h>
+
+#if HAVE_GTK_3
+  #include <gdk/gdk.h>
+#else
+  #include <gdk/gdkkeysyms.h>
+#endif
+
 #include <cairo/cairo.h>
 
 #define LOTSA_PIXELS 10000
@@ -37,13 +43,6 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
                                   (strcmp("GtkWidget_", XEN_SYMBOL_TO_C_STRING(XEN_CAR(Value))) == 0))
 #define XEN_WRAP_EVENT(Value)    ((Value) ? XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("GdkEvent_"), XEN_WRAP_C_POINTER(Value)) : XEN_FALSE)
 #define NULL_WIDGET NULL
-
-#if MUS_DEBUGGING
-#define ASSERT_WIDGET_TYPE(Cond, Wid) if (!(Cond)) fprintf(stderr, "%s:[%s %d] widget is wrong type", c__FUNCTION__, __FILE__, __LINE__)
-#else
-  #define ASSERT_WIDGET_TYPE(Cond, Wid)
-#endif
-
 #define SG_SIGNAL_CONNECT(Widget, Signal, Function, Data) g_signal_connect(G_OBJECT(Widget), Signal, G_CALLBACK(Function), (gpointer)Data)
 
 

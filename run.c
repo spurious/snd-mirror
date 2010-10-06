@@ -105,40 +105,40 @@
 
 
 /* some timings (I keep losing these stats, so I'll put them here for safekeeping, "*"=not optimizable)
- *     valgrind --tool=callgrind snd ws.scm [etc]
+ *     valgrind --tool=callgrind snd ws.scm [etc -- no stats, not to snd, *clm-output-safety*=1]
  *
- *      test                                                       snd-10.4  (snd-10.7?)  snd-11.4
+ *      test                                                        10.4    (10.7?)   11.4   11.10
  *
- * (with-sound () (fm-violin 0 20 440 .1))                          1068        642         561
- * (with-sound (:channels 2) (fm-violin 0 20 440 .1 :degree 45))    1228        764         687
- * (with-sound (:reverb jc-reverb) (fm-violin 0 20 440 .1))         2577       1455        1335
- * (with-sound (:reverb nrev) (fm-violin 0 20 440 .1))              2983       1812        1685
- * (with-sound () (p 0 3))                                         91020*      3011        2828
- * (with-sound () (expandn 0 10 "oboe.snd" 1 :expand 4))            1228        526         464
- * (with-sound () (calling-all-animals))                           16359      11684       10306
- * (with-sound () (pins 0 3 "oboe.snd" 1.0 :max-peaks 8))           1207        783 (755)   660
- * (load "popi.scm")                                               11042       6391        5923
+ * (with-sound () (fm-violin 0 20 440 .1))                          1068      642      561     528
+ * (with-sound (:channels 2) (fm-violin 0 20 440 .1 :degree 45))    1228      764      687     570
+ * (with-sound (:reverb jc-reverb) (fm-violin 0 20 440 .1))         2577     1455     1335    1153
+ * (with-sound (:reverb nrev) (fm-violin 0 20 440 .1))              2983     1812     1685    1503
+ * (with-sound () (p 0 3))                                         91020*    3011     2828    2817
+ * (with-sound () (expandn 0 10 "oboe.snd" 1 :expand 4))            1228      526      464     456
+ * (with-sound () (calling-all-animals))                           16359    11684    10306    9841
+ * (with-sound () (pins 0 3 "oboe.snd" 1.0 :max-peaks 8))           1207      783      660     700
+ * (load "popi.scm")                                               11042     6391     5923    4756
  *
- * (with-sound ()                                                   1015        641         562
+ * (with-sound ()                                                   1015      641      562     674
  *   (singer 0 .1 
  *     (list (list .4 ehh.shp test.glt 523.0 .8 0.0 .01) 
  *           (list .6 oo.shp test.glt 523.0 .7 .1 .01))))
  *
- * (with-sound (:channels 2)                                         206        139          93
+ * (with-sound (:channels 2)                                         206      139       93     107
  *   (let ((file "oboe.snd")) 
  *     (grani 0 1 .5 "oboe.snd" 
  *       :grain-envelope '(0 0 0.2 0.2 0.5 1 0.8 0.2 1 0))))
  *
- * (with-sound ()                                                   7120       5069        4064
+ * (with-sound ()                                                   7120     5069     4064    3996
  *   (do ((i 0 (+ i 1))) 
  *       ((= i 10000)) 
  *     (fm-violin (* i .001) .01 440 .001)))
  *
- * (with-sound (:channels 2)                                         283        220         158
+ * (with-sound (:channels 2)                                         283      220      158     167
  *   (fullmix "pistol.snd" 0 2 0 #f .5)  
  *   (fullmix "oboe.snd" 1 2 0 (list (list .1 (make-env '(0 0 1 1) :duration 2 :scaler .5)))))
  *
- *                                      1st case in clm-ins.scm:    12201      1138        1043
+ *                                      1st case in clm-ins.scm:    12201    1138     1043     968
  */
 
 #include <mus-config.h>
@@ -15626,6 +15626,8 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
       num_args = s7_list_length(s7, all_args);
       if (s7_is_symbol(function))
 	{
+#if 0
+	  /* this is slow for some reason -- perhaps move it down? */
 	  if (s7_is_macro(s7, function))
 	    {
 	      /* if it's a macro we want to apply its procedure-source to the form, then walk the result
@@ -15635,7 +15637,7 @@ static xen_value *walk(ptree *prog, s7_pointer form, walk_result_t walk_result)
 	      /* fprintf(stderr, "macro-> %s\n", s7_object_to_c_string(s7, new_form)); */
 	      return(walk(prog, new_form, walk_result));
 	    }
-	  
+#endif	  
 	  walker = scheme_walker(function);
 	  if (s7_is_c_pointer(walker))
 	    {

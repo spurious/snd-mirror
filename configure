@@ -11421,7 +11421,7 @@ fi
 # Check whether --enable-deprecated was given.
 if test "${enable_deprecated+set}" = set; then :
   enableval=$enable_deprecated; if test "$enable_deprecated" = no ; then
-    CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DCAIRO_DISABLE_DEPRECATED $CFLAGS"
+    CFLAGS="-DGTK_DISABLE_DEPRECATED -DG_DISABLE_DEPRECATED -DGDK_DISABLE_DEPRECATED -DPANGO_DISABLE_DEPRECATED -DCAIRO_DISABLE_DEPRECATED -DGSEAL_ENABLE -DGTK_DISABLE_SINGLE_INCLUDES $CFLAGS"
     $as_echo "#define XM_DISABLE_DEPRECATED 1" >>confdefs.h
 
     $as_echo "#define CLM_DISABLE_DEPRECATED 1" >>confdefs.h

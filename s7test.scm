@@ -9669,7 +9669,7 @@
 (num-test (let ((equals =) (x 0)) (do ((i 0 (+ i 1))) ((equals i 3) x) (set! x (+ x i)) (set! equals >))) 6)
 (num-test (let ((equals =) (x 0)) (do ((i 0 (+ i 1))) ((equals i 3) x) (set! x (+ x i)) (set! equals =))) 3)
 (num-test (let ((equals =) (x 0)) (do ((i 0 (+ i 1))) ((equals i 3) (set! x (+ x 1)) x) (set! x (+ x i)) (set! equals =))) 4)
-(num-test (do ((i 0 (+ i 1))) ((> i 3) i) (set! i (expt 2 60)))(do ((i 0 (+ i 1))) ((> i 3) i) (set! i (expt 2 60))) (+ 1 (expt 2 60)))
+(num-test (do ((i 0 (+ i 1))) ((> i 3) i) (set! i (expt 2 60))) (+ 1 (expt 2 60)))
 (num-test (let ((x 0) (n 3)) (do ((i 0 (+ i 1))) ((= i n) x) (set! x (+ x i)))) 3)
 (num-test (let ((x 0) (n 3)) (do ((i 0 (+ i 1))) ((= 1 1) x) (set! x (+ x i)))) 0)
 (num-test (let ((x 0) (n (expt 2 50))) (do ((i 0 (+ i n))) ((= i (expt 2 51)) x) (set! x (+ x i)))) (expt 2 50))
@@ -9680,6 +9680,16 @@
 (num-test (call-with-exit (lambda (r) (do () (#t 10 14) (r 1)))) 14)
 (num-test (do ((i 0 (+ i 1))) (#t 10 12)) 12)
 (num-test (do ((i 0 (+ i 1))) ((= i 3) i)) 3)
+(num-test (do ((i 0 (+ i 1))) ((> i 3) i)) 4)
+(num-test (do ((i 0 (+ i 1))) ((< i 3) i)) 0)
+(num-test (do ((i 0 (+ i 1))) ((<= i 3) i)) 0)
+(num-test (do ((i 0 (+ i 1))) ((>= i 3) i)) 3)
+(num-test (do ((i 0 (+ i 1))) ((>= 3 i) i)) 0)
+(num-test (do ((i 0 (+ i 1))) ((> 3 i) i)) 0)
+(num-test (do ((i 0 (+ i 1))) ((< 3 i) i)) 4)
+(num-test (do ((i 0 (+ i 1))) ((<= 3 i) i)) 3)
+(num-test (let ((n 3)) (do ((i 0 (+ i 1))) ((> i n) i))) 4)
+(num-test (let ((n 3)) (do ((i 0 (+ i 1))) ((< n i) i))) 4)
 
 
 

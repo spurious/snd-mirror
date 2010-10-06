@@ -623,16 +623,7 @@ void set_widget_y(GtkWidget *w, gint16 y)
 
 void set_widget_size(GtkWidget *w, guint16 width, guint16 height)
 {
-#if 1
-  /* This one resizes the window. */
   gdk_window_resize(WIDGET_TO_WINDOW(w), width, height);
-#else
-  /* This one doesn't seem to do anything, but the function name seems at least to be quite similar to set_widget_size. */
-  GtkRequisition r;
-  r.width = width;
-  r.height = height;
-  gtk_widget_size_request(w, &r);
-#endif
 #if 0
   /* This one doesn't do anything, and prints out errors. */
   gtk_window_resize(GTK_WINDOW(w), width, height);
@@ -1160,6 +1151,7 @@ char *slist_selection(slist *lst)
  *       if combined, initial drag of mix does not reflect drag until button release
  *       mix tag and waveform are sometimes red now? and 1st drag sometimes doesn't update continuously
  *       perhaps play triangle for mix
+ *  (see also goto_window above)
  *
  * TODO: try cairo-trace and the new GL surface (1.10.0)
  */

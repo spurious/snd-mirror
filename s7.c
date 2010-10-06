@@ -20510,7 +20510,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		else arg2 = s7_integer(cdr(vector_element(sv, 4)));
 		
 		/* it seems innocuous to extend this to other ops like '>', but somehow
-		 *   that greatly slows down eval_args below!
+		 *   that greatly slows down eval_args below!  (A switch statement
+		 *   or a function call is equally bad).
 		 */
 		if (((vector_element(sv, 0) == initial_equal) && (arg1 == arg2)) ||
 		    ((vector_element(sv, 0) == initial_lt) && (arg1 < arg2)) ||

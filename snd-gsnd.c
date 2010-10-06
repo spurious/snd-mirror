@@ -155,7 +155,7 @@ void display_minibuffer_error(snd_info *sp, const char *str)
 }
 
 
-/* -------- PIXMAPS -------- */
+/* -------- PIXBUFS -------- */
 
 static bool mini_lock_allocated = false;
 static picture_t *mini_lock = NULL, *speed_r = NULL, *speed_l = NULL, *blank = NULL, *stop_sign = NULL;

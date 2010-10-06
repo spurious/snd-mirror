@@ -236,7 +236,6 @@ static GtkWidget *make_row_label(prefs_info *prf, const char *label, GtkWidget *
 static GtkWidget *make_row_inner_label(prefs_info *prf, const char *label, GtkWidget *box)
 {
   GtkWidget *w, *ev;
-  ASSERT_WIDGET_TYPE(GTK_IS_HBOX(box), box);
 
   ev = gtk_event_box_new();
   gtk_box_pack_start(GTK_BOX(box), ev, false, false, 4);
@@ -259,7 +258,6 @@ static GtkWidget *make_row_inner_label(prefs_info *prf, const char *label, GtkWi
 static GtkWidget *make_row_middle_separator(GtkWidget *box)
 {
   GtkWidget *w;
-  ASSERT_WIDGET_TYPE(GTK_IS_HBOX(box), box);
   w = gtk_vseparator_new();
   gtk_box_pack_start(GTK_BOX(box), w, false, false, 10);
   gtk_widget_show(w);
@@ -272,7 +270,6 @@ static GtkWidget *make_row_middle_separator(GtkWidget *box)
 static GtkWidget *make_row_inner_separator(int width, GtkWidget *box)
 {
   GtkWidget *w;
-  ASSERT_WIDGET_TYPE(GTK_IS_HBOX(box), box);
   w = gtk_hseparator_new();
   gtk_box_pack_start(GTK_BOX(box), w, false, false, width);
   gtk_widget_show(w);
@@ -310,7 +307,6 @@ static GtkWidget *make_row_help(prefs_info *prf, const char *label, GtkWidget *b
 static GtkWidget *make_row_toggle_with_label(prefs_info *prf, bool current_value, GtkWidget *box, const char *label)
 {
   GtkWidget *w;
-  ASSERT_WIDGET_TYPE(GTK_IS_HBOX(box), box);
   if (label)
     w = gtk_check_button_new_with_label(label);
   else w = gtk_check_button_new();
@@ -337,7 +333,6 @@ static GtkWidget *make_row_toggle(prefs_info *prf, bool current_value, GtkWidget
 static GtkWidget *make_row_error(prefs_info *prf, GtkWidget *box)
 {
   GtkWidget *w;
-  ASSERT_WIDGET_TYPE(GTK_IS_HBOX(box), box);
 
   w = gtk_label_new("");
   gtk_box_pack_end(GTK_BOX(box), w, true, false, 0);
@@ -493,7 +488,6 @@ static prefs_info *prefs_row_with_toggle(const char *label, const char *varname,
   prefs_info *prf = NULL;
   GtkWidget *sep, *hb, *row, *help;
 
-  ASSERT_WIDGET_TYPE(GTK_IS_VBOX(box), box);
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
@@ -538,7 +532,6 @@ static prefs_info *prefs_row_with_two_toggles(const char *label, const char *var
   prefs_info *prf = NULL;
   GtkWidget *sep, *help, *sep1, *row, *hb;
 
-  ASSERT_WIDGET_TYPE(GTK_IS_VBOX(box), box);
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
   prf->toggle_func = toggle_func;
@@ -632,7 +625,6 @@ static GtkWidget *make_row_text(prefs_info *prf, const char *text_value, int col
   GtkSettings *settings;
   text_info *info;
 
-  ASSERT_WIDGET_TYPE(GTK_IS_HBOX(box), box);
   len = mus_strlen(text_value);
   w = gtk_entry_new();
   gtk_entry_set_has_frame(GTK_ENTRY(w), true);
@@ -1042,7 +1034,6 @@ static prefs_info *prefs_row_with_text(const char *label, const char *varname, c
   prefs_info *prf = NULL;
   GtkWidget *sep, *hb, *row, *help;
 
-  ASSERT_WIDGET_TYPE(GTK_IS_VBOX(box), box);
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
 
@@ -1076,7 +1067,6 @@ static prefs_info *prefs_row_with_two_texts(const char *label, const char *varna
 {
   prefs_info *prf = NULL;
   GtkWidget *sep, *lab1, *lab2, *hb, *row, *help;
-  ASSERT_WIDGET_TYPE(GTK_IS_VBOX(box), box);
   prf = (prefs_info *)calloc(1, sizeof(prefs_info));
   prf->var_name = varname;
 
@@ -1461,7 +1451,6 @@ static prefs_info *prefs_color_selector_row(const char *label, const char *varna
 static GtkWidget *make_inter_topic_separator(GtkWidget *topics)
 {
   GtkWidget *w;
-  ASSERT_WIDGET_TYPE(GTK_IS_VBOX(topics), topics);
   w = gtk_hseparator_new();
   gtk_box_pack_start(GTK_BOX(topics), w, false, false, 0);
   gtk_widget_show(w);
@@ -1475,7 +1464,6 @@ static GtkWidget *make_inter_topic_separator(GtkWidget *topics)
 static GtkWidget *make_inter_variable_separator(GtkWidget *topics)
 {
   GtkWidget *w;
-  ASSERT_WIDGET_TYPE(GTK_IS_VBOX(topics), topics);
   w = gtk_hseparator_new();
   gtk_box_pack_start(GTK_BOX(topics), w, false, false, 0);
   gtk_widget_show(w);
@@ -1489,7 +1477,6 @@ static GtkWidget *make_inter_variable_separator(GtkWidget *topics)
 static GtkWidget *make_top_level_label(const char *label, GtkWidget *parent)
 {
   GtkWidget *w, *w1, *w2;
-  ASSERT_WIDGET_TYPE(GTK_IS_VBOX(parent), parent);
 
   w1 = gtk_vseparator_new();
   gtk_box_pack_start(GTK_BOX(parent), w1, false, false, 8);
@@ -1514,7 +1501,6 @@ static GtkWidget *make_top_level_label(const char *label, GtkWidget *parent)
 static GtkWidget *make_top_level_box(GtkWidget *topics)
 {
   GtkWidget *w, *frame;
-  ASSERT_WIDGET_TYPE(GTK_IS_VBOX(topics), topics);
 
   frame = gtk_frame_new(NULL);
   gtk_box_pack_start(GTK_BOX(topics), frame, true, true, 0);
@@ -1530,7 +1516,6 @@ static GtkWidget *make_top_level_box(GtkWidget *topics)
 static GtkWidget *make_inner_label(const char *label, GtkWidget *parent)
 {
   GtkWidget *w, *w1, *w2;
-  ASSERT_WIDGET_TYPE(GTK_IS_VBOX(parent), parent);
 
   w1 = gtk_vseparator_new();
   gtk_box_pack_start(GTK_BOX(parent), w1, false, false, 8);

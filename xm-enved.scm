@@ -401,3 +401,5 @@
 			     '(0.0 1.0 0.0 1.0)))
 |#
 
+;;; TODO: translate this to cairo
+;;; TODO: expose_events -> draw

@@ -48323,13 +48323,13 @@ EDITS: 1
     
     (let ((val (run-eval '(lambda (y) (let ((ge (make-env l0111 :length 11))) (env ge))) 0.0)))
       (if (fneq val 1.0) (snd-display #__line__ ";make-env in run with var list: ~A" val)))
-
+#|
     (let ()
       (define-macro (run-hi a) `(+ 1 ,a))
       (let ((val (run (+ 1 (run-hi 2)))))
 	(if (not (= val 4))
 	    (snd-display #__line__ ";run + macro: ~A" val))))
-    
+|#    
     (let ((x 0.0))
       (run
        (lambda ()
@@ -63782,6 +63782,17 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 10,986,910,643  io.c:mus_write_1 [/home/bil/snd-11/snd]
 10,047,515,195  run.c:eval_ptree [/home/bil/snd-11/snd]
  8,918,483,905  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
+
+5-Oct-10
+267,837,106,060  PROGRAM TOTALS
+35,902,703,952  s7.c:eval [/home/bil/test-snd/snd]
+27,365,068,952  s7.c:eval'2 [/home/bil/test-snd/snd]
+24,694,290,706  snd-edits.c:channel_local_maxamp [/home/bil/test-snd/snd]
+20,739,696,960  io.c:mus_read_any_1 [/home/bil/test-snd/snd]
+12,932,022,923  s7.c:gc [/home/bil/test-snd/snd]
+10,972,303,775  io.c:mus_write_1 [/home/bil/test-snd/snd]
+10,050,562,563  run.c:eval_ptree [/home/bil/test-snd/snd]
+ 8,918,483,905  snd-sig.c:direct_filter [/home/bil/test-snd/snd]
 
 |#
 
