@@ -553,45 +553,7 @@ end
 #
 # --- GTK ---
 #
-# From xg.c
-# (define (g_signal_connect obj name func . data)
-#   (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f 0))
-# (define (g_signal_connect_after obj name func . data)
-#   (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_AFTER))
-# (define (g_signal_connect_swapped obj name func . data)
-#   (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_SWAPPED))
-
 module Snd_Gtk
-  def Rg_signal_connect(obj, name, func, data = false)
-    Rg_signal_connect_data(RGPOINTER(obj),
-                           name,
-                           func,
-                           #lambda do |w, d| func.call(w, d) end,
-                           data,
-                           false,
-                           0)
-  end
-
-  def Rg_signal_connect_after(obj, name, func, data = false)
-    Rg_signal_connect_data(RGPOINTER(obj),
-                           name,
-                           func,
-                           #lambda do |w, d| func.call(w, d) end,
-                           data,
-                           false,
-                           RG_CONNECT_AFTER)
-  end
-
-  def Rg_signal_connect_swapped(obj, name, func, data = false)
-    Rg_signal_connect_data(RGPOINTER(obj),
-                           name,
-                           func,
-                           #lambda do |w, d| func.call(w, d) end,
-                           data,
-                           false,
-                           RG_CONNECT_SWAPPED)
-  end
-  
   def make_snd_menu(name, args = [], &body)
     Snd_main_menu.new(name, nil, args, &body)
   end

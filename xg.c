@@ -253,7 +253,6 @@ static void define_xm_obj(void)
 #define XEN_GtkRecentFilterFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 2)))
 #define XEN_GtkTreeViewSearchPositionFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 3)))
 #define XEN_GtkAssistantPageFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 2)))
-#define XEN_GtkLinkButtonUriFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 3)))
 #define XEN_GtkRecentSortFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 3)))
 #define XEN_GCallback_P(Arg) (XEN_PROCEDURE_P(Arg) && ((XEN_REQUIRED_ARGS_OK(Arg, 2)) || (XEN_REQUIRED_ARGS_OK(Arg, 3)) || (XEN_REQUIRED_ARGS_OK(Arg, 4))))
 #define XEN_TO_C_lambda2(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_child_func
@@ -292,7 +291,6 @@ static void define_xm_obj(void)
 #define XEN_TO_C_GtkRecentFilterFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_recent_filter
 #define XEN_TO_C_GtkTreeViewSearchPositionFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_search_position
 #define XEN_TO_C_GtkAssistantPageFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_page_func
-#define XEN_TO_C_GtkLinkButtonUriFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_link_button_uri
 #define XEN_TO_C_GtkRecentSortFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_recent_sort
 #define XEN_TO_C_GCallback(Arg) ((XEN_REQUIRED_ARGS_OK(Arg, 4)) ? (GCallback)gxg_func4 : ((XEN_REQUIRED_ARGS_OK(Arg, 3)) ? (GCallback)gxg_func3 : (GCallback)gxg_func2))
 #define XEN_TO_C_lambda_data(Arg) (gpointer)gxg_ptr
@@ -375,7 +373,6 @@ XM_TYPE_PTR(guint8_, guint8*)
 #define XEN_TO_C_gsize(Arg) (gsize)(XEN_TO_C_INT(Arg))
 #define XEN_gsize_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GtkRecentFilterInfo_, GtkRecentFilterInfo*)
-XM_TYPE_PTR(GtkLinkButton_, GtkLinkButton*)
 XM_TYPE_PTR(GtkRecentInfo_, GtkRecentInfo*)
 #define C_TO_XEN_GType(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_GType(Arg) (GType)(XEN_TO_C_ULONG(Arg))
@@ -812,6 +809,7 @@ XM_TYPE_PTR_1(GtkAssistant_, GtkAssistant*)
 #define C_TO_XEN_GtkAssistantPageType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkAssistantPageType(Arg) (GtkAssistantPageType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkAssistantPageType_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR(GtkLinkButton_, GtkLinkButton*)
 XM_TYPE_PTR_1(GtkRecentChooser_, GtkRecentChooser*)
 #define C_TO_XEN_GtkRecentSortType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkRecentSortType(Arg) (GtkRecentSortType)(XEN_TO_C_INT(Arg))
@@ -911,7 +909,6 @@ XM_TYPE(GtkAlign, GtkAlign)
 #define XEN_TO_C_GtkWrapBoxSpreading(Arg) (GtkWrapBoxSpreading)(XEN_TO_C_INT(Arg))
 #define XEN_GtkWrapBoxSpreading_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GtkWrapBox_, GtkWrapBox*)
-#define C_TO_XEN_GtkWrapBoxPacking(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkWrapBoxPacking(Arg) (GtkWrapBoxPacking)(XEN_TO_C_INT(Arg))
 #define XEN_GtkWrapBoxPacking_P(Arg) XEN_INTEGER_P(Arg)
 #endif
@@ -1467,16 +1464,6 @@ static gint gxg_page_func(gint current_page, gpointer func_info)
                                   C_TO_XEN_gint(current_page),
                                   XEN_CADR((XEN)func_info),
                                   c__FUNCTION__)));
-}
-
-static void gxg_link_button_uri(GtkLinkButton* button, const gchar* link, gpointer func_info)
-{
-  if (!XEN_LIST_P((XEN)func_info)) return;
-  XEN_CALL_3(XEN_CAR((XEN)func_info),
-             C_TO_XEN_GtkLinkButton_(button),
-             C_TO_XEN_gchar_(link),
-             XEN_CADR((XEN)func_info),
-             c__FUNCTION__);
 }
 
 static gint gxg_recent_sort(GtkRecentInfo* a, GtkRecentInfo* b, gpointer func_info)
@@ -7398,43 +7385,6 @@ static XEN gxg_gtk_check_version(XEN required_major, XEN required_minor, XEN req
   XEN_ASSERT_TYPE(XEN_guint_P(required_minor), required_minor, 2, "gtk_check_version", "guint");
   XEN_ASSERT_TYPE(XEN_guint_P(required_micro), required_micro, 3, "gtk_check_version", "guint");
   return(C_TO_XEN_gchar_(gtk_check_version(XEN_TO_C_guint(required_major), XEN_TO_C_guint(required_minor), XEN_TO_C_guint(required_micro))));
-}
-
-static XEN gxg_gtk_init(XEN argc, XEN argv)
-{
-  #define H_gtk_init "void gtk_init(int* {argc}, char*** |argv|)"
-  int ref_argc;
-  char** ref_argv = NULL;
-  ref_argc = XEN_TO_C_int(argc);
-  ref_argv = (char**)calloc(ref_argc, sizeof(char*));
-  {
-   int i;
-   XEN lst;
-   lst = XEN_COPY_ARG(argv);
-   for (i = 0; i < ref_argc; i++, lst = XEN_CDR(lst)) ref_argv[i] = XEN_TO_C_char_(XEN_CAR(lst));
-  }
-  gtk_init(&ref_argc, &ref_argv);
-  return(XEN_LIST_2(C_TO_XEN_int(ref_argc), C_TO_XEN_char__(ref_argv)));
-}
-
-static XEN gxg_gtk_init_check(XEN argc, XEN argv)
-{
-  #define H_gtk_init_check "gboolean gtk_init_check(int* {argc}, char*** |argv|)"
-  int ref_argc;
-  char** ref_argv = NULL;
-  ref_argc = XEN_TO_C_int(argc);
-  ref_argv = (char**)calloc(ref_argc, sizeof(char*));
-  {
-   int i;
-   XEN lst;
-   lst = XEN_COPY_ARG(argv);
-   for (i = 0; i < ref_argc; i++, lst = XEN_CDR(lst)) ref_argv[i] = XEN_TO_C_char_(XEN_CAR(lst));
-  }
-  {
-    XEN result = XEN_FALSE;
-    result = C_TO_XEN_gboolean(gtk_init_check(&ref_argc, &ref_argv));
-    return(XEN_LIST_3(result, C_TO_XEN_int(ref_argc), C_TO_XEN_char__(ref_argv)));
-   }
 }
 
 static XEN gxg_gtk_disable_setlocale(void)
@@ -35340,6 +35290,64 @@ static XEN gxg_GTK_IS_OBJECT(XEN obj) {return(C_TO_XEN_BOOLEAN(WRAPPED_OBJECT_P(
 
 /* ---------------------------------------- special functions ---------------------------------------- */
 
+static XEN gxg_gtk_init(XEN argc, XEN argv) 
+{ 
+  #define H_gtk_init "void gtk_init(int* argc, char*** argv)" 
+  int ref_argc = 0; 
+  char** ref_argv = NULL; 
+  if (XEN_BOUND_P(argv)) 
+    { 
+      if (XEN_BOUND_P(argc) && XEN_INTEGER_P(argc) && XEN_TO_C_int(argc) <= XEN_LIST_LENGTH(argv)) 
+	ref_argc = XEN_TO_C_int(argc); 
+      else ref_argc = XEN_LIST_LENGTH(argv); 
+    } 
+  ref_argv = (char**)calloc(ref_argc, sizeof(char*)); 
+  { 
+    int i; 
+    XEN lst; 
+    lst = XEN_COPY_ARG(argv); 
+    for (i = 0; i < ref_argc; i++, lst = XEN_CDR(lst)) ref_argv[i] = XEN_TO_C_char_(XEN_CAR(lst));
+  }
+  gtk_init(&ref_argc, &ref_argv);
+  return(XEN_LIST_2(C_TO_XEN_int(ref_argc), C_TO_XEN_char__(ref_argv)));
+} 
+
+static XEN gxg_gtk_init_check(XEN argc, XEN argv) 
+{ 
+  #define H_gtk_init_check "gboolean gtk_init_check(int* argc, char*** argv)" 
+  int ref_argc = 0; 
+  char** ref_argv = NULL; 
+  if (XEN_BOUND_P(argc) && XEN_LIST_P(argc)) 
+    { 
+      argv = argc; 
+      ref_argc = XEN_LIST_LENGTH(argv); 
+    } 
+  else 
+    {
+      if (XEN_BOUND_P(argv)) 
+	{ 
+	  int len; 
+	  XEN_ASSERT_TYPE(XEN_INTEGER_P(argc), argc, 1, "gtk_init_check", "int argc"); 
+	  XEN_ASSERT_TYPE(XEN_LIST_P(argv), argv, 2, "gtk_init_check", "char *argv[]"); 
+	  len = XEN_LIST_LENGTH(argv); 
+	  ref_argc = XEN_TO_C_int(argc); 
+	  if (ref_argc > len) ref_argc = len; 
+	}
+    }
+  ref_argv = (char**)calloc(ref_argc, sizeof(char*)); 
+  { 
+    int i; 
+    XEN lst; 
+    lst = XEN_COPY_ARG(argv); 
+    for (i = 0; i < ref_argc; i++, lst = XEN_CDR(lst)) ref_argv[i] = XEN_TO_C_char_(XEN_CAR(lst));
+  }
+  {
+    XEN result = XEN_FALSE;
+    result = C_TO_XEN_gboolean(gtk_init_check(&ref_argc, &ref_argv));
+    return(XEN_LIST_3(result, C_TO_XEN_int(ref_argc), C_TO_XEN_char__(ref_argv)));
+  }
+}
+
 static XEN gxg_make_target_entry(XEN lst)
 {
   GtkTargetEntry* targets;
@@ -36342,8 +36350,6 @@ XEN_NARGIFY_2(gxg_gtk_list_store_prepend_w, gxg_gtk_list_store_prepend)
 XEN_NARGIFY_2(gxg_gtk_list_store_append_w, gxg_gtk_list_store_append)
 XEN_NARGIFY_1(gxg_gtk_list_store_clear_w, gxg_gtk_list_store_clear)
 XEN_NARGIFY_3(gxg_gtk_check_version_w, gxg_gtk_check_version)
-XEN_ARGIFY_2(gxg_gtk_init_w, gxg_gtk_init)
-XEN_ARGIFY_2(gxg_gtk_init_check_w, gxg_gtk_init_check)
 XEN_NARGIFY_0(gxg_gtk_disable_setlocale_w, gxg_gtk_disable_setlocale)
 XEN_NARGIFY_0(gxg_gtk_set_locale_w, gxg_gtk_set_locale)
 XEN_NARGIFY_0(gxg_gtk_get_default_language_w, gxg_gtk_get_default_language)
@@ -39294,6 +39300,8 @@ XEN_NARGIFY_2(xen_list_to_c_array_w, xen_list_to_c_array)
 XEN_NARGIFY_1(gxg_make_target_entry_w, gxg_make_target_entry)
 XEN_NARGIFY_1(c_to_xen_string_w, c_to_xen_string)
 XEN_NARGIFY_3(xg_object_get_w, xg_object_get);
+XEN_ARGIFY_2(gxg_gtk_init_w, gxg_gtk_init)
+XEN_ARGIFY_2(gxg_gtk_init_check_w, gxg_gtk_init_check)
 XEN_NARGIFY_1(gxg_GDK_DRAG_CONTEXT_w, gxg_GDK_DRAG_CONTEXT)
 XEN_NARGIFY_1(gxg_GDK_DRAWABLE_w, gxg_GDK_DRAWABLE)
 XEN_NARGIFY_1(gxg_GDK_DEVICE_w, gxg_GDK_DEVICE)
@@ -40339,8 +40347,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_list_store_append_w gxg_gtk_list_store_append
 #define gxg_gtk_list_store_clear_w gxg_gtk_list_store_clear
 #define gxg_gtk_check_version_w gxg_gtk_check_version
-#define gxg_gtk_init_w gxg_gtk_init
-#define gxg_gtk_init_check_w gxg_gtk_init_check
 #define gxg_gtk_disable_setlocale_w gxg_gtk_disable_setlocale
 #define gxg_gtk_set_locale_w gxg_gtk_set_locale
 #define gxg_gtk_get_default_language_w gxg_gtk_get_default_language
@@ -43291,6 +43297,8 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_make_target_entry_w gxg_make_target_entry
 #define c_to_xen_string_w c_to_xen_string
 #define xg_object_get_w xg_object_get
+#define gxg_gtk_init_w gxg_gtk_init
+#define gxg_gtk_init_check_w gxg_gtk_init_check
 #define gxg_GDK_DRAG_CONTEXT_w gxg_GDK_DRAG_CONTEXT
 #define gxg_GDK_DRAWABLE_w gxg_GDK_DRAWABLE
 #define gxg_GDK_DEVICE_w gxg_GDK_DEVICE
@@ -44343,8 +44351,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_list_store_append, gxg_gtk_list_store_append_w, 2, 0, 0, H_gtk_list_store_append);
   XG_DEFINE_PROCEDURE(gtk_list_store_clear, gxg_gtk_list_store_clear_w, 1, 0, 0, H_gtk_list_store_clear);
   XG_DEFINE_PROCEDURE(gtk_check_version, gxg_gtk_check_version_w, 3, 0, 0, H_gtk_check_version);
-  XG_DEFINE_PROCEDURE(gtk_init, gxg_gtk_init_w, 0, 2, 0, H_gtk_init);
-  XG_DEFINE_PROCEDURE(gtk_init_check, gxg_gtk_init_check_w, 0, 2, 0, H_gtk_init_check);
   XG_DEFINE_PROCEDURE(gtk_disable_setlocale, gxg_gtk_disable_setlocale_w, 0, 0, 0, H_gtk_disable_setlocale);
   XG_DEFINE_PROCEDURE(gtk_set_locale, gxg_gtk_set_locale_w, 0, 0, 0, H_gtk_set_locale);
   XG_DEFINE_PROCEDURE(gtk_get_default_language, gxg_gtk_get_default_language_w, 0, 0, 0, H_gtk_get_default_language);
@@ -47511,6 +47517,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(->string, c_to_xen_string_w, 1, 0, 0, NULL);
   XG_DEFINE_PROCEDURE(make-target-entry, gxg_make_target_entry_w, 1, 0, 0, H_make_target_entry);
   XG_DEFINE_PROCEDURE(g_object_get, xg_object_get_w, 3, 0, 0, NULL);
+  XG_DEFINE_PROCEDURE(gtk_init, gxg_gtk_init_w, 0, 2, 0, H_gtk_init);
+  XG_DEFINE_PROCEDURE(gtk_init_check, gxg_gtk_init_check_w, 0, 2, 0, H_gtk_init_check);
   XG_DEFINE_PROCEDURE(GDK_IS_DRAG_CONTEXT, gxg_GDK_IS_DRAG_CONTEXT_w, 1, 0, 0, "(GDK_IS_DRAG_CONTEXT obj): " PROC_TRUE " if obj is a GDK_IS_DRAG_CONTEXT");
   XG_DEFINE_PROCEDURE(GDK_IS_DRAWABLE, gxg_GDK_IS_DRAWABLE_w, 1, 0, 0, "(GDK_IS_DRAWABLE obj): " PROC_TRUE " if obj is a GDK_IS_DRAWABLE");
   XG_DEFINE_PROCEDURE(GDK_IS_DEVICE, gxg_GDK_IS_DEVICE_w, 1, 0, 0, "(GDK_IS_DEVICE obj): " PROC_TRUE " if obj is a GDK_IS_DEVICE");
@@ -49437,6 +49445,16 @@ void Init_libxg(void)
       XEN_EVAL_C_STRING("(define (g_signal_connect_after obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_AFTER))");
       XEN_EVAL_C_STRING("(define (g_signal_connect_swapped obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_SWAPPED))");
 #endif
+#if HAVE_RUBY 
+      XEN_EVAL_C_STRING("def Rg_signal_connect(obj, name, func, data = false); Rg_signal_connect_data(RGPOINTER(obj), name, func, data, false, 0); end"); 
+      XEN_EVAL_C_STRING("def Rg_signal_connect_after(obj, name, func, data = false); Rg_signal_connect_data(RGPOINTER(obj), name, func, data, false, RG_CONNECT_AFTER); end"); 
+      XEN_EVAL_C_STRING("def Rg_signal_connect_swapped(obj, name, func, data = false); Rg_signal_connect_data(RGPOINTER(obj), name, func, data, false, RG_CONNECT_SWAPPED); end"); 
+#endif 
+#if HAVE_FORTH 
+      XEN_EVAL_C_STRING(": Fg_signal_connect <{ obj name func :optional data #f -- n }> obj FGPOINTER name func data #f 0 Fg_signal_connect_data ;"); 
+      XEN_EVAL_C_STRING(": Fg_signal_connect_after <{ obj name func :optional data #f -- n }> obj FGPOINTER name func data #f FG_CONNECT_AFTER Fg_signal_connect_data ;"); 
+      XEN_EVAL_C_STRING(": Fg_signal_connect_swapped <{ obj name func :optional data #f -- n }> obj FGPOINTER name func data #f FG_CONNECT_SWAPPED Fg_signal_connect_data ;"); 
+#endif 
     }
 }
 #else

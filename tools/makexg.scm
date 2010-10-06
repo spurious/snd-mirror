@@ -192,7 +192,7 @@
 	
 	"gdouble*" "GdkFill" "GdkSubwindowMode" "GdkLineStyle" "GdkCapStyle" "GdkJoinStyle"
 	"GtkInfoBar*" "GtkSpinner*" "GtkToolShell*" "GtkToolPalette*" "GtkToolPaletteDragTargets"
-	"GdkFunction"
+	"GdkFunction" "GtkWrapBoxPacking"
 
 	"GdkRectangle*" "PangoRenderer*" "cairo_glyph_t**" "cairo_text_cluster_t**"
 ;	"cairo_text_cluster_flags_t" 
@@ -651,12 +651,12 @@
 			      "page_func"
 			      (parse-args "gint current_page lambda_data func_info" 'callback)
 			      'permanent)
-			(list 'GtkLinkButtonUriFunc
-			      "void"
-			      "link_button_uri"
-			      (parse-args "GtkLinkButton* button gchar* link lambda_data func_info" 'callback)
-			      ;; const gchar *link
-			      'permanent)
+;			(list 'GtkLinkButtonUriFunc
+;			      "void"
+;			      "link_button_uri"
+;			      (parse-args "GtkLinkButton* button gchar* link lambda_data func_info" 'callback)
+;			      ;; const gchar *link
+;			      'permanent)
 			(list 'GtkRecentSortFunc
 			      "gint"
 			      "recent_sort"
@@ -2741,6 +2741,65 @@
 
 (hey "~%~%/* ---------------------------------------- special functions ---------------------------------------- */~%~%")
 
+;;; from Mike Scholz -- improve the error checking
+(hey "static XEN gxg_gtk_init(XEN argc, XEN argv) ~%")
+(hey "{ ~%")
+(hey "  #define H_gtk_init \"void gtk_init(int* argc, char*** argv)\" ~%")
+(hey "  int ref_argc = 0; ~%")
+(hey "  char** ref_argv = NULL; ~%")
+(hey "  if (XEN_BOUND_P(argv)) ~%")
+(hey "    { ~%")
+(hey "      if (XEN_BOUND_P(argc) && XEN_INTEGER_P(argc) && XEN_TO_C_int(argc) <= XEN_LIST_LENGTH(argv)) ~%")
+(hey "	ref_argc = XEN_TO_C_int(argc); ~%")
+(hey "      else ref_argc = XEN_LIST_LENGTH(argv); ~%")
+(hey "    } ~%")
+(hey "  ref_argv = (char**)calloc(ref_argc, sizeof(char*)); ~%")
+(hey "  { ~%")
+(hey "    int i; ~%")
+(hey "    XEN lst; ~%")
+(hey "    lst = XEN_COPY_ARG(argv); ~%")
+(hey "    for (i = 0; i < ref_argc; i++, lst = XEN_CDR(lst)) ref_argv[i] = XEN_TO_C_char_(XEN_CAR(lst));~%")
+(hey "  }~%")
+(hey "  gtk_init(&ref_argc, &ref_argv);~%")
+(hey "  return(XEN_LIST_2(C_TO_XEN_int(ref_argc), C_TO_XEN_char__(ref_argv)));~%")
+(hey "} ~%")
+(hey "~%")
+(hey "static XEN gxg_gtk_init_check(XEN argc, XEN argv) ~%")
+(hey "{ ~%")
+(hey "  #define H_gtk_init_check \"gboolean gtk_init_check(int* argc, char*** argv)\" ~%")
+(hey "  int ref_argc = 0; ~%")
+(hey "  char** ref_argv = NULL; ~%")
+(hey "  if (XEN_BOUND_P(argc) && XEN_LIST_P(argc)) ~%")
+(hey "    { ~%")
+(hey "      argv = argc; ~%")
+(hey "      ref_argc = XEN_LIST_LENGTH(argv); ~%")
+(hey "    } ~%")
+(hey "  else ~%")
+(hey "    {~%")
+(hey "      if (XEN_BOUND_P(argv)) ~%")
+(hey "	{ ~%")
+(hey "	  int len; ~%")
+(hey "	  XEN_ASSERT_TYPE(XEN_INTEGER_P(argc), argc, 1, \"gtk_init_check\", \"int argc\"); ~%")
+(hey "	  XEN_ASSERT_TYPE(XEN_LIST_P(argv), argv, 2, \"gtk_init_check\", \"char *argv[]\"); ~%")
+(hey "	  len = XEN_LIST_LENGTH(argv); ~%")
+(hey "	  ref_argc = XEN_TO_C_int(argc); ~%")
+(hey "	  if (ref_argc > len) ref_argc = len; ~%")
+(hey "	}~%")
+(hey "    }~%")
+(hey "  ref_argv = (char**)calloc(ref_argc, sizeof(char*)); ~%")
+(hey "  { ~%")
+(hey "    int i; ~%")
+(hey "    XEN lst; ~%")
+(hey "    lst = XEN_COPY_ARG(argv); ~%")
+(hey "    for (i = 0; i < ref_argc; i++, lst = XEN_CDR(lst)) ref_argv[i] = XEN_TO_C_char_(XEN_CAR(lst));~%")
+(hey "  }~%")
+(hey "  {~%")
+(hey "    XEN result = XEN_FALSE;~%")
+(hey "    result = C_TO_XEN_gboolean(gtk_init_check(&ref_argc, &ref_argv));~%")
+(hey "    return(XEN_LIST_3(result, C_TO_XEN_int(ref_argc), C_TO_XEN_char__(ref_argv)));~%")
+(hey "  }~%")
+(hey "}~%~%")
+
 (hey "static XEN gxg_make_target_entry(XEN lst)~%")
 (hey "{~%")
 (hey "  GtkTargetEntry* targets;~%")
@@ -3027,7 +3086,6 @@
  all-funcs all-func-withs)
 
 
-(define (ruby-cast func) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
 (hey "XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)~%")
 (hey "XEN_NARGIFY_2(c_array_to_xen_list_w, c_array_to_xen_list)~%")
 (hey "XEN_NARGIFY_2(xen_list_to_c_array_w, xen_list_to_c_array)~%")
@@ -3035,8 +3093,10 @@
 (hey "XEN_NARGIFY_1(c_to_xen_string_w, c_to_xen_string)~%")
 (hey "XEN_NARGIFY_3(xg_object_get_w, xg_object_get);~%")
 
-(define (ruby-cast func) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
+(hey "XEN_ARGIFY_2(gxg_gtk_init_w, gxg_gtk_init)~%")
+(hey "XEN_ARGIFY_2(gxg_gtk_init_check_w, gxg_gtk_init_check)~%")
 
+(define (ruby-cast func) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
 (for-each ruby-cast (reverse casts))
 (for-each
  (lambda (cast-list cast-func)
@@ -3097,6 +3157,9 @@
 (hey "#define gxg_make_target_entry_w gxg_make_target_entry~%")
 (hey "#define c_to_xen_string_w c_to_xen_string~%")
 (hey "#define xg_object_get_w xg_object_get~%")
+
+(hey "#define gxg_gtk_init_w gxg_gtk_init~%")
+(hey "#define gxg_gtk_init_check_w gxg_gtk_init_check~%")
 
 (define (ruby-uncast func) (hey "#define gxg_~A_w gxg_~A~%" (no-arg (car func)) (no-arg (car func)))) 
 (for-each ruby-uncast (reverse casts))
@@ -3199,6 +3262,9 @@
 (hey "  XG_DEFINE_PROCEDURE(->string, c_to_xen_string_w, 1, 0, 0, NULL);~%")
 (hey "  XG_DEFINE_PROCEDURE(make-target-entry, gxg_make_target_entry_w, 1, 0, 0, H_make_target_entry);~%")
 (hey "  XG_DEFINE_PROCEDURE(g_object_get, xg_object_get_w, 3, 0, 0, NULL);~%")
+
+(hey "  XG_DEFINE_PROCEDURE(gtk_init, gxg_gtk_init_w, 0, 2, 0, H_gtk_init);~%")
+(hey "  XG_DEFINE_PROCEDURE(gtk_init_check, gxg_gtk_init_check_w, 0, 2, 0, H_gtk_init_check);~%")
 
 (define (check-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, \"(~A obj): \" PROC_TRUE \" if obj is a ~A\");~%" 
@@ -3357,7 +3423,6 @@
 
 (hey "}~%~%")
 
-
 (hey "/* -------------------------------- initialization -------------------------------- */~%~%")
 (hey "static bool xg_already_inited = false;~%~%")
 (hey "void Init_libxg(void);~%")
@@ -3375,14 +3440,22 @@
 (hey "      XEN_YES_WE_HAVE(\"xg\");~%")
 (hey "      XEN_DEFINE(\"xg-version\", C_TO_XEN_STRING(\"~A\"));~%" (strftime "%d-%b-%y" (localtime (current-time))))
 (hey "      xg_already_inited = true;~%")
-
 (hey "#if HAVE_SCHEME~%")
 (hey "      /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */~%")
 (hey "      XEN_EVAL_C_STRING(\"(define (g_signal_connect obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f 0))\");~%")
 (hey "      XEN_EVAL_C_STRING(\"(define (g_signal_connect_after obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_AFTER))\");~%")
 (hey "      XEN_EVAL_C_STRING(\"(define (g_signal_connect_swapped obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_SWAPPED))\");~%")
 (hey "#endif~%")
-
+(hey "#if HAVE_RUBY ~%")
+(hey "      XEN_EVAL_C_STRING(\"def Rg_signal_connect(obj, name, func, data = false); Rg_signal_connect_data(RGPOINTER(obj), name, func, data, false, 0); end\"); ~%")
+(hey "      XEN_EVAL_C_STRING(\"def Rg_signal_connect_after(obj, name, func, data = false); Rg_signal_connect_data(RGPOINTER(obj), name, func, data, false, RG_CONNECT_AFTER); end\"); ~%")
+(hey "      XEN_EVAL_C_STRING(\"def Rg_signal_connect_swapped(obj, name, func, data = false); Rg_signal_connect_data(RGPOINTER(obj), name, func, data, false, RG_CONNECT_SWAPPED); end\"); ~%")
+(hey "#endif ~%")
+(hey "#if HAVE_FORTH ~%")
+(hey "      XEN_EVAL_C_STRING(\": Fg_signal_connect <{ obj name func :optional data #f -- n }> obj FGPOINTER name func data #f 0 Fg_signal_connect_data ;\"); ~%")
+(hey "      XEN_EVAL_C_STRING(\": Fg_signal_connect_after <{ obj name func :optional data #f -- n }> obj FGPOINTER name func data #f FG_CONNECT_AFTER Fg_signal_connect_data ;\"); ~%")
+(hey "      XEN_EVAL_C_STRING(\": Fg_signal_connect_swapped <{ obj name func :optional data #f -- n }> obj FGPOINTER name func data #f FG_CONNECT_SWAPPED Fg_signal_connect_data ;\"); ~%")
+(hey "#endif ~%")
 (hey "    }~%")
 (hey "}~%")
 (hey "#else~%")

@@ -2101,8 +2101,11 @@
 (CFNC "void gtk_list_store_clear GtkListStore* list_store")
 (CINT "GTK_PRIORITY_RESIZE")
 (CFNC "gchar* gtk_check_version guint required_major guint required_minor guint required_micro")
-(CFNC "void gtk_init int* {argc} char*** |argv|")
-(CFNC "gboolean gtk_init_check int* {argc} char*** |argv|")
+
+;;; (CFNC "void gtk_init int* {argc} char*** |argv|")
+;;; (CFNC "gboolean gtk_init_check int* {argc} char*** |argv|")
+;;;   these two are done by hand in makexg.scm to improve error handling
+
 ;(CFNC "void gtk_init_abi_check int* argc char*** argv int num_checks size_t sizeof_GtkWindow")
 ;(CFNC "gboolean gtk_init_check_abi_check int* argc char*** argv int num_checks size_t sizeof_GtkWindow")
 (CFNC "void gtk_disable_setlocale void")
