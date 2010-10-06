@@ -9690,7 +9690,9 @@
 (num-test (do ((i 0 (+ i 1))) ((<= 3 i) i)) 3)
 (num-test (let ((n 3)) (do ((i 0 (+ i 1))) ((> i n) i))) 4)
 (num-test (let ((n 3)) (do ((i 0 (+ i 1))) ((< n i) i))) 4)
-
+(num-test (do ((i 10 (- i 1))) ((= i 0) i)) 0)
+(num-test (do ((i 10 (- 1 i))) ((< i 0) i)) -9)
+(num-test (do ((i 10 (- i 3))) ((< i 0) i)) -2)
 
 
 

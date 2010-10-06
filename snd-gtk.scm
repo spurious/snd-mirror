@@ -340,7 +340,11 @@
       (g_signal_connect amp-adj "value_changed" (lambda (w d) (set! amplitude (gtk_adjustment_get_value (GTK_ADJUSTMENT amp-adj)))) #f)
       )
     
-    (g_signal_connect scan-pane "expose_event" (lambda (w e d) (redraw-graph)) #f)
+    (g_signal_connect scan-pane 
+		      (if (provided? 'gtk3) "draw" "expose_event")
+		      (lambda (w e d) 
+			(redraw-graph)) 
+		      #f)
     (g_signal_connect scan-pane "configure_event" (lambda (w e d) (redraw-graph)) #f)
     (g_signal_connect scan-pane "button_press_event" 
 		      (lambda (w e d) 
@@ -804,7 +808,11 @@ Reverb-feedback sets the scaler on the feedback.
       (gtk_container_add (GTK_CONTAINER frame) meter)
       (gtk_widget_show meter)
       (let ((context (list meter 0.0 1.0 0.0 0.0 width height)))
-	(g_signal_connect meter "expose_event" (lambda (w e d) (display-level d)) context)
+	(g_signal_connect meter 
+			  (if (provided? 'gtk3) "draw" "expose_event")
+			  (lambda (w e d) 
+			    (display-level d)) 
+			  context)
 	(g_signal_connect meter "configure_event" 
 			  (lambda (w e d)
 			    (let ((xy (gdk_drawable_get_size (GDK_DRAWABLE (gtk_widget_get_window w)))))

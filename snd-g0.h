@@ -92,7 +92,8 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
   #define EVENT_Y(Ev) (Ev)->y
   #define DRAW_SIGNAL "expose_event"
 #endif
-#if HAVE_GTK_3
+
+#if HAVE_GTK_STATUS_ICON_GET_TITLE
   #define SET_CAN_FOCUS(Wid) gtk_widget_set_can_focus(Wid, true)
   #define UNSET_CAN_FOCUS(Wid) gtk_widget_set_can_focus(Wid, false)
 #else

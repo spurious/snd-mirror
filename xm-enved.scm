@@ -239,7 +239,8 @@
 	(gtk_widget_set_size_request drawer -1 200)
 
 	(g_signal_connect_closure_by_id (GPOINTER drawer)
-					(g_signal_lookup "expose_event" (G_OBJECT_TYPE (GTK_OBJECT drawer)))
+					(g_signal_lookup (if (provided? 'gtk3) "draw" "expose_event")
+							 (G_OBJECT_TYPE (GTK_OBJECT drawer)))
 					0 (g_cclosure_new (lambda (w e d)
 							    (list-set! editor 2 (apply draw-axes drawer gc name axis-bounds))
 							    (xe-redraw editor)
@@ -402,4 +403,3 @@
 |#
 
 ;;; TODO: translate this to cairo
-;;; TODO: expose_events -> draw

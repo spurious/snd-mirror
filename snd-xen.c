@@ -3096,6 +3096,11 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 
 #if USE_GTK
   XEN_YES_WE_HAVE("snd-gtk");
+#if HAVE_GTK_3
+  XEN_YES_WE_HAVE("gtk3");
+#else
+  XEN_YES_WE_HAVE("gtk2");
+#endif
 #endif
 
 #if USE_NO_GUI
