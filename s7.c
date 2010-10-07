@@ -1992,7 +1992,7 @@ static s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, int
     { 
       const char *s; 
       s = symbol_name(car(x)); 
-      if ((s) && (strings_are_equal(name, s)))
+      if ((s) && (*s == *name) && (strings_are_equal(name, s)))
 	{
 #if HAVE_PTHREADS
 	  pthread_mutex_unlock(&symtab_lock);
@@ -4737,7 +4737,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 
 
 #define CTABLE_SIZE 256
-static bool *exponent_table, *slashify_table, *char_ok_in_a_name;
+static bool *exponent_table, *slashify_table, *char_ok_in_a_name, *white_space;
 static int *digits;
 
 static void init_ctables(void)
@@ -4747,6 +4747,7 @@ static void init_ctables(void)
   exponent_table = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
   slashify_table = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
   char_ok_in_a_name = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
+  white_space = (bool *)permanent_calloc(CTABLE_SIZE * sizeof(bool));
   
   for (i = 1; i < CTABLE_SIZE; i++)
     char_ok_in_a_name[i] = true;
@@ -4762,6 +4763,15 @@ static void init_ctables(void)
   /* double-quote is recent, but I want '(1 ."hi") to be parsed as '(1 . "hi") 
    * what about stuff like vertical tab?  or comma?
    */
+
+  for (i = 0; i < CTABLE_SIZE; i++)
+    white_space[i] = false;
+  white_space['\t'] = true;
+  white_space['\n'] = true;
+  white_space['\r'] = true;
+  white_space['\f'] = true;
+  white_space['\v'] = true;
+  white_space[' '] = true;
 
   /* surely only 'e' is needed... */
   exponent_table['e'] = true; exponent_table['E'] = true;
@@ -4852,10 +4862,10 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
   int len;
   s7_pointer x;
 
-  if (strings_are_equal(name, "t"))
+  if ((name[0] == 't') && (name[1] == '\0'))
     return(sc->T);
   
-  if (strings_are_equal(name, "f"))
+  if ((name[0] == 'f') && (name[1] == '\0'))
     return(sc->F);
 
   if ((at_top) &&
@@ -5740,15 +5750,27 @@ If str does not represent a number, string->number returns #f."
     }
   else radix = 10;
 
-  if (safe_strcmp(str, "nan.0") == 0)
-    return(s7_make_real(sc, NAN));
-
-  if ((safe_strcmp(str, "inf.0") == 0) || 
-      (safe_strcmp((const char *)(str + 1), "inf.0") == 0))
+  switch (str[0])
     {
-      if (str[0] == '-')
-	return(s7_make_real(sc, -INFINITY));
-      return(s7_make_real(sc, INFINITY));
+    case 'n':
+      if (safe_strcmp(str, "nan.0") == 0)
+	return(s7_make_real(sc, NAN));
+      break;
+
+    case 'i':
+      if (safe_strcmp(str, "inf.0") == 0)
+	return(s7_make_real(sc, INFINITY));
+      break;
+
+    case '-':
+      if ((str[1] == 'i') && (safe_strcmp((const char *)(str + 1), "inf.0") == 0))
+	 return(s7_make_real(sc, -INFINITY));
+       break;
+
+    case '+':
+      if ((str[1] == 'i') && (safe_strcmp((const char *)(str + 1), "inf.0") == 0))
+	 return(s7_make_real(sc, INFINITY));
+       break;
     }
 
   return(s7_string_to_number(sc, str, radix));
@@ -18897,6 +18919,13 @@ static void back_up_stack(s7_scheme *sc)
 }
 
 
+static bool is_white_space(int c)
+{
+  /* this is much faster than C's isspace, and does not depend on the current locale */
+  return((c >= 0) && (white_space[c]));
+}
+
+
 static token_t token(s7_scheme *sc)
 {
   int c = 0;
@@ -18905,7 +18934,7 @@ static token_t token(s7_scheme *sc)
   pt = sc->input_port;
   if (sc->input_is_file)
     {
-      while (isspace(c = fgetc(port_file(pt))))
+      while (is_white_space(c = fgetc(port_file(pt))))
 	if (c == '\n')
 	  port_line_number(pt)++;
     }
@@ -18921,7 +18950,7 @@ static token_t token(s7_scheme *sc)
        */
       orig_str = str;
 
-      while (isspace(c = (unsigned int)(unsigned char)(*str++))) /* (let ((ÿa 1)) ÿa) -- 255 is not -1 = EOF */
+      while (is_white_space(c = (int)(unsigned char)(*str++))) /* (let ((ÿa 1)) ÿa) -- 255 is not -1 = EOF */
 	if (c == '\n')
 	  port_line_number(pt)++;
       port_string_point(pt) += (str - orig_str);
@@ -20481,8 +20510,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (vector_element(sv, 0) == initial_add)
 	      caddar(sc->args) = s7_make_integer(sc, s7_integer(cdr(vector_element(sv, 2))) + s7_integer(vector_element(sv, 3)));
 	    else caddar(sc->args) = s7_make_integer(sc, s7_integer(cdr(vector_element(sv, 2))) - s7_integer(vector_element(sv, 3)));
-
-	    /* TODO: (if not gmp?) make caddar args a mutable int if possible so that we can assign directly?  */
+	    /* this can't use make_mutable_integer */
 
 	    sc->args = cdr(sc->args);                               /* go to next step var */
 	    goto DO_STEP1;
