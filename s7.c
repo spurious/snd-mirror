@@ -517,8 +517,6 @@ struct s7_scheme {
   s7_pointer envir;                   /* current environment */
   s7_pointer code, cur_code;          /* current code */
 
-  s7_pointer arg_temps;
-  
   s7_pointer stack;                   /* stack is a vector */
   int stack_size;
   s7_pointer *stack_start, *stack_end, *stack_resize_trigger;
@@ -9300,25 +9298,26 @@ end: (substring \"01234\" 1 2) -> \"1\""
   if (!s7_is_string(str))
     return(s7_wrong_type_arg_error(sc, "substring", 1, str, "a string"));
   
-  if ((!s7_is_integer(start)) || (s7_integer(start) < 0))
+  if (!s7_is_integer(start))
+    return(s7_wrong_type_arg_error(sc, "substring start point,", 2, start, "an integer"));
+  i0 = s7_integer(start);
+  if (i0 < 0)
     return(s7_wrong_type_arg_error(sc, "substring start point,", 2, start, "a non-negative integer"));
-  
+
   if (cddr(args) != sc->NIL)
     {
       end = caddr(args);
-      if ((!s7_is_integer(end)) || (s7_integer(end) < 0))
-	return(s7_wrong_type_arg_error(sc, "substring end point,", 3, end, "an integer >= start"));
+      if (!s7_is_integer(end))
+	return(s7_wrong_type_arg_error(sc, "substring end point,", 3, end, "an integer"));
       i1 = s7_integer(end);
+      if (i1 < i0)
+	return(s7_wrong_type_arg_error(sc, "substring end point,", 3, end, "an integer >= start"));
+      if (i1 > string_length(str))
+	return(s7_out_of_range_error(sc, "substring start,", 3, end, "end <= string length"));
     }
   else i1 = string_length(str);
   
-  i0 = s7_integer(start);
   s = string_value(str);
-  
-  if ((i0 > i1) || 
-      (i1 > string_length(str)))
-    return(s7_out_of_range_error(sc, "substring start,", 2, start, "start <= end <= string length"));
-  
   len = i1 - i0;
   x = make_empty_string(sc, len, 0);
   memcpy(string_value(x), s + i0, len);
@@ -12510,9 +12509,8 @@ static s7_pointer list_ref_1(s7_scheme *sc, s7_pointer lst, s7_pointer ind)
   s7_Int i, index;
   s7_pointer p;
 
-  if ((!s7_is_integer(ind)) ||
-      (s7_integer(ind) < 0))
-    return(s7_wrong_type_arg_error(sc, "list-ref index,", 2, ind, "a non-negative integer"));
+  if (!s7_is_integer(ind))
+    return(s7_wrong_type_arg_error(sc, "list-ref index,", 2, ind, "an integer"));
   
   index = s7_integer(ind);
   if (index < 0)
@@ -12525,7 +12523,7 @@ static s7_pointer list_ref_1(s7_scheme *sc, s7_pointer lst, s7_pointer ind)
   if (p == sc->NIL)
     return(s7_out_of_range_error(sc, "list-ref index,", 2, ind, "should be less than list length"));
   if (!is_pair(p))
-    return(s7_wrong_type_arg_error(sc, "list-ref", i, p, "a proper list"));
+    return(s7_wrong_type_arg_error(sc, "list-ref", 1, lst, "a proper list"));
   
   return(car(p));
 }
@@ -12566,28 +12564,30 @@ static s7_pointer g_list_set(s7_scheme *sc, s7_pointer args)
   
   int i;
   s7_Int index;
-  s7_pointer p;
+  s7_pointer p, lst, ind;
 
   /* (let ((L '((1 2 3) (4 5 6)))) (list-set! L 1 2 32) L) */
   
-  if (!is_pair(car(args)))
-    return(s7_wrong_type_arg_error(sc, "list-set!", 1, car(args), "a pair"));
-  if ((!s7_is_integer(cadr(args))) ||
-      (s7_integer(cadr(args)) < 0))
-    return(s7_wrong_type_arg_error(sc, "list-set! index,", 2, cadr(args), "a non-negative integer"));
+  lst = car(args);
+  if (!is_pair(lst))
+    return(s7_wrong_type_arg_error(sc, "list-set!", 1, lst, "a pair"));
+
+  ind = cadr(args);
+  if (!s7_is_integer(ind))
+    return(s7_wrong_type_arg_error(sc, "list-set! index,", 2, ind, "an integer"));
   
-  index = s7_integer(cadr(args));
+  index = s7_integer(ind);
   if (index < 0)
-    return(s7_out_of_range_error(sc, "list-set!", 2, cadr(args), "index should be non-negative"));
+    return(s7_out_of_range_error(sc, "list-set!", 2, ind, "index should be non-negative"));
   if (index > MAX_LIST_LENGTH)
-    return(s7_out_of_range_error(sc, "list-set! index,", 2, cadr(args), "should be a reasonable integer"));
+    return(s7_out_of_range_error(sc, "list-set! index,", 2, ind, "should be a reasonable integer"));
   
-  for (i = 0, p = car(args); (i < index) && is_pair(p); i++, p = cdr(p)) {}
+  for (i = 0, p = lst; (i < index) && is_pair(p); i++, p = cdr(p)) {}
   
   if (p == sc->NIL)
-    return(s7_out_of_range_error(sc, "list-set! index,", 2, cadr(args), "should be less than list length"));
+    return(s7_out_of_range_error(sc, "list-set! index,", 2, ind, "should be less than list length"));
   if (!is_pair(p))
-    return(s7_wrong_type_arg_error(sc, "list-set!", i, p, "a proper list"));
+    return(s7_wrong_type_arg_error(sc, "list-set!", 1, lst, "a proper list"));
   
   /* TODO: this should use a loop, not cons */
   if (cdddr(args) == sc->NIL)
@@ -13764,9 +13764,9 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
   x = car(args);
   if (s7_is_integer(x))
     {
-      if (s7_integer(x) < 0)
-	return(s7_wrong_type_arg_error(sc, "make-vector length,", 1, x, "a non-negative integer"));
       len = s7_integer(x);
+      if (len < 0)
+	return(s7_wrong_type_arg_error(sc, "make-vector length,", 1, x, "a non-negative integer"));
     }
   else
     {
@@ -15778,11 +15778,11 @@ static s7_pointer pws_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
       len = safe_list_length(sc, args);
       if (len < f->set_req_args)
 	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, 
-			make_list_3(sc, make_protected_string(sc, "set!: ~A: not enough arguments: ~A"), obj, args)));
+			make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, obj, args)));
 
       if (len > (f->set_req_args + f->set_opt_args))
 	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, 
-			make_list_3(sc, make_protected_string(sc, "set!: ~A: too many arguments: ~A"), obj, args)));
+			make_list_3(sc, sc->TOO_MANY_ARGUMENTS, obj, args)));
 
       return((*(f->setter))(sc, args));
     }
@@ -17544,7 +17544,6 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
    *   else send out the error info ourselves.
    */
   sc->no_values = 0;
-  sc->arg_temps = sc->NIL;
   catcher = sc->F;
 
   vector_element(sc->error_info, ERROR_TYPE) = type;
@@ -20695,13 +20694,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    /* end test is #t, go to result */
 		    sc->code = cddr(sc->args);                /* result expr (a list -- implicit begin) */
-		    sc->args = sc->NIL;
 		    goto BEGIN;
 		  }
 
 		/* end test is #f, evaluate body (sc->code is ready to go) */
 		push_stack(sc, opcode(OP_DO_STEP), sc->args, sc->code);
-		sc->args = sc->NIL;
 		goto BEGIN;
 	      }
 	  }
@@ -20729,12 +20726,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  push_stack(sc, opcode(OP_DO_STEP), sc->args, sc->code);
 	  /* sc->code is ready to go */
 	}
-      sc->args = sc->NIL;
       /* fall through */
 
 
     BEGIN:
     case OP_BEGIN:
+      sc->args = sc->NIL;
       if (!is_pair(sc->code)) 
 	{
 	  if (sc->code != sc->NIL)            /* (begin . 1), (cond (#t . 1)) */
@@ -20994,7 +20991,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	case T_C_ANY_ARGS_FUNCTION:              /* -------- C-based function that can take any number of arguments -------- */
 	  sc->value = c_function_call(sc->code)(sc, sc->args);
-	  sc->args = sc->NIL;
 	  goto START;
 
 	case T_C_MACRO: 	                    /* -------- C-based macro -------- */
@@ -21023,7 +21019,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      make_list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
 
 	    sc->value = c_macro_call(sc->code)(sc, sc->args);
-	    sc->args = sc->NIL;
 	    goto START;
 	  }
 	  
@@ -21124,20 +21119,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 				sc->WRONG_NUMBER_OF_ARGS, 
 				make_list_3(sc, sc->TOO_MANY_ARGUMENTS, closure_name(sc, sc->code), sc->args)));
 	    } 
-	  else 
-	    {
-	      if (s7_is_symbol(sc->x))
-		add_to_local_environment(sc, sc->x, sc->y); 
-	      else 
-		{
-		  if ((is_macro(sc->code)) || (is_bacro(sc->code)))
-		    return(eval_error(sc, "~A: undefined argument to macro", sc->x));
-		  else return(eval_error(sc, "~A: undefined argument to function", sc->x));
-		}
-	    }
+	  else add_to_local_environment(sc, sc->x, sc->y); /* the rest arg I think */
 
 	  sc->code = closure_body(sc->code);
-	  sc->args = sc->NIL;
 	  goto BEGIN;
 	  
 	case T_CLOSURE_STAR:	                  /* -------- define* (lambda*) -------- */
@@ -21180,7 +21164,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	    /* evaluate the function body */
 	    sc->code = closure_body(sc->code);
-	    sc->args = sc->NIL;
 	    goto BEGIN;
 	  }
 		
@@ -21776,7 +21759,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     case OP_LET1:       /* let -- calculate parameters */
-      sc->args = s7_cons(sc, sc->value, sc->args);
+      /* sc->args = s7_cons(sc, sc->value, sc->args); */
+      {
+	s7_pointer x;
+	NEW_CELL(sc, x);
+	car(x) = sc->value;
+	cdr(x) = sc->args;
+	set_type(x, T_PAIR | T_STRUCTURE);
+	sc->args = x;
+      }
+
       if (is_pair(sc->code)) 
 	{ 
 	  if (!is_pair(car(sc->code)))          /* (let ((x)) ...) or (let ((x 1) . (y 2)) ...) */
@@ -21839,12 +21831,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  add_to_local_environment(sc, car(sc->code), sc->x); 
 	  sc->code = cddr(sc->code);
-	  sc->args = sc->NIL;
 	} 
       else 
 	{
 	  sc->code = cdr(sc->code);
-	  sc->args = sc->NIL;
 	}
       
       if (car(sc->envir) != sc->NIL)
@@ -21930,7 +21920,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "let* var list improper?: ~A", sc->code));
 
       sc->code = sc->args;
-      sc->args = sc->NIL;
       if (car(sc->envir) != sc->NIL)
 	push_stack(sc, opcode(OP_LET_UNWIND), sc->NIL, sc->NIL);
       goto BEGIN;
@@ -21997,7 +21986,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y))
 	s7_symbol_set_value(sc, caar(sc->x), car(sc->y));
       sc->code = cdr(sc->code);
-      sc->args = sc->NIL;
       if (car(sc->envir) != sc->NIL)
 	push_stack(sc, opcode(OP_LET_UNWIND), sc->NIL, sc->NIL);
       goto BEGIN;
