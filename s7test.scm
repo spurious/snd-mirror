@@ -10613,6 +10613,7 @@
 (test (apply (lambda (x . y) x) (list 1 2 3)) 1)
 (test (apply * (list 2 (apply + 1 2 '(3)))) 12)
 (test (apply (if (> 3 2) + -) '(3 2)) 5)
+(test (let ((x (list 1 2))) (eq? x (append '() x))) #t) ;; ?? guile says #t also
 
 (for-each
  (lambda (arg)
@@ -34207,8 +34208,10 @@ why are these different (read-time `#() ? )
 (num-test (expt 1/2 1/3) 7.937005259840997373758528196361541301963E-1)
 (num-test (expt 1/4 1/3) 6.299605249474365823836053036391141752849E-1)
 
-(test (= (make-rectangular 1.0 0.0) (make-polar 1.0 0.0) 1.0+0i (* -1.0 -1.0) (/ 1.0) 
-	 (exp 0.0) (abs -1.0) (cos 0.0) (log (exp 1)) (magnitude 1.0+0i) (max 0.0 1.0) (min 1.0 2.0) )
+(test (< (abs (- (+ (make-rectangular 1.0 0.0) (make-polar 1.0 0.0) 1.0+0i (* -1.0 -1.0) (/ 1.0) 
+		    (exp 0.0) (abs -1.0) (cos 0.0) (log (exp 1)) (magnitude 1.0+0i) (max 0.0 1.0) (min 1.0 2.0))
+		 12.0))
+	 1e-12)
       #t)
 
 (let ((xs (list 2 3 4 1/2 1/3 1/4 2.5 1+i 2.5+1.5i 2.5-.5i))

@@ -479,6 +479,7 @@ typedef struct s7_cell {
     
     struct {               /* dynamic-wind */
       s7_pointer in, out, body;
+      int state;
     } winder;
 
   } object;
@@ -515,6 +516,8 @@ struct s7_scheme {
   s7_pointer args;                    /* arguments of current function */
   s7_pointer envir;                   /* current environment */
   s7_pointer code, cur_code;          /* current code */
+
+  s7_pointer arg_temps;
   
   s7_pointer stack;                   /* stack is a vector */
   int stack_size;
@@ -717,13 +720,6 @@ struct s7_scheme {
 #define set_local(p)                  typeflag(p) |= T_LOCAL
 /* this marks a symbol that has been used at some time as a local variable */
 
-#define T_DWIND_INIT                  (1 << (TYPE_BITS + 15))
-#define T_DWIND_BODY                  (1 << (TYPE_BITS + 16))
-#define T_DWIND_FINISH                (T_DWIND_INIT | T_DWIND_BODY)
-#define DWIND_STATE(p)                (typeflag(p) & T_DWIND_FINISH)
-#define DWIND_SET_STATE(p, n)         typeflag(p) = ((typeflag(p) & (~T_DWIND_FINISH)) | n)
-/* dynamic-wind state */
-
 #define T_DONT_COPY_CDR               (1 << (TYPE_BITS + 17))
 #define dont_copy_cdr(p)              ((typeflag(p) & T_DONT_COPY_CDR) != 0)
 /* copy_object (continuations) optimization */
@@ -772,10 +768,10 @@ struct s7_scheme {
 #define T_KEYWORD                     (1 << (TYPE_BITS + 22))
 #define is_keyword(p)                 ((typeflag(p) & T_KEYWORD) != 0)
 
-#define UNUSED_BITS                   0x80000000
+#define UNUSED_BITS                   0x81800000
 
-/* TYPE_BITS could be 5, and several of the current type bits could be fields in the s7_cell struct
- *   2 bits in DWIND_STATE for example, or T_KEYWORD
+/* TYPE_BITS could be 5
+ * TYPE_BITS + 15, 16 and 31 are currently unused
  */
 
 
@@ -917,9 +913,9 @@ struct s7_scheme {
 #define catch_goto_loc(p)             (p)->object.rcatch.goto_loc
 #define catch_handler(p)              (p)->object.rcatch.handler
 
+enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define is_dynamic_wind(p)            (type(p) == T_DYNAMIC_WIND)
-#define dynamic_wind_state(p)         DWIND_STATE(p)
-#define dynamic_wind_set_state(p, n)  DWIND_SET_STATE(p, n)
+#define dynamic_wind_state(p)         (p)->object.winder.state
 #define dynamic_wind_in(p)            (p)->object.winder.in
 #define dynamic_wind_out(p)           (p)->object.winder.out
 #define dynamic_wind_body(p)          (p)->object.winder.body
@@ -956,6 +952,8 @@ struct s7_scheme {
 #define real_part(n)                  n.value.complex_value.real
 #define imag_part(n)                  n.value.complex_value.imag
 #define integer(n)                    n.value.integer_value
+#define complex_real_part(p)          real_part(number(p))
+#define complex_imag_part(p)          imag_part(number(p))
 
 #ifndef LLONG_MAX
   #define LLONG_MAX 9223372036854775807LL
@@ -2461,22 +2459,15 @@ environment."
 }
 
 
-static s7_pointer g_augment_environment(s7_scheme *sc, s7_pointer args)
+s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer e, s7_pointer bindings)
 {
-  #define H_augment_environment "(augment-environment env ...) adds its \
-arguments (each a cons: symbol . value) to the environment env, and returns the \
-new environment."
-
-  s7_pointer x, e, new_e;
+  s7_pointer x, new_e;
   int gc_loc;
-  e = car(args);
-  if (!is_environment(sc, e))
-    return(s7_wrong_type_arg_error(sc, "augment-environment", 1, e, "an environment"));
   
   new_e = new_frame_in_env(sc, e);
   gc_loc = s7_gc_protect(sc, new_e);
 
-  for (x = cdr(args); x != sc->NIL; x = cdr(x))
+  for (x = bindings; x != sc->NIL; x = cdr(x))
     if (is_pair(car(x)))
       add_to_environment(sc, new_e, caar(x), cdar(x));
 
@@ -2485,9 +2476,18 @@ new environment."
 }
 
 
-s7_pointer s7_augment_environment(s7_scheme *sc, s7_pointer env, s7_pointer bindings)
+static s7_pointer g_augment_environment(s7_scheme *sc, s7_pointer args)
 {
-  return(g_augment_environment(sc, s7_append(sc, env, bindings))); /* or perhaps make_list_2? */
+  #define H_augment_environment "(augment-environment env ...) adds its \
+arguments (each a cons: symbol . value) to the environment env, and returns the \
+new environment."
+
+  s7_pointer e;
+  e = car(args);
+  if (!is_environment(sc, e))
+    return(s7_wrong_type_arg_error(sc, "augment-environment", 1, e, "an environment"));
+
+  return(s7_augment_environment(sc, e, cdr(args)));
 }
 
 
@@ -3086,7 +3086,7 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 	    if (s_base != 0)
 	      break;	  
 	  
-	    if (dynamic_wind_state(x) == T_DWIND_BODY)
+	    if (dynamic_wind_state(x) == DWIND_BODY)
 	      {
 		push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
 		sc->args = sc->NIL;
@@ -3125,7 +3125,7 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 	  sc->args = sc->NIL;
 	  sc->code = dynamic_wind_in(x);
 	  eval(sc, OP_APPLY);
-	  dynamic_wind_set_state(x, T_DWIND_BODY);
+	  dynamic_wind_state(x) = DWIND_BODY;
 	}
       else
 	{
@@ -3180,7 +3180,7 @@ static void call_with_exit(s7_scheme *sc)
 	case OP_DYNAMIC_WIND:
 	  {
 	    sc->z = stack_code(sc->stack, i);
-	    if (dynamic_wind_state(sc->z) == T_DWIND_BODY)
+	    if (dynamic_wind_state(sc->z) == DWIND_BODY)
 	      {
 		push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
 		sc->args = sc->NIL;
@@ -3372,6 +3372,10 @@ double cbrt(double x)
 }
 
 static bool isnan(s7_Double x) {return(x != x);}
+/* isnan shows up prominently in callgrind output for s7test, but it's not due to anything
+ *    in this file.  If I replace all the local isnan's with is_nan based on this function,
+ *    the callgrind value scarcely changes -- I guess the math library is calling it a lot.
+ */
 
 static bool isinf(s7_Double x) {return((x == x) && (isnan(x - x)));}
 
@@ -3881,6 +3885,7 @@ static s7_Int num_to_denominator(s7_num_t n)
 
 static s7_Double num_to_real_part(s7_num_t n)
 {
+  /* no bignum parallel */
   switch (n.type)
     {
     case NUM_INT:   return((s7_Double)integer(n));
@@ -4097,7 +4102,7 @@ static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x)
 	s7_Int numer = 0, denom = 1;
 	s7_Double val;
 
-	val = s7_real_part(x);
+	val = s7_real(x);
 	if ((isinf(val)) || (isnan(val)))
 	  return(s7_wrong_type_arg_error(sc, "inexact->exact", 1, x, "a normal real"));
 
@@ -4122,7 +4127,7 @@ s7_Double s7_number_to_real(s7_pointer x)
     case NUM_RATIO: return((s7_Double)s7_numerator(x) / (s7_Double)s7_denominator(x));
     case NUM_REAL:
     case NUM_REAL2: return(s7_real(x));
-    default:        return(s7_real_part(x));
+    default:        return(complex_real_part(x));
     }
 }
 
@@ -4135,7 +4140,7 @@ s7_Int s7_number_to_integer(s7_pointer x)
     case NUM_RATIO: return((s7_Int)((s7_Double)s7_numerator(x) / (s7_Double)s7_denominator(x)));
     case NUM_REAL:
     case NUM_REAL2: return((s7_Int)s7_real(x));
-    default:        return((s7_Int)s7_real_part(x));
+    default:        return((s7_Int)complex_real_part(x));
     }
 }
 
@@ -4556,18 +4561,18 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 
 	if (sizeof(double) >= sizeof(s7_Double))
 	  {
-	    if (s7_imag_part(obj) >= 0.0)
+	    if (complex_imag_part(obj) >= 0.0)
 	      frmt = (float_choice == 'g') ? "%.*g+%.*gi" : ((float_choice == 'f') ? "%.*f+%.*fi" : "%.*e+%.*ei"); 
 	    else frmt = (float_choice == 'g') ? "%.*g%.*gi" : ((float_choice == 'f') ? "%.*f-%.*fi" :"%.*e-%.*ei");
 	  }
 	else 
 	  {
-	    if (s7_imag_part(obj) >= 0.0)
+	    if (complex_imag_part(obj) >= 0.0)
 	      frmt = (float_choice == 'g') ? "%.*Lg+%.*Lgi" : ((float_choice == 'f') ? "%.*Lf+%.*Lfi" : "%.*Le+%.*Lei");
 	    else frmt = (float_choice == 'g') ? "%.*Lg%.*Lgi" : ((float_choice == 'f') ? "%.*Lf-%.*Lfi" : "%.*Le-%.*Lei");
 	  }
 
-	len = snprintf(p, 256, frmt, precision, s7_real_part(obj), precision, s7_imag_part(obj));
+	len = snprintf(p, 256, frmt, precision, complex_real_part(obj), precision, complex_imag_part(obj));
 	if (width > len)
 	  {                             /* (format #f "~20g" 1+i) */
 	    char *p1;
@@ -4657,9 +4662,9 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
 
     default:
       p = (char *)malloc(512 * sizeof(char));
-      n = number_to_string_with_radix(sc, s7_make_real(sc, s7_real_part(obj)), radix, 0, precision, float_choice);
-      d = number_to_string_with_radix(sc, s7_make_real(sc, s7_imag_part(obj)), radix, 0, precision, float_choice);
-      len = snprintf(p, 512, "%s%s%si", n, (s7_imag_part(obj) < 0.0) ? "" : "+", d);
+      n = number_to_string_with_radix(sc, s7_make_real(sc, complex_real_part(obj)), radix, 0, precision, float_choice);
+      d = number_to_string_with_radix(sc, s7_make_real(sc, complex_imag_part(obj)), radix, 0, precision, float_choice);
+      len = snprintf(p, 512, "%s%s%si", n, (complex_imag_part(obj) < 0.0) ? "" : "+", d);
       free(n);
       free(d);
       break;
@@ -5903,7 +5908,7 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "angle", 0, x, "a number"));
 
   if (!s7_is_real(x))
-    return(s7_make_real(sc, atan2(s7_imag_part(x), s7_real_part(x))));
+    return(s7_make_real(sc, atan2(complex_imag_part(x), complex_real_part(x))));
 
   f = num_to_real(number(x));
   if (isnan(f)) return(x);
@@ -6111,9 +6116,9 @@ static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
       return(s7_make_real(sc, tan(val)));
     }
 
-  if (s7_imag_part(x) > 350.0)
+  if (complex_imag_part(x) > 350.0)
     return(s7_make_complex(sc, 0.0, 1.0));
-  if (s7_imag_part(x) < -350.0)
+  if (complex_imag_part(x) < -350.0)
     return(s7_make_complex(sc, 0.0, -1.0));
 
   return(s7_from_c_complex(sc, ctan(s7_complex(x))));
@@ -6152,8 +6157,8 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
   /*   this code taken from sbcl's src/code/irrat.lisp */
   /* break is around x+70000000i */
 
-  if ((s7_Double_abs(s7_real_part(n)) > 1.0e7) ||
-      (s7_Double_abs(s7_imag_part(n)) > 1.0e7))
+  if ((s7_Double_abs(complex_real_part(n)) > 1.0e7) ||
+      (s7_Double_abs(complex_imag_part(n)) > 1.0e7))
     {
       s7_Complex sq1mz, sq1pz, z;
 
@@ -6161,7 +6166,7 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
       sq1mz = csqrt(1.0 - z);
       sq1pz = csqrt(1.0 + z);
       return(s7_make_complex(sc, 
-			     atan(s7_real_part(n) / creal(sq1mz * sq1pz)),
+			     atan(complex_real_part(n) / creal(sq1mz * sq1pz)),
 			     asinh(cimag(sq1pz * conj(sq1mz)))));
     }
 #endif
@@ -6201,8 +6206,8 @@ static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
   /* if either real or imag part is very large, use explicit formula, not cacos */
   /*   this code taken from sbcl's src/code/irrat.lisp */
 
-  if ((s7_Double_abs(s7_real_part(n)) > 1.0e7) ||
-      (s7_Double_abs(s7_imag_part(n)) > 1.0e7))
+  if ((s7_Double_abs(complex_real_part(n)) > 1.0e7) ||
+      (s7_Double_abs(complex_imag_part(n)) > 1.0e7))
     {
       s7_Complex sq1mz, sq1pz, z;
 
@@ -6295,9 +6300,9 @@ static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
   if (s7_is_real(x))
     return(s7_make_real(sc, tanh(num_to_real(number(x)))));
 
-  if (s7_real_part(x) > 350.0)
+  if (complex_real_part(x) > 350.0)
     return(real_one);               /* closer than 0.0 which is what ctanh is about to return! */
-  if (s7_real_part(x) < -350.0)
+  if (complex_real_part(x) < -350.0)
     return(s7_make_real(sc, -1.0)); /* closer than -0.0 which is what ctanh is about to return! */
 
   return(s7_from_c_complex(sc, ctanh(s7_complex(x))));
@@ -6468,7 +6473,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	}
       else
 	{                                                      /* (expt 0 a+bi) */
-	  if (s7_real_part(pw) < 0.0)                          /* (expt 0 -1+i) */
+	  if (complex_real_part(pw) < 0.0)                     /* (expt 0 -1+i) */
 	    return(division_by_zero_error(sc, "expt", args));  
 	}
 
@@ -8203,7 +8208,7 @@ static s7_pointer g_imag_part(s7_scheme *sc, s7_pointer args)
     case NUM_RATIO: return(small_int(0));
     case NUM_REAL:
     case NUM_REAL2: return(real_zero);
-    default:        return(s7_make_real(sc, s7_imag_part(p)));
+    default:        return(s7_make_real(sc, complex_imag_part(p)));
     }
 }
 
@@ -8247,7 +8252,7 @@ static s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args)
 	return(make_boolean(sc, isnan(real(number(x)))));
 	  
       default:
-	return(make_boolean(sc, (isnan(s7_real_part(x))) || (isnan(s7_imag_part(x)))));
+	return(make_boolean(sc, (isnan(complex_real_part(x))) || (isnan(complex_imag_part(x)))));
       }
 #endif
   return(sc->F);
@@ -8754,7 +8759,7 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
       return(s7_make_real(sc, s7_real(num) * next_random(r)));
 
     default: 
-      return(s7_make_complex(sc, s7_real_part(num) * next_random(r), s7_imag_part(num) * next_random(r)));
+      return(s7_make_complex(sc, complex_real_part(num) * next_random(r), complex_imag_part(num) * next_random(r)));
     }
 
   return(sc->F);
@@ -12280,7 +12285,7 @@ s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a)
     {
       if (cdr(a) != sc->NIL)
 	return(s7_cons(sc, cdr(a), car(a)));
-      return(s7_cons(sc, car(a), sc->NIL)); /* don't return a itself */
+      return(s7_cons(sc, car(a), sc->NIL)); /* don't return 'a' itself */
     }
 
   sc->w = make_list_1(sc, car(a));
@@ -12346,6 +12351,9 @@ static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list) /* "safe
   return(result);
 }
 
+
+/* is this correct? (let ((x (list 1 2))) (eq? x (append '() x))) -> #t
+ */
 
 s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b) 
 {
@@ -12527,21 +12535,28 @@ static s7_pointer g_list_ref(s7_scheme *sc, s7_pointer args)
 {
   #define H_list_ref "(list-ref lst i ...) returns the i-th element (0-based) of the list"
   
-  /* (let ((L '((1 2 3) (4 5 6)))) (list-ref L 1 2)) */
+  /* (let ((L '((1 2 3) (4 5 6)))) (list-ref L 1 2)) 
 
-  if (!is_pair(car(args)))
-    return(s7_wrong_type_arg_error(sc, "list-ref", 1, car(args), "a pair"));
-
-  /*
     (define (lref L . args) 
       (if (null? (cdr args))
           (list-ref L (car args))
           (apply lref (list-ref L (car args)) (cdr args))))
   */
 
-  if (cddr(args) == sc->NIL)
-    return(list_ref_1(sc, car(args), cadr(args)));
-  return(g_list_ref(sc, s7_cons(sc, list_ref_1(sc, car(args), cadr(args)), cddr(args))));
+  s7_pointer lst, inds;
+  lst = car(args);
+
+  inds = cdr(args);
+  while (true)
+    {
+      if (!is_pair(lst))
+	return(s7_wrong_type_arg_error(sc, "list-ref", 1, lst, "a pair"));
+
+      if (cdr(inds) == sc->NIL)
+	return(list_ref_1(sc, lst, car(inds)));
+      lst = list_ref_1(sc, lst, car(inds));
+      inds = cdr(inds);
+    }
 }
 
 
@@ -12574,6 +12589,7 @@ static s7_pointer g_list_set(s7_scheme *sc, s7_pointer args)
   if (!is_pair(p))
     return(s7_wrong_type_arg_error(sc, "list-set!", i, p, "a proper list"));
   
+  /* TODO: this should use a loop, not cons */
   if (cdddr(args) == sc->NIL)
     car(p) = caddr(args);
   else return(g_list_set(sc, s7_cons(sc, car(p), cddr(args))));
@@ -13303,15 +13319,35 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
   x = sc->NIL;
   for (i = 1, y = args; y != sc->NIL; i++, y = cdr(y)) 
     {
+      /* the original version used s7_append but that copies the arguments too many times if there are 3 or more lists */
+      s7_pointer p;
       if (cdr(y) == sc->NIL)
-	return(s7_append(sc, x, car(y)));
-      
-      if (!is_proper_list(sc, car(y)))
-	return(s7_wrong_type_arg_error(sc, "append", i, car(y), "a proper list"));
-      
-      x = s7_append(sc, x, car(y));
+	return(reverse_in_place(sc, car(y), x)); /* i.e. tack car(y) onto end of x copied and reversed */
+
+      p = car(y);
+      if (!is_proper_list(sc, p))
+	return(s7_wrong_type_arg_error(sc, "append", i, p, "a proper list"));
+
+      while (p != sc->NIL)
+	{
+	  x = s7_cons(sc, car(p), x);
+	  p = cdr(p);
+	}
     }
   return(x);
+}
+
+
+static s7_pointer append_in_place(s7_scheme *sc, s7_pointer a, s7_pointer b)
+{
+  /* tack b onto the end of a without copying either -- 'a' is changed! */
+  s7_pointer p;
+  if (a == sc->NIL)
+    return(b);
+  p = a;
+  while (cdr(p) != sc->NIL) p = cdr(p);
+  cdr(p) = b;
+  return(a);
 }
 
 
@@ -13700,6 +13736,7 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
 	  (index >= vector_length(vec)))
 	return(s7_out_of_range_error(sc, "vector-set! index,", 2, cadr(args), "should be between 0 and the vector length"));
 
+      /* TODO: this can use a loop */
       if (cdddr(args) != sc->NIL)
 	return(g_vector_set(sc, s7_cons(sc, vector_element(vec, index), cddr(args))));
 
@@ -14356,6 +14393,7 @@ static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
 
   if (cddr(args) == sc->NIL)
     return(s7_hash_table_ref(sc, table, cadr(args)));
+  /* TODO: this can use a loop */
   return(g_hash_table_ref(sc, s7_cons(sc, s7_hash_table_ref(sc, table, cadr(args)), cddr(args))));
 }
 
@@ -14628,11 +14666,11 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
   if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p))
     {
       return(s7_cons(sc, 
-		     s7_append(sc, 
-			       make_list_2(sc, 
-					   (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, 
-					   closure_args(p)),
-			       closure_body(p)),
+		     append_in_place(sc, 
+				     make_list_2(sc, 
+						 (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, 
+						 closure_args(p)),
+				     closure_body(p)),
 		     closure_environment(p)));
     }
   
@@ -14668,11 +14706,11 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "procedure-source", 0, p, "a procedure or a macro"));
 
   if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_bacro(p))
-    return(s7_append(sc, 
-		     make_list_2(sc, 
-				 (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, 
-				 closure_args(p)),
-		     closure_body(p)));
+    return(append_in_place(sc, 
+			   make_list_2(sc, 
+				       (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, 
+				       closure_args(p)),
+			   closure_body(p)));
 
   if (s7_is_procedure_with_setter(p))
     return(pws_source(sc, p));
@@ -14881,9 +14919,9 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
   if (s7_is_procedure_with_setter(x))
     {
       if (s7_procedure_with_setter_getter(x) != sc->NIL)
-	return(s7_append(sc, 
-			 s7_procedure_arity(sc, s7_procedure_with_setter_getter(x)),
-			 s7_procedure_arity(sc, s7_procedure_with_setter_setter(x))));
+	return(append_in_place(sc, 
+			       s7_procedure_arity(sc, s7_procedure_with_setter_getter(x)),
+			       s7_procedure_arity(sc, s7_procedure_with_setter_setter(x))));
 
       return(pws_arity(sc, x));
     }
@@ -15847,11 +15885,11 @@ static s7_pointer pws_source(s7_scheme *sc, s7_pointer x)
   f = (s7_pws_t *)s7_object_value(x);
   if ((is_closure(f->scheme_getter)) ||
       (is_closure_star(f->scheme_getter)))
-    return(s7_append(sc, 
-		     make_list_2(sc,
-				 (is_closure(f->scheme_getter)) ? sc->LAMBDA : sc->LAMBDA_STAR,
-				 closure_args(f->scheme_getter)),
-		     closure_body(f->scheme_getter)));
+    return(append_in_place(sc, 
+			   make_list_2(sc,
+				       (is_closure(f->scheme_getter)) ? sc->LAMBDA : sc->LAMBDA_STAR,
+				       closure_args(f->scheme_getter)),
+			   closure_body(f->scheme_getter)));
   return(sc->NIL);
 }
 
@@ -17363,7 +17401,8 @@ each a function of no arguments, guaranteeing that finish is called even if body
   dynamic_wind_in(p) = car(args);
   dynamic_wind_body(p) = cadr(args);
   dynamic_wind_out(p) = caddr(args);
-  set_type(p, T_DYNAMIC_WIND | T_ATOM | T_DWIND_INIT | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
+  dynamic_wind_state(p) = DWIND_INIT;
+  set_type(p, T_DYNAMIC_WIND | T_ATOM | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
 
   push_stack(sc, opcode(OP_DYNAMIC_WIND), sc->NIL, p);          /* args will be the saved result, code = s7_dynwind_t obj */
   
@@ -17505,6 +17544,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
    *   else send out the error info ourselves.
    */
   sc->no_values = 0;
+  sc->arg_temps = sc->NIL;
   catcher = sc->F;
 
   vector_element(sc->error_info, ERROR_TYPE) = type;
@@ -17555,7 +17595,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	{
 	case OP_DYNAMIC_WIND:
 	  x = stack_code(sc->stack, i);
-	  if (dynamic_wind_state(x) == T_DWIND_BODY)
+	  if (dynamic_wind_state(x) == DWIND_BODY)
 	    {
 	      push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
 	      sc->args = sc->NIL;
@@ -17966,7 +18006,7 @@ static void improper_arglist_error(s7_scheme *sc)
   s7_error(sc, sc->SYNTAX_ERROR, 
 	   make_list_2(sc,
 		       make_protected_string(sc, "improper list of arguments: ~A"),
-		       s7_append(sc, safe_reverse_in_place(sc, sc->args), sc->code)));
+		       append_in_place(sc, safe_reverse_in_place(sc, sc->args), sc->code)));
 }
 
 
@@ -20418,6 +20458,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if (is_multiple_value(sc->value))            /* (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4)) */
 	    caddr(sc->args) = s7_append(sc, safe_reverse_in_place(sc, multiple_value(sc->value)), caddr(sc->args));
+	  /* not append_in_place here because sc->value has the multiple-values bit set */
 	  else caddr(sc->args) = s7_cons(sc, sc->value, caddr(sc->args));
 	}
 
@@ -20899,6 +20940,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->code = car(sc->args);
 	      sc->args = cdr(sc->args);
 	      /* fall through  */
+
+	      /* I tried a "safe function" bit meaning the args could be gc'd immediately after
+	       *   the call, setting sc->arg_temp = sc->args here, then returning those
+	       *   args to the free list after the function call -- a kind of incremental GC.
+	       *   The GC is called less often, but the local free code takes more time than
+	       *   we save in the GC, so the only gain is that there are fewer points where
+	       *   s7 pauses to call the GC.  The time lost is about 1%.  This was a big
+	       *   disappointment!
+	       */
 	    }
 	}
       
@@ -20944,6 +20994,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	case T_C_ANY_ARGS_FUNCTION:              /* -------- C-based function that can take any number of arguments -------- */
 	  sc->value = c_function_call(sc->code)(sc, sc->args);
+	  sc->args = sc->NIL;
 	  goto START;
 
 	case T_C_MACRO: 	                    /* -------- C-based macro -------- */
@@ -22433,9 +22484,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_DYNAMIC_WIND:
-      if (dynamic_wind_state(sc->code) == T_DWIND_INIT)
+      if (dynamic_wind_state(sc->code) == DWIND_INIT)
 	{
-	  dynamic_wind_set_state(sc->code, T_DWIND_BODY);
+	  dynamic_wind_state(sc->code) = DWIND_BODY;
 	  push_stack(sc, opcode(OP_DYNAMIC_WIND), sc->NIL, sc->code);
 	  sc->args = sc->NIL;
 	  sc->code = dynamic_wind_body(sc->code);
@@ -22443,9 +22494,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       else
 	{
-	  if (dynamic_wind_state(sc->code) == T_DWIND_BODY)
+	  if (dynamic_wind_state(sc->code) == DWIND_BODY)
 	    {
-	      dynamic_wind_set_state(sc->code, T_DWIND_FINISH);
+	      dynamic_wind_state(sc->code) = DWIND_FINISH;
 	      push_stack(sc, opcode(OP_DYNAMIC_WIND), sc->value, sc->code);
 	      sc->args = sc->NIL;
 	      sc->code = dynamic_wind_out(sc->code);
@@ -23685,7 +23736,7 @@ static s7_pointer s7_number_to_big_complex(s7_scheme *sc, s7_pointer p)
       break;
 
     default:
-      mpc_set_d_d(*n, s7_real_part(p), s7_imag_part(p), MPC_RNDNN);
+      mpc_set_d_d(*n, complex_real_part(p), complex_imag_part(p), MPC_RNDNN);
       break;
     }
   return(s7_make_object(sc, big_complex_tag, (void *)n));
@@ -23865,7 +23916,7 @@ s7_Double s7_number_to_real(s7_pointer x)
     case NUM_RATIO: return((s7_Double)s7_numerator(x) / (s7_Double)s7_denominator(x));
     case NUM_REAL:
     case NUM_REAL2: return(s7_real(x));
-    default:        return(s7_real_part(x));
+    default:        return(complex_real_part(x));
     }
 }
 
@@ -23888,7 +23939,7 @@ s7_Int s7_number_to_integer(s7_pointer x)
     case NUM_RATIO: return((s7_Int)s7_numerator(x) / (s7_Double)s7_denominator(x));
     case NUM_REAL:
     case NUM_REAL2: return((s7_Int)s7_real(x));
-    default:        return((s7_Int)s7_real_part(x));
+    default:        return((s7_Int)complex_real_part(x));
     }
 }
 
@@ -24139,11 +24190,11 @@ static bool big_numbers_are_eqv(s7_pointer a, s7_pointer b)
 
       if (is_c_object(a))
 	a1 = (mpc_t *)s7_object_value(a);
-      else a1 = s7_Doubles_to_mpc(s7_real_part(a), s7_imag_part(a));
+      else a1 = s7_Doubles_to_mpc(complex_real_part(a), complex_imag_part(a));
 
       if (is_c_object(b))
 	b1 = (mpc_t *)s7_object_value(b);
-      else b1 = s7_Doubles_to_mpc(s7_real_part(b), s7_imag_part(b));
+      else b1 = s7_Doubles_to_mpc(complex_real_part(b), complex_imag_part(b));
 
       result = (mpc_cmp(*a1, *b1) == 0);
 

@@ -17086,6 +17086,13 @@ static XEN gxg_pango_language_matches(XEN language, XEN range_list)
   return(C_TO_XEN_gboolean(pango_language_matches(XEN_TO_C_PangoLanguage_(language), XEN_TO_C_char_(range_list))));
 }
 
+static XEN gxg_G_OBJECT_TYPE(XEN object)
+{
+  #define H_G_OBJECT_TYPE "GType G_OBJECT_TYPE(GObject* object)"
+  XEN_ASSERT_TYPE(XEN_GObject__P(object), object, 1, "G_OBJECT_TYPE", "GObject*");
+  return(C_TO_XEN_GType(G_OBJECT_TYPE(XEN_TO_C_GObject_(object))));
+}
+
 static XEN gxg_g_utf8_validate(XEN str, XEN max_len, XEN ignore_end)
 {
   #define H_g_utf8_validate "gboolean g_utf8_validate(gchar* str, gssize max_len, gchar** [end])"
@@ -32379,13 +32386,6 @@ static XEN gxg_gtk_requisition_free(XEN requisition)
   return(XEN_FALSE);
 }
 
-static XEN gxg_G_OBJECT_TYPE(XEN object)
-{
-  #define H_G_OBJECT_TYPE "GType G_OBJECT_TYPE(GtkObject* object)"
-  XEN_ASSERT_TYPE(XEN_GtkObject__P(object), object, 1, "G_OBJECT_TYPE", "GtkObject*");
-  return(C_TO_XEN_GType(G_OBJECT_TYPE(XEN_TO_C_GtkObject_(object))));
-}
-
 static XEN gxg_gdk_screen_get_default_colormap(XEN screen)
 {
   #define H_gdk_screen_get_default_colormap "GdkColormap* gdk_screen_get_default_colormap(GdkScreen* screen)"
@@ -37390,6 +37390,7 @@ XEN_NARGIFY_3(gxg_pango_layout_iter_get_layout_extents_w, gxg_pango_layout_iter_
 XEN_NARGIFY_1(gxg_pango_layout_iter_get_baseline_w, gxg_pango_layout_iter_get_baseline)
 XEN_NARGIFY_1(gxg_pango_language_from_string_w, gxg_pango_language_from_string)
 XEN_NARGIFY_2(gxg_pango_language_matches_w, gxg_pango_language_matches)
+XEN_NARGIFY_1(gxg_G_OBJECT_TYPE_w, gxg_G_OBJECT_TYPE)
 XEN_ARGIFY_3(gxg_g_utf8_validate_w, gxg_g_utf8_validate)
 XEN_NARGIFY_2(gxg_gtk_tree_model_get_string_from_iter_w, gxg_gtk_tree_model_get_string_from_iter)
 XEN_NARGIFY_2(gxg_gtk_tree_model_sort_iter_is_valid_w, gxg_gtk_tree_model_sort_iter_is_valid)
@@ -39016,7 +39017,6 @@ XEN_NARGIFY_0(gxg_gtk_widget_get_default_visual_w, gxg_gtk_widget_get_default_vi
 XEN_NARGIFY_4(gxg_gtk_widget_shape_combine_mask_w, gxg_gtk_widget_shape_combine_mask)
 XEN_NARGIFY_1(gxg_gtk_requisition_copy_w, gxg_gtk_requisition_copy)
 XEN_NARGIFY_1(gxg_gtk_requisition_free_w, gxg_gtk_requisition_free)
-XEN_NARGIFY_1(gxg_G_OBJECT_TYPE_w, gxg_G_OBJECT_TYPE)
 XEN_NARGIFY_1(gxg_gdk_screen_get_default_colormap_w, gxg_gdk_screen_get_default_colormap)
 XEN_NARGIFY_2(gxg_gdk_screen_set_default_colormap_w, gxg_gdk_screen_set_default_colormap)
 XEN_NARGIFY_1(gxg_gdk_screen_get_system_colormap_w, gxg_gdk_screen_get_system_colormap)
@@ -41387,6 +41387,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_pango_layout_iter_get_baseline_w gxg_pango_layout_iter_get_baseline
 #define gxg_pango_language_from_string_w gxg_pango_language_from_string
 #define gxg_pango_language_matches_w gxg_pango_language_matches
+#define gxg_G_OBJECT_TYPE_w gxg_G_OBJECT_TYPE
 #define gxg_g_utf8_validate_w gxg_g_utf8_validate
 #define gxg_gtk_tree_model_get_string_from_iter_w gxg_gtk_tree_model_get_string_from_iter
 #define gxg_gtk_tree_model_sort_iter_is_valid_w gxg_gtk_tree_model_sort_iter_is_valid
@@ -43013,7 +43014,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_widget_shape_combine_mask_w gxg_gtk_widget_shape_combine_mask
 #define gxg_gtk_requisition_copy_w gxg_gtk_requisition_copy
 #define gxg_gtk_requisition_free_w gxg_gtk_requisition_free
-#define gxg_G_OBJECT_TYPE_w gxg_G_OBJECT_TYPE
 #define gxg_gdk_screen_get_default_colormap_w gxg_gdk_screen_get_default_colormap
 #define gxg_gdk_screen_set_default_colormap_w gxg_gdk_screen_set_default_colormap
 #define gxg_gdk_screen_get_system_colormap_w gxg_gdk_screen_get_system_colormap
@@ -45391,6 +45391,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(pango_layout_iter_get_baseline, gxg_pango_layout_iter_get_baseline_w, 1, 0, 0, H_pango_layout_iter_get_baseline);
   XG_DEFINE_PROCEDURE(pango_language_from_string, gxg_pango_language_from_string_w, 1, 0, 0, H_pango_language_from_string);
   XG_DEFINE_PROCEDURE(pango_language_matches, gxg_pango_language_matches_w, 2, 0, 0, H_pango_language_matches);
+  XG_DEFINE_PROCEDURE(G_OBJECT_TYPE, gxg_G_OBJECT_TYPE_w, 1, 0, 0, H_G_OBJECT_TYPE);
   XG_DEFINE_PROCEDURE(g_utf8_validate, gxg_g_utf8_validate_w, 2, 1, 0, H_g_utf8_validate);
   XG_DEFINE_PROCEDURE(gtk_tree_model_get_string_from_iter, gxg_gtk_tree_model_get_string_from_iter_w, 2, 0, 0, H_gtk_tree_model_get_string_from_iter);
   XG_DEFINE_PROCEDURE(gtk_tree_model_sort_iter_is_valid, gxg_gtk_tree_model_sort_iter_is_valid_w, 2, 0, 0, H_gtk_tree_model_sort_iter_is_valid);
@@ -47017,7 +47018,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_shape_combine_mask, gxg_gtk_widget_shape_combine_mask_w, 4, 0, 0, H_gtk_widget_shape_combine_mask);
   XG_DEFINE_PROCEDURE(gtk_requisition_copy, gxg_gtk_requisition_copy_w, 1, 0, 0, H_gtk_requisition_copy);
   XG_DEFINE_PROCEDURE(gtk_requisition_free, gxg_gtk_requisition_free_w, 1, 0, 0, H_gtk_requisition_free);
-  XG_DEFINE_PROCEDURE(G_OBJECT_TYPE, gxg_G_OBJECT_TYPE_w, 1, 0, 0, H_G_OBJECT_TYPE);
   XG_DEFINE_PROCEDURE(gdk_screen_get_default_colormap, gxg_gdk_screen_get_default_colormap_w, 1, 0, 0, H_gdk_screen_get_default_colormap);
   XG_DEFINE_PROCEDURE(gdk_screen_set_default_colormap, gxg_gdk_screen_set_default_colormap_w, 2, 0, 0, H_gdk_screen_set_default_colormap);
   XG_DEFINE_PROCEDURE(gdk_screen_get_system_colormap, gxg_gdk_screen_get_system_colormap_w, 1, 0, 0, H_gdk_screen_get_system_colormap);
@@ -49437,7 +49437,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("06-Oct-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("07-Oct-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

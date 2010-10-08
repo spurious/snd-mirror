@@ -126,7 +126,18 @@ static void zx_changed(float value, chan_info *cp)
     {
       /* if cursor visible, focus on that, else selection, else mark, else left side */
       focus_x_axis_change(ap, cp, zoom_focus_style(ss));
-      resize_sx(cp);
+
+      /* focus_x_axis_change has already displayed the new graph, but in gtk the scrollbar setting
+       *   in resize_sx will try to display everything again. So try to squelch it...
+       */
+      if (!(cp->squelch_update))
+	{
+	  cp->squelch_update = true;
+	  resize_sx(cp);
+	  cp->squelch_update = false;
+	  clear_minibuffer(cp->sound); /* erase the "(update squelched)" message */
+	}
+      else resize_sx(cp);
     }
 }
 
