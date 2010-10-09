@@ -9030,6 +9030,20 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
 }
 
 
+s7_pointer s7_make_terminated_string_with_length(s7_scheme *sc, const char *str, int len) 
+{
+  s7_pointer x;
+  NEW_CELL(sc, x);
+  set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY); /* should this follow the malloc? */
+  string_value(x) = (char *)malloc((len + 1) * sizeof(char)); 
+  if (len != 0)                                             /* memcpy can segfault if string_value(x) is NULL */
+    memcpy((void *)string_value(x), (void *)str, len);
+  string_value(x)[len] = 0;
+  string_length(x) = len;
+  return(x);
+}
+
+
 static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int len) 
 {
   s7_pointer x;
@@ -10456,16 +10470,16 @@ If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
 	{
 	  if (i == 0)
 	    return(sc->EOF_OBJECT);
-	  sc->read_line_buf[i] = 0;
-	  return(s7_make_string_with_length(sc, sc->read_line_buf, i));
+	  /* sc->read_line_buf[i] = 0; */
+	  return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, i));
 	}
 
       sc->read_line_buf[i] = (char)c;
       if (c == '\n')
 	{
 	  if (!with_eol) i--;
-	  sc->read_line_buf[i + 1] = 0;
-	  return(s7_make_string_with_length(sc, sc->read_line_buf, i + 1));
+	  /* sc->read_line_buf[i + 1] = 0; */
+	  return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, i + 1));
 	}
     }
   return(sc->EOF_OBJECT);
@@ -19317,15 +19331,82 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 }
 
 
+#define NOT_AN_X_CHAR -1
+
+static int read_x_char(s7_scheme *sc, s7_pointer pt)
+{
+  /* possible "\xnn" char (write creates these things, so we have to read them) 
+   *   but we could have crazy input like "\x -- with no trailing double quote
+   */
+  int d1, d2, c;
+
+  c = inchar(sc, pt);
+  if (c == EOF)
+    return(NOT_AN_X_CHAR);
+
+  d1 = digits[(unsigned int)c];
+  if (d1 < 16)
+    {
+      c = inchar(sc, pt);
+      if (c == EOF)
+	return(NOT_AN_X_CHAR);
+      d2 = digits[(unsigned int)c];
+      if (d2 < 16)
+	return(16 * d1 + d2);           /* following char can be anything, including a number -- we ignore it */
+      /* apparently one digit is also ok */
+      backchar(sc, c, pt);
+      return(d1);
+    }
+  return(NOT_AN_X_CHAR);
+}
+
+
 static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 {
   /* sc->F => error 
    *   no check needed here for bad input port and so on
    */
-  int i, c;
+  int i = 0, c;
 
-  for (i = 0; ; ) 
+  if (!(sc->input_is_file))
     {
+      /* try the most common case first */
+      char *s, *start, *end;
+      start = (char *)(port_string(pt) + port_string_point(pt));
+      end = (char *)(port_string(pt) + port_string_length(pt));
+      for (s = start; s < end; s++)
+	{
+	  if (*s == '"')
+	    {
+	      s7_pointer result;
+	      int len;
+	      len = s - start;
+	      result = s7_make_terminated_string_with_length(sc, start, len);
+	      port_string_point(pt) += (len + 1);
+	      return(result);
+	    }
+	  else
+	    {
+	      if (*s == '\\')
+		{
+		  if ((s - start) >= sc->strbuf_size)
+		    resize_strbuf(sc);
+		  for (i = 0; i < (s - start); i++)
+		    sc->strbuf[i] = port_string(pt)[port_string_point(pt)++];
+		  break;
+		}
+	      else
+		{
+		  if (*s == '\n')
+		    port_line_number(pt)++; 
+		}
+	    }
+	}
+    }
+
+  while (true)
+    {
+      /* splitting this check out and duplicating the loop was slower?!? */
       if (sc->input_is_file)
 	c = fgetc(port_file(pt)); /* not unsigned char! -- could be EOF */
       else 
@@ -19346,8 +19427,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 	  return(sc->F);
 
 	case '"':
-	  sc->strbuf[i] = '\0';
-	  return(s7_make_string_with_length(sc, sc->strbuf, i));
+	  return(s7_make_terminated_string_with_length(sc, sc->strbuf, i));
 
 	case '\\':
 	  c = inchar(sc, pt);
@@ -19369,39 +19449,14 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 		    {
 		      if (c == 'x')
 			{
-			  /* possible "\xnn" char (write creates these things, so we have to read them) 
-			   *   but we could have crazy input like "\x -- with no trailing double quote
-			   */
-			  int d1, d2;
-			  c = inchar(sc, pt);
-			  if (c == EOF)
+			  c = read_x_char(sc, pt);
+			  if (c == NOT_AN_X_CHAR)
 			    return(sc->T);
-			  d1 = digits[(unsigned int)c];
-			  if (d1 < 16)
-			    {
-			      c = inchar(sc, pt);
-			      if (c == EOF)
-				return(sc->T);
-			      d2 = digits[(unsigned int)c];
-			      if (d2 < 16)
-				{
-				  sc->strbuf[i++] = (unsigned char)(16 * d1 + d2);
-				  /* following char can be anything, including a number -- we ignore it */
-				  break;
-				}
-			      else
-				{
-				  /* apparently one digit is also ok */
-				  backchar(sc, c, pt);
-				  sc->strbuf[i++] = d1;
-				  break;
-				}
-			      return(sc->T);
-			    }
-			  return(sc->T);
+			  sc->strbuf[i++] = (unsigned char)c;
 			}
-		      if (!isspace(c))
-			return(sc->T); /* #f here would give confusing error message "end of input", so return #t=bad backslash */
+		      else
+			if (!isspace(c))
+			  return(sc->T); /* #f here would give confusing error message "end of input", so return #t=bad backslash */
 		      /* this is not optimal. It's easy to forget that backslash needs to be backslashed. */
 		    }
 		}
@@ -19419,8 +19474,12 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 }
 
 
+/* static const char *tokens[12] = {"eof", "left_paren", "right_paren", "dot", "atom", "quote", 
+                                    "double_quote", "back_quote", "comma", "at_mark", "sharp_const", "vector"}; 
+*/
+
 static s7_pointer read_expression(s7_scheme *sc)
-{
+{ 
   while (true) 
     {
       int c;
@@ -19488,7 +19547,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	case TOKEN_DOUBLE_QUOTE:
 	  sc->value = read_string_constant(sc, sc->input_port);
 
-	  if (sc->value == sc->F)                                /* can happen if input code ends in the middle of a string */
+	  if (sc->value == sc->F)                                   /* can happen if input code ends in the middle of a string */
 	    return(read_error(sc, "end of input encountered while in a string"));
 	  if (sc->value == sc->T)
 	    return(read_error(sc, "unknown backslash usage -- perhaps you meant two backslashes?"));
@@ -19496,17 +19555,15 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  return(sc->value);
 	  
 	case TOKEN_SHARP_CONST:
-	  {
-	    sc->value = read_delimited_string(sc, false);
+	  sc->value = read_delimited_string(sc, false);
 
-	    /* here we need the following character and form 
-	     *   strbuf[0] == '#', false above = # case, not an atom
-	     */
+	  /* here we need the following character and form 
+	   *   strbuf[0] == '#', false above = # case, not an atom
+	   */
 
-	    if (sc->value == sc->NIL)
-	      return(read_error(sc, "undefined # expression"));
-	    return(sc->value);
-	  }
+	  if (sc->value == sc->NIL)
+	    return(read_error(sc, "undefined # expression"));
+	  return(sc->value);
 
 	case TOKEN_DOT:                                             /* (catch #t (lambda () (+ 1 . . )) (lambda args 'hiho)) */
 	  back_up_stack(sc);
@@ -22542,6 +22599,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+    READ_LIST:
     case OP_READ_LIST: 
       /* sc->args is sc->NIL at first */
       /*    was: sc->args = s7_cons(sc, sc->value, sc->args); */ 
@@ -22625,15 +22683,31 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   */
 	  return(missing_close_paren_error(sc));
 
+	case TOKEN_ATOM:
+	  sc->value = read_delimited_string(sc, true);
+	  goto READ_LIST;
+	  break;
+
+	case TOKEN_SHARP_CONST:
+	  sc->value = read_delimited_string(sc, false);
+	  if (sc->value == sc->NIL)
+	    return(read_error(sc, "undefined # expression"));
+	  goto READ_LIST;
+	  break;
+
+	case TOKEN_DOUBLE_QUOTE:
+	  sc->value = read_string_constant(sc, sc->input_port);
+	  if (sc->value == sc->F)                                /* can happen if input code ends in the middle of a string */
+	    return(read_error(sc, "end of input encountered while in a string"));
+	  if (sc->value == sc->T)
+	    return(read_error(sc, "unknown backslash usage -- perhaps you meant two backslashes?"));
+	  goto READ_LIST;
+	  break;
+
 	case TOKEN_DOT:
 	  push_stack(sc, opcode(OP_READ_DOT), sc->args, sc->NIL);
 	  sc->tok = token(sc);
 	  sc->value = read_expression(sc);
-	  break;
-
-	case TOKEN_ATOM:
-	  push_stack(sc, opcode(OP_READ_LIST), sc->args, sc->NIL);
-	  sc->value = read_delimited_string(sc, true);
 	  break;
 
 	default:
