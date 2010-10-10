@@ -355,6 +355,14 @@
 (test (eq? #| a comment |##f #f) #t)  ; ??
 (test (eq? #| a comment | ##f|##f #f) #t) ; ??
 (test (eq? #||##||##|a comment| ##f|##f #f) #t)
+
+(test (+ ;#|
+            3 ;|#
+            4)
+      7)
+(test (+ #| ; |# 3
+		 4)
+      7)
 ;;; Snd's listener is confused by (eq? #||##||##|a;comment|" ##f|##f #f) etc
 
 (test (eq? (if #f #t) (if #f 3)) #t)
@@ -9396,6 +9404,8 @@
 (test (do ((i 0 (+ i 1))) ((or (= i 12) (not (number? i)) (> (expt 2 i) 32)) (expt 2 i))) 64)
 (test (let ((k 0)) (do ((i 0 (+ i 1))) ((let () (set! k (+ k 1)) (set! i (+ i 1)) (> k 3)) i))) 7)
 (num-test (do ((i 0 (+ i 1))) ((> i 3) i) (set! i (* .9 i))) 3.439)
+(test (let ((v #(0 0 0))) (do ((i 0 (+ i 1))) ((= i 3) v) (set! (v i) i))) #(0 1 2))
+(test (let ((v (list 0 0 0))) (do ((i 0 (+ i 1))) ((= i 3) v) (set! (v i) i))) '(0 1 2))
 
 (test (let ((lst '(1 2 3))
 	    (v (vector 0 0 0)))

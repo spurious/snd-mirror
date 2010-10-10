@@ -1980,6 +1980,7 @@ static s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, int
 { 
   s7_pointer x; 
 
+  /* TODO: do we need this lock?  we're simply reading here */
 #if HAVE_PTHREADS
   pthread_mutex_lock(&symtab_lock);
 #endif
@@ -4806,6 +4807,13 @@ static void init_ctables(void)
 }
 
 
+static bool is_white_space(int c)
+{
+  /* this is much faster than C's isspace, and does not depend on the current locale */
+  return((c >= 0) && (white_space[c]));
+}
+
+
 static bool is_radix_prefix(char prefix)
 { /* perhaps include caps here */
   return((prefix == 'b') ||
@@ -5457,13 +5465,13 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	/* what about embedded null? (string->number (string #\1 (integer->char 0) #\0)) 
 	 *   currently we stop and return 1, but Guile returns #f
 	 */
-	if (!ISDIGIT(c, current_radix)) 
+	if (!ISDIGIT(c, current_radix))         /* moving this inside the switch statement was much slower */
 	  {
 	    current_radix = radix;
 	    
 	    switch (c)
 	      {
-		/* decimal point */
+		/* -------- decimal point -------- */
 	      case '.':
 		if (((has_dec_point1) ||
 		     (slash1)) &&
@@ -5483,8 +5491,9 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 		  has_dec_point1 = true;
 		else has_dec_point2 = true;
 		continue;
+
 		
-		/* exponent marker */
+		/* -------- exponent marker -------- */
 	      case 'e': case 'E':
 	      case 's': case 'S':
 	      case 'd': case 'D':
@@ -5526,7 +5535,8 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 		  continue;
 		break;
 
-		/* internal + or - */
+
+		/* -------- internal + or - -------- */
 	      case '+':
 	      case '-':
 		if (has_plus_or_minus != 0) /* already have the separator */
@@ -5560,7 +5570,8 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 		
 		continue;
 
-		/* i for the imaginary part */
+
+		/* -------- i for the imaginary part -------- */
 	      case 'i':
 		if ((has_plus_or_minus != 0) && 
 		    (!has_i))
@@ -8837,7 +8848,7 @@ static s7_pointer g_is_char_whitespace(s7_scheme *sc, s7_pointer args)
   #define H_is_char_whitespace "(char-whitespace? c) returns #t if the character c is non-printing character"
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char-whitespace?", 0, car(args), "a character"));
-  return(make_boolean(sc, isspace(character(car(args)))));
+  return(make_boolean(sc, white_space[character(car(args))]));
 }
 
 
@@ -16665,7 +16676,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 
 		case '\n':                          /* -------- trim white-space -------- */
 		  for (i = i + 2; i <str_len - 1; i++)
-		    if (!(isspace(str[i])))
+		    if (!(white_space[str[i]]))
 		      {
 			i--;
 			break;
@@ -18972,13 +18983,6 @@ static void back_up_stack(s7_scheme *sc)
 }
 
 
-static bool is_white_space(int c)
-{
-  /* this is much faster than C's isspace, and does not depend on the current locale */
-  return((c >= 0) && (white_space[c]));
-}
-
-
 static token_t token(s7_scheme *sc)
 {
   int c = 0;
@@ -19002,11 +19006,14 @@ static token_t token(s7_scheme *sc)
        *   eval_string and others take the given string without copying or padding.
        */
       orig_str = str;
-
-      while (is_white_space(c = (int)(unsigned char)(*str++))) /* (let ((ÿa 1)) ÿa) -- 255 is not -1 = EOF */
-	if (c == '\n')
-	  port_line_number(pt)++;
-      port_string_point(pt) += (str - orig_str);
+      {
+	unsigned char c1;
+	while (white_space[c1 = (unsigned char)(*str++)]) /* (let ((ÿa 1)) ÿa) -- 255 is not -1 = EOF */
+	  if (c1 == '\n')
+	    port_line_number(pt)++;
+	port_string_point(pt) += (str - orig_str);
+	c = c1;
+      }
     }
 
   switch (c) 
@@ -19455,7 +19462,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 			  sc->strbuf[i++] = (unsigned char)c;
 			}
 		      else
-			if (!isspace(c))
+			if (!is_white_space(c))
 			  return(sc->T); /* #f here would give confusing error message "end of input", so return #t=bad backslash */
 		      /* this is not optimal. It's easy to forget that backslash needs to be backslashed. */
 		    }
@@ -20310,12 +20317,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if ((sc->tok != TOKEN_EOF) && 
 	  (port_string_point(sc->input_port) < port_string_length(sc->input_port))) /* ran past end somehow? */
 	{
-	  int c = 0;
-	  while (isspace(c = port_string(sc->input_port)[port_string_point(sc->input_port)++]))
+	  unsigned char c;
+	  while (white_space[c = port_string(sc->input_port)[port_string_point(sc->input_port)++]])
 	    if (c == '\n')
 	      port_line_number(sc->input_port)++;
 
-	  if ((c != EOF) && (c != 0))
+	  if (c != 0)
 	    {
 	      backchar(sc, c, sc->input_port);
 	      push_stack(sc, opcode(OP_EVAL_STRING), sc->NIL, sc->value);
@@ -20342,12 +20349,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if ((sc->tok != TOKEN_EOF) && 
 	  (port_string_point(sc->input_port) < port_string_length(sc->input_port))) /* ran past end somehow? */
 	{
-	  int c = 0;
-	  while (isspace(c = port_string(sc->input_port)[port_string_point(sc->input_port)++]))
+	  unsigned char c;
+	  while (white_space[c = port_string(sc->input_port)[port_string_point(sc->input_port)++]])
 	    if (c == '\n')
 	      port_line_number(sc->input_port)++;
 
-	  if ((c != EOF) && (c != 0))
+	  if (c != 0)
 	    {
 	      backchar(sc, c, sc->input_port);
 	      push_stack(sc, opcode(OP_EVAL_STRING_1), sc->NIL, sc->value);
@@ -20588,6 +20595,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *    (f))
 	   *
 	   * s7 says 3, guile says 1.
+	   *
+	   * I wonder if what they're actually talking about is a kind of shared value problem.  If we
+	   *   set the value directly (not the cdr(binding) but, for example, integer(cdr(binding))), then
+	   *   every previous reference gets changed as a side-effect.  In the current code, we're "binding" 
+	   *   the value in the sense that on each step, a new value is assigned to the step variable.
+	   *   In the "direct" case, (let ((v #(0 0 0))) (do ((i 0 (+ i 1))) ((= i 3) v) (set! (v i) i)) 
+	   *   would return #(3 3 3).
 	   */
 	  
 	  sc->value = sc->NIL;
@@ -20809,11 +20823,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* replacing this label with the equivalent sc->op = OP_EVAL and so on is much slower */
     EVAL:
     case OP_EVAL:                           /* main part of evaluation */
-      /* timing info from valgrind makes no sense to me.  Why does a one-level if statement drastically
-       *   slow this down, whereas the equivalent switch statement does not?  I'm wondering to
-       *   what extent I'm optimizing for valgrind... (And I get different results from s7test
-       *   under valgrind).
-       */
       switch (type(sc->code))
 	{
 	case T_PAIR:
@@ -20841,8 +20850,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   it's actually slower by about 30/2400 than just plowing ahead as if
 	   *   there were args.  (The check costs 27 and we only hit it a few hundred times).
 	   */
-	  /* push_stack(sc, opcode(OP_LET_UNWIND), sc->args, sc->code); */
-	  
 	  push_stack(sc, opcode(OP_EVAL_ARGS), sc->NIL, cdr(sc->code));
 	  sc->code = car(sc->code);
 	  goto EVAL;
@@ -20959,7 +20966,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      push_stack(sc, opcode(OP_EVAL_ARGS1), sc->args, cdr(sc->code));
 	      sc->code = car_code;
-	      sc->args = sc->NIL;
+	      /* sc->args = sc->NIL; */
 	      goto EVAL;
 	    }
 
@@ -21285,7 +21292,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_syntax(sc->code))                                           /* (apply begin '((define x 3) (+ x 2))) */
 	    {
 	      sc->code = s7_cons(sc, sc->code, sc->args);
-	      sc->args = sc->NIL;
+	      /* sc->args = sc->NIL; */
 	      goto EVAL;
 	    }
 	  /* else fall through */
@@ -21844,7 +21851,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  push_stack(sc, opcode(OP_LET1), sc->args, cdr(sc->code));
 	  sc->code = cadar(sc->code);
-	  sc->args = sc->NIL;
+	  /* sc->args = sc->NIL; */
 	  goto EVAL;
 	}
 
@@ -21969,7 +21976,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  push_stack(sc, opcode(OP_LET_STAR1), sc->args, sc->code);
 	  sc->code = cadar(sc->code);
-	  sc->args = sc->NIL;
+	  /* sc->args = sc->NIL; */
 	  goto EVAL;
 	} 
 
@@ -22030,7 +22037,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  push_stack(sc, opcode(OP_LETREC1), sc->args, cdr(sc->code));
 	  sc->code = cadar(sc->code);
-	  sc->args = sc->NIL;
+	  /* sc->args = sc->NIL; */
 	  goto EVAL;
 	} 
 
@@ -22578,7 +22585,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       push_stack(sc, opcode(OP_WITH_ENV1), sc->envir, sc->NIL);  /* save current env */
       push_stack(sc, opcode(OP_WITH_ENV2), sc->NIL, sc->code);
-      sc->args = sc->NIL;
+      /* sc->args = sc->NIL; */
       sc->code = car(sc->code);                          /* eval env arg */
       goto EVAL;
 
@@ -22711,6 +22718,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 
 	default:
+	  /* by far the main case here is TOKEN_LEFT_PAREN, but it doesn't save anything to move it to this level */
 	  push_stack(sc, opcode(OP_READ_LIST), sc->args, sc->NIL);
 	  sc->value = read_expression(sc);
 	  break;
@@ -22786,7 +22794,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->args == small_int(1))
 	sc->code = make_list_3(sc, sc->APPLY, sc->VECTOR, g_quasiquote_1(sc, sc->value));
       else sc->code = make_list_4(sc, sc->APPLY, sc->MULTIVECTOR, sc->args, g_quasiquote_1(sc, sc->value));
-      sc->args = sc->NIL;
+      /* sc->args = sc->NIL; */
       goto EVAL;
 
       
