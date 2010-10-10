@@ -466,17 +466,13 @@ char *version_info(void)
 void about_snd_help(void)
 {
   char *info = NULL, *features = NULL;
-#if HAVE_FORTH
-  char *files = NULL;
-#endif
 
 #if HAVE_RUBY
   features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING((char *)"$\".join(' ')")), 400);
 #endif
 
 #if HAVE_FORTH
-  features = word_wrap(XEN_AS_STRING(XEN_VARIABLE_REF("*features*")), 400);
-  files = word_wrap(XEN_AS_STRING(XEN_VARIABLE_REF("*loaded-files*")), 400);
+  features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")), 400); 
 #endif
 
 #if HAVE_SCHEME
@@ -505,8 +501,7 @@ void about_snd_help(void)
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",
 #endif
 #if HAVE_FORTH    
-	    "\n    *features*:\n", features, "\n\n",
-            "\n    *loaded-files*:\n", files, "\n\n",
+	    "\n    *features*:\n    ", features, "\n\n", 
 #endif
 #if HAVE_SCHEME
   	    "\n    *features*:\n    '", features, "\n\n",
@@ -519,9 +514,6 @@ NULL);
 
   if (info) free(info);
   if (features) free(features);
-#if HAVE_FORTH
-  if (files) free(files);
-#endif
 }
 
 

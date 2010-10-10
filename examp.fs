@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Thu Jan 07 00:33:30 CET 2010
+\ Changed: Wed Aug 18 19:07:45 CEST 2010
 
 \ Commentary:
 \
@@ -127,6 +127,8 @@
   <'> noop alias hide-widget		\ ( a -- b )
   <'> noop alias widget-size		\ ( a -- b )
   : set-widget-size     ( a b -- c )    drop ;
+  : window-property     ( a b -- c )    drop ;
+  : set-window-property ( a b c -- d ) 2drop ;
 [then]
 
 \ #( #( snd0 chn0 ) #( snd0 chn1 ) ... )
@@ -493,11 +495,10 @@ y0 and y1 are ignored."
     #( 44100 48000 32000 0 ) srate-index array-ref mpegnum / { srate }
     $" %s: %s Hz, %s, MPEG-%s"
     #( mpgfile srate chans 1 = if "mono" else "stereo" then mpeg-layer ) clm-message
-    $" mpg123 -s %s > %s" #( mpgfile rawfile ) string-format file-system { stat }
-    stat if
+    $" mpg123 -s %s > %s" #( mpgfile rawfile ) string-format file-system if
       rawfile chans srate little-endian? if mus-lshort else mus-bshort then open-raw-sound drop
     else
-      $" system in %s: %s" #( get-func-name stat ) clm-message
+      $" system in %s: %s" #( get-func-name exit-status ) clm-message
     then
   then
 ;

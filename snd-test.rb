@@ -21,7 +21,6 @@
 $original_save_dir = set_save_dir(ENV["TMPDIR"])
 $original_temp_dir = set_temp_dir(ENV["TMPDIR"])
 $original_output_data_format = default_output_data_format
-set_with_gl(false)
 
 # $with_exit         = false
 # $with_backtrace    = true
@@ -118,6 +117,34 @@ unless provided? :snd_nogui
   require "draw"
   require "musglyphs"
   require "effects"
+end
+
+if provided? :snd_motif
+  RXSetErrorHandler(lambda do |dpy, e|
+                      val, err = RXGetErrorText(dpy, Rerror_code(e), nil, 1024)
+                      $stderr.printf("Xlib error_code[%s]: %s\n", val, err)
+                      val, err = RXGetErrorText(dpy, Rrequest_code(e), nil, 1024)
+                      $stderr.printf("Xlib request_code[%s]: %s\n", val, err)
+                      val, err = RXGetErrorText(dpy, Rminor_code(e), nil, 1024)
+                      $stderr.printf("Xlib minor_code[%s]: %s\n", val, err)
+                      $stderr.printf("Ruby $!: %s\n", $!.inspect)
+                      $stderr.printf("Ruby $@: %s\n", $@.inspect)
+                    end)
+  RXSetIOErrorHandler(lambda do |dpy|
+                        $stderr.printf("Xlib IO Error dpy: %s", dpy.inspect)
+                        $stderr.printf("Ruby $!: %s\n", $!.inspect)
+                        $stderr.printf("Ruby $@: %s\n", $@.inspect)
+                      end)
+  RXtAppSetErrorHandler(main_widgets().car, lambda do |msg|
+                          $stderr.printf("Xt Error: %s\n", msg)
+                          $stderr.printf("Ruby $!: %s\n", $!.inspect)
+                          $stderr.printf("Ruby $@: %s\n", $@.inspect)
+                        end)
+  RXtAppSetWarningHandler(main_widgets().car, lambda do |msg|
+                            $stderr.printf("Xt Warning: %s\n", msg)
+                            $stderr.printf("Ruby $!: %s\n", $!.inspect)
+                            $stderr.printf("Ruby $@: %s\n", $@.inspect)
+                          end)
 end
 
 $original_save_dir = (save_dir or "/zap/snd")
@@ -1302,7 +1329,7 @@ def test00
             [:grid_density, 1.0],
             [:html_dir, "."],
             [:html_program, "firefox"],
-            [:just_sounds, false],
+            [:just_sounds, true],
             [:ladspa_dir, ""],
             [:peak_env_dir, ""],
             [:listener_prompt, ">"],
@@ -1410,7 +1437,10 @@ end
 
 # ---------------- test 01: defaults ----------------
 
-$good_colormap = provided?(:gl) ? $hot_colormap : $black_and_white_colormap
+# INFO: Wed Sep  1 22:48:47 CEST 2010 [ms]
+# snd-0.h:603:#define DEFAULT_COLOR_MAP 2
+# 2 -> HOT_COLORMAP
+$good_colormap = $hot_colormap
 $better_colormap = $black_and_white_colormap
 
 # :normal        = [[Symbol, val], ...]
@@ -1446,18 +1476,6 @@ def test01
   if $test01
     $before_test_hook.call(1)
     Snd.sounds.apply(:close_sound)
-    unless provided? :snd_nogui
-      unless colormap? $good_colormap
-        $good_colormap = integer2colormap((1..19).detect do |c|
-                                            colormap?(integer2colormap(c))
-                                          end)
-      end
-      unless colormap? $better_colormap
-        $better_colormap = integer2colormap(($good_colormap..19).detect do |c|
-                                              colormap?(integer2colormap(c))
-                                            end)
-      end
-    end
     controls = [[:ask_before_overwrite, false],
                 [:audio_output_device, 0],
                 [:auto_resize, true],
@@ -1517,7 +1535,7 @@ def test01
                 [:grid_density, 1.0],
                 [:html_dir, "."],
                 [:html_program, "firefox"],
-                [:just_sounds, false],
+                [:just_sounds, true],
                 [:ladspa_dir, ""],
                 [:peak_env_dir, ""],
                 [:listener_prompt, ">"],
@@ -1689,14 +1707,11 @@ def test02
     test_headers("Fnonull.aif", 1, 8000, 0.00112499995157123, "AIFC", "mulaw (8 bits)")
     test_headers("Pmiscck.aif", 1, 8000, 0.00112499995157123, "AIFC", "mulaw (8 bits)")
     test_headers("Pmiscck.wav", 1, 8000, 0.00112499995157123, "RIFF", "mulaw (8 bits)")
-    # test_headers("Pnossnd.aif", 1, 8000, 0.0, "AIFC", "mulaw (8 bits)")
     test_headers("Poffset.aif", 1, 8000, 0.00112499995157123, "AIFC", "mulaw (8 bits)")
     test_headers("Porder.aif", 1, 8000, 0.00112499995157123, "AIFC", "mulaw (8 bits)")
     test_headers("Ptjunk.aif", 1, 8000, 0.00112499995157123, "AIFC", "mulaw (8 bits)")
     test_headers("Ptjunk.wav", 1, 8000, 0.00112499995157123, "RIFF", "mulaw (8 bits)")
     test_headers("SINE24-S.WAV", 2, 44100, 2.0, "RIFF", "little endian int (24 bits)")
-    # test_headers("a1.asf", 1, 16000, 0.0, "asf", "unknown")
-    # test_headers("a2.asf", 1, 8000, 0.0, "asf", "unknown")
     test_headers("a1.asf", 1, 16000, 3.736562, "asf", "unknown")
     test_headers("a2.asf", 1, 8000, 4.630625, "asf", "unknown")
     test_headers("addf8.afsp", 1, 8000, 2.9760000705719, "Sun/Next", "big endian short (16 bits)")
@@ -1714,7 +1729,6 @@ def test02
     test_headers("alaw.aifc", 1, 44100, 0.0367800444364548, "AIFC", "alaw (8 bits)")
     test_headers("alaw.wav", 1, 11025, 8.70666694641113, "RIFF", "alaw (8 bits)")
     test_headers("astor_basia.mp2", 2, 44100, 1.022,"raw (no header)", "big endian short (16 bits)")
-    # test_headers("c.asf", 1, 8000, 0.0, "asf", "unknown")
     test_headers("c.asf", 1, 8000, 21.368126, "asf", "unknown")
     test_headers("ce-c3.w02", 1, 33000, 3.88848495483398, "TX-16W", "unknown")
     test_headers("ce-c4.w03", 1, 33000, 2.91618180274963, "TX-16W", "unknown")
@@ -1750,7 +1764,6 @@ def test02
     test_headers("inrs-16.snd", 1, 8000, 2.46399998664856, "INRS", "little endian short (16 bits)")
     test_headers("kirk.wve", 1, 8000, 1.40799999237061, "PSION", "alaw (8 bits)")
     test_headers("loop.aiff", 1, 44100, 0.0367120169103146, "AIFC", "big endian short (16 bits)")
-    # test_headers("m.asf", 1, 8000, 0.0, "asf", "unknown")
     test_headers("m.asf", 1, 8000, 64.964622, "asf", "unknown")
     test_headers("mary-sun4.sig", 1, 8000, 4.47612476348877,
                  "Comdisco SPW signal", "big endian double (64 bits)")
@@ -1759,7 +1772,6 @@ def test02
     test_headers("msadpcm.wav", 1, 11025, 4.43501138687134, "RIFF", "unknown")
     test_headers("n8.snd", 1, 44100, 0.0367800444364548, "Sun/Next", "signed byte (8 bits)")
     test_headers("nasahal.aif", 1, 11025, 9.89841270446777, "AIFF", "signed byte (8 bits)")
-    # test_headers("nasahal.avi", 1, 11025, 0.0, "AVI", "unknown")
     test_headers("nasahal.avi", 1, 11025, 10.432744, "AVI", "little endian short (16 bits)")
     test_headers("nasahal.dig", 1, 11025, 9.8984, "Sound Designer 1", "big endian short (16 bits)")
     test_headers("nasahal.ivc", 2, 44100, 0.449, "raw (no header)", "big endian short (16 bits)")
@@ -2025,7 +2037,7 @@ def test03
               [:graph_cursor, 34, 33]
             end,
             [:graph_style, 0, 1],
-            [:just_sounds, false, true],
+            [:just_sounds, true, false],
             [:listener_prompt, ">", ":"],
             [:max_transform_peaks, 100, 10],
             [:max_regions, 16, 6],
@@ -3165,6 +3177,7 @@ def test094
   end
   close_sound(ind1)
   delete_file("test.snd")
+  #
   set_clipping(true)
   map_channel(lambda do |y| y * 10.0 end, 0, frames(ind), ind, 0)
   save_sound_as("test.snd", ind, Mus_next, Mus_bfloat)
@@ -3175,6 +3188,7 @@ def test094
   end
   close_sound(ind1)
   delete_file("test.snd")
+  #
   set_clipping(false)
   mx = maxamp(ind)
   map_channel(lambda do |y| y + (1.001 - mx) end, 0, frames(ind), ind, 0)
@@ -3185,6 +3199,7 @@ def test094
   end
   close_sound(ind1)
   delete_file("test.snd")
+  #
   set_clipping(true)
   save_sound_as("test.snd", ind, Mus_next, Mus_bshort)
   ind1 = open_sound("test.snd")
@@ -3200,21 +3215,30 @@ def test094
   set_clipping(false)
   snd = new_sound("test.snd", :data_format, Mus_lshort)
   pad_channel(0, 10)
-  set_sample(1, 1.0)
+  set_sample(1,  1.0)
   set_sample(2, -1.0)
-  set_sample(3, 0.9999)
-  set_sample(4, 2.0)
+  set_sample(3,  0.9999)
+  set_sample(4,  2.0)
   set_sample(5, -2.0)
-  set_sample(6, 1.3)
+  set_sample(6,  1.3)
   set_sample(7, -1.3)
-  set_sample(8, 1.8)
+  set_sample(8,  1.8)
   set_sample(9, -1.8)
   save_sound(snd)
   close_sound(snd)
   snd = open_sound("test.snd")
+  # FIXME
+  # clipping(#f)
+  # data-format mus-lshort:
+  # GCC   vct( 0.0 1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 )
+  # Clang vct( 0.0 1.0 -1.0 1.0  0.0  0.0 -0.7  0.7 -0.2  0.2 )
   unless vequal(res = channel2vct(0, 10),
                 vct(0.0, 1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0))
-    snd_display("unclipped 1: %s?", res)
+    if vequal(res, vct(0.0, 1.0, -1.0, 1.0, 0.0, 0.0, -0.7, 0.7, -0.2, 0.2))
+      snd_display("clipping(false): clang")
+    else
+      snd_display("clipping(false): %s?", res)
+    end
   end
   close_sound(snd)
   mus_sound_forget("test.snd")
@@ -3222,21 +3246,21 @@ def test094
   set_clipping(true)
   snd = new_sound("test.snd", :data_format, Mus_lshort)
   pad_channel(0, 10)
-  set_sample(1, 1.0)
+  set_sample(1,  1.0)
   set_sample(2, -1.0)
-  set_sample(3, 0.9999)
-  set_sample(4, 2.0)
+  set_sample(3,  0.9999)
+  set_sample(4,  2.0)
   set_sample(5, -2.0)
-  set_sample(6, 1.3)
+  set_sample(6,  1.3)
   set_sample(7, -1.3)
-  set_sample(8, 1.8)
+  set_sample(8,  1.8)
   set_sample(9, -1.8)
   save_sound(snd)
   close_sound(snd)
   snd = open_sound("test.snd")
   unless vequal(res = channel2vct(0, 10),
                 vct(0.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0))
-    snd_display("clipped: %s?", res)
+    snd_display("clipping(true): %s?", res)
   end
   close_sound(snd)
   #
@@ -3247,9 +3271,18 @@ def test094
   mus_sound_write(snd, 0, 9, 1, sdata)
   mus_sound_close_output(snd, 40)
   snd = open_sound("test.snd")
+  # FIXME
+  # mus-file-clipping(#f)
+  # data-format mus-lshort:
+  # GCC   vct( 0.0 -1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 )
+  # Clang vct( 0.0 -1.0 -1.0 1.0  0.0  0.0 -0.7  0.7 -0.2  0.2 )
   unless vequal(res = channel2vct(0, 10),
                 vct(0.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0))
-    snd_display("unclipped 2: %s?", res)
+    if vequal(res, vct(0.0, -1.0, -1.0, 1.0, 0.0, 0.0, -0.7, 0.7, -0.2, 0.2))
+      snd_display("mus_file_clipping(false): clang")
+    else
+      snd_display("mus_file_clipping(false): %s?", res)
+    end
   end
   close_sound(snd)
   mus_sound_forget("test.snd")
@@ -3264,7 +3297,7 @@ def test094
   snd = open_sound("test.snd")
   unless vequal(res = channel2vct(0, 10),
                 vct(0.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0))
-    snd_display("clipped 1: %s?", res)
+    snd_display("mus_file_clipping(true): %s?", res)
   end
   close_sound(snd)
   mus_sound_forget("test.snd")
@@ -3276,9 +3309,18 @@ def test094
   mus_sound_write(snd, 0, 9, 1, sdata)
   mus_sound_close_output(snd, 40)
   snd = open_sound("test.snd")
+  # FIXME
+  # mus-clipping(#f)
+  # data-format mus-lshort:
+  # GCC   vct( 0.0 -1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 )
+  # Clang vct( 0.0 -1.0 -1.0 1.0  0.0  0.0 -0.7  0.7 -0.2  0.2 )
   unless vequal(res = channel2vct(0, 10),
                 vct(0.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0))
-    snd_display("unclipped 3: %s?", res)
+    if vequal(res, vct(0.0, -1.0, -1.0, 1.0, 0.0, 0.0, -0.7, 0.7, -0.2, 0.2))
+      snd_display("mus_clipping(false): clang")
+    else
+      snd_display("mus_clipping(false): %s?", res)
+    end
   end
   close_sound(snd)
   mus_sound_forget("test.snd")
@@ -3292,7 +3334,7 @@ def test094
   snd = open_sound("test.snd")
   unless vequal(res = channel2vct(0, 10),
                 vct(0.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0))
-    snd_display("clipped 2: %s?", res)
+    snd_display("mus_clipping(true): %s?", res)
   end
   close_sound(snd)
   mus_sound_forget("test.snd")
@@ -6655,11 +6697,11 @@ def test105
   set_time_graph?(true)
   Snd.catch(:all, lambda do |args| snd_display("axis label error: %s", args) end) do
     if (res = x_axis_label) != "time"
-      snd_display("def time x_axis_label: %s?", res)
+      snd_display("get time x_axis_label: %s?", res)
     end
     set_x_axis_label("no time", ind, 0, Time_graph)
     if (res = x_axis_label) != "no time"
-      snd_display("time x_axis_label: %s?", res)
+      snd_display("set time x_axis_label: %s?", res)
     end
     update_transform_graph
     if (res = x_axis_label(ind, 0, Transform_graph)) != "frequency"
@@ -6674,24 +6716,24 @@ def test105
     graph([0, 0, 1, 1, 2, 0], "lisp")
     update_lisp_graph
     if (res = x_axis_label(ind, 0, Lisp_graph)) != "lisp"
-      snd_display("def lisp x_axis_label: %s?", res)
+      snd_display("get lisp x_axis_label: %s?", res)
     end
     set_x_axis_label("no lisp", ind, 0, Lisp_graph)
     if (res = x_axis_label(ind, 0, Lisp_graph)) != "no lisp"
-      snd_display("lisp x_axis_label: %s?", res)
+      snd_display("set lisp x_axis_label: %s?", res)
     end
     set_y_axis_label("no amp", ind, 0, Time_graph)
     if (res = y_axis_label) != "no amp"
-      snd_display("time y_axis_label: %s?", res)
+      snd_display("set time y_axis_label: %s?", res)
     end
     set_y_axis_label("no lamp", ind, 0, Lisp_graph)
     if (res = y_axis_label(ind, 0, Lisp_graph)) != "no lamp"
-      snd_display("lisp y_axis_label: %s?", res)
+      snd_display("set lisp y_axis_label: %s?", res)
     end
     set_y_axis_label(false)
     set_y_axis_label("no amp", ind, 0)
     if (res = y_axis_label(ind, 0)) != "no amp"
-      snd_display("time y_axis_label (time): %s?", res)
+      snd_display("set time y_axis_label (time): %s?", res)
     end
     set_y_axis_label(false)
   end
@@ -6762,6 +6804,7 @@ def test105
   if provided?(:xm) and (!dialog_widgets[20] or !RXtIsManaged(dialog_widgets[20]))
     snd_display("peaks but no help?")
   end
+  dismiss_all_dialogs
   num_transforms = 6
   num_transform_graph_types = 3
   set_transform_graph?(true, ind, 0)
@@ -7883,7 +7926,7 @@ def test145
   update_transform_graph(ind, 0)
   res = transform_frames(ind, 0)
   if (not list?(res)) or fneq(res.car, 1.0) or res.caddr != 256
-    snd_display("transform_frames: %s (%s)?", res, transform_size(ind, 0))
+    snd_display("transform_frames: %s (%s)?", res.inspect, transform_size(ind, 0))
   end
   close_sound(ind)
   #
@@ -19802,6 +19845,7 @@ def test009
   snd_display("multiply_envelopes: %s?", v1) unless vequal(v1, [0, 0, 0.5, 0.5, 1, 0.5])
   snd_display("window_envelope: %s?", v2) unless vequal(v2, [1, 0.2, 3, 0.6])
   close_sound(new_index)
+  dismiss_all_dialogs
 end
 
 def test029
@@ -20198,7 +20242,7 @@ def test039
   close_sound(ind)
 end
 
-def test119
+def test049
   #
   set_with_mix_tags(true)
   ind = open_sound("oboe.snd")
@@ -20313,7 +20357,7 @@ def test09
     test009
     test029
     test039
-    test119
+    test049
     $after_test_hook.call(9)
   end
 end
@@ -21288,14 +21332,7 @@ def test11
     Snd.catch do peaks() end
     enved_dialog
     color_orientation_dialog
-    # FIXME: calling TRANSFORM_DIALOG with managed=true here kills test28 (snd-motif) [ms]
-    # X Error of failed request:  ... with different messages.
-    if provided?(:snd_motif) and $test28
-      transform_dialog(false)
-    else
-      # transform_dialog(managed=true)
-      transform_dialog
-    end
+    transform_dialog
     view_files_dialog
     view_regions_dialog
     Snd.catch do edit_header_dialog() end
@@ -21312,9 +21349,11 @@ def test11
     help_dialog("test2", "this is the next test",
                 ["string 1{open-sound}", "{env-sound}string2", "string{close-sound}3"],
                 ["extsnd.html#sndopen", "extsnd.html#sndenv", "extsnd.html#sndclose"])
+    dismiss_all_dialogs
     # 
     ind = open_sound("oboe.snd")
     edit_header_dialog(ind)
+    dismiss_all_dialogs
     close_sound(ind)
     # 
     if (res = snd_url(:open_sound)) != "extsnd.html#opensound"

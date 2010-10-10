@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Sun Aug 01 12:10:30 CEST 2010
+\ Changed: Sun Oct 10 04:07:18 CEST 2010
 
 \ Commentary:
 \
@@ -18,6 +18,7 @@
 \ test 15: chan-local vars
 \ test 19: save and restore
 \ test 23: with-sound
+\ test 26: Gtk
 \ test 28: errors
 
 #f value under-valgrind
@@ -44,7 +45,7 @@
 hide
 : (snd-display) { fmt args lno -- } $" \\ [%04d] %s\n" #( lno fmt args string-format ) fth-print ;
 set-current
-: snd-display ( --; fmt args -- ) postpone *lineno* postpone (snd-display) ; immediate
+: snd-display ( -- ; fmt args -- ) postpone *lineno* postpone (snd-display) ; immediate
 previous
 
 \ lambda: <{ -- }> cr gc-stats cr .memory cr cr ; at-exit
@@ -69,21 +70,14 @@ require extensions
 require env
 require mix
 require dsp
-'snd-motif provided? [if]
-  require snd-xm
-  under-valgrind [unless]
-    require effects
-  [then]
+require snd-xm
+under-valgrind [unless]
+  require effects
 [then]
 
 reset-all-hooks
 
-nil value *arg1*
-nil value *arg2*
-nil value *prc*
-nil value *tag*
-
-\ If #t, prints additionals, e.g. function names in test-19 or proc-array lengths in test-28
+\ If #t, prints proc-array lengths in test-28.
 #t value *snd-test-verbose*
 
 \ You may set them in .sndtest.fs.
@@ -113,16 +107,32 @@ listener-prompt        		  value original-prompt
 
 *clm-search-list* file-pwd array-push to *clm-search-list*
 
+'snd-motif provided? [if]
+  lambda: <{ dpy e -- }>
+    dpy e Ferror_code   nil 1024 FXGetErrorText { res }
+    $" Xlib error_code[%s]: %s"   res fth-warning
+    dpy e Frequest_code nil 1024 FXGetErrorText to res
+    $" Xlib request_code[%s]: %s" res fth-warning
+    dpy e Fminor_code   nil 1024 FXGetErrorText to res
+    $" Xlib minor_code[%s]: %s"   res fth-warning
+  ; FXSetErrorHandler drop
+  lambda: <{ dpy -- }>
+    $" Xlib IO Error dpy: %S" #( dpy ) fth-error
+  ; FXSetIOErrorHandler drop
+[then]
+
 : fneq-err ( r1 r2 err -- f ) -rot f- fabs f<= ;
 : cneq-err ( c1 c2 err -- f )
   { c1 c2 err }
   c1 real-ref  c2 real-ref  err fneq-err
   c1 image-ref c2 image-ref err fneq-err ||
 ;
+
 : fneq   ( a b -- f ) 0.001 fneq-err ;
-: ffneq  ( a b -- f ) 0.01  fneq-err ;
-: fffneq ( a b -- f ) 0.1   fneq-err ;
+: ffneq  ( a b -- f ) 0.010 fneq-err ;
+: fffneq ( a b -- f ) 0.100 fneq-err ;
 : cneq   ( a b -- f ) 0.001 cneq-err ;
+
 : any->vct ( obj )
   { obj }
   obj vct? if
@@ -144,11 +154,13 @@ listener-prompt        		  value original-prompt
     #f
   then
 ;
+
 : vequal    ( v0 v1 -- f ) 0.001   vequal-err ;
 : vvequal   ( v0 v1 -- f ) 0.00002 vequal-err ;
 : vfequal   ( v0 v1 -- f ) 0.01    vequal-err ;
 : vffequal  ( v0 v1 -- f ) 0.1     vequal-err ;
 : vfffequal ( v0 v1 -- f ) 0.5     vequal-err ;
+
 : feql-err ( obj0 obj1 err -- f )
   { obj0 obj1 err }
   obj0 object-length obj1 object-length = if
@@ -157,15 +169,18 @@ listener-prompt        		  value original-prompt
     #f
   then
 ;
+
 : feql   ( obj0 obj1 -- f ) 0.001 feql-err ;
 : ffeql  ( obj0 obj1 -- f ) 0.01  feql-err ;
 : fffeql ( obj0 obj1 -- f ) 0.1   feql-err ;
-: fveql ( v1 v2 idx -- f)
+
+: fveql  ( v1 v2 idx -- f)
   { v1 v2 idx }
   #t v1 length v2 length min idx ?do
     v1 i object-ref v2 i object-ref fneq if not leave then
   loop
 ;
+
 : arity-ok <{ proc args -- f }>
   proc proc? if
     \ draw-axes 0/0/#t but it means 3/6/#f
@@ -182,51 +197,41 @@ listener-prompt        		  value original-prompt
   then
 ;
 : set-arity-ok <{ proc args -- f }> proc set-xt args arity-ok ; 
+
 : make-color-with-catch ( c1 c2 c3 -- color )
   <'> make-color 'no-such-color #t fth-catch if stack-reset 1 0 0 make-color then
 ;
+
 : reset-almost-all-hooks ( -- )
   reset-all-hooks
   my-snd-error-hook proc? if snd-error-hook my-snd-error-hook add-hook! then
   my-mus-error-hook proc? if mus-error-hook my-mus-error-hook add-hook! then
 ;
-'xm provided? [if]
+
+'snd-nogui provided? [if]
+  <'> noop alias dismiss-all-dialogs
+[else]
+  'xm provided? [if]
+    : widget-is-managed? ( d -- f ) FXtIsManaged ;
+  [else]
+    <'> noop alias widget-is-managed? ( d -- f )
+  [then]
   : dismiss-all-dialogs ( -- )
     nil nil { dialog d }
     dialog-widgets each to dialog
       dialog if
 	dialog 0 array-ref symbol? if
-	  dialog FXtIsManaged if dialog FXtUnmanageChild drop then
+	  dialog widget-is-managed? if dialog widget-unmanage then
 	else
 	  dialog each to d
 	    d 0 array-ref symbol? if
-	      d FXtIsManaged if d FXtUnmanageChild drop then
+	      d widget-is-managed? if d widget-unmanage then
 	    then
 	  end-each
 	then
       then
     end-each
   ;
-[else]
-  'xg provided? [if]
-    : dismiss-all-dialogs ( -- )
-      nil nil { dialog d }
-      dialog-widgets each to dialog
-	dialog if
-	  dialog xmobj? if
-	    dialog Fgtk_widget_hide drop
-	  else
-	    dialog each to d
-	      d xmobj? if
-		d Fgtk_widget_hide drop
-	      then
-	    end-each
-	  then
-	then
-      end-each
-    ;
-  [then]
-  <'> noop alias dismiss-all-dialogs
 [then]
 
 #f  value overall-start-time
@@ -249,6 +254,7 @@ listener-prompt        		  value original-prompt
     $" %s: %s\n\\ " #( name tm ) snd-test-message
   then
 ;
+
 : start-snd-test ( -- )
   \ Global variables may be overridden in `pwd`/.sndtest.fs or ~/.sndtest.fs
   ".sndtest.fs" load-init-file
@@ -284,6 +290,7 @@ listener-prompt        		  value original-prompt
   stack-reset
   make-timer to overall-start-time
 ;
+
 : finish-snd-test ( -- )
   overall-start-time stop-timer
   .stack
@@ -450,15 +457,16 @@ listener-prompt        		  value original-prompt
   g0 g2 object-equal?     if $" run %s: %s equal? %s?"     #( g0 mus-name g0 g2 ) snd-display then
 ;
 
-\ bind-key xt
-: C-xC-c <{ -- f }> 0 snd-exit #f ;
+\ bind-key proc
+: C-xC-c <{ -- }> 0 snd-exit ;
 
 \ hooks
 : my-test1-proc <{ fname -- f }> #f ;
-: my-test2-proc <{ fname -- f }> #f ;
-: my-test3-proc <{ fname -- f }> #f ;
-: my-test4-proc <{ fname -- f }> #f ;
-: my-test5-proc <{ fname -- f }> #f ;
+<'> my-test1-proc alias my-test2-proc
+<'> my-test1-proc alias my-test3-proc
+<'> my-test1-proc alias my-test4-proc
+<'> my-test1-proc alias my-test5-proc
+
 : my-local-thunk <{ -- }>
   open-hook object-length 3 <> if
     $" add-hook! local length: %d?" #( open-hook object-length ) snd-display
@@ -473,6 +481,14 @@ listener-prompt        		  value original-prompt
     $" local5 add-hook!: %s" #( open-hook ) snd-display
   then
 ;
+
+: map-10-times-cb <{ y -- y' }> y 10.0 f* ;
+: map-diff-plus-cb { mx -- proc; y self -- y' }
+  1 proc-create 1.001 mx f- , ( proc )
+ does> { y self -- y' }
+  self @ y f+
+;
+: scan-less-than-zero-cb <{ y -- y' }> y f0< ;
 
 : 00-sel-from-snd ( -- )
   \ hooks
@@ -489,8 +505,9 @@ listener-prompt        		  value original-prompt
     $" global2 add-hook!: %s" #( open-hook ) snd-display
   then
   open-hook
-  #( <'> my-test3-proc <'> my-test4-proc <'> my-test5-proc )
-  <'> my-local-thunk with-local-hook
+  #( <'> my-test3-proc
+     <'> my-test4-proc
+     <'> my-test5-proc ) <'> my-local-thunk with-local-hook
   open-hook object-length 2 <> if
     $" add-hook! reset length: %d?" #( open-hook object-length ) snd-display
   then
@@ -500,26 +517,17 @@ listener-prompt        		  value original-prompt
   open-hook "my-test2-proc" hook-member? unless
     $" reset2 add-hook!: %s" #( open-hook ) snd-display
   then
-  \ set window
-  window-x { x }			\ set to 600, x says 606
-  window-y { y }			\ set to  10, y says 35
-  'snd-motif provided? if
-    x 600 6 + <> if $" window-x[600]: %s?" #( x ) snd-display then
-    y 10 25 + <> if $" window-y[10]: %s?"  #( y ) snd-display then
-  then
   \ bind-key
-  'snd-nogui provided? unless
-    <'> C-xC-c { prc }
-    "c" 4 #t key-binding { old-prc }
-    "c" 4 prc #t bind-key { prc1 }
-    "c" 4 #t key-binding { prc2 }
-    prc prc1 = unless $" bind-key: %s %s?" #( prc prc1 ) snd-display then
-    prc prc2 = unless $" key-binding: %s %s?" #( prc prc2 ) snd-display then
-    old-prc proc? if
-      "c" 4 old-prc #t bind-key drop
-    else
-      "c" 4 #t unbind-key drop
-    then
+  <'> C-xC-c { prc }
+  "c" 4 #t key-binding { old-prc }
+  "c" 4 prc #t bind-key { prc1 }
+  "c" 4 #t key-binding { prc2 }
+  prc prc1 = unless $" bind-key: %s %s?" #( prc prc1 ) snd-display then
+  prc prc2 = unless $" key-binding: %s %s?" #( prc prc2 ) snd-display then
+  old-prc proc? if
+    "c" 4 old-prc #t bind-key drop
+  else
+    "c" 4 #t unbind-key drop
   then
   \ new-sound
   "fmv.snd" mus-next mus-bshort 22050 1 $" set-samples test" 100 new-sound { ind }
@@ -529,6 +537,234 @@ listener-prompt        		  value original-prompt
     $" 1 set samples 0 for 0.1: %s?" #( res ) snd-display
   then
   ind close-sound drop
+  \ check clipping choices (test004)
+  "oboe.snd" view-sound to ind
+  #f set-clipping drop
+  <'> map-10-times-cb 0 ind undef undef frames ind 0 map-channel drop
+  "test.snd" ind mus-next mus-bfloat save-sound-as drop
+  1 ind 0 undo drop
+  "test.snd" open-sound { ind1 }
+  ind1 0 undef maxamp { res1 }
+  ind  0 undef maxamp { ind-mx }
+  res1 ind-mx 10.0 f*  fneq if $" clipping 0: %s %s?" #( res1 ind-mx ) snd-display then
+  ind1 close-sound drop
+  "test.snd" file-delete
+  \ 
+  #t set-clipping drop
+  <'> map-10-times-cb 0 ind undef undef frames ind 0 map-channel drop
+  "test.snd" ind mus-next mus-bfloat save-sound-as drop
+  1 ind 0 undo drop
+  "test.snd" open-sound to ind1
+  ind1 0 undef maxamp to res1
+  \ ind-mx == ind 0 maxamp from above
+  res1 1.0 fneq if $" clipping 1: %s %s?" #( res1 ind-mx ) snd-display then
+  ind1 close-sound drop
+  "test.snd" file-delete
+  \ 
+  #f set-clipping drop
+  ind-mx map-diff-plus-cb 0 ind undef undef frames ind 0 map-channel drop
+  "test.snd" ind mus-next mus-bshort save-sound-as drop
+  "test.snd" open-sound to ind1
+  <'> scan-less-than-zero-cb scan-channel to res1
+  res1 unless $" clipping 2: %s?" #( res1 ) snd-display then
+  ind1 close-sound drop
+  "test.snd" file-delete
+  \ 
+  #t set-clipping drop
+  "test.snd" ind mus-next mus-bshort save-sound-as drop
+  "test.snd" open-sound to ind1
+  <'> scan-less-than-zero-cb scan-channel to res1
+  res1 if $" clipping 3: %s?" #( res1 ) snd-display then
+  ind1 close-sound drop
+  "test.snd" file-delete
+  #f set-clipping drop
+  ind close-sound drop
+  \
+  #f set-clipping drop
+  "test.snd" :data-format mus-lshort new-sound { snd }
+  0 10 pad-channel drop
+  1  1.0    set-sample drop
+  2 -1.0    set-sample drop
+  3  0.9999 set-sample drop
+  4  2.0    set-sample drop
+  5 -2.0    set-sample drop
+  6  1.3    set-sample drop
+  7 -1.3    set-sample drop
+  8  1.8    set-sample drop
+  9 -1.8    set-sample drop
+  snd save-sound drop
+  snd close-sound drop
+  "test.snd" open-sound to snd
+  0 10 channel->vct to res
+  \ FIXME
+  \ clipping(#f)
+  \ data-format mus-lshort:
+  \ GCC   vct( 0.0 1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 )
+  \ Clang vct( 0.0 1.0 -1.0 1.0  0.0  0.0 -0.7  0.7 -0.2  0.2 )
+  res vct( 0.0 1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 ) vequal unless
+    res vct( 0.0 1.0 -1.0 1.0 0.0 0.0 -0.7 0.7 -0.2 0.2 ) vequal if
+      $" clipping(#f): clang" #() snd-display
+    else
+      $" clipping(#f):: %s?" #( res ) snd-display
+    then
+  then
+  snd close-sound drop
+  "test.snd" mus-sound-forget drop
+  \ 
+  #t set-clipping drop
+  "test.snd" :data-format mus-lshort new-sound { snd }
+  0 10 pad-channel drop
+  1  1.0    set-sample drop
+  2 -1.0    set-sample drop
+  3  0.9999 set-sample drop
+  4  2.0    set-sample drop
+  5 -2.0    set-sample drop
+  6  1.3    set-sample drop
+  7 -1.3    set-sample drop
+  8  1.8    set-sample drop
+  9 -1.8    set-sample drop
+  snd save-sound drop
+  snd close-sound drop
+  "test.snd" open-sound to snd
+  0 10 channel->vct to res
+  res vct( 0.0 1.0 -1.0 1.0 1.0 -1.0 1.0 -1.0 1.0 -1.0 ) vequal unless
+    $" clipping(#t): %s?" #( res ) snd-display
+  then
+  snd close-sound drop
+  "test.snd" mus-sound-forget drop
+  \ 
+  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
+  data vct->sound-data { sdata }
+  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
+  snd #f set-mus-file-clipping drop
+  snd 0 9 1 sdata mus-sound-write drop
+  snd 40 mus-sound-close-output drop
+  "test.snd" open-sound to snd
+  0 10 channel->vct to res
+  \ FIXME
+  \ mus-file-clipping(#f)
+  \ data-format mus-lshort:
+  \ GCC   vct( 0.0 -1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 )
+  \ Clang vct( 0.0 -1.0 -1.0 1.0  0.0  0.0 -0.7  0.7 -0.2  0.2 )
+  res vct( 0.0 -1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 ) vequal unless
+    res vct( 0.0 -1.0 -1.0 1.0 0.0 0.0 -0.7 0.7 -0.2 0.2 ) vequal if
+      $" mus-file-clipping(#f): clang" #() snd-display
+    else
+      $" mus-file-clipping(#f): %s?" #( res ) snd-display
+    then
+  then
+  snd close-sound drop
+  "test.snd" mus-sound-forget drop
+  \ 
+  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
+  data vct->sound-data { sdata }
+  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
+  snd #t set-mus-file-clipping drop
+  snd 0 9 1 sdata mus-sound-write drop
+  snd #f set-mus-file-clipping drop
+  snd 40 mus-sound-close-output drop
+  "test.snd" open-sound to snd
+  0 10 channel->vct to res
+  res vct( 0.0 1.0 -1.0 1.0 1.0 -1.0 1.0 -1.0 1.0 -1.0 ) vequal unless
+    $" mus-file-clipping(#t): %s?" #( res ) snd-display
+  then
+  snd close-sound drop
+  "test.snd" mus-sound-forget drop
+  \
+  #f set-mus-clipping drop
+  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
+  data vct->sound-data { sdata }
+  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
+  snd 0 9 1 sdata mus-sound-write drop
+  snd 40 mus-sound-close-output drop
+  "test.snd" open-sound to snd
+  0 10 channel->vct to res
+  \ FIXME
+  \ mus-clipping(#f)
+  \ data-format mus-lshort:
+  \ GCC   vct( 0.0 -1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 )
+  \ Clang vct( 0.0 -1.0 -1.0 1.0  0.0  0.0 -0.7  0.7 -0.2  0.2 )
+  res vct( 0.0 -1.0 -1.0 1.0 -1.0 -1.0 -1.0 -1.0 -1.0 -1.0 ) vequal unless
+    res vct( 0.0 -1.0 -1.0 1.0 0.0 0.0 -0.7 0.7 -0.2 0.2 ) vequal if
+      $" mus-clipping(#f): clang" #() snd-display
+    else
+      $" mus-clipping(#f): %s?" #( res ) snd-display
+    then
+  then
+  snd close-sound drop
+  "test.snd" mus-sound-forget drop
+  \ 
+  #t set-mus-clipping drop
+  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
+  data vct->sound-data { sdata }
+  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
+  snd 0 9 1 sdata mus-sound-write drop
+  snd 40 mus-sound-close-output drop
+  "test.snd" open-sound to snd
+  0 10 channel->vct to res
+  res vct( 0.0 1.0 -1.0 1.0 1.0 -1.0 1.0 -1.0 1.0 -1.0 ) vequal unless
+    $" mus-clipping(#t): %s?" #( res ) snd-display
+  then
+  snd close-sound drop
+  "test.snd" mus-sound-forget drop
+  \
+  #t set-mus-clipping drop
+  vct( 0.0 1.0 -1.0 0.9999 2.0 -2.0 1.3 -1.3 1.8 -1.8 ) { data }
+  data vct->sound-data { sdata }
+  "test.snd" 22050 1 mus-lshort mus-riff $" a comment" mus-sound-open-output to snd
+  snd 0 10 1 sdata <'> mus-sound-write #t nil fth-catch to res
+  stack-reset
+  res 0 array-ref 'out-of-range <> if
+    $" mus-sound-write too many bytes: %s" #( res ) snd-display
+  then
+  snd 0 10 1 sdata <'> mus-sound-read #t nil fth-catch to res
+  stack-reset
+  res 0 array-ref 'out-of-range <> if
+    $" mus-sound-read too many bytes: %s" #( res ) snd-display
+  then
+  snd 0 mus-sound-close-output drop
+  "test.snd" file-delete
+  "test.snd" mus-sound-forget drop
+  #f set-mus-clipping drop 		\ default
+  #f set-clipping drop
+  \ x-axis-label (test005)
+  'snd-nogui provided? unless
+    "oboe.snd" open-sound to ind
+    #t set-transform-graph? drop
+    #t set-time-graph? drop
+    x-axis-label to res
+    res "time" string<> if $" get time x-axis-label: %s?" #( res ) snd-display then
+    "hiho1" ind 0 time-graph set-x-axis-label drop
+    x-axis-label to res
+    res "hiho1" string<> if $" set time x-axis-label: %s?" #( res ) snd-display then
+    update-transform-graph drop
+    ind 0 transform-graph x-axis-label to res
+    res "frequency" string<> if $" get fft x-axis-label: %s?" #( res ) snd-display then
+    "hiho2" ind 0 transform-graph set-x-axis-label drop
+    update-transform-graph drop
+    ind 0 transform-graph x-axis-label to res
+    res "hiho2" string<> if $" set fft x-axis-label: %s?" #( res ) snd-display then
+    "frequency" ind 0 transform-graph set-x-axis-label drop
+    '( 0 0 1 1 2 0 ) "lisp" graph drop
+    update-lisp-graph drop
+    ind 0 lisp-graph x-axis-label to res
+    res "lisp" string<> if $" get lisp x-axis-label: %s?" #( res ) snd-display then
+    "hiho3" ind 0 lisp-graph set-x-axis-label drop
+    ind 0 lisp-graph x-axis-label to res
+    res "hiho3" string<> if $" set lisp x-axis-label: %s?" #( res ) snd-display then
+    "hiho4" ind 0 time-graph set-y-axis-label drop
+    y-axis-label to res
+    res "hiho4" string<> if $" set time y-axis-label: %s?" #( res ) snd-display then
+    "hiho5" ind 0 lisp-graph set-y-axis-label drop
+    ind 0 lisp-graph y-axis-label to res
+    res "hiho5" string<> if $" set lisp y-axis-label: %s?" #( res ) snd-display then
+    #f set-y-axis-label drop
+    "hiho6" ind 0 set-y-axis-label drop
+    ind 0 y-axis-label to res
+    res "hiho6" string<> if $" set time y-axis-label (time): %s?" #( res ) snd-display then
+    #f set-y-axis-label drop
+    ind close-sound drop
+  then
   \ edot-product (test008)
   complex-test
   \ delay (test008)
@@ -2309,6 +2545,1185 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   current-edit-position
 ;
 
+'snd-gtk provided? [if]
+  #( <'> Fg_free <'> Fg_signal_lookup <'> Fg_source_remove <'> Fg_type_from_name
+     <'> Fg_type_is_a <'> Fg_type_name <'> Fg_type_parent <'> Fg_type_qname <'> Fgdk_atom_intern
+     <'> Fgdk_init <'> Fgdk_init_check <'> Fgdk_set_show_events <'> Fgdk_threads_enter
+     <'> Fgdk_threads_init <'> Fgdk_threads_leave <'> Fgdk_utf8_to_string_target
+     <'> Fgtk_accel_map_load <'> Fgtk_accel_map_load_fd <'> Fgtk_accel_map_lookup_entry
+     <'> Fgtk_accel_map_save <'> Fgtk_accel_map_save_fd <'> Fgtk_button_new_with_label
+     <'> Fgtk_check_button_new_with_label <'> Fgtk_check_menu_item_new_with_label
+     <'> Fgtk_color_selection_palette_from_string <'> Fgtk_disable_setlocale
+     <'> Fgtk_icon_size_from_name <'> Fgtk_image_menu_item_new_with_label <'> Fgtk_init
+     <'> Fgtk_init_add <'> Fgtk_init_check <'> Fgtk_key_snooper_install <'> Fgtk_key_snooper_remove
+     <'> Fgtk_main <'> Fgtk_main_do_event <'> Fgtk_main_iteration <'> Fgtk_main_iteration_do
+     <'> Fgtk_main_level <'> Fgtk_main_quit <'> Fgtk_menu_item_new_with_label
+     <'> Fgtk_quit_add <'> Fgtk_quit_remove <'> Fgtk_quit_remove_by_data
+     <'> Fgtk_radio_button_new_with_label <'> Fgtk_radio_menu_item_new_with_label
+     <'> Fgtk_rc_find_module_in_path <'> Fgtk_toggle_button_new_with_label
+     <'> Fpango_coverage_from_bytes <'> Fpango_find_paragraph_boundary
+     <'> Fpango_language_from_string <'> Fpango_script_iter_new ) constant breakable-gtk-procs
+
+  #( <'> FGDK_DEVICE <'> FGDK_DISPLAY_OBJECT <'> FGDK_DRAG_CONTEXT
+     <'> FGDK_DRAWABLE <'> FGDK_EVENT_ANY <'> FGDK_EVENT_BUTTON
+     <'> FGDK_EVENT_CONFIGURE <'> FGDK_EVENT_CROSSING <'> FGDK_EVENT_DND
+     <'> FGDK_EVENT_EXPOSE <'> FGDK_EVENT_FOCUS <'> FGDK_EVENT_KEY
+     <'> FGDK_EVENT_MOTION <'> FGDK_EVENT_NOEXPOSE <'> FGDK_EVENT_PROPERTY
+     <'> FGDK_EVENT_PROXIMITY <'> FGDK_EVENT_SCROLL <'> FGDK_EVENT_SELECTION
+     <'> FGDK_EVENT_SETTING <'> FGDK_EVENT_VISIBILITY <'> FGDK_EVENT_WINDOWSTATE
+     <'> FGDK_IS_DEVICE <'> FGDK_IS_DISPLAY <'> FGDK_IS_DRAG_CONTEXT
+     <'> FGDK_IS_DRAWABLE <'> FGDK_IS_KEYMAP <'> FGDK_IS_SCREEN
+     <'> FGDK_IS_VISUAL <'> FGDK_IS_WINDOW <'> FGDK_KEYMAP <'> FGDK_SCREEN
+     <'> FGDK_VISUAL <'> FGDK_WINDOW <'> FGPOINTER <'> FGTK_ABOUT_DIALOG
+     <'> FGTK_ACCEL_GROUP <'> FGTK_ACCEL_LABEL <'> FGTK_ACCEL_MAP
+     <'> FGTK_ACCESSIBLE <'> FGTK_ACTION <'> FGTK_ACTION_GROUP <'> FGTK_ADJUSTMENT
+     <'> FGTK_ALIGNMENT <'> FGTK_ARROW <'> FGTK_ASPECT_FRAME <'> FGTK_BIN
+     <'> FGTK_BOX <'> FGTK_BUTTON <'> FGTK_BUTTON_BOX <'> FGTK_CALENDAR
+     <'> FGTK_CELL_EDITABLE <'> FGTK_CELL_LAYOUT <'> FGTK_CELL_RENDERER
+     <'> FGTK_CELL_RENDERER_COMBO <'> FGTK_CELL_RENDERER_PIXBUF
+     <'> FGTK_CELL_RENDERER_PROGRESS <'> FGTK_CELL_RENDERER_TEXT
+     <'> FGTK_CELL_RENDERER_TOGGLE <'> FGTK_CELL_VIEW <'> FGTK_CHECK_BUTTON
+     <'> FGTK_CHECK_MENU_ITEM <'> FGTK_CLIPBOARD <'> FGTK_COLOR_BUTTON
+     <'> FGTK_COLOR_SELECTION <'> FGTK_COLOR_SELECTION_DIALOG <'> FGTK_COMBO_BOX
+     <'> FGTK_COMBO_BOX_ENTRY <'> FGTK_CONTAINER <'> FGTK_DIALOG
+     <'> FGTK_DRAWING_AREA <'> FGTK_EDITABLE <'> FGTK_ENTRY
+     <'> FGTK_ENTRY_COMPLETION <'> FGTK_EVENT_BOX <'> FGTK_EXPANDER
+     <'> FGTK_FILE_CHOOSER <'> FGTK_FILE_CHOOSER_BUTTON
+     <'> FGTK_FILE_CHOOSER_DIALOG <'> FGTK_FILE_CHOOSER_WIDGET
+     <'> FGTK_FILE_FILTER <'> FGTK_FIXED <'> FGTK_FONT_BUTTON
+     <'> FGTK_FONT_SELECTION <'> FGTK_FONT_SELECTION_DIALOG
+     <'> FGTK_FRAME <'> FGTK_HANDLE_BOX <'> FGTK_HBOX <'> FGTK_HBUTTON_BOX
+     <'> FGTK_HPANED <'> FGTK_HRULER <'> FGTK_HSCALE <'> FGTK_HSCROLLBAR
+     <'> FGTK_HSEPARATOR <'> FGTK_ICON_FACTORY <'> FGTK_ICON_THEME
+     <'> FGTK_ICON_VIEW <'> FGTK_IMAGE <'> FGTK_IMAGE_MENU_ITEM
+     <'> FGTK_IM_CONTEXT <'> FGTK_IM_CONTEXT_SIMPLE <'> FGTK_IM_MULTICONTEXT
+     <'> FGTK_INVISIBLE <'> FGTK_IS_ABOUT_DIALOG <'> FGTK_IS_ACCEL_GROUP
+     <'> FGTK_IS_ACCEL_LABEL <'> FGTK_IS_ACCEL_MAP <'> FGTK_IS_ACCESSIBLE
+     <'> FGTK_IS_ACTION <'> FGTK_IS_ACTION_GROUP <'> FGTK_IS_ADJUSTMENT
+     <'> FGTK_IS_ALIGNMENT <'> FGTK_IS_ARROW <'> FGTK_IS_ASPECT_FRAME
+     <'> FGTK_IS_BIN <'> FGTK_IS_BOX <'> FGTK_IS_BUTTON <'> FGTK_IS_BUTTON_BOX
+     <'> FGTK_IS_CALENDAR <'> FGTK_IS_CELL_EDITABLE <'> FGTK_IS_CELL_LAYOUT
+     <'> FGTK_IS_CELL_RENDERER <'> FGTK_IS_CELL_RENDERER_COMBO
+     <'> FGTK_IS_CELL_RENDERER_PIXBUF <'> FGTK_IS_CELL_RENDERER_PROGRESS
+     <'> FGTK_IS_CELL_RENDERER_TEXT <'> FGTK_IS_CELL_RENDERER_TOGGLE
+     <'> FGTK_IS_CELL_VIEW <'> FGTK_IS_CHECK_BUTTON
+     <'> FGTK_IS_CHECK_MENU_ITEM <'> FGTK_IS_CLIPBOARD
+     <'> FGTK_IS_COLOR_BUTTON <'> FGTK_IS_COLOR_SELECTION
+     <'> FGTK_IS_COLOR_SELECTION_DIALOG <'> FGTK_IS_COMBO_BOX
+     <'> FGTK_IS_COMBO_BOX_ENTRY <'> FGTK_IS_CONTAINER
+     <'> FGTK_IS_DIALOG <'> FGTK_IS_DRAWING_AREA <'> FGTK_IS_EDITABLE
+     <'> FGTK_IS_ENTRY <'> FGTK_IS_ENTRY_COMPLETION <'> FGTK_IS_EVENT_BOX
+     <'> FGTK_IS_EXPANDER <'> FGTK_IS_FILE_CHOOSER <'> FGTK_IS_FILE_CHOOSER_BUTTON
+     <'> FGTK_IS_FILE_CHOOSER_DIALOG <'> FGTK_IS_FILE_CHOOSER_WIDGET
+     <'> FGTK_IS_FILE_FILTER <'> FGTK_IS_FIXED <'> FGTK_IS_FONT_BUTTON
+     <'> FGTK_IS_FONT_SELECTION <'> FGTK_IS_FONT_SELECTION_DIALOG
+     <'> FGTK_IS_FRAME <'> FGTK_IS_HANDLE_BOX <'> FGTK_IS_HBOX
+     <'> FGTK_IS_HBUTTON_BOX <'> FGTK_IS_HPANED <'> FGTK_IS_HRULER
+     <'> FGTK_IS_HSCALE <'> FGTK_IS_HSCROLLBAR <'> FGTK_IS_HSEPARATOR
+     <'> FGTK_IS_ICON_FACTORY <'> FGTK_IS_ICON_THEME <'> FGTK_IS_ICON_VIEW
+     <'> FGTK_IS_IMAGE <'> FGTK_IS_IMAGE_MENU_ITEM <'> FGTK_IS_IM_CONTEXT
+     <'> FGTK_IS_IM_CONTEXT_SIMPLE <'> FGTK_IS_IM_MULTICONTEXT
+     <'> FGTK_IS_INVISIBLE <'> FGTK_IS_LABEL <'> FGTK_IS_LAYOUT
+     <'> FGTK_IS_LIST_STORE <'> FGTK_IS_MENU <'> FGTK_IS_MENU_BAR
+     <'> FGTK_IS_MENU_ITEM <'> FGTK_IS_MENU_SHELL <'> FGTK_IS_MENU_TOOL_BUTTON
+     <'> FGTK_IS_MISC <'> FGTK_IS_NOTEBOOK <'> FGTK_IS_OBJECT <'> FGTK_IS_PANED
+     <'> FGTK_IS_PLUG <'> FGTK_IS_PROGRESS_BAR <'> FGTK_IS_RADIO_ACTION
+     <'> FGTK_IS_RADIO_BUTTON <'> FGTK_IS_RADIO_MENU_ITEM
+     <'> FGTK_IS_RADIO_TOOL_BUTTON <'> FGTK_IS_RANGE <'> FGTK_IS_RC_STYLE
+     <'> FGTK_IS_RULER <'> FGTK_IS_SCALE <'> FGTK_IS_SCROLLBAR
+     <'> FGTK_IS_SCROLLED_WINDOW <'> FGTK_IS_SEPARATOR
+     <'> FGTK_IS_SEPARATOR_MENU_ITEM <'> FGTK_IS_SEPARATOR_TOOL_ITEM
+     <'> FGTK_IS_SIZE_GROUP <'> FGTK_IS_SOCKET <'> FGTK_IS_SPIN_BUTTON
+     <'> FGTK_IS_STATUSBAR <'> FGTK_IS_STYLE <'> FGTK_IS_TABLE
+     <'> FGTK_IS_TEAROFF_MENU_ITEM <'> FGTK_IS_TEXT_BUFFER
+     <'> FGTK_IS_TEXT_CHILD_ANCHOR <'> FGTK_IS_TEXT_MARK <'> FGTK_IS_TEXT_TAG
+     <'> FGTK_IS_TEXT_TAG_TABLE <'> FGTK_IS_TEXT_VIEW
+     <'> FGTK_IS_TOGGLE_ACTION <'> FGTK_IS_TOGGLE_BUTTON
+     <'> FGTK_IS_TOGGLE_TOOL_BUTTON <'> FGTK_IS_TOOLBAR <'> FGTK_IS_TOOL_BUTTON
+     <'> FGTK_IS_TOOL_ITEM <'> FGTK_IS_TREE_DRAG_DEST
+     <'> FGTK_IS_TREE_DRAG_SOURCE <'> FGTK_IS_TREE_MODEL
+     <'> FGTK_IS_TREE_MODEL_FILTER <'> FGTK_IS_TREE_MODEL_SORT
+     <'> FGTK_IS_TREE_SELECTION <'> FGTK_IS_TREE_SORTABLE
+     <'> FGTK_IS_TREE_STORE <'> FGTK_IS_TREE_VIEW
+     <'> FGTK_IS_TREE_VIEW_COLUMN <'> FGTK_IS_UI_MANAGER <'> FGTK_IS_VBOX
+     <'> FGTK_IS_VBUTTON_BOX <'> FGTK_IS_VIEWPORT <'> FGTK_IS_VPANED
+     <'> FGTK_IS_VRULER <'> FGTK_IS_VSCALE <'> FGTK_IS_VSCROLLBAR
+     <'> FGTK_IS_VSEPARATOR <'> FGTK_IS_WIDGET <'> FGTK_IS_WINDOW <'> FGTK_LABEL
+     <'> FGTK_LAYOUT <'> FGTK_LIST_STORE <'> FGTK_MENU <'> FGTK_MENU_BAR
+     <'> FGTK_MENU_ITEM <'> FGTK_MENU_SHELL <'> FGTK_MENU_TOOL_BUTTON
+     <'> FGTK_MISC <'> FGTK_NOTEBOOK <'> FGTK_PANED <'> FGTK_PLUG
+     <'> FGTK_PROGRESS_BAR <'> FGTK_RADIO_ACTION <'> FGTK_RADIO_BUTTON
+     <'> FGTK_RADIO_MENU_ITEM <'> FGTK_RADIO_TOOL_BUTTON
+     <'> FGTK_RANGE <'> FGTK_RULER <'> FGTK_SCALE <'> FGTK_SCROLLBAR
+     <'> FGTK_SCROLLED_WINDOW <'> FGTK_SEPARATOR <'> FGTK_SEPARATOR_MENU_ITEM
+     <'> FGTK_SEPARATOR_TOOL_ITEM <'> FGTK_SIZE_GROUP <'> FGTK_SOCKET
+     <'> FGTK_SPIN_BUTTON <'> FGTK_STATUSBAR <'> FGTK_STYLE <'> FGTK_TABLE
+     <'> FGTK_TEAROFF_MENU_ITEM <'> FGTK_TEXT_BUFFER <'> FGTK_TEXT_CHILD_ANCHOR
+     <'> FGTK_TEXT_MARK <'> FGTK_TEXT_TAG <'> FGTK_TEXT_TAG_TABLE
+     <'> FGTK_TEXT_VIEW <'> FGTK_TOGGLE_ACTION <'> FGTK_TOGGLE_BUTTON
+     <'> FGTK_TOGGLE_TOOL_BUTTON <'> FGTK_TOOLBAR <'> FGTK_TOOL_BUTTON
+     <'> FGTK_TOOL_ITEM <'> FGTK_TREE_DRAG_DEST <'> FGTK_TREE_DRAG_SOURCE
+     <'> FGTK_TREE_MODEL <'> FGTK_TREE_MODEL_FILTER
+     <'> FGTK_TREE_MODEL_SORT <'> FGTK_TREE_SELECTION
+     <'> FGTK_TREE_SORTABLE <'> FGTK_TREE_STORE <'> FGTK_TREE_VIEW
+     <'> FGTK_TREE_VIEW_COLUMN <'> FGTK_UI_MANAGER <'> FGTK_VBOX
+     <'> FGTK_VBUTTON_BOX <'> FGTK_VIEWPORT <'> FGTK_VPANED <'> FGTK_VRULER
+     <'> FGTK_VSCALE <'> FGTK_VSCROLLBAR <'> FGTK_VSEPARATOR <'> FGTK_WIDGET
+     <'> FG_IS_OBJECT <'> FG_OBJECT <'> FPANGO_CONTEXT <'> FPANGO_FONT
+     <'> FPANGO_FONT_FACE <'> FPANGO_FONT_FAMILY <'> FPANGO_FONT_MAP
+     <'> FPANGO_IS_CONTEXT <'> FPANGO_IS_FONT <'> FPANGO_IS_FONT_FACE
+     <'> FPANGO_IS_FONT_FAMILY <'> FPANGO_IS_FONT_MAP <'> FPANGO_IS_LAYOUT
+     <'> FPANGO_LAYOUT <'> Fg_cclosure_new <'> Fg_idle_add
+     <'> Fg_idle_add_full <'> Fg_idle_remove_by_data <'> Fg_list_copy
+     <'> Fg_list_first <'> Fg_list_free <'> Fg_list_last <'> Fg_list_length
+     <'> Fg_list_nth_data <'> Fg_list_remove_link <'> Fg_list_reverse
+     <'> Fg_object_get_data <'> Fg_object_ref <'> Fg_object_set_data
+     <'> Fg_object_unref <'> Fg_quark_from_string <'> Fg_quark_to_string
+     <'> Fg_signal_add_emission_hook <'> Fg_signal_connect_closure
+     <'> Fg_signal_connect_closure_by_id <'> Fg_signal_connect_data
+     <'> Fg_signal_get_invocation_hint <'> Fg_signal_handler_block
+     <'> Fg_signal_handler_disconnect <'> Fg_signal_handler_find
+     <'> Fg_signal_handler_is_connected <'> Fg_signal_handler_unblock
+     <'> Fg_signal_handlers_block_matched <'> Fg_signal_handlers_destroy
+     <'> Fg_signal_handlers_disconnect_matched
+     <'> Fg_signal_handlers_unblock_matched <'> Fg_signal_has_handler_pending
+     <'> Fg_signal_list_ids <'> Fg_signal_name <'> Fg_signal_newv
+     <'> Fg_signal_parse_name <'> Fg_signal_query
+     <'> Fg_signal_remove_emission_hook <'> Fg_signal_stop_emission
+     <'> Fg_signal_stop_emission_by_name <'> Fg_timeout_add
+     <'> Fg_timeout_add_full <'> Fgdk_add_client_message_filter
+     <'> Fgdk_atom_name <'> Fgdk_beep <'> Fgdk_color_copy <'> Fgdk_color_equal
+     <'> Fgdk_color_free <'> Fgdk_color_hash <'> Fgdk_color_parse
+     <'> Fgdk_display_add_client_message_filter <'> Fgdk_display_beep
+     <'> Fgdk_display_close <'> Fgdk_display_flush <'> Fgdk_display_get_default
+     <'> Fgdk_display_get_default_cursor_size <'> Fgdk_display_get_default_group
+     <'> Fgdk_display_get_default_screen <'> Fgdk_display_get_event
+     <'> Fgdk_display_get_maximal_cursor_size <'> Fgdk_display_get_n_screens
+     <'> Fgdk_display_get_name <'> Fgdk_display_get_pointer
+     <'> Fgdk_display_get_screen <'> Fgdk_display_get_window_at_pointer
+     <'> Fgdk_display_keyboard_ungrab <'> Fgdk_display_open
+     <'> Fgdk_display_peek_event <'> Fgdk_display_pointer_is_grabbed
+     <'> Fgdk_display_pointer_ungrab <'> Fgdk_display_put_event
+     <'> Fgdk_display_set_double_click_distance <'> Fgdk_display_set_double_click_time
+     <'> Fgdk_display_supports_clipboard_persistence <'> Fgdk_display_supports_cursor_alpha
+     <'> Fgdk_display_supports_cursor_color <'> Fgdk_display_sync
+     <'> Fgdk_drag_abort <'> Fgdk_drag_begin <'> Fgdk_drag_context_new
+     <'> Fgdk_drag_drop <'> Fgdk_drag_drop_succeeded <'> Fgdk_drag_find_window
+     <'> Fgdk_drag_get_protocol <'> Fgdk_drag_get_selection <'> Fgdk_drag_motion
+     <'> Fgdk_drag_status <'> Fgdk_drop_finish <'> Fgdk_drop_reply
+     <'> Fgdk_error_trap_pop <'> Fgdk_error_trap_push <'> Fgdk_event_copy
+     <'> Fgdk_event_free <'> Fgdk_event_get <'> Fgdk_event_get_coords
+     <'> Fgdk_event_get_root_coords <'> Fgdk_event_get_state
+     <'> Fgdk_event_get_time <'> Fgdk_event_handler_set <'> Fgdk_event_peek
+     <'> Fgdk_event_put <'> Fgdk_event_send_client_message
+     <'> Fgdk_event_send_clientmessage_toall <'> Fgdk_events_pending
+     <'> Fgdk_flush <'> Fgdk_get_default_root_window <'> Fgdk_get_display
+     <'> Fgdk_get_display_arg_name <'> Fgdk_get_program_class
+     <'> Fgdk_get_show_events <'> Fgdk_keyboard_grab <'> Fgdk_keyboard_ungrab
+     <'> Fgdk_keymap_get_default <'> Fgdk_keymap_get_direction
+     <'> Fgdk_keymap_get_entries_for_keycode <'> Fgdk_keymap_get_entries_for_keyval
+     <'> Fgdk_keymap_lookup_key <'> Fgdk_keyval_convert_case
+     <'> Fgdk_keyval_from_name <'> Fgdk_keyval_is_lower <'> Fgdk_keyval_is_upper
+     <'> Fgdk_keyval_name <'> Fgdk_keyval_to_lower <'> Fgdk_keyval_to_unicode
+     <'> Fgdk_keyval_to_upper <'> Fgdk_list_visuals
+     <'> Fgdk_notify_startup_complete <'> Fgdk_pango_context_get
+     <'> Fgdk_pixbuf_add_alpha <'> Fgdk_pixbuf_animation_get_height
+     <'> Fgdk_pixbuf_animation_get_iter <'> Fgdk_pixbuf_animation_get_static_image
+     <'> Fgdk_pixbuf_animation_get_width <'> Fgdk_pixbuf_animation_is_static_image
+     <'> Fgdk_pixbuf_animation_iter_advance <'> Fgdk_pixbuf_animation_iter_get_delay_time
+     <'> Fgdk_pixbuf_animation_iter_get_pixbuf
+     <'> Fgdk_pixbuf_animation_iter_on_currently_loading_frame
+     <'> Fgdk_pixbuf_animation_new_from_file <'> Fgdk_pixbuf_composite
+     <'> Fgdk_pixbuf_composite_color <'> Fgdk_pixbuf_composite_color_simple
+     <'> Fgdk_pixbuf_copy <'> Fgdk_pixbuf_copy_area <'> Fgdk_pixbuf_error_quark
+     <'> Fgdk_pixbuf_fill <'> Fgdk_pixbuf_get_bits_per_sample
+     <'> Fgdk_pixbuf_get_colorspace <'> Fgdk_pixbuf_get_has_alpha
+     <'> Fgdk_pixbuf_get_height <'> Fgdk_pixbuf_get_n_channels
+     <'> Fgdk_pixbuf_get_option <'> Fgdk_pixbuf_get_pixels
+     <'> Fgdk_pixbuf_get_rowstride <'> Fgdk_pixbuf_get_width
+     <'> Fgdk_pixbuf_new_from_data <'> Fgdk_pixbuf_new_from_file
+     <'> Fgdk_pixbuf_new_from_inline <'> Fgdk_pixbuf_new_from_xpm_data
+     <'> Fgdk_pixbuf_new_subpixbuf <'> Fgdk_pixbuf_saturate_and_pixelate
+     <'> Fgdk_pixbuf_savev <'> Fgdk_pixbuf_scale <'> Fgdk_pixbuf_scale_simple
+     <'> Fgdk_pointer_grab <'> Fgdk_pointer_is_grabbed <'> Fgdk_pointer_ungrab
+     <'> Fgdk_property_change <'> Fgdk_property_delete <'> Fgdk_property_get
+     <'> Fgdk_query_depths <'> Fgdk_query_visual_types
+     <'> Fgdk_rectangle_intersect <'> Fgdk_rectangle_union
+     <'> Fgdk_screen_broadcast_client_message <'> Fgdk_screen_get_default
+     <'> Fgdk_screen_get_display <'> Fgdk_screen_get_height
+     <'> Fgdk_screen_get_height_mm <'> Fgdk_screen_get_monitor_at_point
+     <'> Fgdk_screen_get_monitor_at_window <'> Fgdk_screen_get_monitor_geometry
+     <'> Fgdk_screen_get_n_monitors <'> Fgdk_screen_get_number
+     <'> Fgdk_screen_get_root_window <'> Fgdk_screen_get_system_visual
+     <'> Fgdk_screen_get_toplevel_windows <'> Fgdk_screen_get_width
+     <'> Fgdk_screen_get_width_mm <'> Fgdk_screen_height
+     <'> Fgdk_screen_height_mm <'> Fgdk_screen_list_visuals
+     <'> Fgdk_screen_make_display_name <'> Fgdk_screen_width
+     <'> Fgdk_screen_width_mm <'> Fgdk_selection_convert
+     <'> Fgdk_selection_owner_get <'> Fgdk_selection_owner_set
+     <'> Fgdk_selection_property_get <'> Fgdk_selection_send_notify
+     <'> Fgdk_set_double_click_time <'> Fgdk_set_locale
+     <'> Fgdk_set_program_class <'> Fgdk_set_sm_client_id
+     <'> Fgdk_unicode_to_keyval <'> Fgdk_visual_get_best
+     <'> Fgdk_visual_get_best_depth <'> Fgdk_visual_get_best_type
+     <'> Fgdk_visual_get_best_with_both <'> Fgdk_visual_get_best_with_depth
+     <'> Fgdk_visual_get_best_with_type <'> Fgdk_visual_get_system
+     <'> Fgdk_window_add_filter <'> Fgdk_window_at_pointer
+     <'> Fgdk_window_begin_move_drag <'> Fgdk_window_begin_paint_rect
+     <'> Fgdk_window_begin_resize_drag <'> Fgdk_window_configure_finished
+     <'> Fgdk_window_constrain_size <'> Fgdk_window_deiconify
+     <'> Fgdk_window_destroy <'> Fgdk_window_enable_synchronized_configure
+     <'> Fgdk_window_end_paint <'> Fgdk_window_focus
+     <'> Fgdk_window_foreign_new <'> Fgdk_window_freeze_updates
+     <'> Fgdk_window_get_children <'> Fgdk_window_get_decorations
+     <'> Fgdk_window_get_events <'> Fgdk_window_get_frame_extents
+     <'> Fgdk_window_get_geometry <'> Fgdk_window_get_group
+     <'> Fgdk_window_get_origin <'> Fgdk_window_get_parent
+     <'> Fgdk_window_get_pointer <'> Fgdk_window_get_position
+     <'> Fgdk_window_get_root_origin <'> Fgdk_window_get_state
+     <'> Fgdk_window_get_toplevel <'> Fgdk_window_get_user_data
+     <'> Fgdk_window_get_window_type <'> Fgdk_window_hide
+     <'> Fgdk_window_iconify <'> Fgdk_window_invalidate_rect
+     <'> Fgdk_window_is_viewable <'> Fgdk_window_is_visible
+     <'> Fgdk_window_lookup <'> Fgdk_window_lower
+     <'> Fgdk_window_maximize <'> Fgdk_window_merge_child_shapes
+     <'> Fgdk_window_move <'> Fgdk_window_move_resize <'> Fgdk_window_new
+     <'> Fgdk_window_peek_children <'> Fgdk_window_process_all_updates
+     <'> Fgdk_window_process_updates <'> Fgdk_window_raise
+     <'> Fgdk_window_register_dnd <'> Fgdk_window_remove_filter
+     <'> Fgdk_window_reparent <'> Fgdk_window_resize <'> Fgdk_window_scroll
+     <'> Fgdk_window_set_background <'> Fgdk_window_set_child_shapes
+     <'> Fgdk_window_set_cursor <'> Fgdk_window_set_debug_updates
+     <'> Fgdk_window_set_decorations <'> Fgdk_window_set_events
+     <'> Fgdk_window_set_functions <'> Fgdk_window_set_geometry_hints
+     <'> Fgdk_window_set_group <'> Fgdk_window_set_icon_list
+     <'> Fgdk_window_set_icon_name <'> Fgdk_window_set_keep_above
+     <'> Fgdk_window_set_keep_below <'> Fgdk_window_set_modal_hint
+     <'> Fgdk_window_set_override_redirect <'> Fgdk_window_set_role
+     <'> Fgdk_window_set_static_gravities <'> Fgdk_window_set_title
+     <'> Fgdk_window_set_transient_for <'> Fgdk_window_set_type_hint
+     <'> Fgdk_window_set_user_data <'> Fgdk_window_show
+     <'> Fgdk_window_show_unraised <'> Fgdk_window_stick
+     <'> Fgdk_window_thaw_updates <'> Fgdk_window_unmaximize
+     <'> Fgdk_window_unstick <'> Fgdk_window_withdraw
+     <'> Fgtk_about_dialog_get_artists <'> Fgtk_about_dialog_get_authors
+     <'> Fgtk_about_dialog_get_comments <'> Fgtk_about_dialog_get_copyright
+     <'> Fgtk_about_dialog_get_documenters <'> Fgtk_about_dialog_get_license
+     <'> Fgtk_about_dialog_get_logo <'> Fgtk_about_dialog_get_logo_icon_name
+     <'> Fgtk_about_dialog_get_translator_credits
+     <'> Fgtk_about_dialog_get_version <'> Fgtk_about_dialog_get_website
+     <'> Fgtk_about_dialog_get_website_label <'> Fgtk_about_dialog_new
+     <'> Fgtk_about_dialog_set_artists <'> Fgtk_about_dialog_set_authors
+     <'> Fgtk_about_dialog_set_comments <'> Fgtk_about_dialog_set_copyright
+     <'> Fgtk_about_dialog_set_documenters <'> Fgtk_about_dialog_set_license
+     <'> Fgtk_about_dialog_set_logo <'> Fgtk_about_dialog_set_logo_icon_name
+     <'> Fgtk_about_dialog_set_translator_credits
+     <'> Fgtk_about_dialog_set_version <'> Fgtk_about_dialog_set_website
+     <'> Fgtk_about_dialog_set_website_label
+     <'> Fgtk_accel_group_activate <'> Fgtk_accel_group_connect
+     <'> Fgtk_accel_group_connect_by_path <'> Fgtk_accel_group_disconnect
+     <'> Fgtk_accel_group_disconnect_key <'> Fgtk_accel_group_find
+     <'> Fgtk_accel_group_from_accel_closure <'> Fgtk_accel_group_lock
+     <'> Fgtk_accel_group_new <'> Fgtk_accel_group_query
+     <'> Fgtk_accel_group_unlock <'> Fgtk_accel_groups_activate
+     <'> Fgtk_accel_groups_from_object <'> Fgtk_accel_label_get_accel_widget
+     <'> Fgtk_accel_label_get_accel_width <'> Fgtk_accel_label_new
+     <'> Fgtk_accel_label_refetch <'> Fgtk_accel_label_set_accel_closure
+     <'> Fgtk_accel_label_set_accel_widget <'> Fgtk_accel_map_add_entry
+     <'> Fgtk_accel_map_add_filter <'> Fgtk_accel_map_change_entry
+     <'> Fgtk_accel_map_foreach <'> Fgtk_accel_map_foreach_unfiltered
+     <'> Fgtk_accel_map_get <'> Fgtk_accelerator_get_default_mod_mask
+     <'> Fgtk_accelerator_get_label <'> Fgtk_accelerator_name
+     <'> Fgtk_accelerator_parse <'> Fgtk_accelerator_set_default_mod_mask
+     <'> Fgtk_accelerator_valid <'> Fgtk_accessible_connect_widget_destroyed
+     <'> Fgtk_action_activate <'> Fgtk_action_connect_accelerator
+     <'> Fgtk_action_create_icon <'> Fgtk_action_create_menu_item
+     <'> Fgtk_action_create_tool_item <'> Fgtk_action_disconnect_accelerator
+     <'> Fgtk_action_get_name <'> Fgtk_action_get_proxies
+     <'> Fgtk_action_get_sensitive <'> Fgtk_action_get_visible
+     <'> Fgtk_action_group_add_action <'> Fgtk_action_group_add_action_with_accel
+     <'> Fgtk_action_group_add_actions <'> Fgtk_action_group_add_toggle_actions
+     <'> Fgtk_action_group_add_toggle_actions_full
+     <'> Fgtk_action_group_get_action <'> Fgtk_action_group_get_name
+     <'> Fgtk_action_group_get_sensitive <'> Fgtk_action_group_get_visible
+     <'> Fgtk_action_group_list_actions <'> Fgtk_action_group_new
+     <'> Fgtk_action_group_remove_action <'> Fgtk_action_group_set_sensitive
+     <'> Fgtk_action_group_set_translation_domain
+     <'> Fgtk_action_group_set_visible <'> Fgtk_action_is_sensitive
+     <'> Fgtk_action_is_visible <'> Fgtk_action_new <'> Fgtk_action_set_sensitive
+     <'> Fgtk_action_set_visible <'> Fgtk_adjustment_changed
+     <'> Fgtk_adjustment_clamp_page <'> Fgtk_adjustment_get_value
+     <'> Fgtk_adjustment_new <'> Fgtk_adjustment_set_value
+     <'> Fgtk_adjustment_value_changed <'> Fgtk_alignment_get_padding
+     <'> Fgtk_alignment_new <'> Fgtk_alignment_set <'> Fgtk_alignment_set_padding
+     <'> Fgtk_alternative_dialog_button_order <'> Fgtk_arrow_new
+     <'> Fgtk_arrow_set <'> Fgtk_aspect_frame_new <'> Fgtk_aspect_frame_set
+     <'> Fgtk_bin_get_child <'> Fgtk_binding_entry_remove
+     <'> Fgtk_binding_set_add_path <'> Fgtk_binding_set_by_class
+     <'> Fgtk_binding_set_find <'> Fgtk_binding_set_new <'> Fgtk_border_copy
+     <'> Fgtk_border_free <'> Fgtk_box_get_homogeneous <'> Fgtk_box_get_spacing
+     <'> Fgtk_box_pack_end <'> Fgtk_box_pack_start
+     <'> Fgtk_box_query_child_packing <'> Fgtk_box_reorder_child
+     <'> Fgtk_box_set_child_packing <'> Fgtk_box_set_homogeneous
+     <'> Fgtk_box_set_spacing <'> Fgtk_button_box_get_child_secondary
+     <'> Fgtk_button_box_get_layout <'> Fgtk_button_box_set_child_secondary
+     <'> Fgtk_button_box_set_layout <'> Fgtk_button_get_alignment
+     <'> Fgtk_button_get_focus_on_click <'> Fgtk_button_get_image
+     <'> Fgtk_button_get_label <'> Fgtk_button_get_relief
+     <'> Fgtk_button_get_use_stock <'> Fgtk_button_get_use_underline
+     <'> Fgtk_button_new <'> Fgtk_button_new_from_stock
+     <'> Fgtk_button_new_with_mnemonic <'> Fgtk_button_set_alignment
+     <'> Fgtk_button_set_focus_on_click <'> Fgtk_button_set_image
+     <'> Fgtk_button_set_label <'> Fgtk_button_set_relief
+     <'> Fgtk_button_set_use_stock <'> Fgtk_button_set_use_underline
+     <'> Fgtk_calendar_clear_marks <'> Fgtk_calendar_get_date
+     <'> Fgtk_calendar_get_display_options <'> Fgtk_cell_editable_editing_done
+     <'> Fgtk_cell_editable_remove_widget <'> Fgtk_cell_editable_start_editing
+     <'> Fgtk_cell_layout_add_attribute <'> Fgtk_cell_layout_clear
+     <'> Fgtk_cell_layout_clear_attributes <'> Fgtk_cell_layout_pack_end
+     <'> Fgtk_cell_layout_pack_start <'> Fgtk_cell_layout_reorder
+     <'> Fgtk_cell_layout_set_attributes <'> Fgtk_cell_layout_set_cell_data_func
+     <'> Fgtk_cell_renderer_activate <'> Fgtk_cell_renderer_combo_new
+     <'> Fgtk_cell_renderer_get_fixed_size <'> Fgtk_cell_renderer_get_size
+     <'> Fgtk_cell_renderer_pixbuf_new <'> Fgtk_cell_renderer_progress_new
+     <'> Fgtk_cell_renderer_set_fixed_size <'> Fgtk_cell_renderer_start_editing
+     <'> Fgtk_cell_renderer_text_new <'> Fgtk_cell_renderer_text_set_fixed_height_from_font
+     <'> Fgtk_cell_renderer_toggle_get_active <'> Fgtk_cell_renderer_toggle_get_radio
+     <'> Fgtk_cell_renderer_toggle_new <'> Fgtk_cell_renderer_toggle_set_active
+     <'> Fgtk_cell_renderer_toggle_set_radio <'> Fgtk_cell_view_get_displayed_row
+     <'> Fgtk_cell_view_new <'> Fgtk_cell_view_new_with_markup
+     <'> Fgtk_cell_view_new_with_pixbuf <'> Fgtk_cell_view_new_with_text
+     <'> Fgtk_cell_view_set_background_color <'> Fgtk_cell_view_set_displayed_row
+     <'> Fgtk_cell_view_set_model <'> Fgtk_check_button_new
+     <'> Fgtk_check_button_new_with_mnemonic <'> Fgtk_check_menu_item_get_active
+     <'> Fgtk_check_menu_item_get_draw_as_radio <'> Fgtk_check_menu_item_get_inconsistent
+     <'> Fgtk_check_menu_item_new <'> Fgtk_check_menu_item_new_with_mnemonic
+     <'> Fgtk_check_menu_item_set_active <'> Fgtk_check_menu_item_set_draw_as_radio
+     <'> Fgtk_check_menu_item_set_inconsistent <'> Fgtk_check_menu_item_toggled
+     <'> Fgtk_check_version <'> Fgtk_clipboard_clear <'> Fgtk_clipboard_get
+     <'> Fgtk_clipboard_get_display <'> Fgtk_clipboard_get_for_display
+     <'> Fgtk_clipboard_get_owner <'> Fgtk_clipboard_request_contents
+     <'> Fgtk_clipboard_request_image <'> Fgtk_clipboard_request_targets
+     <'> Fgtk_clipboard_request_text <'> Fgtk_clipboard_set_can_store
+     <'> Fgtk_clipboard_set_image <'> Fgtk_clipboard_set_text
+     <'> Fgtk_clipboard_set_with_data <'> Fgtk_clipboard_store
+     <'> Fgtk_clipboard_wait_for_contents <'> Fgtk_clipboard_wait_for_image
+     <'> Fgtk_clipboard_wait_for_targets <'> Fgtk_clipboard_wait_for_text
+     <'> Fgtk_clipboard_wait_is_image_available <'> Fgtk_clipboard_wait_is_target_available
+     <'> Fgtk_clipboard_wait_is_text_available
+     <'> Fgtk_color_button_get_alpha <'> Fgtk_color_button_get_color
+     <'> Fgtk_color_button_get_title <'> Fgtk_color_button_get_use_alpha
+     <'> Fgtk_color_button_new <'> Fgtk_color_button_new_with_color
+     <'> Fgtk_color_button_set_alpha <'> Fgtk_color_button_set_color
+     <'> Fgtk_color_button_set_title <'> Fgtk_color_button_set_use_alpha
+     <'> Fgtk_color_selection_dialog_new <'> Fgtk_color_selection_get_current_alpha
+     <'> Fgtk_color_selection_get_current_color <'> Fgtk_color_selection_get_has_opacity_control
+     <'> Fgtk_color_selection_get_has_palette <'> Fgtk_color_selection_get_previous_alpha
+     <'> Fgtk_color_selection_get_previous_color <'> Fgtk_color_selection_is_adjusting
+     <'> Fgtk_color_selection_new <'> Fgtk_color_selection_palette_to_string
+     <'> Fgtk_color_selection_set_current_alpha <'> Fgtk_color_selection_set_current_color
+     <'> Fgtk_color_selection_set_has_opacity_control <'> Fgtk_color_selection_set_has_palette
+     <'> Fgtk_color_selection_set_previous_alpha <'> Fgtk_color_selection_set_previous_color
+     <'> Fgtk_combo_box_append_text <'> Fgtk_combo_box_entry_get_text_column
+     <'> Fgtk_combo_box_entry_new <'> Fgtk_combo_box_entry_new_text
+     <'> Fgtk_combo_box_entry_new_with_model <'> Fgtk_combo_box_entry_set_text_column
+     <'> Fgtk_combo_box_get_active <'> Fgtk_combo_box_get_active_iter
+     <'> Fgtk_combo_box_get_active_text <'> Fgtk_combo_box_get_add_tearoffs
+     <'> Fgtk_combo_box_get_column_span_column <'> Fgtk_combo_box_get_focus_on_click
+     <'> Fgtk_combo_box_get_model <'> Fgtk_combo_box_get_row_span_column
+     <'> Fgtk_combo_box_get_wrap_width <'> Fgtk_combo_box_insert_text
+     <'> Fgtk_combo_box_new <'> Fgtk_combo_box_new_text <'> Fgtk_combo_box_new_with_model
+     <'> Fgtk_combo_box_popdown <'> Fgtk_combo_box_popup <'> Fgtk_combo_box_prepend_text
+     <'> Fgtk_combo_box_remove_text <'> Fgtk_combo_box_set_active
+     <'> Fgtk_combo_box_set_active_iter
+     <'> Fgtk_combo_box_set_add_tearoffs <'> Fgtk_combo_box_set_column_span_column
+     <'> Fgtk_combo_box_set_focus_on_click <'> Fgtk_combo_box_set_model
+     <'> Fgtk_combo_box_set_row_separator_func <'> Fgtk_combo_box_set_row_span_column
+     <'> Fgtk_combo_box_set_wrap_width <'> Fgtk_container_add <'> Fgtk_container_check_resize
+     <'> Fgtk_container_foreach <'> Fgtk_container_get_border_width <'> Fgtk_container_get_children
+     <'> Fgtk_container_get_resize_mode <'> Fgtk_container_remove
+     <'> Fgtk_container_set_border_width
+     <'> Fgtk_container_set_resize_mode <'> Fgtk_dialog_add_action_widget
+     <'> Fgtk_dialog_add_button <'> Fgtk_dialog_add_buttons <'> Fgtk_dialog_new
+     <'> Fgtk_dialog_new_with_buttons <'> Fgtk_dialog_response <'> Fgtk_dialog_run
+     <'> Fgtk_dialog_set_alternative_button_order_from_array <'> Fgtk_dialog_set_default_response
+     <'> Fgtk_dialog_set_response_sensitive <'> Fgtk_drag_begin <'> Fgtk_drag_check_threshold
+     <'> Fgtk_drag_dest_add_image_targets <'> Fgtk_drag_dest_add_text_targets
+     <'> Fgtk_drag_dest_add_uri_targets <'> Fgtk_drag_dest_find_target
+     <'> Fgtk_drag_dest_get_target_list <'> Fgtk_drag_dest_set <'> Fgtk_drag_dest_set_proxy
+     <'> Fgtk_drag_dest_set_target_list <'> Fgtk_drag_dest_unset <'> Fgtk_drag_finish
+     <'> Fgtk_drag_get_data <'> Fgtk_drag_get_source_widget <'> Fgtk_drag_highlight
+     <'> Fgtk_drag_set_icon_default <'> Fgtk_drag_set_icon_pixbuf <'> Fgtk_drag_set_icon_stock
+     <'> Fgtk_drag_set_icon_widget <'> Fgtk_drag_source_add_image_targets
+     <'> Fgtk_drag_source_add_text_targets <'> Fgtk_drag_source_add_uri_targets
+     <'> Fgtk_drag_source_get_target_list <'> Fgtk_drag_source_set
+     <'> Fgtk_drag_source_set_icon_pixbuf <'> Fgtk_drag_source_set_icon_stock
+     <'> Fgtk_drag_source_set_target_list <'> Fgtk_drag_source_unset
+     <'> Fgtk_drag_unhighlight <'> Fgtk_drawing_area_new <'> Fgtk_editable_copy_clipboard
+     <'> Fgtk_editable_cut_clipboard <'> Fgtk_editable_delete_selection
+     <'> Fgtk_editable_delete_text
+     <'> Fgtk_editable_get_chars <'> Fgtk_editable_get_editable
+     <'> Fgtk_editable_get_position <'> Fgtk_editable_get_selection_bounds
+     <'> Fgtk_editable_insert_text <'> Fgtk_editable_paste_clipboard
+     <'> Fgtk_editable_set_editable <'> Fgtk_editable_set_position
+     <'> Fgtk_entry_completion_complete <'> Fgtk_entry_completion_delete_action
+     <'> Fgtk_entry_completion_get_entry <'> Fgtk_entry_completion_get_inline_completion
+     <'> Fgtk_entry_completion_get_minimum_key_length <'> Fgtk_entry_completion_get_model
+     <'> Fgtk_entry_completion_get_popup_completion <'> Fgtk_entry_completion_get_text_column
+     <'> Fgtk_entry_completion_insert_action_markup <'> Fgtk_entry_completion_insert_action_text
+     <'> Fgtk_entry_completion_insert_prefix <'> Fgtk_entry_completion_new
+     <'> Fgtk_entry_completion_set_inline_completion <'> Fgtk_entry_completion_set_match_func
+     <'> Fgtk_entry_completion_set_minimum_key_length <'> Fgtk_entry_completion_set_model
+     <'> Fgtk_entry_completion_set_popup_completion <'> Fgtk_entry_completion_set_text_column
+     <'> Fgtk_entry_get_activates_default <'> Fgtk_entry_get_alignment
+     <'> Fgtk_entry_get_completion
+     <'> Fgtk_entry_get_has_frame <'> Fgtk_entry_get_invisible_char <'> Fgtk_entry_get_layout
+     <'> Fgtk_entry_get_max_length <'> Fgtk_entry_get_text <'> Fgtk_entry_get_visibility
+     <'> Fgtk_entry_get_width_chars <'> Fgtk_entry_layout_index_to_text_index <'> Fgtk_entry_new
+     <'> Fgtk_entry_set_activates_default <'> Fgtk_entry_set_alignment
+     <'> Fgtk_entry_set_completion <'> Fgtk_entry_set_has_frame <'> Fgtk_entry_set_invisible_char
+     <'> Fgtk_entry_set_max_length <'> Fgtk_entry_set_text <'> Fgtk_entry_set_visibility
+     <'> Fgtk_entry_set_width_chars <'> Fgtk_entry_text_index_to_layout_index
+     <'> Fgtk_event_box_get_above_child <'> Fgtk_event_box_get_visible_window
+     <'> Fgtk_event_box_new <'> Fgtk_event_box_set_above_child
+     <'> Fgtk_event_box_set_visible_window <'> Fgtk_events_pending <'> Fgtk_expander_get_expanded
+     <'> Fgtk_expander_get_label <'> Fgtk_expander_get_label_widget
+     <'> Fgtk_expander_get_spacing <'> Fgtk_expander_get_use_markup
+     <'> Fgtk_expander_get_use_underline <'> Fgtk_expander_new <'> Fgtk_expander_new_with_mnemonic
+     <'> Fgtk_expander_set_expanded <'> Fgtk_expander_set_label <'> Fgtk_expander_set_label_widget
+     <'> Fgtk_expander_set_spacing <'> Fgtk_expander_set_use_markup
+     <'> Fgtk_expander_set_use_underline <'> Fgtk_false ) constant gtk-procs-1
+
+  #( <'> Fgtk_file_chooser_add_filter <'> Fgtk_file_chooser_add_shortcut_folder
+     <'> Fgtk_file_chooser_add_shortcut_folder_uri <'> Fgtk_file_chooser_button_get_title
+     <'> Fgtk_file_chooser_button_get_width_chars <'> Fgtk_file_chooser_button_set_title
+     <'> Fgtk_file_chooser_button_set_width_chars <'> Fgtk_file_chooser_dialog_new
+     <'> Fgtk_file_chooser_get_action <'> Fgtk_file_chooser_get_current_folder
+     <'> Fgtk_file_chooser_get_current_folder_uri <'> Fgtk_file_chooser_get_extra_widget
+     <'> Fgtk_file_chooser_get_filename <'> Fgtk_file_chooser_get_filenames
+     <'> Fgtk_file_chooser_get_filter <'> Fgtk_file_chooser_get_local_only
+     <'> Fgtk_file_chooser_get_preview_filename <'> Fgtk_file_chooser_get_preview_uri
+     <'> Fgtk_file_chooser_get_preview_widget <'> Fgtk_file_chooser_get_preview_widget_active
+     <'> Fgtk_file_chooser_get_select_multiple <'> Fgtk_file_chooser_get_show_hidden 
+     <'> Fgtk_file_chooser_get_uri <'> Fgtk_file_chooser_get_uris 
+     <'> Fgtk_file_chooser_get_use_preview_label <'> Fgtk_file_chooser_list_filters
+     <'> Fgtk_file_chooser_list_shortcut_folder_uris <'> Fgtk_file_chooser_list_shortcut_folders
+     <'> Fgtk_file_chooser_remove_filter <'> Fgtk_file_chooser_remove_shortcut_folder
+     <'> Fgtk_file_chooser_remove_shortcut_folder_uri <'> Fgtk_file_chooser_select_all 
+     <'> Fgtk_file_chooser_select_filename <'> Fgtk_file_chooser_select_uri 
+     <'> Fgtk_file_chooser_set_action <'> Fgtk_file_chooser_set_current_folder
+     <'> Fgtk_file_chooser_set_current_folder_uri <'> Fgtk_file_chooser_set_current_name 
+     <'> Fgtk_file_chooser_set_extra_widget <'> Fgtk_file_chooser_set_filename 
+     <'> Fgtk_file_chooser_set_filter <'> Fgtk_file_chooser_set_local_only 
+     <'> Fgtk_file_chooser_set_preview_widget <'> Fgtk_file_chooser_set_preview_widget_active
+     <'> Fgtk_file_chooser_set_select_multiple <'> Fgtk_file_chooser_set_show_hidden 
+     <'> Fgtk_file_chooser_set_uri <'> Fgtk_file_chooser_set_use_preview_label
+     <'> Fgtk_file_chooser_unselect_all <'> Fgtk_file_chooser_unselect_filename
+     <'> Fgtk_file_chooser_unselect_uri <'> Fgtk_file_filter_add_pattern
+     <'> Fgtk_file_filter_add_pixbuf_formats <'> Fgtk_file_filter_filter
+     <'> Fgtk_file_filter_get_name <'> Fgtk_file_filter_get_needed
+     <'> Fgtk_file_filter_new <'> Fgtk_file_filter_set_name
+     <'> Fgtk_fixed_move <'> Fgtk_fixed_new <'> Fgtk_fixed_put
+     <'> Fgtk_font_button_get_font_name <'> Fgtk_font_button_get_show_size
+     <'> Fgtk_font_button_get_show_style <'> Fgtk_font_button_get_title
+     <'> Fgtk_font_button_get_use_font <'> Fgtk_font_button_get_use_size
+     <'> Fgtk_font_button_new <'> Fgtk_font_button_new_with_font
+     <'> Fgtk_font_button_set_font_name <'> Fgtk_font_button_set_show_size
+     <'> Fgtk_font_button_set_show_style <'> Fgtk_font_button_set_title
+     <'> Fgtk_font_button_set_use_font <'> Fgtk_font_button_set_use_size
+     <'> Fgtk_font_selection_dialog_get_font_name <'> Fgtk_font_selection_dialog_get_preview_text
+     <'> Fgtk_font_selection_dialog_new <'> Fgtk_font_selection_dialog_set_font_name
+     <'> Fgtk_font_selection_dialog_set_preview_text <'> Fgtk_font_selection_get_font_name
+     <'> Fgtk_font_selection_get_preview_text <'> Fgtk_font_selection_new
+     <'> Fgtk_font_selection_set_preview_text <'> Fgtk_frame_get_label
+     <'> Fgtk_frame_get_label_align <'> Fgtk_frame_get_label_widget
+     <'> Fgtk_frame_get_shadow_type <'> Fgtk_frame_new
+     <'> Fgtk_frame_set_label <'> Fgtk_frame_set_label_align
+     <'> Fgtk_frame_set_label_widget <'> Fgtk_frame_set_shadow_type
+     <'> Fgtk_get_current_event <'> Fgtk_get_current_event_state
+     <'> Fgtk_get_current_event_time <'> Fgtk_get_default_language
+     <'> Fgtk_get_event_widget <'> Fgtk_grab_add <'> Fgtk_grab_get_current
+     <'> Fgtk_grab_remove <'> Fgtk_handle_box_get_handle_position
+     <'> Fgtk_handle_box_get_shadow_type <'> Fgtk_handle_box_get_snap_edge
+     <'> Fgtk_handle_box_new <'> Fgtk_handle_box_set_handle_position
+     <'> Fgtk_handle_box_set_shadow_type <'> Fgtk_handle_box_set_snap_edge
+     <'> Fgtk_hbox_new <'> Fgtk_hbutton_box_new <'> Fgtk_hpaned_new
+     <'> Fgtk_hruler_new <'> Fgtk_hscale_new <'> Fgtk_hscale_new_with_range
+     <'> Fgtk_hscrollbar_new <'> Fgtk_hseparator_new <'> Fgtk_icon_factory_add
+     <'> Fgtk_icon_factory_add_default <'> Fgtk_icon_factory_lookup
+     <'> Fgtk_icon_factory_lookup_default <'> Fgtk_icon_factory_new
+     <'> Fgtk_icon_factory_remove_default <'> Fgtk_icon_info_copy
+     <'> Fgtk_icon_info_free <'> Fgtk_icon_info_get_base_size
+     <'> Fgtk_icon_info_get_builtin_pixbuf <'> Fgtk_icon_info_get_display_name
+     <'> Fgtk_icon_info_get_embedded_rect <'> Fgtk_icon_info_get_filename
+     <'> Fgtk_icon_info_load_icon <'> Fgtk_icon_info_set_raw_coordinates
+     <'> Fgtk_icon_set_add_source <'> Fgtk_icon_set_copy
+     <'> Fgtk_icon_set_get_sizes <'> Fgtk_icon_set_new
+     <'> Fgtk_icon_set_new_from_pixbuf <'> Fgtk_icon_set_ref
+     <'> Fgtk_icon_set_render_icon <'> Fgtk_icon_set_unref
+     <'> Fgtk_icon_size_get_name <'> Fgtk_icon_size_lookup
+     <'> Fgtk_icon_size_register <'> Fgtk_icon_size_register_alias
+     <'> Fgtk_icon_source_copy <'> Fgtk_icon_source_free
+     <'> Fgtk_icon_source_get_direction <'> Fgtk_icon_source_get_direction_wildcarded
+     <'> Fgtk_icon_source_get_filename
+     <'> Fgtk_icon_source_get_icon_name <'> Fgtk_icon_source_get_pixbuf
+     <'> Fgtk_icon_source_get_size <'> Fgtk_icon_source_get_size_wildcarded
+     <'> Fgtk_icon_source_get_state <'> Fgtk_icon_source_get_state_wildcarded
+     <'> Fgtk_icon_source_new <'> Fgtk_icon_source_set_direction
+     <'> Fgtk_icon_source_set_direction_wildcarded
+     <'> Fgtk_icon_source_set_filename <'> Fgtk_icon_source_set_pixbuf
+     <'> Fgtk_icon_source_set_size <'> Fgtk_icon_source_set_size_wildcarded
+     <'> Fgtk_icon_source_set_state <'> Fgtk_icon_source_set_state_wildcarded
+     <'> Fgtk_icon_theme_add_builtin_icon <'> Fgtk_icon_theme_append_search_path
+     <'> Fgtk_icon_theme_get_default <'> Fgtk_icon_theme_get_example_icon_name
+     <'> Fgtk_icon_theme_get_for_screen <'> Fgtk_icon_theme_get_icon_sizes
+     <'> Fgtk_icon_theme_get_search_path <'> Fgtk_icon_theme_has_icon
+     <'> Fgtk_icon_theme_list_icons <'> Fgtk_icon_theme_load_icon
+     <'> Fgtk_icon_theme_lookup_icon <'> Fgtk_icon_theme_new
+     <'> Fgtk_icon_theme_prepend_search_path <'> Fgtk_icon_theme_rescan_if_needed
+     <'> Fgtk_icon_theme_set_custom_theme <'> Fgtk_icon_theme_set_screen
+     <'> Fgtk_icon_view_get_markup_column <'> Fgtk_icon_view_get_model
+     <'> Fgtk_icon_view_get_path_at_pos <'> Fgtk_icon_view_get_pixbuf_column
+     <'> Fgtk_icon_view_get_selected_items <'> Fgtk_icon_view_get_selection_mode
+     <'> Fgtk_icon_view_get_text_column <'> Fgtk_icon_view_item_activated
+     <'> Fgtk_icon_view_new <'> Fgtk_icon_view_new_with_model
+     <'> Fgtk_icon_view_path_is_selected <'> Fgtk_icon_view_select_all
+     <'> Fgtk_icon_view_select_path <'> Fgtk_icon_view_selected_foreach
+     <'> Fgtk_icon_view_set_markup_column <'> Fgtk_icon_view_set_model
+     <'> Fgtk_icon_view_set_pixbuf_column <'> Fgtk_icon_view_set_selection_mode
+     <'> Fgtk_icon_view_set_text_column <'> Fgtk_icon_view_unselect_all
+     <'> Fgtk_icon_view_unselect_path <'> Fgtk_im_context_delete_surrounding
+     <'> Fgtk_im_context_filter_keypress <'> Fgtk_im_context_focus_in
+     <'> Fgtk_im_context_focus_out <'> Fgtk_im_context_get_preedit_string
+     <'> Fgtk_im_context_get_surrounding <'> Fgtk_im_context_reset
+     <'> Fgtk_im_context_set_client_window <'> Fgtk_im_context_set_cursor_location
+     <'> Fgtk_im_context_set_surrounding <'> Fgtk_im_context_set_use_preedit
+     <'> Fgtk_im_context_simple_add_table <'> Fgtk_im_context_simple_new
+     <'> Fgtk_im_multicontext_append_menuitems <'> Fgtk_im_multicontext_new
+     <'> Fgtk_label_get_attributes <'> Fgtk_label_get_ellipsize
+     <'> Fgtk_label_get_justify <'> Fgtk_label_get_label
+     <'> Fgtk_label_get_layout <'> Fgtk_label_get_layout_offsets
+     <'> Fgtk_label_get_line_wrap <'> Fgtk_label_get_mnemonic_keyval
+     <'> Fgtk_label_get_mnemonic_widget <'> Fgtk_label_get_selectable
+     <'> Fgtk_label_get_selection_bounds <'> Fgtk_label_get_single_line_mode
+     <'> Fgtk_label_get_text <'> Fgtk_label_get_use_markup
+     <'> Fgtk_label_get_use_underline <'> Fgtk_label_get_width_chars
+     <'> Fgtk_label_new <'> Fgtk_label_new_with_mnemonic <'> Fgtk_label_set_angle
+     <'> Fgtk_label_set_attributes <'> Fgtk_label_set_ellipsize
+     <'> Fgtk_label_set_justify <'> Fgtk_label_set_label
+     <'> Fgtk_label_set_line_wrap <'> Fgtk_label_set_markup
+     <'> Fgtk_label_set_markup_with_mnemonic <'> Fgtk_label_set_mnemonic_widget
+     <'> Fgtk_label_set_pattern <'> Fgtk_label_set_selectable
+     <'> Fgtk_label_set_single_line_mode <'> Fgtk_label_set_text
+     <'> Fgtk_label_set_text_with_mnemonic <'> Fgtk_label_set_use_markup
+     <'> Fgtk_label_set_use_underline <'> Fgtk_label_set_width_chars
+     <'> Fgtk_layout_get_hadjustment <'> Fgtk_layout_get_size
+     <'> Fgtk_layout_get_vadjustment <'> Fgtk_layout_move <'> Fgtk_layout_new
+     <'> Fgtk_layout_put <'> Fgtk_layout_set_hadjustment <'> Fgtk_layout_set_size
+     <'> Fgtk_layout_set_vadjustment <'> Fgtk_list_store_append
+     <'> Fgtk_list_store_clear <'> Fgtk_list_store_insert
+     <'> Fgtk_list_store_insert_after <'> Fgtk_list_store_insert_before
+     <'> Fgtk_list_store_move_after <'> Fgtk_list_store_move_before
+     <'> Fgtk_list_store_new <'> Fgtk_list_store_newv <'> Fgtk_list_store_prepend
+     <'> Fgtk_list_store_remove <'> Fgtk_list_store_reorder
+     <'> Fgtk_list_store_set <'> Fgtk_list_store_set_column_types
+     <'> Fgtk_list_store_swap <'> Fgtk_menu_attach <'> Fgtk_menu_bar_new
+     <'> Fgtk_menu_detach <'> Fgtk_menu_get_accel_group <'> Fgtk_menu_get_active
+     <'> Fgtk_menu_get_attach_widget <'> Fgtk_menu_get_for_attach_widget
+     <'> Fgtk_menu_get_tearoff_state <'> Fgtk_menu_get_title
+     <'> Fgtk_menu_item_activate <'> Fgtk_menu_item_deselect
+     <'> Fgtk_menu_item_get_right_justified <'> Fgtk_menu_item_get_submenu
+     <'> Fgtk_menu_item_new <'> Fgtk_menu_item_new_with_mnemonic
+     <'> Fgtk_menu_item_select <'> Fgtk_menu_item_set_accel_path
+     <'> Fgtk_menu_item_set_right_justified <'> Fgtk_menu_item_set_submenu
+     <'> Fgtk_menu_item_toggle_size_allocate
+     <'> Fgtk_menu_item_toggle_size_request <'> Fgtk_menu_new
+     <'> Fgtk_menu_popdown <'> Fgtk_menu_popup <'> Fgtk_menu_reorder_child
+     <'> Fgtk_menu_reposition <'> Fgtk_menu_set_accel_group
+     <'> Fgtk_menu_set_accel_path <'> Fgtk_menu_set_active
+     <'> Fgtk_menu_set_monitor <'> Fgtk_menu_set_screen
+     <'> Fgtk_menu_set_tearoff_state <'> Fgtk_menu_set_title
+     <'> Fgtk_menu_shell_activate_item <'> Fgtk_menu_shell_append
+     <'> Fgtk_menu_shell_cancel <'> Fgtk_menu_shell_deactivate
+     <'> Fgtk_menu_shell_deselect <'> Fgtk_menu_shell_insert
+     <'> Fgtk_menu_shell_prepend <'> Fgtk_menu_shell_select_first
+     <'> Fgtk_menu_shell_select_item <'> Fgtk_menu_tool_button_get_menu
+     <'> Fgtk_menu_tool_button_new <'> Fgtk_menu_tool_button_new_from_stock
+     <'> Fgtk_menu_tool_button_set_menu <'> Fgtk_misc_get_alignment
+     <'> Fgtk_misc_get_padding <'> Fgtk_misc_set_alignment
+     <'> Fgtk_misc_set_padding <'> Fgtk_notebook_append_page
+     <'> Fgtk_notebook_append_page_menu <'> Fgtk_notebook_get_current_page
+     <'> Fgtk_notebook_get_menu_label <'> Fgtk_notebook_get_menu_label_text
+     <'> Fgtk_notebook_get_n_pages <'> Fgtk_notebook_get_nth_page
+     <'> Fgtk_notebook_get_scrollable <'> Fgtk_notebook_get_show_border
+     <'> Fgtk_notebook_get_show_tabs <'> Fgtk_notebook_get_tab_label
+     <'> Fgtk_notebook_get_tab_label_text <'> Fgtk_notebook_get_tab_pos
+     <'> Fgtk_notebook_insert_page <'> Fgtk_notebook_insert_page_menu
+     <'> Fgtk_notebook_new <'> Fgtk_notebook_next_page <'> Fgtk_notebook_page_num
+     <'> Fgtk_notebook_popup_disable <'> Fgtk_notebook_popup_enable
+     <'> Fgtk_notebook_prepend_page <'> Fgtk_notebook_prepend_page_menu
+     <'> Fgtk_notebook_prev_page <'> Fgtk_notebook_remove_page
+     <'> Fgtk_notebook_reorder_child <'> Fgtk_notebook_set_current_page
+     <'> Fgtk_notebook_set_menu_label <'> Fgtk_notebook_set_menu_label_text
+     <'> Fgtk_notebook_set_scrollable <'> Fgtk_notebook_set_show_border
+     <'> Fgtk_notebook_set_show_tabs <'> Fgtk_notebook_set_tab_label
+     <'> Fgtk_notebook_set_tab_label_text <'> Fgtk_notebook_set_tab_pos
+     <'> Fgtk_paned_add1 <'> Fgtk_paned_add2 <'> Fgtk_paned_get_child1
+     <'> Fgtk_paned_get_child2 <'> Fgtk_paned_get_position <'> Fgtk_paned_pack1
+     <'> Fgtk_paned_pack2 <'> Fgtk_paned_set_position <'> Fgtk_plug_construct
+     <'> Fgtk_plug_get_id <'> Fgtk_plug_new <'> Fgtk_progress_bar_get_ellipsize
+     <'> Fgtk_progress_bar_get_fraction <'> Fgtk_progress_bar_get_pulse_step
+     <'> Fgtk_progress_bar_get_text <'> Fgtk_progress_bar_new
+     <'> Fgtk_progress_bar_pulse <'> Fgtk_progress_bar_set_ellipsize
+     <'> Fgtk_progress_bar_set_fraction <'> Fgtk_progress_bar_set_pulse_step
+     <'> Fgtk_progress_bar_set_text <'> Fgtk_propagate_event
+     <'> Fgtk_radio_action_get_current_value <'> Fgtk_radio_action_get_group
+     <'> Fgtk_radio_action_new <'> Fgtk_radio_action_set_group
+     <'> Fgtk_radio_button_get_group <'> Fgtk_radio_button_new
+     <'> Fgtk_radio_button_new_from_widget <'> Fgtk_radio_button_new_with_label_from_widget
+     <'> Fgtk_radio_button_new_with_mnemonic <'> Fgtk_radio_button_new_with_mnemonic_from_widget
+     <'> Fgtk_radio_button_set_group <'> Fgtk_radio_menu_item_get_group
+     <'> Fgtk_radio_menu_item_new <'> Fgtk_radio_menu_item_new_from_widget
+     <'> Fgtk_radio_menu_item_new_with_label_from_widget
+     <'> Fgtk_radio_menu_item_new_with_mnemonic
+     <'> Fgtk_radio_menu_item_new_with_mnemonic_from_widget
+     <'> Fgtk_radio_menu_item_set_group <'> Fgtk_radio_tool_button_get_group
+     <'> Fgtk_radio_tool_button_new <'> Fgtk_radio_tool_button_new_from_stock
+     <'> Fgtk_radio_tool_button_new_from_widget
+     <'> Fgtk_radio_tool_button_new_with_stock_from_widget
+     <'> Fgtk_radio_tool_button_set_group <'> Fgtk_range_get_adjustment
+     <'> Fgtk_range_get_inverted <'> Fgtk_range_get_update_policy
+     <'> Fgtk_range_get_value <'> Fgtk_range_set_adjustment
+     <'> Fgtk_range_set_increments <'> Fgtk_range_set_inverted
+     <'> Fgtk_range_set_range <'> Fgtk_range_set_update_policy
+     <'> Fgtk_range_set_value <'> Fgtk_rc_add_default_file
+     <'> Fgtk_rc_get_default_files <'> Fgtk_rc_get_im_module_file
+     <'> Fgtk_rc_get_im_module_path <'> Fgtk_rc_get_module_dir
+     <'> Fgtk_rc_get_style <'> Fgtk_rc_get_theme_dir <'> Fgtk_rc_parse
+     <'> Fgtk_rc_reparse_all <'> Fgtk_rc_set_default_files <'> Fgtk_rc_style_copy
+     <'> Fgtk_rc_style_new <'> Fgtk_ruler_get_metric <'> Fgtk_ruler_get_range
+     <'> Fgtk_ruler_set_metric <'> Fgtk_ruler_set_range <'> Fgtk_scale_get_digits
+     <'> Fgtk_scale_get_draw_value <'> Fgtk_scale_get_layout
+     <'> Fgtk_scale_get_layout_offsets <'> Fgtk_scale_get_value_pos
+     <'> Fgtk_scale_set_digits <'> Fgtk_scale_set_draw_value
+     <'> Fgtk_scale_set_value_pos <'> Fgtk_scrolled_window_add_with_viewport
+     <'> Fgtk_scrolled_window_get_hadjustment <'> Fgtk_scrolled_window_get_placement
+     <'> Fgtk_scrolled_window_get_policy <'> Fgtk_scrolled_window_get_shadow_type
+     <'> Fgtk_scrolled_window_get_vadjustment <'> Fgtk_scrolled_window_new
+     <'> Fgtk_scrolled_window_set_hadjustment <'> Fgtk_scrolled_window_set_placement
+     <'> Fgtk_scrolled_window_set_policy <'> Fgtk_scrolled_window_set_shadow_type
+     <'> Fgtk_scrolled_window_set_vadjustment <'> Fgtk_selection_add_target
+     <'> Fgtk_selection_add_targets <'> Fgtk_selection_clear_targets
+     <'> Fgtk_selection_convert <'> Fgtk_selection_data_copy
+     <'> Fgtk_selection_data_free <'> Fgtk_selection_data_get_pixbuf
+     <'> Fgtk_selection_data_get_targets <'> Fgtk_selection_data_get_text
+     <'> Fgtk_selection_data_get_uris <'> Fgtk_selection_data_set
+     <'> Fgtk_selection_data_set_pixbuf <'> Fgtk_selection_data_set_text
+     <'> Fgtk_selection_data_set_uris <'> Fgtk_selection_data_targets_include_image
+     <'> Fgtk_selection_data_targets_include_text <'> Fgtk_selection_owner_set
+     <'> Fgtk_selection_remove_all <'> Fgtk_separator_menu_item_new
+     <'> Fgtk_separator_tool_item_get_draw <'> Fgtk_separator_tool_item_new
+     <'> Fgtk_separator_tool_item_set_draw <'> Fgtk_set_locale
+     <'> Fgtk_size_group_add_widget <'> Fgtk_size_group_get_mode
+     <'> Fgtk_size_group_new <'> Fgtk_size_group_remove_widget
+     <'> Fgtk_size_group_set_mode <'> Fgtk_socket_add_id
+     <'> Fgtk_socket_get_id <'> Fgtk_socket_new <'> Fgtk_spin_button_configure
+     <'> Fgtk_spin_button_get_adjustment <'> Fgtk_spin_button_get_digits
+     <'> Fgtk_spin_button_get_increments <'> Fgtk_spin_button_get_numeric
+     <'> Fgtk_spin_button_get_range <'> Fgtk_spin_button_get_snap_to_ticks
+     <'> Fgtk_spin_button_get_update_policy <'> Fgtk_spin_button_get_value
+     <'> Fgtk_spin_button_get_value_as_int <'> Fgtk_spin_button_get_wrap
+     <'> Fgtk_spin_button_new <'> Fgtk_spin_button_new_with_range
+     <'> Fgtk_spin_button_set_adjustment <'> Fgtk_spin_button_set_digits
+     <'> Fgtk_spin_button_set_increments <'> Fgtk_spin_button_set_numeric
+     <'> Fgtk_spin_button_set_range <'> Fgtk_spin_button_set_snap_to_ticks
+     <'> Fgtk_spin_button_set_update_policy <'> Fgtk_spin_button_set_value
+     <'> Fgtk_spin_button_set_wrap <'> Fgtk_spin_button_spin
+     <'> Fgtk_spin_button_update <'> Fgtk_statusbar_get_context_id
+     <'> Fgtk_statusbar_get_has_resize_grip <'> Fgtk_statusbar_new
+     <'> Fgtk_statusbar_pop <'> Fgtk_statusbar_push
+     <'> Fgtk_statusbar_remove <'> Fgtk_statusbar_set_has_resize_grip
+     <'> Fgtk_stock_add <'> Fgtk_stock_add_static <'> Fgtk_stock_item_copy
+     <'> Fgtk_stock_item_free <'> Fgtk_stock_list_ids <'> Fgtk_stock_lookup
+     <'> Fgtk_style_attach <'> Fgtk_style_copy <'> Fgtk_style_detach
+     <'> Fgtk_style_lookup_icon_set <'> Fgtk_style_new <'> Fgtk_style_render_icon
+     <'> Fgtk_style_set_background <'> Fgtk_table_attach
+     <'> Fgtk_table_attach_defaults <'> Fgtk_table_get_col_spacing
+     <'> Fgtk_table_get_default_col_spacing <'> Fgtk_table_get_default_row_spacing
+     <'> Fgtk_table_get_homogeneous <'> Fgtk_table_get_row_spacing
+     <'> Fgtk_table_new <'> Fgtk_table_resize <'> Fgtk_table_set_col_spacing
+     <'> Fgtk_table_set_col_spacings <'> Fgtk_table_set_homogeneous
+     <'> Fgtk_table_set_row_spacing <'> Fgtk_table_set_row_spacings
+     <'> Fgtk_target_list_add <'> Fgtk_target_list_add_image_targets
+     <'> Fgtk_target_list_add_table <'> Fgtk_target_list_add_text_targets
+     <'> Fgtk_target_list_add_uri_targets <'> Fgtk_target_list_find
+     <'> Fgtk_target_list_remove <'> Fgtk_target_list_unref
+     <'> Fgtk_tearoff_menu_item_new <'> Fgtk_text_attributes_copy
+     <'> Fgtk_text_attributes_copy_values <'> Fgtk_text_attributes_new
+     <'> Fgtk_text_attributes_unref <'> Fgtk_text_buffer_add_selection_clipboard
+     <'> Fgtk_text_buffer_apply_tag <'> Fgtk_text_buffer_apply_tag_by_name
+     <'> Fgtk_text_buffer_backspace <'> Fgtk_text_buffer_begin_user_action
+     <'> Fgtk_text_buffer_copy_clipboard <'> Fgtk_text_buffer_create_child_anchor
+     <'> Fgtk_text_buffer_create_mark <'> Fgtk_text_buffer_create_tag
+     <'> Fgtk_text_buffer_cut_clipboard <'> Fgtk_text_buffer_delete
+     <'> Fgtk_text_buffer_delete_interactive <'> Fgtk_text_buffer_delete_mark
+     <'> Fgtk_text_buffer_delete_mark_by_name
+     <'> Fgtk_text_buffer_delete_selection <'> Fgtk_text_buffer_end_user_action
+     <'> Fgtk_text_buffer_get_bounds <'> Fgtk_text_buffer_get_char_count
+     <'> Fgtk_text_buffer_get_end_iter <'> Fgtk_text_buffer_get_insert
+     <'> Fgtk_text_buffer_get_iter_at_child_anchor <'> Fgtk_text_buffer_get_iter_at_line
+     <'> Fgtk_text_buffer_get_iter_at_line_index <'> Fgtk_text_buffer_get_iter_at_line_offset
+     <'> Fgtk_text_buffer_get_iter_at_mark <'> Fgtk_text_buffer_get_iter_at_offset
+     <'> Fgtk_text_buffer_get_line_count <'> Fgtk_text_buffer_get_mark
+     <'> Fgtk_text_buffer_get_modified <'> Fgtk_text_buffer_get_selection_bound
+     <'> Fgtk_text_buffer_get_selection_bounds <'> Fgtk_text_buffer_get_slice
+     <'> Fgtk_text_buffer_get_start_iter <'> Fgtk_text_buffer_get_tag_table
+     <'> Fgtk_text_buffer_get_text <'> Fgtk_text_buffer_insert
+     <'> Fgtk_text_buffer_insert_at_cursor <'> Fgtk_text_buffer_insert_child_anchor
+     <'> Fgtk_text_buffer_insert_interactive <'> Fgtk_text_buffer_insert_interactive_at_cursor
+     <'> Fgtk_text_buffer_insert_pixbuf <'> Fgtk_text_buffer_insert_range
+     <'> Fgtk_text_buffer_insert_range_interactive <'> Fgtk_text_buffer_insert_with_tags
+     <'> Fgtk_text_buffer_insert_with_tags_by_name <'> Fgtk_text_buffer_move_mark
+     <'> Fgtk_text_buffer_move_mark_by_name <'> Fgtk_text_buffer_new
+     <'> Fgtk_text_buffer_paste_clipboard <'> Fgtk_text_buffer_place_cursor
+     <'> Fgtk_text_buffer_remove_all_tags <'> Fgtk_text_buffer_remove_selection_clipboard
+     <'> Fgtk_text_buffer_remove_tag <'> Fgtk_text_buffer_remove_tag_by_name
+     <'> Fgtk_text_buffer_select_range <'> Fgtk_text_buffer_set_modified
+     <'> Fgtk_text_buffer_set_text <'> Fgtk_text_child_anchor_get_deleted
+     <'> Fgtk_text_child_anchor_get_widgets <'> Fgtk_text_child_anchor_new
+     <'> Fgtk_text_iter_backward_char <'> Fgtk_text_iter_backward_chars
+     <'> Fgtk_text_iter_backward_cursor_position <'> Fgtk_text_iter_backward_cursor_positions
+     <'> Fgtk_text_iter_backward_find_char <'> Fgtk_text_iter_backward_line
+     <'> Fgtk_text_iter_backward_lines <'> Fgtk_text_iter_backward_search
+     <'> Fgtk_text_iter_backward_sentence_start <'> Fgtk_text_iter_backward_sentence_starts
+     <'> Fgtk_text_iter_backward_to_tag_toggle <'> Fgtk_text_iter_backward_word_start
+     <'> Fgtk_text_iter_backward_word_starts <'> Fgtk_text_iter_begins_tag
+     <'> Fgtk_text_iter_can_insert <'> Fgtk_text_iter_compare
+     <'> Fgtk_text_iter_copy <'> Fgtk_text_iter_editable
+     <'> Fgtk_text_iter_ends_line <'> Fgtk_text_iter_ends_sentence
+     <'> Fgtk_text_iter_ends_tag <'> Fgtk_text_iter_ends_word
+     <'> Fgtk_text_iter_equal <'> Fgtk_text_iter_forward_char
+     <'> Fgtk_text_iter_forward_chars <'> Fgtk_text_iter_forward_cursor_position
+     <'> Fgtk_text_iter_forward_cursor_positions <'> Fgtk_text_iter_forward_find_char 
+     <'> Fgtk_text_iter_forward_line <'> Fgtk_text_iter_forward_lines 
+     <'> Fgtk_text_iter_forward_search <'> Fgtk_text_iter_forward_sentence_end
+     <'> Fgtk_text_iter_forward_sentence_ends <'> Fgtk_text_iter_forward_to_end
+     <'> Fgtk_text_iter_forward_to_line_end
+     <'> Fgtk_text_iter_forward_to_tag_toggle <'> Fgtk_text_iter_forward_word_end
+     <'> Fgtk_text_iter_forward_word_ends <'> Fgtk_text_iter_free
+     <'> Fgtk_text_iter_get_attributes <'> Fgtk_text_iter_get_buffer
+     <'> Fgtk_text_iter_get_bytes_in_line <'> Fgtk_text_iter_get_char
+     <'> Fgtk_text_iter_get_chars_in_line <'> Fgtk_text_iter_get_child_anchor
+     <'> Fgtk_text_iter_get_language <'> Fgtk_text_iter_get_line
+     <'> Fgtk_text_iter_get_line_index <'> Fgtk_text_iter_get_line_offset
+     <'> Fgtk_text_iter_get_marks <'> Fgtk_text_iter_get_offset
+     <'> Fgtk_text_iter_get_pixbuf <'> Fgtk_text_iter_get_slice
+     <'> Fgtk_text_iter_get_tags <'> Fgtk_text_iter_get_text
+     <'> Fgtk_text_iter_get_toggled_tags <'> Fgtk_text_iter_get_visible_line_index
+     <'> Fgtk_text_iter_get_visible_line_offset
+     <'> Fgtk_text_iter_get_visible_slice <'> Fgtk_text_iter_get_visible_text
+     <'> Fgtk_text_iter_has_tag <'> Fgtk_text_iter_in_range
+     <'> Fgtk_text_iter_inside_sentence <'> Fgtk_text_iter_inside_word
+     <'> Fgtk_text_iter_is_cursor_position <'> Fgtk_text_iter_is_end
+     <'> Fgtk_text_iter_is_start <'> Fgtk_text_iter_order
+     <'> Fgtk_text_iter_set_line <'> Fgtk_text_iter_set_line_index
+     <'> Fgtk_text_iter_set_line_offset <'> Fgtk_text_iter_set_offset
+     <'> Fgtk_text_iter_set_visible_line_index
+     <'> Fgtk_text_iter_set_visible_line_offset <'> Fgtk_text_iter_starts_line
+     <'> Fgtk_text_iter_starts_sentence <'> Fgtk_text_iter_starts_word
+     <'> Fgtk_text_iter_toggles_tag <'> Fgtk_text_mark_get_buffer
+     <'> Fgtk_text_mark_get_deleted <'> Fgtk_text_mark_get_left_gravity
+     <'> Fgtk_text_mark_get_name <'> Fgtk_text_mark_get_visible
+     <'> Fgtk_text_mark_set_visible <'> Fgtk_text_tag_event
+     <'> Fgtk_text_tag_get_priority <'> Fgtk_text_tag_new
+     <'> Fgtk_text_tag_set_priority <'> Fgtk_text_tag_table_add
+     <'> Fgtk_text_tag_table_foreach <'> Fgtk_text_tag_table_get_size
+     <'> Fgtk_text_tag_table_lookup <'> Fgtk_text_tag_table_new
+     <'> Fgtk_text_tag_table_remove <'> Fgtk_text_view_add_child_at_anchor
+     <'> Fgtk_text_view_add_child_in_window <'> Fgtk_text_view_backward_display_line
+     <'> Fgtk_text_view_backward_display_line_start <'> Fgtk_text_view_buffer_to_window_coords
+     <'> Fgtk_text_view_forward_display_line <'> Fgtk_text_view_forward_display_line_end
+     <'> Fgtk_text_view_get_accepts_tab <'> Fgtk_text_view_get_border_window_size
+     <'> Fgtk_text_view_get_buffer <'> Fgtk_text_view_get_cursor_visible
+     <'> Fgtk_text_view_get_default_attributes <'> Fgtk_text_view_get_editable
+     <'> Fgtk_text_view_get_indent <'> Fgtk_text_view_get_iter_at_location
+     <'> Fgtk_text_view_get_iter_location <'> Fgtk_text_view_get_justification
+     <'> Fgtk_text_view_get_left_margin <'> Fgtk_text_view_get_line_at_y
+     <'> Fgtk_text_view_get_line_yrange <'> Fgtk_text_view_get_overwrite
+     <'> Fgtk_text_view_get_pixels_above_lines <'> Fgtk_text_view_get_pixels_below_lines
+     <'> Fgtk_text_view_get_pixels_inside_wrap <'> Fgtk_text_view_get_right_margin
+     <'> Fgtk_text_view_get_tabs <'> Fgtk_text_view_get_visible_rect
+     <'> Fgtk_text_view_get_window <'> Fgtk_text_view_get_window_type
+     <'> Fgtk_text_view_get_wrap_mode <'> Fgtk_text_view_move_child
+     <'> Fgtk_text_view_move_mark_onscreen <'> Fgtk_text_view_move_visually
+     <'> Fgtk_text_view_new <'> Fgtk_text_view_new_with_buffer
+     <'> Fgtk_text_view_place_cursor_onscreen
+     <'> Fgtk_text_view_scroll_mark_onscreen <'> Fgtk_text_view_scroll_to_iter
+     <'> Fgtk_text_view_scroll_to_mark <'> Fgtk_text_view_set_accepts_tab
+     <'> Fgtk_text_view_set_border_window_size <'> Fgtk_text_view_set_buffer
+     <'> Fgtk_text_view_set_cursor_visible <'> Fgtk_text_view_set_editable
+     <'> Fgtk_text_view_set_indent <'> Fgtk_text_view_set_justification
+     <'> Fgtk_text_view_set_left_margin <'> Fgtk_text_view_set_overwrite
+     <'> Fgtk_text_view_set_pixels_above_lines <'> Fgtk_text_view_set_pixels_below_lines
+     <'> Fgtk_text_view_set_pixels_inside_wrap <'> Fgtk_text_view_set_right_margin
+     <'> Fgtk_text_view_set_tabs <'> Fgtk_text_view_set_wrap_mode
+     <'> Fgtk_text_view_starts_display_line
+     <'> Fgtk_text_view_window_to_buffer_coords <'> Fgtk_toggle_action_get_active
+     <'> Fgtk_toggle_action_get_draw_as_radio <'> Fgtk_toggle_action_new
+     <'> Fgtk_toggle_action_set_active <'> Fgtk_toggle_action_set_draw_as_radio
+     <'> Fgtk_toggle_action_toggled <'> Fgtk_toggle_button_get_active
+     <'> Fgtk_toggle_button_get_inconsistent <'> Fgtk_toggle_button_get_mode
+     <'> Fgtk_toggle_button_new <'> Fgtk_toggle_button_new_with_mnemonic
+     <'> Fgtk_toggle_button_set_active <'> Fgtk_toggle_button_set_inconsistent
+     <'> Fgtk_toggle_button_set_mode <'> Fgtk_toggle_button_toggled
+     <'> Fgtk_toggle_tool_button_get_active <'> Fgtk_toggle_tool_button_new
+     <'> Fgtk_toggle_tool_button_new_from_stock
+     <'> Fgtk_toggle_tool_button_set_active <'> Fgtk_tool_button_get_icon_widget
+     <'> Fgtk_tool_button_get_label <'> Fgtk_tool_button_get_label_widget
+     <'> Fgtk_tool_button_get_stock_id <'> Fgtk_tool_button_get_use_underline
+     <'> Fgtk_tool_button_new <'> Fgtk_tool_button_new_from_stock
+     <'> Fgtk_tool_button_set_icon_widget <'> Fgtk_tool_button_set_label
+     <'> Fgtk_tool_button_set_label_widget <'> Fgtk_tool_button_set_stock_id
+     <'> Fgtk_tool_button_set_use_underline <'> Fgtk_tool_item_get_expand
+     <'> Fgtk_tool_item_get_homogeneous <'> Fgtk_tool_item_get_icon_size
+     <'> Fgtk_tool_item_get_is_important <'> Fgtk_tool_item_get_proxy_menu_item
+     <'> Fgtk_tool_item_get_relief_style <'> Fgtk_tool_item_get_toolbar_style
+     <'> Fgtk_tool_item_get_use_drag_window <'> Fgtk_tool_item_get_visible_horizontal
+     <'> Fgtk_tool_item_get_visible_vertical <'> Fgtk_tool_item_new
+     <'> Fgtk_tool_item_rebuild_menu <'> Fgtk_tool_item_retrieve_proxy_menu_item
+     <'> Fgtk_tool_item_set_expand <'> Fgtk_tool_item_set_homogeneous
+     <'> Fgtk_tool_item_set_is_important <'> Fgtk_tool_item_set_proxy_menu_item
+     <'> Fgtk_tool_item_set_visible_horizontal
+     <'> Fgtk_tool_item_set_visible_vertical <'> Fgtk_toolbar_get_drop_index
+     <'> Fgtk_toolbar_get_icon_size <'> Fgtk_toolbar_get_item_index
+     <'> Fgtk_toolbar_get_n_items <'> Fgtk_toolbar_get_nth_item
+     <'> Fgtk_toolbar_get_relief_style <'> Fgtk_toolbar_get_show_arrow
+     <'> Fgtk_toolbar_get_style <'> Fgtk_toolbar_insert <'> Fgtk_toolbar_new
+     <'> Fgtk_toolbar_set_show_arrow <'> Fgtk_toolbar_set_style
+     <'> Fgtk_toolbar_unset_style <'> Fgtk_tree_drag_dest_drag_data_received
+     <'> Fgtk_tree_drag_dest_row_drop_possible <'> Fgtk_tree_drag_source_drag_data_delete
+     <'> Fgtk_tree_drag_source_drag_data_get <'> Fgtk_tree_drag_source_row_draggable 
+     <'> Fgtk_tree_get_row_drag_data <'> Fgtk_tree_iter_copy <'> Fgtk_tree_iter_free
+     <'> Fgtk_tree_model_filter_clear_cache <'> Fgtk_tree_model_filter_convert_child_path_to_path
+     <'> Fgtk_tree_model_filter_convert_iter_to_child_iter
+     <'> Fgtk_tree_model_filter_convert_path_to_child_path
+     <'> Fgtk_tree_model_filter_get_model <'> Fgtk_tree_model_filter_new
+     <'> Fgtk_tree_model_filter_refilter
+     <'> Fgtk_tree_model_filter_set_visible_column <'> Fgtk_tree_model_foreach
+     <'> Fgtk_tree_model_get_column_type <'> Fgtk_tree_model_get_flags
+     <'> Fgtk_tree_model_get_iter <'> Fgtk_tree_model_get_iter_first
+     <'> Fgtk_tree_model_get_iter_from_string <'> Fgtk_tree_model_get_n_columns
+     <'> Fgtk_tree_model_get_path <'> Fgtk_tree_model_get_string_from_iter
+     <'> Fgtk_tree_model_iter_children <'> Fgtk_tree_model_iter_has_child
+     <'> Fgtk_tree_model_iter_n_children <'> Fgtk_tree_model_iter_next
+     <'> Fgtk_tree_model_iter_nth_child <'> Fgtk_tree_model_iter_parent
+     <'> Fgtk_tree_model_ref_node <'> Fgtk_tree_model_row_changed
+     <'> Fgtk_tree_model_row_deleted <'> Fgtk_tree_model_row_has_child_toggled
+     <'> Fgtk_tree_model_row_inserted <'> Fgtk_tree_model_rows_reordered
+     <'> Fgtk_tree_model_sort_clear_cache <'> Fgtk_tree_model_sort_convert_child_iter_to_iter
+     <'> Fgtk_tree_model_sort_convert_child_path_to_path
+     <'> Fgtk_tree_model_sort_convert_iter_to_child_iter
+     <'> Fgtk_tree_model_sort_convert_path_to_child_path
+     <'> Fgtk_tree_model_sort_get_model <'> Fgtk_tree_model_sort_iter_is_valid
+     <'> Fgtk_tree_model_sort_new_with_model <'> Fgtk_tree_model_sort_reset_default_sort_func
+     <'> Fgtk_tree_model_unref_node <'> Fgtk_tree_path_append_index
+     <'> Fgtk_tree_path_compare <'> Fgtk_tree_path_copy <'> Fgtk_tree_path_down
+     <'> Fgtk_tree_path_free <'> Fgtk_tree_path_get_depth
+     <'> Fgtk_tree_path_get_indices <'> Fgtk_tree_path_is_ancestor
+     <'> Fgtk_tree_path_is_descendant <'> Fgtk_tree_path_new
+     <'> Fgtk_tree_path_new_first <'> Fgtk_tree_path_new_from_string
+     <'> Fgtk_tree_path_next <'> Fgtk_tree_path_prepend_index
+     <'> Fgtk_tree_path_prev <'> Fgtk_tree_path_to_string <'> Fgtk_tree_path_up
+     <'> Fgtk_tree_row_reference_deleted <'> Fgtk_tree_row_reference_free
+     <'> Fgtk_tree_row_reference_get_path <'> Fgtk_tree_row_reference_inserted
+     <'> Fgtk_tree_row_reference_new <'> Fgtk_tree_row_reference_new_proxy
+     <'> Fgtk_tree_row_reference_reordered <'> Fgtk_tree_row_reference_valid
+     <'> Fgtk_tree_selection_count_selected_rows <'> Fgtk_tree_selection_get_mode
+     <'> Fgtk_tree_selection_get_selected <'> Fgtk_tree_selection_get_selected_rows
+     <'> Fgtk_tree_selection_get_tree_view <'> Fgtk_tree_selection_get_user_data
+     <'> Fgtk_tree_selection_iter_is_selected <'> Fgtk_tree_selection_path_is_selected
+     <'> Fgtk_tree_selection_select_all <'> Fgtk_tree_selection_select_iter
+     <'> Fgtk_tree_selection_select_path <'> Fgtk_tree_selection_select_range
+     <'> Fgtk_tree_selection_selected_foreach <'> Fgtk_tree_selection_set_mode
+     <'> Fgtk_tree_selection_set_select_function <'> Fgtk_tree_selection_unselect_all 
+     <'> Fgtk_tree_selection_unselect_iter <'> Fgtk_tree_selection_unselect_path 
+     <'> Fgtk_tree_set_row_drag_data <'> Fgtk_tree_sortable_get_sort_column_id
+     <'> Fgtk_tree_sortable_has_default_sort_func <'> Fgtk_tree_sortable_set_default_sort_func
+     <'> Fgtk_tree_sortable_set_sort_column_id <'> Fgtk_tree_sortable_set_sort_func
+     <'> Fgtk_tree_sortable_sort_column_changed <'> Fgtk_tree_store_append
+     <'> Fgtk_tree_store_clear <'> Fgtk_tree_store_insert
+     <'> Fgtk_tree_store_insert_after <'> Fgtk_tree_store_insert_before
+     <'> Fgtk_tree_store_is_ancestor <'> Fgtk_tree_store_iter_depth
+     <'> Fgtk_tree_store_new <'> Fgtk_tree_store_newv <'> Fgtk_tree_store_prepend
+     <'> Fgtk_tree_store_remove <'> Fgtk_tree_store_reorder
+     <'> Fgtk_tree_store_set <'> Fgtk_tree_store_set_column_types
+     <'> Fgtk_tree_store_swap <'> Fgtk_tree_view_append_column
+     <'> Fgtk_tree_view_collapse_all <'> Fgtk_tree_view_collapse_row
+     <'> Fgtk_tree_view_column_add_attribute <'> Fgtk_tree_view_column_cell_get_position
+     <'> Fgtk_tree_view_column_cell_get_size <'> Fgtk_tree_view_column_cell_is_visible
+     <'> Fgtk_tree_view_column_cell_set_cell_data <'> Fgtk_tree_view_column_clear
+     <'> Fgtk_tree_view_column_clear_attributes <'> Fgtk_tree_view_column_clicked
+     <'> Fgtk_tree_view_column_get_alignment <'> Fgtk_tree_view_column_get_clickable 
+     <'> Fgtk_tree_view_column_get_expand <'> Fgtk_tree_view_column_get_fixed_width
+     <'> Fgtk_tree_view_column_get_max_width <'> Fgtk_tree_view_column_get_min_width
+     <'> Fgtk_tree_view_column_get_reorderable <'> Fgtk_tree_view_column_get_resizable
+     <'> Fgtk_tree_view_column_get_sizing <'> Fgtk_tree_view_column_get_sort_column_id
+     <'> Fgtk_tree_view_column_get_sort_indicator <'> Fgtk_tree_view_column_get_sort_order
+     <'> Fgtk_tree_view_column_get_spacing <'> Fgtk_tree_view_column_get_title
+     <'> Fgtk_tree_view_column_get_visible <'> Fgtk_tree_view_column_get_widget
+     <'> Fgtk_tree_view_column_get_width <'> Fgtk_tree_view_column_new
+     <'> Fgtk_tree_view_column_new_with_attributes <'> Fgtk_tree_view_column_pack_end 
+     <'> Fgtk_tree_view_column_pack_start <'> Fgtk_tree_view_column_set_alignment
+     <'> Fgtk_tree_view_column_set_attributes <'> Fgtk_tree_view_column_set_cell_data_func
+     <'> Fgtk_tree_view_column_set_clickable <'> Fgtk_tree_view_column_set_expand
+     <'> Fgtk_tree_view_column_set_fixed_width <'> Fgtk_tree_view_column_set_max_width
+     <'> Fgtk_tree_view_column_set_min_width <'> Fgtk_tree_view_column_set_reorderable
+     <'> Fgtk_tree_view_column_set_resizable <'> Fgtk_tree_view_column_set_sizing
+     <'> Fgtk_tree_view_column_set_sort_column_id <'> Fgtk_tree_view_column_set_sort_indicator
+     <'> Fgtk_tree_view_column_set_sort_order
+     <'> Fgtk_tree_view_column_set_spacing <'> Fgtk_tree_view_column_set_title
+     <'> Fgtk_tree_view_column_set_visible <'> Fgtk_tree_view_column_set_widget
+     <'> Fgtk_tree_view_columns_autosize <'> Fgtk_tree_view_enable_model_drag_dest
+     <'> Fgtk_tree_view_enable_model_drag_source <'> Fgtk_tree_view_expand_all
+     <'> Fgtk_tree_view_expand_row <'> Fgtk_tree_view_expand_to_path
+     <'> Fgtk_tree_view_get_background_area <'> Fgtk_tree_view_get_bin_window
+     <'> Fgtk_tree_view_get_cell_area <'> Fgtk_tree_view_get_column
+     <'> Fgtk_tree_view_get_columns <'> Fgtk_tree_view_get_cursor
+     <'> Fgtk_tree_view_get_dest_row_at_pos <'> Fgtk_tree_view_get_drag_dest_row
+     <'> Fgtk_tree_view_get_enable_search <'> Fgtk_tree_view_get_expander_column
+     <'> Fgtk_tree_view_get_fixed_height_mode <'> Fgtk_tree_view_get_hadjustment
+     <'> Fgtk_tree_view_get_headers_visible <'> Fgtk_tree_view_get_hover_expand
+     <'> Fgtk_tree_view_get_hover_selection <'> Fgtk_tree_view_get_model
+     <'> Fgtk_tree_view_get_path_at_pos <'> Fgtk_tree_view_get_reorderable ) constant gtk-procs-2
+
+  #( <'> Fgtk_tree_view_get_rules_hint <'> Fgtk_tree_view_get_search_column
+     <'> Fgtk_tree_view_get_search_equal_func <'> Fgtk_tree_view_get_selection
+     <'> Fgtk_tree_view_get_vadjustment <'> Fgtk_tree_view_get_visible_rect
+     <'> Fgtk_tree_view_insert_column <'> Fgtk_tree_view_insert_column_with_attributes
+     <'> Fgtk_tree_view_insert_column_with_data_func <'> Fgtk_tree_view_map_expanded_rows
+     <'> Fgtk_tree_view_move_column_after <'> Fgtk_tree_view_new <'> Fgtk_tree_view_new_with_model
+     <'> Fgtk_tree_view_remove_column <'> Fgtk_tree_view_row_activated
+     <'> Fgtk_tree_view_row_expanded <'> Fgtk_tree_view_scroll_to_cell
+     <'> Fgtk_tree_view_scroll_to_point <'> Fgtk_tree_view_set_column_drag_function
+     <'> Fgtk_tree_view_set_cursor <'> Fgtk_tree_view_set_drag_dest_row
+     <'> Fgtk_tree_view_set_enable_search <'> Fgtk_tree_view_set_expander_column
+     <'> Fgtk_tree_view_set_fixed_height_mode <'> Fgtk_tree_view_set_hadjustment
+     <'> Fgtk_tree_view_set_headers_clickable <'> Fgtk_tree_view_set_headers_visible
+     <'> Fgtk_tree_view_set_hover_expand <'> Fgtk_tree_view_set_hover_selection
+     <'> Fgtk_tree_view_set_model <'> Fgtk_tree_view_set_reorderable
+     <'> Fgtk_tree_view_set_row_separator_func <'> Fgtk_tree_view_set_rules_hint
+     <'> Fgtk_tree_view_set_search_column <'> Fgtk_tree_view_set_search_equal_func
+     <'> Fgtk_tree_view_set_vadjustment <'> Fgtk_tree_view_unset_rows_drag_dest
+     <'> Fgtk_tree_view_unset_rows_drag_source <'> Fgtk_true <'> Fgtk_ui_manager_add_ui
+     <'> Fgtk_ui_manager_add_ui_from_file <'> Fgtk_ui_manager_add_ui_from_string
+     <'> Fgtk_ui_manager_ensure_update <'> Fgtk_ui_manager_get_accel_group
+     <'> Fgtk_ui_manager_get_action <'> Fgtk_ui_manager_get_action_groups
+     <'> Fgtk_ui_manager_get_add_tearoffs <'> Fgtk_ui_manager_get_ui
+     <'> Fgtk_ui_manager_get_widget <'> Fgtk_ui_manager_insert_action_group
+     <'> Fgtk_ui_manager_new <'> Fgtk_ui_manager_new_merge_id
+     <'> Fgtk_ui_manager_remove_action_group <'> Fgtk_ui_manager_remove_ui
+     <'> Fgtk_ui_manager_set_add_tearoffs <'> Fgtk_vbox_new <'> Fgtk_vbutton_box_new
+     <'> Fgtk_viewport_get_hadjustment <'> Fgtk_viewport_get_shadow_type
+     <'> Fgtk_viewport_get_vadjustment <'> Fgtk_viewport_new <'> Fgtk_viewport_set_hadjustment
+     <'> Fgtk_viewport_set_shadow_type <'> Fgtk_viewport_set_vadjustment <'> Fgtk_vpaned_new
+     <'> Fgtk_vruler_new <'> Fgtk_vscale_new <'> Fgtk_vscale_new_with_range <'> Fgtk_vscrollbar_new
+     <'> Fgtk_vseparator_new <'> Fgtk_widget_activate <'> Fgtk_widget_add_accelerator
+     <'> Fgtk_widget_add_events <'> Fgtk_widget_add_mnemonic_label
+     <'> Fgtk_widget_can_activate_accel <'> Fgtk_widget_child_focus <'> Fgtk_widget_child_notify
+     <'> Fgtk_widget_class_path <'> Fgtk_widget_create_pango_context
+     <'> Fgtk_widget_create_pango_layout <'> Fgtk_widget_destroy <'> Fgtk_widget_destroyed
+     <'> Fgtk_widget_ensure_style <'> Fgtk_widget_event <'> Fgtk_widget_freeze_child_notify
+     <'> Fgtk_widget_get_accessible <'> Fgtk_widget_get_ancestor
+     <'> Fgtk_widget_get_child_visible <'> Fgtk_widget_get_clipboard
+     <'> Fgtk_widget_get_composite_name <'> Fgtk_widget_get_default_direction
+     <'> Fgtk_widget_get_default_style <'> Fgtk_widget_get_direction <'> Fgtk_widget_get_display
+     <'> Fgtk_widget_get_events <'> Fgtk_widget_get_modifier_style <'> Fgtk_widget_get_name
+     <'> Fgtk_widget_get_no_show_all <'> Fgtk_widget_get_pango_context <'> Fgtk_widget_get_parent
+     <'> Fgtk_widget_get_parent_window <'> Fgtk_widget_get_pointer <'> Fgtk_widget_get_root_window
+     <'> Fgtk_widget_get_screen <'> Fgtk_widget_get_size_request <'> Fgtk_widget_get_style
+     <'> Fgtk_widget_get_toplevel <'> Fgtk_widget_get_visual <'> Fgtk_widget_grab_default
+     <'> Fgtk_widget_grab_focus <'> Fgtk_widget_has_screen <'> Fgtk_widget_hide
+     <'> Fgtk_widget_hide_all <'> Fgtk_widget_hide_on_delete <'> Fgtk_widget_intersect
+     <'> Fgtk_widget_is_ancestor <'> Fgtk_widget_is_focus <'> Fgtk_widget_list_accel_closures
+     <'> Fgtk_widget_list_mnemonic_labels <'> Fgtk_widget_map <'> Fgtk_widget_mnemonic_activate
+     <'> Fgtk_widget_modify_base <'> Fgtk_widget_modify_bg <'> Fgtk_widget_modify_fg
+     <'> Fgtk_widget_modify_font <'> Fgtk_widget_modify_style <'> Fgtk_widget_modify_text
+     <'> Fgtk_widget_path <'> Fgtk_widget_pop_composite_child <'> Fgtk_widget_push_composite_child
+     <'> Fgtk_widget_queue_draw <'> Fgtk_widget_queue_draw_area <'> Fgtk_widget_queue_resize
+     <'> Fgtk_widget_queue_resize_no_redraw <'> Fgtk_widget_realize
+     <'> Fgtk_widget_remove_accelerator <'> Fgtk_widget_remove_mnemonic_label
+     <'> Fgtk_widget_render_icon <'> Fgtk_widget_reparent <'> Fgtk_widget_reset_rc_styles
+     <'> Fgtk_widget_reset_shapes <'> Fgtk_widget_send_expose <'> Fgtk_widget_set_accel_path
+     <'> Fgtk_widget_set_app_paintable <'> Fgtk_widget_set_child_visible
+     <'> Fgtk_widget_set_composite_name <'> Fgtk_widget_set_default_direction
+     <'> Fgtk_widget_set_direction <'> Fgtk_widget_set_double_buffered <'> Fgtk_widget_set_events
+     <'> Fgtk_widget_set_name <'> Fgtk_widget_set_no_show_all <'> Fgtk_widget_set_parent
+     <'> Fgtk_widget_set_parent_window <'> Fgtk_widget_set_redraw_on_allocate
+     <'> Fgtk_widget_set_scroll_adjustments <'> Fgtk_widget_set_sensitive
+     <'> Fgtk_widget_set_size_request <'> Fgtk_widget_set_state <'> Fgtk_widget_set_style
+     <'> Fgtk_widget_show <'> Fgtk_widget_show_all <'> Fgtk_widget_show_now
+     <'> Fgtk_widget_size_allocate <'> Fgtk_widget_thaw_child_notify
+     <'> Fgtk_widget_translate_coordinates <'> Fgtk_widget_unmap <'> Fgtk_widget_unparent
+     <'> Fgtk_widget_unrealize <'> Fgtk_window_activate_default <'> Fgtk_window_activate_focus
+     <'> Fgtk_window_activate_key <'> Fgtk_window_add_accel_group <'> Fgtk_window_add_embedded_xid
+     <'> Fgtk_window_add_mnemonic <'> Fgtk_window_begin_move_drag <'> Fgtk_window_begin_resize_drag
+     <'> Fgtk_window_deiconify <'> Fgtk_window_get_accept_focus <'> Fgtk_window_get_decorated
+     <'> Fgtk_window_get_default_icon_list <'> Fgtk_window_get_default_size
+     <'> Fgtk_window_get_destroy_with_parent <'> Fgtk_window_get_focus
+     <'> Fgtk_window_get_focus_on_map <'> Fgtk_window_get_frame_dimensions
+     <'> Fgtk_window_get_gravity <'> Fgtk_window_get_has_frame <'> Fgtk_window_get_icon 
+     <'> Fgtk_window_get_icon_list <'> Fgtk_window_get_icon_name
+     <'> Fgtk_window_get_mnemonic_modifier
+     <'> Fgtk_window_get_modal <'> Fgtk_window_get_position <'> Fgtk_window_get_resizable
+     <'> Fgtk_window_get_role <'> Fgtk_window_get_size <'> Fgtk_window_get_title
+     <'> Fgtk_window_get_transient_for <'> Fgtk_window_has_toplevel_focus <'> Fgtk_window_iconify
+     <'> Fgtk_window_is_active <'> Fgtk_window_list_toplevels <'> Fgtk_window_maximize
+     <'> Fgtk_window_mnemonic_activate <'> Fgtk_window_move <'> Fgtk_window_new
+     <'> Fgtk_window_parse_geometry <'> Fgtk_window_present <'> Fgtk_window_propagate_key_event
+     <'> Fgtk_window_remove_accel_group <'> Fgtk_window_remove_embedded_xid
+     <'> Fgtk_window_remove_mnemonic <'> Fgtk_window_reshow_with_initial_size
+     <'> Fgtk_window_resize <'> Fgtk_window_set_accept_focus
+     <'> Fgtk_window_set_auto_startup_notification <'> Fgtk_window_set_decorated
+     <'> Fgtk_window_set_default <'> Fgtk_window_set_default_icon
+     <'> Fgtk_window_set_default_icon_list <'> Fgtk_window_set_default_icon_name
+     <'> Fgtk_window_set_default_size <'> Fgtk_window_set_destroy_with_parent
+     <'> Fgtk_window_set_focus <'> Fgtk_window_set_focus_on_map
+     <'> Fgtk_window_set_frame_dimensions <'> Fgtk_window_set_geometry_hints
+     <'> Fgtk_window_set_gravity <'> Fgtk_window_set_has_frame <'> Fgtk_window_set_icon
+     <'> Fgtk_window_set_icon_list <'> Fgtk_window_set_icon_name <'> Fgtk_window_set_keep_above
+     <'> Fgtk_window_set_keep_below <'> Fgtk_window_set_mnemonic_modifier
+     <'> Fgtk_window_set_modal <'> Fgtk_window_set_position <'> Fgtk_window_set_resizable
+     <'> Fgtk_window_set_role <'> Fgtk_window_set_title <'> Fgtk_window_set_transient_for
+     <'> Fgtk_window_set_type_hint <'> Fgtk_window_set_wmclass <'> Fgtk_window_stick
+     <'> Fgtk_window_unmaximize <'> Fgtk_window_unstick <'> Fpango_attr_background_new
+     <'> Fpango_attr_fallback_new <'> Fpango_attr_family_new <'> Fpango_attr_font_desc_new
+     <'> Fpango_attr_foreground_new <'> Fpango_attr_iterator_copy <'> Fpango_attr_iterator_destroy
+     <'> Fpango_attr_iterator_get <'> Fpango_attr_iterator_get_attrs
+     <'> Fpango_attr_iterator_get_font
+     <'> Fpango_attr_iterator_next <'> Fpango_attr_iterator_range <'> Fpango_attr_language_new
+     <'> Fpango_attr_letter_spacing_new <'> Fpango_attr_list_change <'> Fpango_attr_list_copy
+     <'> Fpango_attr_list_filter <'> Fpango_attr_list_get_iterator <'> Fpango_attr_list_insert
+     <'> Fpango_attr_list_insert_before <'> Fpango_attr_list_new <'> Fpango_attr_list_splice
+     <'> Fpango_attr_list_unref <'> Fpango_attr_rise_new <'> Fpango_attr_scale_new
+     <'> Fpango_attr_shape_new <'> Fpango_attr_size_new <'> Fpango_attr_stretch_new
+     <'> Fpango_attr_strikethrough_color_new <'> Fpango_attr_strikethrough_new
+     <'> Fpango_attr_style_new <'> Fpango_attr_type_register <'> Fpango_attr_underline_color_new
+     <'> Fpango_attr_underline_new <'> Fpango_attr_variant_new <'> Fpango_attr_weight_new
+     <'> Fpango_attribute_copy <'> Fpango_attribute_destroy <'> Fpango_attribute_equal
+     <'> Fpango_break <'> Fpango_color_copy <'> Fpango_color_free <'> Fpango_color_parse
+     <'> Fpango_context_get_base_dir <'> Fpango_context_get_font_description
+     <'> Fpango_context_get_language <'> Fpango_context_get_metrics
+     <'> Fpango_context_list_families <'> Fpango_context_load_font <'> Fpango_context_load_fontset
+     <'> Fpango_context_set_base_dir <'> Fpango_context_set_font_description
+     <'> Fpango_context_set_language <'> Fpango_coverage_copy <'> Fpango_coverage_get
+     <'> Fpango_coverage_max <'> Fpango_coverage_new <'> Fpango_coverage_ref
+     <'> Fpango_coverage_set
+     <'> Fpango_coverage_to_bytes <'> Fpango_coverage_unref <'> Fpango_font_describe
+     <'> Fpango_font_description_better_match <'> Fpango_font_description_copy
+     <'> Fpango_font_description_copy_static <'> Fpango_font_description_equal
+     <'> Fpango_font_description_free <'> Fpango_font_description_from_string
+     <'> Fpango_font_description_get_family <'> Fpango_font_description_get_set_fields
+     <'> Fpango_font_description_get_size <'> Fpango_font_description_get_stretch
+     <'> Fpango_font_description_get_style <'> Fpango_font_description_get_variant
+     <'> Fpango_font_description_get_weight <'> Fpango_font_description_hash
+     <'> Fpango_font_description_merge <'> Fpango_font_description_merge_static
+     <'> Fpango_font_description_new <'> Fpango_font_description_set_family
+     <'> Fpango_font_description_set_family_static <'> Fpango_font_description_set_size
+     <'> Fpango_font_description_set_stretch <'> Fpango_font_description_set_style
+     <'> Fpango_font_description_set_variant <'> Fpango_font_description_set_weight
+     <'> Fpango_font_description_to_filename <'> Fpango_font_description_to_string
+     <'> Fpango_font_description_unset_fields <'> Fpango_font_descriptions_free
+     <'> Fpango_font_face_describe <'> Fpango_font_face_get_face_name
+     <'> Fpango_font_face_list_sizes <'> Fpango_font_family_get_name
+     <'> Fpango_font_family_is_monospace <'> Fpango_font_family_list_faces
+     <'> Fpango_font_get_coverage <'> Fpango_font_get_glyph_extents
+     <'> Fpango_font_get_metrics <'> Fpango_font_map_list_families
+     <'> Fpango_font_map_load_font <'> Fpango_font_map_load_fontset
+     <'> Fpango_font_metrics_get_approximate_char_width
+     <'> Fpango_font_metrics_get_approximate_digit_width
+     <'> Fpango_font_metrics_get_ascent <'> Fpango_font_metrics_get_descent
+     <'> Fpango_font_metrics_get_strikethrough_position
+     <'> Fpango_font_metrics_get_strikethrough_thickness
+     <'> Fpango_font_metrics_get_underline_position
+     <'> Fpango_font_metrics_get_underline_thickness <'> Fpango_font_metrics_ref
+     <'> Fpango_font_metrics_unref <'> Fpango_get_log_attrs <'> Fpango_glyph_string_copy
+     <'> Fpango_glyph_string_extents <'> Fpango_glyph_string_extents_range
+     <'> Fpango_glyph_string_free <'> Fpango_glyph_string_get_logical_widths
+     <'> Fpango_glyph_string_index_to_x <'> Fpango_glyph_string_new
+     <'> Fpango_glyph_string_set_size <'> Fpango_glyph_string_x_to_index
+     <'> Fpango_item_copy <'> Fpango_item_free <'> Fpango_item_new <'> Fpango_item_split
+     <'> Fpango_itemize <'> Fpango_language_matches <'> Fpango_layout_context_changed
+     <'> Fpango_layout_copy <'> Fpango_layout_get_alignment <'> Fpango_layout_get_attributes
+     <'> Fpango_layout_get_auto_dir <'> Fpango_layout_get_context <'> Fpango_layout_get_cursor_pos
+     <'> Fpango_layout_get_extents <'> Fpango_layout_get_indent <'> Fpango_layout_get_iter
+     <'> Fpango_layout_get_justify <'> Fpango_layout_get_line <'> Fpango_layout_get_line_count
+     <'> Fpango_layout_get_lines <'> Fpango_layout_get_log_attrs
+     <'> Fpango_layout_get_pixel_extents
+     <'> Fpango_layout_get_pixel_size <'> Fpango_layout_get_single_paragraph_mode
+     <'> Fpango_layout_get_size <'> Fpango_layout_get_spacing <'> Fpango_layout_get_tabs
+     <'> Fpango_layout_get_text <'> Fpango_layout_get_width <'> Fpango_layout_get_wrap
+     <'> Fpango_layout_index_to_pos <'> Fpango_layout_iter_at_last_line <'> Fpango_layout_iter_free
+     <'> Fpango_layout_iter_get_baseline <'> Fpango_layout_iter_get_char_extents
+     <'> Fpango_layout_iter_get_cluster_extents <'> Fpango_layout_iter_get_index
+     <'> Fpango_layout_iter_get_layout_extents <'> Fpango_layout_iter_get_line
+     <'> Fpango_layout_iter_get_line_extents <'> Fpango_layout_iter_get_line_yrange
+     <'> Fpango_layout_iter_get_run <'> Fpango_layout_iter_get_run_extents
+     <'> Fpango_layout_iter_next_char <'> Fpango_layout_iter_next_cluster
+     <'> Fpango_layout_iter_next_line <'> Fpango_layout_iter_next_run
+     <'> Fpango_layout_line_get_extents <'> Fpango_layout_line_get_pixel_extents
+     <'> Fpango_layout_line_get_x_ranges <'> Fpango_layout_line_index_to_x
+     <'> Fpango_layout_line_x_to_index <'> Fpango_layout_move_cursor_visually
+     <'> Fpango_layout_new <'> Fpango_layout_set_alignment <'> Fpango_layout_set_attributes
+     <'> Fpango_layout_set_auto_dir <'> Fpango_layout_set_font_description
+     <'> Fpango_layout_set_indent <'> Fpango_layout_set_justify <'> Fpango_layout_set_markup
+     <'> Fpango_layout_set_markup_with_accel <'> Fpango_layout_set_single_paragraph_mode
+     <'> Fpango_layout_set_spacing <'> Fpango_layout_set_tabs <'> Fpango_layout_set_text
+     <'> Fpango_layout_set_width <'> Fpango_layout_set_wrap <'> Fpango_layout_xy_to_index
+     <'> Fpango_parse_markup <'> Fpango_renderer_deactivate
+     <'> Fpango_renderer_draw_error_underline
+     <'> Fpango_script_iter_free <'> Fpango_script_iter_get_range <'> Fpango_script_iter_next
+     <'> FGDK_COLORMAP <'> FGDK_IS_COLORMAP <'> FG_OBJECT_TYPE <'> Fgdk_colormap_alloc_color
+     <'> Fgdk_colormap_alloc_colors <'> Fgdk_colormap_get_system <'> Fgdk_colormap_get_visual
+     <'> Fgdk_colormap_new <'> Fgdk_drawable_get_depth <'> Fgdk_drawable_get_size
+     <'> Fgdk_drawable_get_visual <'> Fgdk_drawable_set_colormap <'> Fgdk_pixbuf_get_from_drawable
+     <'> Fgdk_pixbuf_render_pixmap_and_mask <'> Fgdk_pixbuf_render_pixmap_and_mask_for_colormap
+     <'> Fgdk_pixbuf_render_threshold_alpha <'> Fgdk_screen_get_default_colormap
+     <'> Fgdk_screen_get_system_colormap <'> Fgdk_screen_set_default_colormap
+     <'> Fgdk_window_clear <'> Fgdk_window_clear_area <'> Fgdk_window_clear_area_e
+     <'> Fgdk_window_get_internal_paint_info <'> Fgdk_window_set_back_pixmap
+     <'> Fgdk_window_set_icon
+     <'> Fgdk_window_shape_combine_mask <'> Fgtk_binding_set_activate <'> Fgtk_bindings_activate
+     <'> Fgtk_cell_renderer_render <'> Fgtk_cell_view_get_size_of_row <'> Fgtk_drag_set_icon_pixmap
+     <'> Fgtk_drag_source_set_icon <'> Fgtk_paint_arrow <'> Fgtk_paint_box <'> Fgtk_paint_box_gap
+     <'> Fgtk_paint_check <'> Fgtk_paint_diamond <'> Fgtk_paint_extension <'> Fgtk_paint_flat_box
+     <'> Fgtk_paint_focus <'> Fgtk_paint_handle <'> Fgtk_paint_hline <'> Fgtk_paint_layout
+     <'> Fgtk_paint_option <'> Fgtk_paint_resize_grip <'> Fgtk_paint_shadow
+     <'> Fgtk_paint_shadow_gap
+     <'> Fgtk_paint_slider <'> Fgtk_paint_tab <'> Fgtk_paint_vline <'> Fgtk_requisition_copy
+     <'> Fgtk_requisition_free <'> Fgtk_ruler_draw_pos <'> Fgtk_ruler_draw_ticks
+     <'> Fgtk_style_apply_default_background <'> Fgtk_tree_view_create_row_drag_icon
+     <'> Fgtk_widget_get_child_requisition <'> Fgtk_widget_get_colormap
+     <'> Fgtk_widget_get_default_colormap <'> Fgtk_widget_get_default_visual
+     <'> Fgtk_widget_pop_colormap <'> Fgtk_widget_push_colormap <'> Fgtk_widget_set_colormap
+     <'> Fgtk_widget_set_default_colormap <'> Fgtk_widget_shape_combine_mask
+     <'> Fgtk_widget_size_request <'> Fgdk_drawable_get_colormap
+     <'> Fpango_shape ) constant gtk-procs-3
+
+  \ from breakable-gtk-procs
+  \ <'> Fgtk_accel_map_load_scanner
+  \ <'> Fgtk_quit_add_destroy
+  \ from gtk-procs-x
+  \ <'> Fgtk_paint_expander
+
+  : 26-gtk ( -- )
+    $" breakable gtk procs: %d" #( breakable-gtk-procs length ) snd-test-message
+    $"           gtk procs: %d" #(
+       gtk-procs-1 length gtk-procs-2 length + gtk-procs-3 length + ) snd-test-message
+  ; 
+[else]
+  <'> noop alias 26-gtk
+[then]
+
 : 28-errors ( -- )
   #t set-with-background-processes drop
   reset-all-hooks
@@ -3773,6 +5188,7 @@ let: ( -- )
   <'> 15-chan-local-vars run-fth-test
   <'> 19-save/restore    run-fth-test
   <'> 23-with-sound      run-fth-test
+  <'> 26-gtk             run-fth-test
   <'> 28-errors          run-fth-test
   <'> 30-test            run-fth-test	\ local fragment test
   finish-snd-test

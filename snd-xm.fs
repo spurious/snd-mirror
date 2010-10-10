@@ -1,428 +1,124 @@
 \ -*- snd-forth -*-
-\ snd-xm.fs -- snd-motif.scm|snd-xm.rb --> snd-xm.fs
+\ snd-xm.fs -- snd-motif|gtk.scm|snd-xm.rb --> snd-xm.fs
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Dec 26 22:36:46 CET 2005
-\ Changed: Fri Jan 08 00:07:47 CET 2010
+\ Changed: Sun Oct 10 03:35:12 CEST 2010
 
 \ Commentary:
 \
-\ main-dpy                 ( -- dpy )
+\ Requires --with-motif|gtk and module libxm.so|libxg.so or --with-static-xm|xg!
+\
+\ Tested with Snd 11.10, Motif 2.3.0, Gtk+ 2.20.1, Fth 1.2.x
+\ 
+\ Motif and Gtk:
+\
+\ widget?                  ( w -- f )
+\ widget-manage            ( w -- )
+\ widget-unmanage          ( w -- )
+\ widget-set-sensitive     ( w f -- )
+\ change-label     	   ( widget new-label -- )
+\ for-each-child   	   ( widget prc -- )
 \ load-font                ( name -- fid|#f )
-\ current-screen   	   ( -- scr )
+\ host-name                ( -- host )
 \ white-pixel      	   ( -- pix )
 \ black-pixel      	   ( -- pix )
+\ raise-dialog             ( dialog -- )
+\ show-smpte-label         ( on-or-off -- )
+\ smpte-is-on              ( -- flag )
+\ show-disk-space          ( snd -- )
+\
+\ Motif only:
+\ 
+\ main-dpy                 ( -- dpy )
+\ current-screen   	   ( -- scr )
 \ screen-depth     	   ( -- n )
 \ 
-\ for-each-child   	   ( widget xt -- )
 \ children->array          ( widget -- array )
 \ find-child               ( widget name -- wid )
 \ widget-exists?           ( widget name -- f )
 \ main-widget-exists?      ( name -- f )
 \ display-widget-tree      ( widget -- )
 \ set-main-color-of-widget ( w -- )
-\ host-name                ( -- host )
 \ 
 \ add-channel-pane         ( snd chn name type args -- wid )
 \ add-sound-pane           ( snd name type args -- wid )
 \ add-main-pane            ( name type args -- wid )
 \ add-listener-pane        ( name type args -- wid )
 \ 
-\ raise-dialog             ( dialog -- )
 \ activate-dialog          ( dialog -- )
 \ add-mark-pane            ( -- )
-\
-\ show-smpte-label         ( on-or-off -- )
-\ smpte-is-on              ( -- flag )
-\ 
-\ change-label     	   ( widget new-label -- )
-\ show-disk-space          ( snd -- )
 \ 
 \ current-label    	   ( widget -- label )
 
 \ Code:
 
-'snd-motif provided? [unless] skip-file [then]
+'snd-nogui provided? [if] skip-file [then]
 
-require clm
-require examp
-\ if not configured --with-static-xm
-'xm provided? not [if] dl-load libxm Init_libxm [then]
+require extensions
 
-: main-dpy ( -- dpy ) main-widgets 1 array-ref FXtDisplay ;
-: load-font ( name -- fid|#f )
-  { name }
-  main-dpy name FXLoadQueryFont { fs }
-  fs FXFontStruct? if fs Ffid else #f then 
-;
-: current-screen ( -- scr )
-  doc" Returns the current X screen number of the current display."
-  main-dpy FDefaultScreenOfDisplay
-;
-: white-pixel  ( -- pix ) current-screen FWhitePixelOfScreen ;
-: black-pixel  ( -- pix ) current-screen FBlackPixelOfScreen ;
-: screen-depth ( -- n )   current-screen FDefaultDepthOfScreen ;
+\ if not configured --with-static-xm|g
+'snd-motif provided? 'xm provided? not && [if] dl-load libxm Init_libxm [then]
+'snd-gtk   provided? 'xg provided? not && [if] dl-load libxg Init_libxg [then]
 
-\ --- apply func to every widget belonging to w ---
-
-: for-each-child { wid xt -- }
-  doc" Applies XT to WIDGET and each of its children."
-  wid xt execute
-  wid FXtIsComposite if
-    wid #( FXmNchildren 0 ) FXtVaGetValues 1 array-ref each ( w ) xt recurse end-each
-  then
-;
-
-hide
-: children->array-xt ( ary -- xt; child self -- )
-  1 proc-create swap ,
- does> ( child self -- )
-  ( self ) @ swap ( child ) array-push drop
-;
-set-current
-: children->array ( widget -- array )
-  #() { ary }
-  ( widget ) ary children->array-xt for-each-child
-  ary
-;
-previous
-  
-: find-child ( widget name -- wid )
-  doc" Returns a widget named NAME, if one can be found in the widget hierarchy beneath WIDGET."
-  { widget name }
-  #f
-  widget children->array each { w }
-    w FXtName name string= if
-      not
-      w swap
-      leave
-    then
-  end-each
-  unless 'no-such-widget #( get-func-name name ) fth-throw then
-;
-
-: widget-exists? { widget name -- f }
-  #f ( flag ) widget children->array each ( w ) FXtName name string= if not leave then end-each
-;
-: main-widget-exists? ( name -- f ) main-widgets 1 array-ref swap widget-exists? ;
-
-hide
-: display-widget <{ widget n -- }>
-  widget FXtName empty? if
-    $" <unnamed>"
-  else
-    widget FXtName
-  then
-  n spaces .string cr
-  widget FXtIsComposite if
-    widget #( FXmNchildren 0 ) FXtVaGetValues 1 array-ref each ( w ) n 2 + recurse end-each
-  then
-;
-set-current
-: display-widget-tree { widget -- }
-  doc" Displays the hierarchy of widgets beneath WIDGET."
-  <'> display-widget #( widget 0 ) run-proc drop
-;
-previous
-
-hide
-: change-color-xt <{ w -- }>
-  w FXtIsWidget if
-    w FXmIsScrollBar if
-      w position-color FXmChangeColor drop
-    else
-      w basic-color FXmChangeColor drop
-    then
-  then
-;
-set-current
-: set-main-color-of-widget ( widget -- )
-  doc" Sets the background color of WIDGET."
-  <'> change-color-xt for-each-child
-;
-previous
-
-: host-name ( -- host )
-  doc" Returns name of current machine."
-  main-widgets 1 array-ref { wid }
-  wid FXtWindow { win }
-  main-dpy win main-dpy $" WM_CLIENT_MACHINE" #f FXInternAtom 0 32 #f FXA_STRING
-  FXGetWindowProperty { host }
-  host if host 5 array-ref else host then
-;
-  
-\ --- add our own pane to the channel section ---
-
-: add-channel-pane { snd chn name typ args -- wid }
-  name typ snd chn channel-widgets 7 array-ref FXtParent FXtParent args undef FXtCreateManagedWidget
-;
-
-\ --- add our own pane to the sound section (underneath the controls in this case) ---
-
-: add-sound-pane { snd name typ args -- wid }
-  name typ snd sound-widgets 0 array-ref args undef FXtCreateManagedWidget
-;
-
-\ --- add our own pane to the overall Snd window (underneath the listener in this case) ---
-
-: add-main-pane { name typ args -- wid }
-  main-widgets 5 array-ref dup unless drop main-widgets 3 array-ref then { parent }
-  name typ parent args undef FXtCreateManagedWidget
-;
-
-\ --- add a widget at the top of the listener ---
-
-: add-listener-pane { name typ args -- wid }
-  main-widgets 1 array-ref $" lisp-listener" find-child { listener }
-  listener FXtParent { listener-scroll }
-  listener-scroll FXtParent { listener-form }
-  listener-scroll FXtUnmanageChild drop
-  args
-  #( FXmNleftAttachment  FXmATTACH_FORM
-     FXmNrightAttachment FXmATTACH_FORM
-     FXmNtopAttachment   FXmATTACH_FORM ) array-append to args
-  name typ listener-form args undef FXtCreateManagedWidget { top-widget }
-  listener-scroll
-  #( FXmNtopAttachment FXmATTACH_WIDGET FXmNtopWidget top-widget ) FXtVaSetValues drop
-  listener-scroll FXtManageChild drop
-  top-widget
-;
-
-\ 0 0 $" new-pane" FxmDrawingAreaWidgetClass
-\ #( FXmNbackground graph-color FXmNforeground data-color ) add-channel-pane value draw-widget
-
-\ --- bring possibly-obscured dialog to top ---
-
-: raise-dialog ( dialog -- )
-  { w }
-  w FWidget? if
-    w FXtIsManaged if
-      w FXtParent { parent }
-      parent FWidget? if
-	parent FxmDialogShellWidgetClass FXtIsSubclass if
-	  parent FXtGrabNone FXtPopup drop
-	then
-      then
-    then
-  then
-;
-: activate-dialog ( dialog -- ) dup FXtIsManaged if raise-dialog else FXtManageChild drop then ;
-
-\ --- add-mark-pane ---
-
-#f value including-mark-pane
-
-hide
-#() value mark-list-lengths
-#() value mark-lists
-
-: find-mark-list { snd chn dats -- lst }
-  #f					\ flag
-  dats each { dat }
-    snd dat 0 array-ref =
-    chn dat 1 array-ref = && if
-      drop				\ drop flag
-      dat 2 array-ref
-      leave
-    then
-  end-each
-;
-: mark-list-length ( snd chn -- len ) mark-list-lengths find-mark-list dup unless drop 0 then ;
-: set-mark-list-length { snd chn len -- }
-  mark-list-lengths each { dat }
-    snd dat 0 array-ref =
-    chn dat 1 array-ref = && if
-      mark-list-lengths i array-delete! drop
-      leave
-    then
-  end-each
-  mark-list-lengths #( snd chn len ) array-push drop
-;
-: mark-list ( snd chn -- lst ) mark-lists find-mark-list dup if 2 array-ref else drop #() then ;
-: set-mark-list { snd chn lst -- } mark-lists #( snd chn lst ) array-push drop ;
-: deactivate-channel { snd chn -- }
-  snd chn mark-list-length 0>
-  snd chn mark-list FWidget? && if
-    snd chn mark-list #( FXmNchildren 0 ) FXtVaGetValues 1 array-ref each
-      FXtUnmanageChild drop
-    end-each
-  then
-;
-: marks-focus-cb        <{ w c i -- }> w #( FXmNbackground white-pixel ) FXtVaSetValues drop ;
-: marks-losing-focus-cb <{ w c i -- }> w #( FXmNbackground basic-color ) FXtVaSetValues drop ;
-: marks-activate-cb <{ w c info -- }>
-  w #( FXmNuserData 0 ) FXtVaGetValues 1 array-ref { id }
-  w #( FXmNvalue 0 )    FXtVaGetValues 1 array-ref { txt }
-  txt string? txt length 0> && if txt string->number else #f then { samp }
-  samp if id samp set-mark-sample else id delete-mark then drop
-  w #( FXmNbackground basic-color ) FXtVaSetValues drop
-;
-: marks-enter-cb <{ w c i f -- }> mouse-enter-text-hook #( w ) run-hook drop ;
-: marks-leave-cb <{ w c i f -- }> mouse-leave-text-hook #( w ) run-hook drop ;
-: make-mark-list { snd chn -- }
-  snd chn mark-list-length { cur-len }
-  snd chn deactivate-channel
-  snd chn mark-list FWidget? unless
-    snd chn $" mark-box" FxmFormWidgetClass
-    #( FXmNbackground       basic-color
-       FXmNorientation      FXmVERTICAL
-       FXmNpaneMinimum      100
-       FXmNbottomAttachment FXmATTACH_FORM ) add-channel-pane { mark-box }
-    $" Marks" FxmLabelWidgetClass mark-box
-    #( FXmNbackground       highlight-color
-       FXmNleftAttachment   FXmATTACH_FORM
-       FXmNrightAttachment  FXmATTACH_FORM
-       FXmNalignment        FXmALIGNMENT_CENTER
-       FXmNtopAttachment    FXmATTACH_FORM ) undef FXtCreateManagedWidget { mark-label }
-    $" mark-scroller" FxmScrolledWindowWidgetClass mark-box
-    #( FXmNbackground       basic-color
-       FXmNscrollingPolicy  FXmAUTOMATIC
-       FXmNscrollBarDisplayPolicy FXmSTATIC
-       FXmNleftAttachment   FXmATTACH_FORM
-       FXmNrightAttachment  FXmATTACH_FORM
-       FXmNtopAttachment    FXmATTACH_WIDGET
-       FXmNtopWidget        mark-label
-       FXmNbottomAttachment FXmATTACH_FORM ) undef FXtCreateManagedWidget { mark-scroller }
-    $" mark-list" FxmRowColumnWidgetClass mark-scroller
-    #( FXmNorientation      FXmVERTICAL
-       FXmNtopAttachment    FXmATTACH_FORM
-       FXmNbottomAttachment FXmATTACH_FORM
-       FXmNspacing          0 ) undef FXtCreateManagedWidget { mlist }
-    mark-scroller set-main-color-of-widget
-    mark-box #( FXmNpaneMinimum 1 ) FXtVaSetValues drop
-    snd chn #( snd chn mlist ) set-mark-list
-  then
-  snd chn #f marks { new-marks }
-  new-marks length cur-len > if
-    snd chn mark-list { lst }
-    new-marks length cur-len ?do
-      $" field" FxmTextFieldWidgetClass lst
-      #( FXmNbackground basic-color ) undef FXtCreateWidget { tf }
-      tf FXmNfocusCallback       <'> marks-focus-cb        undef FXtAddCallback drop
-      tf FXmNlosingFocusCallback <'> marks-losing-focus-cb undef FXtAddCallback drop
-      tf FXmNactivateCallback    <'> marks-activate-cb     undef FXtAddCallback drop
-      tf FEnterWindowMask #f     <'> marks-enter-cb        undef FXtAddEventHandler drop
-      tf FLeaveWindowMask #f     <'> marks-leave-cb        undef FXtAddEventHandler drop
-    loop
-  then
-  snd chn new-marks length set-mark-list-length
-  snd chn mark-list #( FXmNchildren 0 ) FXtVaGetValues 1 array-ref each { wid }
-    new-marks empty? ?leave
-    wid FXmIsTextField if
-      wid
-      #( FXmNvalue    new-marks 0 array-ref undef mark-sample number->string
-	 FXmNuserData new-marks 0 array-ref ) FXtVaSetValues drop
-      wid FXtManageChild drop
-      new-marks array-shift to new-marks
-    then
-  end-each
-  #f
-;
-: remark <{ id snd chn reason -- }> snd chn make-mark-list ;
-: unremark <{ snd -- }> snd channels 0 ?do snd i deactivate-channel loop ;
-: marks-edit-cb { snd chn -- proc; self -- }
-  0 proc-create chn , snd ,
- does> ( self -- )
-  { self }
-  self @ { chn }
-  self cell+ @ { snd }
-  snd chn mark-list FWidget? if snd chn make-mark-list then
-;
-: open-remarks <{ snd -- }>
-  snd channels 0 ?do
-    snd i after-edit-hook snd i marks-edit-cb add-hook!
-    snd i undo-hook       snd i marks-edit-cb add-hook!
-  loop
-;
-: marks-update-proc <{ snd -- }> snd channels 0 ?do snd i make-mark-list loop ;
-: marks-update-cb <{ snd -- proc }> snd <'> marks-update-proc ;
-set-current
-: add-mark-pane ( -- )
-  #t to including-mark-pane
-  mark-hook       <'> remark          add-hook!
-  close-hook      <'> unremark        add-hook!
-  after-open-hook <'> open-remarks    add-hook!
-  update-hook     <'> marks-update-cb add-hook!
-;
-previous
-
-\  --- show-smpte-label ---
+\ ;;; -------- show-smpte-label
+\ ;;;
+\ ;;; (show-smpte-label on-or-off)
+\ ;;; turns on/off a label in the time-domain graph showing the
+\ ;;; current smpte frame of the leftmost sample
 
 hide
 24.0 value smpte-frames-per-second
+nil  value draw-smpte-label-cb
 
 : smpte-label { samp sr -- str }
-  samp sr f/ { secs }
+  samp sr f/                      { secs }
   secs smpte-frames-per-second f* { frms }
-  secs 60.0 f/ floor { mins }
-  mins 60.0 f/ floor { hours }
-  $" %02d:%02d:%02d:%02d"
-  #( hours f>s
+  secs 60.0 f/ ftrunc             { mins }
+  mins 60.0 f/ ftrunc             { hours }
+  "%02d:%02d:%02d:%02d" #(
+     hours f>s
      mins hours 60.0 f* f- f>s
-     secs mins 60.0 f* f- f>s
-     frms secs floor smpte-frames-per-second f* f- floor f>s ) string-format
+     secs mins  60.0 f* f- ftrunc f>s
+     frms secs ftrunc smpte-frames-per-second f* f- ftrunc f>s ) string-format
 ;
+set-current
 
 : draw-smpte-label ( vars -- proc; snd chn self -- )
-  2 proc-create swap ,
+  2 proc-create swap , ( proc )
  does> ( snd chn self -- )
   { snd chn self }
   self @ { vars }
-  snd chn undef axis-info { axinf }
-  axinf 10 array-ref { x }
-  axinf 13 array-ref { y }
-  axinf 12 array-ref x - { grf-width }
-  axinf 11 array-ref y - { grf-height }
-  grf-height vars 'height array-assoc-ref 2* >
-  grf-width  vars 'width  array-assoc-ref 1.5 f* f>s > &&
-  snd chn time-graph? && if
+  vars 'height array-assoc-ref { height }
+  vars 'width  array-assoc-ref { width }
+  snd chn undef axis-info      { axinf }
+  axinf 10 array-ref           { x }
+  axinf 13 array-ref           { y }
+  axinf 12 array-ref x -       { grf-width }
+  axinf 11 array-ref y -       { grf-height }
+  grf-height height 2*         >
+  grf-width  width  1.5 f* f>s > &&
+  snd chn time-graph?            && if
     axinf 0 array-ref snd srate smpte-label { smpte }
-    x y vars 'width array-assoc-ref 2 snd chn undef undef fill-rectangle drop
-    x y vars 'height array-assoc-ref + vars 'width array-assoc-ref 2 snd chn undef undef fill-rectangle drop
-    x y 2 vars 'height array-assoc-ref snd chn undef undef fill-rectangle drop
-    x vars 'width array-assoc-ref 2 - + y 2 vars 'height array-assoc-ref snd chn undef undef fill-rectangle drop
-    vars 'dpy array-assoc-ref snd selected-channel chn = if
-      snd-gcs 1 array-ref
-    else
-      snd-gcs 0 array-ref
-    then vars 'fs array-assoc-ref Ffid FXSetFont drop
+    x            y          width 2      snd chn undef undef fill-rectangle drop
+    x            y height + width 2      snd chn undef undef fill-rectangle drop
+    x            y          2     height snd chn undef undef fill-rectangle drop
+    x width 2- + y          2     height snd chn undef undef fill-rectangle drop
+    vars 'fs array-assoc-ref snd chn time-graph set-current-font drop
     smpte x 4 + y 4 + snd chn undef draw-string drop
-  then
-;
-set-current
-: show-smpte-label ( on-or-off -- )
-  doc" Turns on/off a label in the time-domain graph showing \
-the current smpte frame of the leftmost sample."
-  ( on-or-off ) if
-    after-graph-hook <'> draw-smpte-label hook-member? unless
-      main-widgets 1 array-ref FXtDisplay { dpy }
-      dpy axis-numbers-font FXLoadQueryFont { fs }
-      #()      'width   fs $" 00:00:00:00" 11 FXTextWidth  8 +  array-assoc-set!
-      ( vars ) 'height  fs "0" 1 FXTextExtents 2 array-ref 8 +  array-assoc-set!
-      ( vars ) 'dpy     dpy array-assoc-set!
-      ( vars ) 'fs      fs  array-assoc-set! { vars }
-      after-graph-hook vars draw-smpte-label add-hook!
-      #t #t update-time-graph drop
-    then
-  else
-    after-graph-hook <'> draw-smpte-label remove-hook! drop
-    #t #t update-time-graph drop
   then
 ;
 
 \ for prefs
-: smpte-is-on ( -- flag ) after-graph-hook <'> draw-smpte-label hook-member? ;
+: smpte-is-on ( -- flag ) after-graph-hook draw-smpte-label-cb hook-member? ;
+\
+\ call: #t show-smpte-label
+\
 previous
 
-: change-label ( wid new-label -- )
-  doc" Changes WIDGET's label to be NEW-LABEL."
-  { wid new-label }
-  new-label FXmStringCreateLocalized { str }
-  wid #( FXmNlabelString str ) FXtVaSetValues drop
-  str FXmStringFree drop
-;
-
-\ --- show-disk-space ---
+\ ;;; -------- show-disk-space
+\ ;;;
+\ ;;; adds a label to the minibuffer area showing the current free space 
 
 hide
 #() value labelled-snds
@@ -432,8 +128,8 @@ hide
     $" disk full!"
   else
     "" { str }
-    num 1024 > if
-      num 1024 1024 * > if
+    num 1024 d> if
+      num 1024 1024 * d> if
 	$" space: %6.3fG" #( num 1024.0 1024.0 f* f/ ) string-format
       else
 	$" space: %6.3fM" #( num 1024.0 f/ )           string-format
@@ -443,62 +139,586 @@ hide
     then ( str )
   then
 ;
-
-: show-label <{ data id -- }>
-  data 0 array-ref empty? unless
-    data 0 array-ref { snd }
-    data 1 array-ref { wid }
-    data 2 array-ref { app }
-    snd sound? if wid  snd file-name disk-kspace kmg change-label then
-    app 10000 running-word data FXtAppAddTimeOut drop
-  then
-;
 set-current
-
 #f value showing-disk-space		\ for prefs
-
-: show-disk-space <{ snd -- }>
-  doc" Adds a label to the minibuffer area showing the current free space \
-(for use with after-open-hook)."
-  #f labelled-snds each { n } n 0 array-ref snd = if drop n leave then end-each { previous-label }
-  previous-label unless
-    snd sound? if
-      #t to showing-disk-space
-      main-widgets 0 array-ref { app }
-      snd sound-widgets { widgets }
-      widgets 3 array-ref { minibuffer }
-      widgets 6 array-ref { unite-button }
-      widgets 9 array-ref { sync-button }
-      minibuffer FXtParent { name-form }
-      snd file-name disk-kspace kmg FXmStringCreateLocalized { str }
-      minibuffer FXtUnmanageChild drop
-      minibuffer #( FXmNrightAttachment FXmATTACH_NONE ) FXtVaSetValues drop
-      "space" FxmLabelWidgetClass name-form
-      #( FXmNbackground      basic-color
-	 FXmNleftAttachment  FXmATTACH_NONE
-	 FXmNlabelString     str
-	 FXmNrightAttachment FXmATTACH_WIDGET
-	 FXmNrightWidget     unite-button FXtIsManaged if unite-button else sync-button then
-	 FXmNtopAttachment   FXmATTACH_FORM ) undef FXtCreateManagedWidget { new-label }
-      minibuffer
-      #( FXmNrightWidget new-label FXmNrightAttachment FXmATTACH_WIDGET ) FXtVaSetValues drop
-      minibuffer FXtManageChild drop
-      str FXmStringFree drop
-      #( snd new-label app ) to previous-label
-      labelled-snds previous-label array-push drop
-      app 10000 <'> show-label previous-label FXtAppAddTimeOut drop
-    else
-      $" no sound found for disk space label" snd-error drop
-    then
-  then
-;
+\
 \ after-open-hook <'> show-disk-space add-hook!
+\
 previous
 
-: current-label ( widget -- label )
-  doc" Returns WIDGET's label."
-  ( wid ) #( FXmNlabelString 0 ) FXtVaGetValues 1 array-ref { xmstr }
-  xmstr #f FXmCHARSET_TEXT FXmCHARSET_TEXT #f 0 FXmOUTPUT_ALL FXmStringUnparse
-;
+\ ===== Gtk and Motif =====
+
+'snd-gtk provided? [if]
+  : widget?              ( w -- f ) FGTK_IS_WIDGET ;
+  : widget-manage        ( w -- )   Fgtk_widget_show drop ;
+  : widget-unmanage      ( w -- )   Fgtk_widget_hide drop ;
+  : widget-set-sensitive ( w f -- ) Fgtk_widget_set_sensitive drop ;
+
+  : change-label ( wid new-label -- )
+    doc" Changes WIDGET's label to be NEW-LABEL."
+    { wid new-label }
+    wid if
+      wid FGTK_IS_LABEL if
+	wid
+      else
+	wid FGTK_BIN Fgtk_bin_get_child
+      then FGTK_LABEL new-label Fgtk_label_set_text drop
+    then
+  ;
+
+  hide
+  : for-each-cb ( cb -- prc; w d self -- val )
+    2 proc-create swap , ( prc )
+   does> { w d self -- val }
+    self @ ( cb ) #( w ) run-proc
+  ;
+  set-current
+
+  : for-each-child { wid prc -- }
+    doc" Applies PRC ( w -- val ) to WIDGET and each of its children."
+    wid widget? if
+      prc #( wid ) run-proc drop
+      wid FGTK_CONTAINER prc for-each-cb Fgtk_container_foreach drop
+    then
+  ;
+  previous
+
+  : load-font ( name -- fid|#f ) Fpango_font_description_from_string ;
+
+  : host-name ( -- host )
+    doc" Returns name of current machine."
+    main-widgets 0 array-ref
+    "WM_CLIENT_MACHINE" #f Fgdk_atom_intern
+    FGDK_TARGET_STRING 0 1024 0 Fgdk_property_get { val }
+    \ we get '( #t #( GdkAtom 0x3f ) 8 21 "pumpkin.fth-devel.net" )
+    val car if
+      val 4 list-ref 0 val 3 list-ref string-substring
+    else
+      #f
+    then
+  ;
+  : get-color-pixel ( name -- pix )
+    { name }
+    FGdkColor { tmp }
+    name tmp Fgdk_color_parse drop
+    tmp Fgdk_color_copy
+  ;
+  : white-pixel ( -- pix ) "white" get-color-pixel ;
+  : black-pixel ( -- pix ) "black" get-color-pixel ;
+
+  \ --- bring possibly-obscured dialog to top ---
+
+  : raise-dialog ( dialog -- )
+    { w }
+    w Fgtk_widget_show drop
+    w FGTK_WINDOW Fgtk_window_present drop
+  ;
+
+  \  --- show-smpte-label, Gtk specific ---
+  hide
+  #f value smpte-font-wh
+  "" value smpte-font-name
+  
+  : get-text-width-and-height { text fs -- wh }
+    smpte-font-wh not
+    smpte-font-name axis-numbers-font string<> || if
+      Fgdk_pango_context_get { ctx }
+      ctx Fpango_layout_new { layout }
+      axis-numbers-font to smpte-font-name
+      layout if
+	layout fs Fpango_layout_set_font_description drop
+	layout text -1 Fpango_layout_set_text drop
+	layout #f Fpango_layout_get_pixel_size { wid }
+	layout FGPOINTER Fg_object_unref drop
+	wid to smpte-font-wh
+	ctx FGPOINTER Fg_object_unref drop
+      then
+    then
+    smpte-font-wh
+  ;
+  set-current
+
+  : show-smpte-label ( on-or-off -- )
+    doc" Turns on/off a label in the time-domain graph showing \
+    the current smpte frame of the leftmost sample."
+    ( on-or-off ) if
+      smpte-is-on unless
+	axis-numbers-font Fpango_font_description_from_string { fs }
+	"00:00:00:00" fs get-text-width-and-height { wh }
+	#()      'width   wh 0 array-ref 8 +  array-assoc-set!
+	( vars ) 'height  wh 1 array-ref 8 +  array-assoc-set!
+	( vars ) 'fs      fs  array-assoc-set! { vars }
+	vars draw-smpte-label to draw-smpte-label-cb
+	after-graph-hook draw-smpte-label-cb add-hook!
+	#t #t update-time-graph drop
+      then
+    else
+      after-graph-hook draw-smpte-label-cb remove-hook! drop
+      #t #t update-time-graph drop
+    then
+  ;
+  previous
+
+  \ --- show-disk-space, Gtk specific ---
+
+  hide
+  : show-label <{ data -- n }>
+    data 0 array-ref sound? if
+      data 0 array-ref { snd }
+      data 1 array-ref { wid }
+      snd file-name disk-kspace kmg { space }
+      wid FGTK_LABEL space Fgtk_label_set_text drop
+      10000 running-word data Fg_timeout_add drop
+      0
+    else
+      nil
+    then
+  ;
+  set-current
+
+  : show-disk-space <{ snd -- }>
+    doc" Adds a label to the minibuffer area showing the current free space \
+    (for use with after-open-hook)."
+    #f ( flag )
+    labelled-snds each { n } n 0 array-ref snd equal? if
+	( flag ) drop
+	n
+	leave
+      then
+    end-each { previous-label }
+    previous-label unless
+      snd sound? if
+	#t to showing-disk-space
+	snd sound-widgets 10 array-ref { name-form }
+	snd file-name disk-kspace kmg { space }
+	space Fgtk_label_new { new-label }
+	name-form FGTK_BOX new-label #f #f 6 Fgtk_box_pack_start drop
+	new-label Fgtk_widget_show drop
+	#( snd new-label ) to previous-label
+	labelled-snds previous-label array-push drop
+	10000 <'> show-label previous-label Fg_timeout_add drop
+      else
+	$" no sound found for disk space label" snd-error drop
+      then
+    then
+  ;
+  previous
+[else]
+  : widget?              ( w -- f)  FWidget? ;
+  : widget-manage        ( w -- )   FXtManageChild drop ;
+  : widget-unmanage      ( w -- )   FXtUnmanageChild drop ;
+  : widget-set-sensitive ( w f -- ) FXtSetSensitive drop ;
+
+  : change-label ( wid new-label -- )
+    doc" Changes WIDGET's label to be NEW-LABEL."
+    { wid new-label }
+    new-label FXmStringCreateLocalized { str }
+    wid #( FXmNlabelString str ) FXtVaSetValues drop
+    str FXmStringFree drop
+  ;
+
+  : for-each-child { wid prc -- }
+    doc" Applies PRC to WIDGET and each of its children."
+    prc #( wid ) run-proc drop
+    wid FXtIsComposite if
+      wid #( FXmNchildren 0 ) FXtVaGetValues 1 array-ref each ( w ) prc recurse end-each
+    then
+  ;
+
+  : main-dpy ( -- dpy ) main-widgets 1 array-ref FXtDisplay ;
+
+  : load-font ( name -- fid|#f )
+    { name }
+    main-dpy name FXLoadQueryFont { fs }
+    fs FXFontStruct? if fs Ffid else #f then 
+  ;
+
+  : current-screen ( -- scr )
+    doc" Returns the current X screen number of the current display."
+    main-dpy FDefaultScreenOfDisplay
+  ;
+
+  : white-pixel  ( -- pix ) current-screen FWhitePixelOfScreen ;
+  : black-pixel  ( -- pix ) current-screen FBlackPixelOfScreen ;
+  : screen-depth ( -- n )   current-screen FDefaultDepthOfScreen ;
+
+  \ --- apply func to every widget belonging to w ---
+
+  hide
+  : children->array-cb ( ary -- xt; child self -- )
+    1 proc-create swap ,
+   does> ( child self -- )
+    ( self ) @ swap ( child ) array-push drop
+  ;
+  set-current
+
+  : children->array ( widget -- array )
+    #() { ary }
+    ( widget ) ary children->array-cb for-each-child
+    ary
+  ;
+  previous
+  
+  : find-child ( widget name -- wid )
+    doc" Returns a widget named NAME, if one can be found in the widget hierarchy beneath WIDGET."
+    { widget name }
+    #f
+    widget children->array each { w }
+      w FXtName name string= if
+	not
+	w swap
+	leave
+      then
+    end-each
+    unless 'no-such-widget #( get-func-name name ) fth-throw then
+  ;
+
+  : widget-exists? { widget name -- f }
+    #f ( flag ) widget children->array each ( w ) FXtName name string= if not leave then end-each
+  ;
+
+  : main-widget-exists? ( name -- f ) main-widgets 1 array-ref swap widget-exists? ;
+
+  hide
+  : display-widget <{ widget n -- }>
+    widget FXtName empty? if
+      $" <unnamed>"
+    else
+      widget FXtName
+    then
+    n spaces .string cr
+    widget FXtIsComposite if
+      widget #( FXmNchildren 0 ) FXtVaGetValues 1 array-ref each ( w ) n 2 + recurse end-each
+    then
+  ;
+  set-current
+
+  : display-widget-tree { widget -- }
+    doc" Displays the hierarchy of widgets beneath WIDGET."
+    <'> display-widget #( widget 0 ) run-proc drop
+  ;
+  previous
+
+  hide
+  : change-color-cb <{ w -- }>
+    w FXtIsWidget if
+      w FXmIsScrollBar if
+	w position-color FXmChangeColor drop
+      else
+	w basic-color FXmChangeColor drop
+      then
+    then
+  ;
+  set-current
+
+  : set-main-color-of-widget ( widget -- )
+    doc" Sets the background color of WIDGET."
+    <'> change-color-cb for-each-child
+  ;
+  previous
+
+  : host-name ( -- host )
+    doc" Returns name of current machine."
+    main-widgets 1 array-ref { wid }
+    wid FXtWindow { win }
+    main-dpy win main-dpy $" WM_CLIENT_MACHINE" #f FXInternAtom 0 32 #f FXA_STRING
+    FXGetWindowProperty { host }
+    host if host 5 array-ref else host then
+  ;
+  
+  \ --- add our own pane to the channel section ---
+
+  : add-channel-pane { snd chn name typ args -- wid }
+    name typ snd chn channel-widgets 7 array-ref FXtParent FXtParent args FXtCreateManagedWidget
+  ;
+
+  \ --- add our own pane to the sound section (underneath the controls in this case) ---
+
+  : add-sound-pane { snd name typ args -- wid }
+    name typ snd sound-widgets 0 array-ref args undef FXtCreateManagedWidget
+  ;
+
+  \ --- add our own pane to the overall Snd window (underneath the listener in this case) ---
+
+  : add-main-pane { name typ args -- wid }
+    main-widgets 5 array-ref dup unless drop main-widgets 3 array-ref then { parent }
+    name typ parent args undef FXtCreateManagedWidget
+  ;
+
+  \ --- add a widget at the top of the listener ---
+
+  : add-listener-pane { name typ args -- wid }
+    main-widgets 1 array-ref $" lisp-listener" find-child { listener }
+    listener FXtParent { listener-scroll }
+    listener-scroll FXtParent { listener-form }
+    listener-scroll FXtUnmanageChild drop
+    args
+    #( FXmNleftAttachment  FXmATTACH_FORM
+       FXmNrightAttachment FXmATTACH_FORM
+       FXmNtopAttachment   FXmATTACH_FORM ) array-append to args
+    name typ listener-form args undef FXtCreateManagedWidget { top-widget }
+    listener-scroll
+    #( FXmNtopAttachment FXmATTACH_WIDGET FXmNtopWidget top-widget ) FXtVaSetValues drop
+    listener-scroll FXtManageChild drop
+    top-widget
+  ;
+
+  \ 0 0 $" new-pane" FxmDrawingAreaWidgetClass
+  \ #( FXmNbackground graph-color FXmNforeground data-color ) add-channel-pane value draw-widget
+
+  \ --- bring possibly-obscured dialog to top ---
+
+  : raise-dialog ( dialog -- )
+    { w }
+    w FWidget? if
+      w FXtIsManaged if
+	w FXtParent { parent }
+	parent FWidget? if
+	  parent FxmDialogShellWidgetClass FXtIsSubclass if
+	    parent FXtGrabNone FXtPopup drop
+	  then
+	then
+      then
+    then
+  ;
+
+  : activate-dialog ( dialog -- ) dup FXtIsManaged if raise-dialog else FXtManageChild drop then ;
+
+  \ --- add-mark-pane ---
+
+  #f value including-mark-pane
+
+  hide
+  #() value mark-list-lengths
+  #() value mark-lists
+
+  : find-mark-list { snd chn dats -- lst }
+    #f					\ flag
+    dats each { dat }
+      snd dat 0 array-ref =
+      chn dat 1 array-ref = && if
+	drop				\ drop flag
+	dat 2 array-ref
+	leave
+      then
+    end-each
+  ;
+
+  : mark-list-length ( snd chn -- len ) mark-list-lengths find-mark-list dup unless drop 0 then ;
+
+  : set-mark-list-length { snd chn len -- }
+    mark-list-lengths each { dat }
+      snd dat 0 array-ref =
+      chn dat 1 array-ref = && if
+	mark-list-lengths i array-delete! drop
+	leave
+      then
+    end-each
+    mark-list-lengths #( snd chn len ) array-push drop
+  ;
+
+  : mark-list ( snd chn -- lst ) mark-lists find-mark-list dup if 2 array-ref else drop #() then ;
+
+  : set-mark-list { snd chn lst -- } mark-lists #( snd chn lst ) array-push drop ;
+
+  : deactivate-channel { snd chn -- }
+    snd chn mark-list-length 0>
+    snd chn mark-list FWidget? && if
+      snd chn mark-list #( FXmNchildren 0 ) FXtVaGetValues 1 array-ref each
+	FXtUnmanageChild drop
+      end-each
+    then
+  ;
+
+  : marks-focus-cb        <{ w c i -- f }> w #( FXmNbackground white-pixel ) FXtVaSetValues ;
+  : marks-losing-focus-cb <{ w c i -- f }> w #( FXmNbackground basic-color ) FXtVaSetValues ;
+
+  : marks-activate-cb <{ w c info -- }>
+    w #( FXmNuserData 0 ) FXtVaGetValues 1 array-ref { id }
+    w #( FXmNvalue 0 )    FXtVaGetValues 1 array-ref { txt }
+    txt string? txt length 0> && if txt string->number else #f then { samp }
+    samp if id samp set-mark-sample else id delete-mark then drop
+    w #( FXmNbackground basic-color ) FXtVaSetValues drop
+  ;
+
+  : marks-enter-cb <{ w c i f -- f }> mouse-enter-text-hook #( w ) run-hook ;
+  : marks-leave-cb <{ w c i f -- f }> mouse-leave-text-hook #( w ) run-hook ;
+
+  : make-mark-list { snd chn -- }
+    snd chn mark-list-length { cur-len }
+    snd chn deactivate-channel
+    snd chn mark-list FWidget? unless
+      snd chn $" mark-box" FxmFormWidgetClass
+      #( FXmNbackground       basic-color
+	 FXmNorientation      FXmVERTICAL
+	 FXmNpaneMinimum      100
+	 FXmNbottomAttachment FXmATTACH_FORM ) add-channel-pane { mark-box }
+      $" Marks" FxmLabelWidgetClass mark-box
+      #( FXmNbackground       highlight-color
+	 FXmNleftAttachment   FXmATTACH_FORM
+	 FXmNrightAttachment  FXmATTACH_FORM
+	 FXmNalignment        FXmALIGNMENT_CENTER
+	 FXmNtopAttachment    FXmATTACH_FORM ) undef FXtCreateManagedWidget { mark-label }
+      $" mark-scroller" FxmScrolledWindowWidgetClass mark-box
+      #( FXmNbackground       basic-color
+	 FXmNscrollingPolicy  FXmAUTOMATIC
+	 FXmNscrollBarDisplayPolicy FXmSTATIC
+	 FXmNleftAttachment   FXmATTACH_FORM
+	 FXmNrightAttachment  FXmATTACH_FORM
+	 FXmNtopAttachment    FXmATTACH_WIDGET
+	 FXmNtopWidget        mark-label
+	 FXmNbottomAttachment FXmATTACH_FORM ) undef FXtCreateManagedWidget { mark-scroller }
+      $" mark-list" FxmRowColumnWidgetClass mark-scroller
+      #( FXmNorientation      FXmVERTICAL
+	 FXmNtopAttachment    FXmATTACH_FORM
+	 FXmNbottomAttachment FXmATTACH_FORM
+	 FXmNspacing          0 ) undef FXtCreateManagedWidget { mlist }
+      mark-scroller set-main-color-of-widget
+      mark-box #( FXmNpaneMinimum 1 ) FXtVaSetValues drop
+      snd chn #( snd chn mlist ) set-mark-list
+    then
+    snd chn #f marks { new-marks }
+    new-marks length cur-len > if
+      snd chn mark-list { lst }
+      new-marks length cur-len ?do
+	$" field" FxmTextFieldWidgetClass lst
+	#( FXmNbackground basic-color ) undef FXtCreateWidget { tf }
+	tf FXmNfocusCallback       <'> marks-focus-cb        undef FXtAddCallback drop
+	tf FXmNlosingFocusCallback <'> marks-losing-focus-cb undef FXtAddCallback drop
+	tf FXmNactivateCallback    <'> marks-activate-cb     undef FXtAddCallback drop
+	tf FEnterWindowMask #f     <'> marks-enter-cb        undef FXtAddEventHandler drop
+	tf FLeaveWindowMask #f     <'> marks-leave-cb        undef FXtAddEventHandler drop
+      loop
+    then
+    snd chn new-marks length set-mark-list-length
+    snd chn mark-list #( FXmNchildren 0 ) FXtVaGetValues 1 array-ref each { wid }
+      new-marks empty? ?leave
+      wid FXmIsTextField if
+	wid
+	#( FXmNvalue    new-marks 0 array-ref undef mark-sample number->string
+	   FXmNuserData new-marks 0 array-ref ) FXtVaSetValues drop
+	wid FXtManageChild drop
+	new-marks array-shift to new-marks
+      then
+    end-each
+    #f
+  ;
+
+  : remark <{ id snd chn reason -- }> snd chn make-mark-list ;
+  : unremark <{ snd -- }> snd channels 0 ?do snd i deactivate-channel loop ;
+
+  : marks-edit-cb { snd chn -- proc; self -- }
+    0 proc-create chn , snd ,
+   does> ( self -- )
+    { self }
+    self @ { chn }
+    self cell+ @ { snd }
+    snd chn mark-list FWidget? if snd chn make-mark-list then
+  ;
+
+  : open-remarks <{ snd -- }>
+    snd channels 0 ?do
+      snd i after-edit-hook snd i marks-edit-cb add-hook!
+      snd i undo-hook       snd i marks-edit-cb add-hook!
+    loop
+  ;
+
+  : marks-update-proc <{ snd -- }> snd channels 0 ?do snd i make-mark-list loop ;
+  : marks-update-cb <{ snd -- proc }> snd <'> marks-update-proc ;
+  set-current
+
+  : add-mark-pane ( -- )
+    #t to including-mark-pane
+    mark-hook       <'> remark          add-hook!
+    close-hook      <'> unremark        add-hook!
+    after-open-hook <'> open-remarks    add-hook!
+    update-hook     <'> marks-update-cb add-hook!
+  ;
+  previous
+
+  \  --- show-smpte-label, Motif specific ---
+
+  : show-smpte-label ( on-or-off -- )
+    doc" Turns on/off a label in the time-domain graph showing \
+    the current smpte frame of the leftmost sample."
+    ( on-or-off ) if
+      smpte-is-on unless
+	main-widgets 1 array-ref FXtDisplay axis-numbers-font FXLoadQueryFont { fs }
+	#()      'width  fs "00:00:00:00" dup length FXTextWidth     8 +  array-assoc-set!
+	( vars ) 'height fs "0" dup length FXTextExtents 2 array-ref 8 +  array-assoc-set!
+	( vars ) 'fs     fs Ffid array-assoc-set! { vars }
+	vars draw-smpte-label to draw-smpte-label-cb
+	after-graph-hook draw-smpte-label-cb add-hook!
+	#t #t update-time-graph drop
+      then
+    else
+      after-graph-hook draw-smpte-label-cb remove-hook! drop
+      #t #t update-time-graph drop
+    then
+  ;
+
+  \ --- show-disk-space, Motif specific ---
+
+  hide
+  : show-label <{ data id -- }>
+    data 0 array-ref empty? unless
+      data 0 array-ref { snd }
+      data 1 array-ref { wid }
+      data 2 array-ref { app }
+      snd sound? if wid  snd file-name disk-kspace kmg change-label then
+      app 10000 running-word data FXtAppAddTimeOut drop
+    then
+  ;
+  set-current
+
+  : show-disk-space <{ snd -- }>
+    doc" Adds a label to the minibuffer area showing the current free space \
+    (for use with after-open-hook)."
+    #f ( flag )
+    labelled-snds each { n } n 0 array-ref snd equal? if
+	( flag ) drop
+	n
+	leave
+      then
+    end-each { previous-label }
+    previous-label unless
+      snd sound? if
+	#t to showing-disk-space
+	main-widgets 0 array-ref { app }
+	snd sound-widgets { widgets }
+	widgets 3 array-ref { minibuffer }
+	widgets 6 array-ref { unite-button }
+	widgets 9 array-ref { sync-button }
+	minibuffer FXtParent { name-form }
+	snd file-name disk-kspace kmg FXmStringCreateLocalized { str }
+	minibuffer FXtUnmanageChild drop
+	minibuffer #( FXmNrightAttachment FXmATTACH_NONE ) FXtVaSetValues drop
+	"space" FxmLabelWidgetClass name-form
+	#( FXmNbackground      basic-color
+	   FXmNleftAttachment  FXmATTACH_NONE
+	   FXmNlabelString     str
+	   FXmNrightAttachment FXmATTACH_WIDGET
+	   FXmNrightWidget     unite-button FXtIsManaged if unite-button else sync-button then
+	   FXmNtopAttachment   FXmATTACH_FORM ) undef FXtCreateManagedWidget { new-label }
+	minibuffer
+	#( FXmNrightWidget new-label FXmNrightAttachment FXmATTACH_WIDGET ) FXtVaSetValues drop
+	minibuffer FXtManageChild drop
+	str FXmStringFree drop
+	#( snd new-label app ) to previous-label
+	labelled-snds previous-label array-push drop
+	app 10000 <'> show-label previous-label FXtAppAddTimeOut drop
+      else
+	$" no sound found for disk space label" snd-error drop
+      then
+    then
+  ;
+  previous
+
+  : current-label ( widget -- label )
+    doc" Returns WIDGET's label."
+    ( wid ) #( FXmNlabelString 0 ) FXtVaGetValues 1 array-ref { xmstr }
+    xmstr #f FXmCHARSET_TEXT FXmCHARSET_TEXT #f 0 FXmOUTPUT_ALL FXmStringUnparse
+  ;
+[then]
 
 \ snd-xm.fs ends here
