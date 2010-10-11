@@ -378,12 +378,11 @@
 		      (cairo_push_group cr)
 
 		      (let ((bg-color (color->list (basic-color))))
-			(cairo_set_source_rgb cr (car bg-color) (cadr bg-color) (caddr bg-color))
-			(cairo_rectangle cr 0 0 (car size) (cadr size))
-			(cairo_fill cr)
 			(cairo_set_source_rgb cr 1.0 1.0 1.0)
-			(cairo_rectangle cr (+ px0 2) py1 (- px1 px0) (- py0 py1))
+			(cairo_rectangle cr 0 0 (car size) (cadr size))
 			(cairo_fill cr))
+
+		      (draw-axes widget gc name ix0 ix1 iy0 iy1 x-axis-in-seconds show-all-axes cr)
 
 		      (cairo_set_line_width cr 1.0)
 		      (cairo_set_source_rgb cr 0.0 0.0 0.0)
@@ -402,8 +401,6 @@
 			  (set! ly cy)))
 		      (cairo_pop_group_to_source cr)
 		      (cairo_paint cr)
-
-		      (draw-axes widget gc name ix0 ix1 iy0 iy1)
 		      (cairo_destroy cr)))))))))
   
 #|

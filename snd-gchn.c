@@ -31,7 +31,18 @@ GtkWidget *channel_down_arrow(chan_info *cp) {return(cp->cgx->chan_widgets[W_dow
 
 
 #define EDIT_HISTORY_LIST(Cp) (Cp->cgx)->edhist_list
-
+#if HAVE_GTK_3
+  #define EDIT_HISTORY_CLOSED 2
+#else
+  #define EDIT_HISTORY_CLOSED 1
+#endif
+/* in gtk2, 0 is a no-op here, leaving the edit history pane open, 
+ * but in gtk 3 if less than about 30, we get 
+ * "Gtk-CRITICAL **: gtk_paint_slider: assertion `width >= 0' failed"
+ *   (which means the damned thing has to be open always)
+ * or if we hide the scrolled text widget, the pane separator goes away!
+ * So, in gtk3 the scrolled window does not display a horizontal scrollbar
+ */
 
 static GtkWidget *channel_main_pane(chan_info *cp) {return(cp->cgx->chan_widgets[W_main_window]);}
 static GtkAdjustment *gsy_adj(chan_info *cp)           {return(cp->cgx->chan_adjs[W_gsy_adj]);}
@@ -782,6 +793,11 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 	  gtk_container_set_border_width(GTK_CONTAINER(cw[W_main_window]), 2);
 	  gtk_box_pack_start(GTK_BOX(w_snd_pane_box(sp)), cw[W_main_window], true, true, 0);
 	  cp->cgx->edhist_list = slist_new(cw[W_main_window], NULL, 0, PANED_ADD1);
+#if HAVE_GTK_3
+	  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(cp->cgx->edhist_list->scroller), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+#else
+	  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(cp->cgx->edhist_list->scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+#endif
 	  cp->cgx->edhist_list->select_callback = history_select_callback;
 	  cp->cgx->edhist_list->select_callback_data = (void *)cp;
 	}
@@ -943,11 +959,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 	  cw[W_gzy] = NULL;
 	}
       if ((GTK_IS_VPANED(cw[W_main_window])) || (GTK_IS_HPANED(cw[W_main_window])))
-	gtk_paned_set_position(GTK_PANED(cw[W_main_window]), 2);  
-      /* 0 is a no-op here, leaving the edit history pane open, but in gtk 3, 1 gives
-       *      "gtk_paint_slider: assertion `width >= 0' failed"
-       * 2 seems to be ok.
-       */
+	gtk_paned_set_position(GTK_PANED(cw[W_main_window]), EDIT_HISTORY_CLOSED);  
       gtk_widget_show(cw[W_graph_window]);
 
     }
@@ -1165,7 +1177,7 @@ void cleanup_cw(chan_info *cp)
       if (EDIT_HISTORY_LIST(cp)) 
 	{
 	  slist_clear(EDIT_HISTORY_LIST(cp));
-	  gtk_paned_set_position(GTK_PANED(cx->chan_widgets[W_main_window]), 1);
+	  gtk_paned_set_position(GTK_PANED(cx->chan_widgets[W_main_window]), EDIT_HISTORY_CLOSED);
 	}
 
       cx->selected = false;

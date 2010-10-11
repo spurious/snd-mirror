@@ -135,7 +135,6 @@ static void fsb_update_lists(fsb *fs)
 
   for (i = 0; i < files->len; i++) 
     slist_append(fs->directory_list, files->files[i]->filename);
-  files = free_dir_info(files);
 
   /* set directory list position */
   {
@@ -158,6 +157,8 @@ static void fsb_update_lists(fsb *fs)
 
     free(dir_case);
   }
+
+  free_dir_info(files);
 
   /* reload file list */
   if (fs->current_files) fs->current_files = free_dir_info(fs->current_files);

@@ -544,6 +544,15 @@ static void update_graph_1(chan_info *cp, bool warn)
   snd_info *sp;
   axis_info *ap;
 
+#if 0
+  fprintf(stderr, "update %d %d %d %d %d\n",
+	  (cp->updating),
+	  (cp->active != CHANNEL_HAS_AXES),
+	  (cp->cgx == NULL),
+	  (cp->sounds == NULL),
+	  (cp->sounds[cp->sound_ctr] == NULL));
+#endif
+
   if ((cp->updating) || 
       (cp->active != CHANNEL_HAS_AXES) ||
       (cp->cgx == NULL) || 

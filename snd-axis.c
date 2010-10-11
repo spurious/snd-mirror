@@ -1630,6 +1630,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 #if USE_GTK
   GtkWidget *w; 
   gc_t *gc;
+  cairo_t *cr = NULL;
 #endif
 
   XEN val, xwid, xgc, xx0, xx1, xy0, xy1, xstyle, xaxes, label_ref;
@@ -1642,7 +1643,11 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   int len;
 
   len = XEN_LIST_LENGTH(args);
+#if (!USE_GTK)
   XEN_ASSERT_TYPE((len >= 3) && (len < 10), args, XEN_ONLY_ARG, S_draw_axes, "3 required and 6 optional args");
+#else
+  XEN_ASSERT_TYPE((len >= 3) && (len < 11), args, XEN_ONLY_ARG, S_draw_axes, "3 required and 7 optional args");
+#endif
   
   xwid = XEN_LIST_REF(args, 0);
   XEN_ASSERT_TYPE(XEN_WIDGET_P(xwid), xwid, XEN_ARG_1, S_draw_axes, "widget");
@@ -1697,6 +1702,10 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 			  if (!(show_axes_p(tmp)))
 			    XEN_OUT_OF_RANGE_ERROR(S_draw_axes, 8, xaxes, S_show_axes " choice");
 			  axes = (show_axes_t)XEN_TO_C_INT(xaxes);
+#if USE_GTK
+			  if (len > 9)
+			    cr = (cairo_t *)XEN_UNWRAP_C_POINTER(XEN_CADR(XEN_LIST_REF(args, 9)));
+#endif
 			}}}}}}
 
   ap = (axis_info *)calloc(1, sizeof(axis_info));
@@ -1709,7 +1718,9 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 #if USE_GTK
   ax->wn = WIDGET_TO_WINDOW(w);
   ax->w = w;
-  ax->cr = gdk_cairo_create(ax->wn);
+  if (cr)
+    ax->cr = cr;
+  else ax->cr = gdk_cairo_create(ax->wn);
 #endif
 
   ap->xmin = x0;
@@ -1741,7 +1752,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 	    XEN_EMPTY_LIST))));
 
 #if USE_GTK
-  cairo_destroy(ax->cr);
+  if (!cr) cairo_destroy(ax->cr);
 #endif
   free_axis_info(ap);
 

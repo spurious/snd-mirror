@@ -360,7 +360,6 @@ void goto_window(GtkWidget *text)
 {
 #if (!HAVE_GTK_3)
   /* TODO: why does this erase the window in gtk 3? why isn't the initial graph displayed? 
-   * TODO: "gtk_paint_slider: assertion `width >= 0' failed" in edit history list unless it is open
    */
   gtk_widget_grab_focus(text);
 #endif
@@ -990,6 +989,7 @@ slist *slist_new_with_title_and_table_data(const char *title,
 
   lst->topics = gtk_vbox_new(false, 2); /* sets list item vertical spacing */
   lst->scroller = gtk_scrolled_window_new(NULL, NULL);
+
   if (!title) 
     topw = lst->scroller;
   else gtk_box_pack_start(GTK_BOX(lst->box), lst->scroller, true, true, 0);
