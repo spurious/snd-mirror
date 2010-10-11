@@ -16877,6 +16877,7 @@ why are these different (read-time `#() ? )
 
 	(test (= (fib-2 10) 55 (fib 10)) #t)
 	(test (fib 40) 102334155))
+      ;; TODO: check these 
       
       (for-each
        (lambda (arg)

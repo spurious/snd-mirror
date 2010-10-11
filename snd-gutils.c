@@ -360,9 +360,7 @@ void goto_window(GtkWidget *text)
 {
 #if (!HAVE_GTK_3)
   /* TODO: why does this erase the window in gtk 3? why isn't the initial graph displayed? 
-   * TODO: mark is not displayed in gtk 3
    * TODO: "gtk_paint_slider: assertion `width >= 0' failed" in edit history list unless it is open
-   * TODO: I don't think the expose event is being reported
    */
   gtk_widget_grab_focus(text);
 #endif

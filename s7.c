@@ -375,7 +375,7 @@ typedef struct s7_port_t {
   int file_number;
   char *filename;
   char *value;
-  int size, point; 
+  int size, point;        /* these limit the in-core portion of a string-port to 2^31 bytes */
   s7_pointer (*input_function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port);
   void (*output_function)(s7_scheme *sc, unsigned char c, s7_pointer port);
   void *data;
@@ -1979,28 +1979,21 @@ static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char
 static s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name, int location) 
 { 
   s7_pointer x; 
-
-  /* TODO: do we need this lock?  we're simply reading here */
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&symtab_lock);
-#endif
-
+  /* in the pthreads case, I don't think any lock is needed here -- we're simply
+   *   scanning the symbol table for a name.  If we had a lock here, it would not solve
+   *   the race condition: thread1 looks for symbol in make_symbol, does not find it,
+   *   gets set to add it, but thread2 which is also looking for symbol, gets the lock and 
+   *   does not find it, thread1 adds it, thread2 adds it.  The look-and-add code in
+   *   make_symbol needs to be atomic -- we can't handle the problem here.  I doubt
+   *   this is actually a problem (two threads loading the same file at the same time?).
+   */
   for (x = vector_element(sc->symbol_table, location); x != sc->NIL; x = cdr(x)) 
     { 
       const char *s; 
       s = symbol_name(car(x)); 
       if ((s) && (*s == *name) && (strings_are_equal(name, s)))
-	{
-#if HAVE_PTHREADS
-	  pthread_mutex_unlock(&symtab_lock);
-#endif
-	  return(car(x)); 
-	}
+	return(car(x)); 
     }
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&symtab_lock);
-#endif
-
   return(sc->NIL); 
 } 
 

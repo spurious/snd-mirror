@@ -7739,9 +7739,13 @@ static XEN g_mus_irandom(XEN val) {return(C_TO_XEN_INT(mus_irandom(XEN_TO_C_INT(
 #include <sys/time.h>
 
 static struct timeval overall_start_time;
+#define S_get_internal_real_time "get-internal-real-time"
+#define S_internal_time_units_per_second "internal-time-units-per-second"
 
 static XEN g_get_internal_real_time(void) 
 {
+  #define H_get_internal_real_time "(" S_get_internal_real_time ") returns the number of seconds since \
+the program started.  The number is in terms of " S_internal_time_units_per_second ", usually 1"
   struct timezone z0;
   struct timeval t0;
   double secs;
@@ -8844,8 +8848,8 @@ static void mus_xen_init(void)
   XEN_DEFINE_VARIABLE(S_reverb, clm_reverb, XEN_FALSE);
 
 #if HAVE_SCHEME && HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H && (!MSC_VER)
-  XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
-  XEN_DEFINE_CONSTANT("internal-time-units-per-second", 1, "clock speed");
+  XEN_DEFINE_PROCEDURE(S_get_internal_real_time, g_get_internal_real_time_w, 0, 0, 0, H_get_internal_real_time);
+  XEN_DEFINE_CONSTANT(S_internal_time_units_per_second, 1, "units used by " S_get_internal_real_time);
 #endif
 
 
