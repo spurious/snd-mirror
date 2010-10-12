@@ -450,7 +450,6 @@ typedef struct s7_cell {
        *   I'm told this idea was once called a "hunk" and was considered a disaster.
        *   Due to the s7_num_t size, there is unused space in several of these union fields,
        *   so csr currently holds the symbol-access lists.
-       * There's also room for another 4-bytes of info.
        */
       int line;
     } cons;
@@ -666,16 +665,12 @@ struct s7_scheme {
 /* immutable means the value can't be changed via set! or bind -- this is separate from the symbol access stuff
  */
 
-#define T_ATOM                        (1 << (TYPE_BITS + 3))
-#define is_atom(p)                    ((typeflag(p) & T_ATOM) != 0)
-/* is_atom means there's no car/cdr to be marked */
-
 #define T_GC_MARK                     (1 << (TYPE_BITS + 4))
 #define is_marked(p)                  ((typeflag(p) &  T_GC_MARK) != 0)
 #define set_mark(p)                   typeflag(p)  |= T_GC_MARK
 #define clear_mark(p)                 typeflag(p)  &= (~T_GC_MARK)
 /* making this a separate bool field in the cell struct slightly speeds up the mark function,
- *   but at the cost of 4 (or 8!) bytes per object. Since the speedup was about .5% overall (2074 to 2084), I think
+ *   but at the cost of 4 (or 8!) bytes per object. Since the speedup was about .5% overall,
  *   the size increase is more important.
  */
 
@@ -769,7 +764,7 @@ struct s7_scheme {
 #define UNUSED_BITS                   0x81800000
 
 /* TYPE_BITS could be 5
- * TYPE_BITS + 15, 16 and 31 are currently unused
+ * TYPE_BITS + 3, 15, 16 and 23 are currently unused
  */
 
 
@@ -1380,9 +1375,9 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
 static void s7_mark_object_1(s7_pointer p);
 
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
-  #define S7_MARK(Obj) ({ s7_pointer _p_; _p_ = Obj; if (!is_marked(_p_)) s7_mark_object_1(_p_); })
+  #define S7_MARK(Obj) ({ s7_pointer _p_; _p_ = Obj; if (!is_marked(_p_)) {set_mark(_p_); if (!is_simple(_p_)) s7_mark_object_1(_p_);}})
 #else
-  #define S7_MARK(Obj) do {if (!is_marked(Obj)) s7_mark_object_1(Obj);} while (0)
+  #define S7_MARK(Obj) do {if (!is_marked(Obj)) {set_mark(Obj); if (!is_simple(Obj)) s7_mark_object_1(Obj);}} while (0)
 #endif
 /* this is slightly faster than if we first call s7_mark_object, then check the mark bit */
 
@@ -1408,10 +1403,6 @@ static void mark_vector(s7_pointer p, s7_Int top)
 
 static void s7_mark_object_1(s7_pointer p)
 {
-  set_mark(p);
-  
-  if (is_simple(p)) return;
-  
   switch (type(p))
     {
     case T_UNTYPED: /* 0 actually -- a cell still being set up when the GC was triggered */
@@ -1420,6 +1411,8 @@ static void s7_mark_object_1(s7_pointer p)
     case T_PAIR:
       if (symbol_has_accessor(p))
 	S7_MARK(csr(p));
+      S7_MARK(car(p));
+      S7_MARK(cdr(p));
       break;
 
     case T_VECTOR:
@@ -1466,15 +1459,11 @@ static void s7_mark_object_1(s7_pointer p)
       return;
 
     default:
+      /* closures of various kinds primarily */
+      S7_MARK(car(p));
+      S7_MARK(cdr(p));
       break;
     }
-  
-  /* this should follow s7_is_object -- the latter is an atom, but we have to run the object's internal mark function */
-  if (is_atom(p))
-    return;
-  
-  S7_MARK(car(p));
-  S7_MARK(cdr(p));
 }
 
 
@@ -1953,7 +1942,7 @@ static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char
   s7_pointer x, str; 
   
   str = s7_make_permanent_string(name);
-  x = permanent_cons(str, sc->NIL, T_SYMBOL | T_ATOM | T_SIMPLE | T_DONT_COPY | T_ETERNAL);
+  x = permanent_cons(str, sc->NIL, T_SYMBOL | T_SIMPLE | T_DONT_COPY | T_ETERNAL);
   symbol_location(x) = location;   /* accesses car(x) */
   symbol_global_slot(x) = sc->NIL; /* accesses car(x) */
 
@@ -1967,7 +1956,7 @@ static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char
 #endif
 
   vector_element(sc->symbol_table, location) = permanent_cons(x, vector_element(sc->symbol_table, location), 
-							      T_PAIR | T_ATOM | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY | T_STRUCTURE);
+							      T_PAIR | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY | T_STRUCTURE);
 #if HAVE_PTHREADS
   pthread_mutex_unlock(&symtab_lock);
 #endif
@@ -2086,12 +2075,10 @@ static s7_pointer g_set_symbol_table_is_locked(s7_scheme *sc, s7_pointer args)
 }
 
 
-s7_pointer s7_make_symbol(s7_scheme *sc, const char *name) 
-{ 
+static s7_pointer make_symbol(s7_scheme *sc, const char *name) 
+{
   s7_pointer x; 
   int location;
-
-  if (!name) return(sc->F);
 
   location = symbol_table_hash(name); 
   x = symbol_table_find_by_name(sc, name, location); 
@@ -2103,6 +2090,13 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
 
   return(symbol_table_add_by_name_at_location(sc, name, location)); 
 } 
+
+
+s7_pointer s7_make_symbol(s7_scheme *sc, const char *name) 
+{ 
+  if (!name) return(sc->F);
+  return(make_symbol(sc, name));
+}
 
 
 s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
@@ -2151,7 +2145,7 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
 
 s7_pointer s7_name_to_value(s7_scheme *sc, const char *name)
 {
-  return(s7_symbol_value(sc, s7_make_symbol(sc, name)));
+  return(s7_symbol_value(sc, make_symbol(sc, name)));
 }
 
 
@@ -2202,7 +2196,7 @@ static s7_pointer g_string_to_symbol(s7_scheme *sc, s7_pointer args)
   /* currently if the string has an embedded null, it marks the end of the new symbol name.
    *   I wonder if this is a bug...
    */
-  return(s7_make_symbol(sc, string_value(str)));
+  return(make_symbol(sc, string_value(str)));
 
   /* This can return symbols that can't be used as, for example, variable names.
    *   apparently the idea is to allow any string to be converted to a symbol for fast comparisons 
@@ -2393,7 +2387,7 @@ static void save_initial_environment(s7_scheme *sc)
 	for (slot = car(lsts[i]); is_pair(slot); slot = cdr(slot))
 	  if (is_procedure(symbol_value(slot)))
 	    {
-	      inits[k++] = permanent_cons(car(slot), cdr(slot), T_PAIR | T_ATOM | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY | T_STRUCTURE);
+	      inits[k++] = permanent_cons(car(slot), cdr(slot), T_PAIR | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY | T_STRUCTURE);
 	      if (k >= INITIAL_ENV_ENTRIES)
 		break;
 	    }
@@ -2757,7 +2751,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 bool s7_is_defined(s7_scheme *sc, const char *name)
 {
   s7_pointer x;
-  x = find_symbol(sc, sc->envir, s7_make_symbol(sc, name));
+  x = find_symbol(sc, sc->envir, make_symbol(sc, name));
   return((x != sc->NIL) && (x != sc->UNDEFINED));
 }
 
@@ -2776,7 +2770,7 @@ void s7_define_variable(s7_scheme *sc, const char *name, s7_pointer value)
 {
   s7_pointer sym;
 
-  sym = s7_make_symbol(sc, name);
+  sym = make_symbol(sc, name);
   s7_define(sc, s7_global_environment(sc), sym, value);
 }
 
@@ -2785,7 +2779,7 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
 {
   s7_pointer x, sym;
   
-  sym = s7_make_symbol(sc, name);
+  sym = make_symbol(sc, name);
   s7_define(sc, s7_global_environment(sc), sym, value);
   x = symbol_global_slot(sym);
   set_immutable(car(x));
@@ -2804,7 +2798,7 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
    *     x = symbol_global_slot(sym);
    *     etc
    *   big_pi must be handled specially:
-   *     s7_symbol_set_value(sc, s7_make_symbol(sc, "pi"), tmp = big_pi(sc));
+   *     s7_symbol_set_value(sc, make_symbol(sc, "pi"), tmp = big_pi(sc));
    *     s7_gc_protect(sc, tmp);
    */
 }
@@ -2840,7 +2834,7 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
   
   name = (char *)malloc((safe_strlen(key) + 2) * sizeof(char));
   sprintf(name, ":%s", key);                     /* prepend ":" */
-  sym = s7_make_symbol(sc, name);
+  sym = make_symbol(sc, name);
   typeflag(sym) |= (T_IMMUTABLE | T_DONT_COPY); 
   free(name);
   
@@ -2871,7 +2865,7 @@ static s7_pointer g_keyword_to_symbol(s7_scheme *sc, s7_pointer args)
 
   name = symbol_name(car(args));
   if (name[0] == ':')
-    return(s7_make_symbol(sc, (const char *)(name + 1)));
+    return(make_symbol(sc, (const char *)(name + 1)));
 
   /* else it ends in ":", (keyword->symbol foo:) */
   {
@@ -2879,7 +2873,7 @@ static s7_pointer g_keyword_to_symbol(s7_scheme *sc, s7_pointer args)
     s7_pointer res;
     temp = copy_string(name);
     temp[strlen(temp) - 1] = '\0';
-    res = s7_make_symbol(sc, (const char *)temp);
+    res = make_symbol(sc, (const char *)temp);
     free(temp);
     return(res);
   }
@@ -2922,7 +2916,7 @@ s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_C_POINTER | T_ATOM | T_SIMPLE | T_DONT_COPY);
+  set_type(x, T_C_POINTER | T_SIMPLE | T_DONT_COPY);
   x->object.c_pointer = ptr;
   return(x);
 }
@@ -3018,7 +3012,7 @@ static s7_pointer make_goto(s7_scheme *sc)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_ATOM | T_GOTO | T_SIMPLE | T_DONT_COPY | T_PROCEDURE);
+  set_type(x, T_GOTO | T_SIMPLE | T_DONT_COPY | T_PROCEDURE);
   call_exit_goto_loc(x) = s7_stack_top(sc);
   call_exit_active(x) = true;
   return(x);
@@ -3156,7 +3150,7 @@ static void call_with_exit(s7_scheme *sc)
   int i, new_stack_top;
   
   if (!call_exit_active(sc->code))
-    s7_error(sc, s7_make_symbol(sc, "invalid-escape-function"),
+    s7_error(sc, make_symbol(sc, "invalid-escape-function"),
 	     make_list_1(sc, make_protected_string(sc, "call-with-exit escape procedure called outside its block")));
   call_exit_active(sc->code) = false;
 
@@ -3951,7 +3945,7 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
 	return(small_negative_ints[-n]);
     }
   NEW_CELL(sc, x);
-  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
+  set_type(x, T_NUMBER | T_SIMPLE | T_DONT_COPY);
   number_type(x) = NUM_INT;
   integer(number(x)) = n;
   
@@ -3963,7 +3957,7 @@ static s7_pointer make_mutable_integer(s7_scheme *sc, s7_Int n)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
+  set_type(x, T_NUMBER | T_SIMPLE | T_DONT_COPY);
   number_type(x) = NUM_INT;
   integer(number(x)) = n;
   return(x);
@@ -3979,7 +3973,7 @@ s7_pointer s7_make_real(s7_scheme *sc, s7_Double n)
     return(real_one);
 
   NEW_CELL(sc, x);
-  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
+  set_type(x, T_NUMBER | T_SIMPLE | T_DONT_COPY);
   number_type(x) = NUM_REAL;
   real(number(x)) = n;
   
@@ -3991,7 +3985,7 @@ s7_pointer s7_make_complex(s7_scheme *sc, s7_Double a, s7_Double b)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
+  set_type(x, T_NUMBER | T_SIMPLE | T_DONT_COPY);
   if (b == 0.0)
     {
       number_type(x) = NUM_REAL;
@@ -4046,7 +4040,7 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
     return(s7_make_integer(sc, a));
 
   NEW_CELL(sc, x);
-  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
+  set_type(x, T_NUMBER | T_SIMPLE | T_DONT_COPY);
 
   ret = make_ratio(a, b);
   
@@ -5096,8 +5090,26 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
   while (*tmp == '0') {tmp++;};
   tmp1 = tmp;
 
-  while ((dig = digits[(int)(*tmp++)]) < radix)
-    lval = dig + (lval * radix);
+ if (radix == 10)
+    {
+      while (true)
+	{
+	  dig = digits[*tmp++];
+	  if (dig < 10)
+	    lval = dig + (lval * 10);
+	  else break;
+	}
+    }
+  else
+    {
+      while (true)
+	{
+	  dig = digits[*tmp++];
+	  if (dig < radix)
+	    lval = dig + (lval * radix);
+	  else break;
+	}
+    }
 
 #if WITH_GMP
   (*overflow) = ((tmp - tmp1) > s7_int_digits_by_radix[radix]); /* possibly an overflow -- we're being conservative here (floor used, not round etc) */
@@ -5420,7 +5432,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	  c = *p++; 
 	} 
       if ((!c) || (!ISDIGIT(c, radix)))
-	return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
+	return((want_symbol) ? make_symbol(sc, q) : sc->F);
       break;
 
     case '.':
@@ -5428,7 +5440,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
       c = *p++; 
 
       if ((!c) || (!ISDIGIT(c, radix)))
-	return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
+	return((want_symbol) ? make_symbol(sc, q) : sc->F); 
       break;
 
     case '0':        /* these two are always digits */
@@ -5437,7 +5449,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 
     default:
       if (!ISDIGIT(c, radix))
-	return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
+	return((want_symbol) ? make_symbol(sc, q) : sc->F); 
       break;
     }
 
@@ -5469,16 +5481,16 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 		if (((has_dec_point1) ||
 		     (slash1)) &&
 		    (has_plus_or_minus == 0)) /* 1.. or 1/2. */
-		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
+		  return((want_symbol) ? make_symbol(sc, q) : sc->F); 
 		
 		if (((has_dec_point2) ||
 		     (slash2)) &&
 		    (has_plus_or_minus != 0)) /* 1+1.. or 1+1/2. */
-		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
+		  return((want_symbol) ? make_symbol(sc, q) : sc->F); 
 		
 		if ((!ISDIGIT(p[1], current_radix)) &&
 		    (!ISDIGIT(p[-1], current_radix))) 
-		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
+		  return((want_symbol) ? make_symbol(sc, q) : sc->F); 
 		
 		if (has_plus_or_minus == 0)
 		  has_dec_point1 = true;
@@ -5493,7 +5505,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	      case 'f': case 'F':
 	      case 'l': case 'L':
 		if (current_radix > 10)
-		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
+		  return((want_symbol) ? make_symbol(sc, q) : sc->F); 
 		/* see note above */
 		
 		current_radix = 10;
@@ -5501,16 +5513,16 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 		if (((ex1) ||
 		     (slash1)) &&
 		    (has_plus_or_minus == 0)) /* ee */
-		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
+		  return((want_symbol) ? make_symbol(sc, q) : sc->F); 
 		
 		if (((ex2) ||
 		     (slash2)) &&
 		    (has_plus_or_minus != 0)) /* 1+1.0ee */
-		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
+		  return((want_symbol) ? make_symbol(sc, q) : sc->F); 
 		
 		if ((!ISDIGIT(p[-1], current_radix)) &&
 		    (p[-1] != '.'))
-		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F); 
+		  return((want_symbol) ? make_symbol(sc, q) : sc->F); 
 		
 		if (has_plus_or_minus == 0)
 		  {
@@ -5533,7 +5545,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	      case '+':
 	      case '-':
 		if (has_plus_or_minus != 0) /* already have the separator */
-		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
+		  return((want_symbol) ? make_symbol(sc, q) : sc->F);
 		
 		if (c == '+') has_plus_or_minus = 1; else has_plus_or_minus = -1;
 		plus = (char *)(p + 1);
@@ -5545,13 +5557,13 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 		    ((ex1) ||
 		     (slash1) ||
 		     (has_dec_point1)))
-		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
+		  return((want_symbol) ? make_symbol(sc, q) : sc->F);
 		
 		if ((has_plus_or_minus != 0) &&
 		    ((ex2) ||
 		     (slash2) ||
 		     (has_dec_point2)))
-		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
+		  return((want_symbol) ? make_symbol(sc, q) : sc->F);
 		
 		if (has_plus_or_minus == 0)
 		  slash1 = (char *)(p + 1);
@@ -5559,7 +5571,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 		
 		if ((!ISDIGIT(p[1], current_radix)) ||
 		    (!ISDIGIT(p[-1], current_radix)))
-		  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
+		  return((want_symbol) ? make_symbol(sc, q) : sc->F);
 		
 		continue;
 
@@ -5578,13 +5590,13 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 		break;
 	      }
 
-	    return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
+	    return((want_symbol) ? make_symbol(sc, q) : sc->F);
 	  }
       }
     
     if ((has_plus_or_minus != 0) &&        /* that is, we have an internal + or - */
 	(!has_i))                          /*   but no i for the imaginary part */
-      return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
+      return((want_symbol) ? make_symbol(sc, q) : sc->F);
 
     if (has_i)
       {
@@ -5600,7 +5612,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	len = safe_strlen(q);
 	
 	if (q[len - 1] != 'i')
-	  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
+	  return((want_symbol) ? make_symbol(sc, q) : sc->F);
 	
 	/* save original string */
 	ql1 = q[len - 1];
@@ -5669,7 +5681,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	s7_pointer result;
 	
 	if (slash1)  /* not complex, so slash and "." is not a number */
-	  return((want_symbol) ? s7_make_symbol(sc, q) : sc->F);
+	  return((want_symbol) ? make_symbol(sc, q) : sc->F);
 	
 #if (!WITH_GMP)
 	result = s7_make_real(sc, string_to_double_with_radix(q, radix, &overflow));
@@ -6945,7 +6957,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 
       i++;
     }
-  return(s7_error(sc, s7_make_symbol(sc, "internal-error"),
+  return(s7_error(sc, make_symbol(sc, "internal-error"),
 		  make_list_2(sc, make_protected_string(sc, "s7 mishandled addition: ~S\n"), args)));
 }
 
@@ -7077,7 +7089,7 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 
       i++;
     }
-  return(s7_error(sc, s7_make_symbol(sc, "internal-error"),
+  return(s7_error(sc, make_symbol(sc, "internal-error"),
 		  make_list_2(sc, make_protected_string(sc, "s7 mishandled subtraction: ~S\n"), args)));
 }
 
@@ -7212,7 +7224,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 
       i++;
     }
-  return(s7_error(sc, s7_make_symbol(sc, "internal-error"),
+  return(s7_error(sc, make_symbol(sc, "internal-error"),
 		  make_list_2(sc, make_protected_string(sc, "s7 mishandled multiplication: ~S\n"), args)));
 }
 
@@ -7395,7 +7407,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 
       i++;
     }
-  return(s7_error(sc, s7_make_symbol(sc, "internal-error"),
+  return(s7_error(sc, make_symbol(sc, "internal-error"),
 		  make_list_2(sc, make_protected_string(sc, "s7 mishandled division: ~S\n"), args)));
 }
 
@@ -8411,7 +8423,7 @@ s7_pointer s7_make_ulong(s7_scheme *sc, unsigned long n)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
+  set_type(x, T_NUMBER | T_SIMPLE | T_DONT_COPY);
   
   number_type(x) = NUM_INT;
   number(x).value.ul_value = n;
@@ -8435,7 +8447,7 @@ s7_pointer s7_make_ulong_long(s7_scheme *sc, unsigned long long n)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
+  set_type(x, T_NUMBER | T_SIMPLE | T_DONT_COPY);
   
   number_type(x) = NUM_INT;
   number(x).value.ull_value = n;
@@ -9024,7 +9036,7 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY); /* should this follow the malloc? */
+  set_type(x, T_STRING | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY); /* should this follow the malloc? */
   string_value(x) = (char *)malloc((len + 1) * sizeof(char)); 
   if (len != 0)                                             /* memcpy can segfault if string_value(x) is NULL */
     memcpy((void *)string_value(x), (void *)str, len + 1);
@@ -9038,7 +9050,7 @@ s7_pointer s7_make_terminated_string_with_length(s7_scheme *sc, const char *str,
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY); /* should this follow the malloc? */
+  set_type(x, T_STRING | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY); /* should this follow the malloc? */
   string_value(x) = (char *)malloc((len + 1) * sizeof(char)); 
   if (len != 0)                                             /* memcpy can segfault if string_value(x) is NULL */
     memcpy((void *)string_value(x), (void *)str, len);
@@ -9052,7 +9064,7 @@ static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(x, T_STRING | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   string_value(x) = str;
   string_length(x) = len;
   return(x);
@@ -9063,7 +9075,7 @@ static s7_pointer make_protected_string(s7_scheme *sc, const char *str)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_ATOM | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(x, T_STRING | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   string_value(x) = (char *)str;
   string_length(x) = safe_strlen(str);
   return(x);
@@ -9074,7 +9086,7 @@ static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(x, T_STRING | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   if (fill == 0)
     string_value(x) = (char *)calloc((len + 1), sizeof(char));
@@ -9119,7 +9131,7 @@ s7_pointer s7_make_permanent_string(const char *str)
   s7_pointer x;
   x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
   x->hloc = NOT_IN_HEAP;
-  set_type(x, T_STRING | T_ATOM | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY);
+  set_type(x, T_STRING | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY);
   if (str)
     {
       string_length(x) = safe_strlen(str);
@@ -10006,7 +10018,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
   char *content = NULL;
 
   NEW_CELL(sc, port);
-  set_type(port, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(port, T_INPUT_PORT | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   port_loc = s7_gc_protect(sc, port);
   port->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_is_closed(port) = false;
@@ -10115,7 +10127,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
     }
 
   NEW_CELL(sc, x);
-  set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(x, T_OUTPUT_PORT | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = FILE_PORT;
@@ -10149,7 +10161,7 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(x, T_INPUT_PORT | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = STRING_PORT;
@@ -10182,7 +10194,7 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(x, T_OUTPUT_PORT | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = STRING_PORT;
@@ -10225,7 +10237,7 @@ s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_schem
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(x, T_INPUT_PORT | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = FUNCTION_PORT;
@@ -10240,7 +10252,7 @@ s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc
 {
   s7_pointer x;
   NEW_CELL(sc, x);
-  set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(x, T_OUTPUT_PORT | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   x->object.port = (s7_port_t *)calloc(1, sizeof(s7_port_t));
   port_type(x) = FUNCTION_PORT;
@@ -10594,7 +10606,7 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
   if (!fp)
     return(file_error(sc, "load", "can't open", filename));
 
-  load_hook = s7_symbol_special_value(sc, s7_make_symbol(sc, "*load-hook*"));
+  load_hook = s7_symbol_special_value(sc, make_symbol(sc, "*load-hook*"));
   if (is_procedure(load_hook))
     {
       push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
@@ -10691,7 +10703,7 @@ defaults to the global environment.  To load into the current environment instea
   {
     /* (set! *load-hook* (lambda (name) (format #t "loading ~A~%" name))) */
     s7_pointer load_hook;
-    load_hook = s7_symbol_special_value(sc, s7_make_symbol(sc, "*load-hook*"));
+    load_hook = s7_symbol_special_value(sc, make_symbol(sc, "*load-hook*"));
     if (is_procedure(load_hook))
       {
 	sc->args = make_list_1(sc, s7_make_string(sc, fname));
@@ -10706,14 +10718,14 @@ defaults to the global environment.  To load into the current environment instea
 
 s7_pointer s7_load_path(s7_scheme *sc)
 {
-  return(s7_symbol_value(sc, s7_make_symbol(sc, "*load-path*")));
+  return(s7_symbol_value(sc, make_symbol(sc, "*load-path*")));
 }
 
 
 s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *dir)
 {
   s7_pointer load_path;
-  load_path = s7_make_symbol(sc, "*load-path*");
+  load_path = make_symbol(sc, "*load-path*");
 
   s7_symbol_set_value(sc, 
 		      load_path,
@@ -11210,12 +11222,11 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   {
     char *buf;
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     type_name(obj),
 	     typeflag(obj),
 	     is_simple(obj) ? " simple" : "",
-	     is_atom(obj) ? " atom" : "",
 	     is_eternal(obj) ? " eternal" : "",
 	     is_procedure(obj) ? " procedure" : "",
 	     is_marked(obj) ? " gc-marked" : "",
@@ -13302,7 +13313,7 @@ static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
   if ((typeflag(car(args)) & (T_MASKTYPE | T_SYNTAX)) != T_SYMBOL)
     return(s7_wrong_type_arg_error(sc, "provide", 1, car(args), "a symbol"));
 
-  features = s7_make_symbol(sc, "*features*");
+  features = make_symbol(sc, "*features*");
   if (!is_member(car(args), s7_symbol_value(sc, features)))
     s7_symbol_set_value(sc, 
 			features,
@@ -13415,7 +13426,7 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
     {
       vector_elements(x) = (s7_pointer *)malloc(len * sizeof(s7_pointer));
       if (!(vector_elements(x)))
-	return(s7_error(sc, s7_make_symbol(sc, "out-of-memory"), make_protected_string(sc, "make-vector allocation failed!")));
+	return(s7_error(sc, make_symbol(sc, "out-of-memory"), make_protected_string(sc, "make-vector allocation failed!")));
 
       vector_length(x) = len;
       if (filled) s7_vector_fill(sc, x, sc->NIL); /* make_hash_table assumes nil as the default value */
@@ -14587,7 +14598,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   ptr = (s7_func_t *)permanent_calloc(sizeof(s7_func_t));
   if ((required_args == 0) && (rest_arg) && (optional_args == 0))
     ftype = T_C_ANY_ARGS_FUNCTION;
-  set_type(x, ftype | T_ATOM | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR);
+  set_type(x, ftype | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR);
 
   c_function(x) = ptr;
   c_function_call(x) = f;
@@ -14766,14 +14777,14 @@ void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int re
 {
   s7_pointer func;
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
-  s7_define(sc, s7_global_environment(sc), s7_make_symbol(sc, name), func);
+  s7_define(sc, s7_global_environment(sc), make_symbol(sc, name), func);
 }
 
 
 static void s7_define_constant_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_pointer func, sym;
-  sym = s7_make_symbol(sc, name);
+  sym = make_symbol(sc, name);
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
   s7_define(sc, s7_global_environment(sc), sym, func);
   set_immutable(car(symbol_global_slot(sym)));
@@ -14784,8 +14795,8 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
 {
   s7_pointer func;
   func = s7_make_function(sc, name, fnc, required_args, optional_args, rest_arg, doc);
-  set_type(func, T_C_MACRO | T_ATOM | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_ANY_MACRO | T_DONT_COPY_CDR);
-  s7_define(sc, s7_global_environment(sc), s7_make_symbol(sc, name), func);
+  set_type(func, T_C_MACRO | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_ANY_MACRO | T_DONT_COPY_CDR);
+  s7_define(sc, s7_global_environment(sc), make_symbol(sc, name), func);
 }
 
 
@@ -15211,7 +15222,7 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
   NEW_CELL(sc, x);
   c_object_type(x) = type;
   c_object_value(x) = value;
-  set_type(x, T_C_OBJECT | T_ATOM | T_FINALIZABLE | T_DONT_COPY);
+  set_type(x, T_C_OBJECT | T_FINALIZABLE | T_DONT_COPY);
   if (object_types[type].apply)
     typeflag(x) |= T_PROCEDURE;
   return(x);
@@ -17362,7 +17373,7 @@ s7_pointer s7_wrong_number_of_args_error(s7_scheme *sc, const char *caller, s7_p
 
 static s7_pointer division_by_zero_error(s7_scheme *sc, const char *caller, s7_pointer arg)
 {
-  return(s7_error(sc, s7_make_symbol(sc, "division-by-zero"), 
+  return(s7_error(sc, make_symbol(sc, "division-by-zero"), 
 		  make_list_3(sc, 
 			      make_protected_string(sc, "~A: division by zero, ~A"), 
 			      make_protected_string(sc, caller),
@@ -17372,7 +17383,7 @@ static s7_pointer division_by_zero_error(s7_scheme *sc, const char *caller, s7_p
 
 static s7_pointer file_error(s7_scheme *sc, const char *caller, const char *descr, const char *name)
 {
-  return(s7_error(sc, s7_make_symbol(sc, "io-error"), 
+  return(s7_error(sc, make_symbol(sc, "io-error"), 
 		  make_list_4(sc, 
 			      make_protected_string(sc, "~A: ~A ~S"),
 			      make_protected_string(sc, caller),
@@ -17420,7 +17431,7 @@ each a function of no arguments, guaranteeing that finish is called even if body
   dynamic_wind_body(p) = cadr(args);
   dynamic_wind_out(p) = caddr(args);
   dynamic_wind_state(p) = DWIND_INIT;
-  set_type(p, T_DYNAMIC_WIND | T_ATOM | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
+  set_type(p, T_DYNAMIC_WIND | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
 
   push_stack(sc, opcode(OP_DYNAMIC_WIND), sc->NIL, p);          /* args will be the saved result, code = s7_dynwind_t obj */
   
@@ -17445,7 +17456,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   catch_tag(p) = car(args);
   catch_goto_loc(p) = s7_stack_top(sc);
   catch_handler(p) = caddr(args);
-  set_type(p, T_CATCH | T_ATOM | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
+  set_type(p, T_CATCH | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
 
   push_stack(sc, opcode(OP_CATCH), sc->NIL, p);
   sc->args = sc->NIL;
@@ -17983,7 +17994,7 @@ static s7_pointer g_error(s7_scheme *sc, s7_pointer args)
     {
       if (s7_is_string(car(args)))                    /* CL-style error? -- use tag = 'no-catch */
 	{
-	  s7_error(sc, s7_make_symbol(sc, "no-catch"), args);
+	  s7_error(sc, make_symbol(sc, "no-catch"), args);
 	  return(sc->UNSPECIFIED);
 	}
       return(s7_error(sc, car(args), cdr(args)));
@@ -19293,7 +19304,7 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 			  break;
 
 			default:
-			  result = s7_make_symbol(sc, (char *)(orig_str - 1));
+			  result = make_symbol(sc, (char *)(orig_str - 1));
 			}
 		    }
 		  else result = make_sharp_constant(sc, (char *)(orig_str - 1), true, 10);
@@ -19897,12 +19908,12 @@ static lstar_err_t prepare_closure_star(s7_scheme *sc)
 		  
 		  name = symbol_name(car(sc->y));
 		  if (name[0] == ':')
-		    sym = s7_make_symbol(sc, (const char *)(name + 1));
+		    sym = make_symbol(sc, (const char *)(name + 1));
 		  else
 		    {
 		      /* must be a trailing ':' here, else not is_keyword */
 		      name[symbol_name_length(car(sc->y)) - 1] = '\0';
-		      sym = s7_make_symbol(sc, name);
+		      sym = make_symbol(sc, name);
 		      name[symbol_name_length(car(sc->y)) - 1] = ':';
 		    }
 		  
@@ -20819,21 +20830,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       switch (type(sc->code))
 	{
 	case T_PAIR:
-	  /* using a local s7_pointer for sc->x here drastically slows things down?!? */
+	  /* using a local s7_pointer here drastically slows things down?!? */
 	  if (is_syntax(car(sc->code)))
 	    {     
-#if 0
-	      /* (let () (define (if a) a) (if 1)) or (let let ((i 0)) (if (< i 3) (let (+ i 1)) i))
-	       * but this slows us down by a huge amount (30%!) [I don't know why...]
-	       */
-	      if ((!(is_not_local(sc->x))) &&
-		  (find_symbol(sc, sc->envir, sc->x) != sc->NIL))
-		{
-		  push_stack(sc, opcode(OP_EVAL_ARGS), sc->NIL, cdr(sc->code));
-		  sc->code = sc->x;
-		  goto EVAL;
-		}
-#endif		  
 	      sc->op = (opcode_t)syntax_opcode(car(sc->code));
 	      sc->code = cdr(sc->code);
 	      goto START_WITHOUT_POP_STACK;
@@ -20865,6 +20864,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = sc->code;
 	  goto START;
 	}
+      break;
 
       
     case OP_EVAL_ARGS:
@@ -20919,6 +20919,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        */
 
       
+      /* using while here rather than EVAL_ARGS and a goto made no speed difference */
     EVAL_ARGS:
     case OP_EVAL_ARGS1:
       /* this is where most of s7's compute time goes */
@@ -21284,9 +21285,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_SYMBOL:                            /* -------- syntactic keyword as applicable object -------- */
 	  if (is_syntax(sc->code))                                           /* (apply begin '((define x 3) (+ x 2))) */
 	    {
-	      sc->code = s7_cons(sc, sc->code, sc->args);
-	      /* sc->args = sc->NIL; */
-	      goto EVAL;
+	      sc->op = (opcode_t)syntax_opcode(sc->code);
+	      sc->code = sc->args;
+	      goto START_WITHOUT_POP_STACK;
+	      /* this was:
+	       *    sc->code = s7_cons(sc, sc->code, sc->args); goto EVAL;
+	       * but that merely leads to the code above, I think.
+	       */
+
 	    }
 	  /* else fall through */
 
@@ -21572,12 +21578,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  if (is_multiple_value(sc->value))
 	    {
-	      sc->code = s7_cons(sc, s7_make_symbol(sc, "set!"), s7_append(sc, multiple_value(sc->value), s7_append(sc, sc->args, sc->code)));
+	      sc->code = s7_cons(sc, make_symbol(sc, "set!"), s7_append(sc, multiple_value(sc->value), s7_append(sc, sc->args, sc->code)));
 	      sc->op = OP_SET;
 	      goto START_WITHOUT_POP_STACK;
 	    }
+
+	  /* very weird -- the 2nd case seems like it must be more efficient, but it's actually slower? 
+	   *    using push_stack to get to eval_args almost gets it back to the current speed.
+	   *    so, goto EVAL_ARGS must be the culprit.   Moving these blocks ahead of EVAL_ARGS doesn't help.
+	   */
 	  sc->code = s7_cons(sc, sc->LIST_SET, s7_cons(sc, make_list_2(sc, sc->QUOTE, sc->value), s7_append(sc, sc->args, sc->code)));
 	  goto EVAL;
+
+	  /*
+	  sc->code = s7_cons(sc, make_list_2(sc, sc->QUOTE, sc->value), s7_append(sc, sc->args, sc->code));
+	  sc->value = sc->LIST_SET;
+	  sc->args = sc->NIL;
+	  goto EVAL_ARGS;
+	  */
 	}
 
       if (s7_is_vector(sc->value))
@@ -21738,23 +21756,30 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     case OP_IF:
-      if (!is_pair(sc->code))                               /* (if) or (if . 1) */
-	return(eval_error(sc, "(if): if needs at least 2 expressions: ~A", sc->code));
+      {
+	s7_pointer cdr_code;
+	if (!is_pair(sc->code))                               /* (if) or (if . 1) */
+	  return(eval_error(sc, "(if): if needs at least 2 expressions: ~A", sc->code));
 
-      if (!is_pair(cdr(sc->code)))                          /* (if 1) */
-	return(eval_error(sc, "(if ~A): if needs another clause", car(sc->code)));
+	cdr_code = cdr(sc->code);
+	if (!is_pair(cdr_code))                          /* (if 1) */
+	  return(eval_error(sc, "(if ~A): if needs another clause", car(sc->code)));
       
-      if ((!is_pair(cddr(sc->code))) &&
-	  (cddr(sc->code) != sc->NIL))                      /* (if 1 2 . 3) */
-	return(eval_error(sc, "if: ~A has improper list?", sc->code));
-
-      if ((is_pair(cddr(sc->code))) && 
-	  (cdddr(sc->code) != sc->NIL))                     /* (if 1 2 3 4) */
-	return(eval_error(sc, "too many clauses for if: ~A", sc->code));
+	if (is_pair(cdr(cdr_code)))
+	  {
+	    if (cddr(cdr_code) != sc->NIL)                   /* (if 1 2 3 4) */
+	      return(eval_error(sc, "too many clauses for if: ~A", sc->code));
+	  }
+	else
+	  {
+	    if (cdr(cdr_code) != sc->NIL)                    /* (if 1 2 . 3) */
+	      return(eval_error(sc, "if: ~A has improper list?", sc->code));
+	  }
       
-      push_stack(sc, opcode(OP_IF1), sc->NIL, cdr(sc->code));
-      sc->code = car(sc->code);
-      goto EVAL;
+	push_stack(sc, opcode(OP_IF1), sc->NIL, cdr_code);
+	sc->code = car(sc->code);
+	goto EVAL;
+      }
       
       
     case OP_IF1:
@@ -22623,56 +22648,55 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->value = safe_reverse_in_place(sc, sc->args);
 	      if (sc->input_port != sc->NIL)
 		pair_line_number(sc->value) = port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20);
-	    }
 
-	  /* read-time macro expansion
-	   *
-	   *   (defmacro hi (a) (format #t "hi...") `(+ ,a 1))
-	   *   (define (ho b) (+ 1 (hi b)))
-	   *
-	   * here sc->value is: (ho b), (hi b), (+ 1 (hi b)), (define (ho b) (+ 1 (hi b)))
-	   * 
-	   * but... first we can't tell for sure at this point that "hi" really is a macro
-	   *
-	   *   (letrec ((hi ... (hi...))) will be confused about the 2nd hi,
-	   *   or (call/cc (lambda (hi) (hi 1))) etc.
-	   *
-	   * second, figuring out that we're quoted is not easy -- we have to march all the
-	   * way to the bottom of the stack looking for op_read_quote or op_read_vector
-	   *
-	   *    #(((hi)) 2) or '(((hi)))
-	   *
-	   * or op_read_list with args not equal (quote) or (macroexapand)
-	   *
-	   *    '(hi 3) or (macroexpand (hi 3) or (quote (hi 3))
-	   *
-	   * and those are only the problems I noticed!
-	   *
-	   * The hardest of these problems involve shadowing, so Rick asked for "define-expansion"
-	   *   which is just like define-macro, but the programmer guarantees that the macro
-	   *   name will not be shadowed.  So I'll also assume that the other funny cases are
-	   *   being avoided -- see what happens!
-	   *
-	   *   (define-expansion (hi a) `(+ ,a 1))
-	   *   (define (ho b) (+ 1 (hi b)))
-	   *   (procedure-source ho) -> (lambda (b) (+ 1 (+ b 1)))
-	   */
+	      /* read-time macro expansion
+	       *
+	       *   (defmacro hi (a) (format #t "hi...") `(+ ,a 1))
+	       *   (define (ho b) (+ 1 (hi b)))
+	       *
+	       * here sc->value is: (ho b), (hi b), (+ 1 (hi b)), (define (ho b) (+ 1 (hi b)))
+	       * 
+	       * but... first we can't tell for sure at this point that "hi" really is a macro
+	       *
+	       *   (letrec ((hi ... (hi...))) will be confused about the 2nd hi,
+	       *   or (call/cc (lambda (hi) (hi 1))) etc.
+	       *
+	       * second, figuring out that we're quoted is not easy -- we have to march all the
+	       * way to the bottom of the stack looking for op_read_quote or op_read_vector
+	       *
+	       *    #(((hi)) 2) or '(((hi)))
+	       *
+	       * or op_read_list with args not equal (quote) or (macroexapand)
+	       *
+	       *    '(hi 3) or (macroexpand (hi 3) or (quote (hi 3))
+	       *
+	       * and those are only the problems I noticed!
+	       *
+	       * The hardest of these problems involve shadowing, so Rick asked for "define-expansion"
+	       *   which is just like define-macro, but the programmer guarantees that the macro
+	       *   name will not be shadowed.  So I'll also assume that the other funny cases are
+	       *   being avoided -- see what happens!
+	       *
+	       *   (define-expansion (hi a) `(+ ,a 1))
+	       *   (define (ho b) (+ 1 (hi b)))
+	       *   (procedure-source ho) -> (lambda (b) (+ 1 (+ b 1)))
+	       */
 	  
-	  if ((sc->value != sc->NIL) &&
-	      (is_expansion(car(sc->value))))
-	    {
-	      int loc;
-	      loc = s7_stack_top(sc) - 1;
-	      if ((loc >= 3) &&
-		  ((int)stack_op(sc->stack, loc) != OP_READ_QUOTE) &&        /* '(hi 1) for example */
-		  (car(stack_args(sc->stack, loc)) != sc->QUOTE) &&          /* (quote (hi 1)) */
-		  (car(stack_args(sc->stack, loc)) != sc->MACROEXPAND))      /* (macroexpand (hi 1)) */
+	      if (is_expansion(car(sc->value)))
 		{
-		  s7_pointer x;
-		  x = symbol_value(find_symbol(sc, sc->envir, car(sc->value)));
-		  sc->args = make_list_1(sc, sc->value); 
-		  sc->code = x;
-		  goto APPLY;
+		  int loc;
+		  loc = s7_stack_top(sc) - 1;
+		  if ((loc >= 3) &&
+		      ((int)stack_op(sc->stack, loc) != OP_READ_QUOTE) &&        /* '(hi 1) for example */
+		      (car(stack_args(sc->stack, loc)) != sc->QUOTE) &&          /* (quote (hi 1)) */
+		      (car(stack_args(sc->stack, loc)) != sc->MACROEXPAND))      /* (macroexpand (hi 1)) */
+		    {
+		      s7_pointer x;
+		      x = symbol_value(find_symbol(sc, sc->envir, car(sc->value)));
+		      sc->args = make_list_1(sc, sc->value); 
+		      sc->code = x;
+		      goto APPLY;
+		    }
 		}
 	    }
 	  break;
@@ -23224,7 +23248,7 @@ static s7_pointer g_make_thread_variable(s7_scheme *sc, s7_pointer args)
   err = pthread_key_create(key, NULL);
   if (err == 0)
     return(s7_make_object(sc, key_tag, (void *)key));  
-  return(s7_error(sc, s7_make_symbol(sc, "thread-error"), make_list_1(sc, make_protected_string(sc, "make-thread-variable failed!?"))));
+  return(s7_error(sc, make_symbol(sc, "thread-error"), make_list_1(sc, make_protected_string(sc, "make-thread-variable failed!?"))));
 }
 
 
@@ -24592,7 +24616,7 @@ static s7_pointer g_bignum(s7_scheme *sc, s7_pointer args)
 
   p = g_string_to_number(sc, args);
   if (is_false(sc, p))                                       /* (bignum "1/3.0") */
-    s7_error(sc, s7_make_symbol(sc, "bignum-error"),
+    s7_error(sc, make_symbol(sc, "bignum-error"),
 	     make_list_2(sc,
 			 make_protected_string(sc, "bignum argument is not a number: ~S"),
 			 car(args)));
@@ -27385,7 +27409,7 @@ static s7_pointer g_set_precision(s7_scheme *sc, s7_pointer args)
   bits = (mp_prec_t)precision;
   mpfr_set_default_prec(bits);
   mpc_set_default_precision(bits);
-  s7_symbol_set_value(sc, s7_make_symbol(sc, "pi"), big_pi(sc));
+  s7_symbol_set_value(sc, make_symbol(sc, "pi"), big_pi(sc));
   return(car(args));
 }
 
@@ -27702,15 +27726,15 @@ static void s7_gmp_init(s7_scheme *sc)
   mpfr_set_default_prec((mp_prec_t)128); 
   mpc_set_default_precision((mp_prec_t)128);
 
-  s7_symbol_set_value(sc, s7_make_symbol(sc, "pi"), big_pi(sc));
+  s7_symbol_set_value(sc, make_symbol(sc, "pi"), big_pi(sc));
 
   /* if these fixnum limits were read as strings, they'd be bignums in the gmp case, 
    *   so for consistency make the symbolic versions bignums as well.
    */
-  s7_symbol_set_value(sc, s7_make_symbol(sc, "most-positive-fixnum"), s7_Int_to_big_integer(sc, s7_integer(s7_name_to_value(sc, "most-positive-fixnum"))));
-  s7_symbol_set_value(sc, s7_make_symbol(sc, "most-negative-fixnum"), s7_Int_to_big_integer(sc, s7_integer(s7_name_to_value(sc, "most-negative-fixnum"))));
+  s7_symbol_set_value(sc, make_symbol(sc, "most-positive-fixnum"), s7_Int_to_big_integer(sc, s7_integer(s7_name_to_value(sc, "most-positive-fixnum"))));
+  s7_symbol_set_value(sc, make_symbol(sc, "most-negative-fixnum"), s7_Int_to_big_integer(sc, s7_integer(s7_name_to_value(sc, "most-negative-fixnum"))));
 
-  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "gmp")));
+  g_provide(sc, make_list_1(sc, make_symbol(sc, "gmp")));
 }
 
 #endif
@@ -27755,28 +27779,28 @@ s7_scheme *s7_init(void)
   sc->TEMP_CELL = &sc->_TEMP_CELL;
   sc->TEMP_CELL_1 = &sc->_TEMP_CELL_1;
 
-  set_type(sc->NIL, T_NIL | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(sc->NIL, T_NIL | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->NIL) = cdr(sc->NIL) = sc->UNSPECIFIED;
   
-  set_type(sc->T, T_BOOLEAN | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(sc->T, T_BOOLEAN | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->T) = cdr(sc->T) = sc->UNSPECIFIED;
   
-  set_type(sc->F, T_BOOLEAN | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(sc->F, T_BOOLEAN | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->F) = cdr(sc->F) = sc->UNSPECIFIED;
   
-  set_type(sc->EOF_OBJECT, T_UNTYPED | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(sc->EOF_OBJECT, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->EOF_OBJECT) = cdr(sc->EOF_OBJECT) = sc->UNSPECIFIED;
   
-  set_type(sc->UNSPECIFIED, T_UNTYPED | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(sc->UNSPECIFIED, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->UNSPECIFIED) = cdr(sc->UNSPECIFIED) = sc->UNSPECIFIED;
   
-  set_type(sc->UNDEFINED, T_UNTYPED | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(sc->UNDEFINED, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->UNDEFINED) = cdr(sc->UNDEFINED) = sc->UNSPECIFIED;
   
-  set_type(sc->NO_VALUE, T_UNTYPED | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(sc->NO_VALUE, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->NO_VALUE) = cdr(sc->NO_VALUE) = sc->UNSPECIFIED;
 
-  set_type(sc->ELSE, T_UNTYPED | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
+  set_type(sc->ELSE, T_UNTYPED | T_GC_MARK | T_IMMUTABLE | T_SIMPLE | T_DONT_COPY);
   car(sc->ELSE) = cdr(sc->ELSE) = sc->UNSPECIFIED;
   /* "else" is added to the global environment below -- can't do it here
    *    because the symbol table and environment don't exist yet.
@@ -27882,14 +27906,14 @@ s7_scheme *s7_init(void)
       s7_pointer p;
 
       p = (s7_pointer)calloc(1, sizeof(s7_cell));
-      p->flag = T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
+      p->flag = T_IMMUTABLE | T_NUMBER | T_SIMPLE | T_DONT_COPY;
       p->hloc = NOT_IN_HEAP;
       number_type(p) = NUM_INT;
       integer(number(p)) = (s7_Int)i;
       small_ints[i] = p;
 
       p = (s7_pointer)calloc(1, sizeof(s7_cell));
-      p->flag = T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
+      p->flag = T_IMMUTABLE | T_NUMBER | T_SIMPLE | T_DONT_COPY;
       p->hloc = NOT_IN_HEAP;
       number_type(p) = NUM_INT;
       integer(number(p)) = (s7_Int)(-i);
@@ -27897,13 +27921,13 @@ s7_scheme *s7_init(void)
     }
 
   real_zero = (s7_pointer)calloc(1, sizeof(s7_cell));
-  real_zero->flag = T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
+  real_zero->flag = T_IMMUTABLE | T_NUMBER | T_SIMPLE | T_DONT_COPY;
   real_zero->hloc = NOT_IN_HEAP;
   number_type(real_zero) = NUM_REAL;
   real(number(real_zero)) = (s7_Double)0.0;
 
   real_one = (s7_pointer)calloc(1, sizeof(s7_cell));
-  real_one->flag = T_IMMUTABLE | T_ATOM | T_NUMBER | T_SIMPLE | T_DONT_COPY;
+  real_one->flag = T_IMMUTABLE | T_NUMBER | T_SIMPLE | T_DONT_COPY;
   real_one->hloc = NOT_IN_HEAP;
   number_type(real_one) = NUM_REAL;
   real(number(real_one)) = (s7_Double)1.0;
@@ -27914,7 +27938,7 @@ s7_scheme *s7_init(void)
     {
       s7_pointer p;
       p = (s7_pointer)calloc(1, sizeof(s7_cell));
-      p->flag = T_IMMUTABLE | T_ATOM | T_CHARACTER | T_SIMPLE | T_DONT_COPY;
+      p->flag = T_IMMUTABLE | T_CHARACTER | T_SIMPLE | T_DONT_COPY;
       p->hloc = NOT_IN_HEAP;
       character(p) = (unsigned int)i;
       chars[i] = p;
@@ -27948,86 +27972,86 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "define-bacro",      OP_DEFINE_BACRO);     /* macro expansion in calling environment */
   assign_syntax(sc, "define-bacro*",     OP_DEFINE_BACRO_STAR);
   
-  sc->LAMBDA = s7_make_symbol(sc, "lambda");
+  sc->LAMBDA = make_symbol(sc, "lambda");
   typeflag(sc->LAMBDA) |= T_DONT_COPY; 
   
-  sc->LAMBDA_STAR = s7_make_symbol(sc, "lambda*");
+  sc->LAMBDA_STAR = make_symbol(sc, "lambda*");
   typeflag(sc->LAMBDA_STAR) |= T_DONT_COPY; 
 
-  sc->SPECIAL = s7_make_symbol(sc, "special");
+  sc->SPECIAL = make_symbol(sc, "special");
   typeflag(sc->SPECIAL) |= T_DONT_COPY;
   
-  sc->QUOTE = s7_make_symbol(sc, "quote");
+  sc->QUOTE = make_symbol(sc, "quote");
   typeflag(sc->QUOTE) |= T_DONT_COPY; 
   
-  sc->UNQUOTE = s7_make_symbol(sc, "unquote");
+  sc->UNQUOTE = make_symbol(sc, "unquote");
   typeflag(sc->UNQUOTE) |= T_DONT_COPY; 
   
-  sc->UNQUOTE_SPLICING = s7_make_symbol(sc, "unquote-splicing");
+  sc->UNQUOTE_SPLICING = make_symbol(sc, "unquote-splicing");
   typeflag(sc->UNQUOTE_SPLICING) |= T_DONT_COPY; 
   
-  sc->MACROEXPAND = s7_make_symbol(sc, "macroexpand");
+  sc->MACROEXPAND = make_symbol(sc, "macroexpand");
   typeflag(sc->MACROEXPAND) |= T_DONT_COPY; 
   
-  sc->FEED_TO = s7_make_symbol(sc, "=>");
+  sc->FEED_TO = make_symbol(sc, "=>");
   typeflag(sc->FEED_TO) |= T_DONT_COPY; 
   
   #define object_set_name "(generalized set!)"
-  sc->OBJECT_SET = s7_make_symbol(sc, object_set_name);   /* will call g_object_set */
+  sc->OBJECT_SET = make_symbol(sc, object_set_name);   /* will call g_object_set */
   typeflag(sc->OBJECT_SET) |= T_DONT_COPY; 
 
   #define s_is_type_name "[?]"                            /* these were "(?)" etc, but the procedure-source needs to be usable */
-  sc->S_IS_TYPE = s7_make_symbol(sc, s_is_type_name);
+  sc->S_IS_TYPE = make_symbol(sc, s_is_type_name);
   typeflag(sc->S_IS_TYPE) |= T_DONT_COPY; 
 
   #define s_type_make_name "[make]"
-  sc->S_TYPE_MAKE = s7_make_symbol(sc, s_type_make_name);
+  sc->S_TYPE_MAKE = make_symbol(sc, s_type_make_name);
   typeflag(sc->S_TYPE_MAKE) |= T_DONT_COPY; 
 
   #define s_type_ref_name "[ref]"
-  sc->S_TYPE_REF = s7_make_symbol(sc, s_type_ref_name);
+  sc->S_TYPE_REF = make_symbol(sc, s_type_ref_name);
   typeflag(sc->S_TYPE_REF) |= T_DONT_COPY; 
 
   #define s_type_arg_name "[arg]"
-  sc->S_TYPE_ARG = s7_make_symbol(sc, s_type_arg_name);
+  sc->S_TYPE_ARG = make_symbol(sc, s_type_arg_name);
   typeflag(sc->S_TYPE_ARG) |= T_DONT_COPY;
 
-  sc->APPLY = s7_make_symbol(sc, "apply");
+  sc->APPLY = make_symbol(sc, "apply");
   typeflag(sc->APPLY) |= T_DONT_COPY; 
   
-  sc->QQ_VALUES = s7_make_symbol(sc, "{values}");
+  sc->QQ_VALUES = make_symbol(sc, "{values}");
   typeflag(sc->QQ_VALUES) |= T_DONT_COPY; 
   
-  sc->QQ_LIST = s7_make_symbol(sc, "{list}");
+  sc->QQ_LIST = make_symbol(sc, "{list}");
   typeflag(sc->QQ_LIST) |= T_DONT_COPY; 
   
-  sc->QQ_APPLY = s7_make_symbol(sc, "{apply}");
+  sc->QQ_APPLY = make_symbol(sc, "{apply}");
   typeflag(sc->QQ_APPLY) |= T_DONT_COPY; 
   
-  sc->QQ_APPEND = s7_make_symbol(sc, "{append}");
+  sc->QQ_APPEND = make_symbol(sc, "{append}");
   typeflag(sc->QQ_APPEND) |= T_DONT_COPY; 
   
-  sc->CDR = s7_make_symbol(sc, "cdr");
+  sc->CDR = make_symbol(sc, "cdr");
   typeflag(sc->CDR) |= T_DONT_COPY; 
   
-  add_to_current_environment(sc, s7_make_symbol(sc, "else"), sc->ELSE);
+  add_to_current_environment(sc, make_symbol(sc, "else"), sc->ELSE);
 
-  sc->VECTOR = s7_make_symbol(sc, "vector");
+  sc->VECTOR = make_symbol(sc, "vector");
   typeflag(sc->VECTOR) |= T_DONT_COPY; 
   
-  sc->MULTIVECTOR = s7_make_symbol(sc, "{multivector}");
+  sc->MULTIVECTOR = make_symbol(sc, "{multivector}");
   typeflag(sc->MULTIVECTOR) |= T_DONT_COPY; 
   
-  sc->ERROR = s7_make_symbol(sc, "error");
+  sc->ERROR = make_symbol(sc, "error");
   typeflag(sc->ERROR) |= T_DONT_COPY; 
 
-  sc->READ_ERROR = s7_make_symbol(sc, "read-error");
+  sc->READ_ERROR = make_symbol(sc, "read-error");
   typeflag(sc->READ_ERROR) |= T_DONT_COPY; 
 
-  sc->SYNTAX_ERROR = s7_make_symbol(sc, "syntax-error");
+  sc->SYNTAX_ERROR = make_symbol(sc, "syntax-error");
   typeflag(sc->SYNTAX_ERROR) |= T_DONT_COPY; 
 
-  sc->WRONG_TYPE_ARG = s7_make_symbol(sc, "wrong-type-arg");
+  sc->WRONG_TYPE_ARG = make_symbol(sc, "wrong-type-arg");
   typeflag(sc->WRONG_TYPE_ARG) |= T_DONT_COPY; 
 
   sc->WRONG_TYPE_ARG_INFO = sc->NIL;
@@ -28035,13 +28059,13 @@ s7_scheme *s7_init(void)
     sc->WRONG_TYPE_ARG_INFO = permanent_cons(sc->F, sc->WRONG_TYPE_ARG_INFO, T_PAIR | T_STRUCTURE);
   s7_list_set(sc, sc->WRONG_TYPE_ARG_INFO, 0, s7_make_permanent_string("~A argument ~D, ~S, is ~A but should be ~A"));
 
-  sc->WRONG_NUMBER_OF_ARGS = s7_make_symbol(sc, "wrong-number-of-args");
+  sc->WRONG_NUMBER_OF_ARGS = make_symbol(sc, "wrong-number-of-args");
   typeflag(sc->WRONG_NUMBER_OF_ARGS) |= T_DONT_COPY; 
 
-  sc->FORMAT_ERROR = s7_make_symbol(sc, "format-error");
+  sc->FORMAT_ERROR = make_symbol(sc, "format-error");
   typeflag(sc->FORMAT_ERROR) |= T_DONT_COPY; 
 
-  sc->OUT_OF_RANGE = s7_make_symbol(sc, "out-of-range");
+  sc->OUT_OF_RANGE = make_symbol(sc, "out-of-range");
   typeflag(sc->OUT_OF_RANGE) |= T_DONT_COPY; 
 
   sc->OUT_OF_RANGE_INFO = sc->NIL;
@@ -28061,19 +28085,19 @@ s7_scheme *s7_init(void)
   sc->KEY_REST = s7_make_keyword(sc, "rest");
   typeflag(sc->KEY_REST) |= T_DONT_COPY; 
 
-  sc->__FUNC__ = s7_make_symbol(sc, "__func__");
+  sc->__FUNC__ = make_symbol(sc, "__func__");
   typeflag(sc->__FUNC__) |= (T_DONT_COPY | T_LOCAL); 
 
-  sc->ERROR_HOOK = s7_make_symbol(sc, "*error-hook*");
+  sc->ERROR_HOOK = make_symbol(sc, "*error-hook*");
   typeflag(sc->ERROR_HOOK) |= T_DONT_COPY; 
 
-  sc->TRACE_HOOK = s7_make_symbol(sc, "*trace-hook*");
+  sc->TRACE_HOOK = make_symbol(sc, "*trace-hook*");
   typeflag(sc->TRACE_HOOK) |= T_DONT_COPY; 
 
-  sc->UNBOUND_VARIABLE_HOOK = s7_make_symbol(sc, "*unbound-variable-hook*");
+  sc->UNBOUND_VARIABLE_HOOK = make_symbol(sc, "*unbound-variable-hook*");
   typeflag(sc->UNBOUND_VARIABLE_HOOK) |= T_DONT_COPY; 
 
-  sc->SET = s7_make_symbol(sc, "set!");
+  sc->SET = make_symbol(sc, "set!");
   typeflag(sc->SET) |= T_DONT_COPY; 
 
   sc->s_function_args = permanent_cons(sc->F, sc->NIL, T_PAIR | T_STRUCTURE);
@@ -28402,7 +28426,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "stacktrace",              g_stacktrace,              0, 2, false, H_stacktrace);
 
   s7_define_variable(sc, "*#readers*", sc->NIL);
-  sc->sharp_readers = symbol_global_slot(s7_make_symbol(sc, "*#readers*"));
+  sc->sharp_readers = symbol_global_slot(make_symbol(sc, "*#readers*"));
 
   s7_define_function(sc, "gc",                      g_gc,                      0, 1, false, H_gc);
   s7_define_function(sc, "quit",                    g_quit,                    0, 0, false, H_quit);
@@ -28433,7 +28457,7 @@ s7_scheme *s7_init(void)
   s7_define_variable(sc, "*load-hook*", sc->NIL);
 
   s7_define_variable(sc, "*vector-print-length*", small_ints[8]);
-  sc->vector_print_length = symbol_global_slot(s7_make_symbol(sc, "*vector-print-length*"));
+  sc->vector_print_length = symbol_global_slot(make_symbol(sc, "*vector-print-length*"));
 
   s7_define_variable(sc, "symbol-table-locked?", 
 		     s7_make_procedure_with_setter(sc, "symbol-table-locked?", g_symbol_table_is_locked, 0, 0, g_set_symbol_table_is_locked, 1, 0, H_symbol_table_is_locked));
@@ -28443,10 +28467,10 @@ s7_scheme *s7_init(void)
   s7_define_constant(sc, "*error-info*", sc->error_info);
   s7_define_variable(sc, "*unbound-variable-hook*", sc->NIL);
   
-  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "s7")));
+  g_provide(sc, make_list_1(sc, make_symbol(sc, "s7")));
 
 #if WITH_PROFILING
-  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "profiling")));  
+  g_provide(sc, make_list_1(sc, make_symbol(sc, "profiling")));  
 #endif
 
 
@@ -28467,24 +28491,24 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "make-thread-variable",    g_make_thread_variable,    0, 0, false, H_make_thread_variable);
   s7_define_function(sc, "thread-variable?",        g_is_thread_variable,      1, 0, false, H_is_thread_variable);
 
-  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "threads")));
+  g_provide(sc, make_list_1(sc, make_symbol(sc, "threads")));
 #endif
 
 #if (!S7_DISABLE_DEPRECATED)
-  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "multidimensional-vectors"))); /* backwards compatibility */
+  g_provide(sc, make_list_1(sc, make_symbol(sc, "multidimensional-vectors"))); /* backwards compatibility */
 #endif
 
 
-  sc->VECTOR_SET = s7_symbol_value(sc, s7_make_symbol(sc, "vector-set!"));
+  sc->VECTOR_SET = s7_symbol_value(sc, make_symbol(sc, "vector-set!"));
   typeflag(sc->VECTOR_SET) |= T_DONT_COPY; 
 
-  sc->LIST_SET = s7_symbol_value(sc, s7_make_symbol(sc, "list-set!"));
+  sc->LIST_SET = s7_symbol_value(sc, make_symbol(sc, "list-set!"));
   typeflag(sc->LIST_SET) |= T_DONT_COPY; 
 
-  sc->HASH_TABLE_SET = s7_symbol_value(sc, s7_make_symbol(sc, "hash-table-set!"));
+  sc->HASH_TABLE_SET = s7_symbol_value(sc, make_symbol(sc, "hash-table-set!"));
   typeflag(sc->HASH_TABLE_SET) |= T_DONT_COPY; 
 
-  sc->STRING_SET = s7_symbol_value(sc, s7_make_symbol(sc, "string-set!"));
+  sc->STRING_SET = s7_symbol_value(sc, make_symbol(sc, "string-set!"));
   typeflag(sc->STRING_SET) |= T_DONT_COPY; 
 
   s7_function_set_setter(sc, "car",                 "set-car!");
@@ -28574,11 +28598,11 @@ s7_scheme *s7_init(void)
 
   save_initial_environment(sc);
 
-  initial_add = s7_symbol_value(sc, s7_make_symbol(sc, "+"));
-  initial_subtract = s7_symbol_value(sc, s7_make_symbol(sc, "-"));
-  initial_equal = s7_symbol_value(sc, s7_make_symbol(sc, "="));
-  initial_lt = s7_symbol_value(sc, s7_make_symbol(sc, "<"));
-  initial_gt = s7_symbol_value(sc, s7_make_symbol(sc, ">"));
+  initial_add = s7_symbol_value(sc, make_symbol(sc, "+"));
+  initial_subtract = s7_symbol_value(sc, make_symbol(sc, "-"));
+  initial_equal = s7_symbol_value(sc, make_symbol(sc, "="));
+  initial_lt = s7_symbol_value(sc, make_symbol(sc, "<"));
+  initial_gt = s7_symbol_value(sc, make_symbol(sc, ">"));
 
   return(sc);
 }
@@ -28701,7 +28725,7 @@ s7_scheme *s7_init(void)
  * things to add: lint? (can we notice unreachable code, unbound variables, bad args)?
  *                could the profiler give block counts as well?
  *
- * s7test valgrind, time       17-Jul-10   7-Sep-10
+ * s7test valgrind, time       17-Jul-10   7-Sep-10          now
  *    intel core duo (1.83G):    3162     2690, 1.921
  *    intel E5200 (2.5G):                 1951, 1.450
  *    amd operon 2218 (2.5G):             1859, 1.335
@@ -28711,10 +28735,10 @@ s7_scheme *s7_init(void)
  *    amd phenom 945 (3.0G):     2085     1864, 0.894
  *    intel Q9450 (2.66G):                1951, 0.857
  *    intel Q9550 (2.83G):       2184     1948, 0.838
- *    intel E8400  (3.0G):       2372     2082, 0.836
+ *    intel E8400  (3.0G):       2372     2082, 0.836     1910 .803
  *    intel xeon 5530 (2.4G)     2093     1855, 0.811
  *    amd phenom 965 (3.4G):     2083     1862, 0.808
- *    intel i7 930 (2.8G):       2084     1864  0.704
+ *    intel i7 930 (2.8G):       2084     1864  0.704     1728 .636
  *
  * 10.8: 0.684, same in 11.10: 0.380, using no-gui snd (overhead: 0.04)
  */

@@ -2625,7 +2625,10 @@
 
 (test (symbol? (string->symbol (string #\; #\" #\)))) #t)
 (test (let (((symbol ";")) 3) (symbol ";")) 'error)
-
+(test (symbol? (symbol "")) #t)
+(test (symbol? (symbol (string))) #t)
+(test (symbol? (symbol (make-string 0))) #t)
+(test (symbol? (symbol (string-append))) #t)
 
 (for-each
  (lambda (arg)

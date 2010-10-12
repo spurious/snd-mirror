@@ -158,7 +158,7 @@ static void fsb_update_lists(fsb *fs)
     free(dir_case);
   }
 
-  free_dir_info(files);
+  files = free_dir_info(files);
 
   /* reload file list */
   if (fs->current_files) fs->current_files = free_dir_info(fs->current_files);
