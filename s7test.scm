@@ -8250,6 +8250,11 @@
 (test '(1 .(2 3)) '(1 2 3))
 (test '(1 .(2 3)) '(1 . (2 3)))
 (test (cadr '(1 '0,)) ''0,)
+(test (equal? 3 ' 3) #t)
+(test (equal? '   
+	             3 3) #t)
+(test (equal? '"hi" ' "hi") #t)
+(test (equal? '#\a '    #\a) #t)
 (test (let ((nam()e 1)) 1) 'error)
 (test (let ((nam""e 1)) nam""e) 'error) ; this was 1 originally
 (test (cadr '(1 ']x)) '']x)

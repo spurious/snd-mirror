@@ -627,11 +627,11 @@ struct s7_scheme {
 #define T_CLOSURE              6
 #define T_CLOSURE_STAR         7
 #define T_CONTINUATION         8
-#define T_C_FUNCTION           9
-#define T_CHARACTER           10
-#define T_INPUT_PORT          11
-#define T_VECTOR              12
-#define T_MACRO               13
+#define T_CHARACTER            9
+#define T_INPUT_PORT          10
+#define T_VECTOR              11
+#define T_MACRO               12
+#define T_BACRO               13
 #define T_C_OBJECT            14
 #define T_GOTO                15
 #define T_OUTPUT_PORT         16
@@ -641,11 +641,12 @@ struct s7_scheme {
 #define T_BOOLEAN             20
 #define T_C_MACRO             21
 #define T_C_POINTER           22
-#define T_C_ANY_ARGS_FUNCTION 23
-#define T_C_OPT_ARGS_FUNCTION 24
-#define T_C_RST_ARGS_FUNCTION 25
-#define T_BACRO               26
-#define BUILT_IN_TYPES        27
+#define T_C_FUNCTION          23
+#define T_C_ANY_ARGS_FUNCTION 24
+#define T_C_OPT_ARGS_FUNCTION 25
+#define T_C_RST_ARGS_FUNCTION 26
+#define T_C_LST_ARGS_FUNCTION 27
+#define BUILT_IN_TYPES        28
 
 #define TYPE_BITS                     8
 #define T_MASKTYPE                    0xff
@@ -866,7 +867,7 @@ struct s7_scheme {
 #define port_input_function(p)        (p)->object.port->input_function
 #define port_data(p)                  (p)->object.port->data
 
-#define is_c_function(f)              ((type(f) == T_C_FUNCTION) || (type(f) == T_C_ANY_ARGS_FUNCTION) || (type(f) == T_C_OPT_ARGS_FUNCTION) || (type(f) == T_C_RST_ARGS_FUNCTION))
+#define is_c_function(f)              (type(f) >= T_C_FUNCTION)
 #define c_function(f)                 (f)->object.ffptr
 #define c_function_call(f)            (f)->object.ffptr->ff
 #define c_function_name(f)            (f)->object.ffptr->name
@@ -1778,6 +1779,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_C_OBJECT:
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
+    case T_C_LST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION:
     case T_C_MACRO:
@@ -4369,6 +4371,33 @@ static bool s7_is_one(s7_pointer x)
 }
 
 
+/* optimize exponents */
+#define MAX_POW 32
+static double pepow[17][MAX_POW], mepow[17][MAX_POW];
+
+static initialize_pows(void)
+{
+  int i, j;
+  for (i = 2; i < 17; i++)        /* radix between 2 and 16 */
+    for (j = 0; j < MAX_POW; j++) /* saved exponent between 0 and +/- MAX_POW */
+      {
+	pepow[i][j] = pow((double)i, (double)j);
+	mepow[i][j] = pow((double)i, (double)(-j));
+      }
+}
+
+static double ipow(int x, int y)
+{
+  if ((y < MAX_POW) && (y > (-MAX_POW)))
+    {
+      if (y >= 0)
+	return(pepow[x][y]);
+      return(mepow[x][-y]);
+    }
+  return(pow((double)x, (double)y));
+}
+
+
 static void s7_Int_to_string(char *p, s7_Int n, int radix, int width)
 {
   static char dignum[] = "0123456789abcdef";
@@ -4633,7 +4662,7 @@ static char *number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radi
 	int_part = (s7_Int)floor(x);
 	frac_part = x - int_part;
 	s7_Int_to_string(n, int_part, radix, 0);
-	min_frac = (s7_Double)pow((s7_Double)radix, (s7_Double)(-precision));
+	min_frac = (s7_Double)ipow(radix, -precision);
 
 	for (i = 0, base = radix; (i < precision) && (frac_part > min_frac); i++, base *= radix)
 	  {
@@ -5276,8 +5305,8 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 #endif
       
       if (int_len <= max_len)
-	dval = int_part * pow((double)radix, (double)exponent);
-      else dval = int_part * pow((double)radix, (double)(exponent + int_len - max_len));
+	dval = int_part * ipow(radix, exponent);
+      else dval = int_part * ipow(radix, exponent + int_len - max_len);
 
       /* shift by exponent, but if int_len > max_len then we assumed (see below) int_len - max_len 0's on the left */
       /*   using int_to_int or table lookups here instead of pow did not make any difference in speed */
@@ -5296,7 +5325,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	      for (i = 0; i < flen; i++)
 		frac_part = digits[(int)(*str++)] + (frac_part * radix);
 
-	      dval += frac_part * pow((double)radix, (double)(exponent - flen - k));
+	      dval += frac_part * ipow(radix, exponent - flen - k);
 	    }
 	}
       else
@@ -5313,7 +5342,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	      for (i = 0; i < ilen; i++)
 		frac_part = digits[(int)(*str++)] + (frac_part * radix);
 
-	      dval += frac_part * pow((double)radix, (double)(exponent - ilen));
+	      dval += frac_part * ipow(radix, exponent - ilen);
 	    }
 	}
 
@@ -5328,7 +5357,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	int_part = dig + (int_part * radix);
       
       if (exponent != 0)
-	dval = int_part * pow((double)radix, (double)exponent);
+	dval = int_part * ipow(radix, exponent);
       else dval = (s7_Double)int_part;
 
     }
@@ -5355,8 +5384,8 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	fpart = digits[(int)(*str++)] + (fpart * radix);
 
       if (len <= 0)
-	dval = int_part + fpart * pow((double)radix, (double)(len - flen));
-      else dval = int_part + fpart * pow((double)radix, (double)(-flen));
+	dval = int_part + fpart * ipow(radix, len - flen);
+      else dval = int_part + fpart * ipow(radix, -flen);
     }
 
   str = fpart;
@@ -5365,7 +5394,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
       while ((dig = digits[(int)(*str++)]) < radix)
 	frac_part = dig + (frac_part * radix);
       
-      dval += frac_part * pow((double)radix, (double)(exponent - frac_len));
+      dval += frac_part * ipow(radix, exponent - frac_len);
     }
   else
     {
@@ -5374,7 +5403,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	  for (i = 0; i < max_len; i++)
 	    frac_part = digits[(int)(*str++)] + (frac_part * radix);
 
-	  dval += frac_part * pow((double)radix, (double)(exponent - max_len));
+	  dval += frac_part * ipow(radix, exponent - max_len);
 	}
       else
 	{
@@ -5397,7 +5426,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 	  for (i = 0; i < frac_len; i++)
 	    frac_part = digits[(int)(*str++)] + (frac_part * radix);
 	  
-	  dval += int_part + frac_part * pow((double)radix, (double)(-frac_len));
+	  dval += int_part + frac_part * ipow(radix, -frac_len);
 	}
     }
 
@@ -11192,6 +11221,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
+    case T_C_LST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION:
       return(copy_string(c_function_name(obj)));
@@ -14686,10 +14716,7 @@ static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
   return(make_boolean(sc,
 		      (typ == T_CLOSURE) || 
 		      (typ == T_CLOSURE_STAR) ||
-		      (typ == T_C_ANY_ARGS_FUNCTION) ||
-		      (typ == T_C_RST_ARGS_FUNCTION) ||
-		      (typ == T_C_OPT_ARGS_FUNCTION) ||
-		      (typ == T_C_FUNCTION) ||
+		      (typ >= T_C_FUNCTION) ||
 		      (typ == T_GOTO) ||
 		      (typ == T_CONTINUATION) ||
 		      (s7_is_procedure_with_setter(x))));
@@ -15013,6 +15040,10 @@ static bool args_match(s7_scheme *sc, s7_pointer x, int args)
 {
   switch (type(x))
     {
+    case T_C_ANY_ARGS_FUNCTION:
+    case T_C_OPT_ARGS_FUNCTION:
+    case T_C_RST_ARGS_FUNCTION:
+    case T_C_LST_ARGS_FUNCTION:
     case T_C_FUNCTION:
       return((c_function_required_args(x) <= args) &&
 	     (c_function_all_args(x) >= args));
@@ -17318,6 +17349,7 @@ static const char *type_name(s7_pointer arg)
     case T_CONTINUATION: return("continuation");
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
+    case T_C_LST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION:   return("function");
     case T_C_MACRO:      return("macro");
@@ -18804,9 +18836,6 @@ static s7_pointer g_qq_list(s7_scheme *sc, s7_pointer args)
   #define H_qq_list "({list} ...) returns its arguments in a list (internal to quasiquote)"
 
   s7_pointer x, y, px;
-
-  if (sc->no_values == 0) 
-    return(args);
 
   for (x = args; is_pair(x); x = cdr(x))
     if (car(x) == sc->NO_VALUE) 
@@ -21128,6 +21157,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->value = c_function_call(sc->code)(sc, sc->args);
 	    goto START;
 	  }
+
+	case T_C_LST_ARGS_FUNCTION:
+	  if (sc->no_values == 0)
+	    sc->value = sc->args;
+	  else sc->value = g_qq_list(sc, sc->args); /* c_function_call(sc->code)(sc, sc->args); */
+	  goto START;
 
 	case T_C_MACRO: 	                    /* -------- C-based macro -------- */
 	  {
@@ -28616,6 +28651,12 @@ s7_scheme *s7_init(void)
   /* these are internal for quasiquote's use */
   s7_define_function(sc, "{values}",                g_qq_values,               0, 0, true,  H_qq_values);
   s7_define_function(sc, "{list}",                  g_qq_list,                 0, 0, true,  H_qq_list);
+  {
+    s7_pointer p;
+    p = s7_symbol_value(sc, make_symbol(sc, "{list}"));
+    set_type(p, (T_C_LST_ARGS_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR));
+  }
+
   s7_define_function(sc, "{apply}",                 g_apply,                   1, 0, true,  H_apply);
   s7_define_function(sc, "{append}",                g_append,                  0, 0, true,  H_append);
   s7_define_function(sc, "{multivector}",           g_qq_multivector,          1, 0, true,  H_qq_multivector);
@@ -28796,6 +28837,7 @@ s7_scheme *s7_init(void)
 
   /* fprintf(stderr, "size: %d %d\n", sizeof(s7_cell), sizeof(s7_num_t)); */
 
+  initialize_pows();
   save_initial_environment(sc);
 
   initial_add = s7_symbol_value(sc, make_symbol(sc, "+"));
@@ -28935,10 +28977,10 @@ s7_scheme *s7_init(void)
  *    amd phenom 945 (3.0G):     2085     1864, 0.894
  *    intel Q9450 (2.66G):                1951, 0.857
  *    intel Q9550 (2.83G):       2184     1948, 0.838
- *    intel E8400  (3.0G):       2372     2082, 0.836     1897 .780
+ *    intel E8400  (3.0G):       2372     2082, 0.836     1875 .770
  *    intel xeon 5530 (2.4G)     2093     1855, 0.811
  *    amd phenom 965 (3.4G):     2083     1862, 0.808
- *    intel i7 930 (2.8G):       2084     1864  0.704     1707 .634
+ *    intel i7 930 (2.8G):       2084     1864  0.704     1683 .630
  *
  * 10.8: 0.684, same in 11.10: 0.380, using no-gui snd (overhead: 0.04)
  */
