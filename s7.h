@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.69"
-#define S7_DATE "30-Sep-10"
+#define S7_VERSION "1.70"
+#define S7_DATE "14-Oct-10"
 
 
 typedef long long int s7_Int;
@@ -469,7 +469,6 @@ s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);
 s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym);
 s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val);
 s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local_env);
-s7_pointer s7_symbol_special_value(s7_scheme *sc, s7_pointer symbol);
 void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, void *data), void *data);
 void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, s7_pointer value, void *data), void *data);
   
@@ -477,8 +476,7 @@ void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
    *   a symbol's current binding (s7_name_to_value takes the symbol name as a char*,
    *   s7_symbol_value takes the symbol itself, s7_symbol_set_value changes the
    *   current binding, and s7_symbol_local_value uses the environment passed
-   *   as its third argument; s7_symbol_special_value returns the dynamic binding
-   *   of a symbol).
+   *   as its third argument.
    *
    * To iterate over the complete symbol table, use s7_for_each_symbol_name,
    *   and s7_for_each_symbol.  The latter calls the 'symbol_func' on each
@@ -762,6 +760,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 14-Oct:    removed special variable support.
  * 30-Sep:    setters for current-input-port, current-output-port, and current-error-port.
  * 30-Aug:    :allow-other-keys in define*.
  * 10-Aug:    added boolean argument use_write to s7_object_to_string (true=write, false=display).

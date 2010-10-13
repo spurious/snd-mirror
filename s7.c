@@ -36,7 +36,6 @@
  *        true multiple-values
  *        threads (optional)
  *        multidimensional vectors
- *        special (dynamically bound) variables
  *
  *   many minor changes!
  *
@@ -220,7 +219,7 @@
  *    format
  *    error handlers, stacktrace, trace
  *    sundry leftovers
- *    multiple-values, quasiquote, special variables
+ *    multiple-values, quasiquote
  *    eval
  *    threads
  *    multiprecision arithmetic
@@ -306,7 +305,6 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_TRACE_RETURN, OP_ERROR_HOOK_QUIT, OP_TRACE_HOOK_QUIT, OP_WITH_ENV, OP_WITH_ENV1, OP_WITH_ENV2,
 	      OP_FOR_EACH, OP_MAP, OP_BARRIER, OP_DEACTIVATE_GOTO,
 	      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, OP_BACRO,
-	      OP_LET_UNWIND, OP_SPECIAL, OP_SET_SPECIAL,
 	      OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT4, OP_SORT_TWO,
 	      OP_EVAL_STRING_1, OP_EVAL_STRING_2,
 	      OP_MAX_DEFINED} opcode_t;
@@ -325,14 +323,13 @@ static const char *op_names[OP_MAX_DEFINED] =
    "error-quit", "unwind-input", "unwind-output", "trace-return", "error-hook-quit", 
    "trace-hook-quit", "with-environment", "with-environment", "with-environment", "for-each", "map", 
    "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro",
-   "let_unwind", "special", "set-special",
    "get-output-string", "sort", "sort", "sort", "sort", "sort", "sort",
    "eval-string", "eval-string"
 };
 
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 93 max num chars (256) */
+/* this needs to be at least OP_MAX_DEFINED = 90 max num chars (256) */
 /* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -551,7 +548,7 @@ struct s7_scheme {
   s7_pointer global_env;              /* global environment */
   s7_pointer initial_env;             /* original bindings of predefined functions */
   
-  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, UNQUOTE_SPLICING, MACROEXPAND, SPECIAL;
+  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, UNQUOTE, UNQUOTE_SPLICING, MACROEXPAND;
   s7_pointer APPLY, VECTOR, CDR, SET, QQ_VALUES, QQ_LIST, QQ_APPLY, QQ_APPEND, MULTIVECTOR;
   s7_pointer ERROR, WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO;
   s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, SYNTAX_ERROR, TOO_MANY_ARGUMENTS, NOT_ENOUGH_ARGUMENTS;
@@ -1902,6 +1899,8 @@ static void increase_stack_size(s7_scheme *sc)
 
   loc = s7_stack_top(sc);
   new_size = sc->stack_size * 2;
+
+  /* fprintf(stderr, "stack size is %d\n", new_size); */
 
   vector_elements(sc->stack) = (s7_pointer *)realloc(vector_elements(sc->stack), new_size * sizeof(s7_pointer));
   for (i = sc->stack_size; i < new_size; i++)
@@ -5391,9 +5390,10 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
   str = fpart;
   if (frac_len <= max_len)
     {
+      /* splitting out base 10 case saves very little here */
       while ((dig = digits[(int)(*str++)]) < radix)
 	frac_part = dig + (frac_part * radix);
-      
+
       dval += frac_part * ipow(radix, exponent - frac_len);
     }
   else
@@ -10643,7 +10643,7 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
   if (!fp)
     return(file_error(sc, "load", "can't open", filename));
 
-  load_hook = s7_symbol_special_value(sc, make_symbol(sc, "*load-hook*"));
+  load_hook = s7_symbol_value(sc, make_symbol(sc, "*load-hook*"));
   if (is_procedure(load_hook))
     {
       push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
@@ -10740,7 +10740,7 @@ defaults to the global environment.  To load into the current environment instea
   {
     /* (set! *load-hook* (lambda (name) (format #t "loading ~A~%" name))) */
     s7_pointer load_hook;
-    load_hook = s7_symbol_special_value(sc, make_symbol(sc, "*load-hook*"));
+    load_hook = s7_symbol_value(sc, make_symbol(sc, "*load-hook*"));
     if (is_procedure(load_hook))
       {
 	sc->args = make_list_1(sc, s7_make_string(sc, fname));
@@ -18764,7 +18764,6 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
 	      return(car(x));
 	  return(car(x));
 
-	case OP_LET_UNWIND:
 	case OP_BARRIER: 
 	  pop_stack(sc);
 	  return(splice_in_values(sc, args));
@@ -19756,107 +19755,6 @@ static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
     return(symbol_value(x));
 
   return(eval_symbol_1(sc, sym));
-}
-
-
-/* ---------------- special variables ---------------- */
-
-static s7_pointer find_purely_local_symbol(s7_scheme *sc, s7_pointer env, s7_pointer hdl) 
-{ 
-  s7_pointer y;
-
-  y = car(env);
-  if ((y == sc->NIL) || (s7_is_vector(y)))
-    return(sc->NIL);
-
-  if (caar(y) == hdl)
-    return(car(y));
-      
-  for (y = cdr(y); is_pair(y); y = cdr(y))
-    if (caar(y) == hdl)
-      return(car(y));
-
-  return(sc->NIL); 
-} 
-
-
-static s7_pointer find_dynamic_symbol(s7_scheme *sc, s7_pointer symbol)
-{
-  s7_pointer x;
-  int i;
-
-  x = find_local_symbol(sc, sc->envir, symbol);  
-  if (x != sc->NIL)
-    return(x);
-
-  for (i = s7_stack_top(sc) - 1; i >= 3; i -= 4)
-    {
-      x = find_purely_local_symbol(sc, stack_environment(sc->stack, i), symbol);
-      if (x != sc->NIL)
-	return(x);
-    }
-  return(find_symbol(sc, sc->envir, symbol));
-}
-
-
-s7_pointer s7_symbol_special_value(s7_scheme *sc, s7_pointer symbol)
-{
-  s7_pointer slot;
-
-  if (is_not_local(symbol))
-    slot = symbol_global_slot(symbol);
-  else slot = find_dynamic_symbol(sc, symbol);
-  if (slot == sc->NIL)
-    slot = eval_symbol_1(sc, symbol); /* give unbound variable hook a chance, and so on */
-
-  if (slot != sc->NIL) 
-    return(symbol_value(slot));
-  return(sc->UNDEFINED);
-}
-
-
-static s7_pointer g_special(s7_scheme *sc, s7_pointer symbol)
-{
-  /* arg is a symbol, we return its dynamic binding 
-   *
-   * this can't be a function because that would evaluate its argument, and
-   *   it can't be a macro because that would evaluate the value!
-   *
-   * the usual value lookup runs through the current environment checking every frame,
-   *   the dynamic environment however is implicit in the stack, so we run through
-   *   every stack entry checking car(envir), then the global env.  If symbol is not local,
-   *   we can go straight to the global value without searching. This depends on the
-   *   OP_LET_UNWIND stack entries, which cost about .5% total compute time in s7test (which has
-   *   an inordinate number of lets), but it's simple and works in call/cc and error cases,
-   *   and is automatically locally bound in a thread.
-   */
-  s7_pointer slot;
-  if (!s7_is_symbol(symbol))
-    return(s7_wrong_type_arg_error(sc, "special", 0, symbol, "a symbol"));
-
-  if (is_not_local(symbol))
-    slot = symbol_global_slot(symbol);
-  else slot = find_dynamic_symbol(sc, symbol);
-  if (slot != sc->NIL) 
-    return(symbol_value(slot));
-  return(eval_symbol_1(sc, symbol)); /* give unbound variable hook a chance, and so on */
-}
-
-
-static s7_pointer g_set_special(s7_scheme *sc, s7_pointer symbol, s7_pointer value)
-{
-  s7_pointer slot;
-  if (!s7_is_symbol(symbol))
-    return(s7_wrong_type_arg_error(sc, "set! (special...) ...)", 0, symbol, "a symbol"));
-
-  if (is_not_local(symbol))
-    slot = symbol_global_slot(symbol);
-  else slot = find_dynamic_symbol(sc, symbol);
-  if (slot != sc->NIL) 
-    set_symbol_value(slot, value);
-  else return(eval_error(sc, "can't find dynamic binding for ~S", symbol));
-  
-  return(value);
 }
 
 
@@ -21110,7 +21008,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       switch (type(sc->code))
 	{
-	case T_C_FUNCTION: 	                  /* -------- C-based function -------- */
+	case T_C_FUNCTION: 	                    /* -------- C-based function -------- */
 	  {
 	    int len;
 	    len = safe_list_length(sc, sc->args);
@@ -21130,11 +21028,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	  /* drop into ... */
 
-	case T_C_ANY_ARGS_FUNCTION:              /* -------- C-based function that can take any number of arguments -------- */
+	case T_C_ANY_ARGS_FUNCTION:                 /* -------- C-based function that can take any number of arguments -------- */
 	  sc->value = c_function_call(sc->code)(sc, sc->args);
 	  goto START;
 
-	case T_C_OPT_ARGS_FUNCTION:
+	case T_C_OPT_ARGS_FUNCTION:                 /* -------- C-based function that n optional arguments -------- */
 	  {
 	    int len;
 	    len = safe_list_length(sc, sc->args);
@@ -21146,7 +21044,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto START;
 	  }
 
-	case T_C_RST_ARGS_FUNCTION:
+	case T_C_RST_ARGS_FUNCTION:                 /* -------- C-based function that has n required args, then any others -------- */
 	  {
 	    int len;
 	    len = safe_list_length(sc, sc->args);
@@ -21158,7 +21056,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto START;
 	  }
 
-	case T_C_LST_ARGS_FUNCTION:
+	case T_C_LST_ARGS_FUNCTION:                 /* -------- {list} -------- */
 	  if (sc->no_values == 0)
 	    sc->value = sc->args;
 	  else sc->value = g_qq_list(sc, sc->args); /* c_function_call(sc->code)(sc, sc->args); */
@@ -21193,7 +21091,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto START;
 	  }
 	  
-	case T_BACRO:
+	case T_BACRO:                                /* -------- bacro -------- */
 	  NEW_FRAME(sc, sc->envir, sc->envir);       /* like let* -- we'll be adding macro args, so might as well sequester things here */
 	  goto BACRO;
 	  /* another choice is to do expansion and evaluation in the definition env,
@@ -21547,15 +21445,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
 
       
-    case OP_SPECIAL:
-      if (!is_pair(sc->code))
-	return(eval_error(sc, "special: no argument? ~A", sc->code));
-      if (cdr(sc->code) != sc->NIL)
-	return(eval_error(sc, "special: too many arguments? ~A", sc->code));
-      sc->value = g_special(sc, car(sc->code));
-      goto START;
-      
-      
     case OP_DEFINE_CONSTANT1:
       /* define-constant -> OP_DEFINE_CONSTANT -> OP_DEFINE..1, then back to here */
       /*   at this point, sc->value is the symbol that we want to be immutable, sc->code is the original pair */
@@ -21858,15 +21747,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      break;
 
 	    default:                                         /* (set! (1 2) 3) */
-	      if (s7_is_symbol(caar(sc->code)))              /* (set! (asdf) 1) */
-		{
-		  if (caar(sc->code) == sc->SPECIAL)         /* (set! (special x) ...) */
-		    {
-		      push_stack(sc, opcode(OP_SET_SPECIAL), sc->NIL, car(sc->code));
-		      sc->code = cadr(sc->code);             /* save the (special...) for now and */
-		      goto EVAL;                             /* get the value */
-		    }
-		}
 	      return(eval_error(sc, "no generalized set for ~A", caar(sc->code)));
 	    }
 	}
@@ -21898,11 +21778,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       return(eval_error(sc, "set! ~A: unbound variable", sc->code));
       
 
-    case OP_SET_SPECIAL:
-      g_set_special(sc, cadr(sc->code), sc->value);
-      goto START;
-
-      
     case OP_IF:
       {
 	s7_pointer cdr_code;
@@ -22067,16 +21942,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  sc->code = cdr(sc->code);
 	}
-      
-      if (car(sc->envir) != sc->NIL)
-	push_stack(sc, opcode(OP_LET_UNWIND), sc->NIL, sc->NIL);
       goto BEGIN;
 
 
-    case OP_LET_UNWIND:
-      goto START;
-
-      
     case OP_LET_STAR:
       if (!is_pair(sc->code))                    /* (let* . 1) */
 	return(eval_error(sc, "let* variable list is messed up: ~A", sc->code));
@@ -22152,8 +22020,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "let* var list improper?: ~A", sc->code));
 
       sc->code = sc->args;
-      if (car(sc->envir) != sc->NIL)
-	push_stack(sc, opcode(OP_LET_UNWIND), sc->NIL, sc->NIL);
       goto BEGIN;
       
       
@@ -22218,8 +22084,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y))
 	s7_symbol_set_value(sc, caar(sc->x), car(sc->y));
       sc->code = cdr(sc->code);
-      if (car(sc->envir) != sc->NIL)
-	push_stack(sc, opcode(OP_LET_UNWIND), sc->NIL, sc->NIL);
       goto BEGIN;
       
       
@@ -22765,8 +22629,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "with-environment takes an environment argument: ~A", sc->value));
 
       sc->envir = sc->value;                             /* in new env... */
-      push_stack(sc, opcode(OP_LET_UNWIND), sc->NIL, sc->NIL);
-
       sc->code = cdr(sc->code);                          /*   handle body */
       goto BEGIN;
 
@@ -28190,7 +28052,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "case",              OP_CASE);
   assign_syntax(sc, "do",                OP_DO);
 
-  assign_syntax(sc, "special",           OP_SPECIAL);          /* dynamic bindings */
+  /* assign_syntax(sc, "special",           OP_SPECIAL);    */      /* dynamic bindings */
   set_immutable(assign_syntax(sc, "with-environment",  OP_WITH_ENV));
 
   assign_syntax(sc, "lambda",            OP_LAMBDA);
@@ -28213,9 +28075,6 @@ s7_scheme *s7_init(void)
   sc->LAMBDA_STAR = make_symbol(sc, "lambda*");
   typeflag(sc->LAMBDA_STAR) |= T_DONT_COPY; 
 
-  sc->SPECIAL = make_symbol(sc, "special");
-  typeflag(sc->SPECIAL) |= T_DONT_COPY;
-  
   sc->QUOTE = make_symbol(sc, "quote");
   typeflag(sc->QUOTE) |= T_DONT_COPY; 
   
@@ -28967,8 +28826,8 @@ s7_scheme *s7_init(void)
  * things to add: lint? (can we notice unreachable code, unbound variables, bad args)?
  *                could the profiler give block counts as well?
  *
- * s7test valgrind, time       17-Jul-10   7-Sep-10          now
- *    intel core duo (1.83G):    3162     2690, 1.921     2501 1.855
+ * s7test valgrind, time       17-Jul-10   7-Sep-10          now [with ca 5000 more lines in the test]
+ *    intel core duo (1.83G):    3162     2690, 1.921     2449 1.830
  *    intel E5200 (2.5G):                 1951, 1.450
  *    amd operon 2218 (2.5G):             1859, 1.335
  *    amd opteron 8356 (2.3G):   2181     1949, 1.201
@@ -28977,10 +28836,10 @@ s7_scheme *s7_init(void)
  *    amd phenom 945 (3.0G):     2085     1864, 0.894
  *    intel Q9450 (2.66G):                1951, 0.857
  *    intel Q9550 (2.83G):       2184     1948, 0.838
- *    intel E8400  (3.0G):       2372     2082, 0.836     1875 .770
+ *    intel E8400  (3.0G):       2372     2082, 0.836     1870 .760
  *    intel xeon 5530 (2.4G)     2093     1855, 0.811
  *    amd phenom 965 (3.4G):     2083     1862, 0.808
- *    intel i7 930 (2.8G):       2084     1864  0.704     1683 .630
+ *    intel i7 930 (2.8G):       2084     1864  0.704     1675 .630
  *
  * 10.8: 0.684, same in 11.10: 0.380, using no-gui snd (overhead: 0.04)
  */

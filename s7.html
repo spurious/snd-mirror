@@ -76,7 +76,7 @@ and want a quick tour of where s7 is different.  (Well, it was quick once upon a
   <li><a href="#math">math functions</a>
   <li><a href="#define*">define*</a>
   <li><a href="#macros">define-macro</a>
-  <li><a href="#constants">define-constant, symbol-access, dynamic bindings</a>
+  <li><a href="#constants">define-constant, symbol-access</a>
   <li><a href="#maketype">make-type</a>
   <li><a href="#pws">procedure-with-setter</a>
   <li><a href="#generalizedset">generalized set!</a>
@@ -1107,7 +1107,7 @@ to quote the result (if the result does not already evaluate to itself):
 <dt>
 <A NAME="constants"></a>
 <table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
-<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define-constant, constant?, symbol-access, dynamic-bindings</h4></td></tr></table>
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>define-constant, constant?, symbol-access</h4></td></tr></table>
 </td></tr></table>
 </dt>
 
@@ -1234,126 +1234,6 @@ I believe symbol-access is similar to Ruby's hooked variables, or perhaps Perl's
 We could implement all kinds of things
 with this mechanism, including property lists.
 </p>
-
-
-<small>
-<blockquote>
-<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
-  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
-
-
-<p>We can use symbol-access to improve fluid-let:
-</p>
-
-<pre>
-(define-macro (define-global variable value)
-  `(begin
-     (define ,variable ,value)
-     (set! (<em class=red>symbol-access</em> ',variable) 
-           (list #f #f (lambda (symbol new-value) 
-                         (error "use let-global to bind a global variable"))))))
-
-(define-macro (let-global xexe . body)
-  ;; all xexe vars are assumed to be global variables
-  ;;    this is fluid-let, taken with changes from Teach Yourself Scheme
-  (let ((xx (map car xexe))
-	(ee (map cadr xexe))
-	(old-xx (map (lambda (ig) 
-                       (gensym))
-                     xexe)))
-    `(let ,(map (lambda (old-x x) 
-                  `(,old-x ,x)) 
-		old-xx xx)
-       (dynamic-wind
-	   (lambda () #f)
-	   (lambda ()
-	     ,@(map (lambda (x e)
-		      `(set! ,x ,e)) 
-		    xx ee)
-	     (let ()
-	       ,@body))
-	   (lambda ()
-	     ,@(map (lambda (x old-x)
-		      `(set! ,x ,old-x)) 
-		    xx old-xx))))))
-
-(let ()
-  (define-global x 32)
-  (let ((y 0))
-    (define (gx) x)
-    (let-global ((x 100))
-      (let-global ((x 12))
-	(set! y (gx))))
-    (list x y)))
-</pre>
-
-<p>which returns '(32 12).
-</p>
-
-
-<!--
-(define-macro (define-with-setter sym val . accessors)
-  (if (null? accessors)
-      `(define ,sym ,val)
-      (let ((setter (eval (car accessors)))
-	    (binder (if (not (null? (cdr accessors))) (eval (cadr accessors)) #f)))
-	(if (procedure? val)
-	    `(define ,sym (make-procedure-with-setter ,val ,setter))
-	    `(begin
-	       (define ,sym ,val)
-	       (set! (symbol-access ',sym) (list #f ,setter ,binder))
-	       ',sym)))))
--->
-
-<br>
-</blockquote>
-</small>
-
-
-<p>But fluid-let is not needed;
-s7 provides access to the dynamic binding of any variable at any time through the
-<b>special</b> macro: <code>(special x)</code>.
-</p>
-
-<pre>
-&gt; (define (fx) (+ x (special x))) ; add the lexical and dynamic bindings of 'x'
-&gt; (define x 32)
-&gt; (fx)                ; here the two bindings coincide
-64
-&gt; (let ((x 3)) (fx))  ; here x (in fx) is 32, (special x) is 3
-35
-&gt; (let ((x 3)) (set! x 1) (fx))
-33
-&gt; (let ((x 1)) (set! (special x) 12) x)
-12
-&gt; x
-32
-</pre>
-
-<p>The fluid-let code above becomes:
-</p>
-
-<pre>
-(let ()
-  (define x 32)
-  (let ((y 0))
-    (define (gx) (<em class=red>special</em> x))
-    (let ((x 100))
-      (let ((x 12))
-        (set! y (gx))))
-    (list x y)))
-</pre>
-
-
-<p>I think this is an improvement over CL's special variables because 'special'
-makes the use of the dynamic binding explicit, rather than depending on forgetful
-programmers and "*"'s in variable names.  It also makes it easy to use either
-binding at any time.  Each thread has its own stack, so any global variable
-that is bound locally in a thread is specific to that thread.  
-</p>
-
-
-
 
 </dd>
 <br><br>
@@ -3849,9 +3729,6 @@ the directory:
 	    (if (not (member directory-name <em class=red>*load-path*</em>))
 		(set! <em class=red>*load-path*</em> (cons directory-name *load-path*))))))))
 </pre>
-
-<p>*load-hook* is a special variable; s7 uses its dynamic binding.  
-</p>
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
