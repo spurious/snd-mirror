@@ -608,7 +608,8 @@ struct s7_scheme {
 
   s7_pointer *trace_list;
   int trace_list_size, trace_top, trace_depth;
-  int no_values;
+  int no_values, current_line;
+  const char *current_file;
 
   void *default_rng;
 #if WITH_GMP
@@ -641,8 +642,10 @@ struct s7_scheme {
 #define T_C_MACRO             21
 #define T_C_POINTER           22
 #define T_C_ANY_ARGS_FUNCTION 23
-#define T_BACRO               24
-#define BUILT_IN_TYPES        25
+#define T_C_OPT_ARGS_FUNCTION 24
+#define T_C_RST_ARGS_FUNCTION 25
+#define T_BACRO               26
+#define BUILT_IN_TYPES        27
 
 #define TYPE_BITS                     8
 #define T_MASKTYPE                    0xff
@@ -760,6 +763,8 @@ struct s7_scheme {
 
 #define T_KEYWORD                     (1 << (TYPE_BITS + 22))
 #define is_keyword(p)                 ((typeflag(p) & T_KEYWORD) != 0)
+/* this bit distinguishes a symbol from a symbol that is also a keyword
+ */
 
 #define UNUSED_BITS                   0x81800000
 
@@ -861,7 +866,7 @@ struct s7_scheme {
 #define port_input_function(p)        (p)->object.port->input_function
 #define port_data(p)                  (p)->object.port->data
 
-#define is_c_function(f)              ((type(f) == T_C_FUNCTION) || (type(f) == T_C_ANY_ARGS_FUNCTION))
+#define is_c_function(f)              ((type(f) == T_C_FUNCTION) || (type(f) == T_C_ANY_ARGS_FUNCTION) || (type(f) == T_C_OPT_ARGS_FUNCTION) || (type(f) == T_C_RST_ARGS_FUNCTION))
 #define c_function(f)                 (f)->object.ffptr
 #define c_function_call(f)            (f)->object.ffptr->ff
 #define c_function_name(f)            (f)->object.ffptr->name
@@ -1771,6 +1776,8 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_NUMBER:
     case T_CHARACTER:
     case T_C_OBJECT:
+    case T_C_OPT_ARGS_FUNCTION:
+    case T_C_RST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION:
     case T_C_MACRO:
@@ -3171,6 +3178,7 @@ static void call_with_exit(s7_scheme *sc)
 		push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
 		sc->args = sc->NIL;
 		sc->code = dynamic_wind_out(sc->z);
+		sc->z = sc->NIL;
 		eval(sc, OP_APPLY);
 	      }
 	  }
@@ -11182,6 +11190,8 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     case T_CLOSURE_STAR:
       return(copy_string(c_closure_name(sc, obj)));
   
+    case T_C_OPT_ARGS_FUNCTION:
+    case T_C_RST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION:
       return(copy_string(c_function_name(obj)));
@@ -14091,6 +14101,7 @@ If its first argument is a list, the list is copied (despite the '!')."
   vector_element(sc->x, 4) = make_list_2(sc, sc->F, sc->F);
 
   push_stack(sc, opcode(OP_SORT), args, sc->x);
+  sc->x = sc->NIL;
   return(sc->F);
   
   /* if the comparison function waffles, sort! can hang: (sort! '(1 2 3) =)
@@ -14596,8 +14607,23 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   x->hloc = NOT_IN_HEAP;
 
   ptr = (s7_func_t *)permanent_calloc(sizeof(s7_func_t));
-  if ((required_args == 0) && (rest_arg) && (optional_args == 0))
-    ftype = T_C_ANY_ARGS_FUNCTION;
+  if (required_args == 0)
+    {
+      if (rest_arg)
+	ftype = T_C_ANY_ARGS_FUNCTION;
+      else 
+	{
+	  if (optional_args != 0)
+	    ftype = T_C_OPT_ARGS_FUNCTION;
+	  /* a thunk needs to check for no args passed */
+	}
+    }
+  else
+    {
+      if (rest_arg)
+	ftype = T_C_RST_ARGS_FUNCTION;
+    }
+  
   set_type(x, ftype | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR);
 
   c_function(x) = ptr;
@@ -14661,6 +14687,8 @@ static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
 		      (typ == T_CLOSURE) || 
 		      (typ == T_CLOSURE_STAR) ||
 		      (typ == T_C_ANY_ARGS_FUNCTION) ||
+		      (typ == T_C_RST_ARGS_FUNCTION) ||
+		      (typ == T_C_OPT_ARGS_FUNCTION) ||
 		      (typ == T_C_FUNCTION) ||
 		      (typ == T_GOTO) ||
 		      (typ == T_CONTINUATION) ||
@@ -17288,6 +17316,8 @@ static const char *type_name(s7_pointer arg)
     case T_CLOSURE_STAR: return("closure*");
     case T_GOTO:         return("goto");
     case T_CONTINUATION: return("continuation");
+    case T_C_OPT_ARGS_FUNCTION:
+    case T_C_RST_ARGS_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_FUNCTION:   return("function");
     case T_C_MACRO:      return("macro");
@@ -17923,6 +17953,8 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
   s7_pointer pt;
   pt = sc->input_port;
 
+  /* make an heroic effort to find where we slid off the tracks */
+
   if (is_string_port(sc->input_port))
     {
       #define QUOTE_SIZE 40
@@ -17963,25 +17995,30 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
 
       if (port_line_number(pt) > 0)
 	{
-	  len = safe_strlen(recent_input) + safe_strlen(errmsg) + safe_strlen(port_filename(pt)) + 32;
+	  len = safe_strlen(recent_input) + safe_strlen(errmsg) + safe_strlen(port_filename(pt)) + safe_strlen(sc->current_file) + 64;
 	  msg = (char *)malloc(len * sizeof(char));
-	  len = snprintf(msg, len, "%s: %s %s[%d]", errmsg, (recent_input) ? recent_input : "", port_filename(pt), port_line_number(pt));
+	  len = snprintf(msg, len, "%s: %s %s[%d], last top-level form at: %s[%d]", 
+			 errmsg, (recent_input) ? recent_input : "", port_filename(pt), port_line_number(pt),
+			 sc->current_file, sc->current_line);
 	}
       else
 	{
-	  len = safe_strlen(recent_input) + safe_strlen(errmsg) + 32;
+	  len = safe_strlen(recent_input) + safe_strlen(errmsg) + safe_strlen(sc->current_file) + 64;
 	  msg = (char *)malloc(len * sizeof(char));
-	  len = snprintf(msg, len, "%s: %s", errmsg, (recent_input) ? recent_input : "");
+	  len = snprintf(msg, len, "%s: %s, last top-level form at %s[%d]", 
+			 errmsg, (recent_input) ? recent_input : "",
+			 sc->current_file, sc->current_line);
 	}
       
       if (recent_input) free(recent_input);
+      return(s7_error(sc, sc->READ_ERROR, make_string_uncopied_with_length(sc, msg, len)));
     }
-  else
-    {
-      len = safe_strlen(errmsg) + safe_strlen(port_filename(pt)) + 32;
-      msg = (char *)malloc(len * sizeof(char));
-      len = snprintf(msg, len, "%s %s[%d]", errmsg, port_filename(pt), port_line_number(pt));
-    }
+
+  len = safe_strlen(errmsg) + safe_strlen(port_filename(pt)) + safe_strlen(sc->current_file) + 64;
+  msg = (char *)malloc(len * sizeof(char));
+  len = snprintf(msg, len, "%s %s[%d], last top-level form at %s[%d]", 
+		 errmsg, port_filename(pt), port_line_number(pt), 
+		 sc->current_file, sc->current_line);
   
   return(s7_error(sc, sc->READ_ERROR, make_string_uncopied_with_length(sc, msg, len)));
 }
@@ -18005,24 +18042,16 @@ static s7_pointer g_error(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer missing_close_paren_error(s7_scheme *sc)
 {
-  s7_pointer x;
-  int line;
+  int len;
+  char *msg;
 
-  x = sc->args;
-  if (is_pair(x))
-    while (is_pair(cdr(x))) x = cdr(x);
-  line = pair_line_number(x);
-
-  if (line > 0)
-    return(s7_error(sc, sc->READ_ERROR, 
-		    make_list_3(sc, 
-				make_protected_string(sc, "missing close paren, list started around line ~D of ~S"), 
-				s7_make_integer(sc, remembered_line_number(line)),
-				(port_filename(sc->input_port)) ? file_names[port_file_number(sc->input_port)] : make_protected_string(sc, port_filename(sc->input_port)))));
+  len = safe_strlen(port_filename(sc->input_port)) + safe_strlen(sc->current_file) + 128;
+  msg = (char *)malloc(len * sizeof(char));
+  len = snprintf(msg, len, "missing close paren, %s[%d], last top-level form at %s[%d]\n", 
+		 port_filename(sc->input_port), port_line_number(sc->input_port), 
+		 sc->current_file, sc->current_line);
   
-  /* we need a legit s7_error here, but we're lost... */
-  return(s7_error(sc, sc->READ_ERROR, 
-		  make_list_1(sc, make_protected_string(sc, "missing close paren"))));
+  return(s7_error(sc, sc->READ_ERROR, make_string_uncopied_with_length(sc, msg, len)));
 }
 
 
@@ -18500,6 +18529,9 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
                  s7_cons(sc, sc->x, 
                    safe_reverse_in_place(sc, sc->z))));
 
+  sc->x = sc->NIL;
+  sc->y = sc->NIL;
+  sc->z = sc->NIL;
   push_stack(sc, opcode(OP_FOR_EACH), sc->args, sc->code);
   return(sc->UNSPECIFIED);
 }
@@ -18577,6 +18609,7 @@ static bool next_map(s7_scheme *sc)
   integer(number(car(sc->args))) = loc + 1;
   push_stack(sc, opcode(OP_MAP), sc->args, sc->code);
   sc->args = sc->x;
+  sc->x = sc->NIL;
   return(true);
 }
 
@@ -18634,6 +18667,8 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 		 s7_cons(sc, sc->NIL, 
                    safe_reverse_in_place(sc, sc->z))));
 
+  sc->y = sc->NIL;
+  sc->z = sc->NIL;
   if (next_map(sc))
     push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);
 
@@ -18987,9 +19022,183 @@ static void back_up_stack(s7_scheme *sc)
 }
 
 
+static token_t token(s7_scheme *sc);
+
+static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
+{
+  int c;
+  /* inchar can return EOF, so it can't be used directly as an index into the digits array */
+  c = inchar(sc, pt);
+  if (c == EOF)
+    s7_error(sc, sc->SYNTAX_ERROR,
+	     make_list_1(sc, make_protected_string(sc, "unexpected '#' at end of input")));
+
+  sc->w = small_int(1);
+  if (c == '(') 
+    return(TOKEN_VECTOR);
+
+  if (isdigit(c)) /* #2D(...) */
+    {
+      int dims, dig, d, loc = 0;
+      sc->strbuf[loc++] = c;
+      dims = digits[c];
+
+      while (true)
+	{
+	  d = inchar(sc, pt);
+	  if (d == EOF)
+	    s7_error(sc, sc->SYNTAX_ERROR,
+		     make_list_1(sc, make_protected_string(sc, "unexpected end of input while reading #n...")));
+
+	  dig = digits[d];
+	  if (dig >= 10) break;
+	  dims = dig + (dims * 10);
+	  sc->strbuf[loc++] = d;
+	}
+      sc->strbuf[loc++] = d;
+      if ((d == 'D') || (d == 'd'))
+	{
+	  d = inchar(sc, pt);
+	  if (d == EOF)
+	    s7_error(sc, sc->SYNTAX_ERROR,
+		     make_list_1(sc, make_protected_string(sc, "unexpected end of input while reading #nD...")));
+	  sc->strbuf[loc++] = d;
+	  if (d == '(')
+	    {
+	      sc->w = s7_make_integer(sc, dims);
+	      return(TOKEN_VECTOR);
+	    }
+	}
+
+      /* try to back out */
+      for (d = loc - 1; d > 0; d--)
+	backchar(sc, sc->strbuf[d], pt);
+    }
+
+#if (!S7_DISABLE_DEPRECATED)
+  if (c == ':')  /* turn #: into : -- this is for compatiblity with Guile, #:optional in particular */
+    {
+      sc->strbuf[0] = ':';
+      return(TOKEN_ATOM);
+    }
+#endif
+
+  /* block comments in either #! ... !# */
+  if (c == '!') 
+    {
+      char last_char;
+      last_char = ' ';
+      while ((c = inchar(sc, pt)) != EOF)
+	{
+	  if ((c == '#') &&
+	      (last_char == '!'))
+	    break;
+	  last_char = c;
+	}
+      return(token(sc));
+    }
+      
+  /*   or #| ... |# */
+  if (c == '|') 
+    {
+      char last_char;
+      last_char = ' ';
+      while ((c = inchar(sc, pt)) != EOF)
+	{
+	  if ((c == '#') &&
+	      (last_char == '|'))
+	    break;
+	  last_char = c;
+	}
+      return(token(sc));
+    }
+      
+  sc->strbuf[0] = c; 
+  return(TOKEN_SHARP_CONST); /* next stage notices any errors */
+}    
+
+
+static token_t read_semicolon(s7_scheme *sc, s7_pointer pt)
+{
+  int c;
+  if (sc->input_is_file)
+    {
+      do (c = fgetc(port_file(pt))); while ((c != '\n') && (c != EOF));
+      port_line_number(pt)++;
+      if (c == EOF)
+	return(TOKEN_EOF);
+    }
+  else 
+    {
+      do (c = port_string(pt)[port_string_point(pt)++]); while ((c != '\n') && (c != 0));
+      port_line_number(pt)++;
+      if (c == 0)
+	return(TOKEN_EOF);
+    }
+  return(token(sc));
+}
+
+
+static token_t read_comma(s7_scheme *sc, s7_pointer pt)
+{
+  int c;
+  /* here we probably should check for symbol names that start with "@":
+     
+     :(defmacro hi (@foo) `(+ ,@foo 1))
+     hi
+     :(hi 2)
+     ;foo: unbound variable
+	 
+     but
+
+     :(defmacro hi (.foo) `(+ ,.foo 1))
+     hi
+     :(hi 2)
+     3
+
+     and ambiguous:
+     :(define-macro (hi @foo . foo) `(list ,@foo))
+
+     what about , @foo -- is the space significant?  We accept ,@ foo.
+  */
+
+  if ((c = inchar(sc, pt)) == '@') 
+    return(TOKEN_AT_MARK);
+
+  if (c == EOF)
+    {
+      sc->strbuf[0] = ',';  /* was '@' which doesn't make any sense */
+      return(TOKEN_COMMA);  /* was TOKEN_ATOM, which also doesn't seem sensible */
+    }
+  backchar(sc, c, pt);
+  return(TOKEN_COMMA);
+}
+
+
+static token_t read_dot(s7_scheme *sc, s7_pointer pt)
+{
+  int c;
+  c = inchar(sc, pt);
+  if (c != EOF)
+    {
+      backchar(sc, c, pt);
+
+      if ((!char_ok_in_a_name[c]) && (c != 0))
+	return(TOKEN_DOT);
+    }
+  else
+    {
+      sc->strbuf[0] = '.'; 
+      return(TOKEN_DOT);
+    }
+  sc->strbuf[0] = '.'; 
+  return(TOKEN_ATOM);  /* i.e. something that can start with a dot like a number */
+}
+
+
 static token_t token(s7_scheme *sc)
 {
-  int c = 0;
+  int c;
   s7_pointer pt;
 
   pt = sc->input_port;
@@ -18998,10 +19207,13 @@ static token_t token(s7_scheme *sc)
       while (is_white_space(c = fgetc(port_file(pt))))
 	if (c == '\n')
 	  port_line_number(pt)++;
+      if (c == EOF) 
+	return(TOKEN_EOF);
     }
   else 
     {
       char *orig_str, *str;
+      unsigned char c1;
 
       str = (char *)(port_string(pt) + port_string_point(pt));
       if (!(*str)) return(TOKEN_EOF);
@@ -19010,25 +19222,20 @@ static token_t token(s7_scheme *sc)
        *   eval_string and others take the given string without copying or padding.
        */
       orig_str = str;
-      {
-	unsigned char c1;
-	while (white_space[c1 = (unsigned char)(*str++)]) /* (let ((ÿa 1)) ÿa) -- 255 is not -1 = EOF */
-	  if (c1 == '\n')
-	    port_line_number(pt)++;
-	port_string_point(pt) += (str - orig_str);
-	c = c1;
-      }
+      while (white_space[c1 = (unsigned char)(*str++)]) /* (let ((ÿa 1)) ÿa) -- 255 is not -1 = EOF */
+	if (c1 == '\n')
+	  port_line_number(pt)++;
+      if (c1 == 0)
+	{
+	  port_string_point(pt) += (str - orig_str - 1);
+	  return(TOKEN_EOF);
+	}
+      port_string_point(pt) += (str - orig_str);
+      c = c1;
     }
 
   switch (c) 
     {
-    case EOF: /* fgetc might return EOF */
-      return(TOKEN_EOF);
-
-    case 0:   /* port_string ends in null */
-      port_string_point(pt)--;
-      return(TOKEN_EOF);
-      
     case '(':
       return(TOKEN_LEFT_PAREN);
       
@@ -19036,35 +19243,13 @@ static token_t token(s7_scheme *sc)
       return(TOKEN_RIGHT_PAREN);
       
     case '.':
-      c = inchar(sc, pt);
-      if (c != EOF)
-	{
-	  backchar(sc, c, pt);
-
-	  if ((!char_ok_in_a_name[c]) && (c != 0))
-	    return(TOKEN_DOT);
-	}
-      else
-	{
-	  sc->strbuf[0] = '.'; 
-	  return(TOKEN_DOT);
-	}
-      sc->strbuf[0] = '.'; 
-      return(TOKEN_ATOM);  /* i.e. something that can start with a dot like a number */
+      return(read_dot(sc, pt));
 
     case '\'':
       return(TOKEN_QUOTE);
       
     case ';':
-      {
-	if (sc->input_is_file)
-	  do (c = fgetc(port_file(pt))); while ((c != '\n') && (c != EOF));
-	else do (c = port_string(pt)[port_string_point(pt)++]); while ((c != '\n') && (c != 0));
-	port_line_number(pt)++;
-	if (c == 0)
-	  return(TOKEN_EOF);
-	return(token(sc));
-      }
+      return(read_semicolon(sc, pt));
 
     case '"':
       return(TOKEN_DOUBLE_QUOTE);
@@ -19073,128 +19258,11 @@ static token_t token(s7_scheme *sc)
       return(TOKEN_BACK_QUOTE);
       
     case ',':
-
-      /* here we probably should check for symbol names that start with "@":
-
-	 :(defmacro hi (@foo) `(+ ,@foo 1))
-	 hi
-	 :(hi 2)
-	 ;foo: unbound variable
-	 
-	 but
-
-	 :(defmacro hi (.foo) `(+ ,.foo 1))
-	 hi
-	 :(hi 2)
-	 3
-
-	 and ambiguous:
-	 :(define-macro (hi @foo . foo) `(list ,@foo))
-
-	 what about , @foo -- is the space significant?  We accept ,@ foo.
-      */
-
-      if ((c = inchar(sc, pt)) == '@') 
-	return(TOKEN_AT_MARK);
-
-      if (c == EOF)
-	{
-	  sc->strbuf[0] = ',';  /* was '@' which doesn't make any sense */
-	  return(TOKEN_COMMA);  /* was TOKEN_ATOM, which also doesn't seem sensible */
-	}
-      backchar(sc, c, pt);
-      return(TOKEN_COMMA);
+      return(read_comma(sc, pt));
       
     case '#':
-      /* inchar can return EOF, so it can't be used directly as an index into the digits array */
-      c = inchar(sc, pt);
-      if (c == EOF)
-	s7_error(sc, sc->SYNTAX_ERROR,
-		 make_list_1(sc, make_protected_string(sc, "unexpected '#' at end of input")));
+      return(read_sharp(sc, pt));
 
-      sc->w = small_int(1);
-      if (c == '(') 
-	return(TOKEN_VECTOR);
-
-      if (isdigit(c)) /* #2D(...) */
-	{
-	  int dims, dig, d, loc = 0;
-	  sc->strbuf[loc++] = c;
-	  dims = digits[c];
-
-	  while (true)
-	    {
-	      d = inchar(sc, pt);
-	      if (d == EOF)
-		s7_error(sc, sc->SYNTAX_ERROR,
-			 make_list_1(sc, make_protected_string(sc, "unexpected end of input while reading #n...")));
-
-	      dig = digits[d];
-	      if (dig >= 10) break;
-	      dims = dig + (dims * 10);
-	      sc->strbuf[loc++] = d;
-	    }
-	  sc->strbuf[loc++] = d;
-	  if ((d == 'D') || (d == 'd'))
-	    {
-	      d = inchar(sc, pt);
-	      if (d == EOF)
-		s7_error(sc, sc->SYNTAX_ERROR,
-			 make_list_1(sc, make_protected_string(sc, "unexpected end of input while reading #nD...")));
-	      sc->strbuf[loc++] = d;
-	      if (d == '(')
-		{
-		  sc->w = s7_make_integer(sc, dims);
-		  return(TOKEN_VECTOR);
-		}
-	    }
-
-	  /* try to back out */
-	  for (d = loc - 1; d > 0; d--)
-	    backchar(sc, sc->strbuf[d], pt);
-	}
-
-#if (!S7_DISABLE_DEPRECATED)
-      if (c == ':')  /* turn #: into : -- this is for compatiblity with Guile, #:optional in particular */
-	{
-	  sc->strbuf[0] = ':';
-	  return(TOKEN_ATOM);
-	}
-#endif
-
-      /* block comments in either #! ... !# */
-      if (c == '!') 
-	{
-	  char last_char;
-	  last_char = ' ';
-	  while ((c = inchar(sc, pt)) != EOF)
-	    {
-	      if ((c == '#') &&
-		  (last_char == '!'))
-		break;
-	      last_char = c;
-	    }
-	  return(token(sc));
-	}
-      
-      /*   or #| ... |# */
-      if (c == '|') 
-	{
-	  char last_char;
-	  last_char = ' ';
-	  while ((c = inchar(sc, pt)) != EOF)
-	    {
-	      if ((c == '#') &&
-		  (last_char == '|'))
-		break;
-	      last_char = c;
-	    }
-	  return(token(sc));
-	}
-      
-      sc->strbuf[0] = c; 
-      return(TOKEN_SHARP_CONST); /* next stage notices any errors */
-      
     default: 
       sc->strbuf[0] = c; /* every TOKEN_ATOM return goes to read_delimited_string, so we save a backchar/inchar shuffle by starting the read here */
       return(TOKEN_ATOM);
@@ -19630,12 +19698,9 @@ static s7_pointer eval_symbol_1(s7_scheme *sc, s7_pointer sym)
 {
   s7_pointer x;
 
-  if (is_keyword(sym))
+  if ((is_keyword(sym)) ||
+      (is_syntax(sym)))
     return(sym);
-	  
-  x = symbol_table_find_by_name(sc, symbol_name(sym), symbol_location(sym));
-  if (is_syntax(x))
-    return(x);
 
   if (sym == sc->UNQUOTE)
     return(eval_error_no_arg(sc, "unquote (',') occurred outside quasiquote"));
@@ -20262,6 +20327,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	default:
 	  sc->value = read_expression(sc);
+	  sc->current_line = port_line_number(sc->input_port);
+	  sc->current_file = port_filename(sc->input_port);
 	  goto START;
 	}
 
@@ -20902,19 +20969,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        * check for args=nil and jump to apply here costs slightly more than it saves 
        *
        * here sc->args is nil, sc->value is the operator (car of list), sc->code is the rest -- the args.
-       *   EVAL_ARGS can be called within the EVAL_ARGS1 loop if it's a nested expression:
-       * (+ 1 2 (* 2 3)):
-       *   e_args: (), value: +, code: (1 2 (* 2 3))
-       *   e1args: (+), value: +, code: (1 2 (* 2 3))
-       *   e1args: (1 +), value: +, code: (2 (* 2 3))
-       *   e1args: (2 1 +), value: +, code: ((* 2 3))
-       *   e_args: (), value: *, code: (2 3)
-       *   e1args: (*), value: *, code: (2 3)
-       *   e1args: (2 *), value: *, code: (3)
-       *   e1args: (3 2 *), value: *, code: ()
-       *   <end -> apply the * op>
-       *   e1args: (6 2 1 +), value: +, code: ()
-       *
        * allocating sc->args here rather than below (trading 2 sets for a jump) was much slower
        */
 
@@ -21039,7 +21093,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
 			      make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
-	    
+
 	    if (c_function_all_args(sc->code) < len)
 	      return(s7_error(sc, 
 			      sc->WRONG_NUMBER_OF_ARGS, 
@@ -21050,6 +21104,30 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_C_ANY_ARGS_FUNCTION:              /* -------- C-based function that can take any number of arguments -------- */
 	  sc->value = c_function_call(sc->code)(sc, sc->args);
 	  goto START;
+
+	case T_C_OPT_ARGS_FUNCTION:
+	  {
+	    int len;
+	    len = safe_list_length(sc, sc->args);
+	    if (c_function_all_args(sc->code) < len)
+	      return(s7_error(sc, 
+			      sc->WRONG_NUMBER_OF_ARGS, 
+			      make_list_3(sc, sc->TOO_MANY_ARGUMENTS, sc->code, sc->args)));
+	    sc->value = c_function_call(sc->code)(sc, sc->args);
+	    goto START;
+	  }
+
+	case T_C_RST_ARGS_FUNCTION:
+	  {
+	    int len;
+	    len = safe_list_length(sc, sc->args);
+	    if (len < c_function_required_args(sc->code))
+	      return(s7_error(sc, 
+			      sc->WRONG_NUMBER_OF_ARGS, 
+			      make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
+	    sc->value = c_function_call(sc->code)(sc, sc->args);
+	    goto START;
+	  }
 
 	case T_C_MACRO: 	                    /* -------- C-based macro -------- */
 	  {
@@ -21263,6 +21341,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->x = multiple_value(sc->code);                             /* ((values + 1 2) 3) */
 	      sc->code = car(sc->x);
 	      sc->args = s7_append(sc, cdr(sc->x), sc->args);
+	      sc->x = sc->NIL;
 	      goto APPLY;
 	    }
  	  if (sc->args == sc->NIL)
@@ -21489,6 +21568,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* (define ((f a) b) (* a b)) -> (define f (lambda (a) (lambda (b) (* a b)))) */
 
       push_stack(sc, opcode(OP_DEFINE1), sc->NIL, sc->x);
+      sc->x = sc->NIL;
       goto EVAL;
       
       
@@ -21554,6 +21634,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	set_symbol_value(sc->x, sc->value); 
       else add_to_current_environment(sc, sc->code, sc->value); 
       sc->value = sc->code;
+      sc->x = sc->NIL;
       goto START;
       
       
@@ -21576,32 +21657,36 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (!is_proper_list(sc, sc->args))                                 /* (set! ('(1 2) 1 . 2) 1) */
 	    eval_error(sc, "set! target arguments are an improper list: ~A", sc->args);
 
+	  /* in all of these cases, we might need to GC protect the temporary lists */
+
 	  if (is_multiple_value(sc->value))
 	    {
-	      sc->code = s7_cons(sc, make_symbol(sc, "set!"), s7_append(sc, multiple_value(sc->value), s7_append(sc, sc->args, sc->code)));
+	      sc->code = s7_cons(sc, sc->SET, s7_append(sc, multiple_value(sc->value), s7_append(sc, sc->args, sc->code)));
 	      sc->op = OP_SET;
 	      goto START_WITHOUT_POP_STACK;
 	    }
 
-	  /* very weird -- the 2nd case seems like it must be more efficient, but it's actually slower? 
-	   *    using push_stack to get to eval_args almost gets it back to the current speed.
-	   *    so, goto EVAL_ARGS must be the culprit.   Moving these blocks ahead of EVAL_ARGS doesn't help.
+	  /* old form:
+	   *    sc->code = s7_cons(sc, sc->LIST_SET, s7_cons(sc, make_list_2(sc, sc->QUOTE, sc->value), s7_append(sc, sc->args, sc->code)));  
 	   */
-	  sc->code = s7_cons(sc, sc->LIST_SET, s7_cons(sc, make_list_2(sc, sc->QUOTE, sc->value), s7_append(sc, sc->args, sc->code)));
+
+	  push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_2(sc, sc->value, sc->LIST_SET), s7_append(sc, cdr(sc->args), sc->code));
+	  sc->code = car(sc->args);
 	  goto EVAL;
 
-	  /*
-	  sc->code = s7_cons(sc, make_list_2(sc, sc->QUOTE, sc->value), s7_append(sc, sc->args, sc->code));
-	  sc->value = sc->LIST_SET;
-	  sc->args = sc->NIL;
-	  goto EVAL_ARGS;
-	  */
+	  /* timings: old 3.25, new 2.34 (1.93 direct)
+	   *    (time (let ((L '((1 2 3)))) (do ((i 0 (+ i 1))) ((= i 10000000)) (set! ((L 0) 1) i)) L))
+	   */
 	}
 
       if (s7_is_vector(sc->value))
 	{
-	  /* vector arg (sc->value) doesn't need to be quoted since eval won't treat it as code */
-	  sc->code = s7_cons(sc, sc->VECTOR_SET, s7_cons(sc, sc->value, s7_append(sc, sc->args, sc->code)));
+	  /* old form:
+	   *     sc->code = s7_cons(sc, sc->VECTOR_SET, s7_cons(sc, sc->value, s7_append(sc, sc->args, sc->code)));
+	   *     [vector arg (sc->value) doesn't need to be quoted since eval won't treat it as code]
+	   */
+	  push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_2(sc, sc->value, sc->VECTOR_SET), s7_append(sc, cdr(sc->args), sc->code));
+	  sc->code = car(sc->args);
 	  goto EVAL;
 	}
 
@@ -21676,7 +21761,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	    case T_C_OBJECT:
 	      if (object_set_function(sc->x))
-		sc->code = s7_cons(sc, sc->OBJECT_SET, s7_append(sc, car(sc->code), cdr(sc->code)));   
+		{
+		  /* sc->code = s7_cons(sc, sc->OBJECT_SET, s7_append(sc, car(sc->code), cdr(sc->code))); */
+		  if (is_pair(cdar(sc->code)))
+		    {
+		      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_2(sc, sc->x, s7_symbol_value(sc, sc->OBJECT_SET)), s7_append(sc, cddar(sc->code), cdr(sc->code)));
+		      sc->code = cadar(sc->code);
+		    }
+		  else /* (set! (window-width) 800) -> ((window-width) 800) so cdar(sc->code) is nil */
+		    {
+		      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_2(sc, sc->x, s7_symbol_value(sc, sc->OBJECT_SET)), cddr(sc->code));
+		      sc->code = cadr(sc->code);
+		    }
+		}
 	        /* use set method (append copies/flattens the lists) -- we can't stitch car to cdr here because we're
 		 *   dealing with in-coming code -- set_cdr! will create a circular list.
 		 */
@@ -21686,21 +21783,36 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    case T_VECTOR:
 	      /* sc->x is the vector, sc->code is expr without the set! */
 	      /*  args have not been evaluated! */
-	      sc->code = s7_cons(sc, sc->VECTOR_SET, s7_append(sc, car(sc->code), cdr(sc->code)));
+	      /* sc->code = s7_cons(sc, sc->VECTOR_SET, s7_append(sc, car(sc->code), cdr(sc->code))); */
+	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_2(sc, sc->x, sc->VECTOR_SET), s7_append(sc, cddar(sc->code), cdr(sc->code)));
+	      sc->code = cadar(sc->code);
 	      break;
 	      
 	    case T_STRING:
-	      sc->code = s7_cons(sc, sc->STRING_SET, s7_append(sc, car(sc->code), cdr(sc->code)));
+	      /* sc->code = s7_cons(sc, sc->STRING_SET, s7_append(sc, car(sc->code), cdr(sc->code))); */
+	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_2(sc, sc->x, sc->STRING_SET), s7_append(sc, cddar(sc->code), cdr(sc->code)));
+	      sc->code = cadar(sc->code);
 	      break;
 
 	    case T_PAIR:
-	      sc->code = s7_cons(sc, sc->LIST_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
+	      /* code: ((lst 1) 32) from (let ((lst '(1 2 3))) (set! (lst 1) 32))
+	       * old form:
+	       *    sc->code = s7_cons(sc, sc->LIST_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
+	       *    old: 2.32, new: 1.77 (1.50 direct)
+	       *    (time (let ((lst '(1 2 3))) (do ((i 0 (+ i 1))) ((= i 10000000)) (set! (lst 1) 32))))
+	       */
+	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_2(sc, sc->x, sc->LIST_SET), s7_append(sc, cddar(sc->code), cdr(sc->code)));
+	      sc->code = cadar(sc->code);
 	      break;
 
 	    case T_HASH_TABLE:
-	      sc->code = s7_cons(sc, sc->HASH_TABLE_SET, s7_append(sc, car(sc->code), cdr(sc->code))); 
+	      /* sc->code = s7_cons(sc, sc->HASH_TABLE_SET, s7_append(sc, car(sc->code), cdr(sc->code))); */
+	      push_stack(sc, opcode(OP_EVAL_ARGS1), make_list_2(sc, sc->x, sc->HASH_TABLE_SET), s7_append(sc, cddar(sc->code), cdr(sc->code)));
+	      sc->code = cadar(sc->code);
 	      break;
 
+	    case T_C_OPT_ARGS_FUNCTION:
+	    case T_C_RST_ARGS_FUNCTION:
 	    case T_C_ANY_ARGS_FUNCTION:                       /* (let ((lst (list 1 2))) (set! (list-ref lst 1) 2) lst) */
 	    case T_C_FUNCTION:
 	      /* perhaps it has a setter */
@@ -21731,6 +21843,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  push_stack(sc, opcode(OP_SET1), sc->NIL, car(sc->code));
 	  sc->code = cadr(sc->code);
 	}
+      sc->x = sc->NIL;
       goto EVAL;
       
       
@@ -21913,6 +22026,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  add_to_local_environment(sc, car(sc->code), sc->x); 
 	  sc->code = cddr(sc->code);
+	  sc->x = sc->NIL;
 	} 
       else 
 	{
@@ -21929,13 +22043,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     case OP_LET_STAR:
-      if ((!is_pair(sc->code)) ||                /* (let* . 1) */
-	  (!is_pair(cdr(sc->code))) ||           /* (let*) */
+      if (!is_pair(sc->code))                    /* (let* . 1) */
+	return(eval_error(sc, "let* variable list is messed up: ~A", sc->code));
+
+      if ((!is_pair(cdr(sc->code))) ||           /* (let*) */
 	  ((!is_pair(car(sc->code))) &&          /* (let* 1 ...), also there's no named let* */
 	   (car(sc->code) != sc->NIL)))
 	{
-	  if ((is_pair(sc->code)) &&
-	      (s7_is_symbol(car(sc->code))))
+	  if (s7_is_symbol(car(sc->code)))
 	    return(eval_error(sc, "there is no named let*: ~A", sc->code));
 	  return(eval_error(sc, "let* variable list is messed up: ~A", sc->code));
 	}
@@ -22119,11 +22234,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	      if (is_multiple_value(sc->value))                             /* (cond ((values 1 2) => +)) */
 		sc->code = s7_cons(sc, cadr(sc->code), multiple_value(sc->value));
-	      else
-		{
-		  sc->x = make_list_2(sc, sc->QUOTE, sc->value); 
-		  sc->code = make_list_2(sc, cadr(sc->code), sc->x);
-		}
+	      else sc->code = make_list_2(sc, cadr(sc->code), make_list_2(sc, sc->QUOTE, sc->value)); 
 	      goto EVAL;
 	    }
 	  goto BEGIN;
@@ -22295,7 +22406,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *                        (cons (quote +) (cons a (cons b (quote ()))))) 
        *                      (cdr defmac-21)))
        */
+      sc->y = sc->NIL;
+      sc->z = sc->NIL;
       push_stack(sc, opcode(OP_MACRO), sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO */
+      sc->x = sc->NIL;
       goto EVAL;
 
 
@@ -22376,7 +22490,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   sc->x: hi
        *   sc->code: (lambda ({defmac}-14) (apply (lambda (a b) ({list} '+ a b)) (cdr {defmac}-14)))
        */
+      sc->y = sc->NIL;
+      sc->z = sc->NIL;
       push_stack(sc, opcode(OP_MACRO), sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO */
+      sc->x = sc->NIL;
       goto EVAL;
       
       
@@ -22636,7 +22753,90 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	set_type(x, T_PAIR | T_STRUCTURE);
 	sc->args = x;
       }
-      sc->tok = token(sc);
+      
+      /* sc->tok = token(sc); */
+      /* this is 75% of the token calls, so expanding it saves lots of time */
+      {
+	int c;
+	s7_pointer pt;
+
+	pt = sc->input_port;
+	if (sc->input_is_file)
+	  {
+	    while (is_white_space(c = fgetc(port_file(pt))))
+	      if (c == '\n')
+		port_line_number(pt)++;
+	    if (c == EOF) 
+	      return(missing_close_paren_error(sc));
+	  }
+	else 
+	  {
+	    char *orig_str, *str;
+	    unsigned char c1;
+
+	    str = (char *)(port_string(pt) + port_string_point(pt));
+	    if (!(*str)) 
+	      return(missing_close_paren_error(sc));
+
+	    orig_str = str;
+	    while (white_space[c1 = (unsigned char)(*str++)]) /* (let ((ÿa 1)) ÿa) -- 255 is not -1 = EOF */
+	      if (c1 == '\n')
+		port_line_number(pt)++;
+	    if (c1 == 0)
+	      {
+		port_string_point(pt) += (str - orig_str - 1);
+		return(missing_close_paren_error(sc));
+	      }
+	    port_string_point(pt) += (str - orig_str);
+	    c = c1;
+	  }
+
+	switch (c) 
+	  {
+	  case '(':
+	    sc->tok = TOKEN_LEFT_PAREN;
+	    break;
+      
+	  case ')':
+	    sc->tok = TOKEN_RIGHT_PAREN;
+	    break;
+	    
+	  case '.':
+	    sc->tok = read_dot(sc, pt);
+	    break;
+	    
+	  case '\'':
+	    sc->tok = TOKEN_QUOTE;
+	    break;
+	    
+	  case ';':
+	    sc->tok = read_semicolon(sc, pt);
+	    break;
+	    
+	  case '"':
+	    sc->tok = TOKEN_DOUBLE_QUOTE;
+	    break;
+	    
+	  case '`':
+	    sc->tok = TOKEN_BACK_QUOTE;
+	    break;
+	    
+	  case ',':
+	    sc->tok = read_comma(sc, pt);
+	    break;
+	    
+	  case '#':
+	    sc->tok = read_sharp(sc, pt);
+	    break;
+	    
+	  default: 
+	    sc->strbuf[0] = c; 
+	    /* sc->tok = TOKEN_ATOM; */
+	    sc->value = read_delimited_string(sc, true);
+	    goto READ_LIST;
+	    break;
+	  }
+      }
 
       switch (sc->tok)
 	{
@@ -22702,9 +22902,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 
 	case TOKEN_EOF:
-	  /* we should be able to scan the stack for the earlist OP_READ_LIST,
-	   *  and find where the current list started
-	   */
+	  /* can't happen, I believe */
 	  return(missing_close_paren_error(sc));
 
 	case TOKEN_ATOM:
@@ -27956,6 +28154,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "or",                OP_OR);
   assign_syntax(sc, "case",              OP_CASE);
   assign_syntax(sc, "do",                OP_DO);
+
   assign_syntax(sc, "special",           OP_SPECIAL);          /* dynamic bindings */
   set_immutable(assign_syntax(sc, "with-environment",  OP_WITH_ENV));
 
@@ -27964,6 +28163,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "define",            OP_DEFINE);
   assign_syntax(sc, "define*",           OP_DEFINE_STAR);
   assign_syntax(sc, "define-constant",   OP_DEFINE_CONSTANT);  /* unsetabble and unrebindable bindings */
+
   assign_syntax(sc, "defmacro",          OP_DEFMACRO);         /* CL-style macro syntax */
   assign_syntax(sc, "defmacro*",         OP_DEFMACRO_STAR);
   assign_syntax(sc, "define-macro",      OP_DEFINE_MACRO);     /* Scheme-style macro syntax */
@@ -28726,7 +28926,7 @@ s7_scheme *s7_init(void)
  *                could the profiler give block counts as well?
  *
  * s7test valgrind, time       17-Jul-10   7-Sep-10          now
- *    intel core duo (1.83G):    3162     2690, 1.921
+ *    intel core duo (1.83G):    3162     2690, 1.921     2501 1.855
  *    intel E5200 (2.5G):                 1951, 1.450
  *    amd operon 2218 (2.5G):             1859, 1.335
  *    amd opteron 8356 (2.3G):   2181     1949, 1.201
@@ -28735,10 +28935,10 @@ s7_scheme *s7_init(void)
  *    amd phenom 945 (3.0G):     2085     1864, 0.894
  *    intel Q9450 (2.66G):                1951, 0.857
  *    intel Q9550 (2.83G):       2184     1948, 0.838
- *    intel E8400  (3.0G):       2372     2082, 0.836     1910 .803
+ *    intel E8400  (3.0G):       2372     2082, 0.836     1897 .780
  *    intel xeon 5530 (2.4G)     2093     1855, 0.811
  *    amd phenom 965 (3.4G):     2083     1862, 0.808
- *    intel i7 930 (2.8G):       2084     1864  0.704     1728 .636
+ *    intel i7 930 (2.8G):       2084     1864  0.704     1707 .634
  *
  * 10.8: 0.684, same in 11.10: 0.380, using no-gui snd (overhead: 0.04)
  */

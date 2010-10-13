@@ -51480,6 +51480,7 @@ why are these different (read-time `#() ? )
 (test (string->number "#b1 1") #f)
 (test (string->number "#b 1") #f)
 (test (string->number "# b1") #f)
+(test (string->number "#b12") #f)
 (test (string->number (string (integer->char 216))) #f) ; slashed 0
 (test (string->number (string (integer->char 189))) #f) ; 1/2 as single char
 (test (string->number (string #\1 (integer->char 127) #\0)) #f) ; backspace

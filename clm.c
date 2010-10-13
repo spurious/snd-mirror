@@ -11608,7 +11608,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
       pv->amps[i] += pv->ampinc[i];
       pv->phaseinc[i] += pv->freqs[i];
       pv->phases[i] += pv->phaseinc[i];
-      sum += (pv->amps[i] * sin(pv->phases[i]));
+      sum += (pv->amps[i] * sin(pv->phases[i])); /* this is really expensive in 64-bit systems -- perhaps make a local sin? */
     }
   return(sum);
 }
