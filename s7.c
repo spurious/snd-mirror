@@ -162,13 +162,17 @@
 #define INITIAL_STACK_SIZE 2048         
 /* the stack grows as needed, each frame takes 4 entries, this is its initial size.
  *   this needs to be big enough to handle the eval_c_string's at startup (ca 100) 
+ *   In s7test.scm, the maximum stack size is ca 440.  In snd-test.scm, it's ca 50.
  */
 
 #define INITIAL_PROTECTED_OBJECTS_SIZE 16  
 /* a vector of objects that are (semi-permanently) protected from the GC, grows as needed */
 
 #define GC_TEMPS_SIZE 128
-/* the number of recent objects that are temporarily gc-protected; 8 works for s7test and snd-test */
+/* the number of recent objects that are temporarily gc-protected; 8 works for s7test and snd-test. 
+ *    For the FFI, this sets the lag between a call on s7_cons and the first moment when its result
+ *    might be vulnerable to the GC. 
+*/
 
 #define INITIAL_TRACE_LIST_SIZE 2
 /* a list of currently-traced functions */
@@ -1914,6 +1918,12 @@ static void increase_stack_size(s7_scheme *sc)
 } 
 
 
+static s7_pointer g_stack_size(s7_scheme *sc, s7_pointer args)
+{
+  return(s7_make_integer(sc, (sc->stack_end - sc->stack_start) / 4));
+}
+
+
 
 
 /* -------------------------------- symbols -------------------------------- */
@@ -3082,6 +3092,7 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 	  
 	    if (dynamic_wind_state(x) == DWIND_BODY)
 	      {
+		dynamic_wind_state(x) = DWIND_FINISH;
 		push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
 		sc->args = sc->NIL;
 		sc->code = dynamic_wind_out(x);
@@ -3176,6 +3187,7 @@ static void call_with_exit(s7_scheme *sc)
 	    sc->z = stack_code(sc->stack, i);
 	    if (dynamic_wind_state(sc->z) == DWIND_BODY)
 	      {
+		dynamic_wind_state(sc->z) = DWIND_FINISH;
 		push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
 		sc->args = sc->NIL;
 		sc->code = dynamic_wind_out(sc->z);
@@ -3259,7 +3271,7 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   sc->code = car(args);                                      /* the lambda form */
   sc->args = make_list_1(sc, make_goto(sc));                 /*   the argument to the lambda (the goto = "return" above) */
 
-  push_stack(sc, opcode(OP_DEACTIVATE_GOTO), car(sc->args), sc->NIL);
+  push_stack(sc, opcode(OP_DEACTIVATE_GOTO), car(sc->args), sc->NIL); /* this means call-with-exit is not tail-recursive */
   push_stack(sc, opcode(OP_APPLY), sc->args, sc->code);      /* apply looks at sc->code to decide what to do (it will see the lambda) */
   
   /* if the lambda body calls the argument as a function, 
@@ -10780,13 +10792,13 @@ static s7_pointer eval_string_1(s7_scheme *sc, const char *str)
   port = s7_open_input_string(sc, str);
   push_input_port(sc, port);
 
-  push_stack(sc, opcode(OP_BARRIER), port, sc->NIL);
+  push_stack(sc, opcode(OP_BARRIER), port, sc->NIL);   /* this means eval-string is not tail-recursive */
   push_stack(sc, opcode(OP_EVAL_STRING), sc->args, sc->code);
   eval(sc, OP_READ_INTERNAL);
 
   pop_input_port(sc);
   s7_close_input_port(sc, port);
-  if (is_multiple_value(sc->value))                 /* (+ 1 (eval-string "(values 2 3)")) */
+  if (is_multiple_value(sc->value))                    /* (+ 1 (eval-string "(values 2 3)")) */
     sc->value = splice_in_values(sc, multiple_value(sc->value));
 
   return(sc->value);
@@ -17687,10 +17699,11 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  x = stack_code(sc->stack, i);
 	  if (dynamic_wind_state(x) == DWIND_BODY)
 	    {
+	      dynamic_wind_state(x) = DWIND_FINISH;   /* make sure an uncaught error in the exit thunk doesn't cause us to loop */
 	      push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
 	      sc->args = sc->NIL;
 	      sc->code = dynamic_wind_out(x);
-	      eval(sc, OP_APPLY);
+	      eval(sc, OP_APPLY);                     /* I guess this means no call/cc out of the exit thunk in an error-catching context */
 	    }
 	  break;
 
@@ -19347,90 +19360,97 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
     }
   else
     {
-      if (port_string(pt))
+      int k = 0;
+      char *orig_str, *str;
+      unsigned char c1;
+      
+      str = (char *)(port_string(pt) + port_string_point(pt));
+      orig_str = str;
+      
+      do {c1 = (*str++);} while (char_ok_in_a_name[c1]);
+      c = c1;
+      k = str - orig_str;
+      port_string_point(pt) += k;
+      
+      if ((k == 1) && 
+	  (sc->strbuf[0] == '\\'))         
 	{
-	  int k = 0;
-	  char *orig_str, *str;
-
-	  str = (char *)(port_string(pt) + port_string_point(pt));
-	  orig_str = str;
-	  
-	  {
-	    unsigned char c1;
-	    do {c1 = (*str++);} while (char_ok_in_a_name[c1]);
-	    c = c1;
-	  }
-	  k = str - orig_str;
-	  port_string_point(pt) += k;
-
-	  if ((k == 1) && 
-	      (sc->strbuf[0] == '\\'))         
-	    /* must be from #\( and friends -- a character that happens to be not ok-in-a-name,
-	     *   we ended up pointing to the actual delimiter, whereas below, if c != 0 (end of file)
-	     *   we ended up 1 past the delimiter, so we have to back up the port point.
-	     */
-	    {
-	      sc->strbuf[1] = (*orig_str);
-	      sc->strbuf[2] = '\0';
-	      return(make_sharp_constant(sc, sc->strbuf, true, 10));
-	    }
-	  else 
-	    {
-	      if (port_needs_free(pt)) 
-		{
-		  /* port_string was allocated (and read from a file) so we can mess with it directly */
-		  s7_pointer result;
-		  char endc;
-
-		  endc = orig_str[k - 1];
-		  orig_str[k - 1] = '\0';
-		  
-		  if (atom_case)
-		    {
-		      switch (orig_str[-1])
-			{
-			case '0': case '1': case '2': case '3': case '4':
-			case '5': case '6': case '7': case '8': case '9':
-			case '.': case '+': case '-':
-			  result = make_atom(sc, (char *)(orig_str - 1), 10, true);
-			  break;
-
-			case '#':
-			  result = make_sharp_constant(sc, orig_str, true, 10);
-			  break;
-
-			default:
-			  result = make_symbol(sc, (char *)(orig_str - 1));
-			}
-		    }
-		  else result = make_sharp_constant(sc, (char *)(orig_str - 1), true, 10);
-	      
-		  orig_str[k - 1] = endc;
-		  if (c != 0) port_string_point(pt)--;
-
-		  return(result);
-		}
-
-	      /* eval_c_string string is a constant so we can't set and unset the token's end char */
-	      if ((k + 1) >= sc->strbuf_size)
-		resize_strbuf(sc);
-
-	      memcpy((void *)(sc->strbuf + 1), (void *)orig_str, k);
-
-	      if (c != 0)
-		{
-		  port_string_point(pt)--;
-		  sc->strbuf[k] = '\0';
-		}
-	    }
+	  /* must be from #\( and friends -- a character that happens to be not ok-in-a-name,
+	   *   we ended up pointing to the actual delimiter, whereas below, if c != 0 (end of file)
+	   *   we ended up 1 past the delimiter, so we have to back up the port point.
+	   */
+	  sc->strbuf[1] = (*orig_str);
+	  sc->strbuf[2] = '\0';
+	  return(make_sharp_constant(sc, sc->strbuf, true, 10));
 	}
       else 
 	{
-	  sc->strbuf[0] = '\0';
-	  if (!atom_case) return(sc->NIL);
+	  if (port_needs_free(pt)) 
+	    {
+	      /* port_string was allocated (and read from a file) so we can mess with it directly */
+	      s7_pointer result;
+	      char endc;
+	      
+	      endc = orig_str[k - 1];
+	      orig_str[k - 1] = '\0';
+	      
+	      if (atom_case)
+		{
+		  switch (orig_str[-1])
+		    {
+		    case '0': case '1': case '2': case '3': case '4':
+		    case '5': case '6': case '7': case '8': case '9':
+		    case '.': case '+': case '-':
+		      result = make_atom(sc, (char *)(orig_str - 1), 10, true);
+		      break;
+		      
+		    case '#':
+		      result = make_sharp_constant(sc, orig_str, true, 10);
+		      break;
+		      
+		    default:
+		      /* result = make_symbol(sc, (char *)(orig_str - 1)); 
+		       *    expanded for speed
+		       */
+		      {
+			int location;
+			const char *name;
+
+			name = (const char *)(orig_str - 1);
+			location = symbol_table_hash(name); 
+			result = symbol_table_find_by_name(sc, name, location); 
+
+			if (result == sc->NIL) 
+			  {
+			    if (sc->symbol_table_is_locked)
+			      result = sc->F;
+			    else result = symbol_table_add_by_name_at_location(sc, name, location); 
+			  }
+		      }
+		      break;
+		    }
+		}
+	      else result = make_sharp_constant(sc, (char *)(orig_str - 1), true, 10);
+	      
+	      orig_str[k - 1] = endc;
+	      if (c != 0) port_string_point(pt)--;
+	      
+	      return(result);
+	    }
+	  
+	  /* eval_c_string string is a constant so we can't set and unset the token's end char */
+	  if ((k + 1) >= sc->strbuf_size)
+	    resize_strbuf(sc);
+	  
+	  memcpy((void *)(sc->strbuf + 1), (void *)orig_str, k);
+	  
+	  if (c != 0)
+	    {
+	      port_string_point(pt)--;
+	      sc->strbuf[k] = '\0';
+	    }
 	}
     }
-
   if (atom_case)
     return(make_atom(sc, sc->strbuf, 10, true));
 
@@ -20192,7 +20212,6 @@ static void prepare_do_end_test(s7_scheme *sc)
 	}
     }
 }
-
 
 
 /* -------------------------------- eval -------------------------------- */
@@ -22217,6 +22236,29 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   11
        * The tail recursion is more important.  This behavior matches that of "begin" -- if the
        * values statement is last, it splices into the next outer arglist.
+       *
+       * I tried implementing dynamic-binding by walking up the stack looking at envs, but
+       *   for that to work in some cases, every new frame needs to be on the stack, hence
+       *   OP_LET_UNWIND.  But that means the stack grows on every let, so tail recursion is
+       *   defeated.  I'd have to notice tail calls and pop the stack, but I decided that
+       *   was too much work for a minor (unneeded) feature.  Although the stack does not
+       *   grow, we're depending on the GC to take care of the old local envs after the
+       *   tail call.  My test:
+       *
+       * (let ((max-stack 0))
+       *   (define (tc-1 a c) 
+       *     (let ((b (+ a 1)) 
+       *           (d (make-vector 1000)))
+       *       (if (> (s7-stack-size) max-stack)
+       *           (set! max-stack (s7-stack-size)))
+       *       (if (< b c) 
+       *           (tc-1 b c))))
+       * (tc-1 0 3200000) max-stack)
+       * 4
+       *
+       * indicated (via "top") that the memory footprint was not growing, and the "4"
+       * shows the stack was ok, so I currently believe that s7 is doing tail calls
+       * correctly.
        */
 
 
@@ -28052,7 +28094,6 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "case",              OP_CASE);
   assign_syntax(sc, "do",                OP_DO);
 
-  /* assign_syntax(sc, "special",           OP_SPECIAL);    */      /* dynamic bindings */
   set_immutable(assign_syntax(sc, "with-environment",  OP_WITH_ENV));
 
   assign_syntax(sc, "lambda",            OP_LAMBDA);
@@ -28559,8 +28600,15 @@ s7_scheme *s7_init(void)
   s7_define_variable(sc, "*vector-print-length*", small_ints[8]);
   sc->vector_print_length = symbol_global_slot(make_symbol(sc, "*vector-print-length*"));
 
+
+  /* the next two are for the test suite */
   s7_define_variable(sc, "symbol-table-locked?", 
-		     s7_make_procedure_with_setter(sc, "symbol-table-locked?", g_symbol_table_is_locked, 0, 0, g_set_symbol_table_is_locked, 1, 0, H_symbol_table_is_locked));
+		     s7_make_procedure_with_setter(sc, "s7-symbol-table-locked?", 
+						   g_symbol_table_is_locked, 0, 0, 
+						   g_set_symbol_table_is_locked, 1, 0, 
+						   H_symbol_table_is_locked));
+  s7_define_function(sc, "s7-stack-size", g_stack_size, 0, 0, false, "current stack size");
+
 
   s7_define_variable(sc, "*error-hook*", sc->NIL);
   sc->error_info = s7_make_and_fill_vector(sc, ERROR_INFO_SIZE, ERROR_INFO_DEFAULT);
@@ -28826,7 +28874,7 @@ s7_scheme *s7_init(void)
  * things to add: lint? (can we notice unreachable code, unbound variables, bad args)?
  *                could the profiler give block counts as well?
  *
- * s7test valgrind, time       17-Jul-10   7-Sep-10          now [with ca 5000 more lines in the test]
+ * s7test valgrind, time       17-Jul-10   7-Sep-10          now
  *    intel core duo (1.83G):    3162     2690, 1.921     2449 1.830
  *    intel E5200 (2.5G):                 1951, 1.450
  *    amd operon 2218 (2.5G):             1859, 1.335
@@ -28836,7 +28884,7 @@ s7_scheme *s7_init(void)
  *    amd phenom 945 (3.0G):     2085     1864, 0.894
  *    intel Q9450 (2.66G):                1951, 0.857
  *    intel Q9550 (2.83G):       2184     1948, 0.838
- *    intel E8400  (3.0G):       2372     2082, 0.836     1870 .760
+ *    intel E8400  (3.0G):       2372     2082, 0.836     1865 .750
  *    intel xeon 5530 (2.4G)     2093     1855, 0.811
  *    amd phenom 965 (3.4G):     2083     1862, 0.808
  *    intel i7 930 (2.8G):       2084     1864  0.704     1675 .630
