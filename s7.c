@@ -162,7 +162,7 @@
 #define INITIAL_STACK_SIZE 2048         
 /* the stack grows as needed, each frame takes 4 entries, this is its initial size.
  *   this needs to be big enough to handle the eval_c_string's at startup (ca 100) 
- *   In s7test.scm, the maximum stack size is ca 440.  In snd-test.scm, it's ca 50.
+ *   In s7test.scm, the maximum stack size is ca 440.  In snd-test.scm, it's ca 200.
  */
 
 #define INITIAL_PROTECTED_OBJECTS_SIZE 16  
@@ -1904,7 +1904,7 @@ static void increase_stack_size(s7_scheme *sc)
   loc = s7_stack_top(sc);
   new_size = sc->stack_size * 2;
 
-  /* fprintf(stderr, "stack size is %d\n", new_size); */
+  /* fprintf(stderr, "stack size is %d because current size is %d\n", new_size, sc->stack_end - sc->stack_start); */
 
   vector_elements(sc->stack) = (s7_pointer *)realloc(vector_elements(sc->stack), new_size * sizeof(s7_pointer));
   for (i = sc->stack_size; i < new_size; i++)
@@ -4024,13 +4024,15 @@ s7_pointer s7_make_complex(s7_scheme *sc, s7_Double a, s7_Double b)
 
 s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
 {
-  s7_num_t ret;
   s7_pointer x;
+  s7_Int divisor;
 
   if (b == 0)
     return(division_by_zero_error(sc, "make-ratio", make_list_2(sc, s7_make_integer(sc, a), small_ints[0])));
   if (a == 0)
     return(small_ints[0]);
+  if (b == 1)
+    return(s7_make_integer(sc, a));
 
 #if (!WITH_GMP)
   if (b == LLONG_MIN)
@@ -4057,22 +4059,26 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
     }
 #endif
 
+  if (b < 0)
+    {
+      a = -a;
+      b = -b;
+    }
+  divisor = c_gcd(a, b);
+  if (divisor != 1)
+    {
+      a /= divisor;
+      b /= divisor;
+    }
   if (b == 1)
     return(s7_make_integer(sc, a));
-
+  
   NEW_CELL(sc, x);
   set_type(x, T_NUMBER | T_SIMPLE | T_DONT_COPY);
+  number_type(x) = NUM_RATIO;
+  numerator(number(x)) = a;
+  denominator(number(x)) = b;
 
-  ret = make_ratio(a, b);
-  
-  number_type(x) = ret.type;
-  if (ret.type == NUM_INT)
-    integer(number(x)) = numerator(ret);
-  else
-    {
-      numerator(number(x)) = numerator(ret);
-      denominator(number(x)) = denominator(ret);
-    }
   return(x);
 }
 
@@ -4522,6 +4528,8 @@ static char *pad_number(const char *p, int len, int width)
 }
 
 
+#define BASE_10 10
+
 static char *number_to_string_base_10(s7_pointer obj, int width, int precision, char float_choice)
 {
   char *p;
@@ -4529,7 +4537,7 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 
 #if WITH_GMP
   if (is_c_object(obj))
-    return(big_number_to_string_with_radix(obj, 10, width));
+    return(big_number_to_string_with_radix(obj, BASE_10, width));
 #endif
 
   switch (number_type(obj))
@@ -4902,6 +4910,12 @@ static bool is_abnormal(s7_scheme *sc, s7_pointer x)
 }
 
 
+#define NESTED_SHARP false
+#define UNNESTED_SHARP true
+
+#define SYMBOL_OK true
+#define NO_SYMBOLS false
+
 static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, int radix) 
 {
   /* name is the stuff after the '#', return sc->NIL if not a recognized #... entity */
@@ -4967,7 +4981,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	    else return(sc->NIL);
 	  }
 	/* the #b or whatever overrides any radix passed in earlier */
-	x = make_atom(sc, (char *)(name + num_at), (name[0] == 'o') ? 8 : ((name[0] == 'x') ? 16 : ((name[0] == 'b') ? 2 : 10)), false);
+	x = make_atom(sc, (char *)(name + num_at), (name[0] == 'o') ? 8 : ((name[0] == 'x') ? 16 : ((name[0] == 'b') ? 2 : 10)), NO_SYMBOLS);
 
 	/* #x#i1 apparently makes sense, so #x1.0 should also be accepted.
 	 * here we can get #b#e0/0 or #b#e+1/0 etc.
@@ -5007,7 +5021,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	   */
 	  if (is_radix_prefix(name[2]))
 	    {
-	      x = make_sharp_constant(sc, (char *)(name + 2), false, radix);
+	      x = make_sharp_constant(sc, (char *)(name + 2), NESTED_SHARP, radix);
 	      if (is_abnormal(sc, x))
 		return(sc->NIL);
 #if WITH_GMP
@@ -5018,7 +5032,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	    }
 	  return(sc->NIL);
 	}
-      x = make_atom(sc, (char *)(name + 1), radix, false);
+      x = make_atom(sc, (char *)(name + 1), radix, NO_SYMBOLS);
       if (is_abnormal(sc, x))
 	return(sc->NIL);
 #if WITH_GMP
@@ -5035,7 +5049,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	{
 	  if (is_radix_prefix(name[2]))
 	    {
-	      x = make_sharp_constant(sc, (char *)(name + 2), false, radix);
+	      x = make_sharp_constant(sc, (char *)(name + 2), NESTED_SHARP, radix);
 	      if (is_abnormal(sc, x))                    /* (string->number "#e#b0/0") */
 		return(sc->NIL);
 	      if (!s7_is_real(x))                        /* (string->number "#e#b1/0+i") */
@@ -5048,7 +5062,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	  return(sc->NIL);
 	}
 
-      x = make_atom(sc, (char *)(name + 1), radix, false);
+      x = make_atom(sc, (char *)(name + 1), radix, NO_SYMBOLS);
 
       if (is_abnormal(sc, x))                            /* (string->number "#e0/0") */
 	return(sc->NIL);
@@ -5142,7 +5156,7 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
     {
       while (true)
 	{
-	  dig = digits[*tmp++];
+	  dig = digits[(unsigned char)(*tmp++)];
 	  if (dig < 10)
 	    lval = dig + (lval * 10);
 	  else break;
@@ -5152,7 +5166,7 @@ static s7_Int string_to_integer(const char *str, int radix, bool *overflow)
     {
       while (true)
 	{
-	  dig = digits[*tmp++];
+	  dig = digits[(unsigned char)(*tmp++)];
 	  if (dig < radix)
 	    lval = dig + (lval * radix);
 	  else break;
@@ -5470,7 +5484,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
   switch (c)
     {
     case '#':
-      return(make_sharp_constant(sc, p, true, radix)); /* make_sharp_constant expects the '#' to be removed */
+      return(make_sharp_constant(sc, p, UNNESTED_SHARP, radix)); /* make_sharp_constant expects the '#' to be removed */
 
     case '+':
     case '-':
@@ -5783,7 +5797,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 static s7_pointer s7_string_to_number(s7_scheme *sc, char *str, int radix)
 {
   s7_pointer x;
-  x = make_atom(sc, str, radix, false);
+  x = make_atom(sc, str, radix, NO_SYMBOLS);
   if (s7_is_number(x))  /* only needed because str might start with '#' and not be a number (#t for example) */
     return(x);
   return(sc->F);
@@ -9405,6 +9419,9 @@ end: (substring \"01234\" 1 2) -> \"1\""
 }
 
 
+#define USE_WRITE true
+#define USE_DISPLAY false
+
 static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_object_to_string "(object->string obj (write true)) returns a string representation of obj."
@@ -9415,7 +9432,7 @@ static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
 	return(s7_object_to_string(sc, car(args), s7_boolean(sc, cadr(args))));
       return(s7_wrong_type_arg_error(sc, "object->string", 2, cadr(args), "a boolean"));
     }
-  return(s7_object_to_string(sc, car(args), true));
+  return(s7_object_to_string(sc, car(args), USE_WRITE));
 }
 
 
@@ -11032,6 +11049,9 @@ static void write_string(s7_scheme *sc, const char *s, s7_pointer pt)
 }
 
 
+#define IN_QUOTES true
+#define NOT_IN_QUOTES false
+
 static char *slashify_string(const char *p, int len, bool quoted, bool *slashified)
 {
   int i, j = 0, cur_size;
@@ -11144,7 +11164,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	/* I think this is the only place we print a symbol's name */
 	/* return(copy_string_with_len(symbol_name(obj), symbol_name_length(obj))); */
 
-	str = slashify_string(symbol_name(obj), symbol_name_length(obj), false, &slashified);
+	str = slashify_string(symbol_name(obj), symbol_name_length(obj), NOT_IN_QUOTES, &slashified);
 	if (slashified)
 	  {
 	    char *symstr;
@@ -11171,7 +11191,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	    len = (1 << 24);
 	  if (!use_write) 
 	    return(copy_string_with_len(string_value(obj), len));
-	  return(slashify_string(string_value(obj), len, true, &slashified));
+	  return(slashify_string(string_value(obj), len, IN_QUOTES, &slashified));
 	}
       if (!use_write)
 	return(NULL);
@@ -11547,6 +11567,9 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top)
 static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, shared_info *ci);
 static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci);
 
+#define WITH_ELLIPSES false
+#define NO_ELLIPSES true
+
 static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_write, bool to_file, shared_info *ci)
 {
   if ((s7_is_vector(obj)) ||
@@ -11572,7 +11595,7 @@ static char *object_to_c_string_with_circle_check(s7_scheme *sc, s7_pointer vr, 
 	  if (ref > 0)
 	    {
 	      char *element;
-	      element = s7_object_to_c_string_1(sc, vr, true, false, ci);
+	      element = s7_object_to_c_string_1(sc, vr, USE_WRITE, WITH_ELLIPSES, ci);
 	      name = (char *)calloc(strlen(element) + 32, sizeof(char));
 	      sprintf(name, "#%d=%s", ref, element);
 	      free(element);
@@ -11635,7 +11658,7 @@ static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, sh
   elements = (char **)malloc(len * sizeof(char *));
   for (i = 0; i < len; i++)
     {
-      elements[i] = object_to_c_string_with_circle_check(sc, vector_element(vect, i), true, false, ci);
+      elements[i] = object_to_c_string_with_circle_check(sc, vector_element(vect, i), USE_WRITE, WITH_ELLIPSES, ci);
       bufsize += safe_strlen(elements[i]);
     }
 
@@ -11693,7 +11716,7 @@ static s7_pointer vector_to_string(s7_scheme *sc, s7_pointer vect)
   s7_pointer result;
   shared_info *ci = NULL;
   ci = make_shared_info(sc, vect);
-  result = make_string_uncopied(sc, object_to_c_string_with_circle_check(sc, vect, true, false, ci));
+  result = make_string_uncopied(sc, object_to_c_string_with_circle_check(sc, vect, USE_WRITE, WITH_ELLIPSES, ci));
   if (ci) free_shared_info(ci);
   return(result);
 }
@@ -11743,16 +11766,16 @@ static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci)
 	{
 	  if ((ci) && (i != 0) && (peek_shared_ref(ci, x) != 0))
 	    {
-	      elements[i] = object_to_c_string_with_circle_check(sc, x, true, false, ci);
+	      elements[i] = object_to_c_string_with_circle_check(sc, x, USE_WRITE, WITH_ELLIPSES, ci);
 	      len = i + 1;
 	      bufsize += safe_strlen(elements[i]);
 	      break;
 	    }
-	  else elements[i] = object_to_c_string_with_circle_check(sc, car(x), true, false, ci);
+	  else elements[i] = object_to_c_string_with_circle_check(sc, car(x), USE_WRITE, WITH_ELLIPSES, ci);
 	}
       else 
 	{
-	  elements[i] = object_to_c_string_with_circle_check(sc, x, true, false, ci);
+	  elements[i] = object_to_c_string_with_circle_check(sc, x, USE_WRITE, WITH_ELLIPSES, ci);
 	  len = i + 1;
 	  bufsize += safe_strlen(elements[i]);
 	  break;
@@ -11827,7 +11850,7 @@ static s7_pointer list_as_string(s7_scheme *sc, s7_pointer lst)
   s7_pointer result;
   shared_info *ci;
   ci = make_shared_info(sc, lst);
-  result = make_string_uncopied(sc, object_to_c_string_with_circle_check(sc, lst, true, false, ci));
+  result = make_string_uncopied(sc, object_to_c_string_with_circle_check(sc, lst, USE_WRITE, WITH_ELLIPSES, ci));
   if (ci) free_shared_info(ci);
   return(result);
 }
@@ -11839,7 +11862,7 @@ char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj)
   shared_info *ci = NULL;
   if (has_structure(obj))
     ci = make_shared_info(sc, obj);
-  result = object_to_c_string_with_circle_check(sc, obj, true, false, ci);
+  result = object_to_c_string_with_circle_check(sc, obj, USE_WRITE, WITH_ELLIPSES, ci);
   if (ci) free_shared_info(ci);
   return(result);
 }
@@ -11934,7 +11957,7 @@ static void write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer port, boo
 
 void s7_write(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 {
-  write_or_display(sc, obj, port, true);
+  write_or_display(sc, obj, port, USE_WRITE);
 }
 
 
@@ -11952,14 +11975,14 @@ static s7_pointer g_write(s7_scheme *sc, s7_pointer args)
 	return(s7_wrong_type_arg_error(sc, "write port", 2, port, "an open output port"));
     }
   else port = sc->output_port;
-  write_or_display(sc, car(args), port, true);
+  write_or_display(sc, car(args), port, USE_WRITE);
   return(sc->UNSPECIFIED);
 }
 
 
 void s7_display(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 {
-  write_or_display(sc, obj, port, false);
+  write_or_display(sc, obj, port, USE_DISPLAY);
 }
 
 
@@ -11977,7 +12000,7 @@ static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
 	return(s7_wrong_type_arg_error(sc, "display port", 2, port, "an open output port"));
     }
   else port = sc->output_port;
-  write_or_display(sc, car(args), port, false);
+  write_or_display(sc, car(args), port, USE_DISPLAY);
   return(sc->UNSPECIFIED);
 }
 
@@ -13440,6 +13463,8 @@ bool s7_is_vector(s7_pointer p)
   return(type(p) == T_VECTOR);
 }
 
+#define FILLED true
+#define NOT_FILLED false
 
 static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled) 
 {
@@ -13491,7 +13516,7 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_Int len, bool filled)
 
 s7_pointer s7_make_vector(s7_scheme *sc, s7_Int len)
 {
-  return(make_vector_1(sc, len, true));
+  return(make_vector_1(sc, len, FILLED));
 }
 
 
@@ -13615,7 +13640,7 @@ static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_make_and_fill_vector(s7_scheme *sc, s7_Int len, s7_pointer fill)
 {
   s7_pointer vect;
-  vect = make_vector_1(sc, len, false);
+  vect = make_vector_1(sc, len, NOT_FILLED);
   s7_vector_fill(sc, vect, fill);
   return(vect);
 }
@@ -13632,7 +13657,7 @@ static s7_pointer g_vector(s7_scheme *sc, s7_pointer args)
       ((len == 0) && (args != sc->NIL)))
     return(s7_wrong_type_arg_error(sc, "vector", 1, car(args), "a proper list"));
   
-  vec = make_vector_1(sc, len, false);
+  vec = make_vector_1(sc, len, NOT_FILLED);
   if (len > 0)
     {
       s7_pointer x;
@@ -13884,7 +13909,7 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
   if (cdr(args) != sc->NIL) 
     fill = cadr(args);
 
-  vec = make_vector_1(sc, len, false);
+  vec = make_vector_1(sc, len, NOT_FILLED);
   if (len > 0) s7_vector_fill(sc, vec, fill);
 
   if ((is_pair(x)) &&
@@ -14070,7 +14095,7 @@ static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect)
 
   if (vector_is_multidimensional(old_vect))
     new_vect = g_make_vector(sc, make_list_1(sc, g_vector_dimensions(sc, make_list_1(sc, old_vect))));
-  else new_vect = make_vector_1(sc, len, false);
+  else new_vect = make_vector_1(sc, len, NOT_FILLED);
 
   /* here and in vector-fill! we have a problem with bignums -- should new bignums be allocated? (copy_list also) */
 
@@ -16463,7 +16488,7 @@ also accepts a string or vector argument."
 	len = vector_length(p);
 	if (vector_is_multidimensional(p))
 	  np = g_make_vector(sc, make_list_1(sc, g_vector_dimensions(sc, make_list_1(sc, p))));
-	else np = make_vector_1(sc, len, false);
+	else np = make_vector_1(sc, len, NOT_FILLED);
 	if (len > 0)
 	  for (i = 0, j = len - 1; i < len; i++, j--)
 	    vector_element(np, i) = vector_element(p, j);
@@ -16817,7 +16842,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 
 		    if (has_structure(obj))
 		      ci = make_shared_info(sc, obj);
-		    tmp = object_to_c_string_with_circle_check(sc, obj, (str[i] == 'S') || (str[i] == 's'), false, ci);
+		    tmp = object_to_c_string_with_circle_check(sc, obj, (str[i] == 'S') || (str[i] == 's'), WITH_ELLIPSES, ci);
 		    if (ci) free_shared_info(ci);
 
 		    format_append_string(fdat, tmp);
@@ -19321,9 +19346,11 @@ static void resize_strbuf(s7_scheme *sc)
 }
 
 
-static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case) 
+#define WITH_SHARP false
+#define NO_SHARP true
+
+static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 {
-  int c;
   s7_pointer pt;
 
   pt = sc->input_port;
@@ -19331,7 +19358,7 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 
   if (sc->input_is_file)
     {
-      int i = 1;
+      int c, i = 1;
       do
 	{
 	  c = fgetc(port_file(pt)); /* might return EOF */
@@ -19362,26 +19389,21 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
     {
       int k = 0;
       char *orig_str, *str;
-      unsigned char c1;
+
+      orig_str = (char *)(port_string(pt) + port_string_point(pt) - 1);
+      str = (char *)(orig_str + 1);
       
-      str = (char *)(port_string(pt) + port_string_point(pt));
-      orig_str = str;
-      
-      do {c1 = (*str++);} while (char_ok_in_a_name[c1]);
-      c = c1;
+      while (char_ok_in_a_name[(unsigned char)(*str)]) {str++;}
       k = str - orig_str;
       port_string_point(pt) += k;
       
       if ((k == 1) && 
-	  (sc->strbuf[0] == '\\'))         
+	  (*orig_str == '\\'))         
 	{
-	  /* must be from #\( and friends -- a character that happens to be not ok-in-a-name,
-	   *   we ended up pointing to the actual delimiter, whereas below, if c != 0 (end of file)
-	   *   we ended up 1 past the delimiter, so we have to back up the port point.
-	   */
-	  sc->strbuf[1] = (*orig_str);
+	  /* must be from #\( and friends -- a character that happens to be not ok-in-a-name */
+	  sc->strbuf[1] = orig_str[1];
 	  sc->strbuf[2] = '\0';
-	  return(make_sharp_constant(sc, sc->strbuf, true, 10));
+	  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10));
 	}
       else 
 	{
@@ -19391,49 +19413,46 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 	      s7_pointer result;
 	      char endc;
 	      
-	      endc = orig_str[k - 1];
-	      orig_str[k - 1] = '\0';
+	      endc = orig_str[k];
+	      orig_str[k] = '\0';
 	      
 	      if (atom_case)
 		{
-		  switch (orig_str[-1])
+		  switch (*orig_str)
 		    {
 		    case '0': case '1': case '2': case '3': case '4':
 		    case '5': case '6': case '7': case '8': case '9':
 		    case '.': case '+': case '-':
-		      result = make_atom(sc, (char *)(orig_str - 1), 10, true);
+		      result = make_atom(sc, orig_str, BASE_10, SYMBOL_OK);
 		      break;
 		      
 		    case '#':
-		      result = make_sharp_constant(sc, orig_str, true, 10);
+		      result = make_sharp_constant(sc, (char *)(orig_str + 1), UNNESTED_SHARP, BASE_10);
 		      break;
 		      
 		    default:
-		      /* result = make_symbol(sc, (char *)(orig_str - 1)); 
+		      /* result = make_symbol(sc, orig_str); 
 		       *    expanded for speed
 		       */
 		      {
 			int location;
-			const char *name;
-
-			name = (const char *)(orig_str - 1);
-			location = symbol_table_hash(name); 
-			result = symbol_table_find_by_name(sc, name, location); 
+			location = symbol_table_hash(orig_str); 
+			result = symbol_table_find_by_name(sc, orig_str, location); 
 
 			if (result == sc->NIL) 
 			  {
 			    if (sc->symbol_table_is_locked)
 			      result = sc->F;
-			    else result = symbol_table_add_by_name_at_location(sc, name, location); 
+			    else result = symbol_table_add_by_name_at_location(sc, orig_str, location); 
 			  }
 		      }
 		      break;
 		    }
 		}
-	      else result = make_sharp_constant(sc, (char *)(orig_str - 1), true, 10);
+	      else result = make_sharp_constant(sc, orig_str, UNNESTED_SHARP, BASE_10);
 	      
-	      orig_str[k - 1] = endc;
-	      if (c != 0) port_string_point(pt)--;
+	      orig_str[k] = endc;
+	      if (*str != 0) port_string_point(pt)--;
 	      
 	      return(result);
 	    }
@@ -19442,19 +19461,16 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 	  if ((k + 1) >= sc->strbuf_size)
 	    resize_strbuf(sc);
 	  
-	  memcpy((void *)(sc->strbuf + 1), (void *)orig_str, k);
-	  
-	  if (c != 0)
-	    {
-	      port_string_point(pt)--;
-	      sc->strbuf[k] = '\0';
-	    }
+	  memcpy((void *)(sc->strbuf), (void *)orig_str, k);
+	  if (*str != 0) port_string_point(pt)--;
+	  sc->strbuf[k] = '\0';
 	}
     }
-  if (atom_case)
-    return(make_atom(sc, sc->strbuf, 10, true));
 
-  return(make_sharp_constant(sc, sc->strbuf, true, 10));
+  if (atom_case)
+    return(make_atom(sc, sc->strbuf, BASE_10, SYMBOL_OK));
+
+  return(make_sharp_constant(sc, sc->strbuf, UNNESTED_SHARP, BASE_10));
 }
 
 
@@ -19503,7 +19519,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
       end = (char *)(port_string(pt) + port_string_length(pt));
       for (s = start; s < end; s++)
 	{
-	  if (*s == '"')
+	  if (*s == '"')                         /* switch here no faster */
 	    {
 	      s7_pointer result;
 	      int len;
@@ -19640,6 +19656,9 @@ static s7_pointer read_expression(s7_scheme *sc)
 	   *   occurs, we need clean info in the error handler, so it's tricky to optimize this.
 	   *   (and if we do optimize it, it saves maybe %1 of the total stack time).
 	   */
+
+	  if (sc->stack_end >= sc->stack_resize_trigger)
+	    increase_stack_size(sc);
 	  break;
 	  
 	case TOKEN_QUOTE:
@@ -19668,7 +19687,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  break;
 	  
 	case TOKEN_ATOM:
-	  return(read_delimited_string(sc, true));
+	  return(read_delimited_string(sc, NO_SHARP));
 	  /* If reading list (from lparen), this will finally get us to op_read_list */
 	  
 	case TOKEN_DOUBLE_QUOTE:
@@ -19682,7 +19701,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  return(sc->value);
 	  
 	case TOKEN_SHARP_CONST:
-	  sc->value = read_delimited_string(sc, false);
+	  sc->value = read_delimited_string(sc, WITH_SHARP);
 
 	  /* here we need the following character and form 
 	   *   strbuf[0] == '#', false above = # case, not an atom
@@ -19813,7 +19832,7 @@ static s7_pointer quotify(s7_scheme *sc, s7_pointer pars)
    *
    * But at the point in eval where we handle lambda* arguments, we can't easily tell whether we're part of
    * a function or a macro, so at definition time of a macro* we scan the parameter list for an expression
-   * as a default value, annd replace it with (quote expr).
+   * as a default value, and replace it with (quote expr).
    *
    * and... (define-macro* ((a x)) ...) should behave the same as (define-macro* ((a (+ x 0))) ...)
    */
@@ -20273,7 +20292,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	default:
 	  sc->value = read_expression(sc);
-	  sc->current_line = port_line_number(sc->input_port);
+	  sc->current_line = port_line_number(sc->input_port);  /* this info is used to track down missing close parens */
 	  sc->current_file = port_filename(sc->input_port);
 	  goto START;
 	}
@@ -20909,7 +20928,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* sc->value is the func, sc->code is the entire expression 
        *
        *   we don't have to delay lookup of the func because arg evaluation order is not specified, so
-       *     (let ((func +)) (func (let () (set! func -) 3)	2))
+       *     (let ((func +)) (func (let () (set! func -) 3) 2))
        *   can return 5.
        *
        * check for args=nil and jump to apply here costs slightly more than it saves 
@@ -21021,9 +21040,26 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     APPLY_WITHOUT_TRACE:
 
-      if (sc->stack_end >= sc->stack_resize_trigger)
-	increase_stack_size(sc);
-      /* it saves a bit to move this to the push of eval_args1 but I feel safer with it here */
+      /*
+       * if (sc->stack_end >= sc->stack_resize_trigger)
+       *   increase_stack_size(sc);
+       *
+       * the two places where the stack reaches it maximum size are in read_expression where TOKEN_LEFT_PAREN
+       *   pushes OP_READ_LIST, and (the actual max) in OP_EVAL at the push of OP_EVAL_ARGS.  I've moved
+       *   the stack size check from here (where it reflects the eval stack size) to read_expression (where
+       *   it reflects nested list depth), and added it to the T_CLOSURE(*) parts of apply since (for example) 
+       *   extremely deep recursion involving map or for-each can increase the stack size indefinitely:
+       *
+       * (define (tfe a b)
+       *   (format #t "~A ~A -> ~A~%" a b (s7-stack-size))
+       *   (for-each
+       *     (lambda (c)
+       *       (if (< c b)
+       *           (tfe (+ c 1) b)))
+       *     (list a)))
+       *
+       * now (tfe 0 1000) triggers the stack increase.
+       */
 
       switch (type(sc->code))
 	{
@@ -21051,7 +21087,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = c_function_call(sc->code)(sc, sc->args);
 	  goto START;
 
-	case T_C_OPT_ARGS_FUNCTION:                 /* -------- C-based function that n optional arguments -------- */
+	case T_C_OPT_ARGS_FUNCTION:                 /* -------- C-based function that has n optional arguments -------- */
 	  {
 	    int len;
 	    len = safe_list_length(sc, sc->args);
@@ -21122,6 +21158,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   */
 
 	case T_CLOSURE:                              /* -------- normal function (lambda), or macro -------- */
+	  if (sc->stack_end >= sc->stack_resize_trigger)
+	    increase_stack_size(sc);
+
 	case T_MACRO:
 	  /* sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); */
 	  NEW_FRAME(sc, closure_environment(sc->code), sc->envir);
@@ -21215,6 +21254,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_CLOSURE_STAR:	                  /* -------- define* (lambda*) -------- */
 	  { 
 	    lstar_err_t err;
+	    if (sc->stack_end >= sc->stack_resize_trigger)
+	      increase_stack_size(sc);
 
 	    sc->envir = new_frame_in_env(sc, closure_environment(sc->code)); 
 	    err = prepare_closure_star(sc);
@@ -21551,13 +21592,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if ((is_closure(sc->value)) || 
 	  (is_closure_star(sc->value)))
 	{
-	  if (port_filename(sc->input_port))
+	  if (port_filename(sc->input_port))                                 /* add (__func__ (name file line)) to current env */
 	    sc->x = immutable_cons(sc, 
 				   sc->__FUNC__, 									       
 				   make_list_3(sc, sc->code,
 					       file_names[port_file_number(sc->input_port)],
 					       s7_make_integer(sc, port_line_number(sc->input_port))));
-	  else sc->x = immutable_cons(sc, sc->__FUNC__, sc->code);
+	  else sc->x = immutable_cons(sc, sc->__FUNC__, sc->code);           /* fallback on (__func__ name) */
 	  closure_environment(sc->value) = s7_cons(sc, 
 						   make_list_1(sc, sc->x),
 						   closure_environment(sc->value));
@@ -21576,6 +21617,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->x != sc->NIL) 
 	set_symbol_value(sc->x, sc->value); 
       else add_to_current_environment(sc, sc->code, sc->value); 
+
       sc->value = sc->code;
       sc->x = sc->NIL;
       goto START;
@@ -22224,16 +22266,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	push_stack(sc, opcode(OP_OR1), sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
+
       /* by going direct without a push_stack on the last one we get "tail recursion",
        *   but if the last arg (also in "and" above) is "values", there is a slight
        *   inconsistency: the values are returned and spliced into the caller if trailing, but
        *   are spliced into the "or" if not trailing, so
+       *
        *   (+ 10 (or (values 1 2) #f))
        *   11
        *   (+ 10 (or #f (values 1 2)))
        *   13
        *   (+ 10 (or (or #f (values 1 2)) #f))
        *   11
+       *
        * The tail recursion is more important.  This behavior matches that of "begin" -- if the
        * values statement is last, it splices into the next outer arglist.
        *
@@ -22530,7 +22575,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_DEACTIVATE_GOTO:
-      call_exit_active(sc->args) = false;
+      call_exit_active(sc->args) = false;      /* as we leave the call-with-exit body, deactivate the exiter */
       goto START;
 
 
@@ -22771,7 +22816,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  default: 
 	    sc->strbuf[0] = c; 
 	    /* sc->tok = TOKEN_ATOM; */
-	    sc->value = read_delimited_string(sc, true);
+	    sc->value = read_delimited_string(sc, NO_SHARP);
 	    goto READ_LIST;
 	    break;
 	  }
@@ -22845,12 +22890,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  return(missing_close_paren_error(sc));
 
 	case TOKEN_ATOM:
-	  sc->value = read_delimited_string(sc, true);
+	  sc->value = read_delimited_string(sc, NO_SHARP);
 	  goto READ_LIST;
 	  break;
 
 	case TOKEN_SHARP_CONST:
-	  sc->value = read_delimited_string(sc, false);
+	  sc->value = read_delimited_string(sc, WITH_SHARP);
 	  if (sc->value == sc->NIL)
 	    return(read_error(sc, "undefined # expression"));
 	  goto READ_LIST;
@@ -28875,7 +28920,7 @@ s7_scheme *s7_init(void)
  *                could the profiler give block counts as well?
  *
  * s7test valgrind, time       17-Jul-10   7-Sep-10          now
- *    intel core duo (1.83G):    3162     2690, 1.921     2449 1.830
+ *    intel core duo (1.83G):    3162     2690, 1.921     2426 1.830
  *    intel E5200 (2.5G):                 1951, 1.450
  *    amd operon 2218 (2.5G):             1859, 1.335
  *    amd opteron 8356 (2.3G):   2181     1949, 1.201
@@ -28884,10 +28929,10 @@ s7_scheme *s7_init(void)
  *    amd phenom 945 (3.0G):     2085     1864, 0.894
  *    intel Q9450 (2.66G):                1951, 0.857
  *    intel Q9550 (2.83G):       2184     1948, 0.838
- *    intel E8400  (3.0G):       2372     2082, 0.836     1865 .750
+ *    intel E8400  (3.0G):       2372     2082, 0.836     1857 .750
  *    intel xeon 5530 (2.4G)     2093     1855, 0.811
  *    amd phenom 965 (3.4G):     2083     1862, 0.808
- *    intel i7 930 (2.8G):       2084     1864  0.704     1675 .630
+ *    intel i7 930 (2.8G):       2084     1864  0.704     1667 .620
  *
  * 10.8: 0.684, same in 11.10: 0.380, using no-gui snd (overhead: 0.04)
  */
