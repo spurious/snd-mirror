@@ -1904,8 +1904,6 @@ static void increase_stack_size(s7_scheme *sc)
   loc = s7_stack_top(sc);
   new_size = sc->stack_size * 2;
 
-  /* fprintf(stderr, "stack size is %d because current size is %d\n", new_size, sc->stack_end - sc->stack_start); */
-
   vector_elements(sc->stack) = (s7_pointer *)realloc(vector_elements(sc->stack), new_size * sizeof(s7_pointer));
   for (i = sc->stack_size; i < new_size; i++)
     vector_element(sc->stack, i) = sc->NIL;
@@ -2098,13 +2096,15 @@ static s7_pointer make_symbol(s7_scheme *sc, const char *name)
   s7_pointer x; 
   int location;
 
+  /* TODO: somehow we get here with name = null?? */
+
   location = symbol_table_hash(name); 
   x = symbol_table_find_by_name(sc, name, location); 
   if (x != sc->NIL) 
     return(x); 
 
   if (sc->symbol_table_is_locked)
-    return(sc->F);
+    return(s7_error(sc, sc->ERROR, sc->NIL));
 
   return(symbol_table_add_by_name_at_location(sc, name, location)); 
 } 
@@ -5084,7 +5084,8 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
       /* -------- #\... -------- */
     case '\\':
       if (name[2] == 0)                             /* the most common case: #\a */
-	return(chars[(unsigned int)(name[1])]);
+	return(chars[(unsigned char)(name[1])]);
+      /* not unsigned int here!  (unsigned int)255 (as a char) returns -1!! */
 
       if (strings_are_equal(name + 1, "space")) 
 	return(chars[' ']);
@@ -5250,7 +5251,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
   while (digits[(int)(*str)] < radix) str++;
   frac_len = str - fpart;
 
-  if ((*str) && (exponent_table[(unsigned int)((unsigned char)(*str))]))
+  if ((*str) && (exponent_table[(unsigned char)(*str)]))
     {
       int exp_negative = false;
       str++;
@@ -5471,7 +5472,7 @@ static s7_Double string_to_double_with_radix(const char *ur_str, int radix, bool
 
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol) 
 {
-  #define ISDIGIT(Chr, Rad) (digits[(unsigned int)((unsigned char)Chr)] < Rad)
+  #define ISDIGIT(Chr, Rad) (digits[(unsigned char)Chr] < Rad)
 
   char c, *p;
   bool has_dec_point1 = false;
@@ -8869,7 +8870,7 @@ static s7_pointer g_integer_to_char(s7_scheme *sc, s7_pointer args)
   if ((ind < 0) || (ind > 255))
     return(s7_wrong_type_arg_error(sc, "integer->char", 0, x, "an integer between 0 and 255"));
 
-  return(s7_make_character(sc, (unsigned int)ind));
+  return(s7_make_character(sc, (unsigned char)ind));
 }
 
 
@@ -8878,7 +8879,7 @@ static s7_pointer g_char_upcase(s7_scheme *sc, s7_pointer args)
   #define H_char_upcase "(char-upcase c) converts the character c to upper case"
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char-upcase", 0, car(args), "a character"));
-  return(s7_make_character(sc, (unsigned int)toupper(character(car(args)))));
+  return(s7_make_character(sc, (unsigned char)toupper(character(car(args)))));
 }
 
 
@@ -8887,7 +8888,7 @@ static s7_pointer g_char_downcase(s7_scheme *sc, s7_pointer args)
   #define H_char_downcase "(char-downcase c) converts the character c to lower case"
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char-downcase", 0, car(args), "a character"));
-  return(s7_make_character(sc, (unsigned int)tolower(character(car(args)))));
+  return(s7_make_character(sc, (unsigned char)tolower(character(car(args)))));
 }
 
 
@@ -9281,7 +9282,7 @@ static s7_pointer string_ref_1(s7_scheme *sc, s7_pointer strng, s7_pointer index
     return(s7_out_of_range_error(sc, "string-ref index,", 2, index, "should be less than string length"));
   
   str = string_value(strng);
-  return(s7_make_character(sc, (unsigned int)((unsigned char *)str)[ind]));
+  return(s7_make_character(sc, ((unsigned char *)str)[ind]));
 }
 
 
@@ -9396,6 +9397,9 @@ end: (substring \"01234\" 1 2) -> \"1\""
   i0 = s7_integer(start);
   if (i0 < 0)
     return(s7_wrong_type_arg_error(sc, "substring start point,", 2, start, "a non-negative integer"));
+  if (i0 > string_length(str))            /* (substring "012" 10) */
+    return(s7_out_of_range_error(sc, "substring start point,", 2, start, "start <= string length"));
+  /* this is how guile handles it: (substring "012" 3) -> "" */
 
   if (cddr(args) != sc->NIL)
     {
@@ -9406,7 +9410,7 @@ end: (substring \"01234\" 1 2) -> \"1\""
       if (i1 < i0)
 	return(s7_wrong_type_arg_error(sc, "substring end point,", 3, end, "an integer >= start"));
       if (i1 > string_length(str))
-	return(s7_out_of_range_error(sc, "substring start,", 3, end, "end <= string length"));
+	return(s7_out_of_range_error(sc, "substring end point,", 3, end, "end <= string length"));
     }
   else i1 = string_length(str);
   
@@ -9731,7 +9735,7 @@ static s7_pointer s7_string_to_list(s7_scheme *sc, const char *str, int len)
 
   sc->w = sc->NIL;
   for (i = 0; i < len; i++)
-    sc->w = s7_cons(sc, s7_make_character(sc, (unsigned int)((unsigned char)str[i])), sc->w);
+    sc->w = s7_cons(sc, s7_make_character(sc, ((unsigned char)str[i])), sc->w);
   p = sc->w;
   sc->w = sc->NIL;
 
@@ -9818,7 +9822,12 @@ static s7_pointer g_port_filename(s7_scheme *sc, s7_pointer args)
   if (((is_input_port(x)) ||
        (is_output_port(x))) &&
       (!port_is_closed(x)))
-    return(make_protected_string(sc, port_filename(x)));
+    {
+      if (port_filename(x))
+	return(make_protected_string(sc, port_filename(x)));
+      return(s7_make_string_with_length(sc, "", 0));   
+      /* otherwise (eval-string (port-filename)) and (string->symbol (port-filename)) segfault */
+    }
 
   return(s7_wrong_type_arg_error(sc, "port-filename", 1, x, "an open port"));
 }
@@ -10476,7 +10485,7 @@ static s7_pointer g_read_char_1(s7_scheme *sc, s7_pointer args, bool peek)
   if (c == EOF)
     return(sc->EOF_OBJECT); 
 
-  return(s7_make_character(sc, (unsigned int)c));
+  return(s7_make_character(sc, (unsigned char)c));
 }
 
 
@@ -10503,6 +10512,13 @@ If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
   int i;
   bool with_eol = false;
 
+  /* TODO: (read-line (current-output-port)) hangs because '() is a port!
+   *  was this to provide a way to force IO from a terminal (stdin/out/err)?
+   *  how are these handled in other schemes? or CL?
+   *
+   * guile: (read-char (current-output-port)) -> wrong type arg error (nil is also an error)
+   * perhaps add *stdin* *stdout* *stderr* ? (defaults to these)
+   */
   if (args != sc->NIL)
     {
       port = car(args);
@@ -11064,7 +11080,7 @@ static char *slashify_string(const char *p, int len, bool quoted, bool *slashifi
 
   for (i = 0; i < len; i++) 
     {
-      if (slashify_table[(unsigned int)((unsigned char)(p[i]))])
+      if (slashify_table[((unsigned char)(p[i]))])
 	{
 	  s[j++] = '\\';
 	  (*slashified) = true;
@@ -12044,7 +12060,7 @@ static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
       c = fgetc(port_file(port));
       if (c == EOF)
 	return(sc->EOF_OBJECT);
-      return(small_int((unsigned int)c)); 
+      return(small_int((unsigned char)c)); 
     }
 
   return((*(port_input_function(port)))(sc, S7_READ_BYTE, port));
@@ -14932,7 +14948,7 @@ void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, c
   local_args = s7_eval_c_string(sc, internal_arglist);
   free(internal_arglist);
   
-  args = s7_list_length(sc, local_args);
+  args = safe_list_length(sc, local_args); /* since local_args is from map (above), I think it can't be improper */
   internal_arglist = s7_object_to_c_string(sc, local_args);
   /* this has an opening paren which we don't want */
   internal_arglist[0] = ' ';
@@ -18521,7 +18537,7 @@ static bool next_for_each(s7_scheme *sc)
 	break;
 
       case T_STRING:
-	car(x) = s7_make_character(sc, (unsigned int)((unsigned char)(string_value(car(y))[loc])));
+	car(x) = s7_make_character(sc, ((unsigned char)(string_value(car(y))[loc])));
 	break;
 
       default:           /* see comment in next_map: (let ((L (list 1 2 3 4 5))) (for-each (lambda (x) (set-cdr! (cddr L) 5) (display x)) L)) */
@@ -18654,7 +18670,7 @@ static bool next_map(s7_scheme *sc)
 	  break;
 
 	case T_STRING:
-	  x = s7_make_character(sc, (unsigned int)((unsigned char)(string_value(car(y))[loc])));
+	  x = s7_make_character(sc, ((unsigned char)(string_value(car(y))[loc])));
 	  break;
 
 	default: 
@@ -19397,7 +19413,8 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
       k = str - orig_str;
       port_string_point(pt) += k;
       
-      if ((k == 1) && 
+      if ((!atom_case) &&             /* there's a bizarre special case here \ with the next char #\null: (eval-string "(list \\\x00 1)") */
+	  (k == 1) && 
 	  (*orig_str == '\\'))         
 	{
 	  /* must be from #\( and friends -- a character that happens to be not ok-in-a-name */
@@ -19487,13 +19504,13 @@ static int read_x_char(s7_scheme *sc, s7_pointer pt)
   if (c == EOF)
     return(NOT_AN_X_CHAR);
 
-  d1 = digits[(unsigned int)c];
+  d1 = digits[c];
   if (d1 < 16)
     {
       c = inchar(sc, pt);
       if (c == EOF)
 	return(NOT_AN_X_CHAR);
-      d2 = digits[(unsigned int)c];
+      d2 = digits[c];
       if (d2 < 16)
 	return(16 * d1 + d2);           /* following char can be anything, including a number -- we ignore it */
       /* apparently one digit is also ok */
@@ -20140,7 +20157,6 @@ static s7_pointer prepare_do_step_variables(s7_scheme *sc)
     if (end_stuff == sc->NIL)
       sc->args = s7_cons(sc, sc->args, sc->NIL);
     else sc->args = s7_cons(sc, sc->args, s7_cons(sc, s7_cons(sc, car(end_stuff), sc->F), cdr(end_stuff)));
-    /* fprintf(stderr, "args: %s\n", s7_object_to_c_string(sc, sc->args)); */
   }
   sc->code = cddr(sc->code);
   
@@ -21130,7 +21146,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	    else eval_error(sc, "~A called as a function, but it's a macro!", sc->code);
 
-	    len = safe_list_length(sc, sc->args);
+	    len = s7_list_length(sc, sc->args);
+	    if (len <= 0)                          /* (quasiquote 0 . 1) */
+	      return(s7_error(sc, sc->SYNTAX_ERROR, 
+			      make_list_3(sc, make_protected_string(sc, "~A: improper list of arguments: ~S"), sc->code, sc->args)));
 
 	    if (len < c_macro_required_args(sc->code))
 	      return(s7_error(sc, 
@@ -28122,7 +28141,7 @@ s7_scheme *s7_init(void)
       p = (s7_pointer)calloc(1, sizeof(s7_cell));
       p->flag = T_IMMUTABLE | T_CHARACTER | T_SIMPLE | T_DONT_COPY;
       p->hloc = NOT_IN_HEAP;
-      character(p) = (unsigned int)i;
+      character(p) = (unsigned char)i;
       chars[i] = p;
     }
 
@@ -28647,7 +28666,7 @@ s7_scheme *s7_init(void)
 
 
   /* the next two are for the test suite */
-  s7_define_variable(sc, "symbol-table-locked?", 
+  s7_define_variable(sc, "s7-symbol-table-locked?", 
 		     s7_make_procedure_with_setter(sc, "s7-symbol-table-locked?", 
 						   g_symbol_table_is_locked, 0, 0, 
 						   g_set_symbol_table_is_locked, 1, 0, 
@@ -28919,20 +28938,20 @@ s7_scheme *s7_init(void)
  * things to add: lint? (can we notice unreachable code, unbound variables, bad args)?
  *                could the profiler give block counts as well?
  *
- * s7test valgrind, time       17-Jul-10   7-Sep-10          now
+ * s7test valgrind, time       17-Jul-10   7-Sep-10        15-Oct-10
  *    intel core duo (1.83G):    3162     2690, 1.921     2426 1.830
- *    intel E5200 (2.5G):                 1951, 1.450
- *    amd operon 2218 (2.5G):             1859, 1.335
- *    amd opteron 8356 (2.3G):   2181     1949, 1.201
- *    intel E6850 (3.0G):                 1952, 1.045
- *    intel Q9650 (3.0G):        2081     1856, 0.938
- *    amd phenom 945 (3.0G):     2085     1864, 0.894
+ *    intel E5200 (2.5G):                 1951, 1.450     1751 1.28
+ *    amd operon 2218 (2.5G):             1859, 1.335     1667 1.33
+ *    amd opteron 8356 (2.3G):   2181     1949, 1.201     1752 1.18
+ *    intel E6850 (3.0G):                 1952, 1.045     1752 0.945
+ *    intel Q9650 (3.0G):        2081     1856, 0.938     1665 0.840
+ *    amd phenom 945 (3.0G):     2085     1864, 0.894     1667 0.808
  *    intel Q9450 (2.66G):                1951, 0.857
- *    intel Q9550 (2.83G):       2184     1948, 0.838
- *    intel E8400  (3.0G):       2372     2082, 0.836     1857 .750
- *    intel xeon 5530 (2.4G)     2093     1855, 0.811
- *    amd phenom 965 (3.4G):     2083     1862, 0.808
- *    intel i7 930 (2.8G):       2084     1864  0.704     1667 .620
+ *    intel Q9550 (2.83G):       2184     1948, 0.838     1751 0.800
+ *    intel E8400  (3.0G):       2372     2082, 0.836     1857 0.750
+ *    intel xeon 5530 (2.4G)     2093     1855, 0.811     1675 0.711
+ *    amd phenom 965 (3.4G):     2083     1862, 0.808     1667 0.823
+ *    intel i7 930 (2.8G):       2084     1864  0.704     1667 0.620
  *
  * 10.8: 0.684, same in 11.10: 0.380, using no-gui snd (overhead: 0.04)
  */

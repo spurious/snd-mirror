@@ -896,6 +896,10 @@
 (test (char=? #\newline #\linefeed) #t)
 (test (char=? #\return #\xd) #t)
 (test (char=? #\nul #\x0) #t)
+;(test (char? #\ÿ) #t) ; this seems to involve unwanted translations in emacs?
+(test (eval-string (string-append "(char? " (format #f "#\\~C" (integer->char 255)) ")")) #t)
+(test (eval-string (string-append "(char? " (format #f "#\\~C" (integer->char 127)) ")")) #t)
+(test (apply char? (list (integer->char 255))) #t)
 
 (num-test (let ((str (make-string 258 #\space)))
 	    (do ((i 1 (+ i 1)))
@@ -1532,6 +1536,8 @@
 (test (integer->char (expt 2 32)) 'error)
 (test (integer->char 12 14) 'error)
 (test (char->integer #\a #\b) 'error)
+;(test (char->integer #\ÿ) 255) ; emacs confusion?
+(test (eval-string (string-append "(char->integer " (format #f "#\\~C" (integer->char 255)) ")")) 255)
 
 (for-each
  (lambda (arg)
@@ -2295,6 +2301,19 @@
 (test (substring (substring "" 0 0) 0 0) "")
 (test (substring (format #f "") 0 0) "")
 
+(test (substring "012" 3) "")
+(test (substring "012" 10) 'error)
+(test (substring "012" most-positive-fixnum) 'error)
+(test (substring "012" -1) 'error)
+(test (substring "012" 3 3) "")
+(test (substring "012" 3 4) 'error)
+(test (substring "012" 3 2) 'error)
+(test (substring "012" 3 -2) 'error)
+(test (substring "012" 3 0) 'error)
+(test (substring "012" 0) "012")
+(test (substring "012" 2) "2")
+(test (substring "" 0) "")
+
 (test (recompose 12 (lambda (a) (substring a 0 3)) "12345") "123")
 (test (reinvert 12 (lambda (a) (substring a 0 3)) (lambda (a) (string-append a "45")) "12345") "12345")
 
@@ -2327,8 +2346,9 @@
 
 (for-each
  (lambda (arg)
+   (test (substring "0123" arg) 'error)
    (test (substring "hiho" 1 arg) 'error))
- (list "hi" #\a 0 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
+ (list "hi" #\a -1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
@@ -8250,6 +8270,9 @@
    (test (port-filename arg) 'error))
  (list "hi" -1 0 #\a 'a-symbol '#(1 2 3) '(1 . 2) '(1 2 3) 3.14 3/4 1.0+1.0i #t abs #<eof> #<unspecified> (lambda () 1)))
 
+(test (catch #t (lambda () (eval-string (port-filename))) (lambda args #f)) #f)
+(test (symbol? (string->symbol (port-filename))) #t)
+
 
 
 
@@ -8286,6 +8309,7 @@
 (test '((()().(().()))) '((() () ())))
 (test '(1 .;
 	  2) '(1 . 2))
+(test (vector .(1 .(2))) #(1 2))
 
 ;; currently \ -> (), ` -> #<eof> etc -- not sure these matter
 ;(test (keyword? '#:#) #t) ; probably not for long... (Guile compatibility)
@@ -8305,6 +8329,8 @@
 (test (list"0"0()#()#\a"""1"'x(list)+(cons"""")#f) (list "0" 0 () #() #\a "" "1" 'x (list) + '("" . "") #f))
 (test (let ((x, 1)) x,) 1)
 (test (length (eval-string (string #\' #\( #\1 #\space #\. (integer->char 200) #\2 #\)))) 2) ; will be -1 if dot is for improper list, 3 if dot is a symbol
+(test (eval-string "(list \\\x001)") 'error)
+(test (eval-string "(list \\\x00 1)") 'error)
 
 #|
 (do ((i 0 (+ i 1)))
@@ -13387,6 +13413,42 @@ who says the continuation has to restart the map from the top?
   (let ((val (dw1 0 4)))
     (test val 'error)))
 
+(let ((x 0)
+      (y 0)
+      (z 0))
+  (let ((val (call-with-exit
+	      (lambda (r)
+		(catch #t
+		       (lambda ()
+			 (dynamic-wind
+			     (lambda ()
+			       (set! x (+ x 1)))
+			     (lambda ()
+			       (set! y (+ y 1))
+			       (r y))
+			     (lambda ()
+			       (set! z (+ z 1)))))
+		       (lambda args 'error))))))
+    (test (list val z) '(1 1))))
+
+(let ((x 0)
+      (y 0)
+      (z 0))
+  (let ((val (catch #t
+		    (lambda ()
+		      (dynamic-wind
+			  (lambda ()
+			    (set! x (+ x 1)))
+			  (lambda ()
+			    (call-with-exit
+			     (lambda (r)
+			       (set! y r)
+			       x)))
+			  (lambda ()
+			    (set! z (+ z 1))
+			    (y z))))
+		    (lambda args 'error))))
+    (test val 'error)))
 
 
 
@@ -13645,7 +13707,7 @@ who says the continuation has to restart the map from the top?
 		(do ((k 0 (+ k 1)))
 		    ((= k size))
 		  (set! (str1 k) (str k)))))
-	  (set! (symbol-table-locked?) #t)
+	  (set! (s7-symbol-table-locked?) #t)
 	  (if (and happy
 		   (not (char=? (str1 1) #\))))
 	      (catch #t 
@@ -13656,7 +13718,7 @@ who says the continuation has to restart the map from the top?
 			     (format #t "~S ~%" str1))))
 		     (lambda args
 		       'error)))
-	  (set! (symbol-table-locked?) #f))))))
+	  (set! (s7-symbol-table-locked?) #f))))))
 #|
 
 (test (= 1 '+1 `+1 '`1 `01 ``1) #t)
@@ -13777,6 +13839,8 @@ why are these different (read-time `#() ? )
 (test (apply quasiquote '((1 2 3))) '(1 2 3))
 (test (quasiquote (',,= 1)) 'error)
 (test (quasiquote (',,@(1 2) 1)) 'error)
+(test (quasiquote 1.1 . -0) 'error)
+
 (test `(1 ,@2) 'error)
 (test `(1 ,@(2 . 3)) 'error)
 (test `(1 ,@(2 3)) 'error)
@@ -17105,8 +17169,8 @@ why are these different (read-time `#() ? )
 (test (procedure-with-setter?) 'error)
 (test (call-with-exit (lambda (return) (procedure-with-setter? return))) #f)
 (test (procedure-with-setter? quasiquote) #f)
-(test (procedure-with-setter? symbol-table-locked?) #t)
-(test (procedure-with-setter? 'symbol-table-locked?) #f) ; this parallels (procedure? 'abs) -> #f but seems inconsistent with other *? funcs
+(test (procedure-with-setter? s7-symbol-table-locked?) #t)
+(test (procedure-with-setter? 's7-symbol-table-locked?) #f) ; this parallels (procedure? 'abs) -> #f but seems inconsistent with other *? funcs
 
 (define (procedure-with-setter-setter-arity proc) (cdddr (procedure-arity proc)))
 (test (let ((pws (make-procedure-with-setter (lambda () 1) (lambda (a) a)))) (procedure-with-setter-setter-arity pws)) '(1 0 #f))
@@ -17622,6 +17686,8 @@ why are these different (read-time `#() ? )
 (num-test (string->number "#d1d1") 10.0)
 (num-test (string->number "#d0001d0001") 10.0)
 (test (#|#<|# = #|#f#|# #o#e0 #|#>|# #e#o0 #|#t#|#) #t)
+(num-test (apply * (map (lambda (r) (sin (* pi (/ r 130)))) (list 1 67 69 73 81 97))) (/ 1.0 64))
+(num-test (max 0(+)(-(*))1) 1)
 
 (test ((call-with-exit object->string) 0) #\#) ; #<goto>
 (test ((begin begin) 1) 1)
@@ -40851,6 +40917,8 @@ why are these different (read-time `#() ? )
 (test (rational? 1.0) #f)
 (test (rational? 1+i) #f)
 (test (rational? most-negative-fixnum) #t)
+(test (rational? 0/0) #f)  ; I like this
+(test (rational? 1/0) #f)
 
 (test (integer? 1/2) #f)
 (test (integer? 1/1) #t)
@@ -40861,6 +40929,10 @@ why are these different (read-time `#() ? )
 (test (integer? most-negative-fixnum) #t)
 (test (integer? 250076005727/500083) #t)
 (test (integer? 1+0i) #f) ; hmmm
+(test (integer? 0/0) #f)
+(test (integer? 1/0) #f)
+(test (exact? 1/0) #f)
+(test (number? 0/0) #t)
 
 (test (real? 1/2) #t)
 (test (real? 2) #t)
@@ -40875,6 +40947,9 @@ why are these different (read-time `#() ? )
 (test (complex? 1.0) #t)
 (test (complex? 1+i) #t)
 (test (complex? most-negative-fixnum) #t)
+(test (complex? 1/0) #t) ; nan is complex?? I guess so -- it's a "real"...
+(test (complex? (log 0.0)) #t)
+(test (complex? 0/0) #t)
 
 (test (integer?) 'error)
 (test (rational?) 'error)
@@ -52071,6 +52146,7 @@ why are these different (read-time `#() ? )
 (num-test #o#e-.1 -1/8)
 (num-test #d#e-.1 -1/10)
 (num-test #x#e-.1 -1/16)
+(num-test #e-.0 0)
 
 (num-test #b#e1.1e2 6)
 (num-test #o#e1.1e2 72)
@@ -52441,6 +52517,9 @@ why are these different (read-time `#() ? )
 (test (number->string -12.5-3.75i 8) "-14.4-3.6i")
 (test (number->string 12.0+0.75i 16) "c.0+0.ci")
 (test (number->string -12.5-3.75i 16) "-c.8-3.ci")
+(test (string->number "2/#b1" 10) #f)
+(test (string->number "2.i" 10) #f)
+(num-test (string->number "6+3.i" 10) 6+3i)
 
 (num-test (string->number "#i+9/9" 10) 1.0)
 (num-test (string->number "#e9e-999" 10) 0)
