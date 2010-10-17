@@ -572,7 +572,10 @@ struct s7_scheme {
   s7_pointer sharp_readers;           /* the binding pair for the global *#readers* list */
   s7_pointer vector_print_length;     /* same for *vector-print-length* */
   bool input_is_file;
-  
+  /*
+  s7_pointer standard_input, standard_output, standard_error;
+  */
+
   /* these 6 are pointers so that all thread refs are to the same thing */
   bool *gc_off;                       /* if true, the GC won't run */
   bool *tracing, *trace_all;          /* if tracing, each function on the *trace* list prints its args upon application */
@@ -4392,7 +4395,7 @@ static bool s7_is_one(s7_pointer x)
 #define MAX_POW 32
 static double pepow[17][MAX_POW], mepow[17][MAX_POW];
 
-static initialize_pows(void)
+static void initialize_pows(void)
 {
   int i, j;
   for (i = 2; i < 17; i++)        /* radix between 2 and 16 */
@@ -9110,7 +9113,7 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
 }
 
 
-s7_pointer s7_make_terminated_string_with_length(s7_scheme *sc, const char *str, int len) 
+static s7_pointer s7_make_terminated_string_with_length(s7_scheme *sc, const char *str, int len) 
 {
   s7_pointer x;
   NEW_CELL(sc, x);
@@ -16212,7 +16215,7 @@ bool s7_is_eqv(s7_pointer a, s7_pointer b)
 
 static bool structures_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci);
 
-bool s7_is_equal_ci(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
+static bool s7_is_equal_ci(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
 {
   if (x == y) 
     return(true);
@@ -16792,7 +16795,7 @@ static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args,
 
 		case '\n':                          /* -------- trim white-space -------- */
 		  for (i = i + 2; i <str_len - 1; i++)
-		    if (!(white_space[str[i]]))
+		    if (!(white_space[(unsigned char)(str[i])]))
 		      {
 			i--;
 			break;

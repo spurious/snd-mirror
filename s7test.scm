@@ -607,6 +607,7 @@
 (test (equal? (cons 1 (cons 2 3)) '(1 2 . 3)) #t)
 (test (equal? '() '()) #t)
 (test (equal? '() (list)) #t)
+(test (equal? (cdr '   ''0) '((quote 0))) #t)
 (test (equal? "\n" "\n") #t)
 (test (equal? #f ((lambda () #f))) #t)
 (test (equal? (+) 0) #t)
@@ -4236,6 +4237,7 @@
 (test (append '(1) 2 '(3)) 'error)
 (test (append '(1) 2 3) 'error)
 (test (let ((lst (list 1 2 3))) (append lst lst)) '(1 2 3 1 2 3))
+(test (append ''1 ''1) '(quote 1 quote 1))
 
 (for-each
  (lambda (arg)
@@ -8310,6 +8312,7 @@
 (test '(1 .;
 	  2) '(1 . 2))
 (test (vector .(1 .(2))) #(1 2))
+(test (vector 0. .(.1)) #(0.0 0.1))
 
 ;; currently \ -> (), ` -> #<eof> etc -- not sure these matter
 ;(test (keyword? '#:#) #t) ; probably not for long... (Guile compatibility)
@@ -8331,6 +8334,7 @@
 (test (length (eval-string (string #\' #\( #\1 #\space #\. (integer->char 200) #\2 #\)))) 2) ; will be -1 if dot is for improper list, 3 if dot is a symbol
 (test (eval-string "(list \\\x001)") 'error)
 (test (eval-string "(list \\\x00 1)") 'error)
+(test (+ `,0(angle ```,`11)) 0)
 
 #|
 (do ((i 0 (+ i 1)))
@@ -13859,7 +13863,7 @@ why are these different (read-time `#() ? )
 (test (equal? ` 1 ' 1) #t)
 (test (+ ` 1 `  2) `   3)
 (test ` ( + ,(- 3 2) 2) '(+ 1 2))
-
+(test (quasiquote #(1)) `#(1))
 
 
 
@@ -36300,6 +36304,7 @@ why are these different (read-time `#() ? )
 (num-test (gcd 0 "hi") 'error)
 (num-test (lcm 0 "hi") 'error)
 
+(test (lcm 1 ' #e1.(logior )) 0) ; (lcm 1 1 0)
 
 
 
@@ -40410,6 +40415,8 @@ why are these different (read-time `#() ? )
        (complex-inf--nan (+ complex-inf-- complex-inf-+))
        ;; and so on!!
        )
+
+  ;; an easy way to get NaN: 1e10000
 
   ;; (define (nan? x) (and (number? x) (not (= x x))))
   ;; (define (infinite? x) (and (number? x) (= x x) (or (= x inf+) (= x inf-))))

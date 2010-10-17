@@ -536,9 +536,9 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-static-xm --without-xpm --without-xp            ---- '
+echo ' -----                --with-static-xm --without-xpm                         ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-static-xm --without-xpm --without-xp
+./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-static-xm --without-xpm
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-motif 'xm"
@@ -663,7 +663,7 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --with-ruby --with-static-xm --with-gtk --enable-snd-debug --without-gsl --without-xpm --without-xp '
+echo ' ----                 --with-ruby --with-static-xm --with-gtk --enable-snd-debug --without-gsl --without-xpm '
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DXEN_DEBUGGING" --with-ruby --with-static-xm --with-gtk --enable-snd-debug --without-gsl --without-xpm --without-xp
 make
