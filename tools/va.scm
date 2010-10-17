@@ -165,6 +165,151 @@
 		       new-tip-list))
 	 (display (format #f ";defined in wz_data.js but not used: ~A~%" name))))
    tip-list))
+
+
+  (for-each
+   (lambda (filename)
+     (call-with-input-file filename
+       (lambda (file)
+	 (let ((line-number 0))
+	 (let loop ((line (read-line file #t)))
+	   (or (eof-object? line)
+	       (let ((len (string-length line)))
+		 (set! line-number (+ line-number 1))
+		 (if (> len 8)
+		     (let ((start 0))
+		       (do ((i 1 (+ 1 i)))
+			   ((>= i len))
+			 (let ((chr (string-ref line i)))
+			   (if (or (char-whitespace? chr)
+				   (char=? chr #\)))
+			       (let* ((name (substring line (+ 1 start) i))
+				      (name-len (string-length name)))
+				 (if (or (and (> name-len 4)
+					      (or (string=? "gtk_" (substring name 0 4))
+						  (string=? "GTK_" (substring name 0 4))
+						  (string=? "gdk_" (substring name 0 4))
+						  (string=? "GDK_" (substring name 0 4))))
+					 (and (> name-len 6)
+					      (or (string=? "pango_" (substring name 0 6))
+						  (string=? "PANGO_" (substring name 0 6))
+						  (string=? "cairo_" (substring name 0 6))
+						  (string=? "CAIRO_" (substring name 0 6)))))
+				     (if (not (defined? (string->symbol name)))
+					 (format #t "~A (~A[~D]) is not defined~%" name filename line-number)))))
+			   (if (and (not (char=? chr #\_))
+				    (not (char-alphabetic? chr))
+				    (not (char-numeric? chr)))
+			       (set! start i))))))
+		 (loop (read-line file #t)))))))))
+   (list 
+    "analog-filter.scm"
+    "musglyphs.scm"
+    "animals.scm"
+    "nb.scm"
+    "autosave.scm"
+    "new-backgrounds.scm"
+    "bess1.scm"
+    "new-effects.scm"
+    "bess.scm"
+    "noise.scm"
+    "big-gens.scm"
+    "nrev.scm"
+    "binary-io.scm"
+    "numerics.scm"
+    "bird.scm"
+    "oscope.scm"
+    "clean.scm"
+    "panic.scm"
+    "clm23.scm"
+    "peak-phases.scm"
+    "clm-ins.scm"
+    "piano.scm"
+    "dlocsig.scm"
+    "play.scm"
+    "draw.scm"
+    "poly.scm"
+    "dsp.scm"
+    "popup.scm"
+    "edit123.scm"
+    "prc95.scm"
+    "edit-menu.scm"
+    "pretty-print.scm"
+    "effects-utils.scm"
+    "primes.scm"
+    "enved.scm"
+    "pvoc.scm"
+    "env.scm"
+    "rgb.scm"
+    "examp.scm"
+    "rtio.scm"
+    "expandn.scm"
+    "rubber.scm"
+    "extensions.scm"
+    "s7-slib-init.scm"
+    "fade.scm"
+    "s7test.scm"
+    "fft-menu.scm"
+    "selection.scm"
+    "fmv.scm"
+    "singer.scm"
+    "frame.scm"
+    "snd10.scm"
+    "freeverb.scm"
+    "snd11.scm"
+    "fullmix.scm"
+    "snd9.scm"
+    "generators.scm"
+    "snddiff.scm"
+    "grani.scm"
+    "snd-gl.scm"
+    "gtk-effects.scm"
+    "snd-gtk.scm"
+    "gtk-effects-utils.scm"
+    "sndlib-ws.scm"
+    "gtk-popup.scm"
+    "snd-motif.scm"
+    "hooks.scm"
+    "snd-test.scm"
+    "index.scm"
+    "sndwarp.scm"
+    "jcrev.scm"
+    "special-menu.scm"
+    "jcvoi.scm"
+    "spectr.scm"
+    "kmenu.scm"
+    "spokenword.scm"
+    "maraca.scm"
+    "stochastic.scm"
+    "marks-menu.scm"
+    "strad.scm"
+    "marks.scm"
+    "toolbar.scm"
+    "maxf.scm"
+    "v.scm"
+    "misc.scm"
+    "ws.scm"
+    "mixer.scm"
+    "xm-enved.scm"
+    "mix.scm"
+    "zip.scm"
+    "moog.scm"
+    
+    "snd.html"
+    "sndscm.html"
+    "grfsnd.html"
+    "extsnd.html"
+    "libxm.html"
+    ))
+
+#|
+TODO: deal with these gtk changes:
+gtk_progress_bar_set_orientation (snd-gtk.scm[1036]) is not defined
+GTK_PROGRESS_LEFT_TO_RIGHT (snd-gtk.scm[1036]) is not defined
+gtk_progress_bar_set_bar_style (snd-gtk.scm[1037]) is not defined
+GTK_PROGRESS_CONTINUOUS (snd-gtk.scm[1037]) is not defined
+gtk_widget_get_realized (xm-enved.scm[317]) is not defined
+|#
   
    
 (exit)
