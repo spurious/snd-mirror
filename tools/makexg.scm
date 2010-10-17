@@ -1717,7 +1717,7 @@
   (dpy "#endif~%~%"))
 
 (define (with-29x dpy thunk)
-  (dpy "#if HAVE_GTK_WRAP_BOX_NEW~%")
+  (dpy "#if HAVE_GTK_WIDGET_GET_HEXPAND~%")
   (thunk)
   (dpy "#endif~%~%"))
 

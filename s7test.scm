@@ -17000,7 +17000,7 @@ why are these different (read-time `#() ? )
       (let ()
 	(define (fib n) 
 	  (define (fib-1 n)
-	    (if (> n 2) 
+	    (if (< n 2) 
 		n 
 		(+ (fib-1 (- n 1)) 
 		   (fib-1 (- n 2)))))

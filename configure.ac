@@ -1052,8 +1052,8 @@ else
 	# for 2.19.n
 	AC_CHECK_LIB(m, gtk_entry_get_text_window, [AC_DEFINE(HAVE_GTK_ENTRY_GET_TEXT_WINDOW)], ,$GTK_LIBS)
 	# for 2.9n.n
-	AC_CHECK_LIB(m, gtk_wrap_box_new, 
-                          [AC_DEFINE(HAVE_GTK_WRAP_BOX_NEW)
+	AC_CHECK_LIB(m, gtk_widget_get_hexpand,
+                          [AC_DEFINE(HAVE_GTK_WIDGET_GET_HEXPAND)
                            AC_DEFINE(HAVE_GTK_3)
                           ], ,$GTK_LIBS)
 
