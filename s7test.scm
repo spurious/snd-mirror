@@ -8098,6 +8098,27 @@
 (test (char? our-eof) #f)
 (test (eof-object? ((lambda () our-eof))) #t)
 
+(for-each
+ (lambda (op)
+   (test (op *stdout*) 'error)
+   (test (op *stderr*) 'error)
+   (if (equal? *stdout* (current-output-port))
+       (test (op (current-output-port)) 'error))
+   (if (equal? *stderr* (current-error-port))
+       (test (op (current-error-port)) 'error)))
+ (list read read-line read-char read-byte peek-char char-ready?))
+
+(for-each
+ (lambda (op)
+   (test (op #\a *stdin*) 'error)
+   (if (equal? *stdin* (current-input-port))
+       (test (op #\a (current-input-port)))))
+ (list write display write-char))
+	 
+(test (write-byte 0 *stdin*) 'error)
+(test (newline *stdin*) 'error)
+(test (format *stdin* "hiho") 'error)	 
+
 (test (open-input-file "[*not-a-file!*]-") 'error)
 (test (call-with-input-file "[*not-a-file!*]-" (lambda (p) p)) 'error)
 (test (with-input-from-file "[*not-a-file!*]-" (lambda () #f)) 'error)

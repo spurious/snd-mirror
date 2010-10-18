@@ -1164,11 +1164,9 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
   sep = make_row_middle_separator(hb);  
   
 #if HAVE_GTK_3
-  prf->text = gtk_combo_box_new_with_entry();
-  /* TODO: what is the replacement for this? [these are the items in the drop down menu]
+  prf->text = gtk_combo_box_text_new_with_entry();
   for (i = 0; i < num_values; i++)
-    gtk_combo_box_append_text(GTK_COMBO_BOX(prf->text), (values[i]) ? values[i] : " ");
-  */
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(prf->text), (values[i]) ? values[i] : " ");
 #else
   prf->text = gtk_combo_box_entry_new_text();
   for (i = 0; i < num_values; i++)

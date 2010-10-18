@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.70"
-#define S7_DATE "14-Oct-10"
+#define S7_VERSION "1.71"
+#define S7_DATE "19-Oct-10"
 
 
 typedef long long int s7_Int;
@@ -48,6 +48,7 @@ typedef double s7_Double;
    *    most-positive-fixnum
    *    most-negative-fixnum    integer limits (the names come from Common Lisp)
    *    pi                      3.1415...
+   *    *stdin*, *stdout*, *stderr* default IO ports
    *
    * s7 non-standard functions:
    *
@@ -760,6 +761,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 19-Oct:    *stdin*, *stdout*, *stderr* for default IO ports (rather than nil which is ambiguous).
  * 14-Oct:    removed special variable support.
  * 30-Sep:    setters for current-input-port, current-output-port, and current-error-port.
  * 30-Aug:    :allow-other-keys in define*.

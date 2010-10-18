@@ -572,9 +572,7 @@ struct s7_scheme {
   s7_pointer sharp_readers;           /* the binding pair for the global *#readers* list */
   s7_pointer vector_print_length;     /* same for *vector-print-length* */
   bool input_is_file;
-  /*
   s7_pointer standard_input, standard_output, standard_error;
-  */
 
   /* these 6 are pointers so that all thread refs are to the same thing */
   bool *gc_off;                       /* if true, the GC won't run */
@@ -702,10 +700,6 @@ struct s7_scheme {
 #define is_procedure(p)               ((typeflag(p) & T_PROCEDURE) != 0)
 /* closure, macro, c_function, procedure-with-setter, settable object, goto or continuation */
 
-#define T_ETERNAL                     (1 << (TYPE_BITS + 11))
-#define is_eternal(p)                 ((typeflag(p) & T_ETERNAL) != 0)
-/* an eternal object is a cons whose "line_number" is actually the global environment vector location (i.e. a symbol table entry) */
-
 #define T_ANY_MACRO                   (1 << (TYPE_BITS + 12))
 #define is_any_macro(p)               ((typeflag(p) & T_ANY_MACRO) != 0)
 /* this marks scheme and C-defined macros */
@@ -771,10 +765,10 @@ struct s7_scheme {
 /* this bit distinguishes a symbol from a symbol that is also a keyword
  */
 
-#define UNUSED_BITS                   0x81800000
+#define UNUSED_BITS                   0x81880800
 
 /* TYPE_BITS could be 5
- * TYPE_BITS + 3, 15, 16 and 23 are currently unused
+ * TYPE_BITS + 3, 11, 15, 16 and 23 are currently unused
  */
 
 
@@ -1086,7 +1080,7 @@ static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer 
 static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj);
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
 static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect);
-static s7_pointer pop_input_port(s7_scheme *sc);
+static void pop_input_port(s7_scheme *sc);
 
 #if HAVE_PTHREADS
   static bool is_thread(s7_pointer obj);
@@ -1961,7 +1955,7 @@ static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char
   s7_pointer x, str; 
   
   str = s7_make_permanent_string(name);
-  x = permanent_cons(str, sc->NIL, T_SYMBOL | T_SIMPLE | T_DONT_COPY | T_ETERNAL);
+  x = permanent_cons(str, sc->NIL, T_SYMBOL | T_SIMPLE | T_DONT_COPY);
   symbol_location(x) = location;   /* accesses car(x) */
   symbol_global_slot(x) = sc->NIL; /* accesses car(x) */
 
@@ -2098,8 +2092,6 @@ static s7_pointer make_symbol(s7_scheme *sc, const char *name)
 {
   s7_pointer x; 
   int location;
-
-  /* TODO: somehow we get here with name = null?? */
 
   location = symbol_table_hash(name); 
   x = symbol_table_find_by_name(sc, name, location); 
@@ -9761,11 +9753,21 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
 
 
 
-/* -------------------------------- ports -------------------------------- */
+/* -------------------------------- ports -------------------------------- 
+ *
+ * originally nil served as stdin and friends, but that made it impossible to catch an error
+ *   like (read-line (current-output-port)) when the latter was stdout.  So we now have
+ *   the built-in constant ports *stdin*, *stdout*, and *stderr*.  Some way is needed to
+ *   refer to these directly so that (read-line *stdin*) for example can insist on reading
+ *   from the terminal, or whatever stdin is.
+ */
 
 static char *describe_port(s7_scheme *sc, s7_pointer p)
 {
   char *desc;
+  if ((p == sc->standard_input) || (p == sc->standard_output) || (p == sc->standard_error))
+    return(copy_string(port_filename(p)));
+
   desc = (char *)malloc(64 * sizeof(char));
   snprintf(desc, 64, "<port%s%s%s>",
   	   (is_file_port(p)) ? " file" : ((is_string_port(p)) ? " string" : " function"),
@@ -9779,9 +9781,11 @@ static s7_pointer g_is_port_closed(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_port_closed "(port-closed? p) returns #t if the port p is closed."
   s7_pointer x;
+
   x = car(args);
   if ((is_input_port(x)) || (is_output_port(x)))
     return(make_boolean(sc, port_is_closed(x)));
+
   return(s7_wrong_type_arg_error(sc, "port-closed?", 1, x, "a port"));      
 }
 
@@ -9838,29 +9842,27 @@ static s7_pointer g_port_filename(s7_scheme *sc, s7_pointer args)
 
 bool s7_is_input_port(s7_scheme *sc, s7_pointer p)   
 { 
-  return((p == sc->NIL) || /* stdin? */
-	 (is_input_port(p)));
+  return(is_input_port(p));
 }
 
 
 static s7_pointer g_is_input_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_input_port "(input-port? p) returns #t if p is an input port"
-  return(make_boolean(sc, s7_is_input_port(sc, car(args))));
+  return(make_boolean(sc, is_input_port(car(args))));
 }
 
 
 bool s7_is_output_port(s7_scheme *sc, s7_pointer p)     
 { 
-  return((p == sc->NIL) ||  /* stderr? */
-	 (is_output_port(p)));
+  return(is_output_port(p));
 }
 
 
 static s7_pointer g_is_output_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_output_port "(output-port? p) returns #t if p is an output port"
-  return(make_boolean(sc, s7_is_output_port(sc, car(args))));
+  return(make_boolean(sc, is_output_port(car(args))));
 }
 
 
@@ -9881,13 +9883,15 @@ static s7_pointer g_set_current_input_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_set_current_input_port "(set-current-input-port port) sets the current-input port to port and returns the previous value of the input port"
   s7_pointer old_port, port;
+
   old_port = sc->input_port;
   port = car(args);
-  if ((s7_is_input_port(sc, port)) &&
+  if ((is_input_port(port)) &&
       (!port_is_closed(port)))
     sc->input_port = port;
-  else return(s7_wrong_type_arg_error(sc, "set-current-input-port", 0, port, "an open input port or nil"));
+  else return(s7_wrong_type_arg_error(sc, "set-current-input-port", 0, port, "an open input port"));
   sc->input_is_file = (is_file_port(sc->input_port));
+
   return(old_port);
 }
 
@@ -9928,12 +9932,14 @@ static s7_pointer g_set_current_output_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_set_current_output_port "(set-current-output-port port) sets the current-output port to port and returns the previous value of the output port"
   s7_pointer old_port, port;
+
   old_port = sc->output_port;
   port = car(args);
-  if ((s7_is_output_port(sc, port)) &&
+  if ((is_output_port(port)) &&
       (!port_is_closed(port)))
     sc->output_port = port;
-  else return(s7_wrong_type_arg_error(sc, "set-current-output-port", 0, port, "an open output port or nil"));
+  else return(s7_wrong_type_arg_error(sc, "set-current-output-port", 0, port, "an open output port"));
+
   return(old_port);
 }
 
@@ -9964,12 +9970,14 @@ static s7_pointer g_set_current_error_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_set_current_error_port "(set-current-error-port port) sets the current-error port to port and returns the previous value of the error port"
   s7_pointer old_port, port;
+
   old_port = sc->error_port;
   port = car(args);
-  if ((s7_is_output_port(sc, port)) &&
+  if ((is_output_port(port)) &&
       (!port_is_closed(port)))
     sc->error_port = port;
-  else return(s7_wrong_type_arg_error(sc, "set-current-error-port", 0, port, "an open output port or nil"));
+  else return(s7_wrong_type_arg_error(sc, "set-current-error-port", 0, port, "an open output port"));
+
   return(old_port);
 }
 
@@ -9980,7 +9988,7 @@ static s7_pointer g_is_char_ready(s7_scheme *sc, s7_pointer args)
   if (args != sc->NIL)
     {
       s7_pointer pt = car(args);
-      if (!s7_is_input_port(sc, pt))
+      if (!is_input_port(pt))
 	return(s7_wrong_type_arg_error(sc, "char-ready?", 0, pt, "an input port"));
       if (port_is_closed(pt))
 	return(s7_wrong_type_arg_error(sc, "char-ready?", 0, pt, "an open input port"));
@@ -10002,7 +10010,7 @@ static s7_pointer g_is_eof_object(s7_scheme *sc, s7_pointer args)
 
 void s7_close_input_port(s7_scheme *sc, s7_pointer p)
 {
-  if ((p == sc->NIL) ||
+  if ((is_immutable(p)) ||
       ((is_input_port(p)) && (port_is_closed(p))))
     return;
 
@@ -10018,6 +10026,7 @@ void s7_close_input_port(s7_scheme *sc, s7_pointer p)
       fclose(port_file(p));
       port_file(p) = NULL;
     }
+
   if (port_needs_free(p))
     {
       if (port_string(p))
@@ -10027,6 +10036,7 @@ void s7_close_input_port(s7_scheme *sc, s7_pointer p)
 	}
       port_needs_free(p) = false;
     }
+
   /* if input string, someone else is dealing with GC */
   port_is_closed(p) = true;
 }
@@ -10035,17 +10045,19 @@ void s7_close_input_port(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_close_input_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_close_input_port "(close-input-port port) closes the port"
-  s7_pointer pt = car(args);
-  if (!s7_is_input_port(sc, pt))
+  s7_pointer pt;
+  pt = car(args);
+  if (!is_input_port(pt))
     return(s7_wrong_type_arg_error(sc, "close-input-port", 0, pt, "an input port"));
-  s7_close_input_port(sc, pt);
+  if (!is_immutable(pt))
+    s7_close_input_port(sc, pt);
   return(sc->UNSPECIFIED);
 }
 
 
 void s7_close_output_port(s7_scheme *sc, s7_pointer p)
 {
-  if ((p == sc->NIL) ||
+  if ((is_immutable(p)) ||
       ((is_output_port(p)) && (port_is_closed(p))))
     return;
   
@@ -10080,10 +10092,12 @@ void s7_close_output_port(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_close_output_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_close_output_port "(close-output-port port) closes the port"
-  s7_pointer pt = car(args);
-  if (!s7_is_output_port(sc, pt))
+  s7_pointer pt;
+  pt = car(args);
+  if (!is_output_port(pt))
     return(s7_wrong_type_arg_error(sc, "close-output-port", 0, pt, "an output port"));
-  s7_close_output_port(sc, pt);
+  if (!(is_immutable(pt)))
+    s7_close_output_port(sc, pt);
   return(sc->UNSPECIFIED);
 }
 
@@ -10176,6 +10190,7 @@ static s7_pointer g_open_input_file(s7_scheme *sc, s7_pointer args)
 {
   #define H_open_input_file "(open-input-file filename :optional mode) opens filename for reading"
   s7_pointer name = car(args);
+
   if (!s7_is_string(name))
     return(s7_wrong_type_arg_error(sc, "open-input-file filename,", 1, name, "a string"));
   
@@ -10186,6 +10201,60 @@ static s7_pointer g_open_input_file(s7_scheme *sc, s7_pointer args)
       return(s7_open_input_file(sc, s7_string(name), s7_string(cadr(args))));
     }
   return(s7_open_input_file(sc, s7_string(name), "r"));
+}
+
+
+static void make_standard_ports(s7_scheme *sc)
+{
+  s7_pointer x;
+
+  /* standard output */
+  x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  x->hloc = NOT_IN_HEAP;
+  set_type(x, T_OUTPUT_PORT | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY);
+  x->object.port = (s7_port_t *)permanent_calloc(sizeof(s7_port_t));
+  port_type(x) = FILE_PORT;
+  port_is_closed(x) = false;
+  port_filename(x) = copy_string("<standard output>");
+  port_line_number(x) = 0;
+  port_file(x) = stdout;
+  port_needs_free(x) = false;
+  sc->standard_output = x;
+
+  /* standard error */
+  x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  x->hloc = NOT_IN_HEAP;
+  set_type(x, T_OUTPUT_PORT | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY);
+  x->object.port = (s7_port_t *)permanent_calloc(sizeof(s7_port_t));
+  port_type(x) = FILE_PORT;
+  port_is_closed(x) = false;
+  port_filename(x) = copy_string("<standard error>");
+  port_line_number(x) = 0;
+  port_file(x) = stderr;
+  port_needs_free(x) = false;
+  sc->standard_error = x;
+
+  /* standard input */
+  x = (s7_cell *)permanent_calloc(sizeof(s7_cell));
+  x->hloc = NOT_IN_HEAP;
+  set_type(x, T_INPUT_PORT | T_SIMPLE | T_IMMUTABLE | T_DONT_COPY);
+  x->object.port = (s7_port_t *)permanent_calloc(sizeof(s7_port_t));
+  port_type(x) = FILE_PORT;
+  port_is_closed(x) = false;
+  port_filename(x) = copy_string("<standard input>");
+  port_line_number(x) = 0;
+  port_file_number(x) = -1;
+  port_file(x) = stdin;
+  port_needs_free(x) = false;
+  sc->standard_input = x;
+
+  s7_define_constant(sc, "*stdin*", sc->standard_input);
+  s7_define_constant(sc, "*stdout*", sc->standard_output);
+  s7_define_constant(sc, "*stderr*", sc->standard_error);
+
+  sc->input_port = sc->standard_input;
+  sc->output_port = sc->standard_output;
+  sc->error_port = sc->standard_error;
 }
 
 
@@ -10222,6 +10291,7 @@ static s7_pointer g_open_output_file(s7_scheme *sc, s7_pointer args)
 {
   #define H_open_output_file "(open-output-file filename :optional mode) opens filename for writing"
   s7_pointer name = car(args);
+
   if (!s7_is_string(name))
     return(s7_wrong_type_arg_error(sc, "open-output-file filename,", 1, name, "a string"));
   
@@ -10259,6 +10329,7 @@ static s7_pointer g_open_input_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_open_input_string "(open-input-string str) opens an input port reading str"
   s7_pointer input_string = car(args);
+
   if (!s7_is_string(input_string))
     return(s7_wrong_type_arg_error(sc, "open-input-string", 0, input_string, "a string"));
   
@@ -10302,6 +10373,7 @@ static s7_pointer g_get_output_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_get_output_string "(get-output-string port) returns the output accumulated in port"
   s7_pointer p = car(args);
+
   if ((!is_output_port(p)) ||
       (!is_string_port(p)))
     return(s7_wrong_type_arg_error(sc, "get-output-string", 0, p, "an output string port"));
@@ -10310,6 +10382,7 @@ static s7_pointer g_get_output_string(s7_scheme *sc, s7_pointer args)
 
   return(s7_make_string(sc, s7_get_output_string(sc, p)));
 }
+
 
 s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port))
 {
@@ -10356,7 +10429,7 @@ void *s7_port_set_data(s7_pointer port, void *stuff)
 
 /* static int pushes = 0; */
 
-static bool push_input_port(s7_scheme *sc, s7_pointer new_port)
+static void push_input_port(s7_scheme *sc, s7_pointer new_port)
 {
 #if 0
   {
@@ -10369,11 +10442,10 @@ static bool push_input_port(s7_scheme *sc, s7_pointer new_port)
   sc->input_port_stack = s7_cons(sc, sc->input_port, sc->input_port_stack);
   sc->input_port = new_port;
   sc->input_is_file = (is_file_port(sc->input_port));
-  return(sc->input_port != sc->NIL);
 }
 
 
-static s7_pointer pop_input_port(s7_scheme *sc)
+static void pop_input_port(s7_scheme *sc)
 {
 #if 0
   {
@@ -10388,16 +10460,15 @@ static s7_pointer pop_input_port(s7_scheme *sc)
       sc->input_port = car(sc->input_port_stack);
       sc->input_port_stack = cdr(sc->input_port_stack);
     }
-  else sc->input_port = sc->NIL;
+  else sc->input_port = sc->standard_input;
   sc->input_is_file = (is_file_port(sc->input_port));
-  return(sc->input_port);
 }
 
 
 static int inchar(s7_scheme *sc, s7_pointer pt)
 {
   int c;
-  if (pt == sc->NIL) return(EOF);
+  /* if (pt == sc->standard_input) return(EOF); */
   
   if (is_file_port(pt))
     c = fgetc(port_file(pt)); /* not unsigned char! -- could be EOF */
@@ -10418,7 +10489,7 @@ static int inchar(s7_scheme *sc, s7_pointer pt)
 
 static void backchar(s7_scheme *sc, char c, s7_pointer pt) 
 {
-  if (pt == sc->NIL) return;
+  /* if (pt == sc->standard_input) return; */
   
   if (c == '\n')
     port_line_number(pt)--;
@@ -10435,7 +10506,6 @@ static void backchar(s7_scheme *sc, char c, s7_pointer pt)
 
 static int s7_read_char_1(s7_scheme *sc, s7_pointer port, s7_read_t read_choice)
 {
-  /* port nil -> as if read-char with no arg -> use current input port */
   int c;              /* needs to be an int so EOF=-1, but not 255 */
 
   if (is_function_port(port))
@@ -10455,7 +10525,6 @@ static int s7_read_char_1(s7_scheme *sc, s7_pointer port, s7_read_t read_choice)
     backchar(sc, c, port);
   return(c);
 }
-
 
 
 int s7_read_char(s7_scheme *sc, s7_pointer port)
@@ -10479,7 +10548,7 @@ static s7_pointer g_read_char_1(s7_scheme *sc, s7_pointer args, bool peek)
     port = car(args);
   else port = sc->input_port;
 
-  if (!s7_is_input_port(sc, port))
+  if (!is_input_port(port))
     return(s7_wrong_type_arg_error(sc, (peek) ? "peek-char" : "read-char", 0, port, "an input port"));
   if (port_is_closed(port))
     return(s7_wrong_type_arg_error(sc, (peek) ? "peek-char" : "read-char", 0, port, "an open input port"));
@@ -10515,17 +10584,10 @@ If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
   int i;
   bool with_eol = false;
 
-  /* TODO: (read-line (current-output-port)) hangs because '() is a port!
-   *  was this to provide a way to force IO from a terminal (stdin/out/err)?
-   *  how are these handled in other schemes? or CL?
-   *
-   * guile: (read-char (current-output-port)) -> wrong type arg error (nil is also an error)
-   * perhaps add *stdin* *stdout* *stderr* ? (defaults to these)
-   */
   if (args != sc->NIL)
     {
       port = car(args);
-      if (!s7_is_input_port(sc, port))
+      if (!is_input_port(port))
 	return(s7_wrong_type_arg_error(sc, "read-line", 1, port, "an input port"));
       if (port_is_closed(port))
 	return(s7_wrong_type_arg_error(sc, "read-line", 1, port, "an open input port"));
@@ -10560,7 +10622,7 @@ If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
 	  sc->read_line_buf = (char *)realloc(sc->read_line_buf, sc->read_line_buf_size * sizeof(char));
 	}
 
-      if (port == sc->NIL)
+      if (port == sc->standard_input)
 	{
 	  fgets(sc->read_line_buf, sc->read_line_buf_size, stdin);
 	  return(s7_make_string(sc, sc->read_line_buf)); /* fgets adds the trailing '\0' */
@@ -10571,7 +10633,6 @@ If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
 	{
 	  if (i == 0)
 	    return(sc->EOF_OBJECT);
-	  /* sc->read_line_buf[i] = 0; */
 	  return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, i));
 	}
 
@@ -10579,17 +10640,17 @@ If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
       if (c == '\n')
 	{
 	  if (!with_eol) i--;
-	  /* sc->read_line_buf[i + 1] = 0; */
 	  return(s7_make_terminated_string_with_length(sc, sc->read_line_buf, i + 1));
 	}
     }
+
   return(sc->EOF_OBJECT);
 }
 
 
 s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
 {
-  if (s7_is_input_port(sc, port))
+  if (is_input_port(port))
     {
       bool old_longjmp;
       old_longjmp = sc->longjmp_ok;
@@ -10619,10 +10680,7 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
     port = car(args);
   else port = sc->input_port;
   
-  if (!is_input_port(port)) 
-    /* s7_is_input_port here lets NIL through as stdin, but that segfaults in token
-     *    should stdin work in that case?
-     */
+  if (!is_input_port(port)) /* was also not stdin */
     return(s7_wrong_type_arg_error(sc, "read", 0, port, "an input port"));
   if (port_is_closed(port))
     return(s7_wrong_type_arg_error(sc, "read", 0, port, "an open input port"));
@@ -11020,19 +11078,24 @@ static void char_to_string_port(char c, s7_pointer pt)
 
 static void write_char(s7_scheme *sc, int c, s7_pointer pt) 
 {
-  if (pt == sc->NIL)
+  if (pt == sc->standard_error)
     fputc(c, stderr);
   else
     {
-      if (port_is_closed(pt))
-	return;
-      if (is_file_port(pt))
-	fputc(c, port_file(pt));
-      else 
+      if (pt == sc->standard_output)
+	fputc(c, stdout);
+      else
 	{
-	  if (is_string_port(pt))
-	    char_to_string_port(c, pt);
-	  else (*(port_output_function(pt)))(sc, c, pt);
+	  if (port_is_closed(pt))
+	    return;
+	  if (is_file_port(pt))
+	    fputc(c, port_file(pt));
+	  else 
+	    {
+	      if (is_string_port(pt))
+		char_to_string_port(c, pt);
+	      else (*(port_output_function(pt)))(sc, c, pt);
+	    }
 	}
     }
 }
@@ -11042,26 +11105,31 @@ static void write_string(s7_scheme *sc, const char *s, s7_pointer pt)
 {
   if (!s) return;
   
-  if (pt == sc->NIL)
+  if (pt == sc->standard_error)
     fputs(s, stderr);
   else
     {
-      if (port_is_closed(pt))
-	return;
-      
-      if (is_file_port(pt))
-	fputs(s, port_file(pt));
-      else 
+      if (pt == sc->standard_output)
+	fputs(s, stdout);
+      else
 	{
-	  if (is_string_port(pt))
-	    {
-	      for (; *s; s++)
-		char_to_string_port(*s, pt);
-	    }
+	  if (port_is_closed(pt))
+	    return;
+	  
+	  if (is_file_port(pt))
+	    fputs(s, port_file(pt));
 	  else 
 	    {
-	      for (; *s; s++)
-		(*(port_output_function(pt)))(sc, *s, pt);
+	      if (is_string_port(pt))
+		{
+		  for (; *s; s++)
+		    char_to_string_port(*s, pt);
+		}
+	      else 
+		{
+		  for (; *s; s++)
+		    (*(port_output_function(pt)))(sc, *s, pt);
+		}
 	    }
 	}
     }
@@ -11313,12 +11381,11 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   {
     char *buf;
     buf = (char *)calloc(512, sizeof(char));
-    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
+    snprintf(buf, 512, "<unknown object! type: %d (%s), flags: %x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s>", 
 	     type(obj), 
 	     type_name(obj),
 	     typeflag(obj),
 	     is_simple(obj) ? " simple" : "",
-	     is_eternal(obj) ? " eternal" : "",
 	     is_procedure(obj) ? " procedure" : "",
 	     is_marked(obj) ? " gc-marked" : "",
 	     is_immutable(obj) ? " immutable" : "",
@@ -11921,7 +11988,7 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
   if (args != sc->NIL)
     {
       port = car(args);
-      if (!s7_is_output_port(sc, port))
+      if (!is_output_port(port))
 	return(s7_wrong_type_arg_error(sc, "newline", 0, port, "an output port"));
       if (port_is_closed(port))
 	return(s7_wrong_type_arg_error(sc, "newline", 0, port, "an open output port"));
@@ -11950,7 +12017,7 @@ static s7_pointer g_write_char(s7_scheme *sc, s7_pointer args)
   if (is_pair(cdr(args)))
     {
       port = cadr(args);
-      if (!s7_is_output_port(sc, port))
+      if (!is_output_port(port))
 	return(s7_wrong_type_arg_error(sc, "write-char port", 2, port, "an output port"));
       if (port_is_closed(port))
 	return(s7_wrong_type_arg_error(sc, "write-char port", 2, port, "an open output port"));
@@ -11988,7 +12055,7 @@ static s7_pointer g_write(s7_scheme *sc, s7_pointer args)
   if (is_pair(cdr(args)))
     {
       port = cadr(args);
-      if (!s7_is_output_port(sc, port))
+      if (!is_output_port(port))
 	return(s7_wrong_type_arg_error(sc, "write port", 2, port, "an output port"));
       if (port_is_closed(port))
 	return(s7_wrong_type_arg_error(sc, "write port", 2, port, "an open output port"));
@@ -12013,7 +12080,7 @@ static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
   if (is_pair(cdr(args)))
     {
       port = cadr(args);
-      if (!s7_is_output_port(sc, port))
+      if (!is_output_port(port))
 	return(s7_wrong_type_arg_error(sc, "display port", 2, port, "an output port"));
       if (port_is_closed(port))
 	return(s7_wrong_type_arg_error(sc, "display port", 2, port, "an open output port"));
@@ -17154,8 +17221,7 @@ spacing (and spacing character) and precision.  ~{ starts an embedded format dir
     return(s7_wrong_type_arg_error(sc, "format control string,", 2, cadr(args), "a string"));
     
   if (!((s7_is_boolean(pt)) ||               /* #f or #t */
-	(pt == sc->NIL) ||                   /* default current-output-port = stdout -> nil */
-	((s7_is_output_port(sc, pt)) &&      /* (current-output-port) or call-with-open-file arg, etc */
+	((is_output_port(pt)) &&             /* (current-output-port) or call-with-open-file arg, etc */
 	 (!port_is_closed(pt)))))
     return(s7_wrong_type_arg_error(sc, "format", 1, pt, "#f, #t, or an open output port"));
 
@@ -22634,12 +22700,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	bool is_file;
 	is_file = is_file_port(sc->code);
 
-	if ((s7_is_output_port(sc, sc->code)) &&
+	if ((is_output_port(sc->code)) &&
 	    (!port_is_closed(sc->code)))
 	  s7_close_output_port(sc, sc->code); /* may call fflush */
 
-	if ((sc->args != sc->F) &&
-	    (s7_is_output_port(sc, sc->args)) &&
+	if ((is_output_port(sc->args)) &&
 	    (!port_is_closed(sc->args)))
 	  sc->output_port = sc->args;
        
@@ -22653,12 +22718,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_UNWIND_INPUT:
-      if ((s7_is_input_port(sc, sc->code)) &&
+      if ((is_input_port(sc->code)) &&
 	  (!port_is_closed(sc->code)))
 	s7_close_input_port(sc, sc->code);
 
-      if ((sc->args != sc->F) &&
-	  (s7_is_input_port(sc, sc->args)) &&
+      if ((is_input_port(sc->args)) &&
 	  (!port_is_closed(sc->args)))
 	{
 	  sc->input_port = sc->args;
@@ -28811,6 +28875,7 @@ s7_scheme *s7_init(void)
 
   /* fprintf(stderr, "size: %d %d\n", sizeof(s7_cell), sizeof(s7_num_t)); */
 
+  make_standard_ports(sc);
   initialize_pows();
   save_initial_environment(sc);
 

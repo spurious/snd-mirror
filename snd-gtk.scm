@@ -1033,8 +1033,6 @@ Reverb-feedback sets the scaler on the feedback.
 	   (gtk_misc_set_alignment (GTK_MISC (GTK_LABEL label)) 0.05 0.0)
 	   (gtk_widget_show label)
 	   (gtk_box_pack_start (GTK_BOX hbox) scale #f #f 6)
-	   ;(gtk_progress_bar_set_orientation (GTK_PROGRESS_BAR scale) GTK_PROGRESS_LEFT_TO_RIGHT)
-	   ;(gtk_progress_bar_set_bar_style (GTK_PROGRESS_BAR scale) GTK_PROGRESS_CONTINUOUS)
 	   (gtk_widget_show scale)
 	   (list scale (car range) (cadr range))))
 	((meter)

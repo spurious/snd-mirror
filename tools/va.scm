@@ -302,14 +302,4 @@
     "libxm.html"
     ))
 
-#|
-TODO: deal with these gtk changes:
-gtk_progress_bar_set_orientation (snd-gtk.scm[1036]) is not defined
-GTK_PROGRESS_LEFT_TO_RIGHT (snd-gtk.scm[1036]) is not defined
-gtk_progress_bar_set_bar_style (snd-gtk.scm[1037]) is not defined
-GTK_PROGRESS_CONTINUOUS (snd-gtk.scm[1037]) is not defined
-gtk_widget_get_realized (xm-enved.scm[317]) is not defined
-|#
-  
-   
 (exit)
