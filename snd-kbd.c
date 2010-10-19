@@ -614,6 +614,13 @@ static void prompt_named_mark(chan_info *cp)
 
 void errors_to_minibuffer(const char *msg, void *data)
 {
+  snd_info *sp;
+  sp = (snd_info *)data;
+  if (!(snd_ok(sp)))
+    {
+      sp = any_selected_sound();
+      if (!snd_ok(sp)) return;
+    }
   display_minibuffer_error((snd_info *)data, msg);
 }
 

@@ -141,7 +141,7 @@ static XEN g_snd_s7_error_handler(XEN args)
   fprintf(stderr, "error: %s\n", s7_object_to_c_string(s7, args));
 #endif
   if (ss->xen_error_handler)
-    (*(ss->xen_error_handler))(s7_string(s7_car(args)), (void *)NULL);
+    (*(ss->xen_error_handler))(s7_string(s7_car(args)), (void *)any_selected_sound()); /* not NULL! */
   return(s7_f(s7));
 }
 #endif

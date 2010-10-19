@@ -19,7 +19,7 @@
 
 /* s7, Bill Schottstaedt, Aug-08
  *
- *   major changes from tinyScheme:
+ *   changes from tinyScheme:
  *        just two files: s7.c and s7.h, source-level embeddable (no library, no run-time init files)
  *        full continuations, call-with-exit for goto or return, dynamic-wind
  *        ratios and complex numbers (and ints are 64-bit by default)
@@ -37,9 +37,7 @@
  *        threads (optional)
  *        multidimensional vectors
  *
- *   many minor changes!
- *
- *   deliberate omission from r5rs: 
+ *   differences from r5rs:
  *        no syntax-rules or any of its friends
  *        no force or delay
  *        no inexact integer or ratio (so, for example, truncate returns an exact integer), no exact complex or exact real
@@ -48,8 +46,6 @@
  *           In s7, exact? is a synonym for rational?, inexact->exact is a synonym for rationalize.
  *        '#' does not stand for an unknown digit, and the '@' complex number notation is ignored
  *           I also choose not to include numbers such as +i (= 0+i) -- include the real part!
- *
- *   deliberate difference from r5rs:
  *        modulo, remainder, and quotient take integer, ratio, or real args 
  *        lcm and gcd can take integer or ratio args
  *        continuation? function to distinguish a continuation from a procedure
@@ -60,7 +56,7 @@
  *   other additions: 
  *        random for any numeric type and any numeric argument, including 0 ferchrissake!
  *        sinh, cosh, tanh, asinh, acosh, atanh
- *        read-line, read-byte, write-byte
+ *        read-line, read-byte, write-byte, *stdin*, *stdout*, and *stderr*
  *        logior, logxor, logand, lognot, ash, integer-length, integer-decode-float, nan?, infinite?
  *        procedure-source, procedure-arity, procedure-documentation, help
  *          if the initial expression in a function body is a string constant, it is assumed to be a documentation string
@@ -247,7 +243,7 @@
   #include <unistd.h>
 #endif
 #include <limits.h>
-#include <float.h>
+/* #include <float.h> */
 #include <ctype.h>
 #ifndef _MSC_VER
   #include <strings.h>
@@ -256,7 +252,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <time.h>
+/* #include <time.h> */
 #include <stdarg.h>
 
 #if __cplusplus
@@ -4129,6 +4125,12 @@ static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x)
 #if (!WITH_GMP)
 s7_Double s7_number_to_real(s7_pointer x)
 {
+  if (!s7_is_number(x))
+    return(0.0); 
+  /* what to do?? -- to return #f or throw an error, we need the s7_scheme pointer
+   *   some sort of check is needed for FFI calls -- not a number -> segfault
+   */
+
   switch (number_type(x))
     {
     case NUM_INT:   return((s7_Double)s7_integer(x));
@@ -5028,7 +5030,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	  return(sc->NIL);
 	}
       x = make_atom(sc, (char *)(name + 1), radix, NO_SYMBOLS);
-      if (is_abnormal(sc, x))
+      if (!s7_is_number(x))  /* not is_abnormal(x) -- #i0/0 -> nan etc */
 	return(sc->NIL);
 #if WITH_GMP
       if (s7_is_bignum(x))
@@ -11411,7 +11413,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	int old_flag;
 	old_flag = typeflag(obj);
 	typeflag(obj) = saved_typeflag(obj);
-	descr = atom_to_c_string(sc, obj, false);
+	descr = atom_to_c_string(sc, obj, WITH_ELLIPSES);
 	typeflag(obj) = old_flag;
 	if (descr)
 	  {
@@ -12748,42 +12750,45 @@ static s7_pointer g_list_ref(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_list_set(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_list_set_1(s7_scheme *sc, s7_pointer lst, s7_pointer args, int arg_num)
 {
   #define H_list_set "(list-set! lst i ... val) sets the i-th element (0-based) of the list to val"
   
   int i;
   s7_Int index;
-  s7_pointer p, lst, ind;
+  s7_pointer p, ind;
 
   /* (let ((L '((1 2 3) (4 5 6)))) (list-set! L 1 2 32) L) */
-  
-  lst = car(args);
   if (!is_pair(lst))
     return(s7_wrong_type_arg_error(sc, "list-set!", 1, lst, "a pair"));
 
-  ind = cadr(args);
+  ind = car(args);
   if (!s7_is_integer(ind))
-    return(s7_wrong_type_arg_error(sc, "list-set! index,", 2, ind, "an integer"));
+    return(s7_wrong_type_arg_error(sc, "list-set! index,", arg_num, ind, "an integer"));
   
   index = s7_integer(ind);
   if (index < 0)
-    return(s7_out_of_range_error(sc, "list-set!", 2, ind, "index should be non-negative"));
+    return(s7_out_of_range_error(sc, "list-set!", arg_num, ind, "index should be non-negative"));
   if (index > MAX_LIST_LENGTH)
-    return(s7_out_of_range_error(sc, "list-set! index,", 2, ind, "should be a reasonable integer"));
+    return(s7_out_of_range_error(sc, "list-set! index,", arg_num, ind, "should be a reasonable integer"));
   
   for (i = 0, p = lst; (i < index) && is_pair(p); i++, p = cdr(p)) {}
   
   if (p == sc->NIL)
-    return(s7_out_of_range_error(sc, "list-set! index,", 2, ind, "should be less than list length"));
+    return(s7_out_of_range_error(sc, "list-set! index,", arg_num, ind, "should be less than list length"));
   if (!is_pair(p))
     return(s7_wrong_type_arg_error(sc, "list-set!", 1, lst, "a proper list"));
   
-  /* TODO: this should use a loop, not cons */
-  if (cdddr(args) == sc->NIL)
-    car(p) = caddr(args);
-  else return(g_list_set(sc, s7_cons(sc, car(p), cddr(args))));
-  return(caddr(args));
+  if (cddr(args) == sc->NIL)
+    car(p) = cadr(args);
+  else return(g_list_set_1(sc, car(p), cdr(args), arg_num + 1));
+  return(cadr(args));
+}
+
+
+static s7_pointer g_list_set(s7_scheme *sc, s7_pointer args)
+{
+  return(g_list_set_1(sc, car(args), cdr(args), 2));
 }
 
 
@@ -13928,7 +13933,6 @@ can also use 'set!' instead of 'vector-set!': (set! (v ...) val) -- I find this 
 	  (index >= vector_length(vec)))
 	return(s7_out_of_range_error(sc, "vector-set! index,", 2, cadr(args), "should be between 0 and the vector length"));
 
-      /* TODO: this can use a loop */
       if (cdddr(args) != sc->NIL)
 	return(g_vector_set(sc, s7_cons(sc, vector_element(vec, index), cddr(args))));
 
@@ -14586,7 +14590,6 @@ static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
 
   if (cddr(args) == sc->NIL)
     return(s7_hash_table_ref(sc, table, cadr(args)));
-  /* TODO: this can use a loop */
   return(g_hash_table_ref(sc, s7_cons(sc, s7_hash_table_ref(sc, table, cadr(args)), cddr(args))));
 }
 
@@ -18148,7 +18151,8 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
 	  for (i = 0; i < slen; i++) recent_input[i + 4] = port_string(pt)[start + i];
 	}
 
-      if (port_line_number(pt) > 0)
+      if ((port_line_number(pt) > 0) &&
+	  (port_filename(pt)))
 	{
 	  len = safe_strlen(recent_input) + safe_strlen(errmsg) + safe_strlen(port_filename(pt)) + safe_strlen(sc->current_file) + 64;
 	  msg = (char *)malloc(len * sizeof(char));
@@ -24255,6 +24259,9 @@ static bool real_is_too_big(s7_pointer p)
 
 s7_Double s7_number_to_real(s7_pointer x)
 {
+  if (!s7_is_number(x))
+    return(0.0);
+
   if (is_c_object(x))
     {
       if (c_object_type(x) == big_real_tag)
@@ -28266,7 +28273,7 @@ s7_scheme *s7_init(void)
   sc->OBJECT_SET = make_symbol(sc, object_set_name);   /* will call g_object_set */
   typeflag(sc->OBJECT_SET) |= T_DONT_COPY; 
 
-  #define s_is_type_name "[?]"                            /* these were "(?)" etc, but the procedure-source needs to be usable */
+  #define s_is_type_name "[?]"                         /* these were "(?)" etc, but the procedure-source needs to be usable */
   sc->S_IS_TYPE = make_symbol(sc, s_is_type_name);
   typeflag(sc->S_IS_TYPE) |= T_DONT_COPY; 
 

@@ -192,7 +192,7 @@
 	
 	"gdouble*" "GdkFill" "GdkSubwindowMode" "GdkLineStyle" "GdkCapStyle" "GdkJoinStyle"
 	"GtkInfoBar*" "GtkSpinner*" "GtkToolShell*" "GtkToolPalette*" "GtkToolPaletteDragTargets"
-	"GdkFunction" "GtkWrapBoxPacking"
+	"GdkFunction" "GtkWrapBoxPacking" "GtkLinkButtonUriFunc"
 
 	"GdkRectangle*" "PangoRenderer*" "cairo_glyph_t**" "cairo_text_cluster_t**"
 ;	"cairo_text_cluster_flags_t" 
@@ -487,11 +487,11 @@
 					;			      "span_func"
 					;			      (parse-args "GdkSpan* span lambda_data func_info" 'callback)
 					;			      'temporary)
-			(list 'GtkFunction
-			      "gboolean"
-			      "func1"
-			      (parse-args "lambda_data func_info" 'callback)
-			      'semi-permanent)
+					;			(list 'GtkFunction
+					;			      "gboolean"
+					;			      "func1"
+					;			      (parse-args "lambda_data func_info" 'callback)
+					;			      'semi-permanent)
 			(list 'GtkKeySnoopFunc
 			      "gint"
 			      "snoop_func"

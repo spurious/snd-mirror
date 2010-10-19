@@ -1243,6 +1243,12 @@ env *xen_to_env(XEN res)
 		    {
 		      XEN el;
 		      el = XEN_CAR(lst);
+		      if ((!(XEN_NUMBER_P(XEN_CAR(el)))) ||
+			  (!(XEN_NUMBER_P(XEN_CADR(el)))))
+			{
+			  free(data);
+			  return(NULL);
+			}
 		      data[i] = XEN_TO_C_DOUBLE(XEN_CAR(el));
 		      data[i + 1] = XEN_TO_C_DOUBLE(XEN_CADR(el));
 		    }

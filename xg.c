@@ -224,7 +224,6 @@ static void define_xm_obj(void)
 #define XEN_GtkDestroyNotify_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 1)))
 #define XEN_GdkFilterFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 3)))
 #define XEN_GdkEventFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 2)))
-#define XEN_GtkFunction_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 1)))
 #define XEN_GtkKeySnoopFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 3)))
 #define XEN_GtkMenuPositionFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 5)))
 #define XEN_GtkTextTagTableForeach_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 2)))
@@ -262,7 +261,6 @@ static void define_xm_obj(void)
 #define XEN_TO_C_GtkDestroyNotify(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_destroy_func
 #define XEN_TO_C_GdkFilterFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_filter_func
 #define XEN_TO_C_GdkEventFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_event_func
-#define XEN_TO_C_GtkFunction(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_func1
 #define XEN_TO_C_GtkKeySnoopFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_snoop_func
 #define XEN_TO_C_GtkMenuPositionFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_menu_position_func
 #define XEN_TO_C_GtkTextTagTableForeach(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_text_tag_table_foreach
@@ -1144,14 +1142,6 @@ static void gxg_event_func(GdkEvent* event, gpointer func_info)
              C_TO_XEN_GdkEvent_(event),
              XEN_CADR((XEN)func_info),
              c__FUNCTION__);
-}
-
-static gboolean gxg_func1(gpointer func_info)
-{
-  if (!XEN_LIST_P((XEN)func_info)) return((gboolean)0);
-  return(XEN_TO_C_gboolean(XEN_CALL_1(XEN_CAR((XEN)func_info),
-                                      XEN_CADR((XEN)func_info),
-                                      c__FUNCTION__)));
 }
 
 static gint gxg_snoop_func(GtkWidget* widget, GdkEventKey* event, gpointer func_info)
@@ -49299,7 +49289,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("17-Oct-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("18-Oct-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

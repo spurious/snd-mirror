@@ -8102,22 +8102,39 @@
  (lambda (op)
    (test (op *stdout*) 'error)
    (test (op *stderr*) 'error)
-   (if (equal? *stdout* (current-output-port))
-       (test (op (current-output-port)) 'error))
-   (if (equal? *stderr* (current-error-port))
-       (test (op (current-error-port)) 'error)))
+   (test (op (current-output-port)) 'error)
+   (test (op (current-error-port)) 'error)
+   (test (op '()) 'error))
  (list read read-line read-char read-byte peek-char char-ready?))
 
 (for-each
  (lambda (op)
    (test (op #\a *stdin*) 'error)
-   (if (equal? *stdin* (current-input-port))
-       (test (op #\a (current-input-port)))))
+   (test (op #\a (current-input-port)) 'error)
+   (test (op #\a '()) 'error))
  (list write display write-char))
 	 
 (test (write-byte 0 *stdin*) 'error)
 (test (newline *stdin*) 'error)
-(test (format *stdin* "hiho") 'error)	 
+(test (format *stdin* "hiho") 'error)
+
+(test (port-filename *stdin*) "<standard input>")	 
+(test (port-filename *stdout*) "<standard output>")	 
+(test (port-filename *stderr*) "<standard error>")	
+
+(test (input-port? *stdin*) #t) 
+(test (output-port? *stdin*) #f) 
+(test (port-closed? *stdin*) #f)
+(test (input-port? *stdout*) #f) 
+(test (output-port? *stdout*) #t) 
+(test (port-closed? *stdout*) #f)
+(test (input-port? *stderr*) #f) 
+(test (output-port? *stderr*) #t) 
+(test (port-closed? *stderr*) #f)
+
+(test (port-line-number *stdin*) 0)
+(test (port-line-number *stdout*) 'error)
+(test (port-line-number *stderr*) 'error)
 
 (test (open-input-file "[*not-a-file!*]-") 'error)
 (test (call-with-input-file "[*not-a-file!*]-" (lambda (p) p)) 'error)
@@ -35061,6 +35078,19 @@ why are these different (read-time `#() ? )
 (num-test (expt 0.0 0.0) 0.0)
 (num-test (expt -0.0 -0.0) 0.0)
 
+(num-test (let ((dickey (lambda (x y) ; from Kawa
+			  (+  (* 1335/4 (expt y 6))
+			      (* (expt x 2)
+				 (- (* 11 (expt x 2) (expt y 2))
+				    (expt y 6)
+				    (* 121 (expt y 4))
+				    2))
+			      (* 11/2 (expt y 8))
+			      (/ x (* 2 y))))))
+	    (dickey 77617 33096))
+	  -54767/66192)
+
+
 
 (let ((x-10 (lambda (n) (- (expt n 10) (* n n n n n n n n n n)))))
   (let ((happy #t)
@@ -36292,6 +36322,7 @@ why are these different (read-time `#() ? )
 (num-test (gcd 2 0) 2)
 (num-test (lcm 2 0) 0)
 (num-test (lcm 1741 2063 3137 3797 3251 3 19) 7927658615618708709)
+(num-test (gcd 4294967298 3) 3)
 
 (num-test (lcm 1/2 2) 2)
 (num-test (lcm 1/2 -2) 2)
@@ -51932,15 +51963,16 @@ why are these different (read-time `#() ? )
 (test (string->number "#e#b0/0") #f)
 (test (string->number "#i#b0/0") #f)
 (test (string->number "#e0/0") #f)
-(test (string->number "#i0/0") #f)
+(test (number? (string->number "#i0/0")) #t) ; nan since (number? 0/0) is #t
 (test (string->number "#e#b1/0") #f)
 (test (string->number "#i#b1/0") #f)
 (test (string->number "#e1/0") #f)
-(test (string->number "#i1/0") #f)
+(test (number? (string->number "#i1/0")) #t)
 (test (string->number "#e#b1/0+i") #f)
 (test (string->number "#i#b1/0+i") #f) ; inf+i?
 (test (string->number "#e1/0+i") #f)
-(test (string->number "#i1/0+i") #f)   ; inf+i?
+(test (number? (string->number "#i1/0+i")) #t) 
+(test (number? (string->number "#i0/0+i")) #t) 
 
 (num-test (string->number "#b#e11e30") 3221225472) ; very confusing!
 (num-test (string->number "#b#i11e30") 3221225472.0)
