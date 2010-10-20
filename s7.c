@@ -954,6 +954,12 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
   /* LONG_MAX is either the same or 2147483647 */
 #endif
 
+/* on 64-bit systems, LONG_MAX == LLONG_MAX, but we need the 32-bit max to decide when to 
+ *   move into gmp (when it's in use), so...
+ */
+#define S7_LONG_MAX 2147483647LL
+#define S7_LONG_MIN -2147483648LL
+
 #define BIGNUM_PLUS   9007199254740992LL
 #define BIGNUM_MINUS -9007199254740992LL
 
@@ -2117,7 +2123,7 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
   len = safe_strlen(prefix) + 32;
   name = (char *)calloc(len, sizeof(char));
   
-  for (; (*(sc->gensym_counter)) < LONG_MAX; ) 
+  for (; (*(sc->gensym_counter)) < S7_LONG_MAX; ) 
     { 
       snprintf(name, len, "{%s}-%ld", prefix, (*(sc->gensym_counter))++); 
       location = symbol_table_hash(name); 
@@ -3960,7 +3966,7 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
   set_type(x, T_NUMBER | T_SIMPLE | T_DONT_COPY);
   number_type(x) = NUM_INT;
   integer(number(x)) = n;
-  
+
   return(x);
 }
 
@@ -4081,7 +4087,7 @@ static s7_pointer exact_to_inexact(s7_scheme *sc, s7_pointer x)
    */
 #if WITH_GMP
   if ((number_type(x) == NUM_INT) &&
-      (s7_integer(x) > LONG_MAX))
+      (s7_integer(x) > S7_LONG_MAX))
     return(s7_number_to_big_real(sc, x));
 #endif
   if (s7_is_rational(x))
@@ -4749,17 +4755,17 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 	{
 	  s7_Double val;
 	  val = s7_Double_abs(s7_real(x));
-	  if ((val < (LONG_MAX / 4)) && (val > 1.0e-6))
+	  if ((val < (S7_LONG_MAX / 4)) && (val > 1.0e-6))
 	    size = 14;
 	}
       else
 	{
 	  s7_Double rl, im;
 	  rl = s7_Double_abs(s7_real_part(x));
-	  if ((rl < (LONG_MAX / 4)) && (rl > 1.0e-6))
+	  if ((rl < (S7_LONG_MAX / 4)) && (rl > 1.0e-6))
 	    {
 	      im = s7_Double_abs(s7_imag_part(x));
-	      if ((im < (LONG_MAX/4)) && (im > 1.0e-6))
+	      if ((im < (S7_LONG_MAX / 4)) && (im > 1.0e-6))
 		size = 14;
 	    }
 	}
@@ -6494,7 +6500,7 @@ static long long int nth_roots[63] = {
   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
 
 static long int_nth_roots[31] = {
-  LONG_MAX, LONG_MAX, 46340, 1290, 215, 73, 35, 21, 14, 10, 8, 7, 5, 5, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
+  S7_LONG_MAX, S7_LONG_MAX, 46340, 1290, 215, 73, 35, 21, 14, 10, 8, 7, 5, 5, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
 
 static bool int_pow_ok(s7_Int x, s7_Int y)
 {
@@ -6832,7 +6838,7 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 	{
 	  n = c_lcm(n, s7_integer(car(x)));
 #if WITH_GMP
-	  if ((n > LONG_MAX) || (n < LONG_MIN))
+	  if ((n > S7_LONG_MAX) || (n < S7_LONG_MIN))
 	    return(big_lcm(sc, s7_cons(sc, s7_Int_to_big_integer(sc, n), x)));
 #endif
 	  if (n == 0)
@@ -6845,7 +6851,7 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
     {
       n = c_lcm(n, s7_numerator(car(x)));
 #if WITH_GMP
-      if ((n > LONG_MAX) || (n < LONG_MIN))
+      if ((n > S7_LONG_MAX) || (n < S7_LONG_MIN))
 	return(big_lcm(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, n, d), x)));
 #endif
       if (n == 0)
@@ -6917,15 +6923,15 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
       switch (a.type)
 	{
 	case NUM_INT:
-	  if ((integer(a) > LONG_MAX) ||
-	      (integer(a) < LONG_MIN))
+	  if ((integer(a) > S7_LONG_MAX) ||
+	      (integer(a) < S7_LONG_MIN))
 	    return(big_add(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(a)), x)));
 	  break;
 
 	case NUM_RATIO:
-	  if ((numerator(a) > LONG_MAX) ||
-	      (denominator(a) > LONG_MAX) ||
-	      (numerator(a) < LONG_MIN))
+	  if ((numerator(a) > S7_LONG_MAX) ||
+	      (denominator(a) > S7_LONG_MAX) ||
+	      (numerator(a) < S7_LONG_MIN))
 	    return(big_add(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, (numerator(a)), denominator(a)), x)));
 	  break;
 	}
@@ -7049,15 +7055,15 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
       switch (a.type)
 	{
 	case NUM_INT:
-	  if ((integer(a) > LONG_MAX) ||
-	      (integer(a) < LONG_MIN))
+	  if ((integer(a) > S7_LONG_MAX) ||
+	      (integer(a) < S7_LONG_MIN))
 	    return(big_subtract(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(a)), x)));
 	  break;
 
 	case NUM_RATIO:
-	  if ((numerator(a) > LONG_MAX) ||
-	      (denominator(a) > LONG_MAX) ||
-	      (numerator(a) < LONG_MIN))
+	  if ((numerator(a) > S7_LONG_MAX) ||
+	      (denominator(a) > S7_LONG_MAX) ||
+	      (numerator(a) < S7_LONG_MIN))
 	    return(big_subtract(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, (numerator(a)), denominator(a)), x)));
 	  break;
 	}
@@ -7186,15 +7192,15 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
       switch (a.type)
 	{
 	case NUM_INT:
-	  if ((integer(a) > LONG_MAX) ||
-	      (integer(a) < LONG_MIN))
+	  if ((integer(a) > S7_LONG_MAX) ||
+	      (integer(a) < S7_LONG_MIN))
 	    return(big_multiply(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(a)), x)));
 	  break;
 
 	case NUM_RATIO:
-	  if ((numerator(a) > LONG_MAX) ||
-	      (denominator(a) > LONG_MAX) ||
-	      (numerator(a) < LONG_MIN))
+	  if ((numerator(a) > S7_LONG_MAX) ||
+	      (denominator(a) > S7_LONG_MAX) ||
+	      (numerator(a) < S7_LONG_MIN))
 	    return(big_multiply(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, (numerator(a)), denominator(a)), x)));
 	  break;
 	}
@@ -7211,8 +7217,8 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	{
 	case NUM_INT: 
 #if WITH_GMP
-	  if ((integer(b) > LONG_MAX) ||
-	      (integer(b) < LONG_MIN))
+	  if ((integer(b) > S7_LONG_MAX) ||
+	      (integer(b) < S7_LONG_MIN))
 	    return(big_multiply(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(a)), old_x)));
 #endif
 	  if (x == sc->NIL)
@@ -7329,15 +7335,15 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
       switch (a.type)
 	{
 	case NUM_INT:
-	  if ((integer(a) > LONG_MAX) ||
-	      (integer(a) < LONG_MIN))
+	  if ((integer(a) > S7_LONG_MAX) ||
+	      (integer(a) < S7_LONG_MIN))
 	    return(big_divide(sc, s7_cons(sc, s7_Int_to_big_integer(sc, integer(a)), x)));
 	  break;
 
 	case NUM_RATIO:
-	  if ((numerator(a) > LONG_MAX) ||
-	      (denominator(a) > LONG_MAX) ||
-	      (numerator(a) < LONG_MIN))
+	  if ((numerator(a) > S7_LONG_MAX) ||
+	      (denominator(a) > S7_LONG_MAX) ||
+	      (numerator(a) < S7_LONG_MIN))
 	    return(big_divide(sc, s7_cons(sc, s7_ratio_to_big_ratio(sc, (numerator(a)), denominator(a)), x)));
 	  break;
 	}
@@ -18535,7 +18541,7 @@ static long int applicable_length(s7_scheme *sc, s7_pointer obj)
 	if (len < 0)             /* dotted (does not include the final cdr) */
 	  return(-len);
 	if (len == 0)            /* circular */
-	  return(LONG_MAX);
+	  return(S7_LONG_MAX);
 	return(len);
       }
 
@@ -18679,7 +18685,7 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
    *    better marker.  This actually might not be an error (the for-each function could
    *    have call-with-exit), but it seems better to complain about it.
    */
-  if (len == LONG_MAX)
+  if (len == S7_LONG_MAX)
     return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 		    make_list_2(sc, make_protected_string(sc, "for-each's arguments are circular lists! ~A"), cdr(args))));
 
@@ -18817,7 +18823,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
     }
 
   /* if at this point len == LONG_MAX, then all args are circular */
-  if (len == LONG_MAX)
+  if (len == S7_LONG_MAX)
     return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 		    make_list_2(sc, make_protected_string(sc, "map's arguments are circular lists! ~A"), cdr(args))));
 
@@ -20129,8 +20135,8 @@ static bool is_steppable_integer(s7_pointer p)
 {
   return((type(p) == T_NUMBER) &&               /* not bignum, or any other weird case */
 	 (number_type(p) == NUM_INT) &&         /* not float etc */
-	 (integer(number(p)) < LONG_MAX) &&     /* not a huge int (bignum overflow etc) */
-	 (integer(number(p)) > LONG_MIN));
+	 (integer(number(p)) < S7_LONG_MAX) &&  /* not a huge int (bignum overflow etc) */
+	 (integer(number(p)) > S7_LONG_MIN));
 }
 
 
@@ -24001,7 +24007,7 @@ static s7_pointer s7_number_to_big_real(s7_scheme *sc, s7_pointer p)
       {
 	s7_Int val;
 	val = s7_integer(p);
-	if ((val <= LONG_MAX) && (val >= LONG_MIN))
+	if ((val <= S7_LONG_MAX) && (val >= S7_LONG_MIN))
 	  mpfr_init_set_si(*n, (int)val, GMP_RNDN);
 	else mpfr_init_set_ld(*n, (long double)val, GMP_RNDN);
       }
@@ -24079,7 +24085,7 @@ static s7_pointer s7_number_to_big_complex(s7_scheme *sc, s7_pointer p)
       {
 	s7_Int val;
 	val = s7_integer(p);
-	if ((val <= LONG_MAX) && (val >= LONG_MIN))
+	if ((val <= S7_LONG_MAX) && (val >= S7_LONG_MIN))
 	  mpc_set_si(*n, (int)val, MPC_RNDNN);
 	else mpc_set_d(*n, (double)val, MPC_RNDNN);
       }
@@ -24189,7 +24195,7 @@ static s7_pointer make_big_complex(s7_scheme *sc, mpfr_t rl, mpfr_t im)
 
 static void mpz_init_set_s7_Int(mpz_t n, s7_Int uval)
 {
-  if ((uval <= LONG_MAX) && (uval >= LONG_MIN))
+  if ((uval <= S7_LONG_MAX) && (uval >= S7_LONG_MIN))
     mpz_init_set_si(n, (int)uval);
   else
     { /* long long int to gmp mpz_t */
@@ -24205,11 +24211,13 @@ static void mpz_init_set_s7_Int(mpz_t n, s7_Int uval)
 	  if (need_sign) val = -val;
 	  mpz_init_set_si(n, val >> 32);
 	  mpz_mul_2exp(n, n, 32);
-	  mpz_add_ui(n, n, (int)(val & 0xffffffff));
+	  mpz_add_ui(n, n, (unsigned int)(val & 0xffffffff)); /* the "unsigned" part matters in 64-bit machines */
 	  if (need_sign) mpz_neg(n, n);
 	}
     }
 }
+
+/* TODO: (+ 123123123123123 123123123123123) */
 
 
 static s7_pointer s7_Int_to_big_integer(s7_scheme *sc, s7_Int val)
@@ -24229,6 +24237,7 @@ static s7_Int big_integer_to_s7_Int(mpz_t n)
 
   if (mpz_fits_sint_p(n))
     return((s7_Int)mpz_get_si(n));
+  /* special case as always is most-negative-fixnum */
 
   mpz_init_set(x, n);
   if (mpz_cmp_ui(x, 0) < 0)
@@ -24237,6 +24246,8 @@ static s7_Int big_integer_to_s7_Int(mpz_t n)
       mpz_neg(x, x);
     }
   low = mpz_get_ui(x);
+  if (low == LLONG_MIN)
+    return(LLONG_MIN);
   mpz_fdiv_q_2exp(x, x, 32);
   high = mpz_get_ui(x);
   mpz_clear(x);
@@ -24388,8 +24399,8 @@ static mpq_t *s7_Ints_to_mpq(s7_Int num, s7_Int den)
   mpq_t *n;
   n = (mpq_t *)malloc(sizeof(mpq_t));
   mpq_init(*n);
-  if ((num <= LONG_MAX) && (num >= LONG_MIN) &&
-      (den <= LONG_MAX) && (den >= LONG_MIN))
+  if ((num <= S7_LONG_MAX) && (num >= S7_LONG_MIN) &&
+      (den <= S7_LONG_MAX) && (den >= S7_LONG_MIN))
     mpq_set_si(*n, (long int)num, (long int)den);
   else
     {
@@ -25967,6 +25978,8 @@ static s7_pointer big_exp(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer big_is_negative(s7_scheme *sc, s7_pointer args);
+
 static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 {
   /* g_expt can overflow easily so I think I'll handle as many cases as possible here */
@@ -25995,12 +26008,12 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 
       if (s7_is_real(y))
 	{
-	  if (s7_is_negative(y))
+	  if (big_is_negative(sc, cdr(args)) == sc->T)
 	    return(division_by_zero_error(sc, "expt", args));
 	}
       else
 	{
-	  if (s7_is_negative(big_real_part(sc, cdr(args))))
+	  if (big_is_negative(sc, (make_list_1(sc, big_real_part(sc, cdr(args))))) == sc->T)
 	    return(division_by_zero_error(sc, "expt", args));
 	}
 
@@ -26035,8 +26048,8 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	    return(x);
 	}
 
-      if ((yval < LONG_MAX) &&
-	  (yval > LONG_MIN))
+      if ((yval < S7_LONG_MAX) &&
+	  (yval > S7_LONG_MIN))
 	{
 	  if (s7_is_integer(x))
 	    {
@@ -26200,7 +26213,7 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 	      /* mpfr_integer_p can be confused: (expt 2718/1000 (bignum "617/5")) returns an int if precision=128, float if 512 */
 	      /*   so first make sure we're within (say) 31 bits */
 	      mpfr_t zi;
-	      mpfr_init_set_ui(zi, LONG_MAX, GMP_RNDN);
+	      mpfr_init_set_ui(zi, S7_LONG_MAX, GMP_RNDN);
 	      if (mpfr_cmpabs(mpc_realref(*z), zi) < 0)
 		{
 		  mpz_t *k;
@@ -26619,7 +26632,7 @@ static s7_pointer big_ash(s7_scheme *sc, s7_pointer args)
       else 
 	{
 	  shift = s7_integer(p1);
-	  if (shift < LONG_MIN)
+	  if (shift < S7_LONG_MIN)
 	    {
 	      if (p0_compared_to_zero == 1)
 		return(small_int(0));
@@ -28813,8 +28826,8 @@ s7_scheme *s7_init(void)
     #define LOG_LONG_MAX  21.487562
 
     top = sizeof(s7_Int);
-    s7_int_max = (top == 8) ? LONG_MAX : SHRT_MAX;
-    s7_int_min = (top == 8) ? LONG_MIN : SHRT_MIN;
+    s7_int_max = (top == 8) ? S7_LONG_MAX : SHRT_MAX;
+    s7_int_min = (top == 8) ? S7_LONG_MIN : SHRT_MIN;
     s7_int_bits = (top == 8) ? 63 : 31;
     s7_int_digits = (top == 8) ? 18 : 8;
 
@@ -29027,6 +29040,7 @@ s7_scheme *s7_init(void)
  *    intel xeon 5530 (2.4G)     2093     1855, 0.811     1675 0.711
  *    amd phenom 965 (3.4G):     2083     1862, 0.808     1667 0.823
  *    intel i7 930 (2.8G):       2084     1864  0.704     1667 0.620
+ *    intel i7 950 (3.1G):                                1667 0.590
  *
  * 10.8: 0.684, same in 11.10: 0.380, using no-gui snd (overhead: 0.04)
  */

@@ -7342,7 +7342,7 @@
 (test (format #f "~1/4F" 1.4) 'error)
 (test (format #f "~1.4F" 1.4) 'error)
 (test (format #f "~F" (real-part (log 0.0))) "-inf.0")
-(test (format #f "~F" (/ (real-part (log 0.0)) (real-part (log 0.0)))) "nan.0")
+(test (let ((val (format #f "~F" (/ (real-part (log 0.0)) (real-part (log 0.0)))))) (or (string=? val "nan.0") (string=? val "-nan.0"))) #t)
 (test (format #f "~1/4T~A" 1) 'error)
 (test (format #f "~T") "")
 (test (format #f "~@P~S" 1 '(1)) "y(1)")
@@ -35078,17 +35078,18 @@ why are these different (read-time `#() ? )
 (num-test (expt 0.0 0.0) 0.0)
 (num-test (expt -0.0 -0.0) 0.0)
 
-(num-test (let ((dickey (lambda (x y) ; from Kawa
-			  (+  (* 1335/4 (expt y 6))
-			      (* (expt x 2)
-				 (- (* 11 (expt x 2) (expt y 2))
-				    (expt y 6)
-				    (* 121 (expt y 4))
-				    2))
-			      (* 11/2 (expt y 8))
-			      (/ x (* 2 y))))))
-	    (dickey 77617 33096))
-	  -54767/66192)
+(if with-bignums
+    (num-test (let ((dickey (lambda (x y) ; from Kawa
+			      (+  (* 1335/4 (expt y 6))
+				  (* (expt x 2)
+				     (- (* 11 (expt x 2) (expt y 2))
+					(expt y 6)
+					(* 121 (expt y 4))
+					2))
+				  (* 11/2 (expt y 8))
+				  (/ x (* 2 y))))))
+		(dickey 77617 33096))
+	      -54767/66192))
 
 
 
