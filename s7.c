@@ -1083,6 +1083,8 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj);
 static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args);
 static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect);
 static void pop_input_port(s7_scheme *sc);
+static bool s7_is_negative(s7_pointer obj);
+static bool s7_is_positive(s7_pointer obj);
 
 #if HAVE_PTHREADS
   static bool is_thread(s7_pointer obj);
@@ -4345,6 +4347,7 @@ static s7_Double round_per_R5RS(s7_Double x)
 }
 
 
+#if (!WITH_GMP)
 static bool s7_is_negative(s7_pointer obj)
 {
   switch (number_type(obj))
@@ -4365,6 +4368,7 @@ static bool s7_is_positive(s7_pointer x)
     default:        return(s7_real(x) > 0);
     }
 }
+#endif
 
 
 static bool s7_is_zero(s7_pointer x)
@@ -4736,15 +4740,30 @@ char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
 static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_number_to_string "(number->string num :optional (radix 10)) converts the number num into a string."
-  s7_Int radix = 0;
+  s7_Int radix = 10;
   int size = 20;
   char *res;
   s7_pointer x;
 
   x = car(args);
-
   if (!s7_is_number(x))
     return(s7_wrong_type_arg_error(sc, "number->string", 1, x, "a number"));
+
+  if (is_pair(cdr(args)))
+    {
+      s7_pointer y;
+      y = cadr(args);
+      if (s7_is_integer(y))
+	radix = s7_integer(y);
+      else return(s7_wrong_type_arg_error(sc, "number->string radix,", 2, y, "an integer"));
+      if ((radix < 2) || (radix > 16))
+	return(s7_out_of_range_error(sc, "number->string radix,", 2, y, "should be between 2 and 16"));
+    }
+
+#if WITH_GMP
+  if (s7_is_bignum(x))
+    return(make_string_uncopied(sc, big_number_to_string_with_radix(x, radix, 0)));
+#endif
 
   if (number_type(x) > NUM_RATIO)
     {
@@ -4771,15 +4790,8 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 	}
     }
 
-  if (is_pair(cdr(args)))
-    {
-      if (s7_is_integer(cadr(args)))
-	radix = s7_integer(cadr(args));
-      if ((radix < 2) || (radix > 16))
-	return(s7_out_of_range_error(sc, "number->string radix,", 2, cadr(args), "should be between 2 and 16"));
-
-      res = number_to_string_with_radix(sc, x, radix, 0, (radix == 10) ? size : 20, 'g');
-    }
+  if (radix != 10)
+    res = number_to_string_with_radix(sc, x, radix, 0, (radix == 10) ? size : 20, 'g');
   else res = number_to_string_base_10(x, 0, size, 'g');
   
   return(make_string_uncopied(sc, res));
@@ -24086,7 +24098,7 @@ static s7_pointer s7_number_to_big_complex(s7_scheme *sc, s7_pointer p)
 	s7_Int val;
 	val = s7_integer(p);
 	if ((val <= S7_LONG_MAX) && (val >= S7_LONG_MIN))
-	  mpc_set_si(*n, (int)val, MPC_RNDNN);
+	  mpc_set_si(*n, (long int)val, MPC_RNDNN);
 	else mpc_set_d(*n, (double)val, MPC_RNDNN);
       }
       break;
@@ -24193,31 +24205,43 @@ static s7_pointer make_big_complex(s7_scheme *sc, mpfr_t rl, mpfr_t im)
 }
 
 
+/* gmp.h mpz_init_set_si the "si" part is "signed long int", so in the 64-bit case,
+ *   s7_Int already fits.  I guess we can catch this (since no configure script)
+ *   by noticing that sizeof(s7_Int) == sizeof(long int).
+ */
+
 static void mpz_init_set_s7_Int(mpz_t n, s7_Int uval)
 {
-  if ((uval <= S7_LONG_MAX) && (uval >= S7_LONG_MIN))
-    mpz_init_set_si(n, (int)uval);
+  if (sizeof(s7_Int) == sizeof(long int))
+    mpz_init_set_si(n, uval);
   else
-    { /* long long int to gmp mpz_t */
-      bool need_sign;
-      long long int val;
-      val = (long long int)uval;
-      /* handle one special case (sigh) */
-      if (val == LLONG_MIN)
-	mpz_init_set_str(n, "-9223372036854775808", 10);
+    {
+      if ((uval <= S7_LONG_MAX) && (uval >= S7_LONG_MIN))
+	mpz_init_set_si(n, (int)uval);
       else
-	{
-	  need_sign = (val < 0);
-	  if (need_sign) val = -val;
-	  mpz_init_set_si(n, val >> 32);
-	  mpz_mul_2exp(n, n, 32);
-	  mpz_add_ui(n, n, (unsigned int)(val & 0xffffffff)); /* the "unsigned" part matters in 64-bit machines */
-	  if (need_sign) mpz_neg(n, n);
+	{ /* long long int to gmp mpz_t */
+	  bool need_sign;
+	  long long int val;
+	  val = (long long int)uval;
+	  /* handle one special case (sigh) */
+	  if (val == LLONG_MIN)
+	    mpz_init_set_str(n, "-9223372036854775808", 10);
+	  else
+	    {
+	      need_sign = (val < 0);
+	      if (need_sign) val = -val;
+	      mpz_init_set_si(n, val >> 32);
+	      mpz_mul_2exp(n, n, 32);
+	      mpz_add_ui(n, n, (unsigned int)(val & 0xffffffff));
+	      if (need_sign) mpz_neg(n, n);
+	    }
 	}
     }
 }
-
-/* TODO: (+ 123123123123123 123123123123123) */
+/* TODO: (+ 123123123123123 123123123123123)
+   (expt 0 (make-rectangular (- (expt 2 60)) 1.0))
+   (expt 0 (- (expt 2.0 60)))
+*/
 
 
 static s7_pointer s7_Int_to_big_integer(s7_scheme *sc, s7_Int val)
@@ -24235,6 +24259,9 @@ static s7_Int big_integer_to_s7_Int(mpz_t n)
   mpz_t x;
   bool need_sign = false;
 
+  if (sizeof(s7_Int) == sizeof(long int))
+    return(mpz_get_si(n));
+
   if (mpz_fits_sint_p(n))
     return((s7_Int)mpz_get_si(n));
   /* special case as always is most-negative-fixnum */
@@ -24248,6 +24275,7 @@ static s7_Int big_integer_to_s7_Int(mpz_t n)
   low = mpz_get_ui(x);
   if (low == LLONG_MIN)
     return(LLONG_MIN);
+
   mpz_fdiv_q_2exp(x, x, 32);
   high = mpz_get_ui(x);
   mpz_clear(x);
@@ -24255,6 +24283,8 @@ static s7_Int big_integer_to_s7_Int(mpz_t n)
     return(-(low + (high << 32)));
   return(low + (high << 32));
 }
+
+/* (expt 1/2 9223372036854775807) */
 
 
 static bool real_is_too_big(s7_pointer p)
@@ -25978,8 +26008,6 @@ static s7_pointer big_exp(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer big_is_negative(s7_scheme *sc, s7_pointer args);
-
 static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 {
   /* g_expt can overflow easily so I think I'll handle as many cases as possible here */
@@ -26008,12 +26036,12 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 
       if (s7_is_real(y))
 	{
-	  if (big_is_negative(sc, cdr(args)) == sc->T)
+	  if (s7_is_negative(y))
 	    return(division_by_zero_error(sc, "expt", args));
 	}
       else
 	{
-	  if (big_is_negative(sc, (make_list_1(sc, big_real_part(sc, cdr(args))))) == sc->T)
+	  if (s7_is_negative(big_real_part(sc, cdr(args))))
 	    return(division_by_zero_error(sc, "expt", args));
 	}
 
@@ -26507,41 +26535,69 @@ static s7_pointer big_is_zero(s7_scheme *sc, s7_pointer args)
 }
 
 
+static bool s7_is_positive(s7_pointer obj)
+{
+  if (is_c_object(obj))
+    {
+      if (c_object_type(obj) == big_integer_tag)
+	return(mpz_cmp_ui(S7_BIG_INTEGER(obj), 0) > 0);
+
+      if (c_object_type(obj) == big_ratio_tag)
+	return(mpq_cmp_ui(S7_BIG_RATIO(obj), 0, 1) > 0);
+
+      if (c_object_type(obj) == big_real_tag)
+	return(mpfr_cmp_ui(S7_BIG_REAL(obj), 0) > 0);
+    }
+
+  switch (number_type(obj))
+    {
+    case NUM_INT:   return(s7_integer(obj) > 0);
+    case NUM_RATIO: return(s7_numerator(obj) > 0);
+    default:        return(s7_real(obj) > 0);
+    }
+  return(false);
+}
+
+
 static s7_pointer big_is_positive(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer p;
-  p = car(args);
-  if (is_c_object(p))
+  if (!s7_is_real(car(args)))
+    return(s7_wrong_type_arg_error(sc, "positive?", 0, car(args), "a real"));
+  
+  return(make_boolean(sc, s7_is_positive(car(args))));
+}
+
+
+static bool s7_is_negative(s7_pointer obj)
+{
+  if (is_c_object(obj))
     {
-      if (c_object_type(p) == big_integer_tag)
-	return(make_boolean(sc, mpz_cmp_ui(S7_BIG_INTEGER(p), 0) > 0));
+      if (c_object_type(obj) == big_integer_tag)
+	return(mpz_cmp_ui(S7_BIG_INTEGER(obj), 0) < 0);
 
-      if (c_object_type(p) == big_ratio_tag)
-	return(make_boolean(sc, mpq_cmp_ui(S7_BIG_RATIO(p), 0, 1) > 0));
+      if (c_object_type(obj) == big_ratio_tag)
+	return(mpq_cmp_ui(S7_BIG_RATIO(obj), 0, 1) < 0);
 
-      if (c_object_type(p) == big_real_tag)
-	return(make_boolean(sc, mpfr_cmp_ui(S7_BIG_REAL(p), 0) > 0));
+      if (c_object_type(obj) == big_real_tag)
+	return(mpfr_cmp_ui(S7_BIG_REAL(obj), 0) < 0);
     }
-  return(g_is_positive(sc, args));
+
+  switch (number_type(obj))
+    {
+    case NUM_INT:   return(s7_integer(obj) < 0);
+    case NUM_RATIO: return(s7_numerator(obj) < 0);
+    default:        return(s7_real(obj) < 0);
+    }
+  return(false); /* need s7_scheme pointer to return an error */
 }
 
 
 static s7_pointer big_is_negative(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer p;
-  p = car(args);
-  if (is_c_object(p))
-    {
-      if (c_object_type(p) == big_integer_tag)
-	return(make_boolean(sc, mpz_cmp_ui(S7_BIG_INTEGER(p), 0) < 0));
-
-      if (c_object_type(p) == big_ratio_tag)
-	return(make_boolean(sc, mpq_cmp_ui(S7_BIG_RATIO(p), 0, 1) < 0));
-
-      if (c_object_type(p) == big_real_tag)
-	return(make_boolean(sc, mpfr_cmp_ui(S7_BIG_REAL(p), 0) < 0));
-    }
-  return(g_is_negative(sc, args));
+  if (!s7_is_real(car(args)))
+    return(s7_wrong_type_arg_error(sc, "negative?", 0, car(args), "a real"));
+  
+  return(make_boolean(sc, s7_is_negative(car(args))));
 }
 
 
