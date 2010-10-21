@@ -7220,7 +7220,7 @@
 
 (CFNC-29x "void gdk_window_shape_combine_region GdkWindow* window cairo_region_t* shape_region gint offset_x gint offset_y")
 (CFNC-29x "void gdk_window_invalidate_region GdkWindow* window cairo_region_t* region gboolean invalidate_children")
-(CFNC-29x "void gdk_window_invalidate_maybe_recurse GdkWindow* window cairo_region_t* region lambda2 func lambda_data #func_info")
+;(CFNC-29x "void gdk_window_invalidate_maybe_recurse GdkWindow* window cairo_region_t* region lambda2 func lambda_data #func_info")
 (CFNC-29x "cairo_region_t* gdk_window_get_update_area GdkWindow* window")
 (CFNC-29x "void gdk_window_begin_paint_region GdkWindow* window cairo_region_t* region")
 (CFNC-29x "cairo_region_t* gtk_widget_region_intersect GtkWidget* widget cairo_region_t* region") ; FREE

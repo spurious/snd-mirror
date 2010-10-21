@@ -8683,6 +8683,7 @@
 
 (test (object->string "hi" #f) "hi")
 (test (object->string "h\\i" #f) "h\\i")
+(test (object->string -1.(list? -1e0)) "-1.0")
 
 (for-each
  (lambda (arg)
@@ -17685,6 +17686,7 @@ why are these different (read-time `#() ? )
 (test (procedure? ((((((lambda (x) (set! x (lambda () x))) (lambda () x))))))) #t)
 (test ((do ((i 0 (+ i 1))) ((= i 1) (lambda () 3)))) 3)
 (test (dynamic-wind s7-version s7-version s7-version) (s7-version))
+(test ((((lambda - -) -) 0) 1) -1)
 
 (test (+ (+) (*)) 1)
 (test (modulo (lcm) (gcd)) 1)
@@ -30149,6 +30151,7 @@ why are these different (read-time `#() ? )
 (num-test (sinh -2.0e+00+9.42512322775237976202e+00i) 3.6268601916692946571e0-1.2989619299081657245e-3i)
 (num-test (sinh -2.0e+00-9.42512322775237976202e+00i) 3.6268601916692946571e0+1.2989619299081657245e-3i)
 (num-test (sinh 0) 0.0)
+(num-test (sinh 0+i) (* 0+i (sin 1)))
 
 (test (sinh) 'error)
 (test (sinh "hi") 'error)
@@ -33446,6 +33449,12 @@ why are these different (read-time `#() ? )
 (test (exp "hi") 'error)
 (test (exp 1.0+23.0i 1.0+23.0i) 'error)
 
+(if with-bignums
+    (let ((val1 (* 1000 (- (exp 30) 10686474581524)))
+	  (val2 (* 1000 (- (exp (bignum "30")) 10686474581524))))
+      (if (> (abs (- val1 val2)) 1)
+	  (format #t "(exp 30): ~A ~A~%" val1 val2))))
+
 
 
 ;; -------- log
@@ -35507,6 +35516,10 @@ why are these different (read-time `#() ? )
       (num-test (rationalize .1e20) 'error)
       (num-test (rationalize 1e19) 'error)
       (num-test (rationalize 1e20) 'error)))
+
+(test (rationalize (expt 2 60) -) 'error)
+(num-test (rationalize (/ (expt 2 60) (expt 3 20)) .01) 2314582608/7)
+(num-test (rationalize (/ (expt 2 60) (expt 3 20)) .001) 8266366457/25)
 
 
 
@@ -40726,8 +40739,10 @@ why are these different (read-time `#() ? )
   (if (not (provided? 'gmp)) (test (* 1e12000 1e12000) inf+))
 
   (test (zero? nan.0) #f)
+  (test (zero? 0/0) #f)
   (test (positive? nan.0) #f)
   (test (negative? nan.0) #f)
+  (test (negative? (/ (real-part (log 0.0)) (real-part (log 0.0)))) #f) ; and yet it prints as -nan.0
   (test (exact? nan.0) #f)
   (test (inexact? nan.0) #t)
   (test (imag-part nan.0) 0.0)
@@ -40979,6 +40994,12 @@ why are these different (read-time `#() ? )
 (test (rational? most-negative-fixnum) #t)
 (test (rational? 0/0) #f)  ; I like this
 (test (rational? 1/0) #f)
+(test (if 1/0 0 1) 0)
+(test (nan? (random 1/0)) #t)
+(let ((val (random (log 0.0))))
+  (test (and (infinite? (real-part val))
+	     (> pi (imag-part val) 0.0))
+	#t))
 
 (test (integer? 1/2) #f)
 (test (integer? 1/1) #t)
@@ -50829,6 +50850,11 @@ why are these different (read-time `#() ? )
   (num-test (expt f-3.25 0) 1.0 )
   (num-test (atan 1 1) (atan 1)))
 
+(num-test (+ 123123123123123 123123123123123) 246246246246246)
+(test (expt 0 (make-rectangular (- (expt 2 60)) 1.0)) 'error)
+(test (expt 0 (- (expt 2.0 60))) 'error)
+
+
 (if with-bignums 
     (letrec ((tb (lambda (n1 n2)
 		   (= n1 (+ (* n2 (quotient n1 n2))
@@ -54698,22 +54724,29 @@ why are these different (read-time `#() ? )
       ))
 
 
-(for-each
- (lambda (op)
-   (for-each
-    (lambda (arg)
-      (let ((val (catch #t (lambda () (op arg)) (lambda args 'error))))
-	(if (not (eq? val 'error))
-	    (begin 
-	      (display "(") (display op) (display " ") (display arg) (display ") returned ")
-	      (display val) (display " but expected 'error") (newline)))))
-    (list "hi" '() #\a (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs #t (if #f #f) (lambda (a) (+ a 1))
-	  (if (eof-object? (with-input-from-string "" (lambda () (read-char))))
-	      (with-input-from-string "" (lambda () (read-char)))
-	      :key))))
- (list exact? inexact? zero? positive? negative? even? odd? quotient remainder modulo truncate floor ceiling round
-       abs max min gcd lcm expt exact->inexact inexact->exact rationalize numerator denominator imag-part real-part
-       magnitude angle make-polar make-rectangular sqrt exp log sin cos tan asin acos atan number->string))
+(let ((ntype ((cadr (make-type)) "hi")))
+  (for-each
+
+   (lambda (op)
+     (for-each
+
+      (lambda (arg)
+	(let ((val (catch #t (lambda () (op arg)) (lambda args 'error))))
+	  (if (not (eq? val 'error))
+	      (format #t "(~A ~A) -> ~A (expected 'error)~%" op arg val)))
+	(let ((val (catch #t (lambda () (op 0 arg)) (lambda args 'error))))
+	  (if (not (eq? val 'error))
+	      (format #t "(~A 0 ~A) -> ~A (expected 'error)~%" op arg val)))
+	(if with-bignums
+	    (let ((val (catch #t (lambda () (op (expt 2 60) arg)) (lambda args 'error))))
+	      (if (not (eq? val 'error))
+		  (format #t "(~A 2^60 ~A) -> ~A (expected 'error)~%" op arg val)))))
+
+      (list "hi" '() #\a (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs #t (if #f #f) (lambda (a) (+ a 1)) #<undefined> #<unspecified> #<eof> ntype :key)))
+
+   (list exact? inexact? zero? positive? negative? even? odd? quotient remainder modulo truncate floor ceiling round
+	 abs max min gcd lcm expt exact->inexact inexact->exact rationalize numerator denominator imag-part real-part
+	 magnitude angle make-polar make-rectangular sqrt exp log sin cos tan asin acos atan number->string)))
 
 
 (let ((d 3.14)

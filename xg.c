@@ -217,7 +217,6 @@ static void define_xm_obj(void)
   static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \
 
 /* type checks for callback wrappers */
-#define XEN_lambda2_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 2)))
 #define XEN_lambda3_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 3)))
 #define XEN_GtkCallback_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 2)))
 #define XEN_GSourceFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 1)))
@@ -254,7 +253,6 @@ static void define_xm_obj(void)
 #define XEN_GtkAssistantPageFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 2)))
 #define XEN_GtkRecentSortFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 3)))
 #define XEN_GCallback_P(Arg) (XEN_PROCEDURE_P(Arg) && ((XEN_REQUIRED_ARGS_OK(Arg, 2)) || (XEN_REQUIRED_ARGS_OK(Arg, 3)) || (XEN_REQUIRED_ARGS_OK(Arg, 4))))
-#define XEN_TO_C_lambda2(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_child_func
 #define XEN_TO_C_lambda3(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_find_func
 #define XEN_TO_C_GtkCallback(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_func2
 #define XEN_TO_C_GSourceFunc(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_timer_func
@@ -320,7 +318,6 @@ XM_TYPE_PTR_2(GdkEventAny_, GdkEventAny*)
 XM_TYPE_PTR_1(gdouble_, gdouble*)
 XM_TYPE_PTR_1(GtkColorSelectionDialog_, GtkColorSelectionDialog*)
 XM_TYPE_PTR_1(GdkEventMotion_, GdkEventMotion*)
-XM_TYPE_PTR(GdkWindow_, GdkWindow*)
 XM_TYPE_PTR(GtkAccelKey_, GtkAccelKey*)
 XM_TYPE_PTR(GClosure_, GClosure*)
 XM_TYPE_PTR(GtkWidget_, GtkWidget*)
@@ -408,6 +405,7 @@ XM_TYPE_PTR(GdkDragContext_, GdkDragContext*)
 #define C_TO_XEN_guint32(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_guint32(Arg) (guint32)(XEN_TO_C_ULONG(Arg))
 #define XEN_guint32_P(Arg) XEN_ULONG_P(Arg)
+XM_TYPE_PTR(GdkWindow_, GdkWindow*)
 XM_TYPE_PTR(GList_, GList*)
 #define C_TO_XEN_GdkDragProtocol(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkDragProtocol(Arg) (GdkDragProtocol)(XEN_TO_C_INT(Arg))
@@ -804,7 +802,7 @@ XM_TYPE_PTR_1(GtkAssistant_, GtkAssistant*)
 #define C_TO_XEN_GtkAssistantPageType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkAssistantPageType(Arg) (GtkAssistantPageType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkAssistantPageType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR(GtkLinkButton_, GtkLinkButton*)
+XM_TYPE_PTR_1(GtkLinkButton_, GtkLinkButton*)
 XM_TYPE_PTR_1(GtkRecentChooser_, GtkRecentChooser*)
 #define C_TO_XEN_GtkRecentSortType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkRecentSortType(Arg) (GtkRecentSortType)(XEN_TO_C_INT(Arg))
@@ -1080,15 +1078,6 @@ static void xm_unprotect_at(int ind)
 
 
 /* ---------------------------------------- callback handlers ---------------------------------------- */
-
-static gboolean gxg_child_func(GdkWindow* window, gpointer func_info)
-{
-  if (!XEN_LIST_P((XEN)func_info)) return((gboolean)0);
-  return(XEN_TO_C_gboolean(XEN_CALL_2(XEN_CAR((XEN)func_info),
-                                      C_TO_XEN_GdkWindow_(window),
-                                      XEN_CADR((XEN)func_info),
-                                      c__FUNCTION__)));
-}
 
 static gboolean gxg_find_func(GtkAccelKey* key, GClosure* closure, gpointer func_info)
 {
@@ -29769,27 +29758,6 @@ gboolean invalidate_children)"
   return(XEN_FALSE);
 }
 
-static XEN gxg_gdk_window_invalidate_maybe_recurse(XEN window, XEN region, XEN func, XEN func_info)
-{
-  #define H_gdk_window_invalidate_maybe_recurse "void gdk_window_invalidate_maybe_recurse(GdkWindow* window, \
-cairo_region_t* region, lambda2 func, lambda_data func_info)"
-  XEN_ASSERT_TYPE(XEN_GdkWindow__P(window), window, 1, "gdk_window_invalidate_maybe_recurse", "GdkWindow*");
-  XEN_ASSERT_TYPE(XEN_cairo_region_t__P(region), region, 2, "gdk_window_invalidate_maybe_recurse", "cairo_region_t*");
-  XEN_ASSERT_TYPE(XEN_lambda2_P(func), func, 3, "gdk_window_invalidate_maybe_recurse", "lambda2");
-  if (XEN_NOT_BOUND_P(func_info)) func_info = XEN_FALSE; 
-  else XEN_ASSERT_TYPE(XEN_lambda_data_P(func_info), func_info, 4, "gdk_window_invalidate_maybe_recurse", "lambda_data");
-  {
-    int loc;
-    XEN gxg_ptr = XEN_LIST_5(func, func_info, XEN_FALSE, XEN_FALSE, XEN_FALSE);
-    loc = xm_protect(gxg_ptr);
-    XEN_LIST_SET(gxg_ptr, 2, C_TO_XEN_INT(loc));
-    gdk_window_invalidate_maybe_recurse(XEN_TO_C_GdkWindow_(window), XEN_TO_C_cairo_region_t_(region), XEN_TO_C_lambda2(func), 
-                                    XEN_TO_C_lambda_data(func_info));
-    xm_unprotect_at(loc);
-    return(XEN_FALSE);
-   }
-}
-
 static XEN gxg_gdk_window_get_update_area(XEN window)
 {
   #define H_gdk_window_get_update_area "cairo_region_t* gdk_window_get_update_area(GdkWindow* window)"
@@ -38714,7 +38682,6 @@ XEN_NARGIFY_5(gxg_gdk_pango_layout_line_get_clip_region_w, gxg_gdk_pango_layout_
 XEN_NARGIFY_5(gxg_gdk_pango_layout_get_clip_region_w, gxg_gdk_pango_layout_get_clip_region)
 XEN_NARGIFY_4(gxg_gdk_window_shape_combine_region_w, gxg_gdk_window_shape_combine_region)
 XEN_NARGIFY_3(gxg_gdk_window_invalidate_region_w, gxg_gdk_window_invalidate_region)
-XEN_ARGIFY_4(gxg_gdk_window_invalidate_maybe_recurse_w, gxg_gdk_window_invalidate_maybe_recurse)
 XEN_NARGIFY_1(gxg_gdk_window_get_update_area_w, gxg_gdk_window_get_update_area)
 XEN_NARGIFY_2(gxg_gdk_window_begin_paint_region_w, gxg_gdk_window_begin_paint_region)
 XEN_NARGIFY_2(gxg_gtk_widget_region_intersect_w, gxg_gtk_widget_region_intersect)
@@ -42703,7 +42670,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gdk_pango_layout_get_clip_region_w gxg_gdk_pango_layout_get_clip_region
 #define gxg_gdk_window_shape_combine_region_w gxg_gdk_window_shape_combine_region
 #define gxg_gdk_window_invalidate_region_w gxg_gdk_window_invalidate_region
-#define gxg_gdk_window_invalidate_maybe_recurse_w gxg_gdk_window_invalidate_maybe_recurse
 #define gxg_gdk_window_get_update_area_w gxg_gdk_window_get_update_area
 #define gxg_gdk_window_begin_paint_region_w gxg_gdk_window_begin_paint_region
 #define gxg_gtk_widget_region_intersect_w gxg_gtk_widget_region_intersect
@@ -46699,7 +46665,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gdk_pango_layout_get_clip_region, gxg_gdk_pango_layout_get_clip_region_w, 5, 0, 0, H_gdk_pango_layout_get_clip_region);
   XG_DEFINE_PROCEDURE(gdk_window_shape_combine_region, gxg_gdk_window_shape_combine_region_w, 4, 0, 0, H_gdk_window_shape_combine_region);
   XG_DEFINE_PROCEDURE(gdk_window_invalidate_region, gxg_gdk_window_invalidate_region_w, 3, 0, 0, H_gdk_window_invalidate_region);
-  XG_DEFINE_PROCEDURE(gdk_window_invalidate_maybe_recurse, gxg_gdk_window_invalidate_maybe_recurse_w, 3, 1, 0, H_gdk_window_invalidate_maybe_recurse);
   XG_DEFINE_PROCEDURE(gdk_window_get_update_area, gxg_gdk_window_get_update_area_w, 1, 0, 0, H_gdk_window_get_update_area);
   XG_DEFINE_PROCEDURE(gdk_window_begin_paint_region, gxg_gdk_window_begin_paint_region_w, 2, 0, 0, H_gdk_window_begin_paint_region);
   XG_DEFINE_PROCEDURE(gtk_widget_region_intersect, gxg_gtk_widget_region_intersect_w, 2, 0, 0, H_gtk_widget_region_intersect);
@@ -49289,7 +49254,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("18-Oct-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("20-Oct-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

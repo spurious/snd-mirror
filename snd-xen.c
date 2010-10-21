@@ -155,20 +155,22 @@ void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *da
 #if HAVE_SCHEME
   if (handler == NULL)
     s7_symbol_set_value(s7, s7_make_symbol(s7, "*error-hook*"), s7_nil(s7));
-  else s7_eval_c_string(s7, "(set! *error-hook*                                   \n\
-                               (lambda (tag args)                                 \n\
-                                 (_snd_s7_error_handler_                          \n\
-                                   (string-append                                 \n\
-                                     (if (string? args)                           \n\
-                                         args                                     \n\
-                                         (apply format #f (car args) (cdr args))) \n\
-                                     (if (and (*error-info* 2)                    \n\
-                                              (string? (*error-info* 4))          \n\
-                                              (number? (*error-info* 3)))         \n\
-                                         (format #f \"~%~S[~D]: ~A~%\"            \n\
-                                                 (*error-info* 4)                 \n\
-                                                 (*error-info* 3)                 \n\
-                                                 (*error-info* 2))                \n\
+  else s7_eval_c_string(s7, "(set! *error-hook*                                      \n\
+                               (lambda (tag args)                                    \n\
+                                 (_snd_s7_error_handler_                             \n\
+                                   (string-append                                    \n\
+                                     (if (string? args)                              \n\
+                                         args                                        \n\
+                                         (if (pair? args)                            \n\
+                                             (apply format #f (car args) (cdr args)) \n\
+                                             \"\"))                                  \n\
+                                     (if (and (*error-info* 2)                       \n\
+                                              (string? (*error-info* 4))             \n\
+                                              (number? (*error-info* 3)))            \n\
+                                         (format #f \"~%~S[~D]: ~A~%\"               \n\
+                                                 (*error-info* 4)                    \n\
+                                                 (*error-info* 3)                    \n\
+                                                 (*error-info* 2))                   \n\
                                          \"\")))))");
 #endif
 }

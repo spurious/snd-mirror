@@ -11554,7 +11554,11 @@ static void check_shared_info_size(shared_info *ci)
       ci->size *= 2;
       ci->objs = (s7_pointer *)realloc(ci->objs, ci->size * sizeof(s7_pointer));
       ci->refs = (int *)realloc(ci->refs, ci->size * sizeof(int));
-      for (i = ci->top; i < ci->size; i++) ci->refs[i] = 0;
+      for (i = ci->top; i < ci->size; i++)
+	{
+	  ci->refs[i] = 0;
+	  ci->objs[i] = NULL;
+	}
     }
 }
 
@@ -15718,8 +15722,10 @@ static s7_pointer s_type_ref(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_make_type(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_type "(make-type :optkey print equal getter setter length name copy fill) returns a new type object.\
-The optional arguments are functions that specify how objects of the new type display themselves (print, 1 argument), \
+  #define H_make_type "(make-type :optkey print equal getter setter length name copy fill) returns a new type object, \
+a list of three functions: ?, make, and ref.  The '?' function returns #t if passed an argument of the new type, \
+the 'make' function creates a new object of that type, and the 'ref' function returns the value of that object.\
+The optional arguments to make-type are functions that specify how objects of the new type display themselves (print, 1 argument), \
 check for equality (equal, 2 args, both will be of the new type), apply themselves to arguments, (getter, any number \
 of args, see vector for an example), respond to the generalized set! and length generic functions, and finally, \
 one special case: name sets the type name (a string), which only matters if you're not specifying the print function. \
@@ -24238,10 +24244,6 @@ static void mpz_init_set_s7_Int(mpz_t n, s7_Int uval)
 	}
     }
 }
-/* TODO: (+ 123123123123123 123123123123123)
-   (expt 0 (make-rectangular (- (expt 2 60)) 1.0))
-   (expt 0 (- (expt 2.0 60)))
-*/
 
 
 static s7_pointer s7_Int_to_big_integer(s7_scheme *sc, s7_Int val)
@@ -26769,9 +26771,16 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
   s7_pointer p0, p1 = NULL;
 
   p0 = car(args);
+  if (!s7_is_real(p0))
+    return(s7_wrong_type_arg_error(sc, "rationalize", 1, p0, "a real"));
+  
   /* p0 can be exact, but we still have to check it for simplification */
   if (cdr(args) != sc->NIL)
-    p1 = cadr(args);
+    {
+      p1 = cadr(args);
+      if (!s7_is_real(p1))              /* (rationalize (expt 2 60) -) */
+	return(s7_wrong_type_arg_error(sc, "rationalize error limit,", 2, p1, "a real"));
+    }
 
   if (((is_c_object(p0)) || 
        ((p1) && (is_c_object(p1)))) && /* one or other is big, perhaps */
@@ -29081,6 +29090,9 @@ s7_scheme *s7_init(void)
  * things to fix: nonce-symbols need to be garbage collected
  * things to add: lint? (can we notice unreachable code, unbound variables, bad args)?
  *                could the profiler give block counts as well?
+ * if user creates an enormous list, it can seem to hang the listener:
+ *   *list-print-length* ?
+ *
  *
  * s7test valgrind, time       17-Jul-10   7-Sep-10        15-Oct-10
  *    intel core duo (1.83G):    3162     2690, 1.921     2426 1.830

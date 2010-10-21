@@ -1,4 +1,4 @@
-;;; makexg.scm creates the gtk2/gdk/pango/glib/cairo bindings using xgdata.scm, writes xg.c
+;;; makexg.scm creates the gtk2|3/gdk/pango/glib/cairo bindings using xgdata.scm, writes xg.c
 
 (define xg-file (open-output-file "xg.c"))
 
@@ -192,7 +192,7 @@
 	
 	"gdouble*" "GdkFill" "GdkSubwindowMode" "GdkLineStyle" "GdkCapStyle" "GdkJoinStyle"
 	"GtkInfoBar*" "GtkSpinner*" "GtkToolShell*" "GtkToolPalette*" "GtkToolPaletteDragTargets"
-	"GdkFunction" "GtkWrapBoxPacking" "GtkLinkButtonUriFunc"
+	"GdkFunction" "GtkWrapBoxPacking" "GtkLinkButton*"
 
 	"GdkRectangle*" "PangoRenderer*" "cairo_glyph_t**" "cairo_text_cluster_t**"
 ;	"cairo_text_cluster_flags_t" 
@@ -447,11 +447,12 @@
 			  (set! type (substring args (+ 1 sp) i))))
 		  (set! sp i))))))))
 
-(define callbacks (list (list 'lambda2 ; unnamed gdk_window_invalidate_maybe_recurse argument (2.90.6 now)
-			      "gboolean"
-			      "child_func"
-			      (parse-args "GdkWindow* window lambda_data func_info" 'callback)
-			      'temporary)
+(define callbacks (list            
+					;                       (list 'lambda2 ; unnamed gdk_window_invalidate_maybe_recurse argument (2.90.6 now)
+					;			      "gboolean"
+					;			      "child_func"
+					;			      (parse-args "GdkWindow* window lambda_data func_info" 'callback)
+					;			      'temporary)
 			(list 'lambda3 ; unnamed gtk_accel_group_find argument
 			      "gboolean"
 			      "find_func"
@@ -651,12 +652,12 @@
 			      "page_func"
 			      (parse-args "gint current_page lambda_data func_info" 'callback)
 			      'permanent)
-;			(list 'GtkLinkButtonUriFunc
-;			      "void"
-;			      "link_button_uri"
-;			      (parse-args "GtkLinkButton* button gchar* link lambda_data func_info" 'callback)
-;			      ;; const gchar *link
-;			      'permanent)
+					;			(list 'GtkLinkButtonUriFunc
+					;			      "void"
+					;			      "link_button_uri"
+					;			      (parse-args "GtkLinkButton* button gchar* link lambda_data func_info" 'callback)
+					;			      ;; const gchar *link
+					;			      'permanent)
 			(list 'GtkRecentSortFunc
 			      "gint"
 			      "recent_sort"
