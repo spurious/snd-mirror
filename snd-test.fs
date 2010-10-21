@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Sun Oct 10 04:07:18 CEST 2010
+\ Changed: Thu Oct 21 01:11:54 CEST 2010
 
 \ Commentary:
 \
@@ -13,7 +13,7 @@
 \ snd-forth -noinit -load snd-test.fs 3 7 20 \ test 3 7 20
 \ snd-forth -noinit -load snd-test.fs -23    \ all tests but 23
 \
-\ test -1: general
+\ test  0: general
 \ test 10: marks
 \ test 15: chan-local vars
 \ test 19: save and restore
@@ -21,16 +21,21 @@
 \ test 26: Gtk
 \ test 28: errors
 
-#f value under-valgrind
 24 set-object-print-length
 
 'snd-nogui provided? [unless]
   \ Prints to Snd's listener and stdout/stderr.
+
+  \ The original CLM-PRINT utilizes SND-PRINT only but we want output
+  \ to stdout/stderr too.
+  : clm-print ( fmt :optional args -- ) fth-format ( str ) snd-print ( str ) .stdout ;
+
   :port-name "sndout"
-  :write-line lambda: <{ line -- }> line snd-print .stdout ;
+  :write-line lambda: <{ line -- }> line snd-print ( line ) .stdout ;
   make-soft-port set-*stdout* value stdout-io
+
   :port-name "snderr"
-  :write-line lambda: <{ line -- }> line snd-print .stderr ;
+  :write-line lambda: <{ line -- }> line snd-print ( line ) .stderr ;
   make-soft-port set-*stderr* value stderr-io
 [then]
 
@@ -49,7 +54,9 @@ set-current
 previous
 
 \ lambda: <{ -- }> cr gc-stats cr .memory cr cr ; at-exit
-\ before-load-hook lambda: <{ fname -- f }> $" loading " fname $+ #f snd-test-message #t ; add-hook!
+\ before-load-hook lambda: <{ fname -- f }>
+\   $" loading " fname $+ #f snd-test-message #t
+\ ; add-hook!
 
 'snd-motif provided? 'xm provided? not && [if] dl-load libxm Init_libxm [then]
 'snd-gtk   provided? 'xg provided? not && [if] dl-load libxg Init_libxg [then]
@@ -71,14 +78,23 @@ require env
 require mix
 require dsp
 require snd-xm
-under-valgrind [unless]
-  require effects
-[then]
+require effects
+require bird.fsm
 
 reset-all-hooks
 
 \ If #t, prints proc-array lengths in test-28.
-#t value *snd-test-verbose*
+#f value *snd-test-verbose*
+
+\ *fth-verbose* -- fth arg --verbose
+\ *fth-debug*   -- fth arg --debug
+#f to *fth-verbose*
+#f to *fth-debug*
+
+\ *clm-verbose* -- test-19 function names; test-23 :statistics, :verbose, and :play
+\ *clm-debug*   -- test-23: :statistics for sndclm-examples
+#f to *clm-verbose*
+#f to *clm-debug*
 
 \ You may set them in .sndtest.fs.
 #f value my-snd-error-hook
@@ -93,11 +109,6 @@ listener-prompt        		  value original-prompt
 #t  		       		  value with-exit
 #f                     		  value all-args
 "/home/bil/zap/sounds/bigger.snd" value bigger-snd
-
-#f to *fth-verbose*
-#f to *fth-debug*
-#f to *clm-verbose*
-#f to *clm-debug*
 
 \ let: ( -- )
 \   file-pwd "/peaks" $+ { dir }
@@ -122,6 +133,7 @@ listener-prompt        		  value original-prompt
 [then]
 
 : fneq-err ( r1 r2 err -- f ) -rot f- fabs f<= ;
+
 : cneq-err ( c1 c2 err -- f )
   { c1 c2 err }
   c1 real-ref  c2 real-ref  err fneq-err
@@ -144,6 +156,7 @@ listener-prompt        		  value original-prompt
     then
   then
 ;
+
 : vequal-err ( v0 v1 err -- f )
   { val0 val1 err }
   val0 any->vct { v0 }
@@ -196,6 +209,7 @@ listener-prompt        		  value original-prompt
     #f
   then
 ;
+
 : set-arity-ok <{ proc args -- f }> proc set-xt args arity-ok ; 
 
 : make-color-with-catch ( c1 c2 c3 -- color )
@@ -286,7 +300,8 @@ listener-prompt        		  value original-prompt
   10  set-window-y       	    drop
   #t  set-show-listener      	    drop
   reset-almost-all-hooks
-  22050 set-mus-srate f>s to *clm-srate*
+  \ set-mus-srate returns old srate
+  22050 dup set-mus-srate drop to *clm-srate*
   stack-reset
   make-timer to overall-start-time
 ;
@@ -370,10 +385,40 @@ listener-prompt        		  value original-prompt
      "o2_dvi.wave.snd"
      "nist-shortpack.wav.snd"
      "bad_data_format.snd.snd" ) each ( file ) sf-dir swap $+ file-delete end-each
-  #t  set-show-listener      	    drop
+  #t set-show-listener drop
   "test-forth.output" save-listener drop
   original-prompt set-listener-prompt drop
 ;
+
+SIGSEGV lambda: { sig -- }
+  stack-reset
+  backtrace
+  "" #f snd-test-message
+  $" Segmentation fault (signal no %d)" #( sig ) snd-test-message
+  "" #f snd-test-message
+  finish-snd-test
+  2 snd-exit drop
+; signal drop
+
+SIGILL lambda: { sig -- }
+  stack-reset
+  backtrace
+  "" #f snd-test-message
+  $" Illegal instruction (signal no %d)" #( sig ) snd-test-message
+  "" #f snd-test-message
+  finish-snd-test
+  2 snd-exit drop
+; signal drop
+
+SIGINT lambda: { sig -- }
+  stack-reset
+  backtrace
+  "" #f snd-test-message
+  $" Interrupt received.  Clean up %S." #( *filename* #f file-basename ) snd-test-message
+  "" #f snd-test-message
+  finish-snd-test
+  0 snd-exit drop
+; signal drop
 
 'complex provided? [if]
   : complex-test ( -- )
@@ -438,7 +483,7 @@ listener-prompt        		  value original-prompt
   gen egen object-equal? unless $" equal? %s: %s %s?" #( name gen egen ) snd-display then
 ;
 
-\ ====== test -1: general
+\ ====== test 0: general
 : test-gen-equal ( g0 g1 g2 -- )
   { g0 g1 g2 }
   \ g0 g1 =
@@ -483,11 +528,13 @@ listener-prompt        		  value original-prompt
 ;
 
 : map-10-times-cb <{ y -- y' }> y 10.0 f* ;
+
 : map-diff-plus-cb { mx -- proc; y self -- y' }
   1 proc-create 1.001 mx f- , ( proc )
  does> { y self -- y' }
   self @ y f+
 ;
+
 : scan-less-than-zero-cb <{ y -- y' }> y f0< ;
 
 : 00-sel-from-snd ( -- )
@@ -1233,6 +1280,7 @@ listener-prompt        		  value original-prompt
     0.0
   then pk0loc f+  #f srate f*  size f/  peak0 2 >array
 ;
+
 : src-test15-cb ( os -- proc; y self -- val )
   1 proc-create swap ,
  does> { y self -- val }
@@ -1682,90 +1730,85 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    #( lambda: <{ -- val }> #( 60.0 120.0 240.0 ) #f 0 #f #f #f #f #t 2 notch-channel ;
       $" lambda: <{ snd chn -- val }> #( 60.0 120.0 240.0 ) #f 0 #f snd chn notch-channel drop ;"
       "notch-channel" )
-   'snd-motif provided? under-valgrind not && [if]
-     ( effects.fs )
-     #( lambda: <{ -- val }> 0.1 128 effects-squelch-channel ;
-	$" lambda: <{ snd chn -- val }> 0.1 128 snd chn effects-squelch-channel drop ;"
-	"effects-sqelch-channel" )
-     #( lambda: <{ -- val }> #f 0.5 0.1 0 #f #f #f effects-echo ;
-	$" lambda: <{ snd chn -- val }> #f 0.5 0.1 0 #f snd chn effects-echo drop ;"
-	"effects-echo" )
-     #( lambda: <{ -- val }> 0.5 0.1 #f 0 #f #f #f effects-flecho ;
-	$" lambda: <{ snd chn -- val }> 0.5 0.1 #f 0 #f snd chn effects-flecho drop ;"
-	"effects-flecho" )
-     #( lambda: <{ -- val }> 0.75 0.75 6.0 10.0 #f 0 #f #f #f effects-zecho ;
-	$" lambda: <{ snd chn -- val }> 0.75 0.75 6.0 10.0 #f 0 #f snd chn effects-zecho drop ;"
-	"effects-zecho" )
-     #( lambda: <{ -- val }> 0.1 50 0 #f #f #f effects-comb-filter ;
-	$" lambda: <{ snd chn -- val }> 0.1 50 0 #f snd chn effects-comb-filter drop ;"
-	"effects-comb-filter" )
-     #( lambda: <{ -- val }> 10000 0.5 0 #f #f #f effects-moog ;
-	$" lambda: <{ snd chn -- val }> 10000 0.5 0 #f snd chn effects-moog drop ;"
-	"effects-moog" )
-     #( lambda: <{ -- val }> #f #f effects-remove-dc ;
-	$" lambda: <{ snd chn -- val }>  snd chn effects-remove-dc drop ;"
-	"effects-remove-dc" )
-     #( lambda: <{ -- val }> #f #f effects-compand ;
-	$" lambda: <{ snd chn -- val }>  snd chn effects-compand drop ;"
-	"effects-compand" )
-     #( lambda: <{ -- val }> 100.0 #f 0 #f #f #f effects-am ;
-	$" lambda: <{ snd chn -- val }> 100.0 #f 0 #f snd chn effects-am drop ;"
-	"effects-am" )
-     #( lambda: <{ -- val }> 100.0 #f 0 #f #f #f effects-rm ;
-	$" lambda: <{ snd chn -- val }> 100.0 #f 0 #f snd chn effects-rm drop ;"
-	"effects-rm" )
-     #( lambda: <{ -- val }> 1000.0 100.0 0 #f #f #f effects-bbp ;
-	$" lambda: <{ snd chn -- val }> 1000.0 100.0 0 #f snd chn effects-bbp drop ;"
-	"effects-bbp" )
-     #( lambda: <{ -- val }> 1000.0 100.0 0 #f #f #f effects-bbr ;
-	$" lambda: <{ snd chn -- val }> 1000.0 100.0 0 #f snd chn effects-bbr drop ;"
-	"effects-bbr" )
-     #( lambda: <{ -- val }> 1000.0 0 #f #f #f effects-bhp ;
-	$" lambda: <{ snd chn -- val }> 1000.0 0 #f snd chn effects-bhp drop ;"
-	"effects-bhp" )
-     #( lambda: <{ -- val }> 1000.0 0 #f #f #f effects-blp ;
-	$" lambda: <{ snd chn -- val }> 1000.0 0 #f snd chn effects-blp drop ;"
-	"effects-blp" )
-     #( lambda: <{ -- val }> 50.0 0.5 0 #f #f #f effects-hello-dentist ;
-	$" lambda: <{ snd chn -- val }> 50.0 0.5 0 #f snd chn effects-hello-dentist drop ;"
-	"effects-hello-dentist" )
-     #( lambda: <{ -- val }> 1.0 0.3 20.0 0 #f #f #f effects-fp ;
-	$" lambda: <{ snd chn -- val }> 1.0 0.3 20.0 0 #f snd chn effects-fp drop ;"
-	"effects-fp" )
-     #( lambda: <{ -- val }> 5.0 2.0 0.001 0 #f #f #f effects-flange ;
-	$" lambda: <{ snd chn -- val }> 5.0 2.0 0.001 0 #f snd chn effects-flange drop ;"
-	"effects-flange" )
-     #( lambda: <{ -- val }> 0.1 0 #f #f #f effects-jc-reverb-1 ;
-	$" lambda: <{ snd chn -- val }> 0.1 0 #f snd chn effects-jc-reverb-1 drop ;"
-	"effects-jc-reverb-1" )
-   [then]
-) value test19-*.fs
+   ( effects.fs )
+   #( lambda: <{ -- val }> 0.1 128 effects-squelch-channel ;
+      $" lambda: <{ snd chn -- val }> 0.1 128 snd chn effects-squelch-channel drop ;"
+      "effects-sqelch-channel" )
+   #( lambda: <{ -- val }> #f 0.5 0.1 0 #f #f #f effects-echo ;
+      $" lambda: <{ snd chn -- val }> #f 0.5 0.1 0 #f snd chn effects-echo drop ;"
+      "effects-echo" )
+   #( lambda: <{ -- val }> 0.5 0.1 #f 0 #f #f #f effects-flecho ;
+      $" lambda: <{ snd chn -- val }> 0.5 0.1 #f 0 #f snd chn effects-flecho drop ;"
+      "effects-flecho" )
+   #( lambda: <{ -- val }> 0.75 0.75 6.0 10.0 #f 0 #f #f #f effects-zecho ;
+      $" lambda: <{ snd chn -- val }> 0.75 0.75 6.0 10.0 #f 0 #f snd chn effects-zecho drop ;"
+      "effects-zecho" )
+   #( lambda: <{ -- val }> 0.1 50 0 #f #f #f effects-comb-filter ;
+      $" lambda: <{ snd chn -- val }> 0.1 50 0 #f snd chn effects-comb-filter drop ;"
+      "effects-comb-filter" )
+   #( lambda: <{ -- val }> 10000 0.5 0 #f #f #f effects-moog ;
+      $" lambda: <{ snd chn -- val }> 10000 0.5 0 #f snd chn effects-moog drop ;"
+      "effects-moog" )
+   #( lambda: <{ -- val }> #f #f effects-remove-dc ;
+      $" lambda: <{ snd chn -- val }>  snd chn effects-remove-dc drop ;"
+      "effects-remove-dc" )
+   #( lambda: <{ -- val }> #f #f effects-compand ;
+      $" lambda: <{ snd chn -- val }>  snd chn effects-compand drop ;"
+      "effects-compand" )
+   #( lambda: <{ -- val }> 100.0 #f 0 #f #f #f effects-am ;
+      $" lambda: <{ snd chn -- val }> 100.0 #f 0 #f snd chn effects-am drop ;"
+      "effects-am" )
+   #( lambda: <{ -- val }> 100.0 #f 0 #f #f #f effects-rm ;
+      $" lambda: <{ snd chn -- val }> 100.0 #f 0 #f snd chn effects-rm drop ;"
+      "effects-rm" )
+   #( lambda: <{ -- val }> 1000.0 100.0 0 #f #f #f effects-bbp ;
+      $" lambda: <{ snd chn -- val }> 1000.0 100.0 0 #f snd chn effects-bbp drop ;"
+      "effects-bbp" )
+   #( lambda: <{ -- val }> 1000.0 100.0 0 #f #f #f effects-bbr ;
+      $" lambda: <{ snd chn -- val }> 1000.0 100.0 0 #f snd chn effects-bbr drop ;"
+      "effects-bbr" )
+   #( lambda: <{ -- val }> 1000.0 0 #f #f #f effects-bhp ;
+      $" lambda: <{ snd chn -- val }> 1000.0 0 #f snd chn effects-bhp drop ;"
+      "effects-bhp" )
+   #( lambda: <{ -- val }> 1000.0 0 #f #f #f effects-blp ;
+      $" lambda: <{ snd chn -- val }> 1000.0 0 #f snd chn effects-blp drop ;"
+      "effects-blp" )
+   #( lambda: <{ -- val }> 50.0 0.5 0 #f #f #f effects-hello-dentist ;
+      $" lambda: <{ snd chn -- val }> 50.0 0.5 0 #f snd chn effects-hello-dentist drop ;"
+      "effects-hello-dentist" )
+   #( lambda: <{ -- val }> 1.0 0.3 20.0 0 #f #f #f effects-fp ;
+      $" lambda: <{ snd chn -- val }> 1.0 0.3 20.0 0 #f snd chn effects-fp drop ;"
+      "effects-fp" )
+   #( lambda: <{ -- val }> 5.0 2.0 0.001 0 #f #f #f effects-flange ;
+      $" lambda: <{ snd chn -- val }> 5.0 2.0 0.001 0 #f snd chn effects-flange drop ;"
+      "effects-flange" )
+   #( lambda: <{ -- val }> 0.1 0 #f #f #f effects-jc-reverb-1 ;
+      $" lambda: <{ snd chn -- val }> 0.1 0 #f snd chn effects-jc-reverb-1 drop ;"
+      "effects-jc-reverb-1" ) ) value test19-*.fs
 
 : 19-save/restore ( -- )
-  \
   "oboe.snd" open-sound { ind }
-  'xm provided? 'xg provided? || if
-    nil nil nil nil nil { vals func1 descr name func }
-    test19-*.fs each to vals
-      vals 0 array-ref to func1
-      vals 1 array-ref to descr
-      vals 2 array-ref to name
-      *clm-debug* if name #f snd-test-message then
-      func1 #() run-proc drop
-      ind #f undef undef edit-list->function to func
-      func proc-source-ref descr string<> if
-      	$" edit-list->function %d: %s?" #( i func proc-source-ref ) snd-display
-      then
-      ind revert-sound drop
-      func #( ind 0 ) run-proc drop
-      ind revert-sound drop
-    end-each
-  then
+  nil nil nil nil nil { vals func1 descr name func }
+  test19-*.fs each to vals
+    vals 0 array-ref to func1
+    vals 1 array-ref to descr
+    vals 2 array-ref to name
+    *clm-verbose* if name #f snd-test-message then
+    func1 #() run-proc drop
+    ind #f undef undef edit-list->function to func
+    func proc-source-ref descr string<> if
+      $" edit-list->function %d: %s?" #( i func proc-source-ref ) snd-display
+    then
+    ind revert-sound drop
+    func #( ind 0 ) run-proc drop
+    ind revert-sound drop
+  end-each
   ind close-sound drop
 ;
 
 \ ====== test 23: with-sound
 : test23-notehook { ins start dur -- } $" %14s: %5.2f  %5.2f" #( ins start dur ) snd-test-message ;
+
 : test23-balance ( -- )
   make-rmsgain    { rg }
   40 make-rmsgain { rg1 }
@@ -1781,15 +1824,14 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     i  rg1 sig                    e1 env rmsgain-balance  *output*  outb drop
     i  rg2 o 0.0 0.0 oscil 0.1 f* e2 env rmsgain-balance  *output*  outc drop
   loop
-  \ INFO: original 0.98402 [ms]
-  \ but s7 says 1.12136477001985472977245889469814486275E0
-  rg rmsgain-gain-avg 1.121365 fneq if
-    $" rmsgain gain-avg: %f (1.121365, original 0.98402)?" #( rg rmsgain-gain-avg ) snd-display
+  rg rmsgain-gain-avg 0.98402 fneq if
+    $" rmsgain gain-avg: %f (0.98402)?" #( rg rmsgain-gain-avg ) snd-display
   then
   rg2 :rmsg-avgc array-assoc-ref 10000 <> if
     $" rmsgain count: %d (10000)?" #( rg2 :rmsg-avgc array-assoc-ref ) snd-display
   then
 ;
+
 : test23-ssb-fm ( gen mg -- proc; y self -- val )
   1 proc-create { prc } ( mg ) , ( gen ) , prc
  does> { y self -- val }
@@ -1805,6 +1847,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     i  gen 0 0 oscil  f2/ *output* outa drop
   loop
 ;
+
 : sndclm-env-test ( -- )
   440.0 make-oscil { gen }
   '( 0 0 0.01 1 0.25 0.1 0.5 0.01 1 0 )
@@ -1813,36 +1856,42 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     i  gen 0 0 oscil  ampf env  f* *output*  outa drop
   loop
 ;
+
 : sndclm-table-lookup-test ( -- )
   440.0 :wave '( 1 0.5  2 0.5 ) #f #f partials->wave make-table-lookup { gen }
   44100 0 do
     i  gen 0 table-lookup  f2/ *output* outa drop
   loop
 ;
+
 : sndclm-polywave-test ( -- )
   440.0 :partials '( 1 0.5 2 0.5 ) make-polywave { gen }
   44100 0 do
     i  gen 0 polywave  f2/ *output* outa drop
   loop
 ;
+
 : sndclm-triangle-wave-test ( -- )
   440.0 make-triangle-wave { gen }
   44100 0 do
     i  gen 0 triangle-wave  f2/ *output* outa drop
   loop
 ;
+
 : sndclm-ncos-test ( -- )
   440.0 10 make-ncos { gen }
   44100 0 do
     i  gen 0 ncos  f2/ *output* outa drop
   loop
 ;
+
 : sndclm-nrxycos-test ( -- )
   440.0 :n 10 make-nrxycos { gen }
   44100 0 ?do
     i  gen 0 nrxycos  f2/ *output* outa drop
   loop
 ;
+
 : sndclm-ssb-am-test ( -- )
   440.0 20 make-ssb-am { shifter }
   440.0 make-oscil { osc }
@@ -1850,6 +1899,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     i  shifter  osc 0 0 oscil  0 ssb-am f2/ *output* outa drop
   loop
 ;
+
 : sndclm-wave-train-test ( -- )
   400 10 make-ncos { g }
   g -0.5 pi f* set-mus-phase drop
@@ -1859,6 +1909,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     i  gen 0 wave-train  f2/ *output* outa drop
   loop
 ;
+
 : sndclm-rand-test ( -- )
   5.0 220.0 hz->radians make-rand { ran1 }
   5.0 330.0 hz->radians make-rand-interp { ran2 }
@@ -1869,6 +1920,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     i  osc2  ran2 0 rand-interp  0 oscil  f2/ *output* outb drop
   loop
 ;
+
 : sndclm-two-pole-test ( -- )
   1000.0 0.999 make-two-pole { flt }
   10000.0 0.002 make-rand { ran1 }
@@ -1876,6 +1928,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     i  flt  ran1 0 rand  two-pole  f2/ *output* outa drop
   loop
 ;
+
 : sndclm-firmant-test ( -- )
   1000.0 0.999 make-firmant { flt }
   10000.0 5.0 make-rand { ran1 }
@@ -1883,6 +1936,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     i  flt  ran1 0 rand  #f firmant  f2/ *output* outa drop
   loop
 ;
+
 : sndclm-iir-filter-test ( -- )
   3 vct( 0.0 -1.978 0.998 ) make-iir-filter { flt }
   10000.0 0.002 make-rand { ran1 }
@@ -1890,6 +1944,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     i  flt  ran1 0 rand  iir-filter  f2/ *output* outa drop
   loop
 ;
+
 : sndclm-delay-test ( -- )
   0.5 seconds->samples make-delay { dly }
   440.0 make-oscil { osc1 }
@@ -1901,6 +1956,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     f2/ *output* outa drop
   loop
 ;
+
 : sndclm-comb-test ( -- )
   0.4 0.4 seconds->samples make-comb { cmb }
   440.0 make-oscil { osc }
@@ -1913,6 +1969,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     comb f2/ *output* outa drop
   loop
 ;
+
 : sndclm-all-pass-test ( -- )
   -0.4 0.4 0.4 seconds->samples make-all-pass { alp }
   440.0 make-oscil { osc }
@@ -1925,6 +1982,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     all-pass f2/ *output* outa drop
   loop
 ;
+
 : sndclm-moving-average-test ( -- )
   4410 make-moving-average { avg }
   440.0 make-oscil { osc }
@@ -1938,6 +1996,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     i  avg 0.0 moving-average  osc 0 0 oscil f*  *output* outa drop
   loop
 ;
+
 : sndclm-src1-test ( -- )
   "oboe.snd" make-readin { rd }
   rd 0.5 make-src { sr }
@@ -1945,11 +2004,13 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     i  sr 0 #f src  *output* outa drop
   loop
 ;
+
 : make-src-proc { osc -- prc; dir self -- val }
   1 proc-create osc , ( prc )
  does> { dir self -- val }
   self @ ( osc ) 0 0 oscil
 ;
+
 : sndclm-src2-test ( -- )
   440.0 make-oscil { osc }
   osc make-src-proc { prc }
@@ -1958,6 +2019,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     i  sr 0 prc src  *output* outa drop
   loop
 ;
+
 : sndclm-convolve1-test ( -- )
   "pistol.snd" make-readin ( rd )
   "oboe.snd" file->vct ( v ) make-convolve { cnv }
@@ -1965,6 +2027,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     i  cnv #f convolve  0.25 f* *output* outa drop
   loop
 ;
+
 : sndclm-convolve2-test ( -- )
   "oboe.snd" "pistol.snd" 0.5 "convolved.snd" convolve-files { tempfile }
   tempfile make-readin { reader }
@@ -1973,17 +2036,20 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
   loop
   tempfile file-delete
 ;
+
 : sndclm-granulate1-test ( -- )
   "oboe.snd" make-readin 2.0 make-granulate { grn }
   44100 0 do
     i  grn #f #f granulate  *output* outa drop
   loop
 ;
+
 : make-granulate-proc { osc sweep -- prc; dir self -- val }
   1 proc-create osc , sweep , ( prc )
  does> { dir self -- val }
   self @ ( osc )  self cell+ @ ( sweep ) env  0 oscil  0.2 f*
 ;
+
 : sndclm-granulate2-test ( -- )
   440.0 make-oscil { osc }
   '( 0 0 1 1 ) :scaler 440.0 hz->radians :length 44100 make-env { sweep }
@@ -1992,24 +2058,28 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     i  grn #f #f granulate  *output* outa drop
   loop
 ;
+
 : sndclm-phase-vocoder1-test ( -- )
   "oboe.snd" make-readin :pitch 2.0 make-phase-vocoder { pv }
   44100 0 do
     i  pv #f #f #f #f phase-vocoder  *output* outa drop
   loop
 ;
+
 : sndclm-phase-vocoder2-test ( -- )
   "oboe.snd" make-readin :interp 256 make-phase-vocoder { pv }
   "oboe.snd" mus-sound-frames 2* ( samps ) 0 do
     i  pv #f #f #f #f phase-vocoder  *output* outa drop
   loop
 ;
+
 : sndclm-asymmetric-fm-test ( -- )
   440.0 0.0 0.9 0.5 make-asymmetric-fm { fm }
   44100 0 do
     i  fm 1.0 0 asymmetric-fm  f2/ *output* outa drop
   loop
 ;
+
 : sndclm-file->frame->file-test ( -- )
   "stereo.snd" make-file->frame { input }
   2 make-frame { frm }
@@ -2020,18 +2090,21 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     *output* i frm frame->file drop
   loop
 ;
+
 : sndclm-readin-test ( -- )
   "oboe.snd" make-readin { reader }
   44100 0 do
     i  reader readin  f2/ *output* outa drop
   loop
 ;
+
 : sndclm-in-out-any-test ( -- )
   "oboe.snd" make-file->sample { infile }
   44100 0 do
     i  i 0 infile in-any  0 *output* out-any drop
   loop
 ;
+
 : sndclm-locsig-test ( -- )
   60.0 make-locsig { loc }
   440.0 make-oscil { osc }
@@ -2039,6 +2112,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     loc i  osc 0 0 oscil f2/  locsig drop
   loop
 ;
+
 : sndclm-amplitude-modulate-test ( -- )
   440.0 make-oscil { osc1 }
   220.0 make-oscil { osc2 }
@@ -2050,501 +2124,74 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
   loop
 ;
 
-include bird.fsm
+: ws-close-sound ( ws -- ) ws-output 0 find-sound dup sound? if close-sound then drop ;
 
-: ws-close-sound ( ws -- )
-  ( ws ) :output array-assoc-ref 0 find-sound { ind }
-  ind sound? if ind close-sound drop then
-;
 : 23-with-sound ( -- )
   1024 1024 * to *clm-file-buffer-size*
   <'> bird-test				\ from bird.fsm
   :statistics *clm-verbose*
   :verbose    *clm-verbose*
-  :srate      44100
-  :scaled-to  0.8 with-sound ( ws ) ws-close-sound
-  \ FIXME: Here a mysterious sound "test.snd" remains open [ms].
-  sounds if sounds each ( snd ) close-sound drop end-each then
+  :play       *clm-verbose*
+  :channels 2
+  :scaled-to 0.8 with-sound ( ws ) ws-close-sound
   0.0 0.3 <'> clm-ins-test		\ from clm-ins.fs
   :notehook   *clm-verbose* if <'> test23-notehook else #f then
   :statistics *clm-verbose*
   :verbose    *clm-verbose*
-  :channels 2 with-sound ( ws ) ws-close-sound
-  <'> test23-balance :channels 3 with-sound ( ws ) :output array-assoc-ref 0 find-sound { ind }
-  ind sound? if
-    ind close-sound drop
+  :play       *clm-verbose*
+  :channels 2    with-sound ( ws ) ws-close-sound
+  <'> test23-balance :channels 3 with-sound ( ws ) ws-output 0 find-sound dup sound? if
+    close-sound
   else
     $" with-sound balance?" snd-display
-  then
+  then drop
+  "tmp.snd" mus-next mus-bfloat 22050 1 new-sound { ind }
+  0 1000 ind 0 pad-channel drop
   100.0 make-oscil { mg }
   1000 make-ssb-fm { gen }
-  "tmp.snd" mus-next mus-bfloat 22050 1 new-sound to ind
-  0 1000 ind 0 pad-channel drop
   gen mg test23-ssb-fm <'> map-channel #t nil fth-catch stack-reset
   ind close-sound drop
   \ examples from sndclm.html
-  <'> sndclm-oscil-test              :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-env-test                :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-table-lookup-test       :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-polywave-test           :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-triangle-wave-test      :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-ncos-test               :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-nrxycos-test            :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-ssb-am-test             :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-wave-train-test         :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-rand-test   :channels 2 :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-two-pole-test           :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-firmant-test            :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-iir-filter-test         :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-delay-test              :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-comb-test               :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-all-pass-test           :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-moving-average-test     :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-src1-test  :srate 22050 :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-src2-test               :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-convolve1-test          :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-convolve2-test          :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-granulate1-test         :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-granulate2-test         :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-phase-vocoder1-test     :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-phase-vocoder2-test :srate 22050 :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-asymmetric-fm-test      :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-file->frame->file-test :channels 2 :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-readin-test             :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-in-out-any-test         :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-locsig-test :channels 2 :play *clm-verbose* with-sound ( ws ) ws-close-sound
-  <'> sndclm-amplitude-modulate-test :play *clm-verbose* with-sound ( ws ) ws-close-sound
+  *clm-play*       { old-play }
+  *clm-statistics* { old-stats }
+  *clm-verbose* to *clm-play*
+  *clm-debug*   to *clm-statistics*
+  <'> sndclm-oscil-test              		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-env-test                		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-table-lookup-test       		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-polywave-test           		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-triangle-wave-test      		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-ncos-test               		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-nrxycos-test            		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-ssb-am-test             		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-wave-train-test         		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-rand-test               :channels 2  with-sound ( ws ) ws-close-sound
+  <'> sndclm-two-pole-test           		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-firmant-test            		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-iir-filter-test         		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-delay-test              		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-comb-test               		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-all-pass-test           		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-moving-average-test     		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-src1-test               :srate 22050 with-sound ( ws ) ws-close-sound
+  <'> sndclm-src2-test               		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-convolve1-test          		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-convolve2-test          		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-granulate1-test         		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-granulate2-test         		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-phase-vocoder1-test     		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-phase-vocoder2-test     :srate 22050 with-sound ( ws ) ws-close-sound
+  <'> sndclm-asymmetric-fm-test                   with-sound ( ws ) ws-close-sound
+  <'> sndclm-file->frame->file-test  :channels 2  with-sound ( ws ) ws-close-sound
+  <'> sndclm-readin-test             		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-in-out-any-test         		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-locsig-test             :channels 2  with-sound ( ws ) ws-close-sound
+  <'> sndclm-amplitude-modulate-test 		  with-sound ( ws ) ws-close-sound
+  old-play  to *clm-play*
+  old-stats to *clm-statistics*
 ;
 
-\ ====== test 28: errors
-: check-error-tag { xt expected-tag -- }
-  xt #t nil fth-catch { tag }
-  stack-reset
-  tag if				\ we ignore #f
-    tag car expected-tag = unless
-      $" %s: expected %s from %s, got %s?" #( get-func-name expected-tag xt tag ) snd-display
-    then
-  then
-;
-'snd-motif provided? [if]
-  : snd-motif-error-checks ( -- )
-    #( 'Widget 0 ) 	      <'> widget-position     'no-such-widget check-error-tag
-    #( 'Widget 0 ) 	      <'> widget-size         'no-such-widget check-error-tag
-    #( 'Widget 0 ) 	      <'> widget-text         'no-such-widget check-error-tag
-    #( 'Widget 0 ) #( 0 0 )   <'> set-widget-position 'no-such-widget check-error-tag
-    #( 'Widget 0 ) #( 10 10 ) <'> set-widget-size     'no-such-widget check-error-tag
-    #( 'Widget 0 ) "text"     <'> set-widget-text     'no-such-widget check-error-tag
-    #( 'Widget 0 ) 	      <'> hide-widget         'no-such-widget check-error-tag
-    #( 'Widget 0 ) 	      <'> show-widget         'no-such-widget check-error-tag
-    #( 'Widget 0 ) 	      <'> focus-widget        'no-such-widget check-error-tag
-  ;
-[else]
-  <'> noop alias snd-motif-error-checks
-[then]
-[ifundef] mus-audio-reinitialize
-  : mus-audio-reinitialize ( -- n ) 0 ;
-[then]
-
-: pt-test-1 <{ a -- f }>     #f ;
-: pt-test-2 <{ a b -- f }>   #f ;
-: pt-test-3 <{ a b c -- f }> #f ;
-
-#( 1 2 3 )     constant color-95
-440 make-oscil constant delay-32
-0 make-array   constant vector-0
-3 0.0 make-vct constant vct-3
-5 0.0 make-vct constant vct-5
-
-: make-identity-mixer <{ chans -- mx }>
-  #f { mx }
-  chans 256 < if
-    chans make-mixer to mx
-    mx mixer? if chans 0 do mx i i 1.0 mixer-set! drop loop else #f to mx then
-  then
-  mx
-;
-
-#( <'> make-all-pass <'> make-asymmetric-fm <'> make-snd->sample <'> make-moving-average
-   <'> make-comb <'> make-filtered-comb <'> make-convolve <'> make-delay <'> make-env
-   <'> make-fft-window <'> make-file->frame <'> make-file->sample <'> make-filter
-   <'> make-fir-filter <'> make-formant <'> make-firmant <'> make-frame
-   <'> make-frame->file <'> make-granulate <'> make-iir-filter <'> make-locsig
-   <'> make-mixer <'> make-notch <'> make-one-pole <'> make-one-zero <'> make-oscil
-   <'> make-pulse-train <'> make-rand <'> make-rand-interp <'> make-readin
-   <'> make-sample->file <'> make-sawtooth-wave <'> make-nrxysin <'> make-nrxycos
-   <'> make-square-wave <'> make-src <'> make-ncos <'> make-nsin <'> make-table-lookup
-   <'> make-triangle-wave <'> make-two-pole <'> make-two-zero <'> make-wave-train
-   <'> make-phase-vocoder <'> make-ssb-am <'> make-polyshape <'> make-polywave
-   <'> make-player <'> make-region <'> make-scalar-mixer ) constant make-procs
-
-#( :frequency :initial-phase :wave :cosines :amplitude :ratio :size :a0 :a1 :a2 :b1 :b2 :input 
-   :srate :file :channel :start :initial-contents :initial-element :scaler :feedforward :feedback 
-   :max-size :radius :gain :partials :r :a :n :fill-time :order :xcoeffs :ycoeffs :envelope 
-   :base :duration :offset :end :direction :degree :distance :reverb :output :fft-size :expansion 
-   :length :hop :ramp :jitter :type :format :comment :channels :filter :revout :width :edit 
-   :synthesize :analyze :interp :overlap :pitch :distribution :sines :dur ) constant keyargs
-
-#( <'> add-mark <'> add-sound-file-extension <'> add-source-file-extension
-   <'> sound-file-extensions <'> sound-file? <'> add-to-main-menu <'> add-to-menu <'> add-transform
-   <'> amp-control <'> as-one-edit <'> ask-before-overwrite <'> audio-input-device
-   <'> audio-output-device <'> auto-resize <'> auto-update <'> autocorrelate
-   <'> axis-info <'> c-g? <'> apply-controls <'> change-samples-with-origin
-   <'> channel-style <'> channels <'> chans <'> close-sound
-   <'> comment <'> contrast-control <'> contrast-control-amp <'> contrast-control?
-   <'> convolve-selection-with <'> convolve-with <'> channel-properties <'> channel-property
-   <'> amp-control-bounds
-   <'> speed-control-bounds <'> expand-control-bounds <'> contrast-control-bounds
-   <'> reverb-control-length-bounds
-   <'> reverb-control-scale-bounds <'> cursor-update-interval <'> cursor-location-offset
-   <'> auto-update-interval <'> count-matches <'> cursor
-   <'> with-tracking-cursor <'> cursor-size <'> cursor-style <'> tracking-cursor-style
-   <'> dac-combines-channels <'> dac-size <'> clipping
-   <'> data-format <'> data-location <'> data-size <'> default-output-chans
-   <'> default-output-data-format <'> default-output-srate <'> default-output-header-type
-   <'> define-envelope <'> delete-mark <'> delete-marks <'> forget-region <'> delete-sample
-   <'> delete-samples <'> delete-selection <'> display-edits
-   <'> edit-fragment <'> edit-position <'> edit-tree <'> edits <'> env-selection
-   <'> env-sound <'> enved-envelope <'> enved-base <'> enved-clip?
-   <'> enved-in-dB <'> enved-style <'> enved-power <'> enved-target <'> enved-wave? <'> eps-file
-   <'> eps-left-margin <'> eps-bottom-margin <'> eps-size <'> expand-control
-   <'> expand-control-hop <'> expand-control-jitter <'> expand-control-length
-   <'> expand-control-ramp <'> expand-control? <'> fft <'> fft-window-alpha <'> fft-window-beta
-   <'> fft-log-frequency <'> fft-log-magnitude <'> transform-size <'> disk-kspace
-   <'> transform-graph-type <'> fft-window <'> transform-graph? <'> file-name
-   <'> filter-sound <'> filter-control-in-dB <'> filter-control-envelope <'> enved-filter-order
-   <'> enved-filter <'> filter-control-in-hz <'> filter-control-order <'> filter-selection
-   <'> filter-channel <'> filter-control? <'> find-channel
-   <'> find-mark <'> find-sound <'> finish-progress-report <'> frames <'> free-sampler
-   <'> graph <'> transform? <'> delete-transform <'> add-watcher <'> delete-watcher
-   <'> graph-cursor <'> graph->ps
-   <'> gl-graph->ps <'> graph-style <'> lisp-graph? <'>  graphs-horizontal <'> header-type
-   <'> in <'> insert-region <'> insert-sample <'> insert-samples
-   <'> insert-samples-with-origin <'> insert-selection <'> insert-silence <'> insert-sound
-   <'> just-sounds <'> left-sample <'> listener-prompt
-   <'> make-mix-sampler <'> make-player <'> make-region <'> make-region-sampler
-   <'> make-sampler <'> map-chan
-   <'> mark-name <'> mark-properties <'> mark-property
-   <'> mark-sample <'> mark-sync <'> mark-sync-max
-   <'> mark-home <'> marks <'> mark? <'>  max-transform-peaks
-   <'> max-regions <'> maxamp <'> maxamp-position
-   <'> minibuffer-history-length <'> min-dB <'> log-freq-start <'> mix
-   <'> mixes <'> mix-amp <'> mix-amp-env <'> mix-length
-   <'> mix? <'> mix-position <'> mix-properties <'> mix-property
-   <'> mix-name <'> mix-region <'> mix-sampler?
-   <'> mix-selection <'> mix-sound <'> mix-home <'> mix-speed
-   <'> mix-tag-height <'> mix-tag-width <'> mark-tag-height <'> mark-tag-width
-   <'> mix-tag-y <'> mix-vct <'> mix-waveform-height <'> time-graph-style
-   <'> lisp-graph-style <'> transform-graph-style <'> read-mix-sample
-   <'> next-sample <'> transform-normalization <'> open-raw-sound
-   <'> open-sound <'> previous-sample <'> peaks <'> player? <'> players
-   <'> add-directory-to-view-files-list <'> add-file-to-view-files-list
-   <'> view-files-sort <'> view-files-amp <'> view-files-speed <'> view-files-files
-   <'> view-files-selected-files <'> view-files-speed-style <'> view-files-amp-env
-   <'> print-length <'> progress-report <'> prompt-in-minibuffer <'> read-only
-   <'> redo <'> region-chans <'> region-home
-   <'> region-graph-style <'> region-frames <'> region-position <'> region-maxamp
-   <'> region-maxamp-position <'> selection-maxamp <'> selection-maxamp-position
-   <'> region-sample <'> region->vct <'> clear-minibuffer <'> region-srate <'> regions
-   <'> region? <'>  remove-from-menu <'> report-in-minibuffer <'> reset-controls
-   <'> restore-controls <'> restore-region <'> reverb-control-decay <'> reverb-control-feedback
-   <'> reverb-control-length <'> reverb-control-lowpass <'> reverb-control-scale
-   <'> reverb-control? <'>  reverse-sound <'> reverse-selection <'> revert-sound
-   <'> right-sample <'> sample <'> sampler-at-end? <'>  sampler?
-   <'> samples <'> sampler-position <'> save-controls
-   <'> ladspa-dir <'> peak-env-dir <'> save-dir <'> save-edit-history <'> save-envelopes
-   <'> save-listener <'> save-marks <'> save-region <'> save-selection
-   <'> save-sound <'> save-sound-as <'> save-state <'> save-state-file
-   <'> scale-by <'> scale-selection-by <'> scale-selection-to <'> scale-to
-   <'> scan-chan <'> search-procedure <'> select-all <'> select-channel
-   <'> select-sound <'> selected-channel
-   <'> selected-sound <'> selection-position <'> selection-creates-region
-   <'> selection-frames <'> selection-member? <'> selection? <'> short-file-name
-   <'> show-axes <'> show-controls <'> show-transform-peaks
-   <'> show-indices <'> show-marks <'> show-mix-waveforms
-   <'> show-selection-transform <'> show-y-zero <'> sinc-width <'> show-grid
-   <'> show-sonogram-cursor <'> grid-density <'> smooth-sound <'> smooth-selection
-   <'> snd-spectrum <'> snd-tempnam <'> snd-version
-   <'> sound-files-in-directory <'> sound-loop-info
-   <'> sound? <'> sounds <'> spectrum-end <'> spectro-hop
-   <'> spectrum-start <'> spectro-x-angle <'> spectro-x-scale <'> spectro-y-angle
-   <'> spectro-y-scale <'> spectro-z-angle <'> spectro-z-scale <'> speed-control
-   <'> speed-control-style <'> speed-control-tones <'> squelch-update <'> srate
-   <'> src-sound <'> src-selection <'> start-progress-report <'> stop-player
-   <'> stop-playing <'> swap-channels <'> syncd-marks <'> sync
-   <'> sync-max <'> sound-properties <'> sound-property <'> temp-dir <'>  region-sampler?
-   <'> transform-sample <'> transform->vct <'> transform-frames <'> transform-type
-   <'> trap-segfault <'> with-file-monitor <'> optimization
-   <'> undo <'> update-transform-graph <'> update-time-graph <'> update-lisp-graph
-   <'> update-sound <'> clm-table-size <'> with-verbose-cursor <'> view-sound <'> wavelet-type
-   <'> time-graph? <'>  time-graph-type <'> wavo-hop <'> wavo-trace
-   <'> window-height <'> window-width <'> window-x <'> window-y
-   <'> with-mix-tags <'> with-relative-panes <'> with-gl
-   <'> x-axis-style <'> beats-per-measure <'> beats-per-minute <'> x-bounds
-   <'> x-position-slider <'> x-zoom-slider <'> mus-header-type->string
-   <'> mus-data-format->string <'> y-bounds <'> y-position-slider
-   <'> y-zoom-slider <'> zero-pad <'> zoom-focus-style
-   <'> mus-sound-samples <'> mus-sound-frames <'> mus-sound-duration <'> mus-sound-datum-size
-   <'> mus-sound-data-location <'> data-size <'> mus-sound-chans <'> mus-sound-srate
-   <'> mus-sound-header-type <'> mus-sound-data-format <'> mus-sound-length
-   <'> mus-sound-type-specifier
-   <'> mus-header-type-name <'> mus-data-format-name <'> mus-sound-comment
-   <'> mus-sound-write-date
-   <'> mus-bytes-per-sample <'> mus-sound-loop-info
-   'snd-nogui [unless] <'> mus-audio-describe [then]
-   <'> mus-alsa-squelch-warning <'> mus-sound-maxamp
-   <'> mus-sound-maxamp-exists?
-   <'> mus-file-prescaler <'> mus-prescaler <'> mus-clipping <'> mus-file-clipping
-   <'> mus-header-raw-defaults <'> moving-average <'> moving-average? <'> make-moving-average
-   <'> mus-expand-filename <'> make-sound-data <'> sound-data-ref <'> sound-data-set!
-   <'> sound-data-scale! <'> sound-data-fill! <'> sound-data? <'> sound-data-length
-   <'> sound-data-multiply! <'> sound-data-add! <'> sound-data-offset! <'> sound-data*
-   <'> sound-data+ <'> sound-data-copy <'> sound-data-reverse! <'> sound-data-maxamp
-   <'> sound-data-chans <'> sound-data->vct <'> vct->sound-data <'> sound-data-peak
-   <'> all-pass <'> all-pass? <'> amplitude-modulate <'> array->file
-   <'> array-interp <'> mus-interpolate <'> asymmetric-fm <'> asymmetric-fm?
-   <'> sound-data->sound-data <'> clear-array <'> comb <'> comb?
-   <'> filtered-comb <'> filtered-comb? <'> contrast-enhancement <'> convolution
-   <'> convolve <'> convolve? <'> db->linear <'> degrees->radians
-   <'> delay <'> delay? <'> dot-product <'> env
-   <'> env-interp <'> env? <'> file->array <'> file->frame
-   <'> file->frame? <'>  file->sample <'> file->sample? <'> filter
-   <'> filter? <'> fir-filter <'> fir-filter? <'> formant
-   <'> formant-bank <'> formant? <'> frame* <'> frame+
-   <'> frame->file <'> frame->file? <'> frame->frame <'> frame->list
-   <'> frame->sample <'> frame-ref <'> frame-set! <'> frame?
-   <'> granulate <'> granulate? <'> hz->radians <'> iir-filter
-   <'> iir-filter? <'>  in-any <'> ina <'> inb
-   <'> linear->db <'> locsig <'> locsig-ref <'> locsig-reverb-ref
-   <'> locsig-reverb-set! <'> locsig-set! <'>  locsig? <'> make-all-pass
-   <'> make-asymmetric-fm <'> make-comb <'> make-filtered-comb <'> make-convolve
-   <'> make-delay <'> make-env <'> make-fft-window <'> make-file->frame
-   <'> make-file->sample <'> make-filter <'> make-fir-filter <'> make-formant
-   <'> make-frame <'> make-frame->file <'> make-granulate <'> make-iir-filter
-   <'> make-locsig <'> move-locsig <'> make-mixer <'> make-notch
-   <'> make-one-pole <'> make-one-zero <'> make-oscil <'> make-pulse-train
-   <'> make-rand <'> make-rand-interp <'> make-readin <'> make-sample->file
-   <'> make-sawtooth-wave <'> make-square-wave <'> make-src
-   <'> make-ssb-am <'> make-table-lookup
-   <'> make-triangle-wave <'> make-two-pole <'> make-two-zero <'> make-wave-train
-   <'> mixer* <'> mixer-ref <'> mixer-set!
-   <'> mixer? <'> mixer+ <'> move-sound <'> make-move-sound
-   <'> move-sound? <'> mus-float-equal-fudge-factor <'> multiply-arrays
-   <'> mus-array-print-length
-   <'> mus-channel <'> mus-channels <'> make-polyshape <'> polyshape?
-   <'> mus-close <'> mus-data <'> mus-feedback
-   <'> mus-feedforward <'> mus-fft <'> mus-frequency
-   <'> mus-hop <'> mus-increment <'> mus-input? <'> mus-file-name
-   <'> mus-length <'> mus-location <'> mus-mix <'> mus-order
-   <'> mus-output? <'>  mus-phase <'> mus-ramp <'> mus-random
-   <'> mus-scaler <'> mus-srate <'> mus-xcoeffs <'> mus-ycoeffs
-   <'> notch <'> notch? <'> one-pole <'> one-pole?
-   <'> one-zero <'> one-zero? <'> oscil <'> oscil?
-   <'> out-any <'> outa <'> outb <'> outc
-   <'> outd <'> partials->polynomial <'> partials->wave
-   <'> phase-partials->wave <'> polynomial <'> pulse-train <'> pulse-train?
-   <'> radians->degrees <'> radians->hz <'> rand <'> rand-interp
-   <'> rand-interp? <'>  rand? <'> readin <'> readin?
-   <'> rectangular->polar <'> rectangular->magnitudes
-   <'> ring-modulate <'> sample->file <'> sample->file?
-   <'> sample->frame <'> sawtooth-wave <'> sawtooth-wave?
-   <'> spectrum <'> square-wave <'> square-wave?
-   <'> src <'> src? <'> ssb-am <'> ssb-am?
-   <'> table-lookup <'> table-lookup? <'> tap <'> triangle-wave
-   <'> triangle-wave? <'> two-pole <'> two-pole? <'> two-zero
-   <'> two-zero? <'> wave-train <'> wave-train?
-   <'> make-vct <'> vct-add! <'> vct-subtract!
-   <'> vct-copy <'> vct-length <'> vct-multiply! <'> vct-offset!
-   <'> vct-ref <'> vct-scale! <'> vct-fill! <'> vct-set!
-   <'> vct-peak <'> vct? <'> list->vct
-   <'> vct->list <'> vector->vct <'> vct->vector <'> vct-move!
-   <'> vct-reverse! <'> vct-subseq <'> vct <'> little-endian?
-   <'> vct->string <'> clm-channel <'> env-channel <'> map-channel
-   <'> scan-channel <'> reverse-channel <'> seconds->samples
-   <'> samples->seconds <'> smooth-channel <'> vct->channel <'> channel->vct
-   <'> src-channel <'> scale-channel <'> ramp-channel <'> pad-channel
-   <'> normalize-channel <'> cursor-position <'> show-listener <'> mus-sound-prune
-   <'> mus-sound-forget <'> xramp-channel <'> ptree-channel <'> snd->sample
-   <'> snd->sample? <'> make-snd->sample <'> make-scalar-mixer <'> beats-per-minute
-   <'> beats-per-measure <'> channel-amp-envs <'> convolve-files <'> filter-control-coeffs
-   <'> locsig-type <'> make-phase-vocoder <'> mus-describe
-   <'> mus-error-type->string <'> mus-file-buffer-size <'> mus-name <'> mus-offset
-   <'> mus-out-format <'> mus-reset <'> mus-rand-seed <'> mus-width
-   <'> phase-vocoder? <'> polar->rectangular <'> phase-vocoder-amp-increments
-   <'> phase-vocoder-amps
-   <'> phase-vocoder-freqs <'> phase-vocoder-phase-increments
-   <'> phase-vocoder-phases
-   <'> mus-generator? <'> read-sample <'> reset-listener-cursor <'> goto-listener-end
-   <'> sampler-home <'> selection-chans <'> selection-srate <'> snd-warning
-   <'> channel-data <'> x-axis-label <'> variable-graph? <'> y-axis-label
-   <'> snd-url <'> snd-urls <'> free-player <'> delete-mix <'> delay-tick <'> playing
-   <'> pausing <'> copy-sampler <'> html-dir <'> html-program
-   <'> make-fir-coeffs <'> make-identity-mixer <'> mus-interp-type <'> mus-run
-   <'> phase-vocoder <'> player-home <'> redo-edit <'> undo-edit ) constant procs
-
-#( <'> amp-control <'> ask-before-overwrite <'> audio-input-device <'> audio-output-device
-   <'> auto-update <'> channel-style <'> sound-file-extensions
-   <'> contrast-control <'> contrast-control-amp
-   <'> amp-control-bounds <'> speed-control-bounds <'> expand-control-bounds
-   <'> contrast-control-bounds
-   <'> reverb-control-length-bounds <'> reverb-control-scale-bounds <'> cursor-update-interval
-   <'> cursor-location-offset
-   <'> contrast-control? <'> auto-update-interval <'> cursor
-   <'> channel-properties <'> channel-property <'> with-tracking-cursor <'> cursor-size
-   <'> cursor-style <'> tracking-cursor-style <'> dac-combines-channels <'> dac-size
-   <'> clipping <'> default-output-chans <'> default-output-data-format
-   <'> default-output-srate <'> default-output-header-type <'> dot-size <'> enved-envelope
-   <'> enved-base <'> enved-clip? <'> enved-in-dB <'> enved-style
-   <'> enved-power <'> enved-target <'> enved-wave?
-   <'> eps-file <'> eps-left-margin <'> eps-bottom-margin <'> eps-size
-   <'> expand-control <'> expand-control-hop <'> expand-control-jitter <'> expand-control-length
-   <'> expand-control-ramp <'> expand-control? <'> fft-window-alpha <'> fft-window-beta
-   <'> fft-log-frequency <'> fft-log-magnitude <'> transform-size <'> transform-graph-type
-   <'> fft-window <'> transform-graph? <'> filter-control-in-dB <'> filter-control-envelope
-   <'> enved-filter-order <'> enved-filter <'> filter-control-in-hz <'> filter-control-order
-   <'> filter-control? <'> graph-cursor <'> graph-style <'> lisp-graph? <'> graphs-horizontal
-   <'> just-sounds <'> left-sample <'> listener-prompt
-   <'> mark-name <'> mark-properties <'> mark-property
-   <'> mark-sample <'> mark-sync <'> max-transform-peaks
-   <'> min-dB <'> log-freq-start <'> mix-amp
-   <'> mix-amp-env <'> mix-name <'> mix-position <'> mix-properties <'> mix-property
-   <'> mix-speed <'> mix-tag-height <'> mix-tag-width
-   <'> mix-tag-y <'> mark-tag-width <'> mark-tag-height <'> mix-waveform-height
-   <'> transform-normalization
-   <'> view-files-sort <'> print-length <'> view-files-amp
-   <'> view-files-speed <'> view-files-speed-style <'> view-files-amp-env <'> view-files-files
-   <'> view-files-selected-files <'> region-graph-style <'> reverb-control-decay
-   <'> reverb-control-feedback <'> reverb-control-length
-   <'> reverb-control-lowpass <'> reverb-control-scale <'> time-graph-style <'> lisp-graph-style
-   <'> transform-graph-style <'> reverb-control? <'> ladspa-dir <'> peak-env-dir
-   <'> save-dir <'> save-state-file
-   <'> selection-creates-region <'> show-axes
-   <'> show-controls <'> show-transform-peaks <'> show-indices <'> show-marks
-   <'> show-mix-waveforms <'> show-selection-transform <'> show-y-zero
-   <'> show-grid <'> show-sonogram-cursor <'> sinc-width <'> spectrum-end
-   <'> spectro-hop <'> spectrum-start <'> spectro-x-angle <'>  grid-density
-   <'> spectro-x-scale <'> spectro-y-angle <'> spectro-y-scale <'> spectro-z-angle
-   <'> spectro-z-scale <'> speed-control <'> speed-control-style <'> speed-control-tones
-   <'> squelch-update <'> sync <'> sound-properties <'> sound-property <'> temp-dir
-   <'> y-bounds <'> transform-type
-   <'> trap-segfault <'> with-file-monitor <'> optimization <'> with-verbose-cursor
-   <'> wavelet-type <'> x-bounds
-   <'> time-graph? <'> wavo-hop <'> wavo-trace <'> with-gl
-   <'> with-mix-tags <'> x-axis-style <'> beats-per-minute <'> zero-pad
-   <'> zoom-focus-style <'> with-relative-panes <'>  window-x
-   <'> window-y <'> window-width <'> window-height
-   <'> beats-per-measure <'> channels <'> chans
-   <'> comment <'> data-format <'> data-location
-   <'> data-size <'> edit-position <'> frames <'> header-type
-   <'> maxamp <'> minibuffer-history-length <'> read-only <'> right-sample
-   <'> sample <'> samples <'> selected-channel
-   <'> selected-sound <'> selection-position <'> selection-frames
-   <'> selection-member? <'> sound-loop-info <'> srate <'> time-graph-type
-   <'> x-position-slider <'> x-zoom-slider <'> y-position-slider
-   <'> y-zoom-slider <'> sound-data-ref <'> mus-array-print-length <'> mus-float-equal-fudge-factor
-   <'> mus-data <'> mus-feedback <'> mus-feedforward
-   <'> mus-frequency <'> mus-hop <'> mus-increment
-   <'> mus-length <'> mus-location <'> mus-phase <'> mus-ramp
-   <'> mus-scaler <'> vct-ref <'> x-axis-label <'> filter-control-coeffs
-   <'> locsig-type <'> mus-file-buffer-size <'> mus-rand-seed <'> mus-width
-   <'> clm-table-size <'> mus-offset <'> mus-reset
-   <'> phase-vocoder-amp-increments <'> phase-vocoder-amps <'> phase-vocoder-freqs
-   <'> phase-vocoder-phase-increments <'> phase-vocoder-phases
-   <'> html-dir <'> html-program <'> mus-interp-type
-   <'> mixer-ref <'> frame-ref <'> locsig-ref <'> locsig-reverb-ref
-   <'> mus-file-prescaler <'> mus-prescaler <'> mus-clipping <'> mus-file-clipping
-   <'> mus-header-raw-defaults ) constant set-procs
-
-: arity-not-ok     <{ prc args -- f }> prc args     arity-ok not ;
-: set-arity-not-ok <{ prc args -- f }> prc args set-arity-ok not ;
-procs <'> arity-not-ok  0 array-reject constant procs00
-procs <'> arity-not-ok  1 array-reject constant procs01
-procs <'> arity-not-ok  2 array-reject constant procs02
-procs <'> arity-not-ok  3 array-reject constant procs03
-procs <'> arity-not-ok  4 array-reject constant procs04
-procs <'> arity-not-ok  5 array-reject constant procs05
-procs <'> arity-not-ok  6 array-reject constant procs06
-procs <'> arity-not-ok  7 array-reject constant procs07
-procs <'> arity-not-ok  8 array-reject constant procs08
-procs <'> arity-not-ok 10 array-reject constant procs10
-set-procs <'> set-arity-not-ok 1 array-reject constant set-procs00
-set-procs <'> set-arity-not-ok 2 array-reject constant set-procs01
-set-procs <'> set-arity-not-ok 3 array-reject constant set-procs02
-set-procs <'> set-arity-not-ok 4 array-reject constant set-procs03
-set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
-
-: close-sound-mc-cb { -- prc; y self -- val }
-  1 proc-create "oboe.snd" open-sound , ( prc )
- does> { y self -- val }
-  self @ { ind }
-  ind sound? if ind close-sound drop then
-  0.0
-;
-: close-sound-aoe-1-cb { -- prc; self -- val }
-  0 proc-create "oboe.snd" open-sound , "pistol.snd" open-sound ,
- does> { self -- val }
-  self       @ ( ind1 ) close-sound drop
-  self cell+ @ ( ind2 ) close-sound
-;
-: close-sound-aoe-2b-cb { ind1 ind2 -- prc; self -- val }
-  0 proc-create ind1 , ind2 , ( prc )
- does> { self -- val }
-  self       @ ( ind1 ) close-sound drop
-  self cell+ @ ( ind2 ) close-sound
-;
-: close-sound-aoe-2a-cb { -- prc; self -- val }
-  0 proc-create "oboe.snd" open-sound , "pistol.snd" open-sound ,
- does> { self -- val }
-  self       @ { ind1 }
-  self cell+ @ { ind2 }
-  100 0.1 ind1 0 set-sample drop
-  100 0.1 ind2 0 set-sample drop
-  ind1 ind2 close-sound-aoe-2b-cb "inner-edit" as-one-edit
-;
-: close-sound-fc-cb { -- prc; y self -- f }
-  1 proc-create "oboe.snd" open-sound , ( prc )
- does> { y self -- f }
-  self @ { ind }
-  ind sound? if ind close-sound drop then
-  #f
-;
-: sc-1-cb { mx -- prc; x self -- f }
-  1 proc-create mx , ( prc )
- does> { x self -- f }
-  x fabs self @ @ ( mx ) fmax self @ !
-  #f
-;
-: mc-1-cb { scl -- prc; y self -- val }
-  1 proc-create scl , 0.0 ( mx ) , ( prc )
- does> { y self -- val }
-  y 0.4 f> if
-    0.0 self cell+ !
-    self cell+ ( addr-of-mx ) sc-1-cb scan-channel drop
-    self cell+ @ 1/f self ! ( scl = 1/mx )
-  then
-  self @ ( scl ) y f*
-;
-: mc-2-cb { ind -- prc; y self -- val }
-  1 proc-create ind , ( prc )
- does> { y self -- val }
-  y 0.4 f> if 1 self @ ( ind ) 0 set-frames drop then
-  y
-;
-'complex provided? [if]
-  : mc-3-cb <{ y -- val }> y 0.0+1.0i c* ;
-[else]
-  noop alias mc-3-cb
-[then]
-: edpos-1-cb { ind -- prc; self -- edpos }
-  0 proc-create ind , ( prc )
- does> { self -- edpos }
-  self @ ( ind ) close-sound drop
-  current-edit-position
-;
-: edpos-2-cb <{ snd chn -- edpos }>
-  snd close-sound drop
-  current-edit-position
-;
-
+\ ====== test 26: Gtk
 'snd-gtk provided? [if]
   #( <'> Fg_free <'> Fg_signal_lookup <'> Fg_source_remove <'> Fg_type_from_name
      <'> Fg_type_is_a <'> Fg_type_name <'> Fg_type_parent <'> Fg_type_qname <'> Fgdk_atom_intern
@@ -2555,10 +2202,11 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> Fgtk_check_button_new_with_label <'> Fgtk_check_menu_item_new_with_label
      <'> Fgtk_color_selection_palette_from_string <'> Fgtk_disable_setlocale
      <'> Fgtk_icon_size_from_name <'> Fgtk_image_menu_item_new_with_label <'> Fgtk_init
-     <'> Fgtk_init_add <'> Fgtk_init_check <'> Fgtk_key_snooper_install <'> Fgtk_key_snooper_remove
+     \ <'> Fgtk_init_add
+     <'> Fgtk_init_check <'> Fgtk_key_snooper_install <'> Fgtk_key_snooper_remove
      <'> Fgtk_main <'> Fgtk_main_do_event <'> Fgtk_main_iteration <'> Fgtk_main_iteration_do
      <'> Fgtk_main_level <'> Fgtk_main_quit <'> Fgtk_menu_item_new_with_label
-     <'> Fgtk_quit_add <'> Fgtk_quit_remove <'> Fgtk_quit_remove_by_data
+     \ <'> Fgtk_quit_add <'> Fgtk_quit_remove <'> Fgtk_quit_remove_by_data
      <'> Fgtk_radio_button_new_with_label <'> Fgtk_radio_menu_item_new_with_label
      <'> Fgtk_rc_find_module_in_path <'> Fgtk_toggle_button_new_with_label
      <'> Fpango_coverage_from_bytes <'> Fpango_find_paragraph_boundary
@@ -2585,7 +2233,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> FGTK_CELL_RENDERER_TOGGLE <'> FGTK_CELL_VIEW <'> FGTK_CHECK_BUTTON
      <'> FGTK_CHECK_MENU_ITEM <'> FGTK_CLIPBOARD <'> FGTK_COLOR_BUTTON
      <'> FGTK_COLOR_SELECTION <'> FGTK_COLOR_SELECTION_DIALOG <'> FGTK_COMBO_BOX
-     <'> FGTK_COMBO_BOX_ENTRY <'> FGTK_CONTAINER <'> FGTK_DIALOG
+     \ <'> FGTK_COMBO_BOX_ENTRY
+     <'> FGTK_CONTAINER <'> FGTK_DIALOG
      <'> FGTK_DRAWING_AREA <'> FGTK_EDITABLE <'> FGTK_ENTRY
      <'> FGTK_ENTRY_COMPLETION <'> FGTK_EVENT_BOX <'> FGTK_EXPANDER
      <'> FGTK_FILE_CHOOSER <'> FGTK_FILE_CHOOSER_BUTTON
@@ -2610,7 +2259,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> FGTK_IS_CHECK_MENU_ITEM <'> FGTK_IS_CLIPBOARD
      <'> FGTK_IS_COLOR_BUTTON <'> FGTK_IS_COLOR_SELECTION
      <'> FGTK_IS_COLOR_SELECTION_DIALOG <'> FGTK_IS_COMBO_BOX
-     <'> FGTK_IS_COMBO_BOX_ENTRY <'> FGTK_IS_CONTAINER
+     \ <'> FGTK_IS_COMBO_BOX_ENTRY
+     <'> FGTK_IS_CONTAINER
      <'> FGTK_IS_DIALOG <'> FGTK_IS_DRAWING_AREA <'> FGTK_IS_EDITABLE
      <'> FGTK_IS_ENTRY <'> FGTK_IS_ENTRY_COMPLETION <'> FGTK_IS_EVENT_BOX
      <'> FGTK_IS_EXPANDER <'> FGTK_IS_FILE_CHOOSER <'> FGTK_IS_FILE_CHOOSER_BUTTON
@@ -2832,7 +2482,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> Fgtk_accel_label_set_accel_widget <'> Fgtk_accel_map_add_entry
      <'> Fgtk_accel_map_add_filter <'> Fgtk_accel_map_change_entry
      <'> Fgtk_accel_map_foreach <'> Fgtk_accel_map_foreach_unfiltered
-     <'> Fgtk_accel_map_get <'> Fgtk_accelerator_get_default_mod_mask
+     <'> Fgtk_accel_map_get
+     \ <'> Fgtk_accelerator_get_default_mod_mask
      <'> Fgtk_accelerator_get_label <'> Fgtk_accelerator_name
      <'> Fgtk_accelerator_parse <'> Fgtk_accelerator_set_default_mod_mask
      <'> Fgtk_accelerator_valid <'> Fgtk_accessible_connect_widget_destroyed
@@ -2924,17 +2575,23 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> Fgtk_color_selection_set_current_alpha <'> Fgtk_color_selection_set_current_color
      <'> Fgtk_color_selection_set_has_opacity_control <'> Fgtk_color_selection_set_has_palette
      <'> Fgtk_color_selection_set_previous_alpha <'> Fgtk_color_selection_set_previous_color
-     <'> Fgtk_combo_box_append_text <'> Fgtk_combo_box_entry_get_text_column
-     <'> Fgtk_combo_box_entry_new <'> Fgtk_combo_box_entry_new_text
-     <'> Fgtk_combo_box_entry_new_with_model <'> Fgtk_combo_box_entry_set_text_column
+     \ <'> Fgtk_combo_box_append_text <'> Fgtk_combo_box_entry_get_text_column
+     \ <'> Fgtk_combo_box_entry_new <'> Fgtk_combo_box_entry_new_text
+     \ <'> Fgtk_combo_box_entry_new_with_model <'> Fgtk_combo_box_entry_set_text_column
      <'> Fgtk_combo_box_get_active <'> Fgtk_combo_box_get_active_iter
-     <'> Fgtk_combo_box_get_active_text <'> Fgtk_combo_box_get_add_tearoffs
+     \ <'> Fgtk_combo_box_get_active_text
+     <'> Fgtk_combo_box_get_add_tearoffs
      <'> Fgtk_combo_box_get_column_span_column <'> Fgtk_combo_box_get_focus_on_click
      <'> Fgtk_combo_box_get_model <'> Fgtk_combo_box_get_row_span_column
-     <'> Fgtk_combo_box_get_wrap_width <'> Fgtk_combo_box_insert_text
-     <'> Fgtk_combo_box_new <'> Fgtk_combo_box_new_text <'> Fgtk_combo_box_new_with_model
-     <'> Fgtk_combo_box_popdown <'> Fgtk_combo_box_popup <'> Fgtk_combo_box_prepend_text
-     <'> Fgtk_combo_box_remove_text <'> Fgtk_combo_box_set_active
+     <'> Fgtk_combo_box_get_wrap_width
+     \ <'> Fgtk_combo_box_insert_text
+     <'> Fgtk_combo_box_new
+     \ <'> Fgtk_combo_box_new_text
+     <'> Fgtk_combo_box_new_with_model
+     <'> Fgtk_combo_box_popdown <'> Fgtk_combo_box_popup
+     \ <'> Fgtk_combo_box_prepend_text
+     \ <'> Fgtk_combo_box_remove_text
+     <'> Fgtk_combo_box_set_active
      <'> Fgtk_combo_box_set_active_iter
      <'> Fgtk_combo_box_set_add_tearoffs <'> Fgtk_combo_box_set_column_span_column
      <'> Fgtk_combo_box_set_focus_on_click <'> Fgtk_combo_box_set_model
@@ -3240,9 +2897,11 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
      <'> Fgtk_spin_button_set_update_policy <'> Fgtk_spin_button_set_value
      <'> Fgtk_spin_button_set_wrap <'> Fgtk_spin_button_spin
      <'> Fgtk_spin_button_update <'> Fgtk_statusbar_get_context_id
-     <'> Fgtk_statusbar_get_has_resize_grip <'> Fgtk_statusbar_new
+     \ <'> Fgtk_statusbar_get_has_resize_grip
+     <'> Fgtk_statusbar_new
      <'> Fgtk_statusbar_pop <'> Fgtk_statusbar_push
-     <'> Fgtk_statusbar_remove <'> Fgtk_statusbar_set_has_resize_grip
+     <'> Fgtk_statusbar_remove
+     \ <'> Fgtk_statusbar_set_has_resize_grip
      <'> Fgtk_stock_add <'> Fgtk_stock_add_static <'> Fgtk_stock_item_copy
      <'> Fgtk_stock_item_free <'> Fgtk_stock_list_ids <'> Fgtk_stock_lookup
      <'> Fgtk_style_attach <'> Fgtk_style_copy <'> Fgtk_style_detach
@@ -3723,6 +3382,447 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
 [else]
   <'> noop alias 26-gtk
 [then]
+
+\ ====== test 28: errors
+: check-error-tag { xt expected-tag -- }
+  xt #t nil fth-catch { tag }
+  stack-reset
+  tag if				\ we ignore #f
+    tag car expected-tag = unless
+      $" %s: expected %s from %s, got %s?" #( get-func-name expected-tag xt tag ) snd-display
+    then
+  then
+;
+
+'snd-motif provided? [if]
+  : snd-motif-error-checks ( -- )
+    #( 'Widget 0 ) 	      <'> widget-position     'no-such-widget check-error-tag
+    #( 'Widget 0 ) 	      <'> widget-size         'no-such-widget check-error-tag
+    #( 'Widget 0 ) 	      <'> widget-text         'no-such-widget check-error-tag
+    #( 'Widget 0 ) #( 0 0 )   <'> set-widget-position 'no-such-widget check-error-tag
+    #( 'Widget 0 ) #( 10 10 ) <'> set-widget-size     'no-such-widget check-error-tag
+    #( 'Widget 0 ) "text"     <'> set-widget-text     'no-such-widget check-error-tag
+    #( 'Widget 0 ) 	      <'> hide-widget         'no-such-widget check-error-tag
+    #( 'Widget 0 ) 	      <'> show-widget         'no-such-widget check-error-tag
+    #( 'Widget 0 ) 	      <'> focus-widget        'no-such-widget check-error-tag
+  ;
+[else]
+  <'> noop alias snd-motif-error-checks
+[then]
+[ifundef] mus-audio-reinitialize
+  : mus-audio-reinitialize ( -- n ) 0 ;
+[then]
+
+: pt-test-1 <{ a -- f }>     #f ;
+: pt-test-2 <{ a b -- f }>   #f ;
+: pt-test-3 <{ a b c -- f }> #f ;
+
+#( 1 2 3 )     constant color-95
+440 make-oscil constant delay-32
+0 make-array   constant vector-0
+3 0.0 make-vct constant vct-3
+5 0.0 make-vct constant vct-5
+
+: make-identity-mixer <{ chans -- mx }>
+  #f { mx }
+  chans 256 < if
+    chans make-mixer to mx
+    mx mixer? if chans 0 do mx i i 1.0 mixer-set! drop loop else #f to mx then
+  then
+  mx
+;
+
+#( <'> make-all-pass <'> make-asymmetric-fm <'> make-snd->sample <'> make-moving-average
+   <'> make-comb <'> make-filtered-comb <'> make-convolve <'> make-delay <'> make-env
+   <'> make-fft-window <'> make-file->frame <'> make-file->sample <'> make-filter
+   <'> make-fir-filter <'> make-formant <'> make-firmant <'> make-frame
+   <'> make-frame->file <'> make-granulate <'> make-iir-filter <'> make-locsig
+   <'> make-mixer <'> make-notch <'> make-one-pole <'> make-one-zero <'> make-oscil
+   <'> make-pulse-train <'> make-rand <'> make-rand-interp <'> make-readin
+   <'> make-sample->file <'> make-sawtooth-wave <'> make-nrxysin <'> make-nrxycos
+   <'> make-square-wave <'> make-src <'> make-ncos <'> make-nsin <'> make-table-lookup
+   <'> make-triangle-wave <'> make-two-pole <'> make-two-zero <'> make-wave-train
+   <'> make-phase-vocoder <'> make-ssb-am <'> make-polyshape <'> make-polywave
+   <'> make-player <'> make-region <'> make-scalar-mixer ) constant make-procs
+
+#( :frequency :initial-phase :wave :cosines :amplitude :ratio :size :a0 :a1 :a2 :b1 :b2 :input 
+   :srate :file :channel :start :initial-contents :initial-element :scaler :feedforward :feedback 
+   :max-size :radius :gain :partials :r :a :n :fill-time :order :xcoeffs :ycoeffs :envelope 
+   :base :duration :offset :end :direction :degree :distance :reverb :output :fft-size :expansion 
+   :length :hop :ramp :jitter :type :format :comment :channels :filter :revout :width :edit 
+   :synthesize :analyze :interp :overlap :pitch :distribution :sines :dur ) constant keyargs
+
+#( <'> add-mark <'> add-sound-file-extension <'> add-source-file-extension
+   <'> sound-file-extensions <'> sound-file? <'> add-to-main-menu <'> add-to-menu <'> add-transform
+   <'> amp-control <'> as-one-edit <'> ask-before-overwrite <'> audio-input-device
+   <'> audio-output-device <'> auto-resize <'> auto-update <'> autocorrelate
+   <'> axis-info <'> c-g? <'> apply-controls <'> change-samples-with-origin
+   <'> channel-style <'> channels <'> chans <'> close-sound
+   <'> comment <'> contrast-control <'> contrast-control-amp <'> contrast-control?
+   <'> convolve-selection-with <'> convolve-with <'> channel-properties <'> channel-property
+   <'> amp-control-bounds
+   <'> speed-control-bounds <'> expand-control-bounds <'> contrast-control-bounds
+   <'> reverb-control-length-bounds
+   <'> reverb-control-scale-bounds <'> cursor-update-interval <'> cursor-location-offset
+   <'> auto-update-interval <'> count-matches <'> cursor
+   <'> with-tracking-cursor <'> cursor-size <'> cursor-style <'> tracking-cursor-style
+   <'> dac-combines-channels <'> dac-size <'> clipping
+   <'> data-format <'> data-location <'> data-size <'> default-output-chans
+   <'> default-output-data-format <'> default-output-srate <'> default-output-header-type
+   <'> define-envelope <'> delete-mark <'> delete-marks <'> forget-region <'> delete-sample
+   <'> delete-samples <'> delete-selection <'> display-edits
+   <'> edit-fragment <'> edit-position <'> edit-tree <'> edits <'> env-selection
+   <'> env-sound <'> enved-envelope <'> enved-base <'> enved-clip?
+   <'> enved-in-dB <'> enved-style <'> enved-power <'> enved-target <'> enved-wave? <'> eps-file
+   <'> eps-left-margin <'> eps-bottom-margin <'> eps-size <'> expand-control
+   <'> expand-control-hop <'> expand-control-jitter <'> expand-control-length
+   <'> expand-control-ramp <'> expand-control? <'> fft <'> fft-window-alpha <'> fft-window-beta
+   <'> fft-log-frequency <'> fft-log-magnitude <'> transform-size <'> disk-kspace
+   <'> transform-graph-type <'> fft-window <'> transform-graph? <'> file-name
+   <'> filter-sound <'> filter-control-in-dB <'> filter-control-envelope <'> enved-filter-order
+   <'> enved-filter <'> filter-control-in-hz <'> filter-control-order <'> filter-selection
+   <'> filter-channel <'> filter-control? <'> find-channel
+   <'> find-mark <'> find-sound <'> finish-progress-report <'> frames <'> free-sampler
+   <'> graph <'> transform? <'> delete-transform <'> add-watcher <'> delete-watcher
+   <'> graph-cursor <'> graph->ps
+   <'> gl-graph->ps <'> graph-style <'> lisp-graph? <'>  graphs-horizontal <'> header-type
+   <'> in <'> insert-region <'> insert-sample <'> insert-samples
+   <'> insert-samples-with-origin <'> insert-selection <'> insert-silence <'> insert-sound
+   <'> just-sounds <'> left-sample <'> listener-prompt
+   <'> make-mix-sampler <'> make-player <'> make-region <'> make-region-sampler
+   <'> make-sampler <'> map-chan
+   <'> mark-name <'> mark-properties <'> mark-property
+   <'> mark-sample <'> mark-sync <'> mark-sync-max
+   <'> mark-home <'> marks <'> mark? <'>  max-transform-peaks
+   <'> max-regions <'> maxamp <'> maxamp-position
+   <'> minibuffer-history-length <'> min-dB <'> log-freq-start <'> mix
+   <'> mixes <'> mix-amp <'> mix-amp-env <'> mix-length
+   <'> mix? <'> mix-position <'> mix-properties <'> mix-property
+   <'> mix-name <'> mix-region <'> mix-sampler?
+   <'> mix-selection <'> mix-sound <'> mix-home <'> mix-speed
+   <'> mix-tag-height <'> mix-tag-width <'> mark-tag-height <'> mark-tag-width
+   <'> mix-tag-y <'> mix-vct <'> mix-waveform-height <'> time-graph-style
+   <'> lisp-graph-style <'> transform-graph-style <'> read-mix-sample
+   <'> next-sample <'> transform-normalization <'> open-raw-sound
+   <'> open-sound <'> previous-sample <'> peaks <'> player? <'> players
+   <'> add-directory-to-view-files-list <'> add-file-to-view-files-list
+   <'> view-files-sort <'> view-files-amp <'> view-files-speed <'> view-files-files
+   <'> view-files-selected-files <'> view-files-speed-style <'> view-files-amp-env
+   <'> print-length <'> progress-report <'> prompt-in-minibuffer <'> read-only
+   <'> redo <'> region-chans <'> region-home
+   <'> region-graph-style <'> region-frames <'> region-position <'> region-maxamp
+   <'> region-maxamp-position <'> selection-maxamp <'> selection-maxamp-position
+   <'> region-sample <'> region->vct <'> clear-minibuffer <'> region-srate <'> regions
+   <'> region? <'>  remove-from-menu <'> report-in-minibuffer <'> reset-controls
+   <'> restore-controls <'> restore-region <'> reverb-control-decay <'> reverb-control-feedback
+   <'> reverb-control-length <'> reverb-control-lowpass <'> reverb-control-scale
+   <'> reverb-control? <'>  reverse-sound <'> reverse-selection <'> revert-sound
+   <'> right-sample <'> sample <'> sampler-at-end? <'>  sampler?
+   <'> samples <'> sampler-position <'> save-controls
+   <'> ladspa-dir <'> peak-env-dir <'> save-dir <'> save-edit-history <'> save-envelopes
+   <'> save-listener <'> save-marks <'> save-region <'> save-selection
+   <'> save-sound <'> save-sound-as <'> save-state <'> save-state-file
+   <'> scale-by <'> scale-selection-by <'> scale-selection-to <'> scale-to
+   <'> scan-chan <'> search-procedure <'> select-all <'> select-channel
+   <'> select-sound <'> selected-channel
+   <'> selected-sound <'> selection-position <'> selection-creates-region
+   <'> selection-frames <'> selection-member? <'> selection? <'> short-file-name
+   <'> show-axes <'> show-controls <'> show-transform-peaks
+   <'> show-indices <'> show-marks <'> show-mix-waveforms
+   <'> show-selection-transform <'> show-y-zero <'> sinc-width <'> show-grid
+   <'> show-sonogram-cursor <'> grid-density <'> smooth-sound <'> smooth-selection
+   <'> snd-spectrum <'> snd-tempnam <'> snd-version
+   <'> sound-files-in-directory <'> sound-loop-info
+   <'> sound? <'> sounds <'> spectrum-end <'> spectro-hop
+   <'> spectrum-start <'> spectro-x-angle <'> spectro-x-scale <'> spectro-y-angle
+   <'> spectro-y-scale <'> spectro-z-angle <'> spectro-z-scale <'> speed-control
+   <'> speed-control-style <'> speed-control-tones <'> squelch-update <'> srate
+   <'> src-sound <'> src-selection <'> start-progress-report <'> stop-player
+   <'> stop-playing <'> swap-channels <'> syncd-marks <'> sync
+   <'> sync-max <'> sound-properties <'> sound-property <'> temp-dir <'>  region-sampler?
+   <'> transform-sample <'> transform->vct <'> transform-frames <'> transform-type
+   <'> trap-segfault <'> with-file-monitor <'> optimization
+   <'> undo <'> update-transform-graph <'> update-time-graph <'> update-lisp-graph
+   <'> update-sound <'> clm-table-size <'> with-verbose-cursor <'> view-sound <'> wavelet-type
+   <'> time-graph? <'>  time-graph-type <'> wavo-hop <'> wavo-trace
+   <'> window-height <'> window-width <'> window-x <'> window-y
+   <'> with-mix-tags <'> with-relative-panes <'> with-gl
+   <'> x-axis-style <'> beats-per-measure <'> beats-per-minute <'> x-bounds
+   <'> x-position-slider <'> x-zoom-slider <'> mus-header-type->string
+   <'> mus-data-format->string <'> y-bounds <'> y-position-slider
+   <'> y-zoom-slider <'> zero-pad <'> zoom-focus-style
+   <'> mus-sound-samples <'> mus-sound-frames <'> mus-sound-duration <'> mus-sound-datum-size
+   <'> mus-sound-data-location <'> data-size <'> mus-sound-chans <'> mus-sound-srate
+   <'> mus-sound-header-type <'> mus-sound-data-format <'> mus-sound-length
+   <'> mus-sound-type-specifier
+   <'> mus-header-type-name <'> mus-data-format-name <'> mus-sound-comment
+   <'> mus-sound-write-date
+   <'> mus-bytes-per-sample <'> mus-sound-loop-info
+   'snd-nogui [unless] <'> mus-audio-describe [then]
+   <'> mus-alsa-squelch-warning <'> mus-sound-maxamp
+   <'> mus-sound-maxamp-exists?
+   <'> mus-file-prescaler <'> mus-prescaler <'> mus-clipping <'> mus-file-clipping
+   <'> mus-header-raw-defaults <'> moving-average <'> moving-average? <'> make-moving-average
+   <'> mus-expand-filename <'> make-sound-data <'> sound-data-ref <'> sound-data-set!
+   <'> sound-data-scale! <'> sound-data-fill! <'> sound-data? <'> sound-data-length
+   <'> sound-data-multiply! <'> sound-data-add! <'> sound-data-offset! <'> sound-data*
+   <'> sound-data+ <'> sound-data-copy <'> sound-data-reverse! <'> sound-data-maxamp
+   <'> sound-data-chans <'> sound-data->vct <'> vct->sound-data <'> sound-data-peak
+   <'> all-pass <'> all-pass? <'> amplitude-modulate <'> array->file
+   <'> array-interp <'> mus-interpolate <'> asymmetric-fm <'> asymmetric-fm?
+   <'> sound-data->sound-data <'> clear-array <'> comb <'> comb?
+   <'> filtered-comb <'> filtered-comb? <'> contrast-enhancement <'> convolution
+   <'> convolve <'> convolve? <'> db->linear <'> degrees->radians
+   <'> delay <'> delay? <'> dot-product <'> env
+   <'> env-interp <'> env? <'> file->array <'> file->frame
+   <'> file->frame? <'>  file->sample <'> file->sample? <'> filter
+   <'> filter? <'> fir-filter <'> fir-filter? <'> formant
+   <'> formant-bank <'> formant? <'> frame* <'> frame+
+   <'> frame->file <'> frame->file? <'> frame->frame <'> frame->list
+   <'> frame->sample <'> frame-ref <'> frame-set! <'> frame?
+   <'> granulate <'> granulate? <'> hz->radians <'> iir-filter
+   <'> iir-filter? <'>  in-any <'> ina <'> inb
+   <'> linear->db <'> locsig <'> locsig-ref <'> locsig-reverb-ref
+   <'> locsig-reverb-set! <'> locsig-set! <'>  locsig? <'> make-all-pass
+   <'> make-asymmetric-fm <'> make-comb <'> make-filtered-comb <'> make-convolve
+   <'> make-delay <'> make-env <'> make-fft-window <'> make-file->frame
+   <'> make-file->sample <'> make-filter <'> make-fir-filter <'> make-formant
+   <'> make-frame <'> make-frame->file <'> make-granulate <'> make-iir-filter
+   <'> make-locsig <'> move-locsig <'> make-mixer <'> make-notch
+   <'> make-one-pole <'> make-one-zero <'> make-oscil <'> make-pulse-train
+   <'> make-rand <'> make-rand-interp <'> make-readin <'> make-sample->file
+   <'> make-sawtooth-wave <'> make-square-wave <'> make-src
+   <'> make-ssb-am <'> make-table-lookup
+   <'> make-triangle-wave <'> make-two-pole <'> make-two-zero <'> make-wave-train
+   <'> mixer* <'> mixer-ref <'> mixer-set!
+   <'> mixer? <'> mixer+ <'> move-sound <'> make-move-sound
+   <'> move-sound? <'> mus-float-equal-fudge-factor <'> multiply-arrays
+   <'> mus-array-print-length
+   <'> mus-channel <'> mus-channels <'> make-polyshape <'> polyshape?
+   <'> mus-close <'> mus-data <'> mus-feedback
+   <'> mus-feedforward <'> mus-fft <'> mus-frequency
+   <'> mus-hop <'> mus-increment <'> mus-input? <'> mus-file-name
+   <'> mus-length <'> mus-location <'> mus-mix <'> mus-order
+   <'> mus-output? <'>  mus-phase <'> mus-ramp <'> mus-random
+   <'> mus-scaler <'> mus-srate <'> mus-xcoeffs <'> mus-ycoeffs
+   <'> notch <'> notch? <'> one-pole <'> one-pole?
+   <'> one-zero <'> one-zero? <'> oscil <'> oscil?
+   <'> out-any <'> outa <'> outb <'> outc
+   <'> outd <'> partials->polynomial <'> partials->wave
+   <'> phase-partials->wave <'> polynomial <'> pulse-train <'> pulse-train?
+   <'> radians->degrees <'> radians->hz <'> rand <'> rand-interp
+   <'> rand-interp? <'>  rand? <'> readin <'> readin?
+   <'> rectangular->polar <'> rectangular->magnitudes
+   <'> ring-modulate <'> sample->file <'> sample->file?
+   <'> sample->frame <'> sawtooth-wave <'> sawtooth-wave?
+   <'> spectrum <'> square-wave <'> square-wave?
+   <'> src <'> src? <'> ssb-am <'> ssb-am?
+   <'> table-lookup <'> table-lookup? <'> tap <'> triangle-wave
+   <'> triangle-wave? <'> two-pole <'> two-pole? <'> two-zero
+   <'> two-zero? <'> wave-train <'> wave-train?
+   <'> make-vct <'> vct-add! <'> vct-subtract!
+   <'> vct-copy <'> vct-length <'> vct-multiply! <'> vct-offset!
+   <'> vct-ref <'> vct-scale! <'> vct-fill! <'> vct-set!
+   <'> vct-peak <'> vct? <'> list->vct
+   <'> vct->list <'> vector->vct <'> vct->vector <'> vct-move!
+   <'> vct-reverse! <'> vct-subseq <'> vct <'> little-endian?
+   <'> vct->string <'> clm-channel <'> env-channel <'> map-channel
+   <'> scan-channel <'> reverse-channel <'> seconds->samples
+   <'> samples->seconds <'> smooth-channel <'> vct->channel <'> channel->vct
+   <'> src-channel <'> scale-channel <'> ramp-channel <'> pad-channel
+   <'> normalize-channel <'> cursor-position <'> show-listener <'> mus-sound-prune
+   <'> mus-sound-forget <'> xramp-channel <'> ptree-channel <'> snd->sample
+   <'> snd->sample? <'> make-snd->sample <'> make-scalar-mixer <'> beats-per-minute
+   <'> beats-per-measure <'> channel-amp-envs <'> convolve-files <'> filter-control-coeffs
+   <'> locsig-type <'> make-phase-vocoder <'> mus-describe
+   <'> mus-error-type->string <'> mus-file-buffer-size <'> mus-name <'> mus-offset
+   <'> mus-out-format <'> mus-reset <'> mus-rand-seed <'> mus-width
+   <'> phase-vocoder? <'> polar->rectangular <'> phase-vocoder-amp-increments
+   <'> phase-vocoder-amps
+   <'> phase-vocoder-freqs <'> phase-vocoder-phase-increments
+   <'> phase-vocoder-phases
+   <'> mus-generator? <'> read-sample <'> reset-listener-cursor <'> goto-listener-end
+   <'> sampler-home <'> selection-chans <'> selection-srate <'> snd-warning
+   <'> channel-data <'> x-axis-label <'> variable-graph? <'> y-axis-label
+   <'> snd-url <'> snd-urls <'> free-player <'> delete-mix <'> delay-tick <'> playing
+   <'> pausing <'> copy-sampler <'> html-dir <'> html-program
+   <'> make-fir-coeffs <'> make-identity-mixer <'> mus-interp-type <'> mus-run
+   <'> phase-vocoder <'> player-home <'> redo-edit <'> undo-edit ) constant procs
+
+#( <'> amp-control <'> ask-before-overwrite <'> audio-input-device <'> audio-output-device
+   <'> auto-update <'> channel-style <'> sound-file-extensions
+   <'> contrast-control <'> contrast-control-amp
+   <'> amp-control-bounds <'> speed-control-bounds <'> expand-control-bounds
+   <'> contrast-control-bounds
+   <'> reverb-control-length-bounds <'> reverb-control-scale-bounds <'> cursor-update-interval
+   <'> cursor-location-offset
+   <'> contrast-control? <'> auto-update-interval <'> cursor
+   <'> channel-properties <'> channel-property <'> with-tracking-cursor <'> cursor-size
+   <'> cursor-style <'> tracking-cursor-style <'> dac-combines-channels <'> dac-size
+   <'> clipping <'> default-output-chans <'> default-output-data-format
+   <'> default-output-srate <'> default-output-header-type <'> dot-size <'> enved-envelope
+   <'> enved-base <'> enved-clip? <'> enved-in-dB <'> enved-style
+   <'> enved-power <'> enved-target <'> enved-wave?
+   <'> eps-file <'> eps-left-margin <'> eps-bottom-margin <'> eps-size
+   <'> expand-control <'> expand-control-hop <'> expand-control-jitter <'> expand-control-length
+   <'> expand-control-ramp <'> expand-control? <'> fft-window-alpha <'> fft-window-beta
+   <'> fft-log-frequency <'> fft-log-magnitude <'> transform-size <'> transform-graph-type
+   <'> fft-window <'> transform-graph? <'> filter-control-in-dB <'> filter-control-envelope
+   <'> enved-filter-order <'> enved-filter <'> filter-control-in-hz <'> filter-control-order
+   <'> filter-control? <'> graph-cursor <'> graph-style <'> lisp-graph? <'> graphs-horizontal
+   <'> just-sounds <'> left-sample <'> listener-prompt
+   <'> mark-name <'> mark-properties <'> mark-property
+   <'> mark-sample <'> mark-sync <'> max-transform-peaks
+   <'> min-dB <'> log-freq-start <'> mix-amp
+   <'> mix-amp-env <'> mix-name <'> mix-position <'> mix-properties <'> mix-property
+   <'> mix-speed <'> mix-tag-height <'> mix-tag-width
+   <'> mix-tag-y <'> mark-tag-width <'> mark-tag-height <'> mix-waveform-height
+   <'> transform-normalization
+   <'> view-files-sort <'> print-length <'> view-files-amp
+   <'> view-files-speed <'> view-files-speed-style <'> view-files-amp-env <'> view-files-files
+   <'> view-files-selected-files <'> region-graph-style <'> reverb-control-decay
+   <'> reverb-control-feedback <'> reverb-control-length
+   <'> reverb-control-lowpass <'> reverb-control-scale <'> time-graph-style <'> lisp-graph-style
+   <'> transform-graph-style <'> reverb-control? <'> ladspa-dir <'> peak-env-dir
+   <'> save-dir <'> save-state-file
+   <'> selection-creates-region <'> show-axes
+   <'> show-controls <'> show-transform-peaks <'> show-indices <'> show-marks
+   <'> show-mix-waveforms <'> show-selection-transform <'> show-y-zero
+   <'> show-grid <'> show-sonogram-cursor <'> sinc-width <'> spectrum-end
+   <'> spectro-hop <'> spectrum-start <'> spectro-x-angle <'>  grid-density
+   <'> spectro-x-scale <'> spectro-y-angle <'> spectro-y-scale <'> spectro-z-angle
+   <'> spectro-z-scale <'> speed-control <'> speed-control-style <'> speed-control-tones
+   <'> squelch-update <'> sync <'> sound-properties <'> sound-property <'> temp-dir
+   <'> y-bounds <'> transform-type
+   <'> trap-segfault <'> with-file-monitor <'> optimization <'> with-verbose-cursor
+   <'> wavelet-type <'> x-bounds
+   <'> time-graph? <'> wavo-hop <'> wavo-trace <'> with-gl
+   <'> with-mix-tags <'> x-axis-style <'> beats-per-minute <'> zero-pad
+   <'> zoom-focus-style <'> with-relative-panes <'>  window-x
+   <'> window-y <'> window-width <'> window-height
+   <'> beats-per-measure <'> channels <'> chans
+   <'> comment <'> data-format <'> data-location
+   <'> data-size <'> edit-position <'> frames <'> header-type
+   <'> maxamp <'> minibuffer-history-length <'> read-only <'> right-sample
+   <'> sample <'> samples <'> selected-channel
+   <'> selected-sound <'> selection-position <'> selection-frames
+   <'> selection-member? <'> sound-loop-info <'> srate <'> time-graph-type
+   <'> x-position-slider <'> x-zoom-slider <'> y-position-slider
+   <'> y-zoom-slider <'> sound-data-ref <'> mus-array-print-length <'> mus-float-equal-fudge-factor
+   <'> mus-data <'> mus-feedback <'> mus-feedforward
+   <'> mus-frequency <'> mus-hop <'> mus-increment
+   <'> mus-length <'> mus-location <'> mus-phase <'> mus-ramp
+   <'> mus-scaler <'> vct-ref <'> x-axis-label <'> filter-control-coeffs
+   <'> locsig-type <'> mus-file-buffer-size <'> mus-rand-seed <'> mus-width
+   <'> clm-table-size <'> mus-offset <'> mus-reset
+   <'> phase-vocoder-amp-increments <'> phase-vocoder-amps <'> phase-vocoder-freqs
+   <'> phase-vocoder-phase-increments <'> phase-vocoder-phases
+   <'> html-dir <'> html-program <'> mus-interp-type
+   <'> mixer-ref <'> frame-ref <'> locsig-ref <'> locsig-reverb-ref
+   <'> mus-file-prescaler <'> mus-prescaler <'> mus-clipping <'> mus-file-clipping
+   <'> mus-header-raw-defaults ) constant set-procs
+
+: arity-not-ok     <{ prc args -- f }> prc args     arity-ok not ;
+: set-arity-not-ok <{ prc args -- f }> prc args set-arity-ok not ;
+
+procs <'> arity-not-ok  0 array-reject constant procs00
+procs <'> arity-not-ok  1 array-reject constant procs01
+procs <'> arity-not-ok  2 array-reject constant procs02
+procs <'> arity-not-ok  3 array-reject constant procs03
+procs <'> arity-not-ok  4 array-reject constant procs04
+procs <'> arity-not-ok  5 array-reject constant procs05
+procs <'> arity-not-ok  6 array-reject constant procs06
+procs <'> arity-not-ok  7 array-reject constant procs07
+procs <'> arity-not-ok  8 array-reject constant procs08
+procs <'> arity-not-ok 10 array-reject constant procs10
+set-procs <'> set-arity-not-ok 1 array-reject constant set-procs00
+set-procs <'> set-arity-not-ok 2 array-reject constant set-procs01
+set-procs <'> set-arity-not-ok 3 array-reject constant set-procs02
+set-procs <'> set-arity-not-ok 4 array-reject constant set-procs03
+set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
+
+: close-sound-mc-cb { -- prc; y self -- val }
+  1 proc-create "oboe.snd" open-sound , ( prc )
+ does> { y self -- val }
+  self @ { ind }
+  ind sound? if ind close-sound drop then
+  0.0
+;
+
+: close-sound-aoe-1-cb { -- prc; self -- val }
+  0 proc-create "oboe.snd" open-sound , "pistol.snd" open-sound ,
+ does> { self -- val }
+  self       @ ( ind1 ) close-sound drop
+  self cell+ @ ( ind2 ) close-sound
+;
+
+: close-sound-aoe-2b-cb { ind1 ind2 -- prc; self -- val }
+  0 proc-create ind1 , ind2 , ( prc )
+ does> { self -- val }
+  self       @ ( ind1 ) close-sound drop
+  self cell+ @ ( ind2 ) close-sound
+;
+
+: close-sound-aoe-2a-cb { -- prc; self -- val }
+  0 proc-create "oboe.snd" open-sound , "pistol.snd" open-sound ,
+ does> { self -- val }
+  self       @ { ind1 }
+  self cell+ @ { ind2 }
+  100 0.1 ind1 0 set-sample drop
+  100 0.1 ind2 0 set-sample drop
+  ind1 ind2 close-sound-aoe-2b-cb "inner-edit" as-one-edit
+;
+
+: close-sound-fc-cb { -- prc; y self -- f }
+  1 proc-create "oboe.snd" open-sound , ( prc )
+ does> { y self -- f }
+  self @ { ind }
+  ind sound? if ind close-sound drop then
+  #f
+;
+
+: sc-1-cb { mx -- prc; x self -- f }
+  1 proc-create mx , ( prc )
+ does> { x self -- f }
+  x fabs self @ @ ( mx ) fmax self @ !
+  #f
+;
+
+: mc-1-cb { scl -- prc; y self -- val }
+  1 proc-create scl , 0.0 ( mx ) , ( prc )
+ does> { y self -- val }
+  y 0.4 f> if
+    0.0 self cell+ !
+    self cell+ ( addr-of-mx ) sc-1-cb scan-channel drop
+    self cell+ @ 1/f self ! ( scl = 1/mx )
+  then
+  self @ ( scl ) y f*
+;
+
+: mc-2-cb { ind -- prc; y self -- val }
+  1 proc-create ind , ( prc )
+ does> { y self -- val }
+  y 0.4 f> if 1 self @ ( ind ) 0 set-frames drop then
+  y
+;
+
+'complex provided? [if]
+  : mc-3-cb <{ y -- val }> y 0.0+1.0i c* ;
+[else]
+  noop alias mc-3-cb
+[then]
+
+: edpos-1-cb { ind -- prc; self -- edpos }
+  0 proc-create ind , ( prc )
+ does> { self -- edpos }
+  self @ ( ind ) close-sound drop
+  current-edit-position
+;
+
+: edpos-2-cb <{ snd chn -- edpos }>
+  snd close-sound drop
+  current-edit-position
+;
 
 : 28-errors ( -- )
   #t set-with-background-processes drop
@@ -5136,34 +5236,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   "%s" #( tm ) snd-test-message
 ;
 
-SIGSEGV lambda: { sig -- }
-  stack-reset
-  backtrace
-  "" #f snd-test-message
-  $" Segmentation fault (signal no %d)" #( sig ) snd-test-message
-  "" #f snd-test-message
-  finish-snd-test
-  2 snd-exit drop
-; signal drop
-SIGILL lambda: { sig -- }
-  stack-reset
-  backtrace
-  "" #f snd-test-message
-  $" Illegal instruction (signal no %d)" #( sig ) snd-test-message
-  "" #f snd-test-message
-  finish-snd-test
-  2 snd-exit drop
-; signal drop
-SIGINT lambda: { sig -- }
-  stack-reset
-  backtrace
-  "" #f snd-test-message
-  $" Interrupt received.  Clean up %S." #( *filename* #f file-basename ) snd-test-message
-  "" #f snd-test-message
-  finish-snd-test
-  0 snd-exit drop
-; signal drop
-
 let: ( -- )
   #() { numbs }
   script-arg 0> if
@@ -5180,7 +5252,7 @@ let: ( -- )
   test-numbers empty? if
     29 -1 do test-numbers i array-push to test-numbers loop
   then
-  numbs each abs { n } test-numbers test-numbers n array-index array-delete! drop end-each
+    numbs each abs { n } test-numbers test-numbers n array-index array-delete! drop end-each
   .stack
   start-snd-test
   <'> 00-sel-from-snd    run-fth-test

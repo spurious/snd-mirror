@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Aug 08 23:27:50 CEST 2006
-\ Changed: Thu Dec 31 05:27:01 CET 2009
+\ Changed: Sun Jun 13 16:43:56 CEST 2010
 
 \ snd-hooks         Array with all Snd hooks.
 \ reset-all-hooks   ( -- )

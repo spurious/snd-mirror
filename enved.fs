@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Nov 13 13:59:42 CET 2005
-\ Changed: Fri Nov 06 00:28:14 CET 2009
+\ Changed: Tue Oct 19 23:01:15 CEST 2010
 
 \ Commentary:
 
@@ -19,7 +19,6 @@
 \  enved-set!           ( obj index point -- )
 \  enved-equal?   	( obj1 obj2 -- f )
 \  enved-length         ( obj -- len )
-\  enved-mark     	( obj -- )
 \  enved-free     	( obj -- )
 \ 
 \ enved?     	  	( obj -- f )
@@ -29,6 +28,7 @@
 \ enved-delete!         ( obj index -- )
 
 \ === ENVED OBJECT TYPE ===
+
 hide
 \ The name enved-envelope is in use!
 struct
@@ -52,19 +52,18 @@ fth-enved make-?obj enved?
 ;  
 previous
 
-: enved-length  ( obj -- len ) envelope@ array-length 2/ ;
-: enved-inspect ( obj -- str )
-  { obj }
-  "#<" make-string-output-port { prt }
-  prt $" %s[%d]: %S>" #( obj object-name obj enved-length obj envelope@ ) port-puts-format
-  prt port->string
+: enved-length ( obj -- len ) envelope@ array-length 2/ ;
+
+: enved-inspect { obj -- str }
+  $" #<%s[%d]: %S>" #( obj object-name obj enved-length obj envelope@ ) string-format
 ;
+
 : enved->string ( obj -- str )  envelope@ object->string ;
 : enved-dump    ( obj -- str )  enved->string $"  make-enved" $+ ;
 : enved->array  ( obj -- ary )  envelope@ array->array ;
 : enved-copy    ( obj -- obj2 ) envelope@ array-copy make-enved ;
-: enved-ref     ( obj index -- point )
-  { obj index }
+
+: enved-ref { obj index -- point }
   obj enved? obj 1 $" an enved object" assert-type
   index 0< if index obj enved-length + to index then
   obj index object-range? if
@@ -76,8 +75,8 @@ previous
     fth-throw
   then
 ;
-: enved-set! ( obj index point -- )
-  { obj index point }
+
+: enved-set! { obj index point -- }
   obj enved? obj 1 $" an enved object" assert-type
   index 0< if index obj enved-length + to index then
   obj index object-range? if
@@ -90,16 +89,17 @@ previous
     fth-throw
   then
 ;
-: enved-equal? ( obj1 obj2 -- f )
-  { obj1 obj2 }
+
+: enved-equal? { obj1 obj2 -- f }
   obj1 enved? obj2 enved? && if
     obj1 envelope@ obj2 envelope@ object-equal?
   else
     #f
   then
 ;
-: enved-mark    ( obj -- ) envelope@ gc-mark drop ;
-: enved-free    ( obj -- ) instance-gen-ref free throw ;
+
+\ frees %alloc-ed struct enved%
+: enved-free ( obj -- ) instance-gen-ref free throw ;
 
 \ Init enved
 <'> enved-inspect  fth-enved set-object-inspect	\ en .inspect
@@ -111,18 +111,16 @@ previous
 <'> enved-set!     fth-enved set-object-value-set \ en index #( x y ) object-set!
 <'> enved-equal?   fth-enved set-object-equal-p	\ obj1 obj2 equal?
 <'> enved-length   fth-enved set-object-length  \ en object-length => number of points (lstlen/2)
-<'> enved-mark     fth-enved set-object-mark    \ for gc
 <'> enved-free     fth-enved set-object-free	\ for gc
 <'> enved-ref      fth-enved 1 set-object-apply	\ en index apply => #( x y )
 
 \ ENVED-INDEX, ENVED-INSERT!, ENVED-DELETE!
-: enved-index ( obj x -- index|-1 )
-  { obj x }
+: enved-index { obj x -- index|-1 }
   obj enved? obj 1 $" an enved object" assert-type
   -1 obj each 0 array-ref x f= if drop i leave then end-each
 ;
-: enved-insert! ( obj index point -- )
-  { obj index point }
+
+: enved-insert! { obj index point -- }
   obj enved? obj 1 $" an enved object" assert-type
   point array? point object-length 2 = &&  point 3 $" a point array #( x y )" assert-type
   obj enved-length 0= if
@@ -139,8 +137,8 @@ previous
     then
   then obj envelope!
 ;
-: enved-delete! ( obj index -- )
-  { obj index }
+
+: enved-delete! { obj index -- }
   obj enved? obj 1 $" an enved object" assert-type
   index 0< if index obj enved-length + to index then
   obj index object-range? if

@@ -2,11 +2,11 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Fri Feb 07 23:56:21 CET 2003
-# Changed: Tue Oct 05 01:02:28 CEST 2010
+# Changed: Wed Oct 20 23:06:02 CEST 2010
 
 # Commentary:
 #
-# Requires --with-moitf or --with-gtk and module libxm.so or --with-static-xm!
+# Requires --with-motif|gtk and module libxm.so|libxg.so or --with-static-xm|xg!
 #
 # Tested with Snd 11.10, Motif 2.3.0, Gtk+ 2.20.1, Ruby 1.8.7
 #
@@ -43,31 +43,14 @@
 # Code:
 
 require "clm"
-require "snd-xm"
 require "env"
 require "extensions"
-require "xm-enved"
 require "rubber"
 include Rubber
 include Math
 require "hooks"
 
 $effects_menu = false           # for prefs
-
-unless $mark_hook.member?("mark-buttons-effects-hook")
-  mark_hook_proc = lambda do | |
-    flag = marks?
-    $mark_buttons.each do |w| set_sensitive(w, flag) end
-  end
-  
-  $mark_hook.add_hook!("mark-buttons-effects-hook") do |id, snd, chn, reason|
-    mark_hook_proc.call
-  end
-
-  $after_graph_hook.add_hook!("mark-buttons-effects-hook") do |snd, chn|
-    mark_hook_proc.call
-  end
-end
 
 module Effects
   def plausible_mark_samples
@@ -134,7 +117,7 @@ module Effects
             when :selection
               selection_position
             when :cursor
-              cursor(selected_sound, selected_channel)
+              cursor(selected_sound, selected_channel(selected_sound))
             else
               (ms ? ms[0] : 0)
             end
@@ -168,6 +151,23 @@ module Effects
         1 + y.abs
       else
         1
+      end
+    end
+  end
+
+  def effect_target_ok(target)
+    if Snd.sounds.empty?
+      false
+    else
+      case target
+      when :sound
+        true
+      when :selection
+        selection?
+      when :marks
+        Snd.marks(selected_sound, selected_channel(selected_sound)).length >= 2
+      else
+        false
       end
     end
   end
@@ -357,7 +357,8 @@ module Effects
 
   def effects_jc_reverb_1(volume, beg = 0, dur = false, snd = false, chn = false)
     map_channel(effects_jc_reverb((dur or frames(snd, chn)), volume),
-                beg, dur, snd, chn, false, format("%s(%s, %s, %s", get_func_name, volume, beg, dur))
+                beg, dur, snd, chn, false,
+                format("%s(%s, %s, %s", get_func_name, volume, beg, dur))
   end
   
   def effects_hello_dentist(frq, amp, beg = 0, dur = false, snd = false, chn = false)
@@ -468,7 +469,53 @@ module Effects
       array_interp(tbl, 8.0 + 8.0 * inval)
     end
   end
+end
+
+module X_Effects
+  include Effects
+  require "snd-xm"
+  require "xm-enved"
+
+  #
+  # defined in snd-xm.rb:
+  #
+  # $with_motif
+  # $with_gtk
+  #
   
+  if $with_motif
+    def make_enved_widget(name, dlg, &target_body)
+      frame = dlg.add_frame([RXmNheight, 200])
+      dlg.add_target() do |t| target_body.call(t) end
+      activate_dialog(dlg.dialog)
+      make_xenved(name, frame, :envelope, [0.0, 1.0, 1.0, 1.0], :axis_bounds, [0.0, 1.0, 0.0, 1.0])
+    end
+
+    def set_log_value(slider, minval, init, maxval)
+      set_scale_value(slider.scale, scale_log2linear(minval, init, maxval))
+      change_label(slider.label, "%1.2f" % init)
+    end
+
+    def get_log_value(wid, info, minval, maxval)
+      scale_linear2log(minval, Rvalue(info), maxval)
+    end
+  else
+    def make_enved_widget(name, dlg, &target_body)
+      frame = dlg.parent
+      activate_dialog(dlg.dialog)
+      dlg.add_target() do |t| target_body.call(t) end
+      make_xenved(name, frame, :envelope, [0.0, 1.0, 1.0, 1.0], :axis_bounds, [0.0, 1.0, 0.0, 1.0])
+    end
+
+    def set_log_value(slider, minval, init, maxval)
+      set_scale_value(slider.scale, scale_log2linear(minval, init, maxval))
+    end
+
+    def get_log_value(wid, info, minval, maxval)
+      scale_linear2log(minval, Rgtk_adjustment_get_value(RGTK_ADJUSTMENT(wid)), maxval)
+    end
+  end  
+
   #
   # --- Amplitude Effects ---
   #
@@ -484,7 +531,7 @@ module Effects
     def inspect
       format("%s (%1.2f)", @label, @amount)
     end
-
+    
     def post_dialog
       unless @dlg.kind_of?(Dialog) and widget?(@dlg.dialog)
         init_amount = 1.0
@@ -492,6 +539,7 @@ module Effects
         fr = nil
         @dlg = make_dialog(@label,
                            :info, "Move the slider to change the gain scaling amount",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              @envelope.envelope = [0.0, 1.0, 1.0, 1.0]
                              set_scale_value(sliders[0].scale, @amount = init_amount, 100.0)
@@ -534,18 +582,8 @@ module Effects
         sliders[0] = @dlg.add_slider("gain", 0.0, init_amount, 5.0, 100) do |w, c, i|
           @amount = get_scale_value(w, i, 100.0)
         end
-        if provided? :xm
-          frame = @dlg.add_frame([RXmNheight, 200])
-          @dlg.add_target() do |t| @target = t end
-        else
-          frame = @dlg.parent
-        end
-        activate_dialog(@dlg.dialog)
-        @envelope = make_xenved("gain", frame,
-                                :envelope, [0.0, 1.0, 1.0, 1.0],
-                                :axis_bounds, [0.0, 1.0, 0.0, 1.0])
-        if provided? :xg
-          @dlg.add_target() do |t| @target = t end
+        @envelope = make_enved_widget(@label, @dlg) do |t|
+          set_sensitive(@dlg.okay_button, effect_target_ok(@target = t))
         end
       else
         activate_dialog(@dlg.dialog)
@@ -572,6 +610,7 @@ module Effects
         @dlg = make_dialog(@label,
                            :info, "Normalize scales amplitude to the normalize amount. \
 Move the slider to change the scaling amount.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              set_scale_value(sliders[0].scale, @amount = init_amount, 100.0)
                            end) do |w, c, i|
@@ -604,7 +643,7 @@ Move the slider to change the scaling amount.",
         sliders[0] = @dlg.add_slider("normalize", 0.0, init_amount, 1.0, 100) do |w, c, i|
           @amount = get_scale_value(w, i, 100.0)
         end
-        @dlg.add_target() do |t| @target = t end
+        @dlg.add_target() do |t| set_sensitive(@dlg.okay_button, effect_target_ok(@target = t)) end
       end
       activate_dialog(@dlg.dialog)
     end
@@ -673,6 +712,7 @@ Higher values gate more of the sound.",
         sliders = Array.new(2)
         @dlg = make_dialog(@label,
                            :info, "The sliders change the delay time and echo amount.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              set_scale_value(sliders[0].scale, @delay_time = init_delay_time, 100.0)
                              set_scale_value(sliders[1].scale, @amount = init_amount, 100.0)
@@ -704,7 +744,7 @@ Higher values gate more of the sound.",
         sliders[1] = @dlg.add_slider("echo amount", 0.0, init_amount, 1.0, 100) do |w, c, i|
           @amount = get_scale_value(w, i, 100.0)
         end
-        @dlg.add_target() do |t| @target = t end
+        @dlg.add_target() do |t| set_sensitive(@dlg.okay_button, effect_target_ok(@target = t)) end
         @dlg.add_toggle() do |t| @truncate = t end
       end
       activate_dialog(@dlg.dialog)
@@ -744,6 +784,7 @@ Higher values gate more of the sound.",
         @dlg = make_dialog(@label,
                            :info, "Move the sliders to the filter scaler and the \
 delay time in seconds.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              set_scale_value(sliders[0].scale, @scaler = init_scaler, 100.0)
                              set_scale_value(sliders[1].scale, @delay = init_del, 100.0)
@@ -763,7 +804,7 @@ delay time in seconds.",
         sliders[1] = @dlg.add_slider("delay time (secs)", 0.0, init_del, 3.0, 100) do |w, c, i|
           @delay = get_scale_value(w, i, 100.0)
         end
-        @dlg.add_target() do |t| @target = t end
+        @dlg.add_target() do |t| set_sensitive(@dlg.okay_button, effect_target_ok(@target = t)) end
         @dlg.add_toggle() do |t| @truncate = t end
       end
       activate_dialog(@dlg.dialog)
@@ -808,6 +849,7 @@ delay time in seconds.",
         @dlg = make_dialog(@label,
                            :info, "Move the sliders to set the echo scaler, \
 the delay time in seconds, the modulation frequency, and the echo amplitude.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              set_scale_value(sliders[0].scale, @scaler = init_scaler, 100.0)
                              set_scale_value(sliders[1].scale, @delay = init_del, 100.0)
@@ -839,7 +881,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude.",
                                      0.0, init_amp, 100.0, 100) do |w, c, i|
           @amp = get_scale_value(w, i, 100.0)
         end
-        @dlg.add_target() do |t| @target = t end
+        @dlg.add_target() do |t| set_sensitive(@dlg.okay_button, effect_target_ok(@target = t)) end
         @dlg.add_toggle() do |t| @truncate = t end
       end
       activate_dialog(@dlg.dialog)
@@ -870,12 +912,9 @@ the delay time in seconds, the modulation frequency, and the echo amplitude.",
         @dlg = make_dialog(@label,
                            :info, "Butterworth band-pass filter. \
 Move the slider to change the center frequency and bandwidth.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
-                             @freq = init_freq
-                             set_scale_value(sliders[0].scale, scale_log2linear(20, @freq, 22050))
-                             if provided? :xm
-                               change_label(sliders[0].label, "%1.2f" % @freq)
-                             end
+                             set_log_value(sliders[0], 20, @freq = init_freq, 22050)
                              set_scale_value(sliders[1].scale, @bw = init_bw)
                            end) do |w, c, i|
           flt = make_butter_band_pass(@freq, @bw)
@@ -893,19 +932,17 @@ Move the slider to change the center frequency and bandwidth.",
                         format("effects_bbp(%s, %s, %s, %s", @freq, @bw, bg, nd))
           end
         end
-        sliders[0] = @dlg.add_slider("center frequency",
-                                     20, init_freq, 22050, 1, :log) do |w, c, i|
-          @freq = if provided? :xm
-                    scale_linear2log(20, Rvalue(i), 22050)
-                  else
-                    scale_linear2log(20, Rvalue(RGTK_ADJUSTMENT(w)), 22050)
-                  end
+        sliders[0] = @dlg.add_slider("center frequency", 20, init_freq, 22050, 1,
+                                     :log) do |w, c, i|
+          @freq = get_log_value(w, i, 20, 22050)
         end
         sliders[1] = @dlg.add_slider("bandwidth", 0, init_bw, 1000) do |w, c, i|
           @bw = get_scale_value(w, i)
         end
         @dlg.add_target([["entire sound", :sound, true],
-                         ["selection", :selection, false]]) do |t| @target = t end
+                         ["selection", :selection, false]]) do |t|
+          set_sensitive(@dlg.okay_button, effect_target_ok(@target = t))
+        end
       end
       activate_dialog(@dlg.dialog)
     end
@@ -932,12 +969,9 @@ Move the slider to change the center frequency and bandwidth.",
         @dlg = make_dialog(@label,
                            :info, "Butterworth band-reject filter. \
 Move the slider to change the center frequency and bandwidth.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
-                             @freq = init_freq
-                             set_scale_value(sliders[0].scale, scale_log2linear(20, @freq, 22050))
-                             if provided? :xm
-                               change_label(sliders[0].label, "%1.2f" % @freq)
-                             end
+                             set_log_value(sliders[0], 20, @freq = init_freq, 22050)
                              set_scale_value(sliders[1].scale, @bw = init_bw)
                            end) do |w, c, i|
           flt = make_butter_band_reject(@freq, @bw)
@@ -957,17 +991,15 @@ Move the slider to change the center frequency and bandwidth.",
         end
         sliders[0] = @dlg.add_slider("center frequency",
                                      20, init_freq, 22050, 1, :log) do |w, c, i|
-          @freq = if provided? :xm
-                    scale_linear2log(20, Rvalue(i), 22050)
-                  else
-                    scale_linear2log(20, Rvalue(RGTK_ADJUSTMENT(w)), 22050)
-                  end
+          @freq = get_log_value(w, i, 20, 22050)
         end
         sliders[1] = @dlg.add_slider("bandwidth", 0, init_bw, 1000) do |w, c, i|
           @bw = get_scale_value(w, i)
         end
         @dlg.add_target([["entire sound", :sound, true],
-                         ["selection", :selection, false]]) do |t| @target = t end
+                         ["selection", :selection, false]]) do |t|
+          set_sensitive(@dlg.okay_button, effect_target_ok(@target = t))
+        end
       end
       activate_dialog(@dlg.dialog)
     end
@@ -992,12 +1024,9 @@ Move the slider to change the center frequency and bandwidth.",
         @dlg = make_dialog(@label,
                            :info, "Butterworth high-pass filter. \
 Move the slider to change the high-pass cutoff frequency.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
-                             @freq = init_freq
-                             set_scale_value(sliders[0].scale, scale_log2linear(20, @freq, 22050))
-                             if provided? :xm
-                               change_label(sliders[0].label, "%1.2f" % @freq)
-                             end
+                             set_log_value(sliders[0], 20, @freq = init_freq, 22050)
                            end) do |w, c, i|
           flt = make_butter_high_pass(@freq)
           case @target
@@ -1016,14 +1045,12 @@ Move the slider to change the high-pass cutoff frequency.",
         end
         sliders[0] = @dlg.add_slider("high-pass cutoff frequency",
                                      20, init_freq, 22050, 1, :log) do |w, c, i|
-          @freq = if provided? :xm
-                    scale_linear2log(20, Rvalue(i), 22050)
-                  else
-                    scale_linear2log(20, Rvalue(RGTK_ADJUSTMENT(w)), 22050)
-                  end
+          @freq = get_log_value(w, i, 20, 22050)
         end
         @dlg.add_target([["entire sound", :sound, true],
-                         ["selection", :selection, false]]) do |t| @target = t end
+                         ["selection", :selection, false]]) do |t|
+          set_sensitive(@dlg.okay_button, effect_target_ok(@target = t))
+        end
       end
       activate_dialog(@dlg.dialog)
     end
@@ -1048,12 +1075,9 @@ Move the slider to change the high-pass cutoff frequency.",
         @dlg = make_dialog(@label,
                            :info, "Butterworth low-pass filter. \
 Move the slider to change the low-pass cutoff frequency.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
-                             @freq = init_freq
-                             set_scale_value(sliders[0].scale, scale_log2linear(20, @freq, 22050))
-                             if provided? :xm
-                               change_label(sliders[0].label, "%1.2f" % @freq)
-                             end
+                             set_log_value(sliders[0], 20, @freq = init_freq, 22050)
                            end) do |w, c, i|
           flt = make_butter_low_pass(@freq)
           case @target
@@ -1072,14 +1096,12 @@ Move the slider to change the low-pass cutoff frequency.",
         end
         sliders[0] = @dlg.add_slider("low-pass cutoff frequency",
                                      20, init_freq, 22050, 1, :log) do |w, c, i|
-          @freq = if provided? :xm
-                    scale_linear2log(20, Rvalue(i), 22050)
-                  else
-                    scale_linear2log(20, Rvalue(RGTK_ADJUSTMENT(w)), 22050)
-                  end
+          @freq = get_log_value(w, i, 20, 22050)
         end
         @dlg.add_target([["entire sound", :sound, true],
-                         ["selection", :selection, false]]) do |t| @target = t end
+                         ["selection", :selection, false]]) do |t|
+          set_sensitive(@dlg.okay_button, effect_target_ok(@target = t))
+        end
       end
       activate_dialog(@dlg.dialog)
     end
@@ -1105,6 +1127,7 @@ Move the slider to change the low-pass cutoff frequency.",
         sliders = Array.new(2)
         @dlg = make_dialog(@label,
                            :info, "Move the slider to change the comb scaler and size.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              set_scale_value(sliders[0].scale, @scaler = init_scaler, 100.0)
                              set_scale_value(sliders[1].scale, @size = init_size)
@@ -1122,7 +1145,7 @@ Move the slider to change the low-pass cutoff frequency.",
         sliders[1] = @dlg.add_slider("size", 1, init_size, 100) do |w, c, i|
           @size = get_scale_value(w, i)
         end
-        @dlg.add_target() do |t| @target = t end
+        @dlg.add_target() do |t| set_sensitive(@dlg.okay_button, effect_target_ok(@target = t)) end
       end
       activate_dialog(@dlg.dialog)
     end
@@ -1157,6 +1180,7 @@ Move the slider to change the low-pass cutoff frequency.",
                            :info, "Comb chord filter:
 Creates chords by using filters at harmonically related sizes. \
 Move the sliders to set the comb chord parameters.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              set_scale_value(sliders[0].scale, @scaler = init_scaler, 100.0)
                              set_scale_value(sliders[1].scale, @size = init_size)
@@ -1188,7 +1212,7 @@ Move the sliders to set the comb chord parameters.",
         sliders[4] = @dlg.add_slider("interval two", 0.0, init_two, 2.0, 100) do |w, c, i|
           @interval_two = get_scale_value(w, i, 100.0)
         end
-        @dlg.add_target() do |t| @target = t end
+        @dlg.add_target() do |t| set_sensitive(@dlg.okay_button, effect_target_ok(@target = t)) end
       end
       activate_dialog(@dlg.dialog)
     end
@@ -1216,13 +1240,9 @@ Move the sliders to set the comb chord parameters.",
                            :info, "Moog filter:
 Moog-style 4-pole lowpass filter with 24db/oct rolloff and variable resonance. \
 Move the sliders to set the filter cutoff frequency and resonance.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
-                             @cutoff_freq = init_freq
-                             set_scale_value(sliders[0].scale,
-                                             scale_log2linear(20, @cutoff_freq, 22050))
-                             if provided? :xm
-                               change_label(sliders[0].label, "%1.2f" % @cutoff_freq)
-                             end
+                             set_log_value(sliders[0], 20, @cutoff = init_freq, 22050)
                              set_scale_value(sliders[1].scale, @resonance = init_resonance, 100.0)
                            end) do |w, c, i|
           map_chan_over_target_with_sync(@target, false,
@@ -1235,16 +1255,12 @@ Move the sliders to set the filter cutoff frequency and resonance.",
         end
         sliders[0] = @dlg.add_slider("cutoff frequency",
                                      20, init_freq, 22050, 1, :log) do |w, c, i|
-          @cutoff_freq = if provided? :xm
-                           scale_linear2log(20, Rvalue(i), 22050)
-                         else
-                           scale_linear2log(20, Rvalue(RGTK_ADJUSTMENT(w)), 22050)
-                         end
+          @cutoff_freq = get_log_value(w, i, 20, 22050)
         end
         sliders[1] = @dlg.add_slider("resonance", 0.0, init_resonance, 1.0, 100) do |w, c, i|
           @resonance = get_scale_value(w, i, 100.0)
         end
-        @dlg.add_target() do |t| @target = t end
+        @dlg.add_target() do |t| set_sensitive(@dlg.okay_button, effect_target_ok(@target = t)) end
       end
       activate_dialog(@dlg.dialog)
     end
@@ -1271,6 +1287,7 @@ Move the sliders to set the filter cutoff frequency and resonance.",
         sliders = Array.new(1)
         @dlg = make_dialog(@label,
                            :info, "Move the slider to change the saturation scaling factor.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              set_scale_value(sliders[0].scale, @size = init_size)
                            end) do |w, c, i|
@@ -1306,7 +1323,7 @@ Move the sliders to set the filter cutoff frequency and resonance.",
         sliders[0] = @dlg.add_slider("adaptive saturation size", 0, init_size, 10) do |w, c, i|
           @size = get_scale_value(w, i).round
         end
-        @dlg.add_target() do |t| @target = t end
+        @dlg.add_target() do |t| set_sensitive(@dlg.okay_button, effect_target_ok(@target = t)) end
       end
       activate_dialog(@dlg.dialog)
     end
@@ -1331,6 +1348,7 @@ Move the sliders to set the filter cutoff frequency and resonance.",
         @dlg = make_dialog(@label,
                            :info, "Move the slider to change the sample rate. \
 Values greater than 1.0 speed up file play, negative values reverse it.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              set_scale_value(sliders[0].scale, @amount = init_amount, 100.0)
                            end) do |w, c, i|
@@ -1345,7 +1363,9 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
           @amount = get_scale_value(w, i, 100.0)
         end
         @dlg.add_target([["entire sound", :sound, true],
-                         ["selection", :selection, false]]) do |t| @target = t end
+                         ["selection", :selection, false]]) do |t|
+          set_sensitive(@dlg.okay_button, effect_target_ok(@target = t))
+        end
       end
       activate_dialog(@dlg.dialog)
     end
@@ -1377,6 +1397,7 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
         sliders = Array.new(5)
         @dlg = make_dialog(@label,
                            :info, "Move the sliders to change the time/pitch scaling parameters.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              set_scale_value(sliders[0].scale, @time_scale = time_scale, 100.0)
                              set_scale_value(sliders[1].scale, @hop_size = hop_size, 100.0)
@@ -1420,7 +1441,7 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
         sliders[4] = @dlg.add_slider("pitch scale", 0.0, pitch_scale, 5.0, 100) do |w, c, i|
           @pitch_scale = get_scale_value(w, i, 100.0)
         end
-        @dlg.add_target() do |t| @target = t end
+        @dlg.add_target() do |t| set_sensitive(@dlg.okay_button, effect_target_ok(@target = t)) end
       end
       activate_dialog(@dlg.dialog)
     end
@@ -1448,6 +1469,7 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
         fr = nil
         @dlg = make_dialog(@label,
                            :info, "Move the slider to change the src-timevar scaling amount.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              @envelope.envelope = [0.0, 1.0, 1.0, 1.0]
                              set_scale_value(sliders[0].scale, @scale = init_scale, 100.0)
@@ -1473,23 +1495,12 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
         sliders[0] = @dlg.add_slider("resample factor", 0.0, init_scale, 10.0, 100) do |w, c, i|
           @scale = get_scale_value(w, i, 100.0)
         end
-        if provided? :xm
-          frame = @dlg.add_frame([RXmNheight, 200])
-          @dlg.add_target() do |t| @target = t end
-        else
-          frame = @dlg.parent
+        @envelope = make_enved_widget(@label, @dlg) do |t|
+          set_sensitive(@dlg.okay_button, effect_target_ok(@target = t))
         end
+      else
         activate_dialog(@dlg.dialog)
-        # out-of-range error if envelope hits 0.0
-        # therefore y0 = 0.0001
-        @envelope = make_xenved("src-timevar", frame,
-                                :envelope, [0.0, 1.0, 1.0, 1.0],
-                                :axis_bounds, [0.0, 1.0, 0.0001, 1.0])
-        if provided? :xg
-          @dlg.add_target() do |t| @target = t end
-        end
       end
-      activate_dialog(@dlg.dialog)
     end
   end
 
@@ -1516,6 +1527,7 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
         fr = nil
         @dlg = make_dialog(@label,
                            :info, "Move the slider to change the modulation amount.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              @envelope.envelope = [0.0, 1.0, 1.0, 1.0]
                              set_scale_value(sliders[0].scale, @amount = init_amount)
@@ -1544,18 +1556,8 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
         sliders[0] = @dlg.add_slider("amplitude modulation", 0.0, init_amount, 1000.0) do |w, c, i|
           @amount = get_scale_value(w, i)
         end
-        if provided? :xm
-          frame = @dlg.add_frame([RXmNheight, 200])
-          @dlg.add_target() do |t| @target = t end
-        else
-          frame = @dlg.parent
-        end
-        activate_dialog(@dlg.dialog)
-        @envelope = make_xenved("amplitude modulation", frame,
-                                :envelope, [0.0, 1.0, 1.0, 1.0],
-                                :axis_bounds, [0.0, 1.0, 0.0, 1.0])
-        if provided? :xg
-          @dlg.add_target() do |t| @target = t end
+        @envelope = make_enved_widget(@label, @dlg) do |t|
+          set_sensitive(@dlg.okay_button, effect_target_ok(@target = t))
         end
       else
         activate_dialog(@dlg.dialog)
@@ -1585,6 +1587,7 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
         fr = nil
         @dlg = make_dialog(@label,
                            :info, "Move the sliders to change the modulation parameters.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              @envelope.envelope = [0.0, 1.0, 1.0, 1.0]
                              set_scale_value(sliders[0].scale, @frequency = init_frequency)
@@ -1615,18 +1618,8 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
         sliders[1] = @dlg.add_slider("modulation radians", 0, init_radians, 360) do |w, c, i|
           @radians = get_scale_value(w, i)
         end
-        if provided? :xm
-          frame = @dlg.add_frame([RXmNheight, 200])
-          @dlg.add_target() do |t| @target = t end
-        else
-          frame = @dlg.parent
-        end
-        activate_dialog(@dlg.dialog)
-        @envelope = make_xenved("ring modulation", frame,
-                                :envelope, [0.0, 1.0, 1.0, 1.0],
-                                :axis_bounds, [0.0, 1.0, 0.0, 1.0])
-        if provided? :xg
-          @dlg.add_target() do |t| @target = t end
+        @envelope = make_enved_widget(@label, @dlg) do |t|
+          set_sensitive(@dlg.okay_button, effect_target_ok(@target = t))
         end
       else
         activate_dialog(@dlg.dialog)
@@ -1661,6 +1654,7 @@ Values greater than 1.0 speed up file play, negative values reverse it.",
                            :info, "Reverberator from Michael McNabb. \
 Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. \
 Move the sliders to change the reverb parameters.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              set_scale_value(sliders[0].scale, @amount = init_amount, 100.0)
                              set_scale_value(sliders[1].scale, @filter = init_filter, 100.0)
@@ -1691,7 +1685,7 @@ Move the sliders to change the reverb parameters.",
         sliders[2] = @dlg.add_slider("reverb feedback", 0.0, init_feedback, 1.25, 100) do |w, c, i|
           @feedback = get_scale_value(w, i, 100.0)
         end
-        @dlg.add_target() do |t| @target = t end
+        @dlg.add_target() do |t| set_sensitive(@dlg.okay_button, effect_target_ok(@target = t)) end
       end
       activate_dialog(@dlg.dialog)
     end
@@ -1719,6 +1713,7 @@ Move the sliders to change the reverb parameters.",
         @dlg = make_dialog(@label,
                            :info, "Nice reverb from John Chowning. \
 Move the sliders to change the reverb parameters.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              set_scale_value(sliders[0].scale, @decay = init_decay, 100.0)
                              set_scale_value(sliders[1].scale, @volume = init_volume, 100.0)
@@ -1736,7 +1731,7 @@ Move the sliders to change the reverb parameters.",
         sliders[1] = @dlg.add_slider("reverb volume", 0.0, init_volume, 1.0, 100) do |w, c, i|
           @volume = get_scale_value(w, i, 100.0)
         end
-        @dlg.add_target() do |t| @target = t end
+        @dlg.add_target() do |t| set_sensitive(@dlg.okay_button, effect_target_ok(@target = t)) end
         @dlg.add_toggle() do |t| @truncate = t end
       end
       activate_dialog(@dlg.dialog)
@@ -1837,6 +1832,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data.",
         sliders = Array.new(3)
         @dlg = make_dialog(@label,
                            :info, "Mixes mono sound into stereo sound field.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              @envelope.envelope = [0.0, 1.0, 1.0, 1.0]
                              set_scale_value(sliders[0].scale, @mono_snd = init_mono_snd)
@@ -1858,21 +1854,12 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data.",
         sliders[2] = @dlg.add_slider("pan position", 0, init_pan_pos, 90) do |w, c, i|
         @pan_pos = get_scale_value(w, i)
         end
-        if provided? :xm
-          frame = @dlg.add_frame([RXmNheight, 200])
-          @dlg.add_target() do |t| @target = t end
-        else
-          frame = @dlg.parent
+        @envelope = make_enved_widget(@label, @dlg) do |t|
+          set_sensitive(@dlg.okay_button, effect_target_ok(@target = t))
         end
+      else
         activate_dialog(@dlg.dialog)
-        @envelope = make_xenved("panning", frame,
-                                :envelope, [0.0, 1.0, 1.0, 1.0],
-                                :axis_bounds, [0.0, 1.0, 0.0, 1.0])
-        if provided? :xg
-          @dlg.add_target() do |t| @target = t end
-        end
       end
-      activate_dialog(@dlg.dialog)
     end
   end
 
@@ -1948,7 +1935,7 @@ of silence added at the cursor position.",
                                      0.0, init_amount, 10.0, 100) do |w, c, i|
           @amount = get_scale_value(w, i, 100.0)
         end
-        @dlg.add_target() do |t| @target = t end
+        @dlg.add_target() do |t| set_sensitive(@dlg.okay_button, effect_target_ok(@target = t)) end
       end
       activate_dialog(@dlg.dialog)
     end
@@ -2005,11 +1992,12 @@ of silence added at the cursor position.",
         @dlg = make_dialog(@label,
                            :info, "The sliders set the number of the soundfile \
 to be cross_synthesized, the synthesis amplitude, the FFT size, and the radius value.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              set_scale_value(sliders[0].scale, @sound = init_sound)
                              set_scale_value(sliders[1].scale, @amp = init_amp, 100.0)
                              @fft_size = init_fft_size
-                             if provided? :xm
+                             if $with_motif
                                RXmToggleButtonSetState(@default_fft_widget, true, true)
                              end
                              set_scale_value(sliders[2].scale, @radius = init_radius, 100.0)
@@ -2035,42 +2023,53 @@ to be cross_synthesized, the synthesis amplitude, the FFT size, and the radius v
         sliders[2] = @dlg.add_slider("radius", 0.0, init_radius, 360.0, 100) do |w, c, i|
           @radius = get_scale_value(w, i, 100.0)
         end
-        if provided? :xm
-          frame = @dlg.add_frame([RXmNpositionIndex, 2])
+        if $with_motif
+          s1 = RXmStringCreateLocalized("FFT size")
+          frame = @dlg.add_frame([RXmNborderWidth,   1,
+                                  RXmNshadowType,    RXmSHADOW_ETCHED_IN,
+                                  RXmNpositionIndex, 2])
           frm = RXtCreateManagedWidget("frm", RxmFormWidgetClass, frame,
-                                       [RXmNleftAttachment, RXmATTACH_FORM,
-                                        RXmNrightAttachment, RXmATTACH_FORM,
-                                        RXmNtopAttachment, RXmATTACH_FORM,
+                                       [RXmNleftAttachment,   RXmATTACH_FORM,
+                                        RXmNrightAttachment,  RXmATTACH_FORM,
+                                        RXmNtopAttachment,    RXmATTACH_FORM,
                                         RXmNbottomAttachment, RXmATTACH_FORM,
-                                        RXmNbackground, basic_color])
+                                        RXmNbackground,       basic_color])
           rc = RXtCreateManagedWidget("rc", RxmRowColumnWidgetClass, frm,
-                                      [RXmNorientation, RXmHORIZONTAL,
-                                       RXmNradioBehavior, true,
-                                       RXmNradioAlwaysOne, true,
-                                       RXmNentryClass, RxmToggleButtonWidgetClass,
-                                       RXmNisHomogeneous, true,
-                                       RXmNleftAttachment, RXmATTACH_FORM,
-                                       RXmNrightAttachment, RXmATTACH_FORM,
-                                       RXmNtopAttachment, RXmATTACH_FORM,
+                                      [RXmNorientation,      RXmHORIZONTAL,
+                                       RXmNradioBehavior,    true,
+                                       RXmNradioAlwaysOne,   true,
+                                       RXmNentryClass,       RxmToggleButtonWidgetClass,
+                                       RXmNisHomogeneous,    true,
+                                       RXmNleftAttachment,   RXmATTACH_FORM,
+                                       RXmNrightAttachment,  RXmATTACH_FORM,
+                                       RXmNtopAttachment,    RXmATTACH_FORM,
                                        RXmNbottomAttachment, RXmATTACH_NONE,
-                                       RXmNbackground, basic_color])
+                                       RXmNbackground,       basic_color])
           RXtCreateManagedWidget("FFT size", RxmLabelWidgetClass, frm,
-                                 [RXmNalignment, RXmALIGNMENT_BEGINNING,
-                                  RXmNtopAttachment, RXmATTACH_WIDGET,
-                                  RXmNtopWidget, rc,
-                                  RXmNbackground, basic_color])
+                                 [RXmNleftAttachment,   RXmATTACH_FORM,
+                                  RXmNrightAttachment,  RXmATTACH_FORM,
+                                  RXmNtopAttachment,    RXmATTACH_WIDGET,
+                                  RXmNtopWidget,        rc,
+                                  RXmNbottomAttachment, RXmATTACH_FORM,
+                                  RXmNlabelString,      s1,
+                                  RXmNalignment,        RXmALIGNMENT_BEGINNING,
+                                  RXmNbackground,       basic_color])
           [64, 128, 256, 512, 1024, 4096].each do |s|
             button = RXtCreateManagedWidget(s.to_s, RxmToggleButtonWidgetClass, rc,
-                                            [RXmNbackground, basic_color,
-                                             RXmNvalueChangedCallback,
-                                             [lambda do |w, c, i| @fft_size = c if Rset(i) end, s],
-                                             RXmNset, (s == @fft_size)])
+                                            [RXmNbackground,           basic_color,
+                                             RXmNvalueChangedCallback, [lambda do |w, c, i|
+                                                                          if Rset(i)
+                                                                            @fft_size = c
+                                                                          end
+                                                                        end, s],
+                                             RXmNset,                  (s == @fft_size)])
             if s == @fft_size
               @default_fft_widget = button
             end
           end
+          RXmStringFree(s1)
         end
-        @dlg.add_target() do |t| @target = t end
+        @dlg.add_target() do |t| set_sensitive(@dlg.okay_button, effect_target_ok(@target = t)) end
       end
       activate_dialog(@dlg.dialog)
     end
@@ -2098,6 +2097,7 @@ to be cross_synthesized, the synthesis amplitude, the FFT size, and the radius v
         sliders = Array.new(3)
         @dlg = make_dialog(@label,
                            :info, "Move the sliders to change the flange speed, amount, and time.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              set_scale_value(sliders[0].scale, @speed = init_speed, 10.0)
                              set_scale_value(sliders[1].scale, @amount = init_amount, 10.0)
@@ -2125,7 +2125,7 @@ to be cross_synthesized, the synthesis amplitude, the FFT size, and the radius v
         sliders[2] = @dlg.add_slider("flange time", 0.0, init_time, 1.0, 100) do |w, c, i|
           @time = get_scale_value(w, i, 100.0)
         end
-        @dlg.add_target() do |t| @target = t end
+        @dlg.add_target() do |t| set_sensitive(@dlg.okay_button, effect_target_ok(@target = t)) end
       end
       activate_dialog(@dlg.dialog)
     end
@@ -2184,6 +2184,7 @@ to be cross_synthesized, the synthesis amplitude, the FFT size, and the radius v
         @dlg = make_dialog(@label,
                            :info, "Move the sliders to set the sample rate, \
 oscillator amplitude, and oscillator frequency.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              set_scale_value(sliders[0].scale, @samp_rate = init_rate, 100.0)
                              set_scale_value(sliders[1].scale, @osc_amp = init_amp, 100.0)
@@ -2216,7 +2217,7 @@ oscillator amplitude, and oscillator frequency.",
         sliders[2] = @dlg.add_slider("oscillator frequency", 0.0, init_freq, 60, 100) do |w, c, i|
           @osc_freq = get_scale_value(w, i, 100.0)
         end
-        @dlg.add_target() do |t| @target = t end
+        @dlg.add_target() do |t| set_sensitive(@dlg.okay_button, effect_target_ok(@target = t)) end
       end
       activate_dialog(@dlg.dialog)
     end
@@ -2241,6 +2242,7 @@ oscillator amplitude, and oscillator frequency.",
         @dlg = make_dialog(@label,
                            :info, "Stretches or contracts the time of a sound. \
 Move the slider to change the stretch factor.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              set_scale_value(sliders[0].scale, @factor = init_factor, 100.0)
                            end) do |w, c, i|
@@ -2249,7 +2251,7 @@ Move the slider to change the stretch factor.",
         sliders[0] = @dlg.add_slider("stretch factor", 0.0, init_factor, 5.0, 100) do |w, c, i|
           @factor = get_scale_value(w, i, 100.0)
         end
-        @dlg.add_target() do |t| @target = t end
+        @dlg.add_target() do |t| set_sensitive(@dlg.okay_button, effect_target_ok(@target = t)) end
       end
       activate_dialog(@dlg.dialog)
     end
@@ -2275,6 +2277,7 @@ Move the slider to change the stretch factor.",
         sliders = Array.new(2)
         @dlg = make_dialog(@label,
                            :info, "Move the sliders to set the wobble frequency and amplitude.",
+                           :target_cb, lambda do | | effect_target_ok(@target) end,
                            :reset_cb, lambda do |w, c, i|
                              set_scale_value(sliders[0].scale, @frequency = init_freq, 100.0)
                              set_scale_value(sliders[1].scale, @amplitude = init_amp, 100.0)
@@ -2303,23 +2306,24 @@ Move the slider to change the stretch factor.",
         sliders[1] = @dlg.add_slider("wobble amplitude", 0.0, init_amp, 1.0, 100) do |w, c, i|
           @amplitude = get_scale_value(w, i, 100.0)
         end
-        @dlg.add_target() do |t| @target = t end
+        @dlg.add_target() do |t| set_sensitive(@dlg.okay_button, effect_target_ok(@target = t)) end
       end
       activate_dialog(@dlg.dialog)
     end
   end
-end
+end unless provided? :snd_nogui
 
 #
 # example menu
 #
-unless defined? $__private_snd_menu__ and $__private_snd_menu__
+if provided? :snd_nogui
   include Effects
+else
+  include X_Effects
 
   snd_main = make_snd_menu("Effects") do
     cascade("Amplitude Effects") do
-      # FIXME: make_xenved with xg doesn't work
-      entry(Gain, "Gain") unless provided? :xg
+      entry(Gain, "Gain")
       entry(Normalize, "Normalize")
       entry(Gate, "Gate")
     end
@@ -2341,14 +2345,11 @@ unless defined? $__private_snd_menu__ and $__private_snd_menu__
       entry(Adaptive, "Adaptive saturation")
       entry(Sample_rate, "Sample rate conversion")
       entry(Time_pitch, "Time/pitch scaling")
-      # FIXME: make_xenved with xg doesn't work
-      entry(Src_timevar, "Src-Timevar") unless provided? :xg
+      entry(Src_timevar, "Src-Timevar")
     end
     cascade("Modulation Effects") do
-      # FIXME: make_xenved with xg doesn't work
-      entry(Amplitude_modulation, "Amplitude modulation") unless provided? :xg
-      # FIXME: make_xenved with xg doesn't work
-      entry(Ring_modulation, "Ring modulation") unless provided? :xg
+      entry(Amplitude_modulation, "Amplitude modulation")
+      entry(Ring_modulation, "Ring modulation")
     end
     cascade("Reverbs") do
       entry(Nrev, "McNabb reverb")
@@ -2356,8 +2357,7 @@ unless defined? $__private_snd_menu__ and $__private_snd_menu__
       entry(Convolution, "Convolution")
     end
     cascade("Various") do
-      # FIXME: make_xenved with xg doesn't work
-      entry(Placed, "Place sound") unless provided? :xg
+      entry(Placed, "Place sound")
       entry(Add_silence, "Add silence")
       entry(Contrast, "Contrast enhancement")
       entry(Cross_synthesis, "Cross synthesis")
@@ -2414,31 +2414,28 @@ unless defined? $__private_snd_menu__ and $__private_snd_menu__
     entry("Null phase") do zero_phase end
   end
 
-  if provided? :xm
-    set_label_sensitive(menu_widgets[Top_menu_bar], "Effects", ((sounds() or []).length > 1))
-  else
-    set_sensitive(snd_main.menu, ((sounds() or []).length > 1))
+  set_effects_menu_sensitive = lambda do |flag|
+    if $with_motif
+      set_label_sensitive(menu_widgets[Top_menu_bar], "Effects", flag)
+    else
+      set_sensitive(snd_main.menu, flag)
+    end
   end
+
+  set_effects_menu_sensitive.call(Snd.sounds.length > 0)
   
   unless $open_hook.member?("effects-menu-hook")
-    $open_hook.add_hook!("effects-menu-hook") do |snd| 
-      if provided? :xm
-        set_label_sensitive(menu_widgets[Top_menu_bar], "Effects", true)
-      else
-        set_sensitive(snd_main.menu, true)
-      end
+    $open_hook.add_hook!("effects-menu-hook") do |snd|
+      set_effects_menu_sensitive.call(true)
       false
     end
     
     $close_hook.add_hook!("effects-menu-hook") do |snd|
-      if provided? :xm
-        set_label_sensitive(menu_widgets[Top_menu_bar], "Effects", ((sounds() or []).length > 1))
-      else
-        set_sensitive(snd_main.menu, ((sounds() or []).length > 1))
-      end
+      set_effects_menu_sensitive.call(Snd.sounds.length > 1)
       false
     end
   end
+
   $effects_menu = true
 end
 

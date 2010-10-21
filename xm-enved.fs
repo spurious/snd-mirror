@@ -3,10 +3,14 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Oct 21 18:22:57 CEST 2005
-\ Changed: Fri Nov 06 00:36:32 CET 2009
+\ Changed: Thu Oct 21 12:56:25 CEST 2010
 
 \ Commentary:
-
+\
+\ Requires --with-motif|gtk and module libxm.so|libxg.so or --with-static-xm|xg!
+\
+\ Tested with Snd 11.10, Motif 2.3.0, Gtk+ 2.20.1, Fth 1.2.x
+\
 \ This is an example of an object type written in Forth.
 \
 \ XENVED
@@ -18,7 +22,6 @@
 \  xe-set!              ( obj index point -- )
 \  xe-equal?  	  	( obj1 obj2 -- f )
 \  xe-length            ( obj -- len )
-\  xe-mark    	  	( obj -- )
 \  xe-free    	  	( obj -- )
 \
 \ xenved?     	  	( obj -- f )
@@ -34,7 +37,7 @@
 \
 \ xenved-test           ( :optional name -- )
 
-'snd-motif provided? [unless] skip-file [then]
+'snd-nogui provided? [if] skip-file [then]
 
 require enved
 require snd-xm
@@ -53,6 +56,8 @@ If one of the hook procedures in the hook array returns #f, xenved changes the b
 otherwise the last hook procedure is responsible for manipulating GEN's envelope itself."
 create-hook before-enved-hook
 
+: axis-bounds? ( obj -- f ) array-length 4 = ;
+
 hide
 enved%
   cell% field xe-enved
@@ -69,11 +74,12 @@ enved%
   cell% field xe-px1
   cell% field xe-py0
   cell% field xe-py1
-  cell% field xe-mouse-up
-  cell% field xe-mouse-down
+  cell% field xe-mouse-up		\ float
+  cell% field xe-mouse-down		\ float
   cell% field xe-mouse-pos
   cell% field xe-mouse-new
   cell% field xe-click-time
+  cell% field xe-dragging
 end-struct xenved%
 
 : xe-enved@      ( obj -- env ) instance-gen-ref xe-enved @ ;
@@ -84,6 +90,7 @@ end-struct xenved%
 : xe-args@       ( obj -- val ) instance-gen-ref xe-args @ ;
 : xe-gcs@        ( obj -- val ) instance-gen-ref xe-gcs @ ;
 : xe-drawer@     ( obj -- val ) instance-gen-ref xe-drawer @ ;
+: xe-drawer!     ( val obj -- ) instance-gen-ref xe-drawer ! ;
 : xe-bx0@        ( obj -- val ) instance-gen-ref xe-bx0 @ ;
 : xe-bx1@        ( obj -- val ) instance-gen-ref xe-bx1 @ ;
 : xe-by0@        ( obj -- val ) instance-gen-ref xe-by0 @ ;
@@ -105,6 +112,8 @@ end-struct xenved%
 : xe-mouse-new@  ( obj -- val ) instance-gen-ref xe-mouse-new @ ;
 : xe-mouse-new!  ( val obj -- ) instance-gen-ref xe-mouse-new ! ;
 : xe-click-time@ ( obj -- val ) instance-gen-ref xe-click-time @ ;
+: xe-dragging@   ( obj -- val ) instance-gen-ref xe-dragging @ ;
+: xe-dragging!   ( val obj -- ) instance-gen-ref xe-dragging ! ;
 set-current
 
 "xenved" make-object-type constant fth-xenved
@@ -133,8 +142,8 @@ fth-xenved make-?obj xenved?
 \     res #f <> if #t else #f then
 \   then
 \ ; add-hook!
-: run-before-enved-hook ( gen point reason -- f )
-  { gen point reason }
+
+: run-before-enved-hook { gen point reason -- f }
   before-enved-hook hook-empty? if
     #t
   else
@@ -148,9 +157,9 @@ fth-xenved make-?obj xenved?
   then
 ;
 
-: xe-length   ( obj -- len ) xe-enved@ enved-length ;
-: xe-inspect  ( obj -- str )
-  { obj }
+: xe-length ( obj -- len ) xe-enved@ enved-length ;
+
+: xe-inspect { obj -- str }
   $" #<%s[%d]: axis-bounds:  #( %s %s %s %s ), envelope: %s>"
   #( obj object-name
      obj xe-length
@@ -160,9 +169,10 @@ fth-xenved make-?obj xenved?
      obj xe-by1@
      obj xe-enved@ ) string-format
 ;
-: xe->string  ( obj -- str ) xe-enved@ enved->string ;  
-: xe-dump     ( obj -- str )
-  { obj }
+
+: xe->string ( obj -- str ) xe-enved@ enved->string ;  
+
+: xe-dump { obj -- str }
   $" %S %S :envelope %S :axis-bounds #( %s %s %s %s ) :args %S make-xenved"
   #( obj xe-name@
      obj xe-parent@
@@ -173,32 +183,19 @@ fth-xenved make-?obj xenved?
      obj xe-by1@
      obj xe-args@ ) string-format
 ;
-: xe->array   ( obj -- ary )         xe-enved@ enved->array ;  
-: xe-ref      ( obj index -- point ) swap xe-enved@ swap enved-ref ;
-: xe-set!     ( obj index point -- ) rot xe-enved@ -rot enved-set! ;
-: xe-equal?   ( obj1 obj2 -- f )
-  { obj1 obj2 }
+
+: xe->array ( obj -- ary )         xe-enved@ enved->array ;  
+: xe-ref    ( obj index -- point ) swap xe-enved@ swap enved-ref ;
+: xe-set!   ( obj index point -- ) rot xe-enved@ -rot enved-set! ;
+
+: xe-equal? { obj1 obj2 -- f }
   obj1 xenved? obj2 xenved? && if
     obj1 xe-enved@ obj2 xe-enved@ enved-equal?
   else
     #f
   then
 ;
-: xe-mark ( obj -- )
-  ( obj ) xe-envelope@   gc-mark
-  ( obj ) xe-name@       gc-mark
-  ( obj ) xe-parent@     gc-mark
-  ( obj ) xe-args@       gc-mark
-  ( obj ) xe-drawer@     gc-mark
-  ( obj ) xe-gcs@        gc-mark
-  ( obj ) xe-bx0@        gc-mark
-  ( obj ) xe-bx1@ 	 gc-mark
-  ( obj ) xe-by0@ 	 gc-mark
-  ( obj ) xe-by1@ 	 gc-mark
-  ( obj ) xe-mouse-up@   gc-mark
-  ( obj ) xe-mouse-down@ gc-mark
-  ( obj ) xe-click-time@ gc-mark drop
-;
+
 : xe-free ( obj -- ) instance-gen-ref free throw ;
 
 \ Init xenved
@@ -210,7 +207,6 @@ fth-xenved make-?obj xenved?
 <'> xe-set!     fth-xenved set-object-value-set \ xe index #( x y ) object-set!
 <'> xe-equal?   fth-xenved set-object-equal-p   \ obj1 obj2 equal?
 <'> xe-length   fth-xenved set-object-length    \ xe object-length => number of points (lstlen/2)
-\ <'> xe-mark     fth-xenved set-object-mark      \ for gc
 <'> xe-free     fth-xenved set-object-free      \ for gc
 <'> xe-ref      fth-xenved 1 set-object-apply   \ xe index apply => #( x y )
 
@@ -219,8 +215,8 @@ fth-xenved make-?obj xenved?
 : xe-delete! ( obj index -- )       swap xe-enved@ swap enved-delete! ;
 
 0.03 constant mouse-radius
-: grfx ( x gen -- val )
-  { x gen }
+
+: grfx { x gen -- val }
   gen xe-px0@ gen xe-px1@ = if
     gen xe-px0@
   else
@@ -231,8 +227,8 @@ fth-xenved make-?obj xenved?
     x bx0 f-  bx1 bx0 f-  f/  px1 px0 f-  f*  px0  f+  floor f>s  px0  max  px1  min
   then
 ;
-: grfy ( y gen -- val )
-  { y gen }
+
+: grfy { y gen -- val }
   gen xe-py0@ gen xe-py1@ = if
     gen xe-py0@
   else
@@ -243,8 +239,8 @@ fth-xenved make-?obj xenved?
     y by1 f-  by0 by1 f-  f/  py0 py1 f-  f*  py1 f+  floor f>s  py1  max  py0  min
   then
 ;
-: ungrfx ( x gen -- val )
-  { x gen }
+
+: ungrfx { x gen -- val }
   gen xe-px0@ gen xe-px1@ = if
     gen xe-bx0@ s>f
   else
@@ -255,8 +251,8 @@ fth-xenved make-?obj xenved?
     x px0 f-  px1 px0 f-  f/  bx1 bx0 f-  f*  bx0  f+  bx0  fmax  bx1  fmin
   then
 ;
-: ungrfy ( y gen -- val )
-  { y gen }
+
+: ungrfy { y gen -- val }
   gen xe-py0@ gen xe-py1@ = if
     gen xe-by1@ s>f
   else
@@ -267,59 +263,100 @@ fth-xenved make-?obj xenved?
     py0 y f-  py0 py1 f-  f/  by1 by0 f-  f*  by0  f+  by0  fmax  by1  fmin
   then
 ;
-360 64 * constant 360*64
-: xe-redraw ( gen -- )
-  { gen }
-  gen xe-drawer@ FXtIsManaged
-  gen xe-py0@ gen xe-py1@ > && if
+
+'snd-motif provided? [if]
+  360 64 * constant 360*64
+
+  : xe-redraw { gen -- }
     gen xe-drawer@ { drawer }
-    gen xe-gcs@ { gc }
-    drawer FXtDisplay { dpy }
-    drawer FXtWindow { win }
-    dpy win FXClearWindow drop
-    drawer
-    gc
-    gen xe-name@
-    gen xe-bx0@
-    gen xe-bx1@
-    gen xe-by0@
-    gen xe-by1@
-    x-axis-in-seconds
-    show-all-axes draw-axes drop
-    #f #f { lx ly }
-    10 { mouse-d }
-    5  { mouse-r }
-    gen each { point }
-      point 0 array-ref gen grfx { cx }
-      point 1 array-ref gen grfy { cy }
-      dpy win gc  cx mouse-r -  cy mouse-r -  mouse-d mouse-d 0 360*64 FXFillArc drop
-      lx if dpy win gc lx ly cx cy FXDrawLine drop then
-      cx to lx
-      cy to ly
-    end-each
-  then
-;
-: draw-axes-cb ( gen -- proc; w c i self -- )
-  3 proc-create swap ( gen ) , ( proc )
- does> { w c i self -- }
-  self @ { gen }
-  gen xe-drawer@
-  gen xe-gcs@
-  gen xe-name@
-  gen xe-bx0@
-  gen xe-bx1@
-  gen xe-by0@
-  gen xe-by1@
-  x-axis-in-seconds
-  show-all-axes draw-axes { lst }
-  lst 0 array-ref gen xe-px0!
-  lst 1 array-ref gen xe-py0!
-  lst 2 array-ref gen xe-px1!
-  lst 3 array-ref gen xe-py1!
-  gen xe-redraw
-;
-: add-envelope-point ( x y gen -- )
-  { x y gen }
+    drawer is-managed?
+    gen xe-py0@ gen xe-py1@ > && if
+      gen xe-gcs@ { gc }
+      drawer FXtDisplay { dpy }
+      drawer FXtWindow { win }
+      dpy win FXClearWindow drop
+      \ Motif's DRAW-AXES takes 6 optional arguments.
+      \ '( x0 y0 x1 y1 ) = draw-axes(wid gc label
+      \                              x0=0.0 x1=1.0 y0=-1.0 y1=1.0
+      \                              style=x-axis-in-seconds
+      \                              axes=show-all-axes)
+      \ arity #( 3 6 #f )
+      drawer
+      gc
+      gen xe-name@
+      gen xe-bx0@
+      gen xe-bx1@
+      gen xe-by0@
+      gen xe-by1@
+      x-axis-in-seconds
+      show-all-axes draw-axes drop
+      #f #f { lx ly }
+      10 { mouse-d }
+      5  { mouse-r }
+      gen each { point }
+	point 0 array-ref gen grfx { cx }
+	point 1 array-ref gen grfy { cy }
+	dpy win gc  cx mouse-r -  cy mouse-r -  mouse-d mouse-d 0 360*64 FXFillArc drop
+	lx if dpy win gc lx ly cx cy FXDrawLine drop then
+	cx to lx
+	cy to ly
+      end-each
+    then
+  ;
+[else]
+  : xe-redraw { gen -- }
+    gen xe-drawer@ { drawer }
+    drawer is-managed?
+    gen xe-py0@ gen xe-py1@ > && if
+      gen xe-gcs@ { gc }
+      drawer FGTK_WIDGET widget-size { size }
+      drawer Fgtk_widget_get_window ( win ) FGDK_DRAWABLE Fgdk_cairo_create { cairo }
+      cairo Fcairo_push_group drop
+      cairo 1.0 1.0 1.0 Fcairo_set_source_rgb drop
+      cairo 0 0 size 0 array-ref size 1 array-ref Fcairo_rectangle drop
+      cairo Fcairo_fill drop
+      \ Gtk's DRAW-AXES takes one more optional argument, a cairo object.
+      \ '( x0 y0 x1 y1 ) = draw-axes(wid gc label
+      \                              x0=0.0 x1=1.0 y0=-1.0 y1=1.0
+      \                              style=x-axis-in-seconds
+      \                              axes=show-all-axes
+      \                              cairo)
+      \ arity #( 3 7 #f )
+      drawer
+      gc
+      gen xe-name@
+      gen xe-bx0@
+      gen xe-bx1@
+      gen xe-by0@
+      gen xe-by1@
+      x-axis-in-seconds
+      show-all-axes
+      cairo draw-axes drop
+      cairo 1.0 Fcairo_set_line_width drop
+      cairo 0.0 0.0 0.0 Fcairo_set_source_rgb drop
+      #f #f { lx ly }
+      5 { mouse-r }
+      gen each { point }
+	point 0 array-ref gen grfx { cx }
+	point 1 array-ref gen grfy { cy }
+	cairo cx cy mouse-r 0.0 two-pi Fcairo_arc drop
+	cairo Fcairo_fill drop
+	lx if
+	  cairo lx ly Fcairo_move_to drop
+	  cairo cx cy Fcairo_line_to drop
+	  cairo Fcairo_stroke drop
+	then
+	cx to lx
+	cy to ly
+      end-each
+      cairo Fcairo_pop_group_to_source drop
+      cairo Fcairo_paint drop
+      cairo Fcairo_destroy drop
+    then
+  ;
+[then]
+
+: add-envelope-point { x y gen -- }
   gen xe-mouse-pos@ { mpos }
   gen x xe-index dup 0>= if
     to mpos
@@ -330,16 +367,22 @@ fth-xenved make-?obj xenved?
   gen mpos #( x y ) xe-insert!
   mpos gen xe-mouse-pos!
 ;
-: mouse-press-cb ( gen -- proc; w c e f self -- )
-  4 proc-create swap ,
- does> { w c ev f self -- }
-  self @ { gen }
-  ev Fx gen ungrfx 1.0 fmin 0.0 fmax { x }
-  ev Fy gen ungrfy 1.0 fmin 0.0 fmax { y }
-  #f
+
+: draw-axes-set-points { lst gen -- }
+  lst 0 array-ref gen xe-px0!
+  lst 1 array-ref gen xe-py0!
+  lst 2 array-ref gen xe-px1!
+  lst 3 array-ref gen xe-py1!
+  gen xe-redraw
+;
+
+: mouse-press { gen xx yy -- }
+  xx gen ungrfx { x }
+  yy gen ungrfy { y }
+  #f					\ flag
   gen each { point }
     point 0 array-ref x f- fabs mouse-radius f<
-    point 1 array-ref y f- fabs mouse-radius f< && if drop i leave then
+    point 1 array-ref y f- fabs mouse-radius f< && if drop ( flag ) i leave then
   end-each { pos }
   pos not gen xe-mouse-new!
   time gen xe-mouse-down!
@@ -350,10 +393,8 @@ fth-xenved make-?obj xenved?
     gen xe-redraw
   then
 ;
-: mouse-release-cb ( gen -- proc; w c e f self -- )
-  4 proc-create swap ,
- does> { w c ev f self -- }
-  self @ { gen }
+
+: mouse-release { gen -- }
   gen xe-mouse-pos@ { mpos }
   time gen xe-mouse-up!
   gen xe-mouse-new@ unless
@@ -369,12 +410,10 @@ fth-xenved make-?obj xenved?
   then
   #f gen xe-mouse-new!
 ;
-: mouse-drag-cb ( gen -- proc; w c e f self -- )
-  4 proc-create swap ,
- does> { w c ev f self -- }
-  self @ { gen }
-  ev Fx gen ungrfx { x }
-  ev Fy gen ungrfy { y }
+
+: mouse-drag { gen xx yy -- }
+  xx gen ungrfx { x }
+  yy gen ungrfy { y }
   gen xe-mouse-pos@ { mpos }
   mpos 0= if
     gen 0 xe-ref 0 array-ref
@@ -388,40 +427,153 @@ fth-xenved make-?obj xenved?
   gen #( x y ) enved-move-point run-before-enved-hook if gen mpos #( x y ) xe-set! then
   gen xe-redraw
 ;
-: define-cursor-cb ( cursor -- proc; w c e f self -- )
-  4 proc-create swap ,
- does> { wid c e f self -- }
-  wid FXtDisplay wid FXtWindow self @ ( new-cursor ) FXDefineCursor drop
-;
-: undefine-cursor-cb ( -- proc; w c e f self -- )
-  4 proc-create
- does> { wid c e f self -- }
-  wid FXtDisplay wid FXtWindow FXUndefineCursor drop
-;
-: axis-bounds? ( obj -- f ) array-length 4 = ;
+
+'snd-motif provided? [if]
+  : draw-axes-cb <{ w gen info -- }>
+    gen xe-drawer@
+    gen xe-gcs@
+    gen xe-name@
+    gen xe-bx0@
+    gen xe-bx1@
+    gen xe-by0@
+    x-axis-in-seconds
+    show-all-axes draw-axes gen draw-axes-set-points
+  ;
+  
+  : mouse-press-cb     <{ w gen ev f -- }>   gen ev Fx ev Fy mouse-press ;
+  : mouse-release-cb   <{ w gen ev f -- }>   gen mouse-release ;
+  : mouse-drag-cb      <{ w gen ev f -- }>   gen ev Fx ev Fy mouse-drag ;
+  : define-cursor-cb   <{ w gen ev f -- x }> w FXtDisplay w FXtWindow gen FXDefineCursor ;
+  : undefine-cursor-cb <{ w gen ev f -- x }> w FXtDisplay w FXtWindow FXUndefineCursor ;
+
+  : init-xenved { gen -- gen }
+    gen xe-args@ { args }
+    args FXmNbackground array-member? unless
+      args #( FXmNbackground graph-color ) array-append to args
+    then
+    args FXmNforeground array-member? unless
+      args #( FXmNforeground data-color ) array-append to args
+    then
+    gen xe-name@ FxmDrawingAreaWidgetClass gen xe-parent@ args FXtCreateManagedWidget { drawer }
+    drawer gen xe-drawer!
+    drawer FXtDisplay FXC_crosshair FXCreateFontCursor { arrow-cursor }
+    drawer FXmNresizeCallback    <'> draw-axes-cb     gen          FXtAddCallback drop
+    drawer FXmNexposeCallback    <'> draw-axes-cb     gen          FXtAddCallback drop
+    drawer FButtonPressMask   #f <'> mouse-press-cb   gen          FXtAddEventHandler drop
+    drawer FButtonReleaseMask #f <'> mouse-release-cb gen          FXtAddEventHandler drop
+    drawer FButtonMotionMask  #f <'> mouse-drag-cb    gen          FXtAddEventHandler drop
+    drawer FEnterWindowMask   #f <'> define-cursor-cb arrow-cursor FXtAddEventHandler drop
+    drawer FLeaveWindowMask   #f <'> undefine-cursor-cb        #f  FXtAddEventHandler drop
+    gen
+  ;
+[else]
+  : draw-axes-cb <{ w ev gen -- f }>
+    save-stack { stack }
+    gen xe-drawer@
+    gen xe-gcs@
+    gen xe-name@
+    gen xe-bx0@
+    gen xe-bx1@
+    gen xe-by0@
+    gen xe-by1@ draw-axes gen draw-axes-set-points
+    stack restore-stack
+    #f
+  ;
+
+  \ '( bool x y ) = gdk_event_get_coords(event x-win-return=undef y-win-return=undef)
+  \ arity #( 1 2 #f )
+  : get-coords ( ev -- x y ) undef undef Fgdk_event_get_coords dup 1 array-ref swap 2 array-ref ;
+
+  : mouse-press-cb <{ w ev gen -- f }>
+    #t gen xe-dragging!
+    gen ev FGDK_EVENT get-coords mouse-press
+    #f
+  ;
+
+  : mouse-release-cb <{ w ev gen -- f }>
+    #f gen xe-dragging!
+    gen mouse-release
+    #f
+  ;
+
+  : mouse-drag-cb <{ w ev gen -- f }>
+    gen xe-dragging@ if gen ev FGDK_EVENT get-coords mouse-drag then
+    #f
+  ;
+
+  : define-cursor-cb <{ w ev cursor -- f }>
+    w Fgtk_widget_get_window cursor Fgdk_window_set_cursor drop
+    #f
+  ;
+
+  : init-xenved { gen -- gen }
+    Fgtk_drawing_area_new { drawer }
+    drawer gen xe-drawer!
+    drawer FGDK_ALL_EVENTS_MASK Fgtk_widget_set_events drop
+    gen xe-parent@ FGTK_BOX drawer #t #t 10 Fgtk_box_pack_start drop
+    drawer Fgtk_widget_show drop
+    drawer gen xe-name@ Fgtk_widget_set_name drop
+    drawer -1 200 Fgtk_widget_set_size_request drop
+    drawer FGPOINTER
+    "expose_event" drawer FG_OBJECT FG_OBJECT_TYPE Fg_signal_lookup
+    0
+    <'> draw-axes-cb gen #f Fg_cclosure_new
+    #f
+    Fg_signal_connect_closure_by_id drop
+    drawer FGPOINTER
+    "configure_event" drawer FG_OBJECT FG_OBJECT_TYPE Fg_signal_lookup
+    0
+    <'> draw-axes-cb gen #f Fg_cclosure_new
+    #f
+    Fg_signal_connect_closure_by_id drop
+    drawer FGPOINTER
+    "button_press_event" drawer FG_OBJECT FG_OBJECT_TYPE Fg_signal_lookup
+    0
+    <'> mouse-press-cb gen #f Fg_cclosure_new
+    #f
+    Fg_signal_connect_closure_by_id drop
+    drawer FGPOINTER
+    "button_release_event" drawer FG_OBJECT FG_OBJECT_TYPE Fg_signal_lookup
+    0
+    <'> mouse-release-cb gen #f Fg_cclosure_new
+    #f
+    Fg_signal_connect_closure_by_id drop
+    drawer FGPOINTER
+    "motion_notify_event" drawer FG_OBJECT FG_OBJECT_TYPE Fg_signal_lookup
+    0
+    <'> mouse-drag-cb gen #f Fg_cclosure_new
+    #f
+    Fg_signal_connect_closure_by_id drop
+    drawer FGPOINTER
+    "enter_notify_event" drawer FG_OBJECT FG_OBJECT_TYPE Fg_signal_lookup
+    0
+    <'> define-cursor-cb FGDK_CROSSHAIR Fgdk_cursor_new ( arrow-cursor ) #f Fg_cclosure_new
+    #f
+    Fg_signal_connect_closure_by_id drop
+    drawer FGPOINTER
+    "leave_notify_event" drawer FG_OBJECT FG_OBJECT_TYPE Fg_signal_lookup
+    0
+    <'> define-cursor-cb FGDK_LEFT_PTR Fgdk_cursor_new ( old-cursor ) #f Fg_cclosure_new
+    #f
+    Fg_signal_connect_closure_by_id drop
+    gen
+  ;
+[then]
+
 : make-xenved <{ name parent
      :key
      envelope    #( 0 0 1 1 )
      axis-bounds #( 0 1 0 1 )
      args        #() -- xe }>
-  parent      FWidget?     parent      2 $" a widget"                assert-type
+  parent      widget?      parent      2 $" a widget"                assert-type
   axis-bounds axis-bounds? axis-bounds 4 $" an array of axis bounds" assert-type
   xenved% %alloc { xe }
   xe unless 'system-error #( get-func-name $" cannot create xenved" ) fth-throw then
   envelope make-enved xe xe-enved !
-  name string? unless $" xe-test" to name then
+  name string? unless "xe-test" to name then
   name   xe xe-name !
   parent xe xe-parent !
   args   xe xe-args !
-  args FXmNbackground array-member? unless
-    args #( FXmNbackground graph-color ) array-append to args
-  then
-  args FXmNforeground array-member? unless
-    args #( FXmNforeground data-color ) array-append to args
-  then
-  name FxmDrawingAreaWidgetClass parent args undef FXtCreateManagedWidget { drawer }
-  drawer xe xe-drawer !
-  drawer FXtDisplay FXC_crosshair FXCreateFontCursor { arrow-cursor }
   snd-gcs 0 array-ref xe xe-gcs !
   axis-bounds 0 array-ref xe xe-bx0 !
   axis-bounds 2 array-ref xe xe-by0 !
@@ -436,52 +588,41 @@ fth-xenved make-?obj xenved?
   0.5 xe xe-click-time !
   0   xe xe-mouse-pos !
   #f  xe xe-mouse-new !
-  xe fth-xenved make-instance { gen }
-  gen draw-axes-cb { axes-cb }
-  drawer FXmNresizeCallback axes-cb      	             #f FXtAddCallback drop
-  drawer FXmNexposeCallback axes-cb      	             #f FXtAddCallback drop
-  drawer FButtonPressMask   #f gen mouse-press-cb    	     #f FXtAddEventHandler drop
-  drawer FButtonReleaseMask #f gen mouse-release-cb 	     #f FXtAddEventHandler drop
-  drawer FButtonMotionMask  #f gen mouse-drag-cb     	     #f FXtAddEventHandler drop
-  drawer FEnterWindowMask   #f arrow-cursor define-cursor-cb #f FXtAddEventHandler drop
-  drawer FLeaveWindowMask   #f undefine-cursor-cb            #f FXtAddEventHandler drop
-  gen
+  #f  xe xe-dragging !
+  #f  xe xe-drawer !
+  xe fth-xenved make-instance init-xenved ( gen )
 ;
 
-: xe-envelope ( gen -- lst )
-  { gen }
+: xe-envelope { gen -- lst }
   gen xenved? gen 1 $" an xenved object" assert-type
   gen xe-envelope@
 ;
-: set-xe-envelope ( gen lst -- )
-  { gen lst }
+
+: set-xe-envelope { gen lst -- }
   gen xenved? gen 1 $" an xenved object" assert-type
   lst array?  lst 2 $" an array"         assert-type
   lst gen xe-envelope!
   gen xe-redraw
 ;
-: xe-open ( gen -- )
-  { gen }
+
+: xe-open { gen -- }
   gen xenved? gen 1 $" an xenved object" assert-type
-  gen xe-drawer@ FWidget? if gen xe-drawer@ FXtManageChild drop then
+  gen xe-drawer@ widget? if gen xe-drawer@ show-widget drop then
 ;
-: xe-close ( gen -- )
-  { gen }
+
+: xe-close { gen -- }
   gen xenved? gen 1 $" an xenved object" assert-type
-  gen xe-drawer@ FWidget? if gen xe-drawer@ FXtUnmanageChild drop then
+  gen xe-drawer@ widget? if gen xe-drawer@ hide-widget drop then
 ;
 previous
 
-: xenved-test <{ :optional name "xenved" -- xe }>
-  name
-  name FxmFormWidgetClass #( FXmNheight 200 ) add-main-pane
-  :envelope    #( 0 0 1 1 )
-  :axis-bounds #( 0 1 0 1 )
-  :args
-  #( FXmNleftAttachment   FXmATTACH_WIDGET
-     FXmNtopAttachment    FXmATTACH_WIDGET
-     FXmNbottomAttachment FXmATTACH_WIDGET
-     FXmNrightAttachment  FXmATTACH_WIDGET ) make-xenved
-;
+'snd-motif provided? [if]
+  : xenved-test <{ :optional name "xenved" -- xe }>
+    name
+    name FxmFormWidgetClass #( FXmNheight 200 ) add-main-pane
+    :envelope    #( 0 0 1 1 )
+    :axis-bounds #( 0 1 0 1 ) make-xenved
+  ;
+[then]
 
 \ xm-enved.fs ends here

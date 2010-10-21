@@ -2,7 +2,25 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Mar 18 00:18:35 CET 2003
-# Changed: Tue Oct 05 01:00:15 CEST 2010
+# Changed: Thu Oct 21 12:57:27 CEST 2010
+
+# Important:
+#
+# Motif works without problems.
+# 
+# Gtk Version: Gtk+ 2.20.1, Glib 2.24.2, Pango 1.28.1, Cairo 1.8.10
+#
+# tested with provided?(:gtk2):
+#     in snd-xm.rb:
+#
+#     in add_event_handler:
+#
+#     Rg_signal_lookup(event, RG_OBJECT_TYPE(RG_OBJECT(parent)))
+#     RG_OBJECT  (not RGTK_OBJECT!)
+#
+#     in is_managed:
+#
+#     Rgtk_widget_get_realized() exists and is used.
 
 # Commentary:
 #
@@ -100,6 +118,15 @@ if provided?(:snd_motif) or provided?(:snd_gtk)
   require "snd-xm"
   include Snd_XM
 end
+
+#
+# defined in snd-xm.rb:
+#
+# $with_motif
+# $with_gtk
+#
+
+$with_gui = ($with_motif or $with_gtk) ? true : false
 
 module Snd_enved
   # returns Graph_enved object or nil
@@ -290,8 +317,7 @@ pans a mono sound following its enved envelope into a stereo sound")
     obj.instance_of?(Graph_enved)
   end
 
-  # FIXME: xg doesn't work
-  if provided?(:xm) #or provided?(:xg)
+  if $with_gui
     def make_xenved(name, parent, *rest)
       envelope, bounds, args, label = optkey(rest,
                                              [:envelope, [0, 0, 1, 1]],
@@ -313,12 +339,12 @@ pans a mono sound following its enved envelope into a stereo sound")
     end
 
     def xenved_test(name = "xenved")
-      widget = if provided? :xm
+      widget = if $with_motif
                  add_main_pane(name, RxmFormWidgetClass, [RXmNheight, 200])
                else
                  add_main_pane(name)
                end
-      args = if provided? :xm
+      args = if $with_motif
                [RXmNleftAttachment, RXmATTACH_WIDGET,
                 RXmNtopAttachment, RXmATTACH_WIDGET,
                 RXmNbottomAttachment, RXmATTACH_WIDGET,
@@ -605,11 +631,11 @@ Enved_add_point, Enved_delete_point, Enved_move_point.")
   end
 
   def init
-    @mouse_up = 0.0
+    @mouse_up   = 0.0
     @mouse_down = 0.0
     @click_time = 0.5
-    @mouse_pos = 0
-    @mouse_new = false
+    @mouse_pos  = 0
+    @mouse_new  = false
   end
 
   def envelope=(new_env)
@@ -757,96 +783,145 @@ ge.help                             # this help
   end
 end
 
-class Xenved < Graph_enved
-  def initialize(name, parent, enved, bounds, args, axis_label)
-    super(enved)
-    @name = name
-    @parent = parent
-    @x0, @x1, @y0, @y1 = bounds.map do |x| x.to_f end
-    @args = args
-    if provided? :xm
-      @args += [RXmNforeground, data_color] unless @args.member?(RXmNforeground)
-      @args += [RXmNbackground, graph_color] unless @args.member?(RXmNbackground)
-    end
-    @lx0, @lx1, @ly0, @ly1 = if envelope?(axis_label)
-                               axis_label.map do |x| x.to_f end
-                             else
-                               [0.0, 1.0, -1.0, 1.0]
-                             end
-    @gc = snd_gcs[0]
-    @drawer = @dpy = @window = nil
-    @px0 = @px1 = @py0 = @py1 = nil
-    set_enved_help
-    create
-  end
-  alias help description
-  
-  def inspect
-    format("%s.new(%s, %s, %s, %s, %s)",
-           self.class, @name.inspect, @parent, @envelope,
-           [@x0, @x1, @y0, @y1], @args, [@lx0, @lx1, @ly0, @ly1])
-  end
-  
-  def to_s
-    format("#<%s: name: %s, envelope: %s>", self.class, @name.inspect, @envelope.to_string)
-  end
-
-  def axis_bounds
-    [@x0, @x1, @y0, @y1]
-  end
-  
-  def axis_bounds=(bounds)
-    assert_type((array?(bounds) and bounds.length == 4),
-                bounds, 0, "an array of 4 elements [x0, x1, y0, y1]")
-    @x0, @x1, @y0, @y1 = bounds.map do |x| x.to_f end
-    self.envelope = @init
-  end
-
-  def point(idx, *args)
-    if args.length > 0
-      super
-      redraw
-    end
-    @envelope[idx * 2, 2]
-  end
-
-  def create
-    if widget?(@drawer)
-      show_widget(@drawer)
-    else
-      create_enved
-    end
-  end
-  alias open create
-  
-  def close
-    hide_widget(@drawer)
-  end
-
-  Mouse_d = 10
-  Mouse_r = 5
-
-  protected
-  def redraw
-    if is_managed(@drawer) and @px0 and @py0 > @py1
-      clear_window
-      draw_axes(@drawer, @gc, @name, @lx0, @lx1, @ly0, @ly1)
-      lx = ly = nil
-      @envelope.each_pair do |x, y|
-        cx = grfx(x)
-        cy = grfy(y)
-        fill_arc(cx, cy, Mouse_d, Mouse_d, 0, 360 * 64)
-        draw_line(lx, ly, cx, cy) if lx
-        lx, ly = cx, cy
+if $with_gui
+  class Xenved < Graph_enved
+    def initialize(name, parent, enved, bounds, args, axis_label)
+      super(enved)
+      @name = name
+      @parent = parent
+      @x0, @x1, @y0, @y1 = bounds.map do |x| x.to_f end
+      @args = args
+      if $with_motif
+        @args += [RXmNforeground, data_color]  unless @args.member?(RXmNforeground)
+        @args += [RXmNbackground, graph_color] unless @args.member?(RXmNbackground)
       end
-      finish_draw
+      @lx0, @lx1, @ly0, @ly1 = if envelope?(axis_label)
+                                 axis_label.map do |x| x.to_f end
+                               else
+                                 [0.0, 1.0, -1.0, 1.0]
+                               end
+      @gc = snd_gcs[0]
+      @drawer = @dpy = @window = nil
+      @px0 = @px1 = @py0 = @py1 = nil
+      @dragging = false
+      set_enved_help
+      create
     end
-  end
-  
-  private
-  def set_enved_help
-    super
-    self.description += "\
+    alias help description
+    
+    def inspect
+      format("%s.new(%s, %s, %s, %s, %s, %s)",
+             self.class,
+             @name.inspect,
+             @parent,
+             @envelope,
+             [@x0, @x1, @y0, @y1],
+             @args,
+             [@lx0, @lx1, @ly0, @ly1])
+    end
+    
+    def to_s
+      format("#<%s: name: %s, envelope: %s>", self.class, @name.inspect, @envelope.to_string)
+    end
+
+    def axis_bounds
+      [@x0, @x1, @y0, @y1]
+    end
+    
+    def axis_bounds=(bounds)
+      assert_type((array?(bounds) and bounds.length == 4),
+                  bounds, 0, "an array of 4 elements [x0, x1, y0, y1]")
+      @x0, @x1, @y0, @y1 = bounds.map do |x| x.to_f end
+      self.envelope = @init
+    end
+
+    def point(idx, *args)
+      if args.length > 0
+        super
+        redraw
+      end
+      @envelope[idx * 2, 2]
+    end
+
+    def create
+      if widget?(@drawer)
+        show_widget(@drawer)
+      else
+        create_enved
+      end
+    end
+    alias open create
+    
+    def close
+      hide_widget(@drawer)
+    end
+
+    protected
+    if $with_motif
+      def redraw
+        if is_managed(@drawer) and @px0 and @py0 > @py1
+          RXClearWindow(@dpy, @window)
+          # Motif's DRAW-AXES takes 6 optional arguments.
+          # '( x0 y0 x1 y1 ) = draw-axes(wid gc label
+          #                              x0=0.0 x1=1.0 y0=-1.0 y1=1.0
+          #                              style=x-axis-in-seconds
+          #                              axes=show-all-axes)
+          # arity #( 3 6 #f )
+          draw_axes(@drawer, @gc, @name, @lx0, @lx1, @ly0, @ly1)
+          lx = ly = nil
+          @envelope.each_pair do |x, y|
+            cx = grfx(x)
+            cy = grfy(y)
+            RXFillArc(@dpy, @window, @gc, cx - Mouse_r, cy - Mouse_r, Mouse_d, Mouse_d, 0, 360*64)
+            RXDrawLine(@dpy, @window, @gc, lx, ly, cx, cy) if lx
+            lx, ly = cx, cy
+          end
+        end
+      end
+    else
+      def redraw
+        if is_managed(@drawer) and @px0 and @py0 > @py1
+          size = widget_size(RGTK_WIDGET(@drawer))
+          cairo = Rgdk_cairo_create(RGDK_DRAWABLE(Rgtk_widget_get_window(@drawer)))
+          Rcairo_push_group(cairo)
+          Rcairo_set_source_rgb(cairo, 1.0, 1.0, 1.0)
+          Rcairo_rectangle(cairo, 0, 0, size[0], size[1])
+          Rcairo_fill(cairo)
+          # Gtk's DRAW-AXES takes one more optional argument, a cairo object.
+          # '( x0 y0 x1 y1 ) = draw-axes(wid gc label
+          #                              x0=0.0 x1=1.0 y0=-1.0 y1=1.0
+          #                              style=x-axis-in-seconds
+          #                              axes=show-all-axes
+          #                              cairo)
+          # arity #( 3 7 #f )
+          draw_axes(@drawer, @gc, @name, @lx0, @lx1, @ly0, @ly1,
+                    X_axis_in_seconds, Show_all_axes, cairo)
+          Rcairo_set_line_width(cairo, 1.0)
+          Rcairo_set_source_rgb(cairo, 0.0, 0.0, 0.0)
+          lx = ly = nil
+          @envelope.each_pair do |x, y|
+            cx = grfx(x)
+            cy = grfy(y)
+            Rcairo_arc(cairo, cx, cy, Mouse_r, 0.0, TWO_PI)
+            Rcairo_fill(cairo)
+            if lx
+              Rcairo_move_to(cairo, lx, ly)
+              Rcairo_line_to(cairo, cx, cy)
+              Rcairo_stroke(cairo)
+            end
+            lx, ly = cx, cy
+          end
+          Rcairo_pop_group_to_source(cairo)
+          Rcairo_paint(cairo)
+          Rcairo_destroy(cairo)
+        end
+      end
+    end
+    
+    private
+    def set_enved_help
+      super
+      self.description += "\
 #
 # make_xenved(name, parent, *rest)
 #   name     String
@@ -886,167 +961,127 @@ xe.envelope                         # --> [0.0, 1.0,
                                     #      1.0, 1.0]
 xe.help                             # this help
 "
-    add_help(:Xenved, self.description)
-  end
-
-  if provided? :xm
-    def create_enved
-      @drawer = RXtCreateManagedWidget(@name, RxmDrawingAreaWidgetClass, @parent, @args)
-      @dpy = RXtDisplay(@drawer)
-      @window = RXtWindow(@drawer)
-      RXtAddCallback(@drawer, RXmNresizeCallback, lambda do |w, c, i| draw_axes_cb end)
-      RXtAddCallback(@drawer, RXmNexposeCallback, lambda do |w, c, i| draw_axes_cb end)
-      RXtAddEventHandler(@drawer, RButtonPressMask, false,
-                         lambda do |w, c, e, f| mouse_press_cb(e) end)
-      RXtAddEventHandler(@drawer, RButtonReleaseMask, false,
-                         lambda do |w, c, e, f| mouse_release_cb end)
-      RXtAddEventHandler(@drawer, RButtonMotionMask, false,
-                         lambda do |w, c, e, f| mouse_drag_cb(e) end)
-      new_cursor = RXCreateFontCursor(@dpy, RXC_crosshair)
-      RXtAddEventHandler(@drawer, REnterWindowMask, false,
-                         lambda do |w, c, e, f| RXDefineCursor(@dpy, @window, new_cursor) end)
-      RXtAddEventHandler(@drawer, RLeaveWindowMask, false,
-                         lambda do |w, c, e, f| RXUndefineCursor(@dpy, @window) end)
+      add_help(:Xenved, self.description)
     end
 
-    def clear_window
-      RXClearWindow(@dpy, @window)
+    Mouse_d = 10
+    Mouse_r = 5
+
+    if $with_motif
+      def create_enved
+        @drawer = RXtCreateManagedWidget(@name, RxmDrawingAreaWidgetClass, @parent, @args)
+        @dpy = RXtDisplay(@drawer)
+        @window = RXtWindow(@drawer)
+        RXtAddCallback(@drawer, RXmNresizeCallback, lambda do |w, c, i| draw_axes_cb end)
+        RXtAddCallback(@drawer, RXmNexposeCallback, lambda do |w, c, i| draw_axes_cb end)
+        RXtAddEventHandler(@drawer, RButtonPressMask, false,
+                           lambda do |w, c, e, f|
+                             mouse_press_cb(ungrfx(Rx(e)), ungrfy(Ry(e)))
+                           end)
+        RXtAddEventHandler(@drawer, RButtonReleaseMask, false,
+                           lambda do |w, c, e, f|
+                             mouse_release_cb
+                           end)
+        RXtAddEventHandler(@drawer, RButtonMotionMask, false,
+                           lambda do |w, c, e, f|
+                             mouse_drag_cb(ungrfx(Rx(e)), ungrfy(Ry(e)))
+                           end)
+        RXtAddEventHandler(@drawer, REnterWindowMask, false,
+                           lambda do |w, cursor, e, f|
+                             RXDefineCursor(@dpy, @window, cursor)
+                           end, RXCreateFontCursor(@dpy, RXC_crosshair))
+        RXtAddEventHandler(@drawer, RLeaveWindowMask, false,
+                           lambda do |w, c, e, f|
+                             RXUndefineCursor(@dpy, @window)
+                           end)
+      end
+
+    else
+      def create_enved
+        @drawer = Rgtk_drawing_area_new()
+        Rgtk_widget_set_events(@drawer, RGDK_ALL_EVENTS_MASK)
+        Rgtk_box_pack_start(RGTK_BOX(@parent), @drawer, true, true, 10)
+        Rgtk_widget_show(@drawer)
+        Rgtk_widget_set_name(@drawer, @name)
+        Rgtk_widget_set_size_request(@drawer, -1, 200)
+        add_event_handler(@drawer, "expose_event") do |w, e, d|
+          draw_axes_cb
+          false
+        end
+        add_event_handler(@drawer, "configure_event") do |w, e, d|
+          draw_axes_cb
+          false
+        end
+        add_event_handler(@drawer, "button_press_event") do |w, e, d|
+          @dragging = true
+          xy = Rgdk_event_get_coords(RGDK_EVENT(e))
+          mouse_press_cb(ungrfx(xy[1]), ungrfy(xy[2]))
+          false
+        end
+        add_event_handler(@drawer, "button_release_event") do |w, e, d|
+          @dragging = false
+          mouse_release_cb
+          false
+        end
+        add_event_handler(@drawer, "motion_notify_event") do |w, e, d|
+          if @dragging
+            xy = Rgdk_event_get_coords(RGDK_EVENT(e))
+            mouse_drag_cb(ungrfx(xy[1]), ungrfy(xy[2]))
+          end
+          false
+        end
+        add_event_handler(@drawer,
+                          "enter_notify_event",
+                          Rgdk_cursor_new(RGDK_CROSSHAIR)) do |w, e, cursor|
+          Rgdk_window_set_cursor(Rgtk_widget_get_window(w), cursor)
+          false
+        end
+        add_event_handler(@drawer,
+                          "leave_notify_event",
+                          Rgdk_cursor_new(RGDK_LEFT_PTR)) do |w, e, cursor|
+          Rgdk_window_set_cursor(Rgtk_widget_get_window(w), cursor)
+          false
+        end
+      end
+    end
+
+    def draw_axes_cb
+      @px0, @py0, @px1, @py1 = draw_axes(@drawer, @gc, @name, @lx0, @lx1, @ly0, @ly1)
+      redraw
+    end
+
+    def ungrfx(x)
+      if @px0 == @px1
+        @x0
+      else
+        [@x1, [@x0, @x0 + ((@x1 - @x0) * ((x - @px0) / (@px1.to_f - @px0)))].max].min
+      end
     end
     
-    def fill_arc(x, y, width, height, angle1, angle2)
-      RXFillArc(@dpy, @window, @gc, x - Mouse_r, y - Mouse_r, width, height, angle1, angle2)
-    end
-
-    def draw_line(x1, y1, x2, y2)
-      RXDrawLine(@dpy, @window, @gc, x1, y1, x2, y2)
-    end
-
-    def finish_draw
-    end
-  elsif provided? :xg
-    def create_enved
-      @drawer = Rgtk_drawing_area_new()
-      Rgtk_widget_set_events(@drawer, RGDK_ALL_EVENTS_MASK)
-      Rgtk_widget_show(@parent)
-      Rgtk_box_pack_start(RGTK_BOX(@parent), @drawer, true, true, 10)
-      Rgtk_widget_show(@drawer)
-      Rgtk_widget_set_name(@drawer, @name)
-      @window = Rgtk_widget_get_window(@drawer)
-      #Rgdk_window_set_background(@window, graph_color)
-      Rgtk_widget_set_size_request(@drawer, -1, 200)
-      add_event_handler(@drawer, "expose_event") do |w, e, d|
-        draw_axes_cb
-        false
-      end
-      add_event_handler(@drawer, "configure_event") do |w, e, d|
-        draw_axes_cb
-        false
-      end
-      add_event_handler(@drawer, "button_press_event") do |w, e, d|
-        ev = RGDK_EVENT_BUTTON(e)
-        xy = Rgdk_event_get_coords(ev)
-        mouse_press_cb(xy[1], xy[2])
-        false
-      end
-      add_event_handler(@drawer, "button_release_event") do |w, e, d|
-        mouse_release_cb
-        false
-      end
-      add_event_handler(@drawer, "motion_notify_event") do |w, e, d|
-        ev = RGDK_EVENT_MOTION(e)
-        xy = Rgdk_event_get_coords(ev)
-        mouse_drag_cb(xy[1], xy[2])
-        false
-      end
-      new_cursor = Rgdk_cursor_new(RGDK_CROSSHAIR)
-      old_cursor = Rgdk_cursor_new(RGDK_LEFT_PTR)
-      add_event_handler(@drawer, "enter_notify_event") do |w, e, d|
-        Rgdk_window_set_cursor(Rgtk_widget_get_window(w), new_cursor)
-        false
-      end
-      add_event_handler(@drawer, "leave_notify_event") do |w, e, d|
-        Rgdk_window_set_cursor(Rgtk_widget_get_window(w), old_cursor)
-        false
+    def ungrfy(y)
+      if @py0 == @py1
+        @y1
+      else
+        [@y1, [@y0, @y0 + ((@y1 - @y0) * ((@py0 - y) / (@py0.to_f - @py1)))].max].min
       end
     end
 
-    def clear_window
-      Rgdk_window_clear(@window)
-      @cairo = Rgdk_cairo_create(RGDK_DRAWABLE(@window))
+    def grfx(x)
+      if @px0 == @px1
+        @px0
+      else
+        [@px1, [@px0, (@px0 + ((@px1 - @px0) * ((x - @x0) / (@x1.to_f - @x0)))).round].max].min
+      end
     end
 
-    def fill_arc(x, y, width, height, angle1, angle2)
-      Rcairo_arc(@cairo, x, y, Mouse_r, 0.0, TWO_PI)
-      Rcairo_fill(@cairo)
-    end
-
-    def draw_line(x1, y1, x2, y2)
-      Rcairo_move_to(@cairo, x1, y1)
-      Rcairo_line_to(@cairo, x2, y2)
-      Rcairo_stroke(@cairo)
-    end
-
-    def finish_draw
-      Rcairo_destroy(@cairo)
-      @cairo = nil
-    end
-  else
-    Snd.raise(:runtime_error, "neither Motif nor Gtk?")
-  end
-
-  def mouse_press_cb(e, gtk = false)
-    if gtk
-      super(ungrfx(e), ungrfy(gtk))
-    else
-      super(ungrfx(Rx(e)), ungrfy(Ry(e)))
+    def grfy(y)
+      if @py0 == @py1
+        @py0
+      else
+        [@py0, [@py1, (@py1 + ((@py0 - @py1) * ((y - @y1) / (@y0.to_f - @y1)))).round].max].min
+      end
     end
   end
-  
-  def mouse_drag_cb(e, gtk = false)
-    if gtk
-      super(ungrfx(e), ungrfy(gtk))
-    else
-      super(ungrfx(Rx(e)), ungrfy(Ry(e)))
-    end
-  end
-
-  def draw_axes_cb
-    @px0, @py0, @px1, @py1 = draw_axes(@drawer, @gc, @name, @lx0, @lx1, @ly0, @ly1)
-    redraw
-  end
-
-  def ungrfx(x)
-    if @px0 == @px1
-      @x0
-    else
-      [@x1, [@x0, @x0 + ((@x1 - @x0) * ((x - @px0) / (@px1.to_f - @px0)))].max].min
-    end
-  end
-  
-  def ungrfy(y)
-    if @py0 == @py1
-      @y1
-    else
-      [@y1, [@y0, @y0 + ((@y1 - @y0) * ((@py0 - y) / (@py0.to_f - @py1)))].max].min
-    end
-  end
-
-  def grfx(x)
-    if @px0 == @px1
-      @px0
-    else
-      [@px1, [@px0, (@px0 + ((@px1 - @px0) * ((x - @x0) / (@x1.to_f - @x0)))).round].max].min
-    end
-  end
-
-  def grfy(y)
-    if @py0 == @py1
-      @py0
-    else
-      [@py0, [@py1, (@py1 + ((@py0 - @py1) * ((y - @y1) / (@y0.to_f - @y1)))).round].max].min
-    end
-  end
-  # FIXME: xg doesn't work
-end if provided?(:xm) #or provided?(:xg)
+end
 
 # xm-enved.rb ends here

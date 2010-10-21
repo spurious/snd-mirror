@@ -2,7 +2,7 @@
 
 \ Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Dec 12 03:26:27 CET 2006
-\ Changed: Thu Jun 18 12:20:57 CEST 2009
+\ Changed: Thu Oct 14 20:24:59 CEST 2010
 
 \ Usage: <'> bird-test with-sound
 \        or ws-bird-test
@@ -1112,8 +1112,7 @@ event: various-gull-cries-from-end-of-colony-5 ( beg -- )
   :channels   2
   :srate      44100
   :scaled-to  0.8
-  :notehook   #f
-  with-sound ( ws ) :output array-assoc-ref .string cr
+  :notehook   #f with-sound drop
 ;
 
 \ bird.fsm ends here

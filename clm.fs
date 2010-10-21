@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Fri Jan 08 01:06:37 CET 2010
+\ Changed: Thu Oct 14 21:26:53 CEST 2010
 
 \ Commentary:
 \
@@ -44,6 +44,7 @@
 \ record-sound         ( output keyword-args -- )
 \
 \ clm-mix              ( infile :key output output-frame frames input-frame scaler -- )
+\ ws-output            ( ws -- fname )
 \ with-sound           ( body-xt keyword-args -- ws )
 \ clm-load             ( fname keyword-args -- ws )
 \ with-current-sound   ( body-xt :key offset scaled-to scaled-by -- )
@@ -53,7 +54,7 @@
 \ with-mix             ( body-str|nil args fname start -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 08-Jan-2010" value *clm-version*
+$" fth 14-Oct-2010" value *clm-version*
 
 [ifundef] flog10
   <'> flog  alias flog10
@@ -86,6 +87,7 @@ dl-load sndlib Init_sndlib
     <'> fth-print alias clm-print ( fmt :optional args -- )
   [then]
 [then]
+
 \ puts a comment sign before output string and adds a carriage return
 : clm-message <{ fmt :optional args undef -- }> $" \\ %s\n" '( fmt args fth-format ) clm-print ;
 
@@ -95,6 +97,7 @@ hide
 60.0 value *clm-tempo*
 0.25 value *clm-beat*
 set-current
+
 : now@   ( -- secs ) *clm-current-time* ;
 : now!   ( secs -- ) to *clm-current-time* ;
 : step   ( secs -- ) now@ f+ now! ;
@@ -118,6 +121,7 @@ hide
   @
 ;
 set-current
+
  0 0 pitch |C0    1 0 pitch |Cs0    1 0 pitch |Df0
  2 0 pitch |D0    3 0 pitch |Ds0    3 0 pitch |Ef0
  4 0 pitch |E0    4 0 pitch |Ff0    5 0 pitch |Es0
@@ -202,6 +206,7 @@ hide
   @ rhythm->seconds
 ;
 set-current
+
  1.0     notelength |W			\ whole
  2.0 1/f notelength |H			\ half
  4.0 1/f notelength |Q			\ quarter
@@ -271,23 +276,26 @@ clm-default-frequency      value *clm-default-frequency*
   hide
   user *fth-file-number*
   set-current
+
   : fth-tempnam ( -- name )
-    doc" Looks for environment variables TMP, TEMP, or TMPDIR, otherwise \
-uses /tmp as temporary path and produces something like:\n\
+    doc" Looks for environment variables TMP, TEMP, and TMPDIR.  \
+If none of them is set, uses /tmp as temporary path.  \
+Produces something like:\n\
 /tmp/fth-12345-1.snd\n\
 /tmp/fth-12345-2.snd\n\
 /tmp/fth-12345-3.snd\n\
 ..."
     1 *fth-file-number* +!
+    environ { env }
     "%s/fth-%d-%d.snd"
-    environ "TMP" array-assoc-ref ?dup-if
-      1 object-ref
+    env "TMP" array-assoc-ref ?dup-if
+      ( tmp )
     else
-      environ "TEMP" array-assoc-ref ?dup-if
-	1 object-ref
+      env "TEMP" array-assoc-ref ?dup-if
+	( temp )
       else
-	environ "TMPDIR" array-assoc-ref ?dup-if
-	  1 object-ref
+	env "TMPDIR" array-assoc-ref ?dup-if
+	  ( tmpdir )
 	else
 	  "/tmp"
 	then
@@ -325,7 +333,6 @@ uses /tmp as temporary path and produces something like:\n\
 ;
 
 \ === With-Sound Run-Instrument ===
-
 $" with-sound error"     create-exception with-sound-error
 $" with-sound interrupt" create-exception with-sound-interrupt
 #() value *ws-args*			\ array for recursive with-sound calls 
@@ -338,17 +345,22 @@ $" with-sound interrupt" create-exception with-sound-interrupt
     nil { vals }
     "" #() clm-message
     *clm-instruments* each to vals
-      $" === %s [%.3f-%.3f] ===" #( vals 0 array-ref vals 1 array-ref vals 2 array-ref ) clm-message
+      $" === %s [%.3f-%.3f] ===" #(
+	 vals 0 array-ref
+	 vals 1 array-ref
+	 vals 2 array-ref ) clm-message
       vals 3 array-ref each ( var ) $" %s = %s" swap clm-message end-each
       "" #() clm-message
     end-each
   then
 ;
+
 : ws-interrupt? ( -- )
   c-g? if
     'with-sound-interrupt #( "interrupted" ) fth-throw
   then
 ;
+
 : ws-info ( start dur vars -- start dur )
   { start dur vars }
   *clm-instruments* #( *clm-current-instrument* start dur vars ) array-push to *clm-instruments*
@@ -361,6 +373,7 @@ $" with-sound interrupt" create-exception with-sound-interrupt
 
 hide
 : (run)            ( start dur vars      -- limit begin ) ws-info times->samples ;
+
 : (run-instrument) ( start dur args vars -- limit begin )
   { start dur args vars }
   args hash? unless #{} to args then
@@ -390,8 +403,10 @@ hide
   then
   start dur vars (run)
 ;
+
 : (end-run) { val idx -- } *locsig* idx val locsig drop ;
 set-current
+
 \ RUN/LOOP is only a simple replacement of
 \ start dur TIMES->SAMPLES ?DO ... LOOP
 \
@@ -413,9 +428,11 @@ set-current
 : run            ( start dur -- )
   postpone local-variables postpone (run)            postpone ?do
 ; immediate compile-only
+
 : run-instrument ( start dur locsig-args -- )
   postpone local-variables postpone (run-instrument) postpone ?do
 ; immediate compile-only
+
 : end-run        ( sample -- )
   postpone r@ postpone (end-run) postpone loop
 ; immediate compile-only
@@ -431,16 +448,19 @@ hide
 : ins-info   ( ins-name -- ) to *clm-current-instrument* ;
 : event-info ( ev-name -- )  *clm-verbose* if #() clm-message else drop then ;
 set-current
+
 : instrument: ( -- )
   >in @ parse-word $>string { ins-name } >in !
   :
   ins-name postpone literal <'> ins-info   compile,
 ;
+
 : event: ( -- )
   >in @ parse-word $>string { ev-name }  >in !
   :
   ev-name  postpone literal <'> event-info compile,
 ;
+
 : ;instrument ( -- ) postpone ; ; immediate
 <'> ;instrument alias ;event immediate
 previous
@@ -477,10 +497,12 @@ hide
     2 +loop
   then
 ;
+
 : .timer { obj -- }
   $" %*s: %.3f  (utime %.3f, stime %.3f)"
   #( 8 $" real" obj real-time@ obj user-time@ obj system-time@ ) clm-message
 ;
+
 : .timer-ratio { sr frms obj -- }
   frms 0> if
     sr frms f/ { m }
@@ -491,6 +513,7 @@ hide
   then
 ;
 set-current
+
 : snd-info <{ output :key reverb-file-name #f scaled? #f timer #f -- }>
   output mus-sound-duration { dur }
   output mus-sound-frames   { frames }
@@ -549,6 +572,7 @@ previous
     $" nothing to play for %S (%d frames)" #( input bufsize ) string-format warning
   then
 ;
+
 : record-sound ( output keyword-args -- )
   <{ output :key
      duration      10.0
@@ -593,6 +617,7 @@ previous
   snd-fd frames chans * data-format mus-bytes-per-sample * mus-sound-close-output drop
   old-srate set-mus-srate drop
 ;
+
 : clm-mix <{ infile :key output #f output-frame 0 frames #f input-frame 0 scaler 1.0 -- }>
   doc" Mixes files in with-sound's *output* generator.\n\
 \"oboe.snd\" clm-mix\n\
@@ -630,96 +655,117 @@ The whole oboe.snd file will be mixed in because :frames is not specified."
   outgen if output continue-sample->file to *output* then
 ;
 
+[ifundef] ws-is-array?
+  false value ws-is-array?
+[then]
+
+ws-is-array? [if]
+  <'> #()              alias #w{}    ( -- ws )
+  <'> array?           alias ws?     ( obj -- f )
+  <'> array-assoc-ref  alias ws-ref  ( ws key     -- val )
+  <'> array-assoc-set! alias ws-set! ( ws key val -- 'ws )
+[else]
+  <'> #{}              alias #w{}    ( -- ws )
+  <'> hash?            alias ws?     ( obj -- f )
+  <'> hash-ref         alias ws-ref  ( ws key     -- val )
+  : ws-set! ( ws key val -- 'ws ) 3 pick >r hash-set! r> ;
+[then]
+
 hide
 : ws-get-snd ( ws -- snd )
-  { ws }
-  ws :output array-assoc-ref find-file { fname }
-  fname 0 find-sound dup sound? if ( snd ) save-sound then drop
-  fname open-sound ( snd )
+  ( ws ) :output ws-ref find-file { fname }
+  fname 0 find-sound dup sound? if dup save-sound drop close-sound then drop
+  fname open-sound
 ;
+
 : ws-scaled-to ( ws -- )
   { ws }
-  ws :scaled-to array-assoc-ref { scale }
+  ws :scaled-to ws-ref { scale }
   'snd provided? if
     ws ws-get-snd { snd }
     0.0  snd #t #f maxamp each fmax end-each { mx }
     mx f0<> if
       scale mx f/ to scale
       snd #f #f frames { len }
-      ws :channels array-assoc-ref 0 ?do scale 0 len snd i ( chn ) #f scale-channel drop loop
+      ws :channels ws-ref 0 ?do scale 0 len snd i ( chn ) #f scale-channel drop loop
     then
     snd save-sound drop
   else
-    ws :output array-assoc-ref mus-sound-maxamp { smax }
+    ws :output ws-ref mus-sound-maxamp { smax }
     0.0 smax length 1 ?do smax i array-ref fabs fmax 2 +loop { mx }
     mx f0<> if
-      ws :output array-assoc-ref :scaler scale mx f/ clm-mix
+      ws :output ws-ref :scaler scale mx f/ clm-mix
     then
   then
 ;
+
 : ws-scaled-by ( ws -- )
   { ws }
-  ws :scaled-by array-assoc-ref { scale }
+  ws :scaled-by ws-ref { scale }
   'snd provided? if
     ws ws-get-snd { snd }
     snd #f #f frames { len }
-    ws :channels array-assoc-ref 0 ?do scale 0 len snd i ( chn ) #f scale-channel drop loop
+    ws :channels ws-ref 0 ?do scale 0 len snd i ( chn ) #f scale-channel drop loop
     snd save-sound drop
   else
-    ws :output array-assoc-ref :scaler scale clm-mix
+    ws :output ws-ref :scaler scale clm-mix
   then
 ;
+
 : ws-before-output ( ws -- )
   { ws }
-  ws     :old-table-size         clm-table-size         array-assoc-set!
-  ( ws ) :old-file-buffer-size   mus-file-buffer-size   array-assoc-set!
-  ( ws ) :old-array-print-length mus-array-print-length array-assoc-set!
-  ( ws ) :old-clipping           mus-clipping           array-assoc-set!
-  ( ws ) :old-srate       	 mus-srate        	array-assoc-set!
-  ( ws ) :old-locsig-type 	 locsig-type      	array-assoc-set!
-  ( ws ) :old-*output*    	 *output*         	array-assoc-set!
-  ( ws ) :old-*reverb*    	 *reverb*         	array-assoc-set!
-  ( ws ) :old-verbose     	 *verbose*        	array-assoc-set! 
-  ( ws ) :old-debug       	 *clm-debug*      	array-assoc-set!
-  ( ws ) :old-channels    	 *channels*       	array-assoc-set!
-  ( ws ) :old-notehook    	 *notehook*       	array-assoc-set!
-  ( ws ) :old-decay-time  	 *clm-decay-time* 	array-assoc-set! to ws
-  ws :verbose                array-assoc-ref  		to *verbose*
-  ws :debug                  array-assoc-ref  		to *clm-debug*
-  ws :channels               array-assoc-ref  		to *channels*
-  ws :notehook               array-assoc-ref  		to *notehook*
-  ws :decay-time             array-assoc-ref  		to *clm-decay-time*
+  ws     :old-table-size         clm-table-size         ws-set!
+  ( ws ) :old-file-buffer-size   mus-file-buffer-size   ws-set!
+  ( ws ) :old-array-print-length mus-array-print-length ws-set!
+  ( ws ) :old-clipping           mus-clipping           ws-set!
+  ( ws ) :old-srate       	 mus-srate        	ws-set!
+  ( ws ) :old-locsig-type 	 locsig-type      	ws-set!
+  ( ws ) :old-*output*    	 *output*         	ws-set!
+  ( ws ) :old-*reverb*    	 *reverb*         	ws-set!
+  ( ws ) :old-verbose     	 *verbose*        	ws-set! 
+  ( ws ) :old-debug       	 *clm-debug*      	ws-set!
+  ( ws ) :old-channels    	 *channels*       	ws-set!
+  ( ws ) :old-notehook    	 *notehook*       	ws-set!
+  ( ws ) :old-decay-time  	 *clm-decay-time* 	ws-set! to ws
+  ws :verbose                ws-ref  			to *verbose*
+  ws :debug                  ws-ref  			to *clm-debug*
+  ws :channels               ws-ref  			to *channels*
+  ws :notehook               ws-ref  			to *notehook*
+  ws :decay-time             ws-ref  			to *clm-decay-time*
   *clm-file-buffer-size*     set-mus-file-buffer-size   drop
   *clm-array-print-length*   set-mus-array-print-length drop
   *clm-clipped* boolean? if *clm-clipped* else #f then  set-mus-clipping drop
-  ws :srate                  array-assoc-ref  		set-mus-srate    drop
-  ws :locsig-type            array-assoc-ref  		set-locsig-type  drop
+  ws :srate                  ws-ref  		        set-mus-srate    drop
+  ws :locsig-type            ws-ref  		        set-locsig-type  drop
 ;
+
 : ws-after-output ( ws -- ws )
   { ws }
-  ws :old-table-size         array-assoc-ref set-clm-table-size         drop
-  ws :old-file-buffer-size   array-assoc-ref set-mus-file-buffer-size   drop
-  ws :old-array-print-length array-assoc-ref set-mus-array-print-length drop
-  ws :old-clipping           array-assoc-ref set-mus-clipping           drop
-  ws :old-srate       	     array-assoc-ref set-mus-srate              drop
-  ws :old-locsig-type 	     array-assoc-ref set-locsig-type            drop
-  ws :old-*output*    	     array-assoc-ref 				to *output*
-  ws :old-*reverb*    	     array-assoc-ref 				to *reverb*
-  ws :old-verbose     	     array-assoc-ref 				to *verbose*
-  ws :old-debug       	     array-assoc-ref 				to *clm-debug*
-  ws :old-channels    	     array-assoc-ref 				to *channels*
-  ws :old-notehook    	     array-assoc-ref 				to *notehook*
-  ws :old-decay-time  	     array-assoc-ref 				to *clm-decay-time*
+  ws :old-table-size         ws-ref set-clm-table-size         drop
+  ws :old-file-buffer-size   ws-ref set-mus-file-buffer-size   drop
+  ws :old-array-print-length ws-ref set-mus-array-print-length drop
+  ws :old-clipping           ws-ref set-mus-clipping           drop
+  ws :old-srate       	     ws-ref set-mus-srate              drop
+  ws :old-locsig-type 	     ws-ref set-locsig-type            drop
+  ws :old-*output*    	     ws-ref 			       to *output*
+  ws :old-*reverb*    	     ws-ref 			       to *reverb*
+  ws :old-verbose     	     ws-ref 			       to *verbose*
+  ws :old-debug       	     ws-ref 			       to *clm-debug*
+  ws :old-channels    	     ws-ref 			       to *channels*
+  ws :old-notehook    	     ws-ref 			       to *notehook*
+  ws :old-decay-time  	     ws-ref 			       to *clm-decay-time*
   *ws-args* array-pop
 ;
+
 : ws-statistics ( ws -- )
   { ws }
-  ws :output array-assoc-ref
-  :reverb-file-name ws :reverb-file-name array-assoc-ref
-  :scaled?          ws :scaled-to array-assoc-ref ws :scaled-by array-assoc-ref ||
-  :timer            ws :timer            array-assoc-ref
+  ws :output ws-ref
+  :reverb-file-name ws :reverb-file-name ws-ref
+  :scaled?          ws :scaled-to ws-ref ws :scaled-by ws-ref ||
+  :timer            ws :timer            ws-ref
   snd-info
 ;
+
 \ player can be one of xt, proc, string, or #f.
 \
 \       xt: output player execute
@@ -737,13 +783,13 @@ hide
 \ <'> play-3-times to *clm-player*
 : ws-play-it ( ws -- )
   { ws }
-  ws :output array-assoc-ref { output }
-  ws :player array-assoc-ref { player }
+  ws :output ws-ref { output }
+  ws :player ws-ref { player }
   player word? if
     player #( output ) run-proc drop
   else
     player string? if
-      $" %s %s" #( player output ) string-format file-shell drop
+      $" %s %s" #( player output ) string-format file-system drop
     else
       'snd provided? if
 	output find-file :wait #t play drop
@@ -753,14 +799,18 @@ hide
     then
   then
 ;
+
 : set-args ( key def ws -- )
   { key def ws }
-  key def get-optkey ws key rot array-assoc-set! to ws
+  key def get-optkey ws key rot ws-set! to ws
 ;
 set-current
+
+: ws-output ( ws -- fname ) :output ws-ref ;
+
 : with-sound-default-args ( keyword-args -- ws )
   #() to *clm-instruments*
-  #() { ws }
+  #w{} { ws }
   *ws-args* ws array-push to *ws-args*
   :play              *clm-play*             ws set-args
   :statistics        *clm-statistics*       ws set-args
@@ -786,59 +836,60 @@ set-current
   :decay-time        *clm-decay-time*       ws set-args
   ws
 ;  
+
 : with-sound-args ( keyword-args -- ws )
-  #() { ws }
+  #w{} { ws }
   *ws-args* -1 array-ref { ws1 }
   *ws-args* ws array-push to *ws-args*
   :play              #f                    ws set-args
   :player            #f                    ws set-args
   :statistics        #f                    ws set-args
   :continue-old-file #f               	   ws set-args
-  :verbose           ws1 :verbose     	   array-assoc-ref ws set-args
-  :debug             ws1 :debug       	   array-assoc-ref ws set-args
-  :output            ws1 :output      	   array-assoc-ref ws set-args
-  :channels          ws1 :channels    	   array-assoc-ref ws set-args
-  :srate             ws1 :srate       	   array-assoc-ref ws set-args
-  :locsig-type       ws1 :locsig-type 	   array-assoc-ref ws set-args
-  :header-type       ws1 :header-type 	   array-assoc-ref ws set-args
-  :data-format       ws1 :data-format 	   array-assoc-ref ws set-args
+  :verbose           ws1 :verbose     	   ws-ref ws set-args
+  :debug             ws1 :debug       	   ws-ref ws set-args
+  :output            ws1 :output      	   ws-ref ws set-args
+  :channels          ws1 :channels    	   ws-ref ws set-args
+  :srate             ws1 :srate       	   ws-ref ws set-args
+  :locsig-type       ws1 :locsig-type 	   ws-ref ws set-args
+  :header-type       ws1 :header-type 	   ws-ref ws set-args
+  :data-format       ws1 :data-format 	   ws-ref ws set-args
   :comment $" with-sound level %d" #( *ws-args* length ) string-format ws set-args
-  :notehook          ws1 :notehook         array-assoc-ref ws set-args
-  :scaled-to         ws1 :scaled-to        array-assoc-ref ws set-args
-  :scaled-by         ws1 :scaled-by        array-assoc-ref ws set-args
-  :delete-reverb     ws1 :delete-reverb    array-assoc-ref ws set-args
-  :reverb            ws1 :reverb           array-assoc-ref ws set-args
-  :reverb-data       ws1 :reverb-data      array-assoc-ref ws set-args
-  :reverb-channels   ws1 :reverb-channels  array-assoc-ref ws set-args
-  :reverb-file-name  ws1 :reverb-file-name array-assoc-ref ws set-args
-  :decay-time        ws1 :decay-time       array-assoc-ref ws set-args
+  :notehook          ws1 :notehook         ws-ref ws set-args
+  :scaled-to         ws1 :scaled-to        ws-ref ws set-args
+  :scaled-by         ws1 :scaled-by        ws-ref ws set-args
+  :delete-reverb     ws1 :delete-reverb    ws-ref ws set-args
+  :reverb            ws1 :reverb           ws-ref ws set-args
+  :reverb-data       ws1 :reverb-data      ws-ref ws set-args
+  :reverb-channels   ws1 :reverb-channels  ws-ref ws set-args
+  :reverb-file-name  ws1 :reverb-file-name ws-ref ws set-args
+  :decay-time        ws1 :decay-time       ws-ref ws set-args
   ws
 ;
+
 : with-sound-main ( body-xt ws -- ws )
   { body-xt ws }
-  body-xt word? body-xt 1 $" a proc or xt"         assert-type
-  ws array?     ws      2 $" an associative array" assert-type
+  body-xt word? body-xt 1 $" a proc or xt" assert-type
+  ws      ws?   ws      2 $" a ws object"  assert-type
   ws ws-before-output
-  ws :reverb array-assoc-ref { reverb-xt }
+  ws :reverb ws-ref { reverb-xt }
   reverb-xt if
     reverb-xt word? reverb-xt 3 $" a proc or xt" assert-type
     #t
   else
     #f
   then { rev? }
-  ws :output            array-assoc-ref { output }
-  ws :reverb-file-name  array-assoc-ref { revput }
-  ws :continue-old-file array-assoc-ref { cont? }
+  ws :output            ws-ref { output }
+  ws :reverb-file-name  ws-ref { revput }
+  ws :continue-old-file ws-ref { cont? }
   cont? if
     output continue-sample->file
   else
     output file-delete
     output
-    ws :channels    array-assoc-ref
-    ws :data-format array-assoc-ref
-    ws :header-type array-assoc-ref
-    ws :comment array-assoc-ref dup empty? if drop make-default-comment then
-    make-sample->file
+    ws :channels    ws-ref
+    ws :data-format ws-ref
+    ws :header-type ws-ref
+    ws :comment ws-ref dup empty? if drop make-default-comment then make-sample->file
   then to *output*
   *output* sample->file? unless
     'with-sound-error #( get-func-name $" cannot open sample->file" ) fth-throw
@@ -855,16 +906,16 @@ set-current
     else
       revput file-delete
       revput
-      ws :reverb-channels array-assoc-ref
-      ws :data-format     array-assoc-ref
-      ws :header-type     array-assoc-ref
+      ws :reverb-channels ws-ref
+      ws :data-format     ws-ref
+      ws :header-type     ws-ref
       $" with-sound temporary reverb file" make-sample->file
     then to *reverb*
     *reverb* sample->file? unless
       'with-sound-error #( get-func-name $" cannot open reverb sample->file" ) fth-throw
     then
   then
-  ws :timer make-timer array-assoc-set! to ws
+  ws :timer make-timer ws-set! to ws
   \ compute ws body
   *clm-debug* if
     \ EXECUTE provides probably a more precise backtrace than FTH-CATCH.
@@ -881,13 +932,13 @@ set-current
   then
   reverb-xt if
     *reverb* mus-close drop
-    ws :reverb-file-name array-assoc-ref undef make-file->sample to *reverb*
+    ws :reverb-file-name ws-ref undef make-file->sample to *reverb*
     *reverb* file->sample? unless
       'with-sound-error #( get-func-name $" cannot open file->sample" ) fth-throw
     then
     \ compute ws reverb
     \ push reverb arguments on stack
-    ws :reverb-data array-assoc-ref each end-each
+    ws :reverb-data ws-ref each end-each
     *clm-debug* if
       reverb-xt proc->xt execute
     else
@@ -903,17 +954,15 @@ set-current
     *reverb* mus-close drop
   then
   *output* mus-close drop
-  ws :timer array-assoc-ref stop-timer
+  ws :timer ws-ref stop-timer
   'snd provided? if
     ws ws-get-snd drop
   then
-  ws :statistics    array-assoc-ref if ws ws-statistics then
-  reverb-xt if
-    ws :delete-reverb array-assoc-ref if ws :reverb-file-name array-assoc-ref file-delete then
-  then
-  ws :scaled-to     array-assoc-ref if ws ws-scaled-to  then
-  ws :scaled-by     array-assoc-ref if ws ws-scaled-by  then
-  ws :play          array-assoc-ref if ws ws-play-it    then
+  ws :statistics    ws-ref if ws ws-statistics then
+  reverb-xt if ws :delete-reverb ws-ref if ws :reverb-file-name ws-ref file-delete then then
+  ws :scaled-to     ws-ref if ws ws-scaled-to  then
+  ws :scaled-by     ws-ref if ws ws-scaled-by  then
+  ws :play          ws-ref if ws ws-play-it    then
   ws ws-after-output ( ws )
 ;
 previous
@@ -955,6 +1004,7 @@ Executes BODY-XT, a proc object or an xt, and returns an assoc array with with-s
   then ( ws )
   with-sound-main ( ws )
 ;
+
 : clm-load ( fname keyword-args -- ws )
   doc" Loads and evals the CLM instrument call file FNAME.  \
 See with-sound for a full keyword list.\n\
@@ -966,7 +1016,7 @@ See with-sound for a full keyword list.\n\
   then
   { fname ws }
   fname file-exists? if
-    ws :verbose array-assoc-ref if $" loading %S" #( fname ) clm-message then
+    ws :verbose ws-ref if $" loading %S" #( fname ) clm-message then
     fname <'> file-eval ws with-sound-main ( ws )
   else
     'no-such-file $" %s: %S not found" #( get-func-name fname ) fth-raise
@@ -981,13 +1031,14 @@ Takes all arguments from current with-sound except :output, :scaled-to, :scaled-
   then
   with-sound-args { ws }
   fth-tempnam { output }
-  ws     :output    output    array-assoc-set!
-  ( ws ) :scaled-to scaled-to array-assoc-set!
-  ( ws ) :scaled-by scaled-by array-assoc-set! to ws
+  ws     :output    output    ws-set!
+  ( ws ) :scaled-to scaled-to ws-set!
+  ( ws ) :scaled-by scaled-by ws-set! to ws
   body-xt ws with-sound-main drop
   output :output-frame offset seconds->samples clm-mix
   output file-delete
 ;
+
 : scaled-to <{ body-xt scl -- }>
   doc" Must be called within with-sound body.  \
 Scales BODY-XT's resulting sound file to SCL.\n\
@@ -997,6 +1048,7 @@ lambda: ( -- )\n\
 ; with-sound"
   body-xt :scaled-to scl with-current-sound
 ;
+
 : scaled-by <{ body-xt scl -- }>
   doc" Must be called within with-sound body.  \
 Scales BODY-XT's resulting sound file by SCL.\n\
@@ -1006,6 +1058,7 @@ lambda: ( -- )\n\
 ; with-sound"
   body-xt :scaled-by scl with-current-sound
 ;
+
 : with-offset <{ body-xt sec -- }>
   doc" Must be called within with-sound body.  \
 Mixes BODY-XT's resulting sound file into main sound file at SEC seconds.\n\
@@ -1095,8 +1148,8 @@ lambda: { tmp1 tmp2 }\n\
   then
   ws-xt-lst map
     *key* 0 array-ref ( args ) each end-each with-sound-args
-    ( ws ) :output fth-tempnam array-assoc-set! { ws }
-    *key* 1 array-ref ( xt ) each end-each ws with-sound-main :output array-assoc-ref ( outfile )
+    ( ws ) :output fth-tempnam ws-set! { ws }
+    *key* 1 array-ref ( xt ) each end-each ws with-sound-main :output ws-ref ( outfile )
   end-map { outfiles }
   body-xt xt? if
     outfiles each end-each body-xt execute
@@ -1106,8 +1159,7 @@ lambda: { tmp1 tmp2 }\n\
   outfiles each file-delete end-each
 ;
 
-\ === example instruments, more in clm-ins.fs ===
-
+\ === Example instruments, more in clm-ins.fs ===
 instrument: simp ( start dur freq amp -- )
   { start dur freq amp }
   :frequency freq make-oscil { os }

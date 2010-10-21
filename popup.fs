@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 23 00:28:28 CET 2005
-\ Changed: Sun Oct 10 03:30:47 CEST 2010
+\ Changed: Thu Oct 21 12:17:07 CEST 2010
 
 \ Commentary:
 
@@ -670,31 +670,31 @@ let: ( -- menu )
     name $" Undo"          string= ||
     name $" Revert"        string= ||
     name $" Play previous" string= || if
-      w eds 0 array-ref 0> if widget-manage else widget-unmanage then
+      w eds 0 array-ref 0> if show-widget else hide-widget then drop
     else
       name $" Play channel" string= if
-	w snd channels 1 > if widget-manage else widget-unmanage then
+	w snd channels 1 > if show-widget else hide-widget then drop
       else
 	name $" Redo" string= if
-	  w eds 1 array-ref 0> if widget-manage else widget-unmanage then
+	  w eds 1 array-ref 0> if show-widget else hide-widget then drop
 	else
 	  name $" Mix selection"          string=
 	  name $" Insert selection"       string= ||
 	  name $" Unselect"               string= ||
 	  name $" Replace with selection" string= || if
-	    w undef selection? if widget-manage else widget-unmanage then
+	    w undef selection? if show-widget else hide-widget then drop
 	  else
 	    name $" Play from cursor" string= if
-	      w snd chn #f cursor 0> if widget-manage else widget-unmanage then
+	      w snd chn #f cursor 0> if show-widget else hide-widget then drop
 	    else
 	      name $" Play original" string= if
-		w eds 0 array-ref 1 > if widget-manage else widget-unmanage then
+		w eds 0 array-ref 1 > if show-widget else hide-widget then drop
 	      else
 		name $" Delete mark"       string=
 		name $" Delete all marks"  string= ||
 		name $" To next mark"      string= ||
 		name $" To last mark"      string= || if
-		  w snd chn #f marks nil? unless widget-manage else widget-unmanage then
+		  w snd chn #f marks nil? unless show-widget else hide-widget then drop
 		then
 	      then
 	    then
@@ -747,7 +747,7 @@ let: ( -- menu )
 
 : grp-set <{ lst -- }>
   graph-popup-snd graph-popup-chn transform-graph-type { tp }
-  lst each ( child ) i tp <> widget-set-sensitive end-each
+  lst each ( child ) i tp <> set-sensitive end-each
 ;
 
 #( 16 64 256 1024 4096 16384 65536 262144 1048576 ) constant fft-siz-sizes
@@ -763,7 +763,7 @@ let: ( -- menu )
 
 : siz-set <{ lst -- }>
   graph-popup-snd graph-popup-chn transform-size { siz }
-  lst each ( child ) fft-siz-sizes i array-ref siz <> widget-set-sensitive end-each
+  lst each ( child ) fft-siz-sizes i array-ref siz <> set-sensitive end-each
 ;
 
 #( rectangular-window
@@ -836,7 +836,7 @@ let: ( -- menu )
 ;
 : win-set <{ lst -- }>
   graph-popup-snd graph-popup-chn fft-window { win }
-  lst each ( child ) fft-win-windows i array-ref win <> widget-set-sensitive end-each
+  lst each ( child ) fft-win-windows i array-ref win <> set-sensitive end-each
 ;
 
 #( fourier-transform
@@ -859,7 +859,7 @@ let: ( -- menu )
 
 : trn-set <{ lst -- }>
   graph-popup-snd graph-popup-chn transform-type { trn }
-  lst each ( child ) fft-trn-transform i array-ref trn equal? not widget-set-sensitive end-each
+  lst each ( child ) fft-trn-transform i array-ref trn equal? not set-sensitive end-each
 ;
 
 : typ-lst-cb ( val -- prc; w c i self -- )
@@ -893,7 +893,7 @@ let: ( -- menu )
 
 : typ-set <{ lst -- }>
   graph-popup-snd graph-popup-chn wavelet-type { tp }
-  lst each ( child ) i tp <> widget-set-sensitive end-each
+  lst each ( child ) i tp <> set-sensitive end-each
 ;
 
 : fft-color <{ w c info -- val }> #t color-orientation-dialog ;
@@ -1105,13 +1105,13 @@ let: ( -- menu )
     self cell+ @ { snd }
     w FXtName    { name }
     name "Clear" string= name "Apply" string= || if
-      w edhist-funcs empty? not widget-set-sensitive
+      w edhist-funcs empty? not set-sensitive
     else
       name "Save" string= if
-	w 0 snd chn edits each + end-each 0> widget-set-sensitive
+	w 0 snd chn edits each + end-each 0> set-sensitive
       else
 	name "Reapply" string= if
-	  w edhist-funcs #( snd chn ) array-assoc-ref widget-set-sensitive
+	  w edhist-funcs #( snd chn ) array-assoc-ref set-sensitive
 	then
       then
     then

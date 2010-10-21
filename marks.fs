@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Dec 27 19:22:06 CET 2005
-\ Changed: Sat Feb 06 14:01:51 CET 2010
+\ Changed: Mon Oct 18 17:43:36 CEST 2010
 
 \ Commentary:
 \
@@ -19,6 +19,24 @@
 
 require clm
 require examp
+
+<'> integer? alias channel?
+
+\ snd #f: all sounds
+\ chn #f: all channels
+: marks-length <{ :optional snd #f chn #f edpos #f -- len }>
+  snd sound? if
+    chn channel? if
+      snd chn edpos marks
+    else
+      snd chn edpos marks car
+    then
+  else
+    snd chn edpos marks car car
+  then length
+;
+
+: marks? ( :optional snd chn edpos -- f ) marks-length 0> ;
 
 \ from rubber.fs
 : add-named-mark ( samp name snd chn -- mark )

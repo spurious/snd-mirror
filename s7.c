@@ -5708,6 +5708,14 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	
 	(*((char *)(plus - 1))) = '\0';
 	
+	/* there is a slight inconsistency here:
+	   1/0      -> nan.0
+           1/0+0i   -> inf.0 (0/1+0i is 0.0)
+	   #i1/0+0i -> inf.0
+	   0/0      -> nan.0
+	   0/0+0i   -> -nan
+	*/
+
 #if (!WITH_GMP)
 	if ((has_dec_point1) ||
 	    (ex1))

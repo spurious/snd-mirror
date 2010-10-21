@@ -10709,6 +10709,7 @@
 (test (apply * (list 2 (apply + 1 2 '(3)))) 12)
 (test (apply (if (> 3 2) + -) '(3 2)) 5)
 (test (let ((x (list 1 2))) (eq? x (append '() x))) #t) ;; ?? guile says #t also
+(test (apply (lambda* args args) 1 2 3 '(4 5 6 (7))) '(1 2 3 4 5 6 (7))) ; from lisp bboard
 
 (for-each
  (lambda (arg)
@@ -39868,6 +39869,8 @@ why are these different (read-time `#() ? )
     (begin
       (num-test (truncate (exact->inexact most-negative-fixnum)) most-negative-fixnum)
       (test (truncate (exact->inexact most-positive-fixnum)) most-positive-fixnum)))
+(num-test (truncate (/ (- most-positive-fixnum 1) most-positive-fixnum)) 0)
+(num-test (truncate (/ most-positive-fixnum (- most-positive-fixnum 1))) 1)
 
 (num-test (truncate 0) 0)
 (num-test (truncate -0) 0)
@@ -40001,6 +40004,8 @@ why are these different (read-time `#() ? )
 (num-test (ceiling -1/123400000) 0)
 (num-test (ceiling (- 1 1/123400000)) 1)
 (num-test (ceiling (- (+ 1 -1/123400000))) 0)
+(num-test (ceiling (/ (- most-positive-fixnum 1) most-positive-fixnum)) 1)
+(num-test (ceiling (/ most-positive-fixnum (- most-positive-fixnum 1))) 2)
 
 (test (ceiling) 'error)
 (test (ceiling 1.23+1.0i) 'error)
@@ -48733,6 +48738,21 @@ why are these different (read-time `#() ? )
 
       (test (= #e.1e20 1e19) #t)
 
+      (let ((twos (make-vector 30)))
+	(do ((i 0 (+ i 1))
+	     (t2 1 (* t2 8)))
+	    ((= i 30))
+	  (set! (twos i) t2))
+	(do ((i 0 (+ i 1)))
+	    ((= i 29))
+	  (if (not (= (twos (+ i 1)) (* 8 (twos i))))
+	      (format #t "~A * 8 -> ~A (~A)~%" (twos i) (* 8 (twos i)) (twos (+ i 1))))
+	  (if (not (= (+ (twos (+ i 1)) (* 8 (twos i))) (* 2 (twos (+ i 1)))))
+	      (format #t "~A + ~A -> ~A (~A)~%" (* 8 (twos i)) (twos (+ i 1)) (* 2 (twos (+ i 1)))))
+	  (if (not (= (/ (twos (+ i 1)) (twos i)) 8))
+	      (format #t "~A / ~A = ~A (8)~%" (twos (+ i 1)) (twos i) (/ (twos (+ i 1)) (twos i))))
+	  (if (not (= (- (twos (+ i 1)) (* 8 (twos i))) 0))
+	      (format #t "~A - ~A -> ~A (0)~%" (* 8 (twos i)) (twos (+ i 1)) (- (twos (+ i 1)) (* 8 (twos i)))))))
 
       ;; --------------------------------
       ;; these come from Brad Lucier:

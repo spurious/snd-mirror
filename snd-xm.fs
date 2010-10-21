@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Dec 26 22:36:46 CET 2005
-\ Changed: Sun Oct 10 03:35:12 CEST 2010
+\ Changed: Thu Oct 21 12:16:34 CEST 2010
 
 \ Commentary:
 \
@@ -14,9 +14,8 @@
 \ Motif and Gtk:
 \
 \ widget?                  ( w -- f )
-\ widget-manage            ( w -- )
-\ widget-unmanage          ( w -- )
-\ widget-set-sensitive     ( w f -- )
+\ set-sensitive            ( w f -- )
+\ is-managed?              ( w -- f )
 \ change-label     	   ( widget new-label -- )
 \ for-each-child   	   ( widget prc -- )
 \ load-font                ( name -- fid|#f )
@@ -24,6 +23,7 @@
 \ white-pixel      	   ( -- pix )
 \ black-pixel      	   ( -- pix )
 \ raise-dialog             ( dialog -- )
+\ activate-dialog          ( dialog -- )
 \ show-smpte-label         ( on-or-off -- )
 \ smpte-is-on              ( -- flag )
 \ show-disk-space          ( snd -- )
@@ -46,7 +46,6 @@
 \ add-main-pane            ( name type args -- wid )
 \ add-listener-pane        ( name type args -- wid )
 \ 
-\ activate-dialog          ( dialog -- )
 \ add-mark-pane            ( -- )
 \ 
 \ current-label    	   ( widget -- label )
@@ -55,11 +54,11 @@
 
 'snd-nogui provided? [if] skip-file [then]
 
-require extensions
-
 \ if not configured --with-static-xm|g
 'snd-motif provided? 'xm provided? not && [if] dl-load libxm Init_libxm [then]
 'snd-gtk   provided? 'xg provided? not && [if] dl-load libxg Init_libxg [then]
+
+require extensions
 
 \ ;;; -------- show-smpte-label
 \ ;;;
@@ -140,6 +139,7 @@ hide
   then
 ;
 set-current
+
 #f value showing-disk-space		\ for prefs
 \
 \ after-open-hook <'> show-disk-space add-hook!
@@ -149,10 +149,14 @@ previous
 \ ===== Gtk and Motif =====
 
 'snd-gtk provided? [if]
-  : widget?              ( w -- f ) FGTK_IS_WIDGET ;
-  : widget-manage        ( w -- )   Fgtk_widget_show drop ;
-  : widget-unmanage      ( w -- )   Fgtk_widget_hide drop ;
-  : widget-set-sensitive ( w f -- ) Fgtk_widget_set_sensitive drop ;
+  : widget?       ( w -- f ) FGTK_IS_WIDGET ;
+  : set-sensitive ( w f -- ) Fgtk_widget_set_sensitive drop ;
+
+  [undefined] Fgtk_widget_get_realized [if]
+    <'> noop alias is-managed? ( wid -- f )
+  [else]
+    <'> Fgtk_widget_get_realized alias is-managed? ( wid -- f )
+  [then]
 
   : change-label ( wid new-label -- )
     doc" Changes WIDGET's label to be NEW-LABEL."
@@ -197,12 +201,14 @@ previous
       #f
     then
   ;
+
   : get-color-pixel ( name -- pix )
     { name }
     FGdkColor { tmp }
     name tmp Fgdk_color_parse drop
     tmp Fgdk_color_copy
   ;
+
   : white-pixel ( -- pix ) "white" get-color-pixel ;
   : black-pixel ( -- pix ) "black" get-color-pixel ;
 
@@ -214,7 +220,10 @@ previous
     w FGTK_WINDOW Fgtk_window_present drop
   ;
 
+  <'> raise-dialog alias activate-dialog ( dialog -- )
+
   \  --- show-smpte-label, Gtk specific ---
+
   hide
   #f value smpte-font-wh
   "" value smpte-font-name
@@ -303,11 +312,11 @@ previous
     then
   ;
   previous
-[else]
-  : widget?              ( w -- f)  FWidget? ;
-  : widget-manage        ( w -- )   FXtManageChild drop ;
-  : widget-unmanage      ( w -- )   FXtUnmanageChild drop ;
-  : widget-set-sensitive ( w f -- ) FXtSetSensitive drop ;
+[else]					\ Motif
+  : widget?       ( w -- f)  FWidget? ;
+  : set-sensitive ( w f -- ) FXtSetSensitive drop ;
+
+  <'> FXtIsManaged alias is-managed? ( wid -- f )
 
   : change-label ( wid new-label -- )
     doc" Changes WIDGET's label to be NEW-LABEL."
