@@ -10244,6 +10244,7 @@ static void make_standard_ports(s7_scheme *sc)
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
   port_filename(x) = copy_string("<standard output>");
+  port_file_number(x) = remember_file_name(sc, port_filename(x)); /* these numbers need to be correct for the evaluator (__FUNC__ data) */
   port_line_number(x) = 0;
   port_file(x) = stdout;
   port_needs_free(x) = false;
@@ -10257,6 +10258,7 @@ static void make_standard_ports(s7_scheme *sc)
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
   port_filename(x) = copy_string("<standard error>");
+  port_file_number(x) = remember_file_name(sc, port_filename(x));
   port_line_number(x) = 0;
   port_file(x) = stderr;
   port_needs_free(x) = false;
@@ -10270,8 +10272,8 @@ static void make_standard_ports(s7_scheme *sc)
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
   port_filename(x) = copy_string("<standard input>");
+  port_file_number(x) = remember_file_name(sc, port_filename(x));
   port_line_number(x) = 0;
-  port_file_number(x) = -1;
   port_file(x) = stdin;
   port_needs_free(x) = false;
   sc->standard_input = x;
@@ -11239,6 +11241,9 @@ static const char *c_closure_name(s7_scheme *sc, s7_pointer closure)
 }
 
 
+#define WITH_ELLIPSES false
+#define NO_ELLIPSES true
+
 static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 {
   switch (type(obj))
@@ -11684,9 +11689,6 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top)
 
 static char *vector_to_c_string(s7_scheme *sc, s7_pointer vect, bool to_file, shared_info *ci);
 static char *list_to_c_string(s7_scheme *sc, s7_pointer lst, shared_info *ci);
-
-#define WITH_ELLIPSES false
-#define NO_ELLIPSES true
 
 static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_write, bool to_file, shared_info *ci)
 {
@@ -21716,7 +21718,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if ((is_closure(sc->value)) || 
 	  (is_closure_star(sc->value)))
 	{
-	  if (port_filename(sc->input_port))                                 /* add (__func__ (name file line)) to current env */
+	  if (port_filename(sc->input_port))                                /* add (__func__ (name file line)) to current env */
 	    sc->x = immutable_cons(sc, 
 				   sc->__FUNC__, 									       
 				   make_list_3(sc, sc->code,
@@ -28305,6 +28307,8 @@ s7_scheme *s7_init(void)
       chars[i] = p;
     }
 
+  make_standard_ports(sc);
+
   assign_syntax(sc, "quote",             OP_QUOTE);
   assign_syntax(sc, "if",                OP_IF);
   assign_syntax(sc, "begin",             OP_BEGIN);
@@ -28968,7 +28972,6 @@ s7_scheme *s7_init(void)
 
   /* fprintf(stderr, "size: %d %d\n", sizeof(s7_cell), sizeof(s7_num_t)); */
 
-  make_standard_ports(sc);
   initialize_pows();
   save_initial_environment(sc);
 
