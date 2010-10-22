@@ -21718,7 +21718,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if ((is_closure(sc->value)) || 
 	  (is_closure_star(sc->value)))
 	{
-	  if (port_filename(sc->input_port))                                /* add (__func__ (name file line)) to current env */
+	  if ((port_filename(sc->input_port)) &&                             /* add (__func__ (name file line)) to current env */
+	      (port_file(sc->input_port) != stdin))
 	    sc->x = immutable_cons(sc, 
 				   sc->__FUNC__, 									       
 				   make_list_3(sc, sc->code,
@@ -22728,7 +22729,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       return(sc->value); /* not executed I hope */
 
       
-    case OP_GET_OUTPUT_STRING:
+    case OP_GET_OUTPUT_STRING:          /* from call-with-output-string and with-output-to-string -- return the string */
       sc->value = s7_make_string(sc, s7_get_output_string(sc, sc->code));
       goto START;
 
