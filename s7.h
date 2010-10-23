@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.71"
-#define S7_DATE "19-Oct-10"
+#define S7_VERSION "1.72"
+#define S7_DATE "23-Oct-10"
 
 
 typedef long long int s7_Int;
@@ -600,6 +600,7 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
    */
 
 s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args);
+s7_pointer s7_call_with_location(s7_scheme *sc, s7_pointer func, s7_pointer args, const char *caller, const char *file, int line);
   
   /* s7_call takes a scheme function (e.g. g_car above), and applies it to 'args' (a list of arguments)
    *   returning the result.
@@ -607,6 +608,8 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args);
    *   s7_integer(s7_call(s7, g_car, s7_cons(s7, s7_make_integer(sc, 123), s7_nil(s7))));
    *  
    *   returns 123.
+   *
+   * s7_call_with_location passes some information to the error handler.
    */
 
 bool s7_is_procedure_with_setter(s7_pointer obj);
@@ -761,6 +764,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 23-Oct:    s7_call_with_location for better error reporting.
  * 19-Oct:    *stdin*, *stdout*, *stderr* for default IO ports (rather than nil which is ambiguous).
  * 14-Oct:    removed special variable support.
  * 30-Sep:    setters for current-input-port, current-output-port, and current-error-port.

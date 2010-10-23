@@ -50,10 +50,13 @@ void add_header(char *name)
 int add_name(char *name, char *hdr)
 {
   int i;
+  
   if (name == NULL) return(-1);
   if ((isdigit(name[0])) || (strlen(name) == 1)) return(-1);
-
+  
+  /*
   if (isupper(name[0])) return(-1);
+  */
 
   if ((strcmp(hdr, "snd-nogui0.h") == 0) ||
       (strcmp(hdr, "snd-nogui1.h") == 0))
@@ -535,6 +538,13 @@ int main(int argc, char **argv)
 					    }
 					}
 				    }
+				}
+
+			      if ((input[j + 1] == ' ') &&
+				  (input[j + 2] == '{') &&
+				  (input[j + 3] == '}'))
+				{
+				  k = 0;
 				}
 			      
 			      if (k > 0)

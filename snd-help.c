@@ -489,13 +489,11 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+25-Oct:  Snd 11.10.\n\
 22-Sep:  def-clm-struct is now just a synonym for defgenerator.\n\
 19-Sep:  removed snd7.scm and snd8.scm.\n\
 18-Sep:  Snd 11.9.\n\
 19-Aug:  removed the Gdk backend option; cairo is now the only choice.\n\
-12-Aug:  Snd 11.8.\n\
-9-Aug:   make-index.scm (replaces index.cl and indexer.scm).\n\
-30-Jul:  removed *-button-color.\n\
 ",
 #if HAVE_RUBY	    
 	    "\n    $LOADED_FEATURES: \n", features, "\n\n",

@@ -1,32 +1,29 @@
-Snd 11.9.
+Snd 11.10
 
-The new gtk (version 3) has discarded most of the gdk functions, replacing them
-  with cairo.  This means the xg module and gtk code have also
-  changed a lot.  --with-cairo is the default (and the only alternative).
-  You'll need gtk 2.9 or later, and cairo 1.6.4 or later.  Eventually
-  there will be a cairo "surface" for openGL, so I'll be able to
-  reimplement that connection.  Unfortunately, the gtk/cairo version
-  of Snd is very slow (more than 10 times slower than Motif).  Looking
-  at valgrind output, my first guess is that it's cairo's fault, but
-  I need to spend some time poking at it.
+Mike made innumerable improvements in the scripts.
 
-kmenu.scm uses the new gdk key names, so it only works in gtk 2.90.7 or later.
+removed snd7.scm and snd8.scm.
 
-removed --with-builtin-gtkrc (Gtk themes have improved a lot over the years)
+defgenerator replaces def-clm-struct.
 
-removed --with-static-gsl
+deprecated verbose-cursor (use with-verbose-cursor).
 
-removed the button color functions.
-  
-added a play triangle to the selection, and a close button to the sound pane.
+added 'gtk3 or 'gtk2 to *features*.
 
-changed the default value of just-sounds to #t.
+s7: added setters for current-input-port, current-output-port, 
+       and current-error-port.
 
-s7: :allow-other-keys in define* parameter list.
+    *stdin*, *stdout*, *stderr* as the default IO ports 
+       (rather than nil which is ambiguous).
 
-Greg Santucci noticed and fixed a bug in *trace-hook*.
+    removed special variable (dynamic binding) support (it gets
+       in the way of tail recursion).
 
-checked: gtk 2.90.6|7, sbcl 1.0.42
+    s7_call_with_location to improve error handling.
 
-Thanks!: Michael Klingbeil, Greg Santucci 
+    s7 is about 10% faster in this version -- there are timings
+       at the end of s7.c and snd-test.scm.
 
+checked: autoconf 2.68, sbcl 1.0.43, gtk 2.91.0|1, gmp 5.0.1
+
+Thanks!: Mike Scholz

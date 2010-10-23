@@ -10,11 +10,12 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 4
-#define XEN_VERSION "3.4"
+#define XEN_MINOR_VERSION 5
+#define XEN_VERSION "3.5"
 
 /* HISTORY:
  *
+ *  23-Oct:    use s7_call_with_location, rather than s7_call, for better error reporting.
  *  19-Mar:    removed s7_define_set_function (removed encapsulation from s7, so it's not useful anymore).
  *  17-Feb:    various s7 changes.
  *  5-Feb-10:  XEN_ASSOC_REF and XEN_ASSOC_SET.  XEN_ASSOC_REF returns the value, not the key/value pair.
@@ -1389,20 +1390,21 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
 #define XEN_REQUIRED_ARGS(Func)                                       XEN_TO_C_INT(XEN_CAR(XEN_ARITY(Func)))
 #define XEN_REQUIRED_ARGS_OK(Func, Args)                              (XEN_REQUIRED_ARGS(Func) == Args)
 
-#define XEN_CALL_0(Func, Caller)                                      s7_call(s7, Func, XEN_EMPTY_LIST) /* these need a catch */
-#define XEN_CALL_1(Func, Arg1, Caller)                                s7_call(s7, Func, XEN_LIST_1(Arg1))
-#define XEN_CALL_2(Func, Arg1, Arg2, Caller)                          s7_call(s7, Func, XEN_LIST_2(Arg1, Arg2))
-#define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller)                    s7_call(s7, Func, XEN_LIST_3(Arg1, Arg2, Arg3))
-#define XEN_CALL_4(Func, Arg1, Arg2, Arg3, Arg4, Caller)              s7_call(s7, Func, XEN_LIST_4(Arg1, Arg2, Arg3, Arg4))
-#define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller)        s7_call(s7, Func, XEN_LIST_5(Arg1, Arg2, Arg3, Arg4, Arg5))
-#define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller)  s7_call(s7, Func, XEN_LIST_6(Arg1, Arg2, Arg3, Arg4, Arg5, Arg6))
-#define XEN_APPLY(Func, Args, Caller)                                 s7_call(s7, Func, Args)
+#define XEN_CALL_0(Func, Caller)                                      s7_call_with_location(s7, Func, XEN_EMPTY_LIST, Caller, __FILE__, __LINE__) /* these need a catch */
+#define XEN_CALL_1(Func, Arg1, Caller)                                s7_call_with_location(s7, Func, XEN_LIST_1(Arg1), Caller, __FILE__, __LINE__)
+#define XEN_CALL_2(Func, Arg1, Arg2, Caller)                          s7_call_with_location(s7, Func, XEN_LIST_2(Arg1, Arg2), Caller, __FILE__, __LINE__)
+#define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller)                    s7_call_with_location(s7, Func, XEN_LIST_3(Arg1, Arg2, Arg3), Caller, __FILE__, __LINE__)
+#define XEN_CALL_4(Func, Arg1, Arg2, Arg3, Arg4, Caller)              s7_call_with_location(s7, Func, XEN_LIST_4(Arg1, Arg2, Arg3, Arg4), Caller, __FILE__, __LINE__)
+#define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller)        s7_call_with_location(s7, Func, XEN_LIST_5(Arg1, Arg2, Arg3, Arg4, Arg5), Caller, __FILE__, __LINE__)
+#define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller)  s7_call_with_location(s7, Func, XEN_LIST_6(Arg1, Arg2, Arg3, Arg4, Arg5, Arg6), Caller, __FILE__, __LINE__)
+#define XEN_APPLY(Func, Args, Caller)                                 s7_call_with_location(s7, Func, Args, Caller, __FILE__, __LINE__)
 #define XEN_APPLY_ARG_LIST_END                                        XEN_EMPTY_LIST
-#define XEN_CALL_0_NO_CATCH(Func)                                     s7_call(s7, Func, XEN_EMPTY_LIST)
-#define XEN_CALL_1_NO_CATCH(Func, Arg1)                               s7_call(s7, Func, XEN_LIST_1(Arg1))
-#define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2)                         s7_call(s7, Func, XEN_LIST_2(Arg1, Arg2))
-#define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3)                   s7_call(s7, Func, XEN_LIST_3(Arg1, Arg2, Arg3))
-#define XEN_APPLY_NO_CATCH(Func, Args)                                s7_call(s7, Func, Args)
+
+#define XEN_CALL_0_NO_CATCH(Func)                                     s7_call_with_location(s7, Func, XEN_EMPTY_LIST, c__FUNCTION__, __FILE__, __LINE__)
+#define XEN_CALL_1_NO_CATCH(Func, Arg1)                               s7_call_with_location(s7, Func, XEN_LIST_1(Arg1), c__FUNCTION__, __FILE__, __LINE__)
+#define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2)                         s7_call_with_location(s7, Func, XEN_LIST_2(Arg1, Arg2), c__FUNCTION__, __FILE__, __LINE__)
+#define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3)                   s7_call_with_location(s7, Func, XEN_LIST_3(Arg1, Arg2, Arg3), c__FUNCTION__, __FILE__, __LINE__)
+#define XEN_APPLY_NO_CATCH(Func, Args)                                s7_call_with_location(s7, Func, Args, c__FUNCTION__, __FILE__, __LINE__)
 typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *data);
 
 #define XEN_DEFINE_CONSTANT(Name, Value, Help)                        xen_s7_define_constant(s7, Name, s7_make_integer(s7, Value), Help)

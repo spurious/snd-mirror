@@ -114,7 +114,6 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define EVENT_IS_HINT(Ev)     (Ev)->is_hint
 #define EVENT_AREA_WIDTH(Ev)  (Ev)->area.width
 #define EVENT_AREA_HEIGHT(Ev) (Ev)->area.height
-#define EVENT_ATOM(Ev)        (Ev)->atom
 
 #define idle_t guint
 #define idle_func_t gboolean

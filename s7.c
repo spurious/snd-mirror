@@ -252,7 +252,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
-/* #include <time.h> */
+#include <time.h>
 #include <stdarg.h>
 
 #if __cplusplus
@@ -606,8 +606,8 @@ struct s7_scheme {
 
   s7_pointer *trace_list;
   int trace_list_size, trace_top, trace_depth;
-  int no_values, current_line;
-  const char *current_file;
+  int no_values, current_line, s7_call_line;
+  const char *current_file, *s7_call_file, *s7_call_name;
 
   void *default_rng;
 #if WITH_GMP
@@ -17788,6 +17788,8 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   int i;
   bool reset_error_hook = false;
   s7_pointer catcher;
+  const char *call_name = NULL, *call_file = NULL;
+  int call_line = 0;
   
   /* set up *error-info*, look for a catch that matches 'type', if found
    *   call its error-handler, else if *error-hook* is bound, call it,
@@ -17795,6 +17797,16 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
    */
   sc->no_values = 0;
   catcher = sc->F;
+
+  if (sc->s7_call_name)
+    {
+      call_name = sc->s7_call_name;
+      call_file = sc->s7_call_file;
+      call_line = sc->s7_call_line;
+      sc->s7_call_name = NULL;
+      sc->s7_call_file = NULL;
+      sc->s7_call_line = -1;
+    }
 
   vector_element(sc->error_info, ERROR_TYPE) = type;
   vector_element(sc->error_info, ERROR_DATA) = info;
@@ -17975,7 +17987,7 @@ GOT_CATCH:
 	   *
 	   * if at all possible, get some indication of where we are!
 	   */
-	  s7_pointer error_port;
+	  s7_pointer x, error_port;
 	  error_port = s7_current_error_port(sc);
 
 	  if ((!s7_is_list(sc, info)) ||
@@ -18011,7 +18023,8 @@ GOT_CATCH:
 	  
 	  /* now display location and \n at end */
 	  
-	  if (is_input_port(sc->input_port))
+	  if ((is_input_port(sc->input_port)) &&
+	      (port_file(sc->input_port) != stdin))
 	    {
 	      const char *filename = NULL;
 	      int line;
@@ -18027,6 +18040,19 @@ GOT_CATCH:
 		  if (line > 0)
 		    format_to_output(sc, error_port, ", line ~D", 
 				     make_list_1(sc, s7_make_integer(sc, line)));
+		}
+	    }
+	  else
+	    {
+	      if ((call_file != NULL) &&
+		  (call_name != NULL) &&
+		  (call_line >= 0))
+		{
+		  format_to_output(sc, error_port, ", ~A ~A[~D]",
+				   make_list_3(sc, 
+					       make_protected_string(sc, call_name), 
+					       make_protected_string(sc, call_file), 
+					       s7_make_integer(sc, call_line)));
 		}
 	    }
 	  s7_newline(sc, error_port);
@@ -18049,18 +18075,15 @@ GOT_CATCH:
 
 	  /* look for __func__ in the error environment etc
 	   */
-	  {
-	    s7_pointer x;
-	    x = find_symbol(sc, vector_element(sc->error_info, ERROR_ENVIRONMENT), sc->__FUNC__);  /* returns nil if no __func__ */
+	  x = find_symbol(sc, vector_element(sc->error_info, ERROR_ENVIRONMENT), sc->__FUNC__);  /* returns nil if no __func__ */
 
-	    if ((is_pair(x)) &&
-		(error_port != sc->F))
-	      {
-		s7_display(sc, make_protected_string(sc, ";    "), error_port);
-		s7_display(sc, cdr(x), error_port);
-		s7_newline(sc, error_port);
-	      }
-	  }
+	  if ((is_pair(x)) &&
+	      (error_port != sc->F))
+	    {
+	      s7_display(sc, make_protected_string(sc, ";    "), error_port);
+	      s7_display(sc, cdr(x), error_port);
+	      s7_newline(sc, error_port);
+	    }
 	  
 	  if ((exit_eval) &&
 	      (sc->error_exiter))
@@ -18504,7 +18527,7 @@ pass (global-environment):\n\
 
 
 s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
-{ 
+{
   bool old_longjmp;
   jmp_buf old_goto_start;
 
@@ -18545,8 +18568,33 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
 
   sc->longjmp_ok = old_longjmp;
   memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
+
   return(sc->value);
 } 
+
+
+s7_pointer s7_call_with_location(s7_scheme *sc, s7_pointer func, s7_pointer args, const char *caller, const char *file, int line)
+{ 
+  s7_pointer result;
+
+  if (caller)
+    {
+      sc->s7_call_name = caller;
+      sc->s7_call_file = file;
+      sc->s7_call_line = line;
+    }
+
+  result = s7_call(sc, func, args);
+  
+  if (caller)
+    {
+      sc->s7_call_name = NULL;
+      sc->s7_call_file = NULL;
+      sc->s7_call_line = -1;
+    }
+
+  return(result);
+}
 
 
 static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
@@ -28252,6 +28300,9 @@ s7_scheme *s7_init(void)
   sc->trace_top = 0;
   sc->trace_depth = 0;
   sc->no_values = 0;
+  sc->s7_call_line = 0;
+  sc->s7_call_file = NULL;
+  sc->s7_call_name = NULL;
 
 #if HAVE_PTHREADS
   sc->thread_ids = (int *)calloc(1, sizeof(int));
