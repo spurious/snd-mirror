@@ -6058,7 +6058,7 @@ static reader_mixes *free_reader_mixes(reader_mixes *md)
 
 snd_fd *free_snd_fd_almost(snd_fd *sf)
 {
-  if (sf) 
+  if ((sf) && (!(sf->freed)))
     {
       snd_data *sd;
 
@@ -6115,6 +6115,7 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
       sf->cb = NULL;
       sf->region = INVALID_REGION;
       sf->edit_ctr = -1;
+      sf->freed = true;
     }
   return(NULL);
 }
@@ -6122,7 +6123,7 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
 
 snd_fd *free_snd_fd(snd_fd *sf)
 {
-  if (sf)
+  if ((sf) && (!(sf->freed)))
     {
       free_snd_fd_almost(sf);
       free(sf);
@@ -6184,6 +6185,7 @@ static snd_fd *init_sample_read_any_with_bufsize(mus_long_t samp, chan_info *cp,
   /* snd_fd allocated only here */
   sf = (snd_fd *)calloc(1, sizeof(snd_fd)); /* only creation point (... oops -- see below...)*/
 
+  sf->freed = false;
   sf->region = INVALID_REGION;
   sf->type = SAMPLER;
   sf->initial_samp = samp;
@@ -7371,6 +7373,7 @@ snd_fd *make_virtual_mix_reader(chan_info *cp, mus_long_t beg, mus_long_t len, i
 
   sf = (snd_fd *)calloc(1, sizeof(snd_fd));
 
+  sf->freed = false;
   sf->region = INVALID_MIX_ID;
   sf->type = MIX_READER;
   sf->initial_samp = beg;

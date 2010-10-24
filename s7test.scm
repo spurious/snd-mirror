@@ -735,7 +735,7 @@
 (test (symbol? '|) #t)
 (test (symbol? '|') #t)
 (test (symbol? '@) #t)
-(test (symbol? '#:) #t)
+;(test (symbol? '#:) #t) ; confusable given guile-style keywords
 (test (symbol? #b1) #f)
 (test (symbol? 'sym0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789) #t) ;M Gran
 (test (symbol? (vector-ref '#(1 a 34) 1)) #t)

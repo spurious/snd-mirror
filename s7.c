@@ -1747,6 +1747,23 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
    *   the heap when it is defined.  If redefined, we currently lose the memory held by the
    *   old definition.  (It is not trivial to recover this memory because it is allocated
    *   in blocks, not by the pointer, I think, but s7_define is the point to try).
+   * 
+   * There is at least one problem with this: if, for example, a function has
+   *    a quoted (constant) list, then uses list-set! to change an element of it,
+   *    then a GC happens, and the new element is GC'd because no one in the heap
+   *    points to it, then we call the function again, and it tries to access
+   *    that element.  I wonder if removal should be on a switch, so the user can
+   *    choose a "safety" level.
+   *
+   *    (define (bad-idea)
+   *      (let ((lst '(1 2 3)))
+   *        (let ((result (list-ref lst 1)))
+   *          (list-set! lst 1 (* 2.0 16.6))
+   *          (gc)
+   *          result)))
+   * 
+   *     put that in a file, load it (to force removal), than call bad-idea a few times.
+   * TODO: add *safety* to control remove-from-heap
    */
 
   if (is_pending_removal(x)) return;
@@ -10285,6 +10302,8 @@ static void make_standard_ports(s7_scheme *sc)
   sc->input_port = sc->standard_input;
   sc->output_port = sc->standard_output;
   sc->error_port = sc->standard_error;
+
+  /* TODO: doc stdin et al */
 }
 
 
@@ -21279,6 +21298,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			      sc->WRONG_NUMBER_OF_ARGS, 
 			      make_list_3(sc, sc->NOT_ENOUGH_ARGUMENTS, sc->code, sc->args)));
 	    sc->value = c_function_call(sc->code)(sc, sc->args);
+	    /* sc->code here need not match sc->code before the function call (map for example) */
 	    goto START;
 	  }
 

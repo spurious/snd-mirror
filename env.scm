@@ -90,12 +90,13 @@ end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"
 	      (lambda (e)
 		(let* ((diff (car e))
 		       (len (length e))
-		       (lastx (list-ref e (- len 2))))
+		       (lastx (list-ref e (- len 2)))
+		       (newe (copy e))) ; it is dangerous (and unclean...) to use list-set! on the original list
 		  (do ((i 0 (+ i 2)))
-		      ((>= i len) e)
-		    (let ((x (/ (- (list-ref e i) diff) lastx)))
+		      ((>= i len) newe)
+		    (let ((x (/ (- (list-ref newe i) diff) lastx)))
 		      (set! xs (cons x xs))
-		      (list-set! e i x))))))
+		      (list-set! newe i x))))))
 	     (remove-duplicates
 	      (lambda (lst)
 		(letrec ((rem-dup

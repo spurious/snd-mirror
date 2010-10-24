@@ -138,7 +138,7 @@ typedef struct snd_fd {
   mus_long_t loc, first, last;
   int cbi;
   read_direction_t direction;
-  bool at_eof;
+  bool at_eof, freed;
   mus_sample_t *data;
   snd_data *current_sound;
   mus_long_t initial_samp;
