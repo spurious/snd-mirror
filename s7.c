@@ -606,7 +606,7 @@ struct s7_scheme {
 
   s7_pointer *trace_list;
   int trace_list_size, trace_top, trace_depth;
-  int no_values, current_line, s7_call_line;
+  int no_values, current_line, s7_call_line, safety;
   const char *current_file, *s7_call_file, *s7_call_name;
 
   void *default_rng;
@@ -1738,6 +1738,15 @@ s7_pointer s7_gc_on(s7_scheme *sc, bool on)
 }
 
 
+static s7_pointer g_safety_set(s7_scheme *sc, s7_pointer args)
+{
+  if (!s7_is_integer(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "set! *safety*", 0, cadr(args), "must be an integer (0 = unsafe)"));
+  sc->safety = s7_integer(cadr(args));
+  return(cadr(args));
+}
+
+
 #define NOT_IN_HEAP -1
 
 void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
@@ -1756,14 +1765,14 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
    *    choose a "safety" level.
    *
    *    (define (bad-idea)
-   *      (let ((lst '(1 2 3)))
+   *      (let ((lst '(1 2 3))) ; or #(1 2 3) and vector-ref|set
    *        (let ((result (list-ref lst 1)))
    *          (list-set! lst 1 (* 2.0 16.6))
    *          (gc)
    *          result)))
    * 
    *     put that in a file, load it (to force removal), than call bad-idea a few times.
-   * TODO: add *safety* to control remove-from-heap
+   * so... if *safety* is not 0, remove-from-heap is disabled.
    */
 
   if (is_pending_removal(x)) return;
@@ -2299,10 +2308,11 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
     {
       int loc;
 
-      if ((is_closure(value)) ||
-	  (is_closure_star(value)) ||
-	  (is_macro(value)) ||
-	  (is_bacro(value)))
+      if ((sc->safety == 0) &&
+	  ((is_closure(value)) ||
+	   (is_closure_star(value)) ||
+	   (is_macro(value)) ||
+	   (is_bacro(value))))
 	s7_remove_from_heap(sc, closure_source(value));
 
       loc = symbol_location(variable);
@@ -10302,8 +10312,6 @@ static void make_standard_ports(s7_scheme *sc)
   sc->input_port = sc->standard_input;
   sc->output_port = sc->standard_output;
   sc->error_port = sc->standard_error;
-
-  /* TODO: doc stdin et al */
 }
 
 
@@ -28323,6 +28331,7 @@ s7_scheme *s7_init(void)
   sc->s7_call_line = 0;
   sc->s7_call_file = NULL;
   sc->s7_call_name = NULL;
+  sc->safety = 0;
 
 #if HAVE_PTHREADS
   sc->thread_ids = (int *)calloc(1, sizeof(int));
@@ -28914,7 +28923,13 @@ s7_scheme *s7_init(void)
   sc->error_info = s7_make_and_fill_vector(sc, ERROR_INFO_SIZE, ERROR_INFO_DEFAULT);
   s7_define_constant(sc, "*error-info*", sc->error_info);
   s7_define_variable(sc, "*unbound-variable-hook*", sc->NIL);
-  
+
+  s7_define_variable(sc, "*safety*", small_int(sc->safety));
+  s7_symbol_set_access(sc, s7_make_symbol(sc, "*safety*"), 
+		       make_list_3(sc, sc->F, s7_make_function(sc, "safety-set", g_safety_set, 2, 0, false, "called if *safety* is set"), sc->F));
+  /* TODO: doc *safety* and add the bad-idea examples to s7test (and wrong type set) -- the latter can segfault?
+   */
+
   g_provide(sc, make_list_1(sc, make_symbol(sc, "s7")));
 
 #if WITH_PROFILING
@@ -28941,11 +28956,6 @@ s7_scheme *s7_init(void)
 
   g_provide(sc, make_list_1(sc, make_symbol(sc, "threads")));
 #endif
-
-#if (!S7_DISABLE_DEPRECATED)
-  g_provide(sc, make_list_1(sc, make_symbol(sc, "multidimensional-vectors"))); /* backwards compatibility */
-#endif
-
 
   sc->VECTOR_SET = s7_symbol_value(sc, make_symbol(sc, "vector-set!"));
   typeflag(sc->VECTOR_SET) |= T_DONT_COPY; 
@@ -29177,21 +29187,21 @@ s7_scheme *s7_init(void)
  *   *list-print-length* ?
  *
  *
- * s7test valgrind, time       17-Jul-10   7-Sep-10        15-Oct-10
- *    intel core duo (1.83G):    3162     2690, 1.921     2426 1.830
- *    intel E5200 (2.5G):                 1951, 1.450     1751 1.28
- *    amd operon 2218 (2.5G):             1859, 1.335     1667 1.33
- *    amd opteron 8356 (2.3G):   2181     1949, 1.201     1752 1.18
- *    intel E6850 (3.0G):                 1952, 1.045     1752 0.945
- *    intel Q9650 (3.0G):        2081     1856, 0.938     1665 0.840
- *    amd phenom 945 (3.0G):     2085     1864, 0.894     1667 0.808
- *    intel Q9450 (2.66G):                1951, 0.857
- *    intel Q9550 (2.83G):       2184     1948, 0.838     1751 0.800
- *    intel E8400  (3.0G):       2372     2082, 0.836     1857 0.750
- *    intel xeon 5530 (2.4G)     2093     1855, 0.811     1675 0.711
- *    amd phenom 965 (3.4G):     2083     1862, 0.808     1667 0.823
- *    intel i7 930 (2.8G):       2084     1864  0.704     1667 0.620
- *    intel i7 950 (3.1G):                                1667 0.590
+ * s7test valgrind, time       17-Jul-10   7-Sep-10       15-Oct-10
+ *    intel core duo (1.83G):    3162     2690 1.921     2426 1.830
+ *    intel E5200 (2.5G):                 1951 1.450     1751 1.28
+ *    amd operon 2218 (2.5G):             1859 1.335     1667 1.33
+ *    amd opteron 8356 (2.3G):   2181     1949 1.201     1752 1.18
+ *    intel E6850 (3.0G):                 1952 1.045     1752 0.945
+ *    intel Q9650 (3.0G):        2081     1856 0.938     1665 0.840
+ *    amd phenom 945 (3.0G):     2085     1864 0.894     1667 0.808
+ *    intel Q9450 (2.66G):                1951 0.857
+ *    intel Q9550 (2.83G):       2184     1948 0.838     1751 0.800
+ *    intel E8400  (3.0G):       2372     2082 0.836     1857 0.750
+ *    intel xeon 5530 (2.4G)     2093     1855 0.811     1675 0.711
+ *    amd phenom 965 (3.4G):     2083     1862 0.808     1667 0.823
+ *    intel i7 930 (2.8G):       2084     1864 0.704     1667 0.620
+ *    intel i7 950 (3.1G):                               1667 0.590
  *
  * 10.8: 0.684, same in 11.10: 0.380, using no-gui snd (overhead: 0.04)
  */

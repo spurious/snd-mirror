@@ -30715,28 +30715,29 @@ EDITS: 2
     )
   
   (define (test-menus)
-    (for-each-child
-     (car (menu-widgets))
-     (lambda (w)
-       (if (not (XmIsRowColumn w))
-	   (let ((option-holder (cadr (XtGetValues w (list XmNsubMenuId 0)))))
-	     (for-each-child
-	      option-holder
-	      (lambda (menu)
-		(if (and (XmIsPushButton menu)
-			 (XtIsManaged menu)
-			 (XtIsSensitive menu)
-			 (not (member (XtName menu)
-				      (list "Exit" "New" 
-					    "Save   C-x C-s" 
-					    "Close  C-x k"
-					    "Close all"
-					    "Save options"
-					    "Record"
-					    "Mixes" "clm" "fm-violin"))))
-		    (XtCallCallbacks menu XmNactivateCallback (snd-global-state)))))))))
-    (for-each close-sound (sounds))
-    (dismiss-all-dialogs))
+    (if (provided? 'xm)
+	(for-each-child
+	 (car (menu-widgets))
+	 (lambda (w)
+	   (if (not (XmIsRowColumn w))
+	       (let ((option-holder (cadr (XtGetValues w (list XmNsubMenuId 0)))))
+		 (for-each-child
+		  option-holder
+		  (lambda (menu)
+		    (if (and (XmIsPushButton menu)
+			     (XtIsManaged menu)
+			     (XtIsSensitive menu)
+			     (not (member (XtName menu)
+					  (list "Exit" "New" 
+						"Save   C-x C-s" 
+						"Close  C-x k"
+						"Close all"
+						"Save options"
+						"Record"
+						"Mixes" "clm" "fm-violin"))))
+			(XtCallCallbacks menu XmNactivateCallback (snd-global-state)))))))))
+	(for-each close-sound (sounds))
+	(dismiss-all-dialogs)))
   
   (define (mdt-test id x time drg) #f)
   

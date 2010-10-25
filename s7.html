@@ -3931,6 +3931,7 @@ bind it to something else, which is asking for confusion).
 <li>set! and *-set! return the new value, not #&lt;unspecified&gt;.
 <li>port-closed?
 <li>current-input-port, current-output-port, and current-error-port have setters
+<li>the default IO ports are named *stdin*, *stdout*, and *stderr*.
 </ul>
 
 <small>
@@ -4401,6 +4402,9 @@ have any number after, for example, #b:
    remove the 4-way cxxxxr functions
    add file-exists?, directory?, and delete-file
    add a generic position function
+   remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!,
+     set-car!|cdr!, and set-current-output|input|error-port.  All of these
+     are redundant given generalized set!.
 </pre>
 
 <p>Scheme needs a more elegant way to define functions that share a closure.
