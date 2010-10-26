@@ -16617,6 +16617,14 @@ why are these different (read-time `#() ? )
     (test (symbol-access '_int_ 2) 'error)
     (test (symbol-access 'abs) #f)
     (test (symbol-access 'xyzzy) #f)
+
+    (let ((_x1_ #f))
+      (set! (symbol-access '_x1_) (list #f 
+					(lambda (x y) 'error)
+					(lambda (x y) 'error)))
+      (test (set! _x1_ 32) 'error)
+      (test (let ((_x1_ 32)) 2) 'error))
+
     ))
 
 
@@ -17058,6 +17066,8 @@ why are these different (read-time `#() ? )
 	(test (= (fib-2 10) 55 (fib 10)) #t)
 	(test (fib 40) 102334155))
       ;; TODO: check these 
+
+      (test (catch #t (lambda () (join-thread (make-thread (lambda () (+ 1 "hi"))))) (lambda args args)) 'error)
       
       (for-each
        (lambda (arg)

@@ -1161,9 +1161,11 @@ local constants with:
 (define constant-access 
   (list #f
 	(lambda (symbol new-value) 
-	  (error "can't change constant ~A's value to ~A" symbol new-value))
+	  (format #t "can't change constant ~A's value to ~A" symbol new-value)
+          'error)
 	(lambda (symbol new-value) 
-	  (error "can't bind constant ~A to a new value, ~A" symbol new-value))))
+	  (format #t "can't bind constant ~A to a new value, ~A" symbol new-value)
+          'error)))
 
 (define-macro (define-constant symbol value)
   `(begin
@@ -1193,7 +1195,9 @@ local constants with:
 		 (lambda (symbol new-value)
 		   (if (real? new-value)
 		       (floor new-value) ; or min/max to restrict it to some range etc
-		       (error "~A can only take an integer value, not ~S" symbol new-value)))
+                       (begin 
+                         (format #t "~A can only take an integer value, not ~S" symbol new-value)
+                         'error)))
 		 #f))
      ',var))
 

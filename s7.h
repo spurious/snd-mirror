@@ -609,7 +609,7 @@ s7_pointer s7_call_with_location(s7_scheme *sc, s7_pointer func, s7_pointer args
    *  
    *   returns 123.
    *
-   * s7_call_with_location passes some information to the error handler.
+   * s7_call_with_location passes some information to the error handler.  
    */
 
 bool s7_is_procedure_with_setter(s7_pointer obj);

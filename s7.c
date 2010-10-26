@@ -306,7 +306,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_FOR_EACH, OP_MAP, OP_BARRIER, OP_DEACTIVATE_GOTO,
 	      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, OP_BACRO,
 	      OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT4, OP_SORT_TWO,
-	      OP_EVAL_STRING_1, OP_EVAL_STRING_2,
+	      OP_EVAL_STRING_1, OP_EVAL_STRING_2, OP_SET_ACCESS,
 	      OP_MAX_DEFINED} opcode_t;
 
 static const char *op_names[OP_MAX_DEFINED] = 
@@ -324,7 +324,7 @@ static const char *op_names[OP_MAX_DEFINED] =
    "trace-hook-quit", "with-environment", "with-environment", "with-environment", "for-each", "map", 
    "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro",
    "get-output-string", "sort", "sort", "sort", "sort", "sort", "sort",
-   "eval-string", "eval-string"
+   "eval-string", "eval-string", "set-access"
 };
 
 
@@ -1740,10 +1740,18 @@ s7_pointer s7_gc_on(s7_scheme *sc, bool on)
 
 static s7_pointer g_safety_set(s7_scheme *sc, s7_pointer args)
 {
-  if (!s7_is_integer(cadr(args)))
-    return(s7_wrong_type_arg_error(sc, "set! *safety*", 0, cadr(args), "must be an integer (0 = unsafe)"));
-  sc->safety = s7_integer(cadr(args));
-  return(cadr(args));
+  if (s7_is_integer(cadr(args)))
+    {
+      sc->safety = s7_integer(cadr(args));
+      return(cadr(args));
+    }
+  return(sc->ERROR);
+}
+
+
+static s7_pointer g_safety_bind(s7_scheme *sc, s7_pointer args)
+{
+  return(sc->ERROR);
 }
 
 
@@ -1774,6 +1782,8 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
    *     put that in a file, load it (to force removal), than call bad-idea a few times.
    * so... if *safety* is not 0, remove-from-heap is disabled.
    */
+
+  /* (catch #t (lambda () (set! *safety* "hi")) (lambda args args)) */
 
   if (is_pending_removal(x)) return;
   set_pending_removal(x);
@@ -16265,6 +16275,13 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value)
 {
+  /* this happens in contexts that are tricky to implement with a clean use of the evaluator stack (as in
+   *   the parallel symbol set case -- see OP_SET_ACCESS), so we need to use s7_call.  But if an uncaught error
+   *   occurs in s7_call, the error handler marches up the stack looking for a catch, unwinding the stack
+   *   past the point of the call.  In the worst case, we can segfault because any subsequent pop_stack
+   *   (i.e. an unchecked goto START), walks off the start of the stack. 
+   */
+   
   s7_pointer x;
   x = find_symbol(sc, sc->envir, symbol);
   if (symbol_has_accessor(x))
@@ -16274,33 +16291,20 @@ static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer 
       if (is_procedure(func))
 	{
 	  int save_x, save_y, save_z;
+	  s7_pointer original_value;
+	  original_value = new_value;
 	  SAVE_X_Y_Z(save_x, save_y, save_z);
 	  new_value = s7_call(sc, func, make_list_2(sc, symbol, new_value));
 	  RESTORE_X_Y_Z(save_x, save_y, save_z);
+	  if (new_value == sc->ERROR)
+	    return(s7_error(sc, sc->ERROR,
+			    make_list_3(sc, make_protected_string(sc, "can't bind ~S to ~S"), symbol, original_value)));
 	}
     }
   return(new_value);
 }
 
 
-static s7_pointer call_symbol_set(s7_scheme *sc, s7_pointer symbol, s7_pointer new_value)
-{
-  s7_pointer x;
-  x = find_symbol(sc, sc->envir, symbol);
-  if (symbol_has_accessor(x))
-    {
-      s7_pointer func;
-      func = cadr(csr(x));
-      if (is_procedure(func))
-	{
-	  int save_x, save_y, save_z;
-	  SAVE_X_Y_Z(save_x, save_y, save_z);
-	  new_value = s7_call(sc, func, make_list_2(sc, symbol, new_value));
-	  RESTORE_X_Y_Z(save_x, save_y, save_z);
-	}
-    }
-  return(new_value);
-}
 
 
 
@@ -17991,7 +17995,6 @@ GOT_CATCH:
     {
       /* (set! *error-hook* (lambda (tag args) (apply format (cons #t args)))) */
       s7_pointer error_hook, error_hook_binding;
-
       error_hook_binding = find_symbol(sc, sc->envir, sc->ERROR_HOOK);
 
       if ((!reset_error_hook) &&
@@ -18562,6 +18565,10 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
    *   and if we reset the stack, the previously running evaluation steps off the end
    *   of the stack == segfault. 
    */
+
+  if (is_c_function(func))
+    return(c_function_call(func)(sc, args));  /* no check for wrong-number-of-args -- is that reasonable? */
+
   old_longjmp = sc->longjmp_ok;
   memcpy((void *)old_goto_start, (void *)(sc->goto_start), sizeof(jmp_buf));
 
@@ -18584,7 +18591,8 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
 	  longjmp(sc->goto_start, 1); /* this is trying to clear the C stack back to some clean state */
 	}
 
-      eval(sc, sc->op);
+      eval(sc, sc->op); 
+      /* sc->op can be OP_APPLY if s7_call raised an error that was caught (via catch) -- we're about to go to the error handler */
       return(sc->value);
     }
 
@@ -21507,6 +21515,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	case T_C_OBJECT:	                  /* -------- applicable object -------- */
+
+	  /* PERHAPS: if is_s_object, push OP_S_OBJECT_APPLY, set func and args, goto APPLY
+	   *            the op then handles the continuation
+	   *   and why not separate T_C_ and T_S_OBJECT?
+	   */
+
 	  sc ->value = apply_object(sc, sc->code, sc->args);
 	  if (sc->stack_end > sc->stack_start)
 	    pop_stack(sc);
@@ -21948,6 +21962,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  switch (type(sc->x))
 	    {
 	    case T_C_OBJECT:
+	      /* PERHAPS: if is_s_object, do this direct in eval, not via s7_call
+	       */
 	      if (object_set_function(sc->x))
 		{
 		  /* sc->code = s7_cons(sc, sc->OBJECT_SET, s7_append(sc, car(sc->code), cdr(sc->code))); */
@@ -22031,7 +22047,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->y != sc->NIL) 
 	{
 	  if (symbol_accessed(sc->code))
-	    sc->value = call_symbol_set(sc, sc->code, sc->value);
+	    {
+	      s7_pointer func;
+	      func = cadr(csr(sc->y));
+	      if (is_procedure(func))
+		{
+		  push_stack(sc, opcode(OP_SET_ACCESS), sc->y, make_list_2(sc, sc->code, sc->value));
+		  sc->code = func;
+		  sc->args = make_list_2(sc, sc->code, sc->value);
+		  goto APPLY;
+		}
+	    }
 	  set_symbol_value(sc->y, sc->value); 
 	  goto START;
 	}
@@ -22040,7 +22066,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_syntax(sc->code))
 	return(eval_error(sc, "can't set! ~A", sc->code));
       return(eval_error(sc, "set! ~A: unbound variable", sc->code));
+
       
+    case OP_SET_ACCESS:
+      /* sc->value is the new value from the set access function, sc->code is the symbol and the original value, sc->args is the binding slot
+       */
+      if (sc->value == sc->ERROR)
+	return(s7_error(sc, sc->ERROR,
+			make_list_3(sc, make_protected_string(sc, "can't set! ~S to ~S"), car(sc->code), cadr(sc->code))));
+      set_symbol_value(sc->args, sc->value); 
+      goto START;
+
 
     case OP_IF:
       {
@@ -22850,6 +22886,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_ERROR_QUIT: 
       /* these 3 are used for unwinding the stack in dynamic-wind and error handling */
+
 
     case OP_EVAL_DONE:
       /* this is the "time to quit" operator */
@@ -28926,8 +28963,11 @@ s7_scheme *s7_init(void)
 
   s7_define_variable(sc, "*safety*", small_int(sc->safety));
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*safety*"), 
-		       make_list_3(sc, sc->F, s7_make_function(sc, "safety-set", g_safety_set, 2, 0, false, "called if *safety* is set"), sc->F));
-  /* TODO: doc *safety* and add the bad-idea examples to s7test (and wrong type set) -- the latter can segfault?
+		       make_list_3(sc, 
+				   sc->F, 
+				   s7_make_function(sc, "(safety set)", g_safety_set, 2, 0, false, "called if *safety* is set"), 
+				   s7_make_function(sc, "(safety bind)", g_safety_bind, 2, 0, false, "called if *safety* is bound")));
+  /* TODO: doc *safety* and add the bad-idea examples to s7test (and wrong type set), also symbol-access cases from t188 and nested cases
    */
 
   g_provide(sc, make_list_1(sc, make_symbol(sc, "s7")));
