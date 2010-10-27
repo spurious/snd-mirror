@@ -631,20 +631,21 @@ struct s7_scheme {
 #define T_MACRO               12
 #define T_BACRO               13
 #define T_C_OBJECT            14
-#define T_GOTO                15
-#define T_OUTPUT_PORT         16
-#define T_CATCH               17
-#define T_DYNAMIC_WIND        18
-#define T_HASH_TABLE          19
-#define T_BOOLEAN             20
-#define T_C_MACRO             21
-#define T_C_POINTER           22
-#define T_C_FUNCTION          23
-#define T_C_ANY_ARGS_FUNCTION 24
-#define T_C_OPT_ARGS_FUNCTION 25
-#define T_C_RST_ARGS_FUNCTION 26
-#define T_C_LST_ARGS_FUNCTION 27
-#define BUILT_IN_TYPES        28
+#define T_S_OBJECT            15
+#define T_GOTO                16
+#define T_OUTPUT_PORT         17
+#define T_CATCH               18
+#define T_DYNAMIC_WIND        19
+#define T_HASH_TABLE          20
+#define T_BOOLEAN             21
+#define T_C_MACRO             22
+#define T_C_POINTER           23
+#define T_C_FUNCTION          24
+#define T_C_ANY_ARGS_FUNCTION 25
+#define T_C_OPT_ARGS_FUNCTION 26
+#define T_C_RST_ARGS_FUNCTION 27
+#define T_C_LST_ARGS_FUNCTION 28
+#define BUILT_IN_TYPES        29
 
 #define TYPE_BITS                     8
 #define T_MASKTYPE                    0xff
@@ -675,10 +676,6 @@ struct s7_scheme {
  *   but at the cost of 4 (or 8!) bytes per object. Since the speedup was about .5% overall,
  *   the size increase is more important.
  */
-
-#define T_S_OBJECT                    (1 << (TYPE_BITS + 6))
-#define is_s_object(p)                ((type(p) == T_C_OBJECT) && ((typeflag(p) & T_S_OBJECT) != 0))
-/* this identifies c_objects that come from make-type -- scheme objects */
 
 #define T_FINALIZABLE                 (1 << (TYPE_BITS + 7))
 #define is_finalizable(p)             ((typeflag(p) & T_FINALIZABLE) != 0)
@@ -761,10 +758,10 @@ struct s7_scheme {
 /* this bit distinguishes a symbol from a symbol that is also a keyword
  */
 
-#define UNUSED_BITS                   0x81880800
+#define UNUSED_BITS                   0x81884800
 
 /* TYPE_BITS could be 5
- * TYPE_BITS + 3, 11, 15, 16 and 23 are currently unused
+ * TYPE_BITS + 3, 6, 11, 15, 16 and 23 are currently unused
  */
 
 
@@ -916,6 +913,10 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define is_c_object(p)                (type(p) == T_C_OBJECT)
 #define c_object_type(p)              (p)->object.fobj.type
 #define c_object_value(p)             (p)->object.fobj.value
+
+#define is_s_object(p)                (type(p) == T_S_OBJECT)
+#define s_object_type(p)              (p)->object.fobj.type
+#define s_object_value(p)             (p)->object.fobj.value
 
 
 #define NUM_INT      0
@@ -1349,6 +1350,7 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
       break;
       
     case T_C_OBJECT:
+    case T_S_OBJECT:
       free_object(a);
       break;
       
@@ -1448,6 +1450,7 @@ static void s7_mark_object_1(s7_pointer p)
       return;
       
     case T_C_OBJECT:
+    case T_S_OBJECT:
       mark_embedded_objects(p);
       return;
 
@@ -1814,6 +1817,7 @@ void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
     case T_STRING:
     case T_NUMBER:
     case T_CHARACTER:
+    case T_S_OBJECT:
     case T_C_OBJECT:
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
@@ -5750,7 +5754,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
            1/0+0i   -> inf.0 (0/1+0i is 0.0)
 	   #i1/0+0i -> inf.0
 	   0/0      -> nan.0
-	   0/0+0i   -> -nan
+	   0/0+0i   -> -nan.0
 	*/
 
 #if (!WITH_GMP)
@@ -11433,6 +11437,7 @@ static char *atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     case T_DYNAMIC_WIND:                 /* this can't happen */
       return(copy_string("#<dynamic-wind>"));
   
+    case T_S_OBJECT:
     case T_C_OBJECT:
       return(describe_object(sc, obj)); /* this allocates already */
 
@@ -14818,7 +14823,7 @@ bool s7_is_function(s7_pointer p)
 
 bool s7_is_object(s7_pointer p) 
 { 
-  return(is_c_object(p));
+  return((is_c_object(p)) || (is_s_object(p)));
 }
 
 
@@ -15419,7 +15424,7 @@ static void mark_embedded_objects(s7_pointer a) /* called by gc, calls fobj's ma
 
 static bool object_is_applicable(s7_pointer x)
 {
-  return((is_c_object(x)) &&
+  return(((is_c_object(x)) || (is_s_object(x))) &&
 	 (object_types[c_object_type(x)].apply));
 }
 
@@ -15448,14 +15453,6 @@ static s7_pointer object_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 }
 
 
-/* generalized set! calls g_object_set which then calls the object's set function */
-
-static s7_pointer g_object_set(s7_scheme *sc, s7_pointer args)
-{
-  return(object_set(sc, car(args), cdr(args)));
-}
-
-
 void *s7_object_value(s7_pointer obj)
 {
   return(c_object_value(obj));
@@ -15466,6 +15463,8 @@ int s7_object_type(s7_pointer obj)
 {
   if (is_c_object(obj))
     return(c_object_type(obj));
+  if (is_s_object(obj))
+    return(s_object_type(obj));
   return(-1);
 }
 
@@ -15618,7 +15617,7 @@ static char *call_s_object_print(s7_scheme *sc, void *value)
 static bool call_s_object_equal(s7_scheme *sc, s7_pointer a, s7_pointer b)
 {
   s_type_t *obj1, *obj2;
-  if (c_object_type(a) != c_object_type(b))
+  if (s_object_type(a) != s_object_type(b))
     return(false);
 
   obj1 = (s_type_t *)s7_object_value(a);
@@ -15647,12 +15646,42 @@ static s7_pointer call_s_object_setter(s7_scheme *sc, s7_pointer a, s7_pointer a
 }
 
 
+/* generalized set! calls g_object_set which then calls the object's set function */
+
+static s7_pointer g_object_set(s7_scheme *sc, s7_pointer args)
+{
+  int tag;
+  s_type_t *obj;
+
+  if (is_c_object(car(args)))
+    return(object_set(sc, car(args), cdr(args)));
+
+  tag = s_object_type(car(args));
+  obj = (s_type_t *)s7_object_value(car(args));
+  car(args) = obj->value;                           /* this should be safe -- we cons up this list in OP_SET */
+  push_stack(sc, opcode(OP_APPLY), args, object_types[tag].setter_func);
+}
+
+
 static s7_pointer call_s_object_length(s7_scheme *sc, s7_pointer a)
 {
   s_type_t *obj;
   obj = (s_type_t *)s7_object_value(a);
   car(sc->s_function_args) = obj->value;
   return(s7_call(sc, object_types[obj->type].length_func, sc->s_function_args));
+}
+
+
+static s7_pointer make_s_object(s7_scheme *sc, int type, void *value)
+{
+  s7_pointer x;
+  NEW_CELL(sc, x);
+  s_object_type(x) = type;
+  s_object_value(x) = value;
+  set_type(x, T_S_OBJECT | T_FINALIZABLE | T_DONT_COPY);
+  if (object_types[type].apply)
+    typeflag(x) |= T_PROCEDURE;
+  return(x);
 }
 
 
@@ -15668,8 +15697,7 @@ static s7_pointer call_s_object_copy(s7_scheme *sc, s7_pointer a)
   new_obj->type = obj->type;
 
   new_obj->value = s7_call(sc, object_types[new_obj->type].copy_func, sc->s_function_args);
-  result = s7_make_object(sc, new_obj->type, (void *)new_obj);
-  typeflag(result) |= T_S_OBJECT;
+  result = make_s_object(sc, new_obj->type, (void *)new_obj);
 
   return(result);
 }
@@ -15721,9 +15749,9 @@ static void s_type_gc_mark(void *val)
 
 static s7_pointer s_is_type(s7_scheme *sc, s7_pointer args)
 {
-  s_type_t *obj;
   if (is_s_object(cadr(args)))
     {
+      s_type_t *obj;
       obj = (s_type_t *)s7_object_value(cadr(args));
       return(s7_make_boolean(sc, obj->type == s7_integer(car(args))));
     }
@@ -15738,8 +15766,7 @@ static s7_pointer s_type_make(s7_scheme *sc, s7_pointer args)
   obj = (s_type_t *)calloc(1, sizeof(s_type_t));
   obj->type = s7_integer(car(args));
   obj->value = cadr(args);
-  result = s7_make_object(sc, obj->type, (void *)obj);
-  typeflag(result) |= T_S_OBJECT;
+  result = make_s_object(sc, obj->type, (void *)obj);
   return(result);
 }
 
@@ -15748,12 +15775,12 @@ static s7_pointer s_type_ref(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x;
   int tag;
-  s_type_t *obj;
 
   tag = s7_integer(car(args));
   x = cadr(args);
   if (is_s_object(x))
     {
+      s_type_t *obj;
       obj = (s_type_t *)s7_object_value(x);
       if (obj->type == tag)
 	return(obj->value);
@@ -16367,9 +16394,10 @@ static bool s7_is_equal_ci(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_inf
     case T_STRING:
       return(scheme_strings_are_equal(x, y));
 
+    case T_S_OBJECT:
+      return(call_s_object_equal(sc, x, y));
+
     case T_C_OBJECT:
-      if (is_s_object(x))
-	return(call_s_object_equal(sc, x, y));
       return(objects_are_equal(x, y));
 
     case T_CHARACTER:
@@ -16463,9 +16491,10 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
     case T_STRING:
       return(scheme_strings_are_equal(x, y));
 
+    case T_S_OBJECT:
+      return(call_s_object_equal(sc, x, y));
+
     case T_C_OBJECT:
-      if (is_s_object(x))
-	return(call_s_object_equal(sc, x, y));
       return(objects_are_equal(x, y));
 
     case T_CHARACTER:
@@ -16553,6 +16582,7 @@ list has infinite length."
     case T_HASH_TABLE:
       return(g_hash_table_size(sc, args));
 
+    case T_S_OBJECT:
     case T_C_OBJECT:
       return(object_length(sc, lst));
 
@@ -16580,6 +16610,7 @@ static s7_pointer s7_copy(s7_scheme *sc, s7_pointer obj)
     case T_STRING:
       return(s7_make_string_with_length(sc, string_value(obj), string_length(obj)));
 
+    case T_S_OBJECT:
     case T_C_OBJECT:
       return(object_copy(sc, obj));
 
@@ -16652,6 +16683,7 @@ also accepts a string or vector argument."
     case T_HASH_TABLE:
       return(hash_table_reverse(sc, p));
 
+    case T_S_OBJECT:
     case T_C_OBJECT:
       return(object_reverse(sc, p));
       break;
@@ -16721,6 +16753,7 @@ static s7_pointer g_fill(s7_scheme *sc, s7_pointer args)
     case T_VECTOR:
       return(g_vector_fill(sc, args));
 
+    case T_S_OBJECT:
     case T_C_OBJECT:
       return(object_fill(sc, car(args), cadr(args)));
 
@@ -17551,6 +17584,7 @@ static const char *type_name(s7_pointer arg)
     case T_CATCH:        return("catch");
     case T_DYNAMIC_WIND: return("dynamic-wind");
     case T_HASH_TABLE:   return("hash-table");
+    case T_S_OBJECT:     return(object_types[s_object_type(arg)].name);
     case T_C_OBJECT:     return(object_types[c_object_type(arg)].name);
 
     case T_INPUT_PORT:
@@ -17765,6 +17799,20 @@ static int remember_file_name(s7_scheme *sc, const char *file)
 #endif
 
   return(file_names_top);
+}
+
+
+static s7_pointer g_error_hook_set(s7_scheme *sc, s7_pointer args)
+{
+  if ((cadr(args) == sc->NIL) || (is_procedure(cadr(args)))) /* nil is the default value */
+    return(cadr(args));
+  return(sc->ERROR);
+}
+
+
+static s7_pointer g_error_hook_bind(s7_scheme *sc, s7_pointer args)
+{
+  return(sc->ERROR);
 }
 
 
@@ -18656,6 +18704,7 @@ static long int applicable_length(s7_scheme *sc, s7_pointer obj)
 	return(len);
       }
 
+    case T_S_OBJECT:
     case T_C_OBJECT:
       return(s7_integer(object_length(sc, obj)));
 
@@ -18695,20 +18744,27 @@ static bool next_for_each(s7_scheme *sc)
 	car(y) = cdar(y);
 	break;
 
+      case T_S_OBJECT: 
+	{
+	  int save_x, save_y, save_z;
+	  if (z == sc->NIL) 
+	    {
+	      z = make_list_1(sc, car(sc->args));
+	      zloc = s7_gc_protect(sc, z);
+	    }
+	  SAVE_X_Y_Z(save_x, save_y, save_z);
+	  car(x) = apply_object(sc, car(y), z);
+	  RESTORE_X_Y_Z(save_x, save_y, save_z);
+	}
+	break;
+
       case T_C_OBJECT: 
 	if (z == sc->NIL) 
 	  {
 	    z = make_list_1(sc, car(sc->args));
 	    zloc = s7_gc_protect(sc, z);
 	  }
-	if (is_s_object(car(y)))
-	  {
-	    int save_x, save_y, save_z;
-	    SAVE_X_Y_Z(save_x, save_y, save_z);
-	    car(x) = apply_object(sc, car(y), z);
-	    RESTORE_X_Y_Z(save_x, save_y, save_z);
-	  }
-	else car(x) = apply_object(sc, car(y), z);
+	car(x) = apply_object(sc, car(y), z);
 	break;
 	
       case T_VECTOR:
@@ -18835,20 +18891,27 @@ static bool next_map(s7_scheme *sc)
 	  car(y) = cdar(y);
 	  break;
 	  
+	case T_S_OBJECT:
+	  {
+	    int save_x, save_y, save_z;
+	    if (z == sc->NIL) 
+	      {
+		z = make_list_1(sc, car(sc->args));
+		zloc = s7_gc_protect(sc, z);
+	      }
+	    SAVE_X_Y_Z(save_x, save_y, save_z);
+	    x = apply_object(sc, car(y), z);
+	    RESTORE_X_Y_Z(save_x, save_y, save_z);
+	  }
+	  break;
+
 	case T_C_OBJECT: 
 	  if (z == sc->NIL) 
 	    {
 	      z = make_list_1(sc, car(sc->args));
 	      zloc = s7_gc_protect(sc, z);
 	    }
-	  if (is_s_object(car(y)))
-	    {
-	      int save_x, save_y, save_z;
-	      SAVE_X_Y_Z(save_x, save_y, save_z);
-	      x = apply_object(sc, car(y), z);
-	      RESTORE_X_Y_Z(save_x, save_y, save_z);
-	    }
-	  else x = apply_object(sc, car(y), z);
+	  x = apply_object(sc, car(y), z);
 	  break;
 	
 	case T_VECTOR:
@@ -19938,6 +20001,20 @@ static s7_pointer read_expression(s7_scheme *sc)
 /* ---------------- */
 
 /* (set! *unbound-variable-hook* (lambda (sym) (load "dsp.scm") (symbol->value sym))) */
+
+static s7_pointer g_unbound_variable_set(s7_scheme *sc, s7_pointer args)
+{
+  if ((cadr(args) == sc->NIL) || (is_procedure(cadr(args)))) /* nil is the default value */
+    return(cadr(args));
+  return(sc->ERROR);
+}
+
+
+static s7_pointer g_unbound_variable_bind(s7_scheme *sc, s7_pointer args)
+{
+  return(sc->ERROR);
+}
+
 
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 {
@@ -21514,13 +21591,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  call_with_exit(sc);
 	  goto START;
 
-	case T_C_OBJECT:	                  /* -------- applicable object -------- */
-
-	  /* PERHAPS: if is_s_object, push OP_S_OBJECT_APPLY, set func and args, goto APPLY
-	   *            the op then handles the continuation
-	   *   and why not separate T_C_ and T_S_OBJECT?
-	   */
-
+	case T_S_OBJECT:                          /* -------- applicable s(cheme) object -------- */
+	  {
+	    int tag;
+	    tag = s_object_type(sc->code);
+	    if (object_types[tag].apply)
+	      {
+		s_type_t *obj;
+		obj = (s_type_t *)s7_object_value(sc->code);
+		sc->code = object_types[tag].getter_func;
+		sc->args = s7_cons(sc, obj->value, sc->args);
+		goto APPLY;
+	      }
+	    return(apply_error(sc, sc->code, sc->args));
+	  }
+	    
+	case T_C_OBJECT:	                  /* -------- applicable c object -------- */
 	  sc ->value = apply_object(sc, sc->code, sc->args);
 	  if (sc->stack_end > sc->stack_start)
 	    pop_stack(sc);
@@ -21961,9 +22047,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  switch (type(sc->x))
 	    {
-	    case T_C_OBJECT:
-	      /* PERHAPS: if is_s_object, do this direct in eval, not via s7_call
+	    case T_S_OBJECT:
+	      /* it's tricky to split out this case because we haven't evaluated the args yet, so we check in g_object_set.
 	       */
+	    case T_C_OBJECT:
 	      if (object_set_function(sc->x))
 		{
 		  /* sc->code = s7_cons(sc, sc->OBJECT_SET, s7_append(sc, car(sc->code), cdr(sc->code))); */
@@ -22053,8 +22140,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (is_procedure(func))
 		{
 		  push_stack(sc, opcode(OP_SET_ACCESS), sc->y, make_list_2(sc, sc->code, sc->value));
-		  sc->code = func;
 		  sc->args = make_list_2(sc, sc->code, sc->value);
+		  sc->code = func;
 		  goto APPLY;
 		}
 	    }
@@ -28946,6 +29033,8 @@ s7_scheme *s7_init(void)
   s7_define_variable(sc, "*vector-print-length*", small_ints[8]);
   sc->vector_print_length = symbol_global_slot(make_symbol(sc, "*vector-print-length*"));
 
+  /* PERHAPS: symbol-access checks for *vector-print-length* *load-hook* *trace-hook* *#readers*, perhaps *load-path* and *features*
+   */
 
   /* the next two are for the test suite */
   s7_define_variable(sc, "s7-symbol-table-locked?", 
@@ -28957,19 +29046,30 @@ s7_scheme *s7_init(void)
 
 
   s7_define_variable(sc, "*error-hook*", sc->NIL);
+  s7_symbol_set_access(sc, s7_make_symbol(sc, "*error-hook*"), 
+		       make_list_3(sc, 
+				   sc->F, 
+				   s7_make_function(sc, "(set *error-hook*)", g_error_hook_set, 2, 0, false, "called if *error-hook* is set"), 
+				   s7_make_function(sc, "(bind *error-hook*)", g_error_hook_bind, 2, 0, false, "called if *error-hook* is bound")));
+
   sc->error_info = s7_make_and_fill_vector(sc, ERROR_INFO_SIZE, ERROR_INFO_DEFAULT);
   s7_define_constant(sc, "*error-info*", sc->error_info);
+
   s7_define_variable(sc, "*unbound-variable-hook*", sc->NIL);
+  s7_symbol_set_access(sc, s7_make_symbol(sc, "*unbound-variable-hook*"), 
+		       make_list_3(sc, 
+				   sc->F, 
+				   s7_make_function(sc, "(set *unbound-variable-hook*)", g_unbound_variable_set, 2, 0, false, "called if *unbound-variable-hook* is set"), 
+				   s7_make_function(sc, "(bind *unbound-variable-hook*)", g_unbound_variable_bind, 2, 0, false, "called if *unbound-variable-hook* is bound")));
 
   s7_define_variable(sc, "*safety*", small_int(sc->safety));
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*safety*"), 
 		       make_list_3(sc, 
 				   sc->F, 
-				   s7_make_function(sc, "(safety set)", g_safety_set, 2, 0, false, "called if *safety* is set"), 
-				   s7_make_function(sc, "(safety bind)", g_safety_bind, 2, 0, false, "called if *safety* is bound")));
-  /* TODO: doc *safety* and add the bad-idea examples to s7test (and wrong type set), also symbol-access cases from t188 and nested cases
+				   s7_make_function(sc, "(set *safety*)", g_safety_set, 2, 0, false, "called if *safety* is set"), 
+				   s7_make_function(sc, "(bind *safety*)", g_safety_bind, 2, 0, false, "called if *safety* is bound")));
+  /* TODO: doc *safety*
    */
-
   g_provide(sc, make_list_1(sc, make_symbol(sc, "s7")));
 
 #if WITH_PROFILING
