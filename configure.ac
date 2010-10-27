@@ -1050,10 +1050,10 @@ else
 	# for 2.17.7, 2.18.n
 	AC_CHECK_LIB(m, gtk_widget_get_visible, [AC_DEFINE(HAVE_GTK_WIDGET_GET_VISIBLE)], ,$GTK_LIBS)
 	# for 2.19.n
-	AC_CHECK_LIB(m, gtk_entry_get_text_window, [AC_DEFINE(HAVE_GTK_ENTRY_GET_TEXT_WINDOW)], ,$GTK_LIBS)
+	AC_CHECK_LIB(m, gtk_widget_get_mapped, [AC_DEFINE(HAVE_GTK_WIDGET_GET_MAPPED)], ,$GTK_LIBS)
 	# for 2.9n.n
-	AC_CHECK_LIB(m, gtk_widget_get_hexpand,
-                          [AC_DEFINE(HAVE_GTK_WIDGET_GET_HEXPAND)
+	AC_CHECK_LIB(m, gtk_grid_new,
+                          [AC_DEFINE(HAVE_GTK_GRID_NEW)
                            AC_DEFINE(HAVE_GTK_3)
                           ], ,$GTK_LIBS)
 

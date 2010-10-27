@@ -35177,6 +35177,10 @@ why are these different (read-time `#() ? )
 (num-test (expt 0.0 0.0) 0.0)
 (num-test (expt -0.0 -0.0) 0.0)
 
+; from bug-guile
+(test (expt -2742638075.5 2) (* -2742638075.5 -2742638075.5))
+(num-test (expt -2742638075.5 1/2) (sqrt -2742638075.5))
+
 (if with-bignums
     (num-test (let ((dickey (lambda (x y) ; from Kawa
 			      (+  (* 1335/4 (expt y 6))

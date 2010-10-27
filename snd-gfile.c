@@ -150,7 +150,11 @@ static void fsb_update_lists(fsb *fs)
 	adj = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->directory_list->scroller));
 	if (ADJUSTMENT_UPPER(adj) < files->len * 16)
 	  ADJUSTMENT_SET_UPPER(adj, files->len * 16);
+#if HAVE_GTK_3
+	adj = gtk_scrollable_get_vadjustment(GTK_SCROLLABLE(gtk_widget_get_parent(fs->directory_list->topics)));
+#else
 	adj = gtk_viewport_get_vadjustment(GTK_VIEWPORT(gtk_widget_get_parent(fs->directory_list->topics)));
+#endif
 	ADJUSTMENT_SET_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->directory_list->scroller)), list_top);
       }
     else slist_moveto(fs->directory_list, 0);
@@ -200,7 +204,11 @@ static void fsb_update_lists(fsb *fs)
 	 */
 	if (ADJUSTMENT_UPPER(adj) < files->len * 16)
 	  ADJUSTMENT_SET_UPPER(adj, files->len * 16);
+#if HAVE_GTK_3
+	adj = gtk_scrollable_get_vadjustment(GTK_SCROLLABLE(gtk_widget_get_parent(fs->file_list->topics)));
+#else
 	adj = gtk_viewport_get_vadjustment(GTK_VIEWPORT(gtk_widget_get_parent(fs->file_list->topics)));
+#endif
 	ADJUSTMENT_SET_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)), list_top);
       }
     else slist_moveto(fs->file_list, 0);

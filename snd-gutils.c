@@ -873,7 +873,11 @@ void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
   GtkAdjustment *v;
   gdouble maximum, size, new_value, minimum;
   parent = gtk_widget_get_parent(list);
+#if HAVE_GTK_3
+  v = gtk_scrollable_get_vadjustment(GTK_SCROLLABLE(parent));
+#else
   v = gtk_viewport_get_vadjustment(GTK_VIEWPORT(parent));
+#endif
   maximum = ADJUSTMENT_UPPER(v);
   minimum = ADJUSTMENT_LOWER(v);
   size = ADJUSTMENT_PAGE_SIZE(v);

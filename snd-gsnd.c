@@ -2205,13 +2205,17 @@ void show_controls(snd_info *sp)
 
 void hide_controls(snd_info *sp)
 {
+#if HAVE_GTK_3
+  gtk_widget_hide(CONTROL_PANEL(sp));
+#else
   gtk_widget_hide_all(CONTROL_PANEL(sp));
+#endif
 }
 
 
 bool showing_controls(snd_info *sp)
 {
-#if ((!HAVE_GTK_WIDGET_GET_VISIBLE) || (!HAVE_GTK_ENTRY_GET_TEXT_WINDOW))
+#if ((!HAVE_GTK_WIDGET_GET_VISIBLE) || (!HAVE_GTK_WIDGET_GET_MAPPED))
   return((GTK_WIDGET_MAPPED(CONTROL_PANEL(sp))) && 
 	 (widget_is_active(CONTROL_PANEL(sp))));
 #else

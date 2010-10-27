@@ -1713,12 +1713,12 @@
   (dpy "#endif~%~%"))
 
 (define (with-2190 dpy thunk)
-  (dpy "#if HAVE_GTK_ENTRY_GET_TEXT_WINDOW~%")
+  (dpy "#if HAVE_GTK_WIDGET_GET_MAPPED~%")
   (thunk)
   (dpy "#endif~%~%"))
 
 (define (with-29x dpy thunk)
-  (dpy "#if HAVE_GTK_WIDGET_GET_HEXPAND~%")
+  (dpy "#if HAVE_GTK_GRID_NEW~%")
   (thunk)
   (dpy "#endif~%~%"))
 

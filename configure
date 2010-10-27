@@ -8722,9 +8722,9 @@ if test "x$ac_cv_lib_m_gtk_widget_get_visible" = x""yes; then :
 fi
 
 	# for 2.19.n
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk_entry_get_text_window in -lm" >&5
-$as_echo_n "checking for gtk_entry_get_text_window in -lm... " >&6; }
-if test "${ac_cv_lib_m_gtk_entry_get_text_window+set}" = set; then :
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk_widget_get_mapped in -lm" >&5
+$as_echo_n "checking for gtk_widget_get_mapped in -lm... " >&6; }
+if test "${ac_cv_lib_m_gtk_widget_get_mapped+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -8738,35 +8738,35 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char gtk_entry_get_text_window ();
+char gtk_widget_get_mapped ();
 int
 main ()
 {
-return gtk_entry_get_text_window ();
+return gtk_widget_get_mapped ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_m_gtk_entry_get_text_window=yes
+  ac_cv_lib_m_gtk_widget_get_mapped=yes
 else
-  ac_cv_lib_m_gtk_entry_get_text_window=no
+  ac_cv_lib_m_gtk_widget_get_mapped=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_gtk_entry_get_text_window" >&5
-$as_echo "$ac_cv_lib_m_gtk_entry_get_text_window" >&6; }
-if test "x$ac_cv_lib_m_gtk_entry_get_text_window" = x""yes; then :
-  $as_echo "#define HAVE_GTK_ENTRY_GET_TEXT_WINDOW 1" >>confdefs.h
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_gtk_widget_get_mapped" >&5
+$as_echo "$ac_cv_lib_m_gtk_widget_get_mapped" >&6; }
+if test "x$ac_cv_lib_m_gtk_widget_get_mapped" = x""yes; then :
+  $as_echo "#define HAVE_GTK_WIDGET_GET_MAPPED 1" >>confdefs.h
 
 fi
 
 	# for 2.9n.n
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk_widget_get_hexpand in -lm" >&5
-$as_echo_n "checking for gtk_widget_get_hexpand in -lm... " >&6; }
-if test "${ac_cv_lib_m_gtk_widget_get_hexpand+set}" = set; then :
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk_grid_new in -lm" >&5
+$as_echo_n "checking for gtk_grid_new in -lm... " >&6; }
+if test "${ac_cv_lib_m_gtk_grid_new+set}" = set; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -8780,28 +8780,28 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char gtk_widget_get_hexpand ();
+char gtk_grid_new ();
 int
 main ()
 {
-return gtk_widget_get_hexpand ();
+return gtk_grid_new ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_m_gtk_widget_get_hexpand=yes
+  ac_cv_lib_m_gtk_grid_new=yes
 else
-  ac_cv_lib_m_gtk_widget_get_hexpand=no
+  ac_cv_lib_m_gtk_grid_new=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_gtk_widget_get_hexpand" >&5
-$as_echo "$ac_cv_lib_m_gtk_widget_get_hexpand" >&6; }
-if test "x$ac_cv_lib_m_gtk_widget_get_hexpand" = x""yes; then :
-  $as_echo "#define HAVE_GTK_WIDGET_GET_HEXPAND 1" >>confdefs.h
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_m_gtk_grid_new" >&5
+$as_echo "$ac_cv_lib_m_gtk_grid_new" >&6; }
+if test "x$ac_cv_lib_m_gtk_grid_new" = x""yes; then :
+  $as_echo "#define HAVE_GTK_GRID_NEW 1" >>confdefs.h
 
                            $as_echo "#define HAVE_GTK_3 1" >>confdefs.h
 
