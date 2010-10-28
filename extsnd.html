@@ -12204,7 +12204,7 @@ in either Motif or Gtk:
 (let ((listener (list-ref (<a class=quiet href="#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>) 4)))
   (g_signal_connect_closure_by_id 
    (GPOINTER listener)
-   (g_signal_lookup "key_press_event" (G_OBJECT_TYPE (GTK_OBJECT listener)))
+   (g_signal_lookup "key_press_event" (G_OBJECT_TYPE (G_OBJECT listener)))
    0
    (g_cclosure_new (lambda (w event data)
 		     (let ((bits (.state (GDK_EVENT_KEY event)))

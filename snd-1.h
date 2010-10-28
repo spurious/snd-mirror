@@ -1509,11 +1509,6 @@ fam_info *fam_monitor_directory(const char *dir_name,
 fam_info *fam_unmonitor_file(const char *filename, fam_info *fp);
 fam_info *fam_unmonitor_directory(const char *filename, fam_info *fp);
 
-#if MUS_DEBUGGING && HAVE_CLOCK
-  void start_timing(void);
-  void stop_timing(void);
-#endif
-
 
 
 /* -------- snd-listener -------- */

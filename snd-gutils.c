@@ -359,7 +359,7 @@ void set_title(const char *title)
 void goto_window(GtkWidget *text)
 {
 #if (!HAVE_GTK_3)
-  /* TODO: why does this erase the window in gtk 3? why isn't the initial graph displayed? 
+  /* TODO: why does this erase the window in gtk 3?
    */
   gtk_widget_grab_focus(text);
 #endif

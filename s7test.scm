@@ -14504,6 +14504,38 @@ why are these different (read-time `#() ? )
   (test (check-reerror 1) 2)
   (test (check-reerror 2) 2))
 
+(test (catch 'hiho
+	     (lambda ()
+	       (define (f1 a)
+		 (error 'hiho a))
+	       (* 2 (catch 'hiho
+			   (lambda ()
+			     (f1 3))
+			   (lambda args (caadr args)))))
+	     (lambda args (caadr args)))
+      6)
+
+(test (let ()
+	(define (f1 a)
+	  (error 'hiho a))
+	(catch 'hiho
+	       (lambda ()
+		 (* 2 (catch 'hiho
+			     (lambda ()
+			       (f1 3))
+			     (lambda args (caadr args)))))
+	       (lambda args (caadr args))))
+      6)
+
+(test (catch 'hiho
+	     (lambda ()
+	       (let ((f1 (catch 'hiho
+				(lambda ()
+				  (lambda (a) (error 'hiho 3)))
+				(lambda args args))))
+		 (f1 3)))
+	     (lambda args (caadr args)))
+      3)
 
 
 ;;; --------------------------------------------------------------------------------
@@ -27548,7 +27580,17 @@ why are these different (read-time `#() ? )
 
 (num-test (sin 22) -8.851309290403875921690256815772332463307E-3)
 (if with-bignums
-    (num-test (sin 1e22) -8.522008497671888017727058937530293682616E-1)) 
+    (begin
+      (num-test (sin 1e22) -8.522008497671888017727058937530293682616E-1)
+      ;; if mpc version > 0.8.2
+      ;; (test (infinite? (sin 1+1e10i)) #t)
+      ;; this hangs in earlier versions
+      (num-test (sin 1+100i) 1.130986289301505745599509129978056149094E43+7.261979450834655624032117190441273726075E42i)
+      (num-test (sin 0+100i) 0.0+1.34405857090806772420631277579000679368E43i)
+      (num-test (sin 0+1000i) 0.0+9.850355570085234969444396761216615626576E433i)
+      (num-test (sin 1+1000i) 8.288788402267571487966465808315066740252E433+5.322169828138126401369949836048836144292E433i)
+      (num-test (sin 1e-100+1e-100i) 9.999999999999999999999999999999999999992E-101+9.999999999999999999999999999999999999992E-101i)
+      ))
 ;; not even close if not bignums: 0.4626130407646
 ;; we start to lose around 1e18 -- running out of bits of fraction?
 
@@ -28855,6 +28897,8 @@ why are these different (read-time `#() ? )
 (num-test (asin 70000000+3i) 1.570796279536826+18.75715298057358i)
 (num-test (asin 3.0-70000000i) 4.2857142400327436E-8-18.7571529895002i)
 (num-test (asin -70000000+3i) -1.570796279536826+18.75715298057358i)
+(num-test (asin 1e17+1e17i) 0.78539816339745+40.183667351739i)
+(num-test (asin 1+1e17i) 1e-17+39.837093761459i)
 
 (let ((err 0.0)
       (mx 0.0))
@@ -33545,6 +33589,13 @@ why are these different (read-time `#() ? )
       (if (> (abs (- val1 val2)) 1)
 	  (format #t "(exp 30): ~A ~A~%" val1 val2))))
 
+(if with-bignums
+    (begin
+      (num-test (exp (* 172.60813659204 (log 172.60813659204))) 1.364508485146898675293943657160611234948E386) ; not inf!
+      (num-test (exp 800.0) 2.726374572112566567364779546367269757963E347)
+      (num-test (exp -800.0) 3.667874584177687213455495654260798215465E-348)
+      (num-test (exp 100) 2.688117141816135448412625551580013587359E43)
+      (num-test (exp 50.0) 5.184705528587072464087453322933485384827E21)))
 
 
 ;; -------- log
@@ -35178,8 +35229,30 @@ why are these different (read-time `#() ? )
 (num-test (expt -0.0 -0.0) 0.0)
 
 ; from bug-guile
-(test (expt -2742638075.5 2) (* -2742638075.5 -2742638075.5))
+(num-test (expt -2742638075.5 2) (* -2742638075.5 -2742638075.5))
 (num-test (expt -2742638075.5 1/2) (sqrt -2742638075.5))
+
+(do ((i 1 (+ i 1)))
+    ((= i 10))
+  (let ((v (vector i (- i) (/ i) (/ i (+ i 1)) (- (/ i)) (/ (- i) (+ i 1))
+		   (random (* i 10.0)) (sqrt i) (+ i (random (sqrt i))) (- (random (* i 2.0)) i)
+		   (make-rectangular i i)
+		   (make-rectangular (- i) (- i))
+		   )))
+    (let ((len (length v)))
+      (do ((k 0 (+ k 1)))
+	  ((= k len))
+	(do ((j 0 (+ j 1)))
+	    ((= j len))
+	  (let ((val1 (catch #t (lambda () (expt (v k) (v j))) (lambda args 'error)))) ; (expt 0 -1) for example
+	    (if (number? val1)
+		(let ((val2 (if (zero? (v k)) 0 (exp (* (v j) (log (v k))))))
+		      (val3 (if (zero? (v k)) 0 (exp (* (v j) (+ (* 0+2i pi) (log (v k))))))))
+		  (let ((diff 
+			 (min (magnitude (- val1 val2))
+			      (magnitude (- val1 val3)))))
+		    (if (> (/ diff (max (magnitude val1) 1)) 1e-12)
+			(format #t ";(expt ~A ~A), ~A ~A ~A: ~A~%" (v k) (v j) val1 val2 val3 diff)))))))))))
 
 (if with-bignums
     (num-test (let ((dickey (lambda (x y) ; from Kawa

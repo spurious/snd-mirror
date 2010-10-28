@@ -466,7 +466,7 @@
 		    (set! (y-zoom-slider snd i) (* val val))
 		    (set! (y-position-slider snd i) (y-position-slider snd chn)))))
 	    (g_signal_stop_emission (GPOINTER adj)
-				    (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT adj)))
+				    (g_signal_lookup "value_changed" (G_OBJECT_TYPE (G_OBJECT adj)))
 				    0)))))
       
   (set! (sound-property 'dragger snd) #t)
@@ -478,7 +478,7 @@
       ((= chn (channels snd)))
     (let* ((zy (list-ref (channel-widgets snd chn) 14)))
       (g_signal_connect_closure_by_id (GPOINTER zy)
-				      (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT zy)))
+				      (g_signal_lookup "value_changed" (G_OBJECT_TYPE (G_OBJECT zy)))
 				      0
 				      (g_cclosure_new dragger-callback (list snd chn) (list 'GClosureNotify 0))
 				      #f))))
@@ -815,7 +815,10 @@ Reverb-feedback sets the scaler on the feedback.
 			  context)
 	(g_signal_connect meter "configure_event" 
 			  (lambda (w e d)
-			    (let ((xy (gdk_drawable_get_size (GDK_DRAWABLE (gtk_widget_get_window w)))))
+			    (let ((xy (if (provided? 'gtk2)
+					  (gdk_drawable_get_size (GDK_DRAWABLE (gtk_widget_get_window w)))
+					  (list (gtk_widget_get_allocated_width w)
+						(gtk_widget_get_allocated_height w)))))
 			      (list-set! d 5 (car xy))
 			      (list-set! d 6 (cadr xy))
 			      (display-level d)))

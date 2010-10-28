@@ -26104,6 +26104,10 @@ static s7_pointer big_sqrt(s7_scheme *sc, s7_pointer args)
 }
 
 
+/* (define (diff f a) (magnitude (- (f a) (f (bignum (number->string a))))))
+ * (sin 1e15+1e15i) hangs in 0.8.2, but appears to be fixed in the current svn sources
+ */
+
 enum {TRIG_NO_CHECK, TRIG_TAN_CHECK, TRIG_TANH_CHECK};
 
 static s7_pointer big_trig(s7_scheme *sc, s7_pointer args, s7_function g_trig, 
@@ -26116,66 +26120,63 @@ static s7_pointer big_trig(s7_scheme *sc, s7_pointer args, s7_function g_trig,
  *			   void (*mpc_trig)(mpc_t rop, mpc_t op, mpc_rnd_t rnd))
  */
 {
+  mpc_t *n;
   s7_pointer p;
   p = car(args);
-  if (is_c_object(p))
+
+  /* I think here we should always promote to bignum (otherwise, for example, (exp 800) -> inf)
+   */
+  if (!s7_is_number(p))
+    return(s7_wrong_type_arg_error(sc, "sin", 0, p, "a number"));
+    
+  if (s7_is_real(p))
     {
-      if ((c_object_type(p) == big_integer_tag) ||
-	  (c_object_type(p) == big_ratio_tag) ||
-	  (c_object_type(p) == big_real_tag))
-	{
-	  mpfr_t *n;
-	  n = (mpfr_t *)malloc(sizeof(mpfr_t));
-	  mpfr_init_set(*n, S7_BIG_REAL(promote_number(sc, T_BIG_REAL, p)), GMP_RNDN);
-	  mpfr_trig(*n, *n, GMP_RNDN);
-	  /* it's confusing to check for ints here via mpfr_integer_p because it
-	   *   is dependent on the precision!  (exp 617/5) returns an integer if
-	   *   precision is 128, but a float if 512.
-	   */
-	  return(s7_make_object(sc, big_real_tag, (void *)n));
-	}
-
-      if (c_object_type(p) == big_complex_tag)
-	{
-	  mpc_t *n;
-
-	  if (tan_case == TRIG_TAN_CHECK)
-	    {
-	      if ((MPC_INEX_IM(mpc_cmp_si_si(S7_BIG_COMPLEX(p), 1, 350))) > 0)
-		return(s7_make_complex(sc, 0.0, 1.0));	
-	      if ((MPC_INEX_IM(mpc_cmp_si_si(S7_BIG_COMPLEX(p), 1, -350))) < 0)
-		return(s7_make_complex(sc, 0.0, -1.0));	
-	    }
-
-	  if (tan_case == TRIG_TANH_CHECK)
-	    {
-	      if ((MPC_INEX_RE(mpc_cmp_si_si(S7_BIG_COMPLEX(p), 350, 1))) > 0)
-		return(real_one);
-	      if ((MPC_INEX_RE(mpc_cmp_si_si(S7_BIG_COMPLEX(p), -350, 1))) < 0)
-		return(s7_make_real(sc, -1.0));
-	    }
-
-	  n = (mpc_t *)malloc(sizeof(mpc_t));
-	  mpc_init(*n);
-	  mpc_trig(*n, S7_BIG_COMPLEX(p), MPC_RNDNN);
-	  if (mpfr_cmp_ui(mpc_imagref(*n), 0) == 0)
-	    {
-	      mpfr_t *z;
-	      z = (mpfr_t *)malloc(sizeof(mpfr_t));
-	      mpfr_init_set(*z, mpc_realref(*n), GMP_RNDN);
-	      mpc_clear(*n);
-	      free(n);
-	      return(s7_make_object(sc, big_real_tag, (void *)z));
-	    }
-	  return(s7_make_object(sc, big_complex_tag, (void *)n));
-	}
+      mpfr_t *n;
+      n = (mpfr_t *)malloc(sizeof(mpfr_t));
+      mpfr_init_set(*n, S7_BIG_REAL(promote_number(sc, T_BIG_REAL, p)), GMP_RNDN);
+      mpfr_trig(*n, *n, GMP_RNDN);
+      /* it's confusing to check for ints here via mpfr_integer_p because it
+       *   is dependent on the precision!  (exp 617/5) returns an integer if
+       *   precision is 128, but a float if 512.
+       */
+      return(s7_make_object(sc, big_real_tag, (void *)n));
     }
-  else
+
+  if (!is_c_object(p))
+    p = promote_number(sc, T_BIG_COMPLEX, p);
+
+  if (tan_case == TRIG_TAN_CHECK)
     {
-      if (real_is_too_big(p))
-	return(big_trig(sc, make_list_1(sc, s7_number_to_big_real(sc, p)), g_trig, mpfr_trig, mpc_trig, tan_case));
+      if ((MPC_INEX_IM(mpc_cmp_si_si(S7_BIG_COMPLEX(p), 1, 350))) > 0)
+	return(s7_make_complex(sc, 0.0, 1.0));	
+      if ((MPC_INEX_IM(mpc_cmp_si_si(S7_BIG_COMPLEX(p), 1, -350))) < 0)
+	return(s7_make_complex(sc, 0.0, -1.0));	
     }
-  return(g_trig(sc, args));
+  
+  if (tan_case == TRIG_TANH_CHECK)
+    {
+      if ((MPC_INEX_RE(mpc_cmp_si_si(S7_BIG_COMPLEX(p), 350, 1))) > 0)
+	return(real_one);
+      if ((MPC_INEX_RE(mpc_cmp_si_si(S7_BIG_COMPLEX(p), -350, 1))) < 0)
+	return(s7_make_real(sc, -1.0));
+    }
+  
+  n = (mpc_t *)malloc(sizeof(mpc_t));
+  mpc_init(*n);
+  mpc_trig(*n, S7_BIG_COMPLEX(p), MPC_RNDNN);  
+  /* (sin (bignum "1e15+1e15i")) cause mpc to hang (e9 is ok, but e10 hangs) 
+   *   (sin (bignum "0+1e10i")) -> 0+inf (sin (bignum "1+1e10i")) hangs
+   */
+  if (mpfr_cmp_ui(mpc_imagref(*n), 0) == 0)
+    {
+      mpfr_t *z;
+      z = (mpfr_t *)malloc(sizeof(mpfr_t));
+      mpfr_init_set(*z, mpc_realref(*n), GMP_RNDN);
+      mpc_clear(*n);
+      free(n);
+      return(s7_make_object(sc, big_real_tag, (void *)z));
+    }
+  return(s7_make_object(sc, big_complex_tag, (void *)n));
 }
 
 
