@@ -4071,11 +4071,32 @@ One simple way to ensure immutability is to use copy:
 "hiho"
 </pre>
 
+<p>One gotcha lurks beneath this placid surface.  s7 normally tries to optimize garbage collection by
+removing some constants from the heap.  If that constant is a list or a vector, and you later
+set some member of it to something that needs GC protection, nobody in the heap points to it, so
+it is GC'd.  Here is an example:
+</p>
+
+<pre>
+(define (bad-idea)
+  (let ((lst '(1 2 3)))              ; or #(1 2 3) and vector-ref|set
+    (let ((result (list-ref lst 1)))
+     (list-set! lst 1 (* 2.0 16.6))
+     (gc)
+     result)))
+</pre>
+
+<p>Put this is a file, load it into the interpreter, than call <code>(bad-idea)</code> a
+few times.  You can turn off the optimization in question by setting the variable <b>*safety*</b>
+to 1.  *safety* defaults to 0.
+</p>
+
+
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
   <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
 
-<p>Another minor difference: s7 handles circular lists and vectors and dotted lists with its customary aplomb.  
+<p>s7 handles circular lists and vectors and dotted lists with its customary aplomb.  
 You can pass them to memq, or print them, for example; you can even evaluate them.  
 The print syntax is borrowed from CL:
 </p>
@@ -4408,7 +4429,7 @@ have any number after, for example, #b:
    add a generic position function
    remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!,
      set-car!|cdr!, and set-current-output|input|error-port.  All of these
-     are redundant given generalized set!.
+     are redundant given generalized set!.  Also string-length and vector-length.
 </pre>
 
 <p>Scheme needs a more elegant way to define functions that share a closure.

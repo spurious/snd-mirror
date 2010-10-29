@@ -9153,7 +9153,7 @@
 (test (for-each #t) 'error)
 (test (for-each map #t) 'error)
 
-(test (for-each abs '() abs) #<unspecified>)
+(test (for-each abs '() abs) 'error)
 (test (for-each abs '(1) '#(1)) 'error)
 (test (let ((vals '())) (for-each for-each (list (lambda (a) (set! vals (cons (abs a) vals)))) (list (list -1 -2))) vals) '(2 1))
 (test (let ((c #f)) (for-each (lambda (x) (set! c x)) "a") c) #\a)
@@ -9162,6 +9162,15 @@
 
 (test (let ((L (list 1 2 3 4 5)) (sum 0)) (for-each (lambda (x) (set-cdr! (cddr L) 5) (set! sum (+ sum x))) L) sum) 6)
 ;;; map (below) has more tests along this line
+
+(test (for-each ="") #<unspecified>)
+(test (for-each =""=) 'error)
+(test (for-each = "" 123) 'error)
+(test (for-each = () 123) 'error)
+(test (for-each =()=) 'error)
+(test (for-each abs "") #<unspecified>)
+(test (for-each null? () #() "") #<unspecified>)
+(test (for-each null? () #() 0 "") 'error)
 
 
 
@@ -9282,7 +9291,7 @@
 (test (map char-upcase "hi") '(#\H #\I))
 (test (map append #(#() #())) '(#() #()))
 
-(test (map abs '() abs) '())
+(test (map abs '() abs) 'error)
 (test (map (lambda (x) (display "map should not have called this"))) 'error)
 ;(test (map (lambda () 1) '()) 'error)
 (test (let ((ctr 0)) (map (lambda (x y z) (set! ctr (+ ctr x y z)) ctr) '(1) '(3) '())) '())
@@ -9392,6 +9401,15 @@
 (let ((funcs (map (lambda (lst) (eval `(lambda ,@lst))) '((() #f) ((arg) (+ arg 1))))))
   (test ((car funcs)) #f)
   (test ((cadr funcs) 2) 3))
+
+(test (map = #() =) 'error)
+(test (map ="") '())
+(test (map abs ()) ())
+(test (map abs "") ())
+(test (map abs "123" "") ())
+(test (map abs "123" "" #f) 'error)
+(test (map null? () #() "") ())
+(test (map null? () #() 0 "") 'error)
 
 
 
@@ -30287,6 +30305,11 @@ why are these different (read-time `#() ? )
 (num-test (sinh 0) 0.0)
 (num-test (sinh 0+i) (* 0+i (sin 1)))
 
+(test (nan? (imag-part 0+0/0i)) #t)
+(test (nan? (imag-part (sinh 0+0/0i))) #t)
+(test (nan? (imag-part (sinh 1-0/0i))) #t)
+(test (infinite? (imag-part (sinh (log 0.0)))) #t)
+
 (test (sinh) 'error)
 (test (sinh "hi") 'error)
 (test (sinh 1.0+23.0i 1.0+23.0i) 'error)
@@ -31105,6 +31128,16 @@ why are these different (read-time `#() ? )
 (num-test (tanh 1L-10)   1L-10)
 (num-test (tanh 1L-17)   1L-17)
 (num-test (tanh 1L-47)   1L-47)
+
+#|
+;; this is a reader problem
+(test (nan? (tanh 1/0)) #t)
+(test (nan? (tanh 1/0+i)) #t)
+(test (nan? (tanh 1/0+1/0i)) #t)
+(test (nan? (tanh 1+1/0i)) #t)
+(test (nan? (tanh 0+1/0i)) #t)
+(test (nan? (tanh 1/0+0i)) #t)
+|#
 
 (test (tanh) 'error)
 (test (tanh "hi") 'error)
@@ -33073,6 +33106,7 @@ why are these different (read-time `#() ? )
 (num-test (sqrt -9.0) 0.0+3.0i)
 (num-test (sqrt (sqrt (sqrt 256))) 2)
 (num-test (sqrt (sqrt (sqrt 1/256))) 1/2)
+(num-test (sqrt 0.1-111i) 7.4531887486175-7.4464771887462i)
 
 (if (integer? (sqrt 4))
     (begin
@@ -34190,6 +34224,8 @@ why are these different (read-time `#() ? )
 (num-test (log (log (log -1))) 0.66457192224882+0.9410294873126i)
 (num-test (/ (log -1) (sqrt -1)) our-pi)
 (num-test (/ (log -8) (log 2)) 3+4.5323601418272i)
+(num-test (log 1/2 1/4) 1/2)
+(num-test (log 1/4 1/2) 2)
 
 (let ((err 0.0)
       (mx 0.0))
@@ -39539,6 +39575,18 @@ why are these different (read-time `#() ? )
 (num-test (make-polar 1.0+0.1i 0.0) 'error)
 (num-test (make-rectangular 1.0 1.0+0.1i) 'error)
 (num-test (make-rectangular 1.0+0.1i 1.0) 'error)
+(test (make-rectangular 0+0/0i 0) 'error)
+(test (make-rectangular 0 0+0/0i) 'error)
+(test (make-polar 0+0/0i 0) 'error)
+(test (make-polar 0 0+0/0i) 'error)
+(test (nan? (make-polar 0 0/0)) #t)
+
+(if with-bignums
+    (begin
+      (test (nan? (make-polar (bignum "0/0") 0)) #t)
+      (test (nan? (make-polar 0 (bignum "0/0"))) #t)
+      (test (nan? (make-rectangular (bignum "0/0") 0)) #t)
+      (test (nan? (make-rectangular 0 (bignum "0/0"))) #t)))
 
 (num-test (make-polar 1.0 (* 200 pi)) 1.0)
 (num-test (make-polar 1.0 (* 2000000 pi)) 1.0)
@@ -40104,6 +40152,7 @@ why are these different (read-time `#() ? )
 (num-test (floor 2.6) 2)
 (num-test (floor 2.5) 2)
 (num-test (floor -1/123400000) -1)
+(num-test (floor 1.0-00.i) 1)
 
 (test (floor) 'error)
 (test (floor 1.23+1.0i) 'error)
@@ -41185,6 +41234,7 @@ why are these different (read-time `#() ? )
 (test (integer? 1/0) #f)
 (test (exact? 1/0) #f)
 (test (number? 0/0) #t)
+(test (integer? #e.1e010) #t)
 
 (test (real? 1/2) #t)
 (test (real? 2) #t)
@@ -51807,7 +51857,8 @@ why are these different (read-time `#() ? )
 
 
 ;;; --------------------------------------------------------------------------------
-;;; string->number and number->string
+;;; string->number 
+;;; number->string
 ;;;
 ;;;   this section needs some serious reorganization!
 
@@ -52091,6 +52142,8 @@ why are these different (read-time `#() ? )
 (test (string->number "1.0" most-negative-fixnum) 'error)
 (test (string->number "1.0" most-positive-fixnum) 'error)
 (test (number->string 16 17) 'error)
+(test (number->string -0. 11 -) 'error)
+(test (string->number "11" 2 -) 'error)
 
 ;; duplicate various non-digit chars
 (for-each

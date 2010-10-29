@@ -6686,7 +6686,9 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 		  return(s7_make_ratio(sc, int_to_int(dn, -y), int_to_int(nm, -y)));
 		}
 	    }
-	  /* occasionally int^rat can be int but it happens so infrequently it's probably not worth checking */
+	  /* occasionally int^rat can be int but it happens so infrequently it's probably not worth checking
+	   *  one possibly easy case: (expt 1 1/2) -> 1 etc
+	   */
 	}
     }
 
@@ -11013,6 +11015,10 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 }
 
 
+#if DEBUGGING
+  static char *eval_string_string = NULL;
+#endif
+
 static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_eval_string "(eval-string str :optional env) returns the result of evaluating the string str as Scheme code"
@@ -11027,6 +11033,10 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
  	return(s7_wrong_type_arg_error(sc, "eval-string", 2, cadr(args), "an environment"));
       sc->envir = cadr(args);
     }
+
+#if DEBUGGING
+  eval_string_string = s7_string(car(args));
+#endif
   
   old_port = sc->input_port;
   port = s7_open_input_string(sc, s7_string(car(args)));
@@ -18803,6 +18813,20 @@ static bool next_for_each(s7_scheme *sc)
 }
 
 
+/* PERHAPS: T_SEQUENCE (obj needs length and apply) 
+ */
+static bool is_sequence(s7_scheme *sc, s7_pointer p)
+{
+  return((is_pair(p)) ||
+	 (s7_is_vector(p)) ||
+	 (s7_is_string(p)) ||
+	 (s7_is_hash_table(p)) ||
+	 (is_c_object(p)) ||
+	 (is_s_object(p)) ||
+	 (p == sc->NIL));
+}
+
+
 static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 {
   #define H_for_each "(for-each proc object . objects) applies proc to each element of the objects traversed in parallel. \
@@ -18816,13 +18840,22 @@ Each object can be a list (the normal case), string, vector, hash-table, or any 
   if (!is_procedure(sc->code))
     return(s7_wrong_type_arg_error(sc, "for-each", 1, sc->code, "a procedure"));
 
+  /* before checking len=0, we need to check that the arguments are all sequences (this is like our handling of args to + for example)
+   *   otherwise (for-each = "" 123) -> #<unspecified> 
+   * the function may not actually be applicable to its sequence elements, but that isn't an error:
+   *   (map abs "") -> '()
+   */
+  for (i = 2, x = cdr(args); x != sc->NIL; x = cdr(x), i++)
+    if (!is_sequence(sc, car(x)))
+      return(s7_wrong_type_arg_error(sc, "for-each", i, car(x), "a sequence"));
+
   sc->y = args;
   obj = cadr(args); 
 
   len = applicable_length(sc, obj);
   if (len < 0)
     return(s7_wrong_type_arg_error(sc, "for-each", 2, obj, "a vector, list, string, or applicable object"));
-  if (len == 0) return(sc->UNSPECIFIED);    /* circular -> LONG_MAX in this case, so 0 -> nil */
+    if (len == 0) return(sc->UNSPECIFIED);    /* circular -> LONG_MAX in this case, so 0 -> nil */
 
   sc->x = make_list_1(sc, sc->NIL);
   sc->z = make_list_1(sc, obj);
@@ -18966,6 +18999,10 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
     return(s7_wrong_type_arg_error(sc, "map", 1, sc->code, "a procedure"));
 
   /* an object with a setter is a procedure, but (map "hi" '(1 0)) because (procedure? "hi") is #f */
+
+  for (i = 2, x = cdr(args); x != sc->NIL; x = cdr(x), i++)
+    if (!is_sequence(sc, car(x)))
+      return(s7_wrong_type_arg_error(sc, "map", i, car(x), "a sequence"));
 
   sc->y = args;                     /* gc protect */
   obj = cadr(args); 
@@ -24000,6 +24037,7 @@ static char *mpc_to_string(mpc_t val, int radix)
   rl = mpfr_to_string(r, radix);
   mpc_imag(r, val, GMP_RNDN);
   im = mpfr_to_string(r, radix);
+
   len = safe_strlen(rl) + safe_strlen(im) + 128;
   tmp = (char *)malloc(len * sizeof(char));
   snprintf(tmp, len, "%s%s%si", rl, (im[0] == '-') ? "" : "+", im);
@@ -24339,7 +24377,11 @@ static s7_pointer s7_number_to_big_complex(s7_scheme *sc, s7_pointer p)
 
 static s7_pointer make_big_real_or_complex(s7_scheme *sc, s7_pointer z)
 {
-  if (mpfr_cmp_ui(mpc_imagref(S7_BIG_COMPLEX(z)), 0) == 0)
+  if (mpfr_cmp_ui(mpc_imagref(S7_BIG_COMPLEX(z)), 0) == 0) 
+
+    /* TODO: this will lose NaNs
+     *   in all these cases, use s7_image_part or its equivalent
+     */
     {
       mpfr_t *n;
       n = (mpfr_t *)malloc(sizeof(mpfr_t));
@@ -25788,7 +25830,9 @@ static s7_pointer big_angle(s7_scheme *sc, s7_pointer args)
 
       if (c_object_type(p) == big_real_tag)
 	{
-	  if (mpfr_cmp_ui(S7_BIG_REAL(p), 0) >= 0)
+	  /* mpfr_get_d returns inf or -inf if the arg is too large for a double */
+
+	  if (mpfr_cmp_ui(S7_BIG_REAL(p), 0) >= 0)     /* TODO: (angle (bignum "0/0")) -> 0.0, but (angle 0/0) -> nan.0? (same for make-polar etc) */
 	    return(real_zero);
 	  return(big_pi(sc));
 	}
@@ -25925,6 +25969,11 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 	      p1_cmp = (mpfr_cmp_ui(S7_BIG_REAL(p1), 0));
 	      if (p1_cmp == 0)
 		return(s7_out_of_range_error(sc, "log base,", 2, p1, "can't be 0.0"));
+
+	      /* TODO: (log 1.0 (bignum "0/0")) -> ;log base, argument 2, @.NaN@E1, is out of range (can't be 0.0)
+	       *   (log 1.0 (log 0.0)) is 0.0? (same for any arg)
+	       */
+
 	      p1_cmp = (mpfr_cmp_ui(S7_BIG_REAL(p1), 1));
 	      if (p1_cmp == 0)
 		return(s7_out_of_range_error(sc, "log base,", 2, p1, "can't be 1.0"));
@@ -25990,6 +26039,8 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 	mpc_clear(base);
 
 	if (mpfr_cmp_ui(mpc_imagref(*n), 0) == 0)    /* (log -1.0 -1.0) */
+	  /* TODO: (log (- (exp (log 0.0)))) -> -@.Inf@E1+0.0i, (log (bignum "0.0")) -> -@.Inf@E1+0.0i -- why the 0i -- is this a NaN?
+	   */
 	  {
 	    mpfr_t *x;
 	    x = (mpfr_t *)malloc(sizeof(mpfr_t));
@@ -26164,18 +26215,26 @@ static s7_pointer big_trig(s7_scheme *sc, s7_pointer args, s7_function g_trig,
   n = (mpc_t *)malloc(sizeof(mpc_t));
   mpc_init(*n);
   mpc_trig(*n, S7_BIG_COMPLEX(p), MPC_RNDNN);  
-  /* (sin (bignum "1e15+1e15i")) cause mpc to hang (e9 is ok, but e10 hangs) 
+  /* (sin (bignum "1e15+1e15i")) causes mpc to hang (e9 is ok, but e10 hangs) 
    *   (sin (bignum "0+1e10i")) -> 0+inf (sin (bignum "1+1e10i")) hangs
+   *
+   * before comparing imag-part to 0, we need to look for NaN and inf, else:
+   *    (sinh 0+0/0i) -> 0.0
+   *    (sinh (log 0.0)) -> inf.0
    */
-  if (mpfr_cmp_ui(mpc_imagref(*n), 0) == 0)
-    {
-      mpfr_t *z;
-      z = (mpfr_t *)malloc(sizeof(mpfr_t));
-      mpfr_init_set(*z, mpc_realref(*n), GMP_RNDN);
-      mpc_clear(*n);
-      free(n);
-      return(s7_make_object(sc, big_real_tag, (void *)z));
-    }
+  {
+    double ix;
+    ix = mpfr_get_d(mpc_imagref(*n), GMP_RNDN);
+    if (ix == 0.0)
+      {
+	mpfr_t *z;
+	z = (mpfr_t *)malloc(sizeof(mpfr_t));
+	mpfr_init_set(*z, mpc_realref(*n), GMP_RNDN);
+	mpc_clear(*n);
+	free(n);
+	return(s7_make_object(sc, big_real_tag, (void *)z));
+      }
+  }
   return(s7_make_object(sc, big_complex_tag, (void *)n));
 }
 
@@ -26200,6 +26259,7 @@ static s7_pointer big_tan(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer big_sinh(s7_scheme *sc, s7_pointer args)
 {
+  /* currently (sinh 0+0/0i) -> 0.0? */
   return(big_trig(sc, args, g_sinh, mpfr_sinh, mpc_sinh, TRIG_NO_CHECK));
 }
 
@@ -26522,7 +26582,7 @@ static s7_pointer big_acosh(s7_scheme *sc, s7_pointer args)
 	  (c_object_type(p) == big_real_tag))
 	{
 	  p = promote_number(sc, T_BIG_REAL, p);
-	  if (mpfr_cmp_ui(S7_BIG_REAL(p), 1) >= 0)
+	  if (mpfr_cmp_ui(S7_BIG_REAL(p), 1) >= 0) /* TODO: (acosh (bignum "0/0")) -> @.NaN@E-484020625, but nannani? */
 	    {
 	      mpfr_t *n;
 	      n = (mpfr_t *)malloc(sizeof(mpfr_t));
@@ -28758,8 +28818,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "with-output-to-file",     g_with_output_to_file,     2, 0, false, H_with_output_to_file);
   
   
-  s7_define_function(sc, "number->string",          g_number_to_string,        1, 2, false, H_number_to_string);
-  s7_define_function(sc, "string->number",          g_string_to_number,        1, 2, false, H_string_to_number);
+  s7_define_function(sc, "number->string",          g_number_to_string,        1, 1, false, H_number_to_string);
+  s7_define_function(sc, "string->number",          g_string_to_number,        1, 1, false, H_string_to_number);
   s7_define_function(sc, "make-polar",              g_make_polar,              2, 0, false, H_make_polar);
   s7_define_function(sc, "make-rectangular",        g_make_rectangular,        2, 0, false, H_make_rectangular);
   s7_define_function(sc, "magnitude",               g_magnitude,               1, 0, false, H_magnitude);
@@ -29069,8 +29129,7 @@ s7_scheme *s7_init(void)
 				   sc->F, 
 				   s7_make_function(sc, "(set *safety*)", g_safety_set, 2, 0, false, "called if *safety* is set"), 
 				   s7_make_function(sc, "(bind *safety*)", g_safety_bind, 2, 0, false, "called if *safety* is bound")));
-  /* TODO: doc *safety*
-   */
+
   g_provide(sc, make_list_1(sc, make_symbol(sc, "s7")));
 
 #if WITH_PROFILING
