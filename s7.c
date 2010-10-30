@@ -15670,6 +15670,7 @@ static s7_pointer g_object_set(s7_scheme *sc, s7_pointer args)
   obj = (s_type_t *)s7_object_value(car(args));
   car(args) = obj->value;                           /* this should be safe -- we cons up this list in OP_SET */
   push_stack(sc, opcode(OP_APPLY), args, object_types[tag].setter_func);
+  return(sc->UNSPECIFIED);
 }
 
 
@@ -18813,8 +18814,6 @@ static bool next_for_each(s7_scheme *sc)
 }
 
 
-/* PERHAPS: T_SEQUENCE (obj needs length and apply) 
- */
 static bool is_sequence(s7_scheme *sc, s7_pointer p)
 {
   return((is_pair(p)) ||
@@ -24377,11 +24376,11 @@ static s7_pointer s7_number_to_big_complex(s7_scheme *sc, s7_pointer p)
 
 static s7_pointer make_big_real_or_complex(s7_scheme *sc, s7_pointer z)
 {
-  if (mpfr_cmp_ui(mpc_imagref(S7_BIG_COMPLEX(z)), 0) == 0) 
+  double ipart;
 
-    /* TODO: this will lose NaNs
-     *   in all these cases, use s7_image_part or its equivalent
-     */
+  ipart = mpfr_get_d(mpc_imagref(S7_BIG_COMPLEX(z)), GMP_RNDN);
+  /* not mpfr_cmp_ui to 0 here because that misleads us when imag_part is NaN or inf */
+  if (ipart == 0.0)
     {
       mpfr_t *n;
       n = (mpfr_t *)malloc(sizeof(mpfr_t));
@@ -25830,9 +25829,10 @@ static s7_pointer big_angle(s7_scheme *sc, s7_pointer args)
 
       if (c_object_type(p) == big_real_tag)
 	{
+	  double x;
+	  x = mpfr_get_d(S7_BIG_REAL(p), GMP_RNDN);
 	  /* mpfr_get_d returns inf or -inf if the arg is too large for a double */
-
-	  if (mpfr_cmp_ui(S7_BIG_REAL(p), 0) >= 0)     /* TODO: (angle (bignum "0/0")) -> 0.0, but (angle 0/0) -> nan.0? (same for make-polar etc) */
+	  if (x >= 0.0)
 	    return(real_zero);
 	  return(big_pi(sc));
 	}
@@ -25861,12 +25861,14 @@ static s7_pointer big_make_rectangular(s7_scheme *sc, s7_pointer args)
     {
       mpc_t *n;
       mpfr_t rl, im;
+      double x;
 
-      if ((!is_c_object(p1)) && (s7_real(p1) == 0.0))
+      if ((!is_c_object(p1)) && (s7_real(p1) == 0.0)) /* imag-part is not bignum and is 0.0 */
 	return(p0);
 
       mpfr_init_set(im, S7_BIG_REAL(promote_number(sc, T_BIG_REAL, p1)), GMP_RNDN);
-      if (mpfr_cmp_ui(im, 0) == 0)
+      x = mpfr_get_d(im, GMP_RNDN);
+      if (x == 0.0)                                   /* imag-part is bignum 0.0 */
 	{
 	  mpfr_clear(im);
 	  return(p0);
@@ -25886,31 +25888,50 @@ static s7_pointer big_make_rectangular(s7_scheme *sc, s7_pointer args)
 static s7_pointer big_make_polar(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer p0, p1;
+
   p0 = car(args);
   p1 = cadr(args);
+  
   if (((is_c_object(p0)) || (is_c_object(p1))) && 
       (s7_is_real(p0)) && 
       (s7_is_real(p1)))
     {
       mpc_t *n;
       mpfr_t ang, mag, rl, im;
-
-      if ((!is_c_object(p1)) && (s7_real(p1) == 0.0))
-	return(p0);
-      if ((!is_c_object(p0)) && (s7_real(p0) == 0.0))
-	return(p0);
-
-      mpfr_init_set(mag, S7_BIG_REAL(promote_number(sc, T_BIG_REAL, p0)), GMP_RNDN);
-      if (mpfr_cmp_ui(mag, 0) == 0)
-	return(p0);
+      double x, y;
 
       mpfr_init_set(ang, S7_BIG_REAL(promote_number(sc, T_BIG_REAL, p1)), GMP_RNDN);
+      y = mpfr_get_d(ang, GMP_RNDN);
+
+      if (isnan(y))
+	{
+	  mpfr_clear(ang);
+	  return(s7_make_real(sc, NAN));
+	}
+
+      mpfr_init_set(mag, S7_BIG_REAL(promote_number(sc, T_BIG_REAL, p0)), GMP_RNDN);
+      x = mpfr_get_d(mag, GMP_RNDN);
+
+      if (isnan(x))
+	{
+	  mpfr_clear(ang);
+	  mpfr_clear(mag);
+	  return(s7_make_real(sc, NAN));
+	}
+
+      if ((x == 0.0) || (y == 0.0))
+	{
+	  mpfr_clear(ang);
+	  mpfr_clear(mag);
+	  return(p0);
+	}
 
       mpfr_init_set(im, ang, GMP_RNDN);
       mpfr_sin(im, im, GMP_RNDN);
       mpfr_mul(im, im, mag, GMP_RNDN);
-
-      if (mpfr_cmp_ui(im, 0) == 0)
+      
+      x = mpfr_get_d(im, GMP_RNDN);
+      if (x == 0.0)
 	{
 	  mpfr_clear(im);
 	  mpfr_clear(ang);
@@ -25951,63 +25972,43 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 	return(s7_wrong_type_arg_error(sc, "log base,", 2, p1, "a number"));
     }
 
-  if ((IS_BIG(p0)) ||
-      ((p1) && (IS_BIG(p1))))
+  if ((s7_is_real(p0)) &&
+      ((!p1) || (s7_is_real(p1))))
     {
-      if ((s7_is_real(p0)) &&
-	  ((!p1) || (s7_is_real(p1))))
+      double x, y = 0.0;
+
+      p0 = promote_number(sc, T_BIG_REAL, p0);
+      x = mpfr_get_d(S7_BIG_REAL(p0), GMP_RNDN);
+      if (isnan(x))
+	return(s7_make_real(sc, NAN));
+
+      if (p1) 
 	{
-	  int p1_cmp = 0;
-	  p0 = promote_number(sc, T_BIG_REAL, p0);
-	  if (p1) 
+	  p1 = promote_number(sc, T_BIG_REAL, p1);
+	  y = mpfr_get_d(S7_BIG_REAL(p1), GMP_RNDN);
+
+	  if ((y == 0.0) || (y == 1.0))
+	    return(s7_out_of_range_error(sc, "log base,", 2, p1, "can't be 0.0 or 1.0"));
+	  if (isnan(y))
+	    return(s7_make_real(sc, NAN));
+	}
+
+      if (x == 0.0)
+	return(s7_make_complex(sc, -INFINITY, M_PI));
+      if (x == 1.0)
+	return(real_zero);
+
+      if ((x > 0.0) && (y >= 0.0))
+	{
+	  mpfr_t *n;
+	  mpfr_t base;
+	  n = (mpfr_t *)malloc(sizeof(mpfr_t));
+	  mpfr_init_set(*n, S7_BIG_REAL(p0), GMP_RNDN);
+	  mpfr_log(*n, *n, GMP_RNDN);
+	  if (!p1)
 	    {
-	      if ((!is_c_object(p1)) &&
-		  ((s7_is_zero(p1)) || (s7_is_one(p1))))
-		return(s7_out_of_range_error(sc, "log base,", 2, p1, "can't be 0.0 or 1.0"));
-
-	      p1 = promote_number(sc, T_BIG_REAL, p1);
-	      p1_cmp = (mpfr_cmp_ui(S7_BIG_REAL(p1), 0));
-	      if (p1_cmp == 0)
-		return(s7_out_of_range_error(sc, "log base,", 2, p1, "can't be 0.0"));
-
-	      /* TODO: (log 1.0 (bignum "0/0")) -> ;log base, argument 2, @.NaN@E1, is out of range (can't be 0.0)
-	       *   (log 1.0 (log 0.0)) is 0.0? (same for any arg)
-	       */
-
-	      p1_cmp = (mpfr_cmp_ui(S7_BIG_REAL(p1), 1));
-	      if (p1_cmp == 0)
-		return(s7_out_of_range_error(sc, "log base,", 2, p1, "can't be 1.0"));
-	    }
-	  if ((mpfr_cmp_ui(S7_BIG_REAL(p0), 0) > 0) &&
-	      ((!p1) || (p1_cmp > 0)))
-	    {
-	      mpfr_t *n;
-	      mpfr_t base;
-	      n = (mpfr_t *)malloc(sizeof(mpfr_t));
-	      mpfr_init_set(*n, S7_BIG_REAL(p0), GMP_RNDN);
-	      mpfr_log(*n, *n, GMP_RNDN);
-	      if (!p1)
-		{
-		  /* presumably log is safe with regard to real-part overflow giving a bogus int? */
-		  if ((s7_is_rational(car(args))) &&
-		      (mpfr_integer_p(*n) != 0))
-		    {
-		      mpz_t *k;
-		      k = (mpz_t *)malloc(sizeof(mpz_t));
-		      mpz_init(*k);
-		      mpfr_get_z(*k, *n, GMP_RNDN);
-		      mpfr_clear(*n);
-		      free(n);
-		      return(s7_make_object(sc, big_integer_tag, (void *)k));
-		    }
-		  return(s7_make_object(sc, big_real_tag, (void *)n));
-		}
-	      mpfr_init_set(base, S7_BIG_REAL(p1), GMP_RNDN);
-	      mpfr_log(base, base, GMP_RNDN);
-	      mpfr_div(*n, *n, base, GMP_RNDN);
-	      mpfr_clear(base);
+	      /* presumably log is safe with regard to real-part overflow giving a bogus int? */
 	      if ((s7_is_rational(car(args))) &&
-		  (s7_is_rational(cadr(args))) &&
 		  (mpfr_integer_p(*n) != 0))
 		{
 		  mpz_t *k;
@@ -26020,40 +26021,58 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 		}
 	      return(s7_make_object(sc, big_real_tag, (void *)n));
 	    }
+	  mpfr_init_set(base, S7_BIG_REAL(p1), GMP_RNDN);
+	  mpfr_log(base, base, GMP_RNDN);
+	  mpfr_div(*n, *n, base, GMP_RNDN);
+	  mpfr_clear(base);
+	  if ((s7_is_rational(car(args))) &&
+	      (s7_is_rational(cadr(args))) &&
+	      (mpfr_integer_p(*n) != 0))
+	    {
+	      mpz_t *k;
+	      k = (mpz_t *)malloc(sizeof(mpz_t));
+	      mpz_init(*k);
+	      mpfr_get_z(*k, *n, GMP_RNDN);
+	      mpfr_clear(*n);
+	      free(n);
+	      return(s7_make_object(sc, big_integer_tag, (void *)k));
+	    }
+	  return(s7_make_object(sc, big_real_tag, (void *)n));
 	}
-      p0 = promote_number(sc, T_BIG_COMPLEX, p0);
-      if (p1) p1 = promote_number(sc, T_BIG_COMPLEX, p1);
-      {
-	mpc_t *n;
-	mpc_t base;
-	n = (mpc_t *)malloc(sizeof(mpc_t));
-	mpc_init(*n);
-	mpc_set(*n, S7_BIG_COMPLEX(p0), MPC_RNDNN);
-	mpc_log(*n, *n, MPC_RNDNN);
-	if (!p1)
-	  return(s7_make_object(sc, big_complex_tag, (void *)n));
-	mpc_init(base);
-	mpc_set(base, S7_BIG_COMPLEX(p1), MPC_RNDNN);
-	mpc_log(base, base, MPC_RNDNN);
-	mpc_div(*n, *n, base, MPC_RNDNN);
-	mpc_clear(base);
-
-	if (mpfr_cmp_ui(mpc_imagref(*n), 0) == 0)    /* (log -1.0 -1.0) */
-	  /* TODO: (log (- (exp (log 0.0)))) -> -@.Inf@E1+0.0i, (log (bignum "0.0")) -> -@.Inf@E1+0.0i -- why the 0i -- is this a NaN?
-	   */
-	  {
-	    mpfr_t *x;
-	    x = (mpfr_t *)malloc(sizeof(mpfr_t));
-	    mpfr_init_set(*x, mpc_realref(*n), GMP_RNDN);
-	    mpc_clear(*n);
-	    free(n);
-	    return(s7_make_object(sc, big_real_tag, (void *)x));
-	  }
-
-	return(s7_make_object(sc, big_complex_tag, (void *)n));
-      }
     }
-  return(g_log(sc, args));
+
+  p0 = promote_number(sc, T_BIG_COMPLEX, p0);
+  if (p1) p1 = promote_number(sc, T_BIG_COMPLEX, p1);
+  {
+    mpc_t *n;
+    mpc_t base;
+    double x;
+
+    n = (mpc_t *)malloc(sizeof(mpc_t));
+    mpc_init(*n);
+    mpc_set(*n, S7_BIG_COMPLEX(p0), MPC_RNDNN);
+    mpc_log(*n, *n, MPC_RNDNN);
+    if (!p1)
+      return(s7_make_object(sc, big_complex_tag, (void *)n));
+    mpc_init(base);
+    mpc_set(base, S7_BIG_COMPLEX(p1), MPC_RNDNN);
+    mpc_log(base, base, MPC_RNDNN);
+    mpc_div(*n, *n, base, MPC_RNDNN);
+    mpc_clear(base);
+
+    x = mpfr_get_d(mpc_imagref(*n), GMP_RNDN);
+    if (x == 0.0)
+      {
+	mpfr_t *x;
+	x = (mpfr_t *)malloc(sizeof(mpfr_t));
+	mpfr_init_set(*x, mpc_realref(*n), GMP_RNDN);
+	mpc_clear(*n);
+	free(n);
+	return(s7_make_object(sc, big_real_tag, (void *)x));
+      }
+    
+    return(s7_make_object(sc, big_complex_tag, (void *)n));
+  }
 }
 
 

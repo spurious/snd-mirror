@@ -5,6 +5,11 @@
  *    perhaps a mus module, giving mus:sound-srate in xen, mus:sound-srate in clm, mus_sound_srate in C?
  */
 
+/* TODO: if s7, use s7_make_function_star (see g_make_oscil below).
+ *   The same for cases in snd-dac|region|select|snd
+ *   and since it's so easy in s7, are there are others? -- make-sampler but this complicates the documentation
+ */
+
 #include <mus-config.h>
 
 #if USE_SND
@@ -1831,6 +1836,7 @@ XEN g_mus_file_name(XEN gen)
 
 /* ---------------- oscil ---------------- */
 
+#if (!HAVE_SCHEME)
 static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_make_oscil "(" S_make_oscil " (:frequency *clm-default-frequency*) (:initial-phase 0.0)): return a new " S_oscil " (sinewave) generator"
@@ -1860,14 +1866,43 @@ static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(XEN_FALSE);
 }
 
+#else
+
+static XEN g_make_oscil(XEN frequency, XEN initial_phase)
+{
+  #define H_make_oscil "(" S_make_oscil " (:frequency *clm-default-frequency*) (:initial-phase 0.0)): return a new " S_oscil " (sinewave) generator"
+  mus_any *ge;
+  mus_float_t freq, phase = 0.0;
+
+  if (XEN_FALSE_P(frequency))
+    freq = clm_default_frequency;
+  else 
+    {
+      XEN_ASSERT_TYPE(XEN_NUMBER_P(frequency), frequency, XEN_ARG_1, S_make_oscil, "a number");
+      freq = XEN_TO_C_DOUBLE(frequency);
+      if (freq > (0.5 * mus_srate()))
+	XEN_OUT_OF_RANGE_ERROR(S_make_oscil, XEN_ARG_1, frequency, "freq ~A > srate/2?");
+    }
+
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(initial_phase), initial_phase, XEN_ARG_2, S_make_oscil, "a number");
+  phase = XEN_TO_C_DOUBLE(initial_phase);
+
+  ge = mus_make_oscil(freq, phase);
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(XEN_FALSE);
+}
+#endif
+
 
 static XEN g_oscil(XEN os, XEN fm, XEN pm)
 {
   #define H_oscil "(" S_oscil " gen :optional (fm 0.0) (pm 0.0)): next sample from " S_oscil " gen: val = sin(phase + pm); phase += (freq + fm)"
   mus_float_t fm1 = 0.0, pm1 = 0.0;
+
   XEN_ASSERT_TYPE((MUS_XEN_P(os)) && (mus_oscil_p(XEN_TO_MUS_ANY(os))), os, XEN_ARG_1, S_oscil, "an oscil");
   if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_oscil, "a number");
   if (XEN_NUMBER_P(pm)) pm1 = XEN_TO_C_DOUBLE(pm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(pm), pm, XEN_ARG_3, S_oscil, "a number");
+
   return(C_TO_XEN_DOUBLE(mus_oscil(XEN_TO_MUS_ANY(os), fm1, pm1)));
 }
 
@@ -1884,9 +1919,11 @@ static XEN g_mus_apply(XEN arglist)
   #define H_mus_apply "(" S_mus_apply " gen args...): apply gen to args"
   int arglist_len;
   mus_any *gen;
+
   arglist_len = XEN_LIST_LENGTH(arglist);
   if ((arglist_len > 3) || (arglist_len == 0)) 
     return(C_TO_XEN_DOUBLE(0.0));
+
 #if HAVE_FORTH
   XEN_ASSERT_TYPE(MUS_XEN_P(XEN_CAR(arglist)), XEN_CAR(arglist), XEN_ARG_1, S_mus_apply, "a generator");
 #endif
@@ -7826,7 +7863,11 @@ XEN_NARGIFY_1(g_mus_order_w, g_mus_order)
 XEN_NARGIFY_1(g_mus_data_w, g_mus_data)
 XEN_NARGIFY_2(g_mus_set_data_w, g_mus_set_data)
 XEN_NARGIFY_1(g_oscil_p_w, g_oscil_p)
+#if (!HAVE_SCHEME)
 XEN_ARGIFY_4(g_make_oscil_w, g_make_oscil)
+#else
+XEN_NARGIFY_2(g_make_oscil_w, g_make_oscil)
+#endif
 XEN_ARGIFY_3(g_oscil_w, g_oscil)
 XEN_VARGIFY(g_mus_apply_w, g_mus_apply)
 XEN_VARGIFY(g_make_delay_w, g_make_delay)
@@ -8547,7 +8588,11 @@ static void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mus_xcoeffs, g_mus_xcoeffs_w, 1, 0, 0, H_mus_xcoeffs);
   XEN_DEFINE_PROCEDURE(S_mus_ycoeffs, g_mus_ycoeffs_w, 1, 0, 0, H_mus_ycoeffs);
   XEN_DEFINE_PROCEDURE(S_oscil_p,     g_oscil_p_w,     1, 0, 0, H_oscil_p);
+#if (!HAVE_SCHEME)
   XEN_DEFINE_PROCEDURE(S_make_oscil,  g_make_oscil_w,  0, 4, 0, H_make_oscil);
+#else
+  XEN_DEFINE_PROCEDURE_STAR(S_make_oscil, g_make_oscil_w, "(frequency #f) (initial-phase 0.0)", H_make_oscil);
+#endif
   XEN_DEFINE_PROCEDURE(S_oscil,       g_oscil_w,       1, 2, 0, H_oscil);
   XEN_DEFINE_PROCEDURE(S_mus_apply,   g_mus_apply_w,   0, 0, 1, H_mus_apply);
 

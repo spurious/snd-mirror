@@ -1093,18 +1093,16 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
   #define C_TO_XEN_COMPLEX(a)                      a
 #endif
 
-#if HAVE_MAKE_RATIO
-  #define XEN_HAVE_RATIOS                          1
-  #define XEN_NUMERATOR(Arg)                       s7_numerator(Arg)
-  #define XEN_DENOMINATOR(Arg)                     s7_denominator(Arg)
-  #define XEN_RATIONALIZE(Arg1, Arg2)              s7_rationalize(s7, XEN_TO_C_DOUBLE(Arg1), XEN_TO_C_DOUBLE(Arg2))
-  #define XEN_RATIO_P(Arg)                         s7_is_ratio(Arg)
-  #define XEN_MAKE_RATIO(Num, Den)                 s7_make_ratio(s7, XEN_TO_C_INT64_T(Num), XEN_TO_C_INT64_T(Den))
-#endif
+#define XEN_HAVE_RATIOS                            1
+#define XEN_NUMERATOR(Arg)                         s7_numerator(Arg)
+#define XEN_DENOMINATOR(Arg)                       s7_denominator(Arg)
+#define XEN_RATIONALIZE(Arg1, Arg2)                s7_rationalize(s7, XEN_TO_C_DOUBLE(Arg1), XEN_TO_C_DOUBLE(Arg2))
+#define XEN_RATIO_P(Arg)                           s7_is_ratio(Arg)
+#define XEN_MAKE_RATIO(Num, Den)                   s7_make_ratio(s7, XEN_TO_C_INT64_T(Num), XEN_TO_C_INT64_T(Den))
 
 #define C_STRING_TO_XEN_FORM(Str)                  s7_eval_c_string(s7, Str)
 #define XEN_EVAL_C_STRING(Arg)                     s7_eval_c_string(s7, Arg)
-#define XEN_TO_STRING(Obj)                         s7_object_to_string(s7, Obj)
+#define XEN_TO_STRING(Obj)                         s7_object_to_string(s7, Obj, false)
 
 #define XEN_SYMBOL_TO_C_STRING(Arg)                s7_symbol_name(Arg)
 #define XEN_SYMBOL_P(Arg)                          s7_is_symbol(Arg)
