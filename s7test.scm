@@ -317,6 +317,15 @@ yow!! -- I'm using mpc_cmp
 (test (eq? (if #f 1) 1) #f)
 (test (eq? '() '(#||#)) #t)
 (test (eq? '() '(#!@%$&!#)) #t)
+(test (eq? '#||#hi 'hi) #t) ; ??
+(test (eq? '; a comment
+         hi 'hi) #t) ; similar:
+    (test (cadr '#| a comment |#(+ 1 2)) 1)
+    (test `(+ 1 ,@#||#(list 2 3)) '(+ 1 2 3))
+    (test `(+ 1 ,#||#(+ 3 4)) '(+ 1 7))
+    ;; but not splitting the ",@" or splitting a number:
+    (test (+ 1 2.0+#||#3i) 'error)
+    (test `(+ 1 ,#||#@(list 2 3)) 'error)
 (test (eq? #||# (#|%%|# append #|^|#) #|?|# (#|+|# list #|<>|#) #||#) #t)
 (test (eq? '() ;a comment
 	   '()) #t)
@@ -544,6 +553,7 @@ yow!! -- I'm using mpc_cmp
 (test (equal? '#(1 2) (vector 1 2.0)) #f) ; 2 not equal 2.0!
 (test (equal? '(1 . 2) (cons 1 2)) #t)
 (test (equal? '(1 #||# . #||# 2) (cons 1 2)) #t)
+(test (- '#||#1) -1) ; hmm
 (test (equal? '#(1 "hi" #\a) (vector 1 "hi" #\a)) #t)
 (test (equal? '#((1 . 2)) (vector (cons 1 2))) #t)
 (test (equal? '#(1 "hi" #\a (1 . 2)) (vector 1 "hi" #\a (cons 1 2))) #t)
@@ -2825,6 +2835,7 @@ yow!! -- I'm using mpc_cmp
 (test (let ((lst (list 1 2))) (list (apply cons lst) lst)) '((1 . 2) (1 2)))
 (test (let ((lst (list 1 2))) (list lst (apply cons lst))) '((1 2) (1 . 2)))
 (test (cdadr (let ((lst (list 1 2))) (list (apply cons lst) lst))) '(2))
+(test (cons '+ '=) '(+ . =))
 (test (cons 1 '()) '(
                       1
 		       ))
@@ -4336,6 +4347,9 @@ yow!! -- I'm using mpc_cmp
 (test (append '(1) 2 3) 'error)
 (test (let ((lst (list 1 2 3))) (append lst lst)) '(1 2 3 1 2 3))
 (test (append ''1 ''1) '(quote 1 quote 1))
+(test (append '(1 2 . 3) '(4)) 'error)
+(test (append '(1 2 . 3)) '(1 2 . 3))
+(test (append '(4) '(1 2 . 3)) '(4 1 2 . 3))
 
 (for-each
  (lambda (arg)
@@ -4585,6 +4599,8 @@ yow!! -- I'm using mpc_cmp
 (test (vector-ref '#() 0) 'error)
 (test (vector-ref '#() -1) 'error)
 (test (vector-ref '#() 1) 'error)
+(test (vector-ref #(1 2 3) (floor .1)) 1)
+(test (vector-ref #(1 2 3) (floor 0+0i)) 1)
 
 (test (#(1 2) 1) 2)
 (test (#(1 2) 1 2) 'error)
@@ -4602,6 +4618,7 @@ yow!! -- I'm using mpc_cmp
 ;; these 2 are read-errors
 ;(test #2/3d(1 2) 'error)
 ;(test #2.1d(1 2) 'error)
+(test (#(#(#(#t))) 0 0 0) #t)
 
 
 (let ((v #(1 2 3)))
@@ -11327,6 +11344,11 @@ yow!! -- I'm using mpc_cmp
 (test ((values +) 1 2 3) 6)
 (test ((values "hi" 0)) #\h)
 (test ((values + 1) (values 2 3) 4) 10)
+(test ((values - 10)) -10)
+(test ((values - -10) 0) -10) ; looks odd but it's (- -10 0) that is (- a) != (- a 0)
+(test ((values - 2 3) 0) -1)
+(test ((values - 2 3) 1) -2)
+(test ((values - 2 3) 2) -3)  ; it's actually (- 2 3 2) -> -3
 
 (test (let ((str "hi")) (set! ((values str 0) 0) #\x) str) 'error)
 (test (let ((str "hi")) (set! ((values str) 0) #\x) str) "xi")
@@ -14539,6 +14561,7 @@ why are these different (read-time `#() ? )
 
 (test (equal? (sort! (vector 3 4 8 2 0 1 5 9 7 6) <) (vector 0 1 2 3 4 5 6 7 8 9)) #t)
 (test (equal? (sort! '#() <) '#()) #t)
+(test (sort! '(1 2 . 3) <) 'error)
 
 (test (call/cc (lambda (return) (sort! '(1 2 3) (lambda (a b) (return "oops"))))) "oops")
 
@@ -18126,6 +18149,8 @@ why are these different (read-time `#() ? )
 (test ((do ((i 0 (+ i 1))) ((= i 1) (lambda () 3)))) 3)
 (test (dynamic-wind s7-version s7-version s7-version) (s7-version))
 (test ((((lambda - -) -) 0) 1) -1)
+(num-test ((list .(log 0)) 1) 0)
+(num-test (((cons .(log 0)) 0) 1) 0.0)
 
 (test (+ (+) (*)) 1)
 (test (modulo (lcm) (gcd)) 1)
@@ -38971,6 +38996,7 @@ why are these different (read-time `#() ? )
 (if with-bignums (num-test (magnitude most-negative-fixnum) 9223372036854775808))
 (if with-bignums (num-test (abs most-negative-fixnum) 9223372036854775808))
 
+(test (abs 0+0i) 0.0)
 (test (abs) 'error)
 (test (abs 1.23+1.0i) 'error)
 (test (abs 1.23 1.23) 'error)
@@ -38978,6 +39004,8 @@ why are these different (read-time `#() ? )
 (test (magnitude "hi") 'error)
 (test (magnitude 1.0+23.0i 1.0+23.0i) 'error)
 (num-test (abs 1.0+0.1i) 'error)
+(test (positive? (abs (real-part (log 0.0)))) #t)
+(test (nan? (abs 1/0)) #t)
 
 
 
@@ -52681,6 +52709,7 @@ why are these different (read-time `#() ? )
 (num-test (string->number "#e1+0i") 1)
 (num-test (string->number "#x#e1+0i") 1)
 (num-test (string->number "#e#x1+0i") 1)
+(num-test (string->number "#x1/7e2") 1/2018)
 
 (num-test (string->number "0.1e00" 2) 0.5)
 (num-test (string->number "10.101" 2) 2.625)

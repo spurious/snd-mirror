@@ -4071,7 +4071,7 @@ One simple way to ensure immutability is to use copy:
 "hiho"
 </pre>
 
-<p>One gotcha lurks beneath this placid surface.  s7 normally tries to optimize garbage collection by
+<p>A serpent lurks beneath this placid surface.  s7 normally tries to optimize garbage collection by
 removing some constants from the heap.  If that constant is a list or a vector, and you later
 set some member of it to something that needs GC protection, nobody in the heap points to it, so
 it is GC'd.  Here is an example:
