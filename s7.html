@@ -2778,6 +2778,10 @@ This is similar to trying to read from a closed input port.
 
 <p>The last eight take the usual numeric arguments to specify field width and precision.
 </p>
+<p>
+<code>(format #f ...)</code> simply returns the formatted string; <code>(format #t ...)</code>
+also sends it to *stdout*.  To send the string to *stderr* instead, <code>(format *stderr* ...)</code>.
+</p>
 
 <small>
 <blockquote>

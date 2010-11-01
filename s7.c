@@ -10328,6 +10328,8 @@ static void make_standard_ports(s7_scheme *sc)
   sc->input_port = sc->standard_input;
   sc->output_port = sc->standard_output;
   sc->error_port = sc->standard_error;
+  sc->current_file = NULL;
+  sc->current_line = -1;
 }
 
 
@@ -18310,9 +18312,13 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
 	{
 	  len = safe_strlen(recent_input) + safe_strlen(errmsg) + safe_strlen(sc->current_file) + 64;
 	  msg = (char *)malloc(len * sizeof(char));
-	  len = snprintf(msg, len, "%s: %s, last top-level form at %s[%d]", 
-			 errmsg, (recent_input) ? recent_input : "",
-			 sc->current_file, sc->current_line);
+
+	  if ((sc->current_file) &&
+	      (sc->current_line >= 0))
+	    len = snprintf(msg, len, "%s: %s, last top-level form at %s[%d]", 
+			   errmsg, (recent_input) ? recent_input : "",
+			   sc->current_file, sc->current_line);
+	  else len = snprintf(msg, len, "%s: %s", errmsg, (recent_input) ? recent_input : "");
 	}
       
       if (recent_input) free(recent_input);
@@ -20625,6 +20631,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (sc->tok == TOKEN_EOF)
 	sc->value = sc->EOF_OBJECT;
+      sc->current_file = NULL;
       goto START;
       
       
@@ -20639,6 +20646,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = sc->value;
 	  goto EVAL;             /* we read an expression, now evaluate it, and return to read the next */
 	}
+      sc->current_file = NULL;
       return(sc->F);
       
       
@@ -20655,6 +20663,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       s7_close_input_port(sc, sc->input_port);
       pop_input_port(sc);
+      sc->current_file = NULL;
       goto START;
       
       
@@ -29338,6 +29347,60 @@ s7_scheme *s7_init(void)
  *
  * non-error conditions in CL would be better handled with hooks or watchers
  *   need a way to see what hooks are available, local-hook-function, how to invoke the list.
+ *
+ * here's a scheme side hook implementation, but we also need the C side, so it probably
+ *   is better to use the xen.c code.
+(begin
+
+  (define make-hook #f)
+  (define hook? #f)
+  (define hook-empty? #f)
+  (define remove-hook! #f)
+  (define reset-hook! #f)
+  (define hook->list #f)
+  (define run-hook #f)
+  (define add-hook! #f)
+
+  (let* ((hook-type (make-type :name "hook" 
+			       :getter (lambda (hook) (vector-ref hook 0))
+			       :setter (lambda (hook value) (vector-set! hook 0 value))
+			       :print (lambda (hook) (format #f "<hook: ~A>" (vector-ref hook 0)))))
+	 (? (car hook-type))
+	 (make (cadr hook-type))
+	 (ref (caddr hook-type)))
+
+    (set! make-hook (lambda args (make (vector '()))))
+    (set! hook? ?)
+    (set! hook-empty? (lambda (hook) (null? (hook))))
+    (set! reset-hook! (lambda (hook) (set! (hook) '())))
+    (set! remove-hook! (lambda (hook func)
+			 (set! (hook)
+			       (let loop ((l l) 
+					  (result '()))
+				 (cond ((null? l) (reverse! result))
+				       ((eq? func (car l)) 
+					(loop (cdr l) 
+					      result))
+				       (else (loop (cdr l) 
+						   (cons (car l) result))))))))
+    (set! hook->list (lambda (hook) (hook)))
+    (set! add-hook! (lambda (hook func)
+		      (set! (hook) (cons func (hook)))))
+    (set! run-hook (lambda (hook . args)
+		     (let loop ((lst (hook)))
+		       (if (not (null? lst))
+			   (begin
+			     (apply (car lst) args)
+			     (loop (cdr lst)))))))))
+
+ * in any case, run-hook should be hook/s7_hook
+ *   so in C, you'd invoke it via s7_hook(sc, hook, ...) and in scheme (hook <hook> ...)
+ *   defined via (make-hook) or s7_make_hook(sc)
+ *   typed via (hook? obj) or s7_is_hook(obj)
+ *   and all other refs go to the hook list directly (i.e. no hook-empty? etc)
+ *   snd-edits uses XEN_CLEAR_HOOK for the chan-local hooks: s7_vector_set?
+ *   how does C side handle scheme objects? does the c_object layer work here?
+ *
  *
  * TODO: loading s7test simultaneously in several threads hangs after awhile in join_thread (call/cc?) 
  *
