@@ -293,7 +293,6 @@ static void define_xm_obj(void)
 #define XEN_lambda_data_P(Arg) 1
 #define C_TO_XEN_GtkTreeViewSearchPositionFunc(Arg) WRAP_FOR_XEN("GtkTreeViewSearchPositionFunc", Arg)
 #define C_TO_XEN_GtkTreeViewSearchEqualFunc(Arg) WRAP_FOR_XEN("GtkTreeViewSearchEqualFunc", Arg)
-#define C_TO_XEN_GtkLinkButtonUriFunc(Arg) WRAP_FOR_XEN("GtkLinkButtonUriFunc", Arg)
 #define XEN_TO_C_GdkFilterReturn(Arg) (GdkFilterReturn)XEN_TO_C_INT(Arg)
 #define XEN_TO_C_String(Arg) ((XEN_STRING_P(Arg)) ? XEN_TO_C_STRING(Arg) : NULL)
 #define C_TO_XEN_String(Arg) ((Arg != NULL) ? C_TO_XEN_STRING((char *)Arg) : XEN_FALSE)
@@ -49322,7 +49321,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("27-Oct-10"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("01-Nov-10"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

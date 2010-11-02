@@ -3498,6 +3498,7 @@ yow!! -- I'm using mpc_cmp
 (test (list? (list 1 2)) #t)
 (test (list? (list)) #t)
 (test (list? ''foo) #t)
+(test (list? ''2) #t)
 (test (list? (list 'a 'b 'c 'd 'e 'f)) #t)
 (test (list? '(this-that)) #t)
 (test (list? '(this - that)) #t)
@@ -4388,6 +4389,8 @@ yow!! -- I'm using mpc_cmp
 (test-w "(car '( .))")
 (test-w "'#(1 . 2)")
 ;(test-w "(let ((. 3)) .)")
+(test-w "#0d()")
+(test-w "`#0d()")
 
 
 
@@ -5362,6 +5365,7 @@ yow!! -- I'm using mpc_cmp
 (test (equal? #2d((1) (2)) #2d((1) (3))) #f)
 (test (equal? #2d((1) (2)) (copy #2d((1) (2)))) #t)
 (test (equal? (make-vector '(3 0 1)) (make-vector '(3 0 2))) #f)
+;(test #0d() 'error) ; a read-error?
 
 (let ((v1 (make-vector '(3 2 1) #f))
       (v2 (make-vector '(3 2 1) #f)))
@@ -10804,6 +10808,7 @@ yow!! -- I'm using mpc_cmp
 (test (let () (begin (define x 0) (define y x) (begin (define x 3) y))) 0)
 (test (let () (begin (define y x) (define x 3) y)) 'error)               ; guile says 3
 (test (let ((x 12)) (begin (define y x) (define x 3) y)) 12)             ; guile says 3 which is letrec-style?
+(test (begin (define (x) y) (define y 4) (x)) 4)
 ;; (let ((x 12)) (begin (define y x) y)) is 12
 (test (let ((x 3)) (begin x)) 3)
 (test (begin 3) 3)
@@ -14316,6 +14321,12 @@ why are these different (read-time `#() ? )
 (test (or (null? *unbound-variable-hook*) (procedure? *unbound-variable-hook*)) #t)
 (test (vector? *error-info*) #t)
 
+(let ((old-len *vector-print-length*))
+  (for-each
+   (lambda (arg)
+     (test (set! *vector-print-length* arg) 'error))
+   (list -1 #\a '#(1 2 3) 3.14 3/4 1.0+1.0i abs 'hi '() #t #f '#(()) (list 1 2 3) '(1 . 2)))
+  (set! *vector-print-length* old-len))
 
 (let ((old-hook *unbound-variable-hook*)
       (hook-val #f))
@@ -14360,8 +14371,6 @@ why are these different (read-time `#() ? )
 (let ((old-vlen *vector-print-length*))
   (set! *vector-print-length* 0)
   (test (format #f "~A" #()) "#()")
-  (test (format #f "~A" #(1 2 3 4)) "#(...)")
-  (set! *vector-print-length* -64)
   (test (format #f "~A" #(1 2 3 4)) "#(...)")
   (set! *vector-print-length* 1)
   (test (format #f "~A" #()) "#()")
@@ -16784,6 +16793,35 @@ why are these different (read-time `#() ? )
 		  (ref1 val-2)))))
 	  'error)
 
+    (test (make-type (make-type)) 'error)
+    (for-each
+     (lambda (arg)
+       (test (make-type arg) 'error)
+       (test (make-type :getter arg) 'error)
+       (test (make-type :setter arg) 'error)
+       (test (make-type :length arg) 'error)
+       (test (make-type :print arg) 'error)
+       (test (make-type :equal arg) 'error)
+       (test (make-type :copy arg) 'error)
+       (test (make-type :fill arg) 'error)
+       (test (make-type :name arg) 'error))
+     (list #\a 'a-symbol 1.0+1.0i #t #(1 2) '() 3/4 3.14 '(1 . 2)))
+    (test (make-type :print (lambda () #f)) 'error)
+    (test (make-type :print (lambda (a b) #f)) 'error)
+    (test (make-type :getter (lambda () #f)) 'error)
+    (test (make-type :setter (lambda () #f)) 'error)
+    (test (make-type :setter (lambda (a) #f)) 'error)
+    (test (make-type :length (lambda () #f)) 'error)
+    (test (make-type :length (lambda (a b) #f)) 'error)
+    (test (make-type :equal (lambda () #f)) 'error)
+    (test (make-type :equal (lambda (a) #f)) 'error)
+    (test (make-type :equal (lambda (a b c) #f)) 'error)
+    (test (make-type :copy (lambda () #f)) 'error)
+    (test (make-type :copy (lambda (a b) #f)) 'error)
+    (test (make-type :fill (lambda () #f)) 'error)
+    (test (make-type :fill (lambda (a) #f)) 'error)
+    (test (make-type :fill (lambda (a b c) #f)) 'error)
+
     (let ()
       (define make-float-vector #f)
       (define float-vector? #f)
@@ -17523,10 +17561,9 @@ why are these different (read-time `#() ? )
 		      (sqrt 5)))))
 
 	(test (= (fib-2 10) 55 (fib 10)) #t)
-	(test (fib 40) 102334155))
-      ;; TODO: check these 
+	(test (fib 20) 6765))
 
-      (test (catch #t (lambda () (join-thread (make-thread (lambda () (+ 1 "hi"))))) (lambda args args)) 'error)
+      (test (join-thread (make-thread (lambda () (catch #t (lambda () (+ 1 "hi")) (lambda args 'error))))) 'error)
       
       (for-each
        (lambda (arg)
@@ -18246,6 +18283,10 @@ why are these different (read-time `#() ? )
 (test (symbol? (begin (define (x y) y) (x (define (x y) y)))) #t)
 (test (symbol? (do () ((define (x) 1) (define (y) 2)))) #t)
 (test (cond (0 (define (x) 3) (x))) 3)
+(test (let ((x (lambda () 3))) (if (define (x) 4) (x) 0)) 4)
+(test (and (define (x) 4) (+ (x) 1)) 5)
+(test (do ((x (lambda () 3) (lambda () 4))) ((= (x) 4) (define (x) 5) (x))) 5)
+(test (begin (if (define (x) 3) (define (x) 4) (define (x) 5)) (x)) 4)
 
 (test (let ((1,1 3) (1'1 4) (1|1 5) (1#1 6) (1\1 7) (1?1 8)) (+ 1,1 1'1 1|1 1#1 1\1 1?1)) 33)
 (test (let ((,a 3)) ,a) 'error)
@@ -30645,6 +30686,7 @@ why are these different (read-time `#() ? )
 (num-test (sinh 0+i) (* 0+i (sin 1)))
 
 (test (nan? (imag-part 0+0/0i)) #t)
+(num-test (imag-part 0/0+0i) 0.0)
 (test (nan? (imag-part (sinh 0+0/0i))) #t)
 (test (nan? (imag-part (sinh 1-0/0i))) #t)
 (test (infinite? (imag-part (sinh (log 0.0)))) #t)
@@ -59772,7 +59814,4 @@ largest fp integer with a predecessor	2+53 - 1 = 9,007,199,254,740,991
 #xfff8000000000000 nan
 
 but how to build these in scheme? (set! flt (integer-encode-float 0 #x7ff 0)) ? (would need check for invalid args)
-
-
-(= 3.14 (bignum "3.14")) -> #f
 |#

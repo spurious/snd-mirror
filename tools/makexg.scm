@@ -898,7 +898,7 @@
 	(cons "GdkStatus" "INT")
 	(cons "GdkSubwindowMode" "INT")
 	(cons "GdkPropertyState" "INT")
-	
+	(cons "GtkScrollablePolicy" "INT")
 	))
 
 (define (type-it type)
@@ -2056,7 +2056,7 @@
 ;; needed if func returns func of this type
 (hey "#define C_TO_XEN_GtkTreeViewSearchPositionFunc(Arg) WRAP_FOR_XEN(\"GtkTreeViewSearchPositionFunc\", Arg)~%")
 (hey "#define C_TO_XEN_GtkTreeViewSearchEqualFunc(Arg) WRAP_FOR_XEN(\"GtkTreeViewSearchEqualFunc\", Arg)~%")
-(hey "#define C_TO_XEN_GtkLinkButtonUriFunc(Arg) WRAP_FOR_XEN(\"GtkLinkButtonUriFunc\", Arg)~%")
+					;(hey "#define C_TO_XEN_GtkLinkButtonUriFunc(Arg) WRAP_FOR_XEN(\"GtkLinkButtonUriFunc\", Arg)~%")
 					;(hey "#define C_TO_XEN_GtkTreeIterCompareFunc(Arg) WRAP_FOR_XEN(\"GtkTreeViewSearchEqualFunc\", Arg)~%")
 					;(hey "#define C_TO_XEN_GtkTreeSelectionFunc(Arg) WRAP_FOR_XEN(\"GtkTreeSelectionFunc\", Arg)~%")
 					;(hey "#define C_TO_XEN_GtkMenuPositionFunc(Arg) WRAP_FOR_XEN(\"GtkMenuPositionFunc\", Arg)~%")
@@ -2197,7 +2197,8 @@
 			   (if (or (and (or (eq? fname 'GtkClipboardTextReceivedFunc)
 					    (eq? fname 'GtkAccelMapForeach)
 					    (eq? fname 'GtkEntryCompletionMatchFunc)
-					    (eq? fname 'GtkLinkButtonUriFunc))
+					    ;(eq? fname 'GtkLinkButtonUriFunc)
+					    )
 					(= ctr 1))
 				   (and (or (eq? fname 'GtkTreeViewSearchEqualFunc)
 					    (eq? fname 'GLogFunc)

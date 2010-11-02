@@ -314,8 +314,45 @@ How can they be equal? In s7, the sign
 of -0.0 is ignored, and they really are equal.
 </p>
 
+
+<table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
+  <table width="100%" border=0><tr><td bgcolor="beige" align="center"></td></tr></table></td></tr></table>
+
+<p>The random function takes a range and an optional state, and returns a number 
+between zero and the range, of the same type as the range.  It is perfectly reasonable
+to use a range of 0, in which case random returns 0.
+make-random-state creates a new random state from a seed.  If no state is passed,
+random uses some default state initialized from the current time.
+</p>
+
+<pre>
+&gt; (random 0)
+0
+&gt; (random 1.0)
+0.86331198514245
+&gt; (random 3/4)
+654/1129
+&gt; (random 1+i)
+0.86300308872748+0.83601002730848i
+&gt; (random -1.0)
+-0.037691127513267
+&gt; (define r0 (make-random-state 1234))
+r0
+&gt; (random 100 r0)
+94
+&gt; (random 100 r0)
+19
+&gt; (define r1 (make-random-state 1234))
+r1
+&gt; (random 100 r1)
+94
+&gt; (random 100 r1)
+19
+</pre>
+
 </blockquote>
 </small>
+
 </dd>
 <br><br>
 

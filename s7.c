@@ -12179,17 +12179,6 @@ static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* TODO: read-byte is way too slow -- we should read blocks at a time 
- *         vector-read vector n :optional port [read-bytes->vector?]
- *           [read-bytes? and take whatever container is passed? -- (read-bytes n obj :optional port)]
- *           returns number of bytes actually read
- *         vector-write vector n :optional port
- * Clisp has read|write-[char|byte-]sequence
- *
- * it might make sense to have only byte-wise input ports -- no file port for example on input
- *   (this saves very little time (6/2384) according to callgrind)
- */
-
 static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
 {
   #define H_read_byte "(read-byte :optional port): reads a byte from the input port"
@@ -12587,7 +12576,7 @@ s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a)
   return(p);
 }
 
-/* PERHAPS: s7_reverse sometimes tacks extra nodes on the end of a reversed circular list (it detects the cycle too late) 
+/* s7_reverse sometimes tacks extra nodes on the end of a reversed circular list (it detects the cycle too late) 
  *  (let ((lst (list 0))) (set! (cdr lst) lst) (reverse lst)) -> (#1=(0 . #1#) 0 0 0)
  */
 
@@ -12699,7 +12688,7 @@ static s7_pointer g_is_null(s7_scheme *sc, s7_pointer args)
   #define H_is_null "(null? obj) returns #t if obj is the empty list"
   return(make_boolean(sc, car(args) == sc->NIL));
 
-  /* perhaps: has_structure and length == 0 */
+  /* as a generic this could be: has_structure and length == 0 */
 }
 
 
@@ -13703,6 +13692,22 @@ s7_Int s7_vector_length(s7_pointer vec)
 }
 
 
+static s7_pointer g_vector_print_length_set(s7_scheme *sc, s7_pointer args)
+{
+  if (s7_is_integer(cadr(args)))
+    {
+      s7_Int len;
+      len = s7_integer(cadr(args));
+      if (len >= 0)
+	{
+	  set_symbol_value(sc->vector_print_length, cadr(args));
+	  return(cadr(args));
+	}
+    }
+  return(sc->ERROR);
+}
+
+
 #if (!WITH_GMP)
 void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
 #else
@@ -14218,6 +14223,9 @@ static s7_pointer g_multivector(s7_scheme *sc, int dims, s7_pointer data)
    *
    * but a special case: #nD() is an n-dimensional empty vector
    */
+
+  if (dims <= 0)      /* #0d(...) */
+    return(s7_out_of_range_error(sc, "#nD(...) dimensions,", 1, s7_make_integer(sc, dims), "must be 1 or more"));
 
   sc->w = sc->NIL;
   if (data == sc->NIL)  /* dims are already 0 (calloc above) */
@@ -15233,6 +15241,20 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 }
 
 
+static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
+{
+  #define H_procedure_arity "(procedure-arity func) returns a list '(required optional rest)"
+  s7_pointer x;
+  if (s7_is_symbol(car(args)))
+    x = s7_symbol_value(sc, car(args));
+  else x = car(args);
+
+  if (!is_procedure(x))
+    return(s7_wrong_type_arg_error(sc, "procedure-arity", 0, x, "a procedure"));
+  return(s7_procedure_arity(sc, x));
+}
+
+
 static bool is_thunk(s7_scheme *sc, s7_pointer x)
 {
   switch (type(x))
@@ -15266,20 +15288,6 @@ static bool args_match(s7_scheme *sc, s7_pointer x, int args)
 	     (safe_list_length(sc, closure_args(x)) >= args));
     }
   return(false);
-}
-
-
-static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
-{
-  #define H_procedure_arity "(procedure-arity func) returns a list '(required optional rest)"
-  s7_pointer x;
-  if (s7_is_symbol(car(args)))
-    x = s7_symbol_value(sc, car(args));
-  else x = car(args);
-
-  if (!is_procedure(x))
-    return(s7_wrong_type_arg_error(sc, "procedure-arity", 0, x, "a procedure"));
-  return(s7_procedure_arity(sc, x));
 }
 
 
@@ -15924,7 +15932,7 @@ In each case, the argument is the value of the object, not the object itself."
 
 		case 7:                 /* fill */
 		  if ((s7_integer(car(proc_args)) > 2) || 
-		      ((nargs == 0) && (!rest_arg)))
+		      ((nargs < 2) && (!rest_arg)))
 		    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
 				    make_list_2(sc, make_protected_string(sc, "make-type :fill procedure, ~A, should take at two arguments"), func)));
 
@@ -22277,6 +22285,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   (begin (define (x y) y) (x (define (x y) y)))
        *   (if (define (x) 1) 2 3)
        *   (do () ((define (x) 1) (define (y) 2)))
+       *
+       * but we can get some humourous results: 
+       *   (let ((x (lambda () 3))) (if (define (x) 4) (x) 0)) -> 4
        */
 
       if ((s7_is_symbol(car(sc->code))) &&
@@ -22714,7 +22725,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (is_immutable_or_accessed(sc->x))
 	{
 	  if (is_immutable(sc->x))
-	    return(eval_error_with_name(sc, "~A: ~S is immutable", sc->x));     /* (defmacro pi (a) `(+ ,a 1)) */
+	    return(eval_error_with_name(sc, "~A: ~S is immutable", sc->x)); /* (defmacro pi (a) `(+ ,a 1)) */
 	  sc->code = call_symbol_bind(sc, sc->x, sc->code);
 	}
 
@@ -26608,25 +26619,28 @@ static s7_pointer big_acosh(s7_scheme *sc, s7_pointer args)
       if ((c_object_type(p) == big_integer_tag) ||
 	  (c_object_type(p) == big_ratio_tag) ||
 	  (c_object_type(p) == big_real_tag))
-	{
-	  p = promote_number(sc, T_BIG_REAL, p);
-	  if (mpfr_cmp_ui(S7_BIG_REAL(p), 1) >= 0) /* TODO: (acosh (bignum "0/0")) -> @.NaN@E-484020625, but nannani? */
-	    {
-	      mpfr_t *n;
-	      n = (mpfr_t *)malloc(sizeof(mpfr_t));
-	      mpfr_init_set(*n, S7_BIG_REAL(p), GMP_RNDN);
-	      mpfr_acosh(*n, *n, GMP_RNDN);
-	      return(s7_make_object(sc, big_real_tag, (void *)n));
-	    }
-	  p = promote_number(sc, T_BIG_COMPLEX, p);
-	}
+	p = promote_number(sc, T_BIG_COMPLEX, p);
+
       if (c_object_type(p) == big_complex_tag)
 	{
+	  double x;
 	  mpc_t *n;
 	  n = (mpc_t *)malloc(sizeof(mpc_t));
 	  mpc_init(*n);
 	  mpc_set(*n, S7_BIG_COMPLEX(p), MPC_RNDNN);
 	  mpc_acosh(*n, *n, MPC_RNDNN);
+
+	  x = mpfr_get_d(mpc_imagref(*n), GMP_RNDN);
+	  if (x == 0.0)
+	    {
+	      mpfr_t *z;
+	      z = (mpfr_t *)malloc(sizeof(mpfr_t));
+	      mpfr_init_set(*z, mpc_realref(*n), GMP_RNDN);
+	      mpc_clear(*n);
+	      free(n);
+	      return(s7_make_object(sc, big_real_tag, (void *)z));
+	    }
+
 	  return(s7_make_object(sc, big_complex_tag, (void *)n));
 	}
     }
@@ -29121,8 +29135,16 @@ s7_scheme *s7_init(void)
 
   s7_define_variable(sc, "*vector-print-length*", small_ints[8]);
   sc->vector_print_length = symbol_global_slot(make_symbol(sc, "*vector-print-length*"));
+  s7_symbol_set_access(sc, s7_make_symbol(sc, "*vector-print-length*"), 
+		       make_list_3(sc, 
+				   sc->F, 
+				   s7_make_function(sc, "(set *vector-print-length*)", g_vector_print_length_set, 2, 0, false, "called if *vector-print-length* is set"), 
+				   sc->F));
 
-  /* PERHAPS: symbol-access checks for *vector-print-length* *load-hook* *trace-hook* *#readers*, perhaps *load-path* and *features*
+  /* PERHAPS: symbol-access checks for *load-hook* *trace-hook* *#readers*, perhaps *load-path* and *features*
+   *  also it's only the global value we want to protect for *vector-print-length* -- can that be recognized?
+   *  symbol lookup -- current found not in the global-env? or make all refs global?
+   *  what about *safety* etc in this regard?
    */
 
   /* the next two are for the test suite */
@@ -29411,7 +29433,7 @@ s7_scheme *s7_init(void)
  *   static void s7_sigfpe(int ignored) {}
  * then in init: signal(SIGFPE, s7_sigfpe);
  *
- * PERHAPS: method lists for c_objects
+ * method lists for c_objects
  *   a method list in the object struct, (:methods to make-type, methods func to retrieve them -- an alist)
  *   catch 'wrong-type-arg-error in the evaluator,
  *   if 1st arg is v_object, look for method?

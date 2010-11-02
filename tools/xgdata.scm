@@ -7562,3 +7562,19 @@
 (CFNC-29x "GtkAdjustment* gtk_scrollable_get_vadjustment GtkScrollable* scrollable") 
 (CFNC-29x "void gtk_scrollable_set_vadjustment GtkScrollable* scrollable GtkAdjustment* vadjustment") 
 
+#|
+;;; 2.91.3
+(CINT-29x "GTK_ASSISTANT_PAGE_CUSTOM" "GtkAssistantPageType")
+(CINT-29x "GTK_TEXT_SEARCH_CASE_INSENSITIVE" "GtkTextSearchFlags")
+(CINT-29x "GTK_SCROLL_MINIMUM" "GtkScrollablePolicy")
+(CINT-29x "GTK_SCROLL_NATURAL" "GtkScrollablePolicy")
+
+(CFNC-29x "void gtk_assistant_next_page GtkAssistant* assistant")
+(CFNC-29x "void gtk_assistant_previous_page GtkAssistant* assistant")
+(CFNC-29x "GtkWidget* gtk_combo_box_new_with_model_and_entry GtkTreeModel* model")
+(CFNC-29x "GtkScrollablePolicy gtk_scrollable_get_hscroll_policy GtkScrollable* scrollable")
+(CFNC-29x "void gtk_scrollable_set_hscroll_policy GtkScrollable* scrollable GtkScrollablePolicy policy")
+(CFNC-29x "GtkScrollablePolicy gtk_scrollable_get_vscroll_policy GtkScrollable* scrollable")
+(CFNC-29x "void gtk_scrollable_set_vscroll_policy GtkScrollable* scrollable GtkScrollablePolicy policy")
+
+|#
