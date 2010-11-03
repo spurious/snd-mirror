@@ -574,7 +574,7 @@ struct s7_scheme {
   bool *gc_off;                       /* if true, the GC won't run */
   bool *tracing, *trace_all;          /* if tracing, each function on the *trace* list prints its args upon application */
   long *gensym_counter;
-  bool symbol_table_is_locked;
+  bool *symbol_table_is_locked;       /* this also needs to be global across threads */
 
   #define INITIAL_STRBUF_SIZE 1024
   int strbuf_size;
@@ -2121,13 +2121,13 @@ void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
 static s7_pointer g_symbol_table_is_locked(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_table_is_locked "set (symbol-table-locked?) to #t to prohibit the creation of any new symbols"
-  return(make_boolean(sc, sc->symbol_table_is_locked));
+  return(make_boolean(sc, (*(sc->symbol_table_is_locked))));
 }
 
 
 static s7_pointer g_set_symbol_table_is_locked(s7_scheme *sc, s7_pointer args)
 {
-  sc->symbol_table_is_locked = (car(args) != sc->F);
+  (*(sc->symbol_table_is_locked)) = (car(args) != sc->F);
   return(car(args));
 }
 
@@ -2142,7 +2142,7 @@ static s7_pointer make_symbol(s7_scheme *sc, const char *name)
   if (x != sc->NIL) 
     return(x); 
 
-  if (sc->symbol_table_is_locked)
+  if (*(sc->symbol_table_is_locked))
     return(s7_error(sc, sc->ERROR, sc->NIL));
 
   return(symbol_table_add_by_name_at_location(sc, name, location)); 
@@ -2328,6 +2328,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
 	   (is_macro(value)) ||
 	   (is_bacro(value))))
 	s7_remove_from_heap(sc, closure_source(value));
+      /* TODO: does this need a lock in the pthread case?  It messes with the heap */
 
       loc = symbol_location(variable);
       vector_element(e, loc) = s7_cons(sc, slot, vector_element(e, loc));
@@ -3082,8 +3083,22 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
   s7_pointer x;
   int loc;
 
+  /* if pthreads, the heap vars are actually in the main thread's s7_scheme object, and the gc process needs to be protected */
+#if HAVE_PTHREADS
+  {
+    s7_scheme *orig_sc;
+    orig_sc = sc->orig_sc;
+    if ((int)(orig_sc->free_heap_top - orig_sc->free_heap) < (int)(orig_sc->heap_size / 4))
+      {
+	pthread_mutex_lock(&alloc_lock); /* mimic g_gc */
+	gc(orig_sc);
+	pthread_mutex_unlock(&alloc_lock);
+      }
+  }
+#else
   if ((int)(sc->free_heap_top - sc->free_heap) < (int)(sc->heap_size / 4))
     gc(sc);
+#endif
 
   /* this gc call is needed if there are lots of call/cc's -- by pure bad luck
    *   we can end up hitting the end of the gc free list time after time while
@@ -15231,7 +15246,8 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
     }
 
   if ((object_is_applicable(x)) ||
-      (s7_is_continuation(x)))
+      (s7_is_continuation(x)) ||
+      (is_goto(x)))
     return(make_list_3(sc, small_int(0), small_int(0), sc->T));
 
   /* it's not straightforward to add support for macros here -- the arity from the
@@ -19761,7 +19777,7 @@ static s7_pointer read_delimited_string(s7_scheme *sc, bool atom_case)
 
 			if (result == sc->NIL) 
 			  {
-			    if (sc->symbol_table_is_locked)
+			    if (*(sc->symbol_table_is_locked))
 			      result = sc->F;
 			    else result = symbol_table_add_by_name_at_location(sc, orig_str, location); 
 			  }
@@ -23418,7 +23434,6 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
    */
   
   new_sc->longjmp_ok = false;
-  new_sc->symbol_table_is_locked = false;
   new_sc->strbuf_size = INITIAL_STRBUF_SIZE;
   new_sc->strbuf = (char *)calloc(new_sc->strbuf_size, sizeof(char));
 
@@ -28427,7 +28442,8 @@ s7_scheme *s7_init(void)
   sc->gc_off = (bool *)calloc(1, sizeof(bool));
   (*(sc->gc_off)) = true;                         /* sc->args and so on are not set yet, so a gc during init -> segfault */
   sc->longjmp_ok = false;
-  sc->symbol_table_is_locked = false;
+  sc->symbol_table_is_locked = (bool *)calloc(1, sizeof(bool));
+  (*(sc->symbol_table_is_locked)) = false;
 
   sc->strbuf_size = INITIAL_STRBUF_SIZE;
   sc->strbuf = (char *)calloc(sc->strbuf_size, sizeof(char));
@@ -29097,13 +29113,10 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "{append}",                g_append,                  0, 0, true,  H_append);
   s7_define_function(sc, "{multivector}",           g_qq_multivector,          1, 0, true,  H_qq_multivector);
     
+  s7_define_function(sc, "stacktrace",              g_stacktrace,              0, 2, false, H_stacktrace);
   s7_define_function(sc, "trace",                   g_trace,                   0, 0, true,  H_trace);
   s7_define_function(sc, "untrace",                 g_untrace,                 0, 0, true,  H_untrace);
   s7_define_variable(sc, "*trace-hook*", sc->NIL);
-  s7_define_function(sc, "stacktrace",              g_stacktrace,              0, 2, false, H_stacktrace);
-
-  s7_define_variable(sc, "*#readers*", sc->NIL);
-  sc->sharp_readers = symbol_global_slot(make_symbol(sc, "*#readers*"));
 
   s7_define_function(sc, "gc",                      g_gc,                      0, 1, false, H_gc);
   s7_define_function(sc, "quit",                    g_quit,                    0, 0, false, H_quit);
@@ -29133,6 +29146,9 @@ s7_scheme *s7_init(void)
   s7_define_variable(sc, "*load-path*", sc->NIL);
   s7_define_variable(sc, "*load-hook*", sc->NIL);
 
+  s7_define_variable(sc, "*#readers*", sc->NIL);
+  sc->sharp_readers = symbol_global_slot(make_symbol(sc, "*#readers*"));
+
   s7_define_variable(sc, "*vector-print-length*", small_ints[8]);
   sc->vector_print_length = symbol_global_slot(make_symbol(sc, "*vector-print-length*"));
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*vector-print-length*"), 
@@ -29145,15 +29161,17 @@ s7_scheme *s7_init(void)
    *  also it's only the global value we want to protect for *vector-print-length* -- can that be recognized?
    *  symbol lookup -- current found not in the global-env? or make all refs global?
    *  what about *safety* etc in this regard?
+   *
+   * also for the hooks, if the value is a list of functions, call them like a xen/guile hook list
    */
 
   /* the next two are for the test suite */
-  s7_define_variable(sc, "s7-symbol-table-locked?", 
-		     s7_make_procedure_with_setter(sc, "s7-symbol-table-locked?", 
+  s7_define_variable(sc, "-s7-symbol-table-locked?", 
+		     s7_make_procedure_with_setter(sc, "-s7-symbol-table-locked?", 
 						   g_symbol_table_is_locked, 0, 0, 
 						   g_set_symbol_table_is_locked, 1, 0, 
 						   H_symbol_table_is_locked));
-  s7_define_function(sc, "s7-stack-size", g_stack_size, 0, 0, false, "current stack size");
+  s7_define_function(sc, "-s7-stack-size", g_stack_size, 0, 0, false, "current stack size");
 
 
   s7_define_variable(sc, "*error-hook*", sc->NIL);
