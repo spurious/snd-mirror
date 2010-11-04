@@ -1569,9 +1569,11 @@ static void show_sync_button(snd_info *sp)
 }
 
 
-static void reflect_file_close_in_sync(ss_watcher_reason_t reason, void *ignore)
+static XEN reflect_file_close_in_sync(XEN xreason)
 {
-  if ((reason == SS_FILE_CLOSED) && /* snd-file.c */
+  int reason;
+  reason = XEN_TO_C_INT(xreason);
+  if ((reason == FILE_CLOSED) && /* snd-file.c */
       (ss->active_sounds == 1))
     {
       snd_info *sp;
@@ -1580,6 +1582,13 @@ static void reflect_file_close_in_sync(ss_watcher_reason_t reason, void *ignore)
 	gtk_widget_hide(SYNC_BUTTON(sp));
     }
 }
+
+#ifdef XEN_ARGIFY_1
+  XEN_ARGIFY_1(reflect_file_close_in_sync_w, reflect_file_close_in_sync)
+#else
+  #define reflect_file_close_in_sync_w reflect_file_close_in_sync
+#endif
+
 
 
 static void close_button_callback(GtkWidget *w, gpointer context)
@@ -2381,7 +2390,7 @@ pane-box (10)name-form"
 
 void g_init_gxsnd(void) 
 {
-  add_ss_watcher(SS_FILE_OPEN_WATCHER, reflect_file_close_in_sync, NULL);
+  XEN_ADD_HOOK(ss->snd_open_file_hook, reflect_file_close_in_sync_w, "sync-open-file-watcher", "sound sync open-file-hook handler");
 
   XEN_DEFINE_PROCEDURE(S_sound_widgets, g_sound_widgets_w, 0, 1, 0, H_sound_widgets);
 }

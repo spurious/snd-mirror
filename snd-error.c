@@ -25,13 +25,10 @@ const char *io_error_name(io_error_t err)
 #endif
 
 
-static XEN snd_error_hook; 
-static XEN snd_warning_hook; 
-
 bool run_snd_error_hook(const char *msg)
 {
-  return((XEN_HOOKED(snd_error_hook)) &&
-	 (XEN_NOT_FALSE_P(run_or_hook(snd_error_hook, 
+  return((XEN_HOOKED(ss->snd_error_hook)) &&
+	 (XEN_NOT_FALSE_P(run_or_hook(ss->snd_error_hook, 
 				      XEN_LIST_1(C_TO_XEN_STRING(msg)),
 				      S_snd_error_hook))));
 }
@@ -134,8 +131,8 @@ static void snd_warning_1(const char *msg)
       return;
     }
 
-  if ((XEN_HOOKED(snd_warning_hook)) &&
-      (XEN_NOT_FALSE_P(run_or_hook(snd_warning_hook, 
+  if ((XEN_HOOKED(ss->snd_warning_hook)) &&
+      (XEN_NOT_FALSE_P(run_or_hook(ss->snd_warning_hook, 
 				   XEN_LIST_1(C_TO_XEN_STRING(msg)),
 				   S_snd_warning_hook))))
     return;
@@ -240,8 +237,6 @@ static XEN g_snd_error(XEN msg)
   #define H_snd_error "(" S_snd_error " str): throws a 'snd-error error"
   XEN_ASSERT_TYPE(XEN_STRING_P(msg), msg, XEN_ONLY_ARG, S_snd_error, "a string");
 
-  call_ss_watchers_with_context(SS_SND_ERROR_WATCHER, SS_SND_ERROR, (void *)(XEN_TO_C_STRING(msg)));
-
   if (!(run_snd_error_hook(XEN_TO_C_STRING(msg)))) /* have to call this before the throw, else we end up at top level */
     XEN_ERROR(XEN_ERROR_TYPE("snd-error"),
 	      XEN_LIST_2(C_TO_XEN_STRING(S_snd_error ": ~A"),
@@ -329,8 +324,8 @@ If it returns " PROC_TRUE ", Snd flushes the error (it assumes you've reported i
 If it returns " PROC_TRUE ", Snd flushes the warning (it assumes you've reported it via the hook)"
 #endif
 
-  snd_error_hook = XEN_DEFINE_HOOK(S_snd_error_hook, 1, H_snd_error_hook);       /* arg = error-message */
-  snd_warning_hook = XEN_DEFINE_HOOK(S_snd_warning_hook, 1, H_snd_warning_hook); /* arg = error-message */
+  ss->snd_error_hook = XEN_DEFINE_HOOK(S_snd_error_hook, 1, H_snd_error_hook);       /* arg = error-message */
+  ss->snd_warning_hook = XEN_DEFINE_HOOK(S_snd_warning_hook, 1, H_snd_warning_hook); /* arg = error-message */
 
 
   #define H_clip_hook S_clip_hook " (clipping-value) is called each time a sample is about to \

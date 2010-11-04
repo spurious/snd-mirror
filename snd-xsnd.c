@@ -3011,9 +3011,11 @@ void snd_info_cleanup(snd_info *sp)
 }
 
 
-static void reflect_file_close_in_sync(ss_watcher_reason_t reason, void *ignore)
+static XEN reflect_file_close_in_sync(XEN xreason)
 {
-  if ((reason == SS_FILE_CLOSED) && /* snd-file.c */
+  int reason;
+  reason = XEN_TO_C_INT(xreason);
+  if ((reason == FILE_CLOSED) && /* snd-file.c */
       (ss->active_sounds == 1))
     {
       snd_info *sp;
@@ -3025,6 +3027,12 @@ static void reflect_file_close_in_sync(ss_watcher_reason_t reason, void *ignore)
 	}
     }
 }
+
+#ifdef XEN_ARGIFY_1
+  XEN_ARGIFY_1(reflect_file_close_in_sync_w, reflect_file_close_in_sync)
+#else
+  #define reflect_file_close_in_sync_w reflect_file_close_in_sync
+#endif
 
 
 void set_sound_pane_file_label(snd_info *sp, const char *str)
@@ -3276,7 +3284,7 @@ widgets: (0)pane (1)name (2)control-panel (3)minibuffer (4)play-button (5)filter
 
 void g_init_gxsnd(void)
 {
-  add_ss_watcher(SS_FILE_OPEN_WATCHER, reflect_file_close_in_sync, NULL);
+  XEN_ADD_HOOK(ss->snd_open_file_hook, reflect_file_close_in_sync_w, "sync-open-file-watcher", "sound sync open-file-hook handler");
 
   XEN_DEFINE_PROCEDURE(S_sound_widgets,  g_sound_widgets_w,  0, 1, 0, H_sound_widgets);
 }

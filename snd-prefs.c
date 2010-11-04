@@ -494,12 +494,19 @@ static XEN prefs_variable_get(const char *name)
 
 static bool prefs_is_loading = false;
 
-static void watch_for_snd_error_in_prefs(ss_watcher_reason_t reason, void *msg)
+
+static XEN watch_for_snd_error_in_prefs(XEN msg)
 {
   if ((prefs_is_loading) &&
       (widget_is_active(preferences_dialog)))
-    post_it("Load error", (const char *)msg);
+    post_it("Load error", (const char *)XEN_TO_C_STRING(msg));
 }
+
+#ifdef XEN_ARGIFY_1
+  XEN_ARGIFY_1(watch_for_snd_error_in_prefs_w, watch_for_snd_error_in_prefs)
+#else
+  #define watch_for_snd_error_in_prefs_w watch_for_snd_error_in_prefs
+#endif
 
 
 static void load_file_with_path_and_extension(const char *file)

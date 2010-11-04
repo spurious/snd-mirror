@@ -10,11 +10,12 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 5
+#define XEN_MINOR_VERSION 6
 #define XEN_VERSION "3.5"
 
 /* HISTORY:
  *
+ *  7-Nov:     XEN_ADD_HOOK.
  *  23-Oct:    use s7_call_with_location, rather than s7_call, for better error reporting.
  *  19-Mar:    removed s7_define_set_function (removed encapsulation from s7, so it's not useful anymore).
  *  17-Feb:    various s7 changes.
@@ -299,6 +300,7 @@
 #define XEN_HOOKED(a)                   (!xen_rb_hook_empty_p(a))
 #define XEN_DEFINE_HOOK(Name, Arity, Help) xen_rb_create_hook((char *)(Name), Arity, (char *)Help)
 #define XEN_DEFINE_SIMPLE_HOOK(Arity)   xen_rb_hook_c_new((char *)"simple_hook", Arity, NULL);
+#define XEN_ADD_HOOK(Hook, Func, Name, Doc) xen_rb_add_hook(Hook, Func, Name, Doc)
 
 /* ---- vectors ---- */
 #define XEN_VECTOR_P(Arg)               (TYPE(Arg) == T_ARRAY)
@@ -670,7 +672,7 @@ XEN xen_rb_hook_reset_hook(XEN hook);
 XEN xen_rb_hook_to_a(XEN hook);
 void Init_Hook(void);
 XEN xen_rb_create_hook(char *name, int arity, char *help);
-
+XEN xen_rb_add_hook(XEN hook, VALUE (*func)(), const char *name, const char *doc);
 typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 XEN rb_properties(void);
@@ -868,6 +870,7 @@ XEN xen_assoc(XEN key, XEN alist);
 #define XEN_DEFINE_SIMPLE_HOOK(arity)   fth_make_simple_hook(arity)
 #define XEN_CLEAR_HOOK(Arg)             fth_hook_clear(Arg)
 #define XEN_HOOK_PROCEDURES(Obj)        fth_hook_procedure_list(Obj)
+#define XEN_ADD_HOOK(Hook, Func, Name, Doc)  fth_add_hook(Hook, fth_make_proc_from_func(Name, Func, false, fth_hook_arity(Hook), 0, false))
 
 #define XEN_PROCEDURE_P(Arg)            FTH_PROC_P(Arg)
 #define XEN_PROCEDURE_NAME(Func)        C_TO_XEN_STRING(fth_proc_name(Func))
@@ -1431,6 +1434,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 #define XEN_HOOKED(Arg)                                  (!xen_hook_empty_p(Arg))
 #define XEN_CLEAR_HOOK(Arg)                              xen_s7_reset_hook(Arg)
 #define XEN_HOOK_PROCEDURES(Arg)                         xen_hook_to_list(Arg)
+#define XEN_ADD_HOOK(Hook, Func, Name, Doc)              xen_s7_add_hook(Hook, Func, Name, Doc)
 
 #ifdef __cplusplus
 extern "C" {
@@ -1442,6 +1446,7 @@ XEN xen_hook_to_list(XEN hook);
 bool xen_hook_empty_p(XEN hook);
 bool xen_hook_p(XEN val);
 const char *xen_s7_hook_documentation(XEN hook);
+XEN xen_s7_add_hook(XEN hook, s7_function func, const char *func_name, const char *documentation);
 XEN xen_define_variable(const char *name, XEN value);
 void xen_s7_ignore(s7_function func); /* squelch compiler warnings */
 const char *xen_s7_object_help(XEN sym);
@@ -1625,6 +1630,7 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist);
 #define XEN_DEFINE_SIMPLE_HOOK(Arity) 0
 #define XEN_CLEAR_HOOK(Arg)
 #define XEN_HOOK_PROCEDURES(a) 0
+#define XEN_ADD_HOOK(Hook, Func, Name, Doc) 
 #define XEN_VECTOR_P(Arg) 0
 #define XEN_VECTOR_LENGTH(Arg) 0
 #define XEN_VECTOR_REF(Vect, Num) 0

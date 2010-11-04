@@ -7478,10 +7478,6 @@
 ;;; 2.91.1 (CFNC-29x "void gtk_wrap_box_reorder_child GtkWrapBox* box GtkWidget* widget guint index")
 
 
-#|
-(CAIRO-INT-110 "CAIRO_SURFACE_TYPE_SUBSURFACE" "cairo_surface_t")
-|#
-
 (CFNC-29x "GtkWidget* gtk_combo_box_new_with_entry void")
 (CFNC-29x "gboolean gtk_combo_box_get_has_entry GtkComboBox* combo_box")
 (CFNC-29x "void gtk_combo_box_set_entry_text_column GtkComboBox* combo_box gint text_column")
@@ -7563,6 +7559,9 @@
 (CFNC-29x "void gtk_scrollable_set_vadjustment GtkScrollable* scrollable GtkAdjustment* vadjustment") 
 
 #|
+
+;;; (CAIRO-INT-110 "CAIRO_SURFACE_TYPE_SUBSURFACE" "cairo_surface_t")
+
 ;;; 2.91.3
 (CINT-29x "GTK_ASSISTANT_PAGE_CUSTOM" "GtkAssistantPageType")
 (CINT-29x "GTK_TEXT_SEARCH_CASE_INSENSITIVE" "GtkTextSearchFlags")

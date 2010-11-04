@@ -951,7 +951,6 @@ typedef struct file_dialog_info {
   Widget info_frame, info1, info2;     /* labels giving info on selected file, or an error message */
   file_pattern_info *fp;
   dialog_play_info *dp;
-  int open_file_watcher_loc;           /* write-only currently (the watcher is permanent) */
   fam_info *unsound_directory_watcher; /* started if file doesn't exist, not a sound file, bogus header, etc (clears error msg if problem changed) */
   char *unsound_dirname, *unsound_filename;
   fam_info *info_filename_watcher;     /* watch for change in selected file and repost info */
@@ -1702,16 +1701,22 @@ static void mix_file_help_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
-static void file_open_file_watcher(ss_watcher_reason_t reason, void *data)
+static file_dialog_info *mdat = NULL;
+
+static XEN mix_open_file_watcher(XEN reason)
 {
-  file_dialog_info *fdat = (file_dialog_info *)data;
-  if ((fdat->dialog) &&
-      (XtIsManaged(fdat->dialog)))
-    set_sensitive(FSB_BOX(fdat->dialog, XmDIALOG_OK_BUTTON), (bool)any_selected_sound());
+  if ((mdat->dialog) &&
+      (XtIsManaged(mdat->dialog)))
+    set_sensitive(FSB_BOX(mdat->dialog, XmDIALOG_OK_BUTTON), (bool)any_selected_sound());
 }
 
+#ifdef XEN_ARGIFY_1
+  XEN_ARGIFY_1(mix_open_file_watcher_w, mix_open_file_watcher)
+#else
+  #define mix_open_file_watcher_w mix_open_file_watcher
+#endif
 
-static file_dialog_info *mdat = NULL;
+
 
 widget_t make_mix_file_dialog(bool managed)
 {
@@ -1720,7 +1725,7 @@ widget_t make_mix_file_dialog(bool managed)
     {
       mdat = make_file_dialog(FILE_READ_ONLY, _("Mix Sound"), _("mix in:"), file_mix_ok_callback, mix_file_help_callback);
       set_dialog_widget(FILE_MIX_DIALOG, mdat->dialog);
-      mdat->open_file_watcher_loc = add_ss_watcher(SS_FILE_OPEN_WATCHER, file_open_file_watcher, (void *)mdat);
+      XEN_ADD_HOOK(ss->snd_open_file_hook, mix_open_file_watcher_w, "mix-dialog-open-file-watcher", "mix dialog's open-file-hook handler");
     }
   else
     {
@@ -1805,13 +1810,26 @@ static void insert_file_help_callback(Widget w, XtPointer context, XtPointer inf
 
 static file_dialog_info *idat = NULL;
 
+static XEN insert_open_file_watcher(XEN reason)
+{
+  if ((idat->dialog) &&
+      (XtIsManaged(idat->dialog)))
+    set_sensitive(FSB_BOX(idat->dialog, XmDIALOG_OK_BUTTON), (bool)any_selected_sound());
+}
+
+#ifdef XEN_ARGIFY_1
+  XEN_ARGIFY_1(insert_open_file_watcher_w, insert_open_file_watcher)
+#else
+  #define insert_open_file_watcher_w insert_open_file_watcher
+#endif
+
 widget_t make_insert_file_dialog(bool managed)
 {
   if (!idat)
     {
       idat = make_file_dialog(FILE_READ_ONLY, _("Insert Sound"), _("insert:"), file_insert_ok_callback, insert_file_help_callback);
       set_dialog_widget(FILE_INSERT_DIALOG, idat->dialog);
-      idat->open_file_watcher_loc = add_ss_watcher(SS_FILE_OPEN_WATCHER, file_open_file_watcher, (void *)idat);
+      XEN_ADD_HOOK(ss->snd_open_file_hook, insert_open_file_watcher_w, "insert-dialog-open-file-watcher", "insert dialog's open-file-hook handler");
     }
   else
     {

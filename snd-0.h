@@ -156,8 +156,8 @@ enum {BLACK_AND_WHITE_COLORMAP, GRAY_COLORMAP, HOT_COLORMAP, COOL_COLORMAP, BONE
                                (Err != IO_NEED_WRITE_CONFIRMATION) && \
                                (Err != IO_NO_CHANGES))
 
-typedef enum {SS_ANY_WATCHER, SS_FILE_OPEN_WATCHER, SS_MUS_ERROR_WATCHER, SS_SND_ERROR_WATCHER} ss_watcher_t;
-typedef enum {SS_FILE_OPENED, SS_FILE_CLOSED, SS_MUS_ERROR, SS_SND_ERROR} ss_watcher_reason_t;
+enum {FILE_OPENED, FILE_CLOSED};
+
 typedef enum {SP_ANY_WATCHER, SP_READ_ONLY_WATCHER, SP_REVERT_WATCHER} sp_watcher_t;
 typedef enum {SP_READ_ONLY_CHANGED, SP_IS_CLOSING, SP_REVERTED} sp_watcher_reason_t;
 typedef enum {SELECTION_INACTIVE, SELECTION_ACTIVE, SELECTION_CHANGED, SELECTION_IN_DOUBT} selection_watcher_reason_t;

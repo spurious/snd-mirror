@@ -885,6 +885,21 @@ static XEN xen_rb_hook_add_hook(int argc, XEN *argv, XEN hook)
 }
 
 
+XEN xen_rb_add_hook(XEN hook, VALUE (*func)(), const char *name, const char* doc) 
+{
+  /* TODO: fix Ruby C-side add_hook */
+#if 0
+  /* called from C, not Ruby, to add a function to a Ruby-side hook */
+  XEN var;
+  XEN_DEFINE_PROCEDURE(name, func, XEN_TO_C_INT(rb_iv_get(hook, "@arity")), 0, false, doc);
+  rb_gv_set(name, var);
+  rb_ary_push(rb_iv_get(hook, "@procs"), rb_ary_new3(2, C_TO_XEN_STRING(name), var));
+  return(var);
+#endif
+  return(hook);
+}
+
+
 static XEN xen_rb_hook_remove_hook(XEN hook, XEN name)
 {
   XEN ary;
@@ -1734,6 +1749,19 @@ static XEN g_add_hook(XEN hook, XEN function, XEN position)
   if (XEN_BOOLEAN_P(position)) at_end = XEN_TO_C_BOOLEAN(position);
   add_ghook(obj, function, at_end);
   return(hook);
+}
+
+
+XEN xen_s7_add_hook(XEN hook, s7_function func, const char *func_name, const char *documentation)
+{
+  /* since func will be a normal member of an s7 list, it needs to be wrapped up in a normal (never-GC'd) s7 object */
+  XEN fobj;
+  ghook *h;
+  h = XEN_TO_GHOOK(hook);
+  fobj = s7_make_function(s7, func_name, func, ghook_arity(h), 0, false, documentation);
+  /* s7_make_function returns a permanent object */
+  add_ghook(XEN_TO_GHOOK(hook), fobj, false);
+  return(fobj);
 }
 
 

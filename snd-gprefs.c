@@ -2755,7 +2755,7 @@ widget_t start_preferences_dialog(void)
   prefs_unsaved = false;
   prefs_set_dialog_title(NULL);
 
-  add_ss_watcher(SS_SND_ERROR_WATCHER, watch_for_snd_error_in_prefs, NULL);
+  XEN_ADD_HOOK(ss->snd_error_hook, watch_for_snd_error_in_prefs_w, "prefs-error-watcher", "prefs dialog's snd-error handler");
 
   return(preferences_dialog);
 }

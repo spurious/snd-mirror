@@ -1420,7 +1420,10 @@ void after_open(int index)
     run_hook(after_open_hook,
 	     XEN_LIST_1(C_INT_TO_XEN_SOUND(index)),
 	     S_after_open_hook);
-  call_ss_watchers(SS_FILE_OPEN_WATCHER, SS_FILE_OPENED);
+
+  run_hook(ss->snd_open_file_hook,
+	   XEN_LIST_2(C_TO_XEN_INT(FILE_OPENED), XEN_WRAP_C_POINTER(NULL)),
+	   "open-file-hook");
 }
 
 
@@ -1639,7 +1642,10 @@ void snd_close_file(snd_info *sp)
   ss->active_sounds--;
   reflect_file_change_in_title();
   call_selection_watchers(SELECTION_IN_DOUBT);
-  call_ss_watchers(SS_FILE_OPEN_WATCHER, SS_FILE_CLOSED);
+
+  run_hook(ss->snd_open_file_hook,
+	   XEN_LIST_2(C_TO_XEN_INT(FILE_CLOSED), XEN_WRAP_C_POINTER(NULL)),
+	   "open-file-hook");
 
   if (chosen_sp)
     select_channel(chosen_sp, 0);
@@ -2973,25 +2979,35 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
 static void view_files_clear_selected_files(view_files_info *vdat);
 static int view_files_add_selected_file(view_files_info *vdat, vf_row *r);
 static int view_files_find_row(view_files_info *vdat, const char *name);
-
-static void vf_open_file_watcher(ss_watcher_reason_t reason, void *context)
-{
-  view_files_info *vdat = (view_files_info *)context;
-  if ((vdat->dialog) &&
-      (widget_is_active(vdat->dialog)))
-    {
-      /* reasons are SS_FILE_OPENED|CLOSED, but it's not worth the trouble of splitting them out here */
-      vf_mix_insert_buttons_set_sensitive(vdat, 
-					  ((vdat->currently_selected_files > 0) &&
-					   (any_selected_sound())));
-      vf_open_remove_buttons_set_sensitive(vdat, 
-					   (vdat->currently_selected_files > 0));
-    }
-}
-
-
 static int view_files_info_size = 0;
 static view_files_info **view_files_infos = NULL;
+
+static XEN vf_open_file_watcher(XEN reason)
+{
+  int k;
+  /* reasons are FILE_OPENED|CLOSED, but it's not worth the trouble of splitting them out here */
+  
+  /* loop through all vf dialogs ... */
+  for (k = 0; k < view_files_info_size; k++)
+    if ((view_files_infos[k]) &&
+	(view_files_infos[k]->dialog) &&
+	(widget_is_active(view_files_infos[k]->dialog)))
+      {
+	view_files_info *vdat;
+	vdat = view_files_infos[k];
+	vf_mix_insert_buttons_set_sensitive(vdat, 
+					    ((vdat->currently_selected_files > 0) &&
+					     (any_selected_sound())));
+	vf_open_remove_buttons_set_sensitive(vdat, 
+					     (vdat->currently_selected_files > 0));
+      }
+}
+
+#ifdef XEN_ARGIFY_1
+  XEN_ARGIFY_1(vf_open_file_watcher_w, vf_open_file_watcher)
+#else
+  #define vf_open_file_watcher_w vf_open_file_watcher
+#endif
 
 
 int view_files_dialog_list_length(void)
@@ -3096,7 +3112,6 @@ view_files_info *new_view_files_dialog(void)
   vdat->amp = 1.0;
   vdat->speed = 1.0;
   vdat->amp_env = default_env(1.0, 1.0);
-  vdat->open_file_watcher_loc = add_ss_watcher(SS_FILE_OPEN_WATCHER, vf_open_file_watcher, (void *)vdat);
   vdat->sort_items_size = 0;
   vdat->sort_items = NULL;
   vdat->speed_style = speed_control_style(ss);
@@ -5734,6 +5749,8 @@ void g_init_file(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_sort, g_view_files_sort_w, H_view_files_sort,
 				   S_setB S_view_files_sort, g_set_view_files_sort_w,  0, 1, 1, 1);
+
+  XEN_ADD_HOOK(ss->snd_open_file_hook, vf_open_file_watcher_w, "view-files-dialog-watcher", "view-files dialog open-file handler");
 
   #define H_open_hook S_open_hook " (filename): called each time a file is opened (before the actual open). \
 If it returns " PROC_TRUE ", the file is not opened."

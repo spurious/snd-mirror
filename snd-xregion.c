@@ -333,7 +333,7 @@ static void region_edit_callback(Widget w, XtPointer context, XtPointer info)
 }
 
 
-static void reflect_file_in_region_browser(ss_watcher_reason_t reason, void *ignore)
+static XEN reflect_file_in_region_browser(XEN reason)
 {
   if (region_dialog)
     {
@@ -343,6 +343,12 @@ static void reflect_file_in_region_browser(ss_watcher_reason_t reason, void *ign
       set_sensitive(insert_button, file_p);
     }
 }
+
+#ifdef XEN_ARGIFY_1
+  XEN_ARGIFY_1(reflect_file_in_region_browser_w, reflect_file_in_region_browser)
+#else
+  #define reflect_file_in_region_browser_w reflect_file_in_region_browser
+#endif
 
 
 char *regrow_get_label(void *ur)
@@ -681,7 +687,9 @@ static void make_region_dialog(void)
   make_region_labels(rsp->hdr);
   highlight_region();
   region_update_graph(cp);
-  add_ss_watcher(SS_FILE_OPEN_WATCHER, reflect_file_in_region_browser, NULL);
+
+  XEN_ADD_HOOK(ss->snd_open_file_hook, reflect_file_in_region_browser_w, "region-dialog-open-file-watcher", "region dialog open-file-hook handler");
+
   set_dialog_widget(REGION_DIALOG, region_dialog);
 }
 

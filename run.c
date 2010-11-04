@@ -100,7 +100,7 @@
  * SOMEDAY: if return int and bool
  * TODO: we miss shadowed funcs: (spectrum k) where spectrum is a vct complains about args to func spectrum
  *   can this be fixed by checking symbol-value before using the built-in walker?
- * perhaps we can access s7 globals directly -- no need to copy each way for ints/dbls/strings
+ * perhaps we can access s7 globals directly -- no need to copy each way for ints/dbls/strings (if default types are used in s7)
  */
 
 
@@ -16420,7 +16420,7 @@ mus_float_t mus_run_evaluate_ptreec(struct ptree *pt, mus_float_t arg, s7_pointe
 static ptree *last_ptree = NULL, *last_error_ptree = NULL;
 
 #if USE_SND
-static void watch_for_mus_error_in_run(ss_watcher_reason_t reason, void *ignore)
+static XEN watch_for_mus_error_in_run(s7_scheme *sc, XEN args)
 {
   /* called from snd.c if mus_error called, saw_mus_error set to 0 if throw (see above) */
   if (saw_mus_error == 1) 
@@ -16428,6 +16428,7 @@ static void watch_for_mus_error_in_run(ss_watcher_reason_t reason, void *ignore)
       saw_mus_error = 2;
       last_error_ptree = last_ptree;
     }
+  return(XEN_FALSE); /* don't report the error at the hook level */
 }
 #endif
 
@@ -17260,7 +17261,7 @@ void mus_init_run(void)
    */
 
 #if USE_SND
-  add_ss_watcher(SS_MUS_ERROR_WATCHER, watch_for_mus_error_in_run, NULL);
+  XEN_ADD_HOOK(ss->mus_error_hook, watch_for_mus_error_in_run, "run-mus-error-handler", "run macro's mus-error handler");
 #endif
 
   #define H_optimization_hook S_optimization_hook " (msg): called if the run macro encounters \
@@ -17290,7 +17291,7 @@ You can often slightly rewrite the form to make run happy."
 
 
 /* -------------------------------------------------------------------------------- */
-/* not s7, make some no-ops so other languages has some hope of compiling */
+/* not s7, make some no-ops so other languages have some hope of compiling */
 
 #else
 

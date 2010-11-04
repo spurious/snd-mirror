@@ -6,14 +6,12 @@
 #include "snd.h"
 
 snd_state *ss = NULL;
-static XEN mus_error_hook;
-
 
 static bool ignore_mus_error(int type, char *msg)
 {
   XEN result = XEN_FALSE;
-  if (XEN_HOOKED(mus_error_hook))
-    result = run_or_hook(mus_error_hook, 
+  if (XEN_HOOKED(ss->mus_error_hook))
+    result = run_or_hook(ss->mus_error_hook, 
 			 XEN_LIST_2(C_TO_XEN_INT(type), 
 				    C_TO_XEN_STRING(msg)),
 			 S_mus_error_hook);
@@ -32,8 +30,6 @@ void mus_error_to_snd(int type, char *msg)
       fprintf(stderr, "%s", msg);
       return;
     }
-
-  call_ss_watchers(SS_MUS_ERROR_WATCHER, SS_MUS_ERROR);
 
   if (!(ignore_mus_error(type, msg)))
     {
@@ -517,5 +513,5 @@ void g_init_base(void)
   #define H_mus_error_hook S_mus_error_hook " (error-type error-message):  called upon mus_error. \
 If it returns #t, Snd ignores the error (it assumes you've handled it via the hook)."
 
-  mus_error_hook = XEN_DEFINE_HOOK(S_mus_error_hook, 2, H_mus_error_hook);       /* arg = error-type error-message */
+  ss->mus_error_hook = XEN_DEFINE_HOOK(S_mus_error_hook, 2, H_mus_error_hook);       /* arg = error-type error-message */
 }

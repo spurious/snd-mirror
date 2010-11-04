@@ -933,10 +933,16 @@ static void reflect_sound_state(void)
 }
 
 
-static void reflect_file_in_enved(ss_watcher_reason_t reason, void *ignore)
+static XEN reflect_file_in_enved(XEN reason)
 {
   if (enved_dialog) reflect_sound_state();
 }
+
+#ifdef XEN_ARGIFY_1
+  XEN_ARGIFY_1(reflect_file_in_enved_w, reflect_file_in_enved)
+#else
+  #define reflect_file_in_enved_w reflect_file_in_enved
+#endif
 
 
 static void enved_selection_watcher(selection_watcher_reason_t reason, void *data);
@@ -1528,7 +1534,9 @@ Widget create_envelope_editor(void)
       reflect_sound_state();
 
       set_dialog_widget(ENVED_DIALOG, enved_dialog);
-      add_ss_watcher(SS_FILE_OPEN_WATCHER, reflect_file_in_enved, NULL);
+
+      XEN_ADD_HOOK(ss->snd_open_file_hook, reflect_file_in_enved_w, "enved-file-open-watcher", "enved dialog's file-open-hook handler");
+
       add_selection_watcher(enved_selection_watcher, NULL);
     }
   else raise_dialog(enved_dialog);

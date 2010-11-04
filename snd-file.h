@@ -27,7 +27,6 @@ typedef struct {
   graphics_context *env_ax;
   env_editor *spf;
   env *amp_env;
-  int open_file_watcher_loc;
   bool error_p;
   int sort_items_size;
   speed_style_t speed_style;
