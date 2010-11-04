@@ -168,7 +168,7 @@
 /* the number of recent objects that are temporarily gc-protected; 8 works for s7test and snd-test. 
  *    For the FFI, this sets the lag between a call on s7_cons and the first moment when its result
  *    might be vulnerable to the GC. 
-*/
+ */
 
 #define INITIAL_TRACE_LIST_SIZE 2
 /* a list of currently-traced functions */
@@ -975,9 +975,9 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
  *   (4503599627370496 10 1)
  *
  * i.e. the bits are identical.  We can't even detect when it has happened, so should
- * we just give an error for any floor (or whatever) of an arg>1e16?  (sin has a similar problem).
- * I think in the non-gmp case I'll throw an error in these cases because the results are
- * bogus:
+ *   we just give an error for any floor (or whatever) of an arg>1e16?  (sin has a similar problem)?
+ *   I think in the non-gmp case I'll throw an error in these cases because the results are
+ *   bogus:
  *   :(floor (+ (expt 2.0 62) 512))
  *   4611686018427387904
  *   :(floor (+ (expt 2.0 62) 513))
@@ -2327,8 +2327,15 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
 	   (is_closure_star(value)) ||
 	   (is_macro(value)) ||
 	   (is_bacro(value))))
+#if HAVE_PTHREADS
+	{
+	  pthread_mutex_lock(&alloc_lock);
+	  s7_remove_from_heap(sc, closure_source(value));
+	  pthread_mutex_unlock(&alloc_lock);
+	}
+#else
 	s7_remove_from_heap(sc, closure_source(value));
-      /* TODO: does this need a lock in the pthread case?  It messes with the heap */
+#endif
 
       loc = symbol_location(variable);
       vector_element(e, loc) = s7_cons(sc, slot, vector_element(e, loc));
@@ -10887,6 +10894,30 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
 }
 
 
+#include <sys/stat.h>
+
+static bool is_directory(const char *filename)
+{
+#if HAVE_WINDOZE
+  return(false);
+
+#else
+  /* from snd-file.c */
+#ifdef S_ISDIR
+  struct stat statbuf;
+#if HAVE_LSTAT
+  return((lstat(filename, &statbuf) >= 0) &&
+	 (S_ISDIR(statbuf.st_mode)));
+  return(false);
+#else
+  return((stat(filename, &statbuf) == 0) && 
+	 (S_ISDIR(statbuf.st_mode)));
+#endif
+#endif
+#endif
+}
+
+
 static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
 {
   #define H_load "(load file :optional env) loads the scheme file 'file'. The 'env' argument \
@@ -10914,6 +10945,10 @@ defaults to the global environment.  To load into the current environment instea
 		    make_list_2(sc, 
 				make_protected_string(sc, "load's first argument, ~S, should be a filename"),
 				name)));
+
+  if (is_directory(fname))
+    return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+		    make_list_2(sc, make_protected_string(sc, "load argument, ~S, is a directory"), name)));
 
   fp = fopen(fname, "r");
   if (!fp)
@@ -11052,7 +11087,7 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
     }
 
 #if DEBUGGING
-  eval_string_string = s7_string(car(args));
+  eval_string_string = (char *)s7_string(car(args));
 #endif
   
   old_port = sc->input_port;
@@ -19431,7 +19466,7 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
   /* inchar can return EOF, so it can't be used directly as an index into the digits array */
   c = inchar(sc, pt);
   if (c == EOF)
-    s7_error(sc, sc->SYNTAX_ERROR,
+    s7_error(sc, sc->READ_ERROR,
 	     make_list_1(sc, make_protected_string(sc, "unexpected '#' at end of input")));
 
   sc->w = small_int(1);
@@ -19448,7 +19483,7 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 	{
 	  d = inchar(sc, pt);
 	  if (d == EOF)
-	    s7_error(sc, sc->SYNTAX_ERROR,
+	    s7_error(sc, sc->READ_ERROR,
 		     make_list_1(sc, make_protected_string(sc, "unexpected end of input while reading #n...")));
 
 	  dig = digits[d];
@@ -19461,7 +19496,7 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 	{
 	  d = inchar(sc, pt);
 	  if (d == EOF)
-	    s7_error(sc, sc->SYNTAX_ERROR,
+	    s7_error(sc, sc->READ_ERROR,
 		     make_list_1(sc, make_protected_string(sc, "unexpected end of input while reading #nD...")));
 	  sc->strbuf[loc++] = d;
 	  if (d == '(')
@@ -19496,6 +19531,9 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 	    break;
 	  last_char = c;
 	}
+      if (c == EOF)
+	s7_error(sc, sc->READ_ERROR,
+		 make_list_1(sc, make_protected_string(sc, "unexpected end of input while reading #!")));
       return(token(sc));
     }
       
@@ -19511,6 +19549,9 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
 	    break;
 	  last_char = c;
 	}
+      if (c == EOF)
+	s7_error(sc, sc->READ_ERROR,
+		 make_list_1(sc, make_protected_string(sc, "unexpected end of input while reading #|")));
       return(token(sc));
     }
       
@@ -29108,6 +29149,7 @@ s7_scheme *s7_init(void)
     p = s7_symbol_value(sc, make_symbol(sc, "{list}"));
     set_type(p, (T_C_LST_ARGS_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR));
   }
+  /* PERHAPS: make these constants? (s7_define_constant_function) */
 
   s7_define_function(sc, "{apply}",                 g_apply,                   1, 0, true,  H_apply);
   s7_define_function(sc, "{append}",                g_append,                  0, 0, true,  H_append);
@@ -29441,9 +29483,6 @@ s7_scheme *s7_init(void)
  *   snd-edits uses XEN_CLEAR_HOOK for the chan-local hooks: s7_vector_set?
  *   how does C side handle scheme objects? does the c_object layer work here?
  *
- *
- * TODO: loading s7test simultaneously in several threads hangs after awhile in join_thread (call/cc?) 
- *
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html) [also list-ref/set, frame|mixer etc]
  *
  * someday we need to catch gmp exceptions: SIGFPE (exception=deliberate /0 -- see gmp/errno.c)
@@ -29507,7 +29546,6 @@ s7_scheme *s7_init(void)
  *                could the profiler give block counts as well?
  * if user creates an enormous list, it can seem to hang the listener:
  *   *list-print-length* ?
- *
  *
  * s7test valgrind, time       17-Jul-10   7-Sep-10       15-Oct-10
  *    intel core duo (1.83G):    3162     2690 1.921     2426 1.830

@@ -1675,6 +1675,7 @@ yow!! -- I'm using mpc_cmp
 (test (let ((s1 "1234") (s2 "1245")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string=? s1 s2)) #f)
 (test (let ((s1 "1234") (s2 "1234")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string=? s1 s2)) #t)
 (test (let ((s1 "1234") (s2 "124")) (string-set! s1 1 #\null) (string-set! s2 1 #\null) (string=? s1 s2)) #f)
+(test "\x3012" "012")
 
 
 ;;; string<?
@@ -6734,7 +6735,7 @@ yow!! -- I'm using mpc_cmp
 (test (load "empty-file" (current-environment) 1) 'error)
 (test (load "not a file") 'error)
 (test (load "") 'error)
-
+(test (load "/home/bil/cl") 'error)
 
 (test (output-port? (current-output-port)) #t)
 (write-char #\space (current-output-port))
@@ -7312,6 +7313,7 @@ yow!! -- I'm using mpc_cmp
 (test (format #f "~{}" '(1 2)) 'error)
 (test (format #f "{~}" '(1 2)) 'error)
 (test (format #f "~{~{~}}" '(1 2)) 'error)
+(test (format #f "~}" ) 'error)
 (test (format #f "#|~|#|") 'error)
 (test (format #f "~1.5F" 1.5) 'error)
 (test (format #f "~1+iF" 1.5) 'error)
@@ -7431,7 +7433,7 @@ yow!! -- I'm using mpc_cmp
 		(display " returned ") (display result) 
 		(display " but expected 'error")
 		(newline)))))
- (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i 'hi abs (lambda () 1) '#(()) (list 1 2 3) '(1 . 2)))
+ (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i 'hi :hi #<eof> abs (lambda () 1) '#(()) (list 1 2 3) '(1 . 2)))
 
 (for-each
  (lambda (arg)
@@ -7959,6 +7961,11 @@ yow!! -- I'm using mpc_cmp
 (for-each
  (lambda (arg)
    (test (format #f "~D" arg) 'error))
+ (list "hi" #\a 'a-symbol (make-vector 3) abs #f #t (if #f #f) (lambda (a) (+ a 1))))
+
+(for-each
+ (lambda (arg)
+   (test (format #f "~P" arg) 'error))
  (list "hi" #\a 'a-symbol (make-vector 3) abs #f #t (if #f #f) (lambda (a) (+ a 1))))
 
 (for-each
@@ -15156,7 +15163,9 @@ why are these different (read-time `#() ? )
   (test (let () (define* (hi :optional :key :rest a :allow-other-keys) a) (hi :c 1 :a 3 :b 2)) '(:c 1 :a 3 :b 2))
   
   (test (let () (define* (hi :optional (a 1) :optional (b 2)) a)) 'error)
+  (test (let () (define* (hi :optional :optional (a 2)) a) (hi 21)) 'error)
   (test (let () (define* (hi optional: (a 1)) a) (hi 1)) 'error)
+  (test (let () (define* (hi :optional: (a 1)) a) (hi 1)) 'error)
   (test (let () (define* (hi :key (a 1) :key (b 2)) a)) 'error)
   (test (let () (define* (hi :key (a 1) :optional (b 2) :allow-other-keys :allow-other-keys) a)) 'error)
   (test (let () (define* (hi :optional (a 1) :key :allow-other-keys) a) (hi :c 1 :a 3 :b 2)) 3)
@@ -15239,8 +15248,11 @@ why are these different (read-time `#() ? )
   (test ((lambda* (x :key) x) 1) 1)
   (test ((lambda* (:key :optional :rest x :allow-other-keys) x) 1) '(1))
   (test (lambda* (key: x) x) 'error)
+  (test (lambda* (:key: x) x) 'error)
   (test ((lambda* x x) 1) '(1))
   (test (lambda* (((x) 1)) x) 'error)
+  (test ((lambda* ((a: 3)) a:) :a: 4) 'error)
+  (test ((lambda* ((a 3)) a) a: 4) 4)
 
   ;; not sure the next 4 aren't errors
   (test ((lambda* (:key . x) x) :x 1) '(:x 1))
@@ -17163,6 +17175,8 @@ why are these different (read-time `#() ? )
 (num-test (bad-idea-1) 33.2)
 (set! *safety* 0)
 |#
+
+(test (quit 0) 'error)
 
 (define-expansion (_expansion_ a) `(+ ,a 1))
 (test (_expansion_ 3) 4)
@@ -21305,7 +21319,133 @@ why are these different (read-time `#() ? )
 		   (cdr exprs)))
 	      form)))
 
+        (let ()
+
+          ;; this is the nbody computer shootout benchmark taken from mzscheme
+          ;; if we were serious about benchmarks, this could use run.
+
+	  (define +days-per-year+ 365.24)
+	  (define +solar-mass+ (* 4 pi pi))
+	  (defstruct body x y z vx vy vz mass)
+	  
+	  (define *sun*
+	    (make-body 0.0 0.0 0.0 0.0 0.0 0.0 +solar-mass+))
+	  
+	  (define *jupiter*
+	    (make-body 4.84143144246472090
+		       -1.16032004402742839
+		       -1.03622044471123109e-1
+		       (* 1.66007664274403694e-3 +days-per-year+)
+		       (* 7.69901118419740425e-3 +days-per-year+)
+		       (* -6.90460016972063023e-5 +days-per-year+)
+		       (* 9.54791938424326609e-4 +solar-mass+)))
+	  
+	  (define *saturn*
+	    (make-body 8.34336671824457987
+		       4.12479856412430479
+		       -4.03523417114321381e-1
+		       (* -2.76742510726862411e-3 +days-per-year+)
+		       (* 4.99852801234917238e-3 +days-per-year+)
+		       (* 2.30417297573763929e-5 +days-per-year+)
+		       (* 2.85885980666130812e-4 +solar-mass+)))
+	  
+	  (define *uranus*
+	    (make-body 1.28943695621391310e1
+		       -1.51111514016986312e1
+		       -2.23307578892655734e-1
+		       (* 2.96460137564761618e-03 +days-per-year+)
+		       (* 2.37847173959480950e-03 +days-per-year+)
+		       (* -2.96589568540237556e-05 +days-per-year+)
+		       (*  4.36624404335156298e-05 +solar-mass+)))
+	  
+	  (define *neptune*
+	    (make-body 1.53796971148509165e+01
+		       -2.59193146099879641e+01
+		       1.79258772950371181e-01
+		       (* 2.68067772490389322e-03 +days-per-year+)
+		       (* 1.62824170038242295e-03 +days-per-year+)
+		       (* -9.51592254519715870e-05 +days-per-year+)
+		       (* 5.15138902046611451e-05 +solar-mass+)))
+	  
+	  (define (offset-momentum system)
+	    (let loop-i ((i system) (px 0.0) (py 0.0) (pz 0.0))
+	      (if (null? i)
+		  (begin
+		    (set! (body-vx (car system)) (/ (- px) +solar-mass+))
+		    (set! (body-vy (car system)) (/ (- py) +solar-mass+))
+		    (set! (body-vz (car system)) (/ (- pz) +solar-mass+)))
+		  (loop-i (cdr i)
+			  (+ px (* (body-vx (car i)) (body-mass (car i))))
+			  (+ py (* (body-vy (car i)) (body-mass (car i))))
+			  (+ pz (* (body-vz (car i)) (body-mass (car i))))))))
+	  
+	  (define (energy system)
+	    (let loop-o ((o system) (e 0.0))
+	      (if (null? o)
+		  e
+		  (let ((e (+ e (* 0.5 (body-mass (car o))
+				   (+ (* (body-vx (car o)) (body-vx (car o)))
+				      (* (body-vy (car o)) (body-vy (car o)))
+				      (* (body-vz (car o)) (body-vz (car o))))))))
+		    (let loop-i ((i (cdr o)) (e e))
+		      (if (null? i)
+			  (loop-o (cdr o) e)
+			  (let* ((dx (- (body-x (car o)) (body-x (car i))))
+				 (dy (- (body-y (car o)) (body-y (car i))))
+				 (dz (- (body-z (car o)) (body-z (car i))))
+				 (distance (sqrt (+ (* dx dx) (* dy dy) (* dz dz)))))
+			    (let ((e  (- e (/ (* (body-mass (car o)) (body-mass (car i))) distance))))
+			      (loop-i (cdr i) e)))))))))
+	  
+	  (define (advance system dt)
+	    (let loop-o ((o system))
+	      (unless (null? o)
+		      (let loop-i ((i (cdr o)))
+			(unless (null? i)
+				(let* ((o1 (car o))
+				       (i1 (car i))
+				       (dx (- (body-x o1) (body-x i1)))
+				       (dy (- (body-y o1) (body-y i1)))
+				       (dz (- (body-z o1) (body-z i1)))
+				       (distance (sqrt (+ (* dx dx) (* dy dy) (* dz dz))))
+				       (mag (/ dt (* distance distance distance)))
+				       (dxmag (* dx mag))
+				       (dymag (* dy mag))
+				       (dzmag (* dz mag))
+				       (om (body-mass o1))
+				       (im (body-mass i1)))
+				  (set! (body-vx o1) (- (body-vx o1) (* dxmag im)))
+				  (set! (body-vy o1) (- (body-vy o1) (* dymag im)))
+				  (set! (body-vz o1) (- (body-vz o1) (* dzmag im)))
+				  (set! (body-vx i1) (+ (body-vx i1) (* dxmag om)))
+				  (set! (body-vy i1) (+ (body-vy i1) (* dymag om)))
+				  (set! (body-vz i1) (+ (body-vz i1) (* dzmag om)))
+				  (loop-i (cdr i)))))
+		      (loop-o (cdr o))))
+	    (let loop-o ((o system))
+	      (unless (null? o)
+		      (let ((o1 (car o)))
+			(set! (body-x o1) (+ (body-x o1) (* dt (body-vx o1))))
+			(set! (body-y o1) (+ (body-y o1) (* dt (body-vy o1))))
+			(set! (body-z o1) (+ (body-z o1) (* dt (body-vz o1))))
+			(loop-o (cdr o))))))
+	  
+	  ;; (define (nbody-test)
+	  
+	  (let ((n 1000) ; (command-line #:args (n) (string->number n)))
+		(system (list *sun* *jupiter* *saturn* *uranus* *neptune*)))
+	    (offset-momentum system)
+	    (let ((initial (energy system)))
+	      (do ((i 1 (+ i 1)))
+		  ((< n i))
+		(advance system 0.01))
+	      (let ((final (energy system)))
+		(num-test initial -0.16907516382852)
+		(num-test final -0.16908760523461)
+					;(list initial final))))) ; (-0.16907516382852 -0.16908760523461)
+		))))
 	
+
 	;;; ----------------
 	;;; some of these tests are taken (with modifications) from sacla which has 
 	;;;  the following copyright notice:
@@ -52896,6 +53036,10 @@ why are these different (read-time `#() ? )
 (num-test (string->number "-ccdebef.a" 16) -214821871.625)
 (num-test (string->number "+dfefc/c" 16) 76437)
 (num-test (string->number "acd/eabf" 16) 79/1717)
+(num-test (string->number "-1e-1-1e-1i") -0.1-0.1i)
+(num-test (string->number "+1e+1+1e+1i") 10+10i)
+(num-test (string->number "#i#d+1e+1+1e+1i") 10+10i)
+(test (string->number "#e+1e+1+1e+1i") #f)
 
 ;;; these depend on rationalize's default error I think
 ;;; and they cause valgrind to hang!!
@@ -53991,7 +54135,7 @@ why are these different (read-time `#() ? )
 (for-each
  (lambda (str)
    (let ((val (catch #t (lambda () (string->number str)) (lambda args 'error))))
-     (if (number? val)
+     (if val ;(number? val)
 	 (format #t ";(string->number ~S) = ~A?~%" str val))))
  (list "#b#e#e1" "#x#e#e1" "#d#e#e1" "#o#e#e1" "#b#i#e1" "#x#i#e1" "#d#i#e1" "#o#i#e1" "#e#b#e1" "#i#b#e1" "#e#x#e1" "#i#x#e1" 
        "#e#d#e1" "#i#d#e1" "#e#o#e1" "#i#o#e1" "#e#b#i1" "#e#x#i1" "#e#d#i1" "#e#o#i1" "#b#e#b1" "#x#e#b1" "#d#e#b1" "#o#e#b1" 
