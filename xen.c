@@ -891,12 +891,13 @@ XEN xen_rb_add_hook(XEN hook, VALUE (*func)(), const char *name, const char* doc
 #if 0
   /* called from C, not Ruby, to add a function to a Ruby-side hook */
   XEN var;
-  XEN_DEFINE_PROCEDURE(name, func, XEN_TO_C_INT(rb_iv_get(hook, "@arity")), 0, false, doc);
-  rb_gv_set(name, var);
+  XEN_DEFINE_PROCEDURE(name, func, XEN_TO_C_INT_OR_ELSE(rb_iv_get(hook, "@arity"), 0), 0, false, doc);
+  var = rb_gv_get(name);
   rb_ary_push(rb_iv_get(hook, "@procs"), rb_ary_new3(2, C_TO_XEN_STRING(name), var));
   return(var);
-#endif
+#else
   return(hook);
+#endif
 }
 
 

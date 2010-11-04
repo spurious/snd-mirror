@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Oct 21 18:22:57 CEST 2005
-\ Changed: Thu Oct 21 12:56:25 CEST 2010
+\ Changed: Mon Oct 25 21:47:23 CEST 2010
 
 \ Commentary:
 \
@@ -35,7 +35,7 @@
 \ xe-open               ( obj -- )
 \ xe-close              ( obj -- )
 \
-\ xenved-test           ( :optional name -- )
+\ xenved-test           ( name -- xe )
 
 'snd-nogui provided? [if] skip-file [then]
 
@@ -90,7 +90,6 @@ end-struct xenved%
 : xe-args@       ( obj -- val ) instance-gen-ref xe-args @ ;
 : xe-gcs@        ( obj -- val ) instance-gen-ref xe-gcs @ ;
 : xe-drawer@     ( obj -- val ) instance-gen-ref xe-drawer @ ;
-: xe-drawer!     ( val obj -- ) instance-gen-ref xe-drawer ! ;
 : xe-bx0@        ( obj -- val ) instance-gen-ref xe-bx0 @ ;
 : xe-bx1@        ( obj -- val ) instance-gen-ref xe-bx1 @ ;
 : xe-by0@        ( obj -- val ) instance-gen-ref xe-by0 @ ;
@@ -132,14 +131,14 @@ fth-xenved make-?obj xenved?
 \       res gen xe-envelope!
 \     else
 \       res enved? if
-\ 	res envelope@ gen xe-envelope!
+\         res envelope@ gen xe-envelope!
 \       else
-\ 	res xenved? if
-\ 	  res xe-envelope@ gen xe-envelope!
-\ 	then
+\         res xenved? if
+\           res xe-envelope@ gen xe-envelope!
+\         then
 \       then
 \     then
-\     res #f <> if #t else #f then
+\     res
 \   then
 \ ; add-hook!
 
@@ -446,16 +445,18 @@ fth-xenved make-?obj xenved?
   : define-cursor-cb   <{ w gen ev f -- x }> w FXtDisplay w FXtWindow gen FXDefineCursor ;
   : undefine-cursor-cb <{ w gen ev f -- x }> w FXtDisplay w FXtWindow FXUndefineCursor ;
 
-  : init-xenved { gen -- gen }
-    gen xe-args@ { args }
+  : make-drawer { name parent args -- drawer }
     args FXmNbackground array-member? unless
-      args #( FXmNbackground graph-color ) array-append to args
+      args FXmNbackground array-push graph-color array-push to args
     then
     args FXmNforeground array-member? unless
-      args #( FXmNforeground data-color ) array-append to args
+      args FXmNforeground array-push data-color array-push to args
     then
-    gen xe-name@ FxmDrawingAreaWidgetClass gen xe-parent@ args FXtCreateManagedWidget { drawer }
-    drawer gen xe-drawer!
+    name FxmDrawingAreaWidgetClass parent args undef FXtCreateManagedWidget ( drawer )
+  ;
+  
+  : init-xenved { gen -- gen }
+    gen xe-drawer@ { drawer }
     drawer FXtDisplay FXC_crosshair FXCreateFontCursor { arrow-cursor }
     drawer FXmNresizeCallback    <'> draw-axes-cb     gen          FXtAddCallback drop
     drawer FXmNexposeCallback    <'> draw-axes-cb     gen          FXtAddCallback drop
@@ -506,14 +507,18 @@ fth-xenved make-?obj xenved?
     #f
   ;
 
-  : init-xenved { gen -- gen }
+  : make-drawer { name parent args -- drawer }
     Fgtk_drawing_area_new { drawer }
-    drawer gen xe-drawer!
     drawer FGDK_ALL_EVENTS_MASK Fgtk_widget_set_events drop
-    gen xe-parent@ FGTK_BOX drawer #t #t 10 Fgtk_box_pack_start drop
+    parent FGTK_BOX drawer #t #t 10 Fgtk_box_pack_start drop
     drawer Fgtk_widget_show drop
-    drawer gen xe-name@ Fgtk_widget_set_name drop
+    drawer name Fgtk_widget_set_name drop
     drawer -1 200 Fgtk_widget_set_size_request drop
+    drawer
+  ;
+
+  : init-xenved { gen -- gen }
+    gen xe-drawer@ { drawer }
     drawer FGPOINTER
     "expose_event" drawer FG_OBJECT FG_OBJECT_TYPE Fg_signal_lookup
     0
@@ -560,17 +565,26 @@ fth-xenved make-?obj xenved?
   ;
 [then]
 
-: make-xenved <{ name parent
-     :key
-     envelope    #( 0 0 1 1 )
-     axis-bounds #( 0 1 0 1 )
-     args        #() -- xe }>
+\ Arrays or lists as default values for <{ ... }> doesn't work very well.
+\
+\ make-xenved <{ name parent
+\               :key
+\               envelope    #( 0.0 0.0 1.0 1.0 )
+\               axis-bounds #( 0.0 1.0 0.0 1.0 )
+\               args        #() -- gen }>
+
+: make-xenved ( name parent keyword-args -- gen )
+  :envelope    #( 0.0 0.0 1.0 1.0 ) get-optkey { envelope }
+  :axis-bounds #( 0.0 1.0 0.0 1.0 ) get-optkey { axis-bounds }
+  :args        #()                  get-optkey { args }
+  { name parent }
   parent      widget?      parent      2 $" a widget"                assert-type
   axis-bounds axis-bounds? axis-bounds 4 $" an array of axis bounds" assert-type
   xenved% %alloc { xe }
   xe unless 'system-error #( get-func-name $" cannot create xenved" ) fth-throw then
   envelope make-enved xe xe-enved !
   name string? unless "xe-test" to name then
+  name parent args make-drawer xe xe-drawer !
   name   xe xe-name !
   parent xe xe-parent !
   args   xe xe-args !
@@ -589,7 +603,6 @@ fth-xenved make-?obj xenved?
   0   xe xe-mouse-pos !
   #f  xe xe-mouse-new !
   #f  xe xe-dragging !
-  #f  xe xe-drawer !
   xe fth-xenved make-instance init-xenved ( gen )
 ;
 
@@ -616,13 +629,38 @@ fth-xenved make-?obj xenved?
 ;
 previous
 
+#f value test-widget-type
+#f value test-widget-args
+#f value test-xenved-args
+
 'snd-motif provided? [if]
-  : xenved-test <{ :optional name "xenved" -- xe }>
-    name
-    name FxmFormWidgetClass #( FXmNheight 200 ) add-main-pane
-    :envelope    #( 0 0 1 1 )
-    :axis-bounds #( 0 1 0 1 ) make-xenved
-  ;
+  FxmFormWidgetClass  to test-widget-type
+  #( FXmNheight 200 ) to test-widget-args
+  #( FXmNleftAttachment   FXmATTACH_WIDGET
+     FXmNtopAttachment    FXmATTACH_WIDGET
+     FXmNbottomAttachment FXmATTACH_WIDGET
+     FXmNrightAttachment  FXmATTACH_WIDGET ) to test-xenved-args
 [then]
+
+: xenved-test <{ :optional name "xenved" -- xe }>
+  doc" create a drawing test widget\n\
+xenved-test value xe\n\
+xe             => #( 0.0 0.0 1.0 1.0 )\n\
+xe xe-envelope => #( 0.0 0.0 1.0 1.0 )\n\
+\\ some clicks later
+xe xe-envelope => #( 0.0 0.0\n\
+                     0.190736 0.562264\n\
+                     0.632152 0.932075\n\
+                     0.848774 0.316981\n\
+                     1.0 1.0 )\n\
+xe #( 0 1 1 1 ) set-xe-envelope
+xe xe-envelope => #( 0 1 1 1 )\n\
+xe xe-close"
+  name
+  name test-widget-type test-widget-args add-main-pane
+  :envelope    #( 0.0 0.0 1.0 1.0 )
+  :axis-bounds #( 0.0 1.0 0.0 1.0 )
+  :args test-xenved-args make-xenved ( xe )
+;
 
 \ xm-enved.fs ends here

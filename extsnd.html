@@ -11963,27 +11963,6 @@ add-source-file-extension adds 'ext' to the list of source file extensions.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- add-watcher -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="addwatcher">add-watcher</a> func</code>
-</td></tr><tr><td><br></td><td>
-add-watcher adds 'func' (a function of no arguments) to the watcher list, and 
-returns its id (an integer, used by <a href="#deletewatcher">delete-watcher</a>).  Each watcher function is called whenever the current selection
-changes, a sound is opened or closed or set read-only, a sound is selected, or a mark is changed.  
-effects-utils.scm (and the gtk version in gtk-effects-utils.scm) use this to make sure the
-"DoIt" button is sensitive only when it can actually do something.  In the simplest case, this
-is:
-<pre>
-    Motif: (add-watcher (lambda () 
-                          (XtSetSensitive 
-                            (XmMessageBoxGetChild new-dialog XmDIALOG_OK_BUTTON) 
-                            (not (null? (<a class=quiet href="#soundp" onmouseout="UnTip()" onmouseover="Tip(extsnd_soundp_tip)">sounds</a>))))))
-    Gtk:   (add-watcher (lambda () 
-                          (gtk_widget_set_sensitive ok-button (not (null? (<a class=quiet href="#soundp" onmouseout="UnTip()" onmouseover="Tip(extsnd_soundp_tip)">sounds</a>))))))
-</pre>
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
 <!-- bes-* -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><A class=def NAME="besj0">bes-j0</A> x</code><br>
@@ -12335,14 +12314,6 @@ This simulates typing C-g.  It is intended for use with <a href="#bindkey">bind-
 If you use it in some other situation (a hook for example), there are annoying problems with clearing
 the "I've been interrupted" flags.  Probably the safest thing is to call (c-g?) after the interruption 
 has taken effect.
-</td></tr><tr><td colspan=2 height=16></td></tr>
-
-
-<!-- delete-watcher -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="deletewatcher">delete-watcher</a> id</code>
-</td></tr><tr><td width=30><br></td><td>
-delete-watcher removes from the watcher list the function associated with id.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

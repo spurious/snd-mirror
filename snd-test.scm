@@ -2051,7 +2051,7 @@
 	  (names (list '*snd-opened-sound* 'abort 'add-clm-field 'add-colormap 
 		       'add-directory-to-view-files-list 'add-file-filter 'add-file-sorter 'add-file-to-view-files-list 'add-mark
 		       'add-player 'add-sound-file-extension 'add-source-file-extension 'add-to-main-menu 'add-to-menu
-		       'add-transform 'add-watcher 'after-apply-controls-hook 'after-edit-hook 'after-graph-hook 'after-lisp-graph-hook
+		       'add-transform 'after-apply-controls-hook 'after-edit-hook 'after-graph-hook 'after-lisp-graph-hook
 		       'after-open-hook 'after-save-as-hook 'after-save-state-hook 'after-transform-hook 'all-pass
 		       'all-pass? 'amp-control 'amp-control-bounds 'amplitude-modulate 'analyse-ladspa
 		       'apply-controls 'apply-ladspa 'array->file 'array-interp 'as-one-edit
@@ -2083,7 +2083,7 @@
 		       'default-output-header-type 'default-output-srate 'define-envelope 'degrees->radians 'delay
 		       'delay-tick 'delay? 'delete-colormap 'delete-file-filter 'delete-file-sorter
 		       'delete-mark 'delete-marks 'delete-sample 'delete-samples
-		       'delete-selection 'delete-transform 'delete-watcher 'dialog-widgets 'disk-kspace
+		       'delete-selection 'delete-transform 'dialog-widgets 'disk-kspace
 		       'display-edits 'dolph-chebyshev-window 'dont-normalize
 		       'dot-product 'dot-size 'draw-axes 'draw-dot 'draw-dots
 		       'draw-line 'draw-lines 'draw-mark-hook 'draw-mix-hook 'draw-string 'drop-hook
@@ -31951,104 +31951,6 @@ EDITS: 2
       (reset-hook! before-save-as-hook)
       (reset-hook! after-save-as-hook))
     
-    (let* ((sound-changed #f)
-	   (read-only-changed #f)
-	   (marks-changed #f)
-	   (selection-changed #f)
-	   (sound-selection-changed #f)
-	   (cur-sounds (sounds))
-	   (cur-marks (marks))
-	   (cur-read-only (map read-only (sounds)))
-	   (cur-selection (selection?))
-	   (cur-selected-sound (selected-sound))
-	   (cur-selected-channel (and cur-selected-sound (selected-channel)))
-	   (called #f))
-      (let ((w1 (add-watcher (lambda ()
-			       (set! called #t)
-			       (if (not (equal? (sounds) cur-sounds))
-				   (begin
-				     (set! sound-changed #t)
-				     (set! cur-sounds (sounds))))
-			       (if (not (equal? cur-selection (selection?)))
-				   (begin
-				     (set! selection-changed #t)
-				     (set! cur-selection (selection?))))
-			       (if (not (equal? cur-marks (marks)))
-				   (begin
-				     (set! marks-changed #t)
-				     (set! cur-marks (marks))))
-			       (let ((rdonly (map read-only (sounds))))
-				 (if (not (equal? cur-read-only rdonly))
-				     (begin
-				       (set! read-only-changed #t)
-				       (set! cur-read-only rdonly))))
-			       (if (or (not (equal? cur-selected-sound (selected-sound)))
-				       (not (equal? cur-selected-channel (and cur-selected-sound (selected-channel)))))
-				   (begin
-				     (set! sound-selection-changed #t)
-				     (set! cur-selected-sound (selected-sound))
-				     (set! cur-selected-channel (and cur-selected-sound (selected-channel)))))))))
-	(let ((ind (open-sound "oboe.snd")))
-	  (if (not sound-changed)
-	      (snd-display #__line__ ";watcher missed sound open? ")
-	      (set! sound-changed #f))
-	  
-	  (set! (read-only ind) #t)
-	  (if (not read-only-changed)
-	      (snd-display #__line__ ";watcher missed read-only? ")
-	      (set! read-only-changed #f))
-	  
-	  (let ((m1 (add-mark 123 ind 0)))
-	    (if (not marks-changed)
-		(snd-display #__line__ ";watcher missed add mark? ")
-		(set! marks-changed #f))
-	    
-	    (set! called #f) ; too hard to track mark samples here
-	    (set! (mark-sample m1) 321)
-	    (if (not called)
-		(snd-display #__line__ ";watcher missed move mark? ")
-		(set! marks-changed #f))
-	    (delete-mark m1)
-	    (if (not marks-changed)
-		(snd-display #__line__ ";watcher missed delete mark? ")
-		(set! marks-changed #f)))
-	  
-	  (let ((ind1 (open-sound "2.snd")))
-	    (if (not sound-changed)
-		(snd-display #__line__ ";watcher missed 2 sound open? ")
-		(set! sound-changed #f))
-	    (select-sound ind)
-	    (if (not sound-selection-changed)
-		(snd-display #__line__ ";watcher missed select sound?")
-		(set! sound-selection-changed #f))
-	    (select-sound ind1)
-	    (if (not sound-selection-changed)
-		(snd-display #__line__ ";watcher missed select sound 1?")
-		(set! sound-selection-changed #f))
-	    (select-channel 1)
-	    (if (not sound-selection-changed)
-		(snd-display #__line__ ";watcher missed select channel?")
-		(set! sound-selection-changed #f))
-	    (close-sound ind1)
-	    (if (not sound-changed)
-		(snd-display #__line__ ";watcher missed 2 sound close? ")
-		(set! sound-changed #f)))
-	  
-	  (select-all ind)
-	  (if (not selection-changed)
-	      (snd-display #__line__ ";watcher missed selection")
-	      (set! selection-changed #f))
-	  
-	  (set! (selection-member? ind 0) #f)
-	  (if (not selection-changed)
-	      (snd-display #__line__ ";watcher missed selection change")
-	      (set! selection-changed #f))
-	  (set! sound-changed #f)
-	  (delete-watcher w1)
-	  (close-sound ind)
-	  (if sound-changed
-	      (snd-display #__line__ ";deleted watcher runs anyway?")))))
-    
     (let ((old-clip (clipping))
 	  (old-mus-clip (mus-clipping)))
       (set! (clipping) #t)
@@ -61399,7 +61301,7 @@ EDITS: 1
 		     fill-rectangle filter-sound filter-control-in-dB filter-control-envelope enved-filter-order enved-filter
 		     filter-control-in-hz filter-control-order filter-selection filter-channel filter-control-waveform-color filter-control? find-channel
 		     find-mark find-sound finish-progress-report foreground-color insert-file-dialog file-write-date
-		     frames free-sampler graph transform? delete-transform delete-watcher
+		     frames free-sampler graph transform? delete-transform
 		     graph-color graph-cursor graph-data graph->ps gl-graph->ps graph-style lisp-graph?  graphs-horizontal header-type
 		     help-dialog info-dialog highlight-color insert-region insert-sample insert-samples
 		     insert-samples-with-origin insert-selection insert-silence insert-sound just-sounds key key-binding
@@ -61412,7 +61314,7 @@ EDITS: 1
 		     mix-dialog-mix mix-name mix-sync-max mix-sync mix-properties mix-property 
 		     mix-region mix-sampler?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width mark-tag-height mark-tag-width
 		     mix-tag-y mix-vct mix-waveform-height time-graph-style lisp-graph-style transform-graph-style
-					;new-sound in add-watcher
+					;new-sound in
 		     read-mix-sample next-sample read-region-sample
 		     transform-normalization open-file-dialog-directory open-raw-sound open-sound previous-sample
 		     peaks player? players

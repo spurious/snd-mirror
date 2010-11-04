@@ -16,13 +16,19 @@
 % cat ./.sndtest.rb
 # $VERBOSE           = true
 # $DEBUG             = true
-# $ERROR_AND_EXIT    = true
 
-$original_save_dir = set_save_dir(ENV["TMPDIR"])
-$original_temp_dir = set_temp_dir(ENV["TMPDIR"])
+if ENV["RUBYLIB"]
+  ENV["RUBYLIB"].split(/:/).each do |path| $LOAD_PATH.unshift(path) end
+else
+  $LOAD_PATH.unshift("/usr/opt/share/ruby")
+  $LOAD_PATH.unshift("/usr/opt/lib/ruby")
+end
+$LOAD_PATH.uniq!
+
+$original_save_dir           = set_save_dir(ENV["TMPDIR"])
+$original_temp_dir           = set_temp_dir(ENV["TMPDIR"])
 $original_output_data_format = default_output_data_format
 
-# $with_exit         = false
 # $with_backtrace    = true
 # $all_args          = true
 $with_big_file     = true
@@ -62,29 +68,63 @@ $sf_dir            = "/usr/opt/sound/sf1/"
 #  test 28: errors
 #  test all done
 
-$VERBOSE        = false
-$DEBUG          = false
-$ERROR_AND_EXIT = false
+$VERBOSE = false
+$DEBUG   = false
+
+$my_snd_error_hook = false
+$my_mus_error_hook = false
+
+$original_save_dir              = (save_dir or "/zap/snd")
+$original_temp_dir              = (temp_dir or "/zap/tmp")
+$original_output_data_format    = default_output_data_format
+$original_sound_file_extensions = sound_file_extensions
+$default_file_buffer_size       = 65536
+$home_dir                       = ENV["HOME"]
+$info_array_print_length        = 48
+
+$with_backtrace = false
+$sf_dir         = "/home/bil/sf1/"
+$bigger_snd     = "/home/bil/zap/sounds/bigger.snd"
+$with_big_file  = false
+$all_args       = false
+
+# global variables may be overridden in `pwd`/.sndtest.rb or ~/.sndtest.rb
+lambda do |file|
+  if File.exists?(file)
+    load(file)
+  elsif File.exists?(f = ENV["HOME"] + "/" + file)
+    load(f)
+  end
+end.call(".sndtest.rb")
 
 require "clm"
 
-if provided? :snd_nogui
+$with_test_nogui = provided? :snd_nogui
+$with_test_gui   = (not $with_test_nogui)
+$with_test_motif = provided? :snd_motif
+$with_test_gtk   = provided? :snd_gtk
+$with_test_gl    = provided? :gl
+$with_test_gsl   = provided? :gsl
+$with_test_alsa  = provided? :alsa
+
+if $with_test_nogui
   # snd-nogui.c provides them with fixed args
   undef x_bounds
-  undef y_bounds
-  undef set_x_bounds
-  undef set_y_bounds
   def x_bounds(*args)
     []
   end
   
+  undef y_bounds
   def y_bounds(*args)
     []
   end
+
+  undef set_x_bounds
   def set_x_bounds(bounds, *args)
     bounds
   end
   
+  undef set_y_bounds
   def set_y_bounds(bounds, *args)
     bounds
   end
@@ -93,9 +133,7 @@ end
 require "rational"
 require "examp"
 require "ws"
-require "env"
 require "hooks"
-require "extensions"
 require "mix"
 require "marks"
 require "pvoc"
@@ -103,23 +141,14 @@ require "bird"
 require "v"
 require "poly"
 require "dsp"
-require "rubber"
-include Rubber
 require "analog-filter"
-unless provided? :snd_nogui
-  require "rgb"
-  provided?(:snd_motif) and (not provided?(:xm)) and require("libxm")
-  provided?(:snd_gtk)   and (not provided?(:xg)) and require("libxg")
-  require "snd-xm"
-  include Snd_XM
-  require "popup"
-  require "xm-enved"
-  require "draw"
-  require "musglyphs"
-  require "effects"
-end
+require "rgb"
+require "effects"
+require "xm-enved"
+require "draw"
+require "musglyphs"
 
-if provided? :snd_motif
+if $with_test_motif
   RXSetErrorHandler(lambda do |dpy, e|
                       val, err = RXGetErrorText(dpy, Rerror_code(e), nil, 1024)
                       $stderr.printf("Xlib error_code[%s]: %s\n", val, err)
@@ -135,34 +164,7 @@ if provided? :snd_motif
                         $stderr.printf("Ruby $!: %s\n", $!.inspect)
                         $stderr.printf("Ruby $@: %s\n", $@.inspect)
                       end)
-  RXtAppSetErrorHandler(main_widgets().car, lambda do |msg|
-                          $stderr.printf("Xt Error: %s\n", msg)
-                          $stderr.printf("Ruby $!: %s\n", $!.inspect)
-                          $stderr.printf("Ruby $@: %s\n", $@.inspect)
-                        end)
-  RXtAppSetWarningHandler(main_widgets().car, lambda do |msg|
-                            $stderr.printf("Xt Warning: %s\n", msg)
-                            $stderr.printf("Ruby $!: %s\n", $!.inspect)
-                            $stderr.printf("Ruby $@: %s\n", $@.inspect)
-                          end)
 end
-
-$original_save_dir = (save_dir or "/zap/snd")
-$original_temp_dir = (temp_dir or "/zap/tmp")
-$original_output_data_format = default_output_data_format
-$original_sound_file_extensions = sound_file_extensions
-$default_file_buffer_size = 65536
-$home_dir = ENV["HOME"]
-# snd_display will print at least those much vct entries.
-$info_array_print_length = 48
-
-# let do
-#   dir = Dir.pwd + "/peaks"
-#   unless File.directory?(dir)
-#     Dir.mkdir(dir)
-#   end
-#   set_peak_env_dir(dir)
-# end
 
 # Returns the Ascii value of KEY as a Fixnum.
 #
@@ -178,26 +180,7 @@ def key_to_int(key)
   end
 end
 
-unbind_key(key_to_int(?c), 4, true) # C-c for interrupt key
-trap("SIGINT") do |sig|
-  puts
-  snd_info("Interrupt received.  Finish snd-test.rb.")
-  snd_info
-  $timings.last.last.stop
-  finish_snd_test
-  exit(2) if $with_exit
-end
-
-if provided? :snd_nogui then set_with_mix_tags(true) end
-
-$with_backtrace = false
-$sf_dir         = "/home/bil/sf1/"
-$with_exit      = true
-
-$with_big_file  = false
-$bigger_snd     = "/home/bil/zap/sounds/bigger.snd"
-
-$all_args       = false
+if $with_test_nogui then set_with_mix_tags(true) end
 
 $test00 = true
 $test01 = true
@@ -229,40 +212,14 @@ $test26 = true
 $test27 = true
 $test28 = true
 
-$my_snd_error_hook = false
-$my_mus_error_hook = false
-
-# sould be set in .sndtest.rb
-#
-# # handles only $! errors, discards all others
-# $my_snd_error_hook = lambda do |msg|
-#   if number?(msg)
-#     msg + 32
-#   else
-#     if $!
-#       if $VERBOSE
-#         snd_display("#<snd-error-hook: %s>", $!)
-#         snd_info(verbose_message_string(true, "# "))
-#         snd_display("#<snd-error-hook ********** end>")
-#       end
-#       if $ERROR_AND_EXIT
-#         $timings.last.last.stop
-#         finish_snd_test
-#         exit(3)
-#       end
-#     end
-#     true
-#   end
-# end
-
-# discards otiose output
-$my_snd_error_hook = lambda do |msg| true end
-
-# global variables may be overridden in `pwd`/.sndtest.rb or ~/.sndtest.rb
-if File.exist?(".sndtestrc")
-  load_init_file(".sndtestrc")
-else
-  load_init_file(".sndtest.rb")
+unbind_key(key_to_int(?c), 4, true) # C-c for interrupt key
+trap("SIGINT") do |sig|
+  puts
+  snd_info("Interrupt received.  Finish snd-test.rb.")
+  snd_info
+  $timings.last.last.stop
+  finish_snd_test
+  exit(2)
 end
 
 # let procs $snd|mus_error_hook("sndtestrc") untouched
@@ -319,7 +276,7 @@ def snd_info(*args)
   str = format(*args)
   set_mus_array_print_length(olda)
   set_print_length(oldv)
-  if provided? :snd_nogui
+  if $with_test_nogui
     clm_print("# %s\n", str)
   else
     clm_print("\n# %s", str)
@@ -365,7 +322,6 @@ if script_arg.positive?
     args.each do |arg|
       if arg.between?(0, 28)
         eval(format("$test%02d = true", arg))
-        $with_exit = true
       end
     end
   end
@@ -474,24 +430,19 @@ def set_arity_ok(func, args)
   arity_ok("set_#{func}", args)
 end
 
-def dismiss_all_dialogs
-  if provided? :xm or provided? :xg
+if $with_test_nogui
+  def dismiss_all_dialogs
+  end
+else
+  def dismiss_all_dialogs
     dialog_widgets.each do |dialog|
       if array?(dialog)
         if symbol?(dialog.car)
-          if provided? :snd_motif
-            if RXtIsManaged(dialog) then RXtUnmanageChild(dialog) end
-          elsif provided? :snd_gtk
-              Rgtk_widget_hide(dialog)
-          end
+          if is_managed?(dialog) then hide_widget(dialog) end
         else
           dialog.each do |d|
             if symbol?(d.car)
-              if provided? :snd_motif
-                if RXtIsManaged(d) then RXtUnmanageChild(d) end
-              elsif provided? :snd_gtk
-                Rgtk_widget_hide(d)
-              end
+              if is_managed?(dialog) then hide_widget(dialog) end
             end
           end
         end
@@ -674,6 +625,7 @@ def finish_snd_test
    "new.snd",
    "oboe.marks",
    "obtest.snd.stereo",
+   "saved-snd.rb",
    "snd.eps",
    "test-1.snd",
    "test-2.snd",
@@ -723,6 +675,7 @@ make_hook("$before_test_hook", 1, "snd-test") do |n|
   set_mus_srate($default_srate)
   set_clipping(false)
   set_mus_clipping(false)
+  $clm_srate = $default_srate.to_i
   $timings.push([n, Snd_test_time.new])
   snd_info("test %s", n)
 end
@@ -756,11 +709,11 @@ def snd_test_exit(test = 0)
   exit(0)
 end
 
-kind = if provided? :snd_motif
+kind = if $with_test_motif
          "motif"
-       elsif provided? :snd_gtk
+       elsif $with_test_gtk
          "gtk"
-       elsif provided? :snd_nogui
+       elsif $with_test_nogui
          "nogui"
        else
          "unknown"
@@ -772,334 +725,337 @@ snd_info("%s", Time.now.localtime.strftime("%a %d-%b-%Y %H:%M %Z"))
 snd_info
 $overall_start_time = Snd_test_time.new
 
-module Test_event
-  # see event.scm
-  def key_event(widget, key, state)
-    e = RXEvent(RKeyPress)
-    dpy = RXtDisplay(widget)
-    window = RXtWindow(widget)
-    Rset_type(e, RKeyPress)
-    Rset_window(e, window)
-    Rset_display(e, dpy)
-    Rset_root(e, RRootWindow(dpy, RDefaultScreen(dpy)))
-    Rset_x(e, 0)
-    Rset_y(e, 0)
-    Rset_x_root(e, 0)
-    Rset_y_root(e, 0)
-    Rset_keycode(e, RXKeysymToKeycode(dpy, [:KeySym, key_to_int(key)]))
-    Rset_state(e, state)
-    Rset_time(e, [:Time, RCurrentTime])
-    Rset_same_screen(e, true)
-    Rset_subwindow(e, [:Window, RNone])
-    err = RXSendEvent(dpy, window, false, RKeyPressMask, e)
-    if err.nonzero?
-      Rset_type(e, RKeyRelease)
+if $with_test_motif
+  module Test_event
+    # see event.scm
+    def key_event(widget, key, state)
+      e = RXEvent(RKeyPress)
+      dpy = RXtDisplay(widget)
+      window = RXtWindow(widget)
+      Rset_type(e, RKeyPress)
+      Rset_window(e, window)
+      Rset_display(e, dpy)
+      Rset_root(e, RRootWindow(dpy, RDefaultScreen(dpy)))
+      Rset_x(e, 0)
+      Rset_y(e, 0)
+      Rset_x_root(e, 0)
+      Rset_y_root(e, 0)
+      Rset_keycode(e, RXKeysymToKeycode(dpy, [:KeySym, key_to_int(key)]))
+      Rset_state(e, state)
       Rset_time(e, [:Time, RCurrentTime])
-      err = RXSendEvent(dpy, window, false, RKeyReleaseMask, e)
-    end
-    if err.zero? then snd_display("[key-event error] ", err) end
-    err
-  end
-
-  def key_event_with_mouse(widget, key, state, x, y)
-    e = RXEvent(RKeyPress)
-    dpy = RXtDisplay(widget)
-    window = RXtWindow(widget)
-    Rset_type(e, RKeyPress)
-    Rset_window(e, window)
-    Rset_display(e, dpy)
-    Rset_root(e, RRootWindow(dpy, RDefaultScreen(dpy)))
-    Rset_x(e, x)
-    Rset_y(e, y)
-    Rset_x_root(e, x)
-    Rset_y_root(e, y)
-    Rset_keycode(e, RXKeysymToKeycode(dpy, [:KeySym, key_to_int(key)]))
-    Rset_state(e, state)
-    Rset_time(e, [:Time, RCurrentTime])
-    Rset_same_screen(e, true)
-    Rset_subwindow(e, [:Window, RNone])
-    err = RXSendEvent(dpy, window, false, RKeyPressMask, e)
-    if err.nonzero?
-      Rset_type(e, RKeyRelease)
-      Rset_time(e, [:Time, RCurrentTime])
-      err = RXSendEvent(dpy, window, false, RKeyReleaseMask, e)
-    end
-    if err.zero? then snd_display("[key-event error] ", err) end
-    err
-  end
-
-  def resize_event(widget, width, height)
-    e = RXEvent(RResizeRequest)
-    dpy = RXtDisplay(widget)
-    window = RXtWindow(widget)
-    Rset_window(e, window)
-    Rset_display(e, dpy)
-    Rset_width(e, width)
-    Rset_height(e, height)
-    RXSendEvent(dpy, window, false, RResizeRedirectMask, e)
-  end
-
-  def enter_event(widget)
-    e = RXEvent(REnterNotify)
-    dpy = RXtDisplay(widget)
-    window = RXtWindow(widget)
-    Rset_window(e, window)
-    Rset_display(e, dpy)
-    RXSendEvent(dpy, window, false, REnterWindowMask, e)
-  end
-
-  def leave_event(widget)
-    e = RXEvent(RLeaveNotify)
-    dpy = RXtDisplay(widget)
-    window = RXtWindow(widget)
-    Rset_window(e, window)
-    Rset_display(e, dpy)
-    RXSendEvent(dpy, window, false, RLeaveWindowMask, e)
-  end
-
-  def expose_event(widget, x, y, width, height)
-    e = RXEvent(RExpose)
-    dpy = RXtDisplay(widget)
-    window = RXtWindow(widget)
-    Rset_window(e, window)
-    Rset_display(e, dpy)
-    Rset_x(e, x)
-    Rset_y(e, y)
-    Rset_width(e, width)
-    Rset_height(e, height)
-    Rset_count(e, 0)
-    RXSendEvent(dpy, window, false, RExposureMask, e)
-  end
-  
-  def click_event(widget, button, state, x, y)
-    e = RXEvent(RButtonPress)
-    dpy = RXtDisplay(widget)
-    window = RXtWindow(widget)
-    Rset_type(e, RButtonPress)
-    Rset_window(e, window)
-    Rset_display(e, dpy)
-    Rset_root(e, RRootWindow(dpy, RDefaultScreen(dpy)))
-    Rset_x(e, x)
-    Rset_y(e, y)
-    Rset_x_root(e, 0)
-    Rset_y_root(e, 0)
-    Rset_state(e, state)
-    Rset_button(e, button)
-    Rset_time(e, [:Time, RCurrentTime])
-    Rset_same_screen(e, true)
-    Rset_subwindow(e, [:Window, RNone])
-    err = RXSendEvent(dpy, window, false, RButtonPressMask, e)
-    if err.nonzero?
-      Rset_type(e, RButtonRelease)
-      Rset_time(e, [:Time, RCurrentTime])
-      err = RXSendEvent(dpy, window, false, RButtonReleaseMask, e)
-    end
-    if err.zero? then snd_display("[click-event error] ", err) end
-    err
-  end
-  
-  def drag_event(widget, button, state, x0, y0, x1, y1)
-    e = RXEvent(RButtonPress)
-    e1 = RXEvent(RMotionNotify)
-    dpy = RXtDisplay(widget)
-    window = RXtWindow(widget)
-    Rset_type(e, RButtonPress)
-    Rset_window(e, window)
-    Rset_display(e, dpy)
-    Rset_root(e, RRootWindow(dpy, RDefaultScreen(dpy)))
-    Rset_x(e, x0)
-    Rset_y(e, y0)
-    Rset_x_root(e, 0)
-    Rset_y_root(e, 0)
-    Rset_state(e, state)
-    Rset_button(e, button)
-    Rset_time(e, [:Time, RCurrentTime])
-    Rset_same_screen(e, true)
-    Rset_subwindow(e, [:Window, RNone])
-    err = RXSendEvent(dpy, window, false, RButtonPressMask, e)
-    if err.nonzero?
-      Rset_window(e1, window)
-      Rset_display(e1, dpy)
-      Rset_root(e1, RRootWindow(dpy, RDefaultScreen(dpy)))
-      # Rset_x(e1, x1)
-      # Rset_y(e1, y1)
-      Rset_x_root(e1, x0)
-      Rset_y_root(e1, y0)
-      Rset_state(e1, state)
-      Rset_time(e1, [:Time, RCurrentTime + 300])
-      Rset_same_screen(e1, true)
-      Rset_subwindow(e1, [:Window, RNone])
-      Rset_is_hint(e1, RNotifyNormal)
-      den = if (x1 - x0).abs > 10 or (y1 - y0).abs > 10
-              10
-            else
-              2
-            end
-      xdiff = ((x1 - x0) / den.to_f).floor
-      ydiff = ((y1 - y0) / den.to_f).floor
-      xn = x0 + xdiff
-      yn = y0 + ydiff
-      den.times do
-        Rset_x(e1, xn)
-        Rset_y(e1, yn)
-        RXSendEvent(dpy, window, false, RButtonMotionMask, e1)
-        xn += xdiff
-        yn += ydiff
+      Rset_same_screen(e, true)
+      Rset_subwindow(e, [:Window, RNone])
+      err = RXSendEvent(dpy, window, false, RKeyPressMask, e)
+      if err.nonzero?
+        Rset_type(e, RKeyRelease)
+        Rset_time(e, [:Time, RCurrentTime])
+        err = RXSendEvent(dpy, window, false, RKeyReleaseMask, e)
       end
-      Rset_type(e, RButtonRelease)
-      Rset_time(e, [:Time, RCurrentTime + 500])
-      Rset_x(e, x1)
-      Rset_y(e, y1)
-      RXSendEvent(dpy, window, false, RButtonReleaseMask, e)
+      if err.zero? then snd_display("[key-event error] ", err) end
+      err
     end
-  end
 
-  def select_item(wid, pos)
-    if RXmIsList(wid)
-      RXmListSelectPos(wid, pos + 1, true)
-    else
-      snd_display("is not a list!", RXtName(wid))
+    def key_event_with_mouse(widget, key, state, x, y)
+      e = RXEvent(RKeyPress)
+      dpy = RXtDisplay(widget)
+      window = RXtWindow(widget)
+      Rset_type(e, RKeyPress)
+      Rset_window(e, window)
+      Rset_display(e, dpy)
+      Rset_root(e, RRootWindow(dpy, RDefaultScreen(dpy)))
+      Rset_x(e, x)
+      Rset_y(e, y)
+      Rset_x_root(e, x)
+      Rset_y_root(e, y)
+      Rset_keycode(e, RXKeysymToKeycode(dpy, [:KeySym, key_to_int(key)]))
+      Rset_state(e, state)
+      Rset_time(e, [:Time, RCurrentTime])
+      Rset_same_screen(e, true)
+      Rset_subwindow(e, [:Window, RNone])
+      err = RXSendEvent(dpy, window, false, RKeyPressMask, e)
+      if err.nonzero?
+        Rset_type(e, RKeyRelease)
+        Rset_time(e, [:Time, RCurrentTime])
+        err = RXSendEvent(dpy, window, false, RKeyReleaseMask, e)
+      end
+      if err.zero? then snd_display("[key-event error] ", err) end
+      err
     end
-  end
 
-  def click_button(button, value = false, bits = false)
-    if RWidget?(button)
-      if RXtIsSensitive(button)
-        if RXmIsPushButton(button) or RXmIsPushButtonGadget(button)
-          if RXtHasCallbacks(button, RXmNactivateCallback) == RXtCallbackHasSome
-            but = RXmPushButtonCallbackStruct()
-            Rset_click_count(but, 0)
-            e = RXEvent(RButtonPress)
-            Rset_state(e, (bits or 0))
-            Rset_event(but, e)
-            RXtCallCallbacks(button, RXmNactivateCallback, but)
-          else
-            snd_display("pushbutton %s has no active callbacks", RXtName(button))
-          end
-        else
-          if RXmIsToggleButton(button) or RXmIsToggleButtonGadget(button)
-            if RXtHasCallbacks(button, RXmNvalueChangedCallback) == RXtCallbackHasSome
-              tgl = RXmToggleButtonCallbackStruct()
-              Rset_set(tgl, value)
+    def resize_event(widget, width, height)
+      e = RXEvent(RResizeRequest)
+      dpy = RXtDisplay(widget)
+      window = RXtWindow(widget)
+      Rset_window(e, window)
+      Rset_display(e, dpy)
+      Rset_width(e, width)
+      Rset_height(e, height)
+      RXSendEvent(dpy, window, false, RResizeRedirectMask, e)
+    end
+
+    def enter_event(widget)
+      e = RXEvent(REnterNotify)
+      dpy = RXtDisplay(widget)
+      window = RXtWindow(widget)
+      Rset_window(e, window)
+      Rset_display(e, dpy)
+      RXSendEvent(dpy, window, false, REnterWindowMask, e)
+    end
+
+    def leave_event(widget)
+      e = RXEvent(RLeaveNotify)
+      dpy = RXtDisplay(widget)
+      window = RXtWindow(widget)
+      Rset_window(e, window)
+      Rset_display(e, dpy)
+      RXSendEvent(dpy, window, false, RLeaveWindowMask, e)
+    end
+
+    def expose_event(widget, x, y, width, height)
+      e = RXEvent(RExpose)
+      dpy = RXtDisplay(widget)
+      window = RXtWindow(widget)
+      Rset_window(e, window)
+      Rset_display(e, dpy)
+      Rset_x(e, x)
+      Rset_y(e, y)
+      Rset_width(e, width)
+      Rset_height(e, height)
+      Rset_count(e, 0)
+      RXSendEvent(dpy, window, false, RExposureMask, e)
+    end
+    
+    def click_event(widget, button, state, x, y)
+      e = RXEvent(RButtonPress)
+      dpy = RXtDisplay(widget)
+      window = RXtWindow(widget)
+      Rset_type(e, RButtonPress)
+      Rset_window(e, window)
+      Rset_display(e, dpy)
+      Rset_root(e, RRootWindow(dpy, RDefaultScreen(dpy)))
+      Rset_x(e, x)
+      Rset_y(e, y)
+      Rset_x_root(e, 0)
+      Rset_y_root(e, 0)
+      Rset_state(e, state)
+      Rset_button(e, button)
+      Rset_time(e, [:Time, RCurrentTime])
+      Rset_same_screen(e, true)
+      Rset_subwindow(e, [:Window, RNone])
+      err = RXSendEvent(dpy, window, false, RButtonPressMask, e)
+      if err.nonzero?
+        Rset_type(e, RButtonRelease)
+        Rset_time(e, [:Time, RCurrentTime])
+        err = RXSendEvent(dpy, window, false, RButtonReleaseMask, e)
+      end
+      if err.zero? then snd_display("[click-event error] ", err) end
+      err
+    end
+    
+    def drag_event(widget, button, state, x0, y0, x1, y1)
+      e = RXEvent(RButtonPress)
+      e1 = RXEvent(RMotionNotify)
+      dpy = RXtDisplay(widget)
+      window = RXtWindow(widget)
+      Rset_type(e, RButtonPress)
+      Rset_window(e, window)
+      Rset_display(e, dpy)
+      Rset_root(e, RRootWindow(dpy, RDefaultScreen(dpy)))
+      Rset_x(e, x0)
+      Rset_y(e, y0)
+      Rset_x_root(e, 0)
+      Rset_y_root(e, 0)
+      Rset_state(e, state)
+      Rset_button(e, button)
+      Rset_time(e, [:Time, RCurrentTime])
+      Rset_same_screen(e, true)
+      Rset_subwindow(e, [:Window, RNone])
+      err = RXSendEvent(dpy, window, false, RButtonPressMask, e)
+      if err.nonzero?
+        Rset_window(e1, window)
+        Rset_display(e1, dpy)
+        Rset_root(e1, RRootWindow(dpy, RDefaultScreen(dpy)))
+        # Rset_x(e1, x1)
+        # Rset_y(e1, y1)
+        Rset_x_root(e1, x0)
+        Rset_y_root(e1, y0)
+        Rset_state(e1, state)
+        Rset_time(e1, [:Time, RCurrentTime + 300])
+        Rset_same_screen(e1, true)
+        Rset_subwindow(e1, [:Window, RNone])
+        Rset_is_hint(e1, RNotifyNormal)
+        den = if (x1 - x0).abs > 10 or (y1 - y0).abs > 10
+                10
+              else
+                2
+              end
+        xdiff = ((x1 - x0) / den.to_f).floor
+        ydiff = ((y1 - y0) / den.to_f).floor
+        xn = x0 + xdiff
+        yn = y0 + ydiff
+        den.times do
+          Rset_x(e1, xn)
+          Rset_y(e1, yn)
+          RXSendEvent(dpy, window, false, RButtonMotionMask, e1)
+          xn += xdiff
+          yn += ydiff
+        end
+        Rset_type(e, RButtonRelease)
+        Rset_time(e, [:Time, RCurrentTime + 500])
+        Rset_x(e, x1)
+        Rset_y(e, y1)
+        RXSendEvent(dpy, window, false, RButtonReleaseMask, e)
+      end
+    end
+
+    def select_item(wid, pos)
+      if RXmIsList(wid)
+        RXmListSelectPos(wid, pos + 1, true)
+      else
+        snd_display("is not a list!", RXtName(wid))
+      end
+    end
+
+    def click_button(button, value = false, bits = false)
+      if RWidget?(button)
+        if RXtIsSensitive(button)
+          if RXmIsPushButton(button) or RXmIsPushButtonGadget(button)
+            if RXtHasCallbacks(button, RXmNactivateCallback) == RXtCallbackHasSome
+              but = RXmPushButtonCallbackStruct()
+              Rset_click_count(but, 0)
               e = RXEvent(RButtonPress)
               Rset_state(e, (bits or 0))
-              Rset_event(tgl, e)
-              RXtCallCallbacks(button, RXmNvalueChangedCallback, tgl)
-             else
-              snd_display("togglebutton %s has no valueChanged callbacks", RXtName(button))
+              Rset_event(but, e)
+              RXtCallCallbacks(button, RXmNactivateCallback, but)
+            else
+              snd_display("pushbutton %s has no active callbacks", RXtName(button))
             end
           else
-            if RXmIsArrowButton(button)
-              if RXtHasCallbacks(button, RXmNactivateCallback) == RXtCallbackHasSome
-                arr = RXmArrowButtonCallbackStruct()
-                Rset_click_count(arr, 0)
+            if RXmIsToggleButton(button) or RXmIsToggleButtonGadget(button)
+              if RXtHasCallbacks(button, RXmNvalueChangedCallback) == RXtCallbackHasSome
+                tgl = RXmToggleButtonCallbackStruct()
+                Rset_set(tgl, value)
                 e = RXEvent(RButtonPress)
                 Rset_state(e, (bits or 0))
-                Rset_event(arr, e)
-                RXtCallCallbacks(button, RXmNactivateCallback, arr)
+                Rset_event(tgl, e)
+                RXtCallCallbacks(button, RXmNvalueChangedCallback, tgl)
               else
-                snd_display("arrowbutton %s has no active callbacks", RXtName(button))
+                snd_display("togglebutton %s has no valueChanged callbacks", RXtName(button))
               end
             else
-              snd_display("%s (%s) is not a push or toggle button",
-                          RXtName(button), RXtName(RXtParent(button)))
+              if RXmIsArrowButton(button)
+                if RXtHasCallbacks(button, RXmNactivateCallback) == RXtCallbackHasSome
+                  arr = RXmArrowButtonCallbackStruct()
+                  Rset_click_count(arr, 0)
+                  e = RXEvent(RButtonPress)
+                  Rset_state(e, (bits or 0))
+                  Rset_event(arr, e)
+                  RXtCallCallbacks(button, RXmNactivateCallback, arr)
+                else
+                  snd_display("arrowbutton %s has no active callbacks", RXtName(button))
+                end
+              else
+                snd_display("%s (%s) is not a push or toggle button",
+                            RXtName(button), RXtName(RXtParent(button)))
+              end
             end
           end
-        end
-      else
-        snd_display("%s is not sensitive", RXtName(button))
-      end
-    else
-      snd_display("%s is not a widget", button)
-    end
-  end
-
-  def resize_pane(wid, height)
-    RXtUnmanageChild(wid)
-    RXtVaSetValues(wid,
-                   [RXmNpaneMinimum, (height > 5 ? (height - 5) : 0),
-                    RXmNpaneMaximum, height + 5])
-    RXtManageChild(wid)
-    RXtVaSetValues(wid, [RXmNpaneMinimum, 5, RXmNpaneMaximum, 1000])
-  end
-  
-  def force_event
-    app = main_widgets.car
-    msk = RXtIMXEvent | RXtIMAlternateInput
-    until (RXtAppPending(app) & msk).zero?
-      RXtDispatchEvent(RXtAppNextEvent(app))
-    end
-  end
-
-  def take_keyboard_focus(wid)
-    if RXmIsTraversable(wid) and (RXmGetVisibility(wid) != RXmVISIBILITY_FULLY_OBSCURED)
-      RXmProcessTraversal(wid, RXmTRAVERSE_CURRENT)
-    end
-  end
-
-  def move_scale(scl, val)
-    RXmScaleSetValue(scl, val)
-    cb = RXmScaleCallbackStruct()
-    Rset_value(cb, val)
-    Rset_event(cb, RXEvent())
-    RXtCallCallbacks(scl, RXmNvalueChangedCallback, cb)
-  end
-
-  def change_prop(winat, name, command)
-    find_window = lambda do |dpy, top, natom|
-      res = RXGetWindowProperty(dpy, top, natom, 0, 1024, false, RXA_STRING)
-      if res[0] == RSuccess and res[1] != [:Atom, RNone]
-        top
-      else
-        vals = RXQueryTree(dpy, top)
-        if vals[0].zero?
-          false
         else
-          vals[3].each do |win|
-            if RWindow?(val = find_window.call(dpy, win, natom))
-              return val
-            end
-          end
-          false
+          snd_display("%s is not sensitive", RXtName(button))
         end
+      else
+        snd_display("%s is not a widget", button)
       end
     end
-    dpy = RXtDisplay(main_widgets[1])
-    natom = RXInternAtom(dpy, winat, false)
-    if RWindow?(window = find_window.call(dpy, RDefaultRootWindow(dpy), natom))
-      RXChangeProperty(dpy, window, RXInternAtom(dpy, name, false), RXA_STRING, 8,
-                       RPropModeReplace, command)
-      RXFlush(dpy)
-      command
-    else
-      false
+
+    def resize_pane(wid, height)
+      RXtUnmanageChild(wid)
+      RXtVaSetValues(wid,
+                     [RXmNpaneMinimum, (height > 5 ? (height - 5) : 0),
+                      RXmNpaneMaximum, height + 5])
+      RXtManageChild(wid)
+      RXtVaSetValues(wid, [RXmNpaneMinimum, 5, RXmNpaneMaximum, 1000])
+    end
+    
+    def force_event
+      app = main_widgets.car
+      msk = RXtIMXEvent | RXtIMAlternateInput
+      until (RXtAppPending(app) & msk).zero?
+        RXtDispatchEvent(RXtAppNextEvent(app))
+      end
+    end
+
+    def take_keyboard_focus(wid)
+      if RXmIsTraversable(wid) and (RXmGetVisibility(wid) != RXmVISIBILITY_FULLY_OBSCURED)
+        RXmProcessTraversal(wid, RXmTRAVERSE_CURRENT)
+      end
+    end
+
+    def move_scale(scl, val)
+      RXmScaleSetValue(scl, val)
+      cb = RXmScaleCallbackStruct()
+      Rset_value(cb, val)
+      Rset_event(cb, RXEvent())
+      RXtCallCallbacks(scl, RXmNvalueChangedCallback, cb)
+    end
+
+    def change_prop(winat, name, command)
+      find_window = lambda do |dpy, top, natom|
+        res = RXGetWindowProperty(dpy, top, natom, 0, 1024, false, RXA_STRING)
+        if res[0] == RSuccess and res[1] != [:Atom, RNone]
+          top
+        else
+          vals = RXQueryTree(dpy, top)
+          if vals[0].zero?
+            false
+          else
+            vals[3].each do |win|
+              if RWindow?(val = find_window.call(dpy, win, natom))
+                return val
+              end
+            end
+            false
+          end
+        end
+      end
+      dpy = RXtDisplay(main_widgets[1])
+      natom = RXInternAtom(dpy, winat, false)
+      if RWindow?(window = find_window.call(dpy, RDefaultRootWindow(dpy), natom))
+        RXChangeProperty(dpy, window, RXInternAtom(dpy, name, false), RXA_STRING, 8,
+                         RPropModeReplace, command)
+        RXFlush(dpy)
+        command
+      else
+        false
+      end
+    end
+
+    make_proc_with_setter(:beep_state,
+                          # returns amp pitch duration
+                          lambda {
+                            vals = RXGetKeyboardControl(RXtDisplay(main_widgets.cadr))[1, 3]
+                          },
+                          # amp pitch dur
+                          # set_beep_state([100, 200, 100])
+                          lambda { |lst|
+                            RXChangeKeyboardControl(RXtDisplay(main_widgets.cadr),
+                                                    RKBBellPercent |
+                                                    RKBBellPitch |
+                                                    RKBBellDuration,
+                                                    [0] + lst)
+                          })
+
+    def beep
+      RXBell(RXtDisplay(main_widgets.cadr), 100)
     end
   end
-
-  make_proc_with_setter(:beep_state,
-                        # returns amp pitch duration
-                        lambda {
-                          vals = RXGetKeyboardControl(RXtDisplay(main_widgets.cadr))[1, 3]
-                        },
-                        # amp pitch dur
-                        # set_beep_state([100, 200, 100])
-                        lambda { |lst|
-                          RXChangeKeyboardControl(RXtDisplay(main_widgets.cadr),
-                                                  RKBBellPercent | RKBBellPitch | RKBBellDuration,
-                                                  [0] + lst)
-                        })
-
-  def beep
-    RXBell(RXtDisplay(main_widgets.cadr), 100)
-  end
-end if provided? :xm
-
-if provided? :xm
   include Test_event
 end
 
 # snd-test.scm translations
 # ---------------- test 00: constants ----------------
+
+Tiny_font_string = $with_test_motif ? "6x12" : $with_test_gtk ? "Sans 8" : ""
 
 # list = [[:Symbol, value], ...]
 def test000(lst, exec = false)
@@ -1206,13 +1162,13 @@ def test00
               [:Enved_add_point, 0],
               [:Enved_delete_point, 1],
               [:Enved_move_point, 2],
-              unless provided? :snd_nogui
+              if $with_test_gui
                 [:Time_graph, 0]
               end,
-              unless provided? :snd_nogui
+              if $with_test_gui
                 [:Transform_graph, 1]
               end,
-              unless provided? :snd_nogui
+              if $with_test_gui
                 [:Lisp_graph, 2]
               end,
               [:Copy_context, 0],
@@ -1275,7 +1231,7 @@ def test00
               [:Mus_lfloat_unscaled, 20],
               [:Mus_bdouble_unscaled, 21],
               [:Mus_ldouble_unscaled, 22]]
-    # 
+    #
     defs = [[:ask_before_overwrite, false],
             [:audio_output_device, 0],
             [:auto_resize, true],
@@ -1303,7 +1259,7 @@ def test00
             [:dot_size, 1],
             [:enved_base, 1.0],
             [:enved_clip?, true],
-            unless provided? :snd_nogui
+            if $with_test_gui
               [:enved_filter, true]
             end,
             [:enved_filter_order, 40],
@@ -1321,7 +1277,7 @@ def test00
             [:fft_window, 6],
             [:fft_window_alpha, 0.0],
             [:fft_window_beta, 0.0],
-            unless provided? :snd_nogui
+            if $with_test_gui
               [:graph_cursor, 34]
             end,
             [:graph_style, Graph_lines],
@@ -1363,19 +1319,15 @@ def test00
             [:spectrum_end, 1.0],
             [:spectro_hop, 4],
             [:spectrum_start, 0.0],
-            [:spectro_x_angle, (provided?(:gl) ? 300.0 : 90.0)],
-            [:spectro_x_scale, (provided?(:gl) ? 1.5 : 1.0)],
-            [:spectro_y_angle, (provided?(:gl) ? 320.0 : 0.0)],
+            [:spectro_x_angle, ($with_test_gl ? 300.0 : 90.0)],
+            [:spectro_x_scale, ($with_test_gl ? 1.5 : 1.0)],
+            [:spectro_y_angle, ($with_test_gl ? 320.0 : 0.0)],
             [:spectro_y_scale, 1.0],
-            [:spectro_z_angle, (provided?(:gl) ? 0.0 : 358.0)],
-            [:spectro_z_scale, (provided?(:gl) ? 1.0 : 0.1)],
+            [:spectro_z_angle, ($with_test_gl ? 0.0 : 358.0)],
+            [:spectro_z_scale, ($with_test_gl ? 1.0 : 0.1)],
             [:temp_dir, ""],
-            unless provided? :snd_nogui
-              [:tiny_font, if provided? :snd_motif
-                             "6x12"
-                           elsif provided? :snd_gtk
-                             "Sans 8"
-                           end]
+            if $with_test_gui
+              [:tiny_font, Tiny_font_string]
             end,
             [:time_graph_type, Graph_once],
             [:tracking_cursor_style, Cursor_cross],
@@ -1412,7 +1364,7 @@ def test00
     if (res = zero_pad(true, true)) != nil
       snd_display("zero_pad(true, true): %s?", res.inspect)
     end
-    if provided? :snd_motif
+    if $with_test_motif
       [:axis_label_font,
        :axis_numbers_font,
        :tiny_font,
@@ -1424,7 +1376,7 @@ def test00
         end
       end
     end
-    unless provided? :snd_nogui
+    if $with_test_gui
       # set_enved_envelope([]) sets enved_envelope to nil
       set_enved_envelope(enved_envelope)
       if enved_envelope != nil
@@ -1484,7 +1436,7 @@ def test01
                 [:color_cutoff, 0.003],
                 [:color_inverted, true],
                 [:color_scale, 1.0],
-                unless provided? :snd_nogui
+                if $with_test_gui
                   [:colormap, $good_colormap]
                 end,
                 [:clipping, false],
@@ -1502,7 +1454,7 @@ def test01
                 [:dot_size, 1],
                 [:enved_base, 1.0],
                 [:enved_clip?, true],
-                unless provided? :snd_nogui
+                if $with_test_gui
                   [:enved_filter, true]
                 end,
                 [:enved_filter_order, 40],
@@ -1527,7 +1479,7 @@ def test01
                 [:filter_control_in_dB, false],
                 [:filter_control_in_hz, false],
                 [:filter_control_order, 20],
-                unless provided? :snd_nogui
+                if $with_test_gui
                   [:graph_cursor, 34]
                 end,
                 [:graph_style, Graph_lines],
@@ -1565,19 +1517,15 @@ def test01
                 [:spectrum_end, 1.0],
                 [:spectro_hop, 4],
                 [:spectrum_start, 0.0],
-                [:spectro_x_angle, (provided?(:gl) ? 300.0 : 90.0)],
-                [:spectro_x_scale, (provided?(:gl) ? 1.5 : 1.0)],
-                [:spectro_y_angle, (provided?(:gl) ? 320.0 : 0.0)],
+                [:spectro_x_angle, ($with_test_gl ? 300.0 : 90.0)],
+                [:spectro_x_scale, ($with_test_gl ? 1.5 : 1.0)],
+                [:spectro_y_angle, ($with_test_gl ? 320.0 : 0.0)],
                 [:spectro_y_scale, 1.0],
-                [:spectro_z_angle, (provided?(:gl) ? 0.0 : 358.0)],
-                [:spectro_z_scale, (provided?(:gl) ? 1.0 : 0.1)],
+                [:spectro_z_angle, ($with_test_gl ? 0.0 : 358.0)],
+                [:spectro_z_scale, ($with_test_gl ? 1.0 : 0.1)],
                 [:temp_dir, ""],
-                unless provided? :snd_nogui
-                  [:tiny_font, if provided? :snd_motif
-                                 "6x12"
-                               elsif provided? :snd_gtk
-                                 "Sans 8"
-                               end]
+                if $with_test_gui
+                  [:tiny_font, Tiny_font_string]
                 end,
                 [:beats_per_measure, 4],
                 [:beats_per_minute, 60.0],
@@ -1636,7 +1584,7 @@ def test01
     set_default_output_data_format($original_output_data_format)
     test001(specials, :without_error)
     test001(cadr, :cadr)
-    unless provided? :snd_nogui
+    if $with_test_gui
       # set_enved_envelope([]) sets enved_envelope to nil
       set_enved_envelope(enved_envelope)
       if enved_envelope != nil
@@ -1972,7 +1920,7 @@ def test03
             [:auto_resize, true, false],
             [:auto_update, false, true],
             [:channel_style, 0, 1],
-            unless provided? :snd_nogui
+            if $with_test_gui
               [:colormap, $good_colormap, $better_colormap]
             end,
             [:color_cutoff, 0.003, 0.01],
@@ -2026,14 +1974,14 @@ def test03
             [:transform_graph?, false, true],
             [:filter_control_in_dB, false, true],
             [:filter_control_envelope, [0.0, 1.0, 1.0, 1.0], [0.0, 1.0, 1.0, 0.0]],
-            unless provided? :snd_nogui
+            if $with_test_gui
               [:enved_filter, true, false]
             end,
             [:enved_filter_order, 40, 20],
             [:filter_control_in_hz, false, true],
             [:filter_control_order, 20, 40],
             [:filter_control?, false, true],
-            unless provided? :snd_nogui
+            if $with_test_gui
               [:graph_cursor, 34, 33]
             end,
             [:graph_style, 0, 1],
@@ -2074,18 +2022,18 @@ def test03
             [:spectrum_end, 1.0, 0.7],
             [:spectro_hop, 4, 10],
             [:spectrum_start, 0.0, 0.1],
-            [:spectro_x_angle, (provided?(:gl) ? 300.0 : 90.0), 60.0],
-            [:spectro_x_scale, (provided?(:gl) ? 1.5 : 1.0), 2.0],
-            [:spectro_y_angle, (provided?(:gl) ? 320.0 : 0.0), 60.0],
+            [:spectro_x_angle, ($with_test_gl ? 300.0 : 90.0), 60.0],
+            [:spectro_x_scale, ($with_test_gl ? 1.5 : 1.0), 2.0],
+            [:spectro_y_angle, ($with_test_gl ? 320.0 : 0.0), 60.0],
             [:spectro_y_scale, 1.0, 2.0],
-            [:spectro_z_angle, (provided?(:gl) ? 0.0 : 358.0), 60.0],
-            [:spectro_z_scale, (provided?(:gl) ? 1.0 : 0.1), 0.2],
+            [:spectro_z_angle, ($with_test_gl ? 0.0 : 358.0), 60.0],
+            [:spectro_z_scale, ($with_test_gl ? 1.0 : 0.1), 0.2],
             [:speed_control, 1.0, 0.5],
             [:speed_control_bounds, [0.05, 20.0], [1.0, 5.0]],
             [:speed_control_style, 0, 1],
             [:speed_control_tones, 12, 18],
             [:sync, 0, 1],
-            if provided? :snd_motif
+            if $with_test_motif
               [:tiny_font, "6x12", "9x15"]
             end,
             [:transform_type, $fourier_transform, $autocorrelation],
@@ -2095,25 +2043,25 @@ def test03
             [:time_graph_type, Graph_once, Graph_as_wavogram],
             [:wavo_hop, 3, 6],
             [:wavo_trace, 64, 128],
-            [:with_mix_tags, (provided?(:snd_nogui) ? false : true), false],
+            [:with_mix_tags, $with_test_gui, false],
             [:with_relative_panes, true, false],
-            [:with_gl, provided?(:gl), false],
+            [:with_gl, $with_test_gl, false],
             [:x_axis_style, 0, 1],
             [:beats_per_minute, 30.0, 120.0],
             [:beats_per_measure, 1, 120],
             [:zero_pad, 0, 1],
             [:zoom_focus_style, 2, 1],
-            unless provided? :snd_gtk
+            unless $with_test_gtk
               [:window_width, window_width, 300]
             end,
-            unless provided? :snd_gtk
+            unless $with_test_gtk
               [:window_height, window_height, 300]
             end,
             [:color_scale, color_scale, 100.0]]
     bad_args = [[:amp_control, 1.0, [-1.0, 123.123]],
                 [:amp_control_bounds, [0.0, 8.0], [false, [0.0], [1.0, 0.0], 2.0]],
                 [:channel_style, 0, [32, -1, 1.0]],
-                unless provided? :snd_nogui
+                if $with_test_gui
                   [:colormap, $good_colormap, [321, -123]]
                 end,
                 [:color_cutoff, 0.003, [-1.0, 123.123]],
@@ -2171,7 +2119,7 @@ def test03
       snd_display("sample: %s?", sample(1000))
     end
     set_show_controls(true)
-    unless provided? :snd_nogui
+    if $with_test_gui
       Snd_hooks.each_with_index do |h, i|
         snd_display("Snd_hooks[%s] %s?", i, h.inspect) unless hook?(h)
       end
@@ -2441,7 +2389,7 @@ def test044
   if lasth < 10
     snd_display("data_format[%s] == %s?", lasth, mus_data_format_name(lasth))
   end
-  unless provided? :snd_nogui
+  if $with_test_gui
     [:Dont_normalize, :Normalize_globally, :Normalize_by_channel].each do |val_sym|
       val = Module.const_get(val_sym)
       set_transform_normalization(val)
@@ -2681,7 +2629,7 @@ def test064
   if (res = data_format(ab)) != Mus_lshort
     snd_display("set_data_format: %s?", mus_data_format_name(res))
   end
-  unless provided? :snd_nogui
+  if $with_test_gui
     if (res = y_bounds(ab, 0)) != [-3.0, 3.0]
       snd_display("set data format y_bounds: %s?", res)
     end
@@ -6316,7 +6264,7 @@ def test085
     free_sampler(rd)
     dat
   end
-  if provided? :snd_motif and provided? :xm
+  if $with_test_motif
     edhist = channel_widgets(ind, 0)[7]
     edp = RXtParent(edhist)
     pmax = RXtVaGetValues(edp, [RXmNpaneMaximum, 0]).cadr
@@ -6801,7 +6749,7 @@ def test105
   end
   delete_file("tmp.peaks")
   peaks()
-  if provided?(:xm) and (!dialog_widgets[20] or !RXtIsManaged(dialog_widgets[20]))
+  if $with_test_motif and (!dialog_widgets[20] or !RXtIsManaged(dialog_widgets[20]))
     snd_display("peaks but no help?")
   end
   dismiss_all_dialogs
@@ -7193,7 +7141,7 @@ def test105
   set_cursor_style(Cursor_line)
   set_cursor_size(20)
   set_cursor(20, ind, 0)
-  unless provided? :snd_nogui
+  if $with_test_gui
     set_cursor_style(lambda do |snd, chn, ax|
                        x, y = cursor_position
                        size = (cursor_size / 2.0).round
@@ -8099,7 +8047,7 @@ def test155
       fneq(amps[3], newamps[3])
     snd_display("apply selection amp:\n# %s\n# %s", amps, newamps)
   end
-  xtest155(obind) unless provided? :snd_nogui
+  xtest155(obind) if $with_test_gui
   close_sound(obind)
 end
 
@@ -8198,7 +8146,7 @@ def test165
   delete_file("fmv5.snd")
   scale_to(0.25, ind1)
   set_y_bounds([], ind1)
-  if (not provided?(:snd_nogui)) and (res = y_bounds(ind1)) != [-0.25, 0.25]
+  if $with_test_gui and (res = y_bounds(ind1)) != [-0.25, 0.25]
     snd_display("y_bounds []: %s", res)
   end
   revert_sound(ind1)
@@ -9159,7 +9107,7 @@ def test255
     snd_display("save_sound read_write: %s", res)
   end
   key(key_to_int(?j), 4)
-  unless provided? :snd_nogui
+  if $with_test_gui
     if (res = widget_text(sound_widgets(ind)[3])) != "no marks" and res != "no such mark"
       snd_display("C-j w/o marks: %s?", res)
     end
@@ -9169,7 +9117,7 @@ def test255
   key(key_to_int(?j), 4)
   key(key_to_int(?x), 4)
   key(key_to_int(?c), 0)
-  unless provided? :snd_nogui
+  if $with_test_gui
     if (res = widget_text(main_widgets[1]))
       snd_display("widget_text of non-text widget: %s", res)
     end
@@ -9185,7 +9133,7 @@ def test255
   key(key_to_int(?u), 4)
   key(key_to_int(?6), 4)
   key(key_to_int(?j), 4)
-  unless provided? :snd_nogui
+  if $with_test_gui
     if (res = widget_text(sound_widgets(ind)[3])) != "no such mark"
       snd_display("C-u 6 C-j: %s?", res)
     end
@@ -9194,7 +9142,7 @@ def test255
   key(key_to_int(?6), 4)
   key(key_to_int(?x), 4)
   key(key_to_int(?c), 0)
-  unless provided? :snd_nogui
+  if $with_test_gui
     if (res = widget_text(sound_widgets(ind)[3])) != "no such mark"
       snd_display("C-u 6 C-x c: %s?", res)
     end
@@ -9804,7 +9752,7 @@ end
 def test05
   if $test05
     $before_test_hook.call(5)
-    test005 unless provided? :snd_nogui # no set_x_axis_label [ms]
+    test005 if $with_test_gui # no set_x_axis_label [ms]
     test015
     test025
     test035
@@ -9814,18 +9762,18 @@ def test05
     test075
     test085
     test095
-    test105 unless provided? :snd_nogui
+    test105 if $with_test_gui
     test115
-    test125 unless provided? :snd_nogui
+    test125 if $with_test_gui
     test135
-    test145 unless provided? :snd_nogui
+    test145 if $with_test_gui
     test155
     test165
     test175
     test185
     test205
     test225
-    test235 unless provided? :snd_nogui # load("s61.rb") -> set_transform_size(0)
+    test235 if $with_test_gui # load("s61.rb") -> set_transform_size(0)
     test245
     test255
     test265
@@ -10110,7 +10058,7 @@ def test06
   end
   set_speed_control(-1.0, ind)
   apply_controls
-  if (not provided?(:snd_nogui)) and edit_position(ind) != 1
+  if $with_test_gui and edit_position(ind) != 1
     snd_display("apply_controls with srate -1.0: %s: %s", edits(ind), edit_tree(ind))
   end
   if ((res0 = frames(ind, 0)) - (res1 = frames(ind, 0, 0))).abs > 2
@@ -10395,7 +10343,7 @@ def test007
     set_selected_data_color(Light_green)
     set_data_color(Blue)
     set_selected_graph_color(Light_green)
-    if provided? :snd_motif
+    if $with_test_motif
       red = make_color_with_catch(1.0, 0.0, 0.0)
       set_foreground_color(red, ind, 0, Cursor_context)
       if (res = foreground_color(ind, 0, Cursor_context)) != red
@@ -10775,7 +10723,7 @@ def test027
 end
 
 def test07
-  if (not provided?(:snd_nogui)) and $test07
+  if $with_test_gui and $test07
     $before_test_hook.call(7)
     $old_colormap_size = colormap_size
     test007
@@ -11287,7 +11235,7 @@ def analog_filter_tests
   unless vfequal(vals[1], vct(0.505, 0.325, 0, 0, 0, 0, 0, 0, 0.270, 0.506))
     snd_display("inverse_chebyshev bs 8 0.1 0.4 90 spect: %s?", vals[1])
   end
-  if provided? :gsl
+  if $with_test_gsl
     if defined? gsl_roots
       # gsl_roots isn't defined for ruby in snd-xen.c
       #
@@ -13996,7 +13944,7 @@ def test058
   undo_edit
   #
   # analog filter (requires --with-gsl)
-  if defined? :gsl_ellipk then analog_filter_tests end
+  if $with_test_gsl then analog_filter_tests end
   #
   v = spectrum2coeffs(10, vct(0, 1.0, 0, 0, 0, 0, 0, 0, 1.0, 0))
   v1 = make_fir_coeffs(10, vct(0, 1.0, 0, 0, 0, 0, 0, 0, 1.0, 0))
@@ -20190,7 +20138,7 @@ def test039
   end
   close_sound(ind)
   #
-  if provided?(:snd_motif) and provided?(:xm)
+  if $with_test_motif
     ind = open_sound("oboe.snd")
     mix1 = mix_vct([0.1, 0.2, 0.3].to_vct, 120, ind, 0, true, "origin!")
     mix2 = mix_vct([0.1, 0.2, 0.3].to_vct, 1200, ind, 0, true)
@@ -20352,7 +20300,7 @@ def test049
 end
 
 def test09
-  if (not provided?(:snd_nogui)) and $test09
+  if $with_test_gui and $test09
     $before_test_hook.call(9)
     test009
     test029
@@ -20978,7 +20926,7 @@ def test0210
   end
   close_sound(ind)
   #
-  defined?(mark_sync_color) and provided?(:xm) and mark_sync_color("blue")
+  defined?(mark_sync_color) and $with_test_motif and mark_sync_color("blue")
   ind = open_sound("oboe.snd")
   m0 = add_mark(4321)
   delete_sample(100)
@@ -21312,7 +21260,7 @@ def test10
     $before_test_hook.call(10)
     clear_sincs
     test0010
-    test0110 unless provided? :snd_nogui # load("s61.rb") -> set_transform_size(0)
+    test0110 if $with_test_gui # load("s61.rb") -> set_transform_size(0)
     test0210
     $after_test_hook.call(10)
   end
@@ -21327,7 +21275,7 @@ end
 define_envelope("env4", [0, 1, 1, 0]) # defines $env4
 
 def test11
-  if (not provided?(:snd_nogui)) and $test11
+  if $with_test_gui and $test11
     $before_test_hook.call(11)
     Snd.catch do peaks() end
     enved_dialog
@@ -21534,7 +21482,7 @@ def test_spectral_difference(snd1, snd2, maxok)
 end
 
 def test12
-  if (not provided?(:snd_nogui)) and $test12
+  if $with_test_gui and $test12
     $before_test_hook.call(12)
     sf_dir_files = []
     if string?($sf_dir)
@@ -21948,7 +21896,7 @@ def test0013
   set_cursor(2000, fd)
   set_transform_graph_type(Graph_once)
   set_transform_graph?(true, fd)
-  unless provided? :snd_nogui
+  if $with_test_gui
     add_to_menu(mb, "not here", lambda do | | snd_display("oops") end)
     remove_from_menu(mb,"not here")
     add_to_menu(3, "Denoise", lambda do | | report_in_minibuffer("denoise") end)
@@ -22325,7 +22273,7 @@ def test0113
   set_time_graph?(true, ind, 0)
   update_transform_graph(ind, 0)
   unless gr
-    if provided?(:snd_motif) and provided?(:xm)
+    if $with_test_motif
       app = main_widgets.car
       1000.times do
         msg = RXtAppPending(app)
@@ -22558,7 +22506,7 @@ def test0213
   end
   snd_print(make_array(128, 1))
   $print_hook.reset_hook!
-  unless provided? :alsa
+  unless $with_test_alsa
     in1 = open_sound("oboe.snd")
     in2 = open_sound("2.snd")
     set_sync(1, in1)
@@ -22569,7 +22517,7 @@ def test0213
   end
   #
   ind = open_sound("oboe.snd")
-  if provided? :snd_motif and provided? :xm
+  if $with_test_motif
     edhist = channel_widgets(ind, 0)[7]
     edp = RXtParent(edhist)
     pmax = RXtVaGetValues(edp, [RXmNpaneMaximum, 0]).cadr
@@ -22753,7 +22701,7 @@ def test0213
     after_edit_hook_ctr = 0
     revert_sound(ind)
   end
-  if provided? :snd_motif and provided? :xm
+  if $with_test_motif
     edhist = channel_widgets(ind, 0)[7]
     edp = RXtParent(edhist)
     pmax = RXtVaGetValues(edp, [RXmNpaneMaximum, 0]).cadr
@@ -22972,7 +22920,7 @@ def test0213
 end
 
 def test13
-  if (not provided?(:snd_nogui)) and $test13
+  if $with_test_gui and $test13
     $before_test_hook.call(13)
     reset_almost_all_hooks
     test0013
@@ -23048,7 +22996,7 @@ def clone_sound_as(new_name, snd = false)
 end
 
 def test14
-  if (not provided?(:snd_nogui)) and $test14
+  if $with_test_gui and $test14
     $before_test_hook.call(14)
     cur_dir_files = []
     sound_files_in_directory(".").each do |f|
@@ -24210,7 +24158,7 @@ def test0015
   close_sound(s2i)
   #
   obi = open_sound("oboe.snd")
-  unless provided? :snd_nogui
+  if $with_test_gui
     select_all
     Snd.regions.apply(:forget_region)
     if regions != nil then snd_display("no regions: %s?", regions.inspect) end
@@ -24372,7 +24320,7 @@ def test0115
     snd_display("set_x_zoom_slider: %s %s --> %s?", res2, res3, res1)
   end
   set_y_position_slider(0.1, id, 0)
-  if (not provided?(:snd_gtk)) and fneq(res = y_position_slider(id, 0), 0.1)
+  if $with_test_motif and fneq(res = y_position_slider(id, 0), 0.1)
     snd_display("set_y_position_slider 0.1: %s?", res)
   end
   set_y_zoom_slider(0.5, id, 0)
@@ -24511,7 +24459,7 @@ def test0115
   select_channel(1)
   key(key_to_int(?x), 4, id)
   key(key_to_int(?v), 0, id)
-  unless provided? :snd_nogui
+  if $with_test_gui
     x0 = x_bounds(id, 0)
     x1 = x_bounds(id, 1)
     if fneq(x0[0], x1[0]) or fneq(x0[1], x1[1])
@@ -24967,7 +24915,7 @@ def test0315
   key(key_to_int(?0), 0, ind)
   key(key_to_int(?o), 4, ind)
   if frames(ind) != 100 + len then snd_display("C-o len: %s?", frames) end
-  unless provided? :snd_nogui
+  if $with_test_gui
     reader = make_sampler(1200, ind)
     100.times do |i|
       if fneq(val = next_sample(reader), 0.0) then snd_display("C-o[%s]: %s?", i, val) end
@@ -24985,7 +24933,7 @@ def test0315
   key(key_to_int(?0), 0, ind)
   key(key_to_int(?z), 4, ind)
   if frames(ind) != len then snd_display("C-z len: %s?", frames) end
-  unless provided? :snd_nogui
+  if $with_test_gui
     reader = make_sampler(1200, ind)
     100.times do |i|
       if fneq(val = next_sample(reader), 0.0) then snd_display("C-z[%s]: %s?", i, val) end
@@ -25007,7 +24955,7 @@ def test0315
   key(key_to_int(?0), 0, ind)
   key(key_to_int(?o), 4, ind)
   if frames(ind) != srate(ind) + len then snd_display("C-o 1.0 len: %s?", frames) end
-  unless provided? :snd_nogui
+  if $with_test_gui
     reader = make_sampler(1200, ind)
     srate(ind).times do |i|
       if fneq(val = next_sample(reader), 0.0) then snd_display("C-o 1.0[%s]: %s?", i, val) end
@@ -25022,7 +24970,7 @@ def test0315
   key(key_to_int(?0), 0, ind)
   key(key_to_int(?z), 4, ind)
   if frames(ind) != len then snd_display("C-z 1.0 len: %s?", frames) end
-  unless provided? :snd_nogui
+  if $with_test_gui
     reader = make_sampler(1200, ind)
     srate(ind).times do |i|
       if fneq(val = next_sample(reader), 0.0) then snd_display("C-z 1.0[%s]: %s?", i, val) end
@@ -25372,10 +25320,10 @@ def test15
     $before_test_hook.call(15)
     set_transform_type($fourier_transform)
     test0015
-    test0115 unless provided? :snd_nogui
-    test0215 unless provided? :snd_nogui # set_transform_size(0) in test_history_channel
-    test0315 unless provided? :snd_nogui
-    test0415 unless provided? :snd_nogui
+    test0115 if $with_test_gui
+    test0215 if $with_test_gui # set_transform_size(0) in test_history_channel
+    test0315 if $with_test_gui
+    test0415 if $with_test_gui
     $after_test_hook.call(15)
   end
 end
@@ -27474,7 +27422,7 @@ def test0416
   # 
   ind = open_sound("oboe.snd")
   orig_max = maxamp(ind, 0)
-  [[2.00, provided?(:snd_nogui) ? 0.02 : 0.008], # INFO: nogui's behavior differs from xm? [ms]
+  [[2.00, $with_test_nogui ? 0.02 : 0.008], # INFO: nogui's behavior differs from xm? [ms]
    [1.50, 0.020],               # INFO: original df 0.01 [ms]
    [3.00, 0.015],
    [3.14, 0.025]].each do |sr, df|
@@ -27485,7 +27433,7 @@ def test0416
     undo_edit(1, ind, 0)
   end
   #
-  [[0.50, provided?(:snd_nogui) ? 0.03 : 0.001], # INFO: nogui's behavior differs from xm? [ms]
+  [[0.50, $with_test_nogui ? 0.03 : 0.001], # INFO: nogui's behavior differs from xm? [ms]
    [0.25, 0.001],
    [0.90, 0.030],               # INFO: original df 0.001
    [0.10, 0.001]].each do |sr, df|
@@ -27797,7 +27745,7 @@ def test16
   if $test16
     $before_test_hook.call(16)
     test0016
-    test0116 unless provided? :snd_nogui # load("hiho.rb") -> set_transform_size(0)
+    test0116 if $with_test_gui # load("hiho.rb") -> set_transform_size(0)
     test0216
     test0316
     test0416
@@ -27823,7 +27771,7 @@ def arrow2right(x0, y0, size, snd, chn)
 end
 
 def test17
-  if (not provided?(:snd_nogui)) and $test17
+  if $with_test_gui and $test17
     $before_test_hook.call(17)
     $after_graph_hook.add_hook!(get_func_name) do |snd, chn| display_previous_edits(snd, chn) end
     $lisp_graph_hook.add_hook!(get_func_name) do |snd, chn|
@@ -27874,7 +27822,7 @@ def test17
     wids3 = channel_widgets(ind1, 0)
     wids4 = channel_widgets(ind1, 1)
     if (not list_p(wids)) or (not list_p(wids3)) or
-        (provided?(:snd_motif) and (wids1.length != 11 or wids2.length != 11))
+        ($with_test_motif and (wids1.length != 11 or wids2.length != 11))
       snd_display("channel_widgets confused: %s %s %s %s %s?", wids, wids1, wids2, wids3, wids4)
     end
     hide_widget(channel_widgets.first)
@@ -27887,7 +27835,7 @@ end
 # ---------------- test 18: enved ----------------
   
 def test18
-  if (not provided?(:snd_nogui)) and $test18
+  if $with_test_gui and $test18
     $before_test_hook.call(18)
     start_enveloping
     ind = open_sound("oboe.snd")
@@ -28377,11 +28325,11 @@ def test0119
            [:fft_window,              Bartlett_window,    Blackman2_window],
            [:dot_size,                4,                  1],
            [:max_transform_peaks,     10,                 100],
-           [:with_verbose_cursor,          true,               false],
+           [:with_verbose_cursor,     true,               false],
            [:zero_pad,                1,                  0],
            [:min_dB,                  -90,                -60],
            [:spectro_hop,             12,                 4],
-           [:spectrum_end,          0.1,                1.0],
+           [:spectrum_end,            0.1,                1.0],
            [:cursor_size,             15,                 25],
            [:cursor_style,            Cursor_cross,       Cursor_line]]
   old_globals = funcs.map do |func, global, local| snd_func(func) end
@@ -28400,7 +28348,14 @@ def test0119
   load("s61.rb")
   ind = find_sound("oboe.snd")
   funcs.each do |func, global, local|
-    if local_neq?(res1 = snd_func(func), global) or local_neq?(res2 = snd_func(func, ind, 0), local)
+    if $with_test_nogui
+      next if func == :transform_normalization
+      next if func == :spectro_x_scale
+      next if func == :spectro_hop
+      next if func == :spectrum_end
+    end
+    if local_neq?(res1 = snd_func(func), global) or
+        local_neq?(res2 = snd_func(func, ind, 0), local)
       snd_display("save %s reversed: %s [%s] %s [%s]?", func, res1, global, res2, local)
     end
   end
@@ -28444,196 +28399,197 @@ def test0119
   # basic choices
   [[lambda { |ind| insert_sample(10, 0.5, ind, 0) },
     lambda { |ind|
-        if fneq(sample(10), 0.5)
-          snd_display("insert_sample save_state: %s?", channel2vct(5, 10, ind, 0))
-        end
-        if (res = frames(ind, 0)) != 101
-          snd_display("insert_sample save_state len: %s?", res)
-        end
-      }],
+      if fneq(sample(10), 0.5)
+        snd_display("insert_sample save_state: %s?", channel2vct(5, 10, ind, 0))
+      end
+      if (res = frames(ind, 0)) != 101
+        snd_display("insert_sample save_state len: %s?", res)
+      end
+    }],
    [lambda { |ind| delete_sample(10, ind, 0) },
     lambda { |ind|
-        if fneq(sample(10), 0.0)
-          snd_display("delete_sample save_state: %s?", channel2vct(5, 10, ind, 0))
-        end
-        if (res = frames(ind, 0)) != 99
-          snd_display("delete_sample save_state len: %s?", res)
-        end
-      }],
+      if fneq(sample(10), 0.0)
+        snd_display("delete_sample save_state: %s?", channel2vct(5, 10, ind, 0))
+      end
+      if (res = frames(ind, 0)) != 99
+        snd_display("delete_sample save_state len: %s?", res)
+      end
+    }],
    [lambda { |ind| set_sample(10, 0.5, ind, 0) },
     lambda { |ind|
-        if fneq(sample(10), 0.5)
-          snd_display("set_sample save_state: %s?", channel2vct(5, 10, ind, 0))
-        end
-        if (res = frames(ind, 0)) != 100
-          snd_display("set_sample save_state len: %s?", res)
-        end
-      }],
+      if fneq(sample(10), 0.5)
+        snd_display("set_sample save_state: %s?", channel2vct(5, 10, ind, 0))
+      end
+      if (res = frames(ind, 0)) != 100
+        snd_display("set_sample save_state len: %s?", res)
+      end
+    }],
    [lambda { |ind| set_sample(10, 0.5, ind, 0); scale_channel(0.5) },
     lambda { |ind|
-        if fneq(sample(10), 0.25)
-          snd_display("scl sample save_state: %s?", channel2vct(5, 10, ind, 0))
-        end
-        if (res = frames(ind, 0)) != 100
-          snd_display("scl sample save_state len: %s?", res)
-        end
-        if (res = edit_position(ind, 0)) != 2
-          snd_display("scl sample save_state edpos: %s?", res)
-        end
-      }],
+      if fneq(sample(10), 0.25)
+        snd_display("scl sample save_state: %s?", channel2vct(5, 10, ind, 0))
+      end
+      if (res = frames(ind, 0)) != 100
+        snd_display("scl sample save_state len: %s?", res)
+      end
+      if (res = edit_position(ind, 0)) != 2
+        snd_display("scl sample save_state edpos: %s?", res)
+      end
+    }],
    [lambda { |ind| vct2channel(Vct.new(10, 0.5), 10, 5, ind, 0); pad_channel(12, 5, ind, 0) },
     lambda { |ind|
-        if (res = frames(ind, 0)) != 105
-          snd_display("pad sample save_state len: %s?", res)
-        end
-        if (res = edit_position(ind, 0)) != 2
-          snd_display("pad sample save_state edpos: %s?", res)
-        end
-        unless vequal(res = channel2vct(10, 10, ind, 0),vct(0.5, 0.5, 0, 0, 0, 0, 0, 0.5, 0.5, 0.5))
-          snd_display("pad sample save_state: %s?", res)
-        end
-      }],
+      if (res = frames(ind, 0)) != 105
+        snd_display("pad sample save_state len: %s?", res)
+      end
+      if (res = edit_position(ind, 0)) != 2
+        snd_display("pad sample save_state edpos: %s?", res)
+      end
+      unless vequal(res = channel2vct(10, 10, ind, 0),
+                    vct(0.5, 0.5, 0, 0, 0, 0, 0, 0.5, 0.5, 0.5))
+        snd_display("pad sample save_state: %s?", res)
+      end
+    }],
    [lambda { |ind| map_channel(lambda { |y| 1.0 }); env_channel([0, 0, 1, 1], 0, 11, ind, 0) },
     lambda { |ind|
-        if (res = frames(ind, 0)) != 100
-          snd_display("env sample save_state len: %s?", res)
-        end
-        if (res = edit_position(ind, 0)) != 2
-          snd_display("env sample save_state edpos: %s?", res)
-        end
-        unless vequal(res = channel2vct(0, 15, ind, 0),
-                      vct(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1, 1, 1, 1))
-          snd_display("env sample save_state: %s?", res)
-        end
-      }],
+      if (res = frames(ind, 0)) != 100
+        snd_display("env sample save_state len: %s?", res)
+      end
+      if (res = edit_position(ind, 0)) != 2
+        snd_display("env sample save_state edpos: %s?", res)
+      end
+      unless vequal(res = channel2vct(0, 15, ind, 0),
+                    vct(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1, 1, 1, 1))
+        snd_display("env sample save_state: %s?", res)
+      end
+    }],
    # map_channel as backup
    [lambda { |ind|
-        ctr = 0
-        map_channel(lambda { |y|
-                      ctr += 1
-                      ctr.even? ? 0.1 : false
-                    })
-      },
+      ctr = 0
+      map_channel(lambda { |y|
+                    ctr += 1
+                    ctr.even? ? 0.1 : false
+                  })
+    },
     lambda { |ind|
-        if (res = frames(ind, 0)) != 50
-          snd_display("map false save_state len: %s?", res)
-        end
-        if (res = edit_position(ind, 0)) != 1
-          snd_display("map false save_state edpos: %s?", res)
-        end
-        if fneq(res = maxamp(ind, 0), 0.1)
-          snd_display("map false save_state max: %s?", res)
-        end
-        unless vequal(res = channel2vct(0, 10, ind, 0), Vct.new(10, 0.1))
-          snd_display("map false save_state: %s?", res)
-        end
-      }],
+      if (res = frames(ind, 0)) != 50
+        snd_display("map false save_state len: %s?", res)
+      end
+      if (res = edit_position(ind, 0)) != 1
+        snd_display("map false save_state edpos: %s?", res)
+      end
+      if fneq(res = maxamp(ind, 0), 0.1)
+        snd_display("map false save_state max: %s?", res)
+      end
+      unless vequal(res = channel2vct(0, 10, ind, 0), Vct.new(10, 0.1))
+        snd_display("map false save_state: %s?", res)
+      end
+    }],
    # as_one_edit
    [lambda { |ind|
-        as_one_edit(lambda { | |
-                      vct2channel(Vct.new(10) { |i| (i + 1) * 0.1 },  0, 10, ind, 0)
-                      vct2channel(Vct.new(10) { |i| (i + 1) * 0.1 }, 20, 10, ind, 0)
-                    })
-      },
+      as_one_edit(lambda { | |
+                    vct2channel(Vct.new(10) { |i| (i + 1) * 0.1 },  0, 10, ind, 0)
+                    vct2channel(Vct.new(10) { |i| (i + 1) * 0.1 }, 20, 10, ind, 0)
+                  })
+    },
     lambda { |ind|
-        if (res = edit_position(ind, 0)) != 1
-          snd_display("save_state backup 2 vcts edpos: %s?", res)
-        end
-        unless vequal(res = channel2vct( 0, 10, ind, 0), Vct.new(10) { |i| (i + 1) * 0.1 })
-          snd_display("as_one_edit save_state 1: %s?", res.to_str)
-        end
-        unless vequal(res = channel2vct(20, 10, ind, 0), Vct.new(10) { |i| (i + 1) * 0.1 })
-          snd_display("as_one_edit save_state 2: %s?", res.to_str)
-        end
-      }],
+      if (res = edit_position(ind, 0)) != 1
+        snd_display("save_state backup 2 vcts edpos: %s?", res)
+      end
+      unless vequal(res = channel2vct( 0, 10, ind, 0), Vct.new(10) { |i| (i + 1) * 0.1 })
+        snd_display("as_one_edit save_state 1: %s?", res.to_str)
+      end
+      unless vequal(res = channel2vct(20, 10, ind, 0), Vct.new(10) { |i| (i + 1) * 0.1 })
+        snd_display("as_one_edit save_state 2: %s?", res.to_str)
+      end
+    }],
    [lambda { |ind|
-        as_one_edit(lambda { | |
-                      vct2channel(Vct.new(10) { |i| (i + 1) * 0.1 },  0, 10, ind, 0)
-                      scale_by(0.5)
-                    })
-      },
+      as_one_edit(lambda { | |
+                    vct2channel(Vct.new(10) { |i| (i + 1) * 0.1 },  0, 10, ind, 0)
+                    scale_by(0.5)
+                  })
+    },
     lambda { |ind|
-        if (res = edit_position(ind, 0)) != 1
-          snd_display("save_state backup vct+scl edpos: %s?", res)
-        end
-        unless vequal(res = channel2vct(0, 10, ind, 0),
-                      Vct.new(10) { |i| (i + 1) * 0.1 }.scale(0.5))
-          snd_display("as_one_edit save_state 3: %s?", res)
-        end
-      }],
+      if (res = edit_position(ind, 0)) != 1
+        snd_display("save_state backup vct+scl edpos: %s?", res)
+      end
+      unless vequal(res = channel2vct(0, 10, ind, 0),
+                    Vct.new(10) { |i| (i + 1) * 0.1 }.scale(0.5))
+        snd_display("as_one_edit save_state 3: %s?", res)
+      end
+    }],
    [lambda { |ind|
-        as_one_edit(lambda { | |
-                      vct2channel(Vct.new(10) { |i| (i + 1) * 0.1 },  0, 10, ind, 0)
-                      delete_samples(5, 5)
-                    })
-      },
+      as_one_edit(lambda { | |
+                    vct2channel(Vct.new(10) { |i| (i + 1) * 0.1 },  0, 10, ind, 0)
+                    delete_samples(5, 5)
+                  })
+    },
     lambda { |ind|
-        if (res = edit_position(ind, 0)) != 1
-          snd_display("save_state backup vct+del edpos: %s?", res)
-        end
-        unless vequal(res = channel2vct(0, 10, ind, 0), Vct.new(10) { |i|
-                        if i < 5
-                          (i + 1) * 0.1
-                        else
-                          0.0
-                        end
-                      })
-          snd_display("as_one_edit save_state 4: %s?", res)
-        end
-      }],
+      if (res = edit_position(ind, 0)) != 1
+        snd_display("save_state backup vct+del edpos: %s?", res)
+      end
+      unless vequal(res = channel2vct(0, 10, ind, 0), Vct.new(10) { |i|
+                      if i < 5
+                        (i + 1) * 0.1
+                      else
+                        0.0
+                      end
+                    })
+        snd_display("as_one_edit save_state 4: %s?", res)
+      end
+    }],
    [lambda { |ind|
-        as_one_edit(lambda { | |
-                      delete_samples(5, 5)
-                      insert_samples(5, 2, vct(0.1, 0.2))
-                    })
-      },
+      as_one_edit(lambda { | |
+                    delete_samples(5, 5)
+                    insert_samples(5, 2, vct(0.1, 0.2))
+                  })
+    },
     lambda { |ind|
-        if (res = edit_position(ind, 0)) != 1
-          snd_display("save_state backup del+insert edpos: %s?", res)
-        end
-        unless vequal(res = channel2vct(0, 10, ind, 0), Vct.new(10) { |i|
-                        case i
-                        when 5
-                          0.1
-                        when 6
-                          0.2
-                        else
-                          0.0
-                        end
-                      })
-          snd_display("as_one_edit save_state 5: %s?", res)
-        end
-        if (res = frames(ind, 0)) != 97
-          snd_display("save_state backup del+insert len: %s?", res)
-        end
-      }],
+      if (res = edit_position(ind, 0)) != 1
+        snd_display("save_state backup del+insert edpos: %s?", res)
+      end
+      unless vequal(res = channel2vct(0, 10, ind, 0), Vct.new(10) { |i|
+                      case i
+                      when 5
+                        0.1
+                      when 6
+                        0.2
+                      else
+                        0.0
+                      end
+                    })
+        snd_display("as_one_edit save_state 5: %s?", res)
+      end
+      if (res = frames(ind, 0)) != 97
+        snd_display("save_state backup del+insert len: %s?", res)
+      end
+    }],
    # 2 embedded as_one_edits
    [lambda { |ind|
-        map_channel(lambda { |y| -1.0 })
-        as_one_edit(lambda { | |
-                      delete_samples(5, 5)
-                      insert_samples(5, 2, vct(0.1, 0.2))
-                    })
-        scale_channel(2.0)
-        as_one_edit(lambda { | |
-                      vct2channel(Vct.new(10) { |i| (i + 1) * 0.1 }, 10, 10, ind, 0)
-                      vct2channel(Vct.new(10) { |i| (i + 1) * 0.1 }, 20, 10, ind, 0)
-                    })
-        delete_samples(15, 10)
-      },
+      map_channel(lambda { |y| -1.0 })
+      as_one_edit(lambda { | |
+                    delete_samples(5, 5)
+                    insert_samples(5, 2, vct(0.1, 0.2))
+                  })
+      scale_channel(2.0)
+      as_one_edit(lambda { | |
+                    vct2channel(Vct.new(10) { |i| (i + 1) * 0.1 }, 10, 10, ind, 0)
+                    vct2channel(Vct.new(10) { |i| (i + 1) * 0.1 }, 20, 10, ind, 0)
+                  })
+      delete_samples(15, 10)
+    },
     lambda { |ind|
-        if (res = edit_position(ind, 0)) != 5
-          snd_display("embed save_state edpos: %s?", res)
-        end
-        if (res = frames(ind, 0)) != 87
-          snd_display("embed save_state len: %s?", res)
-        end
-        unless vequal(res = channel2vct(0, 25, ind, 0),
-                      vct(-2, -2, -2, -2, -2, 0.2, 0.4, -2, -2, -2, 0.1, 0.2, 0.3,
-                          0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, -2, -2, -2, -2, -2))
-          snd_display("embed save_state 9: %s?", res.to_str)
-        end
-      }]].each_with_index do |args, i|
+      if (res = edit_position(ind, 0)) != 5
+        snd_display("embed save_state edpos: %s?", res)
+      end
+      if (res = frames(ind, 0)) != 87
+        snd_display("embed save_state len: %s?", res)
+      end
+      unless vequal(res = channel2vct(0, 25, ind, 0),
+                    vct(-2, -2, -2, -2, -2, 0.2, 0.4, -2, -2, -2, 0.1, 0.2, 0.3,
+                        0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, -2, -2, -2, -2, -2))
+        snd_display("embed save_state 9: %s?", res.to_str)
+      end
+    }]].each_with_index do |args, i|
     func = args[0]
     test = args[1]
     ind = new_sound("test.snd", Mus_next, Mus_bfloat, 22050, 1, "mono save-state tests", 100)
@@ -29116,23 +29072,6 @@ def test0219
   revert_sound(ind)
   func.call(ind, 0)
   revert_sound(ind)
-  # sticky env end
-  # env_channel(make_env(:envelope, [0, 0, 1, 1, 2, 0], :length, 501), 1000, 1000)
-  # if fneq(res = sample(1750), 0.0)
-  #   snd_display("edit_list2function 15 samp: %s?", res)
-  # end
-  # unless proc?(func = edit_list2function)
-  #   snd_display("edit_list2function 15: %s", func)
-  # end
-  # if (res = func.source) != "Proc.new {|snd, chn|  env_channel(make_env([0.000, 0.000, 1.000, 1.000, 2.000, 0.000], :base, 1.0000, :length, 501), 1000, 1000, snd, chn) }"
-  #   snd_display("edit_list2function 15: %s", res)
-  # end
-  # revert_sound(ind)
-  # func.call(ind, 0)
-  # if fneq(res = sample(1750), 0.0)
-  #   snd_display("edit_list2function 15 re-samp: %s?", res)
-  # end
-  # revert_sound(ind)
   # simple reapply
   env_channel([0, 0, 1, 1, 2, 0])
   func = edit_list2function
@@ -29275,152 +29214,150 @@ def test0219
     snd_display("edit_list2function 19 re-filter: %s %s?", mx, res)
   end
   revert_sound(ind)
-  if provided? :xm
-    [[lambda { insert_vct(vct(1.0, 0.5), 0, 2) },
-      "Proc.new {|snd, chn|  insert_vct(vct(1.000, 0.500), 0, 2, snd, chn) }"],
-     [lambda { clm_channel_test },
-      "Proc.new {|snd, chn|  clm_channel_test(snd, chn) }"],
-     # examp.rb
-     [lambda { fft_edit(1000, 3000) },
-      "Proc.new {|snd, chn|  fft_edit(1000, 3000, snd, chn) }"],
-     [lambda { fft_squelch(0.01) },
-      "Proc.new {|snd, chn|  fft_squelch(0.01, snd, chn) }"],
-     [lambda { fft_cancel(1000, 3000) },
-      "Proc.new {|snd, chn|  fft_cancel(1000, 3000, snd, chn) }"],
-     [lambda { squelch_vowels },
-      "Proc.new {|snd, chn|  squelch_vowels(snd, chn) }"],
-     [lambda { fft_env_edit([0, 0, 1, 1, 2, 0]) },
-      "Proc.new {|snd, chn|  fft_env_edit([0, 0, 1, 1, 2, 0], snd, chn) }"],
-     [lambda { fft_env_interp([0, 0, 1, 1, 2, 0], [0, 1, 1, 0, 2, 0], [0, 0, 1, 1]) },
-      "Proc.new {|snd, chn|  fft_env_interp([0, 0, 1, 1, 2, 0], [0, 1, 1, 0, 2, 0], [0, 0, 1, 1], snd, chn) }"],
-     [lambda { hello_dentist(10.0, 0.1) },
-      "Proc.new {|snd, chn|  hello_dentist(10.0, 0.1, snd, chn) }"],
-     [lambda { fp(1.0, 0.3, 20.0) },
-      "Proc.new {|snd, chn|  fp(1.0, 0.3, 20.0, snd, chn) }"],
-     [lambda { expsnd([0, 1, 1, 2]) },
-      "Proc.new {|snd, chn|  expsnd([0, 1, 1, 2], snd, chn) }"],
-     [lambda { voiced2unvoiced(1.0, 256, 2.0, 2.0) },
-      "Proc.new {|snd, chn|  voiced2unvoiced(1.0, 256, 2.0, 2.0, snd, chn) }"],
-     [lambda { env_sound_interp([0, 0, 1, 1, 2, 0], 2.0) },
-      "Proc.new {|snd, chn|  env_sound_interp([0, 0, 1, 1, 2, 0], 2.0, snd, chn) }"],
-     [lambda { add_notes([["1a.snd"], ["pistol.snd", 1.0, 2.0]]) },
-      "Proc.new {|snd, chn|  add_notes([[\"1a.snd\"], [\"pistol.snd\", 1.0, 2.0]], snd, chn) }"],
-     [lambda { compand_channel },
-      "Proc.new {|snd, chn|  compand_channel(0, false, snd, chn) }"],
-     [lambda { smooth_channel_via_ptree },
-      "Proc.new {|snd, chn|  smooth_channel_via_ptree(0, false, snd, chn) }"],
-     [lambda { ring_modulate_channel(300) },
-      "Proc.new {|snd, chn|  ring_modulate_channel(300, 0, false, snd, chn) }"],
-     [lambda { filtered_env([0, 0, 1, 1, 2, 0]) },
-      "Proc.new {|snd, chn|  filtered_env([0, 0, 1, 1, 2, 0], snd, chn) }"],
-     [lambda { reverse_by_blocks(0.1) },
-      "Proc.new {|snd, chn|  reverse_by_blocks(0.1, snd, chn) }"],
-     [lambda { reverse_within_blocks(0.1) },
-      "Proc.new {|snd, chn|  reverse_within_blocks(0.1, snd, chn) }"], 
-    # extensions.rb
-     [lambda { mix_channel("1a.snd", 1200) },
-      "Proc.new {|snd, chn|  mix_channel(\"1a.snd\", 1200, false, snd, chn) }"],
-     [lambda { insert_channel("1a.snd", 1200) },
-      "Proc.new {|snd, chn|  insert_channel(\"1a.snd\", 1200, false, snd, chn) }"],
-     [lambda { sine_ramp(0.5, 0.9) },
-      "Proc.new {|snd, chn|  sine_ramp(0.5, 0.9, 0, false, snd, chn) }"],
-     [lambda { sine_env_channel([0, 0, 1, 1, 2, -0.5, 3, 1]) },
-      "Proc.new {|snd, chn|  sine_env_channel([0, 0, 1, 1, 2, -0.5, 3, 1], 0, false, snd, chn) }"],
-     [lambda { blackman4_ramp(0.0, 1.0) },
-      "Proc.new {|snd, chn|  blackman4_ramp(0.0, 1.0, 0, false, snd, chn) }"],
-     [lambda { blackman4_env_channel([0, 0, 1, 1, 2, -0.5, 3, 1]) },
-      "Proc.new {|snd, chn|  blackman4_env_channel([0, 0, 1, 1, 2, -0.5, 3, 1], 0, false, snd, chn) }"],
-     [lambda { ramp_squared(0.2, 0.8, true) },
-      "Proc.new {|snd, chn|  ramp_squared(0.2, 0.8, true, 0, false, snd, chn) }"],
-     [lambda { env_squared_channel([0, 0, 1, 1], true) },
-      "Proc.new {|snd, chn|  env_squared_channel([0, 0, 1, 1], true, 0, false, snd, chn) }"],
-     [lambda { ramp_expt(0.2, 0.8, 32.0, true) },
-      "Proc.new {|snd, chn|  ramp_expt(0.2, 0.8, 32.0, true, 0, false, snd, chn) }"],
-     [lambda { env_expt_channel([0, 0, 1, 1], 32.0, true) },
-      "Proc.new {|snd, chn|  env_expt_channel([0, 0, 1, 1], 32.0, true, 0, false, snd, chn) }"],
-     [lambda { offset_channel(0.1) },
-      "Proc.new {|snd, chn|  offset_channel(0.1, 0, false, snd, chn) }"],
-     [lambda { dither_channel(0.1) },
-      "Proc.new {|snd, chn|  dither_channel(0.1, 0, false, snd, chn) }"],
-     [lambda { contrast_channel(0.1) },
-      "Proc.new {|snd, chn|  contrast_channel(0.1, 0, false, snd, chn) }"],
-     # dsp.rb
-     [lambda { ssb_bank(550, 600, 10) },
-      "Proc.new {|snd, chn|  ssb_bank(550, 600, 10, 40, 50.0, 0, false, snd, chn) }"],
-     [lambda { ssb_bank_env(550, 660, [0, 1, 1, 2], 10) },
-      "Proc.new {|snd, chn|  ssb_bank_env(550, 660, [0, 1, 1, 2], 10, 40, 50.0, 0, false, snd, chn) }"],
-     [lambda { down_oct(1) },
-      "Proc.new {|snd, chn|  down_oct(1, snd, chn) }"],
-     [lambda { freqdiv(8) },
-      "Proc.new {|snd, chn|  freqdiv(8, snd, chn) }"],
-     [lambda { adsat(8) },
-      "Proc.new {|snd, chn|  adsat(8, false, false, snd, chn) }"],
-     [lambda { spike },
-      "Proc.new {|snd, chn|  spike(snd, chn) }"],
-     [lambda { zero_phase },
-      "Proc.new {|snd, chn|  zero_phase(snd, chn) }"],
-     [lambda { rotate_phase(lambda { |x| random(PI) })  },
-      format("Proc.new {|snd, chn|  rotate_phase(Proc.new {|val_r| rotate_phase_%s(val_r) }, snd, chn) }", edit_list_proc_counter + 1)],
-     [lambda { brighten_slightly(0.5) },
-      "Proc.new {|snd, chn|  brighten_slightly(0.5, snd, chn) }"],
-     [lambda { shift_channel_pitch(100) },
-      "Proc.new {|snd, chn|  shift_channel_pitch(100, 40, 0, false, snd, chn) }"],
-     [lambda { channel_polynomial(vct(0, 0.5)) },
-      "Proc.new {|snd, chn|  channel_polynomial(vct(0.000, 0.500), snd, chn) }"],
-     [lambda { spectral_polynomial(vct(0, 0.5)) },
-      "Proc.new {|snd, chn|  spectral_polynomial(vct(0.000, 0.500), snd, chn) }"],
-     [lambda { notch_channel([60.0, 120.0, 240.0], false, false, false) },
-      "Proc.new {|snd, chn|  notch_channel([60.0, 120.0, 240.0], false, false, false, snd, chn) }"],
-     # effects.rb
-     [lambda { effects_squelch_channel(0.1, 128) },
-      "Proc.new {|snd, chn|  effects_squelch_channel(0.1, 128, snd, chn) }"],
-     [lambda { effects_echo(false, 0.5, 0.1, 0, false) },
-      "Proc.new {|snd, chn|  effects_echo(false, 0.5, 0.1, 0, false, snd, chn) }"],
-     [lambda { effects_flecho_1(0.5, 0.1, false, 0, false) },
-      "Proc.new {|snd, chn|  effects_flecho_1(0.5, 0.1, false, 0, false, snd, chn) }"],
-     [lambda { effects_zecho_1(0.75, 0.75, 6.0, 10.0, false, 0, false) },
-      "Proc.new {|snd, chn|  effects_zecho_1(0.75, 0.75, 6.0, 10.0, false, 0, false, snd, chn) }"],
-     #[lambda { effects_comb_filter(0.1, 50, 0, false) },
-     #"Proc.new {|snd, chn|  effects_comb_filter(0.1, 50, 0, false, snd, chn) }"],
-     [lambda { effects_moog(10000, 0.5, 0, false) },
-      "Proc.new {|snd, chn|  effects_moog(10000, 0.5, 0, false, snd, chn) }"],
-     [lambda { effects_remove_dc },
-      "Proc.new {|snd, chn|  effects_remove_dc(snd, chn) }"],
-     [lambda { effects_compand },
-      "Proc.new {|snd, chn|  effects_compand(snd, chn) }"],
-     [lambda { effects_am(100.0, false) },
-      "Proc.new {|snd, chn|  effects_am(100.0, false, 0, false, snd, chn) }"],
-     [lambda { effects_rm(100.0, false) },
-      "Proc.new {|snd, chn|  effects_rm(100.0, false, 0, false, snd, chn) }"],
-     [lambda { effects_bbp(1000.0, 100.0, 0, false) },
-      "Proc.new {|snd, chn|  effects_bbp(1000.0, 100.0, 0, false, snd, chn) }"],
-     [lambda { effects_bbr(1000.0, 100.0, 0, false) },
-      "Proc.new {|snd, chn|  effects_bbr(1000.0, 100.0, 0, false, snd, chn) }"],
-     [lambda { effects_bhp(1000.0, 0, false) },
-      "Proc.new {|snd, chn|  effects_bhp(1000.0, 0, false, snd, chn) }"],
-     [lambda { effects_blp(1000.0, 0, false) },
-      "Proc.new {|snd, chn|  effects_blp(1000.0, 0, false, snd, chn) }"],
-     [lambda { effects_hello_dentist(50.0, 0.5, 0, false) },
-      "Proc.new {|snd, chn|  effects_hello_dentist(50.0, 0.5, 0, false, snd, chn) }"],
-     [lambda { effects_fp(1.0, 0.3, 20.0, 0, false) },
-      "Proc.new {|snd, chn|  effects_fp(1.0, 0.3, 20.0, 0, false, snd, chn) }"],
-     [lambda { effects_flange(5.0, 2.0, 0.001, 0, false) },
-      "Proc.new {|snd, chn|  effects_flange(5.0, 2.0, 0.001, 0, false, snd, chn) }"],
-     [lambda { effects_jc_reverb_1(0.1, 0, false) },
-      "Proc.new {|snd, chn|  effects_jc_reverb_1(0.1, 0, false, snd, chn) }"]
-    ].each_with_index do |args, i|
-      func1, descr = args
-      func1.call
-      unless proc?(func = edit_list2function)
-        snd_display("edit_list2function proc 20[%s]: %s", i, func.inspect)
-      end
-      if func.source != descr
-        snd_display("edit_list2function source 20[%s]: %s", i, func.source)
-      end
-      revert_sound(ind)
-      func.call(ind, 0)
-      revert_sound(ind)
+  [[lambda { insert_vct(vct(1.0, 0.5), 0, 2) },
+    "Proc.new {|snd, chn|  insert_vct(vct(1.000, 0.500), 0, 2, snd, chn) }"],
+   [lambda { clm_channel_test },
+    "Proc.new {|snd, chn|  clm_channel_test(snd, chn) }"],
+   # examp.rb
+   [lambda { fft_edit(1000, 3000) },
+    "Proc.new {|snd, chn|  fft_edit(1000, 3000, snd, chn) }"],
+   [lambda { fft_squelch(0.01) },
+    "Proc.new {|snd, chn|  fft_squelch(0.01, snd, chn) }"],
+   [lambda { fft_cancel(1000, 3000) },
+    "Proc.new {|snd, chn|  fft_cancel(1000, 3000, snd, chn) }"],
+   [lambda { squelch_vowels },
+    "Proc.new {|snd, chn|  squelch_vowels(snd, chn) }"],
+   [lambda { fft_env_edit([0, 0, 1, 1, 2, 0]) },
+    "Proc.new {|snd, chn|  fft_env_edit([0, 0, 1, 1, 2, 0], snd, chn) }"],
+   [lambda { fft_env_interp([0, 0, 1, 1, 2, 0], [0, 1, 1, 0, 2, 0], [0, 0, 1, 1]) },
+    "Proc.new {|snd, chn|  fft_env_interp([0, 0, 1, 1, 2, 0], [0, 1, 1, 0, 2, 0], [0, 0, 1, 1], snd, chn) }"],
+   [lambda { hello_dentist(10.0, 0.1) },
+    "Proc.new {|snd, chn|  hello_dentist(10.0, 0.1, snd, chn) }"],
+   [lambda { fp(1.0, 0.3, 20.0) },
+    "Proc.new {|snd, chn|  fp(1.0, 0.3, 20.0, snd, chn) }"],
+   [lambda { expsnd([0, 1, 1, 2]) },
+    "Proc.new {|snd, chn|  expsnd([0, 1, 1, 2], snd, chn) }"],
+   [lambda { voiced2unvoiced(1.0, 256, 2.0, 2.0) },
+    "Proc.new {|snd, chn|  voiced2unvoiced(1.0, 256, 2.0, 2.0, snd, chn) }"],
+   [lambda { env_sound_interp([0, 0, 1, 1, 2, 0], 2.0) },
+    "Proc.new {|snd, chn|  env_sound_interp([0, 0, 1, 1, 2, 0], 2.0, snd, chn) }"],
+   [lambda { add_notes([["1a.snd"], ["pistol.snd", 1.0, 2.0]]) },
+    "Proc.new {|snd, chn|  add_notes([[\"1a.snd\"], [\"pistol.snd\", 1.0, 2.0]], snd, chn) }"],
+   [lambda { compand_channel },
+    "Proc.new {|snd, chn|  compand_channel(0, false, snd, chn) }"],
+   [lambda { smooth_channel_via_ptree },
+    "Proc.new {|snd, chn|  smooth_channel_via_ptree(0, false, snd, chn) }"],
+   [lambda { ring_modulate_channel(300) },
+    "Proc.new {|snd, chn|  ring_modulate_channel(300, 0, false, snd, chn) }"],
+   [lambda { filtered_env([0, 0, 1, 1, 2, 0]) },
+    "Proc.new {|snd, chn|  filtered_env([0, 0, 1, 1, 2, 0], snd, chn) }"],
+   [lambda { reverse_by_blocks(0.1) },
+    "Proc.new {|snd, chn|  reverse_by_blocks(0.1, snd, chn) }"],
+   [lambda { reverse_within_blocks(0.1) },
+    "Proc.new {|snd, chn|  reverse_within_blocks(0.1, snd, chn) }"], 
+   # extensions.rb
+   [lambda { mix_channel("1a.snd", 1200) },
+    "Proc.new {|snd, chn|  mix_channel(\"1a.snd\", 1200, false, snd, chn) }"],
+   [lambda { insert_channel("1a.snd", 1200) },
+    "Proc.new {|snd, chn|  insert_channel(\"1a.snd\", 1200, false, snd, chn) }"],
+   [lambda { sine_ramp(0.5, 0.9) },
+    "Proc.new {|snd, chn|  sine_ramp(0.5, 0.9, 0, false, snd, chn) }"],
+   [lambda { sine_env_channel([0, 0, 1, 1, 2, -0.5, 3, 1]) },
+    "Proc.new {|snd, chn|  sine_env_channel([0, 0, 1, 1, 2, -0.5, 3, 1], 0, false, snd, chn) }"],
+   [lambda { blackman4_ramp(0.0, 1.0) },
+    "Proc.new {|snd, chn|  blackman4_ramp(0.0, 1.0, 0, false, snd, chn) }"],
+   [lambda { blackman4_env_channel([0, 0, 1, 1, 2, -0.5, 3, 1]) },
+    "Proc.new {|snd, chn|  blackman4_env_channel([0, 0, 1, 1, 2, -0.5, 3, 1], 0, false, snd, chn) }"],
+   [lambda { ramp_squared(0.2, 0.8, true) },
+    "Proc.new {|snd, chn|  ramp_squared(0.2, 0.8, true, 0, false, snd, chn) }"],
+   [lambda { env_squared_channel([0, 0, 1, 1], true) },
+    "Proc.new {|snd, chn|  env_squared_channel([0, 0, 1, 1], true, 0, false, snd, chn) }"],
+   [lambda { ramp_expt(0.2, 0.8, 32.0, true) },
+    "Proc.new {|snd, chn|  ramp_expt(0.2, 0.8, 32.0, true, 0, false, snd, chn) }"],
+   [lambda { env_expt_channel([0, 0, 1, 1], 32.0, true) },
+    "Proc.new {|snd, chn|  env_expt_channel([0, 0, 1, 1], 32.0, true, 0, false, snd, chn) }"],
+   [lambda { offset_channel(0.1) },
+    "Proc.new {|snd, chn|  offset_channel(0.1, 0, false, snd, chn) }"],
+   [lambda { dither_channel(0.1) },
+    "Proc.new {|snd, chn|  dither_channel(0.1, 0, false, snd, chn) }"],
+   [lambda { contrast_channel(0.1) },
+    "Proc.new {|snd, chn|  contrast_channel(0.1, 0, false, snd, chn) }"],
+   # dsp.rb
+   [lambda { ssb_bank(550, 600, 10) },
+    "Proc.new {|snd, chn|  ssb_bank(550, 600, 10, 40, 50.0, 0, false, snd, chn) }"],
+   [lambda { ssb_bank_env(550, 660, [0, 1, 1, 2], 10) },
+    "Proc.new {|snd, chn|  ssb_bank_env(550, 660, [0, 1, 1, 2], 10, 40, 50.0, 0, false, snd, chn) }"],
+   [lambda { down_oct(1) },
+    "Proc.new {|snd, chn|  down_oct(1, snd, chn) }"],
+   [lambda { freqdiv(8) },
+    "Proc.new {|snd, chn|  freqdiv(8, snd, chn) }"],
+   [lambda { adsat(8) },
+    "Proc.new {|snd, chn|  adsat(8, false, false, snd, chn) }"],
+   [lambda { spike },
+    "Proc.new {|snd, chn|  spike(snd, chn) }"],
+   [lambda { zero_phase },
+    "Proc.new {|snd, chn|  zero_phase(snd, chn) }"],
+   [lambda { rotate_phase(lambda { |x| random(PI) })  },
+    format("Proc.new {|snd, chn|  rotate_phase(Proc.new {|val_r| rotate_phase_%s(val_r) }, snd, chn) }", edit_list_proc_counter + 1)],
+   [lambda { brighten_slightly(0.5) },
+    "Proc.new {|snd, chn|  brighten_slightly(0.5, snd, chn) }"],
+   [lambda { shift_channel_pitch(100) },
+    "Proc.new {|snd, chn|  shift_channel_pitch(100, 40, 0, false, snd, chn) }"],
+   [lambda { channel_polynomial(vct(0, 0.5)) },
+    "Proc.new {|snd, chn|  channel_polynomial(vct(0.000, 0.500), snd, chn) }"],
+   [lambda { spectral_polynomial(vct(0, 0.5)) },
+    "Proc.new {|snd, chn|  spectral_polynomial(vct(0.000, 0.500), snd, chn) }"],
+   [lambda { notch_channel([60.0, 120.0, 240.0], false, false, false) },
+    "Proc.new {|snd, chn|  notch_channel([60.0, 120.0, 240.0], false, false, false, snd, chn) }"],
+   # effects.rb
+   [lambda { effects_squelch_channel(0.1, 128) },
+    "Proc.new {|snd, chn|  effects_squelch_channel(0.1, 128, snd, chn) }"],
+   [lambda { effects_echo(false, 0.5, 0.1, 0, false) },
+    "Proc.new {|snd, chn|  effects_echo(false, 0.5, 0.1, 0, false, snd, chn) }"],
+   [lambda { effects_flecho_1(0.5, 0.1, false, 0, false) },
+    "Proc.new {|snd, chn|  effects_flecho_1(0.5, 0.1, false, 0, false, snd, chn) }"],
+   [lambda { effects_zecho_1(0.75, 0.75, 6.0, 10.0, false, 0, false) },
+    "Proc.new {|snd, chn|  effects_zecho_1(0.75, 0.75, 6.0, 10.0, false, 0, false, snd, chn) }"],
+   #[lambda { effects_comb_filter(0.1, 50, 0, false) },
+   #"Proc.new {|snd, chn|  effects_comb_filter(0.1, 50, 0, false, snd, chn) }"],
+   [lambda { effects_moog(10000, 0.5, 0, false) },
+    "Proc.new {|snd, chn|  effects_moog(10000, 0.5, 0, false, snd, chn) }"],
+   [lambda { effects_remove_dc },
+    "Proc.new {|snd, chn|  effects_remove_dc(snd, chn) }"],
+   [lambda { effects_compand },
+    "Proc.new {|snd, chn|  effects_compand(snd, chn) }"],
+   [lambda { effects_am(100.0, false) },
+    "Proc.new {|snd, chn|  effects_am(100.0, false, 0, false, snd, chn) }"],
+   [lambda { effects_rm(100.0, false) },
+    "Proc.new {|snd, chn|  effects_rm(100.0, false, 0, false, snd, chn) }"],
+   [lambda { effects_bbp(1000.0, 100.0, 0, false) },
+    "Proc.new {|snd, chn|  effects_bbp(1000.0, 100.0, 0, false, snd, chn) }"],
+   [lambda { effects_bbr(1000.0, 100.0, 0, false) },
+    "Proc.new {|snd, chn|  effects_bbr(1000.0, 100.0, 0, false, snd, chn) }"],
+   [lambda { effects_bhp(1000.0, 0, false) },
+    "Proc.new {|snd, chn|  effects_bhp(1000.0, 0, false, snd, chn) }"],
+   [lambda { effects_blp(1000.0, 0, false) },
+    "Proc.new {|snd, chn|  effects_blp(1000.0, 0, false, snd, chn) }"],
+   [lambda { effects_hello_dentist(50.0, 0.5, 0, false) },
+    "Proc.new {|snd, chn|  effects_hello_dentist(50.0, 0.5, 0, false, snd, chn) }"],
+   [lambda { effects_fp(1.0, 0.3, 20.0, 0, false) },
+    "Proc.new {|snd, chn|  effects_fp(1.0, 0.3, 20.0, 0, false, snd, chn) }"],
+   [lambda { effects_flange(5.0, 2.0, 0.001, 0, false) },
+    "Proc.new {|snd, chn|  effects_flange(5.0, 2.0, 0.001, 0, false, snd, chn) }"],
+   [lambda { effects_jc_reverb_1(0.1, 0, false) },
+    "Proc.new {|snd, chn|  effects_jc_reverb_1(0.1, 0, false, snd, chn) }"]
+  ].each_with_index do |args, i|
+    func1, descr = args
+    func1.call
+    unless proc?(func = edit_list2function)
+      snd_display("edit_list2function proc 20[%s]: %s", i, func.inspect)
     end
+    if func.source != descr
+      snd_display("edit_list2function source 20[%s]: %s", i, func.source)
+    end
+    revert_sound(ind)
+    func.call(ind, 0)
+    revert_sound(ind)
   end
   close_sound(ind)
 end
@@ -29627,8 +29564,8 @@ end
 def test19
   if $test19
     $before_test_hook.call(19)
-    test0019 unless provided? :snd_nogui # load(save_state_file) -> set_transform_size(0)
-    test0119 unless provided? :snd_nogui
+    test0019 if $with_test_gui # load(save_state_file) -> set_transform_size(0)
+    test0119
     test0219
     test0319
     mus_sound_prune
@@ -31099,12 +31036,12 @@ def test0120
     snd_display("transform_frames of sonogram: %s?", size)
   end
   graph2ps("aaa.eps")
-  unless provided? :snd_nogui
+  if $with_test_gui
     Snd.catch do
       unless (ax = axis_info(ind1, 0, Transform_graph))
         snd_display("axis_info Transform_graph?")
       end
-      if provided? :xm
+      if $with_test_motif
         cwid = channel_widgets(ind1, 0).first
         focus_widget(cwid)
         click_event(cwid, 0, 0, (0.5 * (ax[10] + ax[12])).floor, (0.5 * (ax[11] + ax[13])).floor)
@@ -31118,12 +31055,12 @@ def test0120
   set_transform_graph_type(Graph_as_spectrogram, ind1, 0)
   update_transform_graph
   graph2ps("aaa.eps")
-  unless provided? :snd_nogui
+  if $with_test_gui
     Snd.catch do
       unless (ax = axis_info(ind1, 0, Transform_graph))
         snd_display("axis_info Transform_graph?")
       end
-      if provided? :xm
+      if $with_test_motif
         cwid = channel_widgets(ind1, 0).first
         focus_widget(cwid)
         click_event(cwid, 0, 0, (0.5 * (ax[10] + ax[12])).floor, (0.5 * (ax[11] + ax[13])).floor)
@@ -31476,7 +31413,7 @@ def test20
       test_erf
     end
     test0020
-    test0120 unless provided? :snd_nogui
+    test0120 if $with_test_gui
     test0220
     $after_test_hook.call(20)
   end
@@ -31561,7 +31498,7 @@ def test0021
   update_time_graph
   power_env_channel(make_power_env([0, 0, 0.325, 1, 1, 32, 2, 0, 32], :duration, 2.0))
   update_time_graph
-  provided?(:xm) and show_disk_space(ind1)
+  $with_test_motif and show_disk_space(ind1)
   update_time_graph
   close_sound(ind1)
   close_sound(ind2)
@@ -32026,7 +31963,7 @@ def test0021
    [:show_mix_waveforms, false, :==, :eql?, true, true],
    [:with_verbose_cursor, true, :==, :eql?, true, true]
   ].each do |func, new_val, eq_func, leq_func, settable, global|
-    next if provided?(:snd_gtk) and func == :y_position_slider
+    next if $with_test_gtk and func == :y_position_slider
     test_sound_func_1.call(func, new_val, eq_func, leq_func, settable, true, global)
     test_channel_func_1.call(func, new_val, eq_func, leq_func, settable, global)
   end
@@ -32501,7 +32438,7 @@ end
 def test21
   if $test21
     $before_test_hook.call(21)
-    test0021 unless provided? :snd_nogui
+    test0021 if $with_test_gui
     test0121 if $all_args
     test0221
     $after_test_hook.call(21)
@@ -33318,7 +33255,7 @@ def test0223
     snd_display("optkey_4 3: %s 2?", res)
   end
   # 
-  if (provided?(:snd_motif) or provided?(:snd_gtk)) and defined? variable_display
+  if defined? variable_display
     wid1 = make_variable_display("do-loop-1", "i*1", :text)
     wid2 = make_variable_display("do-loop-2", "i*2", :scale, [-1.0, 1.0])
     wid3 = make_variable_display("do-loop-3", "i3", :spectrum)
@@ -33456,7 +33393,7 @@ def test0223
   close_sound(ind)
   # 
   make_birds
-  if provided?(:snd_nogui) then puts end
+  if $with_test_nogui then puts end
   Snd.sounds.apply(:close_sound)
   # 
   # clm23.scm tests skipped
@@ -33525,8 +33462,7 @@ def test0223
   set_x_bounds([1.0, 2.0], ind, 0)
   ind = find_sound(file)
   if fneq(res = amp_control(ind), 0.5) then snd_display("update ws amp: %s?", res) end
-  if (not provided?(:snd_nogui)) and
-      (fneq(x_bounds(ind, 0).car, 1.0) or fneq(x_bounds(ind, 0).cadr, 2.0))
+  if $with_test_gui and (fneq(x_bounds(ind, 0).car, 1.0) or fneq(x_bounds(ind, 0).cadr, 2.0))
     snd_display("update ws bounds: %s?", x_bounds(ind, 0))
   end
   close_sound(ind)
@@ -34488,7 +34424,7 @@ def test0228
   check_error_tag(:out_of_range) do set_default_output_header_type(Mus_soundfont) end
   check_error_tag(:mus_error) do mus_sound_chans($sf_dir + "bad_location.nist") end
   check_error_tag(:mus_error) do mus_sound_chans($sf_dir + "bad_field.nist") end
-  if provided? :snd_motif
+  if $with_test_motif
     check_error_tag(:no_such_widget) do widget_position([:Widget, 0]) end
     check_error_tag(:no_such_widget) do widget_size([:Widget, 0]) end
     check_error_tag(:no_such_widget) do widget_text([:Widget, 0]) end
@@ -34804,7 +34740,7 @@ def test0228
   check_error_tag(:no_such_mix) do mix_properties(integer2mix(mix_sync_max + 1)) end
   check_error_tag(:no_such_mix) do set_mix_properties(integer2mix(mix_sync_max + 1), 1) end
   # 
-  if provided? :snd_motif
+  if $with_test_motif
     [:widget_position, :widget_size, :widget_text,
       :hide_widget, :show_widget, :focus_widget].each do |n|
       if (tag = Snd.catch do snd_func(n, [:Widget, 0]) end).first != :no_such_widget
@@ -34904,7 +34840,7 @@ def test0328
   #
   unless Set_procs00.empty?
     snd_info("set-no-args")
-    unless provided? :snd_nogui
+    if $with_test_gui
       # INFO: [ms] (eval):587:in `set_enved_envelope'
       # [:name_error] undefined local variable or method `feedback' for main: Object (NameError)
       Set_procs00.delete(:enved_envelope)
@@ -35268,7 +35204,7 @@ def test28
     snd_info("proc07: %3d", Procs07.length)
     snd_info("proc08: %3d", Procs08.length)
     snd_info("proc10: %3d", Procs10.length)
-    unless provided? :snd_nogui
+    if $with_test_gui
       unless Procs.empty?
         snd_display("procs: %s?", Procs)
       end
@@ -35278,8 +35214,8 @@ def test28
     end
     reset_almost_all_hooks
     test0028
-    test0128 unless provided? :snd_nogui
-    test0228 unless provided? :snd_nogui
+    test0128 if $with_test_gui
+    test0228 if $with_test_gui
     # INFO: with snd-gtk [ms]
     # test0428 should come before test0328 because of:
     # (snd-ruby-xg:2371): Gdk-WARNING **: GdkWindow 0x160015b unexpectedly destroyed
@@ -35294,6 +35230,6 @@ end
 
 main_test
 finish_snd_test
-exit(0) if $with_exit
+exit(0)
 
 # snd-test.rb ends here

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Mar 18 00:18:35 CET 2003
-# Changed: Thu Oct 21 12:57:27 CEST 2010
+# Changed: Mon Oct 25 19:48:49 CEST 2010
 
 # Important:
 #
@@ -18,7 +18,7 @@
 #     Rg_signal_lookup(event, RG_OBJECT_TYPE(RG_OBJECT(parent)))
 #     RG_OBJECT  (not RGTK_OBJECT!)
 #
-#     in is_managed:
+#     in is_managed?:
 #
 #     Rgtk_widget_get_realized() exists and is used.
 
@@ -48,7 +48,7 @@
 #  graph_enved?(obj)
 #  make_xenved(name, parent, *rest)
 #  xenved?(obj)
-#  xenved_test(name = "xenved")
+#  xenved_test(name)
 #
 # class Enved
 #  initialize(enved = [0, 0, 1, 1])
@@ -338,21 +338,26 @@ pans a mono sound following its enved envelope into a stereo sound")
       obj.instance_of?(Xenved)
     end
 
+
+    if $with_motif
+      Test_widget_type = RxmFormWidgetClass
+      Test_widget_args = [RXmNheight, 200]
+      Test_xenved_args = [RXmNleftAttachment,   RXmATTACH_WIDGET,
+                          RXmNtopAttachment,    RXmATTACH_WIDGET,
+                          RXmNbottomAttachment, RXmATTACH_WIDGET,
+                          RXmNrightAttachment,  RXmATTACH_WIDGET]
+    else
+      Test_widget_type = false
+      Test_widget_args = false
+      Test_xenved_args = []
+    end
+    
     def xenved_test(name = "xenved")
-      widget = if $with_motif
-                 add_main_pane(name, RxmFormWidgetClass, [RXmNheight, 200])
-               else
-                 add_main_pane(name)
-               end
-      args = if $with_motif
-               [RXmNleftAttachment, RXmATTACH_WIDGET,
-                RXmNtopAttachment, RXmATTACH_WIDGET,
-                RXmNbottomAttachment, RXmATTACH_WIDGET,
-                RXmNrightAttachment, RXmATTACH_WIDGET]
-             else
-               []
-             end
-      make_xenved(name, widget, :envelope, [0, 0, 1, 1], :axis_bounds, [0, 1, 0, 1], :args, args)
+      make_xenved(name,
+                  add_main_pane(name, Test_widget_type, Test_widget_args),
+                  :envelope,    [0, 0, 1, 1],
+                  :axis_bounds, [0, 1, 0, 1],
+                  :args,        Test_xenved_args)
     end
   end
 end
@@ -859,7 +864,7 @@ if $with_gui
     protected
     if $with_motif
       def redraw
-        if is_managed(@drawer) and @px0 and @py0 > @py1
+        if is_managed?(@drawer) and @px0 and @py0 > @py1
           RXClearWindow(@dpy, @window)
           # Motif's DRAW-AXES takes 6 optional arguments.
           # '( x0 y0 x1 y1 ) = draw-axes(wid gc label
@@ -880,7 +885,7 @@ if $with_gui
       end
     else
       def redraw
-        if is_managed(@drawer) and @px0 and @py0 > @py1
+        if is_managed?(@drawer) and @px0 and @py0 > @py1
           size = widget_size(RGTK_WIDGET(@drawer))
           cairo = Rgdk_cairo_create(RGDK_DRAWABLE(Rgtk_widget_get_window(@drawer)))
           Rcairo_push_group(cairo)
@@ -951,10 +956,10 @@ if $with_gui
 
 xe = xenved_test
 xe.envelope                         # --> [0.0, 0.0, 1.0, 1.0]
-xe.click_time                       # --> 0.2
+xe.click_time                       # --> 0.5
 xe.envelope = [0, 1, 1, 1]
-# three clicks later
-xe.envelope                         # --> [0.0, 1.0,
+# some clicks later
+xe.envelope                         # --> [0.0, 0.0,
                                     #      0.190735694822888, 0.562264150943396,
                                     #      0.632152588555858, 0.932075471698113,
                                     #      0.848773841961853, 0.316981132075472,

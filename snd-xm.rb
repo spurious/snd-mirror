@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Changed: Wed Oct 20 23:25:32 CEST 2010
+# Changed: Tue Oct 26 23:05:41 CEST 2010
 
 # Commentary:
 #
@@ -33,7 +33,7 @@
 #  find_child(widget, name)
 #  each_child(widget) do |w| .... end
 #  widget?(obj)
-#  is_managed(widget)
+#  is_managed?(widget)
 #  widget_name(widget)
 #  set_scale_value(widget, value, scaler)
 #  get_scale_value(widget, info, scaler)
@@ -658,11 +658,11 @@ module Snd_Gtk
   end
 
   if defined? Rgtk_widget_get_realized
-    def is_managed(wid)
+    def is_managed?(wid)
       Rgtk_widget_get_realized(wid)
     end
   else
-    alias is_managed widget?
+    alias is_managed? widget?
   end
 
   # you should have set the name before:
@@ -693,14 +693,18 @@ module Snd_Gtk
     Rgtk_widget_set_sensitive(widget, flag)
   end
 
-  # This Gtk function works only if not started with -notebook.
-  def add_main_pane(name, motif_type_not_needed = nil, *motif_args_not_needed)
+  # main_widgets[5] (without -notebook) and
+  # main_widgets[2]
+  # seem to be of kind GTK_BOX [ms]
+  def add_main_pane(name, motif_class_not_needed = nil, *motif_args_not_needed)
     pane = Rgtk_hbox_new(false, 0)
-    if RGTK_IS_BOX(main_widgets[Notebook_outer_pane])
-      Rgtk_box_pack_start(RGTK_BOX(main_widgets[Notebook_outer_pane]), pane, false, false, 4)
-    else
-      Snd.raise(:snd_x_error, "doesn't work if Snd-Gtk is started with -notebook")
+    unless RGTK_IS_BOX(parent = main_widgets[Notebook_outer_pane])
+      parent = main_widgets[Main_pane_shell]
     end
+    unless RGTK_IS_BOX(parent)
+      Snd.raise(:snd_x_error, "no GTK_BOX widget found")
+    end
+    Rgtk_box_pack_start(RGTK_BOX(parent), pane, false, false, 4)
     Rgtk_widget_show(pane)
     Rgtk_widget_set_name(pane, name)
     pane
@@ -1133,7 +1137,7 @@ module Snd_Motif
     RWidget?(obj)
   end
 
-  def is_managed(wid)
+  def is_managed?(wid)
     RXtIsManaged(wid)
   end
 
@@ -2052,7 +2056,6 @@ the current free space (for use with $after_open_hook)")
         RXtSetSensitive(@okay_button, (not Snd.sounds.empty?))
         add_watcher(lambda do | | RXtSetSensitive(@okay_button, (not Snd.sounds.empty?)) end)
       end
-      Snd.debug("%p", @okay_button)
       @parent = RXtCreateManagedWidget("pane", RxmPanedWindowWidgetClass, @dialog,
                                        [RXmNsashHeight,  1,
                                         RXmNsashWidth,   1,
@@ -2199,6 +2202,7 @@ module Snd_XM
   else
     Snd.raise(:snd_x_error, "neither Motif nor Gtk?")
   end
+  alias is_managed is_managed?
 end
 
 =begin

@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Wed Aug 18 19:07:45 CEST 2010
+\ Changed: Sat Oct 30 19:09:23 CEST 2010
 
 \ Commentary:
 \
@@ -1422,11 +1422,11 @@ previous
   freq-inc make-array map! i bin * radius make-formant end-map { formants }
   out-len 0.0 make-vct map!
     i freq-inc mod 0= if
-      c-g? if "interrupted" leave then	\ ;; if C-g exit the loop returning the string "interrupted"
+      c-g? ?leave
       inctr fftsize snd chn #f channel->vct to fdr
       fdr vct-peak old-peak-amp fmax to old-peak-amp
       fdr fdi #f 2 spectrum ( fdr ) spectr vct-subtract! ( fdr ) freq-inc 1/f vct-scale! drop
-      hop +to inctr
+      hop inctr + to inctr
     then
     spectr fdr vct? if fdr vct-add! then formants noi 0.0 rand formant-bank ( outval )
     dup fabs new-peak-amp fmax to new-peak-amp
@@ -1450,11 +1450,11 @@ previous
   freq-inc make-array map! i bin * radius make-formant end-map { formants }
   len 0.0 make-vct map!
     i freq-inc mod 0= if
-      c-g? if "interrupted" leave then	\ ;; if C-g exit the loop returning the string "interrupted"
+      c-g? ?leave
       inctr fftsize snd chn #f channel->vct to fdr
       fdr vct-peak old-peak-amp fmax to old-peak-amp
       fdr fdi #f 2 spectrum ( fdr ) spectr vct-subtract! ( fdr ) freq-inc 1/f vct-scale! drop
-      freq-inc +to inctr
+      freq-inc inctr + to inctr
     then
     spectr fdr vct-add! ( spectr ) formants pulse 0.0 sum-of-cosines formant-bank ( outval )
     dup fabs new-peak-amp fmax to new-peak-amp
@@ -1642,7 +1642,7 @@ previous
 	position-in-original jitter mus-random f+ fround->s 0 max snd chn 1 #f make-sampler
 	cycle-set!
 	grain-envs next-reader array-ref mus-reset drop
-	hop-frames +to next-reader-start-at
+	hop-frames next-reader-start-at + to next-reader-start-at
       then
       0.0 ( sum )
       readers each { rd }
@@ -2009,7 +2009,7 @@ previous
   ( data ) map
     *key* { id }
     time { cur }
-    id 0 region-frames id region-srate f/ +to time
+    id 0 region-frames id region-srate f/ time f+ to time
     #( cur id )
   end-map region-play-list
 ;
@@ -2213,7 +2213,7 @@ hide
   data 0 vct-ref { angle }
   data 1 vct-ref { incr }
   angle fsin y f* ( val )
-  data 0 angle incr forward if + else - then vct-set! drop ( val )
+  data 0 angle incr forward if f+ else f- then vct-set! drop ( val )
 ;
 : rmc-cb2 { freq snd -- prc; frag-beg frag-dur self -- vct }
   2 proc-create { prc } freq , snd , prc
@@ -2291,7 +2291,7 @@ hide
       then
     then
     reg start #f #f 0 mix-region drop
-    reg 0 region-frames +to start
+    reg 0 region-frames start + to start
     reg forget-region drop
   loop
   pieces
@@ -2342,7 +2342,7 @@ hide
       val actual-block-len beg - f* 0.1 f* to val
     then
   then
-  1 +to beg
+  beg 1+ to beg
   beg actual-block-len = if
     1 self 2 cells + +! ( ctr++ )
     0 self 1 cells + !  ( beg = 0 )

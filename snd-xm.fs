@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Dec 26 22:36:46 CET 2005
-\ Changed: Thu Oct 21 12:16:34 CEST 2010
+\ Changed: Mon Oct 25 23:08:02 CEST 2010
 
 \ Commentary:
 \
@@ -20,6 +20,7 @@
 \ for-each-child   	   ( widget prc -- )
 \ load-font                ( name -- fid|#f )
 \ host-name                ( -- host )
+\ add-main-pane            ( name class args -- wid )
 \ white-pixel      	   ( -- pix )
 \ black-pixel      	   ( -- pix )
 \ raise-dialog             ( dialog -- )
@@ -43,7 +44,6 @@
 \ 
 \ add-channel-pane         ( snd chn name type args -- wid )
 \ add-sound-pane           ( snd name type args -- wid )
-\ add-main-pane            ( name type args -- wid )
 \ add-listener-pane        ( name type args -- wid )
 \ 
 \ add-mark-pane            ( -- )
@@ -53,6 +53,8 @@
 \ Code:
 
 'snd-nogui provided? [if] skip-file [then]
+
+$" X error" create-exception x-error
 
 \ if not configured --with-static-xm|g
 'snd-motif provided? 'xm provided? not && [if] dl-load libxm Init_libxm [then]
@@ -202,6 +204,25 @@ previous
     then
   ;
 
+  \ --- add our own pane to the overall Snd window (underneath the listener in this case) ---
+
+  \ main-widgets 5 array-ref (without -notebook) and
+  \ main-widgets 2 array-ref
+  \ seem to be of type GTK_BOX [ms]
+  
+  : add-main-pane <{ name :optional class-not-needed #f args-not-needed #f -- wid }>
+    #f 0 Fgtk_hbox_new { pane }
+    main-widgets 5 array-ref { parent }
+    parent FGTK_IS_BOX unless main-widgets 2 array-ref to parent then
+    parent FGTK_IS_BOX unless
+      'x-error $" %s: no GTK_BOX widget found" #( get-func-name ) fth-raise
+    then
+    parent FGTK_BOX pane #f #f 4 Fgtk_box_pack_start drop
+    pane Fgtk_widget_show drop
+    pane name Fgtk_widget_set_name drop
+    pane
+  ;
+
   : get-color-pixel ( name -- pix )
     { name }
     FGdkColor { tmp }
@@ -221,7 +242,7 @@ previous
   ;
 
   <'> raise-dialog alias activate-dialog ( dialog -- )
-
+  
   \  --- show-smpte-label, Gtk specific ---
 
   hide
@@ -391,7 +412,7 @@ previous
   hide
   : display-widget <{ widget n -- }>
     widget FXtName empty? if
-      $" <unnamed>"
+      "<unnamed>"
     else
       widget FXtName
     then
@@ -430,12 +451,15 @@ previous
     doc" Returns name of current machine."
     main-widgets 1 array-ref { wid }
     wid FXtWindow { win }
-    main-dpy win main-dpy $" WM_CLIENT_MACHINE" #f FXInternAtom 0 32 #f FXA_STRING
+    main-dpy win main-dpy "WM_CLIENT_MACHINE" #f FXInternAtom 0 32 #f FXA_STRING
     FXGetWindowProperty { host }
     host if host 5 array-ref else host then
   ;
   
   \ --- add our own pane to the channel section ---
+  \ 
+  \ 0 0 "new-pane" FxmDrawingAreaWidgetClass
+  \ #( FXmNbackground graph-color FXmNforeground data-color ) add-channel-pane value draw-widget
 
   : add-channel-pane { snd chn name typ args -- wid }
     name typ snd chn channel-widgets 7 array-ref FXtParent FXtParent args FXtCreateManagedWidget
@@ -449,15 +473,15 @@ previous
 
   \ --- add our own pane to the overall Snd window (underneath the listener in this case) ---
 
-  : add-main-pane { name typ args -- wid }
+  : add-main-pane { name class args -- wid }
     main-widgets 5 array-ref dup unless drop main-widgets 3 array-ref then { parent }
-    name typ parent args undef FXtCreateManagedWidget
+    name class parent args undef FXtCreateManagedWidget
   ;
 
   \ --- add a widget at the top of the listener ---
 
   : add-listener-pane { name typ args -- wid }
-    main-widgets 1 array-ref $" lisp-listener" find-child { listener }
+    main-widgets 1 array-ref "lisp-listener" find-child { listener }
     listener FXtParent { listener-scroll }
     listener-scroll FXtParent { listener-form }
     listener-scroll FXtUnmanageChild drop
@@ -471,9 +495,6 @@ previous
     listener-scroll FXtManageChild drop
     top-widget
   ;
-
-  \ 0 0 $" new-pane" FxmDrawingAreaWidgetClass
-  \ #( FXmNbackground graph-color FXmNforeground data-color ) add-channel-pane value draw-widget
 
   \ --- bring possibly-obscured dialog to top ---
 
@@ -557,18 +578,18 @@ previous
     snd chn mark-list-length { cur-len }
     snd chn deactivate-channel
     snd chn mark-list FWidget? unless
-      snd chn $" mark-box" FxmFormWidgetClass
+      snd chn "mark-box" FxmFormWidgetClass
       #( FXmNbackground       basic-color
 	 FXmNorientation      FXmVERTICAL
 	 FXmNpaneMinimum      100
 	 FXmNbottomAttachment FXmATTACH_FORM ) add-channel-pane { mark-box }
-      $" Marks" FxmLabelWidgetClass mark-box
+      "Marks" FxmLabelWidgetClass mark-box
       #( FXmNbackground       highlight-color
 	 FXmNleftAttachment   FXmATTACH_FORM
 	 FXmNrightAttachment  FXmATTACH_FORM
 	 FXmNalignment        FXmALIGNMENT_CENTER
 	 FXmNtopAttachment    FXmATTACH_FORM ) undef FXtCreateManagedWidget { mark-label }
-      $" mark-scroller" FxmScrolledWindowWidgetClass mark-box
+      "mark-scroller" FxmScrolledWindowWidgetClass mark-box
       #( FXmNbackground       basic-color
 	 FXmNscrollingPolicy  FXmAUTOMATIC
 	 FXmNscrollBarDisplayPolicy FXmSTATIC
@@ -577,7 +598,7 @@ previous
 	 FXmNtopAttachment    FXmATTACH_WIDGET
 	 FXmNtopWidget        mark-label
 	 FXmNbottomAttachment FXmATTACH_FORM ) undef FXtCreateManagedWidget { mark-scroller }
-      $" mark-list" FxmRowColumnWidgetClass mark-scroller
+      "mark-list" FxmRowColumnWidgetClass mark-scroller
       #( FXmNorientation      FXmVERTICAL
 	 FXmNtopAttachment    FXmATTACH_FORM
 	 FXmNbottomAttachment FXmATTACH_FORM
@@ -590,7 +611,7 @@ previous
     new-marks length cur-len > if
       snd chn mark-list { lst }
       new-marks length cur-len ?do
-	$" field" FxmTextFieldWidgetClass lst
+	"field" FxmTextFieldWidgetClass lst
 	#( FXmNbackground basic-color ) undef FXtCreateWidget { tf }
 	tf FXmNfocusCallback       <'> marks-focus-cb        undef FXtAddCallback drop
 	tf FXmNlosingFocusCallback <'> marks-losing-focus-cb undef FXtAddCallback drop

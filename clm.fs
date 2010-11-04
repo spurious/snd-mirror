@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Thu Oct 14 21:26:53 CEST 2010
+\ Changed: Wed Oct 27 18:07:38 CEST 2010
 
 \ Commentary:
 \
@@ -54,7 +54,7 @@
 \ with-mix             ( body-str|nil args fname start -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 14-Oct-2010" value *clm-version*
+$" fth 27-Oct-2010" value *clm-version*
 
 [ifundef] flog10
   <'> flog  alias flog10
@@ -63,9 +63,9 @@ $" fth 14-Oct-2010" value *clm-version*
 [then]
 
 \ if configured --with-shared-sndlib
-dl-load sndlib Init_sndlib
+'sndlib provided? not [if] dl-load sndlib Init_sndlib [then]
 
-'snd provided? [unless]
+'snd provided? not [if]
   <'> noop alias sound?
   <'> noop alias open-sound
   <'> noop alias find-sound
@@ -78,7 +78,7 @@ dl-load sndlib Init_sndlib
   : c-g? ( -- f ) #f ;
 [then]
 
-[undefined] clm-print [if]
+[ifundef] clm-print
   \ "hello" clm-print
   \ "file %s, line %d\n" '( "oboe.snd" 123 ) clm-print
   'snd provided? [if]
@@ -89,7 +89,7 @@ dl-load sndlib Init_sndlib
 [then]
 
 \ puts a comment sign before output string and adds a carriage return
-: clm-message <{ fmt :optional args undef -- }> $" \\ %s\n" '( fmt args fth-format ) clm-print ;
+: clm-message <{ fmt :optional args nil -- }> $" \\ %s\n" '( fmt args fth-format ) clm-print ;
 
 \ === Notelist ===
 hide
@@ -339,17 +339,17 @@ $" with-sound interrupt" create-exception with-sound-interrupt
 #f value *clm-current-instrument*	\ current instrument set in INSTRUMENT:
 
 : ws-local-variables ( -- )
+  nil { vals }
   *clm-instruments* empty? if
     $" *clm-instruments* is empty" #() clm-message
   else
-    nil { vals }
     "" #() clm-message
     *clm-instruments* each to vals
       $" === %s [%.3f-%.3f] ===" #(
 	 vals 0 array-ref
 	 vals 1 array-ref
 	 vals 2 array-ref ) clm-message
-      vals 3 array-ref each ( var ) $" %s = %s" swap clm-message end-each
+      vals 3 array-ref each ( var-val-cell ) $" %s = %s" swap clm-message end-each
       "" #() clm-message
     end-each
   then
@@ -488,8 +488,8 @@ hide
   fname file-exists? if
     fname mus-sound-maxamp { vals }
     vals length 0 ?do
-      $" %6s %c: %.3f (near %.3f secs)%s"
-      #( name
+      $" %6s %c: %.3f (near %.3f secs)%s" #(
+	 name
 	 [char] A i 2/ +
 	 vals i 1+ array-ref
 	 vals i    array-ref sr f/
@@ -499,18 +499,19 @@ hide
 ;
 
 : .timer { obj -- }
-  $" %*s: %.3f  (utime %.3f, stime %.3f)"
-  #( 8 $" real" obj real-time@ obj user-time@ obj system-time@ ) clm-message
+  $"     real: %.3f  (utime %.3f, stime %.3f)" #(
+     obj real-time@
+     obj user-time@
+     obj system-time@ ) clm-message
 ;
 
 : .timer-ratio { sr frms obj -- }
   frms 0> if
     sr frms f/ { m }
-    $" %*s: %.2f  (uratio %.2f)"
-    #( 8 $" ratio" obj real-time@ m f* obj user-time@ m f* ) clm-message
+    $"    ratio: %.2f  (uratio %.2f)" #( obj real-time@ m f* obj user-time@ m f* )
   else
-    $" %*s: no ratio" #( 8 $" ratio" ) clm-message
-  then
+    $"    ratio: no ratio" #()
+  then clm-message
 ;
 set-current
 
@@ -521,16 +522,16 @@ set-current
   output mus-sound-srate    { srate }
   $" filename: %S"            #( output )             clm-message
   $"    chans: %d, srate: %d" #( channels srate f>s ) clm-message
-  $"   format: %s [%s]"
-  #( output mus-sound-data-format mus-data-format-name
+  $"   format: %s [%s]" #(
+     output mus-sound-data-format mus-data-format-name
      output mus-sound-header-type mus-header-type-name ) clm-message
   $"   length: %.3f  (%d frames)" #( dur frames ) clm-message
   timer timer? if
     timer .timer
     srate frames timer .timer-ratio
   then
-  output $" maxamp" srate scaled? .maxamps
-  reverb-file-name ?dup-if $" revamp" srate #f .maxamps then
+  output "maxamp" srate scaled? .maxamps
+  reverb-file-name ?dup-if "revamp" srate #f .maxamps then
   output mus-sound-comment { comm }
   comm empty? unless $"  comment: %S" #( comm ) clm-message then
 ;
@@ -603,8 +604,8 @@ previous
     $"   device: %d"                #( output-device )   clm-message
     $"    chans: %d, srate: %d"     #( chans srate )     clm-message
     $" r format: %s [Dac]" #( audio-format mus-data-format-name ) clm-message
-    $" w format: %s [%s]"
-    #( data-format mus-data-format-name header-type mus-header-type-name ) clm-message
+    $" w format: %s [%s]" #(
+       data-format mus-data-format-name header-type mus-header-type-name ) clm-message
     $"   length: %.3f  (%d frames)" #( duration frames ) clm-message
     $"  comment: %S"                #( comment )         clm-message
   then
@@ -1206,73 +1207,82 @@ instrument: conv-simp ( start dur filt fname amp -- )
 
 \ <'> src-test with-sound drop
 event: src-test ( -- )
-  0.0 1.0 1.0 0.2 #( 0 0 50 1 100 0 ) $" oboe.snd" src-simp
+  0.0 1.0 1.0 0.2 #( 0 0 50 1 100 0 ) "oboe.snd" src-simp
 ;event
 
 \ <'> conv1-test with-sound drop
 event: conv1-test ( -- )
-  0.0 1.0 vct( 0.5 0.2 0.1 0.05 0 0 0 0 ) $" fyow.snd" 1.0 conv-simp
+  0.0 1.0 vct( 0.5 0.2 0.1 0.05 0 0 0 0 ) "fyow.snd" 1.0 conv-simp
 ;event
 
 \ <'> conc2-test with-sound drop
 event: conv2-test ( -- )
-  0.0 1.0 $" pistol.snd" $" fyow.snd" 0.2 conv-simp
+  0.0 1.0 "pistol.snd" "fyow.snd" 0.2 conv-simp
 ;event
 
 \ <'> inst-test with-sound drop
 event: inst-test ( -- )
-  0.0 1.0 1.0 0.2 #( 0 0 50 1 100 0 ) $" oboe.snd" src-simp
-  1.2 1.0 vct( 0.5 0.2 0.1 0.05 0 0 0 0 ) $" fyow.snd" 1.0 conv-simp
-  2.4 1.0 $" pistol.snd" $" fyow.snd" 0.2 conv-simp
+  0.0 1.0 1.0 0.2 #( 0 0 50 1 100 0 ) "oboe.snd" src-simp
+  1.2 1.0 vct( 0.5 0.2 0.1 0.05 0 0 0 0 ) "fyow.snd" 1.0 conv-simp
+  2.4 1.0 "pistol.snd" "fyow.snd" 0.2 conv-simp
 ;event
 
 \ generators.scm
 : make-waveshape <{ :optional
      frequency *clm-default-frequency*
      partials '( 1 1 )
-     wave #f
-     size *clm-table-size* -- gen }>
-  wave if
-    :frequency frequency :coeffs wave make-polyshape
-  else
-    :frequency frequency :partials partials make-polyshape
-  then ( gen )
+     wave     #f
+     size     *clm-table-size* -- gen }>
+  doc" see make-polyshape"
+  :frequency frequency wave if :coeffs wave else :partials partials then make-polyshape
 ;
 
-<'> polyshape  alias waveshape
-<'> polyshape? alias waveshape?
+<'> polyshape  alias waveshape  ( gen :optional index 1.0 fm 0.0 -- val )
+<'> polyshape? alias waveshape? ( obj -- f )
+<'> waveshape   <'> polyshape  help-ref  help-set!
+<'> waveshape?  <'> polyshape? help-ref  help-set!
 
-: partials->waveshape <{ :optional partials #f size *clm-table-size* -- wave }>
+: partials->waveshape <{ partials :optional size *clm-table-size* -- wave }>
+  doc" see partials->polynomial"
   partials partials->polynomial ( wave )
 ;
 
 \ snd10.scm
 : make-sum-of-sines <{ :key sines 1 frequency 0.0 initial-phase 0.0 -- gen }>
+  doc" see make-nsin"
   :frequency frequency :n sines make-nsin { gen }
   gen initial-phase set-mus-phase drop
   gen
 ;
 
-<'> nsin  alias sum-of-sines
-<'> nsin? alias sum-of-sines?
+<'> nsin  alias sum-of-sines  ( gen :optional fm 0.0 -- val )
+<'> nsin? alias sum-of-sines? ( obj -- f )
+<'> sum-of-sines   <'> nsin  help-ref  help-set!
+<'> sum-of-sines?  <'> nsin? help-ref  help-set!
 
 : make-sum-of-cosines <{ :key cosines 1 frequency 0.0 initial-phase 0.0 -- gen }>
+  doc" see make-ncos"
   :frequency frequency :n cosines make-ncos { gen }
   gen initial-phase set-mus-phase drop
   gen
 ;
 
-<'> ncos  alias sum-of-cosines
-<'> ncos? alias sum-of-cosines?
+<'> ncos  alias sum-of-cosines  ( gen :optional fm 0.0 -- val )
+<'> ncos? alias sum-of-cosines? ( obj -- f )
+<'> sum-of-cosines   <'> ncos  help-ref  help-set!
+<'> sum-of-cosines?  <'> ncos? help-ref  help-set!
 
 : make-sine-summation <{ :key frequency 0.0 initial-phase 0.0 n 1 a 0.5 ratio 1.0 -- gen }>
+  doc" see make-nrxysin"
   :frequency frequency :ratio ratio :n n :r a make-nrxysin { gen }
   gen initial-phase set-mus-phase drop
   gen
 ;
 
-<'> nrxysin  alias sine-summation
-<'> nrxysin? alias sine-summation?
+<'> nrxysin  alias sine-summation  ( gen :optional fm 0.0 -- val )
+<'> nrxysin? alias sine-summation? ( obj -- f )
+<'> sine-summation   <'> nrxysin  help-ref  help-set!
+<'> sine-summation?  <'> nrxysin? help-ref  help-set!
 
 'snd provided? [if]
   instrument: arpeggio <{ start dur freq amp :key ampenv #( 0 0 0.5 1 1 0 ) offset 1.0 -- }>

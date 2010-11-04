@@ -2,16 +2,16 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Thu Oct 21 01:11:54 CEST 2010
+\ Changed: Wed Nov 03 11:55:21 CET 2010
 
 \ Commentary:
 \
 \ You may use an init file name `pwd`/.sndtest.fs or ~/.sndtest.fs to set
 \ global variables or define other special functions, hooks, etc.
 \
-\ snd-forth -noinit -load snd-test.fs        \ all tests
-\ snd-forth -noinit -load snd-test.fs 3 7 20 \ test 3 7 20
-\ snd-forth -noinit -load snd-test.fs -23    \ all tests but 23
+\ snd-forth -noinit -load snd-test.fs          \ all tests
+\ snd-forth -noinit -load snd-test.fs 10 15 19 \ test 10 15 19
+\ snd-forth -noinit -load snd-test.fs -23      \ all tests but 23
 \
 \ test  0: general
 \ test 10: marks
@@ -23,7 +23,10 @@
 
 24 set-object-print-length
 
-'snd-nogui provided? [unless]
+'snd-nogui provided? [if]
+  #f value stdout-io
+  #f value stderr-io
+[else]
   \ Prints to Snd's listener and stdout/stderr.
 
   \ The original CLM-PRINT utilizes SND-PRINT only but we want output
@@ -53,10 +56,48 @@ set-current
 : snd-display ( -- ; fmt args -- ) postpone *lineno* postpone (snd-display) ; immediate
 previous
 
+\ *SND-TEST-VERBOSE*: progress information in long tests
+\
+\ test 19-save/restore: function names
+\ test       28-errors: prints proc-array length and progress information
+#f value *snd-test-verbose*
+
+\ WITH-SOUND control
+\
+\ test   23-with-sound: :play
+\ test   23-with-sound: :statistics
+\ test   23-with-sound: :verbose (event (bird) and instrument names)
+#f value *snd-test-ws-play*
+#f value *snd-test-ws-statistics*
+#f value *snd-test-ws-verbose*
+
+\ You may set them in .sndtest.fs.
+#f value my-snd-error-hook
+#f value my-mus-error-hook
+
+save-dir "/home/bil/zap/snd" ||   value original-save-dir
+temp-dir "/home/bil/zap/tmp" ||   value original-temp-dir
+listener-prompt        		  value original-prompt
+1024 8 *               		  value default-file-buffer-size
+"HOME" getenv          		  value home-dir
+"/home/bil/sf1/"       		  value sf-dir
+#f                     		  value all-args
+"/home/bil/zap/sounds/bigger.snd" value bigger-snd
+
+\ let: ( -- )
+\   file-pwd "/peaks" $+ { dir }
+\   dir file-directory? unless dir 0o755 file-mkdir then
+\   dir set-peak-env-dir drop
+\ ;let
+
+\ Global variables may be overridden in `pwd`/.sndtest.fs or ~/.sndtest.fs
+".sndtest.fs" load-init-file
+
+\
 \ lambda: <{ -- }> cr gc-stats cr .memory cr cr ; at-exit
-\ before-load-hook lambda: <{ fname -- f }>
-\   $" loading " fname $+ #f snd-test-message #t
-\ ; add-hook!
+\
+\ before-load-hook lambda: <{ file -- f }> $" loading " file $+ #f snd-test-message #t ; add-hook!
+\
 
 'snd-motif provided? 'xm provided? not && [if] dl-load libxm Init_libxm [then]
 'snd-gtk   provided? 'xg provided? not && [if] dl-load libxg Init_libxg [then]
@@ -81,42 +122,9 @@ require snd-xm
 require effects
 require bird.fsm
 
-reset-all-hooks
-
-\ If #t, prints proc-array lengths in test-28.
-#f value *snd-test-verbose*
-
-\ *fth-verbose* -- fth arg --verbose
-\ *fth-debug*   -- fth arg --debug
-#f to *fth-verbose*
-#f to *fth-debug*
-
-\ *clm-verbose* -- test-19 function names; test-23 :statistics, :verbose, and :play
-\ *clm-debug*   -- test-23: :statistics for sndclm-examples
-#f to *clm-verbose*
-#f to *clm-debug*
-
-\ You may set them in .sndtest.fs.
-#f value my-snd-error-hook
-#f value my-mus-error-hook
-
-save-dir "/home/bil/zap/snd" ||   value original-save-dir
-temp-dir "/home/bil/zap/tmp" ||   value original-temp-dir
-listener-prompt        		  value original-prompt
-1024 8 *               		  value default-file-buffer-size
-"HOME" getenv          		  value home-dir
-"/home/bil/sf1/"       		  value sf-dir
-#t  		       		  value with-exit
-#f                     		  value all-args
-"/home/bil/zap/sounds/bigger.snd" value bigger-snd
-
-\ let: ( -- )
-\   file-pwd "/peaks" $+ { dir }
-\   dir file-directory? unless dir 0o755 file-mkdir then
-\   dir set-peak-env-dir drop
-\ ;let
-
 *clm-search-list* file-pwd array-push to *clm-search-list*
+
+reset-all-hooks
 
 'snd-motif provided? [if]
   lambda: <{ dpy e -- }>
@@ -225,21 +233,16 @@ listener-prompt        		  value original-prompt
 'snd-nogui provided? [if]
   <'> noop alias dismiss-all-dialogs
 [else]
-  'xm provided? [if]
-    : widget-is-managed? ( d -- f ) FXtIsManaged ;
-  [else]
-    <'> noop alias widget-is-managed? ( d -- f )
-  [then]
   : dismiss-all-dialogs ( -- )
     nil nil { dialog d }
     dialog-widgets each to dialog
       dialog if
 	dialog 0 array-ref symbol? if
-	  dialog widget-is-managed? if dialog widget-unmanage then
+	  dialog is-managed? if dialog hide-widget drop then
 	else
 	  dialog each to d
 	    d 0 array-ref symbol? if
-	      d widget-is-managed? if d widget-unmanage then
+	      d is-managed? if d hide-widget drop then
 	    then
 	  end-each
 	then
@@ -270,8 +273,6 @@ listener-prompt        		  value original-prompt
 ;
 
 : start-snd-test ( -- )
-  \ Global variables may be overridden in `pwd`/.sndtest.fs or ~/.sndtest.fs
-  ".sndtest.fs" load-init-file
   'snd-motif provided? if
     "motif"
   else
@@ -352,6 +353,7 @@ listener-prompt        		  value original-prompt
      "new.snd"
      "oboe.marks"
      "obtest.snd.stereo"
+     "saved-snd.fs"
      "snd.eps"
      "test-1.snd"
      "test-2.snd"
@@ -1793,7 +1795,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     vals 0 array-ref to func1
     vals 1 array-ref to descr
     vals 2 array-ref to name
-    *clm-verbose* if name #f snd-test-message then
+    *snd-test-verbose* if name #f snd-test-message then
     func1 #() run-proc drop
     ind #f undef undef edit-list->function to func
     func proc-source-ref descr string<> if
@@ -2124,69 +2126,78 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
   loop
 ;
 
-: ws-close-sound ( ws -- ) ws-output 0 find-sound dup sound? if close-sound then drop ;
+: check-maxamp { fname name -- }
+  fname mus-sound-maxamp each { val }
+    i 2 mod 0<> if
+      val 1.1 f> if $" %s: maxamp chn %s > 1.0: %s" '( name i 1- 2/ val ) snd-display then
+    then
+  end-each
+;
+
+: ws-close-sound { ws -- }
+  ws ws-output 0 find-sound dup sound? if close-sound then drop
+  ws :statistics ws-ref unless ws ws-output ws :comment ws-ref check-maxamp then
+;
 
 : 23-with-sound ( -- )
   1024 1024 * to *clm-file-buffer-size*
-  <'> bird-test				\ from bird.fsm
-  :statistics *clm-verbose*
-  :verbose    *clm-verbose*
-  :play       *clm-verbose*
-  :channels 2
-  :scaled-to 0.8 with-sound ( ws ) ws-close-sound
-  0.0 0.3 <'> clm-ins-test		\ from clm-ins.fs
-  :notehook   *clm-verbose* if <'> test23-notehook else #f then
-  :statistics *clm-verbose*
-  :verbose    *clm-verbose*
-  :play       *clm-verbose*
-  :channels 2    with-sound ( ws ) ws-close-sound
-  <'> test23-balance :channels 3 with-sound ( ws ) ws-output 0 find-sound dup sound? if
-    close-sound
-  else
-    $" with-sound balance?" snd-display
-  then drop
-  "tmp.snd" mus-next mus-bfloat 22050 1 new-sound { ind }
+  *clm-play*       { old-play }
+  *clm-statistics* { old-stats }
+  *snd-test-ws-play*       to *clm-play*
+  *snd-test-ws-statistics* to *clm-statistics*
+  \ from bird.fsm
+  <'> bird-test
+  :comment  over object->string
+  :verbose  *snd-test-ws-verbose*
+  :channels 2 with-sound ws-close-sound
+  \ from clm-ins.fs
+  0.0 0.3 <'> clm-ins-test
+  :comment  over object->string
+  :notehook *snd-test-ws-verbose* if <'> test23-notehook else #f then
+  :channels 2 with-sound ws-close-sound
+  <'> test23-balance
+  :comment  over object->string
+  :channels 3 with-sound ws-output 0 find-sound { ind }
+  ind sound? if ind close-sound drop else $" with-sound balance?" snd-display then
+  "test.snd" "test23-balance" check-maxamp
+  "tmp.snd" mus-next mus-bfloat 22050 1 new-sound to ind
   0 1000 ind 0 pad-channel drop
   100.0 make-oscil { mg }
   1000 make-ssb-fm { gen }
   gen mg test23-ssb-fm <'> map-channel #t nil fth-catch stack-reset
   ind close-sound drop
   \ examples from sndclm.html
-  *clm-play*       { old-play }
-  *clm-statistics* { old-stats }
-  *clm-verbose* to *clm-play*
-  *clm-debug*   to *clm-statistics*
-  <'> sndclm-oscil-test              		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-env-test                		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-table-lookup-test       		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-polywave-test           		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-triangle-wave-test      		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-ncos-test               		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-nrxycos-test            		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-ssb-am-test             		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-wave-train-test         		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-rand-test               :channels 2  with-sound ( ws ) ws-close-sound
-  <'> sndclm-two-pole-test           		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-firmant-test            		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-iir-filter-test         		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-delay-test              		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-comb-test               		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-all-pass-test           		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-moving-average-test     		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-src1-test               :srate 22050 with-sound ( ws ) ws-close-sound
-  <'> sndclm-src2-test               		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-convolve1-test          		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-convolve2-test          		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-granulate1-test         		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-granulate2-test         		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-phase-vocoder1-test     		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-phase-vocoder2-test     :srate 22050 with-sound ( ws ) ws-close-sound
-  <'> sndclm-asymmetric-fm-test                   with-sound ( ws ) ws-close-sound
-  <'> sndclm-file->frame->file-test  :channels 2  with-sound ( ws ) ws-close-sound
-  <'> sndclm-readin-test             		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-in-out-any-test         		  with-sound ( ws ) ws-close-sound
-  <'> sndclm-locsig-test             :channels 2  with-sound ( ws ) ws-close-sound
-  <'> sndclm-amplitude-modulate-test 		  with-sound ( ws ) ws-close-sound
+  <'> sndclm-oscil-test          :comment over object->string with-sound ws-close-sound
+  <'> sndclm-env-test            :comment over object->string with-sound ws-close-sound
+  <'> sndclm-table-lookup-test   :comment over object->string with-sound ws-close-sound
+  <'> sndclm-polywave-test       :comment over object->string with-sound ws-close-sound
+  <'> sndclm-triangle-wave-test  :comment over object->string with-sound ws-close-sound
+  <'> sndclm-ncos-test           :comment over object->string with-sound ws-close-sound
+  <'> sndclm-nrxycos-test        :comment over object->string with-sound ws-close-sound
+  <'> sndclm-ssb-am-test         :comment over object->string with-sound ws-close-sound
+  <'> sndclm-wave-train-test     :comment over object->string with-sound ws-close-sound
+  <'> sndclm-rand-test :comment over object->string :channels 2 with-sound ws-close-sound
+  <'> sndclm-two-pole-test       :comment over object->string with-sound ws-close-sound
+  <'> sndclm-firmant-test        :comment over object->string with-sound ws-close-sound
+  <'> sndclm-iir-filter-test     :comment over object->string with-sound ws-close-sound
+  <'> sndclm-delay-test          :comment over object->string with-sound ws-close-sound
+  <'> sndclm-comb-test           :comment over object->string with-sound ws-close-sound
+  <'> sndclm-all-pass-test       :comment over object->string with-sound ws-close-sound
+  <'> sndclm-moving-average-test :comment over object->string with-sound ws-close-sound
+  <'> sndclm-src1-test :comment over object->string :srate 22050 with-sound ws-close-sound
+  <'> sndclm-src2-test           :comment over object->string with-sound ws-close-sound
+  <'> sndclm-convolve1-test      :comment over object->string with-sound ws-close-sound
+  <'> sndclm-convolve2-test      :comment over object->string with-sound ws-close-sound
+  <'> sndclm-granulate1-test     :comment over object->string with-sound ws-close-sound
+  <'> sndclm-granulate2-test     :comment over object->string with-sound ws-close-sound
+  <'> sndclm-phase-vocoder1-test :comment over object->string with-sound ws-close-sound
+  <'> sndclm-phase-vocoder2-test :comment over object->string :srate 22050 with-sound ws-close-sound
+  <'> sndclm-asymmetric-fm-test  :comment over object->string with-sound ws-close-sound
+  <'> sndclm-file->frame->file-test :comment over object->string :channels 2 with-sound ws-close-sound
+  <'> sndclm-readin-test         :comment over object->string with-sound ws-close-sound
+  <'> sndclm-in-out-any-test     :comment over object->string with-sound ws-close-sound
+  <'> sndclm-locsig-test :comment over object->string :channels 2 with-sound ws-close-sound
+  <'> sndclm-amplitude-modulate-test :comment over object->string with-sound ws-close-sound
   old-play  to *clm-play*
   old-stats to *clm-statistics*
 ;
@@ -2202,11 +2213,9 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
      <'> Fgtk_check_button_new_with_label <'> Fgtk_check_menu_item_new_with_label
      <'> Fgtk_color_selection_palette_from_string <'> Fgtk_disable_setlocale
      <'> Fgtk_icon_size_from_name <'> Fgtk_image_menu_item_new_with_label <'> Fgtk_init
-     \ <'> Fgtk_init_add
      <'> Fgtk_init_check <'> Fgtk_key_snooper_install <'> Fgtk_key_snooper_remove
      <'> Fgtk_main <'> Fgtk_main_do_event <'> Fgtk_main_iteration <'> Fgtk_main_iteration_do
      <'> Fgtk_main_level <'> Fgtk_main_quit <'> Fgtk_menu_item_new_with_label
-     \ <'> Fgtk_quit_add <'> Fgtk_quit_remove <'> Fgtk_quit_remove_by_data
      <'> Fgtk_radio_button_new_with_label <'> Fgtk_radio_menu_item_new_with_label
      <'> Fgtk_rc_find_module_in_path <'> Fgtk_toggle_button_new_with_label
      <'> Fpango_coverage_from_bytes <'> Fpango_find_paragraph_boundary
@@ -2233,7 +2242,6 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
      <'> FGTK_CELL_RENDERER_TOGGLE <'> FGTK_CELL_VIEW <'> FGTK_CHECK_BUTTON
      <'> FGTK_CHECK_MENU_ITEM <'> FGTK_CLIPBOARD <'> FGTK_COLOR_BUTTON
      <'> FGTK_COLOR_SELECTION <'> FGTK_COLOR_SELECTION_DIALOG <'> FGTK_COMBO_BOX
-     \ <'> FGTK_COMBO_BOX_ENTRY
      <'> FGTK_CONTAINER <'> FGTK_DIALOG
      <'> FGTK_DRAWING_AREA <'> FGTK_EDITABLE <'> FGTK_ENTRY
      <'> FGTK_ENTRY_COMPLETION <'> FGTK_EVENT_BOX <'> FGTK_EXPANDER
@@ -2259,7 +2267,6 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
      <'> FGTK_IS_CHECK_MENU_ITEM <'> FGTK_IS_CLIPBOARD
      <'> FGTK_IS_COLOR_BUTTON <'> FGTK_IS_COLOR_SELECTION
      <'> FGTK_IS_COLOR_SELECTION_DIALOG <'> FGTK_IS_COMBO_BOX
-     \ <'> FGTK_IS_COMBO_BOX_ENTRY
      <'> FGTK_IS_CONTAINER
      <'> FGTK_IS_DIALOG <'> FGTK_IS_DRAWING_AREA <'> FGTK_IS_EDITABLE
      <'> FGTK_IS_ENTRY <'> FGTK_IS_ENTRY_COMPLETION <'> FGTK_IS_EVENT_BOX
@@ -2483,7 +2490,6 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
      <'> Fgtk_accel_map_add_filter <'> Fgtk_accel_map_change_entry
      <'> Fgtk_accel_map_foreach <'> Fgtk_accel_map_foreach_unfiltered
      <'> Fgtk_accel_map_get
-     \ <'> Fgtk_accelerator_get_default_mod_mask
      <'> Fgtk_accelerator_get_label <'> Fgtk_accelerator_name
      <'> Fgtk_accelerator_parse <'> Fgtk_accelerator_set_default_mod_mask
      <'> Fgtk_accelerator_valid <'> Fgtk_accessible_connect_widget_destroyed
@@ -2575,22 +2581,14 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
      <'> Fgtk_color_selection_set_current_alpha <'> Fgtk_color_selection_set_current_color
      <'> Fgtk_color_selection_set_has_opacity_control <'> Fgtk_color_selection_set_has_palette
      <'> Fgtk_color_selection_set_previous_alpha <'> Fgtk_color_selection_set_previous_color
-     \ <'> Fgtk_combo_box_append_text <'> Fgtk_combo_box_entry_get_text_column
-     \ <'> Fgtk_combo_box_entry_new <'> Fgtk_combo_box_entry_new_text
-     \ <'> Fgtk_combo_box_entry_new_with_model <'> Fgtk_combo_box_entry_set_text_column
      <'> Fgtk_combo_box_get_active <'> Fgtk_combo_box_get_active_iter
-     \ <'> Fgtk_combo_box_get_active_text
      <'> Fgtk_combo_box_get_add_tearoffs
      <'> Fgtk_combo_box_get_column_span_column <'> Fgtk_combo_box_get_focus_on_click
      <'> Fgtk_combo_box_get_model <'> Fgtk_combo_box_get_row_span_column
      <'> Fgtk_combo_box_get_wrap_width
-     \ <'> Fgtk_combo_box_insert_text
      <'> Fgtk_combo_box_new
-     \ <'> Fgtk_combo_box_new_text
      <'> Fgtk_combo_box_new_with_model
      <'> Fgtk_combo_box_popdown <'> Fgtk_combo_box_popup
-     \ <'> Fgtk_combo_box_prepend_text
-     \ <'> Fgtk_combo_box_remove_text
      <'> Fgtk_combo_box_set_active
      <'> Fgtk_combo_box_set_active_iter
      <'> Fgtk_combo_box_set_add_tearoffs <'> Fgtk_combo_box_set_column_span_column
@@ -2774,10 +2772,10 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
      <'> Fgtk_label_set_single_line_mode <'> Fgtk_label_set_text
      <'> Fgtk_label_set_text_with_mnemonic <'> Fgtk_label_set_use_markup
      <'> Fgtk_label_set_use_underline <'> Fgtk_label_set_width_chars
-     <'> Fgtk_layout_get_hadjustment <'> Fgtk_layout_get_size
-     <'> Fgtk_layout_get_vadjustment <'> Fgtk_layout_move <'> Fgtk_layout_new
-     <'> Fgtk_layout_put <'> Fgtk_layout_set_hadjustment <'> Fgtk_layout_set_size
-     <'> Fgtk_layout_set_vadjustment <'> Fgtk_list_store_append
+     <'> Fgtk_layout_get_size
+     <'> Fgtk_layout_move <'> Fgtk_layout_new
+     <'> Fgtk_layout_set_size
+     <'> Fgtk_list_store_append
      <'> Fgtk_list_store_clear <'> Fgtk_list_store_insert
      <'> Fgtk_list_store_insert_after <'> Fgtk_list_store_insert_before
      <'> Fgtk_list_store_move_after <'> Fgtk_list_store_move_before
@@ -2897,11 +2895,9 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
      <'> Fgtk_spin_button_set_update_policy <'> Fgtk_spin_button_set_value
      <'> Fgtk_spin_button_set_wrap <'> Fgtk_spin_button_spin
      <'> Fgtk_spin_button_update <'> Fgtk_statusbar_get_context_id
-     \ <'> Fgtk_statusbar_get_has_resize_grip
      <'> Fgtk_statusbar_new
      <'> Fgtk_statusbar_pop <'> Fgtk_statusbar_push
      <'> Fgtk_statusbar_remove
-     \ <'> Fgtk_statusbar_set_has_resize_grip
      <'> Fgtk_stock_add <'> Fgtk_stock_add_static <'> Fgtk_stock_item_copy
      <'> Fgtk_stock_item_free <'> Fgtk_stock_list_ids <'> Fgtk_stock_lookup
      <'> Fgtk_style_attach <'> Fgtk_style_copy <'> Fgtk_style_detach
@@ -3150,14 +3146,14 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
      <'> Fgtk_tree_view_get_columns <'> Fgtk_tree_view_get_cursor
      <'> Fgtk_tree_view_get_dest_row_at_pos <'> Fgtk_tree_view_get_drag_dest_row
      <'> Fgtk_tree_view_get_enable_search <'> Fgtk_tree_view_get_expander_column
-     <'> Fgtk_tree_view_get_fixed_height_mode <'> Fgtk_tree_view_get_hadjustment
+     <'> Fgtk_tree_view_get_fixed_height_mode
      <'> Fgtk_tree_view_get_headers_visible <'> Fgtk_tree_view_get_hover_expand
      <'> Fgtk_tree_view_get_hover_selection <'> Fgtk_tree_view_get_model
      <'> Fgtk_tree_view_get_path_at_pos <'> Fgtk_tree_view_get_reorderable ) constant gtk-procs-2
 
   #( <'> Fgtk_tree_view_get_rules_hint <'> Fgtk_tree_view_get_search_column
      <'> Fgtk_tree_view_get_search_equal_func <'> Fgtk_tree_view_get_selection
-     <'> Fgtk_tree_view_get_vadjustment <'> Fgtk_tree_view_get_visible_rect
+     <'> Fgtk_tree_view_get_visible_rect
      <'> Fgtk_tree_view_insert_column <'> Fgtk_tree_view_insert_column_with_attributes
      <'> Fgtk_tree_view_insert_column_with_data_func <'> Fgtk_tree_view_map_expanded_rows
      <'> Fgtk_tree_view_move_column_after <'> Fgtk_tree_view_new <'> Fgtk_tree_view_new_with_model
@@ -3166,13 +3162,13 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
      <'> Fgtk_tree_view_scroll_to_point <'> Fgtk_tree_view_set_column_drag_function
      <'> Fgtk_tree_view_set_cursor <'> Fgtk_tree_view_set_drag_dest_row
      <'> Fgtk_tree_view_set_enable_search <'> Fgtk_tree_view_set_expander_column
-     <'> Fgtk_tree_view_set_fixed_height_mode <'> Fgtk_tree_view_set_hadjustment
+     <'> Fgtk_tree_view_set_fixed_height_mode
      <'> Fgtk_tree_view_set_headers_clickable <'> Fgtk_tree_view_set_headers_visible
      <'> Fgtk_tree_view_set_hover_expand <'> Fgtk_tree_view_set_hover_selection
      <'> Fgtk_tree_view_set_model <'> Fgtk_tree_view_set_reorderable
      <'> Fgtk_tree_view_set_row_separator_func <'> Fgtk_tree_view_set_rules_hint
      <'> Fgtk_tree_view_set_search_column <'> Fgtk_tree_view_set_search_equal_func
-     <'> Fgtk_tree_view_set_vadjustment <'> Fgtk_tree_view_unset_rows_drag_dest
+     <'> Fgtk_tree_view_unset_rows_drag_dest
      <'> Fgtk_tree_view_unset_rows_drag_source <'> Fgtk_true <'> Fgtk_ui_manager_add_ui
      <'> Fgtk_ui_manager_add_ui_from_file <'> Fgtk_ui_manager_add_ui_from_string
      <'> Fgtk_ui_manager_ensure_update <'> Fgtk_ui_manager_get_accel_group
@@ -3182,9 +3178,10 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
      <'> Fgtk_ui_manager_new <'> Fgtk_ui_manager_new_merge_id
      <'> Fgtk_ui_manager_remove_action_group <'> Fgtk_ui_manager_remove_ui
      <'> Fgtk_ui_manager_set_add_tearoffs <'> Fgtk_vbox_new <'> Fgtk_vbutton_box_new
-     <'> Fgtk_viewport_get_hadjustment <'> Fgtk_viewport_get_shadow_type
-     <'> Fgtk_viewport_get_vadjustment <'> Fgtk_viewport_new <'> Fgtk_viewport_set_hadjustment
-     <'> Fgtk_viewport_set_shadow_type <'> Fgtk_viewport_set_vadjustment <'> Fgtk_vpaned_new
+     <'> Fgtk_viewport_get_shadow_type
+     <'> Fgtk_viewport_new
+     <'> Fgtk_viewport_set_shadow_type
+     <'> Fgtk_vpaned_new
      <'> Fgtk_vruler_new <'> Fgtk_vscale_new <'> Fgtk_vscale_new_with_range <'> Fgtk_vscrollbar_new
      <'> Fgtk_vseparator_new <'> Fgtk_widget_activate <'> Fgtk_widget_add_accelerator
      <'> Fgtk_widget_add_events <'> Fgtk_widget_add_mnemonic_label
@@ -3218,7 +3215,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
      <'> Fgtk_widget_set_direction <'> Fgtk_widget_set_double_buffered <'> Fgtk_widget_set_events
      <'> Fgtk_widget_set_name <'> Fgtk_widget_set_no_show_all <'> Fgtk_widget_set_parent
      <'> Fgtk_widget_set_parent_window <'> Fgtk_widget_set_redraw_on_allocate
-     <'> Fgtk_widget_set_scroll_adjustments <'> Fgtk_widget_set_sensitive
+     <'> Fgtk_widget_set_sensitive
      <'> Fgtk_widget_set_size_request <'> Fgtk_widget_set_state <'> Fgtk_widget_set_style
      <'> Fgtk_widget_show <'> Fgtk_widget_show_all <'> Fgtk_widget_show_now
      <'> Fgtk_widget_size_allocate <'> Fgtk_widget_thaw_child_notify
@@ -3368,11 +3365,48 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
      <'> Fgtk_widget_size_request <'> Fgdk_drawable_get_colormap
      <'> Fpango_shape ) constant gtk-procs-3
 
-  \ from breakable-gtk-procs
+  \ FIXME missing functions
+
+  \ <'> FGTK_COMBO_BOX_ENTRY
+  \ <'> FGTK_IS_COMBO_BOX_ENTRY
   \ <'> Fgtk_accel_map_load_scanner
+  \ <'> Fgtk_accelerator_get_default_mod_mask
+  \ <'> Fgtk_combo_box_append_text
+  \ <'> Fgtk_combo_box_entry_get_text_column
+  \ <'> Fgtk_combo_box_entry_new
+  \ <'> Fgtk_combo_box_entry_new_text
+  \ <'> Fgtk_combo_box_entry_new_with_model
+  \ <'> Fgtk_combo_box_entry_set_text_column
+  \ <'> Fgtk_combo_box_get_active_text
+  \ <'> Fgtk_combo_box_insert_text
+  \ <'> Fgtk_combo_box_new_text
+  \ <'> Fgtk_combo_box_prepend_text
+  \ <'> Fgtk_combo_box_remove_text
+  \ <'> Fgtk_init_add
+  \ <'> Fgtk_paint_expander ( special )
+  \ <'> Fgtk_quit_add
   \ <'> Fgtk_quit_add_destroy
-  \ from gtk-procs-x
-  \ <'> Fgtk_paint_expander
+  \ <'> Fgtk_quit_remove
+  \ <'> Fgtk_quit_remove_by_data
+  \ <'> Fgtk_statusbar_get_has_resize_grip
+  \ <'> Fgtk_statusbar_set_has_resize_grip
+
+  \ FIXME Wed Oct 27 22:08:17 CEST 2010
+  
+  \ <'> Fgtk_layout_get_hadjustment
+  \ <'> Fgtk_layout_get_vadjustment
+  \ <'> Fgtk_layout_put
+  \ <'> Fgtk_layout_set_hadjustment
+  \ <'> Fgtk_layout_set_vadjustment
+  \ <'> Fgtk_tree_view_get_hadjustment
+  \ <'> Fgtk_tree_view_get_vadjustment
+  \ <'> Fgtk_tree_view_set_hadjustment
+  \ <'> Fgtk_tree_view_set_vadjustment
+  \ <'> Fgtk_viewport_get_hadjustment
+  \ <'> Fgtk_viewport_get_vadjustment
+  \ <'> Fgtk_viewport_set_hadjustment
+  \ <'> Fgtk_viewport_set_vadjustment
+  \ <'> Fgtk_widget_set_scroll_adjustments
 
   : 26-gtk ( -- )
     $" breakable gtk procs: %d" #( breakable-gtk-procs length ) snd-test-message
@@ -3823,6 +3857,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   snd close-sound drop
   current-edit-position
 ;
+
+: check-args-progress-info { msg -- } *snd-test-verbose* if msg #f snd-test-message then ;
 
 : 28-errors ( -- )
   #t set-with-background-processes drop
@@ -4660,10 +4696,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   -1000                      <'> set-mus-srate          'out-of-range     check-error-tag
   3 0 make-vct 3 0 make-vct -1 <'> dot-product          'out-of-range     check-error-tag
   3 0 make-vct 3 0 make-vct -1 <'> multiply-arrays      'out-of-range     check-error-tag
-  3 :initial-element 0.0 :initial-contents vct( 0.1 0.2 0.3 )
-  <'> make-delay 'out-of-range check-error-tag
-  3 :max-size 100 :initial-contents vct( 0.1 0.2 0.3 )
-  <'> make-delay 'out-of-range check-error-tag
+  3 vct( 0.1 0.2 0.3 ) 0.0   <'> make-delay             'out-of-range     check-error-tag
+  3 vct( 0.1 0.2 0.3 ) :max-size 100 <'> make-delay     'out-of-range     check-error-tag
   :size 100 :wave 3 0 make-vct <'> make-table-lookup    'out-of-range     check-error-tag
   :size 100 :wave 3 0 make-vct <'> make-wave-train      'out-of-range     check-error-tag
   100 12345678               <'> make-ssb-am            'out-of-range     check-error-tag
@@ -4900,6 +4934,16 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     then
   then
   ind sound? if $" edpos proc clobbers chan??: %s" #( ind ) snd-display then
+  set-procs04 length 2 = if
+    $" (%s %s)" set-procs04
+  else
+    "%s" #( set-procs04 )
+  then string-format { set04fncs }
+  procs10 length 2 = if
+    $" (%s %s)" procs10
+  else
+    "%s" #( procs10 )
+  then string-format { 10fncs }
   *snd-test-verbose* if
     $" procs   prcs/set-prcs" #f snd-test-message
     $" =====================" #f snd-test-message
@@ -4907,12 +4951,12 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     $" procs01: %3d/%3d" #( procs01 length set-procs01 length ) snd-test-message
     $" procs02: %3d/%3d" #( procs02 length set-procs02 length ) snd-test-message
     $" procs03: %3d/%3d" #( procs03 length set-procs03 length ) snd-test-message
-    $" procs04: %3d/%3d" #( procs04 length set-procs04 length ) snd-test-message
+    $" procs04: %3d/%3d %s" #( procs04 length set-procs04 length set04fncs ) snd-test-message
     $" procs05: %3d"     #( procs05 length )                    snd-test-message
     $" procs06: %3d"     #( procs06 length )                    snd-test-message
     $" procs07: %3d"     #( procs07 length )                    snd-test-message
     $" procs08: %3d"     #( procs08 length )                    snd-test-message
-    $" procs10: %3d"     #( procs10 length )                    snd-test-message
+    $" procs10: %3d %s"  #( procs10 length 10fncs )             snd-test-message
   then
   #( 1.5 #( 0 1 ) 1234 #t )                     { random-args }
   #( 1.5 #( 0 1 ) 1234 vct-3 color-95 -1.0 csqrt delay-32 :feedback #f ) { main-args }
@@ -4920,7 +4964,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   #( 1.5 vct-3 -1.0 csqrt )                     { fewer-args }
   all-args if main-args else few-args then      { less-args }
   nil nil nil nil nil nil nil { arg1 arg2 arg3 arg4 tm prc tag }
-  "keyargs-2-args" #f snd-test-message
+  gc-run
+  "keyargs-2-args" check-args-progress-info
   keyargs each to arg1
     random-args each to arg2
       make-procs each to prc
@@ -4929,8 +4974,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
   end-each
   dismiss-all-dialogs
+  gc-run
   all-args if
-    "keyargs-3-args" #f snd-test-message
+    "keyargs-3-args" check-args-progress-info
     random-args each to arg1
       keyargs each to arg2
 	random-args each to arg3
@@ -4941,7 +4987,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       end-each
     end-each
     dismiss-all-dialogs
-    "keyargs-4-args" #f snd-test-message
+    gc-run
+    "keyargs-4-args" check-args-progress-info
     keyargs each to arg1
       random-args each to arg2
 	keyargs each to arg3
@@ -4954,9 +5001,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       end-each
     end-each
     dismiss-all-dialogs
+    gc-run
   then
-  \ 0 args
-  "no-args" #f snd-test-message
+  "no-args" check-args-progress-info
   procs00 each to prc
     prc #t nil fth-catch to tag
     stack-reset
@@ -4965,8 +5012,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     then
   end-each
   dismiss-all-dialogs
-  \ set! no args
-  "set-no-args" #f snd-test-message
+  gc-run
+  "set-no-args" check-args-progress-info
   main-args each to arg
     set-procs00 each to prc
       arg prc set-xt #t nil fth-catch to tag
@@ -4977,8 +5024,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
   end-each
   dismiss-all-dialogs
-  \ 1 arg
-  "1-arg" #f snd-test-message
+  gc-run
+  "1-arg" check-args-progress-info
   nil { arg }
   main-args each to arg
     procs01 each to prc
@@ -4990,8 +5037,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
   end-each
   dismiss-all-dialogs
-  \ set! 1 arg
-  "set-1-arg" #f snd-test-message
+  gc-run
+  "set-1-arg" check-args-progress-info
   main-args each to arg1
     main-args each to arg2
       set-procs01 each to prc
@@ -5006,8 +5053,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
   end-each
   dismiss-all-dialogs
-  \ 2 args
-  "2-args" #f snd-test-message
+  gc-run
+  "2-args" check-args-progress-info
   main-args each to arg1
     main-args each to arg2
       procs02 each to prc
@@ -5020,8 +5067,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
   end-each
   dismiss-all-dialogs
-  \ set! 2 args
-  "set-2-args" #f snd-test-message
+  gc-run
+  "set-2-args" check-args-progress-info
   less-args each to arg1
     less-args each to arg2
       less-args each to arg3
@@ -5036,9 +5083,9 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
   end-each
   dismiss-all-dialogs
+  gc-run
   nil nil nil nil nil nil { arg5 arg6 arg7 arg8 arg9 arg0 }
-  \ 3 args
-  "3-args" #f snd-test-message
+  "3-args" check-args-progress-info
   less-args each to arg1
     less-args each to arg2
       less-args each to arg3
@@ -5053,8 +5100,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
   end-each
   dismiss-all-dialogs
-  \ set! 3 args
-  "set-3-args" #f snd-test-message
+  gc-run
+  "set-3-args" check-args-progress-info
   less-args each to arg1
     less-args each to arg2
       less-args each to arg3
@@ -5071,8 +5118,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
   end-each
   dismiss-all-dialogs
-  \ 4 args
-  "4-args" #f snd-test-message
+  gc-run
+  "4-args" check-args-progress-info
   few-args each to arg1
     few-args each to arg2
       few-args each to arg3
@@ -5089,8 +5136,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
   end-each
   dismiss-all-dialogs
-  \ set! 4 args
-  "set-4-args" #f snd-test-message
+  gc-run
+  "set-4-args" check-args-progress-info
   few-args each to arg1
     few-args each to arg2
       few-args each to arg3
@@ -5112,8 +5159,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   clear-sincs drop
   stop-playing drop
   dismiss-all-dialogs
-  \ 5 args
-  "5-args" #f snd-test-message
+  gc-run
+  "5-args" check-args-progress-info
   fewer-args each to arg1
     fewer-args each to arg2
       fewer-args each to arg3
@@ -5134,8 +5181,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   end-each
   clear-sincs drop
   dismiss-all-dialogs
-  \ 6 args
-  "6-args" #f snd-test-message
+  gc-run
+  "6-args" check-args-progress-info
   fewer-args each to arg1
     fewer-args each to arg2
       fewer-args each to arg3
@@ -5157,8 +5204,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
   end-each
   dismiss-all-dialogs
-  \ 8 args
-  "8-args" #f snd-test-message
+  gc-run
+  "8-args" check-args-progress-info
   fewer-args each to arg1
     fewer-args each to arg2
       fewer-args each to arg3
@@ -5184,8 +5231,8 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     end-each
   end-each
   dismiss-all-dialogs
-  \ 10 args
-  "10-args" #f snd-test-message
+  gc-run
+  "10-args" check-args-progress-info
   fewer-args each to arg1
     fewer-args each to arg2
       fewer-args each to arg3
@@ -5218,6 +5265,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   end-each
   clear-sincs drop
   dismiss-all-dialogs
+  gc-run
 ;
 
 : 30-test
@@ -5230,10 +5278,17 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   fewer-args to few-args
   nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil
   { ind prc tag arg arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg0 tm }
-  make-timer { tm }
-  clear-sincs drop
+  make-timer to tm
+  0.0 0.3 <'> anoi-test \ clm-ins-test
+  \ <'> sndclm-src2-test
+  :comment over object->string
+  :statistics #t
+  :verbose    #f
+  :play       #t
+  :srate      22050
+  :channels 2 with-sound ws-close-sound
   tm stop-timer
-  "%s" #( tm ) snd-test-message
+  \ "%s" #( tm ) snd-test-message
 ;
 
 let: ( -- )
@@ -5264,7 +5319,7 @@ let: ( -- )
   <'> 28-errors          run-fth-test
   <'> 30-test            run-fth-test	\ local fragment test
   finish-snd-test
-  with-exit if 0 snd-exit drop then
+  0 snd-exit drop
 ;let
 
 \ snd-test.fs ends here
