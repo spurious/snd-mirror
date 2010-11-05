@@ -345,7 +345,7 @@ static XEN reflect_file_in_region_browser(XEN reason)
 }
 
 #ifdef XEN_ARGIFY_1
-  XEN_ARGIFY_1(reflect_file_in_region_browser_w, reflect_file_in_region_browser)
+  XEN_NARGIFY_1(reflect_file_in_region_browser_w, reflect_file_in_region_browser)
 #else
   #define reflect_file_in_region_browser_w reflect_file_in_region_browser
 #endif

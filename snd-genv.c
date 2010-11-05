@@ -901,7 +901,7 @@ static XEN reflect_file_in_enved(XEN reason)
 }
 
 #ifdef XEN_ARGIFY_1
-  XEN_ARGIFY_1(reflect_file_in_enved_w, reflect_file_in_enved)
+  XEN_NARGIFY_1(reflect_file_in_enved_w, reflect_file_in_enved)
 #else
   #define reflect_file_in_enved_w reflect_file_in_enved
 #endif
@@ -922,7 +922,7 @@ static XEN enved_selection_handler(XEN xreason)
 }
 
 #ifdef XEN_ARGIFY_1
-  XEN_ARGIFY_1(enved_selection_handler_w, enved_selection_handler)
+  XEN_NARGIFY_1(enved_selection_handler_w, enved_selection_handler)
 #else
   #define enved_selection_handler_w enved_selection_handler
 #endif

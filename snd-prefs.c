@@ -503,7 +503,7 @@ static XEN watch_for_snd_error_in_prefs(XEN msg)
 }
 
 #ifdef XEN_ARGIFY_1
-  XEN_ARGIFY_1(watch_for_snd_error_in_prefs_w, watch_for_snd_error_in_prefs)
+  XEN_NARGIFY_1(watch_for_snd_error_in_prefs_w, watch_for_snd_error_in_prefs)
 #else
   #define watch_for_snd_error_in_prefs_w watch_for_snd_error_in_prefs
 #endif

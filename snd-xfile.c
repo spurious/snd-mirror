@@ -1711,7 +1711,7 @@ static XEN mix_open_file_watcher(XEN reason)
 }
 
 #ifdef XEN_ARGIFY_1
-  XEN_ARGIFY_1(mix_open_file_watcher_w, mix_open_file_watcher)
+  XEN_NARGIFY_1(mix_open_file_watcher_w, mix_open_file_watcher)
 #else
   #define mix_open_file_watcher_w mix_open_file_watcher
 #endif

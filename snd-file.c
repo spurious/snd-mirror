@@ -3016,7 +3016,7 @@ static XEN vf_open_file_watcher(XEN reason)
 }
 
 #ifdef XEN_ARGIFY_1
-  XEN_ARGIFY_1(vf_open_file_watcher_w, vf_open_file_watcher)
+  XEN_NARGIFY_1(vf_open_file_watcher_w, vf_open_file_watcher)
 #else
   #define vf_open_file_watcher_w vf_open_file_watcher
 #endif
@@ -5762,7 +5762,7 @@ void g_init_file(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_view_files_sort, g_view_files_sort_w, H_view_files_sort,
 				   S_setB S_view_files_sort, g_set_view_files_sort_w,  0, 1, 1, 1);
 
-  XEN_ADD_HOOK(ss->snd_open_file_hook, vf_open_file_watcher_w, "view-files-dialog-watcher", "view-files dialog open-file handler");
+  XEN_ADD_HOOK(ss->snd_open_file_hook, vf_open_file_watcher_w, "view-files-dialog-open-file-handler", "view-files dialog open-file handler");
 
   #define H_open_hook S_open_hook " (filename): called each time a file is opened (before the actual open). \
 If it returns " PROC_TRUE ", the file is not opened."

@@ -29483,6 +29483,13 @@ s7_scheme *s7_init(void)
  *   snd-edits uses XEN_CLEAR_HOOK for the chan-local hooks: s7_vector_set?
  *   how does C side handle scheme objects? does the c_object layer work here?
  *
+ * we often need to have both a function and some data as the hook member (this
+ *   from C -- in Scheme we can use a closure which is eqv? to itself).
+ *   The hook support could accept a list as well as a function.
+ *   '(function data), then hook calls function(data, ...).  Then
+ *   XEN_ADD_HOOK_WITH_DATA(hook, func, data).  Also need a way to
+ *   remove this -- would equal? work?
+ *
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html) [also list-ref/set, frame|mixer etc]
  *
  * someday we need to catch gmp exceptions: SIGFPE (exception=deliberate /0 -- see gmp/errno.c)

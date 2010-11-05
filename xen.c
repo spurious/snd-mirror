@@ -889,11 +889,18 @@ XEN xen_rb_add_hook(XEN hook, VALUE (*func)(), const char *name, const char* doc
 {
   /* TODO: fix Ruby C-side add_hook */
 #if 0
+
   /* called from C, not Ruby, to add a function to a Ruby-side hook */
   XEN var;
-  XEN_DEFINE_PROCEDURE(name, func, XEN_TO_C_INT_OR_ELSE(rb_iv_get(hook, "@arity"), 0), 0, false, doc);
-  var = rb_gv_get(name);
-  rb_ary_push(rb_iv_get(hook, "@procs"), rb_ary_new3(2, C_TO_XEN_STRING(name), var));
+  /* expand XEN_DEFINE_PROCEDURE here so we have the Ruby name at hand */
+  char *temp;
+  temp = xen_scheme_procedure_to_ruby(name);
+  rb_define_global_function(temp, XEN_PROCEDURE_CAST func, XEN_TO_C_INT_OR_ELSE(rb_iv_get(hook, "@arity"), 0));
+  if (doc) C_SET_OBJECT_HELP(temp, doc);
+  var = rb_gv_get(temp);
+  rb_ary_push(rb_iv_get(hook, "@procs"), rb_ary_new3(2, C_TO_XEN_STRING(temp), var));
+  if (temp) free(temp);
+
   return(var);
 #else
   return(hook);
@@ -1045,6 +1052,20 @@ XEN xen_rb_create_hook(char *name, int arity, char *help)
   if (temp) free(temp);
   return(var);
 }
+
+static int simple_hook_number = 0; 
+ 
+
+XEN xen_rb_create_simple_hook(int arity) 
+{ 
+  char *name; 
+  XEN hook; 
+  name = (char *)calloc(20, sizeof(char)); 
+  snprintf(name, 20, "simple_%02d_hook", simple_hook_number++); 
+  hook = xen_rb_create_hook(name, arity, NULL); 
+  free(name); 
+  return hook; 
+} 
 
 
 /*

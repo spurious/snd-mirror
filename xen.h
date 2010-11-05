@@ -299,7 +299,8 @@
 #define XEN_CLEAR_HOOK(a)               xen_rb_hook_reset_hook(a)
 #define XEN_HOOKED(a)                   (!xen_rb_hook_empty_p(a))
 #define XEN_DEFINE_HOOK(Name, Arity, Help) xen_rb_create_hook((char *)(Name), Arity, (char *)Help)
-#define XEN_DEFINE_SIMPLE_HOOK(Arity)   xen_rb_hook_c_new((char *)"simple_hook", Arity, NULL);
+/* #define XEN_DEFINE_SIMPLE_HOOK(Arity)   xen_rb_hook_c_new((char *)"simple_hook", Arity, NULL); */ 
+#define XEN_DEFINE_SIMPLE_HOOK(Arity)   xen_rb_create_simple_hook(Arity); 
 #define XEN_ADD_HOOK(Hook, Func, Name, Doc) xen_rb_add_hook(Hook, Func, Name, Doc)
 
 /* ---- vectors ---- */
@@ -672,6 +673,7 @@ XEN xen_rb_hook_reset_hook(XEN hook);
 XEN xen_rb_hook_to_a(XEN hook);
 void Init_Hook(void);
 XEN xen_rb_create_hook(char *name, int arity, char *help);
+XEN xen_rb_create_simple_hook(int arity); 
 XEN xen_rb_add_hook(XEN hook, VALUE (*func)(), const char *name, const char *doc);
 typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 

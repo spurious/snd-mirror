@@ -1,5 +1,6 @@
 Snd change log
 
+ 5-Nov:     add|delete-watchers removed, replaced by effects-hook.
  25-Oct:    Snd 11.10.
  22-Sep:    def-clm-struct is now just a synonym for defgenerator.
  19-Sep:    removed snd7.scm and snd8.scm.

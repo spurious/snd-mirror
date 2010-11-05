@@ -3029,7 +3029,7 @@ static XEN reflect_file_close_in_sync(XEN xreason)
 }
 
 #ifdef XEN_ARGIFY_1
-  XEN_ARGIFY_1(reflect_file_close_in_sync_w, reflect_file_close_in_sync)
+  XEN_NARGIFY_1(reflect_file_close_in_sync_w, reflect_file_close_in_sync)
 #else
   #define reflect_file_close_in_sync_w reflect_file_close_in_sync
 #endif

@@ -2545,7 +2545,7 @@ static XEN save_selection_hook_handler(XEN xreason)
 }
 
 #ifdef XEN_ARGIFY_1
-  XEN_ARGIFY_1(save_selection_hook_handler_w, save_selection_hook_handler)
+  XEN_NARGIFY_1(save_selection_hook_handler_w, save_selection_hook_handler)
 #else
   #define save_selection_hook_handler_w save_selection_hook_handler
 #endif
