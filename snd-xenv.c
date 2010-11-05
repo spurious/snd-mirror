@@ -945,7 +945,26 @@ static XEN reflect_file_in_enved(XEN reason)
 #endif
 
 
-static void enved_selection_watcher(selection_watcher_reason_t reason, void *data);
+static void enved_reflect_selection(bool on);
+
+static XEN enved_selection_handler(XEN xreason)
+{
+  int reason;
+  reason = XEN_TO_C_INT(xreason);
+  switch (reason)
+    {
+    case SELECTION_INACTIVE: enved_reflect_selection(false);                 break;
+    case SELECTION_ACTIVE:   enved_reflect_selection(true);                  break;
+    default:                 enved_reflect_selection(selection_is_active()); break;
+    }
+}
+
+#ifdef XEN_ARGIFY_1
+  XEN_ARGIFY_1(enved_selection_handler_w, enved_selection_handler)
+#else
+  #define enved_selection_handler_w enved_selection_handler
+#endif
+
 
 Widget create_envelope_editor(void)
 {
@@ -1535,9 +1554,8 @@ Widget create_envelope_editor(void)
 
       set_dialog_widget(ENVED_DIALOG, enved_dialog);
 
-      XEN_ADD_HOOK(ss->snd_open_file_hook, reflect_file_in_enved_w, "enved-file-open-watcher", "enved dialog's file-open-hook handler");
-
-      add_selection_watcher(enved_selection_watcher, NULL);
+      XEN_ADD_HOOK(ss->snd_open_file_hook, reflect_file_in_enved_w, "enved-file-open-handler", "enved dialog's file-open-hook handler");
+      XEN_ADD_HOOK(ss->snd_selection_hook, enved_selection_handler_w, "enved-selection-handler", "enved dialog's selection-hook handler");
     }
   else raise_dialog(enved_dialog);
   if (!XtIsManaged(enved_dialog)) 
@@ -1641,16 +1659,6 @@ static void enved_reflect_selection(bool on)
     }
 }
 
-
-static void enved_selection_watcher(selection_watcher_reason_t reason, void *data)
-{
-  switch (reason)
-    {
-    case SELECTION_INACTIVE: enved_reflect_selection(false);                 break;
-    case SELECTION_ACTIVE:   enved_reflect_selection(true);                  break;
-    default:                 enved_reflect_selection(selection_is_active()); break;
-    }
-}
 
 
 void color_enved_waveform(Pixel pix)

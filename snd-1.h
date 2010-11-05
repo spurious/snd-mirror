@@ -518,6 +518,8 @@ typedef struct snd_state {
   XEN snd_error_hook; 
   XEN snd_warning_hook; 
   XEN snd_open_file_hook;
+  XEN snd_selection_hook;
+  XEN effects_hook;
 } snd_state;
 
 extern snd_state *ss;
@@ -1025,9 +1027,6 @@ void save_added_source_file_extensions(FILE *fd);
 
 /* -------- snd-select.c -------- */
 
-int add_selection_watcher(void (*watcher)(selection_watcher_reason_t reason, void *data), void *context);
-void remove_selection_watcher(int loc);
-void call_selection_watchers(selection_watcher_reason_t reason);
 bool selection_is_active(void);
 bool selection_is_active_in_channel(chan_info *cp);
 bool selection_is_visible_in_channel(chan_info *cp);
@@ -1054,10 +1053,10 @@ void finish_selection_creation(void);
 int select_all(chan_info *cp);
 io_error_t save_selection(const char *ofile, int type, int format, int srate, const char *comment, int chan);
 bool selection_creation_in_progress(void);
-void cancel_selection_watch(void);
 void add_selection_or_region(int reg, chan_info *cp);
 void insert_selection_from_menu(void);
 void insert_selection_or_region(int reg, chan_info *cp);
+void cancel_selection_watch(void);
 
 bool xen_selection_p(XEN obj);
 #define XEN_SELECTION_P(arg) xen_selection_p(arg)

@@ -2202,83 +2202,6 @@ static XEN g_gsl_roots(XEN poly)
 #endif
 
 
-/* -------- watchers -------- */
-
-#define NOT_A_WATCHER -1
-#define INITIAL_WATCHERS_SIZE 8
-#define WATCHERS_SIZE_INCREMENT 8
-
-static int *watchers = NULL;
-static int watchers_size = 0;
-
-static XEN g_delete_watcher(XEN id)
-{
-  int w;
-  #define H_delete_watcher "(" S_delete_watcher " id): removes the watcher associated with the integer 'id'"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(id), id, XEN_ONLY_ARG, S_delete_watcher, "an integer");
-
-  w = XEN_TO_C_INT(id);
-  if ((w >= 0) && 
-      (w < watchers_size) &&
-      (watchers[w] != NOT_A_WATCHER))
-    {
-      snd_unprotect_at(watchers[w]);
-      watchers[w] = NOT_A_WATCHER;
-    }
-  return(id);
-}
-
-
-void run_watchers(void)
-{
-  if (watchers)
-    {
-      int i;
-      for (i = 0; i < watchers_size; i++)
-	if (watchers[i] != NOT_A_WATCHER)
-	  XEN_CALL_0(snd_protected_at(watchers[i]), "run watcher");
-    }
-}
-
-
-static XEN g_add_watcher(XEN func)
-{
-  int i, floc = 0;
-  #define H_add_watcher "(" S_add_watcher " func): adds 'func' (a function of no arguments) to the watcher list, and \
-returns its id (an integer, used by " S_delete_watcher "). "
-
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(func) && XEN_REQUIRED_ARGS_OK(func, 0), func, XEN_ONLY_ARG, S_add_watcher, "a function of no args");
-
-  if (watchers_size == 0)
-    {
-      watchers_size = INITIAL_WATCHERS_SIZE;
-      watchers = (int *)calloc(watchers_size, sizeof(int));
-      for (i = 0; i < watchers_size; i++) watchers[i] = NOT_A_WATCHER;
-    }
-  else
-    {
-      floc = -1;
-      for (i = 0; i < watchers_size; i++)
-	if (watchers[i] == NOT_A_WATCHER)
-	  {
-	    floc = i;
-	    break;
-	  }
-      if (floc == -1)
-	{
-	  floc = watchers_size;
-	  watchers_size += WATCHERS_SIZE_INCREMENT;
-	  watchers = (int *)realloc(watchers, watchers_size * sizeof(int));
-	  for (i = floc; i < watchers_size; i++) watchers[i] = NOT_A_WATCHER;
-	}
-    }
-
-  watchers[floc] = snd_protect(func);
-  return(C_TO_XEN_INT(floc));
-}
-
-
-
 
 /* -------- source file extensions list -------- */
 
@@ -2631,9 +2554,6 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
   #endif
 #endif
 
-XEN_NARGIFY_1(g_delete_watcher_w, g_delete_watcher)
-XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
-
 #else
 /* not argify */
 
@@ -2685,9 +2605,6 @@ XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
     #define g_gsl_roots_w g_gsl_roots
   #endif
 #endif
-#define g_delete_watcher_w g_delete_watcher
-#define g_add_watcher_w g_add_watcher
-
 #endif
 
 
@@ -2760,7 +2677,11 @@ void g_xen_initialize(void)
 
   XEN_DEFINE_PROCEDURE("snd-global-state", g_snd_global_state_w, 0, 0, 0, "internal testing function");
   XEN_DEFINE_PROCEDURE(S_add_source_file_extension, g_add_source_file_extension_w, 1, 0, 0, H_add_source_file_extension);
+
   ss->snd_open_file_hook = XEN_DEFINE_SIMPLE_HOOK(1);
+  ss->snd_selection_hook = XEN_DEFINE_SIMPLE_HOOK(1);
+  ss->effects_hook = XEN_DEFINE_HOOK(S_effects_hook, 0, "called when something changes that the effects dialogs care about");
+  /* TODO: doc/test effects-hook */
 
 #if MUS_DEBUGGING
   XEN_DEFINE_PROCEDURE("snd-sound-pointer", g_snd_sound_pointer_w, 1, 0, 0, "internal testing function");
@@ -2824,9 +2745,6 @@ void g_xen_initialize(void)
 #if HAVE_SCHEME && WITH_GMP
   s7_define_function(s7, "bignum-fft", bignum_fft, 3, 1, false, H_bignum_fft);
 #endif
-
-  XEN_DEFINE_PROCEDURE(S_delete_watcher, g_delete_watcher_w, 1, 0, 0, H_delete_watcher);
-  XEN_DEFINE_PROCEDURE(S_add_watcher,    g_add_watcher_w,    1, 0, 0, H_add_watcher);
 
 #if HAVE_SCHEME
   s7_define_function(s7, "char-position", g_char_position, 2, 1, false, H_char_position);

@@ -903,7 +903,9 @@ static void select_sound(snd_info *sp)
       new_active_channel_alert();
     }
   sp->selectpos = current_selectpos++;
-  run_watchers();
+
+  if (XEN_HOOKED(ss->effects_hook))
+    run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
 }
 
 

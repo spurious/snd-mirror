@@ -11,7 +11,7 @@
 
 #define XEN_MAJOR_VERSION 3
 #define XEN_MINOR_VERSION 6
-#define XEN_VERSION "3.5"
+#define XEN_VERSION "3.6"
 
 /* HISTORY:
  *

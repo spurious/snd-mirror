@@ -158,6 +158,7 @@
 #define S_edit_property                 "edit-property"
 #define S_edit_tree                     "edit-tree"
 #define S_edits                         "edits"
+#define S_effects_hook                  "effects-hook"
 #define S_env_channel                   "env-channel"
 #define S_env_channel_with_base         "env-channel-with-base"
 #define S_env_selection                 "env-selection"

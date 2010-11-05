@@ -521,7 +521,9 @@ static void run_mark_hook(chan_info *cp, int id, mark_hook_reason_t reason)
 			C_TO_XEN_INT(cp->chan),
 			C_TO_XEN_INT((int)reason)),
 	     S_mark_hook);
-  run_watchers();
+
+  if (XEN_HOOKED(ss->effects_hook))
+    run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
 }
 
 

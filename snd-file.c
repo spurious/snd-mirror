@@ -1421,9 +1421,13 @@ void after_open(int index)
 	     XEN_LIST_1(C_INT_TO_XEN_SOUND(index)),
 	     S_after_open_hook);
 
-  run_hook(ss->snd_open_file_hook,
-	   XEN_LIST_2(C_TO_XEN_INT(FILE_OPENED), XEN_WRAP_C_POINTER(NULL)),
-	   "open-file-hook");
+  if (XEN_HOOKED(ss->snd_open_file_hook))
+    run_hook(ss->snd_open_file_hook,
+	     XEN_LIST_1(C_TO_XEN_INT(FILE_OPENED)),
+	     "open-file-hook");
+
+  if (XEN_HOOKED(ss->effects_hook))
+    run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
 }
 
 
@@ -1641,11 +1645,19 @@ void snd_close_file(snd_info *sp)
 
   ss->active_sounds--;
   reflect_file_change_in_title();
-  call_selection_watchers(SELECTION_IN_DOUBT);
 
-  run_hook(ss->snd_open_file_hook,
-	   XEN_LIST_2(C_TO_XEN_INT(FILE_CLOSED), XEN_WRAP_C_POINTER(NULL)),
-	   "open-file-hook");
+  if (XEN_HOOKED(ss->snd_selection_hook))
+    run_hook(ss->snd_selection_hook, 
+	     XEN_LIST_1(C_TO_XEN_INT(SELECTION_IN_DOUBT)),
+	     "selection-hook");
+
+  if (XEN_HOOKED(ss->snd_open_file_hook))
+    run_hook(ss->snd_open_file_hook,
+	     XEN_LIST_1(C_TO_XEN_INT(FILE_CLOSED)),
+	     "open-file-hook");
+
+  if (XEN_HOOKED(ss->effects_hook))
+    run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
 
   if (chosen_sp)
     select_channel(chosen_sp, 0);

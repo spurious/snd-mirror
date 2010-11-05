@@ -2,79 +2,6 @@
 #include "clm2xen.h"
 
 
-/* -------- watcher lists -------- */
-
-typedef struct {
-  void (*watcher)(selection_watcher_reason_t reason, void *data);
-  void *context;
-} selection_watcher;
-
-static selection_watcher **selection_watchers = NULL;
-static int selection_watchers_size = 0;
-
-#define SELECTION_WATCHER_SIZE_INCREMENT 2
-
-
-int add_selection_watcher(void (*watcher)(selection_watcher_reason_t reason, void *data), void *context)
-{
-  int loc = -1;
-  if (!(selection_watchers))
-    {
-      loc = 0;
-      selection_watchers_size = SELECTION_WATCHER_SIZE_INCREMENT;
-      selection_watchers = (selection_watcher **)calloc(selection_watchers_size, sizeof(selection_watcher *));
-    }
-  else
-    {
-      int i;
-      for (i = 0; i < selection_watchers_size; i++)
-	if (!(selection_watchers[i]))
-	  {
-	    loc = i;
-	    break;
-	  }
-      if (loc == -1)
-	{
-	  loc = selection_watchers_size;
-	  selection_watchers_size += SELECTION_WATCHER_SIZE_INCREMENT;
-	  selection_watchers = (selection_watcher **)realloc(selection_watchers, selection_watchers_size * sizeof(selection_watcher *));
-	  for (i = loc; i < selection_watchers_size; i++) selection_watchers[i] = NULL;
-	}
-    }
-  selection_watchers[loc] = (selection_watcher *)calloc(1, sizeof(selection_watcher));
-  selection_watchers[loc]->watcher = watcher;
-  selection_watchers[loc]->context = context;
-  return(loc);
-}
-
-
-void remove_selection_watcher(int loc)
-{
-  if ((selection_watchers) &&
-      (loc < selection_watchers_size) &&
-      (loc >= 0) &&
-      (selection_watchers[loc]))
-    {
-      free(selection_watchers[loc]);
-      selection_watchers[loc] = NULL;
-    }
-}
-
-
-void call_selection_watchers(selection_watcher_reason_t reason)
-{
-  if (selection_watchers)
-    {
-      int i;
-      for (i = 0; i < selection_watchers_size; i++)
-	if (selection_watchers[i])
-	  (*(selection_watchers[i]->watcher))(reason, selection_watchers[i]->context);
-    }
-  run_watchers();
-}
-
-
-
 static bool cp_has_selection(chan_info *cp)
 {
   ed_list *ed;
@@ -321,8 +248,17 @@ bool delete_selection(cut_selection_regraph_t regraph)
   if (selection_is_active())
     {
       for_each_normal_chan(cp_delete_selection);
-      if (regraph == UPDATE_DISPLAY) for_each_normal_chan(update_graph);
-      call_selection_watchers(SELECTION_INACTIVE);
+      if (regraph == UPDATE_DISPLAY) 
+	for_each_normal_chan(update_graph);
+
+      if (XEN_HOOKED(ss->snd_selection_hook))
+	run_hook(ss->snd_selection_hook, 
+		 XEN_LIST_1(C_TO_XEN_INT(SELECTION_INACTIVE)),
+		 "selection-hook");
+
+      if (XEN_HOOKED(ss->effects_hook))
+	run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
+
       return(true);
     }
   return(false);
@@ -343,7 +279,15 @@ void deactivate_selection(void)
 {
   for_each_normal_chan(cp_deactivate_selection);
   for_each_normal_chan(update_graph);
-  call_selection_watchers(SELECTION_INACTIVE);
+
+  if (XEN_HOOKED(ss->snd_selection_hook))
+    run_hook(ss->snd_selection_hook, 
+	     XEN_LIST_1(C_TO_XEN_INT(SELECTION_INACTIVE)),
+	     "selection-hook");
+
+  if (XEN_HOOKED(ss->effects_hook))
+    run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
+
   if (syncd_chans) 
     syncd_chans = free_sync_info(syncd_chans);
 }
@@ -369,7 +313,13 @@ void reactivate_selection(chan_info *cp, mus_long_t beg, mus_long_t end)
   ed->selection_maxamp_position = -1;
   xen_selection_counter++;
 
-  call_selection_watchers(SELECTION_ACTIVE);
+  if (XEN_HOOKED(ss->snd_selection_hook))
+    run_hook(ss->snd_selection_hook, 
+	     XEN_LIST_1(C_TO_XEN_INT(SELECTION_ACTIVE)),
+	     "selection-hook");
+
+  if (XEN_HOOKED(ss->effects_hook))
+    run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
 }
 
 
@@ -595,7 +545,15 @@ void finish_selection_creation(void)
     {
       if (selection_creates_region(ss)) 
 	make_region_from_selection();
-      call_selection_watchers(SELECTION_ACTIVE);
+
+      if (XEN_HOOKED(ss->snd_selection_hook))
+	run_hook(ss->snd_selection_hook, 
+		 XEN_LIST_1(C_TO_XEN_INT(SELECTION_ACTIVE)),
+		 "selection-hook");
+
+      if (XEN_HOOKED(ss->effects_hook))
+	run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
+
       syncd_chans = free_sync_info(syncd_chans);      
     }
 }
@@ -1596,7 +1554,15 @@ static XEN g_set_selection_member(XEN on, XEN snd, XEN chn)
 	  else cp_set_selection_beg(cp, 0);
 	}
       else cp_deactivate_selection(cp);
-      call_selection_watchers(SELECTION_CHANGED);
+
+      if (XEN_HOOKED(ss->snd_selection_hook))
+	run_hook(ss->snd_selection_hook, 
+		 XEN_LIST_1(C_TO_XEN_INT(SELECTION_CHANGED)),
+		 "selection-hook");
+
+      if (XEN_HOOKED(ss->effects_hook))
+	run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
+
       if (selection_is_active())
 	redraw_selection();
     }

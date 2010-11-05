@@ -2329,7 +2329,9 @@ void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reaso
 	     (sp->watchers[i]->type == type)))
 	  (*(sp->watchers[i]->watcher))(sp, reason, i);
     }
-  run_watchers();
+
+  if (XEN_HOOKED(ss->effects_hook))
+    run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
 }
 
 

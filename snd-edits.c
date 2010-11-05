@@ -6881,7 +6881,15 @@ void revert_edits(chan_info *cp)
   clear_transform_edit_ctrs(cp);
   reflect_edit_counter_change(cp);
   reflect_sample_change_in_axis(cp);
-  call_selection_watchers(SELECTION_IN_DOUBT);
+
+  if (XEN_HOOKED(ss->snd_selection_hook))
+    run_hook(ss->snd_selection_hook, 
+	     XEN_LIST_1(C_TO_XEN_INT(SELECTION_IN_DOUBT)),
+	     "selection-hook");
+
+  if (XEN_HOOKED(ss->effects_hook))
+    run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
+
   update_graph(cp);
   reflect_mix_change(ANY_MIX_ID);
   reflect_enved_fft_change(cp);
@@ -6911,7 +6919,15 @@ bool undo_edit(chan_info *cp, int count)
 	{
 	  reflect_file_revert_in_label(sp);
 	}
-      call_selection_watchers(SELECTION_IN_DOUBT);
+
+      if (XEN_HOOKED(ss->snd_selection_hook))
+	run_hook(ss->snd_selection_hook, 
+		 XEN_LIST_1(C_TO_XEN_INT(SELECTION_IN_DOUBT)),
+		 "selection-hook");
+
+      if (XEN_HOOKED(ss->effects_hook))
+	run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
+
       update_graph(cp);
       reflect_mix_change(ANY_MIX_ID);
       reflect_enved_fft_change(cp);
@@ -6977,7 +6993,15 @@ bool redo_edit(chan_info *cp, int count)
 	  reflect_file_change_in_label(cp);
 	  reflect_edit_counter_change(cp);
 	  reflect_sample_change_in_axis(cp);
-	  call_selection_watchers(SELECTION_IN_DOUBT);
+
+	  if (XEN_HOOKED(ss->snd_selection_hook))
+	    run_hook(ss->snd_selection_hook, 
+		     XEN_LIST_1(C_TO_XEN_INT(SELECTION_IN_DOUBT)),
+		     "selection-hook");
+
+	  if (XEN_HOOKED(ss->effects_hook))
+	    run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
+
 	  update_graph(cp);
 	  reflect_mix_change(ANY_MIX_ID);
 	  reflect_enved_fft_change(cp);

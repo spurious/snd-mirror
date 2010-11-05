@@ -2497,7 +2497,6 @@ typedef struct {
   save_dialog_t type;
   dialog_play_info *dp;
   fam_info *file_watcher;
-  int selection_watcher_loc;
   gulong filename_watcher_id;
   int header_type, format_type;
 } save_as_dialog_info;
@@ -2519,28 +2518,38 @@ static void clear_error_if_filename_changes(fsb *fs, save_as_dialog_info *sd)
 }
 
 
+
 static save_as_dialog_info *new_save_as_dialog_info(save_dialog_t type)
 {
   save_as_dialog_info *sd;
   sd = (save_as_dialog_info *)calloc(1, sizeof(save_as_dialog_info));
   sd->type = type;
-  sd->selection_watcher_loc = -1;
   sd->filename_watcher_id = 0;
   return(sd);
 }
 
 
-static void save_as_selection_watcher(selection_watcher_reason_t reason, void *data)
+static XEN save_selection_hook_handler(XEN xreason)
 {
-  save_as_dialog_info *sd = (save_as_dialog_info *)data;
+  int reason;
+  save_as_dialog_info *sd;
+
+  sd = save_selection_as;
+  reason = XEN_TO_C_INT(xreason);
+
   if ((reason == SELECTION_ACTIVE) ||
       (selection_is_active()))
     {
       clear_dialog_error(sd->panel_data);
-      remove_selection_watcher(sd->selection_watcher_loc);
-      sd->selection_watcher_loc = -1;
     }
 }
+
+#ifdef XEN_ARGIFY_1
+  XEN_ARGIFY_1(save_selection_hook_handler_w, save_selection_hook_handler)
+#else
+  #define save_selection_hook_handler_w save_selection_hook_handler
+#endif
+
 
 
 void reflect_region_in_save_as_dialog(void)
@@ -2629,8 +2638,6 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	msg = _("no selection to save");
       else msg = _("can't extract: no selection");
       post_file_dialog_error((const char *)msg, sd->panel_data);
-      if (sd->selection_watcher_loc < 0)
-	sd->selection_watcher_loc = add_selection_watcher(save_as_selection_watcher, (void *)sd);
       return;
     }
 
@@ -3044,6 +3051,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
 
 	case SELECTION_SAVE_AS:
 	  set_dialog_widget(SELECTION_SAVE_AS_DIALOG, fs->dialog);
+	  XEN_ADD_HOOK(ss->snd_selection_hook, save_selection_hook_handler_w, "save-selection-hook-handler", "save selection dialog's selection hook handler");
 	  break;
 
 	case REGION_SAVE_AS:
