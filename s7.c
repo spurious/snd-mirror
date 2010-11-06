@@ -10270,8 +10270,10 @@ s7_pointer s7_open_input_file(s7_scheme *sc, const char *name, const char *mode)
   fp = fopen(name, mode);
   if (!fp)
     {
+#ifndef _MSC_VER
       if (errno == EINVAL)
 	return(file_error(sc, "open-input-file", "invalid mode", mode));
+#endif
       return(file_error(sc, "open-input-file", strerror(errno), name));
     }
 

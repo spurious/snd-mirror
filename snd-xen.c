@@ -2681,7 +2681,6 @@ void g_xen_initialize(void)
   ss->snd_open_file_hook = XEN_DEFINE_SIMPLE_HOOK(1);
   ss->snd_selection_hook = XEN_DEFINE_SIMPLE_HOOK(1);
   ss->effects_hook = XEN_DEFINE_HOOK(S_effects_hook, 0, "called when something changes that the effects dialogs care about");
-  /* TODO: doc/test effects-hook */
 
 #if MUS_DEBUGGING
   XEN_DEFINE_PROCEDURE("snd-sound-pointer", g_snd_sound_pointer_w, 1, 0, 0, "internal testing function");
