@@ -561,6 +561,8 @@ void s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int requi
    *
    * s7_define_macro defines a scheme macro; its arguments are not evaluated (unlike a function),
    *   but its returned value (assumed to be some sort of scheme expression) is evaluated.
+   *
+   * for s7_make_closure, see the "Closure defined in C" example in s7.html.
    */
 
   /* In s7, (define* (name . args) body) or (define name (lambda* args body))
@@ -764,6 +766,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 8-Nov:     Closure defined in C example in s7.html.
  * 23-Oct:    s7_call_with_location for better error reporting.
  * 19-Oct:    *stdin*, *stdout*, *stderr* for default IO ports (rather than nil which is ambiguous).
  * 14-Oct:    removed special variable support.

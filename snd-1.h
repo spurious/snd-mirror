@@ -1019,7 +1019,6 @@ void clear_stdin(void);
 #if HAVE_RUBY
   void snd_rb_raise(XEN type, XEN info);
 #endif
-void run_watchers(void);
 bool source_file_p(const char *name);
 void save_added_source_file_extensions(FILE *fd);
 
