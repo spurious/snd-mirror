@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Wed Nov 03 11:55:21 CET 2010
+\ Changed: Sun Nov 07 10:46:47 CET 2010
 
 \ Commentary:
 \
@@ -3517,7 +3517,7 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
    <'> enved-filter <'> filter-control-in-hz <'> filter-control-order <'> filter-selection
    <'> filter-channel <'> filter-control? <'> find-channel
    <'> find-mark <'> find-sound <'> finish-progress-report <'> frames <'> free-sampler
-   <'> graph <'> transform? <'> delete-transform <'> add-watcher <'> delete-watcher
+   <'> graph <'> transform? <'> delete-transform
    <'> graph-cursor <'> graph->ps
    <'> gl-graph->ps <'> graph-style <'> lisp-graph? <'>  graphs-horizontal <'> header-type
    <'> in <'> insert-region <'> insert-sample <'> insert-samples
@@ -3862,7 +3862,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
 
 : 28-errors ( -- )
   #t set-with-background-processes drop
-  reset-all-hooks
+  reset-almost-all-hooks
   nil nil { prc tag }
   #( <'> amp-control <'> apply-controls <'> close-sound <'> comment <'> contrast-control
      <'> amp-control-bounds <'> speed-control-bounds <'> expand-control-bounds
@@ -4441,6 +4441,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       then
     then
   end-each
+  reset-almost-all-hooks
   #( <'> exit-hook <'> stop-dac-hook <'> stop-playing-selection-hook <'> color-hook
      <'> orientation-hook <'> start-playing-selection-hook ) each to hook
     hook <'> noop 3 make-proc <'> add-hook! #t nil fth-catch to tag
@@ -4452,6 +4453,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
       then
     then
   end-each
+  reset-almost-all-hooks
   "not-an-env" 	       	     <'> set-enved-envelope  	'no-such-envelope check-error-tag
   "/bad/baddy" 	       	     <'> save-envelopes      	'cannot-save      check-error-tag
   "/bad/baddy" 	       	     <'> save-macros         	'cannot-save      check-error-tag
@@ -4735,7 +4737,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
     "test.snd" 0o644 file-chmod
     "test.snd" file-delete
   then
-  $" cp -f oboe.snd test.snd" file-system drop
+  "oboe.snd" "test.snd" file-copy
   "test.snd" open-sound to ind
   "test.snd" file-delete
   ind <'> update-sound #t nil fth-catch to tag
@@ -4754,7 +4756,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   then
   ind close-sound drop
   \ 
-  $" cp -f oboe.snd test.snd" file-system drop
+  "oboe.snd" "test.snd" file-copy
   "test.snd" open-sound to ind
   select-all drop
   "test.snd" file-delete
@@ -4762,7 +4764,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   ind close-sound drop
   dismiss-all-dialogs
   \ 
-  $" cp -f oboe.snd test.snd" file-system drop
+  "oboe.snd" "test.snd" file-copy
   "test.snd" open-sound to ind
   "test.snd" 0o400 file-chmod
   10 delete-sample drop
@@ -4777,7 +4779,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   \ 
   "test.snd" 0o644 file-chmod
   "test.snd" file-delete
-  $" cp -f oboe.snd test.snd" file-system drop
+  "oboe.snd" "test.snd" file-copy
   "test.snd" 0o200 file-chmod
   "test.snd" <'> open-sound #t nil fth-catch to tag
   stack-reset
@@ -4791,7 +4793,7 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   "test.snd" file-delete
   ind sound? if ind close-sound drop then
   \ 
-  $" cp -f oboe.snd test.snd" file-system drop
+  "oboe.snd" "test.snd" file-copy
   "test.snd" 0o400 file-chmod
   "test.snd" open-sound to ind
   10 delete-sample drop

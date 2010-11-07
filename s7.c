@@ -2696,7 +2696,15 @@ static s7_pointer lambda_star_argument_default_value(s7_scheme *sc, s7_pointer v
 	return(cadr(val));
 
       x = sc->z;
-      push_stack(sc, opcode(OP_BARRIER), sc->args, sc->code); 
+
+      if (s7_stack_top(sc) < 12)
+	push_stack(sc, opcode(OP_BARRIER), sc->args, sc->code); 
+
+      /* If this barrier is omitted, we get a segfault from 
+       *    (call-with-exit (lambda (quit) ((lambda* ((a (quit 32))) a))))
+       * when typed to the listener's prompt (it's ok in other situations).
+       */
+
       push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
       sc->args = sc->NIL;
       sc->code = val;
@@ -2706,8 +2714,6 @@ static s7_pointer lambda_star_argument_default_value(s7_scheme *sc, s7_pointer v
        *   of getting the value is only safe for a C-side call like s7_read; for s7-internal
        *   calls, error handling assumes we're using the s7 stack, not the C stack.  So,
        *   we better not get an error while evaluating the argument default value!
-       * 
-       * the OP_BARRIER protects against: (call-with-exit (lambda (quit) ((lambda* ((a (quit 32))) a))))
        */
 
       sc->z = x;
@@ -3129,8 +3135,6 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
   int i, s_base = 0, c_base = -1;
   opcode_t op;
 
-  /* fprintf(stderr, "top: %d, start: %d\n",  continuation_stack_top(c), s7_stack_top(sc)); */
-  
   for (i = s7_stack_top(sc) - 1; i > 0; i -= 4)
     {
       s7_pointer x;
@@ -3167,18 +3171,21 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 	  break;
 
 	case OP_BARRIER:
-	  if (i > continuation_stack_top(c)) /* otherwise it's some unproblematic outer eval */
+	  if (i > continuation_stack_top(c)) /* otherwise it's some unproblematic outer eval-string? */
 	    return(false);
 	  break;
-	  /* TODO: check similar cases! */
 
 	case OP_DEACTIVATE_GOTO:              /* here we're jumping out of an unrelated call-with-exit block */
-	  call_exit_active(stack_args(sc->stack, i)) = false;
+	  if (i > continuation_stack_top(c))
+	    call_exit_active(stack_args(sc->stack, i)) = false;
 	  break;
 
 	case OP_TRACE_RETURN:
-	  sc->trace_depth--;
-	  if (sc->trace_depth < 0) sc->trace_depth = 0;
+	  if (i > continuation_stack_top(c))
+	    {
+	      sc->trace_depth--;
+	      if (sc->trace_depth < 0) sc->trace_depth = 0;
+	    }
 	  break;
 	  
 	default:
@@ -3271,7 +3278,7 @@ static void call_with_exit(s7_scheme *sc)
 	  break;
 
 	case OP_BARRIER:                /* oops -- we almost certainly went too far */
-	  return;                       /* (call-with-exit (lambda (return) (eval-string "(return 3)")))) */
+	  return; 
 
 	case OP_DEACTIVATE_GOTO:        /* here we're jumping into an unrelated call-with-exit block */
 	  call_exit_active(stack_args(sc->stack, i)) = false;
@@ -11036,8 +11043,14 @@ static s7_pointer eval_string_1(s7_scheme *sc, const char *str)
   port = s7_open_input_string(sc, str);
   push_input_port(sc, port);
 
-  push_stack(sc, opcode(OP_BARRIER), port, sc->NIL);   /* this means eval-string is not tail-recursive */
-  push_stack(sc, opcode(OP_EVAL_STRING), sc->args, sc->code);
+  push_stack(sc, opcode(OP_BARRIER), port, sc->NIL);
+  /* we're being called directly from C here, not as part of a scheme program.
+   *    Use this op to protect the port, I guess.
+   */
+  push_stack(sc, opcode(OP_EVAL_STRING), sc->args, sc->code);  
+  /* eval-string is not tail-recursive because it pushes markers in eval to catch
+   *    multiple statements in one eval-string call.
+   */
   eval(sc, OP_READ_INTERNAL);
 
   pop_input_port(sc);
@@ -18699,7 +18712,9 @@ pass (global-environment):\n\
    */
 
   sc->code = car(args);
-  push_stack(sc, opcode(OP_BARRIER), sc->NIL, sc->NIL);
+
+  if (s7_stack_top(sc) < 12)
+    push_stack(sc, opcode(OP_BARRIER), sc->NIL, sc->NIL);
   push_stack(sc, opcode(OP_EVAL), sc->args, sc->code);
   return(sc->NIL);
 }

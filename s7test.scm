@@ -452,6 +452,13 @@ yow!! -- I'm using mpc_cmp
 (test (let () (define (make-adder x) (lambda (y) (+ x y))) (eqv? (make-adder 1) (make-adder 1))) #f)
 (test (eqv? 9/2 9/2) #t)
 
+(let ((c1 (let ((x 32))
+	    (lambda () x)))
+      (c2 (let ((x 123))
+	    (lambda () x))))
+  (test (eqv? c1 c2) #f)
+  (test (eqv? c1 c1) #t))
+
 (test (eqv? most-positive-fixnum most-positive-fixnum) #t)
 (test (eqv? most-positive-fixnum most-negative-fixnum) #f)
 (test (eqv? 9223372036854775807 9223372036854775806) #f)
@@ -13708,6 +13715,78 @@ who says the continuation has to restart the map from the top?
 		    (lambda args 'error))))
     (test val 'error)))
 
+;;; this one from Rick
+(test (eval '(call/cc (lambda (go) (go 9) 0))) 9)
+(test (eval-string "(call/cc (lambda (go) (go 9) 0))") 9)
+(test (call-with-exit (lambda (return) (call/cc (lambda (go) (go 9) 0)) (return 1) 2)) 1)
+
+(num-test (/ 1 (call/cc (lambda (go) (go 9) 0))) 1/9)
+
+(test (call/cc (lambda (g) (call/cc (lambda (f) (f 1)) (g 2)))) 2) ; !! guile agrees!
+(test (call/cc (lambda (g) (abs -1 (g 2)))) 2)                     ; perhaps this should be an error
+(test (call/cc (lambda (g) (if #t #f #f (g 2)))) 'error)
+
+(test ((call-with-exit (lambda (go) (go go))) eval) 'error)
+(test ((call/cc (lambda (go) (go go))) eval) eval)
+
+(test (call-with-exit (lambda (go) (if (go 1) (go 2) (go 3)))) 1)
+(test (call-with-exit (lambda (go) (set! (go 1) 2))) 'error) 
+(test (call-with-exit (lambda (go) (let ((x 1) (y (go x))) #f))) 'error)
+(test (call-with-exit (lambda (go) (let* ((x 1) (y (go x))) #f))) 1)
+(test (call-with-exit (lambda (go) (letrec ((x 1) (y (go x))) #f))) #<undefined>)
+(test (call-with-exit (lambda (go) (letrec* ((x 1) (y (go x))) #f))) 1)
+(test (call-with-exit (lambda (go) (case (go 1) ((go 2) 3) (else 4)))) 1)
+(test (call-with-exit (lambda (go) (case go ((go 2) 3) (else 4)))) 4)
+(test (call-with-exit (lambda (go) (case 2 ((go 2) 3) (else 4)))) 3)
+(test (call-with-exit (lambda (go) (eq? go go))) #t)
+(test (call-with-exit (lambda (go) (case 'go ((go 2) 3) (else 4)))) 3)
+(test (call-with-exit (lambda (go) (go (go (go 1))))) 1)
+(test (call-with-exit (lambda (go) (quasiquote (go 1)))) '(go 1))
+(test (call-with-exit (lambda (go) ((lambda* (a (go 1)) a) (go 2)))) 2)
+(test (call-with-exit (lambda (go) ((lambda* (a (go 1)) a) 2))) 2) ; default arg not evaluated if not needed
+(test (call-with-exit (lambda (go) ((lambda* (a (go 1)) a)))) #f) ; lambda_star_argument_default_value in s7 explicitly desires this
+(test (call-with-exit (lambda (go) ((lambda (go) go) 1))) 1)
+(test (call-with-exit (lambda (go) (quote (go 1)) 2)) 2)
+(test (call-with-exit (lambda (go) (and (go 1) #f))) 1)
+(test (call-with-exit (lambda (go) (dynamic-wind (lambda () (go 1)) (lambda () (go 2)) (lambda () (go 3))))) 1)
+
+(test (eval '(call/cc (lambda (go) (if (go 1) (go 2) (go 3))))) 1)
+(test (eval '(call/cc (lambda (go) (set! (go 1) 2)))) 'error) 
+(test (eval '(call/cc (lambda (go) (let ((x 1) (y (go x))) #f)))) 'error)
+(test (eval '(call/cc (lambda (go) (let* ((x 1) (y (go x))) #f)))) 1)
+(test (eval '(call/cc (lambda (go) (letrec ((x 1) (y (go x))) #f)))) #<undefined>)
+(test (eval '(call/cc (lambda (go) (letrec* ((x 1) (y (go x))) #f)))) 1)
+(test (eval '(call/cc (lambda (go) (case (go 1) ((go 2) 3) (else 4))))) 1)
+(test (eval '(call/cc (lambda (go) (case go ((go 2) 3) (else 4))))) 4)
+(test (eval '(call/cc (lambda (go) (case 2 ((go 2) 3) (else 4))))) 3)
+(test (eval '(call/cc (lambda (go) (eq? go go)))) #t)
+(test (eval '(call/cc (lambda (go) (case 'go ((go 2) 3) (else 4))))) 3)
+(test (eval '(call/cc (lambda (go) (go (go (go 1)))))) 1)
+(test (eval '(call/cc (lambda (go) (quasiquote (go 1))))) '(go 1))
+(test (eval '(call/cc (lambda (go) ((lambda* (a (go 1)) a) (go 2))))) 2)
+(test (eval '(call/cc (lambda (go) ((lambda* (a (go 1)) a) 2)))) 2)
+(test (eval '(call/cc (lambda (go) ((lambda* (a (go 1)) a))))) #f)
+(test (eval '(call/cc (lambda (go) ((lambda (go) go) 1)))) 1)
+(test (eval '(call/cc (lambda (go) (quote (go 1)) 2))) 2)
+(test (eval '(call/cc (lambda (go) (and (go 1) #f)))) 1)
+(test (eval '(call/cc (lambda (go) (dynamic-wind (lambda () (go 1)) (lambda () (go 2)) (lambda () (go 3)))))) 1)
+
+(test (call-with-exit (lambda (go) (eval '(go 1)) 2)) 1) 
+(test (call-with-exit (lambda (go) `(,(go 1) 2))) 1)
+;;; (test (call-with-exit (lambda (go) `#(,(go 1) 2))) 'error) ; this is s7's choice -- read time #(...)
+(test (call-with-exit (lambda (go) (case 0 ((0) (go 1) (go 2))))) 1)
+(test (call-with-exit (lambda (go) (cond (1 => go)) 2)) 1)
+(test (call-with-exit (lambda (go) (((cond ((go 1) => go)) 2)))) 1)
+(test (call-with-exit (lambda (go) (cond (1 => (go 2))))) 2)
+
+(test (call-with-exit (lambda (go) (go (eval '(go 1))) 2)) 1)
+(test (+ 10 (call-with-exit (lambda (go) (go (eval '(go 1))) 2))) 11)
+(test (call-with-exit (lambda (go) (go (eval-string "(go 1)")) 2)) 1)
+(test (call-with-exit (lambda (go) (eval-string "(go 1)") 2)) 1) 
+(test (call-with-exit (lambda (go) ((eval 'go) 1) 2)) 1)  
+(test (eval-string "(call/cc (lambda (go) (if (go 1) (go 2) (go 3))))") 1)
+(test (call-with-exit (lambda (quit) ((lambda* ((a (quit 32))) a)))) 32)
+
 
 
 
@@ -18224,6 +18303,15 @@ why are these different (read-time `#() ? )
   (tc-15 0 32)
   (if (> max-stack 10) (format #t "tc-15 max: ~D~%" max-stack)))
 
+(let ((max-stack 0))
+  (define (tc-17 a c) 
+    (if (> (-s7-stack-size) max-stack)
+	(set! max-stack (-s7-stack-size)))
+    (or (and (>= a c) a)
+	(eval `(tc-17 (+ ,a 1) ,c))))
+  (let ((val (tc-17 0 32)))
+    (test (and (= val 32) (< max-stack 28)) #t)))
+
 #|
 (let ((max-stack 0))
   (define (tc-19 a c) 
@@ -18239,9 +18327,18 @@ why are these different (read-time `#() ? )
 
 ;;; the next 3 are not tail-recursive
 ;;;
-;;;   OP_BARRIER problem in eval and eval-string
+;;;   eval-string pushes stack markers to catch multiple statements
 ;;;   OP_DEACTIVATE_GOTO in call-with-exit
 ;;;   OP_DYNAMIC_WIND in the dynamic-wind case
+
+(let ((max-stack 0))
+  (define (tc-17 a c) 
+    (if (> (-s7-stack-size) max-stack)
+	(set! max-stack (-s7-stack-size)))
+    (or (and (>= a c) a)
+	(eval-string (format #f "(tc-17 (+ ~A 1) ~A)" a c))))
+  (let ((val (tc-17 0 32)))
+    (test (and (= val 32) (< max-stack 28)) #f)))
 
 (let ((max-stack 0))
   (define (tc-16 a c) 
@@ -18252,15 +18349,6 @@ why are these different (read-time `#() ? )
        (if (>= a c) (r a))
        (tc-16 (+ a 1) c))))
   (let ((val (tc-16 0 32)))
-    (test (and (= val 32) (> max-stack 28)) #t)))
-
-(let ((max-stack 0))
-  (define (tc-17 a c) 
-    (if (> (-s7-stack-size) max-stack)
-	(set! max-stack (-s7-stack-size)))
-    (or (and (>= a c) a)
-	(eval `(tc-17 (+ ,a 1) ,c))))
-  (let ((val (tc-17 0 32)))
     (test (and (= val 32) (> max-stack 28)) #t)))
 
 (let ((max-stack 0))

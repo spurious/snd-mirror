@@ -3,7 +3,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sun Oct 16 23:04:30 CEST 2005
-\ Changed: Thu Oct 21 12:16:54 CEST 2010
+\ Changed: Sat Nov 06 23:37:30 CET 2010
 
 \ Commentary:
 \
@@ -1042,8 +1042,12 @@ $" Go Away" constant eff-dismiss-string
 	 FXmNarmColor   selection-color ) undef FXtCreateManagedWidget ( reset-button )
       FXmNactivateCallback reset-prc undef FXtAddCallback drop
     then
-    new-dialog FXmDIALOG_OK_BUTTON FXmMessageBoxGetChild ( okay-button )
-    target-prc ?dup-if set-target-cb else set-default-target-cb then  add-watcher drop
+    new-dialog FXmDIALOG_OK_BUTTON FXmMessageBoxGetChild { okay-button }
+    effects-hook  okay-button  target-prc ?dup-if
+      set-target-cb
+    else
+      set-default-target-cb
+    then add-hook!
     new-dialog
   ;
 
@@ -1304,7 +1308,11 @@ $" Go Away" constant eff-dismiss-string
     box help-button #t #t 20 Fgtk_box_pack_end drop
     help-button "clicked" help-prc wrap-motif-cb #f Fg_signal_connect drop
     help-button Fgtk_widget_show drop
-    okay-button  target-prc ?dup-if set-target-cb else set-default-target-cb then  add-watcher drop
+    effects-hook  okay-button  target-prc ?dup-if
+      set-target-cb
+    else
+      set-default-target-cb
+    then add-hook!
     new-dialog FG_OBJECT "ok-button" okay-button FGPOINTER Fg_object_set_data drop
     new-dialog
   ;

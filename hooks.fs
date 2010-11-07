@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Aug 08 23:27:50 CEST 2006
-\ Changed: Sun Jun 13 16:43:56 CEST 2010
+\ Changed: Sat Nov 06 23:40:56 CET 2010
 
 \ snd-hooks         Array with all Snd hooks.
 \ reset-all-hooks   ( -- )
@@ -33,6 +33,7 @@ require examp
      draw-mix-hook
      drop-hook
      during-open-hook
+     effects-hook
      enved-hook
      exit-hook
      graph-hook

@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Changed: Wed Oct 14 23:11:31 CEST 2009
+# Changed: Sat Nov 06 23:43:02 CET 2010
 
 # Commentary:
 #
@@ -134,81 +134,82 @@ need a String or Symbol, not %s"
     obj.kind_of?(Hook)
   end
   
+  $after_apply_controls_hook    = Hook.new("$after_apply_controls_hook", 1)
   $after_graph_hook             = Hook.new("$after_graph_hook", 2)
   $after_lisp_graph_hook        = Hook.new("$after_lisp_graph_hook", 2)
-  $lisp_graph_hook              = Hook.new("$lisp_graph_hook", 2)
-  $time_graph_hook              = Hook.new("$time_graph_hook", 2)
-  $before_transform_hook        = Hook.new("$before_transform_hook", 2)
-  $mix_release_hook             = Hook.new("$mix_release_hook", 2)
-  $save_hook                    = Hook.new("$save_hook", 2)
-  $mus_error_hook               = Hook.new("$mus_error_hook", 2)
-  $mouse_enter_graph_hook       = Hook.new("$mouse_enter_graph_hook", 2)
-  $mouse_leave_graph_hook       = Hook.new("$mouse_leave_graph_hook", 2)
-  $open_raw_sound_hook          = Hook.new("$open_raw_sound_hook", 2)
-  $select_channel_hook          = Hook.new("$select_channel_hook", 2)
   $after_open_hook              = Hook.new("$after_open_hook", 1)
+  $after_save_as_hook           = Hook.new("$after_save_as_hook", 3)
+  $after_save_state_hook        = Hook.new("$after_save_state_hook", 1)
+  $after_transform_hook         = Hook.new("$after_transform_hook", 3)
+  $bad_header_hook              = Hook.new("$bad_header_hook", 1)
+  $before_close_hook            = Hook.new("$before_close_hook", 1)
+  $before_exit_hook             = Hook.new("$before_exit_hook", 0)
+  $before_save_as_hook          = Hook.new("$before_save_as_hook", 7)
+  $before_save_state_hook       = Hook.new("$before_save_state_hook", 1)
+  $before_transform_hook        = Hook.new("$before_transform_hook", 2)
+  $clip_hook                    = Hook.new("$clip_hook", 1)
   $close_hook                   = Hook.new("$close_hook", 1)
+  $dac_hook                     = Hook.new("$dac_hook", 1)
+  $draw_mark_hook               = Hook.new("$draw_mark_hook", 1)
+  $draw_mix_hook                = Hook.new("$draw_mix_hook", 5)
   $drop_hook                    = Hook.new("$drop_hook", 1)
-  $update_hook                  = Hook.new("$update_hook", 1)
+  $during_open_hook             = Hook.new("$during_open_hook", 3)
+  $effects_hook                 = Hook.new("$effects_hook", 0)
+  $enved_hook                   = Hook.new("$enved_hook", 5)
+  $exit_hook                    = Hook.new("$exit_hook", 0)
+  $graph_hook                   = Hook.new("$graph_hook", 4)
+  $help_hook                    = Hook.new("$help_hook", 2)
+  $initial_graph_hook           = Hook.new("$initial_graph_hook", 3)
+  $key_press_hook               = Hook.new("$key_press_hook", 4)
+  $lisp_graph_hook              = Hook.new("$lisp_graph_hook", 2)
+  $listener_click_hook          = Hook.new("$listener_click_hook", 1)
   $mark_click_hook              = Hook.new("$mark_click_hook", 1)
   $mark_drag_hook               = Hook.new("$mark_drag_hook", 1)
+  $mark_drag_triangle_hook      = Hook.new("$mark_drag_triangle_hook", 4)
+  $mark_hook                    = Hook.new("$mark_hook", 4)
+  $mix_click_hook               = Hook.new("$mix_click_hook", 1)
+  $mix_drag_hook                = Hook.new("$mix_drag_hook", 3)
+  $mix_release_hook             = Hook.new("$mix_release_hook", 2)
+  $mouse_click_hook             = Hook.new("$mouse_click_hook", 7)
+  $mouse_drag_hook              = Hook.new("$mouse_drag_hook", 6)
+  $mouse_enter_graph_hook       = Hook.new("$mouse_enter_graph_hook", 2)
+  $mouse_enter_label_hook       = Hook.new("$mouse_enter_label_hook", 3)
+  $mouse_enter_listener_hook    = Hook.new("$mouse_enter_listener_hook", 1)
+  $mouse_enter_text_hook        = Hook.new("$mouse_enter_text_hook", 1)
+  $mouse_leave_graph_hook       = Hook.new("$mouse_leave_graph_hook", 2)
+  $mouse_leave_label_hook       = Hook.new("$mouse_leave_label_hook", 3)
+  $mouse_leave_listener_hook    = Hook.new("$mouse_leave_listener_hook", 1)
+  $mouse_leave_text_hook        = Hook.new("$mouse_leave_text_hook", 1)
+  $mouse_press_hook             = Hook.new("$mouse_press_hook", 6)
+  $mus_error_hook               = Hook.new("$mus_error_hook", 2)
   $name_click_hook              = Hook.new("$name_click_hook", 1)
+  $new_sound_hook               = Hook.new("$new_sound_hook", 1)
+  $new_widget_hook              = Hook.new("$new_widget_hook", 1)
   $open_hook                    = Hook.new("$open_hook", 1)
-  $help_hook                    = Hook.new("$help_hook", 2)
+  $open_raw_sound_hook          = Hook.new("$open_raw_sound_hook", 2)
+  $optimization_hook            = Hook.new("$optimization_hook", 1)
+  $orientation_hook             = Hook.new("$orientation_hook", 0)
   $output_comment_hook          = Hook.new("$output_comment_hook", 1)
+  $output_name_hook             = Hook.new("$output_name_hook", 1)
+  $peak_env_hook                = Hook.new("$peak_env_hook", 2)
   $play_hook                    = Hook.new("$play_hook", 1)
+  $print_hook                   = Hook.new("$print_hook", 1)
+  $read_hook                    = Hook.new("$read_hook", 1)
+  $save_hook                    = Hook.new("$save_hook", 2)
+  $save_state_hook              = Hook.new("$save_state_hook", 1)
+  $select_channel_hook          = Hook.new("$select_channel_hook", 2)
+  $select_sound_hook            = Hook.new("$select_sound_hook", 1)
   $snd_error_hook               = Hook.new("$snd_error_hook", 1)
   $snd_warning_hook             = Hook.new("$snd_warning_hook", 1)
   $start_hook                   = Hook.new("$start_hook", 1)
   $start_playing_hook           = Hook.new("$start_playing_hook", 1)
-  $stop_playing_hook            = Hook.new("$stop_playing_hook", 1)
-  $mouse_enter_listener_hook    = Hook.new("$mouse_enter_listener_hook", 1)
-  $mouse_leave_listener_hook    = Hook.new("$mouse_leave_listener_hook", 1)
-  $select_sound_hook            = Hook.new("$select_sound_hook", 1)
-  $print_hook                   = Hook.new("$print_hook", 1)
-  $exit_hook                    = Hook.new("$exit_hook", 0)
-  $output_name_hook             = Hook.new("$output_name_hook", 1)
-  $during_open_hook             = Hook.new("$during_open_hook", 3)
-  $after_transform_hook         = Hook.new("$after_transform_hook", 3)
-  $mouse_enter_label_hook       = Hook.new("$mouse_enter_label_hook", 3)
-  $mouse_leave_label_hook       = Hook.new("$mouse_leave_label_hook", 3)
-  $initial_graph_hook           = Hook.new("$initial_graph_hook", 3)
-  $graph_hook                   = Hook.new("$graph_hook", 4)
-  $key_press_hook               = Hook.new("$key_press_hook", 4)
-  $mouse_drag_hook              = Hook.new("$mouse_drag_hook", 6)
-  $mouse_press_hook             = Hook.new("$mouse_press_hook", 6)
-  $enved_hook                   = Hook.new("$enved_hook", 5)
-  $read_hook                    = Hook.new("$read_hook", 1)
-  $mouse_click_hook             = Hook.new("$mouse_click_hook", 7)
-  $new_widget_hook              = Hook.new("$new_widget_hook", 1)
-  $mark_hook                    = Hook.new("$mark_hook", 4)
-  $view_files_select_hook       = Hook.new("$view_files_select_hook", 2)
-  $dac_hook                     = Hook.new("$dac_hook", 1)
-  $stop_dac_hook                = Hook.new("$stop_dac_hook", 0)
-  $stop_playing_selection_hook  = Hook.new("$stop_playing_selection_hook", 0)
-  $after_apply_controls_hook    = Hook.new("$after_apply_controls_hook", 1)
-  $draw_mark_hook               = Hook.new("$draw_mark_hook", 1)
-  $draw_mix_hook                = Hook.new("$draw_mix_hook", 5)
-  $bad_header_hook              = Hook.new("$bad_header_hook", 1)
-  $save_state_hook              = Hook.new("$save_state_hook", 1)
-  $new_sound_hook               = Hook.new("$new_sound_hook", 1)
-  $orientation_hook             = Hook.new("$orientation_hook", 0)
-  $listener_click_hook          = Hook.new("$listener_click_hook", 1)
-  $mix_click_hook               = Hook.new("$mix_click_hook", 1)
-  $before_save_state_hook       = Hook.new("$before_save_state_hook", 1)
-  $after_save_state_hook        = Hook.new("$after_save_state_hook", 1)
-  $mouse_enter_text_hook        = Hook.new("$mouse_enter_text_hook", 1)
-  $mouse_leave_text_hook        = Hook.new("$mouse_leave_text_hook", 1)
-  $optimization_hook            = Hook.new("$optimization_hook", 1)
-  $mix_drag_hook                = Hook.new("$mix_drag_hook", 3)
-  $mark_drag_triangle_hook      = Hook.new("$mark_drag_triangle_hook", 4)
   $start_playing_selection_hook = Hook.new("$start_playing_selection_hook", 0)
-  $before_exit_hook             = Hook.new("$before_exit_hook", 0)
-  $before_close_hook            = Hook.new("$before_close_hook", 1)
-  $clip_hook                    = Hook.new("$clip_hook", 1)
-  $after_save_as_hook           = Hook.new("$after_save_as_hook", 3)
-  $before_save_as_hook          = Hook.new("$before_save_as_hook", 7)
-  $peak_env_hook                = Hook.new("$peak_env_hook", 2)
+  $stop_dac_hook                = Hook.new("$stop_dac_hook", 0)
+  $stop_playing_hook            = Hook.new("$stop_playing_hook", 1)
+  $stop_playing_selection_hook  = Hook.new("$stop_playing_selection_hook", 0)
+  $time_graph_hook              = Hook.new("$time_graph_hook", 2)
+  $update_hook                  = Hook.new("$update_hook", 1)
+  $view_files_select_hook       = Hook.new("$view_files_select_hook", 2)
   # unless --with-no-gui
   $color_hook                   = Hook.new("$color_hook", 0)
   # if --with-gtk
@@ -263,81 +264,82 @@ ensure
 end
 
 if defined? $after_graph_hook
-  Snd_hooks = [$after_graph_hook,
+  Snd_hooks = [$after_apply_controls_hook,
+               $after_graph_hook,
                $after_lisp_graph_hook,
-               $lisp_graph_hook,
-               $time_graph_hook,
-               $before_transform_hook,
-               $mix_release_hook,
-               $save_hook,
-               $mus_error_hook,
-               $mouse_enter_graph_hook,
-               $mouse_leave_graph_hook,
-               $open_raw_sound_hook,
-               $select_channel_hook,
                $after_open_hook,
+               $after_save_as_hook,
+               $after_save_state_hook,
+               $after_transform_hook,
+               $bad_header_hook,
+               $before_close_hook,
+               $before_exit_hook,
+               $before_save_as_hook,
+               $before_save_state_hook,
+               $before_transform_hook,
+               $clip_hook,
                $close_hook,
+               $dac_hook,
+               $draw_mark_hook,
+               $draw_mix_hook,
                $drop_hook,
-               $update_hook,
+               $during_open_hook,
+               $effects_hook,
+               $enved_hook,
+               $exit_hook,
+               $graph_hook,
+               $help_hook,
+               $initial_graph_hook,
+               $key_press_hook,
+               $lisp_graph_hook,
+               $listener_click_hook,
                $mark_click_hook,
                $mark_drag_hook,
+               $mark_drag_triangle_hook,
+               $mark_hook,
+               $mix_click_hook,
+               $mix_drag_hook,
+               $mix_release_hook,
+               $mouse_click_hook,
+               $mouse_drag_hook,
+               $mouse_enter_graph_hook,
+               $mouse_enter_label_hook,
+               $mouse_enter_listener_hook,
+               $mouse_enter_text_hook,
+               $mouse_leave_graph_hook,
+               $mouse_leave_label_hook,
+               $mouse_leave_listener_hook,
+               $mouse_leave_text_hook,
+               $mouse_press_hook,
+               $mus_error_hook,
                $name_click_hook,
+               $new_sound_hook,
+               $new_widget_hook,
                $open_hook,
-               $help_hook,
+               $open_raw_sound_hook,
+               $optimization_hook,
+               $orientation_hook,
                $output_comment_hook,
+               $output_name_hook,
+               $peak_env_hook,
                $play_hook,
+               $print_hook,
+               $read_hook,
+               $save_hook,
+               $save_state_hook,
+               $select_channel_hook,
+               $select_sound_hook,
                $snd_error_hook,
                $snd_warning_hook,
                $start_hook,
                $start_playing_hook,
-               $stop_playing_hook,
-               $mouse_enter_listener_hook,
-               $mouse_leave_listener_hook,
-               $select_sound_hook,
-               $print_hook,
-               $exit_hook,
-               $output_name_hook,
-               $during_open_hook,
-               $after_transform_hook,
-               $mouse_enter_label_hook,
-               $mouse_leave_label_hook,
-               $initial_graph_hook,
-               $graph_hook,
-               $key_press_hook,
-               $mouse_drag_hook,
-               $mouse_press_hook,
-               $enved_hook,
-               $read_hook,
-               $mouse_click_hook,
-               $new_widget_hook,
-               $mark_hook,
-               $view_files_select_hook,
-               $dac_hook,
-               $stop_dac_hook,
-               $stop_playing_selection_hook,
-               $after_apply_controls_hook,
-               $draw_mark_hook,
-               $draw_mix_hook,
-               $bad_header_hook,
-               $save_state_hook,
-               $new_sound_hook,
-               $orientation_hook,
-               $listener_click_hook,
-               $mix_click_hook,
-               $peak_env_hook,
-               $before_save_state_hook,
-               $after_save_state_hook,
-               $mouse_enter_text_hook,
-               $mouse_leave_text_hook,
-               $optimization_hook,
-               $mix_drag_hook,
-               $mark_drag_triangle_hook,
                $start_playing_selection_hook,
-               $after_save_as_hook,
-               $before_save_as_hook,
-               $before_exit_hook,
-               $clip_hook,
-               $before_close_hook]
+               $stop_dac_hook,
+               $stop_playing_hook,
+               $stop_playing_selection_hook,
+               $time_graph_hook,
+               $update_hook,
+               $view_files_select_hook]
 
   unless provided? :snd_nogui
     Snd_hooks.push($color_hook)

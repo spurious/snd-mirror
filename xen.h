@@ -872,7 +872,7 @@ XEN xen_assoc(XEN key, XEN alist);
 #define XEN_DEFINE_SIMPLE_HOOK(arity)   fth_make_simple_hook(arity)
 #define XEN_CLEAR_HOOK(Arg)             fth_hook_clear(Arg)
 #define XEN_HOOK_PROCEDURES(Obj)        fth_hook_procedure_list(Obj)
-#define XEN_ADD_HOOK(Hook, Func, Name, Doc)  fth_add_hook(Hook, fth_make_proc_from_func(Name, Func, false, fth_hook_arity(Hook), 0, false))
+#define XEN_ADD_HOOK(Hook, Func, Name, Doc)  fth_add_hook(Hook, (FTH)fth_define_procedure(Name, Func, fth_hook_arity(Hook), 0, false, Doc)) 
 
 #define XEN_PROCEDURE_P(Arg)            FTH_PROC_P(Arg)
 #define XEN_PROCEDURE_NAME(Func)        C_TO_XEN_STRING(fth_proc_name(Func))

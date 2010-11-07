@@ -22763,122 +22763,6 @@ def test0213
   $before_save_as_hook.reset_hook!
   $after_save_as_hook.reset_hook!
   #
-  sound_changed = false
-  read_only_changed = false
-  marks_changed = false
-  selection_changed = false
-  sound_selection_changed = false
-  cur_sounds = Snd.sounds
-  cur_marks = marks
-  cur_read_only = Snd.sounds.apply(:read_only)
-  cur_selection = selection?
-  cur_selected_sound = selected_sound
-  cur_selected_channel = (cur_selected_sound and selected_channel)
-  called = false
-  w1 = add_watcher(lambda do | |
-                     called = true
-                     if Snd.sounds != cur_sounds
-                       sound_changed = true
-                       cur_sounds = Snd.sounds
-                     end
-                     if cur_selection != selection?
-                       selection_changed = true
-                       cur_selection = selection?
-                     end
-                     if cur_marks != marks
-                       marks_changed = true
-                       cur_marks = marks
-                     end
-                     rdonly = Snd.sounds.apply(:read_only)
-                     if cur_read_only != rdonly
-                       read_only_changed = true
-                       cur_read_only = rdonly
-                     end
-                     if cur_selected_sound != selected_sound or
-                         cur_selected_channel != (cur_selected_sound and selected_channel)
-                       sound_selection_changed = true
-                       cur_selected_sound = selected_sound
-                       cur_selected_channel = (cur_selected_sound and selected_channel)
-                     end
-                   end)
-  ind = open_sound("oboe.snd")
-  if sound_changed
-    sound_changed = false
-  else
-    snd_display("watcher missed open_sound?")
-  end
-  set_read_only(true, ind)
-  if read_only_changed
-    read_only_changed = false
-  else
-    snd_display("watcher missed read_only?")
-  end
-  m1 = add_mark(123, ind, 0)
-  if marks_changed
-    marks_changed = false
-  else
-    snd_display("watcher missed add_mark?")
-  end
-  called = false
-  set_mark_sample(m1, 321)
-  if called
-    marks_changed = false
-  else
-    snd_display("watcher missed move mark?")
-  end
-  delete_mark(m1)
-  if marks_changed
-    marks_changed = false
-  else
-    snd_display("watcher missed delete_mark?")
-  end
-  ind1 = open_sound("2.snd")
-  if sound_changed
-    sound_changed = false
-  else
-    snd_display("watcher missed open_sound (2)?")
-  end
-  select_sound(ind)
-  if sound_selection_changed
-    sound_selection_changed = false
-  else
-    snd_display("watcher missed select_sound?")
-  end
-  select_sound(ind1)
-  if sound_selection_changed
-    sound_selection_changed = false
-  else
-    snd_display("watcher missed select_sound 1?")
-  end
-  select_channel(1)
-  if sound_selection_changed
-    sound_selection_changed = false
-  else
-    snd_display("watcher missed select_channel?")
-  end
-  close_sound(ind1)
-  if sound_changed
-    sound_changed = false
-  else
-    snd_display("watcher missed close_sound 1?")
-  end
-  select_all(ind)
-  if selection_changed
-    selection_changed = false
-  else
-    snd_display("watcher missed selection?")
-  end
-  set_selection_member?(false, ind, 0)
-  if selection_changed
-    selection_changed = false
-  else
-    snd_display("watcher missed selection change?")
-  end
-  sound_changed = false
-  delete_watcher(w1)
-  close_sound(ind)
-  if sound_changed then snd_display("deleted watcher runs anyway?") end
-  #
   old_clip = clipping
   old_mus_clip = mus_clipping
   set_clipping(true)
@@ -33608,7 +33492,7 @@ Procs = [:add_mark, :add_sound_file_extension, :add_source_file_extension,
          :filter_control_order, :filter_selection, :filter_channel,
          :filter_control_waveform_color, :filter_control?, :find_channel, :find_mark,
          :find_sound, :finish_progress_report, :foreground_color, :frames, :free_sampler,
-         :graph, :transform?, :delete_transform, :add_watcher, :delete_watcher,
+         :graph, :transform?, :delete_transform,
          :graph_color, :graph_cursor, :graph_data, :graph2ps, :gl_graph2ps, :graph_style,
          :lisp_graph?, :graphs_horizontal, :header_type, :help_dialog, :info_dialog,
          :highlight_color, :call_in, :insert_region, :insert_sample, :insert_samples,

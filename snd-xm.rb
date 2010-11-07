@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Feb 25 05:31:02 CET 2004
-# Changed: Tue Oct 26 23:05:41 CEST 2010
+# Changed: Sat Nov 06 23:32:50 CET 2010
 
 # Commentary:
 #
@@ -1029,13 +1029,13 @@ module Snd_Gtk
       Rgtk_widget_show(@help_button)
       # 
       if @target_cb
-        add_watcher(lambda do | |
-                      Rgtk_widget_set_sensitive(@okay_button, @target_cb.call())
-                    end)
+        $effects_hook.add_hook!("create-dialog-target") do | |
+          Rgtk_widget_set_sensitive(@okay_button, @target_cb.call())
+        end
       else
-        add_watcher(lambda do | |
-                      Rgtk_widget_set_sensitive(@okay_button, (not Snd.sounds.empty?))
-                    end)
+        $effects_hook.add_hook!("create-dialog-target") do | |
+          Rgtk_widget_set_sensitive(@okay_button, (not Snd.sounds.empty?))
+        end
       end
       # 
       Rg_object_set_data(RG_OBJECT(@dialog), "ok-button", RGPOINTER(@okay_button))
@@ -2051,10 +2051,14 @@ the current free space (for use with $after_open_hook)")
       @okay_button    = RXmMessageBoxGetChild(@dialog, RXmDIALOG_OK_BUTTON)
       if @target_cb
         RXtSetSensitive(@okay_button, @target_cb.call())
-        add_watcher(lambda do | | RXtSetSensitive(@okay_button, @target_cb.call()) end)
+        $effects_hook.add_hook!("create-dialog-target") do | |
+          RXtSetSensitive(@okay_button, @target_cb.call())
+        end
       else
         RXtSetSensitive(@okay_button, (not Snd.sounds.empty?))
-        add_watcher(lambda do | | RXtSetSensitive(@okay_button, (not Snd.sounds.empty?)) end)
+        $effects_hook.add_hook!("create-dialog-target") do | |
+          RXtSetSensitive(@okay_button, (not Snd.sounds.empty?))
+        end
       end
       @parent = RXtCreateManagedWidget("pane", RxmPanedWindowWidgetClass, @dialog,
                                        [RXmNsashHeight,  1,
