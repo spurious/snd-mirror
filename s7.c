@@ -775,7 +775,7 @@ struct s7_scheme {
 #define is_true(Sc, p)                ((p) != Sc->F)
 #define is_false(Sc, p)               ((p) == Sc->F)
 #ifdef _MSC_VER
-  #define make_boolean(sc, Val)       (((Val) &0xff) ? sc->T : sc->F)
+  #define make_boolean(sc, Val)       (((Val) & 0xff) ? sc->T : sc->F)
 #else
   #define make_boolean(sc, Val)       ((Val) ? sc->T : sc->F)
 #endif
@@ -3113,6 +3113,7 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
    */
 
   loc = s7_stack_top(sc);
+
   NEW_CELL(sc, x);
   continuation_stack_size(x) = sc->stack_size;
   continuation_stack(x) = copy_stack(sc, sc->stack, s7_stack_top(sc));
@@ -3127,6 +3128,8 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 {
   int i, s_base = 0, c_base = -1;
   opcode_t op;
+
+  /* fprintf(stderr, "top: %d, start: %d\n",  continuation_stack_top(c), s7_stack_top(sc)); */
   
   for (i = s7_stack_top(sc) - 1; i > 0; i -= 4)
     {
@@ -3164,7 +3167,10 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 	  break;
 
 	case OP_BARRIER:
-	  return(false);
+	  if (i > continuation_stack_top(c)) /* otherwise it's some unproblematic outer eval */
+	    return(false);
+	  break;
+	  /* TODO: check similar cases! */
 
 	case OP_DEACTIVATE_GOTO:              /* here we're jumping out of an unrelated call-with-exit block */
 	  call_exit_active(stack_args(sc->stack, i)) = false;
@@ -3344,7 +3350,7 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
    * 
    *   which jumps to the point of the goto returning car(args).
    *
-   * There is one gotcha: we can't jump back, so if the caller saves the goto
+   * There is one gotcha: we can't jump back in from outside, so if the caller saves the goto
    *   and tries to invoke it outside the call-with-exit block, we have to
    *   make sure it triggers an error.  So, if the escape is called, it then
    *   deactivates itself.  Otherwise the block returns, we pop to OP_DEACTIVATE_GOTO,
@@ -8404,8 +8410,17 @@ static s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args)
 
   x = car(args);
   if (s7_is_number(x))
+
 #if WITH_GMP
+
+#ifndef _MSC_VER
     return(make_boolean(sc, (isnan(s7_real_part(x))) || (isnan(s7_imag_part(x)))));
+#else
+  if (isnan(s7_real_part(x)) || isnan(s7_imag_part(x)))
+    return(sc->T);
+  else return(sc->F);
+#endif
+
 #else
     switch (number_type(x))
       {
@@ -8418,7 +8433,13 @@ static s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args)
 	return(make_boolean(sc, isnan(real(number(x)))));
 	  
       default:
+#ifndef _MSC_VER
 	return(make_boolean(sc, (isnan(complex_real_part(x))) || (isnan(complex_imag_part(x)))));
+#else
+	if (isnan(complex_real_part(x)) || isnan(complex_imag_part(x)))
+	  return(sc->T);
+        else return(sc->F);
+#endif
       }
 #endif
   return(sc->F);
@@ -10367,8 +10388,10 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   fp = fopen(name, mode);
   if (!fp)
     {
+#ifndef _MSC_VER
       if (errno == EINVAL)
 	return(file_error(sc, "open-output-file", "invalid mode", mode));
+#endif
       return(file_error(sc, "open-output-file", strerror(errno), name));
     }
 
@@ -29490,7 +29513,7 @@ s7_scheme *s7_init(void)
  *   The hook support could accept a list as well as a function.
  *   '(function data), then hook calls function(data, ...).  Then
  *   XEN_ADD_HOOK_WITH_DATA(hook, func, data).  Also need a way to
- *   remove this -- would equal? work?
+ *   remove this -- would equal? work? [For some of this, see s7.html C closure example]
  *
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html) [also list-ref/set, frame|mixer etc]
  *
