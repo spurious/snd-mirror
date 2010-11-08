@@ -2265,76 +2265,6 @@ void menu_reset_controls(snd_info *sp)
 
 
 
-/* -------- sp watcher lists -------- */
-
-#define SP_WATCHER_SIZE_INCREMENT 2
-
-int add_sp_watcher(snd_info *sp, sp_watcher_t type, void (*watcher)(struct snd_info *sp, sp_watcher_reason_t reason, int list_loc), void *context)
-{
-  int loc = -1;
-  if (!(sp->watchers))
-    {
-      loc = 0;
-      sp->watchers_size = SP_WATCHER_SIZE_INCREMENT;
-      sp->watchers = (sp_watcher **)calloc(sp->watchers_size, sizeof(sp_watcher *));
-    }
-  else
-    {
-      int i;
-      for (i = 0; i < sp->watchers_size; i++)
-	if (!(sp->watchers[i]))
-	  {
-	    loc = i;
-	    break;
-	  }
-      if (loc == -1)
-	{
-	  loc = sp->watchers_size;
-	  sp->watchers_size += SP_WATCHER_SIZE_INCREMENT;
-	  sp->watchers = (sp_watcher **)realloc(sp->watchers, sp->watchers_size * sizeof(sp_watcher *));
-	  for (i = loc; i < sp->watchers_size; i++) sp->watchers[i] = NULL;
-	}
-    }
-  sp->watchers[loc] = (sp_watcher *)calloc(1, sizeof(sp_watcher));
-  sp->watchers[loc]->watcher = watcher;
-  sp->watchers[loc]->context = context;
-  sp->watchers[loc]->loc = loc;
-  sp->watchers[loc]->type = type;
-  return(loc);
-}
-
-
-void remove_sp_watcher(snd_info *sp, int loc)
-{
-  if ((sp) && 
-      (sp->watchers) &&
-      (loc < sp->watchers_size) &&
-      (loc >= 0) &&
-      (sp->watchers[loc]))
-    {
-      free(sp->watchers[loc]);
-      sp->watchers[loc] = NULL;
-    }
-}
-
-
-void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reason)
-{
-  if (sp->watchers)
-    {
-      int i;
-      for (i = 0; i < sp->watchers_size; i++)
-	if ((sp->watchers[i]) &&
-	    ((type == SP_ANY_WATCHER) ||
-	     (sp->watchers[i]->type == type)))
-	  (*(sp->watchers[i]->watcher))(sp, reason, i);
-    }
-
-  if (XEN_HOOKED(ss->effects_hook))
-    run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
-}
-
-
 
 /* ---------------------------------------- sound objects ---------------------------------------- */
 
@@ -3039,7 +2969,6 @@ static XEN sound_set(XEN snd, XEN val, sp_field_t fld, const char *caller)
 	      (sp->file_read_only == FILE_READ_ONLY))
 	    show_lock(sp); 
 	  else hide_lock(sp);
-	  call_sp_watchers(sp, SP_READ_ONLY_WATCHER, SP_READ_ONLY_CHANGED);
 	}
       break;
 

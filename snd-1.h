@@ -319,13 +319,6 @@ typedef struct chan_info {
 #define CURRENT_SAMPLES(Cp) (Cp)->edits[(Cp)->edit_ctr]->samples
 #define CURSOR(Cp) (Cp)->edits[(Cp)->edit_ctr]->cursor
 
-typedef struct {
-  void (*watcher)(struct snd_info *sp, sp_watcher_reason_t reason, int list_loc);
-  void *context;
-  int loc;
-  sp_watcher_t type;
-} sp_watcher;
-
 typedef struct snd_info {
   sound_inuse_t inuse;
   int index;
@@ -393,7 +386,6 @@ typedef struct snd_info {
   char *name_string;
   fam_info *file_watcher;
   bool writing, bomb_in_progress;
-  sp_watcher **watchers;
   int watchers_size;
 #if HAVE_PTHREADS
   mus_lock_t *starred_name_lock, *stop_sign_lock, *edit_history_lock;
@@ -1367,9 +1359,6 @@ snd_info *snd_new_file(const char *newname, int header_type, int data_format, in
 #if XEN_HAVE_RATIOS
   void snd_rationalize(mus_float_t a, int *num, int *den);
 #endif
-int add_sp_watcher(snd_info *sp, sp_watcher_t type, void (*watcher)(struct snd_info *sp, sp_watcher_reason_t reason, int list_loc), void *context);
-void remove_sp_watcher(snd_info *sp, int loc);
-void call_sp_watchers(snd_info *sp, sp_watcher_t type, sp_watcher_reason_t reason);
 
 void g_init_snd(void);
 XEN snd_no_such_sound_error(const char *caller, XEN n);

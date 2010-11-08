@@ -345,8 +345,6 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
     }
   sp->user_read_only = read_only;  /* need to be sure this is set before any hooks run */
   sp->bomb_in_progress = false;
-  sp->watchers = NULL;
-  sp->watchers_size = 0;
   sp->index = snd_slot;
   sp->nchans = chans;
   sp->hdr = hdr;
@@ -395,17 +393,7 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
 void free_snd_info(snd_info *sp)
 {
   int i;
-  if (sp->watchers)
-    {
-      int i;
-      call_sp_watchers(sp, SP_ANY_WATCHER, SP_IS_CLOSING);
-      for (i = 0; i < sp->watchers_size; i++)
-	if (sp->watchers[i])
-	  free(sp->watchers[i]); /* normally watcher will do this, I assume */
-      free(sp->watchers);
-      sp->watchers = NULL;
-      sp->watchers_size = 0;
-    }
+
   if (sp->sgx)
     {
       /* make sure trough colors are ok upon reuse */
@@ -478,6 +466,9 @@ void free_snd_info(snd_info *sp)
   clear_filter_strings(sp);
   clear_players();
   reflect_mix_change(ANY_MIX_ID);
+
+  if (XEN_HOOKED(ss->effects_hook))
+    run_hook(ss->effects_hook, XEN_EMPTY_LIST, S_effects_hook);
 }
 
 

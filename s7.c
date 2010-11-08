@@ -3171,7 +3171,7 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 	  break;
 
 	case OP_BARRIER:
-	  if (i > continuation_stack_top(c)) /* otherwise it's some unproblematic outer eval-string? */
+	  if (i > continuation_stack_top(c))  /* otherwise it's some unproblematic outer eval-string? */
 	    return(false);
 	  break;
 
@@ -3247,8 +3247,8 @@ static void call_with_exit(s7_scheme *sc)
     s7_error(sc, make_symbol(sc, "invalid-escape-function"),
 	     make_list_1(sc, make_protected_string(sc, "call-with-exit escape procedure called outside its block")));
   call_exit_active(sc->code) = false;
-
   new_stack_top = call_exit_goto_loc(sc->code);
+
   /* look for dynamic-wind in the stack section that we are jumping out of */
   for (i = s7_stack_top(sc) - 1; i > new_stack_top; i -= 4)
     {

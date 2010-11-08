@@ -2001,8 +2001,6 @@ snd_info *snd_update(snd_info *sp)
   struct ctrl_state *saved_controls;
   mus_long_t *old_cursors;
   fam_info *old_file_watcher;
-  sp_watcher **old_watchers;
-  int old_watchers_size;
   XEN update_hook_result = XEN_FALSE;
   const char *ur_filename;
   int app_x, app_y;
@@ -2096,10 +2094,6 @@ snd_info *snd_update(snd_info *sp)
     }
 
   old_file_watcher = sp->file_watcher; /* will be unmonitored in snd_close_file, but we need to know if it is being monitored now */
-  old_watchers = sp->watchers;
-  old_watchers_size = sp->watchers_size;
-  sp->watchers = NULL;       /* don't confuse watchers with a temporary close! */
-  sp->watchers_size = 0;
 
   snd_close_file(sp);
 
@@ -2132,8 +2126,6 @@ snd_info *snd_update(snd_info *sp)
 	  (!(nsp->file_watcher)))
 	nsp->file_watcher = fam_monitor_file(nsp->filename, (void *)nsp, fam_sp_action); 
             /* might be a different sp as well as underlying file */
-      nsp->watchers = old_watchers;
-      nsp->watchers_size = old_watchers_size;
 
       nsp->saved_controls = saved_controls;
       if (saved_controls) restore_controls(nsp);

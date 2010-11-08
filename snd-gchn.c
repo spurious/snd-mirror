@@ -593,9 +593,6 @@ void reflect_edit_counter_change(chan_info *cp)
   if (cp->squelch_update) return;
   if (cp->cgx == NULL) return;
   sp = cp->sound;
-  if ((cp->edit_ctr == 0) &&
-      (sp->watchers))
-    call_sp_watchers(sp, SP_REVERT_WATCHER, SP_REVERTED);
   if ((cp->chan > 0) && (sp->channel_style != CHANNELS_SEPARATE))
     {
       chan_info *ncp;

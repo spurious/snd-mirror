@@ -2804,14 +2804,6 @@ static void watch_save_as_file(struct fam_info *fp, FAMEvent *fe)
 }
 
 
-static void save_as_watch_user_read_only(struct snd_info *sp, sp_watcher_reason_t reason, int loc)
-{
-  file_data *pdat = (file_data *)(sp->watchers[loc]->context);
-  clear_dialog_error(pdat);
-  remove_sp_watcher(sp, loc);
-}
-
-
 static void save_or_extract(save_as_dialog_info *sd, bool saving)
 {
   char *str = NULL, *comment = NULL, *msg = NULL, *fullname = NULL, *tmpfile = NULL;
@@ -2944,8 +2936,6 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	  msg = mus_format(_("can't overwrite %s (it is write-protected)"), sp->short_filename);
 	  post_file_dialog_error((const char *)msg, sd->panel_data);
 	  clear_error_if_filename_changes(sd->dialog, sd->panel_data); 
-	  if (sp->user_read_only == FILE_READ_ONLY)
-	    add_sp_watcher(sp, SP_READ_ONLY_WATCHER, save_as_watch_user_read_only, (void *)(sd->panel_data));
 	  free(msg);
 	  free(fullname);
 	  if (comment) free(comment);
@@ -4065,7 +4055,6 @@ static void edit_header_set_ok_sensitive(Widget w, XtPointer context, XtPointer 
 static void eh_cancel(edhead_info *ep)
 {
   unreflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
-  remove_sp_watcher(ep->sp, ep->sp_ro_watcher_loc);
   ep->panel_changed = false;
   if ((ep->file_ro_watcher) &&
       (ep->sp) &&
@@ -4086,41 +4075,6 @@ static void edit_header_cancel_callback(Widget w, XtPointer context, XtPointer i
 static void edit_header_wm_delete_callback(Widget w, XtPointer context, XtPointer info) 
 {
   eh_cancel((edhead_info *)context);
-}
-
-
-static void edit_header_watch_user_read_only(struct snd_info *sp, sp_watcher_reason_t reason, int loc)
-{
-  edhead_info *ep;
-  ep = (edhead_info *)(sp->watchers[loc]->context);
-  if ((ep->dialog) && 
-      (XtIsManaged(ep->dialog)) &&
-      (sp == ep->sp))
-    {
-      if (reason == SP_READ_ONLY_CHANGED) /* SP_IS_CLOSING is other choice */
-	{
-	  XmString title;
-	  if ((sp->file_read_only == FILE_READ_WRITE) && 
-	      (sp->user_read_only == FILE_READ_WRITE))
-	    clear_dialog_error(ep->edat);
-	  title = make_header_dialog_title(ep, sp);
-	  XtVaSetValues(ep->dialog, 
-			XmNmessageString, title, 
-			NULL);
-	  XmStringFree(title);
-	}
-      else /* sound closing, so we shouldn't sit around offering to edit its header -- watcher is null around update's close */
-	{
-	  clear_dialog_error(ep->edat);
-	  if (ep->panel_changed)
-	    unreflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
-	  XtUnmanageChild(ep->dialog);
-	  ep->panel_changed = false;
-	  ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
-	  remove_sp_watcher(ep->sp, loc);
-	  ep->sp = NULL;
-	}
-    }
 }
 
 
@@ -4166,7 +4120,6 @@ static void watch_file_read_only(struct fam_info *fp, FAMEvent *fe)
 	unreflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
       ep->panel_changed = false;
       ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
-      remove_sp_watcher(ep->sp, ep->sp_ro_watcher_loc);
       break;
 
     default:
@@ -4206,7 +4159,6 @@ static void edit_header_ok_callback(Widget w, XtPointer context, XtPointer info)
 		  return;
 		}
 	    }
-	  remove_sp_watcher(ep->sp, ep->sp_ro_watcher_loc);
 	  ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
 	  XtUnmanageChild(ep->dialog);
 	  unreflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
@@ -4352,7 +4304,6 @@ Widget edit_header(snd_info *sp)
   XmStringFree(xstr4);
   if (!(XtIsManaged(ep->dialog))) XtManageChild(ep->dialog);
   reflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
-  ep->sp_ro_watcher_loc = add_sp_watcher(ep->sp, SP_READ_ONLY_WATCHER, edit_header_watch_user_read_only, (void *)ep);
   ep->file_ro_watcher = fam_monitor_file(ep->sp->filename, (void *)ep, watch_file_read_only);
   return(ep->dialog);
 }

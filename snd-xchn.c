@@ -831,9 +831,6 @@ void reflect_edit_counter_change(chan_info *cp)
 	  XtVaSetValues(lst, XmNtopItemPosition, cp->edit_ctr, NULL);
       goto_graph(cp);
     }
-  if ((cp->edit_ctr == 0) &&
-      (cp->sound->watchers))
-    call_sp_watchers(cp->sound, SP_REVERT_WATCHER, SP_REVERTED);
 }
 
 

@@ -13113,6 +13113,96 @@ who says the continuation has to restart the map from the top?
 (test (let ((val (call-with-exit (lambda (ret) (let ((ret1 ret)) (ret1 2) 3))))) val) 2)
 (test (call-with-exit (lambda (return) (sort! '(3 2 1) return))) 'error)
 
+;;; this one from Rick
+(test (eval '(call/cc (lambda (go) (go 9) 0))) 9)
+(test (eval-string "(call/cc (lambda (go) (go 9) 0))") 9)
+(test (call-with-exit (lambda (return) (call/cc (lambda (go) (go 9) 0)) (return 1) 2)) 1)
+
+(num-test (/ 1 (call/cc (lambda (go) (go 9) 0))) 1/9)
+
+(test (call/cc (lambda (g) (call/cc (lambda (f) (f 1)) (g 2)))) 2) ; !! guile agrees!
+(test (call/cc (lambda (g) (abs -1 (g 2)))) 2)                     ; perhaps this should be an error
+(test (call/cc (lambda (g) (if #t #f #f (g 2)))) 'error)
+
+(test ((call-with-exit (lambda (go) (go go))) eval) 'error)
+(test ((call/cc (lambda (go) (go go))) eval) eval)
+
+(test (call-with-exit (lambda (go) (if (go 1) (go 2) (go 3)))) 1)
+(test (call-with-exit (lambda (go) (set! (go 1) 2))) 'error) 
+(test (call-with-exit (lambda (go) (let ((x 1) (y (go x))) #f))) 'error)
+(test (call-with-exit (lambda (go) (let* ((x 1) (y (go x))) #f))) 1)
+(test (call-with-exit (lambda (go) (letrec ((x 1) (y (go x))) #f))) #<undefined>)
+(test (call-with-exit (lambda (go) (letrec* ((x 1) (y (go x))) #f))) 1)
+(test (call-with-exit (lambda (go) (case (go 1) ((go 2) 3) (else 4)))) 1)
+(test (call-with-exit (lambda (go) (case go ((go 2) 3) (else 4)))) 4)
+(test (call-with-exit (lambda (go) (case 2 ((go 2) 3) (else 4)))) 3)
+(test (call-with-exit (lambda (go) (eq? go go))) #t)
+(test (call-with-exit (lambda (go) (case 'go ((go 2) 3) (else 4)))) 3)
+(test (call-with-exit (lambda (go) (go (go (go 1))))) 1)
+(test (call-with-exit (lambda (go) (quasiquote (go 1)))) '(go 1))
+(test (call-with-exit (lambda (go) ((lambda* (a (go 1)) a) (go 2) 3))) 2)
+(test (call-with-exit (lambda (go) ((lambda* (a (go 1)) a) 2))) 2) ; default arg not evaluated if not needed
+(test (call-with-exit (lambda (go) ((lambda* (a (go 1)) a)))) #f) ; lambda_star_argument_default_value in s7 explicitly desires this
+(test (call-with-exit (lambda (go) ((lambda (go) go) 1))) 1)
+(test (call-with-exit (lambda (go) (quote (go 1)) 2)) 2)
+(test (call-with-exit (lambda (go) (and (go 1) #f))) 1)
+(test (call-with-exit (lambda (go) (dynamic-wind (lambda () (go 1) 11) (lambda () (go 2) 12) (lambda () (go 3) 13)))) 1)
+
+(test (eval '(call/cc (lambda (go) (if (go 1) (go 2) (go 3))))) 1)
+(test (eval '(call/cc (lambda (go) (set! (go 1) 2)))) 'error) 
+(test (eval '(call/cc (lambda (go) (let ((x 1) (y (go x))) #f)))) 'error)
+(test (eval '(call/cc (lambda (go) (let* ((x 1) (y (go x))) #f)))) 1)
+(test (eval '(call/cc (lambda (go) (letrec ((x 1) (y (go x))) #f)))) #<undefined>)
+(test (eval '(call/cc (lambda (go) (letrec* ((x 1) (y (go x))) #f)))) 1)
+(test (eval '(call/cc (lambda (go) (case (go 1) ((go 2) 3) (else 4))))) 1)
+(test (eval '(call/cc (lambda (go) (case go ((go 2) 3) (else 4))))) 4)
+(test (eval '(call/cc (lambda (go) (case 2 ((go 2) 3) (else 4))))) 3)
+(test (eval '(call/cc (lambda (go) (eq? go go)))) #t)
+(test (eval '(call/cc (lambda (go) (case 'go ((go 2) 3) (else 4))))) 3)
+(test (eval '(call/cc (lambda (go) (go (go (go 1)))))) 1)
+(test (eval '(call/cc (lambda (go) (quasiquote (go 1))))) '(go 1))
+(test (eval '(call/cc (lambda (go) ((lambda* (a (go 1)) a) (go 2))))) 2)
+(test (eval '(call/cc (lambda (go) ((lambda* (a (go 1)) a) 2)))) 2)
+(test (eval '(call/cc (lambda (go) ((lambda* (a (go 1)) a))))) #f)
+(test (eval '(call/cc (lambda (go) ((lambda (go) go) 1)))) 1)
+(test (eval '(call/cc (lambda (go) (quote (go 1)) 2))) 2)
+(test (eval '(call/cc (lambda (go) (and (go 1) #f)))) 1)
+(test (eval '(call/cc (lambda (go) (dynamic-wind (lambda () (go 1) 11) (lambda () (go 2) 12) (lambda () (go 3) 13))))) 1)
+
+(test (call-with-exit (lambda (go) (eval '(go 1)) 2)) 1) 
+(test (call-with-exit (lambda (go) (eval-string "(go 1)") 2)) 1)
+(test (call-with-exit (lambda (go) `(,(go 1) 2))) 1)
+;;; (test (call-with-exit (lambda (go) `#(,(go 1) 2))) 'error) ; this is s7's choice -- read time #(...)
+(test (call-with-exit (lambda (go) (case 0 ((0) (go 1) (go 2))))) 1)
+(test (call-with-exit (lambda (go) (cond (1 => go)) 2)) 1)
+(test (call-with-exit (lambda (go) (((cond ((go 1) => go)) 2)))) 1)
+(test (call-with-exit (lambda (go) (cond (1 => (go 2))))) 2)
+
+(test (call-with-exit (lambda (go) (go (eval '(go 1))) 2)) 1)
+(test (+ 10 (call-with-exit (lambda (go) (go (eval '(go 1))) 2))) 11)
+(test (call-with-exit (lambda (go) (go (eval-string "(go 1)")) 2)) 1)
+(test (call-with-exit (lambda (go) (eval-string "(go 1)") 2)) 1) 
+(test (call-with-exit (lambda (go) ((eval 'go) 1) 2)) 1)  
+(test (eval-string "(call/cc (lambda (go) (if (go 1) (go 2) (go 3))))") 1)
+(test (call-with-exit (lambda (quit) ((lambda* ((a (quit 32))) a)))) 32)
+(test ((call-with-exit (lambda (go) (go quasiquote))) go) 'go)
+
+(test (let ((c #f))
+	(let ((val -1))
+	  (set! val (call/cc 
+		     (lambda (c1)
+		       (call-with-exit 
+			(lambda (c2)
+			  (call-with-exit 
+			   (lambda (c3)
+			     (call/cc 
+			      (lambda (c4)
+				(set! c c4)
+				(c1 (c2 0)))))))))))
+	  (if (= val 0) (c 5))
+	  val))
+      5)
+
 
 
 
@@ -13714,78 +13804,6 @@ who says the continuation has to restart the map from the top?
 			    (y z))))
 		    (lambda args 'error))))
     (test val 'error)))
-
-;;; this one from Rick
-(test (eval '(call/cc (lambda (go) (go 9) 0))) 9)
-(test (eval-string "(call/cc (lambda (go) (go 9) 0))") 9)
-(test (call-with-exit (lambda (return) (call/cc (lambda (go) (go 9) 0)) (return 1) 2)) 1)
-
-(num-test (/ 1 (call/cc (lambda (go) (go 9) 0))) 1/9)
-
-(test (call/cc (lambda (g) (call/cc (lambda (f) (f 1)) (g 2)))) 2) ; !! guile agrees!
-(test (call/cc (lambda (g) (abs -1 (g 2)))) 2)                     ; perhaps this should be an error
-(test (call/cc (lambda (g) (if #t #f #f (g 2)))) 'error)
-
-(test ((call-with-exit (lambda (go) (go go))) eval) 'error)
-(test ((call/cc (lambda (go) (go go))) eval) eval)
-
-(test (call-with-exit (lambda (go) (if (go 1) (go 2) (go 3)))) 1)
-(test (call-with-exit (lambda (go) (set! (go 1) 2))) 'error) 
-(test (call-with-exit (lambda (go) (let ((x 1) (y (go x))) #f))) 'error)
-(test (call-with-exit (lambda (go) (let* ((x 1) (y (go x))) #f))) 1)
-(test (call-with-exit (lambda (go) (letrec ((x 1) (y (go x))) #f))) #<undefined>)
-(test (call-with-exit (lambda (go) (letrec* ((x 1) (y (go x))) #f))) 1)
-(test (call-with-exit (lambda (go) (case (go 1) ((go 2) 3) (else 4)))) 1)
-(test (call-with-exit (lambda (go) (case go ((go 2) 3) (else 4)))) 4)
-(test (call-with-exit (lambda (go) (case 2 ((go 2) 3) (else 4)))) 3)
-(test (call-with-exit (lambda (go) (eq? go go))) #t)
-(test (call-with-exit (lambda (go) (case 'go ((go 2) 3) (else 4)))) 3)
-(test (call-with-exit (lambda (go) (go (go (go 1))))) 1)
-(test (call-with-exit (lambda (go) (quasiquote (go 1)))) '(go 1))
-(test (call-with-exit (lambda (go) ((lambda* (a (go 1)) a) (go 2)))) 2)
-(test (call-with-exit (lambda (go) ((lambda* (a (go 1)) a) 2))) 2) ; default arg not evaluated if not needed
-(test (call-with-exit (lambda (go) ((lambda* (a (go 1)) a)))) #f) ; lambda_star_argument_default_value in s7 explicitly desires this
-(test (call-with-exit (lambda (go) ((lambda (go) go) 1))) 1)
-(test (call-with-exit (lambda (go) (quote (go 1)) 2)) 2)
-(test (call-with-exit (lambda (go) (and (go 1) #f))) 1)
-(test (call-with-exit (lambda (go) (dynamic-wind (lambda () (go 1)) (lambda () (go 2)) (lambda () (go 3))))) 1)
-
-(test (eval '(call/cc (lambda (go) (if (go 1) (go 2) (go 3))))) 1)
-(test (eval '(call/cc (lambda (go) (set! (go 1) 2)))) 'error) 
-(test (eval '(call/cc (lambda (go) (let ((x 1) (y (go x))) #f)))) 'error)
-(test (eval '(call/cc (lambda (go) (let* ((x 1) (y (go x))) #f)))) 1)
-(test (eval '(call/cc (lambda (go) (letrec ((x 1) (y (go x))) #f)))) #<undefined>)
-(test (eval '(call/cc (lambda (go) (letrec* ((x 1) (y (go x))) #f)))) 1)
-(test (eval '(call/cc (lambda (go) (case (go 1) ((go 2) 3) (else 4))))) 1)
-(test (eval '(call/cc (lambda (go) (case go ((go 2) 3) (else 4))))) 4)
-(test (eval '(call/cc (lambda (go) (case 2 ((go 2) 3) (else 4))))) 3)
-(test (eval '(call/cc (lambda (go) (eq? go go)))) #t)
-(test (eval '(call/cc (lambda (go) (case 'go ((go 2) 3) (else 4))))) 3)
-(test (eval '(call/cc (lambda (go) (go (go (go 1)))))) 1)
-(test (eval '(call/cc (lambda (go) (quasiquote (go 1))))) '(go 1))
-(test (eval '(call/cc (lambda (go) ((lambda* (a (go 1)) a) (go 2))))) 2)
-(test (eval '(call/cc (lambda (go) ((lambda* (a (go 1)) a) 2)))) 2)
-(test (eval '(call/cc (lambda (go) ((lambda* (a (go 1)) a))))) #f)
-(test (eval '(call/cc (lambda (go) ((lambda (go) go) 1)))) 1)
-(test (eval '(call/cc (lambda (go) (quote (go 1)) 2))) 2)
-(test (eval '(call/cc (lambda (go) (and (go 1) #f)))) 1)
-(test (eval '(call/cc (lambda (go) (dynamic-wind (lambda () (go 1)) (lambda () (go 2)) (lambda () (go 3)))))) 1)
-
-(test (call-with-exit (lambda (go) (eval '(go 1)) 2)) 1) 
-(test (call-with-exit (lambda (go) `(,(go 1) 2))) 1)
-;;; (test (call-with-exit (lambda (go) `#(,(go 1) 2))) 'error) ; this is s7's choice -- read time #(...)
-(test (call-with-exit (lambda (go) (case 0 ((0) (go 1) (go 2))))) 1)
-(test (call-with-exit (lambda (go) (cond (1 => go)) 2)) 1)
-(test (call-with-exit (lambda (go) (((cond ((go 1) => go)) 2)))) 1)
-(test (call-with-exit (lambda (go) (cond (1 => (go 2))))) 2)
-
-(test (call-with-exit (lambda (go) (go (eval '(go 1))) 2)) 1)
-(test (+ 10 (call-with-exit (lambda (go) (go (eval '(go 1))) 2))) 11)
-(test (call-with-exit (lambda (go) (go (eval-string "(go 1)")) 2)) 1)
-(test (call-with-exit (lambda (go) (eval-string "(go 1)") 2)) 1) 
-(test (call-with-exit (lambda (go) ((eval 'go) 1) 2)) 1)  
-(test (eval-string "(call/cc (lambda (go) (if (go 1) (go 2) (go 3))))") 1)
-(test (call-with-exit (lambda (quit) ((lambda* ((a (quit 32))) a)))) 32)
 
 
 
