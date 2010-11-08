@@ -1309,6 +1309,21 @@ AC_ARG_WITH(ruby,
                  AC_MSG_RESULT(no)
                 )
 
+    	      AC_MSG_CHECKING([for rb_proc_new])
+              AC_RUN_IFELSE(
+                [AC_LANG_PROGRAM([#include <ruby.h>
+                                  VALUE proc_call(VALUE args, VALUE id) {return(rb_apply(rb_mKernel, (ID)id, args));}
+			         ],
+                                 [VALUE proc; 
+                                  ruby_init(); 
+                                  proc = rb_proc_new(proc_call, rb_intern("hi"))])
+				  ], 
+                [AC_DEFINE(HAVE_RB_PROC_NEW)
+                 AC_MSG_RESULT(yes)
+                ],
+                 AC_MSG_RESULT(no)
+                )
+
 # these don't work if libruby.so doesn't exist (but libruby-static.a does)
 #             AC_CHECK_LIB(ruby, rb_gc_disable, [AC_DEFINE(HAVE_RB_GC_DISABLE)])
 #	      AC_CHECK_LIB(ruby, rb_ary_dup, [AC_DEFINE(HAVE_RB_ARY_DUP)])

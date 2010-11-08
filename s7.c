@@ -29182,19 +29182,18 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "error",                   g_error,                   0, 0, true,  H_error);
 
   /* these are internal for quasiquote's use */
-  s7_define_function(sc, "{values}",                g_qq_values,               0, 0, true,  H_qq_values);
-  s7_define_function(sc, "{list}",                  g_qq_list,                 0, 0, true,  H_qq_list);
+  s7_define_constant_function(sc, "{values}",       g_qq_values,               0, 0, true,  H_qq_values);
+  s7_define_constant_function(sc, "{apply}",        g_apply,                   1, 0, true,  H_apply);
+  s7_define_constant_function(sc, "{append}",       g_append,                  0, 0, true,  H_append);
+  s7_define_constant_function(sc, "{multivector}",  g_qq_multivector,          1, 0, true,  H_qq_multivector);
+    
+  s7_define_constant_function(sc, "{list}",         g_qq_list,                 0, 0, true,  H_qq_list);
   {
     s7_pointer p;
     p = s7_symbol_value(sc, make_symbol(sc, "{list}"));
     set_type(p, (T_C_LST_ARGS_FUNCTION | T_SIMPLE | T_DONT_COPY | T_PROCEDURE | T_DONT_COPY_CDR));
   }
-  /* PERHAPS: make these constants? (s7_define_constant_function) */
 
-  s7_define_function(sc, "{apply}",                 g_apply,                   1, 0, true,  H_apply);
-  s7_define_function(sc, "{append}",                g_append,                  0, 0, true,  H_append);
-  s7_define_function(sc, "{multivector}",           g_qq_multivector,          1, 0, true,  H_qq_multivector);
-    
   s7_define_function(sc, "stacktrace",              g_stacktrace,              0, 2, false, H_stacktrace);
   s7_define_function(sc, "trace",                   g_trace,                   0, 0, true,  H_trace);
   s7_define_function(sc, "untrace",                 g_untrace,                 0, 0, true,  H_untrace);
@@ -29240,11 +29239,6 @@ s7_scheme *s7_init(void)
 				   sc->F));
 
   /* PERHAPS: symbol-access checks for *load-hook* *trace-hook* *#readers*, perhaps *load-path* and *features*
-   *  also it's only the global value we want to protect for *vector-print-length* -- can that be recognized?
-   *  symbol lookup -- current found not in the global-env? or make all refs global?
-   *  what about *safety* etc in this regard?
-   *
-   * also for the hooks, if the value is a list of functions, call them like a xen/guile hook list
    */
 
   /* the next two are for the test suite */
@@ -29467,7 +29461,8 @@ s7_scheme *s7_init(void)
   (display "done"))
   
  *
- * non-error conditions in CL would be better handled with hooks or watchers
+ *
+ * non-error conditions in CL would be better handled with hooks.
  *   need a way to see what hooks are available, local-hook-function, how to invoke the list.
  *
  * here's a scheme side hook implementation, but we also need the C side, so it probably
@@ -29515,20 +29510,26 @@ s7_scheme *s7_init(void)
 			     (apply (car lst) args)
 			     (loop (cdr lst)))))))))
 
- * in any case, run-hook should be hook/s7_hook
- *   so in C, you'd invoke it via s7_hook(sc, hook, ...) and in scheme (hook <hook> ...)
- *   defined via (make-hook) or s7_make_hook(sc)
+ *   defined via (make-hook) or s7_make_hook(sc) or (hook ...)
  *   typed via (hook? obj) or s7_is_hook(obj)
- *   and all other refs go to the hook list directly (i.e. no hook-empty? etc)
- *   snd-edits uses XEN_CLEAR_HOOK for the chan-local hooks: s7_vector_set?
- *   how does C side handle scheme objects? does the c_object layer work here?
+ *   list of functions via (hook-functions obj) (settable) or s7_hook_functions(obj)
+ *   arity via hook-arity or s7_hook_arity
+ *   documentation via hook-documentation or s7_hook_documentation
+ *   default application via apply?
+ *   (apply *error-hook* arglist)
  *
- * we often need to have both a function and some data as the hook member (this
- *   from C -- in Scheme we can use a closure which is eqv? to itself).
- *   The hook support could accept a list as well as a function.
- *   '(function data), then hook calls function(data, ...).  Then
- *   XEN_ADD_HOOK_WITH_DATA(hook, func, data).  Also need a way to
- *   remove this -- would equal? work? [For some of this, see s7.html C closure example]
+ *   (define (hook-empty? hook) (null? (hook-functions hook)))
+ *   (define (reset-hook! hook) (set! (hook-functions hook) '()))
+ *   (define (remove-hook! hook function) (set! (hook-functions hook) (remove func (hook-functions hook))))
+ *   (define (run-hook hook . args) (apply hook args))
+ *   (define (add-hook! hook func) (set! (hook-functions hook) (cons func (hook-functions hook))))
+ *   (define hook->list hook-functions)
+ *
+ * but this requires changes to *trace-hook* *error-hook* *unbound-variable-hook* *load-hook*:
+ *   if the value is a list of functions, call them like a xen/guile hook list
+ *
+ *   snd-edits uses XEN_CLEAR_HOOK for the chan-local hooks
+ *
  *
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html) [also list-ref/set, frame|mixer etc]
  *

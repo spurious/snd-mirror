@@ -78,7 +78,7 @@ typedef double s7_Double;
    *
    * I think s7 has built-in support for srfi-6 (basic string ports), srfi-8 (receive), srfi-17 (generalized-set!), 
    *   srfi-18 (multithreading), srfi-28 (format, also nearly all of srfi-48), srfi-30 (block comments),
-   *   srfi-88 (keywords(, and srfi-89 (define*).  It also supports the functionality of many others
+   *   srfi-88 (keywords), and srfi-89 (define*).  It also supports the functionality of many others
    *   but under a slightly different syntax: srfi-69 (hash-tables), srfi-16 (define*), srfi-25 (multidimensional
    *   arrays).  srfi-98 would be trivial to add, and exists in snd as getenv.
    * The srfi-1 (lists) and srfi-60 (bitwise ops) reference implementations can be loaded as is.

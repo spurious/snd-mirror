@@ -680,12 +680,23 @@ XEN xen_rb_obj_as_string(XEN obj)
 }
 
 
+#if HAVE_RB_PROC_NEW
+
+static XEN xen_rb_apply_1(XEN args) 
+{ 
+  return(rb_apply(XEN_CAR(args), rb_intern("call"), XEN_CADR(args))); 
+} 
+
+#else
+
 static XEN xen_rb_apply_1(XEN args)
 {
   if (XEN_PROCEDURE_P(XEN_CAR(args))) 
     return(rb_apply(XEN_CAR(args), rb_intern("call"), XEN_CADR(args))); 
   return(rb_apply(rb_mKernel, XEN_CAR(args), XEN_CADR(args))); 
 }
+
+#endif
 
 
 XEN xen_rb_apply(XEN func, XEN args)
@@ -887,6 +898,39 @@ static XEN xen_rb_hook_add_hook(int argc, XEN *argv, XEN hook)
 }
 
 
+#if HAVE_RB_PROC_NEW
+
+static XEN xen_proc_call(XEN args, XEN id) 
+{ 
+  return(rb_apply(rb_mKernel, (ID)id, args)); 
+} 
+
+#if 0
+  VALUE rb_proc_new((VALUE (*)(ANYARGS/* VALUE yieldarg[, VALUE procarg] */), VALUE)); 
+#endif
+
+XEN xen_rb_proc_new(const char *name, XEN (*func)(), int arity, const char* doc) 
+{ 
+  rb_define_module_function(rb_mKernel, name, XEN_PROCEDURE_CAST func, arity); 
+  if (doc) C_SET_OBJECT_HELP(name, doc); 
+  return(rb_proc_new(xen_proc_call, rb_intern(name))); 
+} 
+
+
+static XEN xen_rb_hook_arity(XEN hook); 
+
+XEN xen_rb_add_hook(XEN hook, VALUE (*func)(), const char *name, const char* doc) 
+{ 
+  /* called from C, not Ruby, to add a function to a Ruby-side hook */ 
+  char *temp; 
+  temp = xen_scheme_procedure_to_ruby(name); 
+  rb_ary_push(rb_iv_get(hook, "@procs"), rb_ary_new3(2, C_TO_XEN_STRING(temp), xen_rb_proc_new(temp, func, XEN_TO_C_INT(xen_rb_hook_arity(hook)), doc))); 
+  if (temp) free(temp); 
+  return(hook); 
+} 
+
+#else
+
 XEN xen_rb_add_hook(XEN hook, VALUE (*func)(), const char *name, const char* doc) 
 {
   /* called from C, not Ruby, to add a function to a Ruby-side hook */ 
@@ -900,6 +944,8 @@ XEN xen_rb_add_hook(XEN hook, VALUE (*func)(), const char *name, const char* doc
   if (temp) free(temp); 
   return(hook); 
 }
+
+#endif
 
 
 static XEN xen_rb_hook_remove_hook(XEN hook, XEN name)
