@@ -14702,6 +14702,7 @@ why are these different (read-time `#() ? )
 (test (equal? (sort! (vector 3 4 8 2 0 1 5 9 7 6) <) (vector 0 1 2 3 4 5 6 7 8 9)) #t)
 (test (equal? (sort! '#() <) '#()) #t)
 (test (sort! '(1 2 . 3) <) 'error)
+(test (sort! #(1 3 8 7 5 6 4 2) (lambda (a b) (if (even? a) (or (odd? b) (< a b)) (and (odd? b) (< a b))))) #(2 4 6 8 1 3 5 7))
 
 (test (call/cc (lambda (return) (sort! '(1 2 3) (lambda (a b) (return "oops"))))) "oops")
 
@@ -18342,6 +18343,19 @@ why are these different (read-time `#() ? )
   (let ((val (tc-19 0 16)))
     (test (and (= val 16) (< max-stack 8)) #t)))
 |#
+
+(let ((max-stack 0))
+  (define (tc-21 a) 
+    (if (< a 32)
+	(do ((i (- a 1) (+ i 1)))
+	    ((= i a) 
+	     (tc-21 (+ a 1)))
+	  (if (> (-s7-stack-size) max-stack)
+	      (set! max-stack (-s7-stack-size))))
+	a))
+  (let ((val (tc-21 0)))
+    (if (> max-stack 10) (format #t "tc-21 max: ~D~%" max-stack))
+    (if (not (= val 32)) (format #t "tc-21 returned: ~A~%" val))))
 
 ;;; the next 3 are not tail-recursive
 ;;;

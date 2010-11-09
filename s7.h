@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.72"
-#define S7_DATE "23-Oct-10"
+#define S7_VERSION "1.73"
+#define S7_DATE "9-Nov-10"
 
 
 typedef long long int s7_Int;
@@ -349,6 +349,25 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
         (hash 'hi))
       -> 32
   */
+
+
+s7_pointer s7_make_hook(s7_scheme *sc, int required_args, int optional_args, bool rest_arg, const char *documentation);
+                                                                            /* (make-hook arity doc) */
+bool s7_is_hook(s7_pointer p);                                              /* (hook? p) */
+s7_pointer s7_hook_functions(s7_pointer hook);                              /* (hook-functions hook) */
+s7_pointer s7_hook_set_functions(s7_pointer hook, s7_pointer functions);    /* (set! (hook-functions hook) ...) */
+s7_pointer s7_hook_arity(s7_pointer hook);                                  /* (hook-arity hook) */
+const char *s7_hook_documentation(s7_pointer hook);                         /* (hook-documentation hook) */
+s7_pointer s7_hook_apply(s7_scheme *sc, s7_pointer hook, s7_pointer args);  /* (<hook> ... ) or (hook-apply hook args) */
+
+  /* a hook is a list of functions, each compatible with the hook arity.
+   *   when a hook is applied to a list of arguments, each function on its functions list
+   *   is applied to those arguments.  In the default case (hook-apply), the value returned
+   *   is unspecified.  The hook-functions list is settable; it is an ordinary scheme list, 
+   *   and hook-functions is a procedure-with-setter.
+   * hooks are sometimes called callback-lists, conditions, watchpoints, etc.
+   */
+
 
 bool s7_is_input_port(s7_scheme *sc, s7_pointer p);                         /* (input-port? p) */
 bool s7_is_output_port(s7_scheme *sc, s7_pointer p);                        /* (output-port? p) */
@@ -766,6 +785,7 @@ void s7_mark_object(s7_pointer p);
  * 
  *        s7 changes
  *
+ * 9-Nov:     hooks: s7_is_hook, s7_make_hook, s7_hook_apply, s7_hook_functions, s7_hook_arity, s7_hook_documentation.
  * 8-Nov:     Closure defined in C example in s7.html.
  * 23-Oct:    s7_call_with_location for better error reporting.
  * 19-Oct:    *stdin*, *stdout*, *stderr* for default IO ports (rather than nil which is ambiguous).
