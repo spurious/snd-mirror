@@ -6640,6 +6640,56 @@ yow!! -- I'm using mpc_cmp
 
 
 ;;; --------------------------------------------------------------------------------
+;;; HOOKS
+;;; --------------------------------------------------------------------------------
+
+;;; hook?
+;;; hook-arity
+;;; hook-functions
+;;; hook-documentation
+;;; make-hook
+;;; hook-apply
+;;; hook
+
+(for-each
+ (lambda (arg)
+   (for-each
+    (lambda (func)
+      (let ((val (catch #t (lambda () (func arg)) (lambda args 'error))))
+	(if (not (eq? val 'error))
+	    (format #t ";(~A ~A) got ~A, but expected 'error~%" func arg val))))
+    (list hook-arity hook-documentation hook-functions hook hook-apply))
+   (test (hook? arg) #f))
+ (list "hi" #f (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f #<eof> #<undefined> #<unspecified>))
+
+(let ((h (make-hook '(1 0 #f) "a hook")))
+  (test (hook? h) #t)
+  (test (hook-functions h) '())
+  (test (hook-arity h) '(1 0 #f))
+  (test (hook-documentation h) "a hook")
+  (test (hook-apply h '(0)) (h 0))
+  (let ((f1 (lambda (x) x)))
+    (set! (hook-functions h) (list f1))
+    (test (member f1 (hook-functions h)) (list f1))
+    (test (hook-functions h) (list f1))
+    (test (hook-apply h '(1)) (h 1))
+    (test (apply (car (hook-functions h)) '(1)) 1)
+    (set! (hook-functions h) '())
+    (test (hook-functions h) '())
+    (test (set! (hook-functions h) (list (lambda (x y) (+ x y)))) 'error)
+    (let ((f2 (lambda* args (car args))))
+      (set! (hook-functions h) (list f1 f2))
+      (test (hook-functions h) (list f1 f2))
+      (test (hook-apply h '(23)) (h 23)))))
+
+
+
+
+
+
+
+
+;;; --------------------------------------------------------------------------------
 ;;; PORTS
 ;;; --------------------------------------------------------------------------------
 

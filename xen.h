@@ -1429,27 +1429,21 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 #define XEN_OBJECT_TYPE                                  int /* tag type */
 #define XEN_OBJECT_TYPE_P(Obj, Tag)                      (s7_object_type(Obj) == Tag)
 
-#define XEN_HOOK_P(Arg)                                  xen_hook_p(Arg)
-#define XEN_DEFINE_HOOK(Name, Arity, Help)               xen_s7_define_hook(Name, Arity, Help)
+#define XEN_HOOK_P(Arg)                                  s7_is_hook(Arg)
+#define XEN_DEFINE_HOOK(Name, Arity, Help)               xen_s7_define_hook(Name, s7_make_hook(s7, Arity, 0, false, Help))
 /* "simple hooks are for channel-local hooks (unnamed, accessed through the channel) */
-#define XEN_DEFINE_SIMPLE_HOOK(Arity)                    xen_s7_define_hook(NULL, Arity, NULL)
-#define XEN_HOOKED(Arg)                                  (!xen_hook_empty_p(Arg))
-#define XEN_CLEAR_HOOK(Arg)                              xen_s7_reset_hook(Arg)
-#define XEN_HOOK_PROCEDURES(Arg)                         xen_hook_to_list(Arg)
-#define XEN_ADD_HOOK(Hook, Func, Name, Doc)              xen_s7_add_hook(Hook, Func, Name, Doc)
+#define XEN_DEFINE_SIMPLE_HOOK(Arity)                    s7_make_hook(s7, Arity, 0, false, NULL)
+#define XEN_HOOKED(Hook)                                 s7_is_pair(s7_hook_functions(Hook))
+#define XEN_CLEAR_HOOK(Hook)                             s7_hook_set_functions(Hook, s7_nil(s7))
+#define XEN_HOOK_PROCEDURES(Hook)                        s7_hook_functions(Hook)
+#define XEN_ADD_HOOK(Hook, Func, Name, Doc)              s7_hook_set_functions(Hook, s7_cons(s7, s7_make_function(s7, Name, Func, (int)s7_integer(s7_car(s7_hook_arity(Hook))), 0, false, Doc), s7_hook_functions(Hook)))
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-XEN xen_s7_define_hook(const char *name, int arity, const char *help);
-XEN xen_s7_reset_hook(XEN hook);
-XEN xen_hook_to_list(XEN hook);
-bool xen_hook_empty_p(XEN hook);
-bool xen_hook_p(XEN val);
-const char *xen_s7_hook_documentation(XEN hook);
-XEN xen_s7_add_hook(XEN hook, s7_function func, const char *func_name, const char *documentation);
 XEN xen_define_variable(const char *name, XEN value);
+XEN xen_s7_define_hook(const char *name, XEN value);
 void xen_s7_ignore(s7_function func); /* squelch compiler warnings */
 const char *xen_s7_object_help(XEN sym);
 int xen_to_c_int(XEN a);

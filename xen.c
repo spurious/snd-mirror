@@ -1580,6 +1580,14 @@ XEN xen_define_variable(const char *name, XEN value)
 }
 
 
+XEN xen_s7_define_hook(const char *name, XEN value)
+{
+  XEN_DEFINE(name, value);
+  s7_gc_protect(s7, value);
+  return(value);
+}
+
+
 void xen_gc_mark(XEN val)
 {
   s7_mark_object(val);
@@ -1669,254 +1677,6 @@ XEN xen_assoc(s7_scheme *sc, XEN key, XEN alist)
   if (val != s7_f(sc))
     return(s7_cdr(val));
   return(s7_f(sc));
-}
-
-
-/* hooks */
-
-typedef struct {
-  int arity;
-  XEN functions;
-  const char *documentation;
-} ghook;
-
-static XEN_OBJECT_TYPE ghook_tag;
-
-#define XEN_TO_GHOOK(Obj) (ghook *)XEN_OBJECT_REF(Obj)
-
-static int ghook_arity(ghook *hook) {return(hook->arity);}
-
-static XEN ghook_functions(ghook *hook) {return(hook->functions);}
-
-static void reset_ghook(ghook *hook) {hook->functions = XEN_EMPTY_LIST;}
-
-
-static ghook *make_ghook(int arity)
-{
-  ghook *hook;
-  hook = (ghook *)calloc(1, sizeof(ghook));
-  hook->arity = arity;
-  hook->functions = XEN_EMPTY_LIST;
-  hook->documentation = NULL;
-  return(hook);
-}
-
-
-static void free_ghook(ghook *hook)
-{
-  if (hook)
-    {
-      hook->functions = XEN_FALSE;
-      free(hook);
-    }
-}
-
-
-static char *hook_to_string(ghook *hook)
-{
-  if (hook)
-    {
-      int len;
-      char *functions = NULL, *str;
-      functions = XEN_AS_STRING(hook->functions);
-      len = 64 + strlen(functions);
-      str = (char *)calloc(len, sizeof(char));
-      snprintf(str, len, "<hook arity: %d, hooks: %s>", hook->arity, functions);
-      if (functions) free(functions);
-      return(str);
-    }
-  return(NULL);
-}
-
-
-static void add_ghook(ghook *hook, XEN function, bool at_end) 
-{
-  if (at_end)
-    hook->functions = XEN_APPEND(hook->functions, XEN_LIST_1(function));
-  else hook->functions = XEN_CONS(function, hook->functions);
-}
-
-
-bool xen_hook_p(XEN obj) 
-{
-  return(XEN_OBJECT_TYPE_P(obj, ghook_tag));
-}
-
-
-static XEN g_hook_p(XEN val) 
-{
-  return(C_TO_XEN_BOOLEAN(xen_hook_p(val)));
-}
-
-
-static XEN g_hook_empty_p(XEN hook)
-{
-  XEN_ASSERT_TYPE(xen_hook_p(hook), hook, XEN_ONLY_ARG, "hook-empty?", "a hook");
-  return(C_TO_XEN_BOOLEAN(XEN_NULL_P(ghook_functions(XEN_TO_GHOOK(hook)))));
-}
-
-
-bool xen_hook_empty_p(XEN hook)
-{
-  return(XEN_NULL_P(ghook_functions(XEN_TO_GHOOK(hook))));
-}
-
-
-XEN xen_hook_to_list(XEN hook)
-{
-  XEN_ASSERT_TYPE(xen_hook_p(hook), hook, XEN_ONLY_ARG, "hook->list", "a hook");
-  return(ghook_functions(XEN_TO_GHOOK(hook)));
-}
-
-
-const char *xen_s7_hook_documentation(XEN hook)
-{
-  ghook *obj;
-  obj = XEN_TO_GHOOK(hook);
-  return(obj->documentation);
-}
-
-
-static XEN g_make_hook(XEN arity, XEN help)
-{
-  ghook *hook;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arity), arity, XEN_ARG_1, "make-hook", "an integer");
-  XEN_ASSERT_TYPE(XEN_STRING_P(help) || XEN_NOT_BOUND_P(help), help, XEN_ARG_2, "make-hook", "a string if bound");
-  hook = make_ghook(XEN_TO_C_INT(arity));
-  if (XEN_STRING_P(help)) hook->documentation = xen_strdup(XEN_TO_C_STRING(help));
-  XEN_MAKE_AND_RETURN_OBJECT(ghook_tag, hook, 0, 0);
-}
-
-
-static XEN g_add_hook(XEN hook, XEN function, XEN position)
-{
-  ghook *obj;
-  XEN arity;
-  bool at_end = false, arity_ok;
-  int gc_loc;
-
-  obj = XEN_TO_GHOOK(hook);
-  XEN_ASSERT_TYPE(xen_hook_p(hook), hook, XEN_ARG_1, "add-hook!", "a hook");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(function), function, XEN_ARG_2, "add-hook!", "a function");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(position), position, XEN_ARG_3, "add-hook!", "boolean");
-
-  arity = XEN_ARITY(function);
-  gc_loc = s7_gc_protect(s7, arity);
-  arity_ok = ((XEN_TO_C_INT(XEN_CAR(arity)) == ghook_arity(obj)) ||
-	      (XEN_TO_C_INT(XEN_CAR(arity)) + XEN_TO_C_INT(XEN_CADR(arity)) >= ghook_arity(obj)) ||
-	      (XEN_TRUE_P(XEN_CADDR(arity))));
-  s7_gc_unprotect_at(s7, gc_loc);
-  XEN_ASSERT_TYPE(arity_ok, function, XEN_ARG_2, "add-hook!", "a function whose arity matches the hook's");
-
-  if (XEN_BOOLEAN_P(position)) at_end = XEN_TO_C_BOOLEAN(position);
-  add_ghook(obj, function, at_end);
-  return(hook);
-}
-
-
-XEN xen_s7_add_hook(XEN hook, s7_function func, const char *func_name, const char *documentation)
-{
-  /* since func will be a normal member of an s7 list, it needs to be wrapped up in a normal (never-GC'd) s7 object */
-  XEN fobj;
-  ghook *h;
-  h = XEN_TO_GHOOK(hook);
-  fobj = s7_make_function(s7, func_name, func, ghook_arity(h), 0, false, documentation);
-  /* s7_make_function returns a permanent object */
-  add_ghook(XEN_TO_GHOOK(hook), fobj, false);
-  return(fobj);
-}
-
-
-XEN xen_s7_reset_hook(XEN hook)
-{
-  XEN_ASSERT_TYPE(xen_hook_p(hook), hook, XEN_ONLY_ARG, "reset-hook!", "a hook");
-  reset_ghook(XEN_TO_GHOOK(hook));
-  return(hook);
-}
-
-
-static XEN g_run_hook(XEN all_args)
-{
-  XEN hook, args;
-  ghook *obj;
-  int arglen;
-  XEN functions, val = XEN_FALSE;
-
-  hook = XEN_CAR(all_args);
-  XEN_ASSERT_TYPE(xen_hook_p(hook), hook, XEN_ARG_1, "run-hook", "a hook");
-
-  obj = XEN_TO_GHOOK(hook);
-  args = XEN_CDR(all_args);
-  arglen = XEN_LIST_LENGTH(args);
-
-  if (ghook_arity(obj) != arglen)
-    XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"),
-	      XEN_LIST_5(C_TO_XEN_STRING("run hook (~A) got ~A args, but wants ~A (args: ~A)"),
-			 hook,
-			 C_TO_XEN_INT(arglen),
-			 C_TO_XEN_INT(ghook_arity(obj)),
-			 args));
-			 
-
-  functions = ghook_functions(obj);
-  while (XEN_NOT_NULL_P(functions))
-    {
-      val = XEN_APPLY(XEN_CAR(functions), args, "run-hook");
-      functions = XEN_CDR(functions);
-    }
-
-  return(val);
-}
-
-
-static XEN g_remove_hook(XEN hook, XEN function)
-{
-  ghook *obj;
-  XEN_ASSERT_TYPE(xen_hook_p(hook), hook, XEN_ARG_1, "remove-hook!", "a hook");
-  obj = XEN_TO_GHOOK(hook);
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(function), function, XEN_ARG_2, "remove-hook!", "a function");
-  obj->functions = s7_remv(s7, obj->functions, function);
-  return(hook);
-}
-
-
-XEN xen_s7_define_hook(const char *name, int arity, const char *help)
-{
-  XEN hook;
-  ghook *obj;
-  hook = g_make_hook(C_TO_XEN_INT(arity), XEN_UNDEFINED);
-  obj = XEN_TO_GHOOK(hook);
-  obj->documentation = help;
-  if (name)
-    {
-      XEN_DEFINE(name, hook);
-    }
-  s7_gc_protect(s7, hook);
-  return(hook);
-}
-
-
-static bool equalp_hook(void *uv1, void *uv2)
-{
-  return(uv1 == uv2);
-}
-
-
-static void mark_hook(void *v)
-{
-  s7_mark_object(((ghook *)v)->functions);
-}
-
-
-static void free_hook(void *v)
-{
-  free_ghook((ghook *)v);
-}
-
-
-static char *print_hook(s7_scheme *sc, void *v)
-{
-  return(hook_to_string((ghook *)v));
 }
 
 
@@ -2148,15 +1908,6 @@ static XEN g_gc_on(void)
 
 
 
-XEN_NARGIFY_1(g_hook_p_w, g_hook_p);
-XEN_NARGIFY_1(g_hook_empty_p_w, g_hook_empty_p)
-XEN_NARGIFY_2(g_remove_hook_w, g_remove_hook)
-XEN_NARGIFY_1(g_hook_to_list_w, xen_hook_to_list)
-XEN_VARGIFY(g_run_hook_w, g_run_hook)
-XEN_NARGIFY_1(g_reset_hook_w, xen_s7_reset_hook)
-XEN_ARGIFY_2(g_make_hook_w, g_make_hook)
-XEN_ARGIFY_3(g_add_hook_w, g_add_hook)
-
 XEN_NARGIFY_0(g_getpid_w, g_getpid)
 XEN_NARGIFY_1(g_file_exists_p_w, g_file_exists_p)
 XEN_NARGIFY_1(g_file_is_directory_w, g_file_is_directory)
@@ -2194,17 +1945,6 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   xen_undefined = s7_undefined(s7);
   xen_zero = s7_make_integer(s7, 0);
 
-  ghook_tag = XEN_MAKE_OBJECT_TYPE("<hook>", print_hook, free_hook, equalp_hook, mark_hook, NULL, NULL, NULL, NULL, NULL);
-
-  XEN_DEFINE_PROCEDURE("hook?",               g_hook_p_w,             1, 0, 0, "(hook? obj) -> #t if obj is a hook");
-  XEN_DEFINE_PROCEDURE("hook-empty?",         g_hook_empty_p_w,       1, 0, 0, "(hook-empty? hook) -> #t if obj is an empty hook");
-  XEN_DEFINE_PROCEDURE("remove-hook!",        g_remove_hook_w,        2, 0, 0, "(remove-hook! hook func) removes func from hook obj");
-  XEN_DEFINE_PROCEDURE("reset-hook!",         g_reset_hook_w,         1, 0, 0, "(reset-hook! hook) removes all funcs from hook obj");
-  XEN_DEFINE_PROCEDURE("hook->list",          g_hook_to_list_w,       1, 0, 0, "(hook->list hook) -> list of functions on hook obj");
-  XEN_DEFINE_PROCEDURE("run-hook",            g_run_hook_w,           0, 0, 1, "(run-hook hook . args) applies each hook function to args");
-  XEN_DEFINE_PROCEDURE("make-hook",           g_make_hook_w,          1, 1, 0, "(make-hook arity :optional help) makes a new hook object");
-  XEN_DEFINE_PROCEDURE("add-hook!",           g_add_hook_w,           2, 1, 0, "(add-hook! hook func :optional append) adds func to the hooks function list");
-
   XEN_DEFINE_PROCEDURE("getpid",              g_getpid_w,             0, 0, 0, H_getpid);
   XEN_DEFINE_PROCEDURE("file-exists?",        g_file_exists_p_w,      1, 0, 0, H_file_exists_p);
   XEN_DEFINE_PROCEDURE("file-is-directory?",  g_file_is_directory_w,  1, 0, 0, H_file_is_directory); /* "directory?" would be a better name, but we follow Guile */
@@ -2219,6 +1959,24 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   XEN_DEFINE_PROCEDURE("ftell",               g_ftell_w,              1, 0, 0, "(ftell fd): lseek");
   XEN_DEFINE_PROCEDURE(S_gc_off,              g_gc_off_w,             0, 0, 0, H_gc_off);
   XEN_DEFINE_PROCEDURE(S_gc_on,               g_gc_on_w,              0, 0, 0, H_gc_on);
+
+  /* backwards compatibility (guile hook functions) */
+  XEN_EVAL_C_STRING("(define (hook-empty? hook) (null? (hook-functions hook)))");
+  XEN_EVAL_C_STRING("(define (reset-hook! hook) (set! (hook-functions hook) '()))");
+  XEN_EVAL_C_STRING("(define (run-hook . args) (hook-apply (car args) (cdr args)))");
+  XEN_EVAL_C_STRING("(define hook->list hook-functions)");
+  XEN_EVAL_C_STRING("(define* (add-hook! hook func (at-end #f)) \n\
+                       (set! (hook-functions hook) \n\
+                             (if at-end \n\
+                                (cons func (hook-functions hook)) \n\
+                                (append (hook-functions hook) (list func)))))");
+  XEN_EVAL_C_STRING("(define (remove-hook! hook func) \n\
+                       (set! (hook-functions hook)\n\
+	                     (let loop ((l (hook-functions hook))\n\
+		                        (result '()))\n\
+	                       (cond ((null? l) (reverse! result))\n\
+		                     ((eq? func (car l)) (loop (cdr l) result))\n\
+		                     (else (loop (cdr l) (cons (car l) result)))))))");
 
   XEN_EVAL_C_STRING("(define load-from-path load)");
   XEN_EVAL_C_STRING("(define (1+ x) \"add 1 to arg\" (+ x 1))");

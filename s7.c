@@ -308,7 +308,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS, OP_EVAL_ARGS1, OP_APPLY, 
 	      OP_FOR_EACH, OP_MAP, OP_BARRIER, OP_DEACTIVATE_GOTO,
 	      OP_DEFINE_BACRO, OP_DEFINE_BACRO_STAR, OP_BACRO,
 	      OP_GET_OUTPUT_STRING, OP_SORT, OP_SORT1, OP_SORT2, OP_SORT3, OP_SORT4, OP_SORT_TWO,
-	      OP_EVAL_STRING_1, OP_EVAL_STRING_2, OP_SET_ACCESS,
+	      OP_EVAL_STRING_1, OP_EVAL_STRING_2, OP_SET_ACCESS, OP_HOOK_APPLY,
 	      OP_MAX_DEFINED} opcode_t;
 
 static const char *op_names[OP_MAX_DEFINED] = 
@@ -326,12 +326,12 @@ static const char *op_names[OP_MAX_DEFINED] =
    "trace-hook-quit", "with-environment", "with-environment", "with-environment", "for-each", "map", 
    "barrier", "deactivate-goto", "define-bacro", "define-bacro*", "bacro",
    "get-output-string", "sort", "sort", "sort", "sort", "sort", "sort",
-   "eval-string", "eval-string", "set-access"
+   "eval-string", "eval-string", "set-access", "hook-apply"
 };
 
 
 #define NUM_SMALL_INTS 256
-/* this needs to be at least OP_MAX_DEFINED = 90 max num chars (256) */
+/* this needs to be at least OP_MAX_DEFINED = 91 max num chars (256) */
 /* going up to 1024 gives very little improvement */
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
@@ -1098,6 +1098,7 @@ static s7_pointer vector_copy(s7_scheme *sc, s7_pointer old_vect);
 static void pop_input_port(s7_scheme *sc);
 static bool s7_is_negative(s7_pointer obj);
 static bool s7_is_positive(s7_pointer obj);
+static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d);
 
 #if HAVE_PTHREADS
   static bool is_thread(s7_pointer obj);
@@ -16470,6 +16471,44 @@ static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer 
 
 /* -------------------------------- hooks -------------------------------- */
 
+
+static bool is_function_with_arity(s7_pointer x)
+{
+  int typ;
+  typ = type(x);
+  return((typ == T_CLOSURE) || 
+	 (typ == T_CLOSURE_STAR) ||
+	 (typ >= T_C_FUNCTION) ||
+	 (s7_is_procedure_with_setter(x)));
+}
+
+
+static bool function_arity_ok(s7_scheme *sc, s7_pointer hook, s7_pointer func)
+{
+  s7_pointer func_args, hook_args;
+  int hook_req = 0, func_req = 0, func_opt = 0;
+  bool func_rst = false;
+
+  func_args = s7_procedure_arity(sc, func);
+  func_req = s7_integer(car(func_args));
+
+  hook_args = hook_arity(hook);
+  hook_req = s7_integer(car(hook_args));
+
+  if (hook_req == func_req) return(true);
+  if (hook_req < func_req) return(false);
+
+  /* TODO: this is the old form (when all hook args were required) */
+
+  func_opt = s7_integer(cadr(func_args));
+  func_rst = is_true(sc, caddr(func_args));
+  if (hook_req <= (func_req + func_opt)) return(true);
+  if (func_rst) return(true);
+
+  return(false);
+}
+
+
 bool s7_is_hook(s7_pointer p)
 {
   return(is_hook(p));
@@ -16484,9 +16523,9 @@ s7_pointer s7_hook_functions(s7_pointer hook)
 
 s7_pointer s7_hook_set_functions(s7_pointer hook, s7_pointer functions)
 {
-  /* TODO: check arity? */
-  hook_functions(hook) = functions;
-  return(functions);
+  if (is_pair(functions))
+    hook_functions(hook) = functions; /* TODO: check? */
+  return(hook_functions(hook));
 }
 
 
@@ -16542,7 +16581,7 @@ static s7_pointer g_is_hook(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_make_hook(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_hook "(make-hook :optional arity doc) returns a new hook.  'arity' is a list \
+  #define H_make_hook "(make-hook (arity (1 0 #f)) (doc \"\")) returns a new hook.  'arity' is a list \
 describing the argument list that the hook-functions will see: (list required optional rest). \
 It defaults to no arguments: '(0 0 #f).  Any function added to the hook's list has to be compatible \
 with the hook arity.  'doc' is a documentation string."
@@ -16550,16 +16589,24 @@ with the hook arity.  'doc' is a documentation string."
   s7_pointer x;
   NEW_CELL(sc, x);
 
-  /* TODO: check args */
-
   if (args != sc->NIL)
     {
       if (is_pair(car(args)))
 	hook_arity(x) = car(args);
-      else hook_arity(x) = make_list_3(sc, car(args), small_int(0), sc->F); /* old-style arg (guile) */
+      else 
+	{
+	  /* backwards compatibility -- this used to be just an integer => required args */
+	  if (s7_is_integer(car(args)))
+	    hook_arity(x) = make_list_3(sc, car(args), small_int(0), sc->F);
+	  else return(s7_wrong_type_arg_error(sc, "make-hook", 1, car(args), "an arity list: (required optional rest)"));
+	}
 
       if (cdr(args) != sc->NIL)
-	hook_documentation(x) = cadr(args);
+	{
+	  if (s7_is_string(cadr(args)))
+	    hook_documentation(x) = cadr(args);
+	  else return(s7_wrong_type_arg_error(sc, "make-hook", 2, cadr(args), "a string"));
+	}
       else hook_documentation(x) = s7_make_string(sc, "");
     }
   else 
@@ -16581,7 +16628,16 @@ static s7_pointer g_hook(s7_scheme *sc, s7_pointer args)
 as the initial hook-functions list, and taking its arity from those functions.  This is a \
 convenient short-hand similar to (vector ...) or (list ...)."
 
-  
+  s7_pointer x, hook;
+  int i;
+
+  for (i = 1, x = args; is_pair(x); x = cdr(x), i++)
+    if (!is_function_with_arity(car(x)))
+      return(s7_wrong_type_arg_error(sc, "hook", i, car(x), "a function"));
+
+  hook = s7_make_hook(sc, 0, 0, true, NULL);
+  hook_functions(hook) = args;
+  return(hook);
 }
 
 
@@ -16600,13 +16656,30 @@ to the current list."
 
 static s7_pointer g_hook_set_functions(s7_scheme *sc, s7_pointer args)
 {
-  if (!is_hook(car(args)))
-    return(s7_wrong_type_arg_error(sc, "hook-functions", 1, car(args), "a hook"));
+  s7_pointer x, hook, funcs;
+  hook = car(args);
 
-  /* TODO: check args */
+  if (!is_hook(hook))
+    return(s7_wrong_type_arg_error(sc, "hook-functions", 1, hook, "a hook"));
 
-  hook_functions(car(args)) = cadr(args);
-  return(cadr(args));
+  funcs = cadr(args);
+  if ((!is_pair(funcs)) &&
+      (funcs != sc->NIL))
+    return(s7_wrong_type_arg_error(sc, "hook-functions", 2, funcs, "a list of functions or '()"));
+
+  if (is_pair(funcs))
+    {
+      for (x = funcs; is_pair(x); x = cdr(x))
+	{
+	  if (!is_function_with_arity(car(x)))
+	    return(s7_wrong_type_arg_error(sc, "hook-functions", 2, funcs, "a list of functions"));
+	  if (!function_arity_ok(sc, hook, car(x)))
+	    return(s7_wrong_type_arg_error(sc, "hook-functions", 2, funcs, "a list of functions of the correct arity"));
+	}
+    }
+
+  hook_functions(hook) = funcs;
+  return(funcs);
 }
 
 
@@ -16635,10 +16708,62 @@ with the hook."
 }
 
 
-/* TODO: doc/test/xen
- *       fix local hooks
- *       apply/set/get/equal/map/for-each/length/copy
- *       then all the guile-style handlers as scheme replacements (snd-xen)
+static s7_pointer g_hook_apply(s7_scheme *sc, s7_pointer args)
+{
+  #define H_hook_apply "(hook-apply hook ...) applies each function in the hook's function \
+list to the trailing arguments of hook-apply."
+
+  s7_pointer hook, hook_args;
+
+  hook = car(args);
+  if (!is_hook(hook))
+    return(s7_wrong_type_arg_error(sc, "hook-apply", 1, hook, "a hook"));
+
+  if (cdr(args) == sc->NIL)
+    hook_args = sc->NIL;
+  else 
+    {
+      hook_args = apply_list_star(sc, cdr(args));
+
+      if (!is_proper_list(sc, hook_args))        /* (hook-apply + #f) etc */
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, 
+			make_list_2(sc, 
+				    make_protected_string(sc, "hook-apply's last argument should be a proper list: ~A"),
+				    hook_args)));
+    }
+
+  if (caddr(hook_arity(hook)) == sc->F)
+    {
+      int arg_num;
+      arg_num = safe_list_length(sc, hook_args);
+      if ((arg_num < s7_integer(car(hook_arity(hook)))) ||
+	  (arg_num > (s7_integer(car(hook_arity(hook))) + s7_integer(cadr(hook_arity(hook))))))
+	return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, 
+			make_list_3(sc, 
+				    make_protected_string(sc, "hook passed wrong number of args: ~A (arity: ~A)"),
+				    hook_args,
+				    hook_arity(hook))));
+    }
+
+  if (is_pair(hook_functions(hook)))
+    {
+      sc->args = hook_args;
+      sc->code = hook_functions(hook);
+      push_stack(sc, opcode(OP_HOOK_APPLY), sc->args, sc->code);
+    }
+
+  return(sc->UNSPECIFIED);
+}
+
+
+static bool hooks_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
+{
+  return(s7_is_equal(sc, hook_arity(x), hook_arity(y)) &&
+	 s7_is_equal(sc, hook_functions(x), hook_functions(y)));
+}
+
+/* TODO: doc/test
+ *       fix local hooks [set check -> list]
  */
 
 
@@ -16719,6 +16844,9 @@ static bool s7_is_equal_ci(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_inf
     case T_HASH_TABLE:
     case T_PAIR:
       return(structures_are_equal(sc, x, y, ci));
+
+    case T_HOOK:
+      return(hooks_are_equal(sc, x, y));
     }
 
   return(false); /* we already checked that x != y (port etc) */
@@ -16827,6 +16955,9 @@ bool s7_is_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 	free_shared_info(ci);
 	return(result);
       }
+
+    case T_HOOK:
+      return(hooks_are_equal(sc, x, y));
     }
 
   return(false); /* we already checked that x != y (port etc) */
@@ -17895,6 +18026,7 @@ static const char *type_name(s7_pointer arg)
     case T_HASH_TABLE:   return("hash-table");
     case T_S_OBJECT:     return(object_types[s_object_type(arg)].name);
     case T_C_OBJECT:     return(object_types[c_object_type(arg)].name);
+    case T_HOOK:         return("hook");
 
     case T_INPUT_PORT:
       {
@@ -21210,7 +21342,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       sc->value = sc->UNSPECIFIED;
       goto START;
-      
+
+
+    case OP_HOOK_APPLY:
+      /* args = function args, code = function list */
+      if (sc->code != sc->NIL)
+	{
+	  push_stack(sc, opcode(OP_HOOK_APPLY), sc->args, cdr(sc->code));
+	  sc->code = car(sc->code);
+	  goto APPLY;
+	}
+      goto START;
+
 
     case OP_DO_STEP:
       /* increment all vars, return to endtest 
@@ -21938,6 +22081,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	case T_GOTO:	                          /* -------- goto ("call-with-exit") -------- */
 	  call_with_exit(sc);
+	  goto START;
+
+	case T_HOOK:                              /* -------- hook -------- */
+	  if (is_pair(hook_functions(sc->code)))
+	    {
+	      sc->code = hook_functions(sc->code);
+	      push_stack(sc, opcode(OP_HOOK_APPLY), sc->args, cdr(sc->code));
+	      sc->code = car(sc->code);
+	      goto APPLY;
+	    }
+	  else sc->value = sc->UNSPECIFIED;
 	  goto START;
 
 	case T_S_OBJECT:                          /* -------- applicable s(cheme) object -------- */
@@ -29366,6 +29520,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "hook?",                   g_is_hook,                 1, 0, false, H_is_hook);
   s7_define_function(sc, "make-hook",               g_make_hook,               0, 2, false, H_make_hook);
   s7_define_function(sc, "hook",                    g_hook,                    0, 0, true,  H_hook);
+  s7_define_function(sc, "hook-apply",              g_hook_apply,              1, 0, true,  H_hook_apply);
   s7_define_function(sc, "hook-arity",              g_hook_arity,              1, 0, false, H_hook_arity);
   s7_define_function(sc, "hook-documentation",      g_hook_documentation,      1, 0, false, H_hook_documentation);
   s7_define_variable(sc, "hook-functions", 
@@ -29668,79 +29823,6 @@ s7_scheme *s7_init(void)
      x))
   (display "done"))
   
- *
- *
- * non-error conditions in CL would be better handled with hooks.
- *   need a way to see what hooks are available, local-hook-function, how to invoke the list.
- *
- * here's a scheme side hook implementation, but we also need the C side, so it probably
- *   is better to use the xen.c code.
-(begin
-
-  (define make-hook #f)
-  (define hook? #f)
-  (define hook-empty? #f)
-  (define remove-hook! #f)
-  (define reset-hook! #f)
-  (define hook->list #f)
-  (define run-hook #f)
-  (define add-hook! #f)
-
-  (let* ((hook-type (make-type :name "hook" 
-			       :getter (lambda (hook) (vector-ref hook 0))
-			       :setter (lambda (hook value) (vector-set! hook 0 value))
-			       :print (lambda (hook) (format #f "<hook: ~A>" (vector-ref hook 0)))))
-	 (? (car hook-type))
-	 (make (cadr hook-type))
-	 (ref (caddr hook-type)))
-
-    (set! make-hook (lambda args (make (vector '()))))
-    (set! hook? ?)
-    (set! hook-empty? (lambda (hook) (null? (hook))))
-    (set! reset-hook! (lambda (hook) (set! (hook) '())))
-    (set! remove-hook! (lambda (hook func)
-			 (set! (hook)
-			       (let loop ((l l) 
-					  (result '()))
-				 (cond ((null? l) (reverse! result))
-				       ((eq? func (car l)) 
-					(loop (cdr l) 
-					      result))
-				       (else (loop (cdr l) 
-						   (cons (car l) result))))))))
-    (set! hook->list (lambda (hook) (hook)))
-    (set! add-hook! (lambda (hook func)
-		      (set! (hook) (cons func (hook)))))
-    (set! run-hook (lambda (hook . args)
-		     (let loop ((lst (hook)))
-		       (if (not (null? lst))
-			   (begin
-			     (apply (car lst) args)
-			     (loop (cdr lst)))))))))
-
- *   defined via (make-hook) or s7_make_hook(sc), (hook ...)?
- *       make-hook arg is either int=req or list '(req opt rest)
- *       in the (hook ...) case arity is inferred from the list
- *   typed via (hook? obj) or s7_is_hook(obj)
- *   list of functions via (hook-functions obj) (settable) or s7_hook_functions(obj)
- *   arity via hook-arity or s7_hook_arity
- *   documentation via hook-documentation or s7_hook_documentation
- *   default application via apply? (*error-hook* ...) -> apply hook to args, so hook-run is redundant
- *   (apply *error-hook* arglist)
- *   hooks equal if arity/functions match
- *
- *   (define (hook-empty? hook) (null? (hook-functions hook)))
- *   (define (reset-hook! hook) (set! (hook-functions hook) '()))
- *   (define (remove-hook! hook function) (set! (hook-functions hook) (remove func (hook-functions hook))))
- *   (define (run-hook hook . args) (apply hook args))
- *   (define (add-hook! hook func) (set! (hook-functions hook) (cons func (hook-functions hook))))
- *   (define hook->list hook-functions)
- *
- * but this requires changes to *trace-hook* *error-hook* *unbound-variable-hook* *load-hook*:
- *   if the value is a list of functions, call them like a xen/guile hook list
- *
- *   snd-edits uses XEN_CLEAR_HOOK for the chan-local hooks
- *
  *
  * TODO: clean up vct|list|vector-ref|set! throughout Snd (scm/html) [also list-ref/set, frame|mixer etc]
  *

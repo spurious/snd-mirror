@@ -1250,7 +1250,7 @@ XEN run_or_hook(XEN hook, XEN args, const char *caller)
 #endif
   XEN result = XEN_FALSE; /* (or): #f */
   XEN hook_result = XEN_FALSE;
-  XEN procs = XEN_HOOK_PROCEDURES (hook);
+  XEN procs = XEN_HOOK_PROCEDURES(hook);
 
 #if HAVE_SCHEME
   gc_loc = s7_gc_protect(s7, args);
@@ -2680,6 +2680,10 @@ void g_xen_initialize(void)
 
   ss->snd_open_file_hook = XEN_DEFINE_SIMPLE_HOOK(1);
   ss->snd_selection_hook = XEN_DEFINE_SIMPLE_HOOK(1);
+
+  XEN_PROTECT_FROM_GC(ss->snd_open_file_hook);
+  XEN_PROTECT_FROM_GC(ss->snd_selection_hook);
+
   ss->effects_hook = XEN_DEFINE_HOOK(S_effects_hook, 0, "called when something changes that the effects dialogs care about");
 
 #if MUS_DEBUGGING

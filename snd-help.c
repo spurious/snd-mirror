@@ -3728,7 +3728,7 @@ and its value is returned."
     else
       {
 	if (XEN_HOOK_P(sym))
-	  str = (char *)xen_s7_hook_documentation(sym);
+	  str = (char *)s7_hook_documentation(sym);
 	else str = (char *)xen_s7_constant_help(subject);
       }
   }
