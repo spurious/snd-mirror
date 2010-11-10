@@ -16592,7 +16592,7 @@ with the hook arity.  'doc' is a documentation string."
   if (args != sc->NIL)
     {
       if (is_pair(car(args)))
-	hook_arity(x) = car(args);
+	hook_arity(x) = car(args); /* TODO: check that it's (int int bool) */
       else 
 	{
 	  /* backwards compatibility -- this used to be just an integer => required args */
@@ -16762,8 +16762,9 @@ static bool hooks_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 	 s7_is_equal(sc, hook_functions(x), hook_functions(y)));
 }
 
-/* TODO: doc/test
+/* TODO: doc (+scheme/C examples)/test (also various arity choice tests)
  *       fix local hooks [set check -> list]
+ *       libxm configuration
  */
 
 

@@ -9186,64 +9186,35 @@ _ACEOF
 _ACEOF
 
 
-	      XEN_CFLAGS=`$RUBY -e '\$:.each {|path| print "-I", path, " "}'`
+              #[ms] XEN_CFLAGS=`$RUBY -e [['\$:.each {|path| print "-I", path, " "}']]`
+              XEN_CFLAGS=`$RUBY -rrbconfig -e 'if Config::CONFIG["rubyhdrdir"] then print "-I", Config::CONFIG["rubyhdrdir"], " -I", Config::CONFIG["rubyhdrdir"] + Config::CONFIG["arch"]; else \$:.each {|path| print "-I", path, " "}; end'`
+
 	      # this is apparently actually intended for ruby programs (*.rb), not programs embedding ruby
 	      # we have to conjure up some plausible includes by hand:
 	      XEN_CFLAGS="$XEN_CFLAGS -I$ruby_prefix/include/ruby-$RUBY_VERSION/i686-linux -I$ruby_prefix/include/ruby-$RUBY_VERSION"
 
-	      XEN_LIBS=`$RUBY -e '\$:.each {|path| print "-L", path, " "}'`
+	      XEN_LIBS=`$RUBY -rrbconfig -e 'puts Config::CONFIG["LIBRUBYARG"]'`
+              #[ms] XEN_LIBS=`$RUBY -e [['\$:.each {|path| print "-L", path, " "}']]`
+
 	      RUBY_SEARCH_PATH=`$RUBY -e '\$:.each {|path| print path, ":"}'`
-	      RUBY_LIBS=`$RUBY -e 'require "rbconfig"; include Config; print CONFIG["LIBS"]'`
+
+              RUBY_LIBS=`$RUBY -rrbconfig -e 'puts Config::CONFIG["LIBS"]'`
+              #[ms] RUBY_LIBS=`$RUBY -e [['require "rbconfig"; include Config; print CONFIG["LIBS"]']]`
+
 	      # these are the non-ruby libraries required by ruby
 	      #   so look for -lruby, then libruby-static.a
 
-	      LIBRUBY="$ruby_prefix/lib/libruby-static.a"
-              { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rb_intern in -lruby" >&5
-$as_echo_n "checking for rb_intern in -lruby... " >&6; }
-if ${ac_cv_lib_ruby_rb_intern+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lruby  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char rb_intern ();
-int
-main ()
-{
-return rb_intern ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_ruby_rb_intern=yes
-else
-  ac_cv_lib_ruby_rb_intern=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ruby_rb_intern" >&5
-$as_echo "$ac_cv_lib_ruby_rb_intern" >&6; }
-if test "x$ac_cv_lib_ruby_rb_intern" = xyes; then :
-  LIBRUBY="-lruby"
-fi
-
+              #[ms] LIBRUBY=`$RUBY -rrbconfig -e [['puts Config::CONFIG["LIBRUBYARG_STATIC"]']]`
+              #[ms] LIBRUBY="$ruby_prefix/lib/libruby-static.a"
+              #[ms] AC_CHECK_LIB(ruby, rb_intern, [LIBRUBY="-lruby"])
 
 	      cat >>confdefs.h <<_ACEOF
 #define RUBY_SEARCH_PATH "${RUBY_SEARCH_PATH}"
 _ACEOF
 
-              XEN_LIBS="$XEN_LIBS $LIBRUBY $RUBY_LIBS"
+
+              XEN_LIBS="$XEN_LIBS $RUBY_LIBS"
+              #[ms] XEN_LIBS="$XEN_LIBS $LIBRUBY $RUBY_LIBS"
 
 	      if test "$enable_readline" != no ; then
 	        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for readline in -lreadline" >&5

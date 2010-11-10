@@ -902,7 +902,7 @@ static XEN xen_rb_hook_add_hook(int argc, XEN *argv, XEN hook)
 
 static XEN xen_proc_call(XEN args, XEN id) 
 { 
-  return(rb_apply(rb_mKernel, (ID)id, args)); 
+  return(rb_apply(rb_mKernel, (ID)id, XEN_CONS_P(args) ? args : XEN_LIST_1(args))); 
 } 
 
 #if 0
@@ -1967,7 +1967,7 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   XEN_EVAL_C_STRING("(define hook->list hook-functions)");
   XEN_EVAL_C_STRING("(define* (add-hook! hook func (at-end #f)) \n\
                        (set! (hook-functions hook) \n\
-                             (if at-end \n\
+                             (if (not at-end) \n\
                                 (cons func (hook-functions hook)) \n\
                                 (append (hook-functions hook) (list func)))))");
   XEN_EVAL_C_STRING("(define (remove-hook! hook func) \n\

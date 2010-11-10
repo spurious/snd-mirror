@@ -1238,23 +1238,32 @@ AC_ARG_WITH(ruby,
               AC_DEFINE_UNQUOTED(MUS_RUBY_VERSION,"${RUBY_VERSION}")
               AC_DEFINE_UNQUOTED(RUBY_RELEASE_DATE,"${RUBY_RELEASE_DATE}")
 
-	      XEN_CFLAGS=`$RUBY -e [['\$:.each {|path| print "-I", path, " "}']]`
+              #[ms] XEN_CFLAGS=`$RUBY -e [['\$:.each {|path| print "-I", path, " "}']]` 
+              XEN_CFLAGS=`$RUBY -rrbconfig -e [['if Config::CONFIG["rubyhdrdir"] then print "-I", Config::CONFIG["rubyhdrdir"], " -I", Config::CONFIG["rubyhdrdir"] + Config::CONFIG["arch"]; else \$:.each {|path| print "-I", path, " "}; end']]` 
+
 	      # this is apparently actually intended for ruby programs (*.rb), not programs embedding ruby
 	      # we have to conjure up some plausible includes by hand:
 	      XEN_CFLAGS="$XEN_CFLAGS -I$ruby_prefix/include/ruby-$RUBY_VERSION/i686-linux -I$ruby_prefix/include/ruby-$RUBY_VERSION"
 
-	      XEN_LIBS=`$RUBY -e [['\$:.each {|path| print "-L", path, " "}']]`
+	      XEN_LIBS=`$RUBY -rrbconfig -e [['puts Config::CONFIG["LIBRUBYARG"]']]` 
+              #[ms] XEN_LIBS=`$RUBY -e [['\$:.each {|path| print "-L", path, " "}']]` 
+
 	      RUBY_SEARCH_PATH=`$RUBY -e [['\$:.each {|path| print path, ":"}']]`
-	      RUBY_LIBS=`$RUBY -e [['require "rbconfig"; include Config; print CONFIG["LIBS"]']]`
+
+              RUBY_LIBS=`$RUBY -rrbconfig -e [['puts Config::CONFIG["LIBS"]']]` 
+              #[ms] RUBY_LIBS=`$RUBY -e [['require "rbconfig"; include Config; print CONFIG["LIBS"]']]` 
+
 	      # these are the non-ruby libraries required by ruby
 	      #   so look for -lruby, then libruby-static.a
 
-	      LIBRUBY="$ruby_prefix/lib/libruby-static.a"
-              AC_CHECK_LIB(ruby, rb_intern,
-	                   [LIBRUBY="-lruby"])
+              #[ms] LIBRUBY=`$RUBY -rrbconfig -e [['puts Config::CONFIG["LIBRUBYARG_STATIC"]']]` 
+              #[ms] LIBRUBY="$ruby_prefix/lib/libruby-static.a" 
+              #[ms] AC_CHECK_LIB(ruby, rb_intern, [LIBRUBY="-lruby"]) 
 
 	      AC_DEFINE_UNQUOTED(RUBY_SEARCH_PATH,"${RUBY_SEARCH_PATH}")
-              XEN_LIBS="$XEN_LIBS $LIBRUBY $RUBY_LIBS"
+
+              XEN_LIBS="$XEN_LIBS $RUBY_LIBS" 
+              #[ms] XEN_LIBS="$XEN_LIBS $LIBRUBY $RUBY_LIBS" 
 
 	      if test "$enable_readline" != no ; then
 	        AC_CHECK_LIB(readline, readline, 
