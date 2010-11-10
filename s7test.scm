@@ -6718,7 +6718,7 @@ yow!! -- I'm using mpc_cmp
     (set! (hook-functions h) '())
     (test (hook-functions h) '())))
 
-(let ((h (hook (lambda (x) (error 'out-of-hook 32)))))
+(let ((h (hook (lambda x (error 'out-of-hook 32)))))
   (let ((val (catch 'out-of-hook
 		    (lambda ()
 		      (h 123)
@@ -6749,9 +6749,18 @@ yow!! -- I'm using mpc_cmp
   (test (hook? h h) 'error)
   (test (hook h) 'error)
   (test (hook? (hook)) #t)
-  (test (hook-arity (hook)) '(0 0 #t))
+  (test (hook-arity (hook)) '(0 0 #f))
   (test (hook-functions (hook)) '())
   (test (hook-documentation (hook)) ""))
+(test (make-hook '()) 'error)
+(test (make-hook '(1)) 'error)
+(test (make-hook '(1 2)) 'error)
+(test (make-hook '(1 2 #f 3)) 'error)
+(test (make-hook '(1.0 2 #f)) 'error)
+(test (make-hook '(1 2/3 #f)) 'error)
+(test (make-hook '(1 0 1)) 'error)
+(test (make-hook '(-1 0 #f)) 'error)
+(test (make-hook '(1 -1 #f)) 'error)
 
 (let ((h (make-hook '(1 0 #f)))
       (x 0))
@@ -6796,6 +6805,30 @@ yow!! -- I'm using mpc_cmp
   (test (pair? (set! (hook-functions h) (list hook-functions))) #t)
   )
 
+(test (hook-arity (hook (lambda () 1))) '(0 0 #f))
+(test (hook-arity (hook (lambda (x) 1))) '(1 0 #f))
+(test (hook-arity (hook (lambda (x . y) 1))) '(1 0 #t))
+(test (hook-arity (hook (lambda* ((x 1) (y 2)) 1))) '(0 2 #f))
+
+(test (hook? (hook (lambda (x) x) (lambda (y) 1))) #t)
+(test (hook (lambda (x) x) (lambda () 1)) 'error)
+(test (hook (lambda (x) x) (lambda (x y) 1)) 'error)
+(test (hook? (hook (lambda (x) x) (lambda x 1))) #t)
+(test (hook? (hook (lambda () 1) (lambda x 1))) #t)
+(test (hook? (hook (lambda x 1) (lambda x 1))) #t)
+(test (hook? (hook (lambda (x y) x) (lambda* (x (y 1) (z 2)) 1))) #t)
+(test (hook (lambda (x y) x) (lambda* (x) 1)) 'error)
+(test (hook (lambda* (x (y 1)) x) (lambda* (x) 1)) 'error)
+
+(let ((h (make-hook '(1 1 #f))))
+  (set! (hook-functions h) (list (lambda* (x (y 1)) (+ x y)) (lambda z 2)))
+  (test (hook-apply h '(0)) (h 0))
+  (test (hook-apply h '(1 2)) (h 1 2))
+  (test (hook-apply h '(1 2 3)) 'error)
+  (test (h 1 2 3) 'error)
+  (test (hook-apply h '()) 'error)
+  (test (h) 'error)
+  )
 
 
 
@@ -17359,13 +17392,18 @@ why are these different (read-time `#() ? )
 
     (for-each
      (lambda (arg)
-       (test (symbol-access arg) 'error))
+       (test (symbol-access arg) 'error)
+       (test (set! (symbol-access _int_) arg) 'error))
      (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() '#(()) (list 1 2 3) '(1 . 2) "hi"))
     
     (test (symbol-access) 'error)
     (test (symbol-access '_int_ 2) 'error)
     (test (symbol-access 'abs) #f)
     (test (symbol-access 'xyzzy) #f)
+    (test (set! (symbol-access _int_) '()) 'error)
+    (test (set! (symbol-access _int_) '(#f)) 'error)
+    (test (set! (symbol-access _int_) '(#f #f)) 'error)
+    (test (set! (symbol-access _int_) '(#f #f #f #f)) 'error)
 
     (let ((_x1_ #f))
       (set! (symbol-access '_x1_) (list #f 

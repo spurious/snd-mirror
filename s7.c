@@ -16426,12 +16426,19 @@ symbol access its current binding."
 
 static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
 {
-  if (!s7_is_symbol(car(args)))
-    return(s7_wrong_type_arg_error(sc, "set! symbol-access,", 1, car(args), "a symbol"));
+  s7_pointer sym, funcs;
+  sym = car(args);
+  if (!s7_is_symbol(sym))
+    return(s7_wrong_type_arg_error(sc, "set! symbol-access,", 1, sym, "a symbol"));
 
-  /* TODO: shouldn't this check for list or #f? */
-  
-  return(s7_symbol_set_access(sc, car(args), cadr(args)));
+  funcs = cadr(args);
+  if (funcs != sc->F)
+    {
+      if ((!is_pair(funcs)) ||
+	  (s7_list_length(sc, funcs) != 3))
+	return(s7_wrong_type_arg_error(sc, "set! symbol-access,", 2, funcs, "a list of 3 settings"));	
+    }
+  return(s7_symbol_set_access(sc, sym, funcs));
 }
 
 
@@ -16474,6 +16481,7 @@ static s7_pointer call_symbol_bind(s7_scheme *sc, s7_pointer symbol, s7_pointer 
 
 static bool is_function_with_arity(s7_pointer x)
 {
+  /* hook function lists are more restrictive than s7_is_procedure which accepts things like continuations */
   int typ;
   typ = type(x);
   return((typ == T_CLOSURE) || 
@@ -16485,9 +16493,14 @@ static bool is_function_with_arity(s7_pointer x)
 
 static bool function_arity_ok(s7_scheme *sc, s7_pointer hook, s7_pointer func)
 {
+  /* when a function is added to a hook, we need to check that its arity is compatible
+   *   with the hook arity.  The function must accept the hook's required number of
+   *   arguments, and optionally accept any optional hook arguments.  If the hook
+   *   has a rest argument, the function must have one too.
+   */
   s7_pointer func_args, hook_args;
-  int hook_req = 0, func_req = 0, func_opt = 0;
-  bool func_rst = false;
+  int hook_req = 0, hook_opt = 0, func_req = 0, func_opt = 0;
+  bool hook_rst = false, func_rst = false;
 
   func_args = s7_procedure_arity(sc, func);
   func_req = s7_integer(car(func_args));
@@ -16495,16 +16508,20 @@ static bool function_arity_ok(s7_scheme *sc, s7_pointer hook, s7_pointer func)
   hook_args = hook_arity(hook);
   hook_req = s7_integer(car(hook_args));
 
-  if (hook_req == func_req) return(true);
-  if (hook_req < func_req) return(false);
+  if (hook_req < func_req) return(false); /* func requires too many args */
 
-  /* TODO: this is the old form (when all hook args were required) */
-
-  func_opt = s7_integer(cadr(func_args));
   func_rst = is_true(sc, caddr(func_args));
-  if (hook_req <= (func_req + func_opt)) return(true);
-  if (func_rst) return(true);
+  hook_rst = is_true(sc, caddr(hook_args));
 
+  if (func_rst) return(true);             /* func required args are ok, and it has a rest arg, so it matches */
+  if (hook_rst) return(false);            /* func has no rest, hook has rest -- can't be safe */
+
+  /* both rest args are false, hook-req >= func-req */
+  func_opt = s7_integer(cadr(func_args));
+  hook_opt = s7_integer(cadr(hook_args));
+
+  /* most args hook handles must be <= most func handles */
+  if ((hook_req + hook_opt) <= (func_req + func_opt)) return(true);
   return(false);
 }
 
@@ -16524,7 +16541,7 @@ s7_pointer s7_hook_functions(s7_pointer hook)
 s7_pointer s7_hook_set_functions(s7_pointer hook, s7_pointer functions)
 {
   if (is_pair(functions))
-    hook_functions(hook) = functions; /* TODO: check? */
+    hook_functions(hook) = functions;
   return(hook_functions(hook));
 }
 
@@ -16591,21 +16608,38 @@ with the hook arity.  'doc' is a documentation string."
 
   if (args != sc->NIL)
     {
-      if (is_pair(car(args)))
-	hook_arity(x) = car(args); /* TODO: check that it's (int int bool) */
+      s7_pointer arity;
+      arity = car(args);
+      if (is_pair(arity))
+	{
+	  s7_Int req, opt;
+	  if ((s7_list_length(sc, arity) != 3) ||
+	      (!s7_is_integer(car(arity))) ||
+	      (!s7_is_integer(cadr(arity))) ||
+	      (!s7_is_boolean(caddr(arity))))
+	    return(s7_wrong_type_arg_error(sc, "make-hook", 1, arity, "an arity list: (required optional rest)"));
+	  req = s7_integer(car(arity));
+	  opt = s7_integer(cadr(arity));
+	  if ((req < 0) ||
+	      (opt < 0))
+	    return(s7_wrong_type_arg_error(sc, "make-hook", 1, arity, "number of args can't be negative"));
+	  hook_arity(x) = arity; 
+	}
       else 
 	{
 	  /* backwards compatibility -- this used to be just an integer => required args */
-	  if (s7_is_integer(car(args)))
-	    hook_arity(x) = make_list_3(sc, car(args), small_int(0), sc->F);
-	  else return(s7_wrong_type_arg_error(sc, "make-hook", 1, car(args), "an arity list: (required optional rest)"));
+	  if (s7_is_integer(arity))
+	    hook_arity(x) = make_list_3(sc, arity, small_int(0), sc->F);
+	  else return(s7_wrong_type_arg_error(sc, "make-hook", 1, arity, "an arity list: (required optional rest)"));
 	}
 
       if (cdr(args) != sc->NIL)
 	{
-	  if (s7_is_string(cadr(args)))
-	    hook_documentation(x) = cadr(args);
-	  else return(s7_wrong_type_arg_error(sc, "make-hook", 2, cadr(args), "a string"));
+	  s7_pointer doc;
+	  doc = cadr(args);
+	  if (s7_is_string(doc))
+	    hook_documentation(x) = doc;
+	  else return(s7_wrong_type_arg_error(sc, "make-hook", 2, doc, "a string"));
 	}
       else hook_documentation(x) = s7_make_string(sc, "");
     }
@@ -16626,17 +16660,29 @@ static s7_pointer g_hook(s7_scheme *sc, s7_pointer args)
 {
   #define H_hook "(hook ...) returns a new hook object with its arguments (all functions) \
 as the initial hook-functions list, and taking its arity from those functions.  This is a \
-convenient short-hand similar to (vector ...) or (list ...)."
+convenient short-hand similar to (vector ...) or (list ...).  The hook arity is that of the \
+first function in the list, or '(0 0 #f) if there are no functions.  All the other functions \
+must be compatible with the arity of the first."
 
   s7_pointer x, hook;
-  int i;
+  int i, gc_loc;
+  
+  if (args == sc->NIL)
+    return(s7_make_hook(sc, 0, 0, false, NULL));
 
   for (i = 1, x = args; is_pair(x); x = cdr(x), i++)
     if (!is_function_with_arity(car(x)))
       return(s7_wrong_type_arg_error(sc, "hook", i, car(x), "a function"));
 
-  hook = s7_make_hook(sc, 0, 0, true, NULL);
+  hook = g_make_hook(sc, s7_cons(sc, s7_procedure_arity(sc, car(args)), sc->NIL));
   hook_functions(hook) = args;
+  gc_loc = s7_gc_protect(sc, hook);
+  
+  for (i = 1, x = args; is_pair(x); x = cdr(x), i++)
+    if (!function_arity_ok(sc, hook, car(x)))
+      return(s7_wrong_type_arg_error(sc, "hook", i, car(x), "compatible function"));
+
+  s7_gc_unprotect_at(sc, gc_loc);
   return(hook);
 }
 
@@ -16762,9 +16808,10 @@ static bool hooks_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 	 s7_is_equal(sc, hook_functions(x), hook_functions(y)));
 }
 
-/* TODO: doc (+scheme/C examples)/test (also various arity choice tests)
+/* TODO: doc (+scheme/C examples)
  *       fix local hooks [set check -> list]
  *       libxm configuration
+ *       remove guile-hook stuff from *.scm? [add-hook! remove-hook!]
  */
 
 
@@ -17950,6 +17997,7 @@ static void trace_apply(s7_scheme *sc)
       
       sc->trace_depth++;
 
+      /* s7_hook_apply(sc, symbol_value(find_symbol(sc, sc->envir, sc->TRACE_HOOK)), sc->args); */
       {
 	/* handle *trace-hook* */
 	s7_pointer trace_hook, trace_hook_binding;

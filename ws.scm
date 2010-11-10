@@ -543,7 +543,7 @@
 	   ;; if multichannel output, make sure cross-chan mixes move together 
 	   (if (> (channels outsnd) 1)
 	       (begin
-		 (reset-hook! mix-release-hook)
+		 (set! (hook-functions mix-release-hook) '())
 		 (add-hook! mix-release-hook
 			    (lambda (id samps-moved)
 			      (let ((new-pos (+ samps-moved (mix-position id)))
@@ -555,7 +555,7 @@
 				#t)))))
 
 	   ;; click shows the original note list entry
-	   (reset-hook! mix-click-hook)
+	   (set! (hook-functions mix-click-hook) '())
 	   (add-hook! mix-click-hook
 		      (lambda (id)
 			(let ((info (with-mixed-sound-mix-info id outsnd)))
@@ -679,9 +679,9 @@
 
 (defmacro sound-let (snds . body) 
   `(let ((temp-files '())
-	 (old-hook-list (hook->list new-sound-hook))) ; save old new-sound-hook (nested sound-lets etc)
+	 (old-hook-list (hook-functions new-sound-hook))) ; save old new-sound-hook (nested sound-lets etc)
      (begin
-       (reset-hook! new-sound-hook)
+       (set! (hook-functions new-sound-hook) '())
        (add-hook! new-sound-hook (lambda (file)       ; save current sound-let temp file list
 				   (if (string? file) ; try to ignore vcts and sound-data objects
 				       (set! temp-files (cons file temp-files)))))
@@ -697,7 +697,7 @@
 			      (file-exists? file))
 			 (delete-file file)))
 		   temp-files)
-	 (reset-hook! new-sound-hook)                 ; restore old new-sound-hook (should this happen before ,@body?)
+	 (set! (hook-functions new-sound-hook) '())                 ; restore old new-sound-hook (should this happen before ,@body?)
 	 (if (not (null? old-hook-list))
 	     (for-each (lambda (proc)
 			 (add-hook! new-sound-hook proc))

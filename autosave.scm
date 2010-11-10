@@ -42,7 +42,7 @@
 			       temp-file)))
       (do ((i 0 (+ 1 i)))
 	  ((= i (channels snd)))
-	(if (hook-empty? (edit-hook snd i))
+	(if (null? (hook-functions (edit-hook snd i)))
 	    (add-hook! (edit-hook snd i) (upon-edit snd))))
       (clear-unsaved-edits snd)))
   
@@ -65,7 +65,7 @@
 		    (sounds))
 	  (in (* 1000 auto-save-interval) auto-save-func))))
   
-  (if (not (member auto-save-done (hook->list close-hook)))
+  (if (not (member auto-save-done (hook-functions close-hook)))
       (begin
 	(if (not (null? (sounds)))
 	    (for-each auto-save-open-func (sounds)))

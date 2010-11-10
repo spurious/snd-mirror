@@ -31,7 +31,7 @@
 	 (audio-fd 
 	  ;; ALSA throws an error where the rest of the audio cases simply report failure
 	  ;;   so we turn off the "error" printout, catch the error itself, and toss it
-	  (let ((no-error (hook-empty? mus-error-hook)))
+	  (let ((no-error (null? (hook-functions mus-error-hook))))
 	    (if no-error
 		(add-hook! mus-error-hook (lambda (typ msg) #t)))
 	    (let ((val (catch #t
@@ -39,7 +39,7 @@
 				(mus-audio-open-output 0 cur-srate outchans frm outbytes))
 			      (lambda args -1)))) ; -1 returned in case of error
 	      (if no-error 
-		  (reset-hook! mus-error-hook))
+		  (set! (hook-functions mus-error-hook) '()))
 	      val))))
     (if (not (= audio-fd -1))
 	(set! (dac-size) outbytes))

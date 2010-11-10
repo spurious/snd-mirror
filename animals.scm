@@ -267,7 +267,7 @@
 ;;;   otherwise if the file is long (like most bird recordings), play what's in the current window.
 ;;;   This is mainly to cut out the ubiquitous and useless announcer.
 
-(if (hook-empty? start-playing-hook)
+(if (null? (hook-functions start-playing-hook))
     (add-hook! start-playing-hook
 	       (lambda (snd)
 		 (if (sound? snd)  ; meaning not 123456 = temp-sound-index from View:Files play button

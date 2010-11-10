@@ -1662,7 +1662,7 @@ Reverb-feedback sets the scaler on the feedback.
   "(show-smpte-label on-or-off) turns on/off a label in the time-domain graph showing the current smpte frame of the leftmost sample"
   (if (or (null? arg)
 	  (car arg))
-      (if (not (member draw-smpte-label (hook->list after-graph-hook)))
+      (if (not (member draw-smpte-label (hook-functions after-graph-hook)))
 	  (begin
 	    (add-hook! after-graph-hook draw-smpte-label)
 	    (update-time-graph #t #t)))
@@ -1672,7 +1672,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 (define (smpte-is-on) ; for prefs dialog
   "(smpte-is-on) is #t if we are drawing SMPTE time stamps"
-  (member draw-smpte-label (hook->list after-graph-hook)))
+  (member draw-smpte-label (hook-functions after-graph-hook)))
 
 
 ;;; -------- with-level-meters, make-level-meter, display-level
@@ -2345,8 +2345,8 @@ Reverb-feedback sets the scaler on the feedback.
 					      (cadr (get-color new-color)))))
 	 (new-selected-mark-color (list 'Pixel (logxor (cadr (selected-graph-color))
 						       (cadr (get-color new-color))))))
-    (if (not (hook-empty? draw-mark-hook)) 
-	(reset-hook! draw-mark-hook))
+    (if (not (null? (hook-functions draw-mark-hook)))
+	(set! (hook-functions draw-mark-hook) '()))
     (add-hook! draw-mark-hook
 	       (lambda (id)
 		 (if (> (sync id) 0)

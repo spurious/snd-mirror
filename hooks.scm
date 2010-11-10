@@ -23,15 +23,15 @@
   "(reset-all-hooks) removes all Snd hook functions"
   (for-each 
    (lambda (n)
-     (reset-hook! n))
+     (set! (hook-functions n) '()))
    (snd-hooks))
   (for-each 
    (lambda (snd)
      (do ((chn 0 (+ chn 1)))
 	 ((= chn (channels snd)))
-       (reset-hook! (edit-hook snd chn))
-       (reset-hook! (after-edit-hook snd chn))
-       (reset-hook! (undo-hook snd chn))))
+       (set! (hook-functions (edit-hook snd chn)) '())
+       (set! (hook-functions (after-edit-hook snd chn)) '())
+       (set! (hook-functions (undo-hook snd chn)) '())))
    (sounds)))
 
 
@@ -42,7 +42,7 @@
   (for-each 
     (lambda (n) 
       (snd-print (format #f "~%~A" n)))
-    (reverse (hook->list hook))))
+    (reverse (hook-functions hook))))
 
 
 ;;; -------- local hook
@@ -54,13 +54,13 @@
 	(begin
 	  (add-hook! hook (car l))
 	  (list->hook-1 hook (cdr l)))))
-  (reset-hook! hook)
+  (set! (hook-functions hook) '())
   (list->hook-1 hook lst)
   hook)
 
 (define (with-local-hook hook local-hook-procs thunk)
   "(with-local-hook hook local-hook-procs thunk) evaluates thunk with hook set to local-hook-procs (a list), then restores hook to its previous state"
-  (let ((old-hook-procs (hook->list hook)))
+  (let ((old-hook-procs (hook-functions hook)))
     (list->hook hook local-hook-procs)
     (let ((result (thunk)))
       (list->hook hook old-hook-procs)
@@ -71,4 +71,4 @@
 
 (define (hook-member value hook) 
   "(hook-member value hook) returns non-#f if 'value' is a member of the hook's function list"
-  (member value (hook->list hook)))
+  (member value (hook-functions hook)))

@@ -434,7 +434,7 @@
   (lambda arg
     (if (or (null? arg)
 	    (car arg))
-      (if (not (member draw-smpte-label (hook->list after-graph-hook)))
+      (if (not (member draw-smpte-label (hook-functions after-graph-hook)))
 	  (begin
 	    (add-hook! after-graph-hook draw-smpte-label)
 	    (update-time-graph #t #t)))

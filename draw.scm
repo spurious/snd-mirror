@@ -155,7 +155,7 @@ whenever they're in the current view."
 
 (define* (color-samples color ubeg udur usnd uchn)
   "(color-samples color beg dur snd chn) causes samples from beg to beg+dur to be displayed in color"
-  (if (not (member display-samples-in-color (hook->list after-graph-hook)))
+  (if (not (member display-samples-in-color (hook-functions after-graph-hook)))
       (add-hook! after-graph-hook display-samples-in-color))
   (let* ((beg (or ubeg 0))
 	 (snd (or usnd (selected-sound) (car (sounds))))

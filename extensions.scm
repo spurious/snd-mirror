@@ -190,9 +190,9 @@ If 'check' is #f, the hooks are removed."
   (set! checking-for-unsaved-edits check)
   (if check
       (begin
-	(if (not (member unsaved-edits-at-exit? (hook->list before-exit-hook)))
+	(if (not (member unsaved-edits-at-exit? (hook-functions before-exit-hook)))
 	    (add-hook! before-exit-hook unsaved-edits-at-exit?))
-	(if (not (member unsaved-edits-at-close? (hook->list before-close-hook)))
+	(if (not (member unsaved-edits-at-close? (hook-functions before-close-hook)))
 	    (add-hook! before-close-hook unsaved-edits-at-close?)))
       (begin
 	(remove-hook! before-exit-hook unsaved-edits-at-exit?)
@@ -974,7 +974,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   "(set-global-sync choice) sets the preferences dialog global-sync choice"
   (set! global-sync-choice choice)
   (if (and (not (= choice 0))
-	   (not (member global-sync-func (hook->list after-open-hook))))
+	   (not (member global-sync-func (hook-functions after-open-hook))))
       (add-hook! after-open-hook global-sync-func)))
 
 

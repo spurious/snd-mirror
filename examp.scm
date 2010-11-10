@@ -2090,7 +2090,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
       #f)
 
     (lambda ()
-      (if (not (member get-current-files (hook->list open-hook)))
+      (if (not (member get-current-files (hook-functions open-hook)))
 	  (add-hook! open-hook get-current-directory))
       (if (and (not (string? last-file-opened))
 	       (not (null? (sounds))))

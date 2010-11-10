@@ -82,6 +82,7 @@ and want a quick tour of where s7 is different.  (Well, it was quick once upon a
   <li><a href="#generalizedset">generalized set!</a>
   <li><a href="#multidimensionalvectors">multidimensional vectors</a>
   <li><a href="#hashtables">hash tables</a>
+  <li><a href="#hooks">hooks</a>
   <li><a href="#multithreading">multithreading</a>
   <li><a href="#multiplevalues">multiple-values</a>
   <li><a href="#callwithexit">call-with-exit</a>
@@ -2318,6 +2319,44 @@ an entry, <code>'(key . value)</code>, in whatever order the entries are encount
 
 </dd>
 <br><br>
+
+
+<!-- -------------------------------------------------------------------------------- -->
+<dt>
+<A NAME="hooks"></a>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0 cellpadding=8><tr><td bgcolor="#EEFDEE" valign="middle"><h4>hooks</h4></td></tr></table>
+</td></tr></table>
+</dt>
+
+<dd><br>
+<ul>
+<li>(make-hook (arity (0 0 #f)) (documentation ""))
+<li>(hook ...)
+<li>(hook? obj)
+<li>(hook-functions hook)
+<li>(hook-arity hook)
+<li>(hook-documentation hook)
+<li>(hook-apply hook ...) and (&lt;hook&gt; ...)
+</ul>
+
+<p>A hook holds a list of functions.  When something interesting happens,
+the hook is invoked, and it applies its arguments to each function in the list.
+In GUI toolkits hooks are called callback-lists, in CL conditions,
+in other contexts watchpoints or signals.  s7 itself has several
+hooks: *trace-hook*, *error-hook*, *unbound-variable-hook*.
+A hook is created with make-hook or hook, called either as an applicable object
+or via hook-apply, recognized via hook?.  The list of functions is accessed
+via hook-functions.  All the functions on the list have to be compatible with
+the way the hook itself is invoked, so the hook has an arity, hook-arity.
+</p>
+
+</blockquote>
+</small>
+
+</dd>
+<br><br>
+
 
 
 <!-- -------------------------------------------------------------------------------- -->

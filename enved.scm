@@ -182,7 +182,7 @@
       (let ((player (make-player sound chan))
 	    (e (make-env (channel-envelope sound chan) 
 			 :length (floor (/ (frames sound chan) (dac-size))))))
-	(add-player player 0 -1 -1 (lambda (reason) (reset-hook! play-hook)))
+	(add-player player 0 -1 -1 (lambda (reason) (set! (hook-functions play-hook) '())))
 	(add-hook! play-hook (lambda (fr)
 			       ;; if fr (dac buffer size in frames) is not dac-size, we should do something debonair
 			       (set! (amp-control player) (env e))))))
