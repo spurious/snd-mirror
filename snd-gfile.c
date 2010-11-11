@@ -2542,6 +2542,7 @@ static XEN save_selection_hook_handler(XEN xreason)
     {
       clear_dialog_error(sd->panel_data);
     }
+  return(XEN_FALSE);
 }
 
 #ifdef XEN_ARGIFY_1

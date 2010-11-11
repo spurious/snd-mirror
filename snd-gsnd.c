@@ -1581,6 +1581,7 @@ static XEN reflect_file_close_in_sync(XEN xreason)
       if ((sp) && (sp->nchans == 1))
 	gtk_widget_hide(SYNC_BUTTON(sp));
     }
+  return(XEN_FALSE);
 }
 
 #ifdef XEN_ARGIFY_1

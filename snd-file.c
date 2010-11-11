@@ -3005,6 +3005,7 @@ static XEN vf_open_file_watcher(XEN reason)
 	vf_open_remove_buttons_set_sensitive(vdat, 
 					     (vdat->currently_selected_files > 0));
       }
+  return(XEN_FALSE);
 }
 
 #ifdef XEN_ARGIFY_1

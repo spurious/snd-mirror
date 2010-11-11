@@ -16807,7 +16807,7 @@ static bool hooks_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 	 s7_is_equal(sc, hook_functions(x), hook_functions(y)));
 }
 
-/* TODO: doc (+scheme/C examples)
+/* TODO: remaining tests of local hooks etc
  *       libxm configuration
  *       add-hook! et al are still in *.html because they're used by ruby and forth
  */

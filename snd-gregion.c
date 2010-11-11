@@ -362,6 +362,7 @@ static XEN reflect_file_in_region_browser(XEN reason)
       set_sensitive(mix_button, file_p);
       set_sensitive(insert_button, file_p);
     }
+  return(XEN_FALSE);
 }
 
 #ifdef XEN_ARGIFY_1

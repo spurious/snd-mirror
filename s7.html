@@ -2352,6 +2352,14 @@ via hook-functions.  All the functions on the list have to be compatible with
 the way the hook itself is invoked, so the hook has an arity, hook-arity.
 </p>
 
+<pre>
+&gt; (let ((h (make-hook '(1 0 #f) "an example hook")))     ; 1 required arg and no others
+    (set! (hook-functions h)                             ; add 1 function to the hook's list
+      (list (lambda (x) (format #t "x is ~A" x))))
+    (h 23))                                              ; invoke the hook's functions with argument 23
+"x is 23"
+</pre>
+
 </blockquote>
 </small>
 
@@ -4686,6 +4694,7 @@ The examples that follow show:
 <li><a href="#namespace">Load C defined stuff into a separate namespace</a>
 <li><a href="#Cerrors">Error handling in C</a>
 <li><a href="#closure">Closure defined in C</a>
+<li><a href="#testhook">Hooks in C and Scheme</a>
 </ul>
 
 <br><br>
@@ -6023,6 +6032,83 @@ int main(int argc, char **argv)
 </pre>
 </td></tr></table>
 <br><br>
+
+
+<A NAME="testhook"></a>
+<p>C and Scheme hook handling.
+</p>
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=16>
+<tr><td bgcolor="#fbfbf0">
+<pre>
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+#include "s7.h"
+
+static s7_pointer my_exit(s7_scheme *sc, s7_pointer args) {exit(0);}
+
+static s7_pointer my_hook_function(s7_scheme *sc, s7_pointer args)
+{
+  fprintf(stderr, "arg is %s\n", s7_object_to_c_string(sc, s7_car(args)));
+  return(s7_car(args));
+}
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  char buffer[512];
+  char response[1024];
+  s7_pointer test_hook;
+
+  s7 = s7_init();  
+  s7_define_function(s7, "exit", my_exit, 0, 0, false, "(exit) exits the program");
+
+  /* define test_hook in C, test-hook in Scheme */
+  test_hook = <em class=red>s7_make_hook</em>(s7, 2, 0, false, "test-hook's functions take 2 arguments");
+  s7_define_constant(s7, "test-hook", test_hook); 
+
+  /* add my_hook_function to the test_hook function list */
+  <em class=red>s7_hook_set_functions</em>(test_hook, 
+			s7_cons(s7, 
+				s7_make_function(s7, "my-hook-function", my_hook_function, 2, 0, false, "my hook-function"), 
+				s7_hook_functions(test_hook)));
+  while (1) 
+    {
+      fprintf(stdout, "\n&gt; ");
+      fgets(buffer, 512, stdin);
+	  
+      if ((buffer[0] != '\n') || 
+	  (strlen(buffer) &gt; 1))
+	{                            
+	  sprintf(response, "(write %s)", buffer);
+	  s7_eval_c_string(s7, response);
+	}
+    }
+}
+
+/* 
+ *    &gt; test-hook
+ *    #&lt;hook&gt;
+ *    
+ *    &gt; (hook-functions test-hook)
+ *    (my-hook-function)
+ *    
+ *    &gt; (set! (hook-functions test-hook) 
+ *        (cons (lambda (a b) (format #t "a is ~S~%" a)) 
+ *              (hook-functions test-hook)))
+ *    (#&lt;closure&gt; my-hook-function)
+ *    
+ *    &gt; (test-hook 1 2)
+ *    a is 1
+ *    arg is 1
+ *    1
+ */
+</pre>
+</td></tr></table>
+<br><br>
+
 
 </body>
 </html>

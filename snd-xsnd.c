@@ -3026,6 +3026,7 @@ static XEN reflect_file_close_in_sync(XEN xreason)
 	  attach_minibuffer(sp);
 	}
     }
+  return(XEN_FALSE);
 }
 
 #ifdef XEN_ARGIFY_1

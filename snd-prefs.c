@@ -500,6 +500,7 @@ static XEN watch_for_snd_error_in_prefs(XEN msg)
   if ((prefs_is_loading) &&
       (widget_is_active(preferences_dialog)))
     post_it("Load error", (const char *)XEN_TO_C_STRING(msg));
+  return(XEN_FALSE);
 }
 
 #ifdef XEN_ARGIFY_1

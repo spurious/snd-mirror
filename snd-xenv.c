@@ -936,6 +936,7 @@ static void reflect_sound_state(void)
 static XEN reflect_file_in_enved(XEN reason)
 {
   if (enved_dialog) reflect_sound_state();
+  return(XEN_FALSE);
 }
 
 #ifdef XEN_ARGIFY_1
@@ -957,6 +958,7 @@ static XEN enved_selection_handler(XEN xreason)
     case SELECTION_ACTIVE:   enved_reflect_selection(true);                  break;
     default:                 enved_reflect_selection(selection_is_active()); break;
     }
+  return(XEN_FALSE);
 }
 
 #ifdef XEN_ARGIFY_1

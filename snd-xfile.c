@@ -1708,6 +1708,7 @@ static XEN mix_open_file_watcher(XEN reason)
   if ((mdat->dialog) &&
       (XtIsManaged(mdat->dialog)))
     set_sensitive(FSB_BOX(mdat->dialog, XmDIALOG_OK_BUTTON), (bool)any_selected_sound());
+  return(XEN_FALSE);
 }
 
 #ifdef XEN_ARGIFY_1
@@ -1815,6 +1816,7 @@ static XEN insert_open_file_watcher(XEN reason)
   if ((idat->dialog) &&
       (XtIsManaged(idat->dialog)))
     set_sensitive(FSB_BOX(idat->dialog, XmDIALOG_OK_BUTTON), (bool)any_selected_sound());
+  return(XEN_FALSE);
 }
 
 #ifdef XEN_ARGIFY_1
@@ -2734,6 +2736,7 @@ static XEN save_selection_hook_handler(XEN xreason)
     {
       clear_dialog_error(sd->panel_data);
     }
+  return(XEN_FALSE);
 }
 
 #ifdef XEN_ARGIFY_1
