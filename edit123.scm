@@ -28,7 +28,7 @@
 
 ;channels have to be synced. Uncomment this lines and _all_ your sounds will start synced and combined (i wish there would be mode specific settings)
 
-;(add-hook! after-open-hook
+;(hook-push after-open-hook
 ;  (lambda (snd)
 ;      (if (> (channels snd) 1)
 ;        (begin
@@ -92,7 +92,7 @@
 
     (lambda ()
       (if (not (member get-current-files (hook-functions open-hook)))
-	  (add-hook! open-hook get-current-directory))
+	  (hook-push open-hook get-current-directory))
       (if (and (not (string? last-file-opened))
 	       (not (null? (sounds))))
 	  (set! last-file-opened (file-name (or (selected-sound)
@@ -114,7 +114,7 @@
       #t)))
 
 (define (click-middle-button-to-open-next-file-in-directory)
-  (add-hook! mouse-click-hook
+  (hook-push mouse-click-hook
 	     (lambda (snd chn button state x y axis)
 	       (if (= button 2)
 		   (open-next-file-in-directory)
@@ -124,17 +124,17 @@
 
 
 
-(add-hook! after-open-hook
+(hook-push after-open-hook
   (lambda (snd)
   (set! status 0)
 ))
 
-(add-hook! start-playing-hook 
+(hook-push start-playing-hook 
                (lambda (snd)
                (set! is-playing 1)))
 
 
- (add-hook! stop-playing-hook 
+ (hook-push stop-playing-hook 
                (lambda (snd)
                (set! is-playing 0)))
 
@@ -297,7 +297,7 @@
 ;(if (eq? status 3)(set! status 0))
 (let ((old-tracking (cursor-follows-play)))
     (set! (cursor-follows-play) #t)
-    (add-hook! stop-playing-hook 
+    (hook-push stop-playing-hook 
                (lambda (snd)
                  (set! (cursor-follows-play) old-tracking))))
 

@@ -43,7 +43,7 @@
       (do ((i 0 (+ 1 i)))
 	  ((= i (channels snd)))
 	(if (null? (hook-functions (edit-hook snd i)))
-	    (add-hook! (edit-hook snd i) (upon-edit snd))))
+	    (hook-push (edit-hook snd i) (upon-edit snd))))
       (clear-unsaved-edits snd)))
   
   (define (auto-save-done snd)
@@ -69,10 +69,10 @@
       (begin
 	(if (not (null? (sounds)))
 	    (for-each auto-save-open-func (sounds)))
-	(add-hook! after-open-hook auto-save-open-func)
-	(add-hook! close-hook auto-save-done)
-	(add-hook! save-hook (lambda (snd name) (auto-save-done snd)))
-	(add-hook! exit-hook (lambda () (for-each auto-save-done (sounds))))))
+	(hook-push after-open-hook auto-save-open-func)
+	(hook-push close-hook auto-save-done)
+	(hook-push save-hook (lambda (snd name) (auto-save-done snd)))
+	(hook-push exit-hook (lambda () (for-each auto-save-done (sounds))))))
   (set! auto-saving #t)
   (in (* 1000 auto-save-interval) auto-save-func))
 

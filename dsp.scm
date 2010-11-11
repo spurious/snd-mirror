@@ -320,7 +320,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 		       (return (/ (srate snd)
 				  (* 2 (+ i 1 offset))))))))))))))
 
-;(add-hook! graph-hook 
+;(hook-push graph-hook 
 ;	   (lambda (snd chn y0 y1) 
 ;	     (report-in-minibuffer (format #f "~A" (spot-freq (left-sample))))))
 
@@ -2018,18 +2018,18 @@ and replaces it with the spectrum given in coeffs"
 	       (if col3 (set! color3 col3))
 	       (if (not off)
 		   (begin
-		     (add-hook! lisp-graph-hook display-bark-fft-1)
-		     (add-hook! after-lisp-graph-hook make-bark-labels)
-		     (add-hook! mouse-click-hook choose-bark-ticks)
+		     (hook-push lisp-graph-hook display-bark-fft-1)
+		     (hook-push after-lisp-graph-hook make-bark-labels)
+		     (hook-push mouse-click-hook choose-bark-ticks)
 		     (for-each (lambda (snd)
 				 (do ((c 0 (+ 1 c)))
 				     ((= c (channels snd)))
 				   (update-lisp-graph snd c)))
 			       (sounds)))
 		   (begin
-		     (remove-hook! lisp-graph-hook display-bark-fft-1)
-		     (remove-hook! after-lisp-graph-hook make-bark-labels)
-		     (remove-hook! mouse-click-hook choose-bark-ticks)
+		     (hook-remove lisp-graph-hook display-bark-fft-1)
+		     (hook-remove after-lisp-graph-hook make-bark-labels)
+		     (hook-remove mouse-click-hook choose-bark-ticks)
 		     (for-each (lambda (snd)
 				 (do ((c 0 (+ 1 c)))
 				     ((= c (channels snd)))

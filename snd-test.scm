@@ -38,7 +38,7 @@
 					;(show-ptree 1)
 (define profiling #f)
 
-					;(set! *load-hook* (lambda (name) (format #t "load ~S~%" name)))
+					;(set! (hook-functions *load-hook*) (list (lambda (name) (format #t "load ~S~%" name))))
 (if (<= tests 0) (set! tests 1))
 
 (set! *#readers* 
@@ -240,7 +240,7 @@
 (set! (mus-rand-seed) (current-time))
 
 (set! (hook-functions bad-header-hook) '())
-(add-hook! bad-header-hook (lambda (n) #t))
+(hook-push bad-header-hook (lambda (n) #t))
 
 (define with-gui (or (provided? 'snd-gtk)
 		     (provided? 'snd-motif)))
@@ -262,7 +262,7 @@
 
 (set! (hook-functions optimization-hook) '())
 (define *opt* #f)
-(add-hook! optimization-hook 
+(hook-push optimization-hook 
 	   (lambda (msg)
 	     (set! *opt* #f)
 	     (if (= (optimization) max-optimization)
@@ -459,7 +459,7 @@
 (if (not (defined? 'before-test-hook)) (define before-test-hook (make-hook 1)))
 (if (not (defined? 'after-test-hook)) (define after-test-hook (make-hook 1)))
 (set! (hook-functions before-test-hook) '())
-(add-hook! before-test-hook (lambda (n)
+(hook-push before-test-hook (lambda (n)
 			      (set! (mus-srate) default-srate)
 			      (dismiss-all-dialogs)
 			      (set! (clipping) #f)
@@ -487,7 +487,7 @@
   (mus-sound-prune))
 
 (set! (hook-functions after-test-hook) '())
-(add-hook! after-test-hook
+(hook-push after-test-hook
 	   (lambda (n)
 	     (clear-save-state-files)
 	     (clear-listener)
@@ -2878,7 +2878,7 @@
 	    (if (fneq (sample 1000 ab) samp) (snd-display #__line__ ";nist[1000] = ~A?" (sample 1000 ab)))
 	    (close-sound ab))
 	  (set! (hook-functions output-comment-hook) '())
-	  (add-hook! output-comment-hook
+	  (hook-push output-comment-hook
 		     (lambda (str) 
 		       (string-append str " [written by me]")))
 	  (save-sound-as :file "test.snd" :sound ob :header-type mus-riff :data-format mus-lfloat)
@@ -3132,7 +3132,7 @@
 	  (if (or (not (sound? ind))
 		  (not (string=? (short-file-name ind) "oboe.snd")))
 	      (snd-display #__line__ ";open-sound with slashes: ~A ~A" ind (and (sound? ind) (short-file-name ind))))
-	  (add-hook! bad-header-hook (lambda (n) #t))
+	  (hook-push bad-header-hook (lambda (n) #t))
 	  (for-each (lambda (n)
 		      (begin
 			(catch #t (lambda () 
@@ -3344,7 +3344,7 @@
 		 (snd-display #__line__ ";open-sound ~A: ~A" file tag))))
 	 (list "trunc.snd" "trunc.aiff" "trunc.wav" "trunc.sf" "trunc.voc" "trunc.nist" "bad.wav" 
 	       "trunc1.aiff" "badform.aiff"))
-	(add-hook! open-raw-sound-hook (lambda (file choice) (list 1 22050 mus-bshort)))
+	(hook-push open-raw-sound-hook (lambda (file choice) (list 1 22050 mus-bshort)))
 	(let ((ind (open-sound (string-append sf-dir "empty.snd"))))
 	  (if (or (not (= (data-format ind) mus-bshort))
 		  (not (= (chans ind) 1))
@@ -4107,9 +4107,9 @@
 	))
     
     (set! (hook-functions open-raw-sound-hook) '())
-    (add-hook! open-raw-sound-hook (lambda (a b) #t))
+    (hook-push open-raw-sound-hook (lambda (a b) #t))
     (set! (hook-functions bad-header-hook) '())
-    (add-hook! bad-header-hook (lambda (n) #t))
+    (hook-push bad-header-hook (lambda (n) #t))
     (if (null? (hook-functions open-raw-sound-hook)) (snd-display #__line__ ";add-hook open-raw-sound-hook failed??"))
     (if (null? (hook-functions bad-header-hook)) (snd-display #__line__ ";add-hook bad-header-hook failed??"))
     (let* ((magic-words (list ".snd" "FORM" "AIFF" "AIFC" "COMM" "COMT" "INFO" "INST" "inst" "MARK" "SSND"
@@ -10252,7 +10252,7 @@ EDITS: 5
 	  (if (ffneq (amp-control ind 1) .5) (snd-display #__line__ ";amp-control 1 after local set (.5): ~A?" (amp-control ind 1)))
 	  (let ((after-ran #f))
 	    (set! (hook-functions after-apply-controls-hook) '())
-	    (add-hook! after-apply-controls-hook (lambda (snd) (set! after-ran snd)))
+	    (hook-push after-apply-controls-hook (lambda (snd) (set! after-ran snd)))
 	    (apply-controls ind)
 	    (if (not (equal? ind after-ran)) (snd-display #__line__ ";after-apply-controls-hook: ~A?" after-ran))
 	    (set! (hook-functions after-apply-controls-hook) '()))
@@ -11440,7 +11440,7 @@ EDITS: 5
 		;; (old-pos1 (edit-position index 1))
 		(old-reglen (map region-frames (regions)))
 		(s61-files '()))
-	    (add-hook! save-state-hook
+	    (hook-push save-state-hook
 		       (lambda (file)
 			 (set! s61-files (cons file s61-files))
 			 #f))
@@ -14235,7 +14235,7 @@ EDITS: 2
 	      (snd-display #__line__ ";apply-controls srate -1.0 samples: ~A ~A" (maxamp) (sample 9327)))
 	  (if (fneq (speed-control ind) 1.0) (snd-display #__line__ ";apply-controls -1.0 -> ~A?" (speed-control ind)))
 	  
-	  (add-hook! dac-hook (lambda (data) 
+	  (hook-push dac-hook (lambda (data) 
 				(set! ctr (+ 1 ctr))
 				(if (>= ctr 3) (c-g!))))
 	  (play :wait #t)
@@ -14248,7 +14248,7 @@ EDITS: 2
 	  (revert-sound)
 	  (set! (speed-control) 1.5)
 	  (set! ctr 0)
-	  (add-hook! dac-hook (lambda (data) 
+	  (hook-push dac-hook (lambda (data) 
 				(set! ctr (+ 1 ctr))
 				(if (= ctr 3) (apply-controls))))
 	  (play :wait #t)
@@ -14257,7 +14257,7 @@ EDITS: 2
 	  (set! (hook-functions dac-hook) '())
 	  (set! (speed-control) 1.5)
 	  (stop-playing)
-	  (add-hook! after-apply-controls-hook (lambda (s) 
+	  (hook-push after-apply-controls-hook (lambda (s) 
 						 (let ((tag (catch #t 
 								   (lambda () (apply-controls)) 
 								   (lambda args args))))
@@ -14265,7 +14265,7 @@ EDITS: 2
 						       (snd-display #__line__ ";after-apply-controls-hook: recursive attempt apply-controls: ~A" tag)))))
 	  (apply-controls)
 	  (set! (hook-functions after-apply-controls-hook) '())
-	  (add-hook! dac-hook (lambda (s) 
+	  (hook-push dac-hook (lambda (s) 
 				(let ((tag (catch #t 
 						  (lambda () (apply-controls)) 
 						  (lambda args args))))
@@ -29768,7 +29768,7 @@ EDITS: 2
 			(not (= (list-ref val1 3) 1234)))
 		    (snd-display #__line__ ";describe-mark m1 [1]: ~A" val1)))))
 	  (revert-sound ind)
-	  (add-hook! draw-mark-hook (lambda (id) #t))
+	  (hook-push draw-mark-hook (lambda (id) #t))
 	  (let ((m0 (add-mark 4321))
 		(m1 (add-mark 1234))
 		(dur (/ (frames ind) (srate ind))))
@@ -29946,7 +29946,7 @@ EDITS: 2
       (add-mark 456 ind 0 "a mark" 2)
       (add-mark 567 ind 0 #f 1)
       
-      (add-hook! output-comment-hook (lambda (str) (marks->string (selected-sound))))
+      (hook-push output-comment-hook (lambda (str) (marks->string (selected-sound))))
       (save-sound-as "tst.snd")
       (let ((new-file-name (file-name ind)))
 	(close-sound ind)
@@ -30199,7 +30199,7 @@ EDITS: 2
 		      (not (= (length vf-files) 4)))
 		  (snd-display #__line__ ";vf files set: ~A (~A, ~A)" vf-files (string-append home-dir "/cl/1a.snd") (length vf-files))))
 	    (set! (hook-functions view-files-select-hook) '())
-	    (add-hook! view-files-select-hook (lambda (w file)
+	    (hook-push view-files-select-hook (lambda (w file)
 						(if (not (string? file))
 						    (snd-display #__line__ ";vf select hook arg: ~A" file))
 						(if (not w) (snd-display #__line__ ";vf select hook dialog: ~A" w))
@@ -30344,7 +30344,7 @@ EDITS: 2
 		(test-spectral-difference (string-append sf-dir "o2.wave") (string-append sf-dir "o2_dvi.wave") 10.0)
 		(test-spectral-difference (string-append sf-dir "wood.riff") (string-append sf-dir "wood.sds") 4.0)
 		(test-spectral-difference (string-append sf-dir "nist-10.wav") (string-append sf-dir "nist-shortpack.wav") 1.0)
-		(add-hook! bad-header-hook (lambda (n) #t))
+		(hook-push bad-header-hook (lambda (n) #t))
 		
 		;; dangling readers (overall)
 		(let ((ind (open-sound "oboe.snd")))
@@ -30626,83 +30626,83 @@ EDITS: 2
     (define (arg6 a b c d e f) (if (and (number? a) (number? b) (number? c) (number? d) (number? e)) (+ a b c d e f 32) a))
     (reset-almost-all-hooks)
     
-    (add-hook! after-graph-hook arg2) (carg2 after-graph-hook)
-    (add-hook! after-lisp-graph-hook arg2) (carg2 after-lisp-graph-hook)
-    (add-hook! lisp-graph-hook arg2) (carg2 lisp-graph-hook)
-    (add-hook! time-graph-hook arg2) (carg2 time-graph-hook)
-    (add-hook! before-transform-hook arg2) (carg2 before-transform-hook)
-    (add-hook! mix-release-hook arg2) (carg2 mix-release-hook)
-    (add-hook! save-hook arg2) (carg2 save-hook)
-    (add-hook! mus-error-hook arg2) (carg2 mus-error-hook)
-    (add-hook! mouse-enter-graph-hook arg2) (carg2 mouse-enter-graph-hook)
-    (add-hook! mouse-leave-graph-hook arg2) (carg2 mouse-leave-graph-hook)
-    (add-hook! open-raw-sound-hook arg2) (carg2 open-raw-sound-hook)
-    (add-hook! select-channel-hook arg2) (carg2 select-channel-hook)
-    (add-hook! help-hook arg2) (carg2 help-hook)
-    (add-hook! view-files-select-hook arg2) (carg2 view-files-select-hook)
-    (add-hook! peak-env-hook arg2) (carg2 peak-env-hook)
+    (hook-push after-graph-hook arg2) (carg2 after-graph-hook)
+    (hook-push after-lisp-graph-hook arg2) (carg2 after-lisp-graph-hook)
+    (hook-push lisp-graph-hook arg2) (carg2 lisp-graph-hook)
+    (hook-push time-graph-hook arg2) (carg2 time-graph-hook)
+    (hook-push before-transform-hook arg2) (carg2 before-transform-hook)
+    (hook-push mix-release-hook arg2) (carg2 mix-release-hook)
+    (hook-push save-hook arg2) (carg2 save-hook)
+    (hook-push mus-error-hook arg2) (carg2 mus-error-hook)
+    (hook-push mouse-enter-graph-hook arg2) (carg2 mouse-enter-graph-hook)
+    (hook-push mouse-leave-graph-hook arg2) (carg2 mouse-leave-graph-hook)
+    (hook-push open-raw-sound-hook arg2) (carg2 open-raw-sound-hook)
+    (hook-push select-channel-hook arg2) (carg2 select-channel-hook)
+    (hook-push help-hook arg2) (carg2 help-hook)
+    (hook-push view-files-select-hook arg2) (carg2 view-files-select-hook)
+    (hook-push peak-env-hook arg2) (carg2 peak-env-hook)
     
-    (add-hook! save-state-hook arg1) (carg1 save-state-hook)
-    (add-hook! new-sound-hook arg1) (carg1 new-sound-hook)
-    (add-hook! after-open-hook arg1) (carg1 after-open-hook)
-    (add-hook! update-hook arg1) (carg1 update-hook)
-    (add-hook! close-hook arg1) (carg1 close-hook)
-    (add-hook! before-close-hook arg1) (carg1 before-close-hook)
-    (add-hook! clip-hook arg1) (carg1 clip-hook)
-    (add-hook! draw-mark-hook arg1) (carg1 draw-mark-hook)
-    (add-hook! drop-hook arg1) (carg1 drop-hook)
-    (add-hook! mark-click-hook arg1) (carg1 mark-click-hook)
-    (add-hook! listener-click-hook arg1) (carg1 listener-click-hook)
-    (add-hook! mix-click-hook arg1) (carg1 mix-click-hook)
-    (add-hook! after-save-state-hook arg1) (carg1 after-save-state-hook)
-    (add-hook! before-save-state-hook arg1) (carg1 before-save-state-hook)
-    (add-hook! mark-drag-hook arg1) (carg1 mark-drag-hook)
-    (add-hook! name-click-hook arg1) (carg1 name-click-hook)
-    (add-hook! after-apply-controls-hook arg1) (carg1 after-apply-controls-hook)
-    (add-hook! open-hook arg1) (carg1 open-hook)
-    (add-hook! output-comment-hook arg1) (carg1 output-comment-hook)
-    (add-hook! play-hook arg1) (carg1 play-hook)
-    (add-hook! dac-hook arg1) (carg1 dac-hook)
-    (add-hook! new-widget-hook arg1) (carg1 new-widget-hook)
-    (add-hook! snd-error-hook arg1) (carg1 snd-error-hook)
-    (add-hook! snd-warning-hook arg1) (carg1 snd-warning-hook)
-    (add-hook! start-hook arg1) (carg1 start-hook)
-    (add-hook! start-playing-hook arg1) (carg1 start-playing-hook)
-    (add-hook! stop-playing-hook arg1) (carg1 stop-playing-hook)
-    (add-hook! mouse-enter-listener-hook arg1) (carg1 mouse-enter-listener-hook)
-    (add-hook! mouse-leave-listener-hook arg1) (carg1 mouse-leave-listener-hook)
-    (add-hook! select-sound-hook arg1) (carg1 select-sound-hook)
-    (add-hook! print-hook arg1) (carg1 print-hook)
-    (add-hook! read-hook arg1) (carg1 read-hook)
-    (add-hook! bad-header-hook arg1) (carg1 bad-header-hook)
-    (add-hook! output-name-hook arg1) (carg1 output-name-hook)
+    (hook-push save-state-hook arg1) (carg1 save-state-hook)
+    (hook-push new-sound-hook arg1) (carg1 new-sound-hook)
+    (hook-push after-open-hook arg1) (carg1 after-open-hook)
+    (hook-push update-hook arg1) (carg1 update-hook)
+    (hook-push close-hook arg1) (carg1 close-hook)
+    (hook-push before-close-hook arg1) (carg1 before-close-hook)
+    (hook-push clip-hook arg1) (carg1 clip-hook)
+    (hook-push draw-mark-hook arg1) (carg1 draw-mark-hook)
+    (hook-push drop-hook arg1) (carg1 drop-hook)
+    (hook-push mark-click-hook arg1) (carg1 mark-click-hook)
+    (hook-push listener-click-hook arg1) (carg1 listener-click-hook)
+    (hook-push mix-click-hook arg1) (carg1 mix-click-hook)
+    (hook-push after-save-state-hook arg1) (carg1 after-save-state-hook)
+    (hook-push before-save-state-hook arg1) (carg1 before-save-state-hook)
+    (hook-push mark-drag-hook arg1) (carg1 mark-drag-hook)
+    (hook-push name-click-hook arg1) (carg1 name-click-hook)
+    (hook-push after-apply-controls-hook arg1) (carg1 after-apply-controls-hook)
+    (hook-push open-hook arg1) (carg1 open-hook)
+    (hook-push output-comment-hook arg1) (carg1 output-comment-hook)
+    (hook-push play-hook arg1) (carg1 play-hook)
+    (hook-push dac-hook arg1) (carg1 dac-hook)
+    (hook-push new-widget-hook arg1) (carg1 new-widget-hook)
+    (hook-push snd-error-hook arg1) (carg1 snd-error-hook)
+    (hook-push snd-warning-hook arg1) (carg1 snd-warning-hook)
+    (hook-push start-hook arg1) (carg1 start-hook)
+    (hook-push start-playing-hook arg1) (carg1 start-playing-hook)
+    (hook-push stop-playing-hook arg1) (carg1 stop-playing-hook)
+    (hook-push mouse-enter-listener-hook arg1) (carg1 mouse-enter-listener-hook)
+    (hook-push mouse-leave-listener-hook arg1) (carg1 mouse-leave-listener-hook)
+    (hook-push select-sound-hook arg1) (carg1 select-sound-hook)
+    (hook-push print-hook arg1) (carg1 print-hook)
+    (hook-push read-hook arg1) (carg1 read-hook)
+    (hook-push bad-header-hook arg1) (carg1 bad-header-hook)
+    (hook-push output-name-hook arg1) (carg1 output-name-hook)
     
-    (add-hook! before-exit-hook arg0) (carg0 before-exit-hook)
-    (add-hook! exit-hook arg0) (carg0 exit-hook)
-    (add-hook! stop-dac-hook arg0) (carg0 stop-dac-hook)
-    (add-hook! stop-playing-selection-hook arg0) (carg0 stop-playing-selection-hook)
-    (add-hook! color-hook arg0) (carg0 color-hook)
-    (add-hook! orientation-hook arg0) (carg0 orientation-hook)
-    (add-hook! start-playing-selection-hook arg0) (carg0 start-playing-selection-hook)
+    (hook-push before-exit-hook arg0) (carg0 before-exit-hook)
+    (hook-push exit-hook arg0) (carg0 exit-hook)
+    (hook-push stop-dac-hook arg0) (carg0 stop-dac-hook)
+    (hook-push stop-playing-selection-hook arg0) (carg0 stop-playing-selection-hook)
+    (hook-push color-hook arg0) (carg0 color-hook)
+    (hook-push orientation-hook arg0) (carg0 orientation-hook)
+    (hook-push start-playing-selection-hook arg0) (carg0 start-playing-selection-hook)
     
-    (add-hook! during-open-hook arg3) (carg3 during-open-hook)
-    (add-hook! after-transform-hook arg3) (carg3 after-transform-hook)
-    (add-hook! mouse-enter-label-hook arg3) (carg3 mouse-enter-label-hook)
-    (add-hook! mouse-leave-label-hook arg3) (carg3 mouse-leave-label-hook)
-    (add-hook! initial-graph-hook arg3) (carg3 initial-graph-hook)
-    (add-hook! after-save-as-hook arg3) (carg3 after-save-as-hook)
-    (add-hook! mix-drag-hook arg3) (carg3 mix-drag-hook)
+    (hook-push during-open-hook arg3) (carg3 during-open-hook)
+    (hook-push after-transform-hook arg3) (carg3 after-transform-hook)
+    (hook-push mouse-enter-label-hook arg3) (carg3 mouse-enter-label-hook)
+    (hook-push mouse-leave-label-hook arg3) (carg3 mouse-leave-label-hook)
+    (hook-push initial-graph-hook arg3) (carg3 initial-graph-hook)
+    (hook-push after-save-as-hook arg3) (carg3 after-save-as-hook)
+    (hook-push mix-drag-hook arg3) (carg3 mix-drag-hook)
     
-    (add-hook! graph-hook arg4) (carg4 graph-hook)
-    (add-hook! key-press-hook arg4) (carg4 key-press-hook)
-    (add-hook! mark-hook arg4) (carg4 mark-hook)
-    (add-hook! mark-drag-triangle-hook arg4) (carg4 mark-drag-triangle-hook)
+    (hook-push graph-hook arg4) (carg4 graph-hook)
+    (hook-push key-press-hook arg4) (carg4 key-press-hook)
+    (hook-push mark-hook arg4) (carg4 mark-hook)
+    (hook-push mark-drag-triangle-hook arg4) (carg4 mark-drag-triangle-hook)
     
-    (add-hook! mouse-drag-hook arg6) (carg6 mouse-drag-hook)
-    (add-hook! mouse-press-hook arg6) (carg6 mouse-press-hook)
+    (hook-push mouse-drag-hook arg6) (carg6 mouse-drag-hook)
+    (hook-push mouse-press-hook arg6) (carg6 mouse-press-hook)
     
-    (add-hook! enved-hook arg5) (carg5 enved-hook)
-    (add-hook! draw-mix-hook arg5) (carg5 draw-mix-hook)
+    (hook-push enved-hook arg5) (carg5 enved-hook)
+    (hook-push draw-mix-hook arg5) (carg5 draw-mix-hook)
     
     (reset-almost-all-hooks)
     (for-each 
@@ -30776,7 +30776,7 @@ EDITS: 2
     
     (set! (hook-functions help-hook) '())
     (let ((hi (snd-help 'cursor-position)))
-      (add-hook! help-hook (lambda (a b) 
+      (hook-push help-hook (lambda (a b) 
 			     (if (not (string=? a "cursor-position"))
 				 (snd-display #__line__ ";help-hook subject: ~A" a))
 			     (if (not (string=? b "(cursor-position :optional snd chn): current cursor position (x y in pixels) in snd's channel chn"))
@@ -30786,14 +30786,14 @@ EDITS: 2
 	(if (not (= (string-length ho) (+ 5 (string-length hi))))
 	    (snd-display #__line__ ";help-hook ~A -> ~A" hi ho))
 	(set! (hook-functions help-hook) '())
-	(add-hook! help-hook (lambda (a b) #f))
+	(hook-push help-hook (lambda (a b) #f))
 	(set! ho (snd-help 'cursor-position))
 	(if (not (string=? hi ho))
 	    (snd-display #__line__ ";help-hook #f: ~A ~A" hi ho))
 	(set! (hook-functions help-hook) '())))
     (set! (hook-functions mark-drag-triangle-hook) '())
     (if (hook-member mdt-test mark-drag-triangle-hook) (snd-display #__line__ ";hook-member #t? ~A" (hook-functions mark-drag-triangle-hook)))
-    (add-hook! mark-drag-triangle-hook mdt-test)
+    (hook-push mark-drag-triangle-hook mdt-test)
     (if (not (hook-member mdt-test mark-drag-triangle-hook)) (snd-display #__line__ ";hook-member #f? ~A" (hook-functions mark-drag-triangle-hook)))
     (set! (hook-functions mark-drag-triangle-hook) '())
     (set! (transform-size fd 0) 256)
@@ -30829,17 +30829,17 @@ EDITS: 2
     (close-sound fd)
     (set! (transform-type) fourier-transform)
     
-    (add-hook! after-open-hook
+    (hook-push after-open-hook
 	       (lambda (snd)
 		 (set! (x-axis-style snd #t) x-axis-in-samples)))
     (set! fd (open-sound "2.snd"))
     (close-sound fd)
     (set! (hook-functions after-open-hook) '())
     
-    (add-hook! after-open-hook
+    (hook-push after-open-hook
 	       (lambda (snd)
 		 (set! (x-axis-style snd #t) x-axis-as-percentage)))
-    (add-hook! initial-graph-hook
+    (hook-push initial-graph-hook
 	       (lambda (snd chn dur)
 		 (if (mus-sound-maxamp-exists? (file-name snd))
 		     (let* ((amp-vals (mus-sound-maxamp (file-name snd)))
@@ -30849,7 +30849,7 @@ EDITS: 2
     (set! (hook-functions after-open-hook) '())
     (set! (hook-functions initial-graph-hook) '())
     
-    (add-hook! initial-graph-hook
+    (hook-push initial-graph-hook
 	       (lambda (snd chn dur)
 		 (list 0.0 dur -1.0 1.0 "a label" -4.0 4.0)))
     (set! fd (open-sound "2.snd"))
@@ -30885,7 +30885,7 @@ EDITS: 2
       (let ((added 0))
 	(set! (hook-functions close-hook) '())
 	(set! (with-background-processes) #t)
-	(add-hook! new-widget-hook
+	(hook-push new-widget-hook
 		   (lambda (w)
 		     (set! added (+ added 1))))
 	(if (provided? 'snd-motif)
@@ -31043,7 +31043,7 @@ EDITS: 2
     (for-each close-sound (sounds))
     
     (test-hooks)
-    (add-hook! bad-header-hook (lambda (n) #t))
+    (hook-push bad-header-hook (lambda (n) #t))
     (let ((ind (open-sound "oboe.snd")))
       (set! (cursor) 2000)
       (key (char->integer #\u) 4 ind)
@@ -31092,25 +31092,25 @@ EDITS: 2
 	    (snd-display #__line__ ";search-procedure (1): ~A?" str)))
       
       (set! (hook-functions (edit-hook ind 0)) '())
-      (add-hook! (edit-hook ind 0) (lambda () (+ snd chn)))
+      (hook-push (edit-hook ind 0) (lambda () (+ snd chn)))
       (let ((str (with-output-to-string (lambda () (display (map procedure-source (hook-functions (edit-hook ind 0))))))))
 	(if (not (string=? str "((lambda () (+ snd chn)))"))
 	    (snd-display #__line__ ";edit-hook: ~A?" str)))
       (set! (hook-functions (edit-hook ind 0)) '())
       (set! (hook-functions (after-edit-hook ind 0)) '())
-      (add-hook! (after-edit-hook ind 0) (lambda () (+ snd chn)))
+      (hook-push (after-edit-hook ind 0) (lambda () (+ snd chn)))
       (let ((str (with-output-to-string (lambda () (display (map procedure-source (hook-functions (after-edit-hook ind 0))))))))
 	(if (not (string=? str "((lambda () (+ snd chn)))"))
 	    (snd-display #__line__ ";after-edit-hook: ~A?" str)))
       (set! (hook-functions (after-edit-hook ind 0)) '())
       (set! (hook-functions (undo-hook ind 0)) '())
-      (add-hook! (undo-hook ind 0) (lambda () (+ snd chn)))
+      (hook-push (undo-hook ind 0) (lambda () (+ snd chn)))
       (let ((str (with-output-to-string (lambda () (display (map procedure-source (hook-functions (undo-hook ind 0))))))))
 	(if (not (string=? str "((lambda () (+ snd chn)))"))
 	    (snd-display #__line__ ";undo-hook: ~A?" str)))
       (set! (hook-functions (undo-hook ind 0)) '())
       (let ((calls 0))
-	(add-hook! (undo-hook ind 0) (lambda () (set! calls (+ 1 calls))))
+	(hook-push (undo-hook ind 0) (lambda () (set! calls (+ 1 calls))))
 	(delete-sample 0 ind 0)
 	(undo 1)
 	(redo 1)
@@ -31136,7 +31136,7 @@ EDITS: 2
       (close-sound ind)
       )
     (if (not (null? (hook-functions open-raw-sound-hook))) (set! (hook-functions open-raw-sound-hook) '()))
-    (add-hook! open-raw-sound-hook (lambda (file choices) (list 1 22050 mus-bshort)))
+    (hook-push open-raw-sound-hook (lambda (file choices) (list 1 22050 mus-bshort)))
     (let* ((ind (open-sound "../sf1/addf8.nh")))
       (play ind :wait #t)
       (set! (hook-functions open-raw-sound-hook) '())
@@ -31153,7 +31153,7 @@ EDITS: 2
 	  (save-as-name "hiho")
 	  (save-as-index #f))
       (set! (hook-functions after-save-as-hook) '())
-      (add-hook! after-save-as-hook 
+      (hook-push after-save-as-hook 
 		 (lambda (ind name dial)
 		   (set! save-as-index ind)
 		   (set! save-as-name name)
@@ -31168,7 +31168,7 @@ EDITS: 2
 	(if (and (not (string=? (string-append home-dir "/cl/test.snd") save-as-name)) 
 		 (not (string=? (string-append home-dir "/snd-11/test.snd") save-as-name)))
 	    (snd-display #__line__ ";after-save-as-hook name: ~A (~A)" save-as-name (string-append home-dir "/cl/test.snd")))
-	(add-hook! open-raw-sound-hook 
+	(hook-push open-raw-sound-hook 
 		   (lambda (file choice)
 		     (if (not (string=? (my-substring file (- (string-length file) 8)) "test.snd"))
 			 (snd-display #__line__ ";open-raw-sound-hook file: ~A?" (my-substring file (- (string-length file) 8))))
@@ -31184,12 +31184,11 @@ EDITS: 2
 	    (snd-display #__line__ ";open-raw-sound-hook 1: ~A ~A ~A ~A ~A" 
 			 (header-type ind) (data-format ind) (chans ind) (srate ind) (frames ind)))
 	(close-sound ind)
-	(add-hook! open-raw-sound-hook
-		   (lambda (file choice)
-		     (if (not (equal? choice (list 2 44100 mus-mulaw)))
-			 (snd-display #__line__ ";open-raw-sound-hook 2: ~A" choice))
-		     (list 1 22050 mus-lint))
-		   #t)
+	(hook-append open-raw-sound-hook
+		     (lambda (file choice)
+		       (if (not (equal? choice (list 2 44100 mus-mulaw)))
+			   (snd-display #__line__ ";open-raw-sound-hook 2: ~A" choice))
+		       (list 1 22050 mus-lint)))
 	
 	(set! ind (open-sound "test.snd"))
 	(if (or (not (= (header-type ind) mus-raw))
@@ -31201,7 +31200,7 @@ EDITS: 2
 			 (header-type ind) (data-format ind) (chans ind) (srate ind) (frames ind)))
 	(close-sound ind)
 	(set! (hook-functions open-raw-sound-hook) '())
-	(add-hook! open-raw-sound-hook 
+	(hook-push open-raw-sound-hook 
 		   (lambda (file choice)
 		     (list 2)))
 	(set! ind (open-sound "test.snd"))
@@ -31213,7 +31212,7 @@ EDITS: 2
 			 (header-type ind) (data-format ind) (chans ind) (srate ind)))
 	(close-sound ind)
 	(set! (hook-functions open-raw-sound-hook) '())
-	(add-hook! open-raw-sound-hook 
+	(hook-push open-raw-sound-hook 
 		   (lambda (file choice)
 		     (list 1 22050 mus-bshort 120 320)))
 	(set! ind (open-sound "test.snd"))
@@ -31240,16 +31239,16 @@ EDITS: 2
 	  (ig #f)
 	  (scl #f)
 	  (other #f))
-      (add-hook! open-hook 
+      (hook-push open-hook 
 		 (lambda (filename)
 		   (if (not (string=? filename (mus-expand-filename "oboe.snd")))
 		       (snd-display #__line__ ";open-hook: ~A?" filename))
 		   (set! op #t)
 		   #f))
-      (add-hook! after-open-hook 
+      (hook-push after-open-hook 
 		 (lambda (snd)
 		   (set! aop snd)))
-      (add-hook! during-open-hook 
+      (hook-push during-open-hook 
 		 (lambda (fd filename reason)
 		   (set! dop #t)
 		   (if (fneq (mus-file-prescaler fd) 1.0)
@@ -31260,7 +31259,7 @@ EDITS: 2
 		       (snd-display #__line__ ";during-open-hook filename: ~A?" filename))
 		   (if (not (= reason 1))
 		       (snd-display #__line__ ";during-open-hook reason: ~A?" reason))))
-      (add-hook! initial-graph-hook
+      (hook-push initial-graph-hook
 		 (lambda (snd chn dur)
 		   (if (not (= chn 0))
 		       (snd-display #__line__ ";initial-graph-hook (channel): ~A not 0?" chn))
@@ -31280,7 +31279,7 @@ EDITS: 2
       (set! (hook-functions after-open-hook) '())
       (set! (hook-functions initial-graph-hook) '())
       
-      (add-hook! open-hook (lambda (filename) #t))
+      (hook-push open-hook (lambda (filename) #t))
       (let ((pistol (open-sound "pistol.snd")))
 	(if (not (eq? pistol #f))
 	    (begin
@@ -31296,7 +31295,7 @@ EDITS: 2
 	(set! (hook-functions after-transform-hook) '())
 	(set! (hook-functions after-graph-hook) '())
 	(set! (hook-functions graph-hook) '())
-	(add-hook! graph-hook
+	(hook-push graph-hook
 		   (lambda (snd chn y0 y1)
 		     (if (not (equal? snd ind))
 			 (snd-display #__line__ ";graph-hook: ~A not ~A?" snd ind))
@@ -31304,18 +31303,18 @@ EDITS: 2
 			 (snd-display #__line__ ";graph-hook (channel): ~A not 0?" chn))
 		     (set! gr #t)
 		     #f))
-	(add-hook! after-graph-hook
+	(hook-push after-graph-hook
 		   (lambda (snd chn)
 		     (if (not (equal? snd ind))
 			 (snd-display #__line__ ";after-graph-hook: ~A not ~A?" snd ind))
 		     (if (not (= chn 0))
 			 (snd-display #__line__ ";after-graph-hook (channel): ~A not 0?" chn))
 		     (set! agr #t)))
-	(add-hook! before-transform-hook
+	(hook-push before-transform-hook
 		   (lambda (snd chn)
 		     (set! gbf #t)
 		     (cursor)))
-	(add-hook! after-transform-hook
+	(hook-push after-transform-hook
 		   (lambda (snd chn scale)
 		     (set! abf #t)
 		     (if (and (transform-graph? snd chn) 
@@ -31352,12 +31351,12 @@ EDITS: 2
       
       (set! other (open-sound "pistol.snd"))
       
-      (add-hook! select-sound-hook 
+      (hook-push select-sound-hook 
 		 (lambda (snd) 
 		   (if (not (equal? snd ind))
 		       (snd-display #__line__ ";select-sound-hook: ~A not ~A?" snd ind))
 		   (set! sl #t)))
-      (add-hook! select-channel-hook 
+      (hook-push select-channel-hook 
 		 (lambda (snd chn) 
 		   (if (not (equal? snd ind))
 		       (snd-display #__line__ ";select-channel-hook: ~A not ~A?" snd ind))
@@ -31375,18 +31374,18 @@ EDITS: 2
 	    (stl #f)
 	    (ph #f)
 	    (ph1 #f))
-	(add-hook! start-playing-hook
+	(hook-push start-playing-hook
 		   (lambda (snd)
 		     (if (not (equal? snd ind))
 			 (snd-display #__line__ ";start-playing-hook: ~A not ~A?" snd ind))
 		     (set! spl #t)
 		     #f))
-	(add-hook! stop-playing-hook
+	(hook-push stop-playing-hook
 		   (lambda (snd)
 		     (if (not (equal? snd ind))
 			 (snd-display #__line__ ";stop-playing-hook: ~A not ~A?" snd ind))
 		     (set! stl #t)))
-	(add-hook! play-hook
+	(hook-push play-hook
 		   (lambda (n)
 		     (if (< n 128)
 			 (snd-display #__line__ ";play-hook samps: ~A?" n))
@@ -31397,7 +31396,7 @@ EDITS: 2
 		     (set! (reverb-control-lowpass) (reverb-control-lowpass))
 		     (set! (reverb-control-feedback) (reverb-control-feedback))
 		     (set! ph #t)))
-	(add-hook! dac-hook
+	(hook-push dac-hook
 		   (lambda (n)
 		     (if (not (sound-data? n))
 			 (snd-display #__line__ ";dac-hook data: ~A?" n))
@@ -31422,7 +31421,7 @@ EDITS: 2
 	(set! (hook-functions play-hook) '())
 	(set! (hook-functions dac-hook) '())
 	
-	(add-hook! play-hook
+	(hook-push play-hook
 		   (lambda (n)
 		     (set! (expand-control-hop) .02)
 		     (set! (expand-control-length) .02)
@@ -31434,14 +31433,14 @@ EDITS: 2
 	(play ind :wait #t)
 	(set! (hook-functions play-hook) '())
 	
-	(add-hook! start-playing-hook (lambda (sp) #t))
+	(hook-push start-playing-hook (lambda (sp) #t))
 	(play "4.aiff")
 	(set! (hook-functions start-playing-hook) '())
 	
 	(let ((ss #f)
 	      (old-reg (selection-creates-region)))
 	  (set! (selection-creates-region) #t)
-	  (add-hook! stop-playing-selection-hook (lambda () (set! ss #t)))
+	  (hook-push stop-playing-selection-hook (lambda () (set! ss #t)))
 	  (let ((reg (select-all)))
 	    (play (selection) :wait #t)
 	    (if (region? reg) (play reg :wait #t))
@@ -31450,7 +31449,7 @@ EDITS: 2
 	  (set! (selection-creates-region) old-reg))
 	
 	(let ((ctr 0))
-	  (add-hook! dac-hook
+	  (hook-push dac-hook
 		     (lambda (n)
 		       (set! ctr (+ 1 ctr))
 		       (stop-playing)))
@@ -31462,7 +31461,7 @@ EDITS: 2
 	      (ctr 0))
 	  (if (not (player? pl)) (snd-display #__line__ ";make-player: ~A" pl))
 	  (if (= (length (players)) 0) (snd-display #__line__ ";players: ~A" (players)))
-	  (add-hook! dac-hook
+	  (hook-push dac-hook
 		     (lambda (n)
 		       (set! ctr (+ 1 ctr))
 		       (if (player? pl)
@@ -31485,24 +31484,24 @@ EDITS: 2
 	    (u1 #f)
 	    (a0 #f)
 	    (a1 #f))
-	(add-hook! (edit-hook ind 0) 
+	(hook-push (edit-hook ind 0) 
 		   (lambda ()
 		     (set! e0 #t)
 		     #t))
-	(add-hook! (edit-hook other 0) 
+	(hook-push (edit-hook other 0) 
 		   (lambda ()
 		     (set! e1 #t)
 		     #f))
-	(add-hook! (undo-hook ind 0) 
+	(hook-push (undo-hook ind 0) 
 		   (lambda ()
 		     (set! u0 #t)))
-	(add-hook! (undo-hook other 0) 
+	(hook-push (undo-hook other 0) 
 		   (lambda ()
 		     (set! u1 #t)))
-	(add-hook! (after-edit-hook ind 0)
+	(hook-push (after-edit-hook ind 0)
 		   (lambda ()
 		     (set! a0 #t)))
-	(add-hook! (after-edit-hook other 0)
+	(hook-push (after-edit-hook other 0)
 		   (lambda ()
 		     (set! a1 #t)))
 	
@@ -31533,15 +31532,15 @@ EDITS: 2
       (let ((se #f)
 	    (sw #f)
 	    (me #f))
-	(add-hook! snd-error-hook
+	(hook-push snd-error-hook
 		   (lambda (msg)
 		     (set! se #t)
 		     #t))
-	(add-hook! snd-warning-hook
+	(hook-push snd-warning-hook
 		   (lambda (msg)
 		     (set! sw #t)
 		     #t))
-	(add-hook! mus-error-hook
+	(hook-push mus-error-hook
 		   (lambda (typ msg)
 		     (set! me #t)
 		     #t))
@@ -31556,7 +31555,7 @@ EDITS: 2
 	(set! (hook-functions snd-error-hook) '())
 	(set! (hook-functions snd-warning-hook) '())
 	(set! (hook-functions mus-error-hook) '())
-	(add-hook! snd-error-hook
+	(hook-push snd-error-hook
 		   (lambda (msg)
 		     (set! se msg)
 		     #t))
@@ -31567,16 +31566,16 @@ EDITS: 2
 	    (snd-display #__line__ ";snd-error-hook saw: ~A" se))
 	(set! (hook-functions snd-error-hook) '()))
       
-      (add-hook! before-exit-hook (lambda () #f))
-      (add-hook! before-exit-hook (lambda () #t))
-      (add-hook! exit-hook (lambda () #f))
+      (hook-push before-exit-hook (lambda () #f))
+      (hook-push before-exit-hook (lambda () #t))
+      (hook-push exit-hook (lambda () #f))
       (exit)
       (set! (hook-functions exit-hook) '())
       (set! (hook-functions before-exit-hook) '())
       
       (let ((sh #f))
 	(if (file-exists? "baddy.snd") (delete-file "baddy.snd"))
-	(add-hook! save-hook
+	(hook-push save-hook
 		   (lambda (snd filename)
 		     (if (or (not (string? filename))
 			     (not (string=? filename (mus-expand-filename "baddy.snd"))))
@@ -31595,7 +31594,7 @@ EDITS: 2
       
       ;; after-transform-hooks require some way to force the fft to run to completion
       ;; property-changed hook is similar (seems to happen whenever it's good and ready)
-      (add-hook! close-hook
+      (hook-push close-hook
 		 (lambda (snd)
 		   (if (not (equal? snd ind))
 		       (snd-display #__line__ ";close-hook: ~A not ~A?" snd ind))
@@ -31606,7 +31605,7 @@ EDITS: 2
       (set! (hook-functions close-hook) '())
       (close-sound other))
     
-    (add-hook! print-hook (lambda (str) 
+    (hook-push print-hook (lambda (str) 
 			    (if (and (char=? (string-ref str 0) #\#) 
 				     (or (and (= (print-length) 30) ; test 9
 					      (not (string=? str "#(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ...)")))
@@ -31797,11 +31796,11 @@ EDITS: 2
 	    (XtVaSetValues edp (list XmNpaneMinimum 100)) 
 	    (XtManageChild edp)))
       
-      (add-hook! (edit-hook ind 0) 
+      (hook-push (edit-hook ind 0) 
 		 (lambda () 
 		   (set! edit-hook-ctr (+ 1 edit-hook-ctr)) 
 		   #t))
-      (add-hook! (after-edit-hook ind 0) 
+      (hook-push (after-edit-hook ind 0) 
 		 (lambda () 
 		   (set! after-edit-hook-ctr (+ 1 after-edit-hook-ctr)) 
 		   #t))
@@ -31821,11 +31820,11 @@ EDITS: 2
       (set! after-edit-hook-ctr 0)
       (set! (hook-functions (edit-hook ind 0)) '())
       (set! (hook-functions (after-edit-hook ind 0)) '())
-      (add-hook! (edit-hook ind 0) 
+      (hook-push (edit-hook ind 0) 
 		 (lambda () 
 		   (set! edit-hook-ctr (+ 1 edit-hook-ctr)) 
 		   #f))
-      (add-hook! (after-edit-hook ind 0) 
+      (hook-push (after-edit-hook ind 0) 
 		 (lambda () 
 		   (set! after-edit-hook-ctr (+ 1 after-edit-hook-ctr)) 
 		   #t))
@@ -31852,10 +31851,10 @@ EDITS: 2
       
       (close-sound ind))
     
-    (add-hook! mouse-enter-text-hook
+    (hook-push mouse-enter-text-hook
 	       (lambda (w)
 		 (focus-widget w)))
-    (add-hook! mouse-leave-text-hook
+    (hook-push mouse-leave-text-hook
 	       (lambda (w)
 		 (focus-widget w)))
     (describe-hook mouse-enter-text-hook)
@@ -31863,7 +31862,7 @@ EDITS: 2
     
     (let ((ind (open-sound "oboe.snd")))
       (scale-by 2.0)
-      (add-hook! (edit-hook ind 0) (lambda () #t))
+      (hook-push (edit-hook ind 0) (lambda () #t))
       (mix-vct (make-vct 10 .1) 0)
       (if (not (= (edit-position ind 0) 1)) (snd-display #__line__ ";mix-vct: blocked edit: ~A" (edit-position ind 0)))
       (if (not (equal? (mixes ind 0) '())) (snd-display #__line__ ";mix-vct edit-hook: mixes: ~A" (mixes ind 0)))
@@ -31876,7 +31875,7 @@ EDITS: 2
 	    (begin
 	      (if (not (= (edit-position ind 0) 2)) (snd-display #__line__ ";mix-vct: unblocked edit: ~A" (edit-position ind 0)))
 	      (if (not (equal? (mixes ind 0) (list mx))) (snd-display #__line__ ";mix-vct un edit-hook: mixes: ~A" (mixes ind 0)))
-	      (add-hook! (edit-hook ind 0) (lambda () #t))
+	      (hook-push (edit-hook ind 0) (lambda () #t))
 	      (set! (mix-amp mx) 2.0)
 	      (if (not (= (edit-position ind 0) 2)) (snd-display #__line__ ";mix amp: blocked edit: ~A" (edit-position ind 0)))
 	      (if (fneq (mix-amp mx) 1.0) (snd-display #__line__ ";mix amp: blocked edit: ~A" (mix-amp mx)))
@@ -31904,7 +31903,7 @@ EDITS: 2
     
     ;; before|after-save-as-hook
     (let ((hook-called #f))
-      (add-hook! before-save-as-hook ; from docs
+      (hook-push before-save-as-hook ; from docs
 		 (lambda (index filename selection sr type format comment)
 		   (if (not (= sr (srate index)))
 		       (let ((chns (chans index)))
@@ -31930,7 +31929,7 @@ EDITS: 2
       (set! (hook-functions before-save-as-hook) '()))
     
     (let ((need-save-as-undo #f))
-      (add-hook! before-save-as-hook
+      (hook-push before-save-as-hook
 		 (lambda (index filename selection sr type format comment)
 		   (set! need-save-as-undo #f)
 		   (if (not (= sr (srate index)))
@@ -31938,7 +31937,7 @@ EDITS: 2
 			 (src-sound (exact->inexact (/ (srate index) sr)) 1.0 index)
 			 (set! need-save-as-undo #t)))
 		   #f))
-      (add-hook! after-save-as-hook
+      (hook-push after-save-as-hook
 		 (lambda (index filename dialog)
 		   (if need-save-as-undo (undo))))
       (let ((ind (open-sound "oboe.snd")))
@@ -31965,7 +31964,7 @@ EDITS: 2
 	(set! (sample 8) -1.5)
 	(let ((hook-called 0)
 	      (vals (channel->vct 0 10 index)))
-	  (add-hook! clip-hook (lambda (val)
+	  (hook-push clip-hook (lambda (val)
 				 (if (and (fneq val 1.0)
 					  (fneq val 1.5)
 					  (fneq val -1.5))
@@ -32079,7 +32078,7 @@ EDITS: 2
 	sfile))
     
     
-    (add-hook! after-open-hook (lambda (snd)
+    (hook-push after-open-hook (lambda (snd)
 				 (make-player snd 0)))
     (do ((i 0 (+ 1 i)))
 	((= i cur-dir-len))
@@ -32102,8 +32101,8 @@ EDITS: 2
     
     (if (not buffer-menu)
 	(set! buffer-menu (add-to-main-menu "Buffers")))
-    (add-hook! open-hook open-buffer)
-    (add-hook! close-hook close-buffer)
+    (hook-push open-hook open-buffer)
+    (hook-push close-hook close-buffer)
     
     (do ((test-ctr 0 (+ 1 test-ctr)))
 	((= test-ctr tests))
@@ -32416,7 +32415,7 @@ EDITS: 2
 		(start-playing 1 22050 #f))
 	      (revert-sound ind)
 	      (set! (transform-graph? ind 0) #t)
-	      (add-hook! lisp-graph-hook display-energy)
+	      (hook-push lisp-graph-hook display-energy)
 	      (set! (x-bounds) (list 0.0 .01))
 	      (set! (sample 0) 0.5)
 	      (set! (x-bounds) (list 0.0 .001))
@@ -32568,14 +32567,14 @@ EDITS: 2
 	      (mus-sound-forget "/tmp/cloned.snd")
 	      (close-sound cfd2)
 	      (close-sound cfd)))
-	  (add-hook! (edit-hook) (lambda () #f))
+	  (hook-push (edit-hook) (lambda () #f))
 	  (let ((editctr (edit-position)))
 	    (as-one-edit (lambda () (set! (sample 200) .2) (set! (sample 300) .3)))
 	    (if (not (= (edit-position) (+ 1 editctr))) (snd-display #__line__ ";as-one-edit: ~A -> ~A" editctr (edit-position)))
 	    (as-one-edit (lambda () #f))
 	    (if (not (= (edit-position) (+ 1 editctr))) (snd-display #__line__ ";as-one-edit nil: ~A -> ~A" editctr (edit-position))))
 	  (delete-sample 250)
-	  (add-hook! (undo-hook) (lambda () #f))
+	  (hook-push (undo-hook) (lambda () #f))
 	  (undo)
 	  (delete-sample 250)
 	  (undo)
@@ -32585,19 +32584,19 @@ EDITS: 2
 	  (undo 2)
 	  (set! (hook-functions (undo-hook)) '())
 	  (set! (hook-functions (edit-hook)) '())
-					;	    (add-hook! snd-error-hook 
+					;	    (hook-push snd-error-hook 
 					;		       (lambda (msg) 
 					;			 (if (not (string=? msg "hiho")) (snd-display #__line__ ";snd-error-hook: ~A?" msg))
 					;			 #t))
 					;	    (snd-error "hiho")
-	  (add-hook! snd-warning-hook 
+	  (hook-push snd-warning-hook 
 		     (lambda (msg) 
 		       (if (not (string=? msg "hiho")) (snd-display #__line__ ";snd-warning-hook: ~A?" msg))
 		       #t))
 	  (snd-warning "hiho")
 	  (set! (hook-functions snd-error-hook) '())
 	  (set! (hook-functions snd-warning-hook) '())
-	  (add-hook! name-click-hook 
+	  (hook-push name-click-hook 
 		     (lambda (n) 
 		       #t))
 	  (redo 1)
@@ -32642,14 +32641,14 @@ EDITS: 2
 	  (set! (x-bounds) '(.1 .2))
 	  (set! (transform-type) fourier-transform)
 	  (set! (x-bounds) '(.1 .2))
-	  (add-hook! lisp-graph-hook display-energy)
+	  (hook-push lisp-graph-hook display-energy)
 	  (set! (hook-functions graph-hook) '())
 	  (if (= (channels) 2)
 	      (begin
-		(add-hook! graph-hook display-correlation)
+		(hook-push graph-hook display-correlation)
 		(set! (x-bounds) '(.1 .12))
 		(set! (x-bounds) '(.1 .2))
-		(remove-hook! graph-hook display-correlation)))
+		(hook-remove graph-hook display-correlation)))
 	  (set! (lisp-graph?) #f)
 	  (map-chan 
 	   (let ((sum-of-squares 0.0)
@@ -32690,7 +32689,7 @@ EDITS: 2
 	  (set! (hook-functions after-transform-hook) '())
 	  (set! (hook-functions lisp-graph-hook) '())
 	  
-	  (add-hook! lisp-graph-hook 
+	  (hook-push lisp-graph-hook 
 		     (lambda (snd chn) 
 		       (if (> (random 1.0) .5) 
 			   (graph (vct 0 1 2)) 
@@ -32701,7 +32700,7 @@ EDITS: 2
 	     (set! (sync snd) (floor (random 3)))
 	     (update-lisp-graph snd))
 	   (sounds))
-	  (add-hook! graph-hook superimpose-ffts)
+	  (hook-push graph-hook superimpose-ffts)
 	  (do ((i 0 (+ 1 i)))
 	      ((= i 10))
 	    (for-each
@@ -33116,15 +33115,15 @@ EDITS: 2
 	      (let ((tick (locate-zero .001)))
 		(if (not (= tick 1050)) 
 		    (snd-display #__line__ ";locate-zero: ~A = ~A (second try: ~A)?" tick (sample tick) (locate-zero .001))))
-	      (add-hook! graph-hook auto-dot)
-	      (add-hook! graph-hook superimpose-ffts)
+	      (hook-push graph-hook auto-dot)
+	      (hook-push graph-hook superimpose-ffts)
 	      (set! (transform-graph? obi 0) #t)
 	      (update-graphs)
 	      (set! s2i (open-sound (car (match-sound-files (lambda (file) (= (mus-sound-chans file) 2))))))
 	      (if (not (= (chans s2i) 2)) (snd-display #__line__ ";match 2 got ~A with ~A chans" (short-file-name s2i) (chans s2i)))
 	      (update-graphs)
-	      (remove-hook! graph-hook auto-dot)
-	      (remove-hook! graph-hook superimpose-ffts)
+	      (hook-remove graph-hook auto-dot)
+	      (hook-remove graph-hook superimpose-ffts)
 	      (set! (transform-graph? obi 0) #f)
 	      (select-sound obi)
 	      (let ((m1 (add-mark 100 obi 0)))
@@ -33696,7 +33695,7 @@ EDITS: 2
 			    (lambda (reason) 
 			      (set! (hook-functions play-hook) '())
 			      (close-sound ind)))
-		(add-hook! play-hook 
+		(hook-push play-hook 
 			   (lambda (fr)
 			     (set! (amp-control player) (env e))
 			     (if (fneq (amp-control ind) 1.0) (snd-display #__line__ ";amp-control snd: ~A" (amp-control ind)))
@@ -39668,8 +39667,8 @@ EDITS: 1
       (begin
 	
 	(if (not (provided? 'snd-musglyphs.scm)) (load "musglyphs.scm"))
-	(add-hook! after-graph-hook display-previous-edits)
-	(add-hook! lisp-graph-hook 
+	(hook-push after-graph-hook display-previous-edits)
+	(hook-push lisp-graph-hook 
 		   (lambda (snd chn)
 		     (lambda ()
 		       (draw-string "hi" 
@@ -39705,7 +39704,7 @@ EDITS: 1
 	    (set! (time-graph? ind 0) #f)
 	    (graph (list (vct 0 1 2) (vct 3 2 1) (vct 1 2 3) (vct 1 1 1) (vct 0 1 0) (vct 3 1 2)))
 	    (update-lisp-graph)
-	    (add-hook! lisp-graph-hook (lambda (snd chn)
+	    (hook-push lisp-graph-hook (lambda (snd chn)
 					 (list (basic-color) (zoom-color) (data-color) (selected-data-color) (mix-color))))
 	    (graph (list (vct 0 1 2) (vct 3 2 1) (vct 1 2 3) (vct 1 1 1) (vct 0 1 0) (vct 3 1 2)))
 	    (update-lisp-graph)
@@ -39859,7 +39858,7 @@ EDITS: 1
       (set! (sound-property 'ho nind) 1234)
       (set! (channel-property :ha nind 0) 3.14)
       (set! (hook-functions after-save-state-hook) '())
-      (add-hook! before-save-state-hook 
+      (hook-push before-save-state-hook 
 		 (lambda (name) 
 		   (with-output-to-file name
 		     (lambda ()
@@ -39978,7 +39977,7 @@ EDITS: 1
       (set! (sound-property :hi ind) 12345)
       (insert-samples 0 100 (make-vct 100 .1) ind 0) ; need data to force save-state-hook to be called
       (set! (hook-functions save-state-hook) '())
-      (add-hook! save-state-hook (lambda (filename) "savehook.snd"))
+      (hook-push save-state-hook (lambda (filename) "savehook.snd"))
       (save-state "s61.scm")
       (close-sound ind)
       (if (not (file-exists? "savehook.snd"))
@@ -39997,7 +39996,7 @@ EDITS: 1
 		      (snd-display #__line__ ";save-state w/hook filter env: ~A" (filter-control-envelope ind)))
 		  ;; now check that save-state-hook is not called by other funcs
 		  (set! (hook-functions save-state-hook) '())
-		  (add-hook! save-state-hook (lambda (file) (snd-display #__line__ ";bogus save-state-hook call!") "edit-list-to-function-saved.snd"))
+		  (hook-push save-state-hook (lambda (file) (snd-display #__line__ ";bogus save-state-hook call!") "edit-list-to-function-saved.snd"))
 		  (let ((func (edit-list->function ind 0)))
 		    (if (file-exists? "edit-list-to-function-saved.snd")
 			(begin
@@ -41049,7 +41048,7 @@ EDITS: 1
 	      (snd-display #__line__ ";rms-envelope: ~A" vals)))
 	
 	(let ((ind (open-sound "2a.snd")))
-	  (add-hook! graph-hook display-correlation)
+	  (hook-push graph-hook display-correlation)
 	  (update-time-graph)
 	  (set! (hook-functions graph-hook) '())
 	  (stereo->mono ind "hi1.snd" "hi2.snd")
@@ -41094,13 +41093,13 @@ EDITS: 1
 	  (transposed-echo 1.1 .95 .25)
 	  (play :wait #t)
 	  (set! (channel-property 'colored-samples ind 0) (list (list (cursor-color) 0 100)))
-	  (add-hook! after-graph-hook display-samples-in-color)
+	  (hook-push after-graph-hook display-samples-in-color)
 	  (update-time-graph)
 	  (repitch-sound 220.0 440.0)
 	  (uncolor-samples)
 	  (retime-sound 1.0)
 	  (close-sound ind))
-	(remove-hook! after-graph-hook display-samples-in-color)
+	(hook-remove after-graph-hook display-samples-in-color)
 	
 	(let ((val 0)) 
 	  (tree-for-each (lambda (n) (set! val (+ val n))) (list (list 1 0) (list 2) 3))
@@ -43843,14 +43842,14 @@ EDITS: 1
 		  (if (or (fneq (car vals) (/ 10000.0 (srate ind1)))
 			  (fneq (cadr vals) (/ 20000.0 (srate ind1))))
 		      (snd-display #__line__ ";show-selection: ~A (~A)" vals (list (/ 10000.0 (srate ind1)) (/ 20000.0 (srate ind1))))))))
-	  (add-hook! graph-hook zoom-spectrum)
+	  (hook-push graph-hook zoom-spectrum)
 	  (set! (transform-graph? ind1 0) #t)
 	  (let ((ind3 (open-sound "pistol.snd")))
 	    (overlay-sounds ind2 ind1 ind3)
 	    (close-sound ind3))
 	  (samples-via-colormap ind1 0)
 	  (close-sound ind1)
-	  (remove-hook! graph-hook zoom-spectrum)
+	  (hook-remove graph-hook zoom-spectrum)
 	  (close-sound ind2)))
 
       (let ((pe (make-power-env '(0 0 32.0 1 1 32.0 2 0 0.0) :duration .1)))
@@ -53582,7 +53581,7 @@ EDITS: 1
 	(if (not (= (data-format ind) mus-bfloat)) (snd-display #__line__ ";with-sound format: ~A (~A)" (data-format ind) (mus-data-format-name (data-format ind)))))
       (close-sound ind))
     
-    (add-hook! open-raw-sound-hook (lambda (file choice) (list 1 22050 mus-bshort)))      
+    (hook-push open-raw-sound-hook (lambda (file choice) (list 1 22050 mus-bshort)))      
     (with-sound (:header-type mus-raw) (fm-violin 0 1 440 .1))
     (set! (hook-functions open-raw-sound-hook) '())
     (let ((ind (find-sound "test.snd")))
@@ -62277,7 +62276,7 @@ EDITS: 1
 			     (hook-name (cadr n))
 			     (tag
 			      (catch #t
-				     (lambda () (add-hook! hook (lambda () (+ 1 2))))
+				     (lambda () (hook-push hook (lambda () (+ 1 2))))
 				     (lambda args (car args)))))
 			(if (not (eq? tag 'wrong-type-arg))
 			    (snd-display #__line__ ";hooks ~A: ~A" hook-name tag))))
@@ -62691,7 +62690,7 @@ EDITS: 1
 	  ;; now try everything! (all we care about here is that Snd keeps running)
 	  
 					;	    (set! (hook-functions snd-error-hook) '())
-					;	    (add-hook! snd-error-hook (lambda (msg) (snd-display #__line__ msg) #t))
+					;	    (hook-push snd-error-hook (lambda (msg) (snd-display #__line__ msg) #t))
 	  
 	  ;; ---------------- key args
 	  (for-each

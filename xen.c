@@ -1582,7 +1582,7 @@ XEN xen_define_variable(const char *name, XEN value)
 
 XEN xen_s7_define_hook(const char *name, XEN value)
 {
-  XEN_DEFINE(name, value);
+  s7_define_constant(s7, name, value);
   s7_gc_protect(s7, value);
   return(value);
 }
@@ -1977,6 +1977,12 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
 	                       (cond ((null? l) (reverse! result))\n\
 		                     ((eq? func (car l)) (loop (cdr l) result))\n\
 		                     (else (loop (cdr l) (cons (car l) result)))))))");
+
+  /* these three to replace add-hook! and remove-hook! */
+  XEN_EVAL_C_STRING("(define (hook-push hook func) (set! (hook-functions hook) (cons func (hook-functions hook))))");
+  XEN_EVAL_C_STRING("(define (hook-append hook func) (set! (hook-functions hook) (append (hook-functions hook) (list func))))");
+  XEN_EVAL_C_STRING("(define hook-remove remove-hook!)");
+
 
   XEN_EVAL_C_STRING("(define load-from-path load)");
   XEN_EVAL_C_STRING("(define (1+ x) \"add 1 to arg\" (+ x 1))");

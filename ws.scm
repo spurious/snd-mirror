@@ -544,7 +544,7 @@
 	   (if (> (channels outsnd) 1)
 	       (begin
 		 (set! (hook-functions mix-release-hook) '())
-		 (add-hook! mix-release-hook
+		 (hook-push mix-release-hook
 			    (lambda (id samps-moved)
 			      (let ((new-pos (+ samps-moved (mix-position id)))
 				    (base (sync id)))
@@ -556,7 +556,7 @@
 
 	   ;; click shows the original note list entry
 	   (set! (hook-functions mix-click-hook) '())
-	   (add-hook! mix-click-hook
+	   (hook-push mix-click-hook
 		      (lambda (id)
 			(let ((info (with-mixed-sound-mix-info id outsnd)))
 			  (report-in-minibuffer (format #f "mix ~A: ~A" 
@@ -682,7 +682,7 @@
 	 (old-hook-list (hook-functions new-sound-hook))) ; save old new-sound-hook (nested sound-lets etc)
      (begin
        (set! (hook-functions new-sound-hook) '())
-       (add-hook! new-sound-hook (lambda (file)       ; save current sound-let temp file list
+       (hook-push new-sound-hook (lambda (file)       ; save current sound-let temp file list
 				   (if (string? file) ; try to ignore vcts and sound-data objects
 				       (set! temp-files (cons file temp-files)))))
        (let ((val (let ,(map (lambda (arg) 
@@ -700,7 +700,7 @@
 	 (set! (hook-functions new-sound-hook) '())                 ; restore old new-sound-hook (should this happen before ,@body?)
 	 (if (not (null? old-hook-list))
 	     (for-each (lambda (proc)
-			 (add-hook! new-sound-hook proc))
+			 (hook-push new-sound-hook proc))
 		       old-hook-list))
 	 val))))                                      ; return body result
 
@@ -867,7 +867,7 @@ finish-with-sound to complete the process."
     (format fd "      (set! *clm-header-type* ~A)))~%" (mus-header-type->string *clm-header-type*))
     (close-appending fd)))
 
-(add-hook! after-save-state-hook ws-save-state)
+(hook-push after-save-state-hook ws-save-state)
 
 
 ;;; -------- ->frequency --------

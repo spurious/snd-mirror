@@ -90,7 +90,7 @@
 (define (start-sync) (set! mark-sync-number (+ (mark-sync-max) 1)))
 (define (stop-sync) (set! mark-sync-number 0))
 (define (click-to-sync id) (set! (sync id) mark-sync-number) #f)
-;(add-hook! mark-click-hook click-to-sync)
+;(hook-push mark-click-hook click-to-sync)
 
 
 ;;; -------- syncronize sounds at a given mark
@@ -229,7 +229,7 @@
 
 (define (report-mark-names)
   "(report-mark-names) causes mark names to be printed as they are passed while playing"
-  (add-hook! start-playing-hook 
+  (hook-push start-playing-hook 
 	     (lambda (snd)
 	       (let* ((marklist (marks snd 0))
 		      (samplist (map mark-sample marklist))
@@ -246,11 +246,11 @@
 
 		 (define (report-mark-names-stop-playing-hook snd)
 		   (report-in-minibuffer "" snd)
-		   (remove-hook! play-hook report-mark-names-play-hook)
-		   (remove-hook! stop-playing-hook report-mark-names-stop-playing-hook))
+		   (hook-remove play-hook report-mark-names-play-hook)
+		   (hook-remove stop-playing-hook report-mark-names-stop-playing-hook))
 		 
-		 (add-hook! stop-playing-hook report-mark-names-stop-playing-hook)
-		 (add-hook! play-hook report-mark-names-play-hook)
+		 (hook-push stop-playing-hook report-mark-names-stop-playing-hook)
+		 (hook-push play-hook report-mark-names-play-hook)
 		 #f))))
 
 
@@ -326,7 +326,7 @@
 (define (snap-mark-to-beat)
   "(snap-mark-to-beat) ensures that when a mark is dragged, its released position is always on a beat"
   (let ((mark-release 4))
-    (add-hook! mark-hook 
+    (hook-push mark-hook 
 	       (lambda (mrk snd chn reason)
 		 (if (= reason mark-release)
 		     (let* ((samp (mark-sample mrk))
@@ -380,7 +380,7 @@
   (define (close-appending fd)
     (close-output-port fd))
 
-  (add-hook! after-save-state-hook 
+  (hook-push after-save-state-hook 
     (lambda (filename)
       (let ((fd (open-appending filename)))
 	(format fd "~%~%;;; from remember-mark-properties in marks.scm~%")
@@ -469,8 +469,8 @@
      (marks sndf))
     (string-append str (format #f "  m)~%"))))
 		   
-(add-hook! output-comment-hook (lambda (str) (marks->string (selected-sound))))
-(add-hook! after-open-hook (lambda (snd) (eval-header snd)))
+(hook-push output-comment-hook (lambda (str) (marks->string (selected-sound))))
+(hook-push after-open-hook (lambda (snd) (eval-header snd)))
 |#
 
 

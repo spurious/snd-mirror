@@ -185,7 +185,7 @@
 		  (stopping #f)
 		  (stop-widget #f))
 	      
-	      (add-hook! stop-playing-hook
+	      (hook-push stop-playing-hook
 			 (lambda (snd) 
 			   (if stopping
 			       (begin
@@ -510,7 +510,7 @@
       (set! fft-sizes (reverse fft-sizes))
       (set! wavelet-types (reverse wavelet-types))
       (set! fft-popup-menu fft-popup-menu-1)
-      (add-hook! gtk-popup-hook
+      (hook-push gtk-popup-hook
 		 (lambda (widget event data snd chn)
 		   (let* ((e (GDK_EVENT event))
 			  (coords (gdk_event_get_coords e))

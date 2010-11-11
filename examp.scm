@@ -126,7 +126,7 @@
 	  (vct-multiply! data data)
 	  (graph data "energy" (/ ls sr) (/ rs sr) 0.0 (* y-max y-max) snd chn #f)))))
 
-;(add-hook! lisp-graph-hook display-energy)
+;(hook-push lisp-graph-hook display-energy)
 
 
 (define display-db
@@ -153,7 +153,7 @@
 		   0.0 60.0
 		   snd chn))))))
 
-;(add-hook! lisp-graph-hook display-db)
+;(hook-push lisp-graph-hook display-db)
 
 
 (define (window-rms)
@@ -175,7 +175,7 @@
        snd)
       #f))
 
-;(add-hook! after-transform-hook fft-peak)
+;(hook-push after-transform-hook fft-peak)
 
 
 ;;; -------- 'info' from extsnd.html using format --------
@@ -228,7 +228,7 @@
 	  (graph data3 "lag time" 0 fftlen)))
       (report-in-minibuffer "display-correlation wants stereo input")))
 
-;(add-hook! graph-hook display-correlation)
+;(hook-push graph-hook display-correlation)
 
 ;;; The inner let body could also be:
 ;;;
@@ -264,8 +264,8 @@
 
 ;;; here we're adding this menu handling code to whatever is already happening at open/close-hook time
 
-;(add-hook! open-hook open-buffer)
-;(add-hook! close-hook close-buffer)
+;(hook-push open-hook open-buffer)
+;(hook-push close-hook close-buffer)
 
 
 
@@ -285,7 +285,7 @@
 	(set! (spectrum-end snd chn) (y-zoom-slider snd chn))))
   #f)
 
-;(add-hook! graph-hook zoom-spectrum)
+;(hook-push graph-hook zoom-spectrum)
 
 
 
@@ -318,7 +318,7 @@
 		(graph ffts "spectra" 0.0 0.5 y0 y1 snd chn)))))
     #f))
 
-;(add-hook! graph-hook superimpose-ffts)
+;(hook-push graph-hook superimpose-ffts)
 
 
 ;;; -------- c-g? example (Anders Vinjar)
@@ -430,7 +430,7 @@
       #f))
 
 #|  
-(add-hook! open-hook
+(hook-push open-hook
            (lambda (filename)
              (if (= (mus-sound-header-type filename) mus-raw)
                  (read-ogg filename)
@@ -548,7 +548,7 @@ read an ASCII sound file"
 		(set! (dot-size snd chn) 5))))
     #f))
     
-;(add-hook! graph-hook auto-dot)
+;(hook-push graph-hook auto-dot)
 
 
 
@@ -1814,8 +1814,8 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
   #f)
 
 ;(bind-key #\b 0 switch-to-buf #t)
-;(add-hook! close-hook xb-close)
-;(add-hook! after-open-hook xb-open)	    
+;(hook-push close-hook xb-close)
+;(hook-push after-open-hook xb-open)	    
 
 
 ;;; -------- remove-clicks 
@@ -2091,7 +2091,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 
     (lambda ()
       (if (not (member get-current-files (hook-functions open-hook)))
-	  (add-hook! open-hook get-current-directory))
+	  (hook-push open-hook get-current-directory))
       (if (and (not (string? last-file-opened))
 	       (not (null? (sounds))))
 	  (set! last-file-opened (file-name (or (selected-sound)
@@ -2115,7 +2115,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 
 (define (click-middle-button-to-open-next-file-in-directory)
   "(click-middle-button-to-open-next-file-in-directory) adds open-next-file-in-directory to the mouse-click-hook"
-  (add-hook! mouse-click-hook
+  (hook-push mouse-click-hook
 	     (lambda (snd chn button state x y axis)
 	       (if (= button 2)
 		   (open-next-file-in-directory)
@@ -2205,13 +2205,13 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
     
     (if enable
 	(begin
-	  (add-hook! dac-hook local-dac-func)
-	  (add-hook! start-playing-hook local-start-playing-func)
-	  (add-hook! stop-playing-hook local-stop-playing-func))
+	  (hook-push dac-hook local-dac-func)
+	  (hook-push start-playing-hook local-start-playing-func)
+	  (hook-push stop-playing-hook local-stop-playing-func))
 	(begin
-	  (remove-hook! dac-hook local-dac-func)
-	  (remove-hook! start-playing-hook local-start-playing-func)
-	  (remove-hook! stop-playing-hook local-stop-playing-func)))))
+	  (hook-remove dac-hook local-dac-func)
+	  (hook-remove start-playing-hook local-start-playing-func)
+	  (hook-remove stop-playing-hook local-stop-playing-func)))))
 
 
 ;;; -------- smooth-channel as virtual op

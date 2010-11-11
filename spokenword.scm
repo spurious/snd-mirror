@@ -181,13 +181,13 @@
     
     (if enable
   (begin
-    (add-hook! dac-hook local-dac-func)
-    (add-hook! start-playing-hook local-start-playing-func)
-    (add-hook! stop-playing-hook local-stop-playing-func))
+    (hook-push dac-hook local-dac-func)
+    (hook-push start-playing-hook local-start-playing-func)
+    (hook-push stop-playing-hook local-stop-playing-func))
   (begin
-    (remove-hook! dac-hook local-dac-func)
-    (remove-hook! start-playing-hook local-start-playing-func)
-    (remove-hook! stop-playing-hook local-stop-playing-func)))))
+    (hook-remove dac-hook local-dac-func)
+    (hook-remove start-playing-hook local-start-playing-func)
+    (hook-remove stop-playing-hook local-stop-playing-func)))))
 
 ; Default to if-cursor-follows-play-it-stays-where-play-stopped #t.
 (if-cursor-follows-play-it-stays-where-play-stopped)

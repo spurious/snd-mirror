@@ -436,10 +436,10 @@
 	    (car arg))
       (if (not (member draw-smpte-label (hook-functions after-graph-hook)))
 	  (begin
-	    (add-hook! after-graph-hook draw-smpte-label)
+	    (hook-push after-graph-hook draw-smpte-label)
 	    (update-time-graph #t #t)))
       (begin
-	(remove-hook! after-graph-hook draw-smpte-label)
+	(hook-remove after-graph-hook draw-smpte-label)
 	(update-time-graph #t #t)))))
 
   
@@ -485,7 +485,7 @@
 
 (define (zync)
   "(zync) ties each sound's y-zoom sliders together so that all change in paralle if one changes"
-  (add-hook! after-open-hook add-dragger)
+  (hook-push after-open-hook add-dragger)
   (for-each
    (lambda (n)
      (if (not (sound-property 'dragger n))
@@ -494,7 +494,7 @@
 
 (define (unzync)
   "(unzync) undoes a previous (zync) -- subsequently each sound's y-zoom sliders are independent"
-  (remove-hook! after-open-hook add-dragger)
+  (hook-remove after-open-hook add-dragger)
   (for-each
    (lambda (n)
      (if (sound-property 'dragger n)
@@ -941,7 +941,7 @@ Reverb-feedback sets the scaler on the feedback.
     (do ((i 0 (+ 1 i)))
 	((= i n))
       (set! meter-list (cons (make-level-meter meters width height) meter-list)))
-    (add-hook! dac-hook 
+    (hook-push dac-hook 
 	       (lambda (sdobj)
 		 (let* ((maxes (sound-data-maxamp sdobj)))
 		   (for-each
@@ -953,7 +953,7 @@ Reverb-feedback sets the scaler on the feedback.
 			    (display-level meter)
 			    (set! maxes (cdr maxes)))))
 		    (reverse meter-list)))))
-    (add-hook! stop-dac-hook
+    (hook-push stop-dac-hook
 	       (lambda () ; drain away the bubble
 		 (g_idle_add 
 		  (let ((ctr 0))

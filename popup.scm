@@ -193,7 +193,7 @@
 	(stopping #f)
 	(stop-widget #f))
 
-    (add-hook! stop-playing-hook
+    (hook-push stop-playing-hook
 	       (lambda (snd) 
 		 (if stopping
 		     (begin
@@ -673,7 +673,7 @@ all saved edit lists."
       (XtAddCallback edhist-clear XmNactivateCallback edhist-clear-edits))
     (let ((edhist-help (XtCreateManagedWidget "Help" xmPushButtonWidgetClass edhist-popup every-menu)))
       (XtAddCallback edhist-help XmNactivateCallback edhist-help-edits))
-    (add-hook! close-hook (lambda (snd)
+    (hook-push close-hook (lambda (snd)
 			    (let ((chns (channels snd))
 				  (name (short-file-name snd)))
 			      (do ((i 0 (+ 1 i)))
@@ -788,7 +788,7 @@ all saved edit lists."
 					  (begin
 					    (edit-graph-popup-menu graph-popup-snd graph-popup-chn)
 					    (set! (.menuToPost info) graph-popup-menu))))))))))))))))
-    (add-hook! after-open-hook add-popup)
+    (hook-push after-open-hook add-popup)
     (for-each add-popup (sounds))))
 
 (define (change-menu-color menu new-color)

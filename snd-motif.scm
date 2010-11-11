@@ -345,7 +345,7 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
 
 (define (zync)
   "(zync) ties each sound's y-zoom sliders together so that all change in parallel if one changes"
-  (add-hook! after-open-hook add-dragger)
+  (hook-push after-open-hook add-dragger)
   (for-each
    (lambda (n)
      (if (not (sound-property 'dragger n))
@@ -354,7 +354,7 @@ Box: (install-searcher (lambda (file) (= (srate file) 44100)))"
 
 (define (unzync)
   "(unzync) undoes a previous (zync) -- subsequently each sound's y-zoom sliders are independent"
-  (remove-hook! after-open-hook add-dragger)
+  (hook-remove after-open-hook add-dragger)
   (for-each
    (lambda (n)
      (if (sound-property 'dragger n)
@@ -835,7 +835,7 @@ Reverb-feedback sets the scaler on the feedback.
        (paint-all w)))
  (dialog-widgets))
  
-(add-hook! new-widget-hook paint-all)
+(hook-push new-widget-hook paint-all)
 |#
 
 (define right-arrow (list
@@ -1289,20 +1289,20 @@ Reverb-feedback sets the scaler on the feedback.
   (define (open-remarks snd)
     (do ((i 0 (+ i 1)))
 	((= i (channels snd)))
-      (add-hook! (after-edit-hook snd i) 
+      (hook-push (after-edit-hook snd i) 
 		 (lambda () 
 		   (if (Widget? (mark-list snd i)) 
 		       (make-mark-list snd i))))
-      (add-hook! (undo-hook snd i) 
+      (hook-push (undo-hook snd i) 
 		 (lambda () 
 		   (if (Widget? (mark-list snd i)) 
 		       (make-mark-list snd i))))))
 
   (set! including-mark-pane #t)
-  (add-hook! mark-hook remark)
-  (add-hook! close-hook unremark)
-  (add-hook! after-open-hook open-remarks)
-  (add-hook! update-hook (lambda (snd) 
+  (hook-push mark-hook remark)
+  (hook-push close-hook unremark)
+  (hook-push after-open-hook open-remarks)
+  (hook-push update-hook (lambda (snd) 
 			   ;; update-sound (called if header is changed, for example), calls open-sound
 			   ;;   which restores our channel-local mark-pane hooks, but doesn't re-activate
 			   ;;   the mark pane itself. So, we return a procedure from the update-hook
@@ -1664,10 +1664,10 @@ Reverb-feedback sets the scaler on the feedback.
 	  (car arg))
       (if (not (member draw-smpte-label (hook-functions after-graph-hook)))
 	  (begin
-	    (add-hook! after-graph-hook draw-smpte-label)
+	    (hook-push after-graph-hook draw-smpte-label)
 	    (update-time-graph #t #t)))
       (begin
-	(remove-hook! after-graph-hook draw-smpte-label)
+	(hook-remove after-graph-hook draw-smpte-label)
 	(update-time-graph #t #t))))
 
 (define (smpte-is-on) ; for prefs dialog
@@ -1828,7 +1828,7 @@ Reverb-feedback sets the scaler on the feedback.
 				       XmNrightAttachment  XmATTACH_POSITION
 				       XmNrightPosition    (* (+ 1 i) 10))) 
 	       meter-list)))
-    (add-hook! dac-hook 
+    (hook-push dac-hook 
 	       (lambda (sdobj)
 		 (let* ((maxes (sound-data-maxamp sdobj)))
 		   (for-each
@@ -1840,7 +1840,7 @@ Reverb-feedback sets the scaler on the feedback.
 			    (display-level meter)
 			    (set! maxes (cdr maxes)))))
 		    (reverse meter-list)))))
-    (add-hook! stop-dac-hook
+    (hook-push stop-dac-hook
 	       (lambda () ; drain away the bubble
 		 (XtAppAddWorkProc (car (main-widgets))
 				   (let ((ctr 0))
@@ -2176,8 +2176,8 @@ Reverb-feedback sets the scaler on the feedback.
 	      (reset-to-one amp ampn)
 	      (set! (amp-control snd (- top i)) 1.0))))))
   
-  (add-hook! after-open-hook amp-controls-reflect-chans)
-  (add-hook! after-apply-controls-hook amp-controls-clear))
+  (hook-push after-open-hook amp-controls-reflect-chans)
+  (hook-push after-apply-controls-hook amp-controls-clear))
 
 ;(add-amp-controls)
 
@@ -2308,7 +2308,7 @@ Reverb-feedback sets the scaler on the feedback.
     (XmStringFree str)))
 
 ;;; this deletes the play button
-;(add-hook! after-open-hook
+;(hook-push after-open-hook
 ;	   (lambda (snd)
 ;	     (let* ((ctrls (list-ref (sound-widgets snd) 2))
 ;		    (play-button (find-child ctrls "play"))
@@ -2347,7 +2347,7 @@ Reverb-feedback sets the scaler on the feedback.
 						       (cadr (get-color new-color))))))
     (if (not (null? (hook-functions draw-mark-hook)))
 	(set! (hook-functions draw-mark-hook) '()))
-    (add-hook! draw-mark-hook
+    (hook-push draw-mark-hook
 	       (lambda (id)
 		 (if (> (sync id) 0)
 		     (begin
@@ -2863,7 +2863,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"
 	#f))))
 
 
-;(add-hook! after-open-hook with-minmax-button)
+;(hook-push after-open-hook with-minmax-button)
 
 #|
 (define (set-root-window-color color)

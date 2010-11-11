@@ -1141,7 +1141,7 @@
 			(begin
 			  (if (not already-hooked)
 			      (begin
-				(add-hook! stop-dac-hook ; play either ended normally or was interrupted in some way
+				(hook-push stop-dac-hook ; play either ended normally or was interrupted in some way
 					   (lambda ()
 					     (if playing 
 						 (XtVaSetValues w (list XmNlabelPixmap play-pixmap)))
@@ -1171,7 +1171,7 @@
 			(begin
 			  (if (not already-hooked)
 			      (begin
-				(add-hook! stop-dac-hook ; play either ended normally or was interrupted in some way
+				(hook-push stop-dac-hook ; play either ended normally or was interrupted in some way
 					   (lambda ()
 					     (if looping
 						 (XtVaSetValues w (list XmNlabelPixmap loop-pixmap)))

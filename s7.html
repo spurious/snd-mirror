@@ -3110,13 +3110,13 @@ additional info about that error:
 
 
 
-<p>The variable <a name="errorhook">*error-hook*</a> provides a way to specialize error reporting.
-It is a function of 2 arguments, the values passed by the error function:
+<p>The hook <a name="errorhook">*error-hook*</a> provides a way to specialize error reporting.
+Its functions take two arguments, the values passed by the error function:
 the error type and whatever other info accompanies it.
 </p>
 
 <pre>
-(set! *error-hook* (lambda (tag args) (apply format #t args)))
+(set! (hook-functions *error-hook*) (list (lambda (tag args) (apply format #t args))))
 </pre>
 
 <p>stacktrace can be called anytime to see the chain of function calls.  Its optional argument
@@ -3148,18 +3148,18 @@ There's yet another hook, <a name="unboundvariablehook">*unbound-variable-hook*<
 before the error is signalled
 when an unbound variable
 is encountered.
-Its value is a function of one argument,
+Its functions take one argument,
 the unbound symbol.  In Snd, this is used to implement autoloading:
 </p>
 
 <pre>
-(set! <em class=red>*unbound-variable-hook*</em>
-  (lambda (sym)
-    ;; add your own symbol checks here
-    (let ((file (autoload-file (symbol-&gt;string sym))))
-      ;; autoload-file is a Snd function that knows where a lot of Snd's scheme functions are
-      (if file (load file))
-      (symbol-&gt;value sym)))) ; this will return #&lt;undefined&gt; if we didn't find its source file
+(set! (hook-functions <em class=red>*unbound-variable-hook*</em>)
+  (list (lambda (sym)
+          ;; add your own symbol checks here
+          (let ((file (autoload-file (symbol-&gt;string sym))))
+            ;; autoload-file is a Snd function that knows where a lot of Snd's scheme functions are
+            (if file (load file))
+            (symbol-&gt;value sym))))) ; this will return #&lt;undefined&gt; if we didn't find its source file
 </pre>
 
 <!--
@@ -3168,11 +3168,11 @@ the unbound symbol.  In Snd, this is used to implement autoloading:
 <p>Sly evil-doers can subvert this hook to provide something similar to Common Lisp's symbol-macros:
 </p>
 <pre>
-&gt; (set! *unbound-variable-hook* 
-    (lambda (sym)
-      (if (eq? sym 'hiho)
-          (sin (random 1.0))
-          (symbol-&gt;value sym))))
+&gt; (set! (hook-functions *unbound-variable-hook*)
+    (list (lambda (sym)
+            (if (eq? sym 'hiho)
+                (sin (random 1.0))
+                (symbol-&gt;value sym)))))
 &lt;closure&gt;
 
 &gt; hiho
@@ -3217,14 +3217,15 @@ trace with no arguments causes everything to be traced, and untrace with no argu
 turns this off.
 </p>
 
-<p>There is also a hook, <a name="tracehook">*trace-hook*</a>, a function of 2 arguments the currently traced
-function and the list of current arguments.  It is evaluated in the environment of the
-function call (that is, global to the function, not the function's local environment).
+<p>There is also a hook, <a name="tracehook">*trace-hook*</a>.  It takes functions
+of 2 arguments, the currently traced
+function and the list of current arguments.  The hook's functions are evaluated in the environment of the
+traced function call (that is, global to the function, not the function's local environment).
 </p>
 
 <pre>
     (define (hiho a b c) (* a b c))
-    (set! *trace-hook* (lambda (f args) (format #t "sum of args: ~A~%" (apply + args))))
+    (set! (hook-functions *trace-hook*) (list (lambda (f args) (format #t "sum of args: ~A~%" (apply + args)))))
     (trace hiho)
     (hiho 2 3 4)
 
@@ -3786,13 +3787,14 @@ integer-decode-float, and the various bitwise operators.
 </dt>
 
 <dd><p><b><a name="loadpath">*load-path*</a></b> is a list of directories to search when loading a file.
-<b><a name="loadhook">*load-hook*</a></b> is a function called just before a file is loaded.  Its argument is the filename.
+<b><a name="loadhook">*load-hook*</a></b> is a hook whose functions are called just before a file is loaded.  
+The hook function argument is the filename.
 While loading, the port-filename and port-line-number of the current-input-port can tell you
 where you are in the file.
 </p>
 
 <pre>
-(set! *load-hook* (lambda (name) (format #t "loading ~S...~%" name)))
+(set! (hook-functions *load-hook*) (list (lambda (name) (format #t "loading ~S...~%" name))))
 </pre>
 
 <p>Here's a *load-hook* function that adds the loaded file's directory
@@ -3801,18 +3803,18 @@ the directory:
 </p>
 
 <pre>
-(set! <em class=red>*load-hook*</em>
-  (lambda (filename)
-    (let ((pos -1)
-	  (len (length filename)))
-      (do ((i 0 (+ i 1)))
-	  ((= i len))
-	(if (char=? (filename i) #\/)
-	    (set! pos i)))
-      (if (positive? pos)
-	  (let ((directory-name (substring filename 0 pos)))
-	    (if (not (member directory-name <em class=red>*load-path*</em>))
-		(set! <em class=red>*load-path*</em> (cons directory-name *load-path*))))))))
+(set! (hook-functions <em class=red>*load-hook*</em>)
+  (list (lambda (filename)
+          (let ((pos -1)
+	        (len (length filename)))
+            (do ((i 0 (+ i 1)))
+	        ((= i len))
+	      (if (char=? (filename i) #\/)
+	          (set! pos i)))
+            (if (positive? pos)
+	        (let ((directory-name (substring filename 0 pos)))
+	          (if (not (member directory-name <em class=red>*load-path*</em>))
+		      (set! <em class=red>*load-path*</em> (cons directory-name *load-path*)))))))))
 </pre>
 
 <table border=0 vspace=8 width=30% cellpadding=0 cellspacing=0><tr><td bgcolor="lightgreen">
@@ -5833,10 +5835,10 @@ int main(int argc, char **argv)
   s7_define_function(s7, "error-handler", error_handler, 1, 0, false, "our error handler");
 
   if (with_error_hook)
-    s7_eval_c_string(s7, "(set! *error-hook*                               \n\
-                            (lambda (tag args)                             \n\
-                              (error-handler                               \n\
-                                (apply format #f (car args) (cdr args)))))");
+    s7_eval_c_string(s7, "(set! (hook-functions *error-hook*)                    \n\
+                            (list (lambda (tag args)                             \n\
+                                    (error-handler                               \n\
+                                      (apply format #f (car args) (cdr args))))))");
 
   while (1) 
     {

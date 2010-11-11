@@ -1,7 +1,7 @@
 ;;; make-index.scm translated from index.cl
 
-;(set! *load-hook* (lambda (filename) (format #t "loading ~S~%" filename)))
-(set! *unbound-variable-hook* '())
+;(set! (hook-functions *load-hook*) (list (lambda (filename) (format #t "loading ~S~%" filename))))
+(set! (hook-functions *unbound-variable-hook*) '())
 
 
 ;;; --------------------------------------------------------------------------------

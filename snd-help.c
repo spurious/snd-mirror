@@ -4032,10 +4032,10 @@ If more than one hook function, each function gets the previous function's outpu
 #if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE(S_autoload_file, g_autoload_file_w,  1, 0, 0, H_autoload_file);
 
-  XEN_EVAL_C_STRING("(set! *unbound-variable-hook* \
-                       (lambda (sym) \
-			 (let ((file (autoload-file (symbol->string sym)))) \
-			   (if file (load file)) \
-			   (symbol->value sym))))");
+  XEN_EVAL_C_STRING("(set! (hook-functions *unbound-variable-hook*) \
+                       (list (lambda (sym) \
+			       (let ((file (autoload-file (symbol->string sym)))) \
+			         (if file (load file)) \
+			         (symbol->value sym)))))");
 #endif
 }

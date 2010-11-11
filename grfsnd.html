@@ -313,7 +313,7 @@ Here's a more elaborate initialization file (~/.snd_s7):
     (if (provided? '<a class=quiet href="#sndgtkfeature">snd-gtk</a>)
         (load "/home/bil/cl/gtk-popup.scm")))
 
-(<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#afteropenhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afteropenhook_tip)">after-open-hook</a>          ;if sound has many chans, use just one pane for all
+(add-hook! <a class=quiet href="extsnd.html#afteropenhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afteropenhook_tip)">after-open-hook</a>          ;if sound has many chans, use just one pane for all
   (lambda (snd)
     (if (&gt; (<a class=quiet href="extsnd.html#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">channels</a> snd) 4)
         (set! (<a class=quiet href="extsnd.html#channelstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelstyle_tip)">channel-style</a> snd) <a class=quiet href="extsnd.html#channelstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelstyle_tip)">channels-combined</a>))))

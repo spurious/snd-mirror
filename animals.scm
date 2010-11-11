@@ -268,7 +268,7 @@
 ;;;   This is mainly to cut out the ubiquitous and useless announcer.
 
 (if (null? (hook-functions start-playing-hook))
-    (add-hook! start-playing-hook
+    (hook-push start-playing-hook
 	       (lambda (snd)
 		 (if (sound? snd)  ; meaning not 123456 = temp-sound-index from View:Files play button
 		     (if (and (selection?)

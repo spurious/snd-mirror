@@ -109,7 +109,7 @@
 	      (lambda ()
 		(set! (foreground-color snd chn) old-color)))))))
 
-;(add-hook! after-graph-hook overlay-rms-env)
+;(hook-push after-graph-hook overlay-rms-env)
 
 
 (define* (display-colored-samples color beg dur snd chn)
@@ -156,7 +156,7 @@ whenever they're in the current view."
 (define* (color-samples color ubeg udur usnd uchn)
   "(color-samples color beg dur snd chn) causes samples from beg to beg+dur to be displayed in color"
   (if (not (member display-samples-in-color (hook-functions after-graph-hook)))
-      (add-hook! after-graph-hook display-samples-in-color))
+      (hook-push after-graph-hook display-samples-in-color))
   (let* ((beg (or ubeg 0))
 	 (snd (or usnd (selected-sound) (car (sounds))))
 	 (chn (or uchn (selected-channel snd) 0))
@@ -201,7 +201,7 @@ whenever they're in the current view."
 (define (overlay-sounds . args)
   "(overlay-sounds . args) overlays onto its first argument all subsequent arguments: (overlay-sounds 1 0 3)"
   (let ((base (car args)))
-    (add-hook! after-graph-hook
+    (hook-push after-graph-hook
 	       (lambda (snd chn)
 		 (if (and (sound? base)
 			  (equal? snd base))

@@ -559,7 +559,7 @@ struct s7_scheme {
   s7_pointer ERROR, WRONG_TYPE_ARG, WRONG_TYPE_ARG_INFO, OUT_OF_RANGE, OUT_OF_RANGE_INFO;
   s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, SYNTAX_ERROR, TOO_MANY_ARGUMENTS, NOT_ENOUGH_ARGUMENTS;
   s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, KEY_ALLOW_OTHER_KEYS;
-  s7_pointer __FUNC__, ERROR_HOOK, TRACE_HOOK, UNBOUND_VARIABLE_HOOK;
+  s7_pointer __FUNC__;
   s7_pointer FEED_TO;                 /* => */
   s7_pointer OBJECT_SET;              /* applicable object set method */
   s7_pointer VECTOR_SET, STRING_SET, LIST_SET, HASH_TABLE_SET;
@@ -575,6 +575,10 @@ struct s7_scheme {
   s7_pointer vector_print_length;     /* same for *vector-print-length* */
   bool input_is_file;
   s7_pointer standard_input, standard_output, standard_error;
+  s7_pointer trace_hook;              /* *trace-hook* hook object */
+  s7_pointer load_hook;               /* *load-hook* hook object */
+  s7_pointer unbound_variable_hook;   /* *unbound-variable-hook* hook object */
+  s7_pointer error_hook;              /* *error-hook* hook object */
 
   /* these 6 are pointers so that all thread refs are to the same thing */
   bool *gc_off;                       /* if true, the GC won't run */
@@ -10889,7 +10893,7 @@ static s7_pointer load_file(s7_scheme *sc, FILE *fp, const char *name)
 s7_pointer s7_load(s7_scheme *sc, const char *filename)
 {
   bool old_longjmp;
-  s7_pointer port, load_hook;
+  s7_pointer port;
   FILE *fp;
   
   fp = fopen(filename, "r");
@@ -10898,14 +10902,8 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
   if (!fp)
     return(file_error(sc, "load", "can't open", filename));
 
-  load_hook = s7_symbol_value(sc, make_symbol(sc, "*load-hook*"));
-  if (is_procedure(load_hook))
-    {
-      push_stack(sc, opcode(OP_EVAL_DONE), sc->args, sc->code); 
-      sc->args = make_list_1(sc, s7_make_string(sc, filename));
-      sc->code = load_hook;
-      eval(sc, OP_APPLY); /* not ideal, but this is called from C */
-    }
+  if (is_pair(hook_functions(sc->load_hook)))
+    s7_hook_apply(sc, sc->load_hook, make_list_1(sc, s7_make_string(sc, filename)));
 
   port = load_file(sc, fp, filename);
   port_file_number(port) = remember_file_name(sc, filename);
@@ -11008,8 +11006,6 @@ defaults to the global environment.  To load into the current environment instea
   if (!fp)
     return(file_error(sc, "load", "can't open", fname));
   
-  /* run_load_hook(sc, fname); */
-
   port = load_file(sc, fp, fname);
   port_file_number(port) = remember_file_name(sc, fname);
   push_input_port(sc, port);
@@ -11020,17 +11016,13 @@ defaults to the global environment.  To load into the current environment instea
   /* now we've opened and moved to the file to be loaded, and set up the stack to return
    *   to where we were when it is read.  Call *load-hook* if it is a procedure.
    */
-  {
-    /* (set! *load-hook* (lambda (name) (format #t "loading ~A~%" name))) */
-    s7_pointer load_hook;
-    load_hook = s7_symbol_value(sc, make_symbol(sc, "*load-hook*"));
-    if (is_procedure(load_hook))
-      {
-	sc->args = make_list_1(sc, s7_make_string(sc, fname));
-	sc->code = load_hook;
-	push_stack(sc, opcode(OP_APPLY), sc->args, sc->code); 
-      }
-  }
+  
+  if (hook_functions(sc->load_hook) != sc->NIL)
+    {
+      sc->args = make_list_1(sc, s7_make_string(sc, fname));
+      sc->code = hook_functions(sc->load_hook);
+      push_stack(sc, opcode(OP_HOOK_APPLY), sc->args, sc->code);
+    }
 
   return(sc->UNSPECIFIED);
 }
@@ -13812,10 +13804,7 @@ static s7_pointer g_vector_print_length_set(s7_scheme *sc, s7_pointer args)
       s7_Int len;
       len = s7_integer(cadr(args));
       if (len >= 0)
-	{
-	  set_symbol_value(sc->vector_print_length, cadr(args));
-	  return(cadr(args));
-	}
+	return(cadr(args));
     }
   return(sc->ERROR);
 }
@@ -16819,10 +16808,82 @@ static bool hooks_are_equal(s7_scheme *sc, s7_pointer x, s7_pointer y)
 }
 
 /* TODO: doc (+scheme/C examples)
- *       fix local hooks [set check -> list, and s7.html *.scm] *load-hook* *trace-hook* *error-hook* *unbound-variable-hook*
- *       remove add-hook! remove-hook! from *.scm
  *       libxm configuration
+ *       add-hook! et al are still in *.html because they're used by ruby and forth
  */
+
+static s7_pointer g_trace_hook_set(s7_scheme *sc, s7_pointer args)
+{
+  /* in normal use, we'd (set! (hook-functions *trace-hook*) ...), but for backwards compatibility,
+   *   we also need to support (set! *trace-hook* func).
+   */
+  if ((cadr(args) == sc->NIL) ||
+      (is_pair(cadr(args))))
+    hook_functions(sc->trace_hook) = cadr(args); /* TODO: error checks? */
+  else
+    {
+      if (s7_is_procedure(cadr(args)))
+	hook_functions(sc->trace_hook) = s7_cons(sc, cadr(args), sc->NIL);
+      else return(sc->ERROR);
+    }
+  return(sc->trace_hook); /* kinda pointless... */
+}
+
+
+static s7_pointer g_load_hook_set(s7_scheme *sc, s7_pointer args)
+{
+  /* in normal use, we'd (set! (hook-functions *load-hook*) ...), but for backwards compatibility,
+   *   we also need to support (set! *load-hook* func).
+   */
+  if ((cadr(args) == sc->NIL) ||
+      (is_pair(cadr(args))))
+    hook_functions(sc->load_hook) = cadr(args); /* TODO: error checks? */
+  else
+    {
+      if (s7_is_procedure(cadr(args)))
+	hook_functions(sc->load_hook) = s7_cons(sc, cadr(args), sc->NIL);
+      else return(sc->ERROR);
+    }
+  return(sc->load_hook);
+}
+
+
+static s7_pointer g_unbound_variable_hook_set(s7_scheme *sc, s7_pointer args)
+{
+  /* in normal use, we'd (set! (hook-functions *unbound-variable-hook*) ...), but for backwards compatibility,
+   *   we also need to support (set! *unbound-variable-hook* func).
+   */
+  if ((cadr(args) == sc->NIL) ||
+      (is_pair(cadr(args))))
+    hook_functions(sc->unbound_variable_hook) = cadr(args); /* TODO: error checks? */
+  else
+    {
+      if (s7_is_procedure(cadr(args)))
+	hook_functions(sc->unbound_variable_hook) = s7_cons(sc, cadr(args), sc->NIL);
+      else return(sc->ERROR);
+    }
+  return(sc->unbound_variable_hook);
+}
+
+
+static s7_pointer g_error_hook_set(s7_scheme *sc, s7_pointer args)
+{
+  /* in normal use, we'd (set! (hook-functions *error-hook*) ...), but for backwards compatibility,
+   *   we also need to support (set! *error-hook* func).
+   */
+  if ((cadr(args) == sc->NIL) ||
+      (is_pair(cadr(args))))
+    hook_functions(sc->error_hook) = cadr(args); /* TODO: error checks? */
+  else
+    {
+      if (s7_is_procedure(cadr(args)))
+	hook_functions(sc->error_hook) = s7_cons(sc, cadr(args), sc->NIL);
+      else return(sc->ERROR);
+    }
+  return(sc->error_hook);
+}
+
+
 
 
 
@@ -18006,21 +18067,12 @@ static void trace_apply(s7_scheme *sc)
       free(str);
       
       sc->trace_depth++;
-
-      /* s7_hook_apply(sc, symbol_value(find_symbol(sc, sc->envir, sc->TRACE_HOOK)), sc->args); */
-      {
-	/* handle *trace-hook* */
-	s7_pointer trace_hook, trace_hook_binding;
-	trace_hook_binding = find_symbol(sc, sc->envir, sc->TRACE_HOOK);
-	if ((trace_hook_binding != sc->NIL) &&
-	    (is_procedure(symbol_value(trace_hook_binding))))
-	  {
-	    trace_hook = symbol_value(trace_hook_binding);
-	    push_stack(sc, opcode(OP_TRACE_HOOK_QUIT), sc->args, sc->code); /* restore current state after dealing with the trace hook func */
-	    sc->args = make_list_2(sc, sc->code, sc->args);
-	    sc->code = trace_hook;
-	  }
-      }
+      
+      if (hook_functions(sc->trace_hook) != sc->NIL)
+	{
+	  push_stack(sc, opcode(OP_TRACE_HOOK_QUIT), sc->args, sc->code); /* restore current state after dealing with the trace hook func */
+	  s7_hook_apply(sc, sc->trace_hook, make_list_2(sc, sc->code, sc->args));
+	}
     }
 }
 
@@ -18050,6 +18102,8 @@ static void trace_return(s7_scheme *sc)
   sc->trace_depth--;
   if (sc->trace_depth < 0) sc->trace_depth = 0;
 }
+
+
 
 
 
@@ -18302,20 +18356,6 @@ static int remember_file_name(s7_scheme *sc, const char *file)
 }
 
 
-static s7_pointer g_error_hook_set(s7_scheme *sc, s7_pointer args)
-{
-  if ((cadr(args) == sc->NIL) || (is_procedure(cadr(args)))) /* nil is the default value */
-    return(cadr(args));
-  return(sc->ERROR);
-}
-
-
-static s7_pointer g_error_hook_bind(s7_scheme *sc, s7_pointer args)
-{
-  return(sc->ERROR);
-}
-
-
 #define ERROR_INFO_DEFAULT sc->F
 #define ERROR_TYPE 0
 #define ERROR_DATA 1
@@ -18503,7 +18543,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	   */
 
 	case OP_ERROR_HOOK_QUIT:
-	  s7_symbol_set_value(sc, sc->ERROR_HOOK, stack_code(sc->stack, i));
+	  hook_functions(sc->error_hook) = stack_code(sc->stack, i);
 	  /* apparently there was an error during *error-hook* evaluation, but Rick wants the hook re-established anyway */
 	  reset_error_hook = true;
 	  /* avoid infinite loop -- don't try to (re-)evaluate (buggy) *error-hook*! */
@@ -18541,22 +18581,21 @@ GOT_CATCH:
     }
   else
     {
-      /* (set! *error-hook* (lambda (tag args) (apply format (cons #t args)))) */
-      s7_pointer error_hook, error_hook_binding;
-      error_hook_binding = find_symbol(sc, sc->envir, sc->ERROR_HOOK);
+      /* (set! *error-hook* (list (lambda (tag args) (apply format (cons #t args))))) */
 
-      if ((!reset_error_hook) &&
-	  (error_hook_binding != sc->NIL) &&
-	  (is_procedure(symbol_value(error_hook_binding))))
+      if ((!reset_error_hook) && 
+	  (is_pair(hook_functions(sc->error_hook))))
 	{
-	  error_hook = symbol_value(error_hook_binding);
-	  set_symbol_value(error_hook_binding, sc->NIL);
-	  /* if the *error-hook* function triggers an error, we had better not have *error-hook* still set! */
+	  s7_pointer error_list;
 
-	  push_stack(sc, opcode(OP_ERROR_HOOK_QUIT), sc->NIL, error_hook); /* restore *error-hook* upon successful (or any!) evaluation */
+	  error_list = hook_functions(sc->error_hook);
+	  hook_functions(sc->error_hook) = sc->NIL;
+	  /* if the *error-hook* functions trigger an error, we had better not have *error-hook* still set! */
+
+	  push_stack(sc, opcode(OP_ERROR_HOOK_QUIT), sc->NIL, error_list); /* restore *error-hook* upon successful (or any!) evaluation */
 	  sc->args = make_list_2(sc, type, info);
-	  sc->code = error_hook;
-	  sc->op = OP_APPLY;
+	  sc->code = error_list;
+	  push_stack(sc, opcode(OP_HOOK_APPLY), sc->args, sc->code);
 	}
       else
 	{
@@ -20537,29 +20576,10 @@ static s7_pointer read_expression(s7_scheme *sc)
 
 /* ---------------- */
 
-/* (set! *unbound-variable-hook* (lambda (sym) (load "dsp.scm") (symbol->value sym))) */
-
-static s7_pointer g_unbound_variable_set(s7_scheme *sc, s7_pointer args)
-{
-  if ((cadr(args) == sc->NIL) || (is_procedure(cadr(args)))) /* nil is the default value */
-    return(cadr(args));
-  return(sc->ERROR);
-}
-
-
-static s7_pointer g_unbound_variable_bind(s7_scheme *sc, s7_pointer args)
-{
-  return(sc->ERROR);
-}
-
-
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 {
   /* handle *unbound-variable-hook* */
-  s7_pointer unbound_variable_hook_binding;
-  unbound_variable_hook_binding = find_symbol(sc, sc->envir, sc->UNBOUND_VARIABLE_HOOK);
-  if ((unbound_variable_hook_binding != sc->NIL) &&
-      (is_procedure(symbol_value(unbound_variable_hook_binding))))
+  if (hook_functions(sc->unbound_variable_hook) != sc->NIL)
     {
       int save_x, save_y, save_z, cur_code_loc;
       s7_pointer x, cur_code;
@@ -20568,9 +20588,15 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       cur_code_loc = s7_gc_protect(sc, cur_code);   /* we need to save this because it has the file/line number of the unbound symbol */
 
       SAVE_X_Y_Z(save_x, save_y, save_z);
+
+      /* not s7_hook_apply here because we need the value that the hook function returns
+       *   should we call the entire list?  or just call trailing funcs if x is #<unspecified>?
+       */
+
       x = s7_call(sc, 
-		  symbol_value(unbound_variable_hook_binding),
+		  car(hook_functions(sc->unbound_variable_hook)),
 		  make_list_1(sc, sym));
+
       RESTORE_X_Y_Z(save_x, save_y, save_z);
 
       sc->cur_code = cur_code;
@@ -23475,7 +23501,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     case OP_ERROR_HOOK_QUIT:
-      s7_symbol_set_value(sc, sc->ERROR_HOOK, sc->code);
+      hook_functions(sc->error_hook) = sc->code;  /* restore old value */
 
       /* now mimic the end of the normal error handler.  Since this error hook evaluation can happen
        *   in an arbitrary s7_call nesting, we can't just return from the current evaluation --
@@ -29268,15 +29294,6 @@ s7_scheme *s7_init(void)
   sc->__FUNC__ = make_symbol(sc, "__func__");
   typeflag(sc->__FUNC__) |= (T_DONT_COPY | T_LOCAL); 
 
-  sc->ERROR_HOOK = make_symbol(sc, "*error-hook*");
-  typeflag(sc->ERROR_HOOK) |= T_DONT_COPY; 
-
-  sc->TRACE_HOOK = make_symbol(sc, "*trace-hook*");
-  typeflag(sc->TRACE_HOOK) |= T_DONT_COPY; 
-
-  sc->UNBOUND_VARIABLE_HOOK = make_symbol(sc, "*unbound-variable-hook*");
-  typeflag(sc->UNBOUND_VARIABLE_HOOK) |= T_DONT_COPY; 
-
   sc->SET = make_symbol(sc, "set!");
   typeflag(sc->SET) |= T_DONT_COPY; 
 
@@ -29647,7 +29664,41 @@ s7_scheme *s7_init(void)
 
   s7_define_variable(sc, "*features*", sc->NIL);
   s7_define_variable(sc, "*load-path*", sc->NIL);
-  s7_define_variable(sc, "*load-hook*", sc->NIL);
+
+  /* these hook variables should use s7_define_constant, but we need to be backwards compatible */
+
+  sc->load_hook = s7_make_hook(sc, 1, 0, false, "*load-hook* is called when a file is loaded");
+  s7_define_variable(sc, "*load-hook*", sc->load_hook);
+  s7_symbol_set_access(sc, s7_make_symbol(sc, "*load-hook*"), 
+		       make_list_3(sc, 
+				   sc->F, 
+				   s7_make_function(sc, "(set *load-hook*)", g_load_hook_set, 2, 0, false, "called if *load-hook* is set"), 
+				   sc->F));
+
+  sc->trace_hook = s7_make_hook(sc, 2, 0, false, "*trace-hook* customizes tracing");
+  s7_define_variable(sc, "*trace-hook*", sc->trace_hook); 
+  s7_symbol_set_access(sc, s7_make_symbol(sc, "*trace-hook*"), 
+		       make_list_3(sc, 
+				   sc->F, 
+				   s7_make_function(sc, "(set *trace-hook*)", g_trace_hook_set, 2, 0, false, "called if *trace-hook* is set"), 
+				   sc->F));
+  
+  sc->unbound_variable_hook = s7_make_hook(sc, 1, 0, false, "*unbound-variable-hook* customizes is called when an unbound variable is encountered");
+  s7_define_variable(sc, "*unbound-variable-hook*", sc->unbound_variable_hook); 
+  s7_symbol_set_access(sc, s7_make_symbol(sc, "*unbound-variable-hook*"), 
+		       make_list_3(sc, 
+				   sc->F, 
+				   s7_make_function(sc, "(set *unbound-variable-hook*)", g_unbound_variable_hook_set, 2, 0, false, "called if *unbound-variable-hook* is set"), 
+				   sc->F));
+  
+  sc->error_hook = s7_make_hook(sc, 2, 0, false, "*error-hook* is called when an error is not caught");
+  s7_define_variable(sc, "*error-hook*", sc->error_hook);
+  s7_symbol_set_access(sc, s7_make_symbol(sc, "*error-hook*"), 
+		       make_list_3(sc, 
+				   sc->F, 
+				   s7_make_function(sc, "(set *error-hook*)", g_error_hook_set, 2, 0, false, "called if *error-hook* is set"), 
+				   sc->F));
+
 
   s7_define_variable(sc, "*#readers*", sc->NIL);
   sc->sharp_readers = symbol_global_slot(make_symbol(sc, "*#readers*"));
@@ -29672,22 +29723,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "-s7-stack-size", g_stack_size, 0, 0, false, "current stack size");
 
 
-  s7_define_variable(sc, "*error-hook*", sc->NIL);
-  s7_symbol_set_access(sc, s7_make_symbol(sc, "*error-hook*"), 
-		       make_list_3(sc, 
-				   sc->F, 
-				   s7_make_function(sc, "(set *error-hook*)", g_error_hook_set, 2, 0, false, "called if *error-hook* is set"), 
-				   s7_make_function(sc, "(bind *error-hook*)", g_error_hook_bind, 2, 0, false, "called if *error-hook* is bound")));
-
   sc->error_info = s7_make_and_fill_vector(sc, ERROR_INFO_SIZE, ERROR_INFO_DEFAULT);
   s7_define_constant(sc, "*error-info*", sc->error_info);
-
-  s7_define_variable(sc, "*unbound-variable-hook*", sc->NIL);
-  s7_symbol_set_access(sc, s7_make_symbol(sc, "*unbound-variable-hook*"), 
-		       make_list_3(sc, 
-				   sc->F, 
-				   s7_make_function(sc, "(set *unbound-variable-hook*)", g_unbound_variable_set, 2, 0, false, "called if *unbound-variable-hook* is set"), 
-				   s7_make_function(sc, "(bind *unbound-variable-hook*)", g_unbound_variable_bind, 2, 0, false, "called if *unbound-variable-hook* is bound")));
 
   s7_define_variable(sc, "*safety*", small_int(sc->safety));
   s7_symbol_set_access(sc, s7_make_symbol(sc, "*safety*"), 

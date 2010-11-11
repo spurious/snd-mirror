@@ -137,7 +137,7 @@
 
 		    (if (provided? 'snd-motif)
 			(begin
-			  (add-hook! select-channel-hook (lambda (snd chn)
+			  (hook-push select-channel-hook (lambda (snd chn)
 							   (let ((max-ms (max-mark))
 								 (min-ms (min-mark))
 								 (current-ms (find-two-marks)))
@@ -152,7 +152,7 @@
 											 XmNvalue (car current-ms)))
 								    (set! current-ms (cdr current-ms)))
 								  sliders)))))
-			  (add-hook! mark-hook (lambda (id snd chn reason)
+			  (hook-push mark-hook (lambda (id snd chn reason)
 						 (if (and (= snd (selected-sound))
 							  (= chn (selected-channel))
 							  (= reason 0)) ; add-mark
@@ -598,7 +598,7 @@ using the granulate generator to fix up the selection duration (this still is no
   (set! (sync id) mark-sync-number)
   #f)
 
-(add-hook! mark-click-hook click-to-sync)
+(hook-push mark-click-hook click-to-sync)
 
 
 (define m-sync #f)

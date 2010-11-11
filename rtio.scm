@@ -130,8 +130,8 @@
 		     our-srate our-chans our-short our-dac-buffer-size-in-bytes))
 	   (data (make-sound-data our-chans our-dac-buffer-size-in-shorts))
 	   (vobj (make-vct our-dac-buffer-size-in-shorts)))
-      (add-hook! mouse-drag-hook mouse-drag)
-      (add-hook! mouse-press-hook mouse-press)
+      (hook-push mouse-drag-hook mouse-drag)
+      (hook-push mouse-press-hook mouse-press)
       (do ()
 	  ((c-g?))
 	(mus-audio-read in-port data our-dac-buffer-size-in-shorts)
@@ -149,7 +149,7 @@
 		blackman2-window maxpt #t)
 	       "spectrum"
 	       0.0 x1))))
-      (remove-hook! mouse-drag-hook mouse-drag)
-      (remove-hook! mouse-press-hook mouse-press)
+      (hook-remove mouse-drag-hook mouse-drag)
+      (hook-remove mouse-press-hook mouse-press)
       (mus-audio-close in-port))))
 

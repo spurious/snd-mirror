@@ -52,7 +52,7 @@
   (define (list->hook-1 hook l)
     (if (not (null? l))
 	(begin
-	  (add-hook! hook (car l))
+	  (hook-push hook (car l))
 	  (list->hook-1 hook (cdr l)))))
   (set! (hook-functions hook) '())
   (list->hook-1 hook lst)

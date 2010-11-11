@@ -114,12 +114,12 @@
     (if target-ok-callback
 	(begin
 	  (XtSetSensitive (XmMessageBoxGetChild new-dialog XmDIALOG_OK_BUTTON) (target-ok-callback))
-	  (add-hook! effects-hook
+	  (hook-push effects-hook
 		     (lambda () 
 		       (XtSetSensitive (XmMessageBoxGetChild new-dialog XmDIALOG_OK_BUTTON) (target-ok-callback)))))
 	(begin
 	  (XtSetSensitive (XmMessageBoxGetChild new-dialog XmDIALOG_OK_BUTTON) (not (null? (sounds))))
-	  (add-hook! effects-hook
+	  (hook-push effects-hook
 		     (lambda () 
 		       (XtSetSensitive (XmMessageBoxGetChild new-dialog XmDIALOG_OK_BUTTON) (not (null? (sounds))))))))
 

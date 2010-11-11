@@ -31,7 +31,7 @@
 (make-hidden-controls-dialog)
 (check-for-unsaved-edits #t)
 (if (not (hook-member show-disk-space after-open-hook))
-    (add-hook! after-open-hook show-disk-space))
+    (hook-push after-open-hook show-disk-space))
 
 ;(define wd (make-pixmap (cadr (main-widgets)) rough))
 ;(for-each-child (cadr (main-widgets)) (lambda (w) (XtSetValues w (list XmNbackgroundPixmap wd))))
@@ -67,7 +67,7 @@
  (dialog-widgets))
 
 (if (not (hook-member paint-all new-widget-hook))
-    (add-hook! new-widget-hook paint-all))
+    (hook-push new-widget-hook paint-all))
 
 (set! (mix-waveform-height) 32)
 
@@ -107,7 +107,7 @@
 ;;; disable original Play radio button
 ;;;
 
-;(add-hook! after-open-hook
+;(hook-push after-open-hook
 ;           (lambda (snd)
 ;             (XtUnmanageChild (find-child (list-ref (sound-widgets snd) 2) "play"))))
 
@@ -323,11 +323,11 @@
 ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(add-hook! open-raw-sound-hook
+(hook-push open-raw-sound-hook
            (lambda (file choices)
              (list 2 44100 (if (little-endian?) mus-lshort mus-bshort))))
 
-(add-hook! open-hook
+(hook-push open-hook
            (lambda (filename)
              (if (= (mus-sound-header-type filename) mus-raw)
                  (let ((rawfile (string-append filename ".raw")))
@@ -341,11 +341,11 @@
 ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(add-hook! open-raw-sound-hook
+(hook-push open-raw-sound-hook
            (lambda (file choices)
              (list 2 44100 (if (little-endian?) mus-lshort mus-bshort))))
 
-(add-hook! open-hook
+(hook-push open-hook
            (lambda (filename)
              (if (= (mus-sound-header-type filename) mus-raw)
                  (let ((rawfile (string-append filename ".raw")))

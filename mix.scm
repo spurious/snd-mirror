@@ -115,8 +115,8 @@
     #t))
 
 (define (snap-mix-to-beat)
-  "(snap-mix-to-beat) forces a dragged mix to end up on a beat (see beats-per-minute).  (remove-hook! mix-release-hook snap-mix-1) to cancel."
-  (add-hook! mix-release-hook snap-mix-1 #t))
+  "(snap-mix-to-beat) forces a dragged mix to end up on a beat (see beats-per-minute).  (hook-remove mix-release-hook snap-mix-1) to cancel."
+  (hook-push mix-release-hook snap-mix-1 #t))
 
 
 (define (snap-syncd-mixes-1 id samps-moved)
@@ -139,8 +139,8 @@
  
 (define (snap-syncd-mixes-to-beat)
   "(snap-mix-to-beat) forces a dragged mix to end up on a beat (see beats-per-minute). \
-All mixes sync'd to it are also moved the same number of samples. (remove-hook! mix-release-hook snap-syncd-mixes-1) to cancel."
-  (add-hook! mix-release-hook snap-syncd-mixes-1 #t))
+All mixes sync'd to it are also moved the same number of samples. (hook-remove mix-release-hook snap-syncd-mixes-1) to cancel."
+  (hook-push mix-release-hook snap-syncd-mixes-1 #t))
 
 
 
@@ -148,7 +148,7 @@ All mixes sync'd to it are also moved the same number of samples. (remove-hook! 
 ;;; -------- mix-click-sets-amp
 
 (define (mix-click-sets-amp)
-  (add-hook! mix-click-hook 
+  (hook-push mix-click-hook 
 	     (lambda (n)
 	       (let ((zeroed (mix-property :zero n)))
 		 (if (not zeroed)
@@ -190,7 +190,7 @@ All mixes sync'd to it are also moved the same number of samples. (remove-hook! 
 			     ""))))
   #t)
 
-;(add-hook! mix-click-hook mix-click-info)
+;(hook-push mix-click-hook mix-click-info)
 
 
 ;;; -------- mix-name->id

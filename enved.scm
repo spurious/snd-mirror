@@ -155,19 +155,19 @@
 
 (define (start-enveloping)
   "(start-enveloping) starts the enved processes, displaying an envelope editor in each channel"
-  (add-hook! after-open-hook create-initial-envelopes)
-  (add-hook! mouse-press-hook mouse-press-envelope)
-  (add-hook! mouse-drag-hook mouse-drag-envelope)
-  (add-hook! mouse-click-hook mouse-release-envelope)
-  (add-hook! key-press-hook enveloping-key-press))
+  (hook-push after-open-hook create-initial-envelopes)
+  (hook-push mouse-press-hook mouse-press-envelope)
+  (hook-push mouse-drag-hook mouse-drag-envelope)
+  (hook-push mouse-click-hook mouse-release-envelope)
+  (hook-push key-press-hook enveloping-key-press))
 
 (define (stop-enveloping)
   "(stop-enveloping) turns off the enved channel-specific envelope editors"
-  (remove-hook! after-open-hook create-initial-envelopes)
-  (remove-hook! mouse-press-hook mouse-press-envelope)
-  (remove-hook! mouse-drag-hook mouse-drag-envelope)
-  (remove-hook! mouse-click-hook mouse-release-envelope)
-  (remove-hook! key-press-hook enveloping-key-press))
+  (hook-remove after-open-hook create-initial-envelopes)
+  (hook-remove mouse-press-hook mouse-press-envelope)
+  (hook-remove mouse-drag-hook mouse-drag-envelope)
+  (hook-remove mouse-click-hook mouse-release-envelope)
+  (hook-remove key-press-hook enveloping-key-press))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -183,7 +183,7 @@
 	    (e (make-env (channel-envelope sound chan) 
 			 :length (floor (/ (frames sound chan) (dac-size))))))
 	(add-player player 0 -1 -1 (lambda (reason) (set! (hook-functions play-hook) '())))
-	(add-hook! play-hook (lambda (fr)
+	(hook-push play-hook (lambda (fr)
 			       ;; if fr (dac buffer size in frames) is not dac-size, we should do something debonair
 			       (set! (amp-control player) (env e))))))
     (start-playing chans (srate sound))))

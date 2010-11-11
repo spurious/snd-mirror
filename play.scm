@@ -33,7 +33,7 @@
 	  ;;   so we turn off the "error" printout, catch the error itself, and toss it
 	  (let ((no-error (null? (hook-functions mus-error-hook))))
 	    (if no-error
-		(add-hook! mus-error-hook (lambda (typ msg) #t)))
+		(hook-push mus-error-hook (lambda (typ msg) #t)))
 	    (let ((val (catch #t
 			      (lambda ()
 				(mus-audio-open-output 0 cur-srate outchans frm outbytes))

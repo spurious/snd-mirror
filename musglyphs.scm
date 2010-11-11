@@ -331,7 +331,7 @@
 	(fill-rectangle	(- ox 1 (/ width 2)) (- oy 1 height) (+ width 2) (+ height 2) (car home) (cadr home) time-graph #t))
     (fill-rectangle (- x (/ width 2)) (- y height) width height (car home) (cadr home))))
 
-(add-hook! draw-mix-hook
+(hook-push draw-mix-hook
 	   (lambda (id ox oy x y)
 	     (draw-mix-tag id ox oy x y)
 	     (draw-a-note (or (mix-property 'frequency id) 440.0)
@@ -342,7 +342,7 @@
 			  (eq? (mix-property 'instrument id) 'violin))
 	     #t))
 
-(add-hook! after-graph-hook
+(hook-push after-graph-hook
 	   (lambda (s c)
 	     (let ((size (* 2 (mix-waveform-height))))
 	       (draw-staff 0 treble-tag-y (* 1.0 size) (* .25 size))
@@ -407,7 +407,7 @@
 
 (set! (show-mix-waveforms) #f)
 
-(add-hook! draw-mix-hook
+(hook-push draw-mix-hook
 	   (lambda (id ox oy x y)
 	     (let* ((xy (draw-a-note (or (mix-property 'frequency id) 440.0)
 				     (/ (length id) (srate))
@@ -424,7 +424,7 @@
 		     (set! (mix-property 'interval id) 0)))
 	       (list note-x note-y))))
 
-(add-hook! after-graph-hook
+(hook-push after-graph-hook
 	   (lambda (s c)
 	     (let ((size (* 2 (mix-waveform-height))))
 	       (draw-staff 0 treble-tag-y (* 1.0 size) (* .25 size))
@@ -432,7 +432,7 @@
 	       (draw-treble-clef 0 (+ treble-tag-y (* size .76)) size)
 	       (draw-bass-clef (* size .075) (+ bass-tag-y (* size .26)) size))))
 
-(add-hook! mix-drag-hook
+(hook-push mix-drag-hook
 	   (lambda (n x y)
 	     (let ((orig-y (mix-property 'original-tag-y n)))
 	       (if orig-y
@@ -446,7 +446,7 @@
 			   (set! (mix-property 'frequency n) (* (mix-property 'original-frequency n)
 								(expt 2.0 (/ interval 12.0)))))))))))
 	       
-(add-hook! mix-release-hook
+(hook-push mix-release-hook
 	   (lambda (id samps)
 	     (as-one-edit
 	      (lambda ()

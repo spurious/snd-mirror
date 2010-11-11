@@ -6623,16 +6623,17 @@ yow!! -- I'm using mpc_cmp
       #t)
 
 #|
-(let ((old-error-hook *error-hook*)
+(let ((old-error-hook (hook-functions *error-hook*))
       (tag #f)
       (args #f))
-  (set! *error-hook* (lambda (etag eargs)
-		       (set! tag etag)
-		       (set! args eargs)))
+  (set! (hook-functions *error-hook*)
+	(list (lambda (etag eargs)
+		(set! tag etag)
+		(set! args eargs))))
   (error 'tag 1 2 3)
   (test (and (equal? tag 'tag)
 	     (equal? args '(1 2 3))))
-  (set! *error-hook* old-error-hook))
+  (set! (hook-functions *error-hook*) old-error-hook))
 
 ;;; can't include these because they interrupt the load
 |#
@@ -14633,12 +14634,8 @@ why are these different (read-time `#() ? )
      f)))
 
 (test (integer? *vector-print-length*) #t)
-(test (or (null? *trace-hook*) (procedure? *trace-hook*)) #t)
 (test (or (null? *#readers*) (pair? *#readers*)) #t)
-(test (or (null? *load-hook*) (procedure? *load-hook*)) #t)
 (test (or (null? *load-path*) (pair? *load-path*)) #t)
-(test (or (null? *error-hook*) (procedure? *error-hook*)) #t)
-(test (or (null? *unbound-variable-hook*) (procedure? *unbound-variable-hook*)) #t)
 (test (vector? *error-info*) #t)
 
 (let ((old-len *vector-print-length*))
@@ -14648,26 +14645,24 @@ why are these different (read-time `#() ? )
    (list -1 #\a '#(1 2 3) 3.14 3/4 1.0+1.0i abs 'hi '() #t #f '#(()) (list 1 2 3) '(1 . 2)))
   (set! *vector-print-length* old-len))
 
-(let ((old-hook *unbound-variable-hook*)
+(let ((old-hook (hook-functions *unbound-variable-hook*))
       (hook-val #f))
-  (set! *unbound-variable-hook* (lambda (sym) (set! hook-val sym) 123))
+  (set! (hook-functions *unbound-variable-hook*) (list (lambda (sym) (set! hook-val sym) 123)))
   (catch #t
 	 (lambda ()
 	   (+ 1 one-two-three))
 	 (lambda args 'error))
   (test (equal? one-two-three 123) #t)
   (test (equal? hook-val 'one-two-three) #t)
-  (set! *unbound-variable-hook* old-hook))
+  (set! (hook-functions *unbound-variable-hook*) old-hook))
 
 (for-each
  (lambda (arg)
    (test (set! *unbound-variable-hook* arg) 'error)
-   (test (let ((*unbound-variable-hook* arg)) 1) 'error)
-   (test (set! *error-hook* arg) 'error)
-   (test (let ((*error-hook* arg)) 1) 'error))
- (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '#(()) (list 1 2 3) '(1 . 2)))
+   (test (set! *error-hook* arg) 'error))
+ (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '#(())))
 
-(let ((old-load-hook *load-hook*)
+(let ((old-load-hook (hook-functions *load-hook*))
       (val #f))
   (with-output-to-file "load-hook-test.scm"
     (lambda ()
@@ -14686,7 +14681,9 @@ why are these different (read-time `#() ? )
       (format #t ";load-hook-test function not defined?~%")
       (if (not (= (load-hook-test 1) 2))
 	  (format #t ";load-hook-test: ~A~%" (load-hook-test 1))))
-  (set! *load-hook* old-load-hook))
+  (set! (hook-functions *load-hook*) old-load-hook))
+
+;;; TODO: *load-hook* as hook tests
 
 (let ((old-vlen *vector-print-length*))
   (set! *vector-print-length* 0)
@@ -15805,6 +15802,21 @@ why are these different (read-time `#() ? )
     (untrace hiho)
     (set! *trace-hook* '())
     (test sum 9))
+
+  (test (hook-arity *trace-hook*) '(2 0 #f))
+  (test (hook-documentation *trace-hook*) "*trace-hook* customizes tracing")
+  (test (hook-functions *trace-hook*) '())
+
+  (let ((sum 0))
+    (define (hiho a b c) (* a b c))
+    (set! *trace-hook* (list (lambda (f args) (set! sum (apply + args)))))
+    (trace hiho)
+    (hiho 2 3 4)
+    (untrace hiho)
+    (set! *trace-hook* '())
+    (test sum 9))
+
+  ;;; TODO: check *trace-hook* for bad funcs
 
 
   (for-each
@@ -17737,7 +17749,6 @@ why are these different (read-time `#() ? )
 
 ;;; but:
 (test (with-environment '((a . 1)) 1) 1)
-(test (with-environment '((a . 1)) (+ 1 2)) 'error)
 (test (with-environment '((a . 1)) a) 'error)
 
 (test (with-environment (current-environment) 1) 1)

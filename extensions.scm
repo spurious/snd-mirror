@@ -191,12 +191,12 @@ If 'check' is #f, the hooks are removed."
   (if check
       (begin
 	(if (not (member unsaved-edits-at-exit? (hook-functions before-exit-hook)))
-	    (add-hook! before-exit-hook unsaved-edits-at-exit?))
+	    (hook-push before-exit-hook unsaved-edits-at-exit?))
 	(if (not (member unsaved-edits-at-close? (hook-functions before-close-hook)))
-	    (add-hook! before-close-hook unsaved-edits-at-close?)))
+	    (hook-push before-close-hook unsaved-edits-at-close?)))
       (begin
-	(remove-hook! before-exit-hook unsaved-edits-at-exit?)
-	(remove-hook! before-close-hook unsaved-edits-at-close?))))
+	(hook-remove before-exit-hook unsaved-edits-at-exit?)
+	(hook-remove before-close-hook unsaved-edits-at-close?))))
 
 
 ;;; -------- remember-sound-state
@@ -353,21 +353,21 @@ If 'check' is #f, the hooks are removed."
 	(begin
 	  (if (= choice 0)
 	      (begin
-		(remove-hook! close-hook remember-sound-at-close)
-		(remove-hook! after-open-hook remember-sound-at-open)))
-	  (remove-hook! open-hook remember-sound-at-start)
-	  (remove-hook! before-exit-hook remember-sound-at-exit)
+		(hook-remove close-hook remember-sound-at-close)
+		(hook-remove after-open-hook remember-sound-at-open)))
+	  (hook-remove open-hook remember-sound-at-start)
+	  (hook-remove before-exit-hook remember-sound-at-exit)
 	  (if (file-exists? remember-sound-filename)
 	      (delete-file remember-sound-filename))))
 
     (if (not (= choice 0))
 	(begin
-	  (add-hook! close-hook remember-sound-at-close)
-	  (add-hook! after-open-hook remember-sound-at-open)
+	  (hook-push close-hook remember-sound-at-close)
+	  (hook-push after-open-hook remember-sound-at-open)
 	  (if (not (= choice 1))
 	      (begin
-		(add-hook! open-hook remember-sound-at-start)
-		(add-hook! before-exit-hook remember-sound-at-exit)))))
+		(hook-push open-hook remember-sound-at-start)
+		(hook-push before-exit-hook remember-sound-at-exit)))))
 
     (set! remembering-sound-state choice)
     'remembering!))
@@ -899,14 +899,14 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   (set! prefs-initial-beg beg)
   (set! prefs-initial-dur dur)
   (set! prefs-show-full-duration full)
-  (add-hook! initial-graph-hook prefs-initial-bounds))
+  (hook-push initial-graph-hook prefs-initial-bounds))
 
 (define (prefs-deactivate-initial-bounds)
   "(prefs-deactivate-initial-bounds) deactivates the preferences dialog initial graph bounds settings"
   (set! prefs-initial-beg 0.0)
   (set! prefs-initial-dur 0.1)
   (set! prefs-show-full-duration #f)
-  (remove-hook! initial-graph-hook prefs-initial-bounds))
+  (hook-remove initial-graph-hook prefs-initial-bounds))
 
 
 ;;; -------- reopen menu
@@ -954,8 +954,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	  #f)
 	
 	(set! including-reopen-menu #t)
-	(add-hook! close-hook add-to-reopen-menu)
-	(add-hook! open-hook check-reopen-menu))))
+	(hook-push close-hook add-to-reopen-menu)
+	(hook-push open-hook check-reopen-menu))))
 
 
 ;;; -------- global-sync (for prefs dialog)
@@ -975,7 +975,7 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   (set! global-sync-choice choice)
   (if (and (not (= choice 0))
 	   (not (member global-sync-func (hook-functions after-open-hook))))
-      (add-hook! after-open-hook global-sync-func)))
+      (hook-push after-open-hook global-sync-func)))
 
 
 
